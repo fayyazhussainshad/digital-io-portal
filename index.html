@@ -7,6 +7,21 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Digital IO">
   <title>Digital IO</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Jameel Noori Nastaleeq — official legal Urdu font */
+    @font-face {
+      font-family: 'Jameel Noori Nastaleeq';
+      src: local('Jameel Noori Nastaleeq'),
+           local('JameelNooriNastaleeq'),
+           url('https://cdn.jsdelivr.net/npm/jameel-noori-nastaleeq@1.0.0/fonts/JameelNooriNastaleeq.woff2') format('woff2'),
+           url('https://cdn.jsdelivr.net/npm/jameel-noori-nastaleeq@1.0.0/fonts/JameelNooriNastaleeq.woff') format('woff'),
+           url('https://cdn.jsdelivr.net/npm/jameel-noori-nastaleeq@1.0.0/fonts/JameelNooriNastaleeq.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+  </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <style>
@@ -257,6 +272,40 @@ input, textarea, select { font-family: var(--font-main); }
 .perf-bar-wrap { height: 8px; background: var(--hover-bg); border-radius: 4px; overflow: hidden; margin: 6px 0; }
 .perf-bar { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
 .backup-dest-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 16px; }
+
+/* ── CASE WORKSPACE ── */
+.workspace-layout { display: grid; grid-template-columns: 260px 1fr; gap: 0; height: calc(100vh - 84px); overflow: hidden; }
+.workspace-sidebar { background: var(--bg-secondary); border-right: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
+.workspace-sidebar-header { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.workspace-main { overflow-y: auto; background: var(--bg-primary); }
+.doc-card { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border-light); cursor: pointer; transition: background 0.15s; }
+.doc-card:hover { background: var(--hover-bg); }
+.doc-card.active { background: var(--nav-active); border-left: 3px solid var(--accent); }
+.doc-card-icon { font-size: 20px; flex-shrink: 0; }
+.doc-card-name { flex: 1; font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+.doc-card.active .doc-card-name { color: var(--accent); font-weight: 600; }
+.doc-card-status { font-size: 9px; padding: 2px 6px; border-radius: 8px; flex-shrink: 0; }
+.doc-status-draft { background: var(--amber-bg); color: var(--amber); }
+.doc-status-done { background: var(--green-bg); color: var(--green); }
+.doc-status-empty { background: var(--hover-bg); color: var(--text-faint); }
+.case-header { padding: 16px 20px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.case-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); background: var(--bg-secondary); padding: 0 16px; }
+.case-tab { padding: 10px 16px; font-size: 12px; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
+.case-tab:hover { color: var(--text-primary); }
+.case-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.case-tab-content { padding: 20px; }
+
+/* Template Editor */
+.template-editor { background: #fff; color: #1a1a1a; min-height: 600px; padding: 40px; font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', 'Times New Roman', serif; font-size: 14px; line-height: 2; border-radius: var(--radius); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+.template-field { outline: none; border-bottom: 2px dashed #aaa; background: rgba(56,189,248,0.05); padding: 2px 6px; min-width: 80px; display: inline-block; cursor: text; border-radius: 3px 3px 0 0; transition: all 0.15s; }
+.template-field:focus { border-bottom-color: #0284c7; background: rgba(56,189,248,0.1); }
+.template-field[dir="auto"] { text-align: right; }
+.template-toolbar { padding: 10px 16px; background: var(--bg-card); border-bottom: 1px solid var(--border); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* Urdu/bilingual text inputs */
+.urdu-input { direction: auto; text-align: right; font-family: 'Noto Nastaliq Urdu', var(--font-main); font-size: 14px; line-height: 1.8; }
+.bilingual-input { direction: auto; font-family: 'Noto Nastaliq Urdu', var(--font-main); }
+
 @media (max-width: 768px) {
   .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 100; transform: translateX(-100%); }
   .sidebar.open { transform: translateX(0); box-shadow: var(--shadow); }
@@ -496,7 +545,50 @@ function setFocusTimer(m){pauseFocusTimer();timerSeconds=m*60;updateTimerDisplay
 
 // ── CASES ──
 registerPage('cases',renderCases);
-async function renderCases(container,fs='',fq=''){const cases=await getCases(fs,fq);container.innerHTML=`<div class="page-header"><div><div class="page-title">📁 My Cases</div><div class="page-subtitle">Showing ${cases.length} case(s)</div></div><button class="btn btn-primary" onclick="openAddCaseModal()">+ New Case</button></div><div class="search-bar"><input class="search-input" id="case-search" placeholder="🔍 Search FIR, Name, CNIC, Section..." value="${fq}" oninput="renderCases(document.getElementById('page-content'),'',this.value)"><select class="filter-select" id="case-status-filter" onchange="renderCases(document.getElementById('page-content'),this.value,document.getElementById('case-search').value)"><option value="" ${!fs?'selected':''}>All Statuses</option><option value="under" ${fs==='under'?'selected':''}>زیر تفتیش</option><option value="complete" ${fs==='complete'?'selected':''}>مکمل چالان</option><option value="incomplete" ${fs==='incomplete'?'selected':''}>نامکمل چالان</option><option value="untrace" ${fs==='untrace'?'selected':''}>عدم پتہ</option><option value="cancel" ${fs==='cancel'?'selected':''}>اخراج</option></select></div><div class="card" style="padding:0;overflow:hidden;"><table class="data-table"><thead><tr><th>FIR No.</th><th>Accused</th><th>Section</th><th>Offence</th><th>Date</th><th>Status</th><th>Position</th><th>Actions</th></tr></thead><tbody>${cases.length===0?`<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:40px;">No cases found. <a onclick="openAddCaseModal()">Add your first case →</a></td></tr>`:cases.map(c=>`<tr><td><span class="fir-num" onclick="viewCase('${c.id}')">${c.fir_number}</span></td><td style="font-weight:500;">${c.accused_name||'—'}</td><td style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">${c.section_of_law||'—'}</td><td style="font-size:11px;color:var(--text-muted);">${c.offence_type||'—'}</td><td style="font-size:11px;color:var(--text-faint);">${c.fir_date||formatDate(c.created_at)}</td><td><span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span></td><td style="font-size:11px;color:${c.position==='court'?'var(--green)':'var(--amber)'};">${c.position==='court'?'⚖️ In Court':'⏳ Pending'}</td><td><div style="display:flex;gap:4px;"><button class="btn btn-secondary btn-sm" onclick="viewCase('${c.id}')">View</button><button class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')">Edit</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number}')">Del</button></div></td></tr>`).join('')}</tbody></table></div>`;}
+async function renderCases(container,fs='',fq=''){
+  const cases=await getCases(fs,fq);
+  container.innerHTML=`
+    <div class="page-header">
+      <div><div class="page-title">📁 My Cases</div><div class="page-subtitle">Showing ${cases.length} case(s)</div></div>
+      <button class="btn btn-primary" onclick="openAddCaseModal()">+ New Case</button>
+    </div>
+    <div class="search-bar">
+      <input class="search-input" id="case-search" placeholder="🔍 Search FIR, Complainant, Section..." value="${fq}" oninput="renderCases(document.getElementById('page-content'),'',this.value)">
+      <select class="filter-select" id="case-status-filter" onchange="renderCases(document.getElementById('page-content'),this.value,document.getElementById('case-search').value)">
+        <option value="" ${!fs?'selected':''}>All Statuses</option>
+        <option value="under" ${fs==='under'?'selected':''}>زیر تفتیش</option>
+        <option value="complete" ${fs==='complete'?'selected':''}>مکمل چالان</option>
+        <option value="incomplete" ${fs==='incomplete'?'selected':''}>نامکمل چالان</option>
+        <option value="untrace" ${fs==='untrace'?'selected':''}>عدم پتہ</option>
+        <option value="cancel" ${fs==='cancel'?'selected':''}>اخراج</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;">
+      ${cases.length===0
+        ? `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted);font-size:12px;">No cases yet. <a onclick="openAddCaseModal()">Add your first case →</a></div>`
+        : cases.map(c => {
+            const docs = c.documents_checklist ? (typeof c.documents_checklist==='string'?JSON.parse(c.documents_checklist):c.documents_checklist) : [];
+            return `<div class="card" style="cursor:pointer;border-left:3px solid ${c.status==='complete'?'var(--green)':c.status==='under'?'var(--accent)':c.status==='incomplete'?'var(--amber)':c.status==='untrace'?'var(--purple)':'var(--red)'};" onclick="openCaseWorkspace('${c.id}')">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+                <div>
+                  <div style="font-size:15px;font-weight:800;color:var(--accent);font-family:var(--font-mono);">${c.fir_number}</div>
+                  <div style="font-size:10px;color:var(--text-faint);margin-top:2px;">${c.fir_date||formatDate(c.created_at)}</div>
+                </div>
+                <span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span>
+              </div>
+              <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">👤 ${c.complainant||'—'}</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">⚖️ ${c.section_of_law||'—'}</div>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-size:10px;color:var(--text-faint);">📎 ${docs.length} documents</div>
+                <div style="display:flex;gap:4px;">
+                  <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openEditCaseModal('${c.id}')">✏️ Edit</button>
+                  <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();confirmDeleteCase('${c.id}','${c.fir_number}')">🗑️</button>
+                </div>
+              </div>
+            </div>`;
+          }).join('')}
+    </div>`;
+}
 // ── PENAL CODE DATABASE ──
 const PENAL_CODES = [
   // PPC — Pakistan Penal Code
@@ -672,7 +764,7 @@ function caseFormHTML(c={}) {
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Complainant Name *</label>
-          <input class="form-input" id="cf-complainant" value="${c.complainant||''}" placeholder="Full name of complainant">
+          <input class="form-input" id="cf-complainant" value="${c.complainant||''}" placeholder="Full name of complainant" dir="auto" class="form-input bilingual-input">
         </div>
         <div class="form-group">
           <label class="form-label">Complainant CNIC</label>
@@ -955,47 +1047,366 @@ async function saveEditCase(id){
     closeModal();showToast('✅ Case updated!','success');renderCases(document.getElementById('page-content'));
   }catch(err){showToast('❌ Error: '+err.message,'error');}
 }
-async function viewCase(id){
-  const c=await getCase(id);if(!c)return;
-  const ev=await getEvidence(c.fir_number);
+// viewCase now opens workspace
+function viewCase(id) { openCaseWorkspace(id); }
+
+// ════════════════════════════════════════════
+//  CASE WORKSPACE
+// ════════════════════════════════════════════
+let currentCaseId = null;
+let currentDocIndex = null;
+const docDrafts = {}; // stores edited content per case+doc
+
+async function openCaseWorkspace(id) {
+  currentCaseId = id;
+  currentDocIndex = null;
+  document.getElementById('topbar-title').textContent = '📁 Case Workspace';
+  const container = document.getElementById('page-content');
+  container.innerHTML = `<div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Opening Case Workspace...</div></div>`;
+  const c = await getCase(id);
+  if (!c) { showToast('❌ Case not found.', 'error'); return; }
   const docs = c.documents_checklist ? (typeof c.documents_checklist==='string'?JSON.parse(c.documents_checklist):c.documents_checklist) : [];
-  openModal(`📋 FIR ${c.fir_number}`,
-    `<div style="max-height:65vh;overflow-y:auto;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;">
-        ${[
-          ['FIR No.',c.fir_number],
-          ['Date of FIR',c.fir_date||'—'],
-          ['Occurrence Date',c.occurrence_date||'—'],
-          ['Section of Law',c.section_of_law||'—'],
-          ['Offence',c.offence_type||'—'],
-          ['Status',STATUS_LABELS[c.status]||c.status],
-          ['Position',c.position==='court'?'⚖️ In Court':'⏳ Pending'],
-          ['Complainant',c.complainant||'—'],
-          ['Complainant CNIC',c.complainant_cnic||'—'],
-          ['Complainant Cell',c.complainant_cell||'—'],
-          ['Complainant Profession',c.complainant_profession||'—'],
-          ['FIR Writer',c.fir_writer||'—'],
-          ['Complaint Sender',c.complaint_sender||'—'],
-          ['SHO',c.sho||'—'],
-          ['SDPO',c.sdpo||'—'],
-        ].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
+  const ev = await getEvidence(c.fir_number);
+  renderWorkspace(c, docs, ev, container);
+}
+
+function renderWorkspace(c, docs, ev, container) {
+  const statusColor = {under:'var(--accent)',complete:'var(--green)',incomplete:'var(--amber)',untrace:'var(--purple)',cancel:'var(--red)'}[c.status]||'var(--accent)';
+  container.style.padding = '0';
+  container.style.overflow = 'hidden';
+  container.innerHTML = `
+    <!-- WORKSPACE HEADER -->
+    <div class="case-header">
+      <button class="btn btn-secondary btn-sm" onclick="goBackToCases()" style="flex-shrink:0;">← Back</button>
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span style="font-size:18px;font-weight:900;color:var(--accent);font-family:var(--font-mono);">FIR ${c.fir_number}</span>
+          <span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span>
+          <span style="font-size:12px;color:var(--text-muted);">📅 ${c.fir_date||'—'}</span>
+          <span style="font-size:12px;color:var(--text-muted);">⚖️ ${c.section_of_law||'—'}</span>
+          <span style="font-size:12px;color:var(--text-muted);">👤 ${c.complainant||'—'}</span>
+        </div>
       </div>
-      ${c.notes?`<div style="margin-top:10px;padding:10px;background:var(--bg-tertiary);border-radius:8px;font-size:12px;color:var(--text-secondary);"><b style="color:var(--accent);">Notes:</b> ${c.notes}</div>`:''}
-      ${docs.length>0?`
-        <div style="margin-top:12px;">
-          <div style="font-size:10px;color:var(--text-faint);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">📎 MISAL Documents (${docs.length})</div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px;">
-            ${docs.map(d=>`<span style="background:var(--green-bg);color:var(--green);border:1px solid rgba(34,197,94,0.2);border-radius:20px;padding:3px 10px;font-size:10px;">✅ ${d}</span>`).join('')}
-          </div>
-        </div>`:''}
-      <div style="margin-top:12px;">
-        <div style="font-size:10px;color:var(--text-faint);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">📸 Evidence (${ev.length})</div>
-        ${ev.length===0?'<div style="font-size:11px;color:var(--text-faint);">No evidence attached.</div>':ev.map(e=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border-light);"><span>${e.type==='Photo'?'📷':e.type==='Video'?'🎥':e.type==='Audio'?'🎙️':'📄'}</span><div style="flex:1;"><div style="font-size:12px;font-weight:600;">${e.name}</div><div style="font-size:10px;color:var(--text-muted);">${e.type} · ${e.evidence_date||'—'}</div></div></div>`).join('')}
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')">✏️ Edit Case</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number}')">🗑️</button>
       </div>
-    </div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Close</button>
-     <button class="btn btn-primary" onclick="closeModal();openEditCaseModal('${id}')">✏️ Edit</button>`
-  );
+    </div>
+
+    <!-- TABS -->
+    <div class="case-tabs">
+      <div class="case-tab active" id="tab-docs" onclick="switchWorkspaceTab('docs')">📎 Documents (${docs.length})</div>
+      <div class="case-tab" id="tab-details" onclick="switchWorkspaceTab('details')">📋 Case Details</div>
+      <div class="case-tab" id="tab-evidence" onclick="switchWorkspaceTab('evidence')">🔬 Evidence (${ev.length})</div>
+    </div>
+
+    <!-- TAB CONTENT -->
+    <div id="workspace-tab-content" style="height:calc(100vh - 200px);overflow:hidden;">
+      ${renderDocsTab(c, docs)}
+    </div>`;
+
+  // Store for tab switching
+  window._workspaceCase = c;
+  window._workspaceDocs = docs;
+  window._workspaceEv = ev;
+}
+
+function switchWorkspaceTab(tab) {
+  document.querySelectorAll('.case-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  const content = document.getElementById('workspace-tab-content');
+  const c = window._workspaceCase;
+  const docs = window._workspaceDocs;
+  const ev = window._workspaceEv;
+  if (tab === 'docs') content.innerHTML = renderDocsTab(c, docs);
+  else if (tab === 'details') content.innerHTML = renderDetailsTab(c);
+  else if (tab === 'evidence') content.innerHTML = renderEvidenceTab(c, ev);
+}
+
+function renderDocsTab(c, docs) {
+  if (!docs.length) return `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">
+      <div style="font-size:48px;margin-bottom:12px;">📂</div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:6px;">No Documents Selected</div>
+      <div style="font-size:12px;margin-bottom:16px;">Edit this case to select required MISAL documents.</div>
+      <button class="btn btn-primary" onclick="openEditCaseModal('${c.id}')">✏️ Edit Case & Add Documents</button>
+    </div>`;
+
+  return `<div class="workspace-layout">
+    <!-- Document Sidebar -->
+    <div class="workspace-sidebar">
+      <div class="workspace-sidebar-header">
+        <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">📎 Case Documents</div>
+        <input style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;color:var(--text-primary);font-size:11px;outline:none;" placeholder="🔍 Search documents..." oninput="filterWorkspaceDocs(this.value)">
+      </div>
+      <div id="workspace-doc-list">
+        ${docs.map((doc, i) => `
+          <div class="doc-card ${i===currentDocIndex?'active':''}" id="doc-card-${i}" onclick="openDocEditor(${i})">
+            <div class="doc-card-icon">📄</div>
+            <div class="doc-card-name">${doc}</div>
+            <div class="doc-card-status ${docDrafts[currentCaseId+'_'+i]?'doc-status-draft':'doc-status-empty'}">${docDrafts[currentCaseId+'_'+i]?'Draft':'Empty'}</div>
+          </div>`).join('')}
+      </div>
+      <div style="padding:10px;border-top:1px solid var(--border);margin-top:auto;">
+        <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="printAllDocs()">🖨️ Print All</button>
+      </div>
+    </div>
+
+    <!-- Document Editor Area -->
+    <div class="workspace-main" id="workspace-editor-area">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">
+        <div style="font-size:48px;margin-bottom:12px;">👈</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:6px;">Select a Document</div>
+        <div style="font-size:12px;">Click any document from the left panel to open and edit it.</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function filterWorkspaceDocs(q) {
+  const docs = window._workspaceDocs || [];
+  const list = document.getElementById('workspace-doc-list');
+  if (!list) return;
+  const filtered = q ? docs.filter(d => d.toLowerCase().includes(q.toLowerCase())) : docs;
+  list.innerHTML = filtered.map((doc, i) => {
+    const origIndex = docs.indexOf(doc);
+    return `<div class="doc-card" id="doc-card-${origIndex}" onclick="openDocEditor(${origIndex})">
+      <div class="doc-card-icon">📄</div>
+      <div class="doc-card-name">${doc}</div>
+      <div class="doc-card-status ${docDrafts[currentCaseId+'_'+origIndex]?'doc-status-draft':'doc-status-empty'}">${docDrafts[currentCaseId+'_'+origIndex]?'Draft':'Empty'}</div>
+    </div>`;
+  }).join('');
+}
+
+function openDocEditor(docIndex) {
+  currentDocIndex = docIndex;
+  const c = window._workspaceCase;
+  const docs = window._workspaceDocs;
+  const docName = docs[docIndex];
+  const draftKey = currentCaseId + '_' + docIndex;
+  const savedContent = docDrafts[draftKey] || null;
+
+  // Update sidebar active state
+  document.querySelectorAll('.doc-card').forEach(el => el.classList.remove('active'));
+  const activeCard = document.getElementById('doc-card-' + docIndex);
+  if (activeCard) activeCard.classList.add('active');
+
+  const editor = document.getElementById('workspace-editor-area');
+  if (!editor) return;
+
+  // Build auto-filled template
+  const template = buildDocTemplate(docName, c, savedContent);
+
+  editor.innerHTML = `
+    <!-- Toolbar -->
+    <div class="template-toolbar">
+      <span style="font-size:13px;font-weight:700;color:var(--accent);flex:1;">📄 ${docName}</span>
+      <select id="font-family-sel" onchange="changeFont(this.value)" style="background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:4px 8px;color:var(--text-secondary);font-size:11px;">
+        <option value="jameel" selected>Jameel Noori Nastaleeq</option>
+        <option value="noto">Noto Nastaliq Urdu</option>
+        <option value="times">Times New Roman</option>
+        <option value="arial">Arial</option>
+      </select>
+      <select id="font-size-sel" onchange="changeFontSize(this.value)" style="background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:4px 8px;color:var(--text-secondary);font-size:11px;">
+        <option value="12">12px</option>
+        <option value="14" selected>14px</option>
+        <option value="16">16px</option>
+        <option value="18">18px</option>
+        <option value="20">20px</option>
+        <option value="22">22px</option>
+      </select>
+      <button class="btn btn-secondary btn-sm" onclick="toggleDirection()">⇄ LTR/RTL</button>
+      <button class="btn btn-secondary btn-sm" onclick="saveDocDraft(${docIndex})">💾 Save Draft</button>
+      <button class="btn btn-secondary btn-sm" onclick="printThisDoc('${docName}')">🖨️ Print</button>
+      <button class="btn btn-primary btn-sm" onclick="markDocDone(${docIndex})">✅ Mark Complete</button>
+    </div>
+    <!-- Editor -->
+    <div style="padding:24px;background:var(--bg-tertiary);min-height:calc(100% - 50px);">
+      <div id="doc-template-editor" class="template-editor" contenteditable="true" dir="rtl" spellcheck="false" style="font-size:14px;min-height:600px;">
+        ${template}
+      </div>
+    </div>`;
+}
+
+function buildDocTemplate(docName, c, savedContent) {
+  if (savedContent) return savedContent;
+
+  // Auto-fill values
+  const fir = c.fir_number || '____________';
+  const firDate = c.fir_date || '____________';
+  const occurrence = c.occurrence_date || '____________';
+  const complainant = c.complainant || '____________';
+  const compCnic = c.complainant_cnic || '____________';
+  const compCell = c.complainant_cell || '____________';
+  const compProfession = c.complainant_profession || '____________';
+  const section = c.section_of_law || '____________';
+  const offence = c.offence_type || '____________';
+  const sho = c.sho || '____________';
+  const sdpo = c.sdpo || '____________';
+  const firWriter = c.fir_writer || '____________';
+  const station = currentOfficer?.station || '____________';
+  const district = currentOfficer?.district || '____________';
+  const io = currentOfficer?.full_name || '____________';
+  const year = new Date().getFullYear();
+
+  const field = (val) => `<span class="template-field" contenteditable="true">${val}</span>`;
+
+  // Generic template — specific templates will be added when sample files are provided
+  const templates = {
+    'FIR': `
+      <div style="text-align:center;margin-bottom:20px;direction:rtl;">
+        <div style="font-size:16px;font-weight:700;">پاکستان — پنجاب پولیس</div>
+        <div style="font-size:13px;color:#555;margin-top:4px;">Government of Pakistan — Punjab Police</div>
+        <div style="font-size:18px;font-weight:900;margin:10px 0;border-bottom:2px solid #333;padding-bottom:8px;">اول اطلاعاتی رپورٹ</div>
+        <div style="font-size:14px;font-weight:600;">FIRST INFORMATION REPORT</div>
+        <div style="font-size:12px;color:#777;">(Section 154 Cr.P.C.)</div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;direction:rtl;margin-bottom:16px;">
+        <tr><td style="width:25%;padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">FIR نمبر</td><td style="padding:8px;border:1px solid #ccc;">${field(fir)}</td><td style="width:25%;padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">تاریخ</td><td style="padding:8px;border:1px solid #ccc;">${field(firDate)}</td></tr>
+        <tr><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">پولیس اسٹیشن</td><td style="padding:8px;border:1px solid #ccc;">${field(station)}</td><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">ضلع</td><td style="padding:8px;border:1px solid #ccc;">${field(district)}</td></tr>
+        <tr><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">دفعات</td><td colspan="3" style="padding:8px;border:1px solid #ccc;">${field(section)}</td></tr>
+        <tr><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">مدعی کا نام</td><td style="padding:8px;border:1px solid #ccc;">${field(complainant)}</td><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">شناختی کارڈ</td><td style="padding:8px;border:1px solid #ccc;">${field(compCnic)}</td></tr>
+        <tr><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">موبائل نمبر</td><td style="padding:8px;border:1px solid #ccc;">${field(compCell)}</td><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">پیشہ</td><td style="padding:8px;border:1px solid #ccc;">${field(compProfession)}</td></tr>
+        <tr><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">واقعہ کی تاریخ</td><td colspan="3" style="padding:8px;border:1px solid #ccc;">${field(occurrence)}</td></tr>
+      </table>
+      <div style="margin-bottom:12px;direction:rtl;">
+        <div style="font-weight:600;margin-bottom:6px;">بیان / واقعہ:</div>
+        <div class="template-field" contenteditable="true" style="min-height:120px;display:block;width:100%;border:1px dashed #aaa;padding:8px;"></div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;direction:rtl;margin-top:20px;">
+        <tr><td style="width:33%;padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">تفتیشی افسر</td><td style="padding:8px;border:1px solid #ccc;">${field(io)}</td><td style="width:33%;padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">SHO</td><td style="padding:8px;border:1px solid #ccc;">${field(sho)}</td></tr>
+        <tr><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">FIR لکھنے والا</td><td style="padding:8px;border:1px solid #ccc;">${field(firWriter)}</td><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">SDPO</td><td style="padding:8px;border:1px solid #ccc;">${field(sdpo)}</td></tr>
+      </table>`,
+  };
+
+  // Return specific template or generic
+  if (templates[docName]) return templates[docName];
+
+  // Generic bilingual template for all other documents
+  return `
+    <div style="text-align:center;margin-bottom:20px;direction:rtl;">
+      <div style="font-size:14px;font-weight:700;">پاکستان — پنجاب پولیس</div>
+      <div style="font-size:18px;font-weight:900;margin:10px 0;border-bottom:2px solid #333;padding-bottom:8px;">${docName}</div>
+      <div style="font-size:12px;color:#777;">FIR نمبر: ${fir} &nbsp;|&nbsp; تاریخ: ${firDate}</div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;direction:rtl;margin-bottom:16px;">
+      <tr><td style="width:25%;padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">FIR نمبر</td><td style="padding:8px;border:1px solid #ccc;">${field(fir)}</td><td style="width:25%;padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">تاریخ</td><td style="padding:8px;border:1px solid #ccc;">${field(firDate)}</td></tr>
+      <tr><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">پولیس اسٹیشن</td><td style="padding:8px;border:1px solid #ccc;">${field(station)}</td><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">ضلع</td><td style="padding:8px;border:1px solid #ccc;">${field(district)}</td></tr>
+      <tr><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">مدعی</td><td style="padding:8px;border:1px solid #ccc;">${field(complainant)}</td><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">دفعات</td><td style="padding:8px;border:1px solid #ccc;">${field(section)}</td></tr>
+      <tr><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">تفتیشی افسر</td><td style="padding:8px;border:1px solid #ccc;">${field(io)}</td><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">SHO</td><td style="padding:8px;border:1px solid #ccc;">${field(sho)}</td></tr>
+    </table>
+    <div style="direction:rtl;margin-bottom:12px;">
+      <div style="font-weight:600;margin-bottom:6px;">تفصیلات / Details:</div>
+      <div class="template-field" contenteditable="true" style="min-height:200px;display:block;width:100%;border:1px dashed #aaa;padding:10px;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu','Times New Roman',serif;"></div>
+    </div>
+    <div style="direction:rtl;margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <div style="text-align:center;"><div style="border-top:1px solid #333;margin-top:40px;padding-top:4px;font-size:11px;">تفتیشی افسر / Investigation Officer</div></div>
+      <div style="text-align:center;"><div style="border-top:1px solid #333;margin-top:40px;padding-top:4px;font-size:11px;">SHO / Station House Officer</div></div>
+    </div>`;
+}
+
+function saveDocDraft(docIndex) {
+  const editor = document.getElementById('doc-template-editor');
+  if (!editor) return;
+  const key = currentCaseId + '_' + docIndex;
+  docDrafts[key] = editor.innerHTML;
+  // Update card status
+  const card = document.getElementById('doc-card-' + docIndex);
+  if (card) {
+    const statusEl = card.querySelector('.doc-card-status');
+    if (statusEl) { statusEl.textContent = 'Draft'; statusEl.className = 'doc-card-status doc-status-draft'; }
+  }
+  showToast('💾 Draft saved!', 'success', 1500);
+}
+
+function markDocDone(docIndex) {
+  saveDocDraft(docIndex);
+  const card = document.getElementById('doc-card-' + docIndex);
+  if (card) {
+    const statusEl = card.querySelector('.doc-card-status');
+    if (statusEl) { statusEl.textContent = 'Done'; statusEl.className = 'doc-card-status doc-status-done'; }
+  }
+  showToast('✅ Document marked as complete!', 'success');
+}
+
+function changeFont(fontKey) {
+  const editor = document.getElementById('doc-template-editor');
+  if (!editor) return;
+  const fonts = {
+    jameel: "'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif",
+    noto: "'Noto Nastaliq Urdu', serif",
+    times: "'Times New Roman', serif",
+    arial: "Arial, sans-serif",
+  };
+  editor.style.fontFamily = fonts[fontKey] || fonts.jameel;
+}
+
+function changeFontSize(size) {
+  const editor = document.getElementById('doc-template-editor');
+  if (editor) editor.style.fontSize = size + 'px';
+}
+
+function toggleDirection() {
+  const editor = document.getElementById('doc-template-editor');
+  if (!editor) return;
+  editor.dir = editor.dir === 'rtl' ? 'ltr' : 'rtl';
+  editor.style.textAlign = editor.dir === 'rtl' ? 'right' : 'left';
+}
+
+function printThisDoc(docName) {
+  const editor = document.getElementById('doc-template-editor');
+  if (!editor) return;
+  printContent(`<h2>${docName}</h2>${editor.innerHTML}`, docName + ' — Digital IO');
+}
+
+function printAllDocs() {
+  const docs = window._workspaceDocs || [];
+  const c = window._workspaceCase;
+  let html = `<h1>FIR ${c.fir_number} — All Documents</h1>`;
+  docs.forEach((doc, i) => {
+    const key = currentCaseId + '_' + i;
+    html += `<div style="page-break-before:always;"><h2>${doc}</h2>${docDrafts[key] || '<p>Not yet filled.</p>'}</div>`;
+  });
+  printContent(html, `FIR ${c.fir_number} — All Documents`);
+}
+
+function renderDetailsTab(c) {
+  return `<div class="case-tab-content">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="card">
+        <div class="card-title">📋 FIR Information</div>
+        ${[['FIR Number',c.fir_number],['Date of FIR',c.fir_date||'—'],['Occurrence Date',c.occurrence_date||'—'],['Section of Law',c.section_of_law||'—'],['Offence',c.offence_type||'—'],['Status',STATUS_LABELS[c.status]||c.status],['Position',c.position==='court'?'⚖️ In Court':'⏳ Pending'],['FIR Writer',c.fir_writer||'—'],['Complaint Sender',c.complaint_sender||'—'],['SHO',c.sho||'—'],['SDPO',c.sdpo||'—']].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
+      </div>
+      <div class="card">
+        <div class="card-title">👤 Complainant Details</div>
+        ${[['Complainant Name',c.complainant||'—'],['CNIC',c.complainant_cnic||'—'],['Cell No.',c.complainant_cell||'—'],['Profession',c.complainant_profession||'—']].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
+        ${c.notes?`<div style="margin-top:12px;padding:10px;background:var(--bg-tertiary);border-radius:8px;font-size:12px;color:var(--text-secondary);direction:auto;"><b style="color:var(--accent);">Notes:</b><br>${c.notes}</div>`:''}
+      </div>
+    </div>
+    <div style="text-align:right;margin-top:16px;">
+      <button class="btn btn-primary" onclick="openEditCaseModal('${c.id}')">✏️ Edit Case Details</button>
+    </div>
+  </div>`;
+}
+
+function renderEvidenceTab(c, ev) {
+  return `<div class="case-tab-content">
+    <div class="page-header">
+      <div><div style="font-size:16px;font-weight:700;">🔬 Evidence for FIR ${c.fir_number}</div></div>
+      <button class="btn btn-primary" onclick="openAddEvidenceModal()">+ Attach Evidence</button>
+    </div>
+    <div class="evidence-grid">
+      ${ev.length===0?`<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px;">No evidence attached yet.</div>`:ev.map(e=>`<div class="evidence-card"><div class="evidence-thumb"><span style="font-size:36px;">${e.type==='Photo'?'📷':e.type==='Video'?'🎥':e.type==='Audio'?'🎙️':'📄'}</span></div><div class="evidence-info"><div class="evidence-name">${e.name}</div><div class="evidence-tag">${e.fir_number||'—'}</div><div style="font-size:10px;color:var(--text-faint);margin-top:4px;">${e.type} · ${e.evidence_date||formatDate(e.created_at)}</div></div></div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function goBackToCases() {
+  const container = document.getElementById('page-content');
+  container.style.padding = '20px';
+  container.style.overflow = 'auto';
+  document.getElementById('topbar-title').textContent = '📁 My Cases';
+  renderCases(container);
 }
 function confirmDeleteCase(id,fir){openModal('🗑️ Confirm Delete',`<p style="color:var(--text-secondary);font-size:13px;">Delete case <b style="color:var(--accent);">FIR ${fir}</b>?<br><br><span style="color:var(--red);font-size:11px;">⚠️ This cannot be undone.</span></p>`,`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="closeModal();doDeleteCase('${id}')">🗑️ Delete</button>`);}
 async function doDeleteCase(id){try{await deleteCase(id);showToast('🗑️ Case deleted.','info');await updateBadges();renderCases(document.getElementById('page-content'));}catch(err){showToast('❌ Error: '+err.message,'error');}}
