@@ -1203,7 +1203,102 @@ async function doRemoveAdmin(userId) {
 }
 
 function openAddAdminOfficerModal() {
-  showToast('ℹ️ Officers register themselves via the main portal. Use Approvals to activate them.', 'info', 4000);
+  openModal('➕ Add New Officer',
+    `<p style="color:var(--text3);font-size:12px;margin-bottom:16px;">Create an officer account directly. A password reset email will be sent to them.</p>
+     <div class="form-row">
+       <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" id="ao-name" placeholder="e.g. ASI Muhammad Asif"></div>
+       <div class="form-group"><label class="form-label">Official Email *</label><input class="form-input" id="ao-email" placeholder="officer@punjabpolice.gov.pk" type="email"></div>
+     </div>
+     <div class="form-row">
+       <div class="form-group"><label class="form-label">Badge / Service Number *</label><input class="form-input" id="ao-badge" placeholder="e.g. PB-2025-001"></div>
+       <div class="form-group"><label class="form-label">Designation</label><input class="form-input" id="ao-designation" placeholder="e.g. ASI, SI, Inspector"></div>
+     </div>
+     <div class="form-row">
+       <div class="form-group"><label class="form-label">Police Station *</label><input class="form-input" id="ao-station" placeholder="e.g. Sadar Lahore"></div>
+       <div class="form-group"><label class="form-label">District *</label><input class="form-input" id="ao-district" placeholder="e.g. Lahore"></div>
+     </div>
+     <div class="form-row">
+       <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="ao-phone" placeholder="e.g. 0300-1234567"></div>
+       <div class="form-group"><label class="form-label">Temporary Password *</label><input class="form-input" id="ao-password" placeholder="Min 8 characters" type="password"></div>
+     </div>
+     <div style="padding:10px;background:var(--bg);border-radius:var(--r2);font-size:11px;color:var(--text3);margin-top:4px;">
+       ℹ️ Officer will receive a verification email. They can change their password after first login.
+     </div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-primary" onclick="doAddOfficerManually()">➕ Create Officer Account</button>`
+  );
+}
+
+async function doAddOfficerManually() {
+  const name     = document.getElementById('ao-name').value.trim();
+  const email    = document.getElementById('ao-email').value.trim();
+  const badge    = document.getElementById('ao-badge').value.trim();
+  const desig    = document.getElementById('ao-designation').value.trim();
+  const station  = document.getElementById('ao-station').value.trim();
+  const district = document.getElementById('ao-district').value.trim();
+  const phone    = document.getElementById('ao-phone').value.trim();
+  const password = document.getElementById('ao-password').value;
+
+  if (!name || !email || !badge || !station || !district || !password) {
+    showToast('⚠️ Please fill all required fields.', 'error'); return;
+  }
+  if (password.length < 8) {
+    showToast('⚠️ Password must be at least 8 characters.', 'error'); return;
+  }
+
+  const btn = document.querySelector('#modal-root .btn-primary');
+  if (btn) { btn.textContent = '⏳ Creating...'; btn.disabled = true; }
+
+  try {
+    // Step 1 — Create auth user
+    const { data: authData, error: authError } = await sb.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: name, badge_number: badge, station, district } }
+    });
+
+    if (authError) {
+      showToast('❌ Auth error: ' + authError.message, 'error');
+      if (btn) { btn.textContent = '➕ Create Officer Account'; btn.disabled = false; }
+      return;
+    }
+
+    const userId = authData.user?.id;
+    if (!userId) {
+      showToast('❌ Could not get user ID. Try again.', 'error');
+      if (btn) { btn.textContent = '➕ Create Officer Account'; btn.disabled = false; }
+      return;
+    }
+
+    // Step 2 — Create officer profile
+    const { error: officerError } = await sb.from('officers').insert({
+      user_id: userId,
+      full_name: name,
+      badge_number: badge,
+      designation: desig || 'IO',
+      station,
+      district,
+      phone: phone || null,
+    });
+
+    if (officerError) {
+      showToast('⚠️ Account created but profile failed: ' + officerError.message, 'error');
+      if (btn) { btn.textContent = '➕ Create Officer Account'; btn.disabled = false; }
+      return;
+    }
+
+    // Step 3 — Assign officer role
+    await sb.from('user_roles').insert({ user_id: userId, role: 'officer' });
+
+    closeModal();
+    showToast(`✅ Officer account created for ${name}! Verification email sent to ${email}.`, 'success', 5000);
+    await loadApprovalCount();
+    showPage('officers', null);
+
+  } catch (err) {
+    showToast('❌ Unexpected error: ' + err.message, 'error');
+    if (btn) { btn.textContent = '➕ Create Officer Account'; btn.disabled = false; }
+  }
 }
 
 // ════════════════════════════════════════════
