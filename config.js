@@ -1,25 +1,21 @@
 // ═══════════════════════════════════════════════════
 //  DIGITAL IO — CONFIGURATION
-//  Replace YOUR_SUPABASE_URL and YOUR_SUPABASE_ANON_KEY
-//  with your actual values from Supabase Project Settings > API
 // ═══════════════════════════════════════════════════
 
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_URL = 'https://bbrhtokynxmljumxyaeh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJicmh0b2t5bnhtbGp1bXh5YWVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MzU5ODIsImV4cCI6MjA5NTUxMTk4Mn0.o4uKyqhIx9vWDX-CeJjwujWUYK6Cy0XzEZ5fw_efQMA';
 
-// App Configuration
 const APP_CONFIG = {
   name: 'Digital IO',
   version: '4.0.0',
   edition: 'Police Case Management System',
-  sessionTimeout: 3600000,      // 1 hour in milliseconds
-  backupInterval: 5000,         // Backup check every 5 seconds
-  maxLoginAttempts: 5,          // Lock after 5 failed attempts
-  lockoutDuration: 1800000,     // 30 minutes lockout
-  toastDuration: 3000,          // Toast notification duration
+  sessionTimeout: 3600000,
+  backupInterval: 5000,
+  maxLoginAttempts: 5,
+  lockoutDuration: 1800000,
+  toastDuration: 3000,
 };
 
-// Status Labels (Urdu)
 const STATUS_LABELS = {
   under:      'زیر تفتیش',
   complete:   'مکمل چالان',
@@ -36,7 +32,6 @@ const STATUS_CLASSES = {
   cancel:     'pill-red',
 };
 
-// Police News Feed
 const POLICE_NEWS = [
   '⚖️ Supreme Court: Right to bail is a constitutional right under Article 10 — SC Judgment 2024',
   '🏛️ Lahore High Court: Expedited challan submission within 14 days of arrest — LHC Standing Order',
@@ -55,7 +50,6 @@ const POLICE_NEWS = [
   '🏛️ HIGH COURT: Challan incomplete without postmortem in homicide cases — strict compliance ordered',
 ];
 
-// Initialize Supabase
 const { createClient } = supabase;
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
