@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="theme-color" content="#0f1923">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Digital IO">
+  <link rel="manifest" href="manifest.json">
+  <title>Digital IO — Police Case Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  LOGIN SCREEN                          -->
+<!-- ═══════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-bg">
+    <div class="login-bg-grid"></div>
+    <div class="login-bg-glow"></div>
+  </div>
+
+  <div class="login-card">
+    <!-- Logo -->
+    <div class="login-logo-wrap">
+      <div class="login-logo-icon">🛡️</div>
+      <div class="login-logo-text">Digital IO</div>
+      <div class="login-logo-sub">POLICE CASE MANAGEMENT SYSTEM</div>
+    </div>
+
+    <!-- Avatar -->
+    <div class="login-avatar-wrap">
+      <div class="login-avatar" id="login-avatar">
+        <img id="login-avatar-img" src="" alt="" style="display:none;">
+        <span id="login-avatar-initials">IO</span>
+      </div>
+      <div class="login-avatar-ring"></div>
+    </div>
+
+    <!-- Officer Name -->
+    <div class="login-officer-name" id="login-officer-name">Loading...</div>
+    <div class="login-officer-role" id="login-officer-role">Digital IO — Secure Portal</div>
+
+    <!-- Error Message -->
+    <div class="login-error" id="login-error" style="display:none;"></div>
+
+    <!-- Login Methods -->
+    <div class="login-methods">
+      <button class="login-method active" id="lm-password" onclick="setLoginMethod('password',this)">
+        <span>🔐</span> Password
+      </button>
+      <button class="login-method" id="lm-pin" onclick="setLoginMethod('pin',this)">
+        <span>🔢</span> PIN
+      </button>
+      <button class="login-method" id="lm-biometric" onclick="setLoginMethod('biometric',this)">
+        <span>🫆</span> Biometric
+      </button>
+    </div>
+
+    <!-- Password Panel -->
+    <div id="panel-password">
+      <div class="input-group">
+        <input type="email" id="login-email" class="login-input" placeholder="Officer Email Address" autocomplete="email">
+      </div>
+      <div class="input-group">
+        <input type="password" id="login-password" class="login-input" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+        <button class="input-eye" onclick="togglePasswordVisibility()">👁️</button>
+      </div>
+      <button class="login-btn" onclick="doLogin()" id="login-submit-btn">
+        <span id="login-btn-text">🔓 Sign In Securely</span>
+        <span id="login-btn-loader" style="display:none;">⏳ Verifying...</span>
+      </button>
+      <div class="login-links">
+        <a onclick="showForgotPassword()">Forgot Password?</a>
+        <a onclick="showRegister()">Request Access</a>
+      </div>
+    </div>
+
+    <!-- PIN Panel -->
+    <div id="panel-pin" style="display:none;">
+      <div class="pin-display">
+        <div class="pin-dot" id="pd0"></div>
+        <div class="pin-dot" id="pd1"></div>
+        <div class="pin-dot" id="pd2"></div>
+        <div class="pin-dot" id="pd3"></div>
+        <div class="pin-dot" id="pd4"></div>
+        <div class="pin-dot" id="pd5"></div>
+      </div>
+      <div class="pin-pad">
+        <button class="pin-key" onclick="pinPress('1')">1</button>
+        <button class="pin-key" onclick="pinPress('2')">2</button>
+        <button class="pin-key" onclick="pinPress('3')">3</button>
+        <button class="pin-key" onclick="pinPress('4')">4</button>
+        <button class="pin-key" onclick="pinPress('5')">5</button>
+        <button class="pin-key" onclick="pinPress('6')">6</button>
+        <button class="pin-key" onclick="pinPress('7')">7</button>
+        <button class="pin-key" onclick="pinPress('8')">8</button>
+        <button class="pin-key" onclick="pinPress('9')">9</button>
+        <button class="pin-key pin-key-empty"></button>
+        <button class="pin-key" onclick="pinPress('0')">0</button>
+        <button class="pin-key pin-key-del" onclick="pinBackspace()">⌫</button>
+      </div>
+      <div class="login-links"><a onclick="showForgotPassword()">Forgot PIN?</a></div>
+    </div>
+
+    <!-- Biometric Panel -->
+    <div id="panel-biometric" style="display:none;">
+      <div class="biometric-wrap">
+        <div class="biometric-ring" id="bio-ring" onclick="doBiometric()">
+          <div class="biometric-icon">🫆</div>
+        </div>
+        <div class="biometric-label">Touch to authenticate</div>
+      </div>
+      <div class="login-links"><a onclick="setLoginMethod('password',document.getElementById('lm-password'))">Use Password Instead</a></div>
+    </div>
+
+    <!-- Security Badge -->
+    <div class="login-security-badge">
+      🔒 256-bit AES Encrypted · MFA Protected · Audit Logged
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  FORGOT PASSWORD MODAL                 -->
+<!-- ═══════════════════════════════════════ -->
+<div id="forgot-modal" class="modal-overlay" style="display:none;">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">🔐 Reset Access</div>
+      <button class="modal-close" onclick="hideForgotModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="forgot-step1">
+        <p class="modal-desc">Enter your registered email. An OTP will be sent to reset your access.</p>
+        <input type="email" class="login-input" id="forgot-email" placeholder="Registered email address">
+        <button class="login-btn" onclick="sendOTP()" style="margin-top:12px;">📤 Send OTP</button>
+      </div>
+      <div id="forgot-step2" style="display:none;">
+        <p class="modal-desc">Enter the 6-digit OTP sent to your email.</p>
+        <div class="otp-inputs">
+          <input class="otp-box" maxlength="1" id="otp0" oninput="otpNext(0)">
+          <input class="otp-box" maxlength="1" id="otp1" oninput="otpNext(1)">
+          <input class="otp-box" maxlength="1" id="otp2" oninput="otpNext(2)">
+          <input class="otp-box" maxlength="1" id="otp3" oninput="otpNext(3)">
+          <input class="otp-box" maxlength="1" id="otp4" oninput="otpNext(4)">
+          <input class="otp-box" maxlength="1" id="otp5" oninput="otpNext(5)">
+        </div>
+        <button class="login-btn" onclick="verifyOTP()" style="margin-top:12px;">✅ Verify OTP</button>
+      </div>
+      <div id="forgot-step3" style="display:none;">
+        <p class="modal-desc">Set your new password.</p>
+        <input type="password" class="login-input" id="new-pass1" placeholder="New Password" style="margin-bottom:10px;">
+        <input type="password" class="login-input" id="new-pass2" placeholder="Confirm New Password">
+        <button class="login-btn" onclick="resetPassword()" style="margin-top:12px;">🔒 Reset & Login</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  REQUEST ACCESS MODAL                  -->
+<!-- ═══════════════════════════════════════ -->
+<div id="register-modal" class="modal-overlay" style="display:none;">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">📋 Request System Access</div>
+      <button class="modal-close" onclick="hideRegister()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-desc">Fill in your details. Your request will be reviewed by the administrator before access is granted.</p>
+      <input type="text" class="login-input" id="reg-name" placeholder="Full Name (e.g. ASI Muhammad Asif)" style="margin-bottom:10px;">
+      <input type="email" class="login-input" id="reg-email" placeholder="Official Email Address" style="margin-bottom:10px;">
+      <input type="text" class="login-input" id="reg-badge" placeholder="Badge / Service Number" style="margin-bottom:10px;">
+      <input type="text" class="login-input" id="reg-station" placeholder="Police Station" style="margin-bottom:10px;">
+      <input type="text" class="login-input" id="reg-district" placeholder="District" style="margin-bottom:10px;">
+      <input type="password" class="login-input" id="reg-password" placeholder="Choose Password (min 8 characters)" style="margin-bottom:10px;">
+      <button class="login-btn" onclick="submitRegistration()">📤 Submit Request</button>
+      <p style="font-size:10px;color:var(--text-faint);text-align:center;margin-top:10px;">Admin approval required. You will receive an email once approved.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  MAIN APP                              -->
+<!-- ═══════════════════════════════════════ -->
+<div id="main-app" style="display:none;">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">🛡️</div>
+      <div>
+        <div class="sidebar-logo-text">Digital IO</div>
+        <div class="sidebar-logo-sub">Case Management</div>
+      </div>
+    </div>
+
+    <!-- Officer Profile -->
+    <div class="sidebar-profile">
+      <div class="sidebar-avatar" id="sidebar-avatar">IO</div>
+      <div class="sidebar-profile-info">
+        <div class="sidebar-profile-name" id="sidebar-name">Loading...</div>
+        <div class="sidebar-profile-role" id="sidebar-role">Officer</div>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item active" onclick="showPage('dashboard',this)">
+        <span class="nav-icon">🏠</span> Dashboard
+      </a>
+      <a class="nav-item" onclick="showPage('cases',this)">
+        <span class="nav-icon">📁</span> My Cases
+        <span class="nav-badge" id="badge-cases">0</span>
+      </a>
+      <a class="nav-item" onclick="showPage('misal',this)">
+        <span class="nav-icon">📄</span> MISAL Builder
+      </a>
+      <a class="nav-item" onclick="showPage('evidence',this)">
+        <span class="nav-icon">🔬</span> Evidence
+      </a>
+
+      <div class="nav-section-label">Tools</div>
+      <a class="nav-item" onclick="showPage('search',this)">
+        <span class="nav-icon">🔍</span> Advanced Search
+      </a>
+      <a class="nav-item" onclick="showPage('law',this)">
+        <span class="nav-icon">⚖️</span> Law Library
+      </a>
+      <a class="nav-item" onclick="showPage('reminders',this)">
+        <span class="nav-icon">🔔</span> Reminders
+        <span class="nav-badge" id="badge-reminders">0</span>
+      </a>
+      <a class="nav-item" onclick="showPage('performance',this)">
+        <span class="nav-icon">📊</span> Performance
+      </a>
+
+      <div class="nav-section-label">System</div>
+      <a class="nav-item" onclick="showPage('backup',this)">
+        <span class="nav-icon">☁️</span> Backup & Sync
+      </a>
+      <a class="nav-item" onclick="showPage('settings',this)">
+        <span class="nav-icon">⚙️</span> Settings
+      </a>
+      <a class="nav-item" id="admin-nav-item" style="display:none;" onclick="showPage('admin',this)">
+        <span class="nav-icon">👨‍💼</span> Admin Panel
+      </a>
+    </nav>
+
+    <!-- Logout -->
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="doLogout()">🚪 Sign Out</button>
+      <div class="sidebar-version">Digital IO v4.0 · Secure</div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-area">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+        <div class="topbar-title" id="topbar-title">Dashboard</div>
+        <div class="db-badge" id="db-badge">⚙ Connecting...</div>
+      </div>
+      <div class="topbar-right">
+        <button class="topbar-btn" onclick="showPage('search',null)" title="Advanced Search">🔍</button>
+        <button class="topbar-btn" onclick="showPage('reminders',null)" title="Reminders">🔔</button>
+        <button class="topbar-btn" onclick="triggerBackupNow()" title="Backup Now">☁️</button>
+        <div class="topbar-status">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-text">Connecting</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE CONTENT -->
+    <div class="page-content" id="page-content">
+      <div class="loading-screen">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading...</div>
+      </div>
+    </div>
+
+    <!-- BOTTOM BAR -->
+    <div class="bottombar">
+      <span id="footer-officer">Digital IO</span>
+      <span id="footer-time"></span>
+      <span id="footer-license">License: Active</span>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<!-- MODAL ROOT -->
+<div id="modal-root"></div>
+
+<!-- SCRIPTS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/db.js"></script>
+<script src="js/backup.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/pages/dashboard.js"></script>
+<script src="js/pages/cases.js"></script>
+<script src="js/pages/evidence.js"></script>
+<script src="js/pages/misal.js"></script>
+<script src="js/pages/search.js"></script>
+<script src="js/pages/law.js"></script>
+<script src="js/pages/reminders.js"></script>
+<script src="js/pages/performance.js"></script>
+<script src="js/pages/backup-page.js"></script>
+<script src="js/pages/settings.js"></script>
+<script src="js/pages/admin.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
