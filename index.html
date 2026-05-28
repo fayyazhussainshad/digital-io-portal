@@ -497,12 +497,506 @@ function setFocusTimer(m){pauseFocusTimer();timerSeconds=m*60;updateTimerDisplay
 // ── CASES ──
 registerPage('cases',renderCases);
 async function renderCases(container,fs='',fq=''){const cases=await getCases(fs,fq);container.innerHTML=`<div class="page-header"><div><div class="page-title">📁 My Cases</div><div class="page-subtitle">Showing ${cases.length} case(s)</div></div><button class="btn btn-primary" onclick="openAddCaseModal()">+ New Case</button></div><div class="search-bar"><input class="search-input" id="case-search" placeholder="🔍 Search FIR, Name, CNIC, Section..." value="${fq}" oninput="renderCases(document.getElementById('page-content'),'',this.value)"><select class="filter-select" id="case-status-filter" onchange="renderCases(document.getElementById('page-content'),this.value,document.getElementById('case-search').value)"><option value="" ${!fs?'selected':''}>All Statuses</option><option value="under" ${fs==='under'?'selected':''}>زیر تفتیش</option><option value="complete" ${fs==='complete'?'selected':''}>مکمل چالان</option><option value="incomplete" ${fs==='incomplete'?'selected':''}>نامکمل چالان</option><option value="untrace" ${fs==='untrace'?'selected':''}>عدم پتہ</option><option value="cancel" ${fs==='cancel'?'selected':''}>اخراج</option></select></div><div class="card" style="padding:0;overflow:hidden;"><table class="data-table"><thead><tr><th>FIR No.</th><th>Accused</th><th>Section</th><th>Offence</th><th>Date</th><th>Status</th><th>Position</th><th>Actions</th></tr></thead><tbody>${cases.length===0?`<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:40px;">No cases found. <a onclick="openAddCaseModal()">Add your first case →</a></td></tr>`:cases.map(c=>`<tr><td><span class="fir-num" onclick="viewCase('${c.id}')">${c.fir_number}</span></td><td style="font-weight:500;">${c.accused_name||'—'}</td><td style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">${c.section_of_law||'—'}</td><td style="font-size:11px;color:var(--text-muted);">${c.offence_type||'—'}</td><td style="font-size:11px;color:var(--text-faint);">${c.fir_date||formatDate(c.created_at)}</td><td><span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span></td><td style="font-size:11px;color:${c.position==='court'?'var(--green)':'var(--amber)'};">${c.position==='court'?'⚖️ In Court':'⏳ Pending'}</td><td><div style="display:flex;gap:4px;"><button class="btn btn-secondary btn-sm" onclick="viewCase('${c.id}')">View</button><button class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')">Edit</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number}')">Del</button></div></td></tr>`).join('')}</tbody></table></div>`;}
-function caseFormHTML(c={}){return`<div class="form-row"><div class="form-group"><label class="form-label">FIR Number *</label><input class="form-input" id="cf-fir" value="${c.fir_number||''}" placeholder="e.g. 245/2025"></div><div class="form-group"><label class="form-label">Date</label><input class="form-input" id="cf-date" value="${c.fir_date||''}" placeholder="DD-MM-YYYY"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Accused Name *</label><input class="form-input" id="cf-accused" value="${c.accused_name||''}" placeholder="Full name"></div><div class="form-group"><label class="form-label">CNIC</label><input class="form-input" id="cf-cnic" value="${c.accused_cnic||''}" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Cell Number</label><input class="form-input" id="cf-cell" value="${c.accused_cell||''}" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)"></div><div class="form-group"><label class="form-label">Complainant</label><input class="form-input" id="cf-complainant" value="${c.complainant||''}" placeholder="Complainant name"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Section of Law *</label><input class="form-input" id="cf-section" value="${c.section_of_law||''}" placeholder="e.g. 302 PPC"></div><div class="form-group"><label class="form-label">Offence Type</label><input class="form-input" id="cf-offence" value="${c.offence_type||''}" placeholder="e.g. Murder"></div></div><div class="form-row"><div class="form-group"><label class="form-label">SHO</label><input class="form-input" id="cf-sho" value="${c.sho||''}" placeholder="SHO name"></div><div class="form-group"><label class="form-label">SDPO</label><input class="form-input" id="cf-sdpo" value="${c.sdpo||''}" placeholder="SDPO name"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Status *</label><select class="form-input" id="cf-status"><option value="under" ${(c.status||'under')==='under'?'selected':''}>زیر تفتیش</option><option value="complete" ${c.status==='complete'?'selected':''}>مکمل چالان</option><option value="incomplete" ${c.status==='incomplete'?'selected':''}>نامکمل چالان</option><option value="untrace" ${c.status==='untrace'?'selected':''}>عدم پتہ</option><option value="cancel" ${c.status==='cancel'?'selected':''}>اخراج</option></select></div><div class="form-group"><label class="form-label">Position</label><select class="form-input" id="cf-position"><option value="pending" ${(c.position||'pending')==='pending'?'selected':''}>⏳ Pending</option><option value="court" ${c.position==='court'?'selected':''}>⚖️ In Court</option></select></div></div><div class="form-group"><label class="form-label">Investigation Notes</label><textarea class="form-input" id="cf-notes" rows="3" placeholder="Notes...">${c.notes||''}</textarea></div>`;}
+// ── PENAL CODE DATABASE ──
+const PENAL_CODES = [
+  // PPC — Pakistan Penal Code
+  {s:'302',law:'PPC',title:'Qatl-i-Amd (Murder)',offence:'Murder',bail:'Non-Bailable',punishment:'Death or Life Imprisonment or 25 years + Diyat'},
+  {s:'302-B',law:'PPC',title:'Qatl-i-Amd of Spouse',offence:'Murder of Spouse',bail:'Non-Bailable',punishment:'Death'},
+  {s:'304',law:'PPC',title:'Qatl-i-Khata (Accidental Death)',offence:'Accidental Killing',bail:'Bailable',punishment:'Diyat'},
+  {s:'307',law:'PPC',title:'Attempt to Commit Qatl-i-Amd',offence:'Attempted Murder',bail:'Non-Bailable',punishment:'Up to 14 years + Arsh or Daman'},
+  {s:'311',law:'PPC',title:'Qatl Sababul-Amd',offence:'Death by Rash Act',bail:'Non-Bailable',punishment:'Diyat'},
+  {s:'320',law:'PPC',title:'Qatl-i-Khata by Rash Driving',offence:'Rash Driving Causing Death',bail:'Bailable',punishment:'5 years'},
+  {s:'322',law:'PPC',title:'Qatl bis-Sabab',offence:'Constructive Murder',bail:'Non-Bailable',punishment:'Diyat'},
+  {s:'324',law:'PPC',title:'Attempt to Qatl',offence:'Attempt to Murder',bail:'Non-Bailable',punishment:'Up to 10 years'},
+  {s:'326',law:'PPC',title:'Hurt by Firearm',offence:'Hurt by Firearm / Explosive',bail:'Non-Bailable',punishment:'Up to 14 years'},
+  {s:'337-A',law:'PPC',title:'Shajjah (Head Injury)',offence:'Head/Face Injury',bail:'Bailable',punishment:'Arsh + imprisonment'},
+  {s:'337-F',law:'PPC',title:'Jurh (Wound)',offence:'Wound/Injury',bail:'Bailable',punishment:'Arsh + Daman'},
+  {s:'337-L',law:'PPC',title:'Hurt Causing Grievous Harm',offence:'Grievous Hurt',bail:'Non-Bailable',punishment:'Up to 10 years'},
+  {s:'341',law:'PPC',title:'Wrongful Restraint',offence:'Wrongful Restraint',bail:'Bailable',punishment:'1 month or fine'},
+  {s:'342',law:'PPC',title:'Wrongful Confinement',offence:'Wrongful Confinement',bail:'Bailable',punishment:'1 year or fine'},
+  {s:'354',law:'PPC',title:'Assault / Criminal Force to Woman',offence:'Assault on Woman',bail:'Non-Bailable',punishment:'Up to 10 years'},
+  {s:'354-A',law:'PPC',title:'Assault on Woman with Intent to Strip',offence:'Stripping/Assault on Woman',bail:'Non-Bailable',punishment:'Up to 7 years'},
+  {s:'363',law:'PPC',title:'Kidnapping',offence:'Kidnapping',bail:'Non-Bailable',punishment:'Up to 7 years'},
+  {s:'364',law:'PPC',title:'Kidnapping for Murder',offence:'Kidnapping for Murder',bail:'Non-Bailable',punishment:'Life imprisonment'},
+  {s:'364-A',law:'PPC',title:'Kidnapping for Ransom',offence:'Kidnapping for Ransom',bail:'Non-Bailable',punishment:'Death or Life'},
+  {s:'365',law:'PPC',title:'Kidnapping to Confine',offence:'Kidnapping to Confine Person',bail:'Non-Bailable',punishment:'Up to 7 years'},
+  {s:'365-A',law:'PPC',title:'Kidnapping / Abduction for Extortion',offence:'Kidnapping for Extortion',bail:'Non-Bailable',punishment:'Death or Life'},
+  {s:'365-B',law:'PPC',title:'Kidnapping / Abduction of Woman',offence:'Kidnapping of Woman',bail:'Non-Bailable',punishment:'Life imprisonment'},
+  {s:'366',law:'PPC',title:'Kidnapping/Abduction of Woman to Compel Marriage',offence:'Abduction for Forced Marriage',bail:'Non-Bailable',punishment:'Up to 10 years'},
+  {s:'376',law:'PPC',title:'Rape',offence:'Rape',bail:'Non-Bailable',punishment:'Death or 10-25 years'},
+  {s:'377',law:'PPC',title:'Unnatural Offence',offence:'Unnatural Offence',bail:'Non-Bailable',punishment:'Life or up to 10 years'},
+  {s:'379',law:'PPC',title:'Theft',offence:'Theft',bail:'Bailable',punishment:'Up to 3 years or fine'},
+  {s:'380',law:'PPC',title:'Theft in Dwelling House',offence:'House Theft',bail:'Non-Bailable',punishment:'Up to 7 years'},
+  {s:'381',law:'PPC',title:'Theft by Servant',offence:'Theft by Servant',bail:'Non-Bailable',punishment:'Up to 7 years'},
+  {s:'382',law:'PPC',title:'Theft after Preparation to Cause Death',offence:'Theft with Violence',bail:'Non-Bailable',punishment:'Up to 10 years'},
+  {s:'392',law:'PPC',title:'Robbery',offence:'Robbery',bail:'Non-Bailable',punishment:'Up to 10 years, or 14 years if at night'},
+  {s:'393',law:'PPC',title:'Attempt to Commit Robbery',offence:'Attempted Robbery',bail:'Non-Bailable',punishment:'Up to 7 years'},
+  {s:'394',law:'PPC',title:'Voluntarily Causing Hurt in Robbery',offence:'Robbery with Hurt',bail:'Non-Bailable',punishment:'Life or Up to 10 years'},
+  {s:'395',law:'PPC',title:'Dacoity',offence:'Dacoity',bail:'Non-Bailable',punishment:'Life or Up to 10 years'},
+  {s:'396',law:'PPC',title:'Dacoity with Murder',offence:'Dacoity with Murder',bail:'Non-Bailable',punishment:'Death'},
+  {s:'397',law:'PPC',title:'Robbery with Firearm',offence:'Armed Robbery',bail:'Non-Bailable',punishment:'Up to 14 years'},
+  {s:'399',law:'PPC',title:'Making Preparation for Dacoity',offence:'Preparation for Dacoity',bail:'Non-Bailable',punishment:'Up to 10 years'},
+  {s:'400',law:'PPC',title:'Belonging to Gang of Dacoits',offence:'Gang Dacoity',bail:'Non-Bailable',punishment:'Life or Up to 10 years'},
+  {s:'401',law:'PPC',title:'Belonging to Gang of Thieves',offence:'Gang Theft',bail:'Non-Bailable',punishment:'Up to 7 years'},
+  {s:'406',law:'PPC',title:'Criminal Breach of Trust',offence:'Criminal Breach of Trust',bail:'Non-Bailable',punishment:'Up to 3 years or fine'},
+  {s:'409',law:'PPC',title:'Criminal Breach of Trust by Public Servant',offence:'Breach of Trust (Public Servant)',bail:'Non-Bailable',punishment:'Life or Up to 10 years'},
+  {s:'411',law:'PPC',title:'Receiving Stolen Property',offence:'Receiving Stolen Property',bail:'Bailable',punishment:'Up to 3 years or fine'},
+  {s:'420',law:'PPC',title:'Cheating and Dishonestly Inducing',offence:'Cheating / Fraud',bail:'Non-Bailable',punishment:'Up to 7 years'},
+  {s:'427',law:'PPC',title:'Mischief Causing Damage',offence:'Mischief / Property Damage',bail:'Bailable',punishment:'Up to 2 years or fine'},
+  {s:'435',law:'PPC',title:'Mischief by Fire or Explosive',offence:'Arson / Explosive Mischief',bail:'Non-Bailable',punishment:'Up to 7 years'},
+  {s:'436',law:'PPC',title:'Mischief by Fire to Destroy Building',offence:'Arson of Building',bail:'Non-Bailable',punishment:'Life or Up to 10 years'},
+  {s:'448',law:'PPC',title:'Punishment for House Trespass',offence:'House Trespass',bail:'Bailable',punishment:'Up to 1 year or fine'},
+  {s:'449',law:'PPC',title:'House Trespass to Commit Capital Offence',offence:'Trespass for Capital Offence',bail:'Non-Bailable',punishment:'Life'},
+  {s:'452',law:'PPC',title:'House Trespass after Preparation for Hurt',offence:'Trespass with Intent to Hurt',bail:'Non-Bailable',punishment:'Up to 7 years'},
+  {s:'454',law:'PPC',title:'Lurking House Trespass at Night',offence:'Night House Trespass',bail:'Non-Bailable',punishment:'Up to 3 years'},
+  {s:'457',law:'PPC',title:'Lurking House Trespass to Commit Offence',offence:'Trespass to Commit Offence',bail:'Non-Bailable',punishment:'Up to 5 years'},
+  {s:'458',law:'PPC',title:'Lurking Trespass after Preparation for Hurt',offence:'Trespass with Preparation to Hurt',bail:'Non-Bailable',punishment:'Up to 14 years'},
+  {s:'460',law:'PPC',title:'All in House Liable When Death Occurs',offence:'Group Liability for Death',bail:'Non-Bailable',punishment:'Life or Death'},
+  {s:'489-A',law:'PPC',title:'Counterfeiting Currency',offence:'Currency Counterfeiting',bail:'Non-Bailable',punishment:'Life or Up to 10 years'},
+  {s:'489-F',law:'PPC',title:'Dishonestly Issuing a Cheque',offence:'Cheque Dishonour',bail:'Bailable',punishment:'Up to 3 years or fine'},
+  {s:'499',law:'PPC',title:'Defamation',offence:'Defamation',bail:'Bailable',punishment:'Up to 2 years or fine'},
+  {s:'506',law:'PPC',title:'Criminal Intimidation',offence:'Criminal Intimidation / Threats',bail:'Bailable',punishment:'Up to 2 years, or 7 years if life threat'},
+  {s:'34',law:'PPC',title:'Acts Done by Several Persons in Furtherance of Common Intention',offence:'Common Intention',bail:'Depends on main offence',punishment:'Same as main offence'},
+  {s:'109',law:'PPC',title:'Abetment',offence:'Abetment',bail:'Depends on offence abetted',punishment:'Same as abetted offence'},
+  {s:'120-B',law:'PPC',title:'Criminal Conspiracy',offence:'Criminal Conspiracy',bail:'Non-Bailable',punishment:'Same as conspiracy offence'},
+  {s:'147',law:'PPC',title:'Rioting',offence:'Rioting',bail:'Bailable',punishment:'Up to 2 years or fine'},
+  {s:'148',law:'PPC',title:'Rioting Armed with Deadly Weapon',offence:'Armed Rioting',bail:'Non-Bailable',punishment:'Up to 3 years or fine'},
+  {s:'149',law:'PPC',title:'Member of Unlawful Assembly',offence:'Unlawful Assembly',bail:'Bailable',punishment:'Same as rioting'},
+  // CrPC
+  {s:'54',law:'CrPC',title:'Arrest Without Warrant',offence:'Preventive Arrest',bail:'Bailable',punishment:'Procedure'},
+  {s:'107',law:'CrPC',title:'Security for Keeping Peace',offence:'Breach of Peace',bail:'Bailable',punishment:'Bond/Security'},
+  {s:'151',law:'CrPC',title:'Arrest to Prevent Cognizable Offence',offence:'Preventive Arrest',bail:'Bailable',punishment:'Procedure'},
+  // Arms Ordinance
+  {s:'13',law:'Arms Ord.',title:'Possession of Prohibited Bore',offence:'Illegal Weapon (Prohibited Bore)',bail:'Non-Bailable',punishment:'Up to 7 years'},
+  {s:'13-A',law:'Arms Ord.',title:'Use of Prohibited Bore',offence:'Use of Illegal Weapon',bail:'Non-Bailable',punishment:'Death or Life'},
+  {s:'15',law:'Arms Ord.',title:'Possession Without License',offence:'Unlicensed Weapon Possession',bail:'Bailable',punishment:'Up to 3 years or fine'},
+  // CNSA
+  {s:'9',law:'CNSA',title:'Trafficking Narcotics',offence:'Drug Trafficking',bail:'Non-Bailable',punishment:'Death or Life'},
+  {s:'9-C',law:'CNSA',title:'Possession of Narcotics',offence:'Drug Possession',bail:'Non-Bailable',punishment:'Up to 2 years or fine (small qty) to Life (large qty)'},
+  {s:'10',law:'CNSA',title:'Financing Narcotics',offence:'Drug Financing',bail:'Non-Bailable',punishment:'Death or Life'},
+  // ATA
+  {s:'6',law:'ATA',title:'Terrorism',offence:'Terrorist Act',bail:'Non-Bailable',punishment:'Death or Life'},
+  {s:'7',law:'ATA',title:'Punishment for Terrorism',offence:'Acts of Terrorism',bail:'Non-Bailable',punishment:'Death'},
+  {s:'11-N',law:'ATA',title:'Membership of Terrorist Organization',offence:'Terrorist Organization Membership',bail:'Non-Bailable',punishment:'Up to 10 years'},
+  // Electricity
+  {s:'39',law:'Electricity Act',title:'Theft of Electricity',offence:'Electricity Theft',bail:'Bailable',punishment:'Up to 3 years or fine'},
+  // Prohibition
+  {s:'3',law:'Prohibition Act',title:'Manufacture of Liquor',offence:'Liquor Manufacturing',bail:'Non-Bailable',punishment:'Up to 5 years'},
+  {s:'4',law:'Prohibition Act',title:'Possession of Liquor',offence:'Liquor Possession',bail:'Bailable',punishment:'Up to 1 year or fine'},
+];
+
+let selectedSections = [];
+
+// ── MISAL DOCUMENT CHECKLIST ──
+const MISAL_CHECKLIST = {
+  'FIR Documents': ['FIR','FIR Mattan','CRO Form','CDR Form'],
+  'Statements': ['Statement 161 CrPC','Statement 164 CrPC','Talbi 160 CrPC','Zimni Androoni','Zimni Berooni'],
+  'Court Documents': ['Remand Form','Cancellation Report','Untrace Report'],
+  'Identification': ['Shanakht Certificate','Missing Identity Form','Naqsha Moka','Naqsha Baramadgi'],
+  'Medical / Forensic': ['Medical Report','Postmortem Report','DNA/PFSA Report','Potency Test'],
+  'Judicial Forms': ['High Court Checklist','Forms 25-35A/B/C','Index MISAL','Dockets','Kalandras','Memorandum'],
+  'Warrants & Notices': ['Warrant','Ishtihar Application','Abscondence Form','Mafroori Form'],
+  'Financial': ['Investigation Bills','Recovery Memo','Saza Slip','RFA Form'],
+  'Challan Lists': ['Fehrist Warsan (Death)','Fehrist Gawahan (Challan)','Fehrist Gawahan (Cancellation)'],
+  'Intimation': ['Intimation Form','Previous Records'],
+};
+const ALL_MISAL_DOCS = Object.values(MISAL_CHECKLIST).flat();
+let selectedDocuments = [];
+
+function autoFormatDate(inp) {
+  let v = inp.value.replace(/\D/g,'');
+  if (v.length > 4) v = v.slice(0,2) + '-' + v.slice(2,4) + '-' + v.slice(4,8);
+  else if (v.length > 2) v = v.slice(0,2) + '-' + v.slice(2);
+  inp.value = v;
+}
+
+function caseFormHTML(c={}) {
+  selectedSections = c.section_of_law ? c.section_of_law.split(' + ').filter(Boolean) : [];
+  selectedDocuments = c.documents_checklist ? (typeof c.documents_checklist === 'string' ? JSON.parse(c.documents_checklist) : c.documents_checklist) : [];
+
+  return `
+  <div style="max-height:70vh;overflow-y:auto;padding-right:4px;">
+
+    <!-- ROW 1: FIR + Date -->
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">FIR Number *</label>
+        <input class="form-input" id="cf-fir" value="${c.fir_number||''}" placeholder="e.g. 245/2025">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date of FIR *</label>
+        <input class="form-input" id="cf-date" value="${c.fir_date||''}" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" maxlength="10">
+      </div>
+    </div>
+
+    <!-- ROW 2: Occurrence Date + Status -->
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Occurrence Date</label>
+        <input class="form-input" id="cf-occurrence-date" value="${c.occurrence_date||''}" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" maxlength="10">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status *</label>
+        <select class="form-input" id="cf-status">
+          <option value="under" ${(c.status||'under')==='under'?'selected':''}>زیر تفتیش (Under Investigation)</option>
+          <option value="complete" ${c.status==='complete'?'selected':''}>مکمل چالان (Complete)</option>
+          <option value="incomplete" ${c.status==='incomplete'?'selected':''}>نامکمل چالان (Incomplete)</option>
+          <option value="untrace" ${c.status==='untrace'?'selected':''}>عدم پتہ (Untraced)</option>
+          <option value="cancel" ${c.status==='cancel'?'selected':''}>اخراج (Cancelled)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- SECTIONS OF LAW -->
+    <div class="form-group">
+      <label class="form-label">Sections of Law * <span style="color:var(--text-faint);font-weight:400;">(multiple allowed)</span></label>
+      <div style="position:relative;">
+        <input class="form-input" id="cf-section-search" placeholder="🔍 Type section no. or keyword (e.g. 302 or murder)..." oninput="searchPenalCodes(this.value)" autocomplete="off">
+        <div id="section-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg-card);border:1px solid var(--accent);border-radius:0 0 var(--radius-sm) var(--radius-sm);max-height:180px;overflow-y:auto;z-index:200;box-shadow:var(--shadow);"></div>
+      </div>
+      <div id="selected-sections" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+        ${selectedSections.map(s => sectionTag(s)).join('')}
+      </div>
+      <input type="hidden" id="cf-section" value="${c.section_of_law||''}">
+    </div>
+
+    <!-- OFFENCE -->
+    <div class="form-group">
+      <label class="form-label">Offence <span style="color:var(--text-faint);font-weight:400;">(auto-filled or type manually)</span></label>
+      <input class="form-input" id="cf-offence" value="${c.offence_type||''}" placeholder="Auto-filled when section selected">
+    </div>
+
+    <!-- COMPLAINANT SECTION -->
+    <div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:12px;">
+      <div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">👤 Complainant Details</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Complainant Name *</label>
+          <input class="form-input" id="cf-complainant" value="${c.complainant||''}" placeholder="Full name of complainant">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Complainant CNIC</label>
+          <input class="form-input" id="cf-complainant-cnic" value="${c.complainant_cnic||''}" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Complainant Cell No.</label>
+          <input class="form-input" id="cf-complainant-cell" value="${c.complainant_cell||''}" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Complainant Profession</label>
+          <input class="form-input" id="cf-complainant-profession" value="${c.complainant_profession||''}" placeholder="e.g. Farmer, Teacher, Trader">
+        </div>
+      </div>
+    </div>
+
+    <!-- FIR DETAILS -->
+    <div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:12px;">
+      <div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">📋 FIR Details</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">FIR Writer</label>
+          <input class="form-input" id="cf-fir-writer" value="${c.fir_writer||''}" placeholder="Name of FIR writer">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Complaint Sender</label>
+          <input class="form-input" id="cf-complaint-sender" value="${c.complaint_sender||''}" placeholder="Who sent the complaint">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">SHO</label>
+          <input class="form-input" id="cf-sho" value="${c.sho||''}" placeholder="SHO name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">SDPO</label>
+          <input class="form-input" id="cf-sdpo" value="${c.sdpo||''}" placeholder="SDPO name">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Position</label>
+          <select class="form-input" id="cf-position">
+            <option value="pending" ${(c.position||'pending')==='pending'?'selected':''}>⏳ Pending</option>
+            <option value="court" ${c.position==='court'?'selected':''}>⚖️ In Court</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Investigation Notes</label>
+          <input class="form-input" id="cf-notes" value="${c.notes||''}" placeholder="Brief investigation notes">
+        </div>
+      </div>
+    </div>
+
+    <!-- DOCUMENT CHECKLIST -->
+    <div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);">
+      <div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+        <span>📎 MISAL Documents Required</span>
+        <span style="color:var(--text-faint);font-size:9px;font-weight:400;">${selectedDocuments.length} selected</span>
+      </div>
+
+      <!-- Search documents -->
+      <input class="form-input" id="doc-search" placeholder="🔍 Search documents..." oninput="filterDocChecklist(this.value)" style="margin-bottom:10px;">
+
+      <!-- Add custom document -->
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <input class="form-input" id="custom-doc-input" placeholder="Add custom document..." style="flex:1;">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="addCustomDoc()">+ Add</button>
+      </div>
+
+      <!-- Document list -->
+      <div id="doc-checklist" style="max-height:220px;overflow-y:auto;">
+        ${renderDocChecklist(ALL_MISAL_DOCS, selectedDocuments)}
+      </div>
+    </div>
+
+  </div>`;
+}
+
+function renderDocChecklist(docs, selected) {
+  let html = '';
+  for (const [cat, items] of Object.entries(MISAL_CHECKLIST)) {
+    const filtered = docs.filter(d => items.includes(d));
+    if (!filtered.length) continue;
+    html += `<div style="font-size:9px;color:var(--text-faint);letter-spacing:2px;text-transform:uppercase;padding:6px 0 4px;">${cat}</div>`;
+    filtered.forEach(doc => {
+      const checked = selected.includes(doc);
+      html += `<div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:4px;cursor:pointer;transition:background 0.1s;" onmouseenter="this.style.background='var(--hover-bg)'" onmouseleave="this.style.background=''" onclick="toggleDoc('${doc.replace(/'/g,"\\'")}',this)">
+        <input type="checkbox" ${checked?'checked':''} style="accent-color:var(--accent);width:14px;height:14px;pointer-events:none;">
+        <span style="font-size:12px;color:${checked?'var(--accent)':'var(--text-secondary)'};">${doc}</span>
+      </div>`;
+    });
+  }
+  // Custom documents
+  const customDocs = selected.filter(d => !ALL_MISAL_DOCS.includes(d));
+  if (customDocs.length) {
+    html += `<div style="font-size:9px;color:var(--text-faint);letter-spacing:2px;text-transform:uppercase;padding:6px 0 4px;">Custom Documents</div>`;
+    customDocs.forEach(doc => {
+      html += `<div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:4px;cursor:pointer;" onclick="toggleDoc('${doc.replace(/'/g,"\\'")}',this)">
+        <input type="checkbox" checked style="accent-color:var(--accent);width:14px;height:14px;pointer-events:none;">
+        <span style="font-size:12px;color:var(--accent);">${doc}</span>
+        <span onclick="event.stopPropagation();removeCustomDoc('${doc.replace(/'/g,"\\'")}');" style="margin-left:auto;color:var(--red);font-size:12px;cursor:pointer;">×</span>
+      </div>`;
+    });
+  }
+  return html;
+}
+
+function toggleDoc(doc, row) {
+  const cb = row.querySelector('input[type=checkbox]');
+  const span = row.querySelector('span');
+  if (selectedDocuments.includes(doc)) {
+    selectedDocuments = selectedDocuments.filter(d => d !== doc);
+    if (cb) cb.checked = false;
+    if (span) span.style.color = 'var(--text-secondary)';
+  } else {
+    selectedDocuments.push(doc);
+    if (cb) cb.checked = true;
+    if (span) span.style.color = 'var(--accent)';
+  }
+  // Update count
+  const countEl = document.querySelector('#doc-checklist').previousElementSibling?.previousElementSibling?.previousElementSibling?.querySelector('span:last-child');
+  const parent = document.getElementById('doc-checklist')?.closest('div[style*="border-radius"]');
+  if (parent) { const cnt = parent.querySelector('span[style*="text-faint"]'); if (cnt) cnt.textContent = selectedDocuments.length + ' selected'; }
+}
+
+function filterDocChecklist(query) {
+  const docs = query ? ALL_MISAL_DOCS.filter(d => d.toLowerCase().includes(query.toLowerCase())) : ALL_MISAL_DOCS;
+  const el = document.getElementById('doc-checklist');
+  if (el) el.innerHTML = renderDocChecklist(docs, selectedDocuments);
+}
+
+function addCustomDoc() {
+  const inp = document.getElementById('custom-doc-input');
+  const val = inp?.value.trim();
+  if (!val) { showToast('⚠️ Enter document name.','error'); return; }
+  if (selectedDocuments.includes(val)) { showToast('⚠️ Already added.','error'); return; }
+  selectedDocuments.push(val);
+  inp.value = '';
+  const el = document.getElementById('doc-checklist');
+  if (el) el.innerHTML = renderDocChecklist(ALL_MISAL_DOCS, selectedDocuments);
+  showToast('✅ Added: ' + val, 'success', 1500);
+}
+
+function removeCustomDoc(doc) {
+  selectedDocuments = selectedDocuments.filter(d => d !== doc);
+  const el = document.getElementById('doc-checklist');
+  if (el) el.innerHTML = renderDocChecklist(ALL_MISAL_DOCS, selectedDocuments);
+}
+
+function sectionTag(sectionStr) {
+  return `<div style="display:inline-flex;align-items:center;gap:6px;background:var(--nav-active);border:1px solid var(--accent);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--accent);">
+    <b>${sectionStr}</b>
+    <span onclick="removeSection('${sectionStr}')" style="cursor:pointer;color:var(--text-muted);font-size:14px;line-height:1;" title="Remove">×</span>
+  </div>`;
+}
+
+function searchPenalCodes(query) {
+  const dd = document.getElementById('section-dropdown');
+  if (!query || query.length < 1) { dd.style.display = 'none'; return; }
+  const q = query.toLowerCase().trim();
+  const results = PENAL_CODES.filter(p =>
+    p.s.toLowerCase().includes(q) ||
+    p.title.toLowerCase().includes(q) ||
+    p.offence.toLowerCase().includes(q) ||
+    p.law.toLowerCase().includes(q)
+  ).slice(0, 10);
+
+  if (!results.length) { dd.style.display = 'none'; return; }
+
+  dd.style.display = 'block';
+  dd.innerHTML = results.map(p => `
+    <div onclick="addSection('${p.s} ${p.law}','${p.offence}','${p.bail}')" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border-light);transition:background 0.1s;" onmouseenter="this.style.background='var(--hover-bg)'" onmouseleave="this.style.background=''">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <span style="font-size:13px;font-weight:700;color:var(--accent);">§ ${p.s} ${p.law}</span>
+          <span style="font-size:11px;color:var(--text-secondary);margin-left:8px;">${p.title}</span>
+        </div>
+        <span style="font-size:9px;padding:2px 7px;border-radius:10px;background:${p.bail==='Non-Bailable'?'var(--red-bg)':'var(--green-bg)'};color:${p.bail==='Non-Bailable'?'var(--red)':'var(--green)'};">${p.bail}</span>
+      </div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Offence: ${p.offence} · ${p.punishment}</div>
+    </div>`).join('');
+}
+
+function addSection(sectionStr, offence, bail) {
+  if (selectedSections.includes(sectionStr)) {
+    showToast('⚠️ Section already added.', 'error'); return;
+  }
+  selectedSections.push(sectionStr);
+
+  // Update hidden input
+  document.getElementById('cf-section').value = selectedSections.join(' + ');
+
+  // Update offence field
+  const offenceInp = document.getElementById('cf-offence');
+  if (offenceInp) {
+    const current = offenceInp.value;
+    offenceInp.value = current ? current + ' + ' + offence : offence;
+  }
+
+  // Render tags
+  const container = document.getElementById('selected-sections');
+  if (container) container.innerHTML = selectedSections.map(s => sectionTag(s)).join('');
+
+  // Clear search
+  const searchInp = document.getElementById('cf-section-search');
+  if (searchInp) searchInp.value = '';
+  document.getElementById('section-dropdown').style.display = 'none';
+
+  showToast(`✅ Added: ${sectionStr}`, 'success', 1500);
+}
+
+function removeSection(sectionStr) {
+  selectedSections = selectedSections.filter(s => s !== sectionStr);
+  document.getElementById('cf-section').value = selectedSections.join(' + ');
+  const container = document.getElementById('selected-sections');
+  if (container) container.innerHTML = selectedSections.map(s => sectionTag(s)).join('');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+  const dd = document.getElementById('section-dropdown');
+  if (dd && !dd.contains(e.target) && e.target.id !== 'cf-section-search') {
+    dd.style.display = 'none';
+  }
+});
 function openAddCaseModal(){openModal('➕ Add New Case',caseFormHTML(),`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveNewCase()">💾 Save Case</button>`);}
 async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;openModal(`✏️ Edit — FIR ${c.fir_number}`,caseFormHTML(c),`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveEditCase('${id}')">💾 Update</button>`);}
-async function saveNewCase(){const fir=document.getElementById('cf-fir').value.trim(),accused=document.getElementById('cf-accused').value.trim(),section=document.getElementById('cf-section').value.trim();if(!fir||!accused||!section){showToast('⚠️ FIR, Accused, and Section are required.','error');return;}try{await addCase({fir_number:fir,fir_date:document.getElementById('cf-date').value.trim(),accused_name:accused,accused_cnic:document.getElementById('cf-cnic').value.trim(),accused_cell:document.getElementById('cf-cell').value.trim(),complainant:document.getElementById('cf-complainant').value.trim(),section_of_law:section,offence_type:document.getElementById('cf-offence').value.trim(),sho:document.getElementById('cf-sho').value.trim(),sdpo:document.getElementById('cf-sdpo').value.trim(),status:document.getElementById('cf-status').value,position:document.getElementById('cf-position').value,notes:document.getElementById('cf-notes').value.trim()});closeModal();showToast(`✅ Case added: FIR ${fir}`,'success');await updateBadges();renderCases(document.getElementById('page-content'));}catch(err){showToast('❌ Error: '+err.message,'error');}}
-async function saveEditCase(id){try{await updateCase(id,{fir_number:document.getElementById('cf-fir').value.trim(),fir_date:document.getElementById('cf-date').value.trim(),accused_name:document.getElementById('cf-accused').value.trim(),accused_cnic:document.getElementById('cf-cnic').value.trim(),accused_cell:document.getElementById('cf-cell').value.trim(),complainant:document.getElementById('cf-complainant').value.trim(),section_of_law:document.getElementById('cf-section').value.trim(),offence_type:document.getElementById('cf-offence').value.trim(),sho:document.getElementById('cf-sho').value.trim(),sdpo:document.getElementById('cf-sdpo').value.trim(),status:document.getElementById('cf-status').value,position:document.getElementById('cf-position').value,notes:document.getElementById('cf-notes').value.trim()});closeModal();showToast('✅ Case updated!','success');renderCases(document.getElementById('page-content'));}catch(err){showToast('❌ Error: '+err.message,'error');}}
-async function viewCase(id){const c=await getCase(id);if(!c)return;const ev=await getEvidence(c.fir_number);openModal(`📋 FIR ${c.fir_number}`,`<div style="display:grid;grid-template-columns:1fr 1fr;">${[['FIR',c.fir_number],['Date',c.fir_date||'—'],['Accused',c.accused_name||'—'],['CNIC',formatCNIC(c.accused_cnic)],['Cell',formatCell(c.accused_cell)],['Complainant',c.complainant||'—'],['Section',c.section_of_law||'—'],['Offence',c.offence_type||'—'],['SHO',c.sho||'—'],['Status',STATUS_LABELS[c.status]||c.status],['Position',c.position==='court'?'⚖️ In Court':'⏳ Pending']].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}</div>${c.notes?`<div style="margin-top:12px;padding:10px;background:var(--bg-tertiary);border-radius:8px;font-size:12px;color:var(--text-secondary);"><b style="color:var(--accent);">Notes:</b><br>${c.notes}</div>`:''}<div style="margin-top:14px;"><div style="font-size:10px;color:var(--text-faint);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">📎 Evidence (${ev.length})</div>${ev.length===0?'<div style="font-size:11px;color:var(--text-faint);">No evidence attached.</div>':ev.map(e=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border-light);"><span>${e.type==='Photo'?'📷':e.type==='Video'?'🎥':e.type==='Audio'?'🎙️':'📄'}</span><div style="flex:1;"><div style="font-size:12px;font-weight:600;">${e.name}</div><div style="font-size:10px;color:var(--text-muted);">${e.type} · ${e.evidence_date||'—'}</div></div></div>`).join('')}</div>`,`<button class="btn btn-secondary" onclick="closeModal()">Close</button><button class="btn btn-primary" onclick="closeModal();openEditCaseModal('${id}')">✏️ Edit</button>`);}
+async function saveNewCase(){
+  const fir=document.getElementById('cf-fir').value.trim();
+  const section=document.getElementById('cf-section').value.trim();
+  const complainant=document.getElementById('cf-complainant').value.trim();
+  if(!fir||!section||!complainant){showToast('⚠️ FIR Number, Section and Complainant are required.','error');return;}
+  try{
+    await addCase({
+      fir_number:fir,
+      fir_date:document.getElementById('cf-date').value.trim(),
+      occurrence_date:document.getElementById('cf-occurrence-date').value.trim(),
+      complainant:complainant,
+      complainant_cnic:document.getElementById('cf-complainant-cnic').value.trim(),
+      complainant_cell:document.getElementById('cf-complainant-cell').value.trim(),
+      complainant_profession:document.getElementById('cf-complainant-profession').value.trim(),
+      fir_writer:document.getElementById('cf-fir-writer').value.trim(),
+      complaint_sender:document.getElementById('cf-complaint-sender').value.trim(),
+      section_of_law:section,
+      offence_type:document.getElementById('cf-offence').value.trim(),
+      sho:document.getElementById('cf-sho').value.trim(),
+      sdpo:document.getElementById('cf-sdpo').value.trim(),
+      status:document.getElementById('cf-status').value,
+      position:document.getElementById('cf-position').value,
+      notes:document.getElementById('cf-notes').value.trim(),
+      documents_checklist:JSON.stringify(selectedDocuments),
+    });
+    closeModal();showToast(`✅ Case added: FIR ${fir}`,'success');await updateBadges();renderCases(document.getElementById('page-content'));
+  }catch(err){showToast('❌ Error: '+err.message,'error');}
+}
+async function saveEditCase(id){
+  try{
+    await updateCase(id,{
+      fir_number:document.getElementById('cf-fir').value.trim(),
+      fir_date:document.getElementById('cf-date').value.trim(),
+      occurrence_date:document.getElementById('cf-occurrence-date').value.trim(),
+      complainant:document.getElementById('cf-complainant').value.trim(),
+      complainant_cnic:document.getElementById('cf-complainant-cnic').value.trim(),
+      complainant_cell:document.getElementById('cf-complainant-cell').value.trim(),
+      complainant_profession:document.getElementById('cf-complainant-profession').value.trim(),
+      fir_writer:document.getElementById('cf-fir-writer').value.trim(),
+      complaint_sender:document.getElementById('cf-complaint-sender').value.trim(),
+      section_of_law:document.getElementById('cf-section').value.trim(),
+      offence_type:document.getElementById('cf-offence').value.trim(),
+      sho:document.getElementById('cf-sho').value.trim(),
+      sdpo:document.getElementById('cf-sdpo').value.trim(),
+      status:document.getElementById('cf-status').value,
+      position:document.getElementById('cf-position').value,
+      notes:document.getElementById('cf-notes').value.trim(),
+      documents_checklist:JSON.stringify(selectedDocuments),
+    });
+    closeModal();showToast('✅ Case updated!','success');renderCases(document.getElementById('page-content'));
+  }catch(err){showToast('❌ Error: '+err.message,'error');}
+}
+async function viewCase(id){
+  const c=await getCase(id);if(!c)return;
+  const ev=await getEvidence(c.fir_number);
+  const docs = c.documents_checklist ? (typeof c.documents_checklist==='string'?JSON.parse(c.documents_checklist):c.documents_checklist) : [];
+  openModal(`📋 FIR ${c.fir_number}`,
+    `<div style="max-height:65vh;overflow-y:auto;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;">
+        ${[
+          ['FIR No.',c.fir_number],
+          ['Date of FIR',c.fir_date||'—'],
+          ['Occurrence Date',c.occurrence_date||'—'],
+          ['Section of Law',c.section_of_law||'—'],
+          ['Offence',c.offence_type||'—'],
+          ['Status',STATUS_LABELS[c.status]||c.status],
+          ['Position',c.position==='court'?'⚖️ In Court':'⏳ Pending'],
+          ['Complainant',c.complainant||'—'],
+          ['Complainant CNIC',c.complainant_cnic||'—'],
+          ['Complainant Cell',c.complainant_cell||'—'],
+          ['Complainant Profession',c.complainant_profession||'—'],
+          ['FIR Writer',c.fir_writer||'—'],
+          ['Complaint Sender',c.complaint_sender||'—'],
+          ['SHO',c.sho||'—'],
+          ['SDPO',c.sdpo||'—'],
+        ].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
+      </div>
+      ${c.notes?`<div style="margin-top:10px;padding:10px;background:var(--bg-tertiary);border-radius:8px;font-size:12px;color:var(--text-secondary);"><b style="color:var(--accent);">Notes:</b> ${c.notes}</div>`:''}
+      ${docs.length>0?`
+        <div style="margin-top:12px;">
+          <div style="font-size:10px;color:var(--text-faint);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">📎 MISAL Documents (${docs.length})</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            ${docs.map(d=>`<span style="background:var(--green-bg);color:var(--green);border:1px solid rgba(34,197,94,0.2);border-radius:20px;padding:3px 10px;font-size:10px;">✅ ${d}</span>`).join('')}
+          </div>
+        </div>`:''}
+      <div style="margin-top:12px;">
+        <div style="font-size:10px;color:var(--text-faint);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">📸 Evidence (${ev.length})</div>
+        ${ev.length===0?'<div style="font-size:11px;color:var(--text-faint);">No evidence attached.</div>':ev.map(e=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border-light);"><span>${e.type==='Photo'?'📷':e.type==='Video'?'🎥':e.type==='Audio'?'🎙️':'📄'}</span><div style="flex:1;"><div style="font-size:12px;font-weight:600;">${e.name}</div><div style="font-size:10px;color:var(--text-muted);">${e.type} · ${e.evidence_date||'—'}</div></div></div>`).join('')}
+      </div>
+    </div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Close</button>
+     <button class="btn btn-primary" onclick="closeModal();openEditCaseModal('${id}')">✏️ Edit</button>`
+  );
+}
 function confirmDeleteCase(id,fir){openModal('🗑️ Confirm Delete',`<p style="color:var(--text-secondary);font-size:13px;">Delete case <b style="color:var(--accent);">FIR ${fir}</b>?<br><br><span style="color:var(--red);font-size:11px;">⚠️ This cannot be undone.</span></p>`,`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="closeModal();doDeleteCase('${id}')">🗑️ Delete</button>`);}
 async function doDeleteCase(id){try{await deleteCase(id);showToast('🗑️ Case deleted.','info');await updateBadges();renderCases(document.getElementById('page-content'));}catch(err){showToast('❌ Error: '+err.message,'error');}}
 
