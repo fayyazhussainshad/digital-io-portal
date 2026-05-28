@@ -1250,33 +1250,10 @@ async function doAddOfficerManually() {
   if (btn) { btn.textContent = '⏳ Creating...'; btn.disabled = true; }
 
   try {
-    // Step 1 — Sign up the officer using Supabase Auth
-    // We sign up as a new user (not as admin) to avoid MFA issues
-    const { data: authData, error: authError } = await sb.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: name, badge_number: badge, station, district },
-        emailRedirectTo: 'https://fayyazhussainshad.github.io/digital-io-portal/'
-      }
-    });
-
-    if (authError) {
-      showToast('❌ ' + authError.message, 'error');
-      if (btn) { btn.textContent = '➕ Create Officer Account'; btn.disabled = false; }
-      return;
-    }
-
-    const userId = authData.user?.id;
-    if (!userId) {
-      showToast('❌ Could not create account. Email may already be registered.', 'error');
-      if (btn) { btn.textContent = '➕ Create Officer Account'; btn.disabled = false; }
-      return;
-    }
-
-    // Step 2 — Insert officer profile directly via SQL function to bypass RLS
-    const { error: profileError } = await sb.rpc('admin_create_officer', {
-      p_user_id: userId,
+    // Use server-side SQL function that bypasses MFA completely
+    const { data, error } = await sb.rpc('admin_create_officer_full', {
+      p_email: email,
+      p_password: password,
       p_full_name: name,
       p_badge_number: badge,
       p_designation: desig || 'IO',
@@ -1285,30 +1262,14 @@ async function doAddOfficerManually() {
       p_phone: phone || null
     });
 
-    if (profileError) {
-      // Fallback: try direct insert
-      const { error: insertError } = await sb.from('officers').insert({
-        user_id: userId,
-        full_name: name,
-        badge_number: badge,
-        designation: desig || 'IO',
-        station,
-        district,
-        phone: phone || null,
-      });
-
-      if (insertError) {
-        showToast('⚠️ Auth account created. Run the SQL fix in Supabase to complete setup.', 'error', 6000);
-        if (btn) { btn.textContent = '➕ Create Officer Account'; btn.disabled = false; }
-        return;
-      }
+    if (error) {
+      showToast('❌ Error: ' + error.message, 'error');
+      if (btn) { btn.textContent = '➕ Create Officer Account'; btn.disabled = false; }
+      return;
     }
 
-    // Step 3 — Assign officer role
-    await sb.from('user_roles').insert({ user_id: userId, role: 'officer' });
-
     closeModal();
-    showToast(`✅ Officer ${name} created! Verification email sent to ${email}.`, 'success', 5000);
+    showToast(`✅ Officer ${name} created successfully! They can now log in with their email and password.`, 'success', 5000);
     showPage('officers', null);
 
   } catch (err) {
