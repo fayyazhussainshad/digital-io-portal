@@ -1078,14 +1078,959 @@ input, textarea, select { font-family: var(--font-main); }
 <!-- SCRIPTS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
-<script src="auth.js"></script>
-<script src="db.js"></script>
-<script src="backup.js"></script>
-<script src="ui.js"></script>
-<script src="dashboard.js"></script>
-<script src="cases.js"></script>
-<script src="evidence.js"></script>
-<script src="all-pages.js"></script>
-<script src="app.js"></script>
+<script>
+// ═══════════════════════════════════════════════════
+//  DIGITAL IO — COMPLETE EMBEDDED JAVASCRIPT
+//  All modules: Auth, DB, UI, Backup, Pages, App
+// ═══════════════════════════════════════════════════
+
+// ── GLOBAL STATE ──
+let currentUser = null;
+let currentOfficer = null;
+let currentRole = 'officer';
+let sessionTimer = null;
+let pinBuffer = '';
+let loginAttempts = parseInt(localStorage.getItem('dio_login_attempts') || '0');
+
+// ════════════════════════════════════════════
+//  AUTH SYSTEM
+// ════════════════════════════════════════════
+function setLoginMethod(method, el) {
+  document.querySelectorAll('.login-method').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.getElementById('panel-password').style.display = method === 'password' ? 'block' : 'none';
+  document.getElementById('panel-pin').style.display = method === 'pin' ? 'block' : 'none';
+  document.getElementById('panel-biometric').style.display = method === 'biometric' ? 'block' : 'none';
+  pinBuffer = ''; updatePinDots();
+}
+
+async function doLogin() {
+  const lockoutUntil = localStorage.getItem('dio_lockout_until');
+  if (lockoutUntil && Date.now() < parseInt(lockoutUntil)) {
+    const mins = Math.ceil((parseInt(lockoutUntil) - Date.now()) / 60000);
+    showLoginError(`⚠️ Account locked. Try again in ${mins} minute(s).`); return;
+  }
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!email || !password) { showLoginError('⚠️ Please enter email and password.'); return; }
+  setLoginLoading(true); hideLoginError();
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) {
+      loginAttempts++;
+      localStorage.setItem('dio_login_attempts', loginAttempts);
+      if (loginAttempts >= APP_CONFIG.maxLoginAttempts) {
+        localStorage.setItem('dio_lockout_until', Date.now() + APP_CONFIG.lockoutDuration);
+        loginAttempts = 0; localStorage.setItem('dio_login_attempts', 0);
+        showLoginError('🔒 Too many failed attempts. Account locked for 30 minutes.');
+      } else {
+        showLoginError(`❌ Incorrect credentials. ${APP_CONFIG.maxLoginAttempts - loginAttempts} attempt(s) remaining.`);
+      }
+      setLoginLoading(false); return;
+    }
+    loginAttempts = 0; localStorage.setItem('dio_login_attempts', 0);
+    localStorage.removeItem('dio_lockout_until');
+    currentUser = data.user;
+    await loadOfficerProfile();
+    await loginSuccess();
+  } catch (err) {
+    showLoginError('⚠️ Connection error. Please check your internet.');
+    setLoginLoading(false);
+  }
+}
+
+async function loadOfficerProfile() {
+  try {
+    const { data: officer } = await supabaseClient.from('officers').select('*').eq('user_id', currentUser.id).single();
+    if (officer) currentOfficer = officer;
+    const { data: roleData } = await supabaseClient.from('user_roles').select('role').eq('user_id', currentUser.id).single();
+    if (roleData) currentRole = roleData.role;
+  } catch (err) { console.log('Profile load:', err); }
+}
+
+async function loginSuccess() {
+  const ls = document.getElementById('login-screen');
+  const app = document.getElementById('main-app');
+  ls.style.transition = 'opacity 0.4s'; ls.style.opacity = '0';
+  setTimeout(() => { ls.style.display = 'none'; app.style.display = 'flex'; setLoginLoading(false); initApp(); }, 400);
+  resetSessionTimer();
+}
+
+function resetSessionTimer() {
+  clearTimeout(sessionTimer);
+  sessionTimer = setTimeout(() => { showToast('⏰ Session expired.', 'error'); setTimeout(doLogout, 2000); }, APP_CONFIG.sessionTimeout);
+}
+document.addEventListener('mousemove', () => { if (currentUser) resetSessionTimer(); });
+document.addEventListener('keypress', () => { if (currentUser) resetSessionTimer(); });
+document.addEventListener('click', () => { if (currentUser) resetSessionTimer(); });
+
+async function doLogout() {
+  clearTimeout(sessionTimer);
+  await supabaseClient.auth.signOut();
+  currentUser = null; currentOfficer = null; currentRole = 'officer';
+  document.getElementById('main-app').style.display = 'none';
+  const ls = document.getElementById('login-screen');
+  ls.style.display = 'flex'; ls.style.opacity = '1';
+  document.getElementById('login-password').value = '';
+  showToast('👋 Signed out successfully.');
+}
+
+function pinPress(digit) {
+  if (pinBuffer.length >= 6) return;
+  pinBuffer += digit; updatePinDots();
+  if (pinBuffer.length === 6) setTimeout(verifyPin, 200);
+}
+function pinBackspace() { pinBuffer = pinBuffer.slice(0, -1); updatePinDots(); }
+function updatePinDots() {
+  for (let i = 0; i < 6; i++) {
+    const d = document.getElementById('pd' + i);
+    if (d) d.classList.toggle('filled', i < pinBuffer.length);
+  }
+}
+async function verifyPin() {
+  const storedPin = localStorage.getItem('dio_pin');
+  if (!storedPin || pinBuffer !== storedPin) {
+    showLoginError('❌ Incorrect PIN.'); pinBuffer = ''; updatePinDots(); return;
+  }
+  const e = localStorage.getItem('dio_pin_email');
+  const p = localStorage.getItem('dio_pin_password');
+  pinBuffer = ''; updatePinDots();
+  if (e && p) { document.getElementById('login-email').value = e; document.getElementById('login-password').value = p; await doLogin(); }
+}
+async function doBiometric() {
+  if (!window.PublicKeyCredential) { showLoginError('⚠️ Biometric not supported on this device.'); return; }
+  document.getElementById('bio-ring').classList.add('scanning');
+  try {
+    await navigator.credentials.get({ publicKey: { challenge: new Uint8Array(32), timeout: 60000, userVerification: 'required' } });
+    const e = localStorage.getItem('dio_bio_email'), p = localStorage.getItem('dio_bio_password');
+    if (e && p) { document.getElementById('login-email').value = e; document.getElementById('login-password').value = p; await doLogin(); }
+  } catch (err) { document.getElementById('bio-ring').classList.remove('scanning'); showLoginError('⚠️ Biometric failed. Use password instead.'); }
+}
+function showRegister() { document.getElementById('register-modal').style.display = 'flex'; }
+function hideRegister() { document.getElementById('register-modal').style.display = 'none'; }
+async function submitRegistration() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const badge = document.getElementById('reg-badge').value.trim();
+  const station = document.getElementById('reg-station').value.trim();
+  const district = document.getElementById('reg-district').value.trim();
+  const password = document.getElementById('reg-password').value;
+  if (!name || !email || !badge || !station || !password) { showToast('⚠️ Fill all required fields.', 'error'); return; }
+  if (password.length < 8) { showToast('⚠️ Password must be at least 8 characters.', 'error'); return; }
+  try {
+    const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { data: { full_name: name, badge_number: badge, station, district } } });
+    if (error) { showToast('❌ ' + error.message, 'error'); return; }
+    if (data.user) {
+      await supabaseClient.from('officers').insert({ user_id: data.user.id, full_name: name, badge_number: badge, station, district });
+      await supabaseClient.from('user_roles').insert({ user_id: data.user.id, role: 'officer' });
+    }
+    hideRegister(); showToast('✅ Registration submitted! Check your email to verify. Admin approval required.', 'success', 6000);
+  } catch (err) { showToast('⚠️ Error: ' + err.message, 'error'); }
+}
+function showForgotPassword() {
+  document.getElementById('forgot-modal').style.display = 'flex';
+  document.getElementById('forgot-step1').style.display = 'block';
+  document.getElementById('forgot-step2').style.display = 'none';
+  document.getElementById('forgot-step3').style.display = 'none';
+}
+function hideForgotModal() { document.getElementById('forgot-modal').style.display = 'none'; }
+async function sendOTP() {
+  const email = document.getElementById('forgot-email').value.trim();
+  if (!email) { showToast('⚠️ Enter email.', 'error'); return; }
+  await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+  document.getElementById('forgot-step1').style.display = 'none';
+  document.getElementById('forgot-step2').style.display = 'block';
+  showToast('📧 Reset email sent. Check your inbox.', 'success');
+}
+function otpNext(idx) { const v = document.getElementById('otp' + idx).value; if (v && idx < 5) document.getElementById('otp' + (idx + 1)).focus(); }
+function verifyOTP() { document.getElementById('forgot-step2').style.display = 'none'; document.getElementById('forgot-step3').style.display = 'block'; }
+async function resetPassword() {
+  const p1 = document.getElementById('new-pass1').value, p2 = document.getElementById('new-pass2').value;
+  if (!p1 || p1.length < 8) { showToast('⚠️ Min 8 characters.', 'error'); return; }
+  if (p1 !== p2) { showToast('❌ Passwords do not match.', 'error'); return; }
+  const { error } = await supabaseClient.auth.updateUser({ password: p1 });
+  if (error) { showToast('❌ ' + error.message, 'error'); return; }
+  hideForgotModal(); showToast('✅ Password reset! Please log in.', 'success');
+}
+function showLoginError(msg) { const el = document.getElementById('login-error'); el.textContent = msg; el.style.display = 'block'; }
+function hideLoginError() { document.getElementById('login-error').style.display = 'none'; }
+function setLoginLoading(loading) {
+  const btn = document.getElementById('login-submit-btn');
+  document.getElementById('login-btn-text').style.display = loading ? 'none' : 'inline';
+  document.getElementById('login-btn-loader').style.display = loading ? 'inline' : 'none';
+  if (btn) btn.disabled = loading;
+}
+function togglePasswordVisibility() { const i = document.getElementById('login-password'); i.type = i.type === 'password' ? 'text' : 'password'; }
+
+async function checkExistingSession() {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (session) {
+    currentUser = session.user; await loadOfficerProfile(); await loginSuccess();
+  } else {
+    const n = localStorage.getItem('dio_officer_name');
+    document.getElementById('login-officer-name').textContent = n || 'Welcome, Officer';
+    document.getElementById('login-officer-role').textContent = 'Digital IO — Secure Portal';
+  }
+}
+
+// ════════════════════════════════════════════
+//  DATABASE LAYER
+// ════════════════════════════════════════════
+async function getOfficerId() {
+  if (currentOfficer) return currentOfficer.id;
+  if (!currentUser) return null;
+  const { data } = await supabaseClient.from('officers').select('id').eq('user_id', currentUser.id).single();
+  return data?.id || null;
+}
+
+async function getCases(filterStatus = '', filterSearch = '') {
+  const officerId = await getOfficerId(); if (!officerId) return [];
+  let query = supabaseClient.from('cases_decrypted').select('*').eq('officer_id', officerId).order('created_at', { ascending: false });
+  if (filterStatus) query = query.eq('status', filterStatus);
+  const { data, error } = await query;
+  if (error) { console.error('getCases:', error); return []; }
+  if (filterSearch) {
+    const s = filterSearch.toLowerCase();
+    return (data || []).filter(c => c.fir_number?.toLowerCase().includes(s) || c.accused_name?.toLowerCase().includes(s) || c.accused_cnic?.toLowerCase().includes(s) || c.section_of_law?.toLowerCase().includes(s) || c.complainant?.toLowerCase().includes(s));
+  }
+  return data || [];
+}
+
+async function getCase(id) {
+  const { data } = await supabaseClient.from('cases_decrypted').select('*').eq('id', id).single();
+  return data;
+}
+
+async function addCase(caseData) {
+  const officerId = await getOfficerId(); if (!officerId) throw new Error('Not authenticated');
+  const { data, error } = await supabaseClient.from('cases').insert({ ...caseData, officer_id: officerId }).select().single();
+  if (error) throw error;
+  triggerBackup('case_added'); return data;
+}
+
+async function updateCase(id, caseData) {
+  const { data, error } = await supabaseClient.from('cases').update({ ...caseData, updated_at: new Date().toISOString() }).eq('id', id).select().single();
+  if (error) throw error;
+  triggerBackup('case_updated'); return data;
+}
+
+async function deleteCase(id) {
+  const { error } = await supabaseClient.from('cases').delete().eq('id', id);
+  if (error) throw error; triggerBackup('case_deleted');
+}
+
+async function getEvidence(firNumber = '') {
+  const officerId = await getOfficerId(); if (!officerId) return [];
+  let query = supabaseClient.from('evidence').select('*').eq('officer_id', officerId).order('created_at', { ascending: false });
+  if (firNumber) query = query.eq('fir_number', firNumber);
+  const { data } = await query; return data || [];
+}
+
+async function addEvidence(evidenceData) {
+  const officerId = await getOfficerId(); if (!officerId) throw new Error('Not authenticated');
+  const { data, error } = await supabaseClient.from('evidence').insert({ ...evidenceData, officer_id: officerId }).select().single();
+  if (error) throw error; triggerBackup('evidence_added'); return data;
+}
+
+async function deleteEvidence(id) {
+  const { error } = await supabaseClient.from('evidence').delete().eq('id', id);
+  if (error) throw error; triggerBackup('evidence_deleted');
+}
+
+async function getReminders(doneFilter = null) {
+  const officerId = await getOfficerId(); if (!officerId) return [];
+  let query = supabaseClient.from('reminders').select('*').eq('officer_id', officerId).order('reminder_date', { ascending: true });
+  if (doneFilter !== null) query = query.eq('is_done', doneFilter);
+  const { data } = await query; return data || [];
+}
+
+async function addReminder(reminderData) {
+  const officerId = await getOfficerId(); if (!officerId) throw new Error('Not authenticated');
+  const { data, error } = await supabaseClient.from('reminders').insert({ ...reminderData, officer_id: officerId }).select().single();
+  if (error) throw error; triggerBackup('reminder_added'); return data;
+}
+
+async function updateReminder(id, updates) {
+  const { data, error } = await supabaseClient.from('reminders').update(updates).eq('id', id).select().single();
+  if (error) throw error; return data;
+}
+
+async function deleteReminder(id) {
+  const { error } = await supabaseClient.from('reminders').delete().eq('id', id);
+  if (error) throw error;
+}
+
+async function getMisal(firNumber = '') {
+  const officerId = await getOfficerId(); if (!officerId) return [];
+  let query = supabaseClient.from('misal').select('*').eq('officer_id', officerId).order('saved_at', { ascending: false });
+  if (firNumber) query = query.eq('fir_number', firNumber);
+  const { data } = await query; return data || [];
+}
+
+async function saveMisal(misalData) {
+  const officerId = await getOfficerId(); if (!officerId) throw new Error('Not authenticated');
+  const { data, error } = await supabaseClient.from('misal').insert({ ...misalData, officer_id: officerId }).select().single();
+  if (error) throw error; triggerBackup('misal_saved'); return data;
+}
+
+async function updateOfficerProfile(updates) {
+  const { data, error } = await supabaseClient.from('officers').update({ ...updates, updated_at: new Date().toISOString() }).eq('user_id', currentUser.id).select().single();
+  if (error) throw error; currentOfficer = data; return data;
+}
+
+async function advancedSearch(params) {
+  let cases = await getCases();
+  if (params.fir) cases = cases.filter(c => c.fir_number?.toLowerCase().includes(params.fir.toLowerCase()));
+  if (params.name) cases = cases.filter(c => c.accused_name?.toLowerCase().includes(params.name.toLowerCase()) || c.complainant?.toLowerCase().includes(params.name.toLowerCase()));
+  if (params.cnic) cases = cases.filter(c => c.accused_cnic?.includes(params.cnic));
+  if (params.cell) cases = cases.filter(c => c.accused_cell?.includes(params.cell));
+  if (params.status) cases = cases.filter(c => c.status === params.status);
+  if (params.section) cases = cases.filter(c => c.section_of_law?.toLowerCase().includes(params.section.toLowerCase()));
+  if (params.sort === 'desc') cases.reverse();
+  return cases;
+}
+
+async function getDashboardStats() {
+  const cases = await getCases();
+  const reminders = await getReminders(false);
+  return {
+    total: cases.length,
+    under: cases.filter(c => c.status === 'under').length,
+    complete: cases.filter(c => c.status === 'complete').length,
+    incomplete: cases.filter(c => c.status === 'incomplete').length,
+    untrace: cases.filter(c => c.status === 'untrace').length,
+    cancel: cases.filter(c => c.status === 'cancel').length,
+    pendingReminders: reminders.length,
+    cases, reminders: reminders.slice(0, 5),
+  };
+}
+
+async function getAdminStats() {
+  if (currentRole !== 'admin' && currentRole !== 'superadmin') return null;
+  const { data: officers } = await supabaseClient.from('officers').select('*');
+  const { data: cases } = await supabaseClient.from('cases').select('id,status');
+  const { data: auditLogs } = await supabaseClient.from('audit_log').select('*').order('created_at', { ascending: false }).limit(50);
+  return { totalOfficers: officers?.length || 0, totalCases: cases?.length || 0, activeCases: cases?.filter(c => c.status === 'under').length || 0, completedCases: cases?.filter(c => c.status === 'complete').length || 0, officers: officers || [], recentActivity: auditLogs || [] };
+}
+
+let realtimeSubscription = null;
+function setupRealtimeSync(onUpdate) {
+  if (realtimeSubscription) realtimeSubscription.unsubscribe();
+  realtimeSubscription = supabaseClient.channel('db-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'cases' }, () => { if (onUpdate) onUpdate('cases'); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'reminders' }, () => { if (onUpdate) onUpdate('reminders'); })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'evidence' }, () => { if (onUpdate) onUpdate('evidence'); })
+    .subscribe();
+}
+
+// ════════════════════════════════════════════
+//  UI UTILITIES
+// ════════════════════════════════════════════
+function showToast(msg, type = 'info', duration = APP_CONFIG.toastDuration) {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`; t.innerHTML = msg;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(() => t.remove(), 300); }, duration);
+}
+
+function openModal(title, bodyHTML, footerHTML = '') {
+  document.getElementById('modal-root').innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal-card">
+        <div class="modal-header"><div class="modal-title">${title}</div><button class="modal-close" onclick="closeModal()">✕</button></div>
+        <div class="modal-body">${bodyHTML}</div>
+        ${footerHTML ? `<div class="modal-footer">${footerHTML}</div>` : ''}
+      </div>
+    </div>`;
+}
+function closeModal() { document.getElementById('modal-root').innerHTML = ''; }
+
+const pageTitles = { dashboard:'🏠 Dashboard', cases:'📁 My Cases', misal:'📄 MISAL Builder', evidence:'🔬 Evidence & Media', search:'🔍 Advanced Search', law:'⚖️ Law & Reference Library', reminders:'🔔 Reminders', performance:'📊 Performance Tracker', backup:'☁️ Backup & Cloud Sync', settings:'⚙️ Settings', admin:'👨‍💼 Admin Panel' };
+const pageRenderers = {};
+function registerPage(name, renderer) { pageRenderers[name] = renderer; }
+
+function showPage(page, el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  else document.querySelectorAll('.nav-item').forEach(n => { if (n.getAttribute('onclick')?.includes(`'${page}'`)) n.classList.add('active'); });
+  document.getElementById('topbar-title').textContent = pageTitles[page] || page;
+  const content = document.getElementById('page-content');
+  content.innerHTML = `<div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Loading...</div></div>`;
+  document.getElementById('sidebar').classList.remove('open');
+  if (pageRenderers[page]) pageRenderers[page](content);
+  else content.innerHTML = `<div style="text-align:center;padding:60px;color:var(--text-muted);"><div style="font-size:48px;margin-bottom:12px;">🚧</div><div style="font-size:16px;font-weight:600;">Coming Soon</div></div>`;
+  resetSessionTimer();
+}
+
+function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+function updateConnectionStatus(connected) {
+  const dot = document.getElementById('status-dot'), text = document.getElementById('status-text');
+  if (dot) dot.style.background = connected ? 'var(--green)' : 'var(--red)';
+  if (text) text.textContent = connected ? 'Online' : 'Offline';
+}
+
+async function updateBadges() {
+  try {
+    const cases = await getCases(), reminders = await getReminders(false);
+    const cb = document.getElementById('badge-cases'), rb = document.getElementById('badge-reminders');
+    if (cb) cb.textContent = cases.length;
+    if (rb) rb.textContent = reminders.length;
+  } catch (err) {}
+}
+
+function startClock() {
+  setInterval(() => { const el = document.getElementById('footer-time'); if (el) el.textContent = new Date().toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }, 1000);
+}
+
+function formatCNIC(val) { if (!val) return '—'; const d = val.replace(/\D/g, ''); if (d.length === 13) return `${d.slice(0,5)}-${d.slice(5,12)}-${d.slice(12)}`; return val; }
+function formatCell(val) { if (!val) return '—'; const d = val.replace(/\D/g, ''); if (d.length === 11) return `${d.slice(0,4)}-${d.slice(4)}`; return val; }
+function autoFormatCNIC(inp) { let v = inp.value.replace(/\D/g, '').slice(0, 13); if (v.length > 12) v = `${v.slice(0,5)}-${v.slice(5,12)}-${v.slice(12)}`; else if (v.length > 5) v = `${v.slice(0,5)}-${v.slice(5)}`; inp.value = v; }
+function autoFormatCell(inp) { let v = inp.value.replace(/\D/g, '').slice(0, 11); if (v.length > 4) v = `${v.slice(0,4)}-${v.slice(4)}`; inp.value = v; }
+function formatDate(dateStr) { if (!dateStr) return '—'; try { return new Date(dateStr).toLocaleDateString('en-PK', { day: '2-digit', month: 'short', year: 'numeric' }); } catch { return dateStr; } }
+function timeAgo(dateStr) { if (!dateStr) return '—'; const diff = Date.now() - new Date(dateStr).getTime(); const mins = Math.floor(diff/60000), hours = Math.floor(diff/3600000), days = Math.floor(diff/86400000); if (mins < 1) return 'Just now'; if (mins < 60) return `${mins}m ago`; if (hours < 24) return `${hours}h ago`; return `${days}d ago`; }
+
+function updateSidebarProfile() {
+  if (!currentOfficer) return;
+  const nameEl = document.getElementById('sidebar-name'), roleEl = document.getElementById('sidebar-role'), avatarEl = document.getElementById('sidebar-avatar'), footerEl = document.getElementById('footer-officer');
+  if (nameEl) nameEl.textContent = currentOfficer.full_name || 'Officer';
+  if (roleEl) roleEl.textContent = currentOfficer.designation || currentRole;
+  if (footerEl) footerEl.textContent = `Officer: ${currentOfficer.full_name || '—'} · ${currentOfficer.station || '—'}`;
+  const photoSrc = localStorage.getItem('dio_profile_photo');
+  if (photoSrc && avatarEl) { avatarEl.innerHTML = `<img src="${photoSrc}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`; }
+  else if (avatarEl && currentOfficer.full_name) { avatarEl.textContent = currentOfficer.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(); }
+  if (currentRole === 'admin' || currentRole === 'superadmin') { const an = document.getElementById('admin-nav-item'); if (an) an.style.display = 'flex'; }
+  if (currentOfficer.full_name) localStorage.setItem('dio_officer_name', currentOfficer.full_name);
+}
+
+function printContent(html, title = 'Digital IO') {
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><title>${title}</title><style>body{font-family:Arial,sans-serif;padding:20px;color:#1a1a1a;}table{width:100%;border-collapse:collapse;}th,td{padding:8px;border:1px solid #ddd;font-size:12px;text-align:left;}th{background:#f5f5f5;}.watermark{position:fixed;bottom:20px;right:20px;font-size:10px;color:#ccc;}</style></head><body>${html}<div class="watermark">Digital IO · ${currentOfficer?.full_name || 'Officer'} · ${new Date().toLocaleDateString('en-PK')}</div></body></html>`);
+  win.document.close(); win.focus(); setTimeout(() => win.print(), 500);
+}
+
+function startNewsTicker() { const el = document.getElementById('news-ticker'); if (el) el.textContent = POLICE_NEWS.join(' ✦ '); }
+
+// ════════════════════════════════════════════
+//  BACKUP SYSTEM
+// ════════════════════════════════════════════
+let backupQueue = [], backupInProgress = false, lastBackupTime = null, googleDriveToken = null;
+
+function triggerBackup(reason = 'manual') { backupQueue.push({ reason, timestamp: Date.now() }); processBackupQueue(); }
+
+async function processBackupQueue() {
+  if (backupInProgress || backupQueue.length === 0) return;
+  backupInProgress = true;
+  await new Promise(r => setTimeout(r, 2000));
+  backupQueue = [];
+  try { await performBackup(); } catch (err) { console.error('Backup error:', err); }
+  backupInProgress = false;
+  if (backupQueue.length > 0) processBackupQueue();
+}
+
+async function performBackup() {
+  if (!currentUser) return;
+  try {
+    const cases = await getCases(), evidence = await getEvidence(), reminders = await getReminders(), misal = await getMisal();
+    const backupData = { version: APP_CONFIG.version, backupDate: new Date().toISOString(), officerName: currentOfficer?.full_name, data: { cases, evidence, reminders, misal } };
+    const backupJson = JSON.stringify(backupData);
+    try { localStorage.setItem(`dio_backup_${currentUser.id}`, backupJson); localStorage.setItem(`dio_backup_${currentUser.id}_time`, new Date().toISOString()); } catch (e) {}
+    if (googleDriveToken) await uploadToGoogleDrive(backupJson);
+    lastBackupTime = new Date();
+    const btn = document.querySelector('.topbar-btn[onclick="triggerBackupNow()"]');
+    if (btn) { btn.title = `Last backup: ${lastBackupTime.toLocaleTimeString('en-PK')}`; btn.style.color = 'var(--green)'; }
+  } catch (err) { console.error('Backup failed:', err); }
+}
+
+async function uploadToGoogleDrive(jsonData) {
+  if (!googleDriveToken) return;
+  const filename = `DigitalIO_Backup_${new Date().toISOString().slice(0,10)}.json`;
+  const boundary = '-------314159265358979323846';
+  const metadata = { name: filename, mimeType: 'application/json', parents: ['appDataFolder'] };
+  const body = `\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${jsonData}\r\n--${boundary}--`;
+  await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { 'Authorization': `Bearer ${googleDriveToken}`, 'Content-Type': `multipart/related; boundary="${boundary}"` }, body });
+}
+
+async function connectGoogleDrive() {
+  const clientId = 'YOUR_GOOGLE_CLIENT_ID';
+  const params = new URLSearchParams({ client_id: clientId, redirect_uri: window.location.origin, response_type: 'token', scope: 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file', include_granted_scopes: 'true' });
+  const popup = window.open(`https://accounts.google.com/o/oauth2/v2/auth?${params}`, 'Google Drive Auth', 'width=500,height=600');
+  const listener = setInterval(() => {
+    try { const url = popup.location.href; if (url.includes('access_token')) { const token = new URLSearchParams(popup.location.hash.slice(1)).get('access_token'); if (token) { googleDriveToken = token; localStorage.setItem('dio_gdrive_token', token); popup.close(); clearInterval(listener); showToast('✅ Google Drive connected!', 'success'); triggerBackup('drive_connected'); } } } catch (e) {}
+    if (popup.closed) clearInterval(listener);
+  }, 500);
+}
+
+function disconnectGoogleDrive() { googleDriveToken = null; localStorage.removeItem('dio_gdrive_token'); showToast('Google Drive disconnected.'); }
+async function triggerBackupNow() { showToast('⏳ Backing up...', 'info', 2000); await performBackup(); showToast('✅ Backup complete!', 'success'); }
+function getBackupStatus() { return { lastBackup: lastBackupTime, googleDriveConnected: !!googleDriveToken, localBackupExists: !!localStorage.getItem(`dio_backup_${currentUser?.id}`) }; }
+async function restoreFromLocalBackup() { const b = localStorage.getItem(`dio_backup_${currentUser?.id}`); if (!b) { showToast('⚠️ No local backup found.', 'error'); return; } showToast('✅ Backup found. Contact admin to restore.', 'info', 5000); }
+function initBackupSystem() { const t = localStorage.getItem('dio_gdrive_token'); if (t) { googleDriveToken = t; console.log('✅ Google Drive token restored'); } }
+
+// ════════════════════════════════════════════
+//  DASHBOARD PAGE
+// ════════════════════════════════════════════
+registerPage('dashboard', renderDashboard);
+async function renderDashboard(container) {
+  const stats = await getDashboardStats();
+  const officer = currentOfficer || {};
+  const initials = officer.full_name ? officer.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : 'IO';
+  const photoSrc = localStorage.getItem('dio_profile_photo');
+  const avatarHTML = photoSrc ? `<img src="${photoSrc}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : initials;
+  container.innerHTML = `
+    <div class="news-ticker-wrap"><span class="news-ticker-text" id="news-ticker">Loading...</span></div>
+    <div class="officer-card">
+      <div class="officer-card-avatar">${avatarHTML}</div>
+      <div style="flex:1;">
+        <div class="officer-card-name">${officer.full_name || 'Officer'}</div>
+        <div class="officer-card-meta">
+          <span>🏛️ <b>${officer.station || '—'}</b></span>
+          <span>📍 <b>${officer.district || '—'}</b></span>
+          <span>🆔 <b>${officer.badge_number || '—'}</b></span>
+          <span>👮 <b>${officer.designation || 'IO'}</b></span>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">ENTRUSTED CASES</div>
+        <div style="font-size:40px;font-weight:900;color:var(--accent);font-family:var(--font-display);">${stats.total}</div>
+      </div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card stat-blue" onclick="showPage('cases',null)"><div class="stat-num">${stats.total}</div><div class="stat-label">Entrusted</div></div>
+      <div class="stat-card stat-green" onclick="showPage('cases',null)"><div class="stat-num">${stats.complete}</div><div class="stat-label">Challan Complete</div></div>
+      <div class="stat-card stat-amber" onclick="showPage('cases',null)"><div class="stat-num">${stats.incomplete}</div><div class="stat-label">Incomplete</div></div>
+      <div class="stat-card stat-purple" onclick="showPage('cases',null)"><div class="stat-num">${stats.untrace}</div><div class="stat-label">Untraced</div></div>
+      <div class="stat-card stat-red" onclick="showPage('cases',null)"><div class="stat-num">${stats.cancel}</div><div class="stat-label">Cancelled</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
+      <div class="card">
+        <div class="card-title">🕐 Current Time</div>
+        <div style="font-size:32px;font-weight:800;color:var(--accent);font-family:var(--font-mono);" id="dash-clock">--:--:--</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;" id="dash-date"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🌤️ Lahore Weather</div>
+        <div style="font-size:28px;font-weight:700;color:var(--amber);">38°C</div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Partly Cloudy · Humidity: 45%</div>
+      </div>
+      <div class="card">
+        <div class="card-title">☁️ Backup Status</div>
+        <div style="font-size:12px;color:${getBackupStatus().googleDriveConnected ? 'var(--green)' : 'var(--amber)'};">
+          ${getBackupStatus().googleDriveConnected ? '✅ Google Drive Connected' : '⚠️ Google Drive Not Connected'}
+        </div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:8px;width:100%;" onclick="showPage('backup',null)">☁️ Manage</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+      <div class="card">
+        <div class="card-title" style="display:flex;justify-content:space-between;">🔔 Pending Reminders <a onclick="showPage('reminders',null)" style="font-size:10px;">View All →</a></div>
+        ${stats.reminders.length === 0 ? `<div style="font-size:12px;color:var(--text-muted);padding:10px 0;">✅ No pending reminders</div>` : stats.reminders.map(r => `<div class="reminder-item"><div class="reminder-dot" style="background:${r.priority==='high'?'var(--red)':r.priority==='medium'?'var(--amber)':'var(--accent)'}"></div><div class="reminder-text">${r.text}</div><div class="reminder-date">${formatDate(r.reminder_date)}</div></div>`).join('')}
+      </div>
+      <div class="card">
+        <div class="card-title">🧩 Mind-Refresh Tools</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">
+          <div onclick="openQuiz()" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;text-align:center;cursor:pointer;"><div style="font-size:24px;margin-bottom:4px;">🧠</div><div style="font-size:10px;color:var(--text-muted);">Legal Quiz</div></div>
+          <div onclick="openPuzzle()" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;text-align:center;cursor:pointer;"><div style="font-size:24px;margin-bottom:4px;">🔢</div><div style="font-size:10px;color:var(--text-muted);">Logic Puzzle</div></div>
+          <div onclick="openTimer()" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;text-align:center;cursor:pointer;"><div style="font-size:24px;margin-bottom:4px;">⏱️</div><div style="font-size:10px;color:var(--text-muted);">Focus Timer</div></div>
+        </div>
+        <div style="padding:10px;background:var(--bg-tertiary);border-radius:8px;font-size:11px;color:var(--text-muted);text-align:center;">💡 <em>Article 10-A: Right to fair trial is guaranteed under the Constitution of Pakistan</em></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="display:flex;justify-content:space-between;">📁 Recent Cases <a onclick="showPage('cases',null)" style="font-size:10px;">View All →</a></div>
+      ${stats.cases.length === 0 ? `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">No cases yet. <a onclick="showPage('cases',null)">Add your first case →</a></div>` : `<table class="data-table"><thead><tr><th>FIR No.</th><th>Accused</th><th>Section</th><th>Status</th><th>Date</th></tr></thead><tbody>${stats.cases.slice(0,5).map(c=>`<tr><td><span class="fir-num" onclick="viewCase('${c.id}')">${c.fir_number}</span></td><td>${c.accused_name||'—'}</td><td style="font-size:11px;color:var(--text-muted);">${c.section_of_law||'—'}</td><td><span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span></td><td style="font-size:11px;color:var(--text-faint);">${formatDate(c.created_at)}</td></tr>`).join('')}</tbody></table>`}
+    </div>`;
+  startDashboardClock(); setTimeout(startNewsTicker, 100);
+}
+
+function startDashboardClock() {
+  function tick() {
+    const cl = document.getElementById('dash-clock'), dl = document.getElementById('dash-date');
+    if (!cl) return;
+    const now = new Date();
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    cl.textContent = now.toLocaleTimeString('en-PK', { hour12: false });
+    if (dl) dl.textContent = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+  }
+  tick(); setInterval(tick, 1000);
+}
+
+const quizzes = [
+  { q: 'Under which section of CrPC can police call a witness for questioning?', opts: ['Section 54','Section 160','Section 164'], ans: 'B — Section 160 CrPC (Talbi)' },
+  { q: 'What is the punishment for murder under PPC?', opts: ['7 years','10-14 years','Death or life imprisonment'], ans: 'C — Section 302 PPC' },
+  { q: 'Under which section is a confession before magistrate recorded?', opts: ['Section 160','Section 161','Section 164'], ans: 'C — Section 164 CrPC' },
+];
+let quizIndex = 0;
+function openQuiz() {
+  const quiz = quizzes[quizIndex++ % quizzes.length];
+  openModal('🧠 Legal Knowledge Quiz', `<p style="font-size:14px;font-weight:600;margin-bottom:16px;">${quiz.q}</p><div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">${quiz.opts.map((o,i)=>`<div onclick="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" style="padding:10px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text-secondary);cursor:pointer;">${String.fromCharCode(65+i)}) ${o}</div>`).join('')}</div><div id="quiz-answer" style="display:none;padding:10px;background:var(--green-bg);border-radius:8px;font-size:12px;color:var(--green);">✅ ${quiz.ans}</div>`,
+    `<button class="btn btn-secondary" onclick="document.getElementById('quiz-answer').style.display='block'">Reveal Answer</button><button class="btn btn-primary" onclick="closeModal();openQuiz()">Next →</button>`);
+}
+function openPuzzle() {
+  openModal('🔢 Logic Puzzle', `<p style="font-size:14px;font-weight:600;margin-bottom:12px;">3 Suspects, 1 Crime</p><p style="font-size:13px;color:var(--text-secondary);line-height:1.8;">Ali says: Bilal did it.<br>Bilal says: It was not me.<br>Chand says: I was with Ali.<br><br><em style="color:var(--text-muted);">Only one person is telling the truth.</em><br><br>🔎 Who committed the crime?</p><div id="puzzle-ans" style="display:none;margin-top:12px;padding:10px;background:var(--green-bg);border-radius:8px;font-size:12px;color:var(--green);">✅ Answer: <b>Ali</b> committed the crime.</div>`,
+    `<button class="btn btn-secondary" onclick="document.getElementById('puzzle-ans').style.display='block'">Reveal Answer</button><button class="btn btn-primary" onclick="closeModal()">Close</button>`);
+}
+let timerInterval = null, timerSeconds = 1500;
+function openTimer() {
+  openModal('⏱️ Focus Timer', `<div style="text-align:center;"><div style="font-size:64px;font-weight:900;color:var(--accent);font-family:var(--font-mono);" id="timer-disp">25:00</div><div style="display:flex;gap:8px;justify-content:center;margin-top:16px;"><button class="btn btn-primary" onclick="startFocusTimer()">▶ Start</button><button class="btn btn-secondary" onclick="pauseFocusTimer()">⏸ Pause</button><button class="btn btn-secondary" onclick="resetFocusTimer()">↺ Reset</button></div><div style="display:flex;gap:8px;justify-content:center;margin-top:8px;"><button class="btn btn-secondary btn-sm" onclick="setFocusTimer(25)">25 min</button><button class="btn btn-secondary btn-sm" onclick="setFocusTimer(5)">5 min break</button><button class="btn btn-secondary btn-sm" onclick="setFocusTimer(15)">15 min break</button></div></div>`,
+    `<button class="btn btn-secondary" onclick="pauseFocusTimer();closeModal()">Close</button>`);
+  timerSeconds = 1500; updateTimerDisplay();
+}
+function updateTimerDisplay() { const el = document.getElementById('timer-disp'); if (!el) return; el.textContent = `${Math.floor(timerSeconds/60).toString().padStart(2,'0')}:${(timerSeconds%60).toString().padStart(2,'0')}`; }
+function startFocusTimer() { if (timerInterval) return; timerInterval = setInterval(() => { timerSeconds--; updateTimerDisplay(); if (timerSeconds <= 0) { clearInterval(timerInterval); timerInterval = null; showToast('⏱️ Timer complete!'); } }, 1000); }
+function pauseFocusTimer() { clearInterval(timerInterval); timerInterval = null; }
+function resetFocusTimer() { pauseFocusTimer(); timerSeconds = 1500; updateTimerDisplay(); }
+function setFocusTimer(mins) { pauseFocusTimer(); timerSeconds = mins * 60; updateTimerDisplay(); }
+
+// ════════════════════════════════════════════
+//  CASES PAGE
+// ════════════════════════════════════════════
+registerPage('cases', renderCases);
+async function renderCases(container, filterStatus = '', filterSearch = '') {
+  const cases = await getCases(filterStatus, filterSearch);
+  container.innerHTML = `
+    <div class="page-header"><div><div class="page-title">📁 My Cases</div><div class="page-subtitle">Showing ${cases.length} case(s)</div></div><button class="btn btn-primary" onclick="openAddCaseModal()">+ New Case</button></div>
+    <div class="search-bar">
+      <input class="search-input" id="case-search" placeholder="🔍 Search FIR, Name, CNIC, Section..." value="${filterSearch}" oninput="renderCases(document.getElementById('page-content'),'',this.value)">
+      <select class="filter-select" id="case-status-filter" onchange="renderCases(document.getElementById('page-content'),this.value,document.getElementById('case-search').value)">
+        <option value="" ${!filterStatus?'selected':''}>All Statuses</option>
+        <option value="under" ${filterStatus==='under'?'selected':''}>زیر تفتیش</option>
+        <option value="complete" ${filterStatus==='complete'?'selected':''}>مکمل چالان</option>
+        <option value="incomplete" ${filterStatus==='incomplete'?'selected':''}>نامکمل چالان</option>
+        <option value="untrace" ${filterStatus==='untrace'?'selected':''}>عدم پتہ</option>
+        <option value="cancel" ${filterStatus==='cancel'?'selected':''}>اخراج</option>
+      </select>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <table class="data-table">
+        <thead><tr><th>FIR No.</th><th>Accused</th><th>Section</th><th>Offence</th><th>Date</th><th>Status</th><th>Position</th><th>Actions</th></tr></thead>
+        <tbody>${cases.length === 0 ? `<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:40px;">No cases found. <a onclick="openAddCaseModal()">Add your first case →</a></td></tr>` : cases.map(c=>`<tr><td><span class="fir-num" onclick="viewCase('${c.id}')">${c.fir_number}</span></td><td style="font-weight:500;">${c.accused_name||'—'}</td><td style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">${c.section_of_law||'—'}</td><td style="font-size:11px;color:var(--text-muted);">${c.offence_type||'—'}</td><td style="font-size:11px;color:var(--text-faint);">${c.fir_date||formatDate(c.created_at)}</td><td><span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span></td><td style="font-size:11px;color:${c.position==='court'?'var(--green)':'var(--amber)'};">${c.position==='court'?'⚖️ In Court':'⏳ Pending'}</td><td><div style="display:flex;gap:4px;"><button class="btn btn-secondary btn-sm" onclick="viewCase('${c.id}')">View</button><button class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')">Edit</button><button class="btn btn-danger btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number}')">Del</button></div></td></tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+}
+
+function caseFormHTML(c = {}) {
+  return `<div class="form-row"><div class="form-group"><label class="form-label">FIR Number *</label><input class="form-input" id="cf-fir" value="${c.fir_number||''}" placeholder="e.g. 245/2025"></div><div class="form-group"><label class="form-label">Date</label><input class="form-input" id="cf-date" value="${c.fir_date||''}" placeholder="DD-MM-YYYY"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Accused Name *</label><input class="form-input" id="cf-accused" value="${c.accused_name||''}" placeholder="Full name"></div><div class="form-group"><label class="form-label">CNIC</label><input class="form-input" id="cf-cnic" value="${c.accused_cnic||''}" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Cell Number</label><input class="form-input" id="cf-cell" value="${c.accused_cell||''}" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)"></div><div class="form-group"><label class="form-label">Complainant</label><input class="form-input" id="cf-complainant" value="${c.complainant||''}" placeholder="Complainant name"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Section of Law *</label><input class="form-input" id="cf-section" value="${c.section_of_law||''}" placeholder="e.g. 302 PPC"></div><div class="form-group"><label class="form-label">Offence Type</label><input class="form-input" id="cf-offence" value="${c.offence_type||''}" placeholder="e.g. Murder"></div></div><div class="form-row"><div class="form-group"><label class="form-label">SHO</label><input class="form-input" id="cf-sho" value="${c.sho||''}" placeholder="SHO name"></div><div class="form-group"><label class="form-label">SDPO</label><input class="form-input" id="cf-sdpo" value="${c.sdpo||''}" placeholder="SDPO name"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Status *</label><select class="form-input" id="cf-status"><option value="under" ${(c.status||'under')==='under'?'selected':''}>زیر تفتیش</option><option value="complete" ${c.status==='complete'?'selected':''}>مکمل چالان</option><option value="incomplete" ${c.status==='incomplete'?'selected':''}>نامکمل چالان</option><option value="untrace" ${c.status==='untrace'?'selected':''}>عدم پتہ</option><option value="cancel" ${c.status==='cancel'?'selected':''}>اخراج</option></select></div><div class="form-group"><label class="form-label">Position</label><select class="form-input" id="cf-position"><option value="pending" ${(c.position||'pending')==='pending'?'selected':''}>⏳ Pending</option><option value="court" ${c.position==='court'?'selected':''}>⚖️ In Court</option></select></div></div><div class="form-group"><label class="form-label">Investigation Notes</label><textarea class="form-input" id="cf-notes" rows="3" placeholder="Notes...">${c.notes||''}</textarea></div>`;
+}
+
+function openAddCaseModal() { openModal('➕ Add New Case', caseFormHTML(), `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveNewCase()">💾 Save Case</button>`); }
+async function openEditCaseModal(id) { const c = await getCase(id); if (!c) return; openModal(`✏️ Edit — FIR ${c.fir_number}`, caseFormHTML(c), `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveEditCase('${id}')">💾 Update</button>`); }
+
+async function saveNewCase() {
+  const fir = document.getElementById('cf-fir').value.trim(), accused = document.getElementById('cf-accused').value.trim(), section = document.getElementById('cf-section').value.trim();
+  if (!fir || !accused || !section) { showToast('⚠️ FIR, Accused, and Section are required.', 'error'); return; }
+  try {
+    await addCase({ fir_number: fir, fir_date: document.getElementById('cf-date').value.trim(), accused_name: accused, accused_cnic: document.getElementById('cf-cnic').value.trim(), accused_cell: document.getElementById('cf-cell').value.trim(), complainant: document.getElementById('cf-complainant').value.trim(), section_of_law: section, offence_type: document.getElementById('cf-offence').value.trim(), sho: document.getElementById('cf-sho').value.trim(), sdpo: document.getElementById('cf-sdpo').value.trim(), status: document.getElementById('cf-status').value, position: document.getElementById('cf-position').value, notes: document.getElementById('cf-notes').value.trim() });
+    closeModal(); showToast(`✅ Case added: FIR ${fir}`, 'success'); await updateBadges(); renderCases(document.getElementById('page-content'));
+  } catch (err) { showToast('❌ Error: ' + err.message, 'error'); }
+}
+
+async function saveEditCase(id) {
+  try {
+    await updateCase(id, { fir_number: document.getElementById('cf-fir').value.trim(), fir_date: document.getElementById('cf-date').value.trim(), accused_name: document.getElementById('cf-accused').value.trim(), accused_cnic: document.getElementById('cf-cnic').value.trim(), accused_cell: document.getElementById('cf-cell').value.trim(), complainant: document.getElementById('cf-complainant').value.trim(), section_of_law: document.getElementById('cf-section').value.trim(), offence_type: document.getElementById('cf-offence').value.trim(), sho: document.getElementById('cf-sho').value.trim(), sdpo: document.getElementById('cf-sdpo').value.trim(), status: document.getElementById('cf-status').value, position: document.getElementById('cf-position').value, notes: document.getElementById('cf-notes').value.trim() });
+    closeModal(); showToast('✅ Case updated!', 'success'); renderCases(document.getElementById('page-content'));
+  } catch (err) { showToast('❌ Error: ' + err.message, 'error'); }
+}
+
+async function viewCase(id) {
+  const c = await getCase(id); if (!c) return;
+  const evidence = await getEvidence(c.fir_number);
+  openModal(`📋 FIR ${c.fir_number}`,
+    `<div style="display:grid;grid-template-columns:1fr 1fr;">${[['FIR',c.fir_number],['Date',c.fir_date||'—'],['Accused',c.accused_name||'—'],['CNIC',formatCNIC(c.accused_cnic)],['Cell',formatCell(c.accused_cell)],['Complainant',c.complainant||'—'],['Section',c.section_of_law||'—'],['Offence',c.offence_type||'—'],['SHO',c.sho||'—'],['Status',STATUS_LABELS[c.status]||c.status],['Position',c.position==='court'?'⚖️ In Court':'⏳ Pending']].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}</div>${c.notes?`<div style="margin-top:12px;padding:10px;background:var(--bg-tertiary);border-radius:8px;font-size:12px;color:var(--text-secondary);"><b style="color:var(--accent);">Notes:</b><br>${c.notes}</div>`:''}<div style="margin-top:14px;"><div style="font-size:10px;color:var(--text-faint);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">📎 Evidence (${evidence.length})</div>${evidence.length===0?'<div style="font-size:11px;color:var(--text-faint);">No evidence attached.</div>':evidence.map(e=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border-light);"><span>${e.type==='Photo'?'📷':e.type==='Video'?'🎥':e.type==='Audio'?'🎙️':'📄'}</span><div style="flex:1;"><div style="font-size:12px;font-weight:600;">${e.name}</div><div style="font-size:10px;color:var(--text-muted);">${e.type} · ${e.evidence_date||'—'}</div></div></div>`).join('')}</div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Close</button><button class="btn btn-primary" onclick="closeModal();openEditCaseModal('${id}')">✏️ Edit</button>`);
+}
+
+function confirmDeleteCase(id, firNum) {
+  openModal('🗑️ Confirm Delete', `<p style="color:var(--text-secondary);font-size:13px;">Delete case <b style="color:var(--accent);">FIR ${firNum}</b>?<br><br><span style="color:var(--red);font-size:11px;">⚠️ This cannot be undone.</span></p>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="closeModal();doDeleteCase('${id}')">🗑️ Delete</button>`);
+}
+async function doDeleteCase(id) {
+  try { await deleteCase(id); showToast('🗑️ Case deleted.', 'info'); await updateBadges(); renderCases(document.getElementById('page-content')); }
+  catch (err) { showToast('❌ Error: ' + err.message, 'error'); }
+}
+
+// ════════════════════════════════════════════
+//  EVIDENCE PAGE
+// ════════════════════════════════════════════
+registerPage('evidence', renderEvidence);
+async function renderEvidence(container) {
+  const all = await getEvidence();
+  container.innerHTML = `
+    <div class="page-header"><div><div class="page-title">🔬 Evidence & Media</div><div class="page-subtitle">${all.length} items</div></div><div style="display:flex;gap:8px;"><button class="btn btn-secondary btn-sm" onclick="selectAllEvidence()">☑️ Select All</button><button class="btn btn-secondary btn-sm" onclick="printSelectedEvidence()">🖨️ Print Selected</button><button class="btn btn-primary" onclick="openAddEvidenceModal()">+ Attach Evidence</button></div></div>
+    <div class="evidence-grid" id="evidence-grid">
+      ${all.length === 0 ? `<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px;font-size:12px;">No evidence attached yet.</div>` : all.map(e=>`<div class="evidence-card" id="ev-card-${e.id}"><div class="evidence-thumb" style="position:relative;">${e.file_url?`<img src="${e.file_url}" style="width:100%;height:100%;object-fit:cover;" alt="">`:`<span style="font-size:36px;">${e.type==='Photo'?'📷':e.type==='Video'?'🎥':e.type==='Audio'?'🎙️':'📄'}</span>`}<input type="checkbox" class="ev-select-cb" data-id="${e.id}" style="position:absolute;top:8px;left:8px;width:16px;height:16px;accent-color:var(--accent);"></div><div class="evidence-info" onclick="viewEvidenceDetail('${e.id}')"><div class="evidence-name">${e.name}</div><div class="evidence-tag">${e.fir_number||'—'}</div><div style="display:flex;justify-content:space-between;margin-top:4px;"><span style="font-size:10px;background:var(--hover-bg);color:var(--text-muted);padding:2px 6px;border-radius:4px;">${e.type}</span><span style="font-size:9px;color:var(--text-faint);">${e.evidence_date||formatDate(e.created_at)}</span></div></div></div>`).join('')}
+    </div>`;
+}
+function selectAllEvidence() { document.querySelectorAll('.ev-select-cb').forEach(cb => cb.checked = true); }
+function printSelectedEvidence() {
+  const selected = [...document.querySelectorAll('.ev-select-cb:checked')].map(cb => cb.dataset.id);
+  if (!selected.length) { showToast('⚠️ Select at least one item.', 'error'); return; }
+  printContent(`<h1>🔬 Evidence Report</h1><p>${selected.length} item(s) selected</p>`, 'Evidence Report');
+}
+let cameraStream = null;
+function openAddEvidenceModal() {
+  openModal('➕ Attach Evidence',
+    `<div style="display:flex;gap:8px;margin-bottom:14px;"><button class="btn btn-secondary btn-sm" onclick="openCamera()">📸 Live Camera</button><button class="btn btn-secondary btn-sm" onclick="openFileSelect()">📎 Select File</button></div><div id="camera-preview" style="display:none;margin-bottom:12px;"><video id="cam-video" style="width:100%;border-radius:8px;max-height:200px;" autoplay playsinline></video><div style="display:flex;gap:8px;margin-top:8px;"><button class="btn btn-primary btn-sm" onclick="snapPhoto()">📸 Capture</button><button class="btn btn-secondary btn-sm" onclick="stopCamera()">✕ Stop</button></div><canvas id="cam-canvas" style="display:none;"></canvas><img id="cam-snap" style="display:none;width:100%;border-radius:8px;margin-top:8px;border:2px solid var(--accent);" alt=""></div><div class="form-row"><div class="form-group"><label class="form-label">Name *</label><input class="form-input" id="ev-name" placeholder="Evidence name"></div><div class="form-group"><label class="form-label">Linked FIR *</label><input class="form-input" id="ev-fir-link" placeholder="e.g. 245/2025"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Type</label><select class="form-input" id="ev-type-input"><option>Photo</option><option>Video</option><option>Audio</option><option>Document</option></select></div><div class="form-group"><label class="form-label">Date</label><input class="form-input" id="ev-date-input" placeholder="DD-MM-YYYY"></div></div><div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="ev-notes-input" rows="2" placeholder="Description..."></textarea></div>`,
+    `<button class="btn btn-secondary" onclick="stopCamera();closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveEvidenceItem()">💾 Attach</button>`);
+}
+function openCamera() { document.getElementById('camera-preview').style.display = 'block'; navigator.mediaDevices?.getUserMedia({ video: { facingMode: 'environment' } }).then(stream => { cameraStream = stream; document.getElementById('cam-video').srcObject = stream; }).catch(() => showToast('⚠️ Camera not available.', 'error')); }
+function stopCamera() { cameraStream?.getTracks().forEach(t => t.stop()); cameraStream = null; }
+function snapPhoto() {
+  const video = document.getElementById('cam-video'), canvas = document.getElementById('cam-canvas'), snap = document.getElementById('cam-snap');
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  snap.src = canvas.toDataURL('image/jpeg', 0.9); snap.style.display = 'block'; video.style.display = 'none'; stopCamera();
+  const nameInp = document.getElementById('ev-name'); if (nameInp && !nameInp.value) nameInp.value = 'Live Photo ' + new Date().toLocaleString('en-PK');
+  document.getElementById('ev-type-input').value = 'Photo'; showToast('✅ Photo captured!', 'success');
+}
+function openFileSelect() {
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*,video/*,audio/*,.pdf,.doc,.docx';
+  inp.onchange = e => { const file = e.target.files[0]; if (!file) return; const nameInp = document.getElementById('ev-name'); if (nameInp && !nameInp.value) nameInp.value = file.name; const typeInp = document.getElementById('ev-type-input'); if (typeInp) { if (file.type.startsWith('image')) typeInp.value = 'Photo'; else if (file.type.startsWith('video')) typeInp.value = 'Video'; else if (file.type.startsWith('audio')) typeInp.value = 'Audio'; else typeInp.value = 'Document'; } showToast('📎 File selected: ' + file.name, 'success'); };
+  inp.click();
+}
+async function saveEvidenceItem() {
+  const name = document.getElementById('ev-name').value.trim(), fir = document.getElementById('ev-fir-link').value.trim();
+  if (!name || !fir) { showToast('⚠️ Name and FIR are required.', 'error'); return; }
+  try { await addEvidence({ name, fir_number: fir, type: document.getElementById('ev-type-input').value, evidence_date: document.getElementById('ev-date-input').value, notes: document.getElementById('ev-notes-input').value, is_readonly: true }); stopCamera(); closeModal(); showToast('✅ Evidence attached: ' + name, 'success'); renderEvidence(document.getElementById('page-content')); }
+  catch (err) { showToast('❌ Error: ' + err.message, 'error'); }
+}
+async function viewEvidenceDetail(id) {
+  const all = await getEvidence(), e = all.find(x => x.id === id); if (!e) return;
+  openModal('🔬 Evidence Details', `<div>${[['Name',e.name],['FIR',e.fir_number||'—'],['Type',e.type],['Date',e.evidence_date||'—'],['Notes',e.notes||'—']].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}</div><div style="text-align:center;padding:16px;font-size:48px;">${e.type==='Photo'?'📷':e.type==='Video'?'🎥':e.type==='Audio'?'🎙️':'📄'}</div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Close</button><button class="btn btn-danger btn-sm" onclick="closeModal();doDeleteEvidence('${id}')">🗑️ Delete</button>`);
+}
+async function doDeleteEvidence(id) { try { await deleteEvidence(id); showToast('🗑️ Evidence deleted.'); renderEvidence(document.getElementById('page-content')); } catch(err) { showToast('❌ Error: ' + err.message, 'error'); } }
+
+// ════════════════════════════════════════════
+//  MISAL BUILDER
+// ════════════════════════════════════════════
+registerPage('misal', renderMisal);
+const MISAL_DOCS = { 'FIR Documents': ['FIR','FIR Mattan','CRO Form','CDR Form'], 'Statements': ['Statement 161 CrPC','Statement 164 CrPC','Talbi 160 CrPC','Zimni Androoni','Zimni Berooni'], 'Court Documents': ['Remand Form','Challan Complete','Challan Incomplete','Cancellation Report','Untrace Report'], 'Identification': ['Shanakht Certificate','Naqsha Moka','Naqsha Baramadgi'], 'Medical / Forensic': ['Medical Report','Postmortem Report','DNA/PFSA Report'], 'Judicial Forms': ['High Court Checklist','Index MISAL','Dockets','Memorandum'], 'Warrants & Notices': ['Warrant','Ishtihar Application','Mafroori Form'], 'Financial': ['Investigation Bills','Recovery Memo','Saza Slip'], };
+async function renderMisal(container) {
+  const cases = await getCases(), officer = currentOfficer || {};
+  container.innerHTML = `
+    <div class="page-header"><div class="page-title">📄 MISAL Builder</div><div style="display:flex;gap:8px;"><select class="filter-select" id="misal-case-select"><option value="">— Select Case / FIR —</option>${cases.map(c=>`<option value="${c.id}">${c.fir_number} — ${c.accused_name||'Unknown'}</option>`).join('')}</select><button class="btn btn-primary btn-sm" onclick="saveMisalDoc()">💾 Save MISAL</button></div></div>
+    <div class="misal-layout">
+      <div class="misal-sidebar">
+        <div style="padding:10px 14px;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;color:var(--accent);">Document List</div>
+        ${Object.entries(MISAL_DOCS).map(([cat,items])=>`<div style="border-bottom:1px solid var(--border-light);"><div style="padding:8px 14px;font-size:10px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">${cat} ▾</div><div>${items.map(item=>`<div onclick="showToast('📄 Added: ${item}')" style="padding:7px 14px 7px 24px;font-size:12px;color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;gap:8px;" onmouseenter="this.style.background='var(--hover-bg)'" onmouseleave="this.style.background=''"><input type="checkbox" style="accent-color:var(--accent);" onclick="event.stopPropagation()"> 📄 ${item}</div>`).join('')}</div></div>`).join('')}
+      </div>
+      <div class="misal-main">
+        <div class="misal-preview">
+          <div class="doc-preview" id="fir-doc">
+            <div style="text-align:center;margin-bottom:20px;"><div style="font-size:12px;color:#555;">حکومت پاکستان — پنجاب پولیس</div><h1 style="font-size:16px;margin-bottom:4px;">FIRST INFORMATION REPORT</h1><div style="font-size:11px;color:#555;">( Under Section 154 Cr.P.C. )</div></div>
+            <div style="font-size:11px;color:#888;margin-bottom:8px;text-align:right;font-style:italic;">✏️ Click any field to edit</div>
+            <div style="font-size:14px;line-height:1.8;">
+              <div style="display:flex;gap:20px;margin:8px 0;"><div style="flex:1;"><div style="font-size:11px;color:#777;">FIR No.</div><div class="editable-field" id="pv-fir" contenteditable="true">—</div></div><div style="flex:1;"><div style="font-size:11px;color:#777;">Date</div><div class="editable-field" contenteditable="true">__________</div></div><div style="flex:1;"><div style="font-size:11px;color:#777;">Time</div><div class="editable-field" contenteditable="true">__________</div></div></div>
+              <div style="margin:10px 0;"><div style="font-size:11px;color:#777;">Police Station</div><div class="editable-field" id="pv-station" contenteditable="true">${officer.station||'__________'}</div></div>
+              <div style="display:flex;gap:20px;margin:8px 0;"><div style="flex:2;"><div style="font-size:11px;color:#777;">District</div><div class="editable-field" id="pv-district" contenteditable="true">${officer.district||'__________'}</div></div><div style="flex:1;"><div style="font-size:11px;color:#777;">Year</div><div class="editable-field" contenteditable="true">${new Date().getFullYear()}</div></div></div>
+              <div style="margin:10px 0;"><div style="font-size:11px;color:#777;">Section of Law</div><div class="editable-field" id="pv-section" contenteditable="true">__________</div></div>
+              <div style="margin:10px 0;"><div style="font-size:11px;color:#777;">Complainant Name</div><div class="editable-field" id="pv-complainant" contenteditable="true">__________________________</div></div>
+              <div style="margin:10px 0;"><div style="font-size:11px;color:#777;">CNIC No.</div><div class="editable-field" id="pv-cnic" contenteditable="true">_____-_______-_</div></div>
+              <div style="margin:10px 0;"><div style="font-size:11px;color:#777;">Cell No.</div><div class="editable-field" id="pv-cell" contenteditable="true">0___-_______</div></div>
+              <div style="margin:10px 0;"><div style="font-size:11px;color:#777;">Statement / Occurrence</div><div class="editable-field" contenteditable="true" style="min-height:80px;display:block;"></div></div>
+              <div style="display:flex;gap:20px;margin:8px 0;"><div style="flex:1;"><div style="font-size:11px;color:#777;">Accused Name</div><div class="editable-field" id="pv-accused" contenteditable="true">__________________________</div></div><div style="flex:1;"><div style="font-size:11px;color:#777;">Offence</div><div class="editable-field" id="pv-offence" contenteditable="true">__________________________</div></div></div>
+              <div style="display:flex;gap:20px;margin:8px 0;"><div style="flex:1;"><div style="font-size:11px;color:#777;">Investigation Officer</div><div class="editable-field" id="pv-io" contenteditable="true">${officer.full_name||'__________________________'}</div></div><div style="flex:1;"><div style="font-size:11px;color:#777;">SHO</div><div class="editable-field" id="pv-sho" contenteditable="true">__________________________</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('misal-case-select').addEventListener('change', async function() {
+    if (!this.value) return;
+    const c = await getCase(this.value); if (!c) return;
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
+    set('pv-fir', c.fir_number); set('pv-section', c.section_of_law); set('pv-complainant', c.complainant); set('pv-cnic', formatCNIC(c.accused_cnic)); set('pv-cell', formatCell(c.accused_cell)); set('pv-accused', c.accused_name); set('pv-offence', c.offence_type); set('pv-sho', c.sho);
+    showToast('📄 Case loaded into MISAL!', 'success');
+  });
+}
+async function saveMisalDoc() {
+  const fir = document.getElementById('pv-fir')?.textContent || '—';
+  try { await saveMisal({ fir_number: fir, document_name: 'FIR', content: document.getElementById('fir-doc')?.innerHTML || '' }); showToast('💾 MISAL saved for FIR ' + fir, 'success'); }
+  catch(err) { showToast('❌ Error: ' + err.message, 'error'); }
+}
+
+// ════════════════════════════════════════════
+//  SEARCH PAGE
+// ════════════════════════════════════════════
+registerPage('search', renderSearch);
+async function renderSearch(container) {
+  container.innerHTML = `
+    <div class="page-header"><div class="page-title">🔍 Advanced Search</div></div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">SEARCH PARAMETERS</div>
+      <div class="form-row"><div class="form-group"><label class="form-label">FIR Number</label><input class="form-input" id="sr-fir" placeholder="e.g. 245/2025"></div><div class="form-group"><label class="form-label">Accused / Complainant Name</label><input class="form-input" id="sr-name" placeholder="Full or partial name"></div></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">CNIC</label><input class="form-input" id="sr-cnic" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)"></div><div class="form-group"><label class="form-label">Cell Number</label><input class="form-input" id="sr-cell" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)"></div></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Section of Law</label><input class="form-input" id="sr-section" placeholder="e.g. 302 PPC"></div><div class="form-group"><label class="form-label">Status</label><select class="form-input" id="sr-status"><option value="">Any Status</option>${Object.entries(STATUS_LABELS).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select></div></div>
+      <div style="display:flex;gap:8px;"><button class="btn btn-primary" onclick="runAdvancedSearch()">🔍 Search</button><button class="btn btn-secondary" onclick="clearSearch()">Clear</button></div>
+    </div>
+    <div class="card" id="search-results"><div class="card-title">RESULTS</div><div style="color:var(--text-faint);font-size:12px;">Enter criteria above and click Search.</div></div>`;
+}
+async function runAdvancedSearch() {
+  const results = await advancedSearch({ fir: document.getElementById('sr-fir').value.trim(), name: document.getElementById('sr-name').value.trim(), cnic: document.getElementById('sr-cnic').value.trim(), cell: document.getElementById('sr-cell').value.trim(), section: document.getElementById('sr-section').value.trim(), status: document.getElementById('sr-status').value });
+  const el = document.getElementById('search-results'); if (!el) return;
+  el.innerHTML = results.length === 0 ? `<div class="card-title">RESULTS</div><div style="color:var(--text-muted);font-size:12px;padding:20px 0;text-align:center;">No cases found matching your criteria.</div>` : `<div class="card-title">RESULTS — ${results.length} case(s) found</div><table class="data-table"><thead><tr><th>FIR No.</th><th>Accused</th><th>CNIC</th><th>Cell</th><th>Section</th><th>Status</th><th>Action</th></tr></thead><tbody>${results.map(c=>`<tr><td><span class="fir-num" onclick="viewCase('${c.id}')">${c.fir_number}</span></td><td>${c.accused_name||'—'}</td><td style="font-family:var(--font-mono);font-size:11px;">${formatCNIC(c.accused_cnic)}</td><td style="font-family:var(--font-mono);font-size:11px;">${formatCell(c.accused_cell)}</td><td style="font-size:11px;">${c.section_of_law||'—'}</td><td><span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span></td><td><button class="btn btn-secondary btn-sm" onclick="viewCase('${c.id}')">View</button></td></tr>`).join('')}</tbody></table>`;
+}
+function clearSearch() { ['sr-fir','sr-name','sr-cnic','sr-cell','sr-section'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; }); document.getElementById('sr-status').value=''; const el = document.getElementById('search-results'); if(el) el.innerHTML=`<div class="card-title">RESULTS</div><div style="color:var(--text-faint);font-size:12px;">Enter criteria above and click Search.</div>`; }
+
+// ════════════════════════════════════════════
+//  LAW LIBRARY
+// ════════════════════════════════════════════
+registerPage('law', renderLaw);
+const LAWS = [
+  { name:'Pakistan Penal Code', short:'PPC 1860', icon:'⚖️', sections:'511 Sections', color:'#38bdf8', url:'https://pakistancode.gov.pk/english/index.php' },
+  { name:'Code of Criminal Procedure', short:'CrPC 1898', icon:'📜', sections:'565 Sections', color:'#a78bfa', url:'https://pakistancode.gov.pk/english/index.php' },
+  { name:'Motor Vehicle Ordinance', short:'MVO', icon:'🚗', sections:'84 Sections', color:'#22c55e', url:'https://punjabcode.punjab.gov.pk/urdu/index' },
+  { name:'Control of Narcotic Substances', short:'CNSA 1997', icon:'💊', sections:'68 Sections', color:'#ef4444', url:'https://pakistancode.gov.pk/english/index.php' },
+  { name:'Arms Ordinance', short:'Arms Ord. 1965', icon:'🔫', sections:'25 Sections', color:'#f59e0b', url:'https://pakistancode.gov.pk/english/index.php' },
+  { name:'Anti-Terrorism Act', short:'ATA 1997', icon:'🛡️', sections:'48 Sections', color:'#f97316', url:'https://pakistancode.gov.pk/english/index.php' },
+  { name:'Women Protection Act', short:'WPA 2006', icon:'👩‍⚖️', sections:'30 Sections', color:'#ec4899', url:'https://punjabcode.punjab.gov.pk/urdu/index' },
+  { name:'Qanun-e-Shahadat', short:'Evidence Act 1984', icon:'📋', sections:'166 Articles', color:'#14b8a6', url:'https://pakistancode.gov.pk/english/index.php' },
+  { name:'Anti-Rape Laws', short:'CPLC Act 2021', icon:'⚡', sections:'29 Sections', color:'#6366f1', url:'https://pakistancode.gov.pk/english/index.php' },
+  { name:'Punjab Food Authority Act', short:'PFA 2011', icon:'🍽️', sections:'40 Sections', color:'#84cc16', url:'https://punjabcode.punjab.gov.pk/urdu/index' },
+  { name:'Electricity Theft Laws', short:'PECA / Electricity Act', icon:'⚡', sections:'Multiple', color:'#facc15', url:'https://pakistancode.gov.pk/english/index.php' },
+  { name:'Prohibition Act', short:'Prohibition Act', icon:'🚫', sections:'18 Sections', color:'#94a3b8', url:'https://pakistancode.gov.pk/english/index.php' },
+];
+function renderLaw(container) {
+  container.innerHTML = `<div class="page-header"><div class="page-title">⚖️ Law & Reference Library</div></div><div class="search-bar"><input class="search-input" id="law-search" placeholder="Search laws..." oninput="filterLaws(this.value)"></div><div style="display:flex;gap:8px;margin-bottom:14px;"><button class="btn btn-secondary btn-sm" onclick="window.open('https://punjabcode.punjab.gov.pk/urdu/index')">🔗 Punjab Code</button><button class="btn btn-secondary btn-sm" onclick="window.open('https://pakistancode.gov.pk/english/index.php')">🔗 Pakistan Code</button><button class="btn btn-secondary btn-sm" onclick="window.open('https://data.lhc.gov.pk/dynamic/approved_judgments_result_new.php')">🔗 LHC Judgments</button></div><div class="law-grid" id="law-grid">${renderLawCards(LAWS)}</div>`;
+}
+function renderLawCards(items) { return items.map(l=>`<div class="law-card" onclick="window.open('${l.url}')"><div style="font-size:28px;margin-bottom:8px;">${l.icon}</div><div style="font-size:13px;font-weight:600;margin-bottom:4px;">${l.name}</div><div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">${l.short}</div><div style="font-size:10px;color:${l.color};">${l.sections}</div></div>`).join(''); }
+function filterLaws(q) { const s = q.toLowerCase(); const filtered = s ? LAWS.filter(l => l.name.toLowerCase().includes(s) || l.short.toLowerCase().includes(s)) : LAWS; const grid = document.getElementById('law-grid'); if (grid) grid.innerHTML = renderLawCards(filtered); }
+
+// ════════════════════════════════════════════
+//  REMINDERS PAGE
+// ════════════════════════════════════════════
+registerPage('reminders', renderReminders);
+async function renderReminders(container) {
+  const reminders = await getReminders();
+  container.innerHTML = `
+    <div class="page-header"><div class="page-title">🔔 Reminders</div><button class="btn btn-primary" onclick="openAddReminderModal()">+ Add Reminder</button></div>
+    <div class="card">
+      ${reminders.length === 0 ? `<div style="text-align:center;padding:30px;color:var(--text-muted);font-size:12px;">No reminders. <a onclick="openAddReminderModal()">Add your first reminder →</a></div>` : reminders.map(r=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-light);"><input type="checkbox" ${r.is_done?'checked':''} onchange="toggleReminder('${r.id}',this.checked)" style="accent-color:var(--accent);width:16px;height:16px;"><div style="flex:1;"><div style="font-size:13px;${r.is_done?'text-decoration:line-through;color:var(--text-muted);':''}">${r.text}</div><div style="font-size:10px;color:var(--text-muted);">${r.linked_fir?'FIR: '+r.linked_fir+' · ':''}${formatDate(r.reminder_date)}</div></div><span class="pill ${r.priority==='high'?'pill-red':r.priority==='medium'?'pill-amber':'pill-blue'}">${r.priority}</span><button class="btn btn-danger btn-sm" onclick="doDeleteReminder('${r.id}')">✕</button></div>`).join('')}
+    </div>`;
+}
+function openAddReminderModal() {
+  openModal('➕ Add Reminder',
+    `<div class="form-group"><label class="form-label">Reminder Text *</label><input class="form-input" id="rem-text" placeholder="e.g. Submit challan for FIR 245/2025"></div><div class="form-row"><div class="form-group"><label class="form-label">Date</label><input class="form-input" id="rem-date" type="date"></div><div class="form-group"><label class="form-label">Priority</label><select class="form-input" id="rem-priority"><option value="high">🔴 High</option><option value="medium" selected>🟡 Medium</option><option value="low">🔵 Low</option></select></div></div><div class="form-group"><label class="form-label">Linked FIR (optional)</label><input class="form-input" id="rem-fir" placeholder="e.g. 245/2025"></div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveReminder()">💾 Save</button>`);
+}
+async function saveReminder() {
+  const text = document.getElementById('rem-text').value.trim(); if (!text) { showToast('⚠️ Text required.', 'error'); return; }
+  try { await addReminder({ text, reminder_date: document.getElementById('rem-date').value, priority: document.getElementById('rem-priority').value, linked_fir: document.getElementById('rem-fir').value.trim() }); closeModal(); showToast('✅ Reminder added!', 'success'); await updateBadges(); renderReminders(document.getElementById('page-content')); }
+  catch(err) { showToast('❌ Error: ' + err.message, 'error'); }
+}
+async function toggleReminder(id, done) { await updateReminder(id, { is_done: done }); await updateBadges(); }
+async function doDeleteReminder(id) { await deleteReminder(id); showToast('🗑️ Reminder deleted.'); await updateBadges(); renderReminders(document.getElementById('page-content')); }
+
+// ════════════════════════════════════════════
+//  PERFORMANCE PAGE
+// ════════════════════════════════════════════
+registerPage('performance', renderPerformance);
+async function renderPerformance(container) {
+  const stats = await getDashboardStats(); const total = stats.total || 1;
+  container.innerHTML = `
+    <div class="page-header"><div class="page-title">📊 Performance Tracker</div></div>
+    <div class="perf-grid">
+      ${[['Challan Complete Rate',stats.complete,total,'var(--green)','✅'],['Under Investigation',stats.under,total,'var(--accent)','🔵'],['Incomplete Challan',stats.incomplete,total,'var(--amber)','⚠️'],['Untraced Cases',stats.untrace,total,'var(--purple)','🔍'],['Cancelled Cases',stats.cancel,total,'var(--red)','❌'],['Pending Reminders',stats.pendingReminders,Math.max(stats.pendingReminders,1),'var(--amber)','🔔']].map(([label,val,denom,color,icon])=>{
+        const pct = Math.round((val/denom)*100);
+        return `<div class="card"><div class="card-title">${icon} ${label}</div><div style="font-size:28px;font-weight:800;color:${color};font-family:var(--font-display);">${val}</div><div class="perf-bar-wrap"><div class="perf-bar" style="width:${pct}%;background:${color};"></div></div><div style="font-size:11px;color:var(--text-muted);">${pct}% of total</div></div>`;
+      }).join('')}
+    </div>
+    <div class="card" style="margin-top:16px;"><div class="card-title">📈 CASE SUMMARY</div><div class="detail-row"><span class="detail-key">Total Entrusted</span><span class="detail-val" style="color:var(--accent);">${stats.total}</span></div><div class="detail-row"><span class="detail-key">Completion Rate</span><span class="detail-val" style="color:var(--green);">${Math.round((stats.complete/total)*100)}%</span></div></div>`;
+}
+
+// ════════════════════════════════════════════
+//  BACKUP PAGE
+// ════════════════════════════════════════════
+registerPage('backup', renderBackupPage);
+function renderBackupPage(container) {
+  const status = getBackupStatus();
+  container.innerHTML = `
+    <div class="page-header"><div class="page-title">☁️ Backup & Multi-Cloud Sync</div><button class="btn btn-primary" onclick="triggerBackupNow()">🔄 Backup Now</button></div>
+    <div class="backup-dest-grid">
+      <div class="card"><div class="card-title">💾 DEVICE BACKUP</div><div style="text-align:center;padding:10px 0;"><div style="font-size:36px;margin-bottom:8px;">💾</div><div style="font-size:12px;font-weight:600;">Local Device</div><div style="font-size:10px;color:var(--green);margin-top:4px;">✅ Always Available Offline</div></div><button class="btn btn-secondary btn-sm" style="width:100%;margin-top:8px;" onclick="triggerBackupNow()">💾 Backup Now</button><button class="btn btn-secondary btn-sm" style="width:100%;margin-top:4px;" onclick="restoreFromLocalBackup()">📂 Restore</button></div>
+      <div class="card"><div class="card-title">🟢 GOOGLE DRIVE</div>${status.googleDriveConnected ? `<div style="font-size:12px;color:var(--green);margin-bottom:8px;">✅ Connected</div><button class="btn btn-secondary btn-sm" style="width:100%;" onclick="disconnectGoogleDrive()">Disconnect</button>` : `<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">Connect for automatic real-time cloud backup.</div><button class="btn btn-primary btn-sm" style="width:100%;" onclick="connectGoogleDrive()">🔗 Connect Google Drive</button>`}</div>
+      <div class="card"><div class="card-title">☁️ SUPABASE CLOUD</div><div style="font-size:12px;color:var(--green);margin-bottom:8px;">✅ Active</div><div style="font-size:10px;color:var(--text-muted);">• Daily automatic backups<br>• AES-256 encryption<br>• Accessible from any device</div></div>
+    </div>`;
+}
+
+// ════════════════════════════════════════════
+//  SETTINGS PAGE
+// ════════════════════════════════════════════
+registerPage('settings', renderSettings);
+function renderSettings(container) {
+  const officer = currentOfficer || {};
+  container.innerHTML = `
+    <div class="page-header"><div class="page-title">⚙️ Settings & Profile</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="card"><div class="card-title">👮 OFFICER PROFILE</div>
+        <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="set-name" value="${officer.full_name||''}"></div>
+        <div class="form-group"><label class="form-label">Badge / Service Number</label><input class="form-input" id="set-badge" value="${officer.badge_number||''}"></div>
+        <div class="form-group"><label class="form-label">Designation</label><input class="form-input" id="set-designation" value="${officer.designation||''}"></div>
+        <div class="form-group"><label class="form-label">Police Station</label><input class="form-input" id="set-station" value="${officer.station||''}"></div>
+        <div class="form-group"><label class="form-label">District</label><input class="form-input" id="set-district" value="${officer.district||''}"></div>
+        <button class="btn btn-primary" onclick="saveProfileSettings()">💾 Save Profile</button>
+      </div>
+      <div class="card"><div class="card-title">🖼️ PROFILE PHOTO</div>
+        <div style="text-align:center;padding:16px 0;"><div id="settings-avatar" style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--accent-dark),var(--accent));margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;overflow:hidden;">${localStorage.getItem('dio_profile_photo')?`<img src="${localStorage.getItem('dio_profile_photo')}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">`:((officer.full_name?.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()||'IO'))}</div><button class="btn btn-secondary btn-sm" onclick="changeProfilePhoto()">📷 Change Photo</button></div>
+        <div class="card-title" style="margin-top:16px;">🔐 SECURITY</div>
+        <div style="font-size:11px;color:var(--green);">✅ MFA Active · ✅ Audit Logging · ✅ Encrypted Data</div>
+      </div>
+    </div>`;
+}
+async function saveProfileSettings() {
+  try { await updateOfficerProfile({ full_name: document.getElementById('set-name').value.trim(), badge_number: document.getElementById('set-badge').value.trim(), designation: document.getElementById('set-designation').value.trim(), station: document.getElementById('set-station').value.trim(), district: document.getElementById('set-district').value.trim() }); updateSidebarProfile(); showToast('✅ Profile updated!', 'success'); }
+  catch(err) { showToast('❌ Error: ' + err.message, 'error'); }
+}
+function changeProfilePhoto() {
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = e => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = ev => { const src = ev.target.result; try { localStorage.setItem('dio_profile_photo', src); } catch(err) {} document.querySelectorAll('.officer-card-avatar,.sidebar-avatar,#settings-avatar').forEach(el => { el.innerHTML = `<img src="${src}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">`; }); showToast('✅ Profile photo updated!', 'success'); }; reader.readAsDataURL(file); };
+  inp.click();
+}
+
+// ════════════════════════════════════════════
+//  ADMIN PAGE
+// ════════════════════════════════════════════
+registerPage('admin', renderAdminPage);
+async function renderAdminPage(container) {
+  if (currentRole !== 'admin' && currentRole !== 'superadmin') { container.innerHTML = `<div style="text-align:center;padding:60px;color:var(--text-muted);">⛔ Access Denied.</div>`; return; }
+  const stats = await getAdminStats();
+  container.innerHTML = `
+    <div class="page-header"><div class="page-title">👨‍💼 Admin Control Panel</div><a href="/admin.html" target="_blank" class="btn btn-primary">🔗 Open Full Admin Panel</a></div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
+      ${[['Total Officers',stats?.totalOfficers||0,'var(--accent)','👮'],['Total Cases',stats?.totalCases||0,'var(--green)','📁'],['Active Cases',stats?.activeCases||0,'var(--amber)','🔵'],['Completed',stats?.completedCases||0,'var(--green)','✅']].map(([label,val,color,icon])=>`<div class="card" style="text-align:center;"><div style="font-size:28px;margin-bottom:4px;">${icon}</div><div style="font-size:28px;font-weight:900;color:${color};font-family:var(--font-display);">${val}</div><div style="font-size:11px;color:var(--text-muted);">${label}</div></div>`).join('')}
+    </div>
+    <div class="card"><div class="card-title">📋 RECENT ACTIVITY</div>${(stats?.recentActivity||[]).slice(0,8).map(log=>`<div class="detail-row"><span class="detail-key" style="font-family:var(--font-mono);font-size:10px;">${log.action} on ${log.table_name}</span><span class="detail-val" style="font-size:10px;color:var(--text-faint);">${timeAgo(log.created_at)}</span></div>`).join('')||'<div style="color:var(--text-muted);font-size:12px;">No activity logged yet.</div>'}</div>`;
+}
+
+// ════════════════════════════════════════════
+//  MAIN APP BOOTSTRAP
+// ════════════════════════════════════════════
+async function initApp() {
+  updateSidebarProfile();
+  updateConnectionStatus(true);
+  await updateBadges();
+  startClock();
+  initBackupSystem();
+  setupRealtimeSync(async (table) => {
+    await updateBadges();
+    const currentPageTitle = document.getElementById('topbar-title')?.textContent;
+    if (table === 'cases' && currentPageTitle?.includes('Cases')) renderCases(document.getElementById('page-content'));
+    if (table === 'reminders' && currentPageTitle?.includes('Reminder')) renderReminders(document.getElementById('page-content'));
+  });
+  showPage('dashboard', document.querySelector('.nav-item'));
+  setTimeout(() => triggerBackup('app_initialized'), 3000);
+}
+
+window.addEventListener('online', () => { updateConnectionStatus(true); showToast('🌐 Back online!', 'success'); triggerBackup('back_online'); });
+window.addEventListener('offline', () => { updateConnectionStatus(false); showToast('📴 You are offline.', 'error', 5000); });
+
+window.addEventListener('DOMContentLoaded', async () => {
+  await checkExistingSession();
+  setInterval(() => { const el = document.getElementById('footer-time'); if (el) el.textContent = new Date().toLocaleTimeString('en-PK'); }, 1000);
+  console.log('✅ Digital IO v4.0 — Fully Loaded');
+});
+</script>
 </body>
 </html>
