@@ -595,7 +595,8 @@ async function renderCases(container,fs='',fq=''){
                 <span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span>
               </div>
               <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">👤 ${c.complainant||'—'}</div>
-              <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">⚖️ ${c.section_of_law||'—'}</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">⚖️ ${c.section_of_law||'—'}</div>
+              ${c.is_cross_version?`<div style="font-size:10px;color:var(--red);margin-bottom:6px;">⚔️ Cross Version — مخالف مقدمہ</div>`:''}
               <div style="display:flex;justify-content:space-between;align-items:center;">
                 <div style="font-size:10px;color:var(--text-faint);">📎 ${docs.length} documents</div>
                 <div style="display:flex;gap:4px;">
@@ -869,7 +870,85 @@ function caseFormHTML(c={}) {
       </div>
     </div>
 
-  </div>`;
+    <!-- CROSS VERSION -->
+    <div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-top:10px;">
+      <div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="toggleCrossVersion()">
+        <input type="checkbox" id="cf-cross-version" ${c.is_cross_version?'checked':''} style="accent-color:var(--red);width:16px;height:16px;" onclick="event.stopPropagation();toggleCrossVersion()">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--red);">⚔️ Cross Version — مخالف مقدمہ</div>
+          <div style="font-size:10px;color:var(--text-muted);">Check if accused has also filed a case against complainant for the same incident</div>
+        </div>
+      </div>
+
+      <div id="cross-version-fields" style="display:${c.is_cross_version?'block':'none'};margin-top:14px;border-top:1px dashed var(--red);padding-top:14px;">
+        <div style="font-size:10px;color:var(--red);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">⚔️ Cross FIR Details — مخالف مقدمہ کی تفصیل</div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Cross FIR Number</label>
+            <input class="form-input" id="cf-cross-fir" value="${c.cross_fir_number||''}" placeholder="e.g. 246/2025" dir="auto">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cross FIR Date</label>
+            <input class="form-input" id="cf-cross-fir-date" value="${c.cross_fir_date||''}" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" maxlength="10">
+          </div>
+        </div>
+
+        <div style="padding:10px 12px;background:var(--bg-card);border-radius:var(--radius-sm);margin-bottom:12px;">
+          <div style="font-size:10px;color:var(--red);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">👤 مخالف مدعی / Cross Complainant Details</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Cross Complainant Name</label>
+              <input class="form-input" id="cf-cross-complainant" value="${c.cross_complainant||''}" placeholder="مدعی کا نام" dir="auto">
+            </div>
+            <div class="form-group">
+              <label class="form-label">CNIC</label>
+              <input class="form-input" id="cf-cross-complainant-cnic" value="${c.cross_complainant_cnic||''}" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Cell Number</label>
+              <input class="form-input" id="cf-cross-complainant-cell" value="${c.cross_complainant_cell||''}" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Profession</label>
+              <input class="form-input" id="cf-cross-complainant-profession" value="${c.cross_complainant_profession||''}" placeholder="پیشہ / Profession" dir="auto">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Cross Sections of Law</label>
+            <input class="form-input" id="cf-cross-section" value="${c.cross_section_of_law||''}" placeholder="e.g. 302 PPC + 34 PPC" dir="auto">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cross Offence Type</label>
+            <input class="form-input" id="cf-cross-offence" value="${c.cross_offence_type||''}" placeholder="Cross offence" dir="auto">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Cross FIR Writer</label>
+          <input class="form-input" id="cf-cross-fir-writer" value="${c.cross_fir_writer||''}" placeholder="FIR لکھنے والا" dir="auto">
+        </div>
+
+        <div style="padding:8px 10px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);font-size:11px;color:var(--red);">
+          ⚠️ Cross Version cases are linked to the original FIR. Both cases will appear in the case workspace under the same folder.
+        </div>
+      </div>
+    </div>
+
+  </div>\`;
+}
+
+function toggleCrossVersion() {
+  const cb = document.getElementById('cf-cross-version');
+  const fields = document.getElementById('cross-version-fields');
+  if (!cb || !fields) return;
+  cb.checked = !cb.checked;
+  fields.style.display = cb.checked ? 'block' : 'none';
 }
 
 function renderDocChecklist(docs, selected) {
@@ -1045,6 +1124,16 @@ async function saveNewCase(){
       position:document.getElementById('cf-position').value,
       notes:document.getElementById('cf-notes').value.trim(),
       documents_checklist:selectedDocuments.length > 0 ? selectedDocuments : [],
+      is_cross_version: document.getElementById('cf-cross-version')?.checked || false,
+      cross_fir_number: document.getElementById('cf-cross-fir')?.value.trim() || null,
+      cross_fir_date: document.getElementById('cf-cross-fir-date')?.value.trim() || null,
+      cross_complainant: document.getElementById('cf-cross-complainant')?.value.trim() || null,
+      cross_complainant_cnic: document.getElementById('cf-cross-complainant-cnic')?.value.trim() || null,
+      cross_complainant_cell: document.getElementById('cf-cross-complainant-cell')?.value.trim() || null,
+      cross_complainant_profession: document.getElementById('cf-cross-complainant-profession')?.value.trim() || null,
+      cross_section_of_law: document.getElementById('cf-cross-section')?.value.trim() || null,
+      cross_offence_type: document.getElementById('cf-cross-offence')?.value.trim() || null,
+      cross_fir_writer: document.getElementById('cf-cross-fir-writer')?.value.trim() || null,
     });
     closeModal();showToast(`✅ Case added: FIR ${fir}`,'success');await updateBadges();renderCases(document.getElementById('page-content'));
   }catch(err){showToast('❌ Error: '+err.message,'error');}
@@ -1069,6 +1158,16 @@ async function saveEditCase(id){
       position:document.getElementById('cf-position').value,
       notes:document.getElementById('cf-notes').value.trim(),
       documents_checklist:selectedDocuments.length > 0 ? selectedDocuments : [],
+      is_cross_version: document.getElementById('cf-cross-version')?.checked || false,
+      cross_fir_number: document.getElementById('cf-cross-fir')?.value.trim() || null,
+      cross_fir_date: document.getElementById('cf-cross-fir-date')?.value.trim() || null,
+      cross_complainant: document.getElementById('cf-cross-complainant')?.value.trim() || null,
+      cross_complainant_cnic: document.getElementById('cf-cross-complainant-cnic')?.value.trim() || null,
+      cross_complainant_cell: document.getElementById('cf-cross-complainant-cell')?.value.trim() || null,
+      cross_complainant_profession: document.getElementById('cf-cross-complainant-profession')?.value.trim() || null,
+      cross_section_of_law: document.getElementById('cf-cross-section')?.value.trim() || null,
+      cross_offence_type: document.getElementById('cf-cross-offence')?.value.trim() || null,
+      cross_fir_writer: document.getElementById('cf-cross-fir-writer')?.value.trim() || null,
     });
     closeModal();showToast('✅ Case updated!','success');renderCases(document.getElementById('page-content'));
   }catch(err){showToast('❌ Error: '+err.message,'error');}
@@ -1278,393 +1377,509 @@ function buildDocTemplate(docName, c, savedContent) {
   const field = (val) => `<span class="template-field" contenteditable="true">${val}</span>`;
 
   // Generic template — specific templates will be added when sample files are provided
+  const ts = 'border:1px solid #333;padding:6px 8px;';
+  const th = 'border:1px solid #333;padding:6px 8px;background:#f0f0f0;font-weight:700;text-align:center;';
+  const td = 'border:1px solid #333;padding:6px 8px;';
+  const tdr = 'border:1px solid #333;padding:6px 8px;text-align:right;';
+  const wrap = 'font-family:\'Jameel Noori Nastaleeq\',\'Noto Nastaliq Urdu\',serif;direction:rtl;font-size:14px;line-height:2;color:#000;';
+  const etd = (v) => `<td style="${td}"><span class="template-field" contenteditable="true">${v}</span></td>`;
+  const etdr = (v) => `<td style="${tdr}"><span class="template-field" contenteditable="true">${v}</span></td>`;
+  const ef = (v) => `<span class="template-field" contenteditable="true">${v}</span>`;
+
   const templates = {
-    'FIR': `
-      <div style="text-align:center;margin-bottom:20px;direction:rtl;">
-        <div style="font-size:16px;font-weight:700;">پاکستان — پنجاب پولیس</div>
-        <div style="font-size:13px;color:#555;margin-top:4px;">Government of Pakistan — Punjab Police</div>
-        <div style="font-size:18px;font-weight:900;margin:10px 0;border-bottom:2px solid #333;padding-bottom:8px;">اول اطلاعاتی رپورٹ</div>
-        <div style="font-size:14px;font-weight:600;">FIRST INFORMATION REPORT</div>
-        <div style="font-size:12px;color:#777;">(Section 154 Cr.P.C.)</div>
-      </div>
-      <table style="width:100%;border-collapse:collapse;direction:rtl;margin-bottom:16px;">
-        <tr><td style="width:25%;padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">FIR نمبر</td><td style="padding:8px;border:1px solid #ccc;">${field(fir)}</td><td style="width:25%;padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">تاریخ</td><td style="padding:8px;border:1px solid #ccc;">${field(firDate)}</td></tr>
-        <tr><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">پولیس اسٹیشن</td><td style="padding:8px;border:1px solid #ccc;">${field(station)}</td><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">ضلع</td><td style="padding:8px;border:1px solid #ccc;">${field(district)}</td></tr>
-        <tr><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">دفعات</td><td colspan="3" style="padding:8px;border:1px solid #ccc;">${field(section)}</td></tr>
-        <tr><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">مدعی کا نام</td><td style="padding:8px;border:1px solid #ccc;">${field(complainant)}</td><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">شناختی کارڈ</td><td style="padding:8px;border:1px solid #ccc;">${field(compCnic)}</td></tr>
-        <tr><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">موبائل نمبر</td><td style="padding:8px;border:1px solid #ccc;">${field(compCell)}</td><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">پیشہ</td><td style="padding:8px;border:1px solid #ccc;">${field(compProfession)}</td></tr>
-        <tr><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">واقعہ کی تاریخ</td><td colspan="3" style="padding:8px;border:1px solid #ccc;">${field(occurrence)}</td></tr>
-      </table>
-      <div style="margin-bottom:12px;direction:rtl;">
-        <div style="font-weight:600;margin-bottom:6px;">بیان / واقعہ:</div>
-        <div class="template-field" contenteditable="true" style="min-height:120px;display:block;width:100%;border:1px dashed #aaa;padding:8px;"></div>
-      </div>
-      <table style="width:100%;border-collapse:collapse;direction:rtl;margin-top:20px;">
-        <tr><td style="width:33%;padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">تفتیشی افسر</td><td style="padding:8px;border:1px solid #ccc;">${field(io)}</td><td style="width:33%;padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">SHO</td><td style="padding:8px;border:1px solid #ccc;">${field(sho)}</td></tr>
-        <tr><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">FIR لکھنے والا</td><td style="padding:8px;border:1px solid #ccc;">${field(firWriter)}</td><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">SDPO</td><td style="padding:8px;border:1px solid #ccc;">${field(sdpo)}</td></tr>
-      </table>`,
 
-    'CDR Form': `
-      <div style="text-align:center;direction:rtl;margin-bottom:16px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-          <div style="font-size:13px;font-weight:700;">تھانہ ${field(station)}</div>
-          <div style="font-size:13px;font-weight:700;">ضلع ${field(district)}</div>
-        </div>
-        <div style="font-size:16px;font-weight:900;border:2px solid #333;padding:8px;margin-bottom:8px;">سی ڈی آر فارم — CDR Form</div>
-      </div>
-      <table style="width:100%;border-collapse:collapse;direction:rtl;margin-bottom:12px;">
+    // ══════════════════════════════════════════════
+    //  1. CDR FORM
+    // ══════════════════════════════════════════════
+    'CDR Form': `<div style="${wrap}">
+      <table style="width:100%;border-collapse:collapse;margin-bottom:0;">
         <tr>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;width:20%;">ڈائری نمبر</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field('۔۔۔۔۔۔۔۔')}</td>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;width:15%;">مورخہ</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field('۔۔۔۔۔۔۔۔')}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">مقدمہ نمبر</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field(fir)}</td>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">مورخہ</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field(firDate)}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">بجرم</td>
-          <td colspan="3" style="padding:8px;border:1px solid #ccc;">${field(section)}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">تاریخ/وقت وقوعہ</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field(occurrence)}</td>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">مقام وقوعہ</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field('۔۔۔۔۔۔۔۔')}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">تفتیشی افسر</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field(io)}</td>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">موبائل نمبر</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field('۔۔۔۔۔۔۔۔')}</td>
+          <td style="${td}width:33%;font-weight:700;">تھانہ ${ef(station)}</td>
+          <td style="${td}text-align:center;">ڈائری نمبر ${ef('۔۔۔۔۔۔')} مورخہ ${ef('۔۔۔۔۔۔')}</td>
+          <td style="${td}width:33%;text-align:left;font-weight:700;">ضلع ${ef(district)}</td>
         </tr>
       </table>
-      <table style="width:100%;border-collapse:collapse;direction:rtl;margin-bottom:16px;font-size:12px;">
-        <thead>
-          <tr style="background:#f0f0f0;">
-            <th style="padding:8px;border:1px solid #ccc;text-align:center;">نمبرشمار</th>
-            <th style="padding:8px;border:1px solid #ccc;text-align:center;">مطلوبہ CDR/IMEI</th>
-            <th style="padding:8px;border:1px solid #ccc;text-align:center;">ماڈل فون (اگرمعلوم ہو)</th>
-            <th style="padding:8px;border:1px solid #ccc;text-align:center;">ڈیٹا کی ابتدائی تاریخ</th>
-            <th style="padding:8px;border:1px solid #ccc;text-align:center;">ڈیٹا کی آخری تاریخ</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${[1,2,3,4,5,6,7,8,9].map(n=>`<tr><td style="padding:8px;border:1px solid #ccc;text-align:center;">${n}</td><td style="padding:8px;border:1px solid #ccc;height:30px;"></td><td style="padding:8px;border:1px solid #ccc;"></td><td style="padding:8px;border:1px solid #ccc;"></td><td style="padding:8px;border:1px solid #ccc;"></td></tr>`).join('')}
-          <tr style="background:#f9f9f9;font-weight:600;">
-            <td style="padding:8px;border:1px solid #ccc;">ٹوٹل تعداد</td>
-            <td style="padding:8px;border:1px solid #ccc;">تعداد سم نمبرز</td>
-            <td style="padding:8px;border:1px solid #ccc;">موبائل سیٹ نمبرز</td>
-            <td style="padding:8px;border:1px solid #ccc;">سم لوکیشن: YES</td>
-            <td style="padding:8px;border:1px solid #ccc;">سم ملکیت: YES</td>
-          </tr>
-        </tbody>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:0;">
+        <tr>
+          <td style="${td}" colspan="3">مقدمہ نمبر ${ef(fir)} مورخہ ${ef(firDate)} بجرم ${ef(section)} ت پ تھانہ ${ef(station)} ${ef(district)}</td>
+        </tr>
+        <tr>
+          <td style="${td}width:50%;">تاریخ/وقت وقوعہ: ${ef(occurrence)}</td>
+          <td style="${td}">مقام وقوعہ: ${ef('۔۔۔۔۔۔۔۔۔۔۔۔')}</td>
+        </tr>
+        <tr>
+          <td style="${td}">تفتیشی افسر: ${ef(io)}</td>
+          <td style="${td}">موبائل نمبر: ${ef('۔۔۔۔۔۔۔۔۔۔۔')}</td>
+        </tr>
       </table>
-      <div style="direction:rtl;font-size:12px;margin-bottom:16px;padding:10px;background:#fff9e6;border:1px solid #ddd;border-radius:4px;">
-        <div style="font-weight:700;margin-bottom:6px;">نوٹ:</div>
-        <div>۱۔ موبائل فون کال ڈیٹا ریکارڈ صرف FIR یا FIR سے متعلقہ ہونے کی صورت میں فراہم کیا جائے گا۔</div>
+      <table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:13px;">
+        <tr>
+          <td style="${th}width:8%;">نمبرشمار</td>
+          <td style="${th}width:28%;">مطلوبہ درکار CDR/IMEI</td>
+          <td style="${th}width:22%;">ماڈل فون (اگر معلوم ہو)</td>
+          <td style="${th}width:21%;">ڈیٹا کی ابتدائی تاریخ</td>
+          <td style="${th}width:21%;">ڈیٹا کی آخری تاریخ</td>
+        </tr>
+        ${[1,2,3,4,5,6,7,8,9].map(n=>`<tr>
+          <td style="${td}text-align:center;">${n}</td>
+          <td style="${td}height:28px;"></td>
+          <td style="${td}"></td>
+          <td style="${td}"></td>
+          <td style="${td}"></td>
+        </tr>`).join('')}
+        <tr>
+          <td style="${th}">ٹوٹل تعداد</td>
+          <td style="${th}">تعداد سم نمبرز</td>
+          <td style="${th}">موبائل سیٹ نمبرز</td>
+          <td style="${th}">سم لوکیشن: YES</td>
+          <td style="${th}">سم ملکیت: YES</td>
+        </tr>
+        <tr>
+          <td style="${td}" colspan="3"></td>
+          <td style="${td}" colspan="2" class="template-field" contenteditable="true">اس کیلئے یہی فارم علیحدہ سے بمعہ FIR لف کریں</td>
+        </tr>
+        <tr>
+          <td style="${td}font-weight:700;" colspan="5">دستخط درخواست کنندہ/تفتیشی آفیسر معہ تاریخ: ${ef(io)}</td>
+        </tr>
+      </table>
+      <div style="margin-top:10px;font-size:12px;line-height:2;">
+        <div style="font-weight:700;">نوٹ:</div>
+        <div>۱۔ موبائل فون کال ڈیٹا ریکارڈ صرف FIR یا FIR سے متعلقہ ہونے کی صورت میں فراہم کیا جائے گا یا ایسی انکوائریز جنکا حکم نامہ ہائی کورٹ اور سپریم کورٹ نے دیا ہوں۔</div>
         <div>۲۔ اگر CDR's/IMEI's کا اندراج FIR میں نہ ہو تو ضمنی میں اندراج کریں۔</div>
-        <div>۳۔ CDR کے غلط استعمال کی صورت میں ذمہ دار افسر کے خلاف سخت محکمانہ کاروائی کی جائیگی۔</div>
-        <div>۴۔ ضمنی نمبر ۔۔۔۔۔ تاریخ ۔۔۔۔۔ مرتبہ ۔۔۔۔۔۔۔ (کاپی ضمنی ہمراہ بھجوائیں)</div>
+        <div>۳۔ ضمنی نمبر ${ef('۔۔۔۔۔')} تاریخ ${ef('۔۔۔۔۔')} مرتبہ ${ef('۔۔۔۔۔')} (کاپی ضمنی ہمراہ بھجوائیں یا فارم ہذا کی پشت پر اقتباس ضمنی تحریر کریں)</div>
+        <div>۴۔ CDR کے غلط استعمال کی صورت میں ذمہ دار افسر کے خلاف سخت محکمانہ کاروائی کی جائیگی۔</div>
+        <div>۵۔ CDR کے ذریعے کیس ٹریس ہونے/ملزمان/اشتہاری پکڑے جانے پر/ریکوری ہونے پر IT آفس (موبائل ٹریکنگ سیل ملتان) کو بھی رپورٹ ارسال کی جائے۔</div>
       </div>
-      <div style="display:flex;justify-content:space-between;direction:rtl;margin-top:30px;">
-        <div style="text-align:center;">
-          <div style="border-top:1px solid #333;margin-top:40px;padding-top:4px;font-size:11px;">SHO تھانہ ${field(station)}</div>
-        </div>
-        <div style="text-align:center;">
-          <div style="border-top:1px solid #333;margin-top:40px;padding-top:4px;font-size:11px;">سرکل DSP/SDPO ${field(sdpo)}</div>
-        </div>
-      </div>`,
-
-    'CRO Form': `
-      <div style="text-align:center;direction:rtl;margin-bottom:16px;">
-        <div style="font-size:18px;font-weight:900;border-bottom:2px solid #333;padding-bottom:8px;margin-bottom:8px;">اسٹینڈرڈائیزڈ کریمینل انڈکس کارڈ</div>
-        <div style="font-size:13px;color:#555;">(بر ائے جیل)</div>
-        <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:12px;">
-          <div>CRO نمبر: ${field('۔۔۔۔۔۔۔')}</div>
-          <div>فوٹو گراف تاریخ: ${field('۔۔۔۔۔۔۔')}</div>
-        </div>
-      </div>
-      <table style="width:100%;border-collapse:collapse;direction:rtl;margin-bottom:12px;font-size:13px;">
+      <table style="width:100%;border-collapse:collapse;margin-top:16px;">
         <tr>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;width:18%;">نام</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field('۔۔۔۔۔۔۔')}</td>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;width:15%;">عرف</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field('۔۔۔۔۔۔۔')}</td>
-          <td rowspan="4" style="padding:8px;border:1px solid #ccc;text-align:center;vertical-align:top;width:20%;">
-            <div style="border:1px dashed #999;height:100px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#999;">تصویر ملزم</div>
+          <td style="${td}width:50%;text-align:center;padding:20px 8px 8px;">
+            <div>Forwarded Please</div>
+            <div style="font-weight:700;">SHO تھانہ ${ef(station)}</div>
+          </td>
+          <td style="${td}text-align:center;padding:20px 8px 8px;">
+            <div>Forwarded</div>
+            <div style="font-weight:700;">سرکل DSP/SDPO ${ef(sdpo)}</div>
+          </td>
+        </tr>
+      </table>
+    </div>`,
+
+    // ══════════════════════════════════════════════
+    //  2. CRO FORM
+    // ══════════════════════════════════════════════
+    'CRO Form': `<div style="${wrap}">
+      <table style="width:100%;border-collapse:collapse;margin-bottom:4px;">
+        <tr>
+          <td style="padding:4px 8px;text-align:left;font-size:12px;">طرف الف</td>
+          <td style="padding:4px 8px;text-align:center;font-size:16px;font-weight:900;">سٹینڈرڈائیزڈ کریمینل انڈکس کارڈ</td>
+          <td style="padding:4px 8px;font-size:12px;">CRO نمبر ${ef('۔۔۔۔۔')}</td>
+        </tr>
+        <tr>
+          <td colspan="2" style="padding:2px 8px;text-align:center;font-size:13px;">(برائے جیل)</td>
+          <td style="padding:2px 8px;font-size:12px;">فوٹو گراف تاریخ ${ef('۔۔۔۔۔')}</td>
+        </tr>
+      </table>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr>
+          <td style="${td}width:12%;">ساتھ مل</td>
+          <td style="${td}width:15%;">ساتھ پیہ<br><small>یاں پیاں کریں</small></td>
+          <td style="${td}width:18%;">ماں رشتہ پیہ<br><small>یاں پیاں کریں</small></td>
+          <td style="${td}width:18%;">ماں رشتہ پیہ<br><small>یاں پیاں کریں</small></td>
+          <td rowspan="2" style="${td}width:20%;text-align:center;vertical-align:middle;">
+            <div style="border:1px dashed #999;height:90px;width:70px;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;">تصویر</div>
+          </td>
+          <td rowspan="2" style="${td}width:17%;text-align:center;vertical-align:middle;">
+            <div style="border:1px dashed #999;height:90px;width:70px;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;">تصویر</div>
           </td>
         </tr>
         <tr>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">والد/شوہر کا نام</td>
-          <td colspan="2" style="padding:8px;border:1px solid #ccc;">${field('۔۔۔۔۔۔۔')}</td>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">عرف</td>
-        </tr>
-        <tr>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">جنس</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field('مرد / عورت')}</td>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">مرو/مقام پیدائش</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field('۔۔۔۔۔۔۔')}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">عمر (سال)</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field('۔۔۔۔۔')}</td>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">قومیت</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field('پاکستانی')}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">زبان</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field('۔۔۔۔۔')}</td>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">ذریعہ آمدن</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field('۔۔۔۔۔')}</td>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">تعلیم</td>
-        </tr>
-        <tr>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">مستقل پتہ</td>
-          <td colspan="4" style="padding:8px;border:1px solid #ccc;">${field('۔۔۔۔۔۔۔۔۔۔۔۔۔۔۔۔۔')}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">شناختی کارڈ نمبر</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field('۔۔۔۔۔')}</td>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">تاریخ پیدائش</td>
-          <td colspan="2" style="padding:8px;border:1px solid #ccc;">${field('۔۔۔۔۔')}</td>
+          <td style="${td}height:50px;"></td>
+          <td style="${td}"></td>
+          <td style="${td}"></td>
+          <td style="${td}"></td>
         </tr>
       </table>
-      <div style="direction:rtl;font-size:13px;margin-bottom:12px;">
-        <div style="font-weight:700;border-bottom:1px solid #ccc;padding-bottom:4px;margin-bottom:8px;">متعلقہ رانی پولیس اسٹیشن</div>
-        <table style="width:100%;border-collapse:collapse;">
-          <tr>
-            <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">مر صورت/مقدمہ</td>
-            <td style="padding:8px;border:1px solid #ccc;">${field('قتل / چوری / ڈکیتی')}</td>
-            <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">تھ</td>
-            <td style="padding:8px;border:1px solid #ccc;">${field(station)}</td>
-          </tr>
-          <tr>
-            <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">پتہ لگانا FIR نمبر</td>
-            <td style="padding:8px;border:1px solid #ccc;">${field(fir)}</td>
-            <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">مورخہ</td>
-            <td style="padding:8px;border:1px solid #ccc;">${field(firDate)}</td>
-          </tr>
-          <tr>
-            <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">دفعات</td>
-            <td colspan="3" style="padding:8px;border:1px solid #ccc;">${field(section)}</td>
-          </tr>
-        </table>
-      </div>
-      <div style="direction:rtl;font-size:11px;margin-bottom:12px;">
-        <div style="font-weight:700;margin-bottom:6px;font-size:12px;">نشانات انگشت جمع کرانے ہونے پر سادہ و قلع قلع:</div>
-        <table style="width:100%;border-collapse:collapse;">
-          <tr>
-            <td style="padding:6px;border:1px solid #ccc;text-align:center;font-weight:600;">دائیں چھوٹی</td>
-            <td style="padding:6px;border:1px solid #ccc;text-align:center;font-weight:600;">دائیں انگوٹھی</td>
-            <td style="padding:6px;border:1px solid #ccc;text-align:center;font-weight:600;">دائیں درمیانی</td>
-            <td style="padding:6px;border:1px solid #ccc;text-align:center;font-weight:600;">دائیں شہادت</td>
-            <td style="padding:6px;border:1px solid #ccc;text-align:center;font-weight:600;">دائیں انگوٹھا</td>
-          </tr>
-          <tr><td style="height:60px;border:1px solid #ccc;"></td><td style="border:1px solid #ccc;"></td><td style="border:1px solid #ccc;"></td><td style="border:1px solid #ccc;"></td><td style="border:1px solid #ccc;"></td></tr>
-          <tr>
-            <td style="padding:6px;border:1px solid #ccc;text-align:center;font-weight:600;">بائیں چھوٹی</td>
-            <td style="padding:6px;border:1px solid #ccc;text-align:center;font-weight:600;">بائیں انگوٹھی</td>
-            <td style="padding:6px;border:1px solid #ccc;text-align:center;font-weight:600;">بائیں درمیانی</td>
-            <td style="padding:6px;border:1px solid #ccc;text-align:center;font-weight:600;">بائیں شہادت</td>
-            <td style="padding:6px;border:1px solid #ccc;text-align:center;font-weight:600;">بائیں انگوٹھا</td>
-          </tr>
-          <tr><td style="height:60px;border:1px solid #ccc;"></td><td style="border:1px solid #ccc;"></td><td style="border:1px solid #ccc;"></td><td style="border:1px solid #ccc;"></td><td style="border:1px solid #ccc;"></td></tr>
-        </table>
-      </div>
-      <div style="display:flex;justify-content:space-between;direction:rtl;margin-top:20px;font-size:12px;">
-        <div style="text-align:center;"><div style="border-top:1px solid #333;margin-top:50px;padding-top:4px;">تھانہ ${field(station)}<br>نام و عہدہ</div></div>
-        <div style="text-align:center;"><div style="border-top:1px solid #333;margin-top:50px;padding-top:4px;">تفتیشی افسر ${field(io)}</div></div>
-      </div>`,
+      <div style="margin:6px 0;font-size:12px;border:1px solid #333;padding:4px 8px;">متعلقہ رانی پولیس اسٹیشن ${ef(station)}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <tr>
+          <td style="${th}width:10%;">نام</td>
+          <td style="${td}width:25%;">${ef('۔۔۔۔۔۔۔۔۔۔')}</td>
+          <td style="${th}width:8%;">عرف</td>
+          <td style="${td}width:20%;">${ef('۔۔۔۔۔')}</td>
+          <td style="${th}width:10%;">والد/شوہر کا نام</td>
+          <td style="${td}">${ef('۔۔۔۔۔۔۔۔۔۔')}</td>
+        </tr>
+        <tr>
+          <td style="${th}">جنس</td>
+          <td style="${td}">${ef('مرد / عورت')}</td>
+          <td style="${th}">ذریعہ آمدن</td>
+          <td style="${td}">${ef('۔۔۔۔۔')}</td>
+          <td style="${th}">تعلیم</td>
+          <td style="${td}">${ef('۔۔۔۔۔')}</td>
+        </tr>
+        <tr>
+          <td style="${th}">زبان</td>
+          <td style="${td}">${ef('اردو')}</td>
+          <td style="${th}">ذریعہ معاش</td>
+          <td style="${td}">${ef('۔۔۔۔۔')}</td>
+          <td style="${th}">قومیت</td>
+          <td style="${td}">${ef('پاکستانی')}</td>
+        </tr>
+        <tr>
+          <td style="${th}">تاریخ پیدائش</td>
+          <td style="${td}">${ef('۔۔۔۔۔')}</td>
+          <td style="${th}">مقام پیدائش</td>
+          <td style="${td}">${ef('۔۔۔۔۔')}</td>
+          <td style="${th}">عمر (سال)</td>
+          <td style="${td}">${ef('۔۔۔')}</td>
+        </tr>
+        <tr>
+          <td style="${th}">مستقل پتہ</td>
+          <td style="${td}" colspan="5">${ef('۔۔۔۔۔۔۔۔۔۔۔۔۔۔۔۔۔۔۔۔')}</td>
+        </tr>
+        <tr>
+          <td style="${th}">شناختی کارڈ نمبر</td>
+          <td style="${td}">${ef('۔۔۔۔۔')}</td>
+          <td style="${th}">والد/شوہر کا نام عرف</td>
+          <td style="${td}" colspan="3">${ef('۔۔۔۔۔۔۔۔')}</td>
+        </tr>
+      </table>
+      <div style="font-weight:700;margin:6px 0;border-bottom:1px solid #333;padding-bottom:2px;font-size:13px;">قومیت / Nationality</div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <tr>
+          <td style="${th}">مر صورت/مقدمہ</td>
+          <td style="${td}">${ef(offence||'قتل')}</td>
+          <td style="${th}">تھ</td>
+          <td style="${td}">${ef(station)}</td>
+        </tr>
+        <tr>
+          <td style="${th}">FIR نمبر بذریعہ</td>
+          <td style="${td}">${ef(fir)}</td>
+          <td style="${th}">مورخہ</td>
+          <td style="${td}">${ef(firDate)}</td>
+        </tr>
+        <tr>
+          <td style="${th}">دفعات</td>
+          <td style="${td}" colspan="3">${ef(section)}</td>
+        </tr>
+        <tr>
+          <td style="${th}">بال (رنگ)</td>
+          <td style="${td}">${ef('۔۔۔')}</td>
+          <td style="${th}">بال (سائز)</td>
+          <td style="${td}">${ef('۔۔۔')}</td>
+        </tr>
+        <tr>
+          <td style="${th}">داڑھی (رنگت)</td>
+          <td style="${td}">${ef('۔۔۔')}</td>
+          <td style="${th}">داڑھی (سائز)</td>
+          <td style="${td}">${ef('۔۔۔')}</td>
+        </tr>
+        <tr>
+          <td style="${th}">رنگ چہرہ</td>
+          <td style="${td}">${ef('گورا/سانولا/کالا')}</td>
+          <td style="${th}">کان</td>
+          <td style="${td}">${ef('۔۔۔')}</td>
+        </tr>
+        <tr>
+          <td style="${th}">آ نکھیں (رنگت)</td>
+          <td style="${td}">${ef('۔۔۔')}</td>
+          <td style="${th}">ناک</td>
+          <td style="${td}">${ef('۔۔۔')}</td>
+        </tr>
+      </table>
+      <div style="font-weight:700;margin:8px 0 4px;font-size:13px;">نشانات انگشت جمع کرانے ہونے پر سادہ و قلع قلع:</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <tr>
+          <td style="${th}text-align:center;">دائیں چھوٹی</td>
+          <td style="${th}text-align:center;">دائیں انگوٹھی</td>
+          <td style="${th}text-align:center;">دائیں درمیانی</td>
+          <td style="${th}text-align:center;">دائیں شہادت</td>
+          <td style="${th}text-align:center;">دائیں انگوٹھا</td>
+        </tr>
+        <tr>
+          <td style="${td}height:70px;"></td>
+          <td style="${td}"></td>
+          <td style="${td}"></td>
+          <td style="${td}"></td>
+          <td style="${td}"></td>
+        </tr>
+        <tr>
+          <td style="${th}text-align:center;">بائیں چھوٹی</td>
+          <td style="${th}text-align:center;">بائیں انگوٹھی</td>
+          <td style="${th}text-align:center;">بائیں درمیانی</td>
+          <td style="${th}text-align:center;">بائیں شہادت</td>
+          <td style="${th}text-align:center;">بائیں انگوٹھا</td>
+        </tr>
+        <tr>
+          <td style="${td}height:70px;"></td>
+          <td style="${td}"></td>
+          <td style="${td}"></td>
+          <td style="${td}"></td>
+          <td style="${td}"></td>
+        </tr>
+        <tr>
+          <td style="${th}text-align:center;" colspan="2">بائیں جاراناتیاں یک وقتی</td>
+          <td style="${td}" colspan="3"></td>
+        </tr>
+        <tr>
+          <td style="${th}text-align:center;" colspan="2">دائیں جاراناتیاں یک وقتی</td>
+          <td style="${td}" colspan="3"></td>
+        </tr>
+      </table>
+      <table style="width:100%;border-collapse:collapse;margin-top:16px;">
+        <tr>
+          <td style="${td}text-align:center;padding:30px 8px 8px;">
+            <div style="border-top:1px solid #333;padding-top:4px;">نام و عہدہ<br>${ef(station)}</div>
+          </td>
+          <td style="${td}text-align:center;padding:30px 8px 8px;">
+            <div style="border-top:1px solid #333;padding-top:4px;">تفتیشی افسر ${ef(io)}</div>
+          </td>
+          <td style="${td}font-size:12px;">تیارکنندہ کا نام و عہدہ ${ef(io)}</td>
+        </tr>
+      </table>
+    </div>`,
 
-    'Zimni Androoni': `
-      <div style="text-align:center;direction:rtl;margin-bottom:12px;">
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:#555;margin-bottom:4px;">
-          <span>پولیس فارم نمبر 25—54(1)</span>
-          <span>اندرونی</span>
-        </div>
-        <div style="font-size:18px;font-weight:900;border-bottom:2px solid #333;padding-bottom:6px;">رپورٹ ضمنی — اندرونی</div>
-        <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:13px;">
-          <div>ضلع: ${field(district)}</div>
-          <div>تھانہ: ${field(station)}</div>
-          <div>سال: ${field(new Date().getFullYear().toString())}</div>
-          <div>ضمنی نمبر: ${field('۔۔۔۔۔')}</div>
-        </div>
-      </div>
-      <table style="width:100%;border-collapse:collapse;direction:rtl;margin-bottom:12px;font-size:13px;">
+    // ══════════════════════════════════════════════
+    //  3. ZIMNI ANDROONI
+    // ══════════════════════════════════════════════
+    'Zimni Androoni': `<div style="${wrap}">
+      <table style="width:100%;border-collapse:collapse;margin-bottom:0;">
         <tr>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;width:20%;">مقدمہ نمبر</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field(fir)}</td>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;width:25%;">تھانہ میں پہنچنے کا وقت و تاریخ</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field('۔۔۔۔۔')}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">مورخہ</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field(firDate)}</td>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">تھانہ سے روانگی کا وقت و تاریخ</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field('۔۔۔۔۔')}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">تاریخ و مقام وقوعہ</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field(occurrence)}</td>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">بحد</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field('۔۔۔۔۔')}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">جرم</td>
-          <td colspan="3" style="padding:8px;border:1px solid #ccc;">${field(section)}</td>
+          <td style="padding:2px 8px;font-size:12px;">پولیس فارم نمبر 25—54(1)</td>
+          <td style="padding:2px 8px;text-align:center;font-size:16px;font-weight:900;">اندرونی ضمنی</td>
+          <td style="padding:2px 8px;text-align:left;"></td>
         </tr>
       </table>
-      <table style="width:100%;border-collapse:collapse;direction:rtl;font-size:13px;">
-        <thead>
-          <tr style="background:#f0f0f0;">
-            <th style="padding:8px;border:1px solid #ccc;width:20%;text-align:center;">تاریخ و وقت کارروائی</th>
-            <th style="padding:8px;border:1px solid #ccc;width:15%;text-align:center;">رپورٹ نمبر شمار سلسلہ وار</th>
-            <th style="padding:8px;border:1px solid #ccc;text-align:center;">حالات تفتیش</th>
-            <th style="padding:8px;border:1px solid #ccc;width:15%;text-align:center;">از</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${[1,2,3].map(n=>`
-          <tr>
-            <td style="padding:8px;border:1px solid #ccc;height:80px;vertical-align:top;"></td>
-            <td style="padding:8px;border:1px solid #ccc;vertical-align:top;"></td>
-            <td style="padding:8px;border:1px solid #ccc;vertical-align:top;">
-              <div style="margin-bottom:4px;">سرکار بذریعہ ${field(station)} بنام ${field(complainant)}</div>
-            </td>
-            <td style="padding:8px;border:1px solid #ccc;vertical-align:top;">${field(io)}</td>
-          </tr>`).join('')}
-        </tbody>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:0;">
+        <tr>
+          <td style="${td}width:50%;font-weight:700;font-size:15px;">رپورٹ ضمنی</td>
+          <td style="${td}">ضلع ${ef(district)}</td>
+          <td style="${td}">تھانہ ${ef(station)}</td>
+        </tr>
+        <tr>
+          <td style="${td}">سال ${ef(new Date().getFullYear().toString())}</td>
+          <td style="${td}">ضمنی نمبر ${ef('۔۔۔۔۔')}</td>
+          <td style="${td}"></td>
+        </tr>
       </table>
-      <div style="display:flex;justify-content:space-between;direction:rtl;margin-top:30px;font-size:12px;">
-        <div style="text-align:center;"><div style="border-top:1px solid #333;margin-top:50px;padding-top:4px;">SHO ${field(sho)}</div></div>
-        <div style="text-align:center;"><div style="border-top:1px solid #333;margin-top:50px;padding-top:4px;">تفتیشی افسر ${field(io)}</div></div>
-      </div>`,
+      <table style="width:100%;border-collapse:collapse;margin-top:4px;">
+        <tr>
+          <td style="${td}width:25%;">مقدمہ نمبر ${ef(fir)}</td>
+          <td style="${td}width:25%;">مورخہ ${ef(firDate)}</td>
+          <td style="${td}width:25%;">تھانہ میں پہنچنے کا وقت و تاریخ</td>
+          <td style="${td}width:25%;">${ef('۔۔۔۔۔۔۔')}</td>
+        </tr>
+        <tr>
+          <td style="${td}">تاریخ و مقام وقوعہ ${ef(occurrence)}</td>
+          <td style="${td}"></td>
+          <td style="${td}">تھانہ سے روانگی کا وقت و تاریخ</td>
+          <td style="${td}">${ef('۔۔۔۔۔۔۔')}</td>
+        </tr>
+        <tr>
+          <td style="${td}">بحد ${ef('۔۔۔۔۔')}</td>
+          <td style="${td}">جرم ${ef(section)}</td>
+          <td style="${td}" colspan="2"></td>
+        </tr>
+      </table>
+      <table style="width:100%;border-collapse:collapse;margin-top:8px;">
+        <tr>
+          <td style="${th}width:20%;text-align:center;">تاریخ و وقت کارروائی</td>
+          <td style="${th}width:15%;text-align:center;">رپورٹ نمبر شمار سلسلہ وار</td>
+          <td style="${th}text-align:center;">حالات تفتیش</td>
+          <td style="${th}width:15%;text-align:center;">از</td>
+        </tr>
+        ${[1,2,3,4,5].map(n=>`<tr>
+          <td style="${td}height:70px;vertical-align:top;">${ef('۔۔۔۔۔')}</td>
+          <td style="${td}vertical-align:top;text-align:center;">${n}</td>
+          <td style="${td}vertical-align:top;">
+            <div>سرکار بذریعہ ${ef(station)} بنام ${ef(complainant)}</div>
+            <div class="template-field" contenteditable="true" style="min-height:50px;display:block;"></div>
+          </td>
+          <td style="${td}vertical-align:top;">${ef(io)}</td>
+        </tr>`).join('')}
+      </table>
+      <table style="width:100%;border-collapse:collapse;margin-top:20px;">
+        <tr>
+          <td style="${td}text-align:center;padding:40px 8px 8px;">
+            <div style="border-top:1px solid #333;padding-top:4px;">SHO ${ef(sho)}<br>تھانہ ${ef(station)}</div>
+          </td>
+          <td style="${td}text-align:center;padding:40px 8px 8px;">
+            <div style="border-top:1px solid #333;padding-top:4px;">تفتیشی افسر<br>${ef(io)}</div>
+          </td>
+        </tr>
+      </table>
+    </div>`,
 
-    'Zimni Berooni': `
-      <div style="text-align:center;direction:rtl;margin-bottom:12px;">
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:#555;margin-bottom:4px;">
-          <span>پولیس فارم نمبر 25—54(1)</span>
-          <span>بیرونی</span>
-        </div>
-        <div style="font-size:18px;font-weight:900;border-bottom:2px solid #333;padding-bottom:6px;">رپورٹ ضمنی — بیرونی</div>
-        <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:13px;">
-          <div>ضلع: ${field(district)}</div>
-          <div>تھانہ: ${field(station)}</div>
-          <div>سال: ${field(new Date().getFullYear().toString())}</div>
-          <div>ضمنی نمبر: ${field('۔۔۔۔۔')}</div>
-        </div>
-      </div>
-      <table style="width:100%;border-collapse:collapse;direction:rtl;margin-bottom:12px;font-size:13px;">
+    // ══════════════════════════════════════════════
+    //  4. ZIMNI BEROONI
+    // ══════════════════════════════════════════════
+    'Zimni Berooni': `<div style="${wrap}">
+      <table style="width:100%;border-collapse:collapse;margin-bottom:0;">
         <tr>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;width:20%;">مقدمہ نمبر</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field(fir)}</td>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;width:25%;">تھانہ میں پہنچنے کا وقت و تاریخ</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field('۔۔۔۔۔')}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">مورخہ</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field(firDate)}</td>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">تھانہ سے روانگی کا وقت و تاریخ</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field('۔۔۔۔۔')}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">تاریخ و مقام وقوعہ</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field(occurrence)}</td>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">بحد</td>
-          <td style="padding:8px;border:1px solid #ccc;">${field('۔۔۔۔۔')}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">جرم</td>
-          <td colspan="3" style="padding:8px;border:1px solid #ccc;">${field(section)}</td>
+          <td style="padding:2px 8px;font-size:12px;">پولیس فارم نمبر 25—54(1)</td>
+          <td style="padding:2px 8px;text-align:center;font-size:16px;font-weight:900;">بیرونی ضمنی</td>
+          <td style="padding:2px 8px;text-align:left;"></td>
         </tr>
       </table>
-      <table style="width:100%;border-collapse:collapse;direction:rtl;font-size:13px;">
-        <thead>
-          <tr style="background:#f0f0f0;">
-            <th style="padding:8px;border:1px solid #ccc;width:20%;text-align:center;">تاریخ و وقت کارروائی</th>
-            <th style="padding:8px;border:1px solid #ccc;width:15%;text-align:center;">رپورٹ نمبر شمار سلسلہ وار</th>
-            <th style="padding:8px;border:1px solid #ccc;text-align:center;">حالات تفتیش</th>
-            <th style="padding:8px;border:1px solid #ccc;width:15%;text-align:center;">از</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${[1,2,3,4].map(n=>`
-          <tr>
-            <td style="padding:8px;border:1px solid #ccc;height:80px;vertical-align:top;"></td>
-            <td style="padding:8px;border:1px solid #ccc;vertical-align:top;"></td>
-            <td style="padding:8px;border:1px solid #ccc;vertical-align:top;">
-              <div>سرکار بذریعہ ${field(station)} بنام ${field(complainant)}</div>
-            </td>
-            <td style="padding:8px;border:1px solid #ccc;vertical-align:top;">${field(io)}</td>
-          </tr>`).join('')}
-        </tbody>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:0;">
+        <tr>
+          <td style="${td}width:50%;font-weight:700;font-size:15px;">رپورٹ ضمنی</td>
+          <td style="${td}">ضلع ${ef(district)}</td>
+          <td style="${td}">تھانہ ${ef(station)}</td>
+        </tr>
+        <tr>
+          <td style="${td}">سال ${ef(new Date().getFullYear().toString())}</td>
+          <td style="${td}">ضمنی نمبر ${ef('۔۔۔۔۔')}</td>
+          <td style="${td}"></td>
+        </tr>
       </table>
-      <div style="display:flex;justify-content:space-between;direction:rtl;margin-top:30px;font-size:12px;">
-        <div style="text-align:center;"><div style="border-top:1px solid #333;margin-top:50px;padding-top:4px;">SHO ${field(sho)}</div></div>
-        <div style="text-align:center;"><div style="border-top:1px solid #333;margin-top:50px;padding-top:4px;">تفتیشی افسر ${field(io)}</div></div>
-      </div>`,
+      <table style="width:100%;border-collapse:collapse;margin-top:4px;">
+        <tr>
+          <td style="${td}width:25%;">مقدمہ نمبر ${ef(fir)}</td>
+          <td style="${td}width:25%;">مورخہ ${ef(firDate)}</td>
+          <td style="${td}width:25%;">تھانہ میں پہنچنے کا وقت و تاریخ</td>
+          <td style="${td}width:25%;">${ef('۔۔۔۔۔۔۔')}</td>
+        </tr>
+        <tr>
+          <td style="${td}">تاریخ و مقام وقوعہ ${ef(occurrence)}</td>
+          <td style="${td}"></td>
+          <td style="${td}">تھانہ سے روانگی کا وقت و تاریخ</td>
+          <td style="${td}">${ef('۔۔۔۔۔۔۔')}</td>
+        </tr>
+        <tr>
+          <td style="${td}">بحد ${ef('۔۔۔۔۔')}</td>
+          <td style="${td}">جرم ${ef(section)}</td>
+          <td style="${td}" colspan="2"></td>
+        </tr>
+      </table>
+      <table style="width:100%;border-collapse:collapse;margin-top:8px;">
+        <tr>
+          <td style="${th}width:20%;text-align:center;">تاریخ و وقت کارروائی</td>
+          <td style="${th}width:15%;text-align:center;">رپورٹ نمبر شمار سلسلہ وار</td>
+          <td style="${th}text-align:center;">حالات تفتیش</td>
+          <td style="${th}width:15%;text-align:center;">از</td>
+        </tr>
+        ${[1,2,3,4,5,6].map(n=>`<tr>
+          <td style="${td}height:70px;vertical-align:top;">${ef('۔۔۔۔۔')}</td>
+          <td style="${td}vertical-align:top;text-align:center;">${n}</td>
+          <td style="${td}vertical-align:top;">
+            <div>سرکار بذریعہ ${ef(station)} بنام ${ef(complainant)}</div>
+            <div class="template-field" contenteditable="true" style="min-height:50px;display:block;"></div>
+          </td>
+          <td style="${td}vertical-align:top;">${ef(io)}</td>
+        </tr>`).join('')}
+      </table>
+      <table style="width:100%;border-collapse:collapse;margin-top:20px;">
+        <tr>
+          <td style="${td}text-align:center;padding:40px 8px 8px;">
+            <div style="border-top:1px solid #333;padding-top:4px;">SHO ${ef(sho)}<br>تھانہ ${ef(station)}</div>
+          </td>
+          <td style="${td}text-align:center;padding:40px 8px 8px;">
+            <div style="border-top:1px solid #333;padding-top:4px;">تفتیشی افسر<br>${ef(io)}</div>
+          </td>
+        </tr>
+      </table>
+    </div>`,
 
-    'Investigation Bills': `
-      <div style="text-align:center;direction:rtl;margin-bottom:16px;">
-        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:8px;">
-          <span>تھانہ ${field(station)}</span>
-          <span>ضلع ${field(district)}</span>
-        </div>
-        <div style="font-size:17px;font-weight:900;border:2px solid #333;padding:8px;margin-bottom:8px;">بل بابت تفتیش مقدمات و خرچ خوراک ملزمان بند حوالات</div>
-        <div style="font-size:13px;">بابت ماہ ${field('۔۔۔۔۔۔۔۔')} سال ${field(new Date().getFullYear().toString())} ء</div>
+    // ══════════════════════════════════════════════
+    //  5. INVESTIGATION BILLS
+    // ══════════════════════════════════════════════
+    'Investigation Bills': `<div style="${wrap}">
+      <table style="width:100%;border-collapse:collapse;margin-bottom:0;">
+        <tr>
+          <td style="padding:4px 8px;font-weight:700;font-size:14px;">تھانہ ${ef(station)}</td>
+          <td style="padding:4px 8px;text-align:left;font-weight:700;font-size:14px;">ضلع ${ef(district)}</td>
+        </tr>
+      </table>
+      <div style="text-align:center;font-size:16px;font-weight:900;border-top:2px solid #333;border-bottom:2px solid #333;padding:6px 0;margin:6px 0;">
+        بل بابت تفتیش مقدمات و خرچ خوراک ملزمان بند حوالات
       </div>
-      <div style="direction:rtl;font-size:13px;margin-bottom:16px;padding:10px;border:1px solid #ddd;border-radius:4px;line-height:2;">
-        <span style="font-weight:700;">جناب عالیٰ!</span><br>
+      <div style="text-align:center;margin-bottom:10px;font-size:14px;">
+        بابت ماہ ${ef('۔۔۔۔۔۔۔۔')} سال ${ef(new Date().getFullYear().toString())} ء
+      </div>
+      <div style="font-weight:700;margin-bottom:6px;">جناب عالیٰ!</div>
+      <div style="margin-bottom:10px;text-align:justify;line-height:2.2;">
         گذارش ہے کہ بل بابت تفتیش مقدمات و خرچ خوراک ملزمان بند حوالات جائز طور پر مرتب کیا گیا ہے۔ یہ بل نہ پہلے مرتب ہوا اور نہ ہی برآمد ہوا ہے۔ بل منظور فرماتے ہوئے برآمد کئے جانے کا حکم صادر فرمایا جائے۔
       </div>
-      <table style="width:100%;border-collapse:collapse;direction:rtl;font-size:11px;margin-bottom:16px;">
-        <thead>
-          <tr style="background:#f0f0f0;">
-            <th style="padding:6px;border:1px solid #ccc;text-align:center;">نمبرشمار</th>
-            <th style="padding:6px;border:1px solid #ccc;text-align:center;">تفصیل مقدمات</th>
-            <th style="padding:6px;border:1px solid #ccc;text-align:center;">رپٹ نمبر معہ تاریخ</th>
-            <th style="padding:6px;border:1px solid #ccc;text-align:center;">معیاد حراست ملزم</th>
-            <th style="padding:6px;border:1px solid #ccc;text-align:center;">خرچہ تفتیش</th>
-            <th style="padding:6px;border:1px solid #ccc;text-align:center;">کل خرچ</th>
-            <th style="padding:6px;border:1px solid #ccc;text-align:center;">نام تفتیشی افسر</th>
-            <th style="padding:6px;border:1px solid #ccc;text-align:center;">دستخط</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style="padding:6px;border:1px solid #ccc;text-align:center;">1</td>
-            <td style="padding:6px;border:1px solid #ccc;">${field(offence)}</td>
-            <td style="padding:6px;border:1px solid #ccc;">${field(fir + ' ' + firDate)}</td>
-            <td style="padding:6px;border:1px solid #ccc;height:40px;"></td>
-            <td style="padding:6px;border:1px solid #ccc;">
-              <div style="font-size:10px;line-height:1.6;">
-                ۱۔ ٹرانسپورٹ بابت پوسٹمارٹم<br>
-                ۲۔ نقشہ نویس<br>
-                ۳۔ کیمیکل ایگزامینر<br>
-                ۴۔ بلیسٹک ایکسپرٹ<br>
-                ۵۔ ٹرانسپورٹ گرفتاری ملزمان<br>
-                ۶۔ ٹرانسپورٹ جسمانی ریمانڈ
-              </div>
-            </td>
-            <td style="padding:6px;border:1px solid #ccc;"></td>
-            <td style="padding:6px;border:1px solid #ccc;">${field(io)}</td>
-            <td style="padding:6px;border:1px solid #ccc;"></td>
-          </tr>
-          ${[2,3].map(n=>`<tr><td style="padding:6px;border:1px solid #ccc;text-align:center;">${n}</td><td style="padding:6px;border:1px solid #ccc;height:40px;"></td><td style="padding:6px;border:1px solid #ccc;"></td><td style="padding:6px;border:1px solid #ccc;"></td><td style="padding:6px;border:1px solid #ccc;"></td><td style="padding:6px;border:1px solid #ccc;"></td><td style="padding:6px;border:1px solid #ccc;"></td><td style="padding:6px;border:1px solid #ccc;"></td></tr>`).join('')}
-        </tbody>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:6px;">
+        <tr>
+          <td style="${td}width:50%;">رپورٹ محرر: ${ef('۔۔۔۔۔۔۔۔۔۔')}</td>
+          <td style="${td}">مرتب کنندہ: ${ef(io)}</td>
+        </tr>
       </table>
-      <div style="direction:rtl;font-size:11px;margin-bottom:12px;padding:8px;background:#fff9e6;border:1px solid #ddd;">
-        <div style="font-weight:700;margin-bottom:4px;">نوٹ:</div>
-        <div>بل اخراجات بمطابق شیڈول DIG ویلفئیر اینڈ فنانس پنجاب لاہور بحوالہ چٹھی نمبر 6914-19/A مورخہ 10.03.2003 مرتب کرکے ارسال کریں۔</div>
+      <div style="font-size:13px;font-weight:700;margin:8px 0 4px;">
+        بل بابت تفتیش مقدمات بمعہ تفصیل خوراک ملزمان بند حوالات، پوسٹمارٹم، اسٹیشنری و دیگر اخراجات جو کہ مقدمات کے خرچہ سے متعلق ہیں
       </div>
-      <div style="display:flex;justify-content:space-between;direction:rtl;margin-top:20px;font-size:12px;">
-        <div style="text-align:center;"><div style="border-top:1px solid #333;margin-top:50px;padding-top:4px;">رپورٹ محرر</div></div>
-        <div style="text-align:center;"><div style="border-top:1px solid #333;margin-top:50px;padding-top:4px;">مرتب کنندہ ${field(io)}</div></div>
-      </div>`,
+      <table style="width:100%;border-collapse:collapse;font-size:11px;">
+        <tr>
+          <td style="${th}width:5%;">نمبرشمار</td>
+          <td style="${th}width:14%;">تفصیل مقدمات</td>
+          <td style="${th}width:14%;">رپٹ نمبر معہ تاریخ بندی و روانگی ملزم</td>
+          <td style="${th}width:10%;">معیاد حراست ملزم</td>
+          <td style="${th}width:25%;">خرچہ تفتیش و تفصیل مقدمات</td>
+          <td style="${th}width:8%;">کل خرچ</td>
+          <td style="${th}width:8%;">فاصلہ آمد ورفت</td>
+          <td style="${th}width:10%;">نام تفتیشی افسر</td>
+          <td style="${th}width:11%;">نام و پتہ حوالات ملزمان</td>
+          <td style="${th}width:10%;">دستخط تفتیشی افسر</td>
+        </tr>
+        <tr>
+          <td style="${td}text-align:center;">1</td>
+          <td style="${td}"><div class="template-field" contenteditable="true">${offence||fir}</div></td>
+          <td style="${td}">${ef(fir + ' ' + firDate)}</td>
+          <td style="${td}height:180px;vertical-align:top;"></td>
+          <td style="${td}vertical-align:top;font-size:10px;line-height:1.8;">
+            ۱۔ بل اخراجات ٹرانسپورٹ/ڈیڈ باڈی برائے پوسٹمارٹم<br>
+            ۲۔ بل تیاری نقشہ بذریعہ نقشہ نویس<br>
+            ۳۔ بل سرالوجسٹ بذریعہ کیمیکل ایگزامینر بذریعہ قبضہ پولیس اشیاء<br>
+            ۴۔ بل بلیسٹک ایکسپرٹ کی واردات میں استعمال ہونے والے اسلحہ کی ترسیل<br>
+            ۵۔ بل ٹرانسپورٹ برائے گرفتاری ملزمان (عدم دستیابی گاڑی سرکاری)<br>
+            ۶۔ بل ٹرانسپورٹ برائے جسمانی ریمانڈ (عدم دستیابی گاڑی سرکاری)<br>
+            ۷۔ بل ٹرانسپورٹ برائے اسلحہ<br>
+            ۸۔ بل ٹرانسپورٹ برائے برآمدگی چوری شدہ/چھینی گئی گاڑی/کیس پراپرٹی<br>
+            ۹۔ بل اندھا قتل نعش کا پوسٹمارٹم/اخراجات کفن دفن<br>
+            ۱۰۔ بل ٹرانسپورٹ و میڈیکل برائے زخمی<br>
+            ۱۱۔ بل برائے فوٹو گرافی وقوعہ ڈیڈ باڈی<br>
+            ۱۲۔ بل برائے ویڈیو فلم غیرقانونی اجتماعات<br>
+            ۱۳۔ بل ٹرانسپورٹ برائے شناخت پریڈ<br>
+            ۱۴۔ بل اخراجات مشتبہ افراد زیرحراست<br>
+            ۱۵۔ بل ٹرانسپورٹ برائے معائنہ انجن/چیسز نمبر/فورنزک سائنس لیبارٹری<br>
+            ۱۶۔ بل فنگرپرنٹ/فٹ مولڈز/ہینڈ رائٹنگ<br>
+            ۱۷۔ بل دیگر حادثاتی اخراجات
+          </td>
+          <td style="${td}vertical-align:top;"></td>
+          <td style="${td}vertical-align:top;"></td>
+          <td style="${td}vertical-align:top;">${ef(io)}</td>
+          <td style="${td}vertical-align:top;"></td>
+          <td style="${td}vertical-align:top;"></td>
+        </tr>
+        ${[2,3].map(n=>`<tr>
+          <td style="${td}text-align:center;">${n}</td>
+          <td style="${td}height:60px;"></td>
+          <td style="${td}"></td>
+          <td style="${td}"></td>
+          <td style="${td}"></td>
+          <td style="${td}"></td>
+          <td style="${td}"></td>
+          <td style="${td}"></td>
+          <td style="${td}"></td>
+          <td style="${td}"></td>
+        </tr>`).join('')}
+      </table>
+      <div style="font-size:12px;margin-top:8px;border:1px solid #ccc;padding:6px 8px;">
+        <span style="font-weight:700;">نوٹ:</span> بل اخراجات بمطابق شیڈول DIG ویلفئیر اینڈ فنانس پنجاب لاہور بحوالہ چٹھی نمبر 6914-19/A مورخہ 10.03.2003 مرتب کرکے ارسال کریں۔
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin-top:16px;">
+        <tr>
+          <td style="${td}text-align:center;padding:40px 8px 8px;">
+            <div style="border-top:1px solid #333;padding-top:4px;">رپورٹ محرر</div>
+          </td>
+          <td style="${td}text-align:center;padding:40px 8px 8px;">
+            <div style="border-top:1px solid #333;padding-top:4px;">مرتب کنندہ ${ef(io)}</div>
+          </td>
+        </tr>
+      </table>
+    </div>`,
 
   };
 
@@ -1761,7 +1976,7 @@ function printAllDocs() {
 
 function renderDetailsTab(c) {
   return `<div class="case-tab-content">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
       <div class="card">
         <div class="card-title">📋 FIR Information</div>
         ${[['FIR Number',c.fir_number],['Date of FIR',c.fir_date||'—'],['Occurrence Date',c.occurrence_date||'—'],['Section of Law',c.section_of_law||'—'],['Offence',c.offence_type||'—'],['Status',STATUS_LABELS[c.status]||c.status],['Position',c.position==='court'?'⚖️ In Court':'⏳ Pending'],['FIR Writer',c.fir_writer||'—'],['Complaint Sender',c.complaint_sender||'—'],['SHO',c.sho||'—'],['SDPO',c.sdpo||'—']].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
@@ -1769,10 +1984,27 @@ function renderDetailsTab(c) {
       <div class="card">
         <div class="card-title">👤 Complainant Details</div>
         ${[['Complainant Name',c.complainant||'—'],['CNIC',c.complainant_cnic||'—'],['Cell No.',c.complainant_cell||'—'],['Profession',c.complainant_profession||'—']].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
-        ${c.notes?`<div style="margin-top:12px;padding:10px;background:var(--bg-tertiary);border-radius:8px;font-size:12px;color:var(--text-secondary);direction:auto;"><b style="color:var(--accent);">Notes:</b><br>${c.notes}</div>`:''}
+        ${c.notes?`<div style="margin-top:12px;padding:10px;background:var(--bg-tertiary);border-radius:8px;font-size:12px;color:var(--text-secondary);direction:auto;"><b style="color:var(--accent);">تفتیشی نوٹس:</b><br>${c.notes}</div>`:''}
       </div>
     </div>
-    <div style="text-align:right;margin-top:16px;">
+    ${c.is_cross_version ? `
+    <div class="card" style="border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.03);margin-bottom:16px;">
+      <div class="card-title" style="color:var(--red);">⚔️ Cross Version — مخالف مقدمہ</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+        ${[
+          ['Cross FIR Number', c.cross_fir_number||'—'],
+          ['Cross FIR Date', c.cross_fir_date||'—'],
+          ['Cross Complainant', c.cross_complainant||'—'],
+          ['Cross CNIC', c.cross_complainant_cnic||'—'],
+          ['Cross Cell', c.cross_complainant_cell||'—'],
+          ['Cross Profession', c.cross_complainant_profession||'—'],
+          ['Cross Section', c.cross_section_of_law||'—'],
+          ['Cross Offence', c.cross_offence_type||'—'],
+          ['Cross FIR Writer', c.cross_fir_writer||'—'],
+        ].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
+      </div>
+    </div>` : ''}
+    <div style="text-align:right;">
       <button class="btn btn-primary" onclick="openEditCaseModal('${c.id}')">✏️ Edit Case Details</button>
     </div>
   </div>`;
