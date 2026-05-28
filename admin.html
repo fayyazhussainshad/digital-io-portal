@@ -479,6 +479,7 @@ async function loginSuccess() {
   document.getElementById('footer-admin').textContent = 'Logged in: ' + name;
   startClock();
   await loadApprovalCount();
+  setupRealtimeSync();
   showPage('dashboard', document.querySelector('.nav-item'));
 }
 
@@ -794,6 +795,7 @@ function renderOfficerRows(list) {
         ${status==='pending' ? `<button class="btn btn-success btn-sm" onclick="approveOfficer('${o.id}','${o.full_name}')">Approve</button>` : ''}
         ${status==='active' ? `<button class="btn btn-danger btn-sm" onclick="blockOfficer('${o.id}','${o.full_name}')">Block</button>` : ''}
         ${status==='blocked' ? `<button class="btn btn-success btn-sm" onclick="unblockOfficer('${o.id}','${o.full_name}')">Unblock</button>` : ''}
+        <button class="btn btn-secondary btn-sm" onclick="resetOfficerPassword('${o.id}','${o.full_name}')">🔐 Reset PW</button>
       </div></td>
     </tr>`;
   }).join('');
@@ -1129,6 +1131,7 @@ async function viewOfficerDetail(id) {
         <div class="detail-row"><span class="dk">${k}</span><span class="dv">${v}</span></div>`).join('')}
     </div>`,
     `<button class="btn btn-secondary" onclick="closeModal()">Close</button>
+     <button class="btn btn-secondary" onclick="closeModal();resetOfficerPassword('${id}','${o.full_name}')">🔐 Reset Password</button>
      ${!o.is_approved && !o.is_blocked ? `<button class="btn btn-success" onclick="closeModal();approveOfficer('${id}','${o.full_name}')">✅ Approve</button>` : ''}
      ${!o.is_blocked ? `<button class="btn btn-danger" onclick="closeModal();blockOfficer('${id}','${o.full_name}')">🚫 Block</button>` : `<button class="btn btn-success" onclick="closeModal();unblockOfficer('${id}','${o.full_name}')">✅ Unblock</button>`}`
   );
@@ -1262,6 +1265,137 @@ function startClock() {
     if (el) el.textContent = new Date().toLocaleTimeString('en-PK', { hour12: false });
   }, 1000);
 }
+
+// ════════════════════════════════════════════
+//  REALTIME SYNC
+// ════════════════════════════════════════════
+function setupRealtimeSync() {
+  sb.channel('admin-realtime')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'officers' }, async () => {
+      showToast('🔄 Officers data updated.', 'info', 2000);
+      await loadApprovalCount();
+      const currentPage = document.getElementById('page-title')?.textContent;
+      if (currentPage?.includes('Officer') || currentPage?.includes('Approval') || currentPage?.includes('Blocked')) {
+        showPage(currentPage.includes('Approval') ? 'approvals' : currentPage.includes('Blocked') ? 'blocked' : 'officers', null);
+      }
+      if (currentPage?.includes('Dashboard')) showPage('dashboard', null);
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'cases' }, async () => {
+      showToast('🔄 Cases data updated.', 'info', 2000);
+      const currentPage = document.getElementById('page-title')?.textContent;
+      if (currentPage?.includes('Dashboard') || currentPage?.includes('Revenue')) {
+        showPage(currentPage.includes('Revenue') ? 'revenue' : 'dashboard', null);
+      }
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_log' }, () => {
+      const currentPage = document.getElementById('page-title')?.textContent;
+      if (currentPage?.includes('Audit')) showPage('audit', null);
+    })
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        console.log('✅ Realtime sync active');
+        const dot = document.querySelector('.online-dot');
+        if (dot) { dot.style.background = '#22c55e'; dot.title = 'Live sync active'; }
+      }
+    });
+}
+
+// ════════════════════════════════════════════
+//  PASSWORD RESET FOR OFFICERS
+// ════════════════════════════════════════════
+async function resetOfficerPassword(officerId, officerName) {
+  // Get officer's user_id first
+  const { data: officer } = await sb.from('officers').select('user_id').eq('id', officerId).single();
+  if (!officer) { showToast('❌ Officer not found.', 'error'); return; }
+
+  // Get email from auth.users via a function
+  const { data: userData } = await sb.from('officers').select('*, user_roles(role)').eq('id', officerId).single();
+
+  openModal('🔐 Reset Officer Password',
+    `<p style="color:var(--text2);font-size:13px;line-height:1.6;margin-bottom:16px;">
+      Reset password for <b style="color:var(--accent);">${officerName}</b>.<br><br>
+      Choose how to reset:
+    </p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="padding:14px;background:var(--bg4);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;" onclick="doSendResetEmail('${officerId}','${officerName}')">
+        <div style="font-size:13px;font-weight:600;margin-bottom:4px;">📧 Send Reset Email</div>
+        <div style="font-size:11px;color:var(--text3);">Officer receives an email link to set their own new password.</div>
+      </div>
+      <div style="padding:14px;background:var(--bg4);border:1px solid var(--border);border-radius:var(--r);">
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px;">🔑 Set New Password Manually</div>
+        <input type="password" class="form-input" id="new-officer-pass" placeholder="Enter new password (min 8 characters)" style="margin-bottom:8px;">
+        <input type="password" class="form-input" id="new-officer-pass2" placeholder="Confirm new password">
+        <button class="btn btn-primary" style="width:100%;margin-top:10px;" onclick="doSetOfficerPassword('${officer.user_id}','${officerName}')">🔒 Set Password</button>
+      </div>
+    </div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>`
+  );
+}
+
+async function doSendResetEmail(officerId, officerName) {
+  // Get email from officer's linked auth account
+  const { data, error } = await sb.rpc('get_officer_email', { p_officer_id: officerId });
+  
+  if (error || !data) {
+    // Fallback: ask admin to enter email manually
+    closeModal();
+    openModal('📧 Send Password Reset Email',
+      `<p style="color:var(--text2);font-size:13px;margin-bottom:12px;">Enter the email address of <b style="color:var(--accent);">${officerName}</b>:</p>
+       <input type="email" class="form-input" id="reset-email-input" placeholder="officer@example.com">`,
+      `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+       <button class="btn btn-primary" onclick="sendResetByEmail('${officerName}')">📤 Send Reset Email</button>`
+    );
+    return;
+  }
+
+  const { error: resetError } = await sb.auth.resetPasswordForEmail(data, {
+    redirectTo: window.location.origin
+  });
+
+  if (resetError) { showToast('❌ Error: ' + resetError.message, 'error'); return; }
+  closeModal();
+  showToast(`✅ Password reset email sent to ${officerName}!`, 'success');
+}
+
+async function sendResetByEmail(officerName) {
+  const email = document.getElementById('reset-email-input')?.value.trim();
+  if (!email) { showToast('⚠️ Please enter email.', 'error'); return; }
+  
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://fayyazhussainshad.github.io/digital-io-portal/'
+  });
+
+  if (error) { showToast('❌ Error: ' + error.message, 'error'); return; }
+  closeModal();
+  showToast(`✅ Password reset email sent to ${officerName}!`, 'success');
+}
+
+async function doSetOfficerPassword(userId, officerName) {
+  const p1 = document.getElementById('new-officer-pass')?.value;
+  const p2 = document.getElementById('new-officer-pass2')?.value;
+  
+  if (!p1 || p1.length < 8) { showToast('⚠️ Password must be at least 8 characters.', 'error'); return; }
+  if (p1 !== p2) { showToast('❌ Passwords do not match.', 'error'); return; }
+
+  // Use admin API to update password
+  const { error } = await sb.auth.admin.updateUserById(userId, { password: p1 });
+  
+  if (error) {
+    // Fallback: send reset email instead
+    showToast('⚠️ Direct password change requires service key. Sending reset email instead.', 'info', 4000);
+    const email = prompt(`Enter ${officerName}'s email to send reset link:`);
+    if (email) {
+      await sb.auth.resetPasswordForEmail(email, { redirectTo: 'https://fayyazhussainshad.github.io/digital-io-portal/' });
+      showToast('✅ Password reset email sent!', 'success');
+    }
+    closeModal();
+    return;
+  }
+
+  closeModal();
+  showToast(`✅ Password updated for ${officerName}!`, 'success');
+}
+
 </script>
 </body>
 </html>
