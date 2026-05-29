@@ -22,13 +22,26 @@
       font-display: swap;
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<!-- Fallback if jsDelivr is blocked or slow -->
-<script>
-  if (typeof supabase === 'undefined') {
-    document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
-  }
+  <script>
+// ═══════════════════════════════════════════════════
+//  GLOBAL ERROR HANDLER — surfaces JS errors to the user
+//  instead of leaving buttons silently dead
+// ═══════════════════════════════════════════════════
+window.addEventListener('error', function(e) {
+  console.error('[Digital IO Error]', e.message, 'at', (e.filename || '') + ':' + (e.lineno || ''));
+  try {
+    var el = document.getElementById('login-error');
+    if (el && (!el.textContent || el.textContent.trim() === '')) {
+      el.textContent = '⚠️ Script error — open browser console (F12) for details.';
+      el.style.display = 'block';
+    }
+  } catch (_) {}
+});
+window.addEventListener('unhandledrejection', function(e) {
+  console.error('[Digital IO Promise Error]', e.reason);
+});
 </script>
+  <script>
 // ═══════════════════════════════════════════════════
 //  DIGITAL IO — CONFIGURATION
 // ═══════════════════════════════════════════════════
@@ -81,26 +94,85 @@ const POLICE_NEWS = [
   '🏛️ HIGH COURT: Challan incomplete without postmortem in homicide cases — strict compliance ordered',
 ];
 
-// Guard: ensure supabase CDN loaded before calling createClient
-if (typeof supabase === 'undefined') {
-  document.addEventListener('DOMContentLoaded', () => {
-    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0f1923;color:#ef4444;font-family:sans-serif;font-size:16px;text-align:center;padding:20px;">⚠️ Failed to load security library.<br>Check your internet connection and refresh.</div>';
-  });
-  throw new Error('Supabase CDN failed to load');
+// ═══════════════════════════════════════════════════
+//  ROBUST SUPABASE LOADER
+//  Old code crashed everything if the CDN was slow or
+//  blocked. This version loads jsDelivr first; if that
+//  fails it falls back to unpkg; if both fail the user
+//  sees a clear error instead of dead buttons.
+// ═══════════════════════════════════════════════════
+let supabaseClient = null;
+let supabaseReady = false;
+const supabaseReadyCallbacks = [];
+
+function onSupabaseReady(cb) {
+  if (supabaseReady) cb();
+  else supabaseReadyCallbacks.push(cb);
 }
 
-const { createClient } = supabase;
-const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
-  },
-  realtime: {
-    params: { eventsPerSecond: 10 },
-  },
-});
-    
+function initSupabaseClient() {
+  if (typeof supabase === 'undefined' || !supabase.createClient) {
+    console.error('Supabase global not found');
+    return false;
+  }
+  const { createClient } = supabase;
+  supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+    },
+    realtime: { params: { eventsPerSecond: 10 } },
+  });
+  supabaseReady = true;
+  console.log('✅ Supabase client ready');
+  supabaseReadyCallbacks.forEach(function(cb){ try { cb(); } catch(e) { console.error(e); } });
+  return true;
+}
+
+function loadSupabaseLibrary() {
+  // Attempt #1: jsDelivr
+  var s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+  s.onload = function() {
+    if (!initSupabaseClient()) loadSupabaseFallback();
+  };
+  s.onerror = loadSupabaseFallback;
+  document.head.appendChild(s);
+}
+
+function loadSupabaseFallback() {
+  // Attempt #2: unpkg
+  console.warn('jsDelivr failed, trying unpkg...');
+  var f = document.createElement('script');
+  f.src = 'https://unpkg.com/@supabase/supabase-js@2';
+  f.onload = function() {
+    if (!initSupabaseClient()) showCdnError();
+  };
+  f.onerror = showCdnError;
+  document.head.appendChild(f);
+}
+
+function showCdnError() {
+  console.error('All Supabase CDNs failed to load');
+  var msg = '⚠️ Could not load security library. Please check your internet connection and refresh the page. If this keeps happening, your ISP may be blocking the CDN — try a different network.';
+  var el = document.getElementById('login-error');
+  if (el) {
+    el.textContent = msg;
+    el.style.display = 'block';
+  } else {
+    // Login screen not in DOM yet, show as fullscreen message
+    document.addEventListener('DOMContentLoaded', function() {
+      var e2 = document.getElementById('login-error');
+      if (e2) { e2.textContent = msg; e2.style.display = 'block'; }
+      else alert(msg);
+    });
+  }
+}
+
+// Start loading immediately
+loadSupabaseLibrary();
+
 console.log('✅ Digital IO Config Loaded');
 
 </script>
@@ -534,11 +606,11 @@ async function doLogout(){clearTimeout(sessionTimer);await supabaseClient.auth.s
 function pinPress(d){if(pinBuffer.length>=6)return;pinBuffer+=d;updatePinDots();if(pinBuffer.length===6)setTimeout(verifyPin,200);}
 function pinBackspace(){pinBuffer=pinBuffer.slice(0,-1);updatePinDots();}
 function updatePinDots(){for(let i=0;i<6;i++){const d=document.getElementById('pd'+i);if(d)d.classList.toggle('filled',i<pinBuffer.length);}}
-async function verifyPin(){const sp=localStorage.getItem('dio_pin');if(!sp||pinBuffer!==sp){showLoginError('❌ Incorrect PIN.');pinBuffer='';updatePinDots();return;}const e=localStorage.getItem('dio_pin_email'),p=localStorage.getItem('dio_pin_password');pinBuffer='';updatePinDots();if(e&&p){document.getElementById('login-email').value=e;document.getElementById('login-password').value=p;await doLogin();}}
-async function doBiometric(){if(!window.PublicKeyCredential){showLoginError('⚠️ Biometric not supported.');return;}document.getElementById('bio-ring').classList.add('scanning');try{await navigator.credentials.get({publicKey:{challenge:new Uint8Array(32),timeout:60000,userVerification:'required'}});const e=localStorage.getItem('dio_bio_email'),p=localStorage.getItem('dio_bio_password');if(e&&p){document.getElementById('login-email').value=e;document.getElementById('login-password').value=p;await doLogin();}}catch(e){document.getElementById('bio-ring').classList.remove('scanning');showLoginError('⚠️ Biometric failed. Use password instead.');}}
+async function verifyPin(){const sp=localStorage.getItem('dio_pin');if(!sp||pinBuffer!==sp){showLoginError('❌ Incorrect PIN.');pinBuffer='';updatePinDots();return;}pinBuffer='';updatePinDots();/* SECURITY FIX: Don't store plaintext passwords. Use existing Supabase session refresh token instead. */try{const{data:{session}}=await supabaseClient.auth.getSession();if(session){currentUser=session.user;await loadOfficerProfile();await loginSuccess();}else{showLoginError('⚠️ Session expired. Please use password to sign in.');setLoginMethod('password',document.querySelectorAll('.login-method')[0]);}}catch(e){showLoginError('⚠️ PIN login failed. Use password instead.');}}
+async function doBiometric(){if(!window.PublicKeyCredential){showLoginError('⚠️ Biometric not supported.');return;}document.getElementById('bio-ring').classList.add('scanning');try{await navigator.credentials.get({publicKey:{challenge:new Uint8Array(32),timeout:60000,userVerification:'required'}});/* SECURITY FIX: Don't store plaintext passwords. Use existing session. */const{data:{session}}=await supabaseClient.auth.getSession();if(session){currentUser=session.user;await loadOfficerProfile();await loginSuccess();}else{document.getElementById('bio-ring').classList.remove('scanning');showLoginError('⚠️ Session expired. Please use password to sign in.');setLoginMethod('password',document.querySelectorAll('.login-method')[0]);}}catch(e){document.getElementById('bio-ring').classList.remove('scanning');showLoginError('⚠️ Biometric failed. Use password instead.');}}
 function showRegister(){document.getElementById('register-modal').style.display='flex';}
 function hideRegister(){document.getElementById('register-modal').style.display='none';}
-async function submitRegistration(){const name=document.getElementById('reg-name').value.trim(),email=document.getElementById('reg-email').value.trim(),badge=document.getElementById('reg-badge').value.trim(),station=document.getElementById('reg-station').value.trim(),district=document.getElementById('reg-district').value.trim(),pass=document.getElementById('reg-password').value;if(!name||!email||!badge||!station||!pass){showToast('⚠️ Fill all fields.','error');return;}if(pass.length<8){showToast('⚠️ Password min 8 characters.','error');return;}try{const{data,error}=await supabaseClient.auth.signUp({email,password:pass,options:{data:{full_name:name,badge_number:badge,station,district}}});if(error){showToast('❌ '+error.message,'error');return;}if(data.user){await supabaseClient.from('officers').insert({user_id:data.user.id,full_name:name,badge_number:badge,station,district});await supabaseClient.from('user_roles').insert({user_id:data.user.id,role:'officer'});}hideRegister();showToast('✅ Registration submitted! Check your email. Admin approval required.','success',6000);}catch(err){showToast('⚠️ Error: '+err.message,'error');}}
+async function submitRegistration(){const name=document.getElementById('reg-name').value.trim(),email=document.getElementById('reg-email').value.trim(),badge=document.getElementById('reg-badge').value.trim(),station=document.getElementById('reg-station').value.trim(),district=document.getElementById('reg-district').value.trim(),pass=document.getElementById('reg-password').value;if(!name||!email||!badge||!station||!pass){showToast('⚠️ Fill all fields.','error');return;}if(pass.length<8){showToast('⚠️ Password min 8 characters.','error');return;}try{const{data,error}=await supabaseClient.auth.signUp({email,password:pass,options:{data:{full_name:name,badge_number:badge,station,district}}});if(error){showToast('❌ '+error.message,'error');return;}/* SECURITY FIX: Do NOT auto-create officer/user_roles rows here. Admin must approve via admin.html. Write to pending_registrations instead. */if(data.user){await supabaseClient.from('pending_registrations').insert({user_id:data.user.id,full_name:name,email,badge_number:badge,station,district,status:'pending'});}hideRegister();showToast('✅ Registration submitted! Admin approval required before you can sign in.','success',6000);}catch(err){showToast('⚠️ Error: '+err.message,'error');}}
 function showForgotPassword(){document.getElementById('forgot-modal').style.display='flex';document.getElementById('forgot-step1').style.display='block';document.getElementById('forgot-step2').style.display='none';document.getElementById('forgot-step3').style.display='none';}
 function hideForgotModal(){document.getElementById('forgot-modal').style.display='none';}
 async function sendOTP(){const email=document.getElementById('forgot-email').value.trim();if(!email){showToast('⚠️ Enter email.','error');return;}await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin});document.getElementById('forgot-step1').style.display='none';document.getElementById('forgot-step2').style.display='block';showToast('📧 Reset email sent.','success');}
@@ -2153,7 +2225,7 @@ async function renderAdminPage(container){if(currentRole!=='admin'&&currentRole!
 async function initApp(){updateSidebarProfile();updateConnectionStatus(true);await updateBadges();startClock();initBackupSystem();setupRealtimeSync(async(table)=>{await updateBadges();const pt=document.getElementById('topbar-title')?.textContent;if(table==='cases'&&pt?.includes('Cases'))renderCases(document.getElementById('page-content'));if(table==='reminders'&&pt?.includes('Reminder'))renderReminders(document.getElementById('page-content'));});showPage('dashboard',document.querySelector('.nav-item'));setTimeout(()=>triggerBackup('app_init'),3000);}
 window.addEventListener('online',()=>{updateConnectionStatus(true);showToast('🌐 Back online!','success');});
 window.addEventListener('offline',()=>{updateConnectionStatus(false);showToast('📴 You are offline.','error',5000);});
-window.addEventListener('DOMContentLoaded',async()=>{await checkExistingSession();setInterval(()=>{const el=document.getElementById('footer-time');if(el)el.textContent=new Date().toLocaleTimeString('en-PK');},1000);console.log('✅ Digital IO v4.0 Loaded');});
+window.addEventListener('DOMContentLoaded',async()=>{onSupabaseReady(async()=>{await checkExistingSession();});setInterval(()=>{const el=document.getElementById('footer-time');if(el)el.textContent=new Date().toLocaleTimeString('en-PK');},1000);console.log('✅ Digital IO v4.0 Loaded');});
 </script>
 </body>
 </html>
