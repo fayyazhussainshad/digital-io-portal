@@ -7,6 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Digital IO">
   <title>Digital IO</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🛡️%3C/text%3E%3C/svg%3E">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     /* Jameel Noori Nastaleeq — official legal Urdu font */
@@ -633,7 +634,7 @@ async function getCases(fStatus,fQuery){fStatus=fStatus||'';fQuery=fQuery||'';
   const{data,error}=await q;
   if(error)return[];
   let list=data||[];
-  if(fq){const s=fq.toLowerCase();list=list.filter(c=>c.fir_number?.toLowerCase().includes(s)||c.section_of_law?.toLowerCase().includes(s)||c.offence_type?.toLowerCase().includes(s));}
+  if(fQuery){const s=fQuery.toLowerCase();list=list.filter(c=>c.fir_number?.toLowerCase().includes(s)||c.section_of_law?.toLowerCase().includes(s)||c.offence_type?.toLowerCase().includes(s));}
   return list;
 }
 async function getCase(id){
@@ -670,9 +671,13 @@ function closeModal(){document.getElementById('modal-root').innerHTML='';}
 const pageTitles={dashboard:'🏠 Dashboard',cases:'📁 My Cases',misal:'📄 MISAL Builder',evidence:'🔬 Evidence',search:'🔍 Advanced Search',law:'⚖️ Law Library',reminders:'🔔 Reminders',performance:'📊 Performance',backup:'☁️ Backup & Sync',settings:'⚙️ Settings',admin:'👨‍💼 Admin Panel'};
 const pageRenderers={};
 function registerPage(name,fn){pageRenderers[name]=fn;}
-function showPage(page,el){document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));if(el)el.classList.add('active');else document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes(`'${page}'`))n.classList.add('active');});document.getElementById('topbar-title').textContent=pageTitles[page]||page;const c=document.getElementById('page-content');c.innerHTML=`<div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Loading...</div></div>`;document.getElementById('sidebar').classList.remove('open');if(pageRenderers[page])pageRenderers[page](c);else c.innerHTML=`<div style="text-align:center;padding:60px;color:var(--text-muted);"><div style="font-size:48px;margin-bottom:12px;">🚧</div><div>Coming Soon</div></div>`;resetSessionTimer();}
+function showPage(page,el){document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));if(el)el.classList.add('active');else document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes(`'${page}'`))n.classList.add('active');});document.getElementById('topbar-title').textContent=pageTitles[page]||page;const c=document.getElementById('page-content');c.innerHTML=`<div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Loading...</div></div>`;document.getElementById('sidebar').classList.remove('open');if(pageRenderers[page]){
+  /* Wrap renderer in try/catch + timeout so failures don't leave a permanent loading spinner */
+  const timeoutId=setTimeout(()=>{if(c.querySelector('.loading-screen')){c.innerHTML=`<div style="padding:40px;text-align:center;color:var(--amber);"><div style="font-size:48px;margin-bottom:12px;">⏱️</div><div style="font-size:14px;margin-bottom:8px;">Loading is taking too long.</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">The database query may be blocked by a security policy or your tables may be missing. Open browser console (F12) for details.</div><button class="btn btn-secondary" onclick="showPage('${page}',null)">🔄 Retry</button></div>`;}},15000);
+  Promise.resolve(pageRenderers[page](c)).catch(err=>{console.error('[Page Render Error]',page,err);c.innerHTML=`<div style="padding:40px;text-align:center;color:var(--red);"><div style="font-size:48px;margin-bottom:12px;">⚠️</div><div style="font-size:14px;margin-bottom:8px;">Could not load ${page}.</div><div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);background:var(--bg-tertiary);padding:10px;border-radius:6px;margin:10px auto;max-width:600px;text-align:left;word-break:break-word;">${(err&&err.message)?err.message:String(err)}</div><button class="btn btn-secondary" onclick="showPage('${page}',null)">🔄 Retry</button></div>`;}).finally(()=>clearTimeout(timeoutId));
+}else c.innerHTML=`<div style="text-align:center;padding:60px;color:var(--text-muted);"><div style="font-size:48px;margin-bottom:12px;">🚧</div><div>Coming Soon</div></div>`;resetSessionTimer();}
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');}
-function updateConnectionStatus(ok){const d=document.getElementById('status-dot'),t=document.getElementById('status-text');if(d)d.style.background=ok?'var(--green)':'var(--red)';if(t)t.textContent=ok?'Online':'Offline';}
+function updateConnectionStatus(ok){const d=document.getElementById('status-dot'),t=document.getElementById('status-text'),b=document.getElementById('db-badge');if(d)d.style.background=ok?'var(--green)':'var(--red)';if(t)t.textContent=ok?'Online':'Offline';if(b){b.textContent=ok?'🔗 Connected':'❌ Disconnected';b.style.background=ok?'var(--green-bg)':'var(--red-bg)';b.style.color=ok?'var(--green)':'var(--red)';}}
 async function updateBadges(){try{const cases=await getCases(),rem=await getReminders(false);const cb=document.getElementById('badge-cases'),rb=document.getElementById('badge-reminders');if(cb)cb.textContent=cases.length;if(rb)rb.textContent=rem.length;}catch(e){}}
 function startClock(){setInterval(()=>{const el=document.getElementById('footer-time');if(el)el.textContent=new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit',second:'2-digit'});},1000);}
 function formatCNIC(v){if(!v)return'—';const d=v.replace(/\D/g,'');if(d.length===13)return`${d.slice(0,5)}-${d.slice(5,12)}-${d.slice(12)}`;return v;}
@@ -2225,7 +2230,7 @@ async function renderAdminPage(container){if(currentRole!=='admin'&&currentRole!
 async function initApp(){updateSidebarProfile();updateConnectionStatus(true);await updateBadges();startClock();initBackupSystem();setupRealtimeSync(async(table)=>{await updateBadges();const pt=document.getElementById('topbar-title')?.textContent;if(table==='cases'&&pt?.includes('Cases'))renderCases(document.getElementById('page-content'));if(table==='reminders'&&pt?.includes('Reminder'))renderReminders(document.getElementById('page-content'));});showPage('dashboard',document.querySelector('.nav-item'));setTimeout(()=>triggerBackup('app_init'),3000);}
 window.addEventListener('online',()=>{updateConnectionStatus(true);showToast('🌐 Back online!','success');});
 window.addEventListener('offline',()=>{updateConnectionStatus(false);showToast('📴 You are offline.','error',5000);});
-window.addEventListener('DOMContentLoaded',async()=>{onSupabaseReady(async()=>{await checkExistingSession();});setInterval(()=>{const el=document.getElementById('footer-time');if(el)el.textContent=new Date().toLocaleTimeString('en-PK');},1000);console.log('✅ Digital IO v4.0 Loaded');});
+window.addEventListener('DOMContentLoaded',async()=>{onSupabaseReady(async()=>{await checkExistingSession();});setInterval(()=>{const el=document.getElementById('footer-time');if(el)el.textContent=new Date().toLocaleTimeString('en-PK');},1000);console.log('✅ Digital IO v4.0.1 — FQ FIX APPLIED — '+new Date().toISOString());});
 </script>
 </body>
 </html>
