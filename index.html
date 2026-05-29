@@ -9,6 +9,10 @@
   <title>Digital IO</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🛡️%3C/text%3E%3C/svg%3E">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Official form generation: fills government Word templates client-side -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pizzip/3.1.7/pizzip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.50.0/docxtemplater.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <style>
     /* Jameel Noori Nastaleeq — official legal Urdu font */
     @font-face {
@@ -563,6 +567,7 @@ input, textarea, select { font-family: var(--font-main); }
       <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">🏠</span> Dashboard</div>
       <div class="nav-item" onclick="showPage('cases',this)"><span class="nav-icon">📁</span> My Cases <span class="nav-badge" id="badge-cases">0</span></div>
       <div class="nav-item" onclick="showPage('misal',this)"><span class="nav-icon">📄</span> MISAL Builder</div>
+      <div class="nav-item" onclick="showPage('forms',this)"><span class="nav-icon">📥</span> Official Forms</div>
       <div class="nav-item" onclick="showPage('evidence',this)"><span class="nav-icon">🔬</span> Evidence</div>
       <div class="nav-section-label">Tools</div>
       <div class="nav-item" onclick="showPage('search',this)"><span class="nav-icon">🔍</span> Advanced Search</div>
@@ -668,7 +673,7 @@ function setupRealtimeSync(cb){supabaseClient.channel('db-changes').on('postgres
 function showToast(msg,type='info',duration=APP_CONFIG.toastDuration){const c=document.getElementById('toast-container'),t=document.createElement('div');t.className=`toast toast-${type}`;t.innerHTML=msg;c.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity 0.3s';setTimeout(()=>t.remove(),300);},duration);}
 function openModal(title,body,footer=''){document.getElementById('modal-root').innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal-card"><div class="modal-header"><div class="modal-title">${title}</div><button class="modal-close" onclick="closeModal()">✕</button></div><div class="modal-body">${body}</div>${footer?`<div class="modal-footer">${footer}</div>`:''}</div></div>`;}
 function closeModal(){document.getElementById('modal-root').innerHTML='';}
-const pageTitles={dashboard:'🏠 Dashboard',cases:'📁 My Cases',misal:'📄 MISAL Builder',evidence:'🔬 Evidence',search:'🔍 Advanced Search',law:'⚖️ Law Library',reminders:'🔔 Reminders',performance:'📊 Performance',backup:'☁️ Backup & Sync',settings:'⚙️ Settings',admin:'👨‍💼 Admin Panel'};
+const pageTitles={dashboard:'🏠 Dashboard',cases:'📁 My Cases',misal:'📄 MISAL Builder',forms:'📥 Official Forms',evidence:'🔬 Evidence',search:'🔍 Advanced Search',law:'⚖️ Law Library',reminders:'🔔 Reminders',performance:'📊 Performance',backup:'☁️ Backup & Sync',settings:'⚙️ Settings',admin:'👨‍💼 Admin Panel'};
 const pageRenderers={};
 function registerPage(name,fn){pageRenderers[name]=fn;}
 function showPage(page,el){document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));if(el)el.classList.add('active');else document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes(`'${page}'`))n.classList.add('active');});document.getElementById('topbar-title').textContent=pageTitles[page]||page;const c=document.getElementById('page-content');c.innerHTML=`<div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Loading...</div></div>`;document.getElementById('sidebar').classList.remove('open');if(pageRenderers[page]){
@@ -1477,6 +1482,7 @@ function openDocEditor(docIndex) {
       <button class="btn btn-secondary btn-sm" onclick="toggleDirection()">⇄ LTR/RTL</button>
       <button class="btn btn-secondary btn-sm" onclick="saveDocDraft(${docIndex})">💾 Save Draft</button>
       <button class="btn btn-secondary btn-sm" onclick="printThisDoc('${docName}')">🖨️ Print</button>
+      ${OFFICIAL_TEMPLATES[docName]?`<button class="btn btn-primary btn-sm" onclick="generateOfficialDoc('${docName}')" title="Download in exact government format with case data auto-filled">📥 Official .docx</button>`:''}
       <button class="btn btn-primary btn-sm" onclick="markDocDone(${docIndex})">✅ Mark Complete</button>
     </div>
     <!-- Editor -->
@@ -2226,11 +2232,146 @@ function changeProfilePhoto(){const i=document.createElement('input');i.type='fi
 registerPage('admin',renderAdminPage);
 async function renderAdminPage(container){if(currentRole!=='admin'&&currentRole!=='superadmin'){container.innerHTML=`<div style="text-align:center;padding:60px;color:var(--text-muted);">⛔ Access Denied.</div>`;return;}const stats=await getAdminStats();container.innerHTML=`<div class="page-header"><div class="page-title">👨‍💼 Admin Panel</div><a href="/admin.html" target="_blank" class="btn btn-primary">🔗 Open Full Admin Panel</a></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">${[['Total Officers',stats?.totalOfficers||0,'var(--accent)','👮'],['Total Cases',stats?.totalCases||0,'var(--green)','📁'],['Active Cases',stats?.activeCases||0,'var(--amber)','🔵'],['Completed',stats?.completedCases||0,'var(--green)','✅']].map(([label,val,color,icon])=>`<div class="card" style="text-align:center;"><div style="font-size:28px;margin-bottom:4px;">${icon}</div><div style="font-size:28px;font-weight:900;color:${color};font-family:var(--font-display);">${val}</div><div style="font-size:11px;color:var(--text-muted);">${label}</div></div>`).join('')}</div><div class="card"><div class="card-title">📋 RECENT ACTIVITY</div>${(stats?.recentActivity||[]).slice(0,8).map(log=>`<div class="detail-row"><span class="detail-key" style="font-family:var(--font-mono);font-size:10px;">${log.action} on ${log.table_name}</span><span class="detail-val" style="font-size:10px;color:var(--text-faint);">${timeAgo(log.created_at)}</span></div>`).join('')||'<div style="color:var(--text-muted);font-size:12px;">No activity logged yet.</div>'}</div>`;}
 
+// ═══════════════════════════════════════════════════
+//  OFFICIAL DOCUMENT GENERATION (exact govt format)
+//  Loads the real .docx template, fills the {tokens}
+//  with case data, downloads a print-ready Word file.
+// ═══════════════════════════════════════════════════
+const OFFICIAL_TEMPLATES = {
+  'CDR Form':           'CDR_Form_TEMPLATE.docx',
+  'Zimni Berooni':      'Zimni_Berooni_TEMPLATE.docx',
+  'Zimni Androoni':     'Zimni_Androoni_TEMPLATE.docx',
+  'Investigation Bills':'Investigation_Bill_TEMPLATE.docx',
+};
+
+let _docxLibsReady = false;
+function _loadScriptOnce(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('Failed to load '+src));document.head.appendChild(s);});}
+function loadDocxLibs(){
+  return new Promise((resolve,reject)=>{
+    if(_docxLibsReady && window.PizZip && window.docxtemplater){resolve();return;}
+    _loadScriptOnce('https://cdn.jsdelivr.net/npm/pizzip@3.1.6/dist/pizzip.min.js')
+      .then(()=>_loadScriptOnce('https://cdn.jsdelivr.net/npm/docxtemplater@3.50.0/build/docxtemplater.js'))
+      .then(()=>{_docxLibsReady=true;resolve();})
+      .catch(()=>{ // fallback CDN
+        _loadScriptOnce('https://unpkg.com/pizzip@3.1.6/dist/pizzip.min.js')
+          .then(()=>_loadScriptOnce('https://unpkg.com/docxtemplater@3.50.0/build/docxtemplater.js'))
+          .then(()=>{_docxLibsReady=true;resolve();})
+          .catch(reject);
+      });
+  });
+}
+
+function buildOfficialDocData(c){
+  const o = currentOfficer || {};
+  const today = new Date();
+  const monthsUr = ['جنوری','فروری','مارچ','اپریل','مئی','جون','جولائی','اگست','ستمبر','اکتوبر','نومبر','دسمبر'];
+  return {
+    station: o.station || '',
+    district: o.district || '',
+    fir_number: c.fir_number || '',
+    fir_date: c.fir_date || '',
+    offence: c.offence_type || '',
+    occurrence_date: c.occurrence_date || '',
+    occurrence_place: c.occurrence_place || '',
+    io_name: o.full_name || '',
+    io_mobile: o.phone || '',
+    accused_name: c.accused_name || '',
+    diary_no: '',
+    diary_date: '',
+    zimni_no: '',
+    year: String(today.getFullYear()),
+    month: monthsUr[today.getMonth()],
+  };
+}
+
+async function generateOfficialDoc(docName){
+  const tplFile = OFFICIAL_TEMPLATES[docName];
+  if(!tplFile){ showToast('⚠️ No official template available for this document.','error'); return; }
+  const c = window._workspaceCase;
+  if(!c){ showToast('⚠️ Please open a case first.','error'); return; }
+  showToast('⏳ Generating official document…','info');
+  try{
+    await loadDocxLibs();
+    const resp = await fetch('templates/' + tplFile);
+    if(!resp.ok) throw new Error('Template not found at templates/'+tplFile+' (HTTP '+resp.status+'). Did you upload the templates folder?');
+    const buf = await resp.arrayBuffer();
+    const zip = new window.PizZip(buf);
+    const doc = new window.docxtemplater(zip, { paragraphLoop:true, linebreaks:true, nullGetter:()=>'' });
+    doc.render(buildOfficialDocData(c));
+    const blob = doc.getZip().generate({ type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    const safeFir = (c.fir_number||'').replace(/[\/\\:*?"<>|]/g,'-');
+    const fname = docName.replace(/\s+/g,'_') + '_FIR_' + safeFir + '.docx';
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 2000);
+    showToast('✅ Official document downloaded — open it in Word/Google Docs to print.','success',5000);
+  }catch(err){
+    console.error('[Official Doc Error]', err);
+    showToast('❌ '+err.message,'error',7000);
+  }
+}
+
+// ── OFFICIAL FORMS (Government Templates — Auto-Fill) ──
+const OFFICIAL_FORMS=[
+  {id:'cdr',name:'CDR Form — کال ڈیٹا ریکارڈ',file:'CDR_Form_template.docx',type:'docx'},
+  {id:'berooni',name:'Zimni Berooni — بیرونی ضمنی',file:'Zimni_Berooni_template.docx',type:'docx'},
+  {id:'bill',name:'Investigation Bill — بل تفتیش',file:'Investigation_Bill_template.docx',type:'docx'},
+  {id:'androoni',name:'Zimni Androoni — اندرونی ضمنی (blank note form)',file:'Zimni_Androoni.docx',type:'docx-blank'},
+  {id:'cro',name:'CRO Form — کریمنل ریکارڈ کارڈ (print &amp; fill by hand)',file:'CRO_FORM.pdf',type:'pdf-blank'},
+];
+function buildFormData(c){
+  const o=currentOfficer||{};const now=new Date();
+  const months=['جنوری','فروری','مارچ','اپریل','مئی','جون','جولائی','اگست','ستمبر','اکتوبر','نومبر','دسمبر'];
+  return{
+    station:o.station||'',district:o.district||'',
+    firNumber:c?.fir_number||'',firDate:c?.fir_date||'',
+    offence:[c?.section_of_law,c?.offence_type].filter(Boolean).join(' — ')||'',
+    occurrenceDate:c?.occurrence_date||'',occurrencePlace:'',
+    ioName:o.full_name||'',ioMobile:o.phone||'',
+    year:String(now.getFullYear()),billMonth:months[now.getMonth()],billYear:String(now.getFullYear()),
+  };
+}
+async function generateOfficialForm(formId){
+  const form=OFFICIAL_FORMS.find(f=>f.id===formId);if(!form)return;
+  const caseId=document.getElementById('offform-case-select')?.value;
+  if(form.type==='pdf-blank'){window.open('templates/'+form.file,'_blank');showToast('🖨️ CRO form opened — print and fill by hand (fingerprints & physical marks require the person present).','info',6000);return;}
+  if(form.type==='docx-blank'){const a=document.createElement('a');a.href='templates/'+form.file;a.download=form.file;document.body.appendChild(a);a.click();a.remove();showToast('📄 Blank form downloaded.','info');return;}
+  if(typeof PizZip==='undefined'||typeof window.docxtemplater==='undefined'){showToast('⚠️ Document library still loading — wait a moment and try again.','error',4000);return;}
+  let caseData=null;if(caseId){try{caseData=await getCase(caseId);}catch(e){}}
+  const data=buildFormData(caseData);
+  try{
+    const resp=await fetch('templates/'+form.file);
+    if(!resp.ok)throw new Error('Template not found. Make sure '+form.file+' is in the /templates/ folder of your site.');
+    const buf=await resp.arrayBuffer();
+    const zip=new PizZip(buf);
+    const doc=new window.docxtemplater(zip,{paragraphLoop:true,linebreaks:true,delimiters:{start:'{',end:'}'}});
+    doc.render(data);
+    const out=doc.getZip().generate({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+    const fname=form.id+'_'+(data.firNumber||'blank').replace(/[^\w]/g,'-')+'.docx';
+    saveAs(out,fname);
+    showToast('✅ Official form generated & downloaded!','success');
+  }catch(e){showToast('❌ Generation failed: '+e.message,'error',6000);}
+}
+registerPage('forms',renderOfficialForms);
+async function renderOfficialForms(container){
+  const cases=await getCases();
+  container.innerHTML=`<div class="page-header"><div><div class="page-title">📥 Official Forms</div><div class="page-subtitle">Government-approved templates, auto-filled from case data</div></div></div>`
+  +`<div class="card" style="margin-bottom:16px;"><div class="card-title">1️⃣ Select Case <span style="font-weight:400;color:var(--text-muted);">(optional — fills FIR number, date, offence, etc.)</span></div>`
+  +`<select class="filter-select" id="offform-case-select" style="width:100%;max-width:420px;"><option value="">— Blank form (no case data) —</option>`
+  +cases.map(c=>`<option value="${c.id}">${c.fir_number||'(no FIR)'} — ${c.complainant||c.accused_name||''}</option>`).join('')
+  +`</select></div>`
+  +`<div class="card"><div class="card-title">2️⃣ Choose a Form to Generate</div>`
+  +OFFICIAL_FORMS.map(f=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 8px;border-bottom:1px solid var(--border-light);"><div style="font-size:13px;color:var(--text-secondary);">📄 ${f.name}</div><button class="btn btn-primary btn-sm" style="white-space:nowrap;flex-shrink:0;" onclick="generateOfficialForm('${f.id}')">${f.type==='docx'?'⬇️ Generate Filled':f.type==='pdf-blank'?'🖨️ Open to Print':'⬇️ Download Blank'}</button></div>`).join('')
+  +`</div>`
+  +`<div style="margin-top:14px;padding:14px;background:var(--bg-tertiary);border-radius:8px;font-size:11px;color:var(--text-muted);line-height:1.8;">ℹ️ <b>How it works:</b> Generated forms keep the <b>exact</b> government format. Pick a case, click "Generate Filled" — the FIR number, date, offence, station, and your name are inserted automatically into the official Word file. Open the download to review, then print.<br>🖐️ <b>CRO Form</b> is a scanned card (fingerprints + physical marks) — print blank and fill by hand.<br>📝 <b>Zimni Androoni</b> is an internal note form filled by hand.</div>`;
+}
+
 // ── APP BOOTSTRAP ──
 async function initApp(){updateSidebarProfile();updateConnectionStatus(true);await updateBadges();startClock();initBackupSystem();setupRealtimeSync(async(table)=>{await updateBadges();const pt=document.getElementById('topbar-title')?.textContent;if(table==='cases'&&pt?.includes('Cases'))renderCases(document.getElementById('page-content'));if(table==='reminders'&&pt?.includes('Reminder'))renderReminders(document.getElementById('page-content'));});showPage('dashboard',document.querySelector('.nav-item'));setTimeout(()=>triggerBackup('app_init'),3000);}
 window.addEventListener('online',()=>{updateConnectionStatus(true);showToast('🌐 Back online!','success');});
 window.addEventListener('offline',()=>{updateConnectionStatus(false);showToast('📴 You are offline.','error',5000);});
-window.addEventListener('DOMContentLoaded',async()=>{onSupabaseReady(async()=>{await checkExistingSession();});setInterval(()=>{const el=document.getElementById('footer-time');if(el)el.textContent=new Date().toLocaleTimeString('en-PK');},1000);console.log('✅ Digital IO v4.0.1 — FQ FIX APPLIED — '+new Date().toISOString());});
+window.addEventListener('DOMContentLoaded',async()=>{onSupabaseReady(async()=>{await checkExistingSession();});setInterval(()=>{const el=document.getElementById('footer-time');if(el)el.textContent=new Date().toLocaleTimeString('en-PK');},1000);console.log('✅ Digital IO v4.0.2 — OFFICIAL DOCS — '+new Date().toISOString());});
 </script>
 </body>
 </html>
