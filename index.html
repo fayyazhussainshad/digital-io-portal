@@ -788,226 +788,203 @@ function autoFormatDate(inp) {
   inp.value = v;
 }
 
-function caseFormHTML(c={}) {
+function caseFormHTML(c) {
+  c = c || {};
   selectedSections = c.section_of_law ? c.section_of_law.split(' + ').filter(Boolean) : [];
   try {
     selectedDocuments = c.documents_checklist
       ? (typeof c.documents_checklist === 'string'
           ? JSON.parse(c.documents_checklist)
-          : Array.isArray(c.documents_checklist)
-            ? c.documents_checklist
-            : [])
+          : Array.isArray(c.documents_checklist) ? c.documents_checklist : [])
       : [];
   } catch(e) { selectedDocuments = []; }
 
-  return `
-  <div style="max-height:70vh;overflow-y:auto;padding-right:4px;">
+  var fir = c.fir_number || '';
+  var date = c.fir_date || '';
+  var occ = c.occurrence_date || '';
+  var accused = c.accused_name || '';
+  var cnic = c.accused_cnic || '';
+  var cell = c.accused_cell || '';
+  var complainant = c.complainant || '';
+  var cmpCnic = c.complainant_cnic || '';
+  var cmpCell = c.complainant_cell || '';
+  var cmpProf = c.complainant_profession || '';
+  var section = c.section_of_law || '';
+  var offence = c.offence_type || '';
+  var sho = c.sho || '';
+  var sdpo = c.sdpo || '';
+  var firWriter = c.fir_writer || '';
+  var compSender = c.complaint_sender || '';
+  var notes = c.notes || '';
+  var status = c.status || 'under';
+  var position = c.position || 'pending';
+  var isCross = c.is_cross_version || false;
 
-    <!-- ROW 1: FIR + Date -->
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">FIR Number *</label>
-        <input class="form-input" id="cf-fir" value="${c.fir_number||''}" placeholder="e.g. 245/2025" dir="auto">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Date of FIR *</label>
-        <input class="form-input" id="cf-date" value="${c.fir_date||''}" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" maxlength="10">
-      </div>
-    </div>
+  var statusOpts = '<option value="under"'+(status==='under'?' selected':'')+'>&#x0632;&#x06CC;&#x0631; &#x062A;&#x0641;&#x062A;&#x06CC;&#x0634; (Under Investigation)</option>'
+    + '<option value="complete"'+(status==='complete'?' selected':'')+'>&#x0645;&#x06A9;&#x0645;&#x0644; &#x0686;&#x0627;&#x0644;&#x0627;&#x0646; (Complete)</option>'
+    + '<option value="incomplete"'+(status==='incomplete'?' selected':'')+'>&#x0646;&#x0627;&#x0645;&#x06A9;&#x0645;&#x0644; &#x0686;&#x0627;&#x0644;&#x0627;&#x0646; (Incomplete)</option>'
+    + '<option value="untrace"'+(status==='untrace'?' selected':'')+'>&#x0639;&#x062F;&#x0645; &#x067E;&#x062A;&#x06C1; (Untraced)</option>'
+    + '<option value="cancel"'+(status==='cancel'?' selected':'')+'>&#x0627;&#x062E;&#x0631;&#x0627;&#x062C; (Cancelled)</option>';
 
-    <!-- ROW 2: Occurrence Date + Status -->
-    <div class="form-row">
-      <div class="form-group">
-        <label class="form-label">Occurrence Date</label>
-        <input class="form-input" id="cf-occurrence-date" value="${c.occurrence_date||''}" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" maxlength="10">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Status *</label>
-        <select class="form-input" id="cf-status">
-          <option value="under" ${(c.status||'under')==='under'?'selected':''}>زیر تفتیش (Under Investigation)</option>
-          <option value="complete" ${c.status==='complete'?'selected':''}>مکمل چالان (Complete)</option>
-          <option value="incomplete" ${c.status==='incomplete'?'selected':''}>نامکمل چالان (Incomplete)</option>
-          <option value="untrace" ${c.status==='untrace'?'selected':''}>عدم پتہ (Untraced)</option>
-          <option value="cancel" ${c.status==='cancel'?'selected':''}>اخراج (Cancelled)</option>
-        </select>
-      </div>
-    </div>
+  var posOpts = '<option value="pending"'+(position==='pending'?' selected':'')+'>' + '&#x23F3; Pending</option>'
+    + '<option value="court"'+(position==='court'?' selected':'')+'>&#x2696;&#xFE0F; In Court</option>';
 
-    <!-- SECTIONS OF LAW -->
-    <div class="form-group">
-      <label class="form-label">Sections of Law * <span style="color:var(--text-faint);font-weight:400;">(multiple allowed)</span></label>
-      <div style="position:relative;">
-        <input class="form-input" id="cf-section-search" placeholder="🔍 Type section no. or keyword (e.g. 302 or murder)..." oninput="searchPenalCodes(this.value)" autocomplete="off">
-        <div id="section-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg-card);border:1px solid var(--accent);border-radius:0 0 var(--radius-sm) var(--radius-sm);max-height:180px;overflow-y:auto;z-index:200;box-shadow:var(--shadow);"></div>
-      </div>
-      <div id="selected-sections" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
-        ${selectedSections.map(s => sectionTag(s)).join('')}
-      </div>
-      <input type="hidden" id="cf-section" value="${c.section_of_law||''}">
-    </div>
+  var sectionTags = selectedSections.map(function(s) { return sectionTag(s); }).join('');
+  var docList = renderDocChecklist(ALL_MISAL_DOCS, selectedDocuments);
 
-    <!-- OFFENCE -->
-    <div class="form-group">
-      <label class="form-label">Offence <span style="color:var(--text-faint);font-weight:400;">(auto-filled or type manually)</span></label>
-      <input class="form-input" id="cf-offence" value="${c.offence_type||''}" placeholder="Auto-filled when section selected">
-    </div>
+  var crossFields = '';
+  if (isCross) {
+    crossFields = buildCrossFields(c);
+  }
 
-    <!-- COMPLAINANT SECTION -->
-    <div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:12px;">
-      <div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">👤 Complainant Details</div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Complainant Name *</label>
-          <input class="form-input" id="cf-complainant" value="${c.complainant||''}" placeholder="مدعی کا نام / Complainant Name" dir="auto">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Complainant CNIC</label>
-          <input class="form-input" id="cf-complainant-cnic" value="${c.complainant_cnic||''}" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)">
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Complainant Cell No.</label>
-          <input class="form-input" id="cf-complainant-cell" value="${c.complainant_cell||''}" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Complainant Profession</label>
-          <input class="form-input" id="cf-complainant-profession" value="${c.complainant_profession||''}" placeholder="پیشہ / Profession" dir="auto">
-        </div>
-      </div>
-    </div>
+  var html = ''
+    + '<div style="max-height:70vh;overflow-y:auto;padding-right:4px;">'
 
-    <!-- FIR DETAILS -->
-    <div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:12px;">
-      <div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">📋 FIR Details</div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">FIR Writer</label>
-          <input class="form-input" id="cf-fir-writer" value="${c.fir_writer||''}" placeholder="FIR لکھنے والا" dir="auto">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Complaint Sender</label>
-          <input class="form-input" id="cf-complaint-sender" value="${c.complaint_sender||''}" placeholder="شکایت بھیجنے والا" dir="auto">
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">SHO</label>
-          <input class="form-input" id="cf-sho" value="${c.sho||''}" placeholder="SHO name">
-        </div>
-        <div class="form-group">
-          <label class="form-label">SDPO</label>
-          <input class="form-input" id="cf-sdpo" value="${c.sdpo||''}" placeholder="SDPO name">
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Position</label>
-          <select class="form-input" id="cf-position">
-            <option value="pending" ${(c.position||'pending')==='pending'?'selected':''}>⏳ Pending</option>
-            <option value="court" ${c.position==='court'?'selected':''}>⚖️ In Court</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Investigation Notes</label>
-          <textarea class="form-input" id="cf-notes" placeholder="تفتیشی نوٹس..." dir="auto" style="min-height:60px;resize:vertical;">${c.notes||''}</textarea>
-        </div>
-      </div>
-    </div>
+    // FIR + Date
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">FIR Number *</label>'
+    + '<input class="form-input" id="cf-fir" value="'+fir+'" placeholder="e.g. 245/2025" dir="auto"></div>'
+    + '<div class="form-group"><label class="form-label">Date of FIR *</label>'
+    + '<input class="form-input" id="cf-date" value="'+date+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" maxlength="10"></div>'
+    + '</div>'
 
-    <!-- DOCUMENT CHECKLIST -->
-    <div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);">
-      <div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
-        <span>📎 MISAL Documents Required</span>
-        <span style="color:var(--text-faint);font-size:9px;font-weight:400;">${selectedDocuments.length} selected</span>
-      </div>
+    // Occurrence + Status
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">Occurrence Date</label>'
+    + '<input class="form-input" id="cf-occurrence-date" value="'+occ+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" maxlength="10"></div>'
+    + '<div class="form-group"><label class="form-label">Status *</label>'
+    + '<select class="form-input" id="cf-status">'+statusOpts+'</select></div>'
+    + '</div>'
 
-      <!-- Search documents -->
-      <input class="form-input" id="doc-search" placeholder="🔍 Search documents..." oninput="filterDocChecklist(this.value)" style="margin-bottom:10px;">
+    // Sections
+    + '<div class="form-group">'
+    + '<label class="form-label">Sections of Law * <span style="color:var(--text-faint);font-weight:400;">(multiple allowed)</span></label>'
+    + '<div style="position:relative;">'
+    + '<input class="form-input" id="cf-section-search" placeholder="&#x1F50D; Type section no. or keyword (e.g. 302 or murder)..." oninput="searchPenalCodes(this.value)" autocomplete="off">'
+    + '<div id="section-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg-card);border:1px solid var(--accent);border-radius:0 0 var(--radius-sm) var(--radius-sm);max-height:180px;overflow-y:auto;z-index:200;box-shadow:var(--shadow);"></div>'
+    + '</div>'
+    + '<div id="selected-sections" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">'+sectionTags+'</div>'
+    + '<input type="hidden" id="cf-section" value="'+section+'">'
+    + '</div>'
 
-      <!-- Add custom document -->
-      <div style="display:flex;gap:6px;margin-bottom:10px;">
-        <input class="form-input" id="custom-doc-input" placeholder="Add custom document..." style="flex:1;">
-        <button type="button" class="btn btn-secondary btn-sm" onclick="addCustomDoc()">+ Add</button>
-      </div>
+    // Offence
+    + '<div class="form-group">'
+    + '<label class="form-label">Offence <span style="color:var(--text-faint);font-weight:400;">(auto-filled or type manually)</span></label>'
+    + '<input class="form-input" id="cf-offence" value="'+offence+'" placeholder="Auto-filled when section selected" dir="auto">'
+    + '</div>'
 
-      <!-- Document list -->
-      <div id="doc-checklist" style="max-height:220px;overflow-y:auto;">
-        ${renderDocChecklist(ALL_MISAL_DOCS, selectedDocuments)}
-      </div>
-    </div>
+    // Complainant section
+    + '<div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:12px;">'
+    + '<div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">&#x1F464; Complainant Details</div>'
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">Complainant Name *</label>'
+    + '<input class="form-input" id="cf-complainant" value="'+complainant+'" placeholder="&#x0645;&#x062F;&#x0639;&#x06CC; &#x06A9;&#x0627; &#x0646;&#x0627;&#x0645; / Complainant Name" dir="auto"></div>'
+    + '<div class="form-group"><label class="form-label">Complainant CNIC</label>'
+    + '<input class="form-input" id="cf-complainant-cnic" value="'+cmpCnic+'" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)"></div>'
+    + '</div>'
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">Complainant Cell No.</label>'
+    + '<input class="form-input" id="cf-complainant-cell" value="'+cmpCell+'" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)"></div>'
+    + '<div class="form-group"><label class="form-label">Complainant Profession</label>'
+    + '<input class="form-input" id="cf-complainant-profession" value="'+cmpProf+'" placeholder="&#x067E;&#x06CC;&#x0634;&#x06C1; / Profession" dir="auto"></div>'
+    + '</div>'
+    + '</div>'
 
-    <!-- CROSS VERSION -->
-    <div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-top:10px;">
-      <div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="toggleCrossVersion()">
-        <input type="checkbox" id="cf-cross-version" ${c.is_cross_version?'checked':''} style="accent-color:var(--red);width:16px;height:16px;" onclick="event.stopPropagation();toggleCrossVersion()">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--red);">⚔️ Cross Version — مخالف مقدمہ</div>
-          <div style="font-size:10px;color:var(--text-muted);">Check if accused has also filed a case against complainant for the same incident</div>
-        </div>
-      </div>
+    // FIR Details
+    + '<div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:12px;">'
+    + '<div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">&#x1F4CB; FIR Details</div>'
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">FIR Writer</label>'
+    + '<input class="form-input" id="cf-fir-writer" value="'+firWriter+'" placeholder="FIR &#x0644;&#x06A9;&#x06BE;&#x0646;&#x06D2; &#x0648;&#x0627;&#x0644;&#x0627;" dir="auto"></div>'
+    + '<div class="form-group"><label class="form-label">Complaint Sender</label>'
+    + '<input class="form-input" id="cf-complaint-sender" value="'+compSender+'" placeholder="&#x0634;&#x06A9;&#x0627;&#x06CC;&#x062A; &#x0628;&#x06BE;&#x06CC;&#x062C;&#x0646;&#x06D2; &#x0648;&#x0627;&#x0644;&#x0627;" dir="auto"></div>'
+    + '</div>'
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">SHO</label>'
+    + '<input class="form-input" id="cf-sho" value="'+sho+'" placeholder="SHO name" dir="auto"></div>'
+    + '<div class="form-group"><label class="form-label">SDPO</label>'
+    + '<input class="form-input" id="cf-sdpo" value="'+sdpo+'" placeholder="SDPO name" dir="auto"></div>'
+    + '</div>'
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">Position</label>'
+    + '<select class="form-input" id="cf-position">'+posOpts+'</select></div>'
+    + '<div class="form-group"><label class="form-label">Investigation Notes</label>'
+    + '<textarea class="form-input" id="cf-notes" placeholder="&#x062A;&#x0641;&#x062A;&#x06CC;&#x0634;&#x06CC; &#x0646;&#x0648;&#x0679;&#x0633;..." dir="auto" style="min-height:60px;resize:vertical;">'+notes+'</textarea></div>'
+    + '</div>'
+    + '</div>'
 
-      <div id="cross-version-fields" style="display:${c.is_cross_version?'block':'none'};margin-top:14px;border-top:1px dashed var(--red);padding-top:14px;">
-        <div style="font-size:10px;color:var(--red);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">⚔️ Cross FIR Details — مخالف مقدمہ کی تفصیل</div>
+    // Document checklist
+    + '<div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:10px;">'
+    + '<div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">&#x1F4CE; MISAL Documents Required</div>'
+    + '<input class="form-input" id="doc-search" placeholder="&#x1F50D; Search documents..." oninput="filterDocChecklist(this.value)" style="margin-bottom:10px;">'
+    + '<div style="display:flex;gap:6px;margin-bottom:10px;">'
+    + '<input class="form-input" id="custom-doc-input" placeholder="Add custom document..." style="flex:1;">'
+    + '<button type="button" class="btn btn-secondary btn-sm" onclick="addCustomDoc()">+ Add</button>'
+    + '</div>'
+    + '<div id="doc-checklist" style="max-height:220px;overflow-y:auto;">'+docList+'</div>'
+    + '</div>'
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Cross FIR Number</label>
-            <input class="form-input" id="cf-cross-fir" value="${c.cross_fir_number||''}" placeholder="e.g. 246/2025" dir="auto">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Cross FIR Date</label>
-            <input class="form-input" id="cf-cross-fir-date" value="${c.cross_fir_date||''}" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" maxlength="10">
-          </div>
-        </div>
+    // Cross Version
+    + '<div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-top:10px;">'
+    + '<div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="toggleCrossVersion()">'
+    + '<input type="checkbox" id="cf-cross-version" '+(isCross?'checked':'')+' style="accent-color:var(--red);width:16px;height:16px;" onclick="event.stopPropagation();toggleCrossVersion()">'
+    + '<div>'
+    + '<div style="font-size:13px;font-weight:700;color:var(--red);">&#x2694;&#xFE0F; Cross Version &#x2014; &#x0645;&#x062E;&#x0627;&#x0644;&#x0641; &#x0645;&#x0642;&#x062F;&#x0645;&#x06C1;</div>'
+    + '<div style="font-size:10px;color:var(--text-muted);">Check if accused has also filed a case against complainant for the same incident</div>'
+    + '</div>'
+    + '</div>'
+    + '<div id="cross-version-fields" style="display:'+(isCross?'block':'none')+';margin-top:14px;border-top:1px dashed var(--red);padding-top:14px;">'
+    + crossFields
+    + '</div>'
+    + '</div>'
 
-        <div style="padding:10px 12px;background:var(--bg-card);border-radius:var(--radius-sm);margin-bottom:12px;">
-          <div style="font-size:10px;color:var(--red);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">👤 مخالف مدعی / Cross Complainant Details</div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Cross Complainant Name</label>
-              <input class="form-input" id="cf-cross-complainant" value="${c.cross_complainant||''}" placeholder="مدعی کا نام" dir="auto">
-            </div>
-            <div class="form-group">
-              <label class="form-label">CNIC</label>
-              <input class="form-input" id="cf-cross-complainant-cnic" value="${c.cross_complainant_cnic||''}" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)">
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Cell Number</label>
-              <input class="form-input" id="cf-cross-complainant-cell" value="${c.cross_complainant_cell||''}" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Profession</label>
-              <input class="form-input" id="cf-cross-complainant-profession" value="${c.cross_complainant_profession||''}" placeholder="پیشہ / Profession" dir="auto">
-            </div>
-          </div>
-        </div>
+    + '</div>';
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Cross Sections of Law</label>
-            <input class="form-input" id="cf-cross-section" value="${c.cross_section_of_law||''}" placeholder="e.g. 302 PPC + 34 PPC" dir="auto">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Cross Offence Type</label>
-            <input class="form-input" id="cf-cross-offence" value="${c.cross_offence_type||''}" placeholder="Cross offence" dir="auto">
-          </div>
-        </div>
+  return html;
+}
 
-        <div class="form-group">
-          <label class="form-label">Cross FIR Writer</label>
-          <input class="form-input" id="cf-cross-fir-writer" value="${c.cross_fir_writer||''}" placeholder="FIR لکھنے والا" dir="auto">
-        </div>
-
-        <div style="padding:8px 10px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);font-size:11px;color:var(--red);">
-          ⚠️ Cross Version cases are linked to the original FIR. Both cases will appear in the case workspace under the same folder.
-        </div>
-      </div>
-    </div>
-
-  </div>\`;
+function buildCrossFields(c) {
+  c = c || {};
+  var cfn = c.cross_fir_number || '';
+  var cfd = c.cross_fir_date || '';
+  var cc = c.cross_complainant || '';
+  var ccc = c.cross_complainant_cnic || '';
+  var ccl = c.cross_complainant_cell || '';
+  var ccp = c.cross_complainant_profession || '';
+  var cs = c.cross_section_of_law || '';
+  var co = c.cross_offence_type || '';
+  var cfw = c.cross_fir_writer || '';
+  return '<div style="font-size:10px;color:var(--red);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">&#x2694;&#xFE0F; Cross FIR Details</div>'
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">Cross FIR Number</label>'
+    + '<input class="form-input" id="cf-cross-fir" value="'+cfn+'" placeholder="e.g. 246/2025" dir="auto"></div>'
+    + '<div class="form-group"><label class="form-label">Cross FIR Date</label>'
+    + '<input class="form-input" id="cf-cross-fir-date" value="'+cfd+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" maxlength="10"></div>'
+    + '</div>'
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">Cross Complainant Name</label>'
+    + '<input class="form-input" id="cf-cross-complainant" value="'+cc+'" placeholder="&#x0645;&#x062F;&#x0639;&#x06CC; &#x06A9;&#x0627; &#x0646;&#x0627;&#x0645;" dir="auto"></div>'
+    + '<div class="form-group"><label class="form-label">CNIC</label>'
+    + '<input class="form-input" id="cf-cross-complainant-cnic" value="'+ccc+'" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)"></div>'
+    + '</div>'
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">Cell Number</label>'
+    + '<input class="form-input" id="cf-cross-complainant-cell" value="'+ccl+'" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)"></div>'
+    + '<div class="form-group"><label class="form-label">Profession</label>'
+    + '<input class="form-input" id="cf-cross-complainant-profession" value="'+ccp+'" placeholder="&#x067E;&#x06CC;&#x0634;&#x06C1; / Profession" dir="auto"></div>'
+    + '</div>'
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">Cross Sections of Law</label>'
+    + '<input class="form-input" id="cf-cross-section" value="'+cs+'" placeholder="e.g. 302 PPC + 34 PPC" dir="auto"></div>'
+    + '<div class="form-group"><label class="form-label">Cross Offence Type</label>'
+    + '<input class="form-input" id="cf-cross-offence" value="'+co+'" placeholder="Cross offence" dir="auto"></div>'
+    + '</div>'
+    + '<div class="form-group"><label class="form-label">Cross FIR Writer</label>'
+    + '<input class="form-input" id="cf-cross-fir-writer" value="'+cfw+'" placeholder="FIR &#x0644;&#x06A9;&#x06BE;&#x0646;&#x06D2; &#x0648;&#x0627;&#x0644;&#x0627;" dir="auto"></div>'
+    + '</div>'
+    + '<div style="padding:8px 10px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);font-size:11px;color:var(--red);">'
+    + '&#x26A0;&#xFE0F; Cross Version cases are linked to the original FIR. Both cases will appear in the case workspace under the same folder.'
+    + '</div>';
 }
 
 function toggleCrossVersion() {
@@ -1168,76 +1145,76 @@ document.addEventListener('click', function(e) {
 function openAddCaseModal(){openModal('➕ Add New Case',caseFormHTML(),`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveNewCase()">💾 Save Case</button>`);}
 async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;openModal(`✏️ Edit — FIR ${c.fir_number}`,caseFormHTML(c),`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveEditCase('${id}')">💾 Update</button>`);}
 async function saveNewCase(){
-  const fir=document.getElementById('cf-fir').value.trim();
-  const section=document.getElementById('cf-section').value.trim();
-  const complainant=document.getElementById('cf-complainant').value.trim();
-  if(!fir||!section||!complainant){showToast('⚠️ FIR Number, Section and Complainant are required.','error');return;}
+  var fir=document.getElementById('cf-fir').value.trim();
+  var section=document.getElementById('cf-section').value.trim();
+  var complainant=document.getElementById('cf-complainant').value.trim();
+  if(!fir||!section||!complainant){showToast('FIR Number, Section and Complainant are required.','error');return;}
   try{
     await addCase({
       fir_number:fir,
       fir_date:document.getElementById('cf-date').value.trim(),
-      occurrence_date:document.getElementById('cf-occurrence-date').value.trim(),
+      occurrence_date:document.getElementById('cf-occurrence-date')?.value.trim()||'',
       complainant:complainant,
-      complainant_cnic:document.getElementById('cf-complainant-cnic').value.trim(),
-      complainant_cell:document.getElementById('cf-complainant-cell').value.trim(),
-      complainant_profession:document.getElementById('cf-complainant-profession').value.trim(),
-      fir_writer:document.getElementById('cf-fir-writer').value.trim(),
-      complaint_sender:document.getElementById('cf-complaint-sender').value.trim(),
+      complainant_cnic:document.getElementById('cf-complainant-cnic')?.value.trim()||'',
+      complainant_cell:document.getElementById('cf-complainant-cell')?.value.trim()||'',
+      complainant_profession:document.getElementById('cf-complainant-profession')?.value.trim()||'',
+      fir_writer:document.getElementById('cf-fir-writer')?.value.trim()||'',
+      complaint_sender:document.getElementById('cf-complaint-sender')?.value.trim()||'',
       section_of_law:section,
       offence_type:document.getElementById('cf-offence').value.trim(),
       sho:document.getElementById('cf-sho').value.trim(),
       sdpo:document.getElementById('cf-sdpo').value.trim(),
       status:document.getElementById('cf-status').value,
       position:document.getElementById('cf-position').value,
-      notes:document.getElementById('cf-notes').value.trim(),
-      documents_checklist:selectedDocuments.length > 0 ? selectedDocuments : [],
-      is_cross_version: document.getElementById('cf-cross-version')?.checked || false,
-      cross_fir_number: document.getElementById('cf-cross-fir')?.value.trim() || null,
-      cross_fir_date: document.getElementById('cf-cross-fir-date')?.value.trim() || null,
-      cross_complainant: document.getElementById('cf-cross-complainant')?.value.trim() || null,
-      cross_complainant_cnic: document.getElementById('cf-cross-complainant-cnic')?.value.trim() || null,
-      cross_complainant_cell: document.getElementById('cf-cross-complainant-cell')?.value.trim() || null,
-      cross_complainant_profession: document.getElementById('cf-cross-complainant-profession')?.value.trim() || null,
-      cross_section_of_law: document.getElementById('cf-cross-section')?.value.trim() || null,
-      cross_offence_type: document.getElementById('cf-cross-offence')?.value.trim() || null,
-      cross_fir_writer: document.getElementById('cf-cross-fir-writer')?.value.trim() || null,
+      notes:document.getElementById('cf-notes')?.value.trim()||'',
+      documents_checklist:selectedDocuments.length>0?selectedDocuments:[],
+      is_cross_version:document.getElementById('cf-cross-version')?.checked||false,
+      cross_fir_number:document.getElementById('cf-cross-fir')?.value.trim()||null,
+      cross_fir_date:document.getElementById('cf-cross-fir-date')?.value.trim()||null,
+      cross_complainant:document.getElementById('cf-cross-complainant')?.value.trim()||null,
+      cross_complainant_cnic:document.getElementById('cf-cross-complainant-cnic')?.value.trim()||null,
+      cross_complainant_cell:document.getElementById('cf-cross-complainant-cell')?.value.trim()||null,
+      cross_complainant_profession:document.getElementById('cf-cross-complainant-profession')?.value.trim()||null,
+      cross_section_of_law:document.getElementById('cf-cross-section')?.value.trim()||null,
+      cross_offence_type:document.getElementById('cf-cross-offence')?.value.trim()||null,
+      cross_fir_writer:document.getElementById('cf-cross-fir-writer')?.value.trim()||null,
     });
-    closeModal();showToast(`✅ Case added: FIR ${fir}`,'success');await updateBadges();renderCases(document.getElementById('page-content'));
-  }catch(err){showToast('❌ Error: '+err.message,'error');}
+    closeModal();showToast('Case added: FIR '+fir,'success');await updateBadges();renderCases(document.getElementById('page-content'));
+  }catch(err){showToast('Error: '+err.message,'error');}
 }
 async function saveEditCase(id){
   try{
     await updateCase(id,{
       fir_number:document.getElementById('cf-fir').value.trim(),
       fir_date:document.getElementById('cf-date').value.trim(),
-      occurrence_date:document.getElementById('cf-occurrence-date').value.trim(),
+      occurrence_date:document.getElementById('cf-occurrence-date')?.value.trim()||'',
       complainant:document.getElementById('cf-complainant').value.trim(),
-      complainant_cnic:document.getElementById('cf-complainant-cnic').value.trim(),
-      complainant_cell:document.getElementById('cf-complainant-cell').value.trim(),
-      complainant_profession:document.getElementById('cf-complainant-profession').value.trim(),
-      fir_writer:document.getElementById('cf-fir-writer').value.trim(),
-      complaint_sender:document.getElementById('cf-complaint-sender').value.trim(),
+      complainant_cnic:document.getElementById('cf-complainant-cnic')?.value.trim()||'',
+      complainant_cell:document.getElementById('cf-complainant-cell')?.value.trim()||'',
+      complainant_profession:document.getElementById('cf-complainant-profession')?.value.trim()||'',
+      fir_writer:document.getElementById('cf-fir-writer')?.value.trim()||'',
+      complaint_sender:document.getElementById('cf-complaint-sender')?.value.trim()||'',
       section_of_law:document.getElementById('cf-section').value.trim(),
       offence_type:document.getElementById('cf-offence').value.trim(),
       sho:document.getElementById('cf-sho').value.trim(),
       sdpo:document.getElementById('cf-sdpo').value.trim(),
       status:document.getElementById('cf-status').value,
       position:document.getElementById('cf-position').value,
-      notes:document.getElementById('cf-notes').value.trim(),
-      documents_checklist:selectedDocuments.length > 0 ? selectedDocuments : [],
-      is_cross_version: document.getElementById('cf-cross-version')?.checked || false,
-      cross_fir_number: document.getElementById('cf-cross-fir')?.value.trim() || null,
-      cross_fir_date: document.getElementById('cf-cross-fir-date')?.value.trim() || null,
-      cross_complainant: document.getElementById('cf-cross-complainant')?.value.trim() || null,
-      cross_complainant_cnic: document.getElementById('cf-cross-complainant-cnic')?.value.trim() || null,
-      cross_complainant_cell: document.getElementById('cf-cross-complainant-cell')?.value.trim() || null,
-      cross_complainant_profession: document.getElementById('cf-cross-complainant-profession')?.value.trim() || null,
-      cross_section_of_law: document.getElementById('cf-cross-section')?.value.trim() || null,
-      cross_offence_type: document.getElementById('cf-cross-offence')?.value.trim() || null,
-      cross_fir_writer: document.getElementById('cf-cross-fir-writer')?.value.trim() || null,
+      notes:document.getElementById('cf-notes')?.value.trim()||'',
+      documents_checklist:selectedDocuments.length>0?selectedDocuments:[],
+      is_cross_version:document.getElementById('cf-cross-version')?.checked||false,
+      cross_fir_number:document.getElementById('cf-cross-fir')?.value.trim()||null,
+      cross_fir_date:document.getElementById('cf-cross-fir-date')?.value.trim()||null,
+      cross_complainant:document.getElementById('cf-cross-complainant')?.value.trim()||null,
+      cross_complainant_cnic:document.getElementById('cf-cross-complainant-cnic')?.value.trim()||null,
+      cross_complainant_cell:document.getElementById('cf-cross-complainant-cell')?.value.trim()||null,
+      cross_complainant_profession:document.getElementById('cf-cross-complainant-profession')?.value.trim()||null,
+      cross_section_of_law:document.getElementById('cf-cross-section')?.value.trim()||null,
+      cross_offence_type:document.getElementById('cf-cross-offence')?.value.trim()||null,
+      cross_fir_writer:document.getElementById('cf-cross-fir-writer')?.value.trim()||null,
     });
-    closeModal();showToast('✅ Case updated!','success');renderCases(document.getElementById('page-content'));
-  }catch(err){showToast('❌ Error: '+err.message,'error');}
+    closeModal();showToast('Case updated!','success');renderCases(document.getElementById('page-content'));
+  }catch(err){showToast('Error: '+err.message,'error');}
 }
 // viewCase now opens workspace
 function viewCase(id) { openCaseWorkspace(id); }
