@@ -1,0 +1,9 @@
+/* ═══════════════════════════════════════════════════════════
+   DIGITAL IO — PERFORMANCE TAB
+   Case statistics and progress bars per officer.
+   ═══════════════════════════════════════════════════════════ */
+
+// ── PERFORMANCE ──
+registerPage('performance',renderPerformance);
+async function renderPerformance(container){const stats=await getDashboardStats(),total=stats.total||1;container.innerHTML=`<div class="page-header"><div class="page-title">📊 Performance Tracker</div></div><div class="perf-grid">${[['Challan Complete Rate',stats.complete,total,'var(--green)','✅'],['Under Investigation',stats.under,total,'var(--accent)','🔵'],['Incomplete Challan',stats.incomplete,total,'var(--amber)','⚠️'],['Untraced Cases',stats.untrace,total,'var(--purple)','🔍'],['Cancelled Cases',stats.cancel,total,'var(--red)','❌'],['Pending Reminders',stats.pendingReminders,Math.max(stats.pendingReminders,1),'var(--amber)','🔔']].map(([label,val,denom,color,icon])=>{const pct=Math.round((val/denom)*100);return`<div class="card"><div class="card-title">${icon} ${label}</div><div style="font-size:28px;font-weight:800;color:${color};font-family:var(--font-display);">${val}</div><div class="perf-bar-wrap"><div class="perf-bar" style="width:${pct}%;background:${color};"></div></div><div style="font-size:11px;color:var(--text-muted);">${pct}% of total</div></div>`;}).join('')}</div><div class="card" style="margin-top:16px;"><div class="card-title">📈 CASE SUMMARY</div><div class="detail-row"><span class="detail-key">Total Entrusted</span><span class="detail-val" style="color:var(--accent);">${stats.total}</span></div><div class="detail-row"><span class="detail-key">Completion Rate</span><span class="detail-val" style="color:var(--green);">${Math.round((stats.complete/total)*100)}%</span></div></div>`;}
+
