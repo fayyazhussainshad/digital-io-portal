@@ -429,4 +429,4 @@ window.addEventListener('online',()=>{updateConnectionStatus(true);showToast('�
 window.addEventListener('offline',()=>{updateConnectionStatus(false);showToast('📴 You are offline.','error',5000);});
 window.addEventListener('DOMContentLoaded',async()=>{
   loadSavedTheme(); // Apply theme before anything renders — prevents flash of wrong theme
-  onSupabaseReady(async()=>{await checkExistingSession();});setInterval(()=>{const el=document.getElementById('footer-time');if(el)el.textContent=new Date().toLocaleTimeString('en-PK',{hour12:true});},1000);console.log('✅ Digital IO v4.2.0 — MODULAR Round 2 (misal+forms+fivec extracted) — '+new Date().toISOString());});
+  onSupabaseReady(async()=>{await checkExistingSession();});setInterval(()=>{const el=document.getElementById('footer-time');if(el)el.textContent=new Date().toLocaleTimeString('en-PK',{hour12:true});},1000);console.log('✅ Digital IO v4.3.0 — MODULAR Round 3 (evidence+search+law+reminders+performance) — '+new Date().toISOString());});
