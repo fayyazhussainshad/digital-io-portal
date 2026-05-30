@@ -97,51 +97,129 @@ const PENAL_CODES = [
 
 // ── CASES LIST ──
 registerPage('cases',renderCases);
-async function renderCases(container,fStatus,fQuery){fStatus=fStatus||'';fQuery=fQuery||'';
+let _casesCache = []; // cached for shareModal lookup without re-fetch
+async function renderCases(container,fStatus,fQuery){
+  fStatus=fStatus||'';fQuery=fQuery||'';
   const cases=await getCases(fStatus,fQuery);
+  _casesCache=cases;
+  const o=currentOfficer||{};
   container.innerHTML=`
-    <div class="page-header">
-      <div><div class="page-title">📁 My Cases</div><div class="page-subtitle">Showing ${cases.length} case(s)</div></div>
+  <div class="page-header">
+    <div><div class="page-title">📁 My Cases</div><div class="page-subtitle">${cases.length} case(s)</div></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary btn-sm" onclick="openTransferModal()" title="Record a station transfer">🏛️ Station Transfer</button>
       <button class="btn btn-primary" onclick="openAddCaseModal()">+ New Case</button>
     </div>
-    <div class="search-bar">
-      <input class="search-input" id="case-search" placeholder="🔍 Search FIR, Complainant, Section..." value="${fQuery}" oninput="renderCases(document.getElementById('page-content'),'',this.value)">
-      <select class="filter-select" id="case-status-filter" onchange="renderCases(document.getElementById('page-content'),this.value,document.getElementById('case-search').value)">
-        <option value="" ${!fStatus?'selected':''}>All Statuses</option>
-        <option value="under" ${fStatus==='under'?'selected':''}>زیر تفتیش</option>
-        <option value="complete" ${fStatus==='complete'?'selected':''}>مکمل چالان</option>
-        <option value="incomplete" ${fStatus==='incomplete'?'selected':''}>نامکمل چالان</option>
-        <option value="untrace" ${fStatus==='untrace'?'selected':''}>عدم پتہ</option>
-        <option value="cancel" ${fStatus==='cancel'?'selected':''}>اخراج</option>
-      </select>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+    <input class="search-input" id="case-search" style="flex:1;min-width:200px;" placeholder="🔍 Search FIR No, Complainant, CNIC, Section of Law..." value="${fQuery}" oninput="clearTimeout(window._csTmr);window._csTmr=setTimeout(()=>renderCases(document.getElementById('page-content'),'',this.value),280)">
+    <select class="filter-select" id="case-status-filter" onchange="renderCases(document.getElementById('page-content'),this.value,document.getElementById('case-search').value)">
+      <option value="" ${!fStatus?'selected':''}>All Statuses</option>
+      <option value="under"      ${fStatus==='under'?'selected':''}>زیر تفتیش</option>
+      <option value="complete"   ${fStatus==='complete'?'selected':''}>مکمل چالان</option>
+      <option value="incomplete" ${fStatus==='incomplete'?'selected':''}>نامکمل چالان</option>
+      <option value="untrace"    ${fStatus==='untrace'?'selected':''}>عدم پتہ</option>
+      <option value="cancel"     ${fStatus==='cancel'?'selected':''}>اخراج</option>
+    </select>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div style="overflow-x:auto;">
+      <table class="data-table" style="width:100%;min-width:1180px;">
+        <thead><tr>
+          <th style="width:44px;text-align:center;">S/N</th>
+          <th>FIR No</th>
+          <th>Date of FIR</th>
+          <th>Occurrence Date</th>
+          <th>Offence</th>
+          <th>Police Station</th>
+          <th>Complainant</th>
+          <th>CNIC</th>
+          <th>Cell No</th>
+          <th>Status</th>
+          <th style="width:130px;text-align:center;">Actions</th>
+        </tr></thead>
+        <tbody>
+          ${cases.length===0
+            ?`<tr><td colspan="11" style="text-align:center;padding:48px;color:var(--text-muted);">No cases yet. <a onclick="openAddCaseModal()" style="cursor:pointer;color:var(--accent);">Add your first case →</a></td></tr>`
+            :cases.map((c,i)=>renderCaseRow(c,i+1)).join('')}
+        </tbody>
+      </table>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;">
-      ${cases.length===0
-        ? `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted);font-size:12px;">No cases yet. <a onclick="openAddCaseModal()">Add your first case →</a></div>`
-        : cases.map(c => {
-            const docs = c.documents_checklist ? (typeof c.documents_checklist==='string'?JSON.parse(c.documents_checklist):c.documents_checklist) : [];
-            return `<div class="card" style="cursor:pointer;border-left:3px solid ${c.status==='complete'?'var(--green)':c.status==='under'?'var(--accent)':c.status==='incomplete'?'var(--amber)':c.status==='untrace'?'var(--purple)':'var(--red)'};" onclick="openCaseWorkspace('${c.id}')">
-              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-                <div>
-                  <div style="font-size:15px;font-weight:800;color:var(--accent);font-family:var(--font-mono);">${c.fir_number}</div>
-                  <div style="font-size:10px;color:var(--text-faint);margin-top:2px;">${c.fir_date||formatDate(c.created_at)}</div>
-                </div>
-                <span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span>
-              </div>
-              <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">👤 ${c.complainant||'—'}</div>
-              <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">⚖️ ${c.section_of_law||'—'}</div>
-              ${c.is_cross_version?`<div style="font-size:10px;color:var(--red);margin-bottom:6px;">⚔️ Cross Version — مخالف مقدمہ</div>`:''}
-              <div style="display:flex;justify-content:space-between;align-items:center;">
-                <div style="font-size:10px;color:var(--text-faint);">📎 ${docs.length} documents</div>
-                <div style="display:flex;gap:4px;">
-                  <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openEditCaseModal('${c.id}')">✏️ Edit</button>
-                  <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();confirmDeleteCase('${c.id}','${c.fir_number}')">🗑️</button>
-                </div>
-              </div>
-            </div>`;
-          }).join('')}
-    </div>`;
+  </div>`;
 }
+
+function renderCaseRow(c,sn){
+  const station=c.case_station||(currentOfficer&&currentOfficer.station)||'—';
+  const offence=[c.section_of_law,c.offence_type].filter(Boolean).join(' / ')||'—';
+  const cnic=formatCNIC(c.complainant_cnic)||'—';
+  const cell=formatCell(c.complainant_cell)||'—';
+  return `<tr>
+    <td style="text-align:center;font-size:11px;color:var(--text-muted);font-weight:700;">${sn}</td>
+    <td>
+      <span style="font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:12px;">${c.fir_number||'—'}</span>
+      ${c.is_cross_version?'<br><span style="font-size:9px;color:var(--red);font-weight:600;">⚔️ Cross</span>':''}
+    </td>
+    <td style="font-size:11px;white-space:nowrap;">${c.fir_date||'—'}</td>
+    <td style="font-size:11px;white-space:nowrap;">${c.occurrence_date||'—'}</td>
+    <td style="font-size:11px;max-width:150px;">${offence}</td>
+    <td style="font-size:11px;">${station}</td>
+    <td style="font-size:12px;font-weight:500;">${c.complainant||'—'}</td>
+    <td style="font-family:var(--font-mono);font-size:11px;">${cnic}</td>
+    <td style="font-family:var(--font-mono);font-size:11px;">${cell}</td>
+    <td><span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span></td>
+    <td>
+      <div style="display:flex;gap:2px;justify-content:center;">
+        <button class="btn btn-secondary btn-sm" onclick="openCaseWorkspace('${c.id}')" title="Open Case Form &amp; FIR Documents">📄</button>
+        <button class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')" title="Edit Case Details">✏️</button>
+        <button class="btn btn-primary   btn-sm" onclick="openShareModal('${c.id}')"    title="Share Case via Email or WhatsApp">📤</button>
+        <button class="btn btn-danger    btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number||'?'}')" title="Delete Case">🗑️</button>
+      </div>
+    </td>
+  </tr>`;
+}
+
+// ── SHARE CASE ──
+async function openShareModal(id){
+  const c=_casesCache.find(x=>x.id===id)||await getCase(id);
+  if(!c){showToast('❌ Case not found','error');return;}
+  const o=currentOfficer||{};
+  const station=c.case_station||o.station||'—';
+  const offence=[c.section_of_law,c.offence_type].filter(Boolean).join(' / ')||'—';
+  const lines=[
+    '📋 CASE FILE — Digital IO Police Portal',
+    '─────────────────────────────────',
+    `تھانہ (Station):      ${station}`,
+    `مقدمہ نمبر (FIR No):  ${c.fir_number||'—'}`,
+    `تاریخ FIR (Date):     ${c.fir_date||'—'}`,
+    `تاریخ وقوعہ (Occ.):  ${c.occurrence_date||'—'}`,
+    `جرم (Offence):        ${offence}`,
+    `مدعی (Complainant):   ${c.complainant||'—'}`,
+    `CNIC:                 ${c.complainant_cnic||'—'}`,
+    `رابطہ (Cell):         ${c.complainant_cell||'—'}`,
+    `حالت (Status):        ${STATUS_LABELS[c.status]||c.status}`,
+    '─────────────────────────────────',
+    `تفتیشی آفیسر (IO):   ${o.full_name||''}`,
+    `عہدہ (Rank):          ${o.designation||''} — ${station}`,
+  ];
+  const text=lines.join('\n');
+  const enc=encodeURIComponent(text);
+  const sub=encodeURIComponent(`Case File — FIR ${c.fir_number}`);
+  openModal(`📤 Share Case — FIR ${c.fir_number||''}`,
+    `<div style="margin-bottom:14px;background:var(--bg-tertiary);border-radius:8px;padding:12px;font-size:10.5px;color:var(--text-secondary);font-family:var(--font-mono);white-space:pre;line-height:1.7;max-height:180px;overflow-y:auto;">${text}</div>
+     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+       <a href="https://wa.me/?text=${enc}" target="_blank" rel="noopener"
+          style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;background:#25D366;color:#fff;font-weight:700;font-size:13px;text-decoration:none;">
+         💬 Share on WhatsApp
+       </a>
+       <a href="mailto:?subject=${sub}&body=${enc}"
+          style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;background:var(--accent-dark);color:#fff;font-weight:700;font-size:13px;text-decoration:none;">
+         📧 Send via Email
+       </a>
+     </div>
+     <div style="margin-top:10px;font-size:10px;color:var(--text-muted);text-align:center;">WhatsApp opens in a new tab · Email opens your default email app</div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Close</button>`);
+}
+
 
 // ── CASE FORM (add/edit) ──
 function caseFormHTML(c) {
@@ -536,6 +614,9 @@ async function saveNewCase(){
       cross_section_of_law:document.getElementById('cf-cross-section')?.value.trim()||null,
       cross_offence_type:document.getElementById('cf-cross-offence')?.value.trim()||null,
       cross_fir_writer:document.getElementById('cf-cross-fir-writer')?.value.trim()||null,
+      // Capture station at creation time — survives officer transfers
+      case_station:  currentOfficer?.station  || null,
+      case_district: currentOfficer?.district || null,
     });
     closeModal();showToast('Case added: FIR '+fir,'success');await updateBadges();renderCases(document.getElementById('page-content'));
   }catch(err){showToast('Error: '+err.message,'error');}
