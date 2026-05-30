@@ -293,13 +293,27 @@ async function open5CResponse(id){
         sel.removeAllRanges();
         sel.addRange(range);
       }
-      // Enter → insert <br> instead of creating a new <div>
-      // Chrome's new <div> on Enter copies block styles and Nastaleeq font metrics
-      // are very tall, making it look like 4-5 empty lines. A <br> stays in the
-      // current block and just moves to the next line cleanly.
+      // Enter → insert <br> via direct DOM (not execCommand which is RTL-direction-aware
+      // and places the break at the wrong side in RTL text, making it appear above)
       if(e.key==='Enter'){
         e.preventDefault();
-        document.execCommand('insertLineBreak');
+        const sel=window.getSelection();
+        if(!sel.rangeCount)return;
+        const range=sel.getRangeAt(0);
+        range.deleteContents();
+        const br=document.createElement('br');
+        range.insertNode(br);
+        // If br is now the very last node in its parent, add a trailing br
+        // so the cursor has a visible new line to land on
+        if(br.parentNode&&br===br.parentNode.lastChild){
+          br.parentNode.appendChild(document.createElement('br'));
+        }
+        // Place cursor on the new line (after the br)
+        const next=document.createRange();
+        next.setStartAfter(br);
+        next.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(next);
       }
     });
     // Uses a RegExp on text nodes after every keystroke so it's IME-safe
