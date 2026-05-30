@@ -243,7 +243,7 @@ function showPage(page,el){document.querySelectorAll('.nav-item').forEach(n=>n.c
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');}
 function updateConnectionStatus(ok){const d=document.getElementById('status-dot'),t=document.getElementById('status-text'),b=document.getElementById('db-badge');if(d)d.style.background=ok?'var(--green)':'var(--red)';if(t)t.textContent=ok?'Online':'Offline';if(b){b.textContent=ok?'🔗 Connected':'❌ Disconnected';b.style.background=ok?'var(--green-bg)':'var(--red-bg)';b.style.color=ok?'var(--green)':'var(--red)';}}
 async function updateBadges(){try{const cases=await getCases(),rem=await getReminders(false);const cb=document.getElementById('badge-cases'),rb=document.getElementById('badge-reminders');if(cb)cb.textContent=cases.length;if(rb)rb.textContent=rem.length;}catch(e){}}
-function startClock(){setInterval(()=>{const el=document.getElementById('footer-time');if(el)el.textContent=new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit',second:'2-digit'});},1000);}
+function startClock(){setInterval(()=>{const el=document.getElementById('footer-time');if(el)el.textContent=new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});},1000);}
 function formatCNIC(v){if(!v)return'—';const d=v.replace(/\D/g,'');if(d.length===13)return`${d.slice(0,5)}-${d.slice(5,12)}-${d.slice(12)}`;return v;}
 function formatCell(v){if(!v)return'—';const d=v.replace(/\D/g,'');if(d.length===11)return`${d.slice(0,4)}-${d.slice(4)}`;return v;}
 function autoFormatCNIC(i){let v=i.value.replace(/\D/g,'').slice(0,13);if(v.length>12)v=`${v.slice(0,5)}-${v.slice(5,12)}-${v.slice(12)}`;else if(v.length>5)v=`${v.slice(0,5)}-${v.slice(5)}`;i.value=v;}
@@ -381,4 +381,4 @@ window.addEventListener('online',()=>{updateConnectionStatus(true);showToast('�
 window.addEventListener('offline',()=>{updateConnectionStatus(false);showToast('📴 You are offline.','error',5000);});
 window.addEventListener('DOMContentLoaded',async()=>{
   loadSavedTheme(); // Apply theme before anything renders — prevents flash of wrong theme
-  onSupabaseReady(async()=>{await checkExistingSession();});setInterval(()=>{const el=document.getElementById('footer-time');if(el)el.textContent=new Date().toLocaleTimeString('en-PK');},1000);console.log('✅ Digital IO v4.2.0 — MODULAR Round 2 (misal+forms+fivec extracted) — '+new Date().toISOString());});
+  onSupabaseReady(async()=>{await checkExistingSession();});setInterval(()=>{const el=document.getElementById('footer-time');if(el)el.textContent=new Date().toLocaleTimeString('en-PK',{hour12:true});},1000);console.log('✅ Digital IO v4.2.0 — MODULAR Round 2 (misal+forms+fivec extracted) — '+new Date().toISOString());});
