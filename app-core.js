@@ -194,13 +194,15 @@ async function checkExistingSession(){const{data:{session}}=await supabaseClient
 async function getOfficerId(){if(currentOfficer)return currentOfficer.id;if(!currentUser)return null;const{data}=await supabaseClient.from('officers').select('id').eq('user_id',currentUser.id).single();return data?.id||null;}
 async function getCases(fStatus,fQuery){fStatus=fStatus||'';fQuery=fQuery||'';
   const oid=await getOfficerId();if(!oid)return[];
-  // Query cases directly with all fields including new ones
-  let q=supabaseClient.from('cases').select('*').eq('officer_id',oid).order('created_at',{ascending:false});
-  if(fStatus)q=q.eq('status',fStatus);
-  const{data,error}=await q;
-  if(error)return[];
-  let list=data||[];
-  if(fQuery){const s=fQuery.toLowerCase();list=list.filter(c=>c.fir_number?.toLowerCase().includes(s)||c.section_of_law?.toLowerCase().includes(s)||c.offence_type?.toLowerCase().includes(s));}
+  // Query cases_decrypted so protected fields (complainant, accused, etc.) show correctly
+  const{data,error}=await supabaseClient.from('cases_decrypted').select('*').eq('officer_id',oid).order('created_at',{ascending:false});
+  if(error){console.error('getCases error:',error);return[];}
+  // Merge with raw cases for newer columns (case_station, occurrence_date, CNIC, cell) not yet in the view
+  const{data:raw}=await supabaseClient.from('cases').select('id,case_station,case_district,occurrence_date,complainant_cnic,complainant_cell,complainant_profession,fir_writer,complaint_sender').eq('officer_id',oid);
+  const rawMap={};(raw||[]).forEach(r=>{rawMap[r.id]=r;});
+  let list=(data||[]).map(c=>({...c,...(rawMap[c.id]||{})}));
+  if(fStatus)list=list.filter(c=>c.status===fStatus);
+  if(fQuery){const s=fQuery.toLowerCase().trim();list=list.filter(c=>(c.fir_number||'').toLowerCase().includes(s)||(c.section_of_law||'').toLowerCase().includes(s)||(c.offence_type||'').toLowerCase().includes(s)||(c.complainant||'').toLowerCase().includes(s)||(c.complainant_cnic||'').includes(s));}
   return list;
 }
 async function getCase(id){
