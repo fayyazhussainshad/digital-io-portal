@@ -177,7 +177,7 @@ async function open5CResponse(id){
     .r5sel{padding:2px 5px;background:white;border:1px solid #bbb;border-radius:3px;font-size:12px;color:#222;height:26px;}
     .r5sel:hover{border-color:#666;}
     /* Fix 1: zero out margins inside A4 so Enter doesn't jump 4 lines */
-    #a4-paper div, #a4-paper p, #a4-paper li{margin:0;padding:0;}
+    #a4-paper div, #a4-paper p, #a4-paper li{margin:0!important;padding:0!important;}
     #a4-paper br{line-height:inherit;}
     /* Fix 4: hide page borders when printing */
     @media print{
@@ -275,25 +275,31 @@ async function open5CResponse(id){
     if(!paper)return;
     paper.focus();
 
-    // Tab key → 0.5 inch tab stop (MS Word standard).
-    // Direct DOM insertion so cursor lands AFTER the span, not inside it.
+    // Tab + Enter keydown handler
     paper.addEventListener('keydown',function(e){
+      // Tab → 0.5 inch tab stop (MS Word standard)
       if(e.key==='Tab'){
         e.preventDefault();
         const sel=window.getSelection();
         if(!sel.rangeCount)return;
         const range=sel.getRangeAt(0);
         range.deleteContents();
-        // Build tab span
         const span=document.createElement('span');
         span.style.cssText='display:inline-block;width:0.5in;';
-        span.textContent='\u00A0'; // non-breaking space — visible, deletable with Backspace
+        span.textContent='\u00A0';
         range.insertNode(span);
-        // Move cursor to AFTER the span (not inside it)
         range.setStartAfter(span);
         range.collapse(true);
         sel.removeAllRanges();
         sel.addRange(range);
+      }
+      // Enter → insert <br> instead of creating a new <div>
+      // Chrome's new <div> on Enter copies block styles and Nastaleeq font metrics
+      // are very tall, making it look like 4-5 empty lines. A <br> stays in the
+      // current block and just moves to the next line cleanly.
+      if(e.key==='Enter'){
+        e.preventDefault();
+        document.execCommand('insertLineBreak');
       }
     });
     // Uses a RegExp on text nodes after every keystroke so it's IME-safe
