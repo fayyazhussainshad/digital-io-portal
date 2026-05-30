@@ -145,19 +145,18 @@ async function open5CResponse(id){
   const refs=(app.application_5c_numbers||[]).map(n=>esc5C(n.application_number||'')).filter(Boolean).join('، ')||'—';
 
   // Initial content — uses <br> for spacing (not margin-bottom which propagates on Enter)
-  const initial=app.response_text||`<div dir="rtl" style="text-align:center;"><strong>${esc5C(o.station||'')}، ${esc5C(o.district||'')}</strong></div>
+  const initial=app.response_text||`<div dir="rtl">تھانہ: ${esc5C(o.station||'')} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ضلع: ${esc5C(o.district||'')}</div>
 <br>
-<div dir="rtl"><strong>بسلسلہ:</strong> ${refs}</div>
+<div dir="rtl">درخواست نمبری: ${refs}</div>
 <br>
-<div dir="rtl"><strong>درخواست گزار:</strong> ${esc5C(app.complainant_name||'—')}${app.complainant_cnic?` &nbsp;·&nbsp; CNIC: ${esc5C(formatCNIC(app.complainant_cnic))}`:''}${app.complainant_cell?` &nbsp;·&nbsp; ${esc5C(formatCell(app.complainant_cell))}`:''}</div>
+<div dir="rtl">درخواست ازاں: ${esc5C(app.complainant_name||'')}</div>
 <br>
-<div dir="rtl"><strong>موضوع:</strong> ${esc5C(app.subject||'—')}</div>
+<div dir="rtl">شناختی کارڈ نمبر: ${esc5C(formatCNIC(app.complainant_cnic)||'')} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; رابطہ نمبر: ${esc5C(formatCell(app.complainant_cell)||'')}</div>
 <br>
-<hr style="border:0;border-top:1px solid #bbb;margin:4px 0;">
 <br>
-<div dir="rtl"><strong>رپورٹ / جواب:</strong></div>
+<div dir="rtl">جنابِ عالیٰ!</div>
 <br>
-<div dir="rtl">یہاں جواب لکھیں ...</div>`;
+<div dir="rtl"></div>`;
 
   // Toolbar button style — note: onmousedown="event.preventDefault()" keeps selection alive
   const B=(label,fn,tip)=>`<button class="r5b" onmousedown="event.preventDefault()" onclick="${fn}" title="${tip}">${label}</button>`;
