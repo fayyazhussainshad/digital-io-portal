@@ -424,21 +424,43 @@ function downloadResponse5C(id,name){
   showToast('⬇️ Offline copy downloaded','success');
 }
 
-// Fix 4 — Print removes the border/gradient lines so text doesn't merge with them
+// Fix: @page margin:0 pushes Chrome's timestamp/URL off the page.
+// Body padding replaces it so content has proper A4 white space.
 function print5CResponse(){
   const html=document.getElementById('a4-paper').innerHTML;
   const lh=document.getElementById('a4-paper')?.style.lineHeight||'1.5';
-  const w=window.open('','_blank','width=900,height=1100');
+  const w=window.open('','_blank','width=900,height=1200');
   if(!w){showToast('⚠️ Allow pop-ups to print','error');return;}
-  w.document.write(`<!DOCTYPE html><html lang="ur"><head><meta charset="utf-8"><title>Print</title>
+  w.document.write(`<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>\u0631\u0633\u0645\u06CC \u062C\u0648\u0627\u0628</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-  @page{size:A4;margin:20mm 18mm 20mm 15mm}
-  body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',Aptos,serif;font-size:14pt;line-height:${lh};word-spacing:3px;direction:rtl;margin:0;color:#000;
-    /* NO border, NO gradient — clean print */
+  /* @page margin:0 removes Chrome's auto timestamp + URL headers/footers */
+  @page { size:A4; margin:0; }
+  *   { box-sizing:border-box; }
+  html{ background:white; }
+  body{
+    font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',Aptos,serif;
+    font-size:14pt; line-height:${lh}; word-spacing:3px;
+    direction:rtl; color:#000;
+    margin:0;
+    /* A4 margins as padding — right=start side for RTL */
+    padding:20mm 18mm 20mm 15mm;
+    width:210mm;
   }
-  div,p,li{margin:0;padding:0;}
+  div,p,li{ margin:0!important; padding:0!important; }
+  br{ display:block; }
+  /* Preserve tab spans */
+  span[style*="inline-block"]{ display:inline-block!important; }
 </style>
-</head><body>${html}<scr`+`ipt>window.onload=()=>setTimeout(window.print,400);<\/scr`+`ipt></body></html>`);
+</head>
+<body>${html}<scr`+`ipt>
+  // Trigger print after fonts have loaded
+  document.fonts.ready.then(function(){ setTimeout(window.print, 300); });
+<\/scr`+`ipt></body>
+</html>`);
   w.document.close();
 }
