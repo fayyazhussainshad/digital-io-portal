@@ -97,9 +97,10 @@ const PENAL_CODES = [
 
 // ── CASES LIST ──
 registerPage('cases',renderCases);
-let _casesCache = []; // cached for shareModal lookup without re-fetch
+let _casesCache = []; // cleared on every render — no stale data
 async function renderCases(container,fStatus,fQuery){
   fStatus=fStatus||'';fQuery=fQuery||'';
+  _casesCache = []; // clear before fetch
   const cases=await getCases(fStatus,fQuery);
   _casesCache=cases;
   const o=currentOfficer||{};
@@ -654,8 +655,13 @@ async function saveEditCase(id){
       cross_offence_type:document.getElementById('cf-cross-offence')?.value.trim()||null,
       cross_fir_writer:document.getElementById('cf-cross-fir-writer')?.value.trim()||null,
     });
-    closeModal();showToast('Case updated!','success');renderCases(document.getElementById('page-content'));
-  }catch(err){showToast('Error: '+err.message,'error');}
+    closeModal();
+    showToast('✅ Case updated!','success');
+    // Wait briefly so DB write propagates through cases_decrypted view before re-fetching
+    await new Promise(r=>setTimeout(r,300));
+    await updateBadges();
+    await renderCases(document.getElementById('page-content'));
+  }catch(err){showToast('❌ Error: '+err.message,'error');}
 }
 // viewCase now opens workspace
 function viewCase(id) { openCaseWorkspace(id); }
