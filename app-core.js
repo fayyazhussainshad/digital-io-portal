@@ -43,19 +43,21 @@ const APP_CONFIG = {
 };
 
 const STATUS_LABELS = {
-  under:      'زیر تفتیش',
-  complete:   'مکمل چالان',
-  incomplete: 'نامکمل چالان',
-  untrace:    'عدم پتہ',
-  cancel:     'اخراج',
+  under:       'زیر تفتیش',
+  complete:    'مکمل چالان',
+  incomplete:  'نامکمل چالان',
+  untrace:     'عدم پتہ',
+  cancel:      'اخراج',
+  challan512:  'چالان 512ض ف',
 };
 
 const STATUS_CLASSES = {
-  under:      'pill-blue',
-  complete:   'pill-green',
-  incomplete: 'pill-amber',
-  untrace:    'pill-purple',
-  cancel:     'pill-red',
+  under:       'pill-blue',
+  complete:    'pill-green',
+  incomplete:  'pill-amber',
+  untrace:     'pill-purple',
+  cancel:      'pill-red',
+  challan512:  'pill-teal',
 };
 
 const POLICE_NEWS = [
@@ -223,7 +225,7 @@ async function deleteReminder(id){const{error}=await supabaseClient.from('remind
 async function getMisal(fir=''){const oid=await getOfficerId();if(!oid)return[];let q=supabaseClient.from('misal').select('*').eq('officer_id',oid).order('saved_at',{ascending:false});if(fir)q=q.eq('fir_number',fir);const{data}=await q;return data||[];}
 async function saveMisal(d){const oid=await getOfficerId();if(!oid)throw new Error('Not authenticated');const{data,error}=await supabaseClient.from('misal').insert({...d,officer_id:oid}).select().single();if(error)throw error;return data;}
 async function updateOfficerProfile(u){const{data,error}=await supabaseClient.from('officers').update({...u,updated_at:new Date().toISOString()}).eq('user_id',currentUser.id).select().single();if(error)throw error;currentOfficer=data;return data;}
-async function getDashboardStats(){const cases=await getCases(),reminders=await getReminders(false);return{total:cases.length,under:cases.filter(c=>c.status==='under').length,complete:cases.filter(c=>c.status==='complete').length,incomplete:cases.filter(c=>c.status==='incomplete').length,untrace:cases.filter(c=>c.status==='untrace').length,cancel:cases.filter(c=>c.status==='cancel').length,pendingReminders:reminders.length,cases,reminders:reminders.slice(0,5)};}
+async function getDashboardStats(){const cases=await getCases(),reminders=await getReminders(false);const under=cases.filter(c=>c.status==='under').length,complete=cases.filter(c=>c.status==='complete').length,incomplete=cases.filter(c=>c.status==='incomplete').length,untrace=cases.filter(c=>c.status==='untrace').length,cancel=cases.filter(c=>c.status==='cancel').length,challan512=cases.filter(c=>c.status==='challan512').length;const total=under+complete+incomplete+untrace+cancel+challan512;return{total,under,complete,incomplete,untrace,cancel,challan512,pendingReminders:reminders.length,cases,reminders:reminders.slice(0,5)};}
 async function advancedSearch(p){let cases=await getCases();if(p.fir)cases=cases.filter(c=>c.fir_number?.toLowerCase().includes(p.fir.toLowerCase()));if(p.name)cases=cases.filter(c=>c.accused_name?.toLowerCase().includes(p.name.toLowerCase())||c.complainant?.toLowerCase().includes(p.name.toLowerCase()));if(p.cnic)cases=cases.filter(c=>c.accused_cnic?.includes(p.cnic));if(p.cell)cases=cases.filter(c=>c.accused_cell?.includes(p.cell));if(p.status)cases=cases.filter(c=>c.status===p.status);if(p.section)cases=cases.filter(c=>c.section_of_law?.toLowerCase().includes(p.section.toLowerCase()));return cases;}
 async function getAdminStats(){if(currentRole!=='admin'&&currentRole!=='superadmin')return null;const{data:officers}=await supabaseClient.from('officers').select('*');const{data:cases}=await supabaseClient.from('cases').select('id,status');const{data:logs}=await supabaseClient.from('audit_log').select('*').order('created_at',{ascending:false}).limit(50);return{totalOfficers:officers?.length||0,totalCases:cases?.length||0,activeCases:cases?.filter(c=>c.status==='under').length||0,completedCases:cases?.filter(c=>c.status==='complete').length||0,officers:officers||[],recentActivity:logs||[]};}
 function setupRealtimeSync(cb){supabaseClient.channel('db-changes').on('postgres_changes',{event:'*',schema:'public',table:'cases'},()=>{if(cb)cb('cases');}).on('postgres_changes',{event:'*',schema:'public',table:'reminders'},()=>{if(cb)cb('reminders');}).on('postgres_changes',{event:'*',schema:'public',table:'evidence'},()=>{if(cb)cb('evidence');}).subscribe();}
