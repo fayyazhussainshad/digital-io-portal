@@ -157,7 +157,7 @@ function renderCaseRow(c,sn){
   return `<tr>
     <td style="text-align:center;font-size:11px;color:var(--text-muted);font-weight:700;">${sn}</td>
     <td>
-      <span style="font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:12px;">${c.fir_number||'—'}</span>
+      <span style="font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:12px;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(56,189,248,0.4);" onclick="openCaseWorkspace('${c.id}')" title="Open Case Workspace">${c.fir_number||'—'}</span>
       ${c.is_cross_version?'<br><span style="font-size:9px;color:var(--red);font-weight:600;">⚔️ Cross</span>':''}
     </td>
     <td style="font-size:11px;white-space:nowrap;">${c.fir_date||'—'}</td>
@@ -688,7 +688,7 @@ function renderWorkspace(c, docs, ev, container) {
   container.innerHTML = `
     <!-- WORKSPACE HEADER -->
     <div class="case-header">
-      <button class="btn btn-secondary btn-sm" onclick="goBackToCases()" style="flex-shrink:0;">← Back</button>
+      <button class="btn btn-secondary" onclick="goBackToCases()" style="flex-shrink:0;display:flex;align-items:center;gap:6px;font-weight:600;">← My Cases</button>
       <div style="flex:1;">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <span style="font-size:18px;font-weight:900;color:var(--accent);font-family:var(--font-mono);">FIR ${c.fir_number}</span>
