@@ -272,6 +272,10 @@ async function open5CResponse(id){
     const paper=document.getElementById('a4-paper');
     if(!paper)return;
     paper.focus();
+    // Native Enter → <br> (not <div>). This prevents Nastaleeq font's
+    // large block-level spacing AND fixes RTL cursor placement — Chrome
+    // handles cursor position correctly when Enter is native, not intercepted.
+    document.execCommand('defaultParagraphSeparator',false,'br');
 
     // Tab + Enter keydown handler
     paper.addEventListener('keydown',function(e){
@@ -290,28 +294,6 @@ async function open5CResponse(id){
         range.collapse(true);
         sel.removeAllRanges();
         sel.addRange(range);
-      }
-      // Enter → insert <br> via direct DOM (not execCommand which is RTL-direction-aware
-      // and places the break at the wrong side in RTL text, making it appear above)
-      if(e.key==='Enter'){
-        e.preventDefault();
-        const sel=window.getSelection();
-        if(!sel.rangeCount)return;
-        const range=sel.getRangeAt(0);
-        range.deleteContents();
-        const br=document.createElement('br');
-        range.insertNode(br);
-        // If br is now the very last node in its parent, add a trailing br
-        // so the cursor has a visible new line to land on
-        if(br.parentNode&&br===br.parentNode.lastChild){
-          br.parentNode.appendChild(document.createElement('br'));
-        }
-        // Place cursor on the new line (after the br)
-        const next=document.createRange();
-        next.setStartAfter(br);
-        next.collapse(true);
-        sel.removeAllRanges();
-        sel.addRange(next);
       }
     });
     // Uses a RegExp on text nodes after every keystroke so it's IME-safe
