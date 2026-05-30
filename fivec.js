@@ -146,7 +146,6 @@ async function open5CResponse(id){
 
   // Initial content — uses <br> for spacing (not margin-bottom which propagates on Enter)
   const initial=app.response_text||`<div dir="rtl" style="text-align:center;"><strong>${esc5C(o.station||'')}، ${esc5C(o.district||'')}</strong></div>
-<div dir="rtl" style="text-align:center;">${today}</div>
 <br>
 <div dir="rtl"><strong>بسلسلہ:</strong> ${refs}</div>
 <br>
