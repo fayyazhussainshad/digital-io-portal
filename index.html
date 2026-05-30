@@ -64,6 +64,129 @@
   --font-mono: 'Aptos Mono', 'Consolas', monospace;
 }
 
+/* ═══════════════════════════════════════════════
+   THEMES — applied via html[data-theme="..."]
+   All status/pill colours stay constant (semantic).
+   ═══════════════════════════════════════════════ */
+
+/* ── Light (دن) ── */
+html[data-theme="light"] {
+  --bg-primary:   #f0f4f8;
+  --bg-secondary: #ffffff;
+  --bg-tertiary:  #e2eaf4;
+  --bg-card:      #ffffff;
+  --border:       #c8d8e8;
+  --border-light: #dce8f2;
+  --accent:       #0369a1;
+  --accent-dark:  #0369a1;
+  --accent-darker:#025c8c;
+  --accent-glow:  rgba(3,105,161,0.08);
+  --text-primary: #0f172a;
+  --text-secondary:#334155;
+  --text-muted:   #64748b;
+  --text-faint:   #94a3b8;
+  --nav-active:   #dbeafe;
+  --hover-bg:     #e8f0fa;
+  --shadow:       0 4px 20px rgba(0,0,0,0.08);
+}
+html[data-theme="light"] body { background: var(--bg-primary); }
+html[data-theme="light"] .login-bg { background: radial-gradient(ellipse at 20% 50%, #bfdbfe 0%, #e0f2fe 50%, #f0f9ff 100%); }
+
+/* ── Forest (جنگل) — deep greens ── */
+html[data-theme="forest"] {
+  --bg-primary:   #071410;
+  --bg-secondary: #0d2018;
+  --bg-tertiary:  #040e0a;
+  --bg-card:      #0f2218;
+  --border:       #1a4028;
+  --border-light: #133020;
+  --accent:       #4ade80;
+  --accent-dark:  #16a34a;
+  --accent-darker:#15803d;
+  --accent-glow:  rgba(74,222,128,0.12);
+  --text-primary: #ecfdf5;
+  --text-secondary:#a7f3d0;
+  --text-muted:   #6ee7b7;
+  --text-faint:   #1e5c36;
+  --nav-active:   #14532d;
+  --hover-bg:     #122e1c;
+  --shadow:       0 8px 32px rgba(0,0,0,0.5);
+}
+html[data-theme="forest"] .login-bg { background: radial-gradient(ellipse at 20% 50%, #052e16 0%, #071410 50%, #040e0a 100%); }
+
+/* ── Ocean (سمندر) — teal/cyan ── */
+html[data-theme="ocean"] {
+  --bg-primary:   #021f1f;
+  --bg-secondary: #0a2e2d;
+  --bg-tertiary:  #011414;
+  --bg-card:      #0c3030;
+  --border:       #0d4f4d;
+  --border-light: #0a3c3a;
+  --accent:       #2dd4bf;
+  --accent-dark:  #0d9488;
+  --accent-darker:#0f766e;
+  --accent-glow:  rgba(45,212,191,0.12);
+  --text-primary: #ccfbf1;
+  --text-secondary:#99f6e4;
+  --text-muted:   #5eead4;
+  --text-faint:   #115e59;
+  --nav-active:   #134e4a;
+  --hover-bg:     #0c3a38;
+  --shadow:       0 8px 32px rgba(0,0,0,0.5);
+}
+html[data-theme="ocean"] .login-bg { background: radial-gradient(ellipse at 20% 50%, #042f2e 0%, #021f1f 50%, #011414 100%); }
+
+/* ── Sunset (شفق) — warm amber/gold ── */
+html[data-theme="sunset"] {
+  --bg-primary:   #150900;
+  --bg-secondary: #1e1000;
+  --bg-tertiary:  #0e0600;
+  --bg-card:      #1c0e00;
+  --border:       #3a1c00;
+  --border-light: #2c1500;
+  --accent:       #fb923c;
+  --accent-dark:  #ea580c;
+  --accent-darker:#c2410c;
+  --accent-glow:  rgba(251,146,60,0.12);
+  --text-primary: #fff7ed;
+  --text-secondary:#fed7aa;
+  --text-muted:   #fdba74;
+  --text-faint:   #6c2c00;
+  --nav-active:   #7c2d12;
+  --hover-bg:     #281200;
+  --shadow:       0 8px 32px rgba(0,0,0,0.5);
+}
+html[data-theme="sunset"] .login-bg { background: radial-gradient(ellipse at 20% 50%, #431407 0%, #150900 50%, #0e0600 100%); }
+
+/* ── Lavender (بنفشی) — purple/violet ── */
+html[data-theme="lavender"] {
+  --bg-primary:   #0c0818;
+  --bg-secondary: #140f26;
+  --bg-tertiary:  #080514;
+  --bg-card:      #120d22;
+  --border:       #2a1c4a;
+  --border-light: #1e1438;
+  --accent:       #a78bfa;
+  --accent-dark:  #7c3aed;
+  --accent-darker:#6d28d9;
+  --accent-glow:  rgba(167,139,250,0.12);
+  --text-primary: #f3e8ff;
+  --text-secondary:#ddd6fe;
+  --text-muted:   #c4b5fd;
+  --text-faint:   #3b1d7a;
+  --nav-active:   #4c1d95;
+  --hover-bg:     #1a1038;
+  --shadow:       0 8px 32px rgba(0,0,0,0.5);
+}
+html[data-theme="lavender"] .login-bg { background: radial-gradient(ellipse at 20% 50%, #2e1065 0%, #0c0818 50%, #080514 100%); }
+
+/* Theme picker popup */
+#theme-picker-popup { animation: cardSlideUp 0.2s ease; }
+.theme-swatch { display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 5px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:all 0.15s; }
+.theme-swatch:hover { border-color: var(--accent); background: var(--hover-bg); }
+.theme-swatch.active { border-color: var(--accent); background: var(--accent-glow); }
+.theme-swatch-circle { width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;border:2px solid; }
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 14px; }
 body { font-family: var(--font-main); background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; overflow: hidden; -webkit-font-smoothing: antialiased; }
@@ -427,7 +550,7 @@ input, textarea, select { font-family: var(--font-main); }
   <div class="main-area">
     <div class="topbar">
       <div class="topbar-left"><button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button><div class="topbar-title" id="topbar-title">Dashboard</div><div class="db-badge" id="db-badge">⚙ Connecting...</div></div>
-      <div class="topbar-right"><button class="topbar-btn" onclick="showPage('search',null)" title="Search">🔍</button><button class="topbar-btn" onclick="showPage('reminders',null)" title="Reminders">🔔</button><button class="topbar-btn" onclick="triggerBackupNow()" title="Backup Now">☁️</button><div class="topbar-status"><span class="status-dot" id="status-dot"></span><span id="status-text">Connecting</span></div></div>
+      <div class="topbar-right"><button class="topbar-btn" onclick="showPage('search',null)" title="Search">🔍</button><button class="topbar-btn" onclick="showPage('reminders',null)" title="Reminders">🔔</button><button class="topbar-btn" onclick="triggerBackupNow()" title="Backup Now">☁️</button><button class="topbar-btn" id="theme-picker-btn" onclick="openThemePicker()" title="Change Theme" style="font-size:16px;">🎨</button><div class="topbar-status"><span class="status-dot" id="status-dot"></span><span id="status-text">Connecting</span></div></div>
     </div>
     <div class="page-content" id="page-content"><div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Loading...</div></div></div>
     <div class="bottombar"><span id="footer-officer">Digital IO</span><span id="footer-time"></span><span id="footer-license">License: Active</span></div>
