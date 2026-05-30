@@ -260,6 +260,7 @@ async function open5CResponse(id){
              font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu','Aptos','Segoe UI',serif;
              font-size:14pt;
              line-height:1.5;
+             word-spacing:3px;
              direction:rtl;unicode-bidi:plaintext;
              outline:none;
              background-image:
@@ -274,13 +275,25 @@ async function open5CResponse(id){
     if(!paper)return;
     paper.focus();
 
-    // Tab key → 0.5 inch tab stop (matches MS Word default), not browser tab switch
+    // Tab key → 0.5 inch tab stop (MS Word standard).
+    // Direct DOM insertion so cursor lands AFTER the span, not inside it.
     paper.addEventListener('keydown',function(e){
       if(e.key==='Tab'){
         e.preventDefault();
-        // Insert a zero-width space inside a 0.5-inch span so it behaves like a real tab stop.
-        // Using a span (not spaces) keeps width consistent regardless of font or font size.
-        document.execCommand('insertHTML',false,'<span style="display:inline-block;width:0.5in;">\u200B</span>');
+        const sel=window.getSelection();
+        if(!sel.rangeCount)return;
+        const range=sel.getRangeAt(0);
+        range.deleteContents();
+        // Build tab span
+        const span=document.createElement('span');
+        span.style.cssText='display:inline-block;width:0.5in;';
+        span.textContent='\u00A0'; // non-breaking space — visible, deletable with Backspace
+        range.insertNode(span);
+        // Move cursor to AFTER the span (not inside it)
+        range.setStartAfter(span);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
       }
     });
     // Uses a RegExp on text nodes after every keystroke so it's IME-safe
@@ -385,7 +398,7 @@ async function save5CResponse(id){
 function downloadResponse5C(id,name){
   const html=document.getElementById('a4-paper').innerHTML;
   const lh=document.getElementById('a4-paper')?.style.lineHeight||'1.5';
-  const full=`<!DOCTYPE html><html lang="ur"><head><meta charset="utf-8"><title>5-C Response</title><link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet"><style>@page{size:A4;margin:20mm 18mm 20mm 15mm}body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',Aptos,serif;font-size:14pt;line-height:${lh};direction:rtl;margin:0;padding:0;color:#000;}div,p,li{margin:0;padding:0;}</style></head><body>${html}</body></html>`;
+  const full=`<!DOCTYPE html><html lang="ur"><head><meta charset="utf-8"><title>5-C Response</title><link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet"><style>@page{size:A4;margin:20mm 18mm 20mm 15mm}body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',Aptos,serif;font-size:14pt;line-height:${lh};word-spacing:3px;direction:rtl;margin:0;padding:0;color:#000;}div,p,li{margin:0;padding:0;}</style></head><body>${html}</body></html>`;
   const blob=new Blob([full],{type:'text/html;charset=utf-8'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`5C_${name}_${id.slice(0,8)}.html`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
   showToast('⬇️ Offline copy downloaded','success');
@@ -401,7 +414,7 @@ function print5CResponse(){
 <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   @page{size:A4;margin:20mm 18mm 20mm 15mm}
-  body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',Aptos,serif;font-size:14pt;line-height:${lh};direction:rtl;margin:0;color:#000;
+  body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',Aptos,serif;font-size:14pt;line-height:${lh};word-spacing:3px;direction:rtl;margin:0;color:#000;
     /* NO border, NO gradient — clean print */
   }
   div,p,li{margin:0;padding:0;}
