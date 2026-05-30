@@ -274,11 +274,13 @@ async function open5CResponse(id){
     if(!paper)return;
     paper.focus();
 
-    // Tab key → insert spaces instead of switching browser tabs
+    // Tab key → 0.5 inch tab stop (matches MS Word default), not browser tab switch
     paper.addEventListener('keydown',function(e){
       if(e.key==='Tab'){
         e.preventDefault();
-        document.execCommand('insertText',false,'    '); // 4 non-breaking spaces
+        // Insert a zero-width space inside a 0.5-inch span so it behaves like a real tab stop.
+        // Using a span (not spaces) keeps width consistent regardless of font or font size.
+        document.execCommand('insertHTML',false,'<span style="display:inline-block;width:0.5in;">\u200B</span>');
       }
     });
     // Uses a RegExp on text nodes after every keystroke so it's IME-safe
