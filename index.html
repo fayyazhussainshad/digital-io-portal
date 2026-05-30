@@ -185,7 +185,143 @@ html[data-theme="lavender"] .login-bg { background: radial-gradient(ellipse at 2
 .theme-swatch { display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 5px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:all 0.15s; }
 .theme-swatch:hover { border-color: var(--accent); background: var(--hover-bg); }
 .theme-swatch.active { border-color: var(--accent); background: var(--accent-glow); }
-.theme-swatch-circle { width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;border:2px solid; }
+.theme-swatch-circle { width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;border:2px solid;overflow:hidden;background-size:cover;background-position:center; }
+
+/* ═══════════════════════════════════════════════
+   PHOTO THEMES — glassmorphism frosted-glass panels
+   Background image + semi-transparent blurred UI.
+   Falls back to background-color if image is slow.
+   ═══════════════════════════════════════════════ */
+html.photo-theme body {
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+html.photo-theme #main-app,
+html.photo-theme .main-area,
+html.photo-theme .page-content { background: transparent !important; }
+
+html.photo-theme .sidebar,
+html.photo-theme .topbar,
+html.photo-theme .bottombar {
+  background: rgba(var(--glass-rgb), 0.86) !important;
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border-color: rgba(255,255,255,0.09) !important;
+}
+html.photo-theme .card,
+html.photo-theme .stat-card {
+  background: rgba(var(--glass-rgb), 0.72) !important;
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  border-color: rgba(255,255,255,0.08) !important;
+}
+html.photo-theme .modal-card {
+  background: rgba(var(--glass-rgb), 0.94) !important;
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+}
+html.photo-theme .modal-overlay { background: rgba(0,0,0,0.55); backdrop-filter: blur(4px); }
+html.photo-theme .nav-item.active { background: rgba(var(--glass-rgb),0.55) !important; }
+html.photo-theme .data-table th { background: rgba(var(--glass-rgb),0.90) !important; }
+html.photo-theme .data-table tr:hover td { background: rgba(255,255,255,0.04) !important; }
+html.photo-theme .login-bg { background-size:cover!important;background-position:center!important;filter:brightness(0.65); }
+
+/* ── Blossom (بہار) — fantasy/spring ── */
+html[data-theme="blossom"] {
+  --glass-rgb: 18, 4, 22;
+  --accent:#f472b6; --accent-dark:#db2777; --accent-darker:#be185d;
+  --accent-glow:rgba(244,114,182,0.15);
+  --text-primary:#fdf2f8; --text-secondary:#fbcfe8; --text-muted:#f9a8d4; --text-faint:#831843;
+  --border:rgba(244,114,182,0.22); --border-light:rgba(244,114,182,0.11);
+  --nav-active:rgba(244,114,182,0.22); --hover-bg:rgba(244,114,182,0.09);
+  --shadow:0 8px 32px rgba(0,0,0,0.65);
+}
+html[data-theme="blossom"] body {
+  background-color:#190518;
+  background-image:linear-gradient(rgba(8,1,12,0.42),rgba(8,1,12,0.42)),
+    url('https://picsum.photos/seed/spring-blossom-dio/1920/1080');
+}
+html[data-theme="blossom"] .login-bg {
+  background-image:url('https://picsum.photos/seed/spring-blossom-dio/1920/1080')!important;
+}
+
+/* ── Mountains (پہاڑ) — majestic peaks ── */
+html[data-theme="peaks"] {
+  --glass-rgb: 4, 12, 26;
+  --accent:#60a5fa; --accent-dark:#2563eb; --accent-darker:#1d4ed8;
+  --accent-glow:rgba(96,165,250,0.15);
+  --text-primary:#eff6ff; --text-secondary:#bfdbfe; --text-muted:#93c5fd; --text-faint:#1e3a5f;
+  --border:rgba(96,165,250,0.22); --border-light:rgba(96,165,250,0.11);
+  --nav-active:rgba(96,165,250,0.22); --hover-bg:rgba(96,165,250,0.09);
+  --shadow:0 8px 32px rgba(0,0,0,0.65);
+}
+html[data-theme="peaks"] body {
+  background-color:#04101a;
+  background-image:linear-gradient(rgba(4,12,26,0.38),rgba(4,12,26,0.38)),
+    url('https://picsum.photos/seed/mountain-peaks-dio/1920/1080');
+}
+html[data-theme="peaks"] .login-bg {
+  background-image:url('https://picsum.photos/seed/mountain-peaks-dio/1920/1080')!important;
+}
+
+/* ── Galaxy (کائنات) — deep space ── */
+html[data-theme="cosmos"] {
+  --glass-rgb: 6, 3, 18;
+  --accent:#818cf8; --accent-dark:#4f46e5; --accent-darker:#4338ca;
+  --accent-glow:rgba(129,140,248,0.15);
+  --text-primary:#eef2ff; --text-secondary:#c7d2fe; --text-muted:#a5b4fc; --text-faint:#312e81;
+  --border:rgba(129,140,248,0.22); --border-light:rgba(129,140,248,0.11);
+  --nav-active:rgba(129,140,248,0.22); --hover-bg:rgba(129,140,248,0.09);
+  --shadow:0 8px 32px rgba(0,0,0,0.70);
+}
+html[data-theme="cosmos"] body {
+  background-color:#06031a;
+  background-image:linear-gradient(rgba(3,1,10,0.48),rgba(3,1,10,0.48)),
+    url('https://picsum.photos/seed/galaxy-cosmos-dio/1920/1080');
+}
+html[data-theme="cosmos"] .login-bg {
+  background-image:url('https://picsum.photos/seed/galaxy-cosmos-dio/1920/1080')!important;
+}
+
+/* ── Autumn (خزاں) — warm fall colors ── */
+html[data-theme="autumn"] {
+  --glass-rgb: 18, 6, 0;
+  --accent:#f97316; --accent-dark:#ea580c; --accent-darker:#c2410c;
+  --accent-glow:rgba(249,115,22,0.15);
+  --text-primary:#fff7ed; --text-secondary:#fed7aa; --text-muted:#fdba74; --text-faint:#7c2d12;
+  --border:rgba(249,115,22,0.22); --border-light:rgba(249,115,22,0.11);
+  --nav-active:rgba(249,115,22,0.22); --hover-bg:rgba(249,115,22,0.09);
+  --shadow:0 8px 32px rgba(0,0,0,0.65);
+}
+html[data-theme="autumn"] body {
+  background-color:#180600;
+  background-image:linear-gradient(rgba(14,4,0,0.40),rgba(14,4,0,0.40)),
+    url('https://picsum.photos/seed/autumn-leaves-dio/1920/1080');
+}
+html[data-theme="autumn"] .login-bg {
+  background-image:url('https://picsum.photos/seed/autumn-leaves-dio/1920/1080')!important;
+}
+
+/* ── Aurora (قطبی شفق) — Northern Lights ── */
+html[data-theme="aurora"] {
+  --glass-rgb: 0, 8, 16;
+  --accent:#34d399; --accent-dark:#059669; --accent-darker:#047857;
+  --accent-glow:rgba(52,211,153,0.15);
+  --text-primary:#ecfdf5; --text-secondary:#a7f3d0; --text-muted:#6ee7b7; --text-faint:#064e3b;
+  --border:rgba(52,211,153,0.22); --border-light:rgba(52,211,153,0.11);
+  --nav-active:rgba(52,211,153,0.22); --hover-bg:rgba(52,211,153,0.09);
+  --shadow:0 8px 32px rgba(0,0,0,0.65);
+}
+html[data-theme="aurora"] body {
+  background-color:#000e12;
+  background-image:linear-gradient(rgba(0,6,12,0.42),rgba(0,6,12,0.42)),
+    url('https://picsum.photos/seed/northern-lights-dio/1920/1080');
+}
+html[data-theme="aurora"] .login-bg {
+  background-image:url('https://picsum.photos/seed/northern-lights-dio/1920/1080')!important;
+}
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 14px; }
