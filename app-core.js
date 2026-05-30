@@ -293,8 +293,75 @@ function autoFormatDate(inp) {
   inp.value = v;
 }
 
-// ── APP BOOTSTRAP ──
+// ── THEMES ──
+const THEMES = [
+  {id:'dark',     name:'Dark Navy',  urdu:'رات',    emoji:'🌑', bg:'#0a1520', accent:'#38bdf8'},
+  {id:'light',    name:'Light',      urdu:'دن',     emoji:'☀️',  bg:'#f0f4f8', accent:'#0369a1'},
+  {id:'forest',   name:'Forest',     urdu:'جنگل',   emoji:'🌲', bg:'#071410', accent:'#4ade80'},
+  {id:'ocean',    name:'Ocean',      urdu:'سمندر',  emoji:'🌊', bg:'#021f1f', accent:'#2dd4bf'},
+  {id:'sunset',   name:'Sunset',     urdu:'شفق',    emoji:'🌅', bg:'#150900', accent:'#fb923c'},
+  {id:'lavender', name:'Lavender',   urdu:'بنفشی',  emoji:'💜', bg:'#0c0818', accent:'#a78bfa'},
+];
+
+function applyTheme(id){
+  const t=THEMES.find(th=>th.id===id)||THEMES[0];
+  // Dark is the default :root, so remove attribute to restore it; others set attribute
+  if(id==='dark'){document.documentElement.removeAttribute('data-theme');}
+  else{document.documentElement.setAttribute('data-theme',id);}
+  localStorage.setItem('dio_theme',id);
+  // Update browser theme-color meta tag
+  const meta=document.querySelector('meta[name="theme-color"]');
+  if(meta)meta.content=t.bg;
+  // Refresh any open theme picker so active state updates
+  const popup=document.getElementById('theme-picker-popup');
+  if(popup)_renderThemeSwatches(popup,id);
+}
+
+function loadSavedTheme(){
+  applyTheme(localStorage.getItem('dio_theme')||'dark');
+}
+
+function openThemePicker(){
+  const existing=document.getElementById('theme-picker-popup');
+  if(existing){existing.remove();return;}
+  const btn=document.getElementById('theme-picker-btn');
+  const rect=btn?btn.getBoundingClientRect():{bottom:52,right:16};
+  const popup=document.createElement('div');
+  popup.id='theme-picker-popup';
+  popup.style.cssText=`position:fixed;top:${rect.bottom+6}px;right:16px;z-index:3000;`
+    +`background:var(--bg-card);border:1px solid var(--border);border-radius:14px;`
+    +`padding:16px;box-shadow:var(--shadow);min-width:260px;`;
+  popup.innerHTML=`<div style="font-size:9px;color:var(--text-faint);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;font-weight:700;">🎨 تھیم — Theme</div>`
+    +`<div id="theme-swatches" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;"></div>`;
+  document.body.appendChild(popup);
+  _renderThemeSwatches(popup, localStorage.getItem('dio_theme')||'dark');
+  // Close on outside click
+  setTimeout(()=>{
+    function closeOnOutside(e){
+      if(!popup.contains(e.target)&&e.target.id!=='theme-picker-btn'){
+        popup.remove();document.removeEventListener('click',closeOnOutside);
+      }
+    }
+    document.addEventListener('click',closeOnOutside);
+  },50);
+}
+
+function _renderThemeSwatches(popup, currentId){
+  const grid=popup.querySelector('#theme-swatches');
+  if(!grid)return;
+  grid.innerHTML=THEMES.map(t=>`
+    <div class="theme-swatch ${t.id===currentId?'active':''}" onclick="applyTheme('${t.id}')">
+      <div class="theme-swatch-circle" style="background:${t.bg};border-color:${t.accent};">${t.emoji}</div>
+      <div style="font-size:10px;color:var(--text-secondary);text-align:center;line-height:1.2;">${t.name}</div>
+      <div style="font-size:9px;color:var(--text-muted);text-align:center;">${t.urdu}</div>
+    </div>
+  `).join('');
+}
+
+
 async function initApp(){updateSidebarProfile();updateConnectionStatus(true);await updateBadges();startClock();initBackupSystem();setupRealtimeSync(async(table)=>{await updateBadges();const pt=document.getElementById('topbar-title')?.textContent;if(table==='cases'&&pt?.includes('Cases'))renderCases(document.getElementById('page-content'));if(table==='reminders'&&pt?.includes('Reminder'))renderReminders(document.getElementById('page-content'));});showPage('dashboard',document.querySelector('.nav-item'));setTimeout(()=>triggerBackup('app_init'),3000);}
 window.addEventListener('online',()=>{updateConnectionStatus(true);showToast('🌐 Back online!','success');});
 window.addEventListener('offline',()=>{updateConnectionStatus(false);showToast('📴 You are offline.','error',5000);});
-window.addEventListener('DOMContentLoaded',async()=>{onSupabaseReady(async()=>{await checkExistingSession();});setInterval(()=>{const el=document.getElementById('footer-time');if(el)el.textContent=new Date().toLocaleTimeString('en-PK');},1000);console.log('✅ Digital IO v4.2.0 — MODULAR Round 2 (misal+forms+fivec extracted) — '+new Date().toISOString());});
+window.addEventListener('DOMContentLoaded',async()=>{
+  loadSavedTheme(); // Apply theme before anything renders — prevents flash of wrong theme
+  onSupabaseReady(async()=>{await checkExistingSession();});setInterval(()=>{const el=document.getElementById('footer-time');if(el)el.textContent=new Date().toLocaleTimeString('en-PK');},1000);console.log('✅ Digital IO v4.2.0 — MODULAR Round 2 (misal+forms+fivec extracted) — '+new Date().toISOString());});
