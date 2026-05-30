@@ -274,7 +274,13 @@ async function open5CResponse(id){
     if(!paper)return;
     paper.focus();
 
-    // Fix 2 — Arabic-Indic → Western numerals via input event (catches IME too)
+    // Tab key → insert spaces instead of switching browser tabs
+    paper.addEventListener('keydown',function(e){
+      if(e.key==='Tab'){
+        e.preventDefault();
+        document.execCommand('insertText',false,'    '); // 4 non-breaking spaces
+      }
+    });
     // Uses a RegExp on text nodes after every keystroke so it's IME-safe
     const arabicRe=/[٠-٩]/g;
     const arabicMap={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'};
