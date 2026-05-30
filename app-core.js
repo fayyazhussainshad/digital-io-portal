@@ -377,6 +377,54 @@ function _renderThemeSwatches(popup,currentId){
 
 
 async function initApp(){updateSidebarProfile();updateConnectionStatus(true);await updateBadges();startClock();initBackupSystem();setupRealtimeSync(async(table)=>{await updateBadges();const pt=document.getElementById('topbar-title')?.textContent;if(table==='cases'&&pt?.includes('Cases'))renderCases(document.getElementById('page-content'));if(table==='reminders'&&pt?.includes('Reminder'))renderReminders(document.getElementById('page-content'));});showPage('dashboard',document.querySelector('.nav-item'));setTimeout(()=>triggerBackup('app_init'),3000);}
+// ── STATION TRANSFER ──
+async function openTransferModal(){
+  const o=currentOfficer||{};
+  let history='';
+  try{
+    const oid=await getOfficerId();
+    if(oid){const{data}=await supabaseClient.from('officer_transfers').select('*').eq('officer_id',oid).order('transfer_date',{ascending:false}).limit(10);
+      if(data&&data.length){history=`<div style="margin-top:16px;"><div style="font-size:10px;color:var(--text-faint);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">Transfer History</div>`+data.map(t=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg-tertiary);border-radius:6px;margin-bottom:5px;font-size:11px;flex-wrap:wrap;"><span style="color:var(--text-muted);">${t.transfer_date||'—'}</span><span style="color:var(--text-faint);">→</span><span style="color:var(--text-primary);font-weight:600;">${t.to_station||''}${t.to_district?', '+t.to_district:''}</span>${t.order_number?`<span style="margin-left:auto;font-size:10px;color:var(--text-faint);">Order: ${t.order_number}</span>`:''}</div>`).join('')+'</div>';}}
+  }catch(_){}
+  const inp='width:100%;padding:8px 10px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:13px;box-sizing:border-box;';
+  const lbl='display:block;font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:600;';
+  openModal('🏛️ Record Station Transfer',
+    `<p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Recording a transfer updates your current station. All your existing cases remain visible — they are linked to you, not to a station.</p>
+     <div style="padding:10px;background:var(--accent-glow);border-radius:6px;margin-bottom:14px;font-size:12px;color:var(--text-secondary);">
+       <b>Current Posting:</b> ${o.station||'Not set'}${o.district?', '+o.district:''}
+     </div>
+     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+       <div><label style="${lbl}">New Police Station *</label><input style="${inp}" id="tr-station" placeholder="e.g. Seetal Mari"></div>
+       <div><label style="${lbl}">New District</label><input style="${inp}" id="tr-district" placeholder="e.g. Multan" value="${o.district||''}"></div>
+       <div><label style="${lbl}">Transfer Date</label><input style="${inp}" type="date" id="tr-date" value="${new Date().toISOString().split('T')[0]}"></div>
+       <div><label style="${lbl}">Transfer Order No.</label><input style="${inp}" id="tr-order" placeholder="Optional"></div>
+       <div style="grid-column:1/-1;"><label style="${lbl}">Notes (optional)</label><input style="${inp}" id="tr-notes" placeholder="e.g. Promoted, posted as SHO"></div>
+     </div>${history}`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveTransfer()">✅ Save Transfer</button>`);
+}
+
+async function saveTransfer(){
+  const newStation=document.getElementById('tr-station').value.trim();
+  if(!newStation){showToast('⚠️ New station name is required.','error');return;}
+  const o=currentOfficer||{};
+  const oid=await getOfficerId();if(!oid)return;
+  const newDistrict=document.getElementById('tr-district').value.trim()||null;
+  try{
+    await supabaseClient.from('officer_transfers').insert({
+      officer_id:oid,from_station:o.station||null,from_district:o.district||null,
+      to_station:newStation,to_district:newDistrict,
+      transfer_date:document.getElementById('tr-date').value||null,
+      order_number:document.getElementById('tr-order').value.trim()||null,
+      notes:document.getElementById('tr-notes').value.trim()||null,
+    });
+    await supabaseClient.from('officers').update({station:newStation,district:newDistrict||o.district}).eq('id',oid);
+    if(currentOfficer){currentOfficer.station=newStation;if(newDistrict)currentOfficer.district=newDistrict;}
+    updateSidebarProfile();
+    closeModal();
+    showToast(`✅ Transfer recorded — now posted at ${newStation}.`,'success',5000);
+  }catch(e){showToast('❌ '+e.message,'error',5000);}
+}
+
 window.addEventListener('online',()=>{updateConnectionStatus(true);showToast('🌐 Back online!','success');});
 window.addEventListener('offline',()=>{updateConnectionStatus(false);showToast('📴 You are offline.','error',5000);});
 window.addEventListener('DOMContentLoaded',async()=>{
