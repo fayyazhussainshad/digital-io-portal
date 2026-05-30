@@ -295,24 +295,31 @@ function autoFormatDate(inp) {
 
 // ── THEMES ──
 const THEMES = [
-  {id:'dark',     name:'Dark Navy',  urdu:'رات',    emoji:'🌑', bg:'#0a1520', accent:'#38bdf8'},
-  {id:'light',    name:'Light',      urdu:'دن',     emoji:'☀️',  bg:'#f0f4f8', accent:'#0369a1'},
-  {id:'forest',   name:'Forest',     urdu:'جنگل',   emoji:'🌲', bg:'#071410', accent:'#4ade80'},
-  {id:'ocean',    name:'Ocean',      urdu:'سمندر',  emoji:'🌊', bg:'#021f1f', accent:'#2dd4bf'},
-  {id:'sunset',   name:'Sunset',     urdu:'شفق',    emoji:'🌅', bg:'#150900', accent:'#fb923c'},
-  {id:'lavender', name:'Lavender',   urdu:'بنفشی',  emoji:'💜', bg:'#0c0818', accent:'#a78bfa'},
+  // ─ Colour themes ─
+  {id:'dark',     name:'Dark Navy',  urdu:'رات',       emoji:'🌑', bg:'#0a1520', accent:'#38bdf8', photo:false},
+  {id:'light',    name:'Light',      urdu:'دن',        emoji:'☀️',  bg:'#f0f4f8', accent:'#0369a1', photo:false},
+  {id:'forest',   name:'Forest',     urdu:'جنگل',      emoji:'🌲', bg:'#071410', accent:'#4ade80', photo:false},
+  {id:'ocean',    name:'Ocean',      urdu:'سمندر',     emoji:'🌊', bg:'#021f1f', accent:'#2dd4bf', photo:false},
+  {id:'sunset',   name:'Sunset',     urdu:'شفق',       emoji:'🌅', bg:'#150900', accent:'#fb923c', photo:false},
+  {id:'lavender', name:'Lavender',   urdu:'بنفشی',     emoji:'💜', bg:'#0c0818', accent:'#a78bfa', photo:false},
+  // ─ Photo / wallpaper themes ─
+  {id:'blossom',  name:'Blossom',    urdu:'بہار',      emoji:'🌸', bg:'#190518', accent:'#f472b6', photo:true, seed:'spring-blossom-dio'},
+  {id:'peaks',    name:'Mountains',  urdu:'پہاڑ',      emoji:'🏔️', bg:'#04101a', accent:'#60a5fa', photo:true, seed:'mountain-peaks-dio'},
+  {id:'cosmos',   name:'Galaxy',     urdu:'کائنات',    emoji:'🌌', bg:'#06031a', accent:'#818cf8', photo:true, seed:'galaxy-cosmos-dio'},
+  {id:'autumn',   name:'Autumn',     urdu:'خزاں',      emoji:'🍂', bg:'#180600', accent:'#f97316', photo:true, seed:'autumn-leaves-dio'},
+  {id:'aurora',   name:'Aurora',     urdu:'قطبی شفق',  emoji:'✨', bg:'#000e12', accent:'#34d399', photo:true, seed:'northern-lights-dio'},
 ];
 
 function applyTheme(id){
   const t=THEMES.find(th=>th.id===id)||THEMES[0];
-  // Dark is the default :root, so remove attribute to restore it; others set attribute
   if(id==='dark'){document.documentElement.removeAttribute('data-theme');}
   else{document.documentElement.setAttribute('data-theme',id);}
+  // Photo themes add a class that enables glassmorphism CSS
+  if(t.photo){document.documentElement.classList.add('photo-theme');}
+  else{document.documentElement.classList.remove('photo-theme');}
   localStorage.setItem('dio_theme',id);
-  // Update browser theme-color meta tag
   const meta=document.querySelector('meta[name="theme-color"]');
   if(meta)meta.content=t.bg;
-  // Refresh any open theme picker so active state updates
   const popup=document.getElementById('theme-picker-popup');
   if(popup)_renderThemeSwatches(popup,id);
 }
@@ -330,12 +337,11 @@ function openThemePicker(){
   popup.id='theme-picker-popup';
   popup.style.cssText=`position:fixed;top:${rect.bottom+6}px;right:16px;z-index:3000;`
     +`background:var(--bg-card);border:1px solid var(--border);border-radius:14px;`
-    +`padding:16px;box-shadow:var(--shadow);min-width:260px;`;
+    +`padding:16px;box-shadow:var(--shadow);min-width:310px;max-height:80vh;overflow-y:auto;`;
   popup.innerHTML=`<div style="font-size:9px;color:var(--text-faint);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;font-weight:700;">🎨 تھیم — Theme</div>`
-    +`<div id="theme-swatches" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;"></div>`;
+    +`<div id="theme-swatches"></div>`;
   document.body.appendChild(popup);
-  _renderThemeSwatches(popup, localStorage.getItem('dio_theme')||'dark');
-  // Close on outside click
+  _renderThemeSwatches(popup,localStorage.getItem('dio_theme')||'dark');
   setTimeout(()=>{
     function closeOnOutside(e){
       if(!popup.contains(e.target)&&e.target.id!=='theme-picker-btn'){
@@ -346,16 +352,27 @@ function openThemePicker(){
   },50);
 }
 
-function _renderThemeSwatches(popup, currentId){
-  const grid=popup.querySelector('#theme-swatches');
-  if(!grid)return;
-  grid.innerHTML=THEMES.map(t=>`
-    <div class="theme-swatch ${t.id===currentId?'active':''}" onclick="applyTheme('${t.id}')">
-      <div class="theme-swatch-circle" style="background:${t.bg};border-color:${t.accent};">${t.emoji}</div>
-      <div style="font-size:10px;color:var(--text-secondary);text-align:center;line-height:1.2;">${t.name}</div>
-      <div style="font-size:9px;color:var(--text-muted);text-align:center;">${t.urdu}</div>
-    </div>
-  `).join('');
+function _renderThemeSwatches(popup,currentId){
+  const grid=popup.querySelector('#theme-swatches');if(!grid)return;
+  const colourThemes=THEMES.filter(t=>!t.photo);
+  const photoThemes=THEMES.filter(t=>t.photo);
+  function section(label,themes){
+    return `<div style="font-size:9px;color:var(--text-faint);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">${label}</div>`
+      +`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;">`
+      +themes.map(t=>{
+        const isPhoto=t.photo;
+        const circleStyle=isPhoto
+          ?`background-image:url('https://picsum.photos/seed/${t.seed}/120/80');background-size:cover;background-position:center;`
+          :`background:${t.bg};`;
+        const inner=isPhoto?'':`<span>${t.emoji}</span>`;
+        return `<div class="theme-swatch ${t.id===currentId?'active':''}" onclick="applyTheme('${t.id}')">
+          <div class="theme-swatch-circle" style="${circleStyle}border-color:${t.accent};">${inner}</div>
+          <div style="font-size:10px;color:var(--text-secondary);text-align:center;line-height:1.2;">${t.name}</div>
+          <div style="font-size:9px;color:var(--text-muted);text-align:center;">${t.urdu}</div>
+        </div>`;
+      }).join('')+`</div>`;
+  }
+  grid.innerHTML=section('Colour Themes',colourThemes)+section('Photo / Wallpaper Themes',photoThemes);
 }
 
 
