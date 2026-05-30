@@ -118,6 +118,7 @@ async function renderCases(container,fStatus,fQuery){
       <option value="under"      ${fStatus==='under'?'selected':''}>زیر تفتیش</option>
       <option value="complete"   ${fStatus==='complete'?'selected':''}>مکمل چالان</option>
       <option value="incomplete" ${fStatus==='incomplete'?'selected':''}>نامکمل چالان</option>
+      <option value="challan512" ${fStatus==='challan512'?'selected':''}>چالان 512ض ف</option>
       <option value="untrace"    ${fStatus==='untrace'?'selected':''}>عدم پتہ</option>
       <option value="cancel"     ${fStatus==='cancel'?'selected':''}>اخراج</option>
     </select>
@@ -257,6 +258,7 @@ function caseFormHTML(c) {
   var statusOpts = '<option value="under"'+(status==='under'?' selected':'')+'>&#x0632;&#x06CC;&#x0631; &#x062A;&#x0641;&#x062A;&#x06CC;&#x0634; (Under Investigation)</option>'
     + '<option value="complete"'+(status==='complete'?' selected':'')+'>&#x0645;&#x06A9;&#x0645;&#x0644; &#x0686;&#x0627;&#x0644;&#x0627;&#x0646; (Complete)</option>'
     + '<option value="incomplete"'+(status==='incomplete'?' selected':'')+'>&#x0646;&#x0627;&#x0645;&#x06A9;&#x0645;&#x0644; &#x0686;&#x0627;&#x0644;&#x0627;&#x0646; (Incomplete)</option>'
+    + '<option value="challan512"'+(status==='challan512'?' selected':'')+'>\u0686\u0627\u0644\u0627\u0646 512\u0636 \u0641 (512 CrPC)</option>'
     + '<option value="untrace"'+(status==='untrace'?' selected':'')+'>&#x0639;&#x062F;&#x0645; &#x067E;&#x062A;&#x06C1; (Untraced)</option>'
     + '<option value="cancel"'+(status==='cancel'?' selected':'')+'>&#x0627;&#x062E;&#x0631;&#x0627;&#x062C; (Cancelled)</option>';
 
