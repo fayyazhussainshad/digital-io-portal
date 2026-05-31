@@ -166,7 +166,8 @@ let currentUser=null,currentOfficer=null,currentRole='officer',sessionTimer=null
 function setLoginMethod(method,el){document.querySelectorAll('.login-method').forEach(b=>b.classList.remove('active'));if(el)el.classList.add('active');document.getElementById('panel-password').style.display=method==='password'?'block':'none';document.getElementById('panel-pin').style.display=method==='pin'?'block':'none';document.getElementById('panel-biometric').style.display=method==='biometric'?'block':'none';pinBuffer='';updatePinDots();}
 async function doLogin(){const lock=localStorage.getItem('dio_lockout_until');if(lock&&Date.now()<parseInt(lock)){showLoginError('⚠️ Account locked. Try again later.');return;}const email=document.getElementById('login-email').value.trim(),pass=document.getElementById('login-password').value;if(!email||!pass){showLoginError('⚠️ Please enter email and password.');return;}setLoginLoading(true);hideLoginError();try{const{data,error}=await supabaseClient.auth.signInWithPassword({email,password:pass});if(error){loginAttempts++;localStorage.setItem('dio_login_attempts',loginAttempts);if(loginAttempts>=APP_CONFIG.maxLoginAttempts){localStorage.setItem('dio_lockout_until',Date.now()+APP_CONFIG.lockoutDuration);loginAttempts=0;localStorage.setItem('dio_login_attempts',0);showLoginError('🔒 Too many failed attempts. Account locked for 30 minutes.');}else{showLoginError(`❌ Incorrect credentials. ${APP_CONFIG.maxLoginAttempts-loginAttempts} attempt(s) remaining.`);}setLoginLoading(false);return;}loginAttempts=0;localStorage.setItem('dio_login_attempts',0);localStorage.removeItem('dio_lockout_until');currentUser=data.user;await loadOfficerProfile();
     // Save credentials hash for offline login next time
-    await _saveOfflineAuth(email,pass);
+    // Fire-and-forget — never let offline auth saving break the login flow
+    _saveOfflineAuth(email,pass).catch(()=>{});
     await loginSuccess();
   }catch(err){
     if(!navigator.onLine){
@@ -199,9 +200,12 @@ async function loadOfficerProfile(){
     const{data:r}=await supabaseClient.from('user_roles').select('role').eq('user_id',currentUser.id).single();
     if(r)currentRole=r.role;
   }catch(e){
-    // Offline — load from IndexedDB cache
-    const cached=await offlineStore.getOfflineProfile(currentUser?.id);
-    if(cached){ currentOfficer=cached; }
+    // Offline or Supabase error — load from IndexedDB cache
+    // Wrapped in its own try-catch so IndexedDB errors don't propagate to doLogin
+    try{
+      const cached=await offlineStore.getOfflineProfile(currentUser?.id);
+      if(cached){ currentOfficer=cached; }
+    }catch(_){ /* IndexedDB unavailable or store not yet created — skip */ }
   }
 }
 async function loginSuccess(){const ls=document.getElementById('login-screen'),app=document.getElementById('main-app');ls.style.transition='opacity 0.4s';ls.style.opacity='0';setTimeout(()=>{ls.style.display='none';app.style.display='flex';setLoginLoading(false);initApp();},400);resetSessionTimer();}
