@@ -25,21 +25,18 @@
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [],
   "shortcuts": [
     {
       "name": "My Cases",
       "short_name": "Cases",
       "description": "View and manage your cases",
-      "url": "/?tab=cases",
-      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+      "url": "/?tab=cases"
     },
     {
       "name": "5-C Applications",
       "short_name": "5-C",
       "description": "Track senior officer applications",
-      "url": "/?tab=fivec",
-      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+      "url": "/?tab=fivec"
     }
   ]
 }
