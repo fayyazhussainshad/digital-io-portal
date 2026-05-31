@@ -494,7 +494,32 @@ function autoFormatDate(inp) {
 }
 
 
-// ── OFFLINE AUTH HELPERS ──────────────────────────────────────────────────────
+// ── OFFLINE STORE FALLBACK ──
+// If offline-store.js failed to load or hasn't been uploaded yet,
+// create a no-op shim so nothing crashes — offline features just silently disabled.
+if(typeof offlineStore==='undefined'){
+  window.offlineStore={
+    cache:()=>Promise.resolve(),
+    getAll:()=>Promise.resolve([]),
+    getOne:()=>Promise.resolve(null),
+    remove:()=>Promise.resolve(),
+    enqueue:()=>Promise.resolve(),
+    pendingCount:()=>Promise.resolve(0),
+    getPending:()=>Promise.resolve([]),
+    processQueue:()=>Promise.resolve(0),
+    saveOfflineProfile:()=>Promise.resolve(),
+    getOfflineProfile:()=>Promise.resolve(null),
+    saveOfflineCreds:()=>Promise.resolve(),
+    getOfflineCredsByEmail:()=>Promise.resolve(null),
+    storeFile:()=>Promise.resolve(),
+    getFile:()=>Promise.resolve(null),
+    removeFile:()=>Promise.resolve(),
+    isAvailable:()=>Promise.resolve(false),
+  };
+  console.warn('[DigitalIO] offline-store.js not loaded — offline mode disabled');
+}
+
+
 // SHA-256 hash using Web Crypto API (built-in, no library needed)
 async function _hashPw(password,salt){
   const enc=new TextEncoder();
