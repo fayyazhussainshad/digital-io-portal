@@ -194,13 +194,23 @@ async function checkExistingSession(){const{data:{session}}=await supabaseClient
 async function getOfficerId(){if(currentOfficer)return currentOfficer.id;if(!currentUser)return null;const{data}=await supabaseClient.from('officers').select('id').eq('user_id',currentUser.id).single();return data?.id||null;}
 async function getCases(fStatus,fQuery){fStatus=fStatus||'';fQuery=fQuery||'';
   const oid=await getOfficerId();if(!oid)return[];
-  // Query cases table directly — complainant is stored as plain text here.
-  // (cases_decrypted view can show null for new rows where encryption was never applied)
-  let q=supabaseClient.from('cases').select('*').eq('officer_id',oid).order('created_at',{ascending:false});
-  if(fStatus)q=q.eq('status',fStatus);
-  const{data,error}=await q;
-  if(error){console.error('getCases:',error);return[];}
-  let list=data||[];
+  let list=[];
+  try{
+    if(!navigator.onLine)throw new Error('offline');
+    let q=supabaseClient.from('cases').select('*').eq('officer_id',oid).order('created_at',{ascending:false});
+    if(fStatus)q=q.eq('status',fStatus);
+    const{data,error}=await q;
+    if(error)throw error;
+    list=data||[];
+    // Cache fresh data locally for offline use
+    offlineStore.cache('cases_cache',list).catch(()=>{});
+  }catch(err){
+    // Offline or network error — serve from local cache
+    console.warn('[Offline] getCases using local cache');
+    list=await offlineStore.getAll('cases_cache',oid);
+    if(fStatus)list=list.filter(c=>c.status===fStatus);
+    _showSyncBar('offline',`📴 Offline — showing ${list.length} cached case${list.length!==1?'s':''}`);
+  }
   if(fQuery){const s=fQuery.toLowerCase().trim();list=list.filter(c=>(c.fir_number||'').toLowerCase().includes(s)||(c.section_of_law||'').toLowerCase().includes(s)||(c.offence_type||'').toLowerCase().includes(s)||(c.complainant||'').toLowerCase().includes(s)||(c.complainant_cnic||'').includes(s));}
   return list;
 }
@@ -213,16 +223,143 @@ async function getCase(id){
   // Merge both - raw fields take priority for new columns
   return {...decrypted,...(raw||{})};
 }
-async function addCase(d){const oid=await getOfficerId();if(!oid)throw new Error('Not authenticated');const{data,error}=await supabaseClient.from('cases').insert({...d,officer_id:oid}).select().single();if(error)throw error;triggerBackup('case_added');return data;}
-async function updateCase(id,d){const{data,error}=await supabaseClient.from('cases').update({...d,updated_at:new Date().toISOString()}).eq('id',id).select().single();if(error)throw error;triggerBackup('case_updated');return data;}
-async function deleteCase(id){const{error}=await supabaseClient.from('cases').delete().eq('id',id);if(error)throw error;triggerBackup('case_deleted');}
-async function getEvidence(fir=''){const oid=await getOfficerId();if(!oid)return[];let q=supabaseClient.from('evidence').select('*').eq('officer_id',oid).order('created_at',{ascending:false});if(fir)q=q.eq('fir_number',fir);const{data}=await q;return data||[];}
-async function addEvidence(d){const oid=await getOfficerId();if(!oid)throw new Error('Not authenticated');const{data,error}=await supabaseClient.from('evidence').insert({...d,officer_id:oid}).select().single();if(error)throw error;triggerBackup('ev_added');return data;}
-async function deleteEvidence(id){const{error}=await supabaseClient.from('evidence').delete().eq('id',id);if(error)throw error;}
-async function getReminders(done=null){const oid=await getOfficerId();if(!oid)return[];let q=supabaseClient.from('reminders').select('*').eq('officer_id',oid).order('reminder_date',{ascending:true});if(done!==null)q=q.eq('is_done',done);const{data}=await q;return data||[];}
-async function addReminder(d){const oid=await getOfficerId();if(!oid)throw new Error('Not authenticated');const{data,error}=await supabaseClient.from('reminders').insert({...d,officer_id:oid}).select().single();if(error)throw error;return data;}
-async function updateReminder(id,u){const{data,error}=await supabaseClient.from('reminders').update(u).eq('id',id).select().single();if(error)throw error;return data;}
-async function deleteReminder(id){const{error}=await supabaseClient.from('reminders').delete().eq('id',id);if(error)throw error;}
+async function addCase(d){
+  const oid=await getOfficerId();if(!oid)throw new Error('Not authenticated');
+  if(!navigator.onLine){
+    // Save locally with a temporary ID and queue for sync
+    const tempId='offline_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+    const local={...d,id:tempId,officer_id:oid,created_at:new Date().toISOString(),_offline:true};
+    await offlineStore.cache('cases_cache',local);
+    await offlineStore.enqueue('cases','insert',{...d,officer_id:oid,case_station:currentOfficer?.station||null,case_district:currentOfficer?.district||null},tempId);
+    _showSyncBar('pending','📴 Case saved offline — will sync when connected');
+    return local;
+  }
+  const{data,error}=await supabaseClient.from('cases').insert({...d,officer_id:oid}).select().single();
+  if(error)throw error;
+  offlineStore.cache('cases_cache',data).catch(()=>{});
+  triggerBackup('case_added');return data;
+}
+async function updateCase(id,d){
+  if(!navigator.onLine){
+    // Update local cache and queue
+    const cached=(await offlineStore.getAll('cases_cache')).find(c=>c.id===id);
+    if(cached)await offlineStore.cache('cases_cache',{...cached,...d,id,updated_at:new Date().toISOString()});
+    await offlineStore.enqueue('cases','update',{...d,id,updated_at:new Date().toISOString()});
+    _showSyncBar('pending','📴 Case updated offline — will sync when connected');
+    return{id,...d};
+  }
+  const{data,error}=await supabaseClient.from('cases').update({...d,updated_at:new Date().toISOString()}).eq('id',id).select().single();
+  if(error)throw error;
+  offlineStore.cache('cases_cache',data).catch(()=>{});
+  triggerBackup('case_updated');return data;
+}
+async function deleteCase(id){
+  if(!navigator.onLine){
+    await offlineStore.remove('cases_cache',id);
+    await offlineStore.enqueue('cases','delete',{id});
+    _showSyncBar('pending','📴 Case deletion queued — will sync when connected');
+    return;
+  }
+  const{error}=await supabaseClient.from('cases').delete().eq('id',id);
+  if(error)throw error;
+  offlineStore.remove('cases_cache',id).catch(()=>{});
+  triggerBackup('case_deleted');
+}
+
+async function getEvidence(fir=''){
+  const oid=await getOfficerId();if(!oid)return[];
+  try{
+    if(!navigator.onLine)throw new Error('offline');
+    let q=supabaseClient.from('evidence').select('*').eq('officer_id',oid).order('created_at',{ascending:false});
+    if(fir)q=q.eq('fir_number',fir);
+    const{data}=await q;
+    const list=data||[];
+    offlineStore.cache('evidence_cache',list).catch(()=>{});
+    return list;
+  }catch(_){
+    const list=await offlineStore.getAll('evidence_cache',oid);
+    return fir?list.filter(e=>e.fir_number===fir):list;
+  }
+}
+async function addEvidence(d){
+  const oid=await getOfficerId();if(!oid)throw new Error('Not authenticated');
+  if(!navigator.onLine){
+    const tempId='offline_ev_'+Date.now();
+    const local={...d,id:tempId,officer_id:oid,created_at:new Date().toISOString(),_offline:true};
+    await offlineStore.cache('evidence_cache',local);
+    await offlineStore.enqueue('evidence','insert',{...d,officer_id:oid},tempId);
+    _showSyncBar('pending','📴 Evidence saved offline — will sync when connected');
+    return local;
+  }
+  const{data,error}=await supabaseClient.from('evidence').insert({...d,officer_id:oid}).select().single();
+  if(error)throw error;
+  offlineStore.cache('evidence_cache',data).catch(()=>{});
+  triggerBackup('ev_added');return data;
+}
+async function deleteEvidence(id){
+  if(!navigator.onLine){
+    await offlineStore.remove('evidence_cache',id);
+    await offlineStore.enqueue('evidence','delete',{id});
+    _showSyncBar('pending','📴 Evidence deletion queued — will sync when connected');
+    return;
+  }
+  const{error}=await supabaseClient.from('evidence').delete().eq('id',id);
+  if(error)throw error;
+  offlineStore.remove('evidence_cache',id).catch(()=>{});
+}
+async function getReminders(done=null){
+  const oid=await getOfficerId();if(!oid)return[];
+  try{
+    if(!navigator.onLine)throw new Error('offline');
+    let q=supabaseClient.from('reminders').select('*').eq('officer_id',oid).order('reminder_date',{ascending:true});
+    if(done!==null)q=q.eq('is_done',done);
+    const{data}=await q;const list=data||[];
+    offlineStore.cache('reminders_cache',list).catch(()=>{});
+    return list;
+  }catch(_){
+    const list=await offlineStore.getAll('reminders_cache',oid);
+    return done!==null?list.filter(r=>r.is_done===done):list;
+  }
+}
+async function addReminder(d){
+  const oid=await getOfficerId();if(!oid)throw new Error('Not authenticated');
+  if(!navigator.onLine){
+    const tempId='offline_rem_'+Date.now();
+    const local={...d,id:tempId,officer_id:oid,is_done:false,created_at:new Date().toISOString(),_offline:true};
+    await offlineStore.cache('reminders_cache',local);
+    await offlineStore.enqueue('reminders','insert',{...d,officer_id:oid},tempId);
+    _showSyncBar('pending','📴 Reminder saved offline — will sync when connected');
+    return local;
+  }
+  const{data,error}=await supabaseClient.from('reminders').insert({...d,officer_id:oid}).select().single();
+  if(error)throw error;
+  offlineStore.cache('reminders_cache',data).catch(()=>{});
+  return data;
+}
+async function updateReminder(id,u){
+  const cached=await offlineStore.getOne('reminders_cache',id);
+  if(cached)await offlineStore.cache('reminders_cache',{...cached,...u});
+  if(!navigator.onLine){
+    await offlineStore.enqueue('reminders','update',{id,...u});
+    _showSyncBar('pending','📴 Reminder updated offline — will sync when connected');
+    return{id,...u};
+  }
+  const{data,error}=await supabaseClient.from('reminders').update(u).eq('id',id).select().single();
+  if(error)throw error;
+  offlineStore.cache('reminders_cache',data).catch(()=>{});
+  return data;
+}
+async function deleteReminder(id){
+  if(!navigator.onLine){
+    await offlineStore.remove('reminders_cache',id);
+    await offlineStore.enqueue('reminders','delete',{id});
+    _showSyncBar('pending','📴 Reminder deletion queued — will sync when connected');
+    return;
+  }
+  const{error}=await supabaseClient.from('reminders').delete().eq('id',id);
+  if(error)throw error;
+  offlineStore.remove('reminders_cache',id).catch(()=>{});
+}
 async function getMisal(fir=''){const oid=await getOfficerId();if(!oid)return[];let q=supabaseClient.from('misal').select('*').eq('officer_id',oid).order('saved_at',{ascending:false});if(fir)q=q.eq('fir_number',fir);const{data}=await q;return data||[];}
 async function saveMisal(d){const oid=await getOfficerId();if(!oid)throw new Error('Not authenticated');const{data,error}=await supabaseClient.from('misal').insert({...d,officer_id:oid}).select().single();if(error)throw error;return data;}
 async function updateOfficerProfile(u){const{data,error}=await supabaseClient.from('officers').update({...u,updated_at:new Date().toISOString()}).eq('user_id',currentUser.id).select().single();if(error)throw error;currentOfficer=data;return data;}
@@ -428,8 +565,64 @@ async function saveTransfer(){
   }catch(e){showToast('❌ '+e.message,'error',5000);}
 }
 
-window.addEventListener('online',()=>{updateConnectionStatus(true);showToast('🌐 Back online!','success');});
-window.addEventListener('offline',()=>{updateConnectionStatus(false);showToast('📴 You are offline.','error',5000);});
+// ── OFFLINE SYNC ORCHESTRATION ──
+function _showSyncBar(state,msg){
+  let bar=document.getElementById('sync-bar');
+  if(!bar)return;
+  const styles={
+    offline: 'background:#ef4444;color:#fff;',
+    pending: 'background:#f59e0b;color:#fff;',
+    syncing: 'background:#3b82f6;color:#fff;',
+    success: 'background:#22c55e;color:#fff;',
+  };
+  bar.style.cssText=`display:block;position:fixed;top:0;left:0;right:0;z-index:99999;padding:6px 16px;text-align:center;font-size:12px;font-weight:600;${styles[state]||styles.pending}`;
+  bar.textContent=msg;
+  if(state==='success')setTimeout(()=>{if(bar)bar.style.display='none';},3000);
+}
+function _hideSyncBar(){const b=document.getElementById('sync-bar');if(b)b.style.display='none';}
+
+async function syncOfflineQueue(){
+  const count=await offlineStore.pendingCount();
+  if(count===0){_hideSyncBar();return;}
+  _showSyncBar('syncing',`🔄 Syncing ${count} offline change${count!==1?'s':''}…`);
+  try{
+    const synced=await offlineStore.processQueue(supabaseClient);
+    const remaining=await offlineStore.pendingCount();
+    if(remaining===0){
+      _showSyncBar('success',`✅ ${synced} change${synced!==1?'s':''} synced!`);
+    }else{
+      _showSyncBar('pending',`⚠️ ${synced} synced, ${remaining} still pending — will retry`);
+    }
+    // Refresh whichever tab is currently visible
+    const container=document.getElementById('page-content');
+    const title=document.getElementById('topbar-title')?.textContent||'';
+    if(container){
+      if(title.includes('Cases'))     renderCases(container);
+      else if(title.includes('5-C'))  renderFiveC(container);
+      else if(title.includes('Remind')) renderReminders(container);
+      else if(title.includes('Evidence')) renderEvidence(container);
+    }
+    await updateBadges();
+  }catch(err){
+    _showSyncBar('pending','❌ Sync error — will retry on next connection');
+    console.error('[Sync]',err);
+  }
+}
+
+window.addEventListener('online',async()=>{
+  updateConnectionStatus(true);
+  showToast('🌐 Back online — syncing your offline work…','success',4000);
+  await syncOfflineQueue();
+});
+window.addEventListener('offline',()=>{
+  updateConnectionStatus(false);
+  _showSyncBar('offline','📴 You are offline — changes will be saved locally and synced when reconnected');
+  showToast('📴 Offline mode — working from local cache','error',5000);
+});
 window.addEventListener('DOMContentLoaded',async()=>{
-  loadSavedTheme(); // Apply theme before anything renders — prevents flash of wrong theme
-  onSupabaseReady(async()=>{await checkExistingSession();});setInterval(()=>{const el=document.getElementById('footer-time');if(el)el.textContent=new Date().toLocaleTimeString('en-PK',{hour12:true});},1000);console.log('✅ Digital IO v4.4.0 — FULLY MODULAR (Round 4 complete — index.html is pure HTML/CSS) — '+new Date().toISOString());});
+  loadSavedTheme();
+  onSupabaseReady(async()=>{
+    await checkExistingSession();
+    // Check for pending offline ops from any previous session
+    if(navigator.onLine) setTimeout(()=>syncOfflineQueue(),3000);
+  });setInterval(()=>{const el=document.getElementById('footer-time');if(el)el.textContent=new Date().toLocaleTimeString('en-PK',{hour12:true});},1000);console.log('✅ Digital IO v4.4.0 — FULLY MODULAR (Round 4 complete — index.html is pure HTML/CSS) — '+new Date().toISOString());});
