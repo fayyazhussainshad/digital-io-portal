@@ -9,7 +9,7 @@
        fails and no cached page is available
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME   = 'digital-io-v4';
+const CACHE_NAME   = 'digital-io-v5';
 const OFFLINE_URL  = '/offline.html';
 
 // All static files that make the shell work offline
@@ -18,6 +18,7 @@ const STATIC_FILES = [
   '/index.html',
   '/offline.html',
   '/manifest.json',
+  '/offline-store.js',
   '/app-core.js',
   '/dashboard.js',
   '/cases.js',
