@@ -16,16 +16,64 @@ function autoMaskDate5C(el){let v=el.value.replace(/\D/g,'');if(v.length>2)v=v.s
 // ── DB FUNCTIONS ──
 async function getApplications5C(query){
   const oid=await getOfficerId();if(!oid)return[];
-  const{data,error}=await supabaseClient.from('applications_5c').select('*, application_5c_numbers(*), application_5c_attachments(*)').eq('officer_id',oid).order('serial_number',{ascending:false});
-  if(error){console.error('5C fetch error',error);return[];}
-  let list=data||[];
-  if(query){const s=query.toLowerCase().trim();list=list.filter(a=>(a.complainant_name||'').toLowerCase().includes(s)||(a.complainant_cnic||'').includes(s)||(a.complainant_cell||'').includes(s)||(a.subject||'').toLowerCase().includes(s)||String(a.serial_number||'').includes(s)||(a.application_5c_numbers||[]).some(n=>(n.application_number||'').toLowerCase().includes(s)||(n.senior_officer_designation||'').toLowerCase().includes(s)||(n.senior_officer_name||'').toLowerCase().includes(s)));}
-  return list;
+  try{
+    if(!navigator.onLine)throw new Error('offline');
+    const{data,error}=await supabaseClient.from('applications_5c').select('*, application_5c_numbers(*), application_5c_attachments(*)').eq('officer_id',oid).order('serial_number',{ascending:false});
+    if(error)throw error;
+    const list=data||[];
+    // cache without attachments blobs for storage efficiency
+    offlineStore.cache('fivec_cache',list).catch(()=>{});
+    if(query){const s=query.toLowerCase().trim();return list.filter(a=>(a.complainant_name||'').toLowerCase().includes(s)||(a.complainant_cnic||'').includes(s)||(a.complainant_cell||'').includes(s)||(a.subject||'').toLowerCase().includes(s)||String(a.serial_number||'').includes(s)||(a.application_5c_numbers||[]).some(n=>(n.application_number||'').toLowerCase().includes(s)||(n.senior_officer_designation||'').toLowerCase().includes(s)||(n.senior_officer_name||'').toLowerCase().includes(s)));}
+    return list;
+  }catch(_){
+    let list=await offlineStore.getAll('fivec_cache',oid);
+    if(query){const s=query.toLowerCase().trim();list=list.filter(a=>(a.complainant_name||'').toLowerCase().includes(s)||String(a.serial_number||'').includes(s)||(a.application_5c_numbers||[]).some(n=>(n.application_number||'').toLowerCase().includes(s)));}
+    return list;
+  }
 }
 async function getApplication5C(id){const{data,error}=await supabaseClient.from('applications_5c').select('*, application_5c_numbers(*), application_5c_attachments(*)').eq('id',id).single();if(error){console.error(error);return null;}return data;}
-async function addApplication5C(d){const oid=await getOfficerId();if(!oid)throw new Error('Not authenticated');const{numbers,...main}=d;const{data,error}=await supabaseClient.from('applications_5c').insert({...main,officer_id:oid}).select().single();if(error)throw error;if(numbers&&numbers.length){const rows=numbers.filter(n=>n.application_number).map(n=>({...n,application_5c_id:data.id}));if(rows.length)await supabaseClient.from('application_5c_numbers').insert(rows);}return data;}
-async function updateApplication5C(id,d,numbers){const{error}=await supabaseClient.from('applications_5c').update(d).eq('id',id);if(error)throw error;if(numbers!==undefined){await supabaseClient.from('application_5c_numbers').delete().eq('application_5c_id',id);const rows=numbers.filter(n=>n.application_number).map(n=>({...n,application_5c_id:id}));if(rows.length)await supabaseClient.from('application_5c_numbers').insert(rows);}}
-async function deleteApplication5C(id){const{data:atts}=await supabaseClient.from('application_5c_attachments').select('storage_path').eq('application_5c_id',id);if(atts&&atts.length)await supabaseClient.storage.from('5c-attachments').remove(atts.map(a=>a.storage_path));const{error}=await supabaseClient.from('applications_5c').delete().eq('id',id);if(error)throw error;}
+async function addApplication5C(d){
+  const oid=await getOfficerId();if(!oid)throw new Error('Not authenticated');
+  if(!navigator.onLine){
+    const tempId='offline_5c_'+Date.now();
+    const local={...d,id:tempId,officer_id:oid,created_at:new Date().toISOString(),_offline:true};
+    await offlineStore.cache('fivec_cache',local);
+    await offlineStore.enqueue('fivec','insert',{...d,officer_id:oid},tempId);
+    _showSyncBar('pending','📴 5-C application saved offline — will sync when connected');
+    return local;
+  }
+  const{numbers,...main}=d;
+  const{data,error}=await supabaseClient.from('applications_5c').insert({...main,officer_id:oid}).select().single();
+  if(error)throw error;
+  if(numbers&&numbers.length){const rows=numbers.filter(n=>n.application_number).map(n=>({...n,application_5c_id:data.id}));if(rows.length)await supabaseClient.from('application_5c_numbers').insert(rows);}
+  offlineStore.cache('fivec_cache',{...data,application_5c_numbers:numbers||[]}).catch(()=>{});
+  return data;
+}
+async function updateApplication5C(id,d,numbers){
+  const cached=await offlineStore.getOne('fivec_cache',id);
+  if(cached)await offlineStore.cache('fivec_cache',{...cached,...d,application_5c_numbers:numbers!==undefined?numbers:(cached.application_5c_numbers||[])});
+  if(!navigator.onLine){
+    await offlineStore.enqueue('fivec','update',{id,...d,numbers});
+    _showSyncBar('pending','📴 5-C update saved offline — will sync when connected');
+    return;
+  }
+  const{error}=await supabaseClient.from('applications_5c').update(d).eq('id',id);
+  if(error)throw error;
+  if(numbers!==undefined){await supabaseClient.from('application_5c_numbers').delete().eq('application_5c_id',id);const rows=numbers.filter(n=>n.application_number).map(n=>({...n,application_5c_id:id}));if(rows.length)await supabaseClient.from('application_5c_numbers').insert(rows);}
+}
+async function deleteApplication5C(id){
+  if(!navigator.onLine){
+    await offlineStore.remove('fivec_cache',id);
+    await offlineStore.enqueue('fivec','delete',{id});
+    _showSyncBar('pending','📴 5-C deletion queued — will sync when connected');
+    return;
+  }
+  const{data:atts}=await supabaseClient.from('application_5c_attachments').select('storage_path').eq('application_5c_id',id);
+  if(atts&&atts.length)await supabaseClient.storage.from('5c-attachments').remove(atts.map(a=>a.storage_path));
+  const{error}=await supabaseClient.from('applications_5c').delete().eq('id',id);
+  if(error)throw error;
+  offlineStore.remove('fivec_cache',id).catch(()=>{});
+}
 async function uploadAttachment5C(appId,file,category){if(!currentUser)throw new Error('Not authenticated');const safeName=file.name.replace(/[^\w.\-]/g,'_');const path=`${currentUser.id}/${appId}/${Date.now()}_${safeName}`;const{error:upErr}=await supabaseClient.storage.from('5c-attachments').upload(path,file);if(upErr)throw upErr;const{data,error}=await supabaseClient.from('application_5c_attachments').insert({application_5c_id:appId,file_name:file.name,storage_path:path,file_size:file.size,mime_type:file.type,category}).select().single();if(error){await supabaseClient.storage.from('5c-attachments').remove([path]);throw error;}return data;}
 async function getAttachmentUrl5C(path){const{data,error}=await supabaseClient.storage.from('5c-attachments').createSignedUrl(path,3600);if(error){console.error(error);return null;}return data.signedUrl;}
 async function deleteAttachment5C(id,path){await supabaseClient.storage.from('5c-attachments').remove([path]);await supabaseClient.from('application_5c_attachments').delete().eq('id',id);}
