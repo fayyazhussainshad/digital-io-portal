@@ -164,8 +164,46 @@ let currentUser=null,currentOfficer=null,currentRole='officer',sessionTimer=null
 
 // ── AUTH ──
 function setLoginMethod(method,el){document.querySelectorAll('.login-method').forEach(b=>b.classList.remove('active'));if(el)el.classList.add('active');document.getElementById('panel-password').style.display=method==='password'?'block':'none';document.getElementById('panel-pin').style.display=method==='pin'?'block':'none';document.getElementById('panel-biometric').style.display=method==='biometric'?'block':'none';pinBuffer='';updatePinDots();}
-async function doLogin(){const lock=localStorage.getItem('dio_lockout_until');if(lock&&Date.now()<parseInt(lock)){showLoginError('⚠️ Account locked. Try again later.');return;}const email=document.getElementById('login-email').value.trim(),pass=document.getElementById('login-password').value;if(!email||!pass){showLoginError('⚠️ Please enter email and password.');return;}setLoginLoading(true);hideLoginError();try{const{data,error}=await supabaseClient.auth.signInWithPassword({email,password:pass});if(error){loginAttempts++;localStorage.setItem('dio_login_attempts',loginAttempts);if(loginAttempts>=APP_CONFIG.maxLoginAttempts){localStorage.setItem('dio_lockout_until',Date.now()+APP_CONFIG.lockoutDuration);loginAttempts=0;localStorage.setItem('dio_login_attempts',0);showLoginError('🔒 Too many failed attempts. Account locked for 30 minutes.');}else{showLoginError(`❌ Incorrect credentials. ${APP_CONFIG.maxLoginAttempts-loginAttempts} attempt(s) remaining.`);}setLoginLoading(false);return;}loginAttempts=0;localStorage.setItem('dio_login_attempts',0);localStorage.removeItem('dio_lockout_until');currentUser=data.user;await loadOfficerProfile();await loginSuccess();}catch(err){showLoginError('⚠️ Connection error. Check your internet.');setLoginLoading(false);}}
-async function loadOfficerProfile(){try{const{data:o}=await supabaseClient.from('officers').select('*').eq('user_id',currentUser.id).single();if(o)currentOfficer=o;const{data:r}=await supabaseClient.from('user_roles').select('role').eq('user_id',currentUser.id).single();if(r)currentRole=r.role;}catch(e){}}
+async function doLogin(){const lock=localStorage.getItem('dio_lockout_until');if(lock&&Date.now()<parseInt(lock)){showLoginError('⚠️ Account locked. Try again later.');return;}const email=document.getElementById('login-email').value.trim(),pass=document.getElementById('login-password').value;if(!email||!pass){showLoginError('⚠️ Please enter email and password.');return;}setLoginLoading(true);hideLoginError();try{const{data,error}=await supabaseClient.auth.signInWithPassword({email,password:pass});if(error){loginAttempts++;localStorage.setItem('dio_login_attempts',loginAttempts);if(loginAttempts>=APP_CONFIG.maxLoginAttempts){localStorage.setItem('dio_lockout_until',Date.now()+APP_CONFIG.lockoutDuration);loginAttempts=0;localStorage.setItem('dio_login_attempts',0);showLoginError('🔒 Too many failed attempts. Account locked for 30 minutes.');}else{showLoginError(`❌ Incorrect credentials. ${APP_CONFIG.maxLoginAttempts-loginAttempts} attempt(s) remaining.`);}setLoginLoading(false);return;}loginAttempts=0;localStorage.setItem('dio_login_attempts',0);localStorage.removeItem('dio_lockout_until');currentUser=data.user;await loadOfficerProfile();
+    // Save credentials hash for offline login next time
+    await _saveOfflineAuth(email,pass);
+    await loginSuccess();
+  }catch(err){
+    if(!navigator.onLine){
+      // Offline — try local credentials
+      const profile=await _attemptOfflineLogin(email,pass);
+      if(profile){
+        currentOfficer=profile;
+        currentUser={id:profile.user_id||profile.id,email};
+        setLoginLoading(false);
+        await loginSuccess();
+        _showSyncBar('offline','📴 Offline mode — working from local data');
+        return;
+      }
+      showLoginError('❌ Offline login failed. Connect to internet or check credentials.');
+    }else{
+      showLoginError('⚠️ Connection error. Check your internet and try again.');
+    }
+    setLoginLoading(false);
+  }
+}
+async function loadOfficerProfile(){
+  try{
+    if(!navigator.onLine)throw new Error('offline');
+    const{data:o}=await supabaseClient.from('officers').select('*').eq('user_id',currentUser.id).single();
+    if(o){
+      currentOfficer=o;
+      // Cache profile and role for offline use
+      offlineStore.saveOfflineProfile(currentUser.id,o).catch(()=>{});
+    }
+    const{data:r}=await supabaseClient.from('user_roles').select('role').eq('user_id',currentUser.id).single();
+    if(r)currentRole=r.role;
+  }catch(e){
+    // Offline — load from IndexedDB cache
+    const cached=await offlineStore.getOfflineProfile(currentUser?.id);
+    if(cached){ currentOfficer=cached; }
+  }
+}
 async function loginSuccess(){const ls=document.getElementById('login-screen'),app=document.getElementById('main-app');ls.style.transition='opacity 0.4s';ls.style.opacity='0';setTimeout(()=>{ls.style.display='none';app.style.display='flex';setLoginLoading(false);initApp();},400);resetSessionTimer();}
 function resetSessionTimer(){clearTimeout(sessionTimer);sessionTimer=setTimeout(()=>{showToast('⏰ Session expired.','error');setTimeout(doLogout,2000);},APP_CONFIG.sessionTimeout);}
 document.addEventListener('mousemove',()=>{if(currentUser)resetSessionTimer();});document.addEventListener('keypress',()=>{if(currentUser)resetSessionTimer();});document.addEventListener('click',()=>{if(currentUser)resetSessionTimer();});
@@ -188,7 +226,25 @@ function showLoginError(msg){const el=document.getElementById('login-error');el.
 function hideLoginError(){document.getElementById('login-error').style.display='none';}
 function setLoginLoading(l){const btn=document.getElementById('login-submit-btn');document.getElementById('login-btn-text').style.display=l?'none':'inline';document.getElementById('login-btn-loader').style.display=l?'inline':'none';if(btn)btn.disabled=l;}
 function togglePasswordVisibility(){const i=document.getElementById('login-password');i.type=i.type==='password'?'text':'password';}
-async function checkExistingSession(){const{data:{session}}=await supabaseClient.auth.getSession();if(session){currentUser=session.user;await loadOfficerProfile();await loginSuccess();}else{const n=localStorage.getItem('dio_officer_name');document.getElementById('login-officer-name').textContent=n||'Welcome, Officer';}}
+async function checkExistingSession(){
+  const{data:{session}}=await supabaseClient.auth.getSession();
+  if(session){
+    currentUser=session.user;
+    await loadOfficerProfile(); // offline-safe: falls back to IndexedDB cache
+    await loginSuccess();
+    if(!navigator.onLine)
+      _showSyncBar('offline','📴 Offline mode — your data is available locally');
+  }else{
+    const n=localStorage.getItem('dio_officer_name');
+    const el=document.getElementById('login-officer-name');
+    if(el)el.textContent=n||'Welcome, Officer';
+    // Show offline indicator on login screen if no internet
+    if(!navigator.onLine){
+      const hint=document.getElementById('offline-login-hint');
+      if(hint)hint.style.display='block';
+    }
+  }
+}
 
 // ── DATABASE HELPERS ──
 async function getOfficerId(){if(currentOfficer)return currentOfficer.id;if(!currentUser)return null;const{data}=await supabaseClient.from('officers').select('id').eq('user_id',currentUser.id).single();return data?.id||null;}
@@ -431,6 +487,39 @@ function autoFormatDate(inp) {
   if (v.length > 4) v = v.slice(0,2) + '-' + v.slice(2,4) + '-' + v.slice(4,8);
   else if (v.length > 2) v = v.slice(0,2) + '-' + v.slice(2);
   inp.value = v;
+}
+
+
+// ── OFFLINE AUTH HELPERS ──────────────────────────────────────────────────────
+// SHA-256 hash using Web Crypto API (built-in, no library needed)
+async function _hashPw(password,salt){
+  const enc=new TextEncoder();
+  const buf=await crypto.subtle.digest('SHA-256',enc.encode(salt+password+'dio-v1'));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// Save credentials hash + officer profile to IndexedDB after successful online login
+async function _saveOfflineAuth(email,password){
+  try{
+    const salt=crypto.randomUUID();
+    const hash=await _hashPw(password,salt);
+    await offlineStore.saveOfflineCreds(currentUser.id,email,hash,salt);
+    if(currentOfficer) await offlineStore.saveOfflineProfile(currentUser.id,currentOfficer);
+  }catch(e){ console.warn('[OfflineAuth] Could not save offline credentials:',e); }
+}
+
+// Verify offline credentials against stored hash. Returns profile or null.
+async function _attemptOfflineLogin(email,password){
+  const creds=await offlineStore.getOfflineCredsByEmail(email);
+  if(!creds) return null;
+  // Credentials expire after 30 days of no online login
+  if((Date.now()-new Date(creds.saved_at))>30*86400000){
+    showToast('⚠️ Offline credentials expired — please connect to login.','error',5000);
+    return null;
+  }
+  const hash=await _hashPw(password,creds.salt);
+  if(hash!==creds.hash) return null;
+  return offlineStore.getOfflineProfile(creds.id);
 }
 
 // ── THEMES ──
