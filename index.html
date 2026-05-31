@@ -6,6 +6,9 @@
   <meta name="theme-color" content="#0f1923">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Digital IO">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <title>Digital IO</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🛡️%3C/text%3E%3C/svg%3E">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
@@ -475,6 +478,7 @@ input, textarea, select { font-family: var(--font-main); }
 .pill-amber { background: var(--amber-bg); color: var(--amber); }
 .pill-red { background: var(--red-bg); color: var(--red); }
 .pill-purple { background: rgba(167,139,250,0.1); color: var(--purple); }
+.pill-teal { background: rgba(6,182,212,0.12); color: #06b6d4; }
 .fir-num { color: var(--accent); font-weight: 700; font-size: 13px; cursor: pointer; font-family: var(--font-mono); }
 .fir-num:hover { text-decoration: underline; }
 .search-bar { display: flex; gap: 8px; margin-bottom: 16px; }
@@ -709,104 +713,21 @@ input, textarea, select { font-family: var(--font-main); }
 <script src="law.js"></script>
 <script src="reminders.js"></script>
 <script src="performance.js"></script>
+<script src="backup.js"></script>
+<script src="settings.js"></script>
+<script src="admin.js"></script>
+<script src="officialdocs.js"></script>
 
-
-<!-- ═══ INLINE: Backup, Settings, Admin + OfficialDoc gen (Round 4) ═══ -->
+<!-- ── PWA: register service worker ── -->
 <script>
-// ── BACKUP PAGE ──
-registerPage('backup',renderBackupPage);
-function renderBackupPage(container){container.innerHTML=`<div class="page-header"><div class="page-title">☁️ Backup & Multi-Cloud Sync</div><button class="btn btn-primary" onclick="triggerBackupNow()">🔄 Backup Now</button></div><div class="backup-dest-grid"><div class="card"><div class="card-title">💾 DEVICE BACKUP</div><div style="text-align:center;padding:10px 0;"><div style="font-size:36px;margin-bottom:8px;">💾</div><div style="font-size:12px;font-weight:600;">Local Device</div><div style="font-size:10px;color:var(--green);margin-top:4px;">✅ Always Available Offline</div></div><button class="btn btn-secondary btn-sm" style="width:100%;margin-top:8px;" onclick="triggerBackupNow()">💾 Backup Now</button><button class="btn btn-secondary btn-sm" style="width:100%;margin-top:4px;" onclick="restoreFromLocalBackup()">📂 Restore</button></div><div class="card"><div class="card-title">🟢 GOOGLE DRIVE</div><div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">Connect for automatic real-time cloud backup.</div><button class="btn btn-primary btn-sm" style="width:100%;" onclick="connectGoogleDrive()">🔗 Connect Google Drive</button></div><div class="card"><div class="card-title">☁️ SUPABASE CLOUD</div><div style="font-size:12px;color:var(--green);margin-bottom:8px;">✅ Active</div><div style="font-size:10px;color:var(--text-muted);">• Daily automatic backups<br>• AES-256 encryption<br>• Accessible from any device</div></div></div>`;}
-
-// ── SETTINGS ──
-registerPage('settings',renderSettings);
-function renderSettings(container){const officer=currentOfficer||{};container.innerHTML=`<div class="page-header"><div class="page-title">⚙️ Settings & Profile</div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;"><div class="card"><div class="card-title">👮 OFFICER PROFILE</div><div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="set-name" value="${officer.full_name||''}"></div><div class="form-group"><label class="form-label">Badge / Service Number</label><input class="form-input" id="set-badge" value="${officer.badge_number||''}"></div><div class="form-group"><label class="form-label">Designation</label><input class="form-input" id="set-designation" value="${officer.designation||''}"></div><div class="form-group"><label class="form-label">Police Station</label><input class="form-input" id="set-station" value="${officer.station||''}"></div><div class="form-group"><label class="form-label">District</label><input class="form-input" id="set-district" value="${officer.district||''}"></div><button class="btn btn-primary" onclick="saveProfileSettings()">💾 Save Profile</button></div><div class="card"><div class="card-title">🖼️ PROFILE PHOTO</div><div style="text-align:center;padding:16px 0;"><div id="settings-avatar" style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--accent-dark),var(--accent));margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;overflow:hidden;">${localStorage.getItem('dio_profile_photo')?`<img src="${localStorage.getItem('dio_profile_photo')}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">`:(officer.full_name?.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()||'IO')}</div><button class="btn btn-secondary btn-sm" onclick="changeProfilePhoto()">📷 Change Photo</button></div><div class="card-title" style="margin-top:16px;">🔐 SECURITY</div><div style="font-size:11px;color:var(--green);">✅ MFA Active · ✅ Audit Logging · ✅ Encrypted Data</div></div></div>`;}
-async function saveProfileSettings(){try{await updateOfficerProfile({full_name:document.getElementById('set-name').value.trim(),badge_number:document.getElementById('set-badge').value.trim(),designation:document.getElementById('set-designation').value.trim(),station:document.getElementById('set-station').value.trim(),district:document.getElementById('set-district').value.trim()});updateSidebarProfile();showToast('✅ Profile updated!','success');}catch(err){showToast('❌ Error: '+err.message,'error');}}
-function changeProfilePhoto(){const i=document.createElement('input');i.type='file';i.accept='image/*';i.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{const src=ev.target.result;try{localStorage.setItem('dio_profile_photo',src);}catch(e){}document.querySelectorAll('.officer-card-avatar,.sidebar-avatar,#settings-avatar').forEach(el=>{el.innerHTML=`<img src="${src}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">`;});showToast('✅ Profile photo updated!','success');};r.readAsDataURL(f);};i.click();}
-
-// ── ADMIN PAGE ──
-registerPage('admin',renderAdminPage);
-async function renderAdminPage(container){if(currentRole!=='admin'&&currentRole!=='superadmin'){container.innerHTML=`<div style="text-align:center;padding:60px;color:var(--text-muted);">⛔ Access Denied.</div>`;return;}const stats=await getAdminStats();container.innerHTML=`<div class="page-header"><div class="page-title">👨‍💼 Admin Panel</div><a href="/admin.html" target="_blank" class="btn btn-primary">🔗 Open Full Admin Panel</a></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">${[['Total Officers',stats?.totalOfficers||0,'var(--accent)','👮'],['Total Cases',stats?.totalCases||0,'var(--green)','📁'],['Active Cases',stats?.activeCases||0,'var(--amber)','🔵'],['Completed',stats?.completedCases||0,'var(--green)','✅']].map(([label,val,color,icon])=>`<div class="card" style="text-align:center;"><div style="font-size:28px;margin-bottom:4px;">${icon}</div><div style="font-size:28px;font-weight:900;color:${color};font-family:var(--font-display);">${val}</div><div style="font-size:11px;color:var(--text-muted);">${label}</div></div>`).join('')}</div><div class="card"><div class="card-title">📋 RECENT ACTIVITY</div>${(stats?.recentActivity||[]).slice(0,8).map(log=>`<div class="detail-row"><span class="detail-key" style="font-family:var(--font-mono);font-size:10px;">${log.action} on ${log.table_name}</span><span class="detail-val" style="font-size:10px;color:var(--text-faint);">${timeAgo(log.created_at)}</span></div>`).join('')||'<div style="color:var(--text-muted);font-size:12px;">No activity logged yet.</div>'}</div>`;}
-
-// ═══════════════════════════════════════════════════
-//  OFFICIAL DOCUMENT GENERATION (exact govt format)
-//  Loads the real .docx template, fills the {tokens}
-//  with case data, downloads a print-ready Word file.
-// ═══════════════════════════════════════════════════
-const OFFICIAL_TEMPLATES = {
-  'CDR Form':           'CDR_Form_TEMPLATE.docx',
-  'Zimni Berooni':      'Zimni_Berooni_TEMPLATE.docx',
-  'Zimni Androoni':     'Zimni_Androoni_TEMPLATE.docx',
-  'Investigation Bills':'Investigation_Bill_TEMPLATE.docx',
-};
-
-let _docxLibsReady = false;
-function _loadScriptOnce(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('Failed to load '+src));document.head.appendChild(s);});}
-function loadDocxLibs(){
-  return new Promise((resolve,reject)=>{
-    if(_docxLibsReady && window.PizZip && window.docxtemplater){resolve();return;}
-    _loadScriptOnce('https://cdn.jsdelivr.net/npm/pizzip@3.1.6/dist/pizzip.min.js')
-      .then(()=>_loadScriptOnce('https://cdn.jsdelivr.net/npm/docxtemplater@3.50.0/build/docxtemplater.js'))
-      .then(()=>{_docxLibsReady=true;resolve();})
-      .catch(()=>{ // fallback CDN
-        _loadScriptOnce('https://unpkg.com/pizzip@3.1.6/dist/pizzip.min.js')
-          .then(()=>_loadScriptOnce('https://unpkg.com/docxtemplater@3.50.0/build/docxtemplater.js'))
-          .then(()=>{_docxLibsReady=true;resolve();})
-          .catch(reject);
-      });
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg=>console.log('✅ SW registered, scope:',reg.scope))
+      .catch(err=>console.warn('SW registration failed:',err));
   });
 }
-
-function buildOfficialDocData(c){
-  const o = currentOfficer || {};
-  const today = new Date();
-  const monthsUr = ['جنوری','فروری','مارچ','اپریل','مئی','جون','جولائی','اگست','ستمبر','اکتوبر','نومبر','دسمبر'];
-  return {
-    station: o.station || '',
-    district: o.district || '',
-    fir_number: c.fir_number || '',
-    fir_date: c.fir_date || '',
-    offence: c.offence_type || '',
-    occurrence_date: c.occurrence_date || '',
-    occurrence_place: c.occurrence_place || '',
-    io_name: o.full_name || '',
-    io_mobile: o.phone || '',
-    accused_name: c.accused_name || '',
-    diary_no: '',
-    diary_date: '',
-    zimni_no: '',
-    year: String(today.getFullYear()),
-    month: monthsUr[today.getMonth()],
-  };
-}
-
-async function generateOfficialDoc(docName){
-  const tplFile = OFFICIAL_TEMPLATES[docName];
-  if(!tplFile){ showToast('⚠️ No official template available for this document.','error'); return; }
-  const c = window._workspaceCase;
-  if(!c){ showToast('⚠️ Please open a case first.','error'); return; }
-  showToast('⏳ Generating official document…','info');
-  try{
-    await loadDocxLibs();
-    const resp = await fetch('templates/' + tplFile);
-    if(!resp.ok) throw new Error('Template not found at templates/'+tplFile+' (HTTP '+resp.status+'). Did you upload the templates folder?');
-    const buf = await resp.arrayBuffer();
-    const zip = new window.PizZip(buf);
-    const doc = new window.docxtemplater(zip, { paragraphLoop:true, linebreaks:true, nullGetter:()=>'' });
-    doc.render(buildOfficialDocData(c));
-    const blob = doc.getZip().generate({ type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-    const safeFir = (c.fir_number||'').replace(/[\/\\:*?"<>|]/g,'-');
-    const fname = docName.replace(/\s+/g,'_') + '_FIR_' + safeFir + '.docx';
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url), 2000);
-    showToast('✅ Official document downloaded — open it in Word/Google Docs to print.','success',5000);
-  }catch(err){
-    console.error('[Official Doc Error]', err);
-    showToast('❌ '+err.message,'error',7000);
-  }
-}
-
 </script>
+
 </body>
 </html>
