@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital IO — Offline</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a1520;
+      color: #e8f4fd;
+      font-family: 'Segoe UI', Aptos, system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+    }
+    .card {
+      background: #0f1e2d;
+      border: 1px solid #1a3148;
+      border-radius: 16px;
+      padding: 48px 36px;
+      max-width: 400px;
+      width: 100%;
+    }
+    .icon { font-size: 64px; margin-bottom: 20px; }
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .urdu { font-size: 20px; color: #94a3b8; margin-bottom: 16px; direction: rtl; }
+    p { font-size: 13px; color: #64748b; line-height: 1.7; margin-bottom: 24px; }
+    .btn {
+      display: inline-block;
+      padding: 10px 24px;
+      background: #0369a1;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn:hover { background: #025c8c; }
+    .badge {
+      display: inline-block;
+      margin-top: 24px;
+      font-size: 10px;
+      color: #1a3148;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">📴</div>
+    <h1>You are Offline</h1>
+    <div class="urdu">آپ آف لائن ہیں</div>
+    <p>
+      Digital IO requires an internet connection to sync case data with the secure Supabase database.
+      Please reconnect to continue working.
+    </p>
+    <button class="btn" onclick="window.location.reload()">🔄 Try Again</button>
+    <div class="badge">Digital IO v4 · Police Case Management</div>
+  </div>
+  <script>
+    // Auto-reload when connection returns
+    window.addEventListener('online', () => window.location.href = '/');
+  </script>
+</body>
+</html>
