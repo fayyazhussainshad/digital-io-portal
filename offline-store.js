@@ -10,7 +10,7 @@
    ═══════════════════════════════════════════════════════════ */
 
 const _ODB_NAME    = 'digital-io-v2';
-const _ODB_VERSION = 1;
+const _ODB_VERSION = 2;          // bumped — adds session_cache store
 let   _odb         = null;
 
 function _openDB(){
@@ -19,18 +19,18 @@ function _openDB(){
     const req=indexedDB.open(_ODB_NAME,_ODB_VERSION);
     req.onupgradeneeded=e=>{
       const db=e.target.result;
-      // ── cache stores ──────────────────────────────────────
       ['cases_cache','evidence_cache','fivec_cache','reminders_cache']
         .forEach(s=>{ if(!db.objectStoreNames.contains(s)) db.createObjectStore(s,{keyPath:'id'}); });
-      // pending files (camera data-URLs / file ArrayBuffers)
       if(!db.objectStoreNames.contains('pending_files'))
         db.createObjectStore('pending_files',{keyPath:'fid'});
-      // sync queue
       if(!db.objectStoreNames.contains('sync_queue')){
         const sq=db.createObjectStore('sync_queue',{keyPath:'qid',autoIncrement:true});
         sq.createIndex('by_status','status');
         sq.createIndex('by_table','table');
       }
+      // ── NEW: session cache for offline login ──────────────
+      if(!db.objectStoreNames.contains('session_cache'))
+        db.createObjectStore('session_cache',{keyPath:'key'});
     };
     req.onsuccess =e=>{ _odb=e.target.result; resolve(_odb); };
     req.onerror   =e=>reject(e.target.error);
@@ -251,5 +251,99 @@ const offlineStore={
 
   async isAvailable(){
     try{ await _openDB(); return true; }catch(_){ return false; }
+  },
+
+  // ── OFFLINE SESSION (for login without internet) ──────────
+
+  // Call after every successful online login to cache the profile
+  async saveSession(user, officer){
+    await _openDB();
+    const tx=_odb.transaction('session_cache','readwrite');
+    tx.objectStore('session_cache').put({
+      key:       'current',
+      userId:    user.id,
+      email:     user.email,
+      officer:   officer,
+      savedAt:   new Date().toISOString(),
+    });
+    return _txComplete(tx);
+  },
+
+  async loadSession(){
+    await _openDB();
+    return _p(_tx('session_cache').get('current'));
+  },
+
+  async clearSession(){
+    await _openDB();
+    const tx=_odb.transaction('session_cache','readwrite');
+    tx.objectStore('session_cache').delete('current');
+    return _txComplete(tx);
+  },
+
+  // Hash a PIN with SHA-256 + app salt (never stored in plain text)
+  async _hashPIN(pin){
+    const buf=await crypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode('digital-io-2026-' + pin)
+    );
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  },
+
+  // Save a 4-6 digit offline PIN (hashed)
+  async savePIN(pin){
+    if(!pin||pin.length<4) throw new Error('PIN must be at least 4 digits');
+    const hash=await this._hashPIN(pin);
+    await _openDB();
+    const tx=_odb.transaction('session_cache','readwrite');
+    tx.objectStore('session_cache').put({key:'pin_hash', hash, setAt: new Date().toISOString()});
+    return _txComplete(tx);
+  },
+
+  async hasPIN(){
+    await _openDB();
+    const rec=await _p(_tx('session_cache').get('pin_hash'));
+    return !!(rec && rec.hash);
+  },
+
+  async verifyPIN(pin){
+    const rec=await _p(_tx('session_cache').get('pin_hash'));
+    if(!rec||!rec.hash) return false;
+    const hash=await this._hashPIN(pin);
+    return hash===rec.hash;
+  },
+
+  async clearPIN(){
+    await _openDB();
+    const tx=_odb.transaction('session_cache','readwrite');
+    tx.objectStore('session_cache').delete('pin_hash');
+    return _txComplete(tx);
   }
+  // ── OFFLINE AUTH ─────────────────────────────────────────
+
+  async saveOfflineProfile(userId,profile){
+    await _openDB();
+    const tx=_odb.transaction('offline_profiles','readwrite');
+    tx.objectStore('offline_profiles').put({...profile,id:userId,cached_at:new Date().toISOString()});
+    return _txComplete(tx);
+  },
+
+  async getOfflineProfile(userId){
+    await _openDB();
+    return _p(_tx('offline_profiles').get(userId));
+  },
+
+  async saveOfflineCreds(userId,email,hash,salt){
+    await _openDB();
+    const tx=_odb.transaction('offline_creds','readwrite');
+    tx.objectStore('offline_creds').put({id:userId,email,hash,salt,saved_at:new Date().toISOString()});
+    return _txComplete(tx);
+  },
+
+  async getOfflineCredsByEmail(email){
+    await _openDB();
+    const all=await _p(_tx('offline_creds').getAll());
+    return (all||[]).find(c=>c.email===email)||null;
+  },
+
 };
