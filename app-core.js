@@ -256,39 +256,17 @@ async function getCases(fStatus,fQuery){fStatus=fStatus||'';fQuery=fQuery||'';
   const oid=await getOfficerId();if(!oid)return[];
   try{
     if(!navigator.onLine)throw new Error('offline');
-    // cases_decrypted runs as SECURITY DEFINER — bypasses Column-Level Security
-    // so it can read encrypted/masked complainant values
-    const{data:dec,error:e1}=await supabaseClient.from('cases_decrypted')
-      .select('*').eq('officer_id',oid).order('created_at',{ascending:false});
-    if(e1)throw e1;
-    // Raw cases gives plain-text complainant for newer cases + newer columns
-    const{data:raw}=await supabaseClient.from('cases')
-      .select('id,complainant,case_station,case_district,occurrence_date,complainant_cnic,complainant_cell,complainant_profession')
-      .eq('officer_id',oid);
-    const rm={};(raw||[]).forEach(r=>{rm[r.id]=r;});
-    const isMasked=v=>!v||v==='[PROTECTED]'||v==='Protected';
-    let list=(dec||[]).map(c=>{
-      const r=rm[c.id]||{};
-      return{...c,...{
-        // Use whichever source has the real value
-        complainant:      isMasked(c.complainant)?  (r.complainant||c.complainant) :c.complainant,
-        complainant_cnic: isMasked(c.complainant_cnic)?(r.complainant_cnic||c.complainant_cnic):c.complainant_cnic,
-        complainant_cell: isMasked(c.complainant_cell)?(r.complainant_cell||c.complainant_cell):c.complainant_cell,
-        // Newer columns always come from raw table
-        case_station:  r.case_station  ||c.case_station,
-        case_district: r.case_district ||c.case_district,
-        occurrence_date:r.occurrence_date||c.occurrence_date,
-      }};
-    });
+    let q=supabaseClient.from('cases').select('*').eq('officer_id',oid).order('created_at',{ascending:false});
+    if(fStatus)q=q.eq('status',fStatus);
+    const{data,error}=await q;
+    if(error)throw error;
+    const list=data||[];
     offlineStore.cache('cases_cache',list).catch(()=>{});
-    if(fStatus)list=list.filter(c=>c.status===fStatus);
-    if(fQuery){const s=fQuery.toLowerCase().trim();list=list.filter(c=>(c.fir_number||'').toLowerCase().includes(s)||(c.section_of_law||'').toLowerCase().includes(s)||(c.offence_type||'').toLowerCase().includes(s)||(c.complainant||'').toLowerCase().includes(s)||(c.complainant_cnic||'').includes(s));}
+    if(fQuery){const s=fQuery.toLowerCase().trim();return list.filter(c=>(c.fir_number||'').toLowerCase().includes(s)||(c.section_of_law||'').toLowerCase().includes(s)||(c.offence_type||'').toLowerCase().includes(s)||(c.complainant||'').toLowerCase().includes(s)||(c.complainant_cnic||'').includes(s));}
     return list;
   }catch(err){
-    console.warn('[getCases] Supabase error, using cache:',err.message);
-    let list=await offlineStore.getAll('cases_cache',oid);
-    if(fStatus)list=list.filter(c=>c.status===fStatus);
-    if(fQuery){const s=fQuery.toLowerCase().trim();list=list.filter(c=>(c.fir_number||'').toLowerCase().includes(s)||(c.complainant||'').toLowerCase().includes(s));}
+    const list=await offlineStore.getAll('cases_cache',oid);
+    if(fStatus)list.filter(c=>c.status===fStatus);
     return list;
   }
 }
