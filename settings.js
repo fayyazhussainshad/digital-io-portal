@@ -243,24 +243,27 @@ async function savePostingSettings(){
   const oid = await getOfficerId();
 
   try{
-    // If station changed, record a transfer
-    if(stationChanged && oid){
-      await supabaseClient.from('officer_transfers').insert({
-        officer_id:  oid,
-        from_station:currentOfficer?.station||null,
-        from_district:currentOfficer?.district||null,
-        to_station:  newStation,
-        to_district: newDistrict||null,
-        transfer_date: new Date().toISOString().split('T')[0],
-        notes: 'Updated via Settings',
-      });
-    }
+    // Always update profile first — this refreshes currentOfficer in memory
+    // so new cases immediately pick up the new station
     await updateOfficerProfile({
       station: newStation, district: newDistrict, official_phone: phone||null, phone: phone||null,
     });
     updateSidebarProfile();
-    showToast(stationChanged?`✅ Transfer recorded — now at ${newStation}`:'✅ Posting saved!','success');
-    // Refresh page to update transfer timeline
+
+    // Record transfer non-blocking — a failure here does NOT undo the profile update
+    if(stationChanged && oid){
+      supabaseClient.from('officer_transfers').insert({
+        officer_id:   oid,
+        from_station: currentOfficer?._prev_station || null,
+        from_district:currentOfficer?._prev_district|| null,
+        to_station:   newStation,
+        to_district:  newDistrict||null,
+        transfer_date:new Date().toISOString().split('T')[0],
+        notes:'Updated via Settings',
+      }).then(()=>{}).catch(err=>console.warn('Transfer record failed (non-critical):',err.message));
+    }
+
+    showToast(stationChanged?`✅ Posting updated — now at ${newStation}`:'✅ Posting saved!','success');
     renderSettings(document.getElementById('page-content'));
   }catch(err){ showToast('❌ '+err.message,'error'); }
 }
