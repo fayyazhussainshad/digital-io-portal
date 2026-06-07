@@ -5,7 +5,7 @@
    ═══════════════════════════════════════════════════════════ */
 
 // ── ALL 33 OFFICIAL DOCUMENTS ────────────────────────────────
-const MISAL_DOCS = [
+const CASE_DOCS = [
   { id:'fir',              name:'ایف آئی آر',                              desc:'First Information Report' },
   { id:'cross',            name:'کراس ورش',                                desc:'Cross Verification' },
   { id:'position',         name:'پوزیشن مقدمہ',                            desc:'Case Position' },
@@ -63,7 +63,7 @@ async function loadMisalDocs(caseId) {
 // ── RENDER DOCUMENT BAR ───────────────────────────────────────
 function renderMisalBar(c) {
   _misalCase = c;
-  const items = MISAL_DOCS.map(d => {
+  const items = CASE_DOCS.map(d => {
     const saved = _misalDocs[d.id];
     const done  = saved?.status === 'complete';
     const added = !!saved;
@@ -110,7 +110,7 @@ function renderMisalBar(c) {
 
 // ── OPEN / ADD DOCUMENT ───────────────────────────────────────
 async function openMisalDoc(docId) {
-  const def = MISAL_DOCS.find(d => d.id === docId);
+  const def = CASE_DOCS.find(d => d.id === docId);
   if (!def || !_misalCaseId) return;
   _openDocId = docId;
 
@@ -538,7 +538,7 @@ function getMisalTemplate(docId, c) {
   };
 
   // Generic template for remaining document types
-  const generic = `${header(MISAL_DOCS.find(d=>d.id===docId)?.name||docId)}
+  const generic = `${header(CASE_DOCS.find(d=>d.id===docId)?.name||docId)}
     ${table(row('مقدمہ نمبر', fir) + row('تاریخ', dt) + row('دفعات', sec) + row('تھانہ', sta))}
     <div style="font-weight:bold;margin-bottom:6px;">تفصیل:</div>
     <div style="min-height:200px;border:1px solid #ccc;padding:12px;border-radius:4px;" contenteditable="true">
