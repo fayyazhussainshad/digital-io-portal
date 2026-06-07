@@ -581,6 +581,12 @@ input, textarea, select { font-family: var(--font-main); }
   .backup-dest-grid { grid-template-columns: 1fr; }
   .perf-grid { grid-template-columns: 1fr; }
 }
+
+/* Topbar already shows the tab name — hide duplicate page titles in content */
+.page-title { display:none; }
+.page-subtitle { display:none; }
+/* But keep page-header visible if it contains action buttons */
+.page-header { padding-top:0; margin-bottom:8px; }
   </style>
 </head>
 <body>
