@@ -747,44 +747,31 @@ function switchWorkspaceTab(tab) {
 }
 
 function renderDocsTab(c, docs) {
-  if (!docs.length) return `
-    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">
-      <div style="font-size:48px;margin-bottom:12px;">📂</div>
-      <div style="font-size:14px;font-weight:600;margin-bottom:6px;">No Documents Selected</div>
-      <div style="font-size:12px;margin-bottom:16px;">Edit this case to select required MISAL documents.</div>
-      <button class="btn btn-primary" onclick="openEditCaseModal('${c.id}')">✏️ Edit Case & Add Documents</button>
-    </div>`;
-
   return `<div class="workspace-layout">
     <!-- Document Sidebar -->
     <div class="workspace-sidebar">
       <div class="workspace-sidebar-header">
         <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">📎 Case Documents</div>
-        <input style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;color:var(--text-primary);font-size:11px;outline:none;" placeholder="🔍 Search documents..." oninput="filterWorkspaceDocs(this.value)">
       </div>
-      <div id="workspace-doc-list">
-        ${docs.map((doc, i) => `
-          <div class="doc-card ${i===currentDocIndex?'active':''}" id="doc-card-${i}" onclick="openDocEditor(${i})">
-            <div class="doc-card-icon">📄</div>
-            <div class="doc-card-name">${doc}</div>
-            <div class="doc-card-status ${docDrafts[currentCaseId+'_'+i]?'doc-status-draft':'doc-status-empty'}">${docDrafts[currentCaseId+'_'+i]?'Draft':'Empty'}</div>
-          </div>`).join('')}
+      <div id="workspace-doc-list" style="overflow-y:auto;flex:1;">
+        ${typeof renderMisalDocSidebar === 'function' ? renderMisalDocSidebar() : ''}
       </div>
-      <div style="padding:10px;border-top:1px solid var(--border);margin-top:auto;">
-        <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="printAllDocs()">🖨️ Print All</button>
+      <div style="padding:10px;border-top:1px solid var(--border);">
+        <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="printAllMisalDocs()">🖨️ تمام پرنٹ کریں</button>
       </div>
     </div>
-
-    <!-- Document Editor Area -->
+    <!-- Document Editor -->
     <div class="workspace-main" id="workspace-editor-area">
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">
-        <div style="font-size:48px;margin-bottom:12px;">👈</div>
-        <div style="font-size:14px;font-weight:600;margin-bottom:6px;">Select a Document</div>
-        <div style="font-size:12px;">Click any document from the left panel to open and edit it.</div>
+        <div style="font-size:48px;margin-bottom:12px;">📂</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:6px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">دستاویز منتخب کریں</div>
+        <div style="font-size:12px;">اوپر دستاویز کے نام پر کلک کریں یا بائیں فہرست سے منتخب کریں</div>
       </div>
     </div>
   </div>`;
 }
+
+function printAllMisalDocs() { showToast('🖨️ Print all coming soon.', 'info'); }
 
 function filterWorkspaceDocs(q) {
   const docs = window._workspaceDocs || [];
