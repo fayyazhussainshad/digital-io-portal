@@ -94,12 +94,6 @@ async function renderSettings(container) {
         ${roField('Badge / Service Number', o.badge_number)}
         ${roField('Designation / Rank', o.designation)}
         ${roField('CNIC Number', o.cnic_number ? _esc(o.cnic_number).replace(/(\d{5})(\d{7})(\d)/, '$1-$2-$3') : '')}
-        ${roField('Father\'s Name', o.father_name)}
-        ${roField('PRC Number', o.prc_number)}
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <div>${roField('Date of Birth', o.date_of_birth ? _fmtDate(o.date_of_birth) : '')}</div>
-          <div>${roField('Date of Joining', o.date_of_joining ? _fmtDate(o.date_of_joining) : '')}</div>
-        </div>
         <div style="margin-top:8px;padding:8px 12px;background:var(--accent-glow);border-radius:6px;font-size:11px;color:var(--text-muted);">
           ℹ️ These fields are set by your district admin. To request a correction, contact your admin panel.
         </div>
@@ -115,18 +109,6 @@ async function renderSettings(container) {
         </div>
         ${edField('Official Phone (Department)', 'set-official-phone', o.official_phone||o.phone, '0300-0000000')}
         <button class="btn btn-primary" onclick="savePostingSettings()" style="margin-top:4px;">💾 Save Posting</button>
-      </div>
-
-      <!-- SECTION 3: Personal Details (editable) -->
-      <div class="card" style="margin-bottom:16px;">
-        <div class="card-title" style="margin-bottom:16px;">👤 Personal Details</div>
-        ${edField('Personal Mobile', 'set-personal-phone', o.personal_phone, '0300-0000000')}
-        ${edField('Home Address', 'set-address', o.home_address, 'Street, City')}
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          ${edField('Emergency Contact Name', 'set-emg-name', o.emergency_contact, 'Next of kin')}
-          ${edField('Emergency Contact Phone', 'set-emg-phone', o.emergency_phone, '0300-0000000')}
-        </div>
-        <button class="btn btn-secondary" onclick="savePersonalSettings()" style="margin-top:4px;">💾 Save Personal Details</button>
       </div>
 
     </div>
