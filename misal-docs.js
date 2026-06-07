@@ -250,6 +250,7 @@ function _renderMisalEditor(docId, def) {
       </select>
       <button class="btn btn-secondary btn-sm" onclick="saveMisalDoc('${docId}')">💾 محفوظ کریں</button>
       <button class="btn btn-secondary btn-sm" onclick="markMisalComplete('${docId}')">✅ مکمل</button>
+      <button class="btn btn-secondary btn-sm" id="voice-btn" onclick="toggleVoiceInput()" title="Urdu Voice Input">🎙️ آواز</button>
       <button class="btn btn-secondary btn-sm" onclick="printMisalDoc('${def.name}')">🖨️ پرنٹ</button>
     </div>
     <!-- A4 Editor -->
@@ -326,7 +327,141 @@ function _refreshMisalBar() {
   bar.replaceWith(newBar.firstElementChild);
 }
 
-// ── TEMPLATES ─────────────────────────────────────────────────
+// ── URDU VOICE INPUT ──────────────────────────────────────────
+let _voiceRecognition = null;
+let _voiceActive      = false;
+
+function toggleVoiceInput() {
+  if (_voiceActive) {
+    _stopVoice();
+  } else {
+    _startVoice();
+  }
+}
+
+function _startVoice() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    showToast('⚠️ آپ کا براؤزر آواز کی سہولت کو سپورٹ نہیں کرتا۔ Chrome استعمال کریں۔', 'error', 5000);
+    return;
+  }
+
+  const editor = document.getElementById('misal-editor');
+  if (!editor) { showToast('⚠️ پہلے دستاویز کھولیں', 'error'); return; }
+
+  // Make sure editor has focus so text inserts at cursor
+  editor.focus();
+
+  _voiceRecognition = new SpeechRecognition();
+  _voiceRecognition.lang          = 'ur-PK';   // Urdu - Pakistan
+  _voiceRecognition.continuous    = true;        // keep listening
+  _voiceRecognition.interimResults = true;       // show partial results as typing
+
+  let _lastInterim = '';
+
+  _voiceRecognition.onresult = (event) => {
+    let interim = '';
+    let final   = '';
+
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        final += transcript + ' ';
+      } else {
+        interim += transcript;
+      }
+    }
+
+    // Insert final text at cursor in the editor
+    if (final) {
+      _insertTextAtCursor(editor, final);
+      _lastInterim = '';
+    }
+
+    // Show interim text in the voice status badge
+    const badge = document.getElementById('voice-status');
+    if (badge) badge.textContent = interim ? `🎙️ ${interim}` : '🎙️ سن رہا ہے...';
+  };
+
+  _voiceRecognition.onerror = (e) => {
+    if (e.error === 'no-speech') return; // ignore silence
+    showToast(`⚠️ آواز کی غلطی: ${e.error}`, 'error');
+    _stopVoice();
+  };
+
+  _voiceRecognition.onend = () => {
+    // Auto-restart if still active (continuous mode sometimes stops)
+    if (_voiceActive) _voiceRecognition.start();
+  };
+
+  _voiceRecognition.start();
+  _voiceActive = true;
+
+  // Update button appearance
+  const btn = document.getElementById('voice-btn');
+  if (btn) {
+    btn.style.background    = '#ef4444';
+    btn.style.color         = '#fff';
+    btn.style.borderColor   = '#ef4444';
+    btn.textContent         = '⏹️ روکیں';
+  }
+
+  // Add live status badge below toolbar
+  let badge = document.getElementById('voice-status');
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.id = 'voice-status';
+    badge.style.cssText = `
+      padding:6px 16px;background:#1a1a2e;border-bottom:1px solid #ef4444;
+      font-size:13px;color:#ef4444;direction:rtl;text-align:right;
+      font-family:'Jameel Noori Nastaleeq',serif;animation:pulse 1.5s infinite;`;
+    badge.textContent = '🎙️ سن رہا ہے... اردو میں بولیں';
+    const toolbar = document.querySelector('#workspace-editor-area .case-tab-content > div:first-child') ||
+                    document.querySelector('#workspace-editor-area > div > div:first-child');
+    if (toolbar) toolbar.insertAdjacentElement('afterend', badge);
+  }
+
+  showToast('🎙️ اردو میں بولنا شروع کریں', 'success', 3000);
+}
+
+function _stopVoice() {
+  _voiceActive = false;
+  if (_voiceRecognition) { _voiceRecognition.stop(); _voiceRecognition = null; }
+
+  const btn = document.getElementById('voice-btn');
+  if (btn) {
+    btn.style.background  = '';
+    btn.style.color       = '';
+    btn.style.borderColor = '';
+    btn.textContent       = '🎙️ آواز';
+  }
+
+  const badge = document.getElementById('voice-status');
+  if (badge) badge.remove();
+
+  showToast('⏹️ آواز کی ریکارڈنگ بند', 'info', 2000);
+}
+
+// Insert text at the current cursor position in a contenteditable element
+function _insertTextAtCursor(el, text) {
+  el.focus();
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0) {
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+    const node = document.createTextNode(text);
+    range.insertNode(node);
+    // Move cursor to after inserted text
+    range.setStartAfter(node);
+    range.setEndAfter(node);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  } else {
+    // Fallback: append to end
+    el.textContent += text;
+  }
+}
+
 function getMisalTemplate(docId, c) {
   const o   = currentOfficer || {};
   const fir = c?.fir_number  || '________';
