@@ -68,80 +68,178 @@ function renderMisalBar(c) {
     const done  = saved?.status === 'complete';
     const added = !!saved;
     const cls   = done ? 'mdoc-done' : added ? 'mdoc-added' : 'mdoc-empty';
-    return `<span class="mdoc-chip ${cls}" onclick="openMisalDoc('${d.id}')" title="${d.desc}">${d.name}</span>`;
+    const action = added ? `confirmRemoveMisalDoc('${d.id}')` : `confirmAddMisalDoc('${d.id}')`;
+    return `<span class="mdoc-chip ${cls}" onclick="${action}" title="${d.desc}">${d.name}</span>`;
   }).join('');
 
   return `
   <div id="misal-doc-bar" style="
-    padding:10px 16px;
+    padding:12px 16px;
     background:var(--bg-secondary);
-    border-bottom:1px solid var(--border);
-    overflow-x:auto;
-    white-space:nowrap;
-    scrollbar-width:thin;
-    -webkit-overflow-scrolling:touch;">
-    <div style="font-size:9px;color:var(--text-faint);margin-bottom:6px;letter-spacing:1px;">
-      مثال دستاویزات &nbsp;—&nbsp;
-      <span style="color:var(--text-muted);">■</span> شامل نہیں &nbsp;
-      <span style="color:var(--accent);">■</span> جاری &nbsp;
-      <span style="color:var(--green);">■</span> مکمل
+    border-bottom:1px solid var(--border);">
+    <div style="font-size:11px;color:var(--text-faint);margin-bottom:8px;display:flex;gap:16px;align-items:center;">
+      <span>مثال دستاویزات</span>
+      <span><span style="color:var(--text-muted);">■</span> شامل نہیں</span>
+      <span><span style="color:var(--accent);">■</span> جاری</span>
+      <span><span style="color:var(--green);">■</span> مکمل</span>
     </div>
-    <div style="display:flex;gap:6px;flex-wrap:nowrap;">${items}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">${items}</div>
   </div>
   <style>
     .mdoc-chip{
       display:inline-block;
-      padding:4px 10px;
+      padding:6px 14px;
       border-radius:20px;
-      font-size:12px;
+      font-size:16px;
       cursor:pointer;
-      white-space:nowrap;
       font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
       direction:rtl;
       border:1px solid transparent;
       transition:all 0.15s;
+      margin-bottom:4px;
+      line-height:1.6;
     }
-    .mdoc-chip:hover{ transform:translateY(-1px); box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+    .mdoc-chip:hover{ transform:translateY(-1px); box-shadow:0 2px 8px rgba(0,0,0,0.25); }
     .mdoc-empty{ color:var(--text-muted);  background:var(--bg-tertiary);   border-color:var(--border); }
-    .mdoc-added{ color:var(--accent);      background:rgba(56,189,248,0.1); border-color:var(--accent); font-weight:600; }
-    .mdoc-done { color:var(--green);       background:rgba(34,197,94,0.1);  border-color:var(--green);  font-weight:600; }
+    .mdoc-added{ color:var(--accent);      background:rgba(56,189,248,0.12); border-color:var(--accent); font-weight:600; }
+    .mdoc-done { color:var(--green);       background:rgba(34,197,94,0.12);  border-color:var(--green);  font-weight:600; }
   </style>`;
 }
 
-// ── OPEN / ADD DOCUMENT ───────────────────────────────────────
-async function openMisalDoc(docId) {
+// ── CONFIRMATION: ADD ─────────────────────────────────────────
+function confirmAddMisalDoc(docId) {
+  const def = CASE_DOCS.find(d => d.id === docId);
+  if (!def) return;
+  openModal('دستاویز شامل کریں',
+    `<div style="text-align:right;direction:rtl;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:16px;line-height:2;">
+      <div style="font-size:20px;font-weight:bold;color:var(--accent);margin-bottom:12px;">${def.name}</div>
+      <div style="color:var(--text-secondary);">کیا آپ یہ دستاویز اس مقدمے میں شامل کرنا چاہتے ہیں؟</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">${def.desc}</div>
+    </div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">نہیں، واپس جائیں</button>
+     <button class="btn btn-primary" onclick="closeModal();_doAddMisalDoc('${docId}')">✅ ہاں، شامل کریں</button>`
+  );
+}
+
+// ── CONFIRMATION: REMOVE ──────────────────────────────────────
+function confirmRemoveMisalDoc(docId) {
+  const def = CASE_DOCS.find(d => d.id === docId);
+  if (!def) return;
+  const saved = _misalDocs[docId];
+  openModal('دستاویز ہٹائیں یا کھولیں',
+    `<div style="text-align:right;direction:rtl;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:16px;line-height:2;">
+      <div style="font-size:20px;font-weight:bold;color:var(--accent);margin-bottom:12px;">${def.name}</div>
+      <div style="color:var(--text-secondary);">یہ دستاویز پہلے سے شامل ہے۔ آپ کیا کرنا چاہتے ہیں؟</div>
+    </div>`,
+    `<button class="btn btn-danger" onclick="closeModal();_doRemoveMisalDoc('${docId}')">🗑️ ہٹا دیں</button>
+     <button class="btn btn-secondary" onclick="closeModal()">واپس جائیں</button>
+     <button class="btn btn-primary" onclick="closeModal();_openMisalEditor('${docId}')">📄 کھولیں</button>`
+  );
+}
+
+
+// ── ADD TO CASE ───────────────────────────────────────────────
+async function _doAddMisalDoc(docId) {
   const def = CASE_DOCS.find(d => d.id === docId);
   if (!def || !_misalCaseId) return;
+  try {
+    const oid = await getOfficerId();
+    const { data, error } = await supabaseClient
+      .from('case_documents')
+      .insert({ case_id: _misalCaseId, officer_id: oid, document_type: docId, status: 'draft', content: {} })
+      .select().single();
+    if (error) throw error;
+    _misalDocs[docId] = data;
+    _refreshMisalBar();
+    _refreshMisalSidebar();
+    showToast(`✅ ${def.name} شامل کر دی گئی`, 'success');
+    _openMisalEditor(docId);
+  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+// ── REMOVE FROM CASE ──────────────────────────────────────────
+async function _doRemoveMisalDoc(docId) {
+  const def = CASE_DOCS.find(d => d.id === docId);
+  if (!def || !_misalCaseId) return;
+  try {
+    await supabaseClient.from('case_documents')
+      .delete()
+      .eq('case_id', _misalCaseId)
+      .eq('document_type', docId);
+    delete _misalDocs[docId];
+    _refreshMisalBar();
+    _refreshMisalSidebar();
+    // Clear editor if this doc was open
+    const area = document.getElementById('workspace-editor-area');
+    if (area) area.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">
+        <div style="font-size:40px;margin-bottom:12px;">📂</div>
+        <div style="font-size:14px;font-weight:600;">دستاویز ہٹا دی گئی</div>
+        <div style="font-size:12px;margin-top:6px;">بائیں طرف سے کوئی دستاویز منتخب کریں</div>
+      </div>`;
+    showToast(`🗑️ ${def.name} ہٹا دی گئی`, 'info');
+  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+// ── OPEN EDITOR ───────────────────────────────────────────────
+function _openMisalEditor(docId) {
+  const def = CASE_DOCS.find(d => d.id === docId);
+  if (!def) return;
   _openDocId = docId;
 
-  // Add to DB if not yet added
-  if (!_misalDocs[docId]) {
-    try {
-      const oid = await getOfficerId();
-      const { data, error } = await supabaseClient
-        .from('case_documents')
-        .insert({ case_id: _misalCaseId, officer_id: oid, document_type: docId, status: 'draft', content: {} })
-        .select().single();
-      if (error) throw error;
-      _misalDocs[docId] = data;
-      _refreshMisalBar();
-      showToast(`✅ ${def.name} — دستاویز شامل کر دی گئی`, 'success');
-    } catch(e) { showToast('❌ ' + e.message, 'error'); return; }
-  }
-
-  // Switch to docs tab and render editor
+  // Switch to docs tab
   document.querySelectorAll('.case-tab').forEach(t => t.classList.remove('active'));
   const tab = document.getElementById('tab-docs');
   if (tab) tab.classList.add('active');
 
+  // If docs tab content not rendered yet, render it first
   const area = document.getElementById('workspace-editor-area');
   if (!area) {
     const tc = document.getElementById('workspace-tab-content');
-    if (tc) tc.innerHTML = renderDocsTab(_misalCase, window._workspaceDocs||[]);
-    setTimeout(() => _renderMisalEditor(docId, def), 50);
+    if (tc) tc.innerHTML = renderDocsTab(_misalCase, []);
+    setTimeout(() => _renderMisalEditor(docId, def), 80);
     return;
   }
   _renderMisalEditor(docId, def);
+
+  // Highlight in sidebar
+  document.querySelectorAll('.misal-sidebar-item').forEach(el => el.classList.remove('active'));
+  const item = document.getElementById('msb-' + docId);
+  if (item) item.classList.add('active');
+}
+
+// ── SIDEBAR: list of added documents ─────────────────────────
+function renderMisalDocSidebar() {
+  const added = CASE_DOCS.filter(d => _misalDocs[d.id]);
+  if (!added.length) return `
+    <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px;line-height:1.8;">
+      <div style="font-size:28px;margin-bottom:8px;">📂</div>
+      ابھی کوئی دستاویز شامل نہیں<br>
+      اوپر دستاویز کے نام پر کلک کریں
+    </div>`;
+
+  return added.map(d => {
+    const saved = _misalDocs[d.id];
+    const done  = saved?.status === 'complete';
+    const isOpen = _openDocId === d.id;
+    return `
+      <div class="misal-sidebar-item doc-card ${isOpen?'active':''}" id="msb-${d.id}"
+           onclick="_openMisalEditor('${d.id}')"
+           style="cursor:pointer;padding:10px 12px;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:16px;">${done?'✅':'📄'}</span>
+          <div style="flex:1;">
+            <div style="font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:15px;direction:rtl;color:${done?'var(--green)':isOpen?'var(--accent)':'var(--text-primary)'};">${d.name}</div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${done?'مکمل':'مسودہ'}</div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function _refreshMisalSidebar() {
+  const list = document.getElementById('workspace-doc-list');
+  if (list) list.innerHTML = renderMisalDocSidebar();
 }
 
 function _renderMisalEditor(docId, def) {
