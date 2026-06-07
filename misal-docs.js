@@ -339,86 +339,100 @@ function toggleVoiceInput() {
   }
 }
 
-function _startVoice() {
+async function _startVoice() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    showToast('⚠️ آپ کا براؤزر آواز کی سہولت کو سپورٹ نہیں کرتا۔ Chrome استعمال کریں۔', 'error', 5000);
+    showToast('⚠️ آپ کا براؤزر آواز کو سپورٹ نہیں کرتا — Chrome استعمال کریں', 'error', 6000);
     return;
   }
 
   const editor = document.getElementById('misal-editor');
   if (!editor) { showToast('⚠️ پہلے دستاویز کھولیں', 'error'); return; }
 
-  // Make sure editor has focus so text inserts at cursor
+  // Explicitly request microphone permission first
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    // Permission granted — stop the stream immediately, SpeechRecognition handles its own
+    stream.getTracks().forEach(t => t.stop());
+  } catch(err) {
+    if (err.name === 'NotAllowedError') {
+      showToast('❌ مائیکروفون کی اجازت نہیں — براؤزر میں Allow کریں', 'error', 6000);
+    } else if (err.name === 'NotFoundError') {
+      showToast('❌ کوئی مائیکروفون نہیں ملا — مائیکروفون جوڑیں', 'error', 6000);
+    } else {
+      showToast('❌ مائیکروفون خرابی: ' + err.message, 'error', 6000);
+    }
+    return;
+  }
+
   editor.focus();
 
   _voiceRecognition = new SpeechRecognition();
-  _voiceRecognition.lang          = 'ur-PK';   // Urdu - Pakistan
-  _voiceRecognition.continuous    = true;        // keep listening
-  _voiceRecognition.interimResults = true;       // show partial results as typing
+  _voiceRecognition.lang           = 'ur-PK';
+  _voiceRecognition.continuous     = true;
+  _voiceRecognition.interimResults = true;
 
-  let _lastInterim = '';
+  _voiceRecognition.onstart = () => {
+    console.log('[Voice] Started — ur-PK');
+  };
 
   _voiceRecognition.onresult = (event) => {
     let interim = '';
     let final   = '';
-
     for (let i = event.resultIndex; i < event.results.length; i++) {
-      const transcript = event.results[i][0].transcript;
-      if (event.results[i].isFinal) {
-        final += transcript + ' ';
-      } else {
-        interim += transcript;
-      }
+      const t = event.results[i][0].transcript;
+      if (event.results[i].isFinal) { final += t + ' '; }
+      else { interim += t; }
     }
-
-    // Insert final text at cursor in the editor
-    if (final) {
-      _insertTextAtCursor(editor, final);
-      _lastInterim = '';
-    }
-
-    // Show interim text in the voice status badge
+    if (final) _insertTextAtCursor(editor, final);
     const badge = document.getElementById('voice-status');
     if (badge) badge.textContent = interim ? `🎙️ ${interim}` : '🎙️ سن رہا ہے...';
   };
 
   _voiceRecognition.onerror = (e) => {
-    if (e.error === 'no-speech') return; // ignore silence
-    showToast(`⚠️ آواز کی غلطی: ${e.error}`, 'error');
-    _stopVoice();
+    console.warn('[Voice] Error:', e.error);
+    const msgs = {
+      'not-allowed':  '❌ مائیکروفون کی اجازت نہیں',
+      'no-speech':    null, // ignore silence
+      'audio-capture':'❌ مائیکروفون نہیں ملا',
+      'network':      '❌ نیٹ ورک کی خرابی — آواز نہیں پہنچ رہی',
+      'aborted':      null,
+    };
+    const msg = msgs[e.error];
+    if (msg) { showToast(msg, 'error', 5000); _stopVoice(); }
   };
 
   _voiceRecognition.onend = () => {
-    // Auto-restart if still active (continuous mode sometimes stops)
-    if (_voiceActive) _voiceRecognition.start();
+    if (_voiceActive) {
+      try { _voiceRecognition.start(); } catch(_) {}
+    }
   };
 
-  _voiceRecognition.start();
-  _voiceActive = true;
-
-  // Update button appearance
-  const btn = document.getElementById('voice-btn');
-  if (btn) {
-    btn.style.background    = '#ef4444';
-    btn.style.color         = '#fff';
-    btn.style.borderColor   = '#ef4444';
-    btn.textContent         = '⏹️ روکیں';
+  try {
+    _voiceRecognition.start();
+    _voiceActive = true;
+  } catch(err) {
+    showToast('❌ آواز شروع نہیں ہو سکی: ' + err.message, 'error', 5000);
+    return;
   }
 
-  // Add live status badge below toolbar
+  const btn = document.getElementById('voice-btn');
+  if (btn) {
+    btn.style.background  = '#ef4444';
+    btn.style.color       = '#fff';
+    btn.style.borderColor = '#ef4444';
+    btn.textContent       = '⏹️ روکیں';
+  }
+
+  // Status bar
   let badge = document.getElementById('voice-status');
   if (!badge) {
     badge = document.createElement('div');
     badge.id = 'voice-status';
-    badge.style.cssText = `
-      padding:6px 16px;background:#1a1a2e;border-bottom:1px solid #ef4444;
-      font-size:13px;color:#ef4444;direction:rtl;text-align:right;
-      font-family:'Jameel Noori Nastaleeq',serif;animation:pulse 1.5s infinite;`;
+    badge.style.cssText = 'padding:6px 16px;background:#1a1a2e;border-bottom:2px solid #ef4444;font-size:13px;color:#ef4444;direction:rtl;text-align:right;font-family:\'Jameel Noori Nastaleeq\',serif;';
     badge.textContent = '🎙️ سن رہا ہے... اردو میں بولیں';
-    const toolbar = document.querySelector('#workspace-editor-area .case-tab-content > div:first-child') ||
-                    document.querySelector('#workspace-editor-area > div > div:first-child');
-    if (toolbar) toolbar.insertAdjacentElement('afterend', badge);
+    const editorArea = document.getElementById('workspace-editor-area');
+    if (editorArea) editorArea.insertAdjacentElement('afterbegin', badge);
   }
 
   showToast('🎙️ اردو میں بولنا شروع کریں', 'success', 3000);
