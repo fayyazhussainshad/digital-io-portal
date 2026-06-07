@@ -260,14 +260,20 @@ async function getCases(fStatus,fQuery){fStatus=fStatus||'';fQuery=fQuery||'';
     if(fStatus)q=q.eq('status',fStatus);
     const{data,error}=await q;
     if(error)throw error;
-    const list=data||[];
+    // Map the bulletproof comp_* columns onto the standard complainant_* names
+    // so the rest of the app (table, dashboard, search) never sees [PROTECTED]
+    const list=(data||[]).map(c=>({
+      ...c,
+      complainant:           c.comp_name || (c.complainant==='[PROTECTED]'?null:c.complainant),
+      complainant_cnic:      c.comp_cnic || (c.complainant_cnic==='[PROTECTED]'?null:c.complainant_cnic),
+      complainant_cell:      c.comp_cell || (c.complainant_cell==='[PROTECTED]'?null:c.complainant_cell),
+      complainant_profession:c.comp_prof || (c.complainant_profession==='[PROTECTED]'?null:c.complainant_profession),
+    }));
     offlineStore.cache('cases_cache',list).catch(()=>{});
     if(fQuery){const s=fQuery.toLowerCase().trim();return list.filter(c=>(c.fir_number||'').toLowerCase().includes(s)||(c.section_of_law||'').toLowerCase().includes(s)||(c.offence_type||'').toLowerCase().includes(s)||(c.complainant||'').toLowerCase().includes(s)||(c.complainant_cnic||'').includes(s));}
     return list;
   }catch(err){
-    const list=await offlineStore.getAll('cases_cache',oid);
-    if(fStatus)list.filter(c=>c.status===fStatus);
-    return list;
+    return await offlineStore.getAll('cases_cache',oid);
   }
 }
 async function getCase(id){
