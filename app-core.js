@@ -277,13 +277,9 @@ async function getCases(fStatus,fQuery){fStatus=fStatus||'';fQuery=fQuery||'';
   }
 }
 async function getCase(id){
-  // Get from cases_decrypted for encrypted fields
-  const{data:decrypted}=await supabaseClient.from('cases_decrypted').select('*').eq('id',id).single();
-  // Also get from cases directly for new columns that may not be in view
-  const{data:raw}=await supabaseClient.from('cases').select('occurrence_date,complainant_cnic,complainant_cell,complainant_profession,fir_writer,complaint_sender,documents_checklist').eq('id',id).single();
-  if(!decrypted) return null;
-  // Merge both - raw fields take priority for new columns
-  return {...decrypted,...(raw||{})};
+  const{data,error}=await supabaseClient.from('cases').select('*').eq('id',id).single();
+  if(error||!data) return null;
+  return data;
 }
 async function addCase(d){
   const oid=await getOfficerId();if(!oid)throw new Error('Not authenticated');
