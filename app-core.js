@@ -423,17 +423,25 @@ async function saveMisal(d){const oid=await getOfficerId();if(!oid)throw new Err
 async function updateOfficerProfile(u){const{data,error}=await supabaseClient.from('officers').update({...u,updated_at:new Date().toISOString()}).eq('user_id',currentUser.id).select().single();if(error)throw error;currentOfficer=data;return data;}
 async function getDashboardStats(){const cases=await getCases(),reminders=await getReminders(false);const under=cases.filter(c=>c.status==='under').length,complete=cases.filter(c=>c.status==='complete').length,incomplete=cases.filter(c=>c.status==='incomplete').length,untrace=cases.filter(c=>c.status==='untrace').length,cancel=cases.filter(c=>c.status==='cancel').length,challan512=cases.filter(c=>c.status==='challan512').length;const total=under+complete+incomplete+untrace+cancel+challan512;return{total,under,complete,incomplete,untrace,cancel,challan512,pendingReminders:reminders.length,cases,reminders:reminders.slice(0,5)};}
 async function advancedSearch(p){
-  let cases=await getCases();
+  const all=await getCases();
   const clean=s=>(s||'').replace(/[-\s]/g,'').toLowerCase();
-  if(p.fir)    cases=cases.filter(c=>(c.fir_number||'').toLowerCase().includes(p.fir.toLowerCase()));
-  if(p.name)   cases=cases.filter(c=>(c.complainant||'').toLowerCase().includes(p.name.toLowerCase())||(c.accused_name||'').toLowerCase().includes(p.name.toLowerCase()));
-  if(p.cnic)   cases=cases.filter(c=>clean(c.complainant_cnic).includes(clean(p.cnic))||clean(c.accused_cnic).includes(clean(p.cnic)));
-  if(p.cell)   cases=cases.filter(c=>clean(c.complainant_cell).includes(clean(p.cell))||clean(c.accused_cell).includes(clean(p.cell)));
-  if(p.section)cases=cases.filter(c=>(c.section_of_law||'').toLowerCase().includes(p.section.toLowerCase())||(c.offence_type||'').toLowerCase().includes(p.section.toLowerCase()));
-  if(p.status) cases=cases.filter(c=>c.status===p.status);
-  if(p.date_from)cases=cases.filter(c=>c.fir_date&&c.fir_date>=p.date_from);
-  if(p.date_to)  cases=cases.filter(c=>c.fir_date&&c.fir_date<=p.date_to);
-  return cases;
+
+  // Build list of active filters
+  const filters=[];
+  if(p.fir)      filters.push(c=>(c.fir_number||'').toLowerCase().includes(p.fir.toLowerCase()));
+  if(p.name)     filters.push(c=>(c.complainant||'').toLowerCase().includes(p.name.toLowerCase())||(c.accused_name||'').toLowerCase().includes(p.name.toLowerCase()));
+  if(p.cnic)     filters.push(c=>clean(c.complainant_cnic).includes(clean(p.cnic))||clean(c.accused_cnic).includes(clean(p.cnic)));
+  if(p.cell)     filters.push(c=>clean(c.complainant_cell).includes(clean(p.cell))||clean(c.accused_cell).includes(clean(p.cell)));
+  if(p.section)  filters.push(c=>(c.section_of_law||'').toLowerCase().includes(p.section.toLowerCase())||(c.offence_type||'').toLowerCase().includes(p.section.toLowerCase()));
+  if(p.status)   filters.push(c=>c.status===p.status);
+  if(p.date_from)filters.push(c=>c.fir_date&&c.fir_date>=p.date_from);
+  if(p.date_to)  filters.push(c=>c.fir_date&&c.fir_date<=p.date_to);
+
+  // No filters active — return nothing
+  if(!filters.length) return [];
+
+  // OR logic: case matches if it satisfies ANY active filter
+  return all.filter(c=>filters.some(fn=>fn(c)));
 }
 async function getAdminStats(){if(currentRole!=='admin'&&currentRole!=='superadmin')return null;const{data:officers}=await supabaseClient.from('officers').select('*');const{data:cases}=await supabaseClient.from('cases').select('id,status');const{data:logs}=await supabaseClient.from('audit_log').select('*').order('created_at',{ascending:false}).limit(50);return{totalOfficers:officers?.length||0,totalCases:cases?.length||0,activeCases:cases?.filter(c=>c.status==='under').length||0,completedCases:cases?.filter(c=>c.status==='complete').length||0,officers:officers||[],recentActivity:logs||[]};}
 function setupRealtimeSync(cb){supabaseClient.channel('db-changes').on('postgres_changes',{event:'*',schema:'public',table:'cases'},()=>{if(cb)cb('cases');}).on('postgres_changes',{event:'*',schema:'public',table:'reminders'},()=>{if(cb)cb('reminders');}).on('postgres_changes',{event:'*',schema:'public',table:'evidence'},()=>{if(cb)cb('evidence');}).subscribe();}
