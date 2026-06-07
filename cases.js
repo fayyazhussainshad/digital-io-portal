@@ -683,6 +683,8 @@ async function openCaseWorkspace(id) {
   container.innerHTML = `<div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Opening Case Workspace...</div></div>`;
   const c = await getCase(id);
   if (!c) { showToast('❌ Case not found.', 'error'); return; }
+  // Load MISAL documents for this case
+  await loadMisalDocs(id);
   const docs = c.documents_checklist ? (typeof c.documents_checklist==='string'?JSON.parse(c.documents_checklist):c.documents_checklist) : [];
   const ev = await getEvidence(c.fir_number);
   renderWorkspace(c, docs, ev, container);
@@ -710,6 +712,9 @@ function renderWorkspace(c, docs, ev, container) {
         <button class="btn btn-danger btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number}')">🗑️</button>
       </div>
     </div>
+
+    <!-- MISAL DOCUMENT BAR -->
+    ${renderMisalBar(c)}
 
     <!-- TABS -->
     <div class="case-tabs">
