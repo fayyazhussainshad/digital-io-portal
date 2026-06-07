@@ -350,31 +350,6 @@ function caseFormHTML(c) {
     + '</div>'
     + '</div>'
 
-    // Document checklist
-    + '<div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:10px;">'
-    + '<div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">&#x1F4CE; MISAL Documents Required</div>'
-    + '<input class="form-input" id="doc-search" placeholder="&#x1F50D; Search documents..." oninput="filterDocChecklist(this.value)" style="margin-bottom:10px;">'
-    + '<div style="display:flex;gap:6px;margin-bottom:10px;">'
-    + '<input class="form-input" id="custom-doc-input" placeholder="Add custom document..." style="flex:1;">'
-    + '<button type="button" class="btn btn-secondary btn-sm" onclick="addCustomDoc()">+ Add</button>'
-    + '</div>'
-    + '<div id="doc-checklist" style="max-height:220px;overflow-y:auto;">'+docList+'</div>'
-    + '</div>'
-
-    // Cross Version
-    + '<div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-top:10px;">'
-    + '<div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="toggleCrossVersion()">'
-    + '<input type="checkbox" id="cf-cross-version" '+(isCross?'checked':'')+' style="accent-color:var(--red);width:16px;height:16px;" onclick="event.stopPropagation();toggleCrossVersion()">'
-    + '<div>'
-    + '<div style="font-size:13px;font-weight:700;color:var(--red);">&#x2694;&#xFE0F; Cross Version &#x2014; &#x0645;&#x062E;&#x0627;&#x0644;&#x0641; &#x0645;&#x0642;&#x062F;&#x0645;&#x06C1;</div>'
-    + '<div style="font-size:10px;color:var(--text-muted);">Check if accused has also filed a case against complainant for the same incident</div>'
-    + '</div>'
-    + '</div>'
-    + '<div id="cross-version-fields" style="display:'+(isCross?'block':'none')+';margin-top:14px;border-top:1px dashed var(--red);padding-top:14px;">'
-    + crossFields
-    + '</div>'
-    + '</div>'
-
     + '</div>';
 
   return html;
