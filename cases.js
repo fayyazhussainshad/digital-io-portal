@@ -676,6 +676,7 @@ const docDrafts = {}; // stores edited content per case+doc
 
 async function openCaseWorkspace(id) {
   currentCaseId = id;
+  _currentWorkspaceCaseId = id;
   currentDocIndex = null;
   document.getElementById('topbar-title').textContent = '📁 Case Workspace';
   const container = document.getElementById('page-content');
@@ -1504,16 +1505,225 @@ function renderDetailsTab(c) {
 }
 
 function renderEvidenceTab(c, ev) {
+  const icon = t => t==='Photo'?'📷':t==='Video'?'🎥':t==='Audio'?'🎙️':'📄';
+  const cards = ev.length === 0
+    ? `<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text-muted);">
+        <div style="font-size:40px;margin-bottom:12px;">🔬</div>
+        <div style="font-weight:600;margin-bottom:4px;">No evidence attached yet</div>
+        <div style="font-size:12px;">Click "+ Attach Evidence" to add files, photos or documents</div>
+       </div>`
+    : ev.map(e => `
+      <div class="evidence-card" id="ev-${e.id}">
+        <div class="evidence-thumb" onclick="openEvidenceFile('${e.id}','${(e.file_url||'').replace(/'/g,"\\'")}','${e.name.replace(/'/g,"\\'")}','${e.type}')" style="cursor:${e.file_url?'pointer':'default'};" title="${e.file_url?'Click to open file':'No file attached'}">
+          ${e.file_url && e.type==='Photo'
+            ? `<img src="${e.file_url}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;" alt="${e.name}" onerror="this.style.display='none';this.parentElement.querySelector('.ev-fallback').style.display='flex'"><div class="ev-fallback" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:36px;">📷</div>`
+            : `<span style="font-size:36px;">${icon(e.type)}</span>`}
+          ${e.file_url ? `<div style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,0.6);border-radius:4px;padding:2px 5px;font-size:9px;color:#fff;">Open</div>` : ''}
+        </div>
+        <div class="evidence-info">
+          <div class="evidence-name" id="ev-name-${e.id}">${e.name}</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${e.type} · ${e.evidence_date||formatDate(e.created_at)}</div>
+          ${e.notes ? `<div style="font-size:10px;color:var(--text-faint);margin-top:3px;font-style:italic;">${e.notes}</div>` : ''}
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            ${e.file_url ? `<button class="btn btn-secondary btn-sm" onclick="openEvidenceFile('${e.id}','${(e.file_url||'').replace(/'/g,"\\'")}','${e.name.replace(/'/g,"\\'")}','${e.type}')" title="Open File">📂 Open</button>` : ''}
+            <button class="btn btn-secondary btn-sm" onclick="renameEvidence('${e.id}','${e.name.replace(/'/g,"\\'")}','${c.fir_number}')" title="Rename">✏️ Rename</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteWorkspaceEvidence('${e.id}','${c.fir_number}')" title="Delete">🗑️</button>
+          </div>
+        </div>
+      </div>`).join('');
+
   return `<div class="case-tab-content">
-    <div class="page-header">
-      <div><div style="font-size:16px;font-weight:700;">🔬 Evidence for FIR ${c.fir_number}</div></div>
-      <button class="btn btn-primary" onclick="openAddEvidenceModal()">+ Attach Evidence</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+      <div>
+        <div style="font-size:16px;font-weight:700;">🔬 Evidence — FIR ${c.fir_number}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${ev.length} item${ev.length!==1?'s':''} attached</div>
+      </div>
+      <button class="btn btn-primary" onclick="openWorkspaceEvidenceModal('${c.id}','${c.fir_number}')">+ Attach Evidence</button>
     </div>
-    <div class="evidence-grid">
-      ${ev.length===0?`<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px;">No evidence attached yet.</div>`:ev.map(e=>`<div class="evidence-card"><div class="evidence-thumb"><span style="font-size:36px;">${e.type==='Photo'?'📷':e.type==='Video'?'🎥':e.type==='Audio'?'🎙️':'📄'}</span></div><div class="evidence-info"><div class="evidence-name">${e.name}</div><div class="evidence-tag">${e.fir_number||'—'}</div><div style="font-size:10px;color:var(--text-faint);margin-top:4px;">${e.type} · ${e.evidence_date||formatDate(e.created_at)}</div></div></div>`).join('')}
-    </div>
+    <div class="evidence-grid">${cards}</div>
   </div>`;
 }
+
+// ── OPEN FILE ──────────────────────────────────────────────────
+function openEvidenceFile(id, url, name, type) {
+  if (!url) { showToast('⚠️ No file attached to this evidence item.', 'error'); return; }
+  // Open file in new tab
+  window.open(url, '_blank', 'noopener');
+}
+
+// ── RENAME EVIDENCE ────────────────────────────────────────────
+function renameEvidence(id, currentName, firNumber) {
+  openModal('✏️ Rename Evidence',
+    `<div style="margin-bottom:8px;font-size:12px;color:var(--text-muted);">Enter a new name for this evidence item.</div>
+     <input class="form-input" id="ev-rename-input" value="${currentName}" style="width:100%;box-sizing:border-box;" placeholder="Evidence name">`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-primary" onclick="saveEvidenceRename('${id}','${firNumber}')">✏️ Rename</button>`
+  );
+  setTimeout(() => { const i = document.getElementById('ev-rename-input'); if(i){i.focus();i.select();} }, 100);
+}
+
+async function saveEvidenceRename(id, firNumber) {
+  const newName = document.getElementById('ev-rename-input')?.value.trim();
+  if (!newName) { showToast('⚠️ Name cannot be empty.', 'error'); return; }
+  try {
+    await supabaseClient.from('evidence').update({ name: newName }).eq('id', id);
+    closeModal();
+    showToast('✅ Evidence renamed.', 'success');
+    // Refresh evidence tab
+    const c = await getCase(_currentWorkspaceCaseId);
+    const ev = await getEvidence(firNumber);
+    document.getElementById('workspace-tab-content').innerHTML = renderEvidenceTab(c, ev);
+  } catch(err) { showToast('❌ ' + err.message, 'error'); }
+}
+
+// ── DELETE EVIDENCE ────────────────────────────────────────────
+function deleteWorkspaceEvidence(id, firNumber) {
+  openModal('🗑️ Delete Evidence',
+    `<p style="color:var(--text-secondary);font-size:13px;">Are you sure you want to delete this evidence item?<br><span style="color:var(--red);font-size:11px;margin-top:8px;display:block;">⚠️ This cannot be undone.</span></p>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-danger" onclick="closeModal();doDeleteWorkspaceEvidence('${id}','${firNumber}')">🗑️ Delete</button>`
+  );
+}
+
+async function doDeleteWorkspaceEvidence(id, firNumber) {
+  try {
+    await deleteEvidence(id);
+    showToast('🗑️ Evidence deleted.', 'info');
+    const c = await getCase(_currentWorkspaceCaseId);
+    const ev = await getEvidence(firNumber);
+    document.getElementById('workspace-tab-content').innerHTML = renderEvidenceTab(c, ev);
+  } catch(err) { showToast('❌ ' + err.message, 'error'); }
+}
+
+// ── ATTACH EVIDENCE MODAL ──────────────────────────────────────
+function openWorkspaceEvidenceModal(caseId, firNumber) {
+  openModal('➕ Attach Evidence',
+    `<div style="margin-bottom:12px;">
+       <div style="display:flex;gap:8px;margin-bottom:12px;">
+         <button class="btn btn-secondary btn-sm" onclick="wevOpenCamera()">📸 Camera</button>
+         <button class="btn btn-secondary btn-sm" onclick="wevOpenFile()">📎 Select File</button>
+       </div>
+       <!-- Camera preview -->
+       <div id="wev-camera" style="display:none;margin-bottom:12px;">
+         <video id="wev-video" style="width:100%;border-radius:8px;max-height:200px;" autoplay playsinline></video>
+         <div style="display:flex;gap:8px;margin-top:8px;">
+           <button class="btn btn-primary btn-sm" onclick="wevSnap()">📸 Capture</button>
+           <button class="btn btn-secondary btn-sm" onclick="wevStopCamera()">✕ Stop</button>
+         </div>
+         <canvas id="wev-canvas" style="display:none;"></canvas>
+       </div>
+       <!-- File / photo preview -->
+       <div id="wev-preview" style="display:none;margin-bottom:12px;text-align:center;">
+         <img id="wev-img-preview" style="max-height:120px;border-radius:6px;border:2px solid var(--accent);display:none;" alt="">
+         <div id="wev-file-name" style="font-size:12px;color:var(--accent);margin-top:4px;"></div>
+       </div>
+     </div>
+     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+       <div><label class="form-label">Name *</label><input class="form-input" id="wev-name" placeholder="e.g. CCTV Screenshot"></div>
+       <div><label class="form-label">Type</label>
+         <select class="form-input" id="wev-type">
+           <option>Photo</option><option>Video</option><option>Audio</option><option>Document</option>
+         </select>
+       </div>
+     </div>
+     <div style="margin-bottom:10px;"><label class="form-label">Date of Evidence</label><input class="form-input" id="wev-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
+     <div><label class="form-label">Notes</label><textarea class="form-input" id="wev-notes" rows="2" placeholder="Description, location found, etc."></textarea></div>`,
+    `<button class="btn btn-secondary" onclick="wevStopCamera();closeModal()">Cancel</button>
+     <button class="btn btn-primary" onclick="wevSave('${caseId}','${firNumber}')">💾 Attach</button>`
+  );
+  window._wevFile = null;
+  window._wevDataUrl = null;
+}
+
+// Camera helpers
+async function wevOpenCamera() {
+  document.getElementById('wev-camera').style.display = 'block';
+  try {
+    window._wevStream = await navigator.mediaDevices.getUserMedia({ video: true });
+    document.getElementById('wev-video').srcObject = window._wevStream;
+  } catch(e) { showToast('⚠️ Camera not available.', 'error'); }
+}
+function wevStopCamera() {
+  if (window._wevStream) { window._wevStream.getTracks().forEach(t => t.stop()); window._wevStream = null; }
+  const cam = document.getElementById('wev-camera'); if (cam) cam.style.display = 'none';
+}
+function wevSnap() {
+  const v = document.getElementById('wev-video');
+  const cv = document.getElementById('wev-canvas');
+  cv.width = v.videoWidth; cv.height = v.videoHeight;
+  cv.getContext('2d').drawImage(v, 0, 0);
+  window._wevDataUrl = cv.toDataURL('image/jpeg', 0.85);
+  wevStopCamera();
+  const prev = document.getElementById('wev-preview');
+  const img = document.getElementById('wev-img-preview');
+  prev.style.display = 'block'; img.style.display = 'block'; img.src = window._wevDataUrl;
+  document.getElementById('wev-file-name').textContent = '📸 Camera capture ready';
+  if (!document.getElementById('wev-name').value) document.getElementById('wev-name').value = 'Photo ' + new Date().toLocaleDateString('en-GB');
+  document.getElementById('wev-type').value = 'Photo';
+}
+function wevOpenFile() {
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx';
+  inp.onchange = e => {
+    const f = e.target.files[0]; if (!f) return;
+    window._wevFile = f;
+    const prev = document.getElementById('wev-preview');
+    const img = document.getElementById('wev-img-preview');
+    prev.style.display = 'block';
+    document.getElementById('wev-file-name').textContent = '📎 ' + f.name + ' (' + (f.size/1024).toFixed(1) + ' KB)';
+    if (f.type.startsWith('image/')) {
+      const r = new FileReader(); r.onload = ev => { img.src = ev.target.result; img.style.display = 'block'; }; r.readAsDataURL(f);
+    } else { img.style.display = 'none'; }
+    if (!document.getElementById('wev-name').value) document.getElementById('wev-name').value = f.name.replace(/\.[^/.]+$/, '');
+    if (f.type.startsWith('image/')) document.getElementById('wev-type').value = 'Photo';
+    else if (f.type.startsWith('video/')) document.getElementById('wev-type').value = 'Video';
+    else if (f.type.startsWith('audio/')) document.getElementById('wev-type').value = 'Audio';
+    else document.getElementById('wev-type').value = 'Document';
+  };
+  inp.click();
+}
+
+let _currentWorkspaceCaseId = null;
+
+async function wevSave(caseId, firNumber) {
+  const name = document.getElementById('wev-name')?.value.trim();
+  if (!name) { showToast('⚠️ Evidence name is required.', 'error'); return; }
+  _currentWorkspaceCaseId = caseId;
+
+  let fileUrl = null;
+  const type = document.getElementById('wev-type')?.value || 'Document';
+  const date = document.getElementById('wev-date')?.value || '';
+  const notes = document.getElementById('wev-notes')?.value || '';
+
+  try {
+    // Upload file to Supabase Storage if a file is attached
+    if (window._wevFile || window._wevDataUrl) {
+      let blob, ext;
+      if (window._wevDataUrl) {
+        const res = await fetch(window._wevDataUrl); blob = await res.blob(); ext = 'jpg';
+      } else {
+        blob = window._wevFile; ext = window._wevFile.name.split('.').pop();
+      }
+      const path = `${currentUser?.id||'officer'}/${firNumber}/${Date.now()}_${name.replace(/\s+/g,'_')}.${ext}`;
+      const { error: upErr } = await supabaseClient.storage.from('evidence').upload(path, blob, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: urlData } = supabaseClient.storage.from('evidence').getPublicUrl(path);
+      fileUrl = urlData?.publicUrl || null;
+    }
+
+    await addEvidence({ name, fir_number: firNumber, type, evidence_date: date, notes, file_url: fileUrl });
+    wevStopCamera();
+    closeModal();
+    showToast('✅ Evidence attached: ' + name, 'success');
+
+    // Refresh evidence tab
+    const c = await getCase(caseId);
+    const ev = await getEvidence(firNumber);
+    const tabContent = document.getElementById('workspace-tab-content');
+    if (tabContent) tabContent.innerHTML = renderEvidenceTab(c, ev);
+  } catch(err) { showToast('❌ ' + err.message, 'error'); }
+}
+
+
 
 
 // ── BACK / DELETE ──
