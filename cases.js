@@ -719,7 +719,6 @@ function renderWorkspace(c, docs, ev, container) {
     <!-- TABS -->
     <div class="case-tabs">
       <div class="case-tab active" id="tab-docs" onclick="switchWorkspaceTab('docs')">📎 Documents (${docs.length})</div>
-      <div class="case-tab" id="tab-details" onclick="switchWorkspaceTab('details')">📋 Case Details</div>
       <div class="case-tab" id="tab-evidence" onclick="switchWorkspaceTab('evidence')">🔬 Evidence (${ev.length})</div>
     </div>
 
