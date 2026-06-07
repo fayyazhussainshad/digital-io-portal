@@ -318,7 +318,7 @@ const offlineStore={
     const tx=_odb.transaction('session_cache','readwrite');
     tx.objectStore('session_cache').delete('pin_hash');
     return _txComplete(tx);
-  }
+  },
   // ── OFFLINE AUTH ─────────────────────────────────────────
 
   async saveOfflineProfile(userId,profile){
