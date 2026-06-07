@@ -165,8 +165,7 @@ function _fmtDate(iso){ if(!iso)return''; const p=iso.split('-'); return p.lengt
 
 function _profilePct(o){
   const fields=[o.full_name,o.badge_number,o.designation,o.station,o.district,
-    o.personal_phone||o.phone||o.official_phone,o.cnic_number,o.father_name,
-    o.date_of_joining,o.home_address];
+    o.official_phone||o.phone,o.cnic_number];
   return Math.round(fields.filter(f=>f&&String(f).trim()).length/fields.length*100);
 }
 
