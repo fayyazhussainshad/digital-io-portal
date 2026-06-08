@@ -1,86 +1,960 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — OFFICIAL DOCUMENT GENERATION
-   Fills real government .docx templates with case data and
-   downloads print-ready Word files. Used by Case Workspace.
+   DIGITAL IO — MISAL DOCUMENT SYSTEM  (misal-docs.js)
+   All 33 official case documents — Urdu format
+   Click to add to case → pre-filled template → save to DB
    ═══════════════════════════════════════════════════════════ */
 
-// ═══════════════════════════════════════════════════
-//  OFFICIAL DOCUMENT GENERATION (exact govt format)
-//  Loads the real .docx template, fills the {tokens}
-//  with case data, downloads a print-ready Word file.
-// ═══════════════════════════════════════════════════
-const OFFICIAL_TEMPLATES = {
-  'CDR Form':           'CDR_Form_TEMPLATE.docx',
-  'Zimni Berooni':      'Zimni_Berooni_TEMPLATE.docx',
-  'Zimni Androoni':     'Zimni_Androoni_TEMPLATE.docx',
-  'Investigation Bills':'Investigation_Bill_TEMPLATE.docx',
-};
+// ── ALL 33 OFFICIAL DOCUMENTS ────────────────────────────────
+const CASE_DOCS = [
+  { id:'fir',              name:'ایف آئی آر',                              desc:'First Information Report' },
+  { id:'cross',            name:'کراس ورش',                                desc:'Cross Verification' },
+  { id:'position',         name:'پوزیشن مقدمہ',                            desc:'Case Position' },
+  { id:'report_173',       name:'رپورٹ ۱۷۳',                               desc:'Report u/s 173 CrPC' },
+  { id:'crime_scene',      name:'جائے واردات',                              desc:'Scene of Crime' },
+  { id:'named_accused',    name:'نامزد ملزمان',                             desc:'Named Accused' },
+  { id:'unknown_accused',  name:'نامعلوم ملزمان',                           desc:'Unknown Accused' },
+  { id:'witnesses',        name:'گواہان',                                   desc:'Witnesses' },
+  { id:'affected',         name:'متاثرہ اشخاص',                             desc:'Affected Persons' },
+  { id:'stolen',           name:'مسروقہ مال',                               desc:'Stolen Property' },
+  { id:'recovery',         name:'برآمدگی مال',                              desc:'Recovered Property' },
+  { id:'narcotics',        name:'منثیات واسطہ و دیگر برآمدگی',              desc:'Narcotics & Other Recovery' },
+  { id:'index',            name:'انڈیکس ضمنیات',                            desc:'Index of Annexures' },
+  { id:'preventive',       name:'انسدادی کاروائی',                          desc:'Preventive Action' },
+  { id:'testimonies',      name:'شہادتیں',                                  desc:'Testimonies' },
+  { id:'warrant',          name:'فردمطبوطشکی',                              desc:'Warrant Details' },
+];
 
-let _docxLibsReady = false;
-function _loadScriptOnce(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('Failed to load '+src));document.head.appendChild(s);});}
-function loadDocxLibs(){
-  return new Promise((resolve,reject)=>{
-    if(_docxLibsReady && window.PizZip && window.docxtemplater){resolve();return;}
-    _loadScriptOnce('https://cdn.jsdelivr.net/npm/pizzip@3.1.6/dist/pizzip.min.js')
-      .then(()=>_loadScriptOnce('https://cdn.jsdelivr.net/npm/docxtemplater@3.50.0/build/docxtemplater.js'))
-      .then(()=>{_docxLibsReady=true;resolve();})
-      .catch(()=>{ // fallback CDN
-        _loadScriptOnce('https://unpkg.com/pizzip@3.1.6/dist/pizzip.min.js')
-          .then(()=>_loadScriptOnce('https://unpkg.com/docxtemplater@3.50.0/build/docxtemplater.js'))
-          .then(()=>{_docxLibsReady=true;resolve();})
-          .catch(reject);
-      });
+// ── STATE ─────────────────────────────────────────────────────
+let _misalDocs   = {};   // { docId: {id, content, status} } for current case
+let _misalCaseId = null;
+let _misalCase   = null;
+let _openDocId   = null;
+
+// ── LOAD DOCS FOR CASE ────────────────────────────────────────
+async function loadMisalDocs(caseId) {
+  _misalCaseId = caseId;
+  _misalDocs   = {};
+  try {
+    const { data } = await supabaseClient
+      .from('case_documents')
+      .select('*')
+      .eq('case_id', caseId);
+    (data || []).forEach(d => { _misalDocs[d.document_type] = d; });
+  } catch(e) { console.warn('loadMisalDocs:', e.message); }
+}
+
+// ── RENDER DOCUMENT BAR ───────────────────────────────────────
+function renderMisalBar(c) {
+  _misalCase = c;
+  const items = CASE_DOCS.map(d => {
+    const saved = _misalDocs[d.id];
+    const done  = saved?.status === 'complete';
+    const added = !!saved;
+    const cls   = done ? 'mdoc-done' : added ? 'mdoc-added' : 'mdoc-empty';
+    const action = added ? `confirmRemoveMisalDoc('${d.id}')` : `confirmAddMisalDoc('${d.id}')`;
+    return `<span class="mdoc-chip ${cls}" onclick="${action}" title="${d.desc}">${d.name}</span>`;
+  }).join('');
+
+  return `
+  <div id="misal-doc-bar" style="
+    padding:12px 16px;
+    background:var(--bg-secondary);
+    border-bottom:1px solid var(--border);">
+    <div style="font-size:11px;color:var(--text-faint);margin-bottom:8px;display:flex;gap:16px;align-items:center;">
+      <span>مثال دستاویزات</span>
+      <span><span style="color:var(--text-muted);">■</span> شامل نہیں</span>
+      <span><span style="color:var(--accent);">■</span> جاری</span>
+      <span><span style="color:var(--green);">■</span> مکمل</span>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">${items}</div>
+  </div>
+  <style>
+    .mdoc-chip{
+      display:inline-block;
+      padding:6px 14px;
+      border-radius:20px;
+      font-size:16px;
+      cursor:pointer;
+      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
+      direction:rtl;
+      border:1px solid transparent;
+      transition:all 0.15s;
+      margin-bottom:4px;
+      line-height:1.6;
+    }
+    .mdoc-chip:hover{ transform:translateY(-1px); box-shadow:0 2px 8px rgba(0,0,0,0.25); }
+    .mdoc-empty{ color:var(--text-muted);  background:var(--bg-tertiary);   border-color:var(--border); }
+    .mdoc-added{ color:var(--accent);      background:rgba(56,189,248,0.12); border-color:var(--accent); font-weight:600; }
+    .mdoc-done { color:var(--green);       background:rgba(34,197,94,0.12);  border-color:var(--green);  font-weight:600; }
+  </style>`;
+}
+
+// ── CONFIRMATION: ADD ─────────────────────────────────────────
+function confirmAddMisalDoc(docId) {
+  const def = CASE_DOCS.find(d => d.id === docId);
+  if (!def) return;
+  openModal('دستاویز شامل کریں',
+    `<div style="text-align:right;direction:rtl;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:16px;line-height:2;">
+      <div style="font-size:20px;font-weight:bold;color:var(--accent);margin-bottom:12px;">${def.name}</div>
+      <div style="color:var(--text-secondary);">کیا آپ یہ دستاویز اس مقدمے میں شامل کرنا چاہتے ہیں؟</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">${def.desc}</div>
+    </div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">نہیں، واپس جائیں</button>
+     <button class="btn btn-primary" onclick="closeModal();_doAddMisalDoc('${docId}')">✅ ہاں، شامل کریں</button>`
+  );
+}
+
+// ── CONFIRMATION: REMOVE ──────────────────────────────────────
+function confirmRemoveMisalDoc(docId) {
+  const def = CASE_DOCS.find(d => d.id === docId);
+  if (!def) return;
+  const saved = _misalDocs[docId];
+  openModal('دستاویز ہٹائیں یا کھولیں',
+    `<div style="text-align:right;direction:rtl;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:16px;line-height:2;">
+      <div style="font-size:20px;font-weight:bold;color:var(--accent);margin-bottom:12px;">${def.name}</div>
+      <div style="color:var(--text-secondary);">یہ دستاویز پہلے سے شامل ہے۔ آپ کیا کرنا چاہتے ہیں؟</div>
+    </div>`,
+    `<button class="btn btn-danger" onclick="closeModal();_doRemoveMisalDoc('${docId}')">🗑️ ہٹا دیں</button>
+     <button class="btn btn-secondary" onclick="closeModal()">واپس جائیں</button>
+     <button class="btn btn-primary" onclick="closeModal();_openMisalEditor('${docId}')">📄 کھولیں</button>`
+  );
+}
+
+
+// ── ADD TO CASE ───────────────────────────────────────────────
+async function _doAddMisalDoc(docId) {
+  const def = CASE_DOCS.find(d => d.id === docId);
+  if (!def || !_misalCaseId) return;
+  try {
+    const oid = await getOfficerId();
+    const { data, error } = await supabaseClient
+      .from('case_documents')
+      .insert({ case_id: _misalCaseId, officer_id: oid, document_type: docId, status: 'draft', content: {} })
+      .select().single();
+    if (error) throw error;
+    _misalDocs[docId] = data;
+    _refreshMisalBar();
+    _refreshMisalSidebar();
+    showToast(`✅ ${def.name} شامل کر دی گئی`, 'success');
+    _openMisalEditor(docId);
+  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+// ── REMOVE FROM CASE ──────────────────────────────────────────
+async function _doRemoveMisalDoc(docId) {
+  const def = CASE_DOCS.find(d => d.id === docId);
+  if (!def || !_misalCaseId) return;
+  try {
+    await supabaseClient.from('case_documents')
+      .delete()
+      .eq('case_id', _misalCaseId)
+      .eq('document_type', docId);
+    delete _misalDocs[docId];
+    _refreshMisalBar();
+    _refreshMisalSidebar();
+    // Clear editor if this doc was open
+    const area = document.getElementById('workspace-editor-area');
+    if (area) area.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">
+        <div style="font-size:40px;margin-bottom:12px;">📂</div>
+        <div style="font-size:14px;font-weight:600;">دستاویز ہٹا دی گئی</div>
+        <div style="font-size:12px;margin-top:6px;">بائیں طرف سے کوئی دستاویز منتخب کریں</div>
+      </div>`;
+    showToast(`🗑️ ${def.name} ہٹا دی گئی`, 'info');
+  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+// ── OPEN EDITOR ───────────────────────────────────────────────
+function _openMisalEditor(docId) {
+  const def = CASE_DOCS.find(d => d.id === docId);
+  if (!def) return;
+  _openDocId = docId;
+
+  // Switch to docs tab
+  document.querySelectorAll('.case-tab').forEach(t => t.classList.remove('active'));
+  const tab = document.getElementById('tab-docs');
+  if (tab) tab.classList.add('active');
+
+  // If docs tab content not rendered yet, render it first
+  const area = document.getElementById('workspace-editor-area');
+  if (!area) {
+    const tc = document.getElementById('workspace-tab-content');
+    if (tc) tc.innerHTML = renderDocsTab(_misalCase, []);
+    setTimeout(() => _renderMisalEditor(docId, def), 80);
+    return;
+  }
+  _renderMisalEditor(docId, def);
+
+  // Highlight in sidebar
+  document.querySelectorAll('.misal-sidebar-item').forEach(el => el.classList.remove('active'));
+  const item = document.getElementById('msb-' + docId);
+  if (item) item.classList.add('active');
+}
+
+// ── SIDEBAR: list of added documents ─────────────────────────
+function renderMisalDocSidebar() {
+  const added = CASE_DOCS.filter(d => _misalDocs[d.id]);
+  if (!added.length) return `
+    <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px;line-height:1.8;">
+      <div style="font-size:28px;margin-bottom:8px;">📂</div>
+      ابھی کوئی دستاویز شامل نہیں<br>
+      اوپر دستاویز کے نام پر کلک کریں
+    </div>`;
+
+  return added.map(d => {
+    const saved = _misalDocs[d.id];
+    const done  = saved?.status === 'complete';
+    const isOpen = _openDocId === d.id;
+    return `
+      <div class="misal-sidebar-item doc-card ${isOpen?'active':''}" id="msb-${d.id}"
+           onclick="_openMisalEditor('${d.id}')"
+           style="cursor:pointer;padding:10px 12px;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:16px;">${done?'✅':'📄'}</span>
+          <div style="flex:1;">
+            <div style="font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:15px;direction:rtl;color:${done?'var(--green)':isOpen?'var(--accent)':'var(--text-primary)'};">${d.name}</div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${done?'مکمل':'مسودہ'}</div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function _refreshMisalSidebar() {
+  const list = document.getElementById('workspace-doc-list');
+  if (list) list.innerHTML = renderMisalDocSidebar();
+}
+
+function _renderMisalEditor(docId, def) {
+  const area = document.getElementById('workspace-editor-area');
+  if (!area) return;
+
+  const saved   = _misalDocs[docId];
+  const content = saved?.content?.html || getMisalTemplate(docId, _misalCase);
+
+  area.innerHTML = `
+  <div style="display:flex;flex-direction:column;height:100%;">
+
+    <!-- ── TOOLBAR ROW 1: History · Font · Style · Color ── -->
+    <div style="display:flex;align-items:center;gap:2px;padding:5px 8px;background:var(--bg-secondary);border-bottom:1px solid var(--border);flex-wrap:wrap;">
+      <span style="font-family:'Jameel Noori Nastaleeq',serif;font-size:13px;font-weight:700;color:var(--accent);direction:rtl;margin-left:4px;margin-right:8px;">${def.name}</span>
+      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
+      <!-- Undo / Redo -->
+      <button class="mbtb" onclick="_mExec('undo')" title="Undo">↩</button>
+      <button class="mbtb" onclick="_mExec('redo')" title="Redo">↪</button>
+      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
+      <!-- Font Family -->
+      <select class="mssel" onchange="_mFontFamily(this.value)" title="Font Family" style="width:175px;">
+        <option value="'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif" selected>Jameel Noori Nastaleeq</option>
+        <option value="'Noto Nastaliq Urdu',serif">Noto Nastaliq Urdu</option>
+        <option value="'Arial',sans-serif">Arial</option>
+        <option value="'Times New Roman',serif">Times New Roman</option>
+        <option value="'Georgia',serif">Georgia</option>
+        <option value="'Courier New',monospace">Courier New</option>
+      </select>
+      <!-- Font Size -->
+      <select class="mssel" onchange="_mFontSize(this.value)" title="Font Size" style="width:54px;">
+        ${[8,9,10,11,12,14,15,16,18,20,22,24,28,32,36,48,72].map(s=>'<option value="'+s+'"'+(s===15?' selected':'')+'>'+s+'</option>').join('')}
+      </select>
+      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
+      <!-- Style -->
+      <button class="mbtb" onclick="_mExec('bold')" title="Bold"><b>B</b></button>
+      <button class="mbtb" onclick="_mExec('italic')" title="Italic"><i>I</i></button>
+      <button class="mbtb" onclick="_mExec('underline')" title="Underline" style="text-decoration:underline;">U</button>
+      <button class="mbtb" onclick="_mExec('strikeThrough')" title="Strikethrough" style="text-decoration:line-through;">S</button>
+      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
+      <!-- Colours -->
+      <label class="mbtb" title="Text Colour" style="cursor:pointer;display:flex;align-items:center;gap:2px;">A<input type="color" value="#111111" oninput="_mExec('foreColor',this.value)" style="width:16px;height:14px;padding:0;border:none;cursor:pointer;"></label>
+      <label class="mbtb" title="Highlight" style="cursor:pointer;display:flex;align-items:center;gap:2px;">🖊<input type="color" value="#ffff00" oninput="_mExec('hiliteColor',this.value)" style="width:16px;height:14px;padding:0;border:none;cursor:pointer;"></label>
+      <div style="flex:1;"></div>
+      <!-- Save / Complete / Print on same row, right-aligned -->
+      <button class="mbtb mbtb-accent" onclick="saveMisalDoc('${docId}')" title="Save">💾 محفوظ</button>
+      <button class="mbtb mbtb-green" onclick="markMisalComplete('${docId}')" title="Complete">✅ مکمل</button>
+      <button class="mbtb" onclick="printMisalDoc('${def.name}')" title="Print">🖨️</button>
+    </div>
+
+    <!-- ── TOOLBAR ROW 2: Align · Direction · Lists · Table · Page · Voice ── -->
+    <div style="display:flex;align-items:center;gap:2px;padding:4px 8px;background:var(--bg-secondary);border-bottom:2px solid var(--border);flex-wrap:wrap;">
+      <!-- Alignment -->
+      <button class="mbtb" onclick="_mExec('justifyRight')" title="Align Right">⇥</button>
+      <button class="mbtb" onclick="_mExec('justifyCenter')" title="Centre">≡</button>
+      <button class="mbtb" onclick="_mExec('justifyLeft')" title="Align Left">⇤</button>
+      <button class="mbtb" onclick="_mExec('justifyFull')" title="Justify">⬛</button>
+      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
+      <!-- Direction -->
+      <button class="mbtb" onclick="_mDir('rtl')" title="Right to Left (Urdu)">RTL ←</button>
+      <button class="mbtb" onclick="_mDir('ltr')" title="Left to Right (English)">→ LTR</button>
+      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
+      <!-- Lists & Indent -->
+      <button class="mbtb" onclick="_mExec('insertUnorderedList')" title="Bullet List">• ≡</button>
+      <button class="mbtb" onclick="_mExec('insertOrderedList')" title="Numbered List">1 ≡</button>
+      <button class="mbtb" onclick="_mExec('indent')" title="Indent">→|</button>
+      <button class="mbtb" onclick="_mExec('outdent')" title="Outdent">|←</button>
+      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
+      <!-- Insert Table -->
+      <div style="position:relative;">
+        <button class="mbtb" onclick="_mToggleTablePicker()" title="Insert Table">⊞ Table</button>
+        <div id="misal-table-picker" style="display:none;position:absolute;top:100%;left:0;z-index:9999;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:8px;box-shadow:0 4px 20px rgba(0,0,0,0.4);">
+          <div style="font-size:10px;color:var(--text-muted);margin-bottom:5px;text-align:center;" id="misal-table-label">rows × cols</div>
+          <div style="display:grid;grid-template-columns:repeat(8,20px);gap:2px;">
+            ${Array.from({length:64},(_,i)=>{const r=Math.floor(i/8)+1,cc=(i%8)+1;return'<div class="tgcell" data-r="'+r+'" data-c="'+cc+'" onmouseover="_mHoverCell('+r+','+cc+')" onclick="_mInsertTable('+r+','+cc+')" style="width:20px;height:20px;border:1px solid #555;border-radius:2px;cursor:pointer;"></div>';}).join('')}
+          </div>
+        </div>
+      </div>
+      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
+      <!-- Line Spacing -->
+      <select class="mssel" onchange="_mLineSpacing(this.value)" title="Line Spacing" style="width:68px;">
+        <option value="1.2">≡ 1.2</option><option value="1.5">≡ 1.5</option>
+        <option value="2" selected>≡ 2.0</option><option value="2.5">≡ 2.5</option><option value="3">≡ 3.0</option>
+      </select>
+      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
+      <!-- Page Layout -->
+      <select class="mssel" onchange="_mPageSize(this.value)" title="Page Size" style="width:68px;">
+        <option value="a4" selected>A4</option><option value="a3">A3</option>
+        <option value="legal">Legal</option><option value="letter">Letter</option>
+      </select>
+      <select class="mssel" onchange="_mMargins(this.value)" title="Margins" style="width:78px;">
+        <option value="20mm" selected>Normal</option><option value="12mm">Narrow</option>
+        <option value="38mm">Wide</option><option value="25mm">Moderate</option>
+      </select>
+      <button class="mbtb" id="misal-border-btn" onclick="_mToggleBorder()" title="Page Border">☐ Border</button>
+      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
+      <!-- Voice -->
+      <button class="mbtb mbtb-voice" id="voice-btn" onclick="toggleVoiceInput()" title="Urdu Voice Input">🎙️ آواز</button>
+    </div>
+
+    <!-- A4 Editor -->
+    <div style="flex:1;overflow-y:auto;padding:20px;background:var(--bg-tertiary);">
+      <div id="misal-editor" contenteditable="true" spellcheck="false" style="
+        width:210mm;max-width:100%;min-height:297mm;
+        margin:0 auto;padding:20mm;
+        background:#fff;color:#111;
+        font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
+        font-size:15px;line-height:2;
+        direction:rtl;text-align:right;
+        box-shadow:0 2px 16px rgba(0,0,0,0.15);
+        border-radius:4px;outline:none;
+      ">${content}</div>
+    </div>
+  </div>
+
+  <style>
+    .mbtb{padding:3px 8px;border:1px solid transparent;border-radius:4px;background:none;
+          color:var(--text-secondary);cursor:pointer;font-size:12px;white-space:nowrap;
+          line-height:1.4;transition:all 0.1s;}
+    .mbtb:hover{background:var(--bg-tertiary);border-color:var(--border);color:var(--text-primary);}
+    .mbtb-accent{background:rgba(56,189,248,0.12);color:var(--accent);border-color:var(--accent);}
+    .mbtb-green{background:rgba(34,197,94,0.12);color:var(--green);border-color:var(--green);}
+    .mbtb-voice{color:var(--accent);}
+    .mssel{padding:3px 5px;border:1px solid var(--border);border-radius:4px;
+           background:var(--bg-tertiary);color:var(--text-secondary);font-size:11px;cursor:pointer;}
+    .tgcell:hover,.tgcell.tg-on{background:rgba(56,189,248,0.3)!important;border-color:var(--accent)!important;}
+  </style>`;
+}
+
+// ── MISAL TOOLBAR HELPERS ─────────────────────────────────────
+function _mExec(cmd, val) {
+  const ed = document.getElementById('misal-editor');
+  if (!ed) return;
+  ed.focus();
+  document.execCommand(cmd, false, val || null);
+}
+
+function _mFontFamily(val) {
+  const ed = document.getElementById('misal-editor');
+  if (!ed) return;
+  // Apply to whole editor (global font)
+  ed.style.fontFamily = val;
+}
+
+function _mFontSize(px) {
+  const ed = document.getElementById('misal-editor');
+  if (!ed) return;
+  ed.focus();
+  // Use execCommand fontSize trick then restyle
+  document.execCommand('fontSize', false, '7');
+  ed.querySelectorAll('font[size="7"]').forEach(el => {
+    el.removeAttribute('size');
+    el.style.fontSize = px + 'px';
   });
+  // If nothing selected, just change editor default
+  if (!window.getSelection()?.toString()) ed.style.fontSize = px + 'px';
 }
 
-function buildOfficialDocData(c){
-  const o = currentOfficer || {};
-  const today = new Date();
-  const monthsUr = ['جنوری','فروری','مارچ','اپریل','مئی','جون','جولائی','اگست','ستمبر','اکتوبر','نومبر','دسمبر'];
-  return {
-    station: o.station || '',
-    district: o.district || '',
-    fir_number: c.fir_number || '',
-    fir_date: c.fir_date || '',
-    offence: c.offence_type || '',
-    occurrence_date: c.occurrence_date || '',
-    occurrence_place: c.occurrence_place || '',
-    io_name: o.full_name || '',
-    io_mobile: o.phone || '',
-    accused_name: c.accused_name || '',
-    diary_no: '',
-    diary_date: '',
-    zimni_no: '',
-    year: String(today.getFullYear()),
-    month: monthsUr[today.getMonth()],
-  };
+function _mDir(dir) {
+  const ed = document.getElementById('misal-editor');
+  if (!ed) return;
+  ed.focus();
+  const sel = window.getSelection();
+  let el = sel?.rangeCount > 0 ? sel.getRangeAt(0).commonAncestorContainer : null;
+  if (el?.nodeType === 3) el = el.parentElement;
+  while (el && el !== ed && !['P','DIV','H1','H2','H3','LI','BLOCKQUOTE'].includes(el.tagName)) el = el.parentElement;
+  const target = (el && el !== ed) ? el : ed;
+  target.dir = dir;
+  target.style.textAlign = dir === 'rtl' ? 'right' : 'left';
 }
 
-async function generateOfficialDoc(docName){
-  const tplFile = OFFICIAL_TEMPLATES[docName];
-  if(!tplFile){ showToast('⚠️ No official template available for this document.','error'); return; }
-  const c = window._workspaceCase;
-  if(!c){ showToast('⚠️ Please open a case first.','error'); return; }
-  showToast('⏳ Generating official document…','info');
-  try{
-    await loadDocxLibs();
-    const resp = await fetch('templates/' + tplFile);
-    if(!resp.ok) throw new Error('Template not found at templates/'+tplFile+' (HTTP '+resp.status+'). Did you upload the templates folder?');
-    const buf = await resp.arrayBuffer();
-    const zip = new window.PizZip(buf);
-    const doc = new window.docxtemplater(zip, { paragraphLoop:true, linebreaks:true, nullGetter:()=>'' });
-    doc.render(buildOfficialDocData(c));
-    const blob = doc.getZip().generate({ type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-    const safeFir = (c.fir_number||'').replace(/[\/\\:*?"<>|]/g,'-');
-    const fname = docName.replace(/\s+/g,'_') + '_FIR_' + safeFir + '.docx';
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url), 2000);
-    showToast('✅ Official document downloaded — open it in Word/Google Docs to print.','success',5000);
-  }catch(err){
-    console.error('[Official Doc Error]', err);
-    showToast('❌ '+err.message,'error',7000);
+function _mLineSpacing(val) {
+  const ed = document.getElementById('misal-editor');
+  if (ed) ed.style.lineHeight = val;
+}
+
+const _mSizes = { a4:['210mm','297mm'], a3:['297mm','420mm'], legal:['216mm','356mm'], letter:['216mm','279mm'] };
+function _mPageSize(val) {
+  const ed = document.getElementById('misal-editor');
+  if (!ed) return;
+  const [w, h] = _mSizes[val] || _mSizes.a4;
+  ed.style.width = w; ed.style.minHeight = h;
+}
+function _mMargins(val) { const ed = document.getElementById('misal-editor'); if (ed) ed.style.padding = val; }
+let _mBorderOn = false;
+function _mToggleBorder() {
+  const ed = document.getElementById('misal-editor');
+  if (!ed) return;
+  _mBorderOn = !_mBorderOn;
+  ed.style.border = _mBorderOn ? '2px solid #333' : 'none';
+  const btn = document.getElementById('misal-border-btn');
+  if (btn) btn.style.color = _mBorderOn ? 'var(--accent)' : '';
+}
+
+// Table picker
+function _mToggleTablePicker() {
+  const p = document.getElementById('misal-table-picker');
+  if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+function _mHoverCell(r, c) {
+  document.querySelectorAll('#misal-table-picker .tgcell').forEach(el => {
+    const on = +el.dataset.r <= r && +el.dataset.c <= c;
+    el.classList.toggle('tg-on', on);
+    el.style.background = on ? 'rgba(56,189,248,0.3)' : '';
+    el.style.borderColor = on ? 'var(--accent)' : '#555';
+  });
+  const lbl = document.getElementById('misal-table-label');
+  if (lbl) lbl.textContent = r + ' rows × ' + c + ' cols';
+}
+function _mInsertTable(rows, cols) {
+  const p = document.getElementById('misal-table-picker');
+  if (p) p.style.display = 'none';
+  const ed = document.getElementById('misal-editor');
+  if (!ed) return;
+  ed.focus();
+  let html = '<table style="border-collapse:collapse;width:100%;margin:8px 0;"><tbody>';
+  for (let r = 0; r < rows; r++) {
+    html += '<tr>';
+    for (let c = 0; c < cols; c++)
+      html += '<td style="border:1px solid #999;padding:6px 10px;min-width:50px;min-height:22px;" contenteditable="true">&nbsp;</td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table><br>';
+  document.execCommand('insertHTML', false, html);
+}
+
+// ── SAVE ──────────────────────────────────────────────────────
+async function saveMisalDoc(docId) {
+  const editor = document.getElementById('misal-editor');
+  if (!editor) return;
+  const html = editor.innerHTML;
+  try {
+    const { error } = await supabaseClient
+      .from('case_documents')
+      .update({ content: { html }, updated_at: new Date().toISOString() })
+      .eq('case_id', _misalCaseId)
+      .eq('document_type', docId);
+    if (error) throw error;
+    if (_misalDocs[docId]) _misalDocs[docId].content = { html };
+    showToast('✅ دستاویز محفوظ ہو گئی', 'success');
+  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+async function markMisalComplete(docId) {
+  await saveMisalDoc(docId);
+  try {
+    await supabaseClient.from('case_documents')
+      .update({ status: 'complete' })
+      .eq('case_id', _misalCaseId)
+      .eq('document_type', docId);
+    if (_misalDocs[docId]) _misalDocs[docId].status = 'complete';
+    _refreshMisalBar();
+    showToast('✅ دستاویز مکمل ہو گئی', 'success');
+  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+// ── PRINT ─────────────────────────────────────────────────────
+function printMisalDoc(name) {
+  const el = document.getElementById('misal-editor');
+  if (!el) return;
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
+    <title>${name}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
+    <style>
+      @page{margin:15mm}
+      body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:15px;line-height:2;direction:rtl;text-align:right;color:#111;}
+      table{width:100%;border-collapse:collapse;}
+      td,th{border:1px solid #555;padding:6px 10px;}
+      @media print{body{margin:0}}
+    </style></head><body>${el.innerHTML}</body></html>`);
+  w.document.close();
+  setTimeout(() => { w.print(); }, 500);
+}
+
+// ── REFRESH BAR ───────────────────────────────────────────────
+function _refreshMisalBar() {
+  const bar = document.getElementById('misal-doc-bar');
+  if (!bar || !_misalCase) return;
+  const newBar = document.createElement('div');
+  newBar.innerHTML = renderMisalBar(_misalCase);
+  bar.replaceWith(newBar.firstElementChild);
+}
+
+// ── URDU VOICE INPUT ──────────────────────────────────────────
+let _voiceRecognition = null;
+let _voiceActive      = false;
+
+function toggleVoiceInput() {
+  if (_voiceActive) {
+    _stopVoice();
+  } else {
+    _startVoice();
   }
 }
 
+async function _startVoice() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    showToast('⚠️ آپ کا براؤزر آواز کو سپورٹ نہیں کرتا — Chrome استعمال کریں', 'error', 6000);
+    return;
+  }
+
+  const editor = document.getElementById('misal-editor') || document.getElementById('a4-paper');
+  if (!editor) { showToast('⚠️ پہلے دستاویز کھولیں', 'error'); return; }
+
+  // Explicitly request microphone permission first
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    // Permission granted — stop the stream immediately, SpeechRecognition handles its own
+    stream.getTracks().forEach(t => t.stop());
+  } catch(err) {
+    if (err.name === 'NotAllowedError') {
+      showToast('❌ مائیکروفون کی اجازت نہیں — براؤزر میں Allow کریں', 'error', 6000);
+    } else if (err.name === 'NotFoundError') {
+      showToast('❌ کوئی مائیکروفون نہیں ملا — مائیکروفون جوڑیں', 'error', 6000);
+    } else {
+      showToast('❌ مائیکروفون خرابی: ' + err.message, 'error', 6000);
+    }
+    return;
+  }
+
+  editor.focus();
+
+  _voiceRecognition = new SpeechRecognition();
+  _voiceRecognition.lang           = 'ur-PK';
+  _voiceRecognition.continuous     = true;
+  _voiceRecognition.interimResults = true;
+
+  _voiceRecognition.onstart = () => {
+    console.log('[Voice] Started — ur-PK');
+  };
+
+  _voiceRecognition.onresult = (event) => {
+    let interim = '';
+    let final   = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const t = event.results[i][0].transcript;
+      if (event.results[i].isFinal) { final += t + ' '; }
+      else { interim += t; }
+    }
+    if (final) _insertTextAtCursor(editor, final);
+    const badge = document.getElementById('voice-status');
+    if (badge) badge.textContent = interim ? `🎙️ ${interim}` : '🎙️ سن رہا ہے...';
+  };
+
+  _voiceRecognition.onerror = (e) => {
+    console.warn('[Voice] Error:', e.error);
+    const msgs = {
+      'not-allowed':  '❌ مائیکروفون کی اجازت نہیں',
+      'no-speech':    null, // ignore silence
+      'audio-capture':'❌ مائیکروفون نہیں ملا',
+      'network':      '❌ نیٹ ورک کی خرابی — آواز نہیں پہنچ رہی',
+      'aborted':      null,
+    };
+    const msg = msgs[e.error];
+    if (msg) { showToast(msg, 'error', 5000); _stopVoice(); }
+  };
+
+  _voiceRecognition.onend = () => {
+    if (_voiceActive) {
+      try { _voiceRecognition.start(); } catch(_) {}
+    }
+  };
+
+  try {
+    _voiceRecognition.start();
+    _voiceActive = true;
+  } catch(err) {
+    showToast('❌ آواز شروع نہیں ہو سکی: ' + err.message, 'error', 5000);
+    return;
+  }
+
+  const btn = document.getElementById('voice-btn');
+  if (btn) {
+    btn.style.background  = '#ef4444';
+    btn.style.color       = '#fff';
+    btn.style.borderColor = '#ef4444';
+    btn.textContent       = '⏹️ روکیں';
+  }
+
+  // Status bar
+  let badge = document.getElementById('voice-status');
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.id = 'voice-status';
+    badge.style.cssText = 'padding:6px 16px;background:#1a1a2e;border-bottom:2px solid #ef4444;font-size:13px;color:#ef4444;direction:rtl;text-align:right;font-family:\'Jameel Noori Nastaleeq\',serif;';
+    badge.textContent = '🎙️ سن رہا ہے... اردو میں بولیں';
+    const editorArea = document.getElementById('workspace-editor-area');
+    if (editorArea) editorArea.insertAdjacentElement('afterbegin', badge);
+  }
+
+  showToast('🎙️ اردو میں بولنا شروع کریں', 'success', 3000);
+}
+
+function _stopVoice() {
+  _voiceActive = false;
+  if (_voiceRecognition) { _voiceRecognition.stop(); _voiceRecognition = null; }
+
+  const btn = document.getElementById('voice-btn');
+  if (btn) {
+    btn.style.background  = '';
+    btn.style.color       = '';
+    btn.style.borderColor = '';
+    btn.textContent       = '🎙️ آواز';
+  }
+
+  const badge = document.getElementById('voice-status');
+  if (badge) badge.remove();
+
+  showToast('⏹️ آواز کی ریکارڈنگ بند', 'info', 2000);
+}
+
+// Insert text at the current cursor position in a contenteditable element
+function _insertTextAtCursor(el, text) {
+  el.focus();
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0) {
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+    const node = document.createTextNode(text);
+    range.insertNode(node);
+    // Move cursor to after inserted text
+    range.setStartAfter(node);
+    range.setEndAfter(node);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  } else {
+    // Fallback: append to end
+    el.textContent += text;
+  }
+}
+
+function getMisalTemplate(docId, c) {
+  const o   = currentOfficer || {};
+  const fir = c?.fir_number  || '________';
+  const dt  = c?.fir_date    || '________';
+  const sec = c?.section_of_law || '________';
+  const ofc = c?.offence_type   || '________';
+  const sta = o.station || c?.case_station || '________';
+  const dst = o.district|| c?.case_district|| '________';
+  const cmp = c?.complainant   || '________';
+  const cnic= c?.complainant_cnic||'________';
+  const cel = c?.complainant_cell||'________';
+  const ion = o.full_name      || '________';
+  const rnk = o.designation   || '________';
+  const bdg = o.badge_number  || '________';
+
+  const header = (title) => `
+    <div style="text-align:center;border-bottom:2px solid #333;padding-bottom:10px;margin-bottom:16px;">
+      <div style="font-size:18px;font-weight:bold;">پنجاب پولیس</div>
+      <div style="font-size:14px;">تھانہ ${sta} &nbsp;—&nbsp; ضلع ${dst}</div>
+      <div style="font-size:16px;font-weight:bold;margin-top:6px;">${title}</div>
+      <div style="font-size:12px;margin-top:4px;">مقدمہ نمبر: ${fir} &nbsp;|&nbsp; تاریخ: ${dt}</div>
+    </div>`;
+
+  const row = (label, val='') => `
+    <tr>
+      <td style="width:35%;font-weight:bold;background:#f5f5f5;">${label}</td>
+      <td>${val}</td>
+    </tr>`;
+
+  const table = (rows) => `<table style="width:100%;border-collapse:collapse;margin-bottom:12px;">${rows}</table>`;
+
+  const sig = `
+    <div style="margin-top:40px;display:flex;justify-content:space-between;">
+      <div style="text-align:center;">
+        <div>_______________________</div>
+        <div style="font-size:12px;">دستخط مدعی</div>
+      </div>
+      <div style="text-align:center;">
+        <div>_______________________</div>
+        <div style="font-size:12px;">${rnk} ${ion} (${bdg})</div>
+        <div style="font-size:12px;">تفتیشی افسر</div>
+      </div>
+    </div>`;
+
+  const templates = {
+
+    fir: `${header('ایف آئی آر — مقدمہ اول اطلاع')}
+      ${table(
+        row('مقدمہ نمبر', fir) +
+        row('تاریخ و وقت', dt) +
+        row('دفعات', sec) +
+        row('نوعیت جرم', ofc) +
+        row('تھانہ', sta) +
+        row('ضلع', dst) +
+        row('مدعی / شکایت کنندہ', cmp) +
+        row('شناختی کارڈ', cnic) +
+        row('رابطہ نمبر', cel)
+      )}
+      <div style="font-weight:bold;margin-bottom:6px;">بیان مدعی:</div>
+      <div style="min-height:120px;border:1px solid #ccc;padding:10px;border-radius:4px;" contenteditable="true">بیان یہاں درج کریں...</div>
+      <div style="font-weight:bold;margin:12px 0 6px;">اطلاع کردہ ملزمان:</div>
+      <div style="min-height:60px;border:1px solid #ccc;padding:10px;border-radius:4px;" contenteditable="true">ملزمان کے نام...</div>
+      ${sig}`,
+
+    report_173: `${header('رپورٹ ۱۷۳ ضابطہ فوجداری')}
+      <div style="margin-bottom:10px;">بخدمت جناب عدالت __________</div>
+      ${table(
+        row('مقدمہ نمبر', fir) +
+        row('دفعات', sec) +
+        row('تاریخ وقوعہ', c?.occurrence_date||'________') +
+        row('تھانہ', sta) +
+        row('مدعی', cmp)
+      )}
+      <div style="font-weight:bold;margin-bottom:6px;">تفتیش کا نتیجہ:</div>
+      <div style="min-height:80px;border:1px solid #ccc;padding:10px;border-radius:4px;" contenteditable="true">تفتیش کے نتیجے یہاں درج کریں...</div>
+      <div style="font-weight:bold;margin:12px 0 6px;">گواہان:</div>
+      <div style="min-height:60px;border:1px solid #ccc;padding:10px;border-radius:4px;" contenteditable="true">گواہان کی فہرست...</div>
+      <div style="font-weight:bold;margin:12px 0 6px;">ملزمان:</div>
+      <div style="min-height:60px;border:1px solid #ccc;padding:10px;border-radius:4px;" contenteditable="true">ملزمان کی فہرست...</div>
+      ${sig}`,
+
+    crime_scene: `${header('جائے واردات کا نقشہ و رپورٹ')}
+      ${table(
+        row('مقدمہ نمبر', fir) +
+        row('تاریخ وقوعہ', c?.occurrence_date||'________') +
+        row('مقام وقوعہ', '________') +
+        row('موسم و روشنی', '________')
+      )}
+      <div style="font-weight:bold;margin-bottom:6px;">جائے واردات کی تفصیل:</div>
+      <div style="min-height:100px;border:1px solid #ccc;padding:10px;border-radius:4px;" contenteditable="true">مقام وقوعہ کی تفصیل یہاں درج کریں...</div>
+      <div style="font-weight:bold;margin:12px 0 6px;">جائے واردات کا خاکہ / نقشہ:</div>
+      <div style="min-height:160px;border:2px dashed #ccc;padding:10px;border-radius:4px;text-align:center;color:#999;" contenteditable="true">نقشہ یہاں بنائیں یا تفصیل لکھیں</div>
+      <div style="font-weight:bold;margin:12px 0 6px;">موقع سے برآمد شدہ نشانات:</div>
+      <div style="min-height:60px;border:1px solid #ccc;padding:10px;border-radius:4px;" contenteditable="true">نشانات...</div>
+      ${sig}`,
+
+    named_accused: `${header('نامزد ملزمان')}
+      <div style="font-size:12px;margin-bottom:12px;">مقدمہ نمبر: ${fir} &nbsp;|&nbsp; دفعات: ${sec}</div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:12px;">
+        <thead><tr style="background:#333;color:#fff;">
+          <th style="padding:6px;border:1px solid #555;">نمبر</th>
+          <th style="padding:6px;border:1px solid #555;">نام</th>
+          <th style="padding:6px;border:1px solid #555;">ولدیت</th>
+          <th style="padding:6px;border:1px solid #555;">قوم / ذات</th>
+          <th style="padding:6px;border:1px solid #555;">پتہ</th>
+          <th style="padding:6px;border:1px solid #555;">شناختی کارڈ</th>
+          <th style="padding:6px;border:1px solid #555;">حالت</th>
+        </tr></thead>
+        <tbody>
+          ${[1,2,3,4,5].map(n=>`<tr>
+            <td style="border:1px solid #ccc;padding:6px;text-align:center;">${n}</td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true">زیر حراست / فرار</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      ${sig}`,
+
+    unknown_accused: `${header('نامعلوم ملزمان')}
+      <div style="font-size:12px;margin-bottom:12px;">مقدمہ نمبر: ${fir}</div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:12px;">
+        <thead><tr style="background:#333;color:#fff;">
+          <th style="padding:6px;border:1px solid #555;">نمبر</th>
+          <th style="padding:6px;border:1px solid #555;">حلیہ</th>
+          <th style="padding:6px;border:1px solid #555;">عمر (تخمینہ)</th>
+          <th style="padding:6px;border:1px solid #555;">قد</th>
+          <th style="padding:6px;border:1px solid #555;">خصوصی نشانات</th>
+          <th style="padding:6px;border:1px solid #555;">لباس</th>
+        </tr></thead>
+        <tbody>
+          ${[1,2,3].map(n=>`<tr>
+            <td style="border:1px solid #ccc;padding:6px;text-align:center;">${n}</td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      ${sig}`,
+
+    witnesses: `${header('گواہان')}
+      <div style="font-size:12px;margin-bottom:12px;">مقدمہ نمبر: ${fir}</div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:12px;">
+        <thead><tr style="background:#333;color:#fff;">
+          <th style="padding:6px;border:1px solid #555;">نمبر</th>
+          <th style="padding:6px;border:1px solid #555;">نام گواہ</th>
+          <th style="padding:6px;border:1px solid #555;">ولدیت</th>
+          <th style="padding:6px;border:1px solid #555;">پتہ</th>
+          <th style="padding:6px;border:1px solid #555;">رابطہ</th>
+          <th style="padding:6px;border:1px solid #555;">قسم گواہ</th>
+        </tr></thead>
+        <tbody>
+          ${[1,2,3,4,5].map(n=>`<tr>
+            <td style="border:1px solid #ccc;padding:6px;text-align:center;">${n}</td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true">چشم دید / سماعتی</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      ${sig}`,
+
+    stolen: `${header('مسروقہ مال')}
+      ${table(row('مقدمہ نمبر', fir) + row('تاریخ', dt))}
+      <table style="width:100%;border-collapse:collapse;margin-bottom:12px;">
+        <thead><tr style="background:#333;color:#fff;">
+          <th style="padding:6px;border:1px solid #555;">نمبر</th>
+          <th style="padding:6px;border:1px solid #555;">مال کی تفصیل</th>
+          <th style="padding:6px;border:1px solid #555;">تعداد</th>
+          <th style="padding:6px;border:1px solid #555;">مالیت</th>
+          <th style="padding:6px;border:1px solid #555;">مالک</th>
+          <th style="padding:6px;border:1px solid #555;">نشانِ خاص</th>
+        </tr></thead>
+        <tbody>
+          ${[1,2,3,4,5].map(n=>`<tr>
+            <td style="border:1px solid #ccc;padding:6px;text-align:center;">${n}</td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      ${sig}`,
+
+    recovery: `${header('برآمدگی مال')}
+      ${table(row('مقدمہ نمبر', fir) + row('تاریخ برآمدگی', '________') + row('مقام برآمدگی', '________'))}
+      <table style="width:100%;border-collapse:collapse;margin-bottom:12px;">
+        <thead><tr style="background:#333;color:#fff;">
+          <th style="padding:6px;border:1px solid #555;">نمبر</th>
+          <th style="padding:6px;border:1px solid #555;">برآمد شدہ مال</th>
+          <th style="padding:6px;border:1px solid #555;">تعداد</th>
+          <th style="padding:6px;border:1px solid #555;">مالیت</th>
+          <th style="padding:6px;border:1px solid #555;">برآمد از</th>
+          <th style="padding:6px;border:1px solid #555;">حالت</th>
+        </tr></thead>
+        <tbody>
+          ${[1,2,3,4].map(n=>`<tr>
+            <td style="border:1px solid #ccc;padding:6px;text-align:center;">${n}</td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      ${sig}`,
+
+    court_dates: `${header('عدالت میں ساعت کی تاریخیں')}
+      ${table(row('مقدمہ نمبر', fir) + row('عدالت', '________') + row('جج صاحب', '________'))}
+      <table style="width:100%;border-collapse:collapse;margin-bottom:12px;">
+        <thead><tr style="background:#333;color:#fff;">
+          <th style="padding:6px;border:1px solid #555;">تاریخ</th>
+          <th style="padding:6px;border:1px solid #555;">کارروائی</th>
+          <th style="padding:6px;border:1px solid #555;">اگلی تاریخ</th>
+          <th style="padding:6px;border:1px solid #555;">نوٹ</th>
+        </tr></thead>
+        <tbody>
+          ${[1,2,3,4,5,6,7,8].map(()=>`<tr>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      ${sig}`,
+
+    inv_result: `${header('نتیجہ تفتیش')}
+      ${table(
+        row('مقدمہ نمبر', fir) +
+        row('دفعات', sec) +
+        row('تھانہ', sta) +
+        row('تفتیشی افسر', `${rnk} ${ion} (${bdg})`)
+      )}
+      <div style="font-weight:bold;margin-bottom:6px;">تفتیش کا خلاصہ:</div>
+      <div style="min-height:100px;border:1px solid #ccc;padding:10px;border-radius:4px;" contenteditable="true">تفتیش کا خلاصہ یہاں درج کریں...</div>
+      <div style="font-weight:bold;margin:12px 0 6px;">نتیجہ:</div>
+      <div style="border:1px solid #ccc;padding:10px;border-radius:4px;">
+        <label style="display:block;margin-bottom:6px;"><input type="radio" name="result"> چالان پیش کیا جائے</label>
+        <label style="display:block;margin-bottom:6px;"><input type="radio" name="result"> رپورٹ ۱۷۳ — ملزم فرار</label>
+        <label style="display:block;margin-bottom:6px;"><input type="radio" name="result"> کینسل</label>
+        <label style="display:block;"><input type="radio" name="result"> عدم پتہ</label>
+      </div>
+      ${sig}`,
+
+    checklist: `${header('وقوعہ کی چیک لسٹ')}
+      ${table(row('مقدمہ نمبر', fir) + row('دفعات', sec))}
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr style="background:#333;color:#fff;">
+          <th style="padding:6px;border:1px solid #555;">نمبر</th>
+          <th style="padding:6px;border:1px solid #555;">دستاویز / کارروائی</th>
+          <th style="padding:6px;border:1px solid #555;">مکمل</th>
+          <th style="padding:6px;border:1px solid #555;">تاریخ</th>
+          <th style="padding:6px;border:1px solid #555;">نوٹ</th>
+        </tr></thead>
+        <tbody>
+          ${[
+            'ایف آئی آر رجسٹریشن',
+            'جائے واردات کا معائنہ',
+            'ملزم کی گرفتاری',
+            'برآمدگی',
+            'طبی معائنہ',
+            'فرانزک نمونے',
+            'گواہان کے بیانات',
+            'فوٹوگرافی',
+            'خاکہ جائے واردات',
+            'رپورٹ ۱۷۳ جمع',
+          ].map((item,i)=>`<tr>
+            <td style="border:1px solid #ccc;padding:6px;text-align:center;">${i+1}</td>
+            <td style="border:1px solid #ccc;padding:6px;">${item}</td>
+            <td style="border:1px solid #ccc;padding:6px;text-align:center;"><input type="checkbox"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+            <td style="border:1px solid #ccc;padding:6px;" contenteditable="true"></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      ${sig}`,
+
+  };
+
+  // Generic template for remaining document types
+  const generic = `${header(CASE_DOCS.find(d=>d.id===docId)?.name||docId)}
+    ${table(row('مقدمہ نمبر', fir) + row('تاریخ', dt) + row('دفعات', sec) + row('تھانہ', sta))}
+    <div style="font-weight:bold;margin-bottom:6px;">تفصیل:</div>
+    <div style="min-height:200px;border:1px solid #ccc;padding:12px;border-radius:4px;" contenteditable="true">
+      یہاں تفصیل درج کریں...
+    </div>
+    ${sig}`;
+
+  return templates[docId] || generic;
+}
