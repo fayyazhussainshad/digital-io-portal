@@ -5,7 +5,7 @@
    ═══════════════════════════════════════════════════════════ */
 
 // ── ALL 33 OFFICIAL DOCUMENTS ────────────────────────────────
-const CASE_DOCS = [
+const MISAL_CASE_DOCS = [
   { id:'fir',              name:'ایف آئی آر',                              desc:'First Information Report' },
   { id:'cross',            name:'کراس ورش',                                desc:'Cross Verification' },
   { id:'position',         name:'پوزیشن مقدمہ',                            desc:'Case Position' },
@@ -46,7 +46,7 @@ async function loadMisalDocs(caseId) {
 // ── RENDER DOCUMENT BAR ───────────────────────────────────────
 function renderMisalBar(c) {
   _misalCase = c;
-  const items = CASE_DOCS.map(d => {
+  const items = MISAL_CASE_DOCS.map(d => {
     const saved = _misalDocs[d.id];
     const done  = saved?.status === 'complete';
     const added = !!saved;
@@ -91,7 +91,7 @@ function renderMisalBar(c) {
 
 // ── CONFIRMATION: ADD ─────────────────────────────────────────
 function confirmAddMisalDoc(docId) {
-  const def = CASE_DOCS.find(d => d.id === docId);
+  const def = MISAL_CASE_DOCS.find(d => d.id === docId);
   if (!def) return;
   openModal('دستاویز شامل کریں',
     `<div style="text-align:right;direction:rtl;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:16px;line-height:2;">
@@ -106,7 +106,7 @@ function confirmAddMisalDoc(docId) {
 
 // ── CONFIRMATION: REMOVE ──────────────────────────────────────
 function confirmRemoveMisalDoc(docId) {
-  const def = CASE_DOCS.find(d => d.id === docId);
+  const def = MISAL_CASE_DOCS.find(d => d.id === docId);
   if (!def) return;
   const saved = _misalDocs[docId];
   openModal('دستاویز ہٹائیں یا کھولیں',
@@ -123,7 +123,7 @@ function confirmRemoveMisalDoc(docId) {
 
 // ── ADD TO CASE ───────────────────────────────────────────────
 async function _doAddMisalDoc(docId) {
-  const def = CASE_DOCS.find(d => d.id === docId);
+  const def = MISAL_CASE_DOCS.find(d => d.id === docId);
   if (!def || !_misalCaseId) return;
   try {
     const oid = await getOfficerId();
@@ -142,7 +142,7 @@ async function _doAddMisalDoc(docId) {
 
 // ── REMOVE FROM CASE ──────────────────────────────────────────
 async function _doRemoveMisalDoc(docId) {
-  const def = CASE_DOCS.find(d => d.id === docId);
+  const def = MISAL_CASE_DOCS.find(d => d.id === docId);
   if (!def || !_misalCaseId) return;
   try {
     await supabaseClient.from('case_documents')
@@ -166,7 +166,7 @@ async function _doRemoveMisalDoc(docId) {
 
 // ── OPEN EDITOR ───────────────────────────────────────────────
 function _openMisalEditor(docId) {
-  const def = CASE_DOCS.find(d => d.id === docId);
+  const def = MISAL_CASE_DOCS.find(d => d.id === docId);
   if (!def) return;
   _openDocId = docId;
 
@@ -193,7 +193,7 @@ function _openMisalEditor(docId) {
 
 // ── SIDEBAR: list of added documents ─────────────────────────
 function renderMisalDocSidebar() {
-  const added = CASE_DOCS.filter(d => _misalDocs[d.id]);
+  const added = MISAL_CASE_DOCS.filter(d => _misalDocs[d.id]);
   if (!added.length) return `
     <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px;line-height:1.8;">
       <div style="font-size:28px;margin-bottom:8px;">📂</div>
@@ -234,25 +234,95 @@ function _renderMisalEditor(docId, def) {
 
   area.innerHTML = `
   <div style="display:flex;flex-direction:column;height:100%;">
-    <!-- Toolbar -->
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg-secondary);border-bottom:1px solid var(--border);flex-wrap:wrap;">
-      <span style="font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;font-weight:700;color:var(--accent);direction:rtl;flex:1;">${def.name}</span>
-      <select onchange="document.getElementById('misal-editor').style.fontFamily=this.value" style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:4px;padding:4px 8px;color:var(--text-secondary);font-size:11px;">
+
+    <!-- ── TOOLBAR ROW 1: History · Font · Style · Color ── -->
+    <div style="display:flex;align-items:center;gap:2px;padding:5px 8px;background:var(--bg-secondary);border-bottom:1px solid var(--border);flex-wrap:wrap;">
+      <span style="font-family:'Jameel Noori Nastaleeq',serif;font-size:13px;font-weight:700;color:var(--accent);direction:rtl;margin-left:4px;margin-right:8px;">${def.name}</span>
+      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
+      <!-- Undo / Redo -->
+      <button class="mbtb" onclick="_mExec('undo')" title="Undo">↩</button>
+      <button class="mbtb" onclick="_mExec('redo')" title="Redo">↪</button>
+      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
+      <!-- Font Family -->
+      <select class="mssel" onchange="_mFontFamily(this.value)" title="Font Family" style="width:175px;">
         <option value="'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif" selected>Jameel Noori Nastaleeq</option>
         <option value="'Noto Nastaliq Urdu',serif">Noto Nastaliq Urdu</option>
+        <option value="'Arial',sans-serif">Arial</option>
         <option value="'Times New Roman',serif">Times New Roman</option>
+        <option value="'Georgia',serif">Georgia</option>
+        <option value="'Courier New',monospace">Courier New</option>
       </select>
-      <select onchange="document.getElementById('misal-editor').style.fontSize=this.value+'px'" style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:4px;padding:4px 8px;color:var(--text-secondary);font-size:11px;">
-        <option value="13">13px</option>
-        <option value="15" selected>15px</option>
-        <option value="17">17px</option>
-        <option value="20">20px</option>
+      <!-- Font Size -->
+      <select class="mssel" onchange="_mFontSize(this.value)" title="Font Size" style="width:54px;">
+        ${[8,9,10,11,12,14,15,16,18,20,22,24,28,32,36,48,72].map(s=>'<option value="'+s+'"'+(s===15?' selected':'')+'>'+s+'</option>').join('')}
       </select>
-      <button class="btn btn-secondary btn-sm" onclick="saveMisalDoc('${docId}')">💾 محفوظ کریں</button>
-      <button class="btn btn-secondary btn-sm" onclick="markMisalComplete('${docId}')">✅ مکمل</button>
-      <button class="btn btn-secondary btn-sm" id="voice-btn" onclick="toggleVoiceInput()" title="Urdu Voice Input">🎙️ آواز</button>
-      <button class="btn btn-secondary btn-sm" onclick="printMisalDoc('${def.name}')">🖨️ پرنٹ</button>
+      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
+      <!-- Style -->
+      <button class="mbtb" onclick="_mExec('bold')" title="Bold"><b>B</b></button>
+      <button class="mbtb" onclick="_mExec('italic')" title="Italic"><i>I</i></button>
+      <button class="mbtb" onclick="_mExec('underline')" title="Underline" style="text-decoration:underline;">U</button>
+      <button class="mbtb" onclick="_mExec('strikeThrough')" title="Strikethrough" style="text-decoration:line-through;">S</button>
+      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
+      <!-- Colours -->
+      <label class="mbtb" title="Text Colour" style="cursor:pointer;display:flex;align-items:center;gap:2px;">A<input type="color" value="#111111" oninput="_mExec('foreColor',this.value)" style="width:16px;height:14px;padding:0;border:none;cursor:pointer;"></label>
+      <label class="mbtb" title="Highlight" style="cursor:pointer;display:flex;align-items:center;gap:2px;">🖊<input type="color" value="#ffff00" oninput="_mExec('hiliteColor',this.value)" style="width:16px;height:14px;padding:0;border:none;cursor:pointer;"></label>
+      <div style="flex:1;"></div>
+      <!-- Save / Complete / Print on same row, right-aligned -->
+      <button class="mbtb mbtb-accent" onclick="saveMisalDoc('${docId}')" title="Save">💾 محفوظ</button>
+      <button class="mbtb mbtb-green" onclick="markMisalComplete('${docId}')" title="Complete">✅ مکمل</button>
+      <button class="mbtb" onclick="printMisalDoc('${def.name}')" title="Print">🖨️</button>
     </div>
+
+    <!-- ── TOOLBAR ROW 2: Align · Direction · Lists · Table · Page · Voice ── -->
+    <div style="display:flex;align-items:center;gap:2px;padding:4px 8px;background:var(--bg-secondary);border-bottom:2px solid var(--border);flex-wrap:wrap;">
+      <!-- Alignment -->
+      <button class="mbtb" onclick="_mExec('justifyRight')" title="Align Right">⇥</button>
+      <button class="mbtb" onclick="_mExec('justifyCenter')" title="Centre">≡</button>
+      <button class="mbtb" onclick="_mExec('justifyLeft')" title="Align Left">⇤</button>
+      <button class="mbtb" onclick="_mExec('justifyFull')" title="Justify">⬛</button>
+      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
+      <!-- Direction -->
+      <button class="mbtb" onclick="_mDir('rtl')" title="Right to Left (Urdu)">RTL ←</button>
+      <button class="mbtb" onclick="_mDir('ltr')" title="Left to Right (English)">→ LTR</button>
+      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
+      <!-- Lists & Indent -->
+      <button class="mbtb" onclick="_mExec('insertUnorderedList')" title="Bullet List">• ≡</button>
+      <button class="mbtb" onclick="_mExec('insertOrderedList')" title="Numbered List">1 ≡</button>
+      <button class="mbtb" onclick="_mExec('indent')" title="Indent">→|</button>
+      <button class="mbtb" onclick="_mExec('outdent')" title="Outdent">|←</button>
+      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
+      <!-- Insert Table -->
+      <div style="position:relative;">
+        <button class="mbtb" onclick="_mToggleTablePicker()" title="Insert Table">⊞ Table</button>
+        <div id="misal-table-picker" style="display:none;position:absolute;top:100%;left:0;z-index:9999;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:8px;box-shadow:0 4px 20px rgba(0,0,0,0.4);">
+          <div style="font-size:10px;color:var(--text-muted);margin-bottom:5px;text-align:center;" id="misal-table-label">rows × cols</div>
+          <div style="display:grid;grid-template-columns:repeat(8,20px);gap:2px;">
+            ${Array.from({length:64},(_,i)=>{const r=Math.floor(i/8)+1,cc=(i%8)+1;return'<div class="tgcell" data-r="'+r+'" data-c="'+cc+'" onmouseover="_mHoverCell('+r+','+cc+')" onclick="_mInsertTable('+r+','+cc+')" style="width:20px;height:20px;border:1px solid #555;border-radius:2px;cursor:pointer;"></div>';}).join('')}
+          </div>
+        </div>
+      </div>
+      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
+      <!-- Line Spacing -->
+      <select class="mssel" onchange="_mLineSpacing(this.value)" title="Line Spacing" style="width:68px;">
+        <option value="1.2">≡ 1.2</option><option value="1.5">≡ 1.5</option>
+        <option value="2" selected>≡ 2.0</option><option value="2.5">≡ 2.5</option><option value="3">≡ 3.0</option>
+      </select>
+      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
+      <!-- Page Layout -->
+      <select class="mssel" onchange="_mPageSize(this.value)" title="Page Size" style="width:68px;">
+        <option value="a4" selected>A4</option><option value="a3">A3</option>
+        <option value="legal">Legal</option><option value="letter">Letter</option>
+      </select>
+      <select class="mssel" onchange="_mMargins(this.value)" title="Margins" style="width:78px;">
+        <option value="20mm" selected>Normal</option><option value="12mm">Narrow</option>
+        <option value="38mm">Wide</option><option value="25mm">Moderate</option>
+      </select>
+      <button class="mbtb" id="misal-border-btn" onclick="_mToggleBorder()" title="Page Border">☐ Border</button>
+      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
+      <!-- Voice -->
+      <button class="mbtb mbtb-voice" id="voice-btn" onclick="toggleVoiceInput()" title="Urdu Voice Input">🎙️ آواز</button>
+    </div>
+
     <!-- A4 Editor -->
     <div style="flex:1;overflow-y:auto;padding:20px;background:var(--bg-tertiary);">
       <div id="misal-editor" contenteditable="true" spellcheck="false" style="
@@ -266,7 +336,117 @@ function _renderMisalEditor(docId, def) {
         border-radius:4px;outline:none;
       ">${content}</div>
     </div>
-  </div>`;
+  </div>
+
+  <style>
+    .mbtb{padding:3px 8px;border:1px solid transparent;border-radius:4px;background:none;
+          color:var(--text-secondary);cursor:pointer;font-size:12px;white-space:nowrap;
+          line-height:1.4;transition:all 0.1s;}
+    .mbtb:hover{background:var(--bg-tertiary);border-color:var(--border);color:var(--text-primary);}
+    .mbtb-accent{background:rgba(56,189,248,0.12);color:var(--accent);border-color:var(--accent);}
+    .mbtb-green{background:rgba(34,197,94,0.12);color:var(--green);border-color:var(--green);}
+    .mbtb-voice{color:var(--accent);}
+    .mssel{padding:3px 5px;border:1px solid var(--border);border-radius:4px;
+           background:var(--bg-tertiary);color:var(--text-secondary);font-size:11px;cursor:pointer;}
+    .tgcell:hover,.tgcell.tg-on{background:rgba(56,189,248,0.3)!important;border-color:var(--accent)!important;}
+  </style>`;
+}
+
+// ── MISAL TOOLBAR HELPERS ─────────────────────────────────────
+function _mExec(cmd, val) {
+  const ed = document.getElementById('misal-editor');
+  if (!ed) return;
+  ed.focus();
+  document.execCommand(cmd, false, val || null);
+}
+
+function _mFontFamily(val) {
+  const ed = document.getElementById('misal-editor');
+  if (!ed) return;
+  // Apply to whole editor (global font)
+  ed.style.fontFamily = val;
+}
+
+function _mFontSize(px) {
+  const ed = document.getElementById('misal-editor');
+  if (!ed) return;
+  ed.focus();
+  // Use execCommand fontSize trick then restyle
+  document.execCommand('fontSize', false, '7');
+  ed.querySelectorAll('font[size="7"]').forEach(el => {
+    el.removeAttribute('size');
+    el.style.fontSize = px + 'px';
+  });
+  // If nothing selected, just change editor default
+  if (!window.getSelection()?.toString()) ed.style.fontSize = px + 'px';
+}
+
+function _mDir(dir) {
+  const ed = document.getElementById('misal-editor');
+  if (!ed) return;
+  ed.focus();
+  const sel = window.getSelection();
+  let el = sel?.rangeCount > 0 ? sel.getRangeAt(0).commonAncestorContainer : null;
+  if (el?.nodeType === 3) el = el.parentElement;
+  while (el && el !== ed && !['P','DIV','H1','H2','H3','LI','BLOCKQUOTE'].includes(el.tagName)) el = el.parentElement;
+  const target = (el && el !== ed) ? el : ed;
+  target.dir = dir;
+  target.style.textAlign = dir === 'rtl' ? 'right' : 'left';
+}
+
+function _mLineSpacing(val) {
+  const ed = document.getElementById('misal-editor');
+  if (ed) ed.style.lineHeight = val;
+}
+
+const _mSizes = { a4:['210mm','297mm'], a3:['297mm','420mm'], legal:['216mm','356mm'], letter:['216mm','279mm'] };
+function _mPageSize(val) {
+  const ed = document.getElementById('misal-editor');
+  if (!ed) return;
+  const [w, h] = _mSizes[val] || _mSizes.a4;
+  ed.style.width = w; ed.style.minHeight = h;
+}
+function _mMargins(val) { const ed = document.getElementById('misal-editor'); if (ed) ed.style.padding = val; }
+let _mBorderOn = false;
+function _mToggleBorder() {
+  const ed = document.getElementById('misal-editor');
+  if (!ed) return;
+  _mBorderOn = !_mBorderOn;
+  ed.style.border = _mBorderOn ? '2px solid #333' : 'none';
+  const btn = document.getElementById('misal-border-btn');
+  if (btn) btn.style.color = _mBorderOn ? 'var(--accent)' : '';
+}
+
+// Table picker
+function _mToggleTablePicker() {
+  const p = document.getElementById('misal-table-picker');
+  if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+function _mHoverCell(r, c) {
+  document.querySelectorAll('#misal-table-picker .tgcell').forEach(el => {
+    const on = +el.dataset.r <= r && +el.dataset.c <= c;
+    el.classList.toggle('tg-on', on);
+    el.style.background = on ? 'rgba(56,189,248,0.3)' : '';
+    el.style.borderColor = on ? 'var(--accent)' : '#555';
+  });
+  const lbl = document.getElementById('misal-table-label');
+  if (lbl) lbl.textContent = r + ' rows × ' + c + ' cols';
+}
+function _mInsertTable(rows, cols) {
+  const p = document.getElementById('misal-table-picker');
+  if (p) p.style.display = 'none';
+  const ed = document.getElementById('misal-editor');
+  if (!ed) return;
+  ed.focus();
+  let html = '<table style="border-collapse:collapse;width:100%;margin:8px 0;"><tbody>';
+  for (let r = 0; r < rows; r++) {
+    html += '<tr>';
+    for (let c = 0; c < cols; c++)
+      html += '<td style="border:1px solid #999;padding:6px 10px;min-width:50px;min-height:22px;" contenteditable="true">&nbsp;</td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table><br>';
+  document.execCommand('insertHTML', false, html);
 }
 
 // ── SAVE ──────────────────────────────────────────────────────
@@ -346,7 +526,7 @@ async function _startVoice() {
     return;
   }
 
-  const editor = document.getElementById('misal-editor');
+  const editor = document.getElementById('misal-editor') || document.getElementById('a4-paper');
   if (!editor) { showToast('⚠️ پہلے دستاویز کھولیں', 'error'); return; }
 
   // Explicitly request microphone permission first
@@ -768,7 +948,7 @@ function getMisalTemplate(docId, c) {
   };
 
   // Generic template for remaining document types
-  const generic = `${header(CASE_DOCS.find(d=>d.id===docId)?.name||docId)}
+  const generic = `${header(MISAL_CASE_DOCS.find(d=>d.id===docId)?.name||docId)}
     ${table(row('مقدمہ نمبر', fir) + row('تاریخ', dt) + row('دفعات', sec) + row('تھانہ', sta))}
     <div style="font-weight:bold;margin-bottom:6px;">تفصیل:</div>
     <div style="min-height:200px;border:1px solid #ccc;padding:12px;border-radius:4px;" contenteditable="true">
