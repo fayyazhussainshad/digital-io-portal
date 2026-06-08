@@ -5,7 +5,7 @@
    ═══════════════════════════════════════════════════════════ */
 
 // ── ALL 33 OFFICIAL DOCUMENTS ────────────────────────────────
-const MISAL_CASE_DOCS = [
+const CASE_DOCS = [
   { id:'fir',              name:'ایف آئی آر',                              desc:'First Information Report' },
   { id:'cross',            name:'کراس ورش',                                desc:'Cross Verification' },
   { id:'position',         name:'پوزیشن مقدمہ',                            desc:'Case Position' },
@@ -46,7 +46,7 @@ async function loadMisalDocs(caseId) {
 // ── RENDER DOCUMENT BAR ───────────────────────────────────────
 function renderMisalBar(c) {
   _misalCase = c;
-  const items = MISAL_CASE_DOCS.map(d => {
+  const items = CASE_DOCS.map(d => {
     const saved = _misalDocs[d.id];
     const done  = saved?.status === 'complete';
     const added = !!saved;
@@ -91,7 +91,7 @@ function renderMisalBar(c) {
 
 // ── CONFIRMATION: ADD ─────────────────────────────────────────
 function confirmAddMisalDoc(docId) {
-  const def = MISAL_CASE_DOCS.find(d => d.id === docId);
+  const def = CASE_DOCS.find(d => d.id === docId);
   if (!def) return;
   openModal('دستاویز شامل کریں',
     `<div style="text-align:right;direction:rtl;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:16px;line-height:2;">
@@ -106,7 +106,7 @@ function confirmAddMisalDoc(docId) {
 
 // ── CONFIRMATION: REMOVE ──────────────────────────────────────
 function confirmRemoveMisalDoc(docId) {
-  const def = MISAL_CASE_DOCS.find(d => d.id === docId);
+  const def = CASE_DOCS.find(d => d.id === docId);
   if (!def) return;
   const saved = _misalDocs[docId];
   openModal('دستاویز ہٹائیں یا کھولیں',
@@ -123,7 +123,7 @@ function confirmRemoveMisalDoc(docId) {
 
 // ── ADD TO CASE ───────────────────────────────────────────────
 async function _doAddMisalDoc(docId) {
-  const def = MISAL_CASE_DOCS.find(d => d.id === docId);
+  const def = CASE_DOCS.find(d => d.id === docId);
   if (!def || !_misalCaseId) return;
   try {
     const oid = await getOfficerId();
@@ -142,7 +142,7 @@ async function _doAddMisalDoc(docId) {
 
 // ── REMOVE FROM CASE ──────────────────────────────────────────
 async function _doRemoveMisalDoc(docId) {
-  const def = MISAL_CASE_DOCS.find(d => d.id === docId);
+  const def = CASE_DOCS.find(d => d.id === docId);
   if (!def || !_misalCaseId) return;
   try {
     await supabaseClient.from('case_documents')
@@ -166,7 +166,7 @@ async function _doRemoveMisalDoc(docId) {
 
 // ── OPEN EDITOR ───────────────────────────────────────────────
 function _openMisalEditor(docId) {
-  const def = MISAL_CASE_DOCS.find(d => d.id === docId);
+  const def = CASE_DOCS.find(d => d.id === docId);
   if (!def) return;
   _openDocId = docId;
 
@@ -193,7 +193,7 @@ function _openMisalEditor(docId) {
 
 // ── SIDEBAR: list of added documents ─────────────────────────
 function renderMisalDocSidebar() {
-  const added = MISAL_CASE_DOCS.filter(d => _misalDocs[d.id]);
+  const added = CASE_DOCS.filter(d => _misalDocs[d.id]);
   if (!added.length) return `
     <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px;line-height:1.8;">
       <div style="font-size:28px;margin-bottom:8px;">📂</div>
@@ -948,7 +948,7 @@ function getMisalTemplate(docId, c) {
   };
 
   // Generic template for remaining document types
-  const generic = `${header(MISAL_CASE_DOCS.find(d=>d.id===docId)?.name||docId)}
+  const generic = `${header(CASE_DOCS.find(d=>d.id===docId)?.name||docId)}
     ${table(row('مقدمہ نمبر', fir) + row('تاریخ', dt) + row('دفعات', sec) + row('تھانہ', sta))}
     <div style="font-weight:bold;margin-bottom:6px;">تفصیل:</div>
     <div style="min-height:200px;border:1px solid #ccc;padding:12px;border-radius:4px;" contenteditable="true">
