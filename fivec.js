@@ -332,8 +332,9 @@ async function open5CResponse(id){
     ${sep}
     <!-- Voice -->
     <button class="r5b" id="voice-btn" onclick="toggleVoiceInput()" title="Urdu Voice Input" style="color:#38bdf8;">🎙️ آواز</button>
+  </div>
   <!-- Document area -->
-  <div style="flex:1;overflow:auto;padding:28px 20px;background:#525659;">
+  <div style="flex:1;overflow:auto;padding:28px 20px;background:#525659;display:flex;justify-content:center;align-items:flex-start;direction:ltr;">
     <div id="a4-paper" contenteditable="true" spellcheck="false"
       style="background:white;color:#111;width:210mm;min-height:297mm;max-width:100%;margin:0 auto;
              padding:20mm 18mm 20mm 15mm;
