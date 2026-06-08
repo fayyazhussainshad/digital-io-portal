@@ -232,124 +232,38 @@ function _renderMisalEditor(docId, def) {
   const saved   = _misalDocs[docId];
   const content = saved?.content?.html || getMisalTemplate(docId, _misalCase);
 
-  area.innerHTML = `
-  <div style="display:flex;flex-direction:column;height:100%;">
-
-    <!-- ── TOOLBAR ROW 1: History · Font · Style · Color ── -->
-    <div style="display:flex;align-items:center;gap:2px;padding:5px 8px;background:var(--bg-secondary);border-bottom:1px solid var(--border);flex-wrap:wrap;">
-      <span style="font-family:'Jameel Noori Nastaleeq',serif;font-size:13px;font-weight:700;color:var(--accent);direction:rtl;margin-left:4px;margin-right:8px;">${def.name}</span>
-      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
-      <!-- Undo / Redo -->
-      <button class="mbtb" onclick="_mExec('undo')" title="Undo">↩</button>
-      <button class="mbtb" onclick="_mExec('redo')" title="Redo">↪</button>
-      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
-      <!-- Font Family -->
-      <select class="mssel" onchange="_mFontFamily(this.value)" title="Font Family" style="width:175px;">
-        <option value="'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif" selected>Jameel Noori Nastaleeq</option>
-        <option value="'Noto Nastaliq Urdu',serif">Noto Nastaliq Urdu</option>
-        <option value="'Arial',sans-serif">Arial</option>
-        <option value="'Times New Roman',serif">Times New Roman</option>
-        <option value="'Georgia',serif">Georgia</option>
-        <option value="'Courier New',monospace">Courier New</option>
-      </select>
-      <!-- Font Size -->
-      <select class="mssel" onchange="_mFontSize(this.value)" title="Font Size" style="width:54px;">
-        ${[8,9,10,11,12,14,15,16,18,20,22,24,28,32,36,48,72].map(s=>'<option value="'+s+'"'+(s===15?' selected':'')+'>'+s+'</option>').join('')}
-      </select>
-      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
-      <!-- Style -->
-      <button class="mbtb" onclick="_mExec('bold')" title="Bold"><b>B</b></button>
-      <button class="mbtb" onclick="_mExec('italic')" title="Italic"><i>I</i></button>
-      <button class="mbtb" onclick="_mExec('underline')" title="Underline" style="text-decoration:underline;">U</button>
-      <button class="mbtb" onclick="_mExec('strikeThrough')" title="Strikethrough" style="text-decoration:line-through;">S</button>
-      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
-      <!-- Colours -->
-      <label class="mbtb" title="Text Colour" style="cursor:pointer;display:flex;align-items:center;gap:2px;">A<input type="color" value="#111111" oninput="_mExec('foreColor',this.value)" style="width:16px;height:14px;padding:0;border:none;cursor:pointer;"></label>
-      <label class="mbtb" title="Highlight" style="cursor:pointer;display:flex;align-items:center;gap:2px;">🖊<input type="color" value="#ffff00" oninput="_mExec('hiliteColor',this.value)" style="width:16px;height:14px;padding:0;border:none;cursor:pointer;"></label>
-      <div style="flex:1;"></div>
-      <!-- Save / Complete / Print on same row, right-aligned -->
-      <button class="mbtb mbtb-accent" onclick="saveMisalDoc('${docId}')" title="Save">💾 محفوظ</button>
-      <button class="mbtb mbtb-green" onclick="markMisalComplete('${docId}')" title="Complete">✅ مکمل</button>
-      <button class="mbtb" onclick="printMisalDoc('${def.name}')" title="Print">🖨️</button>
-    </div>
-
-    <!-- ── TOOLBAR ROW 2: Align · Direction · Lists · Table · Page · Voice ── -->
-    <div style="display:flex;align-items:center;gap:2px;padding:4px 8px;background:var(--bg-secondary);border-bottom:2px solid var(--border);flex-wrap:wrap;">
-      <!-- Alignment -->
-      <button class="mbtb" onclick="_mExec('justifyRight')" title="Align Right">⇥</button>
-      <button class="mbtb" onclick="_mExec('justifyCenter')" title="Centre">≡</button>
-      <button class="mbtb" onclick="_mExec('justifyLeft')" title="Align Left">⇤</button>
-      <button class="mbtb" onclick="_mExec('justifyFull')" title="Justify">⬛</button>
-      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
-      <!-- Direction -->
-      <button class="mbtb" onclick="_mDir('rtl')" title="Right to Left (Urdu)">RTL ←</button>
-      <button class="mbtb" onclick="_mDir('ltr')" title="Left to Right (English)">→ LTR</button>
-      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
-      <!-- Lists & Indent -->
-      <button class="mbtb" onclick="_mExec('insertUnorderedList')" title="Bullet List">• ≡</button>
-      <button class="mbtb" onclick="_mExec('insertOrderedList')" title="Numbered List">1 ≡</button>
-      <button class="mbtb" onclick="_mExec('indent')" title="Indent">→|</button>
-      <button class="mbtb" onclick="_mExec('outdent')" title="Outdent">|←</button>
-      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
-      <!-- Insert Table -->
-      <div style="position:relative;">
-        <button class="mbtb" onclick="_mToggleTablePicker()" title="Insert Table">⊞ Table</button>
-        <div id="misal-table-picker" style="display:none;position:absolute;top:100%;left:0;z-index:9999;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:8px;box-shadow:0 4px 20px rgba(0,0,0,0.4);">
-          <div style="font-size:10px;color:var(--text-muted);margin-bottom:5px;text-align:center;" id="misal-table-label">rows × cols</div>
-          <div style="display:grid;grid-template-columns:repeat(8,20px);gap:2px;">
-            ${Array.from({length:64},(_,i)=>{const r=Math.floor(i/8)+1,cc=(i%8)+1;return'<div class="tgcell" data-r="'+r+'" data-c="'+cc+'" onmouseover="_mHoverCell('+r+','+cc+')" onclick="_mInsertTable('+r+','+cc+')" style="width:20px;height:20px;border:1px solid #555;border-radius:2px;cursor:pointer;"></div>';}).join('')}
-          </div>
-        </div>
-      </div>
-      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
-      <!-- Line Spacing -->
-      <select class="mssel" onchange="_mLineSpacing(this.value)" title="Line Spacing" style="width:68px;">
-        <option value="1.2">≡ 1.2</option><option value="1.5">≡ 1.5</option>
-        <option value="2" selected>≡ 2.0</option><option value="2.5">≡ 2.5</option><option value="3">≡ 3.0</option>
-      </select>
-      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
-      <!-- Page Layout -->
-      <select class="mssel" onchange="_mPageSize(this.value)" title="Page Size" style="width:68px;">
-        <option value="a4" selected>A4</option><option value="a3">A3</option>
-        <option value="legal">Legal</option><option value="letter">Letter</option>
-      </select>
-      <select class="mssel" onchange="_mMargins(this.value)" title="Margins" style="width:78px;">
-        <option value="20mm" selected>Normal</option><option value="12mm">Narrow</option>
-        <option value="38mm">Wide</option><option value="25mm">Moderate</option>
-      </select>
-      <button class="mbtb" id="misal-border-btn" onclick="_mToggleBorder()" title="Page Border">☐ Border</button>
-      <div style="width:1px;height:22px;background:var(--border);margin:0 4px;"></div>
-      <!-- Voice -->
-      <button class="mbtb mbtb-voice" id="voice-btn" onclick="toggleVoiceInput()" title="Urdu Voice Input">🎙️ آواز</button>
-    </div>
-
-    <!-- A4 Editor -->
-    <div style="flex:1;overflow-y:auto;padding:20px;background:var(--bg-tertiary);">
+  area.innerHTML =
+    buildWordToolbar('misal-editor', {
+      showVoice:    true,
+      showSave:     true,
+      saveLabel:    '💾 محفوظ',
+      onSave:       "saveMisalDoc('" + docId + "')",
+      showComplete: true,
+      completeLabel:'✅ مکمل',
+      onComplete:   "markMisalComplete('" + docId + "')",
+      onPrint:      "printMisalDoc('" + def.name.replace(/'/g,"\\'") + "')",
+      titleHtml:    def.name,
+    }) +
+    `<div style="flex:1;overflow-y:auto;padding:20px;background:var(--bg-tertiary);">
       <div id="misal-editor" contenteditable="true" spellcheck="false" style="
         width:210mm;max-width:100%;min-height:297mm;
         margin:0 auto;padding:20mm;
         background:#fff;color:#111;
         font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
-        font-size:15px;line-height:2;
+        font-size:14pt;line-height:1.5;
         direction:rtl;text-align:right;
-        box-shadow:0 2px 16px rgba(0,0,0,0.15);
+        box-shadow:0 4px 20px rgba(0,0,0,0.15);
         border-radius:4px;outline:none;
       ">${content}</div>
-    </div>
-  </div>
-
-  <style>
-    .mbtb{padding:3px 8px;border:1px solid transparent;border-radius:4px;background:none;
-          color:var(--text-secondary);cursor:pointer;font-size:12px;white-space:nowrap;
-          line-height:1.4;transition:all 0.1s;}
-    .mbtb:hover{background:var(--bg-tertiary);border-color:var(--border);color:var(--text-primary);}
-    .mbtb-accent{background:rgba(56,189,248,0.12);color:var(--accent);border-color:var(--accent);}
-    .mbtb-green{background:rgba(34,197,94,0.12);color:var(--green);border-color:var(--green);}
-    .mbtb-voice{color:var(--accent);}
-    .mssel{padding:3px 5px;border:1px solid var(--border);border-radius:4px;
-           background:var(--bg-tertiary);color:var(--text-secondary);font-size:11px;cursor:pointer;}
-    .tgcell:hover,.tgcell.tg-on{background:rgba(56,189,248,0.3)!important;border-color:var(--accent)!important;}
-  </style>`;
+    </div>`;
+  // Wrap in outer flex column
+  const _outer = document.createElement('div');
+  _outer.style.cssText = 'display:flex;flex-direction:column;height:100%;';
+  _outer.innerHTML = area.innerHTML;
+  area.innerHTML = '';
+  area.appendChild(_outer);
+  // Activate selection-change tracking
+  setTimeout(function() { setupWordToolbar('misal-editor'); }, 80);
 }
 
 // ── MISAL TOOLBAR HELPERS ─────────────────────────────────────
