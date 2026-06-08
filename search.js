@@ -257,7 +257,7 @@ async function _srRun() {
           <td style="font-size:11px;">${[c.section_of_law, c.offence_type].filter(Boolean).join(' / ') || '—'}</td>
           <td style="font-size:11px;">${c.case_station || '—'}</td>
           <td><span class="pill ${STATUS_CLASSES[c.status] || 'pill-blue'}">${STATUS_LABELS[c.status] || c.status}</span></td>
-          <td style="font-size:11px;white-space:nowrap;">${c.fir_date || '—'}</td>
+          <td style="font-size:11px;white-space:nowrap;">${formatDate(c.fir_date)}</td>
           <td style="white-space:nowrap;">
             <button class="btn btn-secondary btn-sm" onclick="openCaseWorkspace('${c.id}')">📄</button>
             <button class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')">✏️</button>
