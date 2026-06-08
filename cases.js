@@ -161,8 +161,8 @@ function renderCaseRow(c,sn){
       <span style="font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:12px;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(56,189,248,0.4);" onclick="openCaseWorkspace('${c.id}')" title="Open Case Workspace">${c.fir_number||'—'}</span>
       ${c.is_cross_version?'<br><span style="font-size:9px;color:var(--red);font-weight:600;">⚔️ Cross</span>':''}
     </td>
-    <td style="font-size:11px;white-space:nowrap;">${c.fir_date||'—'}</td>
-    <td style="font-size:11px;white-space:nowrap;">${c.occurrence_date||'—'}</td>
+    <td style="font-size:11px;white-space:nowrap;">${formatDate(c.fir_date)}</td>
+    <td style="font-size:11px;white-space:nowrap;">${formatDate(c.occurrence_date)}</td>
     <td style="font-size:11px;max-width:150px;">${offence}</td>
     <td style="font-size:11px;">${station}</td>
     <td style="font-size:12px;font-weight:500;">${c.complainant||'—'}</td>
@@ -192,8 +192,8 @@ async function openShareModal(id){
     '─────────────────────────────────',
     `تھانہ (Station):      ${station}`,
     `مقدمہ نمبر (FIR No):  ${c.fir_number||'—'}`,
-    `تاریخ FIR (Date):     ${c.fir_date||'—'}`,
-    `تاریخ وقوعہ (Occ.):  ${c.occurrence_date||'—'}`,
+    `تاریخ FIR (Date):     ${formatDate(c.fir_date)}`,
+    `تاریخ وقوعہ (Occ.):  ${formatDate(c.occurrence_date)}`,
     `جرم (Offence):        ${offence}`,
     `مدعی (Complainant):   ${c.complainant||'—'}`,
     `CNIC:                 ${c.complainant_cnic||'—'}`,
@@ -677,7 +677,7 @@ function renderWorkspace(c, docs, ev, container) {
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <span style="font-size:18px;font-weight:900;color:var(--accent);font-family:var(--font-mono);">FIR ${c.fir_number}</span>
           <span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span>
-          <span style="font-size:12px;color:var(--text-muted);">📅 ${c.fir_date||'—'}</span>
+          <span style="font-size:12px;color:var(--text-muted);">📅 ${formatDate(c.fir_date)}</span>
           <span style="font-size:12px;color:var(--text-muted);">⚖️ ${c.section_of_law||'—'}</span>
           <span style="font-size:12px;color:var(--text-muted);">👤 ${c.complainant||'—'}</span>
         </div>
@@ -1439,7 +1439,7 @@ function renderDetailsTab(c) {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
       <div class="card">
         <div class="card-title">📋 FIR Information</div>
-        ${[['FIR Number',c.fir_number],['Date of FIR',c.fir_date||'—'],['Occurrence Date',c.occurrence_date||'—'],['Section of Law',c.section_of_law||'—'],['Offence',c.offence_type||'—'],['Status',STATUS_LABELS[c.status]||c.status],['Position',c.position==='court'?'⚖️ In Court':'⏳ Pending'],['FIR Writer',c.fir_writer||'—'],['Complaint Sender',c.complaint_sender||'—'],['SHO',c.sho||'—'],['SDPO',c.sdpo||'—']].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
+        ${[['FIR Number',c.fir_number],['Date of FIR',formatDate(c.fir_date)],['Occurrence Date',formatDate(c.occurrence_date)],['Section of Law',c.section_of_law||'—'],['Offence',c.offence_type||'—'],['Status',STATUS_LABELS[c.status]||c.status],['Position',c.position==='court'?'⚖️ In Court':'⏳ Pending'],['FIR Writer',c.fir_writer||'—'],['Complaint Sender',c.complaint_sender||'—'],['SHO',c.sho||'—'],['SDPO',c.sdpo||'—']].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
       </div>
       <div class="card">
         <div class="card-title">👤 Complainant Details</div>
@@ -1453,7 +1453,7 @@ function renderDetailsTab(c) {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
         ${[
           ['Cross FIR Number', c.cross_fir_number||'—'],
-          ['Cross FIR Date', c.cross_fir_date||'—'],
+          ['Cross FIR Date', formatDate(c.cross_fir_date)],
           ['Cross Complainant', c.cross_complainant||'—'],
           ['Cross CNIC', c.cross_complainant_cnic||'—'],
           ['Cross Cell', c.cross_complainant_cell||'—'],
