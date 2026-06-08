@@ -466,7 +466,28 @@ function formatCNIC(v){if(!v)return'—';const d=v.replace(/\D/g,'');if(d.length
 function formatCell(v){if(!v)return'—';const d=v.replace(/\D/g,'');if(d.length===11)return`${d.slice(0,4)}-${d.slice(4)}`;return v;}
 function autoFormatCNIC(i){let v=i.value.replace(/\D/g,'').slice(0,13);if(v.length>12)v=`${v.slice(0,5)}-${v.slice(5,12)}-${v.slice(12)}`;else if(v.length>5)v=`${v.slice(0,5)}-${v.slice(5)}`;i.value=v;}
 function autoFormatCell(i){let v=i.value.replace(/\D/g,'').slice(0,11);if(v.length>4)v=`${v.slice(0,4)}-${v.slice(4)}`;i.value=v;}
-function formatDate(d){if(!d)return'—';try{return new Date(d).toLocaleDateString('en-PK',{day:'2-digit',month:'short',year:'numeric'});}catch{return d;}}
+function formatDate(d){
+  if(!d||d==='—')return'—';
+  try{
+    // Handle DD-MM-YYYY or DD/MM/YYYY stored directly
+    if(/^\d{2}[-\/]\d{2}[-\/]\d{4}$/.test(d)){
+      const p=d.replace(/\//g,'-').split('-');
+      return `${p[0]}/${p[1]}/${p[2]}`;
+    }
+    // Handle YYYY-MM-DD (ISO)
+    if(/^\d{4}-\d{2}-\d{2}/.test(d)){
+      const p=d.substring(0,10).split('-');
+      return `${p[2]}/${p[1]}/${p[0]}`;
+    }
+    // Fallback: parse as Date object
+    const dt=new Date(d);
+    if(isNaN(dt))return d;
+    const dd=String(dt.getDate()).padStart(2,'0');
+    const mm=String(dt.getMonth()+1).padStart(2,'0');
+    const yy=dt.getFullYear();
+    return `${dd}/${mm}/${yy}`;
+  }catch{return d;}
+}
 function timeAgo(d){if(!d)return'—';const diff=Date.now()-new Date(d).getTime(),m=Math.floor(diff/60000),h=Math.floor(diff/3600000),days=Math.floor(diff/86400000);if(m<1)return'Just now';if(m<60)return`${m}m ago`;if(h<24)return`${h}h ago`;return`${days}d ago`;}
 function updateSidebarProfile(){if(!currentOfficer)return;const ne=document.getElementById('sidebar-name'),re=document.getElementById('sidebar-role'),ae=document.getElementById('sidebar-avatar'),fe=document.getElementById('footer-officer');if(ne)ne.textContent=currentOfficer.full_name||'Officer';if(re)re.textContent=currentOfficer.designation||currentRole;if(fe)fe.textContent=`Officer: ${currentOfficer.full_name||'—'} · ${currentOfficer.station||'—'}`;const photo=localStorage.getItem('dio_profile_photo');if(photo&&ae)ae.innerHTML=`<img src="${photo}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;else if(ae&&currentOfficer.full_name)ae.textContent=currentOfficer.full_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();if(currentRole==='admin'||currentRole==='superadmin'){const an=document.getElementById('admin-nav-item');if(an)an.style.display='flex';}if(currentOfficer.full_name)localStorage.setItem('dio_officer_name',currentOfficer.full_name);}
 function startNewsTicker(){const el=document.getElementById('news-ticker');if(el)el.textContent=POLICE_NEWS.join(' ✦ ');}
