@@ -296,7 +296,42 @@ async function open5CResponse(id){
     <!-- Lists -->
     ${B('•≡','exec5C(\'insertUnorderedList\')','Bullet list')}
     ${B('1≡','exec5C(\'insertOrderedList\')','Numbered list')}
-  </div>
+    ${sep}
+    <!-- Highlight colour -->
+    <label class="r5b" style="cursor:pointer;" title="Highlight colour" onmousedown="event.preventDefault()">
+      🖊&nbsp;<input type="color" value="#ffff00" onchange="_saveSel5C();_restoreSel5C();document.execCommand('hiliteColor',false,this.value)" style="width:18px;height:16px;padding:1px;border:none;cursor:pointer;vertical-align:middle;">
+    </label>
+    ${sep}
+    <!-- Insert Table -->
+    <div style="position:relative;display:inline-block;">
+      <button class="r5b" onclick="_toggleTablePicker5C()" title="Insert Table">⊞ Table</button>
+      <div id="r5-table-picker" style="display:none;position:absolute;top:100%;left:0;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;padding:8px;box-shadow:0 4px 16px rgba(0,0,0,0.3);">
+        <div style="font-size:10px;color:#666;margin-bottom:5px;text-align:center;" id="r5-table-label">rows × cols</div>
+        <div style="display:grid;grid-template-columns:repeat(8,20px);gap:2px;">
+          ${Array.from({length:64},(_,i)=>{const r=Math.floor(i/8)+1,cc=(i%8)+1;return'<div class="r5tgc" data-r="'+r+'" data-c="'+cc+'" onmouseover="_hoverTable5C('+r+','+cc+')" onclick="_insertTable5C('+r+','+cc+')" style="width:20px;height:20px;border:1px solid #bbb;border-radius:2px;cursor:pointer;"></div>';}).join('')}
+        </div>
+      </div>
+    </div>
+    ${sep}
+    <!-- Page Size -->
+    <select class="r5sel" onchange="_saveSel5C();_setPageSize5C(this.value)" style="width:68px;" title="Page size">
+      <option value="210mm|297mm" selected>A4</option>
+      <option value="297mm|420mm">A3</option>
+      <option value="216mm|356mm">Legal</option>
+      <option value="216mm|279mm">Letter</option>
+    </select>
+    <!-- Margins -->
+    <select class="r5sel" onchange="_saveSel5C();_setMargins5C(this.value)" style="width:78px;" title="Margins">
+      <option value="20mm 18mm 20mm 15mm" selected>Normal</option>
+      <option value="12mm 10mm 12mm 10mm">Narrow</option>
+      <option value="38mm 36mm 38mm 36mm">Wide</option>
+      <option value="25mm 20mm 25mm 20mm">Moderate</option>
+    </select>
+    <!-- Page Border -->
+    <button class="r5b" id="r5-border-btn" onclick="_toggleBorder5C()" title="Page Border">☐ Border</button>
+    ${sep}
+    <!-- Voice -->
+    <button class="r5b" id="voice-btn" onclick="toggleVoiceInput()" title="Urdu Voice Input" style="color:#38bdf8;">🎙️ آواز</button>
   <!-- Document area -->
   <div style="flex:1;overflow:auto;padding:28px 20px;background:#525659;">
     <div id="a4-paper" contenteditable="true" spellcheck="false"
@@ -375,6 +410,66 @@ async function open5CResponse(id){
 
 // ── EDITOR COMMANDS ──
 function exec5C(cmd){document.execCommand(cmd,false,null);}
+
+// ── TABLE PICKER (5-C) ────────────────────────────────────────
+function _toggleTablePicker5C(){
+  const p=document.getElementById('r5-table-picker');
+  if(p)p.style.display=p.style.display==='none'?'block':'none';
+}
+function _hoverTable5C(r,c){
+  document.querySelectorAll('#r5-table-picker .r5tgc').forEach(el=>{
+    const on=+el.dataset.r<=r&&+el.dataset.c<=c;
+    el.style.background=on?'rgba(56,189,248,0.3)':'';
+    el.style.borderColor=on?'#0ea5e9':'#bbb';
+  });
+  const lbl=document.getElementById('r5-table-label');
+  if(lbl)lbl.textContent=r+' rows × '+c+' cols';
+}
+function _insertTable5C(rows,cols){
+  const p=document.getElementById('r5-table-picker');
+  if(p)p.style.display='none';
+  const paper=document.getElementById('a4-paper');
+  if(!paper)return;
+  paper.focus();
+  let html='<table style="border-collapse:collapse;width:100%;margin:8px 0;"><tbody>';
+  for(let r=0;r<rows;r++){
+    html+='<tr>';
+    for(let c=0;c<cols;c++)
+      html+='<td style="border:1px solid #999;padding:6px 10px;min-width:50px;" contenteditable="true">&nbsp;</td>';
+    html+='</tr>';
+  }
+  html+='</tbody></table><br>';
+  document.execCommand('insertHTML',false,html);
+}
+
+// ── PAGE LAYOUT (5-C) ─────────────────────────────────────────
+function _setPageSize5C(val){
+  const paper=document.getElementById('a4-paper');
+  if(!paper)return;
+  const[w,h]=val.split('|');
+  paper.style.width=w;paper.style.minHeight=h;
+}
+function _setMargins5C(val){
+  const paper=document.getElementById('a4-paper');
+  if(paper)paper.style.padding=val;
+}
+let _r5BorderOn=false;
+function _toggleBorder5C(){
+  const paper=document.getElementById('a4-paper');
+  if(!paper)return;
+  _r5BorderOn=!_r5BorderOn;
+  paper.style.outline=_r5BorderOn?'2px solid #333':'none';
+  const btn=document.getElementById('r5-border-btn');
+  if(btn)btn.style.color=_r5BorderOn?'#0ea5e9':'';
+}
+
+// Close table picker on outside click
+document.addEventListener('click',e=>{
+  const p=document.getElementById('r5-table-picker');
+  if(p&&!p.contains(e.target)&&!e.target.closest('[onclick*="_toggleTablePicker5C"]'))p.style.display='none';
+  const mp=document.getElementById('misal-table-picker');
+  if(mp&&!mp.contains(e.target)&&!e.target.closest('[onclick*="_mToggleTablePicker"]'))mp.style.display='none';
+});
 
 function applyFont5C(fontVal){
   const sel=window.getSelection();
