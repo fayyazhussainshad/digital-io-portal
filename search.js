@@ -93,11 +93,7 @@ function renderSearch(container) {
     }
   </style>`;
 
-  // Set defaults: today as end date
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('sr-to').value = today;
-
-  // Set party and status state
+  // No default dates — date filter only applies when user explicitly sets it
   window._srState = { party: 'all', status: 'any' };
 }
 
@@ -173,37 +169,55 @@ async function _srRun() {
   const all = await getCases();
   const clean = s => (s || '').replace(/[-\s]/g, '').toLowerCase();
 
+  // Split query into words — ALL words must appear somewhere (AND within query, OR across fields)
+  const words = q ? q.trim().toLowerCase().split(/\s+/).filter(Boolean) : [];
+  const wordMatch = (str) => !words.length || words.every(w => (str||'').toLowerCase().includes(w));
+  const wordMatchClean = (str) => !words.length || words.every(w => clean(str).includes(clean(w)));
+
   const results = all.filter(c => {
     // ── Status filter ──
     if (status !== 'any' && c.status !== status) return false;
 
-    // ── Date filter ──
-    if (from && c.fir_date && c.fir_date < from) return false;
-    if (to   && c.fir_date && c.fir_date > to)   return false;
+    // ── Date filter — only apply if user explicitly set dates ──
+    // Parse both as comparable strings (handle DD-MM-YYYY and YYYY-MM-DD)
+    if (from || to) {
+      const parseDate = d => {
+        if (!d) return null;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d; // already YYYY-MM-DD
+        const parts = d.split('-');
+        if (parts.length === 3 && parts[2].length === 4) return `${parts[2]}-${parts[1]}-${parts[0]}`; // DD-MM-YYYY → YYYY-MM-DD
+        return d;
+      };
+      const cDate = parseDate(c.fir_date);
+      if (cDate) {
+        if (from && cDate < from) return false;
+        if (to   && cDate > to)   return false;
+      }
+    }
 
-    // ── No query — passed filters already ──
-    if (!q) return true;
+    // ── No query — passed filters ──
+    if (!words.length) return true;
 
-    // ── Party-aware text search ──
+    // ── Party-aware text search (word-level partial match) ──
     const matchComplainant =
-      (c.fir_number       || '').toLowerCase().includes(q) ||
-      (c.section_of_law   || '').toLowerCase().includes(q) ||
-      (c.offence_type     || '').toLowerCase().includes(q) ||
-      (c.complainant      || '').toLowerCase().includes(q) ||
-      clean(c.complainant_cnic).includes(clean(q))         ||
-      clean(c.complainant_cell).includes(clean(q));
+      wordMatch(c.fir_number)        ||
+      wordMatch(c.section_of_law)    ||
+      wordMatch(c.offence_type)      ||
+      wordMatch(c.complainant)       ||
+      wordMatchClean(c.complainant_cnic) ||
+      wordMatchClean(c.complainant_cell);
 
     const matchAccused =
-      (c.fir_number       || '').toLowerCase().includes(q) ||
-      (c.section_of_law   || '').toLowerCase().includes(q) ||
-      (c.offence_type     || '').toLowerCase().includes(q) ||
-      (c.accused_name     || '').toLowerCase().includes(q) ||
-      clean(c.accused_cnic).includes(clean(q))             ||
-      clean(c.accused_cell).includes(clean(q));
+      wordMatch(c.fir_number)     ||
+      wordMatch(c.section_of_law) ||
+      wordMatch(c.offence_type)   ||
+      wordMatch(c.accused_name)   ||
+      wordMatchClean(c.accused_cnic) ||
+      wordMatchClean(c.accused_cell);
 
     if (party === 'complainant') return matchComplainant;
     if (party === 'accused')     return matchAccused;
-    return matchComplainant || matchAccused; // All
+    return matchComplainant || matchAccused;
   });
 
   if (!results.length) {
