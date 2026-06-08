@@ -238,101 +238,7 @@ async function open5CResponse(id){
     <button class="btn btn-secondary btn-sm" onmousedown="event.preventDefault()" onclick="print5CResponse()">🖨️ Print</button>
     <button class="btn btn-danger btn-sm" onclick="document.getElementById('response5c-overlay').remove()">✕ Close</button>
   </div>
-  <!-- Word-like ribbon -->
-  <div style="background:#f2f2f2;border-bottom:2px solid #c4c4c4;padding:5px 10px;display:flex;align-items:center;gap:2px;flex-wrap:wrap;">
-    <!-- Undo / Redo -->
-    ${B('↩','exec5C(\'undo\')','Undo')}${B('↪','exec5C(\'redo\')','Redo')}
-    ${sep}
-    <!-- Font family — saves selection before opening, restores after change -->
-    <select class="r5sel" id="r5font" onfocus="_saveSel5C()" onchange="_restoreSel5C();applyFont5C(this.value)" style="min-width:160px;" title="Font family">
-      <option value="'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif">اردو — Jameel Noori</option>
-      <option value="'Noto Nastaliq Urdu',serif">Noto Nastaliq Urdu</option>
-      <option value="'Arial',sans-serif">Arial</option>
-      <option value="'Times New Roman',serif">Times New Roman</option>
-      <option value="'Courier New',monospace">Courier New</option>
-      <option value="'Aptos','Segoe UI',sans-serif">Aptos / Segoe UI</option>
-    </select>
-    <!-- Font size -->
-    <select class="r5sel" id="r5size" onfocus="_saveSel5C()" onchange="_restoreSel5C();applyFontSize5C(this.value)" style="width:56px;" title="Font size">
-      ${[8,9,10,11,12,13,14,16,18,20,22,24,28,32,36,48].map(s=>`<option value="${s}pt" ${s===14?'selected':''}>${s}</option>`).join('')}
-    </select>
-    ${sep}
-    <!-- Bold / Italic / Underline / Strikethrough -->
-    ${B('<b>B</b>','exec5C(\'bold\')','Bold (Ctrl+B)')}
-    ${B('<i>I</i>','exec5C(\'italic\')','Italic (Ctrl+I)')}
-    ${B('<u>U</u>','exec5C(\'underline\')','Underline (Ctrl+U)')}
-    ${B('<s>S</s>','exec5C(\'strikeThrough\')','Strikethrough')}
-    ${sep}
-    <!-- Text colour -->
-    <label class="r5b" style="cursor:pointer;" title="Text colour" onmousedown="event.preventDefault()">
-      A&nbsp;<input type="color" id="r5color" onchange="document.execCommand('foreColor',false,this.value)" style="width:18px;height:16px;padding:1px;border:none;cursor:pointer;vertical-align:middle;">
-    </label>
-    ${sep}
-    <!-- Line spacing -->
-    <select class="r5sel" id="r5lh" onfocus="_saveSel5C()" onchange="_restoreSel5C();setLineSpacing5C(this.value)" style="width:78px;" title="Line spacing">
-      <option value="1.0">≡ 1.0</option>
-      <option value="1.15">≡ 1.15</option>
-      <option value="1.5" selected>≡ 1.5</option>
-      <option value="1.75">≡ 1.75</option>
-      <option value="2.0">≡ 2.0</option>
-      <option value="2.5">≡ 2.5</option>
-      <option value="3.0">≡ 3.0</option>
-    </select>
-    ${sep}
-    <!-- Alignment -->
-    ${B('⬅','align5C(\'justifyRight\')','Align Right (Urdu)')}
-    ${B('⬌','align5C(\'justifyCenter\')','Center')}
-    ${B('➡','align5C(\'justifyLeft\')','Align Left')}
-    ${B('☰','align5C(\'justifyFull\')','Justify / toggle off')}
-    ${sep}
-    <!-- Indent -->
-    ${B('⇥','indent5C(\'in\')','Increase indent')}
-    ${B('⇤','indent5C(\'out\')','Decrease indent')}
-    ${sep}
-    <!-- Paragraph direction -->
-    ${B('RTL ←','setParaDir5C(\'rtl\')','Set paragraph RTL (Urdu)')}
-    ${B('→ LTR','setParaDir5C(\'ltr\')','Set paragraph LTR (English)')}
-    ${sep}
-    <!-- Lists -->
-    ${B('•≡','exec5C(\'insertUnorderedList\')','Bullet list')}
-    ${B('1≡','exec5C(\'insertOrderedList\')','Numbered list')}
-    ${sep}
-    <!-- Highlight colour -->
-    <label class="r5b" style="cursor:pointer;" title="Highlight colour" onmousedown="event.preventDefault()">
-      🖊&nbsp;<input type="color" value="#ffff00" onchange="_saveSel5C();_restoreSel5C();document.execCommand('hiliteColor',false,this.value)" style="width:18px;height:16px;padding:1px;border:none;cursor:pointer;vertical-align:middle;">
-    </label>
-    ${sep}
-    <!-- Insert Table -->
-    <div style="position:relative;display:inline-block;">
-      <button class="r5b" onclick="_toggleTablePicker5C()" title="Insert Table">⊞ Table</button>
-      <div id="r5-table-picker" style="display:none;position:absolute;top:100%;left:0;z-index:9999;background:#fff;border:1px solid #999;border-radius:6px;padding:8px;box-shadow:0 4px 16px rgba(0,0,0,0.3);">
-        <div style="font-size:10px;color:#666;margin-bottom:5px;text-align:center;" id="r5-table-label">rows × cols</div>
-        <div style="display:grid;grid-template-columns:repeat(8,20px);gap:2px;">
-          ${Array.from({length:64},(_,i)=>{const r=Math.floor(i/8)+1,cc=(i%8)+1;return'<div class="r5tgc" data-r="'+r+'" data-c="'+cc+'" onmouseover="_hoverTable5C('+r+','+cc+')" onclick="_insertTable5C('+r+','+cc+')" style="width:20px;height:20px;border:1px solid #bbb;border-radius:2px;cursor:pointer;"></div>';}).join('')}
-        </div>
-      </div>
-    </div>
-    ${sep}
-    <!-- Page Size -->
-    <select class="r5sel" onchange="_saveSel5C();_setPageSize5C(this.value)" style="width:68px;" title="Page size">
-      <option value="210mm|297mm" selected>A4</option>
-      <option value="297mm|420mm">A3</option>
-      <option value="216mm|356mm">Legal</option>
-      <option value="216mm|279mm">Letter</option>
-    </select>
-    <!-- Margins -->
-    <select class="r5sel" onchange="_saveSel5C();_setMargins5C(this.value)" style="width:78px;" title="Margins">
-      <option value="20mm 18mm 20mm 15mm" selected>Normal</option>
-      <option value="12mm 10mm 12mm 10mm">Narrow</option>
-      <option value="38mm 36mm 38mm 36mm">Wide</option>
-      <option value="25mm 20mm 25mm 20mm">Moderate</option>
-    </select>
-    <!-- Page Border -->
-    <button class="r5b" id="r5-border-btn" onclick="_toggleBorder5C()" title="Page Border">☐ Border</button>
-    ${sep}
-    <!-- Voice -->
-    <button class="r5b" id="voice-btn" onclick="toggleVoiceInput()" title="Urdu Voice Input" style="color:#38bdf8;">🎙️ آواز</button>
-  </div>
+  ${buildWordToolbar('a4-paper', { preserveSel: true })}
   <!-- Document area -->
   <div style="flex:1;overflow:auto;padding:28px 20px;background:#525659;display:flex;justify-content:center;align-items:flex-start;direction:ltr;">
     <div id="a4-paper" contenteditable="true" spellcheck="false"
@@ -356,6 +262,7 @@ async function open5CResponse(id){
     const paper=document.getElementById('a4-paper');
     if(!paper)return;
     paper.focus();
+    setupWordToolbar('a4-paper');
     // Native Enter → <br> (not <div>). This prevents Nastaleeq font's
     // large block-level spacing AND fixes RTL cursor placement — Chrome
     // handles cursor position correctly when Enter is native, not intercepted.
