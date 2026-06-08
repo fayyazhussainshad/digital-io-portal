@@ -587,6 +587,41 @@ input, textarea, select { font-family: var(--font-main); }
 .page-subtitle { display:none; }
 /* But keep page-header visible if it contains action buttons */
 .page-header { padding-top:0; margin-bottom:8px; }
+
+/* ── Collapsible Sidebar ── */
+#main-app { display:flex; position:relative; }
+.sidebar {
+  transition: width 0.25s ease, min-width 0.25s ease, opacity 0.2s ease;
+  overflow: hidden;
+}
+.sidebar.collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  opacity: 0;
+  pointer-events: none;
+}
+#sidebar-toggle {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  left: var(--sidebar-width);
+  width: 18px;
+  height: 48px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--text-muted);
+  z-index: 500;
+  transition: left 0.25s ease, background 0.15s;
+}
+#sidebar-toggle:hover { background: var(--accent); color: #fff; }
+#sidebar-toggle.collapsed { left: 0; }
   </style>
 </head>
 <body>
@@ -694,6 +729,8 @@ input, textarea, select { font-family: var(--font-main); }
     </nav>
     <div class="sidebar-footer"><button class="logout-btn" onclick="doLogout()">🚪 Sign Out</button><div class="sidebar-version">Digital IO v4.0 · Secure</div></div>
   </div>
+  <!-- Sidebar collapse toggle -->
+  <div id="sidebar-toggle" onclick="toggleSidebarCollapse()" title="Hide/Show Sidebar">◀</div>
   <div class="main-area">
     <div class="topbar">
       <div class="topbar-left"><button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button><div class="topbar-title" id="topbar-title">Dashboard</div><div class="db-badge" id="db-badge">⚙ Connecting...</div></div>
@@ -724,6 +761,29 @@ input, textarea, select { font-family: var(--font-main); }
 <script src="backup.js"></script>
 <script src="settings.js"></script>
 <script src="officialdocs.js"></script>
+
+<!-- ── Sidebar collapse ── -->
+<script>
+(function(){
+  // Restore saved state on load
+  if(localStorage.getItem('dio_sidebar_collapsed')==='1'){
+    document.getElementById('sidebar')?.classList.add('collapsed');
+    const btn=document.getElementById('sidebar-toggle');
+    if(btn){btn.textContent='▶';btn.classList.add('collapsed');}
+  }
+})();
+
+function toggleSidebarCollapse(){
+  const sb  = document.getElementById('sidebar');
+  const btn = document.getElementById('sidebar-toggle');
+  if(!sb||!btn) return;
+  const collapsing = !sb.classList.contains('collapsed');
+  sb.classList.toggle('collapsed', collapsing);
+  btn.classList.toggle('collapsed', collapsing);
+  btn.textContent = collapsing ? '▶' : '◀';
+  localStorage.setItem('dio_sidebar_collapsed', collapsing ? '1' : '0');
+}
+</script>
 
 <!-- ── PWA: register service worker ── -->
 <script>
