@@ -161,7 +161,7 @@ async function renderSettings(container) {
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 
 function _esc(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function _fmtDate(iso){ if(!iso)return''; const p=iso.split('-'); return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:iso; }
+function _fmtDate(iso){ if(!iso)return''; const p=iso.substring(0,10).split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:iso; }
 
 function _profilePct(o){
   const fields=[o.full_name,o.badge_number,o.designation,o.station,o.district,
