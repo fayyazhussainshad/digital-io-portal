@@ -131,60 +131,59 @@ function renderIncident(container) {
 
         <!-- Section 8: Evidence -->
         ${_secHeader('8', 'شواہد / مادی ثبوت')}
-        ${_fieldFull('موقع واردات سے برآمد شواہد', 'inc-evidence', '', 3)}
+        ${_fieldFull('موقع واردات سے برآمد شواہد', 'inc-evidence', '', 2)}
 
-        <!-- Section 9: Reporting Officer -->
-        ${_secHeader('9', 'رپورٹ کرنے والے افسر کی تفصیل')}
-        <div style="${_grid2()}">
-          ${_field('نام', 'inc-off-name', o.full_name||'', 'text')}
-          ${_field('عہدہ / رینک', 'inc-off-rank', o.designation||'', 'text')}
-          ${_field('بیج نمبر', 'inc-off-badge', o.badge_number||'', 'text')}
-          ${_field('تھانہ', 'inc-off-station', o.station||'', 'text')}
-        </div>
-        ${_field('سپروائزر / افسر اعلیٰ کا نام', 'inc-supervisor', '', 'text')}
+        <!-- Section 9: Visiting Officers -->
+        ${_secHeader('9', 'موقع وزٹ کرنے والے افسران')}
+        <div id="inc-officers-list"></div>
+        <button onclick="_incAddOfficer()" style="${_addBtn()}">+ افسر شامل کریں</button>
 
         <!-- Signature Block -->
-        <div style="margin-top:32px;border-top:2px solid #1a3a5c;padding-top:24px;">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;">
+        <div style="margin-top:28px;border-top:2px solid #1a3a5c;padding-top:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
 
-            <!-- Left: Signature of IO -->
-            <div style="text-align:center;flex:1;">
-              <div style="border-bottom:2px solid #1a3a5c;height:60px;margin-bottom:8px;"></div>
+            <!-- Left: Reporting Officer signature -->
+            <div style="text-align:center;flex:1;border:1px solid #ddd;border-radius:6px;padding:12px;">
+              <div style="height:55px;border-bottom:1px solid #aaa;margin-bottom:8px;"></div>
               <div style="font-size:13px;color:#333;font-weight:700;">${o.full_name||'_________________'}</div>
               <div style="font-size:12px;color:#555;">${o.designation||''}</div>
               <div style="font-size:12px;color:#555;">${o.station||''} تھانہ</div>
-              <div style="font-size:12px;color:#555;">دستخط رپورٹنگ افسر</div>
+              <div style="font-size:11px;color:#888;margin-top:4px;">دستخط رپورٹنگ افسر</div>
             </div>
 
-            <!-- Right: SHO Signature + Date below -->
-            <div style="text-align:center;flex:1;">
-              <div style="border-bottom:2px solid #1a3a5c;height:60px;margin-bottom:8px;"></div>
-              <div style="font-size:11px;color:#555;margin-bottom:4px;">SHO کا نام:</div>
-              <input id="inc-sho-name" placeholder="SHO کا نام یہاں لکھیں"
-                style="border:none;border-bottom:1px solid #aaa;padding:2px 8px;font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;text-align:center;width:200px;outline:none;background:transparent;direction:rtl;">
-              <div style="font-size:11px;color:#555;margin-top:8px;margin-bottom:4px;">${o.station||''} تھانہ</div>
-              <div style="font-size:11px;color:#555;margin-bottom:4px;">تاریخ:</div>
-              <input id="inc-sign-date" value="${today}"
-                style="border:none;border-bottom:1px solid #aaa;padding:2px 8px;font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;text-align:center;width:160px;outline:none;background:transparent;">
-              <div style="font-size:12px;color:#555;margin-top:4px;">دستخط SHO</div>
+            <!-- Right: SHO signature — blank space on top for signature -->
+            <div style="text-align:center;flex:1;border:1px solid #ddd;border-radius:6px;padding:12px;">
+              <div style="height:55px;border-bottom:1px solid #aaa;margin-bottom:8px;">
+                <!-- SHO signs here — space intentionally left blank -->
+              </div>
+              <div style="font-size:13px;font-weight:700;color:#1a3a5c;">SHO ${o.station||'_______'} تھانہ</div>
+              <div style="margin-top:8px;">
+                <div style="font-size:11px;color:#555;margin-bottom:3px;">تاریخ:</div>
+                <input id="inc-sign-date" value="${today}"
+                  style="border:none;border-bottom:1px solid #aaa;padding:2px 6px;
+                  font-family:'Jameel Noori Nastaleeq',serif;font-size:13px;
+                  text-align:center;width:140px;outline:none;background:transparent;">
+              </div>
+              <div style="font-size:11px;color:#888;margin-top:6px;">دستخط SHO</div>
             </div>
 
           </div>
         </div>
 
         <!-- Footer -->
-        <div style="margin-top:20px;padding-top:10px;border-top:1px solid #ccc;text-align:center;font-size:11px;color:#888;">
-          یہ رپورٹ Digital IO — Punjab Police Case Management System کے ذریعے تیار کی گئی
+        <div style="margin-top:16px;padding-top:8px;border-top:1px solid #ccc;text-align:center;font-size:10px;color:#aaa;">
+          Digital IO — محکمہ پولیس پنجاب
         </div>
 
       </div>
     </div>
   </div>`;
 
-  // Add initial victim/suspect/witness rows
+  // Add initial rows
   _incAddVictim();
   _incAddSuspect();
   _incAddWitness();
+  _incAddOfficer();
 }
 
 // ── HELPERS ───────────────────────────────────────────────────
@@ -293,6 +292,31 @@ function _incAddWitness() {
   document.getElementById('inc-witnesses-list').appendChild(div);
 }
 
+let _officerCount = 0;
+function _incAddOfficer() {
+  _officerCount++;
+  const i = _officerCount;
+  const div = document.createElement('div');
+  div.id = 'officer-' + i;
+  div.style.cssText = 'background:#f0f4f8;border:1px solid #bae6fd;border-radius:6px;padding:8px 12px;margin-bottom:6px;';
+  div.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <div style="font-size:13px;font-weight:700;color:#1a3a5c;">افسر ${i}</div>
+      <button onclick="document.getElementById('officer-${i}').remove()" style="border:none;background:none;color:#c00;cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+      <div><label style="${_lbl()}">نام</label><input style="${_iStyle('100%')}border:1px solid #bae6fd;border-radius:4px;padding:4px 8px;"></div>
+      <div><label style="${_lbl()}">عہدہ / رینک</label>
+        <select style="${_iStyle('100%')}border:1px solid #bae6fd;border-radius:4px;padding:4px 8px;">
+          <option>ASI</option><option>SI</option><option>Inspector</option><option>DSP</option>
+          <option>SP</option><option>SSP</option><option>DIG</option><option>Constable</option><option>HC</option>
+        </select>
+      </div>
+      <div><label style="${_lbl()}">بیج نمبر</label><input style="${_iStyle('100%')}border:1px solid #bae6fd;border-radius:4px;padding:4px 8px;"></div>
+    </div>`;
+  document.getElementById('inc-officers-list').appendChild(div);
+}
+
 // ── VOICE INPUT ───────────────────────────────────────────────
 let _incVoiceRec = null, _incVoiceOn = false, _incVoiceTgt = null;
 function _incVoice(targetId, btnId) {
@@ -346,10 +370,18 @@ function _incPrint() {
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
     <style>
-      @page{margin:15mm;}
-      body{margin:0;padding:0;font-family:'Noto Nastaliq Urdu','Jameel Noori Nastaleeq',serif;direction:rtl;}
-      input,select,textarea{border:none!important;border-bottom:1px solid #999!important;background:transparent!important;font-family:'Noto Nastaliq Urdu',serif!important;font-size:14px!important;}
+      @page{margin:8mm;size:A4;}
+      body{margin:0;padding:0;font-family:'Noto Nastaliq Urdu','Jameel Noori Nastaleeq',serif;direction:rtl;font-size:13px;}
+      input,select,textarea{border:none!important;border-bottom:1px solid #999!important;background:transparent!important;
+        font-family:'Noto Nastaliq Urdu',serif!important;font-size:12px!important;width:100%!important;}
       button{display:none!important;}
+      label{font-size:11px!important;}
+      textarea{font-size:12px!important;height:auto!important;}
+      div[style*="padding:20px 24px"]{padding:8px 14px!important;}
+      div[style*="margin:16px 0 10px"]{margin:8px 0 6px!important;padding:4px 10px!important;}
+      div[style*="margin-bottom:12px"]{margin-bottom:6px!important;}
+      div[style*="margin-bottom:8px"]{margin-bottom:4px!important;}
+      div[style*="height:55px"]{height:40px!important;}
       *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     </style>
     </head><body>${form.outerHTML}</body></html>`);
