@@ -142,29 +142,14 @@ function renderIncident(container) {
         <div style="margin-top:28px;border-top:2px solid #1a3a5c;padding-top:20px;">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
 
-            <!-- Left: Reporting Officer signature -->
-            <div style="text-align:center;flex:1;border:1px solid #ddd;border-radius:6px;padding:12px;">
-              <div style="height:55px;border-bottom:1px solid #aaa;margin-bottom:8px;"></div>
-              <div style="font-size:13px;color:#333;font-weight:700;">${o.full_name||'_________________'}</div>
-              <div style="font-size:12px;color:#555;">${o.designation||''}</div>
-              <div style="font-size:12px;color:#555;">${o.station||''} تھانہ</div>
-              <div style="font-size:11px;color:#888;margin-top:4px;">دستخط رپورٹنگ افسر</div>
-            </div>
-
-            <!-- Right: SHO signature — blank space on top for signature -->
-            <div style="text-align:center;flex:1;border:1px solid #ddd;border-radius:6px;padding:12px;">
-              <div style="height:55px;border-bottom:1px solid #aaa;margin-bottom:8px;">
-                <!-- SHO signs here — space intentionally left blank -->
-              </div>
-              <div style="font-size:13px;font-weight:700;color:#1a3a5c;">SHO ${o.station||'_______'} تھانہ</div>
-              <div style="margin-top:8px;">
-                <div style="font-size:11px;color:#555;margin-bottom:3px;">تاریخ:</div>
-                <input id="inc-sign-date" value="${today}"
-                  style="border:none;border-bottom:1px solid #aaa;padding:2px 6px;
-                  font-family:'Jameel Noori Nastaleeq',serif;font-size:13px;
-                  text-align:center;width:140px;outline:none;background:transparent;">
-              </div>
-              <div style="font-size:11px;color:#888;margin-top:6px;">دستخط SHO</div>
+            <!-- SHO signature only — full width -->
+            <div style="text-align:center;border:1px solid #ddd;border-radius:6px;padding:12px;max-width:320px;margin:0 auto;">
+              <div style="height:60px;border-bottom:1px solid #aaa;margin-bottom:6px;"></div>
+              <div style="font-size:13px;font-weight:700;color:#1a3a5c;">SHO تھانہ ${o.station||'_______'} ضلع ${o.district||'_______'}</div>
+              <input id="inc-sign-date" value="${today}"
+                style="border:none;border-bottom:1px solid #aaa;padding:1px 6px;margin-top:5px;
+                font-family:'Jameel Noori Nastaleeq',serif;font-size:13px;
+                text-align:center;width:140px;outline:none;background:transparent;display:block;margin:5px auto 0;">
             </div>
 
           </div>
@@ -304,17 +289,38 @@ function _incAddOfficer() {
       <div style="font-size:13px;font-weight:700;color:#1a3a5c;">افسر ${i}</div>
       <button onclick="document.getElementById('officer-${i}').remove()" style="border:none;background:none;color:#c00;cursor:pointer;font-size:16px;">✕</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;">
       <div><label style="${_lbl()}">نام</label><input style="${_iStyle('100%')}border:1px solid #bae6fd;border-radius:4px;padding:4px 8px;"></div>
-      <div><label style="${_lbl()}">عہدہ / رینک</label>
+      <div><label style="${_lbl()}">رینک</label>
         <select style="${_iStyle('100%')}border:1px solid #bae6fd;border-radius:4px;padding:4px 8px;">
-          <option>ASI</option><option>SI</option><option>Inspector</option><option>DSP</option>
-          <option>SP</option><option>SSP</option><option>DIG</option><option>Constable</option><option>HC</option>
+          <option>Constable</option><option>HC</option><option>ASI</option><option>SI</option><option>Inspector</option>
         </select>
       </div>
-      <div><label style="${_lbl()}">بیج نمبر</label><input style="${_iStyle('100%')}border:1px solid #bae6fd;border-radius:4px;padding:4px 8px;"></div>
+      <div><label style="${_lbl()}">عہدہ</label>
+        <select id="off-uhda-${i}" style="${_iStyle('100%')}border:1px solid #bae6fd;border-radius:4px;padding:4px 8px;" onchange="_checkOtherUhda('off-uhda-${i}','off-uhda-other-${i}')">
+          <option value="">— منتخب کریں —</option>
+          <option>IG</option>
+          <option>ADDL. IG</option>
+          <option>RPO</option>
+          <option>CPO</option>
+          <option>SSP OPS</option>
+          <option>SSP INV</option>
+          <option>SP DIVISION</option>
+          <option>DSP</option>
+          <option>DSP/SDPO CIRCLE</option>
+          <option value="+">+ دیگر عہدہ</option>
+        </select>
+        <input id="off-uhda-other-${i}" placeholder="عہدہ لکھیں" style="display:none;${_iStyle('100%')}border:1px solid #bae6fd;border-radius:4px;padding:4px 8px;margin-top:4px;">
+      </div>
     </div>`;
   document.getElementById('inc-officers-list').appendChild(div);
+}
+
+function _checkOtherUhda(selId, inputId) {
+  const sel = document.getElementById(selId);
+  const inp = document.getElementById(inputId);
+  if (!sel || !inp) return;
+  inp.style.display = sel.value === '+' ? 'block' : 'none';
 }
 
 // ── VOICE INPUT ───────────────────────────────────────────────
