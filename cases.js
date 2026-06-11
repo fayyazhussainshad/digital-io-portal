@@ -693,13 +693,12 @@ function renderWorkspace(c, docs, ev, container) {
 
     <!-- TABS -->
     <div class="case-tabs">
-      <div class="case-tab active" id="tab-docs" onclick="switchWorkspaceTab('docs')">📎 Documents (${docs.length})</div>
-      <div class="case-tab" id="tab-evidence" onclick="switchWorkspaceTab('evidence')">🔬 Evidence (${ev.length})</div>
+      <div class="case-tab active" id="tab-evidence" onclick="switchWorkspaceTab('evidence')">📋 شہادتیں (${ev.length})</div>
     </div>
 
     <!-- TAB CONTENT -->
     <div id="workspace-tab-content" style="height:calc(100vh - 200px);overflow:hidden;">
-      ${renderDocsTab(c, docs)}
+      ${renderEvidenceTab(c, ev)}
     </div>`;
 
   // Store for tab switching
@@ -710,14 +709,11 @@ function renderWorkspace(c, docs, ev, container) {
 
 function switchWorkspaceTab(tab) {
   document.querySelectorAll('.case-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('tab-' + tab)?.classList.add('active');
   const content = document.getElementById('workspace-tab-content');
   const c = window._workspaceCase;
-  const docs = window._workspaceDocs;
   const ev = window._workspaceEv;
-  if (tab === 'docs') content.innerHTML = renderDocsTab(c, docs);
-  else if (tab === 'details') content.innerHTML = renderDetailsTab(c);
-  else if (tab === 'evidence') content.innerHTML = renderEvidenceTab(c, ev);
+  if (tab === 'evidence') content.innerHTML = renderEvidenceTab(c, ev);
 }
 
 function renderDocsTab(c, docs) {
