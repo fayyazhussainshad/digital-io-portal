@@ -9,7 +9,7 @@
        fails and no cached page is available
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME   = 'digital-io-v9';
+const CACHE_NAME   = 'digital-io-v10';
 const OFFLINE_URL  = '/offline.html';
 
 // All static files that make the shell work offline
