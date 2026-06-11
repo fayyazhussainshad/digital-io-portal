@@ -693,7 +693,7 @@ function renderWorkspace(c, docs, ev, container) {
 
     <!-- TABS -->
     <div class="case-tabs">
-      <div class="case-tab active" id="tab-evidence" onclick="switchWorkspaceTab('evidence')">📋 شہادتیں (${ev.length})</div>
+      <div class="case-tab active" id="tab-evidence" onclick="switchWorkspaceTab('evidence')" style="display:none;"></div>
     </div>
 
     <!-- TAB CONTENT -->
