@@ -698,7 +698,11 @@ function renderWorkspace(c, docs, ev, container) {
 
     <!-- TAB CONTENT -->
     <div id="workspace-tab-content" style="height:calc(100vh - 200px);overflow:hidden;">
-      ${renderEvidenceTab(c, ev)}
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">
+        <div style="font-size:48px;margin-bottom:12px;">📂</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:6px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">دستاویز منتخب کریں</div>
+        <div style="font-size:12px;">اوپر دستاویز کے نام پر کلک کریں</div>
+      </div>
     </div>`;
 
   // Store for tab switching
@@ -1470,9 +1474,9 @@ function renderEvidenceTab(c, ev) {
   const icon = t => t==='Photo'?'📷':t==='Video'?'🎥':t==='Audio'?'🎙️':'📄';
   const cards = ev.length === 0
     ? `<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text-muted);">
-        <div style="font-size:40px;margin-bottom:12px;">🔬</div>
-        <div style="font-weight:600;margin-bottom:4px;">No evidence attached yet</div>
-        <div style="font-size:12px;">Click "+ Attach Evidence" to add files, photos or documents</div>
+        <div style="font-size:40px;margin-bottom:12px;">📋</div>
+        <div style="font-weight:600;margin-bottom:4px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">ابھی کوئی شہادت نہیں</div>
+        <div style="font-size:12px;">+ شہادت شامل کریں بٹن دبائیں</div>
        </div>`
     : ev.map(e => `
       <div class="evidence-card" id="ev-${e.id}">
@@ -1497,10 +1501,10 @@ function renderEvidenceTab(c, ev) {
   return `<div class="case-tab-content">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
       <div>
-        <div style="font-size:16px;font-weight:700;">🔬 Evidence — FIR ${c.fir_number}</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${ev.length} item${ev.length!==1?'s':''} attached</div>
+        <div style="font-size:16px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">📋 شہادتیں — FIR ${c.fir_number}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${ev.length} فائل منسلک</div>
       </div>
-      <button class="btn btn-primary" onclick="openWorkspaceEvidenceModal('${c.id}','${c.fir_number}')">+ Attach Evidence</button>
+      <button class="btn btn-primary" onclick="openWorkspaceEvidenceModal('${c.id}','${c.fir_number}')">+ شہادت شامل کریں</button>
     </div>
     <div class="evidence-grid">${cards}</div>
   </div>`;
