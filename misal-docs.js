@@ -8,7 +8,7 @@
 const MISAL_CASE_DOCS = [
   { id:'fir',              name:'ایف آئی آر',               desc:'First Information Report' },
   { id:'cross_version',    name:'کراس ورشن',                 desc:'Cross Version' },
-  { id:'report_173',       name:'Report 173',                desc:'Report u/s 173 CrPC' },
+  { id:'report_173',       name:'رپورٹ 173 ض ف',            desc:'Report u/s 173 CrPC' },
   { id:'crime_scene',      name:'جائے واردات',               desc:'Scene of Crime' },
   { id:'named_accused',    name:'نامزد ملزمان',              desc:'Named Accused' },
   { id:'unknown_accused',  name:'نامعلوم ملزمان',            desc:'Unknown Accused' },
@@ -25,7 +25,7 @@ const MISAL_CASE_DOCS = [
   { id:'index_naql',       name:'انڈیکس نقل مسل',           desc:'Index of Case File Copy' },
   { id:'warrant',          name:'وارنٹ',                     desc:'Warrant' },
   { id:'ishtihar',         name:'اشتہار',                    desc:'Proclamation' },
-  { id:'progress',         name:'Progress Report',           desc:'Progress Report' },
+  { id:'progress',         name:'پراگریس رپورٹ',            desc:'Progress Report' },
   { id:'arrest_form',      name:'فارم گرفتاری',              desc:'Arrest Form' },
   { id:'abscond_form',     name:'فارم مفروری',               desc:'Absconder Form' },
   { id:'inkishafat',       name:'انکشافات',                  desc:'Disclosures' },
