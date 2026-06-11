@@ -3,248 +3,382 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DIGITAL IO - تفتیشی افسر پورٹل</title>
+    <title>DIGITAL IO - تفتیشی اسسٹنٹ پورٹل</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #0f172a;
-            --secondary-color: #1e3a8a;
-            --accent-color: #3b82f6;
-            --success-color: #10b981;
-            --text-main: #334155;
-            --bg-main: #f8fafc;
-        }
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
+    <style>
         body {
-            font-family: 'Noto Sans Arabic', sans-serif;
-            background-color: var(--bg-main);
-            color: var(--text-main);
+            font-family: 'Noto Sans Arabic', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
             margin: 0;
             padding: 0;
+            color: #333;
         }
-
         .header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background-color: #1e3a8a;
             color: white;
-            padding: 25px 20px;
+            padding: 15px 20px;
             text-align: center;
-            border-bottom: 4px solid var(--accent-color);
-        }
-
-        .header h1 {
             font-family: 'Noto Nastaliq Urdu', serif;
-            margin: 0;
-            font-size: 2.5rem;
-            line-height: 2;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-
         .container {
-            max-width: 1100px;
-            margin: 30px auto;
-            padding: 0 20px;
-        }
-
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 280px 1fr;
-            gap: 25px;
-        }
-
-        .sidebar {
-            background: white;
+            max-width: 1000px;
+            margin: 20px auto;
             padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            height: fit-content;
-        }
-
-        .menu-btn {
-            display: flex;
-            align-items: center;
-            width: 100%;
-            padding: 12px 15px;
-            margin-bottom: 10px;
-            background: none;
-            border: none;
-            border-radius: 8px;
-            color: var(--text-main);
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            text-align: right;
-            transition: all 0.2s;
-        }
-
-        .menu-btn:hover, .menu-btn.active {
-            background-color: #eff6ff;
-            color: var(--secondary-color);
-            border-right: 4px solid var(--accent-color);
-        }
-
-        .main-content {
             background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-
-        .card {
-            display: none;
+        .section-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
         }
-
-        .card.active {
-            display: block;
-        }
-
-        h2 {
-            font-family: 'Noto Nastaliq Urdu', serif;
-            color: var(--secondary-color);
+        h2, h3 {
+            color: #1e3a8a;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 8px;
             margin-top: 0;
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 15px;
-            line-height: 2;
         }
-
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
-
         label {
             display: block;
             font-weight: bold;
-            margin-bottom: 8px;
-            color: #1e293b;
+            margin-bottom: 5px;
+            color: #475569;
         }
-
         input[type="text"], input[type="date"], select, textarea {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border: 1px solid #cbd5e1;
-            border-radius: 8px;
+            border-radius: 6px;
             box-sizing: border-box;
-            font-size: 1rem;
-            background-color: #f8fafc;
+            font-size: 15px;
         }
-
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            background-color: white;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .btn {
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .btn:hover {
-            background-color: #2563eb;
-        }
-
         .grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 15px;
         }
-
+        button {
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+        }
+        .btn-primary:hover { background-color: #2563eb; }
+        .btn-success {
+            background-color: #10b981;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+        }
+        .btn-success:hover { background-color: #059669; }
+        .btn-orange {
+            background-color: #d35400;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+        }
+        .btn-orange:hover { background-color: #a04000; }
+        #map {
+            height: 450px;
+            width: 100%;
+            border-radius: 6px;
+            margin-top: 15px;
+            border: 1px solid #cbd5e1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 10px;
+            text-align: right;
+        }
+        th { background-color: #f8fafc; color: #1e3a8a; }
         @media (max-width: 768px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-            .grid-2 {
-                grid-template-columns: 1fr;
-            }
+            .grid-2 { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>ڈیجیٹل آئی او پورٹل</h1>
-        <p style="margin: 5px 0 0 0; font-size: 1.1rem; opacity: 0.9;">تفتیشی افسر کا ڈیجیٹل مددگار</p>
+        <h1>ڈیجیٹل آئی او پورٹل (DIGITAL IO)</h1>
+        <p style="margin: 5px 0 0 0; font-size: 14px; font-family: sans-serif;">Investigation Officer's High-Tech Assistant</p>
     </div>
 
-    <div class="container">
-        <div class="dashboard-grid">
-            <div class="sidebar">
-                <button class="menu-btn active" onclick="showCard('case-entry')">📝 مقدمہ اندراج</button>
-                <button class="menu-btn" onclick="showCard('zimni')">✍️ ضمنی نویسی</button>
-                <button class="menu-btn" onclick="showCard('checklist')">✅ تفتیشی چیک لسٹ</button>
-                <button class="menu-btn" onclick="showCard('laws')">📜 دفعات و قوانین</button>
+    <div class="container" id="mainContent">
+
+        <div class="section-card">
+            <h2>📋 ماڈیول 1: بنیادی مقدمہ ڈیٹا (Misal Builder)</h2>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>مقدمہ نمبر / FIR No:</label>
+                    <input type="text" id="firNo" placeholder="مثال: 125/26">
+                </div>
+                <div class="form-group">
+                    <label>تاریخ اندراج FIR:</label>
+                    <input type="date" id="firDate">
+                </div>
             </div>
-
-            <div class="main-content">
-                <div id="case-entry" class="card active">
-                    <h2>ابتدائی معلوماتی رپورٹ (F.I.R)</h2>
-                    <div class="grid-2">
-                        <div class="form-group">
-                            <label>مقدمہ نمبر:</label>
-                            <input type="text" placeholder="مثال: 142/24">
-                        </div>
-                        <div class="form-group">
-                            <label>تاریخ اندراج:</label>
-                            <input type="date">
-                        </div>
-                    </div>
-                    <div class="grid-2">
-                        <div class="form-group">
-                            <label>تھانہ:</label>
-                            <input type="text" placeholder="تھانے کا نام درج کریں">
-                        </div>
-                        <div class="form-group">
-                            <label>بجرم (دفعات):</label>
-                            <input type="text" placeholder="مثال: 379 PPC">
-                        </div>
-                    </div>
-                    <button class="btn">ڈیٹا محفوظ کریں</button>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>تھانہ / Police Station:</label>
+                    <input type="text" id="policeStation" placeholder="مثال: تھانہ کینٹ ملتان">
                 </div>
-
-                <div id="zimni" class="card">
-                    <h2>ضمنی کارروائی تفتیش</h2>
-                    <div class="form-group">
-                        <label>حالات و واقعات / کارروائی:</label>
-                        <textarea rows="10" placeholder="آج مورخہ۔۔۔ من مسمی تفتیشی افسر بحضور۔۔۔"></textarea>
-                    </div>
-                    <button class="btn">ضمنی جنریٹ کریں</button>
+                <div class="form-group">
+                    <label>بنیادی دفعات (PPC Sections):</label>
+                    <input type="text" id="sections" placeholder="مثال: 302, 324, 34 PPC">
                 </div>
-
-                <div id="checklist" class="card">
-                    <h2>تفتیشی چیک لسٹ میرٹ تفتیش</h2>
-                    <p>یہاں آپ کے منتخب کردہ جرم کے مطابق تفتیشی مراحل کی چیک لسٹ ظاہر ہوگی۔</p>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>نام مدعی مقدمہ:</label>
+                    <input type="text" id="complainant" placeholder="نام معہ ولدیت">
                 </div>
-
-                <div id="laws" class="card">
-                    <h2>قوانین اور تازہ ترین ترامیم</h2>
-                    <p>تعزیراتِ پاکستان اور ضابطہ فوجداری کی اہم دفعات یہاں دیکھی جا سکیں گی۔</p>
+                <div class="form-group">
+                    <label>نام ملزم / ملزمان:</label>
+                    <input type="text" id="suspects" placeholder="نام، ولدیت و سکونت">
                 </div>
             </div>
         </div>
+
+        <div class="section-card">
+            <h2>🎤 ماڈیول 2: سمارٹ اردو ضمنی رائٹر (Voice to Text)</h2>
+            <div class="form-group">
+                <label style="font-family: 'Noto Nastaliq Urdu', serif;">تفتیشی ڈائری / بیانات قلمبند کریں:</label>
+                <textarea id="zimniText" rows="6" style="direction: rtl; font-family: 'Noto Sans Arabic', sans-serif;" placeholder="یہاں ہاتھ سے ٹائپ کریں یا نیچے مائیک کا بٹن دبا کر اردو میں بولیں..."></textarea>
+            </div>
+            <div style="text-align: left;">
+                <span id="statusLabel" style="margin-left: 15px; color: #64748b; font-size: 14px;"></span>
+                <button type="button" id="micBtn" class="btn-orange">🎤 مائیک آن کریں (بولیں)</button>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2>📊 ماڈیول 3: آل نیٹ ورک سی ڈی آر اینالائزر (CDR Analyzer)</h2>
+            <p style="font-size: 13px; color: #64748b; margin-top: -5px;">جیز، زونگ، ٹیلینار یا یوفون کی سی ڈی آر ایکسل فائل اپلوڈ کریں۔ ڈیٹا آپ کے براؤزر میں ہی پروسیس ہوگا (100% محفوظ)۔</p>
+            <div class="form-group">
+                <input type="file" id="cdrFile" accept=".xlsx, .xls, .csv">
+            </div>
+            <button type="button" id="analyzeBtn" class="btn-primary" style="width: 100%;">کال ڈیٹا کا تجزیہ کریں</button>
+            
+            <div id="cdrResults" style="display: none; margin-top: 15px;">
+                <h4 style="color: #b45309; margin-bottom: 5px;">🔝 سب سے زیادہ رابطہ کیے گئے ٹاپ 5 نمبرز:</h4>
+                <table id="topContactsTable">
+                    <thead>
+                        <tr>
+                            <th>رابطہ نمبر (Contact Number)</th>
+                            <th style="text-align: center;">کل ہٹس / کالز (Total Hits)</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <h2>📍 ماڈیول 4: لوکیشن موومنٹ ٹریکر (Cell Site Mapping)</h2>
+            <p style="font-size: 13px; color: #64748b; margin-top: -5px;">اگر سی ڈی آر میں Latitude اور Longitude شامل ہیں تو بٹن دبائیں، ملزم کا پورا روٹ میپ پر نظر آ جائے گا۔</p>
+            <button type="button" id="trackMovementBtn" class="btn-success" style="width: 100%;">ملزم کی موومنٹ نقشے پر دکھائیں</button>
+            <div id="map" style="display: none;"></div>
+        </div>
+
+        <div id="printControls" style="text-align: center; margin: 30px 0; background-color: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <label for="pageSizeSelect" style="margin-bottom: 10px; font-size: 16px;">🖨️ فائنل پرنٹنگ کے لیے پیج کا سائز منتخب کریں:</label>
+            <select id="pageSizeSelect" style="width: 60%; margin: 10px auto; display: block; font-weight: bold; color: #1e3a8a;">
+                <option value="legal">سرکاری لیگل سائز پیج (Legal - 8.5" x 14")</option>
+                <option value="a4">سٹینڈرڈ اے4 سائز پیج (A4 - 8.27" x 11.69")</option>
+            </select>
+            <button type="button" id="downloadPdfBtn" class="btn-primary" style="font-size: 16px; padding: 12px 40px; margin-top: 10px;">📄 ڈیجیٹل مسل ڈاؤن لوڈ کریں (PDF)</button>
+        </div>
+
     </div>
 
     <script>
-        function showCard(cardId) {
-            // تمام کارڈز کو چھپائیں
-            document.querySelectorAll('.card').forEach(card => {
-                card.classList.remove('active');
-            });
-            // تمام مینو بٹنز سے ایکٹو کلاس ہٹائیں
-            document.querySelectorAll('.menu-btn').forEach(btn => {
-                btn.classList.remove('active');
+        // --- ماڈیول 2: اردو وائس ٹو ٹیکسٹ لاجک ---
+        const micBtn = document.getElementById('micBtn');
+        const zimniText = document.getElementById('zimniText');
+        const statusLabel = document.getElementById('statusLabel');
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'ur-PK';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            let isRecording = false;
+
+            micBtn.addEventListener('click', () => {
+                if (!isRecording) recognition.start();
+                else recognition.stop();
             });
 
-            // مطلوبہ کارڈ دکھائیں
-            document.getElementById(cardId).classList.add('active');
-            // متعلقہ بٹن کو ایکٹو کریں
-            event.currentTarget.classList.add('active');
+            recognition.onstart = () => {
+                isRecording = true;
+                micBtn.style.backgroundColor = '#c0392b';
+                micBtn.innerText = '🛑 ریکارڈنگ روکیں';
+                statusLabel.innerText = 'سسٹم سن رہا ہے، بولیں...';
+            };
+
+            recognition.onresult = (event) => {
+                const resultText = event.results[0][0].transcript;
+                zimniText.value = zimniText.value + " " + resultText;
+            };
+
+            recognition.onend = () => {
+                isRecording = false;
+                micBtn.style.backgroundColor = '#d35400';
+                micBtn.innerText = '🎤 مائیک آن کریں (بولیں)';
+                statusLabel.innerText = 'ریکارڈنگ مکمل۔';
+            };
+        } else {
+            micBtn.style.display = 'none';
+            statusLabel.innerText = 'آپ کا براؤزر وائس ٹائپنگ کو سپورٹ نہیں کرتا۔';
         }
+
+        // --- ماڈیول 3 اور 4: سی ڈی آر اور میپنگ ڈیٹا ہینڈلنگ ---
+        let globalCdrRows = [];
+        let myMap;
+        let polyline;
+
+        document.getElementById('cdrFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                globalCdrRows = XLSX.utils.sheet_to_json(worksheet);
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        document.getElementById('analyzeBtn').addEventListener('click', () => {
+            if (globalCdrRows.length === 0) {
+                alert('براہ کرم پہلے ویلڈ سی ڈی آر فائل سلیکٹ کریں!');
+                return;
+            }
+
+            let contactCounts = {};
+            globalCdrRows.forEach(row => {
+                // مختلف پاکستانی نیٹ ورکس کے کالم ہیڈرز کی آٹو ڈیٹیکشن
+                let dialedNumber = row['Dialed Number'] || row['Dialed_Number'] || row['Other Party'] || row['Other_Party_Number'] || row['B_NUMBER'] || row['Called Number'] || row['MSISDN'];
+                if (dialedNumber) {
+                    dialedNumber = dialedNumber.toString().trim();
+                    if (dialedNumber.length > 5) {
+                        contactCounts[dialedNumber] = (contactCounts[dialedNumber] || 0) + 1;
+                    }
+                }
+            });
+
+            let sortedContacts = Object.keys(contactCounts).map(key => {
+                return { number: key, count: contactCounts[key] };
+            }).sort((a, b) => b.count - a.count);
+
+            const tbody = document.querySelector('#topContactsTable tbody');
+            tbody.innerHTML = '';
+            
+            const top5 = sortedContacts.slice(0, 5);
+            top5.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td style="direction: ltr; text-align: right;">${item.number}</td><td style="text-align: center; font-weight: bold; color: #1e40af;">${item.count} بار</td>`;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('cdrResults').style.display = 'block';
+            alert('سی ڈی آر کا تجزیہ مکمل ہو گیا ہے!');
+        });
+
+        document.getElementById('trackMovementBtn').addEventListener('click', () => {
+            if (globalCdrRows.length === 0) {
+                alert('براہ کرم پہلے لوکیشن والی سی ڈی آر فائل اپلوڈ کریں!');
+                return;
+            }
+
+            document.getElementById('map').style.display = 'block';
+            if (myMap) myMap.remove();
+
+            // ملتان سٹی کو ڈیفالٹ سینٹر سیٹ کیا ہے
+            myMap = L.map('map').setView([30.1575, 71.5249], 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(myMap);
+
+            let pathCoordinates = [];
+
+            globalCdrRows.forEach((row, index) => {
+                let lat = parseFloat(row['Latitude'] || row['Lat'] || row['SITE_LAT'] || row['Y_COORD']);
+                let lng = parseFloat(row['Longitude'] || row['Lng'] || row['Long'] || row['SITE_LNG'] || row['X_COORD']);
+                let timeStr = row['DateTime'] || row['Date_Time'] || row['Call_Time'] || 'معلوم نہیں';
+                let activityType = row['Event_Type'] || row['Call_Type'] || 'سرگرمی';
+
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const coord = [lat, lng];
+                    pathCoordinates.push(coord);
+                    const marker = L.marker(coord).addTo(myMap);
+                    marker.bindPopup(`<b>پوائنٹ نمبر:</b> ${index + 1}<br><b>وقت:</b> ${timeStr}<br><b>نوعیت:</b> ${activityType}`);
+                }
+            });
+
+            if (pathCoordinates.length > 0) {
+                polyline = L.polyline(pathCoordinates, { color: 'red', weight: 3, opacity: 0.8, dashArray: '5, 10' }).addTo(myMap);
+                myMap.fitBounds(polyline.getBounds());
+                alert('ملزم کی لوکیشن ہسٹری نقشے پر ڈرا کر دی گئی ہے!');
+            } else {
+                alert('اس فائل میں لوکیشن (Lat/Long) کے کالم نہیں مل سکے!');
+            }
+        });
+
+        // --- پرنٹنگ اینڈ پی ڈی ایف ایکسپورٹ لاجک (A4/LEGAL) ---
+        document.getElementById('downloadPdfBtn').addEventListener('click', () => {
+            const element = document.getElementById('mainContent');
+            const selectedSize = document.getElementById('pageSizeSelect').value;
+            const fileName = selectedSize === 'legal' ? 'Digital_IO_Legal_File.pdf' : 'Digital_IO_A4_File.pdf';
+
+            const options = {
+                margin:       [15, 12, 15, 12], // اوپر، بائیں، نیچے، دائیں حاشیے
+                filename:     fileName,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: selectedSize, orientation: 'portrait' }
+            };
+
+            // پرنٹ کے دوران سلیکشن مینیو اور بٹنز کو چھپائیں
+            const printControls = document.getElementById('printControls');
+            printControls.style.display = 'none';
+
+            html2pdf().set(options).from(element).save().then(() => {
+                // پی ڈی ایف بننے کے بعد بٹن واپس دکھائیں
+                printControls.style.display = 'block';
+            });
+        });
     </script>
 </body>
 </html>
