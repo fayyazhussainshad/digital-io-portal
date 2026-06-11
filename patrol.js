@@ -104,12 +104,15 @@ function _renderActiveShift(root) {
     </div>
 
     <!-- Action buttons -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
-      <button class="btn btn-primary" style="padding:16px;font-size:14px;flex-direction:column;" onclick="logCheckpoint()">
-        📍<br><span style="font-size:12px;margin-top:4px;">Log Checkpoint</span>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+      <button class="btn btn-primary" style="padding:14px 8px;font-size:13px;flex-direction:column;" onclick="logQuickCall()">
+        📞<br><span style="font-size:11px;margin-top:4px;">Quick Call</span>
       </button>
-      <button class="btn btn-secondary" style="padding:16px;font-size:14px;flex-direction:column;" onclick="logIncident()">
-        ⚠️<br><span style="font-size:12px;margin-top:4px;">Log Incident</span>
+      <button class="btn btn-secondary" style="padding:14px 8px;font-size:13px;flex-direction:column;" onclick="logCheckpoint()">
+        📍<br><span style="font-size:11px;margin-top:4px;">Checkpoint</span>
+      </button>
+      <button class="btn btn-secondary" style="padding:14px 8px;font-size:13px;flex-direction:column;" onclick="logIncident()">
+        ⚠️<br><span style="font-size:11px;margin-top:4px;">Incident</span>
       </button>
     </div>
 
@@ -205,6 +208,96 @@ async function _captureGPS(manual) {
 function _setGPSStatus(msg) {
   const el = document.getElementById('gps-status');
   if (el) el.textContent = msg;
+}
+
+// ── QUICK CALL LOG ────────────────────────────────────────────
+function logQuickCall() {
+  openModal('📞 Quick Call Log',
+    `<div style="margin-bottom:10px;">
+       <label class="form-label">Caller Name</label>
+       <input class="form-input" id="call-name" placeholder="e.g. Muhammad Ali" autocomplete="off">
+     </div>
+     <div style="margin-bottom:10px;">
+       <label class="form-label">Cell Number</label>
+       <input class="form-input" id="call-number" type="tel" placeholder="0300-1234567">
+     </div>
+     <div style="margin-bottom:10px;">
+       <label class="form-label">Problem / Masla *</label>
+       <textarea class="form-input" id="call-notes" rows="3" placeholder="Caller ne kya bataya..."></textarea>
+     </div>
+     <div>
+       <label class="form-label">Follow-up Reminder?</label>
+       <select class="form-input" id="call-reminder">
+         <option value="">No reminder</option>
+         <option value="1">1 hour baad</option>
+         <option value="3">3 hours baad</option>
+         <option value="24">Kal (24 hours)</option>
+       </select>
+     </div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-primary" onclick="saveQuickCall()">📞 Save Call</button>`
+  );
+}
+
+async function saveQuickCall() {
+  const name     = document.getElementById('call-name')?.value.trim()   || 'Unknown';
+  const number   = document.getElementById('call-number')?.value.trim() || '';
+  const notes    = document.getElementById('call-notes')?.value.trim()  || '';
+  const reminder = document.getElementById('call-reminder')?.value      || '';
+  if (!notes) { showToast('⚠️ Masla likhna zaruri hai', 'error'); return; }
+  closeModal();
+
+  const oid = await getOfficerId();
+  const noteText = `[CALL] ${name}${number?' ('+number+')':''}: ${notes}`;
+
+  // Save as patrol log entry
+  const saveEntry = async (lat, lng, address) => {
+    await supabaseClient.from('patrol_logs').insert({
+      shift_id:   _activeShift?.id || null,
+      officer_id: oid,
+      log_type:   'checkpoint',
+      lat, lng, address,
+      notes:      noteText,
+      severity:   'medium',
+      logged_at:  new Date().toISOString(),
+    });
+
+    // Set reminder if requested
+    if (reminder) {
+      const remindAt = new Date(Date.now() + parseInt(reminder) * 3600000).toISOString();
+      await supabaseClient.from('reminders').insert({
+        officer_id:    oid,
+        text:          `Follow-up: ${name}${number?' '+number:''} — ${notes.slice(0,80)}`,
+        reminder_date: remindAt,
+        is_done:       false,
+      });
+      showToast('✅ Call logged + reminder set!', 'success');
+    } else {
+      showToast('✅ Call logged!', 'success');
+    }
+    if (_activeShift) _loadLiveLog();
+  };
+
+  // Try to get GPS location
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        let address = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
+        if (navigator.onLine) {
+          try {
+            const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
+            const j = await r.json();
+            address = j.display_name ? j.display_name.split(',').slice(0,3).join(',') : address;
+          } catch(_) {}
+        }
+        await saveEntry(pos.coords.latitude, pos.coords.longitude, address);
+      },
+      async () => await saveEntry(null, null, null),
+      { timeout: 6000 }
+    );
+  } else {
+    await saveEntry(null, null, null);
+  }
 }
 
 // ── LOG CHECKPOINT ────────────────────────────────────────────
