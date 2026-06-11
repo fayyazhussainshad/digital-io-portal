@@ -140,18 +140,17 @@ function renderIncident(container) {
 
         <!-- Signature Block -->
         <div style="margin-top:28px;border-top:2px solid #1a3a5c;padding-top:20px;">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
-
-            <!-- SHO signature only — full width -->
-            <div style="text-align:center;border:1px solid #ddd;border-radius:6px;padding:12px;max-width:320px;margin:0 auto;">
-              <div style="height:60px;border-bottom:1px solid #aaa;margin-bottom:6px;"></div>
-              <div style="font-size:13px;font-weight:700;color:#1a3a5c;">SHO تھانہ ${o.station||'_______'} ضلع ${o.district||'_______'}</div>
+          <div style="display:flex;justify-content:flex-start;">
+            <div style="border:1px solid #ddd;border-radius:6px;padding:12px 24px;min-width:260px;text-align:center;">
+              <div style="height:55px;border-bottom:1px solid #aaa;margin-bottom:4px;"></div>
+              <div style="font-size:13px;font-weight:700;color:#1a3a5c;margin-top:4px;">
+                SHO تھانہ ${o.station||'_______'}
+              </div>
               <input id="inc-sign-date" value="${today}"
-                style="border:none;border-bottom:1px solid #aaa;padding:1px 6px;margin-top:5px;
-                font-family:'Jameel Noori Nastaleeq',serif;font-size:13px;
-                text-align:center;width:140px;outline:none;background:transparent;display:block;margin:5px auto 0;">
+                style="border:none;border-bottom:1px solid #aaa;padding:1px 4px;
+                font-family:'Jameel Noori Nastaleeq',serif;font-size:12px;
+                text-align:center;width:130px;outline:none;background:transparent;display:block;margin:3px auto 0;">
             </div>
-
           </div>
         </div>
 
@@ -293,11 +292,13 @@ function _incAddOfficer() {
       <div><label style="${_lbl()}">نام</label><input style="${_iStyle('100%')}border:1px solid #bae6fd;border-radius:4px;padding:4px 8px;"></div>
       <div><label style="${_lbl()}">رینک</label>
         <select style="${_iStyle('100%')}border:1px solid #bae6fd;border-radius:4px;padding:4px 8px;">
-          <option>Constable</option><option>HC</option><option>ASI</option><option>SI</option><option>Inspector</option>
+          <option>Constable</option><option>HC</option><option>ASI</option>
+          <option>SI</option><option>Inspector</option><option>SHO</option>
         </select>
       </div>
       <div><label style="${_lbl()}">عہدہ</label>
-        <select id="off-uhda-${i}" style="${_iStyle('100%')}border:1px solid #bae6fd;border-radius:4px;padding:4px 8px;" onchange="_checkOtherUhda('off-uhda-${i}','off-uhda-other-${i}')">
+        <select id="off-uhda-${i}" style="${_iStyle('100%')}border:1px solid #bae6fd;border-radius:4px;padding:4px 8px;"
+          onchange="_checkOtherUhda('off-uhda-${i}','off-uhda-other-${i}')">
           <option value="">— منتخب کریں —</option>
           <option>IG</option>
           <option>ADDL. IG</option>
@@ -310,7 +311,8 @@ function _incAddOfficer() {
           <option>DSP/SDPO CIRCLE</option>
           <option value="+">+ دیگر عہدہ</option>
         </select>
-        <input id="off-uhda-other-${i}" placeholder="عہدہ لکھیں" style="display:none;${_iStyle('100%')}border:1px solid #bae6fd;border-radius:4px;padding:4px 8px;margin-top:4px;">
+        <input id="off-uhda-other-${i}" placeholder="عہدہ لکھیں"
+          style="display:none;${_iStyle('100%')}border:1px solid #bae6fd;border-radius:4px;padding:4px 8px;margin-top:4px;">
       </div>
     </div>`;
   document.getElementById('inc-officers-list').appendChild(div);
