@@ -660,7 +660,7 @@ function getMisalTemplate(docId, c) {
       <div style="min-height:60px;border:1px solid #ccc;padding:10px;border-radius:4px;" contenteditable="true">ملزمان کے نام...</div>
       ${sig}`,
 
-    report_173: `${header('رپورٹ ۱۷۳ ضابطہ فوجداری')}
+    report_173: `${header('رپورٹ 173 ضابطہ فوجداری')}
       <div style="margin-bottom:10px;">بخدمت جناب عدالت __________</div>
       ${table(
         row('مقدمہ نمبر', fir) +
@@ -846,7 +846,7 @@ function getMisalTemplate(docId, c) {
       <div style="font-weight:bold;margin:12px 0 6px;">نتیجہ:</div>
       <div style="border:1px solid #ccc;padding:10px;border-radius:4px;">
         <label style="display:block;margin-bottom:6px;"><input type="radio" name="result"> چالان پیش کیا جائے</label>
-        <label style="display:block;margin-bottom:6px;"><input type="radio" name="result"> رپورٹ ۱۷۳ — ملزم فرار</label>
+        <label style="display:block;margin-bottom:6px;"><input type="radio" name="result"> رپورٹ 173 — ملزم فرار</label>
         <label style="display:block;margin-bottom:6px;"><input type="radio" name="result"> کینسل</label>
         <label style="display:block;"><input type="radio" name="result"> عدم پتہ</label>
       </div>
@@ -873,7 +873,7 @@ function getMisalTemplate(docId, c) {
             'گواہان کے بیانات',
             'فوٹوگرافی',
             'خاکہ جائے واردات',
-            'رپورٹ ۱۷۳ جمع',
+            'رپورٹ 173 جمع',
           ].map((item,i)=>`<tr>
             <td style="border:1px solid #ccc;padding:6px;text-align:center;">${i+1}</td>
             <td style="border:1px solid #ccc;padding:6px;">${item}</td>
