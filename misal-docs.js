@@ -34,6 +34,7 @@ const MISAL_CASE_DOCS = [
   { id:'stolen',           name:'مسروقہ مال',                desc:'Stolen Property' },
   { id:'recovery',         name:'برآمدگی مال',               desc:'Recovered Property' },
   { id:'preventive',       name:'انسدادی کاروائی',           desc:'Preventive Action' },
+  { id:'shahadatain',      name:'شہادتیں',                   desc:'Evidence / Testimonies' },
 ];
 
 // ── STATE ─────────────────────────────────────────────────────
@@ -178,6 +179,19 @@ async function _doRemoveMisalDoc(docId) {
 
 // ── OPEN EDITOR ───────────────────────────────────────────────
 function _openMisalEditor(docId) {
+  // Special case: شہادتیں opens Evidence upload view
+  if (docId === 'shahadatain') {
+    _openDocId = docId;
+    document.querySelectorAll('.case-tab').forEach(el => el.classList.remove('active'));
+    const area = document.getElementById('workspace-editor-area');
+    if (area && typeof renderEvidenceTab === 'function' && window._workspaceCase) {
+      const ev = window._workspaceEv || [];
+      area.innerHTML = renderEvidenceTab(window._workspaceCase, ev);
+    }
+    // Highlight in sidebar
+    _refreshMisalSidebar();
+    return;
+  }
   const def = MISAL_CASE_DOCS.find(d => d.id === docId);
   if (!def) return;
   _openDocId = docId;
