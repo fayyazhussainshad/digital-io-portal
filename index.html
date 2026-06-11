@@ -570,16 +570,58 @@ input, textarea, select { font-family: var(--font-main); }
 .bilingual-input { direction: auto; font-family: 'Noto Nastaliq Urdu', var(--font-main); }
 
 @media (max-width: 768px) {
-  .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 100; transform: translateX(-100%); }
-  .sidebar.open { transform: translateX(0); box-shadow: var(--shadow); }
-  .mobile-menu-btn { display: block; }
-  .stats-grid { grid-template-columns: repeat(3,1fr); }
+  /* Sidebar — slides in from left on mobile */
+  .sidebar {
+    position: fixed !important;
+    left: 0; top: 0; bottom: 0;
+    z-index: 200;
+    width: var(--sidebar-width) !important;
+    min-width: var(--sidebar-width) !important;
+    opacity: 1 !important;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease !important;
+    overflow-y: auto;
+  }
+  .sidebar.open { transform: translateX(0); box-shadow: 0 0 40px rgba(0,0,0,0.6); }
+  .sidebar.collapsed { transform: translateX(-100%) !important; width: var(--sidebar-width) !important; opacity:1 !important; }
+
+  /* Overlay behind open sidebar */
+  #mob-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:199; }
+  #mob-overlay.show { display:block; }
+
+  /* Show hamburger, hide desktop sidebar-toggle */
+  .mobile-menu-btn { display:block !important; }
+  #sidebar-toggle { display:none !important; }
+
+  /* Main area takes full width */
+  .main-area { width:100% !important; overflow-x:hidden; }
+
+  /* Page content must scroll on mobile */
+  .page-content { overflow-y: auto !important; -webkit-overflow-scrolling: touch; padding: 12px; }
+
+  /* Topbar compact on mobile */
+  .topbar { padding: 0 8px; }
+
+  /* Grids */
+  .stats-grid { grid-template-columns: repeat(2,1fr); }
   .form-row { grid-template-columns: 1fr; }
   .evidence-grid { grid-template-columns: repeat(2,1fr); }
-  .law-grid { grid-template-columns: repeat(2,1fr); }
+  .law-grid { grid-template-columns: 1fr; }
   .misal-layout { grid-template-columns: 1fr; }
   .backup-dest-grid { grid-template-columns: 1fr; }
   .perf-grid { grid-template-columns: 1fr; }
+
+  /* Tables scroll horizontally */
+  .data-table { font-size: 11px; }
+  table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+
+  /* Modal full width on mobile */
+  .modal-card { max-width:95vw; margin:10px; }
+
+  /* Case workspace on mobile */
+  .case-header { flex-wrap:wrap; gap:6px; padding:8px; }
+  .case-tabs { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .wb-ribbon { overflow-x:auto; -webkit-overflow-scrolling:touch; flex-wrap:nowrap; }
 }
 
 /* Topbar already shows the tab name — hide duplicate page titles in content */
@@ -721,6 +763,7 @@ input, textarea, select { font-family: var(--font-main); }
       <div class="nav-item" onclick="showPage('fivec',this)"><span class="nav-icon">📋</span> 5-C Applications</div>
       <div class="nav-section-label">Tools</div>
       <div class="nav-item" onclick="showPage('patrol',this)"><span class="nav-icon">🚔</span> Patrol Log</div>
+      <div class="nav-item" onclick="showPage('cdr',this)"><span class="nav-icon">📞</span> CDR Analyzer</div>
       <div class="nav-item" onclick="showPage('law',this)"><span class="nav-icon">⚖️</span> Law Library</div>
       <div class="nav-item" onclick="showPage('reminders',this)"><span class="nav-icon">🔔</span> Reminders <span class="nav-badge" id="badge-reminders">0</span></div>
       <div class="nav-item" onclick="showPage('performance',this)"><span class="nav-icon">📊</span> Performance</div>
@@ -751,6 +794,7 @@ input, textarea, select { font-family: var(--font-main); }
 <script src="app-core.js"></script>
 <script src="dashboard.js"></script>
 <script src="patrol.js"></script>
+<script src="cdr.js"></script>
 <script src="toolbar.js"></script>
 <script src="misal-docs.js"></script>
 <script src="cases.js"></script>
