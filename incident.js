@@ -31,24 +31,36 @@ function renderIncident(container) {
 
       <!-- Header -->
       <div style="background:#1a3a5c;color:#fff;padding:16px 24px;text-align:center;">
-        <div style="font-size:22px;font-weight:800;margin-bottom:4px;">پولیس محکمہ پنجاب</div>
+        <div style="font-size:22px;font-weight:800;margin-bottom:4px;">محکمہ پولیس پنجاب — ضلع ${o.district||'_______'}</div>
         <div style="font-size:16px;margin-bottom:2px;">واقعاتی / حادثاتی رپورٹ</div>
         <div style="font-size:13px;opacity:0.8;">INCIDENT REPORT — PUNJAB POLICE</div>
       </div>
 
-      <!-- Report Number + Date -->
+      <!-- Report Number + Incident Type -->
       <div style="background:#f0f4f8;padding:10px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ccc;">
         <div style="font-size:13px;">
           <span style="color:#555;">رپورٹ نمبر:</span>
           <input value="${incNum}" id="inc-num" style="${_iStyle('140px')}font-family:monospace;font-weight:700;color:#1a3a5c;">
         </div>
         <div style="font-size:13px;">
-          <span style="color:#555;">درجہ بندی:</span>
-          <select id="inc-severity" style="${_iStyle('120px')}">
-            <option>انتہائی سنگین</option>
-            <option selected>سنگین</option>
-            <option>متوسط</option>
-            <option>معمولی</option>
+          <span style="color:#555;">واقعے کی قسم:</span>
+          <select id="inc-severity" style="${_iStyle('160px')}">
+            <option>قتل</option>
+            <option>ڈکیتی</option>
+            <option>چوری</option>
+            <option>اغوا</option>
+            <option>دہشت گردی</option>
+            <option>فساد</option>
+            <option>ٹریفک حادثہ</option>
+            <option>جنسی زیادتی</option>
+            <option>غیر قانونی اسلحہ</option>
+            <option>منشیات</option>
+            <option>فراڈ / دھوکہ</option>
+            <option>توڑ پھوڑ</option>
+            <option>خودکشی</option>
+            <option>لاوارث لاش</option>
+            <option>آگ لگنا</option>
+            <option>دیگر</option>
           </select>
         </div>
       </div>
@@ -62,16 +74,6 @@ function renderIncident(container) {
           ${_field('واقعے کا وقت', 'inc-time', timeNow, 'text')}
           ${_field('رپورٹ کی تاریخ', 'inc-rdate', today, 'text')}
           ${_field('رپورٹ کا وقت', 'inc-rtime', timeNow, 'text')}
-        </div>
-        <div style="margin-bottom:12px;">
-          <div style="${_lbl()}">واقعے کی قسم</div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">
-            ${['قتل','ڈکیتی','چوری','اغوا','دہشت گردی','فساد','حادثہ','جنسی زیادتی','اسلحہ','منشیات','دیگر'].map(t=>
-              `<label style="display:flex;align-items:center;gap:4px;font-size:14px;cursor:pointer;">
-                <input type="checkbox" name="inc-type" value="${t}" style="accent-color:#1a3a5c;width:14px;height:14px;">
-                ${t}
-              </label>`).join('')}
-          </div>
         </div>
 
         <!-- Section 2: Location -->
@@ -142,33 +144,29 @@ function renderIncident(container) {
         ${_field('سپروائزر / افسر اعلیٰ کا نام', 'inc-supervisor', '', 'text')}
 
         <!-- Signature Block -->
-        <div style="margin-top:32px;border-top:2px solid #1a3a5c;padding-top:20px;">
-          <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;">
+        <div style="margin-top:32px;border-top:2px solid #1a3a5c;padding-top:24px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;">
 
-            <!-- Left: Stamp -->
-            <div style="text-align:center;min-width:140px;">
-              <div style="width:130px;height:130px;border:2px dashed #1a3a5c;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;">
-                <div style="text-align:center;color:#999;font-size:12px;line-height:1.6;">
-                  <div style="font-size:24px;">🔵</div>
-                  مہر / اسٹامپ
-                </div>
-              </div>
-              <div style="font-size:12px;color:#555;margin-top:8px;">سرکاری مہر</div>
-            </div>
-
-            <!-- Center: Date -->
+            <!-- Left: Signature of IO -->
             <div style="text-align:center;flex:1;">
-              <div style="font-size:14px;color:#555;margin-bottom:6px;">تاریخ</div>
-              <input id="inc-sign-date" value="${today}"
-                style="border:none;border-bottom:2px solid #1a3a5c;padding:4px 10px;font-family:'Jameel Noori Nastaleeq',serif;font-size:16px;text-align:center;width:160px;outline:none;background:transparent;">
+              <div style="border-bottom:2px solid #1a3a5c;height:60px;margin-bottom:8px;"></div>
+              <div style="font-size:13px;color:#333;font-weight:700;">${o.full_name||'_________________'}</div>
+              <div style="font-size:12px;color:#555;">${o.designation||''}</div>
+              <div style="font-size:12px;color:#555;">${o.station||''} تھانہ</div>
+              <div style="font-size:12px;color:#555;">دستخط رپورٹنگ افسر</div>
             </div>
 
-            <!-- Right: Signature -->
-            <div style="text-align:center;min-width:200px;">
+            <!-- Right: SHO Signature + Date below -->
+            <div style="text-align:center;flex:1;">
               <div style="border-bottom:2px solid #1a3a5c;height:60px;margin-bottom:8px;"></div>
-              <div style="font-size:13px;color:#333;font-weight:700;" id="inc-sign-name">${o.full_name||'_________________'}</div>
-              <div style="font-size:12px;color:#555;" id="inc-sign-rank">${o.designation||''}</div>
-              <div style="font-size:12px;color:#555;">دستخط رپورٹنگ افسر</div>
+              <div style="font-size:11px;color:#555;margin-bottom:4px;">SHO کا نام:</div>
+              <input id="inc-sho-name" placeholder="SHO کا نام یہاں لکھیں"
+                style="border:none;border-bottom:1px solid #aaa;padding:2px 8px;font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;text-align:center;width:200px;outline:none;background:transparent;direction:rtl;">
+              <div style="font-size:11px;color:#555;margin-top:8px;margin-bottom:4px;">${o.station||''} تھانہ</div>
+              <div style="font-size:11px;color:#555;margin-bottom:4px;">تاریخ:</div>
+              <input id="inc-sign-date" value="${today}"
+                style="border:none;border-bottom:1px solid #aaa;padding:2px 8px;font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;text-align:center;width:160px;outline:none;background:transparent;">
+              <div style="font-size:12px;color:#555;margin-top:4px;">دستخط SHO</div>
             </div>
 
           </div>
@@ -214,10 +212,15 @@ function _field(label, id, val, type) {
 function _fieldFull(label, id, val, rows) {
   return `<div style="margin-bottom:12px;">
     <label style="${_lbl()}">${label}</label>
-    <textarea id="${id}" rows="${rows}"
-      style="width:100%;border:1px solid #ddd;border-radius:4px;padding:8px 10px;
-             font-family:'Jameel Noori Nastaleeq',serif;font-size:15px;
-             direction:rtl;resize:vertical;outline:none;box-sizing:border-box;">${val}</textarea>
+    <div style="display:flex;gap:6px;align-items:flex-start;">
+      <textarea id="${id}" rows="${rows}"
+        style="flex:1;border:1px solid #ddd;border-radius:4px;padding:8px 10px;
+               font-family:'Jameel Noori Nastaleeq',serif;font-size:15px;
+               direction:rtl;resize:vertical;outline:none;box-sizing:border-box;">${val}</textarea>
+      <button id="mic-${id}" onclick="_incVoice('${id}','mic-${id}')"
+        style="width:38px;height:38px;border:1px solid #ddd;border-radius:6px;background:#f0f4f8;
+               font-size:18px;cursor:pointer;flex-shrink:0;margin-top:2px;">🎙️</button>
+    </div>
   </div>`;
 }
 
@@ -288,6 +291,29 @@ function _incAddWitness() {
       <div><label style="${_lbl()}">موبائل نمبر</label><input style="${_iStyle('100%')}border:1px solid #bae6fd;border-radius:4px;padding:5px 8px;"></div>
     </div>`;
   document.getElementById('inc-witnesses-list').appendChild(div);
+}
+
+// ── VOICE INPUT ───────────────────────────────────────────────
+let _incVoiceRec = null, _incVoiceOn = false, _incVoiceTgt = null;
+function _incVoice(targetId, btnId) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showToast('⚠️ Browser mein voice support nahi','error'); return; }
+  if (_incVoiceOn && _incVoiceTgt === targetId) {
+    _incVoiceRec?.stop(); _incVoiceOn=false; _incVoiceTgt=null;
+    const b=document.getElementById(btnId); if(b){b.style.background='#f0f4f8';b.textContent='🎙️';}
+    return;
+  }
+  if (_incVoiceOn) _incVoiceRec?.stop();
+  _incVoiceTgt=targetId; _incVoiceOn=true;
+  const b=document.getElementById(btnId); if(b){b.style.background='#ef4444';b.style.color='#fff';b.textContent='⏹';}
+  _incVoiceRec=new SR(); _incVoiceRec.lang='ur-PK'; _incVoiceRec.continuous=false; _incVoiceRec.interimResults=false;
+  _incVoiceRec.onresult=e=>{
+    const inp=document.getElementById(targetId);
+    if(inp)inp.value+=(inp.value?' ':'')+e.results[0][0].transcript;
+  };
+  _incVoiceRec.onend=()=>{_incVoiceOn=false;_incVoiceTgt=null;const b=document.getElementById(btnId);if(b){b.style.background='#f0f4f8';b.style.color='';b.textContent='🎙️';}};
+  _incVoiceRec.onerror=()=>{_incVoiceOn=false;const b=document.getElementById(btnId);if(b){b.style.background='#f0f4f8';b.style.color='';b.textContent='🎙️';}};
+  _incVoiceRec.start();
 }
 
 // ── GPS ───────────────────────────────────────────────────────
