@@ -16,12 +16,24 @@ function renderIncident(container) {
   container.innerHTML = `
   <div style="max-width:900px;margin:0 auto;" id="inc-root">
 
+    <!-- Previous Reports -->
+    <div class="card" style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:700;color:var(--accent);">🚨 پرانی Incident Reports</div>
+      </div>
+      <div id="inc-prev-list">
+        <div style="text-align:center;padding:10px;color:var(--text-muted);font-size:12px;">⏳ لوڈ ہو رہی ہے...</div>
+      </div>
+    </div>
+
     <!-- Action Bar -->
-    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+      <div style="font-size:14px;font-weight:700;color:var(--text-primary);">+ نئی رپورٹ</div>
+      <div style="flex:1;"></div>
       <button class="btn btn-primary" onclick="_incPrint()">🖨️ پرنٹ کریں</button>
-      <button class="btn btn-secondary" onclick="_incDownload()">⬇️ ڈاؤنلوڈ کریں</button>
+      <button class="btn btn-secondary" onclick="_incDownload()">⬇️ ڈاؤنلوڈ</button>
       <button class="btn btn-secondary" onclick="_incShare()">📱 WhatsApp</button>
-      <button class="btn btn-secondary" onclick="_incReset()">🔄 نئی رپورٹ</button>
+      <button class="btn btn-secondary" onclick="_incReset()">🔄 صاف کریں</button>
     </div>
 
     <!-- FORM -->
@@ -168,6 +180,68 @@ function renderIncident(container) {
   _incAddSuspect();
   _incAddWitness();
   _incAddOfficer();
+
+  // Load previous reports
+  _loadPrevReports();
+}
+
+// ── PREVIOUS REPORTS ──────────────────────────────────────────
+async function _loadPrevReports() {
+  const el = document.getElementById('inc-prev-list');
+  if (!el) return;
+  try {
+    const oid = await getOfficerId();
+    const { data } = await supabaseClient
+      .from('incident_reports')
+      .select('id,report_number,incident_date,incident_type,address,created_at')
+      .eq('officer_id', oid)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (!data || !data.length) {
+      el.innerHTML = `<div style="text-align:center;padding:10px;color:var(--text-muted);font-size:12px;">ابھی کوئی رپورٹ نہیں</div>`;
+      return;
+    }
+    el.innerHTML = data.map(r => `
+      <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:18px;">🚨</span>
+        <div style="flex:1;">
+          <div style="font-size:12px;font-weight:700;color:var(--accent);">${r.report_number||'—'}</div>
+          <div style="font-size:11px;color:var(--text-muted);">${r.incident_type||'—'} · ${r.incident_date||'—'} · ${r.address||'—'}</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="_viewIncReport('${r.id}')">👁️ دیکھیں</button>
+        <button class="btn btn-danger btn-sm" onclick="_delIncReport('${r.id}')">🗑️</button>
+      </div>`).join('');
+  } catch(_) {
+    el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);padding:8px;">ریکارڈ دستیاب نہیں</div>`;
+  }
+}
+
+async function _delIncReport(id) {
+  try {
+    await supabaseClient.from('incident_reports').delete().eq('id', id);
+    showToast('🗑️ رپورٹ ہٹا دی گئی', 'info');
+    _loadPrevReports();
+  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+async function _viewIncReport(id) {
+  showToast('⏳ رپورٹ لوڈ ہو رہی ہے...', 'info', 1500);
+  try {
+    const { data } = await supabaseClient.from('incident_reports').select('*').eq('id', id).single();
+    if (!data) return;
+    openModal('🚨 Incident Report — ' + (data.report_number||''),
+      `<div style="font-size:12px;line-height:2;direction:rtl;">
+        <div><b>رپورٹ نمبر:</b> ${data.report_number||'—'}</div>
+        <div><b>تاریخ:</b> ${data.incident_date||'—'} · <b>وقت:</b> ${data.incident_time||'—'}</div>
+        <div><b>قسم:</b> ${data.incident_type||'—'}</div>
+        <div><b>مقام:</b> ${data.address||'—'}</div>
+        <div><b>روداد:</b> ${data.narrative||'—'}</div>
+        <div><b>اقدامات:</b> ${data.action_taken||'—'}</div>
+      </div>`,
+      `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`
+    );
+  } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
 
 // ── HELPERS ───────────────────────────────────────────────────
@@ -293,13 +367,14 @@ function _incAddOfficer() {
       <div><label style="${_lbl()}">رینک</label>
         <select style="${_iStyle('100%')}border:1px solid #bae6fd;border-radius:4px;padding:4px 8px;">
           <option>Constable</option><option>HC</option><option>ASI</option>
-          <option>SI</option><option>Inspector</option><option>SHO</option>
+          <option>SI</option><option>Inspector</option>
         </select>
       </div>
       <div><label style="${_lbl()}">عہدہ</label>
         <select id="off-uhda-${i}" style="${_iStyle('100%')}border:1px solid #bae6fd;border-radius:4px;padding:4px 8px;"
           onchange="_checkOtherUhda('off-uhda-${i}','off-uhda-other-${i}')">
           <option value="">— منتخب کریں —</option>
+          <option>SHO</option>
           <option>IG</option>
           <option>ADDL. IG</option>
           <option>RPO</option>
