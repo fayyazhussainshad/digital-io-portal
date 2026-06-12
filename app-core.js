@@ -208,18 +208,40 @@ async function loadOfficerProfile(){
 }
 
 function _updateTopbarShoDsp(o) {
-  const el = document.getElementById('topbar-sho-dsp');
-  if (!el || !o) return;
-  const sho = o.sho_name || '';
-  const dsp = o.dsp_name || '';
-  const sta = o.station  || '';
-  // Always show if any info available
-  if (!sho && !dsp && !sta) { el.style.display='none'; return; }
-  el.style.cssText = 'display:flex!important;flex-direction:column;align-items:flex-end;font-size:10px;color:var(--text-muted);font-family:"Jameel Noori Nastaleeq",serif;direction:rtl;line-height:1.5;margin-left:8px;';
-  el.innerHTML =
-    (sho ? `<div style="color:var(--accent);font-weight:700;white-space:nowrap;">SHO: ${sho}</div>` : '') +
-    (dsp ? `<div style="white-space:nowrap;">DSP: ${dsp}</div>` : '') +
-    (sta && !sho ? `<div style="white-space:nowrap;">تھانہ ${sta}</div>` : '');
+  const shoEl = document.getElementById('topbar-sho');
+  const dspEl = document.getElementById('topbar-dsp');
+  if (shoEl) {
+    shoEl.style.display = 'block';
+    shoEl.textContent = o.sho_name ? 'SHO ' + o.sho_name : 'SHO ___';
+  }
+  if (dspEl) {
+    dspEl.style.display = 'block';
+    dspEl.textContent = o.dsp_name ? 'DSP/SDPO ' + o.dsp_name : 'DSP/SDPO ___';
+  }
+}
+
+function _editTopbarField(field) {
+  const o = currentOfficer || {};
+  const isSho = field === 'sho';
+  const label = isSho ? 'SHO کا نام' : 'DSP/SDPO کا نام';
+  const current = isSho ? (o.sho_name||'') : (o.dsp_name||'');
+  openModal(label,
+    `<input class="form-input" id="topbar-edit-val" value="${current}" placeholder="${label}" dir="auto" style="font-family:'Jameel Noori Nastaleeq',serif;">`,
+    `<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+     <button class="btn btn-primary" onclick="_saveTopbarField('${field}')">💾 محفوظ</button>`
+  );
+  setTimeout(()=>document.getElementById('topbar-edit-val')?.focus(),100);
+}
+
+async function _saveTopbarField(field) {
+  const val = document.getElementById('topbar-edit-val')?.value.trim() || '';
+  const update = field === 'sho' ? { sho_name: val } : { dsp_name: val };
+  try {
+    const updated = await updateOfficerProfile(update);
+    _updateTopbarShoDsp(updated);
+    closeModal();
+    showToast('✅ محفوظ ہو گیا', 'success');
+  } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
 async function loginSuccess(){const ls=document.getElementById('login-screen'),app=document.getElementById('main-app');ls.style.transition='opacity 0.4s';ls.style.opacity='0';setTimeout(()=>{ls.style.display='none';app.style.display='flex';setLoginLoading(false);initApp();},400);resetSessionTimer();}
 function resetSessionTimer(){clearTimeout(sessionTimer);sessionTimer=setTimeout(()=>{showToast('⏰ Session expired.','error');setTimeout(doLogout,2000);},APP_CONFIG.sessionTimeout);}

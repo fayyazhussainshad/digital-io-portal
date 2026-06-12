@@ -851,7 +851,25 @@ input[id*="cnic"], input[id*="cell"] {
   <div class="main-area">
     <div class="topbar">
       <div class="topbar-left"><button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button><div class="topbar-title" id="topbar-title">Dashboard</div><div class="db-badge" id="db-badge">⚙ Connecting...</div></div>
-      <div class="topbar-right"><div id="topbar-sho-dsp" style="font-size:10px;color:var(--text-muted);text-align:right;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;line-height:1.4;display:none;"></div><button class="topbar-btn" onclick="closeMobileSidebar();showPage('search',null)" title="Search">🔍</button><button class="topbar-btn" onclick="closeMobileSidebar();showPage('reminders',null)" title="Reminders">🔔</button><button class="topbar-btn" onclick="triggerBackupNow()" title="Backup Now">☁️</button><button class="topbar-btn" id="theme-picker-btn" onclick="openThemePicker()" title="Change Theme" style="font-size:16px;">🎨</button><div class="topbar-status"><span class="status-dot" id="status-dot"></span><span id="status-text">Connecting</span></div></div>
+      <div class="topbar-right">
+        <div id="topbar-sho" onclick="_editTopbarField('sho')" title="SHO کا نام تبدیل کریں"
+          style="font-size:11px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq',serif;
+                 direction:rtl;cursor:pointer;padding:3px 8px;border-radius:6px;
+                 border:1px solid transparent;white-space:nowrap;display:none;"
+          onmouseover="this.style.borderColor='var(--border)'" 
+          onmouseout="this.style.borderColor='transparent'">SHO</div>
+        <div id="topbar-dsp" onclick="_editTopbarField('dsp')" title="DSP/SDPO کا نام تبدیل کریں"
+          style="font-size:11px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq',serif;
+                 direction:rtl;cursor:pointer;padding:3px 8px;border-radius:6px;
+                 border:1px solid transparent;white-space:nowrap;display:none;"
+          onmouseover="this.style.borderColor='var(--border)'" 
+          onmouseout="this.style.borderColor='transparent'">DSP/SDPO</div>
+        <button class="topbar-btn" onclick="closeMobileSidebar();showPage('search',null)" title="Search">🔍</button>
+        <button class="topbar-btn" onclick="closeMobileSidebar();showPage('reminders',null)" title="Reminders">🔔</button>
+        <button class="topbar-btn" onclick="triggerBackupNow()" title="Backup Now">☁️</button>
+        <button class="topbar-btn" id="theme-picker-btn" onclick="openThemePicker()" title="Change Theme" style="font-size:16px;">🎨</button>
+        <div class="topbar-status"><span class="status-dot" id="status-dot"></span><span id="status-text">Connecting</span></div>
+      </div>
     </div>
     <div class="page-content" id="page-content"><div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Loading...</div></div></div>
     <div class="bottombar"><span id="footer-officer">Digital IO</span><span id="footer-time"></span><span id="footer-license">License: Active</span></div>
