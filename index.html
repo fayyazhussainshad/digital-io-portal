@@ -63,7 +63,7 @@
   --sidebar-width: 240px;
   --topbar-height: 52px;
   --bottombar-height: 32px;
-  --font-main: 'Aptos', 'Segoe UI', system-ui, sans-serif;
+  --font-main: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu','Aptos','Segoe UI',system-ui,sans-serif;
   --font-display: 'Aptos Display', 'Aptos', 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'Aptos Mono', 'Consolas', monospace;
 }
@@ -463,8 +463,8 @@ input, textarea, select { font-family: var(--font-main); }
 .stat-red .stat-num { color: var(--red); }
 .stat-purple .stat-num { color: var(--purple); }
 .form-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
-.form-label { font-size: 11px; color: var(--text-muted); letter-spacing: 0.5px; }
-.form-input { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 12px; color: var(--text-primary); font-size: 12px; outline: none; transition: border 0.15s; font-family: var(--font-main); width: 100%; }
+.form-label { font-size: 11px; color: var(--text-muted); letter-spacing: 0.5px; font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+.form-input { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 12px; color: var(--text-primary); font-size: 14px; outline: none; transition: border 0.15s; font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',var(--font-main); width: 100%; }
 .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
 .form-input::placeholder { color: var(--text-faint); }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -805,7 +805,7 @@ img { content-visibility: auto; }
       <div class="nav-item" onclick="closeMobileSidebar();showPage('performance',this)"><span class="nav-icon">📊</span> Performance</div>
       <div class="nav-section-label">System</div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('backup',this)"><span class="nav-icon">☁️</span> Backup & Sync</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('bin',this)"><span class="nav-icon">🗑️</span> ری سائیکل بن</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('bin',this)"><span class="nav-icon">🗑️</span> Recycle Bin</div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('settings',this)"><span class="nav-icon">⚙️</span> Settings</div>
     </nav>
     <div class="sidebar-footer"><button class="logout-btn" onclick="doLogout()">🚪 Sign Out</button><div class="sidebar-version">Digital IO v4.0 · Secure</div></div>
