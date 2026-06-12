@@ -570,58 +570,87 @@ input, textarea, select { font-family: var(--font-main); }
 .bilingual-input { direction: auto; font-family: 'Noto Nastaliq Urdu', var(--font-main); }
 
 @media (max-width: 768px) {
-  /* Sidebar — slides in from left on mobile */
+  /* Sidebar — fixed, slides from left — ALL Android versions */
   .sidebar {
     position: fixed !important;
-    left: 0; top: 0; bottom: 0;
-    z-index: 200;
-    width: var(--sidebar-width) !important;
-    min-width: var(--sidebar-width) !important;
+    left: 0 !important; top: 0 !important; bottom: 0 !important;
+    z-index: 1000 !important;
+    width: 260px !important;
+    min-width: 260px !important;
     opacity: 1 !important;
+    -webkit-transform: translateX(-100%);
     transform: translateX(-100%);
+    -webkit-transition: -webkit-transform 0.25s ease !important;
     transition: transform 0.25s ease !important;
-    overflow-y: auto;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    pointer-events: auto !important;
   }
-  .sidebar.open { transform: translateX(0); box-shadow: 0 0 40px rgba(0,0,0,0.6); }
-  .sidebar.collapsed { transform: translateX(-100%) !important; width: var(--sidebar-width) !important; opacity:1 !important; }
+  .sidebar.open {
+    -webkit-transform: translateX(0) !important;
+    transform: translateX(0) !important;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.6) !important;
+  }
+  .sidebar.collapsed {
+    -webkit-transform: translateX(-100%) !important;
+    transform: translateX(-100%) !important;
+  }
 
-  /* Overlay behind open sidebar */
-  #mob-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:199; }
-  #mob-overlay.show { display:block; }
+  /* Dark overlay behind sidebar */
+  #mob-overlay {
+    display: none;
+    position: fixed !important;
+    top: 0 !important; left: 0 !important;
+    right: 0 !important; bottom: 0 !important;
+    background: rgba(0,0,0,0.55) !important;
+    z-index: 999 !important;
+    -webkit-tap-highlight-color: transparent;
+  }
 
-  /* Show hamburger, hide desktop sidebar-toggle */
-  .mobile-menu-btn { display:block !important; }
-  #sidebar-toggle { display:none !important; }
+  /* Show hamburger, hide desktop toggle */
+  .mobile-menu-btn { display: block !important; }
+  #sidebar-toggle { display: none !important; }
 
-  /* Main area takes full width */
-  .main-area { width:100% !important; overflow-x:hidden; }
+  /* Main area full width */
+  .main-area { width: 100% !important; overflow-x: hidden !important; }
 
-  /* Page content must scroll on mobile */
-  .page-content { overflow-y: auto !important; -webkit-overflow-scrolling: touch; padding: 12px; }
+  /* Page content scroll */
+  .page-content {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 10px !important;
+    height: calc(100vh - 52px) !important;
+  }
 
-  /* Topbar compact on mobile */
-  .topbar { padding: 0 8px; }
+  /* Topbar compact */
+  .topbar { padding: 0 8px !important; }
 
-  /* Grids */
-  .stats-grid { grid-template-columns: repeat(2,1fr); }
-  .form-row { grid-template-columns: 1fr; }
-  .evidence-grid { grid-template-columns: repeat(2,1fr); }
-  .law-grid { grid-template-columns: 1fr; }
-  .misal-layout { grid-template-columns: 1fr; }
-  .backup-dest-grid { grid-template-columns: 1fr; }
-  .perf-grid { grid-template-columns: 1fr; }
+  /* Grids responsive */
+  .stats-grid { grid-template-columns: repeat(2,1fr) !important; }
+  .form-row { grid-template-columns: 1fr !important; }
+  .evidence-grid { grid-template-columns: repeat(2,1fr) !important; }
+  .law-grid { grid-template-columns: 1fr !important; }
+  .misal-layout { grid-template-columns: 1fr !important; }
+  .backup-dest-grid { grid-template-columns: 1fr !important; }
+  .perf-grid { grid-template-columns: 1fr !important; }
 
-  /* Tables scroll horizontally */
-  .data-table { font-size: 11px; }
-  table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  /* Tables scroll */
+  .data-table { font-size: 11px !important; }
+  table { display: block !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }
 
-  /* Modal full width on mobile */
-  .modal-card { max-width:95vw; margin:10px; }
+  /* Modals full width */
+  .modal-card { max-width: 95vw !important; margin: 10px auto !important; }
 
-  /* Case workspace on mobile */
-  .case-header { flex-wrap:wrap; gap:6px; padding:8px; }
-  .case-tabs { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-  .wb-ribbon { overflow-x:auto; -webkit-overflow-scrolling:touch; flex-wrap:nowrap; }
+  /* Word toolbar scroll */
+  .wb-ribbon { overflow-x: auto !important; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch !important; }
+  .wb-grp { flex-shrink: 0 !important; }
+
+  /* MISAL doc chips scroll */
+  #misal-doc-bar { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }
+
+  /* Cards padding */
+  .card { padding: 12px !important; }
 }
 
 /* ── Mobile Performance Optimizations ── */
@@ -864,28 +893,85 @@ img { content-visibility: auto; }
 
 <!-- ── Mobile sidebar toggle ── -->
 <script>
-function toggleSidebar() {
-  const sb  = document.getElementById('sidebar');
-  const ov  = document.getElementById('mob-overlay');
-  if (!sb) return;
-  const isOpen = sb.classList.contains('open');
-  sb.classList.toggle('open', !isOpen);
-  if (ov) ov.classList.toggle('show', !isOpen);
-}
+// Android-compatible sidebar — works on ALL Android versions
+(function() {
+  var _startX = 0;
+  var _isDragging = false;
 
-// Close sidebar when nav item clicked on mobile
-document.addEventListener('DOMContentLoaded', function() {
-  if (window.innerWidth <= 768) {
-    document.querySelectorAll('.nav-item').forEach(function(el) {
-      el.addEventListener('click', function() {
-        const sb = document.getElementById('sidebar');
-        const ov = document.getElementById('mob-overlay');
-        if (sb) sb.classList.remove('open');
-        if (ov) ov.classList.remove('show');
-      });
-    });
+  function getSidebar() { return document.getElementById('sidebar'); }
+  function getOverlay() { return document.getElementById('mob-overlay'); }
+
+  function openSidebar() {
+    var sb = getSidebar(); var ov = getOverlay();
+    if (!sb) return;
+    sb.style.cssText = 'transform:translateX(0)!important;transition:transform 0.25s ease!important;';
+    if (ov) { ov.style.display = 'block'; ov.style.opacity = '1'; }
+    sb.classList.add('open');
   }
-});
+
+  function closeSidebar() {
+    var sb = getSidebar(); var ov = getOverlay();
+    if (!sb) return;
+    sb.style.cssText = 'transform:translateX(-100%)!important;transition:transform 0.25s ease!important;';
+    if (ov) { ov.style.display = 'none'; ov.style.opacity = '0'; }
+    sb.classList.remove('open');
+  }
+
+  window.toggleSidebar = function() {
+    var sb = getSidebar();
+    if (!sb) return;
+    if (sb.classList.contains('open')) { closeSidebar(); } else { openSidebar(); }
+  };
+
+  // Close when nav item tapped
+  document.addEventListener('click', function(e) {
+    var navItem = e.target.closest('.nav-item');
+    var sb = getSidebar();
+    if (navItem && sb && sb.classList.contains('open') && window.innerWidth <= 768) {
+      closeSidebar();
+    }
+  });
+
+  // Swipe from left edge to open (Android gesture)
+  document.addEventListener('touchstart', function(e) {
+    _startX = e.touches[0].clientX;
+    _isDragging = _startX < 24; // Only from left edge 24px
+  }, { passive: true });
+
+  document.addEventListener('touchend', function(e) {
+    if (!_isDragging) return;
+    var endX = e.changedTouches[0].clientX;
+    var diff = endX - _startX;
+    if (diff > 60) { openSidebar(); }  // Swipe right 60px = open
+    _isDragging = false;
+  }, { passive: true });
+
+  // Swipe left on sidebar to close
+  document.addEventListener('touchstart', function(e) {
+    var sb = getSidebar();
+    if (sb && sb.contains(e.target)) { _startX = e.touches[0].clientX; }
+  }, { passive: true });
+
+  document.addEventListener('touchend', function(e) {
+    var sb = getSidebar();
+    if (sb && sb.classList.contains('open')) {
+      var diff = e.changedTouches[0].clientX - _startX;
+      if (diff < -60) { closeSidebar(); } // Swipe left 60px = close
+    }
+  }, { passive: true });
+
+  // Overlay click/tap to close
+  document.addEventListener('DOMContentLoaded', function() {
+    var ov = getOverlay();
+    if (ov) {
+      ov.addEventListener('click', closeSidebar);
+      ov.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        closeSidebar();
+      });
+    }
+  });
+})();
 </script>
 
 <!-- ── Sidebar collapse ── -->
