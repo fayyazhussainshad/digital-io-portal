@@ -30,7 +30,8 @@ function renderIncident(container) {
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
       <div style="font-size:14px;font-weight:700;color:var(--text-primary);">+ نئی رپورٹ</div>
       <div style="flex:1;"></div>
-      <button class="btn btn-primary" onclick="_incPrint()">🖨️ پرنٹ کریں</button>
+      <button class="btn btn-primary" onclick="_incSaveToDB();_incPrint()">🖨️ محفوظ و پرنٹ</button>
+      <button class="btn btn-secondary" onclick="_incSaveToDB()">💾 محفوظ کریں</button>
       <button class="btn btn-secondary" onclick="_incDownload()">⬇️ ڈاؤنلوڈ</button>
       <button class="btn btn-secondary" onclick="_incShare()">📱 WhatsApp</button>
       <button class="btn btn-secondary" onclick="_incReset()">🔄 صاف کریں</button>
@@ -443,6 +444,32 @@ function _incGPS() {
       } catch(_) {}
     }
   }, () => { if(status)status.textContent='⚠️ GPS نہیں مل سکا'; }, {timeout:10000});
+}
+
+// ── SAVE TO DB ────────────────────────────────────────────────
+async function _incSaveToDB() {
+  try {
+    const oid = await getOfficerId();
+    if (!oid) return;
+    const types = [...document.querySelectorAll('input[name="inc-type"]:checked')].map(e=>e.value).join('، ');
+    await supabaseClient.from('incident_reports').insert({
+      officer_id:   oid,
+      report_number: document.getElementById('inc-num')?.value || '',
+      incident_date: document.getElementById('inc-date')?.value || '',
+      incident_time: document.getElementById('inc-time')?.value || '',
+      incident_type: document.getElementById('inc-severity')?.value || types || '',
+      address:       document.getElementById('inc-address')?.value || '',
+      narrative:     document.getElementById('inc-narrative')?.value || '',
+      action_taken:  document.getElementById('inc-action')?.value || '',
+      data: {
+        fir: document.getElementById('inc-fir')?.value,
+        station: document.getElementById('inc-station')?.value,
+        district: document.getElementById('inc-district')?.value,
+      }
+    });
+    showToast('✅ رپورٹ محفوظ ہو گئی', 'success');
+    _loadPrevReports();
+  } catch(e) { console.warn('incident save:', e.message); }
 }
 
 // ── PRINT ─────────────────────────────────────────────────────
