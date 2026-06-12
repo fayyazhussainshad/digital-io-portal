@@ -275,18 +275,18 @@ async function _srRun() {
   if (section === 'all' || section === 'fivec') {
     try {
       const oid = await getOfficerId();
-      const { data } = await supabaseClient.from('fivec_applications')
+      const { data } = await supabaseClient.from('applications_5c')
         .select('*').eq('officer_id', oid).order('created_at', { ascending: false });
       const apps = (data||[]).filter(a =>
-        wMatch(a.applicant_name) || wMatch(a.subject) ||
-        wMatch(a.fir_number) || wMatch(a.content)
+        wMatch(a.complainant_name) || wMatch(a.subject) ||
+        wMatch(a.fir_number) || wMatch(a.response_text)
       );
       if (apps.length) {
         html += `<div class="sr-section-header">📋 5-C Applications (${apps.length})</div>`;
         html += `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
           ${apps.map(a=>`<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;">
             <div style="font-size:13px;font-weight:600;">${a.subject||'5-C Application'}</div>
-            <div style="font-size:11px;color:var(--text-muted);">${a.applicant_name||'—'} · FIR ${a.fir_number||'—'} · ${formatDate(a.created_at)}</div>
+            <div style="font-size:11px;color:var(--text-muted);">${a.complainant_name||'—'} · S/N ${a.serial_number||'—'} · ${formatDate(a.created_at)}</div>
           </div>`).join('')}
         </div>`;
       }
