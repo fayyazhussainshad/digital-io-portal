@@ -624,6 +624,52 @@ input, textarea, select { font-family: var(--font-main); }
   .wb-ribbon { overflow-x:auto; -webkit-overflow-scrolling:touch; flex-wrap:nowrap; }
 }
 
+/* ── Mobile Performance Optimizations ── */
+* { -webkit-tap-highlight-color: transparent; }
+button, .btn, .nav-item, .sr-pill, .mdoc-chip, .wb-btn {
+  touch-action: manipulation; /* Faster tap — no 300ms delay */
+}
+.sidebar, .main-area, .page-content {
+  -webkit-overflow-scrolling: touch;
+  will-change: transform;
+}
+img { content-visibility: auto; }
+
+@media (max-width: 768px) {
+  /* Word ribbon — scroll horizontally, don't wrap */
+  .wb-ribbon { overflow-x: auto !important; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch; }
+  .wb-grp { flex-shrink: 0; }
+
+  /* MISAL doc bar — scroll horizontally */
+  #misal-doc-bar > div:last-of-type { flex-wrap: nowrap !important; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .mdoc-chip { flex-shrink: 0; }
+
+  /* Dashboard grid — 2 cols on mobile */
+  #dash-root > div[style*="grid-template-columns:repeat(4"] {
+    grid-template-columns: repeat(2,1fr) !important;
+  }
+
+  /* Cards — reduce padding on mobile */
+  .card { padding: 12px !important; }
+
+  /* Topbar icons — hide less important ones on mobile */
+  .topbar-right > button:not(:last-child):not(:nth-last-child(2)) {
+    display: none;
+  }
+
+  /* Tables — smaller font */
+  .data-table th, .data-table td { font-size: 11px; padding: 5px 6px; }
+
+  /* Modals — full screen on mobile */
+  .modal-card { max-width: 100vw !important; max-height: 95vh; margin: 0 !important; border-radius: 12px 12px 0 0 !important; position: fixed; bottom: 0; left: 0; right: 0; }
+
+  /* Remove heavy animations */
+  .nav-item, .btn, .card { transition: none !important; }
+
+  /* Page content proper height */
+  .page-content { height: calc(100vh - 56px); }
+}
+
 /* Topbar already shows the tab name — hide duplicate page titles in content */
 .page-title { display:none; }
 .page-subtitle { display:none; }
@@ -752,6 +798,9 @@ input, textarea, select { font-family: var(--font-main); }
      MAIN APP
 ══════════════════════════════════ -->
 <div id="main-app" style="display:none;">
+  <!-- Mobile overlay (tap to close sidebar) -->
+  <div id="mob-overlay" onclick="toggleSidebar()"></div>
+
   <div class="sidebar" id="sidebar">
     <div class="sidebar-logo"><div class="sidebar-logo-icon">🛡️</div><div><div class="sidebar-logo-text">Digital IO</div><div class="sidebar-logo-sub">Case Management</div></div></div>
     <div class="sidebar-profile"><div class="sidebar-avatar" id="sidebar-avatar">IO</div><div><div class="sidebar-profile-name" id="sidebar-name">Loading...</div><div class="sidebar-profile-role" id="sidebar-role">Officer</div></div></div>
@@ -812,6 +861,32 @@ input, textarea, select { font-family: var(--font-main); }
 <script src="performance.js"></script>
 <script src="backup.js"></script>
 <script src="settings.js"></script>
+
+<!-- ── Mobile sidebar toggle ── -->
+<script>
+function toggleSidebar() {
+  const sb  = document.getElementById('sidebar');
+  const ov  = document.getElementById('mob-overlay');
+  if (!sb) return;
+  const isOpen = sb.classList.contains('open');
+  sb.classList.toggle('open', !isOpen);
+  if (ov) ov.classList.toggle('show', !isOpen);
+}
+
+// Close sidebar when nav item clicked on mobile
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.innerWidth <= 768) {
+    document.querySelectorAll('.nav-item').forEach(function(el) {
+      el.addEventListener('click', function() {
+        const sb = document.getElementById('sidebar');
+        const ov = document.getElementById('mob-overlay');
+        if (sb) sb.classList.remove('open');
+        if (ov) ov.classList.remove('show');
+      });
+    });
+  }
+});
+</script>
 
 <!-- ── Sidebar collapse ── -->
 <script>
