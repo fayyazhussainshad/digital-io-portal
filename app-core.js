@@ -801,3 +801,59 @@ window.addEventListener('DOMContentLoaded',async()=>{
     // Check for pending offline ops from any previous session
     if(navigator.onLine) setTimeout(()=>syncOfflineQueue(),3000);
   });setInterval(()=>{const el=document.getElementById('footer-time');if(el)el.textContent=new Date().toLocaleTimeString('en-PK',{hour12:true});},1000);console.log('✅ Digital IO v4.4.0 — FULLY MODULAR (Round 4 complete — index.html is pure HTML/CSS) — '+new Date().toISOString());});
+
+// ── GLOBAL VOICE INPUT ────────────────────────────────────────
+// Usage: voiceType('input-id', 'btn-id')
+let _gVoiceRec = null, _gVoiceOn = false, _gVoiceTarget = null;
+
+function voiceType(targetId, btnId) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showToast('⚠️ آواز کی سہولت دستیاب نہیں — Chrome استعمال کریں','error',4000); return; }
+
+  if (_gVoiceOn && _gVoiceTarget === targetId) {
+    _gVoiceRec && _gVoiceRec.stop();
+    _gVoiceOn = false; _gVoiceTarget = null;
+    const b = document.getElementById(btnId);
+    if (b) { b.style.background=''; b.style.color=''; b.textContent='🎙️'; }
+    return;
+  }
+  if (_gVoiceOn) { _gVoiceRec && _gVoiceRec.stop(); }
+
+  _gVoiceTarget = targetId; _gVoiceOn = true;
+  const btn = document.getElementById(btnId);
+  if (btn) { btn.style.background='#ef4444'; btn.style.color='#fff'; btn.textContent='⏹'; }
+
+  _gVoiceRec = new SR();
+  _gVoiceRec.lang = 'ur-PK';
+  _gVoiceRec.continuous = false;
+  _gVoiceRec.interimResults = false;
+
+  _gVoiceRec.onresult = (e) => {
+    const txt = e.results[0][0].transcript;
+    const inp = document.getElementById(targetId);
+    if (inp) {
+      if (inp.tagName==='TEXTAREA'||inp.tagName==='INPUT') {
+        inp.value += (inp.value?' ':'')+txt;
+      } else if (inp.contentEditable==='true') {
+        inp.focus(); document.execCommand('insertText',false,txt);
+      }
+      inp.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+  };
+
+  _gVoiceRec.onend = () => {
+    _gVoiceOn=false; _gVoiceTarget=null;
+    const b=document.getElementById(btnId);
+    if(b){b.style.background='';b.style.color='';b.textContent='🎙️';}
+  };
+
+  _gVoiceRec.onerror = (err) => {
+    _gVoiceOn=false; _gVoiceTarget=null;
+    const b=document.getElementById(btnId);
+    if(b){b.style.background='';b.style.color='';b.textContent='🎙️';}
+    if(err.error!=='no-speech') showToast('⚠️ آواز کی غلطی: '+err.error,'error');
+  };
+
+  try { _gVoiceRec.start(); showToast('🎙️ بولیں...','info',2000); }
+  catch(e) { showToast('⚠️ آواز شروع نہ ہو سکی','error'); _gVoiceOn=false; }
+}
