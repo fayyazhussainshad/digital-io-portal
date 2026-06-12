@@ -212,11 +212,14 @@ function _updateTopbarShoDsp(o) {
   if (!el || !o) return;
   const sho = o.sho_name || '';
   const dsp = o.dsp_name || '';
-  if (!sho && !dsp) { el.style.display='none'; return; }
-  el.style.display = 'block';
+  const sta = o.station  || '';
+  // Always show if any info available
+  if (!sho && !dsp && !sta) { el.style.display='none'; return; }
+  el.style.cssText = 'display:flex!important;flex-direction:column;align-items:flex-end;font-size:10px;color:var(--text-muted);font-family:"Jameel Noori Nastaleeq",serif;direction:rtl;line-height:1.5;margin-left:8px;';
   el.innerHTML =
-    (sho ? `<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">SHO: ${sho}</div>` : '') +
-    (dsp ? `<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">DSP: ${dsp}</div>` : '');
+    (sho ? `<div style="color:var(--accent);font-weight:700;white-space:nowrap;">SHO: ${sho}</div>` : '') +
+    (dsp ? `<div style="white-space:nowrap;">DSP: ${dsp}</div>` : '') +
+    (sta && !sho ? `<div style="white-space:nowrap;">تھانہ ${sta}</div>` : '');
 }
 async function loginSuccess(){const ls=document.getElementById('login-screen'),app=document.getElementById('main-app');ls.style.transition='opacity 0.4s';ls.style.opacity='0';setTimeout(()=>{ls.style.display='none';app.style.display='flex';setLoginLoading(false);initApp();},400);resetSessionTimer();}
 function resetSessionTimer(){clearTimeout(sessionTimer);sessionTimer=setTimeout(()=>{showToast('⏰ Session expired.','error');setTimeout(doLogout,2000);},APP_CONFIG.sessionTimeout);}
@@ -802,10 +805,6 @@ window.addEventListener('DOMContentLoaded',async()=>{
     if(navigator.onLine) setTimeout(()=>syncOfflineQueue(),3000);
   });setInterval(()=>{const el=document.getElementById('footer-time');if(el)el.textContent=new Date().toLocaleTimeString('en-PK',{hour12:true});},1000);console.log('✅ Digital IO v4.4.0 — FULLY MODULAR (Round 4 complete — index.html is pure HTML/CSS) — '+new Date().toISOString());});
 
-// ── GLOBAL VOICE INPUT ────────────────────────────────────────
-// Usage: voiceType('input-id', 'btn-id')
-let _gVoiceRec = null, _gVoiceOn = false, _gVoiceTarget = null;
-
 function voiceType(targetId, btnId) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { showToast('⚠️ آواز کی سہولت دستیاب نہیں — Chrome استعمال کریں','error',4000); return; }
@@ -857,3 +856,37 @@ function voiceType(targetId, btnId) {
   try { _gVoiceRec.start(); showToast('🎙️ بولیں...','info',2000); }
   catch(e) { showToast('⚠️ آواز شروع نہ ہو سکی','error'); _gVoiceOn=false; }
 }
+
+// Auto-inject voice buttons to all textareas that don't have one yet
+function _autoInjectVoiceBtns() {
+  var textareas = document.querySelectorAll('textarea.form-input:not([data-voice-added])');
+  textareas.forEach(function(ta) {
+    if (!ta.id) ta.id = 'vta-' + Math.random().toString(36).slice(2,7);
+    var btnId = 'vmb-' + ta.id;
+    if (document.getElementById(btnId)) return;
+    ta.setAttribute('data-voice-added','1');
+    var btn = document.createElement('button');
+    btn.id = btnId;
+    btn.type = 'button';
+    btn.textContent = '🎙️';
+    btn.title = 'آواز سے لکھیں';
+    btn.style.cssText = 'width:36px;height:36px;flex-shrink:0;border:1px solid var(--border);border-radius:6px;background:var(--bg-tertiary);font-size:16px;cursor:pointer;margin-top:2px;';
+    btn.onclick = function(){ voiceType(ta.id, btnId); };
+    // Wrap textarea in flex div
+    var wrapper = document.createElement('div');
+    wrapper.style.cssText = 'display:flex;gap:6px;align-items:flex-start;';
+    ta.parentNode.insertBefore(wrapper, ta);
+    wrapper.appendChild(ta);
+    wrapper.appendChild(btn);
+  });
+}
+
+// Run after every page render
+var _origShowPage = window.showPage;
+document.addEventListener('DOMContentLoaded', function() {
+  var observer = new MutationObserver(function() {
+    _autoInjectVoiceBtns();
+  });
+  var content = document.getElementById('page-content');
+  if (content) observer.observe(content, {childList:true, subtree:true});
+});
