@@ -109,7 +109,7 @@ async function renderCases(container,fStatus,fQuery){
     <div><div class="page-title">📁 My Cases</div><div class="page-subtitle">${cases.length} case(s)</div></div>
     <div style="display:flex;gap:8px;">
       <button class="btn btn-secondary btn-sm" onclick="openTransferModal()" title="Record a station transfer">🏛️ Station Transfer</button>
-      <button class="btn btn-primary" onclick="openAddCaseModal()">+ New Case</button>
+      <button class="btn btn-primary" onclick="openAddCaseModal()">+ نیا مقدمہ</button>
     </div>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
@@ -142,7 +142,7 @@ async function renderCases(container,fStatus,fQuery){
         </tr></thead>
         <tbody>
           ${cases.length===0
-            ?`<tr><td colspan="11" style="text-align:center;padding:48px;color:var(--text-muted);">No cases yet. <a onclick="openAddCaseModal()" style="cursor:pointer;color:var(--accent);">Add your first case →</a></td></tr>`
+            ?`<tr><td colspan="11" style="text-align:center;padding:48px;color:var(--text-muted);">ابھی کوئی مقدمہ نہیں۔ <a onclick="openAddCaseModal()" style="cursor:pointer;color:var(--accent);">پہلا مقدمہ درج کریں →</a></td></tr>`
             :cases.map((c,i)=>renderCaseRow(c,i+1)).join('')}
         </tbody>
       </table>
@@ -312,41 +312,41 @@ function caseFormHTML(c) {
 
     // Complainant section
     + '<div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:12px;">'
-    + '<div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">&#x1F464; Complainant Details</div>'
+    + '<div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">👤 مدعی کی تفصیل</div>'
     + '<div class="form-row">'
-    + '<div class="form-group"><label class="form-label">Complainant Name *</label>'
-    + '<input class="form-input" id="cf-complainant" value="'+complainant+'" placeholder="&#x0645;&#x062F;&#x0639;&#x06CC; &#x06A9;&#x0627; &#x0646;&#x0627;&#x0645; / Complainant Name" dir="auto"></div>'
-    + '<div class="form-group"><label class="form-label">Complainant CNIC</label>'
+    + '<div class="form-group"><label class="form-label">مدعی کا نام *</label>'
+    + '<input class="form-input" id="cf-complainant" value="'+complainant+'" placeholder="مدعی کا مکمل نام" dir="auto"></div>'
+    + '<div class="form-group"><label class="form-label">شناختی کارڈ نمبر</label>'
     + '<input class="form-input" id="cf-complainant-cnic" value="'+cmpCnic+'" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)"></div>'
     + '</div>'
     + '<div class="form-row">'
-    + '<div class="form-group"><label class="form-label">Complainant Cell No.</label>'
+    + '<div class="form-group"><label class="form-label">موبائل نمبر</label>'
     + '<input class="form-input" id="cf-complainant-cell" value="'+cmpCell+'" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)"></div>'
-    + '<div class="form-group"><label class="form-label">Complainant Profession</label>'
-    + '<input class="form-input" id="cf-complainant-profession" value="'+cmpProf+'" placeholder="&#x067E;&#x06CC;&#x0634;&#x06C1; / Profession" dir="auto"></div>'
+    + '<div class="form-group"><label class="form-label">پیشہ</label>'
+    + '<input class="form-input" id="cf-complainant-profession" value="'+cmpProf+'" placeholder="پیشہ" dir="auto"></div>'
     + '</div>'
     + '</div>'
 
     // FIR Details
     + '<div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:12px;">'
-    + '<div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">&#x1F4CB; FIR Details</div>'
+    + '<div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">📋 FIR کی تفصیل</div>'
     + '<div class="form-row">'
-    + '<div class="form-group"><label class="form-label">FIR Writer</label>'
-    + '<input class="form-input" id="cf-fir-writer" value="'+firWriter+'" placeholder="FIR &#x0644;&#x06A9;&#x06BE;&#x0646;&#x06D2; &#x0648;&#x0627;&#x0644;&#x0627;" dir="auto"></div>'
-    + '<div class="form-group"><label class="form-label">Complaint Sender</label>'
-    + '<input class="form-input" id="cf-complaint-sender" value="'+compSender+'" placeholder="&#x0634;&#x06A9;&#x0627;&#x06CC;&#x062A; &#x0628;&#x06BE;&#x06CC;&#x062C;&#x0646;&#x06D2; &#x0648;&#x0627;&#x0644;&#x0627;" dir="auto"></div>'
+    + '<div class="form-group"><label class="form-label">محرر</label>'
+    + '<input class="form-input" id="cf-fir-writer" value="'+firWriter+'" placeholder="محرر کا نام" dir="auto"></div>'
+    + '<div class="form-group"><label class="form-label">مرتبہ مرسلہ</label>'
+    + '<input class="form-input" id="cf-complaint-sender" value="'+compSender+'" placeholder="مرتبہ مرسلہ" dir="auto"></div>'
     + '</div>'
     + '<div class="form-row">'
     + '<div class="form-group"><label class="form-label">SHO</label>'
-    + '<input class="form-input" id="cf-sho" value="'+sho+'" placeholder="SHO name" dir="auto"></div>'
+    + '<input class="form-input" id="cf-sho" value="'+sho+'" placeholder="SHO کا نام" dir="auto"></div>'
     + '<div class="form-group"><label class="form-label">SDPO</label>'
-    + '<input class="form-input" id="cf-sdpo" value="'+sdpo+'" placeholder="SDPO name" dir="auto"></div>'
+    + '<input class="form-input" id="cf-sdpo" value="'+sdpo+'" placeholder="SDPO کا نام" dir="auto"></div>'
     + '</div>'
     + '<div class="form-row">'
-    + '<div class="form-group"><label class="form-label">Position</label>'
+    + '<div class="form-group"><label class="form-label">پوزیشن</label>'
     + '<select class="form-input" id="cf-position">'+posOpts+'</select></div>'
-    + '<div class="form-group"><label class="form-label">Investigation Notes</label>'
-    + '<textarea class="form-input" id="cf-notes" placeholder="&#x062A;&#x0641;&#x062A;&#x06CC;&#x0634;&#x06CC; &#x0646;&#x0648;&#x0679;&#x0633;..." dir="auto" style="min-height:60px;resize:vertical;">'+notes+'</textarea></div>'
+    + '<div class="form-group"><label class="form-label">تفتیشی نوٹس</label>'
+    + '<textarea class="form-input" id="cf-notes" placeholder="تفتیشی نوٹس..." dir="auto" style="min-height:60px;resize:vertical;">'+notes+'</textarea></div>'
     + '</div>'
     + '</div>'
 
@@ -556,8 +556,8 @@ document.addEventListener('click', function(e) {
 });
 
 // ── MODAL OPENERS + SAVE/VIEW ──
-function openAddCaseModal(){openModal('➕ Add New Case',caseFormHTML(),`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveNewCase()">💾 Save Case</button>`);}
-async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;openModal(`✏️ Edit — FIR ${c.fir_number}`,caseFormHTML(c),`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveEditCase('${id}')">💾 Update</button>`);}
+function openAddCaseModal(){openModal('➕ نیا مقدمہ درج کریں',caseFormHTML(),`<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveNewCase()">💾 مقدمہ محفوظ کریں</button>`);}
+async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;openModal(`✏️ ترمیم — FIR ${c.fir_number}`,caseFormHTML(c),`<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveEditCase('${id}')">💾 تبدیلیاں محفوظ کریں</button>`);}
 async function saveNewCase(){
   var fir=document.getElementById('cf-fir').value.trim();
   var section=document.getElementById('cf-section').value.trim();
@@ -904,11 +904,11 @@ function buildDocTemplate(docName, c, savedContent) {
       </table>
       <div style="margin-top:10px;font-size:12px;line-height:2;">
         <div style="font-weight:700;">نوٹ:</div>
-        <div>۱۔ موبائل فون کال ڈیٹا ریکارڈ صرف FIR یا FIR سے متعلقہ ہونے کی صورت میں فراہم کیا جائے گا یا ایسی انکوائریز جنکا حکم نامہ ہائی کورٹ اور سپریم کورٹ نے دیا ہوں۔</div>
-        <div>۲۔ اگر CDR's/IMEI's کا اندراج FIR میں نہ ہو تو ضمنی میں اندراج کریں۔</div>
-        <div>۳۔ ضمنی نمبر ${ef('۔۔۔۔۔')} تاریخ ${ef('۔۔۔۔۔')} مرتبہ ${ef('۔۔۔۔۔')} (کاپی ضمنی ہمراہ بھجوائیں یا فارم ہذا کی پشت پر اقتباس ضمنی تحریر کریں)</div>
-        <div>۴۔ CDR کے غلط استعمال کی صورت میں ذمہ دار افسر کے خلاف سخت محکمانہ کاروائی کی جائیگی۔</div>
-        <div>۵۔ CDR کے ذریعے کیس ٹریس ہونے/ملزمان/اشتہاری پکڑے جانے پر/ریکوری ہونے پر IT آفس (موبائل ٹریکنگ سیل ملتان) کو بھی رپورٹ ارسال کی جائے۔</div>
+        <div>1۔ موبائل فون کال ڈیٹا ریکارڈ صرف FIR یا FIR سے متعلقہ ہونے کی صورت میں فراہم کیا جائے گا یا ایسی انکوائریز جنکا حکم نامہ ہائی کورٹ اور سپریم کورٹ نے دیا ہوں۔</div>
+        <div>2۔ اگر CDR's/IMEI's کا اندراج FIR میں نہ ہو تو ضمنی میں اندراج کریں۔</div>
+        <div>3۔ ضمنی نمبر ${ef('۔۔۔۔۔')} تاریخ ${ef('۔۔۔۔۔')} مرتبہ ${ef('۔۔۔۔۔')} (کاپی ضمنی ہمراہ بھجوائیں یا فارم ہذا کی پشت پر اقتباس ضمنی تحریر کریں)</div>
+        <div>4۔ CDR کے غلط استعمال کی صورت میں ذمہ دار افسر کے خلاف سخت محکمانہ کاروائی کی جائیگی۔</div>
+        <div>5۔ CDR کے ذریعے کیس ٹریس ہونے/ملزمان/اشتہاری پکڑے جانے پر/ریکوری ہونے پر IT آفس (موبائل ٹریکنگ سیل ملتان) کو بھی رپورٹ ارسال کی جائے۔</div>
       </div>
       <table style="width:100%;border-collapse:collapse;margin-top:16px;">
         <tr>
@@ -1289,21 +1289,21 @@ function buildDocTemplate(docName, c, savedContent) {
           <td style="${td}">${ef(fir + ' ' + firDate)}</td>
           <td style="${td}height:180px;vertical-align:top;"></td>
           <td style="${td}vertical-align:top;font-size:10px;line-height:1.8;">
-            ۱۔ بل اخراجات ٹرانسپورٹ/ڈیڈ باڈی برائے پوسٹمارٹم<br>
-            ۲۔ بل تیاری نقشہ بذریعہ نقشہ نویس<br>
-            ۳۔ بل سرالوجسٹ بذریعہ کیمیکل ایگزامینر بذریعہ قبضہ پولیس اشیاء<br>
-            ۴۔ بل بلیسٹک ایکسپرٹ کی واردات میں استعمال ہونے والے اسلحہ کی ترسیل<br>
-            ۵۔ بل ٹرانسپورٹ برائے گرفتاری ملزمان (عدم دستیابی گاڑی سرکاری)<br>
+            1۔ بل اخراجات ٹرانسپورٹ/ڈیڈ باڈی برائے پوسٹمارٹم<br>
+            2۔ بل تیاری نقشہ بذریعہ نقشہ نویس<br>
+            3۔ بل سرالوجسٹ بذریعہ کیمیکل ایگزامینر بذریعہ قبضہ پولیس اشیاء<br>
+            4۔ بل بلیسٹک ایکسپرٹ کی واردات میں استعمال ہونے والے اسلحہ کی ترسیل<br>
+            5۔ بل ٹرانسپورٹ برائے گرفتاری ملزمان (عدم دستیابی گاڑی سرکاری)<br>
             ۶۔ بل ٹرانسپورٹ برائے جسمانی ریمانڈ (عدم دستیابی گاڑی سرکاری)<br>
             ۷۔ بل ٹرانسپورٹ برائے اسلحہ<br>
             ۸۔ بل ٹرانسپورٹ برائے برآمدگی چوری شدہ/چھینی گئی گاڑی/کیس پراپرٹی<br>
             ۹۔ بل اندھا قتل نعش کا پوسٹمارٹم/اخراجات کفن دفن<br>
             ۱۰۔ بل ٹرانسپورٹ و میڈیکل برائے زخمی<br>
-            ۱۱۔ بل برائے فوٹو گرافی وقوعہ ڈیڈ باڈی<br>
-            ۱۲۔ بل برائے ویڈیو فلم غیرقانونی اجتماعات<br>
-            ۱۳۔ بل ٹرانسپورٹ برائے شناخت پریڈ<br>
-            ۱۴۔ بل اخراجات مشتبہ افراد زیرحراست<br>
-            ۱۵۔ بل ٹرانسپورٹ برائے معائنہ انجن/چیسز نمبر/فورنزک سائنس لیبارٹری<br>
+            ۱1۔ بل برائے فوٹو گرافی وقوعہ ڈیڈ باڈی<br>
+            ۱2۔ بل برائے ویڈیو فلم غیرقانونی اجتماعات<br>
+            ۱3۔ بل ٹرانسپورٹ برائے شناخت پریڈ<br>
+            ۱4۔ بل اخراجات مشتبہ افراد زیرحراست<br>
+            ۱5۔ بل ٹرانسپورٹ برائے معائنہ انجن/چیسز نمبر/فورنزک سائنس لیبارٹری<br>
             ۱۶۔ بل فنگرپرنٹ/فٹ مولڈز/ہینڈ رائٹنگ<br>
             ۱۷۔ بل دیگر حادثاتی اخراجات
           </td>
