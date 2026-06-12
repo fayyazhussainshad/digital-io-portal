@@ -109,7 +109,7 @@ async function renderCases(container,fStatus,fQuery){
     <div><div class="page-title">📁 My Cases</div><div class="page-subtitle">${cases.length} case(s)</div></div>
     <div style="display:flex;gap:8px;">
       <button class="btn btn-secondary btn-sm" onclick="openTransferModal()" title="Record a station transfer">🏛️ Station Transfer</button>
-      <button class="btn btn-primary" onclick="openAddCaseModal()">+ نیا مقدمہ</button>
+      <button class="btn btn-primary" onclick="openAddCaseModal()">+ نیا اندراج</button>
     </div>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
@@ -129,9 +129,9 @@ async function renderCases(container,fStatus,fQuery){
       <table class="data-table" style="width:100%;min-width:1180px;">
         <thead><tr>
           <th style="width:44px;text-align:center;">S/N</th>
-          <th>FIR No</th>
-          <th>Date of FIR</th>
-          <th>Occurrence Date</th>
+          <th>مقدمہ نمبر</th>
+          <th>تاریخ اندراج مقدمہ</th>
+          <th>تاریخ وقوعہ</th>
           <th>Offence</th>
           <th>Police Station</th>
           <th>Complainant</th>
@@ -142,7 +142,7 @@ async function renderCases(container,fStatus,fQuery){
         </tr></thead>
         <tbody>
           ${cases.length===0
-            ?`<tr><td colspan="11" style="text-align:center;padding:48px;color:var(--text-muted);">ابھی کوئی مقدمہ نہیں۔ <a onclick="openAddCaseModal()" style="cursor:pointer;color:var(--accent);">پہلا مقدمہ درج کریں →</a></td></tr>`
+            ?`<tr><td colspan="11" style="text-align:center;padding:48px;color:var(--text-muted);">ابھی کوئی اندراج نہیں۔ <a onclick="openAddCaseModal()" style="cursor:pointer;color:var(--accent);">پہلا اندراج درج کریں →</a></td></tr>`
             :cases.map((c,i)=>renderCaseRow(c,i+1)).join('')}
         </tbody>
       </table>
@@ -279,7 +279,7 @@ function caseFormHTML(c) {
 
     // FIR + Date
     + '<div class="form-row">'
-    + '<div class="form-group"><label class="form-label">FIR Number *</label>'
+    + '<div class="form-group"><label class="form-label">مقدمہ نمبر *</label>'
     + '<input class="form-input" id="cf-fir" value="'+fir+'" placeholder="e.g. 245/2025" dir="auto"></div>'
     + '<div class="form-group"><label class="form-label">Date of FIR *</label>'
     + '<input class="form-input" id="cf-date" value="'+date+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" maxlength="10"></div>'
@@ -287,7 +287,7 @@ function caseFormHTML(c) {
 
     // Occurrence + Status
     + '<div class="form-row">'
-    + '<div class="form-group"><label class="form-label">Occurrence Date</label>'
+    + '<div class="form-group"><label class="form-label">تاریخ وقوعہ</label>'
     + '<input class="form-input" id="cf-occurrence-date" value="'+occ+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" maxlength="10"></div>'
     + '<div class="form-group"><label class="form-label">Status *</label>'
     + '<select class="form-input" id="cf-status">'+statusOpts+'</select></div>'
@@ -554,13 +554,13 @@ document.addEventListener('click', function(e) {
 });
 
 // ── MODAL OPENERS + SAVE/VIEW ──
-function openAddCaseModal(){openModal('➕ نیا مقدمہ درج کریں',caseFormHTML(),`<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveNewCase()">💾 مقدمہ محفوظ کریں</button>`);}
-async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;openModal(`✏️ ترمیم — FIR ${c.fir_number}`,caseFormHTML(c),`<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveEditCase('${id}')">💾 تبدیلیاں محفوظ کریں</button>`);}
+function openAddCaseModal(){openModal('➕ نیا اندراج',caseFormHTML(),`<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveNewCase()">💾 اندراج محفوظ کریں</button>`);}
+async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;openModal(`✏️ ترمیم — مقدمہ ${c.fir_number}`,caseFormHTML(c),`<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveEditCase('${id}')">💾 تبدیلیاں محفوظ کریں</button>`);}
 async function saveNewCase(){
   var fir=document.getElementById('cf-fir').value.trim();
   var section=document.getElementById('cf-section').value.trim();
   var complainant=document.getElementById('cf-complainant').value.trim();
-  if(!fir||!section||!complainant){showToast('FIR Number, Section and Complainant are required.','error');return;}
+  if(!fir||!section||!complainant){showToast('مقدمہ نمبر، دفعہ اور مدعی کا نام ضروری ہے۔','error');return;}
   try{
     await addCase({
       fir_number:fir,
@@ -1437,7 +1437,7 @@ function renderDetailsTab(c) {
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
       <div class="card">
         <div class="card-title">📋 FIR Information</div>
-        ${[['FIR Number',c.fir_number],['Date of FIR',formatDate(c.fir_date)],['Occurrence Date',formatDate(c.occurrence_date)],['Section of Law',c.section_of_law||'—'],['Offence',c.offence_type||'—'],['Status',STATUS_LABELS[c.status]||c.status],['Position',c.position==='court'?'⚖️ In Court':'⏳ Pending'],['FIR Writer',c.fir_writer||'—'],['Complaint Sender',c.complaint_sender||'—'],['SHO',c.sho||'—'],['SDPO',c.sdpo||'—']].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
+        ${[['مقدمہ نمبر',c.fir_number],['تاریخ اندراج مقدمہ',formatDate(c.fir_date)],['تاریخ وقوعہ',formatDate(c.occurrence_date)],['Section of Law',c.section_of_law||'—'],['Offence',c.offence_type||'—'],['Status',STATUS_LABELS[c.status]||c.status],['Position',c.position==='court'?'⚖️ In Court':'⏳ Pending'],['FIR Writer',c.fir_writer||'—'],['Complaint Sender',c.complaint_sender||'—'],['SHO',c.sho||'—'],['SDPO',c.sdpo||'—']].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
       </div>
       <div class="card">
         <div class="card-title">👤 Complainant Details</div>
