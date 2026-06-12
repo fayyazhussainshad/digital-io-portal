@@ -570,58 +570,89 @@ input, textarea, select { font-family: var(--font-main); }
 .bilingual-input { direction: auto; font-family: 'Noto Nastaliq Urdu', var(--font-main); }
 
 @media (max-width: 768px) {
-  /* Sidebar — slides in from left on mobile */
   .sidebar {
     position: fixed !important;
-    left: 0; top: 0; bottom: 0;
-    z-index: 200;
-    width: var(--sidebar-width) !important;
-    min-width: var(--sidebar-width) !important;
+    left: 0 !important; top: 0 !important; bottom: 0 !important;
+    z-index: 1000 !important;
+    width: 260px !important;
+    min-width: 260px !important;
     opacity: 1 !important;
+    -webkit-transform: translateX(-100%);
     transform: translateX(-100%);
-    transition: transform 0.25s ease !important;
-    overflow-y: auto;
+    -webkit-transition: -webkit-transform 0.3s ease;
+    transition: transform 0.3s ease;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    pointer-events: auto !important;
   }
-  .sidebar.open { transform: translateX(0); box-shadow: 0 0 40px rgba(0,0,0,0.6); }
-  .sidebar.collapsed { transform: translateX(-100%) !important; width: var(--sidebar-width) !important; opacity:1 !important; }
-
-  /* Overlay behind open sidebar */
-  #mob-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:199; }
-  #mob-overlay.show { display:block; }
-
-  /* Show hamburger, hide desktop sidebar-toggle */
+  .sidebar.collapsed {
+    -webkit-transform: translateX(-100%);
+    transform: translateX(-100%);
+    width: 260px !important;
+    opacity: 1 !important;
+  }
+  #mob-overlay { display:none; }
   .mobile-menu-btn { display:block !important; }
   #sidebar-toggle { display:none !important; }
+  .main-area { width:100% !important; overflow-x:hidden !important; }
+  .page-content { overflow-y:auto !important; -webkit-overflow-scrolling:touch !important; padding:10px !important; height:calc(100vh - 52px) !important; }
+  .topbar { padding:0 8px !important; }
+  .stats-grid { grid-template-columns:repeat(2,1fr) !important; }
+  .form-row { grid-template-columns:1fr !important; }
+  .evidence-grid { grid-template-columns:repeat(2,1fr) !important; }
+  .law-grid,.misal-layout,.backup-dest-grid,.perf-grid { grid-template-columns:1fr !important; }
+  table { display:block !important; overflow-x:auto !important; -webkit-overflow-scrolling:touch !important; }
+  .data-table { font-size:11px !important; }
+  .modal-card { max-width:95vw !important; margin:10px auto !important; }
+  .wb-ribbon { overflow-x:auto !important; flex-wrap:nowrap !important; -webkit-overflow-scrolling:touch !important; }
+  .wb-grp { flex-shrink:0 !important; }
+  .card { padding:12px !important; }
+}
 
-  /* Main area takes full width */
-  .main-area { width:100% !important; overflow-x:hidden; }
+/* ── Mobile Performance Optimizations ── */
+* { -webkit-tap-highlight-color: transparent; }
+button, .btn, .nav-item, .sr-pill, .mdoc-chip, .wb-btn {
+  touch-action: manipulation; /* Faster tap — no 300ms delay */
+}
+.sidebar, .main-area, .page-content {
+  -webkit-overflow-scrolling: touch;
+  will-change: transform;
+}
+img { content-visibility: auto; }
 
-  /* Page content must scroll on mobile */
-  .page-content { overflow-y: auto !important; -webkit-overflow-scrolling: touch; padding: 12px; }
+@media (max-width: 768px) {
+  /* Word ribbon — scroll horizontally, don't wrap */
+  .wb-ribbon { overflow-x: auto !important; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch; }
+  .wb-grp { flex-shrink: 0; }
 
-  /* Topbar compact on mobile */
-  .topbar { padding: 0 8px; }
+  /* MISAL doc bar — scroll horizontally */
+  #misal-doc-bar > div:last-of-type { flex-wrap: nowrap !important; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .mdoc-chip { flex-shrink: 0; }
 
-  /* Grids */
-  .stats-grid { grid-template-columns: repeat(2,1fr); }
-  .form-row { grid-template-columns: 1fr; }
-  .evidence-grid { grid-template-columns: repeat(2,1fr); }
-  .law-grid { grid-template-columns: 1fr; }
-  .misal-layout { grid-template-columns: 1fr; }
-  .backup-dest-grid { grid-template-columns: 1fr; }
-  .perf-grid { grid-template-columns: 1fr; }
+  /* Dashboard grid — 2 cols on mobile */
+  #dash-root > div[style*="grid-template-columns:repeat(4"] {
+    grid-template-columns: repeat(2,1fr) !important;
+  }
 
-  /* Tables scroll horizontally */
-  .data-table { font-size: 11px; }
-  table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  /* Cards — reduce padding on mobile */
+  .card { padding: 12px !important; }
 
-  /* Modal full width on mobile */
-  .modal-card { max-width:95vw; margin:10px; }
+  /* Topbar icons — hide less important ones on mobile */
+  .topbar-right > button:not(:last-child):not(:nth-last-child(2)) {
+    display: none;
+  }
 
-  /* Case workspace on mobile */
-  .case-header { flex-wrap:wrap; gap:6px; padding:8px; }
-  .case-tabs { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-  .wb-ribbon { overflow-x:auto; -webkit-overflow-scrolling:touch; flex-wrap:nowrap; }
+  /* Tables — smaller font */
+  .data-table th, .data-table td { font-size: 11px; padding: 5px 6px; }
+
+  /* Modals — full screen on mobile */
+  .modal-card { max-width: 100vw !important; max-height: 95vh; margin: 0 !important; border-radius: 12px 12px 0 0 !important; position: fixed; bottom: 0; left: 0; right: 0; }
+
+  /* Remove heavy animations */
+  .nav-item, .btn, .card { transition: none !important; }
+
+  /* Page content proper height */
+  .page-content { height: calc(100vh - 56px); }
 }
 
 /* Topbar already shows the tab name — hide duplicate page titles in content */
@@ -752,25 +783,30 @@ input, textarea, select { font-family: var(--font-main); }
      MAIN APP
 ══════════════════════════════════ -->
 <div id="main-app" style="display:none;">
+  <!-- Mobile overlay (tap to close sidebar) -->
+  <div id="mob-overlay" onclick="closeMobileSidebar()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);z-index:999;"></div>
+
   <div class="sidebar" id="sidebar">
     <div class="sidebar-logo"><div class="sidebar-logo-icon">🛡️</div><div><div class="sidebar-logo-text">Digital IO</div><div class="sidebar-logo-sub">Case Management</div></div></div>
     <div class="sidebar-profile"><div class="sidebar-avatar" id="sidebar-avatar">IO</div><div><div class="sidebar-profile-name" id="sidebar-name">Loading...</div><div class="sidebar-profile-role" id="sidebar-role">Officer</div></div></div>
     <nav class="sidebar-nav">
       <div class="nav-section-label">Main</div>
-      <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-icon">🏠</span> Dashboard</div>
-      <div class="nav-item" onclick="showPage('cases',this)"><span class="nav-icon">📁</span> My Cases <span class="nav-badge" id="badge-cases">0</span></div>
-      <div class="nav-item" onclick="showPage('fivec',this)"><span class="nav-icon">📋</span> 5-C Applications</div>
+      <div class="nav-item active" onclick="closeMobileSidebar();showPage('dashboard',this)"><span class="nav-icon">🏠</span> Dashboard</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('cases',this)"><span class="nav-icon">📁</span> My Cases <span class="nav-badge" id="badge-cases">0</span></div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('forms',this)"><span class="nav-icon">📥</span> Templates</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('fivec',this)"><span class="nav-icon">📋</span> 5-C Applications</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('incident',this)"><span class="nav-icon">🚨</span> Incident Report</div>
       <div class="nav-section-label">Tools</div>
-      <div class="nav-item" onclick="showPage('patrol',this)"><span class="nav-icon">🚔</span> Patrol Log</div>
-      <div class="nav-item" onclick="showPage('cdr',this)"><span class="nav-icon">📞</span> CDR Analyzer</div>
-      <div class="nav-item" onclick="showPage('incident',this)"><span class="nav-icon">🚨</span> Incident Report</div>
-      <div class="nav-item" onclick="showPage('law',this)"><span class="nav-icon">⚖️</span> Law Library</div>
-      <div class="nav-item" onclick="showPage('reminders',this)"><span class="nav-icon">🔔</span> Reminders <span class="nav-badge" id="badge-reminders">0</span></div>
-      <div class="nav-item" onclick="showPage('court',this)"><span class="nav-icon">⚖️</span> عدالتی پیشیاں</div>
-      <div class="nav-item" onclick="showPage('performance',this)"><span class="nav-icon">📊</span> Performance</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('patrol',this)"><span class="nav-icon">🚔</span> Patrol Log</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('cdr',this)"><span class="nav-icon">📞</span> CDR Analyzer</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('law',this)"><span class="nav-icon">⚖️</span> Law Library</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('reminders',this)"><span class="nav-icon">🔔</span> Reminders <span class="nav-badge" id="badge-reminders">0</span></div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('court',this)"><span class="nav-icon">⚖️</span> عدالتی پیشیاں</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('performance',this)"><span class="nav-icon">📊</span> Performance</div>
       <div class="nav-section-label">System</div>
-      <div class="nav-item" onclick="showPage('backup',this)"><span class="nav-icon">☁️</span> Backup & Sync</div>
-      <div class="nav-item" onclick="showPage('settings',this)"><span class="nav-icon">⚙️</span> Settings</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('backup',this)"><span class="nav-icon">☁️</span> Backup & Sync</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('bin',this)"><span class="nav-icon">🗑️</span> ری سائیکل بن</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('settings',this)"><span class="nav-icon">⚙️</span> Settings</div>
     </nav>
     <div class="sidebar-footer"><button class="logout-btn" onclick="doLogout()">🚪 Sign Out</button><div class="sidebar-version">Digital IO v4.0 · Secure</div></div>
   </div>
@@ -779,7 +815,7 @@ input, textarea, select { font-family: var(--font-main); }
   <div class="main-area">
     <div class="topbar">
       <div class="topbar-left"><button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button><div class="topbar-title" id="topbar-title">Dashboard</div><div class="db-badge" id="db-badge">⚙ Connecting...</div></div>
-      <div class="topbar-right"><button class="topbar-btn" onclick="showPage('search',null)" title="Search">🔍</button><button class="topbar-btn" onclick="showPage('reminders',null)" title="Reminders">🔔</button><button class="topbar-btn" onclick="triggerBackupNow()" title="Backup Now">☁️</button><button class="topbar-btn" id="theme-picker-btn" onclick="openThemePicker()" title="Change Theme" style="font-size:16px;">🎨</button><div class="topbar-status"><span class="status-dot" id="status-dot"></span><span id="status-text">Connecting</span></div></div>
+      <div class="topbar-right"><button class="topbar-btn" onclick="closeMobileSidebar();showPage('search',null)" title="Search">🔍</button><button class="topbar-btn" onclick="closeMobileSidebar();showPage('reminders',null)" title="Reminders">🔔</button><button class="topbar-btn" onclick="triggerBackupNow()" title="Backup Now">☁️</button><button class="topbar-btn" id="theme-picker-btn" onclick="openThemePicker()" title="Change Theme" style="font-size:16px;">🎨</button><div class="topbar-status"><span class="status-dot" id="status-dot"></span><span id="status-text">Connecting</span></div></div>
     </div>
     <div class="page-content" id="page-content"><div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Loading...</div></div></div>
     <div class="bottombar"><span id="footer-officer">Digital IO</span><span id="footer-time"></span><span id="footer-license">License: Active</span></div>
@@ -798,6 +834,7 @@ input, textarea, select { font-family: var(--font-main); }
 <script src="cdr.js"></script>
 <script src="incident.js"></script>
 <script src="court.js"></script>
+<script src="bin.js"></script>
 <script src="toolbar.js"></script>
 <script src="misal-docs.js"></script>
 <script src="cases.js"></script>
@@ -809,6 +846,50 @@ input, textarea, select { font-family: var(--font-main); }
 <script src="performance.js"></script>
 <script src="backup.js"></script>
 <script src="settings.js"></script>
+
+<!-- ── Mobile sidebar toggle ── -->
+<script>
+var _mobSidebarOpen = false;
+
+function toggleSidebar() {
+  if (_mobSidebarOpen) { _closeSidebar(); } else { _openSidebar(); }
+}
+
+function _openSidebar() {
+  var sb = document.getElementById('sidebar');
+  var ov = document.getElementById('mob-overlay');
+  if (!sb) return;
+  sb.classList.remove('collapsed'); // Remove collapsed — it has !important
+  sb.style.setProperty('-webkit-transform','translateX(0)','important');
+  sb.style.setProperty('transform','translateX(0)','important');
+  sb.style.setProperty('box-shadow','4px 0 20px rgba(0,0,0,0.6)','important');
+  if (ov) ov.style.display = 'block';
+  _mobSidebarOpen = true;
+}
+
+function closeMobileSidebar() { _closeSidebar(); }
+
+function _closeSidebar() {
+  var sb = document.getElementById('sidebar');
+  var ov = document.getElementById('mob-overlay');
+  if (!sb) return;
+  sb.style.setProperty('-webkit-transform','translateX(-100%)','important');
+  sb.style.setProperty('transform','translateX(-100%)','important');
+  sb.style.removeProperty('box-shadow');
+  if (ov) ov.style.display = 'none';
+  _mobSidebarOpen = false;
+}
+
+// On load — if mobile, force sidebar closed regardless of saved state
+window.addEventListener('DOMContentLoaded', function() {
+  if (window.innerWidth <= 768) {
+    _closeSidebar();
+  }
+});
+window.addEventListener('resize', function() {
+  if (window.innerWidth <= 768) { _closeSidebar(); }
+});
+</script>
 
 <!-- ── Sidebar collapse ── -->
 <script>
