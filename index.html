@@ -696,17 +696,17 @@ input[id*="cnic"], input[id*="cell"] {
 /* But keep page-header visible if it contains action buttons */
 .page-header { padding-top:0; margin-bottom:8px; }
 
-/* ── Collapsible Sidebar ── */
+/* ── Collapsible Sidebar (Desktop only) ── */
 #main-app { display:flex; position:relative; }
 .sidebar {
   transition: width 0.25s ease, min-width 0.25s ease, opacity 0.2s ease;
-  overflow: hidden;
 }
 .sidebar.collapsed {
   width: 0 !important;
   min-width: 0 !important;
   opacity: 0;
   pointer-events: none;
+  overflow: hidden;
 }
 #sidebar-toggle {
   position: fixed;
@@ -850,7 +850,7 @@ input[id*="cnic"], input[id*="cell"] {
   <div class="main-area">
     <div class="topbar">
       <div class="topbar-left"><button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button><div class="topbar-title" id="topbar-title">Dashboard</div><div class="db-badge" id="db-badge">⚙ Connecting...</div></div>
-      <div class="topbar-right"><button class="topbar-btn" onclick="closeMobileSidebar();showPage('search',null)" title="Search">🔍</button><button class="topbar-btn" onclick="closeMobileSidebar();showPage('reminders',null)" title="Reminders">🔔</button><button class="topbar-btn" onclick="triggerBackupNow()" title="Backup Now">☁️</button><button class="topbar-btn" id="theme-picker-btn" onclick="openThemePicker()" title="Change Theme" style="font-size:16px;">🎨</button><div class="topbar-status"><span class="status-dot" id="status-dot"></span><span id="status-text">Connecting</span></div></div>
+      <div class="topbar-right"><div id="topbar-sho-dsp" style="font-size:10px;color:var(--text-muted);text-align:right;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;line-height:1.4;display:none;"></div><button class="topbar-btn" onclick="closeMobileSidebar();showPage('search',null)" title="Search">🔍</button><button class="topbar-btn" onclick="closeMobileSidebar();showPage('reminders',null)" title="Reminders">🔔</button><button class="topbar-btn" onclick="triggerBackupNow()" title="Backup Now">☁️</button><button class="topbar-btn" id="theme-picker-btn" onclick="openThemePicker()" title="Change Theme" style="font-size:16px;">🎨</button><div class="topbar-status"><span class="status-dot" id="status-dot"></span><span id="status-text">Connecting</span></div></div>
     </div>
     <div class="page-content" id="page-content"><div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Loading...</div></div></div>
     <div class="bottombar"><span id="footer-officer">Digital IO</span><span id="footer-time"></span><span id="footer-license">License: Active</span></div>
@@ -884,72 +884,86 @@ input[id*="cnic"], input[id*="cell"] {
 
 <!-- ── Mobile sidebar toggle ── -->
 <script>
-var _mobSidebarOpen = false;
+var _mobOpen = false;
 
 function toggleSidebar() {
-  if (_mobSidebarOpen) { _closeSidebar(); } else { _openSidebar(); }
+  _mobOpen ? _sidebarClose() : _sidebarOpen();
 }
 
-function _openSidebar() {
+function _sidebarOpen() {
   var sb = document.getElementById('sidebar');
   var ov = document.getElementById('mob-overlay');
   if (!sb) return;
-  sb.classList.remove('collapsed'); // Remove collapsed — it has !important
-  sb.style.setProperty('-webkit-transform','translateX(0)','important');
-  sb.style.setProperty('transform','translateX(0)','important');
-  sb.style.setProperty('box-shadow','4px 0 20px rgba(0,0,0,0.6)','important');
-  if (ov) ov.style.display = 'block';
-  _mobSidebarOpen = true;
+  // Remove collapsed class so overflow:hidden doesn't hide content
+  sb.classList.remove('collapsed');
+  // Force open with important
+  sb.style.cssText = [
+    'position:fixed!important',
+    'left:0!important',
+    'top:0!important',
+    'bottom:0!important',
+    'width:260px!important',
+    'min-width:260px!important',
+    'z-index:1000!important',
+    'opacity:1!important',
+    'pointer-events:auto!important',
+    'overflow-y:auto!important',
+    '-webkit-transform:translateX(0)!important',
+    'transform:translateX(0)!important',
+    '-webkit-transition:-webkit-transform 0.3s ease!important',
+    'transition:transform 0.3s ease!important',
+    'box-shadow:4px 0 20px rgba(0,0,0,0.5)!important'
+  ].join(';');
+  if (ov) ov.style.cssText = 'display:block!important;position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;background:rgba(0,0,0,0.55)!important;z-index:999!important;';
+  _mobOpen = true;
 }
 
-function closeMobileSidebar() { _closeSidebar(); }
-
-function _closeSidebar() {
+function _sidebarClose() {
   var sb = document.getElementById('sidebar');
   var ov = document.getElementById('mob-overlay');
   if (!sb) return;
-  sb.style.setProperty('-webkit-transform','translateX(-100%)','important');
-  sb.style.setProperty('transform','translateX(-100%)','important');
-  sb.style.removeProperty('box-shadow');
-  if (ov) ov.style.display = 'none';
-  _mobSidebarOpen = false;
+  sb.style.cssText = [
+    'position:fixed!important',
+    'left:0!important',
+    'top:0!important',
+    'bottom:0!important',
+    'width:260px!important',
+    'min-width:260px!important',
+    'z-index:1000!important',
+    'opacity:1!important',
+    '-webkit-transform:translateX(-100%)!important',
+    'transform:translateX(-100%)!important',
+    '-webkit-transition:-webkit-transform 0.3s ease!important',
+    'transition:transform 0.3s ease!important'
+  ].join(';');
+  if (ov) ov.style.cssText = 'display:none!important;';
+  _mobOpen = false;
 }
 
-// On load — if mobile, force sidebar closed regardless of saved state
-window.addEventListener('DOMContentLoaded', function() {
-  if (window.innerWidth <= 768) {
-    _closeSidebar();
-  }
+function closeMobileSidebar() { _sidebarClose(); }
+
+// Init on load
+window.addEventListener('load', function() {
+  if (window.innerWidth <= 768) { _sidebarClose(); }
 });
+
 window.addEventListener('resize', function() {
-  if (window.innerWidth <= 768) { _closeSidebar(); }
+  if (window.innerWidth <= 768) { _sidebarClose(); }
+  else { _mobOpen = false; } // reset flag on desktop
 });
 </script>
 
 <!-- ── Sidebar collapse ── -->
 <script>
 (function(){
-  // Always start with sidebar OPEN — never auto-collapse
+  // Always start open — remove any saved collapse state
   localStorage.removeItem('dio_sidebar_collapsed');
-  // On mobile, force closed initially
-  if (window.innerWidth <= 768) {
-    var sb = document.getElementById('sidebar');
-    if (sb) {
-      sb.style.setProperty('-webkit-transform','translateX(-100%)','important');
-      sb.style.setProperty('transform','translateX(-100%)','important');
-    }
-  }
 })();
 
 function toggleSidebarCollapse(){
-  const sb  = document.getElementById('sidebar');
-  const btn = document.getElementById('sidebar-toggle');
-  if(!sb||!btn) return;
-  const collapsing = !sb.classList.contains('collapsed');
-  sb.classList.toggle('collapsed', collapsing);
-  btn.classList.toggle('collapsed', collapsing);
-  btn.textContent = collapsing ? '▶' : '◀';
-  localStorage.setItem('dio_sidebar_collapsed', collapsing ? '1' : '0');
+  // Desktop collapse disabled — sidebar stays open
+  // On mobile use toggleSidebar() instead
+  if(window.innerWidth<=768){ toggleSidebar(); }
 }
 </script>
 
