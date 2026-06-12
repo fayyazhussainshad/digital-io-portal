@@ -694,7 +694,21 @@ function _renderThemeSwatches(popup,currentId){
 }
 
 
-async function initApp(){updateSidebarProfile();updateConnectionStatus(true);await updateBadges();startClock();initBackupSystem();setupRealtimeSync(async(table)=>{await updateBadges();const pt=document.getElementById('topbar-title')?.textContent;if(table==='cases'&&pt?.includes('Cases'))renderCases(document.getElementById('page-content'));if(table==='reminders'&&pt?.includes('Reminder'))renderReminders(document.getElementById('page-content'));});showPage('dashboard',document.querySelector('.nav-item'));setTimeout(()=>triggerBackup('app_init'),3000);}
+async function initApp(){
+  updateSidebarProfile();
+  updateConnectionStatus(true);
+  await updateBadges();
+  startClock();
+  initBackupSystem();
+  // Show admin nav if admin/superadmin
+  const adminNav = document.getElementById('admin-nav-item');
+  if (adminNav && ['admin','superadmin'].includes(currentOfficer?.role)) {
+    adminNav.style.display = 'flex';
+  }
+  setupRealtimeSync(async(table)=>{await updateBadges();const pt=document.getElementById('topbar-title')?.textContent;if(table==='cases'&&pt?.includes('Cases'))renderCases(document.getElementById('page-content'));if(table==='reminders'&&pt?.includes('Reminder'))renderReminders(document.getElementById('page-content'));});
+  showPage('dashboard',document.querySelector('.nav-item'));
+  setTimeout(()=>triggerBackup('app_init'),3000);
+}
 // ── STATION TRANSFER ──
 async function openTransferModal(){
   const o=currentOfficer||{};
