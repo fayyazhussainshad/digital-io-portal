@@ -212,11 +212,15 @@ function _updateTopbarShoDsp(o) {
   const dspEl = document.getElementById('topbar-dsp');
   if (shoEl) {
     shoEl.style.display = 'block';
-    shoEl.textContent = o.sho_name ? 'SHO ' + o.sho_name : 'SHO ___';
+    shoEl.innerHTML = o.sho_name
+      ? `<span style="color:var(--accent);font-weight:700;">SHO</span> ${o.sho_name}`
+      : `<span style="color:var(--text-faint);">SHO</span>`;
   }
   if (dspEl) {
     dspEl.style.display = 'block';
-    dspEl.textContent = o.dsp_name ? 'DSP/SDPO ' + o.dsp_name : 'DSP/SDPO ___';
+    dspEl.innerHTML = o.dsp_name
+      ? `<span style="color:var(--accent);font-weight:700;">DSP/SDPO</span> ${o.dsp_name}`
+      : `<span style="color:var(--text-faint);">DSP/SDPO</span>`;
   }
 }
 

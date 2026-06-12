@@ -107,10 +107,6 @@ async function renderSettings(container) {
           ${edField('Police Station', 'set-station', o.station, 'e.g. Seetal Mari')}
           ${edField('District', 'set-district', o.district, 'e.g. Multan')}
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-          ${edField('SHO کا نام', 'set-sho', o.sho_name||'', 'SHO کا مکمل نام')}
-          ${edField('DSP/SDPO کا نام', 'set-dsp', o.dsp_name||'', 'DSP کا مکمل نام')}
-        </div>
         ${edField('Official Phone (Department)', 'set-official-phone', o.official_phone||o.phone, '0300-0000000')}
         <button class="btn btn-primary" onclick="savePostingSettings()" style="margin-top:4px;">💾 Save Posting</button>
       </div>
@@ -232,8 +228,6 @@ async function savePostingSettings(){
     // so new cases immediately pick up the new station
     await updateOfficerProfile({
       station: newStation, district: newDistrict,
-      sho_name: (document.getElementById('set-sho')?.value.trim()||null),
-      dsp_name: (document.getElementById('set-dsp')?.value.trim()||null),
       official_phone: phone||null, phone: phone||null,
     });
     updateSidebarProfile();
