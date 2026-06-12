@@ -83,7 +83,7 @@ registerPage('fivec',renderFiveC);
 async function renderFiveC(container,query){
   query=query||'';
   const apps=await getApplications5C(query);
-  container.innerHTML=`<div class="page-header"><div><div class="page-title">📋 5-C Applications</div><div class="page-subtitle">Applications forwarded by senior officers — track, respond, archive</div></div><button class="btn btn-primary" onclick="open5CForm()">+ New Application</button></div>
+  container.innerHTML=`<div class="page-header"><div style="display:flex;align-items:center;gap:10px;"><button class="btn btn-secondary btn-sm" onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="font-size:12px;">← واپس</button><div><div class="page-title">📋 5-C Applications</div></div></div><button class="btn btn-primary" onclick="open5CForm()">+ New Application</button></div>
   <div class="card" style="margin-bottom:14px;padding:12px;">
     <input class="search-input" id="fivec-search" style="width:100%;" placeholder="🔍 Search by complainant name, CNIC, cell, application number, designation..." value="${esc5C(query)}" oninput="clearTimeout(window._5cTmr);window._5cTmr=setTimeout(()=>renderFiveC(document.getElementById('page-content'),this.value),250)">
     <div style="margin-top:6px;font-size:11px;color:var(--text-muted);">${apps.length} application${apps.length===1?'':'s'} ${query?'matching':'total'}</div>
