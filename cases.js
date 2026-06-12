@@ -345,8 +345,6 @@ function caseFormHTML(c) {
     + '<div class="form-row">'
     + '<div class="form-group"><label class="form-label">پوزیشن</label>'
     + '<select class="form-input" id="cf-position">'+posOpts+'</select></div>'
-    + '<div class="form-group"><label class="form-label">تفتیشی نوٹس</label>'
-    + '<textarea class="form-input" id="cf-notes" placeholder="تفتیشی نوٹس..." dir="auto" style="min-height:60px;resize:vertical;">'+notes+'</textarea></div>'
     + '</div>'
     + '</div>'
 
