@@ -655,6 +655,41 @@ img { content-visibility: auto; }
   .page-content { height: calc(100vh - 56px); }
 }
 
+/* ── Sidebar hover on desktop ── */
+#main-app:not(.mobile) .sidebar:hover {
+  width: var(--sidebar-width) !important;
+  min-width: var(--sidebar-width) !important;
+  opacity: 1 !important;
+}
+
+/* ── Form labels RIGHT aligned (Urdu RTL) ── */
+.form-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  text-align: right;
+  direction: rtl;
+  font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
+  display: block;
+  width: 100%;
+}
+
+/* ── Urdu inputs RTL ── */
+.form-input[dir="auto"],
+.form-input:not([type="date"]):not([type="time"]):not([type="number"]):not([type="email"]) {
+  direction: rtl;
+  text-align: right;
+}
+
+/* ── English inputs LTR ── */
+.form-input[type="date"],
+.form-input[type="time"],
+.form-input[type="number"],
+input[id*="cnic"], input[id*="cell"] {
+  direction: ltr !important;
+  text-align: left !important;
+}
+
 /* Topbar already shows the tab name — hide duplicate page titles in content */
 .page-title { display:none; }
 .page-subtitle { display:none; }
@@ -894,11 +929,15 @@ window.addEventListener('resize', function() {
 <!-- ── Sidebar collapse ── -->
 <script>
 (function(){
-  // Restore saved state on load
-  if(localStorage.getItem('dio_sidebar_collapsed')==='1'){
-    document.getElementById('sidebar')?.classList.add('collapsed');
-    const btn=document.getElementById('sidebar-toggle');
-    if(btn){btn.textContent='▶';btn.classList.add('collapsed');}
+  // Always start with sidebar OPEN — never auto-collapse
+  localStorage.removeItem('dio_sidebar_collapsed');
+  // On mobile, force closed initially
+  if (window.innerWidth <= 768) {
+    var sb = document.getElementById('sidebar');
+    if (sb) {
+      sb.style.setProperty('-webkit-transform','translateX(-100%)','important');
+      sb.style.setProperty('transform','translateX(-100%)','important');
+    }
   }
 })();
 
