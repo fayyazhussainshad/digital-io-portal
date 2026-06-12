@@ -277,20 +277,20 @@ function caseFormHTML(c) {
   var html = ''
     + '<div style="max-height:70vh;overflow-y:auto;padding-right:4px;">'
 
-    // FIR + Date
+    // FIR + Date — swapped: Date left, FIR Number right
     + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">تاریخ اندراج مقدمہ *</label>'
+    + '<input class="form-input" id="cf-date" value="'+date+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" maxlength="10"></div>'
     + '<div class="form-group"><label class="form-label">مقدمہ نمبر *</label>'
     + '<input class="form-input" id="cf-fir" value="'+fir+'" placeholder="e.g. 245/2025" dir="auto"></div>'
-    + '<div class="form-group"><label class="form-label">Date of FIR *</label>'
-    + '<input class="form-input" id="cf-date" value="'+date+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" maxlength="10"></div>'
     + '</div>'
 
-    // Occurrence + Status
+    // Occurrence + Status — swapped: Status left, Occurrence right
     + '<div class="form-row">'
-    + '<div class="form-group"><label class="form-label">تاریخ وقوعہ</label>'
-    + '<input class="form-input" id="cf-occurrence-date" value="'+occ+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" maxlength="10"></div>'
     + '<div class="form-group"><label class="form-label">Status *</label>'
     + '<select class="form-input" id="cf-status">'+statusOpts+'</select></div>'
+    + '<div class="form-group"><label class="form-label">تاریخ وقوعہ</label>'
+    + '<input class="form-input" id="cf-occurrence-date" value="'+occ+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" maxlength="10"></div>'
     + '</div>'
 
     // Sections
@@ -310,37 +310,37 @@ function caseFormHTML(c) {
     + '<input class="form-input" id="cf-offence" value="'+offence+'" placeholder="Auto-filled when section selected" dir="auto">'
     + '</div>'
 
-    // Complainant section
+    // Complainant section — swapped: CNIC left, Name right
     + '<div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:12px;">'
     + '<div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">👤 مدعی کی تفصیل</div>'
     + '<div class="form-row">'
-    + '<div class="form-group"><label class="form-label">مدعی کا نام *</label>'
-    + '<input class="form-input" id="cf-complainant" value="'+complainant+'" placeholder="مدعی کا مکمل نام" dir="auto"></div>'
     + '<div class="form-group"><label class="form-label">شناختی کارڈ نمبر</label>'
     + '<input class="form-input" id="cf-complainant-cnic" value="'+cmpCnic+'" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)"></div>'
+    + '<div class="form-group"><label class="form-label">مدعی کا نام *</label>'
+    + '<input class="form-input" id="cf-complainant" value="'+complainant+'" placeholder="مدعی کا مکمل نام" dir="auto"></div>'
     + '</div>'
     + '<div class="form-row">'
-    + '<div class="form-group"><label class="form-label">موبائل نمبر</label>'
-    + '<input class="form-input" id="cf-complainant-cell" value="'+cmpCell+'" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)"></div>'
     + '<div class="form-group"><label class="form-label">پیشہ</label>'
     + '<input class="form-input" id="cf-complainant-profession" value="'+cmpProf+'" placeholder="پیشہ" dir="auto"></div>'
+    + '<div class="form-group"><label class="form-label">موبائل نمبر</label>'
+    + '<input class="form-input" id="cf-complainant-cell" value="'+cmpCell+'" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)"></div>'
     + '</div>'
     + '</div>'
 
-    // FIR Details
+    // FIR Details — swapped pairs
     + '<div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:12px;">'
     + '<div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">📋 FIR کی تفصیل</div>'
     + '<div class="form-row">'
-    + '<div class="form-group"><label class="form-label">محرر</label>'
-    + '<input class="form-input" id="cf-fir-writer" value="'+firWriter+'" placeholder="محرر کا نام" dir="auto"></div>'
     + '<div class="form-group"><label class="form-label">مرتبہ مرسلہ</label>'
     + '<input class="form-input" id="cf-complaint-sender" value="'+compSender+'" placeholder="مرتبہ مرسلہ" dir="auto"></div>'
+    + '<div class="form-group"><label class="form-label">محرر</label>'
+    + '<input class="form-input" id="cf-fir-writer" value="'+firWriter+'" placeholder="محرر کا نام" dir="auto"></div>'
     + '</div>'
     + '<div class="form-row">'
-    + '<div class="form-group"><label class="form-label">SHO</label>'
-    + '<input class="form-input" id="cf-sho" value="'+sho+'" placeholder="SHO کا نام" dir="auto"></div>'
     + '<div class="form-group"><label class="form-label">SDPO</label>'
     + '<input class="form-input" id="cf-sdpo" value="'+sdpo+'" placeholder="SDPO کا نام" dir="auto"></div>'
+    + '<div class="form-group"><label class="form-label">SHO</label>'
+    + '<input class="form-input" id="cf-sho" value="'+sho+'" placeholder="SHO کا نام" dir="auto"></div>'
     + '</div>'
     + '<div class="form-row">'
     + '<div class="form-group"><label class="form-label">پوزیشن</label>'
@@ -554,7 +554,7 @@ document.addEventListener('click', function(e) {
 });
 
 // ── MODAL OPENERS + SAVE/VIEW ──
-function openAddCaseModal(){openModal('➕ نیا اندراج',caseFormHTML(),`<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveNewCase()">💾 اندراج محفوظ کریں</button>`);}
+function openAddCaseModal(){openModal('',caseFormHTML(),`<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveNewCase()">💾 اندراج محفوظ کریں</button>`);}
 async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;openModal(`✏️ ترمیم — مقدمہ ${c.fir_number}`,caseFormHTML(c),`<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveEditCase('${id}')">💾 تبدیلیاں محفوظ کریں</button>`);}
 async function saveNewCase(){
   var fir=document.getElementById('cf-fir').value.trim();
