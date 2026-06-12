@@ -651,6 +651,8 @@ let currentDocIndex = null;
 const docDrafts = {}; // stores edited content per case+doc
 
 async function openCaseWorkspace(id) {
+  // Close mobile sidebar first
+  closeMobileSidebar();
   currentCaseId = id;
   _currentWorkspaceCaseId = id;
   currentDocIndex = null;
@@ -659,7 +661,6 @@ async function openCaseWorkspace(id) {
   container.innerHTML = `<div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Opening Case Workspace...</div></div>`;
   const c = await getCase(id);
   if (!c) { showToast('❌ Case not found.', 'error'); return; }
-  // Load MISAL documents for this case
   await loadMisalDocs(id);
   const docs = c.documents_checklist ? (typeof c.documents_checklist==='string'?JSON.parse(c.documents_checklist):c.documents_checklist) : [];
   const ev = await getEvidence(c.fir_number);
@@ -673,7 +674,7 @@ function renderWorkspace(c, docs, ev, container) {
   container.innerHTML = `
     <!-- WORKSPACE HEADER -->
     <div class="case-header">
-      <button class="btn btn-secondary" onclick="goBackToCases()" style="flex-shrink:0;display:flex;align-items:center;gap:6px;font-weight:600;">← My Cases</button>
+      <button class="btn btn-secondary" onclick="goBackToCases()" style="flex-shrink:0;display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;padding:8px 14px;">← واپس</button>
       <div style="flex:1;">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <span style="font-size:18px;font-weight:900;color:var(--accent);font-family:var(--font-mono);">FIR ${c.fir_number}</span>
@@ -1702,4 +1703,4 @@ function goBackToCases() {
   renderCases(container);
 }
 function confirmDeleteCase(id,fir){openModal('🗑️ Confirm Delete',`<p style="color:var(--text-secondary);font-size:13px;">Delete case <b style="color:var(--accent);">FIR ${fir}</b>?<br><br><span style="color:var(--red);font-size:11px;">⚠️ This cannot be undone.</span></p>`,`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="closeModal();doDeleteCase('${id}')">🗑️ Delete</button>`);}
-async function doDeleteCase(id){try{await deleteCase(id);showToast('🗑️ Case deleted.','info');await updateBadges();renderCases(document.getElementById('page-content'));}catch(err){showToast('❌ Error: '+err.message,'error');}}
+async function doDeleteCase(id){try{await deleteCase(id);showToast('🗑️ Case deleted.','info');await updateBadges();renderCases(document.getElementById('page-content'));}catch(err){showToast('❌ Error: '+err.message,'error');
