@@ -1703,4 +1703,13 @@ function goBackToCases() {
   renderCases(container);
 }
 function confirmDeleteCase(id,fir){openModal('🗑️ Confirm Delete',`<p style="color:var(--text-secondary);font-size:13px;">Delete case <b style="color:var(--accent);">FIR ${fir}</b>?<br><br><span style="color:var(--red);font-size:11px;">⚠️ This cannot be undone.</span></p>`,`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="closeModal();doDeleteCase('${id}')">🗑️ Delete</button>`);}
-async function doDeleteCase(id){try{await deleteCase(id);showToast('🗑️ Case deleted.','info');await updateBadges();renderCases(document.getElementById('page-content'));}catch(err){showToast('❌ Error: '+err.message,'error');
+async function doDeleteCase(id){
+  try {
+    const c = await getCase(id);
+    if (c) await softDelete('case', id, c);
+    await deleteCase(id);
+    showToast('🗑️ مقدمہ Recycle Bin میں','info');
+    await updateBadges();
+    renderCases(document.getElementById('page-content'));
+  } catch(err) { showToast('❌ Error: '+err.message,'error'); }
+}
