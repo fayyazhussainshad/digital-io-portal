@@ -396,6 +396,19 @@ function caseFormHTML(c) {
     + '<select class="form-input" id="cf-status">'+statusOpts+'</select></div>'
     + '</div>'
 
+    // Row 2b: ملزمان کی صورتحال
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">ملزمان</label>'
+    + '<select class="form-input" id="cf-mulzman-type">'
+    + '<option value="maloom" '+(c.mulzman_type==='maloom'?'selected':'')+'>✅ ملزمان معلوم</option>'
+    + '<option value="namaloom" '+(c.mulzman_type==='namaloom'||!c.mulzman_type?'selected':'')+'>⚠️ ملزمان نامعلوم</option>'
+    + '</select></div>'
+    + '<div class="form-group"><label class="form-label">&nbsp;</label>'
+    + '<div style="font-size:11px;color:var(--text-muted);padding:9px 12px;background:var(--bg-secondary);border-radius:6px;">'
+    + '⚠️ نامعلوم منتخب کریں تو 15 دن بعد خودکار یاددہانی ملے گی'
+    + '</div></div>'
+    + '</div>'
+
     // Row 3: Sections of Law (full width)
     + '<div class="form-group">'
     + '<label class="form-label">Sections of Law * <span style="color:var(--text-faint);font-weight:400;">(multiple allowed)</span></label>'
@@ -684,12 +697,13 @@ async function saveNewCase(){
       complaint_sender:document.getElementById('cf-complaint-sender')?.value.trim()||'',
       section_of_law:section,
       offence_type:document.getElementById('cf-offence').value.trim(),
-      sho:document.getElementById('cf-sho').value.trim(),
-      sdpo:document.getElementById('cf-sdpo').value.trim(),
+      sho:document.getElementById('cf-sho')?.value.trim()||'',
+      sdpo:document.getElementById('cf-sdpo')?.value.trim()||'',
       status:document.getElementById('cf-status').value,
+      mulzman_type:document.getElementById('cf-mulzman-type')?.value||'namaloom',
       position:document.getElementById('cf-position').value,
       notes:document.getElementById('cf-notes')?.value.trim()||'',
-      documents_checklist:selectedDocuments.length>0?selectedDocuments:[],
+      documents_checklist:selectedDocuments?.length>0?selectedDocuments:[],
       is_cross_version:document.getElementById('cf-cross-version')?.checked||false,
       cross_fir_number:document.getElementById('cf-cross-fir')?.value.trim()||null,
       cross_fir_date:document.getElementById('cf-cross-fir-date')?.value.trim()||null,
@@ -700,12 +714,112 @@ async function saveNewCase(){
       cross_section_of_law:document.getElementById('cf-cross-section')?.value.trim()||null,
       cross_offence_type:document.getElementById('cf-cross-offence')?.value.trim()||null,
       cross_fir_writer:document.getElementById('cf-cross-fir-writer')?.value.trim()||null,
-      // Capture station at creation time — survives officer transfers
       case_station:  currentOfficer?.station  || null,
       case_district: currentOfficer?.district || null,
     });
-    closeModal();showToast('Case added: FIR '+fir,'success');await updateBadges();renderCases(document.getElementById('page-content'));
+    // Auto reminders
+    const firDate = document.getElementById('cf-date').value.trim();
+    const mulzmanType = document.getElementById('cf-mulzman-type')?.value||'namaloom';
+    await _createAutoReminders(fir, firDate, mulzmanType, complainant);
+    closeModal();showToast('✅ مقدمہ درج ہو گیا: FIR '+fir,'success');await updateBadges();renderCases(document.getElementById('page-content'));
   }catch(err){showToast('Error: '+err.message,'error');}
+}
+
+// ── DOCUMENTS CHECKLIST ────────────────────────────────────────
+const _DOCS_LIST = [
+  'ایف آئی آر','کراس ورشن','رپورٹ 173 ض ف','جائے واردات',
+  'نامزد ملزمان','گواہان FIR','گواہان کراس ورشن','بیانات 161 ض ف',
+  'وقوعہ جات','فردات','ضمنیات','میمورنڈم','فارم گرفتاری',
+  'انکشافات','درخواستیں','بریف مقدمہ','شہادتیں','انسدادی کاروائی',
+  'وارنٹ','اشتہار','پراگریس رپورٹ','فارم مفروری','CDR/IMEI',
+  'ہمراہی ملازمان','انڈیکس نقل مسل',
+];
+
+async function _openDocsChecklist(caseId, firNum) {
+  // Load existing checklist
+  let checked = {};
+  try {
+    const { data } = await supabaseClient.from('cases').select('docs_checklist').eq('id',caseId).single();
+    checked = data?.docs_checklist || {};
+  } catch(_) {}
+
+  const html = `<div style="direction:rtl;">
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">FIR ${firNum} — مکمل ہونے والی دستاویزات چیک کریں</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+      ${_DOCS_LIST.map(d => `
+        <label style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg-secondary);border-radius:6px;cursor:pointer;border:1px solid ${checked[d]?'var(--green)':'var(--border)'};">
+          <input type="checkbox" value="${d}" ${checked[d]?'checked':''} onchange="_updateDocCheck('${caseId}',this)"
+            style="width:16px;height:16px;accent-color:var(--green);">
+          <span style="font-size:13px;font-family:'Jameel Noori Nastaleeq',serif;">${d}</span>
+        </label>`).join('')}
+    </div>
+    <div style="margin-top:12px;padding:10px;background:var(--bg-secondary);border-radius:8px;font-size:12px;color:var(--text-muted);">
+      مکمل: <b id="docs-done-count">${Object.values(checked).filter(Boolean).length}</b> / ${_DOCS_LIST.length}
+    </div>
+  </div>`;
+
+  openModal(`📋 دستاویزات کی فہرست — FIR ${firNum}`, html,
+    `<button class="btn btn-primary" onclick="closeModal()">✅ محفوظ</button>`
+  );
+}
+
+async function _updateDocCheck(caseId, checkbox) {
+  const doc = checkbox.value;
+  const val = checkbox.checked;
+  const label = checkbox.closest('label');
+  if (label) label.style.borderColor = val ? 'var(--green)' : 'var(--border)';
+
+  // Update count
+  const allChecked = document.querySelectorAll('input[type=checkbox]:checked').length;
+  const countEl = document.getElementById('docs-done-count');
+  if (countEl) countEl.textContent = allChecked;
+
+  try {
+    // Get current checklist
+    const { data } = await supabaseClient.from('cases').select('docs_checklist').eq('id',caseId).single();
+    const current = data?.docs_checklist || {};
+    current[doc] = val;
+    await supabaseClient.from('cases').update({ docs_checklist: current }).eq('id', caseId);
+  } catch(e) { console.warn('docs checklist:', e.message); }
+}
+
+// ── AUTO REMINDERS ────────────────────────────────────────────
+async function _createAutoReminders(firNum, firDateStr, mulzmanType, complainant) {
+  try {
+    const oid = await getOfficerId();
+    if (!oid || !firDateStr) return;
+
+    // Parse FIR date
+    let firDate;
+    if (/^\d{4}-\d{2}-\d{2}/.test(firDateStr)) {
+      firDate = new Date(firDateStr);
+    } else {
+      const p = firDateStr.split(/[-\/]/);
+      if (p.length === 3) firDate = new Date(p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0'));
+    }
+    if (!firDate || isNaN(firDate)) return;
+
+    const addDays = (d,n) => { const r=new Date(d); r.setDate(r.getDate()+n); return r.toISOString().split('T')[0]; };
+
+    // 10-day: 173 CrPC interim report
+    await supabaseClient.from('reminders').insert({
+      officer_id: oid,
+      text: `📋 رپورٹ 173 ض ف — مقدمہ FIR ${firNum} (${complainant}) — ابتدائی رپورٹ مرتب کریں`,
+      reminder_date: addDays(firDate, 10),
+      is_done: false,
+    });
+
+    // 15-day: untrace warning (only namaloom)
+    if (mulzmanType === 'namaloom') {
+      await supabaseClient.from('reminders').insert({
+        officer_id: oid,
+        text: `⚠️ عدم پتہ ہونے والا مقدمہ — FIR ${firNum} (${complainant}) — ملزمان نامعلوم، 15 دن مکمل`,
+        reminder_date: addDays(firDate, 15),
+        is_done: false,
+      });
+    }
+    showToast('🔔 خودکار یاددہانیاں بن گئیں','info');
+  } catch(e) { console.warn('auto reminder:', e.message); }
 }
 async function saveEditCase(id){
   try{
@@ -798,7 +912,8 @@ function renderWorkspace(c, docs, ev, container) {
         </div>
       </div>
       <div style="display:flex;gap:6px;">
-        <button class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')">✏️ Edit Case</button>
+        <button class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')">✏️</button>
+        <button class="btn btn-secondary btn-sm" onclick="_openDocsChecklist('${c.id}','${c.fir_number}')">📋 دستاویزات</button>
         <button class="btn btn-danger btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number}')">🗑️</button>
       </div>
     </div>

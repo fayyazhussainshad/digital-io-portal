@@ -121,7 +121,9 @@ async function _drawHome(root) {
     <div style="font-size:52px;margin-bottom:10px;">🚔</div>
     <div style="font-size:17px;font-weight:800;margin-bottom:6px;">Patrol Log</div>
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:22px;">GPS tracking · Call log · Duty report</div>
-    <button class="btn btn-primary" style="font-size:14px;padding:12px 32px;" onclick="startShift()">🟢 Shift Shuru Karo</button>
+    <button class="btn btn-primary" style="font-size:14px;padding:12px 32px;" onclick="startShift()">🟢 شفٹ شروع کریں</button>
+    <br><br>
+    <button class="btn btn-secondary btn-sm" onclick="_showPreviousPatrols()">📋 پرانے پیٹرول دیکھیں</button>
   </div>
   ${hist.length?`<div class="card"><div class="card-title" style="margin-bottom:10px;">📋 Purani Shifts</div>
     ${hist.map(s=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
@@ -137,7 +139,7 @@ function _tabEntry(el) {
   _media=[];
   el.innerHTML=`<div class="card">
     <div style="font-size:10px;color:var(--accent);font-weight:700;letter-spacing:1px;margin-bottom:7px;">ENTRY KA QISM</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;direction:rtl;margin-bottom:14px;">
       ${Object.entries(_ET).map(([t,c])=>`
         <div id="et-${t.replace(/ /g,'_')}" onclick="_selET('${t}')" style="padding:10px;border:1px solid ${_etype===t?c.color:'var(--border)'};border-radius:8px;background:${_etype===t?'rgba(79,195,247,0.08)':'var(--bg-tertiary)'};color:${_etype===t?c.color:'var(--text-muted)'};font-size:12px;cursor:pointer;text-align:center;font-weight:${_etype===t?'700':'400'};">
           ${c.icon} ${t}
@@ -164,7 +166,7 @@ function _tabEntry(el) {
     <div style="font-size:10px;color:var(--text-faint);margin-bottom:12px;">✏️ Mic dabao — apna mushahida bolo</div>
 
     <div style="font-size:10px;color:var(--accent);font-weight:700;letter-spacing:1px;margin-bottom:7px;">📸 PHOTOS / VIDEOS / VOICE RECORDING</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;direction:rtl;margin-bottom:10px;">
       <label style="padding:12px 6px;border:1px solid var(--border);border-radius:8px;background:var(--bg-tertiary);font-size:11px;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;">
         <span style="font-size:24px;">📷</span>Photo Lo / Upload
         <input type="file" accept="image/*" capture="environment" onchange="_addMedia(this,'image')" style="display:none;">
@@ -184,6 +186,36 @@ function _tabEntry(el) {
     <div id="pt-media-prev" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"></div>
 
     <button class="btn btn-primary" style="width:100%;padding:12px;font-size:14px;" onclick="saveEntry()">💾 Entry Save Karo</button>
+
+    <!-- Vehicle / Driver / Companions -->
+    <details style="margin-top:10px;">
+      <summary style="cursor:pointer;font-size:11px;color:var(--accent);font-weight:700;padding:8px 0;">🚗 گاڑی · ڈرائیور · ہمراہی ملازمان (اختیاری)</summary>
+      <div style="padding:10px 0;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;direction:rtl;margin-bottom:8px;">
+          <div>
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">گاڑی نمبر</div>
+            <input class="form-input" id="pe-vehicle" placeholder="مثلاً LZP-1234" dir="ltr" style="text-align:left;">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">ڈرائیور کا نام</div>
+            <input class="form-input" id="pe-driver-name" placeholder="ڈرائیور کا نام">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;direction:rtl;margin-bottom:8px;">
+          <div>
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">ڈرائیور بیلٹ نمبر</div>
+            <input class="form-input" id="pe-driver-belt" placeholder="بیلٹ نمبر" dir="ltr" style="text-align:left;">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">ڈرائیور موبائل (اختیاری)</div>
+            <input class="form-input" id="pe-driver-cell" placeholder="0300-0000000" dir="ltr" style="text-align:left;">
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">ہمراہی ملازمان (نام · رینک)</div>
+        <div id="pe-companions-list"></div>
+        <button onclick="_addCompanion()" style="width:100%;padding:8px;border:1px dashed var(--border);border-radius:6px;background:var(--bg-tertiary);color:var(--accent);font-size:11px;cursor:pointer;margin-top:4px;">+ ہمراہی شامل کریں</button>
+      </div>
+    </details>
   </div>`;
 }
 
@@ -254,11 +286,25 @@ async function _startAudioRec() {
 async function saveEntry() {
   const desc=document.getElementById('pe-desc')?.value.trim();
   if(!desc){showToast('⚠️ Masla likhna zaruri hai','error');return;}
+
+  // Collect companions
+  const companions = [];
+  document.querySelectorAll('.companion-row').forEach(row => {
+    const name = row.querySelector('.comp-name')?.value.trim();
+    const rank = row.querySelector('.comp-rank')?.value.trim();
+    if (name) companions.push({name, rank});
+  });
+
   const meta={
     entry_type:_etype,
     caller:document.getElementById('pe-name')?.value.trim()||'',
     cell:document.getElementById('pe-cell')?.value.trim()||'',
     response:document.getElementById('pe-resp')?.value.trim()||'',
+    vehicle:document.getElementById('pe-vehicle')?.value.trim()||'',
+    driver_name:document.getElementById('pe-driver-name')?.value.trim()||'',
+    driver_belt:document.getElementById('pe-driver-belt')?.value.trim()||'',
+    driver_cell:document.getElementById('pe-driver-cell')?.value.trim()||'',
+    companions,
     media:_media.map(m=>({type:m.type,name:m.name,data:m.data}))
   };
   const loc=document.getElementById('pe-loc')?.value.trim()||'';
@@ -288,6 +334,51 @@ async function saveEntry() {
   } catch(e){showToast('❌ '+e.message,'error');}
 }
 
+// ── COMPANION ─────────────────────────────────────────────────
+let _compCount = 0;
+function _addCompanion() {
+  _compCount++;
+  const i = _compCount;
+  const div = document.createElement('div');
+  div.className = 'companion-row';
+  div.style.cssText = 'display:grid;grid-template-columns:2fr 1fr auto;gap:6px;margin-bottom:6px;direction:rtl;';
+  div.innerHTML = `
+    <input class="form-input comp-name" placeholder="ملازم کا نام" style="font-size:12px;">
+    <input class="form-input comp-rank" placeholder="رینک" style="font-size:12px;">
+    <button onclick="this.parentElement.remove()" style="border:none;background:none;color:var(--red);font-size:18px;cursor:pointer;padding:0 6px;">✕</button>`;
+  document.getElementById('pe-companions-list')?.appendChild(div);
+}
+
+// ── PREVIOUS PATROLS ──────────────────────────────────────────
+async function _showPreviousPatrols() {
+  try {
+    const oid = await getOfficerId();
+    const { data } = await supabaseClient.from('patrol_shifts')
+      .select('*').eq('officer_id', oid)
+      .order('started_at', { ascending: false }).limit(20);
+    const shifts = data || [];
+
+    openModal('📋 پرانے پیٹرول',
+      `<div style="max-height:60vh;overflow-y:auto;">
+        ${shifts.length ? shifts.map(s => `
+          <div style="padding:10px;border-bottom:1px solid var(--border);direction:rtl;">
+            <div style="font-size:13px;font-weight:700;color:var(--accent);">
+              ${new Date(s.started_at).toLocaleDateString('en-PK',{day:'2-digit',month:'short',year:'numeric'})}
+              ${s.ended_at ? ' — ' + new Date(s.ended_at).toLocaleDateString('en-PK',{day:'2-digit',month:'short'}) : ' <span style="color:var(--green);">● فعال</span>'}
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);">
+              شروع: ${new Date(s.started_at).toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'})}
+              ${s.ended_at ? ' · ختم: ' + new Date(s.ended_at).toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}) : ''}
+            </div>
+            ${s.notes ? `<div style="font-size:11px;color:var(--text-faint);">${s.notes}</div>` : ''}
+          </div>`).join('')
+        : '<div style="text-align:center;padding:20px;color:var(--text-muted);">کوئی پرانا پیٹرول نہیں</div>'}
+      </div>`,
+      `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`
+    );
+  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+}
+
 // ── MAP TAB ───────────────────────────────────────────────────
 function _tabMap(el) {
   el.innerHTML=`
@@ -298,7 +389,7 @@ function _tabMap(el) {
     </div>
     <button id="map-gps-btn" class="btn btn-primary btn-sm" onclick="_toggleMapGPS()">▶ GPS On</button>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px;">
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;direction:rtl;margin-bottom:8px;">
     <div style="background:var(--bg-card);border-radius:8px;padding:9px;text-align:center;border:1px solid var(--border);">
       <div style="font-size:17px;font-weight:700;color:var(--accent);" id="stat-km">0.00</div>
       <div style="font-size:10px;color:var(--text-muted);">KM Safar</div>
@@ -402,7 +493,7 @@ async function _tabLogs(el){
   const cnt={};Object.keys(_ET).forEach(k=>{cnt[k]=0;});
   logs.forEach(l=>{const t=l.meta?.entry_type||'Aur Kuch';if(cnt[t]!==undefined)cnt[t]++;});
   el.innerHTML=`
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px;">
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;direction:rtl;margin-bottom:10px;">
     ${Object.entries(cnt).map(([t,n])=>`
       <div style="background:var(--bg-card);border-radius:8px;padding:8px;text-align:center;border:1px solid var(--border);">
         <div style="font-size:16px;font-weight:700;color:var(--accent);">${n}</div>
@@ -533,7 +624,7 @@ async function _tabSummary(el){
 
   el.innerHTML=`
   <div id="pt-report" data-txt="${btoa(unescape(encodeURIComponent(r)))}" style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;font-size:11px;line-height:1.8;color:var(--text-secondary);white-space:pre-wrap;max-height:360px;overflow-y:auto;font-family:monospace;">${r}</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;direction:rtl;">
     <button onclick="_copyRep()" style="padding:10px 4px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:11px;cursor:pointer;">📋 Copy Karo</button>
     <button onclick="_shareRep()" style="padding:10px 4px;border:1px solid #25D366;border-radius:8px;background:rgba(37,211,102,0.08);color:#25D366;font-size:11px;cursor:pointer;">📱 WhatsApp</button>
     <button onclick="_dlRep()" style="padding:10px 4px;border:1px solid var(--accent);border-radius:8px;background:rgba(56,189,248,0.08);color:var(--accent);font-size:11px;cursor:pointer;">⬇️ Download</button>
