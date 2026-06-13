@@ -191,21 +191,22 @@ async function toggleReminder(id, done) { await _toggleRem(id, done); }
 async function doDeleteReminder(id) { await _deleteRem(id); }
 
 // ── SMS via Native App ─────────────────────────────────────────
-function _smsSend(text, date) {
+function _smsSend(text, date) { // WhatsApp instead of SMS
   const o = currentOfficer || {};
   const phone = o.official_phone || o.phone || '';
   const msg = `Digital IO یاددہانی:\n${text}${date?'\nتاریخ: '+date:''}\n\nتھانہ ${o.station||'—'}`;
   if (phone) {
-    window.open(`sms:${phone}?body=${encodeURIComponent(msg)}`);
+    var waMsg = encodeURIComponent(msg);
+    window.open('https://wa.me/92' + phone.replace(/^0/,'').replace(/-/g,'') + '?text=' + waMsg);
   } else {
-    openModal('📱 SMS بھیجیں',
+    openModal('📱 WhatsApp بھیجیں',
       `<div style="direction:rtl;">
         <label class="form-label">نمبر درج کریں</label>
         <input class="form-input" id="sms-num" placeholder="0300-0000000" dir="ltr">
         <div style="margin-top:10px;padding:10px;background:var(--bg-secondary);border-radius:6px;font-size:12px;">${msg}</div>
       </div>`,
       `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-       <button class="btn btn-primary" onclick="window.open('sms:'+document.getElementById('sms-num').value+'?body=${encodeURIComponent(msg)}');closeModal();">📱 SMS کھولیں</button>`
+       <button class="btn btn-primary" onclick="var num = document.getElementById('sms-num').value.replace(/^0/,'').replace(/-/g,''); window.open('https://wa.me/92' + num + '?text=' + encodeURIComponent(msg));closeModal();">📱 WhatsApp کھولیں</button>`
     );
   }
 }

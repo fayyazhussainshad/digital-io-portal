@@ -413,18 +413,13 @@ function caseFormHTML(c) {
     + '<div class="form-group">'
     + '<label class="form-label">Sections of Law * <span style="color:var(--text-faint);font-weight:400;">(multiple allowed)</span></label>'
     + '<div style="position:relative;">'
-    + '<input class="form-input" id="cf-section-search" placeholder="&#x1F50D; Type section no. or keyword (e.g. 302 or murder)..." oninput="searchPenalCodes(this.value)" autocomplete="off">'
+    + '<input class="form-input" id="cf-section-search" placeholder="🔍 دفعہ نمبر یا کلیدی الفاظ..." dir="ltr" style="text-align:left;" oninput="searchPenalCodes(this.value)" autocomplete="off">'
     + '<div id="section-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg-card);border:1px solid var(--accent);border-radius:0 0 var(--radius-sm) var(--radius-sm);max-height:180px;overflow-y:auto;z-index:200;box-shadow:var(--shadow);"></div>'
     + '</div>'
     + '<div id="selected-sections" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">'+sectionTags+'</div>'
     + '<input type="hidden" id="cf-section" value="'+section+'">'
     + '</div>'
 
-    // Row 4: Offence (full width)
-    + '<div class="form-group">'
-    + '<label class="form-label">Offence <span style="color:var(--text-faint);font-weight:400;">(auto-filled or type manually)</span></label>'
-    + '<input class="form-input" id="cf-offence" value="'+offence+'" placeholder="Auto-filled when section selected" dir="auto">'
-    + '</div>'
 
     // Complainant section — RTL, new order
     + '<div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:12px;">'
@@ -435,7 +430,7 @@ function caseFormHTML(c) {
     + '<label class="form-label">مدعی *</label>'
     + '<div style="display:flex;gap:6px;direction:rtl;align-items:center;">'
     + '<div style="flex:1;position:relative;">'
-    + '<input class="form-input" id="cf-complainant" value="'+complainant+'" placeholder="مدعی کا نام" dir="auto" oninput="document.getElementById(\'cf-comp-count\').textContent=this.value.length+\' حروف\'">'
+    + '<input class="form-input" id="cf-complainant" value="'+complainant+'" placeholder="مدعی کا نام" dir="auto" oninput="var _cc=document.getElementById(\'cf-comp-count\');if(_cc)_cc.textContent=this.value.length+\' حروف\';">'
     + '<span id="cf-comp-count" style="position:absolute;bottom:4px;left:8px;font-size:9px;color:var(--text-faint);">'+(complainant?complainant.length+' حروف':'')+'</span>'
     + '</div>'
     + '<button id="vmb-cf-complainant" type="button" onclick="voiceType(\'cf-complainant\',\'vmb-cf-complainant\')" style="width:36px;height:36px;flex-shrink:0;border:1px solid var(--border);border-radius:6px;background:var(--bg-tertiary);font-size:16px;cursor:pointer;">🎙️</button>'
@@ -683,7 +678,9 @@ async function saveNewCase(){
   var fir=document.getElementById('cf-fir').value.trim();
   var section=document.getElementById('cf-section').value.trim();
   var complainant=document.getElementById('cf-complainant').value.trim();
-  if(!fir||!section||!complainant){showToast('مقدمہ نمبر، دفعہ اور مدعی کا نام ضروری ہے۔','error');return;}
+  if(!fir){showToast('⚠️ مقدمہ نمبر درج کریں','error');return;}
+  if(!section){showToast('⚠️ دفعہ قانون درج کریں','error');return;}
+  if(!complainant){showToast('⚠️ مدعی کا نام درج کریں','error');return;}
   try{
     await addCase({
       fir_number:fir,
@@ -696,7 +693,7 @@ async function saveNewCase(){
       fir_writer:document.getElementById('cf-fir-writer')?.value.trim()||'',
       complaint_sender:document.getElementById('cf-complaint-sender')?.value.trim()||'',
       section_of_law:section,
-      offence_type:document.getElementById('cf-offence').value.trim(),
+      offence_type:document.getElementById('cf-offence')?.value?.trim()||'',
       sho:document.getElementById('cf-sho')?.value.trim()||'',
       sdpo:document.getElementById('cf-sdpo')?.value.trim()||'',
       status:document.getElementById('cf-status').value,
@@ -834,7 +831,7 @@ async function saveEditCase(id){
       fir_writer:document.getElementById('cf-fir-writer')?.value.trim()||'',
       complaint_sender:document.getElementById('cf-complaint-sender')?.value.trim()||'',
       section_of_law:document.getElementById('cf-section').value.trim(),
-      offence_type:document.getElementById('cf-offence').value.trim(),
+      offence_type:document.getElementById('cf-offence')?.value?.trim()||'',
       sho:document.getElementById('cf-sho').value.trim(),
       sdpo:document.getElementById('cf-sdpo').value.trim(),
       status:document.getElementById('cf-status').value,

@@ -44,10 +44,11 @@ const APP_CONFIG = {
 
 const STATUS_LABELS = {
   under:       'زیر تفتیش',
-  complete:    'مکمل چالان',
-  incomplete:  'نامکمل چالان',
+  complete:    'چالان مکمل',
+  incomplete:  'چالان نامکمل',
   untrace:     'عدم پتہ',
   cancel:      'اخراج',
+  challan512:  'چالان 512',
   challan512:  'چالان 512ض ف',
 };
 
@@ -57,6 +58,7 @@ const STATUS_CLASSES = {
   incomplete:  'pill-amber',
   untrace:     'pill-purple',
   cancel:      'pill-red',
+  challan512:  'pill-amber',
   challan512:  'pill-teal',
 };
 
