@@ -44,7 +44,7 @@ async function _buildReminders() {
 
   root.innerHTML = `
   <!-- Header -->
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;"><div style="display:flex;align-items:center;gap:10px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq',serif;display:inline-flex;align-items:center;gap:6px;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">← واپس</button>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;direction:rtl;"><div style="display:flex;align-items:center;gap:10px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq',serif;display:inline-flex;align-items:center;gap:6px;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">← واپس</button>
     <div>
       <div style="font-size:18px;font-weight:800;">🔔 یاددہانیاں</div>
       <div style="font-size:12px;color:var(--text-muted);">خودکار · عدالتی پیشیاں · دستی</div>
@@ -87,7 +87,7 @@ function _remCard(r, isOverdue, isDone=false) {
   const pColors = { high:'var(--red)', medium:'var(--amber)', low:'var(--accent)' };
   const color = isOverdue ? 'var(--red)' : pColors[r.priority||'low'];
 
-  return `<div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);align-items:flex-start;">
+  return `<div style="display:flex;gap:10px;direction:rtl;padding:9px 0;border-bottom:1px solid var(--border);align-items:flex-start;">
     ${!r._isCourtDate ? `<input type="checkbox" ${isDone?'checked':''} onchange="_toggleRem('${r.id}',this.checked)"
       style="accent-color:var(--accent);width:16px;height:16px;flex-shrink:0;margin-top:3px;">` :
       `<span style="font-size:16px;flex-shrink:0;">⚖️</span>`}
@@ -152,7 +152,7 @@ function _openAddReminder() {
         <input class="form-input" id="rem-fir" placeholder="مثلاً 245/26" dir="ltr" style="text-align:left;">
       </div>
     </div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
      <button class="btn btn-primary" onclick="_saveRem()">💾 محفوظ</button>`
   );
 }
@@ -203,7 +203,7 @@ function _smsSend(text, date) {
         <input class="form-input" id="sms-num" placeholder="0300-0000000" dir="ltr">
         <div style="margin-top:10px;padding:10px;background:var(--bg-secondary);border-radius:6px;font-size:12px;">${msg}</div>
       </div>`,
-      `<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+      `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
        <button class="btn btn-primary" onclick="window.open('sms:'+document.getElementById('sms-num').value+'?body=${encodeURIComponent(msg)}');closeModal();">📱 SMS کھولیں</button>`
     );
   }

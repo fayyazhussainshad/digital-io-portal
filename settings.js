@@ -172,7 +172,7 @@ function _profilePct(o){
 function _renderTransferTimeline(transfers, o){
   if(!transfers.length){
     // Show current posting as the only entry
-    return `<div style="display:flex;gap:12px;align-items:flex-start;">
+    return `<div style="display:flex;gap:12px;direction:rtl;align-items:flex-start;">
       <div style="width:10px;height:10px;border-radius:50%;background:var(--green);flex-shrink:0;margin-top:4px;"></div>
       <div>
         <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${_esc(o.station||'—')}, ${_esc(o.district||'—')}</div>
@@ -182,7 +182,7 @@ function _renderTransferTimeline(transfers, o){
     </div>`;
   }
   const items=transfers.map((t,i)=>`
-    <div style="display:flex;gap:12px;align-items:flex-start;padding-bottom:${i<transfers.length-1?'14px':'0'};${i<transfers.length-1?'border-bottom:1px solid var(--border-light);margin-bottom:14px;':''}">
+    <div style="display:flex;gap:12px;direction:rtl;align-items:flex-start;padding-bottom:${i<transfers.length-1?'14px':'0'};${i<transfers.length-1?'border-bottom:1px solid var(--border-light);margin-bottom:14px;':''}">
       <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
         <div style="width:10px;height:10px;border-radius:50%;background:${i===0?'var(--green)':'var(--accent)'};"></div>
         ${i<transfers.length-1?`<div style="width:2px;flex:1;min-height:20px;background:var(--border);margin-top:4px;"></div>`:''}
@@ -190,7 +190,7 @@ function _renderTransferTimeline(transfers, o){
       <div style="flex:1;">
         <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${_esc(t.to_station||'—')}${t.to_district?', '+_esc(t.to_district):''}</div>
         <div style="font-size:11px;color:${i===0?'var(--green)':'var(--text-muted)'};">${i===0?'● Current Posting':'From: '+_esc(t.from_station||'—')}</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:3px;">
+        <div style="display:flex;gap:10px;direction:rtl;flex-wrap:wrap;margin-top:3px;">
           ${t.transfer_date?`<span style="font-size:10px;color:var(--text-faint);">📅 ${_fmtDate(t.transfer_date)}</span>`:''}
           ${t.order_number?`<span style="font-size:10px;color:var(--text-faint);">Order: ${_esc(t.order_number)}</span>`:''}
         </div>
@@ -294,7 +294,7 @@ function openChangePasswordModal(){
     `<div style="margin-bottom:12px;font-size:12px;color:var(--text-muted);">Enter your new password. You will remain logged in.</div>
      <div style="margin-bottom:10px;"><label style="display:block;font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:600;">New Password</label><input type="password" id="cp-new" style="width:100%;padding:9px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:13px;box-sizing:border-box;" placeholder="Min. 8 characters"></div>
      <div><label style="display:block;font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:600;">Confirm New Password</label><input type="password" id="cp-confirm" style="width:100%;padding:9px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:13px;box-sizing:border-box;" placeholder="Repeat password"></div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
      <button class="btn btn-primary" onclick="doChangePassword()">🔒 Update Password</button>`
   );
 }

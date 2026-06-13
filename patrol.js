@@ -82,7 +82,7 @@ function _drawRoot() {
   </div>
 
   <!-- Tabs -->
-  <div style="display:flex;gap:3px;margin-bottom:10px;">
+  <div style="display:flex;gap:3px;direction:rtl;margin-bottom:10px;">
     ${[['entry','✏️ Entry'],['map','🗺️ Map'],['logs','📋 Log'],['reminder','🔔 Reminder'],['summary','📊 Summary']].map(([t,l])=>`
       <div class="pt-tab" id="pttab-${t}" onclick="_tab='${t}';_switchPTab()" style="flex:1;padding:7px 2px;border:1px solid ${_tab===t?'var(--accent)':'var(--border)'};border-radius:7px;background:${_tab===t?'var(--accent)':'var(--bg-card)'};color:${_tab===t?'#fff':'var(--text-muted)'};font-size:10px;cursor:pointer;text-align:center;">${l}</div>`).join('')}
   </div>
@@ -124,7 +124,7 @@ async function _drawHome(root) {
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:22px;">GPS tracking · Call log · Duty report</div>
     <button class="btn btn-primary" style="font-size:14px;padding:12px 32px;" onclick="startShift()">🟢 شفٹ شروع کریں</button>
     <br><br>
-    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+    <div style="display:flex;gap:8px;direction:rtl;justify-content:center;flex-wrap:wrap;">
       <button class="btn btn-secondary btn-sm" onclick="_showPreviousPatrols()">📋 پرانے پیٹرول دیکھیں</button>
       <button class="btn btn-secondary btn-sm" onclick="_generatePatrolLink()">🔗 پیٹرول لنک بنائیں</button>
     </div>
@@ -156,14 +156,14 @@ function _tabEntry(el) {
     <input class="form-input" id="pe-loc"  placeholder="📍 Jagah / Mohalla / Gali" style="margin-bottom:14px;">
 
     <div style="font-size:10px;color:var(--accent);font-weight:700;letter-spacing:1px;margin-bottom:5px;">MASLA — CALLER NE KYA KAHA</div>
-    <div style="display:flex;gap:6px;margin-bottom:4px;">
+    <div style="display:flex;gap:6px;direction:rtl;margin-bottom:4px;">
       <textarea class="form-input" id="pe-desc" rows="3" placeholder="Caller ka masla yahan likho ya mic se bolo..." style="flex:1;resize:none;"></textarea>
       <button id="pmic1" onclick="_pVoice('pe-desc','pmic1')" style="width:42px;border:1px solid var(--border);border-radius:8px;background:var(--bg-tertiary);font-size:20px;cursor:pointer;align-self:stretch;">🎙️</button>
     </div>
     <div style="font-size:10px;color:var(--text-faint);margin-bottom:12px;">✏️ Mic dabao aur Urdu/English mein bolo</div>
 
     <div style="font-size:10px;color:var(--accent);font-weight:700;letter-spacing:1px;margin-bottom:5px;">MERA RESPONSE / MUSHAHIDA</div>
-    <div style="display:flex;gap:6px;margin-bottom:4px;">
+    <div style="display:flex;gap:6px;direction:rtl;margin-bottom:4px;">
       <textarea class="form-input" id="pe-resp" rows="2" placeholder="Aapne kya kiya, kya dekha, kya response diya..." style="flex:1;resize:none;"></textarea>
       <button id="pmic2" onclick="_pVoice('pe-resp','pmic2')" style="width:42px;border:1px solid var(--border);border-radius:8px;background:var(--bg-tertiary);font-size:20px;cursor:pointer;align-self:stretch;">🎙️</button>
     </div>
@@ -390,7 +390,7 @@ async function _generatePatrolLink() {
         <div style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:11px;word-break:break-all;font-family:monospace;margin-bottom:12px;">
           ${link}
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;">
           <button class="btn btn-primary" onclick="navigator.clipboard.writeText('${link}').then(()=>showToast('✅ Copy ہو گیا','success'))">📋 Copy کریں</button>
           <button class="btn btn-secondary" onclick="
             var txt='پیٹرول لاگ لنک:\\n${link}\\n\\nاپنا نام، رینک اور تھانہ درج کریں اور پیٹرول اندراج کریں';
@@ -400,7 +400,7 @@ async function _generatePatrolLink() {
           <button class="btn btn-danger btn-sm" onclick="_deactivatePatrolLink('${existing?.[0]?.id||''}')">🔒 لنک بند کریں</button>
         </div>
       </div>`,
-      `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`
+      `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`
     );
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
@@ -437,7 +437,7 @@ async function _showPreviousPatrols() {
           </div>`).join('')
         : '<div style="text-align:center;padding:20px;color:var(--text-muted);">کوئی پرانا پیٹرول نہیں</div>'}
       </div>`,
-      `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`
+      `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`
     );
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
@@ -596,7 +596,7 @@ function _tabReminder(el){
   <div class="card" style="margin-bottom:10px;">
     <div style="font-size:10px;color:var(--accent);font-weight:700;letter-spacing:1px;margin-bottom:8px;">🔔 NAYA REMINDER</div>
     <input class="form-input" id="rem-txt" placeholder="Reminder likhein (e.g. FIR follow-up — Ali ka case)" style="margin-bottom:6px;">
-    <div style="display:flex;gap:6px;margin-bottom:10px;">
+    <div style="display:flex;gap:6px;direction:rtl;margin-bottom:10px;">
       <input class="form-input" type="time" id="rem-time" style="flex:1;">
       <button class="btn btn-primary" onclick="_addReminder()">🔔 Set Karo</button>
     </div>
@@ -746,7 +746,7 @@ function confirmEndShift(){
     `<p style="color:var(--text-secondary);font-size:13px;margin-bottom:10px;">Kya aap shift khatam karna chahte hain?</p>
      <label class="form-label">Akhri Notes (optional)</label>
      <textarea class="form-input" id="end-notes" rows="2" placeholder="Koi akhri baat..."></textarea>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Wapas</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">Wapas</button>
      <button class="btn btn-danger" onclick="endShift()">⏹ Haan, Khatam Karo</button>`);
 }
 

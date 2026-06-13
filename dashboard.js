@@ -84,7 +84,7 @@ async function _buildDashboard() {
   </div>
 
   <!-- Quick Actions -->
-  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+  <div style="display:flex;gap:8px;direction:rtl;margin-bottom:16px;flex-wrap:wrap;">
     <button class="btn btn-primary" onclick="showPage('cases',document.querySelector('.nav-item[onclick*=cases]'))" style="flex:1;min-width:120px;">📁 مقدمات</button>
     <button class="btn btn-secondary" onclick="openAddCaseModal()" style="flex:1;min-width:120px;">+ نیا اندراج</button>
     <button class="btn btn-secondary" onclick="showPage('court',document.querySelector('.nav-item[onclick*=court]'))" style="flex:1;min-width:120px;">⚖️ پیشیاں</button>
@@ -98,7 +98,7 @@ async function _buildDashboard() {
     <!-- Donut Chart — Status -->
     <div class="card">
       <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:14px;letter-spacing:0.5px;">📊 مقدمات کی صورتحال</div>
-      <div style="display:flex;gap:16px;align-items:center;">
+      <div style="display:flex;gap:16px;direction:rtl;align-items:center;">
         <div style="position:relative;flex-shrink:0;">
           <canvas id="dash-donut" width="110" height="110"></canvas>
           <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">
@@ -198,7 +198,7 @@ async function _buildDashboard() {
         const dt=new Date(d.hearing_date);
         const diff=Math.ceil((dt-new Date())/(1000*60*60*24));
         const urg=diff<=3?'var(--red)':diff<=7?'var(--amber)':'var(--accent)';
-        return `<div style="display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);align-items:center;">
+        return `<div style="display:flex;gap:8px;direction:rtl;padding:7px 0;border-bottom:1px solid var(--border);align-items:center;">
           <div style="background:${urg};color:#fff;border-radius:6px;padding:4px 8px;text-align:center;flex-shrink:0;min-width:36px;">
             <div style="font-size:14px;font-weight:800;line-height:1;">${dt.getDate()}</div>
             <div style="font-size:8px;">${dt.toLocaleString('default',{month:'short'})}</div>
@@ -222,7 +222,7 @@ async function _buildDashboard() {
       </div>
       ${pendRem.length ? pendRem.slice(0,4).map(r=>{
         const isOver=r.reminder_date&&r.reminder_date<today;
-        return `<div style="display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);align-items:flex-start;">
+        return `<div style="display:flex;gap:8px;direction:rtl;padding:7px 0;border-bottom:1px solid var(--border);align-items:flex-start;">
           <span style="font-size:16px;">${isOver?'⚠️':'🔔'}</span>
           <div style="flex:1;">
             <div style="font-size:12px;${isOver?'color:var(--red);':''}">${r.text}</div>

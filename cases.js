@@ -107,11 +107,11 @@ async function renderCases(container,fStatus,fQuery){
   container.innerHTML=`
   <div class="page-header">
     <div><div class="page-title">📁 My Cases</div><div class="page-subtitle">${cases.length} case(s)</div></div>
-    <div style="display:flex;gap:8px;">
+    <div style="display:flex;gap:8px;direction:rtl;">
       <button class="btn btn-primary" onclick="openAddCaseModal()">+ نیا اندراج</button>
     </div>
   </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+  <div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;margin-bottom:14px;">
     <input class="search-input" id="case-search" style="flex:1;min-width:200px;" placeholder="🔍 Search FIR No, Complainant, CNIC, Section of Law..." value="${fQuery}" oninput="clearTimeout(window._csTmr);window._csTmr=setTimeout(()=>renderCases(document.getElementById('page-content'),'',this.value),280)">
     <select class="filter-select" id="case-status-filter" onchange="renderCases(document.getElementById('page-content'),this.value,document.getElementById('case-search').value)">
       <option value="" ${!fStatus?'selected':''}>All Statuses</option>
@@ -169,7 +169,7 @@ function renderCaseRow(c,sn){
     <td style="font-family:var(--font-mono);font-size:11px;">${cell}</td>
     <td><span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span></td>
     <td>
-      <div style="display:flex;gap:2px;justify-content:center;flex-direction:row-reverse;">
+      <div style="display:flex;gap:2px;direction:rtl;justify-content:center;flex-direction:row-reverse;">
         <button class="btn btn-secondary btn-sm" onclick="openCaseWorkspace('${c.id}')" title="مقدمہ کھولیں">📄</button>
         <button class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')" title="ترمیم">✏️</button>
         <button class="btn btn-secondary btn-sm" onclick="downloadCaseFile('${c.id}')" title="ڈاؤنلوڈ">⬇️</button>
@@ -196,7 +196,7 @@ async function downloadCaseFile(id) {
       </button>
       <div style="font-size:10px;color:var(--text-faint);text-align:center;">PDF کے لیے: HTML کھولیں → Ctrl+P → Save as PDF</div>
     </div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>`
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>`
   );
 }
 
@@ -311,7 +311,7 @@ async function openShareModal(id){
   const sub=encodeURIComponent(`Case File — FIR ${c.fir_number}`);
   openModal(`📤 Share Case — FIR ${c.fir_number||''}`,
     `<div style="margin-bottom:14px;background:var(--bg-tertiary);border-radius:8px;padding:12px;font-size:10.5px;color:var(--text-secondary);font-family:var(--font-mono);white-space:pre;line-height:1.7;max-height:180px;overflow-y:auto;">${text}</div>
-     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+     <div style="display:flex;gap:10px;direction:rtl;justify-content:center;flex-wrap:wrap;">
        <a href="https://wa.me/?text=${enc}" target="_blank" rel="noopener"
           style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;background:#25D366;color:#fff;font-weight:700;font-size:13px;text-decoration:none;">
          💬 Share on WhatsApp
@@ -322,7 +322,7 @@ async function openShareModal(id){
        </a>
      </div>
      <div style="margin-top:10px;font-size:10px;color:var(--text-muted);text-align:center;">WhatsApp opens in a new tab · Email opens your default email app</div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Close</button>`);
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">Close</button>`);
 }
 
 
@@ -433,7 +433,7 @@ function caseFormHTML(c) {
     // Row 1: مدعی (full width with voice + live counter)
     + '<div class="form-group">'
     + '<label class="form-label">مدعی *</label>'
-    + '<div style="display:flex;gap:6px;align-items:center;">'
+    + '<div style="display:flex;gap:6px;direction:rtl;align-items:center;">'
     + '<div style="flex:1;position:relative;">'
     + '<input class="form-input" id="cf-complainant" value="'+complainant+'" placeholder="مدعی کا نام" dir="auto" oninput="document.getElementById(\'cf-comp-count\').textContent=this.value.length+\' حروف\'">'
     + '<span id="cf-comp-count" style="position:absolute;bottom:4px;left:8px;font-size:9px;color:var(--text-faint);">'+(complainant?complainant.length+' حروف':'')+'</span>'
@@ -461,9 +461,9 @@ function caseFormHTML(c) {
     + '<div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">📋 FIR کی تفصیل</div>'
     + '<div class="form-row">'
     + '<div class="form-group"><label class="form-label">مرتبہ مرسلہ</label>'
-    + '<div style="display:flex;gap:4px;"><input class="form-input" id="cf-complaint-sender" value="'+compSender+'" placeholder="مرتبہ مرسلہ" dir="auto" style="flex:1;"><button id="vmb-cs" type="button" onclick="voiceType(\'cf-complaint-sender\',\'vmb-cs\')" style="width:34px;height:34px;flex-shrink:0;border:1px solid var(--border);border-radius:5px;background:var(--bg-tertiary);font-size:14px;cursor:pointer;">🎙️</button></div></div>'
+    + '<div style="display:flex;gap:4px;direction:rtl;"><input class="form-input" id="cf-complaint-sender" value="'+compSender+'" placeholder="مرتبہ مرسلہ" dir="auto" style="flex:1;"><button id="vmb-cs" type="button" onclick="voiceType(\'cf-complaint-sender\',\'vmb-cs\')" style="width:34px;height:34px;flex-shrink:0;border:1px solid var(--border);border-radius:5px;background:var(--bg-tertiary);font-size:14px;cursor:pointer;">🎙️</button></div></div>'
     + '<div class="form-group"><label class="form-label">محرر</label>'
-    + '<div style="display:flex;gap:4px;"><input class="form-input" id="cf-fir-writer" value="'+firWriter+'" placeholder="محرر کا نام" dir="auto" style="flex:1;"><button id="vmb-fw" type="button" onclick="voiceType(\'cf-fir-writer\',\'vmb-fw\')" style="width:34px;height:34px;flex-shrink:0;border:1px solid var(--border);border-radius:5px;background:var(--bg-tertiary);font-size:14px;cursor:pointer;">🎙️</button></div></div>'
+    + '<div style="display:flex;gap:4px;direction:rtl;"><input class="form-input" id="cf-fir-writer" value="'+firWriter+'" placeholder="محرر کا نام" dir="auto" style="flex:1;"><button id="vmb-fw" type="button" onclick="voiceType(\'cf-fir-writer\',\'vmb-fw\')" style="width:34px;height:34px;flex-shrink:0;border:1px solid var(--border);border-radius:5px;background:var(--bg-tertiary);font-size:14px;cursor:pointer;">🎙️</button></div></div>'
     + '</div>'
     + '<div class="form-row">'
     + '<div class="form-group"><label class="form-label">پوزیشن</label>'
@@ -677,8 +677,8 @@ document.addEventListener('click', function(e) {
 });
 
 // ── MODAL OPENERS + SAVE/VIEW ──
-function openAddCaseModal(){openModal('',caseFormHTML(),`<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveNewCase()">💾 اندراج محفوظ کریں</button>`);}
-async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;openModal(`✏️ ترمیم — مقدمہ ${c.fir_number}`,caseFormHTML(c),`<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveEditCase('${id}')">💾 تبدیلیاں محفوظ کریں</button>`);}
+function openAddCaseModal(){openModal('',caseFormHTML(),`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveNewCase()">💾 اندراج محفوظ کریں</button>`);}
+async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;openModal(`✏️ ترمیم — مقدمہ ${c.fir_number}`,caseFormHTML(c),`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveEditCase('${id}')">💾 تبدیلیاں محفوظ کریں</button>`);}
 async function saveNewCase(){
   var fir=document.getElementById('cf-fir').value.trim();
   var section=document.getElementById('cf-section').value.trim();
@@ -911,7 +911,7 @@ function renderWorkspace(c, docs, ev, container) {
           <span style="font-size:12px;color:var(--text-muted);">👤 ${c.complainant||'—'}</span>
         </div>
       </div>
-      <div style="display:flex;gap:6px;">
+      <div style="display:flex;gap:6px;direction:rtl;">
         <button class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')">✏️</button>
         <button class="btn btn-secondary btn-sm" onclick="_openDocsChecklist('${c.id}','${c.fir_number}')">📋 دستاویزات</button>
         <button class="btn btn-danger btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number}')">🗑️</button>
@@ -1720,7 +1720,7 @@ function renderEvidenceTab(c, ev) {
           <div class="evidence-name" id="ev-name-${e.id}">${e.name}</div>
           <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${e.type} · ${e.evidence_date||formatDate(e.created_at)}</div>
           ${e.notes ? `<div style="font-size:10px;color:var(--text-faint);margin-top:3px;font-style:italic;">${e.notes}</div>` : ''}
-          <div style="display:flex;gap:6px;margin-top:8px;">
+          <div style="display:flex;gap:6px;direction:rtl;margin-top:8px;">
             ${e.file_url ? `<button class="btn btn-secondary btn-sm" onclick="openEvidenceFile('${e.id}','${(e.file_url||'').replace(/'/g,"\\'")}','${e.name.replace(/'/g,"\\'")}','${e.type}')" title="Open File">📂 Open</button>` : ''}
             <button class="btn btn-secondary btn-sm" onclick="renameEvidence('${e.id}','${e.name.replace(/'/g,"\\'")}','${c.fir_number}')" title="Rename">✏️ Rename</button>
             <button class="btn btn-danger btn-sm" onclick="deleteWorkspaceEvidence('${e.id}','${c.fir_number}')" title="Delete">🗑️</button>
@@ -1729,7 +1729,7 @@ function renderEvidenceTab(c, ev) {
       </div>`).join('');
 
   return `<div class="case-tab-content">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;direction:rtl;">
       <div>
         <div style="font-size:16px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">📋 شہادتیں — FIR ${c.fir_number}</div>
         <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${ev.length} فائل منسلک</div>
@@ -1752,7 +1752,7 @@ function renameEvidence(id, currentName, firNumber) {
   openModal('✏️ Rename Evidence',
     `<div style="margin-bottom:8px;font-size:12px;color:var(--text-muted);">Enter a new name for this evidence item.</div>
      <input class="form-input" id="ev-rename-input" value="${currentName}" style="width:100%;box-sizing:border-box;" placeholder="Evidence name">`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
      <button class="btn btn-primary" onclick="saveEvidenceRename('${id}','${firNumber}')">✏️ Rename</button>`
   );
   setTimeout(() => { const i = document.getElementById('ev-rename-input'); if(i){i.focus();i.select();} }, 100);
@@ -1776,7 +1776,7 @@ async function saveEvidenceRename(id, firNumber) {
 function deleteWorkspaceEvidence(id, firNumber) {
   openModal('🗑️ Delete Evidence',
     `<p style="color:var(--text-secondary);font-size:13px;">Are you sure you want to delete this evidence item?<br><span style="color:var(--red);font-size:11px;margin-top:8px;display:block;">⚠️ This cannot be undone.</span></p>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
      <button class="btn btn-danger" onclick="closeModal();doDeleteWorkspaceEvidence('${id}','${firNumber}')">🗑️ Delete</button>`
   );
 }
@@ -1795,14 +1795,14 @@ async function doDeleteWorkspaceEvidence(id, firNumber) {
 function openWorkspaceEvidenceModal(caseId, firNumber) {
   openModal('➕ Attach Evidence',
     `<div style="margin-bottom:12px;">
-       <div style="display:flex;gap:8px;margin-bottom:12px;">
+       <div style="display:flex;gap:8px;direction:rtl;margin-bottom:12px;">
          <button class="btn btn-secondary btn-sm" onclick="wevOpenCamera()">📸 Camera</button>
          <button class="btn btn-secondary btn-sm" onclick="wevOpenFile()">📎 Select File</button>
        </div>
        <!-- Camera preview -->
        <div id="wev-camera" style="display:none;margin-bottom:12px;">
          <video id="wev-video" style="width:100%;border-radius:8px;max-height:200px;" autoplay playsinline></video>
-         <div style="display:flex;gap:8px;margin-top:8px;">
+         <div style="display:flex;gap:8px;direction:rtl;margin-top:8px;">
            <button class="btn btn-primary btn-sm" onclick="wevSnap()">📸 Capture</button>
            <button class="btn btn-secondary btn-sm" onclick="wevStopCamera()">✕ Stop</button>
          </div>
@@ -1930,7 +1930,7 @@ function goBackToCases() {
   document.getElementById('topbar-title').textContent = '📁 My Cases';
   renderCases(container);
 }
-function confirmDeleteCase(id,fir){openModal('🗑️ Confirm Delete',`<p style="color:var(--text-secondary);font-size:13px;">Delete case <b style="color:var(--accent);">FIR ${fir}</b>?<br><br><span style="color:var(--red);font-size:11px;">⚠️ This cannot be undone.</span></p>`,`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="closeModal();doDeleteCase('${id}')">🗑️ Delete</button>`);}
+function confirmDeleteCase(id,fir){openModal('🗑️ Confirm Delete',`<p style="color:var(--text-secondary);font-size:13px;">Delete case <b style="color:var(--accent);">FIR ${fir}</b>?<br><br><span style="color:var(--red);font-size:11px;">⚠️ This cannot be undone.</span></p>`,`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="closeModal();doDeleteCase('${id}')">🗑️ Delete</button>`);}
 async function doDeleteCase(id){
   try {
     const c = await getCase(id);

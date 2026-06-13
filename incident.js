@@ -18,7 +18,7 @@ function renderIncident(container) {
     <div style="margin-bottom:12px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq',serif;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">← واپس</button></div>
 
     <!-- Action Bar — compact -->
-    <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;align-items:center;background:var(--bg-card);padding:10px 12px;border-radius:10px;border:1px solid var(--border);">
+    <div style="display:flex;gap:6px;direction:rtl;margin-bottom:12px;flex-wrap:wrap;align-items:center;background:var(--bg-card);padding:10px 12px;border-radius:10px;border:1px solid var(--border);">
       <span style="font-size:13px;font-weight:700;color:var(--accent);">🚨 واقعاتی رپورٹ</span>
       <div style="flex:1;"></div>
       <button class="btn btn-secondary btn-sm" onclick="_showPrevReports()">📋 پرانی رپورٹس</button>
@@ -267,7 +267,7 @@ function _field(label, id, val, type) {
 function _fieldFull(label, id, val, rows) {
   return `<div style="margin-bottom:12px;">
     <label style="${_lbl()}">${label}</label>
-    <div style="display:flex;gap:6px;align-items:flex-start;">
+    <div style="display:flex;gap:6px;direction:rtl;align-items:flex-start;">
       <textarea id="${id}" rows="${rows}"
         style="flex:1;border:1px solid #ddd;border-radius:4px;padding:8px 10px;
                font-family:'Jameel Noori Nastaleeq',serif;font-size:15px;
@@ -521,7 +521,7 @@ async function _showPrevReports() {
           </div>`).join('')
         : '<div style="text-align:center;padding:20px;color:var(--text-muted);">کوئی پرانی رپورٹ نہیں</div>'}
       </div>`,
-      `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`
+      `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`
     );
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }

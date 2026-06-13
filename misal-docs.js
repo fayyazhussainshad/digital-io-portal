@@ -76,7 +76,7 @@ function renderMisalBar(c) {
       <span><span style="color:var(--accent);">■</span> جاری</span>
       <span><span style="color:var(--green);">■</span> مکمل</span>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">${items}</div>
+    <div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;">${items}</div>
   </div>
   <style>
     .mdoc-chip{
@@ -404,7 +404,7 @@ async function _renderFIRView() {
       <div style="font-family:'Jameel Noori Nastaleeq',serif;font-size:16px;font-weight:700;color:var(--accent);direction:rtl;">
         متن ایف آئی آر — مقدمہ ${c.fir_number||''}
       </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <div style="display:flex;gap:6px;direction:rtl;flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="_openFIREditor()">📝 متن درج کریں</button>
         <button class="btn btn-secondary" onclick="_printFIRAll()">🖨️ پرنٹ</button>
         <button class="btn btn-secondary" onclick="_shareFIRAll()">📱 شیئر</button>

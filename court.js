@@ -24,7 +24,7 @@ async function _buildCourt() {
 
   root.innerHTML = `
   <!-- Header -->
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;"><div style="display:flex;align-items:center;gap:10px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq',serif;display:inline-flex;align-items:center;gap:6px;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">← واپس</button>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;direction:rtl;"><div style="display:flex;align-items:center;gap:10px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq',serif;display:inline-flex;align-items:center;gap:6px;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">← واپس</button>
     <div>
       <div style="font-size:18px;font-weight:800;">⚖️ عدالتی پیشیاں</div>
       <div style="font-size:12px;color:var(--text-muted);">آنے والی · گزری ہوئی · کیلنڈر</div>
@@ -109,7 +109,7 @@ function _courtCard(d, isPast=false) {
   const diff = Math.ceil((dt-new Date())/(1000*60*60*24));
   const urgency = !isPast && diff<=3 ? 'var(--red)' : !isPast && diff<=7 ? 'var(--amber)' : 'var(--accent)';
   return `
-  <div style="display:flex;gap:10px;padding:10px;background:${isPast?'var(--bg-tertiary)':'var(--bg-secondary)'};border-radius:8px;margin-bottom:8px;border:1px solid ${isPast?'var(--border)':urgency};opacity:${isPast?'0.7':'1'};">
+  <div style="display:flex;gap:10px;direction:rtl;padding:10px;background:${isPast?'var(--bg-tertiary)':'var(--bg-secondary)'};border-radius:8px;margin-bottom:8px;border:1px solid ${isPast?'var(--border)':urgency};opacity:${isPast?'0.7':'1'};">
     <div style="background:${urgency};color:#fff;border-radius:8px;padding:6px 10px;text-align:center;flex-shrink:0;min-width:44px;">
       <div style="font-size:18px;font-weight:900;line-height:1;">${dt.getDate()}</div>
       <div style="font-size:9px;">${dt.toLocaleString('default',{month:'short'})}</div>
@@ -175,7 +175,7 @@ async function _openAddCourtDate(existing) {
       <label class="form-label">نوٹس</label>
       <textarea class="form-input" id="cd-notes" rows="2" placeholder="کوئی خاص ہدایت...">${e.notes||''}</textarea>
     </div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
      <button class="btn btn-primary" onclick="_saveCourtDate('${existing?.id||''}')">💾 محفوظ کریں</button>`
   );
 }

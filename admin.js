@@ -77,7 +77,7 @@ async function _buildAdmin(role) {
   </div>
 
   <!-- Tabs -->
-  <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
+  <div style="display:flex;gap:6px;direction:rtl;margin-bottom:14px;flex-wrap:wrap;">
     ${[
       ['pending','⏳ زیر التواء درخواستیں', pending.length],
       ['officers','👮 افسران', officers.length],
@@ -253,7 +253,7 @@ function _renderActivityTab(activity) {
     <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;">📋 حالیہ سرگرمی</div>
     ${activity.length ? activity.map(a => {
       const officer = (window._adminData?.officers||[]).find(o=>o.id===a.officer_id);
-      return `<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);align-items:flex-start;">
+      return `<div style="display:flex;gap:10px;direction:rtl;padding:8px 0;border-bottom:1px solid var(--border);align-items:flex-start;">
         <span style="font-size:16px;">📋</span>
         <div style="flex:1;">
           <div style="font-size:12px;font-weight:600;">${officer?.full_name||'—'}</div>
@@ -347,7 +347,7 @@ async function _adminGetActivity() {
 async function _adminApprove(regId, name) {
   openModal('✅ درخواست منظور کریں',
     `<p style="color:var(--text-secondary);">کیا آپ <b style="color:var(--green);">${name}</b> کی درخواست منظور کرنا چاہتے ہیں؟</p>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
      <button class="btn btn-primary" onclick="closeModal();_doApproveReg('${regId}')">✅ منظور</button>`
   );
 }
@@ -363,7 +363,7 @@ async function _doApproveReg(regId) {
 async function _adminRejectReg(regId, name) {
   openModal('❌ درخواست رد کریں',
     `<p style="color:var(--red);">کیا آپ <b>${name}</b> کی درخواست رد کرنا چاہتے ہیں؟</p>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
      <button class="btn btn-danger" onclick="closeModal();_doRejectReg('${regId}')">❌ رد کریں</button>`
   );
 }
@@ -387,7 +387,7 @@ async function _adminSuspend(officerId, name) {
       <label class="form-label" style="margin-top:10px;">وجہ (ضروری)</label>
       <textarea class="form-input" id="suspend-reason" rows="3" placeholder="معطلی کی وجہ لکھیں..."></textarea>
     </div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
      <button class="btn btn-danger" onclick="closeModal();_doSuspend('${officerId}')">🚫 معطل کریں</button>`
   );
 }
@@ -402,7 +402,7 @@ async function _doSuspend(officerId) {
 async function _adminUnsuspend(officerId, name) {
   openModal('✅ معطلی ختم کریں',
     `<p>کیا آپ <b style="color:var(--green);">${name}</b> کی معطلی ختم کرنا چاہتے ہیں؟</p>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
      <button class="btn btn-primary" onclick="closeModal();_doUnsuspend('${officerId}')">✅ بحال کریں</button>`
   );
 }
@@ -457,7 +457,7 @@ function _adminAddOfficer() {
       </div>
       <div><label class="form-label">عارضی پاسورڈ *</label><input class="form-input" id="ao-pass" type="password" placeholder="Min 8 characters"></div>
     </div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
      <button class="btn btn-primary" onclick="_doAddOfficer()">+ شامل کریں</button>`
   );
 }

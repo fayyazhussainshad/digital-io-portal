@@ -48,12 +48,12 @@ async function _buildBin() {
     <!-- Back -->
     <div style="margin-bottom:12px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq',serif;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">← واپس</button></div>
     <!-- Header -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;direction:rtl;">
       <div>
         <div style="font-size:18px;font-weight:800;">🗑️ ری سائیکل بن</div>
         <div style="font-size:12px;color:var(--text-muted);">حذف شدہ اشیاء · 30 دن بعد خودبخود ختم</div>
       </div>
-      <div style="display:flex;gap:8px;">
+      <div style="display:flex;gap:8px;direction:rtl;">
         <button class="btn btn-secondary" onclick="_binRestoreAll()">🔄 سب بحال کریں</button>
         <button class="btn btn-danger" onclick="_binEmptyAll()">🗑️ بن خالی کریں</button>
       </div>
@@ -96,7 +96,7 @@ async function _buildBin() {
           const urgent   = daysLeft <= 7;
           const d        = item.item_data || {};
           return `
-          <div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);align-items:flex-start;">
+          <div style="display:flex;gap:10px;direction:rtl;padding:9px 0;border-bottom:1px solid var(--border);align-items:flex-start;">
             <span style="font-size:22px;">${cfg.icon}</span>
             <div style="flex:1;">
               <div style="font-size:13px;font-weight:600;color:var(--text-primary);">
@@ -185,7 +185,7 @@ async function _binRestore(binId, type) {
 async function _binRestoreAll() {
   openModal('🔄 سب بحال کریں',
     `<p style="color:var(--text-secondary);font-size:13px;">کیا آپ بن کی تمام اشیاء بحال کرنا چاہتے ہیں؟</p>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
      <button class="btn btn-primary" onclick="closeModal();_binDoRestoreAll()">🔄 ہاں، سب بحال کریں</button>`
   );
 }
@@ -205,7 +205,7 @@ async function _binDoRestoreAll() {
 async function _binDeletePerm(binId) {
   openModal('⚠️ مستقل حذف',
     `<p style="color:var(--red);font-size:13px;">یہ آئٹم ہمیشہ کے لیے حذف ہو جائے گا — واپس نہیں آ سکتا!</p>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
      <button class="btn btn-danger" onclick="closeModal();_binDoPerm('${binId}')">✕ مستقل حذف</button>`
   );
 }
@@ -220,7 +220,7 @@ async function _binDoPerm(binId) {
 function _binEmptyAll() {
   openModal('🗑️ بن خالی کریں',
     `<p style="color:var(--red);font-size:13px;">تمام اشیاء ہمیشہ کے لیے حذف ہو جائیں گی — واپس نہیں آ سکتیں!</p>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
      <button class="btn btn-danger" onclick="closeModal();_binDoEmpty()">🗑️ ہاں، بن خالی کریں</button>`
   );
 }

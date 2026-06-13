@@ -23,7 +23,7 @@ async function renderOfficialForms(container) {
   container.innerHTML = `
   <div style="max-width:900px;margin:0 auto;">
     <div style="margin-bottom:12px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq',serif;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">← واپس</button></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;direction:rtl;">
       <div>
         <div style="font-size:18px;font-weight:800;">📥 سرکاری فارمز</div>
         <div style="font-size:12px;color:var(--text-muted);">تھانہ ${o.station||'—'} · ضلع ${o.district||'—'}</div>
@@ -50,7 +50,7 @@ async function renderOfficialForms(container) {
       <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;direction:rtl;">
         مقدمہ نمبر درج کریں — تمام ڈیٹا خودکار بھر جائے گا
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;">
         <input class="form-input" id="fir-print-num" placeholder="FIR نمبر درج کریں" style="flex:1;min-width:180px;" dir="ltr">
         <button class="btn btn-primary" onclick="_printFIR()">🖨️ FIR پرنٹ کریں</button>
       </div>
