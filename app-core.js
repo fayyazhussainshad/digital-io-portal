@@ -720,7 +720,76 @@ async function initApp(){
   setupRealtimeSync(async(table)=>{await updateBadges();const pt=document.getElementById('topbar-title')?.textContent;if(table==='cases'&&pt?.includes('Cases'))renderCases(document.getElementById('page-content'));if(table==='reminders'&&pt?.includes('Reminder'))renderReminders(document.getElementById('page-content'));});
   showPage('dashboard',document.querySelector('.nav-item'));
   setTimeout(()=>triggerBackup('app_init'),3000);
+  // Initialize notifications
+  setTimeout(_initNotifications, 2000);
+  // Check reminders every 30 minutes while app is open
+  setInterval(_checkDueReminders, 30 * 60 * 1000);
+  setTimeout(_checkDueReminders, 5000);
 }
+
+// ── PUSH NOTIFICATIONS ────────────────────────────────────────
+async function _initNotifications() {
+  if (!('Notification' in window)) return;
+  // Request permission if not already granted
+  if (Notification.permission === 'default') {
+    const perm = await Notification.requestPermission();
+    if (perm === 'granted') {
+      showToast('🔔 اطلاعات فعال ہو گئیں', 'success');
+      _showNotification('Digital IO', 'یاددہانیوں کی اطلاع فعال ہے ✅', '');
+    }
+  }
+}
+
+function _showNotification(title, body, tag) {
+  if (Notification.permission !== 'granted') return;
+  try {
+    const n = new Notification(title, {
+      body, tag: tag || 'digital-io',
+      icon: '/icon-192.png',
+      dir: 'rtl', lang: 'ur',
+      badge: '/icon-192.png',
+    });
+    n.onclick = () => { window.focus(); n.close(); };
+    setTimeout(() => n.close(), 8000);
+  } catch(_) {}
+}
+
+async function _checkDueReminders() {
+  try {
+    if (Notification.permission !== 'granted') return;
+    const reminders = await getReminders();
+    const today = new Date().toISOString().split('T')[0];
+    const due = reminders.filter(r =>
+      !r.is_done && r.reminder_date && r.reminder_date <= today
+    );
+    if (due.length === 0) return;
+
+    // Show notification for each due reminder (max 3)
+    due.slice(0, 3).forEach((r, i) => {
+      setTimeout(() => {
+        _showNotification(
+          `🔔 یاددہانی — ${r.reminder_date === today ? 'آج' : 'گزر گئی'}`,
+          r.text.slice(0, 100),
+          'reminder-' + r.id
+        );
+      }, i * 1500);
+    });
+
+    if (due.length > 3) {
+      setTimeout(() => {
+        _showNotification(
+          '🔔 Digital IO',
+          `${due.length} یاددہانیاں باقی ہیں`,
+          'reminder-count'
+        );
+      }, 5000);
+    }
+  } catch(_) {}
+}
+
+// Public function for manual trigger
+function checkNotifications() { _checkDueReminders(); }
+
 // ── STATION TRANSFER ──
 async function openTransferModal(){
   const o=currentOfficer||{};

@@ -851,7 +851,7 @@ input[id*="cnic"], input[id*="cell"] {
       <div class="topbar-right">
 
         <button class="topbar-btn" onclick="closeMobileSidebar();showPage('search',null)" title="Search">🔍</button>
-        <button class="topbar-btn" onclick="closeMobileSidebar();showPage('reminders',null)" title="Reminders">🔔</button>
+        <button class="topbar-btn" onclick="closeMobileSidebar();showPage('reminders',null)" title="یاددہانیاں" style="position:relative;">🔔<span id="badge-reminders" style="position:absolute;top:2px;right:2px;background:var(--red);color:#fff;font-size:9px;border-radius:50%;width:14px;height:14px;display:none;align-items:center;justify-content:center;font-weight:700;line-height:1;">0</span></button>
         <button class="topbar-btn" onclick="triggerBackupNow()" title="Backup Now">☁️</button>
         <button class="topbar-btn" id="theme-picker-btn" onclick="openThemePicker()" title="تھیم" style="font-size:16px;">🎨</button>
         <button class="topbar-btn" onclick="closeMobileSidebar();showPage('cdr',null)" title="CDR Analyzer" style="font-weight:700;font-size:11px;">📞CDR</button>

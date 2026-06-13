@@ -116,6 +116,7 @@ async function _toggleRem(id, done) {
 
 async function _deleteRem(id) {
   if (id.startsWith('court_')) return;
+  try { await softDelete("reminder", id, {id, text: r?.text, reminder_date: r?.reminder_date}); } catch(_) {}
   await deleteReminder(id);
   showToast('🗑️ یاددہانی ہٹا دی گئی', 'info');
   await updateBadges();

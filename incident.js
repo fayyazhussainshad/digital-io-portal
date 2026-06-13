@@ -212,7 +212,8 @@ async function _loadPrevReports() {
 
 async function _delIncReport(id) {
   try {
-    await supabaseClient.from('incident_reports').delete().eq('id', id);
+    try { const {data:ir}=await supabaseClient.from("incident_reports").select("*").eq("id",id).single(); if(ir) await softDelete("incident",id,ir); } catch(_) {}
+    await supabaseClient.from("incident_reports").delete().eq("id",id);
     showToast('🗑️ رپورٹ ہٹا دی گئی', 'info');
     _loadPrevReports();
   } catch(e) { showToast('❌ ' + e.message, 'error'); }

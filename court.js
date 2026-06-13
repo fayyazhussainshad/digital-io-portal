@@ -228,8 +228,9 @@ async function _markCourtDone(id) {
 }
 
 async function _deleteCourtDate(id) {
-  await supabaseClient.from('court_dates').delete().eq('id',id);
-  showToast('🗑️ پیشی ہٹا دی گئی','info');
+  try { const {data:cd}=await supabaseClient.from("court_dates").select("*").eq("id",id).single(); if(cd) await softDelete("court",id,cd); } catch(_) {}
+  await supabaseClient.from("court_dates").delete().eq("id",id);
+  showToast("🗑️ پیشی Recycle Bin میں","info");
   const c=document.getElementById('page-content'); if(c)renderCourt(c);
 }
 
