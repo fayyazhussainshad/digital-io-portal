@@ -123,7 +123,10 @@ async function _drawHome(root) {
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:22px;">GPS tracking · Call log · Duty report</div>
     <button class="btn btn-primary" style="font-size:14px;padding:12px 32px;" onclick="startShift()">🟢 شفٹ شروع کریں</button>
     <br><br>
-    <button class="btn btn-secondary btn-sm" onclick="_showPreviousPatrols()">📋 پرانے پیٹرول دیکھیں</button>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn btn-secondary btn-sm" onclick="_showPreviousPatrols()">📋 پرانے پیٹرول دیکھیں</button>
+      <button class="btn btn-secondary btn-sm" onclick="_generatePatrolLink()">🔗 پیٹرول لنک بنائیں</button>
+    </div>
   </div>
   ${hist.length?`<div class="card"><div class="card-title" style="margin-bottom:10px;">📋 Purani Shifts</div>
     ${hist.map(s=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
@@ -347,6 +350,65 @@ function _addCompanion() {
     <input class="form-input comp-rank" placeholder="رینک" style="font-size:12px;">
     <button onclick="this.parentElement.remove()" style="border:none;background:none;color:var(--red);font-size:18px;cursor:pointer;padding:0 6px;">✕</button>`;
   document.getElementById('pe-companions-list')?.appendChild(div);
+}
+
+// ── PATROL SHAREABLE LINK ─────────────────────────────────────
+async function _generatePatrolLink() {
+  try {
+    const oid = await getOfficerId();
+    if (!oid) { showToast('⚠️ لاگ ان نہیں','error'); return; }
+
+    showToast('⏳ لنک بن رہا ہے...','info');
+
+    // Check if active token exists
+    const { data: existing } = await supabaseClient
+      .from('patrol_tokens').select('*')
+      .eq('officer_id', oid).eq('active', true).limit(1);
+
+    let token;
+    if (existing?.length) {
+      token = existing[0].token;
+    } else {
+      const { data: newToken, error } = await supabaseClient
+        .from('patrol_tokens').insert({
+          officer_id: oid,
+          label: `${currentOfficer?.full_name||'Officer'} — ${currentOfficer?.station||''}`,
+          active: true
+        }).select().single();
+      if (error) throw error;
+      token = newToken.token;
+    }
+
+    const link = `${window.location.origin}/patrol-share.html?token=${token}`;
+
+    openModal('🔗 پیٹرول لنک',
+      `<div style="direction:rtl;">
+        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">
+          یہ لنک کسی بھی افسر کو بھیجیں — وہ بغیر اکاؤنٹ کے پیٹرول اندراج کر سکے گا
+        </div>
+        <div style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:11px;word-break:break-all;font-family:monospace;margin-bottom:12px;">
+          ${link}
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="navigator.clipboard.writeText('${link}').then(()=>showToast('✅ Copy ہو گیا','success'))">📋 Copy کریں</button>
+          <button class="btn btn-secondary" onclick="
+            var txt='پیٹرول لاگ لنک:\\n${link}\\n\\nاپنا نام، رینک اور تھانہ درج کریں اور پیٹرول اندراج کریں';
+            if(navigator.share){navigator.share({title:'Patrol Log',text:txt});}
+            else{navigator.clipboard.writeText(txt).then(()=>showToast('Copy ہو گیا','info'));}
+          ">📱 WhatsApp</button>
+          <button class="btn btn-danger btn-sm" onclick="_deactivatePatrolLink('${existing?.[0]?.id||''}')">🔒 لنک بند کریں</button>
+        </div>
+      </div>`,
+      `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`
+    );
+  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+async function _deactivatePatrolLink(tokenId) {
+  if (!tokenId) return;
+  await supabaseClient.from('patrol_tokens').update({active:false}).eq('id',tokenId);
+  showToast('🔒 لنک بند کر دیا گیا','info');
+  closeModal();
 }
 
 // ── PREVIOUS PATROLS ──────────────────────────────────────────

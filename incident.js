@@ -16,25 +16,16 @@ function renderIncident(container) {
   container.innerHTML = `
   <div style="max-width:900px;margin:0 auto;" id="inc-root">
 
-    <!-- Previous Reports -->
-    <div class="card" style="margin-bottom:14px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div style="font-size:12px;font-weight:700;color:var(--accent);">🚨 پرانی Incident Reports</div>
-      </div>
-      <div id="inc-prev-list">
-        <div style="text-align:center;padding:10px;color:var(--text-muted);font-size:12px;">⏳ لوڈ ہو رہی ہے...</div>
-      </div>
-    </div>
-
-    <!-- Action Bar -->
-    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
-      <div style="font-size:14px;font-weight:700;color:var(--text-primary);">+ نئی رپورٹ</div>
+    <!-- Action Bar — compact -->
+    <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;align-items:center;background:var(--bg-card);padding:10px 12px;border-radius:10px;border:1px solid var(--border);">
+      <span style="font-size:13px;font-weight:700;color:var(--accent);">🚨 واقعاتی رپورٹ</span>
       <div style="flex:1;"></div>
-      <button class="btn btn-primary" onclick="_incSaveToDB();_incPrint()">🖨️ محفوظ و پرنٹ</button>
-      <button class="btn btn-secondary" onclick="_incSaveToDB()">💾 محفوظ کریں</button>
-      <button class="btn btn-secondary" onclick="_incDownload()">⬇️ ڈاؤنلوڈ</button>
-      <button class="btn btn-secondary" onclick="_incShare()">📱 WhatsApp</button>
-      <button class="btn btn-secondary" onclick="_incReset()">🔄 صاف کریں</button>
+      <button class="btn btn-secondary btn-sm" onclick="_showPrevReports()">📋 پرانی رپورٹس</button>
+      <button class="btn btn-primary btn-sm" onclick="_incSaveAndPrint()">🖨️ محفوظ و پرنٹ</button>
+      <button class="btn btn-primary btn-sm" onclick="_incSaveToDB()">💾 محفوظ</button>
+      <button class="btn btn-secondary btn-sm" onclick="_incDownload()">⬇️</button>
+      <button class="btn btn-secondary btn-sm" onclick="_incShare()">📱</button>
+      <button class="btn btn-secondary btn-sm" onclick="_incReset()">🔄</button>
     </div>
 
     <!-- FORM -->
@@ -446,31 +437,90 @@ function _incGPS() {
   }, () => { if(status)status.textContent='⚠️ GPS نہیں مل سکا'; }, {timeout:10000});
 }
 
+async function _incSaveAndPrint() {
+  await _incSaveToDB();
+  _incPrint();
+}
+
 // ── SAVE TO DB ────────────────────────────────────────────────
 async function _incSaveToDB() {
   try {
     const oid = await getOfficerId();
-    if (!oid) return;
-    const types = [...document.querySelectorAll('input[name="inc-type"]:checked')].map(e=>e.value).join('، ');
+    if (!oid) { showToast('⚠️ لاگ ان نہیں', 'error'); return; }
+    const incType = document.getElementById('inc-severity')?.value || '';
+    const num     = document.getElementById('inc-num')?.value?.trim() || '';
+    const date    = document.getElementById('inc-date')?.value?.trim() || '';
+    const address = document.getElementById('inc-address')?.value?.trim() || '';
+    const narr    = document.getElementById('inc-narrative')?.value?.trim() || '';
+    const action  = document.getElementById('inc-action')?.value?.trim() || '';
+    const station = document.getElementById('inc-station')?.value?.trim() || '';
+    const district= document.getElementById('inc-district')?.value?.trim() || '';
+    const firNum  = document.getElementById('inc-fir')?.value?.trim() || '';
+
+    if (!num) { showToast('⚠️ رپورٹ نمبر ضروری ہے', 'error'); return; }
+
     await supabaseClient.from('incident_reports').insert({
-      officer_id:   oid,
-      report_number: document.getElementById('inc-num')?.value || '',
-      incident_date: document.getElementById('inc-date')?.value || '',
+      officer_id:    oid,
+      report_number: num,
+      incident_date: date,
       incident_time: document.getElementById('inc-time')?.value || '',
-      incident_type: document.getElementById('inc-severity')?.value || types || '',
-      address:       document.getElementById('inc-address')?.value || '',
-      narrative:     document.getElementById('inc-narrative')?.value || '',
-      action_taken:  document.getElementById('inc-action')?.value || '',
+      incident_type: incType,
+      address:       address,
+      narrative:     narr,
+      action_taken:  action,
       data: {
-        fir: document.getElementById('inc-fir')?.value,
-        station: document.getElementById('inc-station')?.value,
-        district: document.getElementById('inc-district')?.value,
+        fir_number: firNum,
+        station:    station,
+        district:   district,
+        severity:   document.getElementById('inc-severity')?.value,
+        rdate:      document.getElementById('inc-rdate')?.value,
+        rtime:      document.getElementById('inc-rtime')?.value,
+        landmark:   document.getElementById('inc-landmark')?.value,
+        gps:        document.getElementById('inc-gps')?.value,
       }
     });
     showToast('✅ رپورٹ محفوظ ہو گئی', 'success');
-    _loadPrevReports();
-  } catch(e) { console.warn('incident save:', e.message); }
+  } catch(e) {
+    showToast('❌ ' + e.message, 'error');
+    console.error('incident save error:', e);
+  }
 }
+
+async function _showPrevReports() {
+  try {
+    const oid = await getOfficerId();
+    const { data } = await supabaseClient
+      .from('incident_reports')
+      .select('id,report_number,incident_date,incident_type,address,created_at,data')
+      .eq('officer_id', oid)
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    const items = data || [];
+    openModal('📋 پرانی Incident Reports',
+      `<div style="max-height:60vh;overflow-y:auto;">
+        ${items.length ? items.map(r => `
+          <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);direction:rtl;">
+            <span style="font-size:18px;">🚨</span>
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:700;color:var(--accent);">${r.report_number||'—'}</div>
+              <div style="font-size:11px;color:var(--text-muted);">${r.incident_type||'—'} · ${r.incident_date||'—'}</div>
+              <div style="font-size:11px;color:var(--text-faint);">${r.address||'—'}</div>
+              ${r.data?.fir_number ? `<div style="font-size:10px;color:var(--accent);">FIR: ${r.data.fir_number}</div>` : ''}
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+              <button class="btn btn-secondary btn-sm" onclick="_viewIncReport('${r.id}')">👁️</button>
+              <button class="btn btn-danger btn-sm" onclick="_delIncReport('${r.id}')">🗑️</button>
+            </div>
+          </div>`).join('')
+        : '<div style="text-align:center;padding:20px;color:var(--text-muted);">کوئی پرانی رپورٹ نہیں</div>'}
+      </div>`,
+      `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`
+    );
+  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+async function _loadPrevReports() { /* kept for compatibility */ }
 
 // ── PRINT ─────────────────────────────────────────────────────
 function _incPrint() {
