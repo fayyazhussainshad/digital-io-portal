@@ -108,7 +108,6 @@ async function renderCases(container,fStatus,fQuery){
   <div class="page-header">
     <div><div class="page-title">📁 My Cases</div><div class="page-subtitle">${cases.length} case(s)</div></div>
     <div style="display:flex;gap:8px;">
-      <button class="btn btn-secondary btn-sm" onclick="openTransferModal()" title="Record a station transfer">🏛️ Station Transfer</button>
       <button class="btn btn-primary" onclick="openAddCaseModal()">+ نیا اندراج</button>
     </div>
   </div>
@@ -277,23 +276,23 @@ function caseFormHTML(c) {
   var html = ''
     + '<div style="max-height:70vh;overflow-y:auto;padding-right:4px;">'
 
-    // FIR + Date — swapped: Date left, FIR Number right
+    // Row 1: مقدمہ نمبر + تاریخ اندراج مقدمہ
     + '<div class="form-row">'
-    + '<div class="form-group"><label class="form-label">تاریخ اندراج مقدمہ *</label>'
-    + '<input class="form-input" id="cf-date" value="'+date+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)"></div>'
     + '<div class="form-group"><label class="form-label">مقدمہ نمبر *</label>'
-    + '<input class="form-input" id="cf-fir" value="'+fir+'" placeholder="e.g. 245/2025" dir="auto"></div>'
+    + '<input class="form-input" id="cf-fir" value="'+fir+'" placeholder="e.g. 245/2025" dir="ltr" style="text-align:left;"></div>'
+    + '<div class="form-group"><label class="form-label">تاریخ اندراج مقدمہ *</label>'
+    + '<input class="form-input" id="cf-date" value="'+date+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" dir="ltr" style="text-align:left;"></div>'
     + '</div>'
 
-    // Occurrence + Status — swapped: Status left, Occurrence right
+    // Row 2: تاریخ وقوعہ + Status
     + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">تاریخ وقوعہ</label>'
+    + '<input class="form-input" id="cf-occurrence-date" value="'+occ+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" dir="ltr" style="text-align:left;"></div>'
     + '<div class="form-group"><label class="form-label">Status *</label>'
     + '<select class="form-input" id="cf-status">'+statusOpts+'</select></div>'
-    + '<div class="form-group"><label class="form-label">تاریخ وقوعہ</label>'
-    + '<input class="form-input" id="cf-occurrence-date" value="'+occ+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)"></div>'
     + '</div>'
 
-    // Sections
+    // Row 3: Sections of Law (full width)
     + '<div class="form-group">'
     + '<label class="form-label">Sections of Law * <span style="color:var(--text-faint);font-weight:400;">(multiple allowed)</span></label>'
     + '<div style="position:relative;">'
@@ -304,7 +303,7 @@ function caseFormHTML(c) {
     + '<input type="hidden" id="cf-section" value="'+section+'">'
     + '</div>'
 
-    // Offence
+    // Row 4: Offence (full width)
     + '<div class="form-group">'
     + '<label class="form-label">Offence <span style="color:var(--text-faint);font-weight:400;">(auto-filled or type manually)</span></label>'
     + '<input class="form-input" id="cf-offence" value="'+offence+'" placeholder="Auto-filled when section selected" dir="auto">'
