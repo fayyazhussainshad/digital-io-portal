@@ -22,6 +22,7 @@ async function renderOfficialForms(container) {
   const o = currentOfficer || {};
   container.innerHTML = `
   <div style="max-width:900px;margin:0 auto;">
+    <div style="margin-bottom:12px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq',serif;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">← واپس</button></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
       <div>
         <div style="font-size:18px;font-weight:800;">📥 سرکاری فارمز</div>

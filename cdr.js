@@ -15,6 +15,7 @@ let _cdrCase    = null; // linked case
 async function renderCDR(container) {
   container.innerHTML = `
   <div style="max-width:1000px;margin:0 auto;" id="cdr-root">
+    <div style="margin-bottom:12px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq',serif;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">← واپس</button></div>
 
     <!-- Header -->
     <div style="background:linear-gradient(135deg,#1a3a5c,#0d2a45);border-radius:12px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:14px;">
@@ -26,7 +27,7 @@ async function renderCDR(container) {
     </div>
 
     <!-- Upload + Link Case -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;direction:rtl;margin-bottom:16px;">
 
       <!-- Upload CDR -->
       <div class="card">
@@ -377,7 +378,7 @@ function _renderAnalysis(a, suspects) {
   <!-- Overview -->
   <div class="card" style="margin-bottom:12px;">
     <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;">📊 مجموعی جائزہ</div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px;">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;direction:rtl;margin-bottom:10px;">
       ${[
         ['کل ریکارڈز', ov.totalCalls, '📋'],
         ['منفرد رابطے', ov.uniqueContacts, '👥'],

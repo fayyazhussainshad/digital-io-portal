@@ -52,6 +52,7 @@ async function renderSettings(container) {
 
   container.innerHTML = `
   <div class="page-header">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq',serif;display:inline-flex;align-items:center;gap:6px;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">← واپس</button></div>
     <div><div class="page-title">⚙️ ترتیبات و پروفائل</div>
     <div class="page-subtitle">آپ کا سرکاری ریکارڈ — ڈیٹابیس سے خودکار مطابقت</div></div>
   </div>

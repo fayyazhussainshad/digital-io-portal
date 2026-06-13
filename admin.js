@@ -23,6 +23,7 @@ async function renderAdmin(container) {
 
   container.innerHTML = `
   <div style="max-width:1000px;margin:0 auto;" id="admin-root">
+    <div style="margin-bottom:10px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);">← واپس</button></div>
     <div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ Loading...</div>
   </div>`;
   await _buildAdmin(role);
