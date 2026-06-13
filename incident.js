@@ -218,20 +218,25 @@ async function _delIncReport(id) {
 }
 
 async function _viewIncReport(id) {
-  showToast('⏳ رپورٹ لوڈ ہو رہی ہے...', 'info', 1500);
+  showToast('⏳ رپورٹ لوڈ ہو رہی ہے...', 'info');
   try {
     const { data } = await supabaseClient.from('incident_reports').select('*').eq('id', id).single();
     if (!data) return;
-    openModal('🚨 Incident Report — ' + (data.report_number||''),
-      `<div style="font-size:12px;line-height:2;direction:rtl;">
+    const fir = data.data?.fir_number || '';
+    openModal('🚨 ' + (data.report_number||'Incident Report'),
+      `<div style="font-size:13px;line-height:2.2;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
         <div><b>رپورٹ نمبر:</b> ${data.report_number||'—'}</div>
-        <div><b>تاریخ:</b> ${data.incident_date||'—'} · <b>وقت:</b> ${data.incident_time||'—'}</div>
+        <div><b>تاریخ:</b> ${data.incident_date||'—'} &nbsp;·&nbsp; <b>وقت:</b> ${data.incident_time||'—'}</div>
         <div><b>قسم:</b> ${data.incident_type||'—'}</div>
         <div><b>مقام:</b> ${data.address||'—'}</div>
-        <div><b>روداد:</b> ${data.narrative||'—'}</div>
+        ${fir ? `<div><b>FIR نمبر:</b> <span style="color:var(--accent);font-weight:700;">${fir}</span>
+          <button class="btn btn-secondary btn-sm" onclick="closeModal();showPage('cases',null);setTimeout(()=>{const c=Array.from(document.querySelectorAll('td')).find(t=>t.textContent.includes('${fir}')); if(c)c.click();},800);">مقدمہ دیکھیں →</button>
+        </div>` : ''}
+        <div style="border-top:1px solid #ddd;margin:8px 0;padding-top:8px;"><b>روداد:</b> ${data.narrative||'—'}</div>
         <div><b>اقدامات:</b> ${data.action_taken||'—'}</div>
       </div>`,
-      `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`
+      `<button class="btn btn-danger btn-sm" onclick="closeModal();_delIncReport('${id}')">🗑️ حذف</button>
+       <button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`
     );
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
