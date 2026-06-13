@@ -212,15 +212,11 @@ function _updateTopbarShoDsp(o) {
   const dspEl = document.getElementById('topbar-dsp');
   if (shoEl) {
     shoEl.style.display = 'block';
-    shoEl.innerHTML = o.sho_name
-      ? `<span style="color:var(--accent);font-weight:700;">SHO</span> ${o.sho_name}`
-      : `<span style="color:var(--text-faint);">SHO</span>`;
+    shoEl.innerHTML = `<span style="color:var(--accent);font-weight:700;">SHO</span>`;
   }
   if (dspEl) {
     dspEl.style.display = 'block';
-    dspEl.innerHTML = o.dsp_name
-      ? `<span style="color:var(--accent);font-weight:700;">DSP/SDPO</span> ${o.dsp_name}`
-      : `<span style="color:var(--text-faint);">DSP/SDPO</span>`;
+    dspEl.innerHTML = `<span style="color:var(--accent);font-weight:700;">DSP/SDPO</span>`;
   }
 }
 
@@ -530,12 +526,7 @@ function formatDate(d){
 function timeAgo(d){if(!d)return'—';const diff=Date.now()-new Date(d).getTime(),m=Math.floor(diff/60000),h=Math.floor(diff/3600000),days=Math.floor(diff/86400000);if(m<1)return'Just now';if(m<60)return`${m}m ago`;if(h<24)return`${h}h ago`;return`${days}d ago`;}
 function updateSidebarProfile(){if(!currentOfficer)return;const ne=document.getElementById('sidebar-name'),re=document.getElementById('sidebar-role'),ae=document.getElementById('sidebar-avatar'),fe=document.getElementById('footer-officer');if(ne)ne.textContent=currentOfficer.full_name||'Officer';if(re)re.textContent=currentOfficer.designation||currentRole;if(fe)fe.textContent=`Officer: ${currentOfficer.full_name||'—'} · ${currentOfficer.station||'—'}`;const photo=localStorage.getItem('dio_profile_photo');if(photo&&ae)ae.innerHTML=`<img src="${photo}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;else if(ae&&currentOfficer.full_name)ae.textContent=currentOfficer.full_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();if(currentRole==='admin'||currentRole==='superadmin'){const an=document.getElementById('admin-nav-item');if(an)an.style.display='flex';}if(currentOfficer.full_name)localStorage.setItem('dio_officer_name',currentOfficer.full_name);
 // Update SHO/DSP topbar display
-const shoDspEl=document.getElementById('topbar-sho-dsp');
-if(shoDspEl&&currentOfficer){
-  const sho=currentOfficer.station?'SHO تھانہ '+currentOfficer.station:'';
-  const dsp=currentOfficer.district?'DSP '+currentOfficer.district:'';
-  if(sho||dsp){shoDspEl.style.display='block';shoDspEl.innerHTML=(sho?`<div style="color:var(--accent);font-weight:700;">${sho}</div>`:'')+( dsp?`<div>${dsp}</div>`:'' );}
-}
+
 }
 function startNewsTicker(){const el=document.getElementById('news-ticker');if(el)el.textContent=POLICE_NEWS.join(' ✦ ');}
 function printContent(html,title='Digital IO'){const win=window.open('','_blank');win.document.write(`<!DOCTYPE html><html><head><title>${title}</title><style>body{font-family:Arial,sans-serif;padding:20px;color:#1a1a1a;}table{width:100%;border-collapse:collapse;}th,td{padding:8px;border:1px solid #ddd;font-size:12px;text-align:left;}th{background:#f5f5f5;}.wm{position:fixed;bottom:20px;right:20px;font-size:10px;color:#ccc;}</style></head><body>${html}<div class="wm">Digital IO · ${currentOfficer?.full_name||'Officer'} · ${new Date().toLocaleDateString('en-PK')}</div></body></html>`);win.document.close();win.focus();setTimeout(()=>win.print(),500);}
