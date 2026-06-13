@@ -400,8 +400,8 @@ input, textarea, select { font-family: var(--font-main); }
 .modal-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.6; }
 
 /* ── APP LAYOUT ── */
-#main-app { display: flex; height: 100vh; overflow: hidden; }
-.sidebar { width: var(--sidebar-width); background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; transition: transform 0.3s ease; overflow-y: auto; }
+#main-app { display: flex; flex-direction: row-reverse; height: 100vh; overflow: hidden; }
+.sidebar { width: var(--sidebar-width); background: var(--bg-secondary); border-left: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; transition: transform 0.3s ease; overflow-y: auto; }
 .sidebar-logo { padding: 18px 16px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
 .sidebar-logo-icon { font-size: 24px; }
 .sidebar-logo-text { font-family: var(--font-display); font-size: 18px; font-weight: 800; letter-spacing: 2px; color: var(--accent); }
@@ -702,7 +702,7 @@ input[id*="cnic"], input[id*="cell"] {
 .page-header { padding-top:0; margin-bottom:8px; }
 
 /* ── Collapsible Sidebar (Desktop only) ── */
-#main-app { display:flex; position:relative; }
+#main-app { display:flex; flex-direction:row-reverse; position:relative; }
 .sidebar {
   transition: width 0.25s ease, min-width 0.25s ease, opacity 0.2s ease;
 }
@@ -821,7 +821,6 @@ input[id*="cnic"], input[id*="cell"] {
       <div class="nav-item" onclick="closeMobileSidebar();showPage('patrol',this)"><span class="nav-icon">🚔</span> Patrol Log</div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('cdr',this)"><span class="nav-icon">📞</span> CDR Analyzer</div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('law',this)"><span class="nav-icon">⚖️</span> Law Library</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('reminders',this)"><span class="nav-icon">🔔</span> Reminders <span class="nav-badge" id="badge-reminders">0</span></div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('court',this)"><span class="nav-icon">⚖️</span> عدالتی پیشیاں</div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('performance',this)"><span class="nav-icon">📊</span> Performance</div>
       <div class="nav-section-label">System</div>
@@ -838,18 +837,7 @@ input[id*="cnic"], input[id*="cell"] {
     <div class="topbar">
       <div class="topbar-left"><button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button><div class="topbar-title" id="topbar-title">Dashboard</div><div class="db-badge" id="db-badge">⚙ Connecting...</div></div>
       <div class="topbar-right">
-        <div id="topbar-sho" onclick="_editTopbarField('sho')" title="SHO کا نام تبدیل کریں"
-          style="font-size:11px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq',serif;
-                 direction:rtl;cursor:pointer;padding:3px 8px;border-radius:6px;
-                 border:1px solid transparent;white-space:nowrap;display:none;"
-          onmouseover="this.style.borderColor='var(--border)'" 
-          onmouseout="this.style.borderColor='transparent'">SHO</div>
-        <div id="topbar-dsp" onclick="_editTopbarField('dsp')" title="DSP/SDPO کا نام تبدیل کریں"
-          style="font-size:11px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq',serif;
-                 direction:rtl;cursor:pointer;padding:3px 8px;border-radius:6px;
-                 border:1px solid transparent;white-space:nowrap;display:none;"
-          onmouseover="this.style.borderColor='var(--border)'" 
-          onmouseout="this.style.borderColor='transparent'">DSP/SDPO</div>
+
         <button class="topbar-btn" onclick="closeMobileSidebar();showPage('search',null)" title="Search">🔍</button>
         <button class="topbar-btn" onclick="closeMobileSidebar();showPage('reminders',null)" title="Reminders">🔔</button>
         <button class="topbar-btn" onclick="triggerBackupNow()" title="Backup Now">☁️</button>
@@ -903,7 +891,7 @@ function _sidebarOpen() {
   var ov = document.getElementById('mob-overlay');
   if (!sb) return;
   sb.classList.remove('collapsed');
-  sb.style.cssText = 'position:fixed!important;left:0!important;top:0!important;bottom:0!important;width:260px!important;min-width:260px!important;z-index:1000!important;opacity:1!important;pointer-events:auto!important;overflow-y:auto!important;-webkit-transform:translateX(0)!important;transform:translateX(0)!important;-webkit-transition:transform 0.3s ease!important;transition:transform 0.3s ease!important;box-shadow:4px 0 20px rgba(0,0,0,0.5)!important;';
+  sb.style.cssText = 'position:fixed!important;right:0!important;left:auto!important;top:0!important;bottom:0!important;width:260px!important;min-width:260px!important;z-index:1000!important;opacity:1!important;pointer-events:auto!important;overflow-y:auto!important;-webkit-transform:translateX(0)!important;transform:translateX(0)!important;-webkit-transition:transform 0.3s ease!important;transition:transform 0.3s ease!important;box-shadow:-4px 0 20px rgba(0,0,0,0.5)!important;border-left:1px solid var(--border)!important;border-right:none!important;';
   if (ov) ov.style.cssText = 'display:block!important;position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;background:rgba(0,0,0,0.55)!important;z-index:999!important;';
   _mobOpen = true;
 }
@@ -912,7 +900,7 @@ function _sidebarClose() {
   var sb = document.getElementById('sidebar');
   var ov = document.getElementById('mob-overlay');
   if (!sb) return;
-  sb.style.cssText = 'position:fixed!important;left:0!important;top:0!important;bottom:0!important;width:260px!important;min-width:260px!important;z-index:1000!important;opacity:1!important;-webkit-transform:translateX(-100%)!important;transform:translateX(-100%)!important;-webkit-transition:transform 0.3s ease!important;transition:transform 0.3s ease!important;';
+  sb.style.cssText = 'position:fixed!important;right:0!important;left:auto!important;top:0!important;bottom:0!important;width:260px!important;min-width:260px!important;z-index:1000!important;opacity:1!important;-webkit-transform:translateX(100%)!important;transform:translateX(100%)!important;-webkit-transition:transform 0.3s ease!important;transition:transform 0.3s ease!important;';
   if (ov) ov.style.cssText = 'display:none!important;';
   _mobOpen = false;
 }
@@ -922,19 +910,17 @@ function closeMobileSidebar() {
 }
 
 window.addEventListener('load', function() {
-  if (window.innerWidth <= 900) {
-    _sidebarClose();
-  } else {
+  if (window.innerWidth <= 900) { _sidebarClose(); }
+  else {
     var sb = document.getElementById('sidebar');
     if (sb) { sb.style.cssText = ''; sb.classList.remove('collapsed'); }
   }
 });
 
 window.addEventListener('resize', function() {
-  var sb = document.getElementById('sidebar');
-  if (window.innerWidth <= 900) {
-    _sidebarClose();
-  } else {
+  if (window.innerWidth <= 900) { _sidebarClose(); }
+  else {
+    var sb = document.getElementById('sidebar');
     if (sb) { sb.style.cssText = ''; sb.classList.remove('collapsed'); }
     _mobOpen = false;
     var ov = document.getElementById('mob-overlay');

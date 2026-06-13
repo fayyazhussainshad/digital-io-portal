@@ -62,6 +62,11 @@ async function _buildDashboard() {
     </div>
   </div>
 
+  <!-- Islamic Messages Ticker -->
+  <div style="background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.15);border-radius:10px;padding:10px 16px;margin-bottom:16px;text-align:center;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;">
+    <span id="islamic-ticker" style="font-size:15px;color:var(--accent);transition:opacity 0.4s;">🤲 اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ — درود شریف پڑھیں</span>
+  </div>
+
   <!-- Stats Grid -->
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
     ${[
@@ -255,7 +260,37 @@ async function _buildDashboard() {
   // Draw charts after DOM ready
   setTimeout(() => {
     _drawDonut(statusCounts, total);
+    _startIslamicTicker();
   }, 120);
+}
+
+function _startIslamicTicker() {
+  const msgs = [
+    '🤲 اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ — درود شریف پڑھیں',
+    '📖 وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا — جو اللہ سے ڈرے اللہ اس کے لیے راستہ نکالتا ہے',
+    '🤲 سُبْحَانَ اللَّهِ وَبِحَمْدِهِ — اللہ کی پاکی اور تعریف بیان کریں',
+    '📖 إِنَّ مَعَ الْعُسْرِ يُسْرًا — بے شک تکلیف کے ساتھ آسانی ہے',
+    '🤲 اَلْحَمْدُ لِلّٰہِ رَبِّ الْعٰلَمِیْنَ — تمام تعریفیں اللہ کے لیے ہیں',
+    '📖 وَتَوَكَّلْ عَلَى اللَّهِ وَكَفَىٰ بِاللَّهِ وَكِيلًا — اللہ پر توکل کریں، وہ کافی ہے',
+    '🤲 اَسْتَغْفِرُاللّٰہَ الْعَظِیْم — اللہ سے معافی مانگیں',
+    '📖 فَإِنَّ مَعَ الْعُسْرِ يُسْرًا — پس بے شک تکلیف کے ساتھ آسانی ہے',
+    '🤲 لَا إِلَٰهَ إِلَّا اللَّهُ مُحَمَّدٌ رَسُولُ اللَّهِ',
+    '📖 اللہ اپنے بندوں کے گناہ معاف فرماتا ہے — توبہ کریں',
+  ];
+  let i = 0;
+  const el = document.getElementById('islamic-ticker');
+  if (!el) return;
+  el.textContent = msgs[0];
+  setInterval(() => {
+    i = (i + 1) % msgs.length;
+    el.style.opacity = '0';
+    setTimeout(() => {
+      if (document.getElementById('islamic-ticker')) {
+        document.getElementById('islamic-ticker').textContent = msgs[i];
+        document.getElementById('islamic-ticker').style.opacity = '1';
+      }
+    }, 400);
+  }, 8000);
 }
 
 // ── DONUT CHART ───────────────────────────────────────────────

@@ -169,12 +169,12 @@ function renderCaseRow(c,sn){
     <td style="font-family:var(--font-mono);font-size:11px;">${cell}</td>
     <td><span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span></td>
     <td>
-      <div style="display:flex;gap:2px;justify-content:center;">
-        <button class="btn btn-secondary btn-sm" onclick="openCaseWorkspace('${c.id}')" title="Open Case Form &amp; FIR Documents">📄</button>
-        <button class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')" title="Edit Case Details">✏️</button>
-        <button class="btn btn-secondary btn-sm" onclick="downloadCaseFile('${c.id}')" title="Download Case File">⬇️</button>
-        <button class="btn btn-primary   btn-sm" onclick="openShareModal('${c.id}')"    title="Share Case via Email or WhatsApp">📤</button>
-        <button class="btn btn-danger    btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number||'?'}')" title="Delete Case">🗑️</button>
+      <div style="display:flex;gap:2px;justify-content:center;flex-direction:row-reverse;">
+        <button class="btn btn-secondary btn-sm" onclick="openCaseWorkspace('${c.id}')" title="مقدمہ کھولیں">📄</button>
+        <button class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')" title="ترمیم">✏️</button>
+        <button class="btn btn-secondary btn-sm" onclick="downloadCaseFile('${c.id}')" title="ڈاؤنلوڈ">⬇️</button>
+        <button class="btn btn-primary   btn-sm" onclick="openShareModal('${c.id}')"    title="شیئر">📤</button>
+        <button class="btn btn-danger    btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number||'?'}')" title="حذف">🗑️</button>
       </div>
     </td>
   </tr>`;

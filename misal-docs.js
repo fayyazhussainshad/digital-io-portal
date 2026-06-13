@@ -11,7 +11,6 @@ const MISAL_CASE_DOCS = [
   { id:'report_173',       name:'رپورٹ 173 ض ف',            desc:'Report u/s 173 CrPC' },
   { id:'crime_scene',      name:'جائے واردات',               desc:'Scene of Crime' },
   { id:'named_accused',    name:'نامزد ملزمان',              desc:'Named Accused' },
-  { id:'unknown_accused',  name:'نامعلوم ملزمان',            desc:'Unknown Accused' },
   { id:'witnesses_fir',    name:'گواہان FIR',                desc:'FIR Witnesses' },
   { id:'witnesses_cross',  name:'گواہان کراس ورشن',          desc:'Cross Version Witnesses' },
   { id:'statements_161',   name:'بیانات 161 ض ف',            desc:'Statements u/s 161 CrPC' },
@@ -31,8 +30,6 @@ const MISAL_CASE_DOCS = [
   { id:'inkishafat',       name:'انکشافات',                  desc:'Disclosures' },
   { id:'darkhwastain',     name:'درخواستیں',                 desc:'Applications' },
   { id:'brief',            name:'بریف مقدمہ',                desc:'Case Brief' },
-  { id:'stolen',           name:'مسروقہ مال',                desc:'Stolen Property' },
-  { id:'recovery',         name:'برآمدگی مال',               desc:'Recovered Property' },
   { id:'preventive',       name:'انسدادی کاروائی',           desc:'Preventive Action' },
   { id:'shahadatain',      name:'شہادتیں',                   desc:'Evidence / Testimonies' },
 ];
