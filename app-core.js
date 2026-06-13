@@ -987,3 +987,33 @@ document.addEventListener('DOMContentLoaded', function() {
   var content = document.getElementById('page-content');
   if (content) observer.observe(content, {childList:true, subtree:true});
 });
+
+// ── BUTTON USAGE LOGGER ───────────────────────────────────────
+const _usageKey = 'dio_btn_usage';
+function _logUsage(label) {
+  try {
+    const data = JSON.parse(localStorage.getItem(_usageKey)||'{}');
+    data[label] = (data[label]||0)+1;
+    localStorage.setItem(_usageKey, JSON.stringify(data));
+  } catch(_) {}
+}
+
+function getUsageStats() {
+  try {
+    const data = JSON.parse(localStorage.getItem(_usageKey)||'{}');
+    return Object.entries(data)
+      .sort((a,b)=>b[1]-a[1])
+      .map(([k,v])=>({label:k, count:v}));
+  } catch(_) { return []; }
+}
+
+// Track nav clicks
+document.addEventListener('click', function(e) {
+  const nav = e.target.closest('.nav-item');
+  if (nav) { _logUsage('nav:' + (nav.textContent||'').trim().slice(0,20)); }
+  const btn = e.target.closest('.btn');
+  if (btn && !btn.closest('.nav-item')) {
+    const txt = (btn.textContent||btn.title||'').trim().slice(0,30);
+    if (txt) _logUsage('btn:'+txt);
+  }
+}, true);

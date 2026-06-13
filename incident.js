@@ -143,9 +143,9 @@ function renderIncident(container) {
         <div id="inc-officers-list"></div>
         <button onclick="_incAddOfficer()" style="${_addBtn()}">+ افسر شامل کریں</button>
 
-        <!-- Signature Block -->
+        <!-- Signature Block — SHO LEFT BOTTOM CORNER -->
         <div style="margin-top:28px;border-top:2px solid #1a3a5c;padding-top:20px;">
-          <div style="display:flex;justify-content:flex-start;">
+          <div style="display:flex;justify-content:flex-end;">
             <div style="border:1px solid #ddd;border-radius:6px;padding:12px 24px;min-width:260px;text-align:center;">
               <div style="height:55px;border-bottom:1px solid #aaa;margin-bottom:4px;"></div>
               <div style="font-size:13px;font-weight:700;color:#1a3a5c;margin-top:4px;">

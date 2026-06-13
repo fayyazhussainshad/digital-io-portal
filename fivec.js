@@ -205,7 +205,17 @@ async function open5CResponse(id){
 <br>
 <div dir="rtl">جنابِ عالیٰ!</div>
 <br>
-<div dir="rtl"></div>`;
+<div dir="rtl"></div>
+<br><br><br><br><br>
+<div style="display:flex;justify-content:flex-end;direction:ltr;">
+  <div style="text-align:center;min-width:200px;">
+    <div style="border-top:1px solid #333;padding-top:6px;margin-top:50px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">
+      SHO تھانہ ${esc5C(o.station||'_______')}
+    </div>
+    <div style="font-size:11px;color:#555;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">مہر و دستخط</div>
+    <div style="font-size:11px;color:#555;margin-top:4px;">${today}</div>
+  </div>
+</div>`;
 
   // Toolbar button style — note: onmousedown="event.preventDefault()" keeps selection alive
   const B=(label,fn,tip)=>`<button class="r5b" onmousedown="event.preventDefault()" onclick="${fn}" title="${tip}">${label}</button>`;

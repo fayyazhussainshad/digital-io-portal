@@ -102,8 +102,8 @@ async function renderSettings(container) {
 
       <!-- SECTION 1: Official Details (Urdu, correct order) -->
       <div class="card" style="margin-bottom:16px;">
-        <div class="card-title" style="margin-bottom:16px;">🔒 سرکاری تفصیلات
-          <span style="font-size:10px;color:var(--text-faint);font-weight:400;margin-right:8px;">ترمیم کے لیے ایڈمن سے رابطہ کریں</span>
+        <div class="card-title" style="margin-bottom:16px;">🔒 Officer Information
+          <span style="font-size:10px;color:var(--text-faint);font-weight:400;margin-right:8px;">Contact admin to update</span>
         </div>
         ${roField('پورا نام', o.full_name)}
         ${roField('رینک / عہدہ', o.designation)}
