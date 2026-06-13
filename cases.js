@@ -309,24 +309,34 @@ function caseFormHTML(c) {
     + '<input class="form-input" id="cf-offence" value="'+offence+'" placeholder="Auto-filled when section selected" dir="auto">'
     + '</div>'
 
-    // Complainant section — swapped: CNIC left, Name right
+    // Complainant section — RTL, new order
     + '<div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:12px;">'
-    + '<div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">👤 مدعی کی تفصیل</div>'
-    + '<div class="form-row">'
-    + '<div class="form-group"><label class="form-label">شناختی کارڈ نمبر</label>'
-    + '<input class="form-input" id="cf-complainant-cnic" value="'+cmpCnic+'" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)"></div>'
-    + '<div class="form-group"><label class="form-label">مدعی کا نام *</label>'
-    + '<div style="display:flex;gap:6px;">'
-    + '<input class="form-input" id="cf-complainant" value="'+complainant+'" placeholder="مدعی کا مکمل نام" dir="auto" style="flex:1;">'
-    + '<button id="vmb-cf-complainant" type="button" onclick="voiceType(\'cf-complainant\',\'vmb-cf-complainant\')" style="width:36px;height:36px;flex-shrink:0;border:1px solid var(--border);border-radius:6px;background:var(--bg-tertiary);font-size:16px;cursor:pointer;">🎙️</button>'
-    + '</div></div>'
+    + '<div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;text-align:right;direction:rtl;">مدعی کی تفصیل 👤</div>'
+
+    // Row 1: مدعی (full width with voice + live counter)
+    + '<div class="form-group">'
+    + '<label class="form-label">مدعی *</label>'
+    + '<div style="display:flex;gap:6px;align-items:center;">'
+    + '<div style="flex:1;position:relative;">'
+    + '<input class="form-input" id="cf-complainant" value="'+complainant+'" placeholder="مدعی کا نام" dir="auto" oninput="document.getElementById(\'cf-comp-count\').textContent=this.value.length+\' حروف\'">'
+    + '<span id="cf-comp-count" style="position:absolute;bottom:4px;left:8px;font-size:9px;color:var(--text-faint);">'+(complainant?complainant.length+' حروف':'')+'</span>'
     + '</div>'
+    + '<button id="vmb-cf-complainant" type="button" onclick="voiceType(\'cf-complainant\',\'vmb-cf-complainant\')" style="width:36px;height:36px;flex-shrink:0;border:1px solid var(--border);border-radius:6px;background:var(--bg-tertiary);font-size:16px;cursor:pointer;">🎙️</button>'
+    + '</div>'
+    + '</div>'
+
+    // Row 2: موبائل نمبر + شناختی کارڈ
     + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">موبائل نمبر</label>'
+    + '<input class="form-input" id="cf-complainant-cell" value="'+cmpCell+'" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)" dir="ltr" style="text-align:left;"></div>'
+    + '<div class="form-group"><label class="form-label">شناختی کارڈ نمبر</label>'
+    + '<input class="form-input" id="cf-complainant-cnic" value="'+cmpCnic+'" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)" dir="ltr" style="text-align:left;"></div>'
+    + '</div>'
+
+    // Row 3: پیشہ (occupation)
     + '<div class="form-group"><label class="form-label">پیشہ</label>'
     + '<input class="form-input" id="cf-complainant-profession" value="'+cmpProf+'" placeholder="پیشہ" dir="auto"></div>'
-    + '<div class="form-group"><label class="form-label">موبائل نمبر</label>'
-    + '<input class="form-input" id="cf-complainant-cell" value="'+cmpCell+'" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)"></div>'
-    + '</div>'
+
     + '</div>'
 
     // FIR Details — swapped pairs
