@@ -107,9 +107,10 @@ function render5CRow(a){
     <td style="font-size:11px;">${toDisplayDate(a.response_date)||'—'}</td>
     <td><span class="pill ${FIVEC_STATUS_CLS[a.status]||'pill-blue'}">${FIVEC_STATUS[a.status]||a.status}</span></td>
     <td style="text-align:center;">📎 ${att}</td>
-    <td style="white-space:nowrap;">
+    <td style="white-space:nowrap;direction:rtl;">
       <button class="btn btn-secondary btn-sm" onclick="open5CForm('${a.id}')">✏️</button>
       <button class="btn btn-primary btn-sm" onclick="open5CResponse('${a.id}')">📝</button>
+      <button class="btn btn-secondary btn-sm" onclick="_print5C('${a.id}')">🖨️</button>
       <button class="btn btn-danger btn-sm" onclick="confirmDelete5C('${a.id}',${a.serial_number})">🗑️</button>
     </td>
   </tr>`;
@@ -494,4 +495,57 @@ function print5CResponse(){
 <\/scr`+`ipt></body>
 </html>`);
   w.document.close();
+}
+
+// ── 5-C PRINT ────────────────────────────────────────────────
+async function _print5C(id) {
+  try {
+    const { data: a } = await supabaseClient.from('applications_5c')
+      .select('*, application_5c_numbers(*)').eq('id',id).single();
+    if (!a) { showToast('⚠️ درخواست نہیں ملی','error'); return; }
+    const o = currentOfficer || {};
+    const nums = (a.application_5c_numbers||[]);
+    const w = window.open('','_blank');
+    w.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+      @page{margin:15mm;size:A4;}
+      body{font-family:'Noto Nastaliq Urdu','Jameel Noori Nastaleeq',Arial,sans-serif;direction:rtl;color:#111;font-size:13px;}
+      .hdr{text-align:center;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:12px;}
+      table{width:100%;border-collapse:collapse;margin-bottom:10px;}
+      td,th{border:1px solid #333;padding:6px 10px;font-size:13px;}
+      th{background:#f0f0f0;width:35%;}
+      .resp{border:1px solid #ccc;padding:12px;min-height:80px;margin-top:8px;line-height:2;}
+      .footer{font-size:10px;color:#666;text-align:center;margin-top:20px;border-top:1px solid #ccc;padding-top:6px;}
+      .sig{display:flex;justify-content:space-between;margin-top:30px;}
+      .sig-box{text-align:center;min-width:180px;}
+      .sig-line{border-top:1px solid #000;padding-top:5px;margin-top:25px;}
+    </style></head><body>
+    <div class="hdr">
+      <h2>محکمہ پولیس پنجاب</h2>
+      <div>تھانہ ${o.station||'—'} · ضلع ${o.district||'—'}</div>
+      <div style="font-weight:700;margin-top:4px;">5-C درخواست — سیریل نمبر: <b>${a.serial_number}</b></div>
+    </div>
+    <table>
+      <tr><th>مدعی / درخواست گزار</th><td><b>${a.complainant_name||'—'}</b></td></tr>
+      <tr><th>شناختی کارڈ</th><td>${a.complainant_cnic||'—'}</td></tr>
+      <tr><th>موبائل</th><td>${a.complainant_cell||'—'}</td></tr>
+      <tr><th>موضوع</th><td>${a.subject||'—'}</td></tr>
+      <tr><th>درخواست کی تاریخ</th><td>${a.application_date||'—'}</td></tr>
+      <tr><th>جواب کی تاریخ</th><td>${a.response_date||'—'}</td></tr>
+    </table>
+    ${nums.length ? `<table><tr><th>درخواست نمبر</th><th>افسر</th><th>عہدہ</th></tr>
+    ${nums.map(n=>`<tr><td>${n.application_number||'—'}</td><td>${n.senior_officer_name||'—'}</td><td>${n.senior_officer_designation||'—'}</td></tr>`).join('')}
+    </table>` : ''}
+    <div style="font-weight:700;margin-top:10px;">جواب / رپورٹ:</div>
+    <div class="resp">${(a.response_text||'').replace(/\n/g,'<br>') || '&nbsp;'}</div>
+    <div class="sig">
+      <div class="sig-box"><div class="sig-line">تفتیشی افسر<br>${o.full_name||'—'} ${o.designation||''}</div></div>
+      <div class="sig-box"><div class="sig-line">SHO تھانہ ${o.station||'—'}<br>مہر و دستخط</div></div>
+    </div>
+    <div class="footer">Digital IO · محکمہ پولیس پنجاب · ${new Date().toLocaleDateString('en-PK')}</div>
+    <script>window.onload=()=>setTimeout(()=>window.print(),500);<\/script>
+    </body></html>`);
+    w.document.close();
+  } catch(e) { showToast('❌ '+e.message,'error'); }
 }

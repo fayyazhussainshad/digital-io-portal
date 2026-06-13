@@ -1,28 +1,21 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER  (sw.js)
-   Strategy:
-     • Static assets (JS, HTML, CSS): Cache-first with
-       network update in background (stale-while-revalidate)
-     • Supabase API calls: Network-first, no caching
-       (case data must always be fresh and secure)
-     • Offline fallback: offline.html shown when network
-       fails and no cached page is available
+   DIGITAL IO — SERVICE WORKER v12
+   Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME   = 'digital-io-v11';
-const OFFLINE_URL  = '/offline.html';
+const CACHE_NAME = 'digital-io-v12';
+const OFFLINE_URL = '/offline.html';
 
-// All static files that make the shell work offline
-const STATIC_FILES = [
+const CORE_ASSETS = [
   '/',
   '/index.html',
   '/offline.html',
   '/manifest.json',
   '/offline-store.js',
-  '/toolbar.js',
-  '/misal-docs.js',
   '/app-core.js',
   '/dashboard.js',
+  '/toolbar.js',
+  '/misal-docs.js',
   '/cases.js',
   '/forms.js',
   '/officialdocs.js',
@@ -40,87 +33,101 @@ const STATIC_FILES = [
   '/court.js',
   '/bin.js',
   '/admin.js',
-  '/icon-192.png',
-  '/icon-512.png',
+  '/patrol-share.html',
 ];
 
-// ── INSTALL: cache all static files ──
+// ── INSTALL ───────────────────────────────────────────────────
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      console.log('[SW] Pre-caching static files');
-      return cache.addAll(STATIC_FILES);
+      console.log('[SW] Caching core assets');
+      return cache.addAll(CORE_ASSETS).catch(err => {
+        console.warn('[SW] Some assets failed to cache:', err);
+      });
     }).then(() => self.skipWaiting())
   );
 });
 
-// ── ACTIVATE: delete old caches from previous versions ──
+// ── ACTIVATE ──────────────────────────────────────────────────
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
-        keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => {
-            console.log('[SW] Deleting old cache:', key);
-            return caches.delete(key);
-          })
+        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
       )
     ).then(() => self.clients.claim())
   );
 });
 
-// ── FETCH: route requests ──
+// ── FETCH — Offline First Strategy ────────────────────────────
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // 1. Skip non-GET requests (POST, PUT, DELETE — Supabase writes)
+  // Skip non-GET and external API calls
   if (event.request.method !== 'GET') return;
+  if (url.hostname === 'supabase.co' || url.hostname.includes('supabase')) return;
+  if (url.hostname === 'nominatim.openstreetmap.org') return;
+  if (url.hostname === 'api.anthropic.com') return;
 
-  // 2. Skip Supabase API and auth calls — always network, never cached
-  //    (case data must be real-time and secure)
-  if (url.hostname.includes('supabase.co')) return;
-
-  // 3. Skip browser-extension and non-http requests
-  if (!url.protocol.startsWith('http')) return;
-
-  // 4. For navigation requests (loading the app shell):
-  //    Network-first → fall back to cached index.html → fall back to offline.html
+  // HTML navigation — offline fallback
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          // Update cache with fresh version in background
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-          return response;
-        })
-        .catch(() =>
-          caches.match('/index.html')
-            .then(cached => cached || caches.match(OFFLINE_URL))
-        )
+      fetch(event.request).catch(() =>
+        caches.match('/offline.html')
+      )
     );
     return;
   }
 
-  // 5. For static assets (JS, CSS, images, fonts):
-  //    Cache-first → network fallback (stale-while-revalidate)
+  // Cache-first for JS/CSS/fonts
   event.respondWith(
     caches.match(event.request).then(cached => {
-      const networkFetch = fetch(event.request).then(response => {
-        // Update cache with fresh copy if request succeeded
+      if (cached) return cached;
+      return fetch(event.request).then(response => {
+        // Cache successful responses
         if (response && response.status === 200) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
         return response;
-      }).catch(() => null);
+      }).catch(() => caches.match('/offline.html'));
+    })
+  );
+});
 
-      // Return cached version immediately; update happens in background
-      return cached || networkFetch ||
-        (event.request.destination === 'document'
-          ? caches.match(OFFLINE_URL)
-          : new Response('', { status: 404 }));
+// ── BACKGROUND SYNC ───────────────────────────────────────────
+self.addEventListener('sync', event => {
+  if (event.tag === 'sync-cases') {
+    event.waitUntil(console.log('[SW] Background sync: cases'));
+  }
+});
+
+// ── PUSH NOTIFICATIONS ────────────────────────────────────────
+self.addEventListener('push', event => {
+  const data = event.data ? event.data.json() : { title:'Digital IO', body:'یاددہانی' };
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'Digital IO یاددہانی', {
+      body: data.body || '',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      dir: 'rtl',
+      lang: 'ur',
+      vibrate: [200, 100, 200],
+      tag: data.tag || 'reminder',
+      data: data.url ? { url: data.url } : {},
+    })
+  );
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const url = event.notification.data?.url || '/';
+  event.waitUntil(
+    clients.matchAll({ type:'window' }).then(clientList => {
+      for (const client of clientList) {
+        if (client.url === url && 'focus' in client) return client.focus();
+      }
+      if (clients.openWindow) return clients.openWindow(url);
     })
   );
 });
