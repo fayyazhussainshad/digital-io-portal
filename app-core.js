@@ -61,21 +61,16 @@ const STATUS_CLASSES = {
 };
 
 const POLICE_NEWS = [
-  '⚖️ Supreme Court: Right to bail is a constitutional right under Article 10 — SC Judgment 2024',
-  '🏛️ Lahore High Court: Expedited challan submission within 14 days of arrest — LHC Standing Order',
-  '📋 AMENDMENT: Section 302 PPC — Court can award Diyat in addition to Qisas — SC Ruling',
-  '🚨 Punjab Police: e-FIR system introduced for Category-B offences — effective citywide',
-  '⚖️ SC: Confessions under duress are inadmissible — Full Bench Ruling confirmed',
-  '🔵 HIGH COURT: Forensic evidence must accompany challan for CNSA cases — LHC Order',
-  '📜 AMENDMENT: Anti-Rape Act 2021 — DNA evidence mandatory within 72 hours of incident',
-  '🏛️ SC: Accused right to free legal aid reaffirmed under Article 10-A Constitution of Pakistan',
-  '⚠️ ADVISORY: Section 160 CrPC notices must be served via proper channel — SHO responsible',
-  '📋 AMENDMENT: Arms Ordinance 1965 — Possession of prohibited bore now non-bailable',
-  '🔵 LHC ORDER: Medical examination in hurt cases must be conducted within 6 hours — mandatory',
-  '⚖️ SC JUDGMENT: Absconder declaration under Section 87 CrPC requires prior Sections 86/87',
-  '🚨 NEW LAW: PECA amendments — digital evidence now fully admissible in Pakistani courts',
-  '📜 Punjab Police: Bodycam footage to be uploaded to secure server within 24 hours',
-  '🏛️ HIGH COURT: Challan incomplete without postmortem in homicide cases — strict compliance ordered',
+  '🤲 اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ — درود ابراہیمی پڑھیں',
+  '📖 إِنَّ مَعَ الْعُسْرِ يُسْرًا — بے شک تکلیف کے ساتھ آسانی ہے (سورۃ الانشراح)',
+  '🤲 سُبْحَانَ اللَّهِ وَبِحَمْدِهِ سُبْحَانَ اللَّهِ الْعَظِيمِ — اللہ کی تسبیح کریں',
+  '📖 وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا — جو اللہ سے ڈرے اللہ اسے راستہ دیتا ہے',
+  '🤲 اَسْتَغْفِرُاللّٰہَ الْعَظِیْمَ وَاَتُوْبُ اِلَیْہِ — اللہ سے بخشش مانگیں',
+  '📖 وَتَوَكَّلْ عَلَى اللَّهِ وَكَفَىٰ بِاللَّهِ وَكِيلًا — اللہ پر بھروسہ کریں',
+  '🤲 لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ — توحید کا اقرار کریں',
+  '📖 إِنَّ اللَّهَ مَعَ الصَّابِرِينَ — بے شک اللہ صبر کرنے والوں کے ساتھ ہے',
+  '🤲 حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ — اللہ ہمارے لیے کافی ہے',
+  '📖 فَاذْكُرُونِي أَذْكُرْكُمْ — مجھے یاد کرو میں تمہیں یاد کروں گا',
 ];
 
 // ═══════════════════════════════════════════════════

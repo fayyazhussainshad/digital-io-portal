@@ -401,7 +401,24 @@ input, textarea, select { font-family: var(--font-main); }
 
 /* ── APP LAYOUT ── */
 #main-app { display: flex; flex-direction: row-reverse; height: 100vh; overflow: hidden; }
-.sidebar { width: var(--sidebar-width); background: var(--bg-secondary); border-left: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; transition: transform 0.3s ease; overflow-y: auto; }
+/* Sidebar always overlay mode — slides from right */
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: fixed;
+  right: 0; left: auto;
+  top: 0; bottom: 0;
+  z-index: 1000;
+  -webkit-transform: translateX(100%);
+  transform: translateX(100%);
+  -webkit-transition: transform 0.3s ease;
+  transition: transform 0.3s ease;
+  overflow-y: auto;
+}
 .sidebar-logo { padding: 18px 16px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
 .sidebar-logo-icon { font-size: 24px; }
 .sidebar-logo-text { font-family: var(--font-display); font-size: 18px; font-weight: 800; letter-spacing: 2px; color: var(--accent); }
@@ -422,7 +439,7 @@ input, textarea, select { font-family: var(--font-main); }
 .logout-btn { width: 100%; background: var(--red-bg); border: 1px solid rgba(239,68,68,0.2); border-radius: var(--radius-sm); padding: 9px; color: var(--red); font-size: 12px; font-weight: 600; transition: all 0.15s; }
 .logout-btn:hover { background: rgba(239,68,68,0.15); }
 .sidebar-version { font-size: 9px; color: var(--text-faint); text-align: center; margin-top: 6px; }
-.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; width: 100%; }
 .topbar { height: var(--topbar-height); background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; justify-content: space-between; flex-shrink: 0; }
 .topbar-left { display: flex; align-items: center; gap: 12px; }
 .topbar-right { display: flex; align-items: center; gap: 8px; }
@@ -433,7 +450,7 @@ input, textarea, select { font-family: var(--font-main); }
 .topbar-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); background: var(--bg-tertiary); padding: 5px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); }
 .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: statusPulse 2s infinite; }
 @keyframes statusPulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-.mobile-menu-btn { display: none; background: none; border: none; color: var(--text-secondary); font-size: 20px; }
+.mobile-menu-btn { display: flex; background: none; border: none; color: var(--text-secondary); font-size: 20px; }
 .page-content { flex: 1; overflow-y: auto; padding: 20px; }
 .bottombar { height: var(--bottombar-height); background: var(--bg-tertiary); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font-size: 10px; color: var(--text-faint); flex-shrink: 0; }
 
@@ -496,8 +513,8 @@ select.form-input { direction: rtl; text-align: right; }
 .detail-row:last-child { border-bottom: none; }
 .detail-key { color: var(--text-muted); }
 .detail-val { color: var(--text-primary); font-weight: 600; text-align: right; max-width: 60%; }
-.news-ticker-wrap { background: linear-gradient(90deg, var(--nav-active), var(--bg-tertiary), var(--nav-active)); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 0; overflow: hidden; margin-bottom: 16px; }
-.news-ticker-text { font-size: 12px; color: var(--accent); letter-spacing: 1px; font-weight: 600; white-space: nowrap; display: inline-block; animation: ticker 40s linear infinite; padding-left: 100%; }
+.news-ticker-wrap { background: rgba(56,189,248,0.06); border: 1px solid rgba(56,189,248,0.15); border-radius: 6px; padding: 4px 16px; overflow: hidden; margin-bottom: 8px; display:flex; align-items:center; justify-content:center; }
+.news-ticker-text { font-size: 13px; color: var(--accent); font-weight: 600; font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; white-space: nowrap; direction: rtl; }
 @keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-100%)} }
 .officer-card { background: linear-gradient(135deg, var(--bg-tertiary), var(--nav-active)); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
 .officer-card-avatar { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-dark), var(--accent)); border: 3px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; color: #fff; flex-shrink: 0; overflow: hidden; font-family: var(--font-display); }
@@ -811,23 +828,18 @@ input[id*="cnic"], input[id*="cell"] {
     <div class="sidebar-logo"><div class="sidebar-logo-icon">🛡️</div><div><div class="sidebar-logo-text">Digital IO</div><div class="sidebar-logo-sub">Case Management</div></div></div>
     <div class="sidebar-profile"><div class="sidebar-avatar" id="sidebar-avatar">IO</div><div><div class="sidebar-profile-name" id="sidebar-name">Loading...</div><div class="sidebar-profile-role" id="sidebar-role">Officer</div></div></div>
     <nav class="sidebar-nav">
-      <div class="nav-section-label">Main</div>
-      <div class="nav-item active" onclick="closeMobileSidebar();showPage('dashboard',this)"><span class="nav-icon">🏠</span> Dashboard</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('cases',this)"><span class="nav-icon">📁</span> My Cases <span class="nav-badge" id="badge-cases">0</span></div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('forms',this)"><span class="nav-icon">📥</span> Templates</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('fivec',this)"><span class="nav-icon">📋</span> 5-C Applications</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('incident',this)"><span class="nav-icon">🚨</span> Incident Report</div>
-      <div class="nav-section-label">Tools</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('patrol',this)"><span class="nav-icon">🚔</span> Patrol Log</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('cdr',this)"><span class="nav-icon">📞</span> CDR Analyzer</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('law',this)"><span class="nav-icon">⚖️</span> Law Library</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('court',this)"><span class="nav-icon">⚖️</span> عدالتی پیشیاں</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('performance',this)"><span class="nav-icon">📊</span> Performance</div>
-      <div class="nav-section-label">System</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('backup',this)"><span class="nav-icon">☁️</span> Backup & Sync</div>
-      <div class="nav-item" id="admin-nav-item" style="display:none;" onclick="closeMobileSidebar();showPage('admin',this)"><span class="nav-icon">👮</span> Admin Panel</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('bin',this)"><span class="nav-icon">🗑️</span> Recycle Bin</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('settings',this)"><span class="nav-icon">⚙️</span> Settings</div>
+      <div class="nav-item active" onclick="closeMobileSidebar();showPage('dashboard',this)"><span class="nav-icon">🏠</span> ڈیش بورڈ</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('cases',this)"><span class="nav-icon">📁</span> میرے مقدمات <span class="nav-badge" id="badge-cases">0</span></div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('forms',this)"><span class="nav-icon">📥</span> ٹیمپلیٹس</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('fivec',this)"><span class="nav-icon">📋</span> مارک شدہ درخواستیں</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('incident',this)"><span class="nav-icon">🚨</span> واقعاتی رپورٹ</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('patrol',this)"><span class="nav-icon">🚔</span> گشت</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('law',this)"><span class="nav-icon">⚖️</span> قانونی لائبریری</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('performance',this)"><span class="nav-icon">📊</span> کارکردگی</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('backup',this)"><span class="nav-icon">☁️</span> بیک اپ</div>
+      <div class="nav-item" id="admin-nav-item" style="display:none;" onclick="closeMobileSidebar();showPage('admin',this)"><span class="nav-icon">👮</span> ایڈمن</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('bin',this)"><span class="nav-icon">🗑️</span> حذف شدہ مواد</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('settings',this)"><span class="nav-icon">⚙️</span> ترتیبات</div>
     </nav>
     <div class="sidebar-footer"><button class="logout-btn" onclick="doLogout()">🚪 Sign Out</button><div class="sidebar-version">Digital IO v4.0 · Secure</div></div>
   </div>
@@ -835,14 +847,16 @@ input[id*="cnic"], input[id*="cell"] {
   <div id="sidebar-toggle" onclick="toggleSidebarCollapse()" title="Hide/Show Sidebar">◀</div>
   <div class="main-area">
     <div class="topbar">
-      <div class="topbar-left"><button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button><div class="topbar-title" id="topbar-title">Dashboard</div><div class="db-badge" id="db-badge">⚙ Connecting...</div></div>
+      <div class="topbar-left"><div class="topbar-title" id="topbar-title">ڈیش بورڈ</div><div class="db-badge" id="db-badge">⚙ Connecting...</div></div>
       <div class="topbar-right">
 
         <button class="topbar-btn" onclick="closeMobileSidebar();showPage('search',null)" title="Search">🔍</button>
         <button class="topbar-btn" onclick="closeMobileSidebar();showPage('reminders',null)" title="Reminders">🔔</button>
         <button class="topbar-btn" onclick="triggerBackupNow()" title="Backup Now">☁️</button>
-        <button class="topbar-btn" id="theme-picker-btn" onclick="openThemePicker()" title="Change Theme" style="font-size:16px;">🎨</button>
+        <button class="topbar-btn" id="theme-picker-btn" onclick="openThemePicker()" title="تھیم" style="font-size:16px;">🎨</button>
+        <button class="topbar-btn" onclick="closeMobileSidebar();showPage('cdr',null)" title="CDR Analyzer" style="font-weight:700;font-size:11px;">📞CDR</button>
         <div class="topbar-status"><span class="status-dot" id="status-dot"></span><span id="status-text">Connecting</span></div>
+        <button class="mobile-menu-btn" onclick="toggleSidebar()" style="margin-right:4px;">☰</button>
       </div>
     </div>
     <div class="page-content" id="page-content"><div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Loading...</div></div></div>
@@ -905,27 +919,11 @@ function _sidebarClose() {
   _mobOpen = false;
 }
 
-function closeMobileSidebar() {
-  if (window.innerWidth <= 900) { _sidebarClose(); }
-}
+function closeMobileSidebar() { _sidebarClose(); }
 
-window.addEventListener('load', function() {
-  if (window.innerWidth <= 900) { _sidebarClose(); }
-  else {
-    var sb = document.getElementById('sidebar');
-    if (sb) { sb.style.cssText = ''; sb.classList.remove('collapsed'); }
-  }
-});
-
+window.addEventListener('load', function() { _sidebarClose(); });
 window.addEventListener('resize', function() {
-  if (window.innerWidth <= 900) { _sidebarClose(); }
-  else {
-    var sb = document.getElementById('sidebar');
-    if (sb) { sb.style.cssText = ''; sb.classList.remove('collapsed'); }
-    _mobOpen = false;
-    var ov = document.getElementById('mob-overlay');
-    if (ov) ov.style.display = 'none';
-  }
+  if (!_mobOpen) _sidebarClose();
 });
 </script>
 
