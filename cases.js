@@ -172,11 +172,115 @@ function renderCaseRow(c,sn){
       <div style="display:flex;gap:2px;justify-content:center;">
         <button class="btn btn-secondary btn-sm" onclick="openCaseWorkspace('${c.id}')" title="Open Case Form &amp; FIR Documents">📄</button>
         <button class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')" title="Edit Case Details">✏️</button>
+        <button class="btn btn-secondary btn-sm" onclick="downloadCaseFile('${c.id}')" title="Download Case File">⬇️</button>
         <button class="btn btn-primary   btn-sm" onclick="openShareModal('${c.id}')"    title="Share Case via Email or WhatsApp">📤</button>
         <button class="btn btn-danger    btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number||'?'}')" title="Delete Case">🗑️</button>
       </div>
     </td>
   </tr>`;
+}
+
+// ── DOWNLOAD CASE FILE ──
+async function downloadCaseFile(id) {
+  const c = _casesCache.find(x=>x.id===id) || await getCase(id);
+  if (!c) { showToast('❌ Case not found','error'); return; }
+
+  openModal('⬇️ Case File Download — FIR ' + (c.fir_number||''),
+    `<div style="display:flex;flex-direction:column;gap:12px;padding:10px 0;">
+      <div style="font-size:13px;color:var(--text-secondary);text-align:center;margin-bottom:4px;">FIR ${c.fir_number||'—'} · ${c.complainant||'—'}</div>
+      <button class="btn btn-primary" style="padding:14px;font-size:14px;" onclick="closeModal();_downloadCaseTxt('${id}')">
+        📄 Text File Download کریں (.txt)
+      </button>
+      <button class="btn btn-secondary" style="padding:14px;font-size:14px;" onclick="closeModal();_downloadCaseHTML('${id}')">
+        🌐 HTML File Download کریں (Print → PDF)
+      </button>
+      <div style="font-size:10px;color:var(--text-faint);text-align:center;">PDF کے لیے: HTML کھولیں → Ctrl+P → Save as PDF</div>
+    </div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>`
+  );
+}
+
+async function _downloadCaseTxt(id) {
+  const c = _casesCache.find(x=>x.id===id) || await getCase(id);
+  if (!c) return;
+  const o = currentOfficer || {};
+  let txt = '══════════════════════════════════\n';
+  txt += '      محکمہ پولیس پنجاب\n';
+  txt += `      تھانہ ${o.station||'—'} ضلع ${o.district||'—'}\n`;
+  txt += '══════════════════════════════════\n\n';
+  txt += `مقدمہ نمبر:        ${c.fir_number||'—'}\n`;
+  txt += `تاریخ اندراج:      ${formatDate(c.fir_date)}\n`;
+  txt += `تاریخ وقوعہ:       ${formatDate(c.occurrence_date)}\n`;
+  txt += `دفعات:             ${c.section_of_law||'—'}\n`;
+  txt += `جرم:               ${c.offence_type||'—'}\n`;
+  txt += `صورتحال:           ${STATUS_LABELS[c.status]||c.status}\n`;
+  txt += `\n── مدعی ──────────────────────────\n`;
+  txt += `نام:               ${c.complainant||'—'}\n`;
+  txt += `شناختی کارڈ:       ${c.complainant_cnic||'—'}\n`;
+  txt += `موبائل:            ${c.complainant_cell||'—'}\n`;
+  txt += `پیشہ:              ${c.complainant_profession||'—'}\n`;
+  txt += `\n── رپورٹنگ افسر ──────────────────\n`;
+  txt += `نام:               ${o.full_name||'—'}\n`;
+  txt += `عہدہ:              ${o.designation||'—'}\n`;
+  txt += `تھانہ:             ${o.station||'—'}\n`;
+  txt += `\nتاریخ پرنٹ: ${new Date().toLocaleDateString('en-PK')}\n`;
+  txt += '══════════════════════════════════\n';
+  txt += '         Digital IO · Punjab Police\n';
+  txt += '══════════════════════════════════\n';
+
+  const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `Case-FIR-${c.fir_number||'file'}-${new Date().toISOString().slice(0,10)}.txt`;
+  a.click();
+  showToast('✅ File Download ہو رہی ہے','success');
+}
+
+async function _downloadCaseHTML(id) {
+  const c = _casesCache.find(x=>x.id===id) || await getCase(id);
+  if (!c) return;
+  const o = currentOfficer || {};
+  const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
+  <title>FIR ${c.fir_number||''}</title>
+  <style>
+    body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',Arial,sans-serif;direction:rtl;margin:30px;color:#111;font-size:14px;}
+    h2,h3{text-align:center;} .row{display:flex;gap:20px;margin-bottom:8px;}
+    .lbl{color:#555;min-width:140px;font-weight:600;} .val{flex:1;}
+    .sec{border-top:1px solid #ccc;margin:16px 0 8px;padding-top:8px;font-weight:700;color:#1a3a5c;}
+    .footer{text-align:center;font-size:11px;color:#888;margin-top:40px;border-top:1px solid #ccc;padding-top:10px;}
+    @media print{body{margin:15mm;}}
+  </style></head><body>
+  <h2>محکمہ پولیس پنجاب</h2>
+  <h3>تھانہ ${o.station||'—'} ضلع ${o.district||'—'}</h3>
+  <hr>
+  <div class="row"><span class="lbl">مقدمہ نمبر:</span><span class="val"><b>${c.fir_number||'—'}</b></span></div>
+  <div class="row"><span class="lbl">تاریخ اندراج:</span><span class="val">${formatDate(c.fir_date)}</span></div>
+  <div class="row"><span class="lbl">تاریخ وقوعہ:</span><span class="val">${formatDate(c.occurrence_date)}</span></div>
+  <div class="row"><span class="lbl">دفعات:</span><span class="val">${c.section_of_law||'—'}</span></div>
+  <div class="row"><span class="lbl">جرم:</span><span class="val">${c.offence_type||'—'}</span></div>
+  <div class="row"><span class="lbl">صورتحال:</span><span class="val">${STATUS_LABELS[c.status]||c.status}</span></div>
+  <div class="sec">مدعی کی تفصیل</div>
+  <div class="row"><span class="lbl">نام:</span><span class="val">${c.complainant||'—'}</span></div>
+  <div class="row"><span class="lbl">شناختی کارڈ:</span><span class="val">${c.complainant_cnic||'—'}</span></div>
+  <div class="row"><span class="lbl">موبائل:</span><span class="val">${c.complainant_cell||'—'}</span></div>
+  <div class="row"><span class="lbl">پیشہ:</span><span class="val">${c.complainant_profession||'—'}</span></div>
+  <div class="sec">رپورٹنگ افسر</div>
+  <div class="row"><span class="lbl">نام:</span><span class="val">${o.full_name||'—'}</span></div>
+  <div class="row"><span class="lbl">عہدہ:</span><span class="val">${o.designation||'—'}</span></div>
+  <div class="row"><span class="lbl">تھانہ:</span><span class="val">${o.station||'—'}</span></div>
+  <div style="margin-top:50px;display:flex;justify-content:space-between;">
+    <div style="text-align:center;"><div style="border-top:1px solid #333;width:200px;padding-top:6px;">دستخط رپورٹنگ افسر</div></div>
+    <div style="text-align:center;"><div style="border-top:1px solid #333;width:200px;padding-top:6px;">SHO تھانہ ${o.station||'—'}</div></div>
+  </div>
+  <div class="footer">Digital IO · محکمہ پولیس پنجاب · تاریخ: ${new Date().toLocaleDateString('en-PK')}</div>
+  </body></html>`;
+
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `Case-FIR-${c.fir_number||'file'}-${new Date().toISOString().slice(0,10)}.html`;
+  a.click();
+  showToast('✅ HTML file download ہوئی — browser میں کھولیں، Ctrl+P سے PDF بنائیں','success');
 }
 
 // ── SHARE CASE ──

@@ -890,7 +890,7 @@ input[id*="cnic"], input[id*="cell"] {
 <script src="bin.js"></script>
 <script src="admin.js"></script>
 
-<!-- ── Mobile sidebar toggle ── -->
+<!-- ── Sidebar ── -->
 <script>
 var _mobOpen = false;
 
@@ -902,26 +902,8 @@ function _sidebarOpen() {
   var sb = document.getElementById('sidebar');
   var ov = document.getElementById('mob-overlay');
   if (!sb) return;
-  // Remove collapsed class so overflow:hidden doesn't hide content
   sb.classList.remove('collapsed');
-  // Force open with important
-  sb.style.cssText = [
-    'position:fixed!important',
-    'left:0!important',
-    'top:0!important',
-    'bottom:0!important',
-    'width:260px!important',
-    'min-width:260px!important',
-    'z-index:1000!important',
-    'opacity:1!important',
-    'pointer-events:auto!important',
-    'overflow-y:auto!important',
-    '-webkit-transform:translateX(0)!important',
-    'transform:translateX(0)!important',
-    '-webkit-transition:-webkit-transform 0.3s ease!important',
-    'transition:transform 0.3s ease!important',
-    'box-shadow:4px 0 20px rgba(0,0,0,0.5)!important'
-  ].join(';');
+  sb.style.cssText = 'position:fixed!important;left:0!important;top:0!important;bottom:0!important;width:260px!important;min-width:260px!important;z-index:1000!important;opacity:1!important;pointer-events:auto!important;overflow-y:auto!important;-webkit-transform:translateX(0)!important;transform:translateX(0)!important;-webkit-transition:transform 0.3s ease!important;transition:transform 0.3s ease!important;box-shadow:4px 0 20px rgba(0,0,0,0.5)!important;';
   if (ov) ov.style.cssText = 'display:block!important;position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;background:rgba(0,0,0,0.55)!important;z-index:999!important;';
   _mobOpen = true;
 }
@@ -930,53 +912,30 @@ function _sidebarClose() {
   var sb = document.getElementById('sidebar');
   var ov = document.getElementById('mob-overlay');
   if (!sb) return;
-  sb.style.cssText = [
-    'position:fixed!important',
-    'left:0!important',
-    'top:0!important',
-    'bottom:0!important',
-    'width:260px!important',
-    'min-width:260px!important',
-    'z-index:1000!important',
-    'opacity:1!important',
-    '-webkit-transform:translateX(-100%)!important',
-    'transform:translateX(-100%)!important',
-    '-webkit-transition:-webkit-transform 0.3s ease!important',
-    'transition:transform 0.3s ease!important'
-  ].join(';');
+  sb.style.cssText = 'position:fixed!important;left:0!important;top:0!important;bottom:0!important;width:260px!important;min-width:260px!important;z-index:1000!important;opacity:1!important;-webkit-transform:translateX(-100%)!important;transform:translateX(-100%)!important;-webkit-transition:transform 0.3s ease!important;transition:transform 0.3s ease!important;';
   if (ov) ov.style.cssText = 'display:none!important;';
   _mobOpen = false;
 }
 
 function closeMobileSidebar() {
-  // Only close on mobile
-  if (window.innerWidth <= 768) { _sidebarClose(); }
+  if (window.innerWidth <= 900) { _sidebarClose(); }
 }
 
-// Init on load
 window.addEventListener('load', function() {
-  if (window.innerWidth <= 768) {
-    _sidebarClose(); // mobile: start closed
+  if (window.innerWidth <= 900) {
+    _sidebarClose();
   } else {
-    // Desktop: make sure sidebar is fully visible, no transform
     var sb = document.getElementById('sidebar');
-    if (sb) {
-      sb.style.cssText = ''; // clear all inline styles on desktop
-      sb.classList.remove('collapsed');
-    }
+    if (sb) { sb.style.cssText = ''; sb.classList.remove('collapsed'); }
   }
 });
 
 window.addEventListener('resize', function() {
   var sb = document.getElementById('sidebar');
-  if (window.innerWidth <= 768) {
+  if (window.innerWidth <= 900) {
     _sidebarClose();
   } else {
-    // Desktop: clear mobile styles
-    if (sb) {
-      sb.style.cssText = '';
-      sb.classList.remove('collapsed');
-    }
+    if (sb) { sb.style.cssText = ''; sb.classList.remove('collapsed'); }
     _mobOpen = false;
     var ov = document.getElementById('mob-overlay');
     if (ov) ov.style.display = 'none';
@@ -986,14 +945,12 @@ window.addEventListener('resize', function() {
 
 <!-- ── Sidebar collapse ── -->
 <script>
-(function(){
-  localStorage.removeItem('dio_sidebar_collapsed');
-})();
-
-function toggleSidebarCollapse(){
-  if (window.innerWidth <= 768) { toggleSidebar(); }
-  // Desktop: do nothing — sidebar always stays open
+(function(){ localStorage.removeItem('dio_sidebar_collapsed'); })();
+function toggleSidebarCollapse() {
+  if (window.innerWidth <= 900) { toggleSidebar(); }
 }
+</script>
+
 </script>
 
 <!-- ── PWA: register service worker ── -->
