@@ -82,7 +82,7 @@ function _renderCalendar(dates) {
   });
 
   let html = `<div style="text-align:center;font-size:13px;font-weight:700;margin-bottom:10px;">${monthName}</div>`;
-  html += `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;">`;
+  html += `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;direction:rtl;text-align:center;">`;
   ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d=>{
     html+=`<div style="font-size:10px;color:var(--text-faint);padding:3px;">${d}</div>`;
   });
@@ -140,7 +140,7 @@ async function _openAddCourtDate(existing) {
   const e = existing || {};
 
   openModal(existing ? '✏️ پیشی تبدیل کریں' : '+ نئی پیشی شامل کریں', `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;direction:rtl;">
       <div>
         <label class="form-label">FIR نمبر</label>
         <select class="form-input" id="cd-fir">

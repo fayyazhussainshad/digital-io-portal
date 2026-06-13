@@ -250,7 +250,7 @@ function _iStyle(w) {
   return `border:none;border-bottom:1px solid #aaa;padding:3px 6px;font-family:'Jameel Noori Nastaleeq',serif;font-size:15px;background:transparent;outline:none;width:${w};direction:rtl;`;
 }
 function _lbl() { return 'font-size:13px;color:#555;margin-bottom:4px;display:block;'; }
-function _grid2() { return 'display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;'; }
+function _grid2() { return 'display:grid;grid-template-columns:1fr 1fr;gap:12px;direction:rtl;margin-bottom:12px;'; }
 function _addBtn() { return 'padding:5px 14px;border:1px dashed #1a3a5c;border-radius:4px;background:#f0f4f8;color:#1a3a5c;cursor:pointer;font-family:"Jameel Noori Nastaleeq",serif;font-size:13px;margin-bottom:14px;'; }
 
 function _secHeader(num, title) {
@@ -296,7 +296,7 @@ function _incAddVictim() {
       <div style="font-size:13px;font-weight:700;color:#1a3a5c;">متاثرہ ${i}</div>
       <button onclick="document.getElementById('victim-${i}').remove()" style="border:none;background:none;color:#c00;cursor:pointer;font-size:16px;">✕</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;direction:rtl;">
       <div><label style="${_lbl()}">نام</label><input style="${_iStyle('100%')}border:1px solid #ddd;border-radius:4px;padding:5px 8px;"></div>
       <div><label style="${_lbl()}">شناختی کارڈ</label><input style="${_iStyle('100%')}border:1px solid #ddd;border-radius:4px;padding:5px 8px;"></div>
       <div><label style="${_lbl()}">چوٹیں / حالت</label>
@@ -319,7 +319,7 @@ function _incAddSuspect() {
       <div style="font-size:13px;font-weight:700;color:#c00;">ملزم ${i}</div>
       <button onclick="document.getElementById('suspect-${i}').remove()" style="border:none;background:none;color:#c00;cursor:pointer;font-size:16px;">✕</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;direction:rtl;">
       <div><label style="${_lbl()}">نام / عرفیت</label><input style="${_iStyle('100%')}border:1px solid #fecaca;border-radius:4px;padding:5px 8px;"></div>
       <div><label style="${_lbl()}">شناختی کارڈ</label><input style="${_iStyle('100%')}border:1px solid #fecaca;border-radius:4px;padding:5px 8px;"></div>
       <div><label style="${_lbl()}">موبائل نمبر</label><input style="${_iStyle('100%')}border:1px solid #fecaca;border-radius:4px;padding:5px 8px;"></div>
@@ -343,7 +343,7 @@ function _incAddWitness() {
       <div style="font-size:13px;font-weight:700;color:#0369a1;">گواہ ${i}</div>
       <button onclick="document.getElementById('witness-${i}').remove()" style="border:none;background:none;color:#c00;cursor:pointer;font-size:16px;">✕</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;direction:rtl;">
       <div><label style="${_lbl()}">نام</label><input style="${_iStyle('100%')}border:1px solid #bae6fd;border-radius:4px;padding:5px 8px;"></div>
       <div><label style="${_lbl()}">شناختی کارڈ</label><input style="${_iStyle('100%')}border:1px solid #bae6fd;border-radius:4px;padding:5px 8px;"></div>
       <div><label style="${_lbl()}">موبائل نمبر</label><input style="${_iStyle('100%')}border:1px solid #bae6fd;border-radius:4px;padding:5px 8px;"></div>
@@ -363,7 +363,7 @@ function _incAddOfficer() {
       <div style="font-size:13px;font-weight:700;color:#1a3a5c;">افسر ${i}</div>
       <button onclick="document.getElementById('officer-${i}').remove()" style="border:none;background:none;color:#c00;cursor:pointer;font-size:16px;">✕</button>
     </div>
-    <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;direction:rtl;">
       <div><label style="${_lbl()}">نام</label><input style="${_iStyle('100%')}border:1px solid #bae6fd;border-radius:4px;padding:4px 8px;"></div>
       <div><label style="${_lbl()}">رینک</label>
         <select style="${_iStyle('100%')}border:1px solid #bae6fd;border-radius:4px;padding:4px 8px;">

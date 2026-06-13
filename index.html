@@ -464,10 +464,15 @@ input, textarea, select { font-family: var(--font-main); }
 .stat-purple .stat-num { color: var(--purple); }
 .form-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
 .form-label { font-size: 11px; color: var(--text-muted); letter-spacing: 0.5px; font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; display:block; width:100%; text-align:right; direction:rtl; }
-.form-input { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 12px; color: var(--text-primary); font-size: 14px; outline: none; transition: border 0.15s; font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',var(--font-main); width: 100%; }
+.form-input { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 12px; color: var(--text-primary); font-size: 14px; outline: none; transition: border 0.15s; font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',var(--font-main); width: 100%; direction: rtl; text-align: right; }
 .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
-.form-input::placeholder { color: var(--text-faint); }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-input::placeholder { color: var(--text-faint); text-align: right; direction: rtl; }
+.form-input[type="date"], .form-input[type="time"], .form-input[type="number"], .form-input[type="email"] { direction: ltr; text-align: left; font-family: var(--font-mono), monospace; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; direction: rtl; }
+/* CNIC, Cell, FIR number — keep LTR for numbers */
+input[id*="cnic"], input[id*="cell"], input[id*="-fir"]:not([id*="writer"]):not([id*="number"]) { direction: ltr !important; text-align: left !important; font-family: var(--font-mono), monospace !important; }
+textarea.form-input { direction: rtl; text-align: right; }
+select.form-input { direction: rtl; text-align: right; }
 .data-table { width: 100%; border-collapse: collapse; }
 .data-table th { text-align: left; font-size: 9px; color: var(--text-faint); letter-spacing: 1.5px; text-transform: uppercase; padding: 8px 12px; border-bottom: 1px solid var(--border); font-family: var(--font-display); }
 .data-table td { padding: 11px 12px; border-bottom: 1px solid var(--border-light); font-size: 12px; vertical-align: middle; }

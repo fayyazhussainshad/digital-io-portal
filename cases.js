@@ -280,7 +280,7 @@ function caseFormHTML(c) {
     // FIR + Date — swapped: Date left, FIR Number right
     + '<div class="form-row">'
     + '<div class="form-group"><label class="form-label">تاریخ اندراج مقدمہ *</label>'
-    + '<input class="form-input" id="cf-date" value="'+date+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" maxlength="10"></div>'
+    + '<input class="form-input" id="cf-date" value="'+date+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)"></div>'
     + '<div class="form-group"><label class="form-label">مقدمہ نمبر *</label>'
     + '<input class="form-input" id="cf-fir" value="'+fir+'" placeholder="e.g. 245/2025" dir="auto"></div>'
     + '</div>'
@@ -290,7 +290,7 @@ function caseFormHTML(c) {
     + '<div class="form-group"><label class="form-label">Status *</label>'
     + '<select class="form-input" id="cf-status">'+statusOpts+'</select></div>'
     + '<div class="form-group"><label class="form-label">تاریخ وقوعہ</label>'
-    + '<input class="form-input" id="cf-occurrence-date" value="'+occ+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" maxlength="10"></div>'
+    + '<input class="form-input" id="cf-occurrence-date" value="'+occ+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)"></div>'
     + '</div>'
 
     // Sections
@@ -366,7 +366,7 @@ function buildCrossFields(c) {
     + '<div class="form-group"><label class="form-label">Cross FIR Number</label>'
     + '<input class="form-input" id="cf-cross-fir" value="'+cfn+'" placeholder="e.g. 246/2025" dir="auto"></div>'
     + '<div class="form-group"><label class="form-label">Cross FIR Date</label>'
-    + '<input class="form-input" id="cf-cross-fir-date" value="'+cfd+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" maxlength="10"></div>'
+    + '<input class="form-input" id="cf-cross-fir-date" value="'+cfd+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)"></div>'
     + '</div>'
     + '<div class="form-row">'
     + '<div class="form-group"><label class="form-label">Cross Complainant Name</label>'
@@ -1359,7 +1359,7 @@ function buildDocTemplate(docName, c, savedContent) {
       <div style="font-weight:600;margin-bottom:6px;">تفصیلات / Details:</div>
       <div class="template-field" contenteditable="true" style="min-height:200px;display:block;width:100%;border:1px dashed #aaa;padding:10px;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu','Times New Roman',serif;"></div>
     </div>
-    <div style="direction:rtl;margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+    <div style="direction:rtl;margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:20px;direction:rtl;">
       <div style="text-align:center;"><div style="border-top:1px solid #333;margin-top:40px;padding-top:4px;font-size:11px;">تفتیشی افسر / Investigation Officer</div></div>
       <div style="text-align:center;"><div style="border-top:1px solid #333;margin-top:40px;padding-top:4px;font-size:11px;">SHO / Station House Officer</div></div>
     </div>`;
@@ -1432,7 +1432,7 @@ function printAllDocs() {
 
 function renderDetailsTab(c) {
   return `<div class="case-tab-content">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;direction:rtl;margin-bottom:16px;">
       <div class="card">
         <div class="card-title">📋 FIR Information</div>
         ${[['مقدمہ نمبر',c.fir_number],['تاریخ اندراج مقدمہ',formatDate(c.fir_date)],['تاریخ وقوعہ',formatDate(c.occurrence_date)],['Section of Law',c.section_of_law||'—'],['Offence',c.offence_type||'—'],['Status',STATUS_LABELS[c.status]||c.status],['Position',c.position==='court'?'⚖️ In Court':'⏳ Pending'],['FIR Writer',c.fir_writer||'—'],['Complaint Sender',c.complaint_sender||'—'],['SHO',c.sho||'—'],['SDPO',c.sdpo||'—']].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
@@ -1446,7 +1446,7 @@ function renderDetailsTab(c) {
     ${c.is_cross_version ? `
     <div class="card" style="border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.03);margin-bottom:16px;">
       <div class="card-title" style="color:var(--red);">⚔️ Cross Version — مخالف مقدمہ</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;direction:rtl;">
         ${[
           ['Cross FIR Number', c.cross_fir_number||'—'],
           ['Cross FIR Date', formatDate(c.cross_fir_date)],
@@ -1580,7 +1580,7 @@ function openWorkspaceEvidenceModal(caseId, firNumber) {
          <div id="wev-file-name" style="font-size:12px;color:var(--accent);margin-top:4px;"></div>
        </div>
      </div>
-     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;direction:rtl;margin-bottom:10px;">
        <div><label class="form-label">Name *</label><input class="form-input" id="wev-name" placeholder="e.g. CCTV Screenshot"></div>
        <div><label class="form-label">Type</label>
          <select class="form-input" id="wev-type">

@@ -61,7 +61,7 @@ async function _buildAdmin(role) {
   </div>
 
   <!-- Stats -->
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;direction:rtl;margin-bottom:16px;">
     ${[
       ['کل افسران', officers.length, '👮', 'var(--accent)'],
       ['فعال افسران', active.length, '✅', 'var(--green)'],
@@ -279,7 +279,7 @@ function _renderReportsTab(officers, cases) {
 
   return `
   <!-- Summary cards -->
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;direction:rtl;margin-bottom:14px;">
     ${Object.entries(STATUS_LABELS).map(([k,l])=>`
       <div class="card" style="text-align:center;padding:12px;">
         <div style="font-size:22px;font-weight:900;color:${
@@ -440,7 +440,7 @@ async function _adminViewOfficer(officerId) {
 
 function _adminAddOfficer() {
   openModal('+ نیا افسر شامل کریں',
-    `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+    `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;direction:rtl;">
       <div><label class="form-label">مکمل نام *</label><input class="form-input" id="ao-name" placeholder="نام"></div>
       <div><label class="form-label">Email *</label><input class="form-input" id="ao-email" placeholder="email@police.gov.pk" type="email"></div>
       <div><label class="form-label">Badge Number</label><input class="form-input" id="ao-badge" placeholder="Badge No"></div>

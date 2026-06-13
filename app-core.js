@@ -702,7 +702,7 @@ function _renderThemeSwatches(popup,currentId){
   const photoThemes=THEMES.filter(t=>t.photo);
   function section(label,themes){
     return `<div style="font-size:9px;color:var(--text-faint);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">${label}</div>`
-      +`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;">`
+      +`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;direction:rtl;margin-bottom:14px;">`
       +themes.map(t=>{
         const isPhoto=t.photo;
         const circleStyle=isPhoto
@@ -751,7 +751,7 @@ async function openTransferModal(){
      <div style="padding:10px;background:var(--accent-glow);border-radius:6px;margin-bottom:14px;font-size:12px;color:var(--text-secondary);">
        <b>Current Posting:</b> ${o.station||'Not set'}${o.district?', '+o.district:''}
      </div>
-     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;direction:rtl;margin-bottom:10px;">
        <div><label style="${lbl}">New Police Station *</label><input style="${inp}" id="tr-station" placeholder="e.g. Seetal Mari"></div>
        <div><label style="${lbl}">New District</label><input style="${inp}" id="tr-district" placeholder="e.g. Multan" value="${o.district||''}"></div>
        <div><label style="${lbl}">Transfer Date</label><input style="${inp}" type="date" id="tr-date" value="${new Date().toISOString().split('T')[0]}"></div>

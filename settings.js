@@ -80,7 +80,7 @@ async function renderSettings(container) {
     </div>
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;direction:rtl;">
 
     <!-- LEFT COLUMN ─────────────────────────────────────── -->
     <div>
@@ -103,7 +103,7 @@ async function renderSettings(container) {
       <div class="card" style="margin-bottom:16px;">
         <div class="card-title" style="margin-bottom:4px;">🏛️ Current Posting</div>
         <div style="font-size:11px;color:var(--text-muted);margin-bottom:16px;">Changing station/district here records a transfer and only affects future cases — existing cases keep their original station.</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;direction:rtl;margin-bottom:10px;">
           ${edField('Police Station', 'set-station', o.station, 'e.g. Seetal Mari')}
           ${edField('District', 'set-district', o.district, 'e.g. Multan')}
         </div>

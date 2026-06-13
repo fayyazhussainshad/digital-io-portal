@@ -127,8 +127,8 @@ async function open5CForm(id){
     <div><label style="${lbl}">Complainant CNIC</label><input style="${inp}" id="f5c-cnic" placeholder="36302-1234567-1" value="${esc5C(app.complainant_cnic)}" oninput="autoFormatCNIC(this)"></div>
     <div><label style="${lbl}">Complainant Cell</label><input style="${inp}" id="f5c-cell" placeholder="0300-1234567" value="${esc5C(app.complainant_cell)}" oninput="autoFormatCell(this)"></div>
     <div><label style="${lbl}">Status</label><select style="${inp}" id="f5c-status">${Object.entries(FIVEC_STATUS).map(([k,v])=>`<option value="${k}" ${app.status===k?'selected':''}>${v}</option>`).join('')}</select></div>
-    <div><label style="${lbl}">Application Date (DD/MM/YYYY)</label><input style="${inp}" id="f5c-appdate" placeholder="DD/MM/YYYY" value="${toDisplayDate(app.application_date)}" oninput="autoMaskDate5C(this)" maxlength="10"></div>
-    <div><label style="${lbl}">Response Date (DD/MM/YYYY)</label><input style="${inp}" id="f5c-respdate" placeholder="DD/MM/YYYY" value="${toDisplayDate(app.response_date)}" oninput="autoMaskDate5C(this)" maxlength="10"></div>
+    <div><label style="${lbl}">Application Date (DD/MM/YYYY)</label><input style="${inp}" id="f5c-appdate" placeholder="DD/MM/YYYY" value="${toDisplayDate(app.application_date)}" oninput="autoMaskDate5C(this)"></div>
+    <div><label style="${lbl}">Response Date (DD/MM/YYYY)</label><input style="${inp}" id="f5c-respdate" placeholder="DD/MM/YYYY" value="${toDisplayDate(app.response_date)}" oninput="autoMaskDate5C(this)"></div>
     <div style="grid-column:1/-1;"><label style="${lbl}">Subject / Summary</label><textarea style="${inp};min-height:60px;font-family:inherit;" id="f5c-subject">${esc5C(app.subject)}</textarea></div>
   </div>
   <hr style="margin:18px 0;border:0;border-top:1px solid var(--border);">
@@ -162,7 +162,7 @@ function render5CNumberRow(n){
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
       <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;font-weight:600;">Officer Name (optional)</div><input style="${inp}" placeholder="Officer full name" data-field="senior_officer_name" value="${esc5C(!isOther?n.senior_officer_name||'':'')}"></div>
-      <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;font-weight:600;">Forwarded Date (DD/MM/YYYY)</div><input style="${inp}" placeholder="DD/MM/YYYY" data-field="forwarded_date" value="${toDisplayDate(n.forwarded_date)}" oninput="autoMaskDate5C(this)" maxlength="10"></div>
+      <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;font-weight:600;">Forwarded Date (DD/MM/YYYY)</div><input style="${inp}" placeholder="DD/MM/YYYY" data-field="forwarded_date" value="${toDisplayDate(n.forwarded_date)}" oninput="autoMaskDate5C(this)"></div>
     </div>
   </div>`;
 }
