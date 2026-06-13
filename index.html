@@ -714,27 +714,8 @@ input[id*="cnic"], input[id*="cell"] {
   overflow: hidden;
 }
 #sidebar-toggle {
-  position: fixed;
-  top: 50%;
-  transform: translateY(-50%);
-  left: var(--sidebar-width);
-  width: 18px;
-  height: 48px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-left: none;
-  border-radius: 0 8px 8px 0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  color: var(--text-muted);
-  z-index: 500;
-  transition: left 0.25s ease, background 0.15s;
+  display: none; /* Hidden — desktop sidebar always open, mobile uses hamburger */
 }
-#sidebar-toggle:hover { background: var(--accent); color: #fff; }
-#sidebar-toggle.collapsed { left: 0; }
   </style>
 </head>
 <body>
@@ -967,30 +948,51 @@ function _sidebarClose() {
   _mobOpen = false;
 }
 
-function closeMobileSidebar() { _sidebarClose(); }
+function closeMobileSidebar() {
+  // Only close on mobile
+  if (window.innerWidth <= 768) { _sidebarClose(); }
+}
 
 // Init on load
 window.addEventListener('load', function() {
-  if (window.innerWidth <= 768) { _sidebarClose(); }
+  if (window.innerWidth <= 768) {
+    _sidebarClose(); // mobile: start closed
+  } else {
+    // Desktop: make sure sidebar is fully visible, no transform
+    var sb = document.getElementById('sidebar');
+    if (sb) {
+      sb.style.cssText = ''; // clear all inline styles on desktop
+      sb.classList.remove('collapsed');
+    }
+  }
 });
 
 window.addEventListener('resize', function() {
-  if (window.innerWidth <= 768) { _sidebarClose(); }
-  else { _mobOpen = false; } // reset flag on desktop
+  var sb = document.getElementById('sidebar');
+  if (window.innerWidth <= 768) {
+    _sidebarClose();
+  } else {
+    // Desktop: clear mobile styles
+    if (sb) {
+      sb.style.cssText = '';
+      sb.classList.remove('collapsed');
+    }
+    _mobOpen = false;
+    var ov = document.getElementById('mob-overlay');
+    if (ov) ov.style.display = 'none';
+  }
 });
 </script>
 
 <!-- ── Sidebar collapse ── -->
 <script>
 (function(){
-  // Always start open — remove any saved collapse state
   localStorage.removeItem('dio_sidebar_collapsed');
 })();
 
 function toggleSidebarCollapse(){
-  // Desktop collapse disabled — sidebar stays open
-  // On mobile use toggleSidebar() instead
-  if(window.innerWidth<=768){ toggleSidebar(); }
+  if (window.innerWidth <= 768) { toggleSidebar(); }
+  // Desktop: do nothing — sidebar always stays open
 }
 </script>
 
