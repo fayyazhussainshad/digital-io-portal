@@ -677,20 +677,15 @@ async function renderCases(container,fStatus,fQuery){fStatus=fStatus||'';fQuery=
 }
 // ── PENAL CODE DATABASE ──
 const PENAL_CODES = [
-  // ─── OFFENCES AGAINST THE PERSON (PPC) ───────────────────────────────────
   {s:'299',law:'PPC',title:'Definitions (Offences Relating to Human Body)',offence:'Qatl / Hurt Definitions',bail:'—',punishment:'Definitions only'},
-  {s:'300',law:'PPC',title:'Qatl-i-Amd Definition',offence:'Murder (Definition)',bail:'—',punishment:'Definitions only'},
   {s:'302',law:'PPC',title:'Qatl-i-Amd (Murder)',offence:'Murder',bail:'Non-Bailable',punishment:'Death or Life Imprisonment or 25 years + Diyat'},
   {s:'302-B',law:'PPC',title:'Qatl-i-Amd of Spouse',offence:'Murder of Spouse',bail:'Non-Bailable',punishment:'Death'},
   {s:'304',law:'PPC',title:'Qatl-i-Khata (Accidental Death)',offence:'Accidental Killing',bail:'Bailable',punishment:'Diyat'},
   {s:'306',law:'PPC',title:'Qatl where Wali is Offender',offence:'Qatl by Guardian',bail:'Non-Bailable',punishment:'Diyat'},
   {s:'307',law:'PPC',title:'Attempt to Commit Qatl-i-Amd',offence:'Attempted Murder',bail:'Non-Bailable',punishment:'Up to 14 years + Arsh or Daman'},
   {s:'308',law:'PPC',title:'Punishment of Qatl-i-Amd not liable to Qisas',offence:'Qatl-i-Amd (No Qisas)',bail:'Non-Bailable',punishment:'Diyat'},
-  {s:'310',law:'PPC',title:'Badl-i-Sulh (Composition)',offence:'Badl-i-Sulh',bail:'Non-Bailable',punishment:'Diyat / Composition'},
   {s:'311',law:'PPC',title:'Qatl Sababul-Amd',offence:'Death by Rash Act',bail:'Non-Bailable',punishment:'Diyat'},
   {s:'315',law:'PPC',title:'Qatl-i-Khata (Not Amounting to Culpable Homicide)',offence:'Unintentional Killing',bail:'Bailable',punishment:'Diyat'},
-  {s:'316',law:'PPC',title:'Punishment of Qatl-i-Khata',offence:'Accidental Killing (Khata)',bail:'Bailable',punishment:'Diyat'},
-  {s:'318',law:'PPC',title:'Concealment of Birth by Secret Disposal of Dead Body',offence:'Concealment of Birth',bail:'Bailable',punishment:'Up to 2 years or fine'},
   {s:'320',law:'PPC',title:'Qatl-i-Khata by Rash Driving',offence:'Rash Driving Causing Death',bail:'Bailable',punishment:'5 years'},
   {s:'322',law:'PPC',title:'Qatl bis-Sabab',offence:'Constructive Murder',bail:'Non-Bailable',punishment:'Diyat'},
   {s:'324',law:'PPC',title:'Attempt to Qatl',offence:'Attempt to Murder',bail:'Non-Bailable',punishment:'Up to 10 years'},
@@ -705,7 +700,7 @@ const PENAL_CODES = [
   {s:'337-F',law:'PPC',title:'Jurh (Wound)',offence:'Wound/Injury',bail:'Bailable',punishment:'Arsh + Daman'},
   {s:'337-L',law:'PPC',title:'Hurt Causing Grievous Harm',offence:'Grievous Hurt',bail:'Non-Bailable',punishment:'Up to 10 years'},
   {s:'337-N',law:'PPC',title:'Hurt by Rash or Negligent Act',offence:'Negligent Causing of Hurt',bail:'Bailable',punishment:'Up to 3 years or fine'},
-  {s:'340',law:'PPC',title:'Wrongful Restraint / Confinement (Definition)',offence:'Wrongful Restraint / Confinement',bail:'Bailable',punishment:'Definitions'},
+  {s:'337-K',law:'PPC',title:'Hurt by Rash Driving',offence:'Hurt by Rash Driving',bail:'Bailable',punishment:'Up to 3 years or Daman'},
   {s:'341',law:'PPC',title:'Wrongful Restraint',offence:'Wrongful Restraint',bail:'Bailable',punishment:'1 month or fine'},
   {s:'342',law:'PPC',title:'Wrongful Confinement',offence:'Wrongful Confinement',bail:'Bailable',punishment:'1 year or fine'},
   {s:'343',law:'PPC',title:'Wrongful Confinement for 3+ Days',offence:'Prolonged Wrongful Confinement',bail:'Non-Bailable',punishment:'Up to 2 years'},
@@ -715,9 +710,6 @@ const PENAL_CODES = [
   {s:'354',law:'PPC',title:'Assault / Criminal Force to Woman',offence:'Assault on Woman',bail:'Non-Bailable',punishment:'Up to 10 years'},
   {s:'354-A',law:'PPC',title:'Assault on Woman to Strip',offence:'Stripping/Assault on Woman',bail:'Non-Bailable',punishment:'Up to 7 years'},
   {s:'355',law:'PPC',title:'Assault to Dishonour Person',offence:'Assault to Dishonour',bail:'Bailable',punishment:'Up to 2 years'},
-  {s:'356',law:'PPC',title:'Assault to Commit Theft',offence:'Assault for Theft',bail:'Non-Bailable',punishment:'Up to 2 years'},
-  {s:'357',law:'PPC',title:'Assault to Wrongful Confinement',offence:'Assault for Confinement',bail:'Non-Bailable',punishment:'Up to 1 year'},
-  // ─── KIDNAPPING & ABDUCTION ───────────────────────────────────────────────
   {s:'362',law:'PPC',title:'Abduction',offence:'Abduction',bail:'Non-Bailable',punishment:'Up to 7 years'},
   {s:'363',law:'PPC',title:'Kidnapping',offence:'Kidnapping',bail:'Non-Bailable',punishment:'Up to 7 years'},
   {s:'363-A',law:'PPC',title:'Kidnapping or Maiming Minor for Begging',offence:'Kidnapping Minor for Begging',bail:'Non-Bailable',punishment:'Up to 10 years'},
@@ -728,10 +720,8 @@ const PENAL_CODES = [
   {s:'365-B',law:'PPC',title:'Kidnapping / Abduction of Woman',offence:'Kidnapping of Woman',bail:'Non-Bailable',punishment:'Life imprisonment'},
   {s:'366',law:'PPC',title:'Kidnapping to Compel Marriage',offence:'Abduction for Forced Marriage',bail:'Non-Bailable',punishment:'Up to 10 years'},
   {s:'366-A',law:'PPC',title:'Procuration of Minor Girl',offence:'Procuration of Minor Girl',bail:'Non-Bailable',punishment:'Up to 10 years'},
-  {s:'366-B',law:'PPC',title:'Importation of Girl from Foreign Country',offence:'Importation of Minor Girl',bail:'Non-Bailable',punishment:'Up to 10 years'},
   {s:'367',law:'PPC',title:'Kidnapping to Subject to Grievous Hurt',offence:'Kidnapping for Grievous Hurt',bail:'Non-Bailable',punishment:'Up to 14 years'},
   {s:'369',law:'PPC',title:'Kidnapping or Abducting Child',offence:'Kidnapping of Child Under 10',bail:'Non-Bailable',punishment:'Up to 7 years'},
-  // ─── RAPE & SEXUAL OFFENCES ───────────────────────────────────────────────
   {s:'375',law:'PPC',title:'Rape (Definition)',offence:'Rape',bail:'Non-Bailable',punishment:'Definitions'},
   {s:'376',law:'PPC',title:'Punishment of Rape',offence:'Rape',bail:'Non-Bailable',punishment:'Death or 10-25 years'},
   {s:'376-A',law:'PPC',title:'Gang Rape',offence:'Gang Rape',bail:'Non-Bailable',punishment:'Death or Life'},
@@ -739,14 +729,11 @@ const PENAL_CODES = [
   {s:'376-C',law:'PPC',title:'Rape of Minor',offence:'Rape of Minor',bail:'Non-Bailable',punishment:'Death or Life'},
   {s:'377',law:'PPC',title:'Unnatural Offence',offence:'Unnatural Offence',bail:'Non-Bailable',punishment:'Life or up to 10 years'},
   {s:'377-A',law:'PPC',title:'Sexual Abuse of Minor',offence:'Sexual Abuse of Minor',bail:'Non-Bailable',punishment:'Up to 14 years'},
-  {s:'377-B',law:'PPC',title:'Harassment of Person using Internet',offence:'Online Harassment / Sexual Abuse',bail:'Non-Bailable',punishment:'Up to 5 years'},
-  // ─── THEFT & ROBBERY ──────────────────────────────────────────────────────
-  {s:'378',law:'PPC',title:'Theft (Definition)',offence:'Theft',bail:'Bailable',punishment:'Definitions'},
+  {s:'377-B',law:'PPC',title:'Harassment via Internet',offence:'Online Harassment / Sexual Abuse',bail:'Non-Bailable',punishment:'Up to 5 years'},
   {s:'379',law:'PPC',title:'Theft',offence:'Theft',bail:'Bailable',punishment:'Up to 3 years or fine'},
   {s:'380',law:'PPC',title:'Theft in Dwelling House',offence:'House Theft',bail:'Non-Bailable',punishment:'Up to 7 years'},
   {s:'381',law:'PPC',title:'Theft by Servant',offence:'Theft by Servant / Employee',bail:'Non-Bailable',punishment:'Up to 7 years'},
   {s:'382',law:'PPC',title:'Theft after Preparation for Hurt',offence:'Theft with Violence',bail:'Non-Bailable',punishment:'Up to 10 years'},
-  {s:'383',law:'PPC',title:'Extortion (Definition)',offence:'Extortion',bail:'Non-Bailable',punishment:'Definitions'},
   {s:'384',law:'PPC',title:'Punishment of Extortion',offence:'Extortion',bail:'Non-Bailable',punishment:'Up to 3 years'},
   {s:'385',law:'PPC',title:'Extortion by Fear of Death',offence:'Extortion with Death Threat',bail:'Non-Bailable',punishment:'Up to 7 years'},
   {s:'386',law:'PPC',title:'Extortion to Put in Fear of Grievous Hurt',offence:'Extortion with Grievous Hurt Threat',bail:'Non-Bailable',punishment:'Up to 10 years'},
@@ -758,44 +745,27 @@ const PENAL_CODES = [
   {s:'395',law:'PPC',title:'Punishment for Dacoity',offence:'Dacoity',bail:'Non-Bailable',punishment:'Life or Up to 14 years'},
   {s:'396',law:'PPC',title:'Dacoity with Murder',offence:'Dacoity with Murder',bail:'Non-Bailable',punishment:'Death or Life'},
   {s:'397',law:'PPC',title:'Robbery with Firearm / Deadly Weapon',offence:'Armed Robbery',bail:'Non-Bailable',punishment:'Up to 14 years'},
-  {s:'398',law:'PPC',title:'Attempt to Commit Robbery with Firearm',offence:'Attempted Armed Robbery',bail:'Non-Bailable',punishment:'Up to 7 years'},
   {s:'399',law:'PPC',title:'Making Preparation for Dacoity',offence:'Dacoity Preparation',bail:'Non-Bailable',punishment:'Up to 10 years'},
   {s:'400',law:'PPC',title:'Belonging to Gang of Dacoits',offence:'Member of Dacoity Gang',bail:'Non-Bailable',punishment:'Life or Up to 10 years'},
   {s:'401',law:'PPC',title:'Belonging to Gang of Thieves',offence:'Member of Thieves Gang',bail:'Non-Bailable',punishment:'Up to 7 years'},
-  // ─── PROPERTY OFFENCES ────────────────────────────────────────────────────
   {s:'403',law:'PPC',title:'Dishonest Misappropriation of Property',offence:'Misappropriation of Property',bail:'Bailable',punishment:'Up to 2 years or fine'},
-  {s:'404',law:'PPC',title:'Dishonest Misappropriation of Deceased Person Property',offence:'Misappropriation of Deceased Property',bail:'Non-Bailable',punishment:'Up to 3 years'},
-  {s:'405',law:'PPC',title:'Criminal Breach of Trust (Definition)',offence:'Criminal Breach of Trust',bail:'Bailable',punishment:'Definitions'},
   {s:'406',law:'PPC',title:'Criminal Breach of Trust',offence:'Criminal Breach of Trust',bail:'Bailable',punishment:'Up to 3 years or fine'},
   {s:'407',law:'PPC',title:'Criminal Breach of Trust by Carrier',offence:'Breach of Trust by Carrier',bail:'Non-Bailable',punishment:'Up to 7 years'},
   {s:'408',law:'PPC',title:'Criminal Breach of Trust by Clerk/Servant',offence:'Breach of Trust by Employee',bail:'Non-Bailable',punishment:'Up to 7 years'},
   {s:'409',law:'PPC',title:'Criminal Breach of Trust by Public Servant / Banker',offence:'Breach of Trust by Public Servant',bail:'Non-Bailable',punishment:'Life or Up to 10 years'},
   {s:'411',law:'PPC',title:'Dishonestly Receiving Stolen Property',offence:'Receiving Stolen Property',bail:'Bailable',punishment:'Up to 3 years or fine'},
-  {s:'412',law:'PPC',title:'Dishonestly Receiving Stolen Property from Dacoit',offence:'Receiving Dacoits Stolen Property',bail:'Non-Bailable',punishment:'Life or Up to 10 years'},
+  {s:'412',law:'PPC',title:'Dishonestly Receiving Stolen Property from Dacoit',offence:'Receiving Stolen Property from Dacoit',bail:'Non-Bailable',punishment:'Life or Up to 10 years'},
   {s:'413',law:'PPC',title:'Habitually Dealing in Stolen Property',offence:'Habitual Receiver of Stolen Property',bail:'Non-Bailable',punishment:'Life or Up to 10 years'},
   {s:'414',law:'PPC',title:'Assisting Concealment of Stolen Property',offence:'Concealing Stolen Property',bail:'Bailable',punishment:'Up to 3 years'},
   {s:'420',law:'PPC',title:'Cheating and Dishonestly Inducing Delivery',offence:'Cheating / Fraud',bail:'Non-Bailable',punishment:'Up to 7 years'},
   {s:'421',law:'PPC',title:'Fraudulent Removal of Property',offence:'Fraudulent Property Removal',bail:'Bailable',punishment:'Up to 2 years'},
-  {s:'424',law:'PPC',title:'Dishonest or Fraudulent Removal / Concealment of Property',offence:'Fraudulent Property Concealment',bail:'Bailable',punishment:'Up to 2 years'},
-  // ─── FORGERY & FRAUD ──────────────────────────────────────────────────────
-  {s:'463',law:'PPC',title:'Forgery (Definition)',offence:'Forgery',bail:'Non-Bailable',punishment:'Definitions'},
-  {s:'464',law:'PPC',title:'Making False Document',offence:'Making False Document',bail:'Non-Bailable',punishment:'Definitions'},
-  {s:'465',law:'PPC',title:'Punishment for Forgery',offence:'Forgery',bail:'Non-Bailable',punishment:'Up to 2 years or fine'},
-  {s:'466',law:'PPC',title:'Forgery of Court Record / Public Register',offence:'Forgery of Court Record',bail:'Non-Bailable',punishment:'Up to 7 years'},
-  {s:'467',law:'PPC',title:'Forgery of Valuable Security',offence:'Forgery of Security / Cheque',bail:'Non-Bailable',punishment:'Life or Up to 10 years'},
-  {s:'468',law:'PPC',title:'Forgery for Purpose of Cheating',offence:'Forgery for Cheating',bail:'Non-Bailable',punishment:'Up to 7 years'},
-  {s:'469',law:'PPC',title:'Forgery for Purpose of Harming Reputation',offence:'Forgery to Harm Reputation',bail:'Non-Bailable',punishment:'Up to 3 years'},
-  {s:'471',law:'PPC',title:'Using Forged Document as Genuine',offence:'Using Forged Document',bail:'Non-Bailable',punishment:'Same as forgery'},
-  {s:'476',law:'PPC',title:'Counterfeiting Device / Mark',offence:'Counterfeiting Mark/Device',bail:'Non-Bailable',punishment:'Up to 7 years'},
-  {s:'477-A',law:'PPC',title:'Falsification of Accounts',offence:'Falsification of Accounts',bail:'Non-Bailable',punishment:'Up to 7 years'},
-  // ─── MISCHIEF & CRIMINAL TRESPASS ─────────────────────────────────────────
+  {s:'424',law:'PPC',title:'Dishonest or Fraudulent Property Concealment',offence:'Fraudulent Property Concealment',bail:'Bailable',punishment:'Up to 2 years'},
   {s:'425',law:'PPC',title:'Mischief (Definition)',offence:'Mischief',bail:'Bailable',punishment:'Definitions'},
   {s:'426',law:'PPC',title:'Punishment for Mischief',offence:'Mischief',bail:'Bailable',punishment:'Up to 3 months or fine'},
-  {s:'427',law:'PPC',title:'Mischief Causing Damage of Rs.50+',offence:'Mischief Causing Loss',bail:'Bailable',punishment:'Up to 2 years'},
+  {s:'427',law:'PPC',title:'Mischief Causing Damage',offence:'Mischief Causing Loss',bail:'Bailable',punishment:'Up to 2 years'},
   {s:'435',law:'PPC',title:'Mischief by Fire or Explosive',offence:'Arson / Explosive Mischief',bail:'Non-Bailable',punishment:'Up to 7 years'},
   {s:'436',law:'PPC',title:'Mischief by Fire to Dwelling House',offence:'Arson of Dwelling',bail:'Non-Bailable',punishment:'Life or Up to 10 years'},
   {s:'440',law:'PPC',title:'Mischief Committed After Preparation for Hurt',offence:'Mischief with Threat of Hurt',bail:'Non-Bailable',punishment:'Up to 5 years'},
-  {s:'441',law:'PPC',title:'Criminal Trespass (Definition)',offence:'Criminal Trespass',bail:'Bailable',punishment:'Definitions'},
   {s:'447',law:'PPC',title:'Punishment for Criminal Trespass',offence:'Criminal Trespass',bail:'Bailable',punishment:'Up to 3 months or fine'},
   {s:'448',law:'PPC',title:'House Trespass',offence:'House Trespass',bail:'Bailable',punishment:'Up to 1 year or fine'},
   {s:'452',law:'PPC',title:'House Trespass after Preparation for Hurt',offence:'House Trespass with Hurt',bail:'Non-Bailable',punishment:'Up to 7 years'},
@@ -803,47 +773,54 @@ const PENAL_CODES = [
   {s:'454',law:'PPC',title:'Lurking House Trespass / House Breaking at Night',offence:'Night House Breaking',bail:'Non-Bailable',punishment:'Up to 3 years'},
   {s:'457',law:'PPC',title:'Lurking House Trespass by Night',offence:'Night Lurking House Trespass',bail:'Non-Bailable',punishment:'Up to 5 years'},
   {s:'458',law:'PPC',title:'Lurking House Trespass by Night with Hurt',offence:'Night Trespass with Hurt',bail:'Non-Bailable',punishment:'Up to 14 years'},
-  {s:'459',law:'PPC',title:'Grievous Hurt Caused during House Breaking',offence:'House Breaking with Grievous Hurt',bail:'Non-Bailable',punishment:'Life or Up to 14 years'},
+  {s:'459',law:'PPC',title:'Grievous Hurt during House Breaking',offence:'House Breaking with Grievous Hurt',bail:'Non-Bailable',punishment:'Life or Up to 14 years'},
   {s:'460',law:'PPC',title:'All Members of Lurking House Trespass / Dacoity',offence:'Group Trespass / Dacoity',bail:'Non-Bailable',punishment:'Life or Up to 14 years'},
-  // ─── OFFENCES AGAINST STATE & PUBLIC ORDER ────────────────────────────────
+  {s:'463',law:'PPC',title:'Forgery (Definition)',offence:'Forgery',bail:'Non-Bailable',punishment:'Definitions'},
+  {s:'465',law:'PPC',title:'Punishment for Forgery',offence:'Forgery',bail:'Non-Bailable',punishment:'Up to 2 years or fine'},
+  {s:'466',law:'PPC',title:'Forgery of Court Record / Public Register',offence:'Forgery of Court Record',bail:'Non-Bailable',punishment:'Up to 7 years'},
+  {s:'467',law:'PPC',title:'Forgery of Valuable Security',offence:'Forgery of Security / Cheque',bail:'Non-Bailable',punishment:'Life or Up to 10 years'},
+  {s:'468',law:'PPC',title:'Forgery for Purpose of Cheating',offence:'Forgery for Cheating',bail:'Non-Bailable',punishment:'Up to 7 years'},
+  {s:'469',law:'PPC',title:'Forgery for Purpose of Harming Reputation',offence:'Forgery to Harm Reputation',bail:'Non-Bailable',punishment:'Up to 3 years'},
+  {s:'471',law:'PPC',title:'Using Forged Document as Genuine',offence:'Using Forged Document',bail:'Non-Bailable',punishment:'Same as forgery'},
+  {s:'477-A',law:'PPC',title:'Falsification of Accounts',offence:'Falsification of Accounts',bail:'Non-Bailable',punishment:'Up to 7 years'},
+  {s:'489-A',law:'PPC',title:'Counterfeiting Currency',offence:'Counterfeiting Currency',bail:'Non-Bailable',punishment:'Life or Up to 10 years'},
+  {s:'489-B',law:'PPC',title:'Using Counterfeit Currency',offence:'Using Counterfeit Currency',bail:'Non-Bailable',punishment:'Life or Up to 10 years'},
+  {s:'489-F',law:'PPC',title:'Dishonour of Cheque',offence:'Bounced Cheque / Dishonoured Cheque',bail:'Bailable',punishment:'Up to 3 years or fine'},
+  {s:'496',law:'PPC',title:'Going Through Marriage Ceremony Fraudulently',offence:'Fraudulent Marriage',bail:'Non-Bailable',punishment:'Up to 7 years'},
+  {s:'496-A',law:'PPC',title:'Cohabitation caused by Man Deceiving a Woman',offence:'Fraudulent Cohabitation',bail:'Non-Bailable',punishment:'Up to 25 years'},
+  {s:'496-B',law:'PPC',title:'Fornication',offence:'Fornication',bail:'Bailable',punishment:'Up to 5 years or 100 stripes'},
+  {s:'496-C',law:'PPC',title:'Levelling False Accusation of Fornication (Qazf)',offence:'Qazf / False Accusation',bail:'Non-Bailable',punishment:'80 stripes'},
+  {s:'498-A',law:'PPC',title:'Prohibition of Depriving Woman of Inheritance',offence:'Depriving Woman of Inheritance',bail:'Non-Bailable',punishment:'Up to 10 years'},
+  {s:'498-B',law:'PPC',title:'Forced Marriage',offence:'Forced Marriage',bail:'Non-Bailable',punishment:'Up to 7 years'},
+  {s:'498-C',law:'PPC',title:'Marriage with Quran (Haq Bakhshwana)',offence:'Haq Bakhshwana / Watta Satta',bail:'Non-Bailable',punishment:'Up to 7 years'},
+  {s:'499',law:'PPC',title:'Defamation (Definition)',offence:'Defamation',bail:'Bailable',punishment:'Definitions'},
+  {s:'500',law:'PPC',title:'Punishment for Defamation',offence:'Defamation',bail:'Bailable',punishment:'Up to 2 years or fine'},
+  {s:'506',law:'PPC',title:'Punishment for Criminal Intimidation',offence:'Criminal Intimidation / Threats',bail:'Bailable',punishment:'Up to 2 years (7 if death threat)'},
+  {s:'509',law:'PPC',title:'Word / Gesture to Insult Modesty of Woman',offence:'Harassment of Woman',bail:'Bailable',punishment:'Up to 3 years or fine'},
+  {s:'511',law:'PPC',title:'Punishment for Attempting to Commit Offences',offence:'Attempt to Commit Offence',bail:'Same as principal offence',punishment:'Up to half of longest term'},
   {s:'121',law:'PPC',title:'Waging War Against Pakistan',offence:'Waging War Against the State',bail:'Non-Bailable',punishment:'Death or Life'},
   {s:'121-A',law:'PPC',title:'Conspiracy to Wage War',offence:'Conspiracy Against the State',bail:'Non-Bailable',punishment:'Life or Up to 10 years'},
   {s:'124-A',law:'PPC',title:'Sedition',offence:'Sedition',bail:'Non-Bailable',punishment:'Life or Up to 3 years'},
   {s:'153-A',law:'PPC',title:'Promoting Enmity Between Groups',offence:'Promoting Enmity / Hatred',bail:'Non-Bailable',punishment:'Up to 5 years'},
-  {s:'153-B',law:'PPC',title:'Inducing Students to Join Unlawful Activity',offence:'Inciting Students / Unlawful Activity',bail:'Non-Bailable',punishment:'Up to 2 years'},
   {s:'295',law:'PPC',title:'Injuring or Defiling Place of Worship',offence:'Damaging Place of Worship',bail:'Non-Bailable',punishment:'Up to 2 years'},
   {s:'295-A',law:'PPC',title:'Deliberate Acts to Outrage Religious Feelings',offence:'Blasphemy / Religious Outrage',bail:'Non-Bailable',punishment:'Up to 3 years'},
   {s:'295-B',law:'PPC',title:'Defiling Copy of Quran',offence:'Defiling the Holy Quran',bail:'Non-Bailable',punishment:'Life'},
   {s:'295-C',law:'PPC',title:'Use of Derogatory Remarks Against Prophet',offence:'Blasphemy Against Holy Prophet',bail:'Non-Bailable',punishment:'Death or Life'},
   {s:'298',law:'PPC',title:'Uttering Words to Wound Religious Feelings',offence:'Wounding Religious Feelings',bail:'Bailable',punishment:'Up to 1 year or fine'},
-  // ─── BRIBERY & CORRUPTION ─────────────────────────────────────────────────
   {s:'161',law:'PPC',title:'Public Servant Taking Gratification (Bribery)',offence:'Bribery / Gratification',bail:'Non-Bailable',punishment:'Up to 3 years or fine'},
   {s:'165',law:'PPC',title:'Public Servant Obtaining Valuables without Consideration',offence:'Public Servant Corruption',bail:'Non-Bailable',punishment:'Up to 3 years or fine'},
   {s:'165-A',law:'PPC',title:'Abetment of Offences under Sections 161-165',offence:'Abetment of Bribery',bail:'Non-Bailable',punishment:'As principal offender'},
   {s:'166',law:'PPC',title:'Public Servant Disobeying Law',offence:'Public Servant Disobeying Law',bail:'Bailable',punishment:'Up to 1 year or fine'},
-  {s:'167',law:'PPC',title:'Public Servant Framing Incorrect Document',offence:'Framing Incorrect Document',bail:'Bailable',punishment:'Up to 3 years'},
-  {s:'218',law:'PPC',title:'Public Servant Framing Incorrect Record to Save Person from Punishment',offence:'Framing Record to Save Criminal',bail:'Non-Bailable',punishment:'Up to 3 years'},
-  {s:'219',law:'PPC',title:'Public Servant Making Corrupt Report',offence:'Corrupt Report by Public Servant',bail:'Non-Bailable',punishment:'Up to 7 years'},
-  // ─── DRUG OFFENCES (CNSA) ─────────────────────────────────────────────────
-  {s:'6',law:'CNSA',title:'Manufacture / Possession of Narcotic',offence:'Drug Manufacture / Possession',bail:'Non-Bailable',punishment:'Death / Life / Rigorous imprisonment'},
-  {s:'8',law:'CNSA',title:'Trafficking of Narcotics',offence:'Drug Trafficking',bail:'Non-Bailable',punishment:'Death or Life'},
-  {s:'9',law:'CNSA',title:'Punishment for Offences Under CNSA',offence:'Drug Offence',bail:'Non-Bailable',punishment:'Based on quantity: 2 years to Death'},
-  {s:'14',law:'CNSA',title:'Possession of Drug Paraphernalia',offence:'Drug Paraphernalia Possession',bail:'Bailable',punishment:'Up to 3 years'},
-  // ─── ARMS ACT ─────────────────────────────────────────────────────────────
-  {s:'13',law:'Arms Ord.',title:'Unlicensed Possession of Firearm',offence:'Illegal Firearm Possession',bail:'Non-Bailable',punishment:'Up to 7 years'},
-  {s:'13-A',law:'Arms Ord.',title:'Use of Unlicensed Firearm in Offence',offence:'Using Illegal Firearm in Crime',bail:'Non-Bailable',punishment:'Up to 14 years'},
-  {s:'23',law:'Arms Ord.',title:'Prohibition on Carrying Arms in Public',offence:'Carrying Arms in Public',bail:'Bailable',punishment:'Fine or imprisonment'},
-  // ─── MOTOR VEHICLE OFFENCES ───────────────────────────────────────────────
+  {s:'201',law:'PPC',title:'Causing Disappearance of Evidence',offence:'Destroying Evidence',bail:'Non-Bailable',punishment:'Up to 7 years or fine'},
+  {s:'202',law:'PPC',title:'Intentional Omission to Give Information',offence:'Concealing Information of Offence',bail:'Bailable',punishment:'Up to 6 months or fine'},
+  {s:'203',law:'PPC',title:'Giving False Information Respecting Offence',offence:'False Information to Police',bail:'Bailable',punishment:'Up to 2 years or fine'},
+  {s:'211',law:'PPC',title:'False Charge of Offence Made with Intent',offence:'False FIR / False Charge',bail:'Non-Bailable',punishment:'Up to 7 years'},
+  {s:'228',law:'PPC',title:'Intentional Insult to Injure Proceedings of Court',offence:'Contempt of Court',bail:'Bailable',punishment:'Up to 2 years or fine'},
+  {s:'186',law:'PPC',title:'Obstructing Public Servant in Discharge of Duty',offence:'Obstructing Public Servant',bail:'Bailable',punishment:'Up to 3 months or fine'},
+  {s:'188',law:'PPC',title:'Disobedience to Order Promulgated by Public Servant',offence:'Disobeying Official Order',bail:'Bailable',punishment:'Up to 1 month or fine'},
   {s:'279',law:'PPC',title:'Rash Driving on Public Way',offence:'Rash / Negligent Driving',bail:'Bailable',punishment:'Up to 6 months or fine'},
   {s:'283',law:'PPC',title:'Danger or Obstruction in Public Way',offence:'Obstruction on Road',bail:'Bailable',punishment:'Fine'},
   {s:'304-A',law:'PPC',title:'Causing Death by Negligence',offence:'Death by Negligent Act',bail:'Bailable',punishment:'Up to 2 years or fine'},
-  {s:'337-K',law:'PPC',title:'Hurt by Rash Driving',offence:'Hurt by Rash Driving',bail:'Bailable',punishment:'Up to 3 years or Daman'},
-  // ─── ANTI-TERRORISM ACT ───────────────────────────────────────────────────
-  {s:'6',law:'ATA',title:'Terrorism (Definition & Punishment)',offence:'Terrorism',bail:'Non-Bailable',punishment:'Death or Life'},
-  {s:'7',law:'ATA',title:'Punishment for Acts of Terrorism',offence:'Terrorist Act',bail:'Non-Bailable',punishment:'Death or Life'},
-  {s:'11-A',law:'ATA',title:'Membership of Proscribed Organisation',offence:'Terrorism Organization Membership',bail:'Non-Bailable',punishment:'Up to 10 years'},
-  {s:'11-N',law:'ATA',title:'Soliciting Funds for Terrorism',offence:'Terrorist Financing',bail:'Non-Bailable',punishment:'Up to 14 years'},
-  // ─── COMMON ABETMENT / JOINT LIABILITY SECTIONS ───────────────────────────
   {s:'34',law:'PPC',title:'Acts done by Several Persons in Furtherance of Common Intention',offence:'Common Intention (Joint Act)',bail:'Same as principal offence',punishment:'Same as principal offence'},
   {s:'107',law:'PPC',title:'Abetment of a Thing',offence:'Abetment',bail:'Same as principal offence',punishment:'Same as principal offence'},
   {s:'109',law:'PPC',title:'Punishment of Abetment (if act committed)',offence:'Abetment (Act Done)',bail:'Same as principal offence',punishment:'Same as principal offence'},
@@ -852,28 +829,17 @@ const PENAL_CODES = [
   {s:'120-B',law:'PPC',title:'Punishment of Criminal Conspiracy',offence:'Criminal Conspiracy',bail:'Non-Bailable',punishment:'Same as principal offence'},
   {s:'148',law:'PPC',title:'Rioting Armed with Deadly Weapon',offence:'Armed Rioting',bail:'Non-Bailable',punishment:'Up to 3 years'},
   {s:'149',law:'PPC',title:'Every Member of Unlawful Assembly Guilty',offence:'Unlawful Assembly',bail:'Non-Bailable',punishment:'Same as principal offender'},
-  {s:'186',law:'PPC',title:'Obstructing Public Servant in Discharge of Duty',offence:'Obstructing Public Servant',bail:'Bailable',punishment:'Up to 3 months or fine'},
-  {s:'188',law:'PPC',title:'Disobedience to Order Promulgated by Public Servant',offence:'Disobeying Official Order',bail:'Bailable',punishment:'Up to 1 month or fine'},
-  {s:'201',law:'PPC',title:'Causing Disappearance of Evidence',offence:'Destroying Evidence',bail:'Non-Bailable',punishment:'Up to 7 years or fine'},
-  {s:'202',law:'PPC',title:'Intentional Omission to Give Information',offence:'Concealing Information of Offence',bail:'Bailable',punishment:'Up to 6 months or fine'},
-  {s:'203',law:'PPC',title:'Giving False Information Respecting Offence',offence:'False Information to Police',bail:'Bailable',punishment:'Up to 2 years or fine'},
-  {s:'211',law:'PPC',title:'False Charge of Offence Made with Intent',offence:'False FIR / False Charge',bail:'Non-Bailable',punishment:'Up to 7 years'},
-  {s:'228',law:'PPC',title:'Intentional Insult to Injure Proceedings of Court',offence:'Contempt of Court',bail:'Bailable',punishment:'Up to 2 years or fine'},
-  {s:'489-A',law:'PPC',title:'Counterfeiting Currency',offence:'Counterfeiting Currency',bail:'Non-Bailable',punishment:'Life or Up to 10 years'},
-  {s:'489-B',law:'PPC',title:'Using Counterfeit Currency',offence:'Using Counterfeit Currency',bail:'Non-Bailable',punishment:'Life or Up to 10 years'},
-  {s:'489-F',law:'PPC',title:'Dishonour of Cheque',offence:'Bounced Cheque / Dishonoured Cheque',bail:'Bailable',punishment:'Up to 3 years or fine or both'},
-  {s:'496',law:'PPC',title:'Going Through Marriage Ceremony Fraudulently',offence:'Fraudulent Marriage',bail:'Non-Bailable',punishment:'Up to 7 years'},
-  {s:'496-A',law:'PPC',title:'Cohabitation caused by Man Deceiving a Woman',offence:'Fraudulent Cohabitation',bail:'Non-Bailable',punishment:'Up to 25 years'},
-  {s:'496-B',law:'PPC',title:'Fornication',offence:'Fornication',bail:'Bailable',punishment:'Up to 5 years or 100 stripes'},
-  {s:'496-C',law:'PPC',title:'Levelling False Accusation of Fornication (Qazf)',offence:'Qazf / False Accusation',bail:'Non-Bailable',punishment:'80 stripes'},
-  {s:'498-A',law:'PPC',title:'Prohibition of Depriving Woman of Inheritance',offence:'Depriving Woman of Inheritance',bail:'Non-Bailable',punishment:'Up to 10 years'},
-  {s:'498-B',law:'PPC',title:'Forced Marriage',offence:'Forced Marriage',bail:'Non-Bailable',punishment:'Up to 7 years'},
-  {s:'498-C',law:'PPC',title:'Marriage with Quran',offence:'Haq Bakhshwana / Watta Satta',bail:'Non-Bailable',punishment:'Up to 7 years'},
-  {s:'499',law:'PPC',title:'Defamation (Definition)',offence:'Defamation',bail:'Bailable',punishment:'Definitions'},
-  {s:'500',law:'PPC',title:'Punishment for Defamation',offence:'Defamation',bail:'Bailable',punishment:'Up to 2 years or fine'},
-  {s:'506',law:'PPC',title:'Punishment for Criminal Intimidation',offence:'Criminal Intimidation / Threats',bail:'Bailable',punishment:'Up to 2 years (7 if death threat)'},
-  {s:'509',law:'PPC',title:'Word / Gesture to Insult Modesty of Woman',offence:'Harassment of Woman',bail:'Bailable',punishment:'Up to 3 years or fine'},
-  {s:'511',law:'PPC',title:'Punishment for Attempting to Commit Offences',offence:'Attempt to Commit Offence',bail:'Same as principal offence',punishment:'Up to half of longest term for offence'},
+  {s:'6',law:'CNSA',title:'Manufacture / Possession of Narcotic',offence:'Drug Manufacture / Possession',bail:'Non-Bailable',punishment:'Death / Life / Rigorous imprisonment'},
+  {s:'8',law:'CNSA',title:'Trafficking of Narcotics',offence:'Drug Trafficking',bail:'Non-Bailable',punishment:'Death or Life'},
+  {s:'9',law:'CNSA',title:'Punishment for Offences Under CNSA',offence:'Drug Offence',bail:'Non-Bailable',punishment:'Based on quantity: 2 years to Death'},
+  {s:'14',law:'CNSA',title:'Possession of Drug Paraphernalia',offence:'Drug Paraphernalia Possession',bail:'Bailable',punishment:'Up to 3 years'},
+  {s:'13',law:'Arms Ord.',title:'Unlicensed Possession of Firearm',offence:'Illegal Firearm Possession',bail:'Non-Bailable',punishment:'Up to 7 years'},
+  {s:'13-A',law:'Arms Ord.',title:'Use of Unlicensed Firearm in Offence',offence:'Using Illegal Firearm in Crime',bail:'Non-Bailable',punishment:'Up to 14 years'},
+  {s:'23',law:'Arms Ord.',title:'Prohibition on Carrying Arms in Public',offence:'Carrying Arms in Public',bail:'Bailable',punishment:'Fine or imprisonment'},
+  {s:'6',law:'ATA',title:'Terrorism (Definition & Punishment)',offence:'Terrorism',bail:'Non-Bailable',punishment:'Death or Life'},
+  {s:'7',law:'ATA',title:'Punishment for Acts of Terrorism',offence:'Terrorist Act',bail:'Non-Bailable',punishment:'Death or Life'},
+  {s:'11-A',law:'ATA',title:'Membership of Proscribed Organisation',offence:'Terrorism Organization Membership',bail:'Non-Bailable',punishment:'Up to 10 years'},
+  {s:'11-N',law:'ATA',title:'Soliciting Funds for Terrorism',offence:'Terrorist Financing',bail:'Non-Bailable',punishment:'Up to 14 years'},
 ];
 
 let selectedSections = [];
@@ -945,6 +911,26 @@ function caseFormHTML(c={}) {
         </select>
       </div>
     </div>
+
+    <!-- Accused / Mulzim Details -->
+    <div style="padding:10px 12px;background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.12);border-radius:var(--radius-sm);margin-bottom:10px;">
+      <div style="font-size:10px;color:var(--red);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">⚠️ Accused / Mulzim — ملزم</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Accused Name</label>
+          <input class="form-input" id="cf-accused" value="${c.accused_name||''}" placeholder="ملزم کا نام / Accused Full Name" dir="auto">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Accused CNIC</label>
+          <input class="form-input" id="cf-cnic" value="${c.accused_cnic||''}" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Accused Cell No.</label>
+        <input class="form-input" id="cf-cell" value="${c.accused_cell||''}" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)">
+      </div>
+    </div>
+
 
     <!-- SECTIONS OF LAW -->
     <div class="form-group">
@@ -1131,6 +1117,39 @@ function toggleCrossVersion() {
   fields.style.display = cb.checked ? 'block' : 'none';
 }
 
+function buildCrossFields(c) {
+  c = c || {};
+  return '<div style="font-size:10px;color:var(--red);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">&#x2694;&#xFE0F; Counter FIR Details</div>'
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">Cross FIR Number</label>'
+    + '<input class="form-input" id="cf-cross-fir" value="'+(c.cross_fir_number||'')+'" placeholder="e.g. 246/2025"></div>'
+    + '<div class="form-group"><label class="form-label">Cross FIR Date</label>'
+    + '<input class="form-input" id="cf-cross-fir-date" value="'+(c.cross_fir_date||'')+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" maxlength="10"></div>'
+    + '</div>'
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">Cross Complainant</label>'
+    + '<input class="form-input" id="cf-cross-complainant" value="'+(c.cross_complainant||'')+'" placeholder="مدعی کا نام" dir="auto"></div>'
+    + '<div class="form-group"><label class="form-label">Cross CNIC</label>'
+    + '<input class="form-input" id="cf-cross-complainant-cnic" value="'+(c.cross_complainant_cnic||'')+'" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)"></div>'
+    + '</div>'
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">Cross Cell No.</label>'
+    + '<input class="form-input" id="cf-cross-complainant-cell" value="'+(c.cross_complainant_cell||'')+'" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)"></div>'
+    + '<div class="form-group"><label class="form-label">Cross Profession</label>'
+    + '<input class="form-input" id="cf-cross-complainant-profession" value="'+(c.cross_complainant_profession||'')+'" placeholder="پیشہ" dir="auto"></div>'
+    + '</div>'
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">Cross Sections</label>'
+    + '<input class="form-input" id="cf-cross-section" value="'+(c.cross_section_of_law||'')+'" placeholder="e.g. 302 PPC + 34 PPC" dir="auto"></div>'
+    + '<div class="form-group"><label class="form-label">Cross Offence</label>'
+    + '<input class="form-input" id="cf-cross-offence" value="'+(c.cross_offence_type||'')+'" placeholder="Offence type" dir="auto"></div>'
+    + '</div>'
+    + '<div class="form-group"><label class="form-label">Cross FIR Writer</label>'
+    + '<input class="form-input" id="cf-cross-fir-writer" value="'+(c.cross_fir_writer||'')+'" placeholder="FIR لکھنے والا" dir="auto"></div>'
+    + '</div>';
+}
+
+
 function renderDocChecklist(docs, selected) {
   let html = '';
   for (const [cat, items] of Object.entries(MISAL_CHECKLIST)) {
@@ -1288,6 +1307,9 @@ async function saveNewCase(){
   try{
     await addCase({
       fir_number:fir,
+      accused_name:document.getElementById('cf-accused')?.value.trim()||'',
+      accused_cnic:document.getElementById('cf-cnic')?.value.trim()||'',
+      accused_cell:document.getElementById('cf-cell')?.value.trim()||'',
       fir_date:document.getElementById('cf-date').value.trim(),
       occurrence_date:document.getElementById('cf-occurrence-date').value.trim(),
       complainant:complainant,
@@ -1322,6 +1344,9 @@ async function saveEditCase(id){
   try{
     await updateCase(id,{
       fir_number:document.getElementById('cf-fir').value.trim(),
+      accused_name:document.getElementById('cf-accused')?.value.trim()||'',
+      accused_cnic:document.getElementById('cf-cnic')?.value.trim()||'',
+      accused_cell:document.getElementById('cf-cell')?.value.trim()||'',
       fir_date:document.getElementById('cf-date').value.trim(),
       occurrence_date:document.getElementById('cf-occurrence-date').value.trim(),
       complainant:document.getElementById('cf-complainant').value.trim(),
@@ -1362,7 +1387,9 @@ let currentCaseId = null;
 let currentDocIndex = null;
 const docDrafts = {}; // stores edited content per case+doc
 
-async function openCaseWorkspace(id) {
+async 
+function ef(val){var v=(val===undefined||val===null||String(val).trim()==='')?'—':String(val);return '<span class="template-field" contenteditable="true">'+v+'</span>';}
+function openCaseWorkspace(id) {
   currentCaseId = id;
   currentDocIndex = null;
   document.getElementById('topbar-title').textContent = '📁 Case Workspace';
@@ -2074,7 +2101,7 @@ function buildDocTemplate(docName, c, savedContent) {
       <div style="font-size:12px;color:#777;">FIR نمبر: ${fir} &nbsp;|&nbsp; تاریخ: ${firDate}</div>
     </div>
     <table style="width:100%;border-collapse:collapse;direction:rtl;margin-bottom:16px;">
-      <tr><td style="width:25%;padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">FIR نمبر</td><td style="padding:8px;border:1px solid #ccc;">${field(fir)}</td><td style="width:25%;padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">تاریخ</td><td style="padding:8px;border:1px solid #ccc;">${field(firDate)}</td></tr>
+      <tr><td style="width:25%;padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">FIR نمبر</td><td style="padding:8px;border:1px solid #ccc;">${ef(fir)}</td><td style="width:25%;padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">تاریخ</td><td style="padding:8px;border:1px solid #ccc;">${field(firDate)}</td></tr>
       <tr><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">پولیس اسٹیشن</td><td style="padding:8px;border:1px solid #ccc;">${field(station)}</td><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">ضلع</td><td style="padding:8px;border:1px solid #ccc;">${field(district)}</td></tr>
       <tr><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">مدعی</td><td style="padding:8px;border:1px solid #ccc;">${field(complainant)}</td><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">دفعات</td><td style="padding:8px;border:1px solid #ccc;">${field(section)}</td></tr>
       <tr><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">تفتیشی افسر</td><td style="padding:8px;border:1px solid #ccc;">${field(io)}</td><td style="padding:8px;border:1px solid #ccc;font-weight:600;background:#f9f9f9;">SHO</td><td style="padding:8px;border:1px solid #ccc;">${field(sho)}</td></tr>
