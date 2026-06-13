@@ -52,103 +52,102 @@ async function renderSettings(container) {
 
   container.innerHTML = `
   <div class="page-header">
-    <div><div class="page-title">⚙️ Settings & Profile</div>
-    <div class="page-subtitle">Your official record — synced two-way with the department database</div></div>
+    <div><div class="page-title">⚙️ ترتیبات و پروفائل</div>
+    <div class="page-subtitle">آپ کا سرکاری ریکارڈ — ڈیٹابیس سے خودکار مطابقت</div></div>
   </div>
 
   <!-- ── PROFILE HEADER ─────────────────────────────────── -->
   <div class="card" style="margin-bottom:16px;padding:20px;">
-    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
-      <!-- Avatar -->
-      <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--accent-dark),var(--accent));flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;overflow:hidden;cursor:pointer;border:3px solid var(--accent);" id="profile-avatar-btn" onclick="changeProfilePhoto()" title="Click to change photo">
-        ${avatarHtml}
-      </div>
-      <!-- Name + role -->
-      <div style="flex:1;">
-        <div style="font-size:22px;font-weight:800;color:var(--text-primary);">${_esc(o.full_name||'Officer Name')}</div>
-        <div style="font-size:13px;color:var(--text-secondary);margin-top:2px;">${_esc(o.designation||'—')} &nbsp;·&nbsp; Badge ${_esc(o.badge_number||'—')}</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">🏛️ ${_esc(o.station||'—')}, ${_esc(o.district||'—')}</div>
+    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;direction:rtl;">
+      <!-- Name + role — RIGHT side (sidebar side) -->
+      <div style="flex:1;text-align:right;">
+        <div style="font-size:22px;font-weight:800;color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;">${_esc(o.full_name||'افسر کا نام')}</div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:2px;">${_esc(o.designation||'—')} &nbsp;·&nbsp; محکمانہ نمبر ${_esc(o.badge_number||'—')}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">🏛️ تھانہ ${_esc(o.station||'—')}, ضلع ${_esc(o.district||'—')}</div>
       </div>
       <!-- Profile completeness -->
-      <div style="text-align:center;min-width:100px;">
-        <div style="font-size:28px;font-weight:800;color:${pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)'};">${pct}%</div>
-        <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Profile Complete</div>
+      <div style="text-align:center;min-width:90px;">
+        <div style="font-size:26px;font-weight:800;color:${pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)'};">${pct}%</div>
+        <div style="font-size:10px;color:var(--text-muted);">پروفائل مکمل</div>
         <div style="height:6px;background:var(--bg-tertiary);border-radius:3px;margin-top:6px;overflow:hidden;">
-          <div style="height:100%;width:${pct}%;background:${pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)'};border-radius:3px;transition:width 0.5s;"></div>
+          <div style="height:100%;width:${pct}%;background:${pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)'};border-radius:3px;"></div>
         </div>
       </div>
+      <!-- Avatar — LEFT side (opposite to sidebar) -->
+      <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--accent-dark),var(--accent));flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;overflow:hidden;cursor:pointer;border:3px solid var(--accent);" id="profile-avatar-btn" onclick="changeProfilePhoto()" title="تصویر تبدیل کریں">
+        ${avatarHtml}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SECURITY CARD (below name card) ─────────────────── -->
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title" style="margin-bottom:12px;">🔐 سیکیورٹی</div>
+    <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;">
+      <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✅</span> MFA فعال ہے</div>
+      <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✅</span> آڈٹ لاگنگ فعال ہے</div>
+      <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✅</span> ڈیٹا خفیہ کردہ ہے</div>
+    </div>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">📧 ${_esc(currentUser?.email||'—')}</div>
+      <button class="btn btn-secondary btn-sm" onclick="openChangePasswordModal()">🔑 پاسورڈ تبدیل کریں</button>
     </div>
   </div>
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;direction:rtl;">
 
-    <!-- LEFT COLUMN ─────────────────────────────────────── -->
+    <!-- RIGHT COLUMN (sidebar side) ───────────────────────── -->
     <div>
 
-      <!-- SECTION 1: Official Details (read-only) -->
+      <!-- SECTION 1: Official Details (Urdu, correct order) -->
       <div class="card" style="margin-bottom:16px;">
-        <div class="card-title" style="margin-bottom:16px;">🔒 Official Details
-          <span style="font-size:10px;color:var(--text-faint);font-weight:400;margin-left:8px;">Contact admin to update these</span>
+        <div class="card-title" style="margin-bottom:16px;">🔒 سرکاری تفصیلات
+          <span style="font-size:10px;color:var(--text-faint);font-weight:400;margin-right:8px;">ترمیم کے لیے ایڈمن سے رابطہ کریں</span>
         </div>
-        ${roField('Full Name', o.full_name)}
-        ${roField('Badge / Service Number', o.badge_number)}
-        ${roField('Designation / Rank', o.designation)}
-        ${roField('CNIC Number', o.cnic_number ? _esc(o.cnic_number).replace(/(\d{5})(\d{7})(\d)/, '$1-$2-$3') : '')}
-        <div style="margin-top:8px;padding:8px 12px;background:var(--accent-glow);border-radius:6px;font-size:11px;color:var(--text-muted);">
-          ℹ️ These fields are set by your district admin. To request a correction, contact your admin panel.
+        ${roField('پورا نام', o.full_name)}
+        ${roField('رینک / عہدہ', o.designation)}
+        ${roField('محکمانہ نمبر', o.badge_number)}
+        ${roField('سیل نمبر', o.official_phone||o.phone)}
+        ${roField('شناختی کارڈ نمبر', o.cnic_number ? _esc(o.cnic_number).replace(/(\d{5})(\d{7})(\d)/, '$1-$2-$3') : '')}
+        ${roField('ای میل ایڈریس', currentUser?.email)}
+        <div style="margin-top:8px;padding:8px 12px;background:var(--accent-glow);border-radius:6px;font-size:11px;color:var(--text-muted);direction:rtl;text-align:right;">
+          ℹ️ یہ خانے ڈسٹرکٹ ایڈمن سیٹ کرتا ہے۔ تبدیلی کے لیے ایڈمن پینل سے رابطہ کریں۔
         </div>
-      </div>
-
-      <!-- SECTION 2: Current Posting (editable) -->
-      <div class="card" style="margin-bottom:16px;">
-        <div class="card-title" style="margin-bottom:4px;">🏛️ Current Posting</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:16px;">Changing station/district here records a transfer and only affects future cases — existing cases keep their original station.</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;direction:rtl;margin-bottom:10px;">
-          ${edField('Police Station', 'set-station', o.station, 'e.g. Seetal Mari')}
-          ${edField('District', 'set-district', o.district, 'e.g. Multan')}
-        </div>
-        ${edField('Official Phone (Department)', 'set-official-phone', o.official_phone||o.phone, '0300-0000000')}
-        <button class="btn btn-primary" onclick="savePostingSettings()" style="margin-top:4px;">💾 Save Posting</button>
       </div>
 
     </div>
 
-    <!-- RIGHT COLUMN ────────────────────────────────────── -->
+    <!-- LEFT COLUMN ────────────────────────────────────────── -->
     <div>
 
       <!-- Profile Photo -->
       <div class="card" style="margin-bottom:16px;text-align:center;padding:20px;">
-        <div class="card-title" style="margin-bottom:16px;text-align:left;">🖼️ Profile Photo</div>
+        <div class="card-title" style="margin-bottom:16px;text-align:right;">🖼️ پروفائل تصویر</div>
         <div style="width:110px;height:110px;border-radius:50%;background:linear-gradient(135deg,var(--accent-dark),var(--accent));margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:800;color:#fff;overflow:hidden;border:3px solid var(--accent);" id="settings-avatar">
           ${avatarHtml}
         </div>
-        <button class="btn btn-secondary btn-sm" onclick="changeProfilePhoto()">📷 Change Photo</button>
-        ${photoSrc ? `<br><button class="btn btn-danger btn-sm" onclick="removeProfilePhoto()" style="margin-top:6px;">🗑️ Remove Photo</button>` : ''}
+        <button class="btn btn-secondary btn-sm" onclick="changeProfilePhoto()">📷 تصویر تبدیل کریں</button>
+        ${photoSrc ? `<br><button class="btn btn-danger btn-sm" onclick="removeProfilePhoto()" style="margin-top:6px;">🗑️ تصویر ہٹائیں</button>` : ''}
+      </div>
+
+      <!-- Current Posting (editable) — no cell number -->
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-title" style="margin-bottom:4px;">🏛️ موجودہ تعیناتی</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:16px;direction:rtl;text-align:right;">تھانہ/ضلع تبدیل کرنے سے ٹرانسفر درج ہو گا</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;direction:rtl;margin-bottom:10px;">
+          ${edField('تھانہ', 'set-station', o.station, 'مثلاً سیتل ماڑی')}
+          ${edField('ضلع', 'set-district', o.district, 'مثلاً ملتان')}
+        </div>
+        <button class="btn btn-primary" onclick="savePostingSettings()" style="margin-top:4px;">💾 تعیناتی محفوظ کریں</button>
       </div>
 
       <!-- Employment History -->
-      <div class="card" style="margin-bottom:16px;">
-        <div class="card-title" style="margin-bottom:4px;">📋 Employment History
-          <button class="btn btn-primary btn-sm" onclick="openTransferModal()" style="float:right;margin-top:-4px;">+ Record Transfer</button>
-        </div>
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">Full posting history across all stations</div>
-        ${_renderTransferTimeline(transfers, o)}
-      </div>
-
-      <!-- Security -->
       <div class="card">
-        <div class="card-title" style="margin-bottom:12px;">🔐 Security</div>
-        <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;">
-          <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✅</span> MFA Active</div>
-          <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✅</span> Audit Logging Enabled</div>
-          <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green);">✅</span> Data Encrypted at Rest</div>
-          <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--accent);">🔒</span> Offline Auth: ${(async()=>{try{const c=await offlineStore.getOfflineCredsByEmail(currentUser?.email);return c?'<span style="color:var(--green);">✅ Ready</span>':'<span style="color:var(--amber);">⚠️ Login online once to enable</span>';}catch(_){return '—';}})()}</div>
+        <div class="card-title" style="margin-bottom:4px;">📋 ملازمت کی تاریخ
+          <button class="btn btn-primary btn-sm" onclick="openTransferModal()" style="float:left;margin-top:-4px;">+ ٹرانسفر</button>
         </div>
-        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
-          <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Account</div>
-          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">📧 ${_esc(currentUser?.email||'—')}</div>
-          <button class="btn btn-secondary btn-sm" onclick="openChangePasswordModal()">🔑 Change Password</button>
-        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">تمام تھانوں کی مکمل تاریخ</div>
+        ${_renderTransferTimeline(transfers, o)}
       </div>
 
     </div>
