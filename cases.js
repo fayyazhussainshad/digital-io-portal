@@ -202,6 +202,63 @@ function renderCaseRow(c,sn){
   </tr>`;
 }
 
+// ── DIRECT FIR PRINT ─────────────────────────────────────────
+async function _printFIRDirect(id) {
+  const c = _casesCache.find(x=>x.id===id) || await getCase(id);
+  if (!c) { showToast('❌ مقدمہ نہیں ملا','error'); return; }
+  const o = currentOfficer||{};
+  const w = window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    @page{margin:15mm;size:A4;}
+    body{font-family:'Noto Nastaliq Urdu','Jameel Noori Nastaleeq',serif;direction:rtl;color:#111;font-size:13px;line-height:1.8;}
+    .hdr{text-align:center;border-bottom:3px double #000;padding-bottom:10px;margin-bottom:14px;}
+    .hdr h1{font-size:20px;font-weight:900;margin:0 0 4px;}
+    .fir-title{font-size:17px;font-weight:900;text-align:center;background:#1a3a5c;color:#fff;padding:8px;margin:10px 0;}
+    table{width:100%;border-collapse:collapse;margin-bottom:12px;}
+    td,th{border:1px solid #333;padding:7px 10px;font-size:13px;}
+    th{background:#e8e8e8;font-weight:700;width:38%;}
+    .s-lbl{font-size:13px;font-weight:800;background:#f0f4f8;padding:7px 12px;border-right:4px solid #1a3a5c;margin:12px 0 6px;}
+    .narrative{border:1px solid #999;padding:12px;min-height:80px;margin-top:6px;line-height:2.2;}
+    .sig-row{display:flex;justify-content:space-between;margin-top:40px;gap:20px;}
+    .sig-box{text-align:center;flex:1;}
+    .sig-line{border-top:1px solid #000;padding-top:6px;margin-top:30px;font-size:12px;}
+    .footer{font-size:9px;color:#888;text-align:center;margin-top:20px;border-top:1px solid #ccc;padding-top:6px;}
+  </style></head><body>
+  <div class="hdr">
+    <h1>محکمہ پولیس پنجاب</h1>
+    <div>تھانہ ${c.case_station||o.station||'___'} ضلع ${c.case_district||o.district||'___'}</div>
+  </div>
+  <div class="fir-title">فرسٹ انفارمیشن رپورٹ (FIR)</div>
+  <table>
+    <tr><th>مقدمہ نمبر</th><td><b>${c.fir_number||'—'}</b></td><th>تاریخ اندراج</th><td>${formatDate(c.fir_date)}</td></tr>
+    <tr><th>تاریخ وقوعہ</th><td>${formatDate(c.occurrence_date)||'—'}</td><th>دفعات</th><td><b>${c.section_of_law||'—'}</b></td></tr>
+    <tr><th>ملزمان</th><td colspan="3">${c.mulzman_type==='maloom'?'✅ معلوم':'⚠️ نامعلوم'}</td></tr>
+  </table>
+  <div class="s-lbl">مدعی کی تفصیل</div>
+  <table>
+    <tr><th>نام</th><td><b>${c.complainant||'—'}</b></td><th>شناختی کارڈ</th><td>${c.complainant_cnic||'—'}</td></tr>
+    <tr><th>موبائل</th><td>${c.complainant_cell||'—'}</td><th>پیشہ</th><td>${c.complainant_profession||'—'}</td></tr>
+  </table>
+  <div class="s-lbl">واقعے کی تفصیل</div>
+  <div class="narrative">${c.notes||'&nbsp;'.repeat(200)}</div>
+  <div class="s-lbl">دفتری</div>
+  <table>
+    <tr><th>تفتیشی افسر</th><td>${o.full_name||'—'}</td><th>عہدہ</th><td>${o.designation||'—'}</td></tr>
+    <tr><th>صورتحال</th><td colspan="3">${STATUS_LABELS[c.status]||c.status||'—'}</td></tr>
+  </table>
+  <div class="sig-row">
+    <div class="sig-box"><div class="sig-line">دستخط مدعی<br>${c.complainant||'___'}</div></div>
+    <div class="sig-box"><div class="sig-line">تفتیشی افسر<br>${o.full_name||'___'}</div></div>
+    <div class="sig-box"><div class="sig-line">SHO تھانہ ${c.case_station||o.station||'___'}<br>مہر و دستخط</div></div>
+  </div>
+  <div class="footer">Digital IO · محکمہ پولیس پنجاب · ${new Date().toLocaleDateString('en-PK')}</div>
+  <script>window.onload=()=>setTimeout(()=>window.print(),500);<\/script>
+  </body></html>`);
+  w.document.close();
+}
+
 // ── DOWNLOAD CASE FILE ──
 async function downloadCaseFile(id) {
   const c = _casesCache.find(x=>x.id===id) || await getCase(id);
@@ -908,46 +965,62 @@ async function openCaseWorkspace(id) {
 }
 
 function renderWorkspace(c, docs, ev, container) {
-  const statusColor = {under:'var(--accent)',complete:'var(--green)',incomplete:'var(--amber)',untrace:'var(--purple)',cancel:'var(--red)'}[c.status]||'var(--accent)';
+  const statusColor = {under:'var(--accent)',complete:'var(--green)',incomplete:'var(--amber)',untrace:'var(--purple)',cancel:'var(--red)',challan512:'#f97316'}[c.status]||'var(--accent)';
+  const o = currentOfficer||{};
   container.style.padding = '0';
   container.style.overflow = 'hidden';
   container.innerHTML = `
-    <!-- BACK BUTTON — RIGHT SIDE -->
-    <div style="padding:8px 12px;background:var(--bg-secondary);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;direction:rtl;">
-      <span style="font-size:13px;color:var(--text-muted);flex:1;">FIR مقدمہ</span>
-      <button onclick="goBackToCases()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;margin-left:0;">واپس ←</button>
-      <span style="font-size:16px;font-weight:800;color:var(--accent);font-family:var(--font-mono);">FIR ${c.fir_number}</span>
-      <span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span>
-    </div>
-    <!-- WORKSPACE HEADER -->
-    <div class="case-header"  style="display:none;">
-      <button class="btn btn-secondary" onclick="goBackToCases()" style="flex-shrink:0;display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;padding:8px 14px;">← واپس</button>
-      <div style="flex:1;">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <span style="font-size:18px;font-weight:900;color:var(--accent);font-family:var(--font-mono);">FIR ${c.fir_number}</span>
-          <span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span>
-          <span style="font-size:12px;color:var(--text-muted);">📅 ${formatDate(c.fir_date)}</span>
-          <span style="font-size:12px;color:var(--text-muted);">⚖️ ${c.section_of_law||'—'}</span>
-          <span style="font-size:12px;color:var(--text-muted);">👤 ${c.complainant||'—'}</span>
-        </div>
+    <!-- TOP BAR: back RIGHT + case info + action buttons -->
+    <div style="padding:8px 14px;background:var(--bg-secondary);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;direction:rtl;">
+      <!-- Case info -->
+      <div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap;">
+        <span style="font-size:15px;font-weight:900;color:var(--accent);font-family:var(--font-mono);">FIR ${c.fir_number||'—'}</span>
+        <span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span>
+        <span style="font-size:11px;color:var(--text-muted);">📅 ${formatDate(c.fir_date)}</span>
+        <span style="font-size:11px;color:var(--text-muted);">👤 ${c.complainant||'—'}</span>
+        <span style="font-size:11px;color:var(--text-muted);">⚖️ ${(c.section_of_law||'—').slice(0,20)}</span>
       </div>
-      <div style="display:flex;gap:6px;direction:rtl;">
+      <!-- Action buttons -->
+      <div style="display:flex;gap:5px;direction:rtl;">
+        <button class="btn btn-secondary btn-sm" onclick="_openDocsChecklist('${c.id}','${c.fir_number||''}')">📋</button>
         <button class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')">✏️</button>
-        <button class="btn btn-secondary btn-sm" onclick="_openDocsChecklist('${c.id}','${c.fir_number}')">📋 دستاویزات</button>
-        <button class="btn btn-danger btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number}')">🗑️</button>
+        <button class="btn btn-secondary btn-sm" onclick="downloadCaseFile('${c.id}')">⬇️</button>
+        <button class="btn btn-secondary btn-sm" onclick="_printFIRDirect('${c.id}')">🖨️ FIR</button>
+        <button class="btn btn-secondary btn-sm" onclick="openShareModal('${c.id}')">📤</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number||''}')">🗑️</button>
+        <button onclick="goBackToCases()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">واپس ←</button>
       </div>
     </div>
+
+    <!-- CASE SUMMARY (collapsible) -->
+    <details style="background:var(--bg-tertiary);border-bottom:1px solid var(--border);">
+      <summary style="cursor:pointer;padding:6px 14px;font-size:11px;color:var(--text-muted);direction:rtl;list-style:none;display:flex;align-items:center;gap:6px;">
+        <span>▼</span> <span style="font-family:'Jameel Noori Nastaleeq',serif;">مقدمے کی تفصیل</span>
+      </summary>
+      <div style="padding:10px 14px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;direction:rtl;font-size:11px;">
+        ${[
+          ['تاریخ اندراج', formatDate(c.fir_date)],
+          ['تاریخ وقوعہ', formatDate(c.occurrence_date)],
+          ['دفعات', c.section_of_law||'—'],
+          ['مدعی', c.complainant||'—'],
+          ['شناختی کارڈ', c.complainant_cnic||'—'],
+          ['موبائل', c.complainant_cell||'—'],
+          ['ملزمان', c.mulzman_type==='maloom'?'معلوم':'نامعلوم'],
+          ['تھانہ', c.case_station||o.station||'—'],
+          ['پوزیشن', c.position||'—'],
+        ].map(([k,v])=>`
+        <div style="background:var(--bg-card);border-radius:6px;padding:6px 8px;">
+          <div style="color:var(--text-muted);font-size:9px;">${k}</div>
+          <div style="font-weight:600;color:var(--text-primary);">${v||'—'}</div>
+        </div>`).join('')}
+      </div>
+    </details>
 
     <!-- MISAL DOCUMENT BAR -->
     ${renderMisalBar(c)}
 
-    <!-- TABS -->
-    <div class="case-tabs">
-      <div class="case-tab active" id="tab-evidence" onclick="switchWorkspaceTab('evidence')" style="display:none;"></div>
-    </div>
-
     <!-- TAB CONTENT -->
-    <div id="workspace-tab-content" style="height:calc(100vh - 200px);overflow:hidden;">
+    <div id="workspace-tab-content" style="height:calc(100vh - 220px);overflow:hidden;">
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">
         <div style="font-size:48px;margin-bottom:12px;">📂</div>
         <div style="font-size:14px;font-weight:600;margin-bottom:6px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">دستاویز منتخب کریں</div>
