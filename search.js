@@ -14,7 +14,7 @@ function renderSearch(container) {
     <div style="position:relative;margin-bottom:14px;">
       <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none;">🔍</span>
       <input id="sr-query" type="text" autocomplete="off"
-        placeholder="Search everything — FIR, name, CNIC, cell, incident, reminder, 5-C..."
+        placeholder="🔍 سب کچھ تلاش کریں — FIR، نام، CNIC، واقعہ، پیشی، قانون..." dir="rtl"
         oninput="_srLive()"
         style="width:100%;box-sizing:border-box;padding:14px 14px 14px 46px;
                background:var(--bg-card);border:2px solid var(--border);
@@ -33,7 +33,7 @@ function renderSearch(container) {
       <!-- Section filter -->
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
         <span style="font-size:11px;color:var(--text-muted);font-weight:600;min-width:64px;">SECTION</span>
-        ${[['all','🔍 All'],['cases','📁 Cases'],['patrol','🚔 Patrol'],['reminders','🔔 Reminders'],['fivec','📋 5-C'],['evidence','📷 شہادتیں']].map(([k,l],i)=>
+        ${[['all','🔍 سب'],['cases','📁 مقدمات'],['patrol','🚔 گشت'],['reminders','🔔 یاددہانی'],['fivec','📋 5-C'],['evidence','📷 شہادت'],['incident','🚨 واقعہ'],['court','⚖️ پیشی'],['law','⚖️ قانون']].map(([k,l],i)=>
           `<button class="sr-pill ${i===0?'sr-pill-active':''}" id="sec-${k}" onclick="_srSection('${k}')">${l}</button>`
         ).join('')}
       </div>
@@ -92,7 +92,7 @@ function renderSearch(container) {
 // ── STATE HANDLERS ────────────────────────────────────────────
 function _srSection(val) {
   window._srState.section = val;
-  ['all','cases','patrol','reminders','fivec','evidence'].forEach(s => {
+  ['all','cases','patrol','reminders','fivec','evidence','incident','court','law'].forEach(s => {
     const el = document.getElementById('sec-' + s);
     if (el) el.className = 'sr-pill' + (s === val ? ' sr-pill-active' : '');
   });
@@ -320,11 +320,76 @@ async function _srRun() {
     } catch(_) {}
   }
 
+  // ── INCIDENT REPORTS ───────────────────────────────────────
+  if (section === 'all' || section === 'incident') {
+    try {
+      const oid = await getOfficerId();
+      const { data } = await supabaseClient.from('incident_reports')
+        .select('*').eq('officer_id', oid).order('created_at', { ascending: false });
+      const incs = (data||[]).filter(i =>
+        wMatch(i.report_number)||wMatch(i.address)||
+        wMatch(i.narrative)||wMatch(i.incident_type)
+      );
+      if (incs.length) {
+        html += `<div class="sr-section-header">🚨 واقعاتی رپورٹس (${incs.length})</div>`;
+        html += `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
+          ${incs.map(i=>`<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;direction:rtl;">
+            <div style="font-size:13px;font-weight:600;">رپورٹ ${i.report_number||'—'}</div>
+            <div style="font-size:11px;color:var(--text-muted);">${i.incident_date||'—'} · ${i.address||'—'}</div>
+            ${i.narrative?`<div style="font-size:11px;color:var(--text-faint);">${i.narrative.slice(0,80)}...</div>`:''}
+          </div>`).join('')}
+        </div>`;
+      }
+    } catch(_) {}
+  }
+
+  // ── COURT DATES ─────────────────────────────────────────────
+  if (section === 'all' || section === 'court') {
+    try {
+      const oid = await getOfficerId();
+      const { data } = await supabaseClient.from('court_dates')
+        .select('*').eq('officer_id', oid).order('hearing_date', { ascending: true });
+      const courts = (data||[]).filter(d =>
+        wMatch(d.fir_number)||wMatch(d.court_name)||
+        wMatch(d.judge_name)||wMatch(d.purpose)
+      );
+      if (courts.length) {
+        html += `<div class="sr-section-header">⚖️ عدالتی پیشیاں (${courts.length})</div>`;
+        html += `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
+          ${courts.map(d=>`<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;direction:rtl;">
+            <div style="font-size:13px;font-weight:600;">FIR ${d.fir_number||'—'} · ${d.court_name||'—'}</div>
+            <div style="font-size:11px;color:var(--accent);">📅 ${formatDate(d.hearing_date)} · ${d.hearing_time||'—'}</div>
+            ${d.purpose?`<div style="font-size:11px;color:var(--text-muted);">${d.purpose}</div>`:''}
+          </div>`).join('')}
+        </div>`;
+      }
+    } catch(_) {}
+  }
+
+  // ── LAW LIBRARY ──────────────────────────────────────────────
+  if (section === 'all' || section === 'law') {
+    try {
+      const oid = await getOfficerId();
+      const { data } = await supabaseClient.from('law_library')
+        .select('*').eq('officer_id', oid).neq('category','template');
+      const laws = (data||[]).filter(l => wMatch(l.title)||wMatch(l.content));
+      if (laws.length) {
+        html += `<div class="sr-section-header">⚖️ قانونی لائبریری (${laws.length})</div>`;
+        html += `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
+          ${laws.map(l=>`<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;direction:rtl;">
+            <div style="font-size:13px;font-weight:600;">${l.title}</div>
+            <div style="font-size:11px;color:var(--text-muted);">${l.category||'—'}</div>
+          </div>`).join('')}
+        </div>`;
+      }
+    } catch(_) {}
+  }
+
   if (!html) {
-    html = `<div style="text-align:center;padding:48px;color:var(--text-muted);">
+    html = `<div style="text-align:center;padding:48px;color:var(--text-muted);direction:rtl;">
       <div style="font-size:32px;margin-bottom:10px;">🔍</div>
-      <div style="font-weight:600;">No results found</div>
-      <div style="font-size:12px;margin-top:4px;">Try different search terms</div>
+      <div style="font-weight:600;font-family:'Jameel Noori Nastaleeq',serif;">کوئی نتیجہ نہیں ملا</div>
+      <div style="font-size:12px;margin-top:4px;">دوسرے الفاظ آزمائیں</div>
     </div>`;
   }
 

@@ -912,9 +912,10 @@ function renderWorkspace(c, docs, ev, container) {
   container.style.padding = '0';
   container.style.overflow = 'hidden';
   container.innerHTML = `
-    <!-- BACK BUTTON — always visible on all screens -->
-    <div style="padding:8px 12px;background:var(--bg-secondary);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
-      <button onclick="goBackToCases()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:'Jameel Noori Nastaleeq',serif;">← واپس</button>
+    <!-- BACK BUTTON — RIGHT SIDE -->
+    <div style="padding:8px 12px;background:var(--bg-secondary);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;direction:rtl;">
+      <span style="font-size:13px;color:var(--text-muted);flex:1;">FIR مقدمہ</span>
+      <button onclick="goBackToCases()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;margin-left:0;">واپس ←</button>
       <span style="font-size:16px;font-weight:800;color:var(--accent);font-family:var(--font-mono);">FIR ${c.fir_number}</span>
       <span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span>
     </div>
