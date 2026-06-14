@@ -23,7 +23,7 @@ async function renderAdmin(container) {
 
   container.innerHTML = `
   <div style="max-width:1000px;margin:0 auto;" id="admin-root">
-    <div style="margin-bottom:10px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);margin-left:auto;">واپس ←</button></div>
+    <div style="margin-bottom:10px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);margin-inline-start:auto;">واپس ←</button></div>
     <div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ Loading...</div>
   </div>`;
   await _buildAdmin(role);
@@ -56,7 +56,7 @@ async function _buildAdmin(role) {
         ${role === 'superadmin' ? '👑 Super Admin' : '🏛️ SHO / Station Admin'} — ${currentOfficer?.station || ''} · ${currentOfficer?.district || ''}
       </div>
     </div>
-    <div style="margin-left:auto;">
+    <div style="margin-inline-start:auto;">
       <button class="btn btn-secondary btn-sm" onclick="_adminRefresh()">🔄 Refresh</button>
     </div>
   </div>

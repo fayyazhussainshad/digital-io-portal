@@ -117,7 +117,7 @@ function _switchPTab() {
 async function _drawHome(root) {
   const hist = await _fetchHist();
   root.innerHTML = `
-  <div style="margin-bottom:8px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);">← واپس</button></div>
+  <div style="margin-bottom:8px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);margin-inline-start:auto;">واپس ←</button></div>
   <div class="card" style="text-align:center;padding:32px 20px;margin-bottom:14px;">
     <div style="font-size:52px;margin-bottom:10px;">🚔</div>
     <div style="font-size:17px;font-weight:800;margin-bottom:6px;">Patrol Log</div>

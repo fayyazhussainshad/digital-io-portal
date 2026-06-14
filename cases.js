@@ -117,7 +117,7 @@ async function renderCases(container,fStatus,fQuery,fStation){
       <div style="font-size:18px;font-weight:800;">📁 میرے مقدمات</div>
       <div style="font-size:12px;color:var(--text-muted);">${cases.length} مقدمات${isArchiveView?' · '+fStation+' آرکائیو':''}</div>
     </div>
-    <div style="display:flex;gap:6px;direction:rtl;margin-left:auto;flex-wrap:wrap;">
+    <div style="display:flex;gap:6px;direction:rtl;margin-inline-start:auto;flex-wrap:wrap;">
       <button class="btn btn-primary" onclick="openAddCaseModal()">+ نیا اندراج</button>
     </div>
   </div>
@@ -624,7 +624,7 @@ function renderDocChecklist(docs, selected) {
       html += `<div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:4px;cursor:pointer;" onclick="toggleDoc('${doc.replace(/'/g,"\\'")}',this)">
         <input type="checkbox" checked style="accent-color:var(--accent);width:14px;height:14px;pointer-events:none;">
         <span style="font-size:12px;color:var(--accent);">${doc}</span>
-        <span onclick="event.stopPropagation();removeCustomDoc('${doc.replace(/'/g,"\\'")}');" style="margin-left:auto;color:var(--red);font-size:12px;cursor:pointer;">×</span>
+        <span onclick="event.stopPropagation();removeCustomDoc('${doc.replace(/'/g,"\\'")}');" style="margin-inline-start:auto;color:var(--red);font-size:12px;cursor:pointer;">×</span>
       </div>`;
     });
   }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ur" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
@@ -329,7 +329,38 @@ html[data-theme="aurora"] .login-bg {
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { font-size: 14px; }
-body { font-family: var(--font-main); background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; overflow: hidden; -webkit-font-smoothing: antialiased; }
+body { font-family: var(--font-main); background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; overflow: hidden; -webkit-font-smoothing: antialiased; direction: rtl; text-align: right; }
+
+/* ═══ GLOBAL RTL — Urdu software, everything flows right-to-left ═══ */
+.topbar, .sidebar, .main-area, .page-content,
+.card, .modal-body, .modal-footer, .modal-header,
+.nav-item, .data-table, .form-row, .form-group,
+.page-header, .case-header { direction: rtl; }
+
+/* Headings, labels, paragraphs default to right alignment */
+h1, h2, h3, h4, h5, h6, p, label, span, div, td, th, li { text-align: right; }
+
+/* Tables: header and cells right-aligned */
+.data-table th, .data-table td { text-align: right; }
+
+/* Flex rows that hold buttons/icons flow RTL (icon then text) */
+.nav-item { flex-direction: row; }
+
+/* LTR ISLANDS — numbers, dates, codes, technical fields stay left-to-right */
+input[type="date"], input[type="time"], input[type="number"],
+input[type="email"], input[type="tel"], input[type="url"],
+input[id*="cnic"], input[id*="cell"], input[id*="phone"],
+input[id*="fir"]:not([id*="writer"]), input[id*="date"],
+input[id*="txn"], input[id*="badge"], input[id*="otp"],
+.ltr, .mono, code, pre, .pin-display, .otp-box,
+[dir="ltr"] { direction: ltr !important; text-align: left !important; }
+
+/* Email/password login fields stay LTR */
+#login-email, #login-password, #reg-email, #reg-password { direction: ltr !important; text-align: left !important; }
+
+/* Numbers inside pills/badges centered */
+.pill, .nav-badge, .badge { text-align: center; }
+
 a { cursor: pointer; color: var(--accent); text-decoration: none; }
 button { cursor: pointer; font-family: var(--font-main); }
 input, textarea, select { font-family: var(--font-main); }
@@ -396,7 +427,7 @@ input, textarea, select { font-family: var(--font-main); }
 .modal-close { background: none; border: none; color: var(--text-muted); font-size: 18px; transition: color 0.15s; cursor: pointer; }
 .modal-close:hover { color: var(--red); }
 .modal-body { padding: 20px; }
-.modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+.modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-start; }
 .modal-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.6; }
 
 /* ── APP LAYOUT ── */
@@ -436,9 +467,9 @@ input, textarea, select { font-family: var(--font-main); }
 .nav-section-label { font-size: 9px; color: var(--text-faint); letter-spacing: 2px; text-transform: uppercase; padding: 8px 10px 4px; }
 .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius-sm); font-size: 13px; color: var(--text-secondary); margin: 2px 0; transition: all 0.15s; cursor: pointer; }
 .nav-item:hover { background: var(--hover-bg); color: var(--text-primary); }
-.nav-item.active { background: var(--nav-active); color: var(--accent); font-weight: 600; box-shadow: inset 2px 0 0 var(--accent); }
+.nav-item.active { background: var(--nav-active); color: var(--accent); font-weight: 600; box-shadow: inset -2px 0 0 var(--accent); }
 .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
-.nav-badge { margin-left: auto; background: var(--red); color: #fff; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 10px; }
+.nav-badge { margin-right: auto; margin-left: 0; background: var(--red); color: #fff; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 10px; }
 .sidebar-footer { padding: 12px 10px; border-top: 1px solid var(--border); }
 .logout-btn { width: 100%; background: var(--red-bg); border: 1px solid rgba(239,68,68,0.2); border-radius: var(--radius-sm); padding: 9px; color: var(--red); font-size: 12px; font-weight: 600; transition: all 0.15s; }
 .logout-btn:hover { background: rgba(239,68,68,0.15); }
@@ -711,7 +742,7 @@ input[id*="cnic"], input[id*="cell"] {
 #fab-toggle {
   position: fixed;
   bottom: 20px;
-  right: 20px;
+  left: 20px;
   width: 48px;
   height: 48px;
   border-radius: 50%;

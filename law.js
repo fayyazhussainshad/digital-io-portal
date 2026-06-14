@@ -35,7 +35,7 @@ async function _buildLaw() {
   root.innerHTML = `
   <!-- Header -->
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;direction:rtl;flex-wrap:wrap;">
-    <button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);margin-left:auto;">واپس ←</button>
+    <button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);margin-inline-start:auto;">واپس ←</button>
     <div>
       <div style="font-size:18px;font-weight:800;">⚖️ قانونی لائبریری</div>
       <div style="font-size:12px;color:var(--text-muted);">${laws.length} قانون · اپ لوڈ، پڑھیں، پرنٹ کریں</div>

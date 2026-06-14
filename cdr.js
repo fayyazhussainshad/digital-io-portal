@@ -365,13 +365,13 @@ function _renderAnalysis(a, suspects) {
   <div class="card" style="margin-bottom:12px;border:1px solid var(--red);">
     <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:10px;">🚨 خودکار انتباہات (${a.flags.length})</div>
     ${a.flags.map(f=>`
-      <div style="display:flex;gap:10px;align-items:flex-start;padding:8px;background:rgba(239,83,80,0.07);border-radius:8px;margin-bottom:6px;border-left:3px solid ${flagColors[f.level]||'var(--amber)'};">
+      <div style="display:flex;gap:10px;direction:rtl;align-items:flex-start;padding:8px;background:rgba(239,83,80,0.07);border-radius:8px;margin-bottom:6px;border-left:3px solid ${flagColors[f.level]||'var(--amber)'};">
         <span style="font-size:20px;">${f.icon}</span>
         <div>
           <div style="font-size:13px;font-weight:700;color:${flagColors[f.level]||'var(--amber)'};">${f.title}</div>
           <div style="font-size:12px;color:var(--text-secondary);">${f.detail}</div>
         </div>
-        <span style="margin-left:auto;font-size:10px;padding:2px 8px;border-radius:10px;background:${flagColors[f.level]};color:#fff;font-weight:700;white-space:nowrap;">${f.level.toUpperCase()}</span>
+        <span style="margin-inline-start:auto;font-size:10px;padding:2px 8px;border-radius:10px;background:${flagColors[f.level]};color:#fff;font-weight:700;white-space:nowrap;">${f.level.toUpperCase()}</span>
       </div>`).join('')}
   </div>` : ''}
 
@@ -506,7 +506,7 @@ function _renderAnalysis(a, suspects) {
   </div>
 
   <!-- Actions -->
-  <div style="display:flex;gap:10px;margin-bottom:16px;">
+  <div style="display:flex;gap:10px;direction:rtl;margin-bottom:16px;">
     <button class="btn btn-primary" style="flex:1;" onclick="_cdrPrintReport()">🖨️ رپورٹ پرنٹ کریں</button>
     <button class="btn btn-secondary" style="flex:1;" onclick="_cdrDownloadReport()">⬇️ رپورٹ ڈاؤنلوڈ کریں</button>
     <button class="btn btn-secondary" style="flex:1;" onclick="_cdrShareReport()">📱 WhatsApp شیئر</button>
