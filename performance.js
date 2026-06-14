@@ -43,7 +43,7 @@ async function _buildPerf() {
   root.innerHTML = `
   <!-- Back + Header -->
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;direction:rtl;flex-wrap:wrap;">
-    <button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);">واپس ←</button>
+    <button onclick="showPage('dashboard',null)" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);">واپس ←</button>
     <div>
       <div style="font-size:18px;font-weight:800;">📊 کارکردگی کا جائزہ</div>
       <div style="font-size:12px;color:var(--text-muted);">${currentOfficer?.full_name||''} · ${currentOfficer?.station||''} · ${new Date().toLocaleDateString('en-PK')}</div>
@@ -76,7 +76,6 @@ async function _buildPerf() {
       {l:'اخراج',        v:cancel,     c:'var(--red)',   i:'❌'},
       {l:'چالان نامکمل', v:incomplete, c:'var(--amber)', i:'⚠️'},
       {l:'چالان 512',    v:c512,       c:'#f97316',     i:'📋'},
-      {l:'زیر التواء یاد', v:pendRem,  c:'var(--amber)', i:'🔔'},
       {l:'گزشتہ پیشیاں',  v:overdueC,  c:'var(--red)',   i:'⚖️'},
     ].map(s=>`
     <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px 8px;text-align:center;border-right:3px solid ${s.c};">

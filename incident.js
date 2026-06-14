@@ -15,18 +15,18 @@ function renderIncident(container) {
 
   container.innerHTML = `
   <div style="max-width:900px;margin:0 auto;" id="inc-root">
-    <div style="margin-bottom:12px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq',serif;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">← واپس</button></div>
+    <div style="margin-bottom:12px;"><button onclick="showPage('dashboard',null)" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq',serif;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">واپس ←</button></div>
 
     <!-- Action Bar — compact -->
     <div style="display:flex;gap:6px;direction:rtl;margin-bottom:12px;flex-wrap:wrap;align-items:center;background:var(--bg-card);padding:10px 12px;border-radius:10px;border:1px solid var(--border);">
       <span style="font-size:13px;font-weight:700;color:var(--accent);">🚨 واقعاتی رپورٹ</span>
+      <button class="btn btn-secondary btn-sm" onclick="_incReset()">➕ نئی رپورٹ</button>
       <div style="flex:1;"></div>
-      <button class="btn btn-secondary btn-sm" onclick="_showPrevReports()">📋 پرانی رپورٹس</button>
       <button class="btn btn-primary btn-sm" onclick="_incSaveAndPrint()">🖨️ محفوظ و پرنٹ</button>
-      <button class="btn btn-primary btn-sm" onclick="_incSaveToDB()">💾 محفوظ</button>
-      <button class="btn btn-secondary btn-sm" onclick="_incDownload()">⬇️</button>
-      <button class="btn btn-secondary btn-sm" onclick="_incShare()">📱</button>
-      <button class="btn btn-secondary btn-sm" onclick="_incReset()">🔄</button>
+      <button class="btn btn-primary btn-sm" onclick="_incSaveToDB()">💾 محفوظ کریں</button>
+      <button class="btn btn-secondary btn-sm" onclick="_incDownload()">⬇️ ڈاؤنلوڈ</button>
+      <button class="btn btn-secondary btn-sm" onclick="_incShare()">📱 WhatsApp</button>
+      <button class="btn btn-secondary btn-sm" onclick="_showPrevReports()">📋 پرانی رپورٹس</button>
     </div>
 
     <!-- FORM -->
@@ -533,8 +533,8 @@ async function _loadPrevReports() { /* kept for compatibility */ }
 function _incPrint() {
   const form = document.getElementById('inc-form');
   if (!form) return;
-  const w = window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  let _printHTML = '';
+  _printHTML += (`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
     <style>
       @page{margin:8mm;size:A4;}
@@ -552,8 +552,8 @@ function _incPrint() {
       *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     </style>
     </head><body>${form.outerHTML}</body></html>`);
-  w.document.close();
-  setTimeout(()=>w.print(),700);
+  dioPrint(_printHTML);
+  
 }
 
 // ── DOWNLOAD ──────────────────────────────────────────────────

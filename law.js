@@ -1,9 +1,17 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — LAW LIBRARY  v2  (law.js)
-   Full law documents · No sections/cards · Upload/Read/Print
+   DIGITAL IO — LAW LIBRARY  v3  (law.js)
+   Full law documents (complete PPC/CrPC etc.) — NO sections
+   Buttons in one line: view · rename · print · download · online · upload
    ═══════════════════════════════════════════════════════════ */
 
 registerPage('law', renderLaw);
+
+const _LAW_LINKS = {
+  punjab:   'https://punjabcode.punjab.gov.pk/urdu/index',
+  pakistan: 'https://pakistancode.gov.pk',
+  supreme:  'https://www.supremecourt.gov.pk',
+  lhc:      'https://data.lhc.gov.pk/judgments',
+};
 
 async function renderLaw(container) {
   container.innerHTML = `<div id="law-root" style="max-width:none;">
@@ -35,17 +43,12 @@ async function _buildLaw() {
   root.innerHTML = `
   <!-- Header -->
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;direction:rtl;flex-wrap:wrap;">
-    <button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);">واپس ←</button>
-    <div>
+    <button onclick="showPage('dashboard',null)" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);">واپس ←</button>
+    <div style="flex:1;">
       <div style="font-size:18px;font-weight:800;">⚖️ قانونی لائبریری</div>
-      <div style="font-size:12px;color:var(--text-muted);">${laws.length} قانون · اپ لوڈ، پڑھیں، پرنٹ کریں</div>
+      <div style="font-size:12px;color:var(--text-muted);">${laws.length} قوانین · مکمل قانون اپ لوڈ کریں</div>
     </div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;">
-      <button class="btn btn-primary" onclick="_addLaw()">+ نیا قانون شامل کریں</button>
-      <button class="btn btn-secondary" onclick="window.open('https://punjabcode.punjab.gov.pk/urdu/index')">🔗 Punjab Code</button>
-      <button class="btn btn-secondary" onclick="window.open('https://pakistancode.gov.pk')">🔗 Pakistan Code</button>
-      <button class="btn btn-secondary" onclick="window.open('https://supremecourt.gov.pk')">🔗 Supreme Court</button>
-    </div>
+    <button class="btn btn-primary" onclick="_addLaw()">➕ نیا قانون اپ لوڈ کریں</button>
   </div>
 
   <!-- Search -->
@@ -59,55 +62,67 @@ async function _buildLaw() {
   <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
     <div style="font-size:52px;margin-bottom:14px;">⚖️</div>
     <div style="font-size:16px;font-weight:700;margin-bottom:8px;font-family:'Jameel Noori Nastaleeq',serif;">${q ? 'کوئی نتیجہ نہیں' : 'قانونی لائبریری خالی ہے'}</div>
-    <div style="font-size:12px;margin-bottom:16px;">${q ? 'دوسرے الفاظ آزمائیں' : '+ نیا قانون شامل کریں بٹن دبائیں'}</div>
-    ${!q?`<button class="btn btn-primary" onclick="_addLaw()">+ پہلا قانون شامل کریں</button>`:''}
+    <div style="font-size:12px;margin-bottom:16px;">${q ? 'دوسرے الفاظ آزمائیں' : 'نیا قانون اپ لوڈ کریں — مکمل PPC، CrPC، CNSA وغیرہ'}</div>
+    ${!q?`<button class="btn btn-primary" onclick="_addLaw()">➕ پہلا قانون اپ لوڈ کریں</button>`:''}
   </div>` : `
-  <!-- Law List — simple rows, not cards -->
+  <!-- Law List — simple rows, buttons in one line -->
   <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
     ${filtered.map((l,i) => `
-    <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-bottom:${i<filtered.length-1?'1px solid var(--border)':'none'};direction:rtl;">
+    <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:${i<filtered.length-1?'1px solid var(--border)':'none'};direction:rtl;flex-wrap:wrap;">
       <div style="font-size:24px;flex-shrink:0;">${l.file_url ? '📄' : '📋'}</div>
-      <div style="flex:1;">
-        <div style="font-size:14px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;margin-bottom:3px;">${l.title}</div>
-        <div style="font-size:10px;color:var(--text-muted);">${l.category||'—'} · ${formatDate(l.created_at)}</div>
-        ${l.content ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;line-height:1.6;max-height:40px;overflow:hidden;">${l.content.slice(0,120)}${l.content.length>120?'...':''}</div>` : ''}
+      <div style="flex:1;min-width:150px;">
+        <div style="font-size:15px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">${l.title}</div>
+        <div style="font-size:11px;color:var(--text-muted);">${formatDate(l.created_at)}${l.content?` · ${l.content.length} حروف`:''}</div>
       </div>
-      <div style="display:flex;gap:4px;flex-direction:column;flex-shrink:0;">
-        ${l.content ? `<button class="btn btn-secondary btn-sm" onclick="_readLaw('${l.id}')">👁️ پڑھیں</button>` : ''}
-        ${l.file_url ? `<button class="btn btn-primary btn-sm" onclick="window.open('${l.file_url}')">⬇️ ڈاؤنلوڈ</button>` : ''}
-        ${l.content ? `<button class="btn btn-secondary btn-sm" onclick="_printLaw('${l.id}')">🖨️ پرنٹ</button>` : ''}
-        <button class="btn btn-secondary btn-sm" onclick="_renameLaw('${l.id}','${l.title.replace(/'/g,'')}')">✏️ نام</button>
-        <button class="btn btn-danger btn-sm" onclick="_deleteLaw('${l.id}')">🗑️</button>
+      <!-- Buttons in ONE line, left side -->
+      <div style="display:flex;gap:5px;flex-shrink:0;direction:rtl;flex-wrap:wrap;">
+        ${l.content ? `<button class="btn btn-secondary btn-sm" onclick="_readLaw('${l.id}')" title="پڑھیں">👁️</button>` : ''}
+        <button class="btn btn-secondary btn-sm" onclick="_renameLaw('${l.id}','${(l.title||'').replace(/'/g,'')}')" title="نام تبدیل">✏️</button>
+        ${l.content ? `<button class="btn btn-secondary btn-sm" onclick="_printLaw('${l.id}')" title="پرنٹ">🖨️</button>` : ''}
+        ${l.file_url ? `<button class="btn btn-secondary btn-sm" onclick="window.open('${l.file_url}')" title="ڈاؤنلوڈ">⬇️</button>` : ''}
+        <button class="btn btn-danger btn-sm" onclick="_deleteLaw('${l.id}')" title="حذف">🗑️</button>
       </div>
     </div>`).join('')}
+  </div>
+
+  <!-- Online resources at the BOTTOM -->
+  <div style="margin-top:16px;padding:14px;background:var(--bg-secondary);border-radius:10px;direction:rtl;">
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">🌐 آن لائن قانونی وسائل</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-secondary btn-sm" onclick="window.open('${_LAW_LINKS.punjab}')">🔗 Punjab Code</button>
+      <button class="btn btn-secondary btn-sm" onclick="window.open('${_LAW_LINKS.pakistan}')">🔗 Pakistan Code</button>
+      <button class="btn btn-secondary btn-sm" onclick="window.open('${_LAW_LINKS.supreme}')">🔗 Supreme Court</button>
+      <button class="btn btn-secondary btn-sm" onclick="window.open('${_LAW_LINKS.lhc}')">🔗 LHC Judgments</button>
+    </div>
   </div>`}`;
 }
 
-// ── ADD LAW ───────────────────────────────────────────────────
+// ── ADD / UPLOAD LAW ──────────────────────────────────────────
 function _addLaw() {
-  openModal('+ نیا قانون شامل کریں',
+  openModal('➕ نیا قانون اپ لوڈ کریں',
     `<div style="direction:rtl;">
-      <label class="form-label">عنوان *</label>
-      <input class="form-input" id="nl-title" placeholder="مثلاً پاکستان پینل کوڈ 1860" style="margin-bottom:10px;">
+      <label class="form-label">قانون کا نام *</label>
+      <input class="form-input" id="nl-title" placeholder="مثلاً پاکستان پینل کوڈ (مکمل)" style="margin-bottom:10px;">
       <label class="form-label">زمرہ</label>
       <select class="form-input" id="nl-cat" style="margin-bottom:10px;">
         <option>PPC</option><option>CrPC</option><option>CNSA</option>
-        <option>ہتھیار</option><option>ٹریفک</option><option>سائبر</option><option>دیگر</option>
+        <option>ہتھیار ایکٹ</option><option>ٹریفک</option><option>سائبر کرائم</option>
+        <option>خصوصی قوانین</option><option>دیگر</option>
       </select>
-      <label class="form-label">مکمل متن</label>
-      <textarea class="form-input" id="nl-content" rows="10"
-        placeholder="یہاں قانون کا مکمل متن لکھیں یا پیسٹ کریں..."
+      <label class="form-label">مکمل متن (پورا قانون یہاں پیسٹ کریں)</label>
+      <textarea class="form-input" id="nl-content" rows="8"
+        placeholder="پورا قانون یہاں لکھیں یا پیسٹ کریں... (دفعات نہیں، مکمل قانون)"
         style="font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;direction:rtl;line-height:2;resize:vertical;"></textarea>
       <div style="margin-top:10px;">
-        <label class="form-label">PDF / فائل اپ لوڈ (اختیاری)</label>
+        <label class="form-label">یا PDF / فائل اپ لوڈ کریں</label>
         <input type="file" id="nl-file" accept=".pdf,.doc,.docx,.txt"
           style="width:100%;padding:8px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);">
         <div id="nl-progress" style="font-size:11px;color:var(--text-muted);margin-top:4px;"></div>
       </div>
     </div>`,
-    `<div style="display:flex;gap:8px;direction:rtl;">
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;">
       <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-      <button class="btn btn-primary" id="nl-save" onclick="_saveLaw()">💾 محفوظ</button>
+      <button class="btn btn-primary" id="nl-save" onclick="_saveLaw()">💾 اپ لوڈ کریں</button>
     </div>`
   );
 }
@@ -120,7 +135,7 @@ async function _saveLaw() {
   const btn     = document.getElementById('nl-save');
   const prog    = document.getElementById('nl-progress');
 
-  if (!title) { showToast('⚠️ عنوان ضروری ہے','error'); return; }
+  if (!title) { showToast('⚠️ قانون کا نام ضروری ہے','error'); return; }
   if (!content && !file) { showToast('⚠️ متن یا فائل ضروری ہے','error'); return; }
 
   if (btn) { btn.textContent='⏳...'; btn.disabled=true; }
@@ -137,10 +152,10 @@ async function _saveLaw() {
       if (prog) prog.textContent = '✅ فائل اپ لوڈ';
     }
     await supabaseClient.from('law_library').insert({ officer_id:oid, title, category:cat, content, file_url:fileUrl, file_name:fileName });
-    closeModal(); showToast('✅ قانون محفوظ','success'); _buildLaw();
+    closeModal(); showToast('✅ قانون اپ لوڈ ہو گیا','success'); _buildLaw();
   } catch(e) {
     showToast('❌ '+e.message,'error');
-    if (btn) { btn.textContent='💾 محفوظ'; btn.disabled=false; }
+    if (btn) { btn.textContent='💾 اپ لوڈ کریں'; btn.disabled=false; }
   }
 }
 
@@ -150,7 +165,7 @@ async function _readLaw(id) {
   if (!data) return;
   openModal(`⚖️ ${data.title}`,
     `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;line-height:2.2;max-height:65vh;overflow-y:auto;white-space:pre-wrap;">${data.content||'مواد دستیاب نہیں'}</div>`,
-    `<div style="display:flex;gap:8px;direction:rtl;">
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;">
       <button class="btn btn-secondary" onclick="closeModal()">بند</button>
       <button class="btn btn-secondary" onclick="_printLaw('${id}')">🖨️ پرنٹ</button>
       ${data.file_url?`<button class="btn btn-primary" onclick="window.open('${data.file_url}')">⬇️ ڈاؤنلوڈ</button>`:''}
@@ -163,21 +178,19 @@ async function _printLaw(id) {
   const { data } = await supabaseClient.from('law_library').select('*').eq('id',id).single();
   if (!data) return;
   const o = currentOfficer||{};
-  let _printHTML = '';
-  _printHTML += (`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
+  const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
     <style>@page{margin:20mm;}body{font-family:'Noto Nastaliq Urdu',serif;direction:rtl;color:#111;font-size:14px;line-height:2;}
     .hdr{text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:16px;}
-    pre,div{white-space:pre-wrap;word-break:break-word;}
+    div{white-space:pre-wrap;word-break:break-word;}
     .footer{font-size:10px;color:#666;text-align:center;margin-top:20px;border-top:1px solid #ccc;padding-top:8px;}</style>
     </head><body>
     <div class="hdr"><h2>محکمہ پولیس پنجاب · قانونی لائبریری</h2>
-    <div>تھانہ ${o.station||'—'} · ضلع ${o.district||'—'}</div><h3>${data.title}</h3></div>
+    <h3>${data.title}</h3></div>
     <div>${(data.content||'').replace(/\n/g,'<br>')}</div>
     <div class="footer">Digital IO · ${new Date().toLocaleDateString('en-PK')}</div>
-    
-    </body></html>`);
-  dioPrint(_printHTML);
+    </body></html>`;
+  if (typeof dioPrint === 'function') dioPrint(html);
 }
 
 // ── RENAME ───────────────────────────────────────────────────
@@ -187,7 +200,7 @@ function _renameLaw(id, oldName) {
       <label class="form-label">نیا نام</label>
       <input class="form-input" id="law-rename" value="${oldName}">
     </div>`,
-    `<div style="display:flex;gap:8px;direction:rtl;">
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;">
       <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
       <button class="btn btn-primary" onclick="_doRenameLaw('${id}')">💾 تبدیل</button>
     </div>`
@@ -204,7 +217,7 @@ async function _doRenameLaw(id) {
 function _deleteLaw(id) {
   openModal('🗑️ حذف',
     `<p style="color:var(--red);direction:rtl;">کیا آپ یہ قانون حذف کرنا چاہتے ہیں؟</p>`,
-    `<div style="display:flex;gap:8px;direction:rtl;">
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;">
       <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
       <button class="btn btn-danger" onclick="closeModal();_doDeleteLaw('${id}')">🗑️ حذف</button>
     </div>`
