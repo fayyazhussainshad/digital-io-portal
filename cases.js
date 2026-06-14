@@ -207,8 +207,8 @@ async function _printFIRDirect(id) {
   const c = _casesCache.find(x=>x.id===id) || await getCase(id);
   if (!c) { showToast('❌ مقدمہ نہیں ملا','error'); return; }
   const o = currentOfficer||{};
-  const w = window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
+  let _printHTML = '';
+  _printHTML += (`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     @page{margin:15mm;size:A4;}
@@ -254,9 +254,9 @@ async function _printFIRDirect(id) {
     <div class="sig-box"><div class="sig-line">SHO تھانہ ${c.case_station||o.station||'___'}<br>مہر و دستخط</div></div>
   </div>
   <div class="footer">Digital IO · محکمہ پولیس پنجاب · ${new Date().toLocaleDateString('en-PK')}</div>
-  <script>window.onload=()=>setTimeout(()=>window.print(),500);<\/script>
+  
   </body></html>`);
-  w.document.close();
+  dioPrint(_printHTML);
 }
 
 // ── DOWNLOAD CASE FILE ──
@@ -759,12 +759,17 @@ async function saveNewCase(){
     const allowed = await checkCaseLimit();
     if (!allowed) return;
   }
-  var fir=document.getElementById('cf-fir').value.trim();
-  var section=document.getElementById('cf-section').value.trim();
-  var complainant=document.getElementById('cf-complainant').value.trim();
-  if(!fir){showToast('⚠️ مقدمہ نمبر درج کریں','error');return;}
-  if(!section){showToast('⚠️ دفعہ قانون درج کریں','error');return;}
-  if(!complainant){showToast('⚠️ مدعی کا نام درج کریں','error');return;}
+  var fir=document.getElementById('cf-fir')?.value.trim()||'';
+  var section=document.getElementById('cf-section')?.value.trim()||'';
+  // Fallback: if user typed a section but didn't pick from dropdown, use the typed text
+  if(!section){
+    var typedSec=document.getElementById('cf-section-search')?.value.trim()||'';
+    if(typedSec){ section=typedSec; var _sh=document.getElementById('cf-section'); if(_sh)_sh.value=typedSec; }
+  }
+  var complainant=document.getElementById('cf-complainant')?.value.trim()||'';
+  if(!fir){showToast('⚠️ مقدمہ نمبر درج کریں','error');document.getElementById('cf-fir')?.focus();return;}
+  if(!section){showToast('⚠️ دفعہ قانون درج کریں','error');document.getElementById('cf-section-search')?.focus();return;}
+  if(!complainant){showToast('⚠️ مدعی کا نام درج کریں','error');document.getElementById('cf-complainant')?.focus();return;}
   try{
     await addCase({
       fir_number:fir,
@@ -903,6 +908,12 @@ async function _createAutoReminders(firNum, firDateStr, mulzmanType, complainant
   } catch(e) { console.warn('auto reminder:', e.message); }
 }
 async function saveEditCase(id){
+  // Resolve section: use selected, else typed search value
+  var _editSection=document.getElementById('cf-section').value.trim();
+  if(!_editSection){
+    var _typed=document.getElementById('cf-section-search')?.value.trim()||'';
+    if(_typed) _editSection=_typed;
+  }
   try{
     await updateCase(id,{
       fir_number:document.getElementById('cf-fir').value.trim(),
@@ -914,11 +925,12 @@ async function saveEditCase(id){
       complainant_profession:document.getElementById('cf-complainant-profession')?.value.trim()||'',
       fir_writer:document.getElementById('cf-fir-writer')?.value.trim()||'',
       complaint_sender:document.getElementById('cf-complaint-sender')?.value.trim()||'',
-      section_of_law:document.getElementById('cf-section').value.trim(),
+      section_of_law:_editSection,
       offence_type:document.getElementById('cf-offence')?.value?.trim()||'',
-      sho:document.getElementById('cf-sho').value.trim(),
-      sdpo:document.getElementById('cf-sdpo').value.trim(),
+      sho:document.getElementById('cf-sho')?.value.trim()||'',
+      sdpo:document.getElementById('cf-sdpo')?.value.trim()||'',
       status:document.getElementById('cf-status').value,
+      mulzman_type:document.getElementById('cf-mulzman-type')?.value||'namaloom',
       position:document.getElementById('cf-position').value,
       notes:document.getElementById('cf-notes')?.value.trim()||'',
       documents_checklist:selectedDocuments.length>0?selectedDocuments:[],
