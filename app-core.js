@@ -650,6 +650,8 @@ async function initApp() {
     if(table==='cases'&&pt?.includes('مقدمات')) renderCases&&renderCases(document.getElementById('page-content'));
     if(table==='reminders'&&pt?.includes('یاددہانی')) renderReminders&&renderReminders(document.getElementById('page-content'));
   });
+  // Check license
+  if (typeof checkLicense==='function') checkLicense();
   showPage('dashboard', document.querySelector('.nav-item'));
   setTimeout(()=>triggerBackup('app_init'), 3000);
   setTimeout(_initNotifications, 2000);

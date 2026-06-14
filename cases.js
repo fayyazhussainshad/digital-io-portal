@@ -754,6 +754,11 @@ document.addEventListener('click', function(e) {
 function openAddCaseModal(){openModal('',caseFormHTML(),`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveNewCase()">💾 اندراج محفوظ کریں</button>`);}
 async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;openModal(`✏️ ترمیم — مقدمہ ${c.fir_number}`,caseFormHTML(c),`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveEditCase('${id}')">💾 تبدیلیاں محفوظ کریں</button>`);}
 async function saveNewCase(){
+  // Check case limit
+  if (typeof checkCaseLimit==='function') {
+    const allowed = await checkCaseLimit();
+    if (!allowed) return;
+  }
   var fir=document.getElementById('cf-fir').value.trim();
   var section=document.getElementById('cf-section').value.trim();
   var complainant=document.getElementById('cf-complainant').value.trim();
