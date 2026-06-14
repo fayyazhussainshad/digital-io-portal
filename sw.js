@@ -12,6 +12,7 @@ const CORE_ASSETS = [
   '/offline.html',
   '/manifest.json',
   '/offline-store.js',
+  '/islamic.js',
   '/app-core.js',
   '/dashboard.js',
   '/toolbar.js',

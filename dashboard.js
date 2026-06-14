@@ -177,40 +177,6 @@ async function _buildDash() {
   setTimeout(() => _startIslamicTicker(), 100);
 }
 
-// ── ISLAMIC TICKER ────────────────────────────────────────────
-const _ISLAMIC = [
-  '🤲 اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ — درود ابراہیمی',
-  '📖 إِنَّ مَعَ الْعُسْرِ يُسْرًا — بے شک تکلیف کے ساتھ آسانی ہے (الانشراح)',
-  '🤲 سُبْحَانَ اللَّهِ وَبِحَمْدِهِ سُبْحَانَ اللَّهِ الْعَظِيمِ',
-  '📖 وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا — جو اللہ سے ڈرے اللہ راستہ دیتا ہے',
-  '🤝 حدیث: جو لوگوں پر رحم نہیں کرتا اللہ اس پر رحم نہیں کرتا (بخاری)',
-  '📖 حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ — اللہ ہمارے لیے کافی ہے',
-  '🤝 حدیث: مسلمان وہ ہے جس کی زبان اور ہاتھ سے دوسرے محفوظ ہوں',
-  '📖 إِنَّ اللَّهَ مَعَ الصَّابِرِينَ — اللہ صبر کرنے والوں کے ساتھ ہے (البقرہ)',
-  '🤝 حدیث: آسانی پیدا کرو، مشکل نہ بناؤ — امام بخاری',
-  '📖 فَاذْكُرُونِي أَذْكُرْكُمْ — مجھے یاد کرو میں تمہیں یاد کروں گا',
-];
-
-let _islamicIdx = 0;
-function _startIslamicTicker() {
-  const el = document.getElementById('islamic-ticker');
-  if (!el) return;
-  el.textContent = _ISLAMIC[0];
-  clearInterval(window._islamicTimer);
-  window._islamicTimer = setInterval(() => {
-    _islamicIdx = (_islamicIdx + 1) % _ISLAMIC.length;
-    const el2 = document.getElementById('islamic-ticker');
-    if (!el2) { clearInterval(window._islamicTimer); return; }
-    el2.style.opacity = '0';
-    setTimeout(() => {
-      if (document.getElementById('islamic-ticker')) {
-        document.getElementById('islamic-ticker').textContent = _ISLAMIC[_islamicIdx];
-        document.getElementById('islamic-ticker').style.opacity = '1';
-      }
-    }, 400);
-  }, 12000);
-}
-
 // ── HELPERS ───────────────────────────────────────────────────
 function _monthlyTrend(cases) {
   const now = new Date();

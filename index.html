@@ -443,7 +443,7 @@ input, textarea, select { font-family: var(--font-main); }
 .logout-btn { width: 100%; background: var(--red-bg); border: 1px solid rgba(239,68,68,0.2); border-radius: var(--radius-sm); padding: 9px; color: var(--red); font-size: 12px; font-weight: 600; transition: all 0.15s; }
 .logout-btn:hover { background: rgba(239,68,68,0.15); }
 .sidebar-version { font-size: 9px; color: var(--text-faint); text-align: center; margin-top: 6px; }
-.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; width: 100%; }
+.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; width: 100%; min-width: 0; }
 .topbar { height: var(--topbar-height); background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; justify-content: space-between; flex-shrink: 0; }
 .topbar-left { display: flex; align-items: center; gap: 12px; }
 .topbar-right { display: flex; align-items: center; gap: 8px; }
@@ -736,7 +736,40 @@ input[id*="cnic"], input[id*="cell"] {
 #sidebar-toggle {
   display: none; /* Hidden — desktop sidebar always open, mobile uses hamburger */
 }
-  </style>
+  
+/* ── Mobile Touch Optimizations ── */
+@media (max-width: 900px) {
+  /* Larger touch targets */
+  .btn { min-height: 38px; min-width: 38px; }
+  .btn-sm { min-height: 32px; padding: 5px 10px; font-size: 11px; }
+  .nav-item { min-height: 44px; padding: 10px 14px; }
+  
+  /* Better font for mobile */
+  .page-content { font-size: 13px; }
+  .data-table th, .data-table td { font-size: 11px; padding: 6px 8px; }
+  
+  /* Tables scroll */
+  table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  
+  /* Cards */
+  .card { padding: 12px; margin-bottom: 10px; }
+  
+  /* Mini strip hidden on mobile - sidebar covers it */
+  #sidebar-mini-strip { display: none !important; }
+  
+  /* Form inputs larger for touch */
+  .form-input { padding: 10px 12px; font-size: 14px; min-height: 44px; }
+}
+
+/* ── Laptop/Desktop ── */
+@media (min-width: 901px) {
+  /* Mini strip visible */
+  #sidebar-mini-strip { display: flex !important; }
+  
+  /* Wider page content */
+  .page-content { padding: 16px 20px; }
+}
+</style>
 </head>
 <body>
 <div id="sync-bar" style="display:none;"></div>
@@ -869,7 +902,7 @@ input[id*="cnic"], input[id*="cell"] {
         <button class="topbar-btn" id="theme-picker-btn" onclick="openThemePicker()" title="تھیم" style="font-size:16px;">🎨</button>
         <button class="topbar-btn" onclick="closeMobileSidebar();showPage('cdr',null)" title="CDR Analyzer" style="font-weight:700;font-size:11px;">📞CDR</button>
         <div class="topbar-status"><span class="status-dot" id="status-dot"></span><span id="status-text">Connecting</span></div>
-        <button class="mobile-menu-btn" onclick="toggleSidebar()" style="margin-right:4px;">☰</button>
+        
       </div>
     </div>
     <div class="page-content" id="page-content"><div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Loading...</div></div></div>
@@ -883,6 +916,7 @@ input[id*="cnic"], input[id*="cell"] {
 
 <!-- ═══ EXTRACTED MODULES (Round 1) ═══ -->
 <script src="offline-store.js"></script>
+<script src="islamic.js"></script>
 <script src="app-core.js"></script>
 <script src="dashboard.js"></script>
 <script src="toolbar.js"></script>
