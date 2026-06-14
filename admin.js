@@ -23,7 +23,7 @@ async function renderAdmin(container) {
 
   container.innerHTML = `
   <div style="max-width:1000px;margin:0 auto;" id="admin-root">
-    <div style="margin-bottom:10px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);">← واپس</button></div>
+    <div style="margin-bottom:10px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);margin-left:auto;">واپس ←</button></div>
     <div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ Loading...</div>
   </div>`;
   await _buildAdmin(role);
@@ -84,6 +84,7 @@ async function _buildAdmin(role) {
       ['cases','📁 تمام مقدمات', total_cases],
       ['activity','📋 سرگرمی لاگ', ''],
       ['reports','📊 رپورٹ', ''],
+      ['subscriptions','💳 سبسکرپشن', ''],
     ].map(([k,l,b],i) => `
       <button id="atab-${k}" onclick="_adminTab('${k}')"
         class="btn ${i===0?'btn-primary':'btn-secondary'}"
@@ -121,6 +122,7 @@ function _adminTab(tab) {
     case 'cases':    el.innerHTML = _renderAllCasesTab(cases); break;
     case 'activity': el.innerHTML = _renderActivityTab(activity); break;
     case 'reports':  el.innerHTML = _renderReportsTab(officers, cases); break;
+    case 'subscriptions': _renderSubsTab(); break;
   }
 }
 
@@ -530,4 +532,132 @@ async function logActivity(action, details) {
       officer_id: oid, action, details: details || {}
     });
   } catch(_) {}
+}
+
+// ── SUBSCRIPTION MANAGEMENT ───────────────────────────────────
+async function _renderSubsTab() {
+  const el = document.getElementById('admin-tab-content');
+  if (!el) return;
+  el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>';
+
+  try {
+    const { data } = await supabaseClient
+      .from('subscriptions')
+      .select('*, officers(full_name,station,designation), subscription_plans(name,price)')
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    const subs = data || [];
+    const pending  = subs.filter(s=>s.status==='pending');
+    const active   = subs.filter(s=>s.status==='active');
+    const trial    = subs.filter(s=>s.status==='trial');
+    const expired  = subs.filter(s=>s.status==='expired');
+
+    el.innerHTML = `
+    <!-- Summary -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">
+      ${[
+        ['⏳ زیر التواء', pending.length, 'var(--amber)'],
+        ['✅ فعال', active.length, 'var(--green)'],
+        ['🎁 آزمائشی', trial.length, 'var(--accent)'],
+        ['❌ ختم', expired.length, 'var(--red)'],
+      ].map(([l,v,c])=>`
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
+        <div style="font-size:9px;color:var(--text-muted);">${l}</div>
+        <div style="font-size:24px;font-weight:900;color:${c};">${v}</div>
+      </div>`).join('')}
+    </div>
+
+    <!-- Pending approvals -->
+    ${pending.length ? `
+    <div class="card" style="margin-bottom:12px;border:1px solid var(--amber);">
+      <div style="font-size:12px;font-weight:700;color:var(--amber);margin-bottom:10px;">⏳ زیر التواء تصدیق (${pending.length})</div>
+      ${pending.map(s=>`
+      <div style="background:var(--bg-secondary);border-radius:8px;padding:12px;margin-bottom:8px;direction:rtl;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+          <div>
+            <div style="font-weight:700;">${s.officers?.full_name||'—'}</div>
+            <div style="font-size:11px;color:var(--text-muted);">${s.officers?.station||'—'} · ${s.officers?.designation||'—'}</div>
+            <div style="font-size:11px;color:var(--accent);">پلان: ${s.subscription_plans?.name||'—'} · Rs. ${s.amount||0}</div>
+            <div style="font-size:11px;color:var(--text-muted);">TXN: <b>${s.payment_ref||'—'}</b> · ${s.payment_method||'—'}</div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-primary btn-sm" onclick="_approveSub('${s.id}','${s.officer_id}')">✅ منظور</button>
+            <button class="btn btn-danger btn-sm" onclick="_rejectSub('${s.id}')">❌ رد</button>
+          </div>
+        </div>
+      </div>`).join('')}
+    </div>` : ''}
+
+    <!-- All subscriptions table -->
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--accent);">
+        💳 تمام سبسکرپشن (${subs.length})
+      </div>
+      <div style="overflow-x:auto;">
+      <table class="data-table" style="width:100%;">
+        <thead><tr>
+          <th>افسر</th><th>پلان</th><th>رقم</th><th>صورتحال</th>
+          <th>میعاد ختم</th><th>TXN</th><th>اقدامات</th>
+        </tr></thead>
+        <tbody>
+          ${subs.map(s=>{
+            const exp = new Date(s.expires_at);
+            const diff = Math.ceil((exp-new Date())/(1000*60*60*24));
+            const statusColors = {active:'var(--green)',trial:'var(--accent)',pending:'var(--amber)',expired:'var(--red)',suspended:'var(--red)'};
+            return `<tr>
+              <td style="direction:rtl;">
+                <div style="font-weight:700;">${s.officers?.full_name||'—'}</div>
+                <div style="font-size:10px;color:var(--text-muted);">${s.officers?.station||'—'}</div>
+              </td>
+              <td style="font-size:12px;">${s.subscription_plans?.name||'—'}</td>
+              <td style="font-weight:700;">Rs. ${s.amount||0}</td>
+              <td><span class="pill" style="background:${statusColors[s.status]||'var(--accent)'};color:#fff;font-size:10px;">${s.status}</span></td>
+              <td style="font-size:11px;color:${diff<7?'var(--red)':'var(--text-secondary)'};">${formatDate(s.expires_at)} ${diff>0?'('+diff+'d)':''}</td>
+              <td style="font-size:10px;font-family:monospace;">${s.payment_ref||'—'}</td>
+              <td>
+                ${s.status==='pending'?`<button class="btn btn-primary btn-sm" onclick="_approveSub('${s.id}','${s.officer_id}')">✅</button>`:''}
+                ${s.status==='active'?`<button class="btn btn-danger btn-sm" onclick="_suspendSub('${s.id}')">🔒</button>`:''}
+                ${s.status==='suspended'||s.status==='expired'?`<button class="btn btn-primary btn-sm" onclick="_approveSub('${s.id}','${s.officer_id}')">🔓</button>`:''}
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+      </div>
+    </div>`;
+  } catch(e) {
+    el.innerHTML = `<div style="color:var(--red);padding:20px;">❌ ${e.message}</div>`;
+  }
+}
+
+async function _approveSub(subId, officerId) {
+  try {
+    const { data:sub } = await supabaseClient.from('subscriptions').select('*,subscription_plans(duration_days)').eq('id',subId).single();
+    const days = sub?.subscription_plans?.duration_days || 30;
+    const exp  = new Date();
+    exp.setDate(exp.getDate() + days);
+
+    await supabaseClient.from('subscriptions').update({
+      status:      'active',
+      verified_by: await getOfficerId(),
+      verified_at: new Date().toISOString(),
+      expires_at:  exp.toISOString(),
+    }).eq('id', subId);
+
+    showToast('✅ سبسکرپشن منظور', 'success');
+    _renderSubsTab();
+  } catch(e) { showToast('❌ '+e.message,'error'); }
+}
+
+async function _rejectSub(subId) {
+  await supabaseClient.from('subscriptions').update({status:'rejected'}).eq('id',subId);
+  showToast('❌ رد کر دی', 'info');
+  _renderSubsTab();
+}
+
+async function _suspendSub(subId) {
+  await supabaseClient.from('subscriptions').update({status:'suspended'}).eq('id',subId);
+  showToast('🔒 معطل', 'info');
+  _renderSubsTab();
 }

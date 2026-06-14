@@ -1,17 +1,15 @@
 /* ═══════════════════════════════════════════════════════════
    DIGITAL IO — SUBSCRIPTION SYSTEM  (subscription.js)
-   Plans · Trial · Payment · License check · Admin verify
+   Plans · Payment · Trial · License · Admin verify
    ═══════════════════════════════════════════════════════════ */
 
-registerPage('subscription', renderSubscription);
-
-// ── LICENSE CHECK (call on every login) ───────────────────────
-async function checkLicense() {
+// ── SUBSCRIPTION CHECK ON LOGIN ───────────────────────────────
+async function checkSubscription() {
   try {
     const oid = await getOfficerId();
-    if (!oid) return { valid: false, reason: 'no_officer' };
+    if (!oid) return { status:'none' };
 
-    const { data: sub } = await supabaseClient
+    const { data } = await supabaseClient
       .from('subscriptions')
       .select('*, subscription_plans(*)')
       .eq('officer_id', oid)
@@ -19,382 +17,285 @@ async function checkLicense() {
       .limit(1)
       .single();
 
-    const now = new Date();
-
-    if (!sub) {
-      // No subscription — create 30-day trial
-      const { data: trialPlan } = await supabaseClient
-        .from('subscription_plans').select('*').eq('name','آزمائشی').single();
-      if (trialPlan) {
-        const expires = new Date(now.getTime() + 30*24*60*60*1000);
-        await supabaseClient.from('subscriptions').insert({
-          officer_id: oid,
-          plan_id: trialPlan.id,
-          status: 'trial',
-          started_at: now.toISOString(),
-          expires_at: expires.toISOString(),
-        });
-        _showLicenseBanner('trial', 30);
-        return { valid: true, status: 'trial', daysLeft: 30 };
-      }
-      return { valid: true, status: 'trial', daysLeft: 30 };
+    if (!data) {
+      // First time — create trial
+      await _createTrial(oid);
+      return { status:'trial', daysLeft:30, plan:'آزمائشی' };
     }
 
-    const expires = new Date(sub.expires_at);
-    const daysLeft = Math.ceil((expires - now) / (1000*60*60*24));
+    const now  = new Date();
+    const exp  = new Date(data.expires_at);
+    const diff = Math.ceil((exp - now)/(1000*60*60*24));
 
-    if (sub.status === 'suspended') {
-      _showPaymentRequired('suspended');
-      return { valid: false, status: 'suspended' };
-    }
-    if (sub.status === 'expired' || daysLeft <= 0) {
-      await supabaseClient.from('subscriptions').update({status:'expired'}).eq('id',sub.id);
-      _showPaymentRequired('expired');
-      return { valid: false, status: 'expired' };
-    }
-    if (sub.status === 'trial' && daysLeft <= 7) {
-      _showLicenseBanner('trial', daysLeft);
-    }
-    if (sub.status === 'active' && daysLeft <= 7) {
-      _showLicenseBanner('expiring', daysLeft);
-    }
+    window._currentSub = data;
 
-    // Store plan features
-    window._licenseFeatures = sub.subscription_plans?.features || {};
-    window._licenseStatus = sub.status;
-    window._licensePlan = sub.subscription_plans?.name || '';
-
-    return { valid: true, status: sub.status, daysLeft, plan: sub.subscription_plans };
-  } catch(e) {
-    console.warn('License check:', e.message);
-    return { valid: true, status: 'trial', daysLeft: 30 }; // Fail open
+    if (data.status === 'active' && diff > 0) {
+      return { status:'active', daysLeft:diff, plan:data.subscription_plans?.name||'فعال' };
+    } else if (data.status === 'trial' && diff > 0) {
+      return { status:'trial', daysLeft:diff, plan:'آزمائشی' };
+    } else if (data.status === 'suspended') {
+      return { status:'suspended', daysLeft:0, plan:'معطل' };
+    } else {
+      return { status:'expired', daysLeft:diff, plan:'میعاد ختم' };
+    }
+  } catch(_) {
+    return { status:'trial', daysLeft:30, plan:'آزمائشی' };
   }
 }
 
-function _showLicenseBanner(type, days) {
-  const colors = { trial:'var(--amber)', expiring:'var(--red)', active:'var(--green)' };
-  const msgs = {
-    trial: `⏳ آزمائشی مدت: ${days} دن باقی — سبسکرپشن لیں`,
-    expiring: `⚠️ سبسکرپشن ختم ہونے والی ہے: ${days} دن باقی`,
-  };
-  const msg = msgs[type];
-  if (!msg) return;
+async function _createTrial(oid) {
+  const exp = new Date();
+  exp.setDate(exp.getDate() + 30);
+  await supabaseClient.from('subscriptions').insert({
+    officer_id: oid,
+    status: 'trial',
+    started_at: new Date().toISOString(),
+    expires_at: exp.toISOString(),
+    amount: 0,
+    payment_method: 'trial',
+  });
+}
 
-  let banner = document.getElementById('license-banner');
+// ── SUBSCRIPTION BANNER ───────────────────────────────────────
+async function showSubscriptionBanner() {
+  const sub = await checkSubscription();
+  const banner = document.getElementById('sub-banner');
+
   if (!banner) {
-    banner = document.createElement('div');
-    banner.id = 'license-banner';
-    banner.style.cssText = `position:fixed;top:0;left:0;right:0;z-index:9998;padding:6px 16px;text-align:center;font-size:12px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;cursor:pointer;`;
-    banner.onclick = () => showPage('subscription', null);
-    document.body.appendChild(banner);
-    // Push content down
-    const topbar = document.getElementById('topbar');
-    if (topbar) topbar.style.marginTop = '30px';
+    // Create banner
+    const div = document.createElement('div');
+    div.id = 'sub-banner';
+    div.style.cssText = 'width:100%;text-align:center;padding:5px 16px;font-size:12px;font-family:"Jameel Noori Nastaleeq",serif;direction:rtl;';
+
+    if (sub.status === 'active') {
+      if (sub.daysLeft <= 7) {
+        div.style.background = 'rgba(245,158,11,0.15)';
+        div.style.color = 'var(--amber)';
+        div.innerHTML = `⚠️ سبسکرپشن ${sub.daysLeft} دن میں ختم — <span onclick="showSubscriptionPage()" style="cursor:pointer;text-decoration:underline;">ابھی تجدید کریں</span>`;
+        document.querySelector('.topbar')?.after(div);
+      }
+    } else if (sub.status === 'trial') {
+      div.style.background = 'rgba(56,189,248,0.1)';
+      div.style.color = 'var(--accent)';
+      div.innerHTML = `🎁 آزمائشی مدت: ${sub.daysLeft} دن باقی — <span onclick="showSubscriptionPage()" style="cursor:pointer;text-decoration:underline;font-weight:700;">پلان خریدیں</span>`;
+      document.querySelector('.topbar')?.after(div);
+    } else if (sub.status === 'expired' || sub.status === 'suspended') {
+      // Show blocking screen
+      showSubscriptionRequired(sub);
+      return;
+    }
   }
-  banner.style.background = colors[type]||'var(--amber)';
-  banner.style.color = type==='expiring'?'#fff':'#000';
-  banner.innerHTML = `${msg} — <b>ابھی سبسکرپشن لیں →</b>`;
 }
 
-function _showPaymentRequired(reason) {
+function showSubscriptionRequired(sub) {
   const app = document.getElementById('main-app');
-  const content = document.getElementById('page-content');
-  if (!content) return;
-
-  const msgs = {
-    expired: 'آپ کی سبسکرپشن ختم ہو گئی ہے',
-    suspended: 'آپ کا اکاؤنٹ معطل کر دیا گیا ہے — ایڈمن سے رابطہ کریں',
-  };
-
-  content.innerHTML = `
-  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;padding:20px;">
-    <div style="font-size:64px;margin-bottom:16px;">🔒</div>
-    <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:var(--red);margin-bottom:8px;">${msgs[reason]||'رسائی محدود'}</div>
-    <div style="font-size:13px;color:var(--text-muted);margin-bottom:24px;">Digital IO استعمال جاری رکھنے کے لیے سبسکرپشن لیں</div>
-    <button class="btn btn-primary" style="font-size:16px;padding:14px 32px;" onclick="showPage('subscription',null)">💳 ابھی سبسکرپشن لیں</button>
+  if (!app) return;
+  app.innerHTML = `
+  <div style="display:flex;align-items:center;justify-content:center;height:100vh;width:100%;background:var(--bg-primary);direction:rtl;">
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:40px;max-width:480px;width:90%;text-align:center;box-shadow:var(--shadow);">
+      <div style="font-size:64px;margin-bottom:16px;">🔒</div>
+      <div style="font-size:20px;font-weight:800;color:var(--text-primary);margin-bottom:8px;font-family:'Jameel Noori Nastaleeq',serif;">
+        ${sub.status==='expired'?'سبسکرپشن ختم ہو گئی':'اکاؤنٹ معطل'}
+      </div>
+      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:24px;">
+        ${sub.status==='expired'?'آپ کی سبسکرپشن کی میعاد ختم ہو گئی ہے۔ جاری رکھنے کے لیے تجدید کریں۔':'آپ کا اکاؤنٹ معطل ہے۔ ایڈمن سے رابطہ کریں۔'}
+      </div>
+      <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px;margin-bottom:10px;" onclick="_showPlans()">
+        💳 پلان خریدیں
+      </button>
+      <button class="btn btn-secondary" style="width:100%;" onclick="doLogout()">← لاگ آؤٹ</button>
+    </div>
   </div>`;
+  _showPlans();
 }
 
 // ── SUBSCRIPTION PAGE ─────────────────────────────────────────
-async function renderSubscription(container) {
-  container.innerHTML = `<div id="sub-root"><div style="text-align:center;padding:20px;color:var(--text-muted);">⏳</div></div>`;
-  await _buildSubPage();
+function showSubscriptionPage() {
+  openModal('💎 سبسکرپشن پلان', _plansHTML(), '');
 }
 
-async function _buildSubPage() {
-  const root = document.getElementById('sub-root');
-  if (!root) return;
+function _showPlans() {
+  openModal('💎 Digital IO — پلان منتخب کریں', _plansHTML(), '');
+}
 
-  const oid = await getOfficerId();
-  const [plansRes, subRes] = await Promise.all([
-    supabaseClient.from('subscription_plans').select('*').eq('is_active',true).order('price'),
-    supabaseClient.from('subscriptions').select('*,subscription_plans(*)').eq('officer_id',oid).order('created_at',{ascending:false}).limit(1).maybeSingle(),
-  ]);
+function _plansHTML() {
+  return `
+  <div style="direction:rtl;">
+    <!-- Plans Grid -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
 
-  const plans = plansRes.data||[];
-  const current = subRes.data;
-  const now = new Date();
-  const daysLeft = current?.expires_at ? Math.ceil((new Date(current.expires_at)-now)/(1000*60*60*24)) : 0;
-
-  root.innerHTML = `
-  <!-- Header -->
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;direction:rtl;flex-wrap:wrap;">
-    <button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);margin-left:auto;">واپس ←</button>
-    <div>
-      <div style="font-size:18px;font-weight:800;">💎 سبسکرپشن</div>
-      <div style="font-size:12px;color:var(--text-muted);">Digital IO — محکمہ پولیس پنجاب</div>
-    </div>
-  </div>
-
-  <!-- Current Status -->
-  ${current ? `
-  <div style="background:linear-gradient(135deg,#0d2a45,#1a3a5c);border-radius:12px;padding:16px 20px;margin-bottom:16px;direction:rtl;">
-    <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:6px;">موجودہ پلان</div>
-    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-      <div>
-        <div style="font-size:20px;font-weight:900;color:#fff;">${current.subscription_plans?.name||'—'}</div>
-        <div style="font-size:12px;color:${daysLeft>7?'#22c55e':daysLeft>0?'#f59e0b':'#ef4444'};">
-          ${current.status==='trial'?'آزمائشی · ':''} 
-          ${daysLeft>0?daysLeft+' دن باقی':'ختم ہو گئی'}
-        </div>
+      <!-- Trial -->
+      <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
+        <div style="font-size:24px;">🎁</div>
+        <div style="font-weight:800;font-size:14px;margin:6px 0;">آزمائشی</div>
+        <div style="font-size:22px;font-weight:900;color:var(--green);">مفت</div>
+        <div style="font-size:10px;color:var(--text-muted);">30 دن</div>
+        <ul style="font-size:11px;color:var(--text-secondary);text-align:right;margin:10px 0;list-style:none;padding:0;">
+          <li>✅ 10 مقدمات</li>
+          <li>✅ گشت لاگ</li>
+          <li>❌ CDR Analyzer</li>
+          <li>❌ ایڈمن پینل</li>
+        </ul>
       </div>
-      <div style="margin-left:auto;text-align:left;">
-        <span style="background:${current.status==='active'?'var(--green)':current.status==='trial'?'var(--amber)':'var(--red)'};color:${current.status==='trial'?'#000':'#fff'};padding:4px 12px;border-radius:8px;font-size:11px;font-weight:700;">
-          ${current.status==='active'?'✅ فعال':current.status==='trial'?'⏳ آزمائشی':current.status==='expired'?'❌ ختم':'🚫 معطل'}
-        </span>
-      </div>
-    </div>
-    ${daysLeft>0&&daysLeft<=7?`<div style="margin-top:10px;background:rgba(239,68,68,0.2);border-radius:6px;padding:8px;font-size:12px;color:#ef4444;direction:rtl;">⚠️ سبسکرپشن ${daysLeft} دن میں ختم ہو جائے گی — ابھی تجدید کریں</div>`:''}
-  </div>` : ''}
 
-  <!-- Plans -->
-  <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;direction:rtl;">📋 دستیاب پلان</div>
-  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;">
-    ${plans.map(p=>{
-      const isCurrent = current?.plan_id===p.id;
-      const features = typeof p.features==='object'?p.features:{};
-      return `
-      <div style="background:var(--bg-card);border:${isCurrent?'2px solid var(--accent)':'1px solid var(--border)'};border-radius:12px;padding:16px;position:relative;direction:rtl;">
-        ${isCurrent?'<div style="position:absolute;top:-10px;right:16px;background:var(--accent);color:#fff;padding:2px 10px;border-radius:10px;font-size:10px;font-weight:700;">موجودہ پلان</div>':''}
-        <div style="font-size:16px;font-weight:800;margin-bottom:4px;font-family:'Jameel Noori Nastaleeq',serif;">${p.name}</div>
-        <div style="font-size:24px;font-weight:900;color:${p.price===0?'var(--green)':'var(--accent)'};margin-bottom:8px;">
-          ${p.price===0?'مفت':`Rs. ${p.price.toLocaleString()}`}
-          <span style="font-size:11px;color:var(--text-muted);">/ ${p.duration_days===365?'سال':'ماہ'}</span>
-        </div>
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">
-          ${p.duration_days===365?'12 ماہ':p.duration_days+' دن'}
-        </div>
-        <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px;">
-          <div style="font-size:11px;direction:rtl;">${features.cases===999||features.cases>50?'✅ لامحدود مقدمات':features.cases?`✅ ${features.cases} مقدمات`:'❌ محدود'}</div>
-          <div style="font-size:11px;">${features.patrol?'✅ پیٹرول لاگ':'❌ پیٹرول نہیں'}</div>
-          <div style="font-size:11px;">${features.cdr?'✅ CDR تجزیہ':'❌ CDR نہیں'}</div>
-          <div style="font-size:11px;">${features.admin?'✅ ایڈمن پینل':'❌ ایڈمن نہیں'}</div>
-        </div>
-        ${!isCurrent&&p.price>0?`<button class="btn btn-primary btn-sm" style="width:100%;" onclick="_initiatePayment('${p.id}','${p.name}',${p.price})">💳 خریدیں</button>`:''}
-        ${p.price===0&&!current?`<button class="btn btn-secondary btn-sm" style="width:100%;" onclick="_startTrial('${p.id}')">🆓 آزمائشی شروع</button>`:''}
-      </div>`;
-    }).join('')}
-  </div>
-
-  <!-- Payment Instructions -->
-  <div class="card" style="margin-bottom:14px;">
-    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;direction:rtl;">💳 ادائیگی کا طریقہ</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;direction:rtl;">
-      <div style="background:var(--bg-secondary);border-radius:8px;padding:12px;text-align:center;">
-        <div style="font-size:24px;margin-bottom:6px;">📱</div>
-        <div style="font-size:12px;font-weight:700;">JazzCash</div>
-        <div style="font-size:14px;color:var(--accent);font-weight:800;margin:6px 0;font-family:monospace;">0300-XXXXXXX</div>
-        <div style="font-size:10px;color:var(--text-muted);">پلان کا نام mention کریں</div>
+      <!-- Basic -->
+      <div style="background:var(--bg-secondary);border:1px solid var(--accent);border-radius:10px;padding:16px;text-align:center;">
+        <div style="font-size:24px;">⭐</div>
+        <div style="font-weight:800;font-size:14px;margin:6px 0;">بنیادی</div>
+        <div style="font-size:22px;font-weight:900;color:var(--accent);">500 روپے</div>
+        <div style="font-size:10px;color:var(--text-muted);">ماہانہ</div>
+        <ul style="font-size:11px;color:var(--text-secondary);text-align:right;margin:10px 0;list-style:none;padding:0;">
+          <li>✅ 50 مقدمات</li>
+          <li>✅ گشت لاگ</li>
+          <li>✅ CDR Analyzer</li>
+          <li>❌ ایڈمن پینل</li>
+        </ul>
+        <button class="btn btn-primary btn-sm" style="width:100%;" onclick="closeModal();_openPayment('بنیادی',500,30)">خریدیں</button>
       </div>
-      <div style="background:var(--bg-secondary);border-radius:8px;padding:12px;text-align:center;">
-        <div style="font-size:24px;margin-bottom:6px;">💚</div>
-        <div style="font-size:12px;font-weight:700;">EasyPaisa</div>
-        <div style="font-size:14px;color:var(--green);font-weight:800;margin:6px 0;font-family:monospace;">0300-XXXXXXX</div>
-        <div style="font-size:10px;color:var(--text-muted);">Transaction ID محفوظ کریں</div>
+
+      <!-- Station -->
+      <div style="background:linear-gradient(135deg,rgba(56,189,248,0.1),rgba(14,165,233,0.05));border:2px solid var(--accent);border-radius:10px;padding:16px;text-align:center;position:relative;">
+        <div style="position:absolute;top:-10px;right:50%;transform:translateX(50%);background:var(--accent);color:#fff;font-size:10px;padding:2px 10px;border-radius:10px;font-weight:700;">مقبول</div>
+        <div style="font-size:24px;">🏛️</div>
+        <div style="font-weight:800;font-size:14px;margin:6px 0;">اسٹیشن</div>
+        <div style="font-size:22px;font-weight:900;color:var(--accent);">2000 روپے</div>
+        <div style="font-size:10px;color:var(--text-muted);">ماہانہ</div>
+        <ul style="font-size:11px;color:var(--text-secondary);text-align:right;margin:10px 0;list-style:none;padding:0;">
+          <li>✅ لامحدود مقدمات</li>
+          <li>✅ گشت لاگ</li>
+          <li>✅ CDR Analyzer</li>
+          <li>✅ ایڈمن پینل</li>
+        </ul>
+        <button class="btn btn-primary btn-sm" style="width:100%;" onclick="closeModal();_openPayment('اسٹیشن',2000,30)">خریدیں</button>
+      </div>
+
+      <!-- Annual -->
+      <div style="background:linear-gradient(135deg,rgba(167,139,250,0.1),rgba(139,92,246,0.05));border:1px solid #a78bfa;border-radius:10px;padding:16px;text-align:center;">
+        <div style="font-size:24px;">👑</div>
+        <div style="font-weight:800;font-size:14px;margin:6px 0;">سالانہ</div>
+        <div style="font-size:22px;font-weight:900;color:#a78bfa;">15000 روپے</div>
+        <div style="font-size:10px;color:var(--text-muted);">سالانہ (37% بچت)</div>
+        <ul style="font-size:11px;color:var(--text-secondary);text-align:right;margin:10px 0;list-style:none;padding:0;">
+          <li>✅ لامحدود سب کچھ</li>
+          <li>✅ پریمیم سپورٹ</li>
+          <li>✅ نئی فیچرز پہلے</li>
+          <li>✅ ایڈمن پینل</li>
+        </ul>
+        <button class="btn btn-secondary btn-sm" style="width:100%;border-color:#a78bfa;color:#a78bfa;" onclick="closeModal();_openPayment('سالانہ',15000,365)">خریدیں</button>
       </div>
     </div>
-    <div style="margin-top:12px;padding:10px;background:rgba(56,189,248,0.1);border-radius:8px;font-size:12px;direction:rtl;color:var(--text-secondary);">
-      ⓘ ادائیگی کے بعد Transaction ID اور Screenshot ایڈمن کو WhatsApp کریں۔ 24 گھنٹے میں فعال ہو جائے گا۔
+    <div style="text-align:center;font-size:11px;color:var(--text-muted);">
+      📞 مدد کے لیے: <b>DigitalIO Support</b>
     </div>
-  </div>
+  </div>`;
+}
 
-  <!-- Submit Payment Proof -->
-  <div class="card">
-    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;direction:rtl;">📤 ادائیگی کی تصدیق</div>
-    <div style="direction:rtl;">
-      <label class="form-label">پلان منتخب کریں</label>
-      <select class="form-input" id="pay-plan" style="margin-bottom:8px;">
-        ${plans.filter(p=>p.price>0).map(p=>`<option value="${p.id}">${p.name} — Rs. ${p.price}</option>`).join('')}
-      </select>
-      <label class="form-label">Transaction ID / Reference</label>
-      <input class="form-input" id="pay-ref" placeholder="مثلاً TXN-123456789" dir="ltr" style="text-align:left;margin-bottom:8px;">
+// ── PAYMENT FORM ──────────────────────────────────────────────
+function _openPayment(planName, amount, days) {
+  openModal(`💳 ادائیگی — ${planName}`,
+    `<div style="direction:rtl;">
+      <!-- Payment Methods -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+        <div style="background:rgba(34,197,94,0.1);border:1px solid var(--green);border-radius:8px;padding:12px;text-align:center;">
+          <div style="font-size:20px;margin-bottom:4px;">📱</div>
+          <div style="font-weight:700;font-size:12px;color:var(--green);">JazzCash</div>
+          <div style="font-size:13px;font-weight:900;color:var(--text-primary);" id="jc-number">0301-8488830</div>
+          <button onclick="navigator.clipboard.writeText('03018488830').then(()=>showToast('نمبر کاپی ہو گیا','success'))" style="font-size:10px;background:none;border:none;color:var(--accent);cursor:pointer;">📋 کاپی کریں</button>
+        </div>
+        <div style="background:rgba(139,92,246,0.1);border:1px solid #a78bfa;border-radius:8px;padding:12px;text-align:center;">
+          <div style="font-size:20px;margin-bottom:4px;">📱</div>
+          <div style="font-weight:700;font-size:12px;color:#a78bfa;">EasyPaisa</div>
+          <div style="font-size:13px;font-weight:900;color:var(--text-primary);">0301-8488830</div>
+          <button onclick="navigator.clipboard.writeText('03018488830').then(()=>showToast('نمبر کاپی ہو گیا','success'))" style="font-size:10px;background:none;border:none;color:var(--accent);cursor:pointer;">📋 کاپی کریں</button>
+        </div>
+      </div>
+
+      <!-- Amount -->
+      <div style="background:var(--bg-secondary);border-radius:8px;padding:12px;text-align:center;margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--text-muted);">رقم</div>
+        <div style="font-size:28px;font-weight:900;color:var(--accent);">Rs. ${amount.toLocaleString()}</div>
+        <div style="font-size:11px;color:var(--text-muted);">${planName} — ${days} دن</div>
+      </div>
+
+      <!-- Steps -->
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">
+        <div style="font-weight:700;margin-bottom:6px;">ادائیگی کے مراحل:</div>
+        <div>1️⃣ JazzCash/EasyPaisa سے اوپر نمبر پر <b>Rs. ${amount}</b> بھیجیں</div>
+        <div>2️⃣ Transaction ID نوٹ کریں</div>
+        <div>3️⃣ نیچے فارم بھریں</div>
+        <div>4️⃣ ایڈمن تصدیق کرے گا (عام طور پر 1-2 گھنٹے)</div>
+      </div>
+
+      <!-- Form -->
+      <label class="form-label">Transaction ID *</label>
+      <input class="form-input" id="pay-txn" placeholder="مثلاً TXN123456789" dir="ltr" style="text-align:left;margin-bottom:8px;">
       <label class="form-label">ادائیگی کا طریقہ</label>
       <select class="form-input" id="pay-method" style="margin-bottom:8px;">
-        <option>JazzCash</option><option>EasyPaisa</option><option>بینک ٹرانسفر</option>
+        <option value="jazzcash">📱 JazzCash</option>
+        <option value="easypaisa">📱 EasyPaisa</option>
+        <option value="bank">🏦 Bank Transfer</option>
       </select>
-      <button class="btn btn-primary" style="width:100%;margin-top:4px;" onclick="_submitPaymentProof()">📤 تصدیق بھیجیں</button>
-    </div>
-  </div>
-
-  <!-- Payment History -->
-  <div id="pay-history" style="margin-top:12px;"></div>`;
-
-  _loadPaymentHistory(oid);
+      <label class="form-label">نوٹ (اختیاری)</label>
+      <input class="form-input" id="pay-note" placeholder="کوئی اضافی معلومات...">
+    </div>`,
+    `<div style="display:flex;gap:8px;direction:rtl;">
+      <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+      <button class="btn btn-primary" onclick="_submitPayment('${planName}',${amount},${days})">📤 درخواست بھیجیں</button>
+    </div>`
+  );
 }
 
-// ── PAYMENT FUNCTIONS ─────────────────────────────────────────
-function _initiatePayment(planId, planName, price) {
-  document.getElementById('pay-plan')?.querySelectorAll('option')?.forEach(o=>{
-    if(o.value===planId) o.selected=true;
-  });
-  document.getElementById('pay-ref')?.focus();
-  showToast(`💳 ${planName} — Rs. ${price} — Transaction ID درج کریں`,'info',5000);
-  document.getElementById('pay-ref')?.scrollIntoView({behavior:'smooth'});
-}
-
-async function _startTrial(planId) {
-  try {
-    const oid = await getOfficerId();
-    const expires = new Date(Date.now()+30*24*60*60*1000);
-    await supabaseClient.from('subscriptions').insert({
-      officer_id:oid, plan_id:planId, status:'trial',
-      expires_at:expires.toISOString(),
-    });
-    showToast('✅ 30 دن کی آزمائشی مدت شروع','success');
-    _buildSubPage();
-  } catch(e) { showToast('❌ '+e.message,'error'); }
-}
-
-async function _submitPaymentProof() {
-  const planId = document.getElementById('pay-plan')?.value;
-  const ref    = document.getElementById('pay-ref')?.value.trim();
+async function _submitPayment(planName, amount, days) {
+  const txnId  = document.getElementById('pay-txn')?.value.trim();
   const method = document.getElementById('pay-method')?.value;
-  if (!ref) { showToast('⚠️ Transaction ID ضروری ہے','error'); return; }
+  const note   = document.getElementById('pay-note')?.value.trim();
+
+  if (!txnId) { showToast('⚠️ Transaction ID ضروری ہے','error'); return; }
+
   try {
     const oid = await getOfficerId();
-    const { data:plan } = await supabaseClient.from('subscription_plans').select('*').eq('id',planId).single();
-    // Create pending subscription
+    const exp = new Date();
+    exp.setDate(exp.getDate() + days);
+
+    // Get plan id
+    const { data:plans } = await supabaseClient.from('subscription_plans').select('id').eq('name',planName).single();
+
     await supabaseClient.from('subscriptions').insert({
-      officer_id:oid, plan_id:planId,
-      status:'pending', payment_ref:ref,
-      amount:plan?.price, payment_method:method,
+      officer_id:     oid,
+      plan_id:        plans?.id||null,
+      status:         'pending', // pending until admin verifies
+      expires_at:     exp.toISOString(),
+      payment_ref:    txnId,
+      amount:         amount,
+      payment_method: method,
     });
-    showToast('✅ تصدیق بھیج دی گئی — ایڈمن 24 گھنٹے میں فعال کرے گا','success',5000);
-    document.getElementById('pay-ref').value='';
-    _loadPaymentHistory(oid);
 
-    // WhatsApp to admin
+    closeModal();
+    showToast('✅ درخواست بھیج دی — ایڈمن تصدیق کرے گا','success');
+
+    // WhatsApp notification to admin
     const o = currentOfficer||{};
-    const msg = `Digital IO سبسکرپشن:\nنام: ${o.full_name}\nتھانہ: ${o.station}\nپلان: ${plan?.name||planId}\nTransaction: ${ref}\nطریقہ: ${method}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
+    const msg = `Digital IO ادائیگی درخواست:\n\nافسر: ${o.full_name||'—'}\nتھانہ: ${o.station||'—'}\nپلان: ${planName}\nرقم: Rs. ${amount}\nTransaction ID: ${txnId}\nطریقہ: ${method}`;
+    window.open(`https://wa.me/923018488830?text=${encodeURIComponent(msg)}`);
+
   } catch(e) { showToast('❌ '+e.message,'error'); }
 }
 
-async function _loadPaymentHistory(oid) {
+// ── SUBSCRIPTION STATUS IN SIDEBAR ───────────────────────────
+async function updateSubBadge() {
   try {
-    const { data } = await supabaseClient.from('subscriptions')
-      .select('*,subscription_plans(name)').eq('officer_id',oid)
-      .order('created_at',{ascending:false}).limit(5);
-    const el = document.getElementById('pay-history');
-    if (!el||!data?.length) return;
-    el.innerHTML = `
-    <div class="card">
-      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;direction:rtl;">📋 ادائیگی کی تاریخ</div>
-      ${data.map(s=>`
-      <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);direction:rtl;align-items:center;">
-        <div style="flex:1;">
-          <div style="font-size:12px;font-weight:600;">${s.subscription_plans?.name||'—'}</div>
-          <div style="font-size:10px;color:var(--text-muted);">${s.payment_method||'—'} · ${s.payment_ref||'—'} · ${formatDate(s.created_at)}</div>
-        </div>
-        <span style="font-size:10px;padding:2px 8px;border-radius:6px;font-weight:700;background:${s.status==='active'?'var(--green)':s.status==='pending'?'var(--amber)':s.status==='trial'?'rgba(56,189,248,0.2)':'var(--red)'};color:${s.status==='pending'?'#000':'#fff'};">
-          ${s.status==='active'?'✅ فعال':s.status==='pending'?'⏳ زیر التواء':s.status==='trial'?'آزمائشی':'❌ ختم'}
-        </span>
-        ${s.amount?`<div style="font-size:11px;font-weight:700;color:var(--accent);">Rs. ${s.amount}</div>`:''}
-      </div>`).join('')}
-    </div>`;
-  } catch(_) {}
-}
-
-// ── ADMIN: SUBSCRIPTION MANAGEMENT ───────────────────────────
-async function renderAdminSubscriptions(container) {
-  const { data } = await supabaseClient.from('subscriptions')
-    .select('*,subscription_plans(name,price),officers(full_name,station,email)')
-    .eq('status','pending').order('created_at',{ascending:false});
-  const pending = data||[];
-
-  container.innerHTML = `
-  <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;direction:rtl;">
-    💳 ادائیگیاں زیر التواء (${pending.length})
-  </div>
-  ${pending.length ? pending.map(s=>`
-  <div style="background:var(--bg-card);border:1px solid var(--amber);border-radius:10px;padding:14px;margin-bottom:10px;direction:rtl;">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
-      <div>
-        <div style="font-size:14px;font-weight:700;">${s.officers?.full_name||'—'}</div>
-        <div style="font-size:11px;color:var(--text-muted);">تھانہ ${s.officers?.station||'—'} · ${s.officers?.email||'—'}</div>
-        <div style="font-size:12px;margin-top:4px;">پلان: <b>${s.subscription_plans?.name||'—'}</b> · Rs. ${s.amount||'—'}</div>
-        <div style="font-size:11px;color:var(--text-muted);">Transaction: <span style="font-family:monospace;">${s.payment_ref||'—'}</span> · ${s.payment_method||'—'}</div>
-        <div style="font-size:10px;color:var(--text-faint);">تاریخ: ${formatDate(s.created_at)}</div>
-      </div>
-      <div style="display:flex;gap:6px;flex-direction:column;">
-        <button class="btn btn-primary btn-sm" onclick="_adminActivateSub('${s.id}','${s.plan_id}','${s.officer_id}')">✅ فعال کریں</button>
-        <button class="btn btn-danger btn-sm" onclick="_adminRejectSub('${s.id}')">❌ رد کریں</button>
-      </div>
-    </div>
-  </div>`).join('')
-  : '<div style="text-align:center;padding:20px;color:var(--text-muted);direction:rtl;">✅ کوئی زیر التواء ادائیگی نہیں</div>'}`;
-}
-
-async function _adminActivateSub(subId, planId, officerId) {
-  try {
-    const { data:plan } = await supabaseClient.from('subscription_plans').select('duration_days').eq('id',planId).single();
-    const expires = new Date(Date.now() + (plan?.duration_days||30)*24*60*60*1000);
-    const verifier = await getOfficerId();
-    await supabaseClient.from('subscriptions').update({
-      status:'active', expires_at:expires.toISOString(),
-      verified_by:verifier, verified_at:new Date().toISOString(),
-    }).eq('id',subId);
-    showToast('✅ سبسکرپشن فعال کر دی گئی','success');
-    renderAdminSubscriptions(document.getElementById('admin-sub-area'));
-  } catch(e) { showToast('❌ '+e.message,'error'); }
-}
-
-async function _adminRejectSub(subId) {
-  await supabaseClient.from('subscriptions').update({status:'rejected'}).eq('id',subId);
-  showToast('❌ ادائیگی رد کر دی گئی','info');
-  renderAdminSubscriptions(document.getElementById('admin-sub-area'));
-}
-
-// ── FEATURE GATE CHECK ────────────────────────────────────────
-async function checkFeatureAccess(feature) {
-  try {
-    const oid = await getOfficerId();
-    const { data:sub } = await supabaseClient.from('subscriptions')
-      .select('status,subscription_plans(features)')
-      .eq('officer_id',oid).order('created_at',{ascending:false}).limit(1).single();
-    if (!sub||sub.status==='expired'||sub.status==='suspended') return false;
-    const features = sub.subscription_plans?.features||{};
-    if (feature==='cdr') return !!features.cdr;
-    if (feature==='admin') return !!features.admin;
-    return true;
-  } catch(_) { return true; }
-}
-
-// Case limit check
-async function checkCaseLimit() {
-  try {
-    const oid = await getOfficerId();
-    const [{ data:sub },{ count }] = await Promise.all([
-      supabaseClient.from('subscriptions').select('subscription_plans(features)').eq('officer_id',oid).order('created_at',{ascending:false}).limit(1).single(),
-      supabaseClient.from('cases').select('id',{count:'exact',head:true}).eq('officer_id',oid),
-    ]);
-    const maxCases = sub?.data?.subscription_plans?.features?.cases||10;
-    if (maxCases===999) return true;
-    if ((count||0)>=maxCases) {
-      showToast(`⚠️ آپ کے پلان میں ${maxCases} مقدمات کی حد ہے — اپگریڈ کریں`,'error',5000);
-      setTimeout(()=>showPage('subscription',null),2000);
-      return false;
+    const sub = await checkSubscription();
+    const el  = document.getElementById('sub-status-badge');
+    if (!el) return;
+    if (sub.status==='active') {
+      el.textContent = `✅ فعال · ${sub.daysLeft}d`;
+      el.style.color = 'var(--green)';
+    } else if (sub.status==='trial') {
+      el.textContent = `🎁 آزمائشی · ${sub.daysLeft}d`;
+      el.style.color = 'var(--amber)';
+    } else {
+      el.textContent = '❌ ختم';
+      el.style.color = 'var(--red)';
     }
-    return true;
-  } catch(_) { return true; }
+  } catch(_) {}
 }

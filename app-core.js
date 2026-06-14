@@ -659,6 +659,11 @@ async function initApp() {
   setInterval(_checkDueReminders, 30*60*1000);
   // Start Islamic messages
   setTimeout(()=>{ if(typeof initIslamicMessages==='function') initIslamicMessages(); }, 1500);
+  // Check subscription
+  setTimeout(async()=>{
+    if(typeof showSubscriptionBanner==='function') await showSubscriptionBanner();
+    if(typeof updateSubBadge==='function') await updateSubBadge();
+  }, 2000);
 }
 
 // ── CHECK SUPABASE SESSION ON LOAD ────────────────────────────

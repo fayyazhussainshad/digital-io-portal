@@ -33,6 +33,7 @@ const CORE_ASSETS = [
   '/incident.js',
   '/court.js',
   '/bin.js',
+  '/subscription.js',
   '/admin.js',
   '/subscription.js',
   '/patrol-share.html',
