@@ -98,51 +98,73 @@ const PENAL_CODES = [
 // ── CASES LIST ──
 registerPage('cases',renderCases);
 let _casesCache = []; // cleared on every render — no stale data
-async function renderCases(container,fStatus,fQuery){
-  fStatus=fStatus||'';fQuery=fQuery||'';
-  _casesCache = []; // clear before fetch
-  const cases=await getCases(fStatus,fQuery);
-  _casesCache=cases;
+async function renderCases(container,fStatus,fQuery,fStation){
+  fStatus=fStatus||'';fQuery=fQuery||'';fStation=fStation||'';
+  _casesCache = [];
+  const allCases=await getCases(fStatus,fQuery);
+  _casesCache=allCases;
   const o=currentOfficer||{};
+
+  // Get unique stations from cases (for folder view)
+  const stations=[...new Set(allCases.map(c=>c.case_station||o.station||'—').filter(Boolean))].sort();
+  const cases = fStation ? allCases.filter(c=>(c.case_station||o.station)==fStation) : allCases;
+  const currentStation = o.station||'—';
+  const isArchiveView = fStation && fStation !== currentStation;
+
   container.innerHTML=`
-  <div class="page-header">
-    <div><div class="page-title">📁 My Cases</div><div class="page-subtitle">${cases.length} case(s)</div></div>
-    <div style="display:flex;gap:8px;direction:rtl;">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;direction:rtl;flex-wrap:wrap;">
+    <div>
+      <div style="font-size:18px;font-weight:800;">📁 میرے مقدمات</div>
+      <div style="font-size:12px;color:var(--text-muted);">${cases.length} مقدمات${isArchiveView?' · '+fStation+' آرکائیو':''}</div>
+    </div>
+    <div style="display:flex;gap:6px;direction:rtl;margin-left:auto;flex-wrap:wrap;">
       <button class="btn btn-primary" onclick="openAddCaseModal()">+ نیا اندراج</button>
     </div>
   </div>
+
+  <!-- Station Folders -->
+  ${stations.length>1?`
+  <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;direction:rtl;">
+    <button class="btn ${!fStation?'btn-primary':'btn-secondary'} btn-sm" onclick="renderCases(document.getElementById('page-content'),'','','')">📁 تمام (${allCases.length})</button>
+    ${stations.map(s=>`
+    <button class="btn ${fStation===s?'btn-primary':'btn-secondary'} btn-sm"
+      onclick="renderCases(document.getElementById('page-content'),'','','${s}')"
+      title="${s===currentStation?'موجودہ تھانہ':'پرانا تھانہ — آرکائیو'}">
+      ${s===currentStation?'🏛️':'📦'} ${s} (${allCases.filter(c=>(c.case_station||o.station)===s).length})
+    </button>`).join('')}
+  </div>`:``}
+
+  ${isArchiveView?`<div style="background:rgba(167,139,250,0.1);border:1px solid #a78bfa;border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:12px;color:#a78bfa;direction:rtl;">📦 آرکائیو — تھانہ ${fStation} کے پرانے مقدمات (صرف دیکھنے کے لیے)</div>`:''}
+
   <div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;margin-bottom:14px;">
-    <input class="search-input" id="case-search" style="flex:1;min-width:200px;" placeholder="🔍 Search FIR No, Complainant, CNIC, Section of Law..." value="${fQuery}" oninput="clearTimeout(window._csTmr);window._csTmr=setTimeout(()=>renderCases(document.getElementById('page-content'),'',this.value),280)">
-    <select class="filter-select" id="case-status-filter" onchange="renderCases(document.getElementById('page-content'),this.value,document.getElementById('case-search').value)">
-      <option value="" ${!fStatus?'selected':''}>All Statuses</option>
+    <input class="search-input" id="case-search" style="flex:1;min-width:180px;" placeholder="🔍 FIR نمبر، مدعی، CNIC، دفعہ..." value="${fQuery}" oninput="clearTimeout(window._csTmr);window._csTmr=setTimeout(()=>renderCases(document.getElementById('page-content'),'',this.value,'${fStation}'),280)" dir="rtl">
+    <select class="filter-select" id="case-status-filter" onchange="renderCases(document.getElementById('page-content'),this.value,document.getElementById('case-search').value,'${fStation}')">
+      <option value="" ${!fStatus?'selected':''}>تمام صورتحال</option>
       <option value="under"      ${fStatus==='under'?'selected':''}>زیر تفتیش</option>
-      <option value="complete"   ${fStatus==='complete'?'selected':''}>مکمل چالان</option>
-      <option value="incomplete" ${fStatus==='incomplete'?'selected':''}>نامکمل چالان</option>
-      <option value="challan512" ${fStatus==='challan512'?'selected':''}>چالان 512ض ف</option>
+      <option value="complete"   ${fStatus==='complete'?'selected':''}>چالان مکمل</option>
+      <option value="incomplete" ${fStatus==='incomplete'?'selected':''}>چالان نامکمل</option>
+      <option value="challan512" ${fStatus==='challan512'?'selected':''}>چالان 512</option>
       <option value="untrace"    ${fStatus==='untrace'?'selected':''}>عدم پتہ</option>
       <option value="cancel"     ${fStatus==='cancel'?'selected':''}>اخراج</option>
     </select>
   </div>
   <div class="card" style="padding:0;overflow:hidden;">
     <div style="overflow-x:auto;">
-      <table class="data-table" style="width:100%;min-width:1180px;">
+      <table class="data-table" style="width:100%;min-width:900px;">
         <thead><tr>
-          <th style="width:44px;text-align:center;">S/N</th>
+          <th style="width:44px;text-align:center;">#</th>
           <th>مقدمہ نمبر</th>
-          <th>تاریخ اندراج مقدمہ</th>
+          <th>تاریخ اندراج</th>
           <th>تاریخ وقوعہ</th>
-          <th>Offence</th>
-          <th>Police Station</th>
-          <th>Complainant</th>
-          <th>CNIC</th>
-          <th>Cell No</th>
-          <th>Status</th>
-          <th style="width:130px;text-align:center;">Actions</th>
+          <th>دفعہ قانون</th>
+          <th>تھانہ</th>
+          <th>مدعی</th>
+          <th>ملزمان</th>
+          <th>صورتحال</th>
+          <th>اقدامات</th>
         </tr></thead>
         <tbody>
-          ${cases.length===0
-            ?`<tr><td colspan="11" style="text-align:center;padding:48px;color:var(--text-muted);">ابھی کوئی اندراج نہیں۔ <a onclick="openAddCaseModal()" style="cursor:pointer;color:var(--accent);">پہلا اندراج درج کریں →</a></td></tr>`
-            :cases.map((c,i)=>renderCaseRow(c,i+1)).join('')}
+          ${cases.length ? cases.map((c,i)=>_caseRow(c,i)).join('') : `<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text-muted);">کوئی مقدمہ نہیں</td></tr>`}
         </tbody>
       </table>
     </div>
