@@ -552,8 +552,8 @@ function _printFIRAll() {
 function _doPrintFIR(html) {
   const c = window._workspaceCase || {};
   const o = currentOfficer || {};
-  const w = window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  let _printHTML = '';
+  _printHTML += (`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
     <style>
       @page{margin:15mm;} body{font-family:'Noto Nastaliq Urdu',serif;direction:rtl;font-size:14px;line-height:2;}
@@ -566,8 +566,8 @@ function _doPrintFIR(html) {
     </div>
     ${html}
     </body></html>`);
-  w.document.close();
-  setTimeout(()=>w.print(),600);
+  dioPrint(_printHTML);
+  
 }
 
 function _shareFIREntry(entryId) {
@@ -624,8 +624,8 @@ async function markMisalComplete(docId) {
 function printMisalDoc(name) {
   const el = document.getElementById('misal-editor');
   if (!el) return;
-  const w = window.open('', '_blank');
-  w.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
+  let _printHTML = '';
+  _printHTML += (`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
     <title>${name}</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
     <style>
@@ -635,8 +635,7 @@ function printMisalDoc(name) {
       td,th{border:1px solid #555;padding:6px 10px;}
       @media print{body{margin:0}}
     </style></head><body>${el.innerHTML}</body></html>`);
-  w.document.close();
-  setTimeout(() => { w.print(); }, 500);
+  dioPrint(_printHTML);
 }
 
 // ── REFRESH BAR ───────────────────────────────────────────────

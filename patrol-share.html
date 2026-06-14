@@ -56,14 +56,45 @@ const token = params.get('token');
 
 async function init() {
   if (!token) { showError('⚠️ غلط لنک — ٹوکن موجود نہیں'); return; }
+
+  // Make sure Supabase library is loaded
+  if (!window.supabase || !supabase) {
+    setTimeout(init, 300);
+    return;
+  }
+
   try {
-    const { data, error } = await supabase.from('patrol_tokens')
-      .select('*').eq('token', token).eq('active', true).single();
-    if (error || !data) { showError('⚠️ یہ لنک غیر فعال یا غلط ہے'); return; }
+    const { data, error } = await supabase
+      .from('patrol_tokens')
+      .select('*')
+      .eq('token', token)
+      .eq('active', true)
+      .maybeSingle();
+
+    if (error) {
+      console.error('token lookup error', error);
+      showError('⚠️ لنک کی تصدیق میں مسئلہ — دوبارہ کوشش کریں<br><span style="font-size:11px;opacity:0.6;">' + (error.message||'') + '</span>');
+      return;
+    }
+    if (!data) {
+      showError('⚠️ یہ لنک غیر فعال یا غلط ہے');
+      return;
+    }
     _tokenData = data;
     renderForm();
-  } catch(e) { showError('❌ ' + e.message); }
+  } catch(e) {
+    console.error('init error', e);
+    showError('❌ ' + (e.message||'نامعلوم مسئلہ') + '<br><span style="font-size:11px;opacity:0.6;">انٹرنیٹ چیک کریں اور صفحہ ریفریش کریں</span>');
+  }
 }
+
+// Safety timeout — if still on loading after 8s, show a retry option
+setTimeout(() => {
+  const sm = document.getElementById('status-msg');
+  if (sm && sm.textContent.includes('تصدیق')) {
+    showError('⚠️ تصدیق میں دیر ہو رہی ہے<br><button onclick="location.reload()" style="margin-top:10px;padding:8px 18px;background:#38bdf8;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;">🔄 دوبارہ کوشش کریں</button>');
+  }
+}, 8000);
 
 function showError(msg) {
   document.getElementById('app').innerHTML = `
@@ -183,7 +214,12 @@ function showToast(msg) {
   setTimeout(() => { t.style.display = 'none'; }, 3000);
 }
 
-init();
+// Start once the page (and Supabase CDN) is ready
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  setTimeout(init, 200);
+} else {
+  window.addEventListener('load', () => setTimeout(init, 200));
+}
 </script>
 </body>
 </html>

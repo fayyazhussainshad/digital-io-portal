@@ -36,7 +36,7 @@ async function _buildBackup() {
   root.innerHTML = `
   <!-- Header -->
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;direction:rtl;flex-wrap:wrap;">
-    <button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);margin-inline-start:auto;">واپس ←</button>
+    <button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);">واپس ←</button>
     <div>
       <div style="font-size:18px;font-weight:800;">☁️ بیک اپ و ڈیٹا</div>
       <div style="font-size:12px;color:var(--text-muted);">آخری بیک اپ: ${lastBackup}</div>
@@ -216,15 +216,15 @@ async function _doImport() {
 
 function _printDataReport() {
   const o = currentOfficer||{};
-  const w = window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
+  let _printHTML = '';
+  _printHTML += (`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
     <style>body{font-family:'Noto Nastaliq Urdu',serif;direction:rtl;padding:20mm;}.hdr{text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:14px;}</style></head><body>
     <div class="hdr"><h2>محکمہ پولیس پنجاب — ڈیٹا رپورٹ</h2>
     <div>${o.full_name||'—'} · تھانہ ${o.station||'—'} · ${new Date().toLocaleDateString('en-PK')}</div></div>
     <p>یہ رپورٹ Digital IO سے خودکار بنائی گئی ہے۔ تمام ڈیٹا Supabase Cloud میں محفوظ ہے۔</p>
-    <script>window.onload=()=>setTimeout(()=>window.print(),400);<\/script></body></html>`);
-  w.document.close();
+    </body></html>`);
+  dioPrint(_printHTML);
 }
 
 // ── LEGACY COMPAT ─────────────────────────────────────────────

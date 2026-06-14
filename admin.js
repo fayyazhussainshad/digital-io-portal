@@ -23,7 +23,7 @@ async function renderAdmin(container) {
 
   container.innerHTML = `
   <div style="max-width:1000px;margin:0 auto;" id="admin-root">
-    <div style="margin-bottom:10px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);margin-inline-start:auto;">واپس ←</button></div>
+    <div style="margin-bottom:10px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);">واپس ←</button></div>
     <div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ Loading...</div>
   </div>`;
   await _buildAdmin(role);
@@ -517,10 +517,10 @@ function _adminPrintReport() {
     html += `<tr><td>${of.full_name||'—'}</td><td>${of.designation||'—'}</td><td>${t}</td><td>${a}</td><td>${cp}</td></tr>`;
   });
   html += `</table>`;
-  const w = window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial;direction:rtl;}table{border-collapse:collapse;width:100%;}td,th{border:1px solid #ccc;padding:6px;}</style></head><body>${html}</body></html>`);
-  w.document.close();
-  setTimeout(()=>w.print(), 500);
+  let _printHTML = '';
+  _printHTML += (`<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial;direction:rtl;}table{border-collapse:collapse;width:100%;}td,th{border:1px solid #ccc;padding:6px;}</style></head><body>${html}</body></html>`);
+  dioPrint(_printHTML);
+  
 }
 
 // ── LOG ACTIVITY HELPER (call from other modules) ─────────────

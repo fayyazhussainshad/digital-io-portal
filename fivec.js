@@ -83,7 +83,7 @@ registerPage('fivec',renderFiveC);
 async function renderFiveC(container,query){
   query=query||'';
   const apps=await getApplications5C(query);
-  container.innerHTML=`<div class="page-header"><div style="display:flex;align-items:center;gap:10px;"><button class="btn btn-secondary btn-sm" onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="font-size:12px;">← واپس</button><div><div class="page-title">📋 5-C Applications</div></div></div><button class="btn btn-primary" onclick="open5CForm()">+ New Application</button></div>
+  container.innerHTML=`<div class="page-header"><div style="display:flex;align-items:center;gap:10px;"><button class="btn btn-secondary btn-sm" onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="font-size:12px;">واپس ←</button><div><div class="page-title">📋 5-C Applications</div></div></div><button class="btn btn-primary" onclick="open5CForm()">+ New Application</button></div>
   <div class="card" style="margin-bottom:14px;padding:12px;">
     <input class="search-input" id="fivec-search" style="width:100%;" placeholder="🔍 Search by complainant name, CNIC, cell, application number, designation..." value="${esc5C(query)}" oninput="clearTimeout(window._5cTmr);window._5cTmr=setTimeout(()=>renderFiveC(document.getElementById('page-content'),this.value),250)">
     <div style="margin-top:6px;font-size:11px;color:var(--text-muted);">${apps.length} application${apps.length===1?'':'s'} ${query?'matching':'total'}</div>
@@ -471,9 +471,7 @@ function downloadResponse5C(id,name){
 function print5CResponse(){
   const html=document.getElementById('a4-paper').innerHTML;
   const lh=document.getElementById('a4-paper')?.style.lineHeight||'1.5';
-  const w=window.open('','_blank','width=900,height=1200');
-  if(!w){showToast('⚠️ Allow pop-ups to print','error');return;}
-  w.document.write(`<!DOCTYPE html>
+  const _printHTML = (`<!DOCTYPE html>
 <html lang="ur" dir="rtl">
 <head>
 <meta charset="utf-8">
@@ -499,12 +497,9 @@ function print5CResponse(){
   span[style*="inline-block"]{ display:inline-block!important; }
 </style>
 </head>
-<body>${html}<scr`+`ipt>
-  // Trigger print after fonts have loaded
-  document.fonts.ready.then(function(){ setTimeout(window.print, 300); });
-<\/scr`+`ipt></body>
+<body>${html}</body>
 </html>`);
-  w.document.close();
+  dioPrint(_printHTML);
 }
 
 // ── 5-C PRINT ────────────────────────────────────────────────
@@ -515,8 +510,8 @@ async function _print5C(id) {
     if (!a) { showToast('⚠️ درخواست نہیں ملی','error'); return; }
     const o = currentOfficer || {};
     const nums = (a.application_5c_numbers||[]);
-    const w = window.open('','_blank');
-    w.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
+    let _printHTML = '';
+    _printHTML += (`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
       @page{margin:15mm;size:A4;}
@@ -554,8 +549,8 @@ async function _print5C(id) {
       <div class="sig-box"><div class="sig-line">SHO تھانہ ${o.station||'—'}<br>مہر و دستخط</div></div>
     </div>
     <div class="footer">Digital IO · محکمہ پولیس پنجاب · ${new Date().toLocaleDateString('en-PK')}</div>
-    <script>window.onload=()=>setTimeout(()=>window.print(),500);<\/script>
+    
     </body></html>`);
-    w.document.close();
+    dioPrint(_printHTML);
   } catch(e) { showToast('❌ '+e.message,'error'); }
 }

@@ -43,7 +43,7 @@ async function _buildPerf() {
   root.innerHTML = `
   <!-- Back + Header -->
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;direction:rtl;flex-wrap:wrap;">
-    <button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);margin-inline-start:auto;">واپس ←</button>
+    <button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);">واپس ←</button>
     <div>
       <div style="font-size:18px;font-weight:800;">📊 کارکردگی کا جائزہ</div>
       <div style="font-size:12px;color:var(--text-muted);">${currentOfficer?.full_name||''} · ${currentOfficer?.station||''} · ${new Date().toLocaleDateString('en-PK')}</div>
@@ -184,8 +184,8 @@ function _clearUsageStats() {
 
 function _printPerfReport() {
   const o=currentOfficer||{};
-  const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
+  let _printHTML = '';
+  _printHTML += (`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
     <style>@page{margin:20mm;}body{font-family:'Noto Nastaliq Urdu',serif;direction:rtl;font-size:13px;color:#111;}
     h2,h3{text-align:center;}table{width:100%;border-collapse:collapse;}td,th{border:1px solid #ccc;padding:6px 10px;}
@@ -202,8 +202,8 @@ function _printPerfReport() {
     <script>
     window.onload = function() {
       // Will be populated after print
-      setTimeout(window.print, 500);
+      
     };
     <\/script></body></html>`);
-  w.document.close();
+  dioPrint(_printHTML);
 }
