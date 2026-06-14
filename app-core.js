@@ -7,7 +7,15 @@
 // ── SUPABASE ──────────────────────────────────────────────────
 const SUPABASE_URL = 'https://bbrhtokynxmljumxyaeh.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJicmh0b2t5bnhtbGp1bXh5YWVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwNzM5NzksImV4cCI6MjA2MzY0OTk3OX0.LjTsRRRMW6JCvFXVJa4KhLqDHBrb8L3F9Qu_-PMGVMY';
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+if (!window.supabase || !window.supabase.createClient) {
+  document.addEventListener('DOMContentLoaded', function(){
+    alert('⚠️ انٹرنیٹ کنکشن چیک کریں — Supabase لائبریری لوڈ نہیں ہوئی۔ صفحہ ریفریش کریں۔');
+  });
+}
+const supabaseClient = (window.supabase && window.supabase.createClient)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+  : null;
+window.supabaseClient = supabaseClient;
 
 // ── GLOBAL STATE ──────────────────────────────────────────────
 let currentUser    = null;

@@ -22,11 +22,11 @@ const MISAL_CASE_DOCS = [
   { id:'cdr_imei',         name:'CDR/IMEI',                  desc:'CDR/IMEI Analysis' },
   { id:'staff',            name:'ہمراہی ملازمان',            desc:'Accompanying Staff' },
   { id:'index_naql',       name:'انڈیکس نقل مسل',           desc:'Index of Case File Copy' },
+  { id:'arrest_form',      name:'فارم گرفتاری',              desc:'Arrest Form' },
+  { id:'abscond_form',     name:'فارم مفروری',               desc:'Absconder Form' },
   { id:'warrant',          name:'وارنٹ',                     desc:'Warrant' },
   { id:'ishtihar',         name:'اشتہار',                    desc:'Proclamation' },
   { id:'progress',         name:'پراگریس رپورٹ',            desc:'Progress Report' },
-  { id:'arrest_form',      name:'فارم گرفتاری',              desc:'Arrest Form' },
-  { id:'abscond_form',     name:'فارم مفروری',               desc:'Absconder Form' },
   { id:'inkishafat',       name:'انکشافات',                  desc:'Disclosures' },
   { id:'darkhwastain',     name:'درخواستیں',                 desc:'Applications' },
   { id:'brief',            name:'بریف مقدمہ',                desc:'Case Brief' },
@@ -70,11 +70,22 @@ function renderMisalBar(c) {
     padding:12px 16px;
     background:var(--bg-secondary);
     border-bottom:1px solid var(--border);">
-    <div style="font-size:11px;color:var(--text-faint);margin-bottom:8px;display:flex;gap:16px;align-items:center;">
+    <div style="font-size:11px;color:var(--text-faint);margin-bottom:8px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;direction:rtl;">
       <span>مثال دستاویزات</span>
       <span><span style="color:var(--text-muted);">■</span> شامل نہیں</span>
       <span><span style="color:var(--accent);">■</span> جاری</span>
       <span><span style="color:var(--green);">■</span> مکمل</span>
+      <!-- SHO / DSP quick-set buttons -->
+      <span style="margin-inline-start:auto;display:flex;gap:6px;align-items:center;">
+        <button onclick="_setMisalOfficer('sho','${c.id}')" title="SHO کا نام مقرر کریں"
+          style="background:${c.sho_name?'rgba(34,197,94,0.15)':'var(--bg-tertiary)'};border:1px solid ${c.sho_name?'var(--green)':'var(--border)'};border-radius:8px;padding:4px 10px;font-size:11px;color:${c.sho_name?'var(--green)':'var(--text-secondary)'};cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">
+          👮 SHO${c.sho_name?': '+c.sho_name:''}
+        </button>
+        <button onclick="_setMisalOfficer('dsp','${c.id}')" title="DSP/SDPO کا نام مقرر کریں"
+          style="background:${c.dsp_name?'rgba(34,197,94,0.15)':'var(--bg-tertiary)'};border:1px solid ${c.dsp_name?'var(--green)':'var(--border)'};border-radius:8px;padding:4px 10px;font-size:11px;color:${c.dsp_name?'var(--green)':'var(--text-secondary)'};cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">
+          🎖️ DSP/SDPO${c.dsp_name?': '+c.dsp_name:''}
+        </button>
+      </span>
     </div>
     <div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;">${items}</div>
   </div>
@@ -97,6 +108,43 @@ function renderMisalBar(c) {
     .mdoc-added{ color:var(--accent);      background:rgba(56,189,248,0.12); border-color:var(--accent); font-weight:600; }
     .mdoc-done { color:var(--green);       background:rgba(34,197,94,0.12);  border-color:var(--green);  font-weight:600; }
   </style>`;
+}
+
+// ── SET SHO / DSP NAME ────────────────────────────────────────
+function _setMisalOfficer(type, caseId) {
+  const isSho = type === 'sho';
+  const label = isSho ? 'SHO کا نام' : 'DSP/SDPO کا نام';
+  const c = _misalCase || {};
+  const current = isSho ? (c.sho_name||'') : (c.dsp_name||'');
+  openModal(label,
+    `<div style="direction:rtl;">
+      <label class="form-label">${label}</label>
+      <input class="form-input" id="misal-officer-name" value="${current}" placeholder="${label}" dir="auto" style="font-family:'Jameel Noori Nastaleeq',serif;font-size:15px;">
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">یہ نام تمام دستاویزات اور رپورٹس میں استعمال ہوگا</div>
+    </div>`,
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;">
+      <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+      <button class="btn btn-primary" onclick="_saveMisalOfficer('${type}','${caseId}')">💾 محفوظ</button>
+    </div>`
+  );
+  setTimeout(()=>document.getElementById('misal-officer-name')?.focus(),100);
+}
+
+async function _saveMisalOfficer(type, caseId) {
+  const name = document.getElementById('misal-officer-name')?.value.trim()||'';
+  const field = type === 'sho' ? 'sho_name' : 'dsp_name';
+  try {
+    await supabaseClient.from('cases').update({ [field]: name }).eq('id', caseId);
+    if (_misalCase) _misalCase[field] = name;
+    // Update workspace cache too
+    if (window._casesCache) {
+      const cc = window._casesCache.find(x=>x.id===caseId);
+      if (cc) cc[field] = name;
+    }
+    closeModal();
+    showToast('✅ '+(type==='sho'?'SHO':'DSP/SDPO')+' کا نام محفوظ', 'success');
+    _refreshMisalBar();
+  } catch(e) { showToast('❌ '+e.message,'error'); }
 }
 
 // ── CONFIRMATION: ADD ─────────────────────────────────────────

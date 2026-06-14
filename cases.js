@@ -159,12 +159,13 @@ async function renderCases(container,fStatus,fQuery,fStation){
           <th>دفعہ قانون</th>
           <th>تھانہ</th>
           <th>مدعی</th>
-          <th>ملزمان</th>
+          <th>شناختی کارڈ</th>
+          <th>موبائل</th>
           <th>صورتحال</th>
-          <th>اقدامات</th>
+          <th style="text-align:center;">اقدامات</th>
         </tr></thead>
         <tbody>
-          ${cases.length ? cases.map((c,i)=>_caseRow(c,i)).join('') : `<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text-muted);">کوئی مقدمہ نہیں</td></tr>`}
+          ${cases.length ? cases.map((c,i)=>renderCaseRow(c,i+1)).join('') : `<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--text-muted);">کوئی مقدمہ نہیں</td></tr>`}
         </tbody>
       </table>
     </div>
