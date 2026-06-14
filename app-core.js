@@ -1,47 +1,21 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — APP CORE
-   Shared by every tab. Loaded first by index.html.
-   Contains: config, Supabase loader, auth, DB helpers,
-             UI helpers (toast/modal/format), page router,
-             session timer, backup queue, app bootstrap.
+   DIGITAL IO — APP CORE  (app-core.js)
+   Auth · Data · UI · Voice · Penal Codes · Notifications
+   Punjab Police Case Management System
    ═══════════════════════════════════════════════════════════ */
 
-// ── GLOBAL ERROR HANDLER ──
-//  GLOBAL ERROR HANDLER — surfaces JS errors to the user
-//  instead of leaving buttons silently dead
-// ═══════════════════════════════════════════════════
-window.addEventListener('error', function(e) {
-  console.error('[Digital IO Error]', e.message, 'at', (e.filename || '') + ':' + (e.lineno || ''));
-  try {
-    var el = document.getElementById('login-error');
-    if (el && (!el.textContent || el.textContent.trim() === '')) {
-      el.textContent = '⚠️ Script error — open browser console (F12) for details.';
-      el.style.display = 'block';
-    }
-  } catch (_) {}
-});
-window.addEventListener('unhandledrejection', function(e) {
-  console.error('[Digital IO Promise Error]', e.reason);
-});
-
-// ── CONFIG + SUPABASE LOADER ──
-//  DIGITAL IO — CONFIGURATION
-// ═══════════════════════════════════════════════════
-
+// ── SUPABASE ──────────────────────────────────────────────────
 const SUPABASE_URL = 'https://bbrhtokynxmljumxyaeh.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJicmh0b2t5bnhtbGp1bXh5YWVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MzU5ODIsImV4cCI6MjA5NTUxMTk4Mn0.o4uKyqhIx9vWDX-CeJjwujWUYK6Cy0XzEZ5fw_efQMA';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJicmh0b2t5bnhtbGp1bXh5YWVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwNzM5NzksImV4cCI6MjA2MzY0OTk3OX0.LjTsRRRMW6JCvFXVJa4KhLqDHBrb8L3F9Qu_-PMGVMY';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const APP_CONFIG = {
-  name: 'Digital IO',
-  version: '4.0.0',
-  edition: 'Police Case Management System',
-  sessionTimeout: 3600000,
-  backupInterval: 5000,
-  maxLoginAttempts: 5,
-  lockoutDuration: 1800000,
-  toastDuration: 3000,
-};
+// ── GLOBAL STATE ──────────────────────────────────────────────
+let currentUser    = null;
+let currentOfficer = null;
+let googleDriveToken = null;
+const _pages = {};
 
+// ── STATUS LABELS & CLASSES ───────────────────────────────────
 const STATUS_LABELS = {
   under:       'زیر تفتیش',
   complete:    'چالان مکمل',
@@ -49,9 +23,7 @@ const STATUS_LABELS = {
   untrace:     'عدم پتہ',
   cancel:      'اخراج',
   challan512:  'چالان 512',
-  challan512:  'چالان 512ض ف',
 };
-
 const STATUS_CLASSES = {
   under:       'pill-blue',
   complete:    'pill-green',
@@ -59,961 +31,646 @@ const STATUS_CLASSES = {
   untrace:     'pill-purple',
   cancel:      'pill-red',
   challan512:  'pill-amber',
-  challan512:  'pill-teal',
 };
 
-const POLICE_NEWS = [
-  '🤲 اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ — درود ابراہیمی پڑھیں',
-  '📖 إِنَّ مَعَ الْعُسْرِ يُسْرًا — بے شک تکلیف کے ساتھ آسانی ہے (سورۃ الانشراح)',
-  '🤲 سُبْحَانَ اللَّهِ وَبِحَمْدِهِ سُبْحَانَ اللَّهِ الْعَظِيمِ — اللہ کی تسبیح کریں',
-  '📖 وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا — جو اللہ سے ڈرے اللہ اسے راستہ دیتا ہے',
-  '🤲 اَسْتَغْفِرُاللّٰہَ الْعَظِیْمَ وَاَتُوْبُ اِلَیْہِ — اللہ سے بخشش مانگیں',
-  '📖 وَتَوَكَّلْ عَلَى اللَّهِ وَكَفَىٰ بِاللَّهِ وَكِيلًا — اللہ پر بھروسہ کریں',
-  '🤲 لَا إِلَٰهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ — توحید کا اقرار کریں',
-  '📖 إِنَّ اللَّهَ مَعَ الصَّابِرِينَ — بے شک اللہ صبر کرنے والوں کے ساتھ ہے',
-  '🤲 حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ — اللہ ہمارے لیے کافی ہے',
-  '📖 فَاذْكُرُونِي أَذْكُرْكُمْ — مجھے یاد کرو میں تمہیں یاد کروں گا',
-];
+// ── PAGE REGISTRY ─────────────────────────────────────────────
+function registerPage(name, fn) { _pages[name] = fn; }
 
-// ═══════════════════════════════════════════════════
-//  ROBUST SUPABASE LOADER
-//  Old code crashed everything if the CDN was slow or
-//  blocked. This version loads jsDelivr first; if that
-//  fails it falls back to unpkg; if both fail the user
-//  sees a clear error instead of dead buttons.
-// ═══════════════════════════════════════════════════
-let supabaseClient = null;
-let supabaseReady = false;
-const supabaseReadyCallbacks = [];
+function showPage(page, el) {
+  // Update active nav
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
 
-function onSupabaseReady(cb) {
-  if (supabaseReady) cb();
-  else supabaseReadyCallbacks.push(cb);
-}
-
-function initSupabaseClient() {
-  if (typeof supabase === 'undefined' || !supabase.createClient) {
-    console.error('Supabase global not found');
-    return false;
-  }
-  const { createClient } = supabase;
-  supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: true,
-    },
-    realtime: { params: { eventsPerSecond: 10 } },
-  });
-  supabaseReady = true;
-  console.log('✅ Supabase client ready');
-  supabaseReadyCallbacks.forEach(function(cb){ try { cb(); } catch(e) { console.error(e); } });
-  return true;
-}
-
-function loadSupabaseLibrary() {
-  // Attempt #1: jsDelivr
-  var s = document.createElement('script');
-  s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-  s.onload = function() {
-    if (!initSupabaseClient()) loadSupabaseFallback();
+  // Update topbar title
+  const titles = {
+    dashboard:'ڈیش بورڈ', cases:'میرے مقدمات', forms:'ٹیمپلیٹس',
+    fivec:'مارک شدہ درخواستیں', incident:'واقعاتی رپورٹ', patrol:'گشت',
+    law:'قانونی لائبریری', performance:'کارکردگی', backup:'بیک اپ',
+    settings:'ترتیبات', admin:'ایڈمن', bin:'حذف شدہ مواد',
+    reminders:'یاددہانیاں', search:'تلاش', cdr:'CDR Analyzer',
+    court:'عدالتی پیشیاں', evidence:'شہادتیں',
   };
-  s.onerror = loadSupabaseFallback;
-  document.head.appendChild(s);
-}
+  const titleEl = document.getElementById('topbar-title');
+  if (titleEl) titleEl.textContent = (titles[page]||page);
 
-function loadSupabaseFallback() {
-  // Attempt #2: unpkg
-  console.warn('jsDelivr failed, trying unpkg...');
-  var f = document.createElement('script');
-  f.src = 'https://unpkg.com/@supabase/supabase-js@2';
-  f.onload = function() {
-    if (!initSupabaseClient()) showCdnError();
-  };
-  f.onerror = showCdnError;
-  document.head.appendChild(f);
-}
+  // Update URL hash
+  try { history.replaceState(null,'','#'+page); } catch(_) {}
 
-function showCdnError() {
-  console.error('All Supabase CDNs failed to load');
-  var msg = '⚠️ Could not load security library. Please check your internet connection and refresh the page. If this keeps happening, your ISP may be blocking the CDN — try a different network.';
-  var el = document.getElementById('login-error');
-  if (el) {
-    el.textContent = msg;
-    el.style.display = 'block';
+  // Log usage
+  _logUsage('page:'+page);
+
+  // Render page
+  const container = document.getElementById('page-content');
+  if (!container) return;
+  container.style.padding = '16px';
+  container.style.overflow = 'auto';
+
+  if (_pages[page]) {
+    _pages[page](container);
   } else {
-    // Login screen not in DOM yet, show as fullscreen message
-    document.addEventListener('DOMContentLoaded', function() {
-      var e2 = document.getElementById('login-error');
-      if (e2) { e2.textContent = msg; e2.style.display = 'block'; }
-      else alert(msg);
-    });
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted);">
+      <div style="font-size:48px;">🚧</div>
+      <div style="font-size:16px;margin-top:12px;">${page} — جلد آ رہا ہے</div>
+    </div>`;
   }
 }
 
-// Start loading immediately
-loadSupabaseLibrary();
-
-console.log('✅ Digital IO Config Loaded');
-
-// ── STATE ──
-let currentUser=null,currentOfficer=null,currentRole='officer',sessionTimer=null,pinBuffer='',loginAttempts=parseInt(localStorage.getItem('dio_login_attempts')||'0');
-
-// ── AUTH ──
-function setLoginMethod(method,el){document.querySelectorAll('.login-method').forEach(b=>b.classList.remove('active'));if(el)el.classList.add('active');document.getElementById('panel-password').style.display=method==='password'?'block':'none';document.getElementById('panel-pin').style.display=method==='pin'?'block':'none';document.getElementById('panel-biometric').style.display=method==='biometric'?'block':'none';pinBuffer='';updatePinDots();}
-async function doLogin(){const lock=localStorage.getItem('dio_lockout_until');if(lock&&Date.now()<parseInt(lock)){showLoginError('⚠️ Account locked. Try again later.');return;}const email=document.getElementById('login-email').value.trim(),pass=document.getElementById('login-password').value;if(!email||!pass){showLoginError('⚠️ Please enter email and password.');return;}setLoginLoading(true);hideLoginError();try{const{data,error}=await supabaseClient.auth.signInWithPassword({email,password:pass});if(error){loginAttempts++;localStorage.setItem('dio_login_attempts',loginAttempts);if(loginAttempts>=APP_CONFIG.maxLoginAttempts){localStorage.setItem('dio_lockout_until',Date.now()+APP_CONFIG.lockoutDuration);loginAttempts=0;localStorage.setItem('dio_login_attempts',0);showLoginError('🔒 Too many failed attempts. Account locked for 30 minutes.');}else{showLoginError(`❌ Incorrect credentials. ${APP_CONFIG.maxLoginAttempts-loginAttempts} attempt(s) remaining.`);}setLoginLoading(false);return;}loginAttempts=0;localStorage.setItem('dio_login_attempts',0);localStorage.removeItem('dio_lockout_until');currentUser=data.user;await loadOfficerProfile();
-    // Save credentials hash for offline login next time
-    // Fire-and-forget — never let offline auth saving break the login flow
-    _saveOfflineAuth(email,pass).catch(()=>{});
-    await loginSuccess();
-  }catch(err){
-    if(!navigator.onLine){
-      // Offline — try local credentials
-      const profile=await _attemptOfflineLogin(email,pass);
-      if(profile){
-        currentOfficer=profile;
-        currentUser={id:profile.user_id||profile.id,email};
-        setLoginLoading(false);
-        await loginSuccess();
-        _showSyncBar('offline','📴 Offline mode — working from local data');
-        return;
-      }
-      showLoginError('❌ Offline login failed. Connect to internet or check credentials.');
-    }else{
-      showLoginError('⚠️ Connection error. Check your internet and try again.');
-    }
-    setLoginLoading(false);
-  }
+// ── MODAL ─────────────────────────────────────────────────────
+function openModal(title, body, footer) {
+  document.getElementById('modal-title').textContent  = title||'';
+  document.getElementById('modal-body').innerHTML     = body||'';
+  document.getElementById('modal-footer').innerHTML   = footer||'';
+  document.getElementById('modal-backdrop').style.display = 'flex';
+  document.getElementById('modal-backdrop').style.alignItems = 'center';
+  document.getElementById('modal-backdrop').style.justifyContent = 'center';
 }
-async function loadOfficerProfile(){
-  try{
-    if(!navigator.onLine)throw new Error('offline');
-    const{data:o}=await supabaseClient.from('officers').select('*').eq('user_id',currentUser.id).single();
-    if(o){
-      currentOfficer=o;
-      _updateTopbarShoDsp(o);
-      offlineStore.saveOfflineProfile(currentUser.id,o).catch(()=>{});
-    }
-    const{data:r}=await supabaseClient.from('user_roles').select('role').eq('user_id',currentUser.id).single();
-    if(r)currentRole=r.role;
-  }catch(e){
-    try{
-      const cached=await offlineStore.getOfflineProfile(currentUser?.id);
-      if(cached){ currentOfficer=cached; _updateTopbarShoDsp(cached); }
-    }catch(_){}
-  }
+function closeModal() {
+  document.getElementById('modal-backdrop').style.display = 'none';
 }
 
+// ── TOAST ─────────────────────────────────────────────────────
+function showToast(msg, type='info', duration=3000) {
+  let t = document.getElementById('toast-msg');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast-msg';
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:8px;font-size:13px;z-index:99999;box-shadow:0 4px 14px rgba(0,0,0,0.3);font-family:"Jameel Noori Nastaleeq","Noto Nastaliq Urdu",serif;direction:rtl;max-width:90vw;text-align:center;';
+    document.body.appendChild(t);
+  }
+  const colors = { success:'#22c55e', error:'#ef4444', info:'#38bdf8', warn:'#f59e0b' };
+  t.style.background = colors[type]||colors.info;
+  t.style.color = type==='warn' ? '#000' : '#fff';
+  t.textContent = msg;
+  t.style.display = 'block'; t.style.opacity = '1';
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => { t.style.opacity='0'; setTimeout(()=>{t.style.display='none';},300); }, duration);
+}
+
+// ── FORMAT HELPERS ────────────────────────────────────────────
+function formatDate(d) {
+  if (!d) return '—';
+  try {
+    const dt = new Date(d);
+    if (isNaN(dt)) return d;
+    return dt.toLocaleDateString('en-PK',{day:'2-digit',month:'2-digit',year:'numeric'});
+  } catch(_) { return d; }
+}
+
+function formatCNIC(v) {
+  if (!v) return '';
+  const d = v.replace(/\D/g,'').slice(0,13);
+  if (d.length<=5) return d;
+  if (d.length<=12) return d.slice(0,5)+'-'+d.slice(5);
+  return d.slice(0,5)+'-'+d.slice(5,12)+'-'+d.slice(12);
+}
+function formatCell(v) {
+  if (!v) return '';
+  const d = v.replace(/\D/g,'').slice(0,11);
+  if (d.length<=4) return d;
+  return d.slice(0,4)+'-'+d.slice(4);
+}
+
+function autoFormatCNIC(input) {
+  let v = input.value.replace(/\D/g,'').slice(0,13);
+  if (v.length>12) v = v.slice(0,5)+'-'+v.slice(5,12)+'-'+v.slice(12);
+  else if (v.length>5) v = v.slice(0,5)+'-'+v.slice(5);
+  input.value = v;
+}
+function autoFormatCell(input) {
+  let v = input.value.replace(/\D/g,'').slice(0,11);
+  if (v.length>4) v = v.slice(0,4)+'-'+v.slice(4);
+  input.value = v;
+}
+function autoFormatDate(input) {
+  let v = input.value.replace(/\D/g,'').slice(0,8);
+  if (v.length>4) v = v.slice(0,2)+'-'+v.slice(2,4)+'-'+v.slice(4);
+  else if (v.length>2) v = v.slice(0,2)+'-'+v.slice(2);
+  input.value = v;
+}
+
+// ── SUPABASE DATA FUNCTIONS ───────────────────────────────────
+async function getOfficerId() {
+  if (currentOfficer?.id) return currentOfficer.id;
+  const uid = currentUser?.id || supabaseClient.auth.getUser().then(r=>r.data?.user?.id);
+  const { data } = await supabaseClient.from('officers').select('id').eq('user_id', typeof uid==='string'?uid:(await uid)).single();
+  return data?.id||null;
+}
+
+async function getCases(status, query) {
+  const oid = await getOfficerId();
+  let q = supabaseClient.from('cases').select('*').eq('officer_id',oid).order('created_at',{ascending:false});
+  if (status) q = q.eq('status',status);
+  if (query) {
+    const w = `%${query}%`;
+    q = q.or(`fir_number.ilike.${w},complainant.ilike.${w},section_of_law.ilike.${w},complainant_cnic.ilike.${w},complainant_cell.ilike.${w}`);
+  }
+  const { data } = await q;
+  return data||[];
+}
+
+async function getCase(id) {
+  const { data } = await supabaseClient.from('cases').select('*').eq('id',id).single();
+  return data;
+}
+
+async function addCase(caseData) {
+  const oid = await getOfficerId();
+  const { data, error } = await supabaseClient.from('cases').insert({...caseData, officer_id:oid}).select().single();
+  if (error) throw error;
+  return data;
+}
+
+async function updateCase(id, updates) {
+  const { data, error } = await supabaseClient.from('cases').update(updates).eq('id',id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+async function deleteCase(id) {
+  const { error } = await supabaseClient.from('cases').delete().eq('id',id);
+  if (error) throw error;
+}
+
+async function getReminders() {
+  const oid = await getOfficerId();
+  const { data } = await supabaseClient.from('reminders').select('*').eq('officer_id',oid).order('reminder_date',{ascending:true});
+  return data||[];
+}
+
+async function addReminder(rem) {
+  const oid = await getOfficerId();
+  const { data, error } = await supabaseClient.from('reminders').insert({...rem,officer_id:oid}).select().single();
+  if (error) throw error;
+  return data;
+}
+
+async function updateReminder(id,updates) {
+  const { data,error } = await supabaseClient.from('reminders').update(updates).eq('id',id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+async function deleteReminder(id) {
+  const { error } = await supabaseClient.from('reminders').delete().eq('id',id);
+  if (error) throw error;
+}
+
+async function getDashboardStats() {
+  const cases = await getCases();
+  const rems = await getReminders();
+  return {
+    total:    cases.length,
+    complete: cases.filter(c=>c.status==='complete').length,
+    incomplete:cases.filter(c=>c.status==='incomplete').length,
+    under:    cases.filter(c=>c.status==='under').length,
+    untrace:  cases.filter(c=>c.status==='untrace').length,
+    cancel:   cases.filter(c=>c.status==='cancel').length,
+    challan512:cases.filter(c=>c.status==='challan512').length,
+    pendingReminders:rems.filter(r=>!r.is_done).length,
+  };
+}
+
+async function updateOfficerProfile(updates) {
+  const oid = await getOfficerId();
+  const { data, error } = await supabaseClient.from('officers').update(updates).eq('id',oid).select().single();
+  if (error) throw error;
+  currentOfficer = {...currentOfficer,...updates,...data};
+  return currentOfficer;
+}
+
+// ── BADGES ────────────────────────────────────────────────────
+async function updateBadges() {
+  try {
+    const oid = await getOfficerId();
+    if (!oid) return;
+    const [{ count:cases },{ count:rems }] = await Promise.all([
+      supabaseClient.from('cases').select('id',{count:'exact',head:true}).eq('officer_id',oid),
+      supabaseClient.from('reminders').select('id',{count:'exact',head:true}).eq('officer_id',oid).eq('is_done',false),
+    ]);
+    const b = document.getElementById('badge-cases');
+    if (b) { b.textContent = cases||0; b.style.display = cases>0?'inline':'none'; }
+    const r = document.getElementById('badge-reminders');
+    if (r) { r.textContent = rems||0; r.style.display = rems>0?'inline':'none'; }
+  } catch(_) {}
+}
+
+// ── SIDEBAR PROFILE ───────────────────────────────────────────
+function updateSidebarProfile() {
+  const o = currentOfficer||{};
+  const nameEl = document.getElementById('sidebar-officer-name');
+  const rankEl = document.getElementById('sidebar-officer-rank');
+  const avEl   = document.getElementById('sidebar-avatar');
+  if (nameEl) nameEl.textContent = o.full_name||'افسر';
+  if (rankEl) rankEl.textContent = `${o.designation||''} · ${o.station||''}`;
+  if (avEl) {
+    const initials = (o.full_name||'IO').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
+    avEl.textContent = initials;
+  }
+  // Show admin nav if applicable
+  const adminNav = document.getElementById('admin-nav-item');
+  if (adminNav) adminNav.style.display = ['admin','superadmin'].includes(o.role) ? 'flex' : 'none';
+}
+
+// ── TOPBAR SHO/DSP ────────────────────────────────────────────
 function _updateTopbarShoDsp(o) {
   const shoEl = document.getElementById('topbar-sho');
   const dspEl = document.getElementById('topbar-dsp');
-  if (shoEl) {
-    shoEl.style.display = 'block';
-    shoEl.innerHTML = `<span style="color:var(--accent);font-weight:700;">SHO</span>`;
-  }
-  if (dspEl) {
-    dspEl.style.display = 'block';
-    dspEl.innerHTML = `<span style="color:var(--accent);font-weight:700;">DSP/SDPO</span>`;
-  }
+  if (shoEl) { shoEl.style.display='block'; shoEl.innerHTML=`<span style="color:var(--accent);font-weight:700;">SHO</span>`; }
+  if (dspEl) { dspEl.style.display='block'; dspEl.innerHTML=`<span style="color:var(--accent);font-weight:700;">DSP/SDPO</span>`; }
 }
 
 function _editTopbarField(field) {
-  const o = currentOfficer || {};
-  const isSho = field === 'sho';
-  const label = isSho ? 'SHO کا نام' : 'DSP/SDPO کا نام';
-  const current = isSho ? (o.sho_name||'') : (o.dsp_name||'');
+  const o = currentOfficer||{};
+  const isSho = field==='sho';
+  const label = isSho?'SHO کا نام':'DSP/SDPO کا نام';
+  const current = isSho?(o.sho_name||''):(o.dsp_name||'');
   openModal(label,
-    `<input class="form-input" id="topbar-edit-val" value="${current}" placeholder="${label}" dir="auto" style="font-family:'Jameel Noori Nastaleeq',serif;">`,
-    `<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-     <button class="btn btn-primary" onclick="_saveTopbarField('${field}')">💾 محفوظ</button>`
+    `<input class="form-input" id="topbar-edit-val" value="${current}" placeholder="${label}" dir="auto">`,
+    `<div style="display:flex;gap:8px;direction:rtl;">
+      <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+      <button class="btn btn-primary" onclick="_saveTopbarField('${field}')">💾 محفوظ</button>
+    </div>`
   );
   setTimeout(()=>document.getElementById('topbar-edit-val')?.focus(),100);
 }
 
 async function _saveTopbarField(field) {
-  const val = document.getElementById('topbar-edit-val')?.value.trim() || '';
-  const update = field === 'sho' ? { sho_name: val } : { dsp_name: val };
+  const val = document.getElementById('topbar-edit-val')?.value.trim()||'';
+  const update = field==='sho'?{sho_name:val}:{dsp_name:val};
   try {
     const updated = await updateOfficerProfile(update);
     _updateTopbarShoDsp(updated);
     closeModal();
-    showToast('✅ محفوظ ہو گیا', 'success');
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
-}
-async function loginSuccess(){const ls=document.getElementById('login-screen'),app=document.getElementById('main-app');ls.style.transition='opacity 0.4s';ls.style.opacity='0';setTimeout(()=>{ls.style.display='none';app.style.display='flex';setLoginLoading(false);initApp();},400);resetSessionTimer();}
-function resetSessionTimer(){clearTimeout(sessionTimer);sessionTimer=setTimeout(()=>{showToast('⏰ Session expired.','error');setTimeout(doLogout,2000);},APP_CONFIG.sessionTimeout);}
-document.addEventListener('mousemove',()=>{if(currentUser)resetSessionTimer();});document.addEventListener('keypress',()=>{if(currentUser)resetSessionTimer();});document.addEventListener('click',()=>{if(currentUser)resetSessionTimer();});
-async function doLogout(){clearTimeout(sessionTimer);await supabaseClient.auth.signOut();currentUser=null;currentOfficer=null;currentRole='officer';document.getElementById('main-app').style.display='none';const ls=document.getElementById('login-screen');ls.style.display='flex';ls.style.opacity='1';document.getElementById('login-password').value='';showToast('👋 Signed out.');}
-function pinPress(d){if(pinBuffer.length>=6)return;pinBuffer+=d;updatePinDots();if(pinBuffer.length===6)setTimeout(verifyPin,200);}
-function pinBackspace(){pinBuffer=pinBuffer.slice(0,-1);updatePinDots();}
-function updatePinDots(){for(let i=0;i<6;i++){const d=document.getElementById('pd'+i);if(d)d.classList.toggle('filled',i<pinBuffer.length);}}
-async function verifyPin(){const sp=localStorage.getItem('dio_pin');if(!sp||pinBuffer!==sp){showLoginError('❌ Incorrect PIN.');pinBuffer='';updatePinDots();return;}pinBuffer='';updatePinDots();/* SECURITY FIX: Don't store plaintext passwords. Use existing Supabase session refresh token instead. */try{const{data:{session}}=await supabaseClient.auth.getSession();if(session){currentUser=session.user;await loadOfficerProfile();await loginSuccess();}else{showLoginError('⚠️ Session expired. Please use password to sign in.');setLoginMethod('password',document.querySelectorAll('.login-method')[0]);}}catch(e){showLoginError('⚠️ PIN login failed. Use password instead.');}}
-async function doBiometric(){if(!window.PublicKeyCredential){showLoginError('⚠️ Biometric not supported.');return;}document.getElementById('bio-ring').classList.add('scanning');try{await navigator.credentials.get({publicKey:{challenge:new Uint8Array(32),timeout:60000,userVerification:'required'}});/* SECURITY FIX: Don't store plaintext passwords. Use existing session. */const{data:{session}}=await supabaseClient.auth.getSession();if(session){currentUser=session.user;await loadOfficerProfile();await loginSuccess();}else{document.getElementById('bio-ring').classList.remove('scanning');showLoginError('⚠️ Session expired. Please use password to sign in.');setLoginMethod('password',document.querySelectorAll('.login-method')[0]);}}catch(e){document.getElementById('bio-ring').classList.remove('scanning');showLoginError('⚠️ Biometric failed. Use password instead.');}}
-function showRegister(){document.getElementById('register-modal').style.display='flex';}
-function hideRegister(){document.getElementById('register-modal').style.display='none';}
-async function submitRegistration(){const name=document.getElementById('reg-name').value.trim(),email=document.getElementById('reg-email').value.trim(),badge=document.getElementById('reg-badge').value.trim(),station=document.getElementById('reg-station').value.trim(),district=document.getElementById('reg-district').value.trim(),pass=document.getElementById('reg-password').value;if(!name||!email||!badge||!station||!pass){showToast('⚠️ Fill all fields.','error');return;}if(pass.length<8){showToast('⚠️ Password min 8 characters.','error');return;}try{const{data,error}=await supabaseClient.auth.signUp({email,password:pass,options:{data:{full_name:name,badge_number:badge,station,district}}});if(error){showToast('❌ '+error.message,'error');return;}/* SECURITY FIX: Do NOT auto-create officer/user_roles rows here. Admin must approve via admin.html. Write to pending_registrations instead. */if(data.user){await supabaseClient.from('pending_registrations').insert({user_id:data.user.id,full_name:name,email,badge_number:badge,station,district,status:'pending'});}hideRegister();showToast('✅ Registration submitted! Admin approval required before you can sign in.','success',6000);}catch(err){showToast('⚠️ Error: '+err.message,'error');}}
-function showForgotPassword(){document.getElementById('forgot-modal').style.display='flex';document.getElementById('forgot-step1').style.display='block';document.getElementById('forgot-step2').style.display='none';document.getElementById('forgot-step3').style.display='none';}
-function hideForgotModal(){document.getElementById('forgot-modal').style.display='none';}
-async function sendOTP(){const email=document.getElementById('forgot-email').value.trim();if(!email){showToast('⚠️ Enter email.','error');return;}await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin});document.getElementById('forgot-step1').style.display='none';document.getElementById('forgot-step2').style.display='block';showToast('📧 Reset email sent.','success');}
-function otpNext(i){const v=document.getElementById('otp'+i).value;if(v&&i<5)document.getElementById('otp'+(i+1)).focus();}
-function verifyOTP(){document.getElementById('forgot-step2').style.display='none';document.getElementById('forgot-step3').style.display='block';}
-async function resetPassword(){const p1=document.getElementById('new-pass1').value,p2=document.getElementById('new-pass2').value;if(!p1||p1.length<8){showToast('⚠️ Min 8 characters.','error');return;}if(p1!==p2){showToast('❌ Passwords do not match.','error');return;}const{error}=await supabaseClient.auth.updateUser({password:p1});if(error){showToast('❌ '+error.message,'error');return;}hideForgotModal();showToast('✅ Password reset! Please log in.','success');}
-function showLoginError(msg){const el=document.getElementById('login-error');el.textContent=msg;el.style.display='block';}
-function hideLoginError(){document.getElementById('login-error').style.display='none';}
-function setLoginLoading(l){const btn=document.getElementById('login-submit-btn');document.getElementById('login-btn-text').style.display=l?'none':'inline';document.getElementById('login-btn-loader').style.display=l?'inline':'none';if(btn)btn.disabled=l;}
-function togglePasswordVisibility(){const i=document.getElementById('login-password');i.type=i.type==='password'?'text':'password';}
-async function checkExistingSession(){
-  const{data:{session}}=await supabaseClient.auth.getSession();
-  if(session){
-    currentUser=session.user;
-    await loadOfficerProfile(); // offline-safe: falls back to IndexedDB cache
-    await loginSuccess();
-    if(!navigator.onLine)
-      _showSyncBar('offline','📴 Offline mode — your data is available locally');
-  }else{
-    const n=localStorage.getItem('dio_officer_name');
-    const el=document.getElementById('login-officer-name');
-    if(el)el.textContent=n||'Welcome, Officer';
-    // Show offline indicator on login screen if no internet
-    if(!navigator.onLine){
-      const hint=document.getElementById('offline-login-hint');
-      if(hint)hint.style.display='block';
-    }
-  }
+    showToast('✅ محفوظ','success');
+  } catch(e) { showToast('❌ '+e.message,'error'); }
 }
 
-// ── DATABASE HELPERS ──
-async function getOfficerId(){if(currentOfficer)return currentOfficer.id;if(!currentUser)return null;const{data}=await supabaseClient.from('officers').select('id').eq('user_id',currentUser.id).single();return data?.id||null;}
-async function getCases(fStatus,fQuery){fStatus=fStatus||'';fQuery=fQuery||'';
-  const oid=await getOfficerId();if(!oid)return[];
-  try{
-    if(!navigator.onLine)throw new Error('offline');
-    let q=supabaseClient.from('cases').select('*').eq('officer_id',oid).order('created_at',{ascending:false});
-    if(fStatus)q=q.eq('status',fStatus);
-    const{data,error}=await q;
-    if(error)throw error;
-    // Map the bulletproof comp_* columns onto the standard complainant_* names
-    // so the rest of the app (table, dashboard, search) never sees [PROTECTED]
-    const list=(data||[]).map(c=>({
-      ...c,
-      complainant:           c.comp_name || (c.complainant==='[PROTECTED]'?null:c.complainant),
-      complainant_cnic:      c.comp_cnic || (c.complainant_cnic==='[PROTECTED]'?null:c.complainant_cnic),
-      complainant_cell:      c.comp_cell || (c.complainant_cell==='[PROTECTED]'?null:c.complainant_cell),
-      complainant_profession:c.comp_prof || (c.complainant_profession==='[PROTECTED]'?null:c.complainant_profession),
-    }));
-    offlineStore.cache('cases_cache',list).catch(()=>{});
-    if(fQuery){const s=fQuery.toLowerCase().trim();return list.filter(c=>(c.fir_number||'').toLowerCase().includes(s)||(c.section_of_law||'').toLowerCase().includes(s)||(c.offence_type||'').toLowerCase().includes(s)||(c.complainant||'').toLowerCase().includes(s)||(c.complainant_cnic||'').includes(s));}
-    return list;
-  }catch(err){
-    return await offlineStore.getAll('cases_cache',oid);
-  }
-}
-async function getCase(id){
-  const{data,error}=await supabaseClient.from('cases').select('*').eq('id',id).single();
-  if(error||!data) return null;
-  return data;
-}
-async function addCase(d){
-  const oid=await getOfficerId();if(!oid)throw new Error('Not authenticated');
-  if(!navigator.onLine){
-    // Save locally with a temporary ID and queue for sync
-    const tempId='offline_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
-    const local={...d,id:tempId,officer_id:oid,created_at:new Date().toISOString(),_offline:true};
-    await offlineStore.cache('cases_cache',local);
-    await offlineStore.enqueue('cases','insert',{...d,officer_id:oid,case_station:currentOfficer?.station||null,case_district:currentOfficer?.district||null},tempId);
-    _showSyncBar('pending','📴 Case saved offline — will sync when connected');
-    return local;
-  }
-  const{data,error}=await supabaseClient.from('cases').insert({...d,officer_id:oid}).select().single();
-  if(error)throw error;
-  offlineStore.cache('cases_cache',data).catch(()=>{});
-  triggerBackup('case_added');return data;
-}
-async function updateCase(id,d){
-  if(!navigator.onLine){
-    // Update local cache and queue
-    const cached=(await offlineStore.getAll('cases_cache')).find(c=>c.id===id);
-    if(cached)await offlineStore.cache('cases_cache',{...cached,...d,id,updated_at:new Date().toISOString()});
-    await offlineStore.enqueue('cases','update',{...d,id,updated_at:new Date().toISOString()});
-    _showSyncBar('pending','📴 Case updated offline — will sync when connected');
-    return{id,...d};
-  }
-  const{data,error}=await supabaseClient.from('cases').update({...d,updated_at:new Date().toISOString()}).eq('id',id).select().single();
-  if(error)throw error;
-  offlineStore.cache('cases_cache',data).catch(()=>{});
-  triggerBackup('case_updated');return data;
-}
-async function deleteCase(id){
-  if(!navigator.onLine){
-    await offlineStore.remove('cases_cache',id);
-    await offlineStore.enqueue('cases','delete',{id});
-    _showSyncBar('pending','📴 Case deletion queued — will sync when connected');
-    return;
-  }
-  const{error}=await supabaseClient.from('cases').delete().eq('id',id);
-  if(error)throw error;
-  offlineStore.remove('cases_cache',id).catch(()=>{});
-  triggerBackup('case_deleted');
+// ── CONNECTION STATUS ──────────────────────────────────────────
+function updateConnectionStatus(online) {
+  const dot  = document.getElementById('status-dot');
+  const text = document.getElementById('status-text');
+  const badge= document.getElementById('db-badge');
+  if (dot)  dot.className  = 'status-dot' + (online?' status-online':' status-offline');
+  if (text) text.textContent = online ? 'Online' : 'Offline';
+  if (badge) badge.textContent = online ? '🔗 Connected' : '⚡ Offline';
 }
 
-async function getEvidence(fir=''){
-  const oid=await getOfficerId();if(!oid)return[];
-  try{
-    if(!navigator.onLine)throw new Error('offline');
-    let q=supabaseClient.from('evidence').select('*').eq('officer_id',oid).order('created_at',{ascending:false});
-    if(fir)q=q.eq('fir_number',fir);
-    const{data}=await q;
-    const list=data||[];
-    offlineStore.cache('evidence_cache',list).catch(()=>{});
-    return list;
-  }catch(_){
-    const list=await offlineStore.getAll('evidence_cache',oid);
-    return fir?list.filter(e=>e.fir_number===fir):list;
-  }
-}
-async function addEvidence(d){
-  const oid=await getOfficerId();if(!oid)throw new Error('Not authenticated');
-  if(!navigator.onLine){
-    const tempId='offline_ev_'+Date.now();
-    const local={...d,id:tempId,officer_id:oid,created_at:new Date().toISOString(),_offline:true};
-    await offlineStore.cache('evidence_cache',local);
-    await offlineStore.enqueue('evidence','insert',{...d,officer_id:oid},tempId);
-    _showSyncBar('pending','📴 Evidence saved offline — will sync when connected');
-    return local;
-  }
-  const{data,error}=await supabaseClient.from('evidence').insert({...d,officer_id:oid}).select().single();
-  if(error)throw error;
-  offlineStore.cache('evidence_cache',data).catch(()=>{});
-  triggerBackup('ev_added');return data;
-}
-async function deleteEvidence(id){
-  if(!navigator.onLine){
-    await offlineStore.remove('evidence_cache',id);
-    await offlineStore.enqueue('evidence','delete',{id});
-    _showSyncBar('pending','📴 Evidence deletion queued — will sync when connected');
-    return;
-  }
-  const{error}=await supabaseClient.from('evidence').delete().eq('id',id);
-  if(error)throw error;
-  offlineStore.remove('evidence_cache',id).catch(()=>{});
-}
-async function getReminders(done=null){
-  const oid=await getOfficerId();if(!oid)return[];
-  try{
-    if(!navigator.onLine)throw new Error('offline');
-    let q=supabaseClient.from('reminders').select('*').eq('officer_id',oid).order('reminder_date',{ascending:true});
-    if(done!==null)q=q.eq('is_done',done);
-    const{data}=await q;const list=data||[];
-    offlineStore.cache('reminders_cache',list).catch(()=>{});
-    return list;
-  }catch(_){
-    const list=await offlineStore.getAll('reminders_cache',oid);
-    return done!==null?list.filter(r=>r.is_done===done):list;
-  }
-}
-async function addReminder(d){
-  const oid=await getOfficerId();if(!oid)throw new Error('Not authenticated');
-  if(!navigator.onLine){
-    const tempId='offline_rem_'+Date.now();
-    const local={...d,id:tempId,officer_id:oid,is_done:false,created_at:new Date().toISOString(),_offline:true};
-    await offlineStore.cache('reminders_cache',local);
-    await offlineStore.enqueue('reminders','insert',{...d,officer_id:oid},tempId);
-    _showSyncBar('pending','📴 Reminder saved offline — will sync when connected');
-    return local;
-  }
-  const{data,error}=await supabaseClient.from('reminders').insert({...d,officer_id:oid}).select().single();
-  if(error)throw error;
-  offlineStore.cache('reminders_cache',data).catch(()=>{});
-  return data;
-}
-async function updateReminder(id,u){
-  const cached=await offlineStore.getOne('reminders_cache',id);
-  if(cached)await offlineStore.cache('reminders_cache',{...cached,...u});
-  if(!navigator.onLine){
-    await offlineStore.enqueue('reminders','update',{id,...u});
-    _showSyncBar('pending','📴 Reminder updated offline — will sync when connected');
-    return{id,...u};
-  }
-  const{data,error}=await supabaseClient.from('reminders').update(u).eq('id',id).select().single();
-  if(error)throw error;
-  offlineStore.cache('reminders_cache',data).catch(()=>{});
-  return data;
-}
-async function deleteReminder(id){
-  if(!navigator.onLine){
-    await offlineStore.remove('reminders_cache',id);
-    await offlineStore.enqueue('reminders','delete',{id});
-    _showSyncBar('pending','📴 Reminder deletion queued — will sync when connected');
-    return;
-  }
-  const{error}=await supabaseClient.from('reminders').delete().eq('id',id);
-  if(error)throw error;
-  offlineStore.remove('reminders_cache',id).catch(()=>{});
-}
-async function getMisal(fir=''){const oid=await getOfficerId();if(!oid)return[];let q=supabaseClient.from('misal').select('*').eq('officer_id',oid).order('saved_at',{ascending:false});if(fir)q=q.eq('fir_number',fir);const{data}=await q;return data||[];}
-async function saveMisal(d){const oid=await getOfficerId();if(!oid)throw new Error('Not authenticated');const{data,error}=await supabaseClient.from('misal').insert({...d,officer_id:oid}).select().single();if(error)throw error;return data;}
-async function updateOfficerProfile(u){const{data,error}=await supabaseClient.from('officers').update({...u,updated_at:new Date().toISOString()}).eq('user_id',currentUser.id).select().single();if(error)throw error;currentOfficer=data;return data;}
-async function getDashboardStats(){const cases=await getCases(),reminders=await getReminders(false);const under=cases.filter(c=>c.status==='under').length,complete=cases.filter(c=>c.status==='complete').length,incomplete=cases.filter(c=>c.status==='incomplete').length,untrace=cases.filter(c=>c.status==='untrace').length,cancel=cases.filter(c=>c.status==='cancel').length,challan512=cases.filter(c=>c.status==='challan512').length;const total=under+complete+incomplete+untrace+cancel+challan512;return{total,under,complete,incomplete,untrace,cancel,challan512,pendingReminders:reminders.length,cases,reminders:reminders.slice(0,5)};}
-async function advancedSearch(p){
-  const all=await getCases();
-  const clean=s=>(s||'').replace(/[-\s]/g,'').toLowerCase();
+window.addEventListener('online',  ()=>updateConnectionStatus(true));
+window.addEventListener('offline', ()=>updateConnectionStatus(false));
 
-  // Build list of active filters
-  const filters=[];
-  if(p.fir)      filters.push(c=>(c.fir_number||'').toLowerCase().includes(p.fir.toLowerCase()));
-  if(p.name)     filters.push(c=>(c.complainant||'').toLowerCase().includes(p.name.toLowerCase())||(c.accused_name||'').toLowerCase().includes(p.name.toLowerCase()));
-  if(p.cnic)     filters.push(c=>clean(c.complainant_cnic).includes(clean(p.cnic))||clean(c.accused_cnic).includes(clean(p.cnic)));
-  if(p.cell)     filters.push(c=>clean(c.complainant_cell).includes(clean(p.cell))||clean(c.accused_cell).includes(clean(p.cell)));
-  if(p.section)  filters.push(c=>(c.section_of_law||'').toLowerCase().includes(p.section.toLowerCase())||(c.offence_type||'').toLowerCase().includes(p.section.toLowerCase()));
-  if(p.status)   filters.push(c=>c.status===p.status);
-  if(p.date_from)filters.push(c=>c.fir_date&&c.fir_date>=p.date_from);
-  if(p.date_to)  filters.push(c=>c.fir_date&&c.fir_date<=p.date_to);
-
-  // No filters active — return nothing
-  if(!filters.length) return [];
-
-  // OR logic: case matches if it satisfies ANY active filter
-  return all.filter(c=>filters.some(fn=>fn(c)));
-}
-async function getAdminStats(){if(currentRole!=='admin'&&currentRole!=='superadmin')return null;const{data:officers}=await supabaseClient.from('officers').select('*');const{data:cases}=await supabaseClient.from('cases').select('id,status');const{data:logs}=await supabaseClient.from('audit_log').select('*').order('created_at',{ascending:false}).limit(50);return{totalOfficers:officers?.length||0,totalCases:cases?.length||0,activeCases:cases?.filter(c=>c.status==='under').length||0,completedCases:cases?.filter(c=>c.status==='complete').length||0,officers:officers||[],recentActivity:logs||[]};}
-function setupRealtimeSync(cb){supabaseClient.channel('db-changes').on('postgres_changes',{event:'*',schema:'public',table:'cases'},()=>{if(cb)cb('cases');}).on('postgres_changes',{event:'*',schema:'public',table:'reminders'},()=>{if(cb)cb('reminders');}).on('postgres_changes',{event:'*',schema:'public',table:'evidence'},()=>{if(cb)cb('evidence');}).subscribe();}
-
-// ── UI HELPERS + PAGE ROUTER ──
-function showToast(msg,type='info',duration=APP_CONFIG.toastDuration){const c=document.getElementById('toast-container'),t=document.createElement('div');t.className=`toast toast-${type}`;t.innerHTML=msg;c.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity 0.3s';setTimeout(()=>t.remove(),300);},duration);}
-function openModal(title,body,footer=''){document.getElementById('modal-root').innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal-card"><div class="modal-header"><div class="modal-title">${title}</div><button class="modal-close" onclick="closeModal()">✕</button></div><div class="modal-body">${body}</div>${footer?`<div class="modal-footer">${footer}</div>`:''}</div></div>`;}
-function closeModal(){document.getElementById('modal-root').innerHTML='';}
-const pageTitles={dashboard:'🏠 Dashboard',cases:'📁 My Cases',misal:'📄 MISAL Builder',forms:'📥 Official Forms',fivec:'📋 5-C Applications',evidence:'🔬 Evidence',search:'🔍 Advanced Search',law:'⚖️ Law Library',reminders:'🔔 Reminders',performance:'📊 Performance',backup:'☁️ Backup & Sync',settings:'⚙️ Settings'};
-const pageRenderers={};
-function registerPage(name,fn){pageRenderers[name]=fn;}
-function showPage(page,el){document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));if(el)el.classList.add('active');else document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes(`'${page}'`))n.classList.add('active');});document.getElementById('topbar-title').textContent=pageTitles[page]||page;const c=document.getElementById('page-content');c.innerHTML=`<div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Loading...</div></div>`;document.getElementById('sidebar').classList.remove('open');if(pageRenderers[page]){
-  /* Wrap renderer in try/catch + timeout so failures don't leave a permanent loading spinner */
-  const timeoutId=setTimeout(()=>{if(c.querySelector('.loading-screen')){c.innerHTML=`<div style="padding:40px;text-align:center;color:var(--amber);"><div style="font-size:48px;margin-bottom:12px;">⏱️</div><div style="font-size:14px;margin-bottom:8px;">Loading is taking too long.</div><div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">The database query may be blocked by a security policy or your tables may be missing. Open browser console (F12) for details.</div><button class="btn btn-secondary" onclick="showPage('${page}',null)">🔄 Retry</button></div>`;}},15000);
-  Promise.resolve(pageRenderers[page](c)).catch(err=>{console.error('[Page Render Error]',page,err);c.innerHTML=`<div style="padding:40px;text-align:center;color:var(--red);"><div style="font-size:48px;margin-bottom:12px;">⚠️</div><div style="font-size:14px;margin-bottom:8px;">Could not load ${page}.</div><div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);background:var(--bg-tertiary);padding:10px;border-radius:6px;margin:10px auto;max-width:600px;text-align:left;word-break:break-word;">${(err&&err.message)?err.message:String(err)}</div><button class="btn btn-secondary" onclick="showPage('${page}',null)">🔄 Retry</button></div>`;}).finally(()=>clearTimeout(timeoutId));
-}else c.innerHTML=`<div style="text-align:center;padding:60px;color:var(--text-muted);"><div style="font-size:48px;margin-bottom:12px;">🚧</div><div>Coming Soon</div></div>`;resetSessionTimer();}
-function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');}
-function updateConnectionStatus(ok){const d=document.getElementById('status-dot'),t=document.getElementById('status-text'),b=document.getElementById('db-badge');if(d)d.style.background=ok?'var(--green)':'var(--red)';if(t)t.textContent=ok?'Online':'Offline';if(b){b.textContent=ok?'🔗 Connected':'❌ Disconnected';b.style.background=ok?'var(--green-bg)':'var(--red-bg)';b.style.color=ok?'var(--green)':'var(--red)';}}
-async function updateBadges(){try{const cases=await getCases(),rem=await getReminders(false);const cb=document.getElementById('badge-cases'),rb=document.getElementById('badge-reminders');if(cb)cb.textContent=cases.length;if(rb)rb.textContent=rem.length;}catch(e){}}
-function startClock(){setInterval(()=>{const el=document.getElementById('footer-time');if(el)el.textContent=new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});},1000);}
-function formatCNIC(v){if(!v)return'—';const d=v.replace(/\D/g,'');if(d.length===13)return`${d.slice(0,5)}-${d.slice(5,12)}-${d.slice(12)}`;return v;}
-function formatCell(v){if(!v)return'—';const d=v.replace(/\D/g,'');if(d.length===11)return`${d.slice(0,4)}-${d.slice(4)}`;return v;}
-function autoFormatCNIC(i){let v=i.value.replace(/\D/g,'').slice(0,13);if(v.length>12)v=`${v.slice(0,5)}-${v.slice(5,12)}-${v.slice(12)}`;else if(v.length>5)v=`${v.slice(0,5)}-${v.slice(5)}`;i.value=v;}
-function autoFormatCell(i){let v=i.value.replace(/\D/g,'').slice(0,11);if(v.length>4)v=`${v.slice(0,4)}-${v.slice(4)}`;i.value=v;}
-function formatDate(d){
-  if(!d||d==='—')return'—';
-  try{
-    // Handle DD-MM-YYYY or DD/MM/YYYY stored directly
-    if(/^\d{2}[-\/]\d{2}[-\/]\d{4}$/.test(d)){
-      const p=d.replace(/\//g,'-').split('-');
-      return `${p[0]}/${p[1]}/${p[2]}`;
-    }
-    // Handle YYYY-MM-DD (ISO)
-    if(/^\d{4}-\d{2}-\d{2}/.test(d)){
-      const p=d.substring(0,10).split('-');
-      return `${p[2]}/${p[1]}/${p[0]}`;
-    }
-    // Fallback: parse as Date object
-    const dt=new Date(d);
-    if(isNaN(dt))return d;
-    const dd=String(dt.getDate()).padStart(2,'0');
-    const mm=String(dt.getMonth()+1).padStart(2,'0');
-    const yy=dt.getFullYear();
-    return `${dd}/${mm}/${yy}`;
-  }catch{return d;}
-}
-function timeAgo(d){if(!d)return'—';const diff=Date.now()-new Date(d).getTime(),m=Math.floor(diff/60000),h=Math.floor(diff/3600000),days=Math.floor(diff/86400000);if(m<1)return'Just now';if(m<60)return`${m}m ago`;if(h<24)return`${h}h ago`;return`${days}d ago`;}
-function updateSidebarProfile(){if(!currentOfficer)return;const ne=document.getElementById('sidebar-name'),re=document.getElementById('sidebar-role'),ae=document.getElementById('sidebar-avatar'),fe=document.getElementById('footer-officer');if(ne)ne.textContent=currentOfficer.full_name||'Officer';if(re)re.textContent=currentOfficer.designation||currentRole;if(fe)fe.textContent=`Officer: ${currentOfficer.full_name||'—'} · ${currentOfficer.station||'—'}`;const photo=localStorage.getItem('dio_profile_photo');if(photo&&ae)ae.innerHTML=`<img src="${photo}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;else if(ae&&currentOfficer.full_name)ae.textContent=currentOfficer.full_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();if(currentRole==='admin'||currentRole==='superadmin'){const an=document.getElementById('admin-nav-item');if(an)an.style.display='flex';}if(currentOfficer.full_name)localStorage.setItem('dio_officer_name',currentOfficer.full_name);
-// Update SHO/DSP topbar display
-
-}
-function startNewsTicker(){const el=document.getElementById('news-ticker');if(el)el.textContent=POLICE_NEWS.join(' ✦ ');}
-function printContent(html,title='Digital IO'){const win=window.open('','_blank');win.document.write(`<!DOCTYPE html><html><head><title>${title}</title><style>body{font-family:Arial,sans-serif;padding:20px;color:#1a1a1a;}table{width:100%;border-collapse:collapse;}th,td{padding:8px;border:1px solid #ddd;font-size:12px;text-align:left;}th{background:#f5f5f5;}.wm{position:fixed;bottom:20px;right:20px;font-size:10px;color:#ccc;}</style></head><body>${html}<div class="wm">Digital IO · ${currentOfficer?.full_name||'Officer'} · ${new Date().toLocaleDateString('en-PK')}</div></body></html>`);win.document.close();win.focus();setTimeout(()=>win.print(),500);}
-
-// ── BACKUP ──
-let backupQueue=[],backupInProgress=false,lastBackupTime=null,googleDriveToken=null;
-function triggerBackup(r='manual'){backupQueue.push({r,t:Date.now()});processBackupQueue();}
-async function processBackupQueue(){if(backupInProgress||!backupQueue.length)return;backupInProgress=true;await new Promise(r=>setTimeout(r,2000));backupQueue=[];try{await performBackup();}catch(e){}backupInProgress=false;if(backupQueue.length)processBackupQueue();}
-async function performBackup(){if(!currentUser)return;try{const cases=await getCases(),evidence=await getEvidence(),reminders=await getReminders(),misal=await getMisal();const bj=JSON.stringify({version:APP_CONFIG.version,date:new Date().toISOString(),officer:currentOfficer?.full_name,data:{cases,evidence,reminders,misal}});try{localStorage.setItem(`dio_backup_${currentUser.id}`,bj);localStorage.setItem(`dio_backup_${currentUser.id}_time`,new Date().toISOString());}catch(e){}if(googleDriveToken)await uploadToGoogleDrive(bj);lastBackupTime=new Date();}catch(e){}}
-async function uploadToGoogleDrive(json){if(!googleDriveToken)return;const b='-------314159265358979323846',meta={name:`DigitalIO_${new Date().toISOString().slice(0,10)}.json`,mimeType:'application/json',parents:['appDataFolder']},body=`\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(meta)}\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${json}\r\n--${b}--`;await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',headers:{'Authorization':`Bearer ${googleDriveToken}`,'Content-Type':`multipart/related; boundary="${b}"`},body});}
-async function connectGoogleDrive(){showToast('Google Drive integration coming in Phase 7.','info',4000);}
-function disconnectGoogleDrive(){googleDriveToken=null;localStorage.removeItem('dio_gdrive_token');showToast('Google Drive disconnected.');}
-async function triggerBackupNow(){showToast('⏳ Backing up...','info',2000);await performBackup();showToast('✅ Backup complete!','success');}
-function getBackupStatus(){return{lastBackup:lastBackupTime,googleDriveConnected:!!googleDriveToken,localBackupExists:!!localStorage.getItem(`dio_backup_${currentUser?.id}`)};}
-async function restoreFromLocalBackup(){const b=localStorage.getItem(`dio_backup_${currentUser?.id}`);if(!b){showToast('⚠️ No local backup found.','error');return;}showToast('✅ Backup found. Contact admin to restore.','info',5000);}
-function initBackupSystem(){const t=localStorage.getItem('dio_gdrive_token');if(t)googleDriveToken=t;}
-
-// ── SHARED: MISAL CHECKLIST + DATE HELPER (used by Cases workspace + MISAL Builder) ──
-let selectedSections = [];
-
-// ── MISAL DOCUMENT CHECKLIST ──
-const MISAL_CHECKLIST = {
-  'FIR Documents': ['FIR','FIR Mattan','CRO Form','CDR Form'],
-  'Statements': ['Statement 161 CrPC','Statement 164 CrPC','Talbi 160 CrPC','Zimni Androoni','Zimni Berooni'],
-  'Court Documents': ['Remand Form','Cancellation Report','Untrace Report'],
-  'Identification': ['Shanakht Certificate','Missing Identity Form','Naqsha Moka','Naqsha Baramadgi'],
-  'Medical / Forensic': ['Medical Report','Postmortem Report','DNA/PFSA Report','Potency Test'],
-  'Judicial Forms': ['High Court Checklist','Forms 25-35A/B/C','Index MISAL','Dockets','Kalandras','Memorandum'],
-  'Warrants & Notices': ['Warrant','Ishtihar Application','Abscondence Form','Mafroori Form'],
-  'Financial': ['Investigation Bills','Recovery Memo','Saza Slip','RFA Form'],
-  'Challan Lists': ['Fehrist Warsan (Death)','Fehrist Gawahan (Challan)','Fehrist Gawahan (Cancellation)'],
-  'Intimation': ['Intimation Form','Previous Records'],
-};
-const ALL_MISAL_DOCS = Object.values(MISAL_CHECKLIST).flat();
-let selectedDocuments = [];
-
-function autoFormatDate(inp) {
-  let v = inp.value.replace(/\D/g,'');
-  if (v.length > 4) v = v.slice(0,2) + '-' + v.slice(2,4) + '-' + v.slice(4,8);
-  else if (v.length > 2) v = v.slice(0,2) + '-' + v.slice(2);
-  inp.value = v;
-}
-
-
-// ── OFFLINE STORE FALLBACK ──
-// If offline-store.js failed to load or hasn't been uploaded yet,
-// create a no-op shim so nothing crashes — offline features just silently disabled.
-if(typeof offlineStore==='undefined'){
-  window.offlineStore={
-    cache:()=>Promise.resolve(),
-    getAll:()=>Promise.resolve([]),
-    getOne:()=>Promise.resolve(null),
-    remove:()=>Promise.resolve(),
-    enqueue:()=>Promise.resolve(),
-    pendingCount:()=>Promise.resolve(0),
-    getPending:()=>Promise.resolve([]),
-    processQueue:()=>Promise.resolve(0),
-    saveOfflineProfile:()=>Promise.resolve(),
-    getOfflineProfile:()=>Promise.resolve(null),
-    saveOfflineCreds:()=>Promise.resolve(),
-    getOfflineCredsByEmail:()=>Promise.resolve(null),
-    storeFile:()=>Promise.resolve(),
-    getFile:()=>Promise.resolve(null),
-    removeFile:()=>Promise.resolve(),
-    isAvailable:()=>Promise.resolve(false),
+// ── CLOCK ─────────────────────────────────────────────────────
+function startClock() {
+  const update = () => {
+    const el = document.getElementById('footer-time');
+    if (el) el.textContent = new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
   };
-  console.warn('[DigitalIO] offline-store.js not loaded — offline mode disabled');
+  update();
+  setInterval(update, 1000);
 }
 
-
-// SHA-256 hash using Web Crypto API (built-in, no library needed)
-async function _hashPw(password,salt){
-  const enc=new TextEncoder();
-  const buf=await crypto.subtle.digest('SHA-256',enc.encode(salt+password+'dio-v1'));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-
-// Save credentials hash + officer profile to IndexedDB after successful online login
-async function _saveOfflineAuth(email,password){
-  try{
-    const salt=crypto.randomUUID();
-    const hash=await _hashPw(password,salt);
-    await offlineStore.saveOfflineCreds(currentUser.id,email,hash,salt);
-    if(currentOfficer) await offlineStore.saveOfflineProfile(currentUser.id,currentOfficer);
-  }catch(e){ console.warn('[OfflineAuth] Could not save offline credentials:',e); }
-}
-
-// Verify offline credentials against stored hash. Returns profile or null.
-async function _attemptOfflineLogin(email,password){
-  const creds=await offlineStore.getOfflineCredsByEmail(email);
-  if(!creds) return null;
-  // Credentials expire after 30 days of no online login
-  if((Date.now()-new Date(creds.saved_at))>30*86400000){
-    showToast('⚠️ Offline credentials expired — please connect to login.','error',5000);
-    return null;
-  }
-  const hash=await _hashPw(password,creds.salt);
-  if(hash!==creds.hash) return null;
-  return offlineStore.getOfflineProfile(creds.id);
-}
-
-// ── THEMES ──
-const THEMES = [
-  // ─ Colour themes ─
-  {id:'dark',     name:'Dark Navy',  urdu:'رات',       emoji:'🌑', bg:'#0a1520', accent:'#38bdf8', photo:false},
-  {id:'light',    name:'Light',      urdu:'دن',        emoji:'☀️',  bg:'#f0f4f8', accent:'#0369a1', photo:false},
-  {id:'forest',   name:'Forest',     urdu:'جنگل',      emoji:'🌲', bg:'#071410', accent:'#4ade80', photo:false},
-  {id:'ocean',    name:'Ocean',      urdu:'سمندر',     emoji:'🌊', bg:'#021f1f', accent:'#2dd4bf', photo:false},
-  {id:'sunset',   name:'Sunset',     urdu:'شفق',       emoji:'🌅', bg:'#150900', accent:'#fb923c', photo:false},
-  {id:'lavender', name:'Lavender',   urdu:'بنفشی',     emoji:'💜', bg:'#0c0818', accent:'#a78bfa', photo:false},
-  // ─ Photo / wallpaper themes ─
-  {id:'blossom',  name:'Blossom',    urdu:'بہار',      emoji:'🌸', bg:'#190518', accent:'#f472b6', photo:true, seed:'spring-blossom-dio'},
-  {id:'peaks',    name:'Mountains',  urdu:'پہاڑ',      emoji:'🏔️', bg:'#04101a', accent:'#60a5fa', photo:true, seed:'mountain-peaks-dio'},
-  {id:'cosmos',   name:'Galaxy',     urdu:'کائنات',    emoji:'🌌', bg:'#06031a', accent:'#818cf8', photo:true, seed:'galaxy-cosmos-dio'},
-  {id:'autumn',   name:'Autumn',     urdu:'خزاں',      emoji:'🍂', bg:'#180600', accent:'#f97316', photo:true, seed:'autumn-leaves-dio'},
-  {id:'aurora',   name:'Aurora',     urdu:'قطبی شفق',  emoji:'✨', bg:'#000e12', accent:'#34d399', photo:true, seed:'northern-lights-dio'},
-];
-
-function applyTheme(id){
-  const t=THEMES.find(th=>th.id===id)||THEMES[0];
-  if(id==='dark'){document.documentElement.removeAttribute('data-theme');}
-  else{document.documentElement.setAttribute('data-theme',id);}
-  // Photo themes add a class that enables glassmorphism CSS
-  if(t.photo){document.documentElement.classList.add('photo-theme');}
-  else{document.documentElement.classList.remove('photo-theme');}
-  localStorage.setItem('dio_theme',id);
-  const meta=document.querySelector('meta[name="theme-color"]');
-  if(meta)meta.content=t.bg;
-  const popup=document.getElementById('theme-picker-popup');
-  if(popup)_renderThemeSwatches(popup,id);
-}
-
-function loadSavedTheme(){
-  applyTheme(localStorage.getItem('dio_theme')||'dark');
-}
-
-function openThemePicker(){
-  const existing=document.getElementById('theme-picker-popup');
-  if(existing){existing.remove();return;}
-  const btn=document.getElementById('theme-picker-btn');
-  const rect=btn?btn.getBoundingClientRect():{bottom:52,right:16};
-  const popup=document.createElement('div');
-  popup.id='theme-picker-popup';
-  popup.style.cssText=`position:fixed;top:${rect.bottom+6}px;right:16px;z-index:3000;`
-    +`background:var(--bg-card);border:1px solid var(--border);border-radius:14px;`
-    +`padding:16px;box-shadow:var(--shadow);min-width:310px;max-height:80vh;overflow-y:auto;`;
-  popup.innerHTML=`<div style="font-size:9px;color:var(--text-faint);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;font-weight:700;">🎨 تھیم — Theme</div>`
-    +`<div id="theme-swatches"></div>`;
-  document.body.appendChild(popup);
-  _renderThemeSwatches(popup,localStorage.getItem('dio_theme')||'dark');
-  setTimeout(()=>{
-    function closeOnOutside(e){
-      if(!popup.contains(e.target)&&e.target.id!=='theme-picker-btn'){
-        popup.remove();document.removeEventListener('click',closeOnOutside);
-      }
-    }
-    document.addEventListener('click',closeOnOutside);
-  },50);
-}
-
-function _renderThemeSwatches(popup,currentId){
-  const grid=popup.querySelector('#theme-swatches');if(!grid)return;
-  const colourThemes=THEMES.filter(t=>!t.photo);
-  const photoThemes=THEMES.filter(t=>t.photo);
-  function section(label,themes){
-    return `<div style="font-size:9px;color:var(--text-faint);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">${label}</div>`
-      +`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;direction:rtl;margin-bottom:14px;">`
-      +themes.map(t=>{
-        const isPhoto=t.photo;
-        const circleStyle=isPhoto
-          ?`background-image:url('https://picsum.photos/seed/${t.seed}/120/80');background-size:cover;background-position:center;`
-          :`background:${t.bg};`;
-        const inner=isPhoto?'':`<span>${t.emoji}</span>`;
-        return `<div class="theme-swatch ${t.id===currentId?'active':''}" onclick="applyTheme('${t.id}')">
-          <div class="theme-swatch-circle" style="${circleStyle}border-color:${t.accent};">${inner}</div>
-          <div style="font-size:10px;color:var(--text-secondary);text-align:center;line-height:1.2;">${t.name}</div>
-          <div style="font-size:9px;color:var(--text-muted);text-align:center;">${t.urdu}</div>
-        </div>`;
-      }).join('')+`</div>`;
-  }
-  grid.innerHTML=section('Colour Themes',colourThemes)+section('Photo / Wallpaper Themes',photoThemes);
-}
-
-
-async function initApp(){
-  updateSidebarProfile();
-  updateConnectionStatus(true);
-  await updateBadges();
-  startClock();
-  initBackupSystem();
-  // Show admin nav if admin/superadmin
-  const adminNav = document.getElementById('admin-nav-item');
-  if (adminNav && ['admin','superadmin'].includes(currentOfficer?.role)) {
-    adminNav.style.display = 'flex';
-  }
-  setupRealtimeSync(async(table)=>{await updateBadges();const pt=document.getElementById('topbar-title')?.textContent;if(table==='cases'&&pt?.includes('Cases'))renderCases(document.getElementById('page-content'));if(table==='reminders'&&pt?.includes('Reminder'))renderReminders(document.getElementById('page-content'));});
-  showPage('dashboard',document.querySelector('.nav-item'));
-  setTimeout(()=>triggerBackup('app_init'),3000);
-  // Initialize notifications
-  setTimeout(_initNotifications, 2000);
-  // Check reminders every 30 minutes while app is open
-  setInterval(_checkDueReminders, 30 * 60 * 1000);
-  setTimeout(_checkDueReminders, 5000);
+// ── REAL-TIME SYNC ────────────────────────────────────────────
+function setupRealtimeSync(cb) {
+  try {
+    supabaseClient.channel('realtime').on('postgres_changes',{event:'*',schema:'public'},e=>{ if(cb) cb(e.table); }).subscribe();
+  } catch(_) {}
 }
 
 // ── PUSH NOTIFICATIONS ────────────────────────────────────────
 async function _initNotifications() {
   if (!('Notification' in window)) return;
-  // Request permission if not already granted
-  if (Notification.permission === 'default') {
+  if (Notification.permission==='default') {
     const perm = await Notification.requestPermission();
-    if (perm === 'granted') {
-      showToast('🔔 اطلاعات فعال ہو گئیں', 'success');
-      _showNotification('Digital IO', 'یاددہانیوں کی اطلاع فعال ہے ✅', '');
-    }
+    if (perm==='granted') showToast('🔔 اطلاعات فعال','success');
   }
 }
 
 function _showNotification(title, body, tag) {
-  if (Notification.permission !== 'granted') return;
+  if (Notification.permission!=='granted') return;
   try {
-    const n = new Notification(title, {
-      body, tag: tag || 'digital-io',
-      icon: '/icon-192.png',
-      dir: 'rtl', lang: 'ur',
-      badge: '/icon-192.png',
-    });
-    n.onclick = () => { window.focus(); n.close(); };
-    setTimeout(() => n.close(), 8000);
+    const n = new Notification(title,{body,tag:tag||'dio',icon:'/icon-192.png',dir:'rtl',lang:'ur',vibrate:[200,100,200]});
+    n.onclick = ()=>{ window.focus(); n.close(); };
+    setTimeout(()=>n.close(),8000);
   } catch(_) {}
 }
 
 async function _checkDueReminders() {
   try {
-    if (Notification.permission !== 'granted') return;
-    const reminders = await getReminders();
+    if (Notification.permission!=='granted') return;
+    const rems = await getReminders();
     const today = new Date().toISOString().split('T')[0];
-    const due = reminders.filter(r =>
-      !r.is_done && r.reminder_date && r.reminder_date <= today
-    );
-    if (due.length === 0) return;
-
-    // Show notification for each due reminder (max 3)
-    due.slice(0, 3).forEach((r, i) => {
-      setTimeout(() => {
-        _showNotification(
-          `🔔 یاددہانی — ${r.reminder_date === today ? 'آج' : 'گزر گئی'}`,
-          r.text.slice(0, 100),
-          'reminder-' + r.id
-        );
-      }, i * 1500);
+    const due = rems.filter(r=>!r.is_done&&r.reminder_date&&r.reminder_date<=today);
+    if (!due.length) return;
+    due.slice(0,3).forEach((r,i)=>{
+      setTimeout(()=>_showNotification(`🔔 یاددہانی — ${r.reminder_date===today?'آج':'گزر گئی'}`,r.text.slice(0,100),'rem-'+r.id),i*1500);
     });
-
-    if (due.length > 3) {
-      setTimeout(() => {
-        _showNotification(
-          '🔔 Digital IO',
-          `${due.length} یاددہانیاں باقی ہیں`,
-          'reminder-count'
-        );
-      }, 5000);
-    }
+    if (due.length>3) setTimeout(()=>_showNotification('🔔 Digital IO',`${due.length} یاددہانیاں باقی`,'rem-count'),5000);
   } catch(_) {}
 }
 
-// Public function for manual trigger
 function checkNotifications() { _checkDueReminders(); }
-
-// ── STATION TRANSFER ──
-async function openTransferModal(){
-  const o=currentOfficer||{};
-  let history='';
-  try{
-    const oid=await getOfficerId();
-    if(oid){const{data}=await supabaseClient.from('officer_transfers').select('*').eq('officer_id',oid).order('transfer_date',{ascending:false}).limit(10);
-      if(data&&data.length){history=`<div style="margin-top:16px;"><div style="font-size:10px;color:var(--text-faint);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">Transfer History</div>`+data.map(t=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg-tertiary);border-radius:6px;margin-bottom:5px;font-size:11px;flex-wrap:wrap;"><span style="color:var(--text-muted);">${t.transfer_date||'—'}</span><span style="color:var(--text-faint);">→</span><span style="color:var(--text-primary);font-weight:600;">${t.to_station||''}${t.to_district?', '+t.to_district:''}</span>${t.order_number?`<span style="margin-left:auto;font-size:10px;color:var(--text-faint);">Order: ${t.order_number}</span>`:''}</div>`).join('')+'</div>';}}
-  }catch(_){}
-  const inp='width:100%;padding:8px 10px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:13px;box-sizing:border-box;';
-  const lbl='display:block;font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:600;';
-  openModal('🏛️ Record Station Transfer',
-    `<p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Recording a transfer updates your current station. All your existing cases remain visible — they are linked to you, not to a station.</p>
-     <div style="padding:10px;background:var(--accent-glow);border-radius:6px;margin-bottom:14px;font-size:12px;color:var(--text-secondary);">
-       <b>Current Posting:</b> ${o.station||'Not set'}${o.district?', '+o.district:''}
-     </div>
-     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;direction:rtl;margin-bottom:10px;">
-       <div><label style="${lbl}">New Police Station *</label><input style="${inp}" id="tr-station" placeholder="e.g. Seetal Mari"></div>
-       <div><label style="${lbl}">New District</label><input style="${inp}" id="tr-district" placeholder="e.g. Multan" value="${o.district||''}"></div>
-       <div><label style="${lbl}">Transfer Date</label><input style="${inp}" type="date" id="tr-date" value="${new Date().toISOString().split('T')[0]}"></div>
-       <div><label style="${lbl}">Transfer Order No.</label><input style="${inp}" id="tr-order" placeholder="Optional"></div>
-       <div style="grid-column:1/-1;"><label style="${lbl}">Notes (optional)</label><input style="${inp}" id="tr-notes" placeholder="e.g. Promoted, posted as SHO"></div>
-     </div>${history}`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveTransfer()">✅ Save Transfer</button>`);
-}
-
-async function saveTransfer(){
-  const newStation=document.getElementById('tr-station').value.trim();
-  if(!newStation){showToast('⚠️ New station name is required.','error');return;}
-  const o=currentOfficer||{};
-  const oid=await getOfficerId();if(!oid)return;
-  const newDistrict=document.getElementById('tr-district').value.trim()||null;
-  try{
-    await supabaseClient.from('officer_transfers').insert({
-      officer_id:oid,from_station:o.station||null,from_district:o.district||null,
-      to_station:newStation,to_district:newDistrict,
-      transfer_date:document.getElementById('tr-date').value||null,
-      order_number:document.getElementById('tr-order').value.trim()||null,
-      notes:document.getElementById('tr-notes').value.trim()||null,
-    });
-    await supabaseClient.from('officers').update({station:newStation,district:newDistrict||o.district}).eq('id',oid);
-    if(currentOfficer){currentOfficer.station=newStation;if(newDistrict)currentOfficer.district=newDistrict;}
-    updateSidebarProfile();
-    closeModal();
-    showToast(`✅ Transfer recorded — now posted at ${newStation}.`,'success',5000);
-  }catch(e){showToast('❌ '+e.message,'error',5000);}
-}
-
-// ── OFFLINE SYNC ORCHESTRATION ──
-function _showSyncBar(state,msg){
-  let bar=document.getElementById('sync-bar');
-  if(!bar)return;
-  const styles={
-    offline: 'background:#ef4444;color:#fff;',
-    pending: 'background:#f59e0b;color:#fff;',
-    syncing: 'background:#3b82f6;color:#fff;',
-    success: 'background:#22c55e;color:#fff;',
-  };
-  bar.style.cssText=`display:block;position:fixed;top:0;left:0;right:0;z-index:99999;padding:6px 16px;text-align:center;font-size:12px;font-weight:600;${styles[state]||styles.pending}`;
-  bar.textContent=msg;
-  if(state==='success')setTimeout(()=>{if(bar)bar.style.display='none';},3000);
-}
-function _hideSyncBar(){const b=document.getElementById('sync-bar');if(b)b.style.display='none';}
-
-async function syncOfflineQueue(){
-  const count=await offlineStore.pendingCount();
-  if(count===0){_hideSyncBar();return;}
-  _showSyncBar('syncing',`🔄 Syncing ${count} offline change${count!==1?'s':''}…`);
-  try{
-    const synced=await offlineStore.processQueue(supabaseClient);
-    const remaining=await offlineStore.pendingCount();
-    if(remaining===0){
-      _showSyncBar('success',`✅ ${synced} change${synced!==1?'s':''} synced!`);
-    }else{
-      _showSyncBar('pending',`⚠️ ${synced} synced, ${remaining} still pending — will retry`);
-    }
-    // Refresh whichever tab is currently visible
-    const container=document.getElementById('page-content');
-    const title=document.getElementById('topbar-title')?.textContent||'';
-    if(container){
-      if(title.includes('Cases'))     renderCases(container);
-      else if(title.includes('5-C'))  renderFiveC(container);
-      else if(title.includes('Remind')) renderReminders(container);
-      else if(title.includes('Evidence')) renderEvidence(container);
-    }
-    await updateBadges();
-  }catch(err){
-    _showSyncBar('pending','❌ Sync error — will retry on next connection');
-    console.error('[Sync]',err);
-  }
-}
-
-window.addEventListener('online',async()=>{
-  updateConnectionStatus(true);
-  showToast('🌐 Back online — syncing your offline work…','success',4000);
-  await syncOfflineQueue();
-});
-window.addEventListener('offline',()=>{
-  updateConnectionStatus(false);
-  _showSyncBar('offline','📴 You are offline — changes will be saved locally and synced when reconnected');
-  showToast('📴 Offline mode — working from local cache','error',5000);
-});
-window.addEventListener('DOMContentLoaded',async()=>{
-  loadSavedTheme();
-  onSupabaseReady(async()=>{
-    await checkExistingSession();
-    // Check for pending offline ops from any previous session
-    if(navigator.onLine) setTimeout(()=>syncOfflineQueue(),3000);
-  });setInterval(()=>{const el=document.getElementById('footer-time');if(el)el.textContent=new Date().toLocaleTimeString('en-PK',{hour12:true});},1000);console.log('✅ Digital IO v4.4.0 — FULLY MODULAR (Round 4 complete — index.html is pure HTML/CSS) — '+new Date().toISOString());});
-
-function voiceType(targetId, btnId) {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { showToast('⚠️ آواز کی سہولت دستیاب نہیں — Chrome استعمال کریں','error',4000); return; }
-
-  if (_gVoiceOn && _gVoiceTarget === targetId) {
-    _gVoiceRec && _gVoiceRec.stop();
-    _gVoiceOn = false; _gVoiceTarget = null;
-    const b = document.getElementById(btnId);
-    if (b) { b.style.background=''; b.style.color=''; b.textContent='🎙️'; }
-    return;
-  }
-  if (_gVoiceOn) { _gVoiceRec && _gVoiceRec.stop(); }
-
-  _gVoiceTarget = targetId; _gVoiceOn = true;
-  const btn = document.getElementById(btnId);
-  if (btn) { btn.style.background='#ef4444'; btn.style.color='#fff'; btn.textContent='⏹'; }
-
-  _gVoiceRec = new SR();
-  _gVoiceRec.lang = 'ur-PK';
-  _gVoiceRec.continuous = false;
-  _gVoiceRec.interimResults = false;
-
-  _gVoiceRec.onresult = (e) => {
-    const txt = e.results[0][0].transcript;
-    const inp = document.getElementById(targetId);
-    if (inp) {
-      if (inp.tagName==='TEXTAREA'||inp.tagName==='INPUT') {
-        inp.value += (inp.value?' ':'')+txt;
-      } else if (inp.contentEditable==='true') {
-        inp.focus(); document.execCommand('insertText',false,txt);
-      }
-      inp.dispatchEvent(new Event('input',{bubbles:true}));
-    }
-  };
-
-  _gVoiceRec.onend = () => {
-    _gVoiceOn=false; _gVoiceTarget=null;
-    const b=document.getElementById(btnId);
-    if(b){b.style.background='';b.style.color='';b.textContent='🎙️';}
-  };
-
-  _gVoiceRec.onerror = (err) => {
-    _gVoiceOn=false; _gVoiceTarget=null;
-    const b=document.getElementById(btnId);
-    if(b){b.style.background='';b.style.color='';b.textContent='🎙️';}
-    if(err.error!=='no-speech') showToast('⚠️ آواز کی غلطی: '+err.error,'error');
-  };
-
-  try { _gVoiceRec.start(); showToast('🎙️ بولیں...','info',2000); }
-  catch(e) { showToast('⚠️ آواز شروع نہ ہو سکی','error'); _gVoiceOn=false; }
-}
-
-// Auto-inject voice buttons to all textareas that don't have one yet
-function _autoInjectVoiceBtns() {
-  var textareas = document.querySelectorAll('textarea.form-input:not([data-voice-added])');
-  textareas.forEach(function(ta) {
-    if (!ta.id) ta.id = 'vta-' + Math.random().toString(36).slice(2,7);
-    var btnId = 'vmb-' + ta.id;
-    if (document.getElementById(btnId)) return;
-    ta.setAttribute('data-voice-added','1');
-    var btn = document.createElement('button');
-    btn.id = btnId;
-    btn.type = 'button';
-    btn.textContent = '🎙️';
-    btn.title = 'آواز سے لکھیں';
-    btn.style.cssText = 'width:36px;height:36px;flex-shrink:0;border:1px solid var(--border);border-radius:6px;background:var(--bg-tertiary);font-size:16px;cursor:pointer;margin-top:2px;';
-    btn.onclick = function(){ voiceType(ta.id, btnId); };
-    // Wrap textarea in flex div
-    var wrapper = document.createElement('div');
-    wrapper.style.cssText = 'display:flex;gap:6px;align-items:flex-start;';
-    ta.parentNode.insertBefore(wrapper, ta);
-    wrapper.appendChild(ta);
-    wrapper.appendChild(btn);
-  });
-}
-
-// Run after every page render
-var _origShowPage = window.showPage;
-document.addEventListener('DOMContentLoaded', function() {
-  var observer = new MutationObserver(function() {
-    _autoInjectVoiceBtns();
-  });
-  var content = document.getElementById('page-content');
-  if (content) observer.observe(content, {childList:true, subtree:true});
-});
 
 // ── BUTTON USAGE LOGGER ───────────────────────────────────────
 const _usageKey = 'dio_btn_usage';
 function _logUsage(label) {
   try {
-    const data = JSON.parse(localStorage.getItem(_usageKey)||'{}');
-    data[label] = (data[label]||0)+1;
-    localStorage.setItem(_usageKey, JSON.stringify(data));
+    const d = JSON.parse(localStorage.getItem(_usageKey)||'{}');
+    d[label] = (d[label]||0)+1;
+    localStorage.setItem(_usageKey, JSON.stringify(d));
   } catch(_) {}
 }
-
 function getUsageStats() {
   try {
-    const data = JSON.parse(localStorage.getItem(_usageKey)||'{}');
-    return Object.entries(data)
-      .sort((a,b)=>b[1]-a[1])
-      .map(([k,v])=>({label:k, count:v}));
+    return Object.entries(JSON.parse(localStorage.getItem(_usageKey)||'{}')).sort((a,b)=>b[1]-a[1]).map(([l,c])=>({label:l,count:c}));
   } catch(_) { return []; }
 }
+document.addEventListener('click',function(e){
+  const btn=e.target.closest('.btn');
+  if(btn&&!btn.closest('.nav-item')){const t=(btn.textContent||btn.title||'').trim().slice(0,30);if(t)_logUsage('btn:'+t);}
+},true);
 
-// Track nav clicks
-document.addEventListener('click', function(e) {
-  const nav = e.target.closest('.nav-item');
-  if (nav) { _logUsage('nav:' + (nav.textContent||'').trim().slice(0,20)); }
-  const btn = e.target.closest('.btn');
-  if (btn && !btn.closest('.nav-item')) {
-    const txt = (btn.textContent||btn.title||'').trim().slice(0,30);
-    if (txt) _logUsage('btn:'+txt);
+// ── VOICE INPUT ───────────────────────────────────────────────
+function voiceType(targetId, btnId) {
+  if (!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)) {
+    showToast('⚠️ آواز کی سہولت دستیاب نہیں','warn'); return;
   }
-}, true);
+  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  const rec = new SR();
+  rec.lang = 'ur-PK'; rec.continuous = false; rec.interimResults = false;
+  const btn = document.getElementById(btnId);
+  if (btn) { btn.textContent='🔴'; btn.disabled=true; }
+  rec.onresult = e => {
+    const inp = document.getElementById(targetId);
+    if (inp) { inp.value += (inp.value?' ':'')+e.results[0][0].transcript; inp.dispatchEvent(new Event('input')); }
+  };
+  rec.onerror = () => showToast('⚠️ آواز سننے میں مشکل','warn');
+  rec.onend   = () => { if(btn){btn.textContent='🎙️';btn.disabled=false;} };
+  rec.start();
+}
+
+function voiceTypeArea(editorId, btnId) {
+  if (!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)) {
+    showToast('⚠️ آواز کی سہولت دستیاب نہیں','warn'); return;
+  }
+  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  const rec = new SR();
+  rec.lang = 'ur-PK'; rec.continuous = true; rec.interimResults = false;
+  const btn = document.getElementById(btnId);
+  if (btn) { btn.textContent='🔴 بند کریں'; btn.onclick=()=>rec.stop(); }
+  rec.onresult = e => {
+    const el = document.getElementById(editorId);
+    if (el) { const t = e.results[e.results.length-1][0].transcript; if(el.tagName==='TEXTAREA'){el.value+=t;}else{el.innerHTML+=t;} }
+  };
+  rec.onend = () => { if(btn){btn.textContent='🎙️';} };
+  rec.start();
+}
+
+// ── AUTO FORMAT ───────────────────────────────────────────────
+// Already defined above
+
+// ── PENAL CODE SEARCH ─────────────────────────────────────────
+const PENAL_CODES = [
+  {s:'302',d:'قتل عمد — موت / عمر قید'},{s:'306',d:'قتل بالعفو — 25 سال قید'},{s:'307',d:'قتل کی کوشش — 10 سال'},
+  {s:'320',d:'غیر ارادی قتل — 10 سال'},{s:'322',d:'قتل خطا — دیت'},{s:'324',d:'قتل کی نیت سے زخمی — 10 سال'},
+  {s:'325',d:'خطا سے زخمی کرنا'},{s:'326',d:'خطرناک ہتھیار سے زخمی'},{s:'337',d:'جسمانی نقصان'},
+  {s:'353',d:'سرکاری ملازم پر حملہ'},{s:'354',d:'عورت کی بے حرمتی'},{s:'365',d:'اغوا — 7 سال'},
+  {s:'365-B',d:'اغوا برائے تاوان — موت'},{s:'377',d:'غیر فطری جرائم'},{s:'379',d:'چوری — 3 سال'},
+  {s:'380',d:'گھر میں چوری'},{s:'382',d:'جان کا خطرہ ڈال کر چوری'},{s:'392',d:'ڈکیتی — 10 سال'},
+  {s:'393',d:'ڈکیتی کی کوشش'},{s:'394',d:'ڈکیتی میں زخمی — 14 سال'},{s:'395',d:'گروہی ڈکیتی — عمر قید'},
+  {s:'396',d:'ڈکیتی میں قتل — موت'},{s:'406',d:'خیانت — 3 سال'},{s:'411',d:'چوری کا مال خریدنا'},
+  {s:'419',d:'دھوکہ — 3 سال'},{s:'420',d:'فراڈ — 7 سال'},{s:'427',d:'نقصان'},{s:'435',d:'آتش زنی'},
+  {s:'436',d:'عمارت کو آگ — عمر قید'},{s:'447',d:'تجاوز — 3 ماہ'},{s:'448',d:'گھر میں داخل'},{s:'452',d:'مسلح تجاوز — 7 سال'},
+  {s:'489-F',d:'جھوٹا چیک — 3 سال'},{s:'499',d:'ہتک عزت'},{s:'500',d:'ہتک عزت کی سزا'},
+  {s:'504',d:'اشتعال دلانا'},{s:'506',d:'دھمکی — 2 سال'},{s:'511',d:'جرم کی کوشش'},
+  {s:'9 CNSA',d:'منشیات رکھنا'},{s:'6 CNSA',d:'منشیات تیار کرنا'},{s:'23 CNSA',d:'منشیات فروخت'},
+  {s:'13 Arms',d:'ممنوع ہتھیار — 7 سال'},{s:'15 Arms',d:'غیر قانونی اسلحہ'},
+  {s:'54 CrPC',d:'بغیر وارنٹ گرفتاری'},{s:'173 CrPC',d:'پولیس رپورٹ'},{s:'161 CrPC',d:'گواہ کا بیان'},
+];
+
+function searchPenalCodes(q) {
+  const dd = document.getElementById('section-dropdown');
+  if (!dd) return;
+  if (!q||q.length<1) { dd.style.display='none'; return; }
+  const res = PENAL_CODES.filter(p=>p.s.toLowerCase().includes(q.toLowerCase())||p.d.includes(q)).slice(0,8);
+  if (!res.length) { dd.style.display='none'; return; }
+  dd.style.display = 'block';
+  dd.innerHTML = res.map(p=>`
+    <div onclick="selectSection('${p.s}','${p.d.replace(/'/g,'')}')"
+      style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:12px;"
+      onmouseover="this.style.background='var(--nav-active)'" onmouseout="this.style.background=''">
+      <b style="color:var(--accent);">${p.s}</b> — ${p.d}
+    </div>`).join('');
+}
+
+function selectSection(s, d) {
+  const hidden = document.getElementById('cf-section');
+  const search = document.getElementById('cf-section-search');
+  const dd     = document.getElementById('section-dropdown');
+  const tags   = document.getElementById('selected-sections');
+  if (!hidden||!tags) return;
+  const existing = hidden.value ? hidden.value.split(',') : [];
+  if (!existing.includes(s)) {
+    existing.push(s);
+    hidden.value = existing.join(',');
+    const tag = document.createElement('span');
+    tag.className = 'section-tag';
+    tag.style.cssText = 'display:inline-flex;align-items:center;gap:4px;background:var(--accent-glow);border:1px solid var(--accent);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--accent);margin-right:4px;margin-bottom:4px;';
+    tag.innerHTML = `${s} <span onclick="removeSection('${s}',this)" style="cursor:pointer;font-size:14px;color:var(--red);">×</span>`;
+    tags.appendChild(tag);
+    // Auto-fill offence
+    const off = document.getElementById('cf-offence');
+    if (off&&!off.value) off.value = d;
+  }
+  if (search) search.value = '';
+  if (dd)     dd.style.display = 'none';
+}
+
+function removeSection(s, el) {
+  const hidden = document.getElementById('cf-section');
+  if (hidden) {
+    const arr = hidden.value.split(',').filter(x=>x!==s);
+    hidden.value = arr.join(',');
+  }
+  el?.closest('.section-tag')?.remove();
+}
+
+// ── THEME PICKER ──────────────────────────────────────────────
+function openThemePicker() {
+  const themes = ['dark','light','forest','ocean','sunset'];
+  const labels = {dark:'🌙 Dark',light:'☀️ Light',forest:'🌿 Forest',ocean:'🌊 Ocean',sunset:'🌅 Sunset'};
+  openModal('🎨 تھیم منتخب کریں',
+    `<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      ${themes.map(t=>`<button onclick="setTheme('${t}');closeModal();" style="padding:10px 20px;border-radius:8px;border:2px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);cursor:pointer;font-size:13px;">${labels[t]}</button>`).join('')}
+    </div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">بند</button>`
+  );
+}
+
+function setTheme(t) {
+  document.documentElement.className = t==='dark'?'':t;
+  localStorage.setItem('dio_theme', t);
+}
+
+// Load saved theme
+(function(){ const t=localStorage.getItem('dio_theme'); if(t&&t!=='dark') setTheme(t); })();
+
+// ── AUTH ──────────────────────────────────────────────────────
+async function doLogin() {
+  const email = document.getElementById('login-email')?.value.trim();
+  const pass  = document.getElementById('login-password')?.value;
+  if (!email||!pass) { showToast('⚠️ ای میل اور پاسورڈ ضروری ہے','error'); return; }
+  setLoginLoading(true);
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({email,password:pass});
+    if (error) throw error;
+    currentUser = data.user;
+    await _loadOfficerProfile();
+    loginSuccess();
+  } catch(e) { showToast('❌ '+e.message,'error'); setLoginLoading(false); }
+}
+
+async function _loadOfficerProfile() {
+  const { data } = await supabaseClient.from('officers').select('*').eq('user_id',currentUser.id).single();
+  currentOfficer = data||{ user_id:currentUser.id, email:currentUser.email, full_name:currentUser.user_metadata?.full_name||'', station:'', district:'', designation:'', role:'officer' };
+}
+
+function setLoginLoading(v) {
+  const btn = document.getElementById('login-btn');
+  if (btn) { btn.disabled=v; btn.textContent=v?'⏳ لاگ ان ہو رہا ہے...':'🔑 لاگ ان'; }
+}
+
+async function loginSuccess() {
+  const ls=document.getElementById('login-screen'), app=document.getElementById('main-app');
+  ls.style.transition='opacity 0.4s'; ls.style.opacity='0';
+  setTimeout(()=>{ ls.style.display='none'; app.style.display='flex'; setLoginLoading(false); initApp(); },400);
+  resetSessionTimer();
+}
+
+async function doLogout() {
+  await supabaseClient.auth.signOut();
+  currentUser=null; currentOfficer=null;
+  document.getElementById('main-app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-screen').style.opacity='1';
+  showToast('✅ لاگ آؤٹ ہو گئے','info');
+}
+
+function showRegister()       { document.getElementById('register-card')?.style&&(document.getElementById('register-card').style.display='block'); document.getElementById('login-card')?.style&&(document.getElementById('login-card').style.display='none'); }
+function hideRegister()       { document.getElementById('register-card')?.style&&(document.getElementById('register-card').style.display='none'); document.getElementById('login-card')?.style&&(document.getElementById('login-card').style.display='block'); }
+function showForgotPassword() { document.getElementById('forgot-card')?.style&&(document.getElementById('forgot-card').style.display='block'); document.getElementById('login-card')?.style&&(document.getElementById('login-card').style.display='none'); }
+function hideForgotModal()    { document.getElementById('forgot-card')?.style&&(document.getElementById('forgot-card').style.display='none'); document.getElementById('login-card')?.style&&(document.getElementById('login-card').style.display='block'); }
+function setLoginMethod(m)    { /* handled inline */ }
+function togglePasswordVisibility(id) { const el=document.getElementById(id); if(el) el.type=el.type==='password'?'text':'password'; }
+function pinPress(v)     { const el=document.getElementById('pin-display'); if(el&&el.textContent.length<6) el.textContent+='●'; }
+function pinBackspace()  { const el=document.getElementById('pin-display'); if(el) el.textContent=el.textContent.slice(0,-1); }
+function doBiometric()   { showToast('بایومیٹرک ابھی دستیاب نہیں','warn'); }
+
+async function sendOTP() { showToast('OTP بھیجنے کی سہولت جلد آ رہی ہے','info'); }
+async function verifyOTP() { showToast('OTP کی تصدیق جلد آ رہی ہے','info'); }
+async function resetPassword() {
+  const email = document.getElementById('forgot-email')?.value.trim();
+  if (!email) { showToast('⚠️ ای میل ضروری ہے','error'); return; }
+  const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
+  if (error) { showToast('❌ '+error.message,'error'); return; }
+  showToast('✅ پاسورڈ ری سیٹ ای میل بھیج دی','success');
+  hideForgotModal();
+}
+
+async function submitRegistration() {
+  const name  = document.getElementById('reg-name')?.value.trim();
+  const email = document.getElementById('reg-email')?.value.trim();
+  const pass  = document.getElementById('reg-password')?.value;
+  const badge = document.getElementById('reg-badge')?.value.trim();
+  const station=document.getElementById('reg-station')?.value.trim();
+  const district=document.getElementById('reg-district')?.value.trim();
+  const desig = document.getElementById('reg-designation')?.value.trim();
+  if(!name||!email||!pass){showToast('⚠️ تمام ضروری خانے بھریں','error');return;}
+  try {
+    const{data,error}=await supabaseClient.auth.signUp({email,password:pass,options:{data:{full_name:name}}});
+    if(error)throw error;
+    if(data.user){
+      await supabaseClient.from('officers').insert({user_id:data.user.id,full_name:name,email,badge_number:badge,designation:desig,station,district,role:'officer',is_approved:false});
+    }
+    showToast('✅ رجسٹریشن ہو گئی! ای میل تصدیق کریں','success');
+    hideRegister();
+  } catch(e){showToast('❌ '+e.message,'error');}
+}
+
+function openChangePasswordModal() {
+  openModal('🔑 پاسورڈ تبدیل کریں',
+    `<div style="direction:rtl;">
+      <label class="form-label">موجودہ پاسورڈ</label>
+      <input class="form-input" type="password" id="cp-old" placeholder="موجودہ پاسورڈ" style="margin-bottom:8px;">
+      <label class="form-label">نیا پاسورڈ</label>
+      <input class="form-input" type="password" id="cp-new" placeholder="نیا پاسورڈ (کم از کم 8)" style="margin-bottom:8px;">
+    </div>`,
+    `<div style="display:flex;gap:8px;direction:rtl;">
+      <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+      <button class="btn btn-primary" onclick="_doChangePassword()">💾 تبدیل</button>
+    </div>`
+  );
+}
+
+async function _doChangePassword() {
+  const np = document.getElementById('cp-new')?.value;
+  if(!np||np.length<8){showToast('⚠️ کم از کم 8 حروف','error');return;}
+  const{error}=await supabaseClient.auth.updateUser({password:np});
+  if(error){showToast('❌ '+error.message,'error');return;}
+  closeModal(); showToast('✅ پاسورڈ تبدیل ہو گیا','success');
+}
+
+// ── SESSION TIMER ─────────────────────────────────────────────
+let _sessionTimer;
+function resetSessionTimer() {
+  clearTimeout(_sessionTimer);
+  _sessionTimer = setTimeout(()=>{
+    showToast('⏰ سیشن ختم — دوبارہ لاگ ان کریں','warn',5000);
+    setTimeout(doLogout, 5000);
+  }, 8*60*60*1000); // 8 hours
+}
+document.addEventListener('click', resetSessionTimer);
+document.addEventListener('keypress', resetSessionTimer);
+
+// ── BACKUP COMPAT ─────────────────────────────────────────────
+function initBackupSystem() {
+  const t = localStorage.getItem('dio_gdrive_token');
+  if(t) googleDriveToken=t;
+}
+function triggerBackup(src) { localStorage.setItem('dio_last_backup_source',src||'auto'); }
+
+// ── INIT APP ──────────────────────────────────────────────────
+async function initApp() {
+  updateSidebarProfile();
+  updateConnectionStatus(navigator.onLine);
+  await updateBadges();
+  startClock();
+  initBackupSystem();
+  setupRealtimeSync(async(table)=>{
+    await updateBadges();
+    const pt = document.getElementById('topbar-title')?.textContent;
+    if(table==='cases'&&pt?.includes('مقدمات')) renderCases&&renderCases(document.getElementById('page-content'));
+    if(table==='reminders'&&pt?.includes('یاددہانی')) renderReminders&&renderReminders(document.getElementById('page-content'));
+  });
+  showPage('dashboard', document.querySelector('.nav-item'));
+  setTimeout(()=>triggerBackup('app_init'), 3000);
+  setTimeout(_initNotifications, 2000);
+  setTimeout(_checkDueReminders, 5000);
+  setInterval(_checkDueReminders, 30*60*1000);
+  // Start Islamic messages
+  setTimeout(()=>{ if(typeof initIslamicMessages==='function') initIslamicMessages(); }, 1500);
+}
+
+// ── CHECK SUPABASE SESSION ON LOAD ────────────────────────────
+window.addEventListener('load', async function() {
+  try {
+    const { data:{ session } } = await supabaseClient.auth.getSession();
+    if (session?.user) {
+      currentUser = session.user;
+      await _loadOfficerProfile();
+      loginSuccess();
+    }
+  } catch(_) {}
+});
+
+supabaseClient.auth.onAuthStateChange((event, session) => {
+  if (event==='SIGNED_OUT') { currentUser=null; currentOfficer=null; }
+});
