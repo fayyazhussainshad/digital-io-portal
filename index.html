@@ -1047,5 +1047,50 @@ if('serviceWorker' in navigator){
 }
 </script>
 
+
+<!-- ── Deep Linking — URL Hash Navigation ── -->
+<script>
+// Pages accessible via URL hash: e.g. digital-io-portal.vercel.app/#admin
+const _HASH_PAGES = {
+  '#admin':    'admin',
+  '#cases':    'cases',
+  '#dashboard':'dashboard',
+  '#patrol':   'patrol',
+  '#law':      'law',
+  '#forms':    'forms',
+  '#settings': 'settings',
+  '#reminders':'reminders',
+  '#cdr':      'cdr',
+  '#fivec':    'fivec',
+  '#incident': 'incident',
+  '#performance':'performance',
+  '#backup':   'backup',
+  '#bin':      'bin',
+};
+
+function _handleHashNav() {
+  const hash = window.location.hash.toLowerCase();
+  const page = _HASH_PAGES[hash];
+  if (page && typeof showPage === 'function') {
+    setTimeout(() => showPage(page, null), 500);
+  }
+}
+
+window.addEventListener('hashchange', _handleHashNav);
+window.addEventListener('load', function() {
+  // Handle hash on initial load (after login)
+  setTimeout(_handleHashNav, 2000);
+});
+
+// Update URL hash when page changes
+const _origShowPageHash = showPage;
+window.showPage = function(page, el) {
+  if (history && history.replaceState) {
+    history.replaceState(null, '', '#' + page);
+  }
+  return _origShowPageHash(page, el);
+};
+</script>
+
 </body>
 </html>
