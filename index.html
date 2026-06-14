@@ -455,7 +455,7 @@ input, textarea, select { font-family: var(--font-main); }
 .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: statusPulse 2s infinite; }
 @keyframes statusPulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 .mobile-menu-btn { display: flex; background: none; border: none; color: var(--text-secondary); font-size: 20px; }
-.page-content { flex: 1; overflow-y: auto; padding: 20px; }
+.page-content { flex: 1; overflow-y: scroll; -webkit-overflow-scrolling: touch; padding: 20px; overscroll-behavior: contain; }
 .bottombar { height: var(--bottombar-height); background: var(--bg-tertiary); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font-size: 10px; color: var(--text-faint); flex-shrink: 0; }
 
 /* ── COMMON COMPONENTS ── */
@@ -691,35 +691,7 @@ input[id*="cnic"], input[id*="cell"] {
   text-align: left !important;
 }
 
-/* Mini sidebar strip — always visible on right edge */
-#sidebar-mini-strip {
-  position: fixed;
-  right: 0; top: 50%;
-  transform: translateY(-50%);
-  z-index: 900;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-right: none;
-  border-radius: 10px 0 0 10px;
-  padding: 8px 6px;
-  box-shadow: -2px 0 10px rgba(0,0,0,0.2);
-  transition: opacity 0.2s;
-}
-#sidebar-mini-strip:hover { opacity: 0.9; }
-#sidebar-mini-strip button {
-  width: 32px; height: 32px;
-  border: none; background: none;
-  cursor: pointer; border-radius: 6px;
-  font-size: 16px; display: flex;
-  align-items: center; justify-content: center;
-  color: var(--text-muted); transition: all 0.15s;
-}
-#sidebar-mini-strip button:hover {
-  background: var(--accent-glow); color: var(--accent);
-}
+
 /* Topbar already shows the tab name — hide duplicate page titles in content */
 .page-title { display:none; }
 .page-subtitle { display:none; }
@@ -733,9 +705,30 @@ input[id*="cnic"], input[id*="cell"] {
   pointer-events: none;
   overflow: hidden;
 }
-#sidebar-toggle {
-  display: none; /* Hidden — desktop sidebar always open, mobile uses hamburger */
+#sidebar-toggle { display: none; }
+
+/* Floating sidebar toggle button */
+#fab-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  z-index: 800;
+  box-shadow: 0 4px 14px rgba(56,189,248,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
 }
+#fab-toggle:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(56,189,248,0.5); }
+#fab-toggle:active { transform: scale(0.95); }
   
 /* ── Mobile Touch Optimizations ── */
 @media (max-width: 900px) {
@@ -857,18 +850,11 @@ input[id*="cnic"], input[id*="cell"] {
      MAIN APP
 ══════════════════════════════════ -->
 <div id="main-app" style="display:none;">
-  <!-- Sidebar mini strip — always visible -->
-  <div id="sidebar-mini-strip">
-    <button onclick="toggleSidebar()" title="مینو">☰</button>
-    <button onclick="closeMobileSidebar();showPage('dashboard',null)" title="ڈیش بورڈ">🏠</button>
-    <button onclick="closeMobileSidebar();showPage('cases',null)" title="مقدمات">📁</button>
-    <button onclick="closeMobileSidebar();showPage('patrol',null)" title="گشت">🚔</button>
-    <button onclick="closeMobileSidebar();showPage('reminders',null)" title="یاددہانی">🔔</button>
-    <button onclick="closeMobileSidebar();showPage('settings',null)" title="ترتیبات">⚙️</button>
-  </div>
-
   <!-- Mobile overlay (tap to close sidebar) -->
   <div id="mob-overlay" onclick="closeMobileSidebar()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);z-index:999;"></div>
+
+  <!-- FAB: Floating toggle button for sidebar -->
+  <button id="fab-toggle" onclick="toggleSidebar()" title="مینو">☰</button>
 
   <div class="sidebar" id="sidebar">
     <div class="sidebar-logo"><div class="sidebar-logo-icon">🛡️</div><div><div class="sidebar-logo-text">Digital IO</div><div class="sidebar-logo-sub">Case Management</div></div></div>
@@ -948,6 +934,7 @@ var _swipeStartY = 0;
 function _sidebarOpen() {
   var sb = document.getElementById('sidebar');
   var ov = document.getElementById('mob-overlay');
+  var fab = document.getElementById('fab-toggle');
   if (!sb) return;
   sb.classList.remove('collapsed');
   sb.setAttribute('style',
@@ -967,6 +954,7 @@ function _sidebarOpen() {
     'background:rgba(0,0,0,0.55)!important;z-index:1000!important;' +
     '-webkit-tap-highlight-color:transparent!important;'
   );
+  if (fab) fab.textContent = '✕';
   _mobOpen = true;
   document.body.style.overflow = 'hidden';
 }
@@ -974,6 +962,7 @@ function _sidebarOpen() {
 function _sidebarClose() {
   var sb = document.getElementById('sidebar');
   var ov = document.getElementById('mob-overlay');
+  var fab = document.getElementById('fab-toggle');
   if (!sb) return;
   sb.setAttribute('style',
     'position:fixed!important;right:0!important;left:auto!important;' +
@@ -986,6 +975,7 @@ function _sidebarClose() {
     'transition:transform 0.28s cubic-bezier(0.4,0,0.2,1)!important;'
   );
   if (ov) ov.setAttribute('style','display:none!important;');
+  if (fab) fab.textContent = '☰';
   _mobOpen = false;
   document.body.style.overflow = '';
 }
