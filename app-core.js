@@ -37,9 +37,19 @@ const STATUS_CLASSES = {
 function registerPage(name, fn) { _pages[name] = fn; }
 
 function showPage(page, el) {
-  // Update active nav
+  // Update active nav — support both old .nav-item and new .topnav-item
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  if (el) el.classList.add('active');
+  document.querySelectorAll('.topnav-item').forEach(n => n.classList.remove('active'));
+  // Highlight matching top-nav button (or the "More" button if page is in dropdown)
+  var mainMatch = document.querySelector('.topnav-item[data-page="'+page+'"]');
+  if (mainMatch) {
+    mainMatch.classList.add('active');
+  } else {
+    var moreBtn = document.getElementById('more-btn');
+    var inMore = ['forms','fivec','law','cdr','performance','backup','bin','subscription','admin','settings'].indexOf(page) !== -1;
+    if (moreBtn && inMore) moreBtn.classList.add('active');
+  }
+  if (el && el.classList) el.classList.add('active');
 
   // Update topbar title
   const titles = {
@@ -652,7 +662,7 @@ async function initApp() {
   });
   // Check license
   if (typeof checkLicense==='function') checkLicense();
-  showPage('dashboard', document.querySelector('.nav-item'));
+  showPage('dashboard', null);
   setTimeout(()=>triggerBackup('app_init'), 3000);
   setTimeout(_initNotifications, 2000);
   setTimeout(_checkDueReminders, 5000);
@@ -681,3 +691,40 @@ window.addEventListener('load', async function() {
 supabaseClient.auth.onAuthStateChange((event, session) => {
   if (event==='SIGNED_OUT') { currentUser=null; currentOfficer=null; }
 });
+
+// ═══════════════════════════════════════════════════════════
+//  GLOBAL PRINT HELPER — iframe-based, no double-close, no full-screen stuck
+// ═══════════════════════════════════════════════════════════
+function dioPrint(htmlContent) {
+  // Remove any previous print iframe
+  const old = document.getElementById('dio-print-frame');
+  if (old) old.remove();
+
+  // Create hidden iframe
+  const iframe = document.createElement('iframe');
+  iframe.id = 'dio-print-frame';
+  iframe.style.cssText = 'position:fixed;right:-9999px;bottom:-9999px;width:0;height:0;border:0;';
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(htmlContent);
+  doc.close();
+
+  // Wait for content + fonts to load, then print once
+  const triggerPrint = () => {
+    try {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    } catch(e) { console.warn('print error', e); }
+    // Clean up after printing
+    setTimeout(() => { iframe.remove(); }, 1000);
+  };
+
+  // Wait for fonts if available, else timeout
+  if (iframe.contentWindow.document.fonts && iframe.contentWindow.document.fonts.ready) {
+    iframe.contentWindow.document.fonts.ready.then(() => setTimeout(triggerPrint, 300));
+  } else {
+    setTimeout(triggerPrint, 600);
+  }
+}

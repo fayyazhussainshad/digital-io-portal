@@ -431,7 +431,7 @@ input, textarea, select { font-family: var(--font-main); }
 .modal-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.6; }
 
 /* ── APP LAYOUT ── */
-#main-app { display: flex; flex-direction: row-reverse; height: 100vh; overflow: hidden; }
+#main-app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 /* Sidebar — overlay from RIGHT on all screens */
 .sidebar {
   width: var(--sidebar-width);
@@ -483,6 +483,103 @@ input, textarea, select { font-family: var(--font-main); }
 .topbar-btn { background: none; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 10px; color: var(--text-muted); font-size: 14px; transition: all 0.15s; }
 .topbar-btn:hover { border-color: var(--accent); color: var(--accent); }
 .topbar-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); background: var(--bg-tertiary); padding: 5px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+
+/* ═══ COMPACT TOP NAV (replaces sidebar) ═══ */
+.tb-logo { display: flex; align-items: center; gap: 6px; }
+.tb-logo-icon { font-size: 18px; }
+.tb-logo-text { font-size: 14px; font-weight: 800; color: var(--accent); font-family: var(--font-display); letter-spacing: 0.3px; }
+
+.topnav {
+  display: flex; align-items: stretch; gap: 4px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 6px 12px;
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  direction: rtl;
+  position: relative;
+  z-index: 50;
+}
+.topnav::-webkit-scrollbar { display: none; }
+
+.topnav-item {
+  display: flex; align-items: center; gap: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-family: var(--font-main);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.topnav-item:hover { background: var(--hover-bg); color: var(--text-primary); }
+.topnav-item.active {
+  background: var(--nav-active);
+  color: var(--accent);
+  border-color: rgba(56,189,248,0.3);
+  font-weight: 700;
+}
+.tn-ic { font-size: 16px; }
+.tn-tx { font-size: 13px; }
+.topnav-item .nav-badge {
+  background: var(--red); color: #fff; font-size: 9px; font-weight: 700;
+  padding: 1px 6px; border-radius: 10px; margin: 0;
+}
+
+/* More dropdown */
+.topnav-more { position: relative; flex-shrink: 0; }
+.more-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 220px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+  padding: 6px;
+  z-index: 2000;
+  direction: rtl;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.more-menu.open { display: block; }
+.more-item {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-family: var(--font-main);
+  cursor: pointer;
+  text-align: right;
+  transition: all 0.12s;
+}
+.more-item:hover { background: var(--hover-bg); color: var(--accent); }
+.more-item span { font-size: 16px; width: 22px; text-align: center; }
+.more-divider { height: 1px; background: var(--border); margin: 5px 8px; }
+.more-logout { color: var(--red); }
+.more-logout:hover { background: var(--red-bg); color: var(--red); }
+
+/* Mobile: smaller nav items, hide text on very small if needed */
+@media (max-width: 600px) {
+  .topnav { padding: 5px 8px; gap: 3px; }
+  .topnav-item { padding: 7px 11px; font-size: 12px; }
+  .tb-logo-text { display: none; }
+  .topbar-title { font-size: 13px; }
+}
 .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: statusPulse 2s infinite; }
 @keyframes statusPulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 .mobile-menu-btn { display: flex; background: none; border: none; color: var(--text-secondary); font-size: 20px; }
@@ -730,7 +827,7 @@ input[id*="cnic"], input[id*="cell"] {
 .page-header { padding-top:0; margin-bottom:8px; }
 
 /* ── Collapsible Sidebar (Desktop only) ── */
-#main-app { display:flex; flex-direction:row-reverse; position:relative; }
+#main-app { display:flex; flex-direction:column; position:relative; }
 .sidebar.collapsed {
   opacity: 0;
   pointer-events: none;
@@ -881,48 +978,48 @@ input[id*="cnic"], input[id*="cell"] {
      MAIN APP
 ══════════════════════════════════ -->
 <div id="main-app" style="display:none;">
-  <!-- Mobile overlay (tap to close sidebar) -->
-  <div id="mob-overlay" onclick="closeMobileSidebar()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);z-index:999;"></div>
-
-  <!-- FAB: Floating toggle button for sidebar -->
-  <button id="fab-toggle" onclick="toggleSidebar()" title="مینو">☰</button>
-
-  <div class="sidebar" id="sidebar">
-    <div class="sidebar-logo"><div class="sidebar-logo-icon">🛡️</div><div><div class="sidebar-logo-text">Digital IO</div><div class="sidebar-logo-sub">Case Management</div></div></div>
-    <div class="sidebar-profile"><div class="sidebar-avatar" id="sidebar-avatar">IO</div><div><div class="sidebar-profile-name" id="sidebar-name">Loading...</div><div class="sidebar-profile-role" id="sidebar-role">Officer</div></div></div>
-    <nav class="sidebar-nav">
-      <div class="nav-item active" onclick="closeMobileSidebar();showPage('dashboard',this)"><span class="nav-icon">🏠</span> ڈیش بورڈ</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('cases',this)"><span class="nav-icon">📁</span> میرے مقدمات <span class="nav-badge" id="badge-cases">0</span></div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('forms',this)"><span class="nav-icon">📥</span> ٹیمپلیٹس</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('fivec',this)"><span class="nav-icon">📋</span> مارک شدہ درخواستیں</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('incident',this)"><span class="nav-icon">🚨</span> واقعاتی رپورٹ</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('patrol',this)"><span class="nav-icon">🚔</span> گشت</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('law',this)"><span class="nav-icon">⚖️</span> قانونی لائبریری</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('performance',this)"><span class="nav-icon">📊</span> کارکردگی</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('backup',this)"><span class="nav-icon">☁️</span> بیک اپ</div>
-      <div class="nav-item" id="admin-nav-item" style="display:none;" onclick="closeMobileSidebar();showPage('admin',this)"><span class="nav-icon">👮</span> ایڈمن</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('bin',this)"><span class="nav-icon">🗑️</span> حذف شدہ مواد</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('subscription',this)"><span class="nav-icon">💎</span> سبسکرپشن</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('settings',this)"><span class="nav-icon">⚙️</span> ترتیبات</div>
-    </nav>
-    <div class="sidebar-footer"><button class="logout-btn" onclick="doLogout()">🚪 Sign Out</button><div class="sidebar-version">Digital IO v4.0 · Secure</div></div>
-  </div>
-  <!-- Sidebar collapse toggle -->
-  <div id="sidebar-toggle" onclick="toggleSidebarCollapse()" title="Hide/Show Sidebar">◀</div>
   <div class="main-area">
+    <!-- TOP BAR -->
     <div class="topbar">
-      <div class="topbar-left"><div class="topbar-title" id="topbar-title">ڈیش بورڈ</div><div class="db-badge" id="db-badge">⚙ Connecting...</div></div>
+      <div class="topbar-left">
+        <div class="tb-logo"><span class="tb-logo-icon">🛡️</span><span class="tb-logo-text">Digital IO</span></div>
+        <div class="topbar-title" id="topbar-title">ڈیش بورڈ</div>
+      </div>
       <div class="topbar-right">
-
-        <button class="topbar-btn" onclick="closeMobileSidebar();showPage('search',null)" title="Search">🔍</button>
-        <button class="topbar-btn" onclick="closeMobileSidebar();showPage('reminders',null)" title="یاددہانیاں">🔔<span id="badge-reminders" class="badge" style="font-size:9px;vertical-align:super;"></span></button>
-        <button class="topbar-btn" onclick="triggerBackupNow()" title="Backup Now">☁️</button>
+        <button class="topbar-btn" onclick="showPage('search',null)" title="تلاش">🔍</button>
+        <button class="topbar-btn" onclick="showPage('reminders',null)" title="یاددہانیاں">🔔<span id="badge-reminders" class="badge" style="font-size:9px;vertical-align:super;"></span></button>
         <button class="topbar-btn" id="theme-picker-btn" onclick="openThemePicker()" title="تھیم" style="font-size:16px;">🎨</button>
-        <button class="topbar-btn" onclick="closeMobileSidebar();showPage('cdr',null)" title="CDR Analyzer" style="font-weight:700;font-size:11px;">📞CDR</button>
         <div class="topbar-status"><span class="status-dot" id="status-dot"></span><span id="status-text">Connecting</span></div>
-        
       </div>
     </div>
+
+    <!-- COMPACT NAV BAR (replaces sidebar) -->
+    <nav class="topnav" id="topnav">
+      <button class="topnav-item active" data-page="dashboard" onclick="navTo('dashboard',this)"><span class="tn-ic">🏠</span><span class="tn-tx">ڈیش بورڈ</span></button>
+      <button class="topnav-item" data-page="cases" onclick="navTo('cases',this)"><span class="tn-ic">📁</span><span class="tn-tx">مقدمات</span><span class="nav-badge" id="badge-cases">0</span></button>
+      <button class="topnav-item" data-page="patrol" onclick="navTo('patrol',this)"><span class="tn-ic">🚔</span><span class="tn-tx">گشت</span></button>
+      <button class="topnav-item" data-page="incident" onclick="navTo('incident',this)"><span class="tn-ic">🚨</span><span class="tn-tx">واقعاتی</span></button>
+
+      <!-- More dropdown -->
+      <div class="topnav-more">
+        <button class="topnav-item" id="more-btn" onclick="toggleMoreMenu(event)"><span class="tn-ic">⋮</span><span class="tn-tx">مزید</span></button>
+        <div class="more-menu" id="more-menu">
+          <button class="more-item" onclick="navTo('forms',null)"><span>📥</span> ٹیمپلیٹس</button>
+          <button class="more-item" onclick="navTo('fivec',null)"><span>📋</span> مارک شدہ درخواستیں</button>
+          <button class="more-item" onclick="navTo('law',null)"><span>⚖️</span> قانونی لائبریری</button>
+          <button class="more-item" onclick="navTo('cdr',null)"><span>📞</span> CDR Analyzer</button>
+          <button class="more-item" onclick="navTo('performance',null)"><span>📊</span> کارکردگی</button>
+          <button class="more-item" onclick="navTo('backup',null)"><span>☁️</span> بیک اپ</button>
+          <button class="more-item" onclick="navTo('bin',null)"><span>🗑️</span> حذف شدہ مواد</button>
+          <button class="more-item" onclick="closeMoreMenu();showSubscriptionPage()"><span>💎</span> سبسکرپشن</button>
+          <button class="more-item" id="admin-nav-item" style="display:none;" onclick="navTo('admin',null)"><span>👮</span> ایڈمن</button>
+          <button class="more-item" onclick="navTo('settings',null)"><span>⚙️</span> ترتیبات</button>
+          <div class="more-divider"></div>
+          <button class="more-item more-logout" onclick="doLogout()"><span>🚪</span> لاگ آؤٹ</button>
+        </div>
+      </div>
+    </nav>
+
     <div class="page-content" id="page-content"><div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Loading...</div></div></div>
     <div class="bottombar"><span id="footer-officer">Digital IO</span><span id="footer-time"></span><span id="footer-license">License: Active</span></div>
   </div>
@@ -959,105 +1056,54 @@ input[id*="cnic"], input[id*="cell"] {
 <script src="admin.js"></script>
 <script src="subscription.js"></script>
 
-<!-- ── Sidebar ── -->
+<!-- ── Compact Top Nav ── -->
 <script>
-var _mobOpen = false;
-var _swipeStartX = 0;
-var _swipeStartY = 0;
-
-function _sidebarOpen() {
-  var sb = document.getElementById('sidebar');
-  var ov = document.getElementById('mob-overlay');
-  var fab = document.getElementById('fab-toggle');
-  if (!sb) return;
-  sb.classList.remove('collapsed');
-  sb.setAttribute('style',
-    'position:fixed!important;right:0!important;left:auto!important;' +
-    'top:0!important;bottom:0!important;width:270px!important;' +
-    'min-width:270px!important;z-index:1001!important;' +
-    'opacity:1!important;pointer-events:auto!important;overflow-y:auto!important;' +
-    'background:var(--bg-secondary)!important;border-left:1px solid var(--border)!important;' +
-    '-webkit-transform:translateX(0)!important;transform:translateX(0)!important;' +
-    '-webkit-transition:-webkit-transform 0.28s cubic-bezier(0.4,0,0.2,1)!important;' +
-    'transition:transform 0.28s cubic-bezier(0.4,0,0.2,1)!important;' +
-    'box-shadow:-4px 0 24px rgba(0,0,0,0.5)!important;'
-  );
-  if (ov) ov.setAttribute('style',
-    'display:block!important;position:fixed!important;' +
-    'top:0!important;left:0!important;right:0!important;bottom:0!important;' +
-    'background:rgba(0,0,0,0.55)!important;z-index:1000!important;' +
-    '-webkit-tap-highlight-color:transparent!important;'
-  );
-  if (fab) fab.textContent = '✕';
-  _mobOpen = true;
-  document.body.style.overflow = 'hidden';
+// Navigate + update active state on top nav
+function navTo(page, el) {
+  // Close more menu
+  closeMoreMenu();
+  // Update active highlight
+  document.querySelectorAll('.topnav-item').forEach(b => b.classList.remove('active'));
+  if (el && el.classList) {
+    el.classList.add('active');
+  } else {
+    // Find matching main nav item by data-page
+    var match = document.querySelector('.topnav-item[data-page="'+page+'"]');
+    if (match) match.classList.add('active');
+    else {
+      // Page is inside "more" — highlight the More button
+      var more = document.getElementById('more-btn');
+      if (more) more.classList.add('active');
+    }
+  }
+  // Show the page
+  showPage(page, null);
 }
 
-function _sidebarClose() {
-  var sb = document.getElementById('sidebar');
-  var ov = document.getElementById('mob-overlay');
-  var fab = document.getElementById('fab-toggle');
-  if (!sb) return;
-  sb.setAttribute('style',
-    'position:fixed!important;right:0!important;left:auto!important;' +
-    'top:0!important;bottom:0!important;width:270px!important;' +
-    'min-width:270px!important;z-index:1001!important;' +
-    'opacity:1!important;pointer-events:auto!important;overflow-y:auto!important;' +
-    'background:var(--bg-secondary)!important;' +
-    '-webkit-transform:translateX(100%)!important;transform:translateX(100%)!important;' +
-    '-webkit-transition:-webkit-transform 0.28s cubic-bezier(0.4,0,0.2,1)!important;' +
-    'transition:transform 0.28s cubic-bezier(0.4,0,0.2,1)!important;'
-  );
-  if (ov) ov.setAttribute('style','display:none!important;');
-  if (fab) fab.textContent = '☰';
-  _mobOpen = false;
-  document.body.style.overflow = '';
+// More dropdown toggle
+function toggleMoreMenu(e) {
+  if (e) e.stopPropagation();
+  var menu = document.getElementById('more-menu');
+  if (!menu) return;
+  menu.classList.toggle('open');
+}
+function closeMoreMenu() {
+  var menu = document.getElementById('more-menu');
+  if (menu) menu.classList.remove('open');
 }
 
-function toggleSidebar() { _mobOpen ? _sidebarClose() : _sidebarOpen(); }
-function closeMobileSidebar() { _sidebarClose(); }
-function toggleSidebarCollapse() { toggleSidebar(); }
-
-// Swipe RIGHT → open sidebar (from right edge)
-// Swipe LEFT on sidebar → close sidebar
-document.addEventListener('touchstart', function(e) {
-  _swipeStartX = e.touches[0].clientX;
-  _swipeStartY = e.touches[0].clientY;
-}, { passive: true });
-
-document.addEventListener('touchend', function(e) {
-  var dx = e.changedTouches[0].clientX - _swipeStartX;
-  var dy = e.changedTouches[0].clientY - _swipeStartY;
-  // Only horizontal swipes
-  if (Math.abs(dx) < Math.abs(dy) * 1.5) return;
-  // Swipe LEFT on right edge (last 40px) → open sidebar
-  if (!_mobOpen && _swipeStartX > window.innerWidth - 40 && dx < -50) {
-    _sidebarOpen();
-  }
-  // Swipe RIGHT when sidebar open → close
-  else if (_mobOpen && dx > 50) {
-    _sidebarClose();
-  }
-}, { passive: true });
-
-// Always start closed
-window.addEventListener('DOMContentLoaded', function() {
-  _sidebarClose();
-  // Overlay click to close
-  var ov = document.getElementById('mob-overlay');
-  if (ov) {
-    ov.addEventListener('click', _sidebarClose);
-    ov.addEventListener('touchend', function(e) {
-      e.preventDefault();
-      _sidebarClose();
-    }, { passive: false });
-  }
+// Close more menu when clicking outside
+document.addEventListener('click', function(e) {
+  var more = document.querySelector('.topnav-more');
+  if (more && !more.contains(e.target)) closeMoreMenu();
 });
-</script>
 
-<!-- ── Clear old collapse state ── -->
-<script>
-(function(){ try { localStorage.removeItem('dio_sidebar_collapsed'); } catch(_){} })();
+// Legacy no-op stubs (old sidebar calls won't break)
+function toggleSidebar() {}
+function closeMobileSidebar() {}
+function toggleSidebarCollapse() {}
+function _sidebarOpen() {}
+function _sidebarClose() {}
 </script>
 
 <!-- ── PWA: register service worker ── -->
