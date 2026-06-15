@@ -1,20 +1,213 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — DASHBOARD TAB
-   Renders the main dashboard page. Auto-registers via
-   registerPage() on load. Loaded after app-core.js.
+   DIGITAL IO — DASHBOARD v4
+   New card order · Full screen · Activity feed
    ═══════════════════════════════════════════════════════════ */
 
-// ── DASHBOARD ──
-registerPage('dashboard',renderDashboard);
-async function renderDashboard(container){const stats=await getDashboardStats(),officer=currentOfficer||{},initials=officer.full_name?officer.full_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase():'IO',photo=localStorage.getItem('dio_profile_photo'),avatarHTML=photo?`<img src="${photo}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`:`${initials}`;container.innerHTML=`<div class="news-ticker-wrap"><span class="news-ticker-text" id="news-ticker">Loading...</span></div><div class="officer-card"><div class="officer-card-avatar">${avatarHTML}</div><div style="flex:1;"><div class="officer-card-name">${officer.full_name||'Officer'}</div><div class="officer-card-meta"><span>🏛️ <b>${officer.station||'—'}</b></span><span>📍 <b>${officer.district||'—'}</b></span><span>🆔 <b>${officer.badge_number||'—'}</b></span><span>👮 <b>${officer.designation||'IO'}</b></span></div></div><div style="text-align:right;"><div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">ENTRUSTED CASES</div><div style="font-size:40px;font-weight:900;color:var(--accent);font-family:var(--font-display);">${stats.total}</div></div></div><div class="stats-grid"><div class="stat-card stat-blue" onclick="showPage('cases',null)"><div class="stat-num">${stats.total}</div><div class="stat-label">Entrusted</div></div><div class="stat-card stat-green" onclick="showPage('cases',null)"><div class="stat-num">${stats.complete}</div><div class="stat-label">Challan Complete</div></div><div class="stat-card stat-amber" onclick="showPage('cases',null)"><div class="stat-num">${stats.incomplete}</div><div class="stat-label">Incomplete</div></div><div class="stat-card stat-purple" onclick="showPage('cases',null)"><div class="stat-num">${stats.untrace}</div><div class="stat-label">Untraced</div></div><div class="stat-card stat-red" onclick="showPage('cases',null)"><div class="stat-num">${stats.cancel}</div><div class="stat-label">Cancelled</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;"><div class="card"><div class="card-title">🕐 Current Time</div><div style="font-size:32px;font-weight:800;color:var(--accent);font-family:var(--font-mono);" id="dash-clock">--:--:--</div><div style="font-size:12px;color:var(--text-secondary);margin-top:4px;" id="dash-date"></div></div><div class="card"><div class="card-title">🌤️ Lahore Weather</div><div style="font-size:28px;font-weight:700;color:var(--amber);">38°C</div><div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Partly Cloudy · Humidity: 45%</div></div><div class="card"><div class="card-title">☁️ Backup Status</div><div style="font-size:12px;color:var(--amber);margin-bottom:8px;">⚠️ Google Drive Not Connected</div><button class="btn btn-secondary btn-sm" style="width:100%;" onclick="showPage('backup',null)">☁️ Manage</button></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;"><div class="card"><div class="card-title" style="display:flex;justify-content:space-between;">🔔 Pending Reminders <a onclick="showPage('reminders',null)" style="font-size:10px;">View All →</a></div>${stats.reminders.length===0?`<div style="font-size:12px;color:var(--text-muted);padding:10px 0;">✅ No pending reminders</div>`:stats.reminders.map(r=>`<div class="reminder-item"><div class="reminder-dot" style="background:${r.priority==='high'?'var(--red)':r.priority==='medium'?'var(--amber)':'var(--accent)'}"></div><div class="reminder-text">${r.text}</div><div class="reminder-date">${formatDate(r.reminder_date)}</div></div>`).join('')}</div><div class="card"><div class="card-title">🧩 Mind-Refresh Tools</div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;"><div onclick="openQuiz()" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;text-align:center;cursor:pointer;"><div style="font-size:24px;margin-bottom:4px;">🧠</div><div style="font-size:10px;color:var(--text-muted);">Legal Quiz</div></div><div onclick="openPuzzle()" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;text-align:center;cursor:pointer;"><div style="font-size:24px;margin-bottom:4px;">🔢</div><div style="font-size:10px;color:var(--text-muted);">Logic Puzzle</div></div><div onclick="openTimer()" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;text-align:center;cursor:pointer;"><div style="font-size:24px;margin-bottom:4px;">⏱️</div><div style="font-size:10px;color:var(--text-muted);">Focus Timer</div></div></div><div style="padding:10px;background:var(--bg-tertiary);border-radius:8px;font-size:11px;color:var(--text-muted);text-align:center;">💡 <em>Article 10-A: Right to fair trial is guaranteed under the Constitution of Pakistan</em></div></div></div><div class="card"><div class="card-title" style="display:flex;justify-content:space-between;">📁 Recent Cases <a onclick="showPage('cases',null)" style="font-size:10px;">View All →</a></div>${stats.cases.length===0?`<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">No cases yet. <a onclick="showPage('cases',null)">Add your first case →</a></div>`:`<table class="data-table"><thead><tr><th>FIR No.</th><th>Accused</th><th>Section</th><th>Status</th><th>Date</th></tr></thead><tbody>${stats.cases.slice(0,5).map(c=>`<tr><td><span class="fir-num" onclick="viewCase('${c.id}')">${c.fir_number}</span></td><td>${c.complainant||'—'}</td><td style="font-size:11px;color:var(--text-muted);">${c.section_of_law||'—'}</td><td><span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span></td><td style="font-size:11px;color:var(--text-faint);">${formatDate(c.created_at)}</td></tr>`).join('')}</tbody></table>`}</div>`;startDashboardClock();setTimeout(startNewsTicker,100);}
-function startDashboardClock(){function tick(){const cl=document.getElementById('dash-clock'),dl=document.getElementById('dash-date');if(!cl)return;const now=new Date(),days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];cl.textContent=now.toLocaleTimeString('en-PK',{hour12:true});if(dl)dl.textContent=`${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;}tick();setInterval(tick,1000);}
-const quizzes=[{q:'Under which section of CrPC can police call a witness for questioning?',opts:['Section 54','Section 160','Section 164'],ans:'B — Section 160 CrPC (Talbi)'},{q:'What is the punishment for murder under PPC?',opts:['7 years','10-14 years','Death or life imprisonment'],ans:'C — Section 302 PPC'},{q:'Under which section is a confession before magistrate recorded?',opts:['Section 160','Section 161','Section 164'],ans:'C — Section 164 CrPC'}];let quizIndex=0;
-function openQuiz(){const quiz=quizzes[quizIndex++%quizzes.length];openModal('🧠 Legal Knowledge Quiz',`<p style="font-size:14px;font-weight:600;margin-bottom:16px;">${quiz.q}</p><div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">${quiz.opts.map((o,i)=>`<div onclick="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" style="padding:10px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text-secondary);cursor:pointer;">${String.fromCharCode(65+i)}) ${o}</div>`).join('')}</div><div id="quiz-answer" style="display:none;padding:10px;background:var(--green-bg);border-radius:8px;font-size:12px;color:var(--green);">✅ ${quiz.ans}</div>`,`<button class="btn btn-secondary" onclick="document.getElementById('quiz-answer').style.display='block'">Reveal Answer</button><button class="btn btn-primary" onclick="closeModal();openQuiz()">Next →</button>`);}
-function openPuzzle(){openModal('🔢 Logic Puzzle',`<p style="font-size:14px;font-weight:600;margin-bottom:12px;">3 Suspects, 1 Crime</p><p style="font-size:13px;color:var(--text-secondary);line-height:1.8;">Ali says: Bilal did it.<br>Bilal says: It was not me.<br>Chand says: I was with Ali.<br><br><em style="color:var(--text-muted);">Only one person is telling the truth.</em><br><br>🔎 Who committed the crime?</p><div id="puzzle-ans" style="display:none;margin-top:12px;padding:10px;background:var(--green-bg);border-radius:8px;font-size:12px;color:var(--green);">✅ Answer: <b>Ali</b> committed the crime.</div>`,`<button class="btn btn-secondary" onclick="document.getElementById('puzzle-ans').style.display='block'">Reveal Answer</button><button class="btn btn-primary" onclick="closeModal()">Close</button>`);}
-let timerInterval=null,timerSeconds=1500;
-function openTimer(){openModal('⏱️ Focus Timer',`<div style="text-align:center;"><div style="font-size:64px;font-weight:900;color:var(--accent);font-family:var(--font-mono);" id="timer-disp">25:00</div><div style="display:flex;gap:8px;justify-content:center;margin-top:16px;"><button class="btn btn-primary" onclick="startFocusTimer()">▶ Start</button><button class="btn btn-secondary" onclick="pauseFocusTimer()">⏸ Pause</button><button class="btn btn-secondary" onclick="resetFocusTimer()">↺ Reset</button></div><div style="display:flex;gap:8px;justify-content:center;margin-top:8px;"><button class="btn btn-secondary btn-sm" onclick="setFocusTimer(25)">25 min</button><button class="btn btn-secondary btn-sm" onclick="setFocusTimer(5)">5 min break</button><button class="btn btn-secondary btn-sm" onclick="setFocusTimer(15)">15 min break</button></div></div>`,`<button class="btn btn-secondary" onclick="pauseFocusTimer();closeModal()">Close</button>`);timerSeconds=1500;updateTimerDisplay();}
-function updateTimerDisplay(){const el=document.getElementById('timer-disp');if(!el)return;el.textContent=`${Math.floor(timerSeconds/60).toString().padStart(2,'0')}:${(timerSeconds%60).toString().padStart(2,'0')}`;}
-function startFocusTimer(){if(timerInterval)return;timerInterval=setInterval(()=>{timerSeconds--;updateTimerDisplay();if(timerSeconds<=0){clearInterval(timerInterval);timerInterval=null;showToast('⏱️ Timer complete!');}},1000);}
-function pauseFocusTimer(){clearInterval(timerInterval);timerInterval=null;}
-function resetFocusTimer(){pauseFocusTimer();timerSeconds=1500;updateTimerDisplay();}
-function setFocusTimer(m){pauseFocusTimer();timerSeconds=m*60;updateTimerDisplay();}
+registerPage('dashboard', renderDashboard);
+
+async function renderDashboard(container) {
+  container.innerHTML = `<div id="dash-root">
+    <div style="text-align:center;padding:32px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq',serif;">⏳ لوڈ ہو رہا ہے...</div>
+  </div>`;
+  await _buildDash();
+}
+
+async function _buildDash() {
+  const root = document.getElementById('dash-root');
+  if (!root) return;
+  const o = currentOfficer || {};
+
+  const [cases, reminders, patrolCount, fivecApps] = await Promise.all([
+    getCases().catch(()=>[]),
+    _dFetchRem().catch(()=>[]),
+    _dFetchPatrol().catch(()=>0),
+    _dFetchFivec().catch(()=>0),
+  ]);
+
+  const today = new Date().toISOString().split('T')[0];
+
+  // Status counts
+  const total       = cases.length;
+  const complete    = cases.filter(c=>c.status==='complete').length;
+  const incomplete  = cases.filter(c=>c.status==='incomplete').length;
+  const cancel      = cases.filter(c=>c.status==='cancel').length;
+  const challan512  = cases.filter(c=>c.status==='challan512').length;
+  const untrace     = cases.filter(c=>c.status==='untrace').length;
+  const under       = cases.filter(c=>c.status==='under').length;
+  const pendRem     = reminders.filter(r=>!r.is_done);
+  const todayCases  = cases.filter(c=>{ const d=_pd(c.fir_date); return d&&d.startsWith(today); });
+
+  const statusCounts = { complete, incomplete, cancel, challan512, untrace, under };
+  const monthly = _monthlyTrend(cases);
+
+  root.innerHTML = `
+  <!-- Welcome -->
+  <div style="background:linear-gradient(135deg,#0d2a45,#1a3a5c);border-radius:12px;padding:14px 18px;margin-bottom:14px;direction:rtl;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="text-align:right;flex:1;">
+        <div style="font-size:16px;font-weight:800;color:#fff;font-family:'Jameel Noori Nastaleeq',serif;">خوش آمدید، ${o.full_name||'افسر'}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.6);">${o.designation||''} · تھانہ ${o.station||''} · ضلع ${o.district||''}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);">${new Date().toLocaleDateString('en-PK',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+      </div>
+      <div style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0;">
+        ${(o.full_name||'IO').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase()}
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px;direction:rtl;">
+    ${[
+      ['📁','میرے مقدمات','cases'],
+      ['➕','نیا اندراج','_newCase'],
+      ['⚖️','پیشیاں','reminders'],
+      ['🚔','گشت','patrol'],
+      ['🚨','واقعہ','incident'],
+    ].map(([i,l,p])=>`
+    <button onclick="${p==='_newCase'?'openAddCaseModal()':'showPage(\''+p+'\',null)'}"
+      style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 4px;font-size:10px;font-family:'Jameel Noori Nastaleeq',serif;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;color:var(--text-secondary);transition:all 0.15s;"
+      onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+      onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-secondary)'">
+      <span style="font-size:20px;">${i}</span>${l}
+    </button>`).join('')}
+  </div>
+
+  <!-- Cases Stats Cards — new order -->
+  <div style="margin-bottom:14px;">
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;direction:rtl;font-weight:700;">📊 مقدمات کی صورتحال</div>
+    <!-- Row 1: کل مقدمات full width -->
+    <div onclick="showPage('cases',null)" style="background:linear-gradient(135deg,var(--accent),#0ea5e9);border-radius:10px;padding:12px 16px;margin-bottom:6px;cursor:pointer;direction:rtl;display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:14px;font-weight:700;color:#fff;font-family:'Jameel Noori Nastaleeq',serif;">کل مقدمات</div>
+      <div style="font-size:32px;font-weight:900;color:#fff;">${total}</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.7);">آج ${todayCases.length} نئے</div>
+    </div>
+    <!-- Row 2: 6 status cards -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px;">
+      ${[
+        {k:'complete',   l:'چالان مکمل',    v:complete,   c:'var(--green)'},
+        {k:'incomplete', l:'چالان نامکمل',   v:incomplete, c:'var(--amber)'},
+        {k:'cancel',     l:'اخراج',          v:cancel,     c:'var(--red)'},
+        {k:'challan512', l:'چالان 512',       v:challan512, c:'#f97316'},
+        {k:'untrace',    l:'عدم پتہ',         v:untrace,    c:'#a78bfa'},
+        {k:'under',      l:'زیر تفتیش',       v:under,      c:'var(--accent)'},
+      ].map(s=>`
+      <div onclick="showPage('cases',null)"
+        style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center;cursor:pointer;border-right:3px solid ${s.c};"
+        onmouseover="this.style.background='var(--bg-secondary)'"
+        onmouseout="this.style.background='var(--bg-card)'">
+        <div style="font-size:9px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq',serif;margin-bottom:3px;">${s.l}</div>
+        <div style="font-size:22px;font-weight:900;color:${s.c};">${s.v}</div>
+        <div style="height:3px;background:${s.c};border-radius:2px;margin-top:4px;opacity:${total?s.v/total:0};"></div>
+      </div>`).join('')}
+    </div>
+  </div>
+
+  <!-- Recent Cases (full width) -->
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:14px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);direction:rtl;">
+      <div style="font-size:13px;font-weight:700;color:var(--accent);">📁 حالیہ مقدمات</div>
+      <button class="btn btn-secondary btn-sm" onclick="showPage('cases',null)" style="font-size:11px;">سب دیکھیں →</button>
+    </div>
+    <div style="overflow-x:auto;">
+    <table class="data-table" style="width:100%;">
+      <thead><tr><th>مقدمہ نمبر</th><th>مدعی</th><th>دفعہ</th><th>صورتحال</th><th>تاریخ</th><th></th></tr></thead>
+      <tbody>
+        ${cases.length ? cases.slice(0,10).map(c=>`<tr>
+          <td style="font-weight:800;color:var(--accent);cursor:pointer;font-size:12px;" onclick="openCaseWorkspace('${c.id}')">${c.fir_number||'—'}</td>
+          <td style="font-size:11px;">${(c.complainant||'—').slice(0,20)}</td>
+          <td style="font-size:10px;">${(c.section_of_law||'—').slice(0,15)}</td>
+          <td><span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}" style="font-size:9px;">${STATUS_LABELS[c.status]||c.status}</span></td>
+          <td style="font-size:10px;">${formatDate(c.fir_date)}</td>
+          <td><button class="btn btn-secondary btn-sm" onclick="openCaseWorkspace('${c.id}')" style="padding:3px 8px;font-size:10px;">📄</button></td>
+        </tr>`).join('') : `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">کوئی مقدمہ نہیں</td></tr>`}
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Charts Row: Monthly trend + Status donut -->
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px;">
+
+    <!-- Monthly bar chart -->
+    <div class="card" style="direction:rtl;">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:14px;">📊 ماہانہ اندراج (6 ماہ)</div>
+      <div style="display:flex;align-items:flex-end;gap:8px;height:120px;padding:0 6px;">
+        ${monthly.map((m,i)=>{
+          const max=Math.max(...monthly.map(x=>x.count),1);
+          const pct=Math.round(m.count/max*100);
+          const isCur=i===monthly.length-1;
+          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;">
+            ${m.count?`<div style="font-size:10px;color:${isCur?'var(--accent)':'var(--text-muted)'};font-weight:${isCur?'800':'600'};">${m.count}</div>`:'<div style="font-size:10px;">&nbsp;</div>'}
+            <div style="width:100%;max-width:42px;background:${isCur?'var(--accent)':'rgba(56,189,248,0.3)'};border-radius:4px 4px 0 0;height:${Math.max(pct,3)}%;transition:height 0.4s;"></div>
+            <div style="font-size:10px;color:${isCur?'var(--accent)':'var(--text-muted)'};font-weight:${isCur?'700':'400'};">${m.label}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <!-- Status donut chart -->
+    <div class="card" style="direction:rtl;">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;">⭕ مقدمات کی صورتحال</div>
+      ${total ? `
+      <div style="display:flex;align-items:center;justify-content:center;margin-bottom:10px;">
+        <div style="position:relative;width:110px;height:110px;border-radius:50%;background:conic-gradient(
+          var(--green) 0% ${complete/total*100}%,
+          var(--amber) ${complete/total*100}% ${(complete+incomplete)/total*100}%,
+          var(--accent) ${(complete+incomplete)/total*100}% ${(complete+incomplete+under)/total*100}%,
+          #a78bfa ${(complete+incomplete+under)/total*100}% ${(complete+incomplete+under+untrace)/total*100}%,
+          var(--red) ${(complete+incomplete+under+untrace)/total*100}% 100%
+        );display:flex;align-items:center;justify-content:center;">
+          <div style="width:70px;height:70px;border-radius:50%;background:var(--bg-card);display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div style="font-size:24px;font-weight:900;color:var(--text-primary);">${total}</div>
+            <div style="font-size:9px;color:var(--text-muted);">کل</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;font-size:10px;">
+        ${[
+          ['مکمل',complete,'var(--green)'],
+          ['نامکمل',incomplete,'var(--amber)'],
+          ['زیر تفتیش',under,'var(--accent)'],
+          ['عدم پتہ',untrace,'#a78bfa'],
+          ['اخراج',cancel,'var(--red)'],
+        ].filter(([,v])=>v>0).map(([l,v,c])=>`
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="width:10px;height:10px;border-radius:2px;background:${c};"></span>
+          <span style="color:var(--text-secondary);flex:1;">${l}</span>
+          <span style="font-weight:700;color:${c};">${v}</span>
+        </div>`).join('')}
+      </div>` : `<div style="text-align:center;padding:30px;color:var(--text-muted);font-size:12px;">ابھی کوئی ڈیٹا نہیں</div>`}
+    </div>
+  </div>`;
+}
+
+// ── HELPERS ───────────────────────────────────────────────────
+function _monthlyTrend(cases) {
+  const now = new Date();
+  return Array.from({length:6},(_,i)=>{
+    const d=new Date(now.getFullYear(),now.getMonth()-5+i,1);
+    const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    return { label:d.toLocaleString('default',{month:'short'}), count:cases.filter(c=>{ const p=_pd(c.fir_date); return p&&p.startsWith(key); }).length };
+  });
+}
+function _pd(d) {
+  if(!d)return null;
+  if(/^\d{4}-\d{2}-\d{2}/.test(d))return d;
+  const p=d.split(/[-\/]/);
+  return p.length===3&&p[2].length===4?`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`:null;
+}
+async function _dFetchRem() {
+  const oid=await getOfficerId();
+  const{data}=await supabaseClient.from('reminders').select('*').eq('officer_id',oid).eq('is_done',false).order('reminder_date',{ascending:true});
+  return data||[];
+}
+async function _dFetchPatrol() {
+  const oid=await getOfficerId();
+  const{count}=await supabaseClient.from('patrol_logs').select('*',{count:'exact',head:true}).eq('officer_id',oid);
+  return count||0;
+}
+async function _dFetchFivec() {
+  const oid=await getOfficerId();
+  const{count}=await supabaseClient.from('applications_5c').select('*',{count:'exact',head:true}).eq('officer_id',oid);
+  return count||0;
+}
