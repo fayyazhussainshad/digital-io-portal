@@ -68,18 +68,19 @@ async function _buildLaw() {
   <!-- Law List — simple rows, buttons in one line -->
   <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
     ${filtered.map((l,i) => `
-    <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:${i<filtered.length-1?'1px solid var(--border)':'none'};direction:rtl;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:${i<filtered.length-1?'1px solid var(--border)':'none'};direction:rtl;">
       <div style="font-size:24px;flex-shrink:0;">${l.file_url ? '📄' : '📋'}</div>
-      <div style="flex:1;min-width:150px;">
+      <div style="flex:1;min-width:120px;">
         <div style="font-size:15px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">${l.title}</div>
-        <div style="font-size:11px;color:var(--text-muted);">${formatDate(l.created_at)}${l.content?` · ${l.content.length} حروف`:''}</div>
+        <div style="font-size:11px;color:var(--text-muted);">${formatDate(l.created_at)}</div>
       </div>
-      <!-- Buttons in ONE line, left side -->
-      <div style="display:flex;gap:5px;flex-shrink:0;direction:rtl;flex-wrap:wrap;">
-        ${l.content ? `<button class="btn btn-secondary btn-sm" onclick="_readLaw('${l.id}')" title="پڑھیں">👁️</button>` : ''}
-        <button class="btn btn-secondary btn-sm" onclick="_renameLaw('${l.id}','${(l.title||'').replace(/'/g,'')}')" title="نام تبدیل">✏️</button>
-        ${l.content ? `<button class="btn btn-secondary btn-sm" onclick="_printLaw('${l.id}')" title="پرنٹ">🖨️</button>` : ''}
-        ${l.file_url ? `<button class="btn btn-secondary btn-sm" onclick="window.open('${l.file_url}')" title="ڈاؤنلوڈ">⬇️</button>` : ''}
+      <!-- Buttons in ONE line: view, download, print, online -->
+      <div style="display:flex;gap:5px;flex-shrink:0;direction:rtl;white-space:nowrap;">
+        <button class="btn btn-secondary btn-sm" onclick="_readLaw('${l.id}')" title="دیکھیں">👁️ دیکھیں</button>
+        <button class="btn btn-secondary btn-sm" onclick="${l.file_url?`window.open('${l.file_url}')`:`_downloadLawText('${l.id}')`}" title="ڈاؤنلوڈ">⬇️ ڈاؤنلوڈ</button>
+        <button class="btn btn-secondary btn-sm" onclick="_printLaw('${l.id}')" title="پرنٹ">🖨️ پرنٹ</button>
+        <button class="btn btn-secondary btn-sm" onclick="window.open('${_LAW_LINKS.pakistan}')" title="آن لائن">🔗 آن لائن</button>
+        <button class="btn btn-secondary btn-sm" onclick="_renameLaw('${l.id}','${(l.title||'').replace(/'/g,'')}')" title="نام">✏️</button>
         <button class="btn btn-danger btn-sm" onclick="_deleteLaw('${l.id}')" title="حذف">🗑️</button>
       </div>
     </div>`).join('')}
@@ -95,6 +96,20 @@ async function _buildLaw() {
       <button class="btn btn-secondary btn-sm" onclick="window.open('${_LAW_LINKS.lhc}')">🔗 LHC Judgments</button>
     </div>
   </div>`}`;
+}
+
+// Download law content as text file
+async function _downloadLawText(id) {
+  try {
+    const { data } = await supabaseClient.from('law_library').select('*').eq('id',id).single();
+    if (!data) return;
+    const blob = new Blob([data.content||''], {type:'text/plain;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (data.title||'law') + '.txt';
+    a.click();
+    showToast('⬇️ ڈاؤنلوڈ ہو گیا','success');
+  } catch(e) { showToast('❌ '+e.message,'error'); }
 }
 
 // ── ADD / UPLOAD LAW ──────────────────────────────────────────

@@ -431,17 +431,23 @@ input, textarea, select { font-family: var(--font-main); }
 .modal-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.6; }
 
 /* ── APP LAYOUT ── */
-#main-app { display: flex; flex-direction: row-reverse; height: 100vh; overflow: hidden; }
+#main-app { height: 100vh; overflow: hidden; position: relative; }
 /* Sidebar — overlay from RIGHT on all screens */
 .sidebar {
-  width: var(--sidebar-width);
-  min-width: var(--sidebar-width);
+  width: var(--sidebar-width) !important;
   background: var(--bg-secondary);
   border-left: 1px solid var(--border);
-  display: flex;
+  display: flex !important;
   flex-direction: column;
-  flex-shrink: 0;
-  height: 100vh;
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  left: auto !important;
+  bottom: 0 !important;
+  z-index: 900 !important;
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: auto !important;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -465,7 +471,7 @@ input, textarea, select { font-family: var(--font-main); }
 .logout-btn { width: 100%; background: var(--red-bg); border: 1px solid rgba(239,68,68,0.2); border-radius: var(--radius-sm); padding: 9px; color: var(--red); font-size: 12px; font-weight: 600; transition: all 0.15s; }
 .logout-btn:hover { background: rgba(239,68,68,0.15); }
 .sidebar-version { font-size: 9px; color: var(--text-faint); text-align: center; margin-top: 6px; }
-.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; width: 100%; min-width: 0; }
+.main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; width: 100%; min-width: 0; margin-right: var(--sidebar-width); }
 .topbar { height: var(--topbar-height); background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; justify-content: space-between; flex-shrink: 0; }
 .topbar-left { display: flex; align-items: center; gap: 12px; }
 .topbar-right { display: flex; align-items: center; gap: 8px; }
@@ -734,9 +740,8 @@ select.form-input { direction: rtl; text-align: right; }
 button, .btn, .nav-item, .sr-pill, .mdoc-chip, .wb-btn {
   touch-action: manipulation; /* Faster tap — no 300ms delay */
 }
-.sidebar, .main-area, .page-content {
+.main-area, .page-content {
   -webkit-overflow-scrolling: touch;
-  will-change: transform;
 }
 img { content-visibility: auto; }
 
@@ -776,11 +781,7 @@ img { content-visibility: auto; }
 }
 
 /* ── Sidebar hover on desktop ── */
-#main-app:not(.mobile) .sidebar:hover {
-  width: var(--sidebar-width) !important;
-  min-width: var(--sidebar-width) !important;
-  opacity: 1 !important;
-}
+/* sidebar hover removed */
 
 /* ── Form labels RIGHT aligned (Urdu RTL) ── */
 .form-label {
@@ -816,14 +817,7 @@ input[id*="cnic"], input[id*="cell"] {
 .page-subtitle { display:none; }
 /* But keep page-header visible if it contains action buttons */
 .page-header { padding-top:0; margin-bottom:8px; }
-
-/* ── Collapsible Sidebar (Desktop only) ── */
-#main-app { display:flex; flex-direction:row-reverse; position:relative; }
-.sidebar.collapsed {
-  opacity: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
+#main-app { position: relative; }
 #sidebar-toggle { display: none; }
 
 /* Floating sidebar toggle button */
@@ -1121,6 +1115,7 @@ function _sidebarClose() { closeMobileSidebar(); }
     box-shadow: -4px 0 20px rgba(0,0,0,0.4);
   }
   .sidebar.mobile-open { transform: translateX(0); }
+  .main-area { margin-right: 0 !important; }
   .topbar { padding-right: 60px !important; }
 }
 </style>
