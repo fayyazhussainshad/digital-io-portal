@@ -97,84 +97,51 @@ const PENAL_CODES = [
 
 // ── CASES LIST ──
 registerPage('cases',renderCases);
-let _casesCache = []; // cleared on every render — no stale data
-async function renderCases(container,fStatus,fQuery,fStation){
-  fStatus=fStatus||'';fQuery=fQuery||'';fStation=fStation||'';
-  // Show loading skeleton immediately
-  if (typeof skeletonRows === 'function') {
-    container.innerHTML = `<div style="padding:8px;"><div class="dio-skeleton" style="width:200px;height:24px;border-radius:6px;margin-bottom:16px;"></div>${skeletonRows(6)}</div>`;
-  }
-  _casesCache = [];
-  const allCases=await getCases(fStatus,fQuery);
-  _casesCache=allCases;
+let _casesCache = []; // cached for shareModal lookup without re-fetch
+async function renderCases(container,fStatus,fQuery){
+  fStatus=fStatus||'';fQuery=fQuery||'';
+  const cases=await getCases(fStatus,fQuery);
+  _casesCache=cases;
   const o=currentOfficer||{};
-
-  // Get unique stations from cases (for folder view)
-  const stations=[...new Set(allCases.map(c=>c.case_station||o.station||'—').filter(Boolean))].sort();
-  const cases = fStation ? allCases.filter(c=>(c.case_station||o.station)==fStation) : allCases;
-  const currentStation = o.station||'—';
-  const isArchiveView = fStation && fStation !== currentStation;
-
   container.innerHTML=`
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;direction:rtl;flex-wrap:wrap;">
-    <div>
-      <div style="font-size:18px;font-weight:800;">📁 میرے مقدمات</div>
-      <div style="font-size:12px;color:var(--text-muted);">${cases.length} مقدمات${isArchiveView?' · '+fStation+' آرکائیو':''}</div>
-    </div>
-    <div style="display:flex;gap:6px;direction:rtl;margin-inline-start:auto;flex-wrap:wrap;">
-      <button class="btn btn-primary" onclick="openAddCaseModal()">+ نیا اندراج</button>
+  <div class="page-header">
+    <div><div class="page-title">📁 My Cases</div><div class="page-subtitle">${cases.length} case(s)</div></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary btn-sm" onclick="openTransferModal()" title="Record a station transfer">🏛️ Station Transfer</button>
+      <button class="btn btn-primary" onclick="openAddCaseModal()">+ New Case</button>
     </div>
   </div>
-
-  <!-- Station Folders -->
-  ${stations.length>1?`
-  <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;direction:rtl;">
-    <button class="btn ${!fStation?'btn-primary':'btn-secondary'} btn-sm" onclick="renderCases(document.getElementById('page-content'),'','','')">📁 تمام (${allCases.length})</button>
-    ${stations.map(s=>`
-    <button class="btn ${fStation===s?'btn-primary':'btn-secondary'} btn-sm"
-      onclick="renderCases(document.getElementById('page-content'),'','','${s}')"
-      title="${s===currentStation?'موجودہ تھانہ':'پرانا تھانہ — آرکائیو'}">
-      ${s===currentStation?'🏛️':'📦'} ${s} (${allCases.filter(c=>(c.case_station||o.station)===s).length})
-    </button>`).join('')}
-  </div>`:``}
-
-  ${isArchiveView?`<div style="background:rgba(167,139,250,0.1);border:1px solid #a78bfa;border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:12px;color:#a78bfa;direction:rtl;">📦 آرکائیو — تھانہ ${fStation} کے پرانے مقدمات (صرف دیکھنے کے لیے)</div>`:''}
-
-  <div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;margin-bottom:14px;">
-    <input class="search-input" id="case-search" style="flex:1;min-width:180px;" placeholder="🔍 FIR نمبر، مدعی، CNIC، دفعہ..." value="${fQuery}" oninput="clearTimeout(window._csTmr);window._csTmr=setTimeout(()=>renderCases(document.getElementById('page-content'),'',this.value,'${fStation}'),280)" dir="rtl">
-    <select class="filter-select" id="case-status-filter" onchange="renderCases(document.getElementById('page-content'),this.value,document.getElementById('case-search').value,'${fStation}')">
-      <option value="" ${!fStatus?'selected':''}>تمام صورتحال</option>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+    <input class="search-input" id="case-search" style="flex:1;min-width:200px;" placeholder="🔍 Search FIR No, Complainant, CNIC, Section of Law..." value="${fQuery}" oninput="clearTimeout(window._csTmr);window._csTmr=setTimeout(()=>renderCases(document.getElementById('page-content'),'',this.value),280)">
+    <select class="filter-select" id="case-status-filter" onchange="renderCases(document.getElementById('page-content'),this.value,document.getElementById('case-search').value)">
+      <option value="" ${!fStatus?'selected':''}>All Statuses</option>
       <option value="under"      ${fStatus==='under'?'selected':''}>زیر تفتیش</option>
-      <option value="complete"   ${fStatus==='complete'?'selected':''}>چالان مکمل</option>
-      <option value="incomplete" ${fStatus==='incomplete'?'selected':''}>چالان نامکمل</option>
-      <option value="challan512" ${fStatus==='challan512'?'selected':''}>چالان 512</option>
+      <option value="complete"   ${fStatus==='complete'?'selected':''}>مکمل چالان</option>
+      <option value="incomplete" ${fStatus==='incomplete'?'selected':''}>نامکمل چالان</option>
       <option value="untrace"    ${fStatus==='untrace'?'selected':''}>عدم پتہ</option>
       <option value="cancel"     ${fStatus==='cancel'?'selected':''}>اخراج</option>
     </select>
   </div>
   <div class="card" style="padding:0;overflow:hidden;">
     <div style="overflow-x:auto;">
-      <table class="data-table" style="width:100%;min-width:900px;">
+      <table class="data-table" style="width:100%;min-width:1180px;">
         <thead><tr>
-          <th style="width:44px;text-align:center;">#</th>
-          <th>مقدمہ نمبر</th>
-          <th>تاریخ اندراج</th>
-          <th>تاریخ وقوعہ</th>
-          <th>دفعہ قانون</th>
-          <th>تھانہ</th>
-          <th>مدعی</th>
-          <th>شناختی کارڈ</th>
-          <th>موبائل</th>
-          <th>صورتحال</th>
-          <th style="text-align:center;">اقدامات</th>
+          <th style="width:44px;text-align:center;">S/N</th>
+          <th>FIR No</th>
+          <th>Date of FIR</th>
+          <th>Occurrence Date</th>
+          <th>Offence</th>
+          <th>Police Station</th>
+          <th>Complainant</th>
+          <th>CNIC</th>
+          <th>Cell No</th>
+          <th>Status</th>
+          <th style="width:130px;text-align:center;">Actions</th>
         </tr></thead>
         <tbody>
-          ${cases.length ? cases.map((c,i)=>renderCaseRow(c,i+1)).join('') : `<tr><td colspan="11" style="text-align:center;padding:50px 20px;">
-            <div style="font-size:54px;margin-bottom:14px;">📁</div>
-            <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:8px;font-family:'Jameel Noori Nastaleeq',serif;">ابھی کوئی مقدمہ درج نہیں</div>
-            <div style="font-size:13px;color:var(--text-muted);margin-bottom:18px;direction:rtl;">اپنا پہلا مقدمہ درج کرنے کے لیے نیچے بٹن دبائیں</div>
-            <button class="btn btn-primary" onclick="openAddCaseModal()" style="font-size:14px;padding:10px 24px;">➕ پہلا مقدمہ درج کریں</button>
-          </td></tr>`}
+          ${cases.length===0
+            ?`<tr><td colspan="11" style="text-align:center;padding:48px;color:var(--text-muted);">No cases yet. <a onclick="openAddCaseModal()" style="cursor:pointer;color:var(--accent);">Add your first case →</a></td></tr>`
+            :cases.map((c,i)=>renderCaseRow(c,i+1)).join('')}
         </tbody>
       </table>
     </div>
@@ -189,11 +156,11 @@ function renderCaseRow(c,sn){
   return `<tr>
     <td style="text-align:center;font-size:11px;color:var(--text-muted);font-weight:700;">${sn}</td>
     <td>
-      <span style="font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:12px;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(56,189,248,0.4);" onclick="openCaseWorkspace('${c.id}')" title="Open Case Workspace">${c.fir_number||'—'}</span>
+      <span style="font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:12px;">${c.fir_number||'—'}</span>
       ${c.is_cross_version?'<br><span style="font-size:9px;color:var(--red);font-weight:600;">⚔️ Cross</span>':''}
     </td>
-    <td style="font-size:11px;white-space:nowrap;">${formatDate(c.fir_date)}</td>
-    <td style="font-size:11px;white-space:nowrap;">${formatDate(c.occurrence_date)}</td>
+    <td style="font-size:11px;white-space:nowrap;">${c.fir_date||'—'}</td>
+    <td style="font-size:11px;white-space:nowrap;">${c.occurrence_date||'—'}</td>
     <td style="font-size:11px;max-width:150px;">${offence}</td>
     <td style="font-size:11px;">${station}</td>
     <td style="font-size:12px;font-weight:500;">${c.complainant||'—'}</td>
@@ -201,175 +168,14 @@ function renderCaseRow(c,sn){
     <td style="font-family:var(--font-mono);font-size:11px;">${cell}</td>
     <td><span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span></td>
     <td>
-      <div style="display:flex;gap:2px;direction:rtl;justify-content:center;flex-direction:row-reverse;">
-        <button class="btn btn-secondary btn-sm" onclick="openCaseWorkspace('${c.id}')" title="مقدمہ کھولیں">📄</button>
-        <button class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')" title="ترمیم">✏️</button>
-        <button class="btn btn-secondary btn-sm" onclick="downloadCaseFile('${c.id}')" title="ڈاؤنلوڈ">⬇️</button>
-        <button class="btn btn-primary   btn-sm" onclick="openShareModal('${c.id}')"    title="شیئر">📤</button>
-        <button class="btn btn-danger    btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number||'?'}')" title="حذف">🗑️</button>
+      <div style="display:flex;gap:2px;justify-content:center;">
+        <button class="btn btn-secondary btn-sm" onclick="openCaseWorkspace('${c.id}')" title="Open Case Form &amp; FIR Documents">📄</button>
+        <button class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')" title="Edit Case Details">✏️</button>
+        <button class="btn btn-primary   btn-sm" onclick="openShareModal('${c.id}')"    title="Share Case via Email or WhatsApp">📤</button>
+        <button class="btn btn-danger    btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number||'?'}')" title="Delete Case">🗑️</button>
       </div>
     </td>
   </tr>`;
-}
-
-// ── DIRECT FIR PRINT ─────────────────────────────────────────
-async function _printFIRDirect(id) {
-  const c = _casesCache.find(x=>x.id===id) || await getCase(id);
-  if (!c) { showToast('❌ مقدمہ نہیں ملا','error'); return; }
-  const o = currentOfficer||{};
-  let _printHTML = '';
-  _printHTML += (`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    @page{margin:15mm;size:A4;}
-    body{font-family:'Noto Nastaliq Urdu','Jameel Noori Nastaleeq',serif;direction:rtl;color:#111;font-size:13px;line-height:1.8;}
-    .hdr{text-align:center;border-bottom:3px double #000;padding-bottom:10px;margin-bottom:14px;}
-    .hdr h1{font-size:20px;font-weight:900;margin:0 0 4px;}
-    .fir-title{font-size:17px;font-weight:900;text-align:center;background:#1a3a5c;color:#fff;padding:8px;margin:10px 0;}
-    table{width:100%;border-collapse:collapse;margin-bottom:12px;}
-    td,th{border:1px solid #333;padding:7px 10px;font-size:13px;}
-    th{background:#e8e8e8;font-weight:700;width:38%;}
-    .s-lbl{font-size:13px;font-weight:800;background:#f0f4f8;padding:7px 12px;border-right:4px solid #1a3a5c;margin:12px 0 6px;}
-    .narrative{border:1px solid #999;padding:12px;min-height:80px;margin-top:6px;line-height:2.2;}
-    .sig-row{display:flex;justify-content:space-between;margin-top:40px;gap:20px;}
-    .sig-box{text-align:center;flex:1;}
-    .sig-line{border-top:1px solid #000;padding-top:6px;margin-top:30px;font-size:12px;}
-    .footer{font-size:9px;color:#888;text-align:center;margin-top:20px;border-top:1px solid #ccc;padding-top:6px;}
-  </style></head><body>
-  <div class="hdr">
-    <h1>محکمہ پولیس پنجاب</h1>
-    <div>تھانہ ${c.case_station||o.station||'___'} ضلع ${c.case_district||o.district||'___'}</div>
-  </div>
-  <div class="fir-title">فرسٹ انفارمیشن رپورٹ (FIR)</div>
-  <table>
-    <tr><th>مقدمہ نمبر</th><td><b>${c.fir_number||'—'}</b></td><th>تاریخ اندراج</th><td>${formatDate(c.fir_date)}</td></tr>
-    <tr><th>تاریخ وقوعہ</th><td>${formatDate(c.occurrence_date)||'—'}</td><th>دفعات</th><td><b>${c.section_of_law||'—'}</b></td></tr>
-    <tr><th>ملزمان</th><td colspan="3">${c.mulzman_type==='maloom'?'✅ معلوم':'⚠️ نامعلوم'}</td></tr>
-  </table>
-  <div class="s-lbl">مدعی کی تفصیل</div>
-  <table>
-    <tr><th>نام</th><td><b>${c.complainant||'—'}</b></td><th>شناختی کارڈ</th><td>${c.complainant_cnic||'—'}</td></tr>
-    <tr><th>موبائل</th><td>${c.complainant_cell||'—'}</td><th>پیشہ</th><td>${c.complainant_profession||'—'}</td></tr>
-  </table>
-  <div class="s-lbl">واقعے کی تفصیل</div>
-  <div class="narrative">${c.notes||'&nbsp;'.repeat(200)}</div>
-  <div class="s-lbl">دفتری</div>
-  <table>
-    <tr><th>تفتیشی افسر</th><td>${o.full_name||'—'}</td><th>عہدہ</th><td>${o.designation||'—'}</td></tr>
-    <tr><th>صورتحال</th><td colspan="3">${STATUS_LABELS[c.status]||c.status||'—'}</td></tr>
-  </table>
-  <div class="sig-row">
-    <div class="sig-box"><div class="sig-line">دستخط مدعی<br>${c.complainant||'___'}</div></div>
-    <div class="sig-box"><div class="sig-line">تفتیشی افسر<br>${o.full_name||'___'}</div></div>
-    <div class="sig-box"><div class="sig-line">SHO تھانہ ${c.case_station||o.station||'___'}<br>مہر و دستخط</div></div>
-  </div>
-  <div class="footer">Digital IO · محکمہ پولیس پنجاب · ${new Date().toLocaleDateString('en-PK')}</div>
-  
-  </body></html>`);
-  dioPrint(_printHTML);
-}
-
-// ── DOWNLOAD CASE FILE ──
-async function downloadCaseFile(id) {
-  const c = _casesCache.find(x=>x.id===id) || await getCase(id);
-  if (!c) { showToast('❌ Case not found','error'); return; }
-
-  openModal('⬇️ Case File Download — FIR ' + (c.fir_number||''),
-    `<div style="display:flex;flex-direction:column;gap:12px;padding:10px 0;">
-      <div style="font-size:13px;color:var(--text-secondary);text-align:center;margin-bottom:4px;">FIR ${c.fir_number||'—'} · ${c.complainant||'—'}</div>
-      <button class="btn btn-primary" style="padding:14px;font-size:14px;" onclick="closeModal();_downloadCaseTxt('${id}')">
-        📄 Text File Download کریں (.txt)
-      </button>
-      <button class="btn btn-secondary" style="padding:14px;font-size:14px;" onclick="closeModal();_downloadCaseHTML('${id}')">
-        🌐 HTML File Download کریں (Print → PDF)
-      </button>
-      <div style="font-size:10px;color:var(--text-faint);text-align:center;">PDF کے لیے: HTML کھولیں → Ctrl+P → Save as PDF</div>
-    </div>`,
-    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>`
-  );
-}
-
-async function _downloadCaseTxt(id) {
-  const c = _casesCache.find(x=>x.id===id) || await getCase(id);
-  if (!c) return;
-  const o = currentOfficer || {};
-  let txt = '══════════════════════════════════\n';
-  txt += '      محکمہ پولیس پنجاب\n';
-  txt += `      تھانہ ${o.station||'—'} ضلع ${o.district||'—'}\n`;
-  txt += '══════════════════════════════════\n\n';
-  txt += `مقدمہ نمبر:        ${c.fir_number||'—'}\n`;
-  txt += `تاریخ اندراج:      ${formatDate(c.fir_date)}\n`;
-  txt += `تاریخ وقوعہ:       ${formatDate(c.occurrence_date)}\n`;
-  txt += `دفعات:             ${c.section_of_law||'—'}\n`;
-  txt += `جرم:               ${c.offence_type||'—'}\n`;
-  txt += `صورتحال:           ${STATUS_LABELS[c.status]||c.status}\n`;
-  txt += `\n── مدعی ──────────────────────────\n`;
-  txt += `نام:               ${c.complainant||'—'}\n`;
-  txt += `شناختی کارڈ:       ${c.complainant_cnic||'—'}\n`;
-  txt += `موبائل:            ${c.complainant_cell||'—'}\n`;
-  txt += `پیشہ:              ${c.complainant_profession||'—'}\n`;
-  txt += `\n── رپورٹنگ افسر ──────────────────\n`;
-  txt += `نام:               ${o.full_name||'—'}\n`;
-  txt += `عہدہ:              ${o.designation||'—'}\n`;
-  txt += `تھانہ:             ${o.station||'—'}\n`;
-  txt += `\nتاریخ پرنٹ: ${new Date().toLocaleDateString('en-PK')}\n`;
-  txt += '══════════════════════════════════\n';
-  txt += '         Digital IO · Punjab Police\n';
-  txt += '══════════════════════════════════\n';
-
-  const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `Case-FIR-${c.fir_number||'file'}-${new Date().toISOString().slice(0,10)}.txt`;
-  a.click();
-  showToast('✅ File Download ہو رہی ہے','success');
-}
-
-async function _downloadCaseHTML(id) {
-  const c = _casesCache.find(x=>x.id===id) || await getCase(id);
-  if (!c) return;
-  const o = currentOfficer || {};
-  const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
-  <title>FIR ${c.fir_number||''}</title>
-  <style>
-    body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',Arial,sans-serif;direction:rtl;margin:30px;color:#111;font-size:14px;}
-    h2,h3{text-align:center;} .row{display:flex;gap:20px;margin-bottom:8px;}
-    .lbl{color:#555;min-width:140px;font-weight:600;} .val{flex:1;}
-    .sec{border-top:1px solid #ccc;margin:16px 0 8px;padding-top:8px;font-weight:700;color:#1a3a5c;}
-    .footer{text-align:center;font-size:11px;color:#888;margin-top:40px;border-top:1px solid #ccc;padding-top:10px;}
-    @media print{body{margin:15mm;}}
-  </style></head><body>
-  <h2>محکمہ پولیس پنجاب</h2>
-  <h3>تھانہ ${o.station||'—'} ضلع ${o.district||'—'}</h3>
-  <hr>
-  <div class="row"><span class="lbl">مقدمہ نمبر:</span><span class="val"><b>${c.fir_number||'—'}</b></span></div>
-  <div class="row"><span class="lbl">تاریخ اندراج:</span><span class="val">${formatDate(c.fir_date)}</span></div>
-  <div class="row"><span class="lbl">تاریخ وقوعہ:</span><span class="val">${formatDate(c.occurrence_date)}</span></div>
-  <div class="row"><span class="lbl">دفعات:</span><span class="val">${c.section_of_law||'—'}</span></div>
-  <div class="row"><span class="lbl">جرم:</span><span class="val">${c.offence_type||'—'}</span></div>
-  <div class="row"><span class="lbl">صورتحال:</span><span class="val">${STATUS_LABELS[c.status]||c.status}</span></div>
-  <div class="sec">مدعی کی تفصیل</div>
-  <div class="row"><span class="lbl">نام:</span><span class="val">${c.complainant||'—'}</span></div>
-  <div class="row"><span class="lbl">شناختی کارڈ:</span><span class="val">${c.complainant_cnic||'—'}</span></div>
-  <div class="row"><span class="lbl">موبائل:</span><span class="val">${c.complainant_cell||'—'}</span></div>
-  <div class="row"><span class="lbl">پیشہ:</span><span class="val">${c.complainant_profession||'—'}</span></div>
-  <div class="sec">رپورٹنگ افسر</div>
-  <div class="row"><span class="lbl">نام:</span><span class="val">${o.full_name||'—'}</span></div>
-  <div class="row"><span class="lbl">عہدہ:</span><span class="val">${o.designation||'—'}</span></div>
-  <div class="row"><span class="lbl">تھانہ:</span><span class="val">${o.station||'—'}</span></div>
-  <div style="margin-top:50px;display:flex;justify-content:space-between;">
-    <div style="text-align:center;"><div style="border-top:1px solid #333;width:200px;padding-top:6px;">دستخط رپورٹنگ افسر</div></div>
-    <div style="text-align:center;"><div style="border-top:1px solid #333;width:200px;padding-top:6px;">SHO تھانہ ${o.station||'—'}</div></div>
-  </div>
-  <div class="footer">Digital IO · محکمہ پولیس پنجاب · تاریخ: ${new Date().toLocaleDateString('en-PK')}</div>
-  </body></html>`;
-
-  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `Case-FIR-${c.fir_number||'file'}-${new Date().toISOString().slice(0,10)}.html`;
-  a.click();
-  showToast('✅ HTML file download ہوئی — browser میں کھولیں، Ctrl+P سے PDF بنائیں','success');
 }
 
 // ── SHARE CASE ──
@@ -384,8 +190,8 @@ async function openShareModal(id){
     '─────────────────────────────────',
     `تھانہ (Station):      ${station}`,
     `مقدمہ نمبر (FIR No):  ${c.fir_number||'—'}`,
-    `تاریخ FIR (Date):     ${formatDate(c.fir_date)}`,
-    `تاریخ وقوعہ (Occ.):  ${formatDate(c.occurrence_date)}`,
+    `تاریخ FIR (Date):     ${c.fir_date||'—'}`,
+    `تاریخ وقوعہ (Occ.):  ${c.occurrence_date||'—'}`,
     `جرم (Offence):        ${offence}`,
     `مدعی (Complainant):   ${c.complainant||'—'}`,
     `CNIC:                 ${c.complainant_cnic||'—'}`,
@@ -400,7 +206,7 @@ async function openShareModal(id){
   const sub=encodeURIComponent(`Case File — FIR ${c.fir_number}`);
   openModal(`📤 Share Case — FIR ${c.fir_number||''}`,
     `<div style="margin-bottom:14px;background:var(--bg-tertiary);border-radius:8px;padding:12px;font-size:10.5px;color:var(--text-secondary);font-family:var(--font-mono);white-space:pre;line-height:1.7;max-height:180px;overflow-y:auto;">${text}</div>
-     <div style="display:flex;gap:10px;direction:rtl;justify-content:center;flex-wrap:wrap;">
+     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
        <a href="https://wa.me/?text=${enc}" target="_blank" rel="noopener"
           style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;background:#25D366;color:#fff;font-weight:700;font-size:13px;text-decoration:none;">
          💬 Share on WhatsApp
@@ -411,7 +217,7 @@ async function openShareModal(id){
        </a>
      </div>
      <div style="margin-top:10px;font-size:10px;color:var(--text-muted);text-align:center;">WhatsApp opens in a new tab · Email opens your default email app</div>`,
-    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">Close</button>`);
+    `<button class="btn btn-secondary" onclick="closeModal()">Close</button>`);
 }
 
 
@@ -451,7 +257,6 @@ function caseFormHTML(c) {
   var statusOpts = '<option value="under"'+(status==='under'?' selected':'')+'>&#x0632;&#x06CC;&#x0631; &#x062A;&#x0641;&#x062A;&#x06CC;&#x0634; (Under Investigation)</option>'
     + '<option value="complete"'+(status==='complete'?' selected':'')+'>&#x0645;&#x06A9;&#x0645;&#x0644; &#x0686;&#x0627;&#x0644;&#x0627;&#x0646; (Complete)</option>'
     + '<option value="incomplete"'+(status==='incomplete'?' selected':'')+'>&#x0646;&#x0627;&#x0645;&#x06A9;&#x0645;&#x0644; &#x0686;&#x0627;&#x0644;&#x0627;&#x0646; (Incomplete)</option>'
-    + '<option value="challan512"'+(status==='challan512'?' selected':'')+'>\u0686\u0627\u0644\u0627\u0646 512\u0636 \u0641 (512 CrPC)</option>'
     + '<option value="untrace"'+(status==='untrace'?' selected':'')+'>&#x0639;&#x062F;&#x0645; &#x067E;&#x062A;&#x06C1; (Untraced)</option>'
     + '<option value="cancel"'+(status==='cancel'?' selected':'')+'>&#x0627;&#x062E;&#x0631;&#x0627;&#x062C; (Cancelled)</option>';
 
@@ -469,89 +274,101 @@ function caseFormHTML(c) {
   var html = ''
     + '<div style="max-height:70vh;overflow-y:auto;padding-right:4px;">'
 
-    // Row 1: مقدمہ نمبر + تاریخ اندراج مقدمہ
+    // FIR + Date
     + '<div class="form-row">'
-    + '<div class="form-group"><label class="form-label">مقدمہ نمبر *</label>'
-    + '<input class="form-input" id="cf-fir" value="'+fir+'" placeholder="e.g. 245/2025" dir="ltr" style="text-align:left;"></div>'
-    + '<div class="form-group"><label class="form-label">تاریخ اندراج مقدمہ *</label>'
-    + '<input class="form-input" id="cf-date" value="'+date+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" dir="ltr" style="text-align:left;"></div>'
+    + '<div class="form-group"><label class="form-label">FIR Number *</label>'
+    + '<input class="form-input" id="cf-fir" value="'+fir+'" placeholder="e.g. 245/2025" dir="auto"></div>'
+    + '<div class="form-group"><label class="form-label">Date of FIR *</label>'
+    + '<input class="form-input" id="cf-date" value="'+date+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" maxlength="10"></div>'
     + '</div>'
 
-    // Row 2: تاریخ وقوعہ + Status
+    // Occurrence + Status
     + '<div class="form-row">'
-    + '<div class="form-group"><label class="form-label">تاریخ وقوعہ</label>'
-    + '<input class="form-input" id="cf-occurrence-date" value="'+occ+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" dir="ltr" style="text-align:left;"></div>'
-    + '<div class="form-group"><label class="form-label">صورتحال *</label>'
+    + '<div class="form-group"><label class="form-label">Occurrence Date</label>'
+    + '<input class="form-input" id="cf-occurrence-date" value="'+occ+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" maxlength="10"></div>'
+    + '<div class="form-group"><label class="form-label">Status *</label>'
     + '<select class="form-input" id="cf-status">'+statusOpts+'</select></div>'
     + '</div>'
 
-    // Row 2b: ملزمان کی صورتحال
-    + '<div class="form-row">'
-    + '<div class="form-group"><label class="form-label">ملزمان</label>'
-    + '<select class="form-input" id="cf-mulzman-type">'
-    + '<option value="maloom" '+(c.mulzman_type==='maloom'?'selected':'')+'>✅ ملزمان معلوم</option>'
-    + '<option value="namaloom" '+(c.mulzman_type==='namaloom'||!c.mulzman_type?'selected':'')+'>⚠️ ملزمان نامعلوم</option>'
-    + '</select></div>'
-    + '<div class="form-group"><label class="form-label">&nbsp;</label>'
-    + '<div style="font-size:11px;color:var(--text-muted);padding:9px 12px;background:var(--bg-secondary);border-radius:6px;">'
-    + '⚠️ نامعلوم منتخب کریں تو 15 دن بعد خودکار یاددہانی ملے گی'
-    + '</div></div>'
-    + '</div>'
-
-    // Row 3: Sections of Law (full width)
+    // Sections
     + '<div class="form-group">'
-    + '<label class="form-label">دفعات قانون * <span style="color:var(--text-faint);font-weight:400;">(ایک سے زیادہ)</span></label>'
+    + '<label class="form-label">Sections of Law * <span style="color:var(--text-faint);font-weight:400;">(multiple allowed)</span></label>'
     + '<div style="position:relative;">'
-    + '<input class="form-input" id="cf-section-search" placeholder="🔍 دفعہ نمبر یا کلیدی الفاظ..." dir="ltr" style="text-align:left;" oninput="searchPenalCodes(this.value)" autocomplete="off">'
+    + '<input class="form-input" id="cf-section-search" placeholder="&#x1F50D; Type section no. or keyword (e.g. 302 or murder)..." oninput="searchPenalCodes(this.value)" autocomplete="off">'
     + '<div id="section-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg-card);border:1px solid var(--accent);border-radius:0 0 var(--radius-sm) var(--radius-sm);max-height:180px;overflow-y:auto;z-index:200;box-shadow:var(--shadow);"></div>'
     + '</div>'
     + '<div id="selected-sections" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">'+sectionTags+'</div>'
     + '<input type="hidden" id="cf-section" value="'+section+'">'
     + '</div>'
 
-
-    // Complainant section — RTL, new order
-    + '<div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:12px;">'
-    + '<div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;text-align:right;direction:rtl;">مدعی کی تفصیل 👤</div>'
-
-    // Row 1: مدعی (full width with voice + live counter)
+    // Offence
     + '<div class="form-group">'
-    + '<label class="form-label">مدعی *</label>'
-    + '<div style="display:flex;gap:6px;direction:rtl;align-items:center;">'
-    + '<div style="flex:1;position:relative;">'
-    + '<input class="form-input" id="cf-complainant" value="'+complainant+'" placeholder="مدعی کا نام" dir="auto" oninput="var _cc=document.getElementById(\'cf-comp-count\');if(_cc)_cc.textContent=this.value.length+\' حروف\';">'
-    + '<span id="cf-comp-count" style="position:absolute;bottom:4px;left:8px;font-size:9px;color:var(--text-faint);">'+(complainant?complainant.length+' حروف':'')+'</span>'
-    + '</div>'
-    + '<button id="vmb-cf-complainant" type="button" onclick="voiceType(\'cf-complainant\',\'vmb-cf-complainant\')" style="width:36px;height:36px;flex-shrink:0;border:1px solid var(--border);border-radius:6px;background:var(--bg-tertiary);font-size:16px;cursor:pointer;">🎙️</button>'
-    + '</div>'
+    + '<label class="form-label">Offence <span style="color:var(--text-faint);font-weight:400;">(auto-filled or type manually)</span></label>'
+    + '<input class="form-input" id="cf-offence" value="'+offence+'" placeholder="Auto-filled when section selected" dir="auto">'
     + '</div>'
 
-    // Row 2: موبائل نمبر + شناختی کارڈ
-    + '<div class="form-row">'
-    + '<div class="form-group"><label class="form-label">موبائل نمبر</label>'
-    + '<input class="form-input" id="cf-complainant-cell" value="'+cmpCell+'" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)" dir="ltr" style="text-align:left;"></div>'
-    + '<div class="form-group"><label class="form-label">شناختی کارڈ نمبر</label>'
-    + '<input class="form-input" id="cf-complainant-cnic" value="'+cmpCnic+'" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)" dir="ltr" style="text-align:left;"></div>'
-    + '</div>'
-
-    // Row 3: پیشہ (occupation)
-    + '<div class="form-group"><label class="form-label">پیشہ</label>'
-    + '<input class="form-input" id="cf-complainant-profession" value="'+cmpProf+'" placeholder="پیشہ" dir="auto"></div>'
-
-    + '</div>'
-
-    // FIR Details — swapped pairs
+    // Complainant section
     + '<div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:12px;">'
-    + '<div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">📋 FIR کی تفصیل</div>'
+    + '<div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">&#x1F464; Complainant Details</div>'
     + '<div class="form-row">'
-    + '<div class="form-group"><label class="form-label">مرتبہ مرسلہ</label>'
-    + '<div style="display:flex;gap:4px;direction:rtl;"><input class="form-input" id="cf-complaint-sender" value="'+compSender+'" placeholder="مرتبہ مرسلہ" dir="auto" style="flex:1;"><button id="vmb-cs" type="button" onclick="voiceType(\'cf-complaint-sender\',\'vmb-cs\')" style="width:34px;height:34px;flex-shrink:0;border:1px solid var(--border);border-radius:5px;background:var(--bg-tertiary);font-size:14px;cursor:pointer;">🎙️</button></div></div>'
-    + '<div class="form-group"><label class="form-label">محرر</label>'
-    + '<div style="display:flex;gap:4px;direction:rtl;"><input class="form-input" id="cf-fir-writer" value="'+firWriter+'" placeholder="محرر کا نام" dir="auto" style="flex:1;"><button id="vmb-fw" type="button" onclick="voiceType(\'cf-fir-writer\',\'vmb-fw\')" style="width:34px;height:34px;flex-shrink:0;border:1px solid var(--border);border-radius:5px;background:var(--bg-tertiary);font-size:14px;cursor:pointer;">🎙️</button></div></div>'
+    + '<div class="form-group"><label class="form-label">Complainant Name *</label>'
+    + '<input class="form-input" id="cf-complainant" value="'+complainant+'" placeholder="&#x0645;&#x062F;&#x0639;&#x06CC; &#x06A9;&#x0627; &#x0646;&#x0627;&#x0645; / Complainant Name" dir="auto"></div>'
+    + '<div class="form-group"><label class="form-label">Complainant CNIC</label>'
+    + '<input class="form-input" id="cf-complainant-cnic" value="'+cmpCnic+'" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)"></div>'
     + '</div>'
     + '<div class="form-row">'
-    + '<div class="form-group"><label class="form-label">پوزیشن</label>'
+    + '<div class="form-group"><label class="form-label">Complainant Cell No.</label>'
+    + '<input class="form-input" id="cf-complainant-cell" value="'+cmpCell+'" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)"></div>'
+    + '<div class="form-group"><label class="form-label">Complainant Profession</label>'
+    + '<input class="form-input" id="cf-complainant-profession" value="'+cmpProf+'" placeholder="&#x067E;&#x06CC;&#x0634;&#x06C1; / Profession" dir="auto"></div>'
+    + '</div>'
+    + '</div>'
+
+    // FIR Details
+    + '<div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:12px;">'
+    + '<div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">&#x1F4CB; FIR Details</div>'
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">FIR Writer</label>'
+    + '<input class="form-input" id="cf-fir-writer" value="'+firWriter+'" placeholder="FIR &#x0644;&#x06A9;&#x06BE;&#x0646;&#x06D2; &#x0648;&#x0627;&#x0644;&#x0627;" dir="auto"></div>'
+    + '<div class="form-group"><label class="form-label">Complaint Sender</label>'
+    + '<input class="form-input" id="cf-complaint-sender" value="'+compSender+'" placeholder="&#x0634;&#x06A9;&#x0627;&#x06CC;&#x062A; &#x0628;&#x06BE;&#x06CC;&#x062C;&#x0646;&#x06D2; &#x0648;&#x0627;&#x0644;&#x0627;" dir="auto"></div>'
+    + '</div>'
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">SHO</label>'
+    + '<input class="form-input" id="cf-sho" value="'+sho+'" placeholder="SHO name" dir="auto"></div>'
+    + '<div class="form-group"><label class="form-label">SDPO</label>'
+    + '<input class="form-input" id="cf-sdpo" value="'+sdpo+'" placeholder="SDPO name" dir="auto"></div>'
+    + '</div>'
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">Position</label>'
     + '<select class="form-input" id="cf-position">'+posOpts+'</select></div>'
+    + '<div class="form-group"><label class="form-label">Investigation Notes</label>'
+    + '<textarea class="form-input" id="cf-notes" placeholder="&#x062A;&#x0641;&#x062A;&#x06CC;&#x0634;&#x06CC; &#x0646;&#x0648;&#x0679;&#x0633;..." dir="auto" style="min-height:60px;resize:vertical;">'+notes+'</textarea></div>'
+    + '</div>'
+    + '</div>'
+
+    // Document checklist
+    + '<div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:10px;">'
+    + '<div style="font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">&#x1F4CE; MISAL Documents Required</div>'
+    + '<input class="form-input" id="doc-search" placeholder="&#x1F50D; Search documents..." oninput="filterDocChecklist(this.value)" style="margin-bottom:10px;">'
+    + '<div style="display:flex;gap:6px;margin-bottom:10px;">'
+    + '<input class="form-input" id="custom-doc-input" placeholder="Add custom document..." style="flex:1;">'
+    + '<button type="button" class="btn btn-secondary btn-sm" onclick="addCustomDoc()">+ Add</button>'
+    + '</div>'
+    + '<div id="doc-checklist" style="max-height:220px;overflow-y:auto;">'+docList+'</div>'
+    + '</div>'
+
+    // Cross Version
+    + '<div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-top:10px;">'
+    + '<div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="toggleCrossVersion()">'
+    + '<input type="checkbox" id="cf-cross-version" '+(isCross?'checked':'')+' style="accent-color:var(--red);width:16px;height:16px;" onclick="event.stopPropagation();toggleCrossVersion()">'
+    + '<div>'
+    + '<div style="font-size:13px;font-weight:700;color:var(--red);">&#x2694;&#xFE0F; Cross Version &#x2014; &#x0645;&#x062E;&#x0627;&#x0644;&#x0641; &#x0645;&#x0642;&#x062F;&#x0645;&#x06C1;</div>'
+    + '<div style="font-size:10px;color:var(--text-muted);">Check if accused has also filed a case against complainant for the same incident</div>'
+    + '</div>'
+    + '</div>'
+    + '<div id="cross-version-fields" style="display:'+(isCross?'block':'none')+';margin-top:14px;border-top:1px dashed var(--red);padding-top:14px;">'
+    + crossFields
     + '</div>'
     + '</div>'
 
@@ -576,7 +393,7 @@ function buildCrossFields(c) {
     + '<div class="form-group"><label class="form-label">Cross FIR Number</label>'
     + '<input class="form-input" id="cf-cross-fir" value="'+cfn+'" placeholder="e.g. 246/2025" dir="auto"></div>'
     + '<div class="form-group"><label class="form-label">Cross FIR Date</label>'
-    + '<input class="form-input" id="cf-cross-fir-date" value="'+cfd+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)"></div>'
+    + '<input class="form-input" id="cf-cross-fir-date" value="'+cfd+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" maxlength="10"></div>'
     + '</div>'
     + '<div class="form-row">'
     + '<div class="form-group"><label class="form-label">Cross Complainant Name</label>'
@@ -634,7 +451,7 @@ function renderDocChecklist(docs, selected) {
       html += `<div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:4px;cursor:pointer;" onclick="toggleDoc('${doc.replace(/'/g,"\\'")}',this)">
         <input type="checkbox" checked style="accent-color:var(--accent);width:14px;height:14px;pointer-events:none;">
         <span style="font-size:12px;color:var(--accent);">${doc}</span>
-        <span onclick="event.stopPropagation();removeCustomDoc('${doc.replace(/'/g,"\\'")}');" style="margin-inline-start:auto;color:var(--red);font-size:12px;cursor:pointer;">×</span>
+        <span onclick="event.stopPropagation();removeCustomDoc('${doc.replace(/'/g,"\\'")}');" style="margin-left:auto;color:var(--red);font-size:12px;cursor:pointer;">×</span>
       </div>`;
     });
   }
@@ -761,25 +578,13 @@ document.addEventListener('click', function(e) {
 });
 
 // ── MODAL OPENERS + SAVE/VIEW ──
-function openAddCaseModal(){openModal('',caseFormHTML(),`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveNewCase()">💾 اندراج محفوظ کریں</button>`);}
-async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;openModal(`✏️ ترمیم — مقدمہ ${c.fir_number}`,caseFormHTML(c),`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveEditCase('${id}')">💾 تبدیلیاں محفوظ کریں</button>`);}
+function openAddCaseModal(){openModal('➕ Add New Case',caseFormHTML(),`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveNewCase()">💾 Save Case</button>`);}
+async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;openModal(`✏️ Edit — FIR ${c.fir_number}`,caseFormHTML(c),`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveEditCase('${id}')">💾 Update</button>`);}
 async function saveNewCase(){
-  // Check case limit
-  if (typeof checkCaseLimit==='function') {
-    const allowed = await checkCaseLimit();
-    if (!allowed) return;
-  }
-  var fir=document.getElementById('cf-fir')?.value.trim()||'';
-  var section=document.getElementById('cf-section')?.value.trim()||'';
-  // Fallback: if user typed a section but didn't pick from dropdown, use the typed text
-  if(!section){
-    var typedSec=document.getElementById('cf-section-search')?.value.trim()||'';
-    if(typedSec){ section=typedSec; var _sh=document.getElementById('cf-section'); if(_sh)_sh.value=typedSec; }
-  }
-  var complainant=document.getElementById('cf-complainant')?.value.trim()||'';
-  if(!fir){showToast('⚠️ مقدمہ نمبر درج کریں','error');document.getElementById('cf-fir')?.focus();return;}
-  if(!section){showToast('⚠️ دفعہ قانون درج کریں','error');document.getElementById('cf-section-search')?.focus();return;}
-  if(!complainant){showToast('⚠️ مدعی کا نام درج کریں','error');document.getElementById('cf-complainant')?.focus();return;}
+  var fir=document.getElementById('cf-fir').value.trim();
+  var section=document.getElementById('cf-section').value.trim();
+  var complainant=document.getElementById('cf-complainant').value.trim();
+  if(!fir||!section||!complainant){showToast('FIR Number, Section and Complainant are required.','error');return;}
   try{
     await addCase({
       fir_number:fir,
@@ -792,14 +597,13 @@ async function saveNewCase(){
       fir_writer:document.getElementById('cf-fir-writer')?.value.trim()||'',
       complaint_sender:document.getElementById('cf-complaint-sender')?.value.trim()||'',
       section_of_law:section,
-      offence_type:document.getElementById('cf-offence')?.value?.trim()||'',
-      sho:document.getElementById('cf-sho')?.value.trim()||'',
-      sdpo:document.getElementById('cf-sdpo')?.value.trim()||'',
+      offence_type:document.getElementById('cf-offence').value.trim(),
+      sho:document.getElementById('cf-sho').value.trim(),
+      sdpo:document.getElementById('cf-sdpo').value.trim(),
       status:document.getElementById('cf-status').value,
-      mulzman_type:document.getElementById('cf-mulzman-type')?.value||'namaloom',
       position:document.getElementById('cf-position').value,
       notes:document.getElementById('cf-notes')?.value.trim()||'',
-      documents_checklist:selectedDocuments?.length>0?selectedDocuments:[],
+      documents_checklist:selectedDocuments.length>0?selectedDocuments:[],
       is_cross_version:document.getElementById('cf-cross-version')?.checked||false,
       cross_fir_number:document.getElementById('cf-cross-fir')?.value.trim()||null,
       cross_fir_date:document.getElementById('cf-cross-fir-date')?.value.trim()||null,
@@ -810,120 +614,14 @@ async function saveNewCase(){
       cross_section_of_law:document.getElementById('cf-cross-section')?.value.trim()||null,
       cross_offence_type:document.getElementById('cf-cross-offence')?.value.trim()||null,
       cross_fir_writer:document.getElementById('cf-cross-fir-writer')?.value.trim()||null,
+      // Capture station at creation time — survives officer transfers
       case_station:  currentOfficer?.station  || null,
       case_district: currentOfficer?.district || null,
     });
-    // Auto reminders
-    const firDate = document.getElementById('cf-date').value.trim();
-    const mulzmanType = document.getElementById('cf-mulzman-type')?.value||'namaloom';
-    await _createAutoReminders(fir, firDate, mulzmanType, complainant);
-    closeModal();showToast('✅ مقدمہ درج ہو گیا: FIR '+fir,'success');await updateBadges();renderCases(document.getElementById('page-content'));
+    closeModal();showToast('Case added: FIR '+fir,'success');await updateBadges();renderCases(document.getElementById('page-content'));
   }catch(err){showToast('Error: '+err.message,'error');}
 }
-
-// ── DOCUMENTS CHECKLIST ────────────────────────────────────────
-const _DOCS_LIST = [
-  'ایف آئی آر','کراس ورشن','رپورٹ 173 ض ف','جائے واردات',
-  'نامزد ملزمان','گواہان FIR','گواہان کراس ورشن','بیانات 161 ض ف',
-  'وقوعہ جات','فردات','ضمنیات','میمورنڈم','فارم گرفتاری',
-  'انکشافات','درخواستیں','بریف مقدمہ','شہادتیں','انسدادی کاروائی',
-  'وارنٹ','اشتہار','پراگریس رپورٹ','فارم مفروری','CDR/IMEI',
-  'ہمراہی ملازمان','انڈیکس نقل مسل',
-];
-
-async function _openDocsChecklist(caseId, firNum) {
-  // Load existing checklist
-  let checked = {};
-  try {
-    const { data } = await supabaseClient.from('cases').select('docs_checklist').eq('id',caseId).single();
-    checked = data?.docs_checklist || {};
-  } catch(_) {}
-
-  const html = `<div style="direction:rtl;">
-    <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">FIR ${firNum} — مکمل ہونے والی دستاویزات چیک کریں</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-      ${_DOCS_LIST.map(d => `
-        <label style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg-secondary);border-radius:6px;cursor:pointer;border:1px solid ${checked[d]?'var(--green)':'var(--border)'};">
-          <input type="checkbox" value="${d}" ${checked[d]?'checked':''} onchange="_updateDocCheck('${caseId}',this)"
-            style="width:16px;height:16px;accent-color:var(--green);">
-          <span style="font-size:13px;font-family:'Jameel Noori Nastaleeq',serif;">${d}</span>
-        </label>`).join('')}
-    </div>
-    <div style="margin-top:12px;padding:10px;background:var(--bg-secondary);border-radius:8px;font-size:12px;color:var(--text-muted);">
-      مکمل: <b id="docs-done-count">${Object.values(checked).filter(Boolean).length}</b> / ${_DOCS_LIST.length}
-    </div>
-  </div>`;
-
-  openModal(`📋 دستاویزات کی فہرست — FIR ${firNum}`, html,
-    `<button class="btn btn-primary" onclick="closeModal()">✅ محفوظ</button>`
-  );
-}
-
-async function _updateDocCheck(caseId, checkbox) {
-  const doc = checkbox.value;
-  const val = checkbox.checked;
-  const label = checkbox.closest('label');
-  if (label) label.style.borderColor = val ? 'var(--green)' : 'var(--border)';
-
-  // Update count
-  const allChecked = document.querySelectorAll('input[type=checkbox]:checked').length;
-  const countEl = document.getElementById('docs-done-count');
-  if (countEl) countEl.textContent = allChecked;
-
-  try {
-    // Get current checklist
-    const { data } = await supabaseClient.from('cases').select('docs_checklist').eq('id',caseId).single();
-    const current = data?.docs_checklist || {};
-    current[doc] = val;
-    await supabaseClient.from('cases').update({ docs_checklist: current }).eq('id', caseId);
-  } catch(e) { console.warn('docs checklist:', e.message); }
-}
-
-// ── AUTO REMINDERS ────────────────────────────────────────────
-async function _createAutoReminders(firNum, firDateStr, mulzmanType, complainant) {
-  try {
-    const oid = await getOfficerId();
-    if (!oid || !firDateStr) return;
-
-    // Parse FIR date
-    let firDate;
-    if (/^\d{4}-\d{2}-\d{2}/.test(firDateStr)) {
-      firDate = new Date(firDateStr);
-    } else {
-      const p = firDateStr.split(/[-\/]/);
-      if (p.length === 3) firDate = new Date(p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0'));
-    }
-    if (!firDate || isNaN(firDate)) return;
-
-    const addDays = (d,n) => { const r=new Date(d); r.setDate(r.getDate()+n); return r.toISOString().split('T')[0]; };
-
-    // 10-day: 173 CrPC interim report
-    await supabaseClient.from('reminders').insert({
-      officer_id: oid,
-      text: `📋 رپورٹ 173 ض ف — مقدمہ FIR ${firNum} (${complainant}) — ابتدائی رپورٹ مرتب کریں`,
-      reminder_date: addDays(firDate, 10),
-      is_done: false,
-    });
-
-    // 15-day: untrace warning (only namaloom)
-    if (mulzmanType === 'namaloom') {
-      await supabaseClient.from('reminders').insert({
-        officer_id: oid,
-        text: `⚠️ عدم پتہ ہونے والا مقدمہ — FIR ${firNum} (${complainant}) — ملزمان نامعلوم، 15 دن مکمل`,
-        reminder_date: addDays(firDate, 15),
-        is_done: false,
-      });
-    }
-    showToast('🔔 خودکار یاددہانیاں بن گئیں','info');
-  } catch(e) { console.warn('auto reminder:', e.message); }
-}
 async function saveEditCase(id){
-  // Resolve section: use selected, else typed search value
-  var _editSection=document.getElementById('cf-section').value.trim();
-  if(!_editSection){
-    var _typed=document.getElementById('cf-section-search')?.value.trim()||'';
-    if(_typed) _editSection=_typed;
-  }
   try{
     await updateCase(id,{
       fir_number:document.getElementById('cf-fir').value.trim(),
@@ -935,12 +633,11 @@ async function saveEditCase(id){
       complainant_profession:document.getElementById('cf-complainant-profession')?.value.trim()||'',
       fir_writer:document.getElementById('cf-fir-writer')?.value.trim()||'',
       complaint_sender:document.getElementById('cf-complaint-sender')?.value.trim()||'',
-      section_of_law:_editSection,
-      offence_type:document.getElementById('cf-offence')?.value?.trim()||'',
-      sho:document.getElementById('cf-sho')?.value.trim()||'',
-      sdpo:document.getElementById('cf-sdpo')?.value.trim()||'',
+      section_of_law:document.getElementById('cf-section').value.trim(),
+      offence_type:document.getElementById('cf-offence').value.trim(),
+      sho:document.getElementById('cf-sho').value.trim(),
+      sdpo:document.getElementById('cf-sdpo').value.trim(),
       status:document.getElementById('cf-status').value,
-      mulzman_type:document.getElementById('cf-mulzman-type')?.value||'namaloom',
       position:document.getElementById('cf-position').value,
       notes:document.getElementById('cf-notes')?.value.trim()||'',
       documents_checklist:selectedDocuments.length>0?selectedDocuments:[],
@@ -955,13 +652,8 @@ async function saveEditCase(id){
       cross_offence_type:document.getElementById('cf-cross-offence')?.value.trim()||null,
       cross_fir_writer:document.getElementById('cf-cross-fir-writer')?.value.trim()||null,
     });
-    closeModal();
-    showToast('✅ Case updated!','success');
-    // Wait briefly so DB write propagates through cases_decrypted view before re-fetching
-    await new Promise(r=>setTimeout(r,300));
-    await updateBadges();
-    await renderCases(document.getElementById('page-content'));
-  }catch(err){showToast('❌ Error: '+err.message,'error');}
+    closeModal();showToast('Case updated!','success');renderCases(document.getElementById('page-content'));
+  }catch(err){showToast('Error: '+err.message,'error');}
 }
 // viewCase now opens workspace
 function viewCase(id) { openCaseWorkspace(id); }
@@ -974,129 +666,52 @@ let currentCaseId = null;
 let currentDocIndex = null;
 const docDrafts = {}; // stores edited content per case+doc
 
-// ── CASE STATUS PIPELINE (visual progress) ────────────────────
-function _caseStatusPipeline(c) {
-  // Police case flow stages
-  const stages = [
-    { key:'registered', label:'اندراج',      icon:'📝' },
-    { key:'under',      label:'زیر تفتیش',    icon:'🔍' },
-    { key:'challan',    label:'چالان',        icon:'📋' },
-    { key:'court',      label:'عدالت',         icon:'⚖️' },
-    { key:'closed',     label:'فیصلہ',         icon:'✅' },
-  ];
-
-  // Map current case status to a stage index
-  let activeIdx = 0;
-  const s = c.status;
-  if (s === 'under') activeIdx = 1;
-  else if (s === 'incomplete' || s === 'challan512') activeIdx = 2;
-  else if (s === 'complete') activeIdx = 3;
-  else if (s === 'cancel' || s === 'untrace') activeIdx = 4;
-  else activeIdx = 0;
-
-  return `
-  <div style="background:var(--bg-secondary);border-bottom:1px solid var(--border);padding:12px 16px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;direction:rtl;max-width:700px;margin:0 auto;">
-      ${stages.map((st,i) => {
-        const done = i < activeIdx;
-        const active = i === activeIdx;
-        const color = done ? 'var(--green)' : active ? 'var(--accent)' : 'var(--border)';
-        const txtColor = done ? 'var(--green)' : active ? 'var(--accent)' : 'var(--text-muted)';
-        return `
-        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;position:relative;">
-          ${i < stages.length-1 ? `<div style="position:absolute;top:14px;right:-50%;width:100%;height:2px;background:${i < activeIdx ? 'var(--green)' : 'var(--border)'};z-index:0;"></div>` : ''}
-          <div style="width:30px;height:30px;border-radius:50%;background:${done||active?color:'var(--bg-card)'};border:2px solid ${color};display:flex;align-items:center;justify-content:center;font-size:13px;z-index:1;position:relative;color:${done||active?'#fff':'var(--text-muted)'};">
-            ${done ? '✓' : st.icon}
-          </div>
-          <div style="font-size:10px;font-weight:${active?'800':'600'};color:${txtColor};font-family:'Jameel Noori Nastaleeq',serif;white-space:nowrap;">${st.label}</div>
-        </div>`;
-      }).join('')}
-    </div>
-  </div>`;
-}
-
 async function openCaseWorkspace(id) {
-  // Close mobile sidebar first
-  closeMobileSidebar();
   currentCaseId = id;
-  _currentWorkspaceCaseId = id;
   currentDocIndex = null;
   document.getElementById('topbar-title').textContent = '📁 Case Workspace';
   const container = document.getElementById('page-content');
   container.innerHTML = `<div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Opening Case Workspace...</div></div>`;
   const c = await getCase(id);
   if (!c) { showToast('❌ Case not found.', 'error'); return; }
-  await loadMisalDocs(id);
   const docs = c.documents_checklist ? (typeof c.documents_checklist==='string'?JSON.parse(c.documents_checklist):c.documents_checklist) : [];
   const ev = await getEvidence(c.fir_number);
   renderWorkspace(c, docs, ev, container);
 }
 
 function renderWorkspace(c, docs, ev, container) {
-  const statusColor = {under:'var(--accent)',complete:'var(--green)',incomplete:'var(--amber)',untrace:'var(--purple)',cancel:'var(--red)',challan512:'#f97316'}[c.status]||'var(--accent)';
-  const o = currentOfficer||{};
+  const statusColor = {under:'var(--accent)',complete:'var(--green)',incomplete:'var(--amber)',untrace:'var(--purple)',cancel:'var(--red)'}[c.status]||'var(--accent)';
   container.style.padding = '0';
   container.style.overflow = 'hidden';
   container.innerHTML = `
-    <!-- TOP BAR: back RIGHT + case info + action buttons -->
-    <div style="padding:8px 14px;background:var(--bg-secondary);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;direction:rtl;">
-      <!-- Case info -->
-      <div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap;">
-        <span style="font-size:15px;font-weight:900;color:var(--accent);font-family:var(--font-mono);">FIR ${c.fir_number||'—'}</span>
-        <span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span>
-        <span style="font-size:11px;color:var(--text-muted);">📅 ${formatDate(c.fir_date)}</span>
-        <span style="font-size:11px;color:var(--text-muted);">👤 ${c.complainant||'—'}</span>
-        <span style="font-size:11px;color:var(--text-muted);">⚖️ ${(c.section_of_law||'—').slice(0,20)}</span>
+    <!-- WORKSPACE HEADER -->
+    <div class="case-header">
+      <button class="btn btn-secondary btn-sm" onclick="goBackToCases()" style="flex-shrink:0;">← Back</button>
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span style="font-size:18px;font-weight:900;color:var(--accent);font-family:var(--font-mono);">FIR ${c.fir_number}</span>
+          <span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span>
+          <span style="font-size:12px;color:var(--text-muted);">📅 ${c.fir_date||'—'}</span>
+          <span style="font-size:12px;color:var(--text-muted);">⚖️ ${c.section_of_law||'—'}</span>
+          <span style="font-size:12px;color:var(--text-muted);">👤 ${c.complainant||'—'}</span>
+        </div>
       </div>
-      <!-- Action buttons -->
-      <div style="display:flex;gap:5px;direction:rtl;">
-        <button class="btn btn-secondary btn-sm" onclick="_openDocsChecklist('${c.id}','${c.fir_number||''}')">📋</button>
-        <button class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')">✏️</button>
-        <button class="btn btn-secondary btn-sm" onclick="downloadCaseFile('${c.id}')">⬇️</button>
-        <button class="btn btn-secondary btn-sm" onclick="_printFIRDirect('${c.id}')">🖨️ FIR</button>
-        <button class="btn btn-secondary btn-sm" onclick="openShareModal('${c.id}')">📤</button>
-        <button class="btn btn-danger btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number||''}')">🗑️</button>
-        <button onclick="goBackToCases()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">↩</button>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')">✏️ Edit Case</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number}')">🗑️</button>
       </div>
     </div>
 
-    <!-- CASE SUMMARY (collapsible) -->
-    <details style="background:var(--bg-tertiary);border-bottom:1px solid var(--border);">
-      <summary style="cursor:pointer;padding:6px 14px;font-size:11px;color:var(--text-muted);direction:rtl;list-style:none;display:flex;align-items:center;gap:6px;">
-        <span>▼</span> <span style="font-family:'Jameel Noori Nastaleeq',serif;">مقدمے کی تفصیل</span>
-      </summary>
-      <div style="padding:10px 14px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;direction:rtl;font-size:11px;">
-        ${[
-          ['تاریخ اندراج', formatDate(c.fir_date)],
-          ['تاریخ وقوعہ', formatDate(c.occurrence_date)],
-          ['دفعات', c.section_of_law||'—'],
-          ['مدعی', c.complainant||'—'],
-          ['شناختی کارڈ', c.complainant_cnic||'—'],
-          ['موبائل', c.complainant_cell||'—'],
-          ['ملزمان', c.mulzman_type==='maloom'?'معلوم':'نامعلوم'],
-          ['تھانہ', c.case_station||o.station||'—'],
-          ['پوزیشن', c.position||'—'],
-        ].map(([k,v])=>`
-        <div style="background:var(--bg-card);border-radius:6px;padding:6px 8px;">
-          <div style="color:var(--text-muted);font-size:9px;">${k}</div>
-          <div style="font-weight:600;color:var(--text-primary);">${v||'—'}</div>
-        </div>`).join('')}
-      </div>
-    </details>
-
-    <!-- CASE STATUS PIPELINE -->
-    ${_caseStatusPipeline(c)}
-
-    <!-- MISAL DOCUMENT BAR -->
-    ${renderMisalBar(c)}
+    <!-- TABS -->
+    <div class="case-tabs">
+      <div class="case-tab active" id="tab-docs" onclick="switchWorkspaceTab('docs')">📎 Documents (${docs.length})</div>
+      <div class="case-tab" id="tab-details" onclick="switchWorkspaceTab('details')">📋 Case Details</div>
+      <div class="case-tab" id="tab-evidence" onclick="switchWorkspaceTab('evidence')">🔬 Evidence (${ev.length})</div>
+    </div>
 
     <!-- TAB CONTENT -->
-    <div id="workspace-tab-content" style="height:calc(100vh - 220px);overflow:hidden;">
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">
-        <div style="font-size:48px;margin-bottom:12px;">📂</div>
-        <div style="font-size:14px;font-weight:600;margin-bottom:6px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">دستاویز منتخب کریں</div>
-        <div style="font-size:12px;">اوپر دستاویز کے نام پر کلک کریں</div>
-      </div>
+    <div id="workspace-tab-content" style="height:calc(100vh - 200px);overflow:hidden;">
+      ${renderDocsTab(c, docs)}
     </div>`;
 
   // Store for tab switching
@@ -1107,39 +722,55 @@ function renderWorkspace(c, docs, ev, container) {
 
 function switchWorkspaceTab(tab) {
   document.querySelectorAll('.case-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('tab-' + tab)?.classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
   const content = document.getElementById('workspace-tab-content');
   const c = window._workspaceCase;
+  const docs = window._workspaceDocs;
   const ev = window._workspaceEv;
-  if (tab === 'evidence') content.innerHTML = renderEvidenceTab(c, ev);
+  if (tab === 'docs') content.innerHTML = renderDocsTab(c, docs);
+  else if (tab === 'details') content.innerHTML = renderDetailsTab(c);
+  else if (tab === 'evidence') content.innerHTML = renderEvidenceTab(c, ev);
 }
 
 function renderDocsTab(c, docs) {
+  if (!docs.length) return `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">
+      <div style="font-size:48px;margin-bottom:12px;">📂</div>
+      <div style="font-size:14px;font-weight:600;margin-bottom:6px;">No Documents Selected</div>
+      <div style="font-size:12px;margin-bottom:16px;">Edit this case to select required MISAL documents.</div>
+      <button class="btn btn-primary" onclick="openEditCaseModal('${c.id}')">✏️ Edit Case & Add Documents</button>
+    </div>`;
+
   return `<div class="workspace-layout">
     <!-- Document Sidebar -->
     <div class="workspace-sidebar">
       <div class="workspace-sidebar-header">
         <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">📎 Case Documents</div>
+        <input style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;color:var(--text-primary);font-size:11px;outline:none;" placeholder="🔍 Search documents..." oninput="filterWorkspaceDocs(this.value)">
       </div>
-      <div id="workspace-doc-list" style="overflow-y:auto;flex:1;">
-        ${typeof renderMisalDocSidebar === 'function' ? renderMisalDocSidebar() : ''}
+      <div id="workspace-doc-list">
+        ${docs.map((doc, i) => `
+          <div class="doc-card ${i===currentDocIndex?'active':''}" id="doc-card-${i}" onclick="openDocEditor(${i})">
+            <div class="doc-card-icon">📄</div>
+            <div class="doc-card-name">${doc}</div>
+            <div class="doc-card-status ${docDrafts[currentCaseId+'_'+i]?'doc-status-draft':'doc-status-empty'}">${docDrafts[currentCaseId+'_'+i]?'Draft':'Empty'}</div>
+          </div>`).join('')}
       </div>
-      <div style="padding:10px;border-top:1px solid var(--border);">
-        <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="printAllMisalDocs()">🖨️ تمام پرنٹ کریں</button>
+      <div style="padding:10px;border-top:1px solid var(--border);margin-top:auto;">
+        <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="printAllDocs()">🖨️ Print All</button>
       </div>
     </div>
-    <!-- Document Editor -->
+
+    <!-- Document Editor Area -->
     <div class="workspace-main" id="workspace-editor-area">
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">
-        <div style="font-size:48px;margin-bottom:12px;">📂</div>
-        <div style="font-size:14px;font-weight:600;margin-bottom:6px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">دستاویز منتخب کریں</div>
-        <div style="font-size:12px;">اوپر دستاویز کے نام پر کلک کریں یا بائیں فہرست سے منتخب کریں</div>
+        <div style="font-size:48px;margin-bottom:12px;">👈</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:6px;">Select a Document</div>
+        <div style="font-size:12px;">Click any document from the left panel to open and edit it.</div>
       </div>
     </div>
   </div>`;
 }
-
-function printAllMisalDocs() { showToast('🖨️ Print all coming soon.', 'info'); }
 
 function filterWorkspaceDocs(q) {
   const docs = window._workspaceDocs || [];
@@ -1298,11 +929,11 @@ function buildDocTemplate(docName, c, savedContent) {
       </table>
       <div style="margin-top:10px;font-size:12px;line-height:2;">
         <div style="font-weight:700;">نوٹ:</div>
-        <div>1۔ موبائل فون کال ڈیٹا ریکارڈ صرف FIR یا FIR سے متعلقہ ہونے کی صورت میں فراہم کیا جائے گا یا ایسی انکوائریز جنکا حکم نامہ ہائی کورٹ اور سپریم کورٹ نے دیا ہوں۔</div>
-        <div>2۔ اگر CDR's/IMEI's کا اندراج FIR میں نہ ہو تو ضمنی میں اندراج کریں۔</div>
-        <div>3۔ ضمنی نمبر ${ef('۔۔۔۔۔')} تاریخ ${ef('۔۔۔۔۔')} مرتبہ ${ef('۔۔۔۔۔')} (کاپی ضمنی ہمراہ بھجوائیں یا فارم ہذا کی پشت پر اقتباس ضمنی تحریر کریں)</div>
-        <div>4۔ CDR کے غلط استعمال کی صورت میں ذمہ دار افسر کے خلاف سخت محکمانہ کاروائی کی جائیگی۔</div>
-        <div>5۔ CDR کے ذریعے کیس ٹریس ہونے/ملزمان/اشتہاری پکڑے جانے پر/ریکوری ہونے پر IT آفس (موبائل ٹریکنگ سیل ملتان) کو بھی رپورٹ ارسال کی جائے۔</div>
+        <div>۱۔ موبائل فون کال ڈیٹا ریکارڈ صرف FIR یا FIR سے متعلقہ ہونے کی صورت میں فراہم کیا جائے گا یا ایسی انکوائریز جنکا حکم نامہ ہائی کورٹ اور سپریم کورٹ نے دیا ہوں۔</div>
+        <div>۲۔ اگر CDR's/IMEI's کا اندراج FIR میں نہ ہو تو ضمنی میں اندراج کریں۔</div>
+        <div>۳۔ ضمنی نمبر ${ef('۔۔۔۔۔')} تاریخ ${ef('۔۔۔۔۔')} مرتبہ ${ef('۔۔۔۔۔')} (کاپی ضمنی ہمراہ بھجوائیں یا فارم ہذا کی پشت پر اقتباس ضمنی تحریر کریں)</div>
+        <div>۴۔ CDR کے غلط استعمال کی صورت میں ذمہ دار افسر کے خلاف سخت محکمانہ کاروائی کی جائیگی۔</div>
+        <div>۵۔ CDR کے ذریعے کیس ٹریس ہونے/ملزمان/اشتہاری پکڑے جانے پر/ریکوری ہونے پر IT آفس (موبائل ٹریکنگ سیل ملتان) کو بھی رپورٹ ارسال کی جائے۔</div>
       </div>
       <table style="width:100%;border-collapse:collapse;margin-top:16px;">
         <tr>
@@ -1683,21 +1314,21 @@ function buildDocTemplate(docName, c, savedContent) {
           <td style="${td}">${ef(fir + ' ' + firDate)}</td>
           <td style="${td}height:180px;vertical-align:top;"></td>
           <td style="${td}vertical-align:top;font-size:10px;line-height:1.8;">
-            1۔ بل اخراجات ٹرانسپورٹ/ڈیڈ باڈی برائے پوسٹمارٹم<br>
-            2۔ بل تیاری نقشہ بذریعہ نقشہ نویس<br>
-            3۔ بل سرالوجسٹ بذریعہ کیمیکل ایگزامینر بذریعہ قبضہ پولیس اشیاء<br>
-            4۔ بل بلیسٹک ایکسپرٹ کی واردات میں استعمال ہونے والے اسلحہ کی ترسیل<br>
-            5۔ بل ٹرانسپورٹ برائے گرفتاری ملزمان (عدم دستیابی گاڑی سرکاری)<br>
+            ۱۔ بل اخراجات ٹرانسپورٹ/ڈیڈ باڈی برائے پوسٹمارٹم<br>
+            ۲۔ بل تیاری نقشہ بذریعہ نقشہ نویس<br>
+            ۳۔ بل سرالوجسٹ بذریعہ کیمیکل ایگزامینر بذریعہ قبضہ پولیس اشیاء<br>
+            ۴۔ بل بلیسٹک ایکسپرٹ کی واردات میں استعمال ہونے والے اسلحہ کی ترسیل<br>
+            ۵۔ بل ٹرانسپورٹ برائے گرفتاری ملزمان (عدم دستیابی گاڑی سرکاری)<br>
             ۶۔ بل ٹرانسپورٹ برائے جسمانی ریمانڈ (عدم دستیابی گاڑی سرکاری)<br>
             ۷۔ بل ٹرانسپورٹ برائے اسلحہ<br>
             ۸۔ بل ٹرانسپورٹ برائے برآمدگی چوری شدہ/چھینی گئی گاڑی/کیس پراپرٹی<br>
             ۹۔ بل اندھا قتل نعش کا پوسٹمارٹم/اخراجات کفن دفن<br>
             ۱۰۔ بل ٹرانسپورٹ و میڈیکل برائے زخمی<br>
-            ۱1۔ بل برائے فوٹو گرافی وقوعہ ڈیڈ باڈی<br>
-            ۱2۔ بل برائے ویڈیو فلم غیرقانونی اجتماعات<br>
-            ۱3۔ بل ٹرانسپورٹ برائے شناخت پریڈ<br>
-            ۱4۔ بل اخراجات مشتبہ افراد زیرحراست<br>
-            ۱5۔ بل ٹرانسپورٹ برائے معائنہ انجن/چیسز نمبر/فورنزک سائنس لیبارٹری<br>
+            ۱۱۔ بل برائے فوٹو گرافی وقوعہ ڈیڈ باڈی<br>
+            ۱۲۔ بل برائے ویڈیو فلم غیرقانونی اجتماعات<br>
+            ۱۳۔ بل ٹرانسپورٹ برائے شناخت پریڈ<br>
+            ۱۴۔ بل اخراجات مشتبہ افراد زیرحراست<br>
+            ۱۵۔ بل ٹرانسپورٹ برائے معائنہ انجن/چیسز نمبر/فورنزک سائنس لیبارٹری<br>
             ۱۶۔ بل فنگرپرنٹ/فٹ مولڈز/ہینڈ رائٹنگ<br>
             ۱۷۔ بل دیگر حادثاتی اخراجات
           </td>
@@ -1757,7 +1388,7 @@ function buildDocTemplate(docName, c, savedContent) {
       <div style="font-weight:600;margin-bottom:6px;">تفصیلات / Details:</div>
       <div class="template-field" contenteditable="true" style="min-height:200px;display:block;width:100%;border:1px dashed #aaa;padding:10px;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu','Times New Roman',serif;"></div>
     </div>
-    <div style="direction:rtl;margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:20px;direction:rtl;">
+    <div style="direction:rtl;margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:20px;">
       <div style="text-align:center;"><div style="border-top:1px solid #333;margin-top:40px;padding-top:4px;font-size:11px;">تفتیشی افسر / Investigation Officer</div></div>
       <div style="text-align:center;"><div style="border-top:1px solid #333;margin-top:40px;padding-top:4px;font-size:11px;">SHO / Station House Officer</div></div>
     </div>`;
@@ -1830,10 +1461,10 @@ function printAllDocs() {
 
 function renderDetailsTab(c) {
   return `<div class="case-tab-content">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;direction:rtl;margin-bottom:16px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
       <div class="card">
         <div class="card-title">📋 FIR Information</div>
-        ${[['مقدمہ نمبر',c.fir_number],['تاریخ اندراج مقدمہ',formatDate(c.fir_date)],['تاریخ وقوعہ',formatDate(c.occurrence_date)],['Section of Law',c.section_of_law||'—'],['Offence',c.offence_type||'—'],['Status',STATUS_LABELS[c.status]||c.status],['Position',c.position==='court'?'⚖️ In Court':'⏳ Pending'],['FIR Writer',c.fir_writer||'—'],['Complaint Sender',c.complaint_sender||'—'],['SHO',c.sho||'—'],['SDPO',c.sdpo||'—']].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
+        ${[['FIR Number',c.fir_number],['Date of FIR',c.fir_date||'—'],['Occurrence Date',c.occurrence_date||'—'],['Section of Law',c.section_of_law||'—'],['Offence',c.offence_type||'—'],['Status',STATUS_LABELS[c.status]||c.status],['Position',c.position==='court'?'⚖️ In Court':'⏳ Pending'],['FIR Writer',c.fir_writer||'—'],['Complaint Sender',c.complaint_sender||'—'],['SHO',c.sho||'—'],['SDPO',c.sdpo||'—']].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
       </div>
       <div class="card">
         <div class="card-title">👤 Complainant Details</div>
@@ -1844,10 +1475,10 @@ function renderDetailsTab(c) {
     ${c.is_cross_version ? `
     <div class="card" style="border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.03);margin-bottom:16px;">
       <div class="card-title" style="color:var(--red);">⚔️ Cross Version — مخالف مقدمہ</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;direction:rtl;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
         ${[
           ['Cross FIR Number', c.cross_fir_number||'—'],
-          ['Cross FIR Date', formatDate(c.cross_fir_date)],
+          ['Cross FIR Date', c.cross_fir_date||'—'],
           ['Cross Complainant', c.cross_complainant||'—'],
           ['Cross CNIC', c.cross_complainant_cnic||'—'],
           ['Cross Cell', c.cross_complainant_cell||'—'],
@@ -1865,225 +1496,16 @@ function renderDetailsTab(c) {
 }
 
 function renderEvidenceTab(c, ev) {
-  const icon = t => t==='Photo'?'📷':t==='Video'?'🎥':t==='Audio'?'🎙️':'📄';
-  const cards = ev.length === 0
-    ? `<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text-muted);">
-        <div style="font-size:40px;margin-bottom:12px;">📋</div>
-        <div style="font-weight:600;margin-bottom:4px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">ابھی کوئی شہادت نہیں</div>
-        <div style="font-size:12px;">+ شہادت شامل کریں بٹن دبائیں</div>
-       </div>`
-    : ev.map(e => `
-      <div class="evidence-card" id="ev-${e.id}">
-        <div class="evidence-thumb" onclick="openEvidenceFile('${e.id}','${(e.file_url||'').replace(/'/g,"\\'")}','${e.name.replace(/'/g,"\\'")}','${e.type}')" style="cursor:${e.file_url?'pointer':'default'};" title="${e.file_url?'Click to open file':'No file attached'}">
-          ${e.file_url && e.type==='Photo'
-            ? `<img src="${e.file_url}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;" alt="${e.name}" onerror="this.style.display='none';this.parentElement.querySelector('.ev-fallback').style.display='flex'"><div class="ev-fallback" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:36px;">📷</div>`
-            : `<span style="font-size:36px;">${icon(e.type)}</span>`}
-          ${e.file_url ? `<div style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,0.6);border-radius:4px;padding:2px 5px;font-size:9px;color:#fff;">Open</div>` : ''}
-        </div>
-        <div class="evidence-info">
-          <div class="evidence-name" id="ev-name-${e.id}">${e.name}</div>
-          <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${e.type} · ${e.evidence_date||formatDate(e.created_at)}</div>
-          ${e.notes ? `<div style="font-size:10px;color:var(--text-faint);margin-top:3px;font-style:italic;">${e.notes}</div>` : ''}
-          <div style="display:flex;gap:6px;direction:rtl;margin-top:8px;">
-            ${e.file_url ? `<button class="btn btn-secondary btn-sm" onclick="openEvidenceFile('${e.id}','${(e.file_url||'').replace(/'/g,"\\'")}','${e.name.replace(/'/g,"\\'")}','${e.type}')" title="Open File">📂 Open</button>` : ''}
-            <button class="btn btn-secondary btn-sm" onclick="renameEvidence('${e.id}','${e.name.replace(/'/g,"\\'")}','${c.fir_number}')" title="Rename">✏️ Rename</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteWorkspaceEvidence('${e.id}','${c.fir_number}')" title="Delete">🗑️</button>
-          </div>
-        </div>
-      </div>`).join('');
-
   return `<div class="case-tab-content">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;direction:rtl;">
-      <div>
-        <div style="font-size:16px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">📋 شہادتیں — FIR ${c.fir_number}</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${ev.length} فائل منسلک</div>
-      </div>
-      <button class="btn btn-primary" onclick="openWorkspaceEvidenceModal('${c.id}','${c.fir_number}')">+ شہادت شامل کریں</button>
+    <div class="page-header">
+      <div><div style="font-size:16px;font-weight:700;">🔬 Evidence for FIR ${c.fir_number}</div></div>
+      <button class="btn btn-primary" onclick="openAddEvidenceModal()">+ Attach Evidence</button>
     </div>
-    <div class="evidence-grid">${cards}</div>
+    <div class="evidence-grid">
+      ${ev.length===0?`<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px;">No evidence attached yet.</div>`:ev.map(e=>`<div class="evidence-card"><div class="evidence-thumb"><span style="font-size:36px;">${e.type==='Photo'?'📷':e.type==='Video'?'🎥':e.type==='Audio'?'🎙️':'📄'}</span></div><div class="evidence-info"><div class="evidence-name">${e.name}</div><div class="evidence-tag">${e.fir_number||'—'}</div><div style="font-size:10px;color:var(--text-faint);margin-top:4px;">${e.type} · ${e.evidence_date||formatDate(e.created_at)}</div></div></div>`).join('')}
+    </div>
   </div>`;
 }
-
-// ── OPEN FILE ──────────────────────────────────────────────────
-function openEvidenceFile(id, url, name, type) {
-  if (!url) { showToast('⚠️ No file attached to this evidence item.', 'error'); return; }
-  // Open file in new tab
-  window.open(url, '_blank', 'noopener');
-}
-
-// ── RENAME EVIDENCE ────────────────────────────────────────────
-function renameEvidence(id, currentName, firNumber) {
-  openModal('✏️ Rename Evidence',
-    `<div style="margin-bottom:8px;font-size:12px;color:var(--text-muted);">Enter a new name for this evidence item.</div>
-     <input class="form-input" id="ev-rename-input" value="${currentName}" style="width:100%;box-sizing:border-box;" placeholder="Evidence name">`,
-    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-     <button class="btn btn-primary" onclick="saveEvidenceRename('${id}','${firNumber}')">✏️ Rename</button>`
-  );
-  setTimeout(() => { const i = document.getElementById('ev-rename-input'); if(i){i.focus();i.select();} }, 100);
-}
-
-async function saveEvidenceRename(id, firNumber) {
-  const newName = document.getElementById('ev-rename-input')?.value.trim();
-  if (!newName) { showToast('⚠️ Name cannot be empty.', 'error'); return; }
-  try {
-    await supabaseClient.from('evidence').update({ name: newName }).eq('id', id);
-    closeModal();
-    showToast('✅ Evidence renamed.', 'success');
-    // Refresh evidence tab
-    const c = await getCase(_currentWorkspaceCaseId);
-    const ev = await getEvidence(firNumber);
-    document.getElementById('workspace-tab-content').innerHTML = renderEvidenceTab(c, ev);
-  } catch(err) { showToast('❌ ' + err.message, 'error'); }
-}
-
-// ── DELETE EVIDENCE ────────────────────────────────────────────
-function deleteWorkspaceEvidence(id, firNumber) {
-  openModal('🗑️ Delete Evidence',
-    `<p style="color:var(--text-secondary);font-size:13px;">Are you sure you want to delete this evidence item?<br><span style="color:var(--red);font-size:11px;margin-top:8px;display:block;">⚠️ This cannot be undone.</span></p>`,
-    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-     <button class="btn btn-danger" onclick="closeModal();doDeleteWorkspaceEvidence('${id}','${firNumber}')">🗑️ Delete</button>`
-  );
-}
-
-async function doDeleteWorkspaceEvidence(id, firNumber) {
-  try {
-    await deleteEvidence(id);
-    showToast('🗑️ Evidence deleted.', 'info');
-    const c = await getCase(_currentWorkspaceCaseId);
-    const ev = await getEvidence(firNumber);
-    document.getElementById('workspace-tab-content').innerHTML = renderEvidenceTab(c, ev);
-  } catch(err) { showToast('❌ ' + err.message, 'error'); }
-}
-
-// ── ATTACH EVIDENCE MODAL ──────────────────────────────────────
-function openWorkspaceEvidenceModal(caseId, firNumber) {
-  openModal('➕ Attach Evidence',
-    `<div style="margin-bottom:12px;">
-       <div style="display:flex;gap:8px;direction:rtl;margin-bottom:12px;">
-         <button class="btn btn-secondary btn-sm" onclick="wevOpenCamera()">📸 Camera</button>
-         <button class="btn btn-secondary btn-sm" onclick="wevOpenFile()">📎 Select File</button>
-       </div>
-       <!-- Camera preview -->
-       <div id="wev-camera" style="display:none;margin-bottom:12px;">
-         <video id="wev-video" style="width:100%;border-radius:8px;max-height:200px;" autoplay playsinline></video>
-         <div style="display:flex;gap:8px;direction:rtl;margin-top:8px;">
-           <button class="btn btn-primary btn-sm" onclick="wevSnap()">📸 Capture</button>
-           <button class="btn btn-secondary btn-sm" onclick="wevStopCamera()">✕ Stop</button>
-         </div>
-         <canvas id="wev-canvas" style="display:none;"></canvas>
-       </div>
-       <!-- File / photo preview -->
-       <div id="wev-preview" style="display:none;margin-bottom:12px;text-align:center;">
-         <img id="wev-img-preview" style="max-height:120px;border-radius:6px;border:2px solid var(--accent);display:none;" alt="">
-         <div id="wev-file-name" style="font-size:12px;color:var(--accent);margin-top:4px;"></div>
-       </div>
-     </div>
-     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;direction:rtl;margin-bottom:10px;">
-       <div><label class="form-label">Name *</label><input class="form-input" id="wev-name" placeholder="e.g. CCTV Screenshot"></div>
-       <div><label class="form-label">Type</label>
-         <select class="form-input" id="wev-type">
-           <option>Photo</option><option>Video</option><option>Audio</option><option>Document</option>
-         </select>
-       </div>
-     </div>
-     <div style="margin-bottom:10px;"><label class="form-label">Date of Evidence</label><input class="form-input" id="wev-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
-     <div><label class="form-label">Notes</label><textarea class="form-input" id="wev-notes" rows="2" placeholder="Description, location found, etc."></textarea></div>`,
-    `<button class="btn btn-secondary" onclick="wevStopCamera();closeModal()">Cancel</button>
-     <button class="btn btn-primary" onclick="wevSave('${caseId}','${firNumber}')">💾 Attach</button>`
-  );
-  window._wevFile = null;
-  window._wevDataUrl = null;
-}
-
-// Camera helpers
-async function wevOpenCamera() {
-  document.getElementById('wev-camera').style.display = 'block';
-  try {
-    window._wevStream = await navigator.mediaDevices.getUserMedia({ video: true });
-    document.getElementById('wev-video').srcObject = window._wevStream;
-  } catch(e) { showToast('⚠️ Camera not available.', 'error'); }
-}
-function wevStopCamera() {
-  if (window._wevStream) { window._wevStream.getTracks().forEach(t => t.stop()); window._wevStream = null; }
-  const cam = document.getElementById('wev-camera'); if (cam) cam.style.display = 'none';
-}
-function wevSnap() {
-  const v = document.getElementById('wev-video');
-  const cv = document.getElementById('wev-canvas');
-  cv.width = v.videoWidth; cv.height = v.videoHeight;
-  cv.getContext('2d').drawImage(v, 0, 0);
-  window._wevDataUrl = cv.toDataURL('image/jpeg', 0.85);
-  wevStopCamera();
-  const prev = document.getElementById('wev-preview');
-  const img = document.getElementById('wev-img-preview');
-  prev.style.display = 'block'; img.style.display = 'block'; img.src = window._wevDataUrl;
-  document.getElementById('wev-file-name').textContent = '📸 Camera capture ready';
-  if (!document.getElementById('wev-name').value) document.getElementById('wev-name').value = 'Photo ' + new Date().toLocaleDateString('en-GB');
-  document.getElementById('wev-type').value = 'Photo';
-}
-function wevOpenFile() {
-  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx';
-  inp.onchange = e => {
-    const f = e.target.files[0]; if (!f) return;
-    window._wevFile = f;
-    const prev = document.getElementById('wev-preview');
-    const img = document.getElementById('wev-img-preview');
-    prev.style.display = 'block';
-    document.getElementById('wev-file-name').textContent = '📎 ' + f.name + ' (' + (f.size/1024).toFixed(1) + ' KB)';
-    if (f.type.startsWith('image/')) {
-      const r = new FileReader(); r.onload = ev => { img.src = ev.target.result; img.style.display = 'block'; }; r.readAsDataURL(f);
-    } else { img.style.display = 'none'; }
-    if (!document.getElementById('wev-name').value) document.getElementById('wev-name').value = f.name.replace(/\.[^/.]+$/, '');
-    if (f.type.startsWith('image/')) document.getElementById('wev-type').value = 'Photo';
-    else if (f.type.startsWith('video/')) document.getElementById('wev-type').value = 'Video';
-    else if (f.type.startsWith('audio/')) document.getElementById('wev-type').value = 'Audio';
-    else document.getElementById('wev-type').value = 'Document';
-  };
-  inp.click();
-}
-
-let _currentWorkspaceCaseId = null;
-
-async function wevSave(caseId, firNumber) {
-  const name = document.getElementById('wev-name')?.value.trim();
-  if (!name) { showToast('⚠️ Evidence name is required.', 'error'); return; }
-  _currentWorkspaceCaseId = caseId;
-
-  let fileUrl = null;
-  const type = document.getElementById('wev-type')?.value || 'Document';
-  const date = document.getElementById('wev-date')?.value || '';
-  const notes = document.getElementById('wev-notes')?.value || '';
-
-  try {
-    // Upload file to Supabase Storage if a file is attached
-    if (window._wevFile || window._wevDataUrl) {
-      let blob, ext;
-      if (window._wevDataUrl) {
-        const res = await fetch(window._wevDataUrl); blob = await res.blob(); ext = 'jpg';
-      } else {
-        blob = window._wevFile; ext = window._wevFile.name.split('.').pop();
-      }
-      const path = `${currentUser?.id||'officer'}/${firNumber}/${Date.now()}_${name.replace(/\s+/g,'_')}.${ext}`;
-      const { error: upErr } = await supabaseClient.storage.from('evidence').upload(path, blob, { upsert: true });
-      if (upErr) throw upErr;
-      const { data: urlData } = supabaseClient.storage.from('evidence').getPublicUrl(path);
-      fileUrl = urlData?.publicUrl || null;
-    }
-
-    await addEvidence({ name, fir_number: firNumber, type, evidence_date: date, notes, file_url: fileUrl });
-    wevStopCamera();
-    closeModal();
-    showToast('✅ Evidence attached: ' + name, 'success');
-
-    // Refresh evidence tab
-    const c = await getCase(caseId);
-    const ev = await getEvidence(firNumber);
-    const tabContent = document.getElementById('workspace-tab-content');
-    if (tabContent) tabContent.innerHTML = renderEvidenceTab(c, ev);
-  } catch(err) { showToast('❌ ' + err.message, 'error'); }
-}
-
-
 
 
 // ── BACK / DELETE ──
@@ -2094,14 +1516,5 @@ function goBackToCases() {
   document.getElementById('topbar-title').textContent = '📁 My Cases';
   renderCases(container);
 }
-function confirmDeleteCase(id,fir){openModal('🗑️ Confirm Delete',`<p style="color:var(--text-secondary);font-size:13px;">Delete case <b style="color:var(--accent);">FIR ${fir}</b>?<br><br><span style="color:var(--red);font-size:11px;">⚠️ This cannot be undone.</span></p>`,`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="closeModal();doDeleteCase('${id}')">🗑️ Delete</button>`);}
-async function doDeleteCase(id){
-  try {
-    const c = await getCase(id);
-    if (c) await softDelete('case', id, c);
-    await deleteCase(id);
-    showToast('🗑️ مقدمہ Recycle Bin میں','info');
-    await updateBadges();
-    renderCases(document.getElementById('page-content'));
-  } catch(err) { showToast('❌ Error: '+err.message,'error'); }
-}
+function confirmDeleteCase(id,fir){openModal('🗑️ Confirm Delete',`<p style="color:var(--text-secondary);font-size:13px;">Delete case <b style="color:var(--accent);">FIR ${fir}</b>?<br><br><span style="color:var(--red);font-size:11px;">⚠️ This cannot be undone.</span></p>`,`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="closeModal();doDeleteCase('${id}')">🗑️ Delete</button>`);}
+async function doDeleteCase(id){try{await deleteCase(id);showToast('🗑️ Case deleted.','info');await updateBadges();renderCases(document.getElementById('page-content'));}catch(err){showToast('❌ Error: '+err.message,'error');}}

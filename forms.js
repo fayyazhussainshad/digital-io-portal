@@ -1,184 +1,176 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — TEMPLATES  (forms.js)
-   Manual templates only — Add/Edit/Print/Copy/Delete/Rename
+   DIGITAL IO — OFFICIAL FORMS TAB
+   Government-approved templates auto-filled with case data.
+   Libraries (PizZip, docxtemplater, FileSaver) are loaded
+   lazily with fallback CDNs — no head-script dependency.
    ═══════════════════════════════════════════════════════════ */
 
-registerPage('forms', renderOfficialForms);
+// ── LIBRARY LOADER (lazy, with fallback CDNs) ──
+let _formsLibState = 'idle'; // idle | loading | ready | error
+const _formsLibCallbacks = [];
 
-async function renderOfficialForms(container) {
-  container.innerHTML = `<div style="max-width:none;" id="forms-root">
-    <div style="text-align:center;padding:20px;color:var(--text-muted);">⏳</div>
-  </div>`;
-  await _buildForms();
+const _LIB_SETS = [
+  // Attempt 1: cdnjs.cloudflare.com
+  [
+    'https://cdnjs.cloudflare.com/ajax/libs/pizzip/3.1.7/pizzip.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.44.0/docxtemplater.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js',
+  ],
+  // Attempt 2: unpkg.com
+  [
+    'https://unpkg.com/pizzip@3.1.7/dist/pizzip.min.js',
+    'https://unpkg.com/docxtemplater@3.44.0/build/docxtemplater.js',
+    'https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js',
+  ],
+];
+
+function _loadScript(url) {
+  return new Promise((resolve, reject) => {
+    // Skip if already loaded
+    if (document.querySelector(`script[src="${url}"]`)) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = url;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('Failed: ' + url));
+    document.head.appendChild(s);
+  });
 }
 
-async function _buildForms() {
-  const root = document.getElementById('forms-root');
-  if (!root) return;
-
-  let templates = [];
-  try {
-    const oid = await getOfficerId();
-    const { data } = await supabaseClient.from('law_library')
-      .select('*').eq('officer_id', oid)
-      .eq('category', 'template')
-      .order('created_at', { ascending: false });
-    templates = data || [];
-  } catch(_) {}
-
-  root.innerHTML = `
-  <!-- Header -->
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;direction:rtl;">
-    <button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:20px;font-weight:700;cursor:pointer;color:var(--accent);line-height:1;">←</button>
-    <div>
-      <div style="font-size:18px;font-weight:800;">📥 ٹیمپلیٹس</div>
-      <div style="font-size:12px;color:var(--text-muted);">${templates.length} ٹیمپلیٹ · شامل کریں، ترمیم کریں، پرنٹ کریں</div>
-    </div>
-    <button class="btn btn-primary" onclick="_openAddTemplate()">+ نیا ٹیمپلیٹ</button>
-  </div>
-
-  ${templates.length === 0 ? `
-  <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
-    <div style="font-size:52px;margin-bottom:14px;">📥</div>
-    <div style="font-size:16px;font-weight:700;margin-bottom:8px;font-family:'Jameel Noori Nastaleeq',serif;">کوئی ٹیمپلیٹ نہیں</div>
-    <div style="font-size:12px;margin-bottom:16px;">+ نیا ٹیمپلیٹ بٹن دبا کر شامل کریں</div>
-    <button class="btn btn-primary" onclick="_openAddTemplate()">+ پہلا ٹیمپلیٹ شامل کریں</button>
-  </div>` : `
-  <div style="display:flex;flex-direction:column;gap:8px;">
-    ${templates.map(t => `
-    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
-      <!-- Template Header -->
-      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);direction:rtl;">
-        <div style="flex:1;">
-          <div style="font-size:14px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">${t.title}</div>
-          <div style="font-size:10px;color:var(--text-muted);">${formatDate(t.created_at)}</div>
-        </div>
-        <div style="display:flex;gap:5px;direction:rtl;">
-          <button class="btn btn-primary btn-sm" onclick="_printTemplate('${t.id}')">🖨️ پرنٹ</button>
-          <button class="btn btn-secondary btn-sm" onclick="_copyTemplate('${t.id}')">📋 کاپی</button>
-          <button class="btn btn-secondary btn-sm" onclick="_editTemplate('${t.id}')">✏️ ترمیم</button>
-          <button class="btn btn-secondary btn-sm" onclick="_renameTemplate('${t.id}','${t.title.replace(/'/g,'')}')">✏️ نام</button>
-          <button class="btn btn-danger btn-sm" onclick="_deleteTemplate('${t.id}')">🗑️</button>
-        </div>
-      </div>
-      <!-- Template Preview -->
-      <div style="padding:12px 14px;max-height:100px;overflow:hidden;position:relative;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;font-size:13px;color:var(--text-secondary);">
-        ${(t.content||'').slice(0,200)}${(t.content||'').length>200?'...':''}
-        <div style="position:absolute;bottom:0;left:0;right:0;height:30px;background:linear-gradient(transparent,var(--bg-card));"></div>
-      </div>
-    </div>`).join('')}
-  </div>`}`;
+function _formsLibsReady() {
+  return typeof PizZip !== 'undefined' &&
+         (typeof window.docxtemplater !== 'undefined' || typeof Docxtemplater !== 'undefined') &&
+         typeof saveAs !== 'undefined';
 }
 
-// ── ADD TEMPLATE ──────────────────────────────────────────────
-function _openAddTemplate(existing) {
-  const e = existing || {};
-  openModal(existing ? '✏️ ٹیمپلیٹ ترمیم' : '+ نیا ٹیمپلیٹ',
-    `<div style="direction:rtl;">
-      <label class="form-label">ٹیمپلیٹ کا نام *</label>
-      <input class="form-input" id="tpl-title" value="${e.title||''}" placeholder="مثلاً گواہی کا فارم" style="margin-bottom:10px;">
-      <label class="form-label">مواد *</label>
-      <textarea class="form-input" id="tpl-content" rows="12"
-        style="font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:14px;direction:rtl;line-height:2;resize:vertical;"
-        placeholder="یہاں ٹیمپلیٹ لکھیں...">${e.content||''}</textarea>
-    </div>`,
-    `<div style="display:flex;gap:8px;direction:rtl;">
-      <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-      <button class="btn btn-primary" onclick="_saveTemplate('${e.id||''}')">💾 محفوظ</button>
-    </div>`
-  );
-}
+async function _loadFormsLibs() {
+  if (_formsLibState === 'ready') return true;
+  if (_formsLibState === 'loading') {
+    return new Promise(res => _formsLibCallbacks.push(res));
+  }
+  _formsLibState = 'loading';
 
-async function _saveTemplate(existingId) {
-  const title   = document.getElementById('tpl-title')?.value.trim();
-  const content = document.getElementById('tpl-content')?.value.trim();
-  if (!title)   { showToast('⚠️ نام ضروری ہے','error'); return; }
-  if (!content) { showToast('⚠️ مواد ضروری ہے','error'); return; }
-
-  try {
-    const oid = await getOfficerId();
-    if (existingId) {
-      await supabaseClient.from('law_library').update({ title, content }).eq('id', existingId);
-    } else {
-      await supabaseClient.from('law_library').insert({ officer_id: oid, title, content, category: 'template' });
+  for (let attempt = 0; attempt < _LIB_SETS.length; attempt++) {
+    try {
+      await Promise.all(_LIB_SETS[attempt].map(_loadScript));
+      if (_formsLibsReady()) {
+        _formsLibState = 'ready';
+        console.log('✅ Forms libraries loaded (attempt ' + (attempt + 1) + ')');
+        _formsLibCallbacks.forEach(cb => cb(true));
+        _formsLibCallbacks.length = 0;
+        return true;
+      }
+    } catch (e) {
+      console.warn('Forms libs attempt ' + (attempt + 1) + ' failed:', e.message);
     }
-    closeModal();
-    showToast('✅ ٹیمپلیٹ محفوظ', 'success');
-    _buildForms();
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+  }
+
+  _formsLibState = 'error';
+  _formsLibCallbacks.forEach(cb => cb(false));
+  _formsLibCallbacks.length = 0;
+  return false;
 }
 
-async function _editTemplate(id) {
-  const { data } = await supabaseClient.from('law_library').select('*').eq('id',id).single();
-  if (data) _openAddTemplate(data);
-}
+// ── FORMS DATA ──
+const OFFICIAL_FORMS = [
+  {id:'cdr',    name:'CDR Form — کال ڈیٹا ریکارڈ',                           file:'CDR_Form_template.docx',        type:'docx'},
+  {id:'berooni',name:'Zimni Berooni — بیرونی ضمنی',                           file:'Zimni_Berooni_template.docx',   type:'docx'},
+  {id:'bill',   name:'Investigation Bill — بل تفتیش',                          file:'Investigation_Bill_template.docx',type:'docx'},
+  {id:'androoni',name:'Zimni Androoni — اندرونی ضمنی (blank note form)',       file:'Zimni_Androoni.docx',           type:'docx-blank'},
+  {id:'cro',    name:'CRO Form — کریمنل ریکارڈ کارڈ (print &amp; fill by hand)',file:'CRO_FORM.pdf',               type:'pdf-blank'},
+];
 
-async function _renameTemplate(id, oldName) {
-  openModal('✏️ نام تبدیل کریں',
-    `<div style="direction:rtl;">
-      <label class="form-label">نیا نام</label>
-      <input class="form-input" id="tpl-rename" value="${oldName}" placeholder="ٹیمپلیٹ کا نام">
-    </div>`,
-    `<div style="display:flex;gap:8px;direction:rtl;">
-      <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-      <button class="btn btn-primary" onclick="_doRenameTemplate('${id}')">💾 تبدیل</button>
-    </div>`
-  );
-}
-
-async function _doRenameTemplate(id) {
-  const title = document.getElementById('tpl-rename')?.value.trim();
-  if (!title) return;
-  await supabaseClient.from('law_library').update({ title }).eq('id', id);
-  closeModal();
-  showToast('✅ نام تبدیل ہو گیا', 'success');
-  _buildForms();
-}
-
-async function _printTemplate(id) {
-  const { data } = await supabaseClient.from('law_library').select('*').eq('id',id).single();
-  if (!data) return;
+function buildFormData(c) {
   const o = currentOfficer || {};
-  let _printHTML = '';
-  _printHTML += (`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>@page{margin:20mm;}body{font-family:'Noto Nastaliq Urdu',serif;direction:rtl;color:#111;font-size:14px;line-height:2;}
-    .hdr{text-align:center;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:16px;}
-    .footer{font-size:10px;color:#666;text-align:center;margin-top:30px;border-top:1px solid #ccc;padding-top:8px;}
-    .sig{display:flex;justify-content:space-between;margin-top:40px;}
-    .sig-box{text-align:center;}.sig-line{border-top:1px solid #000;padding-top:5px;margin-top:30px;}</style>
-    </head><body>
-    <div class="hdr"><h2>محکمہ پولیس پنجاب</h2>
-    <div>تھانہ ${o.station||'—'} · ضلع ${o.district||'—'}</div>
-    <h3>${data.title}</h3></div>
-    <div>${(data.content||'').replace(/\n/g,'<br>')}</div>
-    <div class="sig">
-      <div class="sig-box"><div class="sig-line">دستخط SHO<br>تھانہ ${o.station||'—'}</div><div style="font-size:10px;margin-top:4px;">${new Date().toLocaleDateString('en-PK')}</div></div>
-    </div>
-    <div class="footer">Digital IO · ${new Date().toLocaleDateString('en-PK')}</div>
-    
-    </body></html>`);
-  dioPrint(_printHTML);
+  const now = new Date();
+  const months = ['جنوری','فروری','مارچ','اپریل','مئی','جون','جولائی','اگست','ستمبر','اکتوبر','نومبر','دسمبر'];
+  return {
+    station: o.station || '', district: o.district || '',
+    firNumber: c?.fir_number || '', firDate: c?.fir_date || '',
+    offence: [c?.section_of_law, c?.offence_type].filter(Boolean).join(' — ') || '',
+    occurrenceDate: c?.occurrence_date || '', occurrencePlace: '',
+    ioName: o.full_name || '', ioMobile: o.phone || '',
+    year: String(now.getFullYear()),
+    billMonth: months[now.getMonth()], billYear: String(now.getFullYear()),
+  };
 }
 
-async function _copyTemplate(id) {
-  const { data } = await supabaseClient.from('law_library').select('*').eq('id',id).single();
-  if (!data) return;
-  navigator.clipboard.writeText(data.content||'').then(() => showToast('📋 کاپی ہو گئی','success'));
+async function generateOfficialForm(formId) {
+  const form = OFFICIAL_FORMS.find(f => f.id === formId);
+  if (!form) return;
+  const caseId = document.getElementById('offform-case-select')?.value;
+
+  // PDF / blank docx — no library needed
+  if (form.type === 'pdf-blank') {
+    window.open('templates/' + form.file, '_blank');
+    showToast('🖨️ CRO form opened — print and fill by hand.', 'info', 6000);
+    return;
+  }
+  if (form.type === 'docx-blank') {
+    const a = document.createElement('a'); a.href = 'templates/' + form.file;
+    a.download = form.file; document.body.appendChild(a); a.click(); a.remove();
+    showToast('📄 Blank form downloaded.', 'info');
+    return;
+  }
+
+  // Auto-filled docx — needs libraries
+  showToast('⏳ Loading document library…', 'info', 8000);
+  const loaded = await _loadFormsLibs();
+  if (!loaded) {
+    showToast('❌ Could not load document library. Check internet connection — cdnjs.cloudflare.com and unpkg.com both failed.', 'error', 8000);
+    return;
+  }
+
+  let caseData = null;
+  if (caseId) { try { caseData = await getCase(caseId); } catch (e) {} }
+  const data = buildFormData(caseData);
+
+  try {
+    const resp = await fetch('templates/' + form.file);
+    if (!resp.ok) throw new Error('Template file not found. Make sure "' + form.file + '" is inside the /templates/ folder in your repo.');
+    const buf = await resp.arrayBuffer();
+    const zip = new PizZip(buf);
+    // docxtemplater exposes itself as window.docxtemplater or Docxtemplater depending on version
+    const Docx = window.docxtemplater || Docxtemplater;
+    const doc = new Docx(zip, { paragraphLoop: true, linebreaks: true, delimiters: { start: '{', end: '}' } });
+    doc.render(data);
+    const out = doc.getZip().generate({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    const fname = form.id + '_' + (data.firNumber || 'blank').replace(/[^\w]/g, '-') + '.docx';
+    saveAs(out, fname);
+    showToast('✅ Official form generated & downloaded!', 'success');
+  } catch (e) {
+    showToast('❌ Generation failed: ' + e.message, 'error', 7000);
+    console.error('[Forms] Generation error:', e);
+  }
 }
 
-async function _deleteTemplate(id) {
-  openModal('🗑️ حذف',
-    `<p style="color:var(--red);direction:rtl;">کیا آپ یہ ٹیمپلیٹ حذف کرنا چاہتے ہیں؟</p>`,
-    `<div style="display:flex;gap:8px;direction:rtl;">
-      <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-      <button class="btn btn-danger" onclick="closeModal();_doDelTemplate('${id}')">🗑️ حذف</button>
-    </div>`
-  );
-}
-
-async function _doDelTemplate(id) {
-  await supabaseClient.from('law_library').delete().eq('id',id);
-  showToast('🗑️ حذف ہو گیا','info');
-  _buildForms();
+// ── PAGE RENDERER ──
+registerPage('forms', renderOfficialForms);
+async function renderOfficialForms(container) {
+  // Start loading libs in background as soon as user opens this tab
+  _loadFormsLibs();
+  const cases = await getCases();
+  const libStatus = _formsLibState === 'ready'
+    ? '<span style="color:var(--green);font-size:11px;">✅ Document library ready</span>'
+    : '<span style="color:var(--amber);font-size:11px;">⏳ Loading document library in background…</span>';
+  container.innerHTML =
+    `<div class="page-header"><div><div class="page-title">📥 Official Forms</div>`
+    + `<div class="page-subtitle">Government-approved templates, auto-filled from case data</div></div></div>`
+    + `<div class="card" style="margin-bottom:16px;">`
+    + `<div class="card-title">1️⃣ Select Case <span style="font-weight:400;color:var(--text-muted);">(optional — fills FIR number, date, offence etc.)</span></div>`
+    + `<select class="filter-select" id="offform-case-select" style="width:100%;max-width:420px;">`
+    + `<option value="">— Blank form (no case data) —</option>`
+    + cases.map(c => `<option value="${c.id}">${c.fir_number||'(no FIR)'} — ${c.complainant||c.accused_name||''}</option>`).join('')
+    + `</select></div>`
+    + `<div class="card"><div class="card-title">2️⃣ Choose a Form to Generate <span style="float:right;">${libStatus}</span></div>`
+    + OFFICIAL_FORMS.map(f =>
+        `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 8px;border-bottom:1px solid var(--border-light);">`
+        + `<div style="font-size:13px;color:var(--text-secondary);">📄 ${f.name}</div>`
+        + `<button class="btn btn-primary btn-sm" style="white-space:nowrap;flex-shrink:0;" onclick="generateOfficialForm('${f.id}')">`
+        + `${f.type==='docx'?'⬇️ Generate Filled':f.type==='pdf-blank'?'🖨️ Open to Print':'⬇️ Download Blank'}</button></div>`
+      ).join('')
+    + `</div>`
+    + `<div style="margin-top:14px;padding:14px;background:var(--bg-tertiary);border-radius:8px;font-size:11px;color:var(--text-muted);line-height:1.8;">`
+    + `ℹ️ <b>How it works:</b> Generated forms keep the <b>exact</b> government format. Pick a case, click "Generate Filled" — FIR number, date, offence, station, and your name are inserted automatically.<br>`
+    + `🖐️ <b>CRO Form</b> — scanned fingerprint card, print blank and fill by hand.<br>`
+    + `📝 <b>Zimni Androoni</b> — internal note form, handwritten.</div>`;
 }
