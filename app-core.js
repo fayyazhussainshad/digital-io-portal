@@ -205,6 +205,29 @@ async function getReminders() {
   return data||[];
 }
 
+// ── EVIDENCE ──────────────────────────────────────────────────
+async function getEvidence(firNumber) {
+  try {
+    const oid = await getOfficerId();
+    let q = supabaseClient.from('evidence').select('*').eq('officer_id',oid).order('created_at',{ascending:false});
+    if (firNumber) q = q.eq('fir_number', firNumber);
+    const { data } = await q;
+    return data||[];
+  } catch(_) { return []; }
+}
+
+async function addEvidence(ev) {
+  const oid = await getOfficerId();
+  const { data, error } = await supabaseClient.from('evidence').insert({...ev, officer_id:oid}).select().single();
+  if (error) throw error;
+  return data;
+}
+
+async function deleteEvidence(id) {
+  const { error } = await supabaseClient.from('evidence').delete().eq('id',id);
+  if (error) throw error;
+}
+
 async function addReminder(rem) {
   const oid = await getOfficerId();
   const { data, error } = await supabaseClient.from('reminders').insert({...rem,officer_id:oid}).select().single();
