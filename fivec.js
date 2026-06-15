@@ -16,16 +16,64 @@ function autoMaskDate5C(el){let v=el.value.replace(/\D/g,'');if(v.length>2)v=v.s
 // ── DB FUNCTIONS ──
 async function getApplications5C(query){
   const oid=await getOfficerId();if(!oid)return[];
-  const{data,error}=await supabaseClient.from('applications_5c').select('*, application_5c_numbers(*), application_5c_attachments(*)').eq('officer_id',oid).order('serial_number',{ascending:false});
-  if(error){console.error('5C fetch error',error);return[];}
-  let list=data||[];
-  if(query){const s=query.toLowerCase().trim();list=list.filter(a=>(a.complainant_name||'').toLowerCase().includes(s)||(a.complainant_cnic||'').includes(s)||(a.complainant_cell||'').includes(s)||(a.subject||'').toLowerCase().includes(s)||String(a.serial_number||'').includes(s)||(a.application_5c_numbers||[]).some(n=>(n.application_number||'').toLowerCase().includes(s)||(n.senior_officer_designation||'').toLowerCase().includes(s)||(n.senior_officer_name||'').toLowerCase().includes(s)));}
-  return list;
+  try{
+    if(!navigator.onLine)throw new Error('offline');
+    const{data,error}=await supabaseClient.from('applications_5c').select('*, application_5c_numbers(*), application_5c_attachments(*)').eq('officer_id',oid).order('serial_number',{ascending:false});
+    if(error)throw error;
+    const list=data||[];
+    // cache without attachments blobs for storage efficiency
+    offlineStore.cache('fivec_cache',list).catch(()=>{});
+    if(query){const s=query.toLowerCase().trim();return list.filter(a=>(a.complainant_name||'').toLowerCase().includes(s)||(a.complainant_cnic||'').includes(s)||(a.complainant_cell||'').includes(s)||(a.subject||'').toLowerCase().includes(s)||String(a.serial_number||'').includes(s)||(a.application_5c_numbers||[]).some(n=>(n.application_number||'').toLowerCase().includes(s)||(n.senior_officer_designation||'').toLowerCase().includes(s)||(n.senior_officer_name||'').toLowerCase().includes(s)));}
+    return list;
+  }catch(_){
+    let list=await offlineStore.getAll('fivec_cache',oid);
+    if(query){const s=query.toLowerCase().trim();list=list.filter(a=>(a.complainant_name||'').toLowerCase().includes(s)||String(a.serial_number||'').includes(s)||(a.application_5c_numbers||[]).some(n=>(n.application_number||'').toLowerCase().includes(s)));}
+    return list;
+  }
 }
 async function getApplication5C(id){const{data,error}=await supabaseClient.from('applications_5c').select('*, application_5c_numbers(*), application_5c_attachments(*)').eq('id',id).single();if(error){console.error(error);return null;}return data;}
-async function addApplication5C(d){const oid=await getOfficerId();if(!oid)throw new Error('Not authenticated');const{numbers,...main}=d;const{data,error}=await supabaseClient.from('applications_5c').insert({...main,officer_id:oid}).select().single();if(error)throw error;if(numbers&&numbers.length){const rows=numbers.filter(n=>n.application_number).map(n=>({...n,application_5c_id:data.id}));if(rows.length)await supabaseClient.from('application_5c_numbers').insert(rows);}return data;}
-async function updateApplication5C(id,d,numbers){const{error}=await supabaseClient.from('applications_5c').update(d).eq('id',id);if(error)throw error;if(numbers!==undefined){await supabaseClient.from('application_5c_numbers').delete().eq('application_5c_id',id);const rows=numbers.filter(n=>n.application_number).map(n=>({...n,application_5c_id:id}));if(rows.length)await supabaseClient.from('application_5c_numbers').insert(rows);}}
-async function deleteApplication5C(id){const{data:atts}=await supabaseClient.from('application_5c_attachments').select('storage_path').eq('application_5c_id',id);if(atts&&atts.length)await supabaseClient.storage.from('5c-attachments').remove(atts.map(a=>a.storage_path));const{error}=await supabaseClient.from('applications_5c').delete().eq('id',id);if(error)throw error;}
+async function addApplication5C(d){
+  const oid=await getOfficerId();if(!oid)throw new Error('Not authenticated');
+  if(!navigator.onLine){
+    const tempId='offline_5c_'+Date.now();
+    const local={...d,id:tempId,officer_id:oid,created_at:new Date().toISOString(),_offline:true};
+    await offlineStore.cache('fivec_cache',local);
+    await offlineStore.enqueue('fivec','insert',{...d,officer_id:oid},tempId);
+    _showSyncBar('pending','📴 5-C application saved offline — will sync when connected');
+    return local;
+  }
+  const{numbers,...main}=d;
+  const{data,error}=await supabaseClient.from('applications_5c').insert({...main,officer_id:oid}).select().single();
+  if(error)throw error;
+  if(numbers&&numbers.length){const rows=numbers.filter(n=>n.application_number).map(n=>({...n,application_5c_id:data.id}));if(rows.length)await supabaseClient.from('application_5c_numbers').insert(rows);}
+  offlineStore.cache('fivec_cache',{...data,application_5c_numbers:numbers||[]}).catch(()=>{});
+  return data;
+}
+async function updateApplication5C(id,d,numbers){
+  const cached=await offlineStore.getOne('fivec_cache',id);
+  if(cached)await offlineStore.cache('fivec_cache',{...cached,...d,application_5c_numbers:numbers!==undefined?numbers:(cached.application_5c_numbers||[])});
+  if(!navigator.onLine){
+    await offlineStore.enqueue('fivec','update',{id,...d,numbers});
+    _showSyncBar('pending','📴 5-C update saved offline — will sync when connected');
+    return;
+  }
+  const{error}=await supabaseClient.from('applications_5c').update(d).eq('id',id);
+  if(error)throw error;
+  if(numbers!==undefined){await supabaseClient.from('application_5c_numbers').delete().eq('application_5c_id',id);const rows=numbers.filter(n=>n.application_number).map(n=>({...n,application_5c_id:id}));if(rows.length)await supabaseClient.from('application_5c_numbers').insert(rows);}
+}
+async function deleteApplication5C(id){
+  if(!navigator.onLine){
+    await offlineStore.remove('fivec_cache',id);
+    await offlineStore.enqueue('fivec','delete',{id});
+    _showSyncBar('pending','📴 5-C deletion queued — will sync when connected');
+    return;
+  }
+  const{data:atts}=await supabaseClient.from('application_5c_attachments').select('storage_path').eq('application_5c_id',id);
+  if(atts&&atts.length)await supabaseClient.storage.from('5c-attachments').remove(atts.map(a=>a.storage_path));
+  const{error}=await supabaseClient.from('applications_5c').delete().eq('id',id);
+  if(error)throw error;
+  offlineStore.remove('fivec_cache',id).catch(()=>{});
+}
 async function uploadAttachment5C(appId,file,category){if(!currentUser)throw new Error('Not authenticated');const safeName=file.name.replace(/[^\w.\-]/g,'_');const path=`${currentUser.id}/${appId}/${Date.now()}_${safeName}`;const{error:upErr}=await supabaseClient.storage.from('5c-attachments').upload(path,file);if(upErr)throw upErr;const{data,error}=await supabaseClient.from('application_5c_attachments').insert({application_5c_id:appId,file_name:file.name,storage_path:path,file_size:file.size,mime_type:file.type,category}).select().single();if(error){await supabaseClient.storage.from('5c-attachments').remove([path]);throw error;}return data;}
 async function getAttachmentUrl5C(path){const{data,error}=await supabaseClient.storage.from('5c-attachments').createSignedUrl(path,3600);if(error){console.error(error);return null;}return data.signedUrl;}
 async function deleteAttachment5C(id,path){await supabaseClient.storage.from('5c-attachments').remove([path]);await supabaseClient.from('application_5c_attachments').delete().eq('id',id);}
@@ -35,14 +83,14 @@ registerPage('fivec',renderFiveC);
 async function renderFiveC(container,query){
   query=query||'';
   const apps=await getApplications5C(query);
-  container.innerHTML=`<div class="page-header"><div><div class="page-title">📋 5-C Applications</div><div class="page-subtitle">Applications forwarded by senior officers — track, respond, archive</div></div><button class="btn btn-primary" onclick="open5CForm()">+ New Application</button></div>
+  container.innerHTML=`<div class="page-header"><div style="display:flex;align-items:center;gap:10px;"><button class="btn btn-secondary btn-sm" onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="font-size:12px;">↩</button><div><div class="page-title">📋 5-C Applications</div></div></div><button class="btn btn-primary" onclick="open5CForm()">+ New Application</button></div>
   <div class="card" style="margin-bottom:14px;padding:12px;">
     <input class="search-input" id="fivec-search" style="width:100%;" placeholder="🔍 Search by complainant name, CNIC, cell, application number, designation..." value="${esc5C(query)}" oninput="clearTimeout(window._5cTmr);window._5cTmr=setTimeout(()=>renderFiveC(document.getElementById('page-content'),this.value),250)">
     <div style="margin-top:6px;font-size:11px;color:var(--text-muted);">${apps.length} application${apps.length===1?'':'s'} ${query?'matching':'total'}</div>
   </div>
   <div class="card" style="padding:0;overflow:hidden;">
     <div style="overflow-x:auto;"><table class="data-table" style="width:100%;">
-      <thead><tr><th>S/N</th><th>Complainant</th><th>CNIC</th><th>Cell</th><th>Application No(s) — Designation</th><th>App Date</th><th>Response Date</th><th>Status</th><th>Files</th><th>Actions</th></tr></thead>
+      <thead><tr><th>S/N</th><th>Complainant</th><th>CNIC</th><th>Cell</th><th>Application No(s) — Designation</th><th>App Date</th><th>Status</th><th>Files</th><th>Actions</th></tr></thead>
       <tbody>${apps.length===0?`<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-muted);">${query?'No matches.':'No applications yet. Click <b>+ New Application</b> to add one.'}</td></tr>`:apps.map(render5CRow).join('')}</tbody>
     </table></div>
   </div>`;
@@ -56,13 +104,15 @@ function render5CRow(a){
     <td style="font-family:var(--font-mono);font-size:11px;">${esc5C(formatCell(a.complainant_cell))}</td>
     <td>${nums}</td>
     <td style="font-size:11px;">${toDisplayDate(a.application_date)||'—'}</td>
-    <td style="font-size:11px;">${toDisplayDate(a.response_date)||'—'}</td>
     <td><span class="pill ${FIVEC_STATUS_CLS[a.status]||'pill-blue'}">${FIVEC_STATUS[a.status]||a.status}</span></td>
     <td style="text-align:center;">📎 ${att}</td>
-    <td style="white-space:nowrap;">
-      <button class="btn btn-secondary btn-sm" onclick="open5CForm('${a.id}')">✏️</button>
-      <button class="btn btn-primary btn-sm" onclick="open5CResponse('${a.id}')">📝</button>
-      <button class="btn btn-danger btn-sm" onclick="confirmDelete5C('${a.id}',${a.serial_number})">🗑️</button>
+    <td style="white-space:nowrap;direction:rtl;">
+      <button class="btn btn-secondary btn-sm" onclick="open5CForm('${a.id}')" title="ترمیم">✏️</button>
+      <label class="btn btn-secondary btn-sm" style="cursor:pointer;" title="فائل منسلک کریں"><input type="file" style="display:none;" onchange="upload5CFile('${a.id}','attachment',this.files[0])"> 📎</label>
+      <button class="btn btn-primary btn-sm" onclick="open5CResponse('${a.id}')" title="جواب">📝</button>
+      <button class="btn btn-secondary btn-sm" onclick="_print5C('${a.id}')" title="پرنٹ">🖨️</button>
+      <button class="btn btn-secondary btn-sm" onclick="_export5CPdf('${a.id}')" title="PDF عدالت کے لیے">📄 PDF</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmDelete5C('${a.id}',${a.serial_number})" title="حذف">🗑️</button>
     </td>
   </tr>`;
 }
@@ -79,8 +129,7 @@ async function open5CForm(id){
     <div><label style="${lbl}">Complainant CNIC</label><input style="${inp}" id="f5c-cnic" placeholder="36302-1234567-1" value="${esc5C(app.complainant_cnic)}" oninput="autoFormatCNIC(this)"></div>
     <div><label style="${lbl}">Complainant Cell</label><input style="${inp}" id="f5c-cell" placeholder="0300-1234567" value="${esc5C(app.complainant_cell)}" oninput="autoFormatCell(this)"></div>
     <div><label style="${lbl}">Status</label><select style="${inp}" id="f5c-status">${Object.entries(FIVEC_STATUS).map(([k,v])=>`<option value="${k}" ${app.status===k?'selected':''}>${v}</option>`).join('')}</select></div>
-    <div><label style="${lbl}">Application Date (DD/MM/YYYY)</label><input style="${inp}" id="f5c-appdate" placeholder="DD/MM/YYYY" value="${toDisplayDate(app.application_date)}" oninput="autoMaskDate5C(this)" maxlength="10"></div>
-    <div><label style="${lbl}">Response Date (DD/MM/YYYY)</label><input style="${inp}" id="f5c-respdate" placeholder="DD/MM/YYYY" value="${toDisplayDate(app.response_date)}" oninput="autoMaskDate5C(this)" maxlength="10"></div>
+    <div><label style="${lbl}">Application Date (DD/MM/YYYY)</label><input style="${inp}" id="f5c-appdate" placeholder="DD/MM/YYYY" value="${toDisplayDate(app.application_date)}" oninput="autoMaskDate5C(this)"></div>
     <div style="grid-column:1/-1;"><label style="${lbl}">Subject / Summary</label><textarea style="${inp};min-height:60px;font-family:inherit;" id="f5c-subject">${esc5C(app.subject)}</textarea></div>
   </div>
   <hr style="margin:18px 0;border:0;border-top:1px solid var(--border);">
@@ -114,7 +163,7 @@ function render5CNumberRow(n){
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
       <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;font-weight:600;">Officer Name (optional)</div><input style="${inp}" placeholder="Officer full name" data-field="senior_officer_name" value="${esc5C(!isOther?n.senior_officer_name||'':'')}"></div>
-      <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;font-weight:600;">Forwarded Date (DD/MM/YYYY)</div><input style="${inp}" placeholder="DD/MM/YYYY" data-field="forwarded_date" value="${toDisplayDate(n.forwarded_date)}" oninput="autoMaskDate5C(this)" maxlength="10"></div>
+      <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;font-weight:600;">Forwarded Date (DD/MM/YYYY)</div><input style="${inp}" placeholder="DD/MM/YYYY" data-field="forwarded_date" value="${toDisplayDate(n.forwarded_date)}" oninput="autoMaskDate5C(this)"></div>
     </div>
   </div>`;
 }
@@ -125,7 +174,7 @@ async function upload5CFile(appId,category,file){if(!file)return;if(file.size>10
 async function view5CAttachment(path){const url=await getAttachmentUrl5C(path);if(url)window.open(url,'_blank');else showToast('❌ Could not get file URL','error');}
 async function delete5CAttachment(id,path,btn){if(!confirm('Delete this attachment?'))return;try{await deleteAttachment5C(id,path);if(btn&&btn.closest('div'))btn.closest('div').remove();showToast('🗑️ Deleted','info');}catch(e){showToast('❌ '+e.message,'error');}}
 async function save5CApp(id){
-  const main={complainant_name:document.getElementById('f5c-name').value.trim()||null,complainant_cnic:document.getElementById('f5c-cnic').value.trim()||null,complainant_cell:document.getElementById('f5c-cell').value.trim()||null,application_date:toISODate(document.getElementById('f5c-appdate').value)||null,response_date:toISODate(document.getElementById('f5c-respdate').value)||null,subject:document.getElementById('f5c-subject').value.trim()||null,status:document.getElementById('f5c-status').value};
+  const main={complainant_name:document.getElementById('f5c-name').value.trim()||null,complainant_cnic:document.getElementById('f5c-cnic').value.trim()||null,complainant_cell:document.getElementById('f5c-cell').value.trim()||null,application_date:toISODate(document.getElementById('f5c-appdate').value)||null,subject:document.getElementById('f5c-subject').value.trim()||null,status:document.getElementById('f5c-status').value};
   const numbers=Array.from(document.querySelectorAll('.f5c-num-row')).map(row=>{const r={};row.querySelectorAll('[data-field]').forEach(el=>{r[el.dataset.field]=el.value.trim()||null;});if(r.senior_officer_designation==='Other'){const c=row.querySelector('.desig-custom');r.senior_officer_designation=c&&c.value.trim()?c.value.trim():'Other';}if(r.forwarded_date)r.forwarded_date=toISODate(r.forwarded_date)||r.forwarded_date;delete r.senior_officer_designation_custom;return r;}).filter(n=>n.application_number);
   try{if(id){await updateApplication5C(id,main,numbers);showToast('✅ Updated','success');}else{await addApplication5C({...main,numbers});showToast('✅ Application added','success');}closeModal();renderFiveC(document.getElementById('page-content'));}catch(e){showToast('❌ '+e.message,'error',5000);}
 }
@@ -156,7 +205,17 @@ async function open5CResponse(id){
 <br>
 <div dir="rtl">جنابِ عالیٰ!</div>
 <br>
-<div dir="rtl"></div>`;
+<div dir="rtl"></div>
+<br><br><br><br><br>
+<div style="display:flex;justify-content:flex-end;direction:ltr;">
+  <div style="text-align:center;min-width:200px;">
+    <div style="border-top:1px solid #333;padding-top:6px;margin-top:50px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">
+      SHO تھانہ ${esc5C(o.station||'_______')}
+    </div>
+    <div style="font-size:11px;color:#555;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">مہر و دستخط</div>
+    <div style="font-size:11px;color:#555;margin-top:4px;">${today}</div>
+  </div>
+</div>`;
 
   // Toolbar button style — note: onmousedown="event.preventDefault()" keeps selection alive
   const B=(label,fn,tip)=>`<button class="r5b" onmousedown="event.preventDefault()" onclick="${fn}" title="${tip}">${label}</button>`;
@@ -190,67 +249,9 @@ async function open5CResponse(id){
     <button class="btn btn-secondary btn-sm" onmousedown="event.preventDefault()" onclick="print5CResponse()">🖨️ Print</button>
     <button class="btn btn-danger btn-sm" onclick="document.getElementById('response5c-overlay').remove()">✕ Close</button>
   </div>
-  <!-- Word-like ribbon -->
-  <div style="background:#f2f2f2;border-bottom:2px solid #c4c4c4;padding:5px 10px;display:flex;align-items:center;gap:2px;flex-wrap:wrap;">
-    <!-- Undo / Redo -->
-    ${B('↩','exec5C(\'undo\')','Undo')}${B('↪','exec5C(\'redo\')','Redo')}
-    ${sep}
-    <!-- Font family — saves selection before opening, restores after change -->
-    <select class="r5sel" id="r5font" onfocus="_saveSel5C()" onchange="_restoreSel5C();applyFont5C(this.value)" style="min-width:160px;" title="Font family">
-      <option value="'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif">اردو — Jameel Noori</option>
-      <option value="'Noto Nastaliq Urdu',serif">Noto Nastaliq Urdu</option>
-      <option value="'Arial',sans-serif">Arial</option>
-      <option value="'Times New Roman',serif">Times New Roman</option>
-      <option value="'Courier New',monospace">Courier New</option>
-      <option value="'Aptos','Segoe UI',sans-serif">Aptos / Segoe UI</option>
-    </select>
-    <!-- Font size -->
-    <select class="r5sel" id="r5size" onfocus="_saveSel5C()" onchange="_restoreSel5C();applyFontSize5C(this.value)" style="width:56px;" title="Font size">
-      ${[8,9,10,11,12,13,14,16,18,20,22,24,28,32,36,48].map(s=>`<option value="${s}pt" ${s===14?'selected':''}>${s}</option>`).join('')}
-    </select>
-    ${sep}
-    <!-- Bold / Italic / Underline / Strikethrough -->
-    ${B('<b>B</b>','exec5C(\'bold\')','Bold (Ctrl+B)')}
-    ${B('<i>I</i>','exec5C(\'italic\')','Italic (Ctrl+I)')}
-    ${B('<u>U</u>','exec5C(\'underline\')','Underline (Ctrl+U)')}
-    ${B('<s>S</s>','exec5C(\'strikeThrough\')','Strikethrough')}
-    ${sep}
-    <!-- Text colour -->
-    <label class="r5b" style="cursor:pointer;" title="Text colour" onmousedown="event.preventDefault()">
-      A&nbsp;<input type="color" id="r5color" onchange="document.execCommand('foreColor',false,this.value)" style="width:18px;height:16px;padding:1px;border:none;cursor:pointer;vertical-align:middle;">
-    </label>
-    ${sep}
-    <!-- Line spacing -->
-    <select class="r5sel" id="r5lh" onfocus="_saveSel5C()" onchange="_restoreSel5C();setLineSpacing5C(this.value)" style="width:78px;" title="Line spacing">
-      <option value="1.0">≡ 1.0</option>
-      <option value="1.15">≡ 1.15</option>
-      <option value="1.5" selected>≡ 1.5</option>
-      <option value="1.75">≡ 1.75</option>
-      <option value="2.0">≡ 2.0</option>
-      <option value="2.5">≡ 2.5</option>
-      <option value="3.0">≡ 3.0</option>
-    </select>
-    ${sep}
-    <!-- Alignment -->
-    ${B('⬅','align5C(\'justifyRight\')','Align Right (Urdu)')}
-    ${B('⬌','align5C(\'justifyCenter\')','Center')}
-    ${B('➡','align5C(\'justifyLeft\')','Align Left')}
-    ${B('☰','align5C(\'justifyFull\')','Justify / toggle off')}
-    ${sep}
-    <!-- Indent -->
-    ${B('⇥','indent5C(\'in\')','Increase indent')}
-    ${B('⇤','indent5C(\'out\')','Decrease indent')}
-    ${sep}
-    <!-- Paragraph direction -->
-    ${B('RTL ←','setParaDir5C(\'rtl\')','Set paragraph RTL (Urdu)')}
-    ${B('→ LTR','setParaDir5C(\'ltr\')','Set paragraph LTR (English)')}
-    ${sep}
-    <!-- Lists -->
-    ${B('•≡','exec5C(\'insertUnorderedList\')','Bullet list')}
-    ${B('1≡','exec5C(\'insertOrderedList\')','Numbered list')}
-  </div>
+  ${buildWordToolbar('a4-paper', { preserveSel: true })}
   <!-- Document area -->
-  <div style="flex:1;overflow:auto;padding:28px 20px;background:#525659;">
+  <div style="flex:1;overflow:auto;padding:28px 20px;background:#525659;display:flex;justify-content:center;align-items:flex-start;direction:ltr;">
     <div id="a4-paper" contenteditable="true" spellcheck="false"
       style="background:white;color:#111;width:210mm;min-height:297mm;max-width:100%;margin:0 auto;
              padding:20mm 18mm 20mm 15mm;
@@ -272,6 +273,7 @@ async function open5CResponse(id){
     const paper=document.getElementById('a4-paper');
     if(!paper)return;
     paper.focus();
+    setupWordToolbar('a4-paper');
     // Native Enter → <br> (not <div>). This prevents Nastaleeq font's
     // large block-level spacing AND fixes RTL cursor placement — Chrome
     // handles cursor position correctly when Enter is native, not intercepted.
@@ -327,6 +329,66 @@ async function open5CResponse(id){
 
 // ── EDITOR COMMANDS ──
 function exec5C(cmd){document.execCommand(cmd,false,null);}
+
+// ── TABLE PICKER (5-C) ────────────────────────────────────────
+function _toggleTablePicker5C(){
+  const p=document.getElementById('r5-table-picker');
+  if(p)p.style.display=p.style.display==='none'?'block':'none';
+}
+function _hoverTable5C(r,c){
+  document.querySelectorAll('#r5-table-picker .r5tgc').forEach(el=>{
+    const on=+el.dataset.r<=r&&+el.dataset.c<=c;
+    el.style.background=on?'rgba(56,189,248,0.3)':'';
+    el.style.borderColor=on?'#0ea5e9':'#bbb';
+  });
+  const lbl=document.getElementById('r5-table-label');
+  if(lbl)lbl.textContent=r+' rows × '+c+' cols';
+}
+function _insertTable5C(rows,cols){
+  const p=document.getElementById('r5-table-picker');
+  if(p)p.style.display='none';
+  const paper=document.getElementById('a4-paper');
+  if(!paper)return;
+  paper.focus();
+  let html='<table style="border-collapse:collapse;width:100%;margin:8px 0;"><tbody>';
+  for(let r=0;r<rows;r++){
+    html+='<tr>';
+    for(let c=0;c<cols;c++)
+      html+='<td style="border:1px solid #999;padding:6px 10px;min-width:50px;" contenteditable="true">&nbsp;</td>';
+    html+='</tr>';
+  }
+  html+='</tbody></table><br>';
+  document.execCommand('insertHTML',false,html);
+}
+
+// ── PAGE LAYOUT (5-C) ─────────────────────────────────────────
+function _setPageSize5C(val){
+  const paper=document.getElementById('a4-paper');
+  if(!paper)return;
+  const[w,h]=val.split('|');
+  paper.style.width=w;paper.style.minHeight=h;
+}
+function _setMargins5C(val){
+  const paper=document.getElementById('a4-paper');
+  if(paper)paper.style.padding=val;
+}
+let _r5BorderOn=false;
+function _toggleBorder5C(){
+  const paper=document.getElementById('a4-paper');
+  if(!paper)return;
+  _r5BorderOn=!_r5BorderOn;
+  paper.style.outline=_r5BorderOn?'2px solid #333':'none';
+  const btn=document.getElementById('r5-border-btn');
+  if(btn)btn.style.color=_r5BorderOn?'#0ea5e9':'';
+}
+
+// Close table picker on outside click
+document.addEventListener('click',e=>{
+  const p=document.getElementById('r5-table-picker');
+  if(p&&!p.contains(e.target)&&!e.target.closest('[onclick*="_toggleTablePicker5C"]'))p.style.display='none';
+  const mp=document.getElementById('misal-table-picker');
+  if(mp&&!mp.contains(e.target)&&!e.target.closest('[onclick*="_mToggleTablePicker"]'))mp.style.display='none';
+});
 
 function applyFont5C(fontVal){
   const sel=window.getSelection();
@@ -409,9 +471,7 @@ function downloadResponse5C(id,name){
 function print5CResponse(){
   const html=document.getElementById('a4-paper').innerHTML;
   const lh=document.getElementById('a4-paper')?.style.lineHeight||'1.5';
-  const w=window.open('','_blank','width=900,height=1200');
-  if(!w){showToast('⚠️ Allow pop-ups to print','error');return;}
-  w.document.write(`<!DOCTYPE html>
+  const _printHTML = (`<!DOCTYPE html>
 <html lang="ur" dir="rtl">
 <head>
 <meta charset="utf-8">
@@ -437,10 +497,66 @@ function print5CResponse(){
   span[style*="inline-block"]{ display:inline-block!important; }
 </style>
 </head>
-<body>${html}<scr`+`ipt>
-  // Trigger print after fonts have loaded
-  document.fonts.ready.then(function(){ setTimeout(window.print, 300); });
-<\/scr`+`ipt></body>
+<body>${html}</body>
 </html>`);
-  w.document.close();
+  dioPrint(_printHTML);
+}
+
+// ── 5-C PRINT ────────────────────────────────────────────────
+// ── 5-C PDF EXPORT (court-ready) ──────────────────────────────
+async function _export5CPdf(id) {
+  showToast('📄 PDF تیار ہو رہا ہے — پرنٹ ونڈو میں "Save as PDF" منتخب کریں', 'info', 5000);
+  // Reuse the same court-ready layout; browser's print dialog → Save as PDF
+  setTimeout(() => _print5C(id), 600);
+}
+
+async function _print5C(id) {
+  try {
+    const { data: a } = await supabaseClient.from('applications_5c')
+      .select('*, application_5c_numbers(*)').eq('id',id).single();
+    if (!a) { showToast('⚠️ درخواست نہیں ملی','error'); return; }
+    const o = currentOfficer || {};
+    const nums = (a.application_5c_numbers||[]);
+    let _printHTML = '';
+    _printHTML += (`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+      @page{margin:15mm;size:A4;}
+      body{font-family:'Noto Nastaliq Urdu','Jameel Noori Nastaleeq',Arial,sans-serif;direction:rtl;color:#111;font-size:13px;}
+      .hdr{text-align:center;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:12px;}
+      table{width:100%;border-collapse:collapse;margin-bottom:10px;}
+      td,th{border:1px solid #333;padding:6px 10px;font-size:13px;}
+      th{background:#f0f0f0;width:35%;}
+      .resp{border:1px solid #ccc;padding:12px;min-height:80px;margin-top:8px;line-height:2;}
+      .footer{font-size:10px;color:#666;text-align:center;margin-top:20px;border-top:1px solid #ccc;padding-top:6px;}
+      .sig{display:flex;justify-content:space-between;margin-top:30px;}
+      .sig-box{text-align:center;min-width:180px;}
+      .sig-line{border-top:1px solid #000;padding-top:5px;margin-top:25px;}
+    </style></head><body>
+    <div class="hdr">
+      <h2>محکمہ پولیس پنجاب</h2>
+      <div>تھانہ ${o.station||'—'} · ضلع ${o.district||'—'}</div>
+      <div style="font-weight:700;margin-top:4px;">5-C درخواست — سیریل نمبر: <b>${a.serial_number}</b></div>
+    </div>
+    <table>
+      <tr><th>مدعی / درخواست گزار</th><td><b>${a.complainant_name||'—'}</b></td></tr>
+      <tr><th>شناختی کارڈ</th><td>${a.complainant_cnic||'—'}</td></tr>
+      <tr><th>موبائل</th><td>${a.complainant_cell||'—'}</td></tr>
+      <tr><th>موضوع</th><td>${a.subject||'—'}</td></tr>
+      <tr><th>درخواست کی تاریخ</th><td>${a.application_date||'—'}</td></tr>
+    </table>
+    ${nums.length ? `<table><tr><th>درخواست نمبر</th><th>افسر</th><th>عہدہ</th></tr>
+    ${nums.map(n=>`<tr><td>${n.application_number||'—'}</td><td>${n.senior_officer_name||'—'}</td><td>${n.senior_officer_designation||'—'}</td></tr>`).join('')}
+    </table>` : ''}
+    <div style="font-weight:700;margin-top:10px;">جواب / رپورٹ:</div>
+    <div class="resp">${(a.response_text||'').replace(/\n/g,'<br>') || '&nbsp;'}</div>
+    <div class="sig">
+      <div class="sig-box"><div class="sig-line">تفتیشی افسر<br>${o.full_name||'—'} ${o.designation||''}</div></div>
+      <div class="sig-box"><div class="sig-line">SHO تھانہ ${o.station||'—'}<br>مہر و دستخط</div></div>
+    </div>
+    <div class="footer">Digital IO · محکمہ پولیس پنجاب · ${new Date().toLocaleDateString('en-PK')}</div>
+    
+    </body></html>`);
+    dioPrint(_printHTML);
+  } catch(e) { showToast('❌ '+e.message,'error'); }
 }
