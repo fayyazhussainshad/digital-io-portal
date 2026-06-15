@@ -15,7 +15,7 @@ let _cdrCase    = null; // linked case
 async function renderCDR(container) {
   container.innerHTML = `
   <div style="max-width:1000px;margin:0 auto;" id="cdr-root">
-    <div style="margin-bottom:12px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq',serif;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">← واپس</button></div>
+    <div style="margin-bottom:12px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq',serif;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">↩</button></div>
 
     <!-- Header -->
     <div style="background:linear-gradient(135deg,#1a3a5c,#0d2a45);border-radius:12px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:14px;">
@@ -546,8 +546,8 @@ function _generateExpertOpinion(a, suspects) {
 function _cdrPrintReport() {
   const el = document.getElementById('cdr-results');
   if (!el) return;
-  const w = window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  let _printHTML = '';
+  _printHTML += (`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <title>CDR Analysis Report</title>
     <style>body{font-family:Arial,sans-serif;padding:20px;direction:rtl;}
     table{border-collapse:collapse;width:100%;}td,th{border:1px solid #ccc;padding:6px;font-size:12px;}
@@ -557,8 +557,8 @@ function _cdrPrintReport() {
     <p style="text-align:center;">FIR: ${_cdrCase?.fir_number||'—'} | Network: ${_cdrMeta.network} | Date: ${new Date().toLocaleDateString()}</p>
     ${el.innerHTML}
     </body></html>`);
-  w.document.close();
-  setTimeout(()=>w.print(),500);
+  dioPrint(_printHTML);
+  
 }
 
 function _cdrDownloadReport() {

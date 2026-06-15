@@ -1006,7 +1006,7 @@ function renderWorkspace(c, docs, ev, container) {
         <button class="btn btn-secondary btn-sm" onclick="_printFIRDirect('${c.id}')">🖨️ FIR</button>
         <button class="btn btn-secondary btn-sm" onclick="openShareModal('${c.id}')">📤</button>
         <button class="btn btn-danger btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number||''}')">🗑️</button>
-        <button onclick="goBackToCases()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">واپس ←</button>
+        <button onclick="goBackToCases()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">↩</button>
       </div>
     </div>
 

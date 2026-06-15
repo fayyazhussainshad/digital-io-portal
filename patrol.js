@@ -117,7 +117,7 @@ function _switchPTab() {
 async function _drawHome(root) {
   const hist = await _fetchHist();
   root.innerHTML = `
-  <div style="margin-bottom:8px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text-secondary);">واپس ←</button></div>
+  <div style="margin-bottom:8px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:20px;font-weight:700;cursor:pointer;color:var(--accent);line-height:1;">←</button></div>
   <div class="card" style="text-align:center;padding:32px 20px;margin-bottom:14px;">
     <div style="font-size:52px;margin-bottom:10px;">🚔</div>
     <div style="font-size:17px;font-weight:800;margin-bottom:6px;">Patrol Log</div>
@@ -425,13 +425,13 @@ async function _showPreviousPatrols() {
       `<div style="max-height:60vh;overflow-y:auto;">
         ${shifts.length ? shifts.map(s => `
           <div style="padding:10px;border-bottom:1px solid var(--border);direction:rtl;">
-            <div style="font-size:13px;font-weight:700;color:var(--accent);">
-              ${new Date(s.started_at).toLocaleDateString('en-PK',{day:'2-digit',month:'short',year:'numeric'})}
-              ${s.ended_at ? ' — ' + new Date(s.ended_at).toLocaleDateString('en-PK',{day:'2-digit',month:'short'}) : ' <span style="color:var(--green);">● فعال</span>'}
+            <div style="font-size:13px;font-weight:700;color:var(--accent);direction:rtl;">
+              <span dir="ltr" style="unicode-bidi:embed;">${new Date(s.started_at).toLocaleDateString('en-PK',{day:'2-digit',month:'short',year:'numeric'})}${s.ended_at ? ' — ' + new Date(s.ended_at).toLocaleDateString('en-PK',{day:'2-digit',month:'short'}) : ''}</span>
+              ${s.ended_at ? '' : ' <span style="color:var(--green);">● فعال</span>'}
             </div>
-            <div style="font-size:11px;color:var(--text-muted);">
-              شروع: ${new Date(s.started_at).toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'})}
-              ${s.ended_at ? ' · ختم: ' + new Date(s.ended_at).toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}) : ''}
+            <div style="font-size:11px;color:var(--text-muted);direction:rtl;">
+              <span>شروع:</span> <span dir="ltr" style="unicode-bidi:embed;">${new Date(s.started_at).toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit',hour12:true})}</span>
+              ${s.ended_at ? ' · <span>ختم:</span> <span dir="ltr" style="unicode-bidi:embed;">' + new Date(s.ended_at).toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit',hour12:true}) + '</span>' : ''}
             </div>
             ${s.notes ? `<div style="font-size:11px;color:var(--text-faint);">${s.notes}</div>` : ''}
           </div>`).join('')

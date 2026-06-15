@@ -83,14 +83,14 @@ registerPage('fivec',renderFiveC);
 async function renderFiveC(container,query){
   query=query||'';
   const apps=await getApplications5C(query);
-  container.innerHTML=`<div class="page-header"><div style="display:flex;align-items:center;gap:10px;"><button class="btn btn-secondary btn-sm" onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="font-size:12px;">واپس ←</button><div><div class="page-title">📋 5-C Applications</div></div></div><button class="btn btn-primary" onclick="open5CForm()">+ New Application</button></div>
+  container.innerHTML=`<div class="page-header"><div style="display:flex;align-items:center;gap:10px;"><button class="btn btn-secondary btn-sm" onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="font-size:12px;">↩</button><div><div class="page-title">📋 5-C Applications</div></div></div><button class="btn btn-primary" onclick="open5CForm()">+ New Application</button></div>
   <div class="card" style="margin-bottom:14px;padding:12px;">
     <input class="search-input" id="fivec-search" style="width:100%;" placeholder="🔍 Search by complainant name, CNIC, cell, application number, designation..." value="${esc5C(query)}" oninput="clearTimeout(window._5cTmr);window._5cTmr=setTimeout(()=>renderFiveC(document.getElementById('page-content'),this.value),250)">
     <div style="margin-top:6px;font-size:11px;color:var(--text-muted);">${apps.length} application${apps.length===1?'':'s'} ${query?'matching':'total'}</div>
   </div>
   <div class="card" style="padding:0;overflow:hidden;">
     <div style="overflow-x:auto;"><table class="data-table" style="width:100%;">
-      <thead><tr><th>S/N</th><th>Complainant</th><th>CNIC</th><th>Cell</th><th>Application No(s) — Designation</th><th>App Date</th><th>Response Date</th><th>Status</th><th>Files</th><th>Actions</th></tr></thead>
+      <thead><tr><th>S/N</th><th>Complainant</th><th>CNIC</th><th>Cell</th><th>Application No(s) — Designation</th><th>App Date</th><th>Status</th><th>Files</th><th>Actions</th></tr></thead>
       <tbody>${apps.length===0?`<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-muted);">${query?'No matches.':'No applications yet. Click <b>+ New Application</b> to add one.'}</td></tr>`:apps.map(render5CRow).join('')}</tbody>
     </table></div>
   </div>`;
@@ -104,14 +104,14 @@ function render5CRow(a){
     <td style="font-family:var(--font-mono);font-size:11px;">${esc5C(formatCell(a.complainant_cell))}</td>
     <td>${nums}</td>
     <td style="font-size:11px;">${toDisplayDate(a.application_date)||'—'}</td>
-    <td style="font-size:11px;">${toDisplayDate(a.response_date)||'—'}</td>
     <td><span class="pill ${FIVEC_STATUS_CLS[a.status]||'pill-blue'}">${FIVEC_STATUS[a.status]||a.status}</span></td>
     <td style="text-align:center;">📎 ${att}</td>
     <td style="white-space:nowrap;direction:rtl;">
-      <button class="btn btn-secondary btn-sm" onclick="open5CForm('${a.id}')">✏️</button>
-      <button class="btn btn-primary btn-sm" onclick="open5CResponse('${a.id}')">📝</button>
-      <button class="btn btn-secondary btn-sm" onclick="_print5C('${a.id}')">🖨️</button>
-      <button class="btn btn-danger btn-sm" onclick="confirmDelete5C('${a.id}',${a.serial_number})">🗑️</button>
+      <button class="btn btn-secondary btn-sm" onclick="open5CForm('${a.id}')" title="ترمیم">✏️</button>
+      <label class="btn btn-secondary btn-sm" style="cursor:pointer;" title="فائل منسلک کریں"><input type="file" style="display:none;" onchange="upload5CFile('${a.id}','attachment',this.files[0])"> 📎</label>
+      <button class="btn btn-primary btn-sm" onclick="open5CResponse('${a.id}')" title="جواب">📝</button>
+      <button class="btn btn-secondary btn-sm" onclick="_print5C('${a.id}')" title="پرنٹ">🖨️</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmDelete5C('${a.id}',${a.serial_number})" title="حذف">🗑️</button>
     </td>
   </tr>`;
 }
@@ -129,7 +129,6 @@ async function open5CForm(id){
     <div><label style="${lbl}">Complainant Cell</label><input style="${inp}" id="f5c-cell" placeholder="0300-1234567" value="${esc5C(app.complainant_cell)}" oninput="autoFormatCell(this)"></div>
     <div><label style="${lbl}">Status</label><select style="${inp}" id="f5c-status">${Object.entries(FIVEC_STATUS).map(([k,v])=>`<option value="${k}" ${app.status===k?'selected':''}>${v}</option>`).join('')}</select></div>
     <div><label style="${lbl}">Application Date (DD/MM/YYYY)</label><input style="${inp}" id="f5c-appdate" placeholder="DD/MM/YYYY" value="${toDisplayDate(app.application_date)}" oninput="autoMaskDate5C(this)"></div>
-    <div><label style="${lbl}">Response Date (DD/MM/YYYY)</label><input style="${inp}" id="f5c-respdate" placeholder="DD/MM/YYYY" value="${toDisplayDate(app.response_date)}" oninput="autoMaskDate5C(this)"></div>
     <div style="grid-column:1/-1;"><label style="${lbl}">Subject / Summary</label><textarea style="${inp};min-height:60px;font-family:inherit;" id="f5c-subject">${esc5C(app.subject)}</textarea></div>
   </div>
   <hr style="margin:18px 0;border:0;border-top:1px solid var(--border);">
@@ -174,7 +173,7 @@ async function upload5CFile(appId,category,file){if(!file)return;if(file.size>10
 async function view5CAttachment(path){const url=await getAttachmentUrl5C(path);if(url)window.open(url,'_blank');else showToast('❌ Could not get file URL','error');}
 async function delete5CAttachment(id,path,btn){if(!confirm('Delete this attachment?'))return;try{await deleteAttachment5C(id,path);if(btn&&btn.closest('div'))btn.closest('div').remove();showToast('🗑️ Deleted','info');}catch(e){showToast('❌ '+e.message,'error');}}
 async function save5CApp(id){
-  const main={complainant_name:document.getElementById('f5c-name').value.trim()||null,complainant_cnic:document.getElementById('f5c-cnic').value.trim()||null,complainant_cell:document.getElementById('f5c-cell').value.trim()||null,application_date:toISODate(document.getElementById('f5c-appdate').value)||null,response_date:toISODate(document.getElementById('f5c-respdate').value)||null,subject:document.getElementById('f5c-subject').value.trim()||null,status:document.getElementById('f5c-status').value};
+  const main={complainant_name:document.getElementById('f5c-name').value.trim()||null,complainant_cnic:document.getElementById('f5c-cnic').value.trim()||null,complainant_cell:document.getElementById('f5c-cell').value.trim()||null,application_date:toISODate(document.getElementById('f5c-appdate').value)||null,subject:document.getElementById('f5c-subject').value.trim()||null,status:document.getElementById('f5c-status').value};
   const numbers=Array.from(document.querySelectorAll('.f5c-num-row')).map(row=>{const r={};row.querySelectorAll('[data-field]').forEach(el=>{r[el.dataset.field]=el.value.trim()||null;});if(r.senior_officer_designation==='Other'){const c=row.querySelector('.desig-custom');r.senior_officer_designation=c&&c.value.trim()?c.value.trim():'Other';}if(r.forwarded_date)r.forwarded_date=toISODate(r.forwarded_date)||r.forwarded_date;delete r.senior_officer_designation_custom;return r;}).filter(n=>n.application_number);
   try{if(id){await updateApplication5C(id,main,numbers);showToast('✅ Updated','success');}else{await addApplication5C({...main,numbers});showToast('✅ Application added','success');}closeModal();renderFiveC(document.getElementById('page-content'));}catch(e){showToast('❌ '+e.message,'error',5000);}
 }
