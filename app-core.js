@@ -45,18 +45,8 @@ const STATUS_CLASSES = {
 function registerPage(name, fn) { _pages[name] = fn; }
 
 function showPage(page, el) {
-  // Update active nav — support both old .nav-item and new .topnav-item
+  // Update active nav
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.querySelectorAll('.topnav-item').forEach(n => n.classList.remove('active'));
-  // Highlight matching top-nav button (or the "More" button if page is in dropdown)
-  var mainMatch = document.querySelector('.topnav-item[data-page="'+page+'"]');
-  if (mainMatch) {
-    mainMatch.classList.add('active');
-  } else {
-    var moreBtn = document.getElementById('more-btn');
-    var inMore = ['forms','fivec','law','cdr','performance','backup','bin','subscription','admin','settings'].indexOf(page) !== -1;
-    if (moreBtn && inMore) moreBtn.classList.add('active');
-  }
   if (el && el.classList) el.classList.add('active');
 
   // Update topbar title
@@ -275,8 +265,8 @@ async function updateBadges() {
 // ── SIDEBAR PROFILE ───────────────────────────────────────────
 function updateSidebarProfile() {
   const o = currentOfficer||{};
-  const nameEl = document.getElementById('sidebar-officer-name');
-  const rankEl = document.getElementById('sidebar-officer-rank');
+  const nameEl = document.getElementById('sidebar-name');
+  const rankEl = document.getElementById('sidebar-role');
   const avEl   = document.getElementById('sidebar-avatar');
   if (nameEl) nameEl.textContent = o.full_name||'افسر';
   if (rankEl) rankEl.textContent = `${o.designation||''} · ${o.station||''}`;
@@ -613,7 +603,7 @@ async function initApp() {
   });
   // Check license
   if (typeof checkLicense==='function') checkLicense();
-  showPage('dashboard', null);
+  showPage('dashboard', document.querySelector('.nav-item'));
   setTimeout(()=>triggerBackup('app_init'), 3000);
   setTimeout(_initNotifications, 2000);
   setTimeout(_checkDueReminders, 5000);

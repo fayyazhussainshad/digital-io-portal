@@ -431,7 +431,7 @@ input, textarea, select { font-family: var(--font-main); }
 .modal-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.6; }
 
 /* ── APP LAYOUT ── */
-#main-app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+#main-app { display: flex; flex-direction: row-reverse; height: 100vh; overflow: hidden; }
 /* Sidebar — overlay from RIGHT on all screens */
 .sidebar {
   width: var(--sidebar-width);
@@ -827,7 +827,7 @@ input[id*="cnic"], input[id*="cell"] {
 .page-header { padding-top:0; margin-bottom:8px; }
 
 /* ── Collapsible Sidebar (Desktop only) ── */
-#main-app { display:flex; flex-direction:column; position:relative; }
+#main-app { display:flex; flex-direction:row-reverse; position:relative; }
 .sidebar.collapsed {
   opacity: 0;
   pointer-events: none;
@@ -998,47 +998,51 @@ window.addEventListener('unhandledrejection', function(e){
      MAIN APP
 ══════════════════════════════════ -->
 <div id="main-app" style="display:none;">
+  <!-- Mobile overlay -->
+  <div id="mob-overlay" onclick="closeMobileSidebar()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);z-index:999;"></div>
+
+  <!-- Hamburger button (mobile) -->
+  <button id="menu-toggle" onclick="toggleSidebar()" title="مینو"
+    style="position:fixed;top:10px;right:12px;z-index:1002;width:42px;height:42px;border-radius:10px;background:var(--accent);color:#fff;border:none;font-size:20px;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.3);">☰</button>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><div class="sidebar-logo-icon">🛡️</div><div><div class="sidebar-logo-text">Digital IO</div><div class="sidebar-logo-sub">Case Management</div></div></div>
+    <div class="sidebar-profile"><div class="sidebar-avatar" id="sidebar-avatar">IO</div><div><div class="sidebar-profile-name" id="sidebar-name">Loading...</div><div class="sidebar-profile-role" id="sidebar-role">Officer</div></div></div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="closeMobileSidebar();showPage('dashboard',this)"><span class="nav-icon">🏠</span> ڈیش بورڈ</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('cases',this)"><span class="nav-icon">📁</span> میرے مقدمات <span class="nav-badge" id="badge-cases">0</span></div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('forms',this)"><span class="nav-icon">📥</span> ٹیمپلیٹس</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('fivec',this)"><span class="nav-icon">📋</span> مارک شدہ درخواستیں</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('incident',this)"><span class="nav-icon">🚨</span> واقعاتی رپورٹ</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('patrol',this)"><span class="nav-icon">🚔</span> گشت</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('cdr',this)"><span class="nav-icon">📞</span> CDR Analyzer</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('law',this)"><span class="nav-icon">⚖️</span> قانونی لائبریری</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('reminders',this)"><span class="nav-icon">🔔</span> یاددہانیاں <span class="nav-badge" id="badge-reminders">0</span></div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('search',this)"><span class="nav-icon">🔍</span> تلاش</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('performance',this)"><span class="nav-icon">📊</span> کارکردگی</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('backup',this)"><span class="nav-icon">☁️</span> بیک اپ</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showSubscriptionPage()"><span class="nav-icon">💎</span> سبسکرپشن</div>
+      <div class="nav-item" id="admin-nav-item" style="display:none;" onclick="closeMobileSidebar();showPage('admin',this)"><span class="nav-icon">👮</span> ایڈمن</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('bin',this)"><span class="nav-icon">🗑️</span> حذف شدہ مواد</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('settings',this)"><span class="nav-icon">⚙️</span> ترتیبات</div>
+    </nav>
+    <div class="sidebar-footer"><button class="logout-btn" onclick="doLogout()">🚪 لاگ آؤٹ</button></div>
+  </div>
+
   <div class="main-area">
     <!-- TOP BAR -->
     <div class="topbar">
       <div class="topbar-left">
-        <div class="tb-logo"><span class="tb-logo-icon">🛡️</span><span class="tb-logo-text">Digital IO</span></div>
         <div class="topbar-title" id="topbar-title">ڈیش بورڈ</div>
       </div>
       <div class="topbar-right">
         <button class="topbar-btn" onclick="showPage('search',null)" title="تلاش">🔍</button>
-        <button class="topbar-btn" onclick="showPage('reminders',null)" title="یاددہانیاں">🔔<span id="badge-reminders" class="badge" style="font-size:9px;vertical-align:super;"></span></button>
+        <button class="topbar-btn" onclick="showPage('reminders',null)" title="یاددہانیاں">🔔</button>
         <button class="topbar-btn" id="theme-picker-btn" onclick="openThemePicker()" title="تھیم" style="font-size:16px;">🎨</button>
         <div class="topbar-status"><span class="status-dot" id="status-dot"></span><span id="status-text">Connecting</span></div>
       </div>
     </div>
-
-    <!-- COMPACT NAV BAR (replaces sidebar) -->
-    <nav class="topnav" id="topnav">
-      <button class="topnav-item active" data-page="dashboard" onclick="navTo('dashboard',this)"><span class="tn-ic">🏠</span><span class="tn-tx">ڈیش بورڈ</span></button>
-      <button class="topnav-item" data-page="cases" onclick="navTo('cases',this)"><span class="tn-ic">📁</span><span class="tn-tx">مقدمات</span><span class="nav-badge" id="badge-cases">0</span></button>
-      <button class="topnav-item" data-page="patrol" onclick="navTo('patrol',this)"><span class="tn-ic">🚔</span><span class="tn-tx">گشت</span></button>
-      <button class="topnav-item" data-page="incident" onclick="navTo('incident',this)"><span class="tn-ic">🚨</span><span class="tn-tx">واقعاتی</span></button>
-
-      <!-- More dropdown -->
-      <div class="topnav-more">
-        <button class="topnav-item" id="more-btn" onclick="toggleMoreMenu(event)"><span class="tn-ic">⋮</span><span class="tn-tx">مزید</span></button>
-        <div class="more-menu" id="more-menu">
-          <button class="more-item" onclick="navTo('forms',null)"><span>📥</span> ٹیمپلیٹس</button>
-          <button class="more-item" onclick="navTo('fivec',null)"><span>📋</span> مارک شدہ درخواستیں</button>
-          <button class="more-item" onclick="navTo('law',null)"><span>⚖️</span> قانونی لائبریری</button>
-          <button class="more-item" onclick="navTo('cdr',null)"><span>📞</span> CDR Analyzer</button>
-          <button class="more-item" onclick="navTo('performance',null)"><span>📊</span> کارکردگی</button>
-          <button class="more-item" onclick="navTo('backup',null)"><span>☁️</span> بیک اپ</button>
-          <button class="more-item" onclick="navTo('bin',null)"><span>🗑️</span> حذف شدہ مواد</button>
-          <button class="more-item" onclick="closeMoreMenu();showSubscriptionPage()"><span>💎</span> سبسکرپشن</button>
-          <button class="more-item" id="admin-nav-item" style="display:none;" onclick="navTo('admin',null)"><span>👮</span> ایڈمن</button>
-          <button class="more-item" onclick="navTo('settings',null)"><span>⚙️</span> ترتیبات</button>
-          <div class="more-divider"></div>
-          <button class="more-item more-logout" onclick="doLogout()"><span>🚪</span> لاگ آؤٹ</button>
-        </div>
-      </div>
-    </nav>
 
     <!-- Islamic Messages Ticker -->
     <div id="islamic-bar" style="background:linear-gradient(90deg,rgba(56,189,248,0.08),rgba(34,197,94,0.06));border-bottom:1px solid var(--border);padding:7px 16px;text-align:center;direction:rtl;overflow:hidden;flex-shrink:0;">
@@ -1080,55 +1084,55 @@ window.addEventListener('unhandledrejection', function(e){
 <script src="subscription.js"></script>
 <script src="admin.js"></script>
 
-<!-- ── Compact Top Nav ── -->
+<!-- ── Sidebar ── -->
 <script>
-// Navigate + update active state on top nav
-function navTo(page, el) {
-  // Close more menu
-  closeMoreMenu();
-  // Update active highlight
-  document.querySelectorAll('.topnav-item').forEach(b => b.classList.remove('active'));
-  if (el && el.classList) {
-    el.classList.add('active');
-  } else {
-    // Find matching main nav item by data-page
-    var match = document.querySelector('.topnav-item[data-page="'+page+'"]');
-    if (match) match.classList.add('active');
-    else {
-      // Page is inside "more" — highlight the More button
-      var more = document.getElementById('more-btn');
-      if (more) more.classList.add('active');
-    }
-  }
-  // Show the page
-  showPage(page, null);
+var _sbOpen = false;
+
+function toggleSidebar() {
+  _sbOpen ? closeMobileSidebar() : openMobileSidebar();
 }
 
-// More dropdown toggle
-function toggleMoreMenu(e) {
-  if (e) e.stopPropagation();
-  var menu = document.getElementById('more-menu');
-  if (!menu) return;
-  menu.classList.toggle('open');
-}
-function closeMoreMenu() {
-  var menu = document.getElementById('more-menu');
-  if (menu) menu.classList.remove('open');
+function openMobileSidebar() {
+  var sb = document.getElementById('sidebar');
+  var ov = document.getElementById('mob-overlay');
+  if (sb) sb.classList.add('mobile-open');
+  if (ov) ov.style.display = 'block';
+  _sbOpen = true;
 }
 
-// Close more menu when clicking outside
-document.addEventListener('click', function(e) {
-  var more = document.querySelector('.topnav-more');
-  if (more && !more.contains(e.target)) closeMoreMenu();
-});
+function closeMobileSidebar() {
+  var sb = document.getElementById('sidebar');
+  var ov = document.getElementById('mob-overlay');
+  if (sb) sb.classList.remove('mobile-open');
+  if (ov) ov.style.display = 'none';
+  _sbOpen = false;
+}
 
-// Legacy no-op stubs (old sidebar calls won't break)
-function toggleSidebar() {}
-function closeMobileSidebar() {}
+// Legacy no-op stubs
+function navTo(page, el) { closeMobileSidebar(); showPage(page, el); }
+function toggleMoreMenu() {}
+function closeMoreMenu() {}
 function toggleSidebarCollapse() {}
 function _sidebarOpen() {}
-function _sidebarClose() {}
+function _sidebarClose() { closeMobileSidebar(); }
 </script>
+
+<!-- ── Mobile sidebar CSS ── -->
+<style>
+@media (max-width: 768px) {
+  #menu-toggle { display: flex !important; }
+  .sidebar {
+    position: fixed !important;
+    top: 0; right: 0; bottom: 0;
+    z-index: 1001 !important;
+    transform: translateX(100%);
+    transition: transform 0.28s ease;
+    box-shadow: -4px 0 20px rgba(0,0,0,0.4);
+  }
+  .sidebar.mobile-open { transform: translateX(0); }
+  .topbar { padding-right: 60px !important; }
+}
+</style>
 
 <!-- ── PWA: register service worker ── -->
 <script>
