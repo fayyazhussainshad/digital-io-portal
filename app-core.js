@@ -446,70 +446,9 @@ function voiceTypeArea(editorId, btnId) {
 // Already defined above
 
 // ── PENAL CODE SEARCH ─────────────────────────────────────────
-const PENAL_CODES = [
-  {s:'302',d:'قتل عمد — موت / عمر قید'},{s:'306',d:'قتل بالعفو — 25 سال قید'},{s:'307',d:'قتل کی کوشش — 10 سال'},
-  {s:'320',d:'غیر ارادی قتل — 10 سال'},{s:'322',d:'قتل خطا — دیت'},{s:'324',d:'قتل کی نیت سے زخمی — 10 سال'},
-  {s:'325',d:'خطا سے زخمی کرنا'},{s:'326',d:'خطرناک ہتھیار سے زخمی'},{s:'337',d:'جسمانی نقصان'},
-  {s:'353',d:'سرکاری ملازم پر حملہ'},{s:'354',d:'عورت کی بے حرمتی'},{s:'365',d:'اغوا — 7 سال'},
-  {s:'365-B',d:'اغوا برائے تاوان — موت'},{s:'377',d:'غیر فطری جرائم'},{s:'379',d:'چوری — 3 سال'},
-  {s:'380',d:'گھر میں چوری'},{s:'382',d:'جان کا خطرہ ڈال کر چوری'},{s:'392',d:'ڈکیتی — 10 سال'},
-  {s:'393',d:'ڈکیتی کی کوشش'},{s:'394',d:'ڈکیتی میں زخمی — 14 سال'},{s:'395',d:'گروہی ڈکیتی — عمر قید'},
-  {s:'396',d:'ڈکیتی میں قتل — موت'},{s:'406',d:'خیانت — 3 سال'},{s:'411',d:'چوری کا مال خریدنا'},
-  {s:'419',d:'دھوکہ — 3 سال'},{s:'420',d:'فراڈ — 7 سال'},{s:'427',d:'نقصان'},{s:'435',d:'آتش زنی'},
-  {s:'436',d:'عمارت کو آگ — عمر قید'},{s:'447',d:'تجاوز — 3 ماہ'},{s:'448',d:'گھر میں داخل'},{s:'452',d:'مسلح تجاوز — 7 سال'},
-  {s:'489-F',d:'جھوٹا چیک — 3 سال'},{s:'499',d:'ہتک عزت'},{s:'500',d:'ہتک عزت کی سزا'},
-  {s:'504',d:'اشتعال دلانا'},{s:'506',d:'دھمکی — 2 سال'},{s:'511',d:'جرم کی کوشش'},
-  {s:'9 CNSA',d:'منشیات رکھنا'},{s:'6 CNSA',d:'منشیات تیار کرنا'},{s:'23 CNSA',d:'منشیات فروخت'},
-  {s:'13 Arms',d:'ممنوع ہتھیار — 7 سال'},{s:'15 Arms',d:'غیر قانونی اسلحہ'},
-  {s:'54 CrPC',d:'بغیر وارنٹ گرفتاری'},{s:'173 CrPC',d:'پولیس رپورٹ'},{s:'161 CrPC',d:'گواہ کا بیان'},
-];
-
-function searchPenalCodes(q) {
-  const dd = document.getElementById('section-dropdown');
-  if (!dd) return;
-  if (!q||q.length<1) { dd.style.display='none'; return; }
-  const res = PENAL_CODES.filter(p=>p.s.toLowerCase().includes(q.toLowerCase())||p.d.includes(q)).slice(0,8);
-  if (!res.length) { dd.style.display='none'; return; }
-  dd.style.display = 'block';
-  dd.innerHTML = res.map(p=>`
-    <div onclick="selectSection('${p.s}','${p.d.replace(/'/g,'')}')"
-      style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:12px;"
-      onmouseover="this.style.background='var(--nav-active)'" onmouseout="this.style.background=''">
-      <b style="color:var(--accent);">${p.s}</b> — ${p.d}
-    </div>`).join('');
-}
-
-function selectSection(s, d) {
-  const hidden = document.getElementById('cf-section');
-  const search = document.getElementById('cf-section-search');
-  const dd     = document.getElementById('section-dropdown');
-  const tags   = document.getElementById('selected-sections');
-  if (!hidden||!tags) return;
-  const existing = hidden.value ? hidden.value.split(',') : [];
-  if (!existing.includes(s)) {
-    existing.push(s);
-    hidden.value = existing.join(',');
-    const tag = document.createElement('span');
-    tag.className = 'section-tag';
-    tag.style.cssText = 'display:inline-flex;align-items:center;gap:4px;background:var(--accent-glow);border:1px solid var(--accent);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--accent);margin-right:4px;margin-bottom:4px;';
-    tag.innerHTML = `${s} <span onclick="removeSection('${s}',this)" style="cursor:pointer;font-size:14px;color:var(--red);">×</span>`;
-    tags.appendChild(tag);
-    // Auto-fill offence
-    const off = document.getElementById('cf-offence');
-    if (off&&!off.value) off.value = d;
-  }
-  if (search) search.value = '';
-  if (dd)     dd.style.display = 'none';
-}
-
-function removeSection(s, el) {
-  const hidden = document.getElementById('cf-section');
-  if (hidden) {
-    const arr = hidden.value.split(',').filter(x=>x!==s);
-    hidden.value = arr.join(',');
-  }
-  el?.closest('.section-tag')?.remove();
-}
+// NOTE: PENAL_CODES, searchPenalCodes, selectSection, removeSection, addSection
+// are defined in cases.js (which has the full detailed version with bail/punishment).
+// They were removed from here to avoid "already declared" errors.
 
 // ── THEME PICKER ──────────────────────────────────────────────
 function openThemePicker() {
