@@ -895,6 +895,24 @@ input[id*="cnic"], input[id*="cell"] {
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
+<!-- Diagnostic error banner — shows JS errors on screen (helps debug mobile) -->
+<div id="dio-error-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:999999;background:#b91c1c;color:#fff;padding:10px 14px;font-size:12px;font-family:monospace;direction:ltr;text-align:left;max-height:40vh;overflow:auto;"></div>
+<script>
+window.addEventListener('error', function(e){
+  var b = document.getElementById('dio-error-banner');
+  if (b) {
+    b.style.display = 'block';
+    b.innerHTML += '⚠️ ' + (e.message||'error') + '<br><small>' + (e.filename||'').split('/').pop() + ':' + (e.lineno||'?') + '</small><hr style="border-color:rgba(255,255,255,0.2);margin:4px 0;">';
+  }
+});
+window.addEventListener('unhandledrejection', function(e){
+  var b = document.getElementById('dio-error-banner');
+  if (b) {
+    b.style.display = 'block';
+    b.innerHTML += '⚠️ Promise: ' + (e.reason && e.reason.message ? e.reason.message : e.reason) + '<hr style="border-color:rgba(255,255,255,0.2);margin:4px 0;">';
+  }
+});
+</script>
 <div id="sync-bar" style="display:none;"></div>
 
 <!-- ══════════════════════════════════
@@ -925,7 +943,7 @@ input[id*="cnic"], input[id*="cell"] {
     </div>
     <div id="panel-password">
       <div class="input-group"><input type="email" id="login-email" class="login-input" placeholder="Officer Email Address" autocomplete="email"></div>
-      <div class="input-group"><input type="password" id="login-password" class="login-input" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"><button class="input-eye" onclick="togglePasswordVisibility()">👁️</button></div>
+      <div class="input-group"><input type="password" id="login-password" class="login-input" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"><button class="input-eye" onclick="togglePasswordVisibility('login-password')">👁️</button></div>
       <button class="login-btn" onclick="doLogin()" id="login-submit-btn"><span id="login-btn-text">🔓 Sign In Securely</span><span id="login-btn-loader" style="display:none;">⏳ Verifying...</span></button>
       <div class="login-links"><a onclick="showForgotPassword()">Forgot Password?</a><a onclick="showRegister()">Request Access</a></div>
     </div>
@@ -1022,6 +1040,11 @@ input[id*="cnic"], input[id*="cell"] {
       </div>
     </nav>
 
+    <!-- Islamic Messages Ticker -->
+    <div id="islamic-bar" style="background:linear-gradient(90deg,rgba(56,189,248,0.08),rgba(34,197,94,0.06));border-bottom:1px solid var(--border);padding:7px 16px;text-align:center;direction:rtl;overflow:hidden;flex-shrink:0;">
+      <span id="islamic-ticker" style="font-size:14px;color:var(--accent);font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-weight:600;line-height:1.6;display:inline-block;transition:opacity 0.4s;">🤲 بسم اللہ الرحمٰن الرحیم</span>
+    </div>
+
     <div class="page-content" id="page-content"><div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Loading...</div></div></div>
     <div class="bottombar"><span id="footer-officer">Digital IO</span><span id="footer-time"></span><span id="footer-license">License: Active</span></div>
   </div>
@@ -1056,7 +1079,6 @@ input[id*="cnic"], input[id*="cell"] {
 <script src="bin.js"></script>
 <script src="subscription.js"></script>
 <script src="admin.js"></script>
-<script src="subscription.js"></script>
 
 <!-- ── Compact Top Nav ── -->
 <script>

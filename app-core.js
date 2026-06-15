@@ -524,8 +524,12 @@ function openThemePicker() {
 }
 
 function setTheme(t) {
-  document.documentElement.className = t==='dark'?'':t;
-  localStorage.setItem('dio_theme', t);
+  if (t === 'dark') {
+    document.documentElement.removeAttribute('data-theme');
+  } else {
+    document.documentElement.setAttribute('data-theme', t);
+  }
+  try { localStorage.setItem('dio_theme', t); } catch(_) {}
 }
 
 // Load saved theme
