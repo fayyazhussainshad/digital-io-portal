@@ -100,10 +100,6 @@ registerPage('cases',renderCases);
 let _casesCache = []; // cleared on every render — no stale data
 async function renderCases(container,fStatus,fQuery,fStation){
   fStatus=fStatus||'';fQuery=fQuery||'';fStation=fStation||'';
-  // Show loading skeleton immediately
-  if (typeof skeletonRows === 'function') {
-    container.innerHTML = `<div style="padding:8px;"><div class="dio-skeleton" style="width:200px;height:24px;border-radius:6px;margin-bottom:16px;"></div>${skeletonRows(6)}</div>`;
-  }
   _casesCache = [];
   const allCases=await getCases(fStatus,fQuery);
   _casesCache=allCases;
@@ -169,12 +165,7 @@ async function renderCases(container,fStatus,fQuery,fStation){
           <th style="text-align:center;">اقدامات</th>
         </tr></thead>
         <tbody>
-          ${cases.length ? cases.map((c,i)=>renderCaseRow(c,i+1)).join('') : `<tr><td colspan="11" style="text-align:center;padding:50px 20px;">
-            <div style="font-size:54px;margin-bottom:14px;">📁</div>
-            <div style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:8px;font-family:'Jameel Noori Nastaleeq',serif;">ابھی کوئی مقدمہ درج نہیں</div>
-            <div style="font-size:13px;color:var(--text-muted);margin-bottom:18px;direction:rtl;">اپنا پہلا مقدمہ درج کرنے کے لیے نیچے بٹن دبائیں</div>
-            <button class="btn btn-primary" onclick="openAddCaseModal()" style="font-size:14px;padding:10px 24px;">➕ پہلا مقدمہ درج کریں</button>
-          </td></tr>`}
+          ${cases.length ? cases.map((c,i)=>renderCaseRow(c,i+1)).join('') : `<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--text-muted);">کوئی مقدمہ نہیں</td></tr>`}
         </tbody>
       </table>
     </div>
