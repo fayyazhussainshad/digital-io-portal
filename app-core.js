@@ -492,14 +492,43 @@ async function doLogin() {
   const email = document.getElementById('login-email')?.value.trim();
   const pass  = document.getElementById('login-password')?.value;
   if (!email||!pass) { showToast('⚠️ ای میل اور پاسورڈ ضروری ہے','error'); return; }
+
+  // Failed login lockout check
+  const lockData = JSON.parse(localStorage.getItem('dio_login_lock')||'{}');
+  if (lockData.until && Date.now() < lockData.until) {
+    const mins = Math.ceil((lockData.until - Date.now())/60000);
+    showToast(`🔒 بہت زیادہ غلط کوششیں — ${mins} منٹ بعد دوبارہ کوشش کریں`, 'error', 5000);
+    return;
+  }
+
   setLoginLoading(true);
   try {
     const { data, error } = await supabaseClient.auth.signInWithPassword({email,password:pass});
     if (error) throw error;
     currentUser = data.user;
+    // Clear failed attempts on success
+    localStorage.removeItem('dio_login_lock');
+    // If biometric is enabled for this email, save token for future biometric login
+    if (localStorage.getItem('dio_biometric_email') === email) {
+      try { localStorage.setItem('dio_biometric_token', btoa(pass)); } catch(_) {}
+    }
     await _loadOfficerProfile();
     loginSuccess();
-  } catch(e) { showToast('❌ '+e.message,'error'); setLoginLoading(false); }
+  } catch(e) {
+    // Track failed attempts
+    const lock = JSON.parse(localStorage.getItem('dio_login_lock')||'{"count":0}');
+    lock.count = (lock.count||0) + 1;
+    if (lock.count >= 5) {
+      lock.until = Date.now() + 5*60*1000; // lock for 5 minutes
+      lock.count = 0;
+      localStorage.setItem('dio_login_lock', JSON.stringify(lock));
+      showToast('🔒 5 غلط کوششیں — اکاؤنٹ 5 منٹ کے لیے بند', 'error', 5000);
+    } else {
+      localStorage.setItem('dio_login_lock', JSON.stringify(lock));
+      showToast(`❌ ${e.message} (${5-lock.count} کوششیں باقی)`, 'error');
+    }
+    setLoginLoading(false);
+  }
 }
 
 async function _loadOfficerProfile() {
@@ -536,7 +565,102 @@ function setLoginMethod(m)    { /* handled inline */ }
 function togglePasswordVisibility(id) { const el=document.getElementById(id); if(el) el.type=el.type==='password'?'text':'password'; }
 function pinPress(v)     { const el=document.getElementById('pin-display'); if(el&&el.textContent.length<6) el.textContent+='●'; }
 function pinBackspace()  { const el=document.getElementById('pin-display'); if(el) el.textContent=el.textContent.slice(0,-1); }
-function doBiometric()   { showToast('بایومیٹرک ابھی دستیاب نہیں','warn'); }
+// ── BIOMETRIC (WebAuthn) ──────────────────────────────────────
+async function doBiometric() {
+  const ring = document.getElementById('bio-ring');
+  if (!window.PublicKeyCredential) {
+    showToast('⚠️ یہ ڈیوائس بایومیٹرک سپورٹ نہیں کرتی', 'warn');
+    return;
+  }
+
+  // Check if a biometric credential was registered before
+  const savedCred = localStorage.getItem('dio_biometric_cred');
+  const savedEmail = localStorage.getItem('dio_biometric_email');
+
+  if (!savedCred || !savedEmail) {
+    // First time — need to register. Prompt to enable after normal login.
+    showToast('پہلے ای میل/پاسورڈ سے لاگ ان کریں، پھر بایومیٹرک فعال کریں', 'info', 4000);
+    return;
+  }
+
+  if (ring) ring.classList.add('scanning');
+  try {
+    const challenge = new Uint8Array(32);
+    crypto.getRandomValues(challenge);
+
+    await navigator.credentials.get({
+      publicKey: {
+        challenge,
+        timeout: 60000,
+        userVerification: 'required',
+        allowCredentials: [{
+          type: 'public-key',
+          id: _b64ToBuf(savedCred),
+        }],
+      }
+    });
+
+    // Biometric verified — log in with saved session
+    const savedPass = localStorage.getItem('dio_biometric_token');
+    if (savedPass) {
+      document.getElementById('login-email').value = savedEmail;
+      document.getElementById('login-password').value = atob(savedPass);
+      await doLogin();
+    } else {
+      showToast('✅ بایومیٹرک کامیاب — ای میل/پاسورڈ سے لاگ ان کریں', 'success');
+      document.getElementById('login-email').value = savedEmail;
+    }
+  } catch(e) {
+    showToast('❌ بایومیٹرک ناکام — دوبارہ کوشش کریں', 'error');
+  } finally {
+    if (ring) ring.classList.remove('scanning');
+  }
+}
+
+// Enable biometric (called after successful login from settings)
+async function enableBiometric() {
+  if (!window.PublicKeyCredential) {
+    showToast('⚠️ یہ ڈیوائس بایومیٹرک سپورٹ نہیں کرتی', 'warn');
+    return;
+  }
+  try {
+    const challenge = new Uint8Array(32);
+    crypto.getRandomValues(challenge);
+    const userId = new Uint8Array(16);
+    crypto.getRandomValues(userId);
+
+    const cred = await navigator.credentials.create({
+      publicKey: {
+        challenge,
+        rp: { name: 'Digital IO', id: window.location.hostname },
+        user: {
+          id: userId,
+          name: currentUser?.email || 'officer',
+          displayName: currentOfficer?.full_name || 'Officer',
+        },
+        pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }],
+        authenticatorSelection: {
+          authenticatorAttachment: 'platform',
+          userVerification: 'required',
+        },
+        timeout: 60000,
+      }
+    });
+
+    localStorage.setItem('dio_biometric_cred', _bufToB64(cred.rawId));
+    localStorage.setItem('dio_biometric_email', currentUser?.email || '');
+    showToast('✅ بایومیٹرک فعال ہو گیا — اب فنگرپرنٹ سے لاگ ان کریں', 'success');
+  } catch(e) {
+    showToast('❌ بایومیٹرک فعال نہیں ہوا: ' + (e.message||''), 'error');
+  }
+}
+
+function _bufToB64(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf)));
+}
+function _b64ToBuf(b64) {
+  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+}
 
 async function sendOTP() { showToast('OTP بھیجنے کی سہولت جلد آ رہی ہے','info'); }
 async function verifyOTP() { showToast('OTP کی تصدیق جلد آ رہی ہے','info'); }
@@ -593,16 +717,24 @@ async function _doChangePassword() {
 }
 
 // ── SESSION TIMER ─────────────────────────────────────────────
-let _sessionTimer;
+let _sessionTimer, _sessionWarnTimer;
+const SESSION_TIMEOUT = 10 * 60 * 1000;       // 10 minutes inactivity
+const SESSION_WARN_AT = 9 * 60 * 1000;        // warn at 9 min
 function resetSessionTimer() {
   clearTimeout(_sessionTimer);
+  clearTimeout(_sessionWarnTimer);
+  // Warn 1 minute before logout
+  _sessionWarnTimer = setTimeout(()=>{
+    showToast('⏰ غیر فعالی کے باعث 1 منٹ میں خودکار لاگ آؤٹ ہوگا — کوئی کلک کریں', 'warn', 8000);
+  }, SESSION_WARN_AT);
   _sessionTimer = setTimeout(()=>{
-    showToast('⏰ سیشن ختم — دوبارہ لاگ ان کریں','warn',5000);
-    setTimeout(doLogout, 5000);
-  }, 8*60*60*1000); // 8 hours
+    showToast('🔒 سیشن ختم — حفاظتی وجہ سے لاگ آؤٹ', 'warn', 4000);
+    setTimeout(doLogout, 2000);
+  }, SESSION_TIMEOUT);
 }
 document.addEventListener('click', resetSessionTimer);
 document.addEventListener('keypress', resetSessionTimer);
+document.addEventListener('touchstart', resetSessionTimer);
 
 // ── BACKUP COMPAT ─────────────────────────────────────────────
 function initBackupSystem() {

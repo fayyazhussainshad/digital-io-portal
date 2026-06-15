@@ -91,7 +91,11 @@ async function renderSettings(container) {
     </div>
     <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
       <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">📧 ${_esc(currentUser?.email||'—')}</div>
-      <button class="btn btn-secondary btn-sm" onclick="openChangePasswordModal()">🔑 پاسورڈ تبدیل کریں</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-secondary btn-sm" onclick="openChangePasswordModal()">🔑 پاسورڈ تبدیل کریں</button>
+        <button class="btn btn-secondary btn-sm" onclick="enableBiometric()">🫆 بایومیٹرک فعال کریں</button>
+      </div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:6px;">🫆 بایومیٹرک فعال کرنے سے آپ فنگرپرنٹ/فیس سے لاگ ان کر سکیں گے</div>
     </div>
   </div>
 
