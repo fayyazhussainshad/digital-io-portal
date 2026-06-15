@@ -102,79 +102,28 @@ async function _buildDash() {
     </div>
   </div>
 
-  <!-- Bottom Row: Monthly Chart + Recent Cases -->
-  <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;margin-bottom:14px;">
-
-    <!-- Monthly Chart -->
-    <div class="card">
-      <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:10px;direction:rtl;">📈 ماہانہ اندراج</div>
-      <div style="display:flex;align-items:flex-end;gap:3px;height:80px;margin-bottom:5px;">
-        ${monthly.map((m,i)=>{
-          const max=Math.max(...monthly.map(x=>x.count),1);
-          const pct=Math.round(m.count/max*100);
-          const isCur=i===monthly.length-1;
-          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
-            ${m.count?`<div style="font-size:7px;color:${isCur?'var(--accent)':'var(--text-faint)'};font-weight:${isCur?'800':'400'};">${m.count}</div>`:'<div style="font-size:7px;"></div>'}
-            <div style="width:100%;background:${isCur?'var(--accent)':'rgba(56,189,248,0.25)'};border-radius:2px 2px 0 0;height:${Math.max(pct*0.6,2)}px;"></div>
-            <div style="font-size:7px;color:${isCur?'var(--accent)':'var(--text-faint)'};">${m.label}</div>
-          </div>`;}).join('')}
-      </div>
-      <!-- Patrol + 5-C stats -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;">
-        <div style="text-align:center;background:var(--bg-secondary);border-radius:6px;padding:6px;">
-          <div style="font-size:8px;color:var(--text-muted);direction:rtl;">گشت</div>
-          <div style="font-size:16px;font-weight:900;color:var(--accent);">${patrolCount}</div>
-        </div>
-        <div style="text-align:center;background:var(--bg-secondary);border-radius:6px;padding:6px;">
-          <div style="font-size:8px;color:var(--text-muted);direction:rtl;">مارک درخواستیں</div>
-          <div style="font-size:16px;font-weight:900;color:var(--green);">${fivecApps}</div>
-        </div>
-      </div>
+  <!-- Recent Cases (full width) -->
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:14px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);direction:rtl;">
+      <div style="font-size:13px;font-weight:700;color:var(--accent);">📁 حالیہ مقدمات</div>
+      <button class="btn btn-secondary btn-sm" onclick="showPage('cases',null)" style="font-size:11px;">سب دیکھیں →</button>
     </div>
-
-    <!-- Recent Cases -->
-    <div class="card" style="padding:0;overflow:hidden;">
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);direction:rtl;">
-        <div style="font-size:11px;font-weight:700;color:var(--accent);">📁 حالیہ مقدمات</div>
-        <button class="btn btn-secondary btn-sm" onclick="showPage('cases',null)" style="font-size:10px;">سب →</button>
-      </div>
-      <div style="overflow-x:auto;">
-      <table class="data-table" style="width:100%;">
-        <thead><tr><th>مقدمہ</th><th>مدعی</th><th>دفعہ</th><th>صورتحال</th><th>تاریخ</th><th></th></tr></thead>
-        <tbody>
-          ${cases.slice(0,8).map(c=>`<tr>
-            <td style="font-weight:800;color:var(--accent);cursor:pointer;font-size:11px;" onclick="openCaseWorkspace('${c.id}')">${c.fir_number||'—'}</td>
-            <td style="font-size:10px;">${(c.complainant||'—').slice(0,15)}</td>
-            <td style="font-size:9px;">${(c.section_of_law||'—').slice(0,12)}</td>
-            <td><span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}" style="font-size:8px;">${STATUS_LABELS[c.status]||c.status}</span></td>
-            <td style="font-size:9px;">${formatDate(c.fir_date)}</td>
-            <td><button class="btn btn-secondary btn-sm" onclick="openCaseWorkspace('${c.id}')" style="padding:2px 6px;font-size:9px;">📄</button></td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-      </div>
+    <div style="overflow-x:auto;">
+    <table class="data-table" style="width:100%;">
+      <thead><tr><th>مقدمہ نمبر</th><th>مدعی</th><th>دفعہ</th><th>صورتحال</th><th>تاریخ</th><th></th></tr></thead>
+      <tbody>
+        ${cases.length ? cases.slice(0,10).map(c=>`<tr>
+          <td style="font-weight:800;color:var(--accent);cursor:pointer;font-size:12px;" onclick="openCaseWorkspace('${c.id}')">${c.fir_number||'—'}</td>
+          <td style="font-size:11px;">${(c.complainant||'—').slice(0,20)}</td>
+          <td style="font-size:10px;">${(c.section_of_law||'—').slice(0,15)}</td>
+          <td><span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}" style="font-size:9px;">${STATUS_LABELS[c.status]||c.status}</span></td>
+          <td style="font-size:10px;">${formatDate(c.fir_date)}</td>
+          <td><button class="btn btn-secondary btn-sm" onclick="openCaseWorkspace('${c.id}')" style="padding:3px 8px;font-size:10px;">📄</button></td>
+        </tr>`).join('') : `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">کوئی مقدمہ نہیں</td></tr>`}
+      </tbody>
+    </table>
     </div>
-  </div>
-
-  <!-- Pending reminders -->
-  ${pendRem.length ? `
-  <div class="card" style="margin-bottom:14px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;direction:rtl;">
-      <div style="font-size:11px;font-weight:700;color:var(--accent);">🔔 زیر التواء یاددہانیاں (${pendRem.length})</div>
-      <button class="btn btn-secondary btn-sm" onclick="showPage('reminders',null)" style="font-size:10px;">سب →</button>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:6px;">
-      ${pendRem.slice(0,3).map(r=>{
-        const isOver=r.reminder_date&&r.reminder_date<today;
-        return `<div style="display:flex;gap:8px;align-items:center;padding:7px;background:var(--bg-secondary);border-radius:6px;direction:rtl;border-right:3px solid ${isOver?'var(--red)':'var(--accent)'};">
-          <span style="font-size:14px;">${isOver?'⚠️':'🔔'}</span>
-          <div style="flex:1;"><div style="font-size:11px;">${r.text.slice(0,70)}${r.text.length>70?'...':''}</div>
-          <div style="font-size:9px;color:${isOver?'var(--red)':'var(--accent)'};">${formatDate(r.reminder_date)}</div></div>
-        </div>`;}).join('')}
-    </div>
-  </div>` : ''}`;
-
-  setTimeout(() => _startIslamicTicker(), 100);
+  </div>`;
 }
 
 // ── HELPERS ───────────────────────────────────────────────────
