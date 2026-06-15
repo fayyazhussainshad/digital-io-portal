@@ -472,7 +472,7 @@ function caseFormHTML(c) {
     + '<div class="form-row">'
     + '<div class="form-group"><label class="form-label">تاریخ وقوعہ</label>'
     + '<input class="form-input" id="cf-occurrence-date" value="'+occ+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" dir="ltr" style="text-align:left;"></div>'
-    + '<div class="form-group"><label class="form-label">Status *</label>'
+    + '<div class="form-group"><label class="form-label">صورتحال *</label>'
     + '<select class="form-input" id="cf-status">'+statusOpts+'</select></div>'
     + '</div>'
 
@@ -491,7 +491,7 @@ function caseFormHTML(c) {
 
     // Row 3: Sections of Law (full width)
     + '<div class="form-group">'
-    + '<label class="form-label">Sections of Law * <span style="color:var(--text-faint);font-weight:400;">(multiple allowed)</span></label>'
+    + '<label class="form-label">دفعات قانون * <span style="color:var(--text-faint);font-weight:400;">(ایک سے زیادہ)</span></label>'
     + '<div style="position:relative;">'
     + '<input class="form-input" id="cf-section-search" placeholder="🔍 دفعہ نمبر یا کلیدی الفاظ..." dir="ltr" style="text-align:left;" oninput="searchPenalCodes(this.value)" autocomplete="off">'
     + '<div id="section-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg-card);border:1px solid var(--accent);border-radius:0 0 var(--radius-sm) var(--radius-sm);max-height:180px;overflow-y:auto;z-index:200;box-shadow:var(--shadow);"></div>'
