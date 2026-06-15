@@ -965,6 +965,47 @@ let currentCaseId = null;
 let currentDocIndex = null;
 const docDrafts = {}; // stores edited content per case+doc
 
+// ── CASE STATUS PIPELINE (visual progress) ────────────────────
+function _caseStatusPipeline(c) {
+  // Police case flow stages
+  const stages = [
+    { key:'registered', label:'اندراج',      icon:'📝' },
+    { key:'under',      label:'زیر تفتیش',    icon:'🔍' },
+    { key:'challan',    label:'چالان',        icon:'📋' },
+    { key:'court',      label:'عدالت',         icon:'⚖️' },
+    { key:'closed',     label:'فیصلہ',         icon:'✅' },
+  ];
+
+  // Map current case status to a stage index
+  let activeIdx = 0;
+  const s = c.status;
+  if (s === 'under') activeIdx = 1;
+  else if (s === 'incomplete' || s === 'challan512') activeIdx = 2;
+  else if (s === 'complete') activeIdx = 3;
+  else if (s === 'cancel' || s === 'untrace') activeIdx = 4;
+  else activeIdx = 0;
+
+  return `
+  <div style="background:var(--bg-secondary);border-bottom:1px solid var(--border);padding:12px 16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;direction:rtl;max-width:700px;margin:0 auto;">
+      ${stages.map((st,i) => {
+        const done = i < activeIdx;
+        const active = i === activeIdx;
+        const color = done ? 'var(--green)' : active ? 'var(--accent)' : 'var(--border)';
+        const txtColor = done ? 'var(--green)' : active ? 'var(--accent)' : 'var(--text-muted)';
+        return `
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;position:relative;">
+          ${i < stages.length-1 ? `<div style="position:absolute;top:14px;right:-50%;width:100%;height:2px;background:${i < activeIdx ? 'var(--green)' : 'var(--border)'};z-index:0;"></div>` : ''}
+          <div style="width:30px;height:30px;border-radius:50%;background:${done||active?color:'var(--bg-card)'};border:2px solid ${color};display:flex;align-items:center;justify-content:center;font-size:13px;z-index:1;position:relative;color:${done||active?'#fff':'var(--text-muted)'};">
+            ${done ? '✓' : st.icon}
+          </div>
+          <div style="font-size:10px;font-weight:${active?'800':'600'};color:${txtColor};font-family:'Jameel Noori Nastaleeq',serif;white-space:nowrap;">${st.label}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
 async function openCaseWorkspace(id) {
   // Close mobile sidebar first
   closeMobileSidebar();
@@ -1033,6 +1074,9 @@ function renderWorkspace(c, docs, ev, container) {
         </div>`).join('')}
       </div>
     </details>
+
+    <!-- CASE STATUS PIPELINE -->
+    ${_caseStatusPipeline(c)}
 
     <!-- MISAL DOCUMENT BAR -->
     ${renderMisalBar(c)}

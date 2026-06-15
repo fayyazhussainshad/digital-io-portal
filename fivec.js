@@ -111,6 +111,7 @@ function render5CRow(a){
       <label class="btn btn-secondary btn-sm" style="cursor:pointer;" title="فائل منسلک کریں"><input type="file" style="display:none;" onchange="upload5CFile('${a.id}','attachment',this.files[0])"> 📎</label>
       <button class="btn btn-primary btn-sm" onclick="open5CResponse('${a.id}')" title="جواب">📝</button>
       <button class="btn btn-secondary btn-sm" onclick="_print5C('${a.id}')" title="پرنٹ">🖨️</button>
+      <button class="btn btn-secondary btn-sm" onclick="_export5CPdf('${a.id}')" title="PDF عدالت کے لیے">📄 PDF</button>
       <button class="btn btn-danger btn-sm" onclick="confirmDelete5C('${a.id}',${a.serial_number})" title="حذف">🗑️</button>
     </td>
   </tr>`;
@@ -502,6 +503,13 @@ function print5CResponse(){
 }
 
 // ── 5-C PRINT ────────────────────────────────────────────────
+// ── 5-C PDF EXPORT (court-ready) ──────────────────────────────
+async function _export5CPdf(id) {
+  showToast('📄 PDF تیار ہو رہا ہے — پرنٹ ونڈو میں "Save as PDF" منتخب کریں', 'info', 5000);
+  // Reuse the same court-ready layout; browser's print dialog → Save as PDF
+  setTimeout(() => _print5C(id), 600);
+}
+
 async function _print5C(id) {
   try {
     const { data: a } = await supabaseClient.from('applications_5c')
@@ -536,7 +544,6 @@ async function _print5C(id) {
       <tr><th>موبائل</th><td>${a.complainant_cell||'—'}</td></tr>
       <tr><th>موضوع</th><td>${a.subject||'—'}</td></tr>
       <tr><th>درخواست کی تاریخ</th><td>${a.application_date||'—'}</td></tr>
-      <tr><th>جواب کی تاریخ</th><td>${a.response_date||'—'}</td></tr>
     </table>
     ${nums.length ? `<table><tr><th>درخواست نمبر</th><th>افسر</th><th>عہدہ</th></tr>
     ${nums.map(n=>`<tr><td>${n.application_number||'—'}</td><td>${n.senior_officer_name||'—'}</td><td>${n.senior_officer_designation||'—'}</td></tr>`).join('')}

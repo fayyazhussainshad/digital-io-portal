@@ -42,9 +42,45 @@ const STATUS_CLASSES = {
 };
 
 // ── PAGE REGISTRY ─────────────────────────────────────────────
+// ── ROLE-BASED ACCESS CONTROL ─────────────────────────────────
+// Roles: officer < supervisor < admin < superadmin
+const ROLE_LEVELS = { officer:1, supervisor:2, admin:3, superadmin:4 };
+
+// Which pages each role can access
+const ROLE_PAGES = {
+  officer:    ['dashboard','cases','forms','fivec','incident','patrol','cdr','law','reminders','search','performance','backup','settings','bin','subscription','court','evidence'],
+  supervisor: ['dashboard','cases','forms','fivec','incident','patrol','cdr','law','reminders','search','performance','backup','settings','bin','subscription','court','evidence'],
+  admin:      ['dashboard','cases','forms','fivec','incident','patrol','cdr','law','reminders','search','performance','backup','settings','bin','subscription','court','evidence','admin'],
+  superadmin: ['dashboard','cases','forms','fivec','incident','patrol','cdr','law','reminders','search','performance','backup','settings','bin','subscription','court','evidence','admin'],
+};
+
+function getRole() {
+  return (currentOfficer?.role) || 'officer';
+}
+function roleLevel() {
+  return ROLE_LEVELS[getRole()] || 1;
+}
+function canAccess(page) {
+  const role = getRole();
+  return (ROLE_PAGES[role] || ROLE_PAGES.officer).includes(page);
+}
+function hasRole(minRole) {
+  return roleLevel() >= (ROLE_LEVELS[minRole] || 99);
+}
+// Supervisors+ can see team data, others only their own
+function canViewTeam() {
+  return hasRole('supervisor');
+}
+
 function registerPage(name, fn) { _pages[name] = fn; }
 
 function showPage(page, el) {
+  // Role-based access check
+  if (typeof canAccess === 'function' && !canAccess(page)) {
+    showToast('🔒 آپ کو اس صفحے تک رسائی نہیں ہے', 'error');
+    return;
+  }
+
   // Update active nav
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   if (el && el.classList) el.classList.add('active');
