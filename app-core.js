@@ -72,6 +72,32 @@ function canViewTeam() {
   return hasRole('supervisor');
 }
 
+// ── LOADING SKELETON ──────────────────────────────────────────
+function skeletonRows(count) {
+  count = count || 5;
+  let rows = '';
+  for (let i=0; i<count; i++) {
+    rows += `<div style="display:flex;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);">
+      <div class="dio-skeleton" style="width:36px;height:36px;border-radius:8px;"></div>
+      <div style="flex:1;">
+        <div class="dio-skeleton" style="width:60%;height:12px;border-radius:4px;margin-bottom:6px;"></div>
+        <div class="dio-skeleton" style="width:40%;height:10px;border-radius:4px;"></div>
+      </div>
+      <div class="dio-skeleton" style="width:60px;height:24px;border-radius:6px;"></div>
+    </div>`;
+  }
+  return `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden;">${rows}</div>`;
+}
+// Inject skeleton CSS once
+(function(){
+  if (document.getElementById('dio-skeleton-css')) return;
+  const st = document.createElement('style');
+  st.id = 'dio-skeleton-css';
+  st.textContent = '.dio-skeleton{background:linear-gradient(90deg,var(--bg-tertiary) 25%,var(--bg-secondary) 50%,var(--bg-tertiary) 75%);background-size:200% 100%;animation:dioShimmer 1.3s infinite;}@keyframes dioShimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}';
+  document.head.appendChild(st);
+})();
+
+// ── LOADING SKELETON END ──────────────────────────────────────
 function registerPage(name, fn) { _pages[name] = fn; }
 
 function showPage(page, el) {
@@ -582,6 +608,25 @@ async function loginSuccess() {
   ls.style.transition='opacity 0.4s'; ls.style.opacity='0';
   setTimeout(()=>{ ls.style.display='none'; app.style.display='flex'; setLoginLoading(false); initApp(); },400);
   resetSessionTimer();
+  // Audit trail: record login
+  _logActivity('login', 'لاگ ان ہوئے');
+}
+
+// ── AUDIT TRAIL ───────────────────────────────────────────────
+async function _logActivity(action, detail) {
+  try {
+    const oid = await getOfficerId();
+    await supabaseClient.from('station_activity').insert({
+      officer_id: oid,
+      officer_name: currentOfficer?.full_name || 'افسر',
+      station: currentOfficer?.station || '',
+      action: action,
+      detail: detail || '',
+      device: navigator.userAgent.includes('Mobile') ? '📱 موبائل' : '💻 کمپیوٹر',
+    });
+    // Also update last_active
+    if (oid) await supabaseClient.from('officers').update({ last_active: new Date().toISOString() }).eq('id', oid);
+  } catch(_) {}
 }
 
 async function doLogout() {
