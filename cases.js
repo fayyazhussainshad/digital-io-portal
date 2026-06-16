@@ -1019,6 +1019,39 @@ async function _loadRelatedCases(c) {
   }
 }
 
+// ── PROSECUTION-READY VALIDATOR (Traffic Light) ───────────────
+function _prosecutionValidator(c) {
+  // Checklist of court-required items
+  const checks = [
+    { ok: !!c.fir_number,        label: 'FIR نمبر' },
+    { ok: !!c.section_of_law,    label: 'دفعات قانون' },
+    { ok: !!c.complainant,       label: 'مدعی کا نام' },
+    { ok: !!(c.complainant_cnic),label: 'مدعی شناختی کارڈ' },
+    { ok: !!c.fir_date,          label: 'تاریخ اندراج' },
+    { ok: c.mulzman_type==='maloom' ? !!c.accused_name || true : true, label: 'ملزمان کی تفصیل' },
+  ];
+
+  const missing = checks.filter(x => !x.ok);
+  const allGood = missing.length === 0;
+
+  // Special reminder: if challan complete, remind about conviction/saza slip
+  const sazaReminder = c.status === 'complete';
+
+  return `
+  <div style="background:${allGood ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)'};border-bottom:1px solid var(--border);padding:10px 16px;direction:rtl;">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <div style="font-size:18px;">${allGood ? '🟢' : '🔴'}</div>
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:12px;font-weight:700;color:${allGood ? 'var(--green)' : 'var(--red)'};">
+          ${allGood ? 'مقدمہ عدالت کے لیے تیار ہے' : `نامکمل — ${missing.length} چیزیں درکار ہیں`}
+        </div>
+        ${!allGood ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px;">کمی: ${missing.map(m=>m.label).join('، ')}</div>` : ''}
+      </div>
+    </div>
+    ${sazaReminder ? `<div style="margin-top:8px;padding:7px 10px;background:rgba(245,158,11,0.12);border-radius:6px;font-size:11px;color:var(--amber);font-weight:600;">⚖️ یاد دہانی: چالان مکمل ہو چکا — سزا/رہائی کی سلپ (Conviction Slip) درج کرنا نہ بھولیں</div>` : ''}
+  </div>`;
+}
+
 // ── CASE STATUS PIPELINE (visual progress) ────────────────────
 function _caseStatusPipeline(c) {
   // Police case flow stages
@@ -1131,6 +1164,9 @@ function renderWorkspace(c, docs, ev, container) {
 
     <!-- CASE STATUS PIPELINE -->
     ${_caseStatusPipeline(c)}
+
+    <!-- PROSECUTION-READY VALIDATOR -->
+    ${_prosecutionValidator(c)}
 
     <!-- RELATED CASES -->
     <div id="related-cases-bar"></div>

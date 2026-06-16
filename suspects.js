@@ -132,6 +132,14 @@ function _openSuspectForm(existing) {
         <input class="form-input" id="sp-father" value="${_escSp(p.father_name)}" placeholder="ولدیت">
       </div>
       <div>
+        <label class="form-label">ذات / قوم</label>
+        <input class="form-input" id="sp-caste" value="${_escSp(p.caste)}" placeholder="ذات">
+      </div>
+      <div>
+        <label class="form-label">پیشہ / کاروبار</label>
+        <input class="form-input" id="sp-profession" value="${_escSp(p.profession)}" placeholder="پیشہ">
+      </div>
+      <div>
         <label class="form-label">شناختی کارڈ نمبر</label>
         <input class="form-input" id="sp-cnic" dir="ltr" value="${_escSp(p.cnic)}" placeholder="XXXXX-XXXXXXX-X">
       </div>
@@ -159,6 +167,8 @@ async function _saveSuspect(id) {
     person_type: document.getElementById('sp-type').value,
     full_name:   document.getElementById('sp-name').value.trim() || null,
     father_name: document.getElementById('sp-father').value.trim() || null,
+    caste:       document.getElementById('sp-caste').value.trim() || null,
+    profession:  document.getElementById('sp-profession').value.trim() || null,
     cnic:        document.getElementById('sp-cnic').value.trim() || null,
     cell:        document.getElementById('sp-cell').value.trim() || null,
     address:     document.getElementById('sp-address').value.trim() || null,
@@ -193,6 +203,8 @@ async function _viewSuspect(id) {
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;font-size:13px;">
         <div><b>قسم:</b> ${t.label}</div>
         ${p.father_name ? `<div><b>ولدیت:</b> ${p.father_name}</div>` : ''}
+        ${p.caste ? `<div><b>ذات:</b> ${p.caste}</div>` : ''}
+        ${p.profession ? `<div><b>پیشہ:</b> ${p.profession}</div>` : ''}
         ${p.cnic ? `<div><b>شناختی کارڈ:</b> <span dir="ltr">${p.cnic}</span></div>` : ''}
         ${p.cell ? `<div><b>فون:</b> <span dir="ltr">${p.cell}</span></div>` : ''}
         ${p.address ? `<div><b>پتہ:</b> ${p.address}</div>` : ''}
