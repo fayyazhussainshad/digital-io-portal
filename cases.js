@@ -965,6 +965,60 @@ let currentCaseId = null;
 let currentDocIndex = null;
 const docDrafts = {}; // stores edited content per case+doc
 
+// ── RELATED CASES LINKING ─────────────────────────────────────
+async function _loadRelatedCases(c) {
+  const bar = document.getElementById('related-cases-bar');
+  if (!bar || !c) return;
+  try {
+    const allCases = await getCases();
+    const cName = (c.complainant || '').toLowerCase().trim();
+    const cCnic = (c.complainant_cnic || '').replace(/\D/g, '');
+    const cCell = (c.complainant_cell || '').replace(/\D/g, '');
+    const cSection = (c.section_of_law || '').toLowerCase().trim();
+    const cStation = (c.case_station || '').toLowerCase().trim();
+
+    // Build a relation reason for each matched case
+    const related = [];
+    allCases.forEach(x => {
+      if (x.id === c.id) return;
+      const xName = (x.complainant || '').toLowerCase().trim();
+      const xCnic = (x.complainant_cnic || '').replace(/\D/g, '');
+      const xCell = (x.complainant_cell || '').replace(/\D/g, '');
+      const xSection = (x.section_of_law || '').toLowerCase().trim();
+      const xStation = (x.case_station || '').toLowerCase().trim();
+
+      let reason = '';
+      if (cName && xName && cName === xName) reason = 'اسی مدعی';
+      else if (cCnic && cCnic.length >= 10 && cCnic === xCnic) reason = 'اسی شناختی کارڈ';
+      else if (cCell && cCell.length >= 10 && cCell === xCell) reason = 'اسی فون';
+      else if (cSection && xSection && cSection === xSection) reason = 'اسی دفعہ';
+
+      if (reason) related.push({ ...x, _reason: reason });
+    });
+
+    if (!related.length) {
+      bar.innerHTML = '';
+      return;
+    }
+
+    bar.innerHTML = `
+    <div style="background:rgba(167,139,250,0.08);border-bottom:1px solid var(--border);padding:10px 16px;direction:rtl;">
+      <div style="font-size:12px;font-weight:700;color:#a78bfa;margin-bottom:8px;">🔗 متعلقہ مقدمات — ${related.length}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        ${related.map(r => `
+          <button onclick="openCaseWorkspace('${r.id}')"
+            style="background:var(--bg-card);border:1px solid #a78bfa;border-radius:8px;padding:6px 12px;font-size:11px;cursor:pointer;color:var(--text-secondary);display:flex;align-items:center;gap:6px;">
+            <span style="color:#a78bfa;font-weight:700;">FIR ${r.fir_number || '—'}</span>
+            <span style="font-size:9px;color:var(--text-muted);">(${r._reason})</span>
+            <span class="pill ${STATUS_CLASSES[r.status] || 'pill-blue'}" style="font-size:8px;">${STATUS_LABELS[r.status] || r.status || ''}</span>
+          </button>`).join('')}
+      </div>
+    </div>`;
+  } catch(_) {
+    bar.innerHTML = '';
+  }
+}
+
 // ── CASE STATUS PIPELINE (visual progress) ────────────────────
 function _caseStatusPipeline(c) {
   // Police case flow stages
@@ -1078,6 +1132,9 @@ function renderWorkspace(c, docs, ev, container) {
     <!-- CASE STATUS PIPELINE -->
     ${_caseStatusPipeline(c)}
 
+    <!-- RELATED CASES -->
+    <div id="related-cases-bar"></div>
+
     <!-- MISAL DOCUMENT BAR -->
     ${renderMisalBar(c)}
 
@@ -1093,6 +1150,8 @@ function renderWorkspace(c, docs, ev, container) {
   // Store for tab switching
   window._workspaceCase = c;
   window._workspaceDocs = docs;
+  // Load related cases (same complainant / accused / CNIC)
+  _loadRelatedCases(c);
   window._workspaceEv = ev;
 }
 

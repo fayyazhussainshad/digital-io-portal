@@ -802,6 +802,7 @@ async function initApp() {
   setInterval(_checkDueReminders, 30*60*1000);
   // Start Islamic messages
   setTimeout(()=>{ if(typeof initIslamicMessages==='function') initIslamicMessages(); }, 1500);
+  setTimeout(()=>{ if(typeof updateNotifBadge==='function') updateNotifBadge(); }, 2000);
   // Check subscription
   setTimeout(async()=>{
     if(typeof showSubscriptionBanner==='function') await showSubscriptionBanner();
