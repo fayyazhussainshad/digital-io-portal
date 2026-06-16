@@ -72,6 +72,8 @@ async function _buildDash() {
     </button>`).join('')}
   </div>
 
+  ${_recentlyViewedBar()}
+
   <!-- Cases Stats Cards — new order -->
   <div style="margin-bottom:14px;">
     <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;direction:rtl;font-weight:700;">📊 مقدمات کی صورتحال</div>
@@ -182,6 +184,25 @@ async function _buildDash() {
 }
 
 // ── HELPERS ───────────────────────────────────────────────────
+function _recentlyViewedBar() {
+  let recent = [];
+  try { recent = JSON.parse(localStorage.getItem('dio_recent_cases')||'[]'); } catch(_) {}
+  if (!recent.length) return '';
+  return `
+  <div style="margin-bottom:14px;direction:rtl;">
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;font-weight:700;">🕐 حال ہی میں دیکھے گئے</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      ${recent.map(r=>`
+        <button onclick="openCaseWorkspace('${r.id}')"
+          style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:11px;cursor:pointer;color:var(--text-secondary);display:flex;align-items:center;gap:6px;"
+          onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+          <span style="color:var(--accent);font-weight:700;">FIR ${r.fir}</span>
+          ${r.name?`<span style="font-size:10px;color:var(--text-muted);">${r.name.slice(0,15)}</span>`:''}
+        </button>`).join('')}
+    </div>
+  </div>`;
+}
+
 function _monthlyTrend(cases) {
   const now = new Date();
   return Array.from({length:6},(_,i)=>{

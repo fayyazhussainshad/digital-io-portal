@@ -85,6 +85,22 @@ function _liveScanCdr(text) {
   }
 }
 
+// ── CDR EXCEL EXPORT (B5) ─────────────────────────────────────
+function _exportCdrExcel() {
+  if (!_cdrData.length) { showToast('⚠️ پہلے CDR اپ لوڈ کریں', 'warn'); return; }
+  const top = _analyzeTopContacts();
+  const cols = ['درجہ','نمبر','کالیں','کل وقت (سیکنڈ)','اوسط (سیکنڈ)'];
+  const rows = top.map((c,i) => [
+    i+1, c.num, c.calls, c.duration, c.calls?Math.round(c.duration/c.calls):0
+  ]);
+  const csv = [cols.join(','), ...rows.map(r=>r.map(v=>`"${v}"`).join(','))].join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download = `CDR-تجزیہ-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  showToast('✅ Excel فائل ڈاؤنلوڈ ہو گئی', 'success');
+}
+
 // ── CDR REQUEST FORM GENERATOR (B1) ───────────────────────────
 // Keywords that indicate a phone/theft crime needing CDR
 const CDR_KEYWORDS = [
@@ -516,8 +532,13 @@ function _renderAnalysis(a, suspects) {
 
   <!-- Top Contacts (Frequency Hierarchy) -->
   <div class="card" style="margin-bottom:12px;">
-    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px;">📞 سب سے زیادہ رابطے — ترتیب (زیادہ سے کم)</div>
-    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">مشکوک نمبر 🚨 سے نشان زدہ · ساتھی ملزم تلاش کرنے میں مدد</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px;">📞 سب سے زیادہ رابطے — ترتیب (زیادہ سے کم)</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">مشکوک نمبر 🚨 سے نشان زدہ · ساتھی ملزم تلاش کرنے میں مدد</div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="_exportCdrExcel()">📊 Excel میں نکالیں</button>
+    </div>
     <div style="overflow-x:auto;">
     <table class="data-table" style="width:100%;">
       <thead><tr><th>درجہ</th><th>نمبر</th><th>کالیں</th><th>کل وقت</th><th>اوسط</th><th>بار %</th><th>نوٹ</th></tr></thead>

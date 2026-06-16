@@ -210,6 +210,7 @@ async function getCases(status, query) {
     q = q.or(`fir_number.ilike.${w},complainant.ilike.${w},section_of_law.ilike.${w},complainant_cnic.ilike.${w},complainant_cell.ilike.${w}`);
   }
   const { data } = await q;
+  if (typeof markSynced === 'function') markSynced();
   return data||[];
 }
 
@@ -382,6 +383,26 @@ function updateConnectionStatus(online) {
   if (text) text.textContent = online ? 'Online' : 'Offline';
   if (badge) badge.textContent = online ? '🔗 Connected' : '⚡ Offline';
 }
+
+// ── SYNC STATUS (S4) ──────────────────────────────────────────
+function markSynced() {
+  try { localStorage.setItem('dio_last_sync', Date.now().toString()); } catch(_) {}
+  _updateSyncLabel();
+}
+function _updateSyncLabel() {
+  const el = document.getElementById('sync-label');
+  if (!el) return;
+  let ts = 0;
+  try { ts = parseInt(localStorage.getItem('dio_last_sync')||'0'); } catch(_) {}
+  if (!ts) { el.textContent = ''; return; }
+  const mins = Math.floor((Date.now() - ts) / 60000);
+  let txt;
+  if (mins < 1) txt = 'ابھی sync ہوا';
+  else if (mins < 60) txt = `${mins} منٹ پہلے sync`;
+  else txt = `${Math.floor(mins/60)} گھنٹے پہلے sync`;
+  el.textContent = '· ' + txt;
+}
+setInterval(_updateSyncLabel, 60000); // update label every minute
 
 window.addEventListener('online',  ()=>updateConnectionStatus(true));
 window.addEventListener('offline', ()=>updateConnectionStatus(false));
@@ -772,6 +793,38 @@ function resetSessionTimer() {
 document.addEventListener('click', resetSessionTimer);
 document.addEventListener('keypress', resetSessionTimer);
 document.addEventListener('touchstart', resetSessionTimer);
+
+// ── KEYBOARD SHORTCUTS ────────────────────────────────────────
+document.addEventListener('keydown', function(e) {
+  // Only when logged in and not typing in an input
+  const app = document.getElementById('main-app');
+  if (!app || app.style.display === 'none') return;
+  const tag = (e.target.tagName || '').toLowerCase();
+  const typing = tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable;
+
+  // Ctrl/Cmd + N = New case
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') {
+    e.preventDefault();
+    if (typeof openAddCaseModal === 'function') openAddCaseModal();
+    return;
+  }
+  // Ctrl/Cmd + K = Search
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault();
+    showPage('search', null);
+    return;
+  }
+  // Ctrl/Cmd + D = Dashboard
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+    e.preventDefault();
+    showPage('dashboard', document.querySelector('.nav-item'));
+    return;
+  }
+  // Escape closes any open modal (if not typing)
+  if (e.key === 'Escape' && !typing && typeof closeModal === 'function') {
+    closeModal();
+  }
+});
 
 // ── BACKUP COMPAT ─────────────────────────────────────────────
 function initBackupSystem() {

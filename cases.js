@@ -181,6 +181,7 @@ function renderCaseRow(c,sn){
     <td style="text-align:center;font-size:11px;color:var(--text-muted);font-weight:700;">${sn}</td>
     <td>
       <span style="font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:12px;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(56,189,248,0.4);" onclick="openCaseWorkspace('${c.id}')" title="Open Case Workspace">${c.fir_number||'—'}</span>
+      ${c.priority ? `<br><span style="font-size:9px;font-weight:700;color:${c.priority==='high'?'var(--red)':c.priority==='medium'?'var(--amber)':'var(--green)'};">${c.priority==='high'?'🔴 اہم':c.priority==='medium'?'🟡 درمیانہ':'🟢 کم'}</span>` : ''}
       ${c.is_cross_version?'<br><span style="font-size:9px;color:var(--red);font-weight:600;">⚔️ Cross</span>':''}
     </td>
     <td style="font-size:11px;white-space:nowrap;">${formatDate(c.fir_date)}</td>
@@ -474,6 +475,13 @@ function caseFormHTML(c) {
     + '<input class="form-input" id="cf-occurrence-date" value="'+occ+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" dir="ltr" style="text-align:left;"></div>'
     + '<div class="form-group"><label class="form-label">صورتحال *</label>'
     + '<select class="form-input" id="cf-status">'+statusOpts+'</select></div>'
+    + '<div class="form-group"><label class="form-label">ترجیح (Priority)</label>'
+    + '<select class="form-input" id="cf-priority">'
+    +   '<option value="">— منتخب کریں —</option>'
+    +   '<option value="high"'+(c.priority==='high'?' selected':'')+'>🔴 اہم</option>'
+    +   '<option value="medium"'+(c.priority==='medium'?' selected':'')+'>🟡 درمیانہ</option>'
+    +   '<option value="low"'+(c.priority==='low'?' selected':'')+'>🟢 کم</option>'
+    + '</select></div>'
     + '</div>'
 
     // Row 2b: ملزمان کی صورتحال
@@ -787,6 +795,7 @@ async function saveNewCase(){
       sho:document.getElementById('cf-sho')?.value.trim()||'',
       sdpo:document.getElementById('cf-sdpo')?.value.trim()||'',
       status:document.getElementById('cf-status').value,
+      priority:document.getElementById('cf-priority')?.value||null,
       mulzman_type:document.getElementById('cf-mulzman-type')?.value||'namaloom',
       position:document.getElementById('cf-position').value,
       notes:document.getElementById('cf-notes')?.value.trim()||'',
@@ -931,6 +940,7 @@ async function saveEditCase(id){
       sho:document.getElementById('cf-sho')?.value.trim()||'',
       sdpo:document.getElementById('cf-sdpo')?.value.trim()||'',
       status:document.getElementById('cf-status').value,
+      priority:document.getElementById('cf-priority')?.value||null,
       mulzman_type:document.getElementById('cf-mulzman-type')?.value||'namaloom',
       position:document.getElementById('cf-position').value,
       notes:document.getElementById('cf-notes')?.value.trim()||'',
@@ -1047,6 +1057,7 @@ function _prosecutionValidator(c) {
         </div>
         ${!allGood ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px;">کمی: ${missing.map(m=>m.label).join('، ')}</div>` : ''}
       </div>
+      <button class="btn btn-secondary btn-sm" onclick='_suggest161Questions(${JSON.stringify({id:c.id,section_of_law:c.section_of_law}).replace(/'/g,"&#39;")})' style="flex-shrink:0;">🤖 161 سوالات</button>
     </div>
     ${sazaReminder ? `<div style="margin-top:8px;padding:7px 10px;background:rgba(245,158,11,0.12);border-radius:6px;font-size:11px;color:var(--amber);font-weight:600;">⚖️ یاد دہانی: چالان مکمل ہو چکا — سزا/رہائی کی سلپ (Conviction Slip) درج کرنا نہ بھولیں</div>` : ''}
   </div>`;
@@ -1093,6 +1104,121 @@ function _caseStatusPipeline(c) {
   </div>`;
 }
 
+// ── SMART 161 QUESTION SUGGESTIONS (B4) ───────────────────────
+const _Q161 = {
+  theft:   { // چوری / 379, 380, 457
+    sections: ['379','380','381','382','457','458','380'],
+    title: 'چوری',
+    questions: [
+      'واردات کس تاریخ اور وقت پیش آئی؟',
+      'چوری شدہ مال کی تفصیل اور مالیت کیا ہے؟',
+      'کیا گھر/دکان کے تالے توڑے گئے یا چابی استعمال ہوئی؟',
+      'واردات کے وقت آپ کہاں تھے؟',
+      'کیا کسی پر شک ہے؟ اگر ہاں تو کیوں؟',
+      'کیا کوئی عینی گواہ موجود ہے؟',
+      'کیا CCTV کیمرہ موجود تھا؟',
+      'چوری شدہ موبائل کا IMEI/نمبر کیا ہے؟',
+    ],
+  },
+  robbery: { // ڈکیتی / 392, 394, 395, 396
+    sections: ['392','393','394','395','396','397'],
+    title: 'ڈکیتی / رہزنی',
+    questions: [
+      'ڈاکوؤں کی تعداد کتنی تھی؟',
+      'کیا اسلحہ استعمال ہوا؟ کس قسم کا؟',
+      'لُوٹا گیا مال/رقم کی تفصیل کیا ہے؟',
+      'ملزمان کا حلیہ بیان کریں (قد، رنگ، عمر، لباس)۔',
+      'کیا ملزمان کوئی سواری استعمال کر رہے تھے؟ نمبر؟',
+      'واردات کہاں اور کس وقت ہوئی؟',
+      'کیا کوئی زخمی ہوا؟',
+      'کیا ملزمان کو دوبارہ پہچان سکتے ہیں؟',
+    ],
+  },
+  snatching: { // چھینا / موبائل snatching
+    sections: ['392','356','379'],
+    title: 'موبائل/مال چھیننا',
+    questions: [
+      'چھینا گیا موبائل کس کمپنی کا تھا؟ IMEI نمبر؟',
+      'موبائل میں کونسی سم تھی؟ نمبر؟',
+      'چھیننے والے کتنے افراد تھے؟',
+      'کیا موٹرسائیکل استعمال ہوئی؟ نمبر پلیٹ؟',
+      'واردات کا مقام اور وقت؟',
+      'ملزمان کا حلیہ کیا تھا؟',
+    ],
+  },
+  murder:  { // قتل / 302
+    sections: ['302','311','316','319','322','324'],
+    title: 'قتل',
+    questions: [
+      'مقتول سے آپ کا کیا رشتہ ہے؟',
+      'واقعہ کہاں اور کس وقت پیش آیا؟',
+      'قتل کا سبب/پس منظر کیا ہے (رنجش، جائیداد، وغیرہ)؟',
+      'کیا ملزم کو جانتے ہیں؟ نام اور پتہ؟',
+      'قتل میں کونسا ہتھیار استعمال ہوا؟',
+      'کیا کوئی عینی شاہد موجود ہے؟',
+      'لاش کہاں ملی اور کس حالت میں؟',
+      'کیا پہلے کوئی دھمکی دی گئی تھی؟',
+    ],
+  },
+  hurt:    { // زخمی / 337, 334
+    sections: ['337','334','336','335','333','324'],
+    title: 'زخمی / مارپیٹ',
+    questions: [
+      'جھگڑے کی وجہ کیا تھی؟',
+      'کس نے پہلے حملہ کیا؟',
+      'کونسا ہتھیار/چیز استعمال ہوئی؟',
+      'زخم جسم کے کس حصے پر آئے؟',
+      'کیا میڈیکل کرایا گیا؟',
+      'موقع پر کون کون موجود تھا؟',
+    ],
+  },
+  fraud:   { // دھوکہ / 420, 406, 489-F
+    sections: ['419','420','406','468','471','489'],
+    title: 'دھوکہ / فراڈ',
+    questions: [
+      'دھوکہ کس طریقے سے ہوا؟',
+      'کتنی رقم کا نقصان ہوا؟',
+      'کیا کوئی تحریری معاہدہ/چیک موجود ہے؟',
+      'ملزم سے آپ کا تعارف کیسے ہوا؟',
+      'لین دین کی تاریخیں اور تفصیل؟',
+      'کیا کوئی گواہ موجود ہے؟',
+    ],
+  },
+};
+
+function _suggest161Questions(c) {
+  const sections = (c.section_of_law || '').replace(/\s/g, '');
+  // Find matching crime type by section
+  let matched = null;
+  for (const [key, val] of Object.entries(_Q161)) {
+    if (val.sections.some(s => sections.includes(s))) { matched = val; break; }
+  }
+
+  openModal('🤖 تجویز کردہ سوالات — بیان 161', `
+    <div style="direction:rtl;">
+      ${matched ? `
+        <div style="font-size:13px;color:var(--accent);font-weight:700;margin-bottom:10px;">
+          📋 ${matched.title} — متعلقہ سوالات (دفعات: ${c.section_of_law})
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${matched.questions.map((q,i)=>`
+            <div style="background:var(--bg-secondary);border-radius:8px;padding:10px;font-size:13px;display:flex;gap:8px;">
+              <span style="color:var(--accent);font-weight:700;flex-shrink:0;">${i+1}.</span>
+              <span>${q}</span>
+            </div>`).join('')}
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:10px;">یہ صرف تجاویز ہیں — تفتیش کے مطابق سوالات کریں</div>
+      ` : `
+        <div style="text-align:center;padding:20px;color:var(--text-muted);">
+          <div style="font-size:40px;margin-bottom:10px;">🤔</div>
+          <div style="font-size:13px;">اس دفعہ (${c.section_of_law||'—'}) کے لیے مخصوص سوالات دستیاب نہیں۔</div>
+          <div style="font-size:11px;margin-top:8px;">عام سوالات: واقعہ کہاں ہوا؟ کب ہوا؟ کون ملوث ہے؟ گواہ کون ہیں؟</div>
+        </div>
+      `}
+    </div>
+  `, `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`);
+}
+
 async function openCaseWorkspace(id) {
   // Close mobile sidebar first
   closeMobileSidebar();
@@ -1104,6 +1230,14 @@ async function openCaseWorkspace(id) {
   container.innerHTML = `<div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Opening Case Workspace...</div></div>`;
   const c = await getCase(id);
   if (!c) { showToast('❌ Case not found.', 'error'); return; }
+  // Track recently viewed (S2)
+  try {
+    let recent = JSON.parse(localStorage.getItem('dio_recent_cases')||'[]');
+    recent = recent.filter(r => r.id !== id);
+    recent.unshift({ id, fir: c.fir_number||'—', name: c.complainant||'', at: Date.now() });
+    recent = recent.slice(0, 8);
+    localStorage.setItem('dio_recent_cases', JSON.stringify(recent));
+  } catch(_) {}
   await loadMisalDocs(id);
   const docs = c.documents_checklist ? (typeof c.documents_checklist==='string'?JSON.parse(c.documents_checklist):c.documents_checklist) : [];
   const ev = await getEvidence(c.fir_number);
