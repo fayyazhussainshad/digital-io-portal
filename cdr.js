@@ -26,6 +26,19 @@ async function renderCDR(container) {
       </div>
     </div>
 
+    <!-- CDR Request Form Generator -->
+    <div class="card" style="margin-bottom:16px;direction:rtl;">
+      <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px;">📝 CDR درخواست فارم بنائیں</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">FIR کی عبارت یہاں لکھیں — اگر موبائل/چوری/چھیننے کا ذکر ہوا تو CDR درخواست فارم خودبخود تیار ہو جائے گا</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <input class="form-input" id="cdrrq-fir" placeholder="FIR نمبر">
+        <input class="form-input" id="cdrrq-number" dir="ltr" placeholder="موبائل نمبر (جس کا CDR چاہیے)">
+      </div>
+      <textarea class="form-input" id="cdrrq-text" rows="3" placeholder="FIR کی تفصیل یہاں لکھیں یا پیسٹ کریں..." style="margin-bottom:8px;" oninput="_liveScanCdr(this.value)"></textarea>
+      <div id="cdrrq-keywords" style="font-size:11px;margin-bottom:8px;"></div>
+      <button class="btn btn-primary" onclick="_generateCdrRequest()" style="width:100%;">📄 CDR درخواست فارم بنائیں</button>
+    </div>
+
     <!-- Upload + Link Case -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;direction:rtl;margin-bottom:16px;">
 
@@ -58,6 +71,98 @@ async function renderCDR(container) {
     <!-- Results -->
     <div id="cdr-results"></div>
   </div>`;
+}
+
+function _liveScanCdr(text) {
+  const keywords = _scanCdrKeywords(text);
+  const kwDiv = document.getElementById('cdrrq-keywords');
+  if (!kwDiv) return;
+  if (!text) { kwDiv.innerHTML = ''; return; }
+  if (keywords.length) {
+    kwDiv.innerHTML = `<span style="color:var(--green);">✅ CDR درکار ہے — ملے: ${keywords.join('، ')}</span>`;
+  } else {
+    kwDiv.innerHTML = '<span style="color:var(--text-muted);">کوئی متعلقہ لفظ نہیں ملا</span>';
+  }
+}
+
+// ── CDR REQUEST FORM GENERATOR (B1) ───────────────────────────
+// Keywords that indicate a phone/theft crime needing CDR
+const CDR_KEYWORDS = [
+  'موبائل','موبئل','فون','چوری','چھینا','چھین','چھینے','چھیننے','ڈکیتی','رہزنی',
+  'snatch','snatched','mobile','phone','theft','robbery','dacoity','imei','sim'
+];
+
+function _scanCdrKeywords(text) {
+  const found = [];
+  const lower = (text||'').toLowerCase();
+  CDR_KEYWORDS.forEach(kw => {
+    if (lower.includes(kw.toLowerCase()) && !found.includes(kw)) found.push(kw);
+  });
+  return found;
+}
+
+async function _generateCdrRequest() {
+  const fir = document.getElementById('cdrrq-fir')?.value.trim() || '';
+  const number = document.getElementById('cdrrq-number')?.value.trim() || '';
+  const text = document.getElementById('cdrrq-text')?.value.trim() || '';
+
+  const keywords = _scanCdrKeywords(text);
+  const kwDiv = document.getElementById('cdrrq-keywords');
+
+  if (text && !keywords.length) {
+    if (kwDiv) kwDiv.innerHTML = '<span style="color:var(--amber);">⚠️ کوئی متعلقہ لفظ نہیں ملا (موبائل/چوری/چھیننا) — پھر بھی فارم بنا سکتے ہیں</span>';
+  } else if (keywords.length) {
+    if (kwDiv) kwDiv.innerHTML = `<span style="color:var(--green);">✅ ملے: ${keywords.join('، ')}</span>`;
+  }
+
+  if (!number) { showToast('⚠️ موبائل نمبر ضروری ہے', 'error'); return; }
+
+  const o = currentOfficer || {};
+  const today = new Date().toLocaleDateString('en-GB');
+
+  // Court-ready CDR request letter
+  const html = `
+  <div style="font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;padding:40px;max-width:800px;margin:0 auto;line-height:2;color:#000;">
+    <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:20px;">
+      <div style="font-size:22px;font-weight:800;">محکمہ پولیس پنجاب</div>
+      <div style="font-size:16px;">تھانہ ${o.station||'____'} ضلع ${o.district||'____'}</div>
+    </div>
+
+    <div style="text-align:center;font-size:18px;font-weight:800;text-decoration:underline;margin-bottom:20px;">CDR درخواست فارم</div>
+
+    <table style="width:100%;font-size:15px;border-collapse:collapse;margin-bottom:20px;">
+      <tr><td style="padding:6px;width:35%;font-weight:700;">مقدمہ نمبر (FIR):</td><td style="padding:6px;"><span dir="ltr">${fir||'________'}</span></td></tr>
+      <tr><td style="padding:6px;font-weight:700;">موبائل نمبر:</td><td style="padding:6px;"><span dir="ltr">${number}</span></td></tr>
+      <tr><td style="padding:6px;font-weight:700;">تاریخ:</td><td style="padding:6px;"><span dir="ltr">${today}</span></td></tr>
+      <tr><td style="padding:6px;font-weight:700;">درخواست گزار:</td><td style="padding:6px;">${o.full_name||'____'} (${o.designation||'افسر'})</td></tr>
+    </table>
+
+    <div style="font-size:15px;margin-bottom:14px;text-align:justify;">
+      جناب والا، بخدمت متعلقہ ٹیلی کام کمپنی،<br><br>
+      مذکورہ بالا مقدمہ کی تفتیش کے سلسلے میں درج ذیل موبائل نمبر
+      <b><span dir="ltr">${number}</span></b> کا مکمل کال ڈیٹا ریکارڈ (CDR)
+      بشمول موقع محل وقوعہ (Location/Tower)، IMEI نمبر، اور رابطہ نمبرز،
+      عرصہ ${''} کے لیے فراہم کیا جائے تاکہ تفتیش مکمل کی جا سکے۔
+      ${keywords.length ? `<br><br><b>نوعیتِ جرم:</b> ${keywords.join('، ')}` : ''}
+    </div>
+
+    <div style="margin-top:50px;text-align:left;">
+      <div style="display:inline-block;text-align:center;">
+        <div style="border-top:1px solid #000;padding-top:5px;font-size:14px;">
+          ${o.full_name||'____'}<br>${o.designation||'تفتیشی افسر'}<br>تھانہ ${o.station||'____'}
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  // Print via dioPrint
+  if (typeof dioPrint === 'function') {
+    dioPrint(html);
+  } else {
+    const w = window.open('', '_blank');
+    w.document.write(html); w.document.close(); w.print();
+  }
+  showToast('✅ CDR درخواست فارم تیار', 'success');
 }
 
 // ── FILE UPLOAD & PARSE ───────────────────────────────────────
@@ -256,7 +361,7 @@ function _analyzeTopContacts() {
     dur[num] = (dur[num]||0)+r.dur;
   });
   return Object.entries(cnt)
-    .sort((a,b)=>b[1]-a[1]).slice(0,20)
+    .sort((a,b)=>b[1]-a[1]).slice(0,30)
     .map(([num,calls])=>({ num, calls, duration:dur[num]||0 }));
 }
 
@@ -409,21 +514,25 @@ function _renderAnalysis(a, suspects) {
       </div>`).join('')}
   </div>` : ''}
 
-  <!-- Top Contacts -->
+  <!-- Top Contacts (Frequency Hierarchy) -->
   <div class="card" style="margin-bottom:12px;">
-    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px;">📞 سب سے زیادہ رابطے (Top 20)</div>
+    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px;">📞 سب سے زیادہ رابطے — ترتیب (زیادہ سے کم)</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">مشکوک نمبر 🚨 سے نشان زدہ · ساتھی ملزم تلاش کرنے میں مدد</div>
     <div style="overflow-x:auto;">
     <table class="data-table" style="width:100%;">
-      <thead><tr><th>#</th><th>نمبر</th><th>کالیں</th><th>کل وقت</th><th>بار %</th><th>نوٹ</th></tr></thead>
+      <thead><tr><th>درجہ</th><th>نمبر</th><th>کالیں</th><th>کل وقت</th><th>اوسط</th><th>بار %</th><th>نوٹ</th></tr></thead>
       <tbody>
         ${a.topContacts.map((c,i)=>{
           const pct = Math.round(c.calls/ov.totalCalls*100);
           const isSusp = suspects.includes(c.num);
+          const avg = c.calls ? Math.round(c.duration/c.calls) : 0;
+          const rankBadge = i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`;
           return `<tr style="${isSusp?'background:rgba(239,83,80,0.1);':i<3?'background:rgba(56,189,248,0.06);':''}">
-            <td style="font-weight:700;color:${i<3?'var(--accent)':'var(--text-muted)'};">${i+1}</td>
-            <td style="font-family:monospace;font-weight:700;color:${isSusp?'var(--red)':i<3?'var(--accent)':'var(--text-primary)'};">${c.num}${isSusp?' 🚨':''}</td>
+            <td style="font-weight:700;color:${i<3?'var(--accent)':'var(--text-muted)'};font-size:${i<3?'14px':'12px'};">${rankBadge}</td>
+            <td style="font-family:monospace;font-weight:700;color:${isSusp?'var(--red)':i<3?'var(--accent)':'var(--text-primary)'};"><span dir="ltr">${c.num}</span>${isSusp?' 🚨':''}</td>
             <td style="font-weight:700;">${c.calls}</td>
             <td>${Math.round(c.duration/60)} min</td>
+            <td style="font-size:11px;color:var(--text-muted);">${avg}s</td>
             <td>
               <div style="background:var(--bg-tertiary);border-radius:4px;overflow:hidden;width:80px;height:12px;">
                 <div style="background:${isSusp?'var(--red)':i<3?'var(--accent)':'var(--text-muted)'};height:100%;width:${Math.min(pct*3,100)}%;"></div>
