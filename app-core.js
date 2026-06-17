@@ -72,6 +72,44 @@ function canViewTeam() {
   return hasRole('supervisor');
 }
 
+// ── BUTTON/PAGE USAGE TRACKING (admin analytics) ──────────────
+let _usageBuffer = {};
+let _usageTimer = null;
+
+function _trackUsage(page) {
+  if (!page) return;
+  _usageBuffer[page] = (_usageBuffer[page] || 0) + 1;
+  // Debounce: flush to DB after 5 seconds of activity
+  if (_usageTimer) clearTimeout(_usageTimer);
+  _usageTimer = setTimeout(_flushUsage, 5000);
+}
+
+async function _flushUsage() {
+  const buffer = { ..._usageBuffer };
+  _usageBuffer = {};
+  if (!Object.keys(buffer).length) return;
+  try {
+    const oid = await getOfficerId();
+    if (!oid) return;
+    // Upsert counts per page
+    for (const [page, count] of Object.entries(buffer)) {
+      // Try to increment existing, else insert
+      const { data: existing } = await supabaseClient
+        .from('usage_stats')
+        .select('id,count')
+        .eq('officer_id', oid).eq('page', page).maybeSingle();
+      if (existing) {
+        await supabaseClient.from('usage_stats')
+          .update({ count: (existing.count||0) + count, last_used: new Date().toISOString() })
+          .eq('id', existing.id);
+      } else {
+        await supabaseClient.from('usage_stats')
+          .insert({ officer_id: oid, page, count, last_used: new Date().toISOString() });
+      }
+    }
+  } catch(_) { /* silent — usage tracking is non-critical */ }
+}
+
 function registerPage(name, fn) { _pages[name] = fn; }
 
 
@@ -81,6 +119,9 @@ function showPage(page, el) {
     showToast('🔒 آپ کو اس صفحے تک رسائی نہیں ہے', 'error');
     return;
   }
+
+  // Track page usage (for admin button-usage log)
+  if (typeof _trackUsage === 'function') _trackUsage(page);
 
   // Update active nav
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));

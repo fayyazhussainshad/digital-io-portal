@@ -83,6 +83,7 @@ async function _buildAdmin(role) {
       ['officers','👮 افسران', officers.length],
       ['cases','📁 تمام مقدمات', total_cases],
       ['activity','📋 سرگرمی لاگ', ''],
+      ['usage','📊 استعمال', ''],
       ['reports','📊 رپورٹ', ''],
       ['subscriptions','💳 سبسکرپشن', ''],
     ].map(([k,l,b],i) => `
@@ -121,6 +122,7 @@ function _adminTab(tab) {
     case 'officers': el.innerHTML = _renderOfficersTab(officers, role); break;
     case 'cases':    el.innerHTML = _renderAllCasesTab(cases); break;
     case 'activity': el.innerHTML = _renderActivityTab(activity); break;
+    case 'usage':    _renderUsageTab(el); break;
     case 'reports':  el.innerHTML = _renderReportsTab(officers, cases); break;
     case 'subscriptions': _renderSubsTab(); break;
   }
@@ -205,6 +207,7 @@ function _renderOfficersTab(officers, role) {
             <td style="text-align:center;font-weight:700;color:var(--accent);">${cases}</td>
             <td style="white-space:nowrap;">
               <button class="btn btn-secondary btn-sm" onclick="_adminViewOfficer('${o.id}')">👁️</button>
+              <button class="btn btn-secondary btn-sm" onclick="_adminEditOfficer('${o.id}')" title="معلومات ترمیم کریں">✏️</button>
               ${o.suspended
                 ? `<button class="btn btn-primary btn-sm" onclick="_adminUnsuspend('${o.id}','${o.full_name||''}')">✅</button>`
                 : `<button class="btn btn-danger btn-sm" onclick="_adminSuspend('${o.id}','${o.full_name||''}')">🚫</button>`}
@@ -419,6 +422,125 @@ async function _adminChangeRole(officerId, newRole) {
   try {
     await supabaseClient.from('officers').update({ role: newRole }).eq('id', officerId);
     showToast(`✅ Role تبدیل: ${newRole}`, 'success');
+  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+// ── USAGE ANALYTICS TAB ───────────────────────────────────────
+const _PAGE_NAMES = {
+  dashboard:'ڈیش بورڈ', cases:'میرے مقدمات', forms:'ٹیمپلیٹس', fivec:'5-C درخواستیں',
+  incident:'واقعاتی رپورٹ', patrol:'گشت', cdr:'CDR Analyzer', law:'قانونی لائبریری',
+  reminders:'یاددہانیاں', search:'تلاش', suspects:'ملزمان/گواہان', performance:'کارکردگی',
+  backup:'بیک اپ', settings:'ترتیبات', bin:'حذف شدہ', subscription:'سبسکرپشن',
+  court:'عدالتی پیشیاں', evidence:'شہادتیں', admin:'ایڈمن',
+};
+
+async function _renderUsageTab(el) {
+  el.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>`;
+  try {
+    // Aggregate usage across all officers
+    const { data } = await supabaseClient.from('usage_stats').select('page,count');
+    const totals = {};
+    (data||[]).forEach(r => { totals[r.page] = (totals[r.page]||0) + (r.count||0); });
+    const sorted = Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+    const max = sorted.length ? sorted[0][1] : 1;
+    const grandTotal = sorted.reduce((s,[,v])=>s+v,0);
+
+    if (!sorted.length) {
+      el.innerHTML = `<div class="card" style="text-align:center;padding:40px;color:var(--text-muted);">
+        <div style="font-size:40px;margin-bottom:10px;">📊</div>
+        <div>ابھی استعمال کا ڈیٹا جمع نہیں ہوا</div>
+        <div style="font-size:11px;margin-top:6px;">جیسے جیسے افسران ایپ استعمال کریں گے، یہاں ظاہر ہوگا</div>
+      </div>`;
+      return;
+    }
+
+    el.innerHTML = `
+    <div class="card" style="direction:rtl;">
+      <div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:4px;">📊 سب سے زیادہ استعمال ہونے والے صفحات</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:16px;">کل ${grandTotal} مرتبہ · سب سے اوپر والے کو نمایاں کریں تاکہ افسران کو آسانی ہو</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        ${sorted.map(([page,count],i)=>{
+          const pct = Math.round(count/max*100);
+          const share = Math.round(count/grandTotal*100);
+          const name = _PAGE_NAMES[page] || page;
+          const rank = i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`;
+          return `
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:28px;text-align:center;font-size:${i<3?'16px':'12px'};font-weight:700;color:${i<3?'var(--accent)':'var(--text-muted)'};">${rank}</div>
+            <div style="flex:1;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+                <span style="font-size:13px;font-weight:${i<3?'700':'500'};font-family:'Jameel Noori Nastaleeq',serif;">${name}</span>
+                <span style="font-size:11px;color:var(--text-muted);">${count} (${share}%)</span>
+              </div>
+              <div style="background:var(--bg-tertiary);border-radius:6px;overflow:hidden;height:14px;">
+                <div style="background:${i===0?'var(--accent)':i<3?'rgba(56,189,248,0.6)':'rgba(56,189,248,0.3)'};height:100%;width:${pct}%;transition:width 0.4s;"></div>
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="margin-top:16px;padding:10px;background:var(--bg-secondary);border-radius:8px;font-size:11px;color:var(--text-muted);">
+        💡 تجویز: سب سے اوپر والے 3 صفحات کو ڈیش بورڈ یا Quick Actions میں نمایاں رکھیں تاکہ افسران کو آسانی ہو۔
+      </div>
+    </div>`;
+  } catch(e) {
+    el.innerHTML = `<div class="card" style="padding:20px;color:var(--red);">❌ ${e.message}</div>`;
+  }
+}
+
+// ── ADMIN: EDIT OFFICER INFO ──────────────────────────────────
+async function _adminEditOfficer(officerId) {
+  const o = (window._adminData?.officers||[]).find(x => x.id === officerId);
+  if (!o) { showToast('❌ افسر نہیں ملا', 'error'); return; }
+
+  openModal('✏️ افسر کی معلومات ترمیم کریں', `
+    <div style="display:flex;flex-direction:column;gap:12px;direction:rtl;">
+      <div>
+        <label class="form-label">پورا نام</label>
+        <input class="form-input" id="aeo-name" value="${(o.full_name||'').replace(/"/g,'&quot;')}" placeholder="نام">
+      </div>
+      <div>
+        <label class="form-label">بیج نمبر (Badge)</label>
+        <input class="form-input" id="aeo-badge" dir="ltr" value="${(o.badge_number||'').replace(/"/g,'&quot;')}" placeholder="Badge">
+      </div>
+      <div>
+        <label class="form-label">عہدہ (Designation)</label>
+        <input class="form-input" id="aeo-desig" value="${(o.designation||'').replace(/"/g,'&quot;')}" placeholder="مثلاً ASI، SI">
+      </div>
+      <div>
+        <label class="form-label">تھانہ</label>
+        <input class="form-input" id="aeo-station" value="${(o.station||'').replace(/"/g,'&quot;')}" placeholder="تھانہ">
+      </div>
+      <div>
+        <label class="form-label">ضلع</label>
+        <input class="form-input" id="aeo-district" value="${(o.district||'').replace(/"/g,'&quot;')}" placeholder="ضلع">
+      </div>
+      <div>
+        <label class="form-label">فون نمبر</label>
+        <input class="form-input" id="aeo-phone" dir="ltr" value="${(o.phone||'').replace(/"/g,'&quot;')}" placeholder="0XXX-XXXXXXX">
+      </div>
+    </div>
+  `, `
+    <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    <button class="btn btn-primary" onclick="_adminSaveOfficer('${officerId}')">💾 محفوظ کریں</button>
+  `);
+}
+
+async function _adminSaveOfficer(officerId) {
+  const updates = {
+    full_name:    document.getElementById('aeo-name')?.value.trim() || null,
+    badge_number: document.getElementById('aeo-badge')?.value.trim() || null,
+    designation:  document.getElementById('aeo-desig')?.value.trim() || null,
+    station:      document.getElementById('aeo-station')?.value.trim() || null,
+    district:     document.getElementById('aeo-district')?.value.trim() || null,
+    phone:        document.getElementById('aeo-phone')?.value.trim() || null,
+  };
+  try {
+    const { error } = await supabaseClient.from('officers').update(updates).eq('id', officerId);
+    if (error) throw error;
+    closeModal();
+    showToast('✅ افسر کی معلومات اپ ڈیٹ ہو گئیں', 'success');
+    showPage('admin', document.querySelector('.nav-item.active'));
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
 
