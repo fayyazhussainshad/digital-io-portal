@@ -19,12 +19,24 @@ async function _buildForms() {
   let templates = [];
   try {
     const oid = await getOfficerId();
+    // Officer's own templates + default (admin) templates
     const { data } = await supabaseClient.from('law_library')
-      .select('*').eq('officer_id', oid)
+      .select('*')
       .eq('category', 'template')
+      .or(`officer_id.eq.${oid},is_default.eq.true`)
+      .order('is_default', { ascending: false })
       .order('created_at', { ascending: false });
     templates = data || [];
-  } catch(_) {}
+  } catch(_) {
+    // Fallback: just officer's own
+    try {
+      const oid = await getOfficerId();
+      const { data } = await supabaseClient.from('law_library')
+        .select('*').eq('officer_id', oid).eq('category', 'template')
+        .order('created_at', { ascending: false });
+      templates = data || [];
+    } catch(_) {}
+  }
 
   root.innerHTML = `
   <!-- Header -->
@@ -55,29 +67,25 @@ async function _buildForms() {
     <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
       <!-- Template Header -->
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);direction:rtl;">
-        <div style="font-size:22px;flex-shrink:0;">${t.file_url ? (t.file_name||'').toLowerCase().endsWith('.pdf') ? '📕' : '📘' : '📋'}</div>
+        <div style="font-size:22px;flex-shrink:0;">${t.is_default ? '⭐' : '📋'}</div>
         <div style="flex:1;">
-          <div style="font-size:14px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">${t.title}</div>
-          <div style="font-size:10px;color:var(--text-muted);">${formatDate(t.created_at)}${t.file_name ? ` · ${t.file_name}` : ''}</div>
+          <div style="font-size:14px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">${t.title}${t.is_default ? ' <span style="font-size:9px;background:var(--accent-glow);color:var(--accent);border-radius:6px;padding:1px 6px;">سرکاری</span>' : ''}</div>
+          <div style="font-size:10px;color:var(--text-muted);">${formatDate(t.created_at)}</div>
         </div>
         <div style="display:flex;gap:5px;direction:rtl;flex-wrap:wrap;">
-          ${t.file_url
-            ? `<button class="btn btn-primary btn-sm" onclick="window.open('${t.file_url}','_blank')">⬇️ ڈاؤنلوڈ</button>`
-            : `<button class="btn btn-primary btn-sm" onclick="_fillTemplateFromCase('${t.id}')">🔗 مقدمہ سے بھریں</button>`}
-          ${!t.file_url ? `<button class="btn btn-secondary btn-sm" onclick="_printTemplate('${t.id}')">🖨️ پرنٹ</button>` : ''}
+          <button class="btn btn-secondary btn-sm" onclick="_editTemplate('${t.id}')">✏️ ترمیم / استعمال</button>
+          <button class="btn btn-secondary btn-sm" onclick="_fillTemplateFromCase('${t.id}')">🔗 مقدمہ سے بھریں</button>
           <button class="btn btn-secondary btn-sm" onclick="_copyTemplate('${t.id}')">📋 کاپی</button>
-          <button class="btn btn-secondary btn-sm" onclick="_editTemplate('${t.id}')">✏️ ترمیم</button>
-          <button class="btn btn-secondary btn-sm" onclick="_renameTemplate('${t.id}','${t.title.replace(/'/g,'')}')">✏️ نام</button>
-          <button class="btn btn-danger btn-sm" onclick="_deleteTemplate('${t.id}')">🗑️</button>
+          <button class="btn btn-secondary btn-sm" onclick="_downloadTplWord('${t.id}')">📘 Word</button>
+          <button class="btn btn-secondary btn-sm" onclick="_printTemplate('${t.id}')">📕 PDF / پرنٹ</button>
+          ${!t.is_default ? `<button class="btn btn-danger btn-sm" onclick="_deleteTemplate('${t.id}')">🗑️</button>` : ''}
         </div>
       </div>
       <!-- Template Preview -->
-      ${t.file_url
-        ? `<div style="padding:12px 14px;direction:rtl;font-size:12px;color:var(--text-muted);">📎 منسلک فائل — ڈاؤنلوڈ کر کے استعمال کریں یا اپنی جگہ لے جائیں</div>`
-        : `<div style="padding:12px 14px;max-height:100px;overflow:hidden;position:relative;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;font-size:13px;color:var(--text-secondary);">
+      <div style="padding:12px 14px;max-height:100px;overflow:hidden;position:relative;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;font-size:13px;color:var(--text-secondary);">
         ${(t.content||'').slice(0,200)}${(t.content||'').length>200?'...':''}
         <div style="position:absolute;bottom:0;left:0;right:0;height:30px;background:linear-gradient(transparent,var(--bg-card));"></div>
-      </div>`}
+      </div>
     </div>`).join('')}
   </div>`}`;
 }
@@ -88,80 +96,130 @@ function _openAddTemplate(existing) {
   openModal(existing ? '✏️ ٹیمپلیٹ ترمیم' : '+ نیا ٹیمپلیٹ',
     `<div style="direction:rtl;">
       <label class="form-label">ٹیمپلیٹ کا نام *</label>
-      <input class="form-input" id="tpl-title" value="${e.title||''}" placeholder="مثلاً گواہی کا فارم" style="margin-bottom:14px;">
+      <input class="form-input" id="tpl-title" value="${(e.title||'').replace(/"/g,'&quot;')}" placeholder="مثلاً گواہی کا فارم" style="margin-bottom:14px;">
 
-      <!-- File upload option -->
+      <!-- Import text from Word/PDF/txt file -->
       <div style="background:var(--bg-secondary);border-radius:8px;padding:12px;margin-bottom:14px;">
-        <label class="form-label" style="margin-bottom:6px;display:block;">📎 Word / PDF فائل اپ لوڈ کریں (اختیاری)</label>
-        <input type="file" id="tpl-file" accept=".doc,.docx,.pdf,.txt,.rtf"
-          style="width:100%;font-size:12px;color:var(--text-secondary);" onchange="_onTplFileSelect(this)">
-        ${e.file_url ? `<div style="margin-top:8px;font-size:12px;color:var(--green);">✅ موجودہ فائل: <a href="${e.file_url}" target="_blank" style="color:var(--accent);">${e.file_name||'فائل'}</a></div>` : ''}
-        <div id="tpl-file-status" style="font-size:11px;color:var(--text-muted);margin-top:6px;"></div>
+        <label class="form-label" style="margin-bottom:6px;display:block;">📎 Word/PDF/Text فائل سے متن نکالیں (اختیاری)</label>
+        <input type="file" id="tpl-file" accept=".txt,.doc,.docx,.pdf,.rtf"
+          style="width:100%;font-size:12px;color:var(--text-secondary);" onchange="_extractTplFile(this)">
+        <div id="tpl-file-status" style="font-size:11px;color:var(--text-muted);margin-top:6px;">فائل منتخب کریں — اس کا متن نیچے خانے میں آ جائے گا جہاں آپ ترمیم کر سکتے ہیں</div>
       </div>
 
-      <div style="text-align:center;color:var(--text-muted);font-size:11px;margin-bottom:10px;">— یا —</div>
-
-      <label class="form-label">مواد (ٹیکسٹ ٹیمپلیٹ)</label>
-      <textarea class="form-input" id="tpl-content" rows="10"
+      <label class="form-label">مواد (یہاں ترمیم کریں) *</label>
+      <textarea class="form-input" id="tpl-content" rows="12"
         style="font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:14px;direction:rtl;line-height:2;resize:vertical;"
-        placeholder="یہاں ٹیمپلیٹ لکھیں... (یا اوپر فائل اپ لوڈ کریں)">${e.content||''}</textarea>
+        placeholder="یہاں ٹیمپلیٹ کا متن لکھیں یا اوپر فائل سے نکالیں...">${e.content||''}</textarea>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:6px;">💡 {مدعی}، {FIR}، {دفعات} جیسی نشانیاں لکھیں تو مقدمے کا ڈیٹا خودبخود بھر جائے گا</div>
     </div>`,
-    `<div style="display:flex;gap:8px;direction:rtl;">
+    `<div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;">
       <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+      ${existing ? `<button class="btn btn-secondary" onclick="_saveTemplateAsNew()">📄 نئے نام سے محفوظ (کاپی)</button>` : ''}
       <button class="btn btn-primary" onclick="_saveTemplate('${e.id||''}')">💾 محفوظ</button>
     </div>`
   );
 }
 
-// Track selected file
-let _tplSelectedFile = null;
-function _onTplFileSelect(input) {
-  _tplSelectedFile = input.files[0] || null;
+// Save the edited content as a brand-new template (a copy with a new name)
+async function _saveTemplateAsNew() {
+  const content = document.getElementById('tpl-content')?.value.trim();
+  const oldTitle = document.getElementById('tpl-title')?.value.trim() || 'ٹیمپلیٹ';
+  if (!content) { showToast('⚠️ مواد خالی ہے', 'error'); return; }
+  // Ask for a new name
+  const newName = prompt('نئے ٹیمپلیٹ کا نام درج کریں:', oldTitle + ' (کاپی)');
+  if (!newName || !newName.trim()) return;
+  try {
+    const oid = await getOfficerId();
+    await supabaseClient.from('law_library').insert({
+      officer_id: oid, title: newName.trim(), content, category: 'template'
+    });
+    closeModal();
+    showToast('✅ نئے نام سے محفوظ ہو گیا', 'success');
+    _buildForms();
+  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+// Extract text from uploaded file (txt directly; doc/pdf via best-effort)
+async function _extractTplFile(input) {
+  const file = input.files[0];
+  if (!file) return;
   const status = document.getElementById('tpl-file-status');
-  if (status && _tplSelectedFile) {
-    const sizeKB = Math.round(_tplSelectedFile.size / 1024);
-    status.innerHTML = `<span style="color:var(--accent);">📄 ${_tplSelectedFile.name} (${sizeKB} KB)</span>`;
+  const textarea = document.getElementById('tpl-content');
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+
+  if (status) status.innerHTML = '⏳ متن نکالا جا رہا ہے...';
+
+  try {
+    if (ext === 'txt' || ext === 'rtf') {
+      const text = await file.text();
+      if (textarea) textarea.value = (textarea.value ? textarea.value + '\n' : '') + text;
+      if (status) status.innerHTML = `<span style="color:var(--green);">✅ متن نکال لیا گیا — اب ترمیم کریں</span>`;
+    } else if (ext === 'docx') {
+      // DOCX is a zip; try basic text extraction
+      const text = await _extractDocxText(file);
+      if (textarea) textarea.value = (textarea.value ? textarea.value + '\n' : '') + text;
+      if (status) status.innerHTML = `<span style="color:var(--green);">✅ Word کا متن نکال لیا گیا — اب ترمیم کریں</span>`;
+    } else {
+      // doc / pdf — can't reliably extract in browser
+      if (status) status.innerHTML = `<span style="color:var(--amber);">⚠️ ${ext.toUpperCase()} فائلوں سے خودکار متن مشکل ہے — براہِ کرم متن کاپی کر کے خانے میں پیسٹ کریں</span>`;
+    }
+  } catch(err) {
+    if (status) status.innerHTML = `<span style="color:var(--red);">❌ متن نہیں نکل سکا — متن کاپی کر کے پیسٹ کریں</span>`;
   }
+}
+
+// Basic DOCX text extraction (reads document.xml from the zip)
+async function _extractDocxText(file) {
+  const buf = await file.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  // Find document.xml content — simple approach: decode and strip tags
+  // DOCX is a zip, so we need the raw text between <w:t> tags
+  const decoder = new TextDecoder('utf-8');
+  const raw = decoder.decode(bytes);
+  const matches = raw.match(/<w:t[^>]*>([^<]*)<\/w:t>/g);
+  if (matches) {
+    return matches.map(m => m.replace(/<[^>]+>/g, '')).join(' ')
+      .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"');
+  }
+  throw new Error('no text');
 }
 
 async function _saveTemplate(existingId) {
   const title   = document.getElementById('tpl-title')?.value.trim();
   const content = document.getElementById('tpl-content')?.value.trim();
   if (!title)   { showToast('⚠️ نام ضروری ہے','error'); return; }
+  if (!content) { showToast('⚠️ مواد لکھیں یا فائل سے نکالیں','error'); return; }
 
   try {
     const oid = await getOfficerId();
-    let file_url = null, file_name = null;
-
-    // Upload file if selected
-    if (_tplSelectedFile) {
-      showToast('📤 فائل اپ لوڈ ہو رہی ہے...', 'info');
-      const ext = _tplSelectedFile.name.split('.').pop();
-      const path = `templates/${oid}/${Date.now()}.${ext}`;
-      const { error: upErr } = await supabaseClient.storage
-        .from('law-files').upload(path, _tplSelectedFile, { upsert: true });
-      if (upErr) throw upErr;
-      const { data: urlData } = supabaseClient.storage.from('law-files').getPublicUrl(path);
-      file_url = urlData.publicUrl;
-      file_name = _tplSelectedFile.name;
-    }
-
-    if (!content && !file_url && !existingId) {
-      showToast('⚠️ مواد لکھیں یا فائل اپ لوڈ کریں', 'error'); return;
-    }
-
-    const rec = { title, content: content || null };
-    if (file_url) { rec.file_url = file_url; rec.file_name = file_name; }
-
     if (existingId) {
-      await supabaseClient.from('law_library').update(rec).eq('id', existingId);
+      await supabaseClient.from('law_library').update({ title, content }).eq('id', existingId);
     } else {
-      await supabaseClient.from('law_library').insert({ ...rec, officer_id: oid, category: 'template' });
+      await supabaseClient.from('law_library').insert({ officer_id: oid, title, content, category: 'template' });
     }
-    _tplSelectedFile = null;
     closeModal();
     showToast('✅ ٹیمپلیٹ محفوظ', 'success');
     _buildForms();
+  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+// Download template as a real Word (.doc) file to the officer's PC
+async function _downloadTplWord(id) {
+  try {
+    const { data } = await supabaseClient.from('law_library').select('*').eq('id',id).single();
+    if (!data) return;
+    const content = (data.content || '').replace(/\n/g, '<br>');
+    // Word-compatible HTML document with RTL + Urdu font
+    const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><title>${data.title}</title>
+<style>body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu','Times New Roman',serif;direction:rtl;text-align:right;font-size:14pt;line-height:2;}</style>
+</head><body><h2 style="text-align:center;">${data.title}</h2>${content}</body></html>`;
+    const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${data.title}.doc`;
+    a.click();
+    showToast('📘 Word فائل ڈاؤنلوڈ ہو گئی', 'success');
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
 
