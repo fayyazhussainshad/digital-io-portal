@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital IO — انسٹال کریں</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:'Noto Nastaliq Urdu',serif;
+    background:linear-gradient(135deg,#0a1520,#0f1923);
+    color:#e5eef5; min-height:100vh;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .card {
+    background:rgba(15,25,35,0.9); border:1px solid #1e3a52;
+    border-radius:20px; max-width:480px; width:100%; padding:32px 24px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.5); text-align:center;
+  }
+  .logo { font-size:48px; margin-bottom:8px; }
+  .title { font-size:26px; font-weight:700; color:#38bdf8; margin-bottom:4px; }
+  .subtitle { font-size:14px; color:#7d97ad; margin-bottom:24px; }
+  .qr-box {
+    background:#fff; border-radius:16px; padding:16px; display:inline-block;
+    margin-bottom:20px; box-shadow:0 8px 24px rgba(0,0,0,0.3);
+  }
+  #qrcode canvas, #qrcode img { display:block; }
+  .qr-label { font-size:13px; color:#7d97ad; margin-bottom:24px; }
+  .btn {
+    display:block; width:100%; padding:16px; border-radius:12px; border:none;
+    font-size:17px; font-weight:700; cursor:pointer; margin-bottom:12px;
+    font-family:inherit; text-decoration:none; transition:transform 0.15s;
+  }
+  .btn:active { transform:scale(0.98); }
+  .btn-primary { background:linear-gradient(135deg,#38bdf8,#0ea5e9); color:#fff; }
+  .btn-whatsapp { background:#25D366; color:#fff; }
+  .btn-copy { background:#1e3a52; color:#e5eef5; }
+  .steps {
+    text-align:right; background:rgba(56,189,248,0.06); border-radius:12px;
+    padding:18px; margin-top:24px; font-size:14px; line-height:2.2;
+  }
+  .steps h3 { font-size:16px; color:#38bdf8; margin-bottom:10px; }
+  .step { display:flex; gap:10px; align-items:flex-start; margin-bottom:8px; }
+  .step-num {
+    background:#38bdf8; color:#fff; width:24px; height:24px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-size:13px;
+    flex-shrink:0; font-weight:700; margin-top:2px;
+  }
+  .url-display {
+    background:#0a1520; border:1px solid #1e3a52; border-radius:10px;
+    padding:12px; font-size:13px; color:#38bdf8; direction:ltr;
+    word-break:break-all; margin-bottom:16px; font-family:monospace;
+  }
+  .free-badge {
+    display:inline-block; background:rgba(34,197,94,0.15); color:#22c55e;
+    border-radius:20px; padding:6px 16px; font-size:13px; font-weight:700;
+    margin-bottom:20px;
+  }
+  .footer { font-size:12px; color:#5a7088; margin-top:20px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">🛡️</div>
+    <div class="title">Digital IO</div>
+    <div class="subtitle">پنجاب پولیس — کیس مینجمنٹ سسٹم</div>
+
+    <div class="free-badge">🎁 30 دن مفت آزمائش</div>
+
+    <div class="qr-box"><div id="qrcode"></div></div>
+    <div class="qr-label">📱 موبائل کیمرے سے QR کوڈ اسکین کریں</div>
+
+    <a href="https://digital-io-portal.vercel.app" class="btn btn-primary" target="_blank">🚀 ایپ کھولیں / انسٹال کریں</a>
+
+    <div class="url-display" id="appUrl">https://digital-io-portal.vercel.app</div>
+
+    <button class="btn btn-copy" onclick="copyUrl()">📋 لنک کاپی کریں</button>
+    <button class="btn btn-whatsapp" onclick="shareWhatsApp()">📲 WhatsApp پر شیئر کریں</button>
+
+    <div class="steps">
+      <h3>📝 رجسٹر کیسے کریں؟</h3>
+      <div class="step"><div class="step-num">1</div><div>اوپر دیا گیا لنک کھولیں یا QR اسکین کریں</div></div>
+      <div class="step"><div class="step-num">2</div><div>"📲 ایپ انسٹال کریں" بٹن دبا کر فون/کمپیوٹر پر انسٹال کریں</div></div>
+      <div class="step"><div class="step-num">3</div><div>"Request Access" پر کلک کر کے اپنی معلومات بھریں</div></div>
+      <div class="step"><div class="step-num">4</div><div>ایڈمن کی منظوری کے بعد لاگ ان کریں</div></div>
+      <div class="step"><div class="step-num">5</div><div>30 دن مفت — پھر سبسکرپشن (300/1500/2500 روپے)</div></div>
+    </div>
+
+    <div class="footer">📞 رابطہ: 0300-7339260<br>Digital IO © 2026</div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    const APP_URL = 'https://digital-io-portal.vercel.app';
+    try {
+      new QRCode(document.getElementById('qrcode'), {
+        text: APP_URL, width:200, height:200,
+        colorDark:'#0a1520', colorLight:'#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    } catch(e) {
+      document.getElementById('qrcode').innerHTML = '<div style="padding:40px;color:#333;">QR کے لیے انٹرنیٹ درکار</div>';
+    }
+    function copyUrl() {
+      navigator.clipboard.writeText(APP_URL).then(()=>alert('✅ لنک کاپی ہو گیا!'),()=>alert('لنک: '+APP_URL));
+    }
+    function shareWhatsApp() {
+      const msg = encodeURIComponent('Digital IO — پنجاب پولیس کیس مینجمنٹ سسٹم\n\n30 دن مفت آزمائش!\n\nانسٹال کریں: '+APP_URL);
+      window.open('https://wa.me/?text='+msg,'_blank');
+    }
+  </script>
+</body>
+</html>
