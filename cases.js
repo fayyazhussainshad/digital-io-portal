@@ -6,6 +6,36 @@
    Loaded after app-core.js.
    ═══════════════════════════════════════════════════════════ */
 
+// ── MISAL DOCUMENTS CHECKLIST (used by case add/edit form) ──
+const ALL_MISAL_DOCS = [
+  'FIR / ایف آئی آر',
+  'Cross Version / کراس ورژن',
+  'رپورٹ 173 ض ف',
+  'جائے وقوعہ کا نقشہ',
+  'نامزد ملزمان',
+  'گواہان موقع',
+  'گواہان کراس ورژن',
+  'بیانات 161 ض ف',
+  'واقعاتی رپورٹ',
+  'فردات',
+  'ضمنیات',
+  'میمورنڈم',
+  'CDR Analyzer',
+  'CDR / IMEI',
+  'سٹاف / ہمراہی ملازمان',
+  'انڈیکس نقل مسل',
+  'فارم گرفتاری',
+  'فارم مفروری',
+  'وارنٹ',
+  'اشتہار',
+  'پراگرس رپورٹ',
+  'انکشافات',
+  'درخواستیں',
+  'بریف مقدمہ',
+  'انسدادی کاروائی',
+  'شہادتیں',
+];
+
 // ── PENAL CODE DATABASE (used by the section picker in case form) ──
 const PENAL_CODES = [
   // PPC — Pakistan Penal Code
