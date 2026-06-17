@@ -754,11 +754,121 @@ function showRegister()       { const m=document.getElementById('register-modal'
 function hideRegister()       { const m=document.getElementById('register-modal'); if(m) m.style.display='none'; }
 function showForgotPassword() { document.getElementById('forgot-card')?.style&&(document.getElementById('forgot-card').style.display='block'); document.getElementById('login-card')?.style&&(document.getElementById('login-card').style.display='none'); }
 function hideForgotModal()    { document.getElementById('forgot-card')?.style&&(document.getElementById('forgot-card').style.display='none'); document.getElementById('login-card')?.style&&(document.getElementById('login-card').style.display='block'); }
-function setLoginMethod(m)    { /* handled inline */ }
+// ── PIN LOGIN ─────────────────────────────────────────────────
+let _pinValue = '';
+
+function _renderPinDots() {
+  for (let i = 0; i < 6; i++) {
+    const dot = document.getElementById('pd' + i);
+    if (dot) dot.classList.toggle('filled', i < _pinValue.length);
+  }
+}
+
+function pinPress(v) {
+  if (_pinValue.length >= 6) return;
+  _pinValue += v;
+  _renderPinDots();
+  if (_pinValue.length === 6) {
+    setTimeout(_verifyPin, 200);
+  }
+}
+
+function pinBackspace() {
+  _pinValue = _pinValue.slice(0, -1);
+  _renderPinDots();
+}
+
+async function _verifyPin() {
+  const savedPin = localStorage.getItem('dio_pin');
+  const savedEmail = localStorage.getItem('dio_pin_email');
+  const savedToken = localStorage.getItem('dio_pin_token');
+
+  if (!savedPin) {
+    showToast('⚠️ پہلے پاسورڈ سے لاگ ان کر کے PIN سیٹ کریں (ترتیبات میں)', 'warn', 5000);
+    _pinValue = ''; _renderPinDots();
+    setLoginMethod('password', document.querySelectorAll('.login-method')[0]);
+    return;
+  }
+
+  if (_pinValue === savedPin && savedEmail && savedToken) {
+    try {
+      document.getElementById('login-email').value = savedEmail;
+      document.getElementById('login-password').value = atob(savedToken);
+      _pinValue = ''; _renderPinDots();
+      await doLogin();
+    } catch(e) {
+      showToast('❌ PIN لاگ ان ناکام — پاسورڈ استعمال کریں', 'error');
+      setLoginMethod('password', document.querySelectorAll('.login-method')[0]);
+    }
+  } else {
+    showToast('❌ غلط PIN', 'error');
+    _pinValue = ''; _renderPinDots();
+  }
+}
+
+function setLoginMethod(m, btn) {
+  // Switch active button
+  document.querySelectorAll('.login-method').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  // Show the right panel, hide others
+  const panels = { password:'panel-password', pin:'panel-pin', biometric:'panel-biometric' };
+  Object.entries(panels).forEach(([key, id]) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = (key === m) ? 'block' : 'none';
+  });
+  // Reset PIN dots when switching to PIN
+  if (m === 'pin') { _pinValue = ''; _renderPinDots(); }
+}
 function togglePasswordVisibility(id) { const el=document.getElementById(id); if(el) el.type=el.type==='password'?'text':'password'; }
-function pinPress(v)     { const el=document.getElementById('pin-display'); if(el&&el.textContent.length<6) el.textContent+='●'; }
-function pinBackspace()  { const el=document.getElementById('pin-display'); if(el) el.textContent=el.textContent.slice(0,-1); }
-// ── BIOMETRIC (WebAuthn) ──────────────────────────────────────
+function setLoginMethodOld(m)    { /* deprecated */ }
+// ── SETUP PIN (from settings, while logged in) ────────────────
+function _setupPin() {
+  openModal('🔢 PIN سیٹ کریں', `
+    <div style="direction:rtl;">
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">6 ہندسوں کا PIN منتخب کریں۔ اس سے آپ تیزی سے لاگ ان کر سکیں گے۔</p>
+      <input class="form-input" type="password" id="setup-pin" inputmode="numeric" maxlength="6" placeholder="6 ہندسے" dir="ltr" style="text-align:center;font-size:24px;letter-spacing:8px;margin-bottom:10px;">
+      <input class="form-input" type="password" id="setup-pin2" inputmode="numeric" maxlength="6" placeholder="دوبارہ PIN" dir="ltr" style="text-align:center;font-size:24px;letter-spacing:8px;">
+      <p style="font-size:11px;color:var(--text-muted);margin-top:10px;">⚠️ موجودہ پاسورڈ بھی درکار ہوگا تاکہ PIN لاگ ان کام کرے</p>
+      <input class="form-input" type="password" id="setup-pin-pass" placeholder="موجودہ پاسورڈ" style="margin-top:8px;">
+    </div>
+  `, `
+    <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    <button class="btn btn-primary" onclick="_savePin()">💾 محفوظ کریں</button>
+  `);
+}
+
+function _savePin() {
+  const pin = document.getElementById('setup-pin')?.value.trim();
+  const pin2 = document.getElementById('setup-pin2')?.value.trim();
+  const pass = document.getElementById('setup-pin-pass')?.value;
+
+  if (!pin || pin.length !== 6 || !/^\d{6}$/.test(pin)) {
+    showToast('⚠️ PIN 6 ہندسوں کا ہونا چاہیے', 'error'); return;
+  }
+  if (pin !== pin2) {
+    showToast('⚠️ دونوں PIN مختلف ہیں', 'error'); return;
+  }
+  if (!pass) {
+    showToast('⚠️ موجودہ پاسورڈ درکار ہے', 'error'); return;
+  }
+
+  const email = currentOfficer?.email || currentUser?.email;
+  if (!email) {
+    showToast('❌ ای میل نہیں ملی', 'error'); return;
+  }
+
+  try {
+    localStorage.setItem('dio_pin', pin);
+    localStorage.setItem('dio_pin_email', email);
+    localStorage.setItem('dio_pin_token', btoa(pass));
+    closeModal();
+    showToast('✅ PIN سیٹ ہو گیا — اب لاگ ان اسکرین پر PIN استعمال کریں', 'success', 5000);
+  } catch(e) {
+    showToast('❌ ' + e.message, 'error');
+  }
+}
+
+// ── SETUP PIN END ─────────────────────────────────────────────
 async function doBiometric() {
   const ring = document.getElementById('bio-ring');
   if (!window.PublicKeyCredential) {

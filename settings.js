@@ -94,6 +94,7 @@ async function renderSettings(container) {
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-secondary btn-sm" onclick="openChangePasswordModal()">🔑 پاسورڈ تبدیل کریں</button>
         <button class="btn btn-secondary btn-sm" onclick="enableBiometric()">🫆 بایومیٹرک فعال کریں</button>
+        <button class="btn btn-secondary btn-sm" onclick="_setupPin()">🔢 PIN سیٹ کریں</button>
         <button class="btn btn-secondary btn-sm" onclick="showOnboardingAgain()">📖 گائیڈ دوبارہ دیکھیں</button>
       </div>
       <div style="font-size:10px;color:var(--text-muted);margin-top:6px;">🫆 بایومیٹرک فعال کرنے سے آپ فنگرپرنٹ/فیس سے لاگ ان کر سکیں گے</div>
