@@ -43,9 +43,24 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
+// Fallback CDNs if jsdelivr fails
+if (!window.supabase || !window.supabase.createClient) {
+  document.write('<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"><\/script>');
+}
+</script>
+<script>
+if (!window.supabase || !window.supabase.createClient) {
+  document.write('<script src="https://esm.sh/@supabase/supabase-js@2/dist/umd/supabase.min.js"><\/script>');
+}
+</script>
+<script>
 const SUPABASE_URL = 'https://bbrhtokynxmljumxyaeh.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJicmh0b2t5bnhtbGp1bXh5YWVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MzU5ODIsImV4cCI6MjA5NTUxMTk4Mn0.o4uKyqhIx9vWDX-CeJjwujWUYK6Cy0XzEZ5fw_efQMA';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Safe init — only create client if library loaded
+let supabase = null;
+if (window.supabase && window.supabase.createClient) {
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+}
 
 let _tokenData = null;
 let _entries = [];
@@ -57,10 +72,14 @@ const token = params.get('token');
 async function init() {
   if (!token) { showError('⚠️ غلط لنک — ٹوکن موجود نہیں'); return; }
 
-  // Make sure Supabase library is loaded
-  if (!window.supabase || !supabase) {
+  // Make sure Supabase library is loaded; retry until ready
+  if (!window.supabase || !window.supabase.createClient) {
     setTimeout(init, 300);
     return;
+  }
+  // Create client now if not created yet
+  if (!supabase) {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   }
 
   try {
