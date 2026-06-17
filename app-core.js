@@ -750,8 +750,8 @@ async function doLogout() {
   showToast('✅ لاگ آؤٹ ہو گئے','info');
 }
 
-function showRegister()       { document.getElementById('register-card')?.style&&(document.getElementById('register-card').style.display='block'); document.getElementById('login-card')?.style&&(document.getElementById('login-card').style.display='none'); }
-function hideRegister()       { document.getElementById('register-card')?.style&&(document.getElementById('register-card').style.display='none'); document.getElementById('login-card')?.style&&(document.getElementById('login-card').style.display='block'); }
+function showRegister()       { const m=document.getElementById('register-modal'); if(m) m.style.display='flex'; }
+function hideRegister()       { const m=document.getElementById('register-modal'); if(m) m.style.display='none'; }
 function showForgotPassword() { document.getElementById('forgot-card')?.style&&(document.getElementById('forgot-card').style.display='block'); document.getElementById('login-card')?.style&&(document.getElementById('login-card').style.display='none'); }
 function hideForgotModal()    { document.getElementById('forgot-card')?.style&&(document.getElementById('forgot-card').style.display='none'); document.getElementById('login-card')?.style&&(document.getElementById('login-card').style.display='block'); }
 function setLoginMethod(m)    { /* handled inline */ }
@@ -875,15 +875,24 @@ async function submitRegistration() {
   const district=document.getElementById('reg-district')?.value.trim();
   const desig = document.getElementById('reg-designation')?.value.trim();
   if(!name||!email||!pass){showToast('⚠️ تمام ضروری خانے بھریں','error');return;}
+  if(pass.length<8){showToast('⚠️ پاسورڈ کم از کم 8 حروف کا ہو','error');return;}
   try {
     const{data,error}=await supabaseClient.auth.signUp({email,password:pass,options:{data:{full_name:name}}});
     if(error)throw error;
     if(data.user){
-      await supabaseClient.from('officers').insert({user_id:data.user.id,full_name:name,email,badge_number:badge,designation:desig,station,district,role:'officer',is_approved:false});
+      // Build officer record (omit email if column doesn't exist)
+      const rec={user_id:data.user.id,full_name:name,badge_number:badge,designation:desig,station,district,role:'officer',is_approved:false};
+      let{error:insErr}=await supabaseClient.from('officers').insert({...rec,email});
+      // If email column doesn't exist, retry without it
+      if(insErr && insErr.message && insErr.message.toLowerCase().includes('email')){
+        const r2=await supabaseClient.from('officers').insert(rec);
+        insErr=r2.error;
+      }
+      if(insErr)throw insErr;
     }
-    showToast('✅ رجسٹریشن ہو گئی! ای میل تصدیق کریں','success');
+    showToast('✅ رجسٹریشن ہو گئی! ایڈمن کی منظوری کا انتظار کریں','success',6000);
     hideRegister();
-  } catch(e){showToast('❌ '+e.message,'error');}
+  } catch(e){showToast('❌ '+e.message,'error',6000);}
 }
 
 function openChangePasswordModal() {
