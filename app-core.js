@@ -9,7 +9,17 @@ const SUPABASE_URL = 'https://bbrhtokynxmljumxyaeh.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJicmh0b2t5bnhtbGp1bXh5YWVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MzU5ODIsImV4cCI6MjA5NTUxMTk4Mn0.o4uKyqhIx9vWDX-CeJjwujWUYK6Cy0XzEZ5fw_efQMA';
 if (!window.supabase || !window.supabase.createClient) {
   document.addEventListener('DOMContentLoaded', function(){
-    alert('⚠️ انٹرنیٹ کنکشن چیک کریں — Supabase لائبریری لوڈ نہیں ہوئی۔ صفحہ ریفریش کریں۔');
+    // Wait a moment in case CDN is still loading, then show a retry UI
+    setTimeout(function(){
+      if (!window.supabase || !window.supabase.createClient) {
+        document.body.innerHTML = '<div style="font-family:sans-serif;direction:rtl;text-align:center;padding:40px 20px;max-width:400px;margin:60px auto;background:#0f1923;color:#e5eef5;border-radius:16px;border:1px solid #1e3a52;">'
+          + '<div style="font-size:48px;margin-bottom:16px;">📡</div>'
+          + '<div style="font-size:18px;font-weight:700;margin-bottom:10px;">کنکشن کا مسئلہ</div>'
+          + '<div style="font-size:14px;color:#7d97ad;line-height:1.8;margin-bottom:20px;">انٹرنیٹ سے لائبریری لوڈ نہیں ہو سکی۔ براہِ کرم انٹرنیٹ چیک کریں اور دوبارہ کوشش کریں۔</div>'
+          + '<button onclick="location.reload(true)" style="background:#38bdf8;color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:15px;font-weight:700;cursor:pointer;">🔄 دوبارہ کوشش کریں</button>'
+          + '</div>';
+      }
+    }, 2500);
   });
 }
 const supabaseClient = (window.supabase && window.supabase.createClient)

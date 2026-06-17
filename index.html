@@ -881,12 +881,21 @@ input[id*="cnic"], input[id*="cell"] {
 }
 </style>
 <!-- Supabase JS library (REQUIRED — must load before app-core.js) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-// Fallback: if jsdelivr failed to load Supabase, try unpkg
-if (!window.supabase || !window.supabase.createClient) {
-  document.write('<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"><\/script>');
-}
+// Robust Supabase loader: try multiple CDNs synchronously until one works
+(function(){
+  var cdns = [
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',
+    'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js',
+    'https://esm.sh/@supabase/supabase-js@2/dist/umd/supabase.min.js'
+  ];
+  for (var i = 0; i < cdns.length; i++) {
+    if (window.supabase && window.supabase.createClient) break;
+    try {
+      document.write('<script src="' + cdns[i] + '"><\/script>');
+    } catch(e) {}
+  }
+})();
 </script>
 </head>
 <body>
