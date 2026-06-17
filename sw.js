@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v30
+   DIGITAL IO — SERVICE WORKER v31
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v30';
+const CACHE_NAME = 'digital-io-v31';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -73,6 +73,14 @@ self.addEventListener('fetch', event => {
   if (url.hostname === 'supabase.co' || url.hostname.includes('supabase')) return;
   if (url.hostname === 'nominatim.openstreetmap.org') return;
   if (url.hostname === 'api.anthropic.com') return;
+  // External CDN libraries (Supabase, fonts) — always fetch fresh, never cache-first
+  // This prevents a broken/partial cached copy from blocking the app
+  if (url.hostname.includes('jsdelivr.net') || url.hostname.includes('unpkg.com') || url.hostname.includes('cdnjs.cloudflare.com')) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
+  }
 
   // HTML navigation — offline fallback
   if (event.request.mode === 'navigate') {

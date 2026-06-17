@@ -882,6 +882,12 @@ input[id*="cnic"], input[id*="cell"] {
 </style>
 <!-- Supabase JS library (REQUIRED — must load before app-core.js) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+// Fallback: if jsdelivr failed to load Supabase, try unpkg
+if (!window.supabase || !window.supabase.createClient) {
+  document.write('<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"><\/script>');
+}
+</script>
 </head>
 <body>
 <!-- Diagnostic error banner — shows JS errors on screen (helps debug mobile) -->
