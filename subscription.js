@@ -131,57 +131,57 @@ function _plansHTML() {
         <div style="font-size:22px;font-weight:900;color:var(--green);">مفت</div>
         <div style="font-size:10px;color:var(--text-muted);">30 دن</div>
         <ul style="font-size:11px;color:var(--text-secondary);text-align:right;margin:10px 0;list-style:none;padding:0;">
-          <li>✅ 10 مقدمات</li>
-          <li>✅ گشت لاگ</li>
-          <li>❌ CDR Analyzer</li>
-          <li>❌ ایڈمن پینل</li>
+          <li>✅ تمام فیچرز آزمائیں</li>
+          <li>✅ مقدمات و گشت</li>
+          <li>✅ CDR Analyzer</li>
+          <li>⏳ 30 دن بعد ادائیگی</li>
         </ul>
       </div>
 
-      <!-- Basic -->
+      <!-- 1 Month -->
       <div style="background:var(--bg-secondary);border:1px solid var(--accent);border-radius:10px;padding:16px;text-align:center;">
         <div style="font-size:24px;">⭐</div>
-        <div style="font-weight:800;font-size:14px;margin:6px 0;">بنیادی</div>
-        <div style="font-size:22px;font-weight:900;color:var(--accent);">500 روپے</div>
-        <div style="font-size:10px;color:var(--text-muted);">ماہانہ</div>
+        <div style="font-weight:800;font-size:14px;margin:6px 0;">ماہانہ</div>
+        <div style="font-size:22px;font-weight:900;color:var(--accent);">300 روپے</div>
+        <div style="font-size:10px;color:var(--text-muted);">1 ماہ</div>
         <ul style="font-size:11px;color:var(--text-secondary);text-align:right;margin:10px 0;list-style:none;padding:0;">
-          <li>✅ 50 مقدمات</li>
-          <li>✅ گشت لاگ</li>
+          <li>✅ تمام فیچرز</li>
+          <li>✅ لامحدود مقدمات</li>
           <li>✅ CDR Analyzer</li>
-          <li>❌ ایڈمن پینل</li>
+          <li>✅ تمام دستاویزات</li>
         </ul>
-        <button class="btn btn-primary btn-sm" style="width:100%;" onclick="closeModal();_openPayment('بنیادی',500,30)">خریدیں</button>
+        <button class="btn btn-primary btn-sm" style="width:100%;" onclick="closeModal();_openPayment('ماہانہ',300,30)">خریدیں</button>
       </div>
 
-      <!-- Station -->
+      <!-- 6 Months -->
       <div style="background:linear-gradient(135deg,rgba(56,189,248,0.1),rgba(14,165,233,0.05));border:2px solid var(--accent);border-radius:10px;padding:16px;text-align:center;position:relative;">
         <div style="position:absolute;top:-10px;right:50%;transform:translateX(50%);background:var(--accent);color:#fff;font-size:10px;padding:2px 10px;border-radius:10px;font-weight:700;">مقبول</div>
         <div style="font-size:24px;">🏛️</div>
-        <div style="font-weight:800;font-size:14px;margin:6px 0;">اسٹیشن</div>
-        <div style="font-size:22px;font-weight:900;color:var(--accent);">2000 روپے</div>
-        <div style="font-size:10px;color:var(--text-muted);">ماہانہ</div>
+        <div style="font-weight:800;font-size:14px;margin:6px 0;">شش ماہی</div>
+        <div style="font-size:22px;font-weight:900;color:var(--accent);">1500 روپے</div>
+        <div style="font-size:10px;color:var(--text-muted);">6 ماہ (17% بچت)</div>
         <ul style="font-size:11px;color:var(--text-secondary);text-align:right;margin:10px 0;list-style:none;padding:0;">
+          <li>✅ تمام فیچرز</li>
           <li>✅ لامحدود مقدمات</li>
-          <li>✅ گشت لاگ</li>
           <li>✅ CDR Analyzer</li>
-          <li>✅ ایڈمن پینل</li>
+          <li>✅ 6 ماہ بے فکری</li>
         </ul>
-        <button class="btn btn-primary btn-sm" style="width:100%;" onclick="closeModal();_openPayment('اسٹیشن',2000,30)">خریدیں</button>
+        <button class="btn btn-primary btn-sm" style="width:100%;" onclick="closeModal();_openPayment('شش ماہی',1500,180)">خریدیں</button>
       </div>
 
-      <!-- Annual -->
+      <!-- 1 Year -->
       <div style="background:linear-gradient(135deg,rgba(167,139,250,0.1),rgba(139,92,246,0.05));border:1px solid #a78bfa;border-radius:10px;padding:16px;text-align:center;">
         <div style="font-size:24px;">👑</div>
         <div style="font-weight:800;font-size:14px;margin:6px 0;">سالانہ</div>
-        <div style="font-size:22px;font-weight:900;color:#a78bfa;">15000 روپے</div>
-        <div style="font-size:10px;color:var(--text-muted);">سالانہ (37% بچت)</div>
+        <div style="font-size:22px;font-weight:900;color:#a78bfa;">2500 روپے</div>
+        <div style="font-size:10px;color:var(--text-muted);">1 سال (31% بچت)</div>
         <ul style="font-size:11px;color:var(--text-secondary);text-align:right;margin:10px 0;list-style:none;padding:0;">
-          <li>✅ لامحدود سب کچھ</li>
+          <li>✅ تمام فیچرز</li>
           <li>✅ پریمیم سپورٹ</li>
           <li>✅ نئی فیچرز پہلے</li>
-          <li>✅ ایڈمن پینل</li>
+          <li>✅ سب سے کم قیمت</li>
         </ul>
-        <button class="btn btn-secondary btn-sm" style="width:100%;border-color:#a78bfa;color:#a78bfa;" onclick="closeModal();_openPayment('سالانہ',15000,365)">خریدیں</button>
+        <button class="btn btn-secondary btn-sm" style="width:100%;border-color:#a78bfa;color:#a78bfa;" onclick="closeModal();_openPayment('سالانہ',2500,365)">خریدیں</button>
       </div>
     </div>
     <div style="text-align:center;font-size:11px;color:var(--text-muted);">
@@ -199,14 +199,14 @@ function _openPayment(planName, amount, days) {
         <div style="background:rgba(34,197,94,0.1);border:1px solid var(--green);border-radius:8px;padding:12px;text-align:center;">
           <div style="font-size:20px;margin-bottom:4px;">📱</div>
           <div style="font-weight:700;font-size:12px;color:var(--green);">JazzCash</div>
-          <div style="font-size:13px;font-weight:900;color:var(--text-primary);" id="jc-number">0301-8488830</div>
-          <button onclick="navigator.clipboard.writeText('03018488830').then(()=>showToast('نمبر کاپی ہو گیا','success'))" style="font-size:10px;background:none;border:none;color:var(--accent);cursor:pointer;">📋 کاپی کریں</button>
+          <div style="font-size:13px;font-weight:900;color:var(--text-primary);" id="jc-number">0300-7339260</div>
+          <button onclick="navigator.clipboard.writeText('03007339260').then(()=>showToast('نمبر کاپی ہو گیا','success'))" style="font-size:10px;background:none;border:none;color:var(--accent);cursor:pointer;">📋 کاپی کریں</button>
         </div>
         <div style="background:rgba(139,92,246,0.1);border:1px solid #a78bfa;border-radius:8px;padding:12px;text-align:center;">
           <div style="font-size:20px;margin-bottom:4px;">📱</div>
           <div style="font-weight:700;font-size:12px;color:#a78bfa;">EasyPaisa</div>
-          <div style="font-size:13px;font-weight:900;color:var(--text-primary);">0301-8488830</div>
-          <button onclick="navigator.clipboard.writeText('03018488830').then(()=>showToast('نمبر کاپی ہو گیا','success'))" style="font-size:10px;background:none;border:none;color:var(--accent);cursor:pointer;">📋 کاپی کریں</button>
+          <div style="font-size:13px;font-weight:900;color:var(--text-primary);">0300-7339260</div>
+          <button onclick="navigator.clipboard.writeText('03007339260').then(()=>showToast('نمبر کاپی ہو گیا','success'))" style="font-size:10px;background:none;border:none;color:var(--accent);cursor:pointer;">📋 کاپی کریں</button>
         </div>
       </div>
 
@@ -276,7 +276,7 @@ async function _submitPayment(planName, amount, days) {
     // WhatsApp notification to admin
     const o = currentOfficer||{};
     const msg = `Digital IO ادائیگی درخواست:\n\nافسر: ${o.full_name||'—'}\nتھانہ: ${o.station||'—'}\nپلان: ${planName}\nرقم: Rs. ${amount}\nTransaction ID: ${txnId}\nطریقہ: ${method}`;
-    window.open(`https://wa.me/923018488830?text=${encodeURIComponent(msg)}`);
+    window.open(`https://wa.me/923007339260?text=${encodeURIComponent(msg)}`);
 
   } catch(e) { showToast('❌ '+e.message,'error'); }
 }
