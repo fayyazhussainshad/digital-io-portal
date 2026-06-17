@@ -1137,6 +1137,10 @@ function _prosecutionValidator(c) {
 
 // ── CASE STATUS PIPELINE (visual progress) ────────────────────
 function _caseStatusPipeline(c) {
+  // Status pipeline removed per user request
+  return '';
+}
+function _caseStatusPipeline_OLD(c) {
   // Police case flow stages
   const stages = [
     { key:'registered', label:'اندراج',      icon:'📝' },
@@ -1343,30 +1347,6 @@ function renderWorkspace(c, docs, ev, container) {
         <button onclick="goBackToCases()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">↩</button>
       </div>
     </div>
-
-    <!-- CASE SUMMARY (collapsible) -->
-    <details style="background:var(--bg-tertiary);border-bottom:1px solid var(--border);">
-      <summary style="cursor:pointer;padding:6px 14px;font-size:11px;color:var(--text-muted);direction:rtl;list-style:none;display:flex;align-items:center;gap:6px;">
-        <span>▼</span> <span style="font-family:'Jameel Noori Nastaleeq',serif;">مقدمے کی تفصیل</span>
-      </summary>
-      <div style="padding:10px 14px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;direction:rtl;font-size:11px;">
-        ${[
-          ['تاریخ اندراج', formatDate(c.fir_date)],
-          ['تاریخ وقوعہ', formatDate(c.occurrence_date)],
-          ['دفعات', c.section_of_law||'—'],
-          ['مدعی', c.complainant||'—'],
-          ['شناختی کارڈ', c.complainant_cnic||'—'],
-          ['موبائل', c.complainant_cell||'—'],
-          ['ملزمان', c.mulzman_type==='maloom'?'معلوم':'نامعلوم'],
-          ['تھانہ', c.case_station||o.station||'—'],
-          ['پوزیشن', c.position||'—'],
-        ].map(([k,v])=>`
-        <div style="background:var(--bg-card);border-radius:6px;padding:6px 8px;">
-          <div style="color:var(--text-muted);font-size:9px;">${k}</div>
-          <div style="font-weight:600;color:var(--text-primary);">${v||'—'}</div>
-        </div>`).join('')}
-      </div>
-    </details>
 
     <!-- CASE STATUS PIPELINE -->
     ${_caseStatusPipeline(c)}
