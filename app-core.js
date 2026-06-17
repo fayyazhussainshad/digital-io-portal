@@ -652,7 +652,63 @@ async function loginSuccess() {
   ls.style.transition='opacity 0.4s'; ls.style.opacity='0';
   setTimeout(()=>{ ls.style.display='none'; app.style.display='flex'; setLoginLoading(false); initApp(); },400);
   resetSessionTimer();
+  // Show onboarding for first-time users
+  setTimeout(()=>{ if(typeof _maybeShowOnboarding==='function') _maybeShowOnboarding(); }, 1200);
 }
+
+// ── ONBOARDING WALKTHROUGH (S6) ───────────────────────────────
+function _maybeShowOnboarding() {
+  // Only show once per device
+  if (localStorage.getItem('dio_onboarded') === 'yes') return;
+  _showOnboarding();
+}
+
+const _ONBOARD_STEPS = [
+  { icon:'🛡️', title:'خوش آمدید — Digital IO', text:'پنجاب پولیس کے لیے ایک محفوظ، تیز اور آسان کیس مینجمنٹ سسٹم۔ آئیے چند اہم خصوصیات دیکھیں۔' },
+  { icon:'📁', title:'میرے مقدمات', text:'تمام مقدمات یہاں درج کریں۔ ہر مقدمے کا FIR، مدعی، دفعات، صورتحال — سب ایک جگہ۔ نیا مقدمہ کے لیے Ctrl+N دبائیں۔' },
+  { icon:'📋', title:'MISAL بلڈر', text:'مقدمہ کھولیں تو 26 سرکاری دستاویزات (زمنی، 161 بیانات، چالان وغیرہ) خودکار تیار ہوتی ہیں۔ SHO/DSP کے نام بھی یہیں شامل کریں۔' },
+  { icon:'🤖', title:'سمارٹ مدد', text:'CDR تجزیہ، 161 سوالات کی تجاویز، عدالت کے لیے تیاری کا چیکر (🟢🔴) — سب آپ کی تفتیش میں مدد کے لیے۔' },
+  { icon:'🔗', title:'Ripple Effect', text:'ٹیمپلیٹ میں {مدعی}، {FIR} لکھیں — مقدمے کا ڈیٹا خودبخود بھر جائے گا۔ بار بار لکھنے کی ضرورت نہیں!' },
+  { icon:'✅', title:'تیار ہیں!', text:'بس اتنا ہی۔ کسی بھی وقت ⚙️ ترتیبات سے مدد حاصل کریں۔ اللہ آپ کے کام میں آسانی فرمائے۔' },
+];
+let _onboardIdx = 0;
+
+function _showOnboarding() {
+  _onboardIdx = 0;
+  _renderOnboardStep();
+}
+
+function _renderOnboardStep() {
+  const s = _ONBOARD_STEPS[_onboardIdx];
+  const isLast = _onboardIdx === _ONBOARD_STEPS.length - 1;
+  const isFirst = _onboardIdx === 0;
+
+  openModal('', `
+    <div style="text-align:center;direction:rtl;padding:10px;">
+      <div style="font-size:56px;margin-bottom:14px;">${s.icon}</div>
+      <div style="font-size:18px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;margin-bottom:10px;color:var(--accent);">${s.title}</div>
+      <div style="font-size:14px;line-height:1.9;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq',serif;">${s.text}</div>
+      <div style="display:flex;gap:5px;justify-content:center;margin-top:18px;">
+        ${_ONBOARD_STEPS.map((_,i)=>`<span style="width:8px;height:8px;border-radius:50%;background:${i===_onboardIdx?'var(--accent)':'var(--border)'};"></span>`).join('')}
+      </div>
+    </div>
+  `, `
+    <div style="display:flex;gap:8px;width:100%;direction:rtl;">
+      <button class="btn btn-secondary" onclick="_skipOnboarding()" style="flex:1;">${isLast?'بند کریں':'چھوڑیں'}</button>
+      ${!isFirst?`<button class="btn btn-secondary" onclick="_onboardPrev()">← پیچھے</button>`:''}
+      ${!isLast?`<button class="btn btn-primary" onclick="_onboardNext()" style="flex:1;">آگے →</button>`:`<button class="btn btn-primary" onclick="_skipOnboarding()" style="flex:1;">✅ شروع کریں</button>`}
+    </div>
+  `);
+}
+
+function _onboardNext() { if (_onboardIdx < _ONBOARD_STEPS.length-1) { _onboardIdx++; _renderOnboardStep(); } }
+function _onboardPrev() { if (_onboardIdx > 0) { _onboardIdx--; _renderOnboardStep(); } }
+function _skipOnboarding() {
+  try { localStorage.setItem('dio_onboarded', 'yes'); } catch(_) {}
+  closeModal();
+}
+// Allow re-showing from settings
+function showOnboardingAgain() { _showOnboarding(); }
 
 async function doLogout() {
   await supabaseClient.auth.signOut();

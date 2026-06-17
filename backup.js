@@ -100,6 +100,32 @@ async function _buildBackup() {
       <div style="display:flex;justify-content:space-between;"><span>Service Worker Cache</span><span style="color:var(--green);">✅ آف لائن دستیاب</span></div>
       <div style="display:flex;justify-content:space-between;"><span>Local Storage</span><span id="ls-size" style="color:var(--accent);">حساب ہو رہا ہے...</span></div>
     </div>
+  </div>
+
+  <!-- Google Drive / Cloud Backup -->
+  <div class="card" style="direction:rtl;">
+    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px;">☁️ Google Drive / کلاؤڈ بیک اپ</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">اپنا ڈیٹا Google Drive یا OneDrive میں محفوظ رکھیں — 3 آسان قدم</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="display:flex;gap:10px;align-items:center;background:var(--bg-secondary);border-radius:8px;padding:10px;">
+        <div style="width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;">1</div>
+        <div style="flex:1;font-size:13px;">نیچے بٹن سے مکمل ڈیٹا (JSON) ڈاؤنلوڈ کریں</div>
+        <button class="btn btn-primary btn-sm" onclick="_exportAllData()">⬇️ ڈاؤنلوڈ</button>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;background:var(--bg-secondary);border-radius:8px;padding:10px;">
+        <div style="width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;">2</div>
+        <div style="flex:1;font-size:13px;">Google Drive کھولیں اور فائل اپ لوڈ کریں</div>
+        <button class="btn btn-secondary btn-sm" onclick="window.open('https://drive.google.com','_blank')">📂 Drive</button>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;background:var(--bg-secondary);border-radius:8px;padding:10px;">
+        <div style="width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;">3</div>
+        <div style="flex:1;font-size:13px;">OneDrive استعمال کرتے ہیں؟ یہاں اپ لوڈ کریں</div>
+        <button class="btn btn-secondary btn-sm" onclick="window.open('https://onedrive.live.com','_blank')">☁️ OneDrive</button>
+      </div>
+    </div>
+    <div style="margin-top:10px;padding:8px 10px;background:rgba(34,197,94,0.08);border-radius:6px;font-size:11px;color:var(--green);">
+      ✅ آپ کا ڈیٹا پہلے ہی Supabase کلاؤڈ پر محفوظ ہے۔ یہ صرف اضافی حفاظت کے لیے ہے۔
+    </div>
   </div>`;
 
   // Calculate local storage size
