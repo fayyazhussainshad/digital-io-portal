@@ -122,15 +122,22 @@ function showPage(page, el) {
 
 // ── MODAL ─────────────────────────────────────────────────────
 function openModal(title, body, footer) {
-  document.getElementById('modal-title').textContent  = title||'';
-  document.getElementById('modal-body').innerHTML     = body||'';
-  document.getElementById('modal-footer').innerHTML   = footer||'';
-  document.getElementById('modal-backdrop').style.display = 'flex';
-  document.getElementById('modal-backdrop').style.alignItems = 'center';
-  document.getElementById('modal-backdrop').style.justifyContent = 'center';
+  const t = document.getElementById('modal-title');
+  const b = document.getElementById('modal-body');
+  const f = document.getElementById('modal-footer');
+  const bd = document.getElementById('modal-backdrop');
+  if (t) t.textContent  = title||'';
+  if (b) b.innerHTML     = body||'';
+  if (f) f.innerHTML   = footer||'';
+  if (bd) {
+    bd.style.display = 'flex';
+    bd.style.alignItems = 'center';
+    bd.style.justifyContent = 'center';
+  }
 }
 function closeModal() {
-  document.getElementById('modal-backdrop').style.display = 'none';
+  const bd = document.getElementById('modal-backdrop');
+  if (bd) bd.style.display = 'none';
 }
 
 // ── TOAST ─────────────────────────────────────────────────────
@@ -609,9 +616,10 @@ async function loginSuccess() {
 async function doLogout() {
   await supabaseClient.auth.signOut();
   currentUser=null; currentOfficer=null;
-  document.getElementById('main-app').style.display='none';
-  document.getElementById('login-screen').style.display='flex';
-  document.getElementById('login-screen').style.opacity='1';
+  const app = document.getElementById('main-app');
+  const login = document.getElementById('login-screen');
+  if (app) app.style.display='none';
+  if (login) { login.style.display='flex'; login.style.opacity='1'; }
   showToast('✅ لاگ آؤٹ ہو گئے','info');
 }
 

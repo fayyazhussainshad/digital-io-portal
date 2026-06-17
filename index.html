@@ -1184,5 +1184,17 @@ window.showPage = function(page, el) {
 };
 </script>
 
+<!-- Generic Modal (used by openModal/closeModal) -->
+<div id="modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)closeModal()">
+  <div style="background:var(--bg-card,#0b1826);border:1px solid var(--border,#1e3a52);border-radius:14px;max-width:560px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,0.6);direction:rtl;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border,#1e3a52);">
+      <div id="modal-title" style="font-size:16px;font-weight:700;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;color:var(--text-primary,#e5eef5);"></div>
+      <button onclick="closeModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted,#7d97ad);line-height:1;">✕</button>
+    </div>
+    <div id="modal-body" style="padding:18px;"></div>
+    <div id="modal-footer" style="padding:12px 18px;border-top:1px solid var(--border,#1e3a52);display:flex;gap:8px;justify-content:flex-start;flex-wrap:wrap;"></div>
+  </div>
+</div>
+
 </body>
 </html>
