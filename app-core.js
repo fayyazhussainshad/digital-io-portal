@@ -619,6 +619,26 @@ async function doLogin() {
       try { localStorage.setItem('dio_biometric_token', btoa(pass)); } catch(_) {}
     }
     await _loadOfficerProfile();
+
+    // Check if officer is approved (skip for admins/superadmins)
+    const role = currentOfficer?.role || 'officer';
+    const isPrivileged = ['admin','superadmin'].includes(role);
+    if (!isPrivileged && currentOfficer && currentOfficer.is_approved === false) {
+      await supabaseClient.auth.signOut();
+      currentUser = null; currentOfficer = null;
+      setLoginLoading(false);
+      showToast('⏳ آپ کا اکاؤنٹ ابھی منظوری کے انتظار میں ہے۔ ایڈمن سے رابطہ کریں۔', 'warn', 6000);
+      return;
+    }
+    // Check if suspended
+    if (currentOfficer && currentOfficer.suspended === true) {
+      await supabaseClient.auth.signOut();
+      currentUser = null; currentOfficer = null;
+      setLoginLoading(false);
+      showToast('🚫 آپ کا اکاؤنٹ معطل کر دیا گیا ہے۔ ایڈمن سے رابطہ کریں۔', 'error', 6000);
+      return;
+    }
+
     loginSuccess();
   } catch(e) {
     // Track failed attempts
@@ -1020,3 +1040,42 @@ function dioPrint(htmlContent) {
     setTimeout(triggerPrint, 600);
   }
 }
+
+// ── PWA INSTALL PROMPT ────────────────────────────────────────
+let _deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  _deferredInstallPrompt = e;
+  _showInstallButton();
+});
+
+function _showInstallButton() {
+  // Show a floating install button (only if not already installed)
+  if (document.getElementById('pwa-install-btn')) return;
+  const btn = document.createElement('button');
+  btn.id = 'pwa-install-btn';
+  btn.innerHTML = '📲 ایپ انسٹال کریں';
+  btn.style.cssText = 'position:fixed;bottom:20px;left:20px;z-index:9999;background:var(--accent,#38bdf8);color:#fff;border:none;border-radius:24px;padding:12px 20px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.3);font-family:"Jameel Noori Nastaleeq",sans-serif;';
+  btn.onclick = _installApp;
+  document.body.appendChild(btn);
+}
+
+async function _installApp() {
+  if (!_deferredInstallPrompt) return;
+  _deferredInstallPrompt.prompt();
+  const { outcome } = await _deferredInstallPrompt.userChoice;
+  if (outcome === 'accepted') {
+    showToast('✅ ایپ انسٹال ہو رہی ہے', 'success');
+  }
+  _deferredInstallPrompt = null;
+  const btn = document.getElementById('pwa-install-btn');
+  if (btn) btn.remove();
+}
+
+// Hide install button once installed
+window.addEventListener('appinstalled', function() {
+  const btn = document.getElementById('pwa-install-btn');
+  if (btn) btn.remove();
+  try { showToast('✅ Digital IO آپ کے آلے پر انسٹال ہو گئی', 'success'); } catch(_) {}
+});
