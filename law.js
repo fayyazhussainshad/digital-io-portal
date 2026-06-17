@@ -35,10 +35,12 @@ async function _buildLaw() {
   } catch(_) {}
 
   const q = window._lawSearch || '';
-  const filtered = q ? laws.filter(l =>
+  let filtered = q ? laws.filter(l =>
     l.title?.toLowerCase().includes(q.toLowerCase()) ||
     l.content?.toLowerCase().includes(q.toLowerCase())
-  ) : laws;
+  ) : laws.slice();
+  // Sort: favorites first
+  filtered.sort((a,b) => (_isLawFav(b.id)?1:0) - (_isLawFav(a.id)?1:0));
 
   root.innerHTML = `
   <!-- Header -->
@@ -67,8 +69,11 @@ async function _buildLaw() {
   </div>` : `
   <!-- Law List — simple rows, buttons in one line -->
   <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
-    ${filtered.map((l,i) => `
-    <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:${i<filtered.length-1?'1px solid var(--border)':'none'};direction:rtl;">
+    ${filtered.map((l,i) => {
+      const isFav = _isLawFav(l.id);
+      return `
+    <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:${i<filtered.length-1?'1px solid var(--border)':'none'};direction:rtl;${isFav?'background:rgba(245,158,11,0.05);':''}">
+      <button onclick="_toggleLawFav('${l.id}')" title="پسندیدہ" style="background:none;border:none;font-size:20px;cursor:pointer;flex-shrink:0;line-height:1;">${isFav?'⭐':'☆'}</button>
       <div style="font-size:24px;flex-shrink:0;">${l.file_url ? '📄' : '📋'}</div>
       <div style="flex:1;min-width:120px;">
         <div style="font-size:15px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">${l.title}</div>
@@ -83,7 +88,8 @@ async function _buildLaw() {
         <button class="btn btn-secondary btn-sm" onclick="_renameLaw('${l.id}','${(l.title||'').replace(/'/g,'')}')" title="نام">✏️</button>
         <button class="btn btn-danger btn-sm" onclick="_deleteLaw('${l.id}')" title="حذف">🗑️</button>
       </div>
-    </div>`).join('')}
+    </div>`;
+    }).join('')}
   </div>
 
   <!-- Online resources at the BOTTOM -->
@@ -241,4 +247,24 @@ function _deleteLaw(id) {
 async function _doDeleteLaw(id) {
   await supabaseClient.from('law_library').delete().eq('id',id);
   showToast('🗑️ حذف','info'); _buildLaw();
+}
+
+// ── LAW BOOKMARKS / FAVORITES (S5) ────────────────────────────
+function _getLawFavs() {
+  try { return JSON.parse(localStorage.getItem('dio_law_favs')||'[]'); } catch(_) { return []; }
+}
+function _isLawFav(id) {
+  return _getLawFavs().includes(id);
+}
+function _toggleLawFav(id) {
+  let favs = _getLawFavs();
+  if (favs.includes(id)) {
+    favs = favs.filter(x => x !== id);
+    showToast('☆ پسندیدہ سے ہٹا دیا', 'info');
+  } else {
+    favs.push(id);
+    showToast('⭐ پسندیدہ میں شامل', 'success');
+  }
+  try { localStorage.setItem('dio_law_favs', JSON.stringify(favs)); } catch(_) {}
+  if (typeof _buildLaw === 'function') _buildLaw();
 }
