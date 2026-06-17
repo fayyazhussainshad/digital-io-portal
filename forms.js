@@ -55,13 +55,16 @@ async function _buildForms() {
     <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
       <!-- Template Header -->
       <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);direction:rtl;">
+        <div style="font-size:22px;flex-shrink:0;">${t.file_url ? (t.file_name||'').toLowerCase().endsWith('.pdf') ? '📕' : '📘' : '📋'}</div>
         <div style="flex:1;">
           <div style="font-size:14px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">${t.title}</div>
-          <div style="font-size:10px;color:var(--text-muted);">${formatDate(t.created_at)}</div>
+          <div style="font-size:10px;color:var(--text-muted);">${formatDate(t.created_at)}${t.file_name ? ` · ${t.file_name}` : ''}</div>
         </div>
         <div style="display:flex;gap:5px;direction:rtl;flex-wrap:wrap;">
-          <button class="btn btn-primary btn-sm" onclick="_fillTemplateFromCase('${t.id}')">🔗 مقدمہ سے بھریں</button>
-          <button class="btn btn-secondary btn-sm" onclick="_printTemplate('${t.id}')">🖨️ پرنٹ</button>
+          ${t.file_url
+            ? `<button class="btn btn-primary btn-sm" onclick="window.open('${t.file_url}','_blank')">⬇️ ڈاؤنلوڈ</button>`
+            : `<button class="btn btn-primary btn-sm" onclick="_fillTemplateFromCase('${t.id}')">🔗 مقدمہ سے بھریں</button>`}
+          ${!t.file_url ? `<button class="btn btn-secondary btn-sm" onclick="_printTemplate('${t.id}')">🖨️ پرنٹ</button>` : ''}
           <button class="btn btn-secondary btn-sm" onclick="_copyTemplate('${t.id}')">📋 کاپی</button>
           <button class="btn btn-secondary btn-sm" onclick="_editTemplate('${t.id}')">✏️ ترمیم</button>
           <button class="btn btn-secondary btn-sm" onclick="_renameTemplate('${t.id}','${t.title.replace(/'/g,'')}')">✏️ نام</button>
@@ -69,10 +72,12 @@ async function _buildForms() {
         </div>
       </div>
       <!-- Template Preview -->
-      <div style="padding:12px 14px;max-height:100px;overflow:hidden;position:relative;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;font-size:13px;color:var(--text-secondary);">
+      ${t.file_url
+        ? `<div style="padding:12px 14px;direction:rtl;font-size:12px;color:var(--text-muted);">📎 منسلک فائل — ڈاؤنلوڈ کر کے استعمال کریں یا اپنی جگہ لے جائیں</div>`
+        : `<div style="padding:12px 14px;max-height:100px;overflow:hidden;position:relative;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;font-size:13px;color:var(--text-secondary);">
         ${(t.content||'').slice(0,200)}${(t.content||'').length>200?'...':''}
         <div style="position:absolute;bottom:0;left:0;right:0;height:30px;background:linear-gradient(transparent,var(--bg-card));"></div>
-      </div>
+      </div>`}
     </div>`).join('')}
   </div>`}`;
 }
@@ -83,11 +88,23 @@ function _openAddTemplate(existing) {
   openModal(existing ? '✏️ ٹیمپلیٹ ترمیم' : '+ نیا ٹیمپلیٹ',
     `<div style="direction:rtl;">
       <label class="form-label">ٹیمپلیٹ کا نام *</label>
-      <input class="form-input" id="tpl-title" value="${e.title||''}" placeholder="مثلاً گواہی کا فارم" style="margin-bottom:10px;">
-      <label class="form-label">مواد *</label>
-      <textarea class="form-input" id="tpl-content" rows="12"
+      <input class="form-input" id="tpl-title" value="${e.title||''}" placeholder="مثلاً گواہی کا فارم" style="margin-bottom:14px;">
+
+      <!-- File upload option -->
+      <div style="background:var(--bg-secondary);border-radius:8px;padding:12px;margin-bottom:14px;">
+        <label class="form-label" style="margin-bottom:6px;display:block;">📎 Word / PDF فائل اپ لوڈ کریں (اختیاری)</label>
+        <input type="file" id="tpl-file" accept=".doc,.docx,.pdf,.txt,.rtf"
+          style="width:100%;font-size:12px;color:var(--text-secondary);" onchange="_onTplFileSelect(this)">
+        ${e.file_url ? `<div style="margin-top:8px;font-size:12px;color:var(--green);">✅ موجودہ فائل: <a href="${e.file_url}" target="_blank" style="color:var(--accent);">${e.file_name||'فائل'}</a></div>` : ''}
+        <div id="tpl-file-status" style="font-size:11px;color:var(--text-muted);margin-top:6px;"></div>
+      </div>
+
+      <div style="text-align:center;color:var(--text-muted);font-size:11px;margin-bottom:10px;">— یا —</div>
+
+      <label class="form-label">مواد (ٹیکسٹ ٹیمپلیٹ)</label>
+      <textarea class="form-input" id="tpl-content" rows="10"
         style="font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:14px;direction:rtl;line-height:2;resize:vertical;"
-        placeholder="یہاں ٹیمپلیٹ لکھیں...">${e.content||''}</textarea>
+        placeholder="یہاں ٹیمپلیٹ لکھیں... (یا اوپر فائل اپ لوڈ کریں)">${e.content||''}</textarea>
     </div>`,
     `<div style="display:flex;gap:8px;direction:rtl;">
       <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
@@ -96,19 +113,52 @@ function _openAddTemplate(existing) {
   );
 }
 
+// Track selected file
+let _tplSelectedFile = null;
+function _onTplFileSelect(input) {
+  _tplSelectedFile = input.files[0] || null;
+  const status = document.getElementById('tpl-file-status');
+  if (status && _tplSelectedFile) {
+    const sizeKB = Math.round(_tplSelectedFile.size / 1024);
+    status.innerHTML = `<span style="color:var(--accent);">📄 ${_tplSelectedFile.name} (${sizeKB} KB)</span>`;
+  }
+}
+
 async function _saveTemplate(existingId) {
   const title   = document.getElementById('tpl-title')?.value.trim();
   const content = document.getElementById('tpl-content')?.value.trim();
   if (!title)   { showToast('⚠️ نام ضروری ہے','error'); return; }
-  if (!content) { showToast('⚠️ مواد ضروری ہے','error'); return; }
 
   try {
     const oid = await getOfficerId();
-    if (existingId) {
-      await supabaseClient.from('law_library').update({ title, content }).eq('id', existingId);
-    } else {
-      await supabaseClient.from('law_library').insert({ officer_id: oid, title, content, category: 'template' });
+    let file_url = null, file_name = null;
+
+    // Upload file if selected
+    if (_tplSelectedFile) {
+      showToast('📤 فائل اپ لوڈ ہو رہی ہے...', 'info');
+      const ext = _tplSelectedFile.name.split('.').pop();
+      const path = `templates/${oid}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabaseClient.storage
+        .from('law-files').upload(path, _tplSelectedFile, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: urlData } = supabaseClient.storage.from('law-files').getPublicUrl(path);
+      file_url = urlData.publicUrl;
+      file_name = _tplSelectedFile.name;
     }
+
+    if (!content && !file_url && !existingId) {
+      showToast('⚠️ مواد لکھیں یا فائل اپ لوڈ کریں', 'error'); return;
+    }
+
+    const rec = { title, content: content || null };
+    if (file_url) { rec.file_url = file_url; rec.file_name = file_name; }
+
+    if (existingId) {
+      await supabaseClient.from('law_library').update(rec).eq('id', existingId);
+    } else {
+      await supabaseClient.from('law_library').insert({ ...rec, officer_id: oid, category: 'template' });
+    }
+    _tplSelectedFile = null;
     closeModal();
     showToast('✅ ٹیمپلیٹ محفوظ', 'success');
     _buildForms();
@@ -246,7 +296,13 @@ async function _printTemplate(id) {
 async function _copyTemplate(id) {
   const { data } = await supabaseClient.from('law_library').select('*').eq('id',id).single();
   if (!data) return;
-  navigator.clipboard.writeText(data.content||'').then(() => showToast('📋 کاپی ہو گئی','success'));
+  // If it's a file template, copy the download link; otherwise copy the text content
+  const toCopy = data.file_url ? data.file_url : (data.content || '');
+  if (!toCopy) { showToast('⚠️ کاپی کرنے کے لیے کچھ نہیں', 'warn'); return; }
+  navigator.clipboard.writeText(toCopy).then(
+    () => showToast(data.file_url ? '📋 فائل لنک کاپی ہو گیا' : '📋 ٹیکسٹ کاپی ہو گیا', 'success'),
+    () => showToast('❌ کاپی نہیں ہو سکا', 'error')
+  );
 }
 
 async function _deleteTemplate(id) {
