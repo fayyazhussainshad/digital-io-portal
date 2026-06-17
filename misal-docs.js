@@ -235,6 +235,16 @@ function _openMisalEditor(docId) {
     return;
   }
 
+  // Special: گواہان shows structured witness card system
+  if (docId === 'witnesses_fir' || docId === 'witnesses_cross') {
+    _openDocId = docId;
+    if (typeof openWitnessesCard === 'function') {
+      openWitnessesCard(_misalCaseId);
+    }
+    _refreshMisalSidebar();
+    return;
+  }
+
   // Special: ایف آئی آر shows structured FIR list view
   if (docId === 'fir') {
     _openDocId = docId;

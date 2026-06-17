@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v38
+   DIGITAL IO — SERVICE WORKER v39
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v38';
+const CACHE_NAME = 'digital-io-v39';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -24,6 +24,7 @@ const CORE_ASSETS = [
   '/evidence.js',
   '/search.js',
   '/suspects.js',
+  '/witnesses.js',
   '/notifications.js',
   '/law.js',
   '/reminders.js',
