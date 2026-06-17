@@ -70,10 +70,17 @@ const params = new URLSearchParams(window.location.search);
 const token = params.get('token');
 
 async function init() {
+  const sm = document.getElementById('status-msg');
   if (!token) { showError('⚠️ غلط لنک — ٹوکن موجود نہیں'); return; }
 
-  // Make sure Supabase library is loaded; retry until ready
+  // Make sure Supabase library is loaded; retry until ready (max ~6s)
   if (!window.supabase || !window.supabase.createClient) {
+    window._sbRetries = (window._sbRetries || 0) + 1;
+    if (sm) sm.textContent = '⏳ لائبریری لوڈ ہو رہی ہے... (' + window._sbRetries + ')';
+    if (window._sbRetries > 20) {
+      showError('⚠️ لائبریری لوڈ نہیں ہو سکی — انٹرنیٹ چیک کریں<br><button onclick="location.reload()" style="margin-top:10px;padding:8px 18px;background:#38bdf8;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;">🔄 دوبارہ کوشش کریں</button>');
+      return;
+    }
     setTimeout(init, 300);
     return;
   }
@@ -81,6 +88,7 @@ async function init() {
   if (!supabase) {
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   }
+  if (sm) sm.textContent = '⏳ ٹوکن چیک ہو رہا ہے...';
 
   try {
     const { data, error } = await supabase
@@ -92,11 +100,11 @@ async function init() {
 
     if (error) {
       console.error('token lookup error', error);
-      showError('⚠️ لنک کی تصدیق میں مسئلہ — دوبارہ کوشش کریں<br><span style="font-size:11px;opacity:0.6;">' + (error.message||'') + '</span>');
+      showError('⚠️ ڈیٹابیس کا مسئلہ: ' + (error.message||'نامعلوم') + '<br><span style="font-size:11px;opacity:0.6;">(ممکنہ طور پر RLS policy کی ضرورت ہے)</span>');
       return;
     }
     if (!data) {
-      showError('⚠️ یہ لنک غیر فعال یا غلط ہے');
+      showError('⚠️ یہ لنک غیر فعال یا غلط ہے<br><span style="font-size:11px;opacity:0.6;">ٹوکن نہیں ملا یا active=false ہے</span>');
       return;
     }
     _tokenData = data;
@@ -107,13 +115,13 @@ async function init() {
   }
 }
 
-// Safety timeout — if still on loading after 8s, show a retry option
+// Safety timeout — if still on loading after 6s, show a retry option
 setTimeout(() => {
   const sm = document.getElementById('status-msg');
-  if (sm && sm.textContent.includes('تصدیق')) {
-    showError('⚠️ تصدیق میں دیر ہو رہی ہے<br><button onclick="location.reload()" style="margin-top:10px;padding:8px 18px;background:#38bdf8;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;">🔄 دوبارہ کوشش کریں</button>');
+  if (sm && (sm.textContent.includes('تصدیق') || sm.textContent.includes('لوڈ') || sm.textContent.includes('چیک'))) {
+    showError('⚠️ دیر ہو رہی ہے<br><button onclick="location.reload()" style="margin-top:10px;padding:8px 18px;background:#38bdf8;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;">🔄 دوبارہ کوشش کریں</button>');
   }
-}, 8000);
+}, 6000);
 
 function showError(msg) {
   document.getElementById('app').innerHTML = `

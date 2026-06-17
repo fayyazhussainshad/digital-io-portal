@@ -750,7 +750,7 @@ async function doLogout() {
   showToast('✅ لاگ آؤٹ ہو گئے','info');
 }
 
-function showRegister()       { const m=document.getElementById('register-modal'); if(m) m.style.display='flex'; }
+function showRegister()       { const m=document.getElementById('register-modal'); if(m){ m.style.setProperty('display','flex','important'); m.style.zIndex='99999'; } else { showToast('رجسٹریشن فارم لوڈ نہیں ہوا — صفحہ ریفریش کریں','error'); } }
 function hideRegister()       { const m=document.getElementById('register-modal'); if(m) m.style.display='none'; }
 function showForgotPassword() { document.getElementById('forgot-card')?.style&&(document.getElementById('forgot-card').style.display='block'); document.getElementById('login-card')?.style&&(document.getElementById('login-card').style.display='none'); }
 function hideForgotModal()    { document.getElementById('forgot-card')?.style&&(document.getElementById('forgot-card').style.display='none'); document.getElementById('login-card')?.style&&(document.getElementById('login-card').style.display='block'); }
