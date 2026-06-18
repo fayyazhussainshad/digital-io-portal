@@ -1141,6 +1141,19 @@ function dioPrint(htmlContent) {
   const old = document.getElementById('dio-print-frame');
   if (old) old.remove();
 
+  // Inject a global print stylesheet that hides everything except the print iframe.
+  // This mimics MS Word: only the working document prints, never the app's tabs/sidebar/toolbars.
+  if (!document.getElementById('dio-print-style')) {
+    const st = document.createElement('style');
+    st.id = 'dio-print-style';
+    st.textContent = `@media print {
+      body > *:not(#dio-print-frame) { display: none !important; visibility: hidden !important; }
+      #sidebar, .sidebar, #topbar, .topbar, .nav-item, nav, .workspace-tabs,
+      .case-tabs, .doc-toolbar, .editor-toolbar, .no-print, #islamic-bar { display: none !important; }
+    }`;
+    document.head.appendChild(st);
+  }
+
   // Create hidden iframe
   const iframe = document.createElement('iframe');
   iframe.id = 'dio-print-frame';

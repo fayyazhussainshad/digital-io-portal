@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════
    DIGITAL IO — INCIDENT REPORT  (incident.js)
-   Professional Urdu form · Punjab Police standard
+   Professional Urdu form
    Auto date · Signature + Stamp block · Print/Download
    ═══════════════════════════════════════════════════════════ */
 
@@ -34,145 +34,110 @@ function renderIncident(container) {
       font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
       border:2px solid #1a3a5c;border-radius:4px;padding:0;overflow:hidden;">
 
-      <!-- Header -->
-      <div style="background:#1a3a5c;color:#fff;padding:16px 24px;text-align:center;">
-        <div style="font-size:22px;font-weight:800;margin-bottom:4px;">ضلع ${o.district||'_______'}</div>
-        <div style="font-size:16px;margin-bottom:2px;">واقعاتی / حادثاتی رپورٹ</div>
-        <div style="font-size:13px;opacity:0.8;">INCIDENT REPORT — PUNJAB POLICE</div>
+      <!-- Row 1: Thana Saddar Zila Multan (centered) -->
+      <div style="text-align:center;padding:14px 24px 4px;font-size:18px;font-weight:800;color:#1a3a5c;">
+        تھانہ ${o.station||'_______'} ضلع ${o.district||'_______'}
       </div>
 
-      <!-- Report Number + Incident Type -->
-      <div style="background:#f0f4f8;padding:10px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ccc;">
-        <div style="font-size:13px;">
-          <span style="color:#555;">رپورٹ نمبر:</span>
-          <input value="${incNum}" id="inc-num" style="${_iStyle('140px')}font-family:monospace;font-weight:700;color:#1a3a5c;">
+      <!-- Row 2: واقعاتی رپورٹ (centered, underlined) -->
+      <div style="text-align:center;padding:2px 24px 12px;">
+        <span style="font-size:20px;font-weight:800;border-bottom:2px solid #1a3a5c;padding-bottom:2px;">واقعاتی رپورٹ</span>
+      </div>
+
+      <!-- Report Number + Type -->
+      <div style="padding:8px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid #ccc;">
+        <div style="font-size:14px;">
+          <span style="color:#555;">واقعاتی رپورٹ نمبر:</span>
+          <input value="${incNum}" id="inc-num" style="${_iStyle('150px')}font-family:monospace;font-weight:700;color:#1a3a5c;">
         </div>
-        <div style="font-size:13px;">
-          <span style="color:#555;">واقعے کی قسم:</span>
-          <select id="inc-severity" style="${_iStyle('160px')}">
-            <option>قتل</option>
-            <option>ڈکیتی</option>
-            <option>چوری</option>
-            <option>اغوا</option>
-            <option>دہشت گردی</option>
-            <option>فساد</option>
-            <option>ٹریفک حادثہ</option>
-            <option>جنسی زیادتی</option>
-            <option>غیر قانونی اسلحہ</option>
-            <option>منشیات</option>
-            <option>فراڈ / دھوکہ</option>
-            <option>توڑ پھوڑ</option>
-            <option>خودکشی</option>
-            <option>لاوارث لاش</option>
-            <option>آگ لگنا</option>
-            <option>دیگر</option>
+        <div style="font-size:14px;">
+          <span style="color:#555;">نوعیت:</span>
+          <select id="inc-severity" style="${_iStyle('170px')}">
+            <option>قتل</option><option>ڈکیتی</option><option>چوری</option><option>اغوا</option>
+            <option>دہشت گردی</option><option>فساد</option><option>ٹریفک حادثہ</option><option>جنسی زیادتی</option>
+            <option>غیر قانونی اسلحہ</option><option>منشیات</option><option>فراڈ / دھوکہ</option><option>توڑ پھوڑ</option>
+            <option>خودکشی</option><option>لاوارث لاش</option><option>آگ لگنا</option><option>دیگر</option>
           </select>
         </div>
       </div>
 
-      <div style="padding:20px 24px;">
+      <!-- MAIN TABLE -->
+      <div style="padding:14px 24px 20px;">
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+          <tbody>
+            <!-- Row 1: Caller name | Caller phone -->
+            <tr>
+              <td style="${_tdL()}">اطلاع دہندہ کا نام</td>
+              <td style="${_tdV()}"><input id="inc-caller-name" style="${_tIn()}"></td>
+              <td style="${_tdL()}">اطلاع دہندہ کا فون</td>
+              <td style="${_tdV()}"><input id="inc-caller-phone" dir="ltr" placeholder="0000-0000000" style="${_tIn()}"></td>
+            </tr>
+            <!-- Row 2: Name | Status dropdown -->
+            <tr>
+              <td style="${_tdL()}">نام</td>
+              <td style="${_tdV()}"><input id="inc-person-name" style="${_tIn()}"></td>
+              <td style="${_tdL()}">حیثیت</td>
+              <td style="${_tdV()}">
+                <div style="display:flex;gap:4px;">
+                  <select id="inc-person-type" style="${_tIn()}flex:1;">
+                    <option>مضروب</option><option>victim</option><option>مقتول</option><option>متاثرہ</option>
+                  </select>
+                  <button onclick="_incAddPersonType()" style="border:1px solid #ccc;border-radius:4px;background:#f0f4f8;cursor:pointer;padding:0 8px;" title="نیا">➕</button>
+                </div>
+              </td>
+            </tr>
+            <!-- Row 3: Date/time of occurrence | Place of occurrence -->
+            <tr>
+              <td style="${_tdL()}">تاریخ و وقت وقوعہ</td>
+              <td style="${_tdV()}"><input id="inc-datetime" value="${today} ${timeNow}" style="${_tIn()}"></td>
+              <td style="${_tdL()}">مقام وقوعہ</td>
+              <td style="${_tdV()}"><input id="inc-place" style="${_tIn()}"></td>
+            </tr>
+            <!-- Row 4: Names & addresses of accused (full width) -->
+            <tr>
+              <td style="${_tdL()}">نام و پتہ جات ملزمان / مشتبہگان</td>
+              <td colspan="3" style="${_tdV()}"><textarea id="inc-accused" rows="2" style="${_tIn()}resize:vertical;"></textarea></td>
+            </tr>
+            <!-- Row 5: Visiting officers (checklist) -->
+            <tr>
+              <td style="${_tdL()}">موقع وزٹ کرنے والے افسران</td>
+              <td colspan="3" style="${_tdV()}">
+                <div style="display:flex;flex-wrap:wrap;gap:10px;padding:4px 0;">
+                  ${['SHO تھانہ','DSP / SDPO Circle','SP Division','SSP / Ops','SSP / Inv','CPO','DPO','RPO'].map(off=>
+                    `<label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;">
+                      <input type="checkbox" name="inc-officer-chk" value="${off}" style="accent-color:#1a3a5c;width:15px;height:15px;">${off}
+                    </label>`).join('')}
+                </div>
+              </td>
+            </tr>
+            <!-- Row 6: Brief facts (expandable) -->
+            <tr>
+              <td style="${_tdL()}">مختصر حالات</td>
+              <td colspan="3" style="${_tdV()}">
+                <div style="display:flex;gap:6px;align-items:flex-start;">
+                  <textarea id="inc-narrative" rows="5" style="${_tIn()}resize:vertical;min-height:90px;"></textarea>
+                  <button onclick="_incVoice('inc-narrative','mic-narr')" id="mic-narr" style="width:36px;height:36px;border:1px solid #ccc;border-radius:6px;background:#f0f4f8;font-size:17px;cursor:pointer;flex-shrink:0;">🎙️</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-        <!-- Section 1: Incident Details -->
-        ${_secHeader('1', 'واقعے کی تفصیل')}
-        <div style="${_grid2()}">
-          ${_field('واقعے کی تاریخ', 'inc-date', today, 'text')}
-          ${_field('واقعے کا وقت', 'inc-time', timeNow, 'text')}
-          ${_field('رپورٹ کی تاریخ', 'inc-rdate', today, 'text')}
-          ${_field('رپورٹ کا وقت', 'inc-rtime', timeNow, 'text')}
-        </div>
-
-        <!-- Section 2: Location -->
-        ${_secHeader('2', 'مقام واقعہ')}
-        <div style="${_grid2()}">
-          ${_field('تھانہ', 'inc-station', o.station||'', 'text')}
-          ${_field('ضلع', 'inc-district', o.district||'', 'text')}
-        </div>
-        ${_fieldFull('درست پتہ / مقام', 'inc-address', '', 2)}
-        <div style="${_grid2()}">
-          ${_field('قریبی نشانی', 'inc-landmark', '', 'text')}
-          ${_field('GPS / نقشہ نمبر', 'inc-gps', '', 'text')}
-        </div>
-        <div style="margin-bottom:12px;">
-          <button onclick="_incGPS()" style="padding:6px 14px;border:1px solid #1a3a5c;border-radius:4px;background:#f0f4f8;color:#1a3a5c;cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;font-size:13px;">📍 GPS خودکار لیں</button>
-          <span id="inc-gps-status" style="font-size:12px;color:#666;margin-right:10px;"></span>
-        </div>
-
-        <!-- Section 3: Victims -->
-        ${_secHeader('3', 'متاثرین / مظلومین')}
-        <div id="inc-victims-list"></div>
-        <button onclick="_incAddVictim()" style="${_addBtn()}">+ متاثرہ شخص شامل کریں</button>
-
-        <!-- Section 4: Suspects -->
-        ${_secHeader('4', 'مشتبہ ملزمان')}
-        <div id="inc-suspects-list"></div>
-        <button onclick="_incAddSuspect()" style="${_addBtn()}">+ مشتبہ ملزم شامل کریں</button>
-
-        <!-- Section 5: Witnesses -->
-        ${_secHeader('5', 'گواہان')}
-        <div id="inc-witnesses-list"></div>
-        <button onclick="_incAddWitness()" style="${_addBtn()}">+ گواہ شامل کریں</button>
-
-        <!-- Section 6: Narrative -->
-        ${_secHeader('6', 'واقعے کی تفصیلی روداد')}
-        ${_fieldFull('واقعہ کیسے پیش آیا — مکمل تفصیل', 'inc-narrative', '', 5)}
-
-        <!-- Section 7: Action Taken -->
-        ${_secHeader('7', 'اقدامات / کاروائی')}
-        ${_fieldFull('فوری اقدامات', 'inc-action', '', 3)}
-        <div style="${_grid2()}">
-          ${_field('FIR نمبر (اگر درج ہو)', 'inc-fir', '', 'text')}
-          ${_field('گرفتار ملزمان کی تعداد', 'inc-arrested', '0', 'text')}
-        </div>
-        <div style="margin-bottom:12px;">
-          <div style="${_lbl()}">متعلقہ محکمے (جو بلائے گئے)</div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">
-            ${['ایمبولینس','فائر بریگیڈ','رینجرز','فوج','ٹریفک پولیس','سی ٹی ڈی','ایف آئی اے'].map(t=>
-              `<label style="display:flex;align-items:center;gap:4px;font-size:14px;cursor:pointer;">
-                <input type="checkbox" name="inc-dept" value="${t}" style="accent-color:#1a3a5c;width:14px;height:14px;">
-                ${t}
-              </label>`).join('')}
-          </div>
-        </div>
-
-        <!-- Section 8: Evidence -->
-        ${_secHeader('8', 'شواہد / مادی ثبوت')}
-        ${_fieldFull('موقع واردات سے برآمد شواہد', 'inc-evidence', '', 2)}
-
-        <!-- Section 9: Visiting Officers -->
-        ${_secHeader('9', 'موقع وزٹ کرنے والے افسران')}
-        <div id="inc-officers-list"></div>
-        <button onclick="_incAddOfficer()" style="${_addBtn()}">+ افسر شامل کریں</button>
-
-        <!-- Signature Block — SHO LEFT BOTTOM CORNER -->
-        <div style="margin-top:28px;border-top:2px solid #1a3a5c;padding-top:20px;">
-          <div style="display:flex;justify-content:flex-end;">
-            <div style="border:1px solid #ddd;border-radius:6px;padding:12px 24px;min-width:260px;text-align:center;">
-              <div style="height:55px;border-bottom:1px solid #aaa;margin-bottom:4px;"></div>
-              <div style="font-size:13px;font-weight:700;color:#1a3a5c;margin-top:4px;">
-                SHO تھانہ ${o.station||'_______'}
-              </div>
-              <input id="inc-sign-date" value="${today}"
-                style="border:none;border-bottom:1px solid #aaa;padding:1px 4px;
-                font-family:'Jameel Noori Nastaleeq',serif;font-size:12px;
-                text-align:center;width:130px;outline:none;background:transparent;display:block;margin:3px auto 0;">
+        <!-- Row 7 & 8: SHO + date (LEFT corner) -->
+        <div style="margin-top:30px;display:flex;justify-content:flex-start;">
+          <div style="text-align:center;min-width:240px;">
+            <div style="height:50px;"></div>
+            <div style="font-size:14px;font-weight:700;color:#1a3a5c;border-top:1px solid #1a3a5c;padding-top:6px;">
+              SHO تھانہ ${o.station||'_______'}
             </div>
+            <input id="inc-sign-date" value="${today}"
+              style="border:none;border-bottom:1px solid #aaa;padding:1px 4px;text-align:center;width:130px;outline:none;background:transparent;display:block;margin:4px auto 0;font-family:'Jameel Noori Nastaleeq',serif;font-size:13px;">
           </div>
-        </div>
-
-        <!-- Footer -->
-        <div style="margin-top:16px;padding-top:8px;border-top:1px solid #ccc;text-align:center;font-size:10px;color:#aaa;">
-          Digital IO — 
         </div>
 
       </div>
     </div>
   </div>`;
-
-  // Add initial rows
-  _incAddVictim();
-  _incAddSuspect();
-  _incAddWitness();
-  _incAddOfficer();
 
   // Load previous reports
   _loadPrevReports();
@@ -246,6 +211,19 @@ async function _viewIncReport(id) {
 // ── HELPERS ───────────────────────────────────────────────────
 function _iStyle(w) {
   return `border:none;border-bottom:1px solid #aaa;padding:3px 6px;font-family:'Jameel Noori Nastaleeq',serif;font-size:15px;background:transparent;outline:none;width:${w};direction:rtl;`;
+}
+// Table cell helpers for واقعاتی رپورٹ one-page layout
+function _tdL() { return 'border:1px solid #1a3a5c;padding:8px 10px;background:#f0f4f8;font-weight:700;font-size:13px;color:#1a3a5c;white-space:nowrap;width:1%;'; }
+function _tdV() { return 'border:1px solid #1a3a5c;padding:4px 8px;'; }
+function _tIn() { return "border:none;outline:none;background:transparent;font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;width:100%;direction:rtl;padding:3px 4px;box-sizing:border-box;"; }
+function _incAddPersonType() {
+  const val = prompt('نئی حیثیت درج کریں:');
+  if (!val || !val.trim()) return;
+  const sel = document.getElementById('inc-person-type');
+  if (!sel) return;
+  const opt = document.createElement('option');
+  opt.value = val.trim(); opt.textContent = val.trim(); opt.selected = true;
+  sel.appendChild(opt);
 }
 function _lbl() { return 'font-size:13px;color:#555;margin-bottom:4px;display:block;'; }
 function _grid2() { return 'display:grid;grid-template-columns:1fr 1fr;gap:12px;direction:rtl;margin-bottom:12px;'; }
@@ -437,7 +415,7 @@ function _incGPS() {
       try {
         const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
         const j = await r.json();
-        const addr = document.getElementById('inc-address');
+        const addr = document.getElementById('inc-place');
         if (addr && !addr.value) addr.value = j.display_name?.split(',').slice(0,4).join(',') || '';
       } catch(_) {}
     }
@@ -456,34 +434,37 @@ async function _incSaveToDB() {
     if (!oid) { showToast('⚠️ لاگ ان نہیں', 'error'); return; }
     const incType = document.getElementById('inc-severity')?.value || '';
     const num     = document.getElementById('inc-num')?.value?.trim() || '';
-    const date    = document.getElementById('inc-date')?.value?.trim() || '';
-    const address = document.getElementById('inc-address')?.value?.trim() || '';
-    const narr    = document.getElementById('inc-narrative')?.value?.trim() || '';
-    const action  = document.getElementById('inc-action')?.value?.trim() || '';
-    const station = document.getElementById('inc-station')?.value?.trim() || '';
-    const district= document.getElementById('inc-district')?.value?.trim() || '';
-    const firNum  = document.getElementById('inc-fir')?.value?.trim() || '';
+    const datetime = document.getElementById('inc-datetime')?.value?.trim() || '';
+    const place    = document.getElementById('inc-place')?.value?.trim() || '';
+    const narr     = document.getElementById('inc-narrative')?.value?.trim() || '';
+    const accused  = document.getElementById('inc-accused')?.value?.trim() || '';
+    const callerName  = document.getElementById('inc-caller-name')?.value?.trim() || '';
+    const callerPhone = document.getElementById('inc-caller-phone')?.value?.trim() || '';
+    const personName  = document.getElementById('inc-person-name')?.value?.trim() || '';
+    const personType  = document.getElementById('inc-person-type')?.value || '';
+    const officers = Array.from(document.querySelectorAll('input[name="inc-officer-chk"]:checked')).map(c=>c.value);
 
     if (!num) { showToast('⚠️ رپورٹ نمبر ضروری ہے', 'error'); return; }
 
     await supabaseClient.from('incident_reports').insert({
       officer_id:    oid,
       report_number: num,
-      incident_date: date,
-      incident_time: document.getElementById('inc-time')?.value || '',
+      incident_date: datetime,
       incident_type: incType,
-      address:       address,
+      address:       place,
       narrative:     narr,
-      action_taken:  action,
+      action_taken:  accused,
       data: {
-        fir_number: firNum,
-        station:    station,
-        district:   district,
-        severity:   document.getElementById('inc-severity')?.value,
-        rdate:      document.getElementById('inc-rdate')?.value,
-        rtime:      document.getElementById('inc-rtime')?.value,
-        landmark:   document.getElementById('inc-landmark')?.value,
-        gps:        document.getElementById('inc-gps')?.value,
+        severity:     document.getElementById('inc-severity')?.value,
+        caller_name:  callerName,
+        caller_phone: callerPhone,
+        person_name:  personName,
+        person_type:  personType,
+        place:        place,
+        datetime:     datetime,
+        accused:      accused,
+        officers:     officers,
+        sign_date:    document.getElementById('inc-sign-date')?.value,
       }
     });
     showToast('✅ رپورٹ محفوظ ہو گئی', 'success');
@@ -558,43 +539,41 @@ function _incPrint() {
 
 // ── DOWNLOAD ──────────────────────────────────────────────────
 function _incDownload() {
-  const num    = document.getElementById('inc-num')?.value||'IR';
-  const date   = document.getElementById('inc-date')?.value||'';
-  const addr   = document.getElementById('inc-address')?.value||'';
-  const narr   = document.getElementById('inc-narrative')?.value||'';
-  const action = document.getElementById('inc-action')?.value||'';
-  const off    = document.getElementById('inc-off-name')?.value||'';
-  const rank   = document.getElementById('inc-off-rank')?.value||'';
-  const types  = [...document.querySelectorAll('input[name="inc-type"]:checked')].map(e=>e.value).join('، ');
+  const num      = document.getElementById('inc-num')?.value||'IR';
+  const datetime = document.getElementById('inc-datetime')?.value||'';
+  const place    = document.getElementById('inc-place')?.value||'';
+  const narr     = document.getElementById('inc-narrative')?.value||'';
+  const accused  = document.getElementById('inc-accused')?.value||'';
+  const type     = document.getElementById('inc-severity')?.value||'';
+  const caller   = document.getElementById('inc-caller-name')?.value||'';
 
-  let txt = 'واقعاتی رپورٹ — پولیس محکمہ پنجاب\n';
+  let txt = 'واقعاتی رپورٹ\n';
   txt += '='.repeat(50)+'\n';
-  txt += `رپورٹ نمبر: ${num}\n`;
-  txt += `تاریخ: ${date}\n`;
-  txt += `واقعے کی قسم: ${types||'—'}\n`;
-  txt += `مقام: ${addr}\n\n`;
-  txt += `روداد:\n${narr}\n\n`;
-  txt += `اقدامات:\n${action}\n\n`;
-  txt += `رپورٹنگ افسر: ${off} — ${rank}\n`;
-  txt += `تاریخ دستخط: ${document.getElementById('inc-sign-date')?.value||''}\n`;
-  txt += '\n' + '='.repeat(50) + '\nDigital IO — Punjab Police';
+  txt += `واقعاتی رپورٹ نمبر: ${num}\n`;
+  txt += `نوعیت: ${type}\n`;
+  txt += `اطلاع دہندہ: ${caller}\n`;
+  txt += `تاریخ و وقت وقوعہ: ${datetime}\n`;
+  txt += `مقام وقوعہ: ${place}\n\n`;
+  txt += `نام و پتہ ملزمان: ${accused}\n\n`;
+  txt += `مختصر حالات:\n${narr}\n\n`;
+  txt += `تاریخ: ${document.getElementById('inc-sign-date')?.value||''}\n`;
+  txt += '\n' + '='.repeat(50) + '\nDigital IO';
 
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([txt],{type:'text/plain;charset=utf-8'}));
-  a.download = `Incident-Report-${num}-${date.replace(/\//g,'-')}.txt`;
+  a.download = `Waqiati-Report-${num}.txt`;
   a.click();
   showToast('⬇️ رپورٹ ڈاؤنلوڈ ہو رہی ہے','success');
 }
 
 // ── SHARE ─────────────────────────────────────────────────────
 function _incShare() {
-  const num  = document.getElementById('inc-num')?.value||'';
-  const date = document.getElementById('inc-date')?.value||'';
-  const addr = document.getElementById('inc-address')?.value||'';
-  const off  = document.getElementById('inc-off-name')?.value||'';
-  const types = [...document.querySelectorAll('input[name="inc-type"]:checked')].map(e=>e.value).join('، ');
-  const txt = `واقعاتی رپورٹ\nرپورٹ نمبر: ${num}\nتاریخ: ${date}\nقسم: ${types||'—'}\nمقام: ${addr}\nافسر: ${off}\n\nDigital IO — Punjab Police`;
-  if (navigator.share) { navigator.share({title:'Incident Report',text:txt}).catch(()=>{}); }
+  const num   = document.getElementById('inc-num')?.value||'';
+  const dt    = document.getElementById('inc-datetime')?.value||'';
+  const place = document.getElementById('inc-place')?.value||'';
+  const type  = document.getElementById('inc-severity')?.value||'';
+  const txt = `واقعاتی رپورٹ\nنمبر: ${num}\nنوعیت: ${type}\nتاریخ و وقت: ${dt}\nمقام: ${place}\n\nDigital IO`;
+  if (navigator.share) { navigator.share({title:'واقعاتی رپورٹ',text:txt}).catch(()=>{}); }
   else { navigator.clipboard.writeText(txt).then(()=>showToast('Copy ہو گئی — WhatsApp میں paste کریں','info')); }
 }
 

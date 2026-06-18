@@ -378,7 +378,7 @@ async function _downloadCaseTxt(id) {
   txt += `تھانہ:             ${o.station||'—'}\n`;
   txt += `\nتاریخ پرنٹ: ${new Date().toLocaleDateString('en-PK')}\n`;
   txt += '══════════════════════════════════\n';
-  txt += '         Digital IO · Punjab Police\n';
+  txt += '         Digital IO\n';
   txt += '══════════════════════════════════\n';
 
   const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
