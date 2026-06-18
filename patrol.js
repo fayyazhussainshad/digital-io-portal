@@ -658,7 +658,7 @@ async function _tabSummary(el){
 
   let r='╔══════════════════════════════╗\n';
   r+='║   PATROL DUTY REPORT         ║\n';
-  r+='║   Digital IO — Punjab Police ║\n';
+  r+='║   Digital IO              ║\n';
   r+='╚══════════════════════════════╝\n\n';
   r+=`Officer : ${o.full_name||'—'}\n`;
   r+=`Rank    : ${o.designation||'—'}, Badge: ${o.badge_number||'—'}\n`;
