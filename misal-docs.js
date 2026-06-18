@@ -151,6 +151,12 @@ async function _saveMisalOfficer(type, caseId) {
 function confirmAddMisalDoc(docId) {
   const def = MISAL_CASE_DOCS.find(d => d.id === docId);
   if (!def) return;
+  // Witnesses & accused: skip confirmation, open the card directly
+  if (docId === 'witnesses_fir' || docId === 'witnesses_cross' ||
+      docId === 'named_accused' || docId === 'unknown_accused') {
+    _doAddMisalDoc(docId);
+    return;
+  }
   openModal('دستاویز شامل کریں',
     `<div style="text-align:right;direction:rtl;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:16px;line-height:2;">
       <div style="font-size:20px;font-weight:bold;color:var(--accent);margin-bottom:12px;">${def.name}</div>
@@ -166,6 +172,12 @@ function confirmAddMisalDoc(docId) {
 function confirmRemoveMisalDoc(docId) {
   const def = MISAL_CASE_DOCS.find(d => d.id === docId);
   if (!def) return;
+  // Witnesses & accused: open directly, no remove/open prompt
+  if (docId === 'witnesses_fir' || docId === 'witnesses_cross' ||
+      docId === 'named_accused' || docId === 'unknown_accused') {
+    _openMisalEditor(docId);
+    return;
+  }
   const saved = _misalDocs[docId];
   openModal('دستاویز ہٹائیں یا کھولیں',
     `<div style="text-align:right;direction:rtl;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:16px;line-height:2;">
@@ -682,6 +694,9 @@ async function markMisalComplete(docId) {
 function printMisalDoc(name) {
   const el = document.getElementById('misal-editor');
   if (!el) return;
+  // Clone the editor content and strip out any toolbars/buttons/no-print elements
+  const clone = el.cloneNode(true);
+  clone.querySelectorAll('button, .no-print, .doc-toolbar, .editor-toolbar, [data-no-print], select, input[type=button]').forEach(n => n.remove());
   let _printHTML = '';
   _printHTML += (`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
     <title>${name}</title>
@@ -691,8 +706,9 @@ function printMisalDoc(name) {
       body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:15px;line-height:2;direction:rtl;text-align:right;color:#111;}
       table{width:100%;border-collapse:collapse;}
       td,th{border:1px solid #555;padding:6px 10px;}
-      @media print{body{margin:0}}
-    </style></head><body>${el.innerHTML}</body></html>`);
+      button,.no-print,.doc-toolbar,.editor-toolbar,select{display:none !important;}
+      @media print{body{margin:0}button,.no-print,.doc-toolbar,.editor-toolbar,select{display:none !important;}}
+    </style></head><body>${clone.innerHTML}</body></html>`);
   dioPrint(_printHTML);
 }
 
