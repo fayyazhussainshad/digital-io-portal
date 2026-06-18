@@ -618,7 +618,7 @@ function _doPrintFIR(html) {
       h2{text-align:center;} .header{text-align:center;border-bottom:2px solid #333;padding-bottom:10px;margin-bottom:16px;}
     </style></head><body>
     <div class="header">
-      <div style="font-size:18px;font-weight:bold;">محکمہ پولیس پنجاب — تھانہ ${o.station||''} ضلع ${o.district||''}</div>
+      <div style="font-size:18px;font-weight:bold;">تھانہ ${o.station||''} ضلع ${o.district||''}</div>
       <div style="font-size:16px;font-weight:bold;margin-top:6px;">ایف آئی آر — مقدمہ نمبر: ${c.fir_number||''}</div>
       <div style="font-size:13px;">تاریخ: ${formatDate(c.fir_date)} | دفعات: ${c.section_of_law||''}</div>
     </div>

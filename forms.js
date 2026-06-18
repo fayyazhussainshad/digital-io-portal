@@ -338,7 +338,7 @@ async function _printTemplate(id) {
     .sig{display:flex;justify-content:space-between;margin-top:40px;}
     .sig-box{text-align:center;}.sig-line{border-top:1px solid #000;padding-top:5px;margin-top:30px;}</style>
     </head><body>
-    <div class="hdr"><h2>محکمہ پولیس پنجاب</h2>
+    <div class="hdr"><h2></h2>
     <div>تھانہ ${o.station||'—'} · ضلع ${o.district||'—'}</div>
     <h3>${data.title}</h3></div>
     <div>${(data.content||'').replace(/\n/g,'<br>')}</div>

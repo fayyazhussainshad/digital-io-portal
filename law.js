@@ -206,7 +206,7 @@ async function _printLaw(id) {
     div{white-space:pre-wrap;word-break:break-word;}
     .footer{font-size:10px;color:#666;text-align:center;margin-top:20px;border-top:1px solid #ccc;padding-top:8px;}</style>
     </head><body>
-    <div class="hdr"><h2>محکمہ پولیس پنجاب · قانونی لائبریری</h2>
+    <div class="hdr"><h2>قانونی لائبریری</h2>
     <h3>${data.title}</h3></div>
     <div>${(data.content||'').replace(/\n/g,'<br>')}</div>
     <div class="footer">Digital IO · ${new Date().toLocaleDateString('en-PK')}</div>

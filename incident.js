@@ -36,7 +36,7 @@ function renderIncident(container) {
 
       <!-- Header -->
       <div style="background:#1a3a5c;color:#fff;padding:16px 24px;text-align:center;">
-        <div style="font-size:22px;font-weight:800;margin-bottom:4px;">محکمہ پولیس پنجاب — ضلع ${o.district||'_______'}</div>
+        <div style="font-size:22px;font-weight:800;margin-bottom:4px;">ضلع ${o.district||'_______'}</div>
         <div style="font-size:16px;margin-bottom:2px;">واقعاتی / حادثاتی رپورٹ</div>
         <div style="font-size:13px;opacity:0.8;">INCIDENT REPORT — PUNJAB POLICE</div>
       </div>
@@ -161,7 +161,7 @@ function renderIncident(container) {
 
         <!-- Footer -->
         <div style="margin-top:16px;padding-top:8px;border-top:1px solid #ccc;text-align:center;font-size:10px;color:#aaa;">
-          Digital IO — محکمہ پولیس پنجاب
+          Digital IO — 
         </div>
 
       </div>

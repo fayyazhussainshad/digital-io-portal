@@ -190,7 +190,7 @@ function _printPerfReport() {
     h2,h3{text-align:center;}table{width:100%;border-collapse:collapse;}td,th{border:1px solid #ccc;padding:6px 10px;}
     th{background:#f0f0f0;}.footer{font-size:10px;color:#888;text-align:center;margin-top:20px;border-top:1px solid #ccc;padding-top:8px;}</style>
     </head><body>
-    <h2>محکمہ پولیس پنجاب — کارکردگی رپورٹ</h2>
+    <h2>کارکردگی رپورٹ</h2>
     <h3>${o.full_name||'—'} · ${o.designation||''} · تھانہ ${o.station||'—'}</h3>
     <p style="text-align:center;">تاریخ: ${new Date().toLocaleDateString('en-PK')}</p>
     <table>

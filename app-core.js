@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════
    DIGITAL IO — APP CORE  (app-core.js)
    Auth · Data · UI · Voice · Penal Codes · Notifications
-   Punjab Police Case Management System
+   Digital IO Case Management System
    ═══════════════════════════════════════════════════════════ */
 
 // ── SUPABASE ──────────────────────────────────────────────────

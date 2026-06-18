@@ -301,7 +301,7 @@ async function _printFIRDirect(id) {
     .footer{font-size:9px;color:#888;text-align:center;margin-top:20px;border-top:1px solid #ccc;padding-top:6px;}
   </style></head><body>
   <div class="hdr">
-    <h1>محکمہ پولیس پنجاب</h1>
+    <h1></h1>
     <div>تھانہ ${c.case_station||o.station||'___'} ضلع ${c.case_district||o.district||'___'}</div>
   </div>
   <div class="fir-title">فرسٹ انفارمیشن رپورٹ (FIR)</div>
@@ -327,7 +327,7 @@ async function _printFIRDirect(id) {
     <div class="sig-box"><div class="sig-line">تفتیشی افسر<br>${o.full_name||'___'}</div></div>
     <div class="sig-box"><div class="sig-line">SHO تھانہ ${c.case_station||o.station||'___'}<br>مہر و دستخط</div></div>
   </div>
-  <div class="footer">Digital IO · محکمہ پولیس پنجاب · ${new Date().toLocaleDateString('en-PK')}</div>
+  <div class="footer">Digital IO · ‏${new Date().toLocaleDateString('en-PK')}</div>
   
   </body></html>`);
   dioPrint(_printHTML);
@@ -358,7 +358,7 @@ async function _downloadCaseTxt(id) {
   if (!c) return;
   const o = currentOfficer || {};
   let txt = '══════════════════════════════════\n';
-  txt += '      محکمہ پولیس پنجاب\n';
+  txt += '      \n';
   txt += `      تھانہ ${o.station||'—'} ضلع ${o.district||'—'}\n`;
   txt += '══════════════════════════════════\n\n';
   txt += `مقدمہ نمبر:        ${c.fir_number||'—'}\n`;
@@ -403,7 +403,7 @@ async function _downloadCaseHTML(id) {
     .footer{text-align:center;font-size:11px;color:#888;margin-top:40px;border-top:1px solid #ccc;padding-top:10px;}
     @media print{body{margin:15mm;}}
   </style></head><body>
-  <h2>محکمہ پولیس پنجاب</h2>
+  <h2></h2>
   <h3>تھانہ ${o.station||'—'} ضلع ${o.district||'—'}</h3>
   <hr>
   <div class="row"><span class="lbl">مقدمہ نمبر:</span><span class="val"><b>${c.fir_number||'—'}</b></span></div>
@@ -425,7 +425,7 @@ async function _downloadCaseHTML(id) {
     <div style="text-align:center;"><div style="border-top:1px solid #333;width:200px;padding-top:6px;">دستخط رپورٹنگ افسر</div></div>
     <div style="text-align:center;"><div style="border-top:1px solid #333;width:200px;padding-top:6px;">SHO تھانہ ${o.station||'—'}</div></div>
   </div>
-  <div class="footer">Digital IO · محکمہ پولیس پنجاب · تاریخ: ${new Date().toLocaleDateString('en-PK')}</div>
+  <div class="footer">Digital IO · تاریخ: ${new Date().toLocaleDateString('en-PK')}</div>
   </body></html>`;
 
   const blob = new Blob([html], {type:'text/html;charset=utf-8'});

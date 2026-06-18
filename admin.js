@@ -628,7 +628,7 @@ function _adminPrintReport() {
   const { officers, cases } = window._adminData || {};
   const date = new Date().toLocaleDateString('ur-PK');
   const o = currentOfficer || {};
-  let html = `<h2 style="text-align:center;">محکمہ پولیس پنجاب<br>تھانہ ${o.station||'—'} ضلع ${o.district||'—'}</h2>`;
+  let html = `<h2 style="text-align:center;"><br>تھانہ ${o.station||'—'} ضلع ${o.district||'—'}</h2>`;
   html += `<p style="text-align:center;">تاریخ: ${date}</p><hr>`;
   html += `<h3>افسر وار رپورٹ</h3><table border="1" style="width:100%;border-collapse:collapse;">`;
   html += `<tr><th>افسر</th><th>عہدہ</th><th>کل</th><th>زیر تفتیش</th><th>مکمل</th></tr>`;

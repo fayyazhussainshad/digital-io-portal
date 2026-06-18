@@ -140,7 +140,7 @@ async function _generateCdrRequest() {
   const html = `
   <div style="font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;padding:40px;max-width:800px;margin:0 auto;line-height:2;color:#000;">
     <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:20px;">
-      <div style="font-size:22px;font-weight:800;">محکمہ پولیس پنجاب</div>
+      <div style="font-size:22px;font-weight:800;"></div>
       <div style="font-size:16px;">تھانہ ${o.station||'____'} ضلع ${o.district||'____'}</div>
     </div>
 

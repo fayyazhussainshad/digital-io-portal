@@ -534,7 +534,7 @@ async function _print5C(id) {
       .sig-line{border-top:1px solid #000;padding-top:5px;margin-top:25px;}
     </style></head><body>
     <div class="hdr">
-      <h2>محکمہ پولیس پنجاب</h2>
+      <h2></h2>
       <div>تھانہ ${o.station||'—'} · ضلع ${o.district||'—'}</div>
       <div style="font-weight:700;margin-top:4px;">5-C درخواست — سیریل نمبر: <b>${a.serial_number}</b></div>
     </div>
@@ -554,7 +554,7 @@ async function _print5C(id) {
       <div class="sig-box"><div class="sig-line">تفتیشی افسر<br>${o.full_name||'—'} ${o.designation||''}</div></div>
       <div class="sig-box"><div class="sig-line">SHO تھانہ ${o.station||'—'}<br>مہر و دستخط</div></div>
     </div>
-    <div class="footer">Digital IO · محکمہ پولیس پنجاب · ${new Date().toLocaleDateString('en-PK')}</div>
+    <div class="footer">Digital IO · ‏${new Date().toLocaleDateString('en-PK')}</div>
     
     </body></html>`);
     dioPrint(_printHTML);
