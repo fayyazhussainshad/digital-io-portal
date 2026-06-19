@@ -119,9 +119,9 @@ async function _drawHome(root) {
   root.innerHTML = `
   <div style="margin-bottom:8px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:20px;font-weight:700;cursor:pointer;color:var(--accent);line-height:1;">←</button></div>
   <div class="card" style="text-align:center;padding:32px 20px;margin-bottom:14px;">
-    <div style="font-size:52px;margin-bottom:10px;">🚔</div>
-    <div style="font-size:17px;font-weight:800;margin-bottom:6px;">Patrol Log</div>
-    <div style="font-size:12px;color:var(--text-muted);margin-bottom:22px;">GPS tracking · Call log · Duty report</div>
+    <div style="font-size:52px;margin-bottom:10px;text-align:center;display:flex;justify-content:center;align-items:center;">🚔</div>
+    <div style="font-size:17px;font-weight:800;margin-bottom:6px;text-align:center;">Patrol Log</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:22px;text-align:center;">GPS tracking · Call log · Duty report</div>
     <button class="btn btn-primary" style="font-size:14px;padding:12px 32px;" onclick="startShift()">🟢 شفٹ شروع کریں</button>
     <br><br>
     <div style="display:flex;gap:8px;direction:rtl;justify-content:center;flex-wrap:wrap;">
