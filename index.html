@@ -929,7 +929,7 @@ window.addEventListener('unhandledrejection', function(e){
     <div class="login-logo-wrap">
       <div class="login-logo-icon">🛡️</div>
       <div class="login-logo-text">Digital IO</div>
-      <div class="login-logo-sub">POLICE CASE MANAGEMENT SYSTEM</div>
+      <div class="login-logo-sub" style="font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:14px;letter-spacing:normal;text-transform:none;direction:rtl;">تفتیشی افسر کا چھوٹو</div>
     </div>
     <div class="login-avatar-wrap">
       <div class="login-avatar" id="login-avatar"><img id="login-avatar-img" src="" alt="" style="display:none;"><span id="login-avatar-initials">IO</span></div>
@@ -1012,25 +1012,33 @@ window.addEventListener('unhandledrejection', function(e){
 
   <!-- SIDEBAR -->
   <div class="sidebar" id="sidebar">
-    <div class="sidebar-logo"><div class="sidebar-logo-icon">🛡️</div><div><div class="sidebar-logo-text">Digital IO</div><div class="sidebar-logo-sub">Case Management</div></div></div>
+    <div class="sidebar-logo"><div class="sidebar-logo-icon">🛡️</div><div><div class="sidebar-logo-text">Digital IO</div><div class="sidebar-logo-sub" style="font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">تفتیشی افسر کا چھوٹو</div></div></div>
     <div class="sidebar-profile"><div class="sidebar-avatar" id="sidebar-avatar">IO</div><div><div class="sidebar-profile-name" id="sidebar-name">Loading...</div><div class="sidebar-profile-role" id="sidebar-role">Officer</div></div></div>
     <nav class="sidebar-nav">
       <div class="nav-item active" onclick="closeMobileSidebar();showPage('dashboard',this)"><span class="nav-icon">🏠</span> ڈیش بورڈ</div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('cases',this)"><span class="nav-icon">📁</span> میرے مقدمات <span class="nav-badge" id="badge-cases">0</span></div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('forms',this)"><span class="nav-icon">📥</span> ٹیمپلیٹس</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('fivec',this)"><span class="nav-icon">📋</span> مارک شدہ درخواستیں</div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('incident',this)"><span class="nav-icon">🚨</span> واقعاتی رپورٹ</div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('patrol',this)"><span class="nav-icon">🚔</span> گشت</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('cdr',this)"><span class="nav-icon">📞</span> CDR Analyzer</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('law',this)"><span class="nav-icon">⚖️</span> قانونی لائبریری</div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('reminders',this)"><span class="nav-icon">🔔</span> یاددہانیاں <span class="nav-badge" id="badge-reminders">0</span></div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('search',this)"><span class="nav-icon">🔍</span> تلاش</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('suspects',this)"><span class="nav-icon">👤</span> ملزمان / گواہان</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('performance',this)"><span class="nav-icon">📊</span> کارکردگی</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('backup',this)"><span class="nav-icon">☁️</span> بیک اپ</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showSubscriptionPage()"><span class="nav-icon">💎</span> سبسکرپشن</div>
+
+      <!-- More (collapsible) -->
+      <div class="nav-item" id="nav-more-toggle" onclick="_toggleMoreNav(this)" style="cursor:pointer;">
+        <span class="nav-icon">⋯</span> مزید <span id="more-arrow" style="margin-right:auto;font-size:11px;">▼</span>
+      </div>
+      <div id="nav-more-section" style="display:none;">
+        <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showPage('forms',this)"><span class="nav-icon">📥</span> ٹیمپلیٹس</div>
+        <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showPage('fivec',this)"><span class="nav-icon">📋</span> مارک شدہ درخواستیں</div>
+        <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showPage('cdr',this)"><span class="nav-icon">📞</span> CDR Analyzer</div>
+        <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showPage('law',this)"><span class="nav-icon">⚖️</span> قانونی لائبریری</div>
+        <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showPage('suspects',this)"><span class="nav-icon">👤</span> ملزمان / گواہان</div>
+        <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showPage('performance',this)"><span class="nav-icon">📊</span> کارکردگی</div>
+        <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showPage('backup',this)"><span class="nav-icon">☁️</span> بیک اپ</div>
+        <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showSubscriptionPage()"><span class="nav-icon">💎</span> سبسکرپشن</div>
+        <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showPage('bin',this)"><span class="nav-icon">🗑️</span> حذف شدہ مواد</div>
+      </div>
+
       <div class="nav-item" id="admin-nav-item" style="display:none;" onclick="closeMobileSidebar();showPage('admin',this)"><span class="nav-icon">👮</span> ایڈمن</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('bin',this)"><span class="nav-icon">🗑️</span> حذف شدہ مواد</div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('settings',this)"><span class="nav-icon">⚙️</span> ترتیبات</div>
     </nav>
     <div class="sidebar-footer"><button class="logout-btn" onclick="doLogout()">🚪 لاگ آؤٹ</button></div>
@@ -1122,6 +1130,15 @@ function navTo(page, el) { closeMobileSidebar(); showPage(page, el); }
 function toggleMoreMenu() {}
 function closeMoreMenu() {}
 function toggleSidebarCollapse() {}
+
+function _toggleMoreNav(el) {
+  const sec = document.getElementById('nav-more-section');
+  const arrow = document.getElementById('more-arrow');
+  if (!sec) return;
+  const open = sec.style.display !== 'none';
+  sec.style.display = open ? 'none' : 'block';
+  if (arrow) arrow.textContent = open ? '▼' : '▲';
+}
 function _sidebarOpen() {}
 function _sidebarClose() { closeMobileSidebar(); }
 </script>

@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════
    DIGITAL IO — APP CORE  (app-core.js)
    Auth · Data · UI · Voice · Penal Codes · Notifications
-   Digital IO Case Management System
+   Digital IO — Tafteeshi Officer ka Chhotu
    ═══════════════════════════════════════════════════════════ */
 
 // ── SUPABASE ──────────────────────────────────────────────────

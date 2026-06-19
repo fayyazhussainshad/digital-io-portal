@@ -1,7 +1,7 @@
 {
-  "name": "Digital IO — Police Case Management",
+  "name": "Digital IO — تفتیشی افسر کا چھوٹو",
   "short_name": "Digital IO",
-  "description": "Police Case Management System for Punjab Police Officers",
+  "description": "تفتیشی افسر کا چھوٹو — ایک نجی سافٹ ویئر جو تفتیشی افسران کی مدد کے لیے بنایا گیا",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
