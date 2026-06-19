@@ -1,1036 +1,945 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ur" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#000060" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="Life on Campus" />
-  <link rel="apple-touch-icon" href="https://studentexperience.github.io/icon-192.png" />
-  <title>Life on Campus · Clubs &amp; Societies</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="theme-color" content="#0f1923">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Digital IO">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>Digital IO</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🛡️%3C/text%3E%3C/svg%3E">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
-    :root {
-      --ink: #111827;
-      --muted: #6b7280;
-      --border: #e5e7eb;
-      --bg: #f3f4f6;
-      --panel: #ffffff;
-      --shadow: 0 6px 14px rgba(0,0,0,.10);
-
-      --b1:#F0F7FF; --a1:#D6E6FF;
-      --b2:#F7F3FF; --a2:#E3DBFF;
-      --b3:#FFF6EC; --a3:#FFE6CC;
-      --b4:#F1FAF5; --a4:#D9F2E6;
-      --b5:#FFF0F3; --a5:#FFD6DE;
-      --b6:#F5F5F5; --a6:#E1E1E1;
+    @font-face {
+      font-family: 'Jameel Noori Nastaleeq';
+      src: local('Jameel Noori Nastaleeq'),
+           local('JameelNooriNastaleeq'),
+           url('https://cdn.jsdelivr.net/npm/jameel-noori-nastaleeq@1.0.0/fonts/JameelNooriNastaleeq.woff2') format('woff2'),
+           url('https://cdn.jsdelivr.net/npm/jameel-noori-nastaleeq@1.0.0/fonts/JameelNooriNastaleeq.woff') format('woff'),
+           url('https://cdn.jsdelivr.net/npm/jameel-noori-nastaleeq@1.0.0/fonts/JameelNooriNastaleeq.ttf') format('truetype');
+      font-weight: normal; font-style: normal; font-display: swap;
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    input, select, button, textarea { font-family: inherit; }
-    html, body { max-width: 100%; overflow-x: hidden; }
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: var(--bg);
-      color: var(--ink);
-    }
-
-    /* ── Topbar ── */
-    .topbar {
-      height: 56px;
-      background: linear-gradient(135deg, #000060 0%, #2563eb 60%, #3b82f6 100%);
-      border-bottom: none; box-shadow: 0 2px 12px rgba(37,99,235,.25);
-      display: flex;
-      align-items: center;
-      padding: 0 18px;
-      gap: 12px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .brand { color: white; font-size: 17px; font-weight: 700; letter-spacing: .2px; }
-    .nav-toggle {
-      display: none;
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 4px 6px;
-      font-size: 22px;
-      color: white;
-    }
-
-    /* ── Shell ── */
-    .shell {
-      display: grid;
-      grid-template-columns: 160px 1fr;
-      min-height: calc(100vh - 56px);
-    }
-
-    /* ── Left nav ── */
-    .nav {
-      background: var(--panel);
-      border-right: 1px solid var(--border);
-      padding: 16px 8px;
-    }
-    .nav a {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 9px 12px;
-      margin: 2px 0;
-      border-radius: 10px;
-      color: var(--ink);
-      text-decoration: none;
-      font-size: 13px;
-      font-weight: 500;
-    }
-    .nav a:hover:not(.active) { background: #f9fafb; }
-    .nav a.active {
-      background: #eff6ff;
-      color: #1d4ed8;
-      font-weight: 700;
-      border-left: 3px solid #2563eb;
-      padding-left: 9px;
-      border-radius: 0;
-    }
-
-    /* ── Content ── */
-    .content { padding: 22px; }
-    .page-title {
-      font-size: 28px;
-      font-weight: 700;
-      margin: 6px 0 4px;
-    }
-    .page-subtitle {
-      font-size: 14px;
-      color: var(--muted);
-      margin: 0 0 20px;
-    }
-
-    /* ── Search bar row ── */
-    .search-row {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 22px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .search-row input,
-    .search-row select {
-      padding: 10px 14px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      font-size: 14px;
-      background: var(--panel);
-      box-shadow: var(--shadow);
-    }
-    .search-row input { flex: 1; min-width: 200px; }
-    .search-row select { min-width: 180px; }
-    .search-row .btn-clear {
-      padding: 10px 18px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: var(--panel);
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .result-count {
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 18px;
-    }
-
-    /* ── Cards grid ── */
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-    }
-    .empty {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 20px;
-      color: #444;
-      font-size: 14px;
-      box-shadow: var(--shadow);
-    }
-
-    /* ── Club card ── */
-    .club-card {
-      background: var(--panel);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      transition: transform .18s ease, box-shadow .18s ease;
-      cursor: pointer;
-    }
-    .club-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 28px rgba(0,0,0,.14);
-    }
-
-    /* Colour bar at top */
-    .club-card .top-bar {
-      height: 8px;
-      flex-shrink: 0;
-    }
-
-    /* Avatar / icon area */
-    .club-avatar {
-      height: 90px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 40px;
-      flex-shrink: 0;
-    }
-
-    .club-body {
-      padding: 14px 16px 16px;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .club-name {
-      font-size: 16px;
-      font-weight: 700;
-      line-height: 1.35;
-      margin: 0 0 8px;
-      color: var(--ink);
-    }
-
-    .club-desc {
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.5;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      margin: 0 0 12px;
-      flex: 1;
-    }
-
-    /* Signature events */
-    .club-events-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: .6px;
-      margin-bottom: 4px;
-    }
-    .club-events {
-      font-size: 11.5px;
-      color: #333;
-      line-height: 1.5;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      margin-bottom: 14px;
-    }
-
-    /* Leadership row */
-    .club-leadership {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      margin-bottom: 14px;
-    }
-    .leadership-item {
-      display: flex;
-      align-items: baseline;
-      gap: 5px;
-      font-size: 11.5px;
-    }
-    .leadership-role {
-      color: var(--muted);
-      font-weight: 500;
-      white-space: nowrap;
-      font-size: 11px;
-    }
-    .leadership-name {
-      color: var(--ink);
-      font-weight: 600;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    /* Email button */
-    .club-email {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      font-size: 12px;
-      color: var(--muted);
-      text-decoration: none;
-      padding: 7px 10px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      margin-top: 4px;
-      transition: background .15s;
-      overflow: hidden;
-    }
-    .club-email:hover { background: #f3f4f6; }
-    .club-email span {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    /* ── Modal overlay ── */
-    .modal-backdrop {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.45);
-      z-index: 500;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .modal-backdrop.open { display: flex; }
-    @media(max-width:768px){
-      .modal-backdrop { align-items: flex-end; padding: 0; bottom: 70px; }
-    }
-
-    .modal {
-      background: var(--panel);
-      border-radius: 20px;
-      width: 100%;
-      max-width: 640px;
-      max-height: 88vh;
-      overflow-y: auto;
-      box-shadow: 0 24px 60px rgba(0,0,0,.25);
-      display: flex;
-      flex-direction: column;
-    }
-    @media(max-width:768px){
-      .modal { border-radius: 20px 20px 0 0; max-height: calc(100vh - 56px - 70px); margin: 0; margin-bottom: 70px; }
-    }
-
-    .modal-top-bar { height: 10px; border-radius: 20px 20px 0 0; flex-shrink: 0; }
-
-    .modal-content { padding: 24px 28px 28px; }
-
-    .modal-header {
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-      margin-bottom: 18px;
-    }
-    .modal-icon { font-size: 46px; line-height: 1; flex-shrink: 0; }
-    .modal-title-block { flex: 1; }
-    .modal-title {
-      font-size: 20px;
-      font-weight: 700;
-      margin: 0 0 4px;
-      line-height: 1.25;
-    }
-    .modal-email {
-      font-size: 13px;
-      color: var(--muted);
-      text-decoration: none;
-    }
-    .modal-email:hover { text-decoration: underline; }
-    .modal-close {
-      background: none;
-      border: none;
-      font-size: 22px;
-      cursor: pointer;
-      color: var(--muted);
-      padding: 0 0 0 12px;
-      line-height: 1;
-      flex-shrink: 0;
-    }
-
-    .modal-section { margin-bottom: 20px; }
-    .modal-section-title {
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .7px;
-      color: var(--muted);
-      margin: 0 0 8px;
-    }
-    .modal-section p {
-      font-size: 14px;
-      line-height: 1.65;
-      color: #333;
-      margin: 0;
-      white-space: pre-line;
-    }
-
-    /* Events list in modal */
-    .modal-events-list {
-      font-size: 13.5px;
-      line-height: 1.7;
-      color: #333;
-      white-space: pre-line;
-      margin: 0;
-    }
-
-    /* Leadership grid in modal */
-    .modal-leadership {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    .modal-leader {
-      background: var(--bg);
-      border-radius: 10px;
-      padding: 10px 14px;
-    }
-    .modal-leader-role {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .5px;
-      color: var(--muted);
-      margin-bottom: 3px;
-    }
-    .modal-leader-name {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--ink);
-      white-space: pre-line;
-    }
-
-    /* ── Campus tag ── */
-    .campus-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 9px;
-      border-radius: 999px;
-      margin-top: 10px;
-      margin-bottom: 10px;
-      align-self: flex-start;
-    }
-    .campus-tag.karachi  { background: #eff6ff; color: #1d4ed8; }
-    .campus-tag.nairobi  { background: #f0fdf4; color: #15803d; }
-    .campus-tag.kampala  { background: #fffbeb; color: #b45309; }
-    .campus-tag.dares    { background: #fdf4ff; color: #7e22ce; }
-    .campus-tag.default  { background: #f3f4f6; color: #374151; }
-
-    .category-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 9px;
-      border-radius: 999px;
-      background: #fef3c7;
-      color: #854d0e;
-      margin-bottom: 4px;
-      width: fit-content;
-    }
-
-    /* ── Responsive — card grid ── */
-    @media (max-width: 1280px) { .cards { grid-template-columns: repeat(3, 1fr); } }
-    @media (max-width: 1024px) { .cards { grid-template-columns: repeat(2, 1fr); } }
-
-    /* ── Responsive — mobile standard ── */
-    @media (max-width: 768px) {
-      .shell { display: block; }
-      .nav { display: none; position: fixed; top: 56px; left: 0; width: 200px; height: calc(100vh - 56px); z-index: 99; box-shadow: 4px 0 20px rgba(0,0,0,.1); background: white; }
-      .nav.open { display: block; }
-      .nav-toggle { display: block; }
-      .bottom-nav { display: block; }
-      .content { padding: 12px 12px 80px; }
-      .page-title { font-size: 20px; }
-      .page-subtitle { font-size: 12px; margin-bottom: 12px; }
-      .cards { grid-template-columns: 1fr; gap: 12px; }
-      .search-row input, .search-row select { min-width: 0; width: 100%; }
-      .modal-leadership { grid-template-columns: 1fr; }
-      .modal-content { padding: 18px 18px 22px; }
-    }
-    @media (max-width: 360px) {
-      .topbar { padding: 0 12px; }
-      .brand { font-size: 14px; }
-    }
-
-    /* ── SKELETON LOADER ── */
-    @keyframes shimmer {
-      0%   { background-position: -400px 0; }
-      100% { background-position: 400px 0; }
-    }
-    .skeleton {
-      background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
-      background-size: 800px 100%;
-      animation: shimmer 1.4s infinite;
-      border-radius: 10px;
-    }
-
-    /* ── CARD FADE-IN ── */
-    @keyframes cardFadeIn {
-      from { opacity: 0; transform: translateY(12px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .fade-in { animation: cardFadeIn .3s ease forwards; }
-
-    /* ── TABLE ROW HOVER ── */
-    table tbody tr:hover { background: #f9fafb; cursor: pointer; }
-
-    /* ── MOBILE BOTTOM NAV ── */
-    /* Bottom nav - ALWAYS visible on mobile */
-    .bottom-nav {
-      display: none;
-      position: fixed;
-      left: 0; right: 0; bottom: 0;
-      background: #ffffff;
-      border-top: 1px solid #e5e7eb;
-      padding: 8px 0 max(8px, env(safe-area-inset-bottom));
-      box-shadow: 0 -4px 12px rgba(0,0,0,.08);
-      z-index: 9999;
-    }
-    .bottom-nav-inner { display: flex; align-items: center; }
-    .bottom-nav-item {
-      flex: 1;
-      display: flex; flex-direction: column; align-items: center; gap: 2px;
-      text-decoration: none; color: #9ca3af;
-      font-size: 9px; font-weight: 600;
-      padding: 6px 2px;
-    }
-    .bottom-nav-item.active { color: #2563eb; }
-    .bottom-nav-item.hub { color: #7c3aed; }
-    .bottom-nav-item span:first-child { font-size: 18px; }
-
-    @media (max-width: 1024px) {
-      .bottom-nav { display: block; }
-      body { padding-bottom: 80px; }
-    }
-
+    @font-face { font-family:"Aptos"; src:local("Aptos"),local("Segoe UI"); font-weight:400; }
+    @font-face { font-family:"Aptos"; src:local("Aptos Bold"),local("Segoe UI Bold"); font-weight:700; }
+    @font-face { font-family:"Aptos Display"; src:local("Aptos Display"),local("Segoe UI"); font-weight:400 900; }
+    @font-face { font-family:"Aptos Mono"; src:local("Aptos Mono"),local("Consolas"); font-weight:400 600; }
   </style>
+
+  <style>
+/* ═══════════════════════════════
+   CSS VARIABLES & THEMES
+═══════════════════════════════ */
+:root {
+  --bg-primary:#0a1520; --bg-secondary:#0f1e2d; --bg-tertiary:#071018; --bg-card:#111f2e;
+  --border:#1a3148; --border-light:#152840;
+  --accent:#38bdf8; --accent-dark:#0284c7; --accent-darker:#0369a1;
+  --accent-glow:rgba(56,189,248,0.15);
+  --text-primary:#e2e8f0; --text-secondary:#94a3b8; --text-muted:#64748b; --text-faint:#3d5570;
+  --green:#22c55e; --green-bg:rgba(34,197,94,0.08);
+  --amber:#f59e0b; --amber-bg:rgba(245,158,11,0.08);
+  --red:#ef4444; --red-bg:rgba(239,68,68,0.08);
+  --purple:#a78bfa;
+  --nav-active:#0c3a5c; --hover-bg:#152840;
+  --shadow:0 8px 32px rgba(0,0,0,0.5);
+  --radius:12px; --radius-sm:8px;
+  --sidebar-width:240px; --topbar-height:52px; --bottombar-height:32px;
+  --font-main:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu','Aptos','Segoe UI',system-ui,sans-serif;
+  --font-display:'Aptos Display','Aptos','Segoe UI',system-ui,sans-serif;
+  --font-mono:'Aptos Mono','Consolas',monospace;
+}
+
+/* ── Light ── */
+html[data-theme="light"] {
+  --bg-primary:#f0f4f8; --bg-secondary:#ffffff; --bg-tertiary:#e2eaf4; --bg-card:#ffffff;
+  --border:#c8d8e8; --border-light:#dce8f2;
+  --accent:#0369a1; --accent-dark:#0369a1; --accent-darker:#025c8c;
+  --accent-glow:rgba(3,105,161,0.08);
+  --text-primary:#0f172a; --text-secondary:#334155; --text-muted:#64748b; --text-faint:#94a3b8;
+  --nav-active:#dbeafe; --hover-bg:#e8f0fa; --shadow:0 4px 20px rgba(0,0,0,0.08);
+}
+html[data-theme="light"] body { background:var(--bg-primary); }
+html[data-theme="light"] .login-bg { background:radial-gradient(ellipse at 20% 50%,#bfdbfe 0%,#e0f2fe 50%,#f0f9ff 100%); }
+
+/* ── Forest ── */
+html[data-theme="forest"] {
+  --bg-primary:#071410; --bg-secondary:#0d2018; --bg-tertiary:#040e0a; --bg-card:#0f2218;
+  --border:#1a4028; --border-light:#133020; --accent:#4ade80; --accent-dark:#16a34a; --accent-darker:#15803d;
+  --accent-glow:rgba(74,222,128,0.12); --text-primary:#ecfdf5; --text-secondary:#a7f3d0;
+  --text-muted:#6ee7b7; --text-faint:#1e5c36; --nav-active:#14532d; --hover-bg:#122e1c;
+}
+html[data-theme="forest"] .login-bg { background:radial-gradient(ellipse at 20% 50%,#052e16 0%,#071410 50%,#040e0a 100%); }
+
+/* ── Ocean ── */
+html[data-theme="ocean"] {
+  --bg-primary:#021f1f; --bg-secondary:#0a2e2d; --bg-tertiary:#011414; --bg-card:#0c3030;
+  --border:#0d4f4d; --border-light:#0a3c3a; --accent:#2dd4bf; --accent-dark:#0d9488; --accent-darker:#0f766e;
+  --accent-glow:rgba(45,212,191,0.12); --text-primary:#ccfbf1; --text-secondary:#99f6e4;
+  --text-muted:#5eead4; --text-faint:#115e59; --nav-active:#134e4a; --hover-bg:#0c3a38;
+}
+html[data-theme="ocean"] .login-bg { background:radial-gradient(ellipse at 20% 50%,#042f2e 0%,#021f1f 50%,#011414 100%); }
+
+/* ── Sunset ── */
+html[data-theme="sunset"] {
+  --bg-primary:#150900; --bg-secondary:#1e1000; --bg-tertiary:#0e0600; --bg-card:#1c0e00;
+  --border:#3a1c00; --border-light:#2c1500; --accent:#fb923c; --accent-dark:#ea580c; --accent-darker:#c2410c;
+  --accent-glow:rgba(251,146,60,0.12); --text-primary:#fff7ed; --text-secondary:#fed7aa;
+  --text-muted:#fdba74; --text-faint:#6c2c00; --nav-active:#7c2d12; --hover-bg:#281200;
+}
+html[data-theme="sunset"] .login-bg { background:radial-gradient(ellipse at 20% 50%,#431407 0%,#150900 50%,#0e0600 100%); }
+
+/* ── Lavender ── */
+html[data-theme="lavender"] {
+  --bg-primary:#0c0818; --bg-secondary:#140f26; --bg-tertiary:#080514; --bg-card:#120d22;
+  --border:#2a1c4a; --border-light:#1e1438; --accent:#a78bfa; --accent-dark:#7c3aed; --accent-darker:#6d28d9;
+  --accent-glow:rgba(167,139,250,0.12); --text-primary:#f3e8ff; --text-secondary:#ddd6fe;
+  --text-muted:#c4b5fd; --text-faint:#3b1d7a; --nav-active:#4c1d95; --hover-bg:#1a1038;
+}
+html[data-theme="lavender"] .login-bg { background:radial-gradient(ellipse at 20% 50%,#2e1065 0%,#0c0818 50%,#080514 100%); }
+
+/* ── Photo themes ── */
+html.photo-theme body { background-size:cover; background-position:center; background-attachment:fixed; background-repeat:no-repeat; }
+html.photo-theme .sidebar, html.photo-theme .topbar, html.photo-theme .bottombar {
+  background:rgba(var(--glass-rgb),0.86)!important;
+  backdrop-filter:blur(18px) saturate(140%); -webkit-backdrop-filter:blur(18px) saturate(140%);
+  border-color:rgba(255,255,255,0.09)!important;
+}
+html.photo-theme .card, html.photo-theme .stat-card {
+  background:rgba(var(--glass-rgb),0.72)!important;
+  backdrop-filter:blur(12px) saturate(120%); -webkit-backdrop-filter:blur(12px) saturate(120%);
+}
+html.photo-theme .modal-card { background:rgba(var(--glass-rgb),0.94)!important; backdrop-filter:blur(24px) saturate(160%); }
+html.photo-theme .modal-overlay { background:rgba(0,0,0,0.55); backdrop-filter:blur(4px); }
+html.photo-theme .nav-item.active { background:rgba(var(--glass-rgb),0.55)!important; }
+html.photo-theme .data-table th { background:rgba(var(--glass-rgb),0.90)!important; }
+html.photo-theme .data-table tr:hover td { background:rgba(255,255,255,0.04)!important; }
+
+html[data-theme="blossom"] { --glass-rgb:18,4,22; --accent:#f472b6; --accent-dark:#db2777; --accent-darker:#be185d; --accent-glow:rgba(244,114,182,0.15); --text-primary:#fdf2f8; --text-secondary:#fbcfe8; --text-muted:#f9a8d4; --text-faint:#831843; --border:rgba(244,114,182,0.22); --border-light:rgba(244,114,182,0.11); --nav-active:rgba(244,114,182,0.22); --hover-bg:rgba(244,114,182,0.09); --shadow:0 8px 32px rgba(0,0,0,0.65); }
+html[data-theme="blossom"] body { background-color:#190518; background-image:linear-gradient(rgba(8,1,12,0.42),rgba(8,1,12,0.42)),url('https://picsum.photos/seed/spring-blossom-dio/1920/1080'); }
+html[data-theme="peaks"] { --glass-rgb:4,12,26; --accent:#60a5fa; --accent-dark:#2563eb; --accent-darker:#1d4ed8; --accent-glow:rgba(96,165,250,0.15); --text-primary:#eff6ff; --text-secondary:#bfdbfe; --text-muted:#93c5fd; --text-faint:#1e3a5f; --border:rgba(96,165,250,0.22); --border-light:rgba(96,165,250,0.11); --nav-active:rgba(96,165,250,0.22); --hover-bg:rgba(96,165,250,0.09); --shadow:0 8px 32px rgba(0,0,0,0.65); }
+html[data-theme="peaks"] body { background-color:#04101a; background-image:linear-gradient(rgba(4,12,26,0.38),rgba(4,12,26,0.38)),url('https://picsum.photos/seed/mountain-peaks-dio/1920/1080'); }
+html[data-theme="cosmos"] { --glass-rgb:6,3,18; --accent:#818cf8; --accent-dark:#4f46e5; --accent-darker:#4338ca; --accent-glow:rgba(129,140,248,0.15); --text-primary:#eef2ff; --text-secondary:#c7d2fe; --text-muted:#a5b4fc; --text-faint:#312e81; --border:rgba(129,140,248,0.22); --border-light:rgba(129,140,248,0.11); --nav-active:rgba(129,140,248,0.22); --hover-bg:rgba(129,140,248,0.09); --shadow:0 8px 32px rgba(0,0,0,0.70); }
+html[data-theme="cosmos"] body { background-color:#06031a; background-image:linear-gradient(rgba(3,1,10,0.48),rgba(3,1,10,0.48)),url('https://picsum.photos/seed/galaxy-cosmos-dio/1920/1080'); }
+html[data-theme="autumn"] { --glass-rgb:18,6,0; --accent:#f97316; --accent-dark:#ea580c; --accent-darker:#c2410c; --accent-glow:rgba(249,115,22,0.15); --text-primary:#fff7ed; --text-secondary:#fed7aa; --text-muted:#fdba74; --text-faint:#7c2d12; --border:rgba(249,115,22,0.22); --border-light:rgba(249,115,22,0.11); --nav-active:rgba(249,115,22,0.22); --hover-bg:rgba(249,115,22,0.09); --shadow:0 8px 32px rgba(0,0,0,0.65); }
+html[data-theme="autumn"] body { background-color:#180600; background-image:linear-gradient(rgba(14,4,0,0.40),rgba(14,4,0,0.40)),url('https://picsum.photos/seed/autumn-leaves-dio/1920/1080'); }
+html[data-theme="aurora"] { --glass-rgb:0,8,16; --accent:#34d399; --accent-dark:#059669; --accent-darker:#047857; --accent-glow:rgba(52,211,153,0.15); --text-primary:#ecfdf5; --text-secondary:#a7f3d0; --text-muted:#6ee7b7; --text-faint:#064e3b; --border:rgba(52,211,153,0.22); --border-light:rgba(52,211,153,0.11); --nav-active:rgba(52,211,153,0.22); --hover-bg:rgba(52,211,153,0.09); --shadow:0 8px 32px rgba(0,0,0,0.65); }
+html[data-theme="aurora"] body { background-color:#000e12; background-image:linear-gradient(rgba(0,6,12,0.42),rgba(0,6,12,0.42)),url('https://picsum.photos/seed/northern-lights-dio/1920/1080'); }
+
+/* ═══════════════════════════════
+   RESET & BASE
+═══════════════════════════════ */
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html { font-size:14px; }
+body { font-family:var(--font-main); background:var(--bg-primary); color:var(--text-primary); min-height:100vh; overflow:hidden; -webkit-font-smoothing:antialiased; direction:rtl; text-align:right; }
+.topbar,.sidebar,.main-area,.page-content,.card,.modal-body,.modal-footer,.modal-header,.nav-item,.data-table,.form-row,.form-group,.page-header,.case-header { direction:rtl; }
+h1,h2,h3,h4,h5,h6,p,label,span,div,td,th,li { text-align:right; }
+.data-table th,.data-table td { text-align:right; }
+.nav-item { flex-direction:row; }
+input[type="date"],input[type="time"],input[type="number"],input[type="email"],input[type="tel"],input[type="url"],input[id*="cnic"],input[id*="cell"],input[id*="phone"],input[id*="fir"]:not([id*="writer"]),input[id*="date"],input[id*="txn"],input[id*="badge"],input[id*="otp"],.ltr,.mono,code,pre,.pin-display,.otp-box,[dir="ltr"] { direction:ltr!important; text-align:left!important; }
+#login-email,#login-password,#reg-email,#reg-password { direction:ltr!important; text-align:left!important; }
+.pill,.nav-badge,.badge { text-align:center; }
+a { cursor:pointer; color:var(--accent); text-decoration:none; }
+button { cursor:pointer; font-family:var(--font-main); }
+input,textarea,select { font-family:var(--font-main); }
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+*{ -webkit-tap-highlight-color:transparent; }
+
+/* ═══════════════════════════════
+   LOGIN SCREEN
+═══════════════════════════════ */
+#login-screen { position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; overflow-y:auto; padding:20px; }
+.login-bg { position:fixed; inset:0; z-index:0; background:radial-gradient(ellipse at 20% 50%,#0c2a44 0%,#070f18 50%,#050d15 100%); }
+.login-bg-grid { position:absolute; inset:0; background-image:linear-gradient(rgba(56,189,248,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(56,189,248,0.03) 1px,transparent 1px); background-size:40px 40px; }
+.login-bg-glow { position:absolute; width:600px; height:600px; background:radial-gradient(circle,rgba(56,189,248,0.06) 0%,transparent 70%); top:50%; left:50%; transform:translate(-50%,-50%); animation:glowPulse 4s ease-in-out infinite; }
+@keyframes glowPulse { 0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(1)} 50%{opacity:1;transform:translate(-50%,-50%) scale(1.1)} }
+.login-card { position:relative; z-index:1; background:rgba(11,24,38,0.95); border:1px solid var(--border); border-radius:20px; padding:36px 32px; width:100%; max-width:420px; box-shadow:0 32px 80px rgba(0,0,0,0.7); backdrop-filter:blur(20px); animation:cardSlideUp 0.5s ease; }
+@keyframes cardSlideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
+.login-logo-wrap { text-align:center; margin-bottom:24px; }
+.login-logo-icon { font-size:36px; margin-bottom:8px; }
+.login-logo-text { font-family:var(--font-display); font-size:28px; font-weight:800; letter-spacing:4px; color:var(--accent); text-transform:uppercase; text-align:center; }
+.login-logo-sub { font-size:9px; color:var(--text-faint); letter-spacing:3px; text-transform:uppercase; margin-top:4px; }
+.login-avatar-wrap { position:relative; width:80px; height:80px; margin:0 auto 14px; }
+.login-avatar { width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,var(--accent-dark),var(--accent)); border:2px solid var(--accent); display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:800; color:#fff; overflow:hidden; font-family:var(--font-display); }
+.login-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.login-avatar-ring { position:absolute; inset:-4px; border-radius:50%; border:1px solid rgba(56,189,248,0.3); animation:ringPulse 2s ease-in-out infinite; }
+@keyframes ringPulse { 0%,100%{transform:scale(1);opacity:.3} 50%{transform:scale(1.05);opacity:.8} }
+.login-officer-name { text-align:center; font-size:16px; font-weight:600; color:var(--text-primary); margin-bottom:2px; font-family:var(--font-display); }
+.login-officer-role { text-align:center; font-size:10px; color:var(--text-muted); letter-spacing:1px; margin-bottom:20px; }
+.login-error { background:var(--red-bg); border:1px solid rgba(239,68,68,0.3); border-radius:var(--radius-sm); padding:10px 14px; font-size:12px; color:var(--red); margin-bottom:14px; text-align:center; display:none; }
+.login-methods { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:20px; }
+.login-method { background:rgba(10,25,40,0.8); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 6px; font-size:11px; color:var(--text-muted); transition:all 0.15s; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.login-method span { font-size:18px; }
+.login-method:hover,.login-method.active { border-color:var(--accent); color:var(--accent); background:var(--accent-glow); }
+.input-group { position:relative; margin-bottom:12px; }
+
+/* ═══════════════════════════════
+   ✅ LOGIN INPUT FIX — TEXT VISIBILITY
+   مسئلہ: text type کرنے پر نظر نہیں آتا
+   وجہ: -webkit-text-fill-color override
+═══════════════════════════════ */
+.login-input {
+  width:100%;
+  background:rgba(15,30,45,0.9);
+  border:1px solid rgba(56,189,248,0.3);
+  border-radius:var(--radius-sm);
+  padding:12px 16px;
+  /* ✅ text رنگ واضح سفید */
+  color:#ffffff !important;
+  -webkit-text-fill-color:#ffffff !important;
+  caret-color:var(--accent);
+  font-size:14px;
+  font-family:var(--font-mono),monospace;
+  outline:none;
+  transition:border 0.2s, box-shadow 0.2s;
+  letter-spacing:0.3px;
+}
+.login-input:focus {
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px var(--accent-glow);
+  background:rgba(10,22,35,0.98);
+}
+.login-input::placeholder {
+  color:rgba(148,163,184,0.7) !important;
+  -webkit-text-fill-color:rgba(148,163,184,0.7) !important;
+}
+/* ✅ Autofill fix — Chrome/Safari autofill پر dark background رکھو */
+.login-input:-webkit-autofill,
+.login-input:-webkit-autofill:hover,
+.login-input:-webkit-autofill:focus,
+.login-input:-webkit-autofill:active {
+  -webkit-text-fill-color:#ffffff !important;
+  -webkit-box-shadow:0 0 0 1000px rgba(10,22,35,0.98) inset !important;
+  box-shadow:0 0 0 1000px rgba(10,22,35,0.98) inset !important;
+  caret-color:#ffffff !important;
+  transition:background-color 5000s ease-in-out 0s;
+}
+
+.input-eye { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; font-size:14px; color:var(--text-muted); cursor:pointer; }
+.login-btn { width:100%; background:linear-gradient(135deg,var(--accent-dark),var(--accent-darker)); border:none; border-radius:var(--radius-sm); padding:13px; color:#fff; font-size:14px; font-weight:600; transition:all 0.15s; font-family:var(--font-display); letter-spacing:0.5px; cursor:pointer; }
+.login-btn:hover { transform:translateY(-1px); box-shadow:0 8px 24px rgba(2,132,199,0.4); }
+.login-links { display:flex; justify-content:space-between; margin-top:12px; font-size:11px; color:var(--accent); }
+.login-security-badge { margin-top:20px; text-align:center; font-size:9px; color:var(--text-faint); letter-spacing:0.5px; }
+
+/* PIN */
+.pin-display { display:flex; gap:10px; justify-content:center; margin-bottom:20px; }
+.pin-dot { width:14px; height:14px; border-radius:50%; border:2px solid var(--border); background:transparent; transition:all 0.15s; }
+.pin-dot.filled { background:var(--accent); border-color:var(--accent); }
+.pin-pad { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px; }
+.pin-key { background:rgba(10,25,40,0.8); border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px; font-size:20px; font-weight:700; color:var(--text-primary); font-family:var(--font-mono); transition:all 0.1s; }
+.pin-key:hover { background:var(--hover-bg); color:var(--accent); }
+.pin-key:active { transform:scale(0.92); }
+.pin-key-empty { visibility:hidden; }
+.pin-key-del { font-size:16px; }
+
+/* Biometric */
+.biometric-wrap { text-align:center; padding:20px 0; }
+.biometric-ring { width:90px; height:90px; border-radius:50%; border:2px solid var(--border); margin:0 auto 12px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.3s; animation:bioPulse 2.5s ease-in-out infinite; }
+@keyframes bioPulse { 0%,100%{box-shadow:0 0 0 0 rgba(56,189,248,0.3)} 50%{box-shadow:0 0 0 16px rgba(56,189,248,0)} }
+.biometric-ring:hover { border-color:var(--accent); }
+.biometric-ring.scanning { border-color:var(--accent); background:var(--accent-glow); }
+.biometric-icon { font-size:40px; }
+.biometric-label { font-size:11px; color:var(--text-muted); }
+
+/* OTP */
+.otp-inputs { display:flex; gap:8px; justify-content:center; margin:16px 0; }
+.otp-box { width:44px; height:52px; background:rgba(7,16,24,0.8); border:1px solid var(--border); border-radius:var(--radius-sm); text-align:center; font-size:22px; font-weight:700; color:var(--text-primary); -webkit-text-fill-color:var(--text-primary); outline:none; font-family:var(--font-mono); transition:border 0.15s; }
+.otp-box:focus { border-color:var(--accent); }
+
+/* Offline hint */
+#offline-login-hint { display:none; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.4); border-radius:8px; padding:10px 14px; font-size:12px; color:#f59e0b; margin-bottom:12px; text-align:center; line-height:1.5; }
+
+/* ═══════════════════════════════
+   MODALS
+═══════════════════════════════ */
+.modal-overlay { position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,0.75); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:20px; }
+.modal-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); width:100%; max-width:500px; max-height:85vh; overflow-y:auto; box-shadow:var(--shadow); animation:cardSlideUp 0.3s ease; }
+.modal-header { padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.modal-title { font-size:16px; font-weight:700; font-family:var(--font-display); }
+.modal-close { background:none; border:none; color:var(--text-muted); font-size:18px; transition:color 0.15s; cursor:pointer; }
+.modal-close:hover { color:var(--red); }
+.modal-body { padding:20px; }
+.modal-footer { padding:14px 20px; border-top:1px solid var(--border); display:flex; gap:8px; justify-content:flex-start; }
+.modal-desc { font-size:12px; color:var(--text-muted); margin-bottom:14px; line-height:1.6; }
+
+/* ═══════════════════════════════
+   APP LAYOUT — index3 BEST LAYOUT
+   Desktop: flex-row, sidebar always visible RIGHT
+   Mobile: sidebar fixed + toggle button
+═══════════════════════════════ */
+#main-app {
+  display:flex;
+  flex-direction:row;
+  height:100vh;
+  overflow:hidden;
+  position:relative;
+}
+
+/* SIDEBAR — ہمیشہ RIGHT پر، desktop پر always visible */
+.sidebar {
+  width:var(--sidebar-width);
+  min-width:var(--sidebar-width);
+  background:var(--bg-secondary);
+  border-left:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  flex-shrink:0;
+  height:100vh;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  order:2; /* RTL: sidebar آخر میں = right side */
+  z-index:900;
+}
+
+.sidebar-logo { padding:18px 16px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+.sidebar-logo-icon { font-size:24px; }
+.sidebar-logo-text { font-family:var(--font-display); font-size:18px; font-weight:800; letter-spacing:2px; color:var(--accent); }
+.sidebar-logo-sub { font-size:8px; color:var(--text-faint); letter-spacing:2px; }
+.sidebar-profile { padding:14px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+.sidebar-avatar { width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,var(--accent-dark),var(--accent)); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:#fff; flex-shrink:0; overflow:hidden; font-family:var(--font-display); }
+.sidebar-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.sidebar-profile-name { font-size:12px; font-weight:600; color:var(--text-primary); }
+.sidebar-profile-role { font-size:10px; color:var(--text-muted); }
+.sidebar-nav { flex:1; padding:10px 8px; overflow-y:auto; }
+.nav-section-label { font-size:9px; color:var(--text-faint); letter-spacing:2px; text-transform:uppercase; padding:8px 10px 4px; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:var(--radius-sm); font-size:13px; color:var(--text-secondary); margin:2px 0; transition:all 0.15s; cursor:pointer; }
+.nav-item:hover { background:var(--hover-bg); color:var(--text-primary); }
+.nav-item.active { background:var(--nav-active); color:var(--accent); font-weight:600; box-shadow:inset -2px 0 0 var(--accent); }
+.nav-icon { font-size:16px; width:20px; text-align:center; flex-shrink:0; }
+.nav-badge { margin-right:auto; margin-left:0; background:var(--red); color:#fff; font-size:9px; font-weight:700; padding:2px 6px; border-radius:10px; }
+.sidebar-footer { padding:12px 10px; border-top:1px solid var(--border); }
+.logout-btn { width:100%; background:var(--red-bg); border:1px solid rgba(239,68,68,0.2); border-radius:var(--radius-sm); padding:9px; color:var(--red); font-size:12px; font-weight:600; transition:all 0.15s; cursor:pointer; }
+.logout-btn:hover { background:rgba(239,68,68,0.15); }
+
+/* MAIN AREA */
+.main-area { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; order:1; }
+
+/* TOPBAR */
+.topbar { height:var(--topbar-height); background:var(--bg-secondary); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 16px; justify-content:space-between; flex-shrink:0; }
+.topbar-left { display:flex; align-items:center; gap:12px; }
+.topbar-right { display:flex; align-items:center; gap:8px; }
+.topbar-title { font-size:14px; font-weight:700; color:var(--text-secondary); font-family:var(--font-display); }
+.topbar-btn { background:none; border:1px solid var(--border); border-radius:var(--radius-sm); padding:6px 10px; color:var(--text-muted); font-size:14px; transition:all 0.15s; cursor:pointer; }
+.topbar-btn:hover { border-color:var(--accent); color:var(--accent); }
+.topbar-status { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-muted); background:var(--bg-tertiary); padding:5px 10px; border-radius:var(--radius-sm); border:1px solid var(--border); }
+.status-dot { width:7px; height:7px; border-radius:50%; background:var(--green); animation:statusPulse 2s infinite; }
+@keyframes statusPulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.db-badge { font-size:10px; padding:3px 8px; border-radius:6px; background:var(--green-bg); color:var(--green); border:1px solid rgba(34,197,94,0.2); }
+
+/* PAGE CONTENT */
+.page-content { flex:1; overflow-y:scroll; -webkit-overflow-scrolling:touch; padding:16px 20px; overscroll-behavior:contain; }
+.bottombar { height:var(--bottombar-height); background:var(--bg-tertiary); border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 16px; font-size:10px; color:var(--text-faint); flex-shrink:0; }
+
+/* ═══════════════════════════════
+   COMMON COMPONENTS
+═══════════════════════════════ */
+.page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+.page-title { font-size:20px; font-weight:800; font-family:var(--font-display); color:var(--text-primary); display:none; }
+.page-subtitle { font-size:11px; color:var(--text-muted); margin-top:2px; display:none; }
+.btn { padding:8px 16px; border-radius:var(--radius-sm); font-size:12px; font-weight:600; border:none; transition:all 0.15s; cursor:pointer; font-family:var(--font-main); }
+.btn-primary { background:var(--accent-dark); color:#fff; }
+.btn-primary:hover { background:var(--accent-darker); transform:translateY(-1px); }
+.btn-secondary { background:var(--hover-bg); color:var(--text-secondary); border:1px solid var(--border); }
+.btn-secondary:hover { color:var(--text-primary); border-color:var(--accent); }
+.btn-danger { background:var(--red-bg); color:var(--red); border:1px solid rgba(239,68,68,0.2); }
+.btn-danger:hover { background:rgba(239,68,68,0.15); }
+.btn-success { background:var(--green-bg); color:var(--green); border:1px solid rgba(34,197,94,0.2); }
+.btn-sm { padding:5px 10px; font-size:11px; }
+.card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; transition:border-color 0.15s; }
+.card-title { font-size:10px; color:var(--text-faint); letter-spacing:2px; text-transform:uppercase; margin-bottom:12px; }
+.stats-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:16px; }
+.stat-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px 12px; text-align:center; cursor:pointer; transition:all 0.15s; }
+.stat-card:hover { border-color:var(--accent); transform:translateY(-2px); }
+.stat-num { font-size:28px; font-weight:900; font-family:var(--font-display); line-height:1; }
+.stat-label { font-size:10px; color:var(--text-muted); margin-top:4px; }
+.stat-blue .stat-num { color:var(--accent); }
+.stat-green .stat-num { color:var(--green); }
+.stat-amber .stat-num { color:var(--amber); }
+.stat-red .stat-num { color:var(--red); }
+.stat-purple .stat-num { color:var(--purple); }
+
+/* FORMS */
+.form-group { display:flex; flex-direction:column; gap:4px; margin-bottom:12px; }
+.form-label { font-size:11px; color:var(--text-muted); letter-spacing:0.5px; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; display:block; width:100%; text-align:right; direction:rtl; }
+.form-input { background:var(--bg-tertiary); border:1px solid var(--border); border-radius:var(--radius-sm); padding:9px 12px; color:var(--text-primary); -webkit-text-fill-color:var(--text-primary); font-size:14px; outline:none; transition:border 0.15s; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',var(--font-main); width:100%; direction:rtl; text-align:right; }
+.form-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow); }
+.form-input::placeholder { color:var(--text-faint); -webkit-text-fill-color:var(--text-faint); text-align:right; direction:rtl; }
+.form-input[type="date"],.form-input[type="time"],.form-input[type="number"],.form-input[type="email"] { direction:ltr; text-align:left; font-family:var(--font-mono),monospace; -webkit-text-fill-color:var(--text-primary); }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; direction:rtl; }
+input[id*="cnic"],input[id*="cell"],input[id*="-fir"]:not([id*="writer"]):not([id*="number"]) { direction:ltr!important; text-align:left!important; font-family:var(--font-mono),monospace!important; }
+textarea.form-input { direction:rtl; text-align:right; }
+select.form-input { direction:rtl; text-align:right; }
+textarea:not([dir="ltr"]),input[type="text"]:not([dir="ltr"]):not([id*="cnic"]):not([id*="cell"]):not([id*="fir"]):not([id*="date"]):not([id*="phone"]) { unicode-bidi:plaintext; text-align:start; }
+
+/* TABLE */
+.data-table { width:100%; border-collapse:collapse; }
+.data-table th { text-align:left; font-size:9px; color:var(--text-faint); letter-spacing:1.5px; text-transform:uppercase; padding:8px 12px; border-bottom:1px solid var(--border); font-family:var(--font-display); }
+.data-table td { padding:11px 12px; border-bottom:1px solid var(--border-light); font-size:12px; vertical-align:middle; }
+.data-table tr:hover td { background:var(--hover-bg); }
+.data-table tr:last-child td { border-bottom:none; }
+
+/* PILLS */
+.pill { display:inline-block; padding:3px 10px; border-radius:20px; font-size:10px; font-weight:600; }
+.pill-blue { background:rgba(56,189,248,0.1); color:var(--accent); }
+.pill-green { background:var(--green-bg); color:var(--green); }
+.pill-amber { background:var(--amber-bg); color:var(--amber); }
+.pill-red { background:var(--red-bg); color:var(--red); }
+.pill-purple { background:rgba(167,139,250,0.1); color:var(--purple); }
+.pill-teal { background:rgba(6,182,212,0.12); color:#06b6d4; }
+
+/* SEARCH */
+.search-input { flex:1; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:9px 14px; color:var(--text-primary); -webkit-text-fill-color:var(--text-primary); font-size:13px; outline:none; transition:border 0.15s; }
+.search-input:focus { border-color:var(--accent); }
+.search-input::placeholder { color:var(--text-faint); -webkit-text-fill-color:var(--text-faint); }
+.filter-select { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text-secondary); -webkit-text-fill-color:var(--text-secondary); font-size:12px; outline:none; cursor:pointer; }
+
+/* DETAILS */
+.detail-row { padding:9px 0; border-bottom:1px solid var(--border-light); display:flex; justify-content:space-between; font-size:12px; align-items:center; }
+.detail-row:last-child { border-bottom:none; }
+.detail-key { color:var(--text-muted); }
+.detail-val { color:var(--text-primary); font-weight:600; text-align:right; max-width:60%; }
+.fir-num { color:var(--accent); font-weight:700; font-size:13px; cursor:pointer; font-family:var(--font-mono); }
+.fir-num:hover { text-decoration:underline; }
+
+/* LOADING */
+.loading-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; height:200px; gap:12px; }
+.loading-spinner { width:32px; height:32px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--accent); animation:spin 0.8s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+.loading-text { font-size:12px; color:var(--text-muted); }
+
+/* TOAST */
+#toast-container { position:fixed; bottom:50px; right:20px; z-index:5000; display:flex; flex-direction:column; gap:8px; }
+.toast { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 18px; font-size:12px; color:var(--text-primary); box-shadow:var(--shadow); animation:cardSlideUp 0.3s ease; max-width:320px; }
+.toast-success { border-color:rgba(34,197,94,0.3); }
+.toast-error { border-color:rgba(239,68,68,0.3); }
+
+/* EVIDENCE */
+.evidence-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.evidence-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; cursor:pointer; transition:all 0.15s; }
+.evidence-card:hover { border-color:var(--accent); transform:translateY(-2px); }
+.evidence-thumb { height:100px; background:var(--bg-tertiary); display:flex; align-items:center; justify-content:center; font-size:36px; position:relative; }
+.evidence-info { padding:10px; }
+.evidence-name { font-size:11px; color:var(--text-secondary); margin-bottom:4px; }
+.evidence-tag { font-size:10px; color:var(--accent); font-family:var(--font-mono); }
+
+/* LAW */
+.law-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.law-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; cursor:pointer; transition:all 0.15s; }
+.law-card:hover { border-color:var(--accent); transform:translateY(-1px); }
+
+/* MISAL */
+.misal-layout { display:grid; grid-template-columns:260px 1fr; gap:16px; height:calc(100vh - 130px); }
+.misal-sidebar { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow-y:auto; }
+.misal-main { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); display:flex; flex-direction:column; }
+.misal-preview { flex:1; padding:20px; overflow-y:auto; }
+.doc-preview { background:#fff; color:#1a1a1a; border-radius:8px; padding:40px; min-height:500px; font-family:'Times New Roman',serif; }
+.editable-field { outline:none; border-bottom:2px solid #aaa!important; background:rgba(56,189,248,0.04); border-radius:3px 3px 0 0; padding:2px 4px; transition:all 0.15s; cursor:text; min-height:22px; display:inline-block; min-width:100px; }
+.editable-field:focus { border-bottom-color:#0284c7!important; background:rgba(56,189,248,0.1); }
+
+/* PERFORMANCE */
+.perf-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.perf-bar-wrap { height:8px; background:var(--hover-bg); border-radius:4px; overflow:hidden; margin:6px 0; }
+.perf-bar { height:100%; border-radius:4px; transition:width 0.8s ease; }
+.backup-dest-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:16px; }
+
+/* CASE WORKSPACE */
+.workspace-layout { display:grid; grid-template-columns:260px 1fr; gap:0; height:calc(100vh - 84px); overflow:hidden; }
+.workspace-sidebar { background:var(--bg-secondary); border-right:1px solid var(--border); overflow-y:auto; display:flex; flex-direction:column; }
+.workspace-sidebar-header { padding:14px 16px; border-bottom:1px solid var(--border); }
+.workspace-main { overflow-y:auto; background:var(--bg-primary); }
+.doc-card { display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--border-light); cursor:pointer; transition:background 0.15s; }
+.doc-card:hover { background:var(--hover-bg); }
+.doc-card.active { background:var(--nav-active); border-left:3px solid var(--accent); }
+.doc-card-icon { font-size:20px; flex-shrink:0; }
+.doc-card-name { flex:1; font-size:12px; color:var(--text-secondary); line-height:1.4; }
+.doc-card.active .doc-card-name { color:var(--accent); font-weight:600; }
+.doc-card-status { font-size:9px; padding:2px 6px; border-radius:8px; flex-shrink:0; }
+.doc-status-draft { background:var(--amber-bg); color:var(--amber); }
+.doc-status-done { background:var(--green-bg); color:var(--green); }
+.doc-status-empty { background:var(--hover-bg); color:var(--text-faint); }
+.case-header { padding:16px 20px; background:var(--bg-secondary); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.case-tabs { display:flex; gap:0; border-bottom:1px solid var(--border); background:var(--bg-secondary); padding:0 16px; }
+.case-tab { padding:10px 16px; font-size:12px; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; transition:all 0.15s; white-space:nowrap; }
+.case-tab:hover { color:var(--text-primary); }
+.case-tab.active { color:var(--accent); border-bottom-color:var(--accent); font-weight:600; }
+.case-tab-content { padding:20px; }
+
+/* TEMPLATE EDITOR */
+.template-editor { background:#fff; color:#1a1a1a; min-height:600px; padding:40px; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu','Times New Roman',serif; font-size:14px; line-height:2; border-radius:var(--radius); box-shadow:0 4px 20px rgba(0,0,0,0.3); }
+.template-field { outline:none; border-bottom:2px dashed #aaa; background:rgba(56,189,248,0.05); padding:2px 6px; min-width:80px; display:inline-block; cursor:text; border-radius:3px 3px 0 0; transition:all 0.15s; }
+.template-field:focus { border-bottom-color:#0284c7; background:rgba(56,189,248,0.1); }
+.template-field[dir="auto"] { text-align:right; }
+.template-toolbar { padding:10px 16px; background:var(--bg-card); border-bottom:1px solid var(--border); display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+/* OFFICER CARD */
+.officer-card { background:linear-gradient(135deg,var(--bg-tertiary),var(--nav-active)); border:1px solid var(--border); border-radius:16px; padding:20px; display:flex; align-items:center; gap:16px; margin-bottom:16px; }
+.officer-card-avatar { width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,var(--accent-dark),var(--accent)); border:3px solid var(--accent); display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; color:#fff; flex-shrink:0; overflow:hidden; font-family:var(--font-display); }
+.officer-card-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.officer-card-name { font-size:18px; font-weight:700; font-family:var(--font-display); }
+.officer-card-meta { display:flex; gap:16px; margin-top:6px; flex-wrap:wrap; }
+.officer-card-meta span { font-size:11px; color:var(--text-muted); }
+.officer-card-meta b { color:var(--accent); }
+
+/* REMINDERS */
+.reminder-item { display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid var(--border-light); font-size:12px; }
+.reminder-item:last-child { border-bottom:none; }
+.reminder-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.reminder-text { flex:1; color:var(--text-secondary); }
+.reminder-date { color:var(--text-faint); font-size:10px; }
+
+/* NEWS TICKER */
+.news-ticker-wrap { background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.15); border-radius:6px; padding:4px 16px; overflow:hidden; margin-bottom:8px; display:flex; align-items:center; justify-content:center; }
+.news-ticker-text { font-size:13px; color:var(--accent); font-weight:600; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; white-space:nowrap; direction:rtl; }
+@keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-100%)} }
+
+/* THEME PICKER */
+#theme-picker-popup { animation:cardSlideUp 0.2s ease; }
+.theme-swatch { display:flex; flex-direction:column; align-items:center; gap:5px; padding:9px 5px; border-radius:8px; cursor:pointer; border:2px solid transparent; transition:all 0.15s; }
+.theme-swatch:hover { border-color:var(--accent); background:var(--hover-bg); }
+.theme-swatch.active { border-color:var(--accent); background:var(--accent-glow); }
+.theme-swatch-circle { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:15px; border:2px solid; overflow:hidden; }
+
+/* ═══════════════════════════════
+   MOBILE — ≤768px
+   Sidebar hidden, toggle button visible
+═══════════════════════════════ */
+@media (max-width:768px) {
+  #menu-toggle { display:flex!important; }
+  .sidebar {
+    position:fixed!important;
+    top:0; right:0; bottom:0;
+    z-index:1001!important;
+    transform:translateX(100%);
+    transition:transform 0.28s ease;
+    box-shadow:-4px 0 20px rgba(0,0,0,0.4);
+    order:unset;
+  }
+  .sidebar.mobile-open { transform:translateX(0)!important; }
+  .main-area { margin-right:0!important; }
+  .topbar { padding-right:60px!important; }
+  .page-content { padding:10px!important; height:calc(100vh - 56px)!important; }
+  .stats-grid,.form-row { grid-template-columns:repeat(2,1fr)!important; }
+  .law-grid,.misal-layout,.backup-dest-grid,.perf-grid { grid-template-columns:1fr!important; }
+  table { display:block!important; overflow-x:auto!important; -webkit-overflow-scrolling:touch!important; }
+  .data-table { font-size:11px!important; }
+  .modal-card { max-width:100vw!important; max-height:95vh; margin:0!important; border-radius:12px 12px 0 0!important; position:fixed; bottom:0; left:0; right:0; }
+  .wb-ribbon { overflow-x:auto!important; flex-wrap:nowrap!important; -webkit-overflow-scrolling:touch; }
+  .wb-grp { flex-shrink:0; }
+  .card { padding:12px!important; margin-bottom:10px; }
+  .btn { min-height:38px; min-width:38px; }
+  .btn-sm { min-height:32px; padding:5px 10px; font-size:11px; }
+  .nav-item { min-height:44px; padding:10px 14px; transition:none!important; }
+  .form-input { padding:10px 12px; font-size:14px; min-height:44px; }
+  #dash-root > div[style*="grid-template-columns:repeat(4"] { grid-template-columns:repeat(2,1fr)!important; }
+  #misal-doc-bar > div:last-of-type { flex-wrap:nowrap!important; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .mdoc-chip { flex-shrink:0; }
+  .topbar-right > button:not(:last-child):not(:nth-last-child(2)) { display:none; }
+  .data-table th,.data-table td { font-size:11px; padding:5px 6px; }
+  .nav-item,.btn,.card { transition:none!important; }
+  #sidebar-mini-strip { display:none!important; }
+  .evidence-grid { grid-template-columns:repeat(2,1fr)!important; }
+}
+
+/* DESKTOP — ≥769px */
+@media (min-width:769px) {
+  #menu-toggle { display:none!important; }
+  #sidebar-mini-strip { display:flex!important; }
+  .page-content { padding:16px 20px; }
+}
+
+/* TABLET — 769-900px */
+@media (max-width:900px) and (min-width:769px) {
+  .stats-grid { grid-template-columns:repeat(3,1fr)!important; }
+  .evidence-grid { grid-template-columns:repeat(2,1fr)!important; }
+}
+
+/* Touch optimizations */
+button,.btn,.nav-item,.sr-pill,.mdoc-chip,.wb-btn { touch-action:manipulation; }
+.sidebar,.main-area,.page-content { -webkit-overflow-scrolling:touch; will-change:transform; }
+img { content-visibility:auto; }
+  </style>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
-
 <body>
-  <header class="topbar">
-    <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">&#9776;</button>
-    <div class="brand">Life on Campus</div>
-  </header>
 
-  <div class="shell">
-    <nav class="nav" id="sideNav">
-      <a href="index.html">📅 Events</a>
-      <a href="clubs.html" class="active">🎭 Clubs</a>
-      <a href="acc.html">🎨 ACC</a>
-      <a href="news.html">📰 News</a>
-      <a href="resources.html">🔗 Resources</a>
-      <a href="emergency-contacts.html">🚨 Emergency</a>
-      <a href="event-hub.html" style="color:#7c3aed;font-weight:700;">✦ Event Hub</a>
-    </nav>
-
-    <main class="content">
-      <div class="page-title">Clubs &amp; Societies</div>
-      <div class="page-subtitle" id="pageSubtitle">Loading clubs…</div>
-
-      <div class="search-row">
-        <input id="searchQ" type="text" placeholder="🔍  Search clubs, events, people…" />
-        <select id="campusFilter">
-          <option value="">All Campuses</option>
-          <option value="Karachi">Karachi</option>
-          <option value="Nairobi">Nairobi</option>
-          <option value="Kampala">Kampala</option>
-          <option value="Dar es Salaam">Dar es Salaam</option>
-        </select>
-        <select id="categoryFilter">
-          <option value="">All Categories</option>
-        </select>
-        <button class="btn-clear" id="clearBtn" type="button">Clear</button>
-      </div>
-
-      <div class="result-count" id="resultCount"></div>
-      <div id="emptyMsg" class="empty" style="display:none;">No clubs match your search.</div>
-      <div id="clubsGrid" class="cards"></div>
-    </main>
-  </div>
-
-  <!-- Modal -->
-  <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true">
-    <div class="modal" id="modal">
-      <div class="modal-top-bar" id="modalBar"></div>
-      <div class="modal-content">
-        <div class="modal-header">
-          <div class="modal-icon" id="modalIcon"></div>
-          <div class="modal-title-block">
-            <div class="modal-title" id="modalTitle"></div>
-            <div id="modalCampus" class="campus-tag" style="display:none;margin-bottom:4px;"></div>
-            <div id="modalCategory" class="category-tag" style="display:none;margin-bottom:4px;"></div>
-            <a class="modal-email" id="modalEmail" href="#"></a>
-          </div>
-          <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
-        </div>
-
-        <div class="modal-section">
-          <div class="modal-section-title">About</div>
-          <p id="modalDesc"></p>
-        </div>
-
-        <div class="modal-section" id="modalEventsSection">
-          <div class="modal-section-title">Signature Events</div>
-          <div class="modal-events-list" id="modalEvents"></div>
-        </div>
-
-        <div class="modal-section">
-          <div class="modal-section-title">Leadership</div>
-          <div class="modal-leadership" id="modalLeadership"></div>
-        </div>
-
-        <div style="padding:16px 20px 20px;border-top:1px solid #f3f4f6;">
-          <a id="modalViewEvents" href="index.html"
-            style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;
-            background:#eff6ff;color:#2563eb;border-radius:10px;font-size:13px;font-weight:700;
-            text-decoration:none;transition:background .15s;"
-            onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">
-            📅 View this club's events →
-          </a>
-        </div>
-
-      </div><!-- /modal-content -->
-    </div><!-- /modal -->
-  </div><!-- /modal-backdrop -->
-
+<!-- ✅ Error Banner — JS errors screen پر دکھائے (debugging کے لیے) -->
+<div id="dio-error-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:999999;background:#b91c1c;color:#fff;padding:10px 14px;font-size:12px;font-family:monospace;direction:ltr;text-align:left;max-height:40vh;overflow:auto;"></div>
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-
-  /* ── Nav toggle ── */
-  const navToggle = document.getElementById("navToggle");
-  const sideNav   = document.getElementById("sideNav");
-  navToggle.addEventListener("click", () => sideNav.classList.toggle("open"));
-  document.addEventListener("click", (e) => {
-    if(sideNav.classList.contains("open") && !sideNav.contains(e.target) && e.target !== navToggle)
-      sideNav.classList.remove("open");
-  });
-
-  /* ── Google Drive URL converter ── */
-  function driveUrl(raw){
-    if(!raw) return "";
-    raw = raw.trim();
-    if(!raw.includes("drive.google.com")) return raw;
-    const matchFile = raw.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-    const matchOpen = raw.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-    const id = matchFile?.[1] || matchOpen?.[1];
-    if(!id) return "";
-    // thumbnail endpoint is cross-origin safe and works for direct embedding
-    return `https://drive.google.com/thumbnail?id=${id}&sz=w400`;
-  }
-
-  // Club-name → specific emoji override for better visuals
-  const ICON_MAP = {
-    "aurora":           "🌅",
-    "athletics":        "🏃",
-    "music":            "🎵",
-    "explorer":         "🧭",
-    "ied activity":     "🎪",
-    "entrepreneurial":  "💡",
-    "photography":      "📷",
-    "majlis":           "🏛️",
-    "chess":            "♟️",
-    "arts and culture": "🎨",
-    "rowing":           "🚣",
-    "climate":          "🌍",
-    "public speaking":  "🎤",
-    "journalism":       "📰",
-    "literary":         "📖",
-    "publication":      "📖",
-    "research forum":   "🔬",
-    "synergy":          "⚡",
-    "falah":            "❤️",
-    "mun":              "🌐",
-    "sports":           "🏅",
-    "graduate":         "🎓",
-  };
-
-  function getIcon(name){
-    const lower = name.toLowerCase();
-    for(const [key, emoji] of Object.entries(ICON_MAP)){
-      if(lower.includes(key)) return emoji;
-    }
-    return "🎓";
-  }
-
-  let allClubs = [];
-
-  /* ── DOM refs ── */
-  const searchQ        = document.getElementById("searchQ");
-  const campusFilter   = document.getElementById("campusFilter");
-  const categoryFilter = document.getElementById("categoryFilter");
-  const clearBtn       = document.getElementById("clearBtn");
-  const clubsGrid      = document.getElementById("clubsGrid");
-  const emptyMsg       = document.getElementById("emptyMsg");
-  const resultCount    = document.getElementById("resultCount");
-  const pageSubtitle   = document.getElementById("pageSubtitle");
-
-  /* ── Modal refs ── */
-  const backdrop     = document.getElementById("modalBackdrop");
-  const modalBar     = document.getElementById("modalBar");
-  const modalIcon    = document.getElementById("modalIcon");
-  const modalTitle   = document.getElementById("modalTitle");
-  const modalEmail   = document.getElementById("modalEmail");
-  const modalDesc    = document.getElementById("modalDesc");
-  const modalEvents  = document.getElementById("modalEvents");
-  const modalEventsSection = document.getElementById("modalEventsSection");
-  const modalLeadership    = document.getElementById("modalLeadership");
-  const modalClose   = document.getElementById("modalClose");
-
-  /* ── Palette — distinct color per club, no canvas needed ── */
-  const PALETTE = [
-    { bg:"#FFF0F3", bar:"#e63462" },
-    { bg:"#FFF6EC", bar:"#e07b39" },
-    { bg:"#FFFBEB", bar:"#d97706" },
-    { bg:"#F0FDF4", bar:"#16a34a" },
-    { bg:"#F0F7FF", bar:"#2563eb" },
-    { bg:"#F5F3FF", bar:"#7c3aed" },
-    { bg:"#FDF4FF", bar:"#a21caf" },
-    { bg:"#FFF1F2", bar:"#be123c" },
-    { bg:"#ECFDF5", bar:"#059669" },
-    { bg:"#EFF6FF", bar:"#1d4ed8" },
-    { bg:"#F0FDFA", bar:"#0d9488" },
-    { bg:"#FEF2F2", bar:"#dc2626" },
-    { bg:"#FFF7ED", bar:"#ea580c" },
-    { bg:"#FAFAF9", bar:"#44403c" },
-    { bg:"#F7F3FF", bar:"#6d28d9" },
-    { bg:"#ECFEFF", bar:"#0891b2" },
-    { bg:"#F0FFF4", bar:"#15803d" },
-    { bg:"#FEF9C3", bar:"#a16207" },
-    { bg:"#FDF2F8", bar:"#9d174d" },
-    { bg:"#F1F5F9", bar:"#334155" },
-    { bg:"#FFF5F5", bar:"#c0392b" },
-    { bg:"#F0F9FF", bar:"#0369a1" },
-    { bg:"#F5F0FF", bar:"#5b21b6" },
-  ];
-
-  /* ── Render ── */
-  function monogramEl(name, size){
-    size = size || 52;
-    const words    = name.trim().split(/\s+/);
-    const initials = words.length >= 2
-      ? (words[0][0] + words[1][0]).toUpperCase()
-      : name.substring(0, 2).toUpperCase();
-    const hue = [...name].reduce((h, c) => h + c.charCodeAt(0), 0) % 360;
-    const el  = document.createElement('div');
-    el.style.cssText = 'width:' + size + 'px;height:' + size + 'px;border-radius:14px;'
-      + 'background:hsl(' + hue + ',55%,88%);color:hsl(' + hue + ',55%,30%);'
-      + 'display:flex;align-items:center;justify-content:center;'
-      + 'font-size:' + Math.round(size*0.35) + 'px;font-weight:700;flex-shrink:0;';
-    el.textContent = initials;
-    return el;
-  }
-
-  function monogram(name, size){
-    return monogramEl(name, size).outerHTML;
-  }
-
-  function categoryIcon(cat){
-    if(!cat) return "🏷️";
-    const c = cat.toLowerCase();
-    if(c.includes("sport") || c.includes("athletic") || c.includes("rowing") || c.includes("chess") || c.includes("explorer") || c.includes("fitness")) return "🏆";
-    if(c.includes("music") || c.includes("arts") || c.includes("culture") || c.includes("aurora") || c.includes("photography") || c.includes("creative")) return "🎨";
-    if(c.includes("literary") || c.includes("publication") || c.includes("journal") || c.includes("writing") || c.includes("book")) return "📖";
-    if(c.includes("research") || c.includes("academic") || c.includes("science") || c.includes("stem")) return "🔬";
-    if(c.includes("entrepreneur") || c.includes("business") || c.includes("synergy")) return "💼";
-    if(c.includes("welfare") || c.includes("falah") || c.includes("health") || c.includes("climate") || c.includes("conservation")) return "🤝";
-    if(c.includes("speak") || c.includes("debate") || c.includes("public")) return "🎤";
-    if(c.includes("student") || c.includes("government") || c.includes("majlis")) return "🏛️";
-    if(c.includes("tech") || c.includes("coding") || c.includes("ied") || c.includes("digital")) return "💻";
-    if(c.includes("food") || c.includes("cook")) return "🍳";
-    if(c.includes("media") || c.includes("film") || c.includes("video")) return "🎬";
-    return "🏷️";
-  }
-
-  function campusClass(campus){
-    const map = { "Karachi":"karachi", "Nairobi":"nairobi", "Kampala":"kampala", "Dar es Salaam":"dares" };
-    return map[campus] || "default";
-  }
-
-  function render(){
-    const q   = searchQ.value.trim().toLowerCase();
-    const cpv = campusFilter.value;
-    const ctv = categoryFilter.value;
-
-    let list = allClubs
-      .filter(c => !cpv || c.campus   === cpv)
-      .filter(c => !ctv || c.category === ctv)
-      .filter(c => {
-        if(!q) return true;
-        return [c.name, c.email, c.description, c.events,
-                c.convenor, c.coConvenor, c.secretary, c.treasurer, c.campus, c.category]
-          .join(" ").toLowerCase().includes(q);
-      });
-
-    clubsGrid.innerHTML = "";
-    emptyMsg.style.display = "none";
-    resultCount.textContent = `Showing ${list.length} of ${allClubs.length} clubs`;
-
-    if(!list.length){
-      emptyMsg.style.display = "block";
-      return;
-    }
-
-    list.forEach((c, i) => {
-      const pal      = PALETTE[i % PALETTE.length];
-      const icon     = getIcon(c.name);
-      const cardId   = `club-card-${i}`;
-
-      // Logo avatar — white pill so logo always stands out against any bg color
-      // Build avatar — monogram for no-logo clubs, img for clubs with logos
-      const avatarHtml = `<div class="club-avatar" id="avatar-${cardId}" style="background:#fff;"></div>`;
-      // We'll set avatar content after DOM insert
-
-      // Compact events preview
-      const eventsPreview = c.events
-        ? c.events.replace(/^\s*[\d\-\*\.]+\s*/gm, "").split("\n")
-            .filter(Boolean).slice(0, 3).join(" · ")
-        : "";
-
-      const leaderHtml = [
-        c.convenor   ? `<div class="leadership-item"><span class="leadership-role">Convenor:</span><span class="leadership-name">${esc(c.convenor.split("\n")[0])}</span></div>` : "",
-        c.coConvenor ? `<div class="leadership-item"><span class="leadership-role">Co-Convenor:</span><span class="leadership-name">${esc(c.coConvenor.split("\n")[0])}</span></div>` : "",
-        c.secretary  ? `<div class="leadership-item"><span class="leadership-role">Secretary:</span><span class="leadership-name">${esc(c.secretary.split("\n")[0])}</span></div>` : "",
-        c.treasurer  ? `<div class="leadership-item"><span class="leadership-role">Treasurer:</span><span class="leadership-name">${esc(c.treasurer.split("\n")[0])}</span></div>` : "",
-      ].join("");
-
-      clubsGrid.insertAdjacentHTML("beforeend", `
-        <article class="club-card" id="${cardId}" data-idx="${allClubs.indexOf(c)}" style="background:${pal.bg}" tabindex="0" role="button" aria-label="View ${esc(c.name)} details">
-          <div class="top-bar" style="background:${pal.bar}"></div>
-          ${avatarHtml}
-          <div class="club-body">
-            <div class="club-name">${esc(c.name)}</div>
-            <div class="club-desc">${esc(c.description)}</div>
-            ${eventsPreview ? `
-              <div class="club-events-label">Signature Events</div>
-              <div class="club-events">${esc(eventsPreview)}</div>
-            ` : ""}
-            <div class="club-leadership">${leaderHtml}</div>
-            ${c.category ? `<div class="category-tag">${categoryIcon(c.category)} ${esc(c.category)}</div>` : ""}
-            ${c.campus ? `<div class="campus-tag ${campusClass(c.campus)}">🏫 ${esc(c.campus)}</div>` : ""}
-            ${c.email ? `<a class="club-email" href="mailto:${esc(c.email)}" onclick="event.stopPropagation()">✉️ <span>${esc(c.email)}</span></a>` : ""}
-          </div>
-        </article>
-      `);
-
-      // Set avatar content safely after DOM insert
-      const avatarEl = document.getElementById('avatar-' + cardId);
-      if(avatarEl){
-        if(c.logo){
-          const img = document.createElement('img');
-          img.src   = c.logo;
-          img.alt   = c.name;
-          img.style.cssText = 'width:72px;height:72px;object-fit:contain;border-radius:10px;';
-          img.onerror = () => { avatarEl.innerHTML = ''; avatarEl.appendChild(monogramEl(c.name, 64)); avatarEl.style.background='transparent'; };
-          avatarEl.style.background = '#fff';
-          avatarEl.appendChild(img);
-        } else {
-          avatarEl.appendChild(monogramEl(c.name, 64));
-          avatarEl.style.background = 'transparent';
-        }
-      }
-    });
-
-    // Attach click → open modal
-    clubsGrid.querySelectorAll(".club-card").forEach(card => {
-      const open = () => openModal(allClubs[Number(card.dataset.idx)], PALETTE[Number(card.dataset.idx) % PALETTE.length]);
-      card.addEventListener("click", open);
-      card.addEventListener("keydown", e => { if(e.key === "Enter" || e.key === " ") open(); });
-    });
-  }
-
-  /* ── Modal ── */
-  function openModal(c, pal){
-    modalBar.style.background = pal.bar;
-    if(c.logo){
-      modalIcon.innerHTML = `<img src="${c.logo}" alt="${c.name} logo"
-        style="width:56px;height:56px;object-fit:contain;border-radius:10px;background:#fff;padding:4px;"
-        onerror="this.parentElement.textContent='${getIcon(c.name)}'" />`;
-    } else {
-      modalIcon.textContent = getIcon(c.name);
-    }
-    modalTitle.textContent         = c.name;
-    modalEmail.textContent         = c.email || "";
-    modalEmail.href                = c.email ? `mailto:${c.email}` : "#";
-
-    // View Events link
-    const viewEventsLink = document.getElementById("modalViewEvents");
-    if(viewEventsLink){
-      viewEventsLink.href = `index.html?organiser=${encodeURIComponent(c.name)}`;
-    }
-    const modalCampus = document.getElementById("modalCampus");
-    if(modalCampus){
-      modalCampus.textContent   = c.campus ? `🏫 ${c.campus}` : "";
-      modalCampus.style.display = c.campus ? "inline-flex" : "none";
-      modalCampus.className     = `campus-tag ${campusClass(c.campus || "")}`;
-    }
-    const modalCategory = document.getElementById("modalCategory");
-    if(modalCategory){
-      modalCategory.textContent   = c.category ? `${categoryIcon(c.category)} ${c.category}` : "";
-      modalCategory.style.display = c.category ? "inline-flex" : "none";
-    }
-    modalDesc.textContent          = c.description || "—";
-    modalEvents.textContent        = c.events || "";
-    modalEventsSection.style.display = c.events ? "" : "none";
-
-    // Leadership
-    const roles = [
-      { role: "Convenor",      val: c.convenor    },
-      { role: "Co-Convenor",   val: c.coConvenor  },
-      { role: "Gen. Secretary",val: c.secretary   },
-      { role: "Treasurer",     val: c.treasurer   },
-    ].filter(r => r.val);
-
-    modalLeadership.innerHTML = roles.map(r => `
-      <div class="modal-leader">
-        <div class="modal-leader-role">${esc(r.role)}</div>
-        <div class="modal-leader-name">${esc(r.val)}</div>
-      </div>
-    `).join("");
-
-    backdrop.classList.add("open");
-  }
-
-  function closeModal(){
-    backdrop.classList.remove("open");
-  }
-
-  modalClose.addEventListener("click", closeModal);
-  backdrop.addEventListener("click", e => { if(e.target === backdrop) closeModal(); });
-  document.addEventListener("keydown", e => { if(e.key === "Escape") closeModal(); });
-
-  /* ── Helpers ── */
-  function esc(str){
-    return String(str ?? "")
-      .replaceAll("&","&amp;").replaceAll("<","&lt;")
-      .replaceAll(">","&gt;").replaceAll('"',"&quot;");
-  }
-
-  /* ── Supabase init ── */
-  const SUPABASE_URL = "https://dgzuqvffnbfybngoadse.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_77t5gCD7M620CzcMwESN-A_oAuqz6B8";
-  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { storageKey: "aku-public-session", persistSession: false } });
-
-  /* ── Load clubs from Supabase ── */
-  async function loadClubs(){
-    pageSubtitle.textContent = "Loading clubs…";
-
-    const { data, error } = await sb
-      .from("clubs")
-      .select("*")
-      .order("name", { ascending: true });
-
-    if(error){
-      pageSubtitle.textContent = "Failed to load clubs. Please try again later.";
-      return;
-    }
-
-    allClubs = (data || []).map(r => ({
-      name:        (r.name        || "").trim(),
-      email:       (r.email       || "").trim(),
-      description: (r.description || "").trim(),
-      events:      (r.events      || "").trim(),
-      convenor:    (r.convenor    || "").trim(),
-      coConvenor:  (r.co_convenor || "").trim(),
-      secretary:   (r.secretary   || "").trim(),
-      treasurer:   (r.treasurer   || "").trim(),
-      campus:      (r.campus      || "").trim(),
-      category:    (r.category    || "").trim(),
-      logo:        driveUrl(r.logo_url || ""),
-    })).filter(c => c.name);
-
-    // Populate category filter dynamically from data
-    const categories = [...new Set(allClubs.map(c => c.category).filter(Boolean))].sort();
-    categoryFilter.innerHTML = `<option value="">All Categories</option>`;
-    categories.forEach(cat => {
-      const opt = document.createElement("option");
-      opt.value = cat;
-      opt.textContent = cat;
-      categoryFilter.appendChild(opt);
-    });
-
-    pageSubtitle.textContent = `${allClubs.length} clubs and societies at AKU`;
-
-    // Wire up filters
-    searchQ.addEventListener("input", render);
-    campusFilter.addEventListener("change", render);
-    categoryFilter.addEventListener("change", render);
-    clearBtn.addEventListener("click", () => {
-      searchQ.value        = "";
-      campusFilter.value   = "";
-      categoryFilter.value = "";
-      render();
-    });
-
-    render();
-
-    // Check if a club name was passed in the URL → auto-open its modal
-    const urlParams  = new URLSearchParams(window.location.search);
-    const targetClub = urlParams.get("club");
-    if(targetClub){
-      const target = targetClub.toLowerCase().trim();
-
-      // 1. Exact match
-      let match = allClubs.find(c => c.name.toLowerCase() === target);
-
-      // 2. Partial match — club name contains the organiser name or vice versa
-      if(!match){
-        match = allClubs.find(c =>
-          c.name.toLowerCase().includes(target) ||
-          target.includes(c.name.toLowerCase())
-        );
-      }
-
-      if(match){
-        const idx = allClubs.indexOf(match);
-        const pal = PALETTE[idx % PALETTE.length];
-        openModal(match, pal);
-      }
-    }
-  }
-
-  loadClubs();
-
+window.addEventListener('error',function(e){
+  var b=document.getElementById('dio-error-banner');
+  if(b){b.style.display='block';b.innerHTML+='⚠️ '+(e.message||'error')+'<br><small>'+(e.filename||'').split('/').pop()+':'+(e.lineno||'?')+'</small><hr style="border-color:rgba(255,255,255,0.2);margin:4px 0;">';}
+});
+window.addEventListener('unhandledrejection',function(e){
+  var b=document.getElementById('dio-error-banner');
+  if(b){b.style.display='block';b.innerHTML+='⚠️ Promise: '+(e.reason&&e.reason.message?e.reason.message:e.reason)+'<hr style="border-color:rgba(255,255,255,0.2);margin:4px 0;">';}
 });
 </script>
+<div id="sync-bar" style="display:none;"></div>
+
+<!-- ══════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-bg"><div class="login-bg-grid"></div><div class="login-bg-glow"></div></div>
+  <div class="login-card">
+    <div class="login-logo-wrap">
+      <div class="login-logo-icon">🛡️</div>
+      <div class="login-logo-text">Digital IO</div>
+      <div class="login-logo-sub">POLICE CASE MANAGEMENT SYSTEM</div>
+    </div>
+    <div class="login-avatar-wrap">
+      <div class="login-avatar" id="login-avatar">
+        <img id="login-avatar-img" src="" alt="" style="display:none;">
+        <span id="login-avatar-initials">IO</span>
+      </div>
+      <div class="login-avatar-ring"></div>
+    </div>
+    <div class="login-officer-name" id="login-officer-name">خوش آمدید، افسر</div>
+    <div class="login-officer-role" id="login-officer-role">Digital IO — Secure Portal</div>
+    <div id="offline-login-hint">
+      📴 <strong>آپ آف لائن ہیں۔</strong> اگر پہلے لاگ ان کر چکے ہیں تو email/password سے کام چلے گا۔
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-methods">
+      <button class="login-method active" onclick="setLoginMethod('password',this)"><span>🔐</span> پاسورڈ</button>
+      <button class="login-method" onclick="setLoginMethod('pin',this)"><span>🔢</span> PIN</button>
+      <button class="login-method" onclick="setLoginMethod('biometric',this)"><span>🫆</span> بائیومیٹرک</button>
+    </div>
+
+    <!-- Password Panel -->
+    <div id="panel-password">
+      <div class="input-group">
+        <input type="email" id="login-email" class="login-input" placeholder="افسر کی ای میل" autocomplete="email" dir="ltr">
+      </div>
+      <div class="input-group">
+        <input type="password" id="login-password" class="login-input" placeholder="پاسورڈ" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" dir="ltr">
+        <button class="input-eye" onclick="togglePasswordVisibility('login-password')">👁️</button>
+      </div>
+      <button class="login-btn" onclick="doLogin()" id="login-submit-btn">
+        <span id="login-btn-text">🔓 سائن ان کریں</span>
+        <span id="login-btn-loader" style="display:none;">⏳ تصدیق ہو رہی ہے...</span>
+      </button>
+      <div class="login-links">
+        <a onclick="showForgotPassword()">پاسورڈ بھول گئے؟</a>
+        <a onclick="showRegister()">رجسٹریشن</a>
+      </div>
+    </div>
+
+    <!-- PIN Panel -->
+    <div id="panel-pin" style="display:none;">
+      <div class="pin-display">
+        <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+        <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+        <div class="pin-dot" id="pd4"></div><div class="pin-dot" id="pd5"></div>
+      </div>
+      <div class="pin-pad">
+        <button class="pin-key" onclick="pinPress('1')">1</button><button class="pin-key" onclick="pinPress('2')">2</button><button class="pin-key" onclick="pinPress('3')">3</button>
+        <button class="pin-key" onclick="pinPress('4')">4</button><button class="pin-key" onclick="pinPress('5')">5</button><button class="pin-key" onclick="pinPress('6')">6</button>
+        <button class="pin-key" onclick="pinPress('7')">7</button><button class="pin-key" onclick="pinPress('8')">8</button><button class="pin-key" onclick="pinPress('9')">9</button>
+        <button class="pin-key pin-key-empty"></button><button class="pin-key" onclick="pinPress('0')">0</button><button class="pin-key pin-key-del" onclick="pinBackspace()">⌫</button>
+      </div>
+      <div class="login-links"><a onclick="showForgotPassword()">PIN بھول گئے؟</a></div>
+    </div>
+
+    <!-- Biometric Panel -->
+    <div id="panel-biometric" style="display:none;">
+      <div class="biometric-wrap">
+        <div class="biometric-ring" id="bio-ring" onclick="doBiometric()"><div class="biometric-icon">🫆</div></div>
+        <div class="biometric-label">چھوئیں تصدیق کریں</div>
+      </div>
+      <div class="login-links"><a onclick="setLoginMethod('password',document.querySelectorAll('.login-method')[0])">پاسورڈ سے لاگ ان کریں</a></div>
+    </div>
+
+    <div class="login-security-badge">🔒 256-bit AES Encrypted · MFA Protected · Audit Logged</div>
+  </div>
+</div>
+
+<!-- FORGOT PASSWORD MODAL -->
+<div id="forgot-modal" class="modal-overlay" style="display:none;">
+  <div class="modal-card">
+    <div class="modal-header"><div class="modal-title">🔐 پاسورڈ ری سیٹ</div><button class="modal-close" onclick="hideForgotModal()">✕</button></div>
+    <div class="modal-body">
+      <div id="forgot-step1">
+        <p class="modal-desc">اپنی رجسٹرڈ ای میل درج کریں۔</p>
+        <input type="email" class="login-input" id="forgot-email" placeholder="ای میل ایڈریس" dir="ltr">
+        <button class="login-btn" onclick="sendOTP()" style="margin-top:12px;">📤 ری سیٹ ای میل بھیجیں</button>
+      </div>
+      <div id="forgot-step2" style="display:none;">
+        <p class="modal-desc">6 ہندسوں کا OTP درج کریں۔</p>
+        <div class="otp-inputs">
+          <input class="otp-box" maxlength="1" id="otp0" oninput="otpNext(0)"><input class="otp-box" maxlength="1" id="otp1" oninput="otpNext(1)">
+          <input class="otp-box" maxlength="1" id="otp2" oninput="otpNext(2)"><input class="otp-box" maxlength="1" id="otp3" oninput="otpNext(3)">
+          <input class="otp-box" maxlength="1" id="otp4" oninput="otpNext(4)"><input class="otp-box" maxlength="1" id="otp5" oninput="otpNext(5)">
+        </div>
+        <button class="login-btn" onclick="verifyOTP()" style="margin-top:12px;">✅ OTP تصدیق</button>
+      </div>
+      <div id="forgot-step3" style="display:none;">
+        <p class="modal-desc">نیا پاسورڈ سیٹ کریں۔</p>
+        <input type="password" class="login-input" id="new-pass1" placeholder="نیا پاسورڈ" dir="ltr" style="margin-bottom:10px;">
+        <input type="password" class="login-input" id="new-pass2" placeholder="پاسورڈ دوبارہ" dir="ltr">
+        <button class="login-btn" onclick="resetPassword()" style="margin-top:12px;">🔒 پاسورڈ تبدیل کریں</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REGISTER MODAL -->
+<div id="register-modal" class="modal-overlay" style="display:none;">
+  <div class="modal-card">
+    <div class="modal-header"><div class="modal-title">📋 رسائی کی درخواست</div><button class="modal-close" onclick="hideRegister()">✕</button></div>
+    <div class="modal-body">
+      <p class="modal-desc">تفصیلات بھریں۔ ایڈمن کی منظوری کے بعد رسائی ملے گی۔</p>
+      <input type="text" class="login-input" id="reg-name" placeholder="پورا نام (مثلاً ASI محمد آصف)" style="margin-bottom:10px;" dir="auto">
+      <input type="email" class="login-input" id="reg-email" placeholder="سرکاری ای میل" style="margin-bottom:10px;" dir="ltr">
+      <input type="text" class="login-input" id="reg-badge" placeholder="بیج / سروس نمبر" style="margin-bottom:10px;" dir="ltr">
+      <input type="text" class="login-input" id="reg-station" placeholder="پولیس اسٹیشن" style="margin-bottom:10px;" dir="auto">
+      <input type="text" class="login-input" id="reg-district" placeholder="ضلع" style="margin-bottom:10px;" dir="auto">
+      <input type="text" class="login-input" id="reg-designation" placeholder="عہدہ" style="margin-bottom:10px;" dir="auto">
+      <input type="password" class="login-input" id="reg-password" placeholder="پاسورڈ (کم از کم 8 حروف)" style="margin-bottom:10px;" dir="ltr">
+      <button class="login-btn" onclick="submitRegistration()">📤 درخواست جمع کروائیں</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     MAIN APP
+══════════════════════════════════ -->
+<div id="main-app" style="display:none;">
+
+  <!-- Mobile overlay -->
+  <div id="mob-overlay" onclick="closeMobileSidebar()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);z-index:999;"></div>
+
+  <!-- ☰ Mobile Toggle Button -->
+  <button id="menu-toggle" onclick="toggleSidebar()" title="مینو"
+    style="position:fixed;top:10px;right:12px;z-index:1002;width:42px;height:42px;border-radius:10px;background:var(--accent);color:#fff;border:none;font-size:20px;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.3);">☰</button>
+
+  <!-- SIDEBAR (RIGHT) -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">🛡️</div>
+      <div><div class="sidebar-logo-text">Digital IO</div><div class="sidebar-logo-sub">Case Management</div></div>
+    </div>
+    <div class="sidebar-profile">
+      <div class="sidebar-avatar" id="sidebar-avatar">IO</div>
+      <div>
+        <div class="sidebar-profile-name" id="sidebar-name">لوڈ ہو رہا ہے...</div>
+        <div class="sidebar-profile-role" id="sidebar-role">افسر</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="closeMobileSidebar();showPage('dashboard',this)"><span class="nav-icon">🏠</span> ڈیش بورڈ</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('cases',this)"><span class="nav-icon">📁</span> میرے مقدمات <span class="nav-badge" id="badge-cases" style="display:none;">0</span></div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('forms',this)"><span class="nav-icon">📥</span> ٹیمپلیٹس</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('fivec',this)"><span class="nav-icon">📋</span> مارک شدہ درخواستیں</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('incident',this)"><span class="nav-icon">🚨</span> واقعاتی رپورٹ</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('patrol',this)"><span class="nav-icon">🚔</span> گشت</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('cdr',this)"><span class="nav-icon">📞</span> CDR Analyzer</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('law',this)"><span class="nav-icon">⚖️</span> قانونی لائبریری</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('reminders',this)"><span class="nav-icon">🔔</span> یاددہانیاں <span class="nav-badge" id="badge-reminders" style="display:none;">0</span></div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('search',this)"><span class="nav-icon">🔍</span> تلاش</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('suspects',this)"><span class="nav-icon">👤</span> ملزمان / گواہان</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('performance',this)"><span class="nav-icon">📊</span> کارکردگی</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('court',this)"><span class="nav-icon">🏛️</span> عدالتی پیشیاں</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('evidence',this)"><span class="nav-icon">🔬</span> شہادتیں</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('backup',this)"><span class="nav-icon">☁️</span> بیک اپ</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showSubscriptionPage()"><span class="nav-icon">💎</span> سبسکرپشن</div>
+      <div class="nav-item" id="admin-nav-item" style="display:none;" onclick="closeMobileSidebar();showPage('admin',this)"><span class="nav-icon">👮</span> ایڈمن</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('bin',this)"><span class="nav-icon">🗑️</span> حذف شدہ مواد</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('settings',this)"><span class="nav-icon">⚙️</span> ترتیبات</div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="doLogout()">🚪 لاگ آؤٹ</button>
+      <div style="font-size:9px;color:var(--text-faint);text-align:center;margin-top:6px;">v4.0 · Digital IO</div>
+    </div>
+  </div>
+
+  <!-- MAIN AREA (LEFT) -->
+  <div class="main-area">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="topbar-title">ڈیش بورڈ</div>
+      </div>
+      <div class="topbar-right">
+        <button class="topbar-btn" onclick="showPage('search',null)" title="تلاش">🔍</button>
+        <button class="topbar-btn" onclick="openNotificationCenter()" title="اطلاعات" style="position:relative;">
+          🔔<span id="notif-badge" style="display:none;position:absolute;top:-4px;left:-4px;background:var(--red);color:#fff;border-radius:10px;font-size:9px;font-weight:700;min-width:16px;height:16px;line-height:16px;text-align:center;padding:0 3px;"></span>
+        </button>
+        <button class="topbar-btn" onclick="openThemePicker()" title="تھیم" style="font-size:16px;">🎨</button>
+        <div class="topbar-status">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-text">Connecting</span>
+          <span id="sync-label" style="font-size:10px;color:var(--text-muted);margin-right:4px;"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Islamic Ticker -->
+    <div id="islamic-bar" style="background:linear-gradient(90deg,rgba(56,189,248,0.08),rgba(34,197,94,0.06));border-bottom:1px solid var(--border);padding:7px 16px;text-align:center;direction:rtl;overflow:hidden;flex-shrink:0;">
+      <span id="islamic-ticker" style="font-size:14px;color:var(--accent);font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-weight:600;line-height:1.6;display:inline-block;transition:opacity 0.4s;">🤲 بسم اللہ الرحمٰن الرحیم</span>
+    </div>
+
+    <!-- PAGE CONTENT -->
+    <div class="page-content" id="page-content">
+      <div class="loading-screen">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">لوڈ ہو رہا ہے...</div>
+      </div>
+    </div>
+
+    <!-- BOTTOM BAR -->
+    <div class="bottombar">
+      <span id="footer-officer">Digital IO</span>
+      <span id="footer-time"></span>
+      <span id="footer-license">License: Active</span>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<div id="modal-root">
+  <!-- Global Modal -->
+  <div id="modal-backdrop" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal()">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-title"></div>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer" id="modal-footer"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     JS MODULES
+═══════════════════════════════ -->
+<script src="offline-store.js"></script>
+<script src="islamic.js"></script>
+<script src="app-core.js"></script>
+<script src="dashboard.js"></script>
+<script src="toolbar.js"></script>
+<script src="misal-docs.js"></script>
+<script src="cases.js"></script>
+<script src="forms.js"></script>
+<script src="officialdocs.js"></script>
+<script src="fivec.js"></script>
+<script src="evidence.js"></script>
+<script src="search.js"></script>
+<script src="suspects.js"></script>
+<script src="notifications.js"></script>
+<script src="law.js"></script>
+<script src="reminders.js"></script>
+<script src="performance.js"></script>
+<script src="backup.js"></script>
+<script src="settings.js"></script>
+<script src="patrol.js"></script>
+<script src="cdr.js"></script>
+<script src="incident.js"></script>
+<script src="court.js"></script>
+<script src="bin.js"></script>
+<script src="subscription.js"></script>
+<script src="admin.js"></script>
+
+<!-- ═══════════════════════════════
+     SIDEBAR TOGGLE
+═══════════════════════════════ -->
 <script>
-if("serviceWorker" in navigator){
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js")
-      .then(reg => console.log("[PWA] Service worker registered:", reg.scope))
-      .catch(err => console.warn("[PWA] Service worker failed:", err));
+var _sbOpen = false;
+
+function toggleSidebar() { _sbOpen ? closeMobileSidebar() : openMobileSidebar(); }
+
+function openMobileSidebar() {
+  var sb = document.getElementById('sidebar');
+  var ov = document.getElementById('mob-overlay');
+  if (sb) sb.classList.add('mobile-open');
+  if (ov) ov.style.display = 'block';
+  _sbOpen = true;
+}
+
+function closeMobileSidebar() {
+  var sb = document.getElementById('sidebar');
+  var ov = document.getElementById('mob-overlay');
+  if (sb) sb.classList.remove('mobile-open');
+  if (ov) ov.style.display = 'none';
+  _sbOpen = false;
+}
+
+// Legacy stubs
+function navTo(page, el) { closeMobileSidebar(); showPage(page, el); }
+function toggleMoreMenu() {}
+function closeMoreMenu() {}
+function toggleSidebarCollapse() {}
+function _sidebarOpen() {}
+function _sidebarClose() { closeMobileSidebar(); }
+
+// Login method switcher
+function setLoginMethod(method, btn) {
+  document.querySelectorAll('.login-method').forEach(function(b){ b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  document.getElementById('panel-password').style.display = method === 'password' ? 'block' : 'none';
+  document.getElementById('panel-pin').style.display = method === 'pin' ? 'block' : 'none';
+  document.getElementById('panel-biometric').style.display = method === 'biometric' ? 'block' : 'none';
+}
+</script>
+
+<!-- ═══════════════════════════════
+     PWA SERVICE WORKER
+═══════════════════════════════ -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js')
+      .then(function(reg){ console.log('✅ SW registered:', reg.scope); })
+      .catch(function(err){ console.warn('SW failed:', err); });
   });
 }
 </script>
 
-<nav class="bottom-nav">
-  <div class="bottom-nav-inner">
-    <a href="index.html" class="bottom-nav-item"><span>📅</span><span>Events</span></a>
-    <a href="clubs.html" class="bottom-nav-item active"><span>🎭</span><span>Clubs</span></a>
-    <a href="acc.html" class="bottom-nav-item"><span>🎨</span><span>ACC</span></a>
-    <a href="news.html" class="bottom-nav-item"><span>📰</span><span>News</span></a>
-    <a href="resources.html" class="bottom-nav-item"><span>🔗</span><span>Resources</span></a>
-    <a href="emergency-contacts.html" class="bottom-nav-item"><span>🚨</span><span>Emergency</span></a>
-    <a href="event-hub.html" class="bottom-nav-item hub"><span>✦</span><span>Hub</span></a>
-  </div>
-</nav>
+<!-- ═══════════════════════════════
+     DEEP LINKING — URL HASH
+═══════════════════════════════ -->
+<script>
+var _HASH_PAGES = {
+  '#admin':'admin','#cases':'cases','#dashboard':'dashboard',
+  '#patrol':'patrol','#law':'law','#forms':'forms',
+  '#settings':'settings','#reminders':'reminders','#cdr':'cdr',
+  '#fivec':'fivec','#incident':'incident','#performance':'performance',
+  '#backup':'backup','#bin':'bin','#suspects':'suspects',
+  '#court':'court','#evidence':'evidence','#search':'search',
+};
+
+function _handleHashNav() {
+  var hash = window.location.hash.toLowerCase();
+  var page = _HASH_PAGES[hash];
+  if (page && typeof showPage === 'function') {
+    setTimeout(function(){ showPage(page, null); }, 600);
+  }
+}
+
+window.addEventListener('hashchange', _handleHashNav);
+window.addEventListener('load', function() {
+  setTimeout(_handleHashNav, 2200);
+});
+
+// Wrap showPage to update URL hash
+(function(){
+  var _orig = window.showPage;
+  if (typeof _orig === 'function') {
+    window.showPage = function(page, el) {
+      try { history.replaceState(null, '', '#' + page); } catch(_) {}
+      return _orig(page, el);
+    };
+  }
+})();
+</script>
+
 </body>
 </html>
