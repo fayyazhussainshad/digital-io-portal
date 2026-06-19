@@ -580,6 +580,27 @@ function caseFormHTML(c) {
     + '<input type="hidden" id="cf-section" value="'+section+'">'
     + '</div>'
 
+    // Mobile theft detail (shown only when section 379-402 PPC selected)
+    + '<div id="cf-mobile-box" style="display:'+(_hasMobileSection(selectedSections)?'block':'none')+';background:var(--bg-secondary);border:1px solid var(--amber);border-radius:8px;padding:12px;margin-bottom:12px;">'
+    +   '<div style="font-size:12px;font-weight:700;color:var(--amber);margin-bottom:8px;">📱 موبائل چوری کی تفصیل</div>'
+    +   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
+    +     '<div><label class="form-label">چوری شدہ چیز</label>'
+    +       '<select class="form-input" id="cf-theft-item" onchange="_toggleMobileFields()">'
+    +         '<option value="">— منتخب کریں —</option>'
+    +         '<option value="mobile"'+(c.theft_item==='mobile'?' selected':'')+'>📱 موبائل فون</option>'
+    +         '<option value="motorcycle"'+(c.theft_item==='motorcycle'?' selected':'')+'>🏍️ موٹرسائیکل</option>'
+    +         '<option value="car"'+(c.theft_item==='car'?' selected':'')+'>🚗 گاڑی</option>'
+    +         '<option value="cash"'+(c.theft_item==='cash'?' selected':'')+'>💵 نقدی</option>'
+    +         '<option value="jewelry"'+(c.theft_item==='jewelry'?' selected':'')+'>💍 زیورات</option>'
+    +         '<option value="other"'+(c.theft_item==='other'?' selected':'')+'>دیگر</option>'
+    +       '</select></div>'
+    +     '<div id="cf-mobile-imei-wrap" style="display:'+(c.theft_item==='mobile'?'block':'none')+';"><label class="form-label">IMEI نمبر</label>'
+    +       '<input class="form-input" id="cf-mobile-imei" dir="ltr" value="'+(c.theft_imei||'')+'" placeholder="IMEI (15 ہندسے)"></div>'
+    +     '<div id="cf-mobile-cell-wrap" style="display:'+(c.theft_item==='mobile'?'block':'none')+';"><label class="form-label">چوری شدہ موبائل کا نمبر</label>'
+    +       '<input class="form-input" id="cf-mobile-cell" dir="ltr" value="'+(c.theft_cell||'')+'" placeholder="0000-0000000"></div>'
+    +   '</div>'
+    + '</div>'
+
 
     // Complainant section — RTL, new order
     + '<div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:12px;">'
@@ -813,7 +834,26 @@ function addSection(sectionStr, offence, bail) {
   if (searchInp) searchInp.value = '';
   document.getElementById('section-dropdown').style.display = 'none';
 
+  _updateMobileBox();
   showToast(`✅ Added: ${sectionStr}`, 'success', 1500);
+}
+
+// Show/hide mobile theft box based on selected sections (379-402 PPC)
+function _hasMobileSection(sections) {
+  const theftSections = ['379','380','381','382','392','393','394','395','396','397','398','399','400','401','402','356','411'];
+  return (sections||[]).some(s => theftSections.some(t => String(s).includes(t)));
+}
+function _updateMobileBox() {
+  const box = document.getElementById('cf-mobile-box');
+  if (box) box.style.display = _hasMobileSection(selectedSections) ? 'block' : 'none';
+}
+function _toggleMobileFields() {
+  const item = document.getElementById('cf-theft-item')?.value;
+  const show = item === 'mobile';
+  const imei = document.getElementById('cf-mobile-imei-wrap');
+  const cell = document.getElementById('cf-mobile-cell-wrap');
+  if (imei) imei.style.display = show ? 'block' : 'none';
+  if (cell) cell.style.display = show ? 'block' : 'none';
 }
 
 function removeSection(sectionStr) {
@@ -821,6 +861,7 @@ function removeSection(sectionStr) {
   document.getElementById('cf-section').value = selectedSections.join(' + ');
   const container = document.getElementById('selected-sections');
   if (container) container.innerHTML = selectedSections.map(s => sectionTag(s)).join('');
+  _updateMobileBox();
 }
 
 // Close dropdown when clicking outside
@@ -863,6 +904,9 @@ async function saveNewCase(){
       fir_writer:document.getElementById('cf-fir-writer')?.value.trim()||'',
       complaint_sender:document.getElementById('cf-complaint-sender')?.value.trim()||'',
       section_of_law:section,
+      theft_item:document.getElementById('cf-theft-item')?.value||null,
+      theft_imei:document.getElementById('cf-mobile-imei')?.value?.trim()||null,
+      theft_cell:document.getElementById('cf-mobile-cell')?.value?.trim()||null,
       offence_type:document.getElementById('cf-offence')?.value?.trim()||'',
       sho:document.getElementById('cf-sho')?.value.trim()||'',
       sdpo:document.getElementById('cf-sdpo')?.value.trim()||'',
@@ -1008,6 +1052,9 @@ async function saveEditCase(id){
       fir_writer:document.getElementById('cf-fir-writer')?.value.trim()||'',
       complaint_sender:document.getElementById('cf-complaint-sender')?.value.trim()||'',
       section_of_law:_editSection,
+      theft_item:document.getElementById('cf-theft-item')?.value||null,
+      theft_imei:document.getElementById('cf-mobile-imei')?.value?.trim()||null,
+      theft_cell:document.getElementById('cf-mobile-cell')?.value?.trim()||null,
       offence_type:document.getElementById('cf-offence')?.value?.trim()||'',
       sho:document.getElementById('cf-sho')?.value.trim()||'',
       sdpo:document.getElementById('cf-sdpo')?.value.trim()||'',
@@ -1102,6 +1149,62 @@ async function _loadRelatedCases(c) {
 }
 
 // ── PROSECUTION-READY VALIDATOR (Traffic Light) ───────────────
+// ── INTERIM 173 CrPC (auto after 10 days) ─────────────────────
+function _daysSinceReg(c) {
+  const d = c.fir_date || c.created_at;
+  if (!d) return 0;
+  const reg = new Date(d);
+  if (isNaN(reg)) return 0;
+  return Math.floor((Date.now() - reg.getTime()) / (1000*60*60*24));
+}
+
+function _interim173Alert(c) {
+  const days = _daysSinceReg(c);
+  // Only show if 10+ days passed AND case not yet completed/challaned
+  const doneStatuses = ['complete','incomplete','challan512','cancel'];
+  if (days < 10 || doneStatuses.includes(c.status)) return '';
+  return `
+  <div style="background:rgba(245,158,11,0.1);border:1px solid var(--amber);border-radius:10px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;direction:rtl;">
+    <div style="font-size:20px;">⏰</div>
+    <div style="flex:1;min-width:200px;">
+      <div style="font-size:13px;font-weight:700;color:var(--amber);">عبوری چالان 173 ض ف درکار</div>
+      <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">اس مقدمے کو ${days} دن ہو چکے ہیں — عبوری رپورٹ تیار کریں</div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick='_generateInterim173(${JSON.stringify({id:c.id,fir_number:c.fir_number,section_of_law:c.section_of_law,complainant:c.complainant,fir_date:c.fir_date,case_station:c.case_station,case_district:c.case_district}).replace(/'/g,"&#39;")})'>📄 عبوری 173 تیار کریں</button>
+  </div>`;
+}
+
+function _generateInterim173(c) {
+  const o = currentOfficer || {};
+  const days = _daysSinceReg(c);
+  const today = formatDate(new Date().toISOString());
+  const html = `
+  <div style="font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;padding:30px;line-height:2.2;font-size:15px;color:#000;">
+    <div style="text-align:center;font-weight:800;font-size:18px;margin-bottom:4px;">تھانہ ${c.case_station||o.station||'_____'} ضلع ${c.case_district||o.district||'_____'}</div>
+    <div style="text-align:center;font-size:16px;font-weight:700;border-bottom:2px solid #000;display:inline-block;margin:0 auto 16px;padding-bottom:2px;width:100%;">عبوری رپورٹ زیر دفعہ 173 ضابطہ فوجداری</div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:14px;">
+      <tr><td style="border:1px solid #555;padding:6px 10px;font-weight:700;background:#f0f0f0;">مقدمہ نمبر</td><td style="border:1px solid #555;padding:6px 10px;">${c.fir_number||'—'}</td>
+          <td style="border:1px solid #555;padding:6px 10px;font-weight:700;background:#f0f0f0;">دفعات</td><td style="border:1px solid #555;padding:6px 10px;">${c.section_of_law||'—'}</td></tr>
+      <tr><td style="border:1px solid #555;padding:6px 10px;font-weight:700;background:#f0f0f0;">مدعی</td><td style="border:1px solid #555;padding:6px 10px;">${c.complainant||'—'}</td>
+          <td style="border:1px solid #555;padding:6px 10px;font-weight:700;background:#f0f0f0;">تاریخ اندراج</td><td style="border:1px solid #555;padding:6px 10px;">${formatDate(c.fir_date)}</td></tr>
+    </table>
+    <div style="margin:12px 0;">
+      جناب عالی،<br><br>
+      گزارش ہے کہ مقدمہ ہذا کو درج ہوئے ${days} دن گزر چکے ہیں۔ تفتیش تاحال جاری ہے۔ مندرجہ ذیل وجوہات کی بنا پر چالان مکمل نہیں ہو سکا:
+    </div>
+    <div style="min-height:120px;border:1px solid #ccc;padding:12px;border-radius:4px;" contenteditable="true">۱۔ ...<br>۲۔ ...</div>
+    <div style="margin-top:14px;">لہٰذا عبوری رپورٹ بغرض ملاحظہ پیش خدمت ہے۔ تفتیش مکمل ہونے پر حتمی چالان پیش کر دیا جائے گا۔</div>
+    <div style="margin-top:40px;text-align:left;">
+      <div>_______________________</div>
+      <div style="font-size:13px;font-weight:700;">${o.designation||''} ${o.full_name||''}</div>
+      <div style="font-size:12px;">تفتیشی افسر — تھانہ ${c.case_station||o.station||''}</div>
+      <div style="font-size:12px;">تاریخ: ${today}</div>
+    </div>
+  </div>`;
+  if (typeof dioPrint === 'function') dioPrint(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><style>@page{margin:15mm}body{margin:0}</style></head><body>${html}</body></html>`);
+  showToast('📄 عبوری 173 رپورٹ تیار — پرنٹ کریں یا محفوظ کریں', 'success', 4000);
+}
+
 function _prosecutionValidator(c) {
   // Checklist of court-required items
   const checks = [
@@ -1353,6 +1456,9 @@ function renderWorkspace(c, docs, ev, container) {
 
     <!-- PROSECUTION-READY VALIDATOR -->
     ${_prosecutionValidator(c)}
+
+    <!-- INTERIM 173 ALERT (10+ days) -->
+    ${_interim173Alert(c)}
 
     <!-- RELATED CASES -->
     <div id="related-cases-bar"></div>

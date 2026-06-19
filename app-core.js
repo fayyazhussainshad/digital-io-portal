@@ -261,6 +261,21 @@ async function getOfficerId() {
 
 async function getCases(status, query) {
   const oid = await getOfficerId();
+  // OFFLINE: read from IndexedDB cache
+  if (!navigator.onLine && typeof offlineStore !== 'undefined') {
+    try {
+      let all = await offlineStore.getAll('cases_cache', oid);
+      if (status) all = all.filter(c => c.status === status);
+      if (query) {
+        const w = query.toLowerCase();
+        all = all.filter(c => (c.fir_number||'').toLowerCase().includes(w) ||
+          (c.complainant||'').toLowerCase().includes(w) ||
+          (c.section_of_law||'').toLowerCase().includes(w));
+      }
+      return all.sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
+    } catch(_) { return []; }
+  }
+  // ONLINE: Supabase + cache the results for offline use
   let q = supabaseClient.from('cases').select('*').eq('officer_id',oid).order('created_at',{ascending:false});
   if (status) q = q.eq('status',status);
   if (query) {
@@ -269,30 +284,68 @@ async function getCases(status, query) {
   }
   const { data } = await q;
   if (typeof markSynced === 'function') markSynced();
+  // Cache ALL cases (without filter) for offline
+  if (typeof offlineStore !== 'undefined' && !status && !query) {
+    try { await offlineStore.cache('cases_cache', data||[]); } catch(_) {}
+  } else if (typeof offlineStore !== 'undefined' && data) {
+    try { await offlineStore.cache('cases_cache', data); } catch(_) {}
+  }
   return data||[];
 }
 
 async function getCase(id) {
+  if (!navigator.onLine && typeof offlineStore !== 'undefined') {
+    try { return await offlineStore.getOne('cases_cache', id); } catch(_) { return null; }
+  }
   const { data } = await supabaseClient.from('cases').select('*').eq('id',id).single();
+  if (data && typeof offlineStore !== 'undefined') {
+    try { await offlineStore.cache('cases_cache', data); } catch(_) {}
+  }
   return data;
 }
 
 async function addCase(caseData) {
   const oid = await getOfficerId();
-  const { data, error } = await supabaseClient.from('cases').insert({...caseData, officer_id:oid}).select().single();
+  const rec = {...caseData, officer_id:oid};
+  // OFFLINE: save locally + queue for sync
+  if (!navigator.onLine && typeof offlineStore !== 'undefined') {
+    const tempId = 'local-' + Date.now();
+    const localRec = { ...rec, id: tempId, created_at: new Date().toISOString(), _pending: true };
+    await offlineStore.cache('cases_cache', localRec);
+    await offlineStore.enqueue('cases', 'insert', rec);
+    showToast('📴 آف لائن محفوظ — انٹرنیٹ آنے پر sync ہوگا', 'info');
+    return localRec;
+  }
+  const { data, error } = await supabaseClient.from('cases').insert(rec).select().single();
   if (error) throw error;
+  if (typeof offlineStore !== 'undefined') { try { await offlineStore.cache('cases_cache', data); } catch(_) {} }
   return data;
 }
 
 async function updateCase(id, updates) {
+  if (!navigator.onLine && typeof offlineStore !== 'undefined') {
+    const existing = await offlineStore.getOne('cases_cache', id) || {};
+    const merged = { ...existing, ...updates, id };
+    await offlineStore.cache('cases_cache', merged);
+    await offlineStore.enqueue('cases', 'update', { id, ...updates });
+    showToast('📴 آف لائن محفوظ — sync باقی', 'info');
+    return merged;
+  }
   const { data, error } = await supabaseClient.from('cases').update(updates).eq('id',id).select().single();
   if (error) throw error;
+  if (typeof offlineStore !== 'undefined') { try { await offlineStore.cache('cases_cache', data); } catch(_) {} }
   return data;
 }
 
 async function deleteCase(id) {
+  if (!navigator.onLine && typeof offlineStore !== 'undefined') {
+    await offlineStore.remove('cases_cache', id);
+    await offlineStore.enqueue('cases', 'delete', { id });
+    return;
+  }
   const { error } = await supabaseClient.from('cases').delete().eq('id',id);
   if (error) throw error;
+  if (typeof offlineStore !== 'undefined') { try { await offlineStore.remove('cases_cache', id); } catch(_) {} }
 }
 
 async function getReminders() {
@@ -462,8 +515,28 @@ function _updateSyncLabel() {
 }
 setInterval(_updateSyncLabel, 60000); // update label every minute
 
-window.addEventListener('online',  ()=>updateConnectionStatus(true));
+window.addEventListener('online',  ()=>{ updateConnectionStatus(true); _syncOfflineQueue(); });
 window.addEventListener('offline', ()=>updateConnectionStatus(false));
+
+// ── SYNC offline queue when back online ───────────────────────
+async function _syncOfflineQueue() {
+  if (typeof offlineStore === 'undefined' || !navigator.onLine) return;
+  try {
+    const count = await offlineStore.pendingCount();
+    if (!count) return;
+    showToast(`🔄 ${count} تبدیلیاں sync ہو رہی ہیں...`, 'info');
+    const synced = await offlineStore.processQueue(supabaseClient);
+    if (synced > 0) {
+      showToast(`✅ ${synced} تبدیلیاں sync ہو گئیں`, 'success');
+      // Refresh cases page if currently shown
+      if (typeof _activePage !== 'undefined' && _activePage === 'cases') {
+        showPage('cases', null);
+      }
+    }
+  } catch(e) { console.warn('sync error', e); }
+}
+// Try sync on app start too
+setTimeout(() => { if (navigator.onLine) _syncOfflineQueue(); }, 3000);
 
 // ── CLOCK ─────────────────────────────────────────────────────
 function startClock() {
