@@ -73,7 +73,30 @@ function _renderAutoWitnesses() {
         ${a.cell?`<span style="color:var(--text-muted);direction:ltr;">${a.cell}</span>`:''}
       </div>`).join('')}
     <div style="font-size:10px;color:var(--text-muted);margin-top:6px;">یہ خودبخود گواہان کی فہرست میں شامل ہیں۔ مزید گواہ نیچے شامل کریں۔</div>
+    <button class="btn btn-secondary btn-sm" style="margin-top:8px;" onclick='_saveAutoWitnesses(${JSON.stringify(auto).replace(/'/g,"&#39;")})'>📋 ان سب کو گواہان میں محفوظ کریں</button>
   </div>`;
+}
+
+// Save the auto-detected parties (مدعی/محرر/مضروب) as actual witness records
+async function _saveAutoWitnesses(auto) {
+  if (!auto || !auto.length) return;
+  try {
+    const oid = await getOfficerId();
+    let added = 0;
+    for (const a of auto) {
+      // Skip if a witness with same name already exists
+      if (_witnessList.some(w => (w.full_name||'').trim() === (a.name||'').trim())) continue;
+      await supabaseClient.from('case_witnesses').insert({
+        case_id: _witnessCaseId, officer_id: oid,
+        full_name: a.name, cnic: a.cnic||null, cell: a.cell||null,
+        status: a.role || 'گواہ',
+      });
+      added++;
+    }
+    await _loadWitnesses();
+    _renderWitnessesArea();
+    showToast(added ? `✅ ${added} فریقین گواہان میں شامل ہو گئے` : 'یہ پہلے ہی شامل ہیں', 'success');
+  } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
 
 // Compact single-row strips
