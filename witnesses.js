@@ -11,6 +11,8 @@ const WITNESS_STATUS = [
   { v:'mazroob',  label:'مضروب' },
   { v:'victim',   label:'Victim' },
   { v:'maghvi',   label:'مغوی' },
+  { v:'mudai',    label:'مدعی' },
+  { v:'moharrir', label:'محرر / FIR writer' },
 ];
 
 let _witnessList = [];

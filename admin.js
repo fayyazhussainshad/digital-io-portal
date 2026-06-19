@@ -334,8 +334,9 @@ async function _adminGetOfficers() {
   return data || [];
 }
 async function _adminGetPending() {
-  const { data } = await supabaseClient.from('pending_registrations')
-    .select('*').eq('status','pending').order('created_at', { ascending: false });
+  // Pending = officers who registered but are not yet approved
+  const { data } = await supabaseClient.from('officers')
+    .select('*').eq('is_approved', false).order('created_at', { ascending: false });
   return data || [];
 }
 async function _adminGetAllCases() {
@@ -359,8 +360,8 @@ async function _adminApprove(regId, name) {
 
 async function _doApproveReg(regId) {
   try {
-    await supabaseClient.from('pending_registrations').update({ status: 'approved' }).eq('id', regId);
-    showToast('✅ درخواست منظور ہو گئی', 'success');
+    await supabaseClient.from('officers').update({ is_approved: true }).eq('id', regId);
+    showToast('✅ درخواست منظور ہو گئی — افسر اب لاگ ان کر سکتا ہے', 'success');
     _adminRefresh();
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
@@ -374,7 +375,11 @@ async function _adminRejectReg(regId, name) {
 }
 
 async function _doRejectReg(regId) {
-  await supabaseClient.from('pending_registrations').update({ status: 'rejected' }).eq('id', regId);
+  // Remove the officer record (and clear any audit_log refs first)
+  try {
+    await supabaseClient.from('audit_log').delete().eq('officer_id', regId);
+  } catch(_) {}
+  await supabaseClient.from('officers').delete().eq('id', regId);
   showToast('❌ درخواست رد کر دی گئی', 'info');
   _adminRefresh();
 }

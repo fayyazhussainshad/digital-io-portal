@@ -61,7 +61,15 @@ function renderMisalBar(c) {
     const done  = saved?.status === 'complete';
     const added = !!saved;
     const cls   = done ? 'mdoc-done' : added ? 'mdoc-added' : 'mdoc-empty';
-    const action = added ? `confirmRemoveMisalDoc('${d.id}')` : `confirmAddMisalDoc('${d.id}')`;
+    // Witnesses & accused: always open the card directly (no add/remove confirmation)
+    const isDirectOpen = (d.id === 'witnesses_fir' || d.id === 'witnesses_cross' ||
+                          d.id === 'named_accused' || d.id === 'unknown_accused');
+    let action;
+    if (isDirectOpen) {
+      action = added ? `_openMisalEditor('${d.id}')` : `_doAddMisalDoc('${d.id}')`;
+    } else {
+      action = added ? `confirmRemoveMisalDoc('${d.id}')` : `confirmAddMisalDoc('${d.id}')`;
+    }
     return `<span class="mdoc-chip ${cls}" onclick="${action}" title="${d.desc}">${d.name}</span>`;
   }).join('');
 
