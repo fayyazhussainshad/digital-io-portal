@@ -1019,6 +1019,7 @@ window.addEventListener('unhandledrejection', function(e){
       <div class="nav-item" onclick="closeMobileSidebar();showPage('cases',this)"><span class="nav-icon">📁</span> میرے مقدمات <span class="nav-badge" id="badge-cases">0</span></div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('incident',this)"><span class="nav-icon">🚨</span> واقعاتی رپورٹ</div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('patrol',this)"><span class="nav-icon">🚔</span> گشت</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('diary',this)"><span class="nav-icon">📓</span> روزنامچہ</div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('reminders',this)"><span class="nav-icon">🔔</span> یاددہانیاں <span class="nav-badge" id="badge-reminders">0</span></div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('search',this)"><span class="nav-icon">🔍</span> تلاش</div>
 
@@ -1047,11 +1048,35 @@ window.addEventListener('unhandledrejection', function(e){
   <div class="main-area">
     <!-- TOP BAR -->
     <div class="topbar">
-      <div class="topbar-left">
-        <div class="topbar-title" id="topbar-title">ڈیش بورڈ</div>
+      <div class="topbar-left" style="display:flex;align-items:center;gap:4px;flex-wrap:nowrap;overflow-x:auto;">
+        <!-- Main nav buttons (desktop top nav) -->
+        <button class="topnav-btn active" onclick="showPage('dashboard',null);_setTopNav(this)" title="ڈیش بورڈ">🏠<span class="topnav-label"> ڈیش بورڈ</span></button>
+        <button class="topnav-btn" onclick="showPage('cases',null);_setTopNav(this)" title="مقدمات">📁<span class="topnav-label"> مقدمات</span></button>
+        <button class="topnav-btn" onclick="showPage('diary',null);_setTopNav(this)" title="روزنامچہ">📓<span class="topnav-label"> روزنامچہ</span></button>
+        <button class="topnav-btn" onclick="showPage('incident',null);_setTopNav(this)" title="واقعاتی رپورٹ">🚨<span class="topnav-label"> واقعاتی</span></button>
+        <button class="topnav-btn" onclick="showPage('patrol',null);_setTopNav(this)" title="گشت">🚔<span class="topnav-label"> گشت</span></button>
+        <!-- More dropdown -->
+        <div style="position:relative;display:inline-block;">
+          <button class="topnav-btn" onclick="_toggleTopMore(event)" title="مزید">⋯<span class="topnav-label"> مزید</span></button>
+          <div id="top-more-menu" style="display:none;position:absolute;top:100%;right:0;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:1000;min-width:200px;padding:6px;direction:rtl;margin-top:4px;">
+            ${''}
+            <a class="topmore-item" onclick="showPage('forms',null);_closeTopMore()">📥 ٹیمپلیٹس</a>
+            <a class="topmore-item" onclick="showPage('fivec',null);_closeTopMore()">📋 مارک شدہ درخواستیں</a>
+            <a class="topmore-item" onclick="showPage('cdr',null);_closeTopMore()">📞 CDR Analyzer</a>
+            <a class="topmore-item" onclick="showPage('law',null);_closeTopMore()">⚖️ قانونی لائبریری</a>
+            <a class="topmore-item" onclick="showPage('suspects',null);_closeTopMore()">👤 ملزمان / گواہان</a>
+            <a class="topmore-item" onclick="showPage('reminders',null);_closeTopMore()">🔔 یاددہانیاں</a>
+            <a class="topmore-item" onclick="showPage('performance',null);_closeTopMore()">📊 کارکردگی</a>
+            <a class="topmore-item" onclick="showPage('backup',null);_closeTopMore()">☁️ بیک اپ</a>
+            <a class="topmore-item" onclick="showSubscriptionPage();_closeTopMore()">💎 سبسکرپشن</a>
+            <a class="topmore-item" onclick="showPage('bin',null);_closeTopMore()">🗑️ حذف شدہ مواد</a>
+            <a class="topmore-item" id="top-admin-item" style="display:none;" onclick="showPage('admin',null);_closeTopMore()">👮 ایڈمن</a>
+            <a class="topmore-item" onclick="showPage('settings',null);_closeTopMore()">⚙️ ترتیبات</a>
+            <a class="topmore-item" style="color:var(--red);border-top:1px solid var(--border);margin-top:4px;" onclick="doLogout()">🚪 لاگ آؤٹ</a>
+          </div>
+        </div>
       </div>
       <div class="topbar-right">
-        <button class="topbar-btn" onclick="showPage('search',null)" title="تلاش">🔍</button>
         <button class="topbar-btn" onclick="openNotificationCenter()" title="اطلاعات" style="position:relative;">🔔<span id="notif-badge" style="display:none;position:absolute;top:-4px;left:-4px;background:var(--red);color:#fff;border-radius:10px;font-size:9px;font-weight:700;min-width:16px;height:16px;line-height:16px;text-align:center;padding:0 3px;"></span></button>
         <button class="topbar-btn" id="theme-picker-btn" onclick="openThemePicker()" title="تھیم" style="font-size:16px;">🎨</button>
         <div class="topbar-status"><span class="status-dot" id="status-dot"></span><span id="status-text">Connecting</span><span id="sync-label" style="font-size:10px;color:var(--text-muted);margin-right:4px;"></span></div>
@@ -1087,6 +1112,7 @@ window.addEventListener('unhandledrejection', function(e){
 <script src="search.js"></script>
 <script src="suspects.js"></script>
 <script src="witnesses.js"></script>
+<script src="diary.js"></script>
 <script src="notifications.js"></script>
 <script src="law.js"></script>
 <script src="reminders.js"></script>
