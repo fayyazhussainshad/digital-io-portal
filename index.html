@@ -267,32 +267,32 @@ input,textarea,select { font-family:var(--font-main); }
 .modal-desc { font-size:12px; color:var(--text-muted); margin-bottom:14px; line-height:1.6; }
 
 /* ═══════════════════════════════
-   APP LAYOUT — index3 BEST LAYOUT
-   Desktop: flex-row, sidebar always visible RIGHT
-   Mobile: sidebar fixed + toggle button
+   APP LAYOUT
+   Desktop: sidebar FIXED on RIGHT, main-area has margin-right
+   Mobile: sidebar hidden, toggle button shows it
 ═══════════════════════════════ */
 #main-app {
-  display:flex;
-  flex-direction:row;
   height:100vh;
   overflow:hidden;
   position:relative;
+  display:block; /* simple block — no flex confusion */
 }
 
-/* SIDEBAR — ہمیشہ RIGHT پر، desktop پر always visible */
+/* SIDEBAR — position:fixed, RIGHT side, always visible on desktop */
 .sidebar {
   width:var(--sidebar-width);
-  min-width:var(--sidebar-width);
   background:var(--bg-secondary);
   border-left:1px solid var(--border);
   display:flex;
   flex-direction:column;
-  flex-shrink:0;
-  height:100vh;
+  position:fixed;
+  top:0;
+  right:0;   /* ← ہمیشہ RIGHT */
+  left:auto;
+  bottom:0;
+  z-index:900;
   overflow-y:auto;
   -webkit-overflow-scrolling:touch;
-  order:2; /* RTL: sidebar آخر میں = right side */
-  z-index:900;
 }
 
 .sidebar-logo { padding:18px 16px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
@@ -315,8 +315,15 @@ input,textarea,select { font-family:var(--font-main); }
 .logout-btn { width:100%; background:var(--red-bg); border:1px solid rgba(239,68,68,0.2); border-radius:var(--radius-sm); padding:9px; color:var(--red); font-size:12px; font-weight:600; transition:all 0.15s; cursor:pointer; }
 .logout-btn:hover { background:rgba(239,68,68,0.15); }
 
-/* MAIN AREA */
-.main-area { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; order:1; }
+/* MAIN AREA — margin-right سے sidebar کے لیے جگہ */
+.main-area {
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  min-width:0;
+  height:100vh;
+  margin-right:var(--sidebar-width); /* ← desktop پر sidebar کی جگہ */
+}
 
 /* TOPBAR */
 .topbar { height:var(--topbar-height); background:var(--bg-secondary); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 16px; justify-content:space-between; flex-shrink:0; }
@@ -510,16 +517,13 @@ textarea:not([dir="ltr"]),input[type="text"]:not([dir="ltr"]):not([id*="cnic"]):
 @media (max-width:768px) {
   #menu-toggle { display:flex!important; }
   .sidebar {
-    position:fixed!important;
-    top:0; right:0; bottom:0;
-    z-index:1001!important;
-    transform:translateX(100%);
+    transform:translateX(100%); /* ← right سے باہر چھپا دو */
     transition:transform 0.28s ease;
     box-shadow:-4px 0 20px rgba(0,0,0,0.4);
-    order:unset;
+    z-index:1001!important;
   }
   .sidebar.mobile-open { transform:translateX(0)!important; }
-  .main-area { margin-right:0!important; }
+  .main-area { margin-right:0!important; } /* ← mobile پر margin نہیں */
   .topbar { padding-right:60px!important; }
   .page-content { padding:10px!important; height:calc(100vh - 56px)!important; }
   .stats-grid,.form-row { grid-template-columns:repeat(2,1fr)!important; }
