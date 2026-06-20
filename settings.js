@@ -277,11 +277,26 @@ function changeProfilePhoto(){
     const f=e.target.files[0];if(!f)return;
     const r=new FileReader();
     r.onload=ev=>{
-      const src=ev.target.result;
-      try{localStorage.setItem('dio_profile_photo',src);}catch(e){}
-      document.querySelectorAll('.officer-card-avatar,.sidebar-avatar,#settings-avatar,#profile-avatar-btn')
-        .forEach(el=>{el.innerHTML=`<img src="${src}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">`;});
-      showToast('✅ Profile photo updated!','success');
+      // Compress via canvas before saving (keep small for DB)
+      const img=new Image();
+      img.onload=async()=>{
+        const canvas=document.createElement('canvas');
+        const max=400, scale=Math.min(1,max/img.width);
+        canvas.width=img.width*scale; canvas.height=img.height*scale;
+        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+        const src=canvas.toDataURL('image/jpeg',0.7);
+        try{localStorage.setItem('dio_profile_photo',src);}catch(e){}
+        // Save to Supabase officer record (persists across devices/logins)
+        try{
+          const oid=await getOfficerId();
+          await supabaseClient.from('officers').update({profile_photo:src}).eq('id',oid);
+          if(currentOfficer) currentOfficer.profile_photo=src;
+        }catch(_){}
+        document.querySelectorAll('.officer-card-avatar,.sidebar-avatar,#settings-avatar,#profile-avatar-btn')
+          .forEach(el=>{el.innerHTML=`<img src="${src}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">`;});
+        showToast('✅ Profile photo updated!','success');
+      };
+      img.src=ev.target.result;
     };
     r.readAsDataURL(f);
   };
@@ -291,6 +306,7 @@ function changeProfilePhoto(){
 function removeProfilePhoto(){
   if(!confirm('Remove profile photo?')) return;
   localStorage.removeItem('dio_profile_photo');
+  (async()=>{ try{ const oid=await getOfficerId(); await supabaseClient.from('officers').update({profile_photo:null}).eq('id',oid); if(currentOfficer)currentOfficer.profile_photo=null; }catch(_){} })();
   renderSettings(document.getElementById('page-content'));
   showToast('🗑️ Photo removed','info');
 }
