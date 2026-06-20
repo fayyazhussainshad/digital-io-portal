@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v60
+   DIGITAL IO — SERVICE WORKER v61
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v60';
+const CACHE_NAME = 'digital-io-v61';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -144,8 +144,10 @@ self.addEventListener('push', event => {
   event.waitUntil(
     self.registration.showNotification(data.title || 'Digital IO یاددہانی', {
       body: data.body || '',
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      icon: '/icon.svg',
+  '/icon-192.png',
+      badge: '/icon.svg',
+  '/icon-192.png',
       dir: 'rtl',
       lang: 'ur',
       vibrate: [200, 100, 200],
