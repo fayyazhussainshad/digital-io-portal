@@ -32,20 +32,21 @@ function renderIncident(container) {
     <!-- FORM -->
     <div id="inc-form" style="background:#fff;color:#111;direction:rtl;text-align:right;
       font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
-      border:2px solid #1a3a5c;border-radius:4px;padding:0;overflow:hidden;">
+      padding:24px;">
 
-      <!-- Row 1: Thana Saddar Zila Multan (centered) -->
-      <div style="text-align:center;padding:14px 24px 4px;font-size:18px;font-weight:800;color:#1a3a5c;">
-        تھانہ ${o.station||'_______'} ضلع ${o.district||'_______'}
+      <!-- Row 1: Thana (right, 0.7in gap) ... Zila (left) -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:16px;font-weight:800;color:#1a3a5c;margin-bottom:4px;">
+        <div style="padding-right:0.7in;">تھانہ ${o.station||'_______'}</div>
+        <div>ضلع ${o.district||'_______'}</div>
       </div>
 
       <!-- Row 2: واقعاتی رپورٹ (centered, underlined) -->
-      <div style="text-align:center;padding:2px 24px 12px;">
+      <div style="text-align:center;margin:8px 0 12px;">
         <span style="font-size:20px;font-weight:800;border-bottom:2px solid #1a3a5c;padding-bottom:2px;">واقعاتی رپورٹ</span>
       </div>
 
       <!-- Report Number + Type -->
-      <div style="padding:8px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid #ccc;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #ccc;">
         <div style="font-size:14px;">
           <span style="color:#555;">واقعاتی رپورٹ نمبر:</span>
           <input value="${incNum}" id="inc-num" style="${_iStyle('150px')}font-family:monospace;font-weight:700;color:#1a3a5c;">
@@ -62,41 +63,33 @@ function renderIncident(container) {
       </div>
 
       <!-- MAIN TABLE -->
-      <div style="padding:14px 24px 20px;">
+      <div>
         <table style="width:100%;border-collapse:collapse;font-size:14px;">
           <tbody>
-            <!-- Row 1: Caller name | Caller phone -->
+            <!-- Row 1: Caller name only (no phone column) -->
             <tr>
-              <td style="${_tdL()}">اطلاع دہندہ کا نام</td>
-              <td style="${_tdV()}"><input id="inc-caller-name" style="${_tIn()}"></td>
-              <td style="${_tdL()}">اطلاع دہندہ کا فون</td>
-              <td style="${_tdV()}"><input id="inc-caller-phone" dir="ltr" placeholder="0000-0000000" style="${_tIn()}"></td>
+              <td style="${_tdL()}">نام اطلاع دہندہ</td>
+              <td colspan="3" style="${_tdV()}"><input id="inc-caller-name" style="${_tIn()}"></td>
             </tr>
-            <!-- Row 2: Name | Status dropdown -->
+            <!-- Row 2: Name + status dropdown in SAME column -->
             <tr>
               <td style="${_tdL()}">نام</td>
-              <td style="${_tdV()}"><input id="inc-person-name" style="${_tIn()}"></td>
-              <td style="${_tdL()}">حیثیت</td>
-              <td style="${_tdV()}">
-                <div style="display:flex;gap:4px;">
-                  <select id="inc-person-type" style="${_tIn()}flex:1;">
+              <td colspan="3" style="${_tdV()}">
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <input id="inc-person-name" placeholder="نام" style="${_tIn()}flex:2;">
+                  <select id="inc-person-type" style="${_tIn()}flex:1;min-width:90px;">
                     <option>مضروب</option><option>victim</option><option>مقتول</option><option>متاثرہ</option>
                   </select>
-                  <button onclick="_incAddPersonType()" style="border:1px solid #ccc;border-radius:4px;background:#f0f4f8;cursor:pointer;padding:0 8px;" title="نیا">➕</button>
+                  <button onclick="_incAddPersonType()" style="border:1px solid #ccc;border-radius:4px;background:#f0f4f8;cursor:pointer;padding:2px 8px;flex-shrink:0;" title="نیا">➕</button>
                 </div>
               </td>
             </tr>
-            <!-- Row 3: Date/time of occurrence | Place of occurrence -->
+            <!-- Row 3: مقام وقوعہ (more space) | تاریخ و وقت (less, centered) -->
             <tr>
-              <td style="${_tdL()}">تاریخ و وقت وقوعہ</td>
-              <td style="${_tdV()}"><input id="inc-datetime" value="${today} ${timeNow}" style="${_tIn()}"></td>
               <td style="${_tdL()}">مقام وقوعہ</td>
               <td style="${_tdV()}"><input id="inc-place" style="${_tIn()}"></td>
-            </tr>
-            <!-- Row 4: Names & addresses of accused (full width) -->
-            <tr>
-              <td style="${_tdL()}">نام و پتہ جات ملزمان / مشتبہگان</td>
-              <td colspan="3" style="${_tdV()}"><textarea id="inc-accused" rows="2" style="${_tIn()}resize:vertical;"></textarea></td>
+              <td style="${_tdL()}">تاریخ و وقت وقوعہ</td>
+              <td style="${_tdV()}width:1%;white-space:nowrap;"><input id="inc-datetime" value="${today} ${timeNow}" style="${_tIn()}text-align:center;min-width:150px;"></td>
             </tr>
             <!-- Row 5: Visiting officers (checklist) -->
             <tr>
