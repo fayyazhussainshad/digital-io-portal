@@ -54,34 +54,41 @@ function _drawDiary() {
   const lockTime = now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) + ' ' + now.toLocaleDateString('en-GB');
 
   root.innerHTML = `
-  <!-- Row 1: Title -->
+  <!-- Row 1: Title (Urdu) -->
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;direction:rtl;">
     <button onclick="showPage('dashboard',null)" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:20px;cursor:pointer;color:var(--accent);">←</button>
     <div style="flex:1;text-align:center;">
-      <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;">ڈیجیٹل ڈائری <span style="font-size:14px;color:var(--text-muted);font-style:italic;">(Digital Diary)</span></div>
+      <div style="font-size:24px;font-weight:800;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;">ڈیجیٹل ڈائری</div>
     </div>
     <div style="width:60px;"></div>
   </div>
 
-  <!-- Row 2: Meeting Log Section (2 columns) -->
+  <!-- Row 2: Meeting Log — designation dropdown (right) + purpose (left) -->
   <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;direction:rtl;">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div>
-        <label class="form-label">میٹنگ کا مقصد:</label>
-        <input class="form-input" id="diary-purpose" placeholder="مثلاً: صوبائی کرائم ریویو میٹنگ" style="font-family:'Jameel Noori Nastaleeq',serif;">
+        <label class="form-label" style="font-size:14px;">افسر کا عہدہ:</label>
+        <select class="form-input" id="diary-rank" style="font-family:'Jameel Noori Nastaleeq',serif;font-size:15px;">
+          <option value="">— منتخب کریں —</option>
+          <option>IGP</option><option>Addl IGP</option><option>DIG</option><option>SSP</option>
+          <option>SP</option><option>ASP</option><option>DSP</option><option>SDPO</option>
+          <option>Inspector / SHO</option><option>Sub Inspector (SI)</option>
+          <option>ASI</option><option>Head Constable</option><option>Constable</option>
+          <option>CPO</option><option>DPO</option><option>RPO</option>
+        </select>
       </div>
       <div>
-        <label class="form-label">افسر کا عہدہ:</label>
-        <input class="form-input" id="diary-rank" placeholder="مثلاً: DPO" style="font-family:'Jameel Noori Nastaleeq',serif;">
+        <label class="form-label" style="font-size:14px;">میٹنگ کا مقصد:</label>
+        <input class="form-input" id="diary-purpose" placeholder="مثلاً: صوبائی کرائم ریویو میٹنگ" style="font-family:'Jameel Noori Nastaleeq',serif;font-size:15px;">
       </div>
     </div>
   </div>
 
-  <!-- Row 3: Handwriting / main note canvas -->
+  <!-- Row 3: main note canvas (bigger, justified) -->
   <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;direction:rtl;">
-    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px;">📝 نوٹ اسکرین (Notes Canvas)</div>
-    <textarea class="form-input" id="diary-content" rows="5" placeholder="یہاں احکامات یا تفصیل لکھیں... مثلاً: مقدمہ نمبر 45/24 میں ریکوری تیز کریں۔ ضمنی نمبر 3 فوری مکمل کریں۔"
-      style="font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;line-height:2;resize:vertical;min-height:110px;"></textarea>
+    <div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:8px;">📝 نوٹ اسکرین</div>
+    <textarea class="form-input" id="diary-content" rows="6" placeholder="یہاں احکامات یا تفصیل لکھیں..."
+      style="font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:16px;line-height:2.2;text-align:justify;direction:rtl;resize:vertical;min-height:130px;"></textarea>
   </div>
 
   <!-- Row 4: Voice & Keyboard Input -->
@@ -136,7 +143,9 @@ function _drawDiary() {
       oninput="_diaryFilter=this.value;_drawDiary()" style="font-size:13px;margin-bottom:12px;">` : ''}
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">محفوظ اندراجات: ${_diaryList.length}</div>
     ${_renderDiaryEntries(filtered)}
-  </div>`;
+  </div>
+  <!-- Bottom-left brand (outside table) -->
+  <div style="text-align:left;margin-top:18px;font-size:11px;color:var(--text-faint);direction:ltr;">Created by Digital IO</div>`;
 }
 
 // Append quick input to main canvas

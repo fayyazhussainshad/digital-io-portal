@@ -368,12 +368,12 @@ input, textarea, select { font-family: var(--font-main); }
 ::-webkit-scrollbar { width: 4px; height: 4px; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
 /* ── LOGIN ── */
-#login-screen { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; overflow-y: auto; padding: 20px; }
+#login-screen { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 16px; }
 .login-bg { position: fixed; inset: 0; z-index: 0; background: radial-gradient(ellipse at 20% 50%, #0c2a44 0%, #070f18 50%, #050d15 100%); }
 .login-bg-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(56,189,248,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(56,189,248,0.03) 1px, transparent 1px); background-size: 40px 40px; }
 .login-bg-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(56,189,248,0.06) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%,-50%); animation: glowPulse 4s ease-in-out infinite; }
 @keyframes glowPulse { 0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(1)} 50%{opacity:1;transform:translate(-50%,-50%) scale(1.1)} }
-.login-card { position: relative; z-index: 1; background: rgba(11,24,38,0.95); border: 1px solid var(--border); border-radius: 20px; padding: 36px 32px; width: 100%; max-width: 420px; box-shadow: 0 32px 80px rgba(0,0,0,0.7); backdrop-filter: blur(20px); animation: cardSlideUp 0.5s ease; }
+.login-card { position: relative; z-index: 1; background: rgba(11,24,38,0.95); border: 1px solid var(--border); border-radius: 18px; padding: 24px 24px; width: 100%; max-width: 400px; margin: auto; box-shadow: 0 32px 80px rgba(0,0,0,0.7); backdrop-filter: blur(20px); animation: cardSlideUp 0.5s ease; }
 @keyframes cardSlideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
 .login-logo-wrap { text-align: center !important; margin-bottom: 24px; direction: ltr; }
 .login-logo-icon { font-size: 36px; margin-bottom: 8px; text-align: center; }
@@ -944,8 +944,10 @@ window.addEventListener('unhandledrejection', function(e){
   <div class="login-bg"><div class="login-bg-grid"></div><div class="login-bg-glow"></div></div>
   <div class="login-card">
     <div class="login-logo-wrap">
-      <div class="login-logo-icon">🛡️</div>
-      <div class="login-logo-text">Digital IO</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;">
+        <span class="login-logo-icon" style="margin-bottom:0;">🛡️</span>
+        <span class="login-logo-text">Digital IO</span>
+      </div>
       <div class="login-logo-sub" style="font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:20px;font-weight:700;letter-spacing:normal;text-transform:none;direction:rtl;color:var(--accent);margin-top:8px;">تفتیشی افسر کا چھوٹو</div>
     </div>
     <div class="login-avatar-wrap">
@@ -984,9 +986,9 @@ window.addEventListener('unhandledrejection', function(e){
       <div class="login-links"><a onclick="setLoginMethod('password',document.querySelectorAll('.login-method')[0])">Use Password Instead</a></div>
     </div>
     <div class="login-security-badge">🔒 256-bit AES Encrypted · MFA Protected · Audit Logged</div>
-    <div style="margin-top:16px;padding:12px 14px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:10px;direction:rtl;text-align:right;">
-      <div style="font-size:12.5px;line-height:2;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;">
-        <span style="font-weight:700;color:var(--accent);">"Digital IO"</span> ایک نجی اور غیر سرکاری مددگار سافٹ ویئر ہے۔ اس کا مقصد صرف اور صرف پولیس افسران کے کام کو آسان بنانا ہے۔ اس ایپ کے کسی بھی نوعیت کے غلط استعمال یا اس کے نتائج کی تمام تر ذمہ داری خود صارف (یوزر پولیس افسر) پر ہوگی۔
+    <div style="margin-top:16px;padding:12px 14px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.45);border-radius:10px;direction:rtl;text-align:right;">
+      <div style="font-size:12.5px;line-height:1.9;color:#e8d9b0;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;">
+        <span style="font-weight:700;color:#f5b942;">"Digital IO"</span> ایک نجی اور غیر سرکاری مددگار سافٹ ویئر ہے۔ اس کا مقصد صرف اور صرف پولیس افسران کے کام کو آسان بنانا ہے۔ اس ایپ کے کسی بھی نوعیت کے غلط استعمال یا اس کے نتائج کی تمام تر ذمہ داری خود صارف (یوزر پولیس افسر) پر ہوگی۔
       </div>
     </div>
   </div>

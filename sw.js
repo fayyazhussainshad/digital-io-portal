@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v56
+   DIGITAL IO — SERVICE WORKER v57
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v56';
+const CACHE_NAME = 'digital-io-v57';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -73,21 +73,36 @@ self.addEventListener('fetch', event => {
   if (url.hostname === 'supabase.co' || url.hostname.includes('supabase')) return;
   if (url.hostname === 'nominatim.openstreetmap.org') return;
   if (url.hostname === 'api.anthropic.com') return;
-  // External CDN libraries (Supabase, fonts) — always fetch fresh, never cache-first
-  // This prevents a broken/partial cached copy from blocking the app
-  if (url.hostname.includes('jsdelivr.net') || url.hostname.includes('unpkg.com') || url.hostname.includes('cdnjs.cloudflare.com')) {
+  // External CDN libraries (Supabase, fonts) — network-first, but CACHE for offline
+  if (url.hostname.includes('jsdelivr.net') || url.hostname.includes('unpkg.com') || url.hostname.includes('cdnjs.cloudflare.com') || url.hostname.includes('esm.sh')) {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
+      fetch(event.request).then(response => {
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        }
+        return response;
+      }).catch(() => caches.match(event.request))
     );
     return;
   }
 
-  // HTML navigation — offline fallback
+  // HTML navigation — serve the cached APP so it works offline
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() =>
-        caches.match('/offline.html')
-      )
+      fetch(event.request)
+        .then(response => {
+          // Cache fresh copy of the page
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put('/index.html', clone));
+          return response;
+        })
+        .catch(() =>
+          // OFFLINE: serve the cached app (index.html), fallback to offline.html
+          caches.match('/index.html')
+            .then(cached => cached || caches.match('/'))
+            .then(cached => cached || caches.match('/offline.html'))
+        )
     );
     return;
   }
