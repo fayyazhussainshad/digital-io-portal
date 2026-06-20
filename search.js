@@ -33,7 +33,7 @@ function renderSearch(container) {
       <!-- Section filter -->
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
         <span style="font-size:11px;color:var(--text-muted);font-weight:600;min-width:64px;">SECTION</span>
-        ${[['all','🔍 سب'],['cases','📁 مقدمات'],['patrol','🚔 گشت'],['reminders','🔔 یاددہانی'],['fivec','📋 5-C'],['evidence','📷 شہادت'],['incident','🚨 واقعہ'],['court','⚖️ پیشی'],['law','⚖️ قانون']].map(([k,l],i)=>
+        ${[['all','🔍 سب'],['cases','📁 مقدمات'],['persons','👥 افراد'],['patrol','🚔 گشت'],['reminders','🔔 یاددہانی'],['fivec','📋 5-C'],['evidence','📷 شہادت'],['incident','🚨 واقعہ'],['court','⚖️ پیشی'],['law','⚖️ قانون']].map(([k,l],i)=>
           `<button class="sr-pill ${i===0?'sr-pill-active':''}" id="sec-${k}" onclick="_srSection('${k}')">${l}</button>`
         ).join('')}
       </div>
@@ -248,6 +248,64 @@ async function _srRun() {
             </div>`;
           }).join('')}
         </div>`;
+      }
+    } catch(_) {}
+  }
+
+  // ── PERSONS (ملزمان / مدعی / گواہان — unified) ──────────────
+  if (section === 'all' || section === 'persons') {
+    try {
+      const oid = await getOfficerId();
+      // From suspects database (suspect/complainant/witness/accused)
+      const { data: persons } = await supabaseClient.from('suspects')
+        .select('*').eq('officer_id', oid).order('created_at', { ascending: false });
+      // From case witnesses
+      const { data: witnesses } = await supabaseClient.from('case_witnesses')
+        .select('*').order('created_at', { ascending: false });
+
+      const SUS = (typeof SUSPECT_TYPES !== 'undefined') ? SUSPECT_TYPES : {};
+      const matchedP = (persons||[]).filter(p =>
+        wMatch(p.full_name)||wMatch(p.father_name)||wMatch(p.caste)||
+        wMatch(p.profession)||wMatch(p.address)||wMatchC(p.cnic)||wMatchC(p.cell));
+      const matchedW = (witnesses||[]).filter(w =>
+        wMatch(w.full_name)||wMatch(w.profession)||wMatchC(w.cnic)||wMatchC(w.cell));
+
+      const total = matchedP.length + matchedW.length;
+      if (total) {
+        html += `<div class="sr-section-header">👥 افراد — ملزمان / مدعی / گواہان (${total})</div>`;
+        html += `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">`;
+        matchedP.forEach(p => {
+          const role = (SUS[p.person_type]||{}).label || p.person_type || 'فرد';
+          const icon = (SUS[p.person_type]||{}).icon || '👤';
+          html += `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;direction:rtl;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:16px;">${icon}</span>
+              <span style="font-weight:700;font-size:13px;">${p.full_name||'—'}</span>
+              <span style="background:var(--accent-glow);color:var(--accent);border-radius:10px;padding:1px 8px;font-size:10px;">${role}</span>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;">
+              ${p.father_name?`<span>ولدیت: ${p.father_name}</span>`:''}
+              ${p.cnic?`<span dir="ltr">🪪 ${p.cnic}</span>`:''}
+              ${p.cell?`<span dir="ltr">📱 ${p.cell}</span>`:''}
+              ${p.profession?`<span>${p.profession}</span>`:''}
+            </div>
+          </div>`;
+        });
+        matchedW.forEach(w => {
+          html += `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;direction:rtl;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:16px;">👁️</span>
+              <span style="font-weight:700;font-size:13px;">${w.full_name||'—'}</span>
+              <span style="background:var(--accent-glow);color:var(--accent);border-radius:10px;padding:1px 8px;font-size:10px;">گواہ ${w.status?'· '+w.status:''}</span>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;">
+              ${w.cnic?`<span dir="ltr">🪪 ${w.cnic}</span>`:''}
+              ${w.cell?`<span dir="ltr">📱 ${w.cell}</span>`:''}
+              ${w.profession?`<span>${w.profession}</span>`:''}
+            </div>
+          </div>`;
+        });
+        html += `</div>`;
       }
     } catch(_) {}
   }
