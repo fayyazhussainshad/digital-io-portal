@@ -446,9 +446,12 @@ function updateSidebarProfile() {
     const initials = (o.full_name||'IO').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
     avEl.textContent = initials;
   }
-  // Show admin nav if applicable
+  // Show admin nav if applicable (both old sidebar and new top-nav)
+  const isAdmin = ['admin','superadmin'].includes(o.role);
   const adminNav = document.getElementById('admin-nav-item');
-  if (adminNav) adminNav.style.display = ['admin','superadmin'].includes(o.role) ? 'flex' : 'none';
+  if (adminNav) adminNav.style.display = isAdmin ? 'flex' : 'none';
+  const topAdmin = document.getElementById('top-admin-item');
+  if (topAdmin) topAdmin.style.display = isAdmin ? 'block' : 'none';
 }
 
 // ── TOPBAR SHO/DSP ────────────────────────────────────────────
