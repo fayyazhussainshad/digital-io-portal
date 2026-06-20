@@ -62,9 +62,9 @@ async function _buildDash() {
     <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;direction:rtl;font-weight:700;">📊 مقدمات کی صورتحال</div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;direction:rtl;">
       <!-- کل مقدمات -->
-      <div onclick="showPage('cases',null)" style="background:linear-gradient(135deg,var(--accent),#0ea5e9);border-radius:10px;padding:10px 4px;text-align:center;cursor:pointer;">
-        <div style="font-size:9px;color:rgba(255,255,255,0.85);font-family:'Jameel Noori Nastaleeq',serif;margin-bottom:3px;">کل مقدمات</div>
-        <div style="font-size:20px;font-weight:900;color:#fff;">${total}</div>
+      <div onclick="showPage('cases',null)" style="background:linear-gradient(135deg,var(--accent),#0ea5e9);border-radius:10px;padding:12px 4px;text-align:center;cursor:pointer;">
+        <div style="font-size:11px;color:rgba(255,255,255,0.9);font-family:'Jameel Noori Nastaleeq',serif;margin-bottom:4px;text-align:center;line-height:1.3;">کل مقدمات</div>
+        <div style="font-size:22px;font-weight:900;color:#fff;text-align:center;">${total}</div>
       </div>
       ${[
         {k:'complete',   l:'چالان مکمل',  v:complete,   c:'var(--green)'},
@@ -75,11 +75,11 @@ async function _buildDash() {
         {k:'challan512', l:'چالان 512',     v:challan512, c:'#f97316'},
       ].map(s=>`
       <div onclick="showPage('cases',null)"
-        style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 4px;text-align:center;cursor:pointer;border-bottom:3px solid ${s.c};"
+        style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px 4px;text-align:center;cursor:pointer;border-bottom:3px solid ${s.c};"
         onmouseover="this.style.background='var(--bg-secondary)'"
         onmouseout="this.style.background='var(--bg-card)'">
-        <div style="font-size:8.5px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq',serif;margin-bottom:3px;line-height:1.2;">${s.l}</div>
-        <div style="font-size:18px;font-weight:900;color:${s.c};">${s.v}</div>
+        <div style="font-size:11px;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq',serif;margin-bottom:4px;line-height:1.3;text-align:center;">${s.l}</div>
+        <div style="font-size:20px;font-weight:900;color:${s.c};text-align:center;">${s.v}</div>
       </div>`).join('')}
     </div>
   </div>
