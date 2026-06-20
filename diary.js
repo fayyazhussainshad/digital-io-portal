@@ -43,29 +43,102 @@ function _drawDiary() {
                              (d.entry_type||'').includes(_diaryFilter))
     : _diaryList;
 
+  const o = currentOfficer || {};
+  const now = new Date();
+  const lockTime = now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) + ' ' + now.toLocaleDateString('en-GB');
+
   root.innerHTML = `
-  <!-- Header -->
+  <!-- Row 1: Title -->
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;direction:rtl;">
-    <button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:20px;cursor:pointer;color:var(--accent);">←</button>
-    <div style="flex:1;">
-      <div style="font-size:18px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;">📓 روزنامچہ (Digital Diary)</div>
-      <div style="font-size:11px;color:var(--text-muted);">${_diaryList.length} اندراجات · کاغذ کے بغیر</div>
+    <button onclick="showPage('dashboard',null)" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:20px;cursor:pointer;color:var(--accent);">←</button>
+    <div style="flex:1;text-align:center;">
+      <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;">ڈیجیٹل ڈائری <span style="font-size:14px;color:var(--text-muted);font-style:italic;">(Digital Diary)</span></div>
     </div>
-    <button class="btn btn-primary btn-sm" onclick="_openDiaryForm()">➕ نیا اندراج</button>
+    <div style="width:60px;"></div>
   </div>
 
-  <!-- Quick add box -->
-  <div id="diary-form-box"></div>
+  <!-- Row 2: Meeting Log Section (2 columns) -->
+  <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;direction:rtl;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div>
+        <label class="form-label">میٹنگ کا مقصد:</label>
+        <input class="form-input" id="diary-purpose" placeholder="مثلاً: صوبائی کرائم ریویو میٹنگ" style="font-family:'Jameel Noori Nastaleeq',serif;">
+      </div>
+      <div>
+        <label class="form-label">افسر کا عہدہ:</label>
+        <input class="form-input" id="diary-rank" placeholder="مثلاً: DPO" style="font-family:'Jameel Noori Nastaleeq',serif;">
+      </div>
+    </div>
+  </div>
 
-  <!-- Search -->
-  ${_diaryList.length ? `
-  <div style="margin-bottom:12px;direction:rtl;">
-    <input class="form-input" placeholder="🔍 تلاش کریں..." value="${_diaryFilter}"
-      oninput="_diaryFilter=this.value;_drawDiary()" style="font-size:13px;">
-  </div>` : ''}
+  <!-- Row 3: Handwriting / main note canvas -->
+  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;direction:rtl;">
+    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px;">📝 نوٹ اسکرین (Notes Canvas)</div>
+    <textarea class="form-input" id="diary-content" rows="5" placeholder="یہاں احکامات یا تفصیل لکھیں... مثلاً: مقدمہ نمبر 45/24 میں ریکوری تیز کریں۔ ضمنی نمبر 3 فوری مکمل کریں۔"
+      style="font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;line-height:2;resize:vertical;min-height:110px;"></textarea>
+  </div>
 
-  <!-- Entries -->
-  <div>${_renderDiaryEntries(filtered)}</div>`;
+  <!-- Row 4: Voice & Keyboard Input -->
+  <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;direction:rtl;">
+    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px;">🎙️ وائس ٹائپنگ اور کی بورڈ ان پٹ</div>
+    <div style="display:flex;gap:8px;align-items:stretch;">
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+        <input class="form-input" id="diary-quick" placeholder="وائس کمانڈ یا فوری نوٹ یہاں لکھیں..." style="font-family:'Jameel Noori Nastaleeq',serif;">
+        <button class="btn btn-primary btn-sm" onclick="_diaryAppendQuick()" style="align-self:flex-start;">📨 بھیجیں</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        <button onclick="_diaryVoice()" id="diary-mic" style="width:42px;height:42px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);font-size:18px;cursor:pointer;" title="وائس کمانڈ">🎙️</button>
+        <button onclick="document.getElementById('diary-quick').focus()" style="width:42px;height:42px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);font-size:18px;cursor:pointer;" title="کی بورڈ">⌨️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Photo + location + type + save -->
+  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;direction:rtl;">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+      ${DIARY_TYPES.map((t,i) => `
+        <label style="display:flex;align-items:center;gap:4px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:4px 10px;font-size:12px;cursor:pointer;">
+          <input type="radio" name="diary-type" value="${t.v}" ${i===0?'checked':''} style="accent-color:var(--accent);">${t.icon} ${t.label}
+        </label>`).join('')}
+    </div>
+    <input type="file" id="diary-photo-input" accept="image/*" capture="environment" style="display:none;" onchange="_diaryPhotoSelect(this)">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('diary-photo-input').click()">📷 تصویر</button>
+      <button class="btn btn-secondary btn-sm" onclick="_diaryGetLocation()">📍 مقام</button>
+      <span id="diary-loc-status" style="font-size:11px;color:var(--text-muted);"></span>
+    </div>
+    <div id="diary-photo-preview" style="margin-top:8px;"></div>
+  </div>
+
+  <!-- Row 5: Bottom features -->
+  <div style="margin-bottom:14px;direction:rtl;">
+    <div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;text-align:right;">محفوظ فائلیں اور فیچرز</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+      <button class="btn btn-primary" onclick="_saveDiary('')" style="font-size:12px;">💾 محفوظ کریں</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('diary-search-box').scrollIntoView({behavior:'smooth'})" style="font-size:12px;">🔍 تلاش کریں</button>
+      <button class="btn btn-secondary" onclick="alert('🔒 آٹو ٹائم لاک: ${lockTime}')" style="font-size:12px;">🔒 ${lockTime}</button>
+    </div>
+  </div>
+
+  <!-- Search + Saved entries -->
+  <div id="diary-search-box" style="direction:rtl;">
+    ${_diaryList.length ? `
+    <input class="form-input" placeholder="🔍 محفوظ ڈائری میں تلاش..." value="${_diaryFilter}"
+      oninput="_diaryFilter=this.value;_drawDiary()" style="font-size:13px;margin-bottom:12px;">` : ''}
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">محفوظ اندراجات: ${_diaryList.length}</div>
+    ${_renderDiaryEntries(filtered)}
+  </div>`;
+}
+
+// Append quick input to main canvas
+function _diaryAppendQuick() {
+  const q = document.getElementById('diary-quick');
+  const main = document.getElementById('diary-content');
+  if (q && main && q.value.trim()) {
+    main.value += (main.value ? '\n' : '') + q.value.trim();
+    q.value = '';
+    showToast('✅ نوٹ میں شامل', 'success', 1200);
+  }
 }
 
 function _renderDiaryEntries(entries) {
@@ -206,13 +279,21 @@ function _diaryGetLocation() {
 
 async function _saveDiary(id) {
   const content = document.getElementById('diary-content')?.value.trim();
+  const purpose = document.getElementById('diary-purpose')?.value.trim() || '';
+  const rank = document.getElementById('diary-rank')?.value.trim() || '';
   const type = document.querySelector('input[name="diary-type"]:checked')?.value || 'personal';
-  if (!content && !_diaryPhoto) { showToast('⚠️ کچھ لکھیں یا تصویر لگائیں', 'error'); return; }
+  // Combine purpose/rank into content header if present
+  let fullContent = content || '';
+  if (purpose || rank) {
+    const head = [purpose && `میٹنگ کا مقصد: ${purpose}`, rank && `عہدہ: ${rank}`].filter(Boolean).join(' · ');
+    fullContent = head + (fullContent ? '\n\n' + fullContent : '');
+  }
+  if (!fullContent && !_diaryPhoto) { showToast('⚠️ کچھ لکھیں یا تصویر لگائیں', 'error'); return; }
   try {
     const oid = await getOfficerId();
     const rec = {
       entry_type: type,
-      content: content || '',
+      content: fullContent,
       photo_url: _diaryPhoto || null,
       location: window._diaryLoc || null,
     };
@@ -223,7 +304,6 @@ async function _saveDiary(id) {
     }
     window._diaryLoc = null;
     _diaryPhoto = null;
-    document.getElementById('diary-form-box').innerHTML = '';
     await _loadDiary();
     _drawDiary();
     showToast('✅ اندراج محفوظ ہو گیا', 'success');
