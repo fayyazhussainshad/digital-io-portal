@@ -19,14 +19,20 @@ let _diaryPhoto = null; // base64 of attached photo
 let _diaryFilter = '';
 
 async function renderDiary(container) {
-  container.innerHTML = `<div id="diary-root" style="max-width:640px;margin:0 auto;"></div>`;
-  await _loadDiary();
-  _drawDiary();
+  try {
+    container.innerHTML = `<div id="diary-root" style="max-width:640px;margin:0 auto;"></div>`;
+    await _loadDiary();
+    _drawDiary();
+  } catch(err) {
+    console.error('Diary render error:', err);
+    container.innerHTML = `<div style="padding:30px;text-align:center;direction:rtl;"><div style="font-size:40px;">⚠️</div><div style="margin-top:10px;">ڈائری کھولنے میں مسئلہ</div><div style="font-size:11px;color:var(--text-muted);direction:ltr;font-family:monospace;margin-top:8px;">${(err&&err.message)||err}</div></div>`;
+  }
 }
 
 async function _loadDiary() {
   try {
     const oid = await getOfficerId();
+    if (!oid) { _diaryList = []; return; }
     const { data } = await supabaseClient.from('diary_entries')
       .select('*').eq('officer_id', oid)
       .order('created_at', { ascending: false });
@@ -113,10 +119,13 @@ function _drawDiary() {
   <!-- Row 5: Bottom features -->
   <div style="margin-bottom:14px;direction:rtl;">
     <div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;text-align:right;">محفوظ فائلیں اور فیچرز</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <button class="btn btn-primary" onclick="_saveDiary('')" style="flex:1;">💾 محفوظ کریں</button>
+    </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
-      <button class="btn btn-primary" onclick="_saveDiary('')" style="font-size:12px;">💾 محفوظ کریں</button>
-      <button class="btn btn-secondary" onclick="document.getElementById('diary-search-box').scrollIntoView({behavior:'smooth'})" style="font-size:12px;">🔍 تلاش کریں</button>
-      <button class="btn btn-secondary" onclick="alert('🔒 آٹو ٹائم لاک: ${lockTime}')" style="font-size:12px;">🔒 ${lockTime}</button>
+      <button class="btn btn-secondary" onclick="_diaryPDF()" style="font-size:11px;">📄 PDF رپورٹ</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('diary-search-box').scrollIntoView({behavior:'smooth'});document.querySelector('#diary-search-box input')?.focus()" style="font-size:11px;">🔍 مقدمہ سے تلاش</button>
+      <button class="btn btn-secondary" onclick="showToast('🔒 آٹو ٹائم لاک: ${lockTime}','info',3000)" style="font-size:11px;">🔒 ${lockTime}</button>
     </div>
   </div>
 
@@ -328,6 +337,32 @@ function _shareDiary(id) {
   const txt = `📓 ${t.label}\n${dt}\n\n${d.content}${d.location?`\n\n📍 ${d.location}`:''}\n\nDigital IO`;
   if (navigator.share) { navigator.share({ title:'روزنامچہ', text:txt }).catch(()=>{}); }
   else { navigator.clipboard.writeText(txt).then(()=>showToast('📋 کاپی ہو گیا','success')); }
+}
+
+// Generate a printable PDF report of all diary entries
+function _diaryPDF() {
+  const o = currentOfficer || {};
+  if (!_diaryList.length) { showToast('⚠️ کوئی اندراج نہیں', 'warn'); return; }
+  const rows = _diaryList.map((d,i) => {
+    const t = DIARY_TYPES.find(x => x.v === d.entry_type) || { label:'نوٹ' };
+    const dt = new Date(d.created_at).toLocaleString('ur-PK');
+    return `<tr>
+      <td style="border:1px solid #999;padding:6px;text-align:center;">${i+1}</td>
+      <td style="border:1px solid #999;padding:6px;">${t.label}</td>
+      <td style="border:1px solid #999;padding:6px;white-space:pre-wrap;">${_escD(d.content)}</td>
+      <td style="border:1px solid #999;padding:6px;font-size:11px;white-space:nowrap;">${dt}</td>
+    </tr>`;
+  }).join('');
+  const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
+    <style>@page{margin:15mm}body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;}
+    table{width:100%;border-collapse:collapse;font-size:13px;}th{background:#1a3a5c;color:#fff;padding:8px;border:1px solid #999;}</style></head><body>
+    <h2 style="text-align:center;">ڈیجیٹل ڈائری رپورٹ</h2>
+    <div style="text-align:center;font-size:13px;margin-bottom:12px;">${o.designation||''} ${o.full_name||''} — تھانہ ${o.station||''}</div>
+    <table><thead><tr><th>نمبر</th><th>قسم</th><th>تفصیل</th><th>تاریخ و وقت</th></tr></thead><tbody>${rows}</tbody></table>
+    <div style="text-align:left;margin-top:20px;font-size:10px;color:#999;">Created by DIGITAL IO</div>
+    </body></html>`;
+  if (typeof dioPrint === 'function') dioPrint(html);
+  showToast('📄 رپورٹ تیار — پرنٹ یا PDF کے طور پر محفوظ کریں', 'success', 4000);
 }
 
 function _escD(s) {

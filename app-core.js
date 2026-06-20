@@ -58,10 +58,10 @@ const ROLE_LEVELS = { officer:1, supervisor:2, admin:3, superadmin:4 };
 
 // Which pages each role can access
 const ROLE_PAGES = {
-  officer:    ['dashboard','cases','forms','fivec','incident','patrol','cdr','law','reminders','search','suspects','performance','backup','settings','bin','subscription','court','evidence'],
-  supervisor: ['dashboard','cases','forms','fivec','incident','patrol','cdr','law','reminders','search','suspects','performance','backup','settings','bin','subscription','court','evidence'],
-  admin:      ['dashboard','cases','forms','fivec','incident','patrol','cdr','law','reminders','search','suspects','performance','backup','settings','bin','subscription','court','evidence','admin'],
-  superadmin: ['dashboard','cases','forms','fivec','incident','patrol','cdr','law','reminders','search','suspects','performance','backup','settings','bin','subscription','court','evidence','admin'],
+  officer:    ['dashboard','cases','forms','fivec','incident','patrol','diary','cdr','law','reminders','search','suspects','performance','backup','settings','bin','subscription','court','evidence'],
+  supervisor: ['dashboard','cases','forms','fivec','incident','patrol','diary','cdr','law','reminders','search','suspects','performance','backup','settings','bin','subscription','court','evidence'],
+  admin:      ['dashboard','cases','forms','fivec','incident','patrol','diary','cdr','law','reminders','search','suspects','performance','backup','settings','bin','subscription','court','evidence','admin'],
+  superadmin: ['dashboard','cases','forms','fivec','incident','patrol','diary','cdr','law','reminders','search','suspects','performance','backup','settings','bin','subscription','court','evidence','admin'],
 };
 
 function getRole() {
@@ -162,7 +162,17 @@ function showPage(page, el) {
   container.style.overflow = 'auto';
 
   if (_pages[page]) {
-    _pages[page](container);
+    try {
+      _pages[page](container);
+    } catch(err) {
+      console.error('Page render error ['+page+']:', err);
+      container.innerHTML = `<div style="padding:30px;direction:rtl;text-align:center;">
+        <div style="font-size:40px;">⚠️</div>
+        <div style="font-size:15px;margin-top:10px;color:var(--text-secondary);">صفحہ کھولنے میں مسئلہ</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:8px;font-family:monospace;direction:ltr;">${(err&&err.message)||err}</div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:14px;" onclick="showPage('${page}',null)">🔄 دوبارہ کوشش</button>
+      </div>`;
+    }
   } else {
     container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted);">
       <div style="font-size:48px;">🚧</div>
@@ -267,44 +277,47 @@ async function getOfficerId() {
 }
 
 async function getCases(status, query) {
-  const oid = await getOfficerId();
-  // No officer id yet (not logged in / session restoring) — use cache or empty
-  if (!oid) {
-    if (typeof offlineStore !== 'undefined') {
-      try { return await offlineStore.getAll('cases_cache'); } catch(_) {}
+  try {
+    const oid = await getOfficerId();
+    // No officer id yet (not logged in / session restoring) — use cache or empty
+    if (!oid) {
+      if (typeof offlineStore !== 'undefined') {
+        try { return await offlineStore.getAll('cases_cache'); } catch(_) {}
+      }
+      return [];
     }
+    // OFFLINE: read from IndexedDB cache
+    if (!navigator.onLine && typeof offlineStore !== 'undefined') {
+      try {
+        let all = await offlineStore.getAll('cases_cache', oid);
+        if (status) all = all.filter(c => c.status === status);
+        if (query) {
+          const w = query.toLowerCase();
+          all = all.filter(c => (c.fir_number||'').toLowerCase().includes(w) ||
+            (c.complainant||'').toLowerCase().includes(w) ||
+            (c.section_of_law||'').toLowerCase().includes(w));
+        }
+        return all.sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
+      } catch(_) { return []; }
+    }
+    // ONLINE: Supabase + cache the results for offline use
+    let q = supabaseClient.from('cases').select('*').eq('officer_id',oid).order('created_at',{ascending:false});
+    if (status) q = q.eq('status',status);
+    if (query) {
+      const w = `%${query}%`;
+      q = q.or(`fir_number.ilike.${w},complainant.ilike.${w},section_of_law.ilike.${w},complainant_cnic.ilike.${w},complainant_cell.ilike.${w}`);
+    }
+    const { data } = await q;
+    if (typeof markSynced === 'function') markSynced();
+    // Cache for offline use (don't let cache errors break the page)
+    if (typeof offlineStore !== 'undefined' && data) {
+      try { await offlineStore.cache('cases_cache', data); } catch(_) {}
+    }
+    return data||[];
+  } catch(e) {
+    console.error('getCases error:', e);
     return [];
   }
-  // OFFLINE: read from IndexedDB cache
-  if (!navigator.onLine && typeof offlineStore !== 'undefined') {
-    try {
-      let all = await offlineStore.getAll('cases_cache', oid);
-      if (status) all = all.filter(c => c.status === status);
-      if (query) {
-        const w = query.toLowerCase();
-        all = all.filter(c => (c.fir_number||'').toLowerCase().includes(w) ||
-          (c.complainant||'').toLowerCase().includes(w) ||
-          (c.section_of_law||'').toLowerCase().includes(w));
-      }
-      return all.sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
-    } catch(_) { return []; }
-  }
-  // ONLINE: Supabase + cache the results for offline use
-  let q = supabaseClient.from('cases').select('*').eq('officer_id',oid).order('created_at',{ascending:false});
-  if (status) q = q.eq('status',status);
-  if (query) {
-    const w = `%${query}%`;
-    q = q.or(`fir_number.ilike.${w},complainant.ilike.${w},section_of_law.ilike.${w},complainant_cnic.ilike.${w},complainant_cell.ilike.${w}`);
-  }
-  const { data } = await q;
-  if (typeof markSynced === 'function') markSynced();
-  // Cache ALL cases (without filter) for offline
-  if (typeof offlineStore !== 'undefined' && !status && !query) {
-    try { await offlineStore.cache('cases_cache', data||[]); } catch(_) {}
-  } else if (typeof offlineStore !== 'undefined' && data) {
-    try { await offlineStore.cache('cases_cache', data); } catch(_) {}
-  }
-  return data||[];
 }
 
 async function getCase(id) {
