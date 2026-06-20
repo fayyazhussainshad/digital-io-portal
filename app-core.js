@@ -434,8 +434,24 @@ async function deleteCase(id) {
 
 async function getReminders() {
   const oid = await getOfficerId();
-  const { data } = await supabaseClient.from('reminders').select('*').eq('officer_id',oid).order('reminder_date',{ascending:true});
-  return data||[];
+  if (!oid) return [];
+  // Offline — use cache
+  if (!navigator.onLine && typeof offlineStore !== 'undefined') {
+    try { return await offlineStore.getAll('reminders_cache', oid); } catch(_) { return []; }
+  }
+  try {
+    const { data } = await supabaseClient.from('reminders').select('*').eq('officer_id',oid).order('reminder_date',{ascending:true});
+    if (data && typeof offlineStore !== 'undefined') {
+      try { await offlineStore.cache('reminders_cache', data); } catch(_) {}
+    }
+    return data||[];
+  } catch(_) {
+    // Network failed — fall back to cache
+    if (typeof offlineStore !== 'undefined') {
+      try { return await offlineStore.getAll('reminders_cache', oid); } catch(_) {}
+    }
+    return [];
+  }
 }
 
 // ── EVIDENCE ──────────────────────────────────────────────────
@@ -507,6 +523,7 @@ async function updateBadges() {
   try {
     const oid = await getOfficerId();
     if (!oid) return;
+    if (!navigator.onLine) return;  // Skip network call when offline
     const [{ count:cases },{ count:rems }] = await Promise.all([
       supabaseClient.from('cases').select('id',{count:'exact',head:true}).eq('officer_id',oid),
       supabaseClient.from('reminders').select('id',{count:'exact',head:true}).eq('officer_id',oid).eq('is_done',false),
@@ -920,8 +937,11 @@ function _skipOnboarding() {
 function showOnboardingAgain() { _showOnboarding(); }
 
 async function doLogout() {
-  await supabaseClient.auth.signOut();
+  // Sign out from server, but don't fail if offline
+  try { await supabaseClient.auth.signOut(); } catch(_) {}
   currentUser=null; currentOfficer=null;
+  // Clear cached session so login screen shows
+  try { localStorage.removeItem('dio_officer_cache'); } catch(_) {}
   const app = document.getElementById('main-app');
   const login = document.getElementById('login-screen');
   if (app) app.style.display='none';
