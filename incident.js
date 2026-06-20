@@ -84,12 +84,12 @@ function renderIncident(container) {
                 </div>
               </td>
             </tr>
-            <!-- Row 3: مقام وقوعہ (more space) | تاریخ و وقت (less, centered) -->
+            <!-- Row: مقام وقوعہ (full width) | تاریخ و وقت (empty/blank) -->
             <tr>
               <td style="${_tdL()}">مقام وقوعہ</td>
               <td style="${_tdV()}"><input id="inc-place" style="${_tIn()}"></td>
               <td style="${_tdL()}">تاریخ و وقت وقوعہ</td>
-              <td style="${_tdV()}width:1%;white-space:nowrap;"><input id="inc-datetime" value="${today} ${timeNow}" style="${_tIn()}text-align:center;min-width:150px;"></td>
+              <td style="${_tdV()}"><input id="inc-datetime" style="${_tIn()}text-align:center;"></td>
             </tr>
             <!-- Row 5: Visiting officers (checklist) -->
             <tr>
@@ -122,13 +122,13 @@ function renderIncident(container) {
 
         <!-- SHO + date (LEFT corner — flex-end in RTL = left) -->
         <div style="margin-top:30px;display:flex;justify-content:flex-end;">
-          <div style="text-align:center;min-width:240px;">
+          <div style="text-align:center;min-width:260px;">
             <div style="height:50px;"></div>
-            <div style="font-size:14px;font-weight:700;color:#1a3a5c;border-top:1px solid #1a3a5c;padding-top:6px;">
+            <div style="font-size:17px;font-weight:800;color:#1a3a5c;border-top:1px solid #1a3a5c;padding-top:6px;padding-left:18px;">
               SHO تھانہ ${o.station||'_______'}
             </div>
             <input id="inc-sign-date" value="${today}"
-              style="border:none;border-bottom:1px solid #aaa;padding:1px 4px;text-align:center;width:130px;outline:none;background:transparent;display:block;margin:4px auto 0;font-family:'Jameel Noori Nastaleeq',serif;font-size:13px;">
+              style="border:none;border-bottom:1px solid #aaa;padding:1px 4px;text-align:center;width:130px;outline:none;background:transparent;display:block;margin:4px auto 0;font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
           </div>
         </div>
 
