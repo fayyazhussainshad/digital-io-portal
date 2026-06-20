@@ -1399,28 +1399,44 @@ function _suggest161Questions(c) {
 }
 
 async function openCaseWorkspace(id) {
-  // Close mobile sidebar first
   closeMobileSidebar();
   currentCaseId = id;
   _currentWorkspaceCaseId = id;
   currentDocIndex = null;
-  document.getElementById('topbar-title').textContent = '📁 Case Workspace';
+  const titleEl = document.getElementById('topbar-title');
+  if (titleEl) titleEl.textContent = '📁 Case Workspace';
   const container = document.getElementById('page-content');
   container.innerHTML = `<div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Opening Case Workspace...</div></div>`;
-  const c = await getCase(id);
-  if (!c) { showToast('❌ Case not found.', 'error'); return; }
-  // Track recently viewed (S2)
   try {
-    let recent = JSON.parse(localStorage.getItem('dio_recent_cases')||'[]');
-    recent = recent.filter(r => r.id !== id);
-    recent.unshift({ id, fir: c.fir_number||'—', name: c.complainant||'', at: Date.now() });
-    recent = recent.slice(0, 8);
-    localStorage.setItem('dio_recent_cases', JSON.stringify(recent));
-  } catch(_) {}
-  await loadMisalDocs(id);
-  const docs = c.documents_checklist ? (typeof c.documents_checklist==='string'?JSON.parse(c.documents_checklist):c.documents_checklist) : [];
-  const ev = await getEvidence(c.fir_number);
-  renderWorkspace(c, docs, ev, container);
+    const c = await getCase(id);
+    if (!c) { 
+      container.innerHTML = `<div style="padding:30px;text-align:center;direction:rtl;"><div style="font-size:40px;">⚠️</div><div style="margin-top:10px;">مقدمہ نہیں ملا</div><button class="btn btn-secondary btn-sm" style="margin-top:14px;" onclick="showPage('cases',null)">← واپس مقدمات</button></div>`;
+      return; 
+    }
+    // Track recently viewed
+    try {
+      let recent = JSON.parse(localStorage.getItem('dio_recent_cases')||'[]');
+      recent = recent.filter(r => r.id !== id);
+      recent.unshift({ id, fir: c.fir_number||'—', name: c.complainant||'', at: Date.now() });
+      recent = recent.slice(0, 8);
+      localStorage.setItem('dio_recent_cases', JSON.stringify(recent));
+    } catch(_) {}
+    // These can fail independently — guard each
+    try { await loadMisalDocs(id); } catch(e) { console.warn('loadMisalDocs failed', e); }
+    let docs = [];
+    try { docs = c.documents_checklist ? (typeof c.documents_checklist==='string'?JSON.parse(c.documents_checklist):c.documents_checklist) : []; } catch(_) { docs = []; }
+    let ev = [];
+    try { ev = await getEvidence(c.fir_number); } catch(e) { console.warn('getEvidence failed', e); ev = []; }
+    renderWorkspace(c, docs, ev, container);
+  } catch(err) {
+    console.error('openCaseWorkspace error:', err);
+    container.innerHTML = `<div style="padding:30px;text-align:center;direction:rtl;">
+      <div style="font-size:40px;">⚠️</div>
+      <div style="margin-top:10px;color:var(--text-secondary);">مقدمہ کھولنے میں مسئلہ</div>
+      <div style="font-size:11px;color:var(--text-muted);direction:ltr;font-family:monospace;margin-top:8px;">${(err&&err.message)||err}</div>
+      <button class="btn btn-secondary btn-sm" style="margin-top:14px;" onclick="showPage('cases',null)">← واپس مقدمات</button>
+    </div>`;
+  }
 }
 
 function renderWorkspace(c, docs, ev, container) {
