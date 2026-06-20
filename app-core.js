@@ -746,6 +746,10 @@ async function doLogin() {
 async function _loadOfficerProfile() {
   const { data } = await supabaseClient.from('officers').select('*').eq('user_id',currentUser.id).single();
   currentOfficer = data||{ user_id:currentUser.id, email:currentUser.email, full_name:currentUser.user_metadata?.full_name||'', station:'', district:'', designation:'', role:'officer' };
+  // Restore profile photo from DB so it persists across logins/devices
+  if (currentOfficer.profile_photo) {
+    try { localStorage.setItem('dio_profile_photo', currentOfficer.profile_photo); } catch(_) {}
+  }
 }
 
 function setLoginLoading(v) {
