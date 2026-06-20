@@ -377,7 +377,7 @@ input, textarea, select { font-family: var(--font-main); }
 @keyframes cardSlideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
 .login-logo-wrap { text-align: center !important; margin-bottom: 24px; direction: ltr; }
 .login-logo-icon { font-size: 36px; margin-bottom: 8px; text-align: center; }
-.login-logo-text { font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; text-align: center; direction: ltr; font-style: italic; }
+.login-logo-text { font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; text-align: center; direction: ltr; }
 .login-logo-sub { font-size: 9px; color: var(--text-faint); letter-spacing: 3px; text-transform: uppercase; margin-top: 4px; text-align: center; }
 .login-avatar-wrap { position: relative; width: 80px; height: 80px; margin: 0 auto 14px; }
 .login-avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-dark), var(--accent)); border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: #fff; overflow: hidden; font-family: var(--font-display); }
@@ -453,7 +453,7 @@ input, textarea, select { font-family: var(--font-main); }
 .sidebar.mobile-open { transform: translateX(0); }
 .sidebar-logo { padding: 18px 16px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
 .sidebar-logo-icon { font-size: 24px; }
-.sidebar-logo-text { font-family: var(--font-display); font-size: 18px; font-weight: 800; letter-spacing: 2px; color: var(--accent); font-style: italic; }
+.sidebar-logo-text { font-family: var(--font-display); font-size: 18px; font-weight: 800; letter-spacing: 2px; color: var(--accent); }
 .sidebar-logo-sub { font-size: 8px; color: var(--text-faint); letter-spacing: 2px; }
 .sidebar-profile { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
 .sidebar-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-dark), var(--accent)); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0; overflow: hidden; font-family: var(--font-display); }
@@ -509,7 +509,7 @@ input, textarea, select { font-family: var(--font-main); }
 /* ═══ COMPACT TOP NAV (replaces sidebar) ═══ */
 .tb-logo { display: flex; align-items: center; gap: 6px; }
 .tb-logo-icon { font-size: 18px; }
-.tb-logo-text { font-size: 14px; font-weight: 800; color: var(--accent); font-family: var(--font-display); letter-spacing: 0.3px; font-style: italic; }
+.tb-logo-text { font-size: 14px; font-weight: 800; color: var(--accent); font-family: var(--font-display); letter-spacing: 0.3px; }
 
 .topnav {
   display: flex; align-items: stretch; gap: 4px;
@@ -908,21 +908,12 @@ input[id*="cnic"], input[id*="cell"] {
 }
 </style>
 <!-- Supabase JS library (REQUIRED — must load before app-core.js) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-// Robust Supabase loader: try multiple CDNs synchronously until one works
-(function(){
-  var cdns = [
-    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',
-    'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js',
-    'https://esm.sh/@supabase/supabase-js@2/dist/umd/supabase.min.js'
-  ];
-  for (var i = 0; i < cdns.length; i++) {
-    if (window.supabase && window.supabase.createClient) break;
-    try {
-      document.write('<script src="' + cdns[i] + '"><\/script>');
-    } catch(e) {}
-  }
-})();
+// Fallback to unpkg if jsdelivr failed to define supabase
+if (!window.supabase || !window.supabase.createClient) {
+  document.write('<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"><\/script>');
+}
 </script>
 </head>
 <body>
@@ -976,7 +967,7 @@ window.addEventListener('unhandledrejection', function(e){
       <div class="input-group"><input type="email" id="login-email" class="login-input" placeholder="Officer Email Address" autocomplete="email"></div>
       <div class="input-group"><input type="password" id="login-password" class="login-input" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"><button class="input-eye" onclick="togglePasswordVisibility('login-password')">👁️</button></div>
       <button class="login-btn" onclick="doLogin()" id="login-submit-btn"><span id="login-btn-text">🔓 Sign In Securely</span><span id="login-btn-loader" style="display:none;">⏳ Verifying...</span></button>
-      <div class="login-links"><a onclick="showForgotPassword()">پاس ورڈ بھول گئے</a><a onclick="showRegister()">ہمارا حصہ بنیں</a></div>
+      <div class="login-links"><a onclick="showForgotPassword()">پاس ورڈ بھول گئے ؟</a><a onclick="showRegister()">ہمارا حصہ بنیں</a></div>
     </div>
     <div id="panel-pin" style="display:none;">
       <div class="pin-display"><div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div><div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div><div class="pin-dot" id="pd4"></div><div class="pin-dot" id="pd5"></div></div>

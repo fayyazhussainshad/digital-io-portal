@@ -71,16 +71,16 @@ function renderIncident(container) {
               <td style="${_tdL()}">نام اطلاع دہندہ</td>
               <td colspan="3" style="${_tdV()}"><input id="inc-caller-name" style="${_tIn()}"></td>
             </tr>
-            <!-- Row 2: Name + status dropdown in SAME column -->
+            <!-- Row 2: تفصیل متعلقہ — status dropdown + name in one field -->
             <tr>
-              <td style="${_tdL()}">نام</td>
+              <td style="${_tdL()}">تفصیل متعلقہ</td>
               <td colspan="3" style="${_tdV()}">
                 <div style="display:flex;gap:8px;align-items:center;">
-                  <input id="inc-person-name" placeholder="نام" style="${_tIn()}flex:2;">
-                  <select id="inc-person-type" style="${_tIn()}flex:1;min-width:90px;">
-                    <option>مضروب</option><option>victim</option><option>مقتول</option><option>متاثرہ</option>
+                  <select id="inc-person-type" style="${_tIn()}flex:0 0 auto;min-width:100px;font-weight:700;">
+                    <option>مقتول</option><option>مضروب</option><option>مغوی</option><option>victim</option><option>متاثرہ</option>
                   </select>
                   <button onclick="_incAddPersonType()" style="border:1px solid #ccc;border-radius:4px;background:#f0f4f8;cursor:pointer;padding:2px 8px;flex-shrink:0;" title="نیا">➕</button>
+                  <input id="inc-person-name" placeholder="نام و ولدیت، قوم، کارڈ اور حلیہ یہاں لکھیں..." style="${_tIn()}flex:1;">
                 </div>
               </td>
             </tr>
@@ -103,21 +103,25 @@ function renderIncident(container) {
                 </div>
               </td>
             </tr>
-            <!-- Row 6: Brief facts (expandable) -->
+            <!-- Row 6: مختصر حالات (full-width, justified RTL, voice + handwriting) -->
             <tr>
-              <td style="${_tdL()}">مختصر حالات</td>
-              <td colspan="3" style="${_tdV()}">
-                <div style="display:flex;gap:6px;align-items:flex-start;">
-                  <textarea id="inc-narrative" rows="5" style="${_tIn()}resize:vertical;min-height:90px;"></textarea>
-                  <button onclick="_incVoice('inc-narrative','mic-narr')" id="mic-narr" style="width:36px;height:36px;border:1px solid #ccc;border-radius:6px;background:#f0f4f8;font-size:17px;cursor:pointer;flex-shrink:0;">🎙️</button>
+              <td colspan="4" style="border:1px solid #1a3a5c;padding:8px 10px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                  <span style="font-weight:800;font-size:14px;color:#1a3a5c;">مختصر حالات:</span>
+                  <div style="display:flex;gap:6px;">
+                    <button onclick="_incVoice('inc-narrative','mic-narr')" id="mic-narr" style="width:32px;height:32px;border:1px solid #ccc;border-radius:6px;background:#f0f4f8;font-size:15px;cursor:pointer;" title="وائس ٹائپنگ">🎙️</button>
+                    <button onclick="_incHandwriting()" style="width:32px;height:32px;border:1px solid #ccc;border-radius:6px;background:#f0f4f8;font-size:15px;cursor:pointer;" title="ہینڈ رائٹنگ">✍️</button>
+                  </div>
                 </div>
+                <textarea id="inc-narrative" rows="6" placeholder="مختصر حالات یہاں سے شروع ہوں گے..."
+                  style="width:100%;border:none;outline:none;background:transparent;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:15px;line-height:2.2;direction:rtl;text-align:justify;resize:vertical;min-height:120px;box-sizing:border-box;"></textarea>
               </td>
             </tr>
           </tbody>
         </table>
 
-        <!-- Row 7 & 8: SHO + date (LEFT corner) -->
-        <div style="margin-top:30px;display:flex;justify-content:flex-start;">
+        <!-- SHO + date (LEFT corner — flex-end in RTL = left) -->
+        <div style="margin-top:30px;display:flex;justify-content:flex-end;">
           <div style="text-align:center;min-width:240px;">
             <div style="height:50px;"></div>
             <div style="font-size:14px;font-weight:700;color:#1a3a5c;border-top:1px solid #1a3a5c;padding-top:6px;">
@@ -127,6 +131,9 @@ function renderIncident(container) {
               style="border:none;border-bottom:1px solid #aaa;padding:1px 4px;text-align:center;width:130px;outline:none;background:transparent;display:block;margin:4px auto 0;font-family:'Jameel Noori Nastaleeq',serif;font-size:13px;">
           </div>
         </div>
+
+        <!-- Created by footer -->
+        <div style="text-align:left;margin-top:14px;font-size:10px;color:#bbb;">Created by DIGITAL IO</div>
 
       </div>
     </div>
@@ -217,6 +224,11 @@ function _incAddPersonType() {
   const opt = document.createElement('option');
   opt.value = val.trim(); opt.textContent = val.trim(); opt.selected = true;
   sel.appendChild(opt);
+}
+function _incHandwriting() {
+  showToast('✍️ ہینڈ رائٹنگ: اپنے فون کی کی بورڈ ہینڈ رائٹنگ استعمال کریں، یا ٹائپ کریں', 'info', 4000);
+  const ta = document.getElementById('inc-narrative');
+  if (ta) ta.focus();
 }
 function _lbl() { return 'font-size:13px;color:#555;margin-bottom:4px;display:block;'; }
 function _grid2() { return 'display:grid;grid-template-columns:1fr 1fr;gap:12px;direction:rtl;margin-bottom:12px;'; }

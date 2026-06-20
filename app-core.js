@@ -254,13 +254,27 @@ function autoFormatDate(input) {
 // ── SUPABASE DATA FUNCTIONS ───────────────────────────────────
 async function getOfficerId() {
   if (currentOfficer?.id) return currentOfficer.id;
-  const uid = currentUser?.id || supabaseClient.auth.getUser().then(r=>r.data?.user?.id);
-  const { data } = await supabaseClient.from('officers').select('id').eq('user_id', typeof uid==='string'?uid:(await uid)).single();
-  return data?.id||null;
+  // Resolve user id safely
+  let uid = currentUser?.id;
+  if (!uid) {
+    try { const r = await supabaseClient.auth.getUser(); uid = r.data?.user?.id; } catch(_) {}
+  }
+  if (!uid) return null;  // Don't query with undefined — prevents 400 errors
+  try {
+    const { data } = await supabaseClient.from('officers').select('id').eq('user_id', uid).single();
+    return data?.id || null;
+  } catch(_) { return null; }
 }
 
 async function getCases(status, query) {
   const oid = await getOfficerId();
+  // No officer id yet (not logged in / session restoring) — use cache or empty
+  if (!oid) {
+    if (typeof offlineStore !== 'undefined') {
+      try { return await offlineStore.getAll('cases_cache'); } catch(_) {}
+    }
+    return [];
+  }
   // OFFLINE: read from IndexedDB cache
   if (!navigator.onLine && typeof offlineStore !== 'undefined') {
     try {
@@ -744,8 +758,23 @@ async function doLogin() {
 }
 
 async function _loadOfficerProfile() {
-  const { data } = await supabaseClient.from('officers').select('*').eq('user_id',currentUser.id).single();
-  currentOfficer = data||{ user_id:currentUser.id, email:currentUser.email, full_name:currentUser.user_metadata?.full_name||'', station:'', district:'', designation:'', role:'officer' };
+  try {
+    const { data } = await supabaseClient.from('officers').select('*').eq('user_id',currentUser.id).single();
+    if (data) {
+      currentOfficer = data;
+      // Cache for offline use
+      try { localStorage.setItem('dio_officer_cache', JSON.stringify(data)); } catch(_) {}
+    }
+  } catch(_) {
+    // Offline or error — restore from cache
+    try {
+      const cached = localStorage.getItem('dio_officer_cache');
+      if (cached) currentOfficer = JSON.parse(cached);
+    } catch(_) {}
+  }
+  if (!currentOfficer) {
+    currentOfficer = { user_id:currentUser.id, email:currentUser.email, full_name:currentUser.user_metadata?.full_name||'', station:'', district:'', designation:'', role:'officer' };
+  }
   // Restore profile photo from DB so it persists across logins/devices
   if (currentOfficer.profile_photo) {
     try { localStorage.setItem('dio_profile_photo', currentOfficer.profile_photo); } catch(_) {}
