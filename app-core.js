@@ -129,6 +129,7 @@ function showPage(page, el) {
     showToast('🔒 آپ کو اس صفحے تک رسائی نہیں ہے', 'error');
     return;
   }
+  window._activePage = page;  // Track current page for background refresh
 
   // Track page usage (for admin button-usage log)
   if (typeof _trackUsage === 'function') _trackUsage(page);
@@ -279,28 +280,45 @@ async function getOfficerId() {
 async function getCases(status, query) {
   try {
     const oid = await getOfficerId();
-    // No officer id yet (not logged in / session restoring) — use cache or empty
     if (!oid) {
       if (typeof offlineStore !== 'undefined') {
         try { return await offlineStore.getAll('cases_cache'); } catch(_) {}
       }
       return [];
     }
-    // OFFLINE: read from IndexedDB cache
-    if (!navigator.onLine && typeof offlineStore !== 'undefined') {
-      try {
-        let all = await offlineStore.getAll('cases_cache', oid);
-        if (status) all = all.filter(c => c.status === status);
-        if (query) {
-          const w = query.toLowerCase();
-          all = all.filter(c => (c.fir_number||'').toLowerCase().includes(w) ||
-            (c.complainant||'').toLowerCase().includes(w) ||
-            (c.section_of_law||'').toLowerCase().includes(w));
-        }
-        return all.sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
-      } catch(_) { return []; }
+
+    // Helper: filter cached list by status/query
+    const filterCached = (all) => {
+      if (status) all = all.filter(c => c.status === status);
+      if (query) {
+        const w = query.toLowerCase();
+        all = all.filter(c => (c.fir_number||'').toLowerCase().includes(w) ||
+          (c.complainant||'').toLowerCase().includes(w) ||
+          (c.section_of_law||'').toLowerCase().includes(w) ||
+          (c.complainant_cnic||'').toLowerCase().includes(w) ||
+          (c.complainant_cell||'').toLowerCase().includes(w));
+      }
+      return all.sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
+    };
+
+    // CACHE-FIRST: try to return cached instantly
+    let cached = null;
+    if (typeof offlineStore !== 'undefined') {
+      try { cached = await offlineStore.getAll('cases_cache', oid); } catch(_) {}
     }
-    // ONLINE: Supabase + cache the results for offline use
+
+    // If offline — return cache only (instant)
+    if (!navigator.onLine) {
+      return cached ? filterCached(cached) : [];
+    }
+
+    // ONLINE: if we have cache, refresh it in the BACKGROUND (don't block)
+    if (cached && cached.length) {
+      _refreshCasesInBackground(oid);
+      return filterCached(cached);
+    }
+
+    // No cache yet — fetch from server now (first ever load)
     let q = supabaseClient.from('cases').select('*').eq('officer_id',oid).order('created_at',{ascending:false});
     if (status) q = q.eq('status',status);
     if (query) {
@@ -309,8 +327,7 @@ async function getCases(status, query) {
     }
     const { data } = await q;
     if (typeof markSynced === 'function') markSynced();
-    // Cache for offline use (don't let cache errors break the page)
-    if (typeof offlineStore !== 'undefined' && data) {
+    if (typeof offlineStore !== 'undefined' && data && !status && !query) {
       try { await offlineStore.cache('cases_cache', data); } catch(_) {}
     }
     return data||[];
@@ -320,15 +337,55 @@ async function getCases(status, query) {
   }
 }
 
+// Background refresh — updates cache silently, refreshes UI if cases page open
+let _bgRefreshTimer = null;
+async function _refreshCasesInBackground(oid) {
+  if (_bgRefreshTimer) return; // throttle
+  _bgRefreshTimer = setTimeout(()=>{ _bgRefreshTimer = null; }, 2000);
+  try {
+    const { data } = await supabaseClient.from('cases').select('*').eq('officer_id',oid).order('created_at',{ascending:false});
+    if (data && typeof offlineStore !== 'undefined') {
+      try { await offlineStore.cache('cases_cache', data); } catch(_) {}
+      if (typeof markSynced === 'function') markSynced();
+      // If cases page currently open, silently refresh the list
+      if (window._activePage === 'cases') {
+        const c = document.getElementById('page-content');
+        if (c && typeof renderCases === 'function') {
+          // Only re-render if not in a workspace/modal
+          if (!document.querySelector('.workspace-tabs') && !document.querySelector('.modal-overlay[style*="flex"]')) {
+            renderCases(c);
+          }
+        }
+      }
+    }
+  } catch(_) {}
+}
+
 async function getCase(id) {
-  if (!navigator.onLine && typeof offlineStore !== 'undefined') {
-    try { return await offlineStore.getOne('cases_cache', id); } catch(_) { return null; }
+  // CACHE-FIRST: return cached instantly if available
+  if (typeof offlineStore !== 'undefined') {
+    try {
+      const cached = await offlineStore.getOne('cases_cache', id);
+      if (cached) {
+        // Refresh in background if online
+        if (navigator.onLine) {
+          supabaseClient.from('cases').select('*').eq('id',id).single()
+            .then(({data}) => { if (data) { try { offlineStore.cache('cases_cache', data); } catch(_){} } })
+            .catch(()=>{});
+        }
+        return cached;
+      }
+    } catch(_) {}
   }
-  const { data } = await supabaseClient.from('cases').select('*').eq('id',id).single();
-  if (data && typeof offlineStore !== 'undefined') {
-    try { await offlineStore.cache('cases_cache', data); } catch(_) {}
-  }
-  return data;
+  // Not cached — fetch now
+  if (!navigator.onLine) return null;
+  try {
+    const { data } = await supabaseClient.from('cases').select('*').eq('id',id).single();
+    if (data && typeof offlineStore !== 'undefined') {
+      try { await offlineStore.cache('cases_cache', data); } catch(_) {}
+    }
+    return data;
+  } catch(_) { return null; }
 }
 
 async function addCase(caseData) {
@@ -559,7 +616,7 @@ async function _syncOfflineQueue() {
     if (synced > 0) {
       showToast(`✅ ${synced} تبدیلیاں sync ہو گئیں`, 'success');
       // Refresh cases page if currently shown
-      if (typeof _activePage !== 'undefined' && _activePage === 'cases') {
+      if (window._activePage === 'cases') {
         showPage('cases', null);
       }
     }
