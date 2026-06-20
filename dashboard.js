@@ -55,51 +55,31 @@ async function _buildDash() {
     </div>
   </div>
 
-  <!-- Quick Actions -->
-  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px;direction:rtl;">
-    ${[
-      ['📁','میرے مقدمات','cases'],
-      ['➕','نیا اندراج','_newCase'],
-      ['⚖️','پیشیاں','reminders'],
-      ['🚔','گشت','patrol'],
-      ['🚨','واقعہ','incident'],
-    ].map(([i,l,p])=>`
-    <button onclick="${p==='_newCase'?'openAddCaseModal()':'showPage(\''+p+'\',null)'}"
-      style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 4px;font-size:10px;font-family:'Jameel Noori Nastaleeq',serif;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;color:var(--text-secondary);transition:all 0.15s;"
-      onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
-      onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-secondary)'">
-      <span style="font-size:20px;">${i}</span>${l}
-    </button>`).join('')}
-  </div>
-
   ${_recentlyViewedBar()}
 
-  <!-- Cases Stats Cards — new order -->
+  <!-- Cases Stats — 7 cards in one row (کل + 6 statuses) -->
   <div style="margin-bottom:14px;">
     <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;direction:rtl;font-weight:700;">📊 مقدمات کی صورتحال</div>
-    <!-- Row 1: کل مقدمات full width -->
-    <div onclick="showPage('cases',null)" style="background:linear-gradient(135deg,var(--accent),#0ea5e9);border-radius:10px;padding:12px 16px;margin-bottom:6px;cursor:pointer;direction:rtl;display:flex;justify-content:space-between;align-items:center;">
-      <div style="font-size:14px;font-weight:700;color:#fff;font-family:'Jameel Noori Nastaleeq',serif;">کل مقدمات</div>
-      <div style="font-size:32px;font-weight:900;color:#fff;">${total}</div>
-      <div style="font-size:10px;color:rgba(255,255,255,0.7);">آج ${todayCases.length} نئے</div>
-    </div>
-    <!-- Row 2: 6 status cards -->
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px;">
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;direction:rtl;">
+      <!-- کل مقدمات -->
+      <div onclick="showPage('cases',null)" style="background:linear-gradient(135deg,var(--accent),#0ea5e9);border-radius:10px;padding:10px 4px;text-align:center;cursor:pointer;">
+        <div style="font-size:9px;color:rgba(255,255,255,0.85);font-family:'Jameel Noori Nastaleeq',serif;margin-bottom:3px;">کل مقدمات</div>
+        <div style="font-size:20px;font-weight:900;color:#fff;">${total}</div>
+      </div>
       ${[
-        {k:'complete',   l:'چالان مکمل',    v:complete,   c:'var(--green)'},
-        {k:'incomplete', l:'چالان نامکمل',   v:incomplete, c:'var(--amber)'},
-        {k:'cancel',     l:'اخراج',          v:cancel,     c:'var(--red)'},
-        {k:'challan512', l:'چالان 512',       v:challan512, c:'#f97316'},
-        {k:'untrace',    l:'عدم پتہ',         v:untrace,    c:'#a78bfa'},
-        {k:'under',      l:'زیر تفتیش',       v:under,      c:'var(--accent)'},
+        {k:'complete',   l:'چالان مکمل',  v:complete,   c:'var(--green)'},
+        {k:'incomplete', l:'چالان نامکمل', v:incomplete, c:'var(--amber)'},
+        {k:'cancel',     l:'اخراج',        v:cancel,     c:'var(--red)'},
+        {k:'untrace',    l:'عدم پتہ',       v:untrace,    c:'#a78bfa'},
+        {k:'under',      l:'زیر تفتیش',     v:under,      c:'var(--accent)'},
+        {k:'challan512', l:'چالان 512',     v:challan512, c:'#f97316'},
       ].map(s=>`
       <div onclick="showPage('cases',null)"
-        style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center;cursor:pointer;border-right:3px solid ${s.c};"
+        style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 4px;text-align:center;cursor:pointer;border-bottom:3px solid ${s.c};"
         onmouseover="this.style.background='var(--bg-secondary)'"
         onmouseout="this.style.background='var(--bg-card)'">
-        <div style="font-size:9px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq',serif;margin-bottom:3px;">${s.l}</div>
-        <div style="font-size:22px;font-weight:900;color:${s.c};">${s.v}</div>
-        <div style="height:3px;background:${s.c};border-radius:2px;margin-top:4px;opacity:${total?s.v/total:0};"></div>
+        <div style="font-size:8.5px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq',serif;margin-bottom:3px;line-height:1.2;">${s.l}</div>
+        <div style="font-size:18px;font-weight:900;color:${s.c};">${s.v}</div>
       </div>`).join('')}
     </div>
   </div>
@@ -124,61 +104,6 @@ async function _buildDash() {
         </tr>`).join('') : `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">کوئی مقدمہ نہیں</td></tr>`}
       </tbody>
     </table>
-    </div>
-  </div>
-
-  <!-- Charts Row: Monthly trend + Status donut -->
-  <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px;">
-
-    <!-- Monthly bar chart -->
-    <div class="card" style="direction:rtl;">
-      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:14px;">📊 ماہانہ اندراج (6 ماہ)</div>
-      <div style="display:flex;align-items:flex-end;gap:8px;height:120px;padding:0 6px;">
-        ${monthly.map((m,i)=>{
-          const max=Math.max(...monthly.map(x=>x.count),1);
-          const pct=Math.round(m.count/max*100);
-          const isCur=i===monthly.length-1;
-          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;">
-            ${m.count?`<div style="font-size:10px;color:${isCur?'var(--accent)':'var(--text-muted)'};font-weight:${isCur?'800':'600'};">${m.count}</div>`:'<div style="font-size:10px;">&nbsp;</div>'}
-            <div style="width:100%;max-width:42px;background:${isCur?'var(--accent)':'rgba(56,189,248,0.3)'};border-radius:4px 4px 0 0;height:${Math.max(pct,3)}%;transition:height 0.4s;"></div>
-            <div style="font-size:10px;color:${isCur?'var(--accent)':'var(--text-muted)'};font-weight:${isCur?'700':'400'};">${m.label}</div>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>
-
-    <!-- Status donut chart -->
-    <div class="card" style="direction:rtl;">
-      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;">⭕ مقدمات کی صورتحال</div>
-      ${total ? `
-      <div style="display:flex;align-items:center;justify-content:center;margin-bottom:10px;">
-        <div style="position:relative;width:110px;height:110px;border-radius:50%;background:conic-gradient(
-          var(--green) 0% ${complete/total*100}%,
-          var(--amber) ${complete/total*100}% ${(complete+incomplete)/total*100}%,
-          var(--accent) ${(complete+incomplete)/total*100}% ${(complete+incomplete+under)/total*100}%,
-          #a78bfa ${(complete+incomplete+under)/total*100}% ${(complete+incomplete+under+untrace)/total*100}%,
-          var(--red) ${(complete+incomplete+under+untrace)/total*100}% 100%
-        );display:flex;align-items:center;justify-content:center;">
-          <div style="width:70px;height:70px;border-radius:50%;background:var(--bg-card);display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="font-size:24px;font-weight:900;color:var(--text-primary);">${total}</div>
-            <div style="font-size:9px;color:var(--text-muted);">کل</div>
-          </div>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:4px;font-size:10px;">
-        ${[
-          ['مکمل',complete,'var(--green)'],
-          ['نامکمل',incomplete,'var(--amber)'],
-          ['زیر تفتیش',under,'var(--accent)'],
-          ['عدم پتہ',untrace,'#a78bfa'],
-          ['اخراج',cancel,'var(--red)'],
-        ].filter(([,v])=>v>0).map(([l,v,c])=>`
-        <div style="display:flex;align-items:center;gap:6px;">
-          <span style="width:10px;height:10px;border-radius:2px;background:${c};"></span>
-          <span style="color:var(--text-secondary);flex:1;">${l}</span>
-          <span style="font-weight:700;color:${c};">${v}</span>
-        </div>`).join('')}
-      </div>` : `<div style="text-align:center;padding:30px;color:var(--text-muted);font-size:12px;">ابھی کوئی ڈیٹا نہیں</div>`}
     </div>
   </div>`;
 }

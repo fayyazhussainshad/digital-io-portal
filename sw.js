@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v58
+   DIGITAL IO — SERVICE WORKER v59
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v58';
+const CACHE_NAME = 'digital-io-v59';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -89,16 +89,23 @@ self.addEventListener('fetch', event => {
 
   // HTML navigation — serve the cached APP so it works offline
   if (event.request.mode === 'navigate') {
+    // OFFLINE: serve cache immediately (no slow network timeout)
+    if (!navigator.onLine) {
+      event.respondWith(
+        caches.match('/index.html')
+          .then(cached => cached || caches.match('/'))
+          .then(cached => cached || caches.match('/offline.html'))
+      );
+      return;
+    }
     event.respondWith(
       fetch(event.request)
         .then(response => {
-          // Cache fresh copy of the page
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put('/index.html', clone));
           return response;
         })
         .catch(() =>
-          // OFFLINE: serve the cached app (index.html), fallback to offline.html
           caches.match('/index.html')
             .then(cached => cached || caches.match('/'))
             .then(cached => cached || caches.match('/offline.html'))
@@ -107,12 +114,13 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Cache-first for JS/CSS/fonts
+  // Cache-first for JS/CSS/fonts (and when offline, never wait for network)
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
+      // Not in cache and offline — fail fast
+      if (!navigator.onLine) return caches.match('/offline.html');
       return fetch(event.request).then(response => {
-        // Cache successful responses
         if (response && response.status === 200) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));

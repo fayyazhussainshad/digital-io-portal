@@ -1494,9 +1494,9 @@ function renderWorkspace(c, docs, ev, container) {
   // Store for tab switching
   window._workspaceCase = c;
   window._workspaceDocs = docs;
-  // Load related cases (same complainant / accused / CNIC)
-  _loadRelatedCases(c);
   window._workspaceEv = ev;
+  // Load related cases (same complainant / accused / CNIC) — guard against errors
+  try { _loadRelatedCases(c); } catch(e) { console.warn('related cases failed', e); }
 }
 
 function switchWorkspaceTab(tab) {
