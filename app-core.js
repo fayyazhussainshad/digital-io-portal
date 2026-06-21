@@ -269,15 +269,29 @@ function autoFormatDate(input) {
 // ── SUPABASE DATA FUNCTIONS ───────────────────────────────────
 async function getOfficerId() {
   if (currentOfficer?.id) return currentOfficer.id;
+  // Try cached officer (offline / fast path)
+  try {
+    const cached = JSON.parse(localStorage.getItem('dio_officer_cache')||'null');
+    if (cached?.id) {
+      if (!currentOfficer) currentOfficer = cached;
+      return cached.id;
+    }
+  } catch(_) {}
   // Resolve user id safely
   let uid = currentUser?.id;
   if (!uid) {
     try { const r = await supabaseClient.auth.getUser(); uid = r.data?.user?.id; } catch(_) {}
   }
   if (!uid) return null;  // Don't query with undefined — prevents 400 errors
+  if (!navigator.onLine) return null;  // Can't look up offline without cache
   try {
-    const { data } = await supabaseClient.from('officers').select('id').eq('user_id', uid).single();
-    return data?.id || null;
+    const { data } = await supabaseClient.from('officers').select('*').eq('user_id', uid).single();
+    if (data?.id) {
+      if (!currentOfficer || !currentOfficer.id) currentOfficer = data;
+      try { localStorage.setItem('dio_officer_cache', JSON.stringify(data)); } catch(_) {}
+      return data.id;
+    }
+    return null;
   } catch(_) { return null; }
 }
 
