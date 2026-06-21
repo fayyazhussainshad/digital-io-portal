@@ -331,8 +331,7 @@ function renderMisalDocSidebar() {
 }
 
 function _refreshMisalSidebar() {
-  const list = document.getElementById('workspace-doc-list');
-  if (list) list.innerHTML = renderMisalDocSidebar();
+  // Side document table removed — does nothing now (no "CASE DOCUMENTS" table)
 }
 
 function _renderMisalEditor(docId, def) {
