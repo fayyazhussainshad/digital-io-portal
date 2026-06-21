@@ -594,10 +594,12 @@ function caseFormHTML(c) {
     +         '<option value="jewelry"'+(c.theft_item==='jewelry'?' selected':'')+'>💍 زیورات</option>'
     +         '<option value="other"'+(c.theft_item==='other'?' selected':'')+'>دیگر</option>'
     +       '</select></div>'
-    +     '<div id="cf-mobile-imei-wrap" style="display:'+(c.theft_item==='mobile'?'block':'none')+';"><label class="form-label">IMEI نمبر</label>'
-    +       '<input class="form-input" id="cf-mobile-imei" dir="ltr" value="'+(c.theft_imei||'')+'" placeholder="IMEI (15 ہندسے)"></div>'
-    +     '<div id="cf-mobile-cell-wrap" style="display:'+(c.theft_item==='mobile'?'block':'none')+';"><label class="form-label">چوری شدہ موبائل کا نمبر</label>'
-    +       '<input class="form-input" id="cf-mobile-cell" dir="ltr" value="'+(c.theft_cell||'')+'" placeholder="0000-0000000"></div>'
+    +     '<div id="cf-mobile-imei-wrap" style="display:'+(c.theft_item==='mobile'?'block':'none')+';"><label class="form-label">IMEI نمبر (15 ہندسے)</label>'
+    +       '<input class="form-input" id="cf-mobile-imei" dir="ltr" inputmode="numeric" maxlength="15" value="'+(c.theft_imei||'')+'" placeholder="000000000000000" oninput="_imeiLookup(this)"></div>'
+    +     '<div id="cf-mobile-brand-wrap" style="display:'+(c.theft_item==='mobile'?'block':'none')+';"><label class="form-label">کمپنی / ماڈل (قابل ترمیم)</label>'
+    +       '<input class="form-input" id="cf-mobile-brand" value="'+(c.theft_brand||'')+'" placeholder="IMEI سے خودکار، یا خود لکھیں"></div>'
+    +     '<div id="cf-mobile-cell-wrap" style="display:'+(c.theft_item==='mobile'?'block':'none')+';grid-column:1/-1;"><label class="form-label">چوری شدہ موبائل کے نمبر (ایک سے زیادہ — کاما سے الگ کریں)</label>'
+    +       '<input class="form-input" id="cf-mobile-cell" dir="ltr" value="'+(c.theft_cell||'')+'" placeholder="0000-0000000، 0000-0000000"></div>'
     +   '</div>'
     + '</div>'
 
@@ -850,10 +852,42 @@ function _updateMobileBox() {
 function _toggleMobileFields() {
   const item = document.getElementById('cf-theft-item')?.value;
   const show = item === 'mobile';
-  const imei = document.getElementById('cf-mobile-imei-wrap');
-  const cell = document.getElementById('cf-mobile-cell-wrap');
-  if (imei) imei.style.display = show ? 'block' : 'none';
-  if (cell) cell.style.display = show ? 'block' : 'none';
+  ['cf-mobile-imei-wrap','cf-mobile-brand-wrap','cf-mobile-cell-wrap'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = show ? 'block' : 'none';
+  });
+}
+
+// IMEI brand/model lookup from TAC (first 8 digits = Type Allocation Code)
+function _imeiLookup(input) {
+  // Keep only digits, max 15
+  let v = (input.value || '').replace(/\D/g, '').slice(0, 15);
+  input.value = v;
+  const brandField = document.getElementById('cf-mobile-brand');
+  if (!brandField) return;
+  if (v.length < 8) return;
+  const tac = v.slice(0, 8);
+  // Common TAC prefixes → brand (partial DB; officer can edit)
+  const TAC_BRANDS = {
+    '35':'(عام GSM)','01':'Apple iPhone','35332':'Apple','35326':'Apple',
+    '86':'Xiaomi / Redmi','86891':'Xiaomi','86553':'Oppo','86742':'Vivo',
+    '35846':'Samsung','35649':'Samsung','35878':'Samsung','35291':'Nokia',
+    '35395':'Huawei','86095':'Huawei','86227':'Tecno','86303':'Infinix',
+    '86997':'Realme','35775':'OnePlus','86452':'itel',
+  };
+  // Try longest prefix match
+  let brand = '';
+  for (let len = 6; len >= 2; len--) {
+    const pre = v.slice(0, len);
+    if (TAC_BRANDS[pre]) { brand = TAC_BRANDS[pre]; break; }
+  }
+  // Only auto-fill if field empty or was auto-filled before (don't overwrite manual entry)
+  if (brand && (!brandField.value || brandField.dataset.auto === '1')) {
+    brandField.value = brand;
+    brandField.dataset.auto = '1';
+  }
+  // If user types manually, stop auto
+  brandField.oninput = () => { brandField.dataset.auto = '0'; };
 }
 
 function removeSection(sectionStr) {
@@ -906,6 +940,7 @@ async function saveNewCase(){
       section_of_law:section,
       theft_item:document.getElementById('cf-theft-item')?.value||null,
       theft_imei:document.getElementById('cf-mobile-imei')?.value?.trim()||null,
+      theft_brand:document.getElementById('cf-mobile-brand')?.value?.trim()||null,
       theft_cell:document.getElementById('cf-mobile-cell')?.value?.trim()||null,
       offence_type:document.getElementById('cf-offence')?.value?.trim()||'',
       sho:document.getElementById('cf-sho')?.value.trim()||'',
@@ -1054,6 +1089,7 @@ async function saveEditCase(id){
       section_of_law:_editSection,
       theft_item:document.getElementById('cf-theft-item')?.value||null,
       theft_imei:document.getElementById('cf-mobile-imei')?.value?.trim()||null,
+      theft_brand:document.getElementById('cf-mobile-brand')?.value?.trim()||null,
       theft_cell:document.getElementById('cf-mobile-cell')?.value?.trim()||null,
       offence_type:document.getElementById('cf-offence')?.value?.trim()||'',
       sho:document.getElementById('cf-sho')?.value.trim()||'',
