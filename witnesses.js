@@ -18,6 +18,7 @@ const WITNESS_STATUS = [
 let _witnessList = [];
 let _witnessCaseId = null;
 let _editingWitnessId = null;
+let _witnessFormType = 'fir';
 
 let _personMode = 'witness'; // 'witness' or 'accused'
 
@@ -45,14 +46,32 @@ function _renderWitnessesArea() {
             || document.getElementById('workspace-tab-content')
             || document.getElementById('page-content');
   if (!area) return;
-  const addLabel = _personMode === 'accused' ? '➕ نیا ملزم' : '➕ نیا گواہ';
+  const firList = _witnessList.filter(w => (w.witness_type || 'fir') === 'fir');
+  const crossList = _witnessList.filter(w => w.witness_type === 'cross_version');
   area.innerHTML = `
-  <div style="padding:14px;direction:rtl;height:100%;overflow-y:auto;">
-    <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:12px;">
-      <button class="btn btn-primary btn-sm" onclick="_openWitnessForm()">${addLabel}</button>
-    </div>
+  <div style="padding:14px;direction:rtl;height:100%;overflow-y:auto;max-width:760px;margin:0 auto;">
     <div id="witness-form-box"></div>
-    <div id="witness-list-box">${_renderWitnessList()}</div>
+
+    <!-- TOP: گواہان FIR -->
+    <div style="margin-bottom:18px;">
+      <div style="font-size:18px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:var(--accent);border-bottom:2px solid var(--accent);padding-bottom:6px;margin-bottom:10px;">گواہان FIR</div>
+      <div>${_renderWitnessList(firList, 'fir')}</div>
+      <div style="margin-top:10px;">
+        <button class="btn btn-primary btn-sm" onclick="_openWitnessForm(null,'fir')">➕ گواہ</button>
+      </div>
+    </div>
+
+    <!-- DIVIDER -->
+    <div style="height:2px;background:var(--border);margin:18px 0;"></div>
+
+    <!-- BOTTOM: گواہان کراس ورژن -->
+    <div>
+      <div style="font-size:18px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:var(--amber);border-bottom:2px solid var(--amber);padding-bottom:6px;margin-bottom:10px;">گواہان کراس ورژن</div>
+      <div>${_renderWitnessList(crossList, 'cross_version')}</div>
+      <div style="margin-top:10px;">
+        <button class="btn btn-primary btn-sm" onclick="_openWitnessForm(null,'cross_version')">➕ گواہ</button>
+      </div>
+    </div>
   </div>`;
 }
 
@@ -104,20 +123,21 @@ async function _saveAutoWitnesses(auto) {
 }
 
 // Compact single-row strips
-function _renderWitnessList() {
-  if (!_witnessList.length) {
-    return `<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px;">ابھی کوئی گواہ شامل نہیں</div>`;
+function _renderWitnessList(list, type) {
+  list = list || _witnessList;
+  if (!list.length) {
+    return `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:14px;">کوئی گواہ شامل نہیں</div>`;
   }
-  return _witnessList.map((w, i) => {
+  return list.map((w, i) => {
     const statusLabel = (WITNESS_STATUS.find(s => s.v === w.status) || {}).label || w.status || '—';
     return `
-    <div style="display:flex;align-items:center;gap:10px;background:var(--bg-card);border:1px solid var(--border);border-right:3px solid var(--accent);border-radius:8px;padding:8px 12px;margin-bottom:7px;direction:rtl;font-size:12px;flex-wrap:nowrap;overflow-x:auto;">
+    <div style="display:flex;align-items:center;gap:10px;background:var(--bg-card);border:1px solid var(--border);border-right:3px solid var(--accent);border-radius:8px;padding:10px 12px;margin-bottom:7px;direction:rtl;font-size:14px;flex-wrap:nowrap;overflow-x:auto;">
       <span style="font-weight:800;color:var(--accent);white-space:nowrap;">گواہ ${i+1}</span>
       <span style="font-weight:700;white-space:nowrap;font-family:'Jameel Noori Nastaleeq',serif;">${w.full_name||'—'}</span>
       ${w.cnic?`<span style="color:var(--text-muted);direction:ltr;white-space:nowrap;">${w.cnic}</span>`:''}
       ${w.cell?`<span style="color:var(--text-muted);direction:ltr;white-space:nowrap;">${w.cell}</span>`:''}
       ${w.profession?`<span style="color:var(--text-muted);white-space:nowrap;">${w.profession}</span>`:''}
-      <span style="background:var(--accent-glow);color:var(--accent);border-radius:10px;padding:2px 8px;white-space:nowrap;font-size:11px;">${statusLabel}</span>
+      <span style="background:var(--accent-glow);color:var(--accent);border-radius:10px;padding:2px 8px;white-space:nowrap;font-size:13px;">${statusLabel}</span>
       <span style="flex:1;"></span>
       <button class="btn btn-secondary btn-sm" style="padding:2px 8px;" onclick="_openWitnessForm('${w.id}')">✏️</button>
       <button class="btn btn-danger btn-sm" style="padding:2px 8px;" onclick="_deleteWitness('${w.id}')">🗑️</button>
@@ -125,8 +145,9 @@ function _renderWitnessList() {
   }).join('');
 }
 
-function _openWitnessForm(id) {
+function _openWitnessForm(id, type) {
   _editingWitnessId = id || null;
+  _witnessFormType = type || (id ? (_witnessList.find(x=>x.id===id)||{}).witness_type : null) || 'fir';
   const w = id ? (_witnessList.find(x => x.id === id) || {}) : {};
   const box = document.getElementById('witness-form-box');
   if (!box) return;
@@ -251,14 +272,19 @@ async function _saveWitness() {
     cell: document.getElementById('w-cell')?.value.trim()||null,
     cnic: document.getElementById('w-cnic')?.value.trim()||null,
     status: document.getElementById('w-status')?.value||null,
+    witness_type: _witnessFormType || 'fir',
   };
   if (!rec.full_name) { showToast('⚠️ نام ضروری ہے','error'); return; }
   try {
     const oid = await getOfficerId();
+    if (oid) rec.officer_id = oid;
     if (_editingWitnessId) {
       await supabaseClient.from('case_witnesses').update(rec).eq('id', _editingWitnessId);
+      const idx = _witnessList.findIndex(x => x.id === _editingWitnessId);
+      if (idx >= 0) _witnessList[idx] = { ..._witnessList[idx], ...rec };
     } else {
-      await supabaseClient.from('case_witnesses').insert({ ...rec, officer_id: oid });
+      const { data } = await supabaseClient.from('case_witnesses').insert(rec).select().single();
+      _witnessList.push(data || { ...rec, id: 'tmp_'+Date.now() });
       try {
         await supabaseClient.from('suspects').insert({
           officer_id: oid, person_type:'witness',

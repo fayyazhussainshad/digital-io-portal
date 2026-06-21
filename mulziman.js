@@ -57,42 +57,35 @@ function _renderAccusedArea() {
   if (!area) return;
 
   const firList = _accusedList.filter(a => (a.accused_type || 'fir') === 'fir');
-  const tahList = _accusedList.filter(a => a.accused_type === 'tahqeeqati');
+  const crossList = _accusedList.filter(a => a.accused_type === 'cross_version');
 
   area.innerHTML = `
-  <div style="direction:rtl;height:100%;overflow-y:auto;padding:12px;">
-    <div class="accused-two-col" style="display:flex;gap:0;align-items:stretch;">
+  <div style="direction:rtl;height:100%;overflow-y:auto;padding:14px;max-width:760px;margin:0 auto;">
 
-      <!-- RIGHT COLUMN: FIR ملزم -->
-      <div style="flex:1;min-width:0;padding:0 12px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;border-bottom:2px solid var(--accent);padding-bottom:6px;">
-          <div style="font-size:16px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:var(--accent);">FIR ملزم</div>
-        </div>
-        <div id="acc-fir-list">${_renderAccCards(firList)}</div>
-        <div style="display:flex;gap:6px;margin-top:10px;">
-          <button class="btn btn-primary btn-sm" onclick="_openAccusedForm(null,'fir')">➕ نیا ملزم</button>
-          ${firList.length ? `<button class="btn btn-danger btn-sm" onclick="_deleteLastAcc('fir')">➖ ہٹائیں</button>` : ''}
-        </div>
+    <!-- TOP: ملزمان FIR -->
+    <div style="margin-bottom:18px;">
+      <div style="font-size:18px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:var(--accent);border-bottom:2px solid var(--accent);padding-bottom:6px;margin-bottom:10px;">ملزمان FIR</div>
+      <div id="acc-fir-list">${_renderAccCards(firList)}</div>
+      <div style="display:flex;gap:6px;margin-top:10px;">
+        <button class="btn btn-primary btn-sm" onclick="_openAccusedForm(null,'fir')">➕ ملزم</button>
+        ${firList.length ? `<button class="btn btn-danger btn-sm" onclick="_deleteLastAcc('fir')">➖ ہٹائیں</button>` : ''}
       </div>
-
-      <!-- DIVIDER -->
-      <div class="accused-divider" style="width:1px;background:var(--border);align-self:stretch;"></div>
-
-      <!-- LEFT COLUMN: تفتیشی ملزمان -->
-      <div style="flex:1;min-width:0;padding:0 12px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;border-bottom:2px solid var(--amber);padding-bottom:6px;">
-          <div style="font-size:16px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:var(--amber);">تفتیشی ملزمان</div>
-        </div>
-        <div id="acc-tah-list">${_renderAccCards(tahList)}</div>
-        <div style="display:flex;gap:6px;margin-top:10px;">
-          <button class="btn btn-primary btn-sm" onclick="_openAccusedForm(null,'tahqeeqati')">➕ نیا ملزم</button>
-          ${tahList.length ? `<button class="btn btn-danger btn-sm" onclick="_deleteLastAcc('tahqeeqati')">➖ ہٹائیں</button>` : ''}
-        </div>
-      </div>
-
     </div>
+
+    <!-- DIVIDER -->
+    <div style="height:2px;background:var(--border);margin:18px 0;"></div>
+
+    <!-- BOTTOM: ملزمان کراس ورژن -->
+    <div>
+      <div style="font-size:18px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:var(--amber);border-bottom:2px solid var(--amber);padding-bottom:6px;margin-bottom:10px;">ملزمان کراس ورژن</div>
+      <div id="acc-cross-list">${_renderAccCards(crossList)}</div>
+      <div style="display:flex;gap:6px;margin-top:10px;">
+        <button class="btn btn-primary btn-sm" onclick="_openAccusedForm(null,'cross_version')">➕ ملزم</button>
+        ${crossList.length ? `<button class="btn btn-danger btn-sm" onclick="_deleteLastAcc('cross_version')">➖ ہٹائیں</button>` : ''}
+      </div>
+    </div>
+
   </div>`;
-  _injectAccusedCSS();
 }
 
 // Inject responsive CSS once (avoids brace issues in template literals)
@@ -114,17 +107,26 @@ function _renderAccCards(list) {
   }
   return list.map(a => `
     <div onclick="_openAccusedForm('${a.id}','${a.accused_type||'fir'}')"
-         style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer;display:flex;align-items:center;gap:8px;">
-      ${a.photo_url ? `<img src="${a.photo_url}" style="width:34px;height:34px;border-radius:6px;object-fit:cover;flex-shrink:0;">` : '<span style="font-size:20px;flex-shrink:0;">👤</span>'}
+         style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:pointer;display:flex;align-items:center;gap:8px;">
+      ${a.photo_url ? `<img src="${a.photo_url}" style="width:38px;height:38px;border-radius:6px;object-fit:cover;flex-shrink:0;">` : '<span style="font-size:22px;flex-shrink:0;">👤</span>'}
       <div style="flex:1;min-width:0;">
-        <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_escA(a.name)}</div>
-        <div style="font-size:10px;color:var(--text-muted);display:flex;gap:8px;flex-wrap:wrap;">
+        <div style="font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_escA(a.name)}</div>
+        <div style="font-size:12px;color:var(--text-muted);display:flex;gap:8px;flex-wrap:wrap;">
           ${a.cnic?`<span dir="ltr">🪪 ${_escA(a.cnic)}</span>`:''}
-          ${a.aliha?`<span>${_escA(a.aliha)}</span>`:''}
+          ${a.pesha?`<span>${_escA(a.pesha)}</span>`:''}
+          ${a.arrest_date?`<span dir="ltr">📅 ${_fmtDateDMY(a.arrest_date)}</span>`:''}
         </div>
       </div>
       <button class="btn btn-danger btn-sm" style="padding:2px 7px;flex-shrink:0;" onclick="event.stopPropagation();_deleteAccused('${a.id}')">🗑️</button>
     </div>`).join('');
+}
+
+// Format YYYY-MM-DD → dd/mm/yy
+function _fmtDateDMY(d) {
+  if (!d) return '';
+  const p = String(d).split('-');
+  if (p.length === 3) return p[2].slice(0,2) + '/' + p[1] + '/' + p[0].slice(2);
+  return d;
 }
 
 // Delete the last-added accused in a column
@@ -176,8 +178,8 @@ function _openAccusedForm(id, type) {
         <input class="form-input" id="acc-arrest" type="date" dir="ltr" value="${_escA(a.arrest_date)}">
       </div>
       <div style="flex:1;">
-        <label class="form-label">علیہ (دفعات)</label>
-        <input class="form-input" id="acc-aliha" value="${_escA(a.aliha)}" placeholder="مثلاً: 302/324 ت پ">
+        <label class="form-label">پیشہ</label>
+        <input class="form-input" id="acc-pesha" value="${_escA(a.pesha)}" placeholder="مثلاً: مزدور، ڈرائیور">
       </div>
     </div>
 
@@ -280,7 +282,7 @@ async function _saveAccused(id) {
     cnic: document.getElementById('acc-cnic')?.value.trim() || null,
     mobile: document.getElementById('acc-mobile')?.value.trim() || null,
     arrest_date: document.getElementById('acc-arrest')?.value || null,
-    aliha: document.getElementById('acc-aliha')?.value.trim() || null,
+    pesha: document.getElementById('acc-pesha')?.value.trim() || null,
     rang: document.getElementById('acc-rang')?.value || null,
     chehra: document.getElementById('acc-chehra')?.value || null,
     jism: document.getElementById('acc-jism')?.value || null,
