@@ -144,16 +144,19 @@ function _pd(d) {
 }
 async function _dFetchRem() {
   const oid=await getOfficerId();
-  const{data}=await supabaseClient.from('reminders').select('*').eq('officer_id',oid).eq('is_done',false).order('reminder_date',{ascending:true});
-  return data||[];
+  if(!oid || !navigator.onLine) return [];
+  try { const{data}=await supabaseClient.from('reminders').select('*').eq('officer_id',oid).eq('is_done',false).order('reminder_date',{ascending:true}); return data||[]; }
+  catch(_){ return []; }
 }
 async function _dFetchPatrol() {
   const oid=await getOfficerId();
-  const{count}=await supabaseClient.from('patrol_logs').select('*',{count:'exact',head:true}).eq('officer_id',oid);
-  return count||0;
+  if(!oid || !navigator.onLine) return 0;
+  try { const{count}=await supabaseClient.from('patrol_logs').select('*',{count:'exact',head:true}).eq('officer_id',oid); return count||0; }
+  catch(_){ return 0; }
 }
 async function _dFetchFivec() {
   const oid=await getOfficerId();
-  const{count}=await supabaseClient.from('applications_5c').select('*',{count:'exact',head:true}).eq('officer_id',oid);
-  return count||0;
+  if(!oid || !navigator.onLine) return 0;
+  try { const{count}=await supabaseClient.from('applications_5c').select('*',{count:'exact',head:true}).eq('officer_id',oid); return count||0; }
+  catch(_){ return 0; }
 }
