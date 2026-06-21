@@ -35,7 +35,8 @@ const MISAL_CASE_DOCS = [
 ];
 
 // ── STATE ─────────────────────────────────────────────────────
-let _misalDocs   = {};   // { docId: {id, content, status} } for current case
+let _misalDocs   = {};
+let _misalDirty  = false;   // { docId: {id, content, status} } for current case
 let _misalCaseId = null;
 let _misalCase   = null;
 let _openDocId   = null;
@@ -340,44 +341,93 @@ function _renderMisalEditor(docId, def) {
 
   const saved   = _misalDocs[docId];
   const content = saved?.content?.html || getMisalTemplate(docId, _misalCase);
+  const savedDate = saved?.content?.date || '';
 
-  area.innerHTML =
-    buildWordToolbar('misal-editor', {
-      showVoice:    true,
-      showSave:     true,
-      saveLabel:    '💾 محفوظ',
-      onSave:       "saveMisalDoc('" + docId + "')",
-      showComplete: true,
-      completeLabel:'✅ مکمل',
-      onComplete:   "markMisalComplete('" + docId + "')",
-      onPrint:      "printMisalDoc('" + def.name.replace(/'/g,"\\'") + "')",
-      titleHtml:    def.name,
-    }) +
-    `<div style="flex:1;overflow-y:auto;padding:20px;background:var(--bg-tertiary);">
-      <div style="max-width:210mm;margin:0 auto 10px;display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-secondary btn-sm" onclick="_addCustomField('misal-editor')">➕ خانہ شامل کریں</button>
-        <button class="btn btn-secondary btn-sm" onclick="_addCustomTable('misal-editor')">➕ ٹیبل شامل کریں</button>
-        <span style="font-size:11px;color:var(--text-muted);align-self:center;">اپنی مرضی کے خانے یا ٹیبل شامل کریں</span>
+  area.innerHTML = `
+  <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+      <div style="font-size:16px;font-weight:800;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;color:var(--accent);">${def.name}</div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-primary btn-sm" onclick="saveMisalDoc('${docId}')">💾 محفوظ</button>
+        <button class="btn btn-secondary btn-sm" onclick="printMisalDoc('${def.name.replace(/'/g,"\\'")}')">🖨️</button>
       </div>
+    </div>
+
+    <!-- Formatting toolbar -->
+    <div style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
+      <button onclick="_fmtDoc('bold')" title="بولڈ (Ctrl+B)" style="${_fmtBtn()}font-weight:900;">B</button>
+      <button onclick="_fmtDoc('underline')" title="انڈر لائن (Ctrl+U)" style="${_fmtBtn()}text-decoration:underline;">U</button>
+      <button onclick="_fmtDoc('italic')" title="ترچھا (Ctrl+I)" style="${_fmtBtn()}font-style:italic;">I</button>
+      <span style="width:1px;height:22px;background:var(--border);margin:0 4px;"></span>
+      <button onclick="_fontSize(1)" title="فونٹ بڑا" style="${_fmtBtn()}">A+</button>
+      <button onclick="_fontSize(-1)" title="فونٹ چھوٹا" style="${_fmtBtn()}font-size:11px;">A−</button>
+      <span style="width:1px;height:22px;background:var(--border);margin:0 4px;"></span>
+      <button onclick="_fmtDoc('insertUnorderedList')" title="فہرست" style="${_fmtBtn()}">• فہرست</button>
+      <span style="font-size:11px;color:var(--text-muted);margin-right:auto;">متن منتخب کر کے B / U دبائیں</span>
+    </div>
+
+    <!-- Add field / table buttons -->
+    <div style="display:flex;gap:8px;padding:8px 14px;flex-wrap:wrap;">
+      <button class="btn btn-secondary btn-sm" onclick="_addCustomField('misal-editor')">➕ خانہ</button>
+      <button class="btn btn-secondary btn-sm" onclick="_addCustomTable('misal-editor')">➕ ٹیبل</button>
+      <div style="margin-right:auto;display:flex;align-items:center;gap:6px;">
+        <label style="font-size:12px;color:var(--text-muted);">تاریخ:</label>
+        <input type="text" id="misal-date" value="${savedDate}" placeholder="2026-06-21" style="border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;background:var(--bg-card);color:var(--text-primary);direction:ltr;width:120px;">
+      </div>
+    </div>
+
+    <!-- Text area (justified, RTL, no MS Word page) -->
+    <div style="flex:1;overflow-y:auto;padding:14px;">
       <div id="misal-editor" contenteditable="true" spellcheck="false" style="
-        width:210mm;max-width:100%;min-height:297mm;
-        margin:0 auto;padding:20mm;
-        background:#fff;color:#111;
+        width:100%;min-height:100%;
+        background:var(--bg-card);color:var(--text-primary);
         font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
-        font-size:14pt;line-height:1.5;
-        direction:rtl;text-align:right;
-        box-shadow:0 4px 20px rgba(0,0,0,0.15);
-        border-radius:4px;outline:none;
-      ">${content}</div>
-    </div>`;
-  // Wrap in outer flex column
-  const _outer = document.createElement('div');
-  _outer.style.cssText = 'display:flex;flex-direction:column;height:100%;';
-  _outer.innerHTML = area.innerHTML;
-  area.innerHTML = '';
-  area.appendChild(_outer);
-  // Activate selection-change tracking
-  setTimeout(function() { setupWordToolbar('misal-editor'); }, 80);
+        font-size:16px;line-height:2;
+        direction:rtl;text-align:justify;
+        border:1px solid var(--border);border-radius:8px;
+        padding:18px;outline:none;box-sizing:border-box;
+      " oninput="_misalDirty=true">${content}</div>
+    </div>
+  </div>`;
+
+  // Keyboard shortcuts: Ctrl+B, Ctrl+U, Ctrl+I
+  setTimeout(() => {
+    const ed = document.getElementById('misal-editor');
+    if (ed) {
+      ed.onkeydown = (e) => {
+        if (e.ctrlKey || e.metaKey) {
+          if (e.key === 'b') { e.preventDefault(); document.execCommand('bold'); }
+          if (e.key === 'u') { e.preventDefault(); document.execCommand('underline'); }
+          if (e.key === 'i') { e.preventDefault(); document.execCommand('italic'); }
+        }
+      };
+    }
+  }, 80);
+}
+
+// Formatting helpers
+function _fmtBtn() {
+  return 'min-width:34px;height:32px;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text-primary);cursor:pointer;font-size:14px;padding:0 8px;';
+}
+function _fmtDoc(cmd) {
+  const ed = document.getElementById('misal-editor');
+  if (ed) ed.focus();
+  document.execCommand(cmd, false, null);
+}
+function _fontSize(dir) {
+  const ed = document.getElementById('misal-editor');
+  if (!ed) return;
+  ed.focus();
+  const sel = window.getSelection();
+  if (sel && sel.toString()) {
+    // Wrap selection in span with adjusted size
+    document.execCommand('fontSize', false, dir > 0 ? '5' : '2');
+  } else {
+    // No selection — change whole editor base size
+    const cur = parseInt(window.getComputedStyle(ed).fontSize) || 16;
+    ed.style.fontSize = Math.max(11, Math.min(28, cur + (dir*2))) + 'px';
+  }
 }
 
 // ── CUSTOM FIELDS — officer defines their own fields on the fly ──
@@ -759,14 +809,16 @@ async function saveMisalDoc(docId) {
   const editor = document.getElementById('misal-editor');
   if (!editor) return;
   const html = editor.innerHTML;
+  const date = document.getElementById('misal-date')?.value || '';
   try {
     const { error } = await supabaseClient
       .from('case_documents')
-      .update({ content: { html }, updated_at: new Date().toISOString() })
+      .update({ content: { html, date }, updated_at: new Date().toISOString() })
       .eq('case_id', _misalCaseId)
       .eq('document_type', docId);
     if (error) throw error;
-    if (_misalDocs[docId]) _misalDocs[docId].content = { html };
+    if (_misalDocs[docId]) _misalDocs[docId].content = { html, date };
+    _misalDirty = false;
     showToast('✅ دستاویز محفوظ ہو گئی', 'success');
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
