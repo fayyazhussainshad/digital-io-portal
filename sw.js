@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v73
+   DIGITAL IO — SERVICE WORKER v74
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v73';
+const CACHE_NAME = 'digital-io-v74';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -12,7 +12,7 @@ const CORE_ASSETS = [
   '/offline.html',
   '/manifest.json',
   '/offline-store.js',
-  '/islamic.js',
+
   '/app-core.js',
   '/dashboard.js',
   '/toolbar.js',
@@ -46,9 +46,12 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       console.log('[SW] Caching core assets');
-      return cache.addAll(CORE_ASSETS).catch(err => {
-        console.warn('[SW] Some assets failed to cache:', err);
-      });
+      // Cache each file individually — one failure won't stop the rest
+      return Promise.all(
+        CORE_ASSETS.map(url =>
+          cache.add(url).catch(err => console.warn('[SW] Skip cache:', url))
+        )
+      );
     }).then(() => self.skipWaiting())
   );
 });
