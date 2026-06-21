@@ -64,32 +64,14 @@ async function _createTrial(oid) {
 
 // ── SUBSCRIPTION BANNER ───────────────────────────────────────
 async function showSubscriptionBanner() {
+  // Trial/active info now shows in the BOTTOM bar (footer-license), not below topbar.
+  // Remove any existing top banner.
+  const existing = document.getElementById('sub-banner');
+  if (existing) existing.remove();
+  // Only show blocking screen if subscription expired/suspended.
   const sub = await checkSubscription();
-  const banner = document.getElementById('sub-banner');
-
-  if (!banner) {
-    // Create banner
-    const div = document.createElement('div');
-    div.id = 'sub-banner';
-    div.style.cssText = 'width:100%;text-align:center;padding:5px 16px;font-size:12px;font-family:"Jameel Noori Nastaleeq",serif;direction:rtl;';
-
-    if (sub.status === 'active') {
-      if (sub.daysLeft <= 7) {
-        div.style.background = 'rgba(245,158,11,0.15)';
-        div.style.color = 'var(--amber)';
-        div.innerHTML = `⚠️ سبسکرپشن ${sub.daysLeft} دن میں ختم — <span onclick="showSubscriptionPage()" style="cursor:pointer;text-decoration:underline;">ابھی تجدید کریں</span>`;
-        document.querySelector('.topbar')?.after(div);
-      }
-    } else if (sub.status === 'trial') {
-      div.style.background = 'rgba(56,189,248,0.1)';
-      div.style.color = 'var(--accent)';
-      div.innerHTML = `🎁 آزمائشی مدت: ${sub.daysLeft} دن باقی — <span onclick="showSubscriptionPage()" style="cursor:pointer;text-decoration:underline;font-weight:700;">پلان خریدیں</span>`;
-      document.querySelector('.topbar')?.after(div);
-    } else if (sub.status === 'expired' || sub.status === 'suspended') {
-      // Show blocking screen
-      showSubscriptionRequired(sub);
-      return;
-    }
+  if (sub.status === 'expired' || sub.status === 'suspended') {
+    showSubscriptionRequired(sub);
   }
 }
 
