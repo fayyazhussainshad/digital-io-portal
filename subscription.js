@@ -291,16 +291,17 @@ async function _submitPayment(planName, amount, days) {
 async function updateSubBadge() {
   try {
     const sub = await checkSubscription();
-    const el  = document.getElementById('sub-status-badge');
+    // Show in bottom bar (footer-license)
+    const el = document.getElementById('sub-status-badge') || document.getElementById('footer-license');
     if (!el) return;
     if (sub.status==='active') {
-      el.textContent = `✅ فعال · ${sub.daysLeft}d`;
+      el.textContent = `✅ فعال · ${sub.daysLeft} دن`;
       el.style.color = 'var(--green)';
     } else if (sub.status==='trial') {
-      el.textContent = `🎁 آزمائشی · ${sub.daysLeft}d`;
+      el.textContent = `🎁 آزمائشی · ${sub.daysLeft} دن باقی`;
       el.style.color = 'var(--amber)';
     } else {
-      el.textContent = '❌ ختم';
+      el.textContent = '❌ مدت ختم';
       el.style.color = 'var(--red)';
     }
   } catch(_) {}

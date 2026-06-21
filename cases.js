@@ -1497,26 +1497,13 @@ function renderWorkspace(c, docs, ev, container) {
         <button class="btn btn-secondary btn-sm" onclick="_openDocsChecklist('${c.id}','${c.fir_number||''}')">📋</button>
         <button class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')">✏️</button>
         <button class="btn btn-secondary btn-sm" onclick="downloadCaseFile('${c.id}')">⬇️</button>
-        <button class="btn btn-secondary btn-sm" onclick="_printFIRDirect('${c.id}')">🖨️ FIR</button>
         <button class="btn btn-secondary btn-sm" onclick="openShareModal('${c.id}')">📤</button>
         <button class="btn btn-danger btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number||''}')">🗑️</button>
         <button onclick="goBackToCases()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">↩</button>
       </div>
     </div>
 
-    <!-- CASE STATUS PIPELINE -->
-    ${_caseStatusPipeline(c)}
-
-    <!-- PROSECUTION-READY VALIDATOR -->
-    ${_prosecutionValidator(c)}
-
-    <!-- INTERIM 173 ALERT (10+ days) -->
-    ${_interim173Alert(c)}
-
-    <!-- RELATED CASES -->
-    <div id="related-cases-bar"></div>
-
-    <!-- MISAL DOCUMENT BAR -->
+    <!-- MISAL DOCUMENT BAR (directly after topbar — nothing in between) -->
     ${renderMisalBar(c)}
 
     <!-- TAB CONTENT -->
@@ -1532,8 +1519,6 @@ function renderWorkspace(c, docs, ev, container) {
   window._workspaceCase = c;
   window._workspaceDocs = docs;
   window._workspaceEv = ev;
-  // Load related cases (same complainant / accused / CNIC) — guard against errors
-  try { _loadRelatedCases(c); } catch(e) { console.warn('related cases failed', e); }
 }
 
 function switchWorkspaceTab(tab) {

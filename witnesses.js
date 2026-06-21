@@ -42,13 +42,11 @@ function _renderWitnessesArea() {
   if (!area) return;
   area.innerHTML = `
   <div style="padding:14px;direction:rtl;height:100%;overflow-y:auto;">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
-      <div style="font-size:17px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;">👁️ گواہان</div>
+    <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:12px;">
       <button class="btn btn-primary btn-sm" onclick="_openWitnessForm()">➕ نیا گواہ</button>
     </div>
-    ${_renderAutoWitnesses()}
     <div id="witness-form-box"></div>
-    <div id="witness-list-box" style="margin-top:12px;">${_renderWitnessList()}</div>
+    <div id="witness-list-box">${_renderWitnessList()}</div>
   </div>`;
 }
 
