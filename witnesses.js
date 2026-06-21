@@ -19,7 +19,17 @@ let _witnessList = [];
 let _witnessCaseId = null;
 let _editingWitnessId = null;
 
+let _personMode = 'witness'; // 'witness' or 'accused'
+
 async function openWitnessesCard(caseId) {
+  _personMode = 'witness';
+  _witnessCaseId = caseId || _misalCaseId || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
+  await _loadWitnesses();
+  _renderWitnessesArea();
+}
+
+async function openAccusedCard(caseId) {
+  _personMode = 'accused';
   _witnessCaseId = caseId || _misalCaseId || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
   await _loadWitnesses();
   _renderWitnessesArea();
@@ -40,10 +50,11 @@ function _renderWitnessesArea() {
             || document.getElementById('workspace-tab-content')
             || document.getElementById('page-content');
   if (!area) return;
+  const addLabel = _personMode === 'accused' ? '➕ نیا ملزم' : '➕ نیا گواہ';
   area.innerHTML = `
   <div style="padding:14px;direction:rtl;height:100%;overflow-y:auto;">
     <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:12px;">
-      <button class="btn btn-primary btn-sm" onclick="_openWitnessForm()">➕ نیا گواہ</button>
+      <button class="btn btn-primary btn-sm" onclick="_openWitnessForm()">${addLabel}</button>
     </div>
     <div id="witness-form-box"></div>
     <div id="witness-list-box">${_renderWitnessList()}</div>

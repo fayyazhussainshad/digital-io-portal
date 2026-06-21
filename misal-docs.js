@@ -251,13 +251,21 @@ function _openMisalEditor(docId) {
     return;
   }
 
-  // Special: گواہان shows structured witness card system
+  // Special: گواہان shows structured witness card system (form only — no side table, no doc page)
   if (docId === 'witnesses_fir' || docId === 'witnesses_cross') {
     _openDocId = docId;
-    if (typeof openWitnessesCard === 'function') {
+    if (typeof openWitnessesCard === 'function') openWitnessesCard(_misalCaseId);
+    return;
+  }
+
+  // Special: ملزمان / مجرمان shows accused form (form only — no side table, no doc page)
+  if (docId === 'named_accused' || docId === 'unknown_accused') {
+    _openDocId = docId;
+    if (typeof openAccusedCard === 'function') {
+      openAccusedCard(_misalCaseId);
+    } else if (typeof openWitnessesCard === 'function') {
       openWitnessesCard(_misalCaseId);
     }
-    _refreshMisalSidebar();
     return;
   }
 
@@ -265,7 +273,6 @@ function _openMisalEditor(docId) {
   if (docId === 'fir') {
     _openDocId = docId;
     _renderFIRView();
-    _refreshMisalSidebar();
     return;
   }
   const def = MISAL_CASE_DOCS.find(d => d.id === docId);
