@@ -28,12 +28,7 @@ async function openWitnessesCard(caseId) {
   _renderWitnessesArea();
 }
 
-async function openAccusedCard(caseId) {
-  _personMode = 'accused';
-  _witnessCaseId = caseId || _misalCaseId || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
-  await _loadWitnesses();
-  _renderWitnessesArea();
-}
+// openAccusedCard moved to mulziman.js (dedicated accused module)
 
 async function _loadWitnesses() {
   try {
