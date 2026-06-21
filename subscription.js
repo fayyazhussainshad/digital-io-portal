@@ -8,18 +8,22 @@ async function checkSubscription() {
   try {
     const oid = await getOfficerId();
     if (!oid) return { status:'none' };
+    if (!navigator.onLine) return { status:'trial', daysLeft:30, plan:'آزمائشی' };
 
-    const { data } = await supabaseClient
+    const { data, error } = await supabaseClient
       .from('subscriptions')
       .select('*, subscription_plans(*)')
       .eq('officer_id', oid)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
+
+    // If table not accessible (RLS/401) — just allow access silently
+    if (error) return { status:'trial', daysLeft:30, plan:'آزمائشی' };
 
     if (!data) {
-      // First time — create trial
-      await _createTrial(oid);
+      // First time — create trial (ignore errors)
+      try { await _createTrial(oid); } catch(_) {}
       return { status:'trial', daysLeft:30, plan:'آزمائشی' };
     }
 
@@ -46,14 +50,16 @@ async function checkSubscription() {
 async function _createTrial(oid) {
   const exp = new Date();
   exp.setDate(exp.getDate() + 30);
-  await supabaseClient.from('subscriptions').insert({
-    officer_id: oid,
-    status: 'trial',
-    started_at: new Date().toISOString(),
-    expires_at: exp.toISOString(),
-    amount: 0,
-    payment_method: 'trial',
-  });
+  try {
+    await supabaseClient.from('subscriptions').insert({
+      officer_id: oid,
+      status: 'trial',
+      started_at: new Date().toISOString(),
+      expires_at: exp.toISOString(),
+      amount: 0,
+      payment_method: 'trial',
+    });
+  } catch(_) { /* silent — non-critical */ }
 }
 
 // ── SUBSCRIPTION BANNER ───────────────────────────────────────
