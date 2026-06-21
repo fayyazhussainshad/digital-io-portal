@@ -134,6 +134,7 @@ function showPage(page, el) {
     return;
   }
   window._activePage = page;  // Track current page for background refresh
+  window._inWorkspace = false;  // Left any workspace when navigating via menu
 
   // Track page usage (for admin button-usage log)
   if (typeof _trackUsage === 'function') _trackUsage(page);
@@ -365,11 +366,10 @@ async function _refreshCasesInBackground(oid) {
     if (data && typeof offlineStore !== 'undefined') {
       try { await offlineStore.cache('cases_cache', data); } catch(_) {}
       if (typeof markSynced === 'function') markSynced();
-      // If cases page currently open, silently refresh the list
-      if (window._activePage === 'cases') {
+      // If cases page currently open AND not in a workspace, silently refresh the list
+      if (window._activePage === 'cases' && !window._inWorkspace) {
         const c = document.getElementById('page-content');
         if (c && typeof renderCases === 'function') {
-          // Only re-render if not in a workspace/modal
           if (!document.querySelector('.workspace-tabs') && !document.querySelector('.modal-overlay[style*="flex"]')) {
             renderCases(c);
           }

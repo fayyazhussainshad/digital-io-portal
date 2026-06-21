@@ -1436,6 +1436,7 @@ function _suggest161Questions(c) {
 
 async function openCaseWorkspace(id) {
   closeMobileSidebar();
+  window._inWorkspace = true;  // Prevent background refresh from redirecting back to list
   currentCaseId = id;
   _currentWorkspaceCaseId = id;
   currentDocIndex = null;
@@ -2518,6 +2519,7 @@ async function wevSave(caseId, firNumber) {
 
 // ── BACK / DELETE ──
 function goBackToCases() {
+  window._inWorkspace = false;
   const container = document.getElementById('page-content');
   container.style.padding = '20px';
   container.style.overflow = 'auto';
