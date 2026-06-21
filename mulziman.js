@@ -7,6 +7,7 @@ let _accusedList   = [];
 let _accusedCaseId = null;
 let _accusedPhoto  = null;   // base64 of accused photo
 let _accusedCnicCopy = null; // base64 of CNIC copy
+let _accusedFormType = 'fir'; // 'fir' or 'tahqeeqati'
 
 // Physical description dropdown options
 const ACC_RANG   = ['گندمی','گورا','سانولا','کالا','زرد'];
@@ -48,70 +49,96 @@ async function _loadAccused() {
 }
 
 // ── LIST VIEW ─────────────────────────────────────────────────
+// ── LIST VIEW (two columns: FIR ملزم | تفتیشی ملزمان) ─────────
 function _renderAccusedArea() {
   const area = document.getElementById('workspace-editor-area')
             || document.getElementById('workspace-tab-content')
             || document.getElementById('page-content');
   if (!area) return;
+
+  const firList = _accusedList.filter(a => (a.accused_type || 'fir') === 'fir');
+  const tahList = _accusedList.filter(a => a.accused_type === 'tahqeeqati');
+
   area.innerHTML = `
-  <div style="padding:14px;direction:rtl;height:100%;overflow-y:auto;">
-    <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:12px;">
-      <button class="btn btn-primary btn-sm" onclick="_openAccusedForm()">➕ ملزم درج کریں</button>
+  <div style="direction:rtl;height:100%;overflow-y:auto;padding:12px;">
+    <div class="accused-two-col" style="display:flex;gap:0;align-items:stretch;">
+
+      <!-- RIGHT COLUMN: FIR ملزم -->
+      <div style="flex:1;min-width:0;padding:0 12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;border-bottom:2px solid var(--accent);padding-bottom:6px;">
+          <div style="font-size:16px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:var(--accent);">FIR ملزم</div>
+        </div>
+        <div id="acc-fir-list">${_renderAccCards(firList)}</div>
+        <div style="display:flex;gap:6px;margin-top:10px;">
+          <button class="btn btn-primary btn-sm" onclick="_openAccusedForm(null,'fir')">➕ نیا ملزم</button>
+          ${firList.length ? `<button class="btn btn-danger btn-sm" onclick="_deleteLastAcc('fir')">➖ ہٹائیں</button>` : ''}
+        </div>
+      </div>
+
+      <!-- DIVIDER -->
+      <div class="accused-divider" style="width:1px;background:var(--border);align-self:stretch;"></div>
+
+      <!-- LEFT COLUMN: تفتیشی ملزمان -->
+      <div style="flex:1;min-width:0;padding:0 12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;border-bottom:2px solid var(--amber);padding-bottom:6px;">
+          <div style="font-size:16px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:var(--amber);">تفتیشی ملزمان</div>
+        </div>
+        <div id="acc-tah-list">${_renderAccCards(tahList)}</div>
+        <div style="display:flex;gap:6px;margin-top:10px;">
+          <button class="btn btn-primary btn-sm" onclick="_openAccusedForm(null,'tahqeeqati')">➕ نیا ملزم</button>
+          ${tahList.length ? `<button class="btn btn-danger btn-sm" onclick="_deleteLastAcc('tahqeeqati')">➖ ہٹائیں</button>` : ''}
+        </div>
+      </div>
+
     </div>
-    <div id="accused-list-box">${_renderAccusedList()}</div>
   </div>`;
+  _injectAccusedCSS();
 }
 
-function _renderAccusedList() {
-  if (!_accusedList.length) {
-    return `<div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
-      <div style="font-size:40px;margin-bottom:10px;">👤</div>
-      <div style="font-size:14px;">ابھی کوئی ملزم درج نہیں</div>
-      <div style="font-size:11px;margin-top:6px;">اوپر "ملزم درج کریں" پر کلک کریں</div>
+// Inject responsive CSS once (avoids brace issues in template literals)
+function _injectAccusedCSS() {
+  if (document.getElementById('accused-resp-css')) return;
+  const s = document.createElement('style');
+  s.id = 'accused-resp-css';
+  s.textContent = '@media (max-width:768px){.accused-two-col{flex-direction:column !important;}.accused-divider{width:100% !important;height:1px !important;margin:10px 0;}}';
+  document.head.appendChild(s);
+}
+
+// Compact horizontal cards (witness-card style)
+function _renderAccCards(list) {
+  if (!list.length) {
+    return `<div style="text-align:center;padding:24px 12px;color:var(--text-muted);font-size:12px;">
+      <div style="font-size:30px;margin-bottom:6px;">👤</div>
+      کوئی ملزم نہیں
     </div>`;
   }
-  return `
-  <div style="overflow-x:auto;">
-  <table style="width:100%;border-collapse:collapse;font-size:13px;direction:rtl;">
-    <thead>
-      <tr style="background:var(--bg-secondary);">
-        <th style="${_accTh()}">نام و پتہ</th>
-        <th style="${_accTh()}">شناختی کارڈ</th>
-        <th style="${_accTh()}">موبائل</th>
-        <th style="${_accTh()}">علیہ</th>
-        <th style="${_accTh()}">تاریخ گرفتاری</th>
-        <th style="${_accTh()}">ایکشن</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${_accusedList.map(a => `
-      <tr style="border-bottom:1px solid var(--border);">
-        <td style="${_accTd()}">
-          <div style="display:flex;align-items:center;gap:8px;">
-            ${a.photo_url ? `<img src="${a.photo_url}" style="width:34px;height:34px;border-radius:6px;object-fit:cover;">` : '<span style="font-size:20px;">👤</span>'}
-            <span style="font-weight:700;">${_escA(a.name)}</span>
-          </div>
-        </td>
-        <td style="${_accTd()}" dir="ltr">${_escA(a.cnic)||'—'}</td>
-        <td style="${_accTd()}" dir="ltr">${_escA(a.mobile)||'—'}</td>
-        <td style="${_accTd()}">${_escA(a.aliha)||'—'}</td>
-        <td style="${_accTd()}" dir="ltr">${_escA(a.arrest_date)||'—'}</td>
-        <td style="${_accTd()}">
-          <div style="display:flex;gap:4px;">
-            <button class="btn btn-secondary btn-sm" style="padding:2px 8px;" onclick="_openAccusedForm('${a.id}')">✏️</button>
-            <button class="btn btn-danger btn-sm" style="padding:2px 8px;" onclick="_deleteAccused('${a.id}')">🗑️</button>
-            ${a.cnic_copy_url ? `<button class="btn btn-secondary btn-sm" style="padding:2px 8px;" onclick="window.open('${a.cnic_copy_url}','_blank')" title="شناختی کارڈ کاپی">🪪</button>` : ''}
-          </div>
-        </td>
-      </tr>`).join('')}
-    </tbody>
-  </table>
-  </div>`;
+  return list.map(a => `
+    <div onclick="_openAccusedForm('${a.id}','${a.accused_type||'fir'}')"
+         style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer;display:flex;align-items:center;gap:8px;">
+      ${a.photo_url ? `<img src="${a.photo_url}" style="width:34px;height:34px;border-radius:6px;object-fit:cover;flex-shrink:0;">` : '<span style="font-size:20px;flex-shrink:0;">👤</span>'}
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_escA(a.name)}</div>
+        <div style="font-size:10px;color:var(--text-muted);display:flex;gap:8px;flex-wrap:wrap;">
+          ${a.cnic?`<span dir="ltr">🪪 ${_escA(a.cnic)}</span>`:''}
+          ${a.aliha?`<span>${_escA(a.aliha)}</span>`:''}
+        </div>
+      </div>
+      <button class="btn btn-danger btn-sm" style="padding:2px 7px;flex-shrink:0;" onclick="event.stopPropagation();_deleteAccused('${a.id}')">🗑️</button>
+    </div>`).join('');
+}
+
+// Delete the last-added accused in a column
+function _deleteLastAcc(type) {
+  const list = _accusedList.filter(a => (a.accused_type||'fir') === type);
+  if (!list.length) return;
+  const last = list[list.length - 1];
+  _deleteAccused(last.id);
 }
 
 // ── ADD / EDIT MODAL ──────────────────────────────────────────
-function _openAccusedForm(id) {
+function _openAccusedForm(id, type) {
   const a = id ? (_accusedList.find(x => x.id === id) || {}) : {};
+  _accusedFormType = type || a.accused_type || 'fir';
   _accusedPhoto = a.photo_url || null;
   _accusedCnicCopy = a.cnic_copy_url || null;
 
@@ -126,15 +153,9 @@ function _openAccusedForm(id) {
 
   const body = `
   <div style="direction:rtl;text-align:right;max-height:70vh;overflow-y:auto;padding:2px;">
-    <!-- نام + ولد/والدہ -->
+    <!-- نام و پتہ -->
     <label class="form-label">نام و پتہ ملزم</label>
-    <div style="display:flex;gap:8px;margin-bottom:10px;">
-      <input class="form-input" id="acc-name" value="${_escA(a.name)}" placeholder="نام، ولدیت، پتہ" style="flex:2;">
-      <select class="form-input" id="acc-relation" style="flex:0 0 90px;">
-        <option value="ولد" ${a.relation==='ولد'?'selected':''}>ولد</option>
-        <option value="والدہ" ${a.relation==='والدہ'?'selected':''}>والدہ</option>
-      </select>
-    </div>
+    <input class="form-input" id="acc-name" value="${_escA(a.name)}" placeholder="نام، ولدیت، پتہ" style="margin-bottom:10px;">
 
     <!-- CNIC + Mobile -->
     <div style="display:flex;gap:8px;margin-bottom:10px;">
@@ -255,7 +276,7 @@ async function _saveAccused(id) {
   const rec = {
     case_id: _accusedCaseId,
     name,
-    relation: document.getElementById('acc-relation')?.value || 'ولد',
+    accused_type: _accusedFormType || 'fir',
     cnic: document.getElementById('acc-cnic')?.value.trim() || null,
     mobile: document.getElementById('acc-mobile')?.value.trim() || null,
     arrest_date: document.getElementById('acc-arrest')?.value || null,
@@ -272,15 +293,24 @@ async function _saveAccused(id) {
   try {
     const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
     if (oid) rec.officer_id = oid;
+    let savedRec = null;
     if (id) {
-      await supabaseClient.from('case_accused').update(rec).eq('id', id);
+      const { data } = await supabaseClient.from('case_accused').update(rec).eq('id', id).select().single();
+      savedRec = data || { ...rec, id };
+      // Update local list
+      const idx = _accusedList.findIndex(x => x.id === id);
+      if (idx >= 0) _accusedList[idx] = savedRec;
     } else {
-      await supabaseClient.from('case_accused').insert(rec);
+      const { data, error } = await supabaseClient.from('case_accused').insert(rec).select().single();
+      if (error) throw error;
+      savedRec = data || { ...rec, id: 'tmp_' + Date.now() };
+      _accusedList.push(savedRec);
     }
+    // Update offline cache
+    try { localStorage.setItem('dio_accused_' + _accusedCaseId, JSON.stringify(_accusedList)); } catch(_) {}
     _accusedPhoto = null; _accusedCnicCopy = null;
     closeModal();
-    await _loadAccused();
-    _renderAccusedArea();
+    _renderAccusedArea();   // re-render from updated local list (instant)
     showToast('✅ ملزم محفوظ ہو گیا', 'success');
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
