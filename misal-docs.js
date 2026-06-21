@@ -303,31 +303,8 @@ function _openMisalEditor(docId) {
 
 // ── SIDEBAR: list of added documents ─────────────────────────
 function renderMisalDocSidebar() {
-  const added = MISAL_CASE_DOCS.filter(d => _misalDocs[d.id]);
-  if (!added.length) return `
-    <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px;line-height:1.8;">
-      <div style="font-size:28px;margin-bottom:8px;">📂</div>
-      ابھی کوئی دستاویز شامل نہیں<br>
-      اوپر دستاویز کے نام پر کلک کریں
-    </div>`;
-
-  return added.map(d => {
-    const saved = _misalDocs[d.id];
-    const done  = saved?.status === 'complete';
-    const isOpen = _openDocId === d.id;
-    return `
-      <div class="misal-sidebar-item doc-card ${isOpen?'active':''}" id="msb-${d.id}"
-           onclick="_openMisalEditor('${d.id}')"
-           style="cursor:pointer;padding:10px 12px;border-bottom:1px solid var(--border);">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:16px;">${done?'✅':'📄'}</span>
-          <div style="flex:1;">
-            <div style="font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:15px;direction:rtl;color:${done?'var(--green)':isOpen?'var(--accent)':'var(--text-primary)'};">${d.name}</div>
-            <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${done?'مکمل':'مسودہ'}</div>
-          </div>
-        </div>
-      </div>`;
-  }).join('');
+  // CASE DOCUMENTS side panel permanently removed — returns nothing
+  return '';
 }
 
 function _refreshMisalSidebar() {

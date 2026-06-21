@@ -708,7 +708,7 @@ select.form-input { direction: rtl; text-align: right; }
 .law-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; cursor: pointer; transition: all 0.15s; }
 .law-card:hover { border-color: var(--accent); transform: translateY(-1px); }
 .misal-layout { display: grid; grid-template-columns: 260px 1fr; gap: 16px; height: calc(100vh - 130px); }
-.misal-sidebar { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow-y: auto; }
+.misal-sidebar { display: none !important; }
 .misal-main { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; }
 .misal-preview { flex: 1; padding: 20px; overflow-y: auto; }
 .doc-preview { background: #fff; color: #1a1a1a; border-radius: 8px; padding: 40px; min-height: 500px; font-family: 'Times New Roman', serif; }
@@ -720,10 +720,11 @@ select.form-input { direction: rtl; text-align: right; }
 .backup-dest-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 16px; }
 
 /* ── CASE WORKSPACE ── */
-.workspace-layout { display: grid; grid-template-columns: 260px 1fr; gap: 0; height: calc(100vh - 84px); overflow: hidden; }
-.workspace-sidebar { background: var(--bg-secondary); border-right: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
+.workspace-layout { display: block !important; height: calc(100vh - 84px); overflow: hidden; }
+.workspace-sidebar { display: none !important; }
 .workspace-sidebar-header { padding: 14px 16px; border-bottom: 1px solid var(--border); }
-.workspace-main { overflow-y: auto; background: var(--bg-primary); }
+.workspace-main { overflow-y: auto; background: var(--bg-primary); width: 100% !important; }
+#workspace-doc-list, .misal-sidebar-item { display: none !important; }
 .doc-card { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border-light); cursor: pointer; transition: background 0.15s; }
 .doc-card:hover { background: var(--hover-bg); }
 .doc-card.active { background: var(--nav-active); border-left: 3px solid var(--accent); }
