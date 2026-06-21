@@ -351,6 +351,11 @@ function _renderMisalEditor(docId, def) {
       titleHtml:    def.name,
     }) +
     `<div style="flex:1;overflow-y:auto;padding:20px;background:var(--bg-tertiary);">
+      <div style="max-width:210mm;margin:0 auto 10px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-secondary btn-sm" onclick="_addCustomField('misal-editor')">➕ خانہ شامل کریں</button>
+        <button class="btn btn-secondary btn-sm" onclick="_addCustomTable('misal-editor')">➕ ٹیبل شامل کریں</button>
+        <span style="font-size:11px;color:var(--text-muted);align-self:center;">اپنی مرضی کے خانے یا ٹیبل شامل کریں</span>
+      </div>
       <div id="misal-editor" contenteditable="true" spellcheck="false" style="
         width:210mm;max-width:100%;min-height:297mm;
         margin:0 auto;padding:20mm;
@@ -370,6 +375,84 @@ function _renderMisalEditor(docId, def) {
   area.appendChild(_outer);
   // Activate selection-change tracking
   setTimeout(function() { setupWordToolbar('misal-editor'); }, 80);
+}
+
+// ── CUSTOM FIELDS — officer defines their own fields on the fly ──
+function _addCustomField(editorId) {
+  openModal('➕ نیا خانہ شامل کریں', `
+    <div style="direction:rtl;">
+      <label class="form-label">خانے کا نام (Label)</label>
+      <input class="form-input" id="cf-label" placeholder="مثلاً: ملزم کا نام" style="margin-bottom:10px;">
+      <label class="form-label">قسم</label>
+      <select class="form-input" id="cf-type">
+        <option value="line">ایک سطری خانہ (مختصر)</option>
+        <option value="area">بڑا خانہ (تفصیل کے لیے)</option>
+        <option value="date">تاریخ</option>
+        <option value="cnic">شناختی کارڈ (00000-0000000-0)</option>
+        <option value="phone">فون نمبر (0000-0000000)</option>
+      </select>
+    </div>
+  `, `
+    <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    <button class="btn btn-primary" onclick="_insertCustomField('${editorId}')">شامل کریں</button>
+  `);
+}
+
+function _insertCustomField(editorId) {
+  const label = document.getElementById('cf-label')?.value.trim();
+  const type  = document.getElementById('cf-type')?.value;
+  if (!label) { showToast('⚠️ خانے کا نام لکھیں', 'error'); return; }
+  const ed = document.getElementById(editorId);
+  if (!ed) return;
+
+  let fieldHtml = '';
+  const placeholders = { cnic:'00000-0000000-0', phone:'0000-0000000', date:'', line:'', area:'' };
+  if (type === 'area') {
+    fieldHtml = `<div style="margin:10px 0;"><b>${label}:</b><div contenteditable="true" style="min-height:60px;border:1px solid #ccc;border-radius:4px;padding:8px;margin-top:4px;">&nbsp;</div></div>`;
+  } else {
+    const dir = (type==='cnic'||type==='phone'||type==='date') ? 'ltr' : 'rtl';
+    const ph = placeholders[type] || '';
+    fieldHtml = `<div style="margin:8px 0;display:flex;gap:8px;align-items:center;"><b style="white-space:nowrap;">${label}:</b><span contenteditable="true" style="flex:1;border-bottom:1px solid #999;min-height:20px;padding:2px 6px;direction:${dir};display:inline-block;" data-ph="${ph}">&nbsp;</span></div>`;
+  }
+  // Insert at end of editor
+  ed.innerHTML += fieldHtml;
+  closeModal();
+  showToast('✅ خانہ شامل ہو گیا', 'success');
+}
+
+function _addCustomTable(editorId) {
+  openModal('➕ ٹیبل شامل کریں', `
+    <div style="direction:rtl;">
+      <label class="form-label">کالم کے نام (کاما سے الگ کریں)</label>
+      <input class="form-input" id="ct-cols" placeholder="مثلاً: نمبر شمار، نام، عہدہ" style="margin-bottom:10px;">
+      <label class="form-label">قطاروں کی تعداد</label>
+      <input class="form-input" id="ct-rows" type="number" value="3" min="1" max="20">
+    </div>
+  `, `
+    <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    <button class="btn btn-primary" onclick="_insertCustomTable('${editorId}')">شامل کریں</button>
+  `);
+}
+
+function _insertCustomTable(editorId) {
+  const cols = (document.getElementById('ct-cols')?.value || '').split('،').map(c=>c.trim()).filter(Boolean);
+  const rows = parseInt(document.getElementById('ct-rows')?.value) || 3;
+  if (!cols.length) { showToast('⚠️ کم از کم ایک کالم لکھیں', 'error'); return; }
+  const ed = document.getElementById(editorId);
+  if (!ed) return;
+
+  let table = '<table style="width:100%;border-collapse:collapse;margin:12px 0;"><thead><tr>';
+  cols.forEach(c => { table += `<th style="border:1px solid #999;padding:6px;background:#f0f0f0;">${c}</th>`; });
+  table += '</tr></thead><tbody>';
+  for (let r = 0; r < rows; r++) {
+    table += '<tr>';
+    cols.forEach(() => { table += '<td style="border:1px solid #999;padding:8px;" contenteditable="true">&nbsp;</td>'; });
+    table += '</tr>';
+  }
+  table += '</tbody></table>';
+  ed.innerHTML += table;
+  closeModal();
+  showToast('✅ ٹیبل شامل ہو گیا', 'success');
 }
 
 // ── MISAL TOOLBAR HELPERS ─────────────────────────────────────
