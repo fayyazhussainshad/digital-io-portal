@@ -94,30 +94,34 @@ function _trackUsage(page) {
   _usageTimer = setTimeout(_flushUsage, 5000);
 }
 
+let _usageDisabled = false;
 async function _flushUsage() {
+  if (_usageDisabled) return;
   const buffer = { ..._usageBuffer };
   _usageBuffer = {};
   if (!Object.keys(buffer).length) return;
+  if (!navigator.onLine) return;  // Skip when offline
   try {
     const oid = await getOfficerId();
     if (!oid) return;
-    // Upsert counts per page
     for (const [page, count] of Object.entries(buffer)) {
-      // Try to increment existing, else insert
-      const { data: existing } = await supabaseClient
+      const { data: existing, error: selErr } = await supabaseClient
         .from('usage_stats')
         .select('id,count')
         .eq('officer_id', oid).eq('page', page).maybeSingle();
+      // If the table is not accessible (RLS/401), disable tracking entirely
+      if (selErr) { _usageDisabled = true; return; }
       if (existing) {
         await supabaseClient.from('usage_stats')
           .update({ count: (existing.count||0) + count, last_used: new Date().toISOString() })
           .eq('id', existing.id);
       } else {
-        await supabaseClient.from('usage_stats')
+        const { error: insErr } = await supabaseClient.from('usage_stats')
           .insert({ officer_id: oid, page, count, last_used: new Date().toISOString() });
+        if (insErr) { _usageDisabled = true; return; }
       }
     }
-  } catch(_) { /* silent — usage tracking is non-critical */ }
+  } catch(_) { _usageDisabled = true; }
 }
 
 function registerPage(name, fn) { _pages[name] = fn; }
