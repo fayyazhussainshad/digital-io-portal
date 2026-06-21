@@ -196,6 +196,10 @@ function confirmRemoveMisalDoc(docId) {
 async function _doAddMisalDoc(docId) {
   const def = MISAL_CASE_DOCS.find(d => d.id === docId);
   if (!def || !_misalCaseId) return;
+  const isPersonForm = (docId === 'witnesses_fir' || docId === 'witnesses_cross' ||
+                        docId === 'named_accused' || docId === 'unknown_accused');
+  // If already added — open it (form for persons, editor for docs)
+  if (_misalDocs[docId]) { _openMisalEditor(docId); return; }
   try {
     const oid = await getOfficerId();
     const { data, error } = await supabaseClient
@@ -205,9 +209,8 @@ async function _doAddMisalDoc(docId) {
     if (error) throw error;
     _misalDocs[docId] = data;
     _refreshMisalBar();
-    _refreshMisalSidebar();
-    showToast(`✅ ${def.name} شامل کر دی گئی`, 'success');
-    _openMisalEditor(docId);
+    // Persons (witnesses/accused) → open their card form. Other docs → silent (no MS Word page).
+    if (isPersonForm) _openMisalEditor(docId);
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
 
