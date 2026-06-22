@@ -48,7 +48,7 @@ function _cdrInitialRows() {
     });
   }
   // Pad to 9 rows
-  while (rows.length < 9) rows.push({ req:'', model:'', from:'', to:'' });
+  while (rows.length < 12) rows.push({ req:'', model:'', from:'', to:'' });
   return rows;
 }
 
@@ -81,7 +81,7 @@ function _renderCdr() {
         <!-- Header -->
         <div style="display:flex;justify-content:space-between;">
           <span>تھانہ: <b contenteditable="true">${o.station||'صدر ملتان'}</b></span>
-          <span>ڈائری نمبر: <span contenteditable="true" data-k="diary_number" style="border-bottom:1px solid #999;min-width:60px;display:inline-block;">${v('diary_number')}</span> مورخہ: <span contenteditable="true" data-k="diary_date" style="border-bottom:1px solid #999;min-width:70px;display:inline-block;">${v('diary_date')}</span></span>
+          <span>ڈائری نمبر: <span contenteditable="true" data-k="diary_number" style="border-bottom:1px solid #999;min-width:160px;display:inline-block;">${v('diary_number')}</span> مورخہ: <span contenteditable="true" data-k="diary_date" style="border-bottom:1px solid #999;min-width:140px;display:inline-block;">${v('diary_date')}</span></span>
           <span>ضلع: <b contenteditable="true">${o.district||'ملتان'}</b></span>
         </div>
         <div style="margin-top:6px;">مقدمہ نمبر: <b>${c.fir_number||''}</b> &nbsp; مورخہ: <b>${c.fir_date||''}</b> &nbsp; بجرم: <b>${c.section_of_law||''} ${c.offence_type||''}</b> ت پ تھانہ ${o.station||'صدر ملتان'}</div>
@@ -91,19 +91,19 @@ function _renderCdr() {
         <!-- Main table -->
         <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;" id="cdr-table">
           <thead><tr style="background:#f0f0f0;">
-            <th style="border:1px solid #999;padding:5px;width:8%;">نمبر شمار</th>
-            <th style="border:1px solid #999;padding:5px;">مطلوبہ درکار CDR/IMEI</th>
-            <th style="border:1px solid #999;padding:5px;">ماڈل فون (اگر معلوم ہو)</th>
-            <th style="border:1px solid #999;padding:5px;">ڈیٹا کی ابتدائی تاریخ</th>
-            <th style="border:1px solid #999;padding:5px;">ڈیٹا کی آخری تاریخ</th>
+            <th style="border:1px solid #999;padding:8px 6px;width:8%;font-size:15px;font-weight:bold;text-align:center;vertical-align:middle;">نمبر شمار</th>
+            <th style="border:1px solid #999;padding:8px 6px;font-size:15px;font-weight:bold;text-align:center;vertical-align:middle;">مطلوبہ درکار CDR/IMEI</th>
+            <th style="border:1px solid #999;padding:8px 6px;font-size:15px;font-weight:bold;text-align:center;vertical-align:middle;">ماڈل فون (اگر معلوم ہو)</th>
+            <th style="border:1px solid #999;padding:8px 6px;font-size:15px;font-weight:bold;text-align:center;vertical-align:middle;">ڈیٹا کی ابتدائی تاریخ</th>
+            <th style="border:1px solid #999;padding:8px 6px;font-size:15px;font-weight:bold;text-align:center;vertical-align:middle;">ڈیٹا کی آخری تاریخ</th>
           </tr></thead>
           <tbody>
             ${rows.map((r,i)=>`<tr>
               <td style="border:1px solid #999;padding:5px;text-align:center;">${i+1}</td>
-              <td contenteditable="true" data-c="req" style="border:1px solid #999;padding:5px;" dir="ltr">${r.req||''}</td>
-              <td contenteditable="true" data-c="model" style="border:1px solid #999;padding:5px;">${r.model||''}</td>
-              <td contenteditable="true" data-c="from" style="border:1px solid #999;padding:5px;" dir="ltr">${r.from||''}</td>
-              <td contenteditable="true" data-c="to" style="border:1px solid #999;padding:5px;" dir="ltr">${r.to||''}</td>
+              <td contenteditable="true" data-c="req" style="border:1px solid #999;padding:8px 6px;font-size:14px;text-align:center;vertical-align:middle;" dir="ltr">${r.req||''}</td>
+              <td contenteditable="true" data-c="model" style="border:1px solid #999;padding:8px 6px;font-size:14px;text-align:center;vertical-align:middle;">${r.model||''}</td>
+              <td contenteditable="true" data-c="from" style="border:1px solid #999;padding:8px 6px;font-size:14px;text-align:center;vertical-align:middle;" dir="ltr">${r.from||''}</td>
+              <td contenteditable="true" data-c="to" style="border:1px solid #999;padding:8px 6px;font-size:14px;text-align:center;vertical-align:middle;" dir="ltr">${r.to||''}</td>
             </tr>`).join('')}
           </tbody>
         </table>
@@ -168,10 +168,10 @@ function _cdrAddRow() {
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td style="border:1px solid #999;padding:5px;text-align:center;">${i+1}</td>
-    <td contenteditable="true" data-c="req" style="border:1px solid #999;padding:5px;" dir="ltr"></td>
-    <td contenteditable="true" data-c="model" style="border:1px solid #999;padding:5px;"></td>
-    <td contenteditable="true" data-c="from" style="border:1px solid #999;padding:5px;" dir="ltr"></td>
-    <td contenteditable="true" data-c="to" style="border:1px solid #999;padding:5px;" dir="ltr"></td>`;
+    <td contenteditable="true" data-c="req" style="border:1px solid #999;padding:8px 6px;font-size:14px;text-align:center;vertical-align:middle;" dir="ltr"></td>
+    <td contenteditable="true" data-c="model" style="border:1px solid #999;padding:8px 6px;font-size:14px;text-align:center;vertical-align:middle;"></td>
+    <td contenteditable="true" data-c="from" style="border:1px solid #999;padding:8px 6px;font-size:14px;text-align:center;vertical-align:middle;" dir="ltr"></td>
+    <td contenteditable="true" data-c="to" style="border:1px solid #999;padding:8px 6px;font-size:14px;text-align:center;vertical-align:middle;" dir="ltr"></td>`;
   tbody.appendChild(tr);
 }
 

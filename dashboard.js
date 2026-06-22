@@ -60,8 +60,6 @@ async function _buildDash() {
     </div>
   </div>
 
-  ${_recentlyViewedBar()}
-
   <!-- Cases Stats — 7 cards in one row (کل + 6 statuses) -->
   <div style="margin-bottom:14px;">
     <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;direction:rtl;font-weight:700;">📊 مقدمات کی صورتحال</div>
@@ -95,6 +93,11 @@ async function _buildDash() {
         .dash-stats-grid{ grid-template-columns:repeat(3,1fr) !important; }
       }
     </style>
+  </div>
+
+  <!-- Recently viewed (moved below stats, right-aligned) -->
+  <div style="direction:rtl;text-align:right;margin-bottom:14px;">
+    ${_recentlyViewedBar()}
   </div>
 
   <!-- Recent Cases (full width) -->

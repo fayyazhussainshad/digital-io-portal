@@ -1460,3 +1460,10 @@ window.addEventListener('appinstalled', function() {
   if (btn) btn.remove();
   try { showToast('✅ Digital IO آپ کے آلے پر انسٹال ہو گئی', 'success'); } catch(_) {}
 });
+
+// ── Explicit global bindings (ensure inline onclick handlers work) ──
+if (typeof doLogin === 'function') window.doLogin = doLogin;
+if (typeof doLogout === 'function') window.doLogout = doLogout;
+if (typeof showPage === 'function') window.showPage = showPage;
+if (typeof openCaseWorkspace === 'function') window.openCaseWorkspace = openCaseWorkspace;
+if (typeof togglePasswordVisibility === 'function') window.togglePasswordVisibility = togglePasswordVisibility;

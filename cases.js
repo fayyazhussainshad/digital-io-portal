@@ -1459,12 +1459,15 @@ async function openCaseWorkspace(id) {
       recent = recent.slice(0, 8);
       localStorage.setItem('dio_recent_cases', JSON.stringify(recent));
     } catch(_) {}
-    // These can fail independently — guard each
-    try { await loadMisalDocs(id); } catch(e) { console.warn('loadMisalDocs failed', e); }
+    // Parallel fetch (was sequential — Bug 8 speed fix)
     let docs = [];
     try { docs = c.documents_checklist ? (typeof c.documents_checklist==='string'?JSON.parse(c.documents_checklist):c.documents_checklist) : []; } catch(_) { docs = []; }
     let ev = [];
-    try { ev = await getEvidence(c.fir_number); } catch(e) { console.warn('getEvidence failed', e); ev = []; }
+    const [_misalRes, evRes] = await Promise.allSettled([
+      loadMisalDocs(id),
+      getEvidence(c.fir_number),
+    ]);
+    if (evRes.status === 'fulfilled') ev = evRes.value || [];
     renderWorkspace(c, docs, ev, container);
   } catch(err) {
     console.error('openCaseWorkspace error:', err);

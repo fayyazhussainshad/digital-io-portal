@@ -93,17 +93,21 @@ function _renderCopyTable(rows) {
       <th style="padding:8px;text-align:right;border:1px solid var(--border);">فوٹو کاپی</th>
       <th style="padding:8px;text-align:center;border:1px solid var(--border);width:120px;">ایکشن</th>
     </tr></thead><tbody>
-    ${rows.map(c => `<tr>
+    ${rows.map(c => {
+      const isImage = (c.file_url||'').startsWith('data:image') || /-(jpg|jpeg|png|webp)$/i.test(c.file_name||'') || /\.(jpg|jpeg|png|webp)$/i.test(c.display_name||'');
+      const shownName = c.display_name || c.file_name || 'فائل';
+      return `<tr>
       <td style="padding:10px;border:1px solid var(--border);">
-        ${(c.file_url||'').startsWith('data:image')||/\.(jpg|jpeg|png|webp)$/i.test(c.file_name||'') ?
+        ${isImage ?
           `<img src="${c.file_url}" style="max-width:60px;max-height:60px;border-radius:4px;cursor:pointer;" onclick="window.open('${c.file_url}','_blank')">` :
-          `<span style="cursor:pointer;color:var(--accent);" onclick="window.open('${c.file_url}','_blank')">📄 ${c.file_name||'فائل'}</span>`}
+          `<span style="cursor:pointer;color:var(--accent);" onclick="window.open('${c.file_url}','_blank')">📄 ${shownName}</span>`}
       </td>
       <td style="padding:6px;border:1px solid var(--border);text-align:center;">
         <button class="btn btn-secondary btn-sm" style="padding:2px 6px;" onclick="window.open('${c.file_url}','_blank')">👁️</button>
-        <button class="btn btn-secondary btn-sm" style="padding:2px 6px;" onclick="_printFirCopy('${c.file_url}','${(c.file_name||'').replace(/'/g,'')}' )">🖨️</button>
+        <button class="btn btn-secondary btn-sm" style="padding:2px 6px;" onclick="_printFirCopy('${c.file_url}','${shownName.replace(/'/g,'')}')">🖨️</button>
         <button class="btn btn-danger btn-sm" style="padding:2px 6px;" onclick="_deleteFirCopy('${c.id}')">🗑️</button>
-      </td></tr>`).join('')}
+      </td></tr>`;
+    }).join('')}
     </tbody></table>`;
 }
 
@@ -166,7 +170,8 @@ function _uploadFirCopy(input, type) {
     if (f.type.startsWith('image/')) {
       dataUrl = await _firCompress(dataUrl, 1200, 0.7);
     }
-    const rec = { case_id: _firCaseId, file_url: dataUrl, file_name: f.name, type: type || 'fir' };
+    const safeName = (f.name||'file').replace(/[\/\\.]/g, '-').replace(/-+/g,'-');
+    const rec = { case_id: _firCaseId, file_url: dataUrl, file_name: safeName, display_name: f.name, type: type || 'fir' };
     try {
       const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
       if (oid) rec.officer_id = oid;
@@ -212,10 +217,15 @@ async function _deleteFirCopy(id) {
 
 // ── PRINT ONE COPY (no app UI) ────────────────────────────────
 function _printFirCopy(url, name) {
-  const isImg = url.startsWith('data:image') || /\.(jpg|jpeg|png|webp)$/i.test(name||'');
-  const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>${name||'فوٹو کاپی'}</title>
-    <style>@page{margin:10mm}body{margin:0;text-align:center;}img{max-width:100%;}</style></head>
-    <body>${isImg ? `<img src="${url}">` : `<iframe src="${url}" style="width:100%;height:100vh;border:none;"></iframe>`}</body></html>`;
-  if (typeof dioPrint === 'function') dioPrint(html);
-  else { const w = window.open('','_blank'); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),300); }
+  const isImg = url.startsWith('data:image') || /-(jpg|jpeg|png|webp)$/i.test(name||'') || /\.(jpg|jpeg|png|webp)$/i.test(name||'');
+  if (isImg) {
+    const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>${name||'فوٹو کاپی'}</title>
+      <style>@page{size:A4;margin:8mm}html,body{margin:0;padding:0;height:auto;}img{max-width:100%;max-height:98vh;display:block;margin:0 auto;}</style></head>
+      <body><img src="${url}"></body></html>`;
+    if (typeof dioPrint === 'function') dioPrint(html);
+    else { const w = window.open('','_blank'); w.document.write(html); w.document.close(); setTimeout(()=>{w.print();},400); }
+  } else {
+    // PDF — open in new tab for printing (avoids blank pages)
+    window.open(url, '_blank');
+  }
 }
