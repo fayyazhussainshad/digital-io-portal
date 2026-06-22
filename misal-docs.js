@@ -257,7 +257,8 @@ async function _doAddMisalDoc(docId) {
   if (!def || !_misalCaseId) return;
   const isPersonForm = (docId === 'witnesses_fir' || docId === 'witnesses_cross' ||
                         docId === 'named_accused' || docId === 'unknown_accused' ||
-                        docId === 'zamniyat' || docId === 'memorandum');
+                        docId === 'zamniyat' || docId === 'memorandum' ||
+                        docId === 'cdr_imei');
   // If already added — open it (form for persons, editor for docs)
   if (_misalDocs[docId]) { _openMisalEditor(docId); return; }
   try {
@@ -334,6 +335,13 @@ function _openMisalEditor(docId) {
   if (docId === 'accused_cross') {
     _openDocId = docId;
     if (typeof openAccusedCard === 'function') openAccusedCard(_misalCaseId, 'cross_version');
+    return;
+  }
+
+  // Special: CDR/IMEI → request form
+  if (docId === 'cdr_imei') {
+    _openDocId = docId;
+    if (typeof openCdrImei === 'function') openCdrImei(_misalCaseId);
     return;
   }
 
