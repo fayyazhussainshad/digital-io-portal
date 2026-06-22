@@ -60,12 +60,12 @@ function _renderAccusedArea() {
   const crossList = _accusedList.filter(a => a.accused_type === 'cross_version');
 
   area.innerHTML = `
-  <div style="direction:rtl;height:100%;overflow-y:auto;padding:14px;max-width:760px;margin:0 auto;">
+  <div style="direction:rtl;height:100%;overflow-y:auto;padding:10px;width:100%;box-sizing:border-box;">
 
     <!-- TOP: ملزمان FIR -->
-    <div style="margin-bottom:18px;">
-      <div style="font-size:18px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:var(--accent);border-bottom:2px solid var(--accent);padding-bottom:6px;margin-bottom:10px;">ملزمان FIR</div>
-      <div id="acc-fir-list">${_renderAccCards(firList)}</div>
+    <div style="margin-bottom:18px;width:100%;">
+      <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:var(--accent);border-bottom:2px solid var(--accent);padding-bottom:6px;margin-bottom:10px;text-align:right;width:100%;box-sizing:border-box;">ملزمان FIR</div>
+      <div id="acc-fir-list" style="width:100%;">${_renderAccCards(firList)}</div>
       <div style="display:flex;gap:6px;margin-top:10px;">
         <button class="btn btn-primary btn-sm" onclick="_openAccusedForm(null,'fir')">➕ ملزم</button>
         ${firList.length ? `<button class="btn btn-danger btn-sm" onclick="_deleteLastAcc('fir')">➖ ہٹائیں</button>` : ''}
@@ -73,12 +73,12 @@ function _renderAccusedArea() {
     </div>
 
     <!-- DIVIDER -->
-    <div style="height:2px;background:var(--border);margin:18px 0;"></div>
+    <div style="height:2px;background:var(--border);margin:18px 0;width:100%;"></div>
 
     <!-- BOTTOM: ملزمان کراس ورژن -->
-    <div>
-      <div style="font-size:18px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:var(--amber);border-bottom:2px solid var(--amber);padding-bottom:6px;margin-bottom:10px;">ملزمان کراس ورژن</div>
-      <div id="acc-cross-list">${_renderAccCards(crossList)}</div>
+    <div style="width:100%;">
+      <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:var(--amber);border-bottom:2px solid var(--amber);padding-bottom:6px;margin-bottom:10px;text-align:right;width:100%;box-sizing:border-box;">ملزمان کراس ورژن</div>
+      <div id="acc-cross-list" style="width:100%;">${_renderAccCards(crossList)}</div>
       <div style="display:flex;gap:6px;margin-top:10px;">
         <button class="btn btn-primary btn-sm" onclick="_openAccusedForm(null,'cross_version')">➕ ملزم</button>
         ${crossList.length ? `<button class="btn btn-danger btn-sm" onclick="_deleteLastAcc('cross_version')">➖ ہٹائیں</button>` : ''}
@@ -305,14 +305,15 @@ async function _saveAccused(id) {
     } else {
       const { data, error } = await supabaseClient.from('case_accused').insert(rec).select().single();
       if (error) throw error;
-      savedRec = data || { ...rec, id: 'tmp_' + Date.now() };
+      savedRec = data ? { ...data, accused_type: data.accused_type || rec.accused_type } : { ...rec, id: 'tmp_' + Date.now() };
       _accusedList.push(savedRec);
     }
     // Update offline cache
     try { localStorage.setItem('dio_accused_' + _accusedCaseId, JSON.stringify(_accusedList)); } catch(_) {}
     _accusedPhoto = null; _accusedCnicCopy = null;
     closeModal();
-    _renderAccusedArea();   // re-render from updated local list (instant)
+    await _loadAccused();    // reload from DB (gets ALL records, both types)
+    _renderAccusedArea();
     showToast('✅ ملزم محفوظ ہو گیا', 'success');
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }

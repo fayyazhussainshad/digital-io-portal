@@ -49,26 +49,26 @@ function _renderWitnessesArea() {
   const firList = _witnessList.filter(w => (w.witness_type || 'fir') === 'fir');
   const crossList = _witnessList.filter(w => w.witness_type === 'cross_version');
   area.innerHTML = `
-  <div style="padding:14px;direction:rtl;height:100%;overflow-y:auto;max-width:760px;margin:0 auto;">
+  <div style="padding:10px;direction:rtl;height:100%;overflow-y:auto;width:100%;box-sizing:border-box;">
     <div id="witness-form-box"></div>
 
     <!-- TOP: گواہان FIR -->
-    <div style="margin-bottom:18px;">
-      <div style="font-size:18px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:var(--accent);border-bottom:2px solid var(--accent);padding-bottom:6px;margin-bottom:10px;">گواہان FIR</div>
-      <div>${_renderWitnessList(firList, 'fir')}</div>
-      <div style="margin-top:10px;">
+    <div style="margin-bottom:18px;width:100%;">
+      <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:var(--accent);border-bottom:2px solid var(--accent);padding-bottom:6px;margin-bottom:10px;text-align:right;width:100%;box-sizing:border-box;">گواہان FIR</div>
+      <div style="width:100%;">${_renderWitnessList(firList, 'fir')}</div>
+      <div style="margin-top:10px;text-align:right;">
         <button class="btn btn-primary btn-sm" onclick="_openWitnessForm(null,'fir')">➕ گواہ</button>
       </div>
     </div>
 
     <!-- DIVIDER -->
-    <div style="height:2px;background:var(--border);margin:18px 0;"></div>
+    <div style="height:2px;background:var(--border);margin:18px 0;width:100%;"></div>
 
     <!-- BOTTOM: گواہان کراس ورژن -->
-    <div>
-      <div style="font-size:18px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:var(--amber);border-bottom:2px solid var(--amber);padding-bottom:6px;margin-bottom:10px;">گواہان کراس ورژن</div>
-      <div>${_renderWitnessList(crossList, 'cross_version')}</div>
-      <div style="margin-top:10px;">
+    <div style="width:100%;">
+      <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:var(--amber);border-bottom:2px solid var(--amber);padding-bottom:6px;margin-bottom:10px;text-align:right;width:100%;box-sizing:border-box;">گواہان کراس ورژن</div>
+      <div style="width:100%;">${_renderWitnessList(crossList, 'cross_version')}</div>
+      <div style="margin-top:10px;text-align:right;">
         <button class="btn btn-primary btn-sm" onclick="_openWitnessForm(null,'cross_version')">➕ گواہ</button>
       </div>
     </div>
@@ -284,7 +284,8 @@ async function _saveWitness() {
       if (idx >= 0) _witnessList[idx] = { ..._witnessList[idx], ...rec };
     } else {
       const { data } = await supabaseClient.from('case_witnesses').insert(rec).select().single();
-      _witnessList.push(data || { ...rec, id: 'tmp_'+Date.now() });
+      const newRec = data ? { ...data, witness_type: data.witness_type || rec.witness_type } : { ...rec, id: 'tmp_'+Date.now() };
+      _witnessList.push(newRec);
       try {
         await supabaseClient.from('suspects').insert({
           officer_id: oid, person_type:'witness',
@@ -294,7 +295,8 @@ async function _saveWitness() {
       } catch(_) {}
     }
     document.getElementById('witness-form-box').innerHTML = '';
-    await _loadWitnesses();
+    _witnessFormType = 'fir';  // reset
+    await _loadWitnesses();     // reload from DB (gets all records)
     _renderWitnessesArea();
     showToast('✅ گواہ محفوظ ہو گیا','success');
   } catch(e) { showToast('❌ '+e.message,'error'); }
