@@ -3,15 +3,15 @@
    Auto-fills IMEI & SIM numbers from case mobile-theft data.
    ═══════════════════════════════════════════════════════════ */
 
-let _cdrCaseId = null;
-let _cdrCase = null;
-let _cdrSaved = null;
+let _cdrICaseId = null;
+let _cdrICase = null;
+let _cdrISaved = null;
 
 async function openCdrImei(caseId) {
-  _cdrCaseId = caseId || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
+  _cdrICaseId = caseId || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
             || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
-  if (typeof getCase === 'function' && _cdrCaseId) {
-    try { _cdrCase = await getCase(_cdrCaseId); } catch(_) { _cdrCase = null; }
+  if (typeof getCase === 'function' && _cdrICaseId) {
+    try { _cdrICase = await getCase(_cdrICaseId); } catch(_) { _cdrICase = null; }
   }
   await _loadCdr();
   _renderCdr();
@@ -19,21 +19,21 @@ async function openCdrImei(caseId) {
 
 async function _loadCdr() {
   if (!navigator.onLine) {
-    try { _cdrSaved = JSON.parse(localStorage.getItem('dio_cdr_'+_cdrCaseId)||'null'); } catch(_) { _cdrSaved=null; }
+    try { _cdrISaved = JSON.parse(localStorage.getItem('dio_cdr_'+_cdrICaseId)||'null'); } catch(_) { _cdrISaved=null; }
     return;
   }
   try {
-    const { data } = await supabaseClient.from('cdr_imei_requests').select('*').eq('case_id', _cdrCaseId).order('created_at',{ascending:false}).limit(1).maybeSingle();
-    _cdrSaved = data || null;
-    try { localStorage.setItem('dio_cdr_'+_cdrCaseId, JSON.stringify(_cdrSaved)); } catch(_) {}
+    const { data } = await supabaseClient.from('cdr_imei_requests').select('*').eq('case_id', _cdrICaseId).order('created_at',{ascending:false}).limit(1).maybeSingle();
+    _cdrISaved = data || null;
+    try { localStorage.setItem('dio_cdr_'+_cdrICaseId, JSON.stringify(_cdrISaved)); } catch(_) {}
   } catch(_) {
-    try { _cdrSaved = JSON.parse(localStorage.getItem('dio_cdr_'+_cdrCaseId)||'null'); } catch(_2) { _cdrSaved=null; }
+    try { _cdrISaved = JSON.parse(localStorage.getItem('dio_cdr_'+_cdrICaseId)||'null'); } catch(_2) { _cdrISaved=null; }
   }
 }
 
 // Build initial rows — auto-fill from case IMEI & cell numbers
 function _cdrInitialRows() {
-  const c = _cdrCase || {};
+  const c = _cdrICase || {};
   const rows = [];
   // IMEI numbers
   if (c.theft_imei) {
@@ -58,8 +58,8 @@ function _renderCdr() {
             || document.getElementById('page-content');
   if (!area) return;
   const o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
-  const c = _cdrCase || {};
-  const s = _cdrSaved || {};
+  const c = _cdrICase || {};
+  const s = _cdrISaved || {};
   const rows = (s.rows && s.rows.length) ? s.rows : _cdrInitialRows();
   const v = (k, def) => (s[k] !== undefined && s[k] !== null) ? s[k] : (def||'');
 
@@ -213,7 +213,7 @@ async function _saveCdr() {
   _cdrUpdateCounts();
   const d = _collectCdr();
   const rec = {
-    case_id: _cdrCaseId,
+    case_id: _cdrICaseId,
     diary_number: d.diary_number||null,
     diary_date: d.diary_date||null,
     rows: d.rows,
@@ -226,19 +226,19 @@ async function _saveCdr() {
   try {
     const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
     if (oid) rec.officer_id = oid;
-    if (_cdrSaved && _cdrSaved.id) {
-      await supabaseClient.from('cdr_imei_requests').update(rec).eq('id', _cdrSaved.id);
+    if (_cdrISaved && _cdrISaved.id) {
+      await supabaseClient.from('cdr_imei_requests').update(rec).eq('id', _cdrISaved.id);
     } else {
       const { data } = await supabaseClient.from('cdr_imei_requests').insert(rec).select().single();
-      _cdrSaved = data || { ...rec, id:'tmp_'+Date.now() };
+      _cdrISaved = data || { ...rec, id:'tmp_'+Date.now() };
     }
-    try { localStorage.setItem('dio_cdr_'+_cdrCaseId, JSON.stringify(_cdrSaved)); } catch(_) {}
+    try { localStorage.setItem('dio_cdr_'+_cdrICaseId, JSON.stringify(_cdrISaved)); } catch(_) {}
     showToast('✅ درخواست محفوظ ہو گئی', 'success');
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
 
 function _newCdr() {
-  _cdrSaved = null;
+  _cdrISaved = null;
   _renderCdr();
   showToast('📄 نئی درخواست', 'info');
 }
