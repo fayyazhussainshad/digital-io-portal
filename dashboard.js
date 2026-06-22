@@ -49,8 +49,13 @@ async function _buildDash() {
         <div style="font-size:11px;color:rgba(255,255,255,0.6);">${o.designation||''} · تھانہ ${o.station||''} · ضلع ${o.district||''}</div>
         <div style="font-size:10px;color:rgba(255,255,255,0.4);">${new Date().toLocaleDateString('en-PK',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
       </div>
-      <div style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0;">
-        ${(o.full_name||'IO').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase()}
+      <div id="dash-welcome-avatar" style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0;overflow:hidden;cursor:pointer;" onclick="showPage('settings',null)">
+        ${(() => {
+          let p = o.profile_photo;
+          if (!p) { try { p = localStorage.getItem('dio_profile_photo') || localStorage.getItem('officer_photo_url'); } catch(_) {} }
+          if (p) return `<img src="${p}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+          return (o.full_name||'IO').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
+        })()}
       </div>
     </div>
   </div>

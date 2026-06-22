@@ -293,7 +293,7 @@ function changeProfilePhoto(){
           if(currentOfficer) currentOfficer.profile_photo=src;
         }catch(_){}
         if (typeof updateSidebarProfile === 'function') updateSidebarProfile();
-        document.querySelectorAll('.officer-card-avatar,.sidebar-avatar,#settings-avatar,#profile-avatar-btn,#sidebar-avatar,#topbar-avatar')
+        document.querySelectorAll('.officer-card-avatar,.sidebar-avatar,#settings-avatar,#profile-avatar-btn,#sidebar-avatar,#topbar-avatar,#dash-welcome-avatar')
           .forEach(el=>{el.innerHTML=`<img src="${src}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">`;});
         showToast('✅ Profile photo updated!','success');
       };
