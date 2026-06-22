@@ -318,7 +318,7 @@ async function getCases(status, query) {
           (c.complainant_cnic||'').toLowerCase().includes(w) ||
           (c.complainant_cell||'').toLowerCase().includes(w));
       }
-      return all.sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
+      return all.sort((a,b)=> String(a.fir_number||'').localeCompare(String(b.fir_number||''), undefined, {numeric:true}));
     };
 
     // CACHE-FIRST: try to return cached instantly
@@ -339,7 +339,7 @@ async function getCases(status, query) {
     }
 
     // No cache yet — fetch from server now (first ever load)
-    let q = supabaseClient.from('cases').select('*').eq('officer_id',oid).order('created_at',{ascending:false});
+    let q = supabaseClient.from('cases').select('*').eq('officer_id',oid).order('fir_number',{ascending:true});
     if (status) q = q.eq('status',status);
     if (query) {
       const w = `%${query}%`;
@@ -363,7 +363,7 @@ async function _refreshCasesInBackground(oid) {
   if (_bgRefreshTimer) return; // throttle
   _bgRefreshTimer = setTimeout(()=>{ _bgRefreshTimer = null; }, 2000);
   try {
-    const { data } = await supabaseClient.from('cases').select('*').eq('officer_id',oid).order('created_at',{ascending:false});
+    const { data } = await supabaseClient.from('cases').select('*').eq('officer_id',oid).order('fir_number',{ascending:true});
     if (data && typeof offlineStore !== 'undefined') {
       try { await offlineStore.cache('cases_cache', data); } catch(_) {}
       if (typeof markSynced === 'function') markSynced();
@@ -477,7 +477,7 @@ async function getReminders() {
 async function getEvidence(firNumber) {
   try {
     const oid = await getOfficerId();
-    let q = supabaseClient.from('evidence').select('*').eq('officer_id',oid).order('created_at',{ascending:false});
+    let q = supabaseClient.from('evidence').select('*').eq('officer_id',oid).order('fir_number',{ascending:true});
     if (firNumber) q = q.eq('fir_number', firNumber);
     const { data } = await q;
     return data||[];
