@@ -7,9 +7,11 @@
 
 registerPage('cdr', renderCDR);
 
-let _cdrData    = [];   // parsed CDR rows
-let _cdrMeta    = {};   // file info
-let _cdrCase    = null; // linked case
+// Guard against double-load: only declare once
+var _cdrData = window._cdrData || [];   // parsed CDR rows
+var _cdrMeta = window._cdrMeta || {};   // file info
+var _cdrCase = window._cdrCase || null; // linked case
+window._cdrData = _cdrData; window._cdrMeta = _cdrMeta; window._cdrCase = _cdrCase;
 
 // ── MAIN RENDER ───────────────────────────────────────────────
 async function renderCDR(container) {
@@ -103,10 +105,11 @@ function _exportCdrExcel() {
 
 // ── CDR REQUEST FORM GENERATOR (B1) ───────────────────────────
 // Keywords that indicate a phone/theft crime needing CDR
-const CDR_KEYWORDS = [
+var CDR_KEYWORDS = window.CDR_KEYWORDS || [
   'موبائل','موبئل','فون','چوری','چھینا','چھین','چھینے','چھیننے','ڈکیتی','رہزنی',
   'snatch','snatched','mobile','phone','theft','robbery','dacoity','imei','sim'
 ];
+window.CDR_KEYWORDS = CDR_KEYWORDS;
 
 function _scanCdrKeywords(text) {
   const found = [];
