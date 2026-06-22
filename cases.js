@@ -1437,6 +1437,7 @@ function _suggest161Questions(c) {
 async function openCaseWorkspace(id) {
   closeMobileSidebar();
   window._inWorkspace = true;  // Prevent background refresh from redirecting back to list
+  document.body.classList.add('workspace-mode');  // Hide topbar for more space
   currentCaseId = id;
   _currentWorkspaceCaseId = id;
   currentDocIndex = null;
@@ -1531,25 +1532,13 @@ function switchWorkspaceTab(tab) {
 }
 
 function renderDocsTab(c, docs) {
-  return `<div class="workspace-layout">
-    <!-- Document Sidebar -->
-    <div class="workspace-sidebar">
-      <div class="workspace-sidebar-header">
-        <div style="font-size:11px;font-weight:700;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">📎 Case Documents</div>
-      </div>
-      <div id="workspace-doc-list" style="overflow-y:auto;flex:1;">
-        ${typeof renderMisalDocSidebar === 'function' ? renderMisalDocSidebar() : ''}
-      </div>
-      <div style="padding:10px;border-top:1px solid var(--border);">
-        <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="printAllMisalDocs()">🖨️ تمام پرنٹ کریں</button>
-      </div>
-    </div>
-    <!-- Document Editor -->
-    <div class="workspace-main" id="workspace-editor-area">
+  return `<div class="workspace-layout" style="display:block;">
+    <!-- Document Editor (full width — no side document list) -->
+    <div class="workspace-main" id="workspace-editor-area" style="width:100%;">
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">
         <div style="font-size:48px;margin-bottom:12px;">📂</div>
         <div style="font-size:14px;font-weight:600;margin-bottom:6px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">دستاویز منتخب کریں</div>
-        <div style="font-size:12px;">اوپر دستاویز کے نام پر کلک کریں یا بائیں فہرست سے منتخب کریں</div>
+        <div style="font-size:12px;direction:rtl;">اوپر دستاویز کے نام پر کلک کریں</div>
       </div>
     </div>
   </div>`;
@@ -2505,6 +2494,7 @@ async function wevSave(caseId, firNumber) {
 // ── BACK / DELETE ──
 function goBackToCases() {
   window._inWorkspace = false;
+  document.body.classList.remove('workspace-mode');  // Restore topbar
   const container = document.getElementById('page-content');
   container.style.padding = '20px';
   container.style.overflow = 'auto';

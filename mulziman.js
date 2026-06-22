@@ -16,8 +16,12 @@ const ACC_JISM   = ['دبلا','موٹا','درمیانہ','مضبوط'];
 const ACC_QAD    = ['پستہ','درمیانہ','لمبا','نہایت لمبا'];
 const ACC_NISHAN = ['کوئی نہیں','چہرے پر','بازو پر','ہاتھ پر','گردن پر','دیگر'];
 
+let _accusedViewType = 'fir'; // which type this view shows
+
 // ── ENTRY POINT (called from misal-docs when ملزمان button pressed) ──
-async function openAccusedCard(caseId) {
+async function openAccusedCard(caseId, type) {
+  _accusedViewType = type || 'fir';
+  _accusedFormType = _accusedViewType; // new records default to this view's type
   _accusedCaseId = caseId || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
                 || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
   await _loadAccused();
@@ -56,35 +60,19 @@ function _renderAccusedArea() {
             || document.getElementById('page-content');
   if (!area) return;
 
-  const firList = _accusedList.filter(a => (a.accused_type || 'fir') === 'fir');
-  const crossList = _accusedList.filter(a => a.accused_type === 'cross_version');
+  const isCross = _accusedViewType === 'cross_version';
+  const list = _accusedList.filter(a => (a.accused_type || 'fir') === _accusedViewType);
+  const heading = isCross ? 'ملزمان کراس ورژن' : 'ملزمان FIR';
+  const color = isCross ? 'var(--amber)' : 'var(--accent)';
 
   area.innerHTML = `
   <div style="direction:rtl;height:100%;overflow-y:auto;padding:10px;width:100%;box-sizing:border-box;">
-
-    <!-- TOP: ملزمان FIR -->
-    <div style="margin-bottom:18px;width:100%;">
-      <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:var(--accent);border-bottom:2px solid var(--accent);padding-bottom:6px;margin-bottom:10px;text-align:right;width:100%;box-sizing:border-box;">ملزمان FIR</div>
-      <div id="acc-fir-list" style="width:100%;">${_renderAccCards(firList)}</div>
-      <div style="display:flex;gap:6px;margin-top:10px;">
-        <button class="btn btn-primary btn-sm" onclick="_openAccusedForm(null,'fir')">➕ ملزم</button>
-        ${firList.length ? `<button class="btn btn-danger btn-sm" onclick="_deleteLastAcc('fir')">➖ ہٹائیں</button>` : ''}
-      </div>
+    <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:${color};border-bottom:2px solid ${color};padding-bottom:6px;margin-bottom:12px;text-align:right;width:100%;box-sizing:border-box;">${heading}</div>
+    <div id="acc-list" style="width:100%;">${_renderAccCards(list)}</div>
+    <div style="display:flex;gap:6px;margin-top:12px;">
+      <button class="btn btn-primary btn-sm" onclick="_openAccusedForm(null,'${_accusedViewType}')">➕ ملزم</button>
+      ${list.length ? `<button class="btn btn-danger btn-sm" onclick="_deleteLastAcc('${_accusedViewType}')">➖ ہٹائیں</button>` : ''}
     </div>
-
-    <!-- DIVIDER -->
-    <div style="height:2px;background:var(--border);margin:18px 0;width:100%;"></div>
-
-    <!-- BOTTOM: ملزمان کراس ورژن -->
-    <div style="width:100%;">
-      <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:var(--amber);border-bottom:2px solid var(--amber);padding-bottom:6px;margin-bottom:10px;text-align:right;width:100%;box-sizing:border-box;">ملزمان کراس ورژن</div>
-      <div id="acc-cross-list" style="width:100%;">${_renderAccCards(crossList)}</div>
-      <div style="display:flex;gap:6px;margin-top:10px;">
-        <button class="btn btn-primary btn-sm" onclick="_openAccusedForm(null,'cross_version')">➕ ملزم</button>
-        ${crossList.length ? `<button class="btn btn-danger btn-sm" onclick="_deleteLastAcc('cross_version')">➖ ہٹائیں</button>` : ''}
-      </div>
-    </div>
-
   </div>`;
 }
 

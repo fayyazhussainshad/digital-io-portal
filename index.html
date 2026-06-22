@@ -474,6 +474,8 @@ input, textarea, select { font-family: var(--font-main); }
 .sidebar-version { font-size: 9px; color: var(--text-faint); text-align: center; margin-top: 6px; }
 .main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; width: 100%; min-width: 0; margin-right: 0; }
 .topbar { height: var(--topbar-height); background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; justify-content: space-between; flex-shrink: 0; }
+body.workspace-mode .topbar { display: none !important; }
+body.workspace-mode .page-content { height: 100vh !important; }
 .topbar-left { display: flex; align-items: center; gap: 12px; }
 .topbar-right { display: flex; align-items: center; gap: 8px; }
 .topbar-title { font-size: 14px; font-weight: 700; color: var(--text-secondary); font-family: var(--font-display); }
@@ -1130,6 +1132,7 @@ window.addEventListener('unhandledrejection', function(e){
 <script src="suspects.js"></script>
 <script src="witnesses.js"></script>
 <script src="mulziman.js"></script>
+<script src="zimni.js"></script>
 <script src="diary.js"></script>
 <script src="notifications.js"></script>
 <script src="law.js"></script>

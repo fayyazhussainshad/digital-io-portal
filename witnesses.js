@@ -21,9 +21,12 @@ let _editingWitnessId = null;
 let _witnessFormType = 'fir';
 
 let _personMode = 'witness'; // 'witness' or 'accused'
+let _witnessViewType = 'fir';
 
-async function openWitnessesCard(caseId) {
+async function openWitnessesCard(caseId, type) {
   _personMode = 'witness';
+  _witnessViewType = type || 'fir';
+  _witnessFormType = _witnessViewType;
   _witnessCaseId = caseId || _misalCaseId || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
   await _loadWitnesses();
   _renderWitnessesArea();
@@ -46,31 +49,17 @@ function _renderWitnessesArea() {
             || document.getElementById('workspace-tab-content')
             || document.getElementById('page-content');
   if (!area) return;
-  const firList = _witnessList.filter(w => (w.witness_type || 'fir') === 'fir');
-  const crossList = _witnessList.filter(w => w.witness_type === 'cross_version');
+  const isCross = _witnessViewType === 'cross_version';
+  const list = _witnessList.filter(w => (w.witness_type || 'fir') === _witnessViewType);
+  const heading = isCross ? 'گواہان کراس ورژن' : 'گواہان FIR';
+  const color = isCross ? 'var(--amber)' : 'var(--accent)';
   area.innerHTML = `
   <div style="padding:10px;direction:rtl;height:100%;overflow-y:auto;width:100%;box-sizing:border-box;">
     <div id="witness-form-box"></div>
-
-    <!-- TOP: گواہان FIR -->
-    <div style="margin-bottom:18px;width:100%;">
-      <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:var(--accent);border-bottom:2px solid var(--accent);padding-bottom:6px;margin-bottom:10px;text-align:right;width:100%;box-sizing:border-box;">گواہان FIR</div>
-      <div style="width:100%;">${_renderWitnessList(firList, 'fir')}</div>
-      <div style="margin-top:10px;text-align:right;">
-        <button class="btn btn-primary btn-sm" onclick="_openWitnessForm(null,'fir')">➕ گواہ</button>
-      </div>
-    </div>
-
-    <!-- DIVIDER -->
-    <div style="height:2px;background:var(--border);margin:18px 0;width:100%;"></div>
-
-    <!-- BOTTOM: گواہان کراس ورژن -->
-    <div style="width:100%;">
-      <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:var(--amber);border-bottom:2px solid var(--amber);padding-bottom:6px;margin-bottom:10px;text-align:right;width:100%;box-sizing:border-box;">گواہان کراس ورژن</div>
-      <div style="width:100%;">${_renderWitnessList(crossList, 'cross_version')}</div>
-      <div style="margin-top:10px;text-align:right;">
-        <button class="btn btn-primary btn-sm" onclick="_openWitnessForm(null,'cross_version')">➕ گواہ</button>
-      </div>
+    <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:${color};border-bottom:2px solid ${color};padding-bottom:6px;margin-bottom:12px;text-align:right;width:100%;box-sizing:border-box;">${heading}</div>
+    <div style="width:100%;">${_renderWitnessList(list, _witnessViewType)}</div>
+    <div style="margin-top:12px;text-align:right;">
+      <button class="btn btn-primary btn-sm" onclick="_openWitnessForm(null,'${_witnessViewType}')">➕ گواہ</button>
     </div>
   </div>`;
 }

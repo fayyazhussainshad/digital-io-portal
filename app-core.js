@@ -135,6 +135,7 @@ function showPage(page, el) {
   }
   window._activePage = page;  // Track current page for background refresh
   window._inWorkspace = false;  // Left any workspace when navigating via menu
+  document.body.classList.remove('workspace-mode');  // Restore topbar on navigation
 
   // Track page usage (for admin button-usage log)
   if (typeof _trackUsage === 'function') _trackUsage(page);

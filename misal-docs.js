@@ -10,9 +10,10 @@ const MISAL_CASE_DOCS = [
   { id:'cross_version',    name:'کراس ورشن',                 desc:'Cross Version' },
   { id:'report_173',       name:'رپورٹ 173 ض ف',            desc:'Report u/s 173 CrPC' },
   { id:'crime_scene',      name:'جائے واردات',               desc:'Scene of Crime' },
-  { id:'named_accused',    name:'نامزد ملزمان',              desc:'Named Accused' },
+  { id:'named_accused',    name:'ملزمان FIR',                desc:'FIR Accused' },
+  { id:'accused_cross',    name:'ملزمان کراس ورژن',          desc:'Cross Version Accused' },
   { id:'witnesses_fir',    name:'گواہان FIR',                desc:'FIR Witnesses' },
-  { id:'witnesses_cross',  name:'گواہان کراس ورشن',          desc:'Cross Version Witnesses' },
+  { id:'witnesses_cross',  name:'گواہان کراس ورژن',          desc:'Cross Version Witnesses' },
   { id:'statements_161',   name:'بیانات 161 ض ف',            desc:'Statements u/s 161 CrPC' },
   { id:'incidents',        name:'وقوعہ جات',                 desc:'Incidents' },
   { id:'fardat',           name:'فردات',                     desc:'Fardat' },
@@ -69,27 +70,17 @@ function renderMisalBar(c) {
 
   return `
   <div id="misal-doc-bar" style="
-    padding:12px 16px;
+    padding:8px 12px;
     background:var(--bg-secondary);
     border-bottom:1px solid var(--border);">
-    <div style="font-size:11px;color:var(--text-faint);margin-bottom:8px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;direction:rtl;">
-      <span>مثال دستاویزات</span>
-      <span><span style="color:var(--text-muted);">■</span> شامل نہیں</span>
-      <span><span style="color:var(--accent);">■</span> جاری</span>
-      <span><span style="color:var(--green);">■</span> مکمل</span>
-      <!-- SHO / DSP quick-set buttons -->
-      <span style="margin-inline-start:auto;display:flex;gap:6px;align-items:center;">
-        <button onclick="_setMisalOfficer('sho','${c.id}')" title="SHO کا نام مقرر کریں"
-          style="background:${c.sho_name?'rgba(34,197,94,0.15)':'var(--bg-tertiary)'};border:1px solid ${c.sho_name?'var(--green)':'var(--border)'};border-radius:8px;padding:4px 10px;font-size:11px;color:${c.sho_name?'var(--green)':'var(--text-secondary)'};cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">
-          👮 SHO${c.sho_name?': '+c.sho_name:''}
-        </button>
-        <button onclick="_setMisalOfficer('dsp','${c.id}')" title="DSP/SDPO کا نام مقرر کریں"
-          style="background:${c.dsp_name?'rgba(34,197,94,0.15)':'var(--bg-tertiary)'};border:1px solid ${c.dsp_name?'var(--green)':'var(--border)'};border-radius:8px;padding:4px 10px;font-size:11px;color:${c.dsp_name?'var(--green)':'var(--text-secondary)'};cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">
-          🎖️ DSP/SDPO${c.dsp_name?': '+c.dsp_name:''}
-        </button>
-      </span>
+    <div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;align-items:center;">
+      ${items}
+      <!-- SHO / DSP buttons in the same bar -->
+      <button onclick="_setMisalOfficer('sho','${c.id}')" title="SHO کا نام مقرر کریں"
+        class="mdoc-chip ${c.sho_name?'mdoc-added':'mdoc-empty'}">👮 SHO${c.sho_name?': '+c.sho_name:''}</button>
+      <button onclick="_setMisalOfficer('dsp','${c.id}')" title="DSP/SDPO کا نام مقرر کریں"
+        class="mdoc-chip ${c.dsp_name?'mdoc-added':'mdoc-empty'}">🎖️ DSP/SDPO${c.dsp_name?': '+c.dsp_name:''}</button>
     </div>
-    <div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;">${items}</div>
   </div>
   <style>
     .mdoc-chip{
@@ -198,7 +189,8 @@ async function _doAddMisalDoc(docId) {
   const def = MISAL_CASE_DOCS.find(d => d.id === docId);
   if (!def || !_misalCaseId) return;
   const isPersonForm = (docId === 'witnesses_fir' || docId === 'witnesses_cross' ||
-                        docId === 'named_accused' || docId === 'unknown_accused');
+                        docId === 'named_accused' || docId === 'unknown_accused' ||
+                        docId === 'zamniyat' || docId === 'memorandum');
   // If already added — open it (form for persons, editor for docs)
   if (_misalDocs[docId]) { _openMisalEditor(docId); return; }
   try {
@@ -252,21 +244,36 @@ function _openMisalEditor(docId) {
     return;
   }
 
-  // Special: گواہان shows structured witness card system (form only — no side table, no doc page)
-  if (docId === 'witnesses_fir' || docId === 'witnesses_cross') {
+  // Special: گواہان FIR → only witness_type='fir'
+  if (docId === 'witnesses_fir') {
     _openDocId = docId;
-    if (typeof openWitnessesCard === 'function') openWitnessesCard(_misalCaseId);
+    if (typeof openWitnessesCard === 'function') openWitnessesCard(_misalCaseId, 'fir');
+    return;
+  }
+  // Special: گواہان کراس ورژن → only witness_type='cross_version'
+  if (docId === 'witnesses_cross') {
+    _openDocId = docId;
+    if (typeof openWitnessesCard === 'function') openWitnessesCard(_misalCaseId, 'cross_version');
     return;
   }
 
-  // Special: ملزمان / مجرمان shows accused form (form only — no side table, no doc page)
-  if (docId === 'named_accused' || docId === 'unknown_accused') {
+  // Special: ملزمان FIR → only accused_type='fir'
+  if (docId === 'named_accused') {
     _openDocId = docId;
-    if (typeof openAccusedCard === 'function') {
-      openAccusedCard(_misalCaseId);
-    } else if (typeof openWitnessesCard === 'function') {
-      openWitnessesCard(_misalCaseId);
-    }
+    if (typeof openAccusedCard === 'function') openAccusedCard(_misalCaseId, 'fir');
+    return;
+  }
+  // Special: ملزمان کراس ورژن → only accused_type='cross_version'
+  if (docId === 'accused_cross') {
+    _openDocId = docId;
+    if (typeof openAccusedCard === 'function') openAccusedCard(_misalCaseId, 'cross_version');
+    return;
+  }
+
+  // Special: ضمنیات / میمورنڈم → Zimni progress report editor
+  if (docId === 'zamniyat' || docId === 'memorandum') {
+    _openDocId = docId;
+    if (typeof openZimniEditor === 'function') openZimniEditor(_misalCaseId);
     return;
   }
 
