@@ -148,10 +148,9 @@ function _closeAllDD() {
 // When an option is picked — open that document/view
 function _ddPick(ddId, docId) {
   if (docId === 'fir' || docId === 'cross_version') {
-    // FIR view with version
     _openDocId = docId;
-    if (typeof _renderFIRView === 'function') _renderFIRView(docId === 'cross_version' ? 'cross' : 'fir');
-    else if (typeof _openMisalEditor === 'function') _openMisalEditor(docId);
+    if (typeof openFirView === 'function') openFirView(_misalCaseId, docId);
+    else if (typeof _renderFIRView === 'function') _renderFIRView();
   } else if (docId === 'named_accused') {
     if (typeof openAccusedCard === 'function') openAccusedCard(_misalCaseId, 'fir');
   } else if (docId === 'accused_cross') {
