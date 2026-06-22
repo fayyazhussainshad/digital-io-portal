@@ -6,14 +6,8 @@
 
 // ── ALL 33 OFFICIAL DOCUMENTS ────────────────────────────────
 const MISAL_CASE_DOCS = [
-  { id:'fir',              name:'ایف آئی آر',               desc:'First Information Report' },
-  { id:'cross_version',    name:'کراس ورشن',                 desc:'Cross Version' },
   { id:'report_173',       name:'رپورٹ 173 ض ف',            desc:'Report u/s 173 CrPC' },
   { id:'crime_scene',      name:'جائے واردات',               desc:'Scene of Crime' },
-  { id:'named_accused',    name:'ملزمان FIR',                desc:'FIR Accused' },
-  { id:'accused_cross',    name:'ملزمان کراس ورژن',          desc:'Cross Version Accused' },
-  { id:'witnesses_fir',    name:'گواہان FIR',                desc:'FIR Witnesses' },
-  { id:'witnesses_cross',  name:'گواہان کراس ورژن',          desc:'Cross Version Witnesses' },
   { id:'statements_161',   name:'بیانات 161 ض ف',            desc:'Statements u/s 161 CrPC' },
   { id:'incidents',        name:'وقوعہ جات',                 desc:'Incidents' },
   { id:'fardat',           name:'فردات',                     desc:'Fardat' },
@@ -74,6 +68,18 @@ function renderMisalBar(c) {
     background:var(--bg-secondary);
     border-bottom:1px solid var(--border);">
     <div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;align-items:center;">
+      ${_misalDropdown('fir-dd', 'الف آئی آر', [
+        {label:'الف آئی آر', act:`_ddPick('fir-dd','fir')`},
+        {label:'کراس ورژن', act:`_ddPick('fir-dd','cross_version')`}
+      ])}
+      ${_misalDropdown('acc-dd', 'ملزمان', [
+        {label:'ملزمان FIR', act:`_ddPick('acc-dd','named_accused')`},
+        {label:'ملزمان کراس ورژن', act:`_ddPick('acc-dd','accused_cross')`}
+      ])}
+      ${_misalDropdown('wit-dd', 'گواہان', [
+        {label:'گواہان FIR', act:`_ddPick('wit-dd','witnesses_fir')`},
+        {label:'گواہان کراس ورژن', act:`_ddPick('wit-dd','witnesses_cross')`}
+      ])}
       ${items}
       <!-- SHO / DSP buttons in the same bar -->
       <button onclick="_setMisalOfficer('sho','${c.id}')" title="SHO کا نام مقرر کریں"
@@ -102,6 +108,63 @@ function renderMisalBar(c) {
     .mdoc-done { color:var(--green);       background:rgba(34,197,94,0.12);  border-color:var(--green);  font-weight:600; }
   </style>`;
 }
+
+// ── DROPDOWN BUTTONS (merged FIR / ملزمان / گواہان) ────────────
+function _misalDropdown(ddId, label, options) {
+  return `
+  <span style="position:relative;display:inline-block;">
+    <span class="mdoc-chip mdoc-added" onclick="_toggleDD(event,'${ddId}')" style="cursor:pointer;">
+      ${label} ▾
+    </span>
+    <div id="${ddId}" style="display:none;position:fixed;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:5000;min-width:180px;padding:6px;direction:rtl;">
+      ${options.map(o => `
+        <a onclick="_closeAllDD();${o.act}" style="display:block;padding:9px 12px;font-size:15px;font-family:'Jameel Noori Nastaleeq',serif;color:var(--text-primary);cursor:pointer;border-radius:6px;text-align:right;"
+           onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='transparent'">${o.label}</a>`).join('')}
+    </div>
+  </span>`;
+}
+
+function _toggleDD(ev, ddId) {
+  ev.stopPropagation();
+  const dd = document.getElementById(ddId);
+  if (!dd) return;
+  const isOpen = dd.style.display === 'block';
+  _closeAllDD();
+  if (!isOpen) {
+    const rect = ev.currentTarget.getBoundingClientRect();
+    dd.style.top = (rect.bottom + 4) + 'px';
+    dd.style.right = (window.innerWidth - rect.right) + 'px';
+    dd.style.display = 'block';
+  }
+}
+
+function _closeAllDD() {
+  ['fir-dd','acc-dd','wit-dd'].forEach(id => {
+    const dd = document.getElementById(id);
+    if (dd) dd.style.display = 'none';
+  });
+}
+
+// When an option is picked — open that document/view
+function _ddPick(ddId, docId) {
+  if (docId === 'fir' || docId === 'cross_version') {
+    // FIR view with version
+    _openDocId = docId;
+    if (typeof _renderFIRView === 'function') _renderFIRView(docId === 'cross_version' ? 'cross' : 'fir');
+    else if (typeof _openMisalEditor === 'function') _openMisalEditor(docId);
+  } else if (docId === 'named_accused') {
+    if (typeof openAccusedCard === 'function') openAccusedCard(_misalCaseId, 'fir');
+  } else if (docId === 'accused_cross') {
+    if (typeof openAccusedCard === 'function') openAccusedCard(_misalCaseId, 'cross_version');
+  } else if (docId === 'witnesses_fir') {
+    if (typeof openWitnessesCard === 'function') openWitnessesCard(_misalCaseId, 'fir');
+  } else if (docId === 'witnesses_cross') {
+    if (typeof openWitnessesCard === 'function') openWitnessesCard(_misalCaseId, 'cross_version');
+  }
+}
+
+// Close dropdowns when clicking elsewhere
+document.addEventListener('click', () => _closeAllDD());
 
 // ── SET SHO / DSP NAME ────────────────────────────────────────
 function _setMisalOfficer(type, caseId) {
