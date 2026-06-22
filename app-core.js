@@ -563,8 +563,15 @@ function updateSidebarProfile() {
   if (nameEl) nameEl.textContent = o.full_name||'افسر';
   if (rankEl) rankEl.textContent = `${o.designation||''} · ${o.station||''}`;
   if (avEl) {
-    const initials = (o.full_name||'IO').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
-    avEl.textContent = initials;
+    // Photo URL: DB first, then localStorage fallback (persists across logins)
+    let photo = o.profile_photo;
+    if (!photo) { try { photo = localStorage.getItem('dio_profile_photo') || localStorage.getItem('officer_photo_url'); } catch(_) {} }
+    if (photo) {
+      avEl.innerHTML = `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    } else {
+      const initials = (o.full_name||'IO').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
+      avEl.textContent = initials;
+    }
   }
   // Show admin nav if applicable (both old sidebar and new top-nav)
   const isAdmin = ['admin','superadmin'].includes(o.role);
@@ -883,7 +890,16 @@ async function _loadOfficerProfile() {
   }
   // Restore profile photo from DB so it persists across logins/devices
   if (currentOfficer.profile_photo) {
-    try { localStorage.setItem('dio_profile_photo', currentOfficer.profile_photo); } catch(_) {}
+    try {
+      localStorage.setItem('dio_profile_photo', currentOfficer.profile_photo);
+      localStorage.setItem('officer_photo_url', currentOfficer.profile_photo);
+    } catch(_) {}
+  } else {
+    // DB has no photo — try localStorage fallback
+    try {
+      const saved = localStorage.getItem('officer_photo_url') || localStorage.getItem('dio_profile_photo');
+      if (saved) currentOfficer.profile_photo = saved;
+    } catch(_) {}
   }
 }
 

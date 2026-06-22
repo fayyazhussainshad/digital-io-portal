@@ -368,12 +368,18 @@ input, textarea, select { font-family: var(--font-main); }
 ::-webkit-scrollbar { width: 4px; height: 4px; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
 /* ── LOGIN ── */
-#login-screen { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 16px; }
+#login-screen { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; padding: 24px 16px; min-height: 100dvh; box-sizing: border-box; }
 .login-bg { position: fixed; inset: 0; z-index: 0; background: radial-gradient(ellipse at 20% 50%, #0c2a44 0%, #070f18 50%, #050d15 100%); }
 .login-bg-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(56,189,248,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(56,189,248,0.03) 1px, transparent 1px); background-size: 40px 40px; }
 .login-bg-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(56,189,248,0.06) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%,-50%); animation: glowPulse 4s ease-in-out infinite; }
 @keyframes glowPulse { 0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(1)} 50%{opacity:1;transform:translate(-50%,-50%) scale(1.1)} }
-.login-card { position: relative; z-index: 1; background: rgba(11,24,38,0.95); border: 1px solid var(--border); border-radius: 18px; padding: 24px 24px; width: 100%; max-width: 400px; margin: auto; box-shadow: 0 32px 80px rgba(0,0,0,0.7); backdrop-filter: blur(20px); animation: cardSlideUp 0.5s ease; }
+.login-card { position: relative; z-index: 1; background: rgba(11,24,38,0.95); border: 1px solid var(--border); border-radius: 18px; padding: 24px; width: 100%; max-width: 420px; margin: auto; box-shadow: 0 32px 80px rgba(0,0,0,0.7); backdrop-filter: blur(20px); animation: cardSlideUp 0.5s ease; box-sizing: border-box; }
+@media (max-width: 768px) {
+  #login-screen { padding: 16px; justify-content: flex-start; }
+  .login-card { padding: 18px 16px; }
+  .login-card .disclaimer-box, .login-card [class*="disclaimer"] { font-size: 13px !important; padding: 12px !important; }
+  .auth-method-btn, .login-method-btn { min-height: 60px !important; }
+}
 @keyframes cardSlideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
 .login-logo-wrap { text-align: center !important; margin-bottom: 24px; direction: ltr; }
 .login-logo-icon { font-size: 36px; margin-bottom: 8px; text-align: center; }

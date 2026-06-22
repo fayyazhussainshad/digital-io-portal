@@ -285,14 +285,15 @@ function changeProfilePhoto(){
         canvas.width=img.width*scale; canvas.height=img.height*scale;
         canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
         const src=canvas.toDataURL('image/jpeg',0.7);
-        try{localStorage.setItem('dio_profile_photo',src);}catch(e){}
+        try{localStorage.setItem('dio_profile_photo',src);localStorage.setItem('officer_photo_url',src);}catch(e){}
         // Save to Supabase officer record (persists across devices/logins)
         try{
           const oid=await getOfficerId();
           await supabaseClient.from('officers').update({profile_photo:src}).eq('id',oid);
           if(currentOfficer) currentOfficer.profile_photo=src;
         }catch(_){}
-        document.querySelectorAll('.officer-card-avatar,.sidebar-avatar,#settings-avatar,#profile-avatar-btn')
+        if (typeof updateSidebarProfile === 'function') updateSidebarProfile();
+        document.querySelectorAll('.officer-card-avatar,.sidebar-avatar,#settings-avatar,#profile-avatar-btn,#sidebar-avatar')
           .forEach(el=>{el.innerHTML=`<img src="${src}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">`;});
         showToast('✅ Profile photo updated!','success');
       };
