@@ -14,7 +14,24 @@ const R173_TYPES = [
   { id:'interim',   name:'انٹیرم چالان' },
   { id:'ikhraj',    name:'اخراج' },
   { id:'adampata',  name:'عدم پتہ' },
+  { id:'tatima_challan', name:'تتمہ چالان' },
 ];
+
+const R173_TATIMA_SUBS = [
+  { id:'aslha',  name:'تتمہ چالان — اسلحہ' },
+  { id:'chars',  name:'تتمہ چالان — چرس/منشیات' },
+  { id:'sharab', name:'تتمہ چالان — شراب' },
+  { id:'zina',   name:'تتمہ چالان — زنا/ڈی این اے' },
+];
+
+const R173_TATIMA_BOILER = {
+  aslha: 'جناب عالیٰ! مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر 3 کے خلاف چالان نامکمل مرتب ہو چکا ہے اب PFSA لاہور سے رزلٹ نمبری ____________ موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریر فرمائی ہے۔ "The item P1 pistol was examined and found to be in mechanical operating condition" رزلٹ میں پارسل کو item P1 سے ظاہر کیا گیا ہے لہٰذا مقدمہ ہذا میں ملزم بالا کے خلاف تتمہ چالان مکمل مرتب ہو کر ارسال خدمت ہے سماعت فرمائی جائے۔',
+  chars: 'جناب عالیٰ! مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر 3 کے خلاف چالان نامکمل مرتب ہو چکا ہے PFSA لاہور سے موصولہ متعلقہ مقدمہ ہذا ایک رزلٹ نمبر ____________ موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریر فرمائی ہے۔ "Sample 01 having net weight ______ grams of dark brown resinous material in sealed parcel contains Chars. Sample is Narcotic Drug as defined in the section 2 of the CNS Act, 1997." تصدیق چرس ہو چکی ہے لہٰذا مقدمہ ہذا میں ملزم بالا کے خلاف تتمہ چالان مکمل مرتب ہو کر ارسال خدمت ہے سماعت فرمائی جائے۔',
+  sharab: 'جناب عالیٰ! مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر 3 کے خلاف چالان نامکمل مرتب ہو چکا ہے اب PFSA لاہور سے رزلٹ نمبری ____________ موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریر فرمائی ہے۔ "Presumptive test indicated the presence of alcohol in item 1." لہٰذا مقدمہ ہذا میں ملزم بالا کے خلاف تتمہ چالان مکمل مرتب ہو کر ارسال خدمت ہے سماعت فرمائی جائے۔',
+  zina: 'جناب عالیٰ! مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر 3 کے خلاف چالان نامکمل مرتب ہو چکا ہے اب PFSA لاہور سے رزلٹ نمبری ____________ موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریر فرمائی ہے۔ "No seminal material was found on item no.1 and 2.1-2.3; therefore no further DNA analysis was conducted on these." مقدمہ ہذا میں تکمیل تفتیش ہو چکی ہے لہٰذا ملزم بالا کے خلاف تتمہ چالان مکمل مرتب ہو کر ارسال خدمت ہے سماعت فرمائی جائے۔',
+};
+
+let _r173Subtype = 'aslha';
 
 const R173_BOILER = {
   mukammal: 'جناب عالیٰ! مختصر حالات مقدمہ عنوان بالا اس طرح ہیں کہ دوران تفتیش مقدمہ ہذا مکمل ہوا۔ ملزمان کے خلاف کافی شہادت دستیاب ہوئی۔ چالان مکمل مرتب ہوکر ارسالِ خدمت ہے، سماعت فرمائی جائے۔',
@@ -44,7 +61,10 @@ async function _loadR173() {
   try {
     const { data } = await supabaseClient.from('report_173').select('*').eq('case_id', _r173CaseId);
     _r173Records = {};
-    (data||[]).forEach(r => { _r173Records[r.report_type] = r.form_data || {}; });
+    (data||[]).forEach(r => {
+      const key = r.report_type === 'tatima_challan' ? 'tatima_challan_' + (r.report_subtype||'aslha') : r.report_type;
+      _r173Records[key] = r.form_data || {};
+    });
     try { localStorage.setItem('dio_r173_'+_r173CaseId, JSON.stringify(_r173Records)); } catch(_) {}
   } catch(_) {
     try { _r173Records = JSON.parse(localStorage.getItem('dio_r173_'+_r173CaseId)||'{}'); } catch(_2) { _r173Records={}; }
@@ -56,6 +76,10 @@ function _r173Pick(type) {
   _closeAllDD && _closeAllDD();
   _renderR173();
 }
+function _r173PickSub(sub) {
+  _r173Subtype = sub;
+  _renderR173();
+}
 
 // ── RENDER ────────────────────────────────────────────────────
 function _renderR173() {
@@ -65,10 +89,16 @@ function _renderR173() {
   if (!area) return;
   const o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
   const c = _r173Case || {};
-  const typeName = (R173_TYPES.find(t => t.id === _r173Type) || {}).name || '';
-  const saved = _r173Records[_r173Type] || {};
+  const isTatima = _r173Type === 'tatima_challan';
+  let typeName = (R173_TYPES.find(t => t.id === _r173Type) || {}).name || '';
+  if (isTatima) typeName = 'تتمہ چالان مکمل';
+  // Saved record key (tatima uses subtype)
+  const recKey = isTatima ? 'tatima_challan_' + _r173Subtype : _r173Type;
+  const saved = _r173Records[recKey] || {};
   const v = (k, def) => saved[k] !== undefined ? saved[k] : (def || '');
   const isIkhraj = _r173Type === 'ikhraj';
+  // Boilerplate: tatima uses subtype boiler, others use type boiler
+  const boiler = isTatima ? (R173_TATIMA_BOILER[_r173Subtype]||'') : (R173_BOILER[_r173Type]||'');
 
   area.innerHTML = `
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
@@ -77,6 +107,10 @@ function _renderR173() {
       <select id="r173-type-sel" onchange="_r173Pick(this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
         ${R173_TYPES.map(t => `<option value="${t.id}" ${t.id===_r173Type?'selected':''}>${t.name}</option>`).join('')}
       </select>
+      ${isTatima ? `
+      <select id="r173-sub-sel" onchange="_r173PickSub(this.value)" style="padding:6px 10px;border:1px solid var(--amber);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
+        ${R173_TATIMA_SUBS.map(s => `<option value="${s.id}" ${s.id===_r173Subtype?'selected':''}>${s.name}</option>`).join('')}
+      </select>` : ''}
       <div style="margin-right:auto;display:flex;gap:6px;">
         <button class="btn btn-primary btn-sm" onclick="_saveR173()">💾 محفوظ کریں</button>
         <button class="btn btn-secondary btn-sm" onclick="_printR173()">🖨️ پرنٹ کریں</button>
@@ -127,7 +161,16 @@ function _renderR173() {
 
         <!-- مختصر حالات مقدمہ -->
         <div style="margin-top:12px;font-weight:700;">مختصر حالات مقدمہ معہ جرم:</div>
-        <div contenteditable="true" data-k="halaat" style="border:1px solid #999;padding:10px;min-height:120px;text-align:justify;margin-top:4px;">${v('halaat', R173_BOILER[_r173Type]||'')}</div>
+        <div contenteditable="true" data-k="halaat" style="border:1px solid #999;padding:10px;min-height:120px;text-align:justify;margin-top:4px;">${v('halaat', boiler)}</div>
+
+        ${isTatima ? `
+        <!-- Tatima: رزلٹ نمبر + checkboxes -->
+        <div style="margin-top:10px;">رزلٹ نمبر: <span contenteditable="true" data-k="result_no" style="border-bottom:1px solid #999;min-width:120px;display:inline-block;">${v('result_no')}</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:13px;">
+          <label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" data-pk="t_form" ${v('t_form')?'checked':''}> فارم ہذا/یک</label>
+          <label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" data-pk="t_result" ${v('t_result')?'checked':''}> اصل رزلٹ نمبری/یک</label>
+          <label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" data-pk="t_fir" ${v('t_fir')?'checked':''}> نقل FIR/یک</label>
+        </div>` : ''}
 
         ${isIkhraj ? `
         <!-- Ikhraj extra numbered table -->
@@ -167,13 +210,18 @@ function _collectR173() {
 
 async function _saveR173() {
   const form_data = _collectR173();
-  _r173Records[_r173Type] = form_data;
+  const isTatima = _r173Type === 'tatima_challan';
+  const recKey = isTatima ? 'tatima_challan_' + _r173Subtype : _r173Type;
+  _r173Records[recKey] = form_data;
   const rec = { case_id: _r173CaseId, report_type: _r173Type, form_data };
+  if (isTatima) rec.report_subtype = _r173Subtype;
   try {
     const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
     if (oid) rec.officer_id = oid;
-    // One record per type per case — check existing
-    const { data: existing } = await supabaseClient.from('report_173').select('id').eq('case_id', _r173CaseId).eq('report_type', _r173Type).maybeSingle();
+    // One record per type (and subtype for tatima) per case
+    let q = supabaseClient.from('report_173').select('id').eq('case_id', _r173CaseId).eq('report_type', _r173Type);
+    if (isTatima) q = q.eq('report_subtype', _r173Subtype);
+    const { data: existing } = await q.maybeSingle();
     if (existing) {
       await supabaseClient.from('report_173').update(rec).eq('id', existing.id);
     } else {

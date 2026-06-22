@@ -84,7 +84,8 @@ function renderMisalBar(c) {
         {label:'چالان نامکمل', act:`openReport173WithType('namukammal')`},
         {label:'انٹیرم چالان', act:`openReport173WithType('interim')`},
         {label:'اخراج', act:`openReport173WithType('ikhraj')`},
-        {label:'عدم پتہ', act:`openReport173WithType('adampata')`}
+        {label:'عدم پتہ', act:`openReport173WithType('adampata')`},
+        {label:'تتمہ چالان', act:`openReport173WithType('tatima_challan')`}
       ])}
       ${items}
       <button onclick="_setMisalOfficer('sho','${c.id}')" title="SHO کا نام مقرر کریں"
