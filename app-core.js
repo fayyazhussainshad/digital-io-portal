@@ -562,16 +562,19 @@ function updateSidebarProfile() {
   const avEl   = document.getElementById('sidebar-avatar');
   if (nameEl) nameEl.textContent = o.full_name||'افسر';
   if (rankEl) rankEl.textContent = `${o.designation||''} · ${o.station||''}`;
+  // Resolve photo once (DB first, then localStorage fallback)
+  let _photo = o.profile_photo;
+  if (!_photo) { try { _photo = localStorage.getItem('dio_profile_photo') || localStorage.getItem('officer_photo_url'); } catch(_) {} }
+  const _initials = (o.full_name||'IO').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
   if (avEl) {
-    // Photo URL: DB first, then localStorage fallback (persists across logins)
-    let photo = o.profile_photo;
-    if (!photo) { try { photo = localStorage.getItem('dio_profile_photo') || localStorage.getItem('officer_photo_url'); } catch(_) {} }
-    if (photo) {
-      avEl.innerHTML = `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-    } else {
-      const initials = (o.full_name||'IO').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
-      avEl.textContent = initials;
-    }
+    if (_photo) avEl.innerHTML = `<img src="${_photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    else avEl.textContent = _initials;
+  }
+  // Topbar corner avatar (always update — visible on mobile too)
+  const tbAv = document.getElementById('topbar-avatar');
+  if (tbAv) {
+    if (_photo) tbAv.innerHTML = `<img src="${_photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    else tbAv.textContent = _initials;
   }
   // Show admin nav if applicable (both old sidebar and new top-nav)
   const isAdmin = ['admin','superadmin'].includes(o.role);
