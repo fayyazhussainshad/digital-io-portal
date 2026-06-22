@@ -1324,6 +1324,8 @@ function triggerBackup(src) { localStorage.setItem('dio_last_backup_source',src|
 // ── INIT APP ──────────────────────────────────────────────────
 async function initApp() {
   updateSidebarProfile();
+  // Refresh avatar again after profile fully loads (photo persistence)
+  setTimeout(() => { if (typeof updateSidebarProfile === 'function') updateSidebarProfile(); }, 600);
   updateConnectionStatus(navigator.onLine);
   await updateBadges();
   startClock();
