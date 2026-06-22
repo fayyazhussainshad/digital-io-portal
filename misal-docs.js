@@ -6,7 +6,6 @@
 
 // ── ALL 33 OFFICIAL DOCUMENTS ────────────────────────────────
 const MISAL_CASE_DOCS = [
-  { id:'report_173',       name:'رپورٹ 173 ض ف',            desc:'Report u/s 173 CrPC' },
   { id:'crime_scene',      name:'جائے واردات',               desc:'Scene of Crime' },
   { id:'statements_161',   name:'بیانات 161 ض ف',            desc:'Statements u/s 161 CrPC' },
   { id:'incidents',        name:'وقوعہ جات',                 desc:'Incidents' },
@@ -80,8 +79,14 @@ function renderMisalBar(c) {
         {label:'گواہان FIR', act:`_ddPick('wit-dd','witnesses_fir')`},
         {label:'گواہان کراس ورژن', act:`_ddPick('wit-dd','witnesses_cross')`}
       ])}
+      ${_misalDropdown('r173-dd', 'رپورٹ 173 ض ف', [
+        {label:'چالان مکمل', act:`openReport173WithType('mukammal')`},
+        {label:'چالان نامکمل', act:`openReport173WithType('namukammal')`},
+        {label:'انٹیرم چالان', act:`openReport173WithType('interim')`},
+        {label:'اخراج', act:`openReport173WithType('ikhraj')`},
+        {label:'عدم پتہ', act:`openReport173WithType('adampata')`}
+      ])}
       ${items}
-      <!-- SHO / DSP buttons in the same bar -->
       <button onclick="_setMisalOfficer('sho','${c.id}')" title="SHO کا نام مقرر کریں"
         class="mdoc-chip ${c.sho_name?'mdoc-added':'mdoc-empty'}">👮 SHO${c.sho_name?': '+c.sho_name:''}</button>
       <button onclick="_setMisalOfficer('dsp','${c.id}')" title="DSP/SDPO کا نام مقرر کریں"
