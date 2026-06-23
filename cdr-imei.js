@@ -48,7 +48,7 @@ function _cdrInitialRows() {
     });
   }
   // Pad to 9 rows
-  while (rows.length < 12) rows.push({ req:'', model:'', from:'', to:'' });
+  while (rows.length < 10) rows.push({ req:'', model:'', from:'', to:'' });
   return rows;
 }
 
@@ -76,40 +76,40 @@ function _renderCdr() {
     </div>
 
     <div style="flex:1;overflow-y:auto;padding:16px;background:var(--bg-tertiary);">
-      <div id="cdr-doc" style="max-width:210mm;margin:0 auto;padding:14mm;background:#fff;color:#111;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:13px;line-height:1.8;direction:rtl;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;">
+      <div id="cdr-doc" style="max-width:210mm;margin:0 auto;padding:14mm;background:#fff;color:#111;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:18.67px;line-height:1.8;direction:rtl;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;">
 
         <!-- Header -->
         <div style="display:flex;justify-content:space-between;">
           <span>تھانہ: <b contenteditable="true">${o.station||'صدر ملتان'}</b></span>
-          <span>ڈائری نمبر: <span contenteditable="true" data-k="diary_number" style="border-bottom:1px solid #999;min-width:160px;display:inline-block;">${v('diary_number')}</span> مورخہ: <span contenteditable="true" data-k="diary_date" style="border-bottom:1px solid #999;min-width:140px;display:inline-block;">${v('diary_date')}</span></span>
+          <span>ڈائری نمبر: <span contenteditable="true" data-k="diary_number" style="border-bottom:1px solid #999;min-width:200px;display:inline-block;">${v('diary_number')}</span> مورخہ: <span contenteditable="true" data-k="diary_date" style="border-bottom:1px solid #999;min-width:140px;display:inline-block;">${v('diary_date')}</span></span>
           <span>ضلع: <b contenteditable="true">${o.district||'ملتان'}</b></span>
         </div>
         <div style="margin-top:6px;">مقدمہ نمبر: <b>${c.fir_number||''}</b> &nbsp; مورخہ: <b>${c.fir_date||''}</b> &nbsp; بجرم: <b>${c.section_of_law||''} ${c.offence_type||''}</b> ت پ تھانہ ${o.station||'صدر ملتان'}</div>
-        <div style="margin-top:4px;">تاریخ/وقت وقوعہ: <b>${c.occurrence_date||''}</b> &nbsp; مقام وقوعہ: <b>${c.occurrence_place||''}</b></div>
-        <div style="margin-top:4px;">تفتیشی آفیسر: <b>${o.full_name||''}</b> &nbsp; موبائل نمبر: <b>${o.phone||''}</b></div>
+        <div style="margin-top:4px;display:flex;justify-content:space-between;"><span>تاریخ/وقت وقوعہ: <b>${c.occurrence_date||''}</b></span><span style="min-width:40%;text-align:right;">مقام وقوعہ: <b>${c.occurrence_place||''}</b></span></div>
+        <div style="margin-top:4px;display:flex;justify-content:space-between;"><span>تفتیشی آفیسر: <b>${o.full_name||''}</b></span><span style="min-width:40%;text-align:right;">موبائل نمبر: <b>${o.phone||''}</b></span></div>
 
         <!-- Main table -->
-        <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;" id="cdr-table">
+        <table style="width:100%;border-collapse:collapse;font-size:18.67px;margin-top:10px;" id="cdr-table">
           <thead><tr style="background:#f0f0f0;">
-            <th style="border:1px solid #999;padding:8px 6px;width:8%;font-size:15px;font-weight:bold;text-align:center;vertical-align:middle;">نمبر شمار</th>
-            <th style="border:1px solid #999;padding:8px 6px;font-size:15px;font-weight:bold;text-align:center;vertical-align:middle;">مطلوبہ درکار CDR/IMEI</th>
-            <th style="border:1px solid #999;padding:8px 6px;font-size:15px;font-weight:bold;text-align:center;vertical-align:middle;">ماڈل فون (اگر معلوم ہو)</th>
-            <th style="border:1px solid #999;padding:8px 6px;font-size:15px;font-weight:bold;text-align:center;vertical-align:middle;">ڈیٹا کی ابتدائی تاریخ</th>
-            <th style="border:1px solid #999;padding:8px 6px;font-size:15px;font-weight:bold;text-align:center;vertical-align:middle;">ڈیٹا کی آخری تاریخ</th>
+            <th style="border:1px solid #999;padding:8px 6px;width:8%;font-size:18.67px;font-weight:bold;text-align:center;vertical-align:middle;">نمبر شمار</th>
+            <th style="border:1px solid #999;padding:8px 6px;font-size:18.67px;font-weight:bold;text-align:center;vertical-align:middle;">مطلوبہ درکار CDR/IMEI</th>
+            <th style="border:1px solid #999;padding:8px 6px;font-size:18.67px;font-weight:bold;text-align:center;vertical-align:middle;">ماڈل فون (اگر معلوم ہو)</th>
+            <th style="border:1px solid #999;padding:8px 6px;font-size:18.67px;font-weight:bold;text-align:center;vertical-align:middle;">ڈیٹا کی ابتدائی تاریخ</th>
+            <th style="border:1px solid #999;padding:8px 6px;font-size:18.67px;font-weight:bold;text-align:center;vertical-align:middle;">ڈیٹا کی آخری تاریخ</th>
           </tr></thead>
           <tbody>
             ${rows.map((r,i)=>`<tr>
               <td style="border:1px solid #999;padding:5px;text-align:center;">${i+1}</td>
-              <td contenteditable="true" data-c="req" style="border:1px solid #999;padding:8px 6px;font-size:14px;text-align:center;vertical-align:middle;" dir="ltr">${r.req||''}</td>
-              <td contenteditable="true" data-c="model" style="border:1px solid #999;padding:8px 6px;font-size:14px;text-align:center;vertical-align:middle;">${r.model||''}</td>
-              <td contenteditable="true" data-c="from" style="border:1px solid #999;padding:8px 6px;font-size:14px;text-align:center;vertical-align:middle;" dir="ltr">${r.from||''}</td>
-              <td contenteditable="true" data-c="to" style="border:1px solid #999;padding:8px 6px;font-size:14px;text-align:center;vertical-align:middle;" dir="ltr">${r.to||''}</td>
+              <td contenteditable="true" data-c="req" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;" dir="ltr">${r.req||''}</td>
+              <td contenteditable="true" data-c="model" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;">${r.model||''}</td>
+              <td contenteditable="true" data-c="from" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;" dir="ltr">${r.from||''}</td>
+              <td contenteditable="true" data-c="to" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;" dir="ltr">${r.to||''}</td>
             </tr>`).join('')}
           </tbody>
         </table>
 
         <!-- Summary footer -->
-        <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;">
+        <table style="width:100%;border-collapse:collapse;font-size:18.67px;margin-top:10px;">
           <tr style="background:#f0f0f0;">
             <th style="border:1px solid #999;padding:5px;">ٹوٹل تعداد</th>
             <th style="border:1px solid #999;padding:5px;">تعداد سم نمبرز</th>
@@ -136,7 +136,7 @@ function _renderCdr() {
         <div style="font-size:11px;margin-top:4px;color:#444;">اس کیلئے یہی فارم علیحدہ سے بمعہ FIR لف کریں</div>
 
         <!-- Notes -->
-        <div style="margin-top:12px;font-size:11px;line-height:1.7;color:#333;border:1px solid #ccc;padding:8px;">
+        <div style="margin-top:12px;font-size:16px;line-height:1.7;color:#333;border:1px solid #ccc;padding:8px;">
           <div>۱۔ موبائل فون کال ڈیٹا ریکارڈ صرف FIR یا FIR سے متعلقہ ہونے کی صورت میں فراہم کیا جائے گا۔</div>
           <div>۲۔ اگر CDR's/IMEI's کا اندراج FIR میں نہ ہو تو ضمنی میں اندراج کریں۔</div>
           <div>۳۔ ضمنی نمبر <span contenteditable="true" data-k="zimni_number" style="border-bottom:1px solid #999;min-width:50px;display:inline-block;">${v('zimni_number')}</span> تاریخ <span contenteditable="true" data-k="zimni_date" style="border-bottom:1px solid #999;min-width:60px;display:inline-block;">${v('zimni_date')}</span> مرتبہ <span contenteditable="true" style="border-bottom:1px solid #999;min-width:50px;display:inline-block;"></span> (کاپی ضمنی ہمراہ بھجوائیں)</div>
@@ -144,13 +144,17 @@ function _renderCdr() {
           <div>۵۔ CDR کے ذریعے کیس ٹریس ہونے/ملزمان/اشتہاری پکڑے جانے پر IT آفس (موبائل ٹریکنگ سیل ملتان) کو بھی رپورٹ ارسال کی جائے۔</div>
         </div>
 
-        <!-- Forwarding -->
+        <!-- Forwarding (DSP right, SHO left, with signature gap) -->
         <div style="display:flex;justify-content:space-between;margin-top:24px;gap:20px;">
           <div style="flex:1;text-align:center;">
-            <div style="border-top:1px solid #333;padding-top:4px;">Forwarded Please<br>SHO تھانہ ${o.station||'صدر ملتان'}</div>
+            <div style="font-weight:600;">Forwarded Please</div>
+            <div style="height:80px;"></div>
+            <div style="border-top:1px solid #333;padding-top:6px;">سرکل DSP/SDPO</div>
           </div>
           <div style="flex:1;text-align:center;">
-            <div style="border-top:1px solid #333;padding-top:4px;">Forwarded<br>سرکل DSP/SDPO</div>
+            <div style="font-weight:600;">Forwarded</div>
+            <div style="height:80px;"></div>
+            <div style="border-top:1px solid #333;padding-top:6px;">SHO تھانہ ${o.station||'صدر ملتان'}</div>
           </div>
         </div>
 
@@ -168,10 +172,10 @@ function _cdrAddRow() {
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td style="border:1px solid #999;padding:5px;text-align:center;">${i+1}</td>
-    <td contenteditable="true" data-c="req" style="border:1px solid #999;padding:8px 6px;font-size:14px;text-align:center;vertical-align:middle;" dir="ltr"></td>
-    <td contenteditable="true" data-c="model" style="border:1px solid #999;padding:8px 6px;font-size:14px;text-align:center;vertical-align:middle;"></td>
-    <td contenteditable="true" data-c="from" style="border:1px solid #999;padding:8px 6px;font-size:14px;text-align:center;vertical-align:middle;" dir="ltr"></td>
-    <td contenteditable="true" data-c="to" style="border:1px solid #999;padding:8px 6px;font-size:14px;text-align:center;vertical-align:middle;" dir="ltr"></td>`;
+    <td contenteditable="true" data-c="req" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;" dir="ltr"></td>
+    <td contenteditable="true" data-c="model" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;"></td>
+    <td contenteditable="true" data-c="from" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;" dir="ltr"></td>
+    <td contenteditable="true" data-c="to" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;" dir="ltr"></td>`;
   tbody.appendChild(tr);
 }
 
@@ -246,10 +250,14 @@ function _newCdr() {
 function _printCdr() {
   const doc = document.getElementById('cdr-doc');
   if (!doc) return;
+  const dateStr = new Date().toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'});
   const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
-    <style>@page{size:A4;margin:10mm}body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;font-size:12px;line-height:1.7;color:#000;}
-    table{border-collapse:collapse;width:100%;}td,th{border:1px solid #000;padding:4px;}</style></head>
-    <body>${doc.innerHTML}</body></html>`;
+    <style>@page{size:A4;margin:10mm}
+      body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;font-size:18.67px;line-height:1.7;color:#000;margin:0;}
+      table{border-collapse:collapse;width:100%;}td,th{border:1px solid #000;padding:6px;}
+      .dio-print-footer{position:fixed;bottom:4mm;left:0;right:0;text-align:center;font-size:10px;color:#999;}
+    </style></head>
+    <body>${doc.innerHTML}<div class="dio-print-footer">Digital IO | printed on ${dateStr}</div></body></html>`;
   if (typeof dioPrint === 'function') dioPrint(html);
   else { const w=window.open('','_blank'); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),300); }
 }
