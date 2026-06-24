@@ -1210,6 +1210,7 @@ function _setTopNav(btn) {
   if (btn) btn.classList.add('active');
   _closeTopDD();
 }
+window._setTopNav = _setTopNav;
 function _toggleTopDD(e, menuId) {
   if (e) e.stopPropagation();
   const m = document.getElementById(menuId);
@@ -1224,6 +1225,8 @@ function _closeTopDD() {
     if (m) m.style.display = 'none';
   });
 }
+window._toggleTopDD = _toggleTopDD;
+window._closeTopDD = _closeTopDD;
 // Close dropdowns when clicking elsewhere
 document.addEventListener('click', function(e) {
   if (!e.target.closest('.topdd-menu') && !e.target.closest('.topnav-btn')) {

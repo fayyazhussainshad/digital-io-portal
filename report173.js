@@ -37,7 +37,7 @@ const R173_BOILER = {
   mukammal: 'جناب عالیٰ! مختصر حالات مقدمہ عنوان بالا اس طرح ہیں کہ دوران تفتیش مقدمہ ہذا مکمل ہوا۔ ملزمان کے خلاف کافی شہادت دستیاب ہوئی۔ چالان مکمل مرتب ہوکر ارسالِ خدمت ہے، سماعت فرمائی جائے۔',
   namukammal: 'جناب عالیٰ! مختصر حالات مقدمہ عنوان بالا اس طرح ہیں کہ تفتیش مقدمہ ہذا تاحال نامکمل ہے۔ بعض ملزمان ابھی گرفتار نہ ہوسکے۔ چالان نامکمل مرتب ہوکر ارسالِ خدمت ہے، سماعت فرمائی جائے۔',
   interim: 'جناب عالیٰ! مختصر حالات مقدمہ عنوان بالا اس طرح ہیں کہ تفتیش مقدمہ جاری ہے سردست انٹیرم رپورٹ مرتب ہوکر ارسال خدمت ہے سماعت فرمائی جائے۔',
-  ikhraj: 'جناب عالیٰ! پیش آمدہ حالات کی روشنی میں مقدمہ قابل اخراج پایا جاکر مدعیہ کو نتیجہ تفتیش سے آگاہ کرتے ہوئے رپورٹ اخراج مرتب کی گئی ہے جو ارسال خدمت ہے سماعت فرمائی جائے۔',
+  ikhraj: '',
   adampata: 'جناب عالیٰ! مختصر حالات مقدمہ عنوان بالا اس طرح ہیں کہ باوجود بھرپور کوشش ملزمان کا کوئی سراغ نہ مل سکا۔ رپورٹ عدم پتہ مرتب ہوکر ارسالِ خدمت ہے، سماعت فرمائی جائے۔',
 };
 
@@ -161,7 +161,8 @@ function _renderR173() {
 
         <!-- مختصر حالات مقدمہ -->
         <div style="margin-top:12px;font-weight:700;">مختصر حالات مقدمہ معہ جرم:</div>
-        <div contenteditable="true" data-k="halaat" style="border:1px solid #999;padding:10px;min-height:120px;text-align:justify;margin-top:4px;">${v('halaat', boiler)}</div>
+        <div contenteditable="true" data-k="halaat" data-ph="یہاں پر متن FIR، متن کراس ورژن، تفتیشی وجوہات اخراج مقدمہ لکھیں" style="border:1px solid #999;padding:10px;min-height:120px;text-align:justify;margin-top:4px;${v('halaat', boiler)?'':'color:#999;'}" onfocus="if(this.dataset.ph&&!this.innerText.trim()){this.style.color='#000';}" oninput="this.style.color=this.innerText.trim()?'#000':'#999';">${v('halaat', boiler)}</div>
+        <style>[data-k="halaat"]:empty:before{content:attr(data-ph);color:#999;}</style>
 
         ${isTatima ? `
         <!-- Tatima: رزلٹ نمبر + checkboxes -->
