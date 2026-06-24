@@ -14,6 +14,7 @@ const MISAL_CASE_DOCS = [
   { id:'memorandum',       name:'میمورنڈم',                  desc:'Memorandum' },
   { id:'cdr_analyzer',     name:'CDR Analyzer',              desc:'CDR Analyzer' },
   { id:'cdr_imei',         name:'CDR/IMEI',                  desc:'CDR/IMEI Analysis' },
+  { id:'cro_card',         name:'CRO کارڈ',                  desc:'Criminal Index Card' },
   { id:'staff',            name:'ہمراہی ملازمان',            desc:'Accompanying Staff' },
   { id:'index_naql',       name:'انڈیکس نقل مسل',           desc:'Index of Case File Copy' },
   { id:'arrest_form',      name:'فارم گرفتاری',              desc:'Arrest Form' },
@@ -259,7 +260,7 @@ async function _doAddMisalDoc(docId) {
   const isPersonForm = (docId === 'witnesses_fir' || docId === 'witnesses_cross' ||
                         docId === 'named_accused' || docId === 'unknown_accused' ||
                         docId === 'zamniyat' || docId === 'memorandum' ||
-                        docId === 'cdr_imei');
+                        docId === 'cdr_imei' || docId === 'cro_card');
   // If already added — open it (form for persons, editor for docs)
   if (_misalDocs[docId]) { _openMisalEditor(docId); return; }
   try {
@@ -336,6 +337,13 @@ function _openMisalEditor(docId) {
   if (docId === 'accused_cross') {
     _openDocId = docId;
     if (typeof openAccusedCard === 'function') openAccusedCard(_misalCaseId, 'cross_version');
+    return;
+  }
+
+  // Special: CRO کارڈ → criminal index card
+  if (docId === 'cro_card') {
+    _openDocId = docId;
+    if (typeof openCroCard === 'function') openCroCard(_misalCaseId);
     return;
   }
 
