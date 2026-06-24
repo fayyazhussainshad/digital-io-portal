@@ -112,15 +112,20 @@ function _renderCro() {
   const c = _croCase || {};
   const a = _croAccused || {};
   const s = (_croSaved && _croSaved.form_data) ? _croSaved.form_data : {};
-  const v = (k, def) => (s[k] !== undefined && s[k] !== null) ? s[k] : (def || '');
+  const v = (k, def) => (s[k] !== undefined && s[k] !== null && s[k] !== '') ? s[k] : (def || '');
   const photo = a.photo_url || a.photo || '';
 
-  const cell = (k, val) => `<td contenteditable="true" data-k="${k}" style="border:1px solid #000;padding:5px;min-width:60px;">${v(k, val)}</td>`;
-  const lbl = (t) => `<td style="border:1px solid #000;padding:5px;background:#f0f0f0;font-weight:600;white-space:nowrap;">${t}</td>`;
+  // Rule 2: editable cell — bold ONLY if filled
+  const ec = (k, val) => {
+    const value = v(k, val);
+    const bold = (value && String(value).trim() !== '') ? 'font-weight:bold;' : 'font-weight:normal;';
+    return `<td contenteditable="true" data-k="${k}" oninput="_croBoldCell(this)" style="border:1px solid #000;padding:4px;${bold}">${value}</td>`;
+  };
+  // label cell (always plain)
+  const lc = (t) => `<td style="border:1px solid #000;padding:4px;background:#f7f7f7;white-space:nowrap;">${t}</td>`;
 
   area.innerHTML = `
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
-    <!-- Toolbar -->
     <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
       <button class="btn btn-secondary btn-sm" onclick="_croBackToList()">← واپس فہرست</button>
       <div style="font-weight:700;font-size:14px;font-family:'Jameel Noori Nastaleeq',serif;">CRO کارڈ — ${a.name||'ملزم'}</div>
@@ -133,125 +138,145 @@ function _renderCro() {
     <div style="flex:1;overflow-y:auto;padding:16px;background:var(--bg-tertiary);">
       <div id="cro-doc" oninput="_croDirty=true" style="font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;">
 
-        <!-- ═══ PAGE 1 — FRONT ═══ -->
-        <div class="cro-page" style="max-width:210mm;margin:0 auto 20px;padding:12mm;background:#fff;color:#000;font-size:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-            <div style="border:1px solid #000;width:90px;height:110px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
-              ${photo ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;">` : '<span style="font-size:10px;color:#999;">تصویر</span>'}
-            </div>
-            <div style="text-align:center;flex:1;">
-              <div style="font-size:16px;font-weight:800;">سٹینڈرڈ کریمینل انڈکس کارڈ</div>
-              <div style="font-size:12px;">(برائے ضلع ${o.district||'ملتان'})</div>
-            </div>
-            <div style="text-align:left;font-size:11px;">
-              <div>CRO نمبر: <span contenteditable="true" data-k="cro_number" style="border-bottom:1px solid #999;min-width:60px;display:inline-block;">${v('cro_number')}</span></div>
-              <div>تاریخ: <span contenteditable="true" data-k="cro_date" style="border-bottom:1px solid #999;min-width:60px;display:inline-block;">${v('cro_date')}</span></div>
-            </div>
-          </div>
-
-          <!-- Personal details -->
-          <table style="width:100%;border-collapse:collapse;margin-top:10px;font-size:12px;">
-            <tr>${lbl('نام')}${cell('name', a.name||'')}${lbl('عرف')}${cell('alias')}${lbl('قومیت')}${cell('nationality','پاکستانی')}</tr>
-            <tr>${lbl('والد/شوہر کا نام')}${cell('father_name')}${lbl('ذات')}${cell('caste')}${lbl('تعلیم')}${cell('education')}</tr>
-            <tr>${lbl('مستقل پتہ')}${cell('perm_address')}${lbl('عارضی پتہ')}${cell('temp_address')}${lbl('پیشہ')}${cell('pesha', a.pesha||'')}</tr>
-            <tr>${lbl('شناختی کارڈ نمبر')}${cell('cnic', a.cnic||'')}${lbl('موبائل')}${cell('mobile', a.mobile||'')}${lbl('عمر')}${cell('umar', a.umar||'')}</tr>
-          </table>
-
-          <!-- Physical description (two columns) -->
-          <div style="display:flex;gap:10px;margin-top:10px;">
-            <table style="width:50%;border-collapse:collapse;font-size:11px;">
-              <tr>${lbl('رنگت/چہرہ')}${cell('rang', a.rang||'')}</tr>
-              <tr>${lbl('قد')}${cell('qad', a.qad||'')}</tr>
-              <tr>${lbl('جسم')}${cell('jism', a.jism||'')}</tr>
-              <tr>${lbl('بال (رنگ)')}${cell('hair_color')}</tr>
-              <tr>${lbl('داڑھی')}${cell('beard')}</tr>
-              <tr>${lbl('مونچھیں')}${cell('mustache')}</tr>
-              <tr>${lbl('آنکھیں')}${cell('eyes')}</tr>
-              <tr>${lbl('ناک')}${cell('nose')}</tr>
-            </table>
-            <table style="width:50%;border-collapse:collapse;font-size:11px;">
-              <tr>${lbl('زبان')}${cell('language','اردو/پنجابی')}</tr>
-              <tr>${lbl('آواز')}${cell('voice')}</tr>
-              <tr>${lbl('اندازِ گفتگو')}${cell('speech')}</tr>
-              <tr>${lbl('دانت')}${cell('teeth')}</tr>
-              <tr>${lbl('کان')}${cell('ears')}</tr>
-              <tr>${lbl('گردن')}${cell('neck')}</tr>
-              <tr>${lbl('وضع قطع')}${cell('build')}</tr>
-              <tr>${lbl('لباس')}${cell('dress')}</tr>
-            </table>
-          </div>
-
-          <!-- طریقہ واردات -->
-          <div style="margin-top:10px;font-weight:600;">طریقہ واردات:</div>
-          <div contenteditable="true" data-k="modus" style="border:1px solid #000;min-height:50px;padding:6px;">${v('modus')}</div>
-
-          <!-- ملکیت واردات / سواری -->
-          <table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:11px;">
-            <tr>${lbl('آنے کی سواری')}${cell('arrival_vehicle')}${lbl('جانے کی سواری')}${cell('depart_vehicle')}</tr>
-          </table>
-
-          <!-- ظاہری شناختی نشانات -->
-          <div style="margin-top:10px;font-weight:600;">ظاہری شناختی نشانات:</div>
-          <table style="width:100%;border-collapse:collapse;font-size:11px;">
-            <tr>${lbl('(1)')}${cell('mark1', a.nishan||'')}${lbl('(2)')}${cell('mark2')}</tr>
-          </table>
-
-          <div style="margin-top:8px;font-weight:600;">دیگر خاص بات:</div>
-          <div contenteditable="true" data-k="other_notes" style="border:1px solid #000;min-height:40px;padding:6px;">${v('other_notes')}</div>
-
-          <!-- Officer -->
-          <div style="margin-top:12px;font-size:11px;">
-            تحقیقی افسر: <b>${o.full_name||''}</b> | عہدہ: <b>${o.designation||''}</b> | تھانہ: <b>${o.station||''}</b> | موبائل: <b>${o.phone||''}</b>
-          </div>
+      <!-- ═══ PAGE 1 — طرف الف ═══ -->
+      <div class="cro-page" style="max-width:210mm;margin:0 auto 20px;padding:10mm;background:#fff;color:#000;font-size:11px;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;">
+        <div style="text-align:left;font-size:10px;">طرف الف</div>
+        <div style="text-align:center;font-size:15px;font-weight:800;">سٹینڈرڈ کریمینل انڈکس کارڈ</div>
+        <div style="text-align:center;font-size:11px;">(برائے جیل)</div>
+        <div style="display:flex;justify-content:flex-start;gap:20px;margin-top:4px;font-size:11px;">
+          <span>CRO نمبر: <span contenteditable="true" data-k="cro_number" oninput="_croBoldCell(this)" style="border-bottom:1px solid #999;min-width:80px;display:inline-block;${v('cro_number')?'font-weight:bold;':''}">${v('cro_number')}</span></span>
+          <span>فوٹوگراف تاریخ: <span contenteditable="true" data-k="cro_date" oninput="_croBoldCell(this)" style="border-bottom:1px solid #999;min-width:80px;display:inline-block;${v('cro_date')?'font-weight:bold;':''}">${v('cro_date')}</span></span>
         </div>
 
-        <!-- ═══ PAGE 2 — BACK ═══ -->
-        <div class="cro-page" style="max-width:210mm;margin:0 auto;padding:12mm;background:#fff;color:#000;font-size:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;">
-          <div style="text-align:center;font-size:14px;font-weight:800;margin-bottom:10px;">CRO کارڈ — طرف ب</div>
-
-          ${_croBackTable('موجودہ سابقہ ریکارڈ', ['نمبر شمار','مقدمہ نمبر','تھانہ','جرم','سزا','نتیجہ'], 'prev_record', v)}
-          ${_croBackTable('قانونی ریکارڈ', ['نمبر شمار','مقدمہ نمبر','تھانہ','جرم','سزا','نتیجہ'], 'legal_record', v)}
-          ${_croBackTable('ملاقاتی اشخاص کے کوائف', ['نمبر شمار','نام وپتہ بمعہ شہرت','رابطہ','تعلق'], 'visitors', v)}
-          ${_croBackTable('شریک جرم کے کوائف', ['نمبر شمار','نام وپتہ بمعہ شہرت','نوعیت','CRO نمبر'], 'accomplices', v)}
-
-          <!-- Fingerprints -->
-          <div style="margin-top:12px;font-weight:600;">نشانات انگشت:</div>
-          <table style="width:100%;border-collapse:collapse;font-size:9px;text-align:center;margin-top:4px;">
-            <tr>
-              ${['دائیں انگوٹھا','دائیں شہادت','دائیں درمیانی','دائیں انگشتی','دائیں چھنگلی'].map(f=>`<td style="border:1px solid #000;height:70px;width:20%;vertical-align:bottom;">${f}</td>`).join('')}
-            </tr>
-            <tr>
-              ${['بائیں انگوٹھا','بائیں شہادت','بائیں درمیانی','بائیں انگشتی','بائیں چھنگلی'].map(f=>`<td style="border:1px solid #000;height:70px;width:20%;vertical-align:bottom;">${f}</td>`).join('')}
-            </tr>
-          </table>
-          <table style="width:100%;border-collapse:collapse;font-size:9px;text-align:center;margin-top:6px;">
-            <tr>
-              <td style="border:1px solid #000;height:60px;width:25%;vertical-align:bottom;">دائیں انگلیاں یک وقتی</td>
-              <td style="border:1px solid #000;height:60px;width:25%;vertical-align:bottom;">دائیں انگوٹھا</td>
-              <td style="border:1px solid #000;height:60px;width:25%;vertical-align:bottom;">بائیں انگوٹھا</td>
-              <td style="border:1px solid #000;height:60px;width:25%;vertical-align:bottom;">بائیں انگلیاں یک وقتی</td>
-            </tr>
-          </table>
-
-          <div style="margin-top:14px;font-size:11px;">تیار کنندہ کا نام/عہدہ: <span contenteditable="true" data-k="prepared_by" style="border-bottom:1px solid #999;min-width:200px;display:inline-block;">${v('prepared_by', (o.full_name||'')+' '+(o.designation||''))}</span></div>
+        <!-- 4 photo boxes -->
+        <div style="display:flex;gap:6px;margin-top:8px;">
+          ${['سامنے مل','سامنے چہرہ','بائیں رخ چہرہ','دائیں رخ چہرہ'].map((lbl,i)=>`
+          <div style="flex:1;border:1px solid #000;height:120px;display:flex;align-items:flex-end;justify-content:center;font-size:9px;text-align:center;overflow:hidden;position:relative;">
+            ${(i===3 && photo) ? `<img src="${photo}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">` : ''}
+            <span style="position:relative;background:rgba(255,255,255,0.7);padding:1px;">${lbl}<br>یہاں نہ چپاں کریں</span>
+          </div>`).join('')}
         </div>
+
+        <div style="margin-top:6px;">متعلقہ رپورٹی پولیس اسٹیشن: <span contenteditable="true" data-k="police_station" oninput="_croBoldCell(this)" style="border-bottom:1px solid #999;min-width:140px;display:inline-block;${v('police_station',o.station)?'font-weight:bold;':''}">${v('police_station', o.station||'')}</span></div>
+
+        <!-- Name row -->
+        <table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:11px;">
+          <tr>${lc('نام')}${ec('name', a.name||'')}${lc('عرف')}${ec('alias')}${lc('ذات')}${ec('caste')}${lc('قومیت')}${ec('nationality','پاکستانی')}${lc('تعلیم')}${ec('education')}</tr>
+          <tr>${lc('والد/شوہر کا نام')}${ec('father_name')}${lc('عرف')}${ec('father_alias')}${lc('تاریخ پیدائش/عمر')}${ec('dob', a.umar||'')}${lc('مستقل پتہ')}${ec('perm_address')}${lc('عارضی پتہ')}${ec('temp_address')}</tr>
+        </table>
+
+        <!-- Two columns: right physical / middle crime -->
+        <div style="display:flex;gap:6px;margin-top:8px;">
+          <!-- Middle crime column -->
+          <table style="width:55%;border-collapse:collapse;font-size:10px;">
+            <tr>${lc('کیفیت')}${ec('kaifiyat')}</tr>
+            <tr>${lc('نوعیت واردات')}${ec('noiyat_wardat')}</tr>
+            <tr>${lc('نوعیت مسروقہ')}${ec('noiyat_masruqa')}</tr>
+            <tr>${lc('طریقہ واردات')}<td contenteditable="true" data-k="modus" oninput="_croBoldCell(this)" style="border:1px solid #000;padding:4px;min-height:50px;${v('modus')?'font-weight:bold;':''}">${v('modus')}</td></tr>
+            <tr>${lc('جسمانی نقص')}${ec('jismani_nuqs')}</tr>
+            <tr>${lc('ناگرڈ')}${ec('nagird')}</tr>
+            <tr>${lc('اسلحہ واردات')}${ec('aslha_wardat')}</tr>
+            <tr>${lc('آنے کی سواری')}${ec('arrival_vehicle')}</tr>
+            <tr>${lc('جانے کی سواری')}${ec('depart_vehicle')}</tr>
+            <tr>${lc('تفصیل سواری واردات')}<td contenteditable="true" data-k="sawari_detail" oninput="_croBoldCell(this)" style="border:1px solid #000;padding:4px;min-height:40px;${v('sawari_detail')?'font-weight:bold;':''}">${v('sawari_detail')}</td></tr>
+            <tr>${lc('دیگر خاص بات')}<td contenteditable="true" data-k="other_notes" oninput="_croBoldCell(this)" style="border:1px solid #000;padding:4px;min-height:40px;${v('other_notes')?'font-weight:bold;':''}">${v('other_notes')}</td></tr>
+            <tr>${lc('گینگ کا وزیہ')}${ec('gang')}</tr>
+            <tr>${lc('واردات طبہ')}${ec('wardat_taba')}</tr>
+            <tr>${lc('جرائم کا نوعیت')}${ec('jarayim')}</tr>
+            <tr>${lc('ظاہری شناختی نشانات (1)')}${ec('mark1', a.nishan||'')}</tr>
+            <tr>${lc('(2)')}${ec('mark2')}</tr>
+          </table>
+
+          <!-- Right physical column -->
+          <table style="width:45%;border-collapse:collapse;font-size:10px;">
+            <tr>${lc('شناختی کارڈ نمبر')}${ec('cnic', a.cnic||'')}</tr>
+            <tr>${lc('جنس')}${ec('gender')}</tr>
+            <tr>${lc('جسمانی وضع')}${ec('build', a.jism||'')}</tr>
+            <tr>${lc('آواز')}${ec('voice')}</tr>
+            <tr>${lc('انداز گفتگو')}${ec('speech')}</tr>
+            <tr>${lc('زبان')}${ec('language')}</tr>
+            <tr>${lc('وضع قطع')}${ec('waza_qata')}</tr>
+            <tr>${lc('پیشن متعارف')}${ec('paishani')}</tr>
+            <tr>${lc('عادات')}${ec('habits')}</tr>
+            <tr>${lc('لباس (ذریعہ)')}${ec('dress_type')}</tr>
+            <tr>${lc('لباس (حیثیت)')}${ec('dress_status')}</tr>
+            <tr>${lc('رنگت/چہرہ')}${ec('rang', a.rang||'')}</tr>
+            <tr>${lc('بال (رنگ)')}${ec('hair_color')}</tr>
+            <tr>${lc('بال (سائز)')}${ec('hair_size')}</tr>
+            <tr>${lc('بال (علیہ)')}${ec('hair_type')}</tr>
+            <tr>${lc('داڑھی')}${ec('beard')}</tr>
+            <tr>${lc('مونچھیں')}${ec('mustache')}</tr>
+            <tr>${lc('رخسار')}${ec('cheeks', a.chehra||'')}</tr>
+            <tr>${lc('کان')}${ec('ears')}</tr>
+            <tr>${lc('آنکھیں (رنگت)')}${ec('eyes_color')}</tr>
+            <tr>${lc('آنکھیں (سائز)')}${ec('eyes_size')}</tr>
+            <tr>${lc('ناک (علیہ)')}${ec('nose_type')}</tr>
+            <tr>${lc('ناک (سائز)')}${ec('nose_size')}</tr>
+            <tr>${lc('گردن')}${ec('neck')}</tr>
+            <tr>${lc('چھاتی')}${ec('chest')}</tr>
+            <tr>${lc('قد')}${ec('qad', a.qad||'')}</tr>
+            <tr>${lc('دانت (رنگت/ساخت)')}${ec('teeth')}</tr>
+          </table>
+        </div>
+
+        <div style="margin-top:8px;font-size:11px;">
+          تحقیقی افسر: نام وعہدہ <b>${o.full_name||''} ${o.designation||''}</b> | تھانہ <b>${o.station||''}</b> | موبائل نمبر <b>${o.phone||''}</b>
+        </div>
+      </div>
+
+      <!-- ═══ PAGE 2 — طرف ب ═══ -->
+      <div class="cro-page" style="max-width:210mm;margin:0 auto;padding:10mm;background:#fff;color:#000;font-size:11px;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;">
+        <div style="text-align:left;font-size:10px;">طرف ب</div>
+
+        ${_croBackTable('ملزم کا موجودہ سابقہ ریکارڈ', ['نمبر شمار','مقدمہ نمبر','تھانہ','جرم','سزا','رہائی','تاریخ','نتیجہ'], 'prev_record', v)}
+        ${_croBackTable('ملزم کے قانونی ریکارڈ', ['نمبر شمار','مقدمہ نمبر','تھانہ','جرم','سزا','رہائی','تاریخ','نتیجہ'], 'legal_record', v)}
+        ${_croBackTable('ملاقاتی اشخاص کے کوائف', ['نمبر شمار','نام وپتہ بمعہ سکونت','شناختی کارڈ نمبر','موبائل نمبر','رشتہ/تعلق'], 'visitors', v)}
+        ${_croBackTable('شریک جرم کے کوائف', ['نمبر شمار','نام وپتہ بمعہ سکونت','نوعیت (ملاقات/تاریخ/مقام)','CRO نمبر'], 'accomplices', v)}
+
+        <div style="text-align:center;font-weight:600;margin-top:12px;">نشانات انگشت گھمائے ہوئے سادہ یک وقتی</div>
+        <table style="width:100%;border-collapse:collapse;font-size:9px;text-align:center;margin-top:4px;">
+          <tr>
+            ${['دائیں چھوٹی','دائیں انگشتی','دائیں درمیانی','دائیں شہادت','دائیں انگوٹھا'].map(f=>`<td style="border:1px solid #000;height:90px;width:20%;vertical-align:bottom;">${f}</td>`).join('')}
+          </tr>
+          <tr>
+            ${['بائیں چھوٹی','بائیں انگشتی','بائیں درمیانی','بائیں شہادت','بائیں انگوٹھا'].map(f=>`<td style="border:1px solid #000;height:90px;width:20%;vertical-align:bottom;">${f}</td>`).join('')}
+          </tr>
+        </table>
+        <table style="width:100%;border-collapse:collapse;font-size:9px;text-align:center;margin-top:6px;">
+          <tr>
+            <td style="border:1px solid #000;height:80px;width:25%;vertical-align:bottom;">دائیں چاراں انگلیاں یک وقتی</td>
+            <td style="border:1px solid #000;height:80px;width:25%;vertical-align:bottom;">دایاں انگوٹھا</td>
+            <td style="border:1px solid #000;height:80px;width:25%;vertical-align:bottom;">بایاں انگوٹھا</td>
+            <td style="border:1px solid #000;height:80px;width:25%;vertical-align:bottom;">بائیں چاراں انگلیاں یک وقتی</td>
+          </tr>
+        </table>
+
+        <div style="margin-top:12px;font-size:11px;">تیار کنندہ کا نام/عہدہ: <span contenteditable="true" data-k="prepared_by" oninput="_croBoldCell(this)" style="border-bottom:1px solid #999;min-width:200px;display:inline-block;${v('prepared_by',(o.full_name||''))?'font-weight:bold;':''}">${v('prepared_by', (o.full_name||'')+' '+(o.designation||''))}</span></div>
+      </div>
 
       </div>
     </div>
   </div>`;
 }
 
-// Back-side editable table builder (4 rows)
+// Rule 2: bold cell only when it has content
+function _croBoldCell(el) {
+  if (!el) return;
+  const txt = (el.innerText || el.textContent || '').trim();
+  el.style.fontWeight = txt ? 'bold' : 'normal';
+}
 function _croBackTable(title, cols, key, v) {
   let rows = '';
   for (let i = 0; i < 4; i++) {
     rows += '<tr>' + cols.map((col, ci) => {
-      if (ci === 0) return `<td style="border:1px solid #000;padding:4px;text-align:center;width:8%;">${i+1}</td>`;
-      return `<td contenteditable="true" data-k="${key}_${i}_${ci}" style="border:1px solid #000;padding:4px;">${v(key+'_'+i+'_'+ci)}</td>`;
+      if (ci === 0) return `<td style="border:1px solid #000;padding:4px;text-align:center;width:7%;">${i+1}</td>`;
+      const val = v(key+'_'+i+'_'+ci);
+      const bold = (val && String(val).trim() !== '') ? 'font-weight:bold;' : '';
+      return `<td contenteditable="true" data-k="${key}_${i}_${ci}" oninput="_croBoldCell(this)" style="border:1px solid #000;padding:4px;${bold}">${val}</td>`;
     }).join('') + '</tr>';
   }
   return `
-    <div style="margin-top:10px;font-weight:600;">${title}:</div>
+    <div style="margin-top:10px;font-weight:600;text-align:center;">${title}</div>
     <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:4px;">
       <tr style="background:#f0f0f0;">${cols.map(c=>`<th style="border:1px solid #000;padding:4px;">${c}</th>`).join('')}</tr>
       ${rows}
@@ -294,8 +319,8 @@ function _printCro() {
   if (!doc) return;
   const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
     <style>@page{size:A4;margin:8mm}
-      body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;font-size:11pt;color:#000;margin:0;}
-      table{border-collapse:collapse;width:100%;}td,th{border:1px solid #000;}
+      body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;font-size:10pt;color:#000;margin:0;}
+      table{border-collapse:collapse;width:100%;}td,th{border:1px solid #000;padding:2px 4px;}
       .cro-page{page-break-after:always;box-shadow:none !important;border-radius:0 !important;padding:0 !important;margin:0 !important;}
       .cro-page:last-child{page-break-after:auto;}
       img{max-width:100%;}
