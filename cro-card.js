@@ -8,29 +8,84 @@ let _croCase = null;
 let _croAccused = null;
 let _croSaved = null;
 
+let _croAllAccused = [];
+let _croAllCards = {};   // accused_id -> saved card
+let _croDirty = false;
+
 async function openCroCard(caseId) {
   _croCaseId = caseId || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
             || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
   if (typeof getCase === 'function' && _croCaseId) {
     try { _croCase = await getCase(_croCaseId); } catch(_) { _croCase = null; }
   }
-  await _loadCroAccused();
-  await _loadCro();
+  await _loadCroList();
+  _renderCroList();
+}
+
+async function _loadCroList() {
+  // Load ALL accused (both fir + cross_version)
+  try {
+    const { data } = await supabaseClient.from('case_accused').select('*')
+      .eq('case_id', _croCaseId).order('created_at',{ascending:true});
+    _croAllAccused = data || [];
+  } catch(_) {
+    try { _croAllAccused = JSON.parse(localStorage.getItem('dio_accused_'+_croCaseId)||'[]'); } catch(_2) { _croAllAccused = []; }
+  }
+  // Load ALL saved CRO cards for this case (keyed by accused_id)
+  _croAllCards = {};
+  try {
+    const { data } = await supabaseClient.from('cro_cards').select('*').eq('case_id', _croCaseId);
+    (data||[]).forEach(card => { if (card.accused_id) _croAllCards[card.accused_id] = card; });
+  } catch(_) {}
+}
+
+function _renderCroList() {
+  const area = document.getElementById('workspace-editor-area')
+            || document.getElementById('workspace-tab-content')
+            || document.getElementById('page-content');
+  if (!area) return;
+
+  if (!_croAllAccused.length) {
+    area.innerHTML = `<div style="padding:40px 20px;text-align:center;direction:rtl;color:var(--text-muted);">
+      <div style="font-size:40px;margin-bottom:10px;">👤</div>
+      <div style="font-size:16px;font-family:'Jameel Noori Nastaleeq',serif;">ملزمان درج نہیں — پہلے ملزمان شامل کریں</div>
+    </div>`;
+    return;
+  }
+
+  const rows = _croAllAccused.map(a => {
+    const hasCard = !!_croAllCards[a.id];
+    const typeName = (a.accused_type === 'cross_version') ? 'کراس ورژن' : 'FIR';
+    const typeColor = (a.accused_type === 'cross_version') ? 'var(--amber)' : 'var(--accent)';
+    return `
+    <div onclick="_openCroForAccused('${a.id}')" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;direction:rtl;"
+      onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+      <span style="font-size:20px;">${hasCard ? '✅' : '➕'}</span>
+      <div style="flex:1;">
+        <div style="font-weight:700;font-size:16px;font-family:'Jameel Noori Nastaleeq',serif;">${a.name||'—'}</div>
+        <div style="font-size:13px;color:var(--text-muted);">${a.cnic||'بدون شناختی کارڈ'} · <span style="color:${typeColor};">${typeName}</span></div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();_openCroForAccused('${a.id}')">CRO کارڈ دیکھیں/بنائیں</button>
+    </div>`;
+  }).join('');
+
+  area.innerHTML = `
+  <div style="padding:14px;direction:rtl;height:100%;overflow-y:auto;">
+    <div style="font-size:18px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:14px;color:var(--accent);">CRO کارڈ — ملزمان کی فہرست</div>
+    ${rows}
+  </div>`;
+}
+
+async function _openCroForAccused(accusedId) {
+  _croAccused = _croAllAccused.find(a => a.id === accusedId) || null;
+  _croSaved = _croAllCards[accusedId] || null;
+  _croDirty = false;
   _renderCro();
 }
 
-async function _loadCroAccused() {
-  // Get first FIR accused for auto-fill
-  try {
-    const { data } = await supabaseClient.from('case_accused').select('*')
-      .eq('case_id', _croCaseId).order('created_at',{ascending:true}).limit(1).maybeSingle();
-    _croAccused = data || null;
-  } catch(_) {
-    try {
-      const cached = JSON.parse(localStorage.getItem('dio_accused_'+_croCaseId)||'[]');
-      _croAccused = cached[0] || null;
-    } catch(_2) { _croAccused = null; }
-  }
+function _croBackToList() {
+  if (_croDirty && !confirm('غیر محفوظ تبدیلیاں ضائع ہو جائیں گی۔ کیا واپس جانا چاہتے ہیں؟')) return;
+  _renderCroList();
 }
 
 async function _loadCro() {
@@ -67,7 +122,8 @@ function _renderCro() {
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
     <!-- Toolbar -->
     <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
-      <div style="font-weight:700;font-size:14px;font-family:'Jameel Noori Nastaleeq',serif;">CRO کارڈ</div>
+      <button class="btn btn-secondary btn-sm" onclick="_croBackToList()">← واپس فہرست</button>
+      <div style="font-weight:700;font-size:14px;font-family:'Jameel Noori Nastaleeq',serif;">CRO کارڈ — ${a.name||'ملزم'}</div>
       <div style="margin-right:auto;display:flex;gap:6px;">
         <button class="btn btn-primary btn-sm" onclick="_saveCro()">💾 محفوظ کریں</button>
         <button class="btn btn-secondary btn-sm" onclick="_printCro()">🖨️ پرنٹ کریں (دونوں طرف)</button>
@@ -75,7 +131,7 @@ function _renderCro() {
     </div>
 
     <div style="flex:1;overflow-y:auto;padding:16px;background:var(--bg-tertiary);">
-      <div id="cro-doc" style="font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;">
+      <div id="cro-doc" oninput="_croDirty=true" style="font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;">
 
         <!-- ═══ PAGE 1 — FRONT ═══ -->
         <div class="cro-page" style="max-width:210mm;margin:0 auto 20px;padding:12mm;background:#fff;color:#000;font-size:12px;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;">
@@ -227,6 +283,8 @@ async function _saveCro() {
       _croSaved = data || { ...rec, id:'tmp_'+Date.now() };
     }
     try { localStorage.setItem('dio_cro_'+_croCaseId, JSON.stringify(_croSaved)); } catch(_) {}
+    if (_croAccused && _croAccused.id) _croAllCards[_croAccused.id] = _croSaved;
+    _croDirty = false;
     showToast('✅ CRO کارڈ محفوظ ہو گیا', 'success');
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
