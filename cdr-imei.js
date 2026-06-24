@@ -139,22 +139,22 @@ function _renderCdr() {
         <div style="margin-top:12px;font-size:16px;line-height:1.7;color:#333;border:1px solid #ccc;padding:8px;">
           <div>۱۔ موبائل فون کال ڈیٹا ریکارڈ صرف FIR یا FIR سے متعلقہ ہونے کی صورت میں فراہم کیا جائے گا۔</div>
           <div>۲۔ اگر CDR's/IMEI's کا اندراج FIR میں نہ ہو تو ضمنی میں اندراج کریں۔</div>
-          <div>۳۔ ضمنی نمبر <span contenteditable="true" data-k="zimni_number" style="border-bottom:1px solid #999;min-width:50px;display:inline-block;">${v('zimni_number')}</span> تاریخ <span contenteditable="true" data-k="zimni_date" style="border-bottom:1px solid #999;min-width:60px;display:inline-block;">${v('zimni_date')}</span> مرتبہ <span contenteditable="true" style="border-bottom:1px solid #999;min-width:50px;display:inline-block;"></span> (کاپی ضمنی ہمراہ بھجوائیں)</div>
+          <div style="display:flex;align-items:center;gap:20px;flex-wrap:nowrap;">۳۔ <span style="margin:0 16px;">ضمنی نمبر <span contenteditable="true" data-k="zimni_number" style="border-bottom:1px solid #999;min-width:120px;display:inline-block;">${v('zimni_number')}</span></span><span style="margin:0 16px;">تاریخ <span contenteditable="true" data-k="zimni_date" style="border-bottom:1px solid #999;min-width:120px;display:inline-block;">${v('zimni_date')}</span></span><span style="margin:0 16px;">مرتبہ <span contenteditable="true" style="border-bottom:1px solid #999;min-width:120px;display:inline-block;"></span></span><span style="margin-right:12px;">(کاپی ضمنی ہمراہ بھجوائیں)</span></div>
           <div>۴۔ CDR کے غلط استعمال کی صورت میں ذمہ دار افسر کے خلاف سخت محکمانہ کاروائی کی جائیگی۔</div>
           <div>۵۔ CDR کے ذریعے کیس ٹریس ہونے/ملزمان/اشتہاری پکڑے جانے پر IT آفس (موبائل ٹریکنگ سیل ملتان) کو بھی رپورٹ ارسال کی جائے۔</div>
         </div>
 
-        <!-- Forwarding (DSP right, SHO left, with signature gap) -->
-        <div style="display:flex;justify-content:space-between;margin-top:24px;gap:20px;">
+        <!-- Forwarding (DSP right, SHO left, signature gap, all centered) -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:24px;gap:20px;">
           <div style="flex:1;text-align:center;">
-            <div style="font-weight:600;text-align:left;padding-left:12px;">Forwarded Please</div>
+            <div style="font-weight:600;text-align:center;">Forwarded Please</div>
             <div style="height:80px;"></div>
-            <div style="border-top:1px solid #333;padding-top:6px;">سرکل DSP/SDPO</div>
+            <div style="border-top:1px solid #333;width:70%;margin:0 auto;padding-top:6px;text-align:center;">سرکل DSP/SDPO</div>
           </div>
           <div style="flex:1;text-align:center;">
-            <div style="font-weight:600;text-align:left;padding-left:12px;">Forwarded</div>
+            <div style="font-weight:600;text-align:center;">Forwarded</div>
             <div style="height:80px;"></div>
-            <div style="border-top:1px solid #333;padding-top:6px;">SHO تھانہ ${o.station||'صدر ملتان'}</div>
+            <div style="border-top:1px solid #333;width:70%;margin:0 auto;padding-top:6px;text-align:center;">SHO تھانہ ${o.station||'صدر ملتان'}</div>
           </div>
         </div>
 
