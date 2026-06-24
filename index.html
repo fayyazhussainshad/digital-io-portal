@@ -62,7 +62,7 @@
   --radius: 12px;
   --radius-sm: 8px;
   --sidebar-width: 240px;
-  --topbar-height: 52px;
+  --topbar-height: 48px;
   --bottombar-height: 32px;
   --font-main: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu','Aptos','Segoe UI',system-ui,sans-serif;
   --font-display: 'Aptos Display', 'Aptos', 'Segoe UI', system-ui, sans-serif;
@@ -491,11 +491,12 @@ body.workspace-mode .page-content { height: 100vh !important; }
 .topbar-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); background: var(--bg-tertiary); padding: 5px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); }
 
 /* ═══ TOP NAVIGATION BUTTONS (replace sidebar) ═══ */
-.topnav-btn { background: none; border: 1px solid transparent; border-radius: 8px; padding: 7px 12px; color: var(--text-secondary); font-size: 14px; cursor: pointer; white-space: nowrap; transition: all 0.15s; font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; flex-shrink: 0; }
+.topnav-btn { background: none; border: 1px solid transparent; border-radius: 8px; padding: 6px 10px; color: var(--text-secondary); font-size: 13px; cursor: pointer; white-space: nowrap; transition: all 0.15s; font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; flex-shrink: 0; }
 .topnav-btn:hover { background: var(--hover-bg); color: var(--text-primary); }
 .topnav-btn.active { background: var(--nav-active); color: var(--accent); font-weight: 700; }
 .topnav-label { font-size: 13px; }
 .topmore-item { display: block; padding: 9px 12px; border-radius: 6px; font-size: 13px; color: var(--text-secondary); cursor: pointer; font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; transition: all 0.12s; }
+.topdd-menu { position: fixed; top: 48px; left: 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 9999; min-width: 180px; max-height: 80vh; overflow-y: auto; padding: 6px; direction: rtl; }
 .topmore-item:hover { background: var(--hover-bg); color: var(--accent); }
 
 /* SIDEBAR FULLY REMOVED — top-nav is used on all screens, workspace gets full width */
@@ -512,7 +513,8 @@ body.workspace-mode .page-content { height: 100vh !important; }
 /* MOBILE: top nav scrolls horizontally, labels hidden to save space */
 @media (max-width: 768px) {
   .topnav-label { display: none; }
-  .topnav-btn { padding: 7px 9px; font-size: 16px; }
+  .topnav-btn { padding: 0; width: 36px; height: 36px; font-size: 18px; display: inline-flex; align-items: center; justify-content: center; }
+  #status-text { display: none; }
 }
 
 /* ═══ COMPACT TOP NAV (replaces sidebar) ═══ */
@@ -1080,35 +1082,41 @@ window.addEventListener('unhandledrejection', function(e){
         <!-- Main nav buttons (desktop top nav) -->
         <button class="topnav-btn active" onclick="showPage('dashboard',null);_setTopNav(this)" title="ڈیش بورڈ">🏠<span class="topnav-label"> ڈیش بورڈ</span></button>
         <button class="topnav-btn" onclick="showPage('cases',null);_setTopNav(this)" title="مقدمات">📁<span class="topnav-label"> مقدمات</span></button>
-        <button class="topnav-btn" onclick="showPage('fivec',null);_setTopNav(this)" title="5-C درخواستیں">📋<span class="topnav-label"> 5-C</span></button>
+        <button class="topnav-btn" onclick="showPage('fivec',null);_setTopNav(this)" title="5-C درخواستیں">📋<span class="topnav-label"> C-5</span></button>
         <button class="topnav-btn" onclick="showPage('law',null);_setTopNav(this)" title="قانونی لائبریری">⚖️<span class="topnav-label"> قانونی لائبریری</span></button>
         <button class="topnav-btn" onclick="showPage('search',null);_setTopNav(this)" title="تلاش">🔍<span class="topnav-label"> تلاش</span></button>
         <button class="topnav-btn" onclick="showPage('reminders',null);_setTopNav(this)" title="یاددہانیاں">🔔<span class="topnav-label"> یاددہانی</span></button>
-        <!-- More dropdown -->
-        <div style="position:relative;display:inline-block;">
-          <button class="topnav-btn" onclick="_toggleTopMore(event)" title="مزید">⋯<span class="topnav-label"> مزید</span></button>
-          <div id="top-more-menu" style="display:none;position:fixed;top:52px;left:8px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:3000;min-width:200px;max-height:80vh;overflow-y:auto;padding:6px;direction:rtl;">
 
-            <a class="topmore-item" onclick="showPage('diary',null);_closeTopMore()">📓 ڈیجیٹل ڈائری</a>
-            <a class="topmore-item" onclick="showPage('incident',null);_closeTopMore()">🚨 واقعاتی رپورٹ</a>
-            <a class="topmore-item" onclick="showPage('patrol',null);_closeTopMore()">🚔 گشت</a>
-            <a class="topmore-item" onclick="showPage('forms',null);_closeTopMore()">📥 ٹیمپلیٹس</a>
-            <a class="topmore-item" onclick="showPage('cdr',null);_closeTopMore()">📞 CDR Analyzer</a>
-            <a class="topmore-item" onclick="showPage('suspects',null);_closeTopMore()">👤 ملزمان / گواہان</a>
-            <a class="topmore-item" onclick="showPage('performance',null);_closeTopMore()">📊 کارکردگی</a>
-            <a class="topmore-item" onclick="showPage('backup',null);_closeTopMore()">☁️ بیک اپ</a>
-            <a class="topmore-item" onclick="showSubscriptionPage();_closeTopMore()">💎 سبسکرپشن</a>
-            <a class="topmore-item" onclick="showPage('bin',null);_closeTopMore()">🗑️ حذف شدہ مواد</a>
-            <a class="topmore-item" id="top-admin-item" style="display:none;" onclick="showPage('admin',null);_closeTopMore()">👮 ایڈمن</a>
-            <a class="topmore-item" onclick="showPage('settings',null);_closeTopMore()">⚙️ ترتیبات</a>
+        <!-- اوزار (Tools) dropdown -->
+        <div style="position:relative;display:inline-block;">
+          <button class="topnav-btn" onclick="_toggleTopDD(event,'tools-menu')" title="اوزار">🔧<span class="topnav-label"> اوزار</span> ▾</button>
+          <div id="tools-menu" class="topdd-menu" style="display:none;">
+            <a class="topmore-item" onclick="showPage('diary',null);_closeTopDD()">📓 ڈیجیٹل ڈائری</a>
+            <a class="topmore-item" onclick="showPage('incident',null);_closeTopDD()">🚨 واقعاتی رپورٹ</a>
+            <a class="topmore-item" onclick="showPage('patrol',null);_closeTopDD()">🚔 گشت</a>
+            <a class="topmore-item" onclick="showPage('forms',null);_closeTopDD()">📡 ہمپلیس</a>
+            <a class="topmore-item" onclick="showPage('cdr',null);_closeTopDD()">📞 CDR Analyzer</a>
+            <a class="topmore-item" onclick="showPage('suspects',null);_closeTopDD()">👤 ملزمان / گواہان</a>
+            <a class="topmore-item" onclick="showPage('performance',null);_closeTopDD()">📊 کارکردگی</a>
+            <a class="topmore-item" onclick="showPage('backup',null);_closeTopDD()">☁️ بیک اپ</a>
+          </div>
+        </div>
+
+        <!-- اکاؤنٹ (Account) dropdown -->
+        <div style="position:relative;display:inline-block;">
+          <button class="topnav-btn" onclick="_toggleTopDD(event,'account-menu')" title="اکاؤنٹ">👤<span class="topnav-label"> اکاؤنٹ</span> ▾</button>
+          <div id="account-menu" class="topdd-menu" style="display:none;">
+            <a class="topmore-item" onclick="showSubscriptionPage();_closeTopDD()">💎 سبسکرپشن</a>
+            <a class="topmore-item" onclick="showPage('bin',null);_closeTopDD()">🗑️ حذف شدہ مواد</a>
+            <a class="topmore-item" id="top-admin-item" style="display:none;" onclick="showPage('admin',null);_closeTopDD()">👮 ایڈمن</a>
+            <a class="topmore-item" onclick="showPage('settings',null);_closeTopDD()">⚙️ ترتیبات</a>
             <a class="topmore-item" style="color:var(--red);border-top:1px solid var(--border);margin-top:4px;" onclick="doLogout()">🚪 لاگ آؤٹ</a>
           </div>
         </div>
       </div>
       <div class="topbar-right">
         <button class="topbar-btn" id="theme-picker-btn" onclick="openThemePicker()" title="تھیم" style="font-size:16px;">🎨</button>
-        <div class="topbar-status"><span class="status-dot" id="status-dot"></span><span id="status-text">Connecting</span><span id="sync-label" style="font-size:10px;color:var(--text-muted);margin-right:4px;"></span></div>
-        <div id="topbar-avatar" onclick="showPage('settings',null)" title="پروفائل" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent-dark),var(--accent));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;cursor:pointer;overflow:hidden;flex-shrink:0;">IO</div>
+        <div class="topbar-status" style="display:flex;align-items:center;gap:4px;"><span class="status-dot" id="status-dot"></span><span id="status-text" style="font-size:11px;">Online</span></div>
       </div>
     </div>
 
@@ -1199,22 +1207,26 @@ function _toggleMoreNav(el) {
 function _setTopNav(btn) {
   document.querySelectorAll('.topnav-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  _closeTopMore();
+  _closeTopDD();
 }
-function _toggleTopMore(e) {
+function _toggleTopDD(e, menuId) {
   if (e) e.stopPropagation();
-  const m = document.getElementById('top-more-menu');
-  if (m) m.style.display = m.style.display === 'none' ? 'block' : 'none';
+  const m = document.getElementById(menuId);
+  if (!m) return;
+  const wasOpen = m.style.display === 'block';
+  _closeTopDD();
+  if (!wasOpen) m.style.display = 'block';
 }
-function _closeTopMore() {
-  const m = document.getElementById('top-more-menu');
-  if (m) m.style.display = 'none';
+function _closeTopDD() {
+  ['tools-menu','account-menu'].forEach(id => {
+    const m = document.getElementById(id);
+    if (m) m.style.display = 'none';
+  });
 }
-// Close more-menu when clicking elsewhere
+// Close dropdowns when clicking elsewhere
 document.addEventListener('click', function(e) {
-  const m = document.getElementById('top-more-menu');
-  if (m && m.style.display === 'block' && !e.target.closest('#top-more-menu') && !e.target.closest('.topnav-btn')) {
-    m.style.display = 'none';
+  if (!e.target.closest('.topdd-menu') && !e.target.closest('.topnav-btn')) {
+    _closeTopDD();
   }
 });
 function _sidebarOpen() {}
