@@ -78,7 +78,7 @@ function _renderMatnTable(rows) {
       <th style="padding:8px;text-align:center;border:1px solid var(--border);width:90px;">ایکشن</th>
     </tr></thead><tbody>
     ${rows.map(m => `<tr style="background:rgba(245,158,11,0.08);">
-      <td style="padding:10px;border:1px solid var(--border);text-align:justify;font-family:'Jameel Noori Nastaleeq',serif;line-height:1.9;">${(m.matn||'').slice(0,300)}${(m.matn||'').length>300?'...':''}</td>
+      <td style="padding:10px;border:1px solid var(--border);text-align:justify;font-family:'Jameel Noori Nastaleeq',serif;line-height:1.8;font-size:14px;min-height:80px;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">${m.matn||''}</td>
       <td style="padding:6px;border:1px solid var(--border);text-align:center;">
         <button class="btn btn-secondary btn-sm" style="padding:2px 7px;" onclick="_openMatnModal('${m.type||'fir'}','${m.id}')">✏️</button>
         <button class="btn btn-danger btn-sm" style="padding:2px 7px;margin-top:3px;" onclick="_deleteMatn('${m.id}')">🗑️</button>
@@ -95,7 +95,7 @@ function _renderCopyTable(rows) {
     </tr></thead><tbody>
     ${rows.map(c => {
       const isImage = (c.file_url||'').startsWith('data:image') || /-(jpg|jpeg|png|webp)$/i.test(c.file_name||'') || /\.(jpg|jpeg|png|webp)$/i.test(c.display_name||'');
-      const shownName = c.display_name || c.file_name || 'فائل';
+      const shownName = c.file_display_name || c.display_name || c.file_name || 'فائل';
       return `<tr>
       <td style="padding:10px;border:1px solid var(--border);">
         ${isImage ?
@@ -115,13 +115,18 @@ function _renderCopyTable(rows) {
 function _openMatnModal(type, id) {
   const existing = id ? (_firMatn.find(m => m.id === id) || {}) : {};
   openModal(id ? '✏️ متن میں ترمیم' : '➕ متن درج کریں', `
-    <div style="direction:rtl;">
-      <textarea id="fir-matn-text" placeholder="یہاں مکمل متن لکھیں یا پیسٹ کریں..." style="width:100%;min-height:240px;box-sizing:border-box;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:16px;line-height:2;direction:rtl;text-align:justify;outline:none;">${existing.matn||''}</textarea>
+    <div style="direction:rtl;width:80vw;max-width:90vw;">
+      <textarea id="fir-matn-text" placeholder="یہاں مکمل متن لکھیں یا پیسٹ کریں..." style="width:100%;min-height:50vh;box-sizing:border-box;padding:16px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:16px;line-height:1.8;direction:rtl;text-align:right;outline:none;">${existing.matn||''}</textarea>
     </div>
   `, `
     <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
     <button class="btn btn-primary" onclick="_saveMatn('${type}','${id||''}')">💾 محفوظ کریں</button>
   `);
+  // Enlarge the shared modal box
+  setTimeout(() => {
+    const box = document.querySelector('#modal-backdrop > div, .modal-box, #modal-box');
+    if (box) { box.style.maxWidth = '90vw'; box.style.width = 'auto'; box.style.minHeight = '70vh'; }
+  }, 20);
 }
 
 async function _saveMatn(type, id) {
@@ -170,8 +175,10 @@ function _uploadFirCopy(input, type) {
     if (f.type.startsWith('image/')) {
       dataUrl = await _firCompress(dataUrl, 1200, 0.7);
     }
-    const safeName = (f.name||'file').replace(/[\/\\.]/g, '-').replace(/-+/g,'-');
-    const rec = { case_id: _firCaseId, file_url: dataUrl, file_name: safeName, display_name: f.name, type: type || 'fir' };
+    const ext = (f.name||'file').split('.').pop();
+    const base = (f.name||'file').replace(/\.[^.]+$/,''); // strip extension
+    const safeName = base.replace(/\//g,'-').replace(/\./g,'-').replace(/\s+/g,'_') + '.' + ext;
+    const rec = { case_id: _firCaseId, file_url: dataUrl, file_name: safeName, display_name: f.name, file_display_name: f.name, type: type || 'fir' };
     try {
       const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
       if (oid) rec.officer_id = oid;
