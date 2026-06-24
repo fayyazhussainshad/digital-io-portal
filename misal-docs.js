@@ -52,7 +52,7 @@ async function loadMisalDocs(caseId) {
 // ── RENDER DOCUMENT BAR ───────────────────────────────────────
 function renderMisalBar(c) {
   _misalCase = c;
-  const items = MISAL_CASE_DOCS.map(d => {
+  const items = MISAL_CASE_DOCS.filter(d => d.id !== 'index_naql').map(d => {
     const saved = _misalDocs[d.id];
     const done  = saved?.status === 'complete';
     const added = !!saved;
@@ -62,12 +62,19 @@ function renderMisalBar(c) {
     return `<span class="mdoc-chip ${cls}" onclick="${action}" title="${d.desc}">${d.name}</span>`;
   }).join('');
 
+  // انڈیکس نقل مسل — first button (rightmost in RTL)
+  const _idxSaved = _misalDocs['index_naql'];
+  const _idxCls = _idxSaved?.status === 'complete' ? 'mdoc-done' : _idxSaved ? 'mdoc-added' : 'mdoc-empty';
+  const _idxAction = _idxSaved ? `_openMisalEditor('index_naql')` : `_doAddMisalDoc('index_naql')`;
+  const indexChip = `<span class="mdoc-chip ${_idxCls}" onclick="${_idxAction}" title="Index of Case File Copy">انڈیکس نقل مسل</span>`;
+
   return `
   <div id="misal-doc-bar" style="
     padding:8px 12px;
     background:var(--bg-secondary);
     border-bottom:1px solid var(--border);">
     <div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;align-items:center;">
+      ${indexChip}
       ${_misalDropdown('fir-dd', 'الف آئی آر', [
         {label:'الف آئی آر', act:`_ddPick('fir-dd','fir')`},
         {label:'کراس ورژن', act:`_ddPick('fir-dd','cross_version')`}
