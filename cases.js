@@ -2499,10 +2499,13 @@ function goBackToCases() {
   window._inWorkspace = false;
   document.body.classList.remove('workspace-mode');  // Restore topbar
   const container = document.getElementById('page-content');
-  container.style.padding = '20px';
-  container.style.overflow = 'auto';
-  document.getElementById('topbar-title').textContent = '📁 My Cases';
-  renderCases(container);
+  if (container) {
+    container.style.padding = '20px';
+    container.style.overflow = 'auto';
+  }
+  const titleEl = document.getElementById('topbar-title');
+  if (titleEl) titleEl.textContent = '📁 My Cases';
+  if (container) renderCases(container);
 }
 function confirmDeleteCase(id,fir){openModal('🗑️ Confirm Delete',`<p style="color:var(--text-secondary);font-size:13px;">Delete case <b style="color:var(--accent);">FIR ${fir}</b>?<br><br><span style="color:var(--red);font-size:11px;">⚠️ This cannot be undone.</span></p>`,`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="closeModal();doDeleteCase('${id}')">🗑️ Delete</button>`);}
 async function doDeleteCase(id){

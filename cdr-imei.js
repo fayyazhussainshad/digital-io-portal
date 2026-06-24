@@ -48,7 +48,7 @@ function _cdrInitialRows() {
     });
   }
   // Pad to 9 rows
-  while (rows.length < 10) rows.push({ req:'', model:'', from:'', to:'' });
+  while (rows.length < 12) rows.push({ req:'', model:'', from:'', to:'' });
   return rows;
 }
 
@@ -147,12 +147,12 @@ function _renderCdr() {
         <!-- Forwarding (DSP right, SHO left, with signature gap) -->
         <div style="display:flex;justify-content:space-between;margin-top:24px;gap:20px;">
           <div style="flex:1;text-align:center;">
-            <div style="font-weight:600;">Forwarded Please</div>
+            <div style="font-weight:600;text-align:left;padding-left:12px;">Forwarded Please</div>
             <div style="height:80px;"></div>
             <div style="border-top:1px solid #333;padding-top:6px;">سرکل DSP/SDPO</div>
           </div>
           <div style="flex:1;text-align:center;">
-            <div style="font-weight:600;">Forwarded</div>
+            <div style="font-weight:600;text-align:left;padding-left:12px;">Forwarded</div>
             <div style="height:80px;"></div>
             <div style="border-top:1px solid #333;padding-top:6px;">SHO تھانہ ${o.station||'صدر ملتان'}</div>
           </div>
@@ -252,10 +252,13 @@ function _printCdr() {
   if (!doc) return;
   const dateStr = new Date().toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'});
   const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
-    <style>@page{size:A4;margin:10mm}
-      body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;font-size:18.67px;line-height:1.7;color:#000;margin:0;}
-      table{border-collapse:collapse;width:100%;}td,th{border:1px solid #000;padding:6px;}
-      .dio-print-footer{position:fixed;bottom:4mm;left:0;right:0;text-align:center;font-size:10px;color:#999;}
+    <style>@page{size:A4;margin:8mm}
+      body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;font-size:13px;line-height:1.3;color:#000;margin:0;}
+      table{border-collapse:collapse;width:100%;}
+      td,th{border:1px solid #000;padding:2px 4px;line-height:1.2;font-size:12px;vertical-align:middle;}
+      tr{height:22px;}
+      #cdr-doc > div:first-child, #cdr-doc > div:nth-child(2){margin-bottom:3px !important;}
+      .dio-print-footer{position:fixed;bottom:3mm;left:0;right:0;text-align:center;font-size:9px;color:#999;}
     </style></head>
     <body>${doc.innerHTML}<div class="dio-print-footer">Digital IO | printed on ${dateStr}</div></body></html>`;
   if (typeof dioPrint === 'function') dioPrint(html);

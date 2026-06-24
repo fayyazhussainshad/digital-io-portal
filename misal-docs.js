@@ -145,7 +145,7 @@ function _toggleDD(ev, ddId) {
 }
 
 function _closeAllDD() {
-  ['fir-dd','acc-dd','wit-dd'].forEach(id => {
+  ['fir-dd','acc-dd','wit-dd','r173-dd'].forEach(id => {
     const dd = document.getElementById(id);
     if (dd) dd.style.display = 'none';
   });
