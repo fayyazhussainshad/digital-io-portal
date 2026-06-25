@@ -1112,6 +1112,7 @@ window.addEventListener('unhandledrejection', function(e){
           <div id="account-menu" class="topdd-menu" style="display:none;">
             <a class="topmore-item" onclick="showSubscriptionPage();_closeTopDD()">💎 سبسکرپشن</a>
             <a class="topmore-item" onclick="showPage('bin',null);_closeTopDD()">🗑️ حذف شدہ مواد</a>
+            <a class="topmore-item" onclick="(localStorage.getItem('digital_io_pin_hash')?lockApp('manual'):showPINScreen());_closeTopDD()">🔐 ایپ لاک (PIN)</a>
             <a class="topmore-item" id="top-admin-item" style="display:none;" onclick="showPage('admin',null);_closeTopDD()">👮 ایڈمن</a>
             <a class="topmore-item" onclick="showPage('settings',null);_closeTopDD()">⚙️ ترتیبات</a>
             <a class="topmore-item" style="color:var(--red);border-top:1px solid var(--border);margin-top:4px;" onclick="doLogout()">🚪 لاگ آؤٹ</a>
@@ -1156,6 +1157,7 @@ window.addEventListener('unhandledrejection', function(e){
 <script src="cro-card.js"></script>
 <script src="hamrahi-mulazman.js"></script>
 <script src="sho-dsp.js"></script>
+<script src="security.js"></script>
 <script src="diary.js"></script>
 <script src="notifications.js"></script>
 <script src="law.js"></script>

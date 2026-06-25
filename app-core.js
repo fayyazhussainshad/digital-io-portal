@@ -1062,6 +1062,8 @@ async function loginSuccess() {
   resetSessionTimer();
   // Show onboarding for first-time users
   setTimeout(()=>{ if(typeof _maybeShowOnboarding==='function') _maybeShowOnboarding(); }, 1200);
+  // Offer PIN setup (optional, once)
+  if (typeof maybeSetupPin === 'function') maybeSetupPin();
 }
 
 // ── ONBOARDING WALKTHROUGH (S6) ───────────────────────────────
@@ -1122,8 +1124,10 @@ async function doLogout() {
   // Sign out from server, but don't fail if offline
   try { await supabaseClient.auth.signOut(); } catch(_) {}
   currentUser=null; currentOfficer=null;
-  // Clear cached session so login screen shows
+  // Clear cached session + any app-lock state so login screen shows
   try { localStorage.removeItem('dio_officer_cache'); } catch(_) {}
+  try { localStorage.removeItem('digital_io_locked'); } catch(_) {}
+  const ov = document.getElementById('dio-pin-overlay'); if (ov) ov.remove();
   const app = document.getElementById('main-app');
   const login = document.getElementById('login-screen');
   if (app) app.style.display='none';
@@ -1430,23 +1434,97 @@ async function _doChangePassword() {
 
 // ── SESSION TIMER ─────────────────────────────────────────────
 let _sessionTimer, _sessionWarnTimer;
-const SESSION_TIMEOUT = 10 * 60 * 1000;       // 10 minutes inactivity
-const SESSION_WARN_AT = 9 * 60 * 1000;        // warn at 9 min
+const SESSION_TIMEOUT = 30 * 60 * 1000;       // 30 minutes inactivity (Priority 1A)
+const SESSION_WARN_AT = 29 * 60 * 1000;       // warn at 29 min
 function resetSessionTimer() {
   clearTimeout(_sessionTimer);
   clearTimeout(_sessionWarnTimer);
-  // Warn 1 minute before logout
   _sessionWarnTimer = setTimeout(()=>{
-    showToast('⏰ غیر فعالی کے باعث 1 منٹ میں خودکار لاگ آؤٹ ہوگا — کوئی کلک کریں', 'warn', 8000);
+    showToast('⏰ غیر فعالی کے باعث 1 منٹ میں ایپ مقفل ہو جائے گی — کوئی کلک کریں', 'warn', 8000);
   }, SESSION_WARN_AT);
   _sessionTimer = setTimeout(()=>{
-    showToast('🔒 سیشن ختم — حفاظتی وجہ سے لاگ آؤٹ', 'warn', 4000);
-    setTimeout(doLogout, 2000);
+    // If a PIN is set, lock the app; otherwise log out
+    if (localStorage.getItem('digital_io_pin_hash')) lockApp();
+    else { showToast('🔒 سیشن ختم — حفاظتی وجہ سے لاگ آؤٹ', 'warn', 4000); setTimeout(doLogout, 2000); }
   }, SESSION_TIMEOUT);
 }
 document.addEventListener('click', resetSessionTimer);
 document.addEventListener('keypress', resetSessionTimer);
 document.addEventListener('touchstart', resetSessionTimer);
+
+// ── PIN LOCK SCREEN (Priority 1B) ─────────────────────────────
+let _pinFailedAttempts = 0;
+function _hashPin(pin) { try { return btoa('dio_'+pin+'_lock'); } catch(_) { return pin; } }
+
+function lockApp() {
+  // Only lock if logged in
+  if (!currentUser) return;
+  if (document.getElementById('pin-lock-overlay')) return; // already locked
+  _showPinScreen('unlock');
+}
+window.lockApp = lockApp;
+
+function _showPinScreen(mode) {
+  // mode: 'set' (first time) or 'unlock'
+  const isSet = mode === 'set';
+  const ov = document.createElement('div');
+  ov.id = 'pin-lock-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:99999;background:var(--bg-primary,#0f1420);display:flex;flex-direction:column;align-items:center;justify-content:center;direction:rtl;';
+  ov.innerHTML = `
+    <div style="font-size:40px;margin-bottom:8px;">🛡️</div>
+    <div style="font-size:22px;font-weight:800;color:var(--text-primary,#fff);margin-bottom:4px;">Digital IO</div>
+    <div id="pin-prompt" style="font-size:15px;color:var(--text-secondary,#aaa);margin-bottom:20px;font-family:'Jameel Noori Nastaleeq',serif;">${isSet?'نیا PIN مقرر کریں (4 ہندسے)':'PIN درج کریں'}</div>
+    <input id="pin-input" type="password" inputmode="numeric" maxlength="4" autocomplete="off"
+      style="width:160px;font-size:28px;text-align:center;letter-spacing:12px;padding:10px;border:2px solid var(--accent,#2563eb);border-radius:12px;background:var(--bg-card,#1a2030);color:var(--text-primary,#fff);outline:none;">
+    <div id="pin-msg" style="font-size:13px;color:#e0524d;min-height:18px;margin-top:10px;font-family:'Jameel Noori Nastaleeq',serif;"></div>
+    <button id="pin-submit" class="btn btn-primary" style="margin-top:8px;padding:10px 28px;">${isSet?'محفوظ کریں':'کھولیں'}</button>
+    ${!isSet?'<button id="pin-logout" style="margin-top:14px;background:none;border:none;color:var(--text-muted,#888);font-size:13px;cursor:pointer;font-family:\'Jameel Noori Nastaleeq\',serif;">لاگ آؤٹ کریں</button>':''}
+  `;
+  document.body.appendChild(ov);
+  const input = ov.querySelector('#pin-input');
+  const msg = ov.querySelector('#pin-msg');
+  input.focus();
+
+  const submit = () => {
+    const pin = (input.value||'').trim();
+    if (!/^\d{4}$/.test(pin)) { msg.textContent = '4 ہندسوں کا PIN درج کریں'; return; }
+    if (isSet) {
+      localStorage.setItem('digital_io_pin_hash', _hashPin(pin));
+      ov.remove();
+      showToast('✅ PIN مقرر ہو گیا', 'success');
+    } else {
+      if (_hashPin(pin) === localStorage.getItem('digital_io_pin_hash')) {
+        _pinFailedAttempts = 0;
+        ov.remove();
+        resetSessionTimer();
+      } else {
+        _pinFailedAttempts++;
+        if (_pinFailedAttempts >= 5) { ov.remove(); showToast('🚫 5 غلط کوششیں — لاگ آؤٹ','error'); doLogout(); return; }
+        msg.textContent = `غلط PIN (${5-_pinFailedAttempts} کوششیں باقی)`;
+        input.value = '';
+      }
+    }
+  };
+  ov.querySelector('#pin-submit').onclick = submit;
+  input.onkeydown = (e) => { if (e.key === 'Enter') submit(); };
+  const lo = ov.querySelector('#pin-logout');
+  if (lo) lo.onclick = () => { ov.remove(); doLogout(); };
+}
+
+// Offer to set a PIN once after first login (optional security)
+window.maybeSetupPin = function() {
+  if (!currentUser) return;
+  if (localStorage.getItem('digital_io_pin_hash')) return;
+  if (localStorage.getItem('dio_pin_declined') === 'yes') return;
+  // gentle prompt, not forced
+  setTimeout(() => {
+    if (confirm('کیا آپ ایپ کے تحفظ کے لیے 4 ہندسوں کا PIN مقرر کرنا چاہتے ہیں؟ (غیر فعالی پر ایپ مقفل ہو جائے گی)')) {
+      _showPinScreen('set');
+    } else {
+      localStorage.setItem('dio_pin_declined', 'yes');
+    }
+  }, 2000);
+};
 
 // ── KEYBOARD SHORTCUTS ────────────────────────────────────────
 document.addEventListener('keydown', function(e) {
