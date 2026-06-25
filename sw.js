@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v138
+   DIGITAL IO — SERVICE WORKER v139
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v138';
+const CACHE_NAME = 'digital-io-v139';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -32,7 +32,6 @@ const CORE_ASSETS = [
   '/cro-card.js',
   '/hamrahi-mulazman.js',
   '/sho-dsp.js',
-  '/security.js',
   '/case-sharing.js',
   '/diary.js',
   '/notifications.js',

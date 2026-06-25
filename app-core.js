@@ -1498,17 +1498,11 @@ let _sessionTimer, _sessionWarnTimer;
 const SESSION_TIMEOUT = 30 * 60 * 1000;       // 30 minutes inactivity (Priority 1A)
 const SESSION_WARN_AT = 29 * 60 * 1000;       // warn at 29 min
 function resetSessionTimer() {
+  // App lock DISABLED — no session timeout, no PIN lock.
   clearTimeout(_sessionTimer);
   clearTimeout(_sessionWarnTimer);
-  _sessionWarnTimer = setTimeout(()=>{
-    showToast('⏰ غیر فعالی کے باعث 1 منٹ میں ایپ مقفل ہو جائے گی — کوئی کلک کریں', 'warn', 8000);
-  }, SESSION_WARN_AT);
-  _sessionTimer = setTimeout(()=>{
-    // If a PIN is set, lock the app; otherwise log out
-    if (localStorage.getItem('digital_io_pin_hash')) lockApp();
-    else { showToast('🔒 سیشن ختم — حفاظتی وجہ سے لاگ آؤٹ', 'warn', 4000); setTimeout(doLogout, 2000); }
-  }, SESSION_TIMEOUT);
 }
+// (listeners kept but harmless — they just clear timers)
 document.addEventListener('click', resetSessionTimer);
 document.addEventListener('keypress', resetSessionTimer);
 document.addEventListener('touchstart', resetSessionTimer);
@@ -1518,10 +1512,8 @@ let _pinFailedAttempts = 0;
 function _hashPin(pin) { try { return btoa('dio_'+pin+'_lock'); } catch(_) { return pin; } }
 
 function lockApp() {
-  // Only lock if logged in
-  if (!currentUser) return;
-  if (document.getElementById('pin-lock-overlay')) return; // already locked
-  _showPinScreen('unlock');
+  // App lock DISABLED — never lock.
+  return;
 }
 window.lockApp = lockApp;
 
@@ -1572,8 +1564,9 @@ function _showPinScreen(mode) {
   if (lo) lo.onclick = () => { ov.remove(); doLogout(); };
 }
 
-// Offer to set a PIN once after first login (optional security)
-window.maybeSetupPin = function() {
+// PIN setup DISABLED (app lock removed)
+window.maybeSetupPin = function() { return; };
+function _disabledPinSetup() {
   if (!currentUser) return;
   if (localStorage.getItem('digital_io_pin_hash')) return;
   if (localStorage.getItem('dio_pin_declined') === 'yes') return;
@@ -1628,6 +1621,12 @@ function triggerBackup(src) { localStorage.setItem('dio_last_backup_source',src|
 
 // ── INIT APP ──────────────────────────────────────────────────
 async function initApp() {
+  // App lock removed — clear any leftover lock state and overlays
+  try {
+    localStorage.removeItem('digital_io_locked');
+    localStorage.removeItem('digital_io_pin_hash');
+  } catch(_) {}
+  ['pin-lock-overlay','dio-pin-overlay'].forEach(id => { const e=document.getElementById(id); if(e) e.remove(); });
   updateSidebarProfile();
   // Refresh avatar again after profile fully loads (photo persistence)
   setTimeout(() => { if (typeof updateSidebarProfile === 'function') updateSidebarProfile(); }, 600);
