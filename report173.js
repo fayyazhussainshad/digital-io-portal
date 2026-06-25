@@ -187,12 +187,14 @@ function _renderR173() {
             <label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" data-pk="paper_${i}" ${v('paper_'+i)?'checked':''}> ${p}</label>`).join('')}
         </div>
 
-        <!-- Officer signature -->
+        <!-- SHO signature (blank — SHO signs, not IO) -->
         <div style="margin-top:24px;text-align:left;">
-          <div style="border-top:1px solid #333;display:inline-block;padding-top:4px;">
-            ${o.full_name||''}<br>${o.designation||''} ${o.station||''}
+          <div style="border-top:1px solid #333;display:inline-block;padding-top:4px;text-align:center;">
+            <span contenteditable="true" data-k="sho_name" data-ph="SHO کا نام لکھیں" oninput="this.style.fontWeight=this.innerText.trim()?'bold':'normal';" style="min-width:140px;display:inline-block;${v('sho_name')?'font-weight:bold;':''}">${v('sho_name')}</span><br>
+            SI/SHO تھانہ ${o.station||'صدر ملتان'}
           </div>
         </div>
+        <style>[data-k="sho_name"]:empty:before{content:attr(data-ph);color:#999;font-weight:normal;}</style>
 
       </div>
     </div>

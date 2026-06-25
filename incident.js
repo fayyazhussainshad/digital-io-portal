@@ -123,13 +123,16 @@ function renderIncident(container) {
         <!-- SHO + date (LEFT corner — flex-end in RTL = left) -->
         <div style="margin-top:30px;display:flex;justify-content:flex-end;">
           <div style="text-align:center;min-width:260px;">
-            <div style="height:50px;"></div>
+            <div style="height:50px;display:flex;align-items:flex-end;justify-content:center;">
+              <span contenteditable="true" data-ph="SHO کا نام لکھیں" oninput="this.style.fontWeight=this.innerText.trim()?'bold':'normal';" style="min-width:160px;display:inline-block;font-size:16px;"></span>
+            </div>
             <div style="font-size:17px;font-weight:800;color:#1a3a5c;border-top:1px solid #1a3a5c;padding-top:6px;padding-left:18px;">
-              SHO تھانہ ${o.station||'_______'}
+              SI/SHO تھانہ ${o.station||'_______'}
             </div>
             <input id="inc-sign-date" value="${today}"
               style="border:none;border-bottom:1px solid #aaa;padding:1px 4px;text-align:center;width:130px;outline:none;background:transparent;display:block;margin:4px auto 0;font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
           </div>
+        <style>[data-ph]:empty:before{content:attr(data-ph);color:#999;font-weight:normal;}</style>
         </div>
 
         <!-- Created by footer -->
