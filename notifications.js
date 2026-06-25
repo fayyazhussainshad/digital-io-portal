@@ -118,4 +118,4 @@ async function updateNotifBadge() {
 }
 
 // Auto-update badge every 2 minutes
-setInterval(() => { if (currentUser) updateNotifBadge(); }, 120000);
+setInterval(() => { if (currentUser && navigator.onLine) updateNotifBadge(); }, 120000);

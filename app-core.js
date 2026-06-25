@@ -451,27 +451,46 @@ async function deleteCase(id) {
   if (typeof offlineStore !== 'undefined') { try { await offlineStore.remove('cases_cache', id); } catch(_) {} }
 }
 
+let _remindersFailedAt = 0;  // timestamp of last network failure (backoff)
+
 async function getReminders() {
   const oid = await getOfficerId();
   if (!oid) return [];
-  // Offline — use cache
-  if (!navigator.onLine && typeof offlineStore !== 'undefined') {
-    try { return await offlineStore.getAll('reminders_cache', oid); } catch(_) { return []; }
-  }
-  try {
-    const { data } = await supabaseClient.from('reminders').select('*').eq('officer_id',oid).order('reminder_date',{ascending:true});
-    if (data && typeof offlineStore !== 'undefined') {
-      try { await offlineStore.cache('reminders_cache', data); } catch(_) {}
-    }
-    return data||[];
-  } catch(_) {
-    // Network failed — fall back to cache
+  const lsKey = 'cache_reminders_' + oid;
+  const _fromLS = () => { try { return JSON.parse(localStorage.getItem(lsKey)||'[]'); } catch(_) { return []; } };
+
+  // Offline — use cache, never hit network
+  if (!navigator.onLine) {
     if (typeof offlineStore !== 'undefined') {
       try { return await offlineStore.getAll('reminders_cache', oid); } catch(_) {}
     }
-    return [];
+    return _fromLS();
+  }
+  // Backoff: if a fetch failed in the last 30s, serve cache instead of retrying (stops error spam)
+  if (_remindersFailedAt && (Date.now() - _remindersFailedAt) < 30000) {
+    return _fromLS();
+  }
+  try {
+    const { data, error } = await supabaseClient.from('reminders').select('*').eq('officer_id',oid).order('reminder_date',{ascending:true});
+    if (error) throw error;
+    _remindersFailedAt = 0;
+    if (data) {
+      try { localStorage.setItem(lsKey, JSON.stringify(data)); } catch(_) {}
+      if (typeof offlineStore !== 'undefined') { try { await offlineStore.cache('reminders_cache', data); } catch(_) {} }
+    }
+    return data||[];
+  } catch(_) {
+    // Network failed — mark backoff, fall back to cache
+    _remindersFailedAt = Date.now();
+    if (typeof offlineStore !== 'undefined') {
+      try { return await offlineStore.getAll('reminders_cache', oid); } catch(_) {}
+    }
+    return _fromLS();
   }
 }
+
+// Reset backoff when connection returns
+window.addEventListener('online', () => { _remindersFailedAt = 0; });
 
 // ── EVIDENCE ──────────────────────────────────────────────────
 async function getEvidence(firNumber) {
@@ -1389,7 +1408,7 @@ function dioPrint(htmlContent) {
   if (old) old.remove();
 
   // Inject a global print stylesheet that hides everything except the print iframe.
-  // This mimics MS Word: only the working document prints, never the app's tabs/sidebar/toolbars.
+  // Only the working document prints, never the app's tabs/sidebar/toolbars.
   if (!document.getElementById('dio-print-style')) {
     const st = document.createElement('style');
     st.id = 'dio-print-style';
