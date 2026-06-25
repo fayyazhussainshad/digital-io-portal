@@ -97,6 +97,8 @@ function _renderR173() {
   const saved = _r173Records[recKey] || {};
   const v = (k, def) => saved[k] !== undefined ? saved[k] : (def || '');
   const isIkhraj = _r173Type === 'ikhraj';
+  const isAdampata = _r173Type === 'adampata';
+  const isClosing = isIkhraj || isAdampata; // both use the 3-col 8-row table layout
   // Boilerplate: tatima uses subtype boiler, others use type boiler
   const boiler = isTatima ? (R173_TATIMA_BOILER[_r173Subtype]||'') : (R173_BOILER[_r173Type]||'');
 
@@ -125,7 +127,7 @@ function _renderR173() {
         <div style="text-align:center;font-size:12px;color:#555;">فارم نمبر 25.56(1)</div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0;">
           <span style="font-weight:bold;text-decoration:underline;">تھانہ ${o.station||'صدر ملتان'}</span>
-          <span style="font-weight:bold;text-decoration:underline;font-size:17px;">فارم رپورٹ ${typeName} زیر دفعہ 173 ض ف</span>
+          <span style="font-weight:bold;text-decoration:underline;font-size:17px;">${isClosing ? `فارم رپورٹ اختتامی بصیغہ ${isIkhraj?'اخراج':'عدم پتہ'} زیر دفعہ 173 ض ف` : `فارم رپورٹ ${typeName} زیر دفعہ 173 ض ف`}</span>
           <span style="font-weight:bold;text-decoration:underline;">ضلع ${o.district||'ملتان'}</span>
         </div>
 
@@ -139,8 +141,8 @@ function _renderR173() {
           </tr>
         </table>
 
-        <!-- Main data table (NOT in اخراج — official form has no such table) -->
-        ${!isIkhraj ? `
+        <!-- Main data table (NOT in closing reports — اخراج/عدم پتہ use 3-col table) -->
+        ${!isClosing ? `
         <table style="width:100%;border-collapse:collapse;font-size:13px;">
           <tr style="background:#f0f0f0;">
             <th style="border:1px solid #999;padding:6px;">نام و پتہ مدعی و مستغیث</th>
@@ -160,10 +162,10 @@ function _renderR173() {
           </tr>
         </table>` : ''}
 
-        <!-- مختصر حالات مقدمہ (separate — NOT for اخراج, which has it inside the table) -->
-        ${!isIkhraj ? `
+        <!-- مختصر حالات مقدمہ (separate — NOT for closing reports) -->
+        ${!isClosing ? `
         <div style="margin-top:12px;font-weight:700;">مختصر حالات مقدمہ معہ جرم:</div>
-        <div contenteditable="true" data-k="halaat" data-ph="یہاں پر متن FIR، متن کراس ورژن، تفتیشی وجوہات اخراج مقدمہ لکھیں" style="border:1px solid #999;padding:10px;min-height:120px;text-align:justify;margin-top:4px;${v('halaat', boiler)?'':'color:#999;'}" onfocus="if(this.dataset.ph&&!this.innerText.trim()){this.style.color='#000';}" oninput="this.style.color=this.innerText.trim()?'#000':'#999';">${v('halaat', boiler)}</div>
+        <div contenteditable="true" data-k="halaat" data-ph="یہاں پر مختصر حالات لکھیں" style="border:1px solid #999;padding:10px;min-height:120px;text-align:justify;margin-top:4px;${v('halaat', boiler)?'':'color:#999;'}" onfocus="if(this.dataset.ph&&!this.innerText.trim()){this.style.color='#000';}" oninput="this.style.color=this.innerText.trim()?'#000':'#999';">${v('halaat', boiler)}</div>
         <style>[data-k="halaat"]:empty:before{content:attr(data-ph);color:#999;}</style>` : ''}
 
         ${isTatima ? `
@@ -175,30 +177,68 @@ function _renderR173() {
           <label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" data-pk="t_fir" ${v('t_fir')?'checked':''}> نقل FIR/یک</label>
         </div>` : ''}
 
-        ${isIkhraj ? `
-        <!-- Ikhraj numbered table (with halaat as last row) -->
+        ${isClosing ? `
+        <!-- Closing report 3-column 8-row table (اخراج / عدم پتہ) -->
         <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:12px;">
-          ${[['madai_i','نام وپتہ مدعی و مستغیث'],['jurm_i','مختصر کیفیت جرم'],['masruqa_i','تفصیل مال مسروقہ اگر کوئی ہو'],['namzad_i','تفصیل ملزمان نامزد'],['giraftar_i','تفصیل ملزمان گرفتار شدہ'],['raha_i','تفصیل ملزمان رہا شدہ'],['baramad_i','تفصیل مال برآمدہ مقبوضہ پولیس']].map((r,i)=>`
-          <tr><td style="border:1px solid #999;padding:6px;width:30%;font-weight:600;background:#f9f9f9;">${i+1}. ${r[1]}</td><td contenteditable="true" data-k="${r[0]}" style="border:1px solid #999;padding:6px;">${v(r[0])}</td></tr>`).join('')}
+          <tr style="background:#f0f0f0;">
+            <th style="border:1px solid #000;padding:6px;width:8%;">نمبر شمار</th>
+            <th style="border:1px solid #000;padding:6px;width:30%;">تفصیل</th>
+            <th style="border:1px solid #000;padding:6px;width:62%;">قدر</th>
+          </tr>
+          ${(() => {
+            const autoMadai = (c.complainant_name||'') + (c.complainant_address?(' ساکن '+c.complainant_address):'');
+            const autoJurm  = (c.section_of_law||'') + ' ' + (c.offence_type||'');
+            const rows = [
+              ['madai_i','نام وپتہ مدعی و مستغیث', autoMadai],
+              ['jurm_i','مختصر کیفیت جرم', autoJurm.trim()],
+              ['masruqa_i','تفصیل مال مسروقہ اگر کوئی ہو',''],
+              ['namzad_i','تفصیل ملزمان نامزد',''],
+              ['giraftar_i','تفصیل ملزمان گرفتار شدہ',''],
+              ['raha_i','تفصیل ملزمان رہا شدہ',''],
+              ['baramad_i','تفصیل مال برآمدہ مقبوضہ پولیس','']
+            ];
+            return rows.map((r,i)=>{
+              const val = v(r[0], r[2]);
+              const bold = (val && String(val).trim()) ? 'font-weight:bold;' : '';
+              return `<tr>
+                <td style="border:1px solid #000;padding:6px;text-align:center;">${i+1}</td>
+                <td style="border:1px solid #000;padding:6px;font-weight:600;">${r[1]}</td>
+                <td contenteditable="true" data-k="${r[0]}" oninput="this.style.fontWeight=this.innerText.trim()?'bold':'normal';" style="border:1px solid #000;padding:6px;${bold}">${val}</td>
+              </tr>`;
+            }).join('');
+          })()}
           <tr>
-            <td colspan="2" style="border:1px solid #999;padding:8px;">
-              <div style="text-align:right;font-weight:bold;margin-bottom:4px;">مختصر حالات مقدمہ:</div>
-              <div contenteditable="true" data-k="halaat" data-ph="یہاں پر متن FIR، متن کراس ورژن، تفتیشی وجوہات اخراج مقدمہ لکھیں" style="width:100%;box-sizing:border-box;min-height:120px;direction:rtl;text-align:justify;font-size:15px;padding:8px;border:1px solid #ccc;${v('halaat')?'':'color:#999;'}" oninput="this.style.color=this.innerText.trim()?'#000':'#999';">${v('halaat')}</div>
+            <td style="border:1px solid #000;padding:8px;text-align:center;vertical-align:top;width:8%;"></td>
+            <td style="border:1px solid #000;padding:8px;font-weight:bold;text-align:right;vertical-align:top;width:30%;">مختصر حالات مقدمہ</td>
+            <td style="border:1px solid #000;padding:8px;width:62%;">
+              <div contenteditable="true" data-k="halaat" data-ph="یہاں پر متن FIR، متن کراس ورژن، تفتیشی وجوہات ${isIkhraj?'اخراج':'عدم پتہ'} لکھیں" style="width:100%;box-sizing:border-box;min-height:120px;direction:rtl;text-align:justify;font-size:15px;${v('halaat')?'':'color:#999;'}" oninput="this.style.color=this.innerText.trim()?'#000':'#999';">${v('halaat')}</div>
             </td>
           </tr>
         </table>
         <style>[data-k="halaat"]:empty:before{content:attr(data-ph);color:#999;}</style>` : ''}
 
-        <!-- Footer: papers with قطعہ/قطعات count -->
+        <!-- Footer: papers with قطعہ/قطعات count + SHO box at left -->
         <div style="margin-top:14px;font-weight:700;">تفصیل کاغذات:</div>
-        <div style="display:flex;flex-wrap:wrap;gap:20px;margin-top:8px;font-size:13px;">
-          ${['فارم ہذا','نقل FIR','اصل تحریر','فارم ریمانڈ','نقشہ موقع','اطلاع نامہ مدعی','اصل ضمنی SHO'].map((p,i)=>`
-            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
-              <span>${p}</span>
-              <input type="number" min="0" data-k="paper_${i}" value="${v('paper_'+i)}" oninput="_r173Qita(this)"
-                style="border:none;border-bottom:1px solid #000;width:40px;text-align:center;background:transparent;font-size:14px;outline:none;">
-              <span class="qita-label" style="font-size:11px;color:#555;">${(() => { const n=parseInt(v('paper_'+i)); return n===1?'قطعہ':(n>1?'قطعات':''); })()}</span>
-            </div>`).join('')}
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:8px;gap:16px;">
+          <!-- SHO box (left corner) -->
+          <div style="border:1px solid #000;padding:8px;min-width:200px;text-align:center;font-size:13px;">
+            ${(() => {
+              const sho = (typeof getSHOName === 'function') ? getSHOName() : '';
+              return sho
+                ? `<div style="font-weight:bold;">${sho}</div><div>SI/SHO</div><div>تھانہ ${o.station||'صدر ملتان'}</div>`
+                : `<div style="height:18px;border-bottom:1px solid #999;margin-bottom:4px;"></div><div>SI/SHO</div><div>تھانہ ${o.station||'صدر ملتان'}</div>`;
+            })()}
+          </div>
+          <!-- Papers list -->
+          <div style="display:flex;flex-wrap:wrap;gap:20px;font-size:13px;flex:1;justify-content:flex-end;">
+            ${['فارم ہذا','نقل FIR','اصل تحریر','فارم ریمانڈ','نقشہ موقع','اطلاع نامہ مدعی','اصل ضمنی SHO'].map((p,i)=>`
+              <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+                <span>${p}</span>
+                <input type="number" min="0" data-k="paper_${i}" value="${v('paper_'+i)}" oninput="_r173Qita(this)"
+                  style="border:none;border-bottom:1px solid #000;width:40px;text-align:center;background:transparent;font-size:14px;outline:none;">
+                <span class="qita-label" style="font-size:11px;color:#555;">${(() => { const n=parseInt(v('paper_'+i)); return n===1?'قطعہ':(n>1?'قطعات':''); })()}</span>
+              </div>`).join('')}
+          </div>
         </div>
 
         <!-- SHO signature — ONE line, SHO only (ALL report types), from global SHO setting -->
