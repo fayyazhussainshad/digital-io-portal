@@ -123,11 +123,11 @@ function _renderR173() {
 
         <!-- Header -->
         <div style="text-align:center;font-size:12px;color:#555;">فارم نمبر 25.56(1)</div>
-        <div style="display:flex;justify-content:space-between;font-weight:700;margin:6px 0;">
-          <span>تھانہ <span contenteditable="true" style="border-bottom:1px solid #999;">${o.station||'صدر ملتان'}</span></span>
-          <span>ضلع <span contenteditable="true" style="border-bottom:1px solid #999;">${o.district||'ملتان'}</span></span>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0;">
+          <span style="font-weight:bold;text-decoration:underline;">تھانہ ${o.station||'صدر ملتان'}</span>
+          <span style="font-weight:bold;text-decoration:underline;font-size:17px;">فارم رپورٹ ${typeName} زیر دفعہ 173 ض ف</span>
+          <span style="font-weight:bold;text-decoration:underline;">ضلع ${o.district||'ملتان'}</span>
         </div>
-        <div style="text-align:center;font-size:17px;font-weight:800;margin:10px 0;">فارم رپورٹ ${typeName} زیر دفعہ 173 ض ف</div>
 
         <!-- Case info -->
         <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:10px;">
@@ -189,28 +189,30 @@ function _renderR173() {
         </table>
         <style>[data-k="halaat"]:empty:before{content:attr(data-ph);color:#999;}</style>` : ''}
 
-        <!-- Footer: papers checklist -->
+        <!-- Footer: papers with قطعہ/قطعات count -->
         <div style="margin-top:14px;font-weight:700;">تفصیل کاغذات:</div>
-        <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:6px;font-size:13px;">
+        <div style="display:flex;flex-wrap:wrap;gap:20px;margin-top:8px;font-size:13px;">
           ${['فارم ہذا','نقل FIR','اصل تحریر','فارم ریمانڈ','نقشہ موقع','اطلاع نامہ مدعی','اصل ضمنی SHO'].map((p,i)=>`
-            <label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" data-pk="paper_${i}" ${v('paper_'+i)?'checked':''}> ${p}</label>`).join('')}
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+              <span>${p}</span>
+              <input type="number" min="0" data-k="paper_${i}" value="${v('paper_'+i)}" oninput="_r173Qita(this)"
+                style="border:none;border-bottom:1px solid #000;width:40px;text-align:center;background:transparent;font-size:14px;outline:none;">
+              <span class="qita-label" style="font-size:11px;color:#555;">${(() => { const n=parseInt(v('paper_'+i)); return n===1?'قطعہ':(n>1?'قطعات':''); })()}</span>
+            </div>`).join('')}
         </div>
 
-        <!-- SHO signature: اخراج auto-fills officer name; others stay blank -->
-        <div style="margin-top:24px;text-align:left;">
-          <div style="border-top:1px solid #333;display:inline-block;padding-top:4px;text-align:center;">
+        <!-- SHO signature — ONE line, SHO only (ALL report types), auto-filled from session -->
+        <div style="margin-top:24px;display:flex;justify-content:flex-start;">
+          <div style="border-top:1px solid #333;padding-top:6px;display:flex;flex-direction:row-reverse;gap:8px;align-items:center;font-weight:bold;">
             ${(() => {
-              let fullTitle = '';
-              if (isIkhraj) {
-                let rank = o.rank || o.designation || '';
-                let nm = o.full_name || '';
-                if (!nm) { try { const p = JSON.parse(localStorage.getItem('officer_profile')||localStorage.getItem('dio_officer_cache')||'{}'); rank = rank||p.rank||p.designation||''; nm = p.name||p.full_name||''; } catch(_) {} }
-                fullTitle = [rank, nm].filter(Boolean).join(' ');
-              }
+              let rank = o.rank || o.designation || '';
+              let nm = o.full_name || '';
+              if (!nm) { try { const p = JSON.parse(localStorage.getItem('officer_profile')||localStorage.getItem('dio_officer_cache')||'{}'); rank = rank||p.rank||p.designation||''; nm = p.name||p.full_name||''; } catch(_) {} }
+              const fullTitle = [rank, nm].filter(Boolean).join(' ');
               const val = v('sho_name', fullTitle);
-              return `<span contenteditable="true" data-k="sho_name" data-ph="SHO کا نام لکھیں" oninput="this.style.fontWeight=this.innerText.trim()?'bold':'normal';" style="min-width:140px;display:inline-block;${val?'font-weight:bold;':''}">${val}</span>`;
-            })()}<br>
-            SI/SHO تھانہ ${o.station||'صدر ملتان'}
+              return `<span contenteditable="true" data-k="sho_name" oninput="this.style.fontWeight='bold';" style="min-width:120px;">${val}</span>`;
+            })()}
+            <span>SI/SHO تھانہ ${o.station||'صدر ملتان'}</span>
           </div>
         </div>
         <style>[data-k="sho_name"]:empty:before{content:attr(data-ph);color:#999;font-weight:normal;}</style>
@@ -225,7 +227,9 @@ function _collectR173() {
   const doc = document.getElementById('r173-doc');
   if (!doc) return {};
   const data = {};
-  doc.querySelectorAll('[data-k]').forEach(el => { data[el.dataset.k] = el.innerHTML; });
+  doc.querySelectorAll('[data-k]').forEach(el => {
+    data[el.dataset.k] = (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') ? el.value : el.innerHTML;
+  });
   doc.querySelectorAll('[data-pk]').forEach(el => { data[el.dataset.pk] = el.checked; });
   return data;
 }
@@ -272,4 +276,13 @@ async function openReport173WithType(type) {
   await openReport173(_misalCaseId || (typeof currentCaseId !== 'undefined' ? currentCaseId : null));
   _r173Type = type || 'mukammal';
   _renderR173();
+}
+
+// Update قطعہ/قطعات label based on count
+function _r173Qita(input) {
+  if (!input) return;
+  const label = input.parentElement && input.parentElement.querySelector('.qita-label');
+  if (!label) return;
+  const n = parseInt(input.value);
+  label.textContent = n === 1 ? 'قطعہ' : (n > 1 ? 'قطعات' : '');
 }
