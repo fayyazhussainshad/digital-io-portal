@@ -218,25 +218,35 @@ function _renderR173() {
         <style>[data-k="halaat"]:empty:before{content:attr(data-ph);color:#999;}</style>` : ''}
 
         <!-- تفصیل کاغذات -->
-        ${isClosing ? `
-        <!-- Heading row: تفصیل کاغذات (right) + SHO (left), divider below -->
-        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #000;padding-bottom:4px;margin:14px 0 16px;">
-          <div style="font-weight:bold;direction:rtl;">${(() => { const s=(typeof getSHOName==='function'?getSHOName():''); return (s?s+' ':'')+'SI/SHO تھانہ '+(o.station||'صدر ملتان'); })()}</div>
+        ${isClosing ? (() => {
+          const _sho = (typeof getSHOName==='function'?getSHOName():'');
+          const _shoFull = (_sho?_sho+' ':'')+'SI/SHO تھانہ '+(o.station||'صدر ملتان');
+          const shoBlock = `<div class="sho-signature-block" style="text-align:right;min-width:220px;">
+            <div style="min-height:50px;border-bottom:1px solid #000;margin-bottom:4px;"></div>
+            <div class="sho-signature-line" style="font-weight:bold;font-size:14px;">${_shoFull}</div>
+            <div style="margin-top:6px;font-size:13px;">تاریخ: _______________</div>
+          </div>`;
+          return `
+        <!-- Heading row: تفصیل کاغذات (right) + SHO block (left), divider below -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid #000;padding-bottom:4px;margin:14px 0 16px;">
+          ${shoBlock}
           <div style="font-weight:bold;font-size:15px;">تفصیل کاغذات:</div>
         </div>
-        <!-- Items: one row, underlined labels, input below, no boxes -->
+        <!-- Items: one row, underlined labels, blank editable input (no dash) below -->
         <div style="display:flex;justify-content:space-around;align-items:flex-start;flex-wrap:wrap;gap:8px;">
           ${['فارم ہذا','نقل TR','اصل تحریر','نقشہ موقع','اطلاع نامہ مدعی','اصل ضمنی SHO'].map((p,i)=>`
             <div style="display:inline-flex;flex-direction:column;align-items:center;margin:0 8px;text-align:center;">
               <span style="font-size:14px;text-decoration:underline;">${p}</span>
               <input type="text" inputmode="numeric" pattern="[0-9]*" data-k="paper_${i}" value="${v('paper_'+i)}" oninput="_r173Qita(this)"
-                style="width:45px;border:none;border-bottom:1px solid #000;text-align:center;background:transparent;margin-top:4px;font-size:14px;outline:none;">
-              <span class="qita-label" style="font-size:11px;min-height:14px;color:#555;">${(() => { const n=parseInt(v('paper_'+i)); return n===1?'قطعہ':(n>1?'قطعات':''); })()}</span>
+                style="width:45px;border:none;border-bottom:none;background:transparent;text-align:center;margin-top:4px;font-size:14px;outline:none;color:#000;">
+              <span class="qita-label" style="font-size:12px;text-align:center;min-height:16px;color:#555;">${(() => { const n=parseInt(v('paper_'+i)); return n===1?'قطعہ':(n>1?'قطعات':''); })()}</span>
             </div>`).join('')}
         </div>
-        <!-- Bottom SHO line (bottom-left) -->
-        <div style="text-align:left;margin-top:32px;font-weight:bold;">${(() => { const s=(typeof getSHOName==='function'?getSHOName():''); return (s?s+' ':'')+'SI/SHO تھانہ '+(o.station||'صدر ملتان'); })()}</div>
-        ` : `
+        <!-- Bottom SHO block (bottom-left, identical structure) -->
+        <div style="display:flex;justify-content:flex-start;margin-top:32px;">
+          ${shoBlock}
+        </div>`;
+        })() : `
         <!-- تفصیل کاغذات (non-closing types) -->
         <div style="margin-top:14px;font-weight:700;text-align:right;">تفصیل کاغذات:</div>
         <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:13px;justify-content:center;margin-top:8px;">
