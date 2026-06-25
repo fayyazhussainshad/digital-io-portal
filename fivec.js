@@ -189,7 +189,7 @@ function _restoreSel5C(){if(!_r5cSel)return;const s=window.getSelection();s.remo
 async function open5CResponse(id){
   const app=await getApplication5C(id);if(!app){showToast('❌ Not found','error');return;}
   const o=currentOfficer||{};
-  const today=new Date().toLocaleDateString('en-PK',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const today=formatDate(new Date());
   // Only pull application numbers — no officer rank or designation
   const refs=(app.application_5c_numbers||[]).map(n=>esc5C(n.application_number||'')).filter(Boolean).join('، ')||'—';
 
@@ -281,7 +281,7 @@ async function open5CResponse(id){
 
     // Tab + Enter keydown handler
     paper.addEventListener('keydown',function(e){
-      // Tab → 0.5 inch tab stop (MS Word standard)
+      // Tab → 0.5 inch tab stop
       if(e.key==='Tab'){
         e.preventDefault();
         const sel=window.getSelection();
@@ -554,7 +554,7 @@ async function _print5C(id) {
       <div class="sig-box"><div class="sig-line">تفتیشی افسر<br>${o.full_name||'—'} ${o.designation||''}</div></div>
       <div class="sig-box"><div class="sig-line">SHO تھانہ ${o.station||'—'}<br>مہر و دستخط</div></div>
     </div>
-    <div class="footer">Digital IO · ‏${new Date().toLocaleDateString('en-PK')}</div>
+    <div class="footer">Digital IO · ‏${formatDate(new Date())}</div>
     
     </body></html>`);
     dioPrint(_printHTML);

@@ -328,7 +328,7 @@ async function _printFIRDirect(id) {
     <div class="sig-box"><div class="sig-line">تفتیشی افسر<br>${o.full_name||'___'}</div></div>
     <div class="sig-box"><div class="sig-line">SHO تھانہ ${c.case_station||o.station||'___'}<br>مہر و دستخط</div></div>
   </div>
-  <div class="footer">Digital IO · ‏${new Date().toLocaleDateString('en-PK')}</div>
+  <div class="footer">Digital IO · ‏${formatDate(new Date())}</div>
   
   </body></html>`);
   dioPrint(_printHTML);
@@ -377,7 +377,7 @@ async function _downloadCaseTxt(id) {
   txt += `نام:               ${o.full_name||'—'}\n`;
   txt += `عہدہ:              ${o.designation||'—'}\n`;
   txt += `تھانہ:             ${o.station||'—'}\n`;
-  txt += `\nتاریخ پرنٹ: ${new Date().toLocaleDateString('en-PK')}\n`;
+  txt += `\nتاریخ پرنٹ: ${formatDate(new Date())}\n`;
   txt += '══════════════════════════════════\n';
   txt += '         Digital IO\n';
   txt += '══════════════════════════════════\n';
@@ -426,7 +426,7 @@ async function _downloadCaseHTML(id) {
     <div style="text-align:center;"><div style="border-top:1px solid #333;width:200px;padding-top:6px;">دستخط رپورٹنگ افسر</div></div>
     <div style="text-align:center;"><div style="border-top:1px solid #333;width:200px;padding-top:6px;">SHO تھانہ ${o.station||'—'}</div></div>
   </div>
-  <div class="footer">Digital IO · تاریخ: ${new Date().toLocaleDateString('en-PK')}</div>
+  <div class="footer">Digital IO · تاریخ: ${formatDate(new Date())}</div>
   </body></html>`;
 
   const blob = new Blob([html], {type:'text/html;charset=utf-8'});
@@ -1636,7 +1636,6 @@ function openDocEditor(docIndex) {
       <button class="btn btn-secondary btn-sm" onclick="toggleDirection()">⇄ LTR/RTL</button>
       <button class="btn btn-secondary btn-sm" onclick="saveDocDraft(${docIndex})">💾 Save Draft</button>
       <button class="btn btn-secondary btn-sm" onclick="printThisDoc('${docName}')">🖨️ Print</button>
-      ${OFFICIAL_TEMPLATES[docName]?`<button class="btn btn-primary btn-sm" onclick="generateOfficialDoc('${docName}')" title="Download in exact government format with case data auto-filled">📥 Official .docx</button>`:''}
       <button class="btn btn-primary btn-sm" onclick="markDocDone(${docIndex})">✅ Mark Complete</button>
     </div>
     <!-- Editor -->
@@ -2458,7 +2457,7 @@ function wevSnap() {
   const img = document.getElementById('wev-img-preview');
   prev.style.display = 'block'; img.style.display = 'block'; img.src = window._wevDataUrl;
   document.getElementById('wev-file-name').textContent = '📸 Camera capture ready';
-  if (!document.getElementById('wev-name').value) document.getElementById('wev-name').value = 'Photo ' + new Date().toLocaleDateString('en-GB');
+  if (!document.getElementById('wev-name').value) document.getElementById('wev-name').value = 'Photo ' + formatDate(new Date());
   document.getElementById('wev-type').value = 'Photo';
 }
 function wevOpenFile() {

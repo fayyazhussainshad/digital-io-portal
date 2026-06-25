@@ -247,7 +247,7 @@ function _printDataReport() {
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
     <style>body{font-family:'Noto Nastaliq Urdu',serif;direction:rtl;padding:20mm;}.hdr{text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:14px;}</style></head><body>
     <div class="hdr"><h2>ڈیٹا رپورٹ</h2>
-    <div>${o.full_name||'—'} · تھانہ ${o.station||'—'} · ${new Date().toLocaleDateString('en-PK')}</div></div>
+    <div>${o.full_name||'—'} · تھانہ ${o.station||'—'} · ${formatDate(new Date())}</div></div>
     <p>یہ رپورٹ Digital IO سے خودکار بنائی گئی ہے۔ تمام ڈیٹا Supabase Cloud میں محفوظ ہے۔</p>
     </body></html>`);
   dioPrint(_printHTML);

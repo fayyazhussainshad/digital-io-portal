@@ -137,7 +137,7 @@ async function _generateCdrRequest() {
   if (!number) { showToast('⚠️ موبائل نمبر ضروری ہے', 'error'); return; }
 
   const o = currentOfficer || {};
-  const today = new Date().toLocaleDateString('en-GB');
+  const today = formatDate(new Date());
 
   // Court-ready CDR request letter
   const html = `
@@ -649,7 +649,7 @@ function _renderAnalysis(a, suspects) {
 // ── EXPERT OPINION (rule-based, no AI) ────────────────────────
 function _generateExpertOpinion(a, suspects) {
   const ov   = a.overview;
-  const date = new Date().toLocaleDateString('ur-PK');
+  const date = formatDate(new Date());
   let op = `مورخہ ${date} کو موصول شدہ CDR ریکارڈ کا تجزیہ کیا گیا۔<br>`;
   op += `Network: ${_cdrMeta.network} | کل ریکارڈز: ${ov.totalCalls} | مدت: ${ov.dateFrom} تا ${ov.dateTo}<br><br>`;
 
@@ -687,7 +687,7 @@ function _cdrPrintReport() {
     th{background:#f0f0f0;}.card{border:1px solid #ccc;border-radius:8px;padding:12px;margin-bottom:12px;}
     </style></head><body>
     <h2 style="text-align:center;">CDR Analysis Report — Digital IO</h2>
-    <p style="text-align:center;">FIR: ${_cdrCase?.fir_number||'—'} | Network: ${_cdrMeta.network} | Date: ${new Date().toLocaleDateString()}</p>
+    <p style="text-align:center;">FIR: ${_cdrCase?.fir_number||'—'} | Network: ${_cdrMeta.network} | Date: ${formatDate(new Date())}</p>
     ${el.innerHTML}
     </body></html>`);
   dioPrint(_printHTML);
@@ -714,7 +714,7 @@ function _cdrDownloadReport() {
 
 function _cdrShareReport() {
   const ov = _analyzeOverview();
-  const txt = `CDR Analysis — Digital IO\nFIR: ${_cdrCase?.fir_number||'—'}\nNetwork: ${_cdrMeta.network}\nRecords: ${ov.totalCalls}\nDate: ${new Date().toLocaleDateString()}`;
+  const txt = `CDR Analysis — Digital IO\nFIR: ${_cdrCase?.fir_number||'—'}\nNetwork: ${_cdrMeta.network}\nRecords: ${ov.totalCalls}\nDate: ${formatDate(new Date())}`;
   if (navigator.share) { navigator.share({title:'CDR Report',text:txt}).catch(()=>{}); }
   else { navigator.clipboard.writeText(txt).then(()=>showToast('Copy ہو گئی — WhatsApp میں paste کریں','info')); }
 }

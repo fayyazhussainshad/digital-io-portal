@@ -58,7 +58,7 @@ function _drawRoot() {
     <div style="font-size:24px;">🛡️</div>
     <div style="flex:1;">
       <div style="font-size:14px;font-weight:700;color:#fff;">Patrol Log — Digital IO</div>
-      <div style="font-size:10px;color:rgba(255,255,255,0.6);">${(currentOfficer?.full_name||'Officer')} · ${new Date().toLocaleDateString('ur-PK')}</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.6);">${(currentOfficer?.full_name||'Officer')} · ${formatDate(new Date())}</div>
     </div>
   </div>
 
@@ -426,7 +426,7 @@ async function _showPreviousPatrols() {
         ${shifts.length ? shifts.map(s => `
           <div style="padding:10px;border-bottom:1px solid var(--border);direction:rtl;">
             <div style="font-size:13px;font-weight:700;color:var(--accent);direction:rtl;">
-              <span dir="ltr" style="unicode-bidi:embed;">${new Date(s.started_at).toLocaleDateString('en-PK',{day:'2-digit',month:'short',year:'numeric'})}${s.ended_at ? ' — ' + new Date(s.ended_at).toLocaleDateString('en-PK',{day:'2-digit',month:'short'}) : ''}</span>
+              <span dir="ltr" style="unicode-bidi:embed;">${formatDate(s.started_at)}${s.ended_at ? ' — ' + formatDate(s.ended_at) : ''}</span>
               ${s.ended_at ? '' : ' <span style="color:var(--green);">● فعال</span>'}
             </div>
             <div style="font-size:11px;color:var(--text-muted);direction:rtl;">
@@ -663,7 +663,7 @@ async function _tabSummary(el){
   r+=`Officer : ${o.full_name||'—'}\n`;
   r+=`Rank    : ${o.designation||'—'}, Badge: ${o.badge_number||'—'}\n`;
   r+=`Station : ${o.station||'—'}, ${o.district||'—'}\n`;
-  r+=`Date    : ${now.toLocaleDateString('en-PK',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}\n`;
+  r+=`Date    : ${formatDate(now)}\n`;
   r+=`Shift   : ${_timeStr(_shift.started_at)} → ${_timeStr(now.toISOString())}\n`;
   r+=`Muddat  : ${_dur(_shift.started_at,now.toISOString())}\n`;
   r+=`GPS KM  : ${_totalDist.toFixed(2)} km safar\n\n`;

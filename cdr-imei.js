@@ -275,7 +275,7 @@ function _newCdr() {
 function _printCdr() {
   const doc = document.getElementById('cdr-doc');
   if (!doc) return;
-  const dateStr = new Date().toLocaleDateString('en-PK',{day:'numeric',month:'short',year:'numeric'});
+  const dateStr = formatDate(new Date());
   const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
     <style>@page{size:A4;margin:8mm}
       body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;font-size:13px;line-height:1.3;color:#000;margin:0;}

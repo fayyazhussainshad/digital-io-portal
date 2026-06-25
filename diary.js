@@ -51,7 +51,7 @@ function _drawDiary() {
 
   const o = currentOfficer || {};
   const now = new Date();
-  const lockTime = now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) + ' ' + now.toLocaleDateString('en-GB');
+  const lockTime = now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) + ' ' + formatDate(now);
 
   root.innerHTML = `
   <!-- Row 1: Title (Urdu) -->
@@ -170,7 +170,7 @@ function _renderDiaryEntries(entries) {
   return entries.map(d => {
     const t = DIARY_TYPES.find(x => x.v === d.entry_type) || { icon:'📝', label:d.entry_type||'نوٹ' };
     const dt = new Date(d.created_at);
-    const dateStr = dt.toLocaleDateString('ur-PK') + ' · ' + dt.toLocaleTimeString('ur-PK', {hour:'2-digit',minute:'2-digit'});
+    const dateStr = formatDate(dt) + ' · ' + dt.toLocaleTimeString('ur-PK', {hour:'2-digit',minute:'2-digit'});
     return `
     <div class="card" style="padding:14px;margin-bottom:10px;border-right:3px solid var(--accent);direction:rtl;">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">

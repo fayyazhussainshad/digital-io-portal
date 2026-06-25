@@ -639,7 +639,7 @@ async function _adminRefresh() {
 // ── PRINT REPORT ──────────────────────────────────────────────
 function _adminPrintReport() {
   const { officers, cases } = window._adminData || {};
-  const date = new Date().toLocaleDateString('ur-PK');
+  const date = formatDate(new Date());
   const o = currentOfficer || {};
   let html = `<h2 style="text-align:center;"><br>تھانہ ${o.station||'—'} ضلع ${o.district||'—'}</h2>`;
   html += `<p style="text-align:center;">تاریخ: ${date}</p><hr>`;

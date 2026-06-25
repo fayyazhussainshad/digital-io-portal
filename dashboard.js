@@ -47,7 +47,7 @@ async function _buildDash() {
       <div style="text-align:right;flex:1;">
         <div style="font-size:16px;font-weight:800;color:#fff;font-family:'Jameel Noori Nastaleeq',serif;">خوش آمدید، ${o.full_name||'افسر'}</div>
         <div style="font-size:11px;color:rgba(255,255,255,0.6);">${o.designation||''} · تھانہ ${o.station||''} · ضلع ${o.district||''}</div>
-        <div style="font-size:10px;color:rgba(255,255,255,0.4);">${new Date().toLocaleDateString('en-PK',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);">${formatDate(new Date())}</div>
       </div>
       <div id="dash-welcome-avatar" style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0;overflow:hidden;cursor:pointer;" onclick="showPage('settings',null)">
         ${(() => {
