@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════
    DIGITAL IO — رپورٹ ضمنی (ZIMNI / PROGRESS REPORT)
-   Police Form 25-54(1) — MS Word-style rich text editor
+   Police Form 25-54(1) — rich text editor
    ═══════════════════════════════════════════════════════════ */
 
 let _zimniCaseId = null;
@@ -84,7 +84,7 @@ function _openZimni(id) {
   _renderZimniEditor();
 }
 
-// ── EDITOR (MS Word style, Police Form 25-54(1)) ──────────────
+// ── EDITOR (Police Form 25-54(1)) ──────────────
 function _renderZimniEditor() {
   const area = document.getElementById('workspace-editor-area')
             || document.getElementById('workspace-tab-content')
@@ -124,7 +124,7 @@ function _renderZimniEditor() {
 
     <!-- Document -->
     <div style="flex:1;overflow-y:auto;padding:16px;background:var(--bg-tertiary);">
-      <div id="zimni-doc" contenteditable="true" spellcheck="false" style="
+      <div id="zimni-doc" data-mic="true" contenteditable="true" spellcheck="false" style="
         max-width:210mm;margin:0 auto;padding:18mm;
         background:#fff;color:#111;
         font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
@@ -138,6 +138,7 @@ function _renderZimniEditor() {
   // Keyboard shortcuts
   setTimeout(() => {
     const ed = document.getElementById('zimni-doc');
+    if (typeof applyMicButtons === 'function') applyMicButtons(area);
     if (ed) {
       ed.focus();
       ed.onkeydown = (e) => {
@@ -282,7 +283,7 @@ async function _deleteZimni(id) {
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
 
-// ── PRINT (only the document, MS Word style) ──────────────────
+// ── PRINT (only the document) ──────────────────
 function _printZimni() {
   const ed = document.getElementById('zimni-doc');
   if (!ed) return;

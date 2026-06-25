@@ -116,7 +116,7 @@ function _openMatnModal(type, id) {
   const existing = id ? (_firMatn.find(m => m.id === id) || {}) : {};
   openModal(id ? '✏️ متن میں ترمیم' : '➕ متن درج کریں', `
     <div style="direction:rtl;width:80vw;max-width:90vw;">
-      <textarea id="fir-matn-text" placeholder="یہاں مکمل متن لکھیں یا پیسٹ کریں..." style="width:100%;min-height:50vh;box-sizing:border-box;padding:16px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:16px;line-height:1.8;direction:rtl;text-align:right;outline:none;">${existing.matn||''}</textarea>
+      <textarea id="fir-matn-text" data-mic="true" placeholder="یہاں مکمل متن لکھیں یا پیسٹ کریں..." style="width:100%;min-height:50vh;box-sizing:border-box;padding:16px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:16px;line-height:1.8;direction:rtl;text-align:right;outline:none;">${existing.matn||''}</textarea>
     </div>
   `, `
     <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
@@ -126,6 +126,7 @@ function _openMatnModal(type, id) {
   setTimeout(() => {
     const box = document.querySelector('#modal-backdrop > div, .modal-box, #modal-box');
     if (box) { box.style.maxWidth = '90vw'; box.style.width = 'auto'; box.style.minHeight = '70vh'; }
+    if (typeof applyMicButtons === 'function') applyMicButtons(document.getElementById('modal-body'));
   }, 20);
 }
 
