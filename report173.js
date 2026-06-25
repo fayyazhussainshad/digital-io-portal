@@ -217,36 +217,37 @@ function _renderR173() {
         </table>
         <style>[data-k="halaat"]:empty:before{content:attr(data-ph);color:#999;}</style>` : ''}
 
-        <!-- Footer: papers with قطعہ/قطعات count + SHO box at left -->
-        <div style="margin-top:14px;font-weight:700;">تفصیل کاغذات:</div>
+        <!-- تفصیل کاغذات -->
+        <div style="margin-top:14px;font-weight:700;text-align:right;">تفصیل کاغذات:</div>
+        ${isClosing ? `
+        <div style="border-top:1px solid #000;margin:4px 0;"></div>
+        <!-- One-line SHO above (right-aligned, no box) -->
+        <div style="text-align:right;font-weight:bold;margin:6px 0;">${(typeof getSHOName==='function'?getSHOName():'')} SI/SHO تھانہ ${o.station||'صدر ملتان'}</div>
+        ` : ''}
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:8px;gap:16px;">
           ${isClosing ? `
-          <!-- SHO box (LEFT corner) -->
+          <!-- SHO box (LEFT corner, with border) -->
           <div style="border:1px solid #000;padding:12px;min-width:200px;text-align:center;font-size:13px;">
             <div class="sho-name-line" style="border-bottom:1px solid #000;min-height:24px;margin-bottom:4px;font-weight:bold;">${(typeof getSHOName==='function'?getSHOName():'')}</div>
             <div style="font-weight:bold;">SI/SHO</div>
             <div style="font-weight:bold;">تھانہ ${o.station||'صدر ملتان'}</div>
           </div>` : '<div></div>'}
-          <!-- Papers list -->
-          <div style="display:flex;flex-wrap:wrap;gap:20px;font-size:13px;flex:1;justify-content:center;">
+          <!-- Papers list (center): label / underline / input / count -->
+          <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:13px;flex:1;justify-content:center;">
             ${['فارم ہذا','نقل FIR','اصل تحریر','فارم ریمانڈ','نقشہ موقع','اطلاع نامہ مدعی','اصل ضمنی SHO'].map((p,i)=>`
-              <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
-                <span>${p}</span>
-                <input type="text" inputmode="numeric" pattern="[0-9]*" data-k="paper_${i}" value="${v('paper_'+i)}" oninput="_r173Qita(this)"
-                  style="border:none;border-bottom:1px solid #000;width:40px;text-align:center;background:transparent;font-size:14px;outline:none;">
+              <div style="display:inline-flex;flex-direction:column;align-items:center;margin:0 6px;">
+                <span style="font-weight:bold;">${p}</span>
+                <div style="border-bottom:1px solid #000;width:50px;min-height:18px;"></div>
+                <input type="text" class="qita" inputmode="numeric" pattern="[0-9]*" data-k="paper_${i}" value="${v('paper_'+i)}" oninput="_r173Qita(this)"
+                  style="width:50px;border:none;border-bottom:1px solid #000;text-align:center;background:transparent;font-size:14px;outline:none;margin-top:2px;">
                 <span class="qita-label" style="font-size:11px;color:#555;">${(() => { const n=parseInt(v('paper_'+i)); return n===1?'قطعہ':(n>1?'قطعات':''); })()}</span>
               </div>`).join('')}
           </div>
-          ${isClosing ? `
-          <!-- SHO box (RIGHT corner) -->
-          <div style="border:1px solid #000;padding:12px;min-width:200px;text-align:center;font-size:13px;">
-            <div class="sho-name-line" style="border-bottom:1px solid #000;min-height:24px;margin-bottom:4px;font-weight:bold;">${(typeof getSHOName==='function'?getSHOName():'')}</div>
-            <div style="font-weight:bold;">SI/SHO</div>
-            <div style="font-weight:bold;">تھانہ ${o.station||'صدر ملتان'}</div>
-          </div>` : '<div></div>'}
+          <!-- (right SHO removed — one line shown above left box) -->
+          ${isClosing ? '<div style="min-width:120px;"></div>' : '<div></div>'}
         </div>
 
-        <!-- SHO signature — ONE line, SHO only. Closing reports use the SHO box instead -->
+        <!-- SHO signature — non-closing types only (one line, SHO only) -->
         ${!isClosing ? `
         <div style="margin-top:24px;display:flex;justify-content:flex-start;">
           <div style="border-top:1px solid #333;padding-top:6px;display:flex;flex-direction:row-reverse;gap:8px;align-items:center;font-weight:bold;">
