@@ -494,15 +494,37 @@ async function getCases(status, query) {
       q = q.or(`fir_number.ilike.${w},complainant.ilike.${w},section_of_law.ilike.${w},complainant_cnic.ilike.${w},complainant_cell.ilike.${w}`);
     }
     const { data } = await q;
+    let all = data || [];
+    // P9: merge in cases shared with this officer
+    try {
+      const shared = await _getSharedCases(oid);
+      if (shared && shared.length) {
+        const ownIds = new Set(all.map(c => c.id));
+        shared.forEach(sc => { if (!ownIds.has(sc.id)) all.push(sc); });
+      }
+    } catch(_) {}
     if (typeof markSynced === 'function') markSynced();
-    if (typeof offlineStore !== 'undefined' && data && !status && !query) {
-      try { await offlineStore.cache('cases_cache', data); } catch(_) {}
+    if (typeof offlineStore !== 'undefined' && all && !status && !query) {
+      try { await offlineStore.cache('cases_cache', all); } catch(_) {}
     }
-    return data||[];
+    return all;
   } catch(e) {
     console.error('getCases error:', e);
     return [];
   }
+}
+
+// P9: fetch cases shared with this officer (marked with _shared flag + permission)
+async function _getSharedCases(oid) {
+  try {
+    const { data: shares } = await supabaseClient.from('case_shares')
+      .select('case_id,permission').eq('shared_with', oid);
+    if (!shares || !shares.length) return [];
+    const ids = shares.map(s => s.case_id);
+    const permMap = {}; shares.forEach(s => { permMap[s.case_id] = s.permission; });
+    const { data: cases } = await supabaseClient.from('cases').select('*').in('id', ids);
+    return (cases||[]).map(c => ({ ...c, _shared: true, _sharePermission: permMap[c.id] || 'read' }));
+  } catch(_) { return []; }
 }
 
 // Background refresh — updates cache silently, refreshes UI if cases page open
@@ -512,8 +534,16 @@ async function _refreshCasesInBackground(oid) {
   _bgRefreshTimer = setTimeout(()=>{ _bgRefreshTimer = null; }, 2000);
   try {
     const { data } = await supabaseClient.from('cases').select('*').eq('officer_id',oid).order('fir_number',{ascending:true});
-    if (data && typeof offlineStore !== 'undefined') {
-      try { await offlineStore.cache('cases_cache', data); } catch(_) {}
+    let all = data || [];
+    try {
+      const shared = await _getSharedCases(oid);
+      if (shared && shared.length) {
+        const ownIds = new Set(all.map(c => c.id));
+        shared.forEach(sc => { if (!ownIds.has(sc.id)) all.push(sc); });
+      }
+    } catch(_) {}
+    if (all && typeof offlineStore !== 'undefined') {
+      try { await offlineStore.cache('cases_cache', all); } catch(_) {}
       if (typeof markSynced === 'function') markSynced();
       // If cases page currently open AND not in a workspace, silently refresh the list
       if (window._activePage === 'cases' && !window._inWorkspace) {

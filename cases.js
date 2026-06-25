@@ -255,6 +255,7 @@ function renderCaseRow(c,sn){
       <span style="font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:12px;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(56,189,248,0.4);" onclick="openCaseWorkspace('${c.id}')" title="Open Case Workspace">${c.fir_number||'—'}</span>
       ${c.priority ? `<br><span style="font-size:9px;font-weight:700;color:${c.priority==='high'?'var(--red)':c.priority==='medium'?'var(--amber)':'var(--green)'};">${c.priority==='high'?'🔴 اہم':c.priority==='medium'?'🟡 درمیانہ':'🟢 کم'}</span>` : ''}
       ${c.is_cross_version?'<br><span style="font-size:9px;color:var(--red);font-weight:600;">⚔️ Cross</span>':''}
+      ${c._shared?`<br><span style="font-size:9px;color:var(--accent);font-weight:600;" title="آپ کے ساتھ شیئر کیا گیا (${c._sharePermission==='write'?'ترمیم':'دیکھیں'})">🔗 شیئرڈ</span>`:''}
     </td>
     <td style="font-size:11px;white-space:nowrap;">${formatDate(c.fir_date)}</td>
     <td style="font-size:11px;white-space:nowrap;">${formatDate(c.occurrence_date)}</td>
