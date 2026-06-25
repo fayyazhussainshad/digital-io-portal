@@ -172,12 +172,14 @@ function _renderCdr() {
         <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:24px;gap:20px;">
           <div style="flex:1;text-align:center;">
             <div style="font-weight:600;text-align:center;">Forwarded Please</div>
-            <div style="height:80px;"></div>
+            <div style="height:60px;"></div>
+            <div style="font-weight:bold;text-align:center;">${(typeof getDSPName==='function'?getDSPName():'')}</div>
             <div style="border-top:1px solid #333;width:70%;margin:0 auto;padding-top:6px;text-align:center;">سرکل DSP/SDPO</div>
           </div>
           <div style="flex:1;text-align:center;">
             <div style="font-weight:600;text-align:center;">Forwarded</div>
-            <div style="height:80px;"></div>
+            <div style="height:60px;"></div>
+            <div style="font-weight:bold;text-align:center;">${(typeof getSHOName==='function'?getSHOName():'')}</div>
             <div style="border-top:1px solid #333;width:70%;margin:0 auto;padding-top:6px;text-align:center;">SHO تھانہ ${o.station||'صدر ملتان'}</div>
           </div>
         </div>

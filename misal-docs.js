@@ -96,10 +96,6 @@ function renderMisalBar(c) {
         {label:'تتمہ چالان', act:`openReport173WithType('tatima_challan')`}
       ])}
       ${items}
-      <button onclick="_setMisalOfficer('sho','${c.id}')" title="SHO کا نام مقرر کریں"
-        class="mdoc-chip ${c.sho_name?'mdoc-added':'mdoc-empty'}">👮 SHO${c.sho_name?': '+c.sho_name:''}</button>
-      <button onclick="_setMisalOfficer('dsp','${c.id}')" title="DSP/SDPO کا نام مقرر کریں"
-        class="mdoc-chip ${c.dsp_name?'mdoc-added':'mdoc-empty'}">🎖️ DSP/SDPO${c.dsp_name?': '+c.dsp_name:''}</button>
     </div>
   </div>
   <style>

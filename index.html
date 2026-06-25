@@ -1086,6 +1086,8 @@ window.addEventListener('unhandledrejection', function(e){
         <button class="topnav-btn" onclick="showPage('law',null);_setTopNav(this)" title="قانونی لائبریری">⚖️<span class="topnav-label"> قانونی لائبریری</span></button>
         <button class="topnav-btn" onclick="showPage('search',null);_setTopNav(this)" title="تلاش">🔍<span class="topnav-label"> تلاش</span></button>
         <button class="topnav-btn" onclick="showPage('reminders',null);_setTopNav(this)" title="یاددہانیاں">🔔<span class="topnav-label"> یاددہانی</span></button>
+        <button class="topnav-btn" id="topbar-sho-btn" onclick="openShoDspModal('sho')" title="SHO کا نام">SHO</button>
+        <button class="topnav-btn" id="topbar-dsp-btn" onclick="openShoDspModal('dsp')" title="DSP/SDPO کا نام">DSP/SDPO</button>
 
         <!-- اوزار (Tools) dropdown -->
         <div style="position:relative;display:inline-block;">
@@ -1150,6 +1152,7 @@ window.addEventListener('unhandledrejection', function(e){
 <script src="report173.js"></script>
 <script src="cdr-imei.js"></script>
 <script src="cro-card.js"></script>
+<script src="sho-dsp.js"></script>
 <script src="diary.js"></script>
 <script src="notifications.js"></script>
 <script src="law.js"></script>

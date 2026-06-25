@@ -201,15 +201,12 @@ function _renderR173() {
             </div>`).join('')}
         </div>
 
-        <!-- SHO signature — ONE line, SHO only (ALL report types), auto-filled from session -->
+        <!-- SHO signature — ONE line, SHO only (ALL report types), from global SHO setting -->
         <div style="margin-top:24px;display:flex;justify-content:flex-start;">
           <div style="border-top:1px solid #333;padding-top:6px;display:flex;flex-direction:row-reverse;gap:8px;align-items:center;font-weight:bold;">
             ${(() => {
-              let rank = o.rank || o.designation || '';
-              let nm = o.full_name || '';
-              if (!nm) { try { const p = JSON.parse(localStorage.getItem('officer_profile')||localStorage.getItem('dio_officer_cache')||'{}'); rank = rank||p.rank||p.designation||''; nm = p.name||p.full_name||''; } catch(_) {} }
-              const fullTitle = [rank, nm].filter(Boolean).join(' ');
-              const val = v('sho_name', fullTitle);
+              const shoName = (typeof getSHOName === 'function') ? getSHOName() : '';
+              const val = v('sho_name', shoName);
               return `<span contenteditable="true" data-k="sho_name" oninput="this.style.fontWeight='bold';" style="min-width:120px;">${val}</span>`;
             })()}
             <span>SI/SHO تھانہ ${o.station||'صدر ملتان'}</span>
