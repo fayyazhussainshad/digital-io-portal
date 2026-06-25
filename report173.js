@@ -313,7 +313,26 @@ async function _saveR173() {
       await supabaseClient.from('report_173').insert(rec);
     }
     try { localStorage.setItem('dio_r173_'+_r173CaseId, JSON.stringify(_r173Records)); } catch(_) {}
-    showToast('✅ رپورٹ محفوظ ہو گئی', 'success');
+
+    // P7: auto-update case status based on report type
+    const statusMap = {
+      mukammal: 'complete',
+      namukammal: 'incomplete',
+      interim: 'under',
+      ikhraj: 'cancel',
+      adampata: 'untrace',
+      tatima_challan: 'complete'
+    };
+    const newStatus = statusMap[_r173Type];
+    if (newStatus) {
+      try {
+        await supabaseClient.from('cases').update({ status: newStatus }).eq('id', _r173CaseId);
+        try { localStorage.setItem('case_status_'+_r173CaseId, newStatus); } catch(_) {}
+        showToast('✅ رپورٹ محفوظ — مقدمہ کی حالت اپ ڈیٹ ہو گئی', 'success');
+      } catch(_) { showToast('✅ رپورٹ محفوظ ہو گئی', 'success'); }
+    } else {
+      showToast('✅ رپورٹ محفوظ ہو گئی', 'success');
+    }
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
 

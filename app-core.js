@@ -295,6 +295,37 @@ window.getComplainantName = async function(caseId) {
   } catch(_) { return ''; }
 };
 
+// ── GLOBAL: confirm-delete dialog (P8-B) ──────────────────────
+window.confirmDelete = function(itemName, onConfirm) {
+  const dialog = document.createElement('div');
+  dialog.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:99999;display:flex;align-items:center;justify-content:center;';
+  dialog.innerHTML = `
+    <div style="background:var(--bg-card,#fff);padding:24px;border-radius:14px;max-width:340px;width:90%;text-align:center;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
+      <div style="font-size:34px;margin-bottom:10px;">⚠️</div>
+      <div style="font-size:17px;font-weight:bold;margin-bottom:6px;color:var(--text-primary,#111);">کیا آپ واقعی حذف کرنا چاہتے ہیں؟</div>
+      <div style="font-size:14px;color:var(--text-secondary,#777);margin-bottom:20px;">${itemName||''}</div>
+      <div style="display:flex;gap:12px;justify-content:center;">
+        <button id="_cd-cancel" style="padding:10px 22px;border:1px solid var(--border,#ccc);border-radius:8px;background:transparent;color:var(--text-primary,#111);cursor:pointer;font-size:15px;">منسوخ</button>
+        <button id="_cd-ok" style="padding:10px 22px;border:none;border-radius:8px;background:#dc3545;color:#fff;cursor:pointer;font-size:15px;">✕ حذف کریں</button>
+      </div>
+    </div>`;
+  document.body.appendChild(dialog);
+  dialog.querySelector('#_cd-cancel').onclick = () => dialog.remove();
+  dialog.querySelector('#_cd-ok').onclick = () => { try { onConfirm && onConfirm(); } finally { dialog.remove(); } };
+  dialog.onclick = (e) => { if (e.target === dialog) dialog.remove(); };
+};
+
+// ── GLOBAL: empty-state with guidance (P8-A) ──────────────────
+window.showEmptyState = function(container, message, actionHint) {
+  if (!container) return;
+  container.innerHTML = `
+    <div style="text-align:center;padding:40px 20px;color:var(--text-muted,#888);direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
+      <div style="font-size:46px;margin-bottom:14px;">📂</div>
+      <div style="font-size:16px;margin-bottom:8px;color:var(--text-secondary,#aaa);">${message||''}</div>
+      ${actionHint ? `<div style="font-size:13px;color:var(--text-faint,#999);">${actionHint}</div>` : ''}
+    </div>`;
+};
+
 // ── GLOBAL: smart suggestions (Rule 5) — subtle, non-forcing ───
 // Remembers recent values per "category" key in localStorage, shows
 // dismissible hints below a field. Officer must tap ✓ to accept.
