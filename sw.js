@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v112
+   DIGITAL IO — SERVICE WORKER v114
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v112';
+const CACHE_NAME = 'digital-io-v114';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -38,13 +38,13 @@ const CORE_ASSETS = [
   '/performance.js',
   '/backup.js',
   '/settings.js',
+  '/subscription.js',
   '/patrol.js',
   '/cdr.js',
   '/incident.js',
   '/court.js',
   '/bin.js',
   '/admin.js',
-  '/patrol-share.html',
 ];
 
 // ── INSTALL ───────────────────────────────────────────────────
@@ -123,10 +123,20 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Cache-first for JS/CSS/fonts (and when offline, never wait for network)
+  // Cache-first + stale-while-revalidate for JS/CSS/fonts
   event.respondWith(
     caches.match(event.request).then(cached => {
-      if (cached) return cached;
+      if (cached) {
+        // Serve cache instantly, update in background (stale-while-revalidate)
+        if (navigator.onLine) {
+          fetch(event.request).then(fresh => {
+            if (fresh && fresh.status === 200) {
+              caches.open(CACHE_NAME).then(cache => cache.put(event.request, fresh.clone()));
+            }
+          }).catch(() => {});
+        }
+        return cached;
+      }
       // Not in cache and offline — fail fast
       if (!navigator.onLine) return caches.match('/offline.html');
       return fetch(event.request).then(response => {
