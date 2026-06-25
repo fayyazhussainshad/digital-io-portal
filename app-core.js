@@ -1240,6 +1240,16 @@ async function resetPassword() {
   hideForgotModal();
 }
 
+// Auto-format CNIC as 00000-0000000-0
+function _formatCnic(input) {
+  let d = (input.value || '').replace(/\D/g, '').slice(0, 13);
+  let out = d;
+  if (d.length > 5) out = d.slice(0,5) + '-' + d.slice(5);
+  if (d.length > 12) out = d.slice(0,5) + '-' + d.slice(5,12) + '-' + d.slice(12);
+  input.value = out;
+}
+window._formatCnic = _formatCnic;
+
 async function submitRegistration() {
   const name  = document.getElementById('reg-name')?.value.trim();
   const email = document.getElementById('reg-email')?.value.trim();
@@ -1248,19 +1258,28 @@ async function submitRegistration() {
   const station=document.getElementById('reg-station')?.value.trim();
   const district=document.getElementById('reg-district')?.value.trim();
   const desig = document.getElementById('reg-designation')?.value.trim();
+  const cnic = document.getElementById('reg-cnic')?.value.trim();
   if(!name||!email||!pass){showToast('⚠️ تمام ضروری خانے بھریں','error');return;}
   if(pass.length<8){showToast('⚠️ پاسورڈ کم از کم 8 حروف کا ہو','error');return;}
+  if(cnic && !/^\d{5}-\d{7}-\d$/.test(cnic)){showToast('⚠️ شناختی کارڈ نمبر کا فارمیٹ درست نہیں (00000-0000000-0)','error');return;}
   try {
     const{data,error}=await supabaseClient.auth.signUp({email,password:pass,options:{data:{full_name:name}}});
     if(error)throw error;
     if(data.user){
-      // Build officer record (omit email if column doesn't exist)
+      // Build officer record (omit email/cnic if column doesn't exist)
       const rec={user_id:data.user.id,full_name:name,badge_number:badge,designation:desig,station,district,role:'officer',is_approved:false};
+      if(cnic) rec.cnic = cnic;
       let{error:insErr}=await supabaseClient.from('officers').insert({...rec,email});
       // If email column doesn't exist, retry without it
       if(insErr && insErr.message && insErr.message.toLowerCase().includes('email')){
         const r2=await supabaseClient.from('officers').insert(rec);
         insErr=r2.error;
+      }
+      // If cnic column doesn't exist, retry without it
+      if(insErr && insErr.message && insErr.message.toLowerCase().includes('cnic')){
+        delete rec.cnic;
+        const r3=await supabaseClient.from('officers').insert({...rec,email});
+        insErr=r3.error;
       }
       if(insErr)throw insErr;
     }
