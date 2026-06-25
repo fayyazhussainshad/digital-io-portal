@@ -36,7 +36,7 @@ function _srDebounced() {
   if (!q) { _renderSearchHistory(); return; }
   const box = document.getElementById('sr-results');
   if (box) box.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-muted);"><div style="font-size:28px;">⏳</div><div style="font-size:14px;margin-top:8px;">تلاش ہو رہی ہے...</div></div>`;
-  _searchDebounce = setTimeout(() => _runGlobalSearch(q), 400);
+  _searchDebounce = setTimeout(() => _runGlobalSearch(q), 300);
 }
 
 function _getSearchHistory() {
@@ -94,24 +94,31 @@ async function _runGlobalSearch(q) {
     S.from('case_witnesses').select('id,case_id,full_name,cnic,cell,profession').or(`full_name.ilike.${w},cnic.ilike.${w},cell.ilike.${w},profession.ilike.${w}`).limit(10),
     S.from('fir_matn').select('id,case_id,matn').ilike('matn', w).limit(10),
     S.from('zimni_reports').select('id,case_id,serial_no,content').limit(10),
+    S.from('hamrahi_mulazman').select('id,case_id,name,rank,service_number,cnic,mobile').or(`name.ilike.${w},rank.ilike.${w},service_number.ilike.${w},cnic.ilike.${w},mobile.ilike.${w}`).limit(10),
+    S.from('sarkari_gari').select('id,case_id,vehicle_number,driver_name').or(`vehicle_number.ilike.${w},driver_name.ilike.${w}`).limit(10),
+    S.from('cdr_imei_requests').select('id,case_id,diary_number').ilike('diary_number', w).limit(10),
   ];
 
   const results = await Promise.allSettled(queries);
-  const [casesR, accusedR, witnessR, firR, zimniR] = results.map(r => r.status === 'fulfilled' ? (r.value.data || []) : []);
+  const [casesR, accusedR, witnessR, firR, zimniR, hamrahiR, gariR, cdrR] = results.map(r => r.status === 'fulfilled' ? (r.value.data || []) : []);
 
   const mine = (arr) => caseIds.length ? arr.filter(x => caseIds.includes(x.case_id)) : arr;
   const acc = mine(accusedR);
   const wit = mine(witnessR);
   const fir = mine(firR);
   const zim = mine(zimniR).filter(z => JSON.stringify(z.content||'').toLowerCase().includes(q.toLowerCase()));
+  const ham = hamrahiR || [];
+  const gari = gariR || [];
+  const cdr = mine(cdrR);
 
-  _renderSearchResults(q, { cases: casesR, accused: acc, witnesses: wit, fir, zimni: zim });
+  _renderSearchResults(q, { cases: casesR, accused: acc, witnesses: wit, fir, zimni: zim, hamrahi: ham, gari, cdr });
 }
 
 function _renderSearchResults(q, r) {
   const box = document.getElementById('sr-results');
   if (!box) return;
-  const total = r.cases.length + r.accused.length + r.witnesses.length + r.fir.length + r.zimni.length;
+  const total = r.cases.length + r.accused.length + r.witnesses.length + r.fir.length + r.zimni.length
+              + (r.hamrahi?.length||0) + (r.gari?.length||0) + (r.cdr?.length||0);
   if (!total) {
     box.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text-muted);"><div style="font-size:40px;margin-bottom:10px;">🔍</div><div style="font-size:15px;">"${q}" کے لیے کچھ نہیں ملا</div></div>`;
     return;
@@ -130,5 +137,8 @@ function _renderSearchResults(q, r) {
   r.witnesses.forEach(wt => html += card('گواہ','#a78bfa', wt.full_name||'—', `${wt.cnic||''} ${wt.cell||''} ${wt.profession||''}`, wt.case_id?`openCaseWorkspace('${wt.case_id}')`:''));
   r.fir.forEach(f => html += card('FIR متن','var(--green)', 'الف آئی آر متن', (f.matn||'').slice(0,80)+'...', f.case_id?`openCaseWorkspace('${f.case_id}')`:''));
   r.zimni.forEach(z => html += card('ضمنی','#0ea5e9', `ضمنی نمبر ${z.serial_no||''}`, '', z.case_id?`openCaseWorkspace('${z.case_id}')`:''));
+  (r.hamrahi||[]).forEach(h => html += card('ہمراہی ملازم','#14b8a6', h.name||'—', `${h.rank||''} ${h.service_number||''} ${h.cnic||''} ${h.mobile||''}`, h.case_id?`openCaseWorkspace('${h.case_id}')`:''));
+  (r.gari||[]).forEach(g => html += card('سرکاری گاڑی','#64748b', g.vehicle_number||'—', `ڈرائیور: ${g.driver_name||''}`, g.case_id?`openCaseWorkspace('${g.case_id}')`:''));
+  (r.cdr||[]).forEach(cd => html += card('CDR/IMEI','#8b5cf6', `ڈائری ${cd.diary_number||''}`, '', cd.case_id?`openCaseWorkspace('${cd.case_id}')`:''));
   box.innerHTML = html;
 }

@@ -210,16 +210,15 @@ async function _downloadTplWord(id) {
     if (!data) return;
     const content = (data.content || '').replace(/\n/g, '<br>');
     // Word-compatible HTML document with RTL + Urdu font
-    const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-<head><meta charset="utf-8"><title>${data.title}</title>
+    const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="utf-8"><title>${data.title}</title>
 <style>body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu','Times New Roman',serif;direction:rtl;text-align:right;font-size:14pt;line-height:2;}</style>
 </head><body><h2 style="text-align:center;">${data.title}</h2>${content}</body></html>`;
-    const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `${data.title}.doc`;
+    a.download = `${data.title}.html`;
     a.click();
-    showToast('📘 Word فائل ڈاؤنلوڈ ہو گئی', 'success');
+    showToast('📘 فائل ڈاؤنلوڈ ہو گئی', 'success');
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
 

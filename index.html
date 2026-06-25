@@ -651,7 +651,7 @@ body.workspace-mode .page-content { height: 100vh !important; }
 .form-input::placeholder { color: var(--text-faint); }
 .form-input[type="date"], .form-input[type="time"], .form-input[type="number"], .form-input[type="email"], .form-input[dir="ltr"] { direction: ltr; text-align: left; }
 
-/* MS Word formula: text inputs/textareas auto-detect Urdu (RTL) vs English/numbers (LTR) */
+/* Text inputs/textareas auto-detect Urdu (RTL) vs English/numbers (LTR) */
 textarea:not([dir="ltr"]), input[type="text"]:not([dir="ltr"]):not([id*="cnic"]):not([id*="cell"]):not([id*="fir"]):not([id*="date"]):not([id*="phone"]) {
   unicode-bidi: plaintext;
   text-align: start;
@@ -1088,6 +1088,7 @@ window.addEventListener('unhandledrejection', function(e){
         <button class="topnav-btn" onclick="showPage('reminders',null);_setTopNav(this)" title="یاددہانیاں">🔔<span class="topnav-label"> یاددہانی</span></button>
         <button class="topnav-btn" id="topbar-sho-btn" onclick="openShoDspModal('sho')" title="SHO کا نام">SHO</button>
         <button class="topnav-btn" id="topbar-dsp-btn" onclick="openShoDspModal('dsp')" title="DSP/SDPO کا نام">DSP/SDPO</button>
+        <button class="topnav-btn" id="topbar-gari-btn" onclick="openSarkariGari()" title="سرکاری گاڑی">🚗<span class="topnav-label"> سرکاری گاڑی</span></button>
 
         <!-- اوزار (Tools) dropdown -->
         <div style="position:relative;display:inline-block;">
@@ -1096,7 +1097,7 @@ window.addEventListener('unhandledrejection', function(e){
             <a class="topmore-item" onclick="showPage('diary',null);_closeTopDD()">📓 ڈیجیٹل ڈائری</a>
             <a class="topmore-item" onclick="showPage('incident',null);_closeTopDD()">🚨 واقعاتی رپورٹ</a>
             <a class="topmore-item" onclick="showPage('patrol',null);_closeTopDD()">🚔 گشت</a>
-            <a class="topmore-item" onclick="showPage('forms',null);_closeTopDD()">📡 ہمپلیس</a>
+            <a class="topmore-item" onclick="showPage('forms',null);_closeTopDD()">📡 ٹمپلیٹس</a>
             <a class="topmore-item" onclick="showPage('cdr',null);_closeTopDD()">📞 CDR Analyzer</a>
             <a class="topmore-item" onclick="showPage('suspects',null);_closeTopDD()">👤 ملزمان / گواہان</a>
             <a class="topmore-item" onclick="showPage('performance',null);_closeTopDD()">📊 کارکردگی</a>

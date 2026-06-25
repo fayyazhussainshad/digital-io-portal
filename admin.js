@@ -334,9 +334,9 @@ async function _adminGetOfficers() {
   return data || [];
 }
 async function _adminGetPending() {
-  // Pending = officers who registered but are not yet approved
+  // Pending = officers who registered but are not yet approved (false or null)
   const { data } = await supabaseClient.from('officers')
-    .select('*').eq('is_approved', false).order('created_at', { ascending: false });
+    .select('*').or('is_approved.is.null,is_approved.eq.false').order('created_at', { ascending: false });
   return data || [];
 }
 async function _adminGetAllCases() {

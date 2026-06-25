@@ -63,7 +63,7 @@ async function renderSettings(container) {
       <!-- Name + role — RIGHT side (sidebar side) -->
       <div style="flex:1;text-align:right;">
         <div style="font-size:22px;font-weight:800;color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;">${_esc(o.full_name||'افسر کا نام')}</div>
-        <div style="font-size:13px;color:var(--text-secondary);margin-top:2px;">${_esc(o.designation||'—')} &nbsp;·&nbsp; محکمانہ نمبر ${_esc(o.badge_number||'—')}</div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:2px;">${_esc(o.designation||'—')} &nbsp;·&nbsp; محکمانہ نمبر <span style="direction:ltr;unicode-bidi:embed;display:inline-block;">${_esc(o.badge_number||'—')}</span></div>
         <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">🏛️ تھانہ ${_esc(o.station||'—')}, ضلع ${_esc(o.district||'—')}</div>
       </div>
       <!-- Profile completeness -->
