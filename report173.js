@@ -208,7 +208,7 @@ function _renderR173() {
             }).join('');
           })()}
           <tr>
-            <td style="border:1px solid #000;padding:8px;text-align:center;vertical-align:top;width:8%;"></td>
+            <td style="border:1px solid #000;padding:8px;text-align:center;vertical-align:top;width:8%;font-weight:bold;">8</td>
             <td style="border:1px solid #000;padding:8px;font-weight:bold;text-align:right;vertical-align:top;width:30%;">مختصر حالات مقدمہ</td>
             <td style="border:1px solid #000;padding:8px;width:62%;">
               <div contenteditable="true" data-k="halaat" data-ph="یہاں پر متن FIR، متن کراس ورژن، تفتیشی وجوہات ${isIkhraj?'اخراج':'عدم پتہ'} لکھیں" style="width:100%;box-sizing:border-box;min-height:120px;direction:rtl;text-align:justify;font-size:15px;${v('halaat')?'':'color:#999;'}" oninput="this.style.color=this.innerText.trim()?'#000':'#999';">${v('halaat')}</div>
@@ -221,25 +221,29 @@ function _renderR173() {
         <div style="margin-top:14px;font-weight:700;">تفصیل کاغذات:</div>
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:8px;gap:16px;">
           ${isClosing ? `
-          <!-- SHO box (left corner) — closing reports only -->
-          <div style="border:1px solid #000;padding:8px;min-width:200px;text-align:center;font-size:13px;">
-            ${(() => {
-              const sho = (typeof getSHOName === 'function') ? getSHOName() : '';
-              return sho
-                ? `<div style="font-weight:bold;">${sho}</div><div style="font-weight:bold;">SI/SHO</div><div style="font-weight:bold;">تھانہ ${o.station||'صدر ملتان'}</div>`
-                : `<div style="height:18px;border-bottom:1px solid #999;margin-bottom:4px;"></div><div style="font-weight:bold;">SI/SHO</div><div style="font-weight:bold;">تھانہ ${o.station||'صدر ملتان'}</div>`;
-            })()}
+          <!-- SHO box (LEFT corner) -->
+          <div style="border:1px solid #000;padding:12px;min-width:200px;text-align:center;font-size:13px;">
+            <div class="sho-name-line" style="border-bottom:1px solid #000;min-height:24px;margin-bottom:4px;font-weight:bold;">${(typeof getSHOName==='function'?getSHOName():'')}</div>
+            <div style="font-weight:bold;">SI/SHO</div>
+            <div style="font-weight:bold;">تھانہ ${o.station||'صدر ملتان'}</div>
           </div>` : '<div></div>'}
           <!-- Papers list -->
-          <div style="display:flex;flex-wrap:wrap;gap:20px;font-size:13px;flex:1;justify-content:flex-end;">
+          <div style="display:flex;flex-wrap:wrap;gap:20px;font-size:13px;flex:1;justify-content:center;">
             ${['فارم ہذا','نقل FIR','اصل تحریر','فارم ریمانڈ','نقشہ موقع','اطلاع نامہ مدعی','اصل ضمنی SHO'].map((p,i)=>`
               <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
                 <span>${p}</span>
-                <input type="number" min="0" data-k="paper_${i}" value="${v('paper_'+i)}" oninput="_r173Qita(this)"
+                <input type="text" inputmode="numeric" pattern="[0-9]*" data-k="paper_${i}" value="${v('paper_'+i)}" oninput="_r173Qita(this)"
                   style="border:none;border-bottom:1px solid #000;width:40px;text-align:center;background:transparent;font-size:14px;outline:none;">
                 <span class="qita-label" style="font-size:11px;color:#555;">${(() => { const n=parseInt(v('paper_'+i)); return n===1?'قطعہ':(n>1?'قطعات':''); })()}</span>
               </div>`).join('')}
           </div>
+          ${isClosing ? `
+          <!-- SHO box (RIGHT corner) -->
+          <div style="border:1px solid #000;padding:12px;min-width:200px;text-align:center;font-size:13px;">
+            <div class="sho-name-line" style="border-bottom:1px solid #000;min-height:24px;margin-bottom:4px;font-weight:bold;">${(typeof getSHOName==='function'?getSHOName():'')}</div>
+            <div style="font-weight:bold;">SI/SHO</div>
+            <div style="font-weight:bold;">تھانہ ${o.station||'صدر ملتان'}</div>
+          </div>` : '<div></div>'}
         </div>
 
         <!-- SHO signature — ONE line, SHO only. Closing reports use the SHO box instead -->
