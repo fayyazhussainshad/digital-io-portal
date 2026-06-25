@@ -376,6 +376,7 @@ input, textarea, select { font-family: var(--font-main); }
 .login-card { position: relative; z-index: 1; background: rgba(11,24,38,0.95); border: 1px solid var(--border); border-radius: 18px; padding: 24px; width: 100%; max-width: 420px; margin: auto; box-shadow: 0 32px 80px rgba(0,0,0,0.7); backdrop-filter: blur(20px); animation: cardSlideUp 0.5s ease; box-sizing: border-box; }
 @media (max-width: 768px) {
   /* P2: Mobile touch sizing — bigger tap targets, no iOS zoom */
+  #global-search-bar { display: none !important; } /* topbar search hidden on mobile — use تلاش page */
   .mdoc-chip, .btn { min-height: 40px; }
   input:not([type="checkbox"]):not([type="radio"]), select, textarea { font-size: 16px; }
   .modal-box, #modal-box { max-width: 96vw !important; }
@@ -1124,6 +1125,12 @@ window.addEventListener('unhandledrejection', function(e){
         </div>
       </div>
       <div class="topbar-right">
+        <div id="global-search-bar" style="display:flex;align-items:center;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:20px;padding:3px 10px;min-width:160px;">
+          <span style="font-size:13px;">🔍</span>
+          <input id="global-search-input" type="text" placeholder="تلاش کریں..." dir="rtl"
+            oninput="_topbarSearch(this.value)" onkeydown="if(event.key==='Enter'){showPage('search',null);setTimeout(()=>{var s=document.getElementById('sr-query');if(s){s.value=this.value;s.dispatchEvent(new Event('input'))}},150);}"
+            style="border:none;background:transparent;outline:none;width:100%;font-size:13px;padding:3px 6px;color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;">
+        </div>
         <button class="topbar-btn" id="theme-picker-btn" onclick="openThemePicker()" title="تھیم" style="font-size:16px;">🎨</button>
         <div class="topbar-status" style="display:flex;align-items:center;gap:4px;"><span class="status-dot" id="status-dot"></span><span id="status-text" style="font-size:11px;">Online</span></div>
       </div>
@@ -1217,6 +1224,22 @@ function _toggleMoreNav(el) {
 }
 
 // Top navigation helpers (desktop top bar replaces sidebar)
+// Topbar global search — debounced; opens search page on typing
+let _topbarSearchDebounce;
+function _topbarSearch(val) {
+  clearTimeout(_topbarSearchDebounce);
+  _topbarSearchDebounce = setTimeout(() => {
+    const q = (val||'').trim();
+    if (!q) return;
+    showPage('search', null);
+    setTimeout(() => {
+      const s = document.getElementById('sr-query');
+      if (s) { s.value = q; s.dispatchEvent(new Event('input')); }
+    }, 150);
+  }, 400);
+}
+window._topbarSearch = _topbarSearch;
+
 function _setTopNav(btn) {
   document.querySelectorAll('.topnav-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
