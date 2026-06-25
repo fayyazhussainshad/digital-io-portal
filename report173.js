@@ -218,34 +218,36 @@ function _renderR173() {
         <style>[data-k="halaat"]:empty:before{content:attr(data-ph);color:#999;}</style>` : ''}
 
         <!-- تفصیل کاغذات -->
-        <div style="margin-top:14px;font-weight:700;text-align:right;">تفصیل کاغذات:</div>
         ${isClosing ? `
-        <div style="border-top:1px solid #000;margin:4px 0;"></div>
-        <!-- One-line SHO above (right-aligned, no box) -->
-        <div style="text-align:right;font-weight:bold;margin:6px 0;">${(typeof getSHOName==='function'?getSHOName():'')} SI/SHO تھانہ ${o.station||'صدر ملتان'}</div>
-        ` : ''}
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:8px;gap:16px;">
-          ${isClosing ? `
-          <!-- SHO box (LEFT corner, with border) -->
-          <div style="border:1px solid #000;padding:12px;min-width:200px;text-align:center;font-size:13px;">
-            <div class="sho-name-line" style="border-bottom:1px solid #000;min-height:24px;margin-bottom:4px;font-weight:bold;">${(typeof getSHOName==='function'?getSHOName():'')}</div>
-            <div style="font-weight:bold;">SI/SHO</div>
-            <div style="font-weight:bold;">تھانہ ${o.station||'صدر ملتان'}</div>
-          </div>` : '<div></div>'}
-          <!-- Papers list (center): label / underline / input / count -->
-          <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:13px;flex:1;justify-content:center;">
-            ${['فارم ہذا','نقل FIR','اصل تحریر','فارم ریمانڈ','نقشہ موقع','اطلاع نامہ مدعی','اصل ضمنی SHO'].map((p,i)=>`
-              <div style="display:inline-flex;flex-direction:column;align-items:center;margin:0 6px;">
-                <span style="font-weight:bold;">${p}</span>
-                <div style="border-bottom:1px solid #000;width:50px;min-height:18px;"></div>
-                <input type="text" class="qita" inputmode="numeric" pattern="[0-9]*" data-k="paper_${i}" value="${v('paper_'+i)}" oninput="_r173Qita(this)"
-                  style="width:50px;border:none;border-bottom:1px solid #000;text-align:center;background:transparent;font-size:14px;outline:none;margin-top:2px;">
-                <span class="qita-label" style="font-size:11px;color:#555;">${(() => { const n=parseInt(v('paper_'+i)); return n===1?'قطعہ':(n>1?'قطعات':''); })()}</span>
-              </div>`).join('')}
-          </div>
-          <!-- (right SHO removed — one line shown above left box) -->
-          ${isClosing ? '<div style="min-width:120px;"></div>' : '<div></div>'}
+        <!-- Heading row: تفصیل کاغذات (right) + SHO (left), divider below -->
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #000;padding-bottom:4px;margin:14px 0 16px;">
+          <div style="font-weight:bold;direction:rtl;">${(() => { const s=(typeof getSHOName==='function'?getSHOName():''); return (s?s+' ':'')+'SI/SHO تھانہ '+(o.station||'صدر ملتان'); })()}</div>
+          <div style="font-weight:bold;font-size:15px;">تفصیل کاغذات:</div>
         </div>
+        <!-- Items: one row, underlined labels, input below, no boxes -->
+        <div style="display:flex;justify-content:space-around;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+          ${['فارم ہذا','نقل TR','اصل تحریر','نقشہ موقع','اطلاع نامہ مدعی','اصل ضمنی SHO'].map((p,i)=>`
+            <div style="display:inline-flex;flex-direction:column;align-items:center;margin:0 8px;text-align:center;">
+              <span style="font-size:14px;text-decoration:underline;">${p}</span>
+              <input type="text" inputmode="numeric" pattern="[0-9]*" data-k="paper_${i}" value="${v('paper_'+i)}" oninput="_r173Qita(this)"
+                style="width:45px;border:none;border-bottom:1px solid #000;text-align:center;background:transparent;margin-top:4px;font-size:14px;outline:none;">
+              <span class="qita-label" style="font-size:11px;min-height:14px;color:#555;">${(() => { const n=parseInt(v('paper_'+i)); return n===1?'قطعہ':(n>1?'قطعات':''); })()}</span>
+            </div>`).join('')}
+        </div>
+        <!-- Bottom SHO line (bottom-left) -->
+        <div style="text-align:left;margin-top:32px;font-weight:bold;">${(() => { const s=(typeof getSHOName==='function'?getSHOName():''); return (s?s+' ':'')+'SI/SHO تھانہ '+(o.station||'صدر ملتان'); })()}</div>
+        ` : `
+        <!-- تفصیل کاغذات (non-closing types) -->
+        <div style="margin-top:14px;font-weight:700;text-align:right;">تفصیل کاغذات:</div>
+        <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:13px;justify-content:center;margin-top:8px;">
+          ${['فارم ہذا','نقل FIR','اصل تحریر','فارم ریمانڈ','نقشہ موقع','اطلاع نامہ مدعی','اصل ضمنی SHO'].map((p,i)=>`
+            <div style="display:inline-flex;flex-direction:column;align-items:center;margin:0 6px;">
+              <span style="text-decoration:underline;">${p}</span>
+              <input type="text" inputmode="numeric" pattern="[0-9]*" data-k="paper_${i}" value="${v('paper_'+i)}" oninput="_r173Qita(this)"
+                style="width:45px;border:none;border-bottom:1px solid #000;text-align:center;background:transparent;margin-top:4px;font-size:14px;outline:none;">
+              <span class="qita-label" style="font-size:11px;min-height:14px;color:#555;">${(() => { const n=parseInt(v('paper_'+i)); return n===1?'قطعہ':(n>1?'قطعات':''); })()}</span>
+            </div>`).join('')}
+        </div>`}
 
         <!-- SHO signature — non-closing types only (one line, SHO only) -->
         ${!isClosing ? `
