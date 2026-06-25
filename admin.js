@@ -139,7 +139,7 @@ function _renderPendingTab(pending) {
   return `<div class="card">
     <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;">⏳ نئے افسران کی درخواستیں (${pending.length})</div>
     ${pending.map(p => `
-    <div style="background:var(--bg-secondary);border:1px solid var(--amber);border-radius:10px;padding:14px;margin-bottom:10px;">
+    <div id="pending-card-${p.id}" style="background:var(--bg-secondary);border:1px solid var(--amber);border-radius:10px;padding:14px;margin-bottom:10px;">
       <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
         <div style="width:44px;height:44px;border-radius:50%;background:var(--amber);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;flex-shrink:0;">
           ${(p.full_name||'?')[0].toUpperCase()}
@@ -152,6 +152,7 @@ function _renderPendingTab(pending) {
           <div style="font-size:12px;color:var(--text-secondary);">
             🏛️ ${p.station||'—'} · ${p.district||'—'} &nbsp;·&nbsp; 👮 ${p.designation||'—'}
           </div>
+          ${p.cnic ? `<div style="font-size:12px;color:var(--text-secondary);" dir="ltr">🆔 ${p.cnic}</div>` : ''}
           <div style="font-size:10px;color:var(--text-faint);margin-top:4px;">
             درخواست: ${formatDate(p.created_at)}
           </div>
@@ -334,10 +335,11 @@ async function _adminGetOfficers() {
   return data || [];
 }
 async function _adminGetPending() {
-  // Pending = officers who registered but are not yet approved (false or null)
+  // Pending = officers registered but NOT yet approved. Strictly exclude approved.
   const { data } = await supabaseClient.from('officers')
     .select('*').or('is_approved.is.null,is_approved.eq.false').order('created_at', { ascending: false });
-  return data || [];
+  // Extra safety: filter out any approved record that slipped through
+  return (data || []).filter(o => o.is_approved !== true);
 }
 async function _adminGetAllCases() {
   const { data } = await supabaseClient.from('cases').select('*').order('created_at', { ascending: false });
@@ -361,6 +363,9 @@ async function _adminApprove(regId, name) {
 async function _doApproveReg(regId) {
   try {
     await supabaseClient.from('officers').update({ is_approved: true }).eq('id', regId);
+    // Remove card from DOM immediately (no wait for reload)
+    const card = document.getElementById('pending-card-'+regId);
+    if (card) card.remove();
     showToast('✅ درخواست منظور ہو گئی — افسر اب لاگ ان کر سکتا ہے', 'success');
     _adminRefresh();
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
@@ -380,6 +385,9 @@ async function _doRejectReg(regId) {
     await supabaseClient.from('audit_log').delete().eq('officer_id', regId);
   } catch(_) {}
   await supabaseClient.from('officers').delete().eq('id', regId);
+  // Remove card from DOM immediately
+  const card = document.getElementById('pending-card-'+regId);
+  if (card) card.remove();
   showToast('❌ درخواست رد کر دی گئی', 'info');
   _adminRefresh();
 }
