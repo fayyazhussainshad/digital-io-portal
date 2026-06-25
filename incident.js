@@ -144,6 +144,12 @@ function renderIncident(container) {
 
   // Load previous reports
   _loadPrevReports();
+
+  // Smart suggestions (Rule 5) — recent locations on مقام وقوعہ, dismissible
+  setTimeout(() => {
+    const placeEl = document.getElementById('inc-place');
+    if (placeEl && typeof attachSuggestions === 'function') attachSuggestions(placeEl, 'location');
+  }, 60);
 }
 
 // ── PREVIOUS REPORTS ──────────────────────────────────────────

@@ -232,9 +232,126 @@ function formatDate(d) {
   try {
     const dt = new Date(d);
     if (isNaN(dt)) return d;
-    return dt.toLocaleDateString('en-PK',{day:'2-digit',month:'2-digit',year:'numeric'});
+    const dd = String(dt.getDate()).padStart(2,'0');
+    const mm = String(dt.getMonth()+1).padStart(2,'0');
+    const yyyy = dt.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
   } catch(_) { return d; }
 }
+window.formatDate = formatDate;
+
+// ── GLOBAL: voice-to-text mic button (Rule 7) ──────────────────
+window.addMicButton = function(inputElement) {
+  if (!inputElement || inputElement._micAdded) return;
+  inputElement._micAdded = true;
+  const micBtn = document.createElement('button');
+  micBtn.innerHTML = '🎙️';
+  micBtn.type = 'button';
+  micBtn.style.cssText = 'border:none;background:transparent;cursor:pointer;font-size:18px;padding:2px 6px;vertical-align:middle;';
+  micBtn.title = 'آواز سے لکھیں';
+  // Place the mic button right after the field
+  if (inputElement.nextSibling) inputElement.parentNode.insertBefore(micBtn, inputElement.nextSibling);
+  else inputElement.parentNode.appendChild(micBtn);
+
+  let recognition;
+  micBtn.addEventListener('click', () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { alert('آپ کا براؤزر آواز کی پہچان کی حمایت نہیں کرتا'); return; }
+    if (recognition) { try { recognition.stop(); } catch(_) {} recognition = null; micBtn.innerHTML='🎙️'; return; }
+    recognition = new SR();
+    recognition.lang = 'ur-PK';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    micBtn.innerHTML = '🔴';
+    const isCE = inputElement.isContentEditable;
+    const base = isCE ? (inputElement.innerText||'') : (inputElement.value||'');
+    recognition.onresult = (e) => {
+      let t = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) t += e.results[i][0].transcript;
+      if (isCE) { inputElement.innerText = (base?base+' ':'') + t; inputElement.style.fontWeight='bold'; }
+      else { inputElement.value = (base?base+' ':'') + t; inputElement.style.fontWeight='bold'; }
+    };
+    recognition.onend = () => { micBtn.innerHTML = '🎙️'; recognition = null; };
+    recognition.onerror = () => { micBtn.innerHTML = '🎙️'; recognition = null; };
+    try { recognition.start(); } catch(_) { micBtn.innerHTML='🎙️'; }
+  });
+};
+// Apply mic to any field marked data-mic="true" (call after rendering a form)
+window.applyMicButtons = function(root) {
+  (root||document).querySelectorAll('[data-mic="true"]').forEach(el => window.addMicButton(el));
+};
+
+// ── GLOBAL: complainant name from case (Rule 8) ────────────────
+window.getComplainantName = async function(caseId) {
+  if (!caseId) return '';
+  try {
+    const cached = JSON.parse(localStorage.getItem('case_data_'+caseId) || '{}');
+    if (cached.complainant_name) return cached.complainant_name;
+  } catch(_) {}
+  try {
+    const { data } = await supabaseClient.from('cases')
+      .select('complainant_name,complainant_address').eq('id',caseId).maybeSingle();
+    return (data && data.complainant_name) || '';
+  } catch(_) { return ''; }
+};
+
+// ── GLOBAL: smart suggestions (Rule 5) — subtle, non-forcing ───
+// Remembers recent values per "category" key in localStorage, shows
+// dismissible hints below a field. Officer must tap ✓ to accept.
+window.rememberValue = function(categoryKey, value) {
+  if (!value || !String(value).trim()) return;
+  value = String(value).trim();
+  try {
+    let arr = JSON.parse(localStorage.getItem('suggest_'+categoryKey) || '[]');
+    arr = arr.filter(v => v !== value);   // move to front, no dupes
+    arr.unshift(value);
+    arr = arr.slice(0, 8);                 // keep last 8
+    localStorage.setItem('suggest_'+categoryKey, JSON.stringify(arr));
+  } catch(_) {}
+};
+
+window.attachSuggestions = function(inputEl, categoryKey, opts) {
+  if (!inputEl || inputEl._suggAttached) return;
+  inputEl._suggAttached = true;
+  opts = opts || {};
+  const extra = opts.presets || [];   // fixed common suggestions (e.g. PPC sections)
+
+  // Build hint container right after the field
+  const box = document.createElement('div');
+  box.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;';
+  if (inputEl.nextSibling) inputEl.parentNode.insertBefore(box, inputEl.nextSibling);
+  else inputEl.parentNode.appendChild(box);
+
+  const setVal = (val) => {
+    if (inputEl.isContentEditable) { inputEl.innerText = val; inputEl.style.fontWeight='bold'; }
+    else { inputEl.value = val; inputEl.style.fontWeight='bold'; }
+    inputEl.dispatchEvent(new Event('input', { bubbles:true }));
+  };
+
+  const render = () => {
+    let recent = [];
+    try { recent = JSON.parse(localStorage.getItem('suggest_'+categoryKey) || '[]'); } catch(_) {}
+    const all = [...new Set([...recent, ...extra])].slice(0, 8);
+    box.innerHTML = '';
+    if (!all.length) return;
+    const cur = (inputEl.isContentEditable ? inputEl.innerText : inputEl.value || '').trim();
+    all.filter(s => s && s !== cur).forEach(s => {
+      const chip = document.createElement('span');
+      chip.style.cssText = 'display:inline-flex;align-items:center;gap:4px;font-style:italic;color:#888;font-size:12px;border:1px dashed #bbb;border-radius:12px;padding:2px 8px;cursor:pointer;';
+      chip.innerHTML = `${s} <b style="color:var(--accent,#2563eb);font-style:normal;">✓</b>`;
+      chip.title = 'قبول کریں';
+      chip.onclick = () => { setVal(s); render(); };
+      box.appendChild(chip);
+    });
+  };
+  render();
+  inputEl.addEventListener('focus', render);
+  // Remember on blur
+  inputEl.addEventListener('blur', () => {
+    const val = inputEl.isContentEditable ? inputEl.innerText : inputEl.value;
+    window.rememberValue(categoryKey, val);
+  });
+};
 
 function formatCNIC(v) {
   if (!v) return '';
