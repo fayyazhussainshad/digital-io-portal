@@ -1528,7 +1528,8 @@ function renderWorkspace(c, docs, ev, container) {
         <button class="btn btn-secondary btn-sm" onclick="_openDocsChecklist('${c.id}','${c.fir_number||''}')">📋</button>
         <button class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')">✏️</button>
         <button class="btn btn-secondary btn-sm" onclick="downloadCaseFile('${c.id}')">⬇️</button>
-        <button class="btn btn-secondary btn-sm" onclick="openShareModal('${c.id}')">📤</button>
+        <button class="btn btn-secondary btn-sm" onclick="openShareModal('${c.id}')" title="متن شیئر">📤</button>
+        <button class="btn btn-secondary btn-sm" onclick="openCaseShareModal('${c.id}')" title="افسر کے ساتھ شیئر">🔗</button>
         <button class="btn btn-danger btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number||''}')">🗑️</button>
         <button onclick="goBackToCases()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">↩</button>
       </div>
