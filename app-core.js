@@ -624,7 +624,7 @@ function updateConnectionStatus(online) {
   const text = document.getElementById('status-text');
   const badge= document.getElementById('db-badge');
   if (dot)  dot.className  = 'status-dot' + (online?' status-online':' status-offline');
-  if (text) text.textContent = online ? 'Online' : 'Offline';
+  if (text) text.textContent = online ? 'آن لائن' : 'آف لائن';
   if (badge) badge.textContent = online ? '🔗 Connected' : '⚡ Offline';
 }
 
