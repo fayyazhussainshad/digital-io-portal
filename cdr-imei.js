@@ -147,10 +147,15 @@ function _renderCdr() {
         <div style="margin-top:12px;font-size:16px;line-height:1.7;color:#333;border:1px solid #ccc;padding:8px;">
           <div>۱۔ موبائل فون کال ڈیٹا ریکارڈ صرف FIR یا FIR سے متعلقہ ہونے کی صورت میں فراہم کیا جائے گا۔</div>
           <div>۲۔ اگر CDR's/IMEI's کا اندراج FIR میں نہ ہو تو ضمنی میں اندراج کریں۔</div>
-          <div style="display:flex;align-items:center;flex-direction:row-reverse;gap:24px;justify-content:flex-end;">
+          <div style="display:flex;align-items:center;flex-direction:row;gap:24px;justify-content:flex-start;flex-wrap:wrap;">
             <span style="display:flex;align-items:center;gap:6px;">ضمنی نمبر <span contenteditable="true" data-k="zimni_number" style="border-bottom:1px solid #999;min-width:100px;height:28px;line-height:28px;display:inline-block;${v('zimni_number')?'font-weight:bold;':''}">${v('zimni_number')}</span></span>
             <span style="display:flex;align-items:center;gap:6px;">تاریخ <span contenteditable="true" data-k="zimni_date" style="border-bottom:1px solid #999;min-width:100px;height:28px;line-height:28px;display:inline-block;font-weight:bold;">${v('zimni_date', _today)}</span></span>
-            <span style="display:flex;align-items:center;gap:6px;">مرتبہ <span contenteditable="true" data-k="zimni_marba" style="border-bottom:1px solid #999;min-width:100px;height:28px;line-height:28px;display:inline-block;${v('zimni_marba')?'font-weight:bold;':''}">${v('zimni_marba')}</span></span>
+            <span style="display:flex;align-items:center;gap:6px;">مرتبہ <span contenteditable="true" data-k="zimni_marba" style="border-bottom:1px solid #999;min-width:100px;height:28px;line-height:28px;display:inline-block;${v('zimni_marba')?'font-weight:bold;':''}">${v('zimni_marba')}</span> <b style="margin-right:8px;">${(() => {
+              let rank = o.rank || o.designation || '';
+              let nm = o.full_name || '';
+              if (!nm) { try { const p = JSON.parse(localStorage.getItem('officer_profile')||localStorage.getItem('dio_officer_cache')||'{}'); rank = rank||p.rank||p.designation||''; nm = p.name||p.full_name||''; } catch(_) {} }
+              return [rank, nm].filter(Boolean).join(' ');
+            })()}</b></span>
             <span style="white-space:nowrap;">(کاپی ضمنی ہمراہ بھجوائیں)</span>
           </div>
           <div>۴۔ CDR کے غلط استعمال کی صورت میں ذمہ دار افسر کے خلاف سخت محکمانہ کاروائی کی جائیگی۔</div>
