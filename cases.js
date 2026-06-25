@@ -1480,6 +1480,33 @@ async function openCaseWorkspace(id) {
   }
 }
 
+// P4: Case progress tracker — FIR -> arrest -> challan -> faisla
+function _renderProgressBar(c) {
+  const status = c.status || 'under';
+  const firDone = !!(c.fir_number);
+  let arrestDone = false;
+  try {
+    const acc = JSON.parse(localStorage.getItem('dio_accused_'+c.id)||'[]');
+    arrestDone = Array.isArray(acc) && acc.some(a => a.arrest_date);
+  } catch(_) {}
+  const challanDone = ['complete','incomplete','challan512'].includes(status);
+  const challanActive = !challanDone && (status === 'under');
+  const faislaDone = false;
+  const icon = (done, active) => done ? '✅' : (active ? '⏳' : '⬜');
+  const step = (label, done, active) => `
+    <div style="display:flex;align-items:center;gap:4px;${active?'font-weight:800;color:var(--accent);':'color:var(--text-muted);'}">
+      <span>${icon(done, active)}</span><span>${label}</span>
+    </div>`;
+  const arrow = '<span style="color:var(--text-faint);">&#8592;</span>';
+  return `
+    <div style="display:flex;flex-direction:row-reverse;align-items:center;gap:10px;padding:7px 16px;background:var(--bg-tertiary);border-bottom:1px solid var(--border);font-size:13px;direction:rtl;flex-wrap:wrap;font-family:'Jameel Noori Nastaleeq',serif;">
+      ${step('FIR درج', firDone, false)} ${arrow}
+      ${step('ملزم گرفتار', arrestDone, false)} ${arrow}
+      ${step('چالان', challanDone, challanActive)} ${arrow}
+      ${step('فیصلہ', faislaDone, false)}
+    </div>`;
+}
+
 function renderWorkspace(c, docs, ev, container) {
   const statusColor = {under:'var(--accent)',complete:'var(--green)',incomplete:'var(--amber)',untrace:'var(--purple)',cancel:'var(--red)',challan512:'#f97316'}[c.status]||'var(--accent)';
   const o = currentOfficer||{};
@@ -1506,6 +1533,9 @@ function renderWorkspace(c, docs, ev, container) {
         <button onclick="goBackToCases()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">↩</button>
       </div>
     </div>
+
+    <!-- CASE PROGRESS TRACKER (P4) -->
+    ${_renderProgressBar(c)}
 
     <!-- MISAL DOCUMENT BAR (directly after topbar — nothing in between) -->
     ${renderMisalBar(c)}

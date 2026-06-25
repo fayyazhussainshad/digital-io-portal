@@ -375,6 +375,10 @@ input, textarea, select { font-family: var(--font-main); }
 @keyframes glowPulse { 0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(1)} 50%{opacity:1;transform:translate(-50%,-50%) scale(1.1)} }
 .login-card { position: relative; z-index: 1; background: rgba(11,24,38,0.95); border: 1px solid var(--border); border-radius: 18px; padding: 24px; width: 100%; max-width: 420px; margin: auto; box-shadow: 0 32px 80px rgba(0,0,0,0.7); backdrop-filter: blur(20px); animation: cardSlideUp 0.5s ease; box-sizing: border-box; }
 @media (max-width: 768px) {
+  /* P2: Mobile touch sizing — bigger tap targets, no iOS zoom */
+  .mdoc-chip, .btn { min-height: 40px; }
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea { font-size: 16px; }
+  .modal-box, #modal-box { max-width: 96vw !important; }
   #login-screen { padding: 16px; justify-content: flex-start; }
   .login-card { padding: 18px 16px; }
   .login-card .disclaimer-box, .login-card [class*="disclaimer"] { font-size: 13px !important; padding: 12px !important; }
