@@ -160,10 +160,11 @@ function _renderR173() {
           </tr>
         </table>` : ''}
 
-        <!-- مختصر حالات مقدمہ -->
+        <!-- مختصر حالات مقدمہ (separate — NOT for اخراج, which has it inside the table) -->
+        ${!isIkhraj ? `
         <div style="margin-top:12px;font-weight:700;">مختصر حالات مقدمہ معہ جرم:</div>
         <div contenteditable="true" data-k="halaat" data-ph="یہاں پر متن FIR، متن کراس ورژن، تفتیشی وجوہات اخراج مقدمہ لکھیں" style="border:1px solid #999;padding:10px;min-height:120px;text-align:justify;margin-top:4px;${v('halaat', boiler)?'':'color:#999;'}" onfocus="if(this.dataset.ph&&!this.innerText.trim()){this.style.color='#000';}" oninput="this.style.color=this.innerText.trim()?'#000':'#999';">${v('halaat', boiler)}</div>
-        <style>[data-k="halaat"]:empty:before{content:attr(data-ph);color:#999;}</style>
+        <style>[data-k="halaat"]:empty:before{content:attr(data-ph);color:#999;}</style>` : ''}
 
         ${isTatima ? `
         <!-- Tatima: رزلٹ نمبر + checkboxes -->
@@ -175,11 +176,18 @@ function _renderR173() {
         </div>` : ''}
 
         ${isIkhraj ? `
-        <!-- Ikhraj extra numbered table -->
+        <!-- Ikhraj numbered table (with halaat as last row) -->
         <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:12px;">
           ${[['madai_i','نام وپتہ مدعی و مستغیث'],['jurm_i','مختصر کیفیت جرم'],['masruqa_i','تفصیل مال مسروقہ اگر کوئی ہو'],['namzad_i','تفصیل ملزمان نامزد'],['giraftar_i','تفصیل ملزمان گرفتار شدہ'],['raha_i','تفصیل ملزمان رہا شدہ'],['baramad_i','تفصیل مال برآمدہ مقبوضہ پولیس']].map((r,i)=>`
           <tr><td style="border:1px solid #999;padding:6px;width:30%;font-weight:600;background:#f9f9f9;">${i+1}. ${r[1]}</td><td contenteditable="true" data-k="${r[0]}" style="border:1px solid #999;padding:6px;">${v(r[0])}</td></tr>`).join('')}
-        </table>` : ''}
+          <tr>
+            <td colspan="2" style="border:1px solid #999;padding:8px;">
+              <div style="text-align:right;font-weight:bold;margin-bottom:4px;">مختصر حالات مقدمہ:</div>
+              <div contenteditable="true" data-k="halaat" data-ph="یہاں پر متن FIR، متن کراس ورژن، تفتیشی وجوہات اخراج مقدمہ لکھیں" style="width:100%;box-sizing:border-box;min-height:120px;direction:rtl;text-align:justify;font-size:15px;padding:8px;border:1px solid #ccc;${v('halaat')?'':'color:#999;'}" oninput="this.style.color=this.innerText.trim()?'#000':'#999';">${v('halaat')}</div>
+            </td>
+          </tr>
+        </table>
+        <style>[data-k="halaat"]:empty:before{content:attr(data-ph);color:#999;}</style>` : ''}
 
         <!-- Footer: papers checklist -->
         <div style="margin-top:14px;font-weight:700;">تفصیل کاغذات:</div>
@@ -188,10 +196,20 @@ function _renderR173() {
             <label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" data-pk="paper_${i}" ${v('paper_'+i)?'checked':''}> ${p}</label>`).join('')}
         </div>
 
-        <!-- SHO signature (blank — SHO signs, not IO) -->
+        <!-- SHO signature: اخراج auto-fills officer name; others stay blank -->
         <div style="margin-top:24px;text-align:left;">
           <div style="border-top:1px solid #333;display:inline-block;padding-top:4px;text-align:center;">
-            <span contenteditable="true" data-k="sho_name" data-ph="SHO کا نام لکھیں" oninput="this.style.fontWeight=this.innerText.trim()?'bold':'normal';" style="min-width:140px;display:inline-block;${v('sho_name')?'font-weight:bold;':''}">${v('sho_name')}</span><br>
+            ${(() => {
+              let fullTitle = '';
+              if (isIkhraj) {
+                let rank = o.rank || o.designation || '';
+                let nm = o.full_name || '';
+                if (!nm) { try { const p = JSON.parse(localStorage.getItem('officer_profile')||localStorage.getItem('dio_officer_cache')||'{}'); rank = rank||p.rank||p.designation||''; nm = p.name||p.full_name||''; } catch(_) {} }
+                fullTitle = [rank, nm].filter(Boolean).join(' ');
+              }
+              const val = v('sho_name', fullTitle);
+              return `<span contenteditable="true" data-k="sho_name" data-ph="SHO کا نام لکھیں" oninput="this.style.fontWeight=this.innerText.trim()?'bold':'normal';" style="min-width:140px;display:inline-block;${val?'font-weight:bold;':''}">${val}</span>`;
+            })()}<br>
             SI/SHO تھانہ ${o.station||'صدر ملتان'}
           </div>
         </div>
