@@ -220,15 +220,16 @@ function _renderR173() {
         <!-- Footer: papers with قطعہ/قطعات count + SHO box at left -->
         <div style="margin-top:14px;font-weight:700;">تفصیل کاغذات:</div>
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:8px;gap:16px;">
-          <!-- SHO box (left corner) -->
+          ${isClosing ? `
+          <!-- SHO box (left corner) — closing reports only -->
           <div style="border:1px solid #000;padding:8px;min-width:200px;text-align:center;font-size:13px;">
             ${(() => {
               const sho = (typeof getSHOName === 'function') ? getSHOName() : '';
               return sho
-                ? `<div style="font-weight:bold;">${sho}</div><div>SI/SHO</div><div>تھانہ ${o.station||'صدر ملتان'}</div>`
-                : `<div style="height:18px;border-bottom:1px solid #999;margin-bottom:4px;"></div><div>SI/SHO</div><div>تھانہ ${o.station||'صدر ملتان'}</div>`;
+                ? `<div style="font-weight:bold;">${sho}</div><div style="font-weight:bold;">SI/SHO</div><div style="font-weight:bold;">تھانہ ${o.station||'صدر ملتان'}</div>`
+                : `<div style="height:18px;border-bottom:1px solid #999;margin-bottom:4px;"></div><div style="font-weight:bold;">SI/SHO</div><div style="font-weight:bold;">تھانہ ${o.station||'صدر ملتان'}</div>`;
             })()}
-          </div>
+          </div>` : '<div></div>'}
           <!-- Papers list -->
           <div style="display:flex;flex-wrap:wrap;gap:20px;font-size:13px;flex:1;justify-content:flex-end;">
             ${['فارم ہذا','نقل FIR','اصل تحریر','فارم ریمانڈ','نقشہ موقع','اطلاع نامہ مدعی','اصل ضمنی SHO'].map((p,i)=>`
@@ -241,7 +242,8 @@ function _renderR173() {
           </div>
         </div>
 
-        <!-- SHO signature — ONE line, SHO only (ALL report types), from global SHO setting -->
+        <!-- SHO signature — ONE line, SHO only. Closing reports use the SHO box instead -->
+        ${!isClosing ? `
         <div style="margin-top:24px;display:flex;justify-content:flex-start;">
           <div style="border-top:1px solid #333;padding-top:6px;display:flex;flex-direction:row-reverse;gap:8px;align-items:center;font-weight:bold;">
             ${(() => {
@@ -251,9 +253,7 @@ function _renderR173() {
             })()}
             <span>SI/SHO تھانہ ${o.station||'صدر ملتان'}</span>
           </div>
-        </div>
-        <style>[data-k="sho_name"]:empty:before{content:attr(data-ph);color:#999;font-weight:normal;}</style>
-
+        </div>` : ''}
       </div>
     </div>
   </div>`;

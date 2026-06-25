@@ -73,7 +73,7 @@ function _updateShoDspButtons() {
   }
   if (dspBtn) {
     const d = getDSPName();
-    dspBtn.innerHTML = d ? `DSP: ${d}` : 'DSP/SDPO';
+    dspBtn.innerHTML = d ? `DSP/SDPO: ${d}` : 'DSP/SDPO';
   }
 }
 window._updateShoDspButtons = _updateShoDspButtons;
