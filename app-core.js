@@ -1678,9 +1678,40 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
 //  GLOBAL PRINT HELPER — iframe-based, no double-close, no full-screen stuck
 // ═══════════════════════════════════════════════════════════
 function dioPrint(htmlContent) {
+  // P5: Print preview — show content in a preview modal first (turn off via
+  // localStorage 'dio_print_preview'='off'). Officer confirms then prints.
+  if (localStorage.getItem('dio_print_preview') !== 'off') {
+    _dioPrintPreview(htmlContent);
+    return;
+  }
+  _dioDoPrint(htmlContent);
+}
+
+function _dioPrintPreview(htmlContent) {
+  const old = document.getElementById('dio-preview-overlay');
+  if (old) old.remove();
+  const ov = document.createElement('div');
+  ov.id = 'dio-preview-overlay';
+  ov.className = 'no-print';
+  ov.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:99998;background:rgba(0,0,0,0.8);display:flex;flex-direction:column;align-items:center;padding:12px 0;overflow:auto;';
+  ov.innerHTML = `
+    <div style="display:flex;gap:12px;margin-bottom:10px;direction:rtl;">
+      <button id="dio-prev-print" style="background:#1a73e8;color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:16px;cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">🖨️ پرنٹ کریں</button>
+      <button id="dio-prev-close" style="background:#dc3545;color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:16px;cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">✕ بند کریں</button>
+    </div>
+    <iframe id="dio-preview-frame" style="width:210mm;max-width:96vw;height:80vh;background:#fff;border:none;border-radius:4px;box-shadow:0 8px 40px rgba(0,0,0,0.5);"></iframe>`;
+  document.body.appendChild(ov);
+  const f = document.getElementById('dio-preview-frame');
+  const d = f.contentWindow.document; d.open(); d.write(htmlContent); d.close();
+  document.getElementById('dio-prev-close').onclick = () => ov.remove();
+  document.getElementById('dio-prev-print').onclick = () => { ov.remove(); _dioDoPrint(htmlContent); };
+}
+
+function _dioDoPrint(htmlContent) {
   // Remove any previous print iframe
   const old = document.getElementById('dio-print-frame');
   if (old) old.remove();
+  // continued below…
 
   // Inject a global print stylesheet that hides everything except the print iframe.
   // Only the working document prints, never the app's tabs/sidebar/toolbars.
