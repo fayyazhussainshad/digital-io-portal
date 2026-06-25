@@ -139,7 +139,8 @@ function _renderR173() {
           </tr>
         </table>
 
-        <!-- Main data table -->
+        <!-- Main data table (NOT in اخراج — official form has no such table) -->
+        ${!isIkhraj ? `
         <table style="width:100%;border-collapse:collapse;font-size:13px;">
           <tr style="background:#f0f0f0;">
             <th style="border:1px solid #999;padding:6px;">نام و پتہ مدعی و مستغیث</th>
@@ -157,7 +158,7 @@ function _renderR173() {
             <td contenteditable="true" data-k="mal_qabza" style="border:1px solid #999;padding:8px;vertical-align:top;">${v('mal_qabza')}</td>
             <td contenteditable="true" data-k="shahadat" style="border:1px solid #999;padding:8px;vertical-align:top;">${v('shahadat')}</td>
           </tr>
-        </table>
+        </table>` : ''}
 
         <!-- مختصر حالات مقدمہ -->
         <div style="margin-top:12px;font-weight:700;">مختصر حالات مقدمہ معہ جرم:</div>
