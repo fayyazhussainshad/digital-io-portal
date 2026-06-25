@@ -806,8 +806,16 @@ function setTheme(t) {
   try { localStorage.setItem('dio_theme', t); } catch(_) {}
 }
 
-// Load saved theme
-(function(){ const t=localStorage.getItem('dio_theme'); if(t&&t!=='dark') setTheme(t); })();
+// Load saved theme — default to LIGHT if none chosen
+(function(){
+  let t = localStorage.getItem('dio_theme');
+  if (!t) {
+    // No theme chosen — default to light
+    t = 'light';
+    try { localStorage.setItem('dio_theme', 'light'); } catch(_) {}
+  }
+  setTheme(t);
+})();
 
 // ── AUTH ──────────────────────────────────────────────────────
 async function doLogin() {
