@@ -86,7 +86,7 @@ function _renderCdr() {
         </div>
         <div style="margin-top:6px;">مقدمہ نمبر: <b>${c.fir_number||''}</b> &nbsp; مورخہ: <b>${c.fir_date||''}</b> &nbsp; بجرم: <b>${c.section_of_law||''} ${c.offence_type||''}</b> ت پ تھانہ ${o.station||'صدر ملتان'}</div>
         <div style="margin-top:4px;display:flex;justify-content:space-between;"><span>تاریخ/وقت وقوعہ: <b>${c.occurrence_date||''}</b></span><span style="min-width:40%;text-align:right;">مقام وقوعہ: <b>${c.occurrence_place||''}</b></span></div>
-        <div style="margin-top:4px;display:flex;justify-content:space-between;"><span>تفتیشی آفیسر: <b>${o.full_name||''}</b></span><span style="min-width:40%;text-align:right;">موبائل نمبر: <b>${o.phone||''}</b></span></div>
+        <div style="margin-top:4px;display:flex;justify-content:space-between;"><span>تفتیشی آفیسر: <b>${((o.rank||o.designation||'')+' '+(o.full_name||'')).trim()}</b></span><span style="min-width:40%;text-align:right;">موبائل نمبر: <b>${o.phone||''}</b></span></div>
 
         <!-- Main table -->
         <table style="width:100%;border-collapse:collapse;font-size:18.67px;margin-top:10px;" id="cdr-table">
