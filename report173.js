@@ -220,34 +220,35 @@ function _renderR173() {
         <!-- تفصیل کاغذات -->
         ${isClosing ? (() => {
           const _sho = (typeof getSHOName==='function'?getSHOName():'');
-          const _shoLine = (_sho?_sho+' ':'')+'SI/SHO تھانہ '+(o.station||'صدر ملتان');
-          // LEFT box (with border)
-          const leftBox = `<div style="border:1px solid #000;padding:12px;min-width:200px;text-align:center;font-size:13px;">
-            <div class="sho-name-line" style="border-bottom:1px solid #000;min-height:24px;margin-bottom:4px;font-weight:bold;">${_sho}</div>
-            <div style="font-weight:bold;">SI/SHO</div>
-            <div style="font-weight:bold;">تھانہ ${o.station||'صدر ملتان'}</div>
-          </div>`;
-          // RIGHT element (NO box) — one plain line, bold, right-aligned
-          const rightLine = `<div style="text-align:right;min-width:200px;font-weight:bold;font-size:14px;">${_shoLine}</div>`;
-          // Items between the two
-          const items = `<div style="display:flex;justify-content:center;align-items:flex-start;flex-wrap:wrap;gap:10px;flex:1;">
-            ${['فارم ہذا','نقل FIR','اصل تحریر','فارم ریمانڈ','نقشہ موقع','اطلاع نامہ مدعی','اصل ضمنی SHO'].map((p,i)=>`
-              <div style="display:inline-flex;flex-direction:column;align-items:center;margin:0 8px;text-align:center;">
-                <span style="font-weight:bold;">${p}</span>
-                <div style="border-bottom:1px solid #000;width:50px;min-height:18px;"></div>
-                <input type="text" inputmode="numeric" pattern="[0-9]*" data-k="paper_${i}" value="${v('paper_'+i)}" oninput="_r173Qita(this)"
-                  style="width:50px;border:none;border-bottom:1px solid #000;text-align:center;background:transparent;margin-top:2px;font-size:14px;outline:none;">
-                <span class="qita-label" style="font-size:11px;color:#555;min-height:14px;">${(() => { const n=parseInt(v('paper_'+i)); return n===1?'قطعہ':(n>1?'قطعات':''); })()}</span>
-              </div>`).join('')}
-          </div>`;
+          const items6 = ['فارم ہذا','نقل FIR','اصل تحریر','نقشہ موقع','اطلاع نامہ مدعی','اصل ضمنی SHO'];
           return `
-        <!-- Heading -->
-        <div style="font-weight:bold;font-size:15px;text-align:right;border-bottom:1px solid #000;padding-bottom:4px;margin:14px 0 12px;">تفصیل کاغذات:</div>
-        <!-- 3-column: LEFT box | items center | RIGHT line (no box) -->
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
-          ${leftBox}
-          ${items}
-          ${rightLine}
+        <!-- Header row: top SHO (left) + heading (right), full-width line below -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:16px 0 4px;">
+          <div class="sho-signature-block-top" style="text-align:right;">
+            <div class="sho-name-line" style="font-weight:${_sho?'bold':'normal'};font-size:14px;">${_sho}</div>
+            <div style="font-size:13px;">SI/SHO تھانہ ${o.station||'صدر ملتان'}</div>
+          </div>
+          <div style="font-weight:bold;font-size:15px;">تفصیل کاغذات:</div>
+        </div>
+        <hr style="border:none;border-top:1px solid #000;margin:0 0 16px 0;">
+
+        <!-- Items: one straight horizontal line, evenly spaced -->
+        <div style="display:flex;flex-direction:row-reverse;justify-content:space-around;align-items:flex-start;margin:12px 0 40px;">
+          ${items6.map((p,i)=>`
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+              <span style="font-size:14px;text-decoration:underline;">${p}</span>
+              <input type="text" inputmode="numeric" pattern="[0-9]*" class="qita-input" data-k="paper_${i}" value="${v('paper_'+i)}" oninput="_r173Qita(this)"
+                style="width:45px;border:none;border-bottom:1px solid #000;text-align:center;background:transparent;outline:none;font-size:13px;">
+              <span class="qita-label" style="font-size:11px;min-height:14px;">${(() => { const n=parseInt(v('paper_'+i)); return n===1?'قطعہ':(n>1?'قطعات':''); })()}</span>
+            </div>`).join('')}
+        </div>
+
+        <!-- Bottom SHO block (left): signature space → name → date -->
+        <div class="sho-signature-block-bottom" style="text-align:right;margin-top:8px;min-width:220px;display:inline-block;">
+          <div style="border-bottom:1px solid #000;min-height:50px;margin-bottom:6px;"></div>
+          <div class="sho-name-line" style="font-weight:${_sho?'bold':'normal'};font-size:14px;">${_sho}</div>
+          <div style="font-size:13px;">SI/SHO تھانہ ${o.station||'صدر ملتان'}</div>
+          <div style="font-size:13px;margin-top:6px;">تاریخ: _______________</div>
         </div>`;
         })() : `
         <!-- تفصیل کاغذات (non-closing types) -->
