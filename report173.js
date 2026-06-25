@@ -220,31 +220,34 @@ function _renderR173() {
         <!-- تفصیل کاغذات -->
         ${isClosing ? (() => {
           const _sho = (typeof getSHOName==='function'?getSHOName():'');
-          const _shoFull = (_sho?_sho+' ':'')+'SI/SHO تھانہ '+(o.station||'صدر ملتان');
-          const shoBlock = `<div class="sho-signature-block" style="text-align:right;min-width:220px;">
-            <div style="min-height:50px;border-bottom:1px solid #000;margin-bottom:4px;"></div>
-            <div class="sho-signature-line" style="font-weight:bold;font-size:14px;">${_shoFull}</div>
-            <div style="margin-top:6px;font-size:13px;">تاریخ: _______________</div>
+          const _shoLine = (_sho?_sho+' ':'')+'SI/SHO تھانہ '+(o.station||'صدر ملتان');
+          // LEFT box (with border)
+          const leftBox = `<div style="border:1px solid #000;padding:12px;min-width:200px;text-align:center;font-size:13px;">
+            <div class="sho-name-line" style="border-bottom:1px solid #000;min-height:24px;margin-bottom:4px;font-weight:bold;">${_sho}</div>
+            <div style="font-weight:bold;">SI/SHO</div>
+            <div style="font-weight:bold;">تھانہ ${o.station||'صدر ملتان'}</div>
+          </div>`;
+          // RIGHT element (NO box) — one plain line, bold, right-aligned
+          const rightLine = `<div style="text-align:right;min-width:200px;font-weight:bold;font-size:14px;">${_shoLine}</div>`;
+          // Items between the two
+          const items = `<div style="display:flex;justify-content:center;align-items:flex-start;flex-wrap:wrap;gap:10px;flex:1;">
+            ${['فارم ہذا','نقل FIR','اصل تحریر','فارم ریمانڈ','نقشہ موقع','اطلاع نامہ مدعی','اصل ضمنی SHO'].map((p,i)=>`
+              <div style="display:inline-flex;flex-direction:column;align-items:center;margin:0 8px;text-align:center;">
+                <span style="font-weight:bold;">${p}</span>
+                <div style="border-bottom:1px solid #000;width:50px;min-height:18px;"></div>
+                <input type="text" inputmode="numeric" pattern="[0-9]*" data-k="paper_${i}" value="${v('paper_'+i)}" oninput="_r173Qita(this)"
+                  style="width:50px;border:none;border-bottom:1px solid #000;text-align:center;background:transparent;margin-top:2px;font-size:14px;outline:none;">
+                <span class="qita-label" style="font-size:11px;color:#555;min-height:14px;">${(() => { const n=parseInt(v('paper_'+i)); return n===1?'قطعہ':(n>1?'قطعات':''); })()}</span>
+              </div>`).join('')}
           </div>`;
           return `
-        <!-- Heading row: تفصیل کاغذات (right) + SHO block (left), divider below -->
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid #000;padding-bottom:4px;margin:14px 0 16px;">
-          ${shoBlock}
-          <div style="font-weight:bold;font-size:15px;">تفصیل کاغذات:</div>
-        </div>
-        <!-- Items: one row, underlined labels, blank editable input (no dash) below -->
-        <div style="display:flex;justify-content:space-around;align-items:flex-start;flex-wrap:wrap;gap:8px;">
-          ${['فارم ہذا','نقل TR','اصل تحریر','نقشہ موقع','اطلاع نامہ مدعی','اصل ضمنی SHO'].map((p,i)=>`
-            <div style="display:inline-flex;flex-direction:column;align-items:center;margin:0 8px;text-align:center;">
-              <span style="font-size:14px;text-decoration:underline;">${p}</span>
-              <input type="text" inputmode="numeric" pattern="[0-9]*" data-k="paper_${i}" value="${v('paper_'+i)}" oninput="_r173Qita(this)"
-                style="width:45px;border:none;border-bottom:none;background:transparent;text-align:center;margin-top:4px;font-size:14px;outline:none;color:#000;">
-              <span class="qita-label" style="font-size:12px;text-align:center;min-height:16px;color:#555;">${(() => { const n=parseInt(v('paper_'+i)); return n===1?'قطعہ':(n>1?'قطعات':''); })()}</span>
-            </div>`).join('')}
-        </div>
-        <!-- Bottom SHO block (bottom-left, identical structure) -->
-        <div style="display:flex;justify-content:flex-start;margin-top:32px;">
-          ${shoBlock}
+        <!-- Heading -->
+        <div style="font-weight:bold;font-size:15px;text-align:right;border-bottom:1px solid #000;padding-bottom:4px;margin:14px 0 12px;">تفصیل کاغذات:</div>
+        <!-- 3-column: LEFT box | items center | RIGHT line (no box) -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
+          ${leftBox}
+          ${items}
+          ${rightLine}
         </div>`;
         })() : `
         <!-- تفصیل کاغذات (non-closing types) -->
