@@ -89,7 +89,7 @@ async function renderFiveC(container,query){
     <div style="margin-top:6px;font-size:11px;color:var(--text-muted);">${apps.length} application${apps.length===1?'':'s'} ${query?'matching':'total'}</div>
   </div>
   <div class="card" style="padding:0;overflow:hidden;">
-    <div style="overflow-x:auto;"><table class="data-table" style="width:100%;">
+    <div style="overflow-x:auto;"><table class="data-table fivec-center-table" style="width:100%;">
       <thead><tr><th>S/N</th><th>Complainant</th><th>CNIC</th><th>Cell</th><th>Application No(s) — Designation</th><th>App Date</th><th>Status</th><th>Files</th><th>Actions</th></tr></thead>
       <tbody>${apps.length===0?`<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-muted);">${query?'No matches.':'No applications yet. Click <b>+ New Application</b> to add one.'}</td></tr>`:apps.map(render5CRow).join('')}</tbody>
     </table></div>
@@ -191,7 +191,7 @@ async function open5CResponse(id){
   const o=currentOfficer||{};
   const today=formatDate(new Date());
   // Only pull application numbers — no officer rank or designation
-  const refs=(app.application_5c_numbers||[]).map(n=>esc5C(n.application_number||'')).filter(Boolean).join('، ')||'—';
+  const refs=(app.application_5c_numbers||[]).map(n=>esc5C((n.application_number||'').replace(/،/g,'/'))).filter(Boolean).join('، ')||'—';
 
   // Initial content — uses <br> for spacing (not margin-bottom which propagates on Enter)
   const initial=app.response_text||`<div dir="rtl">تھانہ: ${esc5C(o.station||'')} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ضلع: ${esc5C(o.district||'')}</div>
@@ -546,7 +546,7 @@ async function _print5C(id) {
       <tr><th>درخواست کی تاریخ</th><td>${a.application_date||'—'}</td></tr>
     </table>
     ${nums.length ? `<table><tr><th>درخواست نمبر</th><th>افسر</th><th>عہدہ</th></tr>
-    ${nums.map(n=>`<tr><td>${n.application_number||'—'}</td><td>${n.senior_officer_name||'—'}</td><td>${n.senior_officer_designation||'—'}</td></tr>`).join('')}
+    ${nums.map(n=>`<tr><td dir="ltr">${(n.application_number||'—').replace(/،/g,'/')}</td><td>${n.senior_officer_name||'—'}</td><td>${n.senior_officer_designation||'—'}</td></tr>`).join('')}
     </table>` : ''}
     <div style="font-weight:700;margin-top:10px;">جواب / رپورٹ:</div>
     <div class="resp">${(a.response_text||'').replace(/\n/g,'<br>') || '&nbsp;'}</div>

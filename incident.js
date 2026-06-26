@@ -71,17 +71,21 @@ function renderIncident(container) {
               <td style="${_tdL()}">نام اطلاع دہندہ</td>
               <td colspan="3" style="${_tdV()}"><input id="inc-caller-name" style="${_tIn()}"></td>
             </tr>
-            <!-- Row 2: تفصیل متعلقہ — status dropdown + name in one field -->
+            <!-- Row 2: تفصیل متعلقہ — label + dropdown stacked in column 1, name in column 2 -->
             <tr>
-              <td style="${_tdL()}">تفصیل متعلقہ</td>
-              <td colspan="3" style="${_tdV()}">
-                <div style="display:flex;gap:8px;align-items:center;">
-                  <select id="inc-person-type" style="${_tIn()}flex:0 0 auto;min-width:100px;font-weight:700;">
-                    <option>مقتول</option><option>مضروب</option><option>مغوی</option><option>victim</option><option>متاثرہ</option>
-                  </select>
-                  <button onclick="_incAddPersonType()" style="border:1px solid #ccc;border-radius:4px;background:#f0f4f8;cursor:pointer;padding:2px 8px;flex-shrink:0;" title="نیا">➕</button>
-                  <input id="inc-person-name" placeholder="نام و ولدیت، قوم، کارڈ اور حلیہ یہاں لکھیں..." style="${_tIn()}flex:1;">
+              <td style="${_tdL()}vertical-align:top;">
+                <div style="display:flex;flex-direction:column;gap:6px;align-items:stretch;">
+                  <span style="font-weight:700;text-align:right;">تفصیل متعلقہ</span>
+                  <div style="display:flex;gap:4px;align-items:center;">
+                    <select id="inc-person-type" style="${_tIn()}flex:1;font-weight:700;">
+                      <option>مقتول</option><option>مضروب</option><option>مغوی</option><option>victim</option><option>متاثرہ</option>
+                    </select>
+                    <button onclick="_incAddPersonType()" style="border:1px solid #ccc;border-radius:4px;background:#f0f4f8;cursor:pointer;padding:2px 8px;flex-shrink:0;" title="نیا">➕</button>
+                  </div>
                 </div>
+              </td>
+              <td colspan="3" style="${_tdV()}vertical-align:top;">
+                <input id="inc-person-name" placeholder="نام و ولدیت، قوم، کارڈ اور حلیہ یہاں لکھیں..." style="${_tIn()}">
               </td>
             </tr>
             <!-- Row: مقام وقوعہ (full width) | تاریخ و وقت (empty/blank) -->
@@ -91,17 +95,10 @@ function renderIncident(container) {
               <td style="${_tdL()}">تاریخ و وقت وقوعہ</td>
               <td style="${_tdV()}"><input id="inc-datetime" style="${_tIn()}text-align:center;"></td>
             </tr>
-            <!-- Row 5: Visiting officers (checklist) -->
+            <!-- Row 5: Visiting officers (editable free-text, checkboxes removed for space) -->
             <tr>
               <td style="${_tdL()}">موقع وزٹ کرنے والے افسران</td>
-              <td colspan="3" style="${_tdV()}">
-                <div style="display:flex;flex-wrap:wrap;gap:10px;padding:4px 0;">
-                  ${['SHO تھانہ','DSP / SDPO Circle','SP Division','SSP / Ops','SSP / Inv','CPO','DPO','RPO'].map(off=>
-                    `<label style="display:flex;align-items:center;gap:4px;font-size:13px;cursor:pointer;">
-                      <input type="checkbox" name="inc-officer-chk" value="${off}" style="accent-color:#1a3a5c;width:15px;height:15px;">${off}
-                    </label>`).join('')}
-                </div>
-              </td>
+              <td colspan="3" style="${_tdV()}"><input id="inc-visiting-officers" placeholder="افسران کے نام یہاں لکھیں..." style="${_tIn()}"></td>
             </tr>
             <!-- Row 6: مختصر حالات (full-width, justified RTL, voice + handwriting) -->
             <tr>
@@ -456,7 +453,8 @@ async function _incSaveToDB() {
     const callerPhone = document.getElementById('inc-caller-phone')?.value?.trim() || '';
     const personName  = document.getElementById('inc-person-name')?.value?.trim() || '';
     const personType  = document.getElementById('inc-person-type')?.value || '';
-    const officers = Array.from(document.querySelectorAll('input[name="inc-officer-chk"]:checked')).map(c=>c.value);
+    const officersText = document.getElementById('inc-visiting-officers')?.value?.trim() || '';
+    const officers = officersText ? officersText.split(/[,،]/).map(s=>s.trim()).filter(Boolean) : [];
 
     if (!num) { showToast('⚠️ رپورٹ نمبر ضروری ہے', 'error'); return; }
 
