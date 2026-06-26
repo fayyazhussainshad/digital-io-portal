@@ -6,6 +6,20 @@
 
 registerPage('admin', renderAdmin);
 
+// FIX 9 — when admin returns to the tab/app, refresh pending list (catches approvals made elsewhere)
+let _adminVisHooked = false;
+function _hookAdminVisibility() {
+  if (_adminVisHooked) return;
+  _adminVisHooked = true;
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && _pages && typeof _adminRefresh === 'function') {
+      // Only refresh if the admin page is the one currently shown
+      const onAdmin = document.querySelector('#page-content [data-admin-page]');
+      if (onAdmin) _adminRefresh();
+    }
+  });
+}
+
 // ── MAIN RENDER ───────────────────────────────────────────────
 async function renderAdmin(container) {
   const o = currentOfficer || {};
@@ -22,7 +36,7 @@ async function renderAdmin(container) {
   }
 
   container.innerHTML = `
-  <div style="max-width:1000px;margin:0 auto;" id="admin-root">
+  <div style="max-width:1000px;margin:0 auto;" id="admin-root" data-admin-page="1">
     <div style="margin-bottom:10px;"><button onclick="showPage('dashboard',document.querySelector('.nav-item'))" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:20px;font-weight:700;cursor:pointer;color:var(--accent);line-height:1;">←</button></div>
     <div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ Loading...</div>
   </div>`;
@@ -34,6 +48,7 @@ async function _buildAdmin(role) {
   if (!root) return;
 
   // Load all data in parallel
+  _hookAdminVisibility();
   const [officers, pending, cases, activity] = await Promise.all([
     _adminGetOfficers(),
     _adminGetPending(),
