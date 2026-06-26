@@ -120,8 +120,7 @@ function _plansHTML() {
         <div style="font-size:10px;color:var(--text-muted);">30 دن</div>
         <ul style="font-size:11px;color:var(--text-secondary);text-align:right;margin:10px 0;list-style:none;padding:0;">
           <li>✅ تمام فیچرز آزمائیں</li>
-          <li>✅ مقدمات و گشت</li>
-          <li>✅ CDR Analyzer</li>
+          <li>✅ مقدمات</li>
           <li>⏳ 30 دن بعد ادائیگی</li>
         </ul>
       </div>
@@ -135,7 +134,6 @@ function _plansHTML() {
         <ul style="font-size:11px;color:var(--text-secondary);text-align:right;margin:10px 0;list-style:none;padding:0;">
           <li>✅ تمام فیچرز</li>
           <li>✅ لامحدود مقدمات</li>
-          <li>✅ CDR Analyzer</li>
           <li>✅ تمام دستاویزات</li>
         </ul>
         <button class="btn btn-primary btn-sm" style="width:100%;" onclick="closeModal();_openPayment('ماہانہ',300,30)">خریدیں</button>
@@ -151,7 +149,6 @@ function _plansHTML() {
         <ul style="font-size:11px;color:var(--text-secondary);text-align:right;margin:10px 0;list-style:none;padding:0;">
           <li>✅ تمام فیچرز</li>
           <li>✅ لامحدود مقدمات</li>
-          <li>✅ CDR Analyzer</li>
           <li>✅ 6 ماہ بے فکری</li>
         </ul>
         <button class="btn btn-primary btn-sm" style="width:100%;" onclick="closeModal();_openPayment('شش ماہی',1500,180)">خریدیں</button>
@@ -183,7 +180,7 @@ function _openPayment(planName, amount, days) {
   openModal(`💳 ادائیگی — ${planName}`,
     `<div style="direction:rtl;">
       <!-- Payment Methods -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
         <div style="background:rgba(34,197,94,0.1);border:1px solid var(--green);border-radius:8px;padding:12px;text-align:center;">
           <div style="font-size:20px;margin-bottom:4px;">📱</div>
           <div style="font-weight:700;font-size:12px;color:var(--green);">JazzCash</div>
@@ -193,6 +190,12 @@ function _openPayment(planName, amount, days) {
         <div style="background:rgba(139,92,246,0.1);border:1px solid #a78bfa;border-radius:8px;padding:12px;text-align:center;">
           <div style="font-size:20px;margin-bottom:4px;">📱</div>
           <div style="font-weight:700;font-size:12px;color:#a78bfa;">EasyPaisa</div>
+          <div style="font-size:13px;font-weight:900;color:var(--text-primary);">0300-7339260</div>
+          <button onclick="navigator.clipboard.writeText('03007339260').then(()=>showToast('نمبر کاپی ہو گیا','success'))" style="font-size:10px;background:none;border:none;color:var(--accent);cursor:pointer;">📋 کاپی کریں</button>
+        </div>
+        <div style="background:rgba(56,189,248,0.1);border:1px solid var(--accent);border-radius:8px;padding:12px;text-align:center;">
+          <div style="font-size:20px;margin-bottom:4px;">🏦</div>
+          <div style="font-weight:700;font-size:12px;color:var(--accent);">Raast</div>
           <div style="font-size:13px;font-weight:900;color:var(--text-primary);">0300-7339260</div>
           <button onclick="navigator.clipboard.writeText('03007339260').then(()=>showToast('نمبر کاپی ہو گیا','success'))" style="font-size:10px;background:none;border:none;color:var(--accent);cursor:pointer;">📋 کاپی کریں</button>
         </div>
@@ -208,7 +211,7 @@ function _openPayment(planName, amount, days) {
       <!-- Steps -->
       <div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">
         <div style="font-weight:700;margin-bottom:6px;">ادائیگی کے مراحل:</div>
-        <div>1️⃣ JazzCash/EasyPaisa سے اوپر نمبر پر <b>Rs. ${amount}</b> بھیجیں</div>
+        <div>1️⃣ JazzCash / EasyPaisa / Raast سے اوپر نمبر پر <b>Rs. ${amount}</b> بھیجیں</div>
         <div>2️⃣ Transaction ID نوٹ کریں</div>
         <div>3️⃣ نیچے فارم بھریں</div>
         <div>4️⃣ ایڈمن تصدیق کرے گا (عام طور پر 1-2 گھنٹے)</div>
@@ -221,7 +224,7 @@ function _openPayment(planName, amount, days) {
       <select class="form-input" id="pay-method" style="margin-bottom:8px;">
         <option value="jazzcash">📱 JazzCash</option>
         <option value="easypaisa">📱 EasyPaisa</option>
-        <option value="bank">🏦 Bank Transfer</option>
+        <option value="raast">🏦 Raast</option>
       </select>
       <label class="form-label">نوٹ (اختیاری)</label>
       <input class="form-input" id="pay-note" placeholder="کوئی اضافی معلومات...">

@@ -12,7 +12,6 @@ const MISAL_CASE_DOCS = [
   { id:'fardat',           name:'فردات',                     desc:'Fardat' },
   { id:'zamniyat',         name:'ضمنیات',                    desc:'Annexures' },
   { id:'memorandum',       name:'میمورنڈم',                  desc:'Memorandum' },
-  { id:'cdr_analyzer',     name:'CDR Analyzer',              desc:'CDR Analyzer' },
   { id:'cdr_imei',         name:'CDR/IMEI',                  desc:'CDR/IMEI Analysis' },
   { id:'cro_card',         name:'CRO کارڈ',                  desc:'Criminal Index Card' },
   { id:'staff',            name:'ہمراہی ملازمان',            desc:'Accompanying Staff' },
@@ -480,6 +479,8 @@ function _renderMisalEditor(docId, def) {
         }
       };
     }
+    // Auto text-direction for fields in this document editor
+    if (typeof applyAutoDirection === 'function') applyAutoDirection(area);
   }, 80);
 }
 
@@ -921,11 +922,13 @@ function printMisalDoc(name) {
   const clone = el.cloneNode(true);
   clone.querySelectorAll('button, .no-print, .doc-toolbar, .editor-toolbar, [data-no-print], select, input[type=button]').forEach(n => n.remove());
   let _printHTML = '';
+  // انڈیکس نقل مسل prints on legal size; all other misal docs on A4
+  const _pageSize = (_openDocId === 'index_naql') ? 'legal' : 'A4';
   _printHTML += (`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
     <title>${name}</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
     <style>
-      @page{margin:15mm}
+      @page{size:${_pageSize};margin:15mm}
       body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:15px;line-height:2;direction:rtl;text-align:right;color:#111;}
       table{width:100%;border-collapse:collapse;}
       td,th{border:1px solid #555;padding:6px 10px;}

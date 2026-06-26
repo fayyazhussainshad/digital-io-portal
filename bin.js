@@ -41,7 +41,6 @@ async function _buildBin() {
 
     const typeLabels = {
       case:     { icon:'📁', label:'مقدمات' },
-      patrol:   { icon:'🚔', label:'پیٹرول لاگ' },
       reminder: { icon:'🔔', label:'یاددہانیاں' },
       evidence: { icon:'📷', label:'شہادتیں' },
       court:    { icon:'⚖️', label:'عدالتی پیشیاں' },
@@ -134,7 +133,6 @@ async function _buildBin() {
 function _binTitle(type, d) {
   switch(type) {
     case 'case':     return `FIR ${d.fir_number||'—'} — ${d.complainant||'—'}`;
-    case 'patrol':   return `${d.log_type||'Patrol'} — ${d.notes||'—'}`;
     case 'reminder': return d.text || '—';
     case 'evidence': return d.name || '—';
     case 'court':    return `FIR ${d.fir_number||'—'} — ${d.court_name||'—'}`;
@@ -146,7 +144,6 @@ function _binTitle(type, d) {
 function _binDetail(type, d) {
   switch(type) {
     case 'case':     return `${d.section_of_law||'—'} · ${formatDate(d.fir_date)}`;
-    case 'patrol':   return `${d.address||'—'} · ${formatDate(d.logged_at)}`;
     case 'reminder': return formatDate(d.reminder_date);
     case 'evidence': return `${d.type||'—'} · ${formatDate(d.created_at)}`;
     case 'court':    return `${d.hearing_date||'—'} · ${d.purpose||'—'}`;
@@ -167,7 +164,6 @@ async function _binRestore(binId, type) {
     // Restore to original table
     const tableMap = {
       case:     'cases',
-      patrol:   'patrol_logs',
       reminder: 'reminders',
       evidence: 'evidence',
       court:    'court_dates',

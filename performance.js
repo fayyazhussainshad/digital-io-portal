@@ -16,10 +16,9 @@ async function _buildPerf() {
   const root = document.getElementById('perf-root');
   if (!root) return;
 
-  const [cases, reminders, patrol, courtDates] = await Promise.all([
+  const [cases, reminders, courtDates] = await Promise.all([
     getCases().catch(()=>[]),
     getReminders().catch(()=>[]),
-    _perfPatrols().catch(()=>[]),
     _perfCourtDates().catch(()=>[]),
   ]);
 
@@ -46,7 +45,7 @@ async function _buildPerf() {
     <button onclick="showPage('dashboard',null)" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:20px;font-weight:700;cursor:pointer;color:var(--accent);line-height:1;">←</button>
     <div>
       <div style="font-size:18px;font-weight:800;">📊 کارکردگی کا جائزہ</div>
-      <div style="font-size:12px;color:var(--text-muted);">${currentOfficer?.full_name||''} · ${currentOfficer?.station||''} · ${new Date().toLocaleDateString('en-PK')}</div>
+      <div style="font-size:12px;color:var(--text-muted);">${currentOfficer?.full_name||''} · ${currentOfficer?.station||''} · ${formatDate(new Date())}</div>
     </div>
   </div>
 
@@ -102,7 +101,6 @@ async function _buildPerf() {
             <div style="font-size:6px;color:${isCur?'var(--accent)':'var(--text-faint)'};">${m.label}</div>
           </div>`;}).join('')}
       </div>
-      <div style="font-size:10px;color:var(--text-faint);direction:rtl;text-align:center;">گہرا = رواں ماہ · کل گشت: ${patrol.length}</div>
     </div>
 
     <!-- Section breakdown -->
@@ -166,11 +164,6 @@ function _ppd(d) {
   const p=d.split(/[-\/]/);
   return p.length===3&&p[2].length===4?`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`:null;
 }
-async function _perfPatrols() {
-  const oid=await getOfficerId();
-  const{data}=await supabaseClient.from('patrol_logs').select('id,created_at').eq('officer_id',oid);
-  return data||[];
-}
 async function _perfCourtDates() {
   const oid=await getOfficerId();
   const{data}=await supabaseClient.from('court_dates').select('*').eq('officer_id',oid);
@@ -192,12 +185,12 @@ function _printPerfReport() {
     </head><body>
     <h2>کارکردگی رپورٹ</h2>
     <h3>${o.full_name||'—'} · ${o.designation||''} · تھانہ ${o.station||'—'}</h3>
-    <p style="text-align:center;">تاریخ: ${new Date().toLocaleDateString('en-PK')}</p>
+    <p style="text-align:center;">تاریخ: ${formatDate(new Date())}</p>
     <table>
       <tr><th>چالان مکمل</th><th>زیر تفتیش</th><th>عدم پتہ</th><th>اخراج</th><th>کل</th></tr>
       <tr id="pr-row"><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
     </table>
-    <div class="footer">Digital IO · ${new Date().toLocaleDateString('en-PK')}</div>
+    <div class="footer">Digital IO · ${formatDate(new Date())}</div>
     <script>
     window.onload = function() {
       // Will be populated after print

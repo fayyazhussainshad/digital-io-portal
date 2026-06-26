@@ -58,10 +58,10 @@ const ROLE_LEVELS = { officer:1, supervisor:2, admin:3, superadmin:4 };
 
 // Which pages each role can access
 const ROLE_PAGES = {
-  officer:    ['dashboard','cases','forms','fivec','incident','patrol','diary','cdr','law','reminders','search','suspects','performance','backup','settings','bin','subscription','court','evidence'],
-  supervisor: ['dashboard','cases','forms','fivec','incident','patrol','diary','cdr','law','reminders','search','suspects','performance','backup','settings','bin','subscription','court','evidence'],
-  admin:      ['dashboard','cases','forms','fivec','incident','patrol','diary','cdr','law','reminders','search','suspects','performance','backup','settings','bin','subscription','court','evidence','admin'],
-  superadmin: ['dashboard','cases','forms','fivec','incident','patrol','diary','cdr','law','reminders','search','suspects','performance','backup','settings','bin','subscription','court','evidence','admin'],
+  officer:    ['dashboard','cases','forms','fivec','incident','reminders','law','search','suspects','performance','backup','settings','bin','subscription','court','evidence'],
+  supervisor: ['dashboard','cases','forms','fivec','incident','reminders','law','search','suspects','performance','backup','settings','bin','subscription','court','evidence'],
+  admin:      ['dashboard','cases','forms','fivec','incident','reminders','law','search','suspects','performance','backup','settings','bin','subscription','court','evidence','admin'],
+  superadmin: ['dashboard','cases','forms','fivec','incident','reminders','law','search','suspects','performance','backup','settings','bin','subscription','court','evidence','admin'],
 };
 
 function getRole() {
@@ -147,10 +147,10 @@ function showPage(page, el) {
   // Update topbar title
   const titles = {
     dashboard:'ڈیش بورڈ', cases:'میرے مقدمات', forms:'ٹیمپلیٹس',
-    fivec:'مارک شدہ درخواستیں', incident:'واقعاتی رپورٹ', patrol:'گشت',
+    fivec:'مارک شدہ درخواستیں', incident:'واقعاتی رپورٹ',
     law:'قانونی لائبریری', performance:'کارکردگی', backup:'بیک اپ',
     settings:'ترتیبات', admin:'ایڈمن', bin:'حذف شدہ مواد',
-    reminders:'یاددہانیاں', search:'تلاش', cdr:'CDR Analyzer',
+    reminders:'یاددہانیاں', search:'تلاش',
     court:'عدالتی پیشیاں', evidence:'شہادتیں', suspects:'ملزمان / گواہان',
   };
   const titleEl = document.getElementById('topbar-title');
@@ -171,6 +171,8 @@ function showPage(page, el) {
   if (_pages[page]) {
     try {
       _pages[page](container);
+      // Auto-fix text direction for English-data + mixed fields
+      if (typeof applyAutoDirection === 'function') setTimeout(() => applyAutoDirection(container), 60);
     } catch(err) {
       console.error('Page render error ['+page+']:', err);
       container.innerHTML = `<div style="padding:30px;direction:rtl;text-align:center;">
@@ -202,6 +204,8 @@ function openModal(title, body, footer) {
     bd.style.alignItems = 'center';
     bd.style.justifyContent = 'center';
   }
+  // Auto text-direction for fields inside the modal
+  if (b && typeof applyAutoDirection === 'function') setTimeout(() => applyAutoDirection(b), 40);
 }
 function closeModal() {
   const bd = document.getElementById('modal-backdrop');
@@ -398,18 +402,42 @@ function formatCell(v) {
   return d.slice(0,4)+'-'+d.slice(4);
 }
 
+// ── GLOBAL: auto text-direction ──────────────────────────────
+// English-data fields (CNIC, phone, email, vehicle, badge) → LTR
+// Mixed Urdu+English fields (name, address, place) → plaintext (auto per-line)
+function applyAutoDirection(root) {
+  root = root || document;
+  const ltrHints = /cnic|phone|mobile|cell|email|vehicle|badge|گاڑی|نمبر پلیٹ|رابطہ|شناختی|موبائل/i;
+  const fields = root.querySelectorAll('input[type="text"], input:not([type]), input[type="tel"], input[type="email"], textarea, [contenteditable="true"]');
+  fields.forEach(el => {
+    if (el._dirDone) return;
+    // Skip if an explicit dir is already set in markup
+    const hasDir = el.getAttribute('dir');
+    const hint = (el.id||'') + ' ' + (el.getAttribute('placeholder')||'') + ' ' + (el.getAttribute('data-k')||'') + ' ' + (el.name||'');
+    if (!hasDir) {
+      if (ltrHints.test(hint)) { el.setAttribute('dir','ltr'); el.style.textAlign='left'; }
+      else { el.style.unicodeBidi = 'plaintext'; }   // mixed → auto direction per content
+    }
+    el._dirDone = true;
+  });
+}
+window.applyAutoDirection = applyAutoDirection;
+
 function autoFormatCNIC(input) {
+  input.setAttribute('dir','ltr'); input.style.textAlign='left';   // English numbers always LTR
   let v = input.value.replace(/\D/g,'').slice(0,13);
   if (v.length>12) v = v.slice(0,5)+'-'+v.slice(5,12)+'-'+v.slice(12);
   else if (v.length>5) v = v.slice(0,5)+'-'+v.slice(5);
   input.value = v;
 }
 function autoFormatCell(input) {
+  input.setAttribute('dir','ltr'); input.style.textAlign='left';   // English numbers always LTR
   let v = input.value.replace(/\D/g,'').slice(0,11);
   if (v.length>4) v = v.slice(0,4)+'-'+v.slice(4);
   input.value = v;
 }
 function autoFormatDate(input) {
+  input.setAttribute('dir','ltr'); input.style.textAlign='left';
   let v = input.value.replace(/\D/g,'').slice(0,8);
   if (v.length>4) v = v.slice(0,2)+'-'+v.slice(2,4)+'-'+v.slice(4);
   else if (v.length>2) v = v.slice(0,2)+'-'+v.slice(2);
@@ -1135,12 +1163,11 @@ function _maybeShowOnboarding() {
 }
 
 const _ONBOARD_STEPS = [
-  { icon:'🛡️', title:'خوش آمدید — Digital IO', text:'پنجاب پولیس کے لیے ایک محفوظ، تیز اور آسان کیس مینجمنٹ سسٹم۔ آئیے چند اہم خصوصیات دیکھیں۔' },
-  { icon:'📁', title:'میرے مقدمات', text:'تمام مقدمات یہاں درج کریں۔ ہر مقدمے کا FIR، مدعی، دفعات، صورتحال — سب ایک جگہ۔ نیا مقدمہ کے لیے Ctrl+N دبائیں۔' },
-  { icon:'📋', title:'MISAL بلڈر', text:'مقدمہ کھولیں تو 26 سرکاری دستاویزات (زمنی، 161 بیانات، چالان وغیرہ) خودکار تیار ہوتی ہیں۔ SHO/DSP کے نام بھی یہیں شامل کریں۔' },
-  { icon:'🤖', title:'سمارٹ مدد', text:'CDR تجزیہ، 161 سوالات کی تجاویز، عدالت کے لیے تیاری کا چیکر (🟢🔴) — سب آپ کی تفتیش میں مدد کے لیے۔' },
-  { icon:'🔗', title:'Ripple Effect', text:'ٹیمپلیٹ میں {مدعی}، {FIR} لکھیں — مقدمے کا ڈیٹا خودبخود بھر جائے گا۔ بار بار لکھنے کی ضرورت نہیں!' },
-  { icon:'✅', title:'تیار ہیں!', text:'بس اتنا ہی۔ کسی بھی وقت ⚙️ ترتیبات سے مدد حاصل کریں۔ اللہ آپ کے کام میں آسانی فرمائے۔' },
+  { icon:'🛡️', title:'خوش آمدید — Digital IO', text:'یہ ایک محفوظ، تیز اور آسان پیپرلیس کیس مینجمنٹ ایپ ہے۔ آئیے 4 آسان قدموں میں کام شروع کرنے کا طریقہ دیکھیں۔' },
+  { icon:'📁', title:'قدم 1 — نیا مقدمہ بنائیں', text:'"میرے مقدمات" کھولیں اور "+ نیا اندراج" پر دبائیں۔ FIR نمبر، مدعی، دفعات اور صورتحال درج کریں۔ یہی آپ کے ہر کام کی بنیاد ہے۔' },
+  { icon:'📋', title:'قدم 2 — مقدمہ کھولیں', text:'کسی بھی مقدمے پر دبائیں تو اس کا ورک سپیس کھل جائے گا — یہاں FIR متن، ملزمان، گواہان، ضمنی، رپورٹ 173، CDR/IMEI اور CRO سب موجود ہیں۔' },
+  { icon:'✍️', title:'قدم 3 — دستاویز بھریں اور پرنٹ کریں', text:'جو دستاویز چاہیے اسے کھولیں، خانے بھریں (بہت سا ڈیٹا خودکار بھر جاتا ہے)، پھر 🖨️ پرنٹ دبائیں۔ آواز سے لکھنے کے لیے 🎙️ بٹن استعمال کریں۔' },
+  { icon:'⚙️', title:'تیار ہیں!', text:'اوپر SHO/DSP کے نام ایک بار شامل کر لیں — وہ تمام رپورٹس میں خودبخود آ جائیں گے۔ کسی بھی وقت 🔧 اوزار سے مزید سہولیات حاصل کریں۔ اللہ آپ کے کام میں آسانی فرمائے۔' },
 ];
 let _onboardIdx = 0;
 

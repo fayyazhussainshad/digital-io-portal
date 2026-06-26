@@ -41,7 +41,7 @@
   --bg-card: #111f2e;
   --border: #1a3148;
   --border-light: #152840;
-  --accent: #38bdf8;
+  --accent: #56b6e8;
   --accent-dark: #0284c7;
   --accent-darker: #0369a1;
   --accent-glow: rgba(56,189,248,0.15);
@@ -343,6 +343,7 @@ h1, h2, h3, h4, h5, h6, p, label, span, div, td, th, li { text-align: right; }
 
 /* Tables: header and cells right-aligned */
 .data-table th, .data-table td { text-align: right; }
+.fivec-center-table th, .fivec-center-table td { text-align: center !important; vertical-align: middle !important; }
 
 /* Flex rows that hold buttons/icons flow RTL (icon then text) */
 .nav-item { flex-direction: row; }
@@ -376,7 +377,10 @@ input, textarea, select { font-family: var(--font-main); }
 .login-card { position: relative; z-index: 1; background: rgba(11,24,38,0.95); border: 1px solid var(--border); border-radius: 18px; padding: 24px; width: 100%; max-width: 420px; margin: auto; box-shadow: 0 32px 80px rgba(0,0,0,0.7); backdrop-filter: blur(20px); animation: cardSlideUp 0.5s ease; box-sizing: border-box; }
 @media (max-width: 768px) {
   /* P2: Mobile touch sizing — bigger tap targets, no iOS zoom */
+  /* FIX1: درخواست (5C) list table — all columns centered */
   #global-search-bar { display: none !important; } /* topbar search hidden on mobile — use تلاش page */
+  /* On mobile the page's own search bar is shown (topbar search is hidden) */
+  #sr-page-searchbar { display: block !important; }
   .mdoc-chip, .btn { min-height: 40px; }
   input:not([type="checkbox"]):not([type="radio"]), select, textarea { font-size: 16px; }
   .modal-box, #modal-box { max-width: 96vw !important; }
@@ -474,7 +478,7 @@ input, textarea, select { font-family: var(--font-main); }
 .sidebar-profile-role { font-size: 10px; color: var(--text-muted); }
 .sidebar-nav { flex: 1; padding: 10px 8px; overflow-y: auto; }
 .nav-section-label { font-size: 9px; color: var(--text-faint); letter-spacing: 2px; text-transform: uppercase; padding: 8px 10px 4px; }
-.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius-sm); font-size: 13px; color: var(--text-secondary); margin: 2px 0; transition: all 0.15s; cursor: pointer; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius-sm); font-size: 14px; color: var(--text-secondary); margin: 2px 0; transition: all 0.15s; cursor: pointer; }
 .nav-item:hover { background: var(--hover-bg); color: var(--text-primary); }
 .nav-item.active { background: var(--nav-active); color: var(--accent); font-weight: 600; box-shadow: inset -2px 0 0 var(--accent); }
 .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
@@ -496,11 +500,11 @@ body.workspace-mode .page-content { height: 100vh !important; }
 .topbar-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); background: var(--bg-tertiary); padding: 5px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); }
 
 /* ═══ TOP NAVIGATION BUTTONS (replace sidebar) ═══ */
-.topnav-btn { background: none; border: 1px solid transparent; border-radius: 8px; padding: 6px 10px; color: var(--text-secondary); font-size: 13px; cursor: pointer; white-space: nowrap; transition: all 0.15s; font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; flex-shrink: 0; }
+.topnav-btn { background: none; border: 1px solid transparent; border-radius: 8px; padding: 6px 10px; color: var(--text-secondary); font-size: 14px; cursor: pointer; white-space: nowrap; transition: all 0.15s; font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; flex-shrink: 0; }
 .topnav-btn:hover { background: var(--hover-bg); color: var(--text-primary); }
 .topnav-btn.active { background: var(--nav-active); color: var(--accent); font-weight: 700; }
 .topnav-label { font-size: 13px; }
-.topmore-item { display: block; padding: 9px 12px; border-radius: 6px; font-size: 13px; color: var(--text-secondary); cursor: pointer; font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; transition: all 0.12s; }
+.topmore-item { display: block; padding: 9px 12px; border-radius: 6px; font-size: 14px; color: var(--text-secondary); cursor: pointer; font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; transition: all 0.12s; }
 .topdd-menu { position: fixed; top: 48px; left: 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 9999; min-width: 180px; max-height: 80vh; overflow-y: auto; padding: 6px; direction: rtl; }
 .topmore-item:hover { background: var(--hover-bg); color: var(--accent); }
 
@@ -919,6 +923,8 @@ input[id*="cnic"], input[id*="cell"] {
 @media (min-width: 901px) {
   /* Mini strip visible */
   #sidebar-mini-strip { display: flex !important; }
+  /* Topbar search handles desktop — hide the page's own search bar (no duplicate) */
+  #sr-page-searchbar { display: none !important; }
   
   /* Wider page content */
   .page-content { padding: 16px 20px; }
@@ -1054,9 +1060,8 @@ window.addEventListener('unhandledrejection', function(e){
       <div class="nav-item active" onclick="closeMobileSidebar();showPage('dashboard',this)"><span class="nav-icon">🏠</span> ڈیش بورڈ</div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('cases',this)"><span class="nav-icon">📁</span> میرے مقدمات <span class="nav-badge" id="badge-cases">0</span></div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('incident',this)"><span class="nav-icon">🚨</span> واقعاتی رپورٹ</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('patrol',this)"><span class="nav-icon">🚔</span> گشت</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('diary',this)"><span class="nav-icon">📓</span> Digital Diary</div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('reminders',this)"><span class="nav-icon">🔔</span> یاددہانیاں <span class="nav-badge" id="badge-reminders">0</span></div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('law',this)"><span class="nav-icon">⚖️</span> قانونی لائبریری</div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('search',this)"><span class="nav-icon">🔍</span> تلاش</div>
 
       <!-- More (collapsible) -->
@@ -1066,10 +1071,7 @@ window.addEventListener('unhandledrejection', function(e){
       <div id="nav-more-section" style="display:none;">
         <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showPage('forms',this)"><span class="nav-icon">📥</span> ٹیمپلیٹس</div>
         <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showPage('fivec',this)"><span class="nav-icon">📋</span> مارک شدہ درخواستیں</div>
-        <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showPage('cdr',this)"><span class="nav-icon">📞</span> CDR Analyzer</div>
-        <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showPage('law',this)"><span class="nav-icon">⚖️</span> قانونی لائبریری</div>
         <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showPage('suspects',this)"><span class="nav-icon">👤</span> ملزمان / گواہان</div>
-        <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showPage('performance',this)"><span class="nav-icon">📊</span> کارکردگی</div>
         <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showPage('backup',this)"><span class="nav-icon">☁️</span> بیک اپ</div>
         <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showSubscriptionPage()"><span class="nav-icon">💎</span> سبسکرپشن</div>
         <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showPage('bin',this)"><span class="nav-icon">🗑️</span> حذف شدہ مواد</div>
@@ -1089,24 +1091,20 @@ window.addEventListener('unhandledrejection', function(e){
         <button class="topnav-btn active" onclick="showPage('dashboard',null);_setTopNav(this)" title="ڈیش بورڈ">🏠<span class="topnav-label"> ڈیش بورڈ</span></button>
         <button class="topnav-btn" onclick="showPage('cases',null);_setTopNav(this)" title="مقدمات">📁<span class="topnav-label"> مقدمات</span></button>
         <button class="topnav-btn" onclick="showPage('fivec',null);_setTopNav(this)" title="5-C درخواستیں">📋<span class="topnav-label"> C-5</span></button>
-        <button class="topnav-btn" onclick="showPage('law',null);_setTopNav(this)" title="قانونی لائبریری">⚖️<span class="topnav-label"> قانونی لائبریری</span></button>
         <button class="topnav-btn" onclick="showPage('search',null);_setTopNav(this)" title="تلاش">🔍<span class="topnav-label"> تلاش</span></button>
         <button class="topnav-btn" onclick="showPage('reminders',null);_setTopNav(this)" title="یاددہانیاں">🔔<span class="topnav-label"> یاددہانی</span></button>
-        <button class="topnav-btn" id="topbar-sho-btn" onclick="openShoDspModal('sho')" title="SHO کا نام">SHO</button>
-        <button class="topnav-btn" id="topbar-dsp-btn" onclick="openShoDspModal('dsp')" title="DSP/SDPO کا نام">DSP/SDPO</button>
-        <button class="topnav-btn" id="topbar-gari-btn" onclick="openSarkariGari()" title="سرکاری گاڑی">🚗<span class="topnav-label"> سرکاری گاڑی</span></button>
+        <button class="topnav-btn" onclick="showPage('law',null);_setTopNav(this)" title="قانونی لائبریری">⚖️<span class="topnav-label"> قانونی لائبریری</span></button>
 
         <!-- اوزار (Tools) dropdown -->
         <div style="position:relative;display:inline-block;">
           <button class="topnav-btn" onclick="_toggleTopDD(event,'tools-menu')" title="اوزار">🔧<span class="topnav-label"> اوزار</span> ▾</button>
           <div id="tools-menu" class="topdd-menu" style="display:none;">
-            <a class="topmore-item" onclick="showPage('diary',null);_closeTopDD()">📓 ڈیجیٹل ڈائری</a>
+            <a class="topmore-item" id="topbar-sho-btn" onclick="openShoDspModal('sho');_closeTopDD()" title="SHO کا نام">🏛️ SHO</a>
+            <a class="topmore-item" id="topbar-dsp-btn" onclick="openShoDspModal('dsp');_closeTopDD()" title="DSP/SDPO کا نام">🎖️ DSP/SDPO</a>
+            <a class="topmore-item" id="topbar-gari-btn" onclick="openSarkariGari();_closeTopDD()" title="سرکاری گاڑی">🚗 سرکاری گاڑی</a>
             <a class="topmore-item" onclick="showPage('incident',null);_closeTopDD()">🚨 واقعاتی رپورٹ</a>
-            <a class="topmore-item" onclick="showPage('patrol',null);_closeTopDD()">🚔 گشت</a>
             <a class="topmore-item" onclick="showPage('forms',null);_closeTopDD()">📡 ٹمپلیٹس</a>
-            <a class="topmore-item" onclick="showPage('cdr',null);_closeTopDD()">📞 CDR Analyzer</a>
             <a class="topmore-item" onclick="showPage('suspects',null);_closeTopDD()">👤 ملزمان / گواہان</a>
-            <a class="topmore-item" onclick="showPage('performance',null);_closeTopDD()">📊 کارکردگی</a>
             <a class="topmore-item" onclick="showPage('backup',null);_closeTopDD()">☁️ بیک اپ</a>
           </div>
         </div>
@@ -1165,17 +1163,14 @@ window.addEventListener('unhandledrejection', function(e){
 <script src="cdr-imei.js"></script>
 <script src="cro-card.js"></script>
 <script src="staff-v2.js"></script>
+<script src="law-library.js"></script>
 <script src="sho-dsp.js"></script>
 <script src="case-sharing.js"></script>
-<script src="diary.js"></script>
 <script src="notifications.js"></script>
-<script src="law.js"></script>
 <script src="reminders.js"></script>
 <script src="performance.js"></script>
 <script src="backup.js"></script>
 <script src="settings.js"></script>
-<script src="patrol.js"></script>
-<script src="cdr.js"></script>
 <script src="incident.js"></script>
 <script src="court.js"></script>
 <script src="bin.js"></script>
@@ -1292,11 +1287,65 @@ function _sidebarClose() { closeMobileSidebar(); }
 <!-- ── PWA: register service worker ── -->
 <script>
 if('serviceWorker' in navigator){
+  let _swRefreshing = false;
+  // When the new SW takes control, reload once to get fresh content
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (_swRefreshing) return;
+    _swRefreshing = true;
+    window.location.reload();
+  });
+
   window.addEventListener('load',()=>{
     navigator.serviceWorker.register('/sw.js')
-      .then(reg=>console.log('✅ SW registered, scope:',reg.scope))
+      .then(reg=>{
+        console.log('✅ SW registered, scope:',reg.scope);
+
+        // If a new SW is already waiting (installed but not active), show banner
+        if (reg.waiting) _showUpdateBanner(reg.waiting);
+
+        // Detect a new SW being installed
+        reg.addEventListener('updatefound', () => {
+          const newSW = reg.installing;
+          if (!newSW) return;
+          newSW.addEventListener('statechange', () => {
+            // Installed + there's an existing controller => it's an UPDATE (not first install)
+            if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+              _showUpdateBanner(newSW);
+            }
+          });
+        });
+
+        // Check for updates periodically (every 60s) while app is open
+        setInterval(() => { reg.update().catch(()=>{}); }, 60000);
+      })
       .catch(err=>console.warn('SW registration failed:',err));
   });
+
+  // Builds and shows the "نیا اپڈیٹ دستیاب ہے" banner
+  function _showUpdateBanner(worker){
+    if (document.getElementById('dio-update-banner')) return; // already shown
+    const bar = document.createElement('div');
+    bar.id = 'dio-update-banner';
+    bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:2147483647;background:#1a3a5c;color:#fff;'
+      + 'display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;padding:12px 16px;'
+      + "font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:15px;direction:rtl;"
+      + 'box-shadow:0 -4px 20px rgba(0,0,0,0.35);animation:dioUpSlide .3s ease;';
+    bar.innerHTML = '<span style="display:flex;align-items:center;gap:8px;">🔄 نیا اپڈیٹ دستیاب ہے</span>'
+      + '<button id="dio-update-btn" style="background:#fff;color:#1a3a5c;border:none;border-radius:8px;padding:8px 20px;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit;">ابھی اپڈیٹ کریں</button>'
+      + '<button id="dio-update-later" style="background:transparent;color:#cbd5e1;border:1px solid #475569;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;">بعد میں</button>';
+    document.body.appendChild(bar);
+
+    const style = document.createElement('style');
+    style.textContent = '@keyframes dioUpSlide{from{transform:translateY(100%)}to{transform:translateY(0)}}';
+    document.head.appendChild(style);
+
+    document.getElementById('dio-update-btn').onclick = () => {
+      bar.querySelector('#dio-update-btn').textContent = 'اپڈیٹ ہو رہا ہے...';
+      // Tell the waiting SW to activate — controllerchange will reload the page
+      worker.postMessage({ type: 'SKIP_WAITING' });
+    };
+    document.getElementById('dio-update-later').onclick = () => bar.remove();
+  }
 }
 </script>
 
@@ -1308,11 +1357,10 @@ const _HASH_PAGES = {
   '#admin':    'admin',
   '#cases':    'cases',
   '#dashboard':'dashboard',
-  '#patrol':   'patrol',
-  '#law':      'law',
   '#forms':    'forms',
   '#settings': 'settings',
   '#reminders':'reminders',
+  '#law':      'law',
   '#cdr':      'cdr',
   '#fivec':    'fivec',
   '#incident': 'incident',

@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v141
+   DIGITAL IO — SERVICE WORKER v145
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v141';
+const CACHE_NAME = 'digital-io-v145';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -31,18 +31,15 @@ const CORE_ASSETS = [
   '/cdr-imei.js',
   '/cro-card.js',
   '/staff-v2.js',
+  '/law-library.js',
   '/sho-dsp.js',
   '/case-sharing.js',
-  '/diary.js',
   '/notifications.js',
-  '/law.js',
   '/reminders.js',
   '/performance.js',
   '/backup.js',
   '/settings.js',
   '/subscription.js',
-  '/patrol.js',
-  '/cdr.js',
   '/incident.js',
   '/court.js',
   '/bin.js',
@@ -60,8 +57,19 @@ self.addEventListener('install', event => {
           cache.add(url).catch(err => console.warn('[SW] Skip cache:', url))
         )
       );
-    }).then(() => self.skipWaiting())
+    }).then(() => {
+      console.log('[SW] New version installed, waiting for user to update');
+      // Do NOT auto-skipWaiting — let the page show an "update available" banner
+      // and call skipWaiting only when the officer taps it.
+    })
   );
+});
+
+// Listen for the page telling us to activate now (officer tapped the update banner)
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 // ── ACTIVATE ──────────────────────────────────────────────────

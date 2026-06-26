@@ -17,10 +17,9 @@ async function _buildDash() {
   if (!root) return;
   const o = currentOfficer || {};
 
-  const [cases, reminders, patrolCount, fivecApps] = await Promise.all([
+  const [cases, reminders, fivecApps] = await Promise.all([
     getCases().catch(()=>[]),
     _dFetchRem().catch(()=>[]),
-    _dFetchPatrol().catch(()=>0),
     _dFetchFivec().catch(()=>0),
   ]);
 
@@ -163,12 +162,6 @@ async function _dFetchRem() {
   if(!oid || !navigator.onLine) return [];
   try { const{data}=await supabaseClient.from('reminders').select('*').eq('officer_id',oid).eq('is_done',false).order('reminder_date',{ascending:true}); return data||[]; }
   catch(_){ return []; }
-}
-async function _dFetchPatrol() {
-  const oid=await getOfficerId();
-  if(!oid || !navigator.onLine) return 0;
-  try { const{count}=await supabaseClient.from('patrol_logs').select('*',{count:'exact',head:true}).eq('officer_id',oid); return count||0; }
-  catch(_){ return 0; }
 }
 async function _dFetchFivec() {
   const oid=await getOfficerId();

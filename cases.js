@@ -20,7 +20,6 @@ const ALL_MISAL_DOCS = [
   'فردات',
   'ضمنیات',
   'میمورنڈم',
-  'CDR Analyzer',
   'CDR / IMEI',
   'سٹاف / ہمراہی ملازمان',
   'انڈیکس نقل مسل',
@@ -57,7 +56,6 @@ const MISAL_CHECKLIST = {
     'میمورنڈم',
   ],
   'CDR و تجزیہ': [
-    'CDR Analyzer',
     'CDR / IMEI',
   ],
   'فارمز و وارنٹ': [
@@ -194,18 +192,7 @@ async function renderCases(container,fStatus,fQuery,fStation){
     </div>
   </div>
 
-  <!-- Station Folders -->
-  ${stations.length>1?`
-  <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;direction:rtl;">
-    <button class="btn ${!fStation?'btn-primary':'btn-secondary'} btn-sm" onclick="renderCases(document.getElementById('page-content'),'','','')">📁 تمام (${allCases.length})</button>
-    ${stations.map(s=>`
-    <button class="btn ${fStation===s?'btn-primary':'btn-secondary'} btn-sm"
-      onclick="renderCases(document.getElementById('page-content'),'','','${s}')"
-      title="${s===currentStation?'موجودہ تھانہ':'پرانا تھانہ — آرکائیو'}">
-      ${s===currentStation?'🏛️':'📦'} ${s} (${allCases.filter(c=>(c.case_station||o.station)===s).length})
-    </button>`).join('')}
-  </div>`:``}
-
+  <!-- Station filter buttons removed (FIX6) — all cases shown by default for more space -->
   ${isArchiveView?`<div style="background:rgba(167,139,250,0.1);border:1px solid #a78bfa;border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:12px;color:#a78bfa;direction:rtl;">📦 آرکائیو — تھانہ ${fStation} کے پرانے مقدمات (صرف دیکھنے کے لیے)</div>`:''}
 
   <div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;margin-bottom:14px;">
@@ -231,13 +218,12 @@ async function renderCases(container,fStatus,fQuery,fStation){
           <th>دفعہ قانون</th>
           <th>تھانہ</th>
           <th>مدعی</th>
-          <th>شناختی کارڈ</th>
-          <th>موبائل</th>
+          <th>شناختی کارڈ / موبائل</th>
           <th>صورتحال</th>
           <th style="text-align:center;">اقدامات</th>
         </tr></thead>
         <tbody>
-          ${cases.length ? cases.map((c,i)=>renderCaseRow(c,i+1)).join('') : `<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--text-muted);">کوئی مقدمہ نہیں</td></tr>`}
+          ${cases.length ? cases.map((c,i)=>renderCaseRow(c,i+1)).join('') : `<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text-muted);">کوئی مقدمہ نہیں</td></tr>`}
         </tbody>
       </table>
     </div>
@@ -252,7 +238,7 @@ function renderCaseRow(c,sn){
   return `<tr>
     <td style="text-align:center;font-size:11px;color:var(--text-muted);font-weight:700;">${sn}</td>
     <td>
-      <span style="font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:12px;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(56,189,248,0.4);" onclick="openCaseWorkspace('${c.id}')" title="Open Case Workspace">${c.fir_number||'—'}</span>
+      ${(() => { const fn=c.fir_number||'—'; const p=String(fn).split('/'); return p.length===2 ? `<span style="cursor:pointer;" onclick="openCaseWorkspace('${c.id}')" title="Open Case Workspace"><span style="font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:15px;display:block;line-height:1.1;text-decoration:underline;text-decoration-color:rgba(56,189,248,0.4);">${p[0]}</span><span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);display:block;line-height:1;">/${p[1]}</span></span>` : `<span style="font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:12px;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(56,189,248,0.4);" onclick="openCaseWorkspace('${c.id}')" title="Open Case Workspace">${fn}</span>`; })()}
       ${c.priority ? `<br><span style="font-size:9px;font-weight:700;color:${c.priority==='high'?'var(--red)':c.priority==='medium'?'var(--amber)':'var(--green)'};">${c.priority==='high'?'🔴 اہم':c.priority==='medium'?'🟡 درمیانہ':'🟢 کم'}</span>` : ''}
       ${c.is_cross_version?'<br><span style="font-size:9px;color:var(--red);font-weight:600;">⚔️ Cross</span>':''}
       ${c._shared?`<br><span style="font-size:9px;color:var(--accent);font-weight:600;" title="آپ کے ساتھ شیئر کیا گیا (${c._sharePermission==='write'?'ترمیم':'دیکھیں'})">🔗 شیئرڈ</span>`:''}
@@ -262,8 +248,7 @@ function renderCaseRow(c,sn){
     <td style="font-size:11px;max-width:150px;">${offence}</td>
     <td style="font-size:11px;">${station}</td>
     <td style="font-size:12px;font-weight:500;">${c.complainant||'—'}</td>
-    <td style="font-family:var(--font-mono);font-size:11px;">${cnic}</td>
-    <td style="font-family:var(--font-mono);font-size:11px;">${cell}</td>
+    <td style="font-family:var(--font-mono);font-size:11px;white-space:nowrap;" dir="ltr"><span>${cnic}</span> <span style="color:var(--text-muted);">·</span> <span>${cell}</span></td>
     <td><span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span></td>
     <td>
       <div style="display:flex;gap:2px;direction:rtl;justify-content:center;flex-direction:row-reverse;">

@@ -17,17 +17,16 @@ async function _buildBackup() {
   if (!root) return;
 
   // Get data counts
-  let counts = { cases:0, patrol:0, reminders:0, incidents:0, court:0 };
+  let counts = { cases:0, reminders:0, incidents:0, court:0 };
   try {
     const oid = await getOfficerId();
-    const [c,p,r,i,ct] = await Promise.all([
+    const [c,r,i,ct] = await Promise.all([
       supabaseClient.from('cases').select('id',{count:'exact',head:true}).eq('officer_id',oid),
-      supabaseClient.from('patrol_logs').select('id',{count:'exact',head:true}).eq('officer_id',oid),
       supabaseClient.from('reminders').select('id',{count:'exact',head:true}).eq('officer_id',oid),
       supabaseClient.from('incident_reports').select('id',{count:'exact',head:true}).eq('officer_id',oid),
       supabaseClient.from('court_dates').select('id',{count:'exact',head:true}).eq('officer_id',oid),
     ]);
-    counts = { cases:c.count||0, patrol:p.count||0, reminders:r.count||0, incidents:i.count||0, court:ct.count||0 };
+    counts = { cases:c.count||0, reminders:r.count||0, incidents:i.count||0, court:ct.count||0 };
   } catch(_) {}
 
   const totalRecords = Object.values(counts).reduce((a,b)=>a+b,0);
@@ -45,10 +44,9 @@ async function _buildBackup() {
   </div>
 
   <!-- Data Summary -->
-  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;">
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">
     ${Object.entries({
       '📁 مقدمات': counts.cases,
-      '🚔 گشت': counts.patrol,
       '🔔 یاددہانی': counts.reminders,
       '🚨 واقعات': counts.incidents,
       '⚖️ پیشیاں': counts.court,
@@ -142,9 +140,8 @@ async function _exportAllData() {
   showToast('⏳ ڈیٹا جمع ہو رہا ہے...','info');
   try {
     const oid = await getOfficerId();
-    const [cases,patrol,reminders,incidents,court,fivec] = await Promise.all([
+    const [cases,reminders,incidents,court,fivec] = await Promise.all([
       supabaseClient.from('cases').select('*').eq('officer_id',oid),
-      supabaseClient.from('patrol_logs').select('*').eq('officer_id',oid),
       supabaseClient.from('reminders').select('*').eq('officer_id',oid),
       supabaseClient.from('incident_reports').select('*').eq('officer_id',oid),
       supabaseClient.from('court_dates').select('*').eq('officer_id',oid),
@@ -156,7 +153,6 @@ async function _exportAllData() {
       officer: currentOfficer,
       data: {
         cases: cases.data||[],
-        patrol_logs: patrol.data||[],
         reminders: reminders.data||[],
         incident_reports: incidents.data||[],
         court_dates: court.data||[],
@@ -164,7 +160,6 @@ async function _exportAllData() {
       },
       counts: {
         cases: (cases.data||[]).length,
-        patrol: (patrol.data||[]).length,
         reminders: (reminders.data||[]).length,
         incidents: (incidents.data||[]).length,
         court: (court.data||[]).length,
