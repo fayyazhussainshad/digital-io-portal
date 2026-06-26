@@ -515,7 +515,7 @@ async function getCases(status, query) {
     }
 
     // No cache yet — fetch from server now (first ever load)
-    let q = supabaseClient.from('cases').select('*').eq('officer_id',oid).order('fir_number',{ascending:true});
+    let q = supabaseClient.from('cases').select('*').eq('officer_id',oid).order('fir_number',{ascending:false});
     if (status) q = q.eq('status',status);
     if (query) {
       const w = `%${query}%`;
@@ -561,7 +561,7 @@ async function _refreshCasesInBackground(oid) {
   if (_bgRefreshTimer) return; // throttle
   _bgRefreshTimer = setTimeout(()=>{ _bgRefreshTimer = null; }, 2000);
   try {
-    const { data } = await supabaseClient.from('cases').select('*').eq('officer_id',oid).order('fir_number',{ascending:true});
+    const { data } = await supabaseClient.from('cases').select('*').eq('officer_id',oid).order('fir_number',{ascending:false});
     let all = data || [];
     try {
       const shared = await _getSharedCases(oid);

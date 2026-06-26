@@ -124,12 +124,12 @@ function _renderSearchResults(q, r) {
     return;
   }
   const card = (label, color, title, sub, onclick) => `
-    <div onclick="${onclick}" style="background:var(--bg-card);border:1px solid var(--border);border-right:3px solid ${color};border-radius:8px;padding:11px 13px;margin-bottom:7px;cursor:pointer;direction:rtl;">
-      <div style="display:flex;align-items:center;gap:8px;">
+    <div onclick="${onclick}" style="background:var(--bg-card);border:1px solid var(--border);border-right:3px solid ${color};border-radius:8px;padding:11px 13px;margin-bottom:7px;cursor:pointer;direction:rtl;text-align:right;">
+      <div style="display:flex;align-items:center;gap:8px;justify-content:flex-start;">
         <span style="background:${color};color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;white-space:nowrap;">${label}</span>
         <span style="font-weight:700;font-size:15px;font-family:'Jameel Noori Nastaleeq',serif;">${title}</span>
       </div>
-      ${sub?`<div style="font-size:13px;color:var(--text-muted);margin-top:4px;">${sub}</div>`:''}
+      ${sub?`<div style="font-size:13px;color:var(--text-muted);margin-top:4px;direction:rtl;text-align:right;unicode-bidi:plaintext;">${sub}</div>`:''}
     </div>`;
   let html = `<div style="font-size:13px;color:var(--text-muted);margin-bottom:10px;">${total} نتائج ملے</div>`;
   r.cases.forEach(c => html += card('مقدمہ','var(--accent)', `FIR ${c.fir_number||'—'}`, `${c.offence_type||''} ${c.section_of_law||''} · ${c.complainant||''}`, `openCaseWorkspace('${c.id}')`));

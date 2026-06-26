@@ -172,6 +172,12 @@ async function renderCases(container,fStatus,fQuery,fStation){
   fStatus=fStatus||'';fQuery=fQuery||'';fStation=fStation||'';
   _casesCache = [];
   const allCases=await getCases(fStatus,fQuery);
+  // Sort by FIR number — bigger number first (numeric, not text)
+  allCases.sort((a,b) => {
+    const na = parseInt(String(a.fir_number||'0').split('/')[0]) || 0;
+    const nb = parseInt(String(b.fir_number||'0').split('/')[0]) || 0;
+    return nb - na;
+  });
   _casesCache=allCases;
   const o=currentOfficer||{};
 

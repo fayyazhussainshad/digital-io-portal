@@ -154,7 +154,7 @@ function render5CNumberRow(n){
   const isOther=n.senior_officer_designation==='Other';
   return `<div class="f5c-num-row" style="background:var(--bg-tertiary);border:1px solid var(--border-light);border-radius:8px;padding:10px;margin-bottom:8px;">
     <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-bottom:8px;">
-      <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;font-weight:600;">Application Number</div><input style="${inp}" placeholder="e.g. 1234/IGP/2026" data-field="application_number" value="${esc5C(n.application_number||'')}"></div>
+      <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;font-weight:600;">Application Number</div><input style="${inp}" dir="ltr" placeholder="e.g. 1234/IGP/2026" data-field="application_number" value="${esc5C(n.application_number||'')}"></div>
       <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;font-weight:600;">Senior Officer Designation</div>
         <select style="${inp}" data-field="senior_officer_designation" onchange="handleDesig5C(this)"><option value="">— Select —</option>${FIVEC_DESIGNATIONS.map(d=>`<option value="${d}" ${n.senior_officer_designation===d?'selected':''}>${d}</option>`).join('')}</select>
         <input class="desig-custom" style="${inp};margin-top:6px;display:${isOther?'block':'none'};" placeholder="Enter designation..." data-field="senior_officer_designation_custom" value="${esc5C(isOther?n.senior_officer_name||'':'')}">
@@ -209,8 +209,8 @@ async function open5CResponse(id){
 <br><br><br><br><br>
 <div style="display:flex;justify-content:flex-end;direction:ltr;">
   <div style="text-align:center;min-width:200px;">
-    <div style="border-top:1px solid #333;padding-top:6px;margin-top:50px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">
-      SHO تھانہ ${esc5C(o.station||'_______')}
+    <div style="border-top:1px solid #333;padding-top:6px;margin-top:50px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;font-weight:bold;">
+      ${(() => { const s=(typeof getSHOName==='function')?getSHOName():''; return (s?esc5C(s)+' ':'')+'SHO تھانہ '+esc5C(o.station||'صدر ملتان'); })()}
     </div>
     <div style="font-size:11px;color:#555;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">مہر و دستخط</div>
     <div style="font-size:11px;color:#555;margin-top:4px;">${today}</div>
