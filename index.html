@@ -665,9 +665,24 @@ textarea:not([dir="ltr"]), input[type="text"]:not([dir="ltr"]):not([id*="cnic"])
   unicode-bidi: plaintext;
   text-align: start;
 }
+/* Mixed Urdu+English: contenteditable rich-text fields auto-switch direction per paragraph */
+[contenteditable="true"]:not([dir="ltr"]) {
+  unicode-bidi: plaintext;
+}
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; direction: rtl; }
 /* CNIC, Cell, FIR number — keep LTR for numbers */
 input[id*="cnic"], input[id*="cell"], input[id*="-fir"]:not([id*="writer"]):not([id*="number"]) { direction: ltr !important; text-align: left !important; font-family: var(--font-mono), monospace !important; }
+/* English-data fields: phone/mobile/email/IMEI/badge/vehicle — always LTR */
+input[id*="phone"], input[id*="mobile"], input[id*="imei"], input[id*="email"], input[id*="badge"],
+input[id*="vehicle"], input[id*="-cnic"], input[id*="-cell"], input[type="email"], input[type="tel"],
+input[id*="link"], input[id*="url"], input[data-k*="phone"], input[data-k*="mobile"], input[data-k*="cnic"] {
+  direction: ltr !important; text-align: left !important;
+}
+/* Placeholder-based detection for CNIC and phone formats */
+input[placeholder*="0000-0000000"], input[placeholder*="00000-0000000"],
+input[placeholder*="XXXXX-XXXXXXX"], input[placeholder*="36302"] {
+  direction: ltr !important; text-align: left !important;
+}
 textarea.form-input { direction: rtl; text-align: right; }
 select.form-input { direction: rtl; text-align: right; }
 .data-table { width: 100%; border-collapse: collapse; }
