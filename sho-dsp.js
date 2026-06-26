@@ -68,8 +68,8 @@ function _updateShoDspButtons() {
   // Buttons always show fixed labels; names stored in localStorage, used in reports only
   const shoBtn = document.getElementById('topbar-sho-btn');
   const dspBtn = document.getElementById('topbar-dsp-btn');
-  if (shoBtn) shoBtn.innerHTML = 'SHO';
-  if (dspBtn) dspBtn.innerHTML = 'DSP/SDPO';
+  if (shoBtn) shoBtn.innerHTML = '🏛️ SHO';
+  if (dspBtn) dspBtn.innerHTML = '🎖️ DSP/SDPO';
 }
 window._updateShoDspButtons = _updateShoDspButtons;
 
