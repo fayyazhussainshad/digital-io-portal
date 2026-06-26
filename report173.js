@@ -341,7 +341,7 @@ function _printR173() {
   const doc = document.getElementById('r173-doc');
   if (!doc) return;
   const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
-    <style>@page{size:A4;margin:12mm}
+    <style>@page{size:legal;margin:12mm}
       body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;font-size:14px;line-height:1.9;color:#000;}
       table{border-collapse:collapse;width:100%;}td,th{border:1px solid #000;padding:6px;}
     </style></head><body>${doc.innerHTML}</body></html>`;
