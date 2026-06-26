@@ -263,7 +263,7 @@ async function _doAddMisalDoc(docId) {
   const isPersonForm = (docId === 'witnesses_fir' || docId === 'witnesses_cross' ||
                         docId === 'named_accused' || docId === 'unknown_accused' ||
                         docId === 'zamniyat' || docId === 'memorandum' ||
-                        docId === 'cdr_imei' || docId === 'cro_card');
+                        docId === 'cdr_imei' || docId === 'cro_card' || docId === 'staff');
   // If already added — open it (form for persons, editor for docs)
   if (_misalDocs[docId]) { _openMisalEditor(docId); return; }
   try {
@@ -275,7 +275,7 @@ async function _doAddMisalDoc(docId) {
     if (error) throw error;
     _misalDocs[docId] = data;
     _refreshMisalBar();
-    // Persons (witnesses/accused) → open their card form. Other docs → silent (no MS Word page).
+    // Persons (witnesses/accused) → open their card form. Other docs → silent.
     if (isPersonForm) _openMisalEditor(docId);
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
@@ -340,6 +340,13 @@ function _openMisalEditor(docId) {
   if (docId === 'accused_cross') {
     _openDocId = docId;
     if (typeof openAccusedCard === 'function') openAccusedCard(_misalCaseId, 'cross_version');
+    return;
+  }
+
+  // Special: ہمراہی ملازمان → structured staff form
+  if (docId === 'staff') {
+    _openDocId = docId;
+    if (typeof openStaffV2 === 'function') openStaffV2(_misalCaseId);
     return;
   }
 
@@ -447,7 +454,7 @@ function _renderMisalEditor(docId, def) {
       </div>
     </div>
 
-    <!-- Text area (justified, RTL, no MS Word page) -->
+    <!-- Text area (justified, RTL) -->
     <div style="flex:1;overflow-y:auto;padding:14px;">
       <div id="misal-editor" contenteditable="true" spellcheck="false" style="
         width:100%;min-height:100%;
