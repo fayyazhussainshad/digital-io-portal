@@ -124,8 +124,9 @@ function _renderTplTable() {
       <td style="padding:10px 8px;text-align:center;">
         <div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap;">
           <button onclick="_editTpl('${t.id}')" title="دیکھیں" style="${_tplBtn('#1a73e8')}">👁️</button>
-          <button onclick="_editTpl('${t.id}')" title="ترمیم" style="${_tplBtn('#fd7e14')}">✏️</button>
+          <button onclick="_renameTpl('${t.id}')" title="نام بدلیں" style="${_tplBtn('#fd7e14')}">✏️</button>
           <button onclick="_copyTpl('${t.id}')" title="نقل بنائیں" style="${_tplBtn('#20c997')}">📋</button>
+          ${hasFile?`<button onclick="_downloadTpl('${t.id}')" title="ڈاؤنلوڈ" style="${_tplBtn('#28a745')}">⬇️</button>`:''}
           <button onclick="_moveTpl('${t.id}')" title="قسم بدلیں" style="${_tplBtn('#6f42c1')}">📂</button>
           ${(hasContent||hasFile)?`<button onclick="_printTpl('${t.id}')" title="پرنٹ" style="${_tplBtn('#6c757d')}">🖨️</button>`:''}
           <button onclick="_deleteTpl('${t.id}')" title="حذف" style="${_tplBtn('#dc3545')}">🗑️</button>
@@ -172,8 +173,10 @@ function _openAddTpl() {
   openModal('+ نیا ٹمپلیٹ شامل کریں', `
     <div style="direction:rtl;">
       <label class="form-label">ٹمپلیٹ کا نام *</label>
-      <input class="form-input" id="tpl-f-title" dir="rtl" placeholder="مثلاً: DSP صاحب کو درخواست" style="margin-bottom:6px;">
-      <div style="font-size:12px;color:var(--text-muted);">محفوظ کرنے کے بعد ✏️ سے متن لکھیں</div>
+      <input class="form-input" id="tpl-f-title" dir="rtl" placeholder="مثلاً: DSP صاحب کو درخواست" style="margin-bottom:14px;">
+      <label class="form-label">📤 ٹمپلیٹ اپلوڈ کریں (PDF / Word)</label>
+      <input class="form-input" id="tpl-f-file" type="file" accept=".pdf,.doc,.docx" style="margin-bottom:6px;">
+      <div id="tpl-f-fileinfo" style="font-size:12px;color:var(--text-muted);"></div>
       <div id="tpl-f-progress" style="font-size:12px;color:var(--accent);margin-top:8px;"></div>
     </div>`,
     `<div style="display:flex;gap:8px;direction:rtl;">
@@ -184,25 +187,70 @@ function _openAddTpl() {
 
 async function _saveTpl() {
   const title = document.getElementById('tpl-f-title')?.value.trim();
+  const file = document.getElementById('tpl-f-file')?.files?.[0];
+  const prog = document.getElementById('tpl-f-progress');
   const btn = document.getElementById('tpl-save-btn');
 
   if (!title) { showToast('⚠️ ٹمپلیٹ کا نام ضروری ہے','error'); return; }
+  if (!file) { showToast('⚠️ ٹمپلیٹ فائل اپلوڈ کریں','error'); return; }
   if (btn) { btn.disabled = true; btn.textContent = 'محفوظ ہو رہا ہے...'; }
 
   try {
     const oid = await getOfficerId();
-    const rec = { officer_id:oid, title, category:'other', content:null, is_default:false, is_public:true };
+    if (prog) prog.textContent = '📤 فائل اپلوڈ ہو رہی ہے...';
+    const ext = (file.name.split('.').pop()||'pdf').toLowerCase().replace(/[^a-z0-9]/g,'');
+    const fileType = (ext==='pdf')?'pdf':'word';
+    const fileDisplay = file.name;
+    const rand = Math.random().toString(36).substring(2,8);
+    const safe = `tpl_${Date.now()}_${rand}.${ext||'pdf'}`;
+    const path = `${oid}/${safe}`;
+    const { error: upErr } = await supabaseClient.storage.from(TPL_BUCKET).upload(path, file, { contentType:file.type, upsert:true });
+    if (upErr) throw upErr;
+    const { data:urlData } = supabaseClient.storage.from(TPL_BUCKET).getPublicUrl(path);
+    const fileUrl = urlData?.publicUrl || null;
+
+    if (prog) prog.textContent = '💾 محفوظ ہو رہا ہے...';
+    const rec = { officer_id:oid, title, category:'other', content:null, file_url:fileUrl, file_name:safe, file_display_name:fileDisplay, safe_file_name:safe, file_type:fileType, is_default:false, is_public:true };
     const { data, error } = await supabaseClient.from('templates').insert(rec).select().single();
     if (error) throw error;
     _tplList.unshift(data);
     try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) {}
     closeModal();
-    showToast('✅ ٹمپلیٹ شامل ہو گیا — اب ✏️ سے متن لکھیں','success');
+    showToast('✅ ٹمپلیٹ شامل ہو گیا','success');
     _renderTplTable();
   } catch(e) {
     showToast('❌ ' + (e.message||'محفوظ نہیں ہو سکا'),'error');
     if (btn) { btn.disabled=false; btn.textContent='💾 محفوظ کریں'; }
   }
+}
+
+// ── RENAME template name ─────────────────────────────────────
+function _renameTpl(id) {
+  const t = _tplList.find(x => x.id === id);
+  if (!t) return;
+  openModal('✏️ ٹمپلیٹ کا نام بدلیں', `
+    <div style="direction:rtl;">
+      <label class="form-label">ٹمپلیٹ کا نام *</label>
+      <input class="form-input" id="tpl-rename-inp" dir="rtl" value="${_tplEsc(t.title||'')}" style="margin-bottom:6px;">
+    </div>`,
+    `<div style="display:flex;gap:8px;direction:rtl;">
+      <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+      <button class="btn btn-primary" onclick="_doRenameTpl('${id}')">💾 محفوظ کریں</button>
+    </div>`);
+}
+async function _doRenameTpl(id) {
+  const newName = document.getElementById('tpl-rename-inp')?.value.trim();
+  if (!newName) { showToast('⚠️ نام ضروری ہے','error'); return; }
+  try {
+    await supabaseClient.from('templates').update({ title:newName, updated_at:new Date().toISOString() }).eq('id', id);
+    const t = _tplList.find(x=>x.id===id); if (t) t.title = newName;
+    try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) {}
+    // Update open viewer title if present
+    const vt = document.getElementById('tpl-viewer-title'); if (vt) vt.textContent = newName;
+    closeModal();
+    showToast('✅ نام تبدیل ہو گیا','success');
+    _renderTplTable();
+  } catch(e) { showToast('❌ '+e.message,'error'); }
 }
 
 // ── EDITABLE VIEWER (key feature) ────────────────────────────
@@ -218,8 +266,11 @@ function _editTpl(id, autoPrint) {
     ov.style.cssText='position:fixed;inset:0;z-index:99999;background:#fff;display:flex;flex-direction:column;direction:rtl;';
     ov.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#fd7e14;color:#fff;flex-wrap:wrap;gap:8px;">
-        <button onclick="window.open('${t.file_url}','_blank')" style="${_tplTbBtn()}">📄 نئے ٹیب میں</button>
-        <div style="font-weight:800;">${_tplEsc(t.title)}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button onclick="window.open('${t.file_url}','_blank')" style="${_tplTbBtn()}">📄 نئے ٹیب میں</button>
+          <button onclick="_renameTpl('${t.id}')" style="${_tplTbBtn()}">✏️ نام بدلیں</button>
+        </div>
+        <div style="font-weight:800;" id="tpl-viewer-title">${_tplEsc(t.title)}</div>
         <button onclick="document.getElementById('tpl-editor-overlay').remove()" style="${_tplTbBtn()}">✕ بند</button>
       </div>
       <iframe src="${t.file_url}#toolbar=1" style="flex:1;border:none;"></iframe>`;
@@ -422,6 +473,8 @@ window._tplFilter = _tplFilter;
 window._tplSetCat = _tplSetCat;
 window._openAddTpl = _openAddTpl;
 window._saveTpl = _saveTpl;
+window._renameTpl = _renameTpl;
+window._doRenameTpl = _doRenameTpl;
 window._editTpl = _editTpl;
 window._tplFill = _tplFill;
 window._printTplEditor = _printTplEditor;
