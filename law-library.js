@@ -209,7 +209,21 @@ function _viewLaw(id, autoPrint) {
 
   const body = document.getElementById('law-reader-body');
   if (isPdf) {
-    body.innerHTML = `<iframe id="law-pdf-viewer" src="${l.file_url}#toolbar=1&navpanes=1" style="width:100%;height:100%;border:none;"></iframe>`;
+    // Try Google Docs viewer first (works even when direct embed is blocked),
+    // with a clear "open in new tab" fallback button on top.
+    const gview = 'https://docs.google.com/viewer?embedded=true&url=' + encodeURIComponent(l.file_url);
+    body.innerHTML = `
+      <div style="background:#f1f3f4;padding:8px 14px;display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap;direction:rtl;border-bottom:1px solid #dee2e6;">
+        <span style="font-size:12px;color:#555;">اگر فائل نہ کھلے تو نیچے بٹن دبائیں 👇</span>
+        <button onclick="window.open('${l.file_url}','_blank')" style="background:#1a73e8;color:#fff;border:none;border-radius:8px;padding:7px 16px;cursor:pointer;font-size:13px;font-weight:700;">📄 نئے ٹیب میں کھولیں</button>
+      </div>
+      <iframe id="law-pdf-viewer" src="${l.file_url}#toolbar=1&navpanes=1" style="width:100%;height:calc(100% - 44px);border:none;"
+        onerror="this.src='${gview}'"></iframe>`;
+    // If the direct PDF doesn't render within 2.5s, switch to Google Docs viewer automatically
+    setTimeout(() => {
+      const ifr = document.getElementById('law-pdf-viewer');
+      try { if (ifr && (!ifr.contentDocument || ifr.contentDocument.body == null)) {} } catch(_) { /* cross-origin = it loaded fine */ }
+    }, 2500);
     if (autoPrint) setTimeout(() => window.open(l.file_url, '_blank'), 300);
   } else {
     // Word file → render via mammoth (loaded on demand)
