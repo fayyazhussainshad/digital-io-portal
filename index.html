@@ -1089,7 +1089,6 @@ window.addEventListener('unhandledrejection', function(e){
         <span class="nav-icon">⋯</span> مزید <span id="more-arrow" style="margin-right:auto;font-size:11px;">▼</span>
       </div>
       <div id="nav-more-section" style="display:none;">
-        <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showPage('forms',this)"><span class="nav-icon">📥</span> ٹیمپلیٹس</div>
         <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showPage('fivec',this)"><span class="nav-icon">📋</span> مارک شدہ درخواستیں</div>
         <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showPage('suspects',this)"><span class="nav-icon">👤</span> ملزمان / گواہان</div>
         <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showPage('backup',this)"><span class="nav-icon">☁️</span> بیک اپ</div>
@@ -1123,7 +1122,7 @@ window.addEventListener('unhandledrejection', function(e){
             <a class="topmore-item" id="topbar-dsp-btn" onclick="openShoDspModal('dsp');_closeTopDD()" title="DSP/SDPO کا نام">🎖️ DSP/SDPO</a>
             <a class="topmore-item" id="topbar-gari-btn" onclick="openSarkariGari();_closeTopDD()" title="سرکاری گاڑی">🚗 سرکاری گاڑی</a>
             <a class="topmore-item" onclick="showPage('incident',null);_closeTopDD()">🚨 واقعاتی رپورٹ</a>
-            <a class="topmore-item" onclick="showPage('forms',null);_closeTopDD()">📡 ٹمپلیٹس</a>
+            <a class="topmore-item" onclick="showPage('templates',null);_closeTopDD()">📄 ٹمپلیٹس</a>
             <a class="topmore-item" onclick="showPage('suspects',null);_closeTopDD()">👤 ملزمان / گواہان</a>
             <a class="topmore-item" onclick="showPage('backup',null);_closeTopDD()">☁️ بیک اپ</a>
           </div>
@@ -1164,7 +1163,6 @@ window.addEventListener('unhandledrejection', function(e){
 <script src="toolbar.js"></script>
 <script src="misal-docs.js"></script>
 <script src="cases.js"></script>
-<script src="forms.js"></script>
 <script src="fivec.js"></script>
 <script src="evidence.js"></script>
 <script src="search.js"></script>
@@ -1179,6 +1177,7 @@ window.addEventListener('unhandledrejection', function(e){
 <script src="staff-v2.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script src="law-library.js"></script>
+<script src="templates.js"></script>
 <script src="sho-dsp.js"></script>
 <script src="case-sharing.js"></script>
 <script src="notifications.js"></script>
@@ -1372,10 +1371,10 @@ const _HASH_PAGES = {
   '#admin':    'admin',
   '#cases':    'cases',
   '#dashboard':'dashboard',
-  '#forms':    'forms',
   '#settings': 'settings',
   '#reminders':'reminders',
   '#law':      'law',
+  '#templates':'templates',
   '#cdr':      'cdr',
   '#fivec':    'fivec',
   '#incident': 'incident',

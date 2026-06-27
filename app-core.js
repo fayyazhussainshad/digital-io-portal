@@ -58,10 +58,10 @@ const ROLE_LEVELS = { officer:1, supervisor:2, admin:3, superadmin:4 };
 
 // Which pages each role can access
 const ROLE_PAGES = {
-  officer:    ['dashboard','cases','forms','fivec','incident','reminders','law','search','suspects','performance','backup','settings','bin','subscription','court','evidence'],
-  supervisor: ['dashboard','cases','forms','fivec','incident','reminders','law','search','suspects','performance','backup','settings','bin','subscription','court','evidence'],
-  admin:      ['dashboard','cases','forms','fivec','incident','reminders','law','search','suspects','performance','backup','settings','bin','subscription','court','evidence','admin'],
-  superadmin: ['dashboard','cases','forms','fivec','incident','reminders','law','search','suspects','performance','backup','settings','bin','subscription','court','evidence','admin'],
+  officer:    ['dashboard','cases','fivec','incident','reminders','law','search','suspects','performance','backup','settings','bin','subscription','court','evidence'],
+  supervisor: ['dashboard','cases','fivec','incident','reminders','law','search','suspects','performance','backup','settings','bin','subscription','court','evidence'],
+  admin:      ['dashboard','cases','fivec','incident','reminders','law','search','suspects','performance','backup','settings','bin','subscription','court','evidence','admin'],
+  superadmin: ['dashboard','cases','fivec','incident','reminders','law','search','suspects','performance','backup','settings','bin','subscription','court','evidence','admin'],
 };
 
 function getRole() {
@@ -146,7 +146,7 @@ function showPage(page, el) {
 
   // Update topbar title
   const titles = {
-    dashboard:'ڈیش بورڈ', cases:'میرے مقدمات', forms:'ٹیمپلیٹس',
+    dashboard:'ڈیش بورڈ', cases:'میرے مقدمات', templates:'ٹمپلیٹس',
     fivec:'مارک شدہ درخواستیں', incident:'واقعاتی رپورٹ',
     law:'قانونی لائبریری', performance:'کارکردگی', backup:'بیک اپ',
     settings:'ترتیبات', admin:'ایڈمن', bin:'حذف شدہ مواد',

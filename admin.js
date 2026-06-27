@@ -455,7 +455,7 @@ async function _adminChangeRole(officerId, newRole) {
 
 // ── USAGE ANALYTICS TAB ───────────────────────────────────────
 const _PAGE_NAMES = {
-  dashboard:'ڈیش بورڈ', cases:'میرے مقدمات', forms:'ٹیمپلیٹس', fivec:'5-C درخواستیں',
+  dashboard:'ڈیش بورڈ', cases:'میرے مقدمات', templates:'ٹمپلیٹس', fivec:'5-C درخواستیں',
   incident:'واقعاتی رپورٹ',
   reminders:'یاددہانیاں', search:'تلاش', suspects:'ملزمان/گواہان', performance:'کارکردگی',
   backup:'بیک اپ', settings:'ترتیبات', bin:'حذف شدہ', subscription:'سبسکرپشن',
