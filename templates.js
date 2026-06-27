@@ -253,12 +253,73 @@ async function _doRenameTpl(id) {
   } catch(e) { showToast('❌ '+e.message,'error'); }
 }
 
+// Render template PDF via blob (avoids "content blocked" in PWA)
+async function _tplRenderPdf(url, body, autoPrint) {
+  body.innerHTML = `<div style="text-align:center;padding:40px;color:#6c757d;">⏳ فائل کھل رہی ہے...</div>`;
+  try {
+    const resp = await fetch(url, { mode:'cors' });
+    if (!resp.ok) throw new Error('fetch '+resp.status);
+    const blob = await resp.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const ov = document.getElementById('tpl-editor-overlay');
+    if (ov) ov._blobUrl = blobUrl;
+    body.innerHTML = `<iframe id="tpl-pdf-viewer" src="${blobUrl}#toolbar=1&navpanes=1&view=FitH" style="width:100%;height:100%;border:none;"></iframe>`;
+    if (autoPrint) setTimeout(() => {
+      const ifr = document.getElementById('tpl-pdf-viewer');
+      try { ifr.contentWindow.focus(); ifr.contentWindow.print(); } catch(_) { window.open(blobUrl,'_blank'); }
+    }, 600);
+  } catch(e) {
+    const gview = 'https://docs.google.com/viewer?embedded=true&url=' + encodeURIComponent(url);
+    body.innerHTML = `
+      <div style="height:100%;display:flex;flex-direction:column;">
+        <div style="background:#fff3cd;padding:8px 14px;font-size:12px;color:#664d03;direction:rtl;border-bottom:1px solid #ffc107;">
+          فائل لوڈ ہونے میں دقت ہوئی —
+          <button onclick="window.open('${url}','_blank')" style="background:#1a73e8;color:#fff;border:none;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;">📄 نئے ٹیب میں</button>
+        </div>
+        <iframe src="${gview}" style="flex:1;border:none;"></iframe>
+      </div>`;
+  }
+}
+
+// Render template Word file as selectable HTML via mammoth
+async function _tplRenderWord(url, body, autoPrint) {
+  body.innerHTML = `<div style="text-align:center;padding:40px;color:#6c757d;">⏳ فائل کھل رہی ہے...</div>`;
+  try {
+    if (typeof mammoth === 'undefined') {
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
+        s.onload = res; s.onerror = rej; document.head.appendChild(s);
+      });
+    }
+    const resp = await fetch(url, { mode:'cors' });
+    const buf = await resp.arrayBuffer();
+    const result = await mammoth.convertToHtml({ arrayBuffer: buf });
+    body.innerHTML = `<div id="tpl-word-content" style="max-width:850px;margin:0 auto;padding:30px 24px;direction:rtl;text-align:right;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:16px;line-height:2;color:#111;user-select:text;">${result.value || '<div style="text-align:center;color:#999;">مواد دستیاب نہیں</div>'}</div>`;
+    if (autoPrint) setTimeout(() => window.print(), 400);
+  } catch(e) {
+    body.innerHTML = `<div style="text-align:center;padding:40px;color:#6c757d;">
+      <div style="font-size:40px;margin-bottom:12px;">📄</div>
+      <div style="margin-bottom:16px;">فائل اس براؤزر میں نہیں کھل سکی</div>
+      <button onclick="window.open('${url}','_blank')" style="background:#1a73e8;color:#fff;border:none;border-radius:8px;padding:10px 20px;cursor:pointer;">نئے ٹیب میں کھولیں</button>
+    </div>`;
+  }
+}
+
+function _closeTplViewer() {
+  const ov = document.getElementById('tpl-editor-overlay');
+  if (ov) {
+    if (ov._blobUrl) { try { URL.revokeObjectURL(ov._blobUrl); } catch(_) {} }
+    ov.remove();
+  }
+}
+
 // ── EDITABLE VIEWER (key feature) ────────────────────────────
 function _editTpl(id, autoPrint) {
   const t = _tplList.find(x => x.id === id);
   if (!t) return;
 
-  // If file-based (no text content), open the file instead
+  // If file-based (no text content), open the file in the in-app viewer
   if (!t.content && t.file_url) {
     const isPdf = (t.file_type==='pdf') || t.file_url.toLowerCase().includes('.pdf');
     const ov = document.createElement('div');
@@ -271,10 +332,15 @@ function _editTpl(id, autoPrint) {
           <button onclick="_renameTpl('${t.id}')" style="${_tplTbBtn()}">✏️ نام بدلیں</button>
         </div>
         <div style="font-weight:800;" id="tpl-viewer-title">${_tplEsc(t.title)}</div>
-        <button onclick="document.getElementById('tpl-editor-overlay').remove()" style="${_tplTbBtn()}">✕ بند</button>
+        <button onclick="_closeTplViewer()" style="${_tplTbBtn()}">✕ بند</button>
       </div>
-      <iframe src="${t.file_url}#toolbar=1" style="flex:1;border:none;"></iframe>`;
+      <div id="tpl-viewer-body" style="flex:1;overflow:auto;background:#fff;">
+        <div style="text-align:center;padding:40px;color:#6c757d;">⏳ کھل رہی ہے...</div>
+      </div>`;
     document.body.appendChild(ov);
+    const vbody = document.getElementById('tpl-viewer-body');
+    if (isPdf) _tplRenderPdf(t.file_url, vbody, autoPrint);
+    else _tplRenderWord(t.file_url, vbody, autoPrint);
     return;
   }
 
@@ -476,6 +542,7 @@ window._saveTpl = _saveTpl;
 window._renameTpl = _renameTpl;
 window._doRenameTpl = _doRenameTpl;
 window._editTpl = _editTpl;
+window._closeTplViewer = _closeTplViewer;
 window._tplFill = _tplFill;
 window._printTplEditor = _printTplEditor;
 window._copyTplEditor = _copyTplEditor;

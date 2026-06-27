@@ -214,6 +214,14 @@ async function _saveLaw() {
 }
 
 // ── VIEW / READ LAW (full-screen reader) ─────────────────────
+function _closeLawReader() {
+  const ov = document.getElementById('law-reader-overlay');
+  if (ov) {
+    if (ov._blobUrl) { try { URL.revokeObjectURL(ov._blobUrl); } catch(_) {} }
+    ov.remove();
+  }
+}
+
 function _viewLaw(id, autoPrint) {
   const l = _lawList.find(x => x.id === id);
   if (!l || !l.file_url) { showToast('❌ فائل دستیاب نہیں','error'); return; }
@@ -231,7 +239,7 @@ function _viewLaw(id, autoPrint) {
       <button onclick="_lawNavMatch(1)" title="اگلا" style="border:1px solid #dee2e6;background:#f1f3f4;border-radius:6px;padding:6px 9px;cursor:pointer;font-size:12px;">▼</button>
       <span id="law-search-count" style="font-size:12px;color:#6c757d;"></span>` : ''}
       <button onclick="_printLawReader()" style="background:#1a73e8;color:#fff;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;">🖨️ پرنٹ</button>
-      <button onclick="document.getElementById('law-reader-overlay').remove()" style="background:#e2e8f0;color:#1a3a5c;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;font-weight:700;">✕ بند</button>
+      <button onclick="_closeLawReader()" style="background:#e2e8f0;color:#1a3a5c;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;font-weight:700;">✕ بند</button>
     </div>
     <!-- Body -->
     <div id="law-reader-body" style="flex:1;overflow:auto;background:#fff;">
@@ -241,25 +249,43 @@ function _viewLaw(id, autoPrint) {
 
   const body = document.getElementById('law-reader-body');
   if (isPdf) {
-    // Try Google Docs viewer first (works even when direct embed is blocked),
-    // with a clear "open in new tab" fallback button on top.
-    const gview = 'https://docs.google.com/viewer?embedded=true&url=' + encodeURIComponent(l.file_url);
-    body.innerHTML = `
-      <div style="background:#f1f3f4;padding:8px 14px;display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap;direction:rtl;border-bottom:1px solid #dee2e6;">
-        <span style="font-size:12px;color:#555;">اگر فائل نہ کھلے تو نیچے بٹن دبائیں 👇</span>
-        <button onclick="window.open('${l.file_url}','_blank')" style="background:#1a73e8;color:#fff;border:none;border-radius:8px;padding:7px 16px;cursor:pointer;font-size:13px;font-weight:700;">📄 نئے ٹیب میں کھولیں</button>
-      </div>
-      <iframe id="law-pdf-viewer" src="${l.file_url}#toolbar=1&navpanes=1" style="width:100%;height:calc(100% - 44px);border:none;"
-        onerror="this.src='${gview}'"></iframe>`;
-    // If the direct PDF doesn't render within 2.5s, switch to Google Docs viewer automatically
-    setTimeout(() => {
-      const ifr = document.getElementById('law-pdf-viewer');
-      try { if (ifr && (!ifr.contentDocument || ifr.contentDocument.body == null)) {} } catch(_) { /* cross-origin = it loaded fine */ }
-    }, 2500);
-    if (autoPrint) setTimeout(() => window.open(l.file_url, '_blank'), 300);
+    _renderPdfLaw(l.file_url, body, autoPrint);
   } else {
     // Word file → render via mammoth (loaded on demand)
     _renderWordLaw(l.file_url, body, autoPrint);
+  }
+}
+
+// Render PDF by fetching it as a blob first — this makes it same-origin,
+// which avoids the "content blocked" error inside the installed PWA.
+async function _renderPdfLaw(url, body, autoPrint) {
+  body.innerHTML = `<div style="text-align:center;padding:40px;color:#6c757d;">⏳ فائل کھل رہی ہے...</div>`;
+  try {
+    const resp = await fetch(url, { mode: 'cors' });
+    if (!resp.ok) throw new Error('fetch failed ' + resp.status);
+    const blob = await resp.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    // Remember blob URL on overlay so we can revoke it on close
+    const ov = document.getElementById('law-reader-overlay');
+    if (ov) ov._blobUrl = blobUrl;
+    body.innerHTML = `
+      <iframe id="law-pdf-viewer" src="${blobUrl}#toolbar=1&navpanes=1&view=FitH"
+        style="width:100%;height:100%;border:none;"></iframe>`;
+    if (autoPrint) setTimeout(() => {
+      const ifr = document.getElementById('law-pdf-viewer');
+      try { ifr.contentWindow.focus(); ifr.contentWindow.print(); } catch(_) { window.open(blobUrl,'_blank'); }
+    }, 600);
+  } catch(e) {
+    // Network/CORS failed — offer direct open + Google viewer fallback
+    const gview = 'https://docs.google.com/viewer?embedded=true&url=' + encodeURIComponent(url);
+    body.innerHTML = `
+      <div style="height:100%;display:flex;flex-direction:column;">
+        <div style="background:#fff3cd;padding:8px 14px;font-size:12px;color:#664d03;direction:rtl;border-bottom:1px solid #ffc107;">
+          فائل لوڈ ہونے میں دقت ہوئی — متبادل طریقے آزمائیں:
+          <button onclick="window.open('${url}','_blank')" style="background:#1a73e8;color:#fff;border:none;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;margin-right:6px;">📄 نئے ٹیب میں</button>
+        </div>
+        <iframe src="${gview}" style="flex:1;border:none;"></iframe>
+      </div>`;
   }
 }
 
@@ -530,6 +556,7 @@ window._lawFilter = _lawFilter;
 window._openAddLaw = _openAddLaw;
 window._saveLaw = _saveLaw;
 window._viewLaw = _viewLaw;
+window._closeLawReader = _closeLawReader;
 // Compatibility aliases (prompt uses these names)
 window.viewLaw = (id) => _viewLaw(id);
 window.downloadLaw = (urlOrId, name) => {
