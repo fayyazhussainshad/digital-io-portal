@@ -26,54 +26,7 @@ const TPL_CAT_COLOR = {
 function _tplCatLabel(c){ return TPL_CATEGORIES[c] || 'دیگر'; }
 function _tplCatColor(c){ return TPL_CAT_COLOR[c] || '#6c757d'; }
 
-// ── DEFAULT TEMPLATES (seeded on first visit) ────────────────
-const DEFAULT_TEMPLATES = [
-  { title:'DSP صاحب کو درخواست', category:'darkhwast', content:
-`جناب DSP/SDPO صاحب [تھانہ] ملتان
 
-جناب عالیٰ!
-
-گزارش ہے کہ [نام مدعی] ولد [ولد کا نام] سکنہ [پتہ] نے رپورٹ درج کروائی کہ [مختصر واقعہ]۔
-
-مقدمہ نمبر [مقدمہ نمبر] مورخہ [تاریخ] بجرم [دفعہ] تھانہ صدر ملتان زیر تفتیش ہے۔
-
-لہٰذا [مقصد درخواست] کی درخواست کی جاتی ہے۔
-
-[نام افسر]
-[عہدہ] تھانہ صدر ملتان
-مورخہ: [تاریخ]` },
-  { title:'ملزم کو نوٹس', category:'notice', content:
-`بسلسلہ مقدمہ نمبر [مقدمہ نمبر] مورخہ [تاریخ] بجرم [دفعہ] تھانہ صدر ملتان
-
-[نام ملزم] ولد [ولد کا نام] سکنہ [پتہ]
-
-آپ کو نوٹس دیا جاتا ہے کہ مورخہ [تاریخ] بوقت [وقت] تھانہ صدر ملتان میں حاضر ہوں۔ غیر حاضری کی صورت میں قانونی کاروائی عمل میں لائی جائے گی۔
-
-[نام افسر]
-[عہدہ] تھانہ صدر ملتان` },
-  { title:'گواہ کو طلبی', category:'notice', content:
-`بسلسلہ مقدمہ نمبر [مقدمہ نمبر] مورخہ [تاریخ]
-
-[نام گواہ] ولد [ولد کا نام] سکنہ [پتہ]
-
-آپ کو طلب کیا جاتا ہے کہ بطور گواہ مورخہ [تاریخ] تھانہ صدر ملتان میں حاضری دیں۔
-
-[نام افسر]
-تفتیشی افسر` },
-  { title:'ضمانت کی مخالفت', category:'adaalti', content:
-`عدالت محترم!
-
-مقدمہ نمبر [مقدمہ نمبر] میں ملزم [نام ملزم] کی ضمانت کی مخالفت کی جاتی ہے کیونکہ:
-
-۱۔ ملزم سنگین نوعیت کے جرم میں ملوث ہے
-۲۔ تفتیش ابھی جاری ہے
-۳۔ ضمانت ملنے پر گواہان کو متاثر کر سکتا ہے
-
-لہٰذا ضمانت مسترد کی جائے۔
-
-[نام افسر]
-[عہدہ] تھانہ صدر ملتان` }
-];
 
 // ── PAGE RENDER ──────────────────────────────────────────────
 async function renderTemplates(container) {
@@ -126,27 +79,13 @@ async function _loadTemplates() {
   if (!navigator.onLine) return;
   try {
     const { data, error } = await supabaseClient.from('templates')
-      .select('*').order('created_at', { ascending:false });
+      .select('*').order('category', { ascending:true }).order('title', { ascending:true });
     if (error) throw error;
     _tplList = data || [];
-    // Seed default templates on first ever load (if table empty)
-    if (!_tplList.length) {
-      await _seedDefaults();
-      const r2 = await supabaseClient.from('templates').select('*').order('created_at',{ascending:false});
-      _tplList = r2.data || [];
-    }
     try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) {}
   } catch(e) {
     console.warn('Templates load failed, using cache:', e.message);
   }
-}
-
-async function _seedDefaults() {
-  try {
-    const oid = await getOfficerId();
-    const rows = DEFAULT_TEMPLATES.map(t => ({ officer_id: oid, title: t.title, category: t.category, content: t.content, is_default: true, is_public: true }));
-    await supabaseClient.from('templates').insert(rows);
-  } catch(e) { console.warn('Seed defaults failed:', e.message); }
 }
 
 // ── TABLE ────────────────────────────────────────────────────
@@ -184,11 +123,11 @@ function _renderTplTable() {
       </td>
       <td style="padding:10px 8px;text-align:center;">
         <div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap;">
-          ${(hasContent||hasFile)?`<button onclick="_editTpl('${t.id}')" title="دیکھیں/ترمیم" style="${_tplBtn('#fd7e14')}">✏️</button>`:''}
+          <button onclick="_editTpl('${t.id}')" title="دیکھیں" style="${_tplBtn('#1a73e8')}">👁️</button>
+          <button onclick="_editTpl('${t.id}')" title="ترمیم" style="${_tplBtn('#fd7e14')}">✏️</button>
           <button onclick="_copyTpl('${t.id}')" title="نقل بنائیں" style="${_tplBtn('#20c997')}">📋</button>
-          ${hasFile?`<button onclick="_downloadTpl('${t.id}')" title="ڈاؤنلوڈ" style="${_tplBtn('#28a745')}">⬇️</button>`:''}
-          ${(hasContent||hasFile)?`<button onclick="_printTpl('${t.id}')" title="پرنٹ" style="${_tplBtn('#6c757d')}">🖨️</button>`:''}
           <button onclick="_moveTpl('${t.id}')" title="قسم بدلیں" style="${_tplBtn('#6f42c1')}">📂</button>
+          ${(hasContent||hasFile)?`<button onclick="_printTpl('${t.id}')" title="پرنٹ" style="${_tplBtn('#6c757d')}">🖨️</button>`:''}
           <button onclick="_deleteTpl('${t.id}')" title="حذف" style="${_tplBtn('#dc3545')}">🗑️</button>
         </div>
       </td>
@@ -233,18 +172,8 @@ function _openAddTpl() {
   openModal('+ نیا ٹمپلیٹ شامل کریں', `
     <div style="direction:rtl;">
       <label class="form-label">ٹمپلیٹ کا نام *</label>
-      <input class="form-input" id="tpl-f-title" dir="rtl" placeholder="مثلاً: DSP صاحب کو درخواست" style="margin-bottom:10px;">
-      <label class="form-label">قسم *</label>
-      <select class="form-input" id="tpl-f-category" style="margin-bottom:10px;direction:rtl;">
-        ${Object.entries(TPL_CATEGORIES).map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}
-      </select>
-      <label class="form-label">✍️ متن لکھیں یا پیسٹ کریں</label>
-      <textarea class="form-input" id="tpl-f-content" dir="rtl" rows="7" placeholder="یہاں ٹمپلیٹ کا متن لکھیں..." style="margin-bottom:10px;line-height:2;font-family:'Jameel Noori Nastaleeq',serif;"></textarea>
-      <label class="form-label">📎 یا فائل اپلوڈ کریں (PDF/Word)</label>
-      <input class="form-input" id="tpl-f-file" type="file" accept=".pdf,.doc,.docx" style="margin-bottom:10px;">
-      <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px;font-size:12px;color:#664d03;">
-        💡 قابلِ تبدیل جگہوں کے لیے یہ لکھیں: <b>[نام ملزم]</b> · <b>[تاریخ]</b> · <b>[مقدمہ نمبر]</b> · <b>[نام مدعی]</b> · <b>[تھانہ]</b> · <b>[دفعہ]</b>
-      </div>
+      <input class="form-input" id="tpl-f-title" dir="rtl" placeholder="مثلاً: DSP صاحب کو درخواست" style="margin-bottom:6px;">
+      <div style="font-size:12px;color:var(--text-muted);">محفوظ کرنے کے بعد ✏️ سے متن لکھیں</div>
       <div id="tpl-f-progress" style="font-size:12px;color:var(--accent);margin-top:8px;"></div>
     </div>`,
     `<div style="display:flex;gap:8px;direction:rtl;">
@@ -255,41 +184,20 @@ function _openAddTpl() {
 
 async function _saveTpl() {
   const title = document.getElementById('tpl-f-title')?.value.trim();
-  const category = document.getElementById('tpl-f-category')?.value || 'other';
-  const content = document.getElementById('tpl-f-content')?.value.trim();
-  const file = document.getElementById('tpl-f-file')?.files?.[0];
-  const prog = document.getElementById('tpl-f-progress');
   const btn = document.getElementById('tpl-save-btn');
 
   if (!title) { showToast('⚠️ ٹمپلیٹ کا نام ضروری ہے','error'); return; }
-  if (!content && !file) { showToast('⚠️ متن یا فائل میں سے ایک ضروری ہے','error'); return; }
   if (btn) { btn.disabled = true; btn.textContent = 'محفوظ ہو رہا ہے...'; }
 
   try {
     const oid = await getOfficerId();
-    let fileUrl=null, fileName=null, fileType=null, fileDisplay=null;
-    if (file) {
-      if (prog) prog.textContent = '📤 فائل اپلوڈ ہو رہی ہے...';
-      const ext = (file.name.split('.').pop()||'pdf').toLowerCase().replace(/[^a-z0-9]/g,'');
-      fileType = (ext==='pdf')?'pdf':'word';
-      fileDisplay = file.name;
-      const rand = Math.random().toString(36).substring(2,8);
-      const safe = `tpl_${Date.now()}_${rand}.${ext||'pdf'}`;
-      fileName = safe;
-      const path = `${oid}/${safe}`;
-      const { error: upErr } = await supabaseClient.storage.from(TPL_BUCKET).upload(path, file, { contentType:file.type, upsert:true });
-      if (upErr) throw upErr;
-      const { data:urlData } = supabaseClient.storage.from(TPL_BUCKET).getPublicUrl(path);
-      fileUrl = urlData?.publicUrl || null;
-    }
-    if (prog) prog.textContent = '💾 محفوظ ہو رہا ہے...';
-    const rec = { officer_id:oid, title, category, content:content||null, file_url:fileUrl, file_name:fileName, file_display_name:fileDisplay, safe_file_name:fileName, file_type:fileType, is_default:false, is_public:true };
+    const rec = { officer_id:oid, title, category:'other', content:null, is_default:false, is_public:true };
     const { data, error } = await supabaseClient.from('templates').insert(rec).select().single();
     if (error) throw error;
     _tplList.unshift(data);
     try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) {}
     closeModal();
-    showToast('✅ ٹمپلیٹ شامل ہو گیا','success');
+    showToast('✅ ٹمپلیٹ شامل ہو گیا — اب ✏️ سے متن لکھیں','success');
     _renderTplTable();
   } catch(e) {
     showToast('❌ ' + (e.message||'محفوظ نہیں ہو سکا'),'error');
@@ -331,6 +239,12 @@ function _editTpl(id, autoPrint) {
       </div>
       <div style="font-size:15px;font-weight:800;">✏️ ${_tplEsc(t.title)}</div>
       <button onclick="document.getElementById('tpl-editor-overlay').remove()" style="${_tplTbBtn()}">✕ بند</button>
+    </div>
+
+    <!-- Editable template name -->
+    <div style="padding:10px 16px;background:var(--bg-secondary);border-bottom:1px solid var(--border);direction:rtl;">
+      <label style="font-size:12px;color:var(--text-muted);">ٹمپلیٹ کا نام:</label>
+      <input id="tpl-edit-title" dir="rtl" value="${_tplEsc(t.title||'')}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:15px;font-weight:700;direction:rtl;text-align:right;font-family:'Jameel Noori Nastaleeq',serif;background:var(--bg-card);color:var(--text-primary);margin-top:3px;">
     </div>
 
     <!-- Quick fill bar -->
@@ -399,13 +313,17 @@ function _copyTplEditor() {
 
 async function _saveTplEditor(id) {
   const area = document.getElementById('tpl-editable-area');
+  const titleInp = document.getElementById('tpl-edit-title');
   if (!area) return;
   const content = area.innerText || '';
+  const title = (titleInp?.value || '').trim();
+  if (!title) { showToast('⚠️ ٹمپلیٹ کا نام ضروری ہے','error'); return; }
   try {
-    await supabaseClient.from('templates').update({ content, updated_at:new Date().toISOString() }).eq('id', id);
-    const t = _tplList.find(x=>x.id===id); if (t) t.content = content;
+    await supabaseClient.from('templates').update({ title, content, updated_at:new Date().toISOString() }).eq('id', id);
+    const t = _tplList.find(x=>x.id===id); if (t) { t.content = content; t.title = title; }
     try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) {}
     showToast('✅ محفوظ ہو گیا','success');
+    _renderTplTable();
   } catch(e) { showToast('❌ '+e.message,'error'); }
 }
 
