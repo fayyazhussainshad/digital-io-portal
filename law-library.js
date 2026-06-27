@@ -22,7 +22,7 @@ function _lawCatLabel(c) { return LAW_CATEGORIES[c] || (c && c !== 'قانون' 
 // ── PAGE RENDER ──────────────────────────────────────────────
 async function renderLawLibrary(container) {
   container.innerHTML = `
-  <div style="max-width:1100px;margin:0 auto;direction:rtl;">
+  <div style="max-width:100%;margin:0;direction:rtl;">
     <!-- Header: search + add -->
     <div style="display:flex;align-items:center;gap:12px;padding:14px 4px;flex-wrap:wrap;margin-bottom:8px;">
       <div style="font-size:20px;font-weight:800;display:flex;align-items:center;gap:8px;">⚖️ قانونی لائبریری</div>
@@ -33,7 +33,7 @@ async function renderLawLibrary(container) {
       <button onclick="_printAllLaws()" class="btn btn-secondary btn-sm" title="پوری فہرست پرنٹ کریں">🖨️ فہرست</button>
     </div>
 
-    <div id="law-table-wrap" style="overflow-x:auto;">
+    <div id="law-table-wrap" style="overflow-x:auto;margin:0 -20px;">
       <div style="text-align:center;padding:40px;color:var(--text-muted);width:100%;">⏳ لوڈ ہو رہا ہے...</div>
     </div>
   </div>`;

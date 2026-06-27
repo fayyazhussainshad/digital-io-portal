@@ -31,7 +31,7 @@ function _tplCatColor(c){ return TPL_CAT_COLOR[c] || '#6c757d'; }
 // ── PAGE RENDER ──────────────────────────────────────────────
 async function renderTemplates(container) {
   container.innerHTML = `
-  <div style="max-width:1100px;margin:0 auto;direction:rtl;">
+  <div style="max-width:100%;margin:0;direction:rtl;">
     <div style="display:flex;align-items:center;gap:12px;padding:14px 4px;flex-wrap:wrap;margin-bottom:6px;">
       <div style="font-size:20px;font-weight:800;display:flex;align-items:center;gap:8px;">📄 ٹمپلیٹس</div>
       <input id="tpl-main-search" type="text" dir="rtl" placeholder="ٹمپلیٹ کا نام تلاش کریں..."
@@ -40,13 +40,7 @@ async function renderTemplates(container) {
       <button onclick="_openAddTpl()" class="btn btn-primary" style="white-space:nowrap;">+ نیا ٹمپلیٹ شامل کریں</button>
     </div>
 
-    <!-- Category filter chips -->
-    <div id="tpl-filter-chips" style="display:flex;gap:6px;flex-wrap:wrap;padding:0 4px 10px;">
-      ${_tplChip('', 'سب')}
-      ${Object.entries(TPL_CATEGORIES).map(([k,v])=>_tplChip(k,v)).join('')}
-    </div>
-
-    <div id="tpl-table-wrap" style="overflow-x:auto;">
+    <div id="tpl-table-wrap" style="overflow-x:auto;margin:0 -20px;">
       <div style="text-align:center;padding:40px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>
     </div>
   </div>`;
@@ -127,7 +121,6 @@ function _renderTplTable() {
           <button onclick="_renameTpl('${t.id}')" title="نام بدلیں" style="${_tplBtn('#fd7e14')}">✏️</button>
           <button onclick="_copyTpl('${t.id}')" title="نقل بنائیں" style="${_tplBtn('#20c997')}">📋</button>
           ${hasFile?`<button onclick="_downloadTpl('${t.id}')" title="ڈاؤنلوڈ" style="${_tplBtn('#28a745')}">⬇️</button>`:''}
-          <button onclick="_moveTpl('${t.id}')" title="قسم بدلیں" style="${_tplBtn('#6f42c1')}">📂</button>
           ${(hasContent||hasFile)?`<button onclick="_printTpl('${t.id}')" title="پرنٹ" style="${_tplBtn('#6c757d')}">🖨️</button>`:''}
           <button onclick="_deleteTpl('${t.id}')" title="حذف" style="${_tplBtn('#dc3545')}">🗑️</button>
         </div>
