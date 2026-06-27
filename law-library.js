@@ -78,7 +78,8 @@ function _renderLawCards(list) {
     <div class="law-card" id="law-card-${l.id}" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:16px;width:280px;box-sizing:border-box;direction:rtl;">
       <div style="font-size:46px;text-align:center;margin-bottom:10px;">${icon}</div>
       <div class="law-card-name" style="font-weight:800;font-size:16px;margin-bottom:6px;text-align:center;word-break:break-word;">${_lawEsc(l.name)}</div>
-      <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;text-align:center;min-height:18px;">${_lawEsc(l.description||'')}</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:6px;text-align:center;min-height:18px;">${_lawEsc(l.description||'')}</div>
+      <div style="font-size:10px;color:var(--text-faint);margin-bottom:10px;text-align:center;word-break:break-word;">${l.file_display_name?_lawEsc(l.file_display_name):''}${l.created_at?` · ${formatDate(l.created_at)}`:''}</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
         ${l.file_url ? `<button class="btn btn-secondary btn-sm" onclick="_viewLaw('${l.id}')">👁️ پڑھیں</button>` : ''}
         ${l.file_url ? `<button class="btn btn-secondary btn-sm" onclick="_downloadLaw('${l.id}')">⬇️ ڈاؤنلوڈ</button>` : ''}
@@ -140,14 +141,17 @@ async function _saveLaw() {
 
   try {
     const oid = await getOfficerId();
-    let fileUrl = null, fileName = null, fileType = null;
+    let fileUrl = null, fileName = null, fileType = null, fileDisplay = null;
 
     if (file) {
       if (prog) prog.textContent = '📤 فائل اپلوڈ ہو رہی ہے...';
-      const ext = file.name.split('.').pop().toLowerCase();
+      const ext = (file.name.split('.').pop() || 'pdf').toLowerCase().replace(/[^a-z0-9]/g,'');
       fileType = (ext === 'pdf') ? 'pdf' : 'word';
-      fileName = file.name;
-      const safe = name.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_\u0600-\u06FF]/g,'') + '_' + Date.now() + '.' + ext;
+      fileDisplay = file.name;                      // original (Urdu) name — for display
+      // Storage key MUST be pure ASCII (no Urdu/Arabic, spaces, commas) — Supabase rejects otherwise
+      const rand = Math.random().toString(36).substring(2, 8);
+      const safe = `law_${Date.now()}_${rand}.${ext || 'pdf'}`;
+      fileName = safe;                              // clean name stored
       const path = `${oid}/${safe}`;
       const { error: upErr } = await supabaseClient.storage.from(LAW_BUCKET).upload(path, file, { contentType: file.type, upsert: true });
       if (upErr) throw upErr;
@@ -156,8 +160,14 @@ async function _saveLaw() {
     }
 
     if (prog) prog.textContent = '💾 محفوظ ہو رہا ہے...';
-    const rec = { officer_id: oid, name, description: desc||null, file_url: fileUrl, file_name: fileName, file_type: fileType, online_link: link||null };
-    const { data, error } = await supabaseClient.from('law_library').insert(rec).select().single();
+    const rec = { officer_id: oid, name, description: desc||null, file_url: fileUrl, file_name: fileName, file_display_name: fileDisplay, file_type: fileType, online_link: link||null };
+    let { data, error } = await supabaseClient.from('law_library').insert(rec).select().single();
+    // If file_display_name column doesn't exist yet, retry without it
+    if (error && error.message && error.message.toLowerCase().includes('file_display_name')) {
+      delete rec.file_display_name;
+      const r2 = await supabaseClient.from('law_library').insert(rec).select().single();
+      data = r2.data; error = r2.error;
+    }
     if (error) throw error;
 
     _lawList.unshift(data);
@@ -320,7 +330,7 @@ function _downloadLaw(id) {
   const l = _lawList.find(x => x.id === id);
   if (!l || !l.file_url) { showToast('❌ فائل دستیاب نہیں','error'); return; }
   const a = document.createElement('a');
-  a.href = l.file_url; a.download = l.file_name || l.name; a.target = '_blank';
+  a.href = l.file_url; a.download = l.file_display_name || l.file_name || l.name; a.target = '_blank';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
