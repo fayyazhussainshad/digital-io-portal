@@ -77,7 +77,7 @@ function _renderLawCards(list) {
     return `
     <div class="law-card" id="law-card-${l.id}" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:16px;width:280px;box-sizing:border-box;direction:rtl;">
       <div style="font-size:46px;text-align:center;margin-bottom:10px;">${icon}</div>
-      <div class="law-card-name" style="font-weight:800;font-size:16px;margin-bottom:6px;text-align:center;word-break:break-word;">${_lawEsc(l.name)}</div>
+      <div class="law-card-name" style="font-weight:800;font-size:16px;margin-bottom:6px;text-align:center;word-break:break-word;">${_lawEsc(l.title||l.name)}</div>
       <div style="font-size:13px;color:var(--text-muted);margin-bottom:6px;text-align:center;min-height:18px;">${_lawEsc(l.description||'')}</div>
       <div style="font-size:10px;color:var(--text-faint);margin-bottom:10px;text-align:center;word-break:break-word;">${l.file_display_name?_lawEsc(l.file_display_name):''}${l.created_at?` · ${formatDate(l.created_at)}`:''}</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
@@ -99,7 +99,7 @@ function _lawFilter(val) {
     const q = (val||'').trim().toLowerCase();
     if (!q) { _renderLawCards(_lawList); return; }
     const filtered = _lawList.filter(l =>
-      (l.name||'').toLowerCase().includes(q) ||
+      (l.title||l.name||'').toLowerCase().includes(q) ||
       (l.description||'').toLowerCase().includes(q));
     _renderLawCards(filtered);
   }, 300);
@@ -160,7 +160,7 @@ async function _saveLaw() {
     }
 
     if (prog) prog.textContent = '💾 محفوظ ہو رہا ہے...';
-    const rec = { officer_id: oid, name, description: desc||null, file_url: fileUrl, file_name: fileName, file_display_name: fileDisplay, file_type: fileType, online_link: link||null };
+    const rec = { officer_id: oid, title: name, category: 'قانون', description: desc||null, file_url: fileUrl, file_name: fileName, file_display_name: fileDisplay, safe_file_name: fileName, file_type: fileType, is_public: true, online_link: link||null };
     let { data, error } = await supabaseClient.from('law_library').insert(rec).select().single();
     // If file_display_name column doesn't exist yet, retry without it
     if (error && error.message && error.message.toLowerCase().includes('file_display_name')) {
@@ -193,7 +193,7 @@ function _viewLaw(id, autoPrint) {
   overlay.innerHTML = `
     <!-- Header -->
     <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border-bottom:1px solid #dee2e6;direction:rtl;flex-wrap:wrap;">
-      <div style="font-weight:800;font-size:16px;color:#1a3a5c;flex:1;min-width:140px;">${_lawEsc(l.name)}</div>
+      <div style="font-weight:800;font-size:16px;color:#1a3a5c;flex:1;min-width:140px;">${_lawEsc(l.title||l.name)}</div>
       ${!isPdf ? `<input id="law-internal-search" type="text" dir="rtl" placeholder="سیکشن تلاش کریں... (مثلاً 302)" oninput="_lawInternalSearch(this.value)" style="padding:7px 12px;border:1px solid #dee2e6;border-radius:20px;font-size:13px;min-width:160px;font-family:'Jameel Noori Nastaleeq',serif;">
       <button onclick="_lawNavMatch(-1)" title="پچھلا" style="border:1px solid #dee2e6;background:#f1f3f4;border-radius:6px;padding:6px 9px;cursor:pointer;font-size:12px;">▲</button>
       <button onclick="_lawNavMatch(1)" title="اگلا" style="border:1px solid #dee2e6;background:#f1f3f4;border-radius:6px;padding:6px 9px;cursor:pointer;font-size:12px;">▼</button>
@@ -301,7 +301,7 @@ function _printAllLaws() {
   const rows = _lawList.map((l,i) => `
     <tr>
       <td style="border:1px solid #000;padding:6px;text-align:center;">${i+1}</td>
-      <td style="border:1px solid #000;padding:6px;">${_lawEsc(l.name)}</td>
+      <td style="border:1px solid #000;padding:6px;">${_lawEsc(l.title||l.name)}</td>
       <td style="border:1px solid #000;padding:6px;">${_lawEsc(l.description||'—')}</td>
       <td style="border:1px solid #000;padding:6px;text-align:center;">${l.file_url?'✓':(l.online_link?'🌐':'—')}</td>
     </tr>`).join('');
@@ -330,7 +330,7 @@ function _downloadLaw(id) {
   const l = _lawList.find(x => x.id === id);
   if (!l || !l.file_url) { showToast('❌ فائل دستیاب نہیں','error'); return; }
   const a = document.createElement('a');
-  a.href = l.file_url; a.download = l.file_display_name || l.file_name || l.name; a.target = '_blank';
+  a.href = l.file_url; a.download = l.file_display_name || l.file_name || l.title || l.name; a.target = '_blank';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
 }
 
@@ -341,7 +341,7 @@ function _renameLaw(id) {
   if (!l || !card) return;
   const nameEl = card.querySelector('.law-card-name');
   if (!nameEl || nameEl.querySelector('input')) return;
-  const old = l.name;
+  const old = l.title || l.name;
   nameEl.innerHTML = `<input id="law-rename-inp-${id}" value="${_lawEsc(old)}" style="width:100%;font-size:15px;padding:4px;direction:rtl;text-align:center;border:1px solid var(--accent);border-radius:6px;box-sizing:border-box;font-family:'Jameel Noori Nastaleeq',serif;">`;
   const inp = document.getElementById('law-rename-inp-'+id);
   inp.focus(); inp.select();
@@ -349,9 +349,9 @@ function _renameLaw(id) {
     const newName = inp.value.trim() || old;
     nameEl.textContent = newName;
     if (newName !== old) {
-      l.name = newName;
+      l.title = newName;
       try { localStorage.setItem(LAW_CACHE_KEY, JSON.stringify(_lawList)); } catch(_) {}
-      try { await supabaseClient.from('law_library').update({ name:newName, updated_at:new Date().toISOString() }).eq('id', id); showToast('✅ نام تبدیل ہو گیا','success'); }
+      try { await supabaseClient.from('law_library').update({ title:newName, updated_at:new Date().toISOString() }).eq('id', id); showToast('✅ نام تبدیل ہو گیا','success'); }
       catch(e){ showToast('❌ '+e.message,'error'); }
     }
   };
@@ -383,7 +383,7 @@ function _deleteLaw(id) {
       showToast('🗑️ حذف ہو گیا','info');
     } catch(e) { showToast('❌ '+e.message,'error'); }
   };
-  if (typeof confirmDelete === 'function') confirmDelete(l.name, doDelete);
+  if (typeof confirmDelete === 'function') confirmDelete(l.title||l.name, doDelete);
   else if (confirm('حذف کریں؟')) doDelete();
 }
 
