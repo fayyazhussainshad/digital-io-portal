@@ -422,6 +422,17 @@ window._lawFilter = _lawFilter;
 window._openAddLaw = _openAddLaw;
 window._saveLaw = _saveLaw;
 window._viewLaw = _viewLaw;
+// Compatibility aliases (prompt uses these names)
+window.viewLaw = (id) => _viewLaw(id);
+window.downloadLaw = (urlOrId, name) => {
+  // Accept either an id (preferred) or a direct url
+  const byId = _lawList.find(x => x.id === urlOrId);
+  if (byId) return _downloadLaw(byId.id);
+  const a = document.createElement('a'); a.href = urlOrId; a.download = name||'law-document'; a.target='_blank';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+};
+window.searchInsideLaw = (q) => _lawInternalSearch(q);
+window.navigateLawMatch = (d) => _lawNavMatch(d);
 window._lawInternalSearch = _lawInternalSearch;
 window._lawNavMatch = _lawNavMatch;
 window._printLawReader = _printLawReader;

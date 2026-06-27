@@ -942,6 +942,13 @@ input[id*="cnic"], input[id*="cell"] {
   /* Wider page content */
   .page-content { padding: 16px 20px; }
 }
+/* Law reader: when printing, show only the document content (not header/footer/app) */
+@media print {
+  body.law-printing > *:not(#law-reader-overlay) { display: none !important; }
+  #law-reader-overlay { position: static !important; height: auto !important; background: #fff !important; }
+  #law-reader-overlay > div:first-child, #law-reader-overlay > div:last-child { display: none !important; }
+  #law-reader-content, #law-reader-body { overflow: visible !important; height: auto !important; }
+}
 </style>
 <!-- Supabase JS library (REQUIRED — must load before app-core.js) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -1170,6 +1177,7 @@ window.addEventListener('unhandledrejection', function(e){
 <script src="cdr-imei.js"></script>
 <script src="cro-card.js"></script>
 <script src="staff-v2.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script src="law-library.js"></script>
 <script src="sho-dsp.js"></script>
 <script src="case-sharing.js"></script>
