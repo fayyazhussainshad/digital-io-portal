@@ -10,6 +10,15 @@ const LAW_CACHE_KEY = 'cache_law_library';
 let _lawList = [];
 let _lawSearchTmr = null;
 
+// Law categories (4 types)
+const LAW_CATEGORIES = {
+  'ppc':           'تعزیرات پاکستان (PPC)',
+  'crpc':          'ضابطہ فوجداری (CrPC)',
+  'local_special': 'مقامی و خصوصی قوانین',
+  'other':         'دیگر'
+};
+function _lawCatLabel(c) { return LAW_CATEGORIES[c] || (c && c !== 'قانون' ? c : 'دیگر'); }
+
 // ── PAGE RENDER ──────────────────────────────────────────────
 async function renderLawLibrary(container) {
   container.innerHTML = `
@@ -24,7 +33,7 @@ async function renderLawLibrary(container) {
       <button onclick="_printAllLaws()" class="btn btn-secondary btn-sm" title="پوری فہرست پرنٹ کریں">🖨️ فہرست</button>
     </div>
 
-    <div id="law-cards-grid" style="display:flex;flex-wrap:wrap;gap:12px;justify-content:flex-start;">
+    <div id="law-table-wrap" style="overflow-x:auto;">
       <div style="text-align:center;padding:40px;color:var(--text-muted);width:100%;">⏳ لوڈ ہو رہا ہے...</div>
     </div>
   </div>`;
@@ -54,13 +63,13 @@ async function _loadLaws() {
   }
 }
 
-// ── CARDS GRID ───────────────────────────────────────────────
+// ── TABLE (one law per row) ──────────────────────────────────
 function _renderLawCards(list) {
-  const grid = document.getElementById('law-cards-grid');
-  if (!grid) return;
+  const wrap = document.getElementById('law-table-wrap');
+  if (!wrap) return;
 
   if (!list || !list.length) {
-    grid.innerHTML = `
+    wrap.innerHTML = `
       <div style="text-align:center;padding:60px 20px;color:var(--text-muted);width:100%;">
         <div style="font-size:64px;margin-bottom:16px;">📚</div>
         <div style="font-size:18px;font-weight:800;margin-bottom:8px;">قانونی لائبریری خالی ہے</div>
@@ -70,26 +79,43 @@ function _renderLawCards(list) {
     return;
   }
 
-  grid.innerHTML = list.map(l => {
-    const isPdf = (l.file_type === 'pdf') || (l.file_url && l.file_url.toLowerCase().includes('.pdf'));
-    const icon = isPdf ? '📕' : (l.file_url ? '📘' : '📄');
+  const rows = list.map((l, i) => {
+    const hasFile = !!l.file_url;
     const hasLink = !!l.online_link;
+    const title = _lawEsc(l.title || l.name || '—');
+    const cat = _lawCatLabel(l.category);
     return `
-    <div class="law-card" id="law-card-${l.id}" style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:16px;width:280px;box-sizing:border-box;direction:rtl;">
-      <div style="font-size:46px;text-align:center;margin-bottom:10px;">${icon}</div>
-      <div class="law-card-name" style="font-weight:800;font-size:16px;margin-bottom:6px;text-align:center;word-break:break-word;">${_lawEsc(l.title||l.name)}</div>
-      <div style="font-size:13px;color:var(--text-muted);margin-bottom:6px;text-align:center;min-height:18px;">${_lawEsc(l.description||'')}</div>
-      <div style="font-size:10px;color:var(--text-faint);margin-bottom:10px;text-align:center;word-break:break-word;">${l.file_display_name?_lawEsc(l.file_display_name):''}${l.created_at?` · ${formatDate(l.created_at)}`:''}</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
-        ${l.file_url ? `<button class="btn btn-secondary btn-sm" onclick="_viewLaw('${l.id}')">👁️ پڑھیں</button>` : ''}
-        ${l.file_url ? `<button class="btn btn-secondary btn-sm" onclick="_downloadLaw('${l.id}')">⬇️ ڈاؤنلوڈ</button>` : ''}
-        ${l.file_url ? `<button class="btn btn-secondary btn-sm" onclick="_viewLaw('${l.id}',true)">🖨️ پرنٹ</button>` : ''}
-        ${hasLink ? `<button class="btn btn-secondary btn-sm" onclick="window.open('${l.online_link}','_blank')">🌐 آن لائن</button>` : ''}
-        <button class="btn btn-secondary btn-sm" onclick="_renameLaw('${l.id}')">✏️ نام بدلیں</button>
-        <button class="btn btn-danger btn-sm" onclick="_deleteLaw('${l.id}')">🗑️ حذف</button>
-      </div>
-    </div>`;
+    <tr id="law-row-${l.id}" data-law-name="${title}" data-category="${_lawEsc(cat)}" style="border-bottom:1px solid var(--border);">
+      <td style="padding:10px 8px;text-align:center;color:var(--text-muted);font-size:13px;">${i+1}</td>
+      <td style="padding:10px 8px;text-align:right;font-weight:700;word-break:break-word;">${title}
+        ${l.description?`<div style="font-size:11px;color:var(--text-muted);font-weight:400;">${_lawEsc(l.description)}</div>`:''}</td>
+      <td style="padding:10px 8px;text-align:right;">
+        <span style="background:rgba(56,189,248,0.12);color:var(--accent);padding:3px 10px;border-radius:12px;font-size:12px;white-space:nowrap;">${_lawEsc(cat)}</span>
+      </td>
+      <td style="padding:10px 8px;text-align:center;">
+        <div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap;">
+          ${hasFile?`<button onclick="_viewLaw('${l.id}')" title="پڑھیں" style="padding:5px 9px;background:#1a73e8;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">👁️</button>`:''}
+          ${hasFile?`<button onclick="_downloadLaw('${l.id}')" title="ڈاؤنلوڈ" style="padding:5px 9px;background:#28a745;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">⬇️</button>`:''}
+          ${hasLink?`<button onclick="window.open('${l.online_link}','_blank')" title="آن لائن" style="padding:5px 9px;background:#6f42c1;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">🔗</button>`:''}
+          <button onclick="_editLaw('${l.id}')" title="ترمیم" style="padding:5px 9px;background:#fd7e14;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">✏️</button>
+          <button onclick="_deleteLaw('${l.id}')" title="حذف" style="padding:5px 9px;background:#dc3545;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
   }).join('');
+
+  wrap.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;direction:rtl;background:var(--bg-card);border-radius:10px;overflow:hidden;">
+      <thead>
+        <tr style="background:var(--bg-secondary);border-bottom:2px solid var(--border);">
+          <th style="padding:11px 8px;text-align:center;width:5%;font-size:13px;">#</th>
+          <th style="padding:11px 8px;text-align:right;width:42%;font-size:13px;">قانون کا نام</th>
+          <th style="padding:11px 8px;text-align:right;width:20%;font-size:13px;">قسم</th>
+          <th style="padding:11px 8px;text-align:center;width:33%;font-size:13px;">اقدامات</th>
+        </tr>
+      </thead>
+      <tbody id="law-table-body">${rows}</tbody>
+    </table>`;
 }
 
 // ── SEARCH FILTER (debounced) ────────────────────────────────
@@ -100,7 +126,8 @@ function _lawFilter(val) {
     if (!q) { _renderLawCards(_lawList); return; }
     const filtered = _lawList.filter(l =>
       (l.title||l.name||'').toLowerCase().includes(q) ||
-      (l.description||'').toLowerCase().includes(q));
+      (l.description||'').toLowerCase().includes(q) ||
+      _lawCatLabel(l.category).toLowerCase().includes(q));
     _renderLawCards(filtered);
   }, 300);
 }
@@ -111,6 +138,10 @@ function _openAddLaw() {
     <div style="direction:rtl;">
       <label class="form-label">قانون کا نام *</label>
       <input class="form-input" id="law-f-name" placeholder="مثلاً: تعزیرات پاکستان (PPC)" dir="rtl" style="margin-bottom:10px;">
+      <label class="form-label">قسم</label>
+      <select class="form-input" id="law-f-category" style="margin-bottom:10px;direction:rtl;">
+        ${Object.entries(LAW_CATEGORIES).map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}
+      </select>
       <label class="form-label">تفصیل (اختیاری)</label>
       <textarea class="form-input" id="law-f-desc" placeholder="مثلاً: پاکستان پینل کوڈ 1860" dir="rtl" rows="2" style="margin-bottom:10px;"></textarea>
       <label class="form-label">فائل (PDF / Word)</label>
@@ -129,6 +160,7 @@ async function _saveLaw() {
   const name = document.getElementById('law-f-name')?.value.trim();
   const desc = document.getElementById('law-f-desc')?.value.trim();
   const link = document.getElementById('law-f-link')?.value.trim();
+  const category = document.getElementById('law-f-category')?.value || 'other';
   const fileInp = document.getElementById('law-f-file');
   const file = fileInp?.files?.[0];
   const prog = document.getElementById('law-f-progress');
@@ -160,7 +192,7 @@ async function _saveLaw() {
     }
 
     if (prog) prog.textContent = '💾 محفوظ ہو رہا ہے...';
-    const rec = { officer_id: oid, title: name, category: 'قانون', description: desc||null, file_url: fileUrl, file_name: fileName, file_display_name: fileDisplay, safe_file_name: fileName, file_type: fileType, is_public: true, online_link: link||null };
+    const rec = { officer_id: oid, title: name, category: category, description: desc||null, file_url: fileUrl, file_name: fileName, file_display_name: fileDisplay, safe_file_name: fileName, file_type: fileType, is_public: true, online_link: link||null };
     let { data, error } = await supabaseClient.from('law_library').insert(rec).select().single();
     // If file_display_name column doesn't exist yet, retry without it
     if (error && error.message && error.message.toLowerCase().includes('file_display_name')) {
@@ -349,6 +381,82 @@ function _downloadLaw(id) {
 }
 
 // ── RENAME (inline) ──────────────────────────────────────────
+// ── FULL EDIT MODAL ──────────────────────────────────────────
+function _editLaw(id) {
+  const l = _lawList.find(x => x.id === id);
+  if (!l) return;
+  openModal('✏️ قانون میں ترمیم', `
+    <div style="direction:rtl;">
+      <label class="form-label">قانون کا نام *</label>
+      <input class="form-input" id="law-e-name" dir="rtl" value="${_lawEsc(l.title||l.name||'')}" style="margin-bottom:10px;">
+      <label class="form-label">قسم</label>
+      <select class="form-input" id="law-e-category" style="margin-bottom:10px;direction:rtl;">
+        ${Object.entries(LAW_CATEGORIES).map(([v,lbl])=>`<option value="${v}" ${l.category===v?'selected':''}>${lbl}</option>`).join('')}
+      </select>
+      <label class="form-label">تفصیل (اختیاری)</label>
+      <textarea class="form-input" id="law-e-desc" dir="rtl" rows="2" style="margin-bottom:10px;">${_lawEsc(l.description||'')}</textarea>
+      <label class="form-label">فائل تبدیل کریں (اختیاری)</label>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">موجودہ: ${l.file_display_name?_lawEsc(l.file_display_name):'کوئی فائل نہیں'}</div>
+      <input class="form-input" id="law-e-file" type="file" accept=".pdf,.doc,.docx" style="margin-bottom:10px;">
+      <label class="form-label">آن لائن لنک (اختیاری)</label>
+      <input class="form-input" id="law-e-link" dir="ltr" value="${_lawEsc(l.online_link||'')}" placeholder="https://..." style="text-align:left;">
+      <div id="law-e-progress" style="font-size:12px;color:var(--accent);margin-top:8px;"></div>
+    </div>`,
+    `<div style="display:flex;gap:8px;direction:rtl;">
+      <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+      <button class="btn btn-primary" id="law-edit-save-btn" onclick="_saveEditedLaw('${id}')">💾 محفوظ کریں</button>
+    </div>`);
+}
+
+async function _saveEditedLaw(id) {
+  const l = _lawList.find(x => x.id === id);
+  if (!l) return;
+  const name = document.getElementById('law-e-name')?.value.trim();
+  const category = document.getElementById('law-e-category')?.value || 'other';
+  const desc = document.getElementById('law-e-desc')?.value.trim();
+  const link = document.getElementById('law-e-link')?.value.trim();
+  const file = document.getElementById('law-e-file')?.files?.[0];
+  const prog = document.getElementById('law-e-progress');
+  const btn = document.getElementById('law-edit-save-btn');
+
+  if (!name) { showToast('⚠️ قانون کا نام ضروری ہے','error'); return; }
+  if (btn) { btn.disabled = true; btn.textContent = 'محفوظ ہو رہا ہے...'; }
+
+  try {
+    const oid = await getOfficerId();
+    const upd = { title: name, category, description: desc||null, online_link: link||null, updated_at: new Date().toISOString() };
+
+    if (file) {
+      if (prog) prog.textContent = '📤 نئی فائل اپلوڈ ہو رہی ہے...';
+      const ext = (file.name.split('.').pop() || 'pdf').toLowerCase().replace(/[^a-z0-9]/g,'');
+      const rand = Math.random().toString(36).substring(2, 8);
+      const safe = `law_${Date.now()}_${rand}.${ext || 'pdf'}`;
+      const path = `${oid}/${safe}`;
+      const { error: upErr } = await supabaseClient.storage.from(LAW_BUCKET).upload(path, file, { contentType: file.type, upsert: true });
+      if (upErr) throw upErr;
+      const { data: urlData } = supabaseClient.storage.from(LAW_BUCKET).getPublicUrl(path);
+      upd.file_url = urlData?.publicUrl || null;
+      upd.file_name = safe;
+      upd.safe_file_name = safe;
+      upd.file_display_name = file.name;
+      upd.file_type = (ext === 'pdf') ? 'pdf' : 'word';
+    }
+
+    const { error } = await supabaseClient.from('law_library').update(upd).eq('id', id);
+    if (error) throw error;
+
+    // Update local list
+    Object.assign(l, upd);
+    try { localStorage.setItem(LAW_CACHE_KEY, JSON.stringify(_lawList)); } catch(_) {}
+    closeModal();
+    showToast('✅ ترمیم محفوظ ہو گئی','success');
+    _renderLawCards(_lawList);
+  } catch(e) {
+    showToast('❌ ' + (e.message||'ترمیم ناکام'),'error');
+    if (btn) { btn.disabled = false; btn.textContent = '💾 محفوظ کریں'; }
+  }
+}
+
 function _renameLaw(id) {
   const l = _lawList.find(x => x.id === id);
   const card = document.getElementById('law-card-'+id);
@@ -439,4 +547,7 @@ window._printLawReader = _printLawReader;
 window._printAllLaws = _printAllLaws;
 window._downloadLaw = _downloadLaw;
 window._renameLaw = _renameLaw;
+window._editLaw = _editLaw;
+window._saveEditedLaw = _saveEditedLaw;
+window.editLaw = (id) => _editLaw(id);
 window._deleteLaw = _deleteLaw;
