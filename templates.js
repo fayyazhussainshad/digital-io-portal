@@ -292,24 +292,34 @@ async function _tplRenderWord(url, body, autoPrint) {
         "p[style-name='Heading 1'] => h1:fresh",
         "p[style-name='Heading 2'] => h2:fresh",
         "p[style-name='Heading 3'] => h3:fresh",
-        "table => table", "tr => tr", "td => td",
-        "b => strong", "i => em", "u => u"
+        "table => table", "tr => tr", "td => td", "th => th",
+        "b => b", "i => i", "u => u"
       ],
       convertImage: mammoth.images.imgElement(image =>
-        image.read("base64").then(b => ({ src:`data:${image.contentType};base64,${b}` })))
+        image.read("base64").then(b => ({ src:`data:${image.contentType};base64,${b}` }))),
+      includeDefaultStyleMap: true, ignoreEmptyParagraphs: false
     });
     body.innerHTML = `
       <style>
-        #tpl-word-content{max-width:850px;margin:0 auto;padding:28px 24px;background:#fff;direction:rtl;text-align:right;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:16px;line-height:2;color:#111;user-select:text;}
-        #tpl-word-content table{width:100%;border-collapse:collapse;direction:rtl;margin:12px 0;}
-        #tpl-word-content td,#tpl-word-content th{border:1px solid #000;padding:6px 10px;text-align:right;direction:rtl;vertical-align:top;}
-        #tpl-word-content h1{font-size:20px;font-weight:bold;}#tpl-word-content h2{font-size:18px;font-weight:bold;}#tpl-word-content h3{font-size:16px;font-weight:bold;}
-        #tpl-word-content p,#tpl-word-content td,#tpl-word-content span{unicode-bidi:plaintext;}
-        #tpl-word-content img{max-width:100%;}
-        #tpl-word-content hr{border:none;border-top:1px solid #000;margin:12px 0;}
+        #word-doc-editable{width:210mm;min-height:297mm;margin:20px auto;padding:25.4mm;background:#fff;box-shadow:0 0 30px rgba(0,0,0,0.2);box-sizing:border-box;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu','Traditional Arabic',serif;font-size:12pt;line-height:1.6;color:#000;direction:rtl;text-align:right;outline:none;cursor:text;}
+        #word-doc-editable p{margin:0 0 8pt 0;direction:rtl;text-align:right;unicode-bidi:plaintext;min-height:1em;}
+        #word-doc-editable h1{font-size:16pt;font-weight:bold;margin:12pt 0 6pt;direction:rtl;text-align:right;}
+        #word-doc-editable h2{font-size:14pt;font-weight:bold;margin:10pt 0 4pt;direction:rtl;text-align:right;}
+        #word-doc-editable h3{font-size:13pt;font-weight:bold;margin:8pt 0 4pt;direction:rtl;text-align:right;}
+        #word-doc-editable table{width:100% !important;border-collapse:collapse !important;direction:rtl;margin:8pt 0;}
+        #word-doc-editable td,#word-doc-editable th{border:1pt solid #000 !important;padding:4pt 6pt !important;text-align:right !important;direction:rtl !important;unicode-bidi:plaintext;vertical-align:top;font-size:11pt;word-break:break-word;cursor:text;}
+        #word-doc-editable b,#word-doc-editable strong{font-weight:bold !important;}
+        #word-doc-editable i,#word-doc-editable em{font-style:italic !important;}
+        #word-doc-editable u{text-decoration:underline !important;}
+        #word-doc-editable img{max-width:100%;height:auto;}
+        #word-doc-editable ul,#word-doc-editable ol{direction:rtl;padding-right:20pt;padding-left:0;margin:4pt 0;}
+        #word-doc-editable li{direction:rtl;text-align:right;margin-bottom:4pt;}
+        #word-doc-editable hr{border:none;border-top:1pt solid #000;margin:8pt 0;}
+        #word-doc-editable:focus{box-shadow:0 0 30px rgba(0,0,0,0.2),0 0 0 2px rgba(26,115,232,0.3);}
+        @media (max-width:768px){#word-doc-editable{width:100% !important;min-height:auto;padding:16px;margin:0;box-shadow:none;font-size:11pt;}}
       </style>
-      <div id="tpl-word-content">${result.value || '<div style="text-align:center;color:#999;">مواد دستیاب نہیں</div>'}</div>`;
-    if (autoPrint) setTimeout(() => window.print(), 400);
+      <div id="word-doc-editable" contenteditable="true" spellcheck="false" dir="rtl">${result.value || 'مواد دستیاب نہیں'}</div>`;
+    if (autoPrint) setTimeout(_tplPrintDoc, 500);
   } catch(e) {
     body.innerHTML = `<div style="text-align:center;padding:40px;color:#6c757d;">
       <div style="font-size:40px;margin-bottom:12px;">📄</div>
@@ -327,6 +337,40 @@ function _closeTplViewer() {
   }
 }
 
+// Print the edited Word document (clean A4)
+function _tplPrintDoc() {
+  const doc = document.getElementById('word-doc-editable');
+  if (!doc) { showToast('❌ پرنٹ کے لیے مواد نہیں','error'); return; }
+  const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
+    <style>@page{size:A4;margin:25.4mm;}*{box-sizing:border-box;}
+    body{margin:0;font-family:'Jameel Noori Nastaleeq','Traditional Arabic',serif;font-size:12pt;line-height:1.6;direction:rtl;text-align:right;color:#000;}
+    table{width:100%;border-collapse:collapse;direction:rtl;}td,th{border:1pt solid #000;padding:4pt 6pt;text-align:right;direction:rtl;}
+    p{margin:0 0 8pt 0;direction:rtl;text-align:right;}h1{font-size:16pt;}h2{font-size:14pt;}h3{font-size:13pt;}img{max-width:100%;}b,strong{font-weight:bold;}u{text-decoration:underline;}i,em{font-style:italic;}</style>
+    </head><body>${doc.innerHTML}</body></html>`;
+  if (typeof dioPrint === 'function') dioPrint(html);
+  else { const w=window.open('','_blank'); w.document.write(html); w.document.close(); w.focus(); setTimeout(()=>{w.print();},600); }
+}
+
+function _tplCopyDoc() {
+  const doc = document.getElementById('word-doc-editable');
+  if (!doc) return;
+  const text = doc.innerText || '';
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(()=>showToast('📋 کاپی ہو گیا','success')).catch(()=>showToast('کاپی ناکام','error'));
+}
+
+// Save edited Word content back as the template's text content
+async function _tplSaveDoc(id) {
+  const doc = document.getElementById('word-doc-editable');
+  if (!doc) return;
+  const content = doc.innerText || '';
+  try {
+    await supabaseClient.from('templates').update({ content, updated_at:new Date().toISOString() }).eq('id', id);
+    const t = _tplList.find(x=>x.id===id); if (t) t.content = content;
+    try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) {}
+    showToast('✅ ترمیم محفوظ ہو گئی','success');
+  } catch(e) { showToast('❌ '+e.message,'error'); }
+}
+
 // ── EDITABLE VIEWER (key feature) ────────────────────────────
 function _editTpl(id, autoPrint) {
   const t = _tplList.find(x => x.id === id);
@@ -341,13 +385,17 @@ function _editTpl(id, autoPrint) {
     ov.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#fd7e14;color:#fff;flex-wrap:wrap;gap:8px;">
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${!isPdf?`<button onclick="_tplPrintDoc()" style="${_tplTbBtn()}">🖨️ پرنٹ</button>
+          <button onclick="_tplCopyDoc()" style="${_tplTbBtn()}">📋 کاپی</button>
+          <button onclick="_tplSaveDoc('${t.id}')" style="${_tplTbBtn()}">💾 محفوظ</button>`:''}
           <button onclick="window.open('${t.file_url}','_blank')" style="${_tplTbBtn()}">📄 نئے ٹیب میں</button>
           <button onclick="_renameTpl('${t.id}')" style="${_tplTbBtn()}">✏️ نام بدلیں</button>
         </div>
         <div style="font-weight:800;" id="tpl-viewer-title">${_tplEsc(t.title)}</div>
         <button onclick="_closeTplViewer()" style="${_tplTbBtn()}">✕ بند</button>
       </div>
-      <div id="tpl-viewer-body" style="flex:1;overflow:auto;background:#fff;">
+      ${!isPdf?`<div style="background:#fff3cd;padding:7px 16px;font-size:12px;direction:rtl;text-align:right;border-bottom:1px solid #ffc107;color:#664d03;">✍️ دستاویز میں براہ راست ترمیم کریں — کہیں بھی کلک کر کے لکھیں</div>`:''}
+      <div id="tpl-viewer-body" style="flex:1;overflow:auto;background:#f5f5f5;">
         <div style="text-align:center;padding:40px;color:#6c757d;">⏳ کھل رہی ہے...</div>
       </div>`;
     document.body.appendChild(ov);
@@ -556,6 +604,9 @@ window._renameTpl = _renameTpl;
 window._doRenameTpl = _doRenameTpl;
 window._editTpl = _editTpl;
 window._closeTplViewer = _closeTplViewer;
+window._tplPrintDoc = _tplPrintDoc;
+window._tplCopyDoc = _tplCopyDoc;
+window._tplSaveDoc = _tplSaveDoc;
 window._tplFill = _tplFill;
 window._printTplEditor = _printTplEditor;
 window._copyTplEditor = _copyTplEditor;
