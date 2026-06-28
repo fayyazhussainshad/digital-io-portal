@@ -10,6 +10,7 @@ const TPL_CACHE_KEY = 'cache_templates';
 let _tplList = [];
 let _tplSearchTmr = null;
 let _tplActiveCat = '';
+let _tplDocId = null;
 
 const TPL_CATEGORIES = {
   'darkhwast': 'درخواست',
@@ -325,13 +326,13 @@ async function _tplRenderWord(url, body, autoPrint) {
     });
     body.innerHTML = `
       <style>
-        #word-doc-editable{width:210mm;min-height:297mm;margin:20px auto;padding:25.4mm;background:#fff;box-shadow:0 0 30px rgba(0,0,0,0.2);box-sizing:border-box;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu','Traditional Arabic',serif;font-size:12pt;line-height:1.6;color:#000;direction:rtl;text-align:right;outline:none;cursor:text;}
-        #word-doc-editable p{margin:0 0 8pt 0;direction:rtl;text-align:right;unicode-bidi:plaintext;min-height:1em;}
-        #word-doc-editable h1{font-size:16pt;font-weight:bold;margin:12pt 0 6pt;direction:rtl;text-align:right;}
-        #word-doc-editable h2{font-size:14pt;font-weight:bold;margin:10pt 0 4pt;direction:rtl;text-align:right;}
-        #word-doc-editable h3{font-size:13pt;font-weight:bold;margin:8pt 0 4pt;direction:rtl;text-align:right;}
-        #word-doc-editable table{width:100% !important;border-collapse:collapse !important;direction:rtl;margin:8pt 0;}
-        #word-doc-editable td,#word-doc-editable th{border:1pt solid #000 !important;padding:4pt 6pt !important;text-align:right !important;direction:rtl !important;unicode-bidi:plaintext;vertical-align:top;font-size:11pt;word-break:break-word;cursor:text;}
+        #word-doc-editable{width:210mm;min-height:297mm;margin:16px auto;padding:15mm;background:#fff;box-shadow:0 0 30px rgba(0,0,0,0.2);box-sizing:border-box;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu','Traditional Arabic',serif;font-size:16pt;line-height:1.8;color:#000;direction:rtl;text-align:right;outline:none;cursor:text;}
+        #word-doc-editable p{margin:0 0 8pt 0;direction:rtl;text-align:right;unicode-bidi:plaintext;min-height:1em;font-size:16pt;}
+        #word-doc-editable h1{font-size:22pt;font-weight:bold;margin:12pt 0 6pt;direction:rtl;text-align:right;}
+        #word-doc-editable h2{font-size:19pt;font-weight:bold;margin:10pt 0 4pt;direction:rtl;text-align:right;}
+        #word-doc-editable h3{font-size:17pt;font-weight:bold;margin:8pt 0 4pt;direction:rtl;text-align:right;}
+        #word-doc-editable table{width:100% !important;border-collapse:collapse !important;direction:rtl;margin:8pt 0;table-layout:fixed;}
+        #word-doc-editable td,#word-doc-editable th{border:1pt solid #000 !important;padding:4pt 6pt !important;text-align:right !important;direction:rtl !important;unicode-bidi:plaintext;vertical-align:top;font-size:16pt;word-break:break-word;cursor:text;min-width:30px;}
         #word-doc-editable b,#word-doc-editable strong{font-weight:bold !important;}
         #word-doc-editable i,#word-doc-editable em{font-style:italic !important;}
         #word-doc-editable u{text-decoration:underline !important;}
@@ -340,9 +341,12 @@ async function _tplRenderWord(url, body, autoPrint) {
         #word-doc-editable li{direction:rtl;text-align:right;margin-bottom:4pt;}
         #word-doc-editable hr{border:none;border-top:1pt solid #000;margin:8pt 0;}
         #word-doc-editable:focus{box-shadow:0 0 30px rgba(0,0,0,0.2),0 0 0 2px rgba(26,115,232,0.3);}
-        @media (max-width:768px){#word-doc-editable{width:100% !important;min-height:auto;padding:16px;margin:0;box-shadow:none;font-size:11pt;}}
+        @media (max-width:768px){#word-doc-editable{width:100% !important;min-height:auto;padding:10px;margin:0;box-shadow:none;font-size:14pt;}}
+        .tpl-fmt-btn{padding:4px 10px;border:1px solid #dee2e6;border-radius:4px;background:#fff;cursor:pointer;font-size:14px;}
+        .tpl-fmt-btn:hover{background:#f1f3f4;}
       </style>
       <div id="word-doc-editable" contenteditable="true" spellcheck="false" dir="rtl">${result.value || 'مواد دستیاب نہیں'}</div>`;
+    _tplBuildFormatToolbar();
     if (autoPrint) setTimeout(_tplPrintDoc, 500);
   } catch(e) {
     body.innerHTML = `<div style="text-align:center;padding:40px;color:#6c757d;">
@@ -351,6 +355,70 @@ async function _tplRenderWord(url, body, autoPrint) {
       <button onclick="window.open('${url}','_blank')" style="background:#1a73e8;color:#fff;border:none;border-radius:8px;padding:10px 20px;cursor:pointer;">نئے ٹیب میں کھولیں</button>
     </div>`;
   }
+}
+
+// ── FORMATTING TOOLBAR for Word editor ───────────────────────
+function _tplBuildFormatToolbar() {
+  const host = document.getElementById('tpl-format-toolbar');
+  if (!host) return;
+  const sizes = [8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72];
+  const sep = '<div style="width:1px;height:22px;background:#dee2e6;margin:0 3px;"></div>';
+  host.innerHTML = `
+    <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:6px 12px;background:#fff;border-bottom:1px solid #dee2e6;direction:ltr;">
+      <select onchange="_tplFontSize(this.value)" title="سائز" style="padding:4px 6px;border:1px solid #dee2e6;border-radius:4px;font-size:13px;cursor:pointer;">
+        ${sizes.map(s=>`<option value="${s}" ${s===16?'selected':''}>${s}</option>`).join('')}
+      </select>
+      ${sep}
+      <button class="tpl-fmt-btn" style="font-weight:bold;" onclick="_tplFmt('bold')" title="Bold">B</button>
+      <button class="tpl-fmt-btn" style="font-style:italic;" onclick="_tplFmt('italic')" title="Italic">I</button>
+      <button class="tpl-fmt-btn" style="text-decoration:underline;" onclick="_tplFmt('underline')" title="Underline">U</button>
+      ${sep}
+      <input type="color" value="#000000" onchange="_tplColor(this.value)" title="رنگ" style="width:30px;height:30px;border:1px solid #dee2e6;border-radius:4px;cursor:pointer;padding:2px;">
+      ${sep}
+      <span style="font-size:12px;color:#6c757d;">جدول:</span>
+      <button class="tpl-fmt-btn" style="font-size:12px;" onclick="_tplBorder(1)" title="بارڈر موٹا">▦+</button>
+      <button class="tpl-fmt-btn" style="font-size:12px;" onclick="_tplBorder(-1)" title="بارڈر پتلا">▦−</button>
+      <button class="tpl-fmt-btn" style="font-size:12px;" onclick="_tplRowAdd()" title="قطار شامل">+قطار</button>
+      <button class="tpl-fmt-btn" style="font-size:12px;" onclick="_tplColAdd()" title="کالم شامل">+کالم</button>
+      <button class="tpl-fmt-btn" style="font-size:12px;color:#dc3545;" onclick="_tplRowDel()" title="قطار حذف">−قطار</button>
+      <button class="tpl-fmt-btn" style="font-size:12px;color:#dc3545;" onclick="_tplColDel()" title="کالم حذف">−کالم</button>
+      ${sep}
+      <button class="tpl-fmt-btn" style="font-size:12px;" onclick="_tplSaveDoc(_tplDocId)" title="محفوظ">💾</button>
+      <button class="tpl-fmt-btn" style="font-size:12px;" onclick="_tplPrintDoc()" title="پرنٹ">🖨️</button>
+    </div>`;
+}
+
+function _tplFmt(cmd){ document.execCommand(cmd,false,null); document.getElementById('word-doc-editable')?.focus(); }
+function _tplColor(c){ document.execCommand('foreColor',false,c); document.getElementById('word-doc-editable')?.focus(); }
+function _tplFontSize(size){
+  document.execCommand('fontSize',false,'7');
+  const doc = document.getElementById('word-doc-editable');
+  doc?.querySelectorAll('font[size="7"]').forEach(el => { el.removeAttribute('size'); el.style.fontSize = size+'pt'; });
+  doc?.focus();
+}
+let _tplBorderW = 1;
+function _tplBorder(dir){
+  _tplBorderW = Math.max(0, Math.min(5, _tplBorderW + dir));
+  document.getElementById('word-doc-editable')?.querySelectorAll('td,th').forEach(c => {
+    c.style.border = _tplBorderW===0 ? 'none' : `${_tplBorderW}pt solid #000`;
+  });
+}
+function _tplCellOf(){ const s=window.getSelection(); let n=s&&s.anchorNode; while(n&&n.nodeType!==1)n=n.parentNode; return n&&n.closest?n.closest('td,th'):null; }
+function _tplRowAdd(){
+  const cell=_tplCellOf(); const row=cell&&cell.closest('tr'); if(!row)return;
+  const nr=row.cloneNode(true); nr.querySelectorAll('td,th').forEach(c=>c.innerHTML=''); row.parentNode.insertBefore(nr,row.nextSibling);
+}
+function _tplRowDel(){ const cell=_tplCellOf(); const row=cell&&cell.closest('tr'); if(row&&confirm('یہ قطار حذف کریں؟'))row.remove(); }
+function _tplColAdd(){
+  const cell=_tplCellOf(); const table=cell&&cell.closest('table'); if(!table||!cell)return;
+  const idx=cell.cellIndex;
+  table.querySelectorAll('tr').forEach(r=>{ const nc=document.createElement('td'); nc.style.cssText=cell.style.cssText; nc.innerHTML=''; r.insertBefore(nc, r.cells[idx+1]||null); });
+}
+function _tplColDel(){
+  const cell=_tplCellOf(); const table=cell&&cell.closest('table'); if(!table||!cell)return;
+  if(!confirm('یہ کالم حذف کریں؟'))return;
+  const idx=cell.cellIndex;
+  table.querySelectorAll('tr').forEach(r=>{ if(r.cells[idx])r.cells[idx].remove(); });
 }
 
 function _closeTplViewer() {
@@ -407,22 +475,18 @@ function _editTpl(id, autoPrint) {
     ov.id='tpl-editor-overlay';
     ov.style.cssText='position:fixed;inset:0;z-index:99999;background:#fff;display:flex;flex-direction:column;direction:rtl;';
     ov.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#fd7e14;color:#fff;flex-wrap:wrap;gap:8px;">
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          ${!isPdf?`<button onclick="_tplPrintDoc()" style="${_tplTbBtn()}">🖨️ پرنٹ</button>
-          <button onclick="_tplCopyDoc()" style="${_tplTbBtn()}">📋 کاپی</button>
-          <button onclick="_tplSaveDoc('${t.id}')" style="${_tplTbBtn()}">💾 محفوظ</button>`:''}
-          <button onclick="window.open('${t.file_url}','_blank')" style="${_tplTbBtn()}">📄 نئے ٹیب میں</button>
-          <button onclick="_renameTpl('${t.id}')" style="${_tplTbBtn()}">✏️ نام بدلیں</button>
-        </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#fd7e14;color:#fff;flex-shrink:0;gap:8px;">
+        <button onclick="_closeTplViewer()" style="${_tplTbBtn()}">✕ بند کریں</button>
         <div style="font-weight:800;" id="tpl-viewer-title">${_tplEsc(t.title)}</div>
-        <button onclick="_closeTplViewer()" style="${_tplTbBtn()}">✕ بند</button>
+        <button onclick="_renameTpl('${t.id}')" style="${_tplTbBtn()}">✏️ نام</button>
       </div>
-      ${!isPdf?`<div style="background:#fff3cd;padding:7px 16px;font-size:12px;direction:rtl;text-align:right;border-bottom:1px solid #ffc107;color:#664d03;">✍️ دستاویز میں براہ راست ترمیم کریں — کہیں بھی کلک کر کے لکھیں</div>`:''}
+      ${!isPdf?`<div id="tpl-format-toolbar" style="flex-shrink:0;"></div>
+      <div style="background:#fff3cd;padding:6px 16px;font-size:12px;direction:rtl;text-align:right;border-bottom:1px solid #ffc107;color:#664d03;flex-shrink:0;">✍️ متن سلیکٹ کر کے فارمیٹ کریں — یا کہیں بھی لکھیں</div>`:''}
       <div id="tpl-viewer-body" style="flex:1;overflow:auto;background:#f5f5f5;">
         <div style="text-align:center;padding:40px;color:#6c757d;">⏳ کھل رہی ہے...</div>
       </div>`;
     document.body.appendChild(ov);
+    _tplDocId = t.id;
     const vbody = document.getElementById('tpl-viewer-body');
     if (isPdf) _tplRenderPdf(t.file_url, vbody, autoPrint);
     else _tplRenderWord(t.file_url, vbody, autoPrint);
@@ -631,6 +695,14 @@ window._closeTplViewer = _closeTplViewer;
 window._tplPrintDoc = _tplPrintDoc;
 window._tplCopyDoc = _tplCopyDoc;
 window._tplSaveDoc = _tplSaveDoc;
+window._tplFmt = _tplFmt;
+window._tplColor = _tplColor;
+window._tplFontSize = _tplFontSize;
+window._tplBorder = _tplBorder;
+window._tplRowAdd = _tplRowAdd;
+window._tplRowDel = _tplRowDel;
+window._tplColAdd = _tplColAdd;
+window._tplColDel = _tplColDel;
 window._tplFill = _tplFill;
 window._printTplEditor = _printTplEditor;
 window._copyTplEditor = _copyTplEditor;
