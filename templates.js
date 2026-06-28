@@ -287,8 +287,28 @@ async function _tplRenderWord(url, body, autoPrint) {
     }
     const resp = await fetch(url, { mode:'cors' });
     const buf = await resp.arrayBuffer();
-    const result = await mammoth.convertToHtml({ arrayBuffer: buf });
-    body.innerHTML = `<div id="tpl-word-content" style="max-width:850px;margin:0 auto;padding:30px 24px;direction:rtl;text-align:right;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:16px;line-height:2;color:#111;user-select:text;">${result.value || '<div style="text-align:center;color:#999;">مواد دستیاب نہیں</div>'}</div>`;
+    const result = await mammoth.convertToHtml({ arrayBuffer: buf }, {
+      styleMap: [
+        "p[style-name='Heading 1'] => h1:fresh",
+        "p[style-name='Heading 2'] => h2:fresh",
+        "p[style-name='Heading 3'] => h3:fresh",
+        "table => table", "tr => tr", "td => td",
+        "b => strong", "i => em", "u => u"
+      ],
+      convertImage: mammoth.images.imgElement(image =>
+        image.read("base64").then(b => ({ src:`data:${image.contentType};base64,${b}` })))
+    });
+    body.innerHTML = `
+      <style>
+        #tpl-word-content{max-width:850px;margin:0 auto;padding:28px 24px;background:#fff;direction:rtl;text-align:right;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:16px;line-height:2;color:#111;user-select:text;}
+        #tpl-word-content table{width:100%;border-collapse:collapse;direction:rtl;margin:12px 0;}
+        #tpl-word-content td,#tpl-word-content th{border:1px solid #000;padding:6px 10px;text-align:right;direction:rtl;vertical-align:top;}
+        #tpl-word-content h1{font-size:20px;font-weight:bold;}#tpl-word-content h2{font-size:18px;font-weight:bold;}#tpl-word-content h3{font-size:16px;font-weight:bold;}
+        #tpl-word-content p,#tpl-word-content td,#tpl-word-content span{unicode-bidi:plaintext;}
+        #tpl-word-content img{max-width:100%;}
+        #tpl-word-content hr{border:none;border-top:1px solid #000;margin:12px 0;}
+      </style>
+      <div id="tpl-word-content">${result.value || '<div style="text-align:center;color:#999;">مواد دستیاب نہیں</div>'}</div>`;
     if (autoPrint) setTimeout(() => window.print(), 400);
   } catch(e) {
     body.innerHTML = `<div style="text-align:center;padding:40px;color:#6c757d;">
