@@ -214,6 +214,34 @@ async function _saveLaw() {
 }
 
 // ── VIEW / READ LAW (full-screen reader) ─────────────────────
+// Bottom-sheet options — reliable file access (esp. mobile): browser / Google Docs / download
+function _lawOptions(id) {
+  const l = _lawList.find(x => x.id === id);
+  if (!l || !l.file_url) return;
+  const gview = 'https://docs.google.com/viewer?url=' + encodeURIComponent(l.file_url) + '&embedded=true';
+  const sheet = document.createElement('div');
+  sheet.id = 'law-options-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,0.4);display:flex;align-items:flex-end;';
+  sheet.innerHTML = `
+    <div style="width:100%;background:#fff;border-radius:16px 16px 0 0;padding:18px;direction:rtl;max-height:70vh;overflow-y:auto;">
+      <div style="width:40px;height:4px;background:#dee2e6;border-radius:2px;margin:0 auto 14px;"></div>
+      <div style="font-size:15px;font-weight:800;text-align:center;margin-bottom:14px;color:#1a3a5c;">${_lawEsc(l.title||l.name)}</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <a href="${l.file_url}" target="_blank" onclick="_closeLawOptions()" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#1a73e8;color:#fff;border-radius:10px;text-decoration:none;font-size:15px;"><span style="font-size:20px;">🌐</span> براؤزر میں کھولیں</a>
+        <a href="${gview}" target="_blank" onclick="_closeLawOptions()" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#ea4335;color:#fff;border-radius:10px;text-decoration:none;font-size:15px;"><span style="font-size:20px;">📄</span> Google Docs میں دیکھیں</a>
+        <a href="${l.file_url}" download="${_lawEsc(l.file_display_name||l.title||'law')}" onclick="_closeLawOptions()" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#28a745;color:#fff;border-radius:10px;text-decoration:none;font-size:15px;"><span style="font-size:20px;">⬇️</span> ڈاؤنلوڈ کریں</a>
+        ${l.online_link?`<a href="${l.online_link}" target="_blank" onclick="_closeLawOptions()" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#6f42c1;color:#fff;border-radius:10px;text-decoration:none;font-size:15px;"><span style="font-size:20px;">🔗</span> آن لائن لنک</a>`:''}
+        <button onclick="_closeLawOptions()" style="padding:13px;background:#f8f9fa;border:1px solid #dee2e6;border-radius:10px;font-size:15px;cursor:pointer;color:#6c757d;">منسوخ</button>
+      </div>
+    </div>`;
+  sheet.addEventListener('click', e => { if (e.target === sheet) _closeLawOptions(); });
+  document.body.appendChild(sheet);
+}
+function _closeLawOptions() {
+  const s = document.getElementById('law-options-sheet');
+  if (s) s.remove();
+}
+
 function _closeLawReader() {
   const ov = document.getElementById('law-reader-overlay');
   if (ov) {
@@ -238,6 +266,7 @@ function _viewLaw(id, autoPrint) {
       <button onclick="_lawNavMatch(-1)" title="پچھلا" style="border:1px solid #dee2e6;background:#f1f3f4;border-radius:6px;padding:6px 9px;cursor:pointer;font-size:12px;">▲</button>
       <button onclick="_lawNavMatch(1)" title="اگلا" style="border:1px solid #dee2e6;background:#f1f3f4;border-radius:6px;padding:6px 9px;cursor:pointer;font-size:12px;">▼</button>
       <span id="law-search-count" style="font-size:12px;color:#6c757d;"></span>` : ''}
+      <button onclick="_lawOptions('${l.id}')" title="اختیارات" style="background:#f1f3f4;color:#1a3a5c;border:none;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;">⋯ اختیارات</button>
       <button onclick="_printLawReader()" style="background:#1a73e8;color:#fff;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;">🖨️ پرنٹ</button>
       <button onclick="_closeLawReader()" style="background:#e2e8f0;color:#1a3a5c;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;font-weight:700;">✕ بند</button>
     </div>
@@ -577,6 +606,8 @@ window._openAddLaw = _openAddLaw;
 window._saveLaw = _saveLaw;
 window._viewLaw = _viewLaw;
 window._closeLawReader = _closeLawReader;
+window._lawOptions = _lawOptions;
+window._closeLawOptions = _closeLawOptions;
 // Compatibility aliases (prompt uses these names)
 window.viewLaw = (id) => _viewLaw(id);
 window.downloadLaw = (urlOrId, name) => {

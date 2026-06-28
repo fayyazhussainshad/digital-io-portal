@@ -943,6 +943,17 @@ input[id*="cnic"], input[id*="cell"] {
   .page-content { padding: 16px 20px; }
 }
 /* Law reader: when printing, show only the document content (not header/footer/app) */
+/* Justified Urdu prose — content areas only (NOT buttons/inputs/labels) */
+#law-html-content p, #tpl-word-content p,
+#law-word-body p, #template-editable-doc p,
+.disclaimer-box, .login-card .disclaimer-box,
+.law-content, .template-content, .disclaimer-text {
+  text-align: justify;
+  text-align-last: right;
+  unicode-bidi: plaintext;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
 @media print {
   body.law-printing > *:not(#law-reader-overlay) { display: none !important; }
   #law-reader-overlay { position: static !important; height: auto !important; background: #fff !important; }
