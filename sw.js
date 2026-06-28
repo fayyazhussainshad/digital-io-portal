@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v165
+   DIGITAL IO — SERVICE WORKER v166
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v165';
+const CACHE_NAME = 'digital-io-v166';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -133,7 +133,22 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Cache-first + stale-while-revalidate for JS/CSS/fonts
+  // ── JS & CSS — NETWORK FIRST (never serve stale code) ──
+  // This is the key fix for the recurring "old version" problem.
+  if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+    event.respondWith(
+      fetch(event.request).then(response => {
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        }
+        return response;
+      }).catch(() => caches.match(event.request))   // offline → cached copy
+    );
+    return;
+  }
+
+  // Cache-first + stale-while-revalidate for other assets (images/fonts)
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) {
