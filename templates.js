@@ -247,29 +247,53 @@ async function _doRenameTpl(id) {
 }
 
 // Render template PDF via blob (avoids "content blocked" in PWA)
+// Shared PDF.js loader
+function _ensurePdfJsTpl() {
+  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if (window._pdfJsLoading) return window._pdfJsLoading;
+  window._pdfJsLoading = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.onload = () => { try { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; } catch(_) {} res(window.pdfjsLib); };
+    s.onerror = () => rej(new Error('pdfjs load failed'));
+    document.head.appendChild(s);
+  });
+  return window._pdfJsLoading;
+}
+
+// Render PDF via PDF.js canvas — NO iframe, never "content blocked"
 async function _tplRenderPdf(url, body, autoPrint) {
   body.innerHTML = `<div style="text-align:center;padding:40px;color:#6c757d;">⏳ فائل کھل رہی ہے...</div>`;
   try {
+    const pdfjsLib = await _ensurePdfJsTpl();
     const resp = await fetch(url, { mode:'cors' });
-    if (!resp.ok) throw new Error('fetch '+resp.status);
-    const blob = await resp.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    const ov = document.getElementById('tpl-editor-overlay');
-    if (ov) ov._blobUrl = blobUrl;
-    body.innerHTML = `<iframe id="tpl-pdf-viewer" src="${blobUrl}#toolbar=1&navpanes=1&view=FitH" style="width:100%;height:100%;border:none;"></iframe>`;
-    if (autoPrint) setTimeout(() => {
-      const ifr = document.getElementById('tpl-pdf-viewer');
-      try { ifr.contentWindow.focus(); ifr.contentWindow.print(); } catch(_) { window.open(blobUrl,'_blank'); }
-    }, 600);
+    if (!resp.ok) throw new Error('HTTP '+resp.status);
+    const buf = await resp.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'max-width:900px;margin:0 auto;padding:16px 8px;';
+    body.innerHTML = ''; body.appendChild(wrap);
+    const scale = (window.innerWidth < 768) ? 1.1 : 1.7;
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({ scale });
+      const canvas = document.createElement('canvas');
+      canvas.style.cssText = 'display:block;margin:0 auto 14px;max-width:100%;box-shadow:0 2px 10px rgba(0,0,0,0.25);background:#fff;';
+      canvas.width = viewport.width; canvas.height = viewport.height;
+      wrap.appendChild(canvas);
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    }
+    if (autoPrint) setTimeout(() => window.open(url, '_blank'), 300);
   } catch(e) {
-    const gview = 'https://docs.google.com/viewer?embedded=true&url=' + encodeURIComponent(url);
     body.innerHTML = `
-      <div style="height:100%;display:flex;flex-direction:column;">
-        <div style="background:#fff3cd;padding:8px 14px;font-size:12px;color:#664d03;direction:rtl;border-bottom:1px solid #ffc107;">
-          فائل لوڈ ہونے میں دقت ہوئی —
-          <button onclick="window.open('${url}','_blank')" style="background:#1a73e8;color:#fff;border:none;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;">📄 نئے ٹیب میں</button>
+      <div style="text-align:center;padding:50px 20px;direction:rtl;">
+        <div style="font-size:44px;margin-bottom:12px;">📄</div>
+        <div style="font-size:15px;color:#444;margin-bottom:20px;">فائل ان لائن کھولیں:</div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+          <a href="${url}" target="_blank" style="padding:11px 20px;background:#1a73e8;color:#fff;border-radius:8px;text-decoration:none;">🌐 براؤزر میں کھولیں</a>
+          <a href="https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true" target="_blank" style="padding:11px 20px;background:#ea4335;color:#fff;border-radius:8px;text-decoration:none;">📄 Google Docs</a>
+          <a href="${url}" download style="padding:11px 20px;background:#28a745;color:#fff;border-radius:8px;text-decoration:none;">⬇️ ڈاؤنلوڈ</a>
         </div>
-        <iframe src="${gview}" style="flex:1;border:none;"></iframe>
       </div>`;
   }
 }
