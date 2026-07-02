@@ -92,7 +92,7 @@ function _remCard(r, isOverdue, isDone=false) {
       style="accent-color:var(--accent);width:16px;height:16px;flex-shrink:0;margin-top:3px;">` :
       `<span style="font-size:16px;flex-shrink:0;">⚖️</span>`}
     <div style="flex:1;">
-      <div style="font-size:13px;${isDone?'text-decoration:line-through;color:var(--text-muted);':''}direction:rtl;">${r.text}</div>
+      <div style="font-size:13px;${isDone?'text-decoration:line-through;color:var(--text-muted);':''}direction:rtl;">${esc(r.text)}</div>
       <div style="font-size:10px;margin-top:3px;display:flex;gap:8px;align-items:center;direction:rtl;flex-wrap:wrap;">
         ${r.reminder_date ? `<span style="color:${color};">📅 ${formatDate(r.reminder_date)}${diff!==null&&!isDone?` (${diff<0?Math.abs(diff)+'دن پہلے':diff===0?'آج':diff+'دن باقی'})`:''}` : ''}
         ${r._isCourtDate ? `<span style="background:rgba(167,139,250,0.2);color:#a78bfa;padding:1px 6px;border-radius:8px;font-size:9px;">عدالتی پیشی</span>` : ''}

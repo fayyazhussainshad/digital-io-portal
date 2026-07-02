@@ -122,7 +122,7 @@ function _renderWitnessList(list, type) {
     return `
     <div style="display:flex;align-items:center;gap:10px;background:var(--bg-card);border:1px solid var(--border);border-right:3px solid var(--accent);border-radius:8px;padding:10px 12px;margin-bottom:7px;direction:rtl;font-size:14px;flex-wrap:nowrap;overflow-x:auto;">
       <span style="font-weight:800;color:var(--accent);white-space:nowrap;">گواہ ${i+1}</span>
-      <span style="font-weight:700;white-space:nowrap;font-family:'Jameel Noori Nastaleeq',serif;">${w.full_name||'—'}</span>
+      <span style="font-weight:700;white-space:nowrap;font-family:'Jameel Noori Nastaleeq',serif;">${esc(w.full_name)||'—'}</span>
       ${w.cnic?`<span style="color:var(--text-muted);direction:ltr;white-space:nowrap;">${w.cnic}</span>`:''}
       ${w.cell?`<span style="color:var(--text-muted);direction:ltr;white-space:nowrap;">${w.cell}</span>`:''}
       ${w.profession?`<span style="color:var(--text-muted);white-space:nowrap;">${w.profession}</span>`:''}

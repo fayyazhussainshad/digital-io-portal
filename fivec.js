@@ -546,12 +546,12 @@ async function _print5C(id) {
       <tr><th>درخواست کی تاریخ</th><td>${a.application_date||'—'}</td></tr>
     </table>
     ${nums.length ? `<table><tr><th>درخواست نمبر</th><th>افسر</th><th>عہدہ</th></tr>
-    ${nums.map(n=>`<tr><td dir="ltr">${(n.application_number||'—').replace(/،/g,'/')}</td><td>${n.senior_officer_name||'—'}</td><td>${n.senior_officer_designation||'—'}</td></tr>`).join('')}
+    ${nums.map(n=>`<tr><td dir="ltr">${(n.application_number||'—').replace(/،/g,'/')}</td><td>${esc5C(n.senior_officer_name||'—')}</td><td>${esc5C(n.senior_officer_designation||'—')}</td></tr>`).join('')}
     </table>` : ''}
     <div style="font-weight:700;margin-top:10px;">جواب / رپورٹ:</div>
     <div class="resp">${(a.response_text||'').replace(/\n/g,'<br>') || '&nbsp;'}</div>
     <div class="sig">
-      <div class="sig-box"><div class="sig-line">تفتیشی افسر<br>${o.full_name||'—'} ${o.designation||''}</div></div>
+      <div class="sig-box"><div class="sig-line">تفتیشی افسر<br>${esc5C(o.full_name||'—')} ${esc5C(o.designation||'')}</div></div>
       <div class="sig-box"><div class="sig-line">SHO تھانہ ${o.station||'—'}<br>مہر و دستخط</div></div>
     </div>
     <div class="footer">Digital IO · ‏${formatDate(new Date())}</div>

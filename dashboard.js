@@ -44,7 +44,7 @@ async function _buildDash() {
   <div style="background:linear-gradient(135deg,#0d2a45,#1a3a5c);border-radius:12px;padding:14px 18px;margin-bottom:14px;direction:rtl;">
     <div style="display:flex;align-items:center;gap:12px;">
       <div style="text-align:right;flex:1;">
-        <div style="font-size:16px;font-weight:800;color:#fff;font-family:'Jameel Noori Nastaleeq',serif;">خوش آمدید، ${o.full_name||'افسر'}</div>
+        <div style="font-size:16px;font-weight:800;color:#fff;font-family:'Jameel Noori Nastaleeq',serif;">خوش آمدید، ${esc(o.full_name)||'افسر'}</div>
         <div style="font-size:11px;color:rgba(255,255,255,0.6);">${o.designation||''} · تھانہ ${o.station||''} · ضلع ${o.district||''}</div>
         <div style="font-size:10px;color:rgba(255,255,255,0.4);">${formatDate(new Date())}</div>
       </div>
@@ -111,7 +111,7 @@ async function _buildDash() {
       <tbody>
         ${cases.length ? cases.slice(0,10).map(c=>`<tr>
           <td style="font-weight:800;color:var(--accent);cursor:pointer;font-size:12px;" onclick="openCaseWorkspace('${c.id}')">${c.fir_number||'—'}</td>
-          <td style="font-size:11px;">${(c.complainant||'—').slice(0,20)}</td>
+          <td style="font-size:11px;">${esc((c.complainant||'—').slice(0,20))}</td>
           <td style="font-size:10px;">${(c.section_of_law||'—').slice(0,15)}</td>
           <td><span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}" style="font-size:9px;">${STATUS_LABELS[c.status]||c.status}</span></td>
           <td style="font-size:10px;">${formatDate(c.fir_date)}</td>

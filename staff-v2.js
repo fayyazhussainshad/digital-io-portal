@@ -66,7 +66,7 @@ function _stCard(s) {
   return `
   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;direction:rtl;">
     <span style="background:var(--accent);color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;">${rankLabel||'—'}</span>
-    <span style="font-size:15px;font-weight:700;">${s.name||'—'}</span>
+    <span style="font-size:15px;font-weight:700;">${esc(s.name)||'—'}</span>
     <span style="color:var(--text-muted);font-size:13px;" dir="ltr">${b(s.service_number)}</span>
     <span style="color:var(--text-muted);font-size:13px;" dir="ltr">${b(s.mobile)}</span>
     <span style="color:var(--text-muted);font-size:12px;" dir="ltr">${s.cnic||''}</span>

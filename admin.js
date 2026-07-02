@@ -199,7 +199,7 @@ function _renderOfficersTab(officers, role) {
           const cases = (window._adminData?.cases||[]).filter(c=>c.officer_id===o.id).length;
           return `<tr style="${o.suspended?'opacity:0.6;':''}">
             <td>
-              <div style="font-weight:700;">${o.full_name||'—'}</div>
+              <div style="font-weight:700;">${esc(o.full_name)||'—'}</div>
               <div style="font-size:10px;color:var(--text-muted);">${o.email||''}</div>
             </td>
             <td style="font-family:monospace;font-size:11px;">${o.badge_number||'—'}</td>
@@ -225,8 +225,8 @@ function _renderOfficersTab(officers, role) {
               <button class="btn btn-secondary btn-sm" onclick="_adminViewOfficer('${o.id}')">👁️</button>
               <button class="btn btn-secondary btn-sm" onclick="_adminEditOfficer('${o.id}')" title="معلومات ترمیم کریں">✏️</button>
               ${o.suspended
-                ? `<button class="btn btn-primary btn-sm" onclick="_adminUnsuspend('${o.id}','${o.full_name||''}')">✅</button>`
-                : `<button class="btn btn-danger btn-sm" onclick="_adminSuspend('${o.id}','${o.full_name||''}')">🚫</button>`}
+                ? `<button class="btn btn-primary btn-sm" onclick="_adminUnsuspend('${o.id}','${esc(o.full_name||'')}')">✅</button>`
+                : `<button class="btn btn-danger btn-sm" onclick="_adminSuspend('${o.id}','${esc(o.full_name||'')}')">🚫</button>`}
               ${!o.is_approved
                 ? `<button class="btn btn-primary btn-sm" onclick="_adminApproveOfficer('${o.id}')">✅ منظور</button>`:''}
             </td>
@@ -254,7 +254,7 @@ function _renderAllCasesTab(cases) {
           const officer = (window._adminData?.officers||[]).find(o=>o.id===c.officer_id);
           return `<tr>
             <td style="font-weight:800;color:var(--accent);">${c.fir_number||'—'}</td>
-            <td style="font-size:12px;">${c.complainant||'—'}</td>
+            <td style="font-size:12px;">${esc(c.complainant)||'—'}</td>
             <td style="font-size:11px;">${c.section_of_law||'—'}</td>
             <td style="font-size:12px;">${officer?.full_name||'—'}</td>
             <td style="font-size:11px;">${officer?.station||'—'}</td>
@@ -321,7 +321,7 @@ function _renderReportsTab(officers, cases) {
       <thead><tr><th>افسر</th><th>تھانہ</th><th>کل</th><th>زیر تفتیش</th><th>مکمل</th><th>%</th></tr></thead>
       <tbody>
         ${officerStats.map(o=>`<tr>
-          <td style="font-weight:700;">${o.full_name||'—'}</td>
+          <td style="font-weight:700;">${esc(o.full_name)||'—'}</td>
           <td style="font-size:12px;">${o.station||'—'}</td>
           <td style="font-weight:700;color:var(--accent);">${o.total}</td>
           <td>${o.active}</td>
@@ -576,7 +576,7 @@ async function _adminViewOfficer(officerId) {
   const o = (window._adminData?.officers||[]).find(x=>x.id===officerId);
   if (!o) return;
   const cases = (window._adminData?.cases||[]).filter(c=>c.officer_id===officerId);
-  openModal(`👮 ${o.full_name||'—'}`,
+  openModal(`👮 ${esc(o.full_name)||'—'}`,
     `<div style="font-size:13px;line-height:2.2;">
       <div>📧 <b>Email:</b> ${o.email||'—'}</div>
       <div>🏷️ <b>Badge:</b> ${o.badge_number||'—'}</div>

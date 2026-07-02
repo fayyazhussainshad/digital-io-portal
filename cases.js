@@ -251,9 +251,9 @@ function renderCaseRow(c,sn){
     </td>
     <td style="font-size:11px;white-space:nowrap;">${formatDate(c.fir_date)}</td>
     <td style="font-size:11px;white-space:nowrap;">${formatDate(c.occurrence_date)}</td>
-    <td style="font-size:11px;max-width:150px;">${offence}</td>
-    <td style="font-size:11px;">${station}</td>
-    <td style="font-size:12px;font-weight:500;">${c.complainant||'—'}</td>
+    <td style="font-size:11px;max-width:150px;">${esc(offence)}</td>
+    <td style="font-size:11px;">${esc(station)}</td>
+    <td style="font-size:12px;font-weight:500;">${esc(c.complainant)||'—'}</td>
     <td style="font-family:var(--font-mono);font-size:11px;white-space:nowrap;" dir="ltr"><span>${cnic}</span> <span style="color:var(--text-muted);">·</span> <span>${cell}</span></td>
     <td><span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span></td>
     <td>
@@ -304,19 +304,19 @@ async function _printFIRDirect(id) {
   </table>
   <div class="s-lbl">مدعی کی تفصیل</div>
   <table>
-    <tr><th>نام</th><td><b>${c.complainant||'—'}</b></td><th>شناختی کارڈ</th><td>${c.complainant_cnic||'—'}</td></tr>
-    <tr><th>موبائل</th><td>${c.complainant_cell||'—'}</td><th>پیشہ</th><td>${c.complainant_profession||'—'}</td></tr>
+    <tr><th>نام</th><td><b>${esc(c.complainant)||'—'}</b></td><th>شناختی کارڈ</th><td>${c.complainant_cnic||'—'}</td></tr>
+    <tr><th>موبائل</th><td>${c.complainant_cell||'—'}</td><th>پیشہ</th><td>${esc(c.complainant_profession)||'—'}</td></tr>
   </table>
   <div class="s-lbl">واقعے کی تفصیل</div>
   <div class="narrative">${c.notes||'&nbsp;'.repeat(200)}</div>
   <div class="s-lbl">دفتری</div>
   <table>
-    <tr><th>تفتیشی افسر</th><td>${o.full_name||'—'}</td><th>عہدہ</th><td>${o.designation||'—'}</td></tr>
+    <tr><th>تفتیشی افسر</th><td>${esc(o.full_name)||'—'}</td><th>عہدہ</th><td>${esc(o.designation)||'—'}</td></tr>
     <tr><th>صورتحال</th><td colspan="3">${STATUS_LABELS[c.status]||c.status||'—'}</td></tr>
   </table>
   <div class="sig-row">
-    <div class="sig-box"><div class="sig-line">دستخط مدعی<br>${c.complainant||'___'}</div></div>
-    <div class="sig-box"><div class="sig-line">تفتیشی افسر<br>${o.full_name||'___'}</div></div>
+    <div class="sig-box"><div class="sig-line">دستخط مدعی<br>${esc(c.complainant)||'___'}</div></div>
+    <div class="sig-box"><div class="sig-line">تفتیشی افسر<br>${esc(o.full_name)||'___'}</div></div>
     <div class="sig-box"><div class="sig-line">SHO تھانہ ${c.case_station||o.station||'___'}<br>مہر و دستخط</div></div>
   </div>
   <div class="footer">Digital IO · ‏${formatDate(new Date())}</div>
@@ -332,7 +332,7 @@ async function downloadCaseFile(id) {
 
   openModal('⬇️ Case File Download — FIR ' + (c.fir_number||''),
     `<div style="display:flex;flex-direction:column;gap:12px;padding:10px 0;">
-      <div style="font-size:13px;color:var(--text-secondary);text-align:center;margin-bottom:4px;">FIR ${c.fir_number||'—'} · ${c.complainant||'—'}</div>
+      <div style="font-size:13px;color:var(--text-secondary);text-align:center;margin-bottom:4px;">FIR ${esc(c.fir_number)||'—'} · ${esc(c.complainant)||'—'}</div>
       <button class="btn btn-primary" style="padding:14px;font-size:14px;" onclick="closeModal();_downloadCaseTxt('${id}')">
         📄 Text File Download کریں (.txt)
       </button>
@@ -405,10 +405,10 @@ async function _downloadCaseHTML(id) {
   <div class="row"><span class="lbl">جرم:</span><span class="val">${c.offence_type||'—'}</span></div>
   <div class="row"><span class="lbl">صورتحال:</span><span class="val">${STATUS_LABELS[c.status]||c.status}</span></div>
   <div class="sec">مدعی کی تفصیل</div>
-  <div class="row"><span class="lbl">نام:</span><span class="val">${c.complainant||'—'}</span></div>
-  <div class="row"><span class="lbl">شناختی کارڈ:</span><span class="val">${c.complainant_cnic||'—'}</span></div>
-  <div class="row"><span class="lbl">موبائل:</span><span class="val">${c.complainant_cell||'—'}</span></div>
-  <div class="row"><span class="lbl">پیشہ:</span><span class="val">${c.complainant_profession||'—'}</span></div>
+  <div class="row"><span class="lbl">نام:</span><span class="val">${esc(c.complainant)||'—'}</span></div>
+  <div class="row"><span class="lbl">شناختی کارڈ:</span><span class="val">${esc(c.complainant_cnic)||'—'}</span></div>
+  <div class="row"><span class="lbl">موبائل:</span><span class="val">${esc(c.complainant_cell)||'—'}</span></div>
+  <div class="row"><span class="lbl">پیشہ:</span><span class="val">${esc(c.complainant_profession)||'—'}</span></div>
   <div class="sec">رپورٹنگ افسر</div>
   <div class="row"><span class="lbl">نام:</span><span class="val">${o.full_name||'—'}</span></div>
   <div class="row"><span class="lbl">عہدہ:</span><span class="val">${o.designation||'—'}</span></div>

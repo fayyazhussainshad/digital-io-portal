@@ -231,6 +231,34 @@ function showToast(msg, type='info', duration=3000) {
 }
 
 // ── FORMAT HELPERS ────────────────────────────────────────────
+// ── GLOBAL XSS-SAFE ESCAPE ────────────────────────────────────
+// Use esc() around ANY user-entered value rendered into innerHTML.
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+window.esc = esc;
+
+// ── SANITIZE rich-text HTML (for contenteditable-saved content) ──
+// Keeps formatting (<b>, <br>, tables) but strips scripts & event handlers.
+function sanitizeHtml(html) {
+  if (html == null) return '';
+  const t = document.createElement('template');
+  t.innerHTML = String(html);
+  t.content.querySelectorAll('script,iframe,object,embed,link,style').forEach(n => n.remove());
+  t.content.querySelectorAll('*').forEach(el => {
+    [...el.attributes].forEach(a => {
+      const n = a.name.toLowerCase(), v = String(a.value || '').toLowerCase();
+      if (n.startsWith('on') || ((n === 'href' || n === 'src') && v.trim().startsWith('javascript:'))) {
+        el.removeAttribute(a.name);
+      }
+    });
+  });
+  return t.innerHTML;
+}
+window.sanitizeHtml = sanitizeHtml;
+
 function formatDate(d) {
   if (!d) return '—';
   try {
