@@ -104,10 +104,10 @@ async function _buildBin() {
             <span style="font-size:22px;">${cfg.icon}</span>
             <div style="flex:1;">
               <div style="font-size:13px;font-weight:600;color:var(--text-primary);">
-                ${_binTitle(type, d)}
+                ${esc(_binTitle(type, d))}
               </div>
               <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
-                ${_binDetail(type, d)}
+                ${esc(_binDetail(type, d))}
               </div>
               <div style="font-size:10px;color:${urgent?'var(--red)':'var(--text-faint)'};margin-top:3px;">
                 🕐 حذف: ${formatDate(item.deleted_at)} &nbsp;·&nbsp;

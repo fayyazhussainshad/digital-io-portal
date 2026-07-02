@@ -184,7 +184,7 @@ function _printPerfReport() {
     th{background:#f0f0f0;}.footer{font-size:10px;color:#888;text-align:center;margin-top:20px;border-top:1px solid #ccc;padding-top:8px;}</style>
     </head><body>
     <h2>کارکردگی رپورٹ</h2>
-    <h3>${o.full_name||'—'} · ${o.designation||''} · تھانہ ${o.station||'—'}</h3>
+    <h3>${esc(o.full_name)||'—'} · ${esc(o.designation)||''} · تھانہ ${esc(o.station)||'—'}</h3>
     <p style="text-align:center;">تاریخ: ${formatDate(new Date())}</p>
     <table>
       <tr><th>چالان مکمل</th><th>زیر تفتیش</th><th>عدم پتہ</th><th>اخراج</th><th>کل</th></tr>

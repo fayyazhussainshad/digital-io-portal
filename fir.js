@@ -78,7 +78,7 @@ function _renderMatnTable(rows) {
       <th style="padding:8px;text-align:center;border:1px solid var(--border);width:90px;">ایکشن</th>
     </tr></thead><tbody>
     ${rows.map(m => `<tr style="background:rgba(245,158,11,0.08);">
-      <td style="padding:10px;border:1px solid var(--border);text-align:justify;font-family:'Jameel Noori Nastaleeq',serif;line-height:1.8;font-size:14px;min-height:80px;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">${m.matn||''}</td>
+      <td style="padding:10px;border:1px solid var(--border);text-align:justify;font-family:'Jameel Noori Nastaleeq',serif;line-height:1.8;font-size:14px;min-height:80px;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">${esc(m.matn)||''}</td>
       <td style="padding:6px;border:1px solid var(--border);text-align:center;">
         <button class="btn btn-secondary btn-sm" style="padding:2px 7px;" onclick="_openMatnModal('${m.type||'fir'}','${m.id}')">✏️</button>
         <button class="btn btn-danger btn-sm" style="padding:2px 7px;margin-top:3px;" onclick="_deleteMatn('${m.id}')">🗑️</button>
@@ -116,7 +116,7 @@ function _openMatnModal(type, id) {
   const existing = id ? (_firMatn.find(m => m.id === id) || {}) : {};
   openModal(id ? '✏️ متن میں ترمیم' : '➕ متن درج کریں', `
     <div style="direction:rtl;width:80vw;max-width:90vw;">
-      <textarea id="fir-matn-text" data-mic="true" placeholder="یہاں مکمل متن لکھیں یا پیسٹ کریں..." style="width:100%;min-height:50vh;box-sizing:border-box;padding:16px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:16px;line-height:1.8;direction:rtl;text-align:right;outline:none;">${existing.matn||''}</textarea>
+      <textarea id="fir-matn-text" data-mic="true" placeholder="یہاں مکمل متن لکھیں یا پیسٹ کریں..." style="width:100%;min-height:50vh;box-sizing:border-box;padding:16px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:16px;line-height:1.8;direction:rtl;text-align:right;outline:none;">${esc(existing.matn)||''}</textarea>
     </div>
   `, `
     <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>

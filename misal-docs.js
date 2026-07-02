@@ -416,7 +416,7 @@ function _renderMisalEditor(docId, def) {
   if (!area) return;
 
   const saved   = _misalDocs[docId];
-  const content = saved?.content?.html || getMisalTemplate(docId, _misalCase);
+  const content = saved?.content?.html ? sanitizeHtml(saved.content.html) : getMisalTemplate(docId, _misalCase);
   const savedDate = saved?.content?.date || '';
 
   area.innerHTML = `
@@ -832,12 +832,12 @@ function _printFIREntry(entryId) {
   const entries = window._firEntries || [];
   const e = entries.find(x => x.id === entryId);
   if (!e) return;
-  _doPrintFIR(e.content?.html || '');
+  _doPrintFIR(sanitizeHtml(e.content?.html || ''));
 }
 
 function _printFIRAll() {
   const entries = window._firEntries || [];
-  const html = entries.map(e => e.content?.html || '').join('<hr>');
+  const html = entries.map(e => sanitizeHtml(e.content?.html || '')).join('<hr>');
   _doPrintFIR(html);
 }
 

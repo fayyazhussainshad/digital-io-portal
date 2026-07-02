@@ -95,7 +95,7 @@ function _renderR173() {
   // Saved record key (tatima uses subtype)
   const recKey = isTatima ? 'tatima_challan_' + _r173Subtype : _r173Type;
   const saved = _r173Records[recKey] || {};
-  const v = (k, def) => saved[k] !== undefined ? saved[k] : (def || '');
+  const v = (k, def) => sanitizeHtml(saved[k] !== undefined ? saved[k] : (def || ''));
   const isIkhraj = _r173Type === 'ikhraj';
   const isAdampata = _r173Type === 'adampata';
   const isClosing = isIkhraj || isAdampata; // both use the 3-col 8-row table layout

@@ -61,7 +61,7 @@ function _renderCdr() {
   const c = _cdrICase || {};
   const s = _cdrISaved || {};
   const rows = (s.rows && s.rows.length) ? s.rows : _cdrInitialRows();
-  const v = (k, def) => (s[k] !== undefined && s[k] !== null) ? s[k] : (def||'');
+  const v = (k, def) => esc((s[k] !== undefined && s[k] !== null) ? s[k] : (def||''));
   // Today in dd/mm/yyyy for auto-fill
   const _t = new Date();
   const _today = `${String(_t.getDate()).padStart(2,'0')}/${String(_t.getMonth()+1).padStart(2,'0')}/${_t.getFullYear()}`;

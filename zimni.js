@@ -96,7 +96,7 @@ function _renderZimniEditor() {
   const saved = z.content || {};
   const year = new Date().getFullYear();
 
-  const savedBody = saved.bodyHtml || _zimniDefaultBody(o, c);
+  const savedBody = saved.bodyHtml ? sanitizeHtml(saved.bodyHtml) : _zimniDefaultBody(o, c);
 
   area.innerHTML = `
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
@@ -192,7 +192,7 @@ function _zimniDefaultBody(o, c) {
     </thead>
     <tbody>
       <tr>
-        <td style="border:1px solid #999;padding:8px;vertical-align:top;">${o.full_name||''}<br>${station}</td>
+        <td style="border:1px solid #999;padding:8px;vertical-align:top;">${esc(o.full_name)||''}<br>${esc(station)}</td>
         <td style="border:1px solid #999;padding:8px;vertical-align:top;text-align:justify;min-height:200px;"> </td>
         <td style="border:1px solid #999;padding:8px;text-align:center;vertical-align:top;">${z.serial_no||''}</td>
         <td style="border:1px solid #999;padding:8px;vertical-align:top;"> </td>
@@ -210,7 +210,7 @@ function _zAddRow() {
   const o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
   const tr = document.createElement('tr');
   tr.innerHTML = `
-    <td style="border:1px solid #999;padding:8px;vertical-align:top;">${o.full_name||''}<br>${o.station||''}</td>
+    <td style="border:1px solid #999;padding:8px;vertical-align:top;">${esc(o.full_name)||''}<br>${esc(o.station)||''}</td>
     <td style="border:1px solid #999;padding:8px;vertical-align:top;text-align:justify;"> </td>
     <td style="border:1px solid #999;padding:8px;text-align:center;vertical-align:top;"> </td>
     <td style="border:1px solid #999;padding:8px;vertical-align:top;"> </td>`;

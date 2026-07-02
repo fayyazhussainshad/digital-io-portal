@@ -112,7 +112,7 @@ function _renderCro() {
   const c = _croCase || {};
   const a = _croAccused || {};
   const s = (_croSaved && _croSaved.form_data) ? _croSaved.form_data : {};
-  const v = (k, def) => (s[k] !== undefined && s[k] !== null && s[k] !== '') ? s[k] : (def || '');
+  const v = (k, def) => sanitizeHtml((s[k] !== undefined && s[k] !== null && s[k] !== '') ? s[k] : (def || ''));
   const photo = a.photo_url || a.photo || '';
 
   // Rule 2: editable cell — bold ONLY if filled
@@ -220,7 +220,7 @@ function _renderCro() {
         </div>
 
         <div style="margin-top:8px;font-size:11px;">
-          تحقیقی افسر: نام وعہدہ <b>${o.full_name||''} ${o.designation||''}</b> | تھانہ <b>${o.station||''}</b> | موبائل نمبر <b>${o.phone||''}</b>
+          تحقیقی افسر: نام وعہدہ <b>${esc(o.full_name)||''} ${esc(o.designation)||''}</b> | تھانہ <b>${esc(o.station)||''}</b> | موبائل نمبر <b>${esc(o.phone)||''}</b>
         </div>
       </div>
 

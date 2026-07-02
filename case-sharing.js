@@ -46,7 +46,7 @@ function _searchOfficersForShare(q) {
       box.innerHTML = list.map(o => `
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;direction:rtl;">
           <div>
-            <div style="font-weight:700;font-size:14px;">${o.full_name||'—'}</div>
+            <div style="font-weight:700;font-size:14px;">${esc(o.full_name)||'—'}</div>
             <div style="font-size:11px;color:var(--text-muted);">${o.designation||''} · ${o.badge_number||''} · ${o.station||''}</div>
           </div>
           <div style="display:flex;gap:4px;">
@@ -94,7 +94,7 @@ async function _loadCurrentShares() {
       data.map(s => {
         const off = s.officers || {};
         return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px;direction:rtl;">
-          <span style="font-size:13px;">${off.full_name||'—'} <span style="color:var(--text-muted);font-size:11px;">(${s.permission==='write'?'ترمیم':'دیکھیں'})</span></span>
+          <span style="font-size:13px;">${esc(off.full_name)||'—'} <span style="color:var(--text-muted);font-size:11px;">(${s.permission==='write'?'ترمیم':'دیکھیں'})</span></span>
           <button class="btn btn-danger btn-sm" onclick="_unshare('${s.id}')">✕</button>
         </div>`;
       }).join('');

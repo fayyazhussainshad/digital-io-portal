@@ -49,7 +49,7 @@ function renderIncident(container) {
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #ccc;">
         <div style="font-size:14px;">
           <span style="color:#555;">واقعاتی رپورٹ نمبر:</span>
-          <input value="${incNum}" id="inc-num" style="${_iStyle('150px')}font-family:monospace;font-weight:700;color:#1a3a5c;">
+          <input value="${esc(incNum)}" id="inc-num" style="${_iStyle('150px')}font-family:monospace;font-weight:700;color:#1a3a5c;">
         </div>
         <div style="font-size:14px;">
           <span style="color:#555;">نوعیت:</span>
@@ -247,7 +247,7 @@ function _secHeader(num, title) {
 function _field(label, id, val, type) {
   return `<div>
     <label style="${_lbl()}">${label}</label>
-    <input id="${id}" value="${val}" type="${type}"
+    <input id="${id}" value="${esc(val)}" type="${type}"
       style="${_iStyle('100%')}border:1px solid #ddd;border-radius:4px;padding:6px 10px;">
   </div>`;
 }

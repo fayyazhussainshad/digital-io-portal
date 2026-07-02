@@ -92,7 +92,7 @@ async function openNotificationCenter() {
       <div onclick="closeModal();${n.action}" style="display:flex;gap:10px;align-items:center;padding:10px 12px;background:var(--bg-secondary);border-radius:8px;cursor:pointer;border-right:3px solid ${n.color};">
         <div style="font-size:18px;flex-shrink:0;">${n.icon}</div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:600;font-family:'Jameel Noori Nastaleeq',serif;">${n.title.slice(0,60)}</div>
+          <div style="font-size:13px;font-weight:600;font-family:'Jameel Noori Nastaleeq',serif;">${esc(n.title.slice(0,60))}</div>
           <div style="font-size:10px;color:var(--text-muted);">${n.subtitle || ''}${n.date ? ` · ${formatDate(n.date)}` : ''}</div>
         </div>
       </div>`).join('')}
