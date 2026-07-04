@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v170
+   DIGITAL IO — SERVICE WORKER v171
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v170';
+const CACHE_NAME = 'digital-io-v171';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -14,7 +14,6 @@ const CORE_ASSETS = [
   '/offline-store.js',
 
   '/app-core.js',
-  '/islamic.js',
   '/dashboard.js',
   '/toolbar.js',
   '/misal-docs.js',

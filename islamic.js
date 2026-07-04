@@ -1,0 +1,1 @@
+/* Islamic ticker — REMOVED */

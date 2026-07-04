@@ -1141,6 +1141,8 @@ async function _loadOfficerProfile() {
       currentOfficer = data;
       // Cache for offline use
       try { localStorage.setItem('dio_officer_cache', JSON.stringify(data)); } catch(_) {}
+      // Save session to IndexedDB so app opens offline next time
+      try { if (typeof offlineStore !== 'undefined' && offlineStore.saveSession) offlineStore.saveSession(currentUser, data); } catch(_) {}
     }
   } catch(_) {
     // Offline or error — restore from cache
@@ -1714,6 +1716,29 @@ async function initApp() {
 
 // ── CHECK SUPABASE SESSION ON LOAD ────────────────────────────
 window.addEventListener('load', async function() {
+  // OFFLINE: don't wait for Supabase — restore from cached session immediately
+  if (!navigator.onLine) {
+    try {
+      let sess = null;
+      if (typeof offlineStore !== 'undefined' && offlineStore.getSession) {
+        sess = await offlineStore.getSession();
+      }
+      // Fallback: localStorage-cached officer
+      const cachedOfficer = sess?.officer || JSON.parse(localStorage.getItem('dio_officer_cache') || 'null');
+      if (cachedOfficer) {
+        currentOfficer = cachedOfficer;
+        currentUser = sess?.user || { id: cachedOfficer.user_id };
+        loginSuccess();
+        return;
+      }
+    } catch(_) {}
+    // No cached session — show login with an offline note
+    try { setLoginLoading(false); } catch(_) {}
+    showToast('📴 آف لائن — پہلے ایک بار آن لائن لاگ اِن کریں', 'info');
+    return;
+  }
+
+  // ONLINE: normal Supabase session check
   try {
     const { data:{ session } } = await supabaseClient.auth.getSession();
     if (session?.user) {
