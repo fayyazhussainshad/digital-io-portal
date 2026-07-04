@@ -62,8 +62,8 @@ function _renderCroList() {
       onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
       <span style="font-size:20px;">${hasCard ? '✅' : '➕'}</span>
       <div style="flex:1;">
-        <div style="font-weight:700;font-size:16px;font-family:'Jameel Noori Nastaleeq',serif;">${a.name||'—'}</div>
-        <div style="font-size:13px;color:var(--text-muted);">${a.cnic||'بدون شناختی کارڈ'} · <span style="color:${typeColor};">${typeName}</span></div>
+        <div style="font-weight:700;font-size:16px;font-family:'Jameel Noori Nastaleeq',serif;">${esc(a.name)||'—'}</div>
+        <div style="font-size:13px;color:var(--text-muted);">${esc(a.cnic)||'بدون شناختی کارڈ'} · <span style="color:${typeColor};">${typeName}</span></div>
       </div>
       <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();_openCroForAccused('${a.id}')">CRO کارڈ دیکھیں/بنائیں</button>
     </div>`;
@@ -128,7 +128,7 @@ function _renderCro() {
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
     <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
       <button class="btn btn-secondary btn-sm" onclick="_croBackToList()">← واپس فہرست</button>
-      <div style="font-weight:700;font-size:14px;font-family:'Jameel Noori Nastaleeq',serif;">CRO کارڈ — ${a.name||'ملزم'}</div>
+      <div style="font-weight:700;font-size:14px;font-family:'Jameel Noori Nastaleeq',serif;">CRO کارڈ — ${esc(a.name)||'ملزم'}</div>
       <div style="margin-right:auto;display:flex;gap:6px;">
         <button class="btn btn-primary btn-sm" onclick="_saveCro()">💾 محفوظ کریں</button>
         <button class="btn btn-secondary btn-sm" onclick="_printCro()">🖨️ پرنٹ کریں (دونوں طرف)</button>

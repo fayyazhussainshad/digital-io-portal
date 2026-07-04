@@ -55,8 +55,8 @@ function _renderZimniList() {
         <div class="card" style="padding:12px;direction:rtl;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;"
              onclick="_openZimni('${z.id}')">
           <div>
-            <div style="font-weight:700;font-size:14px;font-family:'Jameel Noori Nastaleeq',serif;">ضمنی نمبر ${z.serial_no || '—'}</div>
-            <div style="font-size:11px;color:var(--text-muted);">${z.report_date || ''}</div>
+            <div style="font-weight:700;font-size:14px;font-family:'Jameel Noori Nastaleeq',serif;">ضمنی نمبر ${esc(z.serial_no) || '—'}</div>
+            <div style="font-size:11px;color:var(--text-muted);">${esc(z.report_date) || ''}</div>
           </div>
           <div style="display:flex;gap:6px;">
             <button class="btn btn-secondary btn-sm" style="padding:2px 8px;" onclick="event.stopPropagation();_openZimni('${z.id}')">✏️</button>

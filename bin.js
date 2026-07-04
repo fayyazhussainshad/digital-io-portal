@@ -132,10 +132,10 @@ async function _buildBin() {
 // ── HELPERS ───────────────────────────────────────────────────
 function _binTitle(type, d) {
   switch(type) {
-    case 'case':     return `FIR ${d.fir_number||'—'} — ${d.complainant||'—'}`;
+    case 'case':     return `FIR ${esc(d.fir_number)||'—'} — ${esc(d.complainant)||'—'}`;
     case 'reminder': return d.text || '—';
     case 'evidence': return d.name || '—';
-    case 'court':    return `FIR ${d.fir_number||'—'} — ${d.court_name||'—'}`;
+    case 'court':    return `FIR ${esc(d.fir_number)||'—'} — ${esc(d.court_name)||'—'}`;
     case 'incident': return `${d.report_number||'—'} — ${d.incident_type||'—'}`;
     default:         return d.title || d.name || d.text || '—';
   }

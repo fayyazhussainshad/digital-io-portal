@@ -160,14 +160,14 @@ function _renderPendingTab(pending) {
           ${(p.full_name||'?')[0].toUpperCase()}
         </div>
         <div style="flex:1;">
-          <div style="font-size:14px;font-weight:700;">${p.full_name||'—'}</div>
+          <div style="font-size:14px;font-weight:700;">${esc(p.full_name)||'—'}</div>
           <div style="font-size:12px;color:var(--text-muted);">
-            📧 ${p.email||'—'} &nbsp;·&nbsp; 🏷️ ${p.badge_number||'—'}
+            📧 ${esc(p.email)||'—'} &nbsp;·&nbsp; 🏷️ ${esc(p.badge_number)||'—'}
           </div>
           <div style="font-size:12px;color:var(--text-secondary);">
             🏛️ ${p.station||'—'} · ${p.district||'—'} &nbsp;·&nbsp; 👮 ${p.designation||'—'}
           </div>
-          ${p.cnic ? `<div style="font-size:12px;color:var(--text-secondary);" dir="ltr">🆔 ${p.cnic}</div>` : ''}
+          ${p.cnic ? `<div style="font-size:12px;color:var(--text-secondary);" dir="ltr">🆔 ${esc(p.cnic)}</div>` : ''}
           <div style="font-size:10px;color:var(--text-faint);margin-top:4px;">
             درخواست: ${formatDate(p.created_at)}
           </div>
@@ -726,8 +726,8 @@ async function _renderSubsTab() {
       <div style="background:var(--bg-secondary);border-radius:8px;padding:12px;margin-bottom:8px;direction:rtl;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
           <div>
-            <div style="font-weight:700;">${s.officers?.full_name||'—'}</div>
-            <div style="font-size:11px;color:var(--text-muted);">${s.officers?.station||'—'} · ${s.officers?.designation||'—'}</div>
+            <div style="font-weight:700;">${esc(s.officers?.full_name)||'—'}</div>
+            <div style="font-size:11px;color:var(--text-muted);">${esc(s.officers?.station)||'—'} · ${esc(s.officers?.designation)||'—'}</div>
             <div style="font-size:11px;color:var(--accent);">پلان: ${s.subscription_plans?.name||'—'} · Rs. ${s.amount||0}</div>
             <div style="font-size:11px;color:var(--text-muted);">TXN: <b>${s.payment_ref||'—'}</b> · ${s.payment_method||'—'}</div>
           </div>
@@ -757,7 +757,7 @@ async function _renderSubsTab() {
             const statusColors = {active:'var(--green)',trial:'var(--accent)',pending:'var(--amber)',expired:'var(--red)',suspended:'var(--red)'};
             return `<tr>
               <td style="direction:rtl;">
-                <div style="font-weight:700;">${s.officers?.full_name||'—'}</div>
+                <div style="font-weight:700;">${esc(s.officers?.full_name)||'—'}</div>
                 <div style="font-size:10px;color:var(--text-muted);">${s.officers?.station||'—'}</div>
               </td>
               <td style="font-size:12px;">${s.subscription_plans?.name||'—'}</td>

@@ -87,7 +87,7 @@ function _renderCdr() {
           <span>ڈائری نمبر: <span contenteditable="true" data-k="diary_number" style="border-bottom:1px solid #999;min-width:200px;display:inline-block;">${v('diary_number')}</span> مورخہ: <span contenteditable="true" data-k="diary_date" style="border-bottom:1px solid #999;min-width:140px;display:inline-block;">${v('diary_date')}</span></span>
           <span>ضلع: <b contenteditable="true">${o.district||'ملتان'}</b></span>
         </div>
-        <div style="margin-top:6px;">مقدمہ نمبر: <b>${c.fir_number||''}</b> &nbsp; مورخہ: <b>${c.fir_date||''}</b> &nbsp; بجرم: <b>${c.section_of_law||''} ${c.offence_type||''}</b> ت پ تھانہ ${o.station||'صدر ملتان'}</div>
+        <div style="margin-top:6px;">مقدمہ نمبر: <b>${esc(c.fir_number)||''}</b> &nbsp; مورخہ: <b>${esc(c.fir_date)||''}</b> &nbsp; بجرم: <b>${esc(c.section_of_law)||''} ${esc(c.offence_type)||''}</b> ت پ تھانہ ${o.station||'صدر ملتان'}</div>
         <div style="margin-top:4px;display:flex;justify-content:space-between;"><span>تاریخ/وقت وقوعہ: <b>${c.occurrence_date||''}</b></span><span style="min-width:40%;text-align:right;">مقام وقوعہ: <b>${c.occurrence_place||''}</b></span></div>
         <div style="margin-top:4px;display:flex;justify-content:space-between;"><span>تفتیشی آفیسر: <b>${(() => {
           let rank = o.rank || o.designation || '';

@@ -168,8 +168,8 @@ async function _loadPrevReports() {
       <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);">
         <span style="font-size:18px;">🚨</span>
         <div style="flex:1;">
-          <div style="font-size:12px;font-weight:700;color:var(--accent);">${r.report_number||'—'}</div>
-          <div style="font-size:11px;color:var(--text-muted);">${r.incident_type||'—'} · ${r.incident_date||'—'} · ${r.address||'—'}</div>
+          <div style="font-size:12px;font-weight:700;color:var(--accent);">${esc(r.report_number)||'—'}</div>
+          <div style="font-size:11px;color:var(--text-muted);">${esc(r.incident_type)||'—'} · ${esc(r.incident_date)||'—'} · ${esc(r.address)||'—'}</div>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="_viewIncReport('${r.id}')">👁️ دیکھیں</button>
         <button class="btn btn-danger btn-sm" onclick="_delIncReport('${r.id}')">🗑️</button>
@@ -501,7 +501,7 @@ async function _showPrevReports() {
           <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);direction:rtl;">
             <span style="font-size:18px;">🚨</span>
             <div style="flex:1;">
-              <div style="font-size:13px;font-weight:700;color:var(--accent);">${r.report_number||'—'}</div>
+              <div style="font-size:13px;font-weight:700;color:var(--accent);">${esc(r.report_number)||'—'}</div>
               <div style="font-size:11px;color:var(--text-muted);">${r.incident_type||'—'} · ${r.incident_date||'—'}</div>
               <div style="font-size:11px;color:var(--text-faint);">${r.address||'—'}</div>
               ${r.data?.fir_number ? `<div style="font-size:10px;color:var(--accent);">FIR: ${r.data.fir_number}</div>` : ''}

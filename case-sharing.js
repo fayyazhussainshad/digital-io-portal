@@ -47,7 +47,7 @@ function _searchOfficersForShare(q) {
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;direction:rtl;">
           <div>
             <div style="font-weight:700;font-size:14px;">${esc(o.full_name)||'—'}</div>
-            <div style="font-size:11px;color:var(--text-muted);">${o.designation||''} · ${o.badge_number||''} · ${o.station||''}</div>
+            <div style="font-size:11px;color:var(--text-muted);">${esc(o.designation)||''} · ${esc(o.badge_number)||''} · ${esc(o.station)||''}</div>
           </div>
           <div style="display:flex;gap:4px;">
             <button class="btn btn-secondary btn-sm" onclick="_shareWith('${o.id}','read')">👁️ دیکھیں</button>

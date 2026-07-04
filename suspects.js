@@ -67,9 +67,9 @@ function _renderSuspectList(people) {
         <div style="display:flex;align-items:center;gap:12px;">
           <div style="width:42px;height:42px;border-radius:50%;background:${t.color};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${t.icon}</div>
           <div style="flex:1;min-width:0;">
-            <div style="font-size:15px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">${p.full_name || '—'}</div>
+            <div style="font-size:15px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">${esc(p.full_name) || '—'}</div>
             <div style="font-size:11px;color:var(--text-muted);">
-              ${t.label}${p.cnic ? ` · <span dir="ltr">${p.cnic}</span>` : ''}${p.cell ? ` · <span dir="ltr">${p.cell}</span>` : ''}
+              ${t.label}${p.cnic ? ` · <span dir="ltr">${esc(p.cnic)}</span>` : ''}${p.cell ? ` · <span dir="ltr">${esc(p.cell)}</span>` : ''}
             </div>
           </div>
           ${caseCount ? `<div style="background:var(--accent-glow);color:var(--accent);border-radius:12px;padding:3px 10px;font-size:11px;font-weight:700;white-space:nowrap;">${caseCount} مقدمات</div>` : ''}
@@ -198,16 +198,16 @@ async function _viewSuspect(id) {
   // Cross-reference: find cases mentioning this person (by name or CNIC)
   const matchedCases = await _findCasesForPerson(p);
 
-  openModal(`${t.icon} ${p.full_name}`, `
+  openModal(`${t.icon} ${esc(p.full_name)}`, `
     <div style="direction:rtl;">
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;font-size:13px;">
         <div><b>قسم:</b> ${t.label}</div>
         ${p.father_name ? `<div><b>ولدیت:</b> ${p.father_name}</div>` : ''}
         ${p.caste ? `<div><b>ذات:</b> ${p.caste}</div>` : ''}
         ${p.profession ? `<div><b>پیشہ:</b> ${p.profession}</div>` : ''}
-        ${p.cnic ? `<div><b>شناختی کارڈ:</b> <span dir="ltr">${p.cnic}</span></div>` : ''}
+        ${p.cnic ? `<div><b>شناختی کارڈ:</b> <span dir="ltr">${esc(p.cnic)}</span></div>` : ''}
         ${p.cell ? `<div><b>فون:</b> <span dir="ltr">${p.cell}</span></div>` : ''}
-        ${p.address ? `<div><b>پتہ:</b> ${p.address}</div>` : ''}
+        ${p.address ? `<div><b>پتہ:</b> ${esc(p.address)}</div>` : ''}
         ${p.notes ? `<div><b>نوٹس:</b> ${p.notes}</div>` : ''}
       </div>
 
