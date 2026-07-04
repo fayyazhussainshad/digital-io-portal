@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ur">
+<head>
+<meta charset="UTF-8">
+<title>Digital IO — Recovery Sheet & Backup Guide</title>
+<style>
+  @page { size: A4; margin: 12mm; }
+  body { font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl; color:#111; font-size:14px; line-height:1.9; max-width:800px; margin:0 auto; padding:16px; }
+  h1 { text-align:center; font-size:21px; margin:4px 0 2px; }
+  .sub { text-align:center; color:#666; font-size:12px; margin-bottom:14px; }
+  h2 { font-size:16px; background:#f0f4f8; padding:5px 12px; border-radius:6px; margin:16px 0 6px; border-right:4px solid #0369a1; }
+  .warn { background:#fdecec; border:1px solid #e08080; border-radius:8px; padding:10px 14px; font-size:13px; margin:10px 0; }
+  table { width:100%; border-collapse:collapse; font-size:13px; margin:6px 0; }
+  td, th { border:1px solid #999; padding:8px 10px; text-align:right; vertical-align:middle; }
+  th { background:#f0f4f8; width:35%; }
+  .fill { min-height:22px; }
+  .step { background:#e8f5e9; border:1px solid #7cb87c; border-radius:8px; padding:8px 14px; font-size:13px; margin:6px 0; }
+  .ltr { direction:ltr; text-align:left; font-family:monospace; font-size:12px; }
+  @media print { body{padding:0;} .pagebreak{page-break-before:always;} }
+</style>
+</head>
+<body>
+
+<h1>🔐 Digital IO — Recovery Sheet</h1>
+<div class="sub">(چابیوں کا لفافہ) — یہ صفحہ بھر کر <b>سیل بند لفافے</b> میں محفوظ جگہ رکھیں</div>
+
+<div class="warn">
+⚠️ <b>یہ صفحہ انتہائی خفیہ ہے۔</b> اسے کسی موبائل/کمپیوٹر میں محفوظ نہ کریں — صرف <b>کاغذ پر</b> لکھ کر گھر کی محفوظ جگہ یا کسی بھروسے مند بھائی/دوست کے پاس بند لفافے میں رکھیں۔ اگر آپ کو کچھ ہو جائے تو سسٹم اسی صفحے سے بحال ہوگا۔
+</div>
+
+<h2>۱ — GitHub (کوڈ یہاں ہے)</h2>
+<table>
+  <tr><th>Login Email</th><td class="fill ltr"></td></tr>
+  <tr><th>Password</th><td class="fill ltr"></td></tr>
+  <tr><th>Recovery Email/Phone</th><td class="fill ltr"></td></tr>
+  <tr><th>Repo نام</th><td class="ltr">fayyazhussainshad / digital-io-portal</td></tr>
+</table>
+
+<h2>۲ — Vercel (ویب سائٹ یہاں چلتی ہے)</h2>
+<table>
+  <tr><th>Login طریقہ</th><td class="fill">(GitHub سے؟ / Email؟) ______________</td></tr>
+  <tr><th>Email / Password</th><td class="fill ltr"></td></tr>
+  <tr><th>Website URL</th><td class="ltr">digital-io-portal.vercel.app</td></tr>
+</table>
+
+<h2>۳ — Supabase (ڈیٹا بیس — سب سے اہم)</h2>
+<table>
+  <tr><th>Login Email</th><td class="fill ltr"></td></tr>
+  <tr><th>Password</th><td class="fill ltr"></td></tr>
+  <tr><th>Project نام</th><td class="fill ltr"></td></tr>
+  <tr><th>Recovery Email/Phone</th><td class="fill ltr"></td></tr>
+</table>
+
+<h2>۴ — ایپ کا Superadmin لاگ اِن</h2>
+<table>
+  <tr><th>Email</th><td class="fill ltr"></td></tr>
+  <tr><th>Password</th><td class="fill ltr"></td></tr>
+  <tr><th>دوسرا Admin (نام/بیج)</th><td class="fill"></td></tr>
+</table>
+
+<div class="warn">
+✅ <b>ابھی چیک کریں:</b> تینوں اکاؤنٹس (GitHub, Vercel, Supabase) کی settings میں جا کر <b>recovery email اور phone number</b> اپنا درست موجود ہونا یقینی بنائیں — ورنہ پاس ورڈ بھولنے پر واپسی ممکن نہیں۔
+</div>
+
+<div class="pagebreak"></div>
+
+<h1>💾 ہفتہ وار بیک اپ گائیڈ</h1>
+<div class="sub">ہر <b>جمعہ</b> کو 10 منٹ — ڈیٹا کبھی ضائع نہ ہو</div>
+
+<h2>طریقہ A — Supabase سے CSV (سب سے اہم)</h2>
+<div class="step">۱۔ Supabase کھولیں → بائیں مینو سے <b>Table Editor</b></div>
+<div class="step">۲۔ ہر اہم table کھولیں، اوپر <b>Export → Export as CSV</b> دبائیں</div>
+<div class="step">۳۔ یہ tables ضرور: <b>cases · zimni_reports · case_accused · case_witnesses · report_173 · officers · fir_matn</b></div>
+<div class="step">۴۔ سب CSV فائلیں ایک folder میں رکھیں — نام: <b>backup_[تاریخ]</b> — پھر <b>Google Drive</b> پر اپلوڈ کریں</div>
+
+<h2>طریقہ B — ایپ کا اپنا بیک اپ</h2>
+<div class="step">ایپ میں 🔧 اوزار → ☁️ <b>بیک اپ</b> → مکمل بیک اپ ڈاؤنلوڈ کریں (یہ بھی ہر ہفتے)</div>
+
+<h2>طریقہ C — GitHub Release (کوڈ کا بیک اپ)</h2>
+<div class="step">کوئی بڑا change اپلوڈ کرنے سے <b>پہلے</b>: GitHub → Releases → <b>Draft a new release</b> → Tag: v___ → Publish۔ کچھ ٹوٹے تو یہیں سے واپسی۔</div>
+
+<table style="margin-top:14px;">
+  <tr><th style="width:20%;">بیک اپ کی تاریخ</th><th>کیا بیک اپ ہوا (CSV/ایپ/Release)</th><th style="width:20%;">کہاں رکھا</th></tr>
+  <tr><td class="fill"></td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td class="fill"></td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td class="fill"></td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td class="fill"></td><td class="fill"></td><td class="fill"></td></tr>
+  <tr><td class="fill"></td><td class="fill"></td><td class="fill"></td></tr>
+</table>
+
+<div style="text-align:center;font-size:11px;color:#999;margin-top:16px;">Digital IO — یہ صفحہ پرنٹ کریں، بھریں، اور محفوظ رکھیں</div>
+
+</body>
+</html>
