@@ -347,6 +347,8 @@ h1, h2, h3, h4, h5, h6, p, label, span, div, td, th, li { text-align: right; }
 /* Tables: header and cells right-aligned */
 .data-table th, .data-table td { text-align: right; }
 .fivec-center-table th, .fivec-center-table td { text-align: center !important; vertical-align: middle !important; }
+/* Complainant column (2nd) — Urdu names must start from the very right border */
+.fivec-center-table th:nth-child(2), .fivec-center-table td:nth-child(2) { text-align: right !important; }
 
 /* Flex rows that hold buttons/icons flow RTL (icon then text) */
 .nav-item { flex-direction: row; }

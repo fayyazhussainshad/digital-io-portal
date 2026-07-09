@@ -49,12 +49,26 @@ async function _buildAdmin(role) {
 
   // Load all data in parallel
   _hookAdminVisibility();
-  const [officers, pending, cases, activity] = await Promise.all([
+  let [officers, pending, cases, activity] = await Promise.all([
     _adminGetOfficers(),
     _adminGetPending(),
     _adminGetAllCases(),
     _adminGetActivity(),
   ]);
+
+  // PERMANENT FIX — duplicate-registration ghosts:
+  // If an officer with the SAME badge number or email is ALREADY approved,
+  // any leftover unapproved duplicate row must NOT appear as a pending request.
+  const _approvedKeys = new Set(
+    officers.filter(o => o.is_approved === true)
+      .flatMap(o => [o.badge_number, o.email])
+      .filter(Boolean)
+      .map(x => String(x).toLowerCase().trim())
+  );
+  pending = pending.filter(p => {
+    const keys = [p.badge_number, p.email].filter(Boolean).map(x => String(x).toLowerCase().trim());
+    return !keys.some(k => _approvedKeys.has(k));
+  });
 
   const active    = officers.filter(o => o.is_approved && !o.suspended);
   const suspended = officers.filter(o => o.suspended);
@@ -377,7 +391,15 @@ async function _adminApprove(regId, name) {
 
 async function _doApproveReg(regId) {
   try {
-    await supabaseClient.from('officers').update({ is_approved: true }).eq('id', regId);
+    // .select() returns the updated row — if RLS silently blocks the update,
+    // data comes back empty and we show a REAL error instead of fake success.
+    const { data, error } = await supabaseClient.from('officers')
+      .update({ is_approved: true }).eq('id', regId).select('id,is_approved');
+    if (error) throw error;
+    if (!data || !data.length || data[0].is_approved !== true) {
+      showToast('❌ منظوری محفوظ نہیں ہوئی — ڈیٹابیس اجازت (RLS) کا مسئلہ ہے', 'error', 6000);
+      return;
+    }
     // Remove card from DOM immediately (no wait for reload)
     const card = document.getElementById('pending-card-'+regId);
     if (card) card.remove();
@@ -408,7 +430,12 @@ async function _doRejectReg(regId) {
 }
 
 async function _adminApproveOfficer(officerId) {
-  await supabaseClient.from('officers').update({ is_approved: true }).eq('id', officerId);
+  const { data, error } = await supabaseClient.from('officers')
+    .update({ is_approved: true }).eq('id', officerId).select('id,is_approved');
+  if (error || !data || !data.length || data[0].is_approved !== true) {
+    showToast('❌ منظوری محفوظ نہیں ہوئی — ڈیٹابیس اجازت (RLS) کا مسئلہ ہے', 'error', 6000);
+    return;
+  }
   showToast('✅ افسر منظور', 'success');
   _adminRefresh();
 }

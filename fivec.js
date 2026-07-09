@@ -194,25 +194,29 @@ async function open5CResponse(id){
   const refs=(app.application_5c_numbers||[]).map(n=>esc5C((n.application_number||'').replace(/،/g,'/'))).filter(Boolean).join('، ')||'—';
 
   // Initial content — uses <br> for spacing (not margin-bottom which propagates on Enter)
-  const initial=app.response_text||`<div dir="rtl">تھانہ: ${esc5C(o.station||'')} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ضلع: ${esc5C(o.district||'')}</div>
+  // Layout strictly per approved reference format:
+  // flex rows keep right & left items perfectly aligned on both lines,
+  // application number + CNIC + cell render LTR, جواب درخواست centered/underlined,
+  // signature block bottom-LEFT: line → SHO تھانہ → date (nothing else).
+  const initial=app.response_text||`<div dir="rtl" style="display:flex;justify-content:space-between;align-items:baseline;"><span>تھانہ: ${esc5C(o.station||'')}</span><span>ضلع: ${esc5C(o.district||'')}</span></div>
 <br>
-<div dir="rtl">درخواست نمبری: ${refs}</div>
+<div dir="rtl" style="display:flex;justify-content:space-between;align-items:baseline;"><span>درخواست نمبری:</span><span dir="ltr" style="direction:ltr;unicode-bidi:isolate;">${refs}</span></div>
 <br>
 <div dir="rtl">درخواست ازاں: ${esc5C(app.complainant_name||'')}</div>
 <br>
-<div dir="rtl">شناختی کارڈ نمبر: ${esc5C(formatCNIC(app.complainant_cnic)||'')} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; رابطہ نمبر: ${esc5C(formatCell(app.complainant_cell)||'')}</div>
+<div dir="rtl" style="display:flex;justify-content:space-between;align-items:baseline;"><span>شناختی کارڈ نمبر: <span dir="ltr" style="direction:ltr;unicode-bidi:isolate;">${esc5C(formatCNIC(app.complainant_cnic)||'')}</span></span><span>رابطہ نمبر: <span dir="ltr" style="direction:ltr;unicode-bidi:isolate;">${esc5C(formatCell(app.complainant_cell)||'')}</span></span></div>
 <br>
+<div dir="rtl" style="text-align:center;"><span style="font-weight:bold;border-bottom:1px solid #000;padding-bottom:2px;">جواب درخواست</span></div>
 <br>
 <div dir="rtl">جنابِ عالیٰ!</div>
 <br>
 <div dir="rtl"></div>
 <br><br><br><br><br>
-<div style="display:flex;justify-content:flex-end;direction:ltr;">
+<div style="display:flex;justify-content:flex-start;direction:ltr;">
   <div style="text-align:center;min-width:200px;">
     <div style="border-top:1px solid #333;padding-top:6px;margin-top:50px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;font-weight:bold;">
       ${(() => { const s=(typeof getSHOName==='function')?getSHOName():''; return (s?esc5C(s)+' ':'')+'SHO تھانہ '+esc5C(o.station||'صدر ملتان'); })()}
     </div>
-    <div style="font-size:11px;color:#555;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">مہر و دستخط</div>
     <div style="font-size:11px;color:#555;margin-top:4px;">${today}</div>
   </div>
 </div>`;
@@ -237,12 +241,18 @@ async function open5CResponse(id){
     #a4-paper div, #a4-paper p, #a4-paper li{margin:0!important;padding:0!important;}
     #a4-paper br{line-height:inherit;}
     /* Fix 4: hide page borders when printing */
+    /* PERMANENT RULE: only the working document prints — title bar and
+       MS-Word-style toolbar must NEVER appear in print (real MS Word behaviour) */
     @media print{
-      #a4-paper{border:none!important;background-image:none!important;box-shadow:none!important;padding:0!important;min-height:auto!important;}
+      body > *:not(#response5c-overlay){display:none!important;}
+      #response5c-overlay{position:static!important;background:white!important;display:block!important;}
+      #r5c-titlebar, #response5c-overlay .wb-ribbon{display:none!important;}
+      #response5c-overlay > div:last-of-type{padding:0!important;background:white!important;display:block!important;}
+      #a4-paper{border:none!important;background-image:none!important;box-shadow:none!important;padding:0!important;min-height:auto!important;width:auto!important;max-width:none!important;}
     }
   </style>
   <!-- Title bar -->
-  <div style="background:#0f1923;padding:8px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #1a3148;flex-wrap:wrap;">
+  <div id="r5c-titlebar" style="background:#0f1923;padding:8px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #1a3148;flex-wrap:wrap;">
     <span style="font-weight:700;color:#e8f0fe;flex:1;font-size:13px;">📝 Response — App #${app.serial_number} · ${esc5C(app.complainant_name||'')}</span>
     <button class="btn btn-primary btn-sm" onmousedown="event.preventDefault()" onclick="save5CResponse('${id}')">💾 Save</button>
     <button class="btn btn-secondary btn-sm" onmousedown="event.preventDefault()" onclick="downloadResponse5C('${id}','${esc5C((app.complainant_name||'response').replace(/[^\w]/g,'_'))}')">⬇️ Download</button>
@@ -533,26 +543,24 @@ async function _print5C(id) {
       .sig-box{text-align:center;min-width:180px;}
       .sig-line{border-top:1px solid #000;padding-top:5px;margin-top:25px;}
     </style></head><body>
-    <div class="hdr">
-      <h2></h2>
-      <div>تھانہ ${o.station||'—'} · ضلع ${o.district||'—'}</div>
-      <div style="font-weight:700;margin-top:4px;">5-C درخواست — سیریل نمبر: <b>${a.serial_number}</b></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;font-weight:700;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:12px;">
+      <div>تھانہ ${esc5C(o.station||'—')}:</div>
+      <div>ضلع ${esc5C(o.district||'—')}</div>
     </div>
     <table>
-      <tr><th>مدعی / درخواست گزار</th><td><b>${a.complainant_name||'—'}</b></td></tr>
-      <tr><th>شناختی کارڈ</th><td>${a.complainant_cnic||'—'}</td></tr>
-      <tr><th>موبائل</th><td>${a.complainant_cell||'—'}</td></tr>
-      <tr><th>موضوع</th><td>${a.subject||'—'}</td></tr>
-      <tr><th>درخواست کی تاریخ</th><td>${a.application_date||'—'}</td></tr>
+      <tr><th>مدعی / درخواست گزار</th><td><b>${esc5C(a.complainant_name)||'—'}</b></td></tr>
+      <tr><th>درخواست نمبر</th><td><span dir="ltr" style="direction:ltr;unicode-bidi:isolate;display:inline-block;">${esc5C(nums.map(n=>(n.application_number||'').replace(/،/g,'/')).filter(Boolean).join('، '))||'—'}</span></td></tr>
+      <tr><th>موضوع</th><td>${esc5C(a.subject)||'—'}</td></tr>
     </table>
-    ${nums.length ? `<table><tr><th>درخواست نمبر</th><th>افسر</th><th>عہدہ</th></tr>
-    ${nums.map(n=>`<tr><td dir="ltr">${(n.application_number||'—').replace(/،/g,'/')}</td><td>${esc5C(n.senior_officer_name||'—')}</td><td>${esc5C(n.senior_officer_designation||'—')}</td></tr>`).join('')}
-    </table>` : ''}
     <div style="font-weight:700;margin-top:10px;">جواب / رپورٹ:</div>
     <div class="resp">${(a.response_text||'').replace(/\n/g,'<br>') || '&nbsp;'}</div>
-    <div class="sig">
-      <div class="sig-box"><div class="sig-line">تفتیشی افسر<br>${esc5C(o.full_name||'—')} ${esc5C(o.designation||'')}</div></div>
-      <div class="sig-box"><div class="sig-line">SHO تھانہ ${o.station||'—'}<br>مہر و دستخط</div></div>
+    <div style="display:flex;justify-content:flex-start;direction:ltr;margin-top:30px;">
+      <div style="text-align:center;min-width:200px;">
+        <div style="border-top:1px solid #000;padding-top:6px;margin-top:35px;font-weight:700;direction:rtl;">
+          ${(() => { const s=(typeof getSHOName==='function')?getSHOName():''; return (s?esc5C(s)+' ':'')+'SHO تھانہ '+esc5C(o.station||'—'); })()}
+        </div>
+        <div style="font-size:11px;margin-top:4px;">${formatDate(new Date())}</div>
+      </div>
     </div>
     <div class="footer">Digital IO · ‏${formatDate(new Date())}</div>
     
