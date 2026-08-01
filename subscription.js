@@ -8,6 +8,11 @@ async function checkSubscription() {
   try {
     const oid = await getOfficerId();
     if (!oid) return { status:'none' };
+    // PERMANENT RULE — superadmin (app ka maalik) par subscription kabhi
+    // apply nahi hoti. Owner ko system kabhi block nahi kar sakta.
+    if (currentOfficer && currentOfficer.role === 'superadmin') {
+      return { status:'active', daysLeft:36500, plan:'مالک — لائف ٹائم' };
+    }
     if (!navigator.onLine) return { status:'trial', daysLeft:30, plan:'آزمائشی' };
 
     const { data, error } = await supabaseClient
