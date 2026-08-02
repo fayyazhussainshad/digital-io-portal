@@ -1143,19 +1143,30 @@ function getMisalTemplate(docId, c) {
     const _dst  = _o.district || c?.case_district || '';
     const _fd   = (v)=> v ? ((typeof formatDate==='function') ? formatDate(v) : v) : '';
     const _e    = (typeof esc==='function') ? esc : (s=>String(s??''));
-    const dots  = (n)=>'۔'.repeat(n);
+    const _fc   = (typeof formatCNIC==='function') ? formatCNIC : (s=>s||'');
+    const _fm   = (typeof formatCell==='function') ? formatCell : (s=>s||'');
     const _th   = 'border:1px solid #333;padding:5px 4px;background:#f5f5f5;font-weight:bold;text-align:center;font-size:13px;';
     const _td   = 'border:1px solid #333;padding:5px 4px;text-align:center;font-size:13px;';
+    const _ltr  = 'dir="ltr" style="unicode-bidi:isolate;"';
 
-    // ملزمان (بنام) — 4 blocks, async fill via span IDs
+    // مدعی کے CNIC + رابطہ — case record سے (sync)
+    const _cCnic = _fc(c?.complainant_cnic) || '';
+    const _cCell = _fm(c?.complainant_cell) || '';
+
+    // بنام blocks — ملزمان async fill (بغیر dots کے)
     let _bnam = '';
     for (let i=1;i<=4;i++){
-      _bnam += `<div style="line-height:2.4;">بنام${i===1?'1':''}<span id="idxn-name-${i}">${dots(52)}</span></div>
-<div style="line-height:2.4;">رابطہ نمبر<span id="idxn-cell-${i}" dir="ltr" style="unicode-bidi:isolate;">${dots(18)}</span> شناختی کارڈ نمبر<span id="idxn-cnic-${i}" dir="ltr" style="unicode-bidi:isolate;">${dots(22)}</span></div>`;
+      _bnam += `<div style="line-height:2.3;">بنام${i}: <span id="idxn-name-${i}" style="font-weight:bold;"></span></div>
+<div style="line-height:2.3;">رابطہ نمبر: <span id="idxn-cell-${i}" ${_ltr}></span> ـــ شناختی کارڈ نمبر: <span id="idxn-cnic-${i}" ${_ltr}></span></div>`;
     }
 
-    // انڈکس ضمنیات — 3 groups × (ضمنی نمبر|مورخہ|تفتیشی افسر), rows 1-18
-    const _zHead = `<tr>${'<th style="'+_th+'width:6%;">ضمنی نمبر</th><th style="'+_th+'width:12%;">مورخہ</th><th style="'+_th+'width:15%;">تفتیشی افسر</th>'.repeat(3)}</tr>`;
+    // انڈکس ضمنیات — 3 groups × (ضمنی نمبر|مورخہ|تفتیشی افسر), rows 1–18
+    // Headers HAR group par (تینوں حصوں میں) — loop سے
+    let _zHead = '<tr>';
+    for (let g=0;g<3;g++){
+      _zHead += `<th style="${_th}width:6%;">ضمنی نمبر</th><th style="${_th}width:12%;">مورخہ</th><th style="${_th}width:15%;">تفتیشی افسر</th>`;
+    }
+    _zHead += '</tr>';
     let _zRows = '';
     for (let r=0;r<6;r++){
       _zRows += '<tr>';
@@ -1164,18 +1175,6 @@ function getMisalTemplate(docId, c) {
         _zRows += `<td style="${_td}">${n}</td><td style="${_td}" id="idxz-d-${n}">&nbsp;</td><td style="${_td}" id="idxz-o-${n}">&nbsp;</td>`;
       }
       _zRows += '</tr>';
-    }
-
-    // انڈکس شہادت — 3 groups × (شہادت نمبر|مورخہ|تفتیشی افسر), rows 1-15
-    const _sHead = `<tr>${'<th style="'+_th+'width:6%;">شہادت نمبر</th><th style="'+_th+'width:12%;">مورخہ</th><th style="'+_th+'width:15%;">تفتیشی افسر</th>'.repeat(3)}</tr>`;
-    let _sRows = '';
-    for (let r=0;r<5;r++){
-      _sRows += '<tr>';
-      for (let g=0;g<3;g++){
-        const n = g*5 + r + 1;
-        _sRows += `<td style="${_td}">${n}</td><td style="${_td}">&nbsp;</td><td style="${_td}">&nbsp;</td>`;
-      }
-      _sRows += '</tr>';
     }
 
     return `
@@ -1202,13 +1201,11 @@ function getMisalTemplate(docId, c) {
     <td style="${_td}"></td>
   </tr>
 </table>
-<div style="line-height:2.4;">سرکار بذریعہ ${_e(c?.complainant||'')}${dots(30)}</div>
-<div style="line-height:2.4;">${dots(58)}</div>
+<div style="line-height:2.3;">سرکار بذریعہ <span style="font-weight:bold;">${_e(c?.complainant||'')}</span></div>
+<div style="line-height:2.3;">رابطہ نمبر: <span ${_ltr}>${_e(_cCell)}</span> ـــ شناختی کارڈ نمبر: <span ${_ltr}>${_e(_cCnic)}</span></div>
 ${_bnam}
 <div style="text-align:center;font-weight:bold;text-decoration:underline;font-size:16px;margin:14px 0 8px;">انڈکس ضمنیات</div>
-<table style="width:100%;border-collapse:collapse;margin-bottom:14px;">${_zHead}${_zRows}</table>
-<div style="text-align:center;font-weight:bold;text-decoration:underline;font-size:16px;margin:14px 0 8px;">انڈکس شہادت</div>
-<table style="width:100%;border-collapse:collapse;">${_sHead}${_sRows}</table>`;
+<table style="width:100%;border-collapse:collapse;">${_zHead}${_zRows}</table>`;
   }
 
   const o   = currentOfficer || {};
