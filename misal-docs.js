@@ -426,7 +426,7 @@ function _renderMisalEditor(docId, def) {
       <div style="font-size:16px;font-weight:800;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;color:var(--accent);">${def.name}</div>
       <div style="display:flex;gap:6px;">
         <button class="btn btn-primary btn-sm" onclick="saveMisalDoc('${docId}')">💾 محفوظ</button>
-        <button class="btn btn-secondary btn-sm" onclick="printMisalDoc('${def.name.replace(/'/g,"\\'")}')">🖨️</button>
+        <button class="btn btn-secondary btn-sm" onclick="printMisalDoc('${def.name.replace(/'/g,"\\'")}')">🖨️ پرنٹ</button>
       </div>
     </div>
 
@@ -962,11 +962,12 @@ function printMisalDoc(name) {
   let _printHTML = '';
   // انڈیکس نقل مسل prints on legal size; all other misal docs on A4
   const _pageSize = (_openDocId === 'index_naql') ? 'legal' : 'A4';
+  const _pageMargin = (_openDocId === 'index_naql') ? '10mm' : '15mm';
   _printHTML += (`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
     <title>${name}</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
     <style>
-      @page{size:${_pageSize};margin:15mm}
+      @page{size:${_pageSize};margin:${_pageMargin}}
       body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:15px;line-height:2;direction:rtl;text-align:right;color:#111;}
       table{width:100%;border-collapse:collapse;}
       td,th{border:1px solid #555;padding:6px 10px;}
@@ -1145,26 +1146,25 @@ function getMisalTemplate(docId, c) {
     const _e    = (typeof esc==='function') ? esc : (s=>String(s??''));
     const _fc   = (typeof formatCNIC==='function') ? formatCNIC : (s=>s||'');
     const _fm   = (typeof formatCell==='function') ? formatCell : (s=>s||'');
-    const _th   = 'border:1px solid #333;padding:5px 4px;background:#f5f5f5;font-weight:bold;text-align:center;font-size:13px;';
-    const _td   = 'border:1px solid #333;padding:5px 4px;text-align:center;font-size:13px;';
+    // Genuine INDEX.docx ki paimaishen (fonts pt mein, widths % mein)
+    const _th1  = 'border:1px solid #333;padding:4px;font-weight:bold;text-align:center;font-size:20pt;line-height:1.9;';
+    const _td1  = 'border:1px solid #333;padding:4px;text-align:center;font-size:20pt;line-height:1.9;';
+    const _thZ  = 'border:1px solid #333;padding:2px 4px;font-weight:bold;text-align:center;font-size:15pt;line-height:1.7;';
+    const _tdZ  = 'border:1px solid #333;padding:2px 4px;text-align:center;font-size:15pt;line-height:1.7;height:25px;';
     const _ltr  = 'dir="ltr" style="unicode-bidi:isolate;"';
 
-    // مدعی کے CNIC + رابطہ — case record سے (sync)
     const _cCnic = _fc(c?.complainant_cnic) || '';
     const _cCell = _fm(c?.complainant_cell) || '';
 
-    // بنام blocks — ملزمان async fill (بغیر dots کے)
     let _bnam = '';
     for (let i=1;i<=4;i++){
-      _bnam += `<div style="line-height:2.3;">بنام${i}: <span id="idxn-name-${i}" style="font-weight:bold;"></span></div>
-<div style="line-height:2.3;">رابطہ نمبر: <span id="idxn-cell-${i}" ${_ltr}></span> ـــ شناختی کارڈ نمبر: <span id="idxn-cnic-${i}" ${_ltr}></span></div>`;
+      _bnam += `<div style="font-size:17pt;line-height:2.1;">بنام${i}: <span id="idxn-name-${i}" style="font-weight:bold;"></span></div>
+<div style="font-size:18pt;line-height:2.1;">رابطہ نمبر: <span id="idxn-cell-${i}" ${_ltr}></span> ـــ شناختی کارڈ نمبر: <span id="idxn-cnic-${i}" ${_ltr}></span></div>`;
     }
 
-    // انڈکس ضمنیات — 3 groups × (ضمنی نمبر|مورخہ|تفتیشی افسر), rows 1–18
-    // Headers HAR group par (تینوں حصوں میں) — loop سے
     let _zHead = '<tr>';
     for (let g=0;g<3;g++){
-      _zHead += `<th style="${_th}width:6%;">ضمنی نمبر</th><th style="${_th}width:12%;">مورخہ</th><th style="${_th}width:15%;">تفتیشی افسر</th>`;
+      _zHead += `<th style="${_thZ}width:7.8%;">ضمنی نمبر</th><th style="${_thZ}width:10.4%;">مورخہ</th><th style="${_thZ}width:14.3%;">تفتیشی افسر</th>`;
     }
     _zHead += '</tr>';
     let _zRows = '';
@@ -1172,39 +1172,39 @@ function getMisalTemplate(docId, c) {
       _zRows += '<tr>';
       for (let g=0;g<3;g++){
         const n = g*6 + r + 1;
-        _zRows += `<td style="${_td}">${n}</td><td style="${_td}" id="idxz-d-${n}">&nbsp;</td><td style="${_td}" id="idxz-o-${n}">&nbsp;</td>`;
+        _zRows += `<td style="${_tdZ}">${n}</td><td style="${_tdZ}" id="idxz-d-${n}">&nbsp;</td><td style="${_tdZ}" id="idxz-o-${n}">&nbsp;</td>`;
       }
       _zRows += '</tr>';
     }
 
     return `
-<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;">
-  <div>تھانہ ${_e(_sta)}</div>
-  <div style="font-weight:bold;text-decoration:underline;font-size:17px;">انڈکس نقل مسل پولیس</div>
-  <div>ضلع ${_e(_dst)}</div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">
+  <div style="font-size:20pt;">تھانہ ${_e(_sta)}</div>
+  <div style="font-weight:bold;text-decoration:underline;font-size:24pt;">انڈکس نقل مسل پولیس</div>
+  <div style="font-size:20pt;">ضلع ${_e(_dst)}</div>
 </div>
-<table style="width:100%;border-collapse:collapse;margin-bottom:14px;">
-  <tr>
-    <th style="${_th}width:14%;">مقدمہ نمبر</th>
-    <th style="${_th}width:14%;">تاریخ وقوعہ</th>
-    <th style="${_th}width:14%;">تاریخ رجوعہ</th>
-    <th style="${_th}width:22%;">جرم</th>
-    <th style="${_th}width:12%;">تعداد اوراق</th>
-    <th style="${_th}width:24%;">حکم اخیر عدالت</th>
+<table style="width:100%;border-collapse:collapse;margin-bottom:12px;">
+  <tr style="height:57px;">
+    <th style="${_th1}width:11.4%;">مقدمہ نمبر</th>
+    <th style="${_th1}width:10.8%;">تاریخ وقوعہ</th>
+    <th style="${_th1}width:11.3%;">تاریخ رجوعہ</th>
+    <th style="${_th1}width:14.4%;">جرم</th>
+    <th style="${_th1}width:15.5%;">تعداد اوراق</th>
+    <th style="${_th1}width:36.6%;">حکم اخیر عدالت</th>
   </tr>
-  <tr>
-    <td style="${_td}height:40px;">${_e(c?.fir_number||'')}</td>
-    <td style="${_td}">${_fd(c?.occurrence_date)}</td>
-    <td style="${_td}">${_fd(c?.fir_date)}</td>
-    <td style="${_td}">${_e(c?.section_of_law||'')}</td>
-    <td style="${_td}"></td>
-    <td style="${_td}"></td>
+  <tr style="height:147px;">
+    <td style="${_td1}vertical-align:top;">${_e(c?.fir_number||'')}</td>
+    <td style="${_td1}vertical-align:top;">${_fd(c?.occurrence_date)}</td>
+    <td style="${_td1}vertical-align:top;">${_fd(c?.fir_date)}</td>
+    <td style="${_td1}vertical-align:top;">${_e(c?.section_of_law||'')}</td>
+    <td style="${_td1}vertical-align:top;"></td>
+    <td style="${_td1}vertical-align:top;"></td>
   </tr>
 </table>
-<div style="line-height:2.3;">سرکار بذریعہ <span style="font-weight:bold;">${_e(c?.complainant||'')}</span></div>
-<div style="line-height:2.3;">رابطہ نمبر: <span ${_ltr}>${_e(_cCell)}</span> ـــ شناختی کارڈ نمبر: <span ${_ltr}>${_e(_cCnic)}</span></div>
+<div style="font-size:18pt;line-height:2.1;margin-top:8px;">سرکار بذریعہ <span style="font-weight:bold;">${_e(c?.complainant||'')}</span></div>
+<div style="font-size:18pt;line-height:2.1;">رابطہ نمبر: <span ${_ltr}>${_e(_cCell)}</span> ـــ شناختی کارڈ نمبر: <span ${_ltr}>${_e(_cCnic)}</span></div>
 ${_bnam}
-<div style="text-align:center;font-weight:bold;text-decoration:underline;font-size:16px;margin:14px 0 8px;">انڈکس ضمنیات</div>
+<div style="text-align:center;font-weight:bold;text-decoration:underline;font-size:22pt;margin:12px 0 8px;">انڈکس ضمنیات</div>
 <table style="width:100%;border-collapse:collapse;">${_zHead}${_zRows}</table>`;
   }
 

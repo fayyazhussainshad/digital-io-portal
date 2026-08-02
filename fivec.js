@@ -242,13 +242,15 @@ async function open5CResponse(id){
     #a4-paper br{line-height:inherit;}
     /* Fix 4: hide page borders when printing */
     /* PERMANENT RULE: only the working document prints — title bar and
-       MS-Word-style toolbar must NEVER appear in print (real MS Word behaviour) */
+       MS-Word-style toolbar must NEVER appear in print (real MS Word behaviour).
+       Scoped via body.r5c-open so it can NEVER affect printing anywhere else
+       in the app (misal docs, index, reports sab iframe se print hote hain). */
     @media print{
-      body > *:not(#response5c-overlay){display:none!important;}
-      #response5c-overlay{position:static!important;background:white!important;display:block!important;}
-      #r5c-titlebar, #response5c-overlay .wb-ribbon{display:none!important;}
-      #response5c-overlay > div:last-of-type{padding:0!important;background:white!important;display:block!important;}
-      #a4-paper{border:none!important;background-image:none!important;box-shadow:none!important;padding:0!important;min-height:auto!important;width:auto!important;max-width:none!important;}
+      body.r5c-open > *:not(#response5c-overlay){display:none!important;}
+      body.r5c-open #response5c-overlay{position:static!important;background:white!important;display:block!important;}
+      body.r5c-open #r5c-titlebar, body.r5c-open #response5c-overlay .wb-ribbon{display:none!important;}
+      body.r5c-open #response5c-overlay > div:last-of-type{padding:0!important;background:white!important;display:block!important;}
+      body.r5c-open #a4-paper{border:none!important;background-image:none!important;box-shadow:none!important;padding:0!important;min-height:auto!important;width:auto!important;max-width:none!important;}
     }
   </style>
   <!-- Title bar -->
@@ -257,7 +259,7 @@ async function open5CResponse(id){
     <button class="btn btn-primary btn-sm" onmousedown="event.preventDefault()" onclick="save5CResponse('${id}')">💾 Save</button>
     <button class="btn btn-secondary btn-sm" onmousedown="event.preventDefault()" onclick="downloadResponse5C('${id}','${esc5C((app.complainant_name||'response').replace(/[^\w]/g,'_'))}')">⬇️ Download</button>
     <button class="btn btn-secondary btn-sm" onmousedown="event.preventDefault()" onclick="print5CResponse()">🖨️ Print</button>
-    <button class="btn btn-danger btn-sm" onclick="document.getElementById('response5c-overlay').remove()">✕ Close</button>
+    <button class="btn btn-danger btn-sm" onclick="document.body.classList.remove('r5c-open');document.getElementById('response5c-overlay').remove()">✕ Close</button>
   </div>
   ${buildWordToolbar('a4-paper', { preserveSel: true })}
   <!-- Document area -->
@@ -278,6 +280,7 @@ async function open5CResponse(id){
              background-color:white;">${initial}</div>
   </div>`;
   document.body.appendChild(overlay);
+  document.body.classList.add('r5c-open');
 
   setTimeout(()=>{
     const paper=document.getElementById('a4-paper');
