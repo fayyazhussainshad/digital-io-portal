@@ -508,18 +508,35 @@ async function _fillIndexNaqlData() {
     });
   } catch(_) {}
   // ضمنیاں → انڈکس ضمنیات (نمبر کے مطابق مورخہ + تفتیشی افسر)
+  // FIX 3: har زمنی entry ka apna date + apna تفتیشی افسر (officer_id lookup);
+  // value na ho to cell blank chhoro (koi placeholder nahi).
   try {
     const { data: zs } = await supabaseClient.from('zimni_reports')
-      .select('serial_no,report_date').eq('case_id', _misalCaseId)
+      .select('serial_no,report_date,officer_id').eq('case_id', _misalCaseId)
       .order('serial_no', { ascending: true });
-    const ofcName = (currentOfficer && currentOfficer.full_name) || '';
+    // Officer names ek dafa fetch (id → naam) taake har entry ka apna افسر lag sake
+    const _ofcIds = [...new Set((zs || []).map(z => z.officer_id).filter(Boolean))];
+    let _ofcMap = {};
+    if (_ofcIds.length) {
+      try {
+        const { data: ofs } = await supabaseClient.from('officers')
+          .select('id,full_name,designation').in('id', _ofcIds);
+        (ofs || []).forEach(o => {
+          _ofcMap[o.id] = (o.full_name || '') + (o.designation ? ' (' + o.designation + ')' : '');
+        });
+      } catch(_) {}
+    }
+    const _selfName = (currentOfficer && currentOfficer.full_name) || '';
     (zs || []).forEach(z => {
       const n = parseInt(z.serial_no);
       if (!n || n < 1 || n > 18) return;
       const d = document.getElementById('idxz-d-' + n);
       if (d && z.report_date) d.textContent = (typeof formatDate==='function') ? formatDate(z.report_date) : z.report_date;
       const oEl = document.getElementById('idxz-o-' + n);
-      if (oEl && ofcName) oEl.textContent = ofcName;
+      if (oEl) {
+        const nm = (z.officer_id && _ofcMap[z.officer_id]) ? _ofcMap[z.officer_id] : (z.officer_id ? _selfName : '');
+        if (nm) oEl.textContent = nm;
+      }
     });
   } catch(_) {}
 }
@@ -1198,10 +1215,10 @@ function getMisalTemplate(docId, c) {
     }
 
     return `
-<div style="display:flex;justify-content:center;align-items:baseline;gap:30px;margin-bottom:4px;white-space:nowrap;">
-  <span style="font-size:18pt;">تھانہ ${_e(_sta)}</span>
-  <span style="font-size:22pt;font-weight:bold;text-decoration:underline;">انڈکس نقل مسل پولیس</span>
-  <span style="font-size:18pt;">ضلع ${_e(_dst)}</span>
+<div style="display:flex;align-items:baseline;width:100%;margin:0 0 6px 0;">
+  <span style="flex:1 1 0;white-space:nowrap;text-align:right;padding-right:1in;font-size:18pt;">تھانہ ${_e(_sta)}</span>
+  <span style="flex:1 1 0;white-space:nowrap;text-align:center;font-size:22pt;font-weight:bold;text-decoration:underline;">انڈکس نقل مسل پولیس</span>
+  <span style="flex:1 1 0;white-space:nowrap;text-align:left;font-size:18pt;">ضلع ${_e(_dst)}</span>
 </div>
 <table style="width:100%;border-collapse:collapse;border:none;margin-bottom:6px;table-layout:fixed;">
   <colgroup>
@@ -1226,7 +1243,7 @@ function getMisalTemplate(docId, c) {
 </table>
 <div style="padding:0 14px;">
   <div style="font-size:16pt;line-height:8mm;">سرکار بذریعہ <span id="idxn-complainant" class="fill-line" style="display:inline-block;width:82%;border-bottom:1.5px dotted #000;vertical-align:bottom;text-align:center;font-weight:bold;">${_e(c?.complainant||'')||'&nbsp;'}</span></div>
-  <div style="font-size:16pt;line-height:8mm;">${_fill('', '96%', '')}</div>
+  <div style="font-size:16pt;line-height:8mm;">رابطہ نمبر <span id="idxn-mudai-cell" class="fill-line" style="display:inline-block;width:28%;border-bottom:1.5px dotted #000;vertical-align:bottom;text-align:center;${_ltrS}">${_e(_cCell)||'&nbsp;'}</span> شناختی کارڈ نمبر <span id="idxn-mudai-cnic" class="fill-line" style="display:inline-block;width:34%;border-bottom:1.5px dotted #000;vertical-align:bottom;text-align:center;${_ltrS}">${_e(_cCnic)||'&nbsp;'}</span></div>
   ${_bnam}
 </div>
 <div style="text-align:center;font-size:20pt;font-weight:bold;text-decoration:underline;margin:3px 0 2px;">انڈکس ضمنیات</div>
