@@ -497,12 +497,14 @@ async function _fillIndexNaqlData() {
     (acc || []).slice(0, 4).forEach((a, i) => {
       const n = i + 1;
       const nm = a.name || a.full_name || '';
+      const _fcx = (typeof formatCNIC==='function') ? formatCNIC : (s=>s||'');
+      const _fmx = (typeof formatCell==='function') ? formatCell : (s=>s||'');
       const elN = document.getElementById('idxn-name-' + n);
       if (elN && nm) elN.textContent = ' ' + nm + ' ';
       const elC = document.getElementById('idxn-cell-' + n);
-      if (elC && a.cell) elC.textContent = ' ' + a.cell + ' ';
+      if (elC && a.cell) elC.textContent = ' ' + (_fmx(a.cell) || a.cell) + ' ';
       const elI = document.getElementById('idxn-cnic-' + n);
-      if (elI && a.cnic) elI.textContent = ' ' + a.cnic + ' ';
+      if (elI && a.cnic) elI.textContent = ' ' + (_fcx(a.cnic) || a.cnic) + ' ';
     });
   } catch(_) {}
   // ضمنیاں → انڈکس ضمنیات (نمبر کے مطابق مورخہ + تفتیشی افسر)
@@ -960,15 +962,15 @@ function printMisalDoc(name) {
   const clone = el.cloneNode(true);
   clone.querySelectorAll('button, .no-print, .doc-toolbar, .editor-toolbar, [data-no-print], select, input[type=button]').forEach(n => n.remove());
   let _printHTML = '';
-  // انڈیکس نقل مسل prints on legal size; all other misal docs on A4
-  const _pageSize = (_openDocId === 'index_naql') ? 'legal' : 'A4';
-  const _pageMargin = (_openDocId === 'index_naql') ? '10mm' : '15mm';
+  // انڈیکس نقل مسل → Folio 8.5in×13in, margins 11/8.5/6.5/8mm (asal Word original)
+  const _isIdx = (_openDocId === 'index_naql');
+  const _pageRule = _isIdx ? 'size:8.5in 13in;margin:11mm 8.5mm 6.5mm 8mm;' : 'size:A4;margin:15mm;';
   _printHTML += (`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
     <title>${name}</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
     <style>
-      @page{size:${_pageSize};margin:${_pageMargin}}
-      body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:15px;line-height:2;direction:rtl;text-align:right;color:#111;}
+      @page{${_pageRule}}
+      body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:15px;line-height:${_isIdx?'1.6':'2'};direction:rtl;text-align:right;color:#111;}
       table{width:100%;border-collapse:collapse;}
       td,th{border:1px solid #555;padding:6px 10px;}
       button,.no-print,.doc-toolbar,.editor-toolbar,select{display:none !important;}
@@ -1139,6 +1141,8 @@ function getMisalTemplate(docId, c) {
   // ═══ انڈکس نقل مسل پولیس — GENUINE FORMAT (user ke INDEX.docx ka hoo-ba-hoo) ═══
   // Auto-fill: مقدمہ data + مدعی (sync) · ملزمان + ضمنیاں (async _fillIndexNaqlData)
   if (docId === 'index_naql') {
+    // ═══ انڈکس نقل مسل پولیس — EXACT physical Word original ═══
+    // Page: 8.5in × 13in (Folio) · margins 11/8.5/6.5/8 mm (print via printMisalDoc)
     const _o    = currentOfficer || {};
     const _sta  = _o.station  || c?.case_station  || '';
     const _dst  = _o.district || c?.case_district || '';
@@ -1146,22 +1150,32 @@ function getMisalTemplate(docId, c) {
     const _e    = (typeof esc==='function') ? esc : (s=>String(s??''));
     const _fc   = (typeof formatCNIC==='function') ? formatCNIC : (s=>s||'');
     const _fm   = (typeof formatCell==='function') ? formatCell : (s=>s||'');
-    // Genuine INDEX.docx ki paimaishen (fonts pt mein, widths % mein)
-    const _th1  = 'border:1px solid #333;padding:4px;font-weight:bold;text-align:center;font-size:20pt;line-height:1.9;';
-    const _td1  = 'border:1px solid #333;padding:4px;text-align:center;font-size:20pt;line-height:1.9;';
-    const _thZ  = 'border:1px solid #333;padding:2px 4px;font-weight:bold;text-align:center;font-size:15pt;line-height:1.7;';
-    const _tdZ  = 'border:1px solid #333;padding:2px 4px;text-align:center;font-size:15pt;line-height:1.7;height:25px;';
-    const _ltr  = 'dir="ltr" style="unicode-bidi:isolate;"';
+
+    // ── Section 2: case-info table borders (match original) ──
+    // NO outer left/right borders · top/bottom/header-line 1.5pt · internal verticals 0.5pt
+    const _thBase = 'border:none;border-top:1.5pt solid #000;border-bottom:1.5pt solid #000;padding:2px 3px;font-weight:normal;text-align:center;font-size:20pt;line-height:1.9;vertical-align:middle;';
+    const _tdBase = 'border:none;border-bottom:1.5pt solid #000;padding:3px;text-align:center;font-size:20pt;line-height:1.9;vertical-align:top;';
+    const _vline  = 'border-left:0.5pt solid #000;';   // internal column line (RTL: left edge = inner side except last col)
+
+    // ── Section 5: zimni table — full 0.5pt grid ──
+    const _thZ = 'border:0.5pt solid #000;padding:1px 3px;font-weight:normal;text-align:center;font-size:15pt;line-height:1.6;height:7mm;vertical-align:middle;';
+    const _tdZ = 'border:0.5pt solid #000;padding:1px 3px;text-align:center;font-size:15pt;line-height:1.6;height:8.5mm;vertical-align:middle;';
+
+    // dotted fill-line span (value auto-fills ON the line; blank = handwriting line)
+    const _fill = (id, w, extra) => `<span ${id?('id="'+id+'"'):''} style="display:inline-block;min-width:${w};border-bottom:1.2pt dotted #000;text-align:center;${extra||''}">&nbsp;</span>`;
 
     const _cCnic = _fc(c?.complainant_cnic) || '';
     const _cCell = _fm(c?.complainant_cell) || '';
+    const _ltrS  = 'unicode-bidi:isolate;direction:ltr;';
 
+    // ── Section 3: four accused blocks (بنام1 then بنام) ──
     let _bnam = '';
     for (let i=1;i<=4;i++){
-      _bnam += `<div style="font-size:17pt;line-height:2.1;">بنام${i}: <span id="idxn-name-${i}" style="font-weight:bold;"></span></div>
-<div style="font-size:18pt;line-height:2.1;">رابطہ نمبر: <span id="idxn-cell-${i}" ${_ltr}></span> ـــ شناختی کارڈ نمبر: <span id="idxn-cnic-${i}" ${_ltr}></span></div>`;
+      _bnam += `<div style="font-size:18pt;line-height:11mm;text-align:center;">بنام${i===1?'1':''}${_fill('idxn-name-'+i,'78%','font-weight:bold;')}</div>
+<div style="font-size:18pt;line-height:11mm;text-align:center;">رابطہ نمبر${_fill('idxn-cell-'+i,'26%',_ltrS)} شناختی کارڈ نمبر${_fill('idxn-cnic-'+i,'32%',_ltrS)}</div>`;
     }
 
+    // ── Section 5 rows: numbers column-wise 1–6 / 7–12 / 13–18 ──
     let _zHead = '<tr>';
     for (let g=0;g<3;g++){
       _zHead += `<th style="${_thZ}width:7.8%;">ضمنی نمبر</th><th style="${_thZ}width:10.4%;">مورخہ</th><th style="${_thZ}width:14.3%;">تفتیشی افسر</th>`;
@@ -1178,33 +1192,35 @@ function getMisalTemplate(docId, c) {
     }
 
     return `
-<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">
-  <div style="font-size:20pt;">تھانہ ${_e(_sta)}</div>
-  <div style="font-weight:bold;text-decoration:underline;font-size:24pt;">انڈکس نقل مسل پولیس</div>
-  <div style="font-size:20pt;">ضلع ${_e(_dst)}</div>
+<div style="text-align:center;margin-bottom:4px;">
+  <span style="font-size:20pt;">تھانہ ${_e(_sta)}</span>
+  &nbsp;<span style="font-size:24pt;font-weight:bold;text-decoration:underline;">انڈکس نقل مسل پولیس</span>&nbsp;
+  <span style="font-size:20pt;">ضلع ${_e(_dst)}</span>
 </div>
-<table style="width:100%;border-collapse:collapse;margin-bottom:12px;">
-  <tr style="height:57px;">
-    <th style="${_th1}width:11.4%;">مقدمہ نمبر</th>
-    <th style="${_th1}width:10.8%;">تاریخ وقوعہ</th>
-    <th style="${_th1}width:11.3%;">تاریخ رجوعہ</th>
-    <th style="${_th1}width:14.4%;">جرم</th>
-    <th style="${_th1}width:15.5%;">تعداد اوراق</th>
-    <th style="${_th1}width:36.6%;">حکم اخیر عدالت</th>
+<table style="width:100%;border-collapse:collapse;border:none;margin-bottom:6px;">
+  <tr style="height:20mm;">
+    <th style="${_thBase}${_vline}width:11.4%;">مقدمہ نمبر</th>
+    <th style="${_thBase}${_vline}width:10.8%;">تاریخ وقوعہ</th>
+    <th style="${_thBase}${_vline}width:11.3%;">تاریخ رجوعہ</th>
+    <th style="${_thBase}${_vline}width:14.4%;">جرم</th>
+    <th style="${_thBase}${_vline}width:15.5%;">تعداد اوراق</th>
+    <th style="${_thBase}width:36.6%;">حکم اخیر عدالت</th>
   </tr>
-  <tr style="height:147px;">
-    <td style="${_td1}vertical-align:top;">${_e(c?.fir_number||'')}</td>
-    <td style="${_td1}vertical-align:top;">${_fd(c?.occurrence_date)}</td>
-    <td style="${_td1}vertical-align:top;">${_fd(c?.fir_date)}</td>
-    <td style="${_td1}vertical-align:top;">${_e(c?.section_of_law||'')}</td>
-    <td style="${_td1}vertical-align:top;"></td>
-    <td style="${_td1}vertical-align:top;"></td>
+  <tr style="height:52mm;">
+    <td style="${_tdBase}${_vline}">${_e(c?.fir_number||'')}</td>
+    <td style="${_tdBase}${_vline}">${_fd(c?.occurrence_date)}</td>
+    <td style="${_tdBase}${_vline}">${_fd(c?.fir_date)}</td>
+    <td style="${_tdBase}${_vline}">${_e(c?.section_of_law||'')}</td>
+    <td style="${_tdBase}${_vline}"></td>
+    <td style="${_tdBase}"></td>
   </tr>
 </table>
-<div style="font-size:18pt;line-height:2.1;margin-top:8px;">سرکار بذریعہ <span style="font-weight:bold;">${_e(c?.complainant||'')}</span></div>
-<div style="font-size:18pt;line-height:2.1;">رابطہ نمبر: <span ${_ltr}>${_e(_cCell)}</span> ـــ شناختی کارڈ نمبر: <span ${_ltr}>${_e(_cCnic)}</span></div>
-${_bnam}
-<div style="text-align:center;font-weight:bold;text-decoration:underline;font-size:22pt;margin:12px 0 8px;">انڈکس ضمنیات</div>
+<div style="padding:0 14px;">
+  <div style="font-size:18pt;line-height:11mm;">سرکار بذریعہ <span style="display:inline-block;min-width:72%;border-bottom:1.2pt dotted #000;text-align:center;font-weight:bold;">${_e(c?.complainant||'')||'&nbsp;'}</span></div>
+  <div style="font-size:18pt;line-height:11mm;text-align:center;"><span style="display:inline-block;min-width:96%;border-bottom:1.2pt dotted #000;text-align:center;">${(_cCell||_cCnic)?('<span style="'+_ltrS+'">'+_e(_cCell)+'</span> ــ <span style="'+_ltrS+'">'+_e(_cCnic)+'</span>'):'&nbsp;'}</span></div>
+  ${_bnam}
+</div>
+<div style="text-align:center;font-size:22pt;font-weight:bold;text-decoration:underline;margin:4px 0 2px;">انڈکس ضمنیات</div>
 <table style="width:100%;border-collapse:collapse;">${_zHead}${_zRows}</table>`;
   }
 
