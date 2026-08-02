@@ -1097,6 +1097,10 @@ function _insertTextAtCursor(el, text) {
 }
 
 function getMisalTemplate(docId, c) {
+  // انڈیکس نقل مسل — BLANK by design. Koi pre-filled format nahi;
+  // user apna manzoor-shuda format khud dega (uska intezar hai).
+  if (docId === 'index_naql') return '';
+
   const o   = currentOfficer || {};
   const fir = c?.fir_number  || '________';
   const dt  = c?.fir_date    || '________';
