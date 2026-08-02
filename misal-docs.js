@@ -1151,34 +1151,35 @@ function getMisalTemplate(docId, c) {
     const _fc   = (typeof formatCNIC==='function') ? formatCNIC : (s=>s||'');
     const _fm   = (typeof formatCell==='function') ? formatCell : (s=>s||'');
 
-    // ── Section 2: case-info table borders (match original) ──
-    // NO outer left/right borders · top/bottom/header-line 1.5pt · internal verticals 0.5pt
-    const _thBase = 'border:none;border-top:1.5pt solid #000;border-bottom:1.5pt solid #000;padding:2px 3px;font-weight:normal;text-align:center;font-size:20pt;line-height:1.9;vertical-align:middle;';
-    const _tdBase = 'border:none;border-bottom:1.5pt solid #000;padding:3px;text-align:center;font-size:20pt;line-height:1.9;vertical-align:top;';
-    const _vline  = 'border-left:0.5pt solid #000;';   // internal column line (RTL: left edge = inner side except last col)
+    // ── Section 2 borders: NO outer left/right · top/bottom/header 1.5pt · internal 0.5pt ──
+    // FIX 3: table-layout:fixed + <col> + break-word => columns NEVER flex
+    const _cellWrap = 'word-wrap:break-word;overflow-wrap:break-word;white-space:normal;';
+    const _thBase = 'border:none;border-top:1.5pt solid #000;border-bottom:1.5pt solid #000;padding:2px 3px;font-weight:normal;text-align:center;font-size:17pt;line-height:1.7;vertical-align:middle;'+_cellWrap;
+    const _tdBase = 'border:none;border-bottom:1.5pt solid #000;padding:3px;text-align:center;font-size:17pt;line-height:1.7;vertical-align:top;'+_cellWrap;
+    const _vline  = 'border-left:0.5pt solid #000;';
 
-    // ── Section 5: zimni table — full 0.5pt grid ──
-    const _thZ = 'border:0.5pt solid #000;padding:1px 3px;font-weight:normal;text-align:center;font-size:15pt;line-height:1.6;height:7mm;vertical-align:middle;';
-    const _tdZ = 'border:0.5pt solid #000;padding:1px 3px;text-align:center;font-size:15pt;line-height:1.6;height:8.5mm;vertical-align:middle;';
+    // ── Section 5 zimni: full 0.5pt grid (FIX 3: fixed layout too) ──
+    const _thZ = 'border:0.5pt solid #000;padding:1px 3px;font-weight:normal;text-align:center;font-size:15pt;line-height:1.6;height:6mm;vertical-align:middle;'+_cellWrap;
+    const _tdZ = 'border:0.5pt solid #000;padding:1px 3px;text-align:center;font-size:15pt;line-height:1.6;height:7mm;vertical-align:middle;'+_cellWrap;
 
-    // dotted fill-line span (value auto-fills ON the line; blank = handwriting line)
-    const _fill = (id, w, extra) => `<span ${id?('id="'+id+'"'):''} style="display:inline-block;min-width:${w};border-bottom:1.2pt dotted #000;text-align:center;${extra||''}">&nbsp;</span>`;
+    // ── FIX 2: aligned dotted fill-line (fixed width, dotted bottom border) ──
+    const _fill = (id, w, extra) => `<span ${id?('id="'+id+'"'):''} class="fill-line" style="display:inline-block;width:${w};border-bottom:1.5px dotted #000;vertical-align:bottom;text-align:center;${extra||''}">&nbsp;</span>`;
 
     const _cCnic = _fc(c?.complainant_cnic) || '';
     const _cCell = _fm(c?.complainant_cell) || '';
     const _ltrS  = 'unicode-bidi:isolate;direction:ltr;';
 
-    // ── Section 3: four accused blocks (بنام1 then بنام) ──
+    // ── Section 3: four accused blocks (بنام۱ then بنام); equal fixed-width lines ──
     let _bnam = '';
     for (let i=1;i<=4;i++){
-      _bnam += `<div style="font-size:18pt;line-height:11mm;text-align:center;">بنام${i===1?'1':''}${_fill('idxn-name-'+i,'78%','font-weight:bold;')}</div>
-<div style="font-size:18pt;line-height:11mm;text-align:center;">رابطہ نمبر${_fill('idxn-cell-'+i,'26%',_ltrS)} شناختی کارڈ نمبر${_fill('idxn-cnic-'+i,'32%',_ltrS)}</div>`;
+      _bnam += `<div style="font-size:16pt;line-height:8mm;">بنام${i===1?'۱':''} ${_fill('idxn-name-'+i,'82%','font-weight:bold;')}</div>
+<div style="font-size:16pt;line-height:8mm;">رابطہ نمبر ${_fill('idxn-cell-'+i,'28%',_ltrS)} شناختی کارڈ نمبر ${_fill('idxn-cnic-'+i,'34%',_ltrS)}</div>`;
     }
 
     // ── Section 5 rows: numbers column-wise 1–6 / 7–12 / 13–18 ──
     let _zHead = '<tr>';
     for (let g=0;g<3;g++){
-      _zHead += `<th style="${_thZ}width:7.8%;">ضمنی نمبر</th><th style="${_thZ}width:10.4%;">مورخہ</th><th style="${_thZ}width:14.3%;">تفتیشی افسر</th>`;
+      _zHead += `<th style="${_thZ}">ضمنی نمبر</th><th style="${_thZ}">مورخہ</th><th style="${_thZ}">تفتیشی افسر</th>`;
     }
     _zHead += '</tr>';
     let _zRows = '';
@@ -1190,23 +1191,31 @@ function getMisalTemplate(docId, c) {
       }
       _zRows += '</tr>';
     }
+    // FIX 3: <col> widths for zimni table (3 groups × 7.8/10.4/14.3)
+    let _zCols = '';
+    for (let g=0;g<3;g++){
+      _zCols += '<col style="width:7.8%;"><col style="width:10.4%;"><col style="width:14.3%;">';
+    }
 
     return `
-<div style="text-align:center;margin-bottom:4px;">
-  <span style="font-size:20pt;">تھانہ ${_e(_sta)}</span>
-  &nbsp;<span style="font-size:24pt;font-weight:bold;text-decoration:underline;">انڈکس نقل مسل پولیس</span>&nbsp;
-  <span style="font-size:20pt;">ضلع ${_e(_dst)}</span>
+<div style="display:flex;justify-content:center;align-items:baseline;gap:30px;margin-bottom:4px;white-space:nowrap;">
+  <span style="font-size:18pt;">تھانہ ${_e(_sta)}</span>
+  <span style="font-size:22pt;font-weight:bold;text-decoration:underline;">انڈکس نقل مسل پولیس</span>
+  <span style="font-size:18pt;">ضلع ${_e(_dst)}</span>
 </div>
-<table style="width:100%;border-collapse:collapse;border:none;margin-bottom:6px;">
-  <tr style="height:20mm;">
-    <th style="${_thBase}${_vline}width:11.4%;">مقدمہ نمبر</th>
-    <th style="${_thBase}${_vline}width:10.8%;">تاریخ وقوعہ</th>
-    <th style="${_thBase}${_vline}width:11.3%;">تاریخ رجوعہ</th>
-    <th style="${_thBase}${_vline}width:14.4%;">جرم</th>
-    <th style="${_thBase}${_vline}width:15.5%;">تعداد اوراق</th>
-    <th style="${_thBase}width:36.6%;">حکم اخیر عدالت</th>
+<table style="width:100%;border-collapse:collapse;border:none;margin-bottom:6px;table-layout:fixed;">
+  <colgroup>
+    <col style="width:11.4%;"><col style="width:10.8%;"><col style="width:11.3%;"><col style="width:14.4%;"><col style="width:15.5%;"><col style="width:36.6%;">
+  </colgroup>
+  <tr style="height:14mm;">
+    <th style="${_thBase}${_vline}">مقدمہ نمبر</th>
+    <th style="${_thBase}${_vline}">تاریخ وقوعہ</th>
+    <th style="${_thBase}${_vline}">تاریخ رجوعہ</th>
+    <th style="${_thBase}${_vline}">جرم</th>
+    <th style="${_thBase}${_vline}">تعداد اوراق</th>
+    <th style="${_thBase}">حکم اخیر عدالت</th>
   </tr>
-  <tr style="height:52mm;">
+  <tr style="height:40mm;">
     <td style="${_tdBase}${_vline}">${_e(c?.fir_number||'')}</td>
     <td style="${_tdBase}${_vline}">${_fd(c?.occurrence_date)}</td>
     <td style="${_tdBase}${_vline}">${_fd(c?.fir_date)}</td>
@@ -1216,12 +1225,12 @@ function getMisalTemplate(docId, c) {
   </tr>
 </table>
 <div style="padding:0 14px;">
-  <div style="font-size:18pt;line-height:11mm;">سرکار بذریعہ <span style="display:inline-block;min-width:72%;border-bottom:1.2pt dotted #000;text-align:center;font-weight:bold;">${_e(c?.complainant||'')||'&nbsp;'}</span></div>
-  <div style="font-size:18pt;line-height:11mm;text-align:center;"><span style="display:inline-block;min-width:96%;border-bottom:1.2pt dotted #000;text-align:center;">${(_cCell||_cCnic)?('<span style="'+_ltrS+'">'+_e(_cCell)+'</span> ــ <span style="'+_ltrS+'">'+_e(_cCnic)+'</span>'):'&nbsp;'}</span></div>
+  <div style="font-size:16pt;line-height:8mm;">سرکار بذریعہ <span id="idxn-complainant" class="fill-line" style="display:inline-block;width:82%;border-bottom:1.5px dotted #000;vertical-align:bottom;text-align:center;font-weight:bold;">${_e(c?.complainant||'')||'&nbsp;'}</span></div>
+  <div style="font-size:16pt;line-height:8mm;">${_fill('', '96%', '')}</div>
   ${_bnam}
 </div>
-<div style="text-align:center;font-size:22pt;font-weight:bold;text-decoration:underline;margin:4px 0 2px;">انڈکس ضمنیات</div>
-<table style="width:100%;border-collapse:collapse;">${_zHead}${_zRows}</table>`;
+<div style="text-align:center;font-size:20pt;font-weight:bold;text-decoration:underline;margin:3px 0 2px;">انڈکس ضمنیات</div>
+<table style="width:100%;border-collapse:collapse;table-layout:fixed;"><colgroup>${_zCols}</colgroup>${_zHead}${_zRows}</table>`;
   }
 
   const o   = currentOfficer || {};
