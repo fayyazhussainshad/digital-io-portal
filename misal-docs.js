@@ -481,7 +481,45 @@ function _renderMisalEditor(docId, def) {
     }
     // Auto text-direction for fields in this document editor
     if (typeof applyAutoDirection === 'function') applyAutoDirection(area);
+    // انڈکس نقل مسل — fresh doc: ملزمان + ضمنیاں database se auto-fill
+    if (docId === 'index_naql' && !(saved?.content?.html)) _fillIndexNaqlData();
   }, 80);
+}
+
+// ── انڈکس نقل مسل — AUTO-FILL (ملزمان + ضمنیاں) ─────────────────
+async function _fillIndexNaqlData() {
+  if (!_misalCaseId) return;
+  // ملزمان → بنام blocks (max 4)
+  try {
+    const { data: acc } = await supabaseClient.from('case_accused')
+      .select('*').eq('case_id', _misalCaseId)
+      .order('created_at', { ascending: true });
+    (acc || []).slice(0, 4).forEach((a, i) => {
+      const n = i + 1;
+      const nm = a.name || a.full_name || '';
+      const elN = document.getElementById('idxn-name-' + n);
+      if (elN && nm) elN.textContent = ' ' + nm + ' ';
+      const elC = document.getElementById('idxn-cell-' + n);
+      if (elC && a.cell) elC.textContent = ' ' + a.cell + ' ';
+      const elI = document.getElementById('idxn-cnic-' + n);
+      if (elI && a.cnic) elI.textContent = ' ' + a.cnic + ' ';
+    });
+  } catch(_) {}
+  // ضمنیاں → انڈکس ضمنیات (نمبر کے مطابق مورخہ + تفتیشی افسر)
+  try {
+    const { data: zs } = await supabaseClient.from('zimni_reports')
+      .select('serial_no,report_date').eq('case_id', _misalCaseId)
+      .order('serial_no', { ascending: true });
+    const ofcName = (currentOfficer && currentOfficer.full_name) || '';
+    (zs || []).forEach(z => {
+      const n = parseInt(z.serial_no);
+      if (!n || n < 1 || n > 18) return;
+      const d = document.getElementById('idxz-d-' + n);
+      if (d && z.report_date) d.textContent = (typeof formatDate==='function') ? formatDate(z.report_date) : z.report_date;
+      const oEl = document.getElementById('idxz-o-' + n);
+      if (oEl && ofcName) oEl.textContent = ofcName;
+    });
+  } catch(_) {}
 }
 
 // Formatting helpers
@@ -1097,9 +1135,81 @@ function _insertTextAtCursor(el, text) {
 }
 
 function getMisalTemplate(docId, c) {
-  // انڈیکس نقل مسل — BLANK by design. Koi pre-filled format nahi;
-  // user apna manzoor-shuda format khud dega (uska intezar hai).
-  if (docId === 'index_naql') return '';
+  // ═══ انڈکس نقل مسل پولیس — GENUINE FORMAT (user ke INDEX.docx ka hoo-ba-hoo) ═══
+  // Auto-fill: مقدمہ data + مدعی (sync) · ملزمان + ضمنیاں (async _fillIndexNaqlData)
+  if (docId === 'index_naql') {
+    const _o    = currentOfficer || {};
+    const _sta  = _o.station  || c?.case_station  || '';
+    const _dst  = _o.district || c?.case_district || '';
+    const _fd   = (v)=> v ? ((typeof formatDate==='function') ? formatDate(v) : v) : '';
+    const _e    = (typeof esc==='function') ? esc : (s=>String(s??''));
+    const dots  = (n)=>'۔'.repeat(n);
+    const _th   = 'border:1px solid #333;padding:5px 4px;background:#f5f5f5;font-weight:bold;text-align:center;font-size:13px;';
+    const _td   = 'border:1px solid #333;padding:5px 4px;text-align:center;font-size:13px;';
+
+    // ملزمان (بنام) — 4 blocks, async fill via span IDs
+    let _bnam = '';
+    for (let i=1;i<=4;i++){
+      _bnam += `<div style="line-height:2.4;">بنام${i===1?'1':''}<span id="idxn-name-${i}">${dots(52)}</span></div>
+<div style="line-height:2.4;">رابطہ نمبر<span id="idxn-cell-${i}" dir="ltr" style="unicode-bidi:isolate;">${dots(18)}</span> شناختی کارڈ نمبر<span id="idxn-cnic-${i}" dir="ltr" style="unicode-bidi:isolate;">${dots(22)}</span></div>`;
+    }
+
+    // انڈکس ضمنیات — 3 groups × (ضمنی نمبر|مورخہ|تفتیشی افسر), rows 1-18
+    const _zHead = `<tr>${'<th style="'+_th+'width:6%;">ضمنی نمبر</th><th style="'+_th+'width:12%;">مورخہ</th><th style="'+_th+'width:15%;">تفتیشی افسر</th>'.repeat(3)}</tr>`;
+    let _zRows = '';
+    for (let r=0;r<6;r++){
+      _zRows += '<tr>';
+      for (let g=0;g<3;g++){
+        const n = g*6 + r + 1;
+        _zRows += `<td style="${_td}">${n}</td><td style="${_td}" id="idxz-d-${n}">&nbsp;</td><td style="${_td}" id="idxz-o-${n}">&nbsp;</td>`;
+      }
+      _zRows += '</tr>';
+    }
+
+    // انڈکس شہادت — 3 groups × (شہادت نمبر|مورخہ|تفتیشی افسر), rows 1-15
+    const _sHead = `<tr>${'<th style="'+_th+'width:6%;">شہادت نمبر</th><th style="'+_th+'width:12%;">مورخہ</th><th style="'+_th+'width:15%;">تفتیشی افسر</th>'.repeat(3)}</tr>`;
+    let _sRows = '';
+    for (let r=0;r<5;r++){
+      _sRows += '<tr>';
+      for (let g=0;g<3;g++){
+        const n = g*5 + r + 1;
+        _sRows += `<td style="${_td}">${n}</td><td style="${_td}">&nbsp;</td><td style="${_td}">&nbsp;</td>`;
+      }
+      _sRows += '</tr>';
+    }
+
+    return `
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;">
+  <div>تھانہ ${_e(_sta)}</div>
+  <div style="font-weight:bold;text-decoration:underline;font-size:17px;">انڈکس نقل مسل پولیس</div>
+  <div>ضلع ${_e(_dst)}</div>
+</div>
+<table style="width:100%;border-collapse:collapse;margin-bottom:14px;">
+  <tr>
+    <th style="${_th}width:14%;">مقدمہ نمبر</th>
+    <th style="${_th}width:14%;">تاریخ وقوعہ</th>
+    <th style="${_th}width:14%;">تاریخ رجوعہ</th>
+    <th style="${_th}width:22%;">جرم</th>
+    <th style="${_th}width:12%;">تعداد اوراق</th>
+    <th style="${_th}width:24%;">حکم اخیر عدالت</th>
+  </tr>
+  <tr>
+    <td style="${_td}height:40px;">${_e(c?.fir_number||'')}</td>
+    <td style="${_td}">${_fd(c?.occurrence_date)}</td>
+    <td style="${_td}">${_fd(c?.fir_date)}</td>
+    <td style="${_td}">${_e(c?.section_of_law||'')}</td>
+    <td style="${_td}"></td>
+    <td style="${_td}"></td>
+  </tr>
+</table>
+<div style="line-height:2.4;">سرکار بذریعہ ${_e(c?.complainant||'')}${dots(30)}</div>
+<div style="line-height:2.4;">${dots(58)}</div>
+${_bnam}
+<div style="text-align:center;font-weight:bold;text-decoration:underline;font-size:16px;margin:14px 0 8px;">انڈکس ضمنیات</div>
+<table style="width:100%;border-collapse:collapse;margin-bottom:14px;">${_zHead}${_zRows}</table>
+<div style="text-align:center;font-weight:bold;text-decoration:underline;font-size:16px;margin:14px 0 8px;">انڈکس شہادت</div>
+<table style="width:100%;border-collapse:collapse;">${_sHead}${_sRows}</table>`;
+  }
 
   const o   = currentOfficer || {};
   const fir = c?.fir_number  || '________';
