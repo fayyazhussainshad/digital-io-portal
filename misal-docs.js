@@ -156,6 +156,8 @@ function _closeAllDD() {
 
 // When an option is picked — open that document/view
 function _ddPick(ddId, docId) {
+  // Full-page view tab (FIR / گواہان / ملزمان bhi poore page par)
+  if (typeof _dioOpenDocTab === 'function') _dioOpenDocTab(docId);
   if (docId === 'fir' || docId === 'cross_version') {
     _openDocId = docId;
     if (typeof openFirView === 'function') openFirView(_misalCaseId, docId);
@@ -304,7 +306,11 @@ async function _doRemoveMisalDoc(docId) {
 }
 
 // ── OPEN EDITOR ───────────────────────────────────────────────
-function _openMisalEditor(docId) {
+function _openMisalEditor(docId, _fromTab) {
+  // Full-page view: dastawez poore page par khulti hai, chips background mein.
+  // _fromTab=true tab aata hai jab tab-switch se dobara render ho raha ho.
+  if (!_fromTab && typeof _dioOpenDocTab === 'function') _dioOpenDocTab(docId);
+
   // Special: شہادتیں shows evidence view
   if (docId === 'shahadatain') {
     _openDocId = docId;
@@ -1551,3 +1557,179 @@ function getMisalTemplate(docId, c) {
 
   return templates[docId] || generic;
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+//  FULL-PAGE DOCUMENT VIEW  (پورے صفحے پر دستاویز)
+//  • Chip par click → dastawez poore page par khulti hai
+//  • Chips/toolbars background mein chale jate hain
+//  • Corner mein sirf: ↩ واپس  aur  🖨️ پرنٹ
+//  • Kai dastawezat aik saath khuli reh sakti hain (tabs)
+//  Design: #workspace-editor-area ko overlay ke andar MOVE karte hain,
+//  is liye har module (witnesses/mulziman/report173/misal) bina tabdeeli
+//  ke waise hi kaam karta hai.
+// ═══════════════════════════════════════════════════════════════════════
+
+let _dioTabs = [];        // [{id, name}]
+let _dioActiveTab = null;
+let _dioAreaHome = null;  // original parent of #workspace-editor-area
+
+// ── Document ka Urdu naam nikalo (special views samet) ──
+function _dioDocName(docId) {
+  const special = {
+    witnesses_fir:   'گواہان FIR',
+    witnesses_cross: 'گواہان کراس ورژن',
+    named_accused:   'ملزمان FIR',
+    accused_cross:   'ملزمان کراس ورژن',
+    shahadatain:     'شہادتیں',
+    fir:             'الف آئی آر',
+    cross_version:   'کراس ورژن',
+    'r173:mukammal':       'رپورٹ 173 — چالان مکمل',
+    'r173:namukammal':     'رپورٹ 173 — چالان نامکمل',
+    'r173:interim':        'رپورٹ 173 — انٹیرم چالان',
+    'r173:ikhraj':         'رپورٹ 173 — اخراج',
+    'r173:adampata':       'رپورٹ 173 — عدم پتہ',
+    'r173:tatima_challan': 'رپورٹ 173 — تتمہ چالان',
+  };
+  if (special[docId]) return special[docId];
+  const d = MISAL_CASE_DOCS.find(x => x.id === docId);
+  return d ? d.name : docId;
+}
+
+// ── Overlay banao aur editor-area us ke andar le jao ──
+function _dioEnterDocView() {
+  if (document.getElementById('dio-docview')) return; // already open
+  const area = document.getElementById('workspace-editor-area');
+  if (!area) return;
+  _dioAreaHome = area.parentElement;   // wapas isi jagah rakhenge
+
+  const ov = document.createElement('div');
+  ov.id = 'dio-docview';
+  ov.style.cssText =
+    'position:fixed;inset:0;z-index:9500;background:var(--bg-primary);' +
+    'display:flex;flex-direction:column;direction:rtl;';
+  ov.innerHTML = `
+    <div id="dio-dv-bar" style="display:flex;align-items:center;gap:8px;padding:8px 12px;
+         background:var(--bg-secondary);border-bottom:1px solid var(--border);flex-wrap:wrap;">
+      <div id="dio-dv-tabs" style="display:flex;gap:6px;flex:1;flex-wrap:wrap;min-width:0;"></div>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button onclick="_dioPrintCurrent()" title="پرنٹ"
+          style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 16px;
+                 font-size:13px;font-weight:700;cursor:pointer;
+                 font-family:'Jameel Noori Nastaleeq',serif;">🖨️ پرنٹ</button>
+        <button onclick="_dioExitDocView()" title="واپس"
+          style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);
+                 border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;
+                 font-family:'Jameel Noori Nastaleeq',serif;">↩ واپس</button>
+      </div>
+    </div>
+    <div id="dio-dv-body" style="flex:1;min-height:0;overflow:auto;"></div>`;
+  document.body.appendChild(ov);
+  document.getElementById('dio-dv-body').appendChild(area);
+  document.body.style.overflow = 'hidden';
+
+  // Escape se band
+  document.addEventListener('keydown', _dioDocViewEsc);
+}
+
+function _dioDocViewEsc(e) {
+  if (e.key === 'Escape') _dioExitDocView();
+}
+
+// ── Band karo — editor-area apni asal jagah wapas ──
+function _dioExitDocView() {
+  const ov = document.getElementById('dio-docview');
+  if (!ov) return;
+  const area = document.getElementById('workspace-editor-area');
+  // Ghair-mehfooz tabdeeli mehfooz kar lo
+  try { if (_misalDirty && _openDocId && typeof saveMisalDoc === 'function') saveMisalDoc(_openDocId); } catch(_) {}
+  if (area && _dioAreaHome) _dioAreaHome.appendChild(area);
+  ov.remove();
+  document.body.style.overflow = '';
+  document.removeEventListener('keydown', _dioDocViewEsc);
+  _dioTabs = [];
+  _dioActiveTab = null;
+}
+
+// ── Tab kholo (ya pehle se khuli ho to us par jao) ──
+function _dioOpenDocTab(docId) {
+  _dioEnterDocView();
+  if (!_dioTabs.some(t => t.id === docId)) {
+    _dioTabs.push({ id: docId, name: _dioDocName(docId) });
+  }
+  _dioActiveTab = docId;
+  _dioRenderTabs();
+}
+
+// ── Tab bar ──
+function _dioRenderTabs() {
+  const box = document.getElementById('dio-dv-tabs');
+  if (!box) return;
+  box.innerHTML = _dioTabs.map(t => {
+    const on = t.id === _dioActiveTab;
+    return `<span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;
+      cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;
+      font-family:'Jameel Noori Nastaleeq',serif;transition:all .15s;
+      border:1px solid ${on ? 'var(--accent)' : 'var(--border)'};
+      background:${on ? 'var(--accent)' : 'var(--bg-tertiary)'};
+      color:${on ? '#fff' : 'var(--text-secondary)'};"
+      onclick="_dioSwitchTab('${t.id}')">
+      ${esc(t.name)}
+      <span onclick="event.stopPropagation();_dioCloseTab('${t.id}')" title="بند کریں"
+        style="opacity:.75;font-weight:900;padding:0 2px;">✕</span>
+    </span>`;
+  }).join('');
+}
+
+// ── Tab badlo (pehle ghair-mehfooz kaam save) ──
+function _dioSwitchTab(docId) {
+  if (docId === _dioActiveTab) return;
+  try { if (_misalDirty && _openDocId && typeof saveMisalDoc === 'function') saveMisalDoc(_openDocId); } catch(_) {}
+  _dioActiveTab = docId;
+  _dioRenderTabs();
+  _dioRenderTabContent(docId);
+}
+
+// ── Tab band karo ──
+function _dioCloseTab(docId) {
+  _dioTabs = _dioTabs.filter(t => t.id !== docId);
+  if (!_dioTabs.length) { _dioExitDocView(); return; }
+  if (_dioActiveTab === docId) {
+    _dioActiveTab = _dioTabs[_dioTabs.length - 1].id;
+    _dioRenderTabContent(_dioActiveTab);
+  }
+  _dioRenderTabs();
+}
+
+// ── Tab ka content dobara render karo ──
+function _dioRenderTabContent(docId) {
+  if (docId.startsWith('r173:')) {
+    const type = docId.slice(5);
+    if (typeof openReport173WithType === 'function') openReport173WithType(type, true);
+    return;
+  }
+  // FIR / کراس ورژن — inka apna opener hai
+  if (docId === 'fir' || docId === 'cross_version') {
+    _openDocId = docId;
+    if (typeof openFirView === 'function') openFirView(_misalCaseId, docId);
+    else if (typeof _renderFIRView === 'function') _renderFIRView();
+    return;
+  }
+  if (typeof _openMisalEditor === 'function') _openMisalEditor(docId, true);
+}
+
+// ── Smart print — active dastawez ke hisab se ──
+function _dioPrintCurrent() {
+  const id = _dioActiveTab;
+  if (!id) return;
+  if (id.startsWith('r173:')) {
+    if (typeof _printR173 === 'function') { _printR173(); return; }
+  }
+  if (typeof printMisalDoc === 'function') { printMisalDoc(_dioDocName(id)); return; }
+  window.print();
+}
+
+window._dioExitDocView  = _dioExitDocView;
+window._dioSwitchTab    = _dioSwitchTab;
+window._dioCloseTab     = _dioCloseTab;
+window._dioPrintCurrent = _dioPrintCurrent;
+window._dioOpenDocTab   = _dioOpenDocTab;

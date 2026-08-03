@@ -350,7 +350,9 @@ function _printR173() {
 }
 
 // Open report 173 with a specific type pre-selected (from dropdown)
-async function openReport173WithType(type) {
+async function openReport173WithType(type, _fromTab) {
+  // Full-page view tab (har report type apna tab)
+  if (!_fromTab && typeof _dioOpenDocTab === 'function') _dioOpenDocTab('r173:' + (type||'mukammal'));
   await openReport173(_misalCaseId || (typeof currentCaseId !== 'undefined' ? currentCaseId : null));
   _r173Type = type || 'mukammal';
   _renderR173();
