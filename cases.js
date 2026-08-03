@@ -294,21 +294,21 @@ async function _printFIRDirect(id) {
   </style></head><body>
   <div class="hdr">
     <h1></h1>
-    <div>تھانہ ${c.case_station||o.station||'___'} ضلع ${c.case_district||o.district||'___'}</div>
+    <div>تھانہ ${esc(c.case_station||o.station||'___')} ضلع ${esc(c.case_district||o.district||'___')}</div>
   </div>
   <div class="fir-title">فرسٹ انفارمیشن رپورٹ (FIR)</div>
   <table>
     <tr><th>مقدمہ نمبر</th><td><b>${c.fir_number||'—'}</b></td><th>تاریخ اندراج</th><td>${formatDate(c.fir_date)}</td></tr>
-    <tr><th>تاریخ وقوعہ</th><td>${formatDate(c.occurrence_date)||'—'}</td><th>دفعات</th><td><b>${c.section_of_law||'—'}</b></td></tr>
+    <tr><th>تاریخ وقوعہ</th><td>${formatDate(c.occurrence_date)||'—'}</td><th>دفعات</th><td><b>${esc(c.section_of_law)||'—'}</b></td></tr>
     <tr><th>ملزمان</th><td colspan="3">${c.mulzman_type==='maloom'?'✅ معلوم':'⚠️ نامعلوم'}</td></tr>
   </table>
   <div class="s-lbl">مدعی کی تفصیل</div>
   <table>
-    <tr><th>نام</th><td><b>${esc(c.complainant)||'—'}</b></td><th>شناختی کارڈ</th><td>${c.complainant_cnic||'—'}</td></tr>
-    <tr><th>موبائل</th><td>${c.complainant_cell||'—'}</td><th>پیشہ</th><td>${esc(c.complainant_profession)||'—'}</td></tr>
+    <tr><th>نام</th><td><b>${esc(c.complainant)||'—'}</b></td><th>شناختی کارڈ</th><td>${esc(c.complainant_cnic)||'—'}</td></tr>
+    <tr><th>موبائل</th><td>${esc(c.complainant_cell)||'—'}</td><th>پیشہ</th><td>${esc(c.complainant_profession)||'—'}</td></tr>
   </table>
   <div class="s-lbl">واقعے کی تفصیل</div>
-  <div class="narrative">${c.notes||'&nbsp;'.repeat(200)}</div>
+  <div class="narrative">${c.notes?esc(c.notes):'&nbsp;'.repeat(200)}</div>
   <div class="s-lbl">دفتری</div>
   <table>
     <tr><th>تفتیشی افسر</th><td>${esc(o.full_name)||'—'}</td><th>عہدہ</th><td>${esc(o.designation)||'—'}</td></tr>
@@ -317,7 +317,7 @@ async function _printFIRDirect(id) {
   <div class="sig-row">
     <div class="sig-box"><div class="sig-line">دستخط مدعی<br>${esc(c.complainant)||'___'}</div></div>
     <div class="sig-box"><div class="sig-line">تفتیشی افسر<br>${esc(o.full_name)||'___'}</div></div>
-    <div class="sig-box"><div class="sig-line">SHO تھانہ ${c.case_station||o.station||'___'}<br>مہر و دستخط</div></div>
+    <div class="sig-box"><div class="sig-line">SHO تھانہ ${esc(c.case_station||o.station||'___')}<br>مہر و دستخط</div></div>
   </div>
   <div class="footer">Digital IO · ‏${formatDate(new Date())}</div>
   
@@ -401,8 +401,8 @@ async function _downloadCaseHTML(id) {
   <div class="row"><span class="lbl">مقدمہ نمبر:</span><span class="val"><b>${c.fir_number||'—'}</b></span></div>
   <div class="row"><span class="lbl">تاریخ اندراج:</span><span class="val">${formatDate(c.fir_date)}</span></div>
   <div class="row"><span class="lbl">تاریخ وقوعہ:</span><span class="val">${formatDate(c.occurrence_date)}</span></div>
-  <div class="row"><span class="lbl">دفعات:</span><span class="val">${c.section_of_law||'—'}</span></div>
-  <div class="row"><span class="lbl">جرم:</span><span class="val">${c.offence_type||'—'}</span></div>
+  <div class="row"><span class="lbl">دفعات:</span><span class="val">${esc(c.section_of_law)||'—'}</span></div>
+  <div class="row"><span class="lbl">جرم:</span><span class="val">${esc(c.offence_type)||'—'}</span></div>
   <div class="row"><span class="lbl">صورتحال:</span><span class="val">${STATUS_LABELS[c.status]||c.status}</span></div>
   <div class="sec">مدعی کی تفصیل</div>
   <div class="row"><span class="lbl">نام:</span><span class="val">${esc(c.complainant)||'—'}</span></div>
@@ -1208,12 +1208,12 @@ function _generateInterim173(c) {
   const today = formatDate(new Date().toISOString());
   const html = `
   <div style="font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;padding:30px;line-height:2.2;font-size:15px;color:#000;">
-    <div style="text-align:center;font-weight:800;font-size:18px;margin-bottom:4px;">تھانہ ${c.case_station||o.station||'_____'} ضلع ${c.case_district||o.district||'_____'}</div>
+    <div style="text-align:center;font-weight:800;font-size:18px;margin-bottom:4px;">تھانہ ${esc(c.case_station||o.station||'_____')} ضلع ${esc(c.case_district||o.district||'_____')}</div>
     <div style="text-align:center;font-size:16px;font-weight:700;border-bottom:2px solid #000;display:inline-block;margin:0 auto 16px;padding-bottom:2px;width:100%;">عبوری رپورٹ زیر دفعہ 173 ضابطہ فوجداری</div>
     <table style="width:100%;border-collapse:collapse;margin-bottom:14px;">
       <tr><td style="border:1px solid #555;padding:6px 10px;font-weight:700;background:#f0f0f0;">مقدمہ نمبر</td><td style="border:1px solid #555;padding:6px 10px;">${c.fir_number||'—'}</td>
-          <td style="border:1px solid #555;padding:6px 10px;font-weight:700;background:#f0f0f0;">دفعات</td><td style="border:1px solid #555;padding:6px 10px;">${c.section_of_law||'—'}</td></tr>
-      <tr><td style="border:1px solid #555;padding:6px 10px;font-weight:700;background:#f0f0f0;">مدعی</td><td style="border:1px solid #555;padding:6px 10px;">${c.complainant||'—'}</td>
+          <td style="border:1px solid #555;padding:6px 10px;font-weight:700;background:#f0f0f0;">دفعات</td><td style="border:1px solid #555;padding:6px 10px;">${esc(c.section_of_law)||'—'}</td></tr>
+      <tr><td style="border:1px solid #555;padding:6px 10px;font-weight:700;background:#f0f0f0;">مدعی</td><td style="border:1px solid #555;padding:6px 10px;">${esc(c.complainant)||'—'}</td>
           <td style="border:1px solid #555;padding:6px 10px;font-weight:700;background:#f0f0f0;">تاریخ اندراج</td><td style="border:1px solid #555;padding:6px 10px;">${formatDate(c.fir_date)}</td></tr>
     </table>
     <div style="margin:12px 0;">
@@ -1225,7 +1225,7 @@ function _generateInterim173(c) {
     <div style="margin-top:40px;text-align:left;">
       <div>_______________________</div>
       <div style="font-size:13px;font-weight:700;">${o.designation||''} ${o.full_name||''}</div>
-      <div style="font-size:12px;">تفتیشی افسر — تھانہ ${c.case_station||o.station||''}</div>
+      <div style="font-size:12px;">تفتیشی افسر — تھانہ ${esc(c.case_station||o.station||'')}</div>
       <div style="font-size:12px;">تاریخ: ${today}</div>
     </div>
   </div>`;
@@ -1405,7 +1405,7 @@ function _suggest161Questions(c) {
     <div style="direction:rtl;">
       ${matched ? `
         <div style="font-size:13px;color:var(--accent);font-weight:700;margin-bottom:10px;">
-          📋 ${matched.title} — متعلقہ سوالات (دفعات: ${c.section_of_law})
+          📋 ${matched.title} — متعلقہ سوالات (دفعات: ${esc(c.section_of_law)})
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;">
           ${matched.questions.map((q,i)=>`
@@ -1418,7 +1418,7 @@ function _suggest161Questions(c) {
       ` : `
         <div style="text-align:center;padding:20px;color:var(--text-muted);">
           <div style="font-size:40px;margin-bottom:10px;">🤔</div>
-          <div style="font-size:13px;">اس دفعہ (${c.section_of_law||'—'}) کے لیے مخصوص سوالات دستیاب نہیں۔</div>
+          <div style="font-size:13px;">اس دفعہ (${esc(c.section_of_law)||'—'}) کے لیے مخصوص سوالات دستیاب نہیں۔</div>
           <div style="font-size:11px;margin-top:8px;">عام سوالات: واقعہ کہاں ہوا؟ کب ہوا؟ کون ملوث ہے؟ گواہ کون ہیں؟</div>
         </div>
       `}
@@ -1512,7 +1512,7 @@ function renderWorkspace(c, docs, ev, container) {
         <span style="font-size:15px;font-weight:900;color:var(--accent);font-family:var(--font-mono);">FIR ${c.fir_number||'—'}</span>
         <span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span>
         <span style="font-size:11px;color:var(--text-muted);">📅 ${formatDate(c.fir_date)}</span>
-        <span style="font-size:11px;color:var(--text-muted);">👤 ${c.complainant||'—'}</span>
+        <span style="font-size:11px;color:var(--text-muted);">👤 ${esc(c.complainant)||'—'}</span>
         <span style="font-size:11px;color:var(--text-muted);">⚖️ ${(c.section_of_law||'—').slice(0,20)}</span>
       </div>
       <!-- Action buttons -->
@@ -2268,7 +2268,7 @@ function renderDetailsTab(c) {
       <div class="card">
         <div class="card-title">👤 Complainant Details</div>
         ${[['Complainant Name',c.complainant||'—'],['CNIC',c.complainant_cnic||'—'],['Cell No.',c.complainant_cell||'—'],['Profession',c.complainant_profession||'—']].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
-        ${c.notes?`<div style="margin-top:12px;padding:10px;background:var(--bg-tertiary);border-radius:8px;font-size:12px;color:var(--text-secondary);direction:auto;"><b style="color:var(--accent);">تفتیشی نوٹس:</b><br>${c.notes}</div>`:''}
+        ${c.notes?`<div style="margin-top:12px;padding:10px;background:var(--bg-tertiary);border-radius:8px;font-size:12px;color:var(--text-secondary);direction:auto;"><b style="color:var(--accent);">تفتیشی نوٹس:</b><br>${esc(c.notes)}</div>`:''}
       </div>
     </div>
     ${c.is_cross_version ? `
@@ -2311,9 +2311,9 @@ function renderEvidenceTab(c, ev) {
           ${e.file_url ? `<div style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,0.6);border-radius:4px;padding:2px 5px;font-size:9px;color:#fff;">Open</div>` : ''}
         </div>
         <div class="evidence-info">
-          <div class="evidence-name" id="ev-name-${e.id}">${e.name}</div>
-          <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${e.type} · ${e.evidence_date||formatDate(e.created_at)}</div>
-          ${e.notes ? `<div style="font-size:10px;color:var(--text-faint);margin-top:3px;font-style:italic;">${e.notes}</div>` : ''}
+          <div class="evidence-name" id="ev-name-${e.id}">${esc(e.name)}</div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${esc(e.type)} · ${e.evidence_date||formatDate(e.created_at)}</div>
+          ${e.notes ? `<div style="font-size:10px;color:var(--text-faint);margin-top:3px;font-style:italic;">${esc(e.notes)}</div>` : ''}
           <div style="display:flex;gap:6px;direction:rtl;margin-top:8px;">
             ${e.file_url ? `<button class="btn btn-secondary btn-sm" onclick="openEvidenceFile('${e.id}','${(e.file_url||'').replace(/'/g,"\\'")}','${e.name.replace(/'/g,"\\'")}','${e.type}')" title="Open File">📂 Open</button>` : ''}
             <button class="btn btn-secondary btn-sm" onclick="renameEvidence('${e.id}','${e.name.replace(/'/g,"\\'")}','${c.fir_number}')" title="Rename">✏️ Rename</button>

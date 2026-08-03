@@ -239,6 +239,9 @@ function esc(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 window.esc = esc;
+// Alias — same HTML-escaper under the name used across print/innerHTML sinks.
+const escapeHtml = esc;
+window.escapeHtml = esc;
 
 // ── SANITIZE rich-text HTML (for contenteditable-saved content) ──
 // Keeps formatting (<b>, <br>, tables) but strips scripts & event handlers.
@@ -1076,7 +1079,14 @@ async function doLogin() {
   const pass  = document.getElementById('login-password')?.value;
   if (!email||!pass) { showToast('⚠️ ای میل اور پاسورڈ ضروری ہے','error'); return; }
 
-  // Failed login lockout check
+  // ── Failed-login lockout (UX ONLY — NOT a security control) ──────────────
+  // SECURITY NOTE (Fix 3): Yeh localStorage-based lockout sirf user-experience
+  // ke liye hai (barishtakna galat koshishon par saaf feedback). Ise bypass
+  // karna aasan hai (localStorage clear karke), is liye YEH SECURITY NAHI hai.
+  // Asal brute-force protection Supabase Auth server-side rate-limiting deti
+  // hai (signInWithPassword par per-IP / per-account throttling) — wahi asal
+  // control hai jis par bharosa kiya jata hai. Client lockout sirf uska
+  // dostana front-end hai.
   const lockData = JSON.parse(localStorage.getItem('dio_login_lock')||'{}');
   if (lockData.until && Date.now() < lockData.until) {
     const mins = Math.ceil((lockData.until - Date.now())/60000);
@@ -1118,7 +1128,8 @@ async function doLogin() {
 
     loginSuccess();
   } catch(e) {
-    // Track failed attempts
+    // Track failed attempts (UX-only — see SECURITY NOTE above; real throttling
+    // is Supabase Auth server-side). This just gives friendly local feedback.
     const lock = JSON.parse(localStorage.getItem('dio_login_lock')||'{"count":0}');
     lock.count = (lock.count||0) + 1;
     if (lock.count >= 5) {
