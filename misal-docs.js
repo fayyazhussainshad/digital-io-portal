@@ -50,6 +50,8 @@ async function loadMisalDocs(caseId) {
 
 // ── RENDER DOCUMENT BAR ───────────────────────────────────────
 function renderMisalBar(c) {
+  // Naya/doosra case khula → purane case ke full-page tabs saaf karo
+  if (_misalCase && c && _misalCase.id !== c.id && typeof _dioResetTabs === 'function') _dioResetTabs();
   _misalCase = c;
   const items = MISAL_CASE_DOCS.filter(d => d.id !== 'index_naql').map(d => {
     const saved = _misalDocs[d.id];
@@ -426,44 +428,16 @@ function _renderMisalEditor(docId, def) {
   const savedDate = saved?.content?.date || '';
 
   area.innerHTML = `
-  <div style="display:flex;flex-direction:column;height:100%;max-height:calc(100dvh - 120px);min-height:400px;direction:rtl;">
-    <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap;">
-      <div style="font-size:16px;font-weight:800;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;color:var(--accent);">${def.name}</div>
-      <div style="display:flex;gap:6px;">
-        <button class="btn btn-primary btn-sm" onclick="saveMisalDoc('${docId}')">💾 محفوظ</button>
-        <button class="btn btn-secondary btn-sm" onclick="printMisalDoc('${def.name.replace(/'/g,"\\'")}')">🖨️ پرنٹ</button>
-      </div>
-    </div>
-
-    <!-- Formatting toolbar -->
-    <div style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
-      <button onclick="_fmtDoc('bold')" title="بولڈ (Ctrl+B)" style="${_fmtBtn()}font-weight:900;">B</button>
-      <button onclick="_fmtDoc('underline')" title="انڈر لائن (Ctrl+U)" style="${_fmtBtn()}text-decoration:underline;">U</button>
-      <button onclick="_fmtDoc('italic')" title="ترچھا (Ctrl+I)" style="${_fmtBtn()}font-style:italic;">I</button>
-      <span style="width:1px;height:22px;background:var(--border);margin:0 4px;"></span>
-      <button onclick="_fontSize(1)" title="فونٹ بڑا" style="${_fmtBtn()}">A+</button>
-      <button onclick="_fontSize(-1)" title="فونٹ چھوٹا" style="${_fmtBtn()}font-size:11px;">A−</button>
-      <span style="width:1px;height:22px;background:var(--border);margin:0 4px;"></span>
-      <button onclick="_fmtDoc('insertUnorderedList')" title="فہرست" style="${_fmtBtn()}">• فہرست</button>
-      <span style="font-size:11px;color:var(--text-muted);margin-right:auto;">متن منتخب کر کے B / U دبائیں</span>
-    </div>
-
-    <!-- Add field / table buttons -->
-    <div style="display:flex;gap:8px;padding:8px 14px;flex-wrap:wrap;">
-      <button class="btn btn-secondary btn-sm" onclick="_addCustomField('misal-editor')">➕ خانہ</button>
-      <button class="btn btn-secondary btn-sm" onclick="_addCustomTable('misal-editor')">➕ ٹیبل</button>
-      <div style="margin-right:auto;display:flex;align-items:center;gap:6px;">
-        <label style="font-size:12px;color:var(--text-muted);">تاریخ:</label>
-        <input type="text" id="misal-date" value="${savedDate}" placeholder="2026-06-21" style="border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;background:var(--bg-card);color:var(--text-primary);direction:ltr;width:120px;">
-      </div>
-    </div>
-
-    <!-- Text area (justified, RTL) -->
+  <div style="display:flex;flex-direction:column;height:100%;min-height:400px;direction:rtl;">
+    <!-- PLAIN PAGE: sarkari form ke columns/rows pehle se defined hote hain,
+         is liye software apni taraf se koi toolbar/format button nahi deta.
+         Sirf safed kaghaz — owner/admin khud form set karta hai.
+         (محفوظ / پرنٹ / واپس upar full-page bar mein hain) -->
+    <input type="hidden" id="misal-date" value="${savedDate}">
     <div style="flex:1;overflow:auto;min-height:0;padding:14px;">
       <div id="misal-editor" contenteditable="true" spellcheck="false" style="
         width:100%;min-height:100%;
-        background:var(--bg-card);color:var(--text-primary);
+        background:#fff;color:#111;
         font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
         font-size:16px;line-height:2;
         direction:rtl;text-align:justify;
@@ -1612,6 +1586,14 @@ function _dioEnterDocView() {
          background:var(--bg-secondary);border-bottom:1px solid var(--border);flex-wrap:wrap;">
       <div id="dio-dv-tabs" style="display:flex;gap:6px;flex:1;flex-wrap:wrap;min-width:0;"></div>
       <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button onclick="_dioAddDocPicker()" title="نئی دستاویز کھولیں (موجودہ بند نہیں ہوگی)"
+          style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--accent);
+                 border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;
+                 font-family:'Jameel Noori Nastaleeq',serif;">➕ نئی دستاویز</button>
+        <button onclick="_dioSaveCurrent()" title="محفوظ کریں"
+          style="background:var(--green,#16a34a);color:#fff;border:none;border-radius:8px;padding:8px 16px;
+                 font-size:13px;font-weight:700;cursor:pointer;
+                 font-family:'Jameel Noori Nastaleeq',serif;">💾 محفوظ</button>
         <button onclick="_dioPrintCurrent()" title="پرنٹ"
           style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 16px;
                  font-size:13px;font-weight:700;cursor:pointer;
@@ -1636,6 +1618,8 @@ function _dioDocViewEsc(e) {
 }
 
 // ── Band karo — editor-area apni asal jagah wapas ──
+// NOTE: Tabs ko JAAN-BOOJH KAR mehfooz rakhte hain, taake wapas ja kar koi
+// aur chip kholne par purane tabs band na hon (sab khule rahen).
 function _dioExitDocView() {
   const ov = document.getElementById('dio-docview');
   if (!ov) return;
@@ -1646,9 +1630,91 @@ function _dioExitDocView() {
   ov.remove();
   document.body.style.overflow = '';
   document.removeEventListener('keydown', _dioDocViewEsc);
-  _dioTabs = [];
-  _dioActiveTab = null;
 }
+
+// Naya case khulne par tabs saaf (purane case ke tabs na rahen)
+function _dioResetTabs() { _dioTabs = []; _dioActiveTab = null; }
+window._dioResetTabs = _dioResetTabs;
+
+// ── ➕ نئی دستاویز — fullscreen ke ANDAR se naya tab kholo ──
+// (Moujooda tab band nahi hota — sab khule rehte hain)
+function _dioAddDocPicker() {
+  const old = document.getElementById('dio-dv-picker');
+  if (old) { old.remove(); return; }   // toggle
+
+  const groups = [
+    { title:'انڈیکس / FIR', items:[
+      ['index_naql','انڈیکس نقل مسل'], ['fir','الف آئی آر'], ['cross_version','کراس ورژن'],
+    ]},
+    { title:'ملزمان / گواہان', items:[
+      ['named_accused','ملزمان FIR'], ['accused_cross','ملزمان کراس ورژن'],
+      ['witnesses_fir','گواہان FIR'], ['witnesses_cross','گواہان کراس ورژن'],
+    ]},
+    { title:'رپورٹ 173 ض ف', items:[
+      ['r173:mukammal','چالان مکمل'], ['r173:namukammal','چالان نامکمل'],
+      ['r173:interim','انٹیرم چالان'], ['r173:ikhraj','اخراج'],
+      ['r173:adampata','عدم پتہ'], ['r173:tatima_challan','تتمہ چالان'],
+    ]},
+    { title:'دیگر دستاویزات', items: MISAL_CASE_DOCS
+        .filter(d => d.id !== 'index_naql').map(d => [d.id, d.name]) },
+  ];
+
+  const box = document.createElement('div');
+  box.id = 'dio-dv-picker';
+  box.style.cssText =
+    'position:absolute;top:56px;left:12px;z-index:9600;max-height:70vh;overflow:auto;' +
+    'background:var(--bg-card);border:1px solid var(--accent);border-radius:12px;' +
+    'padding:12px;box-shadow:0 12px 40px rgba(0,0,0,0.45);direction:rtl;min-width:280px;max-width:92vw;';
+  box.innerHTML = groups.map(g => `
+    <div style="margin-bottom:10px;">
+      <div style="font-size:11px;color:var(--text-muted);font-weight:700;margin-bottom:6px;
+                  font-family:'Jameel Noori Nastaleeq',serif;">${g.title}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        ${g.items.map(([id,label]) => {
+          const open = _dioTabs.some(t => t.id === id);
+          return `<span onclick="_dioPickDoc('${id}')"
+            style="padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;
+                   font-family:'Jameel Noori Nastaleeq',serif;
+                   border:1px solid ${open?'var(--accent)':'var(--border)'};
+                   background:${open?'var(--accent)':'var(--bg-tertiary)'};
+                   color:${open?'#fff':'var(--text-primary)'};">${esc(label)}${open?' ✓':''}</span>`;
+        }).join('')}
+      </div>
+    </div>`).join('') +
+    `<div style="text-align:center;padding-top:6px;border-top:1px solid var(--border);">
+       <span onclick="document.getElementById('dio-dv-picker')?.remove()"
+         style="font-size:12px;color:var(--text-muted);cursor:pointer;
+                font-family:'Jameel Noori Nastaleeq',serif;">✕ بند کریں</span>
+     </div>`;
+  document.getElementById('dio-docview')?.appendChild(box);
+}
+
+// Picker se document chuna → naya tab (purane khule rehte hain)
+function _dioPickDoc(docId) {
+  document.getElementById('dio-dv-picker')?.remove();
+  if (_dioTabs.some(t => t.id === docId)) { _dioSwitchTab(docId); return; }
+  _dioTabs.push({ id: docId, name: _dioDocName(docId) });
+  _dioActiveTab = docId;
+  _dioRenderTabs();
+  _dioRenderTabContent(docId);
+}
+
+// 💾 محفوظ — active dastawez
+function _dioSaveCurrent() {
+  const id = _dioActiveTab;
+  if (!id) return;
+  if (id.startsWith('r173:')) {
+    if (typeof _saveR173 === 'function') { _saveR173(); return; }
+  }
+  if (document.getElementById('misal-editor') && typeof saveMisalDoc === 'function') {
+    saveMisalDoc(_openDocId || id); return;
+  }
+  if (typeof showToast === 'function') showToast('ℹ️ یہ صفحہ خودکار محفوظ ہوتا ہے', 'info');
+}
+
+window._dioAddDocPicker = _dioAddDocPicker;
+window._dioPickDoc      = _dioPickDoc;
+window._dioSaveCurrent  = _dioSaveCurrent;
 
 // ── Tab kholo (ya pehle se khuli ho to us par jao) ──
 function _dioOpenDocTab(docId) {
@@ -1692,7 +1758,7 @@ function _dioSwitchTab(docId) {
 // ── Tab band karo ──
 function _dioCloseTab(docId) {
   _dioTabs = _dioTabs.filter(t => t.id !== docId);
-  if (!_dioTabs.length) { _dioExitDocView(); return; }
+  if (!_dioTabs.length) { _dioActiveTab = null; _dioExitDocView(); return; }
   if (_dioActiveTab === docId) {
     _dioActiveTab = _dioTabs[_dioTabs.length - 1].id;
     _dioRenderTabContent(_dioActiveTab);
