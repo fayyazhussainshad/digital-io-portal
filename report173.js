@@ -114,8 +114,8 @@ function _renderR173() {
         ${R173_TATIMA_SUBS.map(s => `<option value="${s.id}" ${s.id===_r173Subtype?'selected':''}>${s.name}</option>`).join('')}
       </select>` : ''}
       <div style="margin-right:auto;display:flex;gap:6px;">
-        <button class="btn btn-primary btn-sm" onclick="_saveR173()">💾 محفوظ کریں</button>
-        <button class="btn btn-secondary btn-sm" onclick="_printR173()">🖨️ پرنٹ کریں</button>
+        <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveR173()">💾 محفوظ کریں</button>
+        <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printR173()">🖨️ پرنٹ کریں</button>
       </div>
     </div>
 

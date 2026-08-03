@@ -735,7 +735,7 @@ async function _renderFIRView() {
       </div>
       <div style="display:flex;gap:6px;direction:rtl;flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="_openFIREditor()">📝 متن درج کریں</button>
-        <button class="btn btn-secondary" onclick="_printFIRAll()">🖨️ پرنٹ</button>
+        <button class="btn btn-secondary dio-modbtn" onclick="_printFIRAll()">🖨️ پرنٹ</button>
         <button class="btn btn-secondary" onclick="_shareFIRAll()">📱 شیئر</button>
       </div>
     </div>
@@ -1581,6 +1581,14 @@ function _dioEnterDocView() {
   ov.style.cssText =
     'position:fixed;inset:0;z-index:9500;background:var(--bg-primary);' +
     'display:flex;flex-direction:column;direction:rtl;';
+  // Full-page view mein har module ke apne محفوظ/پرنٹ buttons chhupa dete hain —
+  // upar wale bar mein pehle se hain, warna do do buttons nazar aate the.
+  if (!document.getElementById('dio-dv-style')) {
+    const st = document.createElement('style');
+    st.id = 'dio-dv-style';
+    st.textContent = '#dio-dv-body .dio-modbtn{display:none !important;}';
+    document.head.appendChild(st);
+  }
   ov.innerHTML = `
     <div id="dio-dv-bar" style="display:flex;align-items:center;gap:8px;padding:8px 12px;
          background:var(--bg-secondary);border-bottom:1px solid var(--border);flex-wrap:wrap;">
@@ -1789,6 +1797,9 @@ function _dioPrintCurrent() {
   if (!id) return;
   if (id.startsWith('r173:')) {
     if (typeof _printR173 === 'function') { _printR173(); return; }
+  }
+  if (id === 'fir' || id === 'cross_version') {
+    if (typeof _printFIRAll === 'function') { _printFIRAll(); return; }
   }
   if (typeof printMisalDoc === 'function') { printMisalDoc(_dioDocName(id)); return; }
   window.print();

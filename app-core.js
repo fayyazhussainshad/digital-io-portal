@@ -1784,9 +1784,11 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
 //  GLOBAL PRINT HELPER — iframe-based, no double-close, no full-screen stuck
 // ═══════════════════════════════════════════════════════════
 function dioPrint(htmlContent) {
-  // P5: Print preview — show content in a preview modal first (turn off via
-  // localStorage 'dio_print_preview'='off'). Officer confirms then prints.
-  if (localStorage.getItem('dio_print_preview') !== 'off') {
+  // DIRECT PRINT: pehle aik extra in-app preview aata tha (بند کریں/پرنٹ کریں).
+  // Woh fazool tha kyunki browser ka apna print dialog pehle se preview deta hai.
+  // Ab seedha print par jate hain. (Purana preview chahiye to localStorage mein
+  // 'dio_print_preview' = 'on' set karein.)
+  if (localStorage.getItem('dio_print_preview') === 'on') {
     _dioPrintPreview(htmlContent);
     return;
   }
