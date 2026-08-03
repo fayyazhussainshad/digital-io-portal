@@ -983,7 +983,7 @@ function printMisalDoc(name) {
   const _isIdx = (_openDocId === 'index_naql');
   const _pageRule = _isIdx ? 'size:8.5in 13in;margin:11mm 8.5mm 6.5mm 8mm;' : 'size:A4;margin:15mm;';
   _printHTML += (`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
-    <title>${name}</title>
+    <title> </title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
     <style>
       @page{${_pageRule}}
