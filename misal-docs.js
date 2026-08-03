@@ -420,7 +420,7 @@ function _renderMisalEditor(docId, def) {
   const savedDate = saved?.content?.date || '';
 
   area.innerHTML = `
-  <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
+  <div style="display:flex;flex-direction:column;height:100%;max-height:calc(100dvh - 120px);min-height:400px;direction:rtl;">
     <!-- Header -->
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap;">
       <div style="font-size:16px;font-weight:800;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;color:var(--accent);">${def.name}</div>
