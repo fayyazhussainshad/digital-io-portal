@@ -80,9 +80,9 @@ function _renderAutoWitnesses() {
     ${auto.map(a=>`
       <div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;border-bottom:1px solid var(--border);">
         <span style="background:var(--accent-glow);color:var(--accent);border-radius:8px;padding:1px 8px;font-size:10px;white-space:nowrap;">${a.role}</span>
-        <span style="font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">${a.name}</span>
-        ${a.cnic?`<span style="color:var(--text-muted);direction:ltr;">${a.cnic}</span>`:''}
-        ${a.cell?`<span style="color:var(--text-muted);direction:ltr;">${a.cell}</span>`:''}
+        <span style="font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">${esc(a.name)}</span>
+        ${a.cnic?`<span style="color:var(--text-muted);direction:ltr;">${esc(a.cnic)}</span>`:''}
+        ${a.cell?`<span style="color:var(--text-muted);direction:ltr;">${esc(a.cell)}</span>`:''}
       </div>`).join('')}
     <div style="font-size:10px;color:var(--text-muted);margin-top:6px;">یہ خودبخود گواہان کی فہرست میں شامل ہیں۔ مزید گواہ نیچے شامل کریں۔</div>
     <button class="btn btn-secondary btn-sm" style="margin-top:8px;" onclick='_saveAutoWitnesses(${JSON.stringify(auto).replace(/'/g,"&#39;")})'>📋 ان سب کو گواہان میں محفوظ کریں</button>
@@ -123,9 +123,9 @@ function _renderWitnessList(list, type) {
     <div style="display:flex;align-items:center;gap:10px;background:var(--bg-card);border:1px solid var(--border);border-right:3px solid var(--accent);border-radius:8px;padding:10px 12px;margin-bottom:7px;direction:rtl;font-size:14px;flex-wrap:nowrap;overflow-x:auto;">
       <span style="font-weight:800;color:var(--accent);white-space:nowrap;">گواہ ${i+1}</span>
       <span style="font-weight:700;white-space:nowrap;font-family:'Jameel Noori Nastaleeq',serif;">${esc(w.full_name)||'—'}</span>
-      ${w.cnic?`<span style="color:var(--text-muted);direction:ltr;white-space:nowrap;">${w.cnic}</span>`:''}
-      ${w.cell?`<span style="color:var(--text-muted);direction:ltr;white-space:nowrap;">${w.cell}</span>`:''}
-      ${w.profession?`<span style="color:var(--text-muted);white-space:nowrap;">${w.profession}</span>`:''}
+      ${w.cnic?`<span style="color:var(--text-muted);direction:ltr;white-space:nowrap;">${esc(w.cnic)}</span>`:''}
+      ${w.cell?`<span style="color:var(--text-muted);direction:ltr;white-space:nowrap;">${esc(w.cell)}</span>`:''}
+      ${w.profession?`<span style="color:var(--text-muted);white-space:nowrap;">${esc(w.profession)}</span>`:''}
       <span style="background:var(--accent-glow);color:var(--accent);border-radius:10px;padding:2px 8px;white-space:nowrap;font-size:13px;">${statusLabel}</span>
       <span style="flex:1;"></span>
       <button class="btn btn-secondary btn-sm" style="padding:2px 8px;" onclick="_openWitnessForm('${w.id}')">✏️</button>
@@ -234,7 +234,7 @@ async function _doPriorCheck(name, cnic, cell) {
       const role = (SUS[p.person_type]||{}).label || p.person_type;
       const icon = (SUS[p.person_type]||{}).icon || '•';
       html += `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:3px 0;">
-        <span>${icon} <b>${p.full_name}</b> — ${role}</span>
+        <span>${icon} <b>${esc(p.full_name)}</b> — ${role}</span>
         <button class="btn btn-secondary btn-sm" style="font-size:10px;padding:2px 8px;" onclick='_autoFillWitness(${JSON.stringify(p).replace(/'/g,"&#39;")})'>📋 بھریں</button>
       </div>`;
     });

@@ -120,7 +120,7 @@ function _renderSearchResults(q, r) {
   const total = r.cases.length + r.accused.length + r.witnesses.length + r.fir.length + r.zimni.length
               + (r.hamrahi?.length||0) + (r.gari?.length||0) + (r.cdr?.length||0);
   if (!total) {
-    box.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text-muted);"><div style="font-size:40px;margin-bottom:10px;">🔍</div><div style="font-size:15px;">"${q}" کے لیے کچھ نہیں ملا</div></div>`;
+    box.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text-muted);"><div style="font-size:40px;margin-bottom:10px;">🔍</div><div style="font-size:15px;">"${esc(q)}" کے لیے کچھ نہیں ملا</div></div>`;
     return;
   }
   const card = (label, color, title, sub, onclick) => `

@@ -137,7 +137,7 @@ function _recentlyViewedBar() {
           style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:11px;cursor:pointer;color:var(--text-secondary);display:flex;align-items:center;gap:6px;"
           onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
           <span style="color:var(--accent);font-weight:700;">FIR ${r.fir}</span>
-          ${r.name?`<span style="font-size:10px;color:var(--text-muted);">${r.name.slice(0,15)}</span>`:''}
+          ${r.name?`<span style="font-size:10px;color:var(--text-muted);">${esc(r.name.slice(0,15))}</span>`:''}
         </button>`).join('')}
     </div>
   </div>`;

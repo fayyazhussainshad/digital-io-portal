@@ -202,13 +202,13 @@ async function _viewSuspect(id) {
     <div style="direction:rtl;">
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;font-size:13px;">
         <div><b>قسم:</b> ${t.label}</div>
-        ${p.father_name ? `<div><b>ولدیت:</b> ${p.father_name}</div>` : ''}
+        ${p.father_name ? `<div><b>ولدیت:</b> ${esc(p.father_name)}</div>` : ''}
         ${p.caste ? `<div><b>ذات:</b> ${p.caste}</div>` : ''}
-        ${p.profession ? `<div><b>پیشہ:</b> ${p.profession}</div>` : ''}
+        ${p.profession ? `<div><b>پیشہ:</b> ${esc(p.profession)}</div>` : ''}
         ${p.cnic ? `<div><b>شناختی کارڈ:</b> <span dir="ltr">${esc(p.cnic)}</span></div>` : ''}
         ${p.cell ? `<div><b>فون:</b> <span dir="ltr">${p.cell}</span></div>` : ''}
         ${p.address ? `<div><b>پتہ:</b> ${esc(p.address)}</div>` : ''}
-        ${p.notes ? `<div><b>نوٹس:</b> ${p.notes}</div>` : ''}
+        ${p.notes ? `<div><b>نوٹس:</b> ${esc(p.notes)}</div>` : ''}
       </div>
 
       <!-- Cross-referenced cases -->

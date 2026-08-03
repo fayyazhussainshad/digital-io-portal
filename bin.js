@@ -136,18 +136,18 @@ function _binTitle(type, d) {
     case 'reminder': return d.text || '—';
     case 'evidence': return d.name || '—';
     case 'court':    return `FIR ${esc(d.fir_number)||'—'} — ${esc(d.court_name)||'—'}`;
-    case 'incident': return `${d.report_number||'—'} — ${d.incident_type||'—'}`;
+    case 'incident': return `${esc(d.report_number)||'—'} — ${esc(d.incident_type)||'—'}`;
     default:         return d.title || d.name || d.text || '—';
   }
 }
 
 function _binDetail(type, d) {
   switch(type) {
-    case 'case':     return `${d.section_of_law||'—'} · ${formatDate(d.fir_date)}`;
+    case 'case':     return `${esc(d.section_of_law)||'—'} · ${formatDate(d.fir_date)}`;
     case 'reminder': return formatDate(d.reminder_date);
-    case 'evidence': return `${d.type||'—'} · ${formatDate(d.created_at)}`;
-    case 'court':    return `${d.hearing_date||'—'} · ${d.purpose||'—'}`;
-    case 'incident': return `${d.incident_date||'—'} · ${d.address||'—'}`;
+    case 'evidence': return `${esc(d.type)||'—'} · ${formatDate(d.created_at)}`;
+    case 'court':    return `${esc(d.hearing_date)||'—'} · ${esc(d.purpose)||'—'}`;
+    case 'incident': return `${esc(d.incident_date)||'—'} · ${esc(d.address)||'—'}`;
     default:         return formatDate(d.created_at||d.deleted_at);
   }
 }

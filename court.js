@@ -36,7 +36,7 @@ async function _buildCourt() {
   ${overdue.length ? `
   <div style="background:rgba(239,68,68,0.1);border:1px solid var(--red);border-radius:10px;padding:12px 16px;margin-bottom:14px;">
     <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:6px;">⚠️ ${overdue.length} پیشیاں گزر گئیں</div>
-    ${overdue.map(d=>`<div style="font-size:12px;color:var(--red);">FIR ${d.fir_number||'—'} — ${d.hearing_date} — ${d.court_name||'—'}</div>`).join('')}
+    ${overdue.map(d=>`<div style="font-size:12px;color:var(--red);">FIR ${esc(d.fir_number)||'—'} — ${esc(d.hearing_date)} — ${esc(d.court_name)||'—'}</div>`).join('')}
   </div>` : ''}
 
   <!-- Calendar -->
@@ -120,10 +120,10 @@ function _courtCard(d, isPast=false) {
         ${!isPast&&diff<=3?`<span style="font-size:10px;background:var(--red);color:#fff;padding:1px 6px;border-radius:8px;">${diff===0?'آج':diff<0?'گزر گئی':diff+'  دن باقی'}</span>`:''}
         <span class="pill ${d.status==='done'?'pill-green':'pill-blue'}" style="font-size:10px;">${d.status==='done'?'مکمل':'زیر التواء'}</span>
       </div>
-      <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">⚖️ ${d.court_name||'—'} &nbsp;·&nbsp; 🕐 ${d.hearing_time||'—'}</div>
-      ${d.judge_name?`<div style="font-size:11px;color:var(--text-muted);">جج: ${d.judge_name}</div>`:''}
-      ${d.purpose?`<div style="font-size:11px;color:var(--text-muted);">مقصد: ${d.purpose}</div>`:''}
-      ${d.notes?`<div style="font-size:11px;color:var(--text-faint);">${d.notes}</div>`:''}
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">⚖️ ${esc(d.court_name)||'—'} &nbsp;·&nbsp; 🕐 ${d.hearing_time||'—'}</div>
+      ${d.judge_name?`<div style="font-size:11px;color:var(--text-muted);">جج: ${esc(d.judge_name)}</div>`:''}
+      ${d.purpose?`<div style="font-size:11px;color:var(--text-muted);">مقصد: ${esc(d.purpose)}</div>`:''}
+      ${d.notes?`<div style="font-size:11px;color:var(--text-faint);">${esc(d.notes)}</div>`:''}
     </div>
     <div style="display:flex;flex-direction:column;gap:4px;">
       <button class="btn btn-secondary btn-sm" onclick="_editCourtDate('${d.id}')">✏️</button>
@@ -145,7 +145,7 @@ async function _openAddCourtDate(existing) {
         <label class="form-label">FIR نمبر</label>
         <select class="form-input" id="cd-fir">
           <option value="">-- FIR منتخب کریں --</option>
-          ${cases.map(c=>`<option value="${c.fir_number}" data-id="${c.id}" ${e.fir_number===c.fir_number?'selected':''}>${c.fir_number} — ${c.complainant||'—'}</option>`).join('')}
+          ${cases.map(c=>`<option value="${esc(c.fir_number)}" data-id="${c.id}" ${e.fir_number===c.fir_number?'selected':''}>${c.fir_number} — ${c.complainant||'—'}</option>`).join('')}
         </select>
       </div>
       <div>
@@ -158,11 +158,11 @@ async function _openAddCourtDate(existing) {
       </div>
       <div>
         <label class="form-label">عدالت کا نام *</label>
-        <input class="form-input" id="cd-court" placeholder="e.g. سیشن کورٹ ملتان" value="${e.court_name||''}">
+        <input class="form-input" id="cd-court" placeholder="e.g. سیشن کورٹ ملتان" value="${esc(e.court_name||'')}">
       </div>
       <div>
         <label class="form-label">جج کا نام</label>
-        <input class="form-input" id="cd-judge" placeholder="جج کا نام" value="${e.judge_name||''}">
+        <input class="form-input" id="cd-judge" placeholder="جج کا نام" value="${esc(e.judge_name||'')}">
       </div>
       <div>
         <label class="form-label">پیشی کا مقصد</label>
@@ -173,7 +173,7 @@ async function _openAddCourtDate(existing) {
     </div>
     <div style="margin-top:10px;">
       <label class="form-label">نوٹس</label>
-      <textarea class="form-input" id="cd-notes" rows="2" placeholder="کوئی خاص ہدایت...">${e.notes||''}</textarea>
+      <textarea class="form-input" id="cd-notes" rows="2" placeholder="کوئی خاص ہدایت...">${esc(e.notes||'')}</textarea>
     </div>`,
     `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
      <button class="btn btn-primary" onclick="_saveCourtDate('${existing?.id||''}')">💾 محفوظ کریں</button>`

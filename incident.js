@@ -196,10 +196,10 @@ async function _viewIncReport(id) {
     const fir = data.data?.fir_number || '';
     openModal('🚨 ' + (data.report_number||'Incident Report'),
       `<div style="font-size:13px;line-height:2.2;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
-        <div><b>رپورٹ نمبر:</b> ${data.report_number||'—'}</div>
+        <div><b>رپورٹ نمبر:</b> ${esc(data.report_number)||'—'}</div>
         <div><b>تاریخ:</b> ${data.incident_date||'—'} &nbsp;·&nbsp; <b>وقت:</b> ${data.incident_time||'—'}</div>
-        <div><b>قسم:</b> ${data.incident_type||'—'}</div>
-        <div><b>مقام:</b> ${data.address||'—'}</div>
+        <div><b>قسم:</b> ${esc(data.incident_type)||'—'}</div>
+        <div><b>مقام:</b> ${esc(data.address)||'—'}</div>
         ${fir ? `<div><b>FIR نمبر:</b> <span style="color:var(--accent);font-weight:700;">${fir}</span>
           <button class="btn btn-secondary btn-sm" onclick="closeModal();showPage('cases',null);setTimeout(()=>{const c=Array.from(document.querySelectorAll('td')).find(t=>t.textContent.includes('${fir}')); if(c)c.click();},800);">مقدمہ دیکھیں →</button>
         </div>` : ''}
@@ -502,8 +502,8 @@ async function _showPrevReports() {
             <span style="font-size:18px;">🚨</span>
             <div style="flex:1;">
               <div style="font-size:13px;font-weight:700;color:var(--accent);">${esc(r.report_number)||'—'}</div>
-              <div style="font-size:11px;color:var(--text-muted);">${r.incident_type||'—'} · ${r.incident_date||'—'}</div>
-              <div style="font-size:11px;color:var(--text-faint);">${r.address||'—'}</div>
+              <div style="font-size:11px;color:var(--text-muted);">${esc(r.incident_type)||'—'} · ${r.incident_date||'—'}</div>
+              <div style="font-size:11px;color:var(--text-faint);">${esc(r.address)||'—'}</div>
               ${r.data?.fir_number ? `<div style="font-size:10px;color:var(--accent);">FIR: ${r.data.fir_number}</div>` : ''}
             </div>
             <div style="display:flex;flex-direction:column;gap:4px;">
