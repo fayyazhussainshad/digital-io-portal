@@ -19,15 +19,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     /* Jameel Noori Nastaleeq — official legal Urdu font.
-       local() pehle (agar laptop par installed to best quality),
-       phir working GitHub-raw/jsdelivr CDN, phir Google Noto fallback. */
+       local() pehle (laptop par installed to best quality), phir CSP-allowed
+       CDNs (jsdelivr + unpkg) se woff2. Yeh npm package (jameel-noori) mojood
+       aur dono CDNs par serve hota hai. */
     @font-face {
       font-family: 'Jameel Noori Nastaleeq';
       src: local('Jameel Noori Nastaleeq'),
            local('JameelNooriNastaleeq'),
            local('Jameel Noori Nastaleeq Regular'),
-           url('https://cdn.jsdelivr.net/gh/dcs-abbas/Fonts/Jameel%20Noori%20Nastaleeq%20Regular.ttf') format('truetype'),
-           url('https://raw.githubusercontent.com/dcs-abbas/Fonts/master/Jameel%20Noori%20Nastaleeq%20Regular.ttf') format('truetype');
+           url('https://cdn.jsdelivr.net/npm/jameel-noori/fonts/jameel-noori-nastaleeq4.woff2') format('woff2'),
+           url('https://unpkg.com/jameel-noori/fonts/jameel-noori-nastaleeq4.woff2') format('woff2');
       font-weight: normal;
       font-style: normal;
       font-display: swap;
