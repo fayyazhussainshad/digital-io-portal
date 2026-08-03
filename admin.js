@@ -179,7 +179,7 @@ function _renderPendingTab(pending) {
             📧 ${esc(p.email)||'—'} &nbsp;·&nbsp; 🏷️ ${esc(p.badge_number)||'—'}
           </div>
           <div style="font-size:12px;color:var(--text-secondary);">
-            🏛️ ${p.station||'—'} · ${p.district||'—'} &nbsp;·&nbsp; 👮 ${p.designation||'—'}
+            🏛️ ${esc(p.station)||'—'} · ${esc(p.district)||'—'} &nbsp;·&nbsp; 👮 ${esc(p.designation)||'—'}
           </div>
           ${p.cnic ? `<div style="font-size:12px;color:var(--text-secondary);" dir="ltr">🆔 ${esc(p.cnic)}</div>` : ''}
           <div style="font-size:10px;color:var(--text-faint);margin-top:4px;">
@@ -187,8 +187,8 @@ function _renderPendingTab(pending) {
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;">
-          <button class="btn btn-primary btn-sm" onclick="_adminApprove('${p.id}','${p.full_name||''}')">✅ منظور</button>
-          <button class="btn btn-danger btn-sm" onclick="_adminRejectReg('${p.id}','${p.full_name||''}')">❌ رد</button>
+          <button class="btn btn-primary btn-sm" onclick="_adminApprove('${p.id}','${esc(p.full_name||'')}')">✅ منظور</button>
+          <button class="btn btn-danger btn-sm" onclick="_adminRejectReg('${p.id}','${esc(p.full_name||'')}')">❌ رد</button>
         </div>
       </div>
     </div>`).join('')}
@@ -216,9 +216,9 @@ function _renderOfficersTab(officers, role) {
               <div style="font-weight:700;">${esc(o.full_name)||'—'}</div>
               <div style="font-size:10px;color:var(--text-muted);">${o.email||''}</div>
             </td>
-            <td style="font-family:monospace;font-size:11px;">${o.badge_number||'—'}</td>
-            <td style="font-size:12px;">${o.designation||'—'}</td>
-            <td style="font-size:12px;">${o.station||'—'}</td>
+            <td style="font-family:monospace;font-size:11px;">${esc(o.badge_number)||'—'}</td>
+            <td style="font-size:12px;">${esc(o.designation)||'—'}</td>
+            <td style="font-size:12px;">${esc(o.station)||'—'}</td>
             <td>
               <select onchange="_adminChangeRole('${o.id}',this.value)"
                 style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:4px;padding:3px 6px;color:var(--text-primary);font-size:11px;">
@@ -336,7 +336,7 @@ function _renderReportsTab(officers, cases) {
       <tbody>
         ${officerStats.map(o=>`<tr>
           <td style="font-weight:700;">${esc(o.full_name)||'—'}</td>
-          <td style="font-size:12px;">${o.station||'—'}</td>
+          <td style="font-size:12px;">${esc(o.station)||'—'}</td>
           <td style="font-weight:700;color:var(--accent);">${o.total}</td>
           <td>${o.active}</td>
           <td style="color:var(--green);">${o.complete}</td>
@@ -454,7 +454,11 @@ async function _adminSuspend(officerId, name) {
 
 async function _doSuspend(officerId) {
   const reason = document.getElementById('suspend-reason')?.value || '';
-  await supabaseClient.from('officers').update({ suspended: true, suspension_reason: reason }).eq('id', officerId);
+  // Fix 1: server-side SECURITY DEFINER — role/suspend browser se seedha nahi ho sakta
+  const { error } = await supabaseClient.rpc('admin_set_officer_suspension', {
+    p_officer_id: officerId, p_suspended: true, p_reason: reason
+  });
+  if (error) { showToast('❌ ' + error.message, 'error'); return; }
   showToast('🚫 افسر معطل کر دیا گیا', 'info');
   _adminRefresh();
 }
@@ -468,15 +472,22 @@ async function _adminUnsuspend(officerId, name) {
 }
 
 async function _doUnsuspend(officerId) {
-  await supabaseClient.from('officers').update({ suspended: false, suspension_reason: null }).eq('id', officerId);
+  const { error } = await supabaseClient.rpc('admin_set_officer_suspension', {
+    p_officer_id: officerId, p_suspended: false, p_reason: null
+  });
+  if (error) { showToast('❌ ' + error.message, 'error'); return; }
   showToast('✅ افسر بحال', 'success');
   _adminRefresh();
 }
 
 async function _adminChangeRole(officerId, newRole) {
   try {
-    await supabaseClient.from('officers').update({ role: newRole }).eq('id', officerId);
+    const { error } = await supabaseClient.rpc('admin_set_officer_role', {
+      p_officer_id: officerId, p_new_role: newRole
+    });
+    if (error) throw error;
     showToast(`✅ Role تبدیل: ${newRole}`, 'success');
+    _adminRefresh();
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
 
@@ -606,13 +617,13 @@ async function _adminViewOfficer(officerId) {
   openModal(`👮 ${esc(o.full_name)||'—'}`,
     `<div style="font-size:13px;line-height:2.2;">
       <div>📧 <b>Email:</b> ${o.email||'—'}</div>
-      <div>🏷️ <b>Badge:</b> ${o.badge_number||'—'}</div>
-      <div>👮 <b>عہدہ:</b> ${o.designation||'—'}</div>
-      <div>🏛️ <b>تھانہ:</b> ${o.station||'—'} · ${o.district||'—'}</div>
+      <div>🏷️ <b>Badge:</b> ${esc(o.badge_number)||'—'}</div>
+      <div>👮 <b>عہدہ:</b> ${esc(o.designation)||'—'}</div>
+      <div>🏛️ <b>تھانہ:</b> ${esc(o.station)||'—'} · ${esc(o.district)||'—'}</div>
       <div>🔑 <b>Role:</b> ${o.role||'officer'}</div>
       <div>📊 <b>Status:</b> ${o.suspended?'<span style="color:var(--red);">معطل</span>':o.is_approved?'<span style="color:var(--green);">فعال</span>':'زیر التواء'}</div>
       <div>📁 <b>کل مقدمات:</b> ${cases.length}</div>
-      ${o.suspension_reason?`<div>📝 <b>معطلی وجہ:</b> ${o.suspension_reason}</div>`:''}
+      ${o.suspension_reason?`<div>📝 <b>معطلی وجہ:</b> ${esc(o.suspension_reason)}</div>`:''}
     </div>`,
     `<button class="btn btn-primary" onclick="closeModal()">بند کریں</button>`
   );
@@ -683,7 +694,7 @@ function _adminPrintReport() {
   const { officers, cases } = window._adminData || {};
   const date = formatDate(new Date());
   const o = currentOfficer || {};
-  let html = `<h2 style="text-align:center;"><br>تھانہ ${o.station||'—'} ضلع ${o.district||'—'}</h2>`;
+  let html = `<h2 style="text-align:center;"><br>تھانہ ${esc(o.station)||'—'} ضلع ${esc(o.district)||'—'}</h2>`;
   html += `<p style="text-align:center;">تاریخ: ${date}</p><hr>`;
   html += `<h3>افسر وار رپورٹ</h3><table border="1" style="width:100%;border-collapse:collapse;">`;
   html += `<tr><th>افسر</th><th>عہدہ</th><th>کل</th><th>زیر تفتیش</th><th>مکمل</th></tr>`;
@@ -755,7 +766,7 @@ async function _renderSubsTab() {
           <div>
             <div style="font-weight:700;">${esc(s.officers?.full_name)||'—'}</div>
             <div style="font-size:11px;color:var(--text-muted);">${esc(s.officers?.station)||'—'} · ${esc(s.officers?.designation)||'—'}</div>
-            <div style="font-size:11px;color:var(--accent);">پلان: ${s.subscription_plans?.name||'—'} · Rs. ${s.amount||0}</div>
+            <div style="font-size:11px;color:var(--accent);">پلان: ${esc(s.subscription_plans?.name)||'—'} · Rs. ${s.amount||0}</div>
             <div style="font-size:11px;color:var(--text-muted);">TXN: <b>${s.payment_ref||'—'}</b> · ${s.payment_method||'—'}</div>
           </div>
           <div style="display:flex;gap:6px;">
@@ -785,9 +796,9 @@ async function _renderSubsTab() {
             return `<tr>
               <td style="direction:rtl;">
                 <div style="font-weight:700;">${esc(s.officers?.full_name)||'—'}</div>
-                <div style="font-size:10px;color:var(--text-muted);">${s.officers?.station||'—'}</div>
+                <div style="font-size:10px;color:var(--text-muted);">${esc(s.officers?.station)||'—'}</div>
               </td>
-              <td style="font-size:12px;">${s.subscription_plans?.name||'—'}</td>
+              <td style="font-size:12px;">${esc(s.subscription_plans?.name)||'—'}</td>
               <td style="font-weight:700;">Rs. ${s.amount||0}</td>
               <td><span class="pill" style="background:${statusColors[s.status]||'var(--accent)'};color:#fff;font-size:10px;">${s.status}</span></td>
               <td style="font-size:11px;color:${diff<7?'var(--red)':'var(--text-secondary)'};">${formatDate(s.expires_at)} ${diff>0?'('+diff+'d)':''}</td>
