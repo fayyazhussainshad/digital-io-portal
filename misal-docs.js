@@ -454,7 +454,7 @@ function _renderMisalEditor(docId, def) {
     </div>
 
     <!-- Text area (justified, RTL) -->
-    <div style="flex:1;overflow-y:auto;padding:14px;">
+    <div style="flex:1;overflow:auto;min-height:0;padding:14px;">
       <div id="misal-editor" contenteditable="true" spellcheck="false" style="
         width:100%;min-height:100%;
         background:var(--bg-card);color:var(--text-primary);
@@ -751,7 +751,7 @@ async function _renderFIRView() {
     <!-- FIR Header bar -->
     <div style="background:var(--bg-secondary);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
       <div style="font-family:'Jameel Noori Nastaleeq',serif;font-size:16px;font-weight:700;color:var(--accent);direction:rtl;">
-        متن ایف آئی آر — مقدمہ ${c.fir_number||''}
+        متن ایف آئی آر — مقدمہ ${esc(c.fir_number||'')}
       </div>
       <div style="display:flex;gap:6px;direction:rtl;flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="_openFIREditor()">📝 متن درج کریں</button>
@@ -910,8 +910,8 @@ function _doPrintFIR(html) {
     </style></head><body>
     <div class="header">
       <div style="font-size:18px;font-weight:bold;">تھانہ ${o.station||''} ضلع ${o.district||''}</div>
-      <div style="font-size:16px;font-weight:bold;margin-top:6px;">ایف آئی آر — مقدمہ نمبر: ${c.fir_number||''}</div>
-      <div style="font-size:13px;">تاریخ: ${formatDate(c.fir_date)} | دفعات: ${c.section_of_law||''}</div>
+      <div style="font-size:16px;font-weight:bold;margin-top:6px;">ایف آئی آر — مقدمہ نمبر: ${esc(c.fir_number||'')}</div>
+      <div style="font-size:13px;">تاریخ: ${formatDate(c.fir_date)} | دفعات: ${esc(c.section_of_law||'')}</div>
     </div>
     ${html}
     </body></html>`);
@@ -1169,7 +1169,8 @@ function getMisalTemplate(docId, c) {
     const _fm   = (typeof formatCell==='function') ? formatCell : (s=>s||'');
 
     // ── Section 2 borders: NO outer left/right · top/bottom/header 1.5pt · internal 0.5pt ──
-    // FIX 3: table-layout:fixed + <col> + break-word => columns NEVER flex
+    // Columns: <col> widths + per-cell width + break-word => long text wraps
+    // INSIDE the cell (row grows down), column proportions stay put.
     const _cellWrap = 'word-wrap:break-word;overflow-wrap:break-word;white-space:normal;';
     const _thBase = 'border:none;border-top:1.5pt solid #000;border-bottom:1.5pt solid #000;padding:2px 3px;font-weight:normal;text-align:center;font-size:17pt;line-height:1.7;vertical-align:middle;'+_cellWrap;
     const _tdBase = 'border:none;border-bottom:1.5pt solid #000;padding:3px;text-align:center;font-size:17pt;line-height:1.7;vertical-align:top;'+_cellWrap;
@@ -1196,7 +1197,7 @@ function getMisalTemplate(docId, c) {
     // ── Section 5 rows: numbers column-wise 1–6 / 7–12 / 13–18 ──
     let _zHead = '<tr>';
     for (let g=0;g<3;g++){
-      _zHead += `<th style="${_thZ}">ضمنی نمبر</th><th style="${_thZ}">مورخہ</th><th style="${_thZ}">تفتیشی افسر</th>`;
+      _zHead += `<th style="${_thZ}width:7.8%;">ضمنی نمبر</th><th style="${_thZ}width:10.4%;">مورخہ</th><th style="${_thZ}width:14.3%;">تفتیشی افسر</th>`;
     }
     _zHead += '</tr>';
     let _zRows = '';
@@ -1216,21 +1217,21 @@ function getMisalTemplate(docId, c) {
 
     return `
 <div style="display:flex;align-items:baseline;width:100%;margin:0 0 6px 0;">
-  <span style="flex:1 1 0;white-space:nowrap;text-align:right;padding-right:1in;font-size:18pt;">تھانہ ${_e(_sta)}</span>
+  <span style="flex:1 1 0;white-space:nowrap;text-align:right;padding-right:8%;font-size:18pt;">تھانہ ${_e(_sta)}</span>
   <span style="flex:1 1 0;white-space:nowrap;text-align:center;font-size:22pt;font-weight:bold;text-decoration:underline;">انڈکس نقل مسل پولیس</span>
   <span style="flex:1 1 0;white-space:nowrap;text-align:left;font-size:18pt;">ضلع ${_e(_dst)}</span>
 </div>
-<table style="width:100%;border-collapse:collapse;border:none;margin-bottom:6px;table-layout:fixed;">
+<table style="width:100%;border-collapse:collapse;border:none;margin-bottom:6px;">
   <colgroup>
     <col style="width:11.4%;"><col style="width:10.8%;"><col style="width:11.3%;"><col style="width:14.4%;"><col style="width:15.5%;"><col style="width:36.6%;">
   </colgroup>
   <tr style="height:14mm;">
-    <th style="${_thBase}${_vline}">مقدمہ نمبر</th>
-    <th style="${_thBase}${_vline}">تاریخ وقوعہ</th>
-    <th style="${_thBase}${_vline}">تاریخ رجوعہ</th>
-    <th style="${_thBase}${_vline}">جرم</th>
-    <th style="${_thBase}${_vline}">تعداد اوراق</th>
-    <th style="${_thBase}">حکم اخیر عدالت</th>
+    <th style="${_thBase}${_vline}width:11.4%;">مقدمہ نمبر</th>
+    <th style="${_thBase}${_vline}width:10.8%;">تاریخ وقوعہ</th>
+    <th style="${_thBase}${_vline}width:11.3%;">تاریخ رجوعہ</th>
+    <th style="${_thBase}${_vline}width:14.4%;">جرم</th>
+    <th style="${_thBase}${_vline}width:15.5%;">تعداد اوراق</th>
+    <th style="${_thBase}width:36.6%;">حکم اخیر عدالت</th>
   </tr>
   <tr style="height:40mm;">
     <td style="${_tdBase}${_vline}">${_e(c?.fir_number||'')}</td>
@@ -1247,7 +1248,7 @@ function getMisalTemplate(docId, c) {
   ${_bnam}
 </div>
 <div style="text-align:center;font-size:20pt;font-weight:bold;text-decoration:underline;margin:3px 0 2px;">انڈکس ضمنیات</div>
-<table style="width:100%;border-collapse:collapse;table-layout:fixed;"><colgroup>${_zCols}</colgroup>${_zHead}${_zRows}</table>`;
+<table style="width:100%;border-collapse:collapse;"><colgroup>${_zCols}</colgroup>${_zHead}${_zRows}</table>`;
   }
 
   const o   = currentOfficer || {};
