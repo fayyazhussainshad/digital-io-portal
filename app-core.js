@@ -1073,6 +1073,22 @@ function setTheme(t) {
   setTheme(t);
 })();
 
+// ── FONT SIZE (accessibility — har officer apni pasand rakh sake) ──────────
+// Base html font-size badalne se poori app proportionally choti/bari hoti hai.
+const DIO_FONT_SIZES = { small: '15px', medium: '16px', large: '18px', xlarge: '20px' };
+function setFontSize(key) {
+  const px = DIO_FONT_SIZES[key] || DIO_FONT_SIZES.medium;
+  document.documentElement.style.fontSize = px;
+  try { localStorage.setItem('dio_font_size', key); } catch(_) {}
+}
+function getFontSize() {
+  return localStorage.getItem('dio_font_size') || 'medium';
+}
+// Apply saved font-size on load (default medium = 16px)
+(function(){ setFontSize(getFontSize()); })();
+window.setFontSize = setFontSize;
+window.getFontSize = getFontSize;
+
 // ── AUTH ──────────────────────────────────────────────────────
 async function doLogin() {
   const email = document.getElementById('login-email')?.value.trim();
