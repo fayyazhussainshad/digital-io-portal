@@ -1221,7 +1221,7 @@ function getMisalTemplate(docId, c) {
   <span style="flex:1 1 0;white-space:nowrap;text-align:center;font-size:22pt;font-weight:bold;text-decoration:underline;">انڈکس نقل مسل پولیس</span>
   <span style="flex:1 1 0;white-space:nowrap;text-align:left;font-size:18pt;">ضلع ${_e(_dst)}</span>
 </div>
-<table style="width:100%;border-collapse:collapse;border:none;margin-bottom:6px;">
+<table style="width:100%;border-collapse:collapse;border:none;margin-bottom:6px;table-layout:fixed;">
   <colgroup>
     <col style="width:11.4%;"><col style="width:10.8%;"><col style="width:11.3%;"><col style="width:14.4%;"><col style="width:15.5%;"><col style="width:36.6%;">
   </colgroup>
@@ -1248,7 +1248,7 @@ function getMisalTemplate(docId, c) {
   ${_bnam}
 </div>
 <div style="text-align:center;font-size:20pt;font-weight:bold;text-decoration:underline;margin:3px 0 2px;">انڈکس ضمنیات</div>
-<table style="width:100%;border-collapse:collapse;"><colgroup>${_zCols}</colgroup>${_zHead}${_zRows}</table>`;
+<table style="width:100%;border-collapse:collapse;table-layout:fixed;"><colgroup>${_zCols}</colgroup>${_zHead}${_zRows}</table>`;
   }
 
   const o   = currentOfficer || {};
