@@ -181,7 +181,7 @@ function _printPerfReport() {
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
     <style>@page{margin:20mm;}body{font-family:'Noto Nastaliq Urdu',serif;direction:rtl;font-size:13px;color:#111;}
     h2,h3{text-align:center;}table{width:100%;border-collapse:collapse;}td,th{border:1px solid #ccc;padding:6px 10px;}
-    th{background:#f0f0f0;}.footer{font-size:10px;color:#888;text-align:center;margin-top:20px;border-top:1px solid #ccc;padding-top:8px;}</style>
+    th{background:#f0f0f0;}.footer{font-size:10px;color:#888;text-align:left;margin-top:20px;border-top:1px solid #ccc;padding-top:8px;direction:ltr;}</style>
     </head><body>
     <h2>کارکردگی رپورٹ</h2>
     <h3>${esc(o.full_name)||'—'} · ${esc(o.designation)||''} · تھانہ ${esc(o.station)||'—'}</h3>
@@ -190,7 +190,7 @@ function _printPerfReport() {
       <tr><th>چالان مکمل</th><th>زیر تفتیش</th><th>عدم پتہ</th><th>اخراج</th><th>کل</th></tr>
       <tr id="pr-row"><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
     </table>
-    <div class="footer">Digital IO · ${formatDate(new Date())}</div>
+    <div class="footer">Digital IO</div>
     <script>
     window.onload = function() {
       // Will be populated after print

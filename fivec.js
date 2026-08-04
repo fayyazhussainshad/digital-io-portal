@@ -541,7 +541,7 @@ async function _print5C(id) {
       td,th{border:1px solid #333;padding:6px 10px;font-size:13px;}
       th{background:#f0f0f0;width:35%;}
       .resp{border:1px solid #ccc;padding:12px;min-height:80px;margin-top:8px;line-height:2;}
-      .footer{font-size:10px;color:#666;text-align:center;margin-top:20px;border-top:1px solid #ccc;padding-top:6px;}
+      .footer{font-size:10px;color:#666;text-align:left;margin-top:20px;border-top:1px solid #ccc;padding-top:6px;direction:ltr;}
       .sig{display:flex;justify-content:space-between;margin-top:30px;}
       .sig-box{text-align:center;min-width:180px;}
       .sig-line{border-top:1px solid #000;padding-top:5px;margin-top:25px;}
@@ -565,7 +565,7 @@ async function _print5C(id) {
         <div style="font-size:11px;margin-top:4px;">${formatDate(new Date())}</div>
       </div>
     </div>
-    <div class="footer">Digital IO · ‏${formatDate(new Date())}</div>
+    <div class="footer">Digital IO</div>
     
     </body></html>`);
     dioPrint(_printHTML);

@@ -971,8 +971,10 @@ function printMisalDoc(name) {
       table{width:100%;border-collapse:collapse;}
       td,th{border:1px solid #555;padding:6px 10px;}
       button,.no-print,.doc-toolbar,.editor-toolbar,select{display:none !important;}
+      /* Bottom-LEFT branding only — koi tareekh/waqt nahi */
+      .dio-print-brand{position:fixed;bottom:3mm;left:4mm;font-size:9px;color:#999;direction:ltr;}
       @media print{body{margin:0}button,.no-print,.doc-toolbar,.editor-toolbar,select{display:none !important;}}
-    </style></head><body>${clone.innerHTML}</body></html>`);
+    </style></head><body>${clone.innerHTML}<div class="dio-print-brand">Digital IO</div></body></html>`);
   dioPrint(_printHTML);
 }
 

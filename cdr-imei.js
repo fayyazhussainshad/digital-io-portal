@@ -283,9 +283,9 @@ function _printCdr() {
       td,th{border:1px solid #000;padding:2px 4px;line-height:1.2;font-size:12px;vertical-align:middle;}
       tr{height:22px;}
       #cdr-doc > div:first-child, #cdr-doc > div:nth-child(2){margin-bottom:3px !important;}
-      .dio-print-footer{position:fixed;bottom:3mm;left:0;right:0;text-align:center;font-size:9px;color:#999;}
+      .dio-print-footer{position:fixed;bottom:3mm;left:4mm;text-align:left;font-size:9px;color:#999;direction:ltr;}
     </style></head>
-    <body>${doc.innerHTML}<div class="dio-print-footer">Digital IO | printed on ${dateStr}</div></body></html>`;
+    <body>${doc.innerHTML}<div class="dio-print-footer">Digital IO</div></body></html>`;
   if (typeof dioPrint === 'function') dioPrint(html);
   else { const w=window.open('','_blank'); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),300); }
 }

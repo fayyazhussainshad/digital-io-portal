@@ -290,7 +290,7 @@ async function _printFIRDirect(id) {
     .sig-row{display:flex;justify-content:space-between;margin-top:40px;gap:20px;}
     .sig-box{text-align:center;flex:1;}
     .sig-line{border-top:1px solid #000;padding-top:6px;margin-top:30px;font-size:12px;}
-    .footer{font-size:9px;color:#888;text-align:center;margin-top:20px;border-top:1px solid #ccc;padding-top:6px;}
+    .footer{font-size:9px;color:#888;text-align:left;margin-top:20px;border-top:1px solid #ccc;padding-top:6px;direction:ltr;}
   </style></head><body>
   <div class="hdr">
     <h1></h1>
@@ -319,7 +319,7 @@ async function _printFIRDirect(id) {
     <div class="sig-box"><div class="sig-line">تفتیشی افسر<br>${esc(o.full_name)||'___'}</div></div>
     <div class="sig-box"><div class="sig-line">SHO تھانہ ${esc(c.case_station||o.station||'___')}<br>مہر و دستخط</div></div>
   </div>
-  <div class="footer">Digital IO · ‏${formatDate(new Date())}</div>
+  <div class="footer">Digital IO</div>
   
   </body></html>`);
   dioPrint(_printHTML);
@@ -392,7 +392,7 @@ async function _downloadCaseHTML(id) {
     h2,h3{text-align:center;} .row{display:flex;gap:20px;margin-bottom:8px;}
     .lbl{color:#555;min-width:140px;font-weight:600;} .val{flex:1;}
     .sec{border-top:1px solid #ccc;margin:16px 0 8px;padding-top:8px;font-weight:700;color:#1a3a5c;}
-    .footer{text-align:center;font-size:11px;color:#888;margin-top:40px;border-top:1px solid #ccc;padding-top:10px;}
+    .footer{text-align:left;font-size:11px;color:#888;margin-top:40px;border-top:1px solid #ccc;padding-top:10px;direction:ltr;}
     @media print{body{margin:15mm;}}
   </style></head><body>
   <h2></h2>
@@ -417,7 +417,7 @@ async function _downloadCaseHTML(id) {
     <div style="text-align:center;"><div style="border-top:1px solid #333;width:200px;padding-top:6px;">دستخط رپورٹنگ افسر</div></div>
     <div style="text-align:center;"><div style="border-top:1px solid #333;width:200px;padding-top:6px;">SHO تھانہ ${o.station||'—'}</div></div>
   </div>
-  <div class="footer">Digital IO · تاریخ: ${formatDate(new Date())}</div>
+  <div class="footer">Digital IO</div>
   </body></html>`;
 
   const blob = new Blob([html], {type:'text/html;charset=utf-8'});
