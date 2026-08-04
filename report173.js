@@ -149,6 +149,13 @@ function _renderR173() {
       #ch173-doc .tt-mid{ font-weight:bold; text-decoration:underline; font-size:20px; }
       #ch173-doc .form-no{ font-style:italic; font-size:12px; direction:ltr; }
 
+      /* مقدمہ نمبر / مورخہ / جرم — unwan ke neeche, table se pehle */
+      #ch173-doc .ch173-caseline{ display:flex; gap:18px; align-items:baseline; font-size:14px;
+        margin:10px 0 8px; direction:rtl; flex-wrap:wrap; }
+      #ch173-doc .ch173-caseline .fl{ display:inline-block; min-width:120px;
+        border-bottom:1.2px dotted #000; text-align:center; outline:none; }
+      #ch173-doc .ch173-caseline .fl-lg{ min-width:260px; }
+
       #ch173-doc .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
       #ch173-doc .ch173-table th, #ch173-doc .ch173-table td{
         border:1px solid #000; padding:4px 5px; text-align:center;
@@ -184,7 +191,9 @@ function _renderR173() {
         transform:rotate(180deg); -webkit-transform:rotate(180deg);
         white-space:nowrap; line-height:1.2; text-align:center;
       }
-      #ch173-doc th.vcell{ vertical-align:middle; padding:6px 2px; text-align:center; }
+      #ch173-doc th.vcell{ vertical-align:middle; padding:0; text-align:center; height:110px; }
+      /* Header ki khadi likhayi — data khanon jaisa hi wrapper (Ascending) */
+      #ch173-doc .vhwrap{ text-align:center !important; padding:4px 2px; min-height:100px; }
       #ch173-doc th.hcell{ vertical-align:middle; text-align:center; direction:rtl; white-space:normal; }
 
       /* Bahar ke kinare khule — pehla column dayen se, aakhri bayen se */
@@ -204,9 +213,15 @@ function _renderR173() {
         position:absolute; top:0; left:-3px; width:7px; height:100%;
         cursor:col-resize; user-select:none; z-index:5;
       }
+      /* Neeche se unchai badalne wali grip (row height) */
+      #ch173-doc .rowgrip{
+        position:absolute; bottom:-4px; left:0; width:100%; height:8px;
+        cursor:row-resize; user-select:none; z-index:5;
+      }
       @media print{
         .no-print,.doc-toolbar,.editor-toolbar,button,select{ display:none !important; }
-        .colgrip{ display:none !important; }
+        .colgrip,.rowgrip{ display:none !important; }
+        .colgrip,.rowgrip{ display:none !important; }
         #ch173-doc{ box-shadow:none !important; border-radius:0 !important; margin:0 !important; padding:0 !important; max-width:none !important; }
       }
     </style>
@@ -232,6 +247,12 @@ function _renderR173() {
             <span class="tt-left">ضلع ${esc(o.district||'')}</span>
           </div>
 
+          <div class="ch173-caseline">
+            <span>مقدمہ نمبر <span class="fl" contenteditable="true" data-k="cl_fir">${bv('cl_fir')}</span></span>
+            <span>مورخہ <span class="fl" contenteditable="true" data-k="cl_date">${bv('cl_date')}</span></span>
+            <span>جرم <span class="fl fl-lg" contenteditable="true" data-k="cl_jurm">${bv('cl_jurm')}</span></span>
+          </div>
+
           <table class="ch173-table" id="ch173-table">
             <colgroup>
               ${W.map(w => `<col style="width:${w}%">`).join('')}
@@ -241,7 +262,7 @@ function _renderR173() {
                 <th rowspan="2">نام و پتہ مدعی ومستغیث</th>
                 <th rowspan="2">ملزمان جو گرفتارنہ ہوئے</th>
                 <th colspan="2">ملزمان</th>
-                <th rowspan="2" class="vcell"><span class="vtxt">مال قبضہ پولیس</span></th>
+                <th rowspan="2" class="vcell"><div class="vwrap vhwrap">مال قبضہ پولیس</div></th>
                 <th rowspan="2">تفصیل شہادت</th>
                 <th rowspan="2">مختصر حالات مقدمہ معہ جرم مندرجہ بالا</th>
               </tr>
@@ -266,7 +287,14 @@ function _renderR173() {
         </div>
       </div>
     </div>`;
-    setTimeout(() => { _ch173MakeResizable(); }, 60);
+    setTimeout(() => {
+      _ch173MakeResizable();
+      // Mehfooz shuda row height wapas lagao
+      try {
+        const rh = bs.row_height;
+        if (rh) document.querySelectorAll('#ch173-table tbody td').forEach(td => td.style.height = rh);
+      } catch(_) {}
+    }, 60);
     if (typeof applyMicButtons === 'function') setTimeout(() => applyMicButtons(area), 80);
     return;
   }
@@ -461,6 +489,10 @@ function _collectR173() {
     });
     // MS Word jaisi drag se badli hui column widths bhi mehfooz
     try { const cw = _ch173ColWidths(); if (cw) d.col_widths = cw; } catch(_) {}
+    try {
+      const br = document.querySelector('#ch173-table tbody tr td');
+      if (br && br.style.height) d.row_height = br.style.height;
+    } catch(_) {}
     return d;
   }
   const doc = document.getElementById('r173-doc');
@@ -524,7 +556,7 @@ function _printR173() {
   if (chDoc) {
     const chHtml = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
       <style>
-        @page{ size:legal landscape; margin:0.25in; }
+        @page{ size:legal portrait; margin:0.25in; }
         body{ font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl;
               line-height:1.8; color:#000; margin:0; }
         .ch173-title-row{ position:relative; display:flex; align-items:baseline;
@@ -536,6 +568,12 @@ function _printR173() {
         .tt-mid{ font-weight:bold; text-decoration:underline; font-size:20px; }
         .form-no{ font-style:italic; font-size:12px; direction:ltr; }
         .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
+        .ch173-caseline{ display:flex; gap:18px; align-items:baseline; font-size:14px;
+          margin:10px 0 8px; direction:rtl; flex-wrap:wrap; }
+        .ch173-caseline .fl{ display:inline-block; min-width:120px; border-bottom:1.2px dotted #000; text-align:center; }
+        .ch173-caseline .fl-lg{ min-width:260px; }
+        .vhwrap{ text-align:center !important; padding:4px 2px; min-height:100px; }
+        th.vcell{ vertical-align:middle; padding:0; text-align:center; height:110px; }
         .ch173-table th, .ch173-table td{ border:1px solid #000; padding:4px 5px; text-align:center;
           white-space:normal; word-wrap:break-word; overflow-wrap:break-word; }
         .ch173-table thead th{ font-size:12px; vertical-align:middle; }
@@ -556,7 +594,7 @@ function _printR173() {
         .ch173-table tbody tr > td:last-child{ border-left:0 !important; }
         .ch173-table thead tr:nth-child(2) th:last-child{ border-left:none; }
         .ch173-table tbody tr:last-child td{ border-bottom:none; }
-        .colgrip{ display:none !important; }
+        .colgrip,.rowgrip{ display:none !important; }
         .dio-print-brand{ position:fixed; bottom:3mm; left:4mm; font-size:9px; color:#999; direction:ltr; }
       </style></head><body>${chDoc.innerHTML}<div class="dio-print-brand">Digital IO</div></body></html>`;
     if (typeof dioPrint === 'function') dioPrint(chHtml);
@@ -647,6 +685,36 @@ function _ch173MakeResizable() {
     const ths = row2.querySelectorAll('th');
     if (ths[0]) addGrip(ths[0], 2, 3);   // زیر حراست ↔ برضمانت
     if (ths[1]) addGrip(ths[1], 3, 4);   // برضمانت ↔ مال قبضہ
+  }
+
+  // ── NEECHE se unchai badalna (row height) — jaise ooper chaudai ──
+  const bodyRow = table.querySelector('tbody tr');
+  if (bodyRow) {
+    const firstTd = bodyRow.querySelector('td');
+    if (firstTd) {
+      const rg = document.createElement('div');
+      rg.className = 'rowgrip';
+      rg.title = 'اونچائی بدلنے کے لیے کھینچیں';
+      firstTd.appendChild(rg);
+      rg.addEventListener('mousedown', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        const startY = e.clientY;
+        const startH = bodyRow.offsetHeight;
+        document.body.style.cursor = 'row-resize';
+        const onMove = (ev) => {
+          const nh = startH + (ev.clientY - startY);
+          if (nh < 80) return;                       // kam se kam
+          bodyRow.querySelectorAll('td').forEach(td => { td.style.height = nh + 'px'; });
+        };
+        const onUp = () => {
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+          document.body.style.cursor = '';
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+    }
   }
 }
 window._ch173MakeResizable = _ch173MakeResizable;
