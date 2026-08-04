@@ -1126,12 +1126,12 @@ window.addEventListener('unhandledrejection', function(e){
     <div class="topbar">
       <div class="topbar-left" style="display:flex;align-items:center;gap:4px;flex-wrap:nowrap;overflow-x:auto;">
         <!-- Main nav buttons (desktop top nav) -->
-        <button class="topnav-btn active" onclick="showPage('dashboard',null);_setTopNav(this)" title="ڈیش بورڈ">🏠<span class="topnav-label"> ڈیش بورڈ</span></button>
-        <button class="topnav-btn" onclick="showPage('cases',null);_setTopNav(this)" title="مقدمات">📁<span class="topnav-label"> مقدمات</span></button>
-        <button class="topnav-btn" onclick="showPage('fivec',null);_setTopNav(this)" title="5-C درخواستیں">📋<span class="topnav-label"> C-5</span></button>
-        <button class="topnav-btn" onclick="showPage('search',null);_setTopNav(this)" title="تلاش">🔍<span class="topnav-label"> تلاش</span></button>
-        <button class="topnav-btn" onclick="showPage('reminders',null);_setTopNav(this)" title="یاددہانیاں">🔔<span class="topnav-label"> یاددہانی</span></button>
-        <button class="topnav-btn" onclick="showPage('law',null);_setTopNav(this)" title="قانونی لائبریری">⚖️<span class="topnav-label"> قانونی لائبریری</span></button>
+        <button class="topnav-btn active" onclick="showPage('dashboard',null);window._setTopNav&&_setTopNav(this)" title="ڈیش بورڈ">🏠<span class="topnav-label"> ڈیش بورڈ</span></button>
+        <button class="topnav-btn" onclick="showPage('cases',null);window._setTopNav&&_setTopNav(this)" title="مقدمات">📁<span class="topnav-label"> مقدمات</span></button>
+        <button class="topnav-btn" onclick="showPage('fivec',null);window._setTopNav&&_setTopNav(this)" title="5-C درخواستیں">📋<span class="topnav-label"> C-5</span></button>
+        <button class="topnav-btn" onclick="showPage('search',null);window._setTopNav&&_setTopNav(this)" title="تلاش">🔍<span class="topnav-label"> تلاش</span></button>
+        <button class="topnav-btn" onclick="showPage('reminders',null);window._setTopNav&&_setTopNav(this)" title="یاددہانیاں">🔔<span class="topnav-label"> یاددہانی</span></button>
+        <button class="topnav-btn" onclick="showPage('law',null);window._setTopNav&&_setTopNav(this)" title="قانونی لائبریری">⚖️<span class="topnav-label"> قانونی لائبریری</span></button>
 
         <!-- اوزار (Tools) dropdown -->
         <div style="position:relative;display:inline-block;">
@@ -1176,6 +1176,18 @@ window.addEventListener('unhandledrejection', function(e){
 
 
 <!-- ═══ EXTRACTED MODULES (Round 1) ═══ -->
+<script>
+// Early stub: topnav ka highlight function agar baad wale block se pehle
+// call ho jaye to error na aaye (asal definition neeche ise override karti hai).
+if (typeof window._setTopNav !== 'function') {
+  window._setTopNav = function(btn){
+    try {
+      document.querySelectorAll('.topnav-btn').forEach(function(b){ b.classList.remove('active'); });
+      if (btn) btn.classList.add('active');
+    } catch(_) {}
+  };
+}
+</script>
 <script src="offline-store.js"></script>
 <script src="app-core.js"></script>
 <script src="dashboard.js"></script>
