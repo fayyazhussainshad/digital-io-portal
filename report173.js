@@ -141,20 +141,21 @@ function _renderR173() {
       #ch173-doc .ch173-title-row{ position:relative; display:flex; align-items:baseline;
         justify-content:space-between; width:100%; min-height:1.6em; }
       #ch173-doc .ch173-title-row > span{ white-space:nowrap; }
-      #ch173-doc .tt-right{ text-align:right; font-size:14px; padding-right:1in; }
-      #ch173-doc .tt-left{ text-align:left; font-size:14px; }
+      #ch173-doc .tt-right{ text-align:right; font-size:14pt; padding-right:1in; }
+      #ch173-doc .tt-left{ text-align:left; font-size:14pt; }
       #ch173-doc .tt-mid, #ch173-doc .form-no{
         position:absolute; left:50%; transform:translateX(-50%); white-space:nowrap;
       }
-      #ch173-doc .tt-mid{ font-weight:bold; text-decoration:underline; font-size:20px; }
+      #ch173-doc .tt-mid{ font-weight:bold; text-decoration:underline; font-size:17pt; }
       #ch173-doc .form-no{ font-style:italic; font-size:12px; direction:ltr; }
 
       /* مقدمہ نمبر / مورخہ / جرم — unwan ke neeche, table se pehle */
-      #ch173-doc .ch173-caseline{ display:flex; gap:18px; align-items:baseline; font-size:14px;
-        margin:10px 0 8px; direction:rtl; flex-wrap:wrap; }
-      #ch173-doc .ch173-caseline .fl{ display:inline-block; min-width:120px;
-        border-bottom:1.2px dotted #000; text-align:center; outline:none; }
-      #ch173-doc .ch173-caseline .fl-lg{ min-width:260px; }
+      /* مقدمہ نمبر / مورخہ / جرم — koi dashes nahi, data ke hisab se khud fit */
+      #ch173-doc .ch173-caseline{ display:flex; gap:22px; align-items:baseline; font-size:14pt;
+        margin:8px 0 6px; direction:rtl; flex-wrap:wrap; line-height:1.4; }
+      #ch173-doc .ch173-caseline .fl{ display:inline-block; min-width:40px;
+        border:none; text-align:right; outline:none; font-weight:600; }
+      #ch173-doc .ch173-caseline .fl-lg{ min-width:60px; }
 
       #ch173-doc .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
       #ch173-doc .ch173-table th, #ch173-doc .ch173-table td{
@@ -163,11 +164,11 @@ function _renderR173() {
         position:relative; line-height:1.15;
       }
       /* Header row 1: jagah ke hisab se chhota font */
-      #ch173-doc .ch173-table thead th{ font-size:16pt; vertical-align:middle; line-height:1.15; }
+      #ch173-doc .ch173-table thead th{ font-size:15pt; vertical-align:middle; line-height:1.15; }
       /* Data khane: columns 1–6 → Ascending (neeche se ooper). AHEM: CSS transform
          seedha <td> par kaam nahi karta (browser nazar-andaz kar deta hai), is liye
          matn andar <div> wrapper mein rakh kar us par lagate hain. */
-      #ch173-doc .ch173-table td{ font-size:16pt; vertical-align:top; line-height:1.15; }
+      #ch173-doc .ch173-table td{ font-size:15pt; vertical-align:top; line-height:1.15; }
       #ch173-doc .ch173-table tbody td{ height:170mm; padding:0; }
       #ch173-doc .vwrap{
         line-height:1.15;
@@ -280,7 +281,7 @@ function _renderR173() {
                 <td><div class="vwrap" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></td>
                 <td><div class="vwrap" contenteditable="true" data-k="mal_qabza">${bv('mal_qabza')}</div></td>
                 <td><div class="vwrap" contenteditable="true" data-k="shahadat">${bv('shahadat')}</div></td>
-                <td><div class="hwrap" contenteditable="true" data-mic="true" data-k="halaat">${bv('halaat')}</div></td>
+                <td><div class="vwrap" contenteditable="true" data-mic="true" data-k="halaat">${bv('halaat')}</div></td>
               </tr>
             </tbody>
           </table>
@@ -563,22 +564,22 @@ function _printR173() {
         .ch173-title-row{ position:relative; display:flex; align-items:baseline;
           justify-content:space-between; width:100%; min-height:1.6em; }
         .ch173-title-row > span{ white-space:nowrap; }
-        .tt-right{ text-align:right; font-size:14px; padding-right:1in; }
-        .tt-left{ text-align:left; font-size:14px; }
+        .tt-right{ text-align:right; font-size:14pt; padding-right:1in; }
+        .tt-left{ text-align:left; font-size:14pt; }
         .tt-mid, .form-no{ position:absolute; left:50%; transform:translateX(-50%); white-space:nowrap; }
-        .tt-mid{ font-weight:bold; text-decoration:underline; font-size:20px; }
+        .tt-mid{ font-weight:bold; text-decoration:underline; font-size:17pt; }
         .form-no{ font-style:italic; font-size:12px; direction:ltr; }
         .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
-        .ch173-caseline{ display:flex; gap:18px; align-items:baseline; font-size:14px;
-          margin:10px 0 8px; direction:rtl; flex-wrap:wrap; }
-        .ch173-caseline .fl{ display:inline-block; min-width:120px; border-bottom:1.2px dotted #000; text-align:center; }
-        .ch173-caseline .fl-lg{ min-width:260px; }
+        .ch173-caseline{ display:flex; gap:22px; align-items:baseline; font-size:14pt;
+          margin:8px 0 6px; direction:rtl; flex-wrap:wrap; line-height:1.4; }
+        .ch173-caseline .fl{ display:inline-block; min-width:40px; border:none; text-align:right; font-weight:600; }
+        .ch173-caseline .fl-lg{ min-width:60px; }
         .vhwrap{ text-align:center !important; padding:4px 2px; min-height:100px; }
         th.vcell{ vertical-align:middle; padding:0; text-align:center; height:110px; }
         .ch173-table th, .ch173-table td{ border:1px solid #000; padding:2px 4px; text-align:center;
           white-space:normal; word-wrap:break-word; overflow-wrap:break-word; line-height:1.15; }
-        .ch173-table thead th{ font-size:16pt; vertical-align:middle; line-height:1.15; }
-        .ch173-table td{ font-size:16pt; vertical-align:top; height:170mm; padding:0; line-height:1.15; }
+        .ch173-table thead th{ font-size:15pt; vertical-align:middle; line-height:1.15; }
+        .ch173-table td{ font-size:15pt; vertical-align:top; height:170mm; padding:0; line-height:1.15; }
         .vwrap{ writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
           transform:rotate(180deg); -webkit-transform:rotate(180deg);
           width:100%; height:100%; padding:5px; box-sizing:border-box; text-align:right; direction:rtl; }
