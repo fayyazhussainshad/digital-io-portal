@@ -25,6 +25,7 @@ const MISAL_CASE_DOCS = [
   { id:'darkhwastain',     name:'درخواستیں',                 desc:'Applications' },
   { id:'brief',            name:'بریف مقدمہ',                desc:'Case Brief' },
   { id:'preventive',       name:'انسدادی کاروائی',           desc:'Preventive Action' },
+  { id:'saza_slip',        name:'سزا سلپ',                   desc:'Sentence Slip' },
   { id:'shahadatain',      name:'شہادتیں',                   desc:'Evidence / Testimonies' },
 ];
 
@@ -1249,7 +1250,6 @@ function getMisalTemplate(docId, c) {
 
   const header = (title) => `
     <div style="text-align:center;border-bottom:2px solid #333;padding-bottom:10px;margin-bottom:16px;">
-      <div style="font-size:18px;font-weight:bold;">پنجاب پولیس</div>
       <div style="font-size:14px;">تھانہ ${sta} &nbsp;—&nbsp; ضلع ${dst}</div>
       <div style="font-size:16px;font-weight:bold;margin-top:6px;">${title}</div>
       <div style="font-size:12px;margin-top:4px;">مقدمہ نمبر: ${fir} &nbsp;|&nbsp; تاریخ: ${dt}</div>
@@ -1523,13 +1523,10 @@ function getMisalTemplate(docId, c) {
 
   };
 
-  const generic = `${header(MISAL_CASE_DOCS.find(d=>d.id===docId)?.name||docId)}
-    ${table(row('مقدمہ نمبر', fir) + row('تاریخ', dt) + row('دفعات', sec) + row('تھانہ', sta))}
-    <div style="font-weight:bold;margin-bottom:6px;">تفصیل:</div>
-    <div style="min-height:200px;border:1px solid #ccc;padding:12px;border-radius:4px;" contenteditable="true">
-      یہاں تفصیل درج کریں...
-    </div>
-    ${sig}`;
+  // USOOL: jis dastawez ka manzoor-shuda format abhi defined nahi, woh sirf
+  // KHALI SAFED KAGHAZ par khulti hai — software apni taraf se koi format,
+  // heading, khana ya dastakhat nahi deta. Owner/admin khud form set karega.
+  const generic = '';
 
   return templates[docId] || generic;
 }

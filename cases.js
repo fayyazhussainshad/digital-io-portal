@@ -2173,7 +2173,6 @@ function buildDocTemplate(docName, c, savedContent) {
   // Generic bilingual template for all other documents
   return `
     <div style="text-align:center;margin-bottom:20px;direction:rtl;">
-      <div style="font-size:14px;font-weight:700;">پاکستان — پنجاب پولیس</div>
       <div style="font-size:18px;font-weight:900;margin:10px 0;border-bottom:2px solid #333;padding-bottom:8px;">${docName}</div>
       <div style="font-size:12px;color:#777;">FIR نمبر: ${fir} &nbsp;|&nbsp; تاریخ: ${firDate}</div>
     </div>
