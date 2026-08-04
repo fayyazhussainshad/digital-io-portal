@@ -215,8 +215,7 @@ function _renderR173() {
       #ch173-doc .ch173-table tbody tr > td:nth-last-child(1){ border-left:0 !important; }
       /* Row 2 ki bayen aakhri line hataayi */
       #ch173-doc .ch173-table thead tr:nth-child(2) th:last-child{ border-left:none; }
-      /* Neeche wali (bottom) line hataayi */
-      #ch173-doc .ch173-table tbody tr:last-child td{ border-bottom:none; }
+      /* Neeche wali lakeer mojood hai — isi ko pakar kar unchai badalte hain */
 
       /* MS Word jaisi column resize — header par drag handle */
       #ch173-doc .colgrip{
@@ -225,9 +224,11 @@ function _renderR173() {
       }
       /* Neeche se unchai badalne wali grip (row height) */
       #ch173-doc .rowgrip{
-        position:absolute; bottom:-4px; left:0; width:100%; height:8px;
-        cursor:row-resize; user-select:none; z-index:5;
+        position:absolute; bottom:-5px; left:0; width:100%; height:10px;
+        cursor:row-resize; user-select:none; z-index:6;
       }
+      #ch173-doc .rowgrip:hover{ background:rgba(56,189,248,0.35); }
+      #ch173-doc .colgrip:hover{ background:rgba(56,189,248,0.35); }
       @media print{
         .no-print,.doc-toolbar,.editor-toolbar,button,select{ display:none !important; }
         .colgrip,.rowgrip{ display:none !important; }
@@ -248,7 +249,7 @@ function _renderR173() {
       </div>
       <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
         <div id="ch173-doc" style="width:8.5in;max-width:100%;min-height:14in;margin:0 auto;
-             padding:calc(0.25in + 1cm) 1cm 0.25in 1cm;
+             padding:calc(0.25in + 1cm) 0 0.25in 0;
              background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;
              line-height:1.4;box-sizing:border-box;">
 
@@ -568,7 +569,7 @@ function _printR173() {
   if (chDoc) {
     const chHtml = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
       <style>
-        @page{ size:legal portrait; margin:calc(0.25in + 1cm) 1cm 0.25in 1cm; }
+        @page{ size:legal portrait; margin:calc(0.25in + 1cm) 0 0.25in 0; }
         body{ font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl;
               line-height:1.4; color:#000; margin:0; }
         .ch173-title-row{ position:relative; display:flex; align-items:baseline;
@@ -608,7 +609,7 @@ function _printR173() {
         .ch173-table tbody tr > td:first-child{ border-right:0 !important; }
         .ch173-table tbody tr > td:last-child{ border-left:0 !important; }
         .ch173-table thead tr:nth-child(2) th:last-child{ border-left:none; }
-        .ch173-table tbody tr:last-child td{ border-bottom:none; }
+
         .colgrip,.rowgrip{ display:none !important; }
         .dio-print-brand{ position:fixed; bottom:3mm; left:4mm; font-size:9px; color:#999; direction:ltr; }
       </style></head><body>${chDoc.innerHTML}<div class="dio-print-brand">Digital IO</div></body></html>`;
@@ -702,15 +703,16 @@ function _ch173MakeResizable() {
     if (ths[1]) addGrip(ths[1], 3, 4);   // برضمانت ↔ مال قبضہ
   }
 
-  // ── NEECHE se unchai badalna (row height) — jaise ooper chaudai ──
+  // ── NEECHE wali lakeer se unchai badalna (jaise ooper chaudai) ──
+  // Grip HAR khane par lagate hain taake neeche ki poori lakeer par kahin se
+  // bhi pakar kar kheencha ja sake.
   const bodyRow = table.querySelector('tbody tr');
   if (bodyRow) {
-    const firstTd = bodyRow.querySelector('td');
-    if (firstTd) {
+    bodyRow.querySelectorAll('td').forEach(td => {
       const rg = document.createElement('div');
       rg.className = 'rowgrip';
       rg.title = 'اونچائی بدلنے کے لیے کھینچیں';
-      firstTd.appendChild(rg);
+      td.appendChild(rg);
       rg.addEventListener('mousedown', (e) => {
         e.preventDefault(); e.stopPropagation();
         const startY = e.clientY;
@@ -718,8 +720,8 @@ function _ch173MakeResizable() {
         document.body.style.cursor = 'row-resize';
         const onMove = (ev) => {
           const nh = startH + (ev.clientY - startY);
-          if (nh < 80) return;                       // kam se kam
-          bodyRow.querySelectorAll('td').forEach(td => { td.style.height = nh + 'px'; });
+          if (nh < 80) return;
+          bodyRow.querySelectorAll('td').forEach(c => { c.style.height = nh + 'px'; });
         };
         const onUp = () => {
           document.removeEventListener('mousemove', onMove);
@@ -729,7 +731,7 @@ function _ch173MakeResizable() {
         document.addEventListener('mousemove', onMove);
         document.addEventListener('mouseup', onUp);
       });
-    }
+    });
   }
 }
 window._ch173MakeResizable = _ch173MakeResizable;
