@@ -11,11 +11,16 @@ let _r173Type = 'mukammal';
 const R173_TYPES = [
   { id:'mukammal',  name:'چالان مکمل' },
   { id:'namukammal',name:'چالان نامکمل' },
+  { id:'ch512',     name:'چالان 512 ض ف' },
+  { id:'tatima_challan', name:'تتمہ چالان' },
   { id:'interim',   name:'انٹیرم چالان' },
   { id:'ikhraj',    name:'اخراج' },
   { id:'adampata',  name:'عدم پتہ' },
-  { id:'tatima_challan', name:'تتمہ چالان' },
 ];
+
+// CHALLAN types — inka format software NAHI deta (sarkari manzoor-shuda form
+// owner/admin khud set karega). Yeh types khali safed safhe par khulte hain.
+const R173_BLANK_TYPES = ['mukammal','namukammal','ch512','tatima_challan'];
 
 const R173_TATIMA_SUBS = [
   { id:'aslha',  name:'تتمہ چالان — اسلحہ' },
@@ -25,7 +30,8 @@ const R173_TATIMA_SUBS = [
 ];
 
 const R173_TATIMA_BOILER = {
-  aslha: 'جناب عالیٰ! مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر 3 کے خلاف چالان نامکمل مرتب ہو چکا ہے اب PFSA لاہور سے رزلٹ نمبری ____________ موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریر فرمائی ہے۔ "The item P1 pistol was examined and found to be in mechanical operating condition" رزلٹ میں پارسل کو item P1 سے ظاہر کیا گیا ہے لہٰذا مقدمہ ہذا میں ملزم بالا کے خلاف تتمہ چالان مکمل مرتب ہو کر ارسال خدمت ہے سماعت فرمائی جائے۔',
+  // Khali — owner khud set karega
+  _unused_aslha: 'جناب عالیٰ! مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر 3 کے خلاف چالان نامکمل مرتب ہو چکا ہے اب PFSA لاہور سے رزلٹ نمبری ____________ موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریر فرمائی ہے۔ "The item P1 pistol was examined and found to be in mechanical operating condition" رزلٹ میں پارسل کو item P1 سے ظاہر کیا گیا ہے لہٰذا مقدمہ ہذا میں ملزم بالا کے خلاف تتمہ چالان مکمل مرتب ہو کر ارسال خدمت ہے سماعت فرمائی جائے۔',
   chars: 'جناب عالیٰ! مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر 3 کے خلاف چالان نامکمل مرتب ہو چکا ہے PFSA لاہور سے موصولہ متعلقہ مقدمہ ہذا ایک رزلٹ نمبر ____________ موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریر فرمائی ہے۔ "Sample 01 having net weight ______ grams of dark brown resinous material in sealed parcel contains Chars. Sample is Narcotic Drug as defined in the section 2 of the CNS Act, 1997." تصدیق چرس ہو چکی ہے لہٰذا مقدمہ ہذا میں ملزم بالا کے خلاف تتمہ چالان مکمل مرتب ہو کر ارسال خدمت ہے سماعت فرمائی جائے۔',
   sharab: 'جناب عالیٰ! مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر 3 کے خلاف چالان نامکمل مرتب ہو چکا ہے اب PFSA لاہور سے رزلٹ نمبری ____________ موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریر فرمائی ہے۔ "Presumptive test indicated the presence of alcohol in item 1." لہٰذا مقدمہ ہذا میں ملزم بالا کے خلاف تتمہ چالان مکمل مرتب ہو کر ارسال خدمت ہے سماعت فرمائی جائے۔',
   zina: 'جناب عالیٰ! مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر 3 کے خلاف چالان نامکمل مرتب ہو چکا ہے اب PFSA لاہور سے رزلٹ نمبری ____________ موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریر فرمائی ہے۔ "No seminal material was found on item no.1 and 2.1-2.3; therefore no further DNA analysis was conducted on these." مقدمہ ہذا میں تکمیل تفتیش ہو چکی ہے لہٰذا ملزم بالا کے خلاف تتمہ چالان مکمل مرتب ہو کر ارسال خدمت ہے سماعت فرمائی جائے۔',
@@ -34,8 +40,10 @@ const R173_TATIMA_BOILER = {
 let _r173Subtype = 'aslha';
 
 const R173_BOILER = {
-  mukammal: 'جناب عالیٰ! مختصر حالات مقدمہ عنوان بالا اس طرح ہیں کہ دوران تفتیش مقدمہ ہذا مکمل ہوا۔ ملزمان کے خلاف کافی شہادت دستیاب ہوئی۔ چالان مکمل مرتب ہوکر ارسالِ خدمت ہے، سماعت فرمائی جائے۔',
-  namukammal: 'جناب عالیٰ! مختصر حالات مقدمہ عنوان بالا اس طرح ہیں کہ تفتیش مقدمہ ہذا تاحال نامکمل ہے۔ بعض ملزمان ابھی گرفتار نہ ہوسکے۔ چالان نامکمل مرتب ہوکر ارسالِ خدمت ہے، سماعت فرمائی جائے۔',
+  // چالان types ka koi taiyar matn nahi — owner khud likhega/set karega
+  mukammal: '',
+  namukammal: '',
+  ch512: '',
   interim: 'جناب عالیٰ! مختصر حالات مقدمہ عنوان بالا اس طرح ہیں کہ تفتیش مقدمہ جاری ہے سردست انٹیرم رپورٹ مرتب ہوکر ارسال خدمت ہے سماعت فرمائی جائے۔',
   ikhraj: '',
   adampata: 'جناب عالیٰ! مختصر حالات مقدمہ عنوان بالا اس طرح ہیں کہ باوجود بھرپور کوشش ملزمان کا کوئی سراغ نہ مل سکا۔ رپورٹ عدم پتہ مرتب ہوکر ارسالِ خدمت ہے، سماعت فرمائی جائے۔',
@@ -101,6 +109,37 @@ function _renderR173() {
   const isClosing = isIkhraj || isAdampata; // both use the 3-col 8-row table layout
   // Boilerplate: tatima uses subtype boiler, others use type boiler
   const boiler = isTatima ? (R173_TATIMA_BOILER[_r173Subtype]||'') : (R173_BOILER[_r173Type]||'');
+
+  // ── CHALLAN types: koi format software NAHI deta ──────────────────────
+  // چالان مکمل / نامکمل / 512 ض ف / تتمہ چالان — yeh sarkari manzoor-shuda
+  // forms hain jinke khane pehle se muqarrar hote hain. Software apni taraf se
+  // koi format, khana ya button nahi dega — sirf khali safed kaghaz. Owner/admin
+  // khud manzoor-shuda form set karega.
+  if (R173_BLANK_TYPES.includes(_r173Type)) {
+    const blankSaved = _r173Records[recKey] || {};
+    const blankHtml = sanitizeHtml(blankSaved.blank_html || '');
+    area.innerHTML = `
+    <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
+        <select id="r173-type-sel" onchange="_r173Pick(this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
+          ${R173_TYPES.map(t => `<option value="${t.id}" ${t.id===_r173Type?'selected':''}>${t.name}</option>`).join('')}
+        </select>
+        <div style="margin-right:auto;display:flex;gap:6px;">
+          <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveR173()">💾 محفوظ کریں</button>
+          <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printR173()">🖨️ پرنٹ کریں</button>
+        </div>
+      </div>
+      <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
+        <div id="r173-doc" contenteditable="true" spellcheck="false"
+          style="max-width:210mm;margin:0 auto;min-height:270mm;padding:16mm;background:#fff;color:#111;
+                 font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:15px;line-height:2;
+                 direction:rtl;text-align:justify;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;outline:none;"
+          >${blankHtml}</div>
+      </div>
+    </div>`;
+    if (typeof applyMicButtons === 'function') setTimeout(() => applyMicButtons(area), 50);
+    return;
+  }
 
   area.innerHTML = `
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
@@ -285,6 +324,10 @@ function _renderR173() {
 function _collectR173() {
   const doc = document.getElementById('r173-doc');
   if (!doc) return {};
+  // Challan types: poora safha khud contenteditable hai — uska poora content save
+  if (typeof R173_BLANK_TYPES !== 'undefined' && R173_BLANK_TYPES.includes(_r173Type)) {
+    return { blank_html: doc.innerHTML };
+  }
   const data = {};
   doc.querySelectorAll('[data-k]').forEach(el => {
     data[el.dataset.k] = (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') ? el.value : el.innerHTML;
@@ -318,6 +361,7 @@ async function _saveR173() {
     const statusMap = {
       mukammal: 'complete',
       namukammal: 'incomplete',
+      ch512: 'challan512',
       interim: 'under',
       ikhraj: 'cancel',
       adampata: 'untrace',

@@ -1565,6 +1565,7 @@ function _dioDocName(docId) {
     'r173:ikhraj':         'رپورٹ 173 — اخراج',
     'r173:adampata':       'رپورٹ 173 — عدم پتہ',
     'r173:tatima_challan': 'رپورٹ 173 — تتمہ چالان',
+    'r173:ch512':          'رپورٹ 173 — چالان 512 ض ف',
   };
   if (special[docId]) return special[docId];
   const d = MISAL_CASE_DOCS.find(x => x.id === docId);
@@ -1662,6 +1663,7 @@ function _dioAddDocPicker() {
     ]},
     { title:'رپورٹ 173 ض ف', items:[
       ['r173:mukammal','چالان مکمل'], ['r173:namukammal','چالان نامکمل'],
+      ['r173:ch512','چالان 512 ض ف'],
       ['r173:interim','انٹیرم چالان'], ['r173:ikhraj','اخراج'],
       ['r173:adampata','عدم پتہ'], ['r173:tatima_challan','تتمہ چالان'],
     ]},
