@@ -124,118 +124,123 @@ function _renderR173() {
   // khud manzoor-shuda form set karega.
   if (R173_BLANK_TYPES.includes(_r173Type)) {
     // ═══ فارم نمبر 25.56(1) — رپورٹ زیر دفعہ 173 ض ف ═══
-    // Manzoor-shuda sarkari form. Aik hi format tamam challan types ke liye —
-    // sirf unwan (heading) har type ka apna. 7 columns, RTL (dayen se bayen).
     const bs = _r173Records[recKey] || {};
     const bv = (k) => sanitizeHtml(bs[k] !== undefined ? bs[k] : '');
+    // Mehfooz shuda column widths (MS Word jaisi drag-adjust ke baad)
+    const savedW = (() => { try { return JSON.parse(bs.col_widths || 'null'); } catch(_) { return null; } })();
+    const W = savedW || [10, 12, 8, 10, 6, 27, 27];
 
-    return_html_ch173: {
-      area.innerHTML = `
-      <style>
-        /* ── فارم 25.56(1) — چالان ── */
-        #ch173-doc{ direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; color:#000; }
-        #ch173-doc .form-no{ text-align:center; font-style:italic; font-size:12px; direction:ltr; }
-        #ch173-doc .ch173-title-row:first-of-type{ margin:0 0 2px; }
-        /* FIX 1: teen barabar columns → beech ka hissa sacche page-center par */
-        #ch173-doc .ch173-title-row{ display:flex; align-items:baseline; width:100%; margin:0 0 8px; }
-        #ch173-doc .ch173-title-row > span{ flex:1 1 0; white-space:nowrap; }
-        #ch173-doc .tt-right{ text-align:right; padding-right:1in; }
-        #ch173-doc .tt-mid{ text-align:center; font-weight:bold; text-decoration:underline; }
-        #ch173-doc .tt-left{ text-align:left; }
-        /* FIX 2: 7 columns — widths RIGID, kabhi flex/squeeze nahi */
-        /* table-layout:auto → columns 2,3,4,6,7 mawad ke sath dayen-bayen khulte hain */
-        #ch173-doc .ch173-table{ width:100%; border-collapse:collapse; table-layout:auto; direction:rtl; }
-        #ch173-doc .ch173-table th, #ch173-doc .ch173-table td{
-          border:1px solid #000; padding:4px 5px; vertical-align:top; text-align:center;
-          white-space:normal; word-wrap:break-word; overflow-wrap:break-word;
-        }
-        #ch173-doc .ch173-table td{ text-align:right; }
-        /* Column 1 aur 5 — chaudai FIX (kabhi nahi badalti) */
-        #ch173-doc .ch173-table .fixw1{ width:7.1%; min-width:7.1%; max-width:7.1%; }
-        #ch173-doc .ch173-table .fixw5{ width:5.5%; min-width:5.5%; max-width:5.5%; }
-        /* Khadi likhayi — NEECHE se OOPER. transform table-cell par kaam nahi karta,
-           is liye andar span par lagate hain. */
-        #ch173-doc .ch173-table th.vhead{ padding:8px 2px; text-align:center; vertical-align:middle; }
-        #ch173-doc .ch173-table th.vhead > span{
-          display:inline-block; writing-mode:vertical-rl; transform:rotate(180deg);
-          white-space:nowrap;
-        }
-        /* Headers ka matn khane ke DARMIYAN (upar chipka hua nahi) */
-        #ch173-doc .ch173-table th{ vertical-align:middle; }
-        /* Bahar ki dayen/bayen border nahi — pehla aur aakhri column khula */
-        #ch173-doc .ch173-table tr > *:first-child{ border-right:none; }
-        #ch173-doc .ch173-table tr > *:last-child{ border-left:none; }
-        /* Cells mawad ke sath NEECHE ki taraf barhti hain (width wahi rehti) */
-        #ch173-doc .ch173-table td[contenteditable]{ min-height:60mm; height:auto; }
-        /* Print: sirf dastawez — koi tab/toolbar nahi (MS Word jaisa) */
-        @media print{
-          .no-print,.doc-toolbar,.editor-toolbar,button,select{ display:none !important; }
-          #ch173-doc{ box-shadow:none !important; border-radius:0 !important; margin:0 !important; padding:0 !important; max-width:none !important; }
-        }
-      </style>
-      <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
-        <div class="no-print" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
-          <select id="r173-type-sel" onchange="_r173Pick(this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
-            ${R173_TYPES.map(t => `<option value="${t.id}" ${t.id===_r173Type?'selected':''}>${t.name}</option>`).join('')}
-          </select>
-          <div style="margin-right:auto;display:flex;gap:6px;">
-            <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveR173()">💾 محفوظ کریں</button>
-            <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printR173()">🖨️ پرنٹ کریں</button>
-          </div>
+    area.innerHTML = `
+    <style>
+      #ch173-doc{ direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; color:#000; }
+      /* Unwan: FORM No. aur Urdu heading — dono AIK hi flex dhanche mein,
+         is liye dono ka center bilkul aik (linked) */
+      #ch173-doc .ch173-title-row{ display:flex; align-items:baseline; width:100%; }
+      #ch173-doc .ch173-title-row > span{ flex:1 1 0; white-space:nowrap; }
+      #ch173-doc .tt-right{ text-align:right; font-size:14px; }
+      #ch173-doc .tt-left{ text-align:left; font-size:14px; }
+      #ch173-doc .tt-mid{ text-align:center; font-weight:bold; text-decoration:underline; font-size:20px; }
+      #ch173-doc .form-no{ text-align:center; font-style:italic; font-size:12px; direction:ltr; }
+
+      #ch173-doc .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
+      #ch173-doc .ch173-table th, #ch173-doc .ch173-table td{
+        border:1px solid #000; padding:4px 5px; text-align:center;
+        white-space:normal; word-wrap:break-word; overflow-wrap:break-word;
+        position:relative;
+      }
+      /* Header row 1: jagah ke hisab se chhota font */
+      #ch173-doc .ch173-table thead tr:first-child th{ font-size:12px; vertical-align:middle; }
+      #ch173-doc .ch173-table thead tr:nth-child(2) th{ font-size:12px; vertical-align:middle; }
+      #ch173-doc .ch173-table td{ text-align:right; vertical-align:top; font-size:14px; min-height:60mm; }
+
+      /* Khadi likhayi — NEECHE se OOPER (earth → sky) */
+      #ch173-doc .vtxt{
+        display:inline-block;
+        writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl; -ms-writing-mode:tb-rl;
+        transform:rotate(180deg); -webkit-transform:rotate(180deg);
+        white-space:nowrap; line-height:1.2;
+      }
+      #ch173-doc th.vcell{ vertical-align:middle; padding:6px 2px; }
+
+      /* Bahar ke kinare khule — pehla column dayen se, aakhri bayen se */
+      #ch173-doc .ch173-table thead tr:first-child th:first-child{ border-right:none; }
+      #ch173-doc .ch173-table thead tr:first-child th:last-child{ border-left:none; }
+      #ch173-doc .ch173-table tbody td:first-child{ border-right:none; }
+      #ch173-doc .ch173-table tbody td:last-child{ border-left:none; }
+      /* Row 2 ki bayen aakhri line hataayi */
+      #ch173-doc .ch173-table thead tr:nth-child(2) th:last-child{ border-left:none; }
+      /* Neeche wali (bottom) line hataayi */
+      #ch173-doc .ch173-table tbody tr:last-child td{ border-bottom:none; }
+
+      /* MS Word jaisi column resize — header par drag handle */
+      #ch173-doc .colgrip{
+        position:absolute; top:0; left:-3px; width:7px; height:100%;
+        cursor:col-resize; user-select:none; z-index:5;
+      }
+      @media print{
+        .no-print,.doc-toolbar,.editor-toolbar,button,select{ display:none !important; }
+        .colgrip{ display:none !important; }
+        #ch173-doc{ box-shadow:none !important; border-radius:0 !important; margin:0 !important; padding:0 !important; max-width:none !important; }
+      }
+    </style>
+    <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
+      <div class="no-print" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
+        <select id="r173-type-sel" onchange="_r173Pick(this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
+          ${R173_TYPES.map(t => `<option value="${t.id}" ${t.id===_r173Type?'selected':''}>${t.name}</option>`).join('')}
+        </select>
+        <span style="font-size:11px;color:var(--text-muted);">↔ کالم کی لکیر کو پکڑ کر چوڑائی بدلیں</span>
+        <div style="margin-right:auto;display:flex;gap:6px;">
+          <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveR173()">💾 محفوظ کریں</button>
+          <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printR173()">🖨️ پرنٹ کریں</button>
         </div>
-        <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
-          <div id="ch173-doc" style="max-width:297mm;margin:0 auto;padding:0.25in;background:#fff;
-               box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;font-size:14px;line-height:1.8;">
+      </div>
+      <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
+        <div id="ch173-doc" style="max-width:297mm;margin:0 auto;padding:0.25in;background:#fff;
+             box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;line-height:1.8;">
 
-            <div class="ch173-title-row">
-              <span></span>
-              <span class="form-no">FORM No. 25.56(1)</span>
-              <span></span>
-            </div>
-            <div class="ch173-title-row">
-              <span class="tt-right">تھانہ ${esc(o.station||'')}</span>
-              <span class="tt-mid">${esc(_ch173Heading(_r173Type, typeName))}</span>
-              <span class="tt-left">ضلع ${esc(o.district||'')}</span>
-            </div>
-
-            <table class="ch173-table">
-              <colgroup>
-                <col style="width:7.1%"><col><col>
-                <col><col style="width:5.5%"><col>
-                <col>
-              </colgroup>
-              <thead>
-                <tr>
-                  <th rowspan="2" class="fixw1">نام و پتہ مدعی ومستغیث</th>
-                  <th rowspan="2">ملزمان جو گرفتارنہ ہوئے</th>
-                  <th colspan="2">ملزمان</th>
-                  <th rowspan="2" class="vhead fixw5"><span>مال قبضہ پولیس</span></th>
-                  <th rowspan="2">تفصیل شہادت</th>
-                  <th rowspan="2">مختصر حالات مقدمہ معہ جرم مندرجہ بالا</th>
-                </tr>
-                <tr>
-                  <th>زیر حراست</th>
-                  <th>برضمانت</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td contenteditable="true" class="fixw1" data-k="madai">${bv('madai')}</td>
-                  <td contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</td>
-                  <td contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</td>
-                  <td contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</td>
-                  <td contenteditable="true" class="fixw5" data-k="mal_qabza">${bv('mal_qabza')}</td>
-                  <td contenteditable="true" data-k="shahadat">${bv('shahadat')}</td>
-                  <td contenteditable="true" data-mic="true" data-k="halaat">${bv('halaat')}</td>
-                </tr>
-              </tbody>
-            </table>
-
+          <div class="ch173-title-row"><span></span><span class="form-no">FORM No. 25.56(1)</span><span></span></div>
+          <div class="ch173-title-row" style="margin:2px 0 8px;">
+            <span class="tt-right">تھانہ ${esc(o.station||'')}</span>
+            <span class="tt-mid">${esc(_ch173Heading(_r173Type, typeName))}</span>
+            <span class="tt-left">ضلع ${esc(o.district||'')}</span>
           </div>
+
+          <table class="ch173-table" id="ch173-table">
+            <colgroup>
+              ${W.map(w => `<col style="width:${w}%">`).join('')}
+            </colgroup>
+            <thead>
+              <tr>
+                <th rowspan="2">نام و پتہ مدعی ومستغیث</th>
+                <th rowspan="2">ملزمان جو گرفتارنہ ہوئے</th>
+                <th colspan="2">ملزمان</th>
+                <th rowspan="2" class="vcell"><span class="vtxt">مال قبضہ پولیس</span></th>
+                <th rowspan="2">تفصیل شہادت</th>
+                <th rowspan="2">مختصر حالات مقدمہ معہ جرم مندرجہ بالا</th>
+              </tr>
+              <tr>
+                <th class="vcell"><span class="vtxt">زیر حراست</span></th>
+                <th class="vcell"><span class="vtxt">برضمانت</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td contenteditable="true" data-k="madai">${bv('madai')}</td>
+                <td contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</td>
+                <td contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</td>
+                <td contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</td>
+                <td contenteditable="true" data-k="mal_qabza">${bv('mal_qabza')}</td>
+                <td contenteditable="true" data-k="shahadat">${bv('shahadat')}</td>
+                <td contenteditable="true" data-mic="true" data-k="halaat">${bv('halaat')}</td>
+              </tr>
+            </tbody>
+          </table>
+
         </div>
-      </div>`;
-    }
-    if (typeof applyMicButtons === 'function') setTimeout(() => applyMicButtons(area), 50);
+      </div>
+    </div>`;
+    setTimeout(() => { _ch173MakeResizable(); }, 60);
+    if (typeof applyMicButtons === 'function') setTimeout(() => applyMicButtons(area), 80);
     return;
   }
 
@@ -427,6 +432,8 @@ function _collectR173() {
     chDoc.querySelectorAll('[data-k]').forEach(el => {
       d[el.dataset.k] = (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') ? el.value : el.innerHTML;
     });
+    // MS Word jaisi drag se badli hui column widths bhi mehfooz
+    try { const cw = _ch173ColWidths(); if (cw) d.col_widths = cw; } catch(_) {}
     return d;
   }
   const doc = document.getElementById('r173-doc');
@@ -492,27 +499,28 @@ function _printR173() {
       <style>
         @page{ size:legal landscape; margin:0.25in; }
         body{ font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl;
-              font-size:14px; line-height:1.8; color:#000; margin:0; }
-        .form-no{ text-align:center; font-style:italic; font-size:12px; margin:0 0 4px; }
-        .ch173-title-row{ display:flex; align-items:baseline; width:100%; margin:0 0 8px; }
+              line-height:1.8; color:#000; margin:0; }
+        .ch173-title-row{ display:flex; align-items:baseline; width:100%; }
         .ch173-title-row > span{ flex:1 1 0; white-space:nowrap; }
-        .tt-right{ text-align:right; padding-right:1in; }
-        .tt-mid{ text-align:center; font-weight:bold; text-decoration:underline; }
-        .tt-left{ text-align:left; }
-        .ch173-table{ width:100%; border-collapse:collapse; table-layout:auto; direction:rtl; }
-        .ch173-table th, .ch173-table td{ border:1px solid #000; padding:4px 5px; vertical-align:top;
-          text-align:center; white-space:normal; word-wrap:break-word; overflow-wrap:break-word; }
-        .ch173-table td{ text-align:right; height:auto; }
-        .ch173-table .fixw1{ width:7.1%; min-width:7.1%; max-width:7.1%; }
-        .ch173-table .fixw5{ width:5.5%; min-width:5.5%; max-width:5.5%; }
-        .ch173-table th{ vertical-align:middle; }
-        .ch173-table th.vhead{ padding:8px 2px; text-align:center; vertical-align:middle; }
-        .ch173-table th.vhead > span{ display:inline-block; writing-mode:vertical-rl;
-          transform:rotate(180deg); white-space:nowrap; }
-        .ch173-table tr > *:first-child{ border-right:none; }
-        .ch173-table tr > *:last-child{ border-left:none; }
+        .tt-right{ text-align:right; font-size:14px; }
+        .tt-left{ text-align:left; font-size:14px; }
+        .tt-mid{ text-align:center; font-weight:bold; text-decoration:underline; font-size:20px; }
         .form-no{ text-align:center; font-style:italic; font-size:12px; direction:ltr; }
-        .ch173-title-row:first-of-type{ margin:0 0 2px; }
+        .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
+        .ch173-table th, .ch173-table td{ border:1px solid #000; padding:4px 5px; text-align:center;
+          white-space:normal; word-wrap:break-word; overflow-wrap:break-word; }
+        .ch173-table thead th{ font-size:12px; vertical-align:middle; }
+        .ch173-table td{ text-align:right; vertical-align:top; font-size:14px; }
+        .vtxt{ display:inline-block; writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
+               transform:rotate(180deg); -webkit-transform:rotate(180deg); white-space:nowrap; line-height:1.2; }
+        th.vcell{ vertical-align:middle; padding:6px 2px; }
+        .ch173-table thead tr:first-child th:first-child{ border-right:none; }
+        .ch173-table thead tr:first-child th:last-child{ border-left:none; }
+        .ch173-table tbody td:first-child{ border-right:none; }
+        .ch173-table tbody td:last-child{ border-left:none; }
+        .ch173-table thead tr:nth-child(2) th:last-child{ border-left:none; }
+        .ch173-table tbody tr:last-child td{ border-bottom:none; }
+        .colgrip{ display:none !important; }
         .dio-print-brand{ position:fixed; bottom:3mm; left:4mm; font-size:9px; color:#999; direction:ltr; }
       </style></head><body>${chDoc.innerHTML}<div class="dio-print-brand">Digital IO</div></body></html>`;
     if (typeof dioPrint === 'function') dioPrint(chHtml);
@@ -547,4 +555,70 @@ function _r173Qita(input) {
   if (!label) return;
   const n = parseInt(input.value);
   label.textContent = n === 1 ? 'قطعہ' : (n > 1 ? 'قطعات' : '');
+}
+
+// ═══ MS Word jaisi column resize — header ki lakeer pakar kar chaudai badlein ═══
+function _ch173MakeResizable() {
+  const table = document.getElementById('ch173-table');
+  if (!table || table._resizeReady) return;
+  table._resizeReady = true;
+  const cols = table.querySelectorAll('colgroup col');
+  // Row 1 ke headers (7 columns) par grip lagate hain
+  const headRow = table.querySelector('thead tr:first-child');
+  if (!headRow) return;
+
+  // Column index map: row-1 cells → col index (ملزمان colspan=2 ko chhorte hain)
+  let ci = 0;
+  const cellCol = [];
+  headRow.querySelectorAll('th').forEach(th => {
+    const span = parseInt(th.getAttribute('colspan') || '1');
+    cellCol.push({ th, start: ci, span });
+    ci += span;
+  });
+
+  cellCol.forEach(({ th, start, span }) => {
+    // Aakhri column par grip nahi (uske bayen kuch nahi)
+    if (start + span >= cols.length) return;
+    const grip = document.createElement('div');
+    grip.className = 'colgrip';
+    grip.title = 'چوڑائی بدلنے کے لیے کھینچیں';
+    th.appendChild(grip);
+
+    grip.addEventListener('mousedown', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      const iA = start + span - 1;      // is cell ka aakhri column
+      const iB = start + span;          // uske bayen wala column
+      const tW = table.offsetWidth;
+      const startX = e.clientX;
+      const wA = parseFloat(cols[iA].style.width) || (100/cols.length);
+      const wB = parseFloat(cols[iB].style.width) || (100/cols.length);
+      document.body.style.cursor = 'col-resize';
+
+      const onMove = (ev) => {
+        // RTL: bayen ki taraf kheenchne se dayan column bara hota hai
+        const dx = (startX - ev.clientX) / tW * 100;
+        let nA = wA + dx, nB = wB - dx;
+        if (nA < 3 || nB < 3) return;           // kam se kam 3%
+        cols[iA].style.width = nA.toFixed(2) + '%';
+        cols[iB].style.width = nB.toFixed(2) + '%';
+      };
+      const onUp = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        document.body.style.cursor = '';
+        try { _r173Dirty = true; } catch(_) {}
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  });
+}
+window._ch173MakeResizable = _ch173MakeResizable;
+
+// Column widths ko save/collect karne ke liye helper
+function _ch173ColWidths() {
+  const table = document.getElementById('ch173-table');
+  if (!table) return null;
+  return JSON.stringify([...table.querySelectorAll('colgroup col')]
+    .map(c => parseFloat(c.style.width) || 0));
 }
