@@ -90,6 +90,13 @@ function _r173PickSub(sub) {
 }
 
 // ── RENDER ────────────────────────────────────────────────────
+
+// Har challan type ka apna unwan (512 ka andaz alag hai)
+function _ch173Heading(type, typeName) {
+  if (type === 'ch512') return 'فارم رپورٹ چالان زیردفعہ 512 ض ف';
+  return 'فارم رپورٹ ' + typeName + ' زیر دفعہ 173 ض ف';
+}
+
 function _renderR173() {
   const area = document.getElementById('workspace-editor-area')
             || document.getElementById('workspace-tab-content')
@@ -127,7 +134,8 @@ function _renderR173() {
       <style>
         /* ── فارم 25.56(1) — چالان ── */
         #ch173-doc{ direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; color:#000; }
-        #ch173-doc .form-no{ text-align:center; font-style:italic; font-size:12px; margin:0 0 4px; }
+        #ch173-doc .form-no{ text-align:center; font-style:italic; font-size:12px; direction:ltr; }
+        #ch173-doc .ch173-title-row:first-of-type{ margin:0 0 2px; }
         /* FIX 1: teen barabar columns → beech ka hissa sacche page-center par */
         #ch173-doc .ch173-title-row{ display:flex; align-items:baseline; width:100%; margin:0 0 8px; }
         #ch173-doc .ch173-title-row > span{ flex:1 1 0; white-space:nowrap; }
@@ -145,11 +153,18 @@ function _renderR173() {
         /* Column 1 aur 5 — chaudai FIX (kabhi nahi badalti) */
         #ch173-doc .ch173-table .fixw1{ width:7.1%; min-width:7.1%; max-width:7.1%; }
         #ch173-doc .ch173-table .fixw5{ width:5.5%; min-width:5.5%; max-width:5.5%; }
-        /* Khadi likhayi — NEECHE se OOPER parhi jaye (col 5 + sub-headers) */
-        #ch173-doc .ch173-table th.vhead{
-          writing-mode:vertical-rl; transform:rotate(180deg);
-          white-space:nowrap; padding:8px 4px; text-align:center;
+        /* Khadi likhayi — NEECHE se OOPER. transform table-cell par kaam nahi karta,
+           is liye andar span par lagate hain. */
+        #ch173-doc .ch173-table th.vhead{ padding:8px 2px; text-align:center; vertical-align:middle; }
+        #ch173-doc .ch173-table th.vhead > span{
+          display:inline-block; writing-mode:vertical-rl; transform:rotate(180deg);
+          white-space:nowrap;
         }
+        /* Headers ka matn khane ke DARMIYAN (upar chipka hua nahi) */
+        #ch173-doc .ch173-table th{ vertical-align:middle; }
+        /* Bahar ki dayen/bayen border nahi — pehla aur aakhri column khula */
+        #ch173-doc .ch173-table tr > *:first-child{ border-right:none; }
+        #ch173-doc .ch173-table tr > *:last-child{ border-left:none; }
         /* Cells mawad ke sath NEECHE ki taraf barhti hain (width wahi rehti) */
         #ch173-doc .ch173-table td[contenteditable]{ min-height:60mm; height:auto; }
         /* Print: sirf dastawez — koi tab/toolbar nahi (MS Word jaisa) */
@@ -169,13 +184,17 @@ function _renderR173() {
           </div>
         </div>
         <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
-          <div id="ch173-doc" style="max-width:297mm;margin:0 auto;padding:12mm;background:#fff;
+          <div id="ch173-doc" style="max-width:297mm;margin:0 auto;padding:0.25in;background:#fff;
                box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;font-size:14px;line-height:1.8;">
 
-            <div class="form-no">FORM No. 25.56(1)</div>
+            <div class="ch173-title-row">
+              <span></span>
+              <span class="form-no">FORM No. 25.56(1)</span>
+              <span></span>
+            </div>
             <div class="ch173-title-row">
               <span class="tt-right">تھانہ ${esc(o.station||'')}</span>
-              <span class="tt-mid">فارم رپورٹ ${esc(typeName)} زیر دفعہ 173 ض ف</span>
+              <span class="tt-mid">${esc(_ch173Heading(_r173Type, typeName))}</span>
               <span class="tt-left">ضلع ${esc(o.district||'')}</span>
             </div>
 
@@ -190,13 +209,13 @@ function _renderR173() {
                   <th rowspan="2" class="fixw1">نام و پتہ مدعی ومستغیث</th>
                   <th rowspan="2">ملزمان جو گرفتارنہ ہوئے</th>
                   <th colspan="2">ملزمان</th>
-                  <th rowspan="2" class="vhead fixw5">مال قبضہ پولیس</th>
+                  <th rowspan="2" class="vhead fixw5"><span>مال قبضہ پولیس</span></th>
                   <th rowspan="2">تفصیل شہادت</th>
                   <th rowspan="2">مختصر حالات مقدمہ معہ جرم مندرجہ بالا</th>
                 </tr>
                 <tr>
-                  <th class="vhead">زیر حراست</th>
-                  <th class="vhead">برضمانت</th>
+                  <th>زیر حراست</th>
+                  <th>برضمانت</th>
                 </tr>
               </thead>
               <tbody>
@@ -471,7 +490,7 @@ function _printR173() {
   if (chDoc) {
     const chHtml = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
       <style>
-        @page{ size:legal landscape; margin:10mm; }
+        @page{ size:legal landscape; margin:0.25in; }
         body{ font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl;
               font-size:14px; line-height:1.8; color:#000; margin:0; }
         .form-no{ text-align:center; font-style:italic; font-size:12px; margin:0 0 4px; }
@@ -486,8 +505,14 @@ function _printR173() {
         .ch173-table td{ text-align:right; height:auto; }
         .ch173-table .fixw1{ width:7.1%; min-width:7.1%; max-width:7.1%; }
         .ch173-table .fixw5{ width:5.5%; min-width:5.5%; max-width:5.5%; }
-        .ch173-table th.vhead{ writing-mode:vertical-rl; transform:rotate(180deg);
-          white-space:nowrap; padding:8px 4px; text-align:center; }
+        .ch173-table th{ vertical-align:middle; }
+        .ch173-table th.vhead{ padding:8px 2px; text-align:center; vertical-align:middle; }
+        .ch173-table th.vhead > span{ display:inline-block; writing-mode:vertical-rl;
+          transform:rotate(180deg); white-space:nowrap; }
+        .ch173-table tr > *:first-child{ border-right:none; }
+        .ch173-table tr > *:last-child{ border-left:none; }
+        .form-no{ text-align:center; font-style:italic; font-size:12px; direction:ltr; }
+        .ch173-title-row:first-of-type{ margin:0 0 2px; }
         .dio-print-brand{ position:fixed; bottom:3mm; left:4mm; font-size:9px; color:#999; direction:ltr; }
       </style></head><body>${chDoc.innerHTML}<div class="dio-print-brand">Digital IO</div></body></html>`;
     if (typeof dioPrint === 'function') dioPrint(chHtml);

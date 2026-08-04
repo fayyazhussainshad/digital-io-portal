@@ -1528,7 +1528,6 @@ function renderWorkspace(c, docs, ev, container) {
     </div>
 
     <!-- CASE PROGRESS TRACKER (P4) -->
-    ${_renderProgressBar(c)}
 
     <!-- MISAL DOCUMENT BAR (directly after topbar — nothing in between) -->
     ${renderMisalBar(c)}
