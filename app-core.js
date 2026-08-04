@@ -265,8 +265,23 @@ window.sanitizeHtml = sanitizeHtml;
 function formatDate(d) {
   if (!d) return '—';
   try {
+    const str = String(d).trim();
+
+    // Pehle se DD/MM/YYYY ya DD-MM-YYYY (dashes) — dono ko DD/MM/YYYY banao.
+    // (JS `new Date('31-05-2026')` ko nahi samajhta, is liye yahan khud handle
+    //  karte hain — warna woh dash wali tareekh jaisi hai waisi hi reh jati thi.)
+    let m = str.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+    if (m) {
+      return `${String(m[1]).padStart(2,'0')}/${String(m[2]).padStart(2,'0')}/${m[3]}`;
+    }
+    // YYYY-MM-DD (Supabase ka standard) — DD/MM/YYYY banao
+    m = str.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
+    if (m) {
+      return `${String(m[3]).padStart(2,'0')}/${String(m[2]).padStart(2,'0')}/${m[1]}`;
+    }
+
     const dt = new Date(d);
-    if (isNaN(dt)) return d;
+    if (isNaN(dt)) return str;
     const dd = String(dt.getDate()).padStart(2,'0');
     const mm = String(dt.getMonth()+1).padStart(2,'0');
     const yyyy = dt.getFullYear();

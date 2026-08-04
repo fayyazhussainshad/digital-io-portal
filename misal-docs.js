@@ -1169,10 +1169,10 @@ function getMisalTemplate(docId, c) {
     const _cCell = _fm(c?.complainant_cell) || '';
     const _ltrS  = 'unicode-bidi:isolate;direction:ltr;';
 
-    // ── Section 3: four accused blocks (بنام۱ then بنام); equal fixed-width lines ──
+    // ── Section 3: four accused blocks (sab par sirf "بنام"); equal fixed-width lines ──
     let _bnam = '';
     for (let i=1;i<=4;i++){
-      _bnam += `<div style="font-size:16pt;line-height:8mm;">بنام${i===1?'۱':''} ${_fill('idxn-name-'+i,'82%','font-weight:bold;')}</div>
+      _bnam += `<div style="font-size:16pt;line-height:8mm;">بنام ${_fill('idxn-name-'+i,'82%','font-weight:bold;')}</div>
 <div style="font-size:16pt;line-height:8mm;">رابطہ نمبر ${_fill('idxn-cell-'+i,'28%',_ltrS)} شناختی کارڈ نمبر ${_fill('idxn-cnic-'+i,'34%',_ltrS)}</div>`;
     }
 
