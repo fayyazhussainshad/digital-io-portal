@@ -158,19 +158,19 @@ function _renderR173() {
 
       #ch173-doc .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
       #ch173-doc .ch173-table th, #ch173-doc .ch173-table td{
-        border:1px solid #000; padding:4px 5px; text-align:center;
+        border:1px solid #000; padding:2px 4px; text-align:center;
         white-space:normal; word-wrap:break-word; overflow-wrap:break-word;
-        position:relative;
+        position:relative; line-height:1.15;
       }
       /* Header row 1: jagah ke hisab se chhota font */
-      #ch173-doc .ch173-table thead tr:first-child th{ font-size:12px; vertical-align:middle; }
-      #ch173-doc .ch173-table thead tr:nth-child(2) th{ font-size:12px; vertical-align:middle; }
+      #ch173-doc .ch173-table thead th{ font-size:16pt; vertical-align:middle; line-height:1.15; }
       /* Data khane: columns 1–6 → Ascending (neeche se ooper). AHEM: CSS transform
          seedha <td> par kaam nahi karta (browser nazar-andaz kar deta hai), is liye
          matn andar <div> wrapper mein rakh kar us par lagate hain. */
-      #ch173-doc .ch173-table td{ font-size:14px; vertical-align:top; }
-      #ch173-doc .ch173-table tbody td{ height:150mm; padding:0; }
+      #ch173-doc .ch173-table td{ font-size:16pt; vertical-align:top; line-height:1.15; }
+      #ch173-doc .ch173-table tbody td{ height:170mm; padding:0; }
       #ch173-doc .vwrap{
+        line-height:1.15;
         writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl; -ms-writing-mode:tb-rl;
         transform:rotate(180deg); -webkit-transform:rotate(180deg);
         width:100%; height:100%; padding:5px; box-sizing:border-box;
@@ -237,8 +237,9 @@ function _renderR173() {
         </div>
       </div>
       <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
-        <div id="ch173-doc" style="max-width:297mm;margin:0 auto;padding:0.25in;background:#fff;
-             box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;line-height:1.8;">
+        <div id="ch173-doc" style="width:8.5in;max-width:100%;min-height:14in;margin:0 auto;padding:0.25in;
+             background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;
+             line-height:1.4;box-sizing:border-box;">
 
           <div class="ch173-title-row"><span></span><span class="form-no">FORM No. 25.56(1)</span><span></span></div>
           <div class="ch173-title-row" style="margin:2px 0 8px;">
@@ -248,9 +249,9 @@ function _renderR173() {
           </div>
 
           <div class="ch173-caseline">
-            <span>مقدمہ نمبر <span class="fl" contenteditable="true" data-k="cl_fir">${bv('cl_fir')}</span></span>
-            <span>مورخہ <span class="fl" contenteditable="true" data-k="cl_date">${bv('cl_date')}</span></span>
-            <span>جرم <span class="fl fl-lg" contenteditable="true" data-k="cl_jurm">${bv('cl_jurm')}</span></span>
+            <span>مقدمہ نمبر <span class="fl" contenteditable="true" data-k="cl_fir">${bs.cl_fir !== undefined ? sanitizeHtml(bs.cl_fir) : esc(c.fir_number||'')}</span></span>
+            <span>مورخہ <span class="fl" contenteditable="true" data-k="cl_date">${bs.cl_date !== undefined ? sanitizeHtml(bs.cl_date) : esc(formatDate(c.fir_date)||'')}</span></span>
+            <span>جرم <span class="fl fl-lg" contenteditable="true" data-k="cl_jurm">${bs.cl_jurm !== undefined ? sanitizeHtml(bs.cl_jurm) : esc(c.section_of_law||'')}</span></span>
           </div>
 
           <table class="ch173-table" id="ch173-table">
@@ -558,7 +559,7 @@ function _printR173() {
       <style>
         @page{ size:legal portrait; margin:0.25in; }
         body{ font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl;
-              line-height:1.8; color:#000; margin:0; }
+              line-height:1.4; color:#000; margin:0; }
         .ch173-title-row{ position:relative; display:flex; align-items:baseline;
           justify-content:space-between; width:100%; min-height:1.6em; }
         .ch173-title-row > span{ white-space:nowrap; }
@@ -574,10 +575,10 @@ function _printR173() {
         .ch173-caseline .fl-lg{ min-width:260px; }
         .vhwrap{ text-align:center !important; padding:4px 2px; min-height:100px; }
         th.vcell{ vertical-align:middle; padding:0; text-align:center; height:110px; }
-        .ch173-table th, .ch173-table td{ border:1px solid #000; padding:4px 5px; text-align:center;
-          white-space:normal; word-wrap:break-word; overflow-wrap:break-word; }
-        .ch173-table thead th{ font-size:12px; vertical-align:middle; }
-        .ch173-table td{ font-size:14px; vertical-align:top; height:150mm; padding:0; }
+        .ch173-table th, .ch173-table td{ border:1px solid #000; padding:2px 4px; text-align:center;
+          white-space:normal; word-wrap:break-word; overflow-wrap:break-word; line-height:1.15; }
+        .ch173-table thead th{ font-size:16pt; vertical-align:middle; line-height:1.15; }
+        .ch173-table td{ font-size:16pt; vertical-align:top; height:170mm; padding:0; line-height:1.15; }
         .vwrap{ writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
           transform:rotate(180deg); -webkit-transform:rotate(180deg);
           width:100%; height:100%; padding:5px; box-sizing:border-box; text-align:right; direction:rtl; }
