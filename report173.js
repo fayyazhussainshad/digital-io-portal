@@ -170,12 +170,21 @@ function _renderR173() {
          matn andar <div> wrapper mein rakh kar us par lagate hain. */
       #ch173-doc .ch173-table td{ font-size:15pt; vertical-align:top; line-height:1.15; }
       #ch173-doc .ch173-table tbody td{ height:170mm; padding:0; }
+      /* ASCENDING (neeche se ooper). 'sideways-lr' bilkul yahi karta hai —
+         koi rotate nahi chahiye. Purane browsers ke liye rotate fallback. */
       #ch173-doc .vwrap{
         line-height:1.15;
-        writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl; -ms-writing-mode:tb-rl;
+        writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
         transform:rotate(180deg); -webkit-transform:rotate(180deg);
         width:100%; height:100%; padding:5px; box-sizing:border-box;
         text-align:right; outline:none; direction:rtl;
+      }
+      @supports (writing-mode: sideways-lr) {
+        #ch173-doc .vwrap{
+          writing-mode:sideways-lr !important;
+          transform:none !important; -webkit-transform:none !important;
+          text-align:right;
+        }
       }
       /* Column 7 — normal, RTL, justified */
       #ch173-doc .hwrap{
@@ -583,6 +592,9 @@ function _printR173() {
         .vwrap{ writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
           transform:rotate(180deg); -webkit-transform:rotate(180deg);
           width:100%; height:100%; padding:5px; box-sizing:border-box; text-align:right; direction:rtl; }
+        @supports (writing-mode: sideways-lr) {
+          .vwrap{ writing-mode:sideways-lr !important; transform:none !important; text-align:right; }
+        }
         .hwrap{ writing-mode:horizontal-tb; transform:none; width:100%; height:100%;
           padding:5px; box-sizing:border-box; direction:rtl; text-align:justify; }
         th.hcell{ vertical-align:middle; text-align:center; direction:rtl; white-space:normal; }
