@@ -137,7 +137,7 @@ function _renderR173() {
          is liye dono ka center bilkul aik (linked) */
       #ch173-doc .ch173-title-row{ display:flex; align-items:baseline; width:100%; }
       #ch173-doc .ch173-title-row > span{ flex:1 1 0; white-space:nowrap; }
-      #ch173-doc .tt-right{ text-align:right; font-size:14px; }
+      #ch173-doc .tt-right{ text-align:right; font-size:14px; padding-right:1in; }
       #ch173-doc .tt-left{ text-align:left; font-size:14px; }
       #ch173-doc .tt-mid{ text-align:center; font-weight:bold; text-decoration:underline; font-size:20px; }
       #ch173-doc .form-no{ text-align:center; font-style:italic; font-size:12px; direction:ltr; }
@@ -154,19 +154,22 @@ function _renderR173() {
       #ch173-doc .ch173-table td{ text-align:right; vertical-align:top; font-size:14px; min-height:60mm; }
 
       /* Khadi likhayi — NEECHE se OOPER (earth → sky) */
+      /* Khadi likhayi — teeno khanon mein BILKUL aik jaisi (neeche→upar) */
       #ch173-doc .vtxt{
         display:inline-block;
         writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl; -ms-writing-mode:tb-rl;
         transform:rotate(180deg); -webkit-transform:rotate(180deg);
-        white-space:nowrap; line-height:1.2;
+        white-space:nowrap; line-height:1.2; text-align:center;
       }
-      #ch173-doc th.vcell{ vertical-align:middle; padding:6px 2px; }
+      #ch173-doc th.vcell{ vertical-align:middle; padding:6px 2px; text-align:center; }
 
       /* Bahar ke kinare khule — pehla column dayen se, aakhri bayen se */
       #ch173-doc .ch173-table thead tr:first-child th:first-child{ border-right:none; }
       #ch173-doc .ch173-table thead tr:first-child th:last-child{ border-left:none; }
-      #ch173-doc .ch173-table tbody td:first-child{ border-right:none; }
-      #ch173-doc .ch173-table tbody td:last-child{ border-left:none; }
+      #ch173-doc .ch173-table tbody td:first-child{ border-right:none !important; }
+      #ch173-doc .ch173-table tbody td:last-child{ border-left:none !important; }
+      /* Data row: bayen kinare par koi lakeer nahi */
+      #ch173-doc .ch173-table tbody tr td:last-child{ border-left:0 !important; }
       /* Row 2 ki bayen aakhri line hataayi */
       #ch173-doc .ch173-table thead tr:nth-child(2) th:last-child{ border-left:none; }
       /* Neeche wali (bottom) line hataayi */
@@ -502,7 +505,7 @@ function _printR173() {
               line-height:1.8; color:#000; margin:0; }
         .ch173-title-row{ display:flex; align-items:baseline; width:100%; }
         .ch173-title-row > span{ flex:1 1 0; white-space:nowrap; }
-        .tt-right{ text-align:right; font-size:14px; }
+        .tt-right{ text-align:right; font-size:14px; padding-right:1in; }
         .tt-left{ text-align:left; font-size:14px; }
         .tt-mid{ text-align:center; font-weight:bold; text-decoration:underline; font-size:20px; }
         .form-no{ text-align:center; font-style:italic; font-size:12px; direction:ltr; }
@@ -512,12 +515,13 @@ function _printR173() {
         .ch173-table thead th{ font-size:12px; vertical-align:middle; }
         .ch173-table td{ text-align:right; vertical-align:top; font-size:14px; }
         .vtxt{ display:inline-block; writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
-               transform:rotate(180deg); -webkit-transform:rotate(180deg); white-space:nowrap; line-height:1.2; }
-        th.vcell{ vertical-align:middle; padding:6px 2px; }
+               transform:rotate(180deg); -webkit-transform:rotate(180deg); white-space:nowrap;
+               line-height:1.2; text-align:center; }
+        th.vcell{ vertical-align:middle; padding:6px 2px; text-align:center; }
         .ch173-table thead tr:first-child th:first-child{ border-right:none; }
         .ch173-table thead tr:first-child th:last-child{ border-left:none; }
-        .ch173-table tbody td:first-child{ border-right:none; }
-        .ch173-table tbody td:last-child{ border-left:none; }
+        .ch173-table tbody td:first-child{ border-right:none !important; }
+        .ch173-table tbody td:last-child{ border-left:0 !important; }
         .ch173-table thead tr:nth-child(2) th:last-child{ border-left:none; }
         .ch173-table tbody tr:last-child td{ border-bottom:none; }
         .colgrip{ display:none !important; }
