@@ -135,12 +135,19 @@ function _renderR173() {
       #ch173-doc{ direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; color:#000; }
       /* Unwan: FORM No. aur Urdu heading — dono AIK hi flex dhanche mein,
          is liye dono ka center bilkul aik (linked) */
-      #ch173-doc .ch173-title-row{ display:flex; align-items:baseline; width:100%; }
-      #ch173-doc .ch173-title-row > span{ flex:1 1 0; white-space:nowrap; }
+      /* Unwan: beech wala hissa HAMESHA sacche page-center par (absolute 50%),
+         chahe kinaron ka matn kitna bhi lamba ho. FORM No. bhi usi 50% par →
+         dono ka center bilkul aik (linked). */
+      #ch173-doc .ch173-title-row{ position:relative; display:flex; align-items:baseline;
+        justify-content:space-between; width:100%; min-height:1.6em; }
+      #ch173-doc .ch173-title-row > span{ white-space:nowrap; }
       #ch173-doc .tt-right{ text-align:right; font-size:14px; padding-right:1in; }
       #ch173-doc .tt-left{ text-align:left; font-size:14px; }
-      #ch173-doc .tt-mid{ text-align:center; font-weight:bold; text-decoration:underline; font-size:20px; }
-      #ch173-doc .form-no{ text-align:center; font-style:italic; font-size:12px; direction:ltr; }
+      #ch173-doc .tt-mid, #ch173-doc .form-no{
+        position:absolute; left:50%; transform:translateX(-50%); white-space:nowrap;
+      }
+      #ch173-doc .tt-mid{ font-weight:bold; text-decoration:underline; font-size:20px; }
+      #ch173-doc .form-no{ font-style:italic; font-size:12px; direction:ltr; }
 
       #ch173-doc .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
       #ch173-doc .ch173-table th, #ch173-doc .ch173-table td{
@@ -151,7 +158,17 @@ function _renderR173() {
       /* Header row 1: jagah ke hisab se chhota font */
       #ch173-doc .ch173-table thead tr:first-child th{ font-size:12px; vertical-align:middle; }
       #ch173-doc .ch173-table thead tr:nth-child(2) th{ font-size:12px; vertical-align:middle; }
-      #ch173-doc .ch173-table td{ text-align:right; vertical-align:top; font-size:14px; min-height:60mm; }
+      /* Data khane: columns 1–6 ki likhayi NEECHE se OOPER; column 7 normal RTL justified */
+      #ch173-doc .ch173-table td{ font-size:14px; vertical-align:top; }
+      #ch173-doc .ch173-table tbody td:not(:last-child){
+        writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
+        transform:rotate(180deg); -webkit-transform:rotate(180deg);
+        text-align:right; height:150mm;
+      }
+      #ch173-doc .ch173-table tbody td:last-child{
+        writing-mode:horizontal-tb; transform:none;
+        direction:rtl; text-align:justify; vertical-align:top;
+      }
 
       /* Khadi likhayi — NEECHE se OOPER (earth → sky) */
       /* Khadi likhayi — teeno khanon mein BILKUL aik jaisi (neeche→upar) */
@@ -162,6 +179,7 @@ function _renderR173() {
         white-space:nowrap; line-height:1.2; text-align:center;
       }
       #ch173-doc th.vcell{ vertical-align:middle; padding:6px 2px; text-align:center; }
+      #ch173-doc th.hcell{ vertical-align:middle; text-align:center; direction:rtl; white-space:normal; }
 
       /* Bahar ke kinare khule — pehla column dayen se, aakhri bayen se */
       #ch173-doc .ch173-table thead tr:first-child th:first-child{ border-right:none; }
@@ -222,8 +240,8 @@ function _renderR173() {
                 <th rowspan="2">مختصر حالات مقدمہ معہ جرم مندرجہ بالا</th>
               </tr>
               <tr>
-                <th class="vcell"><span class="vtxt">زیر حراست</span></th>
-                <th class="vcell"><span class="vtxt">برضمانت</span></th>
+                <th class="hcell">زیر حراست</th>
+                <th class="hcell">برضمانت</th>
               </tr>
             </thead>
             <tbody>
@@ -503,17 +521,24 @@ function _printR173() {
         @page{ size:legal landscape; margin:0.25in; }
         body{ font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl;
               line-height:1.8; color:#000; margin:0; }
-        .ch173-title-row{ display:flex; align-items:baseline; width:100%; }
-        .ch173-title-row > span{ flex:1 1 0; white-space:nowrap; }
+        .ch173-title-row{ position:relative; display:flex; align-items:baseline;
+          justify-content:space-between; width:100%; min-height:1.6em; }
+        .ch173-title-row > span{ white-space:nowrap; }
         .tt-right{ text-align:right; font-size:14px; padding-right:1in; }
         .tt-left{ text-align:left; font-size:14px; }
-        .tt-mid{ text-align:center; font-weight:bold; text-decoration:underline; font-size:20px; }
-        .form-no{ text-align:center; font-style:italic; font-size:12px; direction:ltr; }
+        .tt-mid, .form-no{ position:absolute; left:50%; transform:translateX(-50%); white-space:nowrap; }
+        .tt-mid{ font-weight:bold; text-decoration:underline; font-size:20px; }
+        .form-no{ font-style:italic; font-size:12px; direction:ltr; }
         .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
         .ch173-table th, .ch173-table td{ border:1px solid #000; padding:4px 5px; text-align:center;
           white-space:normal; word-wrap:break-word; overflow-wrap:break-word; }
         .ch173-table thead th{ font-size:12px; vertical-align:middle; }
-        .ch173-table td{ text-align:right; vertical-align:top; font-size:14px; }
+        .ch173-table td{ font-size:14px; vertical-align:top; }
+        .ch173-table tbody td:not(:last-child){ writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
+          transform:rotate(180deg); -webkit-transform:rotate(180deg); text-align:right; height:150mm; }
+        .ch173-table tbody td:last-child{ writing-mode:horizontal-tb; transform:none;
+          direction:rtl; text-align:justify; }
+        th.hcell{ vertical-align:middle; text-align:center; direction:rtl; white-space:normal; }
         .vtxt{ display:inline-block; writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
                transform:rotate(180deg); -webkit-transform:rotate(180deg); white-space:nowrap;
                line-height:1.2; text-align:center; }
@@ -567,42 +592,27 @@ function _ch173MakeResizable() {
   if (!table || table._resizeReady) return;
   table._resizeReady = true;
   const cols = table.querySelectorAll('colgroup col');
-  // Row 1 ke headers (7 columns) par grip lagate hain
   const headRow = table.querySelector('thead tr:first-child');
   if (!headRow) return;
 
-  // Column index map: row-1 cells → col index (ملزمان colspan=2 ko chhorte hain)
-  let ci = 0;
-  const cellCol = [];
-  headRow.querySelectorAll('th').forEach(th => {
-    const span = parseInt(th.getAttribute('colspan') || '1');
-    cellCol.push({ th, start: ci, span });
-    ci += span;
-  });
-
-  cellCol.forEach(({ th, start, span }) => {
-    // Aakhri column par grip nahi (uske bayen kuch nahi)
-    if (start + span >= cols.length) return;
+  // Grip lagane ka common helper
+  const addGrip = (cell, iA, iB) => {
+    if (iB >= cols.length) return;              // aakhri column ke bayen kuch nahi
     const grip = document.createElement('div');
     grip.className = 'colgrip';
     grip.title = 'چوڑائی بدلنے کے لیے کھینچیں';
-    th.appendChild(grip);
-
+    cell.appendChild(grip);
     grip.addEventListener('mousedown', (e) => {
       e.preventDefault(); e.stopPropagation();
-      const iA = start + span - 1;      // is cell ka aakhri column
-      const iB = start + span;          // uske bayen wala column
       const tW = table.offsetWidth;
       const startX = e.clientX;
       const wA = parseFloat(cols[iA].style.width) || (100/cols.length);
       const wB = parseFloat(cols[iB].style.width) || (100/cols.length);
       document.body.style.cursor = 'col-resize';
-
       const onMove = (ev) => {
-        // RTL: bayen ki taraf kheenchne se dayan column bara hota hai
-        const dx = (startX - ev.clientX) / tW * 100;
+        const dx = (startX - ev.clientX) / tW * 100;   // RTL
         let nA = wA + dx, nB = wB - dx;
-        if (nA < 3 || nB < 3) return;           // kam se kam 3%
+        if (nA < 3 || nB < 3) return;
         cols[iA].style.width = nA.toFixed(2) + '%';
         cols[iB].style.width = nB.toFixed(2) + '%';
       };
@@ -610,12 +620,27 @@ function _ch173MakeResizable() {
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup', onUp);
         document.body.style.cursor = '';
-        try { _r173Dirty = true; } catch(_) {}
       };
       document.addEventListener('mousemove', onMove);
       document.addEventListener('mouseup', onUp);
     });
+  };
+
+  // Row 1 ke headers
+  let ci = 0;
+  headRow.querySelectorAll('th').forEach(th => {
+    const span = parseInt(th.getAttribute('colspan') || '1');
+    addGrip(th, ci + span - 1, ci + span);
+    ci += span;
   });
+
+  // Row 2 ke headers (زیر حراست / برضمانت) — yeh columns 3 aur 4 hain
+  const row2 = table.querySelector('thead tr:nth-child(2)');
+  if (row2) {
+    const ths = row2.querySelectorAll('th');
+    if (ths[0]) addGrip(ths[0], 2, 3);   // زیر حراست ↔ برضمانت
+    if (ths[1]) addGrip(ths[1], 3, 4);   // برضمانت ↔ مال قبضہ
+  }
 }
 window._ch173MakeResizable = _ch173MakeResizable;
 
