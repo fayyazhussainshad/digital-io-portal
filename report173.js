@@ -20,7 +20,7 @@ const R173_TYPES = [
 
 // CHALLAN types — inka format software NAHI deta (sarkari manzoor-shuda form
 // owner/admin khud set karega). Yeh types khali safed safhe par khulte hain.
-const R173_BLANK_TYPES = ['mukammal','namukammal','ch512','tatima_challan'];
+const R173_BLANK_TYPES = ['mukammal','namukammal','ch512','tatima_challan','interim'];
 
 const R173_TATIMA_SUBS = [
   { id:'aslha',  name:'تتمہ چالان — اسلحہ' },
@@ -44,7 +44,7 @@ const R173_BOILER = {
   mukammal: '',
   namukammal: '',
   ch512: '',
-  interim: 'جناب عالیٰ! مختصر حالات مقدمہ عنوان بالا اس طرح ہیں کہ تفتیش مقدمہ جاری ہے سردست انٹیرم رپورٹ مرتب ہوکر ارسال خدمت ہے سماعت فرمائی جائے۔',
+  interim: '',
   ikhraj: '',
   adampata: 'جناب عالیٰ! مختصر حالات مقدمہ عنوان بالا اس طرح ہیں کہ باوجود بھرپور کوشش ملزمان کا کوئی سراغ نہ مل سکا۔ رپورٹ عدم پتہ مرتب ہوکر ارسالِ خدمت ہے، سماعت فرمائی جائے۔',
 };
