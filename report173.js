@@ -158,20 +158,26 @@ function _renderR173() {
       /* Header row 1: jagah ke hisab se chhota font */
       #ch173-doc .ch173-table thead tr:first-child th{ font-size:12px; vertical-align:middle; }
       #ch173-doc .ch173-table thead tr:nth-child(2) th{ font-size:12px; vertical-align:middle; }
-      /* Data khane: columns 1–6 ki likhayi NEECHE se OOPER; column 7 normal RTL justified */
+      /* Data khane: columns 1–6 → Ascending (neeche se ooper). AHEM: CSS transform
+         seedha <td> par kaam nahi karta (browser nazar-andaz kar deta hai), is liye
+         matn andar <div> wrapper mein rakh kar us par lagate hain. */
       #ch173-doc .ch173-table td{ font-size:14px; vertical-align:top; }
-      #ch173-doc .ch173-table tbody td:not(:last-child){
-        writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
+      #ch173-doc .ch173-table tbody td{ height:150mm; padding:0; }
+      #ch173-doc .vwrap{
+        writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl; -ms-writing-mode:tb-rl;
         transform:rotate(180deg); -webkit-transform:rotate(180deg);
-        text-align:right; height:150mm;
+        width:100%; height:100%; padding:5px; box-sizing:border-box;
+        text-align:right; outline:none; direction:rtl;
       }
-      #ch173-doc .ch173-table tbody td:last-child{
+      /* Column 7 — normal, RTL, justified */
+      #ch173-doc .hwrap{
         writing-mode:horizontal-tb; transform:none;
-        direction:rtl; text-align:justify; vertical-align:top;
+        width:100%; height:100%; padding:5px; box-sizing:border-box;
+        direction:rtl; text-align:justify; outline:none;
       }
 
       /* Khadi likhayi — NEECHE se OOPER (earth → sky) */
-      /* Khadi likhayi — teeno khanon mein BILKUL aik jaisi (neeche→upar) */
+      /* Header ki khadi likhayi — Ascending (neeche se ooper) */
       #ch173-doc .vtxt{
         display:inline-block;
         writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl; -ms-writing-mode:tb-rl;
@@ -184,10 +190,10 @@ function _renderR173() {
       /* Bahar ke kinare khule — pehla column dayen se, aakhri bayen se */
       #ch173-doc .ch173-table thead tr:first-child th:first-child{ border-right:none; }
       #ch173-doc .ch173-table thead tr:first-child th:last-child{ border-left:none; }
-      #ch173-doc .ch173-table tbody td:first-child{ border-right:none !important; }
-      #ch173-doc .ch173-table tbody td:last-child{ border-left:none !important; }
-      /* Data row: bayen kinare par koi lakeer nahi */
-      #ch173-doc .ch173-table tbody tr td:last-child{ border-left:0 !important; }
+      /* Data row (row 3): dono kinare khule — dayen bhi, bayen bhi */
+      #ch173-doc .ch173-table tbody tr > td:first-child{ border-right:0 !important; }
+      #ch173-doc .ch173-table tbody tr > td:last-child{ border-left:0 !important; }
+      #ch173-doc .ch173-table tbody tr > td:nth-last-child(1){ border-left:0 !important; }
       /* Row 2 ki bayen aakhri line hataayi */
       #ch173-doc .ch173-table thead tr:nth-child(2) th:last-child{ border-left:none; }
       /* Neeche wali (bottom) line hataayi */
@@ -246,13 +252,13 @@ function _renderR173() {
             </thead>
             <tbody>
               <tr>
-                <td contenteditable="true" data-k="madai">${bv('madai')}</td>
-                <td contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</td>
-                <td contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</td>
-                <td contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</td>
-                <td contenteditable="true" data-k="mal_qabza">${bv('mal_qabza')}</td>
-                <td contenteditable="true" data-k="shahadat">${bv('shahadat')}</td>
-                <td contenteditable="true" data-mic="true" data-k="halaat">${bv('halaat')}</td>
+                <td><div class="vwrap" contenteditable="true" data-k="madai">${bv('madai')}</div></td>
+                <td><div class="vwrap" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div></td>
+                <td><div class="vwrap" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div></td>
+                <td><div class="vwrap" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></td>
+                <td><div class="vwrap" contenteditable="true" data-k="mal_qabza">${bv('mal_qabza')}</div></td>
+                <td><div class="vwrap" contenteditable="true" data-k="shahadat">${bv('shahadat')}</div></td>
+                <td><div class="hwrap" contenteditable="true" data-mic="true" data-k="halaat">${bv('halaat')}</div></td>
               </tr>
             </tbody>
           </table>
@@ -533,11 +539,12 @@ function _printR173() {
         .ch173-table th, .ch173-table td{ border:1px solid #000; padding:4px 5px; text-align:center;
           white-space:normal; word-wrap:break-word; overflow-wrap:break-word; }
         .ch173-table thead th{ font-size:12px; vertical-align:middle; }
-        .ch173-table td{ font-size:14px; vertical-align:top; }
-        .ch173-table tbody td:not(:last-child){ writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
-          transform:rotate(180deg); -webkit-transform:rotate(180deg); text-align:right; height:150mm; }
-        .ch173-table tbody td:last-child{ writing-mode:horizontal-tb; transform:none;
-          direction:rtl; text-align:justify; }
+        .ch173-table td{ font-size:14px; vertical-align:top; height:150mm; padding:0; }
+        .vwrap{ writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
+          transform:rotate(180deg); -webkit-transform:rotate(180deg);
+          width:100%; height:100%; padding:5px; box-sizing:border-box; text-align:right; direction:rtl; }
+        .hwrap{ writing-mode:horizontal-tb; transform:none; width:100%; height:100%;
+          padding:5px; box-sizing:border-box; direction:rtl; text-align:justify; }
         th.hcell{ vertical-align:middle; text-align:center; direction:rtl; white-space:normal; }
         .vtxt{ display:inline-block; writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
                transform:rotate(180deg); -webkit-transform:rotate(180deg); white-space:nowrap;
@@ -545,8 +552,8 @@ function _printR173() {
         th.vcell{ vertical-align:middle; padding:6px 2px; text-align:center; }
         .ch173-table thead tr:first-child th:first-child{ border-right:none; }
         .ch173-table thead tr:first-child th:last-child{ border-left:none; }
-        .ch173-table tbody td:first-child{ border-right:none !important; }
-        .ch173-table tbody td:last-child{ border-left:0 !important; }
+        .ch173-table tbody tr > td:first-child{ border-right:0 !important; }
+        .ch173-table tbody tr > td:last-child{ border-left:0 !important; }
         .ch173-table thead tr:nth-child(2) th:last-child{ border-left:none; }
         .ch173-table tbody tr:last-child td{ border-bottom:none; }
         .colgrip{ display:none !important; }
