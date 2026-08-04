@@ -135,13 +135,17 @@ function _renderR173() {
         #ch173-doc .tt-mid{ text-align:center; font-weight:bold; text-decoration:underline; }
         #ch173-doc .tt-left{ text-align:left; }
         /* FIX 2: 7 columns — widths RIGID, kabhi flex/squeeze nahi */
-        #ch173-doc .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
+        /* table-layout:auto → columns 2,3,4,6,7 mawad ke sath dayen-bayen khulte hain */
+        #ch173-doc .ch173-table{ width:100%; border-collapse:collapse; table-layout:auto; direction:rtl; }
         #ch173-doc .ch173-table th, #ch173-doc .ch173-table td{
           border:1px solid #000; padding:4px 5px; vertical-align:top; text-align:center;
           white-space:normal; word-wrap:break-word; overflow-wrap:break-word;
         }
         #ch173-doc .ch173-table td{ text-align:right; }
-        /* Columns 1–6: khadi likhayi, NEECHE se OOPER parhi jaye */
+        /* Column 1 aur 5 — chaudai FIX (kabhi nahi badalti) */
+        #ch173-doc .ch173-table .fixw1{ width:7.1%; min-width:7.1%; max-width:7.1%; }
+        #ch173-doc .ch173-table .fixw5{ width:5.5%; min-width:5.5%; max-width:5.5%; }
+        /* Khadi likhayi — NEECHE se OOPER parhi jaye (col 5 + sub-headers) */
         #ch173-doc .ch173-table th.vhead{
           writing-mode:vertical-rl; transform:rotate(180deg);
           white-space:nowrap; padding:8px 4px; text-align:center;
@@ -177,17 +181,17 @@ function _renderR173() {
 
             <table class="ch173-table">
               <colgroup>
-                <col style="width:7.1%"><col style="width:8.5%"><col style="width:7.9%">
-                <col style="width:11.8%"><col style="width:5.5%"><col style="width:31.6%">
-                <col style="width:27.6%">
+                <col style="width:7.1%"><col><col>
+                <col><col style="width:5.5%"><col>
+                <col>
               </colgroup>
               <thead>
                 <tr>
-                  <th rowspan="2" class="vhead">نام و پتہ مدعی ومستغیث</th>
-                  <th rowspan="2" class="vhead">ملزمان جو گرفتارنہ ہوئے</th>
+                  <th rowspan="2" class="fixw1">نام و پتہ مدعی ومستغیث</th>
+                  <th rowspan="2">ملزمان جو گرفتارنہ ہوئے</th>
                   <th colspan="2">ملزمان</th>
-                  <th rowspan="2" class="vhead">مال قبضہ پولیس</th>
-                  <th rowspan="2" class="vhead">تفصیل شہادت</th>
+                  <th rowspan="2" class="vhead fixw5">مال قبضہ پولیس</th>
+                  <th rowspan="2">تفصیل شہادت</th>
                   <th rowspan="2">مختصر حالات مقدمہ معہ جرم مندرجہ بالا</th>
                 </tr>
                 <tr>
@@ -197,11 +201,11 @@ function _renderR173() {
               </thead>
               <tbody>
                 <tr>
-                  <td contenteditable="true" data-k="madai">${bv('madai')}</td>
+                  <td contenteditable="true" class="fixw1" data-k="madai">${bv('madai')}</td>
                   <td contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</td>
                   <td contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</td>
                   <td contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</td>
-                  <td contenteditable="true" data-k="mal_qabza">${bv('mal_qabza')}</td>
+                  <td contenteditable="true" class="fixw5" data-k="mal_qabza">${bv('mal_qabza')}</td>
                   <td contenteditable="true" data-k="shahadat">${bv('shahadat')}</td>
                   <td contenteditable="true" data-mic="true" data-k="halaat">${bv('halaat')}</td>
                 </tr>
@@ -476,10 +480,12 @@ function _printR173() {
         .tt-right{ text-align:right; padding-right:1in; }
         .tt-mid{ text-align:center; font-weight:bold; text-decoration:underline; }
         .tt-left{ text-align:left; }
-        .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
+        .ch173-table{ width:100%; border-collapse:collapse; table-layout:auto; direction:rtl; }
         .ch173-table th, .ch173-table td{ border:1px solid #000; padding:4px 5px; vertical-align:top;
           text-align:center; white-space:normal; word-wrap:break-word; overflow-wrap:break-word; }
         .ch173-table td{ text-align:right; height:auto; }
+        .ch173-table .fixw1{ width:7.1%; min-width:7.1%; max-width:7.1%; }
+        .ch173-table .fixw5{ width:5.5%; min-width:5.5%; max-width:5.5%; }
         .ch173-table th.vhead{ writing-mode:vertical-rl; transform:rotate(180deg);
           white-space:nowrap; padding:8px 4px; text-align:center; }
         .dio-print-brand{ position:fixed; bottom:3mm; left:4mm; font-size:9px; color:#999; direction:ltr; }
