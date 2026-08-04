@@ -116,27 +116,102 @@ function _renderR173() {
   // koi format, khana ya button nahi dega — sirf khali safed kaghaz. Owner/admin
   // khud manzoor-shuda form set karega.
   if (R173_BLANK_TYPES.includes(_r173Type)) {
-    const blankSaved = _r173Records[recKey] || {};
-    const blankHtml = sanitizeHtml(blankSaved.blank_html || '');
-    area.innerHTML = `
-    <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
-      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
-        <select id="r173-type-sel" onchange="_r173Pick(this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
-          ${R173_TYPES.map(t => `<option value="${t.id}" ${t.id===_r173Type?'selected':''}>${t.name}</option>`).join('')}
-        </select>
-        <div style="margin-right:auto;display:flex;gap:6px;">
-          <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveR173()">💾 محفوظ کریں</button>
-          <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printR173()">🖨️ پرنٹ کریں</button>
+    // ═══ فارم نمبر 25.56(1) — رپورٹ زیر دفعہ 173 ض ف ═══
+    // Manzoor-shuda sarkari form. Aik hi format tamam challan types ke liye —
+    // sirf unwan (heading) har type ka apna. 7 columns, RTL (dayen se bayen).
+    const bs = _r173Records[recKey] || {};
+    const bv = (k) => sanitizeHtml(bs[k] !== undefined ? bs[k] : '');
+
+    return_html_ch173: {
+      area.innerHTML = `
+      <style>
+        /* ── فارم 25.56(1) — چالان ── */
+        #ch173-doc{ direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; color:#000; }
+        #ch173-doc .form-no{ text-align:center; font-style:italic; font-size:12px; margin:0 0 4px; }
+        /* FIX 1: teen barabar columns → beech ka hissa sacche page-center par */
+        #ch173-doc .ch173-title-row{ display:flex; align-items:baseline; width:100%; margin:0 0 8px; }
+        #ch173-doc .ch173-title-row > span{ flex:1 1 0; white-space:nowrap; }
+        #ch173-doc .tt-right{ text-align:right; padding-right:1in; }
+        #ch173-doc .tt-mid{ text-align:center; font-weight:bold; text-decoration:underline; }
+        #ch173-doc .tt-left{ text-align:left; }
+        /* FIX 2: 7 columns — widths RIGID, kabhi flex/squeeze nahi */
+        #ch173-doc .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
+        #ch173-doc .ch173-table th, #ch173-doc .ch173-table td{
+          border:1px solid #000; padding:4px 5px; vertical-align:top; text-align:center;
+          white-space:normal; word-wrap:break-word; overflow-wrap:break-word;
+        }
+        #ch173-doc .ch173-table td{ text-align:right; }
+        /* Columns 1–6: khadi likhayi, NEECHE se OOPER parhi jaye */
+        #ch173-doc .ch173-table th.vhead{
+          writing-mode:vertical-rl; transform:rotate(180deg);
+          white-space:nowrap; padding:8px 4px; text-align:center;
+        }
+        /* Cells mawad ke sath NEECHE ki taraf barhti hain (width wahi rehti) */
+        #ch173-doc .ch173-table td[contenteditable]{ min-height:60mm; height:auto; }
+        /* Print: sirf dastawez — koi tab/toolbar nahi (MS Word jaisa) */
+        @media print{
+          .no-print,.doc-toolbar,.editor-toolbar,button,select{ display:none !important; }
+          #ch173-doc{ box-shadow:none !important; border-radius:0 !important; margin:0 !important; padding:0 !important; max-width:none !important; }
+        }
+      </style>
+      <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
+        <div class="no-print" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
+          <select id="r173-type-sel" onchange="_r173Pick(this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
+            ${R173_TYPES.map(t => `<option value="${t.id}" ${t.id===_r173Type?'selected':''}>${t.name}</option>`).join('')}
+          </select>
+          <div style="margin-right:auto;display:flex;gap:6px;">
+            <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveR173()">💾 محفوظ کریں</button>
+            <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printR173()">🖨️ پرنٹ کریں</button>
+          </div>
         </div>
-      </div>
-      <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
-        <div id="r173-doc" contenteditable="true" spellcheck="false"
-          style="max-width:210mm;margin:0 auto;min-height:270mm;padding:16mm;background:#fff;color:#111;
-                 font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:15px;line-height:2;
-                 direction:rtl;text-align:justify;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;outline:none;"
-          >${blankHtml}</div>
-      </div>
-    </div>`;
+        <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
+          <div id="ch173-doc" style="max-width:297mm;margin:0 auto;padding:12mm;background:#fff;
+               box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;font-size:14px;line-height:1.8;">
+
+            <div class="form-no">FORM No. 25.56(1)</div>
+            <div class="ch173-title-row">
+              <span class="tt-right">تھانہ ${esc(o.station||'')}</span>
+              <span class="tt-mid">فارم رپورٹ ${esc(typeName)} زیر دفعہ 173 ض ف</span>
+              <span class="tt-left">ضلع ${esc(o.district||'')}</span>
+            </div>
+
+            <table class="ch173-table">
+              <colgroup>
+                <col style="width:7.1%"><col style="width:8.5%"><col style="width:7.9%">
+                <col style="width:11.8%"><col style="width:5.5%"><col style="width:31.6%">
+                <col style="width:27.6%">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th rowspan="2" class="vhead">نام و پتہ مدعی ومستغیث</th>
+                  <th rowspan="2" class="vhead">ملزمان جو گرفتارنہ ہوئے</th>
+                  <th colspan="2">ملزمان</th>
+                  <th rowspan="2" class="vhead">مال قبضہ پولیس</th>
+                  <th rowspan="2" class="vhead">تفصیل شہادت</th>
+                  <th rowspan="2">مختصر حالات مقدمہ معہ جرم مندرجہ بالا</th>
+                </tr>
+                <tr>
+                  <th class="vhead">زیر حراست</th>
+                  <th class="vhead">برضمانت</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td contenteditable="true" data-k="madai">${bv('madai')}</td>
+                  <td contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</td>
+                  <td contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</td>
+                  <td contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</td>
+                  <td contenteditable="true" data-k="mal_qabza">${bv('mal_qabza')}</td>
+                  <td contenteditable="true" data-k="shahadat">${bv('shahadat')}</td>
+                  <td contenteditable="true" data-mic="true" data-k="halaat">${bv('halaat')}</td>
+                </tr>
+              </tbody>
+            </table>
+
+          </div>
+        </div>
+      </div>`;
+    }
     if (typeof applyMicButtons === 'function') setTimeout(() => applyMicButtons(area), 50);
     return;
   }
@@ -322,12 +397,17 @@ function _renderR173() {
 
 // ── SAVE ──────────────────────────────────────────────────────
 function _collectR173() {
+  // Challan types (فارم 25.56(1)) — apna doc id hai
+  const chDoc = document.getElementById('ch173-doc');
+  if (chDoc && typeof R173_BLANK_TYPES !== 'undefined' && R173_BLANK_TYPES.includes(_r173Type)) {
+    const d = {};
+    chDoc.querySelectorAll('[data-k]').forEach(el => {
+      d[el.dataset.k] = (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') ? el.value : el.innerHTML;
+    });
+    return d;
+  }
   const doc = document.getElementById('r173-doc');
   if (!doc) return {};
-  // Challan types: poora safha khud contenteditable hai — uska poora content save
-  if (typeof R173_BLANK_TYPES !== 'undefined' && R173_BLANK_TYPES.includes(_r173Type)) {
-    return { blank_html: doc.innerHTML };
-  }
   const data = {};
   doc.querySelectorAll('[data-k]').forEach(el => {
     data[el.dataset.k] = (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') ? el.value : el.innerHTML;
@@ -382,13 +462,40 @@ async function _saveR173() {
 
 // ── PRINT (only the form) ─────────────────────────────────────
 function _printR173() {
+  // Challan types (فارم 25.56(1)) — apna doc + apni styles
+  const chDoc = document.getElementById('ch173-doc');
+  if (chDoc) {
+    const chHtml = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
+      <style>
+        @page{ size:legal landscape; margin:10mm; }
+        body{ font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl;
+              font-size:14px; line-height:1.8; color:#000; margin:0; }
+        .form-no{ text-align:center; font-style:italic; font-size:12px; margin:0 0 4px; }
+        .ch173-title-row{ display:flex; align-items:baseline; width:100%; margin:0 0 8px; }
+        .ch173-title-row > span{ flex:1 1 0; white-space:nowrap; }
+        .tt-right{ text-align:right; padding-right:1in; }
+        .tt-mid{ text-align:center; font-weight:bold; text-decoration:underline; }
+        .tt-left{ text-align:left; }
+        .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
+        .ch173-table th, .ch173-table td{ border:1px solid #000; padding:4px 5px; vertical-align:top;
+          text-align:center; white-space:normal; word-wrap:break-word; overflow-wrap:break-word; }
+        .ch173-table td{ text-align:right; height:auto; }
+        .ch173-table th.vhead{ writing-mode:vertical-rl; transform:rotate(180deg);
+          white-space:nowrap; padding:8px 4px; text-align:center; }
+        .dio-print-brand{ position:fixed; bottom:3mm; left:4mm; font-size:9px; color:#999; direction:ltr; }
+      </style></head><body>${chDoc.innerHTML}<div class="dio-print-brand">Digital IO</div></body></html>`;
+    if (typeof dioPrint === 'function') dioPrint(chHtml);
+    else { const w = window.open('','_blank'); w.document.write(chHtml); w.document.close(); setTimeout(()=>w.print(),300); }
+    return;
+  }
   const doc = document.getElementById('r173-doc');
   if (!doc) return;
-  const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
+  const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
     <style>@page{size:legal;margin:12mm}
       body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;font-size:14px;line-height:1.9;color:#000;}
       table{border-collapse:collapse;width:100%;}td,th{border:1px solid #000;padding:6px;}
-    </style></head><body>${doc.innerHTML}</body></html>`;
+      .dio-print-brand{position:fixed;bottom:3mm;left:4mm;font-size:9px;color:#999;direction:ltr;}
+    </style></head><body>${doc.innerHTML}<div class="dio-print-brand">Digital IO</div></body></html>`;
   if (typeof dioPrint === 'function') dioPrint(html);
   else { const w = window.open('','_blank'); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),300); }
 }
