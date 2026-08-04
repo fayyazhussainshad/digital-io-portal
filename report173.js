@@ -152,9 +152,10 @@ function _renderR173() {
       /* مقدمہ نمبر / مورخہ / جرم — unwan ke neeche, table se pehle */
       /* مقدمہ نمبر / مورخہ / جرم — koi dashes nahi, data ke hisab se khud fit */
       #ch173-doc .ch173-caseline{ display:flex; gap:22px; align-items:baseline; font-size:14pt;
-        margin:18px 1in 16px 0; direction:rtl; flex-wrap:wrap; line-height:1.4; }
+        margin:18px 0 16px 0; direction:rtl; flex-wrap:wrap; line-height:1.4;
+        justify-content:center; }
       #ch173-doc .ch173-caseline .fl{ display:inline-block; min-width:40px;
-        border:none; text-align:right; outline:none; font-weight:600; }
+        border:none; text-align:right; outline:none; font-weight:normal; }
       #ch173-doc .ch173-caseline .fl-lg{ min-width:60px; }
 
       #ch173-doc .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
@@ -164,7 +165,7 @@ function _renderR173() {
         position:relative; line-height:1.15;
       }
       /* Header row 1: jagah ke hisab se chhota font */
-      #ch173-doc .ch173-table thead th{ font-size:15pt; vertical-align:middle; line-height:1.15; }
+      #ch173-doc .ch173-table thead th{ font-size:15pt; vertical-align:middle; line-height:1.15; font-weight:normal; }
       /* Data khane: columns 1–6 → Ascending (neeche se ooper). AHEM: CSS transform
          seedha <td> par kaam nahi karta (browser nazar-andaz kar deta hai), is liye
          matn andar <div> wrapper mein rakh kar us par lagate hain. */
@@ -173,7 +174,13 @@ function _renderR173() {
       /* ASCENDING (neeche se ooper) — writing-mode Chrome mein na-qabil-e-aitbaar
          hai, is liye seedha ghumao (rotate) use karte hain. Khana relative,
          andar ka box absolute + rotate(90deg) → RTL Urdu neeche se ooper. */
-      #ch173-doc .ch173-table tbody td.rotcell{ position:relative; padding:0; overflow:hidden; }
+      /* Khane ke andar clip-box — rotated matn kabhi doosre column mein na jaye */
+      #ch173-doc .ch173-table td.rotcell, #ch173-doc .ch173-table th.rotcell{
+        position:relative; padding:0; overflow:hidden;
+      }
+      #ch173-doc .rotclip{
+        position:absolute; inset:0; overflow:hidden;
+      }
       #ch173-doc .rotinner{
         position:absolute; top:50%; left:50%;
         transform-origin:center center;
@@ -196,10 +203,10 @@ function _renderR173() {
         transform:rotate(180deg); -webkit-transform:rotate(180deg);
         white-space:nowrap; line-height:1.2; text-align:center;
       }
-      #ch173-doc th.vcell{ vertical-align:middle; padding:0; text-align:center; height:110px; }
+      #ch173-doc th.vcell{ vertical-align:middle; padding:0; text-align:center; height:150px; }
       /* Header ki khadi likhayi — data khanon jaisa hi wrapper (Ascending) */
-      #ch173-doc .rothead{ text-align:center !important; white-space:nowrap; }
-      #ch173-doc th.rotcell{ position:relative; padding:0; overflow:hidden; }
+      #ch173-doc .rothead{ text-align:center !important; white-space:normal; }
+
       #ch173-doc th.hcell{ vertical-align:middle; text-align:center; direction:rtl; white-space:normal; }
 
       /* Bahar ke kinare khule — pehla column dayen se, aakhri bayen se */
@@ -213,7 +220,7 @@ function _renderR173() {
       #ch173-doc .ch173-table thead tr:nth-child(2) th:last-child{ border-left:none; }
       /* Neeche wali lakeer nazar NAHI aati, lekin wahan se unchai badal sakte
          hain (MS Word jaisa) — grip hover par halka nishan dikhata hai */
-      #ch173-doc .ch173-table tbody tr:last-child td{ border-bottom:none !important; }
+      #ch173-doc .ch173-table tbody td{ border-bottom:0 !important; }
 
       /* MS Word jaisi column resize — header par drag handle */
       #ch173-doc .colgrip{
@@ -229,12 +236,13 @@ function _renderR173() {
       #ch173-doc .colgrip:hover{ background:rgba(56,189,248,0.35); }
       @media print{
         .no-print,.doc-toolbar,.editor-toolbar,button,select{ display:none !important; }
-        .ch173-table tbody tr:last-child td{ border-bottom:none !important; }
+        .ch173-table tbody td{ border-bottom:0 !important; }
         .rotcell{ position:relative; padding:0; overflow:hidden; }
+        .rotclip{ position:absolute; inset:0; overflow:hidden; }
         .rotinner{ position:absolute; top:50%; left:50%; transform-origin:center center;
           padding:5px; box-sizing:border-box; direction:rtl; text-align:right;
           line-height:1.15; overflow-wrap:break-word; }
-        .rothead{ text-align:center !important; white-space:nowrap; }
+        .rothead{ text-align:center !important; white-space:normal; }
         .colgrip,.rowgrip{ display:none !important; }
         .colgrip,.rowgrip{ display:none !important; }
         #ch173-doc{ box-shadow:none !important; border-radius:0 !important; margin:0 !important; padding:0 !important; max-width:none !important; }
@@ -253,7 +261,7 @@ function _renderR173() {
       </div>
       <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
         <div id="ch173-doc" style="width:8.5in;max-width:100%;min-height:14in;margin:0 auto;
-             padding:calc(0.25in + 0.5cm) 0.2in 0.25in 0.2in;
+             padding:calc(0.25in + 0.5cm) 0.5cm 0.25in 0.5cm;
              background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;
              line-height:1.4;box-sizing:border-box;">
 
@@ -279,7 +287,7 @@ function _renderR173() {
                 <th rowspan="2">نام و پتہ مدعی ومستغیث</th>
                 <th rowspan="2">ملزمان جو گرفتارنہ ہوئے</th>
                 <th colspan="2">ملزمان</th>
-                <th rowspan="2" class="vcell rotcell"><div class="rotinner rothead">مال قبضہ پولیس</div></th>
+                <th rowspan="2" class="vcell rotcell"><div class="rotclip"><div class="rotinner rothead">مال قبضہ پولیس</div></div></th>
                 <th rowspan="2">تفصیل شہادت</th>
                 <th rowspan="2">مختصر حالات مقدمہ معہ جرم مندرجہ بالا</th>
               </tr>
@@ -290,13 +298,13 @@ function _renderR173() {
             </thead>
             <tbody>
               <tr>
-                <td class="rotcell"><div class="rotinner" contenteditable="true" data-k="madai">${bv('madai')}</div></td>
-                <td class="rotcell"><div class="rotinner" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div></td>
-                <td class="rotcell"><div class="rotinner" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div></td>
-                <td class="rotcell"><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></td>
-                <td class="rotcell"><div class="rotinner" contenteditable="true" data-k="mal_qabza">${bv('mal_qabza')}</div></td>
-                <td class="rotcell"><div class="rotinner" contenteditable="true" data-k="shahadat">${bv('shahadat')}</div></td>
-                <td class="rotcell"><div class="rotinner" contenteditable="true" data-mic="true" data-k="halaat">${bv('halaat')}</div></td>
+                <td class="rotcell"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bv('madai')}</div></div></td>
+                <td class="rotcell"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div></div></td>
+                <td class="rotcell"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div></div></td>
+                <td class="rotcell"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></div></td>
+                <td class="rotcell"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="mal_qabza">${bv('mal_qabza')}</div></div></td>
+                <td class="rotcell"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="shahadat">${bv('shahadat')}</div></div></td>
+                <td class="rotcell"><div class="rotclip"><div class="rotinner" contenteditable="true" data-mic="true" data-k="halaat">${bv('halaat')}</div></div></td>
               </tr>
             </tbody>
           </table>
@@ -576,7 +584,7 @@ function _printR173() {
   if (chDoc) {
     const chHtml = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
       <style>
-        @page{ size:legal portrait; margin:calc(0.25in + 0.5cm) 0.2in 0.25in 0.2in; }
+        @page{ size:legal portrait; margin:calc(0.25in + 0.5cm) 0.5cm 0.25in 0.5cm; }
         body{ font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl;
               line-height:1.4; color:#000; margin:0; }
         .ch173-title-row{ position:relative; display:flex; align-items:baseline;
@@ -589,14 +597,15 @@ function _printR173() {
         .form-no{ font-style:italic; font-size:12pt; direction:ltr; }
         .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
         .ch173-caseline{ display:flex; gap:22px; align-items:baseline; font-size:14pt;
-          margin:18px 1in 16px 0; direction:rtl; flex-wrap:wrap; line-height:1.4; }
-        .ch173-caseline .fl{ display:inline-block; min-width:40px; border:none; text-align:right; font-weight:600; }
+          margin:18px 0 16px 0; direction:rtl; flex-wrap:wrap; line-height:1.4;
+        justify-content:center; }
+        .ch173-caseline .fl{ display:inline-block; min-width:40px; border:none; text-align:right; font-weight:normal; }
         .ch173-caseline .fl-lg{ min-width:60px; }
         .vhwrap{ text-align:center !important; padding:4px 2px; min-height:100px; }
-        th.vcell{ vertical-align:middle; padding:0; text-align:center; height:110px; }
+        th.vcell{ vertical-align:middle; padding:0; text-align:center; height:150px; }
         .ch173-table th, .ch173-table td{ border:1px solid #000; padding:2px 4px; text-align:center;
           white-space:normal; word-wrap:break-word; overflow-wrap:break-word; line-height:1.15; }
-        .ch173-table thead th{ font-size:15pt; vertical-align:middle; line-height:1.15; }
+        .ch173-table thead th{ font-size:15pt; vertical-align:middle; line-height:1.15; font-weight:normal; }
         .ch173-table td{ font-size:15pt; vertical-align:top; height:170mm; padding:0; line-height:1.15; }
         .vwrap{ writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
           transform:rotate(180deg); -webkit-transform:rotate(180deg);
@@ -761,12 +770,15 @@ function _ch173ColWidths() {
 // NEECHE se OOPER (Ascending) parhi jati hai.
 function _ch173SizeRotated() {
   document.querySelectorAll('#ch173-doc .rotcell').forEach(cell => {
+    const clip  = cell.querySelector('.rotclip');
     const inner = cell.querySelector('.rotinner');
     if (!inner) return;
-    const w = cell.clientWidth, h = cell.clientHeight;
+    const box = clip || cell;
+    const w = box.clientWidth  || cell.clientWidth;
+    const h = box.clientHeight || cell.clientHeight;
     if (!w || !h) return;
-    inner.style.width  = h + 'px';
-    inner.style.height = w + 'px';
+    inner.style.width  = h + 'px';   // chaudai = khane ki unchai
+    inner.style.height = w + 'px';   // unchai  = khane ki chaudai
     inner.style.transform = 'translate(-50%,-50%) rotate(90deg)';
   });
 }
