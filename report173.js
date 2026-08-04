@@ -170,21 +170,16 @@ function _renderR173() {
          matn andar <div> wrapper mein rakh kar us par lagate hain. */
       #ch173-doc .ch173-table td{ font-size:15pt; vertical-align:top; line-height:1.15; }
       #ch173-doc .ch173-table tbody td{ height:170mm; padding:0; }
-      /* ASCENDING (neeche se ooper). 'sideways-lr' bilkul yahi karta hai —
-         koi rotate nahi chahiye. Purane browsers ke liye rotate fallback. */
-      #ch173-doc .vwrap{
-        line-height:1.15;
-        writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
-        transform:rotate(180deg); -webkit-transform:rotate(180deg);
-        width:100%; height:100%; padding:5px; box-sizing:border-box;
-        text-align:right; outline:none; direction:rtl;
-      }
-      @supports (writing-mode: sideways-lr) {
-        #ch173-doc .vwrap{
-          writing-mode:sideways-lr !important;
-          transform:none !important; -webkit-transform:none !important;
-          text-align:right;
-        }
+      /* ASCENDING (neeche se ooper) — writing-mode Chrome mein na-qabil-e-aitbaar
+         hai, is liye seedha ghumao (rotate) use karte hain. Khana relative,
+         andar ka box absolute + rotate(90deg) → RTL Urdu neeche se ooper. */
+      #ch173-doc .ch173-table tbody td.rotcell{ position:relative; padding:0; overflow:hidden; }
+      #ch173-doc .rotinner{
+        position:absolute; top:50%; left:50%;
+        transform-origin:center center;
+        padding:5px; box-sizing:border-box;
+        direction:rtl; text-align:right; outline:none;
+        line-height:1.15; overflow-wrap:break-word; word-wrap:break-word;
       }
       /* Column 7 — normal, RTL, justified */
       #ch173-doc .hwrap{
@@ -203,7 +198,8 @@ function _renderR173() {
       }
       #ch173-doc th.vcell{ vertical-align:middle; padding:0; text-align:center; height:110px; }
       /* Header ki khadi likhayi — data khanon jaisa hi wrapper (Ascending) */
-      #ch173-doc .vhwrap{ text-align:center !important; padding:4px 2px; min-height:100px; }
+      #ch173-doc .rothead{ text-align:center !important; white-space:nowrap; }
+      #ch173-doc th.rotcell{ position:relative; padding:0; overflow:hidden; }
       #ch173-doc th.hcell{ vertical-align:middle; text-align:center; direction:rtl; white-space:normal; }
 
       /* Bahar ke kinare khule — pehla column dayen se, aakhri bayen se */
@@ -215,7 +211,9 @@ function _renderR173() {
       #ch173-doc .ch173-table tbody tr > td:nth-last-child(1){ border-left:0 !important; }
       /* Row 2 ki bayen aakhri line hataayi */
       #ch173-doc .ch173-table thead tr:nth-child(2) th:last-child{ border-left:none; }
-      /* Neeche wali lakeer mojood hai — isi ko pakar kar unchai badalte hain */
+      /* Neeche wali lakeer nazar NAHI aati, lekin wahan se unchai badal sakte
+         hain (MS Word jaisa) — grip hover par halka nishan dikhata hai */
+      #ch173-doc .ch173-table tbody tr:last-child td{ border-bottom:none !important; }
 
       /* MS Word jaisi column resize — header par drag handle */
       #ch173-doc .colgrip{
@@ -231,6 +229,12 @@ function _renderR173() {
       #ch173-doc .colgrip:hover{ background:rgba(56,189,248,0.35); }
       @media print{
         .no-print,.doc-toolbar,.editor-toolbar,button,select{ display:none !important; }
+        .ch173-table tbody tr:last-child td{ border-bottom:none !important; }
+        .rotcell{ position:relative; padding:0; overflow:hidden; }
+        .rotinner{ position:absolute; top:50%; left:50%; transform-origin:center center;
+          padding:5px; box-sizing:border-box; direction:rtl; text-align:right;
+          line-height:1.15; overflow-wrap:break-word; }
+        .rothead{ text-align:center !important; white-space:nowrap; }
         .colgrip,.rowgrip{ display:none !important; }
         .colgrip,.rowgrip{ display:none !important; }
         #ch173-doc{ box-shadow:none !important; border-radius:0 !important; margin:0 !important; padding:0 !important; max-width:none !important; }
@@ -249,7 +253,7 @@ function _renderR173() {
       </div>
       <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
         <div id="ch173-doc" style="width:8.5in;max-width:100%;min-height:14in;margin:0 auto;
-             padding:calc(0.25in + 1cm) 0 0.25in 0;
+             padding:calc(0.25in + 0.5cm) 0.2in 0.25in 0.2in;
              background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;
              line-height:1.4;box-sizing:border-box;">
 
@@ -275,7 +279,7 @@ function _renderR173() {
                 <th rowspan="2">نام و پتہ مدعی ومستغیث</th>
                 <th rowspan="2">ملزمان جو گرفتارنہ ہوئے</th>
                 <th colspan="2">ملزمان</th>
-                <th rowspan="2" class="vcell"><div class="vwrap vhwrap">مال قبضہ پولیس</div></th>
+                <th rowspan="2" class="vcell rotcell"><div class="rotinner rothead">مال قبضہ پولیس</div></th>
                 <th rowspan="2">تفصیل شہادت</th>
                 <th rowspan="2">مختصر حالات مقدمہ معہ جرم مندرجہ بالا</th>
               </tr>
@@ -286,13 +290,13 @@ function _renderR173() {
             </thead>
             <tbody>
               <tr>
-                <td><div class="vwrap" contenteditable="true" data-k="madai">${bv('madai')}</div></td>
-                <td><div class="vwrap" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div></td>
-                <td><div class="vwrap" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div></td>
-                <td><div class="vwrap" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></td>
-                <td><div class="vwrap" contenteditable="true" data-k="mal_qabza">${bv('mal_qabza')}</div></td>
-                <td><div class="vwrap" contenteditable="true" data-k="shahadat">${bv('shahadat')}</div></td>
-                <td><div class="vwrap" contenteditable="true" data-mic="true" data-k="halaat">${bv('halaat')}</div></td>
+                <td class="rotcell"><div class="rotinner" contenteditable="true" data-k="madai">${bv('madai')}</div></td>
+                <td class="rotcell"><div class="rotinner" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div></td>
+                <td class="rotcell"><div class="rotinner" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div></td>
+                <td class="rotcell"><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></td>
+                <td class="rotcell"><div class="rotinner" contenteditable="true" data-k="mal_qabza">${bv('mal_qabza')}</div></td>
+                <td class="rotcell"><div class="rotinner" contenteditable="true" data-k="shahadat">${bv('shahadat')}</div></td>
+                <td class="rotcell"><div class="rotinner" contenteditable="true" data-mic="true" data-k="halaat">${bv('halaat')}</div></td>
               </tr>
             </tbody>
           </table>
@@ -302,10 +306,13 @@ function _renderR173() {
     </div>`;
     setTimeout(() => {
       _ch173MakeResizable();
+      _ch173SizeRotated();
+      window.addEventListener('resize', _ch173SizeRotated);
       // Mehfooz shuda row height wapas lagao
       try {
         const rh = bs.row_height;
         if (rh) document.querySelectorAll('#ch173-table tbody td').forEach(td => td.style.height = rh);
+        _ch173SizeRotated();
       } catch(_) {}
     }, 60);
     if (typeof applyMicButtons === 'function') setTimeout(() => applyMicButtons(area), 80);
@@ -569,7 +576,7 @@ function _printR173() {
   if (chDoc) {
     const chHtml = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
       <style>
-        @page{ size:legal portrait; margin:calc(0.25in + 1cm) 0 0.25in 0; }
+        @page{ size:legal portrait; margin:calc(0.25in + 0.5cm) 0.2in 0.25in 0.2in; }
         body{ font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl;
               line-height:1.4; color:#000; margin:0; }
         .ch173-title-row{ position:relative; display:flex; align-items:baseline;
@@ -613,6 +620,8 @@ function _printR173() {
         .colgrip,.rowgrip{ display:none !important; }
         .dio-print-brand{ position:fixed; bottom:3mm; left:4mm; font-size:9px; color:#999; direction:ltr; }
       </style></head><body>${chDoc.innerHTML}<div class="dio-print-brand">Digital IO</div></body></html>`;
+    // Print se pehle rotated khanon ki naap inline kar do (print iframe mein JS nahi chalta)
+    try { if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated(); } catch(_) {}
     if (typeof dioPrint === 'function') dioPrint(chHtml);
     else { const w = window.open('','_blank'); w.document.write(chHtml); w.document.close(); setTimeout(()=>w.print(),300); }
     return;
@@ -676,6 +685,7 @@ function _ch173MakeResizable() {
         if (nA < 3 || nB < 3) return;
         cols[iA].style.width = nA.toFixed(2) + '%';
         cols[iB].style.width = nB.toFixed(2) + '%';
+        if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
       };
       const onUp = () => {
         document.removeEventListener('mousemove', onMove);
@@ -722,6 +732,7 @@ function _ch173MakeResizable() {
           const nh = startH + (ev.clientY - startY);
           if (nh < 80) return;
           bodyRow.querySelectorAll('td').forEach(c => { c.style.height = nh + 'px'; });
+          if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
         };
         const onUp = () => {
           document.removeEventListener('mousemove', onMove);
@@ -743,3 +754,20 @@ function _ch173ColWidths() {
   return JSON.stringify([...table.querySelectorAll('colgroup col')]
     .map(c => parseFloat(c.style.width) || 0));
 }
+
+// ═══ Khadi likhayi ki naap set karo — box ko khane ke barabar banata hai ═══
+// Tareeqa: andar ka box chaudai = khane ki UNCHAI, unchai = khane ki CHAUDAI.
+// Phir 90° ghumane par woh bilkul khane ko bhar deta hai, aur RTL Urdu
+// NEECHE se OOPER (Ascending) parhi jati hai.
+function _ch173SizeRotated() {
+  document.querySelectorAll('#ch173-doc .rotcell').forEach(cell => {
+    const inner = cell.querySelector('.rotinner');
+    if (!inner) return;
+    const w = cell.clientWidth, h = cell.clientHeight;
+    if (!w || !h) return;
+    inner.style.width  = h + 'px';
+    inner.style.height = w + 'px';
+    inner.style.transform = 'translate(-50%,-50%) rotate(90deg)';
+  });
+}
+window._ch173SizeRotated = _ch173SizeRotated;
