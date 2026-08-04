@@ -146,13 +146,13 @@ function _renderR173() {
       #ch173-doc .tt-mid, #ch173-doc .form-no{
         position:absolute; left:50%; transform:translateX(-50%); white-space:nowrap;
       }
-      #ch173-doc .tt-mid{ font-weight:bold; text-decoration:underline; font-size:17pt; }
-      #ch173-doc .form-no{ font-style:italic; font-size:12px; direction:ltr; }
+      #ch173-doc .tt-mid{ font-weight:bold; text-decoration:underline; font-size:20pt; }
+      #ch173-doc .form-no{ font-style:italic; font-size:12pt; direction:ltr; }
 
       /* مقدمہ نمبر / مورخہ / جرم — unwan ke neeche, table se pehle */
       /* مقدمہ نمبر / مورخہ / جرم — koi dashes nahi, data ke hisab se khud fit */
       #ch173-doc .ch173-caseline{ display:flex; gap:22px; align-items:baseline; font-size:14pt;
-        margin:8px 0 6px; direction:rtl; flex-wrap:wrap; line-height:1.4; }
+        margin:18px 1in 16px 0; direction:rtl; flex-wrap:wrap; line-height:1.4; }
       #ch173-doc .ch173-caseline .fl{ display:inline-block; min-width:40px;
         border:none; text-align:right; outline:none; font-weight:600; }
       #ch173-doc .ch173-caseline .fl-lg{ min-width:60px; }
@@ -247,7 +247,8 @@ function _renderR173() {
         </div>
       </div>
       <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
-        <div id="ch173-doc" style="width:8.5in;max-width:100%;min-height:14in;margin:0 auto;padding:0.25in;
+        <div id="ch173-doc" style="width:8.5in;max-width:100%;min-height:14in;margin:0 auto;
+             padding:calc(0.25in + 1cm) 1cm 0.25in 1cm;
              background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;
              line-height:1.4;box-sizing:border-box;">
 
@@ -567,7 +568,7 @@ function _printR173() {
   if (chDoc) {
     const chHtml = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
       <style>
-        @page{ size:legal portrait; margin:0.25in; }
+        @page{ size:legal portrait; margin:calc(0.25in + 1cm) 1cm 0.25in 1cm; }
         body{ font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl;
               line-height:1.4; color:#000; margin:0; }
         .ch173-title-row{ position:relative; display:flex; align-items:baseline;
@@ -576,11 +577,11 @@ function _printR173() {
         .tt-right{ text-align:right; font-size:14pt; padding-right:1in; }
         .tt-left{ text-align:left; font-size:14pt; }
         .tt-mid, .form-no{ position:absolute; left:50%; transform:translateX(-50%); white-space:nowrap; }
-        .tt-mid{ font-weight:bold; text-decoration:underline; font-size:17pt; }
-        .form-no{ font-style:italic; font-size:12px; direction:ltr; }
+        .tt-mid{ font-weight:bold; text-decoration:underline; font-size:20pt; }
+        .form-no{ font-style:italic; font-size:12pt; direction:ltr; }
         .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
         .ch173-caseline{ display:flex; gap:22px; align-items:baseline; font-size:14pt;
-          margin:8px 0 6px; direction:rtl; flex-wrap:wrap; line-height:1.4; }
+          margin:18px 1in 16px 0; direction:rtl; flex-wrap:wrap; line-height:1.4; }
         .ch173-caseline .fl{ display:inline-block; min-width:40px; border:none; text-align:right; font-weight:600; }
         .ch173-caseline .fl-lg{ min-width:60px; }
         .vhwrap{ text-align:center !important; padding:4px 2px; min-height:100px; }
