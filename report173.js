@@ -235,7 +235,6 @@ function _renderR173() {
       #ch173-doc .rotinner{
         width:100%; height:100%; box-sizing:border-box; padding:4px;
         writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
-        transform:rotate(180deg); -webkit-transform:rotate(180deg);
         direction:rtl; text-align:right; outline:none;
         line-height:1.2; overflow-wrap:break-word; white-space:pre-wrap;
         overflow:hidden;
@@ -313,7 +312,6 @@ function _renderR173() {
         .ch173-cont:empty{ display:none; }
         .rotinner{ width:100%; height:100%; box-sizing:border-box; padding:4px;
           writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
-          transform:rotate(180deg); -webkit-transform:rotate(180deg);
           direction:rtl; text-align:right; line-height:1.2;
           overflow-wrap:break-word; white-space:pre-wrap; overflow:hidden; }
         .rothead{ text-align:center !important; white-space:normal; }
@@ -713,7 +711,6 @@ function _printR173() {
         .rotclip{ position:absolute; inset:0; overflow:hidden; }
         .rotinner{ width:100%; height:100%; box-sizing:border-box; padding:4px;
           writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
-          transform:rotate(180deg); -webkit-transform:rotate(180deg);
           direction:rtl; text-align:right; line-height:1.2;
           overflow-wrap:break-word; white-space:pre-wrap; overflow:hidden; }
         .rothead{ text-align:center !important; }
@@ -1014,7 +1011,7 @@ function _ch173UsedAccused(exceptKey) {
     if (k === exceptKey) return;
     const el = document.querySelector(`#ch173-table [data-k="${k}"]`);
     if (!el) return;
-    el.innerText.split(/[،,\n]/).forEach(n => { const t = n.trim(); if (t) used.add(t); });
+    el.innerText.split(/\r?\n/).forEach(n => { const t = n.trim(); if (t) used.add(t); });
   });
   return used;
 }
@@ -1030,7 +1027,7 @@ function _ch173AccPicker(ev, key) {
   }
   const used = _ch173UsedAccused(key);
   const cell = document.querySelector(`#ch173-table [data-k="${key}"]`);
-  const mine = new Set(cell ? cell.innerText.split(/[،,\n]/).map(t=>t.trim()).filter(Boolean) : []);
+  const mine = new Set(cell ? cell.innerText.split(/\r?\n/).map(t=>t.trim()).filter(Boolean) : []);
 
   // Panel: list SCROLL hoti hai, buttons HAMESHA neeche nazar aate hain
   const box = document.createElement('div');
