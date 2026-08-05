@@ -109,7 +109,7 @@ function _renderR173() {
   let typeName = (R173_TYPES.find(t => t.id === _r173Type) || {}).name || '';
   if (isTatima) typeName = 'تتمہ چالان مکمل';
   // Saved record key (tatima uses subtype)
-  const recKey = isTatima ? 'tatima_challan_' + _r173Subtype : _r173Type;
+  let recKey = isTatima ? 'tatima_challan_' + _r173Subtype : _r173Type;
   const saved = _r173Records[recKey] || {};
   const v = (k, def) => sanitizeHtml(saved[k] !== undefined ? saved[k] : (def || ''));
   const isIkhraj = _r173Type === 'ikhraj';
@@ -126,6 +126,8 @@ function _renderR173() {
   if (R173_BLANK_TYPES.includes(_r173Type)) {
     // ملزمان aur گواہان case record se — dropdown + auto-fill ke liye
     if (!_ch173Accused) _ch173LoadPeople();
+    // FIR aur کراس ورژن ka data alag mehfooz hota hai
+    recKey = recKey + '::' + _ch173Version;
     // ═══ فارم نمبر 25.56(1) — رپورٹ زیر دفعہ 173 ض ف ═══
     const bs = _r173Records[recKey] || {};
     const bv = (k) => sanitizeHtml(bs[k] !== undefined ? bs[k] : '');
@@ -307,6 +309,11 @@ function _renderR173() {
       <div class="no-print" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
         <select id="r173-type-sel" onchange="_r173Pick(this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
           ${R173_TYPES.map(t => `<option value="${t.id}" ${t.id===_r173Type?'selected':''}>${t.name}</option>`).join('')}
+        </select>
+        <select id="ch173-ver-sel" onchange="_ch173SetVersion(this.value)" title="ورژن"
+          style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
+          <option value="fir" ${_ch173Version==='fir'?'selected':''}>FIR</option>
+          <option value="cross_version" ${_ch173Version==='cross_version'?'selected':''}>کراس ورژن</option>
         </select>
         <span style="font-size:11px;color:var(--text-muted);">↔ کالم کی لکیر کو پکڑ کر چوڑائی بدلیں</span>
         <div style="margin-right:auto;display:flex;gap:6px;">
@@ -595,9 +602,12 @@ function _collectR173() {
 async function _saveR173() {
   const form_data = _collectR173();
   const isTatima = _r173Type === 'tatima_challan';
-  const recKey = isTatima ? 'tatima_challan_' + _r173Subtype : _r173Type;
+  let recKey = isTatima ? 'tatima_challan_' + _r173Subtype : _r173Type;
+  // Challan types: FIR aur کراس ورژن ka data alag mehfooz
+  if (R173_BLANK_TYPES.includes(_r173Type)) recKey = recKey + '::' + _ch173Version;
   _r173Records[recKey] = form_data;
   const rec = { case_id: _r173CaseId, report_type: _r173Type, form_data };
+  if (R173_BLANK_TYPES.includes(_r173Type)) rec.report_subtype = _ch173Version;
   if (isTatima) rec.report_subtype = _r173Subtype;
   try {
     const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
@@ -896,20 +906,37 @@ function _ch173BindOverflow() {
 window._ch173BindOverflow = _ch173BindOverflow;
 
 // ═══ ملزمان / گواہان — case record se ═══
-let _ch173Accused  = null;   // [{id,name}]
-let _ch173Witnesses = null;  // [{id,full_name}]
+let _ch173Accused  = null;   // [{id,name,accused_type}]
+let _ch173Witnesses = null;  // [{id,full_name,witness_type}]
+let _ch173Version = 'fir';   // 'fir' ya 'cross_version'
+
+// Version badlo — ملزمان/گواہان aur mehfooz data dono badal jate hain
+function _ch173SetVersion(v) {
+  _ch173Version = (v === 'cross_version') ? 'cross_version' : 'fir';
+  if (typeof _renderR173 === 'function') _renderR173();
+}
+window._ch173SetVersion = _ch173SetVersion;
+
+// Sirf mojooda version ke ملزمان
+function _ch173AccList() {
+  return (_ch173Accused || []).filter(a => (a.accused_type || 'fir') === _ch173Version);
+}
+// Sirf mojooda version ke گواہان
+function _ch173WitList() {
+  return (_ch173Witnesses || []).filter(w => (w.witness_type || 'fir') === _ch173Version);
+}
 
 async function _ch173LoadPeople() {
   const cid = _misalCaseId || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
   if (!cid) { _ch173Accused = []; _ch173Witnesses = []; return; }
   try {
     const { data: acc } = await supabaseClient.from('case_accused')
-      .select('id,name').eq('case_id', cid).order('created_at', { ascending: true });
+      .select('id,name,accused_type').eq('case_id', cid).order('created_at', { ascending: true });
     _ch173Accused = acc || [];
   } catch(_) { _ch173Accused = []; }
   try {
     const { data: wit } = await supabaseClient.from('case_witnesses')
-      .select('id,full_name').eq('case_id', cid).order('created_at', { ascending: true });
+      .select('id,full_name,witness_type').eq('case_id', cid).order('created_at', { ascending: true });
     _ch173Witnesses = wit || [];
   } catch(_) { _ch173Witnesses = []; }
   // Data aane par گواہان wala khana bhar do (agar khali ho)
@@ -922,8 +949,9 @@ async function _ch173LoadPeople() {
 
 // Tamam گواہان aik line mein
 function _ch173WitnessText() {
-  if (!_ch173Witnesses || !_ch173Witnesses.length) return '';
-  return _ch173Witnesses.map((w,i) => (i+1) + '۔ ' + (w.full_name||'')).join('  ');
+  const list = _ch173WitList();
+  if (!list.length) return '';
+  return list.map((w,i) => (i+1) + '۔ ' + (w.full_name||'')).join('  ');
 }
 
 // Kaunse ملزمان pehle se kisi column mein chune ja chuke hain
@@ -943,36 +971,61 @@ function _ch173UsedAccused(exceptKey) {
 function _ch173AccPicker(ev, key) {
   ev.preventDefault(); ev.stopPropagation();
   document.getElementById('ch173-acc-menu')?.remove();
-  const list = _ch173Accused || [];
+  const list = _ch173AccList();
   if (!list.length) {
-    if (typeof showToast === 'function') showToast('ℹ️ اس مقدمہ میں کوئی ملزم درج نہیں', 'info');
+    if (typeof showToast === 'function') showToast('ℹ️ ' + (_ch173Version==='cross_version'?'کراس ورژن':'FIR') + ' میں کوئی ملزم درج نہیں', 'info');
     return;
   }
   const used = _ch173UsedAccused(key);
   const cell = document.querySelector(`#ch173-table [data-k="${key}"]`);
   const mine = new Set(cell ? cell.innerText.split(/[،,\n]/).map(t=>t.trim()).filter(Boolean) : []);
 
+  // Panel: list SCROLL hoti hai, buttons HAMESHA neeche nazar aate hain
   const box = document.createElement('div');
   box.id = 'ch173-acc-menu';
   box.style.cssText =
-    'position:fixed;z-index:9999;background:#fff;border:1px solid #0369a1;border-radius:10px;' +
-    'padding:8px;box-shadow:0 10px 30px rgba(0,0,0,.25);direction:rtl;min-width:230px;max-height:60vh;overflow:auto;';
+    'position:fixed;z-index:99999;background:#fff;border:1px solid #0369a1;border-radius:10px;' +
+    'box-shadow:0 10px 30px rgba(0,0,0,.28);direction:rtl;width:260px;max-width:92vw;' +
+    'display:flex;flex-direction:column;max-height:min(60vh,340px);overflow:hidden;';
   const rows = list.filter(a => !used.has((a.name||'').trim())).map(a => {
     const nm = (a.name||'').trim();
     const on = mine.has(nm);
-    return `<label style="display:flex;align-items:center;gap:8px;padding:5px 4px;cursor:pointer;font-size:13px;
-              font-family:'Jameel Noori Nastaleeq',serif;">
+    return `<label style="display:flex;align-items:center;gap:8px;padding:7px 6px;cursor:pointer;font-size:13px;
+              border-bottom:1px solid #f1f5f9;font-family:'Jameel Noori Nastaleeq',serif;">
               <input type="checkbox" ${on?'checked':''} value="${esc(nm)}"> <span>${esc(nm)}</span></label>`;
   }).join('');
-  box.innerHTML = (rows || '<div style="font-size:12px;color:#777;padding:6px;">باقی کوئی ملزم نہیں</div>') +
-    `<div style="display:flex;gap:6px;margin-top:8px;border-top:1px solid #eee;padding-top:6px;">
-       <button id="ch173-acc-ok" style="flex:1;padding:6px;border:none;border-radius:6px;background:#0369a1;color:#fff;cursor:pointer;font-size:12px;">شامل کریں</button>
-       <button id="ch173-acc-x" style="padding:6px 10px;border:1px solid #ccc;border-radius:6px;background:#fff;cursor:pointer;font-size:12px;">بند</button>
-     </div>`;
+  box.innerHTML = `
+    <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:700;color:#0369a1;
+                font-family:'Jameel Noori Nastaleeq',serif;background:#f8fafc;">
+      ملزمان منتخب کریں (${_ch173Version==='cross_version'?'کراس ورژن':'FIR'})
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:4px 8px;min-height:0;">
+      ${rows || '<div style="font-size:12px;color:#777;padding:10px;">باقی کوئی ملزم نہیں</div>'}
+    </div>
+    <div style="display:flex;gap:6px;padding:8px;border-top:1px solid #e5e7eb;background:#f8fafc;flex-shrink:0;">
+      <button id="ch173-acc-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;
+        color:#fff;cursor:pointer;font-size:13px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">✔ شامل کریں</button>
+      <button id="ch173-acc-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;
+        cursor:pointer;font-size:13px;font-family:'Jameel Noori Nastaleeq',serif;">بند</button>
+    </div>`;
   document.body.appendChild(box);
+
+  // Position: button ke qareeb, magar screen se bahar kabhi nahi
   const r = ev.currentTarget.getBoundingClientRect();
-  box.style.top  = Math.min(r.bottom + 4, window.innerHeight - 260) + 'px';
-  box.style.left = Math.max(8, r.left - 200) + 'px';
+  const bw = box.offsetWidth, bh = box.offsetHeight;
+  let top  = r.bottom + 6;
+  if (top + bh > window.innerHeight - 8) top = Math.max(8, r.top - bh - 6);
+  if (top + bh > window.innerHeight - 8) top = Math.max(8, window.innerHeight - bh - 8);
+  let left = r.left + r.width/2 - bw/2;
+  left = Math.max(8, Math.min(left, window.innerWidth - bw - 8));
+  box.style.top  = top + 'px';
+  box.style.left = left + 'px';
+
+  // Bahar click par band
+  setTimeout(() => {
+    const off = (e) => { if (!box.contains(e.target)) { box.remove(); document.removeEventListener('mousedown', off); } };
+    document.addEventListener('mousedown', off);
+  }, 0);
 
   box.querySelector('#ch173-acc-x').onclick = () => box.remove();
   box.querySelector('#ch173-acc-ok').onclick = () => {
