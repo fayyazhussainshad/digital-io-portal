@@ -51,6 +51,7 @@ const R173_BOILER = {
 
 // ── ENTRY ─────────────────────────────────────────────────────
 async function openReport173(caseId) {
+  _ch173Accused = null; _ch173Witnesses = null;   // naye case ki list
   _r173CaseId = caseId || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
              || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
   if (typeof getCase === 'function' && _r173CaseId) {
@@ -123,6 +124,8 @@ function _renderR173() {
   // koi format, khana ya button nahi dega — sirf khali safed kaghaz. Owner/admin
   // khud manzoor-shuda form set karega.
   if (R173_BLANK_TYPES.includes(_r173Type)) {
+    // ملزمان aur گواہان case record se — dropdown + auto-fill ke liye
+    if (!_ch173Accused) _ch173LoadPeople();
     // ═══ فارم نمبر 25.56(1) — رپورٹ زیر دفعہ 173 ض ف ═══
     const bs = _r173Records[recKey] || {};
     const bv = (k) => sanitizeHtml(bs[k] !== undefined ? bs[k] : '');
@@ -193,7 +196,14 @@ function _renderR173() {
       #ch173-doc .ch173-cont{
         direction:rtl; text-align:justify; font-size:15pt; line-height:1.15;
         padding:6px 4px; min-height:40px; outline:none; margin-top:0;
-        overflow-wrap:break-word;
+        overflow-wrap:break-word; border:none !important;
+      }
+      /* ملزمان chunne wala chhota button */
+      #ch173-doc .acc-pick{
+        position:absolute; top:2px; left:2px; z-index:7;
+        width:20px; height:20px; line-height:1; padding:0;
+        border:1px solid var(--border,#999); border-radius:4px;
+        background:#eef6ff; color:#0369a1; cursor:pointer; font-size:12px;
       }
       /* Column 7 — normal RTL (khadi nahi) */
       #ch173-doc .ch173-table td.normcell{ padding:0; vertical-align:top; }
@@ -275,7 +285,8 @@ function _renderR173() {
         .hinner{ width:100%; height:100%; padding:5px; box-sizing:border-box;
           direction:rtl; text-align:justify; line-height:1.15; overflow:hidden; overflow-wrap:break-word; }
         .ch173-cont{ direction:rtl; text-align:justify; font-size:15pt; line-height:1.15;
-          padding:6px 4px; overflow-wrap:break-word; }
+          padding:6px 4px; overflow-wrap:break-word; border:none !important; }
+        .acc-pick{ display:none !important; }
         .ch173-table td.normcell{ padding:0; vertical-align:top; }
         .normwrap{ width:100%; height:100%; padding:5px; box-sizing:border-box;
           direction:rtl; text-align:justify; line-height:1.15; overflow-wrap:break-word; }
@@ -342,12 +353,12 @@ function _renderR173() {
             </thead>
             <tbody>
               <tr>
-                <td class="rotcell"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bv('madai')}</div></div></td>
-                <td class="rotcell"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div></div></td>
-                <td class="rotcell"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div></div></td>
-                <td class="rotcell"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></div></td>
+                <td class="rotcell"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bs.madai !== undefined ? sanitizeHtml(bs.madai) : esc(c.complainant||'')}</div></div></td>
+                <td class="rotcell"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'ghair_giraftar')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div></div></td>
+                <td class="rotcell"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'zer_hirasat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div></div></td>
+                <td class="rotcell"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'bar_zamanat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></div></td>
                 <td class="rotcell"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="mal_qabza">${bv('mal_qabza')}</div></div></td>
-                <td class="rotcell"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="shahadat">${bv('shahadat')}</div></div></td>
+                <td class="rotcell"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="shahadat">${bs.shahadat !== undefined ? sanitizeHtml(bs.shahadat) : esc(_ch173WitnessText())}</div></div></td>
                 <td class="normcell"><div class="normwrap" contenteditable="true" data-mic="true" data-k="halaat">${bv('halaat')}</div></td>
               </tr>
             </tbody>
@@ -883,3 +894,95 @@ function _ch173BindOverflow() {
   cell.addEventListener('paste', () => setTimeout(_ch173Overflow, 60));
 }
 window._ch173BindOverflow = _ch173BindOverflow;
+
+// ═══ ملزمان / گواہان — case record se ═══
+let _ch173Accused  = null;   // [{id,name}]
+let _ch173Witnesses = null;  // [{id,full_name}]
+
+async function _ch173LoadPeople() {
+  const cid = _misalCaseId || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
+  if (!cid) { _ch173Accused = []; _ch173Witnesses = []; return; }
+  try {
+    const { data: acc } = await supabaseClient.from('case_accused')
+      .select('id,name').eq('case_id', cid).order('created_at', { ascending: true });
+    _ch173Accused = acc || [];
+  } catch(_) { _ch173Accused = []; }
+  try {
+    const { data: wit } = await supabaseClient.from('case_witnesses')
+      .select('id,full_name').eq('case_id', cid).order('created_at', { ascending: true });
+    _ch173Witnesses = wit || [];
+  } catch(_) { _ch173Witnesses = []; }
+  // Data aane par گواہان wala khana bhar do (agar khali ho)
+  try {
+    const wcell = document.querySelector('#ch173-table [data-k="shahadat"]');
+    if (wcell && !wcell.innerText.trim()) wcell.innerText = _ch173WitnessText();
+    if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
+  } catch(_) {}
+}
+
+// Tamam گواہان aik line mein
+function _ch173WitnessText() {
+  if (!_ch173Witnesses || !_ch173Witnesses.length) return '';
+  return _ch173Witnesses.map((w,i) => (i+1) + '۔ ' + (w.full_name||'')).join('  ');
+}
+
+// Kaunse ملزمان pehle se kisi column mein chune ja chuke hain
+function _ch173UsedAccused(exceptKey) {
+  const keys = ['ghair_giraftar','zer_hirasat','bar_zamanat'];
+  const used = new Set();
+  keys.forEach(k => {
+    if (k === exceptKey) return;
+    const el = document.querySelector(`#ch173-table [data-k="${k}"]`);
+    if (!el) return;
+    el.innerText.split(/[،,\n]/).forEach(n => { const t = n.trim(); if (t) used.add(t); });
+  });
+  return used;
+}
+
+// ملزمان chunne ki list (jo doosre column mein chun liya gaya woh yahan nahi aata)
+function _ch173AccPicker(ev, key) {
+  ev.preventDefault(); ev.stopPropagation();
+  document.getElementById('ch173-acc-menu')?.remove();
+  const list = _ch173Accused || [];
+  if (!list.length) {
+    if (typeof showToast === 'function') showToast('ℹ️ اس مقدمہ میں کوئی ملزم درج نہیں', 'info');
+    return;
+  }
+  const used = _ch173UsedAccused(key);
+  const cell = document.querySelector(`#ch173-table [data-k="${key}"]`);
+  const mine = new Set(cell ? cell.innerText.split(/[،,\n]/).map(t=>t.trim()).filter(Boolean) : []);
+
+  const box = document.createElement('div');
+  box.id = 'ch173-acc-menu';
+  box.style.cssText =
+    'position:fixed;z-index:9999;background:#fff;border:1px solid #0369a1;border-radius:10px;' +
+    'padding:8px;box-shadow:0 10px 30px rgba(0,0,0,.25);direction:rtl;min-width:230px;max-height:60vh;overflow:auto;';
+  const rows = list.filter(a => !used.has((a.name||'').trim())).map(a => {
+    const nm = (a.name||'').trim();
+    const on = mine.has(nm);
+    return `<label style="display:flex;align-items:center;gap:8px;padding:5px 4px;cursor:pointer;font-size:13px;
+              font-family:'Jameel Noori Nastaleeq',serif;">
+              <input type="checkbox" ${on?'checked':''} value="${esc(nm)}"> <span>${esc(nm)}</span></label>`;
+  }).join('');
+  box.innerHTML = (rows || '<div style="font-size:12px;color:#777;padding:6px;">باقی کوئی ملزم نہیں</div>') +
+    `<div style="display:flex;gap:6px;margin-top:8px;border-top:1px solid #eee;padding-top:6px;">
+       <button id="ch173-acc-ok" style="flex:1;padding:6px;border:none;border-radius:6px;background:#0369a1;color:#fff;cursor:pointer;font-size:12px;">شامل کریں</button>
+       <button id="ch173-acc-x" style="padding:6px 10px;border:1px solid #ccc;border-radius:6px;background:#fff;cursor:pointer;font-size:12px;">بند</button>
+     </div>`;
+  document.body.appendChild(box);
+  const r = ev.currentTarget.getBoundingClientRect();
+  box.style.top  = Math.min(r.bottom + 4, window.innerHeight - 260) + 'px';
+  box.style.left = Math.max(8, r.left - 200) + 'px';
+
+  box.querySelector('#ch173-acc-x').onclick = () => box.remove();
+  box.querySelector('#ch173-acc-ok').onclick = () => {
+    const picked = [...box.querySelectorAll('input:checked')].map(i => i.value);
+    if (cell) cell.innerText = picked.join('، ');
+    box.remove();
+    if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
+    try { _r173Dirty = true; } catch(_) {}
+  };
+}
+window._ch173AccPicker   = _ch173AccPicker;
+window._ch173LoadPeople  = _ch173LoadPeople;
+window._ch173WitnessText = _ch173WitnessText;
