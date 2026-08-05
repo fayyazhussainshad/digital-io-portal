@@ -170,11 +170,11 @@ function _renderR173() {
         position:relative; line-height:1.15;
       }
       /* Header row 1: jagah ke hisab se chhota font */
-      #ch173-doc .ch173-table thead th{ font-size:15pt; vertical-align:middle; line-height:1.15; font-weight:normal; }
+      #ch173-doc .ch173-table thead th{ font-size:14pt; vertical-align:middle; line-height:1.15; font-weight:normal; }
       /* Data khane: columns 1–6 → Ascending (neeche se ooper). AHEM: CSS transform
          seedha <td> par kaam nahi karta (browser nazar-andaz kar deta hai), is liye
          matn andar <div> wrapper mein rakh kar us par lagate hain. */
-      #ch173-doc .ch173-table td{ font-size:15pt; vertical-align:top; line-height:1.15; }
+      #ch173-doc .ch173-table td{ font-size:14pt; vertical-align:top; line-height:1.15; }
       /* Khane KHUD nahi phailte — sirf haath se (drag) resize hote hain */
       #ch173-doc .ch173-table tbody td{ height:170mm; padding:0; overflow:hidden; }
       /* ASCENDING (neeche se ooper) — writing-mode Chrome mein na-qabil-e-aitbaar
@@ -184,8 +184,15 @@ function _renderR173() {
       #ch173-doc .ch173-table td.rotcell, #ch173-doc .ch173-table th.rotcell{
         position:relative; padding:0; overflow:hidden;
       }
-      #ch173-doc .rotclip{
-        position:absolute; inset:0; overflow:hidden;
+      /* Block wrapper — table-cell par position:relative na-qabil-e-aitbaar hai,
+         is liye andar block div rakhte hain. Isi se matn doosre column mein
+         nahi jata. */
+      #ch173-doc .cellbox{ position:relative; width:100%; height:100%; overflow:hidden; }
+      #ch173-doc .rotclip{ position:absolute; inset:0; overflow:hidden; }
+      /* Table ke neeche koi lakeer nahi (magar wahan se unchai badalti hai) */
+      #ch173-doc .ch173-table, #ch173-doc .ch173-table tbody,
+      #ch173-doc .ch173-table tbody tr, #ch173-doc .ch173-table tbody td{
+        border-bottom:0 !important;
       }
       /* Column 7 — normal RTL (khadi nahi), khane ke andar hi mehdood */
       #ch173-doc .hcell-td{ padding:0; vertical-align:top; }
@@ -196,7 +203,7 @@ function _renderR173() {
       }
       /* Table ke NEECHE baqaya matn — khud phailne wali jagah */
       #ch173-doc .ch173-cont{
-        direction:rtl; text-align:justify; font-size:15pt; line-height:1.15;
+        direction:rtl; text-align:justify; font-size:14pt; line-height:1.15;
         padding:6px 4px; min-height:40px; outline:none; margin-top:0;
         overflow-wrap:break-word; border:none !important;
       }
@@ -218,7 +225,7 @@ function _renderR173() {
       #ch173-doc .ch173-cont{
         margin-top:0; border:1px solid #000; border-top:none;
         min-height:40px; padding:6px 8px; direction:rtl; text-align:justify;
-        font-size:15pt; line-height:1.15; outline:none;
+        font-size:14pt; line-height:1.15; outline:none;
         overflow-wrap:break-word; word-wrap:break-word;
       }
       #ch173-doc .ch173-cont:empty::before{
@@ -231,6 +238,7 @@ function _renderR173() {
         padding:5px; box-sizing:border-box;
         direction:rtl; text-align:right; outline:none;
         line-height:1.15; overflow-wrap:break-word; word-wrap:break-word;
+        white-space:pre-wrap;
       }
       /* Column 7 — normal, RTL, justified */
       #ch173-doc .hwrap{
@@ -282,23 +290,25 @@ function _renderR173() {
         .no-print,.doc-toolbar,.editor-toolbar,button,select{ display:none !important; }
         .ch173-table tbody td{ border-bottom:0 !important; }
         .rotcell{ position:relative; padding:0; overflow:hidden; }
+        .cellbox{ position:relative; width:100%; height:100%; overflow:hidden; }
         .rotclip{ position:absolute; inset:0; overflow:hidden; }
+        .ch173-table, .ch173-table tbody, .ch173-table tbody tr, .ch173-table tbody td{ border-bottom:0 !important; }
         .hcell-td{ padding:0; vertical-align:top; }
         .hinner{ width:100%; height:100%; padding:5px; box-sizing:border-box;
-          direction:rtl; text-align:justify; line-height:1.15; overflow:hidden; overflow-wrap:break-word; }
-        .ch173-cont{ direction:rtl; text-align:justify; font-size:15pt; line-height:1.15;
+          direction:rtl; text-align:justify; line-height:1.15; overflow:hidden; overflow-wrap:break-word; white-space:pre-wrap; }
+        .ch173-cont{ direction:rtl; text-align:justify; font-size:14pt; line-height:1.15;
           padding:6px 4px; overflow-wrap:break-word; border:none !important; }
         .acc-pick{ display:none !important; }
         .ch173-table td.normcell{ padding:0; vertical-align:top; }
         .normwrap{ width:100%; height:100%; padding:5px; box-sizing:border-box;
           direction:rtl; text-align:justify; line-height:1.15; overflow-wrap:break-word; }
         .ch173-cont{ border:1px solid #000; border-top:none; min-height:40px; padding:6px 8px;
-          direction:rtl; text-align:justify; font-size:15pt; line-height:1.15;
+          direction:rtl; text-align:justify; font-size:14pt; line-height:1.15;
           overflow-wrap:break-word; }
         .ch173-cont:empty{ display:none; }
         .rotinner{ position:absolute; top:50%; left:50%; transform-origin:center center;
           padding:5px; box-sizing:border-box; direction:rtl; text-align:right;
-          line-height:1.15; overflow-wrap:break-word; }
+          line-height:1.15; overflow-wrap:break-word; white-space:pre-wrap; }
         .rothead{ text-align:center !important; white-space:normal; }
         .colgrip,.rowgrip{ display:none !important; }
         .colgrip,.rowgrip{ display:none !important; }
@@ -317,6 +327,12 @@ function _renderR173() {
         </select>
         <span style="font-size:11px;color:var(--text-muted);">↔ کالم کی لکیر کو پکڑ کر چوڑائی بدلیں</span>
         <div style="margin-right:auto;display:flex;gap:6px;">
+          <button onclick="_ch173Fmt('bold')" title="بولڈ" style="${_chBtn()}font-weight:900;">B</button>
+          <button onclick="_ch173Fmt('underline')" title="انڈر لائن" style="${_chBtn()}text-decoration:underline;">U</button>
+          <button onclick="_ch173FontStep(1)" title="فونٹ بڑا" style="${_chBtn()}">A+</button>
+          <button onclick="_ch173FontStep(-1)" title="فونٹ چھوٹا" style="${_chBtn()}font-size:11px;">A−</button>
+          <button onclick="_ch173Fmt('undo')" title="واپس (Undo)" style="${_chBtn()}">↶</button>
+          <button onclick="_ch173Fmt('redo')" title="دوبارہ (Redo)" style="${_chBtn()}">↷</button>
           <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveR173()">💾 محفوظ کریں</button>
           <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printR173()">🖨️ پرنٹ کریں</button>
         </div>
@@ -349,7 +365,7 @@ function _renderR173() {
                 <th rowspan="2">نام و پتہ مدعی ومستغیث</th>
                 <th rowspan="2">ملزمان جو گرفتارنہ ہوئے</th>
                 <th colspan="2">ملزمان</th>
-                <th rowspan="2" class="vcell rotcell"><div class="rotclip"><div class="rotinner rothead">مال قبضہ پولیس</div></div></th>
+                <th rowspan="2" class="vcell rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner rothead">مال قبضہ پولیس</div></div></div></th>
                 <th rowspan="2">تفصیل شہادت</th>
                 <th rowspan="2">مختصر حالات مقدمہ معہ جرم مندرجہ بالا</th>
               </tr>
@@ -360,12 +376,12 @@ function _renderR173() {
             </thead>
             <tbody>
               <tr>
-                <td class="rotcell"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bs.madai !== undefined ? sanitizeHtml(bs.madai) : esc(c.complainant||'')}</div></div></td>
-                <td class="rotcell"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'ghair_giraftar')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div></div></td>
-                <td class="rotcell"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'zer_hirasat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div></div></td>
-                <td class="rotcell"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'bar_zamanat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></div></td>
-                <td class="rotcell"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="mal_qabza">${bv('mal_qabza')}</div></div></td>
-                <td class="rotcell"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="shahadat">${bs.shahadat !== undefined ? sanitizeHtml(bs.shahadat) : esc(_ch173WitnessText())}</div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bs.madai !== undefined ? sanitizeHtml(bs.madai) : esc(c.complainant||'')}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'ghair_giraftar')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'zer_hirasat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'bar_zamanat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="mal_qabza">${bv('mal_qabza')}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="shahadat">${bs.shahadat !== undefined ? sanitizeHtml(bs.shahadat) : esc(_ch173WitnessText())}</div></div></div></td>
                 <td class="normcell"><div class="normwrap" contenteditable="true" data-mic="true" data-k="halaat">${bv('halaat')}</div></td>
               </tr>
             </tbody>
@@ -674,8 +690,8 @@ function _printR173() {
         th.vcell{ vertical-align:middle; padding:0; text-align:center; height:150px; }
         .ch173-table th, .ch173-table td{ border:1px solid #000; padding:2px 4px; text-align:center;
           white-space:normal; word-wrap:break-word; overflow-wrap:break-word; line-height:1.15; }
-        .ch173-table thead th{ font-size:15pt; vertical-align:middle; line-height:1.15; font-weight:normal; }
-        .ch173-table td{ font-size:15pt; vertical-align:top; height:170mm; padding:0; line-height:1.15; }
+        .ch173-table thead th{ font-size:14pt; vertical-align:middle; line-height:1.15; font-weight:normal; }
+        .ch173-table td{ font-size:14pt; vertical-align:top; height:170mm; padding:0; line-height:1.15; }
         .vwrap{ writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
           transform:rotate(180deg); -webkit-transform:rotate(180deg);
           width:100%; height:100%; padding:5px; box-sizing:border-box; text-align:right; direction:rtl; }
@@ -1030,7 +1046,7 @@ function _ch173AccPicker(ev, key) {
   box.querySelector('#ch173-acc-x').onclick = () => box.remove();
   box.querySelector('#ch173-acc-ok').onclick = () => {
     const picked = [...box.querySelectorAll('input:checked')].map(i => i.value);
-    if (cell) cell.innerText = picked.join('، ');
+    if (cell) cell.innerText = picked.join('\n');
     box.remove();
     if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
     try { _r173Dirty = true; } catch(_) {}
@@ -1039,3 +1055,35 @@ function _ch173AccPicker(ev, key) {
 window._ch173AccPicker   = _ch173AccPicker;
 window._ch173LoadPeople  = _ch173LoadPeople;
 window._ch173WitnessText = _ch173WitnessText;
+
+// ═══ چالان editor ke chhote buttons ═══
+function _chBtn() {
+  return 'min-width:30px;height:28px;border:1px solid var(--border,#ccc);border-radius:6px;' +
+         'background:var(--bg-card,#fff);color:var(--text-primary,#111);cursor:pointer;' +
+         'font-size:13px;padding:0 7px;margin:0 1px;';
+}
+function _ch173Fmt(cmd) {
+  try { document.execCommand(cmd, false, null); } catch(_) {}
+}
+// Font chhota/bara — chune hue matn par, warna poore doc par
+function _ch173FontStep(dir) {
+  const doc = document.getElementById('ch173-doc');
+  if (!doc) return;
+  const sel = window.getSelection();
+  if (sel && !sel.isCollapsed) {
+    try {
+      document.execCommand('fontSize', false, dir > 0 ? '5' : '2');
+      return;
+    } catch(_) {}
+  }
+  // Poore table ka font
+  const cur = parseFloat(doc.dataset.fs || '14');
+  const nf = Math.min(28, Math.max(8, cur + (dir > 0 ? 1 : -1)));
+  doc.dataset.fs = nf;
+  doc.querySelectorAll('.ch173-table th, .ch173-table td, .rotinner, .hinner, .ch173-cont')
+     .forEach(el => { el.style.fontSize = nf + 'pt'; });
+  if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
+}
+window._chBtn = _chBtn;
+window._ch173Fmt = _ch173Fmt;
+window._ch173FontStep = _ch173FontStep;
