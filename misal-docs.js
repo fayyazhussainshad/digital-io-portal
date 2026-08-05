@@ -76,11 +76,6 @@ function renderMisalBar(c) {
     background:var(--bg-secondary);
     border-bottom:1px solid var(--border);">
     <div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;align-items:center;">
-      <button onclick="goBackToCases()" title="واپس مقدمات"
-        style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:5px 12px;
-               font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;">↩</button>
-      <span style="font-size:14px;font-weight:900;color:var(--accent);font-family:var(--font-mono);flex-shrink:0;">
-        مقدمہ ${esc(c?.fir_number)||'—'}</span>
       ${indexChip}
       ${_misalDropdown('fir-dd', 'الف آئی آر', [
         {label:'الف آئی آر', act:`_ddPick('fir-dd','fir')`},
@@ -1613,10 +1608,13 @@ function _dioEnterDocView() {
           style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 16px;
                  font-size:13px;font-weight:700;cursor:pointer;
                  font-family:'Jameel Noori Nastaleeq',serif;">🖨️ پرنٹ</button>
-        <button onclick="_dioExitDocView()" title="واپس"
+        <button onclick="_dioExitDocView()" title="واپس دستاویزات"
           style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);
                  border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;
                  font-family:'Jameel Noori Nastaleeq',serif;">↩ واپس</button>
+        <button onclick="_dioExitDocView();goBackToCases();" title="واپس مقدمات"
+          style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);
+                 border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;">⌂</button>
       </div>
     </div>
     <div id="dio-dv-body" style="flex:1;min-height:0;overflow:auto;"></div>`;

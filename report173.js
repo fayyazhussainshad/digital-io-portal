@@ -198,14 +198,16 @@ function _renderR173() {
       #ch173-doc .hcell-td{ padding:0; vertical-align:top; }
       #ch173-doc .hinner{
         width:100%; height:100%; padding:5px; box-sizing:border-box;
-        direction:rtl; text-align:justify; outline:none;
+        direction:rtl; text-align:justify; text-align-last:justify; outline:none;
         line-height:1.15; overflow:hidden; overflow-wrap:break-word;
+        white-space:pre-wrap; font-size:14pt;
       }
       /* Table ke NEECHE baqaya matn — khud phailne wali jagah */
       #ch173-doc .ch173-cont{
-        direction:rtl; text-align:justify; font-size:14pt; line-height:1.15;
+        direction:rtl; text-align:justify; text-align-last:justify;
+        font-size:14pt; line-height:1.15;
         padding:6px 4px; min-height:40px; outline:none; margin-top:0;
-        overflow-wrap:break-word; border:none !important;
+        overflow-wrap:break-word; border:none !important; white-space:pre-wrap;
       }
       /* ملزمان chunne wala chhota button */
       #ch173-doc .acc-pick{
@@ -235,9 +237,9 @@ function _renderR173() {
       #ch173-doc .rotinner{
         width:100%; height:100%; box-sizing:border-box; padding:4px;
         writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
-        direction:rtl; text-align:right; outline:none;
+        direction:rtl; text-align:center; outline:none; unicode-bidi:plaintext;
         line-height:1.2; overflow-wrap:break-word; white-space:pre-wrap;
-        overflow:hidden;
+        overflow:hidden; font-size:14pt;
       }
       /* Column 7 — normal, RTL, justified */
       #ch173-doc .hwrap{
@@ -300,8 +302,11 @@ function _renderR173() {
         .hcell-td{ padding:0; vertical-align:top; }
         .hinner{ width:100%; height:100%; padding:5px; box-sizing:border-box;
           direction:rtl; text-align:justify; line-height:1.15; overflow:hidden; overflow-wrap:break-word; white-space:pre-wrap; }
-        .ch173-cont{ direction:rtl; text-align:justify; font-size:14pt; line-height:1.15;
-          padding:6px 4px; overflow-wrap:break-word; border:none !important; }
+        .ch173-cont{ direction:rtl; text-align:justify; text-align-last:justify;
+          font-size:14pt; line-height:1.15; padding:6px 4px; overflow-wrap:break-word;
+          border:none !important; white-space:pre-wrap; }
+        /* Matn safhe se zyada ho to khud agle safhe (back side) par chala jaye */
+        .ch173-cont{ page-break-inside:auto; break-inside:auto; }
         .acc-pick{ display:none !important; }
         .ch173-table td.normcell{ padding:0; vertical-align:top; }
         .normwrap{ width:100%; height:100%; padding:5px; box-sizing:border-box;
@@ -312,8 +317,8 @@ function _renderR173() {
         .ch173-cont:empty{ display:none; }
         .rotinner{ width:100%; height:100%; box-sizing:border-box; padding:4px;
           writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
-          direction:rtl; text-align:right; line-height:1.2;
-          overflow-wrap:break-word; white-space:pre-wrap; overflow:hidden; }
+          direction:rtl; text-align:center; line-height:1.2; unicode-bidi:plaintext;
+          overflow-wrap:break-word; white-space:pre-wrap; overflow:hidden; font-size:14pt; }
         .rothead{ text-align:center !important; white-space:normal; }
         .colgrip,.rowgrip{ display:none !important; }
         .colgrip,.rowgrip{ display:none !important; }
@@ -394,6 +399,9 @@ function _renderR173() {
           </table>
 
           <div class="ch173-cont" contenteditable="true" data-k="cont_text">${bv('cont_text')}</div>
+          <div class="ch173-cont" contenteditable="true" data-k="cont_text2">${bv('cont_text2')}</div>
+          <div class="ch173-cont" contenteditable="true" data-k="cont_text3">${bv('cont_text3')}</div>
+          <div class="ch173-cont" contenteditable="true" data-k="cont_text4">${bv('cont_text4')}</div>
 
         </div>
       </div>
@@ -711,19 +719,22 @@ function _printR173() {
         .rotclip{ position:absolute; inset:0; overflow:hidden; }
         .rotinner{ width:100%; height:100%; box-sizing:border-box; padding:4px;
           writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
-          direction:rtl; text-align:right; line-height:1.2;
-          overflow-wrap:break-word; white-space:pre-wrap; overflow:hidden; }
+          direction:rtl; text-align:center; line-height:1.2; unicode-bidi:plaintext;
+          overflow-wrap:break-word; white-space:pre-wrap; overflow:hidden; font-size:14pt; }
         .rothead{ text-align:center !important; }
 
         /* Column 7 — normal RTL */
         .hcell-td{ padding:0; vertical-align:top; }
         .hinner{ width:100%; height:100%; padding:5px; box-sizing:border-box;
-          direction:rtl; text-align:justify; line-height:1.15;
-          overflow:hidden; overflow-wrap:break-word; white-space:pre-wrap; }
+          direction:rtl; text-align:justify; text-align-last:justify; line-height:1.15;
+          overflow:hidden; overflow-wrap:break-word; white-space:pre-wrap; font-size:14pt; }
 
         /* Table ke neeche baqaya matn — koi kinari lakeer nahi */
-        .ch173-cont{ direction:rtl; text-align:justify; font-size:14pt; line-height:1.15;
-          padding:6px 4px; overflow-wrap:break-word; border:none !important; }
+        .ch173-cont{ direction:rtl; text-align:justify; text-align-last:justify;
+          font-size:14pt; line-height:1.15; padding:6px 4px; overflow-wrap:break-word;
+          border:none !important; white-space:pre-wrap; }
+        /* Matn safhe se zyada ho to khud agle safhe (back side) par chala jaye */
+        .ch173-cont{ page-break-inside:auto; break-inside:auto; }
 
         /* Kinare khule: pehla column dayen se, aakhri bayen se */
         .ch173-table thead tr:first-child th:first-child{ border-right:none; }
@@ -740,6 +751,11 @@ function _printR173() {
         }
 
         .colgrip,.rowgrip,.acc-pick,.no-print,button,select{ display:none !important; }
+        /* Print: poori chaudai istemal karo — koi fixed inch nahi, warna
+           browser safha sikor kar dono taraf bari khali jagah chhor deta hai */
+        #ch173-doc{ width:100% !important; max-width:none !important;
+          min-height:auto !important; padding:0 !important; margin:0 !important;
+          box-shadow:none !important; border-radius:0 !important; }
         .dio-print-brand{ position:fixed; bottom:3mm; left:4mm; font-size:9px; color:#999; direction:ltr; }
       </style></head><body>${chDoc.innerHTML}<div class="dio-print-brand">Digital IO</div></body></html>`;
     // Print se pehle rotated khanon ki naap inline kar do (print iframe mein JS nahi chalta)
@@ -948,8 +964,9 @@ function _ch173BindOverflow() {
   cell._ovBound = true;
   // NOTE: 'input' par NAHI chalate — warna har harf par matn dobara set
   // hota hai aur cursor shuru mein chala jata hai. Sirf paste aur blur par.
+  // SIRF paste par — blur par chalane se innerText formatting (bold/italic/
+  // underline) mita deta tha. Ab likhi hui formatting mehfooz rehti hai.
   cell.addEventListener('paste', () => setTimeout(_ch173Overflow, 80));
-  cell.addEventListener('blur',  () => setTimeout(_ch173Overflow, 40));
 }
 window._ch173BindOverflow = _ch173BindOverflow;
 
