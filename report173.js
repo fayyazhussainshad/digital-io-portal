@@ -184,9 +184,9 @@ function _renderR173() {
       #ch173-doc .ch173-table td.rotcell, #ch173-doc .ch173-table th.rotcell{
         position:relative; padding:0; overflow:hidden;
       }
-      /* Block wrapper — table-cell par position:relative na-qabil-e-aitbaar hai,
-         is liye andar block div rakhte hain. Isi se matn doosre column mein
-         nahi jata. */
+      /* Khadi likhayi — SIRF CSS (koi JS naap nahi), is liye print par bhi
+         khud theek rehti hai. writing-mode se matn khada, rotate(180) se
+         NEECHE se OOPER (Ascending). */
       #ch173-doc .cellbox{ position:relative; width:100%; height:100%; overflow:hidden; }
       #ch173-doc .rotclip{ position:absolute; inset:0; overflow:hidden; }
       /* Table ke neeche koi lakeer nahi (magar wahan se unchai badalti hai) */
@@ -233,12 +233,12 @@ function _renderR173() {
         color:#aaa; font-size:12pt;
       }
       #ch173-doc .rotinner{
-        position:absolute; top:50%; left:50%;
-        transform-origin:center center;
-        padding:5px; box-sizing:border-box;
+        width:100%; height:100%; box-sizing:border-box; padding:4px;
+        writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
+        transform:rotate(180deg); -webkit-transform:rotate(180deg);
         direction:rtl; text-align:right; outline:none;
-        line-height:1.15; overflow-wrap:break-word; word-wrap:break-word;
-        white-space:pre-wrap;
+        line-height:1.2; overflow-wrap:break-word; white-space:pre-wrap;
+        overflow:hidden;
       }
       /* Column 7 — normal, RTL, justified */
       #ch173-doc .hwrap{
@@ -292,7 +292,12 @@ function _renderR173() {
         .rotcell{ position:relative; padding:0; overflow:hidden; }
         .cellbox{ position:relative; width:100%; height:100%; overflow:hidden; }
         .rotclip{ position:absolute; inset:0; overflow:hidden; }
-        .ch173-table, .ch173-table tbody, .ch173-table tbody tr, .ch173-table tbody td{ border-bottom:0 !important; }
+        .ch173-table, .ch173-table tbody, .ch173-table tbody tr,
+        .ch173-table tbody td, .ch173-table tbody th,
+        .ch173-table tr:last-child td, .ch173-table tr:last-child th{
+          border-bottom:0 !important; border-bottom-width:0 !important;
+          border-bottom-style:none !important; border-bottom-color:transparent !important;
+        }
         .hcell-td{ padding:0; vertical-align:top; }
         .hinner{ width:100%; height:100%; padding:5px; box-sizing:border-box;
           direction:rtl; text-align:justify; line-height:1.15; overflow:hidden; overflow-wrap:break-word; white-space:pre-wrap; }
@@ -306,9 +311,11 @@ function _renderR173() {
           direction:rtl; text-align:justify; font-size:14pt; line-height:1.15;
           overflow-wrap:break-word; }
         .ch173-cont:empty{ display:none; }
-        .rotinner{ position:absolute; top:50%; left:50%; transform-origin:center center;
-          padding:5px; box-sizing:border-box; direction:rtl; text-align:right;
-          line-height:1.15; overflow-wrap:break-word; white-space:pre-wrap; }
+        .rotinner{ width:100%; height:100%; box-sizing:border-box; padding:4px;
+          writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
+          transform:rotate(180deg); -webkit-transform:rotate(180deg);
+          direction:rtl; text-align:right; line-height:1.2;
+          overflow-wrap:break-word; white-space:pre-wrap; overflow:hidden; }
         .rothead{ text-align:center !important; white-space:normal; }
         .colgrip,.rowgrip{ display:none !important; }
         .colgrip,.rowgrip{ display:none !important; }
@@ -327,19 +334,20 @@ function _renderR173() {
         </select>
         <span style="font-size:11px;color:var(--text-muted);">↔ کالم کی لکیر کو پکڑ کر چوڑائی بدلیں</span>
         <div style="margin-right:auto;display:flex;gap:6px;">
-          <button onclick="_ch173Fmt('bold')" title="بولڈ" style="${_chBtn()}font-weight:900;">B</button>
-          <button onclick="_ch173Fmt('underline')" title="انڈر لائن" style="${_chBtn()}text-decoration:underline;">U</button>
-          <button onclick="_ch173FontStep(1)" title="فونٹ بڑا" style="${_chBtn()}">A+</button>
-          <button onclick="_ch173FontStep(-1)" title="فونٹ چھوٹا" style="${_chBtn()}font-size:11px;">A−</button>
-          <button onclick="_ch173Fmt('undo')" title="واپس (Undo)" style="${_chBtn()}">↶</button>
-          <button onclick="_ch173Fmt('redo')" title="دوبارہ (Redo)" style="${_chBtn()}">↷</button>
+          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('bold')" title="بولڈ" style="${_chBtn()}font-weight:900;">B</button>
+          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('italic')" title="ترچھا" style="${_chBtn()}font-style:italic;">I</button>
+          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('underline')" title="انڈر لائن" style="${_chBtn()}text-decoration:underline;">U</button>
+          <button onmousedown="event.preventDefault()" onclick="_ch173FontStep(1)" title="فونٹ بڑا" style="${_chBtn()}">A+</button>
+          <button onmousedown="event.preventDefault()" onclick="_ch173FontStep(-1)" title="فونٹ چھوٹا" style="${_chBtn()}font-size:11px;">A−</button>
+          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('undo')" title="واپس (Undo)" style="${_chBtn()}">↶</button>
+          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('redo')" title="دوبارہ (Redo)" style="${_chBtn()}">↷</button>
           <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveR173()">💾 محفوظ کریں</button>
           <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printR173()">🖨️ پرنٹ کریں</button>
         </div>
       </div>
       <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
         <div id="ch173-doc" style="width:8.5in;max-width:100%;min-height:14in;margin:0 auto;
-             padding:calc(0.25in + 0.5cm) 0.5cm 0.25in 0.5cm;
+             padding:calc(0.25in + 0.5cm) 0.2cm 0.25in 0.2cm;
              background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;
              line-height:1.4;box-sizing:border-box;">
 
@@ -669,7 +677,7 @@ function _printR173() {
   if (chDoc) {
     const chHtml = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
       <style>
-        @page{ size:legal portrait; margin:calc(0.25in + 0.5cm) 0.5cm 0.25in 0.5cm; }
+        @page{ size:legal portrait; margin:calc(0.25in + 0.5cm) 0.2cm 0.25in 0.2cm; }
         body{ font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl;
               line-height:1.4; color:#000; margin:0; }
         .ch173-title-row{ position:relative; display:flex; align-items:baseline;
@@ -855,6 +863,8 @@ function _ch173ColWidths() {
 // Phir 90° ghumane par woh bilkul khane ko bhar deta hai, aur RTL Urdu
 // NEECHE se OOPER (Ascending) parhi jati hai.
 function _ch173SizeRotated() {
+  return;   // ab zaroorat nahi — layout poori tarah CSS se hai (print-safe)
+  /* eslint-disable no-unreachable */
   document.querySelectorAll('#ch173-doc .rotcell').forEach(cell => {
     const clip  = cell.querySelector('.rotclip');
     const inner = cell.querySelector('.rotinner');
@@ -916,8 +926,10 @@ function _ch173BindOverflow() {
   const cell = document.querySelector('#ch173-table [data-k="halaat"]');
   if (!cell || cell._ovBound) return;
   cell._ovBound = true;
-  cell.addEventListener('input', _ch173OverflowSoon);
-  cell.addEventListener('paste', () => setTimeout(_ch173Overflow, 60));
+  // NOTE: 'input' par NAHI chalate — warna har harf par matn dobara set
+  // hota hai aur cursor shuru mein chala jata hai. Sirf paste aur blur par.
+  cell.addEventListener('paste', () => setTimeout(_ch173Overflow, 80));
+  cell.addEventListener('blur',  () => setTimeout(_ch173Overflow, 40));
 }
 window._ch173BindOverflow = _ch173BindOverflow;
 
@@ -965,9 +977,10 @@ async function _ch173LoadPeople() {
 
 // Tamam گواہان aik line mein
 function _ch173WitnessText() {
-  const list = _ch173WitList();
-  if (!list.length) return '';
-  return list.map((w,i) => (i+1) + '۔ ' + (w.full_name||'')).join('  ');
+  const L = (typeof _ch173WitList === 'function') ? _ch173WitList() : (_ch173Witnesses || []);
+  if (!L.length) return '';
+  // Aik line mein aik گواہ
+  return L.map(function(w, i){ return (i + 1) + '\u06D4 ' + (w.full_name || ''); }).join('\n');
 }
 
 // Kaunse ملزمان pehle se kisi column mein chune ja chuke hain
