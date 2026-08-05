@@ -1505,27 +1505,7 @@ function renderWorkspace(c, docs, ev, container) {
   container.style.padding = '0';
   container.style.overflow = 'hidden';
   container.innerHTML = `
-    <!-- TOP BAR: back RIGHT + case info + action buttons -->
-    <div style="padding:8px 14px;background:var(--bg-secondary);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;direction:rtl;">
-      <!-- Case info -->
-      <div style="display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap;">
-        <span style="font-size:15px;font-weight:900;color:var(--accent);font-family:var(--font-mono);">FIR ${c.fir_number||'—'}</span>
-        <span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span>
-        <span style="font-size:11px;color:var(--text-muted);">📅 ${formatDate(c.fir_date)}</span>
-        <span style="font-size:11px;color:var(--text-muted);">👤 ${esc(c.complainant)||'—'}</span>
-        <span style="font-size:11px;color:var(--text-muted);">⚖️ ${(c.section_of_law||'—').slice(0,20)}</span>
-      </div>
-      <!-- Action buttons -->
-      <div style="display:flex;gap:5px;direction:rtl;">
-        <button class="btn btn-secondary btn-sm" onclick="_openDocsChecklist('${c.id}','${c.fir_number||''}')">📋</button>
-        <button class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')">✏️</button>
-        <button class="btn btn-secondary btn-sm" onclick="downloadCaseFile('${c.id}')">⬇️</button>
-        <button class="btn btn-secondary btn-sm" onclick="openShareModal('${c.id}')" title="متن شیئر">📤</button>
-        <button class="btn btn-secondary btn-sm" onclick="openCaseShareModal('${c.id}')" title="افسر کے ساتھ شیئر">🔗</button>
-        <button class="btn btn-danger btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number||''}')">🗑️</button>
-        <button onclick="goBackToCases()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">↩</button>
-      </div>
-    </div>
+    <!-- TOP BAR hataayi gayi — مقدمہ نمبر ab دستاویز والی patti mein hai -->
 
     <!-- CASE PROGRESS TRACKER (P4) -->
 

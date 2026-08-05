@@ -76,6 +76,11 @@ function renderMisalBar(c) {
     background:var(--bg-secondary);
     border-bottom:1px solid var(--border);">
     <div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;align-items:center;">
+      <button onclick="goBackToCases()" title="واپس مقدمات"
+        style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:5px 12px;
+               font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;">↩</button>
+      <span style="font-size:14px;font-weight:900;color:var(--accent);font-family:var(--font-mono);flex-shrink:0;">
+        مقدمہ ${esc(c?.fir_number)||'—'}</span>
       ${indexChip}
       ${_misalDropdown('fir-dd', 'الف آئی آر', [
         {label:'الف آئی آر', act:`_ddPick('fir-dd','fir')`},
@@ -1592,6 +1597,8 @@ function _dioEnterDocView() {
   ov.innerHTML = `
     <div id="dio-dv-bar" style="display:flex;align-items:center;gap:8px;padding:8px 12px;
          background:var(--bg-secondary);border-bottom:1px solid var(--border);flex-wrap:wrap;">
+      <span id="dio-dv-fir" style="font-size:14px;font-weight:900;color:var(--accent);
+            font-family:var(--font-mono);flex-shrink:0;white-space:nowrap;"></span>
       <div id="dio-dv-tabs" style="display:flex;gap:6px;flex:1;flex-wrap:wrap;min-width:0;"></div>
       <div style="display:flex;gap:8px;flex-shrink:0;">
         <button onclick="_dioAddDocPicker()" title="نئی دستاویز کھولیں (موجودہ بند نہیں ہوگی)"
@@ -1615,6 +1622,10 @@ function _dioEnterDocView() {
     <div id="dio-dv-body" style="flex:1;min-height:0;overflow:auto;"></div>`;
   document.body.appendChild(ov);
   document.getElementById('dio-dv-body').appendChild(area);
+  try {
+    const f = document.getElementById('dio-dv-fir');
+    if (f && _misalCase) f.textContent = 'مقدمہ ' + (_misalCase.fir_number || '—');
+  } catch(_) {}
   document.body.style.overflow = 'hidden';
 
   // Escape se band
