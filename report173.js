@@ -204,11 +204,16 @@ function _renderR173() {
       }
       /* Table ke NEECHE baqaya matn — khud phailne wali jagah */
       #ch173-doc .ch173-cont{
-        direction:rtl; text-align:justify; text-align-last:justify;
+        direction:rtl; text-align:justify; text-align-last:right;
         font-size:14pt; line-height:1.15;
         padding:6px 4px; min-height:40px; outline:none; margin-top:0;
         overflow-wrap:break-word; border:none !important; white-space:pre-wrap;
       }
+      /* Izafi khane screen par nazar aayen (kahan likhna hai pata chale) —
+         print mein yeh nishan nahi aata */
+      #ch173-doc .ch173-cont:empty{ min-height:34px; }
+      #ch173-doc .ch173-cont{ outline:1px dashed rgba(120,120,120,0.35); margin-bottom:6px; }
+      @media print{ #ch173-doc .ch173-cont{ outline:none !important; margin-bottom:0; } }
       /* ملزمان chunne wala chhota button */
       #ch173-doc .acc-pick{
         position:absolute; top:2px; left:2px; z-index:7;
@@ -237,7 +242,7 @@ function _renderR173() {
       #ch173-doc .rotinner{
         width:100%; height:100%; box-sizing:border-box; padding:4px;
         writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
-        direction:rtl; text-align:center; outline:none; unicode-bidi:plaintext;
+        direction:rtl; text-align:left; outline:none; unicode-bidi:plaintext;
         line-height:1.2; overflow-wrap:break-word; white-space:pre-wrap;
         overflow:hidden; font-size:14pt;
       }
@@ -302,7 +307,7 @@ function _renderR173() {
         .hcell-td{ padding:0; vertical-align:top; }
         .hinner{ width:100%; height:100%; padding:5px; box-sizing:border-box;
           direction:rtl; text-align:justify; line-height:1.15; overflow:hidden; overflow-wrap:break-word; white-space:pre-wrap; }
-        .ch173-cont{ direction:rtl; text-align:justify; text-align-last:justify;
+        .ch173-cont{ direction:rtl; text-align:justify; text-align-last:right;
           font-size:14pt; line-height:1.15; padding:6px 4px; overflow-wrap:break-word;
           border:none !important; white-space:pre-wrap; }
         /* Matn safhe se zyada ho to khud agle safhe (back side) par chala jaye */
@@ -317,7 +322,7 @@ function _renderR173() {
         .ch173-cont:empty{ display:none; }
         .rotinner{ width:100%; height:100%; box-sizing:border-box; padding:4px;
           writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
-          direction:rtl; text-align:center; line-height:1.2; unicode-bidi:plaintext;
+          direction:rtl; text-align:left; line-height:1.2; unicode-bidi:plaintext;
           overflow-wrap:break-word; white-space:pre-wrap; overflow:hidden; font-size:14pt; }
         .rothead{ text-align:center !important; white-space:normal; }
         .colgrip,.rowgrip{ display:none !important; }
@@ -684,7 +689,10 @@ function _printR173() {
     const chHtml = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
       <style>
         /* ═══ PRINT CSS — SCREEN ke bilkul mutabiq (koi purani class nahi) ═══ */
-        @page{ size:legal portrait; margin:calc(0.25in + 0.5cm) 0.2cm 0.25in 0.2cm; }
+        /* Pehla safha: kinare kam. Agle safhon par BAYEN taraf punch ki jagah
+           taake sooraakh karne se alfaz na katen aur jild mein na chhupein. */
+        @page{ size:legal portrait; margin:1.2cm 0.2cm 0.25in 1.8cm; }
+        @page :first{ margin:calc(0.25in + 0.5cm) 0.2cm 0.25in 0.2cm; }
         body{ font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl;
               line-height:1.4; color:#000; margin:0; }
 
@@ -719,7 +727,7 @@ function _printR173() {
         .rotclip{ position:absolute; inset:0; overflow:hidden; }
         .rotinner{ width:100%; height:100%; box-sizing:border-box; padding:4px;
           writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
-          direction:rtl; text-align:center; line-height:1.2; unicode-bidi:plaintext;
+          direction:rtl; text-align:left; line-height:1.2; unicode-bidi:plaintext;
           overflow-wrap:break-word; white-space:pre-wrap; overflow:hidden; font-size:14pt; }
         .rothead{ text-align:center !important; }
 
@@ -730,7 +738,7 @@ function _printR173() {
           overflow:hidden; overflow-wrap:break-word; white-space:pre-wrap; font-size:14pt; }
 
         /* Table ke neeche baqaya matn — koi kinari lakeer nahi */
-        .ch173-cont{ direction:rtl; text-align:justify; text-align-last:justify;
+        .ch173-cont{ direction:rtl; text-align:justify; text-align-last:right;
           font-size:14pt; line-height:1.15; padding:6px 4px; overflow-wrap:break-word;
           border:none !important; white-space:pre-wrap; }
         /* Matn safhe se zyada ho to khud agle safhe (back side) par chala jaye */
