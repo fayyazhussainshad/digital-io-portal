@@ -677,9 +677,12 @@ function _printR173() {
   if (chDoc) {
     const chHtml = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
       <style>
+        /* ═══ PRINT CSS — SCREEN ke bilkul mutabiq (koi purani class nahi) ═══ */
         @page{ size:legal portrait; margin:calc(0.25in + 0.5cm) 0.2cm 0.25in 0.2cm; }
         body{ font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl;
               line-height:1.4; color:#000; margin:0; }
+
+        /* Unwan */
         .ch173-title-row{ position:relative; display:flex; align-items:baseline;
           justify-content:space-between; width:100%; min-height:1.6em; }
         .ch173-title-row > span{ white-space:nowrap; }
@@ -688,38 +691,58 @@ function _printR173() {
         .tt-mid, .form-no{ position:absolute; left:50%; transform:translateX(-50%); white-space:nowrap; }
         .tt-mid{ font-weight:bold; text-decoration:underline; font-size:20pt; }
         .form-no{ font-style:italic; font-size:12pt; direction:ltr; }
-        .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
+
+        /* مقدمہ نمبر / مورخہ / جرم */
         .ch173-caseline{ display:flex; gap:22px; align-items:baseline; font-size:14pt;
-          margin:18px 0 16px 0; direction:rtl; flex-wrap:wrap; line-height:1.4;
-        justify-content:center; }
-        .ch173-caseline .fl{ display:inline-block; min-width:40px; border:none; text-align:right; font-weight:normal; }
+          margin:18px 0 16px 0; direction:rtl; flex-wrap:wrap; line-height:1.4; justify-content:center; }
+        .ch173-caseline .fl{ display:inline-block; min-width:40px; border:none;
+          text-align:right; font-weight:normal; }
         .ch173-caseline .fl-lg{ min-width:60px; }
-        .vhwrap{ text-align:center !important; padding:4px 2px; min-height:100px; }
-        th.vcell{ vertical-align:middle; padding:0; text-align:center; height:150px; }
+
+        /* Table */
+        .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
         .ch173-table th, .ch173-table td{ border:1px solid #000; padding:2px 4px; text-align:center;
           white-space:normal; word-wrap:break-word; overflow-wrap:break-word; line-height:1.15; }
         .ch173-table thead th{ font-size:14pt; vertical-align:middle; line-height:1.15; font-weight:normal; }
-        .ch173-table td{ font-size:14pt; vertical-align:top; height:170mm; padding:0; line-height:1.15; }
-        .vwrap{ writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
-          transform:rotate(180deg); -webkit-transform:rotate(180deg);
-          width:100%; height:100%; padding:5px; box-sizing:border-box; text-align:right; direction:rtl; }
-        @supports (writing-mode: sideways-lr) {
-          .vwrap{ writing-mode:sideways-lr !important; transform:none !important; text-align:right; }
-        }
-        .hwrap{ writing-mode:horizontal-tb; transform:none; width:100%; height:100%;
-          padding:5px; box-sizing:border-box; direction:rtl; text-align:justify; }
+        .ch173-table td{ font-size:14pt; vertical-align:top; height:170mm; padding:0; }
         th.hcell{ vertical-align:middle; text-align:center; direction:rtl; white-space:normal; }
-        .vtxt{ display:inline-block; writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
-               transform:rotate(180deg); -webkit-transform:rotate(180deg); white-space:nowrap;
-               line-height:1.2; text-align:center; }
-        th.vcell{ vertical-align:middle; padding:6px 2px; text-align:center; }
+        th.vcell{ vertical-align:middle; padding:0; text-align:center; }
+
+        /* Khadi likhayi — SCREEN jaisa hi (cellbox + rotinner) */
+        .cellbox{ position:relative; width:100%; height:100%; overflow:hidden; }
+        .rotclip{ position:absolute; inset:0; overflow:hidden; }
+        .rotinner{ width:100%; height:100%; box-sizing:border-box; padding:4px;
+          writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
+          transform:rotate(180deg); -webkit-transform:rotate(180deg);
+          direction:rtl; text-align:right; line-height:1.2;
+          overflow-wrap:break-word; white-space:pre-wrap; overflow:hidden; }
+        .rothead{ text-align:center !important; }
+
+        /* Column 7 — normal RTL */
+        .hcell-td{ padding:0; vertical-align:top; }
+        .hinner{ width:100%; height:100%; padding:5px; box-sizing:border-box;
+          direction:rtl; text-align:justify; line-height:1.15;
+          overflow:hidden; overflow-wrap:break-word; white-space:pre-wrap; }
+
+        /* Table ke neeche baqaya matn — koi kinari lakeer nahi */
+        .ch173-cont{ direction:rtl; text-align:justify; font-size:14pt; line-height:1.15;
+          padding:6px 4px; overflow-wrap:break-word; border:none !important; }
+
+        /* Kinare khule: pehla column dayen se, aakhri bayen se */
         .ch173-table thead tr:first-child th:first-child{ border-right:none; }
         .ch173-table thead tr:first-child th:last-child{ border-left:none; }
+        .ch173-table thead tr:nth-child(2) th:last-child{ border-left:none; }
         .ch173-table tbody tr > td:first-child{ border-right:0 !important; }
         .ch173-table tbody tr > td:last-child{ border-left:0 !important; }
-        .ch173-table thead tr:nth-child(2) th:last-child{ border-left:none; }
 
-        .colgrip,.rowgrip{ display:none !important; }
+        /* ═══ NEECHE wali lakeer — har haal mein KHATAM ═══ */
+        .ch173-table, .ch173-table tbody, .ch173-table tbody tr,
+        .ch173-table tbody td, .ch173-table tr:last-child td{
+          border-bottom:0 !important; border-bottom-width:0 !important;
+          border-bottom-style:none !important; border-bottom-color:transparent !important;
+        }
+
+        .colgrip,.rowgrip,.acc-pick,.no-print,button,select{ display:none !important; }
         .dio-print-brand{ position:fixed; bottom:3mm; left:4mm; font-size:9px; color:#999; direction:ltr; }
       </style></head><body>${chDoc.innerHTML}<div class="dio-print-brand">Digital IO</div></body></html>`;
     // Print se pehle rotated khanon ki naap inline kar do (print iframe mein JS nahi chalta)
