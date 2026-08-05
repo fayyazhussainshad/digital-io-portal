@@ -170,7 +170,8 @@ function _renderR173() {
          seedha <td> par kaam nahi karta (browser nazar-andaz kar deta hai), is liye
          matn andar <div> wrapper mein rakh kar us par lagate hain. */
       #ch173-doc .ch173-table td{ font-size:15pt; vertical-align:top; line-height:1.15; }
-      #ch173-doc .ch173-table tbody td{ height:170mm; padding:0; }
+      /* Khane KHUD nahi phailte — sirf haath se (drag) resize hote hain */
+      #ch173-doc .ch173-table tbody td{ height:170mm; padding:0; overflow:hidden; }
       /* ASCENDING (neeche se ooper) — writing-mode Chrome mein na-qabil-e-aitbaar
          hai, is liye seedha ghumao (rotate) use karte hain. Khana relative,
          andar ka box absolute + rotate(90deg) → RTL Urdu neeche se ooper. */
@@ -180,6 +181,37 @@ function _renderR173() {
       }
       #ch173-doc .rotclip{
         position:absolute; inset:0; overflow:hidden;
+      }
+      /* Column 7 — normal RTL (khadi nahi), khane ke andar hi mehdood */
+      #ch173-doc .hcell-td{ padding:0; vertical-align:top; }
+      #ch173-doc .hinner{
+        width:100%; height:100%; padding:5px; box-sizing:border-box;
+        direction:rtl; text-align:justify; outline:none;
+        line-height:1.15; overflow:hidden; overflow-wrap:break-word;
+      }
+      /* Table ke NEECHE baqaya matn — khud phailne wali jagah */
+      #ch173-doc .ch173-cont{
+        direction:rtl; text-align:justify; font-size:15pt; line-height:1.15;
+        padding:6px 4px; min-height:40px; outline:none; margin-top:0;
+        overflow-wrap:break-word;
+      }
+      /* Column 7 — normal RTL (khadi nahi) */
+      #ch173-doc .ch173-table td.normcell{ padding:0; vertical-align:top; }
+      #ch173-doc .normwrap{
+        width:100%; height:100%; padding:5px; box-sizing:border-box;
+        direction:rtl; text-align:justify; outline:none; line-height:1.15;
+        overflow-wrap:break-word; word-wrap:break-word; overflow:auto;
+      }
+      /* Table ke NEECHE tasalsul (continuation) ka phailne wala khana */
+      #ch173-doc .ch173-cont{
+        margin-top:0; border:1px solid #000; border-top:none;
+        min-height:40px; padding:6px 8px; direction:rtl; text-align:justify;
+        font-size:15pt; line-height:1.15; outline:none;
+        overflow-wrap:break-word; word-wrap:break-word;
+      }
+      #ch173-doc .ch173-cont:empty::before{
+        content:'تسلسل — جو تحریر اوپر خانوں میں نہ سما سکے وہ یہاں لکھیں';
+        color:#aaa; font-size:12pt;
       }
       #ch173-doc .rotinner{
         position:absolute; top:50%; left:50%;
@@ -239,6 +271,18 @@ function _renderR173() {
         .ch173-table tbody td{ border-bottom:0 !important; }
         .rotcell{ position:relative; padding:0; overflow:hidden; }
         .rotclip{ position:absolute; inset:0; overflow:hidden; }
+        .hcell-td{ padding:0; vertical-align:top; }
+        .hinner{ width:100%; height:100%; padding:5px; box-sizing:border-box;
+          direction:rtl; text-align:justify; line-height:1.15; overflow:hidden; overflow-wrap:break-word; }
+        .ch173-cont{ direction:rtl; text-align:justify; font-size:15pt; line-height:1.15;
+          padding:6px 4px; overflow-wrap:break-word; }
+        .ch173-table td.normcell{ padding:0; vertical-align:top; }
+        .normwrap{ width:100%; height:100%; padding:5px; box-sizing:border-box;
+          direction:rtl; text-align:justify; line-height:1.15; overflow-wrap:break-word; }
+        .ch173-cont{ border:1px solid #000; border-top:none; min-height:40px; padding:6px 8px;
+          direction:rtl; text-align:justify; font-size:15pt; line-height:1.15;
+          overflow-wrap:break-word; }
+        .ch173-cont:empty{ display:none; }
         .rotinner{ position:absolute; top:50%; left:50%; transform-origin:center center;
           padding:5px; box-sizing:border-box; direction:rtl; text-align:right;
           line-height:1.15; overflow-wrap:break-word; }
@@ -304,10 +348,12 @@ function _renderR173() {
                 <td class="rotcell"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></div></td>
                 <td class="rotcell"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="mal_qabza">${bv('mal_qabza')}</div></div></td>
                 <td class="rotcell"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="shahadat">${bv('shahadat')}</div></div></td>
-                <td class="rotcell"><div class="rotclip"><div class="rotinner" contenteditable="true" data-mic="true" data-k="halaat">${bv('halaat')}</div></div></td>
+                <td class="normcell"><div class="normwrap" contenteditable="true" data-mic="true" data-k="halaat">${bv('halaat')}</div></td>
               </tr>
             </tbody>
           </table>
+
+          <div class="ch173-cont" contenteditable="true" data-k="cont_text">${bv('cont_text')}</div>
 
         </div>
       </div>
@@ -315,6 +361,8 @@ function _renderR173() {
     setTimeout(() => {
       _ch173MakeResizable();
       _ch173SizeRotated();
+      _ch173BindOverflow();
+      _ch173Overflow();
       window.addEventListener('resize', _ch173SizeRotated);
       // Mehfooz shuda row height wapas lagao
       try {
@@ -742,6 +790,7 @@ function _ch173MakeResizable() {
           if (nh < 80) return;
           bodyRow.querySelectorAll('td').forEach(c => { c.style.height = nh + 'px'; });
           if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
+          if (typeof _ch173Overflow === 'function') _ch173Overflow();
         };
         const onUp = () => {
           document.removeEventListener('mousemove', onMove);
@@ -783,3 +832,54 @@ function _ch173SizeRotated() {
   });
 }
 window._ch173SizeRotated = _ch173SizeRotated;
+
+// ═══ Khane se baqaya matn khud table ke NEECHE wali jagah mein ═══
+// Usool: khana apni muqarrar unchai se bara nahi hota (table khud nahi phailta).
+// Jo matn khane mein na samaye woh neeche wali jagah mein chala jata hai.
+let _ch173OverflowTimer = null;
+function _ch173Overflow() {
+  const cell = document.querySelector('#ch173-table [data-k="halaat"]');
+  const cont = document.querySelector('#ch173-doc [data-k="cont_text"]');
+  if (!cell || !cont) return;
+
+  // (a) Agar khane mein jagah bach gayi ho to neeche se matn WAPAS uthao
+  let guard = 0;
+  while (cont.innerText.trim() && cell.scrollHeight <= cell.clientHeight && guard++ < 3000) {
+    const ct = cont.innerText;
+    const m = ct.match(/^\s*(\S+)([\s\S]*)$/);
+    if (!m) break;
+    const prev = cell.innerText;
+    cell.innerText = (prev ? prev + ' ' : '') + m[1];
+    if (cell.scrollHeight > cell.clientHeight) {      // ab na samaya → wapas
+      cell.innerText = prev;
+      break;
+    }
+    cont.innerText = (m[2] || '').replace(/^\s+/, '');
+  }
+
+  // (b) Jo matn khane mein na samaye woh NEECHE bhejo
+  guard = 0;
+  while (cell.scrollHeight > cell.clientHeight + 1 && guard++ < 6000) {
+    const t = cell.innerText;
+    const i = t.replace(/\s+$/, '').lastIndexOf(' ');
+    if (i <= 0) break;
+    const moved = t.slice(i + 1).trim();
+    cell.innerText = t.slice(0, i);
+    cont.innerText = moved + (cont.innerText ? ' ' + cont.innerText : '');
+  }
+}
+function _ch173OverflowSoon() {
+  clearTimeout(_ch173OverflowTimer);
+  _ch173OverflowTimer = setTimeout(_ch173Overflow, 250);
+}
+window._ch173Overflow = _ch173Overflow;
+
+// Khane par input/paste sunno
+function _ch173BindOverflow() {
+  const cell = document.querySelector('#ch173-table [data-k="halaat"]');
+  if (!cell || cell._ovBound) return;
+  cell._ovBound = true;
+  cell.addEventListener('input', _ch173OverflowSoon);
+  cell.addEventListener('paste', () => setTimeout(_ch173Overflow, 60));
+}
+window._ch173BindOverflow = _ch173BindOverflow;
