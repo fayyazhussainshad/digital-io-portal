@@ -216,10 +216,10 @@ function _renderR173() {
       #ch173-doc .sho-right{ text-align:right; font-weight:700; outline:none;
         min-width:120px; text-decoration:underline; }
       #ch173-doc .sho-left{ text-align:left; direction:rtl; min-width:220px; }
-      #ch173-doc .sho-left > div{ outline:none; line-height:1.1; }
+      #ch173-doc .sho-left > div{ outline:none; line-height:1.1; margin:0; padding:0; }
       /* تاریخ SHO ke FORAN baad (koi bara gap nahi) */
-      #ch173-doc .sho-date{ font-size:11pt; color:#333; margin-top:0; line-height:1.1;
-        min-height:16px; cursor:pointer; }
+      #ch173-doc .sho-date{ font-size:11pt; color:#333; margin:0; line-height:1.1;
+        min-height:16px; cursor:pointer; text-align:center; }
       #ch173-doc .sho-date:empty::before{ content:'تاریخ…'; color:#aaa; }
       @media print{ #ch173-doc .sho-date:empty::before{ content:''; } }
       /* Izafi khane screen par nazar aayen (kahan likhna hai pata chale) —
@@ -326,8 +326,8 @@ function _renderR173() {
         .ch173-sho-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; }
         .sho-right{ text-align:right; font-weight:700; text-decoration:underline; }
         .sho-left{ text-align:left; direction:rtl; }
-        .sho-left > div{ line-height:1.1; }
-        .sho-date{ font-size:11pt; color:#000; margin-top:0; line-height:1.1; }
+        .sho-left > div{ line-height:1.1; margin:0; padding:0; }
+        .sho-date{ font-size:11pt; color:#000; margin:0; line-height:1.1; text-align:center; }
         /* Matn safhe se zyada ho to khud agle safhe (back side) par chala jaye */
         .ch173-cont{ page-break-inside:auto; break-inside:auto; }
         .acc-pick{ display:none !important; }
@@ -783,8 +783,8 @@ function _printR173() {
         .ch173-sho-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; }
         .sho-right{ text-align:right; font-weight:700; text-decoration:underline; }
         .sho-left{ text-align:left; direction:rtl; }
-        .sho-left > div{ line-height:1.1; }
-        .sho-date{ font-size:11pt; color:#000; margin-top:0; line-height:1.1; }
+        .sho-left > div{ line-height:1.1; margin:0; padding:0; }
+        .sho-date{ font-size:11pt; color:#000; margin:0; line-height:1.1; text-align:center; }
         /* Matn safhe se zyada ho to khud agle safhe (back side) par chala jaye */
         .ch173-cont{ page-break-inside:auto; break-inside:auto; }
 
@@ -1201,10 +1201,10 @@ function _ch173ShoLine(o) {
     nm   = sho.name || '';
   } catch(_) {}
   const st = o.station || '';
-  // Sirf teen cheezen: rank + naam + تھانہ (koi lafz dohra nahi)
+  // Tarteeb: NAAM pehle → phir rank (SI/SHO ya I/SHO) → phir تھانہ
   const parts = [];
-  if (rank) parts.push(rank);
   if (nm)   parts.push(nm);
+  if (rank) parts.push(rank);
   let line = parts.join(' ');
   if (st) line += (line ? ' ' : '') + 'تھانہ ' + st;
   return line;
