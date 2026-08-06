@@ -366,8 +366,13 @@ function _renderR173() {
           <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('bold')" title="بولڈ" style="${_chBtn()}font-weight:900;">B</button>
           <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('italic')" title="ترچھا" style="${_chBtn()}font-style:italic;">I</button>
           <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('underline')" title="انڈر لائن" style="${_chBtn()}text-decoration:underline;">U</button>
-          <button onmousedown="event.preventDefault()" onclick="_ch173FontStep(1)" title="فونٹ بڑا" style="${_chBtn()}">A+</button>
-          <button onmousedown="event.preventDefault()" onclick="_ch173FontStep(-1)" title="فونٹ چھوٹا" style="${_chBtn()}font-size:11px;">A−</button>
+          <button id="ch173-brush-btn" onmousedown="event.preventDefault()"
+            onclick="_ch173BrushClick(false)" ondblclick="_ch173BrushClick(true)"
+            title="فارمیٹ پینٹر — ایک کلک: ایک بار، ڈبل کلک: بار بار" style="${_chBtn()}">🖌</button>
+          <select id="ch173-font-sel" onchange="_ch173SetFont(this.value)" title="فونٹ سائز"
+            style="height:28px;border:1px solid var(--border,#ccc);border-radius:6px;background:var(--bg-card,#fff);color:var(--text-primary,#111);font-size:13px;padding:0 6px;margin:0 1px;cursor:pointer;">
+            ${R173_FONT_SIZES.map(s => `<option value="${s}" ${String(s)===String(_ch173DocFont(bs))?'selected':''}>${s}</option>`).join('')}
+          </select>
           <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('undo')" title="واپس (Undo)" style="${_chBtn()}">↶</button>
           <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('redo')" title="دوبارہ (Redo)" style="${_chBtn()}">↷</button>
           <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveR173()">💾 محفوظ کریں</button>
@@ -441,6 +446,8 @@ function _renderR173() {
             </tr>
           </table>
 
+          <input type="hidden" data-k="doc_font" value="${esc(String(_ch173DocFont(bs)))}">
+
         </div>
       </div>
     </div>`;
@@ -456,6 +463,20 @@ function _renderR173() {
         if (rh) document.querySelectorAll('#ch173-table tbody td').forEach(td => td.style.height = rh);
         _ch173SizeRotated();
       } catch(_) {}
+      // Mehfooz shuda فونٹ سائز wapas lagao
+      try {
+        const df = _ch173DocFont(bs);
+        if (df && df !== R173_FONT_DEFAULT) _ch173FontToDoc(df);
+      } catch(_) {}
+      // Cursor ke mutabiq dropdown khud badalta rahe (MS Word jaisa)
+      try {
+        if (!window._ch173FontSelBound) {
+          window._ch173FontSelBound = true;
+          document.addEventListener('selectionchange', _ch173SyncFontSel);
+        }
+      } catch(_) {}
+      // Format painter — naye safhe par band halat se shuru
+      try { _ch173BrushOff(); _ch173BindBrush(); } catch(_) {}
     }, 60);
     if (typeof applyMicButtons === 'function') setTimeout(() => applyMicButtons(area), 80);
     return;
@@ -1157,27 +1178,210 @@ function _chBtn() {
          'background:var(--bg-card,#fff);color:var(--text-primary,#111);cursor:pointer;' +
          'font-size:13px;padding:0 7px;margin:0 1px;';
 }
+// ═══ فونٹ سائز — MS Word جیسی فہرست (پوائنٹ میں) ═══
+const R173_FONT_SIZES = [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72];
+const R173_FONT_DEFAULT = 14;
+
+// Mehfooz shuda doc font (na ho to default 14pt)
+function _ch173DocFont(bs) {
+  const n = parseFloat((bs && bs.doc_font) || '');
+  return (n && !isNaN(n)) ? n : R173_FONT_DEFAULT;
+}
+
+// Chune hue matn ko <span> mein lapet do (font size aur format painter dono ke liye).
+// execCommand('fontSize') sirf 1–7 leta hai, is liye size=7 laga kar un <font> tags
+// ko foran <span> se badal dete hain — phir un par koi bhi style lagai ja sakti hai.
+function _ch173WrapSelection() {
+  const doc = document.getElementById('ch173-doc');
+  if (!doc) return [];
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed || !sel.rangeCount) return [];
+  if (!doc.contains(sel.anchorNode) || !doc.contains(sel.focusNode)) return [];
+  try { document.execCommand('styleWithCSS', false, false); } catch(_) {}
+  let ok = false;
+  try { ok = document.execCommand('fontSize', false, '7'); } catch(_) {}
+  if (!ok) return [];
+  const spans = [];
+  doc.querySelectorAll('font[size="7"]').forEach(f => {
+    const span = document.createElement('span');
+    while (f.firstChild) span.appendChild(f.firstChild);
+    f.parentNode.replaceChild(span, f);
+    spans.push(span);
+  });
+  return spans;
+}
+
+// Chune hue matn par sahih pt lagao
+function _ch173FontToSelection(pt) {
+  const spans = _ch173WrapSelection();
+  if (!spans.length) return false;
+  spans.forEach(s => { s.style.fontSize = pt + 'pt'; });
+  return true;
+}
+
+// Poore document ka font
+function _ch173FontToDoc(pt) {
+  const doc = document.getElementById('ch173-doc');
+  if (!doc) return;
+  doc.dataset.fs = pt;
+  doc.querySelectorAll('.ch173-table th, .ch173-table td, .rotinner, .hinner, .ch173-cont, .sho-cell-row:not(.sho-cell-date)')
+     .forEach(el => { el.style.fontSize = pt + 'pt'; });
+  const hid = doc.querySelector('[data-k="doc_font"]');
+  if (hid) hid.value = pt;
+  if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
+  if (typeof _ch173Overflow === 'function') _ch173Overflow();
+}
+window._ch173FontToDoc = _ch173FontToDoc;
+
+// Dropdown se font — matn chuna ho to usi par, warna poore doc par
+function _ch173SetFont(val) {
+  const pt = parseFloat(val);
+  if (!pt || isNaN(pt)) return;
+  if (_ch173FontToSelection(pt)) {
+    try { _r173Dirty = true; } catch(_) {}
+    return;
+  }
+  _ch173FontToDoc(pt);
+  try { _r173Dirty = true; } catch(_) {}
+}
+window._ch173SetFont = _ch173SetFont;
+
+// Cursor jahan ho, dropdown wahi size dikhaye (MS Word jaisa)
+function _ch173SyncFontSel() {
+  const doc = document.getElementById('ch173-doc');
+  const selEl = document.getElementById('ch173-font-sel');
+  if (!doc || !selEl) return;
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount || !sel.anchorNode || !doc.contains(sel.anchorNode)) return;
+  let node = sel.anchorNode;
+  if (node.nodeType === 3) node = node.parentElement;
+  if (!node) return;
+  try {
+    const px = parseFloat(getComputedStyle(node).fontSize);
+    if (!px) return;
+    const pt = Math.round(px * 0.75 * 2) / 2;          // px → pt
+    if ([...selEl.options].some(op => parseFloat(op.value) === pt)) selEl.value = String(pt);
+  } catch(_) {}
+}
+window._ch173SyncFontSel = _ch173SyncFontSel;
+
+// ═══ FORMAT PAINTER — MS Word جیسا ═══
+// ایک کلک  = ایک بار لگے گا، پھر خود بند
+// ڈبل کلک = بند کرنے تک بار بار لگتا رہے گا (Esc یا دوبارہ کلک سے بند)
+let _ch173Brush = null;      // mehfooz formatting
+let _ch173BrushMode = null;  // 'once' | 'sticky' | null
+
+// Cursor jahan hai wahan ki formatting naqal karo
+function _ch173BrushCopy() {
+  const doc = document.getElementById('ch173-doc');
+  if (!doc) return null;
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount || !sel.anchorNode || !doc.contains(sel.anchorNode)) return null;
+  let node = sel.anchorNode;
+  if (node.nodeType === 3) node = node.parentElement;
+  if (!node) return null;
+  let cs;
+  try { cs = getComputedStyle(node); } catch(_) { return null; }
+  // bold/italic/underline queryCommandState se — yeh ancestors ka bhi sahih batata hai
+  const st = (c) => { try { return document.queryCommandState(c); } catch(_) { return false; } };
+  const px = parseFloat(cs.fontSize) || 0;
+  return {
+    fontSize: px ? (Math.round(px * 0.75 * 2) / 2) + 'pt' : '',
+    fontFamily: cs.fontFamily || '',
+    color: cs.color || '',
+    fontWeight: st('bold') ? 'bold' : 'normal',
+    fontStyle: st('italic') ? 'italic' : 'normal',
+    textDecoration: st('underline') ? 'underline' : 'none'
+  };
+}
+
+// Naqal ki hui formatting chune hue matn par lagao
+function _ch173BrushPaint() {
+  if (!_ch173Brush) return false;
+  const spans = _ch173WrapSelection();
+  if (!spans.length) return false;
+  spans.forEach(s => {
+    Object.keys(_ch173Brush).forEach(k => {
+      if (_ch173Brush[k]) s.style[k] = _ch173Brush[k];
+    });
+  });
+  try { _r173Dirty = true; } catch(_) {}
+  return true;
+}
+
+// Button ki halat (on/off) dikhao
+function _ch173BrushUI() {
+  const btn = document.getElementById('ch173-brush-btn');
+  const doc = document.getElementById('ch173-doc');
+  const on = !!_ch173BrushMode;
+  if (btn) {
+    btn.style.background = on ? '#0369a1' : 'var(--bg-card,#fff)';
+    btn.style.color = on ? '#fff' : 'var(--text-primary,#111)';
+    btn.title = on
+      ? (_ch173BrushMode === 'sticky' ? 'فارمیٹ پینٹر چالو (بار بار) — بند کرنے کے لیے کلک یا Esc' : 'فارمیٹ پینٹر چالو — اب متن منتخب کریں')
+      : 'فارمیٹ پینٹر — ایک کلک: ایک بار، ڈبل کلک: بار بار';
+  }
+  if (doc) doc.style.cursor = on ? 'copy' : '';
+}
+
+function _ch173BrushOff() {
+  _ch173Brush = null;
+  _ch173BrushMode = null;
+  _ch173BrushUI();
+}
+window._ch173BrushOff = _ch173BrushOff;
+
+// Button par click / double click
+function _ch173BrushClick(sticky) {
+  if (_ch173BrushMode && !sticky) { _ch173BrushOff(); return; }   // dobara click = band
+  const b = _ch173BrushCopy();
+  if (!b) {
+    if (typeof showToast === 'function') showToast('ℹ️ پہلے اُس متن پر کلک کریں جس کی فارمیٹنگ نقل کرنی ہے', 'info');
+    return;
+  }
+  _ch173Brush = b;
+  _ch173BrushMode = sticky ? 'sticky' : 'once';
+  _ch173BrushUI();
+}
+window._ch173BrushClick = _ch173BrushClick;
+
+// Document par matn chunte hi formatting lag jaye
+function _ch173BindBrush() {
+  const doc = document.getElementById('ch173-doc');
+  if (!doc || doc._brushBound) return;
+  doc._brushBound = true;
+  doc.addEventListener('mouseup', () => {
+    if (!_ch173BrushMode) return;
+    setTimeout(() => {
+      if (!_ch173BrushMode) return;
+      const done = _ch173BrushPaint();
+      if (done && _ch173BrushMode === 'once') _ch173BrushOff();
+    }, 10);
+  });
+  if (!window._ch173BrushEscBound) {
+    window._ch173BrushEscBound = true;
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && _ch173BrushMode) _ch173BrushOff();
+    });
+  }
+}
+window._ch173BindBrush = _ch173BindBrush;
+
 function _ch173Fmt(cmd) {
   try { document.execCommand(cmd, false, null); } catch(_) {}
 }
-// Font chhota/bara — chune hue matn par, warna poore doc par
+// Purana naam bhi chalta rahe (kahin aur se pukara ja raha ho to)
 function _ch173FontStep(dir) {
   const doc = document.getElementById('ch173-doc');
   if (!doc) return;
-  const sel = window.getSelection();
-  if (sel && !sel.isCollapsed) {
-    try {
-      document.execCommand('fontSize', false, dir > 0 ? '5' : '2');
-      return;
-    } catch(_) {}
-  }
-  // Poore table ka font
-  const cur = parseFloat(doc.dataset.fs || '14');
-  const nf = Math.min(28, Math.max(8, cur + (dir > 0 ? 1 : -1)));
-  doc.dataset.fs = nf;
-  doc.querySelectorAll('.ch173-table th, .ch173-table td, .rotinner, .hinner, .ch173-cont')
-     .forEach(el => { el.style.fontSize = nf + 'pt'; });
-  if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
+  const cur = parseFloat(doc.dataset.fs || String(R173_FONT_DEFAULT));
+  const i = R173_FONT_SIZES.indexOf(cur);
+  let next;
+  if (i >= 0) next = R173_FONT_SIZES[Math.min(R173_FONT_SIZES.length - 1, Math.max(0, i + (dir > 0 ? 1 : -1)))];
+  else next = Math.min(72, Math.max(8, cur + (dir > 0 ? 1 : -1)));
+  _ch173SetFont(next);
+  const selEl = document.getElementById('ch173-font-sel');
+  if (selEl) selEl.value = String(next);
 }
 window._chBtn = _chBtn;
 window._ch173Fmt = _ch173Fmt;
