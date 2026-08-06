@@ -160,8 +160,11 @@ function _renderR173() {
         margin:18px 0 16px 0; direction:rtl; flex-wrap:wrap; line-height:1.4;
         justify-content:center; }
       #ch173-doc .ch173-caseline .fl{ display:inline-block; min-width:40px;
-        border:none; text-align:right; outline:none; font-weight:normal; }
+        border:none; text-align:right; outline:none; font-weight:normal;
+        unicode-bidi:isolate; direction:rtl; }
       #ch173-doc .ch173-caseline .fl-lg{ min-width:60px; }
+      /* "ت پ" — دفعات کے بعد آخر میں، اپنا الگ خانہ */
+      #ch173-doc .ch173-caseline .fl-suf{ min-width:24px; }
 
       #ch173-doc .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
       #ch173-doc .ch173-table th, #ch173-doc .ch173-table td{
@@ -395,7 +398,7 @@ function _renderR173() {
           <div class="ch173-caseline">
             <span>مقدمہ نمبر <span class="fl" contenteditable="true" data-k="cl_fir">${bs.cl_fir !== undefined ? sanitizeHtml(bs.cl_fir) : esc(c.fir_number||'')}</span></span>
             <span>مورخہ <span class="fl" contenteditable="true" data-k="cl_date">${bs.cl_date !== undefined ? sanitizeHtml(bs.cl_date) : esc(formatDate(c.fir_date)||'')}</span></span>
-            <span>جرم <span class="fl fl-lg" contenteditable="true" data-k="cl_jurm">${bs.cl_jurm !== undefined ? sanitizeHtml(bs.cl_jurm) : esc(c.section_of_law||'')}</span></span>
+            <span>جرم <span class="fl fl-lg" contenteditable="true" data-k="cl_jurm">${bs.cl_jurm !== undefined ? sanitizeHtml(bs.cl_jurm) : esc(_ch173JurmParts(c.section_of_law).body)}</span> <span class="fl fl-suf" contenteditable="true" data-k="cl_jurm_suf">${bs.cl_jurm_suf !== undefined ? sanitizeHtml(bs.cl_jurm_suf) : esc(_ch173JurmParts(c.section_of_law).suffix)}</span></span>
           </div>
 
           <table class="ch173-table" id="ch173-table">
@@ -761,8 +764,9 @@ function _printR173() {
         .ch173-caseline{ display:flex; gap:22px; align-items:baseline; font-size:14pt;
           margin:18px 0 16px 0; direction:rtl; flex-wrap:wrap; line-height:1.4; justify-content:center; }
         .ch173-caseline .fl{ display:inline-block; min-width:40px; border:none;
-          text-align:right; font-weight:normal; }
+          text-align:right; font-weight:normal; unicode-bidi:isolate; direction:rtl; }
         .ch173-caseline .fl-lg{ min-width:60px; }
+        .ch173-caseline .fl-suf{ min-width:24px; }
 
         /* Table */
         .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
@@ -1396,6 +1400,24 @@ function _ch173ShoLine(o) {
   return '';
 }
 window._ch173ShoLine = _ch173ShoLine;
+
+// ═══ جرم — دفعات اور "ت پ" الگ الگ ═══
+// "ت پ" (تعزیراتِ پاکستان) ہمیشہ دفعات کے بعد، آخر میں آنا چاہیے۔ اگر دونوں ایک ہی
+// خانے میں ہوں تو RTL/LTR ملی جلی تحریر کی وجہ سے اس کی جگہ بدل سکتی ہے، اس لیے
+// اسے الگ خانے میں رکھا جاتا ہے — تب ترتیب ہمیشہ پکی رہتی ہے۔
+const R173_JURM_SUF_RE = /[\s،,\-]*(ت\s*\.?\s*پ|تعزیرات\s*پاکستان)\s*$/;
+
+function _ch173JurmParts(raw, savedSuf) {
+  const txt = String(raw || '').trim();
+  const m = txt.match(R173_JURM_SUF_RE);
+  const body = m ? txt.slice(0, m.index).trim() : txt;
+  let suffix;
+  if (savedSuf !== undefined && savedSuf !== null) suffix = String(savedSuf);
+  else if (m) suffix = m[1].replace(/\s+/g, ' ').trim();
+  else suffix = 'ت پ';
+  return { body, suffix };
+}
+window._ch173JurmParts = _ch173JurmParts;
 
 // ═══ آج کی تاریخ — ہمیشہ DD/MM/YYYY (عالمی formatDate پہلے، ورنہ خود) ═══
 function _ch173Today() {
