@@ -97,6 +97,9 @@ function _trackUsage(page) {
 let _usageDisabled = false;
 async function _flushUsage() {
   if (_usageDisabled) return;
+  // Login ke baghair koi query nahi — warna 401 error console mein aata hai
+  // (logout/naye session ke baad cache mein officer bacha rehta tha).
+  if (typeof currentUser === 'undefined' || !currentUser) return;
   const buffer = { ..._usageBuffer };
   _usageBuffer = {};
   if (!Object.keys(buffer).length) return;
