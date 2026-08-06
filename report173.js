@@ -198,7 +198,7 @@ function _renderR173() {
       #ch173-doc .hcell-td{ padding:0; vertical-align:top; }
       #ch173-doc .hinner{
         width:100%; height:100%; padding:5px; box-sizing:border-box;
-        direction:rtl; text-align:justify; text-align-last:justify; outline:none;
+        direction:rtl; text-align:justify; text-align-last:right; outline:none;
         line-height:1.15; overflow:hidden; overflow-wrap:break-word;
         white-space:pre-wrap; font-size:14pt;
       }
@@ -209,6 +209,14 @@ function _renderR173() {
         padding:6px 4px; min-height:40px; outline:none; margin-top:0;
         overflow-wrap:break-word; border:none !important; white-space:pre-wrap;
       }
+      /* SHO wala khana — dayen taraf تفصیل کاغذات, bayen taraf SHO + تاریخ */
+      #ch173-doc .ch173-sho-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; }
+      #ch173-doc .sho-right{ text-align:right; font-weight:700; outline:none; min-width:120px; }
+      #ch173-doc .sho-left{ text-align:left; direction:rtl; min-width:220px; }
+      #ch173-doc .sho-left > div{ outline:none; }
+      #ch173-doc .sho-date{ font-size:11pt; color:#333; margin-top:2px; min-height:18px; cursor:pointer; }
+      #ch173-doc .sho-date:empty::before{ content:'تاریخ…'; color:#aaa; }
+      @media print{ #ch173-doc .sho-date:empty::before{ content:''; } }
       /* Izafi khane screen par nazar aayen (kahan likhna hai pata chale) —
          print mein yeh nishan nahi aata */
       #ch173-doc .ch173-cont:empty{ min-height:34px; }
@@ -242,7 +250,7 @@ function _renderR173() {
       #ch173-doc .rotinner{
         width:100%; height:100%; box-sizing:border-box; padding:4px;
         writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
-        direction:rtl; text-align:left; outline:none; unicode-bidi:plaintext;
+        direction:rtl; text-align:start; outline:none; unicode-bidi:plaintext;
         line-height:1.2; overflow-wrap:break-word; white-space:pre-wrap;
         overflow:hidden; font-size:14pt;
       }
@@ -310,6 +318,10 @@ function _renderR173() {
         .ch173-cont{ direction:rtl; text-align:justify; text-align-last:right;
           font-size:14pt; line-height:1.15; padding:6px 4px; overflow-wrap:break-word;
           border:none !important; white-space:pre-wrap; }
+        .ch173-sho-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; }
+        .sho-right{ text-align:right; font-weight:700; }
+        .sho-left{ text-align:left; direction:rtl; }
+        .sho-date{ font-size:11pt; color:#000; margin-top:2px; }
         /* Matn safhe se zyada ho to khud agle safhe (back side) par chala jaye */
         .ch173-cont{ page-break-inside:auto; break-inside:auto; }
         .acc-pick{ display:none !important; }
@@ -322,7 +334,7 @@ function _renderR173() {
         .ch173-cont:empty{ display:none; }
         .rotinner{ width:100%; height:100%; box-sizing:border-box; padding:4px;
           writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
-          direction:rtl; text-align:left; line-height:1.2; unicode-bidi:plaintext;
+          direction:rtl; text-align:start; line-height:1.2; unicode-bidi:plaintext;
           overflow-wrap:break-word; white-space:pre-wrap; overflow:hidden; font-size:14pt; }
         .rothead{ text-align:center !important; white-space:normal; }
         .colgrip,.rowgrip{ display:none !important; }
@@ -403,10 +415,31 @@ function _renderR173() {
             </tbody>
           </table>
 
+          <!-- خانہ 1: باقی متن (اوپر والے کالم سے خود آتا ہے) -->
           <div class="ch173-cont" contenteditable="true" data-k="cont_text">${bv('cont_text')}</div>
-          <div class="ch173-cont" contenteditable="true" data-k="cont_text2">${bv('cont_text2')}</div>
-          <div class="ch173-cont" contenteditable="true" data-k="cont_text3">${bv('cont_text3')}</div>
-          <div class="ch173-cont" contenteditable="true" data-k="cont_text4">${bv('cont_text4')}</div>
+
+          <!-- خانہ 2: تفصیل کاغذات (دائیں) + SHO و تاریخ (بائیں) -->
+          <div class="ch173-cont ch173-sho-row">
+            <div class="sho-right" contenteditable="true" data-k="papers_txt">${bs.papers_txt !== undefined ? sanitizeHtml(bs.papers_txt) : 'تفصیل کاغذات'}</div>
+            <div class="sho-left">
+              <div contenteditable="true" data-k="sho1">${bs.sho1 !== undefined ? sanitizeHtml(bs.sho1) : esc(_ch173ShoLine(o))}</div>
+              <div class="sho-date" contenteditable="true" data-k="sho1_date"
+                   onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bv('sho1_date')}</div>
+            </div>
+          </div>
+
+          <!-- خانہ 3: خالی (بعد میں پُر کیا جائے گا) -->
+          <div class="ch173-cont" contenteditable="true" data-k="cont_blank">${bv('cont_blank')}</div>
+
+          <!-- خانہ 4: SHO و تاریخ (بائیں) -->
+          <div class="ch173-cont ch173-sho-row">
+            <div class="sho-right"></div>
+            <div class="sho-left">
+              <div contenteditable="true" data-k="sho2">${bs.sho2 !== undefined ? sanitizeHtml(bs.sho2) : esc(_ch173ShoLine(o))}</div>
+              <div class="sho-date" contenteditable="true" data-k="sho2_date"
+                   onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bv('sho2_date')}</div>
+            </div>
+          </div>
 
         </div>
       </div>
@@ -727,20 +760,24 @@ function _printR173() {
         .rotclip{ position:absolute; inset:0; overflow:hidden; }
         .rotinner{ width:100%; height:100%; box-sizing:border-box; padding:4px;
           writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
-          direction:rtl; text-align:left; line-height:1.2; unicode-bidi:plaintext;
+          direction:rtl; text-align:start; line-height:1.2; unicode-bidi:plaintext;
           overflow-wrap:break-word; white-space:pre-wrap; overflow:hidden; font-size:14pt; }
         .rothead{ text-align:center !important; }
 
         /* Column 7 — normal RTL */
         .hcell-td{ padding:0; vertical-align:top; }
         .hinner{ width:100%; height:100%; padding:5px; box-sizing:border-box;
-          direction:rtl; text-align:justify; text-align-last:justify; line-height:1.15;
+          direction:rtl; text-align:justify; text-align-last:right; line-height:1.15;
           overflow:hidden; overflow-wrap:break-word; white-space:pre-wrap; font-size:14pt; }
 
         /* Table ke neeche baqaya matn — koi kinari lakeer nahi */
         .ch173-cont{ direction:rtl; text-align:justify; text-align-last:right;
           font-size:14pt; line-height:1.15; padding:6px 4px; overflow-wrap:break-word;
           border:none !important; white-space:pre-wrap; }
+        .ch173-sho-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; }
+        .sho-right{ text-align:right; font-weight:700; }
+        .sho-left{ text-align:left; direction:rtl; }
+        .sho-date{ font-size:11pt; color:#000; margin-top:2px; }
         /* Matn safhe se zyada ho to khud agle safhe (back side) par chala jaye */
         .ch173-cont{ page-break-inside:auto; break-inside:auto; }
 
@@ -1145,3 +1182,30 @@ function _ch173FontStep(dir) {
 window._chBtn = _chBtn;
 window._ch173Fmt = _ch173Fmt;
 window._ch173FontStep = _ch173FontStep;
+
+// ═══ SHO ki line — system se khud (naam + عہدہ + تھانہ) ═══
+function _ch173ShoLine(o) {
+  o = o || (typeof currentOfficer !== 'undefined' ? currentOfficer : {}) || {};
+  const nm  = o.full_name   || '';
+  const rk  = o.designation || '';
+  const st  = o.station     || '';
+  let line = 'SHO';
+  if (nm) line += ' ' + nm;
+  if (rk) line += ' (' + rk + ')';
+  if (st) line += ' تھانہ ' + st;
+  return line;
+}
+window._ch173ShoLine = _ch173ShoLine;
+
+// ═══ تاریخ — system POOCHTA hai, khud nahi likhta ═══
+function _ch173PickDate(el) {
+  if (!el) return;
+  const cur = (el.innerText || '').trim();
+  const inp = prompt('تاریخ درج کریں (DD/MM/YYYY):', cur);
+  if (inp === null) return;                       // منسوخ
+  const t = inp.trim();
+  if (!t) { el.innerText = ''; return; }
+  el.innerText = (typeof formatDate === 'function') ? formatDate(t) : t;
+  try { _r173Dirty = true; } catch(_) {}
+}
+window._ch173PickDate = _ch173PickDate;
