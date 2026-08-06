@@ -178,8 +178,8 @@ function _renderCdr() {
           <div style="flex:1;text-align:center;">
             <div style="font-weight:600;text-align:center;">Forwarded</div>
             <div style="height:60px;"></div>
-            <div style="font-weight:bold;text-align:center;">${(typeof getSHOName==='function'?getSHOName():'')}</div>
-            <div style="border-top:1px solid #333;width:70%;margin:0 auto;padding-top:6px;text-align:center;">SHO تھانہ ${o.station||'صدر ملتان'}</div>
+            <div style="height:6px;"></div>
+            <div style="border-top:1px solid #333;width:70%;margin:0 auto;padding-top:6px;text-align:center;font-weight:bold;">${(typeof getSHOSignLine==='function') ? getSHOSignLine(o.station||'صدر ملتان') : ''}</div>
           </div>
         </div>
 

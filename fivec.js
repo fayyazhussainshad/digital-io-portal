@@ -214,10 +214,10 @@ async function open5CResponse(id){
 <br><br><br><br><br>
 <div style="display:flex;justify-content:flex-start;direction:ltr;">
   <div style="text-align:center;min-width:200px;">
-    <div style="border-top:1px solid #333;padding-top:6px;margin-top:50px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;font-weight:bold;">
-      ${(typeof getSHOSignature==='function') ? esc5C(getSHOSignature(o.station||'صدر ملتان')) : ''}
+    <div style="border-top:1px solid #333;padding-top:6px;margin-top:50px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;font-weight:bold;text-align:center;">
+      ${esc5C((typeof getSHOSignLine==='function') ? getSHOSignLine(o.station||'صدر ملتان') : '')}
     </div>
-    <div style="font-size:11px;color:#555;margin-top:4px;">${today}</div>
+    <div style="font-size:11px;color:#555;margin:0;text-align:center;direction:ltr;">${today}</div>
   </div>
 </div>`;
 
@@ -559,10 +559,10 @@ async function _print5C(id) {
     <div class="resp">${(a.response_text||'').replace(/\n/g,'<br>') || '&nbsp;'}</div>
     <div style="display:flex;justify-content:flex-start;direction:ltr;margin-top:30px;">
       <div style="text-align:center;min-width:200px;">
-        <div style="border-top:1px solid #000;padding-top:6px;margin-top:35px;font-weight:700;direction:rtl;">
-          ${(typeof getSHOSignature==='function') ? esc5C(getSHOSignature(o.station||'—')) : ''}
+        <div style="border-top:1px solid #000;padding-top:6px;margin-top:35px;font-weight:700;direction:rtl;text-align:center;">
+          ${esc5C((typeof getSHOSignLine==='function') ? getSHOSignLine(o.station||'') : '')}
         </div>
-        <div style="font-size:11px;margin-top:4px;">${formatDate(new Date())}</div>
+        <div style="font-size:11px;margin:0;text-align:center;direction:ltr;">${formatDate(new Date())}</div>
       </div>
     </div>
     <div class="footer">Digital IO</div>

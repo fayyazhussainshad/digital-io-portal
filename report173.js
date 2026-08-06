@@ -584,14 +584,13 @@ function _renderR173() {
 
         <!-- تفصیل کاغذات -->
         ${isClosing ? (() => {
-          const _sho = (typeof getSHOName==='function'?getSHOName():'');
+          const _sho = (typeof getSHOSignLine==='function') ? getSHOSignLine(o.station||'صدر ملتان') : '';
           const items6 = ['فارم ہذا','نقل FIR','اصل تحریر','نقشہ موقع','اطلاع نامہ مدعی','اصل ضمنی SHO'];
           return `
         <!-- Header row: top SHO (left) + heading (right), full-width line below -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin:16px 0 4px;">
           <div class="sho-signature-block-top" style="text-align:right;">
             <div class="sho-name-line" style="font-weight:${_sho?'bold':'normal'};font-size:14px;">${_sho}</div>
-            <div style="font-size:13px;">SI/SHO تھانہ ${o.station||'صدر ملتان'}</div>
           </div>
           <div style="font-weight:bold;font-size:15px;">تفصیل کاغذات:</div>
         </div>
@@ -612,7 +611,6 @@ function _renderR173() {
         <div class="sho-signature-block-bottom" style="text-align:right;margin-top:8px;min-width:220px;display:inline-block;">
           <div style="border-bottom:1px solid #000;min-height:50px;margin-bottom:6px;"></div>
           <div class="sho-name-line" style="font-weight:${_sho?'bold':'normal'};font-size:14px;">${_sho}</div>
-          <div style="font-size:13px;">SI/SHO تھانہ ${o.station||'صدر ملتان'}</div>
           <div style="font-size:13px;margin-top:6px;">تاریخ: _______________</div>
         </div>`;
         })() : `
@@ -633,11 +631,10 @@ function _renderR173() {
         <div style="margin-top:24px;display:flex;justify-content:flex-start;">
           <div style="border-top:1px solid #333;padding-top:6px;display:flex;flex-direction:row-reverse;gap:8px;align-items:center;font-weight:bold;">
             ${(() => {
-              const shoName = (typeof getSHOName === 'function') ? getSHOName() : '';
+              const shoName = (typeof getSHOSignLine === 'function') ? getSHOSignLine(o.station||'صدر ملتان') : '';
               const val = v('sho_name', shoName);
               return `<span contenteditable="true" data-k="sho_name" oninput="this.style.fontWeight='bold';" style="min-width:120px;">${val}</span>`;
             })()}
-            <span>SI/SHO تھانہ ${o.station||'صدر ملتان'}</span>
           </div>
         </div>` : ''}
       </div>
@@ -1193,21 +1190,10 @@ window._ch173FontStep = _ch173FontStep;
 // ═══ SHO ki line — system se khud (naam + عہدہ + تھانہ) ═══
 function _ch173ShoLine(o) {
   o = o || (typeof currentOfficer !== 'undefined' ? currentOfficer : {}) || {};
-  // اوزار → SHO wali field se: rank + naam (localStorage 'digital_io_sho')
-  let rank = '', nm = '';
-  try {
-    const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}');
-    rank = sho.rank || '';
-    nm   = sho.name || '';
-  } catch(_) {}
-  const st = o.station || '';
-  // Tarteeb: NAAM pehle → phir rank (SI/SHO ya I/SHO) → phir تھانہ
-  const parts = [];
-  if (nm)   parts.push(nm);
-  if (rank) parts.push(rank);
-  let line = parts.join(' ');
-  if (st) line += (line ? ' ' : '') + 'تھانہ ' + st;
-  return line;
+  // Markazi helper — poore system mein aik hi tarteeb:
+  // NAAM → RANK (SI/SHO ya I/SHO) → تھانہ
+  if (typeof getSHOSignLine === 'function') return getSHOSignLine(o.station || '');
+  return '';
 }
 window._ch173ShoLine = _ch173ShoLine;
 
