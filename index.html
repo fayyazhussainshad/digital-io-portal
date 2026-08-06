@@ -1203,6 +1203,10 @@ window.dioGoBack = function () {
     // Agar koi modal khula hai to woh band karo
     const m = document.querySelector('.modal-overlay,[id$="-overlay"]');
     if (m && m.style.display !== 'none' && typeof closeModal === 'function') { closeModal(); return; }
+    // Case ka workspace khula hai? → مقدمات ki fehrist par wapas
+    if (document.getElementById('misal-doc-bar') || document.getElementById('workspace-editor-area')) {
+      if (typeof goBackToCases === 'function') { goBackToCases(); return; }
+    }
     // Warna pichhle safhe par
     const h = window._dioPageHist;
     if (h.length > 1) {

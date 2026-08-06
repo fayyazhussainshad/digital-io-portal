@@ -3,7 +3,10 @@
    Stored in localStorage, used across all reports
    ═══════════════════════════════════════════════════════════ */
 
-const SHO_DSP_RANKS = ['ASI','SI','Inspector','DSP','SDPO','SP','SSP'];
+// SHO ke liye SIRF do عہدے; DSP/SDPO ke liye apni fehrist
+const SHO_RANKS = ['SI/SHO', 'I/SHO'];
+const DSP_RANKS = ['DSP','SDPO','SP','SSP'];
+const SHO_DSP_RANKS = SHO_RANKS;   // backward compatible
 
 // Helper: get SHO rank+name
 function getSHOName() {
@@ -35,7 +38,7 @@ function openShoDspModal(type) {
       <div style="display:flex;gap:10px;align-items:center;">
         <label style="min-width:60px;">رینک:</label>
         <select id="shodsp-rank" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:14px;">
-          ${SHO_DSP_RANKS.map(r => `<option value="${r}" ${cur.rank===r?'selected':''}>${r}</option>`).join('')}
+          ${(isSho ? SHO_RANKS : DSP_RANKS).map(r => `<option value="${r}" ${cur.rank===r?'selected':''}>${r}</option>`).join('')}
         </select>
       </div>
       <div style="display:flex;gap:10px;align-items:center;">

@@ -410,7 +410,7 @@ function _renderR173() {
             </thead>
             <tbody>
               <tr>
-                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bs.madai !== undefined ? sanitizeHtml(bs.madai) : (_ch173Version==='fir' ? esc(c.complainant||'') : '')}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bs.madai !== undefined ? sanitizeHtml(bs.madai) : esc(_ch173Version==='cross_version' ? (c.cross_complainant||'') : (c.complainant||''))}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'ghair_giraftar')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'zer_hirasat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'bar_zamanat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></div></div></td>
@@ -1193,14 +1193,20 @@ window._ch173FontStep = _ch173FontStep;
 // ═══ SHO ki line — system se khud (naam + عہدہ + تھانہ) ═══
 function _ch173ShoLine(o) {
   o = o || (typeof currentOfficer !== 'undefined' ? currentOfficer : {}) || {};
-  // AHEM: yahan SHO ka naam aana chahiye — تفتیشی افسر (IO) ka NAHI.
-  // SHO ka naam aur عہدہ اوزار (topbar) wali SHO field se aata hai.
-  const nm   = o.sho_name || '';
-  const st   = o.station  || '';
-  const rank = o.sho_rank || 'SI/SHO';
-  let line = rank;
-  if (nm) line += ' ' + nm;
-  if (st) line += ' تھانہ ' + st;
+  // اوزار → SHO wali field se: rank + naam (localStorage 'digital_io_sho')
+  let rank = '', nm = '';
+  try {
+    const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}');
+    rank = sho.rank || '';
+    nm   = sho.name || '';
+  } catch(_) {}
+  const st = o.station || '';
+  // Sirf teen cheezen: rank + naam + تھانہ (koi lafz dohra nahi)
+  const parts = [];
+  if (rank) parts.push(rank);
+  if (nm)   parts.push(nm);
+  let line = parts.join(' ');
+  if (st) line += (line ? ' ' : '') + 'تھانہ ' + st;
   return line;
 }
 window._ch173ShoLine = _ch173ShoLine;
