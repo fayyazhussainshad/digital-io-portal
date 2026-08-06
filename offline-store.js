@@ -257,6 +257,8 @@ const offlineStore={
 
   // Call after every successful online login to cache the profile
   async saveSession(user, officer){
+    // user (aur uska id) na ho to kuch save mat karo — warna crash aata hai
+    if (!user || !user.id) return;
     await _openDB();
     const tx=_odb.transaction('session_cache','readwrite');
     tx.objectStore('session_cache').put({

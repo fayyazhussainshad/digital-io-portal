@@ -1188,6 +1188,8 @@ async function doLogin() {
 }
 
 async function _loadOfficerProfile() {
+  // currentUser set na ho to profile load mat karo (crash se bachao)
+  if (!currentUser || !currentUser.id) return;
   try {
     const { data } = await supabaseClient.from('officers').select('*').eq('user_id',currentUser.id).single();
     if (data) {
@@ -1195,7 +1197,7 @@ async function _loadOfficerProfile() {
       // Cache for offline use
       try { localStorage.setItem('dio_officer_cache', JSON.stringify(data)); } catch(_) {}
       // Save session to IndexedDB so app opens offline next time
-      try { if (typeof offlineStore !== 'undefined' && offlineStore.saveSession) offlineStore.saveSession(currentUser, data); } catch(_) {}
+      try { if (currentUser && currentUser.id && typeof offlineStore !== 'undefined' && offlineStore.saveSession) offlineStore.saveSession(currentUser, data); } catch(_) {}
     }
   } catch(_) {
     // Offline or error — restore from cache
