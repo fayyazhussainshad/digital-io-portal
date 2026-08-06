@@ -1217,6 +1217,9 @@ function setLoginLoading(v) {
 }
 
 async function loginSuccess() {
+  // SECURITY: is browser session ka nishan. sessionStorage browser band hote hi
+  // khud mit jata hai — is liye app dobara kholne par password lazmi hoga.
+  try { sessionStorage.setItem('dio_sess_active', '1'); } catch(_) {}
   const ls=document.getElementById('login-screen'), app=document.getElementById('main-app');
   ls.style.transition='opacity 0.4s'; ls.style.opacity='0';
   setTimeout(()=>{ ls.style.display='none'; app.style.display='flex'; setLoginLoading(false); initApp(); },400);
@@ -1767,7 +1770,9 @@ window.addEventListener('load', async function() {
       }
       // Fallback: localStorage-cached officer
       const cachedOfficer = sess?.officer || JSON.parse(localStorage.getItem('dio_officer_cache') || 'null');
-      if (cachedOfficer) {
+      // Wahi usool offline par bhi — naya browser session → login lazmi
+      const sameSessionOff = (() => { try { return sessionStorage.getItem('dio_sess_active') === '1'; } catch(_) { return false; } })();
+      if (cachedOfficer && sameSessionOff) {
         currentOfficer = cachedOfficer;
         currentUser = sess?.user || { id: cachedOfficer.user_id };
         loginSuccess();
@@ -1780,10 +1785,23 @@ window.addEventListener('load', async function() {
     return;
   }
 
-  // ONLINE: normal Supabase session check
+  // ONLINE: session check — magar SIRF usi browser session mein auto-login.
+  // ═══ SECURITY FIX ═══
+  // Pehle Supabase ka mehfooz session milte hi app KHUD-BAKHUD khul jata tha,
+  // chahe browser band kar ke dobara khola gaya ho — yani koi bhi shakhs app
+  // khol kar bina password andar aa sakta tha. Ab agar yeh naya browser session
+  // hai to session khatam kar ke login screen dikhate hain.
   try {
+    const sameSession = (() => { try { return sessionStorage.getItem('dio_sess_active') === '1'; } catch(_) { return false; } })();
     const { data:{ session } } = await supabaseClient.auth.getSession();
     if (session?.user) {
+      if (!sameSession) {
+        // Naya browser session → password lazmi
+        try { await supabaseClient.auth.signOut(); } catch(_) {}
+        currentUser = null; currentOfficer = null;
+        try { setLoginLoading(false); } catch(_) {}
+        return;
+      }
       currentUser = session.user;
       await _loadOfficerProfile();
       loginSuccess();
@@ -1792,7 +1810,10 @@ window.addEventListener('load', async function() {
 });
 
 supabaseClient.auth.onAuthStateChange((event, session) => {
-  if (event==='SIGNED_OUT') { currentUser=null; currentOfficer=null; }
+  if (event==='SIGNED_OUT') {
+    currentUser=null; currentOfficer=null;
+    try { sessionStorage.removeItem('dio_sess_active'); } catch(_) {}
+  }
 });
 
 // ═══════════════════════════════════════════════════════════
