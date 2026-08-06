@@ -217,24 +217,38 @@ function _renderR173() {
       #ch173-doc .ch173-sho-table{ width:100%; border-collapse:collapse; direction:rtl;
         table-layout:auto; margin-top:6px; }
       #ch173-doc .ch173-sho-table td{ vertical-align:top; padding:0; }
-      /* کالم 1 — تفصیل کاغذات */
+      /* کالم 1 — تفصیل کاغذات (عنوان) + اس کے نیچے لکھنے کی جگہ۔ کوئی اوپر والی لکیر نہیں */
       #ch173-doc .ch173-sho-table .sho-papers{
-        width:auto; text-align:right; vertical-align:top;
-        border-top:1px solid #000; padding:4px 6px 0 0;
-        font-weight:700; text-decoration:underline; white-space:nowrap; outline:none;
+        width:auto; text-align:right; vertical-align:top; border:none;
+        padding:4px 6px 0 0;
+      }
+      #ch173-doc .ch173-sho-table .sho-papers-head{
+        font-weight:700; text-decoration:underline; white-space:nowrap;
+        font-size:14pt; line-height:1.25; margin:0;
+      }
+      /* کرسر یہاں بلنک کرتا ہے — ڈیٹا عنوان کے نیچے سے شروع ہوتا ہے */
+      #ch173-doc .ch173-sho-table .sho-papers-body{
+        font-size:14pt; line-height:1.25; text-align:right; white-space:pre-wrap;
+        outline:1px dashed rgba(120,120,120,0.35); padding:3px 4px; margin-top:4px;
+        min-height:22px; overflow-wrap:break-word;
+      }
+      #ch173-doc .ch173-sho-table .sho-papers-body:empty::before{
+        content:'یہاں کاغذات کی تفصیل لکھیں'; color:#bbb; font-size:12pt;
       }
       /* کالم 2 — چوڑائی صرف SHO لائن جتنی (شرنک-ٹو-فٹ)، تمام قطاریں برابر */
-      #ch173-doc .ch173-sho-table .sho-cell{ width:1%; white-space:nowrap; text-align:right; height:13mm; }
+      #ch173-doc .ch173-sho-table .sho-cell{ width:1%; white-space:nowrap; text-align:right; height:15mm; }
       #ch173-doc .ch173-sho-table .sho-cell-row{
         outline:1px dashed rgba(120,120,120,0.35); padding:3px 6px; line-height:1.25;
-        min-height:20px; margin:0;
+        min-height:20px; margin:0; font-size:14pt;
       }
-      #ch173-doc .ch173-sho-table .sho-cell-date{ font-size:11pt; color:#333; cursor:pointer; text-align:center; }
+      #ch173-doc .ch173-sho-table .sho-cell-date{ font-size:14pt; color:#333; cursor:pointer; text-align:center; }
       #ch173-doc .ch173-sho-table .sho-cell-date:empty::before{ content:'تاریخ…'; color:#aaa; }
       #ch173-doc .ch173-sho-table .sho-cell-blank:empty::before{ content:'…'; color:#ccc; }
       @media print{
         #ch173-doc .ch173-sho-table td{ border:none !important; }
-        #ch173-doc .ch173-sho-table .sho-papers{ border-top:1px solid #000 !important; }
+        #ch173-doc .ch173-sho-table .sho-papers{ border:none !important; }
+        #ch173-doc .ch173-sho-table .sho-papers-body{ outline:none !important; }
+        #ch173-doc .ch173-sho-table .sho-papers-body:empty::before{ content:''; }
         #ch173-doc .ch173-sho-table .sho-cell-row{ outline:none !important; }
         #ch173-doc .ch173-sho-table .sho-cell-date:empty::before{ content:''; }
         #ch173-doc .ch173-sho-table .sho-cell-blank:empty::before{ content:''; }
@@ -447,7 +461,10 @@ function _renderR173() {
                تمام قطاریں editable؛ پرنٹ میں کالم 2 کی کوئی لکیر نہیں آتی -->
           <table class="ch173-sho-table">
             <tr>
-              <td class="sho-papers" rowspan="5" contenteditable="true" data-k="papers_txt">${bs.papers_txt !== undefined ? sanitizeHtml(bs.papers_txt) : 'تفصیل کاغذات'}</td>
+              <td class="sho-papers" rowspan="5">
+                <div class="sho-papers-head">تفصیل کاغذات</div>
+                <div class="sho-papers-body" contenteditable="true" data-k="papers_body">${bv('papers_body')}</div>
+              </td>
               <td class="sho-cell">
                 <div class="sho-cell-row sho-cell-blank" contenteditable="true" data-k="sho_r1">${bv('sho_r1')}</div>
               </td>
@@ -828,13 +845,16 @@ function _printR173() {
         /* SHO دستخط خانہ — پرنٹ میں کوئی لکیر نہیں، صرف متن (SHO لائن + تاریخ) */
         .ch173-sho-table{ width:100%; border-collapse:collapse; direction:rtl; table-layout:auto; margin-top:6px; }
         .ch173-sho-table td{ border:none !important; vertical-align:top; padding:0; }
-        /* کالم 1 — تفصیل کاغذات: صرف اوپر والی لکیر چھپتی ہے */
+        /* کالم 1 — تفصیل کاغذات: کوئی لکیر نہیں */
         .ch173-sho-table .sho-papers{ width:auto; text-align:right; vertical-align:top;
-          border-top:1px solid #000 !important; padding:4px 6px 0 0;
-          font-weight:700; text-decoration:underline; white-space:nowrap; }
-        .ch173-sho-table .sho-cell{ width:1%; white-space:nowrap; text-align:right; height:13mm; }
-        .ch173-sho-table .sho-cell-row{ padding:2px 6px; line-height:1.25; margin:0; min-height:20px; }
-        .ch173-sho-table .sho-cell-date{ font-size:11pt; color:#000; text-align:center; }
+          border:none !important; padding:4px 6px 0 0; }
+        .ch173-sho-table .sho-papers-head{ font-weight:700; text-decoration:underline;
+          white-space:nowrap; font-size:14pt; line-height:1.25; margin:0; }
+        .ch173-sho-table .sho-papers-body{ font-size:14pt; line-height:1.25; text-align:right;
+          white-space:pre-wrap; padding:3px 4px; margin-top:4px; overflow-wrap:break-word; }
+        .ch173-sho-table .sho-cell{ width:1%; white-space:nowrap; text-align:right; height:15mm; }
+        .ch173-sho-table .sho-cell-row{ padding:2px 6px; line-height:1.25; margin:0; min-height:20px; font-size:14pt; }
+        .ch173-sho-table .sho-cell-date{ font-size:14pt; color:#000; text-align:center; }
         /* Matn safhe se zyada ho to khud agle safhe (back side) par chala jaye */
         .ch173-cont{ page-break-inside:auto; break-inside:auto; }
 
@@ -1260,7 +1280,7 @@ function _ch173FontToDoc(pt) {
   const doc = document.getElementById('ch173-doc');
   if (!doc) return;
   doc.dataset.fs = pt;
-  doc.querySelectorAll('.ch173-table th, .ch173-table td, .rotinner, .hinner, .ch173-cont, .sho-cell-row:not(.sho-cell-date), .sho-papers')
+  doc.querySelectorAll('.ch173-table th, .ch173-table td, .rotinner, .hinner, .ch173-cont, .sho-cell-row, .sho-papers-head, .sho-papers-body')
      .forEach(el => { el.style.fontSize = pt + 'pt'; });
   const hid = doc.querySelector('[data-k="doc_font"]');
   if (hid) hid.value = pt;
