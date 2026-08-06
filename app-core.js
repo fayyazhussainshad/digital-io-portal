@@ -1342,6 +1342,7 @@ async function _verifyPin() {
   const savedEmail = localStorage.getItem('dio_pin_email');
   const savedToken = localStorage.getItem('dio_pin_token');
 
+  // PIN bilkul set hi nahi hua
   if (!savedPin) {
     showToast('⚠️ پہلے پاسورڈ سے لاگ ان کر کے PIN سیٹ کریں (ترتیبات میں)', 'warn', 5000);
     _pinValue = ''; _renderPinDots();
@@ -1349,21 +1350,45 @@ async function _verifyPin() {
     return;
   }
 
-  if (_pinValue === savedPin && savedEmail && savedToken) {
-    try {
-      document.getElementById('login-email').value = savedEmail;
-      document.getElementById('login-password').value = atob(savedToken);
-      _pinValue = ''; _renderPinDots();
-      await doLogin();
-    } catch(e) {
-      showToast('❌ PIN لاگ ان ناکام — پاسورڈ استعمال کریں', 'error');
-      setLoginMethod('password', document.querySelectorAll('.login-method')[0]);
-    }
-  } else {
+  // Galat PIN
+  if (_pinValue !== savedPin) {
     showToast('❌ غلط PIN', 'error');
     _pinValue = ''; _renderPinDots();
+    return;
+  }
+
+  // PIN theek — magar mehfooz credentials mojood nahi (localStorage saaf ho gaya
+  // ya PIN adhoora set hua). Aik dafa password se login zaroori.
+  if (!savedEmail || !savedToken) {
+    showToast('⚠️ ایک بار پاسورڈ سے لاگ ان کر کے PIN دوبارہ سیٹ کریں', 'warn', 5000);
+    _pinValue = ''; _renderPinDots();
+    setLoginMethod('password', document.querySelectorAll('.login-method')[0]);
+    return;
+  }
+
+  // PIN theek + credentials mojood → seedha login
+  try {
+    document.getElementById('login-email').value = savedEmail;
+    document.getElementById('login-password').value = atob(savedToken);
+    _pinValue = ''; _renderPinDots();
+    await doLogin();
+  } catch(e) {
+    showToast('❌ PIN لاگ ان ناکام — پاسورڈ استعمال کریں', 'error');
+    setLoginMethod('password', document.querySelectorAll('.login-method')[0]);
   }
 }
+
+
+// PIN set ho to login screen khud PIN panel par khule (bar bar password na maange)
+function _dioDefaultLoginPanel() {
+  try {
+    if (localStorage.getItem('dio_pin') && localStorage.getItem('dio_pin_token')) {
+      const pinBtn = document.querySelectorAll('.login-method')[1];  // PIN button
+      if (pinBtn && typeof setLoginMethod === 'function') setLoginMethod('pin', pinBtn);
+    }
+  } catch(_) {}
+}
+window._dioDefaultLoginPanel = _dioDefaultLoginPanel;
 
 function setLoginMethod(m, btn) {
   // Switch active button
@@ -1396,7 +1421,7 @@ function _setupPin() {
   `);
 }
 
-function _savePin() {
+async function _savePin() {
   const pin = document.getElementById('setup-pin')?.value.trim();
   const pin2 = document.getElementById('setup-pin2')?.value.trim();
   const pass = document.getElementById('setup-pin-pass')?.value;
@@ -1415,6 +1440,13 @@ function _savePin() {
   if (!email) {
     showToast('❌ ای میل نہیں ملی', 'error'); return;
   }
+
+  // Pehle password tasdeeq karo — warna galat password mehfooz ho kar
+  // PIN login hamesha nakaam karta rahega
+  try {
+    const { error: vErr } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+    if (vErr) { showToast('❌ موجودہ پاسورڈ غلط ہے', 'error'); return; }
+  } catch(_) {}
 
   try {
     localStorage.setItem('dio_pin', pin);
@@ -1792,6 +1824,7 @@ window.addEventListener('load', async function() {
     } catch(_) {}
     // No cached session — show login with an offline note
     try { setLoginLoading(false); } catch(_) {}
+    try { _dioDefaultLoginPanel(); } catch(_) {}
     showToast('📴 آف لائن — پہلے ایک بار آن لائن لاگ اِن کریں', 'info');
     return;
   }
@@ -1811,6 +1844,7 @@ window.addEventListener('load', async function() {
         try { await supabaseClient.auth.signOut(); } catch(_) {}
         currentUser = null; currentOfficer = null;
         try { setLoginLoading(false); } catch(_) {}
+        try { _dioDefaultLoginPanel(); } catch(_) {}
         return;
       }
       currentUser = session.user;
