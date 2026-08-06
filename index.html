@@ -1125,6 +1125,9 @@ window.addEventListener('unhandledrejection', function(e){
     <!-- TOP BAR -->
     <div class="topbar">
       <div class="topbar-left" style="display:flex;align-items:center;gap:4px;flex-wrap:nowrap;overflow-x:auto;">
+        <!-- WAPAS (Chrome jaisa back arrow) — har safhe se pichhle safhe par -->
+        <button id="dio-back-btn" class="topnav-btn" onclick="dioGoBack()" title="واپس"
+          style="font-size:18px;font-weight:900;padding:6px 12px;flex-shrink:0;">←</button>
         <!-- Main nav buttons (desktop top nav) -->
         <button class="topnav-btn active" onclick="showPage('dashboard',null);window._setTopNav&&_setTopNav(this)" title="ڈیش بورڈ">🏠<span class="topnav-label"> ڈیش بورڈ</span></button>
         <button class="topnav-btn" onclick="showPage('cases',null);window._setTopNav&&_setTopNav(this)" title="مقدمات">📁<span class="topnav-label"> مقدمات</span></button>
@@ -1187,6 +1190,48 @@ if (typeof window._setTopNav !== 'function') {
     } catch(_) {}
   };
 }
+</script>
+<script>
+// ── WAPAS (back) — har safhe se pichhle safhe par ──────────────
+window._dioPageHist = window._dioPageHist || [];
+window.dioGoBack = function () {
+  try {
+    // Agar koi dastawez poore page par khuli hai to pehle woh band karo
+    if (document.getElementById('dio-docview') && typeof _dioExitDocView === 'function') {
+      _dioExitDocView(); return;
+    }
+    // Agar koi modal khula hai to woh band karo
+    const m = document.querySelector('.modal-overlay,[id$="-overlay"]');
+    if (m && m.style.display !== 'none' && typeof closeModal === 'function') { closeModal(); return; }
+    // Warna pichhle safhe par
+    const h = window._dioPageHist;
+    if (h.length > 1) {
+      h.pop();                       // mojooda
+      const prev = h[h.length - 1];
+      if (typeof showPage === 'function') { window._dioSkipHist = true; showPage(prev, null); }
+      return;
+    }
+    if (typeof showPage === 'function') showPage('dashboard', null);
+  } catch (e) { try { history.back(); } catch(_) {} }
+};
+// Har safha khulne par history mein darj
+(function () {
+  const iv = setInterval(function () {
+    if (typeof window.showPage !== 'function') return;
+    clearInterval(iv);
+    const orig = window.showPage;
+    window.showPage = function (page, el) {
+      try {
+        if (window._dioSkipHist) { window._dioSkipHist = false; }
+        else if (window._dioPageHist[window._dioPageHist.length - 1] !== page) {
+          window._dioPageHist.push(page);
+          if (window._dioPageHist.length > 40) window._dioPageHist.shift();
+        }
+      } catch(_) {}
+      return orig.apply(this, arguments);
+    };
+  }, 300);
+})();
 </script>
 <script src="offline-store.js"></script>
 <script src="app-core.js"></script>

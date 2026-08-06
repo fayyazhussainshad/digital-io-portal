@@ -210,11 +210,16 @@ function _renderR173() {
         overflow-wrap:break-word; border:none !important; white-space:pre-wrap;
       }
       /* SHO wala khana — dayen taraf تفصیل کاغذات, bayen taraf SHO + تاریخ */
-      #ch173-doc .ch173-sho-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; }
-      #ch173-doc .sho-right{ text-align:right; font-weight:700; outline:none; min-width:120px; }
+      /* تفصیل کاغذات aur SHO — bilkul AIK SEEDH mein (upar-neeche nahi) */
+      #ch173-doc .ch173-sho-row{ display:flex; justify-content:space-between;
+        align-items:flex-start; gap:20px; }
+      #ch173-doc .sho-right{ text-align:right; font-weight:700; outline:none;
+        min-width:120px; text-decoration:underline; }
       #ch173-doc .sho-left{ text-align:left; direction:rtl; min-width:220px; }
-      #ch173-doc .sho-left > div{ outline:none; }
-      #ch173-doc .sho-date{ font-size:11pt; color:#333; margin-top:2px; min-height:18px; cursor:pointer; }
+      #ch173-doc .sho-left > div{ outline:none; line-height:1.1; }
+      /* تاریخ SHO ke FORAN baad (koi bara gap nahi) */
+      #ch173-doc .sho-date{ font-size:11pt; color:#333; margin-top:0; line-height:1.1;
+        min-height:16px; cursor:pointer; }
       #ch173-doc .sho-date:empty::before{ content:'تاریخ…'; color:#aaa; }
       @media print{ #ch173-doc .sho-date:empty::before{ content:''; } }
       /* Izafi khane screen par nazar aayen (kahan likhna hai pata chale) —
@@ -319,9 +324,10 @@ function _renderR173() {
           font-size:14pt; line-height:1.15; padding:6px 4px; overflow-wrap:break-word;
           border:none !important; white-space:pre-wrap; }
         .ch173-sho-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; }
-        .sho-right{ text-align:right; font-weight:700; }
+        .sho-right{ text-align:right; font-weight:700; text-decoration:underline; }
         .sho-left{ text-align:left; direction:rtl; }
-        .sho-date{ font-size:11pt; color:#000; margin-top:2px; }
+        .sho-left > div{ line-height:1.1; }
+        .sho-date{ font-size:11pt; color:#000; margin-top:0; line-height:1.1; }
         /* Matn safhe se zyada ho to khud agle safhe (back side) par chala jaye */
         .ch173-cont{ page-break-inside:auto; break-inside:auto; }
         .acc-pick{ display:none !important; }
@@ -350,7 +356,13 @@ function _renderR173() {
         <select id="ch173-ver-sel" onchange="_ch173SetVersion(this.value)" title="ورژن"
           style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
           <option value="fir" ${_ch173Version==='fir'?'selected':''}>FIR</option>
-          <option value="cross_version" ${_ch173Version==='cross_version'?'selected':''}>کراس ورژن</option>
+          ${_ch173HasCross() ? `<option value="cross_version" ${_ch173Version==='cross_version'?'selected':''}>کراس ورژن</option>` : ''}
+        </select>
+        <select id="ch173-sho-sel" onchange="_ch173SetSho(this.value)" title="SHO عہدہ"
+          style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);
+                 color:var(--text-primary);font-size:13px;">
+          <option value="SI/SHO" ${_ch173ShoRank==='SI/SHO'?'selected':''}>SI/SHO</option>
+          <option value="I/SHO"  ${_ch173ShoRank==='I/SHO' ?'selected':''}>I/SHO</option>
         </select>
         <span style="font-size:11px;color:var(--text-muted);">↔ کالم کی لکیر کو پکڑ کر چوڑائی بدلیں</span>
         <div style="margin-right:auto;display:flex;gap:6px;">
@@ -404,7 +416,7 @@ function _renderR173() {
             </thead>
             <tbody>
               <tr>
-                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bs.madai !== undefined ? sanitizeHtml(bs.madai) : esc(c.complainant||'')}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bs.madai !== undefined ? sanitizeHtml(bs.madai) : (_ch173Version==='fir' ? esc(c.complainant||'') : '')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'ghair_giraftar')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'zer_hirasat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'bar_zamanat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></div></div></td>
@@ -775,9 +787,10 @@ function _printR173() {
           font-size:14pt; line-height:1.15; padding:6px 4px; overflow-wrap:break-word;
           border:none !important; white-space:pre-wrap; }
         .ch173-sho-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; }
-        .sho-right{ text-align:right; font-weight:700; }
+        .sho-right{ text-align:right; font-weight:700; text-decoration:underline; }
         .sho-left{ text-align:left; direction:rtl; }
-        .sho-date{ font-size:11pt; color:#000; margin-top:2px; }
+        .sho-left > div{ line-height:1.1; }
+        .sho-date{ font-size:11pt; color:#000; margin-top:0; line-height:1.1; }
         /* Matn safhe se zyada ho to khud agle safhe (back side) par chala jaye */
         .ch173-cont{ page-break-inside:auto; break-inside:auto; }
 
@@ -1189,9 +1202,9 @@ function _ch173ShoLine(o) {
   const nm  = o.full_name   || '';
   const rk  = o.designation || '';
   const st  = o.station     || '';
-  let line = 'SHO';
+  const rank = (typeof _ch173ShoRank !== 'undefined' && _ch173ShoRank) ? _ch173ShoRank : 'SI/SHO';
+  let line = rank;
   if (nm) line += ' ' + nm;
-  if (rk) line += ' (' + rk + ')';
   if (st) line += ' تھانہ ' + st;
   return line;
 }
@@ -1209,3 +1222,24 @@ function _ch173PickDate(el) {
   try { _r173Dirty = true; } catch(_) {}
 }
 window._ch173PickDate = _ch173PickDate;
+
+// ═══ SHO ka عہدہ — sirf do options ═══
+let _ch173ShoRank = 'SI/SHO';
+function _ch173SetSho(v) {
+  _ch173ShoRank = (v === 'I/SHO') ? 'I/SHO' : 'SI/SHO';
+  // Dono SHO lines ko naye عہدہ ke sath dobara likho
+  document.querySelectorAll('#ch173-doc [data-k="sho1"], #ch173-doc [data-k="sho2"]').forEach(el => {
+    el.textContent = _ch173ShoLine(typeof currentOfficer !== 'undefined' ? currentOfficer : {});
+  });
+  try { _r173Dirty = true; } catch(_) {}
+}
+window._ch173SetSho = _ch173SetSho;
+
+// ═══ Kya is مقدمہ mein کراس ورژن mojood hai? ═══
+// (Agar nahi to کراس ورژن ka option dikhaya hi nahi jata)
+function _ch173HasCross() {
+  const a = (_ch173Accused   || []).some(x => (x.accused_type || 'fir') === 'cross_version');
+  const w = (_ch173Witnesses || []).some(x => (x.witness_type || 'fir') === 'cross_version');
+  return a || w;
+}
+window._ch173HasCross = _ch173HasCross;
