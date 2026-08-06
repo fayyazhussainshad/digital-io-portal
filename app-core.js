@@ -871,8 +871,15 @@ function _editTopbarField(field) {
   const isSho = field==='sho';
   const label = isSho?'SHO کا نام':'DSP/SDPO کا نام';
   const current = isSho?(o.sho_name||''):(o.dsp_name||'');
+  // SHO ke liye عہدہ ka dropdown — sirf do options (SI/SHO, I/SHO)
+  const rankSel = isSho ? `
+    <label style="font-size:12px;color:var(--text-muted);display:block;margin:10px 0 4px;">عہدہ</label>
+    <select class="form-input" id="topbar-edit-rank">
+      <option value="SI/SHO" ${ (o.sho_rank||'SI/SHO')==='SI/SHO' ? 'selected':'' }>SI/SHO</option>
+      <option value="I/SHO"  ${ (o.sho_rank||'')==='I/SHO'  ? 'selected':'' }>I/SHO</option>
+    </select>` : '';
   openModal(label,
-    `<input class="form-input" id="topbar-edit-val" value="${current}" placeholder="${label}" dir="auto">`,
+    `<input class="form-input" id="topbar-edit-val" value="${current}" placeholder="${label}" dir="auto">${rankSel}`,
     `<div style="display:flex;gap:8px;direction:rtl;">
       <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
       <button class="btn btn-primary" onclick="_saveTopbarField('${field}')">💾 محفوظ</button>
@@ -883,7 +890,8 @@ function _editTopbarField(field) {
 
 async function _saveTopbarField(field) {
   const val = document.getElementById('topbar-edit-val')?.value.trim()||'';
-  const update = field==='sho'?{sho_name:val}:{dsp_name:val};
+  const rank = document.getElementById('topbar-edit-rank')?.value || '';
+  const update = field==='sho' ? { sho_name:val, ...(rank?{sho_rank:rank}:{}) } : { dsp_name:val };
   try {
     const updated = await updateOfficerProfile(update);
     _updateTopbarShoDsp(updated);
