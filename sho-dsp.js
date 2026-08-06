@@ -25,6 +25,24 @@ function getDSPName() {
 window.getSHOName = getSHOName;
 window.getDSPName = getDSPName;
 
+// SHO signature line for reports: "naam rank تھانہ station"
+// (naam pehle, phir asal rank — SI/SHO ya I/SHO — koi lafz dohra nahi)
+function getSHOSignature(station) {
+  let rank = '', nm = '';
+  try {
+    const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}');
+    rank = sho.rank || '';
+    nm   = sho.name || '';
+  } catch(_) {}
+  const parts = [];
+  if (nm)   parts.push(nm);
+  if (rank) parts.push(rank);
+  let line = parts.join(' ');
+  line += (line ? ' ' : '') + 'تھانہ ' + (station || 'صدر ملتان');
+  return line;
+}
+window.getSHOSignature = getSHOSignature;
+
 // Open SHO/DSP name modal
 function openShoDspModal(type) {
   const isSho = type === 'sho';

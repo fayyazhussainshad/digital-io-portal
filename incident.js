@@ -122,7 +122,7 @@ function renderIncident(container) {
           <div style="text-align:center;min-width:260px;">
             <div style="height:40px;border-bottom:1px solid #1a3a5c;"></div>
             <div style="font-size:17px;font-weight:800;color:#1a3a5c;padding-top:6px;">
-              ${(() => { const s=(typeof getSHOName==='function')?getSHOName():''; return (s?s+' ':'')+'SHO تھانہ '+(o.station||'صدر ملتان'); })()}
+              ${(typeof getSHOSignature==='function') ? getSHOSignature(o.station||'صدر ملتان') : ''}
             </div>
             <input id="inc-sign-date" value="${today}"
               style="border:none;border-bottom:1px solid #aaa;padding:1px 4px;text-align:center;width:130px;outline:none;background:transparent;display:block;margin:4px auto 0;font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">

@@ -215,7 +215,7 @@ async function open5CResponse(id){
 <div style="display:flex;justify-content:flex-start;direction:ltr;">
   <div style="text-align:center;min-width:200px;">
     <div style="border-top:1px solid #333;padding-top:6px;margin-top:50px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;font-weight:bold;">
-      ${(() => { const s=(typeof getSHOName==='function')?getSHOName():''; return (s?esc5C(s)+' ':'')+'SHO تھانہ '+esc5C(o.station||'صدر ملتان'); })()}
+      ${(typeof getSHOSignature==='function') ? esc5C(getSHOSignature(o.station||'صدر ملتان')) : ''}
     </div>
     <div style="font-size:11px;color:#555;margin-top:4px;">${today}</div>
   </div>
@@ -560,7 +560,7 @@ async function _print5C(id) {
     <div style="display:flex;justify-content:flex-start;direction:ltr;margin-top:30px;">
       <div style="text-align:center;min-width:200px;">
         <div style="border-top:1px solid #000;padding-top:6px;margin-top:35px;font-weight:700;direction:rtl;">
-          ${(() => { const s=(typeof getSHOName==='function')?getSHOName():''; return (s?esc5C(s)+' ':'')+'SHO تھانہ '+esc5C(o.station||'—'); })()}
+          ${(typeof getSHOSignature==='function') ? esc5C(getSHOSignature(o.station||'—')) : ''}
         </div>
         <div style="font-size:11px;margin-top:4px;">${formatDate(new Date())}</div>
       </div>
