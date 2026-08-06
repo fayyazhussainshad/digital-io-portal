@@ -212,46 +212,48 @@ function _renderR173() {
         padding:6px 4px; min-height:40px; outline:none; margin-top:0;
         overflow-wrap:break-word; border:none !important; white-space:pre-wrap;
       }
-      /* اختتامی خانہ — کالم 1: تفصیل کاغذات (بولڈ + انڈر لائن، اوپر لکیر، دائیں سیدھ)
-         کالم 2: 5 برابر قطاریں (SHO/تاریخ)۔ اسکرین پر ہلکی رہنمائی لکیر، پرنٹ میں کوئی لکیر نہیں */
-      #ch173-doc .ch173-sho-table{ width:100%; border-collapse:collapse; direction:rtl;
-        table-layout:auto; margin-top:6px; }
-      #ch173-doc .ch173-sho-table td{ vertical-align:top; padding:0; }
-      /* کالم 1 — تفصیل کاغذات (عنوان) + اس کے نیچے لکھنے کی جگہ۔ کوئی اوپر والی لکیر نہیں */
-      #ch173-doc .ch173-sho-table .sho-papers{
-        width:auto; text-align:right; vertical-align:top; border:none;
-        padding:4px 6px 0 0;
+      /* اختتامی خانہ — 2 برابر کالم۔ flex اس لیے کہ دونوں کالم ہمیشہ ایک جتنے
+         چوڑے رہیں اور ایک ساتھ ہی نیچے بڑھیں (ایک دوسرے سے آگے نہ نکلے) */
+      #ch173-doc .ch173-sho-flex{
+        display:flex; direction:rtl; align-items:stretch; gap:10px; margin-top:6px;
       }
-      #ch173-doc .ch173-sho-table .sho-papers-head{
+      /* flex:1 1 0 → مواد کم ہو یا زیادہ، دونوں کی چوڑائی ہمیشہ برابر */
+      #ch173-doc .ch173-sho-flex > .sho-col{ flex:0 0 calc(50% - 5px); min-width:0; box-sizing:border-box; }
+
+      /* دائیں کالم — تفصیل کاغذات (عنوان) + اس کے نیچے لکھنے کی جگہ */
+      #ch173-doc .sho-papers{ text-align:right; padding:4px 6px 0 0; }
+      #ch173-doc .sho-papers-head{
         font-weight:700; text-decoration:underline; white-space:nowrap;
         font-size:14pt; line-height:1.25; margin:0;
       }
       /* کرسر یہاں بلنک کرتا ہے — ڈیٹا عنوان کے نیچے سے شروع ہوتا ہے */
-      #ch173-doc .ch173-sho-table .sho-papers-body{
+      #ch173-doc .sho-papers-body{
         font-size:14pt; line-height:1.25; text-align:right; white-space:pre-wrap;
         outline:1px dashed rgba(120,120,120,0.35); padding:3px 4px; margin-top:4px;
         min-height:22px; overflow-wrap:break-word;
       }
-      #ch173-doc .ch173-sho-table .sho-papers-body:empty::before{
+      #ch173-doc .sho-papers-body:empty::before{
         content:'یہاں کاغذات کی تفصیل لکھیں'; color:#bbb; font-size:12pt;
       }
-      /* کالم 2 — چوڑائی صرف SHO لائن جتنی (شرنک-ٹو-فٹ)، تمام قطاریں برابر */
-      #ch173-doc .ch173-sho-table .sho-cell{ width:1%; white-space:nowrap; text-align:right; height:15mm; }
-      #ch173-doc .ch173-sho-table .sho-cell-row{
-        outline:1px dashed rgba(120,120,120,0.35); padding:3px 6px; line-height:1.25;
-        min-height:20px; margin:0; font-size:14pt;
+
+      /* بائیں کالم — SHO/تاریخ: ایک اوپر، ایک نیچے */
+      #ch173-doc .sho-cell{
+        display:flex; flex-direction:column; justify-content:space-between;
+        min-height:42mm;
       }
-      #ch173-doc .ch173-sho-table .sho-cell-date{ font-size:14pt; color:#333; cursor:pointer; text-align:center; }
-      #ch173-doc .ch173-sho-table .sho-cell-date:empty::before{ content:'تاریخ…'; color:#aaa; }
-      #ch173-doc .ch173-sho-table .sho-cell-blank:empty::before{ content:'…'; color:#ccc; }
+      /* align-self:flex-end → RTL میں بائیں کنارے پر (جیسے اصل فارم میں) */
+      #ch173-doc .sho-block{ align-self:flex-end; }
+      #ch173-doc .sho-cell-row{
+        outline:1px dashed rgba(120,120,120,0.35); padding:3px 6px; line-height:1.25;
+        min-height:20px; margin:0; font-size:14pt; text-align:right; white-space:nowrap;
+      }
+      #ch173-doc .sho-cell-date{ font-size:14pt; color:#333; cursor:pointer; text-align:center; }
+      #ch173-doc .sho-cell-date:empty::before{ content:'تاریخ…'; color:#aaa; }
       @media print{
-        #ch173-doc .ch173-sho-table td{ border:none !important; }
-        #ch173-doc .ch173-sho-table .sho-papers{ border:none !important; }
-        #ch173-doc .ch173-sho-table .sho-papers-body{ outline:none !important; }
-        #ch173-doc .ch173-sho-table .sho-papers-body:empty::before{ content:''; }
-        #ch173-doc .ch173-sho-table .sho-cell-row{ outline:none !important; }
-        #ch173-doc .ch173-sho-table .sho-cell-date:empty::before{ content:''; }
-        #ch173-doc .ch173-sho-table .sho-cell-blank:empty::before{ content:''; }
+        #ch173-doc .sho-papers-body{ outline:none !important; }
+        #ch173-doc .sho-papers-body:empty::before{ content:''; }
+        #ch173-doc .sho-cell-row{ outline:none !important; }
+        #ch173-doc .sho-cell-date:empty::before{ content:''; }
       }
       /* Izafi khane screen par nazar aayen (kahan likhna hai pata chale) —
          print mein yeh nishan nahi aata */
@@ -455,45 +457,27 @@ function _renderR173() {
           <!-- خانہ 1: باقی متن (اوپر والے کالم سے خود آتا ہے) — تسلسل/overflow -->
           <div class="ch173-cont" contenteditable="true" data-k="cont_text">${bv('cont_text')}</div>
 
-          <!-- اختتامی خانہ — 2 کالم
-               کالم 1 (دائیں): تفصیل کاغذات — بولڈ + انڈر لائن، اوپر لکیر، دائیں سیدھ
-               کالم 2 (بائیں): 5 برابر قطاریں — قطار 2 اور قطار 5 (آخری) میں SHO + تاریخ
-               تمام قطاریں editable؛ پرنٹ میں کالم 2 کی کوئی لکیر نہیں آتی -->
-          <table class="ch173-sho-table">
-            <tr>
-              <td class="sho-papers" rowspan="5">
-                <div class="sho-papers-head">تفصیل کاغذات</div>
-                <div class="sho-papers-body" contenteditable="true" data-k="papers_body">${bv('papers_body')}</div>
-              </td>
-              <td class="sho-cell">
-                <div class="sho-cell-row sho-cell-blank" contenteditable="true" data-k="sho_r1">${bv('sho_r1')}</div>
-              </td>
-            </tr>
-            <tr>
-              <td class="sho-cell">
+          <!-- اختتامی خانہ — 2 برابر کالم (flex)
+               دائیں: تفصیل کاغذات + لکھنے کی جگہ | بائیں: SHO/تاریخ (اوپر اور نیچے)
+               دونوں کالم ہمیشہ برابر چوڑے، اور ایک ساتھ ہی نیچے بڑھتے ہیں -->
+          <div class="ch173-sho-flex">
+            <div class="sho-col sho-papers">
+              <div class="sho-papers-head">تفصیل کاغذات</div>
+              <div class="sho-papers-body" contenteditable="true" data-k="papers_body">${bv('papers_body')}</div>
+            </div>
+            <div class="sho-col sho-cell">
+              <div class="sho-block">
                 <div class="sho-cell-row" contenteditable="true" data-k="sho_line2">${bs.sho_line2 !== undefined ? sanitizeHtml(bs.sho_line2) : (bs.sho_line !== undefined ? sanitizeHtml(bs.sho_line) : esc(_ch173ShoLine(o)))}</div>
                 <div class="sho-cell-row sho-cell-date" contenteditable="true" data-k="sho_date2"
                      onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bs.sho_date2 !== undefined ? sanitizeHtml(bs.sho_date2) : (bs.sho_date !== undefined ? sanitizeHtml(bs.sho_date) : esc(_ch173Today()))}</div>
-              </td>
-            </tr>
-            <tr>
-              <td class="sho-cell">
-                <div class="sho-cell-row sho-cell-blank" contenteditable="true" data-k="sho_r3">${bv('sho_r3')}</div>
-              </td>
-            </tr>
-            <tr>
-              <td class="sho-cell">
-                <div class="sho-cell-row sho-cell-blank" contenteditable="true" data-k="sho_r4">${bv('sho_r4')}</div>
-              </td>
-            </tr>
-            <tr>
-              <td class="sho-cell">
+              </div>
+              <div class="sho-block">
                 <div class="sho-cell-row" contenteditable="true" data-k="sho_line5">${bs.sho_line5 !== undefined ? sanitizeHtml(bs.sho_line5) : esc(_ch173ShoLine(o))}</div>
                 <div class="sho-cell-row sho-cell-date" contenteditable="true" data-k="sho_date5"
                      onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bs.sho_date5 !== undefined ? sanitizeHtml(bs.sho_date5) : esc(_ch173Today())}</div>
-              </td>
-            </tr>
-          </table>
+              </div>
+            </div>
+          </div>
 
           <input type="hidden" data-k="doc_font" value="${esc(String(_ch173DocFont(bs)))}">
 
@@ -843,18 +827,24 @@ function _printR173() {
           font-size:14pt; line-height:1.15; padding:6px 4px; overflow-wrap:break-word;
           border:none !important; white-space:pre-wrap; }
         /* SHO دستخط خانہ — پرنٹ میں کوئی لکیر نہیں، صرف متن (SHO لائن + تاریخ) */
-        .ch173-sho-table{ width:100%; border-collapse:collapse; direction:rtl; table-layout:auto; margin-top:6px; }
-        .ch173-sho-table td{ border:none !important; vertical-align:top; padding:0; }
-        /* کالم 1 — تفصیل کاغذات: کوئی لکیر نہیں */
-        .ch173-sho-table .sho-papers{ width:auto; text-align:right; vertical-align:top;
-          border:none !important; padding:4px 6px 0 0; }
-        .ch173-sho-table .sho-papers-head{ font-weight:700; text-decoration:underline;
-          white-space:nowrap; font-size:14pt; line-height:1.25; margin:0; }
-        .ch173-sho-table .sho-papers-body{ font-size:14pt; line-height:1.25; text-align:right;
-          white-space:pre-wrap; padding:3px 4px; margin-top:4px; overflow-wrap:break-word; }
-        .ch173-sho-table .sho-cell{ width:1%; white-space:nowrap; text-align:right; height:15mm; }
-        .ch173-sho-table .sho-cell-row{ padding:2px 6px; line-height:1.25; margin:0; min-height:20px; font-size:14pt; }
-        .ch173-sho-table .sho-cell-date{ font-size:14pt; color:#000; text-align:center; }
+        /* اختتامی خانہ — 2 برابر کالم (SCREEN کے بالکل مطابق)۔
+           align-items:stretch → دونوں کالم ہمیشہ ایک جتنے اونچے؛
+           justify-content:space-between → نیچے والا SHO ہمیشہ سب سے نیچے،
+           یعنی کالم 1 بڑھے تو نیچے والا SHO بھی اُسی کے ساتھ نیچے جاتا ہے۔ */
+        .ch173-sho-flex{ display:flex; direction:rtl; align-items:stretch; gap:10px; margin-top:6px; }
+        .ch173-sho-flex > .sho-col{ flex:0 0 calc(50% - 5px); min-width:0; box-sizing:border-box; }
+        .sho-papers{ text-align:right; padding:4px 6px 0 0; }
+        .sho-papers-head{ font-weight:700; text-decoration:underline; white-space:nowrap;
+          font-size:14pt; line-height:1.25; margin:0; }
+        .sho-papers-body{ font-size:14pt; line-height:1.25; text-align:right; white-space:pre-wrap;
+          padding:3px 4px; margin-top:4px; overflow-wrap:break-word; }
+        .sho-cell{ display:flex; flex-direction:column; justify-content:space-between; min-height:42mm; }
+        .sho-block{ align-self:flex-end; }
+        .sho-cell-row{ padding:2px 6px; line-height:1.25; margin:0; min-height:20px;
+          font-size:14pt; text-align:right; white-space:nowrap; }
+        .sho-cell-date{ font-size:14pt; color:#000; text-align:center; }
+        /* یہ خانہ درمیان سے نہ ٹوٹے */
+        .ch173-sho-flex{ page-break-inside:avoid; break-inside:avoid; }
         /* Matn safhe se zyada ho to khud agle safhe (back side) par chala jaye */
         .ch173-cont{ page-break-inside:auto; break-inside:auto; }
 
