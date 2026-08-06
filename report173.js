@@ -209,19 +209,27 @@ function _renderR173() {
         padding:6px 4px; min-height:40px; outline:none; margin-top:0;
         overflow-wrap:break-word; border:none !important; white-space:pre-wrap;
       }
-      /* SHO wala khana — dayen taraf تفصیل کاغذات, bayen taraf SHO + تاریخ */
-      /* تفصیل کاغذات aur SHO — bilkul AIK SEEDH mein (upar-neeche nahi) */
-      #ch173-doc .ch173-sho-row{ display:flex; justify-content:space-between;
-        align-items:flex-start; gap:20px; }
-      #ch173-doc .sho-right{ text-align:right; font-weight:700; outline:none;
-        min-width:120px; text-decoration:underline; }
-      #ch173-doc .sho-left{ text-align:left; direction:rtl; min-width:220px; }
-      #ch173-doc .sho-left > div{ outline:none; line-height:1.1; margin:0; padding:0; }
-      /* تاریخ SHO ke FORAN baad (koi bara gap nahi) */
-      #ch173-doc .sho-date{ font-size:11pt; color:#333; margin:0; line-height:1.1;
-        min-height:16px; cursor:pointer; text-align:center; }
-      #ch173-doc .sho-date:empty::before{ content:'تاریخ…'; color:#aaa; }
-      @media print{ #ch173-doc .sho-date:empty::before{ content:''; } }
+      /* SHO دستخط خانہ — 2 کالم (بائیں: SHO/تاریخ، دائیں: خالی جگہ)۔
+         3 قطاریں، سب editable، اسکرین پر ہلکی رہنمائی لکیر، پرنٹ میں کوئی لکیر نہیں */
+      #ch173-doc .ch173-sho-table{ width:100%; border-collapse:collapse; direction:rtl;
+        table-layout:auto; margin-top:6px; }
+      #ch173-doc .ch173-sho-table td{ vertical-align:top; padding:0; }
+      #ch173-doc .ch173-sho-table .sho-spacer{ width:auto; }
+      /* دوسرا کالم — چوڑائی صرف SHO لائن جتنی (شرنک-ٹو-فٹ) */
+      #ch173-doc .ch173-sho-table .sho-cell{ width:1%; white-space:nowrap; text-align:right; }
+      #ch173-doc .ch173-sho-table .sho-cell-row{
+        outline:1px dashed rgba(120,120,120,0.35); padding:3px 6px; line-height:1.25;
+        min-height:20px; margin:0;
+      }
+      #ch173-doc .ch173-sho-table .sho-cell-date{ font-size:11pt; color:#333; cursor:pointer; text-align:center; }
+      #ch173-doc .ch173-sho-table .sho-cell-date:empty::before{ content:'تاریخ…'; color:#aaa; }
+      #ch173-doc .ch173-sho-table .sho-cell-extra:empty::before{ content:'…'; color:#ccc; }
+      @media print{
+        #ch173-doc .ch173-sho-table td{ border:none !important; }
+        #ch173-doc .ch173-sho-table .sho-cell-row{ outline:none !important; }
+        #ch173-doc .ch173-sho-table .sho-cell-date:empty::before{ content:''; }
+        #ch173-doc .ch173-sho-table .sho-cell-extra:empty::before{ content:''; }
+      }
       /* Izafi khane screen par nazar aayen (kahan likhna hai pata chale) —
          print mein yeh nishan nahi aata */
       #ch173-doc .ch173-cont:empty{ min-height:34px; }
@@ -323,11 +331,6 @@ function _renderR173() {
         .ch173-cont{ direction:rtl; text-align:justify; text-align-last:right;
           font-size:14pt; line-height:1.15; padding:6px 4px; overflow-wrap:break-word;
           border:none !important; white-space:pre-wrap; }
-        .ch173-sho-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; }
-        .sho-right{ text-align:right; font-weight:700; text-decoration:underline; }
-        .sho-left{ text-align:left; direction:rtl; }
-        .sho-left > div{ line-height:1.1; margin:0; padding:0; }
-        .sho-date{ font-size:11pt; color:#000; margin:0; line-height:1.1; text-align:center; }
         /* Matn safhe se zyada ho to khud agle safhe (back side) par chala jaye */
         .ch173-cont{ page-break-inside:auto; break-inside:auto; }
         .acc-pick{ display:none !important; }
@@ -421,31 +424,22 @@ function _renderR173() {
             </tbody>
           </table>
 
-          <!-- خانہ 1: باقی متن (اوپر والے کالم سے خود آتا ہے) -->
+          <!-- خانہ 1: باقی متن (اوپر والے کالم سے خود آتا ہے) — تسلسل/overflow -->
           <div class="ch173-cont" contenteditable="true" data-k="cont_text">${bv('cont_text')}</div>
 
-          <!-- خانہ 2: تفصیل کاغذات (دائیں) + SHO و تاریخ (بائیں) -->
-          <div class="ch173-cont ch173-sho-row">
-            <div class="sho-right" contenteditable="true" data-k="papers_txt">${bs.papers_txt !== undefined ? sanitizeHtml(bs.papers_txt) : 'تفصیل کاغذات'}</div>
-            <div class="sho-left">
-              <div contenteditable="true" data-k="sho1">${bs.sho1 !== undefined ? sanitizeHtml(bs.sho1) : esc(_ch173ShoLine(o))}</div>
-              <div class="sho-date" contenteditable="true" data-k="sho1_date"
-                   onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bv('sho1_date')}</div>
-            </div>
-          </div>
-
-          <!-- خانہ 3: خالی (بعد میں پُر کیا جائے گا) -->
-          <div class="ch173-cont" contenteditable="true" data-k="cont_blank">${bv('cont_blank')}</div>
-
-          <!-- خانہ 4: SHO و تاریخ (بائیں) -->
-          <div class="ch173-cont ch173-sho-row">
-            <div class="sho-right"></div>
-            <div class="sho-left">
-              <div contenteditable="true" data-k="sho2">${bs.sho2 !== undefined ? sanitizeHtml(bs.sho2) : esc(_ch173ShoLine(o))}</div>
-              <div class="sho-date" contenteditable="true" data-k="sho2_date"
-                   onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bv('sho2_date')}</div>
-            </div>
-          </div>
+          <!-- SHO دستخط خانہ — 2 کالم table (دائیں کالم = خالی جگہ، بائیں کالم = SHO لائن + تاریخ + خالی)۔
+               3 قطاریں، سب editable، پرنٹ میں لکیریں نہیں (صرف متن چھپتا ہے) -->
+          <table class="ch173-sho-table">
+            <tr>
+              <td class="sho-spacer"></td>
+              <td class="sho-cell">
+                <div class="sho-cell-row" contenteditable="true" data-k="sho_line">${bs.sho_line !== undefined ? sanitizeHtml(bs.sho_line) : esc(_ch173ShoLine(o))}</div>
+                <div class="sho-cell-row sho-cell-date" contenteditable="true" data-k="sho_date"
+                     onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bs.sho_date !== undefined ? sanitizeHtml(bs.sho_date) : esc(_ch173Today())}</div>
+                <div class="sho-cell-row sho-cell-extra" contenteditable="true" data-k="sho_extra">${bv('sho_extra')}</div>
+              </td>
+            </tr>
+          </table>
 
         </div>
       </div>
@@ -777,11 +771,13 @@ function _printR173() {
         .ch173-cont{ direction:rtl; text-align:justify; text-align-last:right;
           font-size:14pt; line-height:1.15; padding:6px 4px; overflow-wrap:break-word;
           border:none !important; white-space:pre-wrap; }
-        .ch173-sho-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; }
-        .sho-right{ text-align:right; font-weight:700; text-decoration:underline; }
-        .sho-left{ text-align:left; direction:rtl; }
-        .sho-left > div{ line-height:1.1; margin:0; padding:0; }
-        .sho-date{ font-size:11pt; color:#000; margin:0; line-height:1.1; text-align:center; }
+        /* SHO دستخط خانہ — پرنٹ میں کوئی لکیر نہیں، صرف متن (SHO لائن + تاریخ) */
+        .ch173-sho-table{ width:100%; border-collapse:collapse; direction:rtl; table-layout:auto; margin-top:6px; }
+        .ch173-sho-table td{ border:none !important; vertical-align:top; padding:0; }
+        .ch173-sho-table .sho-spacer{ width:auto; }
+        .ch173-sho-table .sho-cell{ width:1%; white-space:nowrap; text-align:right; }
+        .ch173-sho-table .sho-cell-row{ padding:2px 6px; line-height:1.25; margin:0; }
+        .ch173-sho-table .sho-cell-date{ font-size:11pt; color:#000; text-align:center; }
         /* Matn safhe se zyada ho to khud agle safhe (back side) par chala jaye */
         .ch173-cont{ page-break-inside:auto; break-inside:auto; }
 
@@ -1196,6 +1192,22 @@ function _ch173ShoLine(o) {
   return '';
 }
 window._ch173ShoLine = _ch173ShoLine;
+
+// ═══ آج کی تاریخ — ہمیشہ DD/MM/YYYY (عالمی formatDate پہلے، ورنہ خود) ═══
+function _ch173Today() {
+  const d = new Date();
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const manual = dd + '/' + mm + '/' + d.getFullYear();
+  if (typeof formatDate === 'function') {
+    try {
+      const f = formatDate(d);
+      if (f && /^\d{2}\/\d{2}\/\d{4}$/.test(String(f).trim())) return String(f).trim();
+    } catch(_) {}
+  }
+  return manual;
+}
+window._ch173Today = _ch173Today;
 
 // ═══ تاریخ — system POOCHTA hai, khud nahi likhta ═══
 function _ch173PickDate(el) {
