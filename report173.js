@@ -212,26 +212,32 @@ function _renderR173() {
         padding:6px 4px; min-height:40px; outline:none; margin-top:0;
         overflow-wrap:break-word; border:none !important; white-space:pre-wrap;
       }
-      /* SHO دستخط خانہ — 2 کالم (بائیں: SHO/تاریخ، دائیں: خالی جگہ)۔
-         3 قطاریں، سب editable، اسکرین پر ہلکی رہنمائی لکیر، پرنٹ میں کوئی لکیر نہیں */
+      /* اختتامی خانہ — کالم 1: تفصیل کاغذات (بولڈ + انڈر لائن، اوپر لکیر، دائیں سیدھ)
+         کالم 2: 5 برابر قطاریں (SHO/تاریخ)۔ اسکرین پر ہلکی رہنمائی لکیر، پرنٹ میں کوئی لکیر نہیں */
       #ch173-doc .ch173-sho-table{ width:100%; border-collapse:collapse; direction:rtl;
         table-layout:auto; margin-top:6px; }
       #ch173-doc .ch173-sho-table td{ vertical-align:top; padding:0; }
-      #ch173-doc .ch173-sho-table .sho-spacer{ width:auto; }
-      /* دوسرا کالم — چوڑائی صرف SHO لائن جتنی (شرنک-ٹو-فٹ) */
-      #ch173-doc .ch173-sho-table .sho-cell{ width:1%; white-space:nowrap; text-align:right; }
+      /* کالم 1 — تفصیل کاغذات */
+      #ch173-doc .ch173-sho-table .sho-papers{
+        width:auto; text-align:right; vertical-align:top;
+        border-top:1px solid #000; padding:4px 6px 0 0;
+        font-weight:700; text-decoration:underline; white-space:nowrap; outline:none;
+      }
+      /* کالم 2 — چوڑائی صرف SHO لائن جتنی (شرنک-ٹو-فٹ)، تمام قطاریں برابر */
+      #ch173-doc .ch173-sho-table .sho-cell{ width:1%; white-space:nowrap; text-align:right; height:13mm; }
       #ch173-doc .ch173-sho-table .sho-cell-row{
         outline:1px dashed rgba(120,120,120,0.35); padding:3px 6px; line-height:1.25;
         min-height:20px; margin:0;
       }
       #ch173-doc .ch173-sho-table .sho-cell-date{ font-size:11pt; color:#333; cursor:pointer; text-align:center; }
       #ch173-doc .ch173-sho-table .sho-cell-date:empty::before{ content:'تاریخ…'; color:#aaa; }
-      #ch173-doc .ch173-sho-table .sho-cell-extra:empty::before{ content:'…'; color:#ccc; }
+      #ch173-doc .ch173-sho-table .sho-cell-blank:empty::before{ content:'…'; color:#ccc; }
       @media print{
         #ch173-doc .ch173-sho-table td{ border:none !important; }
+        #ch173-doc .ch173-sho-table .sho-papers{ border-top:1px solid #000 !important; }
         #ch173-doc .ch173-sho-table .sho-cell-row{ outline:none !important; }
         #ch173-doc .ch173-sho-table .sho-cell-date:empty::before{ content:''; }
-        #ch173-doc .ch173-sho-table .sho-cell-extra:empty::before{ content:''; }
+        #ch173-doc .ch173-sho-table .sho-cell-blank:empty::before{ content:''; }
       }
       /* Izafi khane screen par nazar aayen (kahan likhna hai pata chale) —
          print mein yeh nishan nahi aata */
@@ -435,16 +441,39 @@ function _renderR173() {
           <!-- خانہ 1: باقی متن (اوپر والے کالم سے خود آتا ہے) — تسلسل/overflow -->
           <div class="ch173-cont" contenteditable="true" data-k="cont_text">${bv('cont_text')}</div>
 
-          <!-- SHO دستخط خانہ — 2 کالم table (دائیں کالم = خالی جگہ، بائیں کالم = SHO لائن + تاریخ + خالی)۔
-               3 قطاریں، سب editable، پرنٹ میں لکیریں نہیں (صرف متن چھپتا ہے) -->
+          <!-- اختتامی خانہ — 2 کالم
+               کالم 1 (دائیں): تفصیل کاغذات — بولڈ + انڈر لائن، اوپر لکیر، دائیں سیدھ
+               کالم 2 (بائیں): 5 برابر قطاریں — قطار 2 اور قطار 5 (آخری) میں SHO + تاریخ
+               تمام قطاریں editable؛ پرنٹ میں کالم 2 کی کوئی لکیر نہیں آتی -->
           <table class="ch173-sho-table">
             <tr>
-              <td class="sho-spacer"></td>
+              <td class="sho-papers" rowspan="5" contenteditable="true" data-k="papers_txt">${bs.papers_txt !== undefined ? sanitizeHtml(bs.papers_txt) : 'تفصیل کاغذات'}</td>
               <td class="sho-cell">
-                <div class="sho-cell-row" contenteditable="true" data-k="sho_line">${bs.sho_line !== undefined ? sanitizeHtml(bs.sho_line) : esc(_ch173ShoLine(o))}</div>
-                <div class="sho-cell-row sho-cell-date" contenteditable="true" data-k="sho_date"
-                     onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bs.sho_date !== undefined ? sanitizeHtml(bs.sho_date) : esc(_ch173Today())}</div>
-                <div class="sho-cell-row sho-cell-extra" contenteditable="true" data-k="sho_extra">${bv('sho_extra')}</div>
+                <div class="sho-cell-row sho-cell-blank" contenteditable="true" data-k="sho_r1">${bv('sho_r1')}</div>
+              </td>
+            </tr>
+            <tr>
+              <td class="sho-cell">
+                <div class="sho-cell-row" contenteditable="true" data-k="sho_line2">${bs.sho_line2 !== undefined ? sanitizeHtml(bs.sho_line2) : (bs.sho_line !== undefined ? sanitizeHtml(bs.sho_line) : esc(_ch173ShoLine(o)))}</div>
+                <div class="sho-cell-row sho-cell-date" contenteditable="true" data-k="sho_date2"
+                     onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bs.sho_date2 !== undefined ? sanitizeHtml(bs.sho_date2) : (bs.sho_date !== undefined ? sanitizeHtml(bs.sho_date) : esc(_ch173Today()))}</div>
+              </td>
+            </tr>
+            <tr>
+              <td class="sho-cell">
+                <div class="sho-cell-row sho-cell-blank" contenteditable="true" data-k="sho_r3">${bv('sho_r3')}</div>
+              </td>
+            </tr>
+            <tr>
+              <td class="sho-cell">
+                <div class="sho-cell-row sho-cell-blank" contenteditable="true" data-k="sho_r4">${bv('sho_r4')}</div>
+              </td>
+            </tr>
+            <tr>
+              <td class="sho-cell">
+                <div class="sho-cell-row" contenteditable="true" data-k="sho_line5">${bs.sho_line5 !== undefined ? sanitizeHtml(bs.sho_line5) : esc(_ch173ShoLine(o))}</div>
+                <div class="sho-cell-row sho-cell-date" contenteditable="true" data-k="sho_date5"
+                     onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bs.sho_date5 !== undefined ? sanitizeHtml(bs.sho_date5) : esc(_ch173Today())}</div>
               </td>
             </tr>
           </table>
@@ -799,9 +828,12 @@ function _printR173() {
         /* SHO دستخط خانہ — پرنٹ میں کوئی لکیر نہیں، صرف متن (SHO لائن + تاریخ) */
         .ch173-sho-table{ width:100%; border-collapse:collapse; direction:rtl; table-layout:auto; margin-top:6px; }
         .ch173-sho-table td{ border:none !important; vertical-align:top; padding:0; }
-        .ch173-sho-table .sho-spacer{ width:auto; }
-        .ch173-sho-table .sho-cell{ width:1%; white-space:nowrap; text-align:right; }
-        .ch173-sho-table .sho-cell-row{ padding:2px 6px; line-height:1.25; margin:0; }
+        /* کالم 1 — تفصیل کاغذات: صرف اوپر والی لکیر چھپتی ہے */
+        .ch173-sho-table .sho-papers{ width:auto; text-align:right; vertical-align:top;
+          border-top:1px solid #000 !important; padding:4px 6px 0 0;
+          font-weight:700; text-decoration:underline; white-space:nowrap; }
+        .ch173-sho-table .sho-cell{ width:1%; white-space:nowrap; text-align:right; height:13mm; }
+        .ch173-sho-table .sho-cell-row{ padding:2px 6px; line-height:1.25; margin:0; min-height:20px; }
         .ch173-sho-table .sho-cell-date{ font-size:11pt; color:#000; text-align:center; }
         /* Matn safhe se zyada ho to khud agle safhe (back side) par chala jaye */
         .ch173-cont{ page-break-inside:auto; break-inside:auto; }
@@ -1228,7 +1260,7 @@ function _ch173FontToDoc(pt) {
   const doc = document.getElementById('ch173-doc');
   if (!doc) return;
   doc.dataset.fs = pt;
-  doc.querySelectorAll('.ch173-table th, .ch173-table td, .rotinner, .hinner, .ch173-cont, .sho-cell-row:not(.sho-cell-date)')
+  doc.querySelectorAll('.ch173-table th, .ch173-table td, .rotinner, .hinner, .ch173-cont, .sho-cell-row:not(.sho-cell-date), .sho-papers')
      .forEach(el => { el.style.fontSize = pt + 'pt'; });
   const hid = doc.querySelector('[data-k="doc_font"]');
   if (hid) hid.value = pt;
