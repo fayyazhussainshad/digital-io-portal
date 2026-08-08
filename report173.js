@@ -215,10 +215,13 @@ function _renderR173() {
       /* اختتامی خانہ — 2 برابر کالم۔ flex اس لیے کہ دونوں کالم ہمیشہ ایک جتنے
          چوڑے رہیں اور ایک ساتھ ہی نیچے بڑھیں (ایک دوسرے سے آگے نہ نکلے) */
       #ch173-doc .ch173-sho-flex{
-        display:flex; direction:rtl; align-items:stretch; gap:10px; margin-top:6px;
+        display:flex; direction:rtl; align-items:stretch; gap:1cm; margin-top:6px;
       }
-      /* flex:1 1 0 → مواد کم ہو یا زیادہ، دونوں کی چوڑائی ہمیشہ برابر */
-      #ch173-doc .ch173-sho-flex > .sho-col{ flex:0 0 calc(50% - 5px); min-width:0; box-sizing:border-box; }
+      #ch173-doc .ch173-sho-flex > .sho-col{ min-width:0; box-sizing:border-box; }
+      /* تفصیل کاغذات کا خانہ SHO لائن کے دائیں کنارے سے 1cm پہلے تک پھیلتا ہے */
+      #ch173-doc .ch173-sho-flex > .sho-papers{ flex:1 1 auto; }
+      /* SHO کالم — چوڑائی صرف اپنی لائن جتنی (شرنک-ٹو-فٹ) */
+      #ch173-doc .ch173-sho-flex > .sho-cell{ flex:0 0 auto; }
 
       /* دائیں کالم — تفصیل کاغذات (عنوان) + اس کے نیچے لکھنے کی جگہ */
       #ch173-doc .sho-papers{ text-align:right; padding:4px 6px 0 0; }
@@ -831,8 +834,10 @@ function _printR173() {
            align-items:stretch → دونوں کالم ہمیشہ ایک جتنے اونچے؛
            justify-content:space-between → نیچے والا SHO ہمیشہ سب سے نیچے،
            یعنی کالم 1 بڑھے تو نیچے والا SHO بھی اُسی کے ساتھ نیچے جاتا ہے۔ */
-        .ch173-sho-flex{ display:flex; direction:rtl; align-items:stretch; gap:10px; margin-top:6px; }
-        .ch173-sho-flex > .sho-col{ flex:0 0 calc(50% - 5px); min-width:0; box-sizing:border-box; }
+        .ch173-sho-flex{ display:flex; direction:rtl; align-items:stretch; gap:1cm; margin-top:6px; }
+        .ch173-sho-flex > .sho-col{ min-width:0; box-sizing:border-box; }
+        .ch173-sho-flex > .sho-papers{ flex:1 1 auto; }
+        .ch173-sho-flex > .sho-cell{ flex:0 0 auto; }
         .sho-papers{ text-align:right; padding:4px 6px 0 0; }
         .sho-papers-head{ font-weight:700; text-decoration:underline; white-space:nowrap;
           font-size:14pt; line-height:1.25; margin:0; }
