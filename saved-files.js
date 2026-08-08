@@ -37,16 +37,22 @@ async function dioRegisterSaved(kind, name, meta) {
 window.dioRegisterSaved = dioRegisterSaved;
 
 // ── Mojooda مقدمہ ki mehfooz files ───────────────────────────────────
-function dioSavedForCase(caseId) {
+// caseId ke saath — aur agar docKey diya jaye to SIRF usi button ki files
+function dioSavedForCase(caseId, docKey) {
   let list = [];
   try { list = JSON.parse(localStorage.getItem('dio_saved_files') || '[]'); } catch (_) {}
-  return caseId ? list.filter(x => x.case_id === caseId) : list;
+  if (caseId) list = list.filter(x => x.case_id === caseId);
+  if (docKey) {
+    list = list.filter(x => (x.meta && (x.meta.doc_id === docKey || x.meta.report_type === docKey))
+                          || x.kind === docKey);
+  }
+  return list;
 }
 window.dioSavedForCase = dioSavedForCase;
 
 // ── Fehrist ka HTML ──────────────────────────────────────────────────
-function dioSavedBoxHTML(caseId) {
-  const list = dioSavedForCase(caseId);
+function dioSavedBoxHTML(caseId, docKey, title) {
+  const list = dioSavedForCase(caseId, docKey);
   const rows = list.map((x, i) => {
     const d = x.saved_at ? (typeof formatDate === 'function' ? formatDate(x.saved_at) : x.saved_at.slice(0, 10)) : '—';
     const t = x.saved_at ? new Date(x.saved_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '';
@@ -69,7 +75,7 @@ function dioSavedBoxHTML(caseId) {
   <div id="dio-saved-box" style="margin-top:14px;border:1px solid var(--border);border-radius:10px;
        background:var(--bg-card);overflow:hidden;direction:rtl;">
     <div style="padding:8px 12px;background:var(--bg-secondary);border-bottom:1px solid var(--border);
-         font-weight:700;font-size:14px;">📁 محفوظ شدہ فائلیں</div>
+         font-weight:700;font-size:14px;">📁 ${title || 'محفوظ شدہ فائلیں'}</div>
     ${list.length ? `
     <table style="width:100%;border-collapse:collapse;font-size:13px;">
       <thead>
@@ -87,13 +93,14 @@ function dioSavedBoxHTML(caseId) {
 }
 window.dioSavedBoxHTML = dioSavedBoxHTML;
 
-function dioRenderSavedBox(caseId) {
+function dioRenderSavedBox(caseId, docKey) {
   const box = document.getElementById('dio-saved-box');
   if (!box) return;
   const cid = caseId || box.dataset.caseId || null;
-  box.outerHTML = dioSavedBoxHTML(cid);
+  const dk  = docKey || box.dataset.docKey || null;
+  box.outerHTML = dioSavedBoxHTML(cid, dk);
   const nb = document.getElementById('dio-saved-box');
-  if (nb && cid) nb.dataset.caseId = cid;
+  if (nb) { if (cid) nb.dataset.caseId = cid; if (dk) nb.dataset.docKey = dk; }
 }
 window.dioRenderSavedBox = dioRenderSavedBox;
 

@@ -99,7 +99,6 @@ function renderMisalBar(c) {
       ])}
       ${items}
     </div>
-    ${(typeof dioSavedBoxHTML === 'function') ? dioSavedBoxHTML(c && c.id) : ''}
   </div>
   <style>
     .mdoc-chip{
@@ -444,6 +443,9 @@ function _renderMisalEditor(docId, def) {
         border:1px solid var(--border);border-radius:8px;
         padding:18px;outline:none;box-sizing:border-box;
       " oninput="_misalDirty=true">${content}</div>
+      ${(typeof dioSavedBoxHTML === 'function')
+        ? dioSavedBoxHTML(_misalCaseId, docId, 'محفوظ شدہ — ' + ((MISAL_CASE_DOCS.find(d=>d.id===docId)||{}).name || ''))
+        : ''}
     </div>
   </div>`;
 
