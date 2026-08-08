@@ -433,10 +433,6 @@ function _renderMisalEditor(docId, def) {
   <div style="display:flex;flex-direction:column;height:100%;min-height:400px;direction:rtl;">
     <!-- Safha khali hi rehta hai (software koi format nahi deta) —
          lekin likhne ke liye MS Word jaise auzaar mojood hain -->
-    <div class="no-print" style="padding:6px 10px;border-bottom:1px solid var(--border);
-         background:var(--bg-secondary);">
-      ${(typeof dioEditorToolbar === 'function') ? dioEditorToolbar() : ''}
-    </div>
     <input type="hidden" id="misal-date" value="${savedDate}">
     <div style="flex:1;overflow:auto;min-height:0;padding:14px;">
       <div id="misal-editor" contenteditable="true" spellcheck="false" style="
@@ -1598,7 +1594,15 @@ function _dioEnterDocView() {
   if (!document.getElementById('dio-dv-style')) {
     const st = document.createElement('style');
     st.id = 'dio-dv-style';
-    st.textContent = '#dio-dv-body .dio-modbtn{display:none !important;}';
+    st.textContent =
+      '#dio-dv-body .dio-modbtn{display:none !important;}' +
+      /* Full page: dastawez poore safhe par phaile (aadhe par nahi) */
+      '#dio-dv-body{display:flex;flex-direction:column;}' +
+      '#dio-dv-body > #workspace-editor-area{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;}' +
+      '#dio-dv-body #workspace-editor-area > *{flex:1;min-height:0;}' +
+      /* چالان ka safha bhi poori chaudai le */
+      '#dio-dv-body #ch173-doc{width:100% !important;max-width:none !important;}' +
+      '#dio-dv-body #misal-editor{min-height:calc(100vh - 160px) !important;}';
     document.head.appendChild(st);
   }
   ov.innerHTML = `

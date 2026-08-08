@@ -156,3 +156,78 @@ function dioBindEditor(root) {
 window.dioBindEditor = dioBindEditor;
 window.dioEditorToolbar = dioEditorToolbar;
 window.dioEditorToolbarCSS = dioEditorToolbarCSS;
+
+
+// ═══════════════════════════════════════════════════════════════════════
+//  FLOATING TOOLBAR — sirf wahan nazar aata hai jahan likhai/tarmeem ho
+//  rahi ho. Koi mustaqil (permanent) toolbar nahi.
+// ═══════════════════════════════════════════════════════════════════════
+let _dioFloatBar = null;
+let _dioFloatHideTimer = null;
+
+function _dioEnsureFloatBar() {
+  if (_dioFloatBar && document.body.contains(_dioFloatBar)) return _dioFloatBar;
+  dioEditorToolbarCSS();
+  const bar = document.createElement('div');
+  bar.id = 'dio-float-bar';
+  bar.className = 'no-print';
+  bar.style.cssText =
+    'position:fixed; z-index:100000; display:none; gap:3px; align-items:center;' +
+    'background:var(--bg-card,#fff); border:1px solid var(--border,#ccc); border-radius:10px;' +
+    'padding:5px 7px; box-shadow:0 6px 22px rgba(0,0,0,.18); direction:rtl; flex-wrap:wrap;' +
+    'max-width:min(96vw,620px);';
+  bar.innerHTML = dioEditorToolbar({ className: 'dio-etb-inner' });
+  // Toolbar par click karne se likhne wale khane ka focus na chhute
+  bar.addEventListener('mousedown', e => e.preventDefault());
+  document.body.appendChild(bar);
+  _dioFloatBar = bar;
+  return bar;
+}
+
+function _dioShowFloatBar(el) {
+  if (!el) return;
+  clearTimeout(_dioFloatHideTimer);
+  const bar = _dioEnsureFloatBar();
+  bar.style.display = 'flex';
+  // Khane ke ooper rakho; jagah na ho to neeche
+  const r  = el.getBoundingClientRect();
+  const bh = bar.offsetHeight || 44;
+  const bw = bar.offsetWidth  || 420;
+  let top = r.top - bh - 8;
+  if (top < 8) top = Math.min(r.bottom + 8, window.innerHeight - bh - 8);
+  let left = r.left + (r.width / 2) - (bw / 2);
+  if (left < 8) left = 8;
+  if (left + bw > window.innerWidth - 8) left = Math.max(8, window.innerWidth - bw - 8);
+  bar.style.top  = Math.max(8, top) + 'px';
+  bar.style.left = left + 'px';
+}
+
+function _dioHideFloatBar() {
+  _dioFloatHideTimer = setTimeout(() => {
+    if (_dioFloatBar) _dioFloatBar.style.display = 'none';
+  }, 200);
+}
+
+// Poore safhe par: jahan bhi likhne wale khane mein jayen, toolbar wahin aa jaye
+function dioEnableFloatingToolbar() {
+  if (window._dioFloatBound) return;
+  window._dioFloatBound = true;
+  document.addEventListener('focusin', e => {
+    const el = e.target;
+    if (el && el.isContentEditable) { dioBindEditor(el.parentNode || document); _dioShowFloatBar(el); }
+  });
+  document.addEventListener('focusout', e => {
+    if (e.target && e.target.isContentEditable) _dioHideFloatBar();
+  });
+  window.addEventListener('scroll', () => {
+    const a = document.activeElement;
+    if (a && a.isContentEditable) _dioShowFloatBar(a);
+  }, true);
+  window.addEventListener('resize', () => {
+    const a = document.activeElement;
+    if (a && a.isContentEditable) _dioShowFloatBar(a);
+  });
+}
+window.dioEnableFloatingToolbar = dioEnableFloatingToolbar;
+document.addEventListener('DOMContentLoaded', dioEnableFloatingToolbar);
+if (document.readyState !== 'loading') dioEnableFloatingToolbar();

@@ -147,32 +147,9 @@ function _renderZimniEditor() {
 
   area.innerHTML = `
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
-    <!-- Top toolbar -->
+    <!-- Formatting buttons yahan nahi — jab kisi khane mein likhenge to
+         MS Word wala toolbar khud wahin nazar aa jayega -->
     <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
-      <button onmousedown="event.preventDefault()" onclick="_zFmt('undo')" title="واپس (Ctrl+Z)" style="${_zBtn()}">↶</button>
-      <button onmousedown="event.preventDefault()" onclick="_zFmt('redo')" title="دوبارہ (Ctrl+Y)" style="${_zBtn()}">↷</button>
-      <span style="width:1px;height:22px;background:var(--border);margin:0 3px;"></span>
-      <button onmousedown="event.preventDefault()" onclick="_zFmt('bold')" title="بولڈ (Ctrl+B)" style="${_zBtn()}font-weight:900;">B</button>
-      <button onmousedown="event.preventDefault()" onclick="_zFmt('italic')" title="ترچھا (Ctrl+I)" style="${_zBtn()}font-style:italic;">I</button>
-      <button onmousedown="event.preventDefault()" onclick="_zFmt('underline')" title="انڈر لائن (Ctrl+U)" style="${_zBtn()}text-decoration:underline;">U</button>
-      <span style="width:1px;height:22px;background:var(--border);margin:0 3px;"></span>
-      <button onclick="_zFont(1)" title="فونٹ بڑا" style="${_zBtn()}">A+</button>
-      <button onclick="_zFont(-1)" title="فونٹ چھوٹا" style="${_zBtn()}font-size:11px;">A−</button>
-      <span style="width:1px;height:22px;background:var(--border);margin:0 3px;"></span>
-      <button onmousedown="event.preventDefault()" onclick="_zFmt('justifyRight')" title="دائیں" style="${_zBtn()}">⫷</button>
-      <button onmousedown="event.preventDefault()" onclick="_zFmt('justifyCenter')" title="درمیان" style="${_zBtn()}">≡</button>
-      <button onmousedown="event.preventDefault()" onclick="_zFmt('justifyLeft')" title="بائیں" style="${_zBtn()}">⫸</button>
-      <button onmousedown="event.preventDefault()" onclick="_zFmt('justifyFull')" title="مکمل" style="${_zBtn()}">☰</button>
-      <span style="width:1px;height:22px;background:var(--border);margin:0 3px;"></span>
-      <select onchange="if(typeof dioSetFontSize==='function')dioSetFontSize(this.value); this.selectedIndex=0;"
-        title="فونٹ سائز" style="${_zBtn()}padding:0 6px;">
-        <option value="">فونٹ</option><option value="12">12 pt</option><option value="14">14 pt</option>
-        <option value="16">16 pt</option><option value="18">18 pt</option><option value="20">20 pt</option>
-      </select>
-      <button onmousedown="event.preventDefault()" onclick="_zFmt('insertUnorderedList')" title="نقطہ دار فہرست" style="${_zBtn()}">•</button>
-      <button onmousedown="event.preventDefault()" onclick="_zFmt('insertOrderedList')" title="نمبر والی فہرست" style="${_zBtn()}">1.</button>
-      <button onmousedown="event.preventDefault()" onclick="_zFmt('removeFormat')" title="فارمیٹنگ ہٹائیں" style="${_zBtn()}">✕</button>
-      <span style="width:1px;height:22px;background:var(--border);margin:0 3px;"></span>
       <button onclick="_zAddRow()" title="نئی قطار" style="${_zBtn()}font-size:11px;">➕ قطار</button>
       <div style="margin-right:auto;display:flex;gap:6px;">
         <button class="btn btn-primary btn-sm" onclick="_saveZimni()">💾 محفوظ</button>
