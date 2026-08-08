@@ -317,7 +317,7 @@ async function _printFIRDirect(id) {
   <div class="sig-row">
     <div class="sig-box"><div class="sig-line">دستخط مدعی<br>${esc(c.complainant)||'___'}</div></div>
     <div class="sig-box"><div class="sig-line">تفتیشی افسر<br>${esc(o.full_name)||'___'}</div></div>
-    <div class="sig-box"><div class="sig-line">SHO تھانہ ${esc(c.case_station||o.station||'___')}<br>مہر و دستخط</div></div>
+    <div class="sig-box"><div class="sig-line">${esc((typeof getSHOSignLine==='function') ? getSHOSignLine(c.case_station||o.station||'') : '')}<br><span style="font-size:11pt;">${esc(formatDate(new Date()))}</span></div></div>
   </div>
   <div class="footer">Digital IO</div>
   
@@ -415,7 +415,7 @@ async function _downloadCaseHTML(id) {
   <div class="row"><span class="lbl">تھانہ:</span><span class="val">${o.station||'—'}</span></div>
   <div style="margin-top:50px;display:flex;justify-content:space-between;">
     <div style="text-align:center;"><div style="border-top:1px solid #333;width:200px;padding-top:6px;">دستخط رپورٹنگ افسر</div></div>
-    <div style="text-align:center;"><div style="border-top:1px solid #333;width:200px;padding-top:6px;">SHO تھانہ ${o.station||'—'}</div></div>
+    <div style="text-align:center;"><div style="border-top:1px solid #333;width:220px;padding-top:6px;">${esc((typeof getSHOSignLine==='function') ? getSHOSignLine(o.station||'') : '')}<div style="font-size:11pt;margin-top:0;">${esc(formatDate(new Date()))}</div></div></div>
   </div>
   <div class="footer">Digital IO</div>
   </body></html>`;
@@ -1717,7 +1717,8 @@ function buildDocTemplate(docName, c, savedContent) {
         <tr>
           <td style="${td}width:50%;text-align:center;padding:20px 8px 8px;">
             <div>Forwarded Please</div>
-            <div style="font-weight:700;">SHO تھانہ ${ef(station)}</div>
+            <div style="font-weight:700;">${ef((typeof getSHOSignLine==='function') ? getSHOSignLine(station) : '')}</div>
+            <div style="font-size:11pt;">${ef(formatDate(new Date()))}</div>
           </td>
           <td style="${td}text-align:center;padding:20px 8px 8px;">
             <div>Forwarded</div>

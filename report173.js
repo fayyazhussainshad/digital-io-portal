@@ -901,6 +901,8 @@ async function openReport173WithType(type, _fromTab) {
   if (!_fromTab && typeof _dioOpenDocTab === 'function') _dioOpenDocTab('r173:' + (type||'mukammal'));
   await openReport173(_misalCaseId || (typeof currentCaseId !== 'undefined' ? currentCaseId : null));
   _r173Type = type || 'mukammal';
+  // Fehrist ka nishan saaf — warna form ki bajaye fehrist khul jati hai
+  _r173ShowList = false;
   _renderR173();
 }
 

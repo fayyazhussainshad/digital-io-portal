@@ -1623,6 +1623,11 @@ function _dioEnterDocView() {
   ov.innerHTML = `
     <div id="dio-dv-bar" style="display:flex;align-items:center;gap:8px;padding:8px 12px;
          background:var(--bg-secondary);border-bottom:1px solid var(--border);flex-wrap:wrap;">
+      <!-- واپس — پورے صفحے پر اوپر والی پٹی ڈھک جاتی ہے، اس لیے یہاں بھی ضروری ہے -->
+      <button onclick="dioGoBack()" title="واپس" aria-label="واپس"
+        style="width:34px;height:34px;border-radius:50%;flex-shrink:0;cursor:pointer;
+               border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);
+               font-size:18px;font-weight:900;line-height:1;direction:ltr;">←</button>
       <span id="dio-dv-fir" style="font-size:14px;font-weight:900;color:var(--accent);
             font-family:var(--font-mono);flex-shrink:0;white-space:nowrap;"></span>
       <div id="dio-dv-tabs" style="display:flex;gap:6px;flex:1;flex-wrap:wrap;min-width:0;"></div>
