@@ -1125,6 +1125,9 @@ window.addEventListener('unhandledrejection', function(e){
     <!-- TOP BAR -->
     <div class="topbar">
       <div class="topbar-left" style="display:flex;align-items:center;gap:4px;flex-wrap:nowrap;overflow-x:auto;">
+        <!-- WAPAS (Chrome jaisa back arrow) — har safhe se pichhle safhe par -->
+        <button id="dio-back-btn" class="topnav-btn" onclick="dioGoBack()" title="واپس"
+          style="font-size:18px;font-weight:900;padding:6px 12px;flex-shrink:0;">←</button>
         <!-- Main nav buttons (desktop top nav) -->
         <button class="topnav-btn active" onclick="showPage('dashboard',null);window._setTopNav&&_setTopNav(this)" title="ڈیش بورڈ">🏠<span class="topnav-label"> ڈیش بورڈ</span></button>
         <button class="topnav-btn" onclick="showPage('cases',null);window._setTopNav&&_setTopNav(this)" title="مقدمات">📁<span class="topnav-label"> مقدمات</span></button>
@@ -1170,9 +1173,6 @@ window.addEventListener('unhandledrejection', function(e){
     <div class="bottombar"><span id="footer-officer">Digital IO</span><span id="footer-time"></span><span id="footer-license"></span></div>
   </div>
 </div>
-
-<!-- WAPAS — top-LEFT corner floating back button (points LEFT, hidden on Dashboard) -->
-<button id="dio-back-btn" onclick="dioGoBack()" title="واپس" aria-label="واپس">&#8592;</button>
 
 <div id="toast-container"></div>
 <div id="modal-root"></div>
@@ -1232,11 +1232,6 @@ window.dioGoBack = function () {
           if (window._dioPageHist.length > 40) window._dioPageHist.shift();
         }
       } catch(_) {}
-      // WAPAS button: Dashboard par chhupao, har doosre safhe par dikhao
-      try {
-        var _bb = document.getElementById('dio-back-btn');
-        if (_bb) _bb.classList.toggle('show', page !== 'dashboard');
-      } catch(_) {}
       return orig.apply(this, arguments);
     };
   }, 300);
@@ -1263,7 +1258,9 @@ window.dioGoBack = function () {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script src="law-library.js"></script>
 <script src="templates.js"></script>
-<script src="sho-dsp.js"></script>
+<script src="editor-tools.js"></script>
+  <script src="saved-files.js"></script>
+  <script src="sho-dsp.js"></script>
 <script src="case-sharing.js"></script>
 <script src="notifications.js"></script>
 <script src="reminders.js"></script>
@@ -1381,47 +1378,6 @@ function _sidebarClose() { closeMobileSidebar(); }
 @media (min-width: 769px) {
   #menu-toggle { display: none !important; }
 }
-</style>
-
-<!-- ── WAPAS: floating top-LEFT back button ── -->
-<style>
-/* Fixed to the top-left corner. Arrow head always points LEFT (←) —
-   direction:ltr keeps the glyph un-flipped even though the app is dir="rtl". */
-#dio-back-btn{
-  position:fixed;
-  top:12px;
-  left:12px;
-  z-index:1200;
-  width:36px;
-  height:36px;
-  padding:0;
-  display:none;                         /* JS adds .show on every non-Dashboard page */
-  align-items:center;
-  justify-content:center;
-  box-sizing:border-box;
-  border:1px solid var(--border,#d5d5d5);
-  border-radius:50%;
-  background:var(--bg-card,#f1f1f1);
-  color:var(--text-primary,#111);
-  font-size:20px;
-  font-weight:900;
-  line-height:1;
-  direction:ltr;                        /* do NOT mirror the arrow for RTL */
-  cursor:pointer;
-  transition:box-shadow .15s ease, background .15s ease;
-  -webkit-tap-highlight-color:transparent;
-}
-#dio-back-btn.show{ display:inline-flex; }
-#dio-back-btn:hover{
-  box-shadow:0 2px 10px rgba(0,0,0,.28);
-  background:var(--hover-bg,#e6e6e6);
-}
-#dio-back-btn:active{ transform:translateY(1px); }
-/* Reserve room on the left so the button never covers topbar controls
-   (in RTL the theme/status cluster sits on the visual left). */
-.topbar{ padding-left:56px !important; }
-/* Case workspace hides the topbar — keep the document chip bar clear of the button. */
-body.workspace-mode #misal-doc-bar{ padding-left:56px; }
 </style>
 
 <!-- ── PWA: register service worker ── -->

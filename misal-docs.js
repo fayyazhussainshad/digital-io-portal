@@ -99,6 +99,7 @@ function renderMisalBar(c) {
       ])}
       ${items}
     </div>
+    ${(typeof dioSavedBoxHTML === 'function') ? dioSavedBoxHTML(c && c.id) : ''}
   </div>
   <style>
     .mdoc-chip{
@@ -430,10 +431,12 @@ function _renderMisalEditor(docId, def) {
 
   area.innerHTML = `
   <div style="display:flex;flex-direction:column;height:100%;min-height:400px;direction:rtl;">
-    <!-- PLAIN PAGE: sarkari form ke columns/rows pehle se defined hote hain,
-         is liye software apni taraf se koi toolbar/format button nahi deta.
-         Sirf safed kaghaz — owner/admin khud form set karta hai.
-         (محفوظ / پرنٹ / واپس upar full-page bar mein hain) -->
+    <!-- Safha khali hi rehta hai (software koi format nahi deta) —
+         lekin likhne ke liye MS Word jaise auzaar mojood hain -->
+    <div class="no-print" style="padding:6px 10px;border-bottom:1px solid var(--border);
+         background:var(--bg-secondary);">
+      ${(typeof dioEditorToolbar === 'function') ? dioEditorToolbar() : ''}
+    </div>
     <input type="hidden" id="misal-date" value="${savedDate}">
     <div style="flex:1;overflow:auto;min-height:0;padding:14px;">
       <div id="misal-editor" contenteditable="true" spellcheck="false" style="
@@ -462,6 +465,8 @@ function _renderMisalEditor(docId, def) {
     }
     // Auto text-direction for fields in this document editor
     if (typeof applyAutoDirection === 'function') applyAutoDirection(area);
+    // MS Word jaise auzaar: Tab, Ctrl+B/I/U waghera
+    if (typeof dioBindEditor === 'function') dioBindEditor(area);
     // انڈکس نقل مسل — fresh doc: ملزمان + ضمنیاں database se auto-fill
     if (docId === 'index_naql' && !(saved?.content?.html)) _fillIndexNaqlData();
   }, 80);
@@ -935,6 +940,13 @@ async function saveMisalDoc(docId) {
     if (error) throw error;
     if (_misalDocs[docId]) _misalDocs[docId].content = { html, date };
     _misalDirty = false;
+    // محفوظ فائلوں کی فہرست میں درج (نمبر شمار + تاریخ)
+    try {
+      if (typeof dioRegisterSaved === 'function') {
+        const dName = (MISAL_CASE_DOCS.find(d => d.id === docId) || {}).name || docId;
+        dioRegisterSaved('misal', dName, { case_id: _misalCaseId, doc_id: docId });
+      }
+    } catch(_) {}
     showToast('✅ دستاویز محفوظ ہو گئی', 'success');
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }

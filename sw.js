@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v237
+   DIGITAL IO — SERVICE WORKER v238
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v237';
+const CACHE_NAME = 'digital-io-v238';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -33,6 +33,8 @@ const CORE_ASSETS = [
   '/law-library.js',
   '/templates.js',
   '/sho-dsp.js',
+  '/editor-tools.js',
+  '/saved-files.js',
   '/case-sharing.js',
   '/notifications.js',
   '/reminders.js',
