@@ -1373,7 +1373,6 @@ function _renderR173List() {
 window._renderR173List = _renderR173List;
 
 // Naya چالان — form kholo
-window._r173OpenFromList = _r173OpenFromList;
 
 // Fehrist se hatao
 
