@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v249
+   DIGITAL IO — SERVICE WORKER v250
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v249';
+const CACHE_NAME = 'digital-io-v250';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -138,8 +138,13 @@ self.addEventListener('fetch', event => {
   // ── JS & CSS — NETWORK FIRST (never serve stale code) ──
   // This is the key fix for the recurring "old version" problem.
   if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+    // AHEM: 'reload' se browser ka apna purana cache nazar-andaz hota hai.
+    // Warna nayi file upload karne ke bawajood purani file chalti rehti thi.
+    const fresh = new Request(event.request.url, {
+      cache: 'reload', credentials: 'same-origin', mode: 'same-origin'
+    });
     event.respondWith(
-      fetch(event.request).then(response => {
+      fetch(fresh).then(response => {
         if (response && response.status === 200) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));

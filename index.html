@@ -1460,6 +1460,17 @@ if('serviceWorker' in navigator){
   // Builds and shows the "نیا اپڈیٹ دستیاب ہے" banner
   function _showUpdateBanner(worker){
     if (document.getElementById('dio-update-banner')) return; // already shown
+    // Agar officer 12 second tak na dabaye to KHUD laagu kar do — warna purani
+    // file chalti rehti hai aur nayi tabdeeliyan nazar nahi aatin.
+    try {
+      setTimeout(() => {
+        try {
+          if (worker && worker.state === 'installed') {
+            worker.postMessage({ type: 'SKIP_WAITING' });
+          }
+        } catch(_) {}
+      }, 12000);
+    } catch(_) {}
     const bar = document.createElement('div');
     bar.id = 'dio-update-banner';
     bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:2147483647;background:#1a3a5c;color:#fff;'
