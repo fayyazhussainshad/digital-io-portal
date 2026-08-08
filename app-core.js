@@ -930,6 +930,15 @@ function _updateSyncLabel() {
 }
 setInterval(_updateSyncLabel, 60000); // update label every minute
 
+// Internet toot-ne par foran cache mode — network par bekar koshishein band
+window.addEventListener('offline', () => {
+  try { _remindersFailedAt = Date.now(); } catch(_) {}
+});
+// Internet wapas aane par backoff hata do
+window.addEventListener('online', () => {
+  try { _remindersFailedAt = 0; } catch(_) {}
+});
+
 window.addEventListener('online',  ()=>{ updateConnectionStatus(true); _syncOfflineQueue(); });
 window.addEventListener('offline', ()=>updateConnectionStatus(false));
 

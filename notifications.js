@@ -8,6 +8,15 @@ async function _gatherNotifications() {
   const notifs = [];
   const today = new Date().toISOString().split('T')[0];
 
+  // INTERNET band ho to network par koshish hi na karo — warna har request
+  // baar baar nakaam ho kar console bhar deti hai aur battery zaya karti hai.
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    try {
+      const c = JSON.parse(localStorage.getItem('dio_notifs_cache') || '[]');
+      return Array.isArray(c) ? c : [];
+    } catch (_) { return []; }
+  }
+
   try {
     // 1. Pending reminders
     const reminders = await getReminders().catch(()=>[]);
@@ -64,6 +73,7 @@ async function _gatherNotifications() {
   const priority = { overdue: 0, court: 1, reminder: 2, case: 3 };
   notifs.sort((a, b) => (priority[a.type] - priority[b.type]) || ((a.date||'') < (b.date||'') ? -1 : 1));
 
+  try { localStorage.setItem('dio_notifs_cache', JSON.stringify(notifs)); } catch (_) {}
   return notifs;
 }
 
