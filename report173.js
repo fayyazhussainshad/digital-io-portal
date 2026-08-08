@@ -72,7 +72,11 @@ async function _loadR173() {
     const { data } = await supabaseClient.from('report_173').select('*').eq('case_id', _r173CaseId);
     _r173Records = {};
     (data||[]).forEach(r => {
-      const key = r.report_type === 'tatima_challan' ? 'tatima_challan_' + (r.report_subtype||'aslha') : r.report_type;
+      // Chaabi bilkul waisi jaisi SAVE karte waqt banti hai (warna dohri entries)
+      let key;
+      if (r.report_type === 'tatima_challan') key = 'tatima_challan_' + (r.report_subtype || 'aslha');
+      else if (R173_BLANK_TYPES.includes(r.report_type)) key = r.report_type + '::' + (r.report_subtype || 'fir');
+      else key = r.report_type;
       _r173Records[key] = r.form_data || {};
     });
     try { localStorage.setItem('dio_r173_'+_r173CaseId, JSON.stringify(_r173Records)); } catch(_) {}
@@ -695,6 +699,8 @@ async function _saveR173() {
     // One record per type (and subtype for tatima) per case
     let q = supabaseClient.from('report_173').select('id').eq('case_id', _r173CaseId).eq('report_type', _r173Type);
     if (isTatima) q = q.eq('report_subtype', _r173Subtype);
+    // چالان: FIR aur کراس ورژن alag records hain — warna aik doosre ko mita dete hain
+    else if (R173_BLANK_TYPES.includes(_r173Type)) q = q.eq('report_subtype', _ch173Version);
     const { data: existing } = await q.maybeSingle();
     if (existing) {
       await supabaseClient.from('report_173').update(rec).eq('id', existing.id);
@@ -1242,7 +1248,11 @@ function _r173SavedRows() {
   const rows = [];
   Object.keys(_r173Records || {}).forEach(key => {
     const d = _r173Records[key] || {};
-    if (!Object.keys(d).length) return;
+    // Sirf woh dikhao jinme WAQAI matn ho — khali/sirf-settings wale nahi
+    const hasContent = ['madai','ghair_giraftar','zer_hirasat','bar_zamanat',
+                        'mal_qabza','shahadat','halaat','cont_text','sho1','sho2']
+      .some(k => String(d[k] || '').replace(/<[^>]*>/g, '').trim().length > 0);
+    if (!hasContent) return;
     // key ki shakl: type ya type::version ya tatima_challan_subtype
     let type = key, ver = '';
     if (key.includes('::')) { const p = key.split('::'); type = p[0]; ver = p[1]; }

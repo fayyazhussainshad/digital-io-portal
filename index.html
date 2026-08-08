@@ -513,7 +513,7 @@ input, textarea, select { font-family: var(--font-main); }
 .logout-btn:hover { background: rgba(239,68,68,0.15); }
 .sidebar-version { font-size: 9px; color: var(--text-faint); text-align: center; margin-top: 6px; }
 .main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; width: 100%; min-width: 0; margin-right: 0; }
-.topbar { height: var(--topbar-height); background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; justify-content: space-between; flex-shrink: 0; }
+.topbar { display:flex; align-items:center; gap:8px; height: var(--topbar-height); background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; justify-content: space-between; flex-shrink: 0; }
 body.workspace-mode .topbar { display: none !important; }
 body.workspace-mode .page-content { height: 100vh !important; }
 .topbar-left { display: flex; align-items: center; gap: 12px; }
@@ -997,13 +997,7 @@ if (!window.supabase || !window.supabase.createClient) {
 </head>
 <body>
 <!-- Diagnostic error banner — shows JS errors on screen (helps debug mobile) -->
-<!-- واپس — بائیں کونے پر، ہر صفحے پر (ڈیش بورڈ کے علاوہ) -->
-<button id="dio-back-btn" onclick="dioGoBack()" title="واپس" aria-label="واپس"
-  style="position:fixed;top:12px;left:12px;z-index:9800;display:none;
-         width:38px;height:38px;border-radius:50%;cursor:pointer;
-         border:1px solid var(--border,#ccc);background:var(--bg-card,#fff);
-         color:var(--text-primary,#111);font-size:19px;font-weight:900;line-height:1;
-         box-shadow:0 2px 10px rgba(0,0,0,.12);direction:ltr;">←</button>
+
 <div id="dio-error-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:999999;background:#b91c1c;color:#fff;padding:10px 14px;font-size:12px;font-family:monospace;direction:ltr;text-align:left;max-height:40vh;overflow:auto;"></div>
 <script>
 window.addEventListener('error', function(e){
@@ -1148,7 +1142,11 @@ window.addEventListener('unhandledrejection', function(e){
   <div class="main-area">
     <!-- TOP BAR -->
     <div class="topbar">
-      <div class="topbar-left" style="display:flex;align-items:center;gap:4px;flex-wrap:nowrap;overflow-x:auto;">
+      <!-- واپس — صفحے کا حصہ (تیرتا ہوا نہیں)، بائیں سرے پر -->
+      <button id="dio-back-btn" class="topnav-btn" onclick="dioGoBack()" title="واپس" aria-label="واپس"
+        style="display:none;order:99;margin-left:0;margin-right:auto;flex-shrink:0;
+               font-size:18px;font-weight:900;padding:6px 12px;direction:ltr;">←</button>
+      <div class="topbar-left" style="display:flex;align-items:center;gap:4px;flex-wrap:nowrap;overflow-x:auto;flex:1;min-width:0;">
         <!-- Main nav buttons (desktop top nav) -->
         <button class="topnav-btn active" onclick="showPage('dashboard',null);window._setTopNav&&_setTopNav(this)" title="ڈیش بورڈ">🏠<span class="topnav-label"> ڈیش بورڈ</span></button>
         <button class="topnav-btn" onclick="showPage('cases',null);window._setTopNav&&_setTopNav(this)" title="مقدمات">📁<span class="topnav-label"> مقدمات</span></button>
@@ -1222,7 +1220,7 @@ function _dioToggleBackBtn(page) {
     const b = document.getElementById('dio-back-btn');
     if (!b) return;
     const onDash = (page === 'dashboard');
-    b.style.display = onDash ? 'none' : 'block';
+    b.style.display = onDash ? 'none' : 'inline-flex';
   } catch(_) {}
 }
 window._dioToggleBackBtn = _dioToggleBackBtn;
