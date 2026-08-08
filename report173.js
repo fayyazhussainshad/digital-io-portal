@@ -5,7 +5,8 @@
 
 let _r173CaseId = null;
 let _r173Case = null;
-let _r173Records = {};  // type -> saved form_data
+let _r173Records = {};
+let _r173ShowList = false;   // save ke baad چالان ki fehrist  // type -> saved form_data
 let _r173Type = 'mukammal';
 
 const R173_TYPES = [
@@ -99,6 +100,8 @@ function _ch173Heading(type, typeName) {
 }
 
 function _renderR173() {
+  // Fehrist mode — save ke baad چالان ki table dikhti hai
+  if (_r173ShowList) { _r173ShowList = false; _renderR173List(); return; }
   const area = document.getElementById('workspace-editor-area')
             || document.getElementById('workspace-tab-content')
             || document.getElementById('page-content');
@@ -700,6 +703,9 @@ async function _saveR173() {
       await supabaseClient.from('report_173').insert(rec);
     }
     try { localStorage.setItem('dio_r173_'+_r173CaseId, JSON.stringify(_r173Records)); } catch(_) {}
+    // Save ke baad چالان ki FEHRIST kholo (image jaisi)
+    _r173ShowList = true;
+    setTimeout(() => { try { _renderR173List(); } catch(_) {} }, 250);
 
     // P7: auto-update case status based on report type
     const statusMap = {
@@ -1226,3 +1232,172 @@ function _ch173HasCross() {
   return a || w;
 }
 window._ch173HasCross = _ch173HasCross;
+
+// ═══════════════════════════════════════════════════════════════════
+//  چالان کی فہرست — save karne ke baad yeh khulti hai
+//  (ضمنیات جیسی table: چالان | ہیڈ | تاریخ | مضمون | ایکشن)
+// ═══════════════════════════════════════════════════════════════════
+
+// Mehfooz چالان ki fehrist banao (_r173Records se)
+function _r173SavedRows() {
+  const rows = [];
+  Object.keys(_r173Records || {}).forEach(key => {
+    const d = _r173Records[key] || {};
+    if (!Object.keys(d).length) return;
+    // key ki shakl: type ya type::version ya tatima_challan_subtype
+    let type = key, ver = '';
+    if (key.includes('::')) { const p = key.split('::'); type = p[0]; ver = p[1]; }
+    const tObj = (typeof R173_TYPES !== 'undefined')
+      ? R173_TYPES.find(t => t.id === type || key.startsWith(t.id)) : null;
+    const head = tObj ? tObj.name : type;
+    const verTxt = ver === 'cross_version' ? ' (کراس ورژن)' : (ver === 'fir' ? ' (FIR)' : '');
+    // مضمون — matn ka pehla hissa
+    const parts = [d.halaat, d.cont_text, d.shahadat, d.madai].filter(Boolean).join(' ');
+    const plain = String(parts).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    const mazmoon = plain ? (plain.length > 110 ? plain.slice(0, 110) + '…' : plain) : '—';
+    rows.push({
+      key, type, ver,
+      chalan: head + verTxt,
+      head: head,
+      date: d.cl_date || (typeof formatDate === 'function' ? formatDate(new Date()) : ''),
+      mazmoon
+    });
+  });
+  return rows;
+}
+
+// Fehrist ka safha
+function _renderR173List() {
+  const area = document.getElementById('workspace-editor-area')
+            || document.getElementById('workspace-tab-content')
+            || document.getElementById('page-content');
+  if (!area) return;
+  const rows = _r173SavedRows();
+
+  area.innerHTML = `
+  <style>
+    .ct{ width:100%; border-collapse:collapse; font-size:13px; direction:rtl;
+         font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+    .ct th{ background:var(--bg-tertiary); border:1px solid var(--border);
+            padding:7px 6px; font-weight:700; white-space:nowrap; }
+    .ct td{ border:1px solid var(--border); padding:6px; vertical-align:middle; }
+    .ct tbody tr:nth-child(odd){ background:var(--bg-secondary); }
+    .ct tbody tr:hover{ background:var(--hover-bg); }
+    .ct .num{ text-align:center; font-weight:700; width:46px; }
+    .ct .act{ white-space:nowrap; text-align:center; width:170px; }
+    .cab{ border:1px solid var(--border); background:var(--bg-card); border-radius:6px;
+          padding:3px 7px; margin:0 1px; cursor:pointer; font-size:14px; line-height:1; }
+    .cab:hover{ background:var(--hover-bg); }
+    .ct .mz{ font-size:12px; color:var(--text-secondary); }
+  </style>
+  <div style="padding:14px;direction:rtl;height:100%;overflow-y:auto;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+      <button class="btn btn-primary btn-sm" onclick="_r173NewFromList()">چالان درج کریں</button>
+      <div style="flex:1;text-align:center;font-weight:700;font-size:15px;min-width:200px;">
+        عبوری / مکمل / ساقط / نامکمل (173 ض ف / 512 ض ف)
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="_printAllR173()">تمام چالان پرنٹ کریں</button>
+    </div>
+    ${rows.length ? `
+    <table class="ct">
+      <thead>
+        <tr>
+          <th class="num">#</th>
+          <th>چالان</th>
+          <th>ہیڈ</th>
+          <th>تاریخ</th>
+          <th>مضمون</th>
+          <th class="act">ایکشن</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map((r, i) => `
+        <tr ondblclick="_r173OpenFromList('${r.key}')" style="cursor:pointer;">
+          <td class="num">${i + 1}</td>
+          <td>${esc(r.chalan)}</td>
+          <td style="text-align:center;">${esc(r.head)}</td>
+          <td style="text-align:center;white-space:nowrap;font-family:var(--font-mono);">${esc(r.date)}</td>
+          <td class="mz">${esc(r.mazmoon)}</td>
+          <td class="act">
+            <button class="cab" onclick="event.stopPropagation();_r173OpenFromList('${r.key}')" title="ترمیم">✏️</button>
+            <button class="cab" onclick="event.stopPropagation();_r173DeleteFromList('${r.key}')" title="حذف">🗑️</button>
+            <button class="cab" onclick="event.stopPropagation();_r173PrintFromList('${r.key}')" title="پرنٹ">🖨️</button>
+            <button class="cab" onclick="event.stopPropagation();_r173EmailFromList('${r.key}')" title="بھیجیں">✉️</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>` : `
+    <div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
+      <div style="font-size:40px;margin-bottom:10px;">📋</div>
+      <div style="font-size:14px;">ابھی کوئی چالان محفوظ نہیں</div>
+      <div style="font-size:11px;margin-top:6px;">اوپر "چالان درج کریں" پر کلک کریں</div>
+    </div>`}
+  </div>`;
+}
+window._renderR173List = _renderR173List;
+
+// Naya چالان — form kholo
+function _r173NewFromList() { _r173ShowList = false; _renderR173(); }
+window._r173NewFromList = _r173NewFromList;
+
+// Fehrist se koi چالان kholo (usi type/version par)
+function _r173OpenFromList(key) {
+  let type = key, ver = '';
+  if (key.includes('::')) { const p = key.split('::'); type = p[0]; ver = p[1]; }
+  _r173Type = type;
+  if (ver) _ch173Version = ver;
+  _r173ShowList = false;
+  _renderR173();
+}
+window._r173OpenFromList = _r173OpenFromList;
+
+// Fehrist se hatao
+async function _r173DeleteFromList(key) {
+  if (!confirm('کیا یہ چالان حذف کر دیں؟')) return;
+  let type = key.includes('::') ? key.split('::')[0] : key;
+  try {
+    delete _r173Records[key];
+    try { localStorage.setItem('dio_r173_' + _r173CaseId, JSON.stringify(_r173Records)); } catch (_) {}
+    await supabaseClient.from('report_173').delete()
+      .eq('case_id', _r173CaseId).eq('report_type', type);
+    if (typeof showToast === 'function') showToast('🗑️ حذف ہو گیا', 'info');
+  } catch (e) {
+    if (typeof showToast === 'function') showToast('❌ ' + e.message, 'error');
+  }
+  _renderR173List();
+}
+window._r173DeleteFromList = _r173DeleteFromList;
+
+// Print — pehle kholo phir chhapo
+function _r173PrintFromList(key) {
+  _r173OpenFromList(key);
+  setTimeout(() => { if (typeof _printR173 === 'function') _printR173(); }, 700);
+}
+window._r173PrintFromList = _r173PrintFromList;
+
+// Bhejna
+async function _r173EmailFromList(key) {
+  const r = _r173SavedRows().find(x => x.key === key);
+  if (!r) return;
+  const txt = `${r.chalan}${r.date ? ' — ' + r.date : ''}\n\n${r.mazmoon}`;
+  try {
+    if (navigator.share) { await navigator.share({ title: r.chalan, text: txt }); return; }
+    window.location.href = 'mailto:?subject=' + encodeURIComponent(r.chalan) + '&body=' + encodeURIComponent(txt);
+  } catch (_) {
+    try { await navigator.clipboard.writeText(txt);
+      if (typeof showToast === 'function') showToast('📋 نقل ہو گیا', 'success'); } catch (__) {}
+  }
+}
+window._r173EmailFromList = _r173EmailFromList;
+
+// Tamam چالان print
+function _printAllR173() {
+  const rows = _r173SavedRows();
+  if (!rows.length) {
+    if (typeof showToast === 'function') showToast('⚠️ کوئی چالان محفوظ نہیں', 'info'); return;
+  }
+  if (typeof showToast === 'function')
+    showToast('🖨️ ایک ایک کر کے چالان کھول کر پرنٹ کریں', 'info', 4000);
+  _r173PrintFromList(rows[0].key);
+}
+window._printAllR173 = _printAllR173;
