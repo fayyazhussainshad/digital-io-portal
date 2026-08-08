@@ -1196,11 +1196,58 @@ async function doLogin() {
   }
 }
 
+
+// ── افسر کا ریکارڈ نہ ملے تو صاف پیغام (خاموش ناکامی نہیں) ──
+function _dioShowNoProfile(email, uid) {
+  if (document.getElementById('dio-noprofile')) return;
+  const d = document.createElement('div');
+  d.id = 'dio-noprofile';
+  d.style.cssText =
+    'position:fixed;inset:0;z-index:2147483647;background:rgba(8,15,26,0.96);color:#fff;' +
+    "display:flex;align-items:center;justify-content:center;padding:20px;direction:rtl;" +
+    "font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;";
+  d.innerHTML = `
+    <div style="max-width:560px;background:#0f2136;border:1px solid #2a4a6b;border-radius:14px;padding:22px;">
+      <div style="font-size:19px;font-weight:800;margin-bottom:10px;">⚠️ افسر کا ریکارڈ نہیں ملا</div>
+      <div style="font-size:15px;line-height:1.9;color:#cfe0f0;">
+        آپ کا لاگ اِن تو کامیاب ہے، مگر اس اکاؤنٹ کے ساتھ کوئی <b>افسر پروفائل</b> منسلک نہیں۔
+        اسی وجہ سے مقدمات، دستاویزات وغیرہ محفوظ نہیں ہو رہے۔
+      </div>
+      <div style="margin:14px 0;padding:10px 12px;background:#08182a;border-radius:8px;
+                  font-family:monospace;font-size:12px;direction:ltr;text-align:left;color:#9fc6e8;">
+        ${email || ''}<br>${uid || ''}
+      </div>
+      <div style="font-size:14px;line-height:1.9;color:#cfe0f0;">
+        اگر یہ آپ کا اصل اکاؤنٹ نہیں تو <b>لاگ آؤٹ</b> کر کے درست ای میل سے لاگ اِن کریں۔
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button onclick="doLogout()" style="flex:1;padding:10px;border:none;border-radius:8px;
+                background:#2563eb;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;font-size:15px;">
+          🚪 لاگ آؤٹ</button>
+        <button onclick="document.getElementById('dio-noprofile').remove()"
+                style="padding:10px 16px;border:1px solid #2a4a6b;border-radius:8px;background:transparent;
+                       color:#cfe0f0;cursor:pointer;font-family:inherit;font-size:15px;">بند کریں</button>
+      </div>
+    </div>`;
+  document.body.appendChild(d);
+}
+window._dioShowNoProfile = _dioShowNoProfile;
+
 async function _loadOfficerProfile() {
   // currentUser set na ho to profile load mat karo (crash se bachao)
   if (!currentUser || !currentUser.id) return;
   try {
-    const { data } = await supabaseClient.from('officers').select('*').eq('user_id',currentUser.id).single();
+    const { data, error } = await supabaseClient.from('officers')
+      .select('*').eq('user_id', currentUser.id).maybeSingle();
+    // AFSAR ka record hi mojood na ho → har cheez par 403 aata hai.
+    // Khamoshi se nakaam hone ki bajaye SAAF paighaam do.
+    if (!data && !error) {
+      currentOfficer = null;
+      try {
+        _dioShowNoProfile(currentUser.email || '', currentUser.id);
+      } catch(_) {}
+      return;
+    }
     if (data) {
       currentOfficer = data;
       // Cache for offline use
