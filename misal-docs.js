@@ -89,14 +89,27 @@ function renderMisalBar(c) {
         {label:'گواہان FIR', act:`_ddPick('wit-dd','witnesses_fir')`},
         {label:'گواہان کراس ورژن', act:`_ddPick('wit-dd','witnesses_cross')`}
       ])}
-      ${_misalDropdown('r173-dd', 'رپورٹ 173 ض ف', [
-        {label:'چالان مکمل', act:`openReport173WithType('mukammal')`},
-        {label:'چالان نامکمل', act:`openReport173WithType('namukammal')`},
-        {label:'انٹیرم چالان', act:`openReport173WithType('interim')`},
-        {label:'اخراج', act:`openReport173WithType('ikhraj')`},
-        {label:'عدم پتہ', act:`openReport173WithType('adampata')`},
-        {label:'تتمہ چالان', act:`openReport173WithType('tatima_challan')`}
-      ])}
+      ${(() => {
+        // Is مقدمہ mein کراس ورژن hai? (کراس ورژن ka مدعی darj ho to)
+        const hasCross = !!(c && (c.cross_complainant || c.cross_complainant_cnic));
+        const types = [
+          ['چالان مکمل','mukammal'], ['چالان نامکمل','namukammal'],
+          ['چالان 512 ض ف','ch512'], ['انٹیرم چالان','interim'],
+          ['اخراج','ikhraj'], ['عدم پتہ','adampata'], ['تتمہ چالان','tatima_challan']
+        ];
+        // کراس ورژن NAHI → seedhi fehrist
+        if (!hasCross) {
+          return _misalDropdown('r173-dd', 'رپورٹ 173 ض ف',
+            types.map(([lbl, id]) => ({ label: lbl, act: `openReport173WithType('${id}')` })));
+        }
+        // کراس ورژن HAI → pehle FIR / کراس ورژن, phir چالان ki fehrist
+        return _misalDropdown('r173-dd', 'رپورٹ 173 ض ف', [
+          { label: '── FIR ──', act: `` },
+          ...types.map(([lbl, id]) => ({ label: '　' + lbl, act: `_r173PickVer('fir','${id}')` })),
+          { label: '── کراس ورژن ──', act: `` },
+          ...types.map(([lbl, id]) => ({ label: '　' + lbl, act: `_r173PickVer('cross_version','${id}')` }))
+        ]);
+      })()}
       ${items}
     </div>
   </div>
@@ -1661,7 +1674,17 @@ function _dioExitDocView() {
   const area = document.getElementById('workspace-editor-area');
   // Ghair-mehfooz tabdeeli mehfooz kar lo
   try { if (_misalDirty && _openDocId && typeof saveMisalDoc === 'function') saveMisalDoc(_openDocId); } catch(_) {}
-  if (area && _dioAreaHome) _dioAreaHome.appendChild(area);
+  if (area && _dioAreaHome) {
+    _dioAreaHome.appendChild(area);
+    // Form/dastawez ko yahan chhod kar na jao — warna woh bina chune bhi
+    // nazar aata rehta hai. Dastawez sirf chip → fehrist se chunne par khulti hai.
+    area.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+           height:100%;min-height:260px;color:var(--text-muted);direction:rtl;">
+        <div style="font-size:40px;margin-bottom:10px;">📄</div>
+        <div style="font-size:14px;">اوپر سے کوئی دستاویز منتخب کریں</div>
+      </div>`;
+  }
   ov.remove();
   document.body.style.overflow = '';
   document.removeEventListener('keydown', _dioDocViewEsc);

@@ -1400,3 +1400,11 @@ function _printAllR173() {
   _r173PrintFromList(rows[0].key);
 }
 window._printAllR173 = _printAllR173;
+
+// ═══ Version (FIR / کراس ورژن) + چالان ki qism — dono aik saath ═══
+// Sirf usi version ka data چالان mein aayega.
+async function _r173PickVer(version, type) {
+  _ch173Version = (version === 'cross_version') ? 'cross_version' : 'fir';
+  if (typeof openReport173WithType === 'function') await openReport173WithType(type);
+}
+window._r173PickVer = _r173PickVer;
