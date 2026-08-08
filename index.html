@@ -34,21 +34,21 @@
       font-display: swap;
     }
   
-/* ── CARDS LANDSCAPE: andar ki fields do columns mein (chaudai ka faida) ── */
-@media (min-width: 760px) {
-  .modal-body .form-grid,
-  .modal-body > form,
-  .modal-body { --dio-cols: 2; }
-  .modal-body .form-row-2, .modal-body .dio-2col {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px;
-  }
-  /* Aam form fields: do do aik qataar mein */
-  .modal-body .form-group { display: inline-block; width: calc(50% - 8px); vertical-align: top; margin-left: 6px; }
-  .modal-body .form-group.full, .modal-body .form-group:has(textarea) { width: 100%; margin-left: 0; }
-  .modal-body textarea { min-height: 90px; }
+/* ── CARDS LANDSCAPE: andar ki fields do columns mein ── */
+@media (min-width: 820px) {
+  #modal-body.modal-body { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; align-items: start; }
+  /* Poori chaudai wale: lambi tehreer, fehristein, buttons ki qataar */
+  #modal-body.modal-body > .form-group:has(textarea),
+  #modal-body.modal-body > .form-group.full,
+  #modal-body.modal-body > .full-width,
+  #modal-body.modal-body > h3,
+  #modal-body.modal-body > hr,
+  #modal-body.modal-body > table,
+  #modal-body.modal-body > .dio-full { grid-column: 1 / -1; }
+  #modal-body.modal-body textarea { min-height: 90px; }
 }
-@media (max-width: 759px) {
-  .modal-body .form-group { width: 100% !important; margin-left: 0 !important; }
+@media (max-width: 819px) {
+  #modal-body.modal-body { display: block; }
 }
 </style>
   <style>
@@ -1542,12 +1542,12 @@ window.showPage = function(page, el) {
 
 <!-- Generic Modal (used by openModal/closeModal) -->
 <div id="modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)closeModal()">
-  <div style="background:var(--bg-card,#0b1826);border:1px solid var(--border,#1e3a52);border-radius:14px;max-width:560px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,0.6);direction:rtl;">
+  <div class="modal-card" style="background:var(--bg-card,#0b1826);border:1px solid var(--border,#1e3a52);border-radius:14px;max-width:980px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,0.6);direction:rtl;">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border,#1e3a52);">
       <div id="modal-title" style="font-size:16px;font-weight:700;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;color:var(--text-primary,#e5eef5);"></div>
       <button onclick="closeModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted,#7d97ad);line-height:1;">✕</button>
     </div>
-    <div id="modal-body" style="padding:18px;"></div>
+    <div id="modal-body" class="modal-body" style="padding:18px;"></div>
     <div id="modal-footer" style="padding:12px 18px;border-top:1px solid var(--border,#1e3a52);display:flex;gap:8px;justify-content:flex-start;flex-wrap:wrap;"></div>
   </div>
 </div>

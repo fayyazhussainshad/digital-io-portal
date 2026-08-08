@@ -76,6 +76,11 @@ function renderMisalBar(c) {
     background:var(--bg-secondary);
     border-bottom:1px solid var(--border);">
     <div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;align-items:center;">
+      <!-- واپس — چپس کی پٹی کا حصہ، بائیں سرے پر -->
+      <button onclick="dioGoBack()" title="واپس" aria-label="واپس"
+        style="order:999;margin-right:auto;width:34px;height:34px;border-radius:50%;flex-shrink:0;
+               cursor:pointer;border:1px solid var(--border);background:var(--bg-card);
+               color:var(--text-primary);font-size:18px;font-weight:900;line-height:1;direction:ltr;">←</button>
       ${indexChip}
       ${_misalDropdown('fir-dd', 'الف آئی آر', [
         {label:'الف آئی آر', act:`_ddPick('fir-dd','fir')`},

@@ -194,6 +194,30 @@ function showPage(page, el) {
 }
 
 // ── MODAL ─────────────────────────────────────────────────────
+
+// ── SHO کی دستخطی لائن — backup تعریف ───────────────────────────
+// اصل تعریف sho-dsp.js میں ہے۔ اگر کسی وجہ سے وہ فائل لوڈ نہ ہو تو
+// SHO کی لائن خالی آ جاتی تھی (اور تاریخ اکیلی رہ جاتی تھی) — اس لیے
+// یہاں بھی رکھ دی ہے تاکہ کبھی غائب نہ ہو۔
+if (typeof window.getSHOSignLine !== 'function') {
+  window.getSHOSignLine = function (station) {
+    let name = '', rank = '';
+    try {
+      const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}');
+      name = (sho.name || '').trim();
+      rank = (sho.rank || '').trim();
+    } catch (_) {}
+    const st = (station ||
+      (typeof currentOfficer !== 'undefined' && currentOfficer ? currentOfficer.station : '') || '').trim();
+    const parts = [];
+    if (name) parts.push(name);
+    if (rank) parts.push(rank);
+    let line = parts.join(' ');
+    if (st) line += (line ? ' ' : '') + 'تھانہ ' + st;
+    return line;
+  };
+}
+
 function openModal(title, body, footer) {
   const t = document.getElementById('modal-title');
   const b = document.getElementById('modal-body');
