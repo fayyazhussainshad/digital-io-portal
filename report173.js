@@ -1337,7 +1337,7 @@ function _renderR173List() {
   const section = (title, addLabel, addFn, printFn, list, col1) => `
     <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap;">
       <button class="btn btn-primary btn-sm" onclick="${addFn}">${addLabel}</button>
-      <div style="flex:1;text-align:center;font-weight:700;font-size:14px;min-width:180px;">${title}</div>
+      ${title ? `<div style="flex:1;text-align:center;font-weight:700;font-size:14px;min-width:180px;">${title}</div>` : '<div style="flex:1;"></div>'}
       <button class="btn btn-secondary btn-sm" onclick="${printFn}">تمام پرنٹ کریں</button>
     </div>
     <table class="ct">
@@ -1365,11 +1365,7 @@ function _renderR173List() {
     .cab:hover{ background:var(--hover-bg); }
   </style>
   <div style="padding:14px;direction:rtl;height:100%;overflow-y:auto;">
-    ${section('عبوری / مکمل / ساقط / نامکمل (173 ض ف / 512 ض ف)',
-              'چالان درج کریں', '_r173NewDoc(false)', '_printAllR173(false)', chalans, 'چالان')}
-    <div style="height:22px;"></div>
-    ${section('عدم پتہ / اخراج',
-              'رپورٹ درج کریں', '_r173NewDoc(true)', '_printAllR173(true)', ikhraj, 'عدم پتہ/اخراج')}
+    ${section('', 'چالان درج کریں', '_r173NewDoc(false)', '_printAllR173(false)', _r173Docs, 'چالان')}
   </div>`;
 }
 window._renderR173List = _renderR173List;
@@ -1398,10 +1394,9 @@ window._r173PickVer = _r173PickVer;
 
 // ➕ نیا چالان یا عدم پتہ/اخراج رپورٹ — پہلے ہیڈ چنیں
 function _r173NewDoc(isIkhraj) {
-  const heads = isIkhraj ? R173_IKHRAJ_HEADS : R173_HEADS;
-  const types = isIkhraj
-    ? R173_TYPES.filter(t => ['ikhraj','adampata'].includes(t.id))
-    : R173_TYPES.filter(t => !['ikhraj','adampata'].includes(t.id));
+  const heads = R173_HEADS.concat(R173_IKHRAJ_HEADS);
+  // Tamam qismein aik hi fehrist mein (چالان + اخراج/عدم پتہ)
+  const types = R173_TYPES;
 
   const body = `
     <div style="direction:rtl;">
@@ -1521,3 +1516,12 @@ function _r173SetHead(h) {
   try { _r173Dirty = true; } catch (_) {}
 }
 window._r173SetHead = _r173SetHead;
+
+// ═══ رپورٹ 173 ض ف کا چِپ — سیدھی فہرست کھولتا ہے (فارم نہیں) ═══
+async function openR173List() {
+  if (typeof _dioOpenDocTab === 'function') _dioOpenDocTab('r173:list');
+  await openReport173(_misalCaseId || (typeof currentCaseId !== 'undefined' ? currentCaseId : null));
+  _r173ShowList = false;
+  _renderR173List();
+}
+window.openR173List = openR173List;

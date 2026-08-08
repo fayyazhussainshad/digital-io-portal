@@ -94,27 +94,7 @@ function renderMisalBar(c) {
         {label:'گواہان FIR', act:`_ddPick('wit-dd','witnesses_fir')`},
         {label:'گواہان کراس ورژن', act:`_ddPick('wit-dd','witnesses_cross')`}
       ])}
-      ${(() => {
-        // Is مقدمہ mein کراس ورژن hai? (کراس ورژن ka مدعی darj ho to)
-        const hasCross = !!(c && (c.cross_complainant || c.cross_complainant_cnic));
-        const types = [
-          ['چالان مکمل','mukammal'], ['چالان نامکمل','namukammal'],
-          ['چالان 512 ض ف','ch512'], ['انٹیرم چالان','interim'],
-          ['اخراج','ikhraj'], ['عدم پتہ','adampata'], ['تتمہ چالان','tatima_challan']
-        ];
-        // کراس ورژن NAHI → seedhi fehrist
-        if (!hasCross) {
-          return _misalDropdown('r173-dd', 'رپورٹ 173 ض ف',
-            types.map(([lbl, id]) => ({ label: lbl, act: `openReport173WithType('${id}')` })));
-        }
-        // کراس ورژن HAI → pehle FIR / کراس ورژن, phir چالان ki fehrist
-        return _misalDropdown('r173-dd', 'رپورٹ 173 ض ف', [
-          { label: '── FIR ──', act: `` },
-          ...types.map(([lbl, id]) => ({ label: '　' + lbl, act: `_r173PickVer('fir','${id}')` })),
-          { label: '── کراس ورژن ──', act: `` },
-          ...types.map(([lbl, id]) => ({ label: '　' + lbl, act: `_r173PickVer('cross_version','${id}')` }))
-        ]);
-      })()}
+      <span class="mdoc-chip mdoc-empty" onclick="openR173List()" title="رپورٹ 173 ض ف">رپورٹ 173 ض ف</span>
       ${items}
     </div>
   </div>
@@ -1584,6 +1564,7 @@ function _dioDocName(docId) {
     shahadatain:     'شہادتیں',
     fir:             'الف آئی آر',
     cross_version:   'کراس ورژن',
+    'r173:list':           'رپورٹ 173 ض ف',
     'r173:mukammal':       'رپورٹ 173 — چالان مکمل',
     'r173:namukammal':     'رپورٹ 173 — چالان نامکمل',
     'r173:interim':        'رپورٹ 173 — انٹیرم چالان',
