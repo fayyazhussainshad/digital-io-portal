@@ -45,29 +45,75 @@ function _renderZimniList() {
             || document.getElementById('page-content');
   if (!area) return;
   area.innerHTML = `
+  <style>
+    .zt{ width:100%; border-collapse:collapse; font-size:13px; direction:rtl;
+         font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+    .zt th{ background:var(--bg-tertiary); border:1px solid var(--border);
+            padding:7px 6px; font-weight:700; white-space:nowrap; }
+    .zt td{ border:1px solid var(--border); padding:6px; vertical-align:middle; }
+    .zt tbody tr:nth-child(odd){ background:var(--bg-secondary); }
+    .zt tbody tr:hover{ background:var(--hover-bg); }
+    .zt .num{ text-align:center; font-weight:700; width:52px; }
+    .zt .act{ white-space:nowrap; text-align:center; width:190px; }
+    .zab{ border:1px solid var(--border); background:var(--bg-card); border-radius:6px;
+          padding:3px 7px; margin:0 1px; cursor:pointer; font-size:14px; line-height:1; }
+    .zab:hover{ background:var(--hover-bg); }
+    .zt .khulasa{ font-size:12px; color:var(--text-secondary); max-width:340px; }
+  </style>
   <div style="padding:14px;direction:rtl;height:100%;overflow-y:auto;">
-    <div style="display:flex;align-items:center;justify-content:flex-start;gap:8px;margin-bottom:12px;">
-      <button class="btn btn-primary btn-sm" onclick="_newZimni()">➕ نئی ضمنی</button>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+      <button class="btn btn-primary btn-sm" onclick="_newZimni()">➕ ضمنی درج کریں</button>
+      <button class="btn btn-secondary btn-sm" onclick="_printAllZimni()">🖨️ تمام ضمنیاں پرنٹ کریں</button>
+      <div style="margin-right:auto;font-weight:700;font-size:15px;">ضمنیات</div>
     </div>
     ${_zimniList.length ? `
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      ${_zimniList.map(z => `
-        <div class="card" style="padding:12px;direction:rtl;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;"
-             onclick="_openZimni('${z.id}')">
-          <div>
-            <div style="font-weight:700;font-size:14px;font-family:'Jameel Noori Nastaleeq',serif;">ضمنی نمبر ${esc(z.serial_no) || '—'}</div>
-            <div style="font-size:11px;color:var(--text-muted);">${esc(z.report_date) || ''}</div>
-          </div>
-          <div style="display:flex;gap:6px;">
-            <button class="btn btn-secondary btn-sm" style="padding:2px 8px;" onclick="event.stopPropagation();_openZimni('${z.id}')">✏️</button>
-            <button class="btn btn-danger btn-sm" style="padding:2px 8px;" onclick="event.stopPropagation();_deleteZimni('${z.id}')">🗑️</button>
-          </div>
-        </div>`).join('')}
-    </div>` : `
+    <table class="zt">
+      <thead>
+        <tr>
+          <th class="num">ضمنی نمبر</th>
+          <th>ضمنی</th>
+          <th>بنام</th>
+          <th>مرتبہ</th>
+          <th>تاریخ</th>
+          <th>فقرہ نمبر</th>
+          <th>خلاصہ</th>
+          <th class="act">ایکشن</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${_zimniList.map((z, i) => {
+          const c = z.content || {};
+          const plain = (c.bodyHtml || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+          const khulasa = plain ? (plain.length > 90 ? plain.slice(0, 90) + '…' : plain) : '—';
+          const dt = z.report_date ? (typeof formatDate === 'function' ? formatDate(z.report_date) : z.report_date) : '—';
+          const murattib = (typeof getIOSignLine === 'function') ? getIOSignLine()
+                         : ((currentOfficer && currentOfficer.full_name ? currentOfficer.full_name + ' ' : '')
+                            + (currentOfficer && currentOfficer.designation ? currentOfficer.designation + ' ' : '')
+                            + 'تھانہ ' + ((currentOfficer && currentOfficer.station) || ''));
+          return `
+          <tr ondblclick="_openZimni('${z.id}')" style="cursor:pointer;">
+            <td class="num">${esc(String(z.serial_no || (i + 1)))}</td>
+            <td>${esc(c.unwan || 'ضمنی رپورٹ')}</td>
+            <td>${esc(c.banam || '')}</td>
+            <td style="white-space:nowrap;">${esc(murattib)}</td>
+            <td style="text-align:center;white-space:nowrap;font-family:var(--font-mono);">${esc(dt)}</td>
+            <td style="text-align:center;">${esc(String(c.faqra_no || 1))}</td>
+            <td class="khulasa">${esc(khulasa)}</td>
+            <td class="act">
+              <button class="zab" onclick="event.stopPropagation();_openZimni('${z.id}')" title="ترمیم">✏️</button>
+              <button class="zab" onclick="event.stopPropagation();_deleteZimni('${z.id}')" title="حذف">🗑️</button>
+              <button class="zab" onclick="event.stopPropagation();_printZimniById('${z.id}')" title="پرنٹ">🖨️</button>
+              <button class="zab" onclick="event.stopPropagation();_emailZimni('${z.id}')" title="بھیجیں">✉️</button>
+              <button class="zab" onclick="event.stopPropagation();_pdfZimni('${z.id}')" title="PDF" style="font-size:10px;font-weight:800;color:#b91c1c;">PDF</button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>` : `
     <div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
       <div style="font-size:40px;margin-bottom:10px;">📋</div>
       <div style="font-size:14px;">ابھی کوئی ضمنی رپورٹ نہیں</div>
-      <div style="font-size:11px;margin-top:6px;">اوپر "نئی ضمنی" پر کلک کریں</div>
+      <div style="font-size:11px;margin-top:6px;">اوپر "ضمنی درج کریں" پر کلک کریں</div>
     </div>`}
   </div>`;
 }
@@ -86,6 +132,7 @@ function _openZimni(id) {
 
 // ── EDITOR (Police Form 25-54(1)) ──────────────
 function _renderZimniEditor() {
+  setTimeout(() => { if (typeof _zimniBindTools === 'function') _zimniBindTools(); }, 120);
   const area = document.getElementById('workspace-editor-area')
             || document.getElementById('workspace-tab-content')
             || document.getElementById('page-content');
@@ -102,17 +149,29 @@ function _renderZimniEditor() {
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
     <!-- Top toolbar -->
     <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
-      <button onclick="_zFmt('bold')" title="بولڈ (Ctrl+B)" style="${_zBtn()}font-weight:900;">B</button>
-      <button onclick="_zFmt('italic')" title="ترچھا (Ctrl+I)" style="${_zBtn()}font-style:italic;">I</button>
-      <button onclick="_zFmt('underline')" title="انڈر لائن (Ctrl+U)" style="${_zBtn()}text-decoration:underline;">U</button>
+      <button onmousedown="event.preventDefault()" onclick="_zFmt('undo')" title="واپس (Ctrl+Z)" style="${_zBtn()}">↶</button>
+      <button onmousedown="event.preventDefault()" onclick="_zFmt('redo')" title="دوبارہ (Ctrl+Y)" style="${_zBtn()}">↷</button>
+      <span style="width:1px;height:22px;background:var(--border);margin:0 3px;"></span>
+      <button onmousedown="event.preventDefault()" onclick="_zFmt('bold')" title="بولڈ (Ctrl+B)" style="${_zBtn()}font-weight:900;">B</button>
+      <button onmousedown="event.preventDefault()" onclick="_zFmt('italic')" title="ترچھا (Ctrl+I)" style="${_zBtn()}font-style:italic;">I</button>
+      <button onmousedown="event.preventDefault()" onclick="_zFmt('underline')" title="انڈر لائن (Ctrl+U)" style="${_zBtn()}text-decoration:underline;">U</button>
       <span style="width:1px;height:22px;background:var(--border);margin:0 3px;"></span>
       <button onclick="_zFont(1)" title="فونٹ بڑا" style="${_zBtn()}">A+</button>
       <button onclick="_zFont(-1)" title="فونٹ چھوٹا" style="${_zBtn()}font-size:11px;">A−</button>
       <span style="width:1px;height:22px;background:var(--border);margin:0 3px;"></span>
-      <button onclick="_zFmt('justifyRight')" title="دائیں" style="${_zBtn()}">⫷</button>
-      <button onclick="_zFmt('justifyCenter')" title="درمیان" style="${_zBtn()}">≡</button>
-      <button onclick="_zFmt('justifyLeft')" title="بائیں" style="${_zBtn()}">⫸</button>
-      <button onclick="_zFmt('justifyFull')" title="مکمل" style="${_zBtn()}">☰</button>
+      <button onmousedown="event.preventDefault()" onclick="_zFmt('justifyRight')" title="دائیں" style="${_zBtn()}">⫷</button>
+      <button onmousedown="event.preventDefault()" onclick="_zFmt('justifyCenter')" title="درمیان" style="${_zBtn()}">≡</button>
+      <button onmousedown="event.preventDefault()" onclick="_zFmt('justifyLeft')" title="بائیں" style="${_zBtn()}">⫸</button>
+      <button onmousedown="event.preventDefault()" onclick="_zFmt('justifyFull')" title="مکمل" style="${_zBtn()}">☰</button>
+      <span style="width:1px;height:22px;background:var(--border);margin:0 3px;"></span>
+      <select onchange="if(typeof dioSetFontSize==='function')dioSetFontSize(this.value); this.selectedIndex=0;"
+        title="فونٹ سائز" style="${_zBtn()}padding:0 6px;">
+        <option value="">فونٹ</option><option value="12">12 pt</option><option value="14">14 pt</option>
+        <option value="16">16 pt</option><option value="18">18 pt</option><option value="20">20 pt</option>
+      </select>
+      <button onmousedown="event.preventDefault()" onclick="_zFmt('insertUnorderedList')" title="نقطہ دار فہرست" style="${_zBtn()}">•</button>
+      <button onmousedown="event.preventDefault()" onclick="_zFmt('insertOrderedList')" title="نمبر والی فہرست" style="${_zBtn()}">1.</button>
+      <button onmousedown="event.preventDefault()" onclick="_zFmt('removeFormat')" title="فارمیٹنگ ہٹائیں" style="${_zBtn()}">✕</button>
       <span style="width:1px;height:22px;background:var(--border);margin:0 3px;"></span>
       <button onclick="_zAddRow()" title="نئی قطار" style="${_zBtn()}font-size:11px;">➕ قطار</button>
       <div style="margin-right:auto;display:flex;gap:6px;">
@@ -239,6 +298,15 @@ function _zFont(dir) {
   }
 }
 
+// Editor khulte hi MS Word jaise auzaar (Tab, Ctrl+B/I/U)
+function _zimniBindTools() {
+  try {
+    const ed = document.getElementById('zimni-doc');
+    if (ed && typeof dioBindEditor === 'function') dioBindEditor(ed.parentNode || document);
+  } catch(_) {}
+}
+window._zimniBindTools = _zimniBindTools;
+
 // ── SAVE ──────────────────────────────────────────────────────
 async function _saveZimni() {
   const ed = document.getElementById('zimni-doc');
@@ -251,6 +319,12 @@ async function _saveZimni() {
     report_date: new Date().toISOString().slice(0,10),
     content: { bodyHtml },
   };
+  // محفوظ فائلوں کی فہرست میں درج (نمبر شمار + تاریخ)
+  try {
+    if (typeof dioRegisterSaved === 'function')
+      dioRegisterSaved('zimni', 'ضمنی نمبر ' + (z.serial_no || 1),
+        { case_id: _zimniCaseId, serial_no: z.serial_no || 1 });
+  } catch(_) {}
   try {
     const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
     if (oid) rec.officer_id = oid;
@@ -299,3 +373,104 @@ function _printZimni() {
     w.document.write(html); w.document.close(); w.print();
   }
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  ضمنیات — fehrist ke ایکشن buttons (پرنٹ / بھیجیں / PDF)
+// ═══════════════════════════════════════════════════════════════
+
+// Aik ضمنی ka poora chhapne wala safha
+function _zimniDocHTML(z) {
+  const o  = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
+  const c  = z.content || {};
+  const dt = z.report_date
+    ? (typeof formatDate === 'function' ? formatDate(z.report_date) : z.report_date) : '';
+  const io = (o.full_name || '') + (o.designation ? ' ' + o.designation : '') +
+             (o.station ? ' تھانہ ' + o.station : '');
+  return `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
+    <style>
+      @page{ size:legal; margin:15mm; }
+      body{ font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl;
+            text-align:justify; font-size:15px; line-height:2; color:#000; }
+      .hd{ text-align:center; font-weight:bold; font-size:18px; margin-bottom:4px; }
+      .sub{ text-align:center; font-size:13px; margin-bottom:14px; }
+      table{ border-collapse:collapse; width:100%; } td,th{ border:1px solid #000; padding:6px; }
+      .sign{ margin-top:40px; text-align:left; }
+      .sign .nm{ font-weight:bold; } .sign .dt{ font-size:12px; }
+      .brand{ position:fixed; bottom:3mm; left:4mm; font-size:9px; color:#999; direction:ltr; }
+    </style></head><body>
+    <div class="hd">ضمنی رپورٹ</div>
+    <div class="sub">ضمنی نمبر <b>${z.serial_no || ''}</b>${dt ? ' &nbsp;—&nbsp; تاریخ ' + dt : ''}</div>
+    <div>${c.bodyHtml || ''}</div>
+    <div class="sign"><div class="nm">${io}</div><div class="dt">${dt}</div></div>
+    <div class="brand">Digital IO</div>
+  </body></html>`;
+}
+
+function _zimniById(id) { return (_zimniList || []).find(z => String(z.id) === String(id)); }
+
+// 🖨️ Aik ضمنی print
+function _printZimniById(id) {
+  const z = _zimniById(id);
+  if (!z) { if (typeof showToast === 'function') showToast('⚠️ ضمنی نہیں ملی', 'error'); return; }
+  const html = _zimniDocHTML(z);
+  if (typeof dioPrint === 'function') dioPrint(html);
+  else { const w = window.open('', '_blank'); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 300); }
+}
+
+// 🖨️ Tamam ضمنیاں aik saath
+function _printAllZimni() {
+  if (!_zimniList || !_zimniList.length) {
+    if (typeof showToast === 'function') showToast('⚠️ کوئی ضمنی موجود نہیں', 'info'); return;
+  }
+  const o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
+  const body = _zimniList.map(z => {
+    const c  = z.content || {};
+    const dt = z.report_date ? (typeof formatDate === 'function' ? formatDate(z.report_date) : z.report_date) : '';
+    return `<div style="page-break-after:always;">
+      <div style="text-align:center;font-weight:bold;font-size:17px;">ضمنی نمبر ${z.serial_no || ''}</div>
+      <div style="text-align:center;font-size:12px;margin-bottom:10px;">${dt}</div>
+      <div>${c.bodyHtml || ''}</div>
+    </div>`;
+  }).join('');
+  const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
+    <style>@page{size:legal;margin:15mm}
+      body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;
+           text-align:justify;font-size:15px;line-height:2;color:#000;}
+      table{border-collapse:collapse;width:100%;}td,th{border:1px solid #000;padding:6px;}
+      .brand{position:fixed;bottom:3mm;left:4mm;font-size:9px;color:#999;direction:ltr;}
+    </style></head><body>${body}<div class="brand">Digital IO</div></body></html>`;
+  if (typeof dioPrint === 'function') dioPrint(html);
+  else { const w = window.open('', '_blank'); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 300); }
+}
+
+// 📄 PDF — print window se "Save as PDF"
+function _pdfZimni(id) {
+  if (typeof showToast === 'function')
+    showToast('📄 پرنٹ ونڈو میں "Save as PDF" منتخب کریں', 'info', 4000);
+  _printZimniById(id);
+}
+
+// ✉️ Bhejna — share sheet ya email
+async function _emailZimni(id) {
+  const z = _zimniById(id);
+  if (!z) return;
+  const c    = z.content || {};
+  const dt   = z.report_date ? (typeof formatDate === 'function' ? formatDate(z.report_date) : z.report_date) : '';
+  const text = (c.bodyHtml || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').replace(/\n{3,}/g, '\n\n').trim();
+  const subj = `ضمنی نمبر ${z.serial_no || ''}${dt ? ' — ' + dt : ''}`;
+  try {
+    if (navigator.share) { await navigator.share({ title: subj, text: subj + '\n\n' + text }); return; }
+  } catch (_) {}
+  try {
+    window.location.href = 'mailto:?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(text);
+  } catch (_) {
+    try { await navigator.clipboard.writeText(subj + '\n\n' + text);
+      if (typeof showToast === 'function') showToast('📋 نقل ہو گیا', 'success'); } catch (__) {}
+  }
+}
+
+window._printZimniById = _printZimniById;
+window._printAllZimni  = _printAllZimni;
+window._pdfZimni       = _pdfZimni;
+window._emailZimni     = _emailZimni;
+window._zimniDocHTML   = _zimniDocHTML;
