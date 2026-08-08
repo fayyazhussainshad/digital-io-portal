@@ -154,7 +154,7 @@ function _renderZimniEditor() {
       <div style="margin-right:auto;display:flex;gap:6px;">
         <button class="btn btn-primary btn-sm" onclick="_saveZimni()">💾 محفوظ</button>
         <button class="btn btn-secondary btn-sm" onclick="_printZimni()">🖨️ پرنٹ</button>
-        <button class="btn btn-secondary btn-sm" onclick="_renderZimniList()">↩ واپس</button>
+        
       </div>
     </div>
 

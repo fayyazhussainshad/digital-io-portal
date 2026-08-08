@@ -11,7 +11,7 @@ function renderSearch(container) {
   container.innerHTML = `
   <div style="max-width:800px;margin:0 auto;padding:8px 0;direction:rtl;">
     <div style="margin-bottom:12px;">
-      <button onclick="showPage('dashboard',null)" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:14px;font-weight:700;cursor:pointer;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq',serif;">↩ واپس</button>
+      
     </div>
     <div id="sr-page-searchbar" style="position:relative;margin-bottom:14px;">
       <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none;">🔍</span>

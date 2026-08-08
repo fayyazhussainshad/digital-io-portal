@@ -1639,13 +1639,7 @@ function _dioEnterDocView() {
           style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 16px;
                  font-size:13px;font-weight:700;cursor:pointer;
                  font-family:'Jameel Noori Nastaleeq',serif;">🖨️ پرنٹ</button>
-        <button onclick="_dioExitDocView()" title="واپس دستاویزات"
-          style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);
-                 border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;
-                 font-family:'Jameel Noori Nastaleeq',serif;">↩ واپس</button>
-        <button onclick="_dioExitDocView();goBackToCases();" title="واپس مقدمات"
-          style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);
-                 border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;">⌂</button>
+        
       </div>
     </div>
     <div id="dio-dv-body" style="flex:1;min-height:0;overflow:auto;"></div>`;
