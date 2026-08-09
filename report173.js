@@ -253,8 +253,10 @@ function _renderR173() {
          matn andar <div> wrapper mein rakh kar us par lagate hain. */
       #ch173-doc .ch173-table td{ font-size:14pt; vertical-align:top; line-height:1.15; }
       /* Khane KHUD nahi phailte — sirf haath se (drag) resize hote hain */
-      #ch173-doc .ch173-table tbody td{ height:${_ch173Paper==='a4'?'150mm':'185mm'}; padding:0;
-        overflow:visible; position:relative; }
+      /* Unchai KAM AZ KAM — matn zyada ho to khana khud barhta hai
+         (pehle yeh hadd thi, is liye matn chhup jata tha) */
+      #ch173-doc .ch173-table tbody td{ height:${_ch173Paper==='a4'?'150mm':'185mm'};
+        padding:0; overflow:visible; position:relative; vertical-align:top; }
       /* ASCENDING (neeche se ooper) — writing-mode Chrome mein na-qabil-e-aitbaar
          hai, is liye seedha ghumao (rotate) use karte hain. Khana relative,
          andar ka box absolute + rotate(90deg) → RTL Urdu neeche se ooper. */
@@ -351,18 +353,19 @@ function _renderR173() {
       /* Column 7 — normal RTL (khadi nahi) */
       #ch173-doc .ch173-table td.normcell{ padding:0; vertical-align:top; position:relative; }
       #ch173-doc .normwrap{
-        position:absolute; inset:0;      /* khane ke barabar — unchai pukhta */
-        padding:5px; box-sizing:border-box;
+        width:100%; min-height:100%; padding:5px; box-sizing:border-box;
         font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
         direction:rtl; text-align:justify; text-align-last:right;
         outline:none; line-height:1.15; font-size:14pt;
         overflow-wrap:break-word; word-wrap:break-word;
-        overflow:hidden;   /* scroll NAHI — jo na samaye woh neeche chala jaye */
+        overflow:visible;  /* matn kabhi chhupega nahi — khana khud barhega */
       }
       /* Har paragraph ki aakhri line bhi dayen (beech mein nahi) */
       #ch173-doc .normwrap p, #ch173-doc .normwrap div{ text-align:justify; text-align-last:right; }
       /* Paste kiya hua matn apna font saath na laye */
-      #ch173-doc .normwrap *{ font-family:inherit !important; }
+      #ch173-doc .normwrap *, #ch173-doc .ch173-cont *{
+        font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif !important;
+      }
       #ch173-doc .ch173-cont:empty::before{
         content:'تسلسل — جو تحریر اوپر خانوں میں نہ سما سکے وہ یہاں لکھیں';
         color:#aaa; font-size:12pt;
@@ -454,7 +457,7 @@ function _renderR173() {
         .ch173-cont{ page-break-inside:auto; break-inside:auto; }
         .acc-pick{ display:none !important; }
         .ch173-table td.normcell{ padding:0; vertical-align:top; position:relative; }
-        .normwrap{ position:absolute; inset:0; padding:5px; box-sizing:border-box;
+        .normwrap{ width:100%; min-height:100%; padding:5px; box-sizing:border-box;
           font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
           direction:rtl; text-align:justify; line-height:1.15; overflow-wrap:break-word; }
         .ch173-cont{ margin:0 !important; border:none !important; padding:0 5px !important;
@@ -613,8 +616,6 @@ function _renderR173() {
       _ch173MakeResizable();
       _ch173SizeRotated();
       _ch173BindKeys();
-      _ch173BindOverflow();
-      _ch173Overflow();
       window.addEventListener('resize', _ch173SizeRotated);
       // Mehfooz shuda row height wapas lagao
       try {
@@ -987,11 +988,15 @@ function _printR173() {
         .rothead{ text-align:center !important; }
         /* Column 7 — poora justified, aakhri line dayen (beech mein nahi) */
         .ch173-table td.normcell{ padding:0; vertical-align:top; position:relative; }
-        .normwrap{ position:absolute; inset:0; padding:5px; box-sizing:border-box;
+        .normwrap{ width:100%; min-height:100%; padding:5px; box-sizing:border-box;
           font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
           direction:rtl; text-align:justify; text-align-last:right; line-height:1.15;
           font-size:14pt; overflow-wrap:break-word; word-wrap:break-word; }
         .normwrap p, .normwrap div{ text-align:justify; text-align-last:right; }
+        /* Paste kiya hua matn apna font/size saath na laye */
+        .normwrap *, .ch173-cont *{
+          font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif !important;
+        }
         /* SHO / تھانہ ki line bold */
         .sho-cell-row{ font-weight:700; }
         .sho-cell-date{ font-weight:normal; }
@@ -1053,10 +1058,10 @@ function _printR173() {
         .ch173-table thead{ display:table-row-group !important; }
         /* Khane ki unchai itni ke unwan + table SAB aik hi safhe par sama jaye
            (A4 aur لیگل ke liye alag) */
+        /* Unchai KAM AZ KAM — matn zyada ho to safha khud barhta hai */
         .ch173-table tbody td{
-          height:${_ch173Paper === 'a4' ? '150mm' : '185mm'} !important;
-          max-height:${_ch173Paper === 'a4' ? '150mm' : '185mm'} !important;
-          overflow:hidden !important;
+          height:${_ch173Paper === 'a4' ? '150mm' : '185mm'};
+          overflow:visible !important; vertical-align:top;
         }
         /* Khali izafi khane fazool safhe na banayen */
         .ch173-cont:empty{ display:none !important; }
@@ -1067,13 +1072,14 @@ function _printR173() {
         /* Print: poori chaudai istemal karo — koi fixed inch nahi, warna
            browser safha sikor kar dono taraf bari khali jagah chhor deta hai */
         /* Safhe ka margin @page se aata hai — doc ka apna padding SIFAR,
-           warna margin dohra ho jata hai (isi liye kinare bade lagte the) */
+           warna margin dohra ho jata hai. min-height bhi khatam, warna
+           safha zabardasti lamba ho kar neeche ka margin bara kar deta tha. */
         #ch173-doc{ width:100% !important; max-width:none !important;
-          min-height:auto !important; padding:0 !important; margin:0 !important;
+          height:auto !important; min-height:0 !important;
+          padding:0 !important; margin:0 !important;
           box-shadow:none !important; border-radius:0 !important; }
         html, body{ margin:0 !important; padding:0 !important; }
-        .dio-print-brand{ position:fixed; bottom:3mm; left:4mm; font-size:9px; color:#999; direction:ltr; }
-      </style></head><body>${chDoc.innerHTML}<div class="dio-print-brand">Digital IO</div></body></html>`;
+      </style></head><body>${chDoc.innerHTML}</body></html>`;
     // Print se pehle rotated khanon ki naap inline kar do (print iframe mein JS nahi chalta)
     try { if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated(); } catch(_) {}
     if (typeof dioPrint === 'function') dioPrint(chHtml);
@@ -1086,8 +1092,7 @@ function _printR173() {
     <style>@page{size:legal;margin:12mm}
       body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;font-size:14px;line-height:1.9;color:#000;}
       table{border-collapse:collapse;width:100%;}td,th{border:1px solid #000;padding:6px;}
-      .dio-print-brand{position:fixed;bottom:3mm;left:4mm;font-size:9px;color:#999;direction:ltr;}
-    </style></head><body>${doc.innerHTML}<div class="dio-print-brand">Digital IO</div></body></html>`;
+    </style></head><body>${doc.innerHTML}</body></html>`;
   if (typeof dioPrint === 'function') dioPrint(html);
   else { const w = window.open('','_blank'); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),300); }
 }
@@ -1317,20 +1322,10 @@ function _ch173BindOverflow() {
   // hota hai aur cursor shuru mein chala jata hai. Sirf paste aur blur par.
   // SIRF paste par — blur par chalane se innerText formatting (bold/italic/
   // underline) mita deta tha. Ab likhi hui formatting mehfooz rehti hai.
-  const run = () => {
-    if (cell.scrollHeight <= cell.clientHeight + 1) return;
-    // Cursor kahan hai yaad rakho
-    let atEnd = false;
-    try {
-      const sel = window.getSelection();
-      atEnd = sel && sel.rangeCount && cell.contains(sel.anchorNode);
-    } catch (_) {}
-    _ch173Overflow();
-    if (atEnd) _ch173CaretEnd(cell);
-  };
-  let _t = null;
-  cell.addEventListener('input', () => { clearTimeout(_t); _t = setTimeout(run, 350); });
-  cell.addEventListener('paste', () => setTimeout(run, 150));
+  // NOTE: ab khana matn ke saath KHUD barhta hai, is liye matn ko zabardasti
+  // neeche bhejne ki zaroorat nahi. (Woh kaam matn ko hilata tha aur kabhi
+  // formatting bigaar deta tha.) Neeche wala khana ab sirf HAATH se likhne
+  // ke liye hai — jo officer khud chahe wahan likhe.
 }
 window._ch173BindOverflow = _ch173BindOverflow;
 
