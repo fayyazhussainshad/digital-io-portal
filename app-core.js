@@ -1080,12 +1080,28 @@ function _dioViewFile(url, name) {
                 align-items:flex-start;justify-content:center;padding:10px;">
       ${isImg
         ? `<img id="dio-fv-img" src="${blob}" style="max-width:100%;height:auto;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,.4);">`
-        : `<iframe id="dio-fv-frame" src="${blob}" style="width:100%;height:100%;border:none;background:#fff;"></iframe>`}
+        : `<iframe id="dio-fv-frame" src="${blob}" style="width:100%;height:100%;border:none;background:#fff;"
+             onload="this.dataset.ok='1'"></iframe>
+           <div id="dio-fv-fallback" style="display:none;color:#fff;text-align:center;padding:40px 20px;
+                font-family:'Jameel Noori Nastaleeq',serif;">
+             <div style="font-size:40px;margin-bottom:12px;">📄</div>
+             <div style="font-size:15px;margin-bottom:6px;">یہ فائل یہاں نہیں دکھائی جا سکی</div>
+             <div style="font-size:12px;color:#cbd5e1;margin-bottom:16px;">نیچے سے محفوظ کر کے کھول لیں</div>
+             <button class="btn btn-primary" onclick="_dioDownloadFileView()">⬇️ فائل محفوظ کریں</button>
+           </div>`}
     </div>`;
   document.body.appendChild(ov);
   ov._blob = blob; ov._name = name || 'file'; ov._isImg = isImg;
   document.body.style.overflow = 'hidden';
   document.addEventListener('keydown', _dioFileViewEsc);
+  // Agar iframe (PDF) na chale — jaise browser rok de — to backup dikhao
+  if (!isImg) setTimeout(() => {
+    try {
+      const fr = document.getElementById('dio-fv-frame');
+      const fb = document.getElementById('dio-fv-fallback');
+      if (fr && fb && fr.dataset.ok !== '1') { fr.style.display = 'none'; fb.style.display = 'block'; }
+    } catch (_) {}
+  }, 1500);
 }
 window._dioViewFile = _dioViewFile;
 
