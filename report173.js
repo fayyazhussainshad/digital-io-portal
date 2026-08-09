@@ -35,6 +35,22 @@ const R173_IKHRAJ_HEADS = [
 // موجودہ کھلے چالان کی شناخت (نیا ہو تو null)
 let _r173DocId = null;
 let _r173Head  = '';
+// Naya چالان — purana data hargiz na aaye (khali فارم)
+let _r173ForceBlank = false;
+// Kahin tabdeeli hui hai? (mehfooz karne ki yaad dahani ke liye)
+let _r173Dirty = false;
+
+// Mojooda khule چالان ka apna record — chaabi ki takraar se bachne ke liye.
+// (Aik hi qism ke kai چالان ki chaabi aik jaisi banti hai, is liye SIRF
+//  chaabi par bharosa karne se aik چالان ka data doosre mein aa jata tha.)
+function _r173CurrentData(fallbackKey) {
+  if (_r173ForceBlank) return {};
+  if (_r173DocId) {
+    const d = _r173Docs.find(x => String(x.id) === String(_r173DocId));
+    if (d && d.form_data) return d.form_data;
+  }
+  return _r173Records[fallbackKey] || {};
+}
 let _r173ShowList = false;   // save ke baad چالان ki fehrist
 
 let _r173Type = 'mukammal';
@@ -96,6 +112,8 @@ async function openReport173(caseId) {
 async function _loadR173() {
   if (!navigator.onLine) {
     try { _r173Records = JSON.parse(localStorage.getItem('dio_r173_'+_r173CaseId)||'{}'); } catch(_) { _r173Records={}; }
+    // Fehrist bhi cache se — warna offline par "کوئی اندراج نہیں" dikhta tha
+    try { _r173Docs = JSON.parse(localStorage.getItem('dio_r173docs_'+_r173CaseId)||'[]'); } catch(_) { _r173Docs = []; }
     return;
   }
   try {
@@ -105,7 +123,10 @@ async function _loadR173() {
       id: r.id, type: r.report_type, subtype: r.report_subtype || '',
       head: (r.form_data && r.form_data.head) || '',
       form_data: r.form_data || {},
-      date: (r.form_data && r.form_data.cl_date) || (r.created_at ? String(r.created_at).slice(0,10) : ''),
+      // چالان ki apni تاریخ (SHO wali). Pehle yahan FIR ki مورخہ aa rahi thi,
+      // is liye har satar par aik hi تاریخ dikhti thi.
+      date: (r.form_data && (r.form_data.sho_date2 || r.form_data.sho_date))
+            || (r.created_at ? String(r.created_at).slice(0,10) : ''),
     }));
     (data||[]).forEach(r => {
       // Chaabi bilkul waisi jaisi SAVE karte waqt banti hai (warna dohri entries)
@@ -116,6 +137,7 @@ async function _loadR173() {
       _r173Records[key] = r.form_data || {};
     });
     try { localStorage.setItem('dio_r173_'+_r173CaseId, JSON.stringify(_r173Records)); } catch(_) {}
+    try { localStorage.setItem('dio_r173docs_'+_r173CaseId, JSON.stringify(_r173Docs)); } catch(_) {}
   } catch(_) {
     try { _r173Records = JSON.parse(localStorage.getItem('dio_r173_'+_r173CaseId)||'{}'); } catch(_2) { _r173Records={}; }
   }
@@ -155,7 +177,7 @@ function _renderR173() {
   if (isTatima) typeName = 'تتمہ چالان مکمل';
   // Saved record key (tatima uses subtype)
   let recKey = isTatima ? 'tatima_challan_' + _r173Subtype : _r173Type;
-  const saved = _r173Records[recKey] || {};
+  const saved = _r173CurrentData(recKey);
   const v = (k, def) => sanitizeHtml(saved[k] !== undefined ? saved[k] : (def || ''));
   const isIkhraj = _r173Type === 'ikhraj';
   const isAdampata = _r173Type === 'adampata';
@@ -174,7 +196,8 @@ function _renderR173() {
     // FIR aur کراس ورژن ka data alag mehfooz hota hai
     recKey = recKey + '::' + _ch173Version;
     // ═══ فارم نمبر 25.56(1) — رپورٹ زیر دفعہ 173 ض ف ═══
-    const bs = _r173Records[recKey] || {};
+    const bs = _r173CurrentData(recKey);
+    _r173ForceBlank = false;          // sirf aik bar
     const bv = (k) => sanitizeHtml(bs[k] !== undefined ? bs[k] : '');
     // Mehfooz shuda column widths (MS Word jaisi drag-adjust ke baad)
     const savedW = (() => { try { return JSON.parse(bs.col_widths || 'null'); } catch(_) { return null; } })();
@@ -550,6 +573,7 @@ function _renderR173() {
       </div>
     </div>`;
     _ch173FullPage(area);
+    _ch173BlockFloatBar();
     setTimeout(() => {
       _ch173FullPage(area);
       _ch173MakeResizable();
@@ -813,7 +837,17 @@ async function _saveR173() {
     // ہیڈ/عنوان بھی محفوظ (ایک ہی قسم کے کئی چالان ہو سکتے ہیں)
     form_data.head = _r173Head || form_data.head || '';
     rec.form_data = form_data;
-    if (_r173DocId) {
+    if (!navigator.onLine) {
+      // OFFLINE — mahfooz maqami tor par + qatar mein daal do (data zaya na ho)
+      if (!_r173DocId) _r173DocId = 'local-' + Date.now();
+      try {
+        if (typeof offlineStore !== 'undefined' && offlineStore.enqueue) {
+          await offlineStore.enqueue('report_173', String(_r173DocId).startsWith('local-') ? 'insert' : 'update',
+            String(_r173DocId).startsWith('local-') ? rec : { id: _r173DocId, ...rec });
+        }
+      } catch(_) {}
+      showToast('📴 آف لائن محفوظ — انٹرنیٹ آنے پر sync ہوگا', 'info');
+    } else if (_r173DocId && !String(_r173DocId).startsWith('local-')) {
       // موجودہ چالان میں ترمیم
       await supabaseClient.from('report_173').update(rec).eq('id', _r173DocId);
     } else {
@@ -826,11 +860,14 @@ async function _saveR173() {
       const idx = _r173Docs.findIndex(d => d.id === _r173DocId);
       const entry = { id: _r173DocId, type: _r173Type,
         subtype: isTatima ? _r173Subtype : (R173_BLANK_TYPES.includes(_r173Type) ? _ch173Version : ''),
-        head: form_data.head, form_data, date: form_data.cl_date || '' };
+        head: form_data.head, form_data,
+        date: form_data.sho_date2 || form_data.sho_date || _ch173Today() };
       if (idx >= 0) _r173Docs[idx] = entry; else _r173Docs.push(entry);
     } catch(_) {}
     try { localStorage.setItem('dio_r173_'+_r173CaseId, JSON.stringify(_r173Records)); } catch(_) {}
+    try { localStorage.setItem('dio_r173docs_'+_r173CaseId, JSON.stringify(_r173Docs)); } catch(_) {}
     // Save ke baad چالان ki FEHRIST kholo
+    _r173Dirty = false;
     _r173ShowList = true;
     setTimeout(() => { try { _renderR173List(); } catch(_) {} }, 250);
 
@@ -984,12 +1021,23 @@ function _printR173() {
 
 // Open report 173 with a specific type pre-selected (from dropdown)
 async function openReport173WithType(type, _fromTab) {
-  // Full-page view tab (har report type apna tab)
-  // SIRF AIK tab — har qism ka alag tab banne se "fake" report khulti thi
-  if (!_fromTab && typeof _dioOpenDocTab === 'function') _dioOpenDocTab('r173');
+  // ═══ AHEM: misal-docs.js ka tab nizam 'r173:' se shuru hone wale id parhta
+  //     hai (_dioRenderTabContent → docId.slice(5)). Is liye tab id hamesha
+  //     'r173:<qism>' honi chahiye — warna tab badalte hi khali safha aata hai.
+  //     Aur 'list' koi چالان ki qism NAHI, fehrist hai — pehle yeh قسم samajh
+  //     kar ghalat فارم render hota tha, yani "fake report 173". ═══
+  if (type === 'list') {
+    if (!_fromTab && typeof _dioOpenDocTab === 'function') _dioOpenDocTab('r173:list');
+    await openReport173(_misalCaseId || (typeof currentCaseId !== 'undefined' ? currentCaseId : null));
+    _r173ShowList = true;
+    _renderR173List();
+    return;
+  }
+  // Har qism ka apna tab (misal-docs.js ke naam ki fehrist mein yeh mojood hain)
+  if (!_fromTab && typeof _dioOpenDocTab === 'function') _dioOpenDocTab('r173:' + (type || 'mukammal'));
   await openReport173(_misalCaseId || (typeof currentCaseId !== 'undefined' ? currentCaseId : null));
   _r173Type = type || 'mukammal';
-  // Fehrist ka nishan saaf — warna form ki bajaye fehrist khul jati hai
+  // Fehrist ka nishan saaf — warna فارم ki bajaye fehrist khul jati hai
   _r173ShowList = false;
   _renderR173();
 }
@@ -1331,6 +1379,28 @@ function _ch173DocFont(bs) {
   return (n && !isNaN(n)) ? n : R173_FONT_DEFAULT;
 }
 
+// ═══ Floating toolbar چالان کے صفحے پر نہ لگے ═══
+// dioBindEditor کسی اور فائل میں بنتی ہے اور ہر contenteditable پر تیرتی ہوئی
+// پٹی لگا دیتی ہے۔ یہاں اسے صرف چالان کے صفحے کے لیے روک دیتے ہیں — باقی
+// دستاویزات پر وہ پہلے کی طرح کام کرتی رہے گی۔
+function _ch173BlockFloatBar() {
+  try {
+    if (typeof window.dioBindEditor === 'function' && !window._ch173BindPatched) {
+      window._ch173BindPatched = true;
+      const _orig = window.dioBindEditor;
+      window.dioBindEditor = function (el) {
+        try {
+          if (el && (el.id === 'ch173-doc' ||
+                    (el.closest && el.closest('#ch173-doc')) ||
+                    (el.querySelector && el.querySelector('#ch173-doc')))) return;
+        } catch(_) {}
+        return _orig.apply(this, arguments);
+      };
+    }
+  } catch(_) {}
+}
+window._ch173BlockFloatBar = _ch173BlockFloatBar;
+
 // ═══ چالان کا فارم پورے صفحے پر ═══
 // Workspace ka doosra hissa (dastawez ki fehrist) aur tang container safhe ko
 // aadha kar dete the. Yahan editor wale khane aur us ke tamam والدین ko poori
@@ -1357,6 +1427,13 @@ function _ch173FullPage(area) {
       w.style.display = 'block';
       w.style.gridTemplateColumns = '1fr';
     });
+    // Poore safhe wale view (dio-docview) ke andar safha poori chaudai le
+    const doc = document.getElementById('ch173-doc');
+    if (doc && doc.closest('#dio-docview')) {
+      doc.style.width = '100%';
+      doc.style.maxWidth = 'none';
+      doc.style.margin = '0';
+    }
   } catch(_) {}
 }
 window._ch173FullPage = _ch173FullPage;
@@ -1742,7 +1819,7 @@ function _renderR173List() {
     <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap;">
       <button class="btn btn-primary btn-sm" onclick="_r173NewDoc(false)">چالان درج کریں</button>
       <div style="flex:1;"></div>
-      <button class="btn btn-secondary btn-sm" onclick="_printAllR173(false)">تمام پرنٹ کریں</button>
+      <span style="font-size:11px;color:var(--text-muted);">پرنٹ کے لیے ہر سطر کا 🖨️ دبائیں</span>
     </div>
     <table class="ct">
       <thead><tr>
@@ -1766,6 +1843,7 @@ window._r173PickVer = _r173PickVer;
 // (قسم / ہیڈ / ورژن — teeno ab upar wali fixed toolbar mein hain.)
 function _r173NewDoc(isIkhraj) {
   _r173DocId    = null;                      // naya record
+  _r173ForceBlank = true;                    // khali فارم — purana data na aaye
   _r173Head     = '';                        // ہیڈ toolbar se chunenge
   _r173ShowList = false;                     // fehrist nahi — فارم
   const t = isIkhraj ? 'adampata' : 'mukammal';
@@ -1785,6 +1863,19 @@ function _r173CreateDoc() { _r173NewDoc(false); }
 window._r173CreateDoc = _r173CreateDoc;
 
 const _r173Doc = (id) => _r173Docs.find(d => String(d.id) === String(id));
+
+// Tabdeeli hui ho to safha chhorne se pehle poocho
+if (!window._r173DirtyBound) {
+  window._r173DirtyBound = true;
+  window.addEventListener('beforeunload', function (e) {
+    if (!_r173Dirty) return;
+    if (!document.getElementById('ch173-doc')) return;
+    e.preventDefault(); e.returnValue = '';
+  });
+  document.addEventListener('input', function (e) {
+    if (e.target && e.target.closest && e.target.closest('#ch173-doc')) _r173Dirty = true;
+  }, true);
+}
 
 // ✏️ موجودہ کھولیں
 async function _r173OpenDoc(id) {
@@ -1867,9 +1958,9 @@ window._r173SetHead = _r173SetHead;
 
 // ═══ رپورٹ 173 ض ف کا چِپ — سیدھی فہرست کھولتا ہے (فارم نہیں) ═══
 async function openR173List() {
-  if (typeof _dioOpenDocTab === 'function') _dioOpenDocTab('r173');
+  if (typeof _dioOpenDocTab === 'function') _dioOpenDocTab('r173:list');
   await openReport173(_misalCaseId || (typeof currentCaseId !== 'undefined' ? currentCaseId : null));
-  _r173ShowList = false;
+  _r173ShowList = true;
   _renderR173List();
 }
 window.openR173List = openR173List;
