@@ -253,7 +253,8 @@ function _renderR173() {
          matn andar <div> wrapper mein rakh kar us par lagate hain. */
       #ch173-doc .ch173-table td{ font-size:14pt; vertical-align:top; line-height:1.15; }
       /* Khane KHUD nahi phailte — sirf haath se (drag) resize hote hain */
-      #ch173-doc .ch173-table tbody td{ height:${_ch173Paper==='a4'?'150mm':'185mm'}; padding:0; overflow:hidden; }
+      #ch173-doc .ch173-table tbody td{ height:${_ch173Paper==='a4'?'150mm':'185mm'}; padding:0;
+        overflow:visible; position:relative; }
       /* ASCENDING (neeche se ooper) — writing-mode Chrome mein na-qabil-e-aitbaar
          hai, is liye seedha ghumao (rotate) use karte hain. Khana relative,
          andar ka box absolute + rotate(90deg) → RTL Urdu neeche se ooper. */
@@ -346,9 +347,10 @@ function _renderR173() {
         background:#eef6ff; color:#0369a1; cursor:pointer; font-size:12px;
       }
       /* Column 7 — normal RTL (khadi nahi) */
-      #ch173-doc .ch173-table td.normcell{ padding:0; vertical-align:top; }
+      #ch173-doc .ch173-table td.normcell{ padding:0; vertical-align:top; position:relative; }
       #ch173-doc .normwrap{
-        width:100%; height:100%; padding:5px; box-sizing:border-box;
+        position:absolute; inset:0;      /* khane ke barabar — unchai pukhta */
+        padding:5px; box-sizing:border-box;
         direction:rtl; text-align:justify; text-align-last:right;
         outline:none; line-height:1.15; font-size:14pt;
         overflow-wrap:break-word; word-wrap:break-word;
@@ -417,11 +419,12 @@ function _renderR173() {
         cursor:col-resize; user-select:none; z-index:5;
       }
       /* Neeche se unchai badalne wali grip (row height) */
+      /* Neeche se unchai badalne wali grip — khane ke ANDAR (kabhi kat na jaye) */
       #ch173-doc .rowgrip{
-        position:absolute; bottom:-5px; left:0; width:100%; height:10px;
-        cursor:row-resize; user-select:none; z-index:6;
+        position:absolute; bottom:0; left:0; width:100%; height:12px;
+        cursor:row-resize; user-select:none; z-index:20;
       }
-      #ch173-doc .rowgrip:hover{ background:rgba(56,189,248,0.35); }
+      #ch173-doc .rowgrip:hover{ background:rgba(56,189,248,0.45); }
       #ch173-doc .colgrip:hover{ background:rgba(56,189,248,0.35); }
       @media print{
         .no-print,.doc-toolbar,.editor-toolbar,button,select{ display:none !important; }
@@ -445,8 +448,8 @@ function _renderR173() {
         /* Matn safhe se zyada ho to khud agle safhe (back side) par chala jaye */
         .ch173-cont{ page-break-inside:auto; break-inside:auto; }
         .acc-pick{ display:none !important; }
-        .ch173-table td.normcell{ padding:0; vertical-align:top; }
-        .normwrap{ width:100%; height:100%; padding:5px; box-sizing:border-box;
+        .ch173-table td.normcell{ padding:0; vertical-align:top; position:relative; }
+        .normwrap{ position:absolute; inset:0; padding:5px; box-sizing:border-box;
           direction:rtl; text-align:justify; line-height:1.15; overflow-wrap:break-word; }
         .ch173-cont{ margin:0 !important; border:none !important; padding:0 5px !important;
           min-height:0; direction:rtl; text-align:justify; text-align-last:right;
@@ -977,8 +980,8 @@ function _printR173() {
           overflow-wrap:break-word; white-space:pre-wrap; overflow:hidden; font-size:14pt; }
         .rothead{ text-align:center !important; }
         /* Column 7 — poora justified, aakhri line dayen (beech mein nahi) */
-        .ch173-table td.normcell{ padding:0; vertical-align:top; }
-        .normwrap{ width:100%; height:100%; padding:5px; box-sizing:border-box;
+        .ch173-table td.normcell{ padding:0; vertical-align:top; position:relative; }
+        .normwrap{ position:absolute; inset:0; padding:5px; box-sizing:border-box;
           direction:rtl; text-align:justify; text-align-last:right; line-height:1.15;
           font-size:14pt; overflow-wrap:break-word; word-wrap:break-word; }
         .normwrap p, .normwrap div{ text-align:justify; text-align-last:right; }
