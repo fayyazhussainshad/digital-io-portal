@@ -5,6 +5,11 @@
 
 let _r173CaseId = null;
 let _r173Case = null;
+// کاغذ کا سائز — لیگل (8.5×13) یا A4 (اوپر ہی رکھنا ضروری، نیچے استعمال ہوتا ہے)
+let _ch173Paper = (function () {
+  try { return localStorage.getItem('dio_ch173_paper') || 'legal'; } catch (_) { return 'legal'; }
+})();
+
 let _r173Records = {};  // type -> saved form_data
 let _r173Docs = [];     // ہر چالان الگ ریکارڈ
 
@@ -346,7 +351,8 @@ function _renderR173() {
         width:100%; height:100%; padding:5px; box-sizing:border-box;
         direction:rtl; text-align:justify; text-align-last:right;
         outline:none; line-height:1.15; font-size:14pt;
-        overflow-wrap:break-word; word-wrap:break-word; overflow:auto;
+        overflow-wrap:break-word; word-wrap:break-word;
+        overflow:hidden;   /* scroll NAHI — jo na samaye woh neeche chala jaye */
       }
       /* Har paragraph ki aakhri line bhi dayen (beech mein nahi) */
       #ch173-doc .normwrap p, #ch173-doc .normwrap div{ text-align:justify; text-align-last:right; }
@@ -363,7 +369,7 @@ function _renderR173() {
       }
       #ch173-doc .ch173-cont:empty{ min-height:0; padding:0 !important; }
       #ch173-doc .rotinner{
-        width:auto; max-width:100%; height:100%; box-sizing:border-box; padding:4px;
+        width:auto; max-width:100%; height:100%; box-sizing:border-box; padding:4px 6px;
         writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
         direction:rtl; text-align:start; outline:none; unicode-bidi:plaintext;
         line-height:1.2; overflow-wrap:break-word; white-space:pre-wrap;
@@ -386,7 +392,9 @@ function _renderR173() {
       }
       #ch173-doc th.vcell{ vertical-align:middle; padding:0; text-align:center; height:150px; }
       /* Header ki khadi likhayi — data khanon jaisa hi wrapper (Ascending) */
-      #ch173-doc .rothead{ text-align:center !important; white-space:normal; }
+      /* مال قبضہ پولیس — lakeeron se hat kar, khane ke beech mein */
+      #ch173-doc .rothead{ text-align:center !important; white-space:normal;
+        padding:8px 6px; font-size:12pt; line-height:1.3; }
 
       #ch173-doc th.hcell{ vertical-align:middle; text-align:center; direction:rtl; white-space:normal; }
 
@@ -472,6 +480,12 @@ function _renderR173() {
           ${(typeof caseHasCross==='function' && caseHasCross(c))
             ? `<option value="cross_version" ${_ch173Version==='cross_version'?'selected':''}>کراس ورژن</option>` : ''}
         </select>
+        <select id="ch173-paper-sel" onchange="_ch173SetPaper(this.value)" title="کاغذ کا سائز"
+          style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);
+                 color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
+          <option value="legal" ${_ch173Paper==='legal'?'selected':''}>لیگل (8.5×13)</option>
+          <option value="a4"    ${_ch173Paper==='a4'   ?'selected':''}>A4 (8.27×11.7)</option>
+        </select>
         <span style="font-size:11px;color:var(--text-muted);">↔ کالم کی لکیر کو پکڑ کر چوڑائی بدلیں</span>
         <div style="margin-right:auto;display:flex;gap:6px;">
           <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('bold')" title="بولڈ" style="${_chBtn()}font-weight:900;">B</button>
@@ -501,7 +515,7 @@ function _renderR173() {
         </div>
       </div>
       <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
-        <div id="ch173-doc" style="width:100%;max-width:none;min-height:11.7in;margin:0 auto;
+        <div id="ch173-doc" style="width:100%;max-width:none;min-height:${_ch173Paper==='a4'?'11.7in':'13in'};margin:0 auto;
              padding:1cm;
              background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;
              line-height:1.4;box-sizing:border-box;">
@@ -539,7 +553,7 @@ function _renderR173() {
             </thead>
             <tbody>
               <tr>
-                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bs.madai !== undefined ? sanitizeHtml(bs.madai) : esc(_ch173Version==='cross_version' ? (c.cross_complainant||'') : (c.complainant||''))}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bs.madai !== undefined ? sanitizeHtml(bs.madai) : esc(_ch173Version==='cross_version' ? (c.cross_complainant||c.cross_complainant_name||'') : (c.complainant||c.complainant_name||''))}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'ghair_giraftar')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'zer_hirasat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'bar_zamanat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></div></div></td>
@@ -916,7 +930,7 @@ function _printR173() {
         /* A4 — kyunki print isi kaghaz par hota hai. Pehle 'legal' likha
            tha, jis se browser safhe ko sikor kar deta tha aur margins
            bade/ghair-barabar ho jate the. */
-        @page{ size:A4 portrait; margin:1cm; }
+        @page{ size:${_ch173Paper === 'a4' ? 'A4 portrait' : '8.5in 13in'}; margin:1cm; }
         /* Agle safhon par BAYEN taraf punch ki jagah */
         @page :left  { margin:1cm 1cm 1cm 1.8cm; }
         @page :right { margin:1cm 1cm 1cm 1.8cm; }
@@ -1020,6 +1034,17 @@ function _printR173() {
           border-bottom-style:none !important; border-bottom-color:transparent !important;
         }
 
+        /* ═══ TABLE SIRF PEHLE SAFHE PAR ═══
+           Pehle table agle safhe par bhi chhap jati thi (header dohra kar).
+           Do wajahein: (1) browser <thead> ko har safhe par dohrata hai,
+           (2) table beech se tootti thi. Ab dono band. */
+        .ch173-table thead{ display:table-row-group !important; }
+        .ch173-table{ page-break-inside:avoid !important; break-inside:avoid !important; }
+        .ch173-table tr, .ch173-table td, .ch173-table th{
+          page-break-inside:avoid !important; break-inside:avoid !important;
+        }
+        .ch173-table tbody td{ height:170mm !important; max-height:170mm !important;
+          overflow:hidden !important; }
         .colgrip,.rowgrip,.acc-pick,.no-print,button,select{ display:none !important; }
         /* Print: poori chaudai istemal karo — koi fixed inch nahi, warna
            browser safha sikor kar dono taraf bari khali jagah chhor deta hai */
@@ -2093,3 +2118,18 @@ function _ch173BindKeys() {
   });
 }
 window._ch173BindKeys = _ch173BindKeys;
+
+// ═══ کاغذ کا سائز — لیگل (8.5×13) یا A4 ═══
+// سافٹ ویئر کا اصل اصول لیگل ہے، مگر بہت سے دفاتر A4 پر چھاپتے ہیں —
+// اس لیے دونوں کا اختیار۔ منتخب کردہ سائز محفوظ رہتا ہے۔
+
+function _ch173SetPaper(v) {
+  _ch173Paper = (v === 'a4') ? 'a4' : 'legal';
+  try { localStorage.setItem('dio_ch173_paper', _ch173Paper); } catch (_) {}
+  // صفحہ نئے سائز پر دوبارہ بنائیں
+  const doc = document.getElementById('ch173-doc');
+  if (doc) doc.style.minHeight = (_ch173Paper === 'a4') ? '11.7in' : '13in';
+  if (typeof showToast === 'function')
+    showToast(_ch173Paper === 'a4' ? '📄 A4 منتخب' : '📄 لیگل (8.5×13) منتخب', 'info');
+}
+window._ch173SetPaper = _ch173SetPaper;
