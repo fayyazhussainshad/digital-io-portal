@@ -274,13 +274,6 @@ function _renderR173() {
         line-height:1.15; overflow:hidden; overflow-wrap:break-word;
         white-space:pre-wrap; font-size:14pt;
       }
-      /* Table ke NEECHE baqaya matn — khud phailne wali jagah */
-      #ch173-doc .ch173-cont{
-        direction:rtl; text-align:justify; text-align-last:right;
-        font-size:14pt; line-height:1.15;
-        padding:6px 4px; min-height:40px; outline:none; margin-top:0;
-        overflow-wrap:break-word; border:none !important; white-space:pre-wrap;
-      }
       /* اختتامی خانہ — 2 برابر کالم۔ flex اس لیے کہ دونوں کالم ہمیشہ ایک جتنے
          چوڑے رہیں اور ایک ساتھ ہی نیچے بڑھیں (ایک دوسرے سے آگے نہ نکلے) */
       #ch173-doc .ch173-sho-flex{
@@ -329,9 +322,6 @@ function _renderR173() {
       }
       /* Izafi khane screen par nazar aayen (kahan likhna hai pata chale) —
          print mein yeh nishan nahi aata */
-      #ch173-doc .ch173-cont:empty{ min-height:34px; }
-      #ch173-doc .ch173-cont{ outline:1px dashed rgba(120,120,120,0.35); margin-bottom:6px; }
-      @media print{ #ch173-doc .ch173-cont{ outline:none !important; margin-bottom:0; } }
       /* ملزمان chunne wala chhota button */
       #ch173-doc .acc-pick{
         position:absolute; top:2px; left:2px; z-index:7;
@@ -346,6 +336,10 @@ function _renderR173() {
         direction:rtl; text-align:justify; outline:none; line-height:1.15;
         overflow-wrap:break-word; word-wrap:break-word; overflow:auto;
       }
+      #ch173-doc .ch173-cont:empty::before{
+        content:'تسلسل — جو تحریر اوپر خانوں میں نہ سما سکے وہ یہاں لکھیں';
+        color:#aaa; font-size:12pt;
+      }
       /* Table ke NEECHE tasalsul — table se BILKUL chipka hua (koi gap nahi) */
       #ch173-doc .ch173-cont{
         margin:0 !important; border:none !important; padding:0 5px !important;
@@ -354,10 +348,6 @@ function _renderR173() {
         overflow-wrap:break-word; word-wrap:break-word; white-space:pre-wrap;
       }
       #ch173-doc .ch173-cont:empty{ min-height:0; padding:0 !important; }
-      #ch173-doc .ch173-cont:empty::before{
-        content:'تسلسل — جو تحریر اوپر خانوں میں نہ سما سکے وہ یہاں لکھیں';
-        color:#aaa; font-size:12pt;
-      }
       #ch173-doc .rotinner{
         width:100%; height:100%; box-sizing:border-box; padding:4px;
         writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
@@ -496,7 +486,7 @@ function _renderR173() {
         </div>
       </div>
       <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
-        <div id="ch173-doc" style="width:100%;max-width:8.5in;min-height:14in;margin:0 auto;
+        <div id="ch173-doc" style="width:100%;max-width:none;min-height:14in;margin:0 auto;
              padding:calc(0.25in + 0.5cm) 0.2cm 0.25in 0.2cm;
              background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;
              line-height:1.4;box-sizing:border-box;">
@@ -1237,21 +1227,14 @@ function _ch173BindOverflow() {
   // LIKHTE WAQT bhi khud-kar behe — magar sirf JAB khana bhar jaye.
   // (Har harf par chalane se cursor shuru mein chala jata tha; ab hum
   //  cursor ko wapas aakhir par le aate hain, is liye likhna nahi rukta.)
-  let _t = null;
-  cell.addEventListener('input', () => {
-    clearTimeout(_t);
-    _t = setTimeout(() => {
-      if (cell.scrollHeight <= cell.clientHeight + 1) return;   // jagah hai — kuch na karo
-      const atEnd = document.activeElement === cell;
-      _ch173Overflow();
-      if (atEnd) _ch173CaretEnd(cell);
-    }, 400);
-  });
   // NOTE: 'input' par NAHI chalate — warna har harf par matn dobara set
   // hota hai aur cursor shuru mein chala jata hai. Sirf paste aur blur par.
   // SIRF paste par — blur par chalane se innerText formatting (bold/italic/
   // underline) mita deta tha. Ab likhi hui formatting mehfooz rehti hai.
-  cell.addEventListener('paste', () => setTimeout(_ch173Overflow, 80));
+  cell.addEventListener('paste', () => setTimeout(() => {
+    // Sirf jab khana waqai bhar chuka ho
+    if (cell.scrollHeight > cell.clientHeight + 2) _ch173Overflow();
+  }, 120));
 }
 window._ch173BindOverflow = _ch173BindOverflow;
 
@@ -1456,11 +1439,13 @@ function _ch173FullPage(area) {
       w.style.gridTemplateColumns = '1fr';
     });
     // Poore safhe wale view (dio-docview) ke andar safha poori chaudai le
+    // چالان کا صفحہ ہمیشہ پوری چوڑائی لے (8.5in کی حد بڑی سکرین پر
+    // آدھا صفحہ لگتی تھی — چاہے پورے صفحے والا منظر ہو یا نہ ہو)
     const doc = document.getElementById('ch173-doc');
-    if (doc && doc.closest('#dio-docview')) {
+    if (doc) {
       doc.style.width = '100%';
       doc.style.maxWidth = 'none';
-      doc.style.margin = '0';
+      doc.style.margin = '0 auto';
     }
   } catch(_) {}
 }
@@ -1703,9 +1688,19 @@ function _ch173ClearFmt() {
 window._ch173ClearFmt = _ch173ClearFmt;
 
 function _ch173Fmt(cmd) {
-  _ch173RestoreRange();
+  // AHEM: agar cursor/selection PEHLE SE چالان ke andar hai to purani
+  // (basi) selection wapas mat lagao — bold lagne ke baad safha badal
+  // jata hai, aur basi selection ghalat jagah par lagti thi, isi liye
+  // dobara dabane par bold KHATAM nahi hota tha.
+  const doc = document.getElementById('ch173-doc');
+  const sel = window.getSelection();
+  const live = doc && sel && sel.rangeCount &&
+               doc.contains(sel.getRangeAt(0).commonAncestorContainer);
+  if (!live) _ch173RestoreRange();
+  try { document.execCommand('styleWithCSS', false, false); } catch(_) {}
   try { document.execCommand(cmd, false, null); } catch(_) {}
   _ch173SaveRange();
+  try { _r173Dirty = true; } catch(_) {}
 }
 // Purana naam bhi chalta rahe (kahin aur se pukara ja raha ho to)
 function _ch173FontStep(dir) {
@@ -1727,10 +1722,23 @@ window._ch173FontStep = _ch173FontStep;
 // ═══ SHO ki line — system se khud (naam + عہدہ + تھانہ) ═══
 function _ch173ShoLine(o) {
   o = o || (typeof currentOfficer !== 'undefined' ? currentOfficer : {}) || {};
-  // Markazi helper — poore system mein aik hi tarteeb:
-  // NAAM → RANK (SI/SHO ya I/SHO) → تھانہ
-  if (typeof getSHOSignLine === 'function') return getSHOSignLine(o.station || '');
-  return '';
+  const st = o.station || '';
+  if (typeof getSHOSignLine === 'function') {
+    const line = getSHOSignLine(st);
+    if (line && line.trim()) return line;
+  }
+  // Backup: seedha localStorage se (agar helper ki file load na hui ho)
+  try {
+    const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}');
+    const parts = [];
+    if (sho.name) parts.push(String(sho.name).trim());
+    if (sho.rank) parts.push(String(sho.rank).trim());
+    let l = parts.join(' ');
+    if (st) l += (l ? ' ' : '') + 'تھانہ ' + st;
+    if (l.trim()) return l;
+  } catch(_) {}
+  // Ab bhi kuch na mile → officer ko batao ke اوزار mein SHO set karein
+  return st ? ('تھانہ ' + st) : '';
 }
 window._ch173ShoLine = _ch173ShoLine;
 

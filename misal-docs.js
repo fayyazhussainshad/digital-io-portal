@@ -121,6 +121,15 @@ function renderMisalBar(c) {
 
 // ── DROPDOWN BUTTONS (merged FIR / ملزمان / گواہان) ────────────
 function _misalDropdown(ddId, label, options) {
+  // AHEM: agar fehrist mein sirf AIK hi cheez ho (jaise کراس ورژن na ho)
+  // to dropdown ka koi faida nahi — us surat mein SEEDHA button dikhao,
+  // warna khali sa menu khulta hai jismein aik "FIR" aur aik dash hota hai.
+  if (!options || options.length <= 1) {
+    const only = options && options[0];
+    if (!only) return '';
+    return `<span class="mdoc-chip mdoc-empty" onclick="${only.act}"
+              style="cursor:pointer;">${label}</span>`;
+  }
   return `
   <span style="position:relative;display:inline-block;">
     <span class="mdoc-chip mdoc-added" onclick="_toggleDD(event,'${ddId}')" style="cursor:pointer;">
