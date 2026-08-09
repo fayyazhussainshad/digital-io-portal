@@ -1023,3 +1023,107 @@ function caseHasCross(c) {
             c.cross_complainant_cnic || c.cross_section_of_law);
 }
 window.caseHasCross = caseHasCross;
+
+// ═══════════════════════════════════════════════════════════════════
+//  فائل کا اپنا (in-app) منظر — نئی Chrome ٹیب میں نہیں
+//  وجہ: فائل ڈیٹا بیس میں data: URL کی شکل میں محفوظ ہوتی ہے، اور
+//  Chrome نئی ٹیب میں data: URL کھولنے سے انکار کر دیتا ہے (اسی لیے
+//  ٹیب خالی آتی تھی)۔ اب فائل ایپ کے اندر ہی کھلتی ہے — جیسے چالان۔
+// ═══════════════════════════════════════════════════════════════════
+
+// data: URL → blob: URL (blob ہر جگہ چلتا ہے، data نہیں)
+function _dioToBlobUrl(url) {
+  try {
+    if (!url || !url.startsWith('data:')) return url;
+    const [head, b64] = url.split(',');
+    const mime = (head.match(/data:([^;]+)/) || [])[1] || 'application/octet-stream';
+    const bin = atob(b64);
+    const arr = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return URL.createObjectURL(new Blob([arr], { type: mime }));
+  } catch (_) { return url; }
+}
+window._dioToBlobUrl = _dioToBlobUrl;
+
+function _dioIsImage(url, name) {
+  return (url || '').startsWith('data:image') ||
+         /\.(jpg|jpeg|png|webp|gif)$/i.test(name || '') ||
+         /-(jpg|jpeg|png|webp|gif)$/i.test(name || '');
+}
+
+// فائل ایپ کے اندر کھولیں
+function _dioViewFile(url, name) {
+  if (!url) { if (typeof showToast === 'function') showToast('❌ فائل نہیں ملی', 'error'); return; }
+  document.getElementById('dio-file-view')?.remove();
+  const blob = _dioToBlobUrl(url);
+  const isImg = _dioIsImage(url, name);
+
+  const ov = document.createElement('div');
+  ov.id = 'dio-file-view';
+  ov.style.cssText =
+    'position:fixed;inset:0;z-index:99998;background:var(--bg-primary,#0b1826);' +
+    'display:flex;flex-direction:column;direction:rtl;';
+  ov.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;flex-shrink:0;
+         background:var(--bg-secondary);border-bottom:1px solid var(--border);">
+      <button onclick="_dioCloseFileView()" title="واپس"
+        style="width:34px;height:34px;border-radius:50%;cursor:pointer;border:1px solid var(--border);
+               background:var(--bg-card);color:var(--text-primary);font-size:18px;font-weight:900;
+               line-height:1;direction:ltr;">←</button>
+      <span style="font-weight:700;font-size:14px;">${esc(name || 'فائل')}</span>
+      <div style="margin-right:auto;display:flex;gap:6px;">
+        <button class="btn btn-secondary btn-sm" onclick="_dioPrintFileView()">🖨️ پرنٹ</button>
+        <button class="btn btn-secondary btn-sm" onclick="_dioDownloadFileView()">⬇️ محفوظ</button>
+      </div>
+    </div>
+    <div style="flex:1;min-height:0;background:#525659;overflow:auto;display:flex;
+                align-items:flex-start;justify-content:center;padding:10px;">
+      ${isImg
+        ? `<img id="dio-fv-img" src="${blob}" style="max-width:100%;height:auto;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,.4);">`
+        : `<iframe id="dio-fv-frame" src="${blob}" style="width:100%;height:100%;border:none;background:#fff;"></iframe>`}
+    </div>`;
+  document.body.appendChild(ov);
+  ov._blob = blob; ov._name = name || 'file'; ov._isImg = isImg;
+  document.body.style.overflow = 'hidden';
+  document.addEventListener('keydown', _dioFileViewEsc);
+}
+window._dioViewFile = _dioViewFile;
+
+function _dioFileViewEsc(e) { if (e.key === 'Escape') _dioCloseFileView(); }
+
+function _dioCloseFileView() {
+  const ov = document.getElementById('dio-file-view');
+  if (!ov) return;
+  try { if (ov._blob && ov._blob.startsWith('blob:')) URL.revokeObjectURL(ov._blob); } catch (_) {}
+  ov.remove();
+  document.body.style.overflow = '';
+  document.removeEventListener('keydown', _dioFileViewEsc);
+}
+window._dioCloseFileView = _dioCloseFileView;
+
+// پرنٹ — ایپ کے اندر ہی (نئی ٹیب نہیں)
+function _dioPrintFileView() {
+  const ov = document.getElementById('dio-file-view');
+  if (!ov) return;
+  if (ov._isImg) {
+    const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
+      <style>@page{size:A4;margin:8mm}html,body{margin:0;padding:0;}
+      img{max-width:100%;max-height:98vh;display:block;margin:0 auto;}</style></head>
+      <body><img src="${ov._blob}"></body></html>`;
+    if (typeof dioPrint === 'function') { dioPrint(html); return; }
+  }
+  // PDF — usi iframe ko chhapo
+  const f = document.getElementById('dio-fv-frame');
+  try { f.contentWindow.focus(); f.contentWindow.print(); return; } catch (_) {}
+  try { window.print(); } catch (_) {}
+}
+window._dioPrintFileView = _dioPrintFileView;
+
+function _dioDownloadFileView() {
+  const ov = document.getElementById('dio-file-view');
+  if (!ov) return;
+  const a = document.createElement('a');
+  a.href = ov._blob; a.download = ov._name || 'file';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+window._dioDownloadFileView = _dioDownloadFileView;

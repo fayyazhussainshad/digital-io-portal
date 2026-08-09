@@ -171,7 +171,13 @@ function handleDesig5C(sel){const c=sel.closest('.f5c-num-row').querySelector('.
 function add5CNumberRow(){const c=document.getElementById('f5c-numbers');const tmp=document.createElement('div');tmp.innerHTML=render5CNumberRow({});c.appendChild(tmp.firstElementChild);}
 function render5CAttachmentRow(a){const ic=a.category==='application_scan'?'📄':a.category==='response_scan'?'📝':'📎';const lb=a.category==='application_scan'?'Application Scan':a.category==='response_scan'?'Response Scan':'Other';const sz=a.file_size?` · ${(a.file_size/1024).toFixed(1)}KB`:'';return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg-tertiary);border-radius:6px;margin-bottom:6px;"><span style="font-size:18px;">${ic}</span><span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;">${esc5C(a.file_name)} <span style="color:var(--text-muted);font-size:10px;">(${lb}${sz})</span></span><button class="btn btn-secondary btn-sm" onclick="view5CAttachment('${a.storage_path}')">👁️</button><button class="btn btn-danger btn-sm" onclick="delete5CAttachment('${a.id}','${a.storage_path}',this)">🗑️</button></div>`;}
 async function upload5CFile(appId,category,file){if(!file)return;if(file.size>10*1024*1024){showToast('⚠️ File too large (max 10 MB).','error');return;}showToast('⏳ Uploading...','info');try{await uploadAttachment5C(appId,file,category);showToast('✅ Uploaded!','success');open5CForm(appId);}catch(e){showToast('❌ Upload failed: '+e.message,'error',5000);}}
-async function view5CAttachment(path){const url=await getAttachmentUrl5C(path);if(url)window.open(url,'_blank');else showToast('❌ Could not get file URL','error');}
+async function view5CAttachment(path){
+  const url = await getAttachmentUrl5C(path);
+  if (!url) { showToast('❌ فائل نہیں ملی', 'error'); return; }
+  // App ke ANDAR kholo — nayi tab mein data: URL Chrome block karta hai (khali safha)
+  if (typeof _dioViewFile === 'function') _dioViewFile(url, path.split('/').pop() || 'فائل');
+  else window.open(url, '_blank');
+}
 async function delete5CAttachment(id,path,btn){if(!confirm('Delete this attachment?'))return;try{await deleteAttachment5C(id,path);if(btn&&btn.closest('div'))btn.closest('div').remove();showToast('🗑️ Deleted','info');}catch(e){showToast('❌ '+e.message,'error');}}
 async function save5CApp(id){
   const main={complainant_name:document.getElementById('f5c-name').value.trim()||null,complainant_cnic:document.getElementById('f5c-cnic').value.trim()||null,complainant_cell:document.getElementById('f5c-cell').value.trim()||null,application_date:toISODate(document.getElementById('f5c-appdate').value)||null,subject:document.getElementById('f5c-subject').value.trim()||null,status:document.getElementById('f5c-status').value};
