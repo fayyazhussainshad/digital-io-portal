@@ -1128,7 +1128,7 @@ window.addEventListener('unhandledrejection', function(e){
 ══════════════════════════════════ -->
 <div id="main-app" style="display:none;">
   <!-- Mobile overlay -->
-  <div id="mob-overlay" onclick="closeMobileSidebar()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);z-index:999;"></div>
+  <div id="mob-overlay" onclick="window.closeMobileSidebar&&closeMobileSidebar()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);z-index:999;"></div>
 
   <!-- Menu toggle button (all screens) -->
   <!-- mobile menu toggle removed (top-nav is used instead) -->
@@ -1146,7 +1146,7 @@ window.addEventListener('unhandledrejection', function(e){
       <div class="nav-item" onclick="closeMobileSidebar();showPage('search',this)"><span class="nav-icon">🔍</span> تلاش</div>
 
       <!-- More (collapsible) -->
-      <div class="nav-item" id="nav-more-toggle" onclick="_toggleMoreNav(this)" style="cursor:pointer;">
+      <div class="nav-item" id="nav-more-toggle" onclick="window._toggleMoreNav&&_toggleMoreNav(this)" style="cursor:pointer;">
         <span class="nav-icon">⋯</span> مزید <span id="more-arrow" style="margin-right:auto;font-size:11px;">▼</span>
       </div>
       <div id="nav-more-section" style="display:none;">
@@ -1167,7 +1167,7 @@ window.addEventListener('unhandledrejection', function(e){
     <!-- TOP BAR -->
     <div class="topbar">
       <!-- واپس — صفحے کا حصہ (تیرتا ہوا نہیں)، بائیں سرے پر -->
-      <button id="dio-back-btn" class="topnav-btn" onclick="dioGoBack()" title="واپس" aria-label="واپس"
+      <button id="dio-back-btn" class="topnav-btn" onclick="window.dioGoBack&&dioGoBack()" title="واپس" aria-label="واپس"
         style="display:none;order:99;margin-left:0;margin-right:auto;flex-shrink:0;
                font-size:18px;font-weight:900;padding:6px 12px;direction:ltr;">←</button>
       <div class="topbar-left" style="display:flex;align-items:center;gap:4px;flex-wrap:nowrap;overflow-x:auto;flex:1;min-width:0;">
@@ -1181,7 +1181,7 @@ window.addEventListener('unhandledrejection', function(e){
 
         <!-- اوزار (Tools) dropdown -->
         <div style="position:relative;display:inline-block;">
-          <button class="topnav-btn" onclick="_toggleTopDD(event,'tools-menu')" title="اوزار">🔧<span class="topnav-label"> اوزار</span> ▾</button>
+          <button class="topnav-btn" onclick="window._toggleTopDD&&_toggleTopDD(event,'tools-menu')" title="اوزار">🔧<span class="topnav-label"> اوزار</span> ▾</button>
           <div id="tools-menu" class="topdd-menu" style="display:none;">
             <a class="topmore-item" id="topbar-sho-btn" onclick="openShoDspModal('sho');_closeTopDD()" title="SHO کا نام">🏛️ SHO</a>
             <a class="topmore-item" id="topbar-dsp-btn" onclick="openShoDspModal('dsp');_closeTopDD()" title="DSP/SDPO کا نام">🎖️ DSP/SDPO</a>
@@ -1195,7 +1195,7 @@ window.addEventListener('unhandledrejection', function(e){
 
         <!-- اکاؤنٹ (Account) dropdown -->
         <div style="position:relative;display:inline-block;">
-          <button class="topnav-btn" onclick="_toggleTopDD(event,'account-menu')" title="اکاؤنٹ">👤<span class="topnav-label"> اکاؤنٹ</span> ▾</button>
+          <button class="topnav-btn" onclick="window._toggleTopDD&&_toggleTopDD(event,'account-menu')" title="اکاؤنٹ">👤<span class="topnav-label"> اکاؤنٹ</span> ▾</button>
           <div id="account-menu" class="topdd-menu" style="display:none;">
             <a class="topmore-item" onclick="showSubscriptionPage();_closeTopDD()">💎 سبسکرپشن</a>
             <a class="topmore-item" onclick="showPage('bin',null);_closeTopDD()">🗑️ حذف شدہ مواد</a>
@@ -1315,6 +1315,44 @@ window.addEventListener('beforeunload', function (e) {
     if (dirty) { e.preventDefault(); e.returnValue = ''; return ''; }
   } catch (_) {}
 });
+</script>
+<script>
+// ── Topbar ke dropdown functions ka EARLY STUB ──────────────────
+// Asal tareef neeche wale block mein hai. Agar kabhi purana cache chal
+// jaye ya woh block load na ho, to button dabane par error aane ki
+// bajaye kuch na ho — app chalti rahe.
+(function () {
+  function menu(id) { try { return document.getElementById(id); } catch (_) { return null; } }
+  if (typeof window._closeTopDD !== 'function') {
+    window._closeTopDD = function () {
+      try { document.querySelectorAll('.topdd-menu').forEach(function (m) { m.style.display = 'none'; }); } catch (_) {}
+    };
+  }
+  if (typeof window._toggleTopDD !== 'function') {
+    window._toggleTopDD = function (e, id) {
+      try { if (e) e.stopPropagation(); } catch (_) {}
+      var m = menu(id); if (!m) return;
+      var open = m.style.display === 'block';
+      window._closeTopDD();
+      if (!open) m.style.display = 'block';
+    };
+  }
+  if (typeof window._toggleMoreNav !== 'function') {
+    window._toggleMoreNav = function () {};
+  }
+  if (typeof window.closeMobileSidebar !== 'function') {
+    window.closeMobileSidebar = function () {
+      try {
+        var sb = document.getElementById('sidebar'), ov = document.getElementById('mob-overlay');
+        if (sb) sb.classList.remove('mobile-open');
+        if (ov) ov.style.display = 'none';
+      } catch (_) {}
+    };
+  }
+  if (typeof window.dioGoBack !== 'function') {
+    window.dioGoBack = function () { try { history.back(); } catch (_) {} };
+  }
+})();
 </script>
 <script src="offline-store.js"></script>
 <script src="app-core.js"></script>
