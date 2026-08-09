@@ -5,8 +5,8 @@
 
 let _r173CaseId = null;
 let _r173Case = null;
-let _r173Records = {};
-let _r173Docs = [];   // ہر چالان الگ ریکارڈ
+let _r173Records = {};  // type -> saved form_data
+let _r173Docs = [];     // ہر چالان الگ ریکارڈ
 
 // ═══ چالان کا ہیڈ/عنوان — ایک ہی قسم کے کئی چالان بن سکتے ہیں ═══
 const R173_HEADS = [
@@ -35,8 +35,8 @@ const R173_IKHRAJ_HEADS = [
 // موجودہ کھلے چالان کی شناخت (نیا ہو تو null)
 let _r173DocId = null;
 let _r173Head  = '';
+let _r173ShowList = false;   // save ke baad چالان ki fehrist
 
-let _r173ShowList = false;   // save ke baad چالان ki fehrist  // type -> saved form_data
 let _r173Type = 'mukammal';
 
 const R173_TYPES = [
@@ -203,8 +203,11 @@ function _renderR173() {
         margin:18px 0 16px 0; direction:rtl; flex-wrap:wrap; line-height:1.4;
         justify-content:center; }
       #ch173-doc .ch173-caseline .fl{ display:inline-block; min-width:40px;
-        border:none; text-align:right; outline:none; font-weight:normal; }
+        border:none; text-align:right; outline:none; font-weight:normal;
+        unicode-bidi:isolate; direction:rtl; }
       #ch173-doc .ch173-caseline .fl-lg{ min-width:60px; }
+      /* "ت پ" — دفعات کے بعد آخر میں، اپنا الگ خانہ */
+      #ch173-doc .ch173-caseline .fl-suf{ min-width:24px; }
 
       #ch173-doc .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
       #ch173-doc .ch173-table th, #ch173-doc .ch173-table td{
@@ -252,19 +255,52 @@ function _renderR173() {
         padding:6px 4px; min-height:40px; outline:none; margin-top:0;
         overflow-wrap:break-word; border:none !important; white-space:pre-wrap;
       }
-      /* SHO wala khana — dayen taraf تفصیل کاغذات, bayen taraf SHO + تاریخ */
-      /* تفصیل کاغذات aur SHO — bilkul AIK SEEDH mein (upar-neeche nahi) */
-      #ch173-doc .ch173-sho-row{ display:flex; justify-content:space-between;
-        align-items:flex-start; gap:20px; }
-      #ch173-doc .sho-right{ text-align:right; font-weight:700; outline:none;
-        min-width:120px; text-decoration:underline; }
-      #ch173-doc .sho-left{ text-align:left; direction:rtl; min-width:220px; }
-      #ch173-doc .sho-left > div{ outline:none; line-height:1.1; margin:0; padding:0; }
-      /* تاریخ SHO ke FORAN baad (koi bara gap nahi) */
-      #ch173-doc .sho-date{ font-size:11pt; color:#333; margin:0; line-height:1.1;
-        min-height:16px; cursor:pointer; text-align:center; }
-      #ch173-doc .sho-date:empty::before{ content:'تاریخ…'; color:#aaa; }
-      @media print{ #ch173-doc .sho-date:empty::before{ content:''; } }
+      /* اختتامی خانہ — 2 برابر کالم۔ flex اس لیے کہ دونوں کالم ہمیشہ ایک جتنے
+         چوڑے رہیں اور ایک ساتھ ہی نیچے بڑھیں (ایک دوسرے سے آگے نہ نکلے) */
+      #ch173-doc .ch173-sho-flex{
+        display:flex; direction:rtl; align-items:stretch; gap:1cm; margin-top:6px;
+      }
+      #ch173-doc .ch173-sho-flex > .sho-col{ min-width:0; box-sizing:border-box; }
+      /* تفصیل کاغذات کا خانہ SHO لائن کے دائیں کنارے سے 1cm پہلے تک پھیلتا ہے */
+      #ch173-doc .ch173-sho-flex > .sho-papers{ flex:1 1 auto; }
+      /* SHO کالم — چوڑائی صرف اپنی لائن جتنی (شرنک-ٹو-فٹ) */
+      #ch173-doc .ch173-sho-flex > .sho-cell{ flex:0 0 auto; }
+
+      /* دائیں کالم — تفصیل کاغذات (عنوان) + اس کے نیچے لکھنے کی جگہ */
+      #ch173-doc .sho-papers{ text-align:right; padding:4px 6px 0 0; }
+      #ch173-doc .sho-papers-head{
+        font-weight:700; text-decoration:underline; white-space:nowrap;
+        font-size:14pt; line-height:1.25; margin:0;
+      }
+      /* کرسر یہاں بلنک کرتا ہے — ڈیٹا عنوان کے نیچے سے شروع ہوتا ہے */
+      #ch173-doc .sho-papers-body{
+        font-size:14pt; line-height:1.25; text-align:right; white-space:pre-wrap;
+        outline:1px dashed rgba(120,120,120,0.35); padding:3px 4px; margin-top:4px;
+        min-height:22px; overflow-wrap:break-word;
+      }
+      #ch173-doc .sho-papers-body:empty::before{
+        content:'یہاں کاغذات کی تفصیل لکھیں'; color:#bbb; font-size:12pt;
+      }
+
+      /* بائیں کالم — SHO/تاریخ: ایک اوپر، ایک نیچے */
+      #ch173-doc .sho-cell{
+        display:flex; flex-direction:column; justify-content:space-between;
+        min-height:42mm;
+      }
+      /* align-self:flex-end → RTL میں بائیں کنارے پر (جیسے اصل فارم میں) */
+      #ch173-doc .sho-block{ align-self:flex-end; }
+      #ch173-doc .sho-cell-row{
+        outline:1px dashed rgba(120,120,120,0.35); padding:3px 6px; line-height:1.25;
+        min-height:20px; margin:0; font-size:14pt; text-align:right; white-space:nowrap;
+      }
+      #ch173-doc .sho-cell-date{ font-size:14pt; color:#333; cursor:pointer; text-align:center; }
+      #ch173-doc .sho-cell-date:empty::before{ content:'تاریخ…'; color:#aaa; }
+      @media print{
+        #ch173-doc .sho-papers-body{ outline:none !important; }
+        #ch173-doc .sho-papers-body:empty::before{ content:''; }
+        #ch173-doc .sho-cell-row{ outline:none !important; }
+        #ch173-doc .sho-cell-date:empty::before{ content:''; }
+      }
       /* Izafi khane screen par nazar aayen (kahan likhna hai pata chale) —
          print mein yeh nishan nahi aata */
       #ch173-doc .ch173-cont:empty{ min-height:34px; }
@@ -366,11 +402,6 @@ function _renderR173() {
         .ch173-cont{ direction:rtl; text-align:justify; text-align-last:right;
           font-size:14pt; line-height:1.15; padding:6px 4px; overflow-wrap:break-word;
           border:none !important; white-space:pre-wrap; }
-        .ch173-sho-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; }
-        .sho-right{ text-align:right; font-weight:700; text-decoration:underline; }
-        .sho-left{ text-align:left; direction:rtl; }
-        .sho-left > div{ line-height:1.1; margin:0; padding:0; }
-        .sho-date{ font-size:11pt; color:#000; margin:0; line-height:1.1; text-align:center; }
         /* Matn safhe se zyada ho to khud agle safhe (back side) par chala jaye */
         .ch173-cont{ page-break-inside:auto; break-inside:auto; }
         .acc-pick{ display:none !important; }
@@ -410,6 +441,18 @@ function _renderR173() {
         </select>
         <span style="font-size:11px;color:var(--text-muted);">↔ کالم کی لکیر کو پکڑ کر چوڑائی بدلیں</span>
         <div style="margin-right:auto;display:flex;gap:6px;">
+          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('bold')" title="بولڈ" style="${_chBtn()}font-weight:900;">B</button>
+          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('italic')" title="ترچھا" style="${_chBtn()}font-style:italic;">I</button>
+          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('underline')" title="انڈر لائن" style="${_chBtn()}text-decoration:underline;">U</button>
+          <button id="ch173-brush-btn" onmousedown="event.preventDefault()"
+            onclick="_ch173BrushClick(false)" ondblclick="_ch173BrushClick(true)"
+            title="فارمیٹ پینٹر — ایک کلک: ایک بار، ڈبل کلک: بار بار" style="${_chBtn()}">🖌</button>
+          <select id="ch173-font-sel" onchange="_ch173SetFont(this.value)" title="فونٹ سائز"
+            style="height:28px;border:1px solid var(--border,#ccc);border-radius:6px;background:var(--bg-card,#fff);color:var(--text-primary,#111);font-size:13px;padding:0 6px;margin:0 1px;cursor:pointer;">
+            ${R173_FONT_SIZES.map(s => `<option value="${s}" ${String(s)===String(_ch173DocFont(bs))?'selected':''}>${s}</option>`).join('')}
+          </select>
+          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('undo')" title="واپس (Undo)" style="${_chBtn()}">↶</button>
+          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('redo')" title="دوبارہ (Redo)" style="${_chBtn()}">↷</button>
           <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveR173()">💾 محفوظ کریں</button>
           <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printR173()">🖨️ پرنٹ کریں</button>
         </div>
@@ -430,7 +473,7 @@ function _renderR173() {
           <div class="ch173-caseline">
             <span>مقدمہ نمبر <span class="fl" contenteditable="true" data-k="cl_fir">${bs.cl_fir !== undefined ? sanitizeHtml(bs.cl_fir) : esc(c.fir_number||'')}</span></span>
             <span>مورخہ <span class="fl" contenteditable="true" data-k="cl_date">${bs.cl_date !== undefined ? sanitizeHtml(bs.cl_date) : esc(formatDate(c.fir_date)||'')}</span></span>
-            <span>جرم <span class="fl fl-lg" contenteditable="true" data-k="cl_jurm">${bs.cl_jurm !== undefined ? sanitizeHtml(bs.cl_jurm) : esc(c.section_of_law||'')}</span></span>
+            <span>جرم <span class="fl fl-lg" contenteditable="true" data-k="cl_jurm">${bs.cl_jurm !== undefined ? sanitizeHtml(bs.cl_jurm) : esc(_ch173JurmParts(c.section_of_law).body)}</span> <span class="fl fl-suf" contenteditable="true" data-k="cl_jurm_suf">${bs.cl_jurm_suf !== undefined ? sanitizeHtml(bs.cl_jurm_suf) : esc(_ch173JurmParts(c.section_of_law).suffix)}</span></span>
           </div>
 
           <table class="ch173-table" id="ch173-table">
@@ -464,31 +507,32 @@ function _renderR173() {
             </tbody>
           </table>
 
-          <!-- خانہ 1: باقی متن (اوپر والے کالم سے خود آتا ہے) -->
+          <!-- خانہ 1: باقی متن (اوپر والے کالم سے خود آتا ہے) — تسلسل/overflow -->
           <div class="ch173-cont" contenteditable="true" data-k="cont_text">${bv('cont_text')}</div>
 
-          <!-- خانہ 2: تفصیل کاغذات (دائیں) + SHO و تاریخ (بائیں) -->
-          <div class="ch173-cont ch173-sho-row">
-            <div class="sho-right" contenteditable="true" data-k="papers_txt">${bs.papers_txt !== undefined ? sanitizeHtml(bs.papers_txt) : 'تفصیل کاغذات'}</div>
-            <div class="sho-left">
-              <div contenteditable="true" data-k="sho1">${bs.sho1 !== undefined ? sanitizeHtml(bs.sho1) : esc(_ch173ShoLine(o))}</div>
-              <div class="sho-date" contenteditable="true" data-k="sho1_date"
-                   onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bv('sho1_date')}</div>
+          <!-- اختتامی خانہ — 2 برابر کالم (flex)
+               دائیں: تفصیل کاغذات + لکھنے کی جگہ | بائیں: SHO/تاریخ (اوپر اور نیچے)
+               دونوں کالم ہمیشہ برابر چوڑے، اور ایک ساتھ ہی نیچے بڑھتے ہیں -->
+          <div class="ch173-sho-flex">
+            <div class="sho-col sho-papers">
+              <div class="sho-papers-head">تفصیل کاغذات</div>
+              <div class="sho-papers-body" contenteditable="true" data-k="papers_body">${bv('papers_body')}</div>
+            </div>
+            <div class="sho-col sho-cell">
+              <div class="sho-block">
+                <div class="sho-cell-row" contenteditable="true" data-k="sho_line2">${bs.sho_line2 !== undefined ? sanitizeHtml(bs.sho_line2) : (bs.sho_line !== undefined ? sanitizeHtml(bs.sho_line) : esc(_ch173ShoLine(o)))}</div>
+                <div class="sho-cell-row sho-cell-date" contenteditable="true" data-k="sho_date2"
+                     onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bs.sho_date2 !== undefined ? sanitizeHtml(bs.sho_date2) : (bs.sho_date !== undefined ? sanitizeHtml(bs.sho_date) : esc(_ch173Today()))}</div>
+              </div>
+              <div class="sho-block">
+                <div class="sho-cell-row" contenteditable="true" data-k="sho_line5">${bs.sho_line5 !== undefined ? sanitizeHtml(bs.sho_line5) : esc(_ch173ShoLine(o))}</div>
+                <div class="sho-cell-row sho-cell-date" contenteditable="true" data-k="sho_date5"
+                     onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bs.sho_date5 !== undefined ? sanitizeHtml(bs.sho_date5) : esc(_ch173Today())}</div>
+              </div>
             </div>
           </div>
 
-          <!-- خانہ 3: خالی (بعد میں پُر کیا جائے گا) -->
-          <div class="ch173-cont" contenteditable="true" data-k="cont_blank">${bv('cont_blank')}</div>
-
-          <!-- خانہ 4: SHO و تاریخ (بائیں) -->
-          <div class="ch173-cont ch173-sho-row">
-            <div class="sho-right"></div>
-            <div class="sho-left">
-              <div contenteditable="true" data-k="sho2">${bs.sho2 !== undefined ? sanitizeHtml(bs.sho2) : esc(_ch173ShoLine(o))}</div>
-              <div class="sho-date" contenteditable="true" data-k="sho2_date"
-                   onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bv('sho2_date')}</div>
-            </div>
-          </div>
+          <input type="hidden" data-k="doc_font" value="${esc(String(_ch173DocFont(bs)))}">
 
         </div>
       </div>
@@ -506,6 +550,20 @@ function _renderR173() {
         if (rh) document.querySelectorAll('#ch173-table tbody td').forEach(td => td.style.height = rh);
         _ch173SizeRotated();
       } catch(_) {}
+      // Mehfooz shuda فونٹ سائز wapas lagao
+      try {
+        const df = _ch173DocFont(bs);
+        if (df && df !== R173_FONT_DEFAULT) _ch173FontToDoc(df);
+      } catch(_) {}
+      // Cursor ke mutabiq dropdown khud badalta rahe (MS Word jaisa)
+      try {
+        if (!window._ch173FontSelBound) {
+          window._ch173FontSelBound = true;
+          document.addEventListener('selectionchange', _ch173SyncFontSel);
+        }
+      } catch(_) {}
+      // Format painter — naye safhe par band halat se shuru
+      try { _ch173BrushOff(); _ch173BindBrush(); } catch(_) {}
     }, 60);
     if (typeof applyMicButtons === 'function') setTimeout(() => applyMicButtons(area), 80);
     return;
@@ -739,7 +797,6 @@ async function _saveR173() {
   try {
     const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
     if (oid) rec.officer_id = oid;
-    // One record per type (and subtype for tatima) per case
     // ہیڈ/عنوان بھی محفوظ (ایک ہی قسم کے کئی چالان ہو سکتے ہیں)
     form_data.head = _r173Head || form_data.head || '';
     rec.form_data = form_data;
@@ -760,7 +817,7 @@ async function _saveR173() {
       if (idx >= 0) _r173Docs[idx] = entry; else _r173Docs.push(entry);
     } catch(_) {}
     try { localStorage.setItem('dio_r173_'+_r173CaseId, JSON.stringify(_r173Records)); } catch(_) {}
-    // Save ke baad چالان ki FEHRIST kholo (image jaisi)
+    // Save ke baad چالان ki FEHRIST kholo
     _r173ShowList = true;
     setTimeout(() => { try { _renderR173List(); } catch(_) {} }, 250);
 
@@ -816,8 +873,9 @@ function _printR173() {
         .ch173-caseline{ display:flex; gap:22px; align-items:baseline; font-size:14pt;
           margin:18px 0 16px 0; direction:rtl; flex-wrap:wrap; line-height:1.4; justify-content:center; }
         .ch173-caseline .fl{ display:inline-block; min-width:40px; border:none;
-          text-align:right; font-weight:normal; }
+          text-align:right; font-weight:normal; unicode-bidi:isolate; direction:rtl; }
         .ch173-caseline .fl-lg{ min-width:60px; }
+        .ch173-caseline .fl-suf{ min-width:24px; }
 
         /* Table */
         .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
@@ -847,11 +905,27 @@ function _printR173() {
         .ch173-cont{ direction:rtl; text-align:justify; text-align-last:right;
           font-size:14pt; line-height:1.15; padding:6px 4px; overflow-wrap:break-word;
           border:none !important; white-space:pre-wrap; }
-        .ch173-sho-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; }
-        .sho-right{ text-align:right; font-weight:700; text-decoration:underline; }
-        .sho-left{ text-align:left; direction:rtl; }
-        .sho-left > div{ line-height:1.1; margin:0; padding:0; }
-        .sho-date{ font-size:11pt; color:#000; margin:0; line-height:1.1; text-align:center; }
+        /* SHO دستخط خانہ — پرنٹ میں کوئی لکیر نہیں، صرف متن (SHO لائن + تاریخ) */
+        /* اختتامی خانہ — 2 برابر کالم (SCREEN کے بالکل مطابق)۔
+           align-items:stretch → دونوں کالم ہمیشہ ایک جتنے اونچے؛
+           justify-content:space-between → نیچے والا SHO ہمیشہ سب سے نیچے،
+           یعنی کالم 1 بڑھے تو نیچے والا SHO بھی اُسی کے ساتھ نیچے جاتا ہے۔ */
+        .ch173-sho-flex{ display:flex; direction:rtl; align-items:stretch; gap:1cm; margin-top:6px; }
+        .ch173-sho-flex > .sho-col{ min-width:0; box-sizing:border-box; }
+        .ch173-sho-flex > .sho-papers{ flex:1 1 auto; }
+        .ch173-sho-flex > .sho-cell{ flex:0 0 auto; }
+        .sho-papers{ text-align:right; padding:4px 6px 0 0; }
+        .sho-papers-head{ font-weight:700; text-decoration:underline; white-space:nowrap;
+          font-size:14pt; line-height:1.25; margin:0; }
+        .sho-papers-body{ font-size:14pt; line-height:1.25; text-align:right; white-space:pre-wrap;
+          padding:3px 4px; margin-top:4px; overflow-wrap:break-word; }
+        .sho-cell{ display:flex; flex-direction:column; justify-content:space-between; min-height:42mm; }
+        .sho-block{ align-self:flex-end; }
+        .sho-cell-row{ padding:2px 6px; line-height:1.25; margin:0; min-height:20px;
+          font-size:14pt; text-align:right; white-space:nowrap; }
+        .sho-cell-date{ font-size:14pt; color:#000; text-align:center; }
+        /* یہ خانہ درمیان سے نہ ٹوٹے */
+        .ch173-sho-flex{ page-break-inside:avoid; break-inside:avoid; }
         /* Matn safhe se zyada ho to khud agle safhe (back side) par chala jaye */
         .ch173-cont{ page-break-inside:auto; break-inside:auto; }
 
@@ -1233,27 +1307,210 @@ function _chBtn() {
          'background:var(--bg-card,#fff);color:var(--text-primary,#111);cursor:pointer;' +
          'font-size:13px;padding:0 7px;margin:0 1px;';
 }
+// ═══ فونٹ سائز — MS Word جیسی فہرست (پوائنٹ میں) ═══
+const R173_FONT_SIZES = [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72];
+const R173_FONT_DEFAULT = 14;
+
+// Mehfooz shuda doc font (na ho to default 14pt)
+function _ch173DocFont(bs) {
+  const n = parseFloat((bs && bs.doc_font) || '');
+  return (n && !isNaN(n)) ? n : R173_FONT_DEFAULT;
+}
+
+// Chune hue matn ko <span> mein lapet do (font size aur format painter dono ke liye).
+// execCommand('fontSize') sirf 1–7 leta hai, is liye size=7 laga kar un <font> tags
+// ko foran <span> se badal dete hain — phir un par koi bhi style lagai ja sakti hai.
+function _ch173WrapSelection() {
+  const doc = document.getElementById('ch173-doc');
+  if (!doc) return [];
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed || !sel.rangeCount) return [];
+  if (!doc.contains(sel.anchorNode) || !doc.contains(sel.focusNode)) return [];
+  try { document.execCommand('styleWithCSS', false, false); } catch(_) {}
+  let ok = false;
+  try { ok = document.execCommand('fontSize', false, '7'); } catch(_) {}
+  if (!ok) return [];
+  const spans = [];
+  doc.querySelectorAll('font[size="7"]').forEach(f => {
+    const span = document.createElement('span');
+    while (f.firstChild) span.appendChild(f.firstChild);
+    f.parentNode.replaceChild(span, f);
+    spans.push(span);
+  });
+  return spans;
+}
+
+// Chune hue matn par sahih pt lagao
+function _ch173FontToSelection(pt) {
+  const spans = _ch173WrapSelection();
+  if (!spans.length) return false;
+  spans.forEach(s => { s.style.fontSize = pt + 'pt'; });
+  return true;
+}
+
+// Poore document ka font
+function _ch173FontToDoc(pt) {
+  const doc = document.getElementById('ch173-doc');
+  if (!doc) return;
+  doc.dataset.fs = pt;
+  doc.querySelectorAll('.ch173-table th, .ch173-table td, .rotinner, .hinner, .ch173-cont, .sho-cell-row, .sho-papers-head, .sho-papers-body')
+     .forEach(el => { el.style.fontSize = pt + 'pt'; });
+  const hid = doc.querySelector('[data-k="doc_font"]');
+  if (hid) hid.value = pt;
+  if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
+  if (typeof _ch173Overflow === 'function') _ch173Overflow();
+}
+window._ch173FontToDoc = _ch173FontToDoc;
+
+// Dropdown se font — matn chuna ho to usi par, warna poore doc par
+function _ch173SetFont(val) {
+  const pt = parseFloat(val);
+  if (!pt || isNaN(pt)) return;
+  if (_ch173FontToSelection(pt)) {
+    try { _r173Dirty = true; } catch(_) {}
+    return;
+  }
+  _ch173FontToDoc(pt);
+  try { _r173Dirty = true; } catch(_) {}
+}
+window._ch173SetFont = _ch173SetFont;
+
+// Cursor jahan ho, dropdown wahi size dikhaye (MS Word jaisa)
+function _ch173SyncFontSel() {
+  const doc = document.getElementById('ch173-doc');
+  const selEl = document.getElementById('ch173-font-sel');
+  if (!doc || !selEl) return;
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount || !sel.anchorNode || !doc.contains(sel.anchorNode)) return;
+  let node = sel.anchorNode;
+  if (node.nodeType === 3) node = node.parentElement;
+  if (!node) return;
+  try {
+    const px = parseFloat(getComputedStyle(node).fontSize);
+    if (!px) return;
+    const pt = Math.round(px * 0.75 * 2) / 2;          // px → pt
+    if ([...selEl.options].some(op => parseFloat(op.value) === pt)) selEl.value = String(pt);
+  } catch(_) {}
+}
+window._ch173SyncFontSel = _ch173SyncFontSel;
+
+// ═══ FORMAT PAINTER — MS Word جیسا ═══
+// ایک کلک  = ایک بار لگے گا، پھر خود بند
+// ڈبل کلک = بند کرنے تک بار بار لگتا رہے گا (Esc یا دوبارہ کلک سے بند)
+let _ch173Brush = null;      // mehfooz formatting
+let _ch173BrushMode = null;  // 'once' | 'sticky' | null
+
+// Cursor jahan hai wahan ki formatting naqal karo
+function _ch173BrushCopy() {
+  const doc = document.getElementById('ch173-doc');
+  if (!doc) return null;
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount || !sel.anchorNode || !doc.contains(sel.anchorNode)) return null;
+  let node = sel.anchorNode;
+  if (node.nodeType === 3) node = node.parentElement;
+  if (!node) return null;
+  let cs;
+  try { cs = getComputedStyle(node); } catch(_) { return null; }
+  // bold/italic/underline queryCommandState se — yeh ancestors ka bhi sahih batata hai
+  const st = (c) => { try { return document.queryCommandState(c); } catch(_) { return false; } };
+  const px = parseFloat(cs.fontSize) || 0;
+  return {
+    fontSize: px ? (Math.round(px * 0.75 * 2) / 2) + 'pt' : '',
+    fontFamily: cs.fontFamily || '',
+    color: cs.color || '',
+    fontWeight: st('bold') ? 'bold' : 'normal',
+    fontStyle: st('italic') ? 'italic' : 'normal',
+    textDecoration: st('underline') ? 'underline' : 'none'
+  };
+}
+
+// Naqal ki hui formatting chune hue matn par lagao
+function _ch173BrushPaint() {
+  if (!_ch173Brush) return false;
+  const spans = _ch173WrapSelection();
+  if (!spans.length) return false;
+  spans.forEach(s => {
+    Object.keys(_ch173Brush).forEach(k => {
+      if (_ch173Brush[k]) s.style[k] = _ch173Brush[k];
+    });
+  });
+  try { _r173Dirty = true; } catch(_) {}
+  return true;
+}
+
+// Button ki halat (on/off) dikhao
+function _ch173BrushUI() {
+  const btn = document.getElementById('ch173-brush-btn');
+  const doc = document.getElementById('ch173-doc');
+  const on = !!_ch173BrushMode;
+  if (btn) {
+    btn.style.background = on ? '#0369a1' : 'var(--bg-card,#fff)';
+    btn.style.color = on ? '#fff' : 'var(--text-primary,#111)';
+    btn.title = on
+      ? (_ch173BrushMode === 'sticky' ? 'فارمیٹ پینٹر چالو (بار بار) — بند کرنے کے لیے کلک یا Esc' : 'فارمیٹ پینٹر چالو — اب متن منتخب کریں')
+      : 'فارمیٹ پینٹر — ایک کلک: ایک بار، ڈبل کلک: بار بار';
+  }
+  if (doc) doc.style.cursor = on ? 'copy' : '';
+}
+
+function _ch173BrushOff() {
+  _ch173Brush = null;
+  _ch173BrushMode = null;
+  _ch173BrushUI();
+}
+window._ch173BrushOff = _ch173BrushOff;
+
+// Button par click / double click
+function _ch173BrushClick(sticky) {
+  if (_ch173BrushMode && !sticky) { _ch173BrushOff(); return; }   // dobara click = band
+  const b = _ch173BrushCopy();
+  if (!b) {
+    if (typeof showToast === 'function') showToast('ℹ️ پہلے اُس متن پر کلک کریں جس کی فارمیٹنگ نقل کرنی ہے', 'info');
+    return;
+  }
+  _ch173Brush = b;
+  _ch173BrushMode = sticky ? 'sticky' : 'once';
+  _ch173BrushUI();
+}
+window._ch173BrushClick = _ch173BrushClick;
+
+// Document par matn chunte hi formatting lag jaye
+function _ch173BindBrush() {
+  const doc = document.getElementById('ch173-doc');
+  if (!doc || doc._brushBound) return;
+  doc._brushBound = true;
+  doc.addEventListener('mouseup', () => {
+    if (!_ch173BrushMode) return;
+    setTimeout(() => {
+      if (!_ch173BrushMode) return;
+      const done = _ch173BrushPaint();
+      if (done && _ch173BrushMode === 'once') _ch173BrushOff();
+    }, 10);
+  });
+  if (!window._ch173BrushEscBound) {
+    window._ch173BrushEscBound = true;
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && _ch173BrushMode) _ch173BrushOff();
+    });
+  }
+}
+window._ch173BindBrush = _ch173BindBrush;
+
 function _ch173Fmt(cmd) {
   try { document.execCommand(cmd, false, null); } catch(_) {}
 }
-// Font chhota/bara — chune hue matn par, warna poore doc par
+// Purana naam bhi chalta rahe (kahin aur se pukara ja raha ho to)
 function _ch173FontStep(dir) {
   const doc = document.getElementById('ch173-doc');
   if (!doc) return;
-  const sel = window.getSelection();
-  if (sel && !sel.isCollapsed) {
-    try {
-      document.execCommand('fontSize', false, dir > 0 ? '5' : '2');
-      return;
-    } catch(_) {}
-  }
-  // Poore table ka font
-  const cur = parseFloat(doc.dataset.fs || '14');
-  const nf = Math.min(28, Math.max(8, cur + (dir > 0 ? 1 : -1)));
-  doc.dataset.fs = nf;
-  doc.querySelectorAll('.ch173-table th, .ch173-table td, .rotinner, .hinner, .ch173-cont')
-     .forEach(el => { el.style.fontSize = nf + 'pt'; });
-  if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
+  const cur = parseFloat(doc.dataset.fs || String(R173_FONT_DEFAULT));
+  const i = R173_FONT_SIZES.indexOf(cur);
+  let next;
+  if (i >= 0) next = R173_FONT_SIZES[Math.min(R173_FONT_SIZES.length - 1, Math.max(0, i + (dir > 0 ? 1 : -1)))];
+  else next = Math.min(72, Math.max(8, cur + (dir > 0 ? 1 : -1)));
+  _ch173SetFont(next);
+  const selEl = document.getElementById('ch173-font-sel');
+  if (selEl) selEl.value = String(next);
 }
 window._chBtn = _chBtn;
 window._ch173Fmt = _ch173Fmt;
@@ -1268,6 +1525,40 @@ function _ch173ShoLine(o) {
   return '';
 }
 window._ch173ShoLine = _ch173ShoLine;
+
+// ═══ جرم — دفعات اور "ت پ" الگ الگ ═══
+// "ت پ" (تعزیراتِ پاکستان) ہمیشہ دفعات کے بعد، آخر میں آنا چاہیے۔ اگر دونوں ایک ہی
+// خانے میں ہوں تو RTL/LTR ملی جلی تحریر کی وجہ سے اس کی جگہ بدل سکتی ہے، اس لیے
+// اسے الگ خانے میں رکھا جاتا ہے — تب ترتیب ہمیشہ پکی رہتی ہے۔
+const R173_JURM_SUF_RE = /[\s،,\-]*(ت\s*\.?\s*پ|تعزیرات\s*پاکستان)\s*$/;
+
+function _ch173JurmParts(raw, savedSuf) {
+  const txt = String(raw || '').trim();
+  const m = txt.match(R173_JURM_SUF_RE);
+  const body = m ? txt.slice(0, m.index).trim() : txt;
+  let suffix;
+  if (savedSuf !== undefined && savedSuf !== null) suffix = String(savedSuf);
+  else if (m) suffix = m[1].replace(/\s+/g, ' ').trim();
+  else suffix = 'ت پ';
+  return { body, suffix };
+}
+window._ch173JurmParts = _ch173JurmParts;
+
+// ═══ آج کی تاریخ — ہمیشہ DD/MM/YYYY (عالمی formatDate پہلے، ورنہ خود) ═══
+function _ch173Today() {
+  const d = new Date();
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const manual = dd + '/' + mm + '/' + d.getFullYear();
+  if (typeof formatDate === 'function') {
+    try {
+      const f = formatDate(d);
+      if (f && /^\d{2}\/\d{2}\/\d{4}$/.test(String(f).trim())) return String(f).trim();
+    } catch(_) {}
+  }
+  return manual;
+}
+window._ch173Today = _ch173Today;
 
 // ═══ تاریخ — system POOCHTA hai, khud nahi likhta ═══
 function _ch173PickDate(el) {
@@ -1294,21 +1585,13 @@ window._ch173HasCross = _ch173HasCross;
 
 // ═══════════════════════════════════════════════════════════════════
 //  چالان کی فہرست — save karne ke baad yeh khulti hai
-//  (ضمنیات جیسی table: چالان | ہیڈ | تاریخ | مضمون | ایکشن)
+//  (ضمنیات جیسی table: # | چالان | ہیڈ | تاریخ | مضمون | ایکشن)
 // ═══════════════════════════════════════════════════════════════════
-
-// Mehfooz چالان ki fehrist banao (_r173Records se)
-
-// ═══ رپورٹ 173 کا صفحہ — دو حصے (چالان  اور  عدم پتہ/اخراج) ═══
 function _renderR173List() {
   const area = document.getElementById('workspace-editor-area')
             || document.getElementById('workspace-tab-content')
             || document.getElementById('page-content');
   if (!area) return;
-
-  const IKHRAJ = ['ikhraj', 'adampata'];
-  const chalans = _r173Docs.filter(d => !IKHRAJ.includes(d.type));
-  const ikhraj  = _r173Docs.filter(d =>  IKHRAJ.includes(d.type));
 
   const typeName = (t) => (R173_TYPES.find(x => x.id === t) || {}).name || t;
   const mazmoon  = (d) => {
@@ -1334,20 +1617,6 @@ function _renderR173List() {
       </td>
     </tr>`).join('');
 
-  const section = (title, addLabel, addFn, printFn, list, col1) => `
-    <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap;">
-      <button class="btn btn-primary btn-sm" onclick="${addFn}">${addLabel}</button>
-      ${title ? `<div style="flex:1;text-align:center;font-weight:700;font-size:14px;min-width:180px;">${title}</div>` : '<div style="flex:1;"></div>'}
-      <button class="btn btn-secondary btn-sm" onclick="${printFn}">تمام پرنٹ کریں</button>
-    </div>
-    <table class="ct">
-      <thead><tr>
-        <th class="num">#</th><th>${col1}</th><th>ہیڈ</th><th>تاریخ</th><th>مضمون</th><th class="act">ایکشن</th>
-      </tr></thead>
-      <tbody>${list.length ? rows(list)
-        : `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:22px;">ابھی کوئی اندراج نہیں</td></tr>`}</tbody>
-    </table>`;
-
   area.innerHTML = `
   <style>
     .ct{ width:100%; border-collapse:collapse; font-size:13px; direction:rtl;
@@ -1365,39 +1634,33 @@ function _renderR173List() {
     .cab:hover{ background:var(--hover-bg); }
   </style>
   <div style="padding:14px;direction:rtl;height:100%;overflow-y:auto;">
-    ${section('', 'چالان درج کریں', '_r173NewDoc(false)', '_printAllR173(false)', _r173Docs, 'چالان')}
+    <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap;">
+      <button class="btn btn-primary btn-sm" onclick="_r173NewDoc(false)">چالان درج کریں</button>
+      <div style="flex:1;"></div>
+      <button class="btn btn-secondary btn-sm" onclick="_printAllR173(false)">تمام پرنٹ کریں</button>
+    </div>
+    <table class="ct">
+      <thead><tr>
+        <th class="num">#</th><th>چالان</th><th>ہیڈ</th><th>تاریخ</th><th>مضمون</th><th class="act">ایکشن</th>
+      </tr></thead>
+      <tbody>${_r173Docs.length ? rows(_r173Docs)
+        : `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:22px;">ابھی کوئی اندراج نہیں</td></tr>`}</tbody>
+    </table>
   </div>`;
 }
 window._renderR173List = _renderR173List;
 
-// Naya چالان — form kholo
-
-// Fehrist se hatao
-
-// Print — pehle kholo phir chhapo
-
-// Bhejna
-
-// Tamam چالان print
-
 // ═══ Version (FIR / کراس ورژن) + چالان ki qism — dono aik saath ═══
-// Sirf usi version ka data چالان mein aayega.
 async function _r173PickVer(version, type) {
   _ch173Version = (version === 'cross_version') ? 'cross_version' : 'fir';
   if (typeof openReport173WithType === 'function') await openReport173WithType(type);
 }
 window._r173PickVer = _r173PickVer;
 
-// ═══════════════════════════════════════════════════════════════════
-//  رپورٹ 173 — فہرست کے ایکشن (نیا / ترمیم / حذف / پرنٹ / بھیجیں)
-// ═══════════════════════════════════════════════════════════════════
-
-// ➕ نیا چالان یا عدم پتہ/اخراج رپورٹ — پہلے ہیڈ چنیں
+// ➕ نیا چالان — پہلے قسم/ہیڈ/ورژن چنیں
 function _r173NewDoc(isIkhraj) {
   const heads = R173_HEADS.concat(R173_IKHRAJ_HEADS);
-  // Tamam qismein aik hi fehrist mein (چالان + اخراج/عدم پتہ)
   const types = R173_TYPES;
-
   const body = `
     <div style="direction:rtl;">
       <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">قسم</label>
