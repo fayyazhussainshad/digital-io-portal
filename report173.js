@@ -253,9 +253,9 @@ function _renderR173() {
          matn andar <div> wrapper mein rakh kar us par lagate hain. */
       #ch173-doc .ch173-table td{ font-size:14pt; vertical-align:top; line-height:1.15; }
       /* Khane KHUD nahi phailte — sirf haath se (drag) resize hote hain */
-      /* Unchai KAM AZ KAM — matn zyada ho to khana khud barhta hai
-         (pehle yeh hadd thi, is liye matn chhup jata tha) */
-      #ch173-doc .ch173-table tbody td{ height:${_ch173Paper==='a4'?'150mm':'185mm'};
+      /* USOOL: khana utna hi khule jitna data ho — koi khali jagah nahi.
+         Lambai SAB SE LAMBE naam (columns 1–6) se tay hoti hai. */
+      #ch173-doc .ch173-table tbody td{ height:auto; min-height:40mm;
         padding:0; overflow:visible; position:relative; vertical-align:top; }
       /* ASCENDING (neeche se ooper) — writing-mode Chrome mein na-qabil-e-aitbaar
          hai, is liye seedha ghumao (rotate) use karte hain. Khana relative,
@@ -267,11 +267,10 @@ function _renderR173() {
       /* Khadi likhayi — SIRF CSS (koi JS naap nahi), is liye print par bhi
          khud theek rehti hai. writing-mode se matn khada, rotate(180) se
          NEECHE se OOPER (Ascending). */
-      #ch173-doc .cellbox{ position:relative; width:100%; height:100%; overflow:hidden; }
+      #ch173-doc .cellbox{ position:relative; width:100%; }
       /* Khadi likhayi ka block khane ke BEECH mein (pehle dayen kinare se
          chipka hua tha). rotclip ko flex bana kar beech mein rakhte hain. */
-      #ch173-doc .rotclip{ position:absolute; inset:0; overflow:hidden;
-        display:flex; justify-content:center; align-items:stretch; }
+      #ch173-doc .rotclip{ display:flex; justify-content:center; }
       /* Table ke neeche koi lakeer nahi (magar wahan se unchai badalti hai) */
       #ch173-doc .ch173-table, #ch173-doc .ch173-table tbody,
       #ch173-doc .ch173-table tbody tr, #ch173-doc .ch173-table tbody td{
@@ -351,14 +350,18 @@ function _renderR173() {
         background:#eef6ff; color:#0369a1; cursor:pointer; font-size:12px;
       }
       /* Column 7 — normal RTL (khadi nahi) */
-      #ch173-doc .ch173-table td.normcell{ padding:0; vertical-align:top; position:relative; }
+      /* USOOL: column 7 table ki lambai NAHI barhata — jo matn na samaye
+         woh khud table ke neeche wale khane mein chala jata hai */
+      #ch173-doc .ch173-table td.normcell{ padding:0; vertical-align:top; position:relative;
+        overflow:hidden; }
       #ch173-doc .normwrap{
-        width:100%; min-height:100%; padding:5px; box-sizing:border-box;
+        position:absolute; inset:0;   /* khane ke barabar — table lambi nahi karta */
+        padding:5px; box-sizing:border-box;
         font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
         direction:rtl; text-align:justify; text-align-last:right;
         outline:none; line-height:1.15; font-size:14pt;
         overflow-wrap:break-word; word-wrap:break-word;
-        overflow:visible;  /* matn kabhi chhupega nahi — khana khud barhega */
+        overflow:hidden;   /* jo na samaye woh neeche wale khane mein jayega */
       }
       /* Har paragraph ki aakhri line bhi dayen (beech mein nahi) */
       #ch173-doc .normwrap p, #ch173-doc .normwrap div{ text-align:justify; text-align-last:right; }
@@ -379,7 +382,7 @@ function _renderR173() {
       }
       #ch173-doc .ch173-cont:empty{ min-height:0; padding:0 !important; }
       #ch173-doc .rotinner{
-        width:auto; max-width:100%; height:100%; box-sizing:border-box; padding:4px 6px;
+        width:auto; max-width:100%; min-height:40mm; box-sizing:border-box; padding:4px 6px;
         writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
         direction:rtl; text-align:start; outline:none; unicode-bidi:plaintext;
         line-height:1.2; overflow-wrap:break-word; white-space:pre-wrap;
@@ -417,9 +420,9 @@ function _renderR173() {
       #ch173-doc .ch173-table tbody tr > td:nth-last-child(1){ border-left:0 !important; }
       /* Row 2 ki bayen aakhri line hataayi */
       #ch173-doc .ch173-table thead tr:nth-child(2) th:last-child{ border-left:none; }
-      /* Neeche wali lakeer nazar NAHI aati, lekin wahan se unchai badal sakte
-         hain (MS Word jaisa) — grip hover par halka nishan dikhata hai */
-      #ch173-doc .ch173-table tbody td{ border-bottom:0 !important; }
+      /* USOOL: columns 1–6 neeche se BAND (lakeer), column 7 khula */
+      #ch173-doc .ch173-table tbody td{ border-bottom:1px solid #000 !important; }
+      #ch173-doc .ch173-table tbody td.normcell{ border-bottom:0 !important; }
 
       /* MS Word jaisi column resize — header par drag handle */
       #ch173-doc .colgrip{
@@ -438,9 +441,8 @@ function _renderR173() {
         .no-print,.doc-toolbar,.editor-toolbar,button,select{ display:none !important; }
         .ch173-table tbody td{ border-bottom:0 !important; }
         .rotcell{ position:relative; padding:0; overflow:hidden; }
-        .cellbox{ position:relative; width:100%; height:100%; overflow:hidden; }
-        .rotclip{ position:absolute; inset:0; overflow:hidden;
-          display:flex; justify-content:center; align-items:stretch; }
+        .cellbox{ position:relative; width:100%; }
+        .rotclip{ display:flex; justify-content:center; }
         .ch173-table, .ch173-table tbody, .ch173-table tbody tr,
         .ch173-table tbody td, .ch173-table tbody th,
         .ch173-table tr:last-child td, .ch173-table tr:last-child th{
@@ -457,14 +459,14 @@ function _renderR173() {
         .ch173-cont{ page-break-inside:auto; break-inside:auto; }
         .acc-pick{ display:none !important; }
         .ch173-table td.normcell{ padding:0; vertical-align:top; position:relative; }
-        .normwrap{ width:100%; min-height:100%; padding:5px; box-sizing:border-box;
+        .normwrap{ position:absolute; inset:0; padding:5px; box-sizing:border-box;
           font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
           direction:rtl; text-align:justify; line-height:1.15; overflow-wrap:break-word; }
         .ch173-cont{ margin:0 !important; border:none !important; padding:0 5px !important;
           min-height:0; direction:rtl; text-align:justify; text-align-last:right;
           font-size:14pt; line-height:1.15; overflow-wrap:break-word; white-space:pre-wrap; }
         .ch173-cont:empty{ display:none; }
-        .rotinner{ width:auto; max-width:100%; height:100%; box-sizing:border-box; padding:4px;
+        .rotinner{ width:auto; max-width:100%; min-height:40mm; box-sizing:border-box; padding:4px 6px;
           writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
           direction:rtl; text-align:start; line-height:1.2; unicode-bidi:plaintext;
           overflow-wrap:break-word; white-space:pre-wrap; overflow:hidden; font-size:14pt; }
@@ -616,6 +618,8 @@ function _renderR173() {
       _ch173MakeResizable();
       _ch173SizeRotated();
       _ch173BindKeys();
+      _ch173BindOverflow();
+      _ch173Overflow();
       window.addEventListener('resize', _ch173SizeRotated);
       // Mehfooz shuda row height wapas lagao
       try {
@@ -978,17 +982,16 @@ function _printR173() {
         th.vcell{ vertical-align:middle; padding:0; text-align:center; height:150px; }
 
         /* Khadi likhayi — SCREEN jaisa hi (cellbox + rotinner) */
-        .cellbox{ position:relative; width:100%; height:100%; overflow:hidden; }
-        .rotclip{ position:absolute; inset:0; overflow:hidden;
-          display:flex; justify-content:center; align-items:stretch; }
-        .rotinner{ width:auto; max-width:100%; height:100%; box-sizing:border-box; padding:4px;
+        .cellbox{ position:relative; width:100%; }
+        .rotclip{ display:flex; justify-content:center; }
+        .rotinner{ width:auto; max-width:100%; min-height:40mm; box-sizing:border-box; padding:4px 6px;
           writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
           direction:rtl; text-align:start; line-height:1.2; unicode-bidi:plaintext;
           overflow-wrap:break-word; white-space:pre-wrap; overflow:hidden; font-size:14pt; }
         .rothead{ text-align:center !important; }
         /* Column 7 — poora justified, aakhri line dayen (beech mein nahi) */
         .ch173-table td.normcell{ padding:0; vertical-align:top; position:relative; }
-        .normwrap{ width:100%; min-height:100%; padding:5px; box-sizing:border-box;
+        .normwrap{ position:absolute; inset:0; padding:5px; box-sizing:border-box;
           font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
           direction:rtl; text-align:justify; text-align-last:right; line-height:1.15;
           font-size:14pt; overflow-wrap:break-word; word-wrap:break-word; }
@@ -1044,25 +1047,28 @@ function _printR173() {
         .ch173-table tbody tr > td:last-child{ border-left:0 !important; }
 
         /* ═══ NEECHE wali lakeer — har haal mein KHATAM ═══ */
-        .ch173-table, .ch173-table tbody, .ch173-table tbody tr,
-        .ch173-table tbody td, .ch173-table tr:last-child td{
+        /* Sirf column 7 ke neeche lakeer nahi — baqi columns band */
+        .ch173-table tbody td.normcell{
           border-bottom:0 !important; border-bottom-width:0 !important;
-          border-bottom-style:none !important; border-bottom-color:transparent !important;
+          border-bottom-style:none !important;
         }
 
         /* ═══ TABLE SIRF PEHLE SAFHE PAR ═══
            Pehle table agle safhe par bhi chhap jati thi (header dohra kar).
            Do wajahein: (1) browser <thead> ko har safhe par dohrata hai,
            (2) table beech se tootti thi. Ab dono band. */
-        /* Header har safhe par na dohraye (yeh browser ka default rawaiya hai) */
+        /* Header har safhe par na dohraye */
         .ch173-table thead{ display:table-row-group !important; }
+        /* USOOL: table AGLE SAFHE par na jaye — poori aik safhe par rahe */
+        .ch173-table{ page-break-inside:avoid; break-inside:avoid; }
         /* Khane ki unchai itni ke unwan + table SAB aik hi safhe par sama jaye
            (A4 aur لیگل ke liye alag) */
-        /* Unchai KAM AZ KAM — matn zyada ho to safha khud barhta hai */
-        .ch173-table tbody td{
-          height:${_ch173Paper === 'a4' ? '150mm' : '185mm'};
-          overflow:visible !important; vertical-align:top;
-        }
+        /* Lambai columns 1–6 se tay — column 7 use barhata nahi */
+        .ch173-table tbody td{ height:auto; min-height:40mm; vertical-align:top; }
+        /* Columns 1–6 neeche se BAND, column 7 khula */
+        .ch173-table tbody td{ border-bottom:1px solid #000 !important; }
+        .ch173-table tbody td.normcell{ border-bottom:0 !important;
+          overflow:hidden; position:relative; }
         /* Khali izafi khane fazool safhe na banayen */
         .ch173-cont:empty{ display:none !important; }
         .sho-papers-body:empty{ min-height:0 !important; }
@@ -1322,10 +1328,22 @@ function _ch173BindOverflow() {
   // hota hai aur cursor shuru mein chala jata hai. Sirf paste aur blur par.
   // SIRF paste par — blur par chalane se innerText formatting (bold/italic/
   // underline) mita deta tha. Ab likhi hui formatting mehfooz rehti hai.
-  // NOTE: ab khana matn ke saath KHUD barhta hai, is liye matn ko zabardasti
-  // neeche bhejne ki zaroorat nahi. (Woh kaam matn ko hilata tha aur kabhi
-  // formatting bigaar deta tha.) Neeche wala khana ab sirf HAATH se likhne
-  // ke liye hai — jo officer khud chahe wahan likhe.
+  // USOOL: column 7 ka jo matn khane mein na samaye woh KHUD table ke
+  // neeche wale khane mein chala jaye (aur jagah bane to wapas aa jaye).
+  const run = () => {
+    if (!cell) return;
+    if (cell.scrollHeight <= cell.clientHeight + 1) { _ch173Overflow(); return; }
+    let inCell = false;
+    try {
+      const sel = window.getSelection();
+      inCell = sel && sel.rangeCount && cell.contains(sel.anchorNode);
+    } catch (_) {}
+    _ch173Overflow();
+    if (inCell) _ch173CaretEnd(cell);
+  };
+  let _t = null;
+  cell.addEventListener('input', () => { clearTimeout(_t); _t = setTimeout(run, 350); });
+  cell.addEventListener('paste', () => setTimeout(run, 150));
 }
 window._ch173BindOverflow = _ch173BindOverflow;
 
@@ -1355,7 +1373,7 @@ async function _ch173LoadPeople() {
   if (!cid) { _ch173Accused = []; _ch173Witnesses = []; return; }
   try {
     const { data: acc } = await supabaseClient.from('case_accused')
-      .select('id,name,accused_type').eq('case_id', cid).order('created_at', { ascending: true });
+      .select('id,name,cnic,accused_type').eq('case_id', cid).order('created_at', { ascending: true });
     _ch173Accused = acc || [];
   } catch(_) { _ch173Accused = []; }
   try {
@@ -1455,7 +1473,14 @@ function _ch173AccPicker(ev, key) {
   box.querySelector('#ch173-acc-x').onclick = () => box.remove();
   box.querySelector('#ch173-acc-ok').onclick = () => {
     const picked = [...box.querySelectorAll('input:checked')].map(i => i.value);
-    if (cell) cell.innerText = picked.join('\n');
+    // Har naam ke neeche uska CNIC (na ho to default khaka)
+    if (cell) {
+      cell.innerText = picked.map(nm => {
+        const a = (_ch173Accused || []).find(x => (x.name || '').trim() === nm);
+        const c = (a && a.cnic && String(a.cnic).trim()) ? String(a.cnic).trim() : '00000-0000000-0';
+        return nm + '\n' + c;
+      }).join('\n');
+    }
     box.remove();
     if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
     try { _r173Dirty = true; } catch(_) {}

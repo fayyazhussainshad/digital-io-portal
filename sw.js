@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v273
+   DIGITAL IO — SERVICE WORKER v274
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v273';
+const CACHE_NAME = 'digital-io-v274';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
