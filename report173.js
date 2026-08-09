@@ -320,6 +320,11 @@ function _renderR173() {
       #ch173-doc .sho-cell-date{ font-weight:normal; }
       #ch173-doc .sho-cell-date{ font-size:14pt; color:#333; cursor:pointer; text-align:center; }
       #ch173-doc .sho-cell-date:empty::before{ content:'تاریخ…'; color:#aaa; }
+      /* SHO ka naam set na ho to saaf hidayat (اوزار → SHO se set karein) */
+      #ch173-doc .sho-cell-row:empty::before{
+        content:'⚠ اوزار → SHO سے نام درج کریں'; color:#c00; font-size:11pt; font-weight:normal;
+      }
+      @media print{ #ch173-doc .sho-cell-row:empty::before{ content:''; } }
       @media print{
         #ch173-doc .sho-papers-body{ outline:none !important; }
         #ch173-doc .sho-papers-body:empty::before{ content:''; }
@@ -496,8 +501,8 @@ function _renderR173() {
         </div>
       </div>
       <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
-        <div id="ch173-doc" style="width:100%;max-width:none;min-height:14in;margin:0 auto;
-             padding:calc(0.25in + 0.5cm) calc(0.25in + 0.5cm) 0.25in calc(0.25in + 0.5cm);
+        <div id="ch173-doc" style="width:100%;max-width:none;min-height:11.7in;margin:0 auto;
+             padding:1cm;
              background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;
              line-height:1.4;box-sizing:border-box;">
 
@@ -908,8 +913,14 @@ function _printR173() {
         /* ═══ PRINT CSS — SCREEN ke bilkul mutabiq (koi purani class nahi) ═══ */
         /* Pehla safha: kinare kam. Agle safhon par BAYEN taraf punch ki jagah
            taake sooraakh karne se alfaz na katen aur jild mein na chhupein. */
-        @page{ size:legal portrait; margin:1.2cm calc(0.25in + 0.5cm) 0.25in 1.8cm; }
-        @page :first{ margin:calc(0.25in + 0.5cm) calc(0.25in + 0.5cm) 0.25in calc(0.25in + 0.5cm); }
+        /* A4 — kyunki print isi kaghaz par hota hai. Pehle 'legal' likha
+           tha, jis se browser safhe ko sikor kar deta tha aur margins
+           bade/ghair-barabar ho jate the. */
+        @page{ size:A4 portrait; margin:1cm; }
+        /* Agle safhon par BAYEN taraf punch ki jagah */
+        @page :left  { margin:1cm 1cm 1cm 1.8cm; }
+        @page :right { margin:1cm 1cm 1cm 1.8cm; }
+        @page :first { margin:1cm; }
         body{ font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl;
               line-height:1.4; color:#000; margin:0; }
 
@@ -1012,9 +1023,12 @@ function _printR173() {
         .colgrip,.rowgrip,.acc-pick,.no-print,button,select{ display:none !important; }
         /* Print: poori chaudai istemal karo — koi fixed inch nahi, warna
            browser safha sikor kar dono taraf bari khali jagah chhor deta hai */
+        /* Safhe ka margin @page se aata hai — doc ka apna padding SIFAR,
+           warna margin dohra ho jata hai (isi liye kinare bade lagte the) */
         #ch173-doc{ width:100% !important; max-width:none !important;
           min-height:auto !important; padding:0 !important; margin:0 !important;
           box-shadow:none !important; border-radius:0 !important; }
+        html, body{ margin:0 !important; padding:0 !important; }
         .dio-print-brand{ position:fixed; bottom:3mm; left:4mm; font-size:9px; color:#999; direction:ltr; }
       </style></head><body>${chDoc.innerHTML}<div class="dio-print-brand">Digital IO</div></body></html>`;
     // Print se pehle rotated khanon ki naap inline kar do (print iframe mein JS nahi chalta)
@@ -1198,32 +1212,38 @@ function _ch173Overflow() {
   const cont = document.querySelector('#ch173-doc [data-k="cont_text"]');
   if (!cell || !cont) return;
 
-  // (a) Agar khane mein jagah bach gayi ho to neeche se matn WAPAS uthao
+  const full = () => cell.scrollHeight > cell.clientHeight + 1;
   let guard = 0;
-  while (cont.innerText.trim() && cell.scrollHeight <= cell.clientHeight && guard++ < 3000) {
-    const ct = cont.innerText;
-    const m = ct.match(/^\s*(\S+)([\s\S]*)$/);
-    if (!m) break;
-    const prev = cell.innerText;
-    cell.innerText = (prev ? prev + ' ' : '') + m[1];
-    if (cell.scrollHeight > cell.clientHeight) {      // ab na samaya → wapas
-      cell.innerText = prev;
-      break;
+
+  // ── (a) Jo matn khane mein na samaye woh NEECHE bhejo ──────────────
+  // AHEM: yahan matn dobara nahi likhte (innerText se bold/italic mit
+  // jata tha aur kabhi matn bhi zaya ho jata tha). Ab asal DOM node ko
+  // uthakar neeche wale khane mein rakhte hain — formatting mehfooz.
+  while (full() && guard++ < 4000) {
+    const last = cell.lastChild;
+    if (!last) break;
+    if (last.nodeType === 3) {                       // saada matn — aakhri lafz
+      const t = last.nodeValue;
+      const k = t.replace(/\s+$/, '').lastIndexOf(' ');
+      if (k > 0) {
+        const moved = t.slice(k);
+        last.nodeValue = t.slice(0, k);
+        cont.insertBefore(document.createTextNode(moved), cont.firstChild);
+        continue;
+      }
     }
-    cont.innerText = (m[2] || '').replace(/^\s+/, '');
+    cont.insertBefore(last, cont.firstChild);        // poora element utha lo
   }
 
-  // (b) Jo matn khane mein na samaye woh NEECHE bhejo
+  // ── (b) Jagah bach jaye to neeche se WAPAS uthao ──────────────────
   guard = 0;
-  while (cell.scrollHeight > cell.clientHeight + 1 && guard++ < 6000) {
-    const t = cell.innerText;
-    const i = t.replace(/\s+$/, '').lastIndexOf(' ');
-    if (i <= 0) break;
-    const moved = t.slice(i + 1).trim();
-    cell.innerText = t.slice(0, i);
-    cont.innerText = moved + (cont.innerText ? ' ' + cont.innerText : '');
+  while (!full() && cont.firstChild && guard++ < 4000) {
+    const first = cont.firstChild;
+    cell.appendChild(first);
+    if (full()) { cont.insertBefore(first, cont.firstChild); break; }  // na samaya → wapas
   }
 }
+
 function _ch173OverflowSoon() {
   clearTimeout(_ch173OverflowTimer);
   _ch173OverflowTimer = setTimeout(_ch173Overflow, 250);
@@ -1254,10 +1274,20 @@ function _ch173BindOverflow() {
   // hota hai aur cursor shuru mein chala jata hai. Sirf paste aur blur par.
   // SIRF paste par — blur par chalane se innerText formatting (bold/italic/
   // underline) mita deta tha. Ab likhi hui formatting mehfooz rehti hai.
-  cell.addEventListener('paste', () => setTimeout(() => {
-    // Sirf jab khana waqai bhar chuka ho
-    if (cell.scrollHeight > cell.clientHeight + 2) _ch173Overflow();
-  }, 120));
+  const run = () => {
+    if (cell.scrollHeight <= cell.clientHeight + 1) return;
+    // Cursor kahan hai yaad rakho
+    let atEnd = false;
+    try {
+      const sel = window.getSelection();
+      atEnd = sel && sel.rangeCount && cell.contains(sel.anchorNode);
+    } catch (_) {}
+    _ch173Overflow();
+    if (atEnd) _ch173CaretEnd(cell);
+  };
+  let _t = null;
+  cell.addEventListener('input', () => { clearTimeout(_t); _t = setTimeout(run, 350); });
+  cell.addEventListener('paste', () => setTimeout(run, 150));
 }
 window._ch173BindOverflow = _ch173BindOverflow;
 
