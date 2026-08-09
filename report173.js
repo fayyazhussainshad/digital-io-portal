@@ -317,6 +317,8 @@ function _renderR173() {
       }
       /* align-self:flex-end → RTL میں بائیں کنارے پر (جیسے اصل فارم میں) */
       #ch173-doc .sho-block{ align-self:flex-end; }
+      /* SHO ki line ko aik satar neeche laane wali khali jagah */
+      #ch173-doc .sho-spacer{ height:1.6em; }
       #ch173-doc .sho-cell-row{
         outline:1px dashed rgba(120,120,120,0.35); padding:3px 6px; line-height:1.25;
         min-height:20px; margin:0; font-size:14pt; text-align:right; white-space:nowrap;
@@ -351,6 +353,7 @@ function _renderR173() {
       #ch173-doc .normwrap{
         position:absolute; inset:0;      /* khane ke barabar — unchai pukhta */
         padding:5px; box-sizing:border-box;
+        font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
         direction:rtl; text-align:justify; text-align-last:right;
         outline:none; line-height:1.15; font-size:14pt;
         overflow-wrap:break-word; word-wrap:break-word;
@@ -358,6 +361,8 @@ function _renderR173() {
       }
       /* Har paragraph ki aakhri line bhi dayen (beech mein nahi) */
       #ch173-doc .normwrap p, #ch173-doc .normwrap div{ text-align:justify; text-align-last:right; }
+      /* Paste kiya hua matn apna font saath na laye */
+      #ch173-doc .normwrap *{ font-family:inherit !important; }
       #ch173-doc .ch173-cont:empty::before{
         content:'تسلسل — جو تحریر اوپر خانوں میں نہ سما سکے وہ یہاں لکھیں';
         color:#aaa; font-size:12pt;
@@ -450,6 +455,7 @@ function _renderR173() {
         .acc-pick{ display:none !important; }
         .ch173-table td.normcell{ padding:0; vertical-align:top; position:relative; }
         .normwrap{ position:absolute; inset:0; padding:5px; box-sizing:border-box;
+          font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
           direction:rtl; text-align:justify; line-height:1.15; overflow-wrap:break-word; }
         .ch173-cont{ margin:0 !important; border:none !important; padding:0 5px !important;
           min-height:0; direction:rtl; text-align:justify; text-align-last:right;
@@ -580,6 +586,9 @@ function _renderR173() {
             </div>
             <div class="sho-col sho-cell">
               <div class="sho-block">
+                <!-- خالی سطر — SHO کی لائن "تفصیل کاغذات" کے برابر نہ آئے،
+                     بلکہ ایک سطر نیچے (جہاں پہلے تاریخ تھی) اور تاریخ اُس کے نیچے -->
+                <div class="sho-spacer"></div>
                 <div class="sho-cell-row" contenteditable="true" data-k="sho_line2">${bs.sho_line2 !== undefined ? sanitizeHtml(bs.sho_line2) : (bs.sho_line !== undefined ? sanitizeHtml(bs.sho_line) : esc(_ch173ShoLine(o)))}</div>
                 <div class="sho-cell-row sho-cell-date" contenteditable="true" data-k="sho_date2"
                      onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bs.sho_date2 !== undefined ? sanitizeHtml(bs.sho_date2) : (bs.sho_date !== undefined ? sanitizeHtml(bs.sho_date) : esc(_ch173Today()))}</div>
@@ -933,11 +942,8 @@ function _printR173() {
         /* A4 — kyunki print isi kaghaz par hota hai. Pehle 'legal' likha
            tha, jis se browser safhe ko sikor kar deta tha aur margins
            bade/ghair-barabar ho jate the. */
+        /* Charon taraf BARABAR margin — har safhe par yaksan */
         @page{ size:${_ch173Paper === 'a4' ? 'A4 portrait' : '8.5in 13in'}; margin:1cm; }
-        /* Agle safhon par BAYEN taraf punch ki jagah */
-        @page :left  { margin:1cm 1cm 1cm 1.8cm; }
-        @page :right { margin:1cm 1cm 1cm 1.8cm; }
-        @page :first { margin:1cm; }
         body{ font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl;
               line-height:1.4; color:#000; margin:0; }
 
@@ -982,6 +988,7 @@ function _printR173() {
         /* Column 7 — poora justified, aakhri line dayen (beech mein nahi) */
         .ch173-table td.normcell{ padding:0; vertical-align:top; position:relative; }
         .normwrap{ position:absolute; inset:0; padding:5px; box-sizing:border-box;
+          font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
           direction:rtl; text-align:justify; text-align-last:right; line-height:1.15;
           font-size:14pt; overflow-wrap:break-word; word-wrap:break-word; }
         .normwrap p, .normwrap div{ text-align:justify; text-align-last:right; }
@@ -1015,6 +1022,7 @@ function _printR173() {
           padding:3px 4px; margin-top:4px; overflow-wrap:break-word; }
         .sho-cell{ display:flex; flex-direction:column; justify-content:space-between; min-height:42mm; }
         .sho-block{ align-self:flex-end; }
+        .sho-spacer{ height:1.6em; }
         .sho-cell-row{ padding:2px 6px; line-height:1.25; margin:0; min-height:20px;
           font-size:14pt; text-align:right; white-space:nowrap; font-weight:700; }
         .sho-cell-date{ font-size:14pt; color:#000; text-align:center; }
