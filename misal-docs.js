@@ -84,15 +84,15 @@ function renderMisalBar(c) {
       ${indexChip}
       ${_misalDropdown('fir-dd', 'الف آئی آر', [
         {label:'الف آئی آر', act:`_ddPick('fir-dd','fir')`},
-        {label:'کراس ورژن', act:`_ddPick('fir-dd','cross_version')`}
+        ...(typeof caseHasCross==='function' && caseHasCross(c) ? [{label:'کراس ورژن', act:`_ddPick('fir-dd','cross_version')`}] : [])
       ])}
       ${_misalDropdown('acc-dd', 'ملزمان', [
         {label:'ملزمان FIR', act:`_ddPick('acc-dd','named_accused')`},
-        {label:'ملزمان کراس ورژن', act:`_ddPick('acc-dd','accused_cross')`}
+        ...(typeof caseHasCross==='function' && caseHasCross(c) ? [{label:'ملزمان کراس ورژن', act:`_ddPick('acc-dd','accused_cross')`}] : [])
       ])}
       ${_misalDropdown('wit-dd', 'گواہان', [
         {label:'گواہان FIR', act:`_ddPick('wit-dd','witnesses_fir')`},
-        {label:'گواہان کراس ورژن', act:`_ddPick('wit-dd','witnesses_cross')`}
+        ...(typeof caseHasCross==='function' && caseHasCross(c) ? [{label:'گواہان کراس ورژن', act:`_ddPick('wit-dd','witnesses_cross')`}] : [])
       ])}
       <span class="mdoc-chip mdoc-empty" onclick="openR173List()" title="رپورٹ 173 ض ف">رپورٹ 173 ض ف</span>
       ${items}

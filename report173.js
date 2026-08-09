@@ -105,8 +105,9 @@ async function openReport173(caseId) {
     try { _r173Case = await getCase(_r173CaseId); } catch(_) { _r173Case = null; }
   }
   await _loadR173();
-  _r173Type = 'mukammal';
-  _renderR173();
+  // NOTE: yahan render NAHI karte — warna do martaba render hota hai aur
+  // beech mein ghalat safha ("fake" report 173) jhalak jata hai.
+  // Render ka faisla bulane wala karta hai (openR173List ya openReport173WithType).
 }
 
 async function _loadR173() {
@@ -340,33 +341,22 @@ function _renderR173() {
       }
       /* Column 7 — normal RTL (khadi nahi) */
       #ch173-doc .ch173-table td.normcell{ padding:0; vertical-align:top; }
-      /* ساتواں کالم — بنیاد ہمیشہ RTL (کرسر دائیں طرف بلنک کرے)۔
-         unicode-bidi:isolate کی وجہ سے انگریزی/ہندسے اندر ہی درست LTR
-         نظر آتے ہیں — یعنی اردو اور انگریزی دونوں ایک ساتھ چل سکتی ہیں۔ */
       #ch173-doc .normwrap{
         width:100%; height:100%; padding:5px; box-sizing:border-box;
-        direction:rtl !important; unicode-bidi:isolate !important;
-        text-align:justify; text-align-last:right; outline:none; line-height:1.15;
+        direction:rtl; text-align:justify; outline:none; line-height:1.15;
         overflow-wrap:break-word; word-wrap:break-word; overflow:auto;
-        white-space:pre-wrap;
       }
-      #ch173-doc .normwrap:empty{ text-align:right; }
-      /* MS Word جیسا Tab — ہر ٹیب آدھا انچ آگے */
-      #ch173-doc .ch173-tab{ display:inline-block; width:0.5in; }
-      /* Table ke NEECHE tasalsul (continuation) ka phailne wala khana */
+      /* Table ke NEECHE tasalsul — table se BILKUL chipka hua (koi gap nahi) */
       #ch173-doc .ch173-cont{
-        margin-top:0; border:1px solid #000; border-top:none;
-        min-height:40px; padding:6px 8px; direction:rtl; text-align:justify;
+        margin:0 !important; border:none !important; padding:0 5px !important;
+        min-height:0; direction:rtl; text-align:justify; text-align-last:right;
         font-size:14pt; line-height:1.15; outline:none;
-        overflow-wrap:break-word; word-wrap:break-word;
+        overflow-wrap:break-word; word-wrap:break-word; white-space:pre-wrap;
       }
+      #ch173-doc .ch173-cont:empty{ min-height:0; padding:0 !important; }
       #ch173-doc .ch173-cont:empty::before{
         content:'تسلسل — جو تحریر اوپر خانوں میں نہ سما سکے وہ یہاں لکھیں';
         color:#aaa; font-size:12pt;
-      }
-      /* تمام لکھنے والے خانے — بنیاد RTL، مگر انگریزی/ہندسے بھی درست */
-      #ch173-doc [contenteditable="true"]{
-        direction:rtl; unicode-bidi:isolate;
       }
       #ch173-doc .rotinner{
         width:100%; height:100%; box-sizing:border-box; padding:4px;
@@ -392,11 +382,7 @@ function _renderR173() {
       }
       #ch173-doc th.vcell{ vertical-align:middle; padding:0; text-align:center; height:150px; }
       /* Header ki khadi likhayi — data khanon jaisa hi wrapper (Ascending) */
-      /* مال قبضہ پولیس — چاروں طرف (دائیں/بائیں/اوپر/نیچے) بالکل برابر */
-      #ch173-doc .rothead{
-        text-align:center !important; white-space:normal;
-        display:flex; align-items:center; justify-content:center; padding:4px;
-      }
+      #ch173-doc .rothead{ text-align:center !important; white-space:normal; }
 
       #ch173-doc th.hcell{ vertical-align:middle; text-align:center; direction:rtl; white-space:normal; }
 
@@ -449,9 +435,9 @@ function _renderR173() {
         .ch173-table td.normcell{ padding:0; vertical-align:top; }
         .normwrap{ width:100%; height:100%; padding:5px; box-sizing:border-box;
           direction:rtl; text-align:justify; line-height:1.15; overflow-wrap:break-word; }
-        .ch173-cont{ border:1px solid #000; border-top:none; min-height:40px; padding:6px 8px;
-          direction:rtl; text-align:justify; font-size:14pt; line-height:1.15;
-          overflow-wrap:break-word; }
+        .ch173-cont{ margin:0 !important; border:none !important; padding:0 5px !important;
+          min-height:0; direction:rtl; text-align:justify; text-align-last:right;
+          font-size:14pt; line-height:1.15; overflow-wrap:break-word; white-space:pre-wrap; }
         .ch173-cont:empty{ display:none; }
         .rotinner{ width:100%; height:100%; box-sizing:border-box; padding:4px;
           writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
@@ -478,7 +464,8 @@ function _renderR173() {
         <select id="ch173-ver-sel" onchange="_ch173SetVersion(this.value)" title="ورژن"
           style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
           <option value="fir" ${_ch173Version==='fir'?'selected':''}>FIR</option>
-          <option value="cross_version" ${_ch173Version==='cross_version'?'selected':''}>کراس ورژن</option>
+          ${(typeof caseHasCross==='function' && caseHasCross(c))
+            ? `<option value="cross_version" ${_ch173Version==='cross_version'?'selected':''}>کراس ورژن</option>` : ''}
         </select>
         <span style="font-size:11px;color:var(--text-muted);">↔ کالم کی لکیر کو پکڑ کر چوڑائی بدلیں</span>
         <div style="margin-right:auto;display:flex;gap:6px;">
@@ -590,7 +577,6 @@ function _renderR173() {
     </div>`;
     _ch173FullPage(area);
     _ch173BlockFloatBar();
-    _ch173BindTab();
     setTimeout(() => {
       _ch173FullPage(area);
       _ch173MakeResizable();
@@ -960,17 +946,7 @@ function _printR173() {
           writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
           direction:rtl; text-align:start; line-height:1.2; unicode-bidi:plaintext;
           overflow-wrap:break-word; white-space:pre-wrap; overflow:hidden; font-size:14pt; }
-        /* مال قبضہ پولیس — چاروں طرف برابر، بیچوں بیچ */
-        .rothead{ text-align:center !important; white-space:normal;
-          display:flex; align-items:center; justify-content:center; padding:4px; }
-        /* AHEM: is khane ki UNCHAI print CSS mein muqarrar nahi thi, is liye
-           khana simat jata tha aur "مال قبضہ پولیس" print hi nahi hota tha. */
-        th.vcell{ height:150px; }
-        /* Column 7 — bunyad RTL (Urdu + English dono) */
-        .normwrap{ direction:rtl !important; unicode-bidi:isolate !important;
-          text-align:justify; text-align-last:right; white-space:pre-wrap; }
-        /* MS Word jaisa Tab */
-        .ch173-tab{ display:inline-block; width:0.5in; }
+        .rothead{ text-align:center !important; }
 
         /* Column 7 — normal RTL */
         .hcell-td{ padding:0; vertical-align:top; }
@@ -1242,10 +1218,35 @@ function _ch173OverflowSoon() {
 window._ch173Overflow = _ch173Overflow;
 
 // Khane par input/paste sunno
+// Cursor ko khane ke AAKHIR par le jao (matn behne ke baad)
+function _ch173CaretEnd(el) {
+  try {
+    el.focus({ preventScroll: true });
+    const r = document.createRange();
+    r.selectNodeContents(el);
+    r.collapse(false);
+    const s = window.getSelection();
+    s.removeAllRanges(); s.addRange(r);
+  } catch (_) {}
+}
+
 function _ch173BindOverflow() {
   const cell = document.querySelector('#ch173-table [data-k="halaat"]');
   if (!cell || cell._ovBound) return;
   cell._ovBound = true;
+  // LIKHTE WAQT bhi khud-kar behe — magar sirf JAB khana bhar jaye.
+  // (Har harf par chalane se cursor shuru mein chala jata tha; ab hum
+  //  cursor ko wapas aakhir par le aate hain, is liye likhna nahi rukta.)
+  let _t = null;
+  cell.addEventListener('input', () => {
+    clearTimeout(_t);
+    _t = setTimeout(() => {
+      if (cell.scrollHeight <= cell.clientHeight + 1) return;   // jagah hai — kuch na karo
+      const atEnd = document.activeElement === cell;
+      _ch173Overflow();
+      if (atEnd) _ch173CaretEnd(cell);
+    }, 400);
+  });
   // NOTE: 'input' par NAHI chalate — warna har harf par matn dobara set
   // hota hai aur cursor shuru mein chala jata hai. Sirf paste aur blur par.
   // SIRF paste par — blur par chalane se innerText formatting (bold/italic/
@@ -1405,48 +1406,6 @@ function _ch173DocFont(bs) {
   const n = parseFloat((bs && bs.doc_font) || '');
   return (n && !isNaN(n)) ? n : R173_FONT_DEFAULT;
 }
-
-// ═══ TAB — بالکل MS Word جیسا ═══
-// پہلے Tab دبانے سے کرسر خانے سے باہر نکل جاتا تھا (براؤزر اگلے عنصر پر
-// focus لے جاتا ہے) اور لکھائی غائب لگتی تھی۔ اب Tab اندر ہی رہتا ہے اور
-// آدھے انچ کا وقفہ ڈالتا ہے — Shift+Tab سے وہ وقفہ واپس ہٹ جاتا ہے۔
-function _ch173BindTab() {
-  if (window._ch173TabBound) return;
-  window._ch173TabBound = true;
-  document.addEventListener('keydown', function (e) {
-    if (e.key !== 'Tab') return;
-    const doc = document.getElementById('ch173-doc');
-    if (!doc) return;
-    const host = e.target && e.target.closest ? e.target.closest('[contenteditable="true"]') : null;
-    if (!host || !doc.contains(host)) return;      // چالان کے خانے سے باہر ہو تو معمول
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (e.shiftKey) {                              // Shift+Tab — پچھلا وقفہ ہٹاؤ
-      try {
-        const sel = window.getSelection();
-        if (!sel || !sel.rangeCount) return;
-        let n = sel.getRangeAt(0).startContainer;
-        if (n.nodeType === 3 && !n.previousSibling && n.parentNode) n = n.parentNode;
-        let prev = n.previousSibling;
-        // زیرو-وڈتھ نشان چھوڑ کر پیچھے دیکھو
-        while (prev && prev.nodeType === 3 && !prev.textContent.replace(/\u200B/g, '').trim()) {
-          const gone = prev; prev = prev.previousSibling; gone.remove();
-        }
-        if (prev && prev.classList && prev.classList.contains('ch173-tab')) prev.remove();
-      } catch(_) {}
-      _ch173SaveRange();
-      return;
-    }
-
-    try {
-      document.execCommand('insertHTML', false, '<span class="ch173-tab"></span>\u200B');
-    } catch(_) {}
-    _ch173SaveRange();
-    try { _r173Dirty = true; } catch(_) {}
-  }, true);
-}
-window._ch173BindTab = _ch173BindTab;
 
 // ═══ Floating toolbar چالان کے صفحے پر نہ لگے ═══
 // dioBindEditor کسی اور فائل میں بنتی ہے اور ہر contenteditable پر تیرتی ہوئی

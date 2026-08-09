@@ -1009,3 +1009,17 @@ if (typeof doLogout === 'function') window.doLogout = doLogout;
 if (typeof showPage === 'function') window.showPage = showPage;
 if (typeof openCaseWorkspace === 'function') window.openCaseWorkspace = openCaseWorkspace;
 if (typeof togglePasswordVisibility === 'function') window.togglePasswordVisibility = togglePasswordVisibility;
+
+// ═══════════════════════════════════════════════════════════════════
+//  کیا اِس مقدمہ میں کراس ورژن ہے؟
+//  کراس ورژن کے اختیارات صرف اُسی وقت نظر آنے چاہئیں جب "نیا مقدمہ"
+//  والے کارڈ میں کراس ورژن پر ✓ لگایا گیا ہو — ورنہ ہر مقدمہ میں
+//  فضول اختیارات نظر آتے ہیں۔
+// ═══════════════════════════════════════════════════════════════════
+function caseHasCross(c) {
+  c = c || (typeof currentCase !== 'undefined' ? currentCase : null)
+        || (typeof _misalCase !== 'undefined' ? _misalCase : null) || {};
+  return !!(c.cross_complainant || c.cross_fir_number || c.cross_rapat_number ||
+            c.cross_complainant_cnic || c.cross_section_of_law);
+}
+window.caseHasCross = caseHasCross;

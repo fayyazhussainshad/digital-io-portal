@@ -214,18 +214,26 @@ function dioEnableFloatingToolbar() {
   window._dioFloatBound = true;
   document.addEventListener('focusin', e => {
     const el = e.target;
-    if (el && el.isContentEditable) { dioBindEditor(el.parentNode || document); _dioShowFloatBar(el); }
+    if (!el || !el.isContentEditable) return;
+    // چالان کے صفحے پر تیرتی پٹی نہیں — وہاں اوپر اپنی مستقل toolbar موجود ہے
+    try { if (el.closest && el.closest('#ch173-doc')) { _dioHideFloatBar(); return; } } catch(_) {}
+    dioBindEditor(el.parentNode || document);
+    _dioShowFloatBar(el);
   });
   document.addEventListener('focusout', e => {
     if (e.target && e.target.isContentEditable) _dioHideFloatBar();
   });
   window.addEventListener('scroll', () => {
     const a = document.activeElement;
-    if (a && a.isContentEditable) _dioShowFloatBar(a);
+    if (!a || !a.isContentEditable) return;
+    try { if (a.closest && a.closest('#ch173-doc')) return; } catch(_) {}
+    _dioShowFloatBar(a);
   }, true);
   window.addEventListener('resize', () => {
     const a = document.activeElement;
-    if (a && a.isContentEditable) _dioShowFloatBar(a);
+    if (!a || !a.isContentEditable) return;
+    try { if (a.closest && a.closest('#ch173-doc')) return; } catch(_) {}
+    _dioShowFloatBar(a);
   });
 }
 window.dioEnableFloatingToolbar = dioEnableFloatingToolbar;
