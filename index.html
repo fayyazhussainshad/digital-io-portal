@@ -1301,12 +1301,29 @@ window.dioGoBack = function () {
   }, 300);
 })();
 </script>
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  کام ضائع ہونے سے بچاؤ — بغیر محفوظ کیے صفحہ بند ہونے پر تنبیہ
+//  پہلے: افسر پورا چالان/ضمنی لکھ کر غلطی سے ٹیب بند کر دے تو سب ضائع۔
+// ═══════════════════════════════════════════════════════════════════
+window.addEventListener('beforeunload', function (e) {
+  try {
+    var dirty =
+      (typeof _misalDirty !== 'undefined' && _misalDirty) ||
+      (typeof _r173Dirty  !== 'undefined' && _r173Dirty)  ||
+      (typeof _zimniDirty !== 'undefined' && _zimniDirty);
+    if (dirty) { e.preventDefault(); e.returnValue = ''; return ''; }
+  } catch (_) {}
+});
+</script>
 <script src="offline-store.js"></script>
 <script src="app-core.js"></script>
 <script src="dashboard.js"></script>
 <script src="toolbar.js"></script>
 <script src="misal-docs.js"></script>
 <script src="cases.js"></script>
+  <script src="case-form.js"></script>
+  <script src="case-docs.js"></script>
 <script src="fivec.js"></script>
 <script src="evidence.js"></script>
 <script src="search.js"></script>
