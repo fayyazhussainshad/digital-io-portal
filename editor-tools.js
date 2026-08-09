@@ -143,6 +143,13 @@ function dioBindEditor(root) {
         document.execCommand('insertHTML', false, '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
         return;
       }
+      // ENTER → nayi satar (khane ke andar hi)
+      if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
+        e.preventDefault();
+        try { document.execCommand('insertLineBreak'); }
+        catch(_) { try { document.execCommand('insertHTML', false, '<br>'); } catch(__) {} }
+        return;
+      }
       // Ctrl shortcuts (MS Word jaise)
       if (e.ctrlKey || e.metaKey) {
         const k = e.key.toLowerCase();

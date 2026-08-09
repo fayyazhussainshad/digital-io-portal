@@ -260,7 +260,10 @@ function _renderR173() {
          khud theek rehti hai. writing-mode se matn khada, rotate(180) se
          NEECHE se OOPER (Ascending). */
       #ch173-doc .cellbox{ position:relative; width:100%; height:100%; overflow:hidden; }
-      #ch173-doc .rotclip{ position:absolute; inset:0; overflow:hidden; }
+      /* Khadi likhayi ka block khane ke BEECH mein (pehle dayen kinare se
+         chipka hua tha). rotclip ko flex bana kar beech mein rakhte hain. */
+      #ch173-doc .rotclip{ position:absolute; inset:0; overflow:hidden;
+        display:flex; justify-content:center; align-items:stretch; }
       /* Table ke neeche koi lakeer nahi (magar wahan se unchai badalti hai) */
       #ch173-doc .ch173-table, #ch173-doc .ch173-table tbody,
       #ch173-doc .ch173-table tbody tr, #ch173-doc .ch173-table tbody td{
@@ -311,7 +314,10 @@ function _renderR173() {
       #ch173-doc .sho-cell-row{
         outline:1px dashed rgba(120,120,120,0.35); padding:3px 6px; line-height:1.25;
         min-height:20px; margin:0; font-size:14pt; text-align:right; white-space:nowrap;
+        font-weight:700;
       }
+      /* تاریخ bold nahi — sirf SHO ki line */
+      #ch173-doc .sho-cell-date{ font-weight:normal; }
       #ch173-doc .sho-cell-date{ font-size:14pt; color:#333; cursor:pointer; text-align:center; }
       #ch173-doc .sho-cell-date:empty::before{ content:'تاریخ…'; color:#aaa; }
       @media print{
@@ -333,9 +339,12 @@ function _renderR173() {
       #ch173-doc .ch173-table td.normcell{ padding:0; vertical-align:top; }
       #ch173-doc .normwrap{
         width:100%; height:100%; padding:5px; box-sizing:border-box;
-        direction:rtl; text-align:justify; outline:none; line-height:1.15;
+        direction:rtl; text-align:justify; text-align-last:right;
+        outline:none; line-height:1.15; font-size:14pt;
         overflow-wrap:break-word; word-wrap:break-word; overflow:auto;
       }
+      /* Har paragraph ki aakhri line bhi dayen (beech mein nahi) */
+      #ch173-doc .normwrap p, #ch173-doc .normwrap div{ text-align:justify; text-align-last:right; }
       #ch173-doc .ch173-cont:empty::before{
         content:'تسلسل — جو تحریر اوپر خانوں میں نہ سما سکے وہ یہاں لکھیں';
         color:#aaa; font-size:12pt;
@@ -349,7 +358,7 @@ function _renderR173() {
       }
       #ch173-doc .ch173-cont:empty{ min-height:0; padding:0 !important; }
       #ch173-doc .rotinner{
-        width:100%; height:100%; box-sizing:border-box; padding:4px;
+        width:auto; max-width:100%; height:100%; box-sizing:border-box; padding:4px;
         writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
         direction:rtl; text-align:start; outline:none; unicode-bidi:plaintext;
         line-height:1.2; overflow-wrap:break-word; white-space:pre-wrap;
@@ -406,7 +415,8 @@ function _renderR173() {
         .ch173-table tbody td{ border-bottom:0 !important; }
         .rotcell{ position:relative; padding:0; overflow:hidden; }
         .cellbox{ position:relative; width:100%; height:100%; overflow:hidden; }
-        .rotclip{ position:absolute; inset:0; overflow:hidden; }
+        .rotclip{ position:absolute; inset:0; overflow:hidden;
+          display:flex; justify-content:center; align-items:stretch; }
         .ch173-table, .ch173-table tbody, .ch173-table tbody tr,
         .ch173-table tbody td, .ch173-table tbody th,
         .ch173-table tr:last-child td, .ch173-table tr:last-child th{
@@ -429,7 +439,7 @@ function _renderR173() {
           min-height:0; direction:rtl; text-align:justify; text-align-last:right;
           font-size:14pt; line-height:1.15; overflow-wrap:break-word; white-space:pre-wrap; }
         .ch173-cont:empty{ display:none; }
-        .rotinner{ width:100%; height:100%; box-sizing:border-box; padding:4px;
+        .rotinner{ width:auto; max-width:100%; height:100%; box-sizing:border-box; padding:4px;
           writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
           direction:rtl; text-align:start; line-height:1.2; unicode-bidi:plaintext;
           overflow-wrap:break-word; white-space:pre-wrap; overflow:hidden; font-size:14pt; }
@@ -487,7 +497,7 @@ function _renderR173() {
       </div>
       <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
         <div id="ch173-doc" style="width:100%;max-width:none;min-height:14in;margin:0 auto;
-             padding:calc(0.25in + 0.5cm) 0.2cm 0.25in 0.2cm;
+             padding:calc(0.25in + 0.5cm) calc(0.25in + 0.5cm) 0.25in calc(0.25in + 0.5cm);
              background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;
              line-height:1.4;box-sizing:border-box;">
 
@@ -571,6 +581,7 @@ function _renderR173() {
       _ch173FullPage(area);
       _ch173MakeResizable();
       _ch173SizeRotated();
+      _ch173BindKeys();
       _ch173BindOverflow();
       _ch173Overflow();
       window.addEventListener('resize', _ch173SizeRotated);
@@ -897,8 +908,8 @@ function _printR173() {
         /* ═══ PRINT CSS — SCREEN ke bilkul mutabiq (koi purani class nahi) ═══ */
         /* Pehla safha: kinare kam. Agle safhon par BAYEN taraf punch ki jagah
            taake sooraakh karne se alfaz na katen aur jild mein na chhupein. */
-        @page{ size:legal portrait; margin:1.2cm 0.2cm 0.25in 1.8cm; }
-        @page :first{ margin:calc(0.25in + 0.5cm) 0.2cm 0.25in 0.2cm; }
+        @page{ size:legal portrait; margin:1.2cm calc(0.25in + 0.5cm) 0.25in 1.8cm; }
+        @page :first{ margin:calc(0.25in + 0.5cm) calc(0.25in + 0.5cm) 0.25in calc(0.25in + 0.5cm); }
         body{ font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl;
               line-height:1.4; color:#000; margin:0; }
 
@@ -927,16 +938,28 @@ function _printR173() {
         .ch173-table thead th{ font-size:14pt; vertical-align:middle; line-height:1.15; font-weight:normal; }
         .ch173-table td{ font-size:14pt; vertical-align:top; height:170mm; padding:0; }
         th.hcell{ vertical-align:middle; text-align:center; direction:rtl; white-space:normal; }
-        th.vcell{ vertical-align:middle; padding:0; text-align:center; }
+        /* AHEM: unchai zaroori hai — warna cellbox ki height 0 ho jati thi
+           aur 'مال قبضہ پولیس' print mein bilkul nazar hi nahi aata tha */
+        th.vcell{ vertical-align:middle; padding:0; text-align:center; height:150px; }
 
         /* Khadi likhayi — SCREEN jaisa hi (cellbox + rotinner) */
         .cellbox{ position:relative; width:100%; height:100%; overflow:hidden; }
-        .rotclip{ position:absolute; inset:0; overflow:hidden; }
-        .rotinner{ width:100%; height:100%; box-sizing:border-box; padding:4px;
+        .rotclip{ position:absolute; inset:0; overflow:hidden;
+          display:flex; justify-content:center; align-items:stretch; }
+        .rotinner{ width:auto; max-width:100%; height:100%; box-sizing:border-box; padding:4px;
           writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
           direction:rtl; text-align:start; line-height:1.2; unicode-bidi:plaintext;
           overflow-wrap:break-word; white-space:pre-wrap; overflow:hidden; font-size:14pt; }
         .rothead{ text-align:center !important; }
+        /* Column 7 — poora justified, aakhri line dayen (beech mein nahi) */
+        .ch173-table td.normcell{ padding:0; vertical-align:top; }
+        .normwrap{ width:100%; height:100%; padding:5px; box-sizing:border-box;
+          direction:rtl; text-align:justify; text-align-last:right; line-height:1.15;
+          font-size:14pt; overflow-wrap:break-word; word-wrap:break-word; }
+        .normwrap p, .normwrap div{ text-align:justify; text-align-last:right; }
+        /* SHO / تھانہ ki line bold */
+        .sho-cell-row{ font-weight:700; }
+        .sho-cell-date{ font-weight:normal; }
 
         /* Column 7 — normal RTL */
         .hcell-td{ padding:0; vertical-align:top; }
@@ -965,7 +988,7 @@ function _printR173() {
         .sho-cell{ display:flex; flex-direction:column; justify-content:space-between; min-height:42mm; }
         .sho-block{ align-self:flex-end; }
         .sho-cell-row{ padding:2px 6px; line-height:1.25; margin:0; min-height:20px;
-          font-size:14pt; text-align:right; white-space:nowrap; }
+          font-size:14pt; text-align:right; white-space:nowrap; font-weight:700; }
         .sho-cell-date{ font-size:14pt; color:#000; text-align:center; }
         /* یہ خانہ درمیان سے نہ ٹوٹے */
         .ch173-sho-flex{ page-break-inside:avoid; break-inside:avoid; }
@@ -1522,7 +1545,7 @@ function _ch173FontToDoc(pt) {
   const doc = document.getElementById('ch173-doc');
   if (!doc) return;
   doc.dataset.fs = pt;
-  doc.querySelectorAll('.ch173-table th, .ch173-table td, .rotinner, .hinner, .ch173-cont, .sho-cell-row, .sho-papers-head, .sho-papers-body')
+  doc.querySelectorAll('.ch173-table th, .ch173-table td, .rotinner, .hinner, .normwrap, .ch173-cont, .sho-cell-row, .sho-papers-head, .sho-papers-body')
      .forEach(el => { el.style.fontSize = pt + 'pt'; });
   const hid = doc.querySelector('[data-k="doc_font"]');
   if (hid) hid.value = pt;
@@ -2000,3 +2023,43 @@ async function openR173List() {
   _renderR173List();
 }
 window.openR173List = openR173List;
+
+// ═══════════════════════════════════════════════════════════════════
+//  MS Word جیسی سہولتیں — Tab / Shift+Tab / Enter / Ctrl+B,I,U
+//  چالان کے ہر لکھنے والے خانے میں (تیرتی پٹی یہاں نہیں چلتی، اس لیے
+//  یہ الگ سے لگانا ضروری ہے)
+// ═══════════════════════════════════════════════════════════════════
+function _ch173BindKeys() {
+  const doc = document.getElementById('ch173-doc');
+  if (!doc || doc._keysBound) return;
+  doc._keysBound = true;
+  doc.addEventListener('keydown', function (e) {
+    const el = e.target;
+    if (!el || !el.isContentEditable) return;
+
+    // TAB → خالی جگہ (فوکس دوسرے خانے پر نہ جائے)
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      if (e.shiftKey) { try { document.execCommand('outdent'); } catch(_) {} return; }
+      try { document.execCommand('insertHTML', false, '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'); } catch(_) {}
+      return;
+    }
+
+    // ENTER → نئی سطر (خانے کے اندر ہی)
+    if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
+      e.preventDefault();
+      try { document.execCommand('insertLineBreak'); }
+      catch(_) { try { document.execCommand('insertHTML', false, '<br>'); } catch(__) {} }
+      return;
+    }
+
+    // Ctrl+B / I / U
+    if (e.ctrlKey || e.metaKey) {
+      const k = String(e.key || '').toLowerCase();
+      if (k === 'b') { e.preventDefault(); _ch173Fmt('bold'); }
+      else if (k === 'i') { e.preventDefault(); _ch173Fmt('italic'); }
+      else if (k === 'u') { e.preventDefault(); _ch173Fmt('underline'); }
+    }
+  });
+}
+window._ch173BindKeys = _ch173BindKeys;
