@@ -446,6 +446,16 @@ function _renderR173() {
           <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('bold')" title="بولڈ" style="${_chBtn()}font-weight:900;">B</button>
           <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('italic')" title="ترچھا" style="${_chBtn()}font-style:italic;">I</button>
           <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('underline')" title="انڈر لائن" style="${_chBtn()}text-decoration:underline;">U</button>
+          <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
+          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('justifyRight')" title="دائیں سیدھ" style="${_chBtn()}">⇥</button>
+          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('justifyCenter')" title="درمیان" style="${_chBtn()}">⇔</button>
+          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('justifyLeft')" title="بائیں سیدھ" style="${_chBtn()}">⇤</button>
+          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('justifyFull')" title="دونوں طرف برابر (Justify)" style="${_chBtn()}">☰</button>
+          <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
+          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('insertUnorderedList')" title="نقطہ دار فہرست" style="${_chBtn()}">•</button>
+          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('insertOrderedList')" title="نمبر والی فہرست" style="${_chBtn()}font-size:11px;">1.</button>
+          <button onmousedown="event.preventDefault()" onclick="_ch173ClearFmt()" title="فارمیٹ ختم کریں" style="${_chBtn()}">🧹</button>
+          <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
           <button id="ch173-brush-btn" onmousedown="event.preventDefault()"
             onclick="_ch173BrushClick(false)" ondblclick="_ch173BrushClick(true)"
             title="فارمیٹ پینٹر — ایک کلک: ایک بار، ڈبل کلک: بار بار" style="${_chBtn()}">🖌</button>
@@ -460,7 +470,7 @@ function _renderR173() {
         </div>
       </div>
       <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
-        <div id="ch173-doc" style="width:8.5in;max-width:100%;min-height:14in;margin:0 auto;
+        <div id="ch173-doc" style="width:100%;max-width:8.5in;min-height:14in;margin:0 auto;
              padding:calc(0.25in + 0.5cm) 0.2cm 0.25in 0.2cm;
              background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;
              line-height:1.4;box-sizing:border-box;">
@@ -539,7 +549,9 @@ function _renderR173() {
         </div>
       </div>
     </div>`;
+    _ch173FullPage(area);
     setTimeout(() => {
+      _ch173FullPage(area);
       _ch173MakeResizable();
       _ch173SizeRotated();
       _ch173BindOverflow();
@@ -1319,6 +1331,36 @@ function _ch173DocFont(bs) {
   return (n && !isNaN(n)) ? n : R173_FONT_DEFAULT;
 }
 
+// ═══ چالان کا فارم پورے صفحے پر ═══
+// Workspace ka doosra hissa (dastawez ki fehrist) aur tang container safhe ko
+// aadha kar dete the. Yahan editor wale khane aur us ke tamam والدین ko poori
+// chaudai/unchai par le aate hain.
+function _ch173FullPage(area) {
+  try {
+    document.body.classList.add('workspace-mode');
+    // Side ki dastawez fehrist chhupao (agar khuli ho)
+    ['.workspace-sidebar', '#workspace-doc-list', '.misal-sidebar'].forEach(sel => {
+      document.querySelectorAll(sel).forEach(el => { el.style.display = 'none'; });
+    });
+    // Editor ka khana + us ke والدین — poori jagah
+    let el = area, hops = 0;
+    while (el && el !== document.body && hops++ < 8) {
+      el.style.width = '100%';
+      el.style.maxWidth = 'none';
+      el.style.marginRight = '0';
+      el.style.marginLeft = '0';
+      if (getComputedStyle(el).display === 'flex') el.style.flex = '1 1 auto';
+      el = el.parentElement;
+    }
+    // Workspace ka grid do-column tha to usay aik column bana do
+    document.querySelectorAll('.workspace-layout, .misal-layout').forEach(w => {
+      w.style.display = 'block';
+      w.style.gridTemplateColumns = '1fr';
+    });
+  } catch(_) {}
+}
+window._ch173FullPage = _ch173FullPage;
+
 // ═══ Chuni hui jagah YAAD rakho ═══
 // Toolbar ke select/button par tap karte hi contenteditable se focus hat jata
 // hai aur chuna hua matn zaya ho jata hai — isi liye font size lagta hi nahi
@@ -1542,6 +1584,19 @@ function _ch173BindBrush() {
 }
 window._ch173BindBrush = _ch173BindBrush;
 
+// 🧹 فارمیٹ ختم — بولڈ/ترچھا/انڈر لائن/رنگ/سائز سب ہٹا کر سادہ متن
+function _ch173ClearFmt() {
+  _ch173RestoreRange();
+  try { document.execCommand('removeFormat', false, null); } catch(_) {}
+  // Humare apne <span style="font-size:..."> bhi saaf karo
+  try {
+    _ch173WrapSelection().forEach(sp => sp.removeAttribute('style'));
+  } catch(_) {}
+  _ch173SaveRange();
+  try { _r173Dirty = true; } catch(_) {}
+}
+window._ch173ClearFmt = _ch173ClearFmt;
+
 function _ch173Fmt(cmd) {
   _ch173RestoreRange();
   try { document.execCommand(cmd, false, null); } catch(_) {}
@@ -1640,6 +1695,8 @@ function _renderR173List() {
             || document.getElementById('workspace-tab-content')
             || document.getElementById('page-content');
   if (!area) return;
+
+  if (typeof _ch173FullPage === 'function') _ch173FullPage(area);
 
   const typeName = (t) => (R173_TYPES.find(x => x.id === t) || {}).name || t;
   const mazmoon  = (d) => {
