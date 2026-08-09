@@ -142,7 +142,7 @@ function _openAccusedForm(id, type) {
     </div>`;
 
   const body = `
-  <div style="direction:rtl;text-align:right;max-height:70vh;overflow-y:auto;padding:2px;">
+  <div class="dio-2col" style="direction:rtl;text-align:right;max-height:74vh;overflow-y:auto;padding:0;">
     <!-- نام و پتہ -->
     <label class="form-label">نام و پتہ ملزم</label>
     <input class="form-input" id="acc-name" value="${_escA(a.name)}" placeholder="نام، ولدیت، پتہ" style="margin-bottom:10px;">

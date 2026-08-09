@@ -34,10 +34,12 @@
       font-display: swap;
     }
   
-/* ── CARDS LANDSCAPE: andar ki fields do columns mein ── */
+/* ── CARDS LANDSCAPE ── */
 @media (min-width: 820px) {
-  #modal-body.modal-body { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 16px; align-items: start; }
-  /* Poori chaudai wale: lambi tehreer, fehristein, buttons ki qataar */
+  #modal-body.modal-body { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 16px; align-items: start; }
+  /* Agar poora content aik hi wrapper mein ho to woh POORI chaudai le
+     (warna doosra column khali reh jata tha) */
+  #modal-body.modal-body > *:only-child { grid-column: 1 / -1; }
   #modal-body.modal-body > .form-group:has(textarea),
   #modal-body.modal-body > .form-group.full,
   #modal-body.modal-body > .full-width,
@@ -46,15 +48,21 @@
   #modal-body.modal-body > table,
   #modal-body.modal-body > .dio-full { grid-column: 1 / -1; }
   #modal-body.modal-body textarea { min-height: 90px; }
+
+  /* Andar ke wrapper ki fields bhi do columns mein — khali jagah na bache */
+  #modal-body .dio-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 14px; align-items: start; }
+  #modal-body .dio-2col > label,
+  #modal-body .dio-2col > .form-label { grid-column: 1 / -1; margin-bottom: 2px; }
+  #modal-body .dio-2col > input + label,
+  #modal-body .dio-2col > .dio-span2 { grid-column: 1 / -1; }
+  #modal-body .dio-2col > textarea { grid-column: 1 / -1; }
 }
 @media (max-width: 819px) {
   #modal-body.modal-body { display: block; }
+  #modal-body .dio-2col { display: block; }
 }
-
-/* ── لاگ اِن کارڈ کا فونٹ 14pt ── */
-.login-card, .login-card input, .login-card button, .login-card select,
-.login-card label, .login-card .login-method { font-size: 14pt; }
-.login-card .disclaimer-box, .login-card [class*="disclaimer"] { font-size: 12pt; }
+/* Card ke kinaron ki fazool jagah kam */
+#modal-body { padding: 14px 16px !important; }
 </style>
   <style>
 @font-face { font-family: "Aptos"; src: local("Aptos"), local("Segoe UI"); font-weight: 400; }

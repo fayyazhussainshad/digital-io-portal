@@ -657,7 +657,17 @@ function buildCrossFields(c) {
   var cs = c.cross_section_of_law || '';
   var co = c.cross_offence_type || '';
   var cfw = c.cross_fir_writer || '';
-  return '<div style="font-size:10px;color:var(--red);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">&#x2694;&#xFE0F; Cross FIR Details</div>'
+  var crn = c.cross_rapat_number || '';
+  var crd = c.cross_rapat_date || '';
+  return '<div style="font-size:10px;color:var(--red);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">&#x2694;&#xFE0F; &#x06A9;&#x0631;&#x0627;&#x0633; &#x0648;&#x0631;&#x0698;&#x0646; &#x06A9;&#x06CC; &#x062A;&#x0641;&#x0635;&#x06CC;&#x0644;</div>'
+    + '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">'
+    + '&#x0645;&#x0642;&#x062F;&#x0645;&#x06C1; &#x0646;&#x0645;&#x0628;&#x0631; &#x0648;&#x06C1;&#x06CC; &#x0631;&#x06C1;&#x06D2; &#x06AF;&#x0627; &#x06C1;&#x06D2;</div>'
+    + '<div class="form-row">'
+    + '<div class="form-group"><label class="form-label">&#x0631;&#x067E;&#x0679; &#x0646;&#x0645;&#x0628;&#x0631;</label>'
+    + '<input class="form-input" id="cf-cross-rapat" value="'+crn+'" placeholder="e.g. 12" dir="auto"></div>'
+    + '<div class="form-group"><label class="form-label">&#x0631;&#x067E;&#x0679; &#x06A9;&#x06CC; &#x062A;&#x0627;&#x0631;&#x06CC;&#x062E;</label>'
+    + '<input class="form-input" id="cf-cross-rapat-date" value="'+crd+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)"></div>'
+    + '</div>'
     + '<div class="form-row">'
     + '<div class="form-group"><label class="form-label">Cross FIR Number</label>'
     + '<input class="form-input" id="cf-cross-fir" value="'+cfn+'" placeholder="e.g. 246/2025" dir="auto"></div>'
@@ -951,6 +961,8 @@ async function saveNewCase(){
       cross_complainant_cell:document.getElementById('cf-cross-complainant-cell')?.value.trim()||null,
       cross_complainant_profession:document.getElementById('cf-cross-complainant-profession')?.value.trim()||null,
       cross_section_of_law:document.getElementById('cf-cross-section')?.value.trim()||null,
+      cross_rapat_number:document.getElementById('cf-cross-rapat')?.value.trim()||null,
+      cross_rapat_date:toISO(document.getElementById('cf-cross-rapat-date')?.value)||null,
       cross_offence_type:document.getElementById('cf-cross-offence')?.value.trim()||null,
       cross_fir_writer:document.getElementById('cf-cross-fir-writer')?.value.trim()||null,
       case_station:  currentOfficer?.station  || null,
@@ -1100,6 +1112,8 @@ async function saveEditCase(id){
       cross_complainant_cell:document.getElementById('cf-cross-complainant-cell')?.value.trim()||null,
       cross_complainant_profession:document.getElementById('cf-cross-complainant-profession')?.value.trim()||null,
       cross_section_of_law:document.getElementById('cf-cross-section')?.value.trim()||null,
+      cross_rapat_number:document.getElementById('cf-cross-rapat')?.value.trim()||null,
+      cross_rapat_date:toISO(document.getElementById('cf-cross-rapat-date')?.value)||null,
       cross_offence_type:document.getElementById('cf-cross-offence')?.value.trim()||null,
       cross_fir_writer:document.getElementById('cf-cross-fir-writer')?.value.trim()||null,
     });

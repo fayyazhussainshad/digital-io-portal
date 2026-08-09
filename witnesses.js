@@ -141,9 +141,9 @@ function _openWitnessForm(id, type) {
   const box = document.getElementById('witness-form-box');
   if (!box) return;
   box.innerHTML = `
-  <div class="card" style="padding:14px;border:1px solid var(--accent);">
-    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px;">${id?'✏️ گواہ کی ترمیم':'➕ نیا گواہ'}</div>
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
+  <div class="card" style="padding:12px 14px;border:1px solid var(--accent);margin:0;">
+    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px;">${id?'✏️ گواہ کی ترمیم':'➕ نیا گواہ'}</div>
+    <div class="dio-form-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px 12px;">
       <div style="grid-column:1/-1;">
         <label class="form-label">نام *</label>
         <input class="form-input" id="w-name" value="${_escW(w.full_name)}" placeholder="پورا نام" oninput="_checkPriorRecord(this.value)">
