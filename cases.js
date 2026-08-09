@@ -641,6 +641,20 @@ function caseFormHTML(c) {
     + '</div>'
     + '</div>'
 
+    // ── کراس ورژن ──────────────────────────────────────────────
+    + '<div class="dio-full" style="margin-top:14px;padding:10px 12px;background:rgba(239,68,68,0.06);'
+    + 'border:1px solid rgba(239,68,68,0.25);border-radius:var(--radius-sm);">'
+    + '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;font-size:14px;">'
+    + '<input type="checkbox" id="cf-cross-version" ' + (isCross ? 'checked' : '')
+    + ' onchange="document.getElementById(\'cross-version-fields\').style.display = this.checked ? \'block\' : \'none\';"'
+    + ' style="width:18px;height:18px;cursor:pointer;">'
+    + '&#x2694;&#xFE0F; &#x06A9;&#x0631;&#x0627;&#x0633; &#x0648;&#x0631;&#x0698;&#x0646; &#x0645;&#x0648;&#x062C;&#x0648;&#x062F; &#x06C1;&#x06D2;'
+    + '</label>'
+    + '<div id="cross-version-fields" style="display:' + (isCross ? 'block' : 'none') + ';margin-top:12px;">'
+    + buildCrossFields(c)
+    + '</div>'
+    + '</div>'
+
     + '</div>';
 
   return html;
@@ -962,7 +976,7 @@ async function saveNewCase(){
       cross_complainant_profession:document.getElementById('cf-cross-complainant-profession')?.value.trim()||null,
       cross_section_of_law:document.getElementById('cf-cross-section')?.value.trim()||null,
       cross_rapat_number:document.getElementById('cf-cross-rapat')?.value.trim()||null,
-      cross_rapat_date:toISO(document.getElementById('cf-cross-rapat-date')?.value)||null,
+      cross_rapat_date:document.getElementById('cf-cross-rapat-date')?.value.trim()||null,
       cross_offence_type:document.getElementById('cf-cross-offence')?.value.trim()||null,
       cross_fir_writer:document.getElementById('cf-cross-fir-writer')?.value.trim()||null,
       case_station:  currentOfficer?.station  || null,
@@ -1113,7 +1127,7 @@ async function saveEditCase(id){
       cross_complainant_profession:document.getElementById('cf-cross-complainant-profession')?.value.trim()||null,
       cross_section_of_law:document.getElementById('cf-cross-section')?.value.trim()||null,
       cross_rapat_number:document.getElementById('cf-cross-rapat')?.value.trim()||null,
-      cross_rapat_date:toISO(document.getElementById('cf-cross-rapat-date')?.value)||null,
+      cross_rapat_date:document.getElementById('cf-cross-rapat-date')?.value.trim()||null,
       cross_offence_type:document.getElementById('cf-cross-offence')?.value.trim()||null,
       cross_fir_writer:document.getElementById('cf-cross-fir-writer')?.value.trim()||null,
     });
