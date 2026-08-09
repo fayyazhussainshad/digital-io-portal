@@ -171,7 +171,7 @@ async function renderSettings(container) {
       <!-- Employment History -->
       <div class="card">
         <div class="card-title" style="margin-bottom:4px;">📋 ملازمت کی تاریخ
-          <button class="btn btn-primary btn-sm" onclick="openTransferModal()" style="float:left;margin-top:-4px;">+ ٹرانسفر</button>
+          
         </div>
         <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">تمام تھانوں کی مکمل تاریخ</div>
         ${_renderTransferTimeline(transfers, o)}
