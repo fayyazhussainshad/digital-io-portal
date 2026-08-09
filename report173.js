@@ -140,8 +140,10 @@ function _ch173Heading(type, typeName) {
 }
 
 function _renderR173() {
-  // Fehrist mode — save ke baad چالان ki table dikhti hai
-  if (_r173ShowList) { _r173ShowList = false; _renderR173List(); return; }
+  // Fehrist ya فارم — yeh halat SIRF user ke amal se badalti hai.
+  // (Pehle yeh flag khud saaf ho jata tha, is liye tab dobara render hone par
+  //  ghalat safha khul jata tha — yani "fake" report 173.)
+  if (_r173ShowList) { _renderR173List(); return; }
   const area = document.getElementById('workspace-editor-area')
             || document.getElementById('workspace-tab-content')
             || document.getElementById('page-content');
@@ -258,7 +260,7 @@ function _renderR173() {
       /* اختتامی خانہ — 2 برابر کالم۔ flex اس لیے کہ دونوں کالم ہمیشہ ایک جتنے
          چوڑے رہیں اور ایک ساتھ ہی نیچے بڑھیں (ایک دوسرے سے آگے نہ نکلے) */
       #ch173-doc .ch173-sho-flex{
-        display:flex; direction:rtl; align-items:stretch; gap:1cm; margin-top:6px;
+        display:flex; direction:rtl; align-items:stretch; gap:0; margin-top:6px;
       }
       #ch173-doc .ch173-sho-flex > .sho-col{ min-width:0; box-sizing:border-box; }
       /* تفصیل کاغذات کا خانہ SHO لائن کے دائیں کنارے سے 1cm پہلے تک پھیلتا ہے */
@@ -540,7 +542,6 @@ function _renderR173() {
     setTimeout(() => {
       _ch173MakeResizable();
       _ch173SizeRotated();
-      if (typeof dioBindEditor === 'function') dioBindEditor(document.getElementById('ch173-doc'));
       _ch173BindOverflow();
       _ch173Overflow();
       window.addEventListener('resize', _ch173SizeRotated);
@@ -910,7 +911,7 @@ function _printR173() {
            align-items:stretch → دونوں کالم ہمیشہ ایک جتنے اونچے؛
            justify-content:space-between → نیچے والا SHO ہمیشہ سب سے نیچے،
            یعنی کالم 1 بڑھے تو نیچے والا SHO بھی اُسی کے ساتھ نیچے جاتا ہے۔ */
-        .ch173-sho-flex{ display:flex; direction:rtl; align-items:stretch; gap:1cm; margin-top:6px; }
+        .ch173-sho-flex{ display:flex; direction:rtl; align-items:stretch; gap:0; margin-top:6px; }
         .ch173-sho-flex > .sho-col{ min-width:0; box-sizing:border-box; }
         .ch173-sho-flex > .sho-papers{ flex:1 1 auto; }
         .ch173-sho-flex > .sho-cell{ flex:0 0 auto; }
@@ -972,7 +973,8 @@ function _printR173() {
 // Open report 173 with a specific type pre-selected (from dropdown)
 async function openReport173WithType(type, _fromTab) {
   // Full-page view tab (har report type apna tab)
-  if (!_fromTab && typeof _dioOpenDocTab === 'function') _dioOpenDocTab('r173:' + (type||'mukammal'));
+  // SIRF AIK tab — har qism ka alag tab banne se "fake" report khulti thi
+  if (!_fromTab && typeof _dioOpenDocTab === 'function') _dioOpenDocTab('r173');
   await openReport173(_misalCaseId || (typeof currentCaseId !== 'undefined' ? currentCaseId : null));
   _r173Type = type || 'mukammal';
   // Fehrist ka nishan saaf — warna form ki bajaye fehrist khul jati hai
@@ -1317,6 +1319,41 @@ function _ch173DocFont(bs) {
   return (n && !isNaN(n)) ? n : R173_FONT_DEFAULT;
 }
 
+// ═══ Chuni hui jagah YAAD rakho ═══
+// Toolbar ke select/button par tap karte hi contenteditable se focus hat jata
+// hai aur chuna hua matn zaya ho jata hai — isi liye font size lagta hi nahi
+// tha aur dropdown wapas purani qeemat par palat jata tha. Yahan hum aakhri
+// selection mehfooz rakhte hain aur amal se pehle wapas laga dete hain.
+let _ch173Range = null;
+
+function _ch173SaveRange() {
+  const doc = document.getElementById('ch173-doc');
+  if (!doc) return;
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+  const r = sel.getRangeAt(0);
+  if (doc.contains(r.commonAncestorContainer)) _ch173Range = r.cloneRange();
+}
+window._ch173SaveRange = _ch173SaveRange;
+
+function _ch173RestoreRange() {
+  const doc = document.getElementById('ch173-doc');
+  if (!doc || !_ch173Range) return false;
+  if (!doc.contains(_ch173Range.commonAncestorContainer)) { _ch173Range = null; return false; }
+  try {
+    // Jis khane mein selection hai usay focus do, warna execCommand kaam nahi karta
+    let n = _ch173Range.commonAncestorContainer;
+    if (n.nodeType === 3) n = n.parentElement;
+    const host = n && n.closest ? n.closest('[contenteditable="true"]') : null;
+    if (host) host.focus({ preventScroll: true });
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(_ch173Range);
+    return true;
+  } catch(_) { return false; }
+}
+window._ch173RestoreRange = _ch173RestoreRange;
+
 // Chune hue matn ko <span> mein lapet do (font size aur format painter dono ke liye).
 // execCommand('fontSize') sirf 1–7 leta hai, is liye size=7 laga kar un <font> tags
 // ko foran <span> se badal dete hain — phir un par koi bhi style lagai ja sakti hai.
@@ -1366,7 +1403,11 @@ window._ch173FontToDoc = _ch173FontToDoc;
 function _ch173SetFont(val) {
   const pt = parseFloat(val);
   if (!pt || isNaN(pt)) return;
+  _ch173RestoreRange();                        // chuna hua matn wapas lagao
+  const _fs = document.getElementById('ch173-font-sel');
+  if (_fs) _fs.value = String(pt);             // dropdown wapas na palte
   if (_ch173FontToSelection(pt)) {
+    _ch173SaveRange();
     try { _r173Dirty = true; } catch(_) {}
     return;
   }
@@ -1380,8 +1421,11 @@ function _ch173SyncFontSel() {
   const doc = document.getElementById('ch173-doc');
   const selEl = document.getElementById('ch173-font-sel');
   if (!doc || !selEl) return;
+  // Dropdown khud khula ho to us ki qeemat mat badlo (warna wapas palat jati hai)
+  if (document.activeElement === selEl) return;
   const sel = window.getSelection();
   if (!sel || !sel.rangeCount || !sel.anchorNode || !doc.contains(sel.anchorNode)) return;
+  _ch173SaveRange();
   let node = sel.anchorNode;
   if (node.nodeType === 3) node = node.parentElement;
   if (!node) return;
@@ -1427,6 +1471,7 @@ function _ch173BrushCopy() {
 // Naqal ki hui formatting chune hue matn par lagao
 function _ch173BrushPaint() {
   if (!_ch173Brush) return false;
+  _ch173RestoreRange();
   const spans = _ch173WrapSelection();
   if (!spans.length) return false;
   spans.forEach(s => {
@@ -1463,6 +1508,7 @@ window._ch173BrushOff = _ch173BrushOff;
 // Button par click / double click
 function _ch173BrushClick(sticky) {
   if (_ch173BrushMode && !sticky) { _ch173BrushOff(); return; }   // dobara click = band
+  _ch173RestoreRange();
   const b = _ch173BrushCopy();
   if (!b) {
     if (typeof showToast === 'function') showToast('ℹ️ پہلے اُس متن پر کلک کریں جس کی فارمیٹنگ نقل کرنی ہے', 'info');
@@ -1497,7 +1543,9 @@ function _ch173BindBrush() {
 window._ch173BindBrush = _ch173BindBrush;
 
 function _ch173Fmt(cmd) {
+  _ch173RestoreRange();
   try { document.execCommand(cmd, false, null); } catch(_) {}
+  _ch173SaveRange();
 }
 // Purana naam bhi chalta rahe (kahin aur se pukara ja raha ho to)
 function _ch173FontStep(dir) {
@@ -1657,46 +1705,26 @@ async function _r173PickVer(version, type) {
 }
 window._r173PickVer = _r173PickVer;
 
-// ➕ نیا چالان — پہلے قسم/ہیڈ/ورژن چنیں
+// ➕ نیا چالان — koi card/modal NAHI. Seedha khali فارم poore safhe par.
+// (قسم / ہیڈ / ورژن — teeno ab upar wali fixed toolbar mein hain.)
 function _r173NewDoc(isIkhraj) {
-  const heads = R173_HEADS.concat(R173_IKHRAJ_HEADS);
-  const types = R173_TYPES;
-  const body = `
-    <div style="direction:rtl;">
-      <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">قسم</label>
-      <select id="r173-new-type" class="form-input" style="margin-bottom:12px;">
-        ${types.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}
-      </select>
-      <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">ہیڈ / عنوان</label>
-      <select id="r173-new-head" class="form-input" style="margin-bottom:12px;">
-        ${heads.map(h => `<option value="${esc(h)}">${esc(h)}</option>`).join('')}
-      </select>
-      <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;">ورژن</label>
-      <select id="r173-new-ver" class="form-input">
-        <option value="fir">FIR</option>
-        <option value="cross_version">کراس ورژن</option>
-      </select>
-    </div>`;
-  openModal(isIkhraj ? 'نئی رپورٹ (عدم پتہ / اخراج)' : 'نیا چالان', body,
-    `<div style="display:flex;gap:8px;direction:rtl;">
-       <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-       <button class="btn btn-primary" onclick="_r173CreateDoc()">کھولیں</button>
-     </div>`);
+  _r173DocId    = null;                      // naya record
+  _r173Head     = '';                        // ہیڈ toolbar se chunenge
+  _r173ShowList = false;                     // fehrist nahi — فارم
+  const t = isIkhraj ? 'adampata' : 'mukammal';
+  _r173Type = t;
+  // Mojooda khali فارم dikhane ke liye purana mehfooz data saaf karo
+  try {
+    let k = t;
+    if (R173_BLANK_TYPES.includes(t)) k = t + '::' + _ch173Version;
+    delete _r173Records[k];
+  } catch(_) {}
+  if (typeof openReport173WithType === 'function') openReport173WithType(t);
 }
 window._r173NewDoc = _r173NewDoc;
 
-async function _r173CreateDoc() {
-  const type = document.getElementById('r173-new-type')?.value || 'mukammal';
-  const head = document.getElementById('r173-new-head')?.value || '';
-  const ver  = document.getElementById('r173-new-ver')?.value || 'fir';
-  closeModal();
-  _r173DocId    = null;          // نیا ریکارڈ
-  _r173Head     = head;
-  _ch173Version = ver;
-  _r173Type     = type;
-  _r173ShowList = false;
-  if (typeof openReport173WithType === 'function') await openReport173WithType(type);
-}
+// Purana naam bhi chalta rahe (kahin aur se pukara ja raha ho to)
+function _r173CreateDoc() { _r173NewDoc(false); }
 window._r173CreateDoc = _r173CreateDoc;
 
 const _r173Doc = (id) => _r173Docs.find(d => String(d.id) === String(id));
@@ -1782,7 +1810,7 @@ window._r173SetHead = _r173SetHead;
 
 // ═══ رپورٹ 173 ض ف کا چِپ — سیدھی فہرست کھولتا ہے (فارم نہیں) ═══
 async function openR173List() {
-  if (typeof _dioOpenDocTab === 'function') _dioOpenDocTab('r173:list');
+  if (typeof _dioOpenDocTab === 'function') _dioOpenDocTab('r173');
   await openReport173(_misalCaseId || (typeof currentCaseId !== 'undefined' ? currentCaseId : null));
   _r173ShowList = false;
   _renderR173List();
