@@ -50,6 +50,11 @@
 @media (max-width: 819px) {
   #modal-body.modal-body { display: block; }
 }
+
+/* ── لاگ اِن کارڈ کا فونٹ 14pt ── */
+.login-card, .login-card input, .login-card button, .login-card select,
+.login-card label, .login-card .login-method { font-size: 14pt; }
+.login-card .disclaimer-box, .login-card [class*="disclaimer"] { font-size: 12pt; }
 </style>
   <style>
 @font-face { font-family: "Aptos"; src: local("Aptos"), local("Segoe UI"); font-weight: 400; }
@@ -399,7 +404,7 @@ input, textarea, select { font-family: var(--font-main); }
 .login-bg-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(56,189,248,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(56,189,248,0.03) 1px, transparent 1px); background-size: 40px 40px; }
 .login-bg-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(56,189,248,0.06) 0%, transparent 70%); top: 50%; left: 50%; transform: translate(-50%,-50%); animation: glowPulse 4s ease-in-out infinite; }
 @keyframes glowPulse { 0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(1)} 50%{opacity:1;transform:translate(-50%,-50%) scale(1.1)} }
-.login-card { position: relative; z-index: 1; background: rgba(11,24,38,0.95); border: 1px solid var(--border); border-radius: 18px; padding: 24px 28px; width: 100%; max-width: 720px; margin: 0 auto; box-shadow: 0 32px 80px rgba(0,0,0,0.7); backdrop-filter: blur(20px); animation: cardSlideUp 0.5s ease; box-sizing: border-box; }
+.login-card { position: relative; z-index: 1; background: rgba(11,24,38,0.95); border: 1px solid var(--border); border-radius: 18px; padding: 24px; width: 100%; max-width: 420px; font-size: 14pt; margin: 0 auto; box-shadow: 0 32px 80px rgba(0,0,0,0.7); backdrop-filter: blur(20px); animation: cardSlideUp 0.5s ease; box-sizing: border-box; }
 @media (max-width: 768px) {
   /* P2: Mobile touch sizing — bigger tap targets, no iOS zoom */
   /* FIX1: درخواست (5C) list table — all columns centered */
