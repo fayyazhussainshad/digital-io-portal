@@ -253,7 +253,7 @@ function _renderR173() {
          matn andar <div> wrapper mein rakh kar us par lagate hain. */
       #ch173-doc .ch173-table td{ font-size:14pt; vertical-align:top; line-height:1.15; }
       /* Khane KHUD nahi phailte — sirf haath se (drag) resize hote hain */
-      #ch173-doc .ch173-table tbody td{ height:170mm; padding:0; overflow:hidden; }
+      #ch173-doc .ch173-table tbody td{ height:${_ch173Paper==='a4'?'150mm':'185mm'}; padding:0; overflow:hidden; }
       /* ASCENDING (neeche se ooper) — writing-mode Chrome mein na-qabil-e-aitbaar
          hai, is liye seedha ghumao (rotate) use karte hain. Khana relative,
          andar ka box absolute + rotate(90deg) → RTL Urdu neeche se ooper. */
@@ -1038,13 +1038,20 @@ function _printR173() {
            Pehle table agle safhe par bhi chhap jati thi (header dohra kar).
            Do wajahein: (1) browser <thead> ko har safhe par dohrata hai,
            (2) table beech se tootti thi. Ab dono band. */
+        /* Header har safhe par na dohraye (yeh browser ka default rawaiya hai) */
         .ch173-table thead{ display:table-row-group !important; }
-        .ch173-table{ page-break-inside:avoid !important; break-inside:avoid !important; }
-        .ch173-table tr, .ch173-table td, .ch173-table th{
-          page-break-inside:avoid !important; break-inside:avoid !important;
+        /* Khane ki unchai itni ke unwan + table SAB aik hi safhe par sama jaye
+           (A4 aur لیگل ke liye alag) */
+        .ch173-table tbody td{
+          height:${_ch173Paper === 'a4' ? '150mm' : '185mm'} !important;
+          max-height:${_ch173Paper === 'a4' ? '150mm' : '185mm'} !important;
+          overflow:hidden !important;
         }
-        .ch173-table tbody td{ height:170mm !important; max-height:170mm !important;
-          overflow:hidden !important; }
+        /* Khali izafi khane fazool safhe na banayen */
+        .ch173-cont:empty{ display:none !important; }
+        .sho-papers-body:empty{ min-height:0 !important; }
+        /* Safhe ki lambai zabardasti na barhe */
+        #ch173-doc{ height:auto !important; }
         .colgrip,.rowgrip,.acc-pick,.no-print,button,select{ display:none !important; }
         /* Print: poori chaudai istemal karo — koi fixed inch nahi, warna
            browser safha sikor kar dono taraf bari khali jagah chhor deta hai */
