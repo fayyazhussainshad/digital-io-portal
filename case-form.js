@@ -247,15 +247,6 @@ function buildCrossFields(c) {
 }
 
 
-function toggleCrossVersion() {
-  const cb = document.getElementById('cf-cross-version');
-  const fields = document.getElementById('cross-version-fields');
-  if (!cb || !fields) return;
-  cb.checked = !cb.checked;
-  fields.style.display = cb.checked ? 'block' : 'none';
-}
-
-
 function sectionTag(sectionStr) {
   return `<div style="display:inline-flex;align-items:center;gap:6px;background:var(--nav-active);border:1px solid var(--accent);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--accent);">
     <b>${sectionStr}</b>

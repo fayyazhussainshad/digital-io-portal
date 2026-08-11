@@ -224,17 +224,3 @@ async function _deleteFirCopy(id) {
 }
 
 // ── PRINT ONE COPY (no app UI) ────────────────────────────────
-function _printFirCopy(url, name) {
-  const isImg = url.startsWith('data:image') || /-(jpg|jpeg|png|webp)$/i.test(name||'') || /\.(jpg|jpeg|png|webp)$/i.test(name||'');
-  if (isImg) {
-    const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>${esc(name||'فوٹو کاپی')}</title>
-      <style>@page{size:A4;margin:8mm}html,body{margin:0;padding:0;height:auto;}img{max-width:100%;max-height:98vh;display:block;margin:0 auto;}</style></head>
-      <body><img src="${esc(url)}"></body></html>`;
-    if (typeof dioPrint === 'function') dioPrint(html);
-    else { const w = window.open('','_blank'); w.document.write(html); w.document.close(); setTimeout(()=>{w.print();},400); }
-  } else {
-    // PDF — app ke ANDAR kholo (nayi tab mein data: URL Chrome block karta hai)
-    if (typeof _dioViewFile === 'function') _dioViewFile(url, name);
-  }
-}
-

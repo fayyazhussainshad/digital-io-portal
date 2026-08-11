@@ -187,24 +187,6 @@ function _ddPick(ddId, docId) {
 document.addEventListener('click', () => _closeAllDD());
 
 // ── SET SHO / DSP NAME ────────────────────────────────────────
-async function _saveMisalOfficer(type, caseId) {
-  const name = document.getElementById('misal-officer-name')?.value.trim()||'';
-  const field = type === 'sho' ? 'sho_name' : 'dsp_name';
-  try {
-    await supabaseClient.from('cases').update({ [field]: name }).eq('id', caseId);
-    if (_misalCase) _misalCase[field] = name;
-    // Update workspace cache too
-    if (window._casesCache) {
-      const cc = window._casesCache.find(x=>x.id===caseId);
-      if (cc) cc[field] = name;
-    }
-    closeModal();
-    showToast('✅ '+(type==='sho'?'SHO':'DSP/SDPO')+' کا نام محفوظ', 'success');
-    _refreshMisalBar();
-  } catch(e) { showToast('❌ '+e.message,'error'); }
-}
-
-// ── CONFIRMATION: ADD ─────────────────────────────────────────
 async function _doAddMisalDoc(docId) {
   const def = MISAL_CASE_DOCS.find(d => d.id === docId);
   if (!def || !_misalCaseId) return;
@@ -229,30 +211,6 @@ async function _doAddMisalDoc(docId) {
 }
 
 // ── REMOVE FROM CASE ──────────────────────────────────────────
-async function _doRemoveMisalDoc(docId) {
-  const def = MISAL_CASE_DOCS.find(d => d.id === docId);
-  if (!def || !_misalCaseId) return;
-  try {
-    await supabaseClient.from('case_documents')
-      .delete()
-      .eq('case_id', _misalCaseId)
-      .eq('document_type', docId);
-    delete _misalDocs[docId];
-    _refreshMisalBar();
-    _refreshMisalSidebar();
-    // Clear editor if this doc was open
-    const area = document.getElementById('workspace-editor-area');
-    if (area) area.innerHTML = `
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">
-        <div style="font-size:40px;margin-bottom:12px;">📂</div>
-        <div style="font-size:14px;font-weight:600;">دستاویز ہٹا دی گئی</div>
-        <div style="font-size:12px;margin-top:6px;">بائیں طرف سے کوئی دستاویز منتخب کریں</div>
-      </div>`;
-    showToast(`🗑️ ${def.name} ہٹا دی گئی`, 'info');
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
-}
-
-// ── OPEN EDITOR ───────────────────────────────────────────────
 function _openMisalEditor(docId, _fromTab) {
   // Full-page view: dastawez poore page par khulti hai, chips background mein.
   // _fromTab=true tab aata hai jab tab-switch se dobara render ho raha ho.
@@ -410,50 +368,6 @@ function _renderMisalEditor(docId, def) {
 }
 
 // ── انڈکس نقل مسل — AUTO-FILL (ملزمان + ضمنیاں) ─────────────────
-function _insertCustomField(editorId) {
-  const label = document.getElementById('cf-label')?.value.trim();
-  const type  = document.getElementById('cf-type')?.value;
-  if (!label) { showToast('⚠️ خانے کا نام لکھیں', 'error'); return; }
-  const ed = document.getElementById(editorId);
-  if (!ed) return;
-
-  let fieldHtml = '';
-  const placeholders = { cnic:'00000-0000000-0', phone:'0000-0000000', date:'', line:'', area:'' };
-  if (type === 'area') {
-    fieldHtml = `<div style="margin:10px 0;"><b>${label}:</b><div contenteditable="true" style="min-height:60px;border:1px solid #ccc;border-radius:4px;padding:8px;margin-top:4px;">&nbsp;</div></div>`;
-  } else {
-    const dir = (type==='cnic'||type==='phone'||type==='date') ? 'ltr' : 'rtl';
-    const ph = placeholders[type] || '';
-    fieldHtml = `<div style="margin:8px 0;display:flex;gap:8px;align-items:center;"><b style="white-space:nowrap;">${label}:</b><span contenteditable="true" style="flex:1;border-bottom:1px solid #999;min-height:20px;padding:2px 6px;direction:${dir};display:inline-block;" data-ph="${ph}">&nbsp;</span></div>`;
-  }
-  // Insert at end of editor
-  ed.innerHTML += fieldHtml;
-  closeModal();
-  showToast('✅ خانہ شامل ہو گیا', 'success');
-}
-
-function _insertCustomTable(editorId) {
-  const cols = (document.getElementById('ct-cols')?.value || '').split('،').map(c=>c.trim()).filter(Boolean);
-  const rows = parseInt(document.getElementById('ct-rows')?.value) || 3;
-  if (!cols.length) { showToast('⚠️ کم از کم ایک کالم لکھیں', 'error'); return; }
-  const ed = document.getElementById(editorId);
-  if (!ed) return;
-
-  let table = '<table style="width:100%;border-collapse:collapse;margin:12px 0;"><thead><tr>';
-  cols.forEach(c => { table += `<th style="border:1px solid #999;padding:6px;background:#f0f0f0;">${c}</th>`; });
-  table += '</tr></thead><tbody>';
-  for (let r = 0; r < rows; r++) {
-    table += '<tr>';
-    cols.forEach(() => { table += '<td style="border:1px solid #999;padding:8px;" contenteditable="true">&nbsp;</td>'; });
-    table += '</tr>';
-  }
-  table += '</tbody></table>';
-  ed.innerHTML += table;
-  closeModal();
-  showToast('✅ ٹیبل شامل ہو گیا', 'success');
-}
-
-// ── MISAL TOOLBAR HELPERS ─────────────────────────────────────
 function _mToggleTablePicker() {
   const p = document.getElementById('misal-table-picker');
   if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none';

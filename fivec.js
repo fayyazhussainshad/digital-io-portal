@@ -189,9 +189,6 @@ function confirmDelete5C(id,sn){if(!confirm(`Delete Application #${sn} and ALL i
 // ── RESPONSE WRITER ──
 // Saved selection — restored after clicking toolbar selects so text stays highlighted
 let _r5cSel=null;
-function _saveSel5C(){const s=window.getSelection();if(s&&s.rangeCount)_r5cSel=s.getRangeAt(0).cloneRange();}
-function _restoreSel5C(){if(!_r5cSel)return;const s=window.getSelection();s.removeAllRanges();s.addRange(_r5cSel);}
-
 async function open5CResponse(id){
   const app=await getApplication5C(id);if(!app){showToast('❌ Not found','error');return;}
   const o=currentOfficer||{};
@@ -347,127 +344,10 @@ async function open5CResponse(id){
 }
 
 // ── EDITOR COMMANDS ──
-function exec5C(cmd){document.execCommand(cmd,false,null);}
-
-// ── TABLE PICKER (5-C) ────────────────────────────────────────
 function _toggleTablePicker5C(){
   const p=document.getElementById('r5-table-picker');
   if(p)p.style.display=p.style.display==='none'?'block':'none';
 }
-function _hoverTable5C(r,c){
-  document.querySelectorAll('#r5-table-picker .r5tgc').forEach(el=>{
-    const on=+el.dataset.r<=r&&+el.dataset.c<=c;
-    el.style.background=on?'rgba(56,189,248,0.3)':'';
-    el.style.borderColor=on?'#0ea5e9':'#bbb';
-  });
-  const lbl=document.getElementById('r5-table-label');
-  if(lbl)lbl.textContent=r+' rows × '+c+' cols';
-}
-function _insertTable5C(rows,cols){
-  const p=document.getElementById('r5-table-picker');
-  if(p)p.style.display='none';
-  const paper=document.getElementById('a4-paper');
-  if(!paper)return;
-  paper.focus();
-  let html='<table style="border-collapse:collapse;width:100%;margin:8px 0;"><tbody>';
-  for(let r=0;r<rows;r++){
-    html+='<tr>';
-    for(let c=0;c<cols;c++)
-      html+='<td style="border:1px solid #999;padding:6px 10px;min-width:50px;" contenteditable="true">&nbsp;</td>';
-    html+='</tr>';
-  }
-  html+='</tbody></table><br>';
-  document.execCommand('insertHTML',false,html);
-}
-
-// ── PAGE LAYOUT (5-C) ─────────────────────────────────────────
-function _setPageSize5C(val){
-  const paper=document.getElementById('a4-paper');
-  if(!paper)return;
-  const[w,h]=val.split('|');
-  paper.style.width=w;paper.style.minHeight=h;
-}
-function _setMargins5C(val){
-  const paper=document.getElementById('a4-paper');
-  if(paper)paper.style.padding=val;
-}
-let _r5BorderOn=false;
-function _toggleBorder5C(){
-  const paper=document.getElementById('a4-paper');
-  if(!paper)return;
-  _r5BorderOn=!_r5BorderOn;
-  paper.style.outline=_r5BorderOn?'2px solid #333':'none';
-  const btn=document.getElementById('r5-border-btn');
-  if(btn)btn.style.color=_r5BorderOn?'#0ea5e9':'';
-}
-
-// Close table picker on outside click
-document.addEventListener('click',e=>{
-  const p=document.getElementById('r5-table-picker');
-  if(p&&!p.contains(e.target)&&!e.target.closest('[onclick*="_toggleTablePicker5C"]'))p.style.display='none';
-  const mp=document.getElementById('misal-table-picker');
-  if(mp&&!mp.contains(e.target)&&!e.target.closest('[onclick*="_mToggleTablePicker"]'))mp.style.display='none';
-});
-
-function applyFont5C(fontVal){
-  const sel=window.getSelection();
-  if(sel&&sel.rangeCount&&!sel.isCollapsed){
-    const span=document.createElement('span');span.style.fontFamily=fontVal;
-    span.appendChild(sel.getRangeAt(0).extractContents());
-    sel.getRangeAt(0).insertNode(span);
-  }else{const p=document.getElementById('a4-paper');if(p)p.style.fontFamily=fontVal;}
-}
-
-function applyFontSize5C(sizeVal){
-  const sel=window.getSelection();
-  if(sel&&sel.rangeCount&&!sel.isCollapsed){
-    const span=document.createElement('span');span.style.fontSize=sizeVal;
-    span.appendChild(sel.getRangeAt(0).extractContents());
-    sel.getRangeAt(0).insertNode(span);
-  }else{const p=document.getElementById('a4-paper');if(p)p.style.fontSize=sizeVal;}
-}
-
-function setLineSpacing5C(val){
-  // Apply to the paper globally (affects all paragraphs)
-  const p=document.getElementById('a4-paper');
-  if(p)p.style.lineHeight=val;
-}
-
-// Fix 3 — Justify toggles OFF if already applied; other alignments just apply
-function align5C(cmd){
-  if(cmd==='justifyFull'&&document.queryCommandState&&document.queryCommandState('justifyFull')){
-    document.execCommand('justifyRight',false,null); // toggle off → back to RTL default
-  }else{
-    document.execCommand(cmd,false,null);
-  }
-}
-
-function indent5C(dir){
-  const sel=window.getSelection();if(!sel.rangeCount)return;
-  let node=sel.getRangeAt(0).commonAncestorContainer;
-  if(node.nodeType===3)node=node.parentElement;
-  const block=node.closest&&node.closest('p,div,h1,h2,h3,h4,li');
-  if(!block||block.id==='a4-paper'){document.execCommand(dir==='in'?'indent':'outdent',false,null);return;}
-  const rtl=window.getComputedStyle(block).direction==='rtl';
-  const prop=rtl?'paddingRight':'paddingLeft';
-  const cur=parseInt(block.style[prop]||'0');
-  block.style[prop]=Math.max(0,Math.min(cur+(dir==='in'?24:-24),200))+'px';
-}
-
-function setParaDir5C(dir){
-  const sel=window.getSelection();if(!sel.rangeCount)return;
-  let node=sel.getRangeAt(0).commonAncestorContainer;
-  if(node.nodeType===3)node=node.parentElement;
-  const block=node.closest&&node.closest('p,div,h1,h2,h3,h4,li,blockquote');
-  if(block&&block.id!=='a4-paper'){
-    block.setAttribute('dir',dir);block.style.direction=dir;
-    block.style.textAlign=dir==='rtl'?'right':'left';
-  }else{
-    document.execCommand('insertHTML',false,`<div dir="${dir}" style="direction:${dir};text-align:${dir==='rtl'?'right':'left'};">\u200B</div>`);
-  }
-}
-
-// ── SAVE / DOWNLOAD / PRINT ──
 async function save5CResponse(id){
   const html=document.getElementById('a4-paper').innerHTML;
   try{

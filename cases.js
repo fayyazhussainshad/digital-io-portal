@@ -640,22 +640,6 @@ function _daysSinceReg(c) {
   return Math.floor((Date.now() - reg.getTime()) / (1000*60*60*24));
 }
 
-function _interim173Alert(c) {
-  const days = _daysSinceReg(c);
-  // Only show if 10+ days passed AND case not yet completed/challaned
-  const doneStatuses = ['complete','incomplete','challan512','cancel'];
-  if (days < 10 || doneStatuses.includes(c.status)) return '';
-  return `
-  <div style="background:rgba(245,158,11,0.1);border:1px solid var(--amber);border-radius:10px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;direction:rtl;">
-    <div style="font-size:20px;">⏰</div>
-    <div style="flex:1;min-width:200px;">
-      <div style="font-size:13px;font-weight:700;color:var(--amber);">عبوری چالان 173 ض ف درکار</div>
-      <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">اس مقدمے کو ${days} دن ہو چکے ہیں — عبوری رپورٹ تیار کریں</div>
-    </div>
-    <button class="btn btn-primary btn-sm" onclick='_generateInterim173(${JSON.stringify({id:c.id,fir_number:c.fir_number,section_of_law:c.section_of_law,complainant:c.complainant,fir_date:c.fir_date,case_station:c.case_station,case_district:c.case_district}).replace(/'/g,"&#39;")})'>📄 عبوری 173 تیار کریں</button>
-  </div>`;
-}
-
 function _generateInterim173(c) {
   const o = currentOfficer || {};
   const days = _daysSinceReg(c);
@@ -687,40 +671,6 @@ function _generateInterim173(c) {
   showToast('📄 عبوری 173 رپورٹ تیار — پرنٹ کریں یا محفوظ کریں', 'success', 4000);
 }
 
-function _prosecutionValidator(c) {
-  // Checklist of court-required items
-  const checks = [
-    { ok: !!c.fir_number,        label: 'FIR نمبر' },
-    { ok: !!c.section_of_law,    label: 'دفعات قانون' },
-    { ok: !!c.complainant,       label: 'مدعی کا نام' },
-    { ok: !!(c.complainant_cnic),label: 'مدعی شناختی کارڈ' },
-    { ok: !!c.fir_date,          label: 'تاریخ اندراج' },
-    { ok: c.mulzman_type==='maloom' ? !!c.accused_name || true : true, label: 'ملزمان کی تفصیل' },
-  ];
-
-  const missing = checks.filter(x => !x.ok);
-  const allGood = missing.length === 0;
-
-  // Special reminder: if challan complete, remind about conviction/saza slip
-  const sazaReminder = c.status === 'complete';
-
-  return `
-  <div style="background:${allGood ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)'};border-bottom:1px solid var(--border);padding:10px 16px;direction:rtl;">
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <div style="font-size:18px;">${allGood ? '🟢' : '🔴'}</div>
-      <div style="flex:1;min-width:200px;">
-        <div style="font-size:12px;font-weight:700;color:${allGood ? 'var(--green)' : 'var(--red)'};">
-          ${allGood ? 'مقدمہ عدالت کے لیے تیار ہے' : `نامکمل — ${missing.length} چیزیں درکار ہیں`}
-        </div>
-        ${!allGood ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px;">کمی: ${missing.map(m=>m.label).join('، ')}</div>` : ''}
-      </div>
-      <button class="btn btn-secondary btn-sm" onclick='_suggest161Questions(${JSON.stringify({id:c.id,section_of_law:c.section_of_law}).replace(/'/g,"&#39;")})' style="flex-shrink:0;">🤖 161 سوالات</button>
-    </div>
-    ${sazaReminder ? `<div style="margin-top:8px;padding:7px 10px;background:rgba(245,158,11,0.12);border-radius:6px;font-size:11px;color:var(--amber);font-weight:600;">⚖️ یاد دہانی: چالان مکمل ہو چکا — سزا/رہائی کی سلپ (Conviction Slip) درج کرنا نہ بھولیں</div>` : ''}
-  </div>`;
-}
-
-// ── CASE STATUS PIPELINE (visual progress) ────────────────────
 function _suggest161Questions(c) {
   const sections = (c.section_of_law || '').replace(/\s/g, '');
   // Find matching crime type by section
@@ -894,42 +844,6 @@ function printThisDoc(docName) {
   const editor = document.getElementById('doc-template-editor');
   if (!editor) return;
   printContent(`<h2>${docName}</h2>${editor.innerHTML}`, docName + ' — Digital IO');
-}
-
-function renderDetailsTab(c) {
-  return `<div class="case-tab-content">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;direction:rtl;margin-bottom:16px;">
-      <div class="card">
-        <div class="card-title">📋 FIR Information</div>
-        ${[['مقدمہ نمبر',c.fir_number],['تاریخ اندراج مقدمہ',formatDate(c.fir_date)],['تاریخ وقوعہ',formatDate(c.occurrence_date)],['Section of Law',c.section_of_law||'—'],['Offence',c.offence_type||'—'],['Status',STATUS_LABELS[c.status]||c.status],['Position',c.position==='court'?'⚖️ In Court':'⏳ Pending'],['FIR Writer',c.fir_writer||'—'],['Complaint Sender',c.complaint_sender||'—'],['SHO',c.sho||'—'],['SDPO',c.sdpo||'—']].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
-      </div>
-      <div class="card">
-        <div class="card-title">👤 Complainant Details</div>
-        ${[['Complainant Name',c.complainant||'—'],['CNIC',c.complainant_cnic||'—'],['Cell No.',c.complainant_cell||'—'],['Profession',c.complainant_profession||'—']].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
-        ${c.notes?`<div style="margin-top:12px;padding:10px;background:var(--bg-tertiary);border-radius:8px;font-size:12px;color:var(--text-secondary);direction:auto;"><b style="color:var(--accent);">تفتیشی نوٹس:</b><br>${esc(c.notes)}</div>`:''}
-      </div>
-    </div>
-    ${c.is_cross_version ? `
-    <div class="card" style="border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.03);margin-bottom:16px;">
-      <div class="card-title" style="color:var(--red);">⚔️ Cross Version — مخالف مقدمہ</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;direction:rtl;">
-        ${[
-          ['Cross FIR Number', c.cross_fir_number||'—'],
-          ['Cross FIR Date', formatDate(c.cross_fir_date)],
-          ['Cross Complainant', c.cross_complainant||'—'],
-          ['Cross CNIC', c.cross_complainant_cnic||'—'],
-          ['Cross Cell', c.cross_complainant_cell||'—'],
-          ['Cross Profession', c.cross_complainant_profession||'—'],
-          ['Cross Section', c.cross_section_of_law||'—'],
-          ['Cross Offence', c.cross_offence_type||'—'],
-          ['Cross FIR Writer', c.cross_fir_writer||'—'],
-        ].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`).join('')}
-      </div>
-    </div>` : ''}
-    <div style="text-align:right;">
-      <button class="btn btn-primary" onclick="openEditCaseModal('${c.id}')">✏️ Edit Case Details</button>
-    </div>
-  </div>`;
 }
 
 function renderEvidenceTab(c, ev) {
@@ -1150,8 +1064,6 @@ async function wevSave(caseId, firNumber) {
     if (tabContent) tabContent.innerHTML = renderEvidenceTab(c, ev);
   } catch(err) { showToast('❌ ' + err.message, 'error'); }
 }
-
-
 
 
 // ── BACK / DELETE ──

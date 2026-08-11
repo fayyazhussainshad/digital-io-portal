@@ -314,22 +314,6 @@ async function deleteReminder(id) {
 }
 
 
-async function getDashboardStats() {
-  const cases = await getCases();
-  const rems = await getReminders();
-  return {
-    total:    cases.length,
-    complete: cases.filter(c=>c.status==='complete').length,
-    incomplete:cases.filter(c=>c.status==='incomplete').length,
-    under:    cases.filter(c=>c.status==='under').length,
-    untrace:  cases.filter(c=>c.status==='untrace').length,
-    cancel:   cases.filter(c=>c.status==='cancel').length,
-    challan512:cases.filter(c=>c.status==='challan512').length,
-    pendingReminders:rems.filter(r=>!r.is_done).length,
-  };
-}
-
-
 async function updateOfficerProfile(updates) {
   const oid = await getOfficerId();
   const { data, error } = await supabaseClient.from('officers').update(updates).eq('id',oid).select().single();

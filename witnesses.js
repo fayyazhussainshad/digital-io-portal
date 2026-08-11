@@ -66,30 +66,6 @@ function _renderWitnessesArea() {
 
 // Built-in case persons who are automatically considered witnesses:
 // مدعی (complainant), محرر/FIR writer, مضروب/مغوی/victim if recorded on the case
-function _renderAutoWitnesses() {
-  const c = (typeof window._workspaceCase !== 'undefined' && window._workspaceCase) ? window._workspaceCase : null;
-  if (!c) return '';
-  const auto = [];
-  if (c.complainant) auto.push({ role:'مدعی', name:c.complainant, cnic:c.complainant_cnic, cell:c.complainant_cell });
-  if (c.fir_writer)  auto.push({ role:'محرر / مندرج کنندہ FIR', name:c.fir_writer });
-  if (c.victim_name) auto.push({ role:'مضروب / متاثرہ', name:c.victim_name });
-  if (!auto.length) return '';
-  return `
-  <div style="background:rgba(56,189,248,0.06);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:12px;">
-    <div style="font-size:11px;color:var(--text-muted);font-weight:700;margin-bottom:6px;">📌 مقدمے کے فریقین (خودکار گواہان — مدعی، محرر، مضروب وغیرہ):</div>
-    ${auto.map(a=>`
-      <div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;border-bottom:1px solid var(--border);">
-        <span style="background:var(--accent-glow);color:var(--accent);border-radius:8px;padding:1px 8px;font-size:10px;white-space:nowrap;">${a.role}</span>
-        <span style="font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">${esc(a.name)}</span>
-        ${a.cnic?`<span style="color:var(--text-muted);direction:ltr;">${esc(a.cnic)}</span>`:''}
-        ${a.cell?`<span style="color:var(--text-muted);direction:ltr;">${esc(a.cell)}</span>`:''}
-      </div>`).join('')}
-    <div style="font-size:10px;color:var(--text-muted);margin-top:6px;">یہ خودبخود گواہان کی فہرست میں شامل ہیں۔ مزید گواہ نیچے شامل کریں۔</div>
-    <button class="btn btn-secondary btn-sm" style="margin-top:8px;" onclick='_saveAutoWitnesses(${JSON.stringify(auto).replace(/'/g,"&#39;")})'>📋 ان سب کو گواہان میں محفوظ کریں</button>
-  </div>`;
-}
-
-// Save the auto-detected parties (مدعی/محرر/مضروب) as actual witness records
 async function _saveAutoWitnesses(auto) {
   if (!auto || !auto.length) return;
   try {

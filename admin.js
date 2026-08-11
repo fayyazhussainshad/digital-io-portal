@@ -712,17 +712,6 @@ function _adminPrintReport() {
 }
 
 // ── LOG ACTIVITY HELPER (call from other modules) ─────────────
-async function logActivity(action, details) {
-  try {
-    const oid = await getOfficerId();
-    if (!oid) return;
-    await supabaseClient.from('station_activity').insert({
-      officer_id: oid, action, details: details || {}
-    });
-  } catch(_) {}
-}
-
-// ── SUBSCRIPTION MANAGEMENT ───────────────────────────────────
 async function _renderSubsTab() {
   const el = document.getElementById('admin-tab-content');
   if (!el) return;

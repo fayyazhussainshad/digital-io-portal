@@ -78,14 +78,6 @@ function hasRole(minRole) {
   return roleLevel() >= (ROLE_LEVELS[minRole] || 99);
 }
 // Supervisors+ can see team data, others only their own
-function canViewTeam() {
-  return hasRole('supervisor');
-}
-
-// ── BUTTON/PAGE USAGE TRACKING (admin analytics) ──────────────
-let _usageBuffer = {};
-let _usageTimer = null;
-
 function _trackUsage(page) {
   if (!page) return;
   _usageBuffer[page] = (_usageBuffer[page] || 0) + 1;
@@ -636,28 +628,6 @@ function _updateTopbarShoDsp(o) {
   if (dspEl) { dspEl.style.display='block'; dspEl.innerHTML=`<span style="color:var(--accent);font-weight:700;">DSP/SDPO</span>`; }
 }
 
-function _editTopbarField(field) {
-  const o = currentOfficer||{};
-  const isSho = field==='sho';
-  const label = isSho?'SHO کا نام':'DSP/SDPO کا نام';
-  const current = isSho?(o.sho_name||''):(o.dsp_name||'');
-  // SHO ke liye عہدہ ka dropdown — sirf do options (SI/SHO, I/SHO)
-  const rankSel = isSho ? `
-    <label style="font-size:12px;color:var(--text-muted);display:block;margin:10px 0 4px;">عہدہ</label>
-    <select class="form-input" id="topbar-edit-rank">
-      <option value="SI/SHO" ${ (o.sho_rank||'SI/SHO')==='SI/SHO' ? 'selected':'' }>SI/SHO</option>
-      <option value="I/SHO"  ${ (o.sho_rank||'')==='I/SHO'  ? 'selected':'' }>I/SHO</option>
-    </select>` : '';
-  openModal(label,
-    `<input class="form-input" id="topbar-edit-val" value="${current}" placeholder="${label}" dir="auto">${rankSel}`,
-    `<div style="display:flex;gap:8px;direction:rtl;">
-      <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-      <button class="btn btn-primary" onclick="_saveTopbarField('${field}')">💾 محفوظ</button>
-    </div>`
-  );
-  setTimeout(()=>document.getElementById('topbar-edit-val')?.focus(),100);
-}
-
 async function _saveTopbarField(field) {
   const val = document.getElementById('topbar-edit-val')?.value.trim()||'';
   const rank = document.getElementById('topbar-edit-rank')?.value || '';
@@ -781,10 +751,6 @@ async function _checkDueReminders() {
   } catch(_) {}
 }
 
-function checkNotifications() { _checkDueReminders(); }
-
-// ── BUTTON USAGE LOGGER ───────────────────────────────────────
-const _usageKey = 'dio_btn_usage';
 function _logUsage(label) {
   try {
     const d = JSON.parse(localStorage.getItem(_usageKey)||'{}');
@@ -821,32 +787,6 @@ function voiceType(targetId, btnId) {
   rec.start();
 }
 
-function voiceTypeArea(editorId, btnId) {
-  if (!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)) {
-    showToast('⚠️ آواز کی سہولت دستیاب نہیں','warn'); return;
-  }
-  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
-  const rec = new SR();
-  rec.lang = 'ur-PK'; rec.continuous = true; rec.interimResults = false;
-  const btn = document.getElementById(btnId);
-  if (btn) { btn.textContent='🔴 بند کریں'; btn.onclick=()=>rec.stop(); }
-  rec.onresult = e => {
-    const el = document.getElementById(editorId);
-    if (el) { const t = e.results[e.results.length-1][0].transcript; if(el.tagName==='TEXTAREA'){el.value+=t;}else{el.innerHTML+=t;} }
-  };
-  rec.onend = () => { if(btn){btn.textContent='🎙️';} };
-  rec.start();
-}
-
-// ── AUTO FORMAT ───────────────────────────────────────────────
-// Already defined above
-
-// ── PENAL CODE SEARCH ─────────────────────────────────────────
-// NOTE: PENAL_CODES, searchPenalCodes, selectSection, removeSection, addSection
-// are defined in cases.js (which has the full detailed version with bail/punishment).
-// They were removed from here to avoid "already declared" errors.
-
-// ── THEME PICKER ──────────────────────────────────────────────
 function openThemePicker() {
   const themes = ['dark','light','forest','ocean','sunset'];
   const labels = {dark:'🌙 Dark',light:'☀️ Light',forest:'🌿 Forest',ocean:'🌊 Ocean',sunset:'🌅 Sunset'};

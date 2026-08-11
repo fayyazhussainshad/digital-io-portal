@@ -78,38 +78,6 @@ async function _gatherNotifications() {
 }
 
 // Open the notification center modal
-async function openNotificationCenter() {
-  openModal('🔔 اطلاعات', `
-    <div id="notif-center-body" style="direction:rtl;min-height:120px;">
-      <div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>
-    </div>
-  `, `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`);
-
-  const notifs = await _gatherNotifications();
-  const body = document.getElementById('notif-center-body');
-  if (!body) return;
-
-  if (!notifs.length) {
-    body.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
-      <div style="font-size:48px;margin-bottom:12px;">✅</div>
-      <div style="font-size:14px;font-family:'Jameel Noori Nastaleeq',serif;">کوئی نئی اطلاع نہیں</div>
-    </div>`;
-    return;
-  }
-
-  body.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;">
-    ${notifs.map(n => `
-      <div onclick="closeModal();${n.action}" style="display:flex;gap:10px;align-items:center;padding:10px 12px;background:var(--bg-secondary);border-radius:8px;cursor:pointer;border-right:3px solid ${n.color};">
-        <div style="font-size:18px;flex-shrink:0;">${n.icon}</div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:600;font-family:'Jameel Noori Nastaleeq',serif;">${esc(n.title.slice(0,60))}</div>
-          <div style="font-size:10px;color:var(--text-muted);">${n.subtitle || ''}${n.date ? ` · ${formatDate(n.date)}` : ''}</div>
-        </div>
-      </div>`).join('')}
-  </div>`;
-}
-
-// Update the bell badge count (called periodically)
 async function updateNotifBadge() {
   try {
     const notifs = await _gatherNotifications();

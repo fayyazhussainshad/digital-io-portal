@@ -257,25 +257,6 @@ function _zAddRow() {
 function _zBtn() {
   return 'min-width:32px;height:30px;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text-primary);cursor:pointer;font-size:14px;padding:0 7px;';
 }
-function _zFmt(cmd) {
-  const ed = document.getElementById('zimni-doc');
-  if (ed) ed.focus();
-  document.execCommand(cmd, false, null);
-}
-function _zFont(dir) {
-  const ed = document.getElementById('zimni-doc');
-  if (!ed) return;
-  ed.focus();
-  const sel = window.getSelection();
-  if (sel && sel.toString()) {
-    document.execCommand('fontSize', false, dir > 0 ? '5' : '2');
-  } else {
-    const cur = parseInt(window.getComputedStyle(ed).fontSize) || 15;
-    ed.style.fontSize = Math.max(11, Math.min(26, cur + dir*2)) + 'px';
-  }
-}
-
-// Editor khulte hi MS Word jaise auzaar (Tab, Ctrl+B/I/U)
 function _zimniBindTools() {
   try {
     const ed = document.getElementById('zimni-doc');

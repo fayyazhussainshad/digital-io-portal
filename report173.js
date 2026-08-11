@@ -912,14 +912,6 @@ function _ch173Overflow() {
   }
 }
 
-function _ch173OverflowSoon() {
-  clearTimeout(_ch173OverflowTimer);
-  _ch173OverflowTimer = setTimeout(_ch173Overflow, 250);
-}
-window._ch173Overflow = _ch173Overflow;
-
-// Khane par input/paste sunno
-// Cursor ko khane ke AAKHIR par le jao (matn behne ke baad)
 function _ch173CaretEnd(el) {
   try {
     el.focus({ preventScroll: true });

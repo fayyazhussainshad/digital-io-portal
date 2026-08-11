@@ -28,7 +28,6 @@ function _tplCatLabel(c){ return TPL_CATEGORIES[c] || 'دیگر'; }
 function _tplCatColor(c){ return TPL_CAT_COLOR[c] || '#6c757d'; }
 
 
-
 // ── PAGE RENDER ──────────────────────────────────────────────
 async function renderTemplates(container) {
   container.innerHTML = `

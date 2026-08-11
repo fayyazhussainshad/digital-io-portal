@@ -276,21 +276,6 @@ async function savePostingSettings(){
   }catch(err){ showToast('❌ '+err.message,'error'); }
 }
 
-async function savePersonalSettings(){
-  try{
-    await updateOfficerProfile({
-      personal_phone:  document.getElementById('set-personal-phone').value.trim()||null,
-      home_address:    document.getElementById('set-address').value.trim()||null,
-      emergency_contact: document.getElementById('set-emg-name').value.trim()||null,
-      emergency_phone: document.getElementById('set-emg-phone').value.trim()||null,
-    });
-    // Refresh completeness bar
-    const pct=_profilePct(currentOfficer||{});
-    showToast(`✅ Personal details saved! Profile ${pct}% complete.`,'success');
-    renderSettings(document.getElementById('page-content'));
-  }catch(err){ showToast('❌ '+err.message,'error'); }
-}
-
 function changeProfilePhoto(){
   const i=document.createElement('input');i.type='file';i.accept='image/*';
   i.onchange=e=>{
@@ -358,9 +343,6 @@ async function doChangePassword(){
 }
 
 // Keep backward-compatible alias
-async function saveProfileSettings(){ await savePostingSettings(); }
-
-// ── FONT SIZE picker (accessibility) ──────────────────────────────
 function _pickFontSize(key) {
   if (typeof setFontSize === 'function') setFontSize(key);
   // Update button highlight without full re-render

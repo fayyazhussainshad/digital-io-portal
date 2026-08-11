@@ -77,15 +77,6 @@ function _renderAccusedArea() {
 }
 
 // Inject responsive CSS once (avoids brace issues in template literals)
-function _injectAccusedCSS() {
-  if (document.getElementById('accused-resp-css')) return;
-  const s = document.createElement('style');
-  s.id = 'accused-resp-css';
-  s.textContent = '@media (max-width:768px){.accused-two-col{flex-direction:column !important;}.accused-divider{width:100% !important;height:1px !important;margin:10px 0;}}';
-  document.head.appendChild(s);
-}
-
-// Compact horizontal cards (witness-card style)
 function _renderAccCards(list) {
   if (!list.length) {
     return `<div style="text-align:center;padding:24px 12px;color:var(--text-muted);font-size:12px;">
@@ -317,6 +308,4 @@ async function _deleteAccused(id) {
 }
 
 // ── HELPERS ───────────────────────────────────────────────────
-function _accTh() { return 'padding:8px 10px;text-align:right;font-size:12px;font-weight:700;color:var(--text-secondary);white-space:nowrap;'; }
-function _accTd() { return 'padding:8px 10px;text-align:right;'; }
 function _escA(s) { return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }

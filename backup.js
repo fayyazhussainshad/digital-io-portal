@@ -261,5 +261,3 @@ async function triggerBackupNow() {
   localStorage.setItem('dio_last_backup', new Date().toLocaleString('en-PK'));
   _buildBackup();
 }
-function restoreFromLocalBackup() { _importData(); }
-function connectGoogleDrive() { showToast('Google Drive جلد آ رہا ہے','info'); }

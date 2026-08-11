@@ -88,21 +88,6 @@ function _croBackToList() {
   _renderCroList();
 }
 
-async function _loadCro() {
-  if (!navigator.onLine) {
-    try { _croSaved = JSON.parse(localStorage.getItem('dio_cro_'+_croCaseId)||'null'); } catch(_) { _croSaved=null; }
-    return;
-  }
-  try {
-    const { data } = await supabaseClient.from('cro_cards').select('*')
-      .eq('case_id', _croCaseId).order('created_at',{ascending:false}).limit(1).maybeSingle();
-    _croSaved = data || null;
-    try { localStorage.setItem('dio_cro_'+_croCaseId, JSON.stringify(_croSaved)); } catch(_) {}
-  } catch(_) {
-    try { _croSaved = JSON.parse(localStorage.getItem('dio_cro_'+_croCaseId)||'null'); } catch(_2) { _croSaved=null; }
-  }
-}
-
 function _renderCro() {
   const area = document.getElementById('workspace-editor-area')
             || document.getElementById('workspace-tab-content')
