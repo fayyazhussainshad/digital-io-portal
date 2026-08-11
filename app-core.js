@@ -489,6 +489,35 @@ function formatCell(v) {
 // ── GLOBAL: auto text-direction ──────────────────────────────
 // English-data fields (CNIC, phone, email, vehicle, badge) → LTR
 // Mixed Urdu+English fields (name, address, place) → plaintext (auto per-line)
+
+// ═══════════════════════════════════════════════════════════════════
+//  اردو + انگریزی ایک ساتھ — ہر حصے کا اپنا رُخ
+//  اصول: اردو RTL، انگریزی/ہندسے LTR۔ applyAutoDirection پورے خانے
+//  کا رُخ طے کرتا ہے، مگر جب ایک ہی خانے میں دونوں ہوں (جیسے
+//  "نام  36302-4459712-5") تو ہر حصے کو الگ رُخ چاہیے — یہ CSS
+//  وہی کرتی ہے (unicode-bidi:plaintext)۔ پورے سسٹم پر لاگو۔
+// ═══════════════════════════════════════════════════════════════════
+function dioMixedTextCSS() {
+  if (document.getElementById('dio-bidi-style')) return;
+  const st = document.createElement('style');
+  st.id = 'dio-bidi-style';
+  st.textContent = `
+    /* ہر پیراگراف/سطر اپنے پہلے حرف کے مطابق رُخ لے */
+    [contenteditable="true"], .dio-mixed,
+    td, th, .form-input, input[type="text"], textarea,
+    .mdoc-chip, .zt td, .ct td, .sho-cell-row, .ch173-cont,
+    .rotinner, .normwrap, .hinner, .sho-papers-body {
+      unicode-bidi: plaintext;
+    }
+    /* اعداد/انگریزی ہمیشہ بائیں سے دائیں */
+    .dio-ltr, .cnic, .phone { direction: ltr; unicode-bidi: isolate; }
+  `;
+  document.head.appendChild(st);
+}
+window.dioMixedTextCSS = dioMixedTextCSS;
+document.addEventListener('DOMContentLoaded', dioMixedTextCSS);
+if (document.readyState !== 'loading') dioMixedTextCSS();
+
 function applyAutoDirection(root) {
   root = root || document;
   const ltrHints = /cnic|phone|mobile|cell|email|vehicle|badge|گاڑی|نمبر پلیٹ|رابطہ|شناختی|موبائل/i;

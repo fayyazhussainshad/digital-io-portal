@@ -1480,7 +1480,7 @@ function _ch173AccPicker(ev, key) {
       cell.innerText = picked.map(nm => {
         const a = (_ch173Accused || []).find(x => (x.name || '').trim() === nm);
         const c = (a && a.cnic && String(a.cnic).trim()) ? String(a.cnic).trim() : '00000-0000000-0';
-        return nm + '  ' + c;
+        return nm + '  ' + '\u2066' + c + '\u2069';   // CNIC hamesha LTR
       }).join('\n');
     }
     box.remove();
@@ -2236,6 +2236,6 @@ function _ch173MudaiText(c) {
                            : (c.complainant || c.complainant_name)) || '').trim();
   const cn = String((cross ? c.cross_complainant_cnic : c.complainant_cnic) || '').trim();
   if (!nm) return '';
-  return nm + '  ' + (cn || '00000-0000000-0');
+  return nm + '  ' + '\u2066' + (cn || '00000-0000000-0') + '\u2069';   // CNIC hamesha LTR
 }
 window._ch173MudaiText = _ch173MudaiText;
