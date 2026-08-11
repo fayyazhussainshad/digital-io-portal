@@ -303,10 +303,10 @@ function _renderR173() {
             </thead>
             <tbody>
               <tr>
-                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bs.madai !== undefined ? sanitizeHtml(bs.madai) : esc(_ch173MudaiName(c))}</div><div class="rotinner cnic-field" contenteditable="true" data-k="madai_cnic">${bs.madai_cnic !== undefined ? sanitizeHtml(bs.madai_cnic) : esc(_ch173MudaiCnic(c))}</div></div></div></td>
-                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'ghair_giraftar')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div><div class="rotinner cnic-field" contenteditable="true" data-k="ghair_giraftar_cnic">${bv('ghair_giraftar_cnic')}</div></div></div></td>
-                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'zer_hirasat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div><div class="rotinner cnic-field" contenteditable="true" data-k="zer_hirasat_cnic">${bv('zer_hirasat_cnic')}</div></div></div></td>
-                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'bar_zamanat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div><div class="rotinner cnic-field" contenteditable="true" data-k="bar_zamanat_cnic">${bv('bar_zamanat_cnic')}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bs.madai !== undefined ? sanitizeHtml(bs.madai) : esc(_ch173MudaiEntry(c))}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'ghair_giraftar')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'zer_hirasat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'bar_zamanat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="mal_qabza">${bv('mal_qabza')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="shahadat">${bs.shahadat !== undefined ? sanitizeHtml(bs.shahadat) : esc(_ch173WitnessText())}</div></div></div></td>
                 <td class="normcell"><div class="normwrap" contenteditable="true" data-mic="true" data-k="halaat">${bv('halaat')}</div></td>
@@ -990,7 +990,7 @@ async function _ch173LoadPeople() {
   } catch(_) { _ch173Accused = []; }
   try {
     const { data: wit } = await supabaseClient.from('case_witnesses')
-      .select('id,full_name,witness_type').eq('case_id', cid).order('created_at', { ascending: true });
+      .select('id,full_name,cnic,witness_type').eq('case_id', cid).order('created_at', { ascending: true });
     _ch173Witnesses = wit || [];
   } catch(_) { _ch173Witnesses = []; }
   // Data aane par گواہان wala khana bhar do (agar khali ho)
@@ -1006,7 +1006,11 @@ function _ch173WitnessText() {
   const L = (typeof _ch173WitList === 'function') ? _ch173WitList() : (_ch173Witnesses || []);
   if (!L.length) return '';
   // Aik line mein aik گواہ
-  return L.map(function(w, i){ return (i + 1) + '\u06D4 ' + (w.full_name || ''); }).join('\n');
+  // Har گواہ: نمبر شمار + naam, aur usi ke saath uska CNIC
+  return L.map(function (w, i) {
+    const cn = (w.cnic && String(w.cnic).trim()) ? String(w.cnic).trim() : '00000-0000000-0';
+    return (i + 1) + '\u06D4 ' + (w.full_name || '') + '\n' + cn;
+  }).join('\n');
 }
 
 // Kaunse ملزمان pehle se kisi column mein chune ja chuke hain
@@ -1085,16 +1089,16 @@ function _ch173AccPicker(ev, key) {
   box.querySelector('#ch173-acc-x').onclick = () => box.remove();
   box.querySelector('#ch173-acc-ok').onclick = () => {
     const picked = [...box.querySelectorAll('input:checked')].map(i => i.value);
-    // Naam aur CNIC ab ALAG ALAG khanon mein
+    // Har naam ko apna نمبر شمار (1، 2، 3…) aur uske SAATH uska apna CNIC.
+    // Dono aik hi khane mein — is liye har CNIC apne naam ke bilkul saath
+    // rehta hai (pehle sab CNIC aik dher mein the, pata nahi chalta tha
+    // ke kaunsa kis ka hai).
     if (cell) {
-      cell.innerText = picked.join('\n');
-      const cf = cell.parentNode && cell.parentNode.querySelector('.cnic-field');
-      if (cf) {
-        cf.innerText = picked.map(nm => {
-          const a = (_ch173Accused || []).find(x => (x.name || '').trim() === nm);
-          return (a && a.cnic && String(a.cnic).trim()) ? String(a.cnic).trim() : '00000-0000000-0';
-        }).join('\n');
-      }
+      cell.innerHTML = picked.map((nm, i) => {
+        const a = (_ch173Accused || []).find(x => (x.name || '').trim() === nm);
+        const c = (a && a.cnic && String(a.cnic).trim()) ? String(a.cnic).trim() : '00000-0000000-0';
+        return esc((i + 1) + '\u06D4 ' + nm) + '\n<span class="cn">' + esc(c) + '</span>';
+      }).join('\n');
     }
     box.remove();
     if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
@@ -2025,18 +2029,6 @@ function _ch173CSS() {
          • Naam  : NEECHE se OOPER (direction:rtl ke saath vertical-rl)
          • CNIC  : OOPER se NEECHE (direction:ltr)
          • Dono ke darmiyan 1.5cm ka fasla */
-      #ch173-doc .rotinner.cnic-field{
-        direction:ltr;                    /* OOPER se NEECHE parhi jaye */
-        align-items:flex-start;           /* khane ke OOPER se shuru */
-        margin-inline-end:1.5cm;          /* naam ke khatme se 1.5cm ka fasla */
-        white-space:nowrap; word-break:keep-all;
-        font-family:var(--font-mono),monospace; font-size:12pt;
-        min-height:0;
-      }
-      #ch173-doc .rotinner.cnic-field:empty::before{
-        content:'00000-0000000-0'; color:#bbb;
-      }
-      @media print{ #ch173-doc .rotinner.cnic-field:empty::before{ content:''; } }
       /* Har khadi khane ka matn ooper se 1cm neeche shuru ho */
       #ch173-doc .rotinner{
         width:auto; max-width:100%; min-height:40mm; box-sizing:border-box;
@@ -2044,9 +2036,14 @@ function _ch173CSS() {
         direction:rtl; outline:none; unicode-bidi:plaintext;
         line-height:1.2; white-space:pre-wrap; word-break:keep-all;
         overflow-wrap:normal; overflow:hidden; font-size:14pt;
-        /* NAAM khane ke NEECHE se shuru ho (flex se — yaqeeni tareeqa) */
-        display:flex; align-items:flex-end;
         padding:4px 6px;
+        /* NAAM khane ke NEECHE wali lakeer se shuru hon */
+        text-align:end;
+      }
+      /* Har naam ke saath uska apna CNIC — CNIC ki satar chhoti aur LTR */
+      #ch173-doc .rotinner .cn{
+        font-family:var(--font-mono),monospace; font-size:11pt;
+        direction:ltr; unicode-bidi:isolate; white-space:nowrap;
       }
       /* Column 7 — normal, RTL, justified */
       #ch173-doc .hwrap{
@@ -2120,18 +2117,16 @@ function _ch173Insert(txt) {
 }
 window._ch173Insert = _ch173Insert;
 
-// مدعی کا نام (CNIC الگ خانے میں جاتا ہے)
-function _ch173MudaiName(c) {
+
+// ═══ مدعی — نمبر شمار + نام، اور اُسی کے ساتھ اُس کا اپنا CNIC ═══
+function _ch173MudaiEntry(c) {
   c = c || {};
   const cross = (_ch173Version === 'cross_version');
-  return String((cross ? (c.cross_complainant || c.cross_complainant_name)
-                       : (c.complainant || c.complainant_name)) || '').trim();
+  const nm = String((cross ? (c.cross_complainant || c.cross_complainant_name)
+                           : (c.complainant || c.complainant_name)) || '').trim();
+  if (!nm) return '';
+  const cn = String((cross ? c.cross_complainant_cnic : c.complainant_cnic) || '').trim()
+             || '00000-0000000-0';
+  return '1\u06D4 ' + nm + '\n' + cn;
 }
-// مدعی کا CNIC
-function _ch173MudaiCnic(c) {
-  c = c || {};
-  const cross = (_ch173Version === 'cross_version');
-  return String((cross ? c.cross_complainant_cnic : c.complainant_cnic) || '').trim();
-}
-window._ch173MudaiName = _ch173MudaiName;
-window._ch173MudaiCnic = _ch173MudaiCnic;
+window._ch173MudaiEntry = _ch173MudaiEntry;
