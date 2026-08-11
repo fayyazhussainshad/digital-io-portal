@@ -207,7 +207,8 @@ function _renderR173() {
     const bv = (k) => sanitizeHtml(bs[k] !== undefined ? bs[k] : '');
     // Mehfooz shuda column widths (MS Word jaisi drag-adjust ke baad)
     const savedW = (() => { try { return JSON.parse(bs.col_widths || 'null'); } catch(_) { return null; } })();
-    const W = savedW || [10, 12, 8, 10, 6, 27, 27];
+    // Naam + CNIC aik hi line mein aate hain, is liye columns 1–4 chaure
+  const W = savedW || [13, 13, 11, 12, 5, 21, 25];
 
     area.innerHTML = `
     <style>
@@ -567,7 +568,7 @@ function _renderR173() {
             </thead>
             <tbody>
               <tr>
-                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bs.madai !== undefined ? sanitizeHtml(bs.madai) : esc(_ch173Version==='cross_version' ? (c.cross_complainant||c.cross_complainant_name||'') : (c.complainant||c.complainant_name||''))}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bs.madai !== undefined ? sanitizeHtml(bs.madai) : esc(_ch173MudaiText(c))}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'ghair_giraftar')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'zer_hirasat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'bar_zamanat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></div></div></td>
@@ -1474,12 +1475,12 @@ function _ch173AccPicker(ev, key) {
   box.querySelector('#ch173-acc-x').onclick = () => box.remove();
   box.querySelector('#ch173-acc-ok').onclick = () => {
     const picked = [...box.querySelectorAll('input:checked')].map(i => i.value);
-    // Har naam ke neeche uska CNIC (na ho to default khaka)
+    // Har naam ke AAGE usi line mein uska CNIC (na ho to default khaka)
     if (cell) {
       cell.innerText = picked.map(nm => {
         const a = (_ch173Accused || []).find(x => (x.name || '').trim() === nm);
         const c = (a && a.cnic && String(a.cnic).trim()) ? String(a.cnic).trim() : '00000-0000000-0';
-        return nm + '\n' + c;
+        return nm + '  ' + c;
       }).join('\n');
     }
     box.remove();
@@ -2226,3 +2227,15 @@ function _ch173FillHalaat() {
   } catch (_) {}
 }
 window._ch173FillHalaat = _ch173FillHalaat;
+
+// ═══ مدعی کا نام + اُس کے آگے CNIC ═══
+function _ch173MudaiText(c) {
+  c = c || {};
+  const cross = (_ch173Version === 'cross_version');
+  const nm = String((cross ? (c.cross_complainant || c.cross_complainant_name)
+                           : (c.complainant || c.complainant_name)) || '').trim();
+  const cn = String((cross ? c.cross_complainant_cnic : c.complainant_cnic) || '').trim();
+  if (!nm) return '';
+  return nm + '  ' + (cn || '00000-0000000-0');
+}
+window._ch173MudaiText = _ch173MudaiText;
