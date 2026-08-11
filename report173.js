@@ -1009,7 +1009,7 @@ function _ch173WitnessText() {
   // Har گواہ: نمبر شمار + naam, aur usi ke saath uska CNIC
   return L.map(function (w, i) {
     const cn = (w.cnic && String(w.cnic).trim()) ? String(w.cnic).trim() : '00000-0000000-0';
-    return (i + 1) + '\u06D4 ' + (w.full_name || '') + '\n' + cn;
+    return (i + 1) + '\u06D4 ' + (w.full_name || '') + '\u2066' + cn + '\u2069';
   }).join('\n');
 }
 
@@ -1097,7 +1097,7 @@ function _ch173AccPicker(ev, key) {
       cell.innerHTML = picked.map((nm, i) => {
         const a = (_ch173Accused || []).find(x => (x.name || '').trim() === nm);
         const c = (a && a.cnic && String(a.cnic).trim()) ? String(a.cnic).trim() : '00000-0000000-0';
-        return esc((i + 1) + '\u06D4 ' + nm) + '\n<span class="cn">' + esc(c) + '</span>';
+        return esc((i + 1) + '\u06D4 ' + nm) + '<span class="cn">' + esc(c) + '</span>';
       }).join('\n');
     }
     box.remove();
@@ -2034,16 +2034,20 @@ function _ch173CSS() {
         width:auto; max-width:100%; min-height:40mm; box-sizing:border-box;
         writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
         direction:rtl; outline:none; unicode-bidi:plaintext;
-        line-height:1.2; white-space:pre-wrap; word-break:keep-all;
+        line-height:1.2; white-space:pre;   /* har satar poori — beech se na tootay */ word-break:keep-all;
         overflow-wrap:normal; overflow:hidden; font-size:14pt;
         padding:4px 6px;
-        /* NAAM khane ke NEECHE wali lakeer se shuru hon */
-        text-align:end;
+        /* NAAM table ki NEECHE wali lakeer se shuru ho kar OOPER (row 2 ki
+           taraf) jaye. Khadi likhayi + direction:rtl mein 'start' ka matlab
+           NEECHE hi hai. */
+        text-align:start;
       }
-      /* Har naam ke saath uska apna CNIC — CNIC ki satar chhoti aur LTR */
+      /* CNIC — USI SATAR mein naam ke saath, 1.5cm ke fasle par.
+         (Aik satar = naam + CNIC. Alag satar NAHI.) */
       #ch173-doc .rotinner .cn{
         font-family:var(--font-mono),monospace; font-size:11pt;
         direction:ltr; unicode-bidi:isolate; white-space:nowrap;
+        margin-inline-start:1.5cm;
       }
       /* Column 7 — normal, RTL, justified */
       #ch173-doc .hwrap{
@@ -2127,6 +2131,6 @@ function _ch173MudaiEntry(c) {
   if (!nm) return '';
   const cn = String((cross ? c.cross_complainant_cnic : c.complainant_cnic) || '').trim()
              || '00000-0000000-0';
-  return '1\u06D4 ' + nm + '\n' + cn;
+  return '1\u06D4 ' + nm + '\u2066' + cn + '\u2069';
 }
 window._ch173MudaiEntry = _ch173MudaiEntry;
