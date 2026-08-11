@@ -497,6 +497,18 @@ function formatCell(v) {
 //  "نام  36302-4459712-5") تو ہر حصے کو الگ رُخ چاہیے — یہ CSS
 //  وہی کرتی ہے (unicode-bidi:plaintext)۔ پورے سسٹم پر لاگو۔
 // ═══════════════════════════════════════════════════════════════════
+
+// نام + CNIC ایک ساتھ دکھانے کا معیاری طریقہ (پورے سسٹم کے لیے)
+// اردو نام RTL، CNIC LTR، اور دونوں کے درمیان 1cm کا فاصلہ۔
+function dioNameWithCnic(name, cnic) {
+  const nm = String(name || '').trim();
+  if (!nm) return '';
+  const cn = String(cnic || '').trim() || '00000-0000000-0';
+  const e = (typeof esc === 'function') ? esc : (x => x);
+  return e(nm) + '<bdi class="dio-cnic">' + e(cn) + '</bdi>';
+}
+window.dioNameWithCnic = dioNameWithCnic;
+
 function dioMixedTextCSS() {
   if (document.getElementById('dio-bidi-style')) return;
   const st = document.createElement('style');
@@ -511,6 +523,18 @@ function dioMixedTextCSS() {
     }
     /* اعداد/انگریزی ہمیشہ بائیں سے دائیں */
     .dio-ltr, .cnic, .phone { direction: ltr; unicode-bidi: isolate; }
+    /* نام اور CNIC/نمبر کے درمیان 1cm کا فاصلہ (پورے سسٹم میں) —
+       CNIC کو U+2066 … U+2069 میں لپیٹا جاتا ہے، اسی نشان سے پہلے
+       یہ جگہ ڈالی جاتی ہے۔ */
+    /* CNIC — hindse kabhi na tootein, aur naam se 1cm ka fasla.
+       'margin-inline-start' seedhi aur khadi dono likhayi mein theek chalta
+       hai (margin-right khadi likhayi mein ghalat taraf lagta tha). */
+    .dio-cnic {
+      direction: ltr; unicode-bidi: isolate;
+      margin-inline-start: 1cm;
+      white-space: nowrap;        /* hindse tootein nahi */
+      word-break: keep-all;
+    }
   `;
   document.head.appendChild(st);
 }

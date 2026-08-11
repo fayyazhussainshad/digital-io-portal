@@ -211,272 +211,7 @@ function _renderR173() {
   const W = savedW || [13, 13, 11, 12, 5, 21, 25];
 
     area.innerHTML = `
-    <style>
-      #ch173-doc{ direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; color:#000; }
-      /* Unwan: FORM No. aur Urdu heading — dono AIK hi flex dhanche mein,
-         is liye dono ka center bilkul aik (linked) */
-      /* Unwan: beech wala hissa HAMESHA sacche page-center par (absolute 50%),
-         chahe kinaron ka matn kitna bhi lamba ho. FORM No. bhi usi 50% par →
-         dono ka center bilkul aik (linked). */
-      #ch173-doc .ch173-title-row{ position:relative; display:flex; align-items:baseline;
-        justify-content:space-between; width:100%; min-height:1.6em; }
-      #ch173-doc .ch173-title-row > span{ white-space:nowrap; }
-      #ch173-doc .tt-right{ text-align:right; font-size:14pt; padding-right:1in; }
-      #ch173-doc .tt-left{ text-align:left; font-size:14pt; }
-      #ch173-doc .tt-mid, #ch173-doc .form-no{
-        position:absolute; left:50%; transform:translateX(-50%); white-space:nowrap;
-      }
-      #ch173-doc .tt-mid{ font-weight:bold; text-decoration:underline; font-size:20pt; }
-      #ch173-doc .form-no{ font-style:italic; font-size:12pt; direction:ltr; }
-
-      /* مقدمہ نمبر / مورخہ / جرم — unwan ke neeche, table se pehle */
-      /* مقدمہ نمبر / مورخہ / جرم — koi dashes nahi, data ke hisab se khud fit */
-      #ch173-doc .ch173-caseline{ display:flex; gap:22px; align-items:baseline; font-size:14pt;
-        margin:18px 0 16px 0; direction:rtl; flex-wrap:wrap; line-height:1.4;
-        justify-content:center; }
-      #ch173-doc .ch173-caseline .fl{ display:inline-block; min-width:40px;
-        border:none; text-align:right; outline:none; font-weight:normal;
-        unicode-bidi:isolate; direction:rtl; }
-      #ch173-doc .ch173-caseline .fl-lg{ min-width:60px; }
-      /* "ت پ" — دفعات کے بعد آخر میں، اپنا الگ خانہ */
-      #ch173-doc .ch173-caseline .fl-suf{ min-width:24px; }
-
-      #ch173-doc .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
-      #ch173-doc .ch173-table th, #ch173-doc .ch173-table td{
-        border:1px solid #000; padding:2px 4px; text-align:center;
-        white-space:normal; word-wrap:break-word; overflow-wrap:break-word;
-        position:relative; line-height:1.15;
-      }
-      /* Header row 1: jagah ke hisab se chhota font */
-      #ch173-doc .ch173-table thead th{ font-size:14pt; vertical-align:middle; line-height:1.15; font-weight:normal; }
-      /* Data khane: columns 1–6 → Ascending (neeche se ooper). AHEM: CSS transform
-         seedha <td> par kaam nahi karta (browser nazar-andaz kar deta hai), is liye
-         matn andar <div> wrapper mein rakh kar us par lagate hain. */
-      #ch173-doc .ch173-table td{ font-size:14pt; vertical-align:top; line-height:1.15; }
-      /* Khane KHUD nahi phailte — sirf haath se (drag) resize hote hain */
-      /* USOOL: khana utna hi khule jitna data ho — koi khali jagah nahi.
-         Lambai SAB SE LAMBE naam (columns 1–6) se tay hoti hai. */
-      #ch173-doc .ch173-table tbody td{ height:auto; min-height:40mm;
-        padding:0; overflow:visible; position:relative; vertical-align:top; }
-      /* ASCENDING (neeche se ooper) — writing-mode Chrome mein na-qabil-e-aitbaar
-         hai, is liye seedha ghumao (rotate) use karte hain. Khana relative,
-         andar ka box absolute + rotate(90deg) → RTL Urdu neeche se ooper. */
-      /* Khane ke andar clip-box — rotated matn kabhi doosre column mein na jaye */
-      #ch173-doc .ch173-table td.rotcell, #ch173-doc .ch173-table th.rotcell{
-        position:relative; padding:0; overflow:hidden;
-      }
-      /* Khadi likhayi — SIRF CSS (koi JS naap nahi), is liye print par bhi
-         khud theek rehti hai. writing-mode se matn khada, rotate(180) se
-         NEECHE se OOPER (Ascending). */
-      #ch173-doc .cellbox{ position:relative; width:100%; }
-      /* Khadi likhayi ka block khane ke BEECH mein (pehle dayen kinare se
-         chipka hua tha). rotclip ko flex bana kar beech mein rakhte hain. */
-      #ch173-doc .rotclip{ display:flex; justify-content:center; }
-      /* Table ke neeche koi lakeer nahi (magar wahan se unchai badalti hai) */
-      #ch173-doc .ch173-table, #ch173-doc .ch173-table tbody,
-      #ch173-doc .ch173-table tbody tr, #ch173-doc .ch173-table tbody td{
-        border-bottom:0 !important;
-      }
-      /* Column 7 — normal RTL (khadi nahi), khane ke andar hi mehdood */
-      #ch173-doc .hcell-td{ padding:0; vertical-align:top; }
-      #ch173-doc .hinner{
-        width:100%; height:100%; padding:5px; box-sizing:border-box;
-        direction:rtl; text-align:justify; text-align-last:right; outline:none;
-        line-height:1.15; overflow:hidden; overflow-wrap:break-word;
-        white-space:pre-wrap; font-size:14pt;
-      }
-      /* اختتامی خانہ — 2 برابر کالم۔ flex اس لیے کہ دونوں کالم ہمیشہ ایک جتنے
-         چوڑے رہیں اور ایک ساتھ ہی نیچے بڑھیں (ایک دوسرے سے آگے نہ نکلے) */
-      #ch173-doc .ch173-sho-flex{
-        display:flex; direction:rtl; align-items:stretch; gap:0; margin-top:6px;
-      }
-      #ch173-doc .ch173-sho-flex > .sho-col{ min-width:0; box-sizing:border-box; }
-      /* تفصیل کاغذات کا خانہ SHO لائن کے دائیں کنارے سے 1cm پہلے تک پھیلتا ہے */
-      #ch173-doc .ch173-sho-flex > .sho-papers{ flex:1 1 auto; }
-      /* SHO کالم — چوڑائی صرف اپنی لائن جتنی (شرنک-ٹو-فٹ) */
-      #ch173-doc .ch173-sho-flex > .sho-cell{ flex:0 0 auto; }
-
-      /* دائیں کالم — تفصیل کاغذات (عنوان) + اس کے نیچے لکھنے کی جگہ */
-      #ch173-doc .sho-papers{ text-align:right; padding:4px 6px 0 0; }
-      #ch173-doc .sho-papers-head{
-        font-weight:700; text-decoration:underline; white-space:nowrap;
-        font-size:14pt; line-height:1.25; margin:0;
-      }
-      /* کرسر یہاں بلنک کرتا ہے — ڈیٹا عنوان کے نیچے سے شروع ہوتا ہے */
-      #ch173-doc .sho-papers-body{
-        font-size:14pt; line-height:1.25; text-align:right; white-space:pre-wrap;
-        outline:1px dashed rgba(120,120,120,0.35); padding:3px 4px; margin-top:4px;
-        min-height:22px; overflow-wrap:break-word;
-      }
-      #ch173-doc .sho-papers-body:empty::before{
-        content:'یہاں کاغذات کی تفصیل لکھیں'; color:#bbb; font-size:12pt;
-      }
-
-      /* بائیں کالم — SHO/تاریخ: ایک اوپر، ایک نیچے */
-      #ch173-doc .sho-cell{
-        display:flex; flex-direction:column; justify-content:space-between;
-        min-height:42mm;
-      }
-      /* align-self:flex-end → RTL میں بائیں کنارے پر (جیسے اصل فارم میں) */
-      #ch173-doc .sho-block{ align-self:flex-end; }
-      /* SHO ki line ko aik satar neeche laane wali khali jagah */
-      #ch173-doc .sho-spacer{ height:1.6em; }
-      #ch173-doc .sho-cell-row{
-        outline:1px dashed rgba(120,120,120,0.35); padding:3px 6px; line-height:1.25;
-        min-height:20px; margin:0; font-size:14pt; text-align:right; white-space:nowrap;
-        font-weight:700;
-      }
-      /* تاریخ bold nahi — sirf SHO ki line */
-      #ch173-doc .sho-cell-date{ font-weight:normal; }
-      #ch173-doc .sho-cell-date{ font-size:14pt; color:#333; cursor:pointer; text-align:center; }
-      #ch173-doc .sho-cell-date:empty::before{ content:'تاریخ…'; color:#aaa; }
-      /* SHO ka naam set na ho to saaf hidayat (اوزار → SHO se set karein) */
-      #ch173-doc .sho-cell-row:empty::before{
-        content:'⚠ اوزار → SHO سے نام درج کریں'; color:#c00; font-size:11pt; font-weight:normal;
-      }
-      @media print{ #ch173-doc .sho-cell-row:empty::before{ content:''; } }
-      @media print{
-        #ch173-doc .sho-papers-body{ outline:none !important; }
-        #ch173-doc .sho-papers-body:empty::before{ content:''; }
-        #ch173-doc .sho-cell-row{ outline:none !important; }
-        #ch173-doc .sho-cell-date:empty::before{ content:''; }
-      }
-      /* Izafi khane screen par nazar aayen (kahan likhna hai pata chale) —
-         print mein yeh nishan nahi aata */
-      /* ملزمان chunne wala chhota button */
-      #ch173-doc .acc-pick{
-        position:absolute; top:2px; left:2px; z-index:7;
-        width:20px; height:20px; line-height:1; padding:0;
-        border:1px solid var(--border,#999); border-radius:4px;
-        background:#eef6ff; color:#0369a1; cursor:pointer; font-size:12px;
-      }
-      /* Column 7 — normal RTL (khadi nahi) */
-      /* USOOL: column 7 table ki lambai NAHI barhata — jo matn na samaye
-         woh khud table ke neeche wale khane mein chala jata hai */
-      #ch173-doc .ch173-table td.normcell{ padding:0; vertical-align:top; position:relative;
-        overflow:hidden; }
-      #ch173-doc .normwrap{
-        position:absolute; inset:0;   /* khane ke barabar — table lambi nahi karta */
-        padding:5px; box-sizing:border-box;
-        font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
-        direction:rtl; text-align:justify; text-align-last:right;
-        outline:none; line-height:1.15; font-size:14pt;
-        overflow-wrap:break-word; word-wrap:break-word;
-        overflow:hidden;   /* jo na samaye woh neeche wale khane mein jayega */
-      }
-      /* Har paragraph ki aakhri line bhi dayen (beech mein nahi) */
-      #ch173-doc .normwrap p, #ch173-doc .normwrap div{ text-align:justify; text-align-last:right; }
-      /* Paste kiya hua matn apna font saath na laye */
-      #ch173-doc .normwrap *, #ch173-doc .ch173-cont *{
-        font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif !important;
-      }
-      #ch173-doc .ch173-cont:empty::before{
-        content:'تسلسل — جو تحریر اوپر خانوں میں نہ سما سکے وہ یہاں لکھیں';
-        color:#aaa; font-size:12pt;
-      }
-      /* Table ke NEECHE tasalsul — table se BILKUL chipka hua (koi gap nahi) */
-      #ch173-doc .ch173-cont{
-        margin:0 !important; border:none !important; padding:0 5px !important;
-        min-height:0; direction:rtl; text-align:justify; text-align-last:right;
-        font-size:14pt; line-height:1.15; outline:none;
-        overflow-wrap:break-word; word-wrap:break-word; white-space:pre-wrap;
-      }
-      #ch173-doc .ch173-cont:empty{ min-height:0; padding:0 !important; }
-      #ch173-doc .rotinner{
-        width:auto; max-width:100%; min-height:40mm; box-sizing:border-box; padding:4px 6px;
-        writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
-        direction:rtl; text-align:start; outline:none; unicode-bidi:plaintext;
-        line-height:1.2; overflow-wrap:break-word; white-space:pre-wrap;
-        overflow:hidden; font-size:14pt;
-      }
-      /* Column 7 — normal, RTL, justified */
-      #ch173-doc .hwrap{
-        writing-mode:horizontal-tb; transform:none;
-        width:100%; height:100%; padding:5px; box-sizing:border-box;
-        direction:rtl; text-align:justify; outline:none;
-      }
-
-      /* Khadi likhayi — NEECHE se OOPER (earth → sky) */
-      /* Header ki khadi likhayi — Ascending (neeche se ooper) */
-      #ch173-doc .vtxt{
-        display:inline-block;
-        writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl; -ms-writing-mode:tb-rl;
-        transform:rotate(180deg); -webkit-transform:rotate(180deg);
-        white-space:nowrap; line-height:1.2; text-align:center;
-      }
-      #ch173-doc th.vcell{ vertical-align:middle; padding:0; text-align:center; height:150px; }
-      /* Header ki khadi likhayi — data khanon jaisa hi wrapper (Ascending) */
-      /* مال قبضہ پولیس — lakeeron se hat kar, khane ke beech mein */
-      #ch173-doc .rothead{ text-align:center !important; white-space:normal;
-        padding:8px 6px; font-size:12pt; line-height:1.3; }
-
-      #ch173-doc th.hcell{ vertical-align:middle; text-align:center; direction:rtl; white-space:normal; }
-
-      /* Bahar ke kinare khule — pehla column dayen se, aakhri bayen se */
-      #ch173-doc .ch173-table thead tr:first-child th:first-child{ border-right:none; }
-      #ch173-doc .ch173-table thead tr:first-child th:last-child{ border-left:none; }
-      /* Data row (row 3): dono kinare khule — dayen bhi, bayen bhi */
-      #ch173-doc .ch173-table tbody tr > td:first-child{ border-right:0 !important; }
-      #ch173-doc .ch173-table tbody tr > td:last-child{ border-left:0 !important; }
-      #ch173-doc .ch173-table tbody tr > td:nth-last-child(1){ border-left:0 !important; }
-      /* Row 2 ki bayen aakhri line hataayi */
-      #ch173-doc .ch173-table thead tr:nth-child(2) th:last-child{ border-left:none; }
-      /* USOOL: columns 1–6 neeche se BAND (lakeer), column 7 khula */
-      #ch173-doc .ch173-table tbody td{ border-bottom:1px solid #000 !important; }
-      #ch173-doc .ch173-table tbody td.normcell{ border-bottom:0 !important; }
-
-      /* MS Word jaisi column resize — header par drag handle */
-      #ch173-doc .colgrip{
-        position:absolute; top:0; left:-3px; width:7px; height:100%;
-        cursor:col-resize; user-select:none; z-index:5;
-      }
-      /* Neeche se unchai badalne wali grip (row height) */
-      /* Neeche se unchai badalne wali grip — khane ke ANDAR (kabhi kat na jaye) */
-      #ch173-doc .rowgrip{
-        position:absolute; bottom:0; left:0; width:100%; height:12px;
-        cursor:row-resize; user-select:none; z-index:20;
-      }
-      #ch173-doc .rowgrip:hover{ background:rgba(56,189,248,0.45); }
-      #ch173-doc .colgrip:hover{ background:rgba(56,189,248,0.35); }
-      @media print{
-        .no-print,.doc-toolbar,.editor-toolbar,button,select{ display:none !important; }
-        .ch173-table tbody td{ border-bottom:0 !important; }
-        .rotcell{ position:relative; padding:0; overflow:hidden; }
-        .cellbox{ position:relative; width:100%; }
-        .rotclip{ display:flex; justify-content:center; }
-        .ch173-table, .ch173-table tbody, .ch173-table tbody tr,
-        .ch173-table tbody td, .ch173-table tbody th,
-        .ch173-table tr:last-child td, .ch173-table tr:last-child th{
-          border-bottom:0 !important; border-bottom-width:0 !important;
-          border-bottom-style:none !important; border-bottom-color:transparent !important;
-        }
-        .hcell-td{ padding:0; vertical-align:top; }
-        .hinner{ width:100%; height:100%; padding:5px; box-sizing:border-box;
-          direction:rtl; text-align:justify; line-height:1.15; overflow:hidden; overflow-wrap:break-word; white-space:pre-wrap; }
-        .ch173-cont{ direction:rtl; text-align:justify; text-align-last:right;
-          font-size:14pt; line-height:1.15; padding:6px 4px; overflow-wrap:break-word;
-          border:none !important; white-space:pre-wrap; }
-        /* Matn safhe se zyada ho to khud agle safhe (back side) par chala jaye */
-        .ch173-cont{ page-break-inside:auto; break-inside:auto; }
-        .acc-pick{ display:none !important; }
-        .ch173-table td.normcell{ padding:0; vertical-align:top; position:relative; }
-        .normwrap{ position:absolute; inset:0; padding:5px; box-sizing:border-box;
-          font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
-          direction:rtl; text-align:justify; line-height:1.15; overflow-wrap:break-word; }
-        .ch173-cont{ margin:0 !important; border:none !important; padding:0 5px !important;
-          min-height:0; direction:rtl; text-align:justify; text-align-last:right;
-          font-size:14pt; line-height:1.15; overflow-wrap:break-word; white-space:pre-wrap; }
-        .ch173-cont:empty{ display:none; }
-        .rotinner{ width:auto; max-width:100%; min-height:40mm; box-sizing:border-box; padding:4px 6px;
-          writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
-          direction:rtl; text-align:start; line-height:1.2; unicode-bidi:plaintext;
-          overflow-wrap:break-word; white-space:pre-wrap; overflow:hidden; font-size:14pt; }
-        .rothead{ text-align:center !important; white-space:normal; }
-        .colgrip,.rowgrip{ display:none !important; }
-        .colgrip,.rowgrip{ display:none !important; }
-        #ch173-doc{ box-shadow:none !important; border-radius:0 !important; margin:0 !important; padding:0 !important; max-width:none !important; }
-      }
-    </style>
+    <style>${_ch173CSS()}</style>
     <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
       <div class="no-print" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
         <select id="r173-type-sel" onchange="_r173Pick(this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
@@ -568,7 +303,7 @@ function _renderR173() {
             </thead>
             <tbody>
               <tr>
-                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bs.madai !== undefined ? sanitizeHtml(bs.madai) : esc(_ch173MudaiText(c))}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bs.madai !== undefined ? sanitizeHtml(bs.madai) : _ch173MudaiText(c)}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'ghair_giraftar')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'zer_hirasat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'bar_zamanat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></div></div></td>
@@ -943,151 +678,28 @@ function _printR173() {
   if (chDoc) {
     const chHtml = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
       <style>
-        /* ═══ PRINT CSS — SCREEN ke bilkul mutabiq (koi purani class nahi) ═══ */
-        /* Pehla safha: kinare kam. Agle safhon par BAYEN taraf punch ki jagah
-           taake sooraakh karne se alfaz na katen aur jild mein na chhupein. */
-        /* A4 — kyunki print isi kaghaz par hota hai. Pehle 'legal' likha
-           tha, jis se browser safhe ko sikor kar deta tha aur margins
-           bade/ghair-barabar ho jate the. */
-        /* Charon taraf BARABAR margin — har safhe par yaksan */
+        /* Charon taraf BARABAR margin — kaghaz chune hue naap ka */
         @page{ size:${_ch173Paper === 'a4' ? 'A4 portrait' : '8.5in 13in'}; margin:1cm; }
-        body{ font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl;
-              line-height:1.4; color:#000; margin:0; }
-
-        /* Unwan */
-        .ch173-title-row{ position:relative; display:flex; align-items:baseline;
-          justify-content:space-between; width:100%; min-height:1.6em; }
-        .ch173-title-row > span{ white-space:nowrap; }
-        .tt-right{ text-align:right; font-size:14pt; padding-right:1in; }
-        .tt-left{ text-align:left; font-size:14pt; }
-        .tt-mid, .form-no{ position:absolute; left:50%; transform:translateX(-50%); white-space:nowrap; }
-        .tt-mid{ font-weight:bold; text-decoration:underline; font-size:20pt; }
-        .form-no{ font-style:italic; font-size:12pt; direction:ltr; }
-
-        /* مقدمہ نمبر / مورخہ / جرم */
-        .ch173-caseline{ display:flex; gap:22px; align-items:baseline; font-size:14pt;
-          margin:18px 0 16px 0; direction:rtl; flex-wrap:wrap; line-height:1.4; justify-content:center; }
-        .ch173-caseline .fl{ display:inline-block; min-width:40px; border:none;
-          text-align:right; font-weight:normal; unicode-bidi:isolate; direction:rtl; }
-        .ch173-caseline .fl-lg{ min-width:60px; }
-        .ch173-caseline .fl-suf{ min-width:24px; }
-
-        /* Table */
-        .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
-        .ch173-table th, .ch173-table td{ border:1px solid #000; padding:2px 4px; text-align:center;
-          white-space:normal; word-wrap:break-word; overflow-wrap:break-word; line-height:1.15; }
-        .ch173-table thead th{ font-size:14pt; vertical-align:middle; line-height:1.15; font-weight:normal; }
-        .ch173-table td{ font-size:14pt; vertical-align:top; height:170mm; padding:0; }
-        th.hcell{ vertical-align:middle; text-align:center; direction:rtl; white-space:normal; }
-        /* AHEM: unchai zaroori hai — warna cellbox ki height 0 ho jati thi
-           aur 'مال قبضہ پولیس' print mein bilkul nazar hi nahi aata tha */
-        th.vcell{ vertical-align:middle; padding:0; text-align:center; height:150px; }
-
-        /* Khadi likhayi — SCREEN jaisa hi (cellbox + rotinner) */
-        .cellbox{ position:relative; width:100%; }
-        .rotclip{ display:flex; justify-content:center; }
-        .rotinner{ width:auto; max-width:100%; min-height:40mm; box-sizing:border-box; padding:4px 6px;
-          writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
-          direction:rtl; text-align:start; line-height:1.2; unicode-bidi:plaintext;
-          overflow-wrap:break-word; white-space:pre-wrap; overflow:hidden; font-size:14pt; }
-        .rothead{ text-align:center !important; }
-        /* Column 7 — poora justified, aakhri line dayen (beech mein nahi) */
-        .ch173-table td.normcell{ padding:0; vertical-align:top; position:relative; }
-        .normwrap{ position:absolute; inset:0; padding:5px; box-sizing:border-box;
+        html, body{ margin:0 !important; padding:0 !important;
           font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
-          direction:rtl; text-align:justify; text-align-last:right; line-height:1.15;
-          font-size:14pt; overflow-wrap:break-word; word-wrap:break-word; }
-        .normwrap p, .normwrap div{ text-align:justify; text-align-last:right; }
-        /* Paste kiya hua matn apna font/size saath na laye */
-        .normwrap *, .ch173-cont *{
-          font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif !important;
-        }
-        /* SHO / تھانہ ki line bold */
-        .sho-cell-row{ font-weight:700; }
-        .sho-cell-date{ font-weight:normal; }
+          direction:rtl; line-height:1.4; color:#000; }
 
-        /* Column 7 — normal RTL */
-        .hcell-td{ padding:0; vertical-align:top; }
-        .hinner{ width:100%; height:100%; padding:5px; box-sizing:border-box;
-          direction:rtl; text-align:justify; text-align-last:right; line-height:1.15;
-          overflow:hidden; overflow-wrap:break-word; white-space:pre-wrap; font-size:14pt; }
+        /* ═══ WAHI CSS jo screen par hai — koi alag nakal nahi ═══ */
+        ${_ch173CSS()}
 
-        /* Table ke neeche baqaya matn — koi kinari lakeer nahi */
-        .ch173-cont{ direction:rtl; text-align:justify; text-align-last:right;
-          font-size:14pt; line-height:1.15; padding:6px 4px; overflow-wrap:break-word;
-          border:none !important; white-space:pre-wrap; }
-        /* SHO دستخط خانہ — پرنٹ میں کوئی لکیر نہیں، صرف متن (SHO لائن + تاریخ) */
-        /* اختتامی خانہ — 2 برابر کالم (SCREEN کے بالکل مطابق)۔
-           align-items:stretch → دونوں کالم ہمیشہ ایک جتنے اونچے؛
-           justify-content:space-between → نیچے والا SHO ہمیشہ سب سے نیچے،
-           یعنی کالم 1 بڑھے تو نیچے والا SHO بھی اُسی کے ساتھ نیچے جاتا ہے۔ */
-        .ch173-sho-flex{ display:flex; direction:rtl; align-items:stretch; gap:0; margin-top:6px; }
-        .ch173-sho-flex > .sho-col{ min-width:0; box-sizing:border-box; }
-        .ch173-sho-flex > .sho-papers{ flex:1 1 auto; }
-        .ch173-sho-flex > .sho-cell{ flex:0 0 auto; }
-        .sho-papers{ text-align:right; padding:4px 6px 0 0; }
-        .sho-papers-head{ font-weight:700; text-decoration:underline; white-space:nowrap;
-          font-size:14pt; line-height:1.25; margin:0; }
-        .sho-papers-body{ font-size:14pt; line-height:1.25; text-align:right; white-space:pre-wrap;
-          padding:3px 4px; margin-top:4px; overflow-wrap:break-word; }
-        .sho-cell{ display:flex; flex-direction:column; justify-content:space-between; min-height:42mm; }
-        .sho-block{ align-self:flex-end; }
-        .sho-spacer{ height:1.6em; }
-        .sho-cell-row{ padding:2px 6px; line-height:1.25; margin:0; min-height:20px;
-          font-size:14pt; text-align:right; white-space:nowrap; font-weight:700; }
-        .sho-cell-date{ font-size:14pt; color:#000; text-align:center; }
-        /* یہ خانہ درمیان سے نہ ٹوٹے */
-        .ch173-sho-flex{ page-break-inside:avoid; break-inside:avoid; }
-        /* Matn safhe se zyada ho to khud agle safhe (back side) par chala jaye */
-        .ch173-cont{ page-break-inside:auto; break-inside:auto; }
-
-        /* Kinare khule: pehla column dayen se, aakhri bayen se */
-        .ch173-table thead tr:first-child th:first-child{ border-right:none; }
-        .ch173-table thead tr:first-child th:last-child{ border-left:none; }
-        .ch173-table thead tr:nth-child(2) th:last-child{ border-left:none; }
-        .ch173-table tbody tr > td:first-child{ border-right:0 !important; }
-        .ch173-table tbody tr > td:last-child{ border-left:0 !important; }
-
-        /* ═══ NEECHE wali lakeer — har haal mein KHATAM ═══ */
-        /* Sirf column 7 ke neeche lakeer nahi — baqi columns band */
-        .ch173-table tbody td.normcell{
-          border-bottom:0 !important; border-bottom-width:0 !important;
-          border-bottom-style:none !important;
-        }
-
-        /* ═══ TABLE SIRF PEHLE SAFHE PAR ═══
-           Pehle table agle safhe par bhi chhap jati thi (header dohra kar).
-           Do wajahein: (1) browser <thead> ko har safhe par dohrata hai,
-           (2) table beech se tootti thi. Ab dono band. */
-        /* Header har safhe par na dohraye */
-        .ch173-table thead{ display:table-row-group !important; }
-        /* USOOL: table AGLE SAFHE par na jaye — poori aik safhe par rahe */
-        .ch173-table{ page-break-inside:avoid; break-inside:avoid; }
-        /* Khane ki unchai itni ke unwan + table SAB aik hi safhe par sama jaye
-           (A4 aur لیگل ke liye alag) */
-        /* Lambai columns 1–6 se tay — column 7 use barhata nahi */
-        .ch173-table tbody td{ height:auto; min-height:40mm; vertical-align:top; }
-        /* Columns 1–6 neeche se BAND, column 7 khula */
-        .ch173-table tbody td{ border-bottom:1px solid #000 !important; }
-        .ch173-table tbody td.normcell{ border-bottom:0 !important;
-          overflow:hidden; position:relative; }
-        /* Khali izafi khane fazool safhe na banayen */
-        .ch173-cont:empty{ display:none !important; }
-        .sho-papers-body:empty{ min-height:0 !important; }
-        /* Safhe ki lambai zabardasti na barhe */
-        #ch173-doc{ height:auto !important; }
-        .colgrip,.rowgrip,.acc-pick,.no-print,button,select{ display:none !important; }
-        /* Print: poori chaudai istemal karo — koi fixed inch nahi, warna
-           browser safha sikor kar dono taraf bari khali jagah chhor deta hai */
-        /* Safhe ka margin @page se aata hai — doc ka apna padding SIFAR,
-           warna margin dohra ho jata hai. min-height bhi khatam, warna
-           safha zabardasti lamba ho kar neeche ka margin bara kar deta tha. */
+        /* Sirf print ke liye chand izafi baatein */
         #ch173-doc{ width:100% !important; max-width:none !important;
           height:auto !important; min-height:0 !important;
           padding:0 !important; margin:0 !important;
           box-shadow:none !important; border-radius:0 !important; }
-        html, body{ margin:0 !important; padding:0 !important; }
-      </style></head><body>${chDoc.innerHTML}</body></html>`;
+        .ch173-table thead{ display:table-row-group !important; }   /* header dohra na ho */
+        .ch173-table{ page-break-inside:avoid; break-inside:avoid; } /* agle safhe par na jaye */
+        .ch173-cont:empty{ display:none !important; }
+        .colgrip,.rowgrip,.acc-pick,.no-print,button,select{ display:none !important; }
+        .sho-papers-body, .sho-cell-row, .ch173-cont{ outline:none !important; }
+        .sho-papers-body:empty::before, .sho-cell-date:empty::before,
+        .sho-cell-row:empty::before, .ch173-cont:empty::before{ content:'' !important; }
+      </style></head><body><div id="ch173-doc">${chDoc.innerHTML}</div></body></html>`;
     // Print se pehle rotated khanon ki naap inline kar do (print iframe mein JS nahi chalta)
     try { if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated(); } catch(_) {}
     if (typeof dioPrint === 'function') dioPrint(chHtml);
@@ -1475,13 +1087,15 @@ function _ch173AccPicker(ev, key) {
   box.querySelector('#ch173-acc-x').onclick = () => box.remove();
   box.querySelector('#ch173-acc-ok').onclick = () => {
     const picked = [...box.querySelectorAll('input:checked')].map(i => i.value);
-    // Har naam ke AAGE usi line mein uska CNIC (na ho to default khaka)
+    // Har naam ke AAGE usi line mein uska CNIC — 1cm ke fasle ke saath.
+    // <bdi> asal element hai: CNIC hamesha LTR rehta hai aur us par
+    // 1cm ka fasla (CSS) lag sakta hai.
     if (cell) {
-      cell.innerText = picked.map(nm => {
+      cell.innerHTML = picked.map(nm => {
         const a = (_ch173Accused || []).find(x => (x.name || '').trim() === nm);
         const c = (a && a.cnic && String(a.cnic).trim()) ? String(a.cnic).trim() : '00000-0000000-0';
-        return nm + '  ' + '\u2066' + c + '\u2069';   // CNIC hamesha LTR
-      }).join('\n');
+        return esc(nm) + '<bdi class="dio-cnic">' + esc(c) + '</bdi>';
+      }).join('<br>');
     }
     box.remove();
     if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
@@ -2148,12 +1762,14 @@ function _ch173BindKeys() {
       return;
     }
 
-    // Ctrl+B / I / U
+    // Ctrl+B / I / U — SIRF yeh teen. Baqi (C/V/X/A/Z/Y) browser khud
+    // sambhale, warna copy/cut/paste kaam karna band kar dete hain.
     if (e.ctrlKey || e.metaKey) {
       const k = String(e.key || '').toLowerCase();
       if (k === 'b') { e.preventDefault(); _ch173Fmt('bold'); }
       else if (k === 'i') { e.preventDefault(); _ch173Fmt('italic'); }
       else if (k === 'u') { e.preventDefault(); _ch173Fmt('underline'); }
+      return;   // baqi sab browser ke hawale
     }
   });
 }
@@ -2236,6 +1852,247 @@ function _ch173MudaiText(c) {
                            : (c.complainant || c.complainant_name)) || '').trim();
   const cn = String((cross ? c.cross_complainant_cnic : c.complainant_cnic) || '').trim();
   if (!nm) return '';
-  return nm + '  ' + '\u2066' + (cn || '00000-0000000-0') + '\u2069';   // CNIC hamesha LTR
+  return esc(nm) + '<bdi class="dio-cnic">' + esc(cn || '00000-0000000-0') + '</bdi>';
 }
 window._ch173MudaiText = _ch173MudaiText;
+
+
+// ═══════════════════════════════════════════════════════════════════
+//  چالان کی CSS — ایک ہی جگہ، اسکرین اور پرنٹ دونوں کے لیے
+//  پہلے دو الگ نقلیں تھیں (ایک اسکرین کی، ایک پرنٹ کی) جو بار بار
+//  ایک دوسرے سے مختلف ہو جاتی تھیں — اسی لیے فارم ہر جگہ الگ نظر
+//  آتا تھا (اسکرین، پرنٹ، PDF)۔ اب ایک ہی نقل ہے۔
+// ═══════════════════════════════════════════════════════════════════
+function _ch173CSS() {
+  return `      #ch173-doc{ direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; color:#000; }
+      /* Unwan: FORM No. aur Urdu heading — dono AIK hi flex dhanche mein,
+         is liye dono ka center bilkul aik (linked) */
+      /* Unwan: beech wala hissa HAMESHA sacche page-center par (absolute 50%),
+         chahe kinaron ka matn kitna bhi lamba ho. FORM No. bhi usi 50% par →
+         dono ka center bilkul aik (linked). */
+      #ch173-doc .ch173-title-row{ position:relative; display:flex; align-items:baseline;
+        justify-content:space-between; width:100%; min-height:1.6em; }
+      #ch173-doc .ch173-title-row > span{ white-space:nowrap; }
+      #ch173-doc .tt-right{ text-align:right; font-size:14pt; padding-right:1in; }
+      #ch173-doc .tt-left{ text-align:left; font-size:14pt; }
+      #ch173-doc .tt-mid, #ch173-doc .form-no{
+        position:absolute; left:50%; transform:translateX(-50%); white-space:nowrap;
+      }
+      #ch173-doc .tt-mid{ font-weight:bold; text-decoration:underline; font-size:20pt; }
+      #ch173-doc .form-no{ font-style:italic; font-size:12pt; direction:ltr; }
+
+      /* مقدمہ نمبر / مورخہ / جرم — unwan ke neeche, table se pehle */
+      /* مقدمہ نمبر / مورخہ / جرم — koi dashes nahi, data ke hisab se khud fit */
+      #ch173-doc .ch173-caseline{ display:flex; gap:22px; align-items:baseline; font-size:14pt;
+        margin:18px 0 16px 0; direction:rtl; flex-wrap:wrap; line-height:1.4;
+        justify-content:center; }
+      #ch173-doc .ch173-caseline .fl{ display:inline-block; min-width:40px;
+        border:none; text-align:right; outline:none; font-weight:normal;
+        unicode-bidi:isolate; direction:rtl; }
+      #ch173-doc .ch173-caseline .fl-lg{ min-width:60px; }
+      /* "ت پ" — دفعات کے بعد آخر میں، اپنا الگ خانہ */
+      #ch173-doc .ch173-caseline .fl-suf{ min-width:24px; }
+
+      #ch173-doc .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
+      #ch173-doc .ch173-table th, #ch173-doc .ch173-table td{
+        border:1px solid #000; padding:2px 4px; text-align:center;
+        white-space:normal; word-wrap:break-word; overflow-wrap:break-word;
+        position:relative; line-height:1.15;
+      }
+      /* Header row 1: jagah ke hisab se chhota font */
+      #ch173-doc .ch173-table thead th{ font-size:14pt; vertical-align:middle; line-height:1.15; font-weight:normal; }
+      /* Data khane: columns 1–6 → Ascending (neeche se ooper). AHEM: CSS transform
+         seedha <td> par kaam nahi karta (browser nazar-andaz kar deta hai), is liye
+         matn andar <div> wrapper mein rakh kar us par lagate hain. */
+      #ch173-doc .ch173-table td{ font-size:14pt; vertical-align:top; line-height:1.15; }
+      /* Khane KHUD nahi phailte — sirf haath se (drag) resize hote hain */
+      /* USOOL: lambai columns 1–6 se tay. Column 7 usi lambai mein mehdood
+         rehta hai — uska baqi matn neeche wale khane mein chala jata hai.
+         AHEM: khane ki unchai PUKHTA honi zaroori hai, warna system pehchan
+         hi nahi pata ke matn zyada hai. */
+      #ch173-doc .ch173-table tbody td{ height:${_ch173Paper==='a4'?'150mm':'185mm'};
+        padding:0; overflow:visible; position:relative; vertical-align:top; }
+      /* ASCENDING (neeche se ooper) — writing-mode Chrome mein na-qabil-e-aitbaar
+         hai, is liye seedha ghumao (rotate) use karte hain. Khana relative,
+         andar ka box absolute + rotate(90deg) → RTL Urdu neeche se ooper. */
+      /* Khane ke andar clip-box — rotated matn kabhi doosre column mein na jaye */
+      #ch173-doc .ch173-table td.rotcell, #ch173-doc .ch173-table th.rotcell{
+        position:relative; padding:0; overflow:hidden;
+      }
+      /* Khadi likhayi — SIRF CSS (koi JS naap nahi), is liye print par bhi
+         khud theek rehti hai. writing-mode se matn khada, rotate(180) se
+         NEECHE se OOPER (Ascending). */
+      #ch173-doc .cellbox{ position:relative; width:100%; }
+      /* Khadi likhayi ka block khane ke BEECH mein (pehle dayen kinare se
+         chipka hua tha). rotclip ko flex bana kar beech mein rakhte hain. */
+      #ch173-doc .rotclip{ display:flex; justify-content:center; }
+      /* Table ke neeche koi lakeer nahi (magar wahan se unchai badalti hai) */
+      #ch173-doc .ch173-table, #ch173-doc .ch173-table tbody,
+      #ch173-doc .ch173-table tbody tr, #ch173-doc .ch173-table tbody td{
+        border-bottom:0 !important;
+      }
+      /* Column 7 — normal RTL (khadi nahi), khane ke andar hi mehdood */
+      #ch173-doc .hcell-td{ padding:0; vertical-align:top; }
+      #ch173-doc .hinner{
+        width:100%; height:100%; padding:5px; box-sizing:border-box;
+        direction:rtl; text-align:justify; text-align-last:right; outline:none;
+        line-height:1.15; overflow:hidden; overflow-wrap:break-word;
+        white-space:pre-wrap; font-size:14pt;
+      }
+      /* اختتامی خانہ — 2 برابر کالم۔ flex اس لیے کہ دونوں کالم ہمیشہ ایک جتنے
+         چوڑے رہیں اور ایک ساتھ ہی نیچے بڑھیں (ایک دوسرے سے آگے نہ نکلے) */
+      #ch173-doc .ch173-sho-flex{
+        display:flex; direction:rtl; align-items:stretch; gap:0; margin-top:6px;
+      }
+      #ch173-doc .ch173-sho-flex > .sho-col{ min-width:0; box-sizing:border-box; }
+      /* تفصیل کاغذات کا خانہ SHO لائن کے دائیں کنارے سے 1cm پہلے تک پھیلتا ہے */
+      #ch173-doc .ch173-sho-flex > .sho-papers{ flex:1 1 auto; }
+      /* SHO کالم — چوڑائی صرف اپنی لائن جتنی (شرنک-ٹو-فٹ) */
+      #ch173-doc .ch173-sho-flex > .sho-cell{ flex:0 0 auto; }
+
+      /* دائیں کالم — تفصیل کاغذات (عنوان) + اس کے نیچے لکھنے کی جگہ */
+      #ch173-doc .sho-papers{ text-align:right; padding:4px 6px 0 0; }
+      #ch173-doc .sho-papers-head{
+        font-weight:700; text-decoration:underline; white-space:nowrap;
+        font-size:14pt; line-height:1.25; margin:0;
+      }
+      /* کرسر یہاں بلنک کرتا ہے — ڈیٹا عنوان کے نیچے سے شروع ہوتا ہے */
+      #ch173-doc .sho-papers-body{
+        font-size:14pt; line-height:1.25; text-align:right; white-space:pre-wrap;
+        outline:1px dashed rgba(120,120,120,0.35); padding:3px 4px; margin-top:4px;
+        min-height:22px; overflow-wrap:break-word;
+      }
+      #ch173-doc .sho-papers-body:empty::before{
+        content:'یہاں کاغذات کی تفصیل لکھیں'; color:#bbb; font-size:12pt;
+      }
+
+      /* بائیں کالم — SHO/تاریخ: ایک اوپر، ایک نیچے */
+      #ch173-doc .sho-cell{
+        display:flex; flex-direction:column; justify-content:space-between;
+        min-height:42mm;
+      }
+      /* align-self:flex-end → RTL میں بائیں کنارے پر (جیسے اصل فارم میں) */
+      #ch173-doc .sho-block{ align-self:flex-end; }
+      /* SHO ki line ko aik satar neeche laane wali khali jagah */
+      #ch173-doc .sho-spacer{ height:1.6em; }
+      #ch173-doc .sho-cell-row{
+        outline:1px dashed rgba(120,120,120,0.35); padding:3px 6px; line-height:1.25;
+        min-height:20px; margin:0; font-size:14pt; text-align:right; white-space:nowrap;
+        font-weight:700;
+      }
+      /* تاریخ bold nahi — sirf SHO ki line */
+      #ch173-doc .sho-cell-date{ font-weight:normal; }
+      #ch173-doc .sho-cell-date{ font-size:14pt; color:#333; cursor:pointer; text-align:center; }
+      #ch173-doc .sho-cell-date:empty::before{ content:'تاریخ…'; color:#aaa; }
+      /* SHO ka naam set na ho to saaf hidayat (اوزار → SHO se set karein) */
+      #ch173-doc .sho-cell-row:empty::before{
+        content:'⚠ اوزار → SHO سے نام درج کریں'; color:#c00; font-size:11pt; font-weight:normal;
+      }
+      @media print{ #ch173-doc .sho-cell-row:empty::before{ content:''; } }
+      @media print{
+        #ch173-doc .sho-papers-body{ outline:none !important; }
+        #ch173-doc .sho-papers-body:empty::before{ content:''; }
+        #ch173-doc .sho-cell-row{ outline:none !important; }
+        #ch173-doc .sho-cell-date:empty::before{ content:''; }
+      }
+      /* Izafi khane screen par nazar aayen (kahan likhna hai pata chale) —
+         print mein yeh nishan nahi aata */
+      /* ملزمان chunne wala chhota button */
+      #ch173-doc .acc-pick{
+        position:absolute; top:2px; left:2px; z-index:7;
+        width:20px; height:20px; line-height:1; padding:0;
+        border:1px solid var(--border,#999); border-radius:4px;
+        background:#eef6ff; color:#0369a1; cursor:pointer; font-size:12px;
+      }
+      /* Column 7 — normal RTL (khadi nahi) */
+      /* USOOL: column 7 table ki lambai NAHI barhata — jo matn na samaye
+         woh khud table ke neeche wale khane mein chala jata hai */
+      #ch173-doc .ch173-table td.normcell{ padding:0; vertical-align:top; position:relative;
+        overflow:hidden; }
+      #ch173-doc .normwrap{
+        position:absolute; inset:0;   /* khane ke barabar — table lambi nahi karta */
+        padding:5px; box-sizing:border-box;
+        font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
+        direction:rtl; text-align:justify; text-align-last:right;
+        outline:none; line-height:1.15; font-size:14pt;
+        overflow-wrap:break-word; word-wrap:break-word;
+        overflow:hidden;   /* jo na samaye woh neeche wale khane mein jayega */
+      }
+      /* Har paragraph ki aakhri line bhi dayen (beech mein nahi) */
+      #ch173-doc .normwrap p, #ch173-doc .normwrap div{ text-align:justify; text-align-last:right; }
+      /* Paste kiya hua matn apna font saath na laye */
+      #ch173-doc .normwrap *, #ch173-doc .ch173-cont *{
+        font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif !important;
+      }
+      #ch173-doc .ch173-cont:empty::before{
+        content:'تسلسل — جو تحریر اوپر خانوں میں نہ سما سکے وہ یہاں لکھیں';
+        color:#aaa; font-size:12pt;
+      }
+      /* Table ke NEECHE tasalsul — table se BILKUL chipka hua (koi gap nahi) */
+      #ch173-doc .ch173-cont{
+        margin:0 !important; border:none !important; padding:0 5px !important;
+        min-height:0; direction:rtl; text-align:justify; text-align-last:right;
+        font-size:14pt; line-height:1.15; outline:none;
+        overflow-wrap:break-word; word-wrap:break-word; white-space:pre-wrap;
+      }
+      #ch173-doc .ch173-cont:empty{ min-height:0; padding:0 !important; }
+      #ch173-doc .rotinner{
+        width:auto; max-width:100%; min-height:40mm; box-sizing:border-box; padding:4px 6px;
+        writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
+        direction:rtl; text-align:start; outline:none; unicode-bidi:plaintext;
+        line-height:1.2; white-space:pre-wrap; word-break:keep-all;
+        overflow-wrap:normal;   /* lafz beech se na tootein */
+        overflow:hidden; font-size:14pt;
+      }
+      /* Column 7 — normal, RTL, justified */
+      #ch173-doc .hwrap{
+        writing-mode:horizontal-tb; transform:none;
+        width:100%; height:100%; padding:5px; box-sizing:border-box;
+        direction:rtl; text-align:justify; outline:none;
+      }
+
+      /* Khadi likhayi — NEECHE se OOPER (earth → sky) */
+      /* Header ki khadi likhayi — Ascending (neeche se ooper) */
+      #ch173-doc .vtxt{
+        display:inline-block;
+        writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl; -ms-writing-mode:tb-rl;
+        transform:rotate(180deg); -webkit-transform:rotate(180deg);
+        white-space:nowrap; line-height:1.2; text-align:center;
+      }
+      #ch173-doc th.vcell{ vertical-align:middle; padding:0; text-align:center; height:150px; }
+      /* Header ki khadi likhayi — data khanon jaisa hi wrapper (Ascending) */
+      /* مال قبضہ پولیس — lakeeron se hat kar, khane ke beech mein */
+      #ch173-doc .rothead{ text-align:center !important; white-space:normal;
+        padding:8px 6px; font-size:12pt; line-height:1.3; }
+
+      #ch173-doc th.hcell{ vertical-align:middle; text-align:center; direction:rtl; white-space:normal; }
+
+      /* Bahar ke kinare khule — pehla column dayen se, aakhri bayen se */
+      #ch173-doc .ch173-table thead tr:first-child th:first-child{ border-right:none; }
+      #ch173-doc .ch173-table thead tr:first-child th:last-child{ border-left:none; }
+      /* Data row (row 3): dono kinare khule — dayen bhi, bayen bhi */
+      #ch173-doc .ch173-table tbody tr > td:first-child{ border-right:0 !important; }
+      #ch173-doc .ch173-table tbody tr > td:last-child{ border-left:0 !important; }
+      #ch173-doc .ch173-table tbody tr > td:nth-last-child(1){ border-left:0 !important; }
+      /* Row 2 ki bayen aakhri line hataayi */
+      #ch173-doc .ch173-table thead tr:nth-child(2) th:last-child{ border-left:none; }
+      /* USOOL: columns 1–6 neeche se BAND (lakeer), column 7 khula */
+      #ch173-doc .ch173-table tbody td{ border-bottom:1px solid #000 !important; }
+      #ch173-doc .ch173-table tbody td.normcell{ border-bottom:0 !important; }
+
+      /* MS Word jaisi column resize — header par drag handle */
+      #ch173-doc .colgrip{
+        position:absolute; top:0; left:-3px; width:7px; height:100%;
+        cursor:col-resize; user-select:none; z-index:5;
+      }
+      /* Neeche se unchai badalne wali grip (row height) */
+      /* Neeche se unchai badalne wali grip — khane ke ANDAR (kabhi kat na jaye) */
+      #ch173-doc .rowgrip{
+        position:absolute; bottom:0; left:0; width:100%; height:12px;
+        cursor:row-resize; user-select:none; z-index:20;
+      }
+      #ch173-doc .rowgrip:hover{ background:rgba(56,189,248,0.45); }
+      #ch173-doc .colgrip:hover{ background:rgba(56,189,248,0.35); }
+`;
+}
+window._ch173CSS = _ch173CSS;
