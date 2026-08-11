@@ -1738,19 +1738,18 @@ function _ch173BindKeys() {
     const el = e.target;
     if (!el || !el.isContentEditable) return;
 
-    // TAB → خالی جگہ (فوکس دوسرے خانے پر نہ جائے)
+    // TAB → خالی جگہ۔ execCommand ناقابلِ اعتبار ہے، اس لیے سیدھا
+    // متن ڈالتے ہیں — یہ ہر براؤزر میں چلتا ہے۔
     if (e.key === 'Tab') {
       e.preventDefault();
-      if (e.shiftKey) { try { document.execCommand('outdent'); } catch(_) {} return; }
-      try { document.execCommand('insertHTML', false, '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'); } catch(_) {}
+      _ch173Insert(e.shiftKey ? '' : '\u00A0\u00A0\u00A0\u00A0\u00A0');
       return;
     }
 
     // ENTER → نئی سطر (خانے کے اندر ہی)
     if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
       e.preventDefault();
-      try { document.execCommand('insertLineBreak'); }
-      catch(_) { try { document.execCommand('insertHTML', false, '<br>'); } catch(__) {} }
+      _ch173Insert('\n');
       return;
     }
 
@@ -1918,11 +1917,6 @@ function _ch173CSS() {
       /* Khadi likhayi ka block khane ke BEECH mein (pehle dayen kinare se
          chipka hua tha). rotclip ko flex bana kar beech mein rakhte hain. */
       #ch173-doc .rotclip{ display:flex; justify-content:center; }
-      /* Table ke neeche koi lakeer nahi (magar wahan se unchai badalti hai) */
-      #ch173-doc .ch173-table, #ch173-doc .ch173-table tbody,
-      #ch173-doc .ch173-table tbody tr, #ch173-doc .ch173-table tbody td{
-        border-bottom:0 !important;
-      }
       /* Column 7 — normal RTL (khadi nahi), khane ke andar hi mehdood */
       #ch173-doc .hcell-td{ padding:0; vertical-align:top; }
       #ch173-doc .hinner{
@@ -1973,8 +1967,8 @@ function _ch173CSS() {
         font-weight:700;
       }
       /* تاریخ bold nahi — sirf SHO ki line */
-      #ch173-doc .sho-cell-date{ font-weight:normal; }
-      #ch173-doc .sho-cell-date{ font-size:14pt; color:#333; cursor:pointer; text-align:center; }
+      #ch173-doc .sho-cell-date{ font-weight:normal; font-size:14pt; color:#333;
+        cursor:pointer; text-align:center; }
       #ch173-doc .sho-cell-date:empty::before{ content:'تاریخ…'; color:#aaa; }
       /* SHO ka naam set na ho to saaf hidayat (اوزار → SHO se set karein) */
       #ch173-doc .sho-cell-row:empty::before{
@@ -2028,7 +2022,18 @@ function _ch173CSS() {
         overflow-wrap:break-word; word-wrap:break-word; white-space:pre-wrap;
       }
       #ch173-doc .ch173-cont:empty{ min-height:0; padding:0 !important; }
+      /* CNIC ka apna khana — column ke ooper se 1cm neeche, aur naam se
+         kam az kam 1cm ka fasla. (Khadi likhayi mein "ooper se" ka matlab
+         matn ke bahao ki shuruaat hai, is liye margin-block-start.) */
+      #ch173-doc .dio-cnic{
+        display:inline-block;
+        margin-block-start:1cm;      /* naam se 1cm ka fasla */
+        white-space:nowrap; word-break:keep-all;
+        direction:ltr; unicode-bidi:isolate;
+      }
+      /* Har khadi khane ka matn ooper se 1cm neeche shuru ho */
       #ch173-doc .rotinner{
+        padding-block-start:1cm;
         width:auto; max-width:100%; min-height:40mm; box-sizing:border-box; padding:4px 6px;
         writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
         direction:rtl; text-align:start; outline:none; unicode-bidi:plaintext;
@@ -2088,3 +2093,22 @@ function _ch173CSS() {
 `;
 }
 window._ch173CSS = _ch173CSS;
+
+// کرسر کی جگہ پر متن ڈالو — ہر براؤزر میں قابلِ اعتبار
+// (execCommand کبھی چلتا ہے کبھی نہیں، اس لیے Range سے کام لیتے ہیں)
+function _ch173Insert(txt) {
+  try {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    const r = sel.getRangeAt(0);
+    r.deleteContents();
+    const node = document.createTextNode(txt);
+    r.insertNode(node);
+    r.setStartAfter(node);
+    r.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(r);
+    try { _r173Dirty = true; } catch (_) {}
+  } catch (_) {}
+}
+window._ch173Insert = _ch173Insert;
