@@ -103,7 +103,7 @@ const R173_BOILER = {
 
 // ── ENTRY ─────────────────────────────────────────────────────
 async function openReport173(caseId) {
-  _ch173Accused = null; _ch173Witnesses = null;   // naye case ki list
+  _ch173Accused = null; _ch173Witnesses = null; _ch173FirMatn = null;   // naye case ki list
   _r173CaseId = caseId || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
              || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
   if (typeof getCase === 'function' && _r173CaseId) {
@@ -620,6 +620,7 @@ function _renderR173() {
       _ch173BindKeys();
       _ch173BindOverflow();
       _ch173Overflow();
+      if (_ch173FirMatn === null) _ch173LoadFirMatn(); else _ch173FillHalaat();
       window.addEventListener('resize', _ch173SizeRotated);
       // Mehfooz shuda row height wapas lagao
       try {
@@ -2171,3 +2172,57 @@ function _ch173SetPaper(v) {
     showToast(_ch173Paper === 'a4' ? '📄 A4 منتخب' : '📄 لیگل (8.5×13) منتخب', 'info');
 }
 window._ch173SetPaper = _ch173SetPaper;
+
+// ═══════════════════════════════════════════════════════════════════
+//  کالم 7 کا شروعاتی فقرہ (خانہ خالی ہو تو خودبخود آ جاتا ہے)
+//  ساخت:  جناب عالیٰ! مختصر حالات مقدمہ اس طرح ہیں کہ
+//         + [FIR یا کراس ورژن کا متن — مقدمہ کے ریکارڈ سے]
+//         + جس پر مقدمہ عنوان بالا درج ہوا … دورانِ تفتیش
+// ═══════════════════════════════════════════════════════════════════
+let _ch173FirMatn = null;          // اس مقدمہ کے تمام متن
+
+const R173_HALAAT_START = 'جناب عالیٰ! مختصر حالات مقدمہ اس طرح ہیں کہ ';
+const R173_HALAAT_END   = ' جس پر مقدمہ عنوان بالا درج ہوا تفتیش مقدمہ عمل میں لائی گئی دورانِ تفتیش ';
+
+// موجودہ ورژن (FIR / کراس ورژن) کا متن
+function _ch173FirText() {
+  const list = _ch173FirMatn || [];
+  const want = (_ch173Version === 'cross_version') ? 'cross_version' : 'fir';
+  const rows = list.filter(m => (m.type || 'fir') === want);
+  if (!rows.length) return '';
+  return rows.map(m => String(m.matn || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim())
+             .filter(Boolean).join(' ');
+}
+
+// پورا فقرہ
+function _ch173HalaatText() {
+  const body = _ch173FirText();
+  return R173_HALAAT_START + (body ? body : '') + R173_HALAAT_END;
+}
+window._ch173HalaatText = _ch173HalaatText;
+
+// متن لوڈ کرو، پھر خالی خانے میں فقرہ ڈال دو
+async function _ch173LoadFirMatn() {
+  const cid = _r173CaseId || _misalCaseId ||
+              (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
+  if (!cid) { _ch173FirMatn = []; return; }
+  try {
+    const { data } = await supabaseClient.from('fir_matn')
+      .select('matn,type').eq('case_id', cid).order('created_at', { ascending: true });
+    _ch173FirMatn = data || [];
+  } catch (_) { _ch173FirMatn = []; }
+  _ch173FillHalaat();
+}
+window._ch173LoadFirMatn = _ch173LoadFirMatn;
+
+// خانہ خالی ہو تو فقرہ ڈالو (لکھا ہوا متن کبھی نہ مٹے)
+function _ch173FillHalaat() {
+  try {
+    const cell = document.querySelector('#ch173-table [data-k="halaat"]');
+    if (!cell) return;
+    if (cell.innerText.replace(/\s/g, '').length) return;   // پہلے سے کچھ لکھا ہے
+    cell.innerText = _ch173HalaatText();
+    if (typeof _ch173Overflow === 'function') _ch173Overflow();
+  } catch (_) {}
+}
+window._ch173FillHalaat = _ch173FillHalaat;
