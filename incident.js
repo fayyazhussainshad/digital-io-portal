@@ -4,6 +4,9 @@
    Auto date · Signature + Stamp block · Print/Download
    ═══════════════════════════════════════════════════════════ */
 
+// (صفائی کے دوران غلطی سے ہٹ گئے تھے — واپس)
+let _victimCount = 0, _suspectCount = 0, _witnessCount = 0;
+
 registerPage('incident', renderIncident);
 
 function renderIncident(container) {

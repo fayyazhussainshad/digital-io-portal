@@ -4,6 +4,11 @@
    Digital IO — Tafteeshi Officer ka Chhotu
    ═══════════════════════════════════════════════════════════ */
 
+// (صفائی کے دوران غلطی سے ہٹ گئے تھے — واپس)
+let _usageBuffer = {};
+const _usageKey = 'dio_btn_usage';
+let _usageTimer = null;
+
 // ── SUPABASE ──────────────────────────────────────────────────
 const SUPABASE_URL = 'https://bbrhtokynxmljumxyaeh.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJicmh0b2t5bnhtbGp1bXh5YWVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MzU5ODIsImV4cCI6MjA5NTUxMTk4Mn0.o4uKyqhIx9vWDX-CeJjwujWUYK6Cy0XzEZ5fw_efQMA';
