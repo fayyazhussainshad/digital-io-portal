@@ -303,10 +303,10 @@ function _renderR173() {
             </thead>
             <tbody>
               <tr>
-                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bs.madai !== undefined ? sanitizeHtml(bs.madai) : _ch173MudaiText(c)}</div></div></div></td>
-                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'ghair_giraftar')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div></div></div></td>
-                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'zer_hirasat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div></div></div></td>
-                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'bar_zamanat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bs.madai !== undefined ? sanitizeHtml(bs.madai) : esc(_ch173MudaiName(c))}</div><div class="rotinner cnic-field" contenteditable="true" data-k="madai_cnic">${bs.madai_cnic !== undefined ? sanitizeHtml(bs.madai_cnic) : esc(_ch173MudaiCnic(c))}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'ghair_giraftar')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div><div class="rotinner cnic-field" contenteditable="true" data-k="ghair_giraftar_cnic">${bv('ghair_giraftar_cnic')}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'zer_hirasat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div><div class="rotinner cnic-field" contenteditable="true" data-k="zer_hirasat_cnic">${bv('zer_hirasat_cnic')}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'bar_zamanat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div><div class="rotinner cnic-field" contenteditable="true" data-k="bar_zamanat_cnic">${bv('bar_zamanat_cnic')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="mal_qabza">${bv('mal_qabza')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="shahadat">${bs.shahadat !== undefined ? sanitizeHtml(bs.shahadat) : esc(_ch173WitnessText())}</div></div></div></td>
                 <td class="normcell"><div class="normwrap" contenteditable="true" data-mic="true" data-k="halaat">${bv('halaat')}</div></td>
@@ -879,49 +879,42 @@ function _ch173Overflow() {
   const cell = document.querySelector('#ch173-table [data-k="halaat"]');
   const cont = document.querySelector('#ch173-doc [data-k="cont_text"]');
   if (!cell || !cont) return;
-
   const full = () => cell.scrollHeight > cell.clientHeight + 1;
   let guard = 0;
 
-  // ── (a) Jo matn khane mein na samaye woh NEECHE bhejo ──────────────
-  // AHEM: yahan matn dobara nahi likhte (innerText se bold/italic mit
-  // jata tha aur kabhi matn bhi zaya ho jata tha). Ab asal DOM node ko
-  // uthakar neeche wale khane mein rakhte hain — formatting mehfooz.
-  while (full() && guard++ < 4000) {
-    const last = cell.lastChild;
-    if (!last) break;
-    if (last.nodeType === 3) {                       // saada matn — aakhri lafz
-      const t = last.nodeValue;
+  // (a) Jo matn na samaye woh NEECHE bhejo — LAFZ-BA-LAFZ.
+  // AHEM: agar aakhri cheez aik bara tukra ho to usay POORA na bhejo,
+  // balke us ke ANDAR ja kar aakhri lafz nikaalo — warna paste kiya hua
+  // sara matn aik saath neeche chala jata hai.
+  while (full() && guard++ < 8000) {
+    let node = cell.lastChild;
+    if (!node) break;
+    while (node.nodeType === 1 && node.lastChild) node = node.lastChild;
+    if (node.nodeType === 3) {
+      const t = node.nodeValue;
       const k = t.replace(/\s+$/, '').lastIndexOf(' ');
       if (k > 0) {
         const moved = t.slice(k);
-        last.nodeValue = t.slice(0, k);
+        node.nodeValue = t.slice(0, k);
         cont.insertBefore(document.createTextNode(moved), cont.firstChild);
         continue;
       }
     }
-    cont.insertBefore(last, cont.firstChild);        // poora element utha lo
+    const par = node.parentNode;
+    cont.insertBefore(node, cont.firstChild);
+    if (par && par !== cell && !par.childNodes.length) par.remove();
   }
 
-  // ── (b) Jagah bach jaye to neeche se WAPAS uthao ──────────────────
+  // (b) Jagah bache to neeche se WAPAS uthao
   guard = 0;
-  while (!full() && cont.firstChild && guard++ < 4000) {
+  while (!full() && cont.firstChild && guard++ < 8000) {
     const first = cont.firstChild;
     cell.appendChild(first);
-    if (full()) { cont.insertBefore(first, cont.firstChild); break; }  // na samaya → wapas
+    if (full()) { cont.insertBefore(first, cont.firstChild); break; }
   }
 }
+window._ch173Overflow = _ch173Overflow;
 
-function _ch173CaretEnd(el) {
-  try {
-    el.focus({ preventScroll: true });
-    const r = document.createRange();
-    r.selectNodeContents(el);
-    r.collapse(false);
-    const s = window.getSelection();
-    s.removeAllRanges(); s.addRange(r);
-  } catch (_) {}
-}
 
 function _ch173BindOverflow() {
   const cell = document.querySelector('#ch173-table [data-k="halaat"]');
@@ -949,7 +942,20 @@ function _ch173BindOverflow() {
   };
   let _t = null;
   cell.addEventListener('input', () => { clearTimeout(_t); _t = setTimeout(run, 350); });
-  cell.addEventListener('paste', () => setTimeout(run, 150));
+  // PASTE: matn SAADA shakl mein daalo.
+  // WAJAH: Word/browser se paste hone par sara matn AIK BARE TUKRE ki
+  // shakl mein aata tha — is liye woh poora ka poora aik saath neeche
+  // chala jata tha. Saada matn hone se woh lafz-ba-lafz taqseem hota hai
+  // aur khane mein jitna samaye utna wahin rehta hai.
+  // (Is se font ka aadha-aadha hona bhi khatam ho jata hai.)
+  cell.addEventListener('paste', (e) => {
+    try {
+      e.preventDefault();
+      const t = ((e.clipboardData || window.clipboardData).getData('text/plain') || '');
+      if (typeof _ch173Insert === 'function') _ch173Insert(t);
+      setTimeout(run, 60);
+    } catch (_) { setTimeout(run, 150); }
+  });
 }
 window._ch173BindOverflow = _ch173BindOverflow;
 
@@ -1079,15 +1085,16 @@ function _ch173AccPicker(ev, key) {
   box.querySelector('#ch173-acc-x').onclick = () => box.remove();
   box.querySelector('#ch173-acc-ok').onclick = () => {
     const picked = [...box.querySelectorAll('input:checked')].map(i => i.value);
-    // Har naam ke AAGE usi line mein uska CNIC — 1cm ke fasle ke saath.
-    // <bdi> asal element hai: CNIC hamesha LTR rehta hai aur us par
-    // 1cm ka fasla (CSS) lag sakta hai.
+    // Naam aur CNIC ab ALAG ALAG khanon mein
     if (cell) {
-      cell.innerHTML = picked.map(nm => {
-        const a = (_ch173Accused || []).find(x => (x.name || '').trim() === nm);
-        const c = (a && a.cnic && String(a.cnic).trim()) ? String(a.cnic).trim() : '00000-0000000-0';
-        return esc(nm) + '<bdi class="dio-cnic">' + esc(c) + '</bdi>';
-      }).join('<br>');
+      cell.innerText = picked.join('\n');
+      const cf = cell.parentNode && cell.parentNode.querySelector('.cnic-field');
+      if (cf) {
+        cf.innerText = picked.map(nm => {
+          const a = (_ch173Accused || []).find(x => (x.name || '').trim() === nm);
+          return (a && a.cnic && String(a.cnic).trim()) ? String(a.cnic).trim() : '00000-0000000-0';
+        }).join('\n');
+      }
     }
     box.remove();
     if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
@@ -1835,17 +1842,6 @@ function _ch173FillHalaat() {
 }
 window._ch173FillHalaat = _ch173FillHalaat;
 
-// ═══ مدعی کا نام + اُس کے آگے CNIC ═══
-function _ch173MudaiText(c) {
-  c = c || {};
-  const cross = (_ch173Version === 'cross_version');
-  const nm = String((cross ? (c.cross_complainant || c.cross_complainant_name)
-                           : (c.complainant || c.complainant_name)) || '').trim();
-  const cn = String((cross ? c.cross_complainant_cnic : c.complainant_cnic) || '').trim();
-  if (!nm) return '';
-  return esc(nm) + '<bdi class="dio-cnic">' + esc(cn || '00000-0000000-0') + '</bdi>';
-}
-window._ch173MudaiText = _ch173MudaiText;
 
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1916,7 +1912,7 @@ function _ch173CSS() {
       #ch173-doc .cellbox{ position:relative; width:100%; }
       /* Khadi likhayi ka block khane ke BEECH mein (pehle dayen kinare se
          chipka hua tha). rotclip ko flex bana kar beech mein rakhte hain. */
-      #ch173-doc .rotclip{ display:flex; justify-content:center; }
+      #ch173-doc .rotclip{ display:flex; justify-content:center; gap:0; }
       /* Column 7 — normal RTL (khadi nahi), khane ke andar hi mehdood */
       #ch173-doc .hcell-td{ padding:0; vertical-align:top; }
       #ch173-doc .hinner{
@@ -2022,15 +2018,23 @@ function _ch173CSS() {
         overflow-wrap:break-word; word-wrap:break-word; white-space:pre-wrap;
       }
       #ch173-doc .ch173-cont:empty{ min-height:0; padding:0 !important; }
-      /* CNIC ka apna khana — column ke ooper se 1cm neeche, aur naam se
-         kam az kam 1cm ka fasla. (Khadi likhayi mein "ooper se" ka matlab
-         matn ke bahao ki shuruaat hai, is liye margin-block-start.) */
-      #ch173-doc .dio-cnic{
-        display:inline-block;
-        margin-block-start:1cm;      /* naam se 1cm ka fasla */
+      /* CNIC ka APNA khana — naam se alag.
+         • Naam  : NEECHE se OOPER (direction:rtl ke saath vertical-rl)
+         • CNIC  : OOPER se NEECHE (direction:ltr)
+         • Dono ke darmiyan 1.5cm ka fasla */
+      #ch173-doc .rotinner.cnic-field{
+        direction:ltr;                 /* OOPER se NEECHE */
+        text-align:start;
+        margin-inline-start:1.5cm;     /* naam se 1.5cm ka fasla */
+        padding-block-start:1cm;       /* column ke ooper se 1cm neeche */
         white-space:nowrap; word-break:keep-all;
-        direction:ltr; unicode-bidi:isolate;
+        font-family:var(--font-mono),monospace;
+        font-size:12pt;
       }
+      #ch173-doc .rotinner.cnic-field:empty::before{
+        content:'00000-0000000-0'; color:#bbb;
+      }
+      @media print{ #ch173-doc .rotinner.cnic-field:empty::before{ content:''; } }
       /* Har khadi khane ka matn ooper se 1cm neeche shuru ho */
       #ch173-doc .rotinner{
         padding-block-start:1cm;
@@ -2112,3 +2116,19 @@ function _ch173Insert(txt) {
   } catch (_) {}
 }
 window._ch173Insert = _ch173Insert;
+
+// مدعی کا نام (CNIC الگ خانے میں جاتا ہے)
+function _ch173MudaiName(c) {
+  c = c || {};
+  const cross = (_ch173Version === 'cross_version');
+  return String((cross ? (c.cross_complainant || c.cross_complainant_name)
+                       : (c.complainant || c.complainant_name)) || '').trim();
+}
+// مدعی کا CNIC
+function _ch173MudaiCnic(c) {
+  c = c || {};
+  const cross = (_ch173Version === 'cross_version');
+  return String((cross ? c.cross_complainant_cnic : c.complainant_cnic) || '').trim();
+}
+window._ch173MudaiName = _ch173MudaiName;
+window._ch173MudaiCnic = _ch173MudaiCnic;
