@@ -1912,7 +1912,10 @@ function _ch173CSS() {
       #ch173-doc .cellbox{ position:relative; width:100%; }
       /* Khadi likhayi ka block khane ke BEECH mein (pehle dayen kinare se
          chipka hua tha). rotclip ko flex bana kar beech mein rakhte hain. */
-      #ch173-doc .rotclip{ display:flex; justify-content:center; gap:0; }
+      /* Naam aur CNIC do alag khane — saath saath.
+         Naam NEECHE se shuru, CNIC OOPER se. */
+      #ch173-doc .rotclip{ display:flex; flex-direction:row; justify-content:center;
+        align-items:stretch; gap:0; }
       /* Column 7 — normal RTL (khadi nahi), khane ke andar hi mehdood */
       #ch173-doc .hcell-td{ padding:0; vertical-align:top; }
       #ch173-doc .hinner{
@@ -2023,13 +2026,12 @@ function _ch173CSS() {
          • CNIC  : OOPER se NEECHE (direction:ltr)
          • Dono ke darmiyan 1.5cm ka fasla */
       #ch173-doc .rotinner.cnic-field{
-        direction:ltr;                 /* OOPER se NEECHE */
-        text-align:start;
-        margin-inline-start:1.5cm;     /* naam se 1.5cm ka fasla */
-        padding-block-start:1cm;       /* column ke ooper se 1cm neeche */
+        direction:ltr;                    /* OOPER se NEECHE parhi jaye */
+        align-items:flex-start;           /* khane ke OOPER se shuru */
+        margin-inline-end:1.5cm;          /* naam ke khatme se 1.5cm ka fasla */
         white-space:nowrap; word-break:keep-all;
-        font-family:var(--font-mono),monospace;
-        font-size:12pt;
+        font-family:var(--font-mono),monospace; font-size:12pt;
+        min-height:0;
       }
       #ch173-doc .rotinner.cnic-field:empty::before{
         content:'00000-0000000-0'; color:#bbb;
@@ -2037,13 +2039,14 @@ function _ch173CSS() {
       @media print{ #ch173-doc .rotinner.cnic-field:empty::before{ content:''; } }
       /* Har khadi khane ka matn ooper se 1cm neeche shuru ho */
       #ch173-doc .rotinner{
-        padding-block-start:1cm;
-        width:auto; max-width:100%; min-height:40mm; box-sizing:border-box; padding:4px 6px;
+        width:auto; max-width:100%; min-height:40mm; box-sizing:border-box;
         writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
-        direction:rtl; text-align:start; outline:none; unicode-bidi:plaintext;
+        direction:rtl; outline:none; unicode-bidi:plaintext;
         line-height:1.2; white-space:pre-wrap; word-break:keep-all;
-        overflow-wrap:normal;   /* lafz beech se na tootein */
-        overflow:hidden; font-size:14pt;
+        overflow-wrap:normal; overflow:hidden; font-size:14pt;
+        /* NAAM khane ke NEECHE se shuru ho (flex se — yaqeeni tareeqa) */
+        display:flex; align-items:flex-end;
+        padding:4px 6px;
       }
       /* Column 7 — normal, RTL, justified */
       #ch173-doc .hwrap{
@@ -2063,8 +2066,8 @@ function _ch173CSS() {
       #ch173-doc th.vcell{ vertical-align:middle; padding:0; text-align:center; height:150px; }
       /* Header ki khadi likhayi — data khanon jaisa hi wrapper (Ascending) */
       /* مال قبضہ پولیس — lakeeron se hat kar, khane ke beech mein */
-      #ch173-doc .rothead{ text-align:center !important; white-space:normal;
-        padding:8px 6px; font-size:12pt; line-height:1.3; }
+      #ch173-doc .rothead{ align-items:center !important; justify-content:center;
+        white-space:normal; padding:8px 6px; font-size:12pt; line-height:1.3; }
 
       #ch173-doc th.hcell{ vertical-align:middle; text-align:center; direction:rtl; white-space:normal; }
 
