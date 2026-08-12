@@ -266,7 +266,7 @@ function _renderR173() {
       </div>
       <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
         <div id="ch173-doc" style="width:100%;max-width:none;min-height:${_ch173Paper==='a4'?'11.7in':'13in'};margin:0 auto;
-             padding:1cm;
+             padding:1cm 0.5cm;
              background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;
              line-height:1.4;box-sizing:border-box;">
 
@@ -679,7 +679,8 @@ function _printR173() {
     const chHtml = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
       <style>
         /* Charon taraf BARABAR margin — kaghaz chune hue naap ka */
-        @page{ size:${_ch173Paper === 'a4' ? 'A4 portrait' : '8.5in 13in'}; margin:1cm; }
+        /* Sides tang aur barabar — table poori qabil-e-tabaat chaudai le */
+        @page{ size:${_ch173Paper === 'a4' ? 'A4 portrait' : '8.5in 13in'}; margin:1cm 0.5cm; }
         html, body{ margin:0 !important; padding:0 !important;
           font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
           direction:rtl; line-height:1.4; color:#000; }
@@ -1905,7 +1906,9 @@ function _ch173CSS() {
          rehta hai — uska baqi matn neeche wale khane mein chala jata hai.
          AHEM: khane ki unchai PUKHTA honi zaroori hai, warna system pehchan
          hi nahi pata ke matn zyada hai. */
-      #ch173-doc .ch173-table tbody td{ height:${_ch173Paper==='a4'?'150mm':'185mm'};
+      /* Khane ki unchai MATN JITNI — zabardasti lambi nahi (pehle muqarrar
+         unchai thi, is liye bari khali jagah reh jati thi) */
+      #ch173-doc .ch173-table tbody td{ height:auto; min-height:60mm;
         padding:0; overflow:visible; position:relative; vertical-align:top; }
       /* ASCENDING (neeche se ooper) — writing-mode Chrome mein na-qabil-e-aitbaar
          hai, is liye seedha ghumao (rotate) use karte hain. Khana relative,
@@ -2000,16 +2003,16 @@ function _ch173CSS() {
       /* Column 7 — normal RTL (khadi nahi) */
       /* USOOL: column 7 table ki lambai NAHI barhata — jo matn na samaye
          woh khud table ke neeche wale khane mein chala jata hai */
-      #ch173-doc .ch173-table td.normcell{ padding:0; vertical-align:top; position:relative;
-        overflow:hidden; }
+      /* Matn kabhi kate nahi — poora nazar aaye */
+      #ch173-doc .ch173-table td.normcell{ padding:0; vertical-align:top; }
       #ch173-doc .normwrap{
-        position:absolute; inset:0;   /* khane ke barabar — table lambi nahi karta */
+        width:100%; min-height:100%;   /* matn ke saath khud barhta hai */
         padding:5px; box-sizing:border-box;
         font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
         direction:rtl; text-align:justify; text-align-last:right;
         outline:none; line-height:1.15; font-size:14pt;
         overflow-wrap:break-word; word-wrap:break-word;
-        overflow:hidden;   /* jo na samaye woh neeche wale khane mein jayega */
+        overflow:visible;  /* matn kate nahi — poora nazar aaye */
       }
       /* Har paragraph ki aakhri line bhi dayen (beech mein nahi) */
       #ch173-doc .normwrap p, #ch173-doc .normwrap div{ text-align:justify; text-align-last:right; }
@@ -2054,10 +2057,11 @@ function _ch173CSS() {
         font-family:var(--font-mono),monospace; font-size:11pt;
         white-space:pre; word-break:keep-all; min-height:0;
       }
+      /* Khaka print mein BHI aaye — pehle print par yeh chhupa diya jata
+         tha, is liye khali CNIC ka khana bilkul khali chhap jata tha */
       #ch173-doc .rotinner.cnic-col:empty::before{
-        content:'00000-0000000-0'; color:#ccc;
+        content:'00000-0000000-0'; color:#000;
       }
-      @media print{ #ch173-doc .rotinner.cnic-col:empty::before{ content:''; } }
       /* CNIC — USI SATAR mein naam ke saath, 1.5cm ke fasle par.
          (Aik satar = naam + CNIC. Alag satar NAHI.) */
       #ch173-doc .rotinner .cn{
