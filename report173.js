@@ -807,9 +807,43 @@ function _ch173MakeResizable() {
     if (ths[1]) addGrip(ths[1], 3, 4);   // برضمانت ↔ مال قبضہ
   }
 
-  // ── NEECHE wali lakeer se unchai badalna (jaise ooper chaudai) ──
-  // Grip HAR khane par lagate hain taake neeche ki poori lakeer par kahin se
-  // bhi pakar kar kheencha ja sake.
+  // ── ROW 2 ki NEECHE wali lakeer se HEADER ki unchai badalna ──
+  const hRow2 = table.querySelector('thead tr:nth-child(2)');
+  if (hRow2) {
+    hRow2.querySelectorAll('th').forEach(th => {
+      const hg = document.createElement('div');
+      hg.className = 'rowgrip';
+      hg.title = 'ہیڈر کی اونچائی بدلنے کے لیے کھینچیں';
+      th.appendChild(hg);
+      hg.addEventListener('mousedown', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        const startY = e.clientY;
+        const startH = hRow2.offsetHeight;
+        // Row 1 ke woh khane jo dono qataron par phaile hue hain (rowspan)
+        const spanned = [...table.querySelectorAll('thead tr:first-child th[rowspan]')];
+        const spanH = spanned.length ? spanned[0].offsetHeight : 0;
+        document.body.style.cursor = 'row-resize';
+        const onMove = (ev) => {
+          const d = ev.clientY - startY;
+          const nh = startH + d;
+          if (nh < 24) return;
+          hRow2.querySelectorAll('th').forEach(c => { c.style.height = nh + 'px'; });
+          spanned.forEach(c => { c.style.height = (spanH + d) + 'px'; });
+        };
+        const onUp = () => {
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+          document.body.style.cursor = '';
+          try { _r173Dirty = true; } catch (_) {}
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+    });
+  }
+
+  // ── ROW 3 ki NEECHE wali lakeer se unchai badalna ──
+  // Grip HAR khane par — neeche ki poori lakeer par kahin se bhi pakar sakte hain
   const bodyRow = table.querySelector('tbody tr');
   if (bodyRow) {
     bodyRow.querySelectorAll('td').forEach(td => {
@@ -1896,7 +1930,8 @@ function _ch173CSS() {
         position:relative; line-height:1.15;
       }
       /* Header row 1: jagah ke hisab se chhota font */
-      #ch173-doc .ch173-table thead th{ font-size:14pt; vertical-align:middle; line-height:1.15; font-weight:normal; }
+      #ch173-doc .ch173-table thead th{ font-size:14pt; vertical-align:middle; line-height:1.15;
+        font-weight:normal; position:relative; }
       /* Data khane: columns 1–6 → Ascending (neeche se ooper). AHEM: CSS transform
          seedha <td> par kaam nahi karta (browser nazar-andaz kar deta hai), is liye
          matn andar <div> wrapper mein rakh kar us par lagate hain. */
@@ -1921,13 +1956,13 @@ function _ch173CSS() {
       /* Khadi likhayi — SIRF CSS (koi JS naap nahi), is liye print par bhi
          khud theek rehti hai. writing-mode se matn khada, rotate(180) se
          NEECHE se OOPER (Ascending). */
-      #ch173-doc .cellbox{ position:relative; width:100%; }
+      #ch173-doc .cellbox{ position:relative; width:100%; height:100%; overflow:hidden; }
       /* Khadi likhayi ka block khane ke BEECH mein (pehle dayen kinare se
          chipka hua tha). rotclip ko flex bana kar beech mein rakhte hain. */
       /* Naam aur CNIC do alag khane — saath saath.
          Naam NEECHE se shuru, CNIC OOPER se. */
-      #ch173-doc .rotclip{ display:flex; flex-direction:row; justify-content:center;
-        align-items:stretch; gap:0; }
+      #ch173-doc .rotclip{ position:absolute; inset:0; overflow:hidden;
+        display:flex; flex-direction:row; justify-content:center; align-items:stretch; }
       /* Column 7 — normal RTL (khadi nahi), khane ke andar hi mehdood */
       #ch173-doc .hcell-td{ padding:0; vertical-align:top; }
       #ch173-doc .hinner{
