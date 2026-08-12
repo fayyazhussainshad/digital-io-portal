@@ -1065,29 +1065,29 @@ window.addEventListener('unhandledrejection', function(e){
     </div>
     <div class="login-error" id="login-error"></div>
     <div class="login-methods">
-      <button class="login-method active" onclick="setLoginMethod('password',this)"><span>🔐</span> Password</button>
-      <button class="login-method" onclick="setLoginMethod('pin',this)"><span>🔢</span> PIN</button>
-      <button class="login-method" onclick="setLoginMethod('biometric',this)"><span>🫆</span> Biometric</button>
+      <button class="login-method active" onclick="window.setLoginMethod&&setLoginMethod('password',this)"><span>🔐</span> Password</button>
+      <button class="login-method" onclick="window.setLoginMethod&&setLoginMethod('pin',this)"><span>🔢</span> PIN</button>
+      <button class="login-method" onclick="window.setLoginMethod&&setLoginMethod('biometric',this)"><span>🫆</span> Biometric</button>
     </div>
     <div id="panel-password">
       <div class="input-group"><input type="email" id="login-email" class="login-input" placeholder="Officer Email Address" autocomplete="email"></div>
-      <div class="input-group"><input type="password" id="login-password" class="login-input" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"><button class="input-eye" onclick="togglePasswordVisibility('login-password')">👁️</button></div>
-      <button class="login-btn" onclick="doLogin()" id="login-submit-btn"><span id="login-btn-text">🔓 Sign In Securely</span><span id="login-btn-loader" style="display:none;">⏳ Verifying...</span></button>
-      <div class="login-links"><a onclick="showForgotPassword()">پاس ورڈ بھول گئے ؟</a><a onclick="showRegister()">ہمارا حصہ بنیں</a></div>
+      <div class="input-group"><input type="password" id="login-password" class="login-input" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter'&&window.doLogin)doLogin()"><button class="input-eye" onclick="window.togglePasswordVisibility&&togglePasswordVisibility('login-password')">👁️</button></div>
+      <button class="login-btn" onclick="window.doLogin&&doLogin()" id="login-submit-btn"><span id="login-btn-text">🔓 Sign In Securely</span><span id="login-btn-loader" style="display:none;">⏳ Verifying...</span></button>
+      <div class="login-links"><a onclick="window.showForgotPassword&&showForgotPassword()">پاس ورڈ بھول گئے ؟</a><a onclick="window.showRegister&&showRegister()">ہمارا حصہ بنیں</a></div>
     </div>
     <div id="panel-pin" style="display:none;">
       <div class="pin-display"><div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div><div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div><div class="pin-dot" id="pd4"></div><div class="pin-dot" id="pd5"></div></div>
       <div class="pin-pad">
-        <button class="pin-key" onclick="pinPress('1')">1</button><button class="pin-key" onclick="pinPress('2')">2</button><button class="pin-key" onclick="pinPress('3')">3</button>
-        <button class="pin-key" onclick="pinPress('4')">4</button><button class="pin-key" onclick="pinPress('5')">5</button><button class="pin-key" onclick="pinPress('6')">6</button>
-        <button class="pin-key" onclick="pinPress('7')">7</button><button class="pin-key" onclick="pinPress('8')">8</button><button class="pin-key" onclick="pinPress('9')">9</button>
-        <button class="pin-key pin-key-empty"></button><button class="pin-key" onclick="pinPress('0')">0</button><button class="pin-key pin-key-del" onclick="pinBackspace()">⌫</button>
+        <button class="pin-key" onclick="window.pinPress&&pinPress('1')">1</button><button class="pin-key" onclick="window.pinPress&&pinPress('2')">2</button><button class="pin-key" onclick="window.pinPress&&pinPress('3')">3</button>
+        <button class="pin-key" onclick="window.pinPress&&pinPress('4')">4</button><button class="pin-key" onclick="window.pinPress&&pinPress('5')">5</button><button class="pin-key" onclick="window.pinPress&&pinPress('6')">6</button>
+        <button class="pin-key" onclick="window.pinPress&&pinPress('7')">7</button><button class="pin-key" onclick="window.pinPress&&pinPress('8')">8</button><button class="pin-key" onclick="window.pinPress&&pinPress('9')">9</button>
+        <button class="pin-key pin-key-empty"></button><button class="pin-key" onclick="window.pinPress&&pinPress('0')">0</button><button class="pin-key pin-key-del" onclick="window.pinBackspace&&pinBackspace()">⌫</button>
       </div>
-      <div class="login-links"><a onclick="showForgotPassword()">Forgot PIN?</a></div>
+      <div class="login-links"><a onclick="window.showForgotPassword&&showForgotPassword()">Forgot PIN?</a></div>
     </div>
     <div id="panel-biometric" style="display:none;">
-      <div class="biometric-wrap"><div class="biometric-ring" id="bio-ring" onclick="doBiometric()"><div class="biometric-icon">🫆</div></div><div class="biometric-label">Touch to authenticate</div></div>
-      <div class="login-links"><a onclick="setLoginMethod('password',document.querySelectorAll('.login-method')[0])">Use Password Instead</a></div>
+      <div class="biometric-wrap"><div class="biometric-ring" id="bio-ring" onclick="window.doBiometric&&doBiometric()"><div class="biometric-icon">🫆</div></div><div class="biometric-label">Touch to authenticate</div></div>
+      <div class="login-links"><a onclick="window.setLoginMethod&&setLoginMethod('password',document.querySelectorAll('.login-method')[0])">Use Password Instead</a></div>
     </div>
     <div class="login-security-badge">🔒 256-bit AES Encrypted · MFA Protected · Audit Logged</div>
   </div>
@@ -1096,11 +1096,11 @@ window.addEventListener('unhandledrejection', function(e){
 <!-- FORGOT PASSWORD MODAL -->
 <div id="forgot-modal" class="modal-overlay" style="display:none;">
   <div class="modal-card">
-    <div class="modal-header"><div class="modal-title">🔐 Reset Access</div><button class="modal-close" onclick="hideForgotModal()">✕</button></div>
+    <div class="modal-header"><div class="modal-title">🔐 Reset Access</div><button class="modal-close" onclick="window.hideForgotModal&&hideForgotModal()">✕</button></div>
     <div class="modal-body">
-      <div id="forgot-step1"><p class="modal-desc">Enter your registered email to receive a reset link.</p><input type="email" class="login-input" id="forgot-email" placeholder="Registered email address"><button class="login-btn" onclick="sendOTP()" style="margin-top:12px;">📤 Send Reset Email</button></div>
-      <div id="forgot-step2" style="display:none;"><p class="modal-desc">Enter the 6-digit OTP sent to your email.</p><div class="otp-inputs"><input class="otp-box" maxlength="1" id="otp0" oninput="otpNext(0)"><input class="otp-box" maxlength="1" id="otp1" oninput="otpNext(1)"><input class="otp-box" maxlength="1" id="otp2" oninput="otpNext(2)"><input class="otp-box" maxlength="1" id="otp3" oninput="otpNext(3)"><input class="otp-box" maxlength="1" id="otp4" oninput="otpNext(4)"><input class="otp-box" maxlength="1" id="otp5" oninput="otpNext(5)"></div><button class="login-btn" onclick="verifyOTP()" style="margin-top:12px;">✅ Verify OTP</button></div>
-      <div id="forgot-step3" style="display:none;"><p class="modal-desc">Set your new password.</p><input type="password" class="login-input" id="new-pass1" placeholder="New Password" style="margin-bottom:10px;"><input type="password" class="login-input" id="new-pass2" placeholder="Confirm New Password"><button class="login-btn" onclick="resetPassword()" style="margin-top:12px;">🔒 Reset Password</button></div>
+      <div id="forgot-step1"><p class="modal-desc">Enter your registered email to receive a reset link.</p><input type="email" class="login-input" id="forgot-email" placeholder="Registered email address"><button class="login-btn" onclick="window.sendOTP&&sendOTP()" style="margin-top:12px;">📤 Send Reset Email</button></div>
+      <div id="forgot-step2" style="display:none;"><p class="modal-desc">Enter the 6-digit OTP sent to your email.</p><div class="otp-inputs"><input class="otp-box" maxlength="1" id="otp0" oninput="otpNext(0)"><input class="otp-box" maxlength="1" id="otp1" oninput="otpNext(1)"><input class="otp-box" maxlength="1" id="otp2" oninput="otpNext(2)"><input class="otp-box" maxlength="1" id="otp3" oninput="otpNext(3)"><input class="otp-box" maxlength="1" id="otp4" oninput="otpNext(4)"><input class="otp-box" maxlength="1" id="otp5" oninput="otpNext(5)"></div><button class="login-btn" onclick="window.verifyOTP&&verifyOTP()" style="margin-top:12px;">✅ Verify OTP</button></div>
+      <div id="forgot-step3" style="display:none;"><p class="modal-desc">Set your new password.</p><input type="password" class="login-input" id="new-pass1" placeholder="New Password" style="margin-bottom:10px;"><input type="password" class="login-input" id="new-pass2" placeholder="Confirm New Password"><button class="login-btn" onclick="window.resetPassword&&resetPassword()" style="margin-top:12px;">🔒 Reset Password</button></div>
     </div>
   </div>
 </div>
@@ -1108,7 +1108,7 @@ window.addEventListener('unhandledrejection', function(e){
 <!-- REGISTER MODAL -->
 <div id="register-modal" class="modal-overlay" style="display:none;">
   <div class="modal-card">
-    <div class="modal-header"><div class="modal-title">📋 Request System Access</div><button class="modal-close" onclick="hideRegister()">✕</button></div>
+    <div class="modal-header"><div class="modal-title">📋 Request System Access</div><button class="modal-close" onclick="window.hideRegister&&hideRegister()">✕</button></div>
     <div class="modal-body">
       <p class="modal-desc">Fill in your details. Admin approval required before access is granted.</p>
       <input type="text" class="login-input" id="reg-name" placeholder="Full Name (e.g. ASI Muhammad Asif)" style="margin-bottom:10px;">
@@ -1118,7 +1118,7 @@ window.addEventListener('unhandledrejection', function(e){
       <input type="text" class="login-input" id="reg-station" placeholder="Police Station" style="margin-bottom:10px;">
       <input type="text" class="login-input" id="reg-district" placeholder="District" style="margin-bottom:10px;">
       <input type="password" class="login-input" id="reg-password" placeholder="Choose Password (min 8 characters)" style="margin-bottom:10px;">
-      <button class="login-btn" onclick="submitRegistration()">📤 Submit Request</button>
+      <button class="login-btn" onclick="window.submitRegistration&&submitRegistration()">📤 Submit Request</button>
     </div>
   </div>
 </div>
@@ -1160,7 +1160,7 @@ window.addEventListener('unhandledrejection', function(e){
       <div class="nav-item" id="admin-nav-item" style="display:none;" onclick="closeMobileSidebar();showPage('admin',this)"><span class="nav-icon">👮</span> ایڈمن</div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('settings',this)"><span class="nav-icon">⚙️</span> ترتیبات</div>
     </nav>
-    <div class="sidebar-footer"><button class="logout-btn" onclick="doLogout()">🚪 لاگ آؤٹ</button></div>
+    <div class="sidebar-footer"><button class="logout-btn" onclick="window.doLogout&&doLogout()">🚪 لاگ آؤٹ</button></div>
   </div>
 
   <div class="main-area">
@@ -1201,7 +1201,7 @@ window.addEventListener('unhandledrejection', function(e){
             <a class="topmore-item" onclick="showPage('bin',null);_closeTopDD()">🗑️ حذف شدہ مواد</a>
             <a class="topmore-item" id="top-admin-item" style="display:none;" onclick="showPage('admin',null);_closeTopDD()">👮 ایڈمن</a>
             <a class="topmore-item" onclick="showPage('settings',null);_closeTopDD()">⚙️ ترتیبات</a>
-            <a class="topmore-item" style="color:var(--red);border-top:1px solid var(--border);margin-top:4px;" onclick="doLogout()">🚪 لاگ آؤٹ</a>
+            <a class="topmore-item" style="color:var(--red);border-top:1px solid var(--border);margin-top:4px;" onclick="window.doLogout&&doLogout()">🚪 لاگ آؤٹ</a>
           </div>
         </div>
       </div>
