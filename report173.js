@@ -1036,7 +1036,9 @@ async function _ch173LoadPeople() {
   // Data aane par گواہان wala khana bhar do (agar khali ho)
   try {
     const wcell = document.querySelector('#ch173-table [data-k="shahadat"]');
-    if (wcell && !wcell.innerText.trim()) wcell.innerText = _ch173WitnessText();
+    // innerHTML — kyunki _ch173WitnessText() mein CNIC ka <span> hota hai.
+    // (innerText se woh <span> ka code khud nazar aa jata tha.)
+    if (wcell && !wcell.innerText.trim()) wcell.innerHTML = _ch173WitnessText();
     if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
   } catch(_) {}
 }
@@ -1062,7 +1064,12 @@ function _ch173UsedAccused(exceptKey) {
     if (k === exceptKey) return;
     const el = document.querySelector(`#ch173-table [data-k="${k}"]`);
     if (!el) return;
-    el.innerText.split(/\r?\n/).forEach(n => { const t = n.trim(); if (t) used.add(t); });
+    el.innerText.split(/\r?\n/).forEach(n => {
+      let t = n.trim();
+      t = t.replace(/^\d+\u06D4\s*/, '');                   // نمبر شمار hatao
+      t = t.replace(/\s*\d{5}-\d{7}-\d\s*$/, '').trim();    // CNIC hatao
+      if (t) used.add(t);
+    });
   });
   return used;
 }
@@ -1078,7 +1085,13 @@ function _ch173AccPicker(ev, key) {
   }
   const used = _ch173UsedAccused(key);
   const cell = document.querySelector(`#ch173-table [data-k="${key}"]`);
-  const mine = new Set(cell ? cell.innerText.split(/\r?\n/).map(t=>t.trim()).filter(Boolean) : []);
+  // Pehle se chune hue naam — CNIC aur نمبر شمار hata kar sirf naam
+  const mine = new Set(cell ? cell.innerText.split(/\r?\n/).map(t => {
+    let x = t.trim();
+    x = x.replace(/^\d+\u06D4\s*/, '');                    // نمبر شمار hatao
+    x = x.replace(/\s*\d{5}-\d{7}-\d\s*$/, '').trim();     // CNIC hatao
+    return x;
+  }).filter(Boolean) : []);
 
   // Panel: list SCROLL hoti hai, buttons HAMESHA neeche nazar aate hain
   const box = document.createElement('div');
