@@ -13,8 +13,12 @@ const _ODB_NAME    = 'digital-io-v2';
 const _ODB_VERSION = 2;          // bumped — adds session_cache store
 let   _odb         = null;
 
+let _odbClosing = false;
+
 function _openDB(){
-  if(_odb) return Promise.resolve(_odb);
+  // Band hota hua connection dobara istemal na karo — naya kholo
+  if(_odb && !_odbClosing) return Promise.resolve(_odb);
+  if(_odbClosing){ try{ _odb && _odb.close(); }catch(_){} _odb=null; _odbClosing=false; }
   return new Promise((resolve,reject)=>{
     const req=indexedDB.open(_ODB_NAME,_ODB_VERSION);
     req.onupgradeneeded=e=>{
@@ -32,14 +36,42 @@ function _openDB(){
       if(!db.objectStoreNames.contains('session_cache'))
         db.createObjectStore('session_cache',{keyPath:'key'});
     };
-    req.onsuccess =e=>{ _odb=e.target.result; resolve(_odb); };
+    req.onsuccess =e=>{
+      _odb=e.target.result;
+      _odbClosing=false;
+      // Connection band ho jaye to nishan laga do (agli dafa naya khulega)
+      _odb.onclose = ()=>{ _odbClosing=true; _odb=null; };
+      _odb.onversionchange = ()=>{ _odbClosing=true; try{_odb.close();}catch(_){} _odb=null; };
+      resolve(_odb);
+    };
     req.onerror   =e=>reject(e.target.error);
   });
 }
 
+// Koi bhi kaam — agar connection band ho gaya ho to NAYA khol kar
+// aik dafa DOBARA aazmao (warna kaam zaya ho jata tha)
+async function _odbRetry(fn){
+  try { return await fn(); }
+  catch(e){
+    const m = String((e && e.message) || e || '');
+    if (m.includes('closing') || m.includes('InvalidState') || m.includes('not allowed')) {
+      _odbClosing = true; _odb = null;
+      await _openDB();
+      return await fn();
+    }
+    throw e;
+  }
+}
+
 // ── helpers ──────────────────────────────────────────────────
 function _tx(store,mode='readonly'){
-  return _odb.transaction(store,mode).objectStore(store);
+  try {
+    return _odb.transaction(store,mode).objectStore(store);
+  } catch(e){
+    // Connection band ho gaya — nishan laga do taake agli dafa naya khule
+    _odbClosing = true; _odb = null;
+    throw e;
+  }
 }
 function _p(req){ return new Promise((res,rej)=>{ req.onsuccess=()=>res(req.result); req.onerror=()=>rej(req.error); }); }
 function _txComplete(tx){ return new Promise((res,rej)=>{ tx.oncomplete=res; tx.onerror=()=>rej(tx.error); }); }
@@ -72,6 +104,7 @@ const offlineStore={
 
   async remove(storeName,id){
     await _openDB();
+    if(!_odb) await _openDB();
     const tx=_odb.transaction(storeName,'readwrite');
     tx.objectStore(storeName).delete(id);
     return _txComplete(tx);
@@ -80,6 +113,7 @@ const offlineStore={
   // Store a file (data-URL string or ArrayBuffer) for offline upload
   async storeFile(fid,fileData,meta){
     await _openDB();
+    if(!_odb) await _openDB();
     const tx=_odb.transaction('pending_files','readwrite');
     tx.objectStore('pending_files').put({fid,fileData,...meta});
     return _txComplete(tx);
@@ -92,6 +126,7 @@ const offlineStore={
 
   async removeFile(fid){
     await _openDB();
+    if(!_odb) await _openDB();
     const tx=_odb.transaction('pending_files','readwrite');
     tx.objectStore('pending_files').delete(fid);
     return _txComplete(tx);
@@ -101,6 +136,7 @@ const offlineStore={
 
   async enqueue(table,op,data,tempId){
     await _openDB();
+    if(!_odb) await _openDB();
     const tx=_odb.transaction('sync_queue','readwrite');
     tx.objectStore('sync_queue').add({
       table, op, data, tempId,
@@ -128,6 +164,7 @@ const offlineStore={
 
   async _markQueueItem(qid,status,extra={}){
     await _openDB();
+    if(!_odb) await _openDB();
     const tx=_odb.transaction('sync_queue','readwrite');
     const store=tx.objectStore('sync_queue');
     const item=await _p(store.get(qid));
@@ -260,6 +297,7 @@ const offlineStore={
     // user (aur uska id) na ho to kuch save mat karo — warna crash aata hai
     if (!user || !user.id) return;
     await _openDB();
+    if(!_odb) await _openDB();
     const tx=_odb.transaction('session_cache','readwrite');
     tx.objectStore('session_cache').put({
       key:       'current',
@@ -278,6 +316,7 @@ const offlineStore={
 
   async clearSession(){
     await _openDB();
+    if(!_odb) await _openDB();
     const tx=_odb.transaction('session_cache','readwrite');
     tx.objectStore('session_cache').delete('current');
     return _txComplete(tx);
@@ -297,6 +336,7 @@ const offlineStore={
     if(!pin||pin.length<4) throw new Error('PIN must be at least 4 digits');
     const hash=await this._hashPIN(pin);
     await _openDB();
+    if(!_odb) await _openDB();
     const tx=_odb.transaction('session_cache','readwrite');
     tx.objectStore('session_cache').put({key:'pin_hash', hash, setAt: new Date().toISOString()});
     return _txComplete(tx);
@@ -317,6 +357,7 @@ const offlineStore={
 
   async clearPIN(){
     await _openDB();
+    if(!_odb) await _openDB();
     const tx=_odb.transaction('session_cache','readwrite');
     tx.objectStore('session_cache').delete('pin_hash');
     return _txComplete(tx);
@@ -325,6 +366,7 @@ const offlineStore={
 
   async saveOfflineProfile(userId,profile){
     await _openDB();
+    if(!_odb) await _openDB();
     const tx=_odb.transaction('offline_profiles','readwrite');
     tx.objectStore('offline_profiles').put({...profile,id:userId,cached_at:new Date().toISOString()});
     return _txComplete(tx);
@@ -337,6 +379,7 @@ const offlineStore={
 
   async saveOfflineCreds(userId,email,hash,salt){
     await _openDB();
+    if(!_odb) await _openDB();
     const tx=_odb.transaction('offline_creds','readwrite');
     tx.objectStore('offline_creds').put({id:userId,email,hash,salt,saved_at:new Date().toISOString()});
     return _txComplete(tx);
