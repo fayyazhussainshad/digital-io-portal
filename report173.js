@@ -1906,9 +1906,10 @@ function _ch173CSS() {
          rehta hai — uska baqi matn neeche wale khane mein chala jata hai.
          AHEM: khane ki unchai PUKHTA honi zaroori hai, warna system pehchan
          hi nahi pata ke matn zyada hai. */
-      /* Khane ki unchai MATN JITNI — zabardasti lambi nahi (pehle muqarrar
-         unchai thi, is liye bari khali jagah reh jati thi) */
-      #ch173-doc .ch173-table tbody td{ height:auto; min-height:60mm;
+      /* Khane ki unchai MUQARRAR — isi se (a) neeche wali lakeer se unchai
+         badalti hai, aur (b) column 7 ka izafi matn neeche wale khane mein
+         jata hai. Unchai aap khud drag kar ke badal sakte hain. */
+      #ch173-doc .ch173-table tbody td{ height:${_ch173Paper==='a4'?'150mm':'185mm'};
         padding:0; overflow:visible; position:relative; vertical-align:top; }
       /* ASCENDING (neeche se ooper) — writing-mode Chrome mein na-qabil-e-aitbaar
          hai, is liye seedha ghumao (rotate) use karte hain. Khana relative,
@@ -2003,16 +2004,18 @@ function _ch173CSS() {
       /* Column 7 — normal RTL (khadi nahi) */
       /* USOOL: column 7 table ki lambai NAHI barhata — jo matn na samaye
          woh khud table ke neeche wale khane mein chala jata hai */
-      /* Matn kabhi kate nahi — poora nazar aaye */
-      #ch173-doc .ch173-table td.normcell{ padding:0; vertical-align:top; }
+      /* Column 7 khane ke barabar — table ko lamba NAHI karta.
+         Jo matn na samaye woh neeche wale khane mein chala jata hai. */
+      #ch173-doc .ch173-table td.normcell{ padding:0; vertical-align:top;
+        position:relative; overflow:hidden; }
       #ch173-doc .normwrap{
-        width:100%; min-height:100%;   /* matn ke saath khud barhta hai */
+        position:absolute; inset:0;    /* khane ke barabar — table lamba nahi hota */
         padding:5px; box-sizing:border-box;
         font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
         direction:rtl; text-align:justify; text-align-last:right;
         outline:none; line-height:1.15; font-size:14pt;
         overflow-wrap:break-word; word-wrap:break-word;
-        overflow:visible;  /* matn kate nahi — poora nazar aaye */
+        overflow:hidden;   /* jo na samaye woh neeche wale khane mein jayega */
       }
       /* Har paragraph ki aakhri line bhi dayen (beech mein nahi) */
       #ch173-doc .normwrap p, #ch173-doc .normwrap div{ text-align:justify; text-align-last:right; }
@@ -2038,24 +2041,27 @@ function _ch173CSS() {
          • Dono ke darmiyan 1.5cm ka fasla */
       /* Har khadi khane ka matn ooper se 1cm neeche shuru ho */
       #ch173-doc .rotinner{
-        width:auto; max-width:100%; min-height:40mm; box-sizing:border-box;
+        width:auto; max-width:100%; height:100%; box-sizing:border-box;
         writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
         direction:rtl; outline:none; unicode-bidi:plaintext;
         line-height:1.2; white-space:pre; word-break:keep-all;
         overflow-wrap:normal; overflow:hidden; font-size:14pt;
         padding:4px 6px;
-        /* NAAM table ki NEECHE wali lakeer se shuru ho kar OOPER jaye.
-           flex se yeh yaqeeni hota hai (text-align par bharosa nahi). */
-        display:flex; flex-direction:column; justify-content:flex-start;
+        /* NAAM: row 3 ki NEECHE wali lakeer se shuru ho kar OOPER (row 2 ki
+           taraf) jaye. Khadi likhayi mein flex-direction:row ka rukh
+           OOPER→NEECHE hota hai, is liye flex-end = NEECHE. */
+        display:flex; flex-direction:row; justify-content:flex-end;
       }
       /* CNIC ka apna khana — naam ke saath, OOPER se NEECHE parhi jaye,
          aur naam se 1.5cm ka fasla */
+      /* CNIC: row 2 ki NEECHE wali lakeer (row 3 ke ooper) se shuru ho kar
+         NEECHE ki taraf aaye — yani naam ke bilkul ulat rukh */
       #ch173-doc .rotinner.cnic-col{
+        justify-content:flex-start;     /* OOPER se shuru */
         direction:ltr;
-        justify-content:flex-start;
-        margin-inline-end:1.5cm;
+        margin-inline-end:1.5cm;        /* naam se 1.5cm ka fasla */
         font-family:var(--font-mono),monospace; font-size:11pt;
-        white-space:pre; word-break:keep-all; min-height:0;
+        white-space:pre; word-break:keep-all;
       }
       /* Khaka print mein BHI aaye — pehle print par yeh chhupa diya jata
          tha, is liye khali CNIC ka khana bilkul khali chhap jata tha */
@@ -2087,7 +2093,7 @@ function _ch173CSS() {
       #ch173-doc th.vcell{ vertical-align:middle; padding:0; text-align:center; height:150px; }
       /* Header ki khadi likhayi — data khanon jaisa hi wrapper (Ascending) */
       /* مال قبضہ پولیس — lakeeron se hat kar, khane ke beech mein */
-      #ch173-doc .rothead{ align-items:center !important; justify-content:center;
+      #ch173-doc .rothead{ justify-content:center !important; align-items:center;
         white-space:normal; padding:8px 6px; font-size:12pt; line-height:1.3; }
 
       #ch173-doc th.hcell{ vertical-align:middle; text-align:center; direction:rtl; white-space:normal; }
