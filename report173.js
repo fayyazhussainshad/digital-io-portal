@@ -303,10 +303,10 @@ function _renderR173() {
             </thead>
             <tbody>
               <tr>
-                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bs.madai !== undefined ? sanitizeHtml(bs.madai) : esc(_ch173MudaiEntry(c))}</div></div></div></td>
-                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'ghair_giraftar')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div></div></div></td>
-                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'zer_hirasat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div></div></div></td>
-                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'bar_zamanat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bs.madai !== undefined ? sanitizeHtml(bs.madai) : esc(_ch173MudaiNameOnly(c))}</div><div class="rotinner cnic-col" contenteditable="true" data-k="madai_cnic">${bs.madai_cnic !== undefined ? sanitizeHtml(bs.madai_cnic) : esc(_ch173MudaiCnicOnly(c))}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'ghair_giraftar')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div><div class="rotinner cnic-col" contenteditable="true" data-k="ghair_giraftar_cnic">${bv('ghair_giraftar_cnic')}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'zer_hirasat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div><div class="rotinner cnic-col" contenteditable="true" data-k="zer_hirasat_cnic">${bv('zer_hirasat_cnic')}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'bar_zamanat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div><div class="rotinner cnic-col" contenteditable="true" data-k="bar_zamanat_cnic">${bv('bar_zamanat_cnic')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="mal_qabza">${bv('mal_qabza')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="shahadat">${bs.shahadat !== undefined ? sanitizeHtml(bs.shahadat) : esc(_ch173WitnessText())}</div></div></div></td>
                 <td class="normcell"><div class="normwrap" contenteditable="true" data-mic="true" data-k="halaat">${bv('halaat')}</div></td>
@@ -1008,8 +1008,7 @@ function _ch173WitnessText() {
   // Aik line mein aik گواہ
   // Har گواہ: نمبر شمار + naam, aur usi ke saath uska CNIC
   return L.map(function (w, i) {
-    const cn = (w.cnic && String(w.cnic).trim()) ? String(w.cnic).trim() : '00000-0000000-0';
-    return (i + 1) + '\u06D4 ' + (w.full_name || '') + '\u2066' + cn + '\u2069';
+    return (i + 1) + '\u06D4 ' + (w.full_name || '');
   }).join('\n');
 }
 
@@ -1094,11 +1093,16 @@ function _ch173AccPicker(ev, key) {
     // rehta hai (pehle sab CNIC aik dher mein the, pata nahi chalta tha
     // ke kaunsa kis ka hai).
     if (cell) {
-      cell.innerHTML = picked.map((nm, i) => {
-        const a = (_ch173Accused || []).find(x => (x.name || '').trim() === nm);
-        const c = (a && a.cnic && String(a.cnic).trim()) ? String(a.cnic).trim() : '00000-0000000-0';
-        return esc((i + 1) + '\u06D4 ' + nm) + '<span class="cn">' + esc(c) + '</span>';
-      }).join('\n');
+      cell.innerText = picked.map((nm, i) => (i + 1) + '\u06D4 ' + nm).join('\n');
+      // CNIC apne khane mein — usi tarteeb se, is liye har CNIC apne naam
+      // ke bilkul saamne (usi satar mein) rehta hai
+      const cf = cell.parentNode && cell.parentNode.querySelector('.cnic-col');
+      if (cf) {
+        cf.innerText = picked.map(nm => {
+          const a = (_ch173Accused || []).find(x => (x.name || '').trim() === nm);
+          return (a && a.cnic && String(a.cnic).trim()) ? String(a.cnic).trim() : '00000-0000000-0';
+        }).join('\n');
+      }
     }
     box.remove();
     if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
@@ -2034,14 +2038,26 @@ function _ch173CSS() {
         width:auto; max-width:100%; min-height:40mm; box-sizing:border-box;
         writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
         direction:rtl; outline:none; unicode-bidi:plaintext;
-        line-height:1.2; white-space:pre;   /* har satar poori — beech se na tootay */ word-break:keep-all;
+        line-height:1.2; white-space:pre; word-break:keep-all;
         overflow-wrap:normal; overflow:hidden; font-size:14pt;
         padding:4px 6px;
-        /* NAAM table ki NEECHE wali lakeer se shuru ho kar OOPER (row 2 ki
-           taraf) jaye. Khadi likhayi + direction:rtl mein 'start' ka matlab
-           NEECHE hi hai. */
-        text-align:start;
+        /* NAAM table ki NEECHE wali lakeer se shuru ho kar OOPER jaye.
+           flex se yeh yaqeeni hota hai (text-align par bharosa nahi). */
+        display:flex; flex-direction:column; justify-content:flex-start;
       }
+      /* CNIC ka apna khana — naam ke saath, OOPER se NEECHE parhi jaye,
+         aur naam se 1.5cm ka fasla */
+      #ch173-doc .rotinner.cnic-col{
+        direction:ltr;
+        justify-content:flex-start;
+        margin-inline-end:1.5cm;
+        font-family:var(--font-mono),monospace; font-size:11pt;
+        white-space:pre; word-break:keep-all; min-height:0;
+      }
+      #ch173-doc .rotinner.cnic-col:empty::before{
+        content:'00000-0000000-0'; color:#ccc;
+      }
+      @media print{ #ch173-doc .rotinner.cnic-col:empty::before{ content:''; } }
       /* CNIC — USI SATAR mein naam ke saath, 1.5cm ke fasle par.
          (Aik satar = naam + CNIC. Alag satar NAHI.) */
       #ch173-doc .rotinner .cn{
@@ -2122,15 +2138,24 @@ function _ch173Insert(txt) {
 window._ch173Insert = _ch173Insert;
 
 
-// ═══ مدعی — نمبر شمار + نام، اور اُسی کے ساتھ اُس کا اپنا CNIC ═══
-function _ch173MudaiEntry(c) {
+
+// ═══ مدعی — نام (CNIC اپنے الگ خانے میں جاتا ہے) ═══
+function _ch173MudaiNameOnly(c) {
+  c = c || {};
+  const cross = (_ch173Version === 'cross_version');
+  const nm = String((cross ? (c.cross_complainant || c.cross_complainant_name)
+                           : (c.complainant || c.complainant_name)) || '').trim();
+  return nm ? ('1\u06D4 ' + nm) : '';
+}
+// ═══ مدعی کا CNIC (اپنے خانے کے لیے) ═══
+function _ch173MudaiCnicOnly(c) {
   c = c || {};
   const cross = (_ch173Version === 'cross_version');
   const nm = String((cross ? (c.cross_complainant || c.cross_complainant_name)
                            : (c.complainant || c.complainant_name)) || '').trim();
   if (!nm) return '';
-  const cn = String((cross ? c.cross_complainant_cnic : c.complainant_cnic) || '').trim()
-             || '00000-0000000-0';
-  return '1\u06D4 ' + nm + '\u2066' + cn + '\u2069';
+  return String((cross ? c.cross_complainant_cnic : c.complainant_cnic) || '').trim()
+         || '00000-0000000-0';
 }
-window._ch173MudaiEntry = _ch173MudaiEntry;
+window._ch173MudaiNameOnly = _ch173MudaiNameOnly;
+window._ch173MudaiCnicOnly = _ch173MudaiCnicOnly;
