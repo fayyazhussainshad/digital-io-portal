@@ -204,7 +204,7 @@ function _renderR173() {
     // ═══ فارم نمبر 25.56(1) — رپورٹ زیر دفعہ 173 ض ف ═══
     const bs = _r173CurrentData(recKey);
     _r173ForceBlank = false;          // sirf aik bar
-    const bv = (k) => sanitizeHtml(bs[k] !== undefined ? bs[k] : '');
+    const bv = (k) => _ch173StripSpan(sanitizeHtml(bs[k] !== undefined ? bs[k] : ''));
     // Mehfooz shuda column widths (MS Word jaisi drag-adjust ke baad)
     const savedW = (() => { try { return JSON.parse(bs.col_widths || 'null'); } catch(_) { return null; } })();
     // Naam + CNIC aik hi line mein aate hain, is liye columns 1–4 chaure
@@ -303,12 +303,12 @@ function _renderR173() {
             </thead>
             <tbody>
               <tr>
-                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bs.madai !== undefined ? sanitizeHtml(bs.madai) : _ch173MudaiLine(c)}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bs.madai !== undefined ? sanitizeHtml(_ch173StripSpan(bs.madai)) : esc(_ch173MudaiLine(c))}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'ghair_giraftar')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'zer_hirasat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'bar_zamanat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="mal_qabza">${bv('mal_qabza')}</div></div></div></td>
-                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="shahadat">${bs.shahadat !== undefined ? sanitizeHtml(bs.shahadat) : _ch173WitnessText()}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="shahadat">${bs.shahadat !== undefined ? sanitizeHtml(_ch173StripSpan(bs.shahadat)) : esc(_ch173WitnessText())}</div></div></div></td>
                 <td class="normcell"><div class="normwrap" contenteditable="true" data-mic="true" data-k="halaat">${bv('halaat')}</div></td>
               </tr>
             </tbody>
@@ -1038,7 +1038,7 @@ async function _ch173LoadPeople() {
     const wcell = document.querySelector('#ch173-table [data-k="shahadat"]');
     // innerHTML — kyunki _ch173WitnessText() mein CNIC ka <span> hota hai.
     // (innerText se woh <span> ka code khud nazar aa jata tha.)
-    if (wcell && !wcell.innerText.trim()) wcell.innerHTML = _ch173WitnessText();
+    if (wcell && !wcell.innerText.trim()) wcell.innerText = _ch173WitnessText();
     if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
   } catch(_) {}
 }
@@ -1052,7 +1052,7 @@ function _ch173WitnessText() {
   // AIK GAWAH = AIK SATAR: نمبر + naam + uska CNIC
   return L.map(function (w, i) {
     const cn = (w.cnic && String(w.cnic).trim()) ? String(w.cnic).trim() : '00000-0000000-0';
-    return esc((i + 1) + '\u06D4 ' + (w.full_name || '')) + '<span class="cn">' + esc(cn) + '</span>';
+    return (i + 1) + '\u06D4 ' + (w.full_name || '') + '   ' + cn;
   }).join('\n');
 }
 
@@ -1149,10 +1149,10 @@ function _ch173AccPicker(ev, key) {
     // ke kaunsa kis ka hai).
     if (cell) {
       // AIK SHAKHS = AIK SATAR: نمبر + naam + uska CNIC (sab saath)
-      cell.innerHTML = picked.map((nm, i) => {
+      cell.innerText = picked.map((nm, i) => {
         const a = (_ch173Accused || []).find(x => (x.name || '').trim() === nm);
         const c = (a && a.cnic && String(a.cnic).trim()) ? String(a.cnic).trim() : '00000-0000000-0';
-        return esc((i + 1) + '\u06D4 ' + nm) + '<span class="cn">' + esc(c) + '</span>';
+        return (i + 1) + '\u06D4 ' + nm + '   ' + c;
       }).join('\n');
     }
     box.remove();
@@ -2102,24 +2102,12 @@ function _ch173CSS() {
            OOPER→NEECHE hai, is liye flex-start = OOPER. */
         display:flex; flex-direction:row; justify-content:flex-start;
       }
-      /* CNIC: USI SATAR mein naam ke saath, 1.5cm ke fasle par
-         (aik shakhs = aik satar: نمبر + naam + CNIC) */
-      #ch173-doc .rotinner .cn{
-        font-family:var(--font-mono),monospace; font-size:11pt;
-        direction:ltr; unicode-bidi:isolate; white-space:nowrap;
-        margin-inline-start:1.5cm;
-      }
       /* CNIC ka apna khana — naam ke saath, OOPER se NEECHE parhi jaye,
          aur naam se 1.5cm ka fasla */
       /* Khaka print mein BHI aaye — pehle print par yeh chhupa diya jata
          tha, is liye khali CNIC ka khana bilkul khali chhap jata tha */
       /* CNIC — USI SATAR mein naam ke saath, 1.5cm ke fasle par.
          (Aik satar = naam + CNIC. Alag satar NAHI.) */
-      #ch173-doc .rotinner .cn{
-        font-family:var(--font-mono),monospace; font-size:11pt;
-        direction:ltr; unicode-bidi:isolate; white-space:nowrap;
-        margin-inline-start:1.5cm;
-      }
       /* Column 7 — normal, RTL, justified */
       #ch173-doc .hwrap{
         writing-mode:horizontal-tb; transform:none;
@@ -2204,6 +2192,19 @@ function _ch173MudaiLine(c) {
   if (!nm) return '';
   const cn = String((cross ? c.cross_complainant_cnic : c.complainant_cnic) || '').trim()
              || '00000-0000000-0';
-  return esc('1\u06D4 ' + nm) + '<span class="cn">' + esc(cn) + '</span>';
+  return '1\u06D4 ' + nm + '   ' + cn;
 }
 window._ch173MudaiLine = _ch173MudaiLine;
+
+// پرانی محفوظ شدہ سطروں کی صفائی — جہاں <span class="cn"> کا کوڈ خود
+// متن بن کر محفوظ ہو گیا تھا، اُسے ہٹا کر صرف نام + CNIC چھوڑ دو
+function _ch173StripSpan(html) {
+  let t = String(html || '');
+  // asal <span> tags (agar HTML ki shakl mein hon)
+  t = t.replace(/<span class="cn">(.*?)<\/span>/g, '   $1');
+  // aur woh jo MATN ki tarah mehfooz ho gaye
+  t = t.replace(/&lt;span class=&quot;cn&quot;&gt;/g, '   ').replace(/&lt;\/span&gt;/g, '');
+  t = t.replace(/<span class="cn">/g, '   ').replace(/<\/span>/g, '');
+  return t;
+}
+window._ch173StripSpan = _ch173StripSpan;
