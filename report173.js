@@ -2837,12 +2837,21 @@ function _ch173CSS() {
         text-decoration:none; font-weight:400;
       }
       /* کرسر یہاں بلنک کرتا ہے — ڈیٹا عنوان کے نیچے سے شروع ہوتا ہے */
+      /* AHEM — کاغذات ki tarteeb DAYEN se BAYEN.
+         app-core.js ka aam qanoon is khane par 'unicode-bidi:plaintext' laga
+         deta hai, jis ka matlab: satar ka rukh us ke PEHLE HARF se tay ho.
+         Kaghazon ke saath tadaad ke angrezi hindse hone ki wajah se rukh ulat
+         kar bayen-se-dayen ho gaya tha aur tarteeb ulti ho gayi thi. Yahan
+         !important se rukh pakka RTL kar dete hain. */
       #ch173-doc .sho-papers-body{
         font-size:14pt; line-height:1.25; text-align:right; white-space:normal;
-        direction:rtl;
+        direction:rtl !important; unicode-bidi:embed !important;
         outline:1px dashed rgba(120,120,120,0.35); padding:3px 4px; margin-top:4px;
         min-height:22px; overflow-wrap:break-word;
       }
+      /* Har kaghaz apne andar bhi apna rukh sambhale */
+      #ch173-doc .pp-item{ direction:rtl; unicode-bidi:isolate; }
+      #ch173-doc .pp-name{ unicode-bidi:isolate; }
       #ch173-doc .sho-papers-body:empty::before{
         content:'یہاں کاغذات کی تفصیل لکھیں'; color:#bbb; font-size:12pt;
       }
