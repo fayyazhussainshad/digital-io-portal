@@ -279,7 +279,7 @@ function _renderR173() {
       </div>
       <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
         <div id="ch173-doc" style="width:100%;max-width:none;min-height:${_ch173Paper==='a4'?'11.7in':'13in'};margin:0 auto;
-             padding:1cm 0.2cm;
+             padding:1cm ${_ch173SideMargin()};
              background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;
              line-height:1.4;box-sizing:border-box;">
 
@@ -737,7 +737,7 @@ function _printR173() {
       <style>
         /* Charon taraf BARABAR margin — kaghaz chune hue naap ka */
         /* Sides tang aur barabar — table poori qabil-e-tabaat chaudai le */
-        @page{ size:${_ch173Paper === 'a4' ? 'A4 portrait' : '8.5in 13in'}; margin:1cm 0.2cm; }
+        @page{ size:${_ch173Paper === 'a4' ? 'A4 portrait' : '8.5in 13in'}; margin:1cm ${_ch173SideMargin()}; }
         html, body{ margin:0 !important; padding:0 !important;
           font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
           direction:rtl; line-height:1.4; color:#000; }
@@ -972,6 +972,15 @@ function _ch173MakeResizable() {
   }
 }
 window._ch173MakeResizable = _ch173MakeResizable;
+
+// ═══ Side margin — har kaghaz ki apni ═══
+// Folio/Legal (8.5in) chaura hai, wahan 0.2cm kaafi hai. A4 (8.27in) zyada
+// tang hai aur printer ka apna na-qabil-e-tabaat hashiya bhi hota hai, is
+// liye wahan 0.5cm rakhi jati hai — warna kinare ke alfaz kat jate hain.
+function _ch173SideMargin() {
+  return (_ch173Paper === 'a4') ? '0.5cm' : '0.2cm';
+}
+window._ch173SideMargin = _ch173SideMargin;
 
 // ═══ کالم 1 (نام و پتہ مدعی) ki chaurai — PAKKI, 1.5cm ═══
 // Yeh har haal mein wahi rehti hai: na mehfooz shuda naap se badalti hai,
@@ -1418,6 +1427,9 @@ function _ch173FitPaper() {
   doc.style.width = wPx + 'px';
   doc.style.maxWidth = 'none';
   doc.style.minHeight = ((_ch173Paper === 'a4') ? 11.7 : 13) * IN + 'px';
+  // Side margin bhi kaghaz ke hisab se — warna A4 chunne par purani (tang)
+  // margin lagi reh jati hai aur kinare ke alfaz kat jate hain.
+  try { doc.style.padding = '1cm ' + _ch173SideMargin(); } catch (_) {}
   // Mojooda jagah ke hisab se bara/chhota (magar naap wahi)
   const avail = Math.max(200, host.clientWidth - 32);
   let k = avail / wPx;
