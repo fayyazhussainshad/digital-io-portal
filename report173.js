@@ -1404,10 +1404,12 @@ window._ch173AccPicker   = _ch173AccPicker;
 //  Neeche wali fehrist mein jo کاغذ چیک ہو جائے وہ خانے میں لکھا جاتا ہے.
 //  AHEM: yahan matn SAADA (seedhi, RTL) shakl mein aata hai — ملزمان wali
 //  khadi likhayi, نمبر شمار aur CNIC ka andaz yahan NAHI lagta.
-//  (Fehrist ka matn baad mein barhaya ja sakta hai — sirf CH173_PAPERS
-//   mein nayi satar shamil kar dein.)
+//  (Fehrist officer khud badal sakta hai — naam badalna, naya shamil karna,
+//   ▲▼ se tarteeb badalna, ✕ se hatana. Sab kuch localStorage mein mehfooz
+//   rehta hai: 'dio_ch173_papers'.)
 // ═══════════════════════════════════════════════════════════════════
-const CH173_PAPERS = [
+// Shuru ki fehrist — har IO isay khud badal sakta hai (neeche mehfooz hoti hai)
+const CH173_PAPERS_DEFAULT = [
   'فارم ہذا',
   'نقل ایف آئی آر',
   'اصل تحریر',
@@ -1417,40 +1419,127 @@ const CH173_PAPERS = [
   'اصل ضمنی SHO',
 ];
 
+// Officer ki apni fehrist (naam badla hua, naya shamil kiya hua, tarteeb badli hui)
+function _ch173PapersList() {
+  try {
+    const a = JSON.parse(localStorage.getItem('dio_ch173_papers') || 'null');
+    if (Array.isArray(a) && a.length) return a.map(String);
+  } catch (_) {}
+  return CH173_PAPERS_DEFAULT.slice();
+}
+function _ch173PapersSave(arr) {
+  try { localStorage.setItem('dio_ch173_papers', JSON.stringify(arr)); } catch (_) {}
+}
+window._ch173PapersList = _ch173PapersList;
+
 function _ch173PapersPicker(ev) {
   ev.preventDefault(); ev.stopPropagation();
   document.getElementById('ch173-papers-menu')?.remove();
   const body = document.querySelector('#ch173-doc [data-k="papers_body"]');
   if (!body) return;
 
-  // Pehle se likhi hui satren — jo fehrist mein hain woh ✔ nazar aayen,
-  // aur jo officer ne khud likhi hain woh mehfooz rahen.
+  let list = _ch173PapersList();
+  const origList = list.slice();
+  // Pehle se likhi hui satren — jo fehrist mein hain woh ✔ nazar aayen
   const lines = (body.innerText || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-  const mine  = new Set(lines);
+  const checked = new Set(lines.filter(l => list.includes(l)));
 
   const box = document.createElement('div');
   box.id = 'ch173-papers-menu';
   box.style.cssText =
     'position:fixed;z-index:99999;background:#fff;border:1px solid #0369a1;border-radius:10px;' +
-    'box-shadow:0 10px 30px rgba(0,0,0,.28);direction:rtl;width:260px;max-width:92vw;' +
-    'display:flex;flex-direction:column;max-height:min(60vh,340px);overflow:hidden;';
-  const rows = CH173_PAPERS.map(p => `
-    <label style="display:flex;align-items:center;gap:8px;padding:7px 6px;cursor:pointer;font-size:13px;
-            border-bottom:1px solid #f1f5f9;font-family:'Jameel Noori Nastaleeq',serif;">
-      <input type="checkbox" ${mine.has(p) ? 'checked' : ''} value="${esc(p)}"> <span>${esc(p)}</span></label>`).join('');
+    'box-shadow:0 10px 30px rgba(0,0,0,.28);direction:rtl;width:300px;max-width:94vw;' +
+    'display:flex;flex-direction:column;max-height:min(72vh,440px);overflow:hidden;';
   box.innerHTML = `
     <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:700;color:#0369a1;
                 font-family:'Jameel Noori Nastaleeq',serif;background:#f8fafc;">
-      کاغذات منتخب کریں
+      کاغذات منتخب کریں <span style="font-weight:400;color:#64748b;">— نام بدلا جا سکتا ہے، ▲▼ سے ترتیب</span>
     </div>
-    <div style="flex:1;overflow-y:auto;padding:4px 8px;min-height:0;">${rows}</div>
-    <div style="display:flex;gap:6px;padding:8px;border-top:1px solid #e5e7eb;background:#f8fafc;flex-shrink:0;">
-      <button id="ch173-pp-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;
-        color:#fff;cursor:pointer;font-size:13px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">✔ شامل کریں</button>
-      <button id="ch173-pp-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;
-        cursor:pointer;font-size:13px;font-family:'Jameel Noori Nastaleeq',serif;">بند</button>
+    <div id="pp-list" style="flex:1;overflow-y:auto;padding:4px 6px;min-height:0;"></div>
+    <div style="padding:6px;border-top:1px solid #e5e7eb;background:#f8fafc;flex-shrink:0;">
+      <button id="pp-add" style="width:100%;padding:7px;border:1px dashed #0369a1;border-radius:6px;background:#fff;
+        color:#0369a1;cursor:pointer;font-size:13px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">
+        ＋ نیا کاغذ شامل کریں</button>
+      <div style="display:flex;gap:6px;margin-top:6px;">
+        <button id="ch173-pp-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;
+          color:#fff;cursor:pointer;font-size:13px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">✔ شامل کریں</button>
+        <button id="ch173-pp-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;
+          cursor:pointer;font-size:13px;font-family:'Jameel Noori Nastaleeq',serif;">بند</button>
+      </div>
     </div>`;
   document.body.appendChild(box);
+
+  const wrap = box.querySelector('#pp-list');
+  const mini = 'width:22px;height:22px;padding:0;line-height:1;border:1px solid #cbd5e1;border-radius:5px;' +
+               'background:#fff;cursor:pointer;font-size:11px;flex-shrink:0;';
+
+  // Screen par jo halat hai usay fehrist mein utaar lo (naam ki tabdeeli + ✔)
+  const readDom = () => {
+    const out = [];
+    checked.clear();
+    wrap.querySelectorAll('.pp-row').forEach(r => {
+      const t = (r.querySelector('.pp-txt').value || '').trim();
+      if (!t) return;
+      out.push(t);
+      if (r.querySelector('.pp-ck').checked) checked.add(t);
+    });
+    list = out;
+  };
+
+  const render = (focusIdx) => {
+    wrap.innerHTML = list.map((p, i) => `
+      <div class="pp-row" data-i="${i}" style="display:flex;align-items:center;gap:5px;padding:4px 2px;
+           border-bottom:1px solid #f1f5f9;">
+        <input type="checkbox" class="pp-ck" ${checked.has(p) ? 'checked' : ''} style="flex-shrink:0;">
+        <input type="text" class="pp-txt" value="${esc(p)}" style="flex:1;min-width:0;border:1px solid transparent;
+          border-radius:5px;padding:4px 6px;font-size:13px;font-family:'Jameel Noori Nastaleeq',serif;
+          direction:rtl;text-align:right;background:#fff;outline:none;"
+          onfocus="this.style.borderColor='#93c5fd';this.style.background='#f8fbff';"
+          onblur="this.style.borderColor='transparent';this.style.background='#fff';">
+        <button class="pp-up"   title="اوپر"  style="${mini}" ${i === 0 ? 'disabled' : ''}>▲</button>
+        <button class="pp-down" title="نیچے"  style="${mini}" ${i === list.length - 1 ? 'disabled' : ''}>▼</button>
+        <button class="pp-del"  title="حذف"   style="${mini}color:#b91c1c;">✕</button>
+      </div>`).join('') ||
+      '<div style="font-size:12px;color:#777;padding:10px;">فہرست خالی ہے — ＋ سے شامل کریں</div>';
+    if (typeof focusIdx === 'number') {
+      const el = wrap.querySelectorAll('.pp-txt')[focusIdx];
+      if (el) { el.focus(); el.select(); }
+    }
+  };
+
+  // Tarteeb badalna / hatana — aik hi jagah se
+  wrap.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    e.preventDefault();
+    const row = btn.closest('.pp-row');
+    if (!row) return;
+    const i = parseInt(row.dataset.i, 10);
+    readDom();
+    if (btn.classList.contains('pp-up')   && i > 0) {
+      [list[i - 1], list[i]] = [list[i], list[i - 1]];
+      _ch173PapersSave(list); render(); return;
+    }
+    if (btn.classList.contains('pp-down') && i < list.length - 1) {
+      [list[i + 1], list[i]] = [list[i], list[i + 1]];
+      _ch173PapersSave(list); render(); return;
+    }
+    if (btn.classList.contains('pp-del')) {
+      list.splice(i, 1);
+      _ch173PapersSave(list); render(); return;
+    }
+  });
+
+  box.querySelector('#pp-add').onclick = (e) => {
+    e.preventDefault();
+    readDom();
+    list.push('نیا کاغذ');
+    _ch173PapersSave(list);
+    render(list.length - 1);          // naye khane mein cursor
+    wrap.scrollTop = wrap.scrollHeight;
+  };
+
+  render();
 
   // Jagah: button ke qareeb, magar screen se bahar kabhi nahi
   const r = ev.currentTarget.getBoundingClientRect();
@@ -1464,15 +1553,24 @@ function _ch173PapersPicker(ev) {
   box.style.left = left + 'px';
 
   setTimeout(() => {
-    const off = (e) => { if (!box.contains(e.target)) { box.remove(); document.removeEventListener('mousedown', off); } };
+    const off = (e) => {
+      if (!box.contains(e.target)) {
+        try { readDom(); _ch173PapersSave(list); } catch (_) {}   // tabdeeli zaya na ho
+        box.remove(); document.removeEventListener('mousedown', off);
+      }
+    };
     document.addEventListener('mousedown', off);
   }, 0);
 
-  box.querySelector('#ch173-pp-x').onclick = () => box.remove();
+  box.querySelector('#ch173-pp-x').onclick = () => {
+    readDom(); _ch173PapersSave(list); box.remove();
+  };
   box.querySelector('#ch173-pp-ok').onclick = () => {
-    const picked = [...box.querySelectorAll('input:checked')].map(i => i.value);
-    // Officer ki apni likhi hui satren (jo fehrist mein nahi) mehfooz rakho
-    const custom = lines.filter(l => !CH173_PAPERS.includes(l));
+    readDom();
+    _ch173PapersSave(list);
+    const picked = list.filter(p => checked.has(p));
+    // Officer ki apni likhi hui satren (jo fehrist mein nahi thin) mehfooz rakho
+    const custom = lines.filter(l => !origList.includes(l) && !list.includes(l));
     body.innerText = [...custom, ...picked].join('\n');
     box.remove();
     try { _r173Dirty = true; } catch (_) {}
