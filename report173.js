@@ -596,6 +596,8 @@ function _collectR173() {
     });
     // MS Word jaisi drag se badli hui column widths bhi mehfooz
     try { const cw = _ch173ColWidths(); if (cw) d.col_widths = cw; } catch(_) {}
+    // Save ke liye lapet kholi thi — screen par seedh wapas laga do
+    try { _ch173WrapCnics(chDoc); } catch(_) {}
     try {
       const br = document.querySelector('#ch173-table tbody tr td');
       if (br && br.style.height) d.row_height = br.style.height;
@@ -721,6 +723,7 @@ function _printR173() {
       chDoc.style.maxWidth = 'none';
       void chDoc.offsetHeight;                 // nayi naap lagne do
       _ch173OverflowSettle(6);
+      try { _ch173WrapCnics(chDoc); } catch (__) {}   // CNIC ki seedh chapai mein bhi
       void chDoc.offsetHeight;
       _inner = chDoc.innerHTML;                // kaghaz ki naap wala natija
     } catch (_) {
@@ -2325,6 +2328,17 @@ function _ch173CSS() {
         text-orientation:sideways; -webkit-text-orientation:sideways;
         direction:ltr; unicode-bidi:isolate; white-space:nowrap;
       }
+      /* Har satar ka apna khana: NAAM shuru (ooper) — CNIC aakhir (neeche).
+         Khadi likhayi mein 'inline-size' poori UNCHAI hoti hai, is liye
+         100% dene se har satar poore khane jitni lambi ho jati hai aur
+         'space-between' CNIC ko bilkul neeche le jata hai — chunanche
+         tamam CNIC aik hi seedh mein aa jate hain (naam chhota ho ya bara). */
+      #ch173-doc .rotinner .ln{
+        display:flex; flex-direction:row; justify-content:space-between;
+        align-items:flex-start; inline-size:100%; min-inline-size:0;
+      }
+      #ch173-doc .rotinner .nm{ flex:0 1 auto; min-inline-size:0; overflow:hidden; }
+      #ch173-doc .rotinner .ln > .cn{ flex:0 0 auto; }
       /* CNIC ka apna khana — naam ke saath, OOPER se NEECHE parhi jaye,
          aur naam se 1.5cm ka fasla */
       /* Khaka print mein BHI aaye — pehle print par yeh chhupa diya jata
@@ -2433,6 +2447,11 @@ function _ch173StripSpan(html) {
   // aur woh jo MATN ki tarah mehfooz ho gaye
   t = t.replace(/&lt;span class=&quot;cn&quot;&gt;/g, ' ').replace(/&lt;\/span&gt;/g, '');
   t = t.replace(/<span class="cn">/g, ' ').replace(/<\/span>/g, '');
+  // Hifazat: agar kabhi satar wale khane (.ln/.nm) mehfooz ho jayen to
+  // unhen wapas saada matn bana do (har khana = aik satar).
+  t = t.replace(/<\/div>\s*<div class="ln">/g, '\n');
+  t = t.replace(/<div class="ln">/g, '').replace(/<\/div>/g, '');
+  t = t.replace(/<span class="nm">/g, '');
   // Purani mehfooz satron mein naam aur CNIC ke darmiyan TEEN space the
   // (bara khali fasla). Unhen kholte waqt aik space par le aate hain —
   // warna purane چالان mein purana chaura fasla hi nazar aata rehta hai.
@@ -2447,44 +2466,84 @@ window._ch173StripSpan = _ch173StripSpan;
 // wapas saada matn bana dete hain, taake data-base mein koi markup na jaye
 // (pehle span ka code khud matn ban kar mehfooz ho jata tha — woh bug na aaye).
 const _CH173_CNIC_RE = /\d{5}-\d{7}-\d/g;
+// Khana "saada" hai? (officer ne apni formatting nahi lagayi)
+// Sirf aisi soorat mein satren dobara tarteeb deni mehfooz hai — warna
+// bold/italic wagera mit jayegi.
+function _ch173PlainCell(cell) {
+  const ok = { DIV: 1, SPAN: 1, BR: 1 };
+  const els = cell.querySelectorAll('*');
+  for (let i = 0; i < els.length; i++) {
+    const e = els[i];
+    if (!ok[e.tagName]) return false;
+    if (e.tagName === 'DIV'  && !e.classList.contains('ln')) return false;
+    if (e.tagName === 'SPAN' && !(e.classList.contains('cn') || e.classList.contains('nm'))) return false;
+    if (e.getAttribute('style')) return false;      // koi apni sajawat lagi hai
+  }
+  return true;
+}
+
+// Kahin koi CNIC aisa to nahi jo abhi tak lapeta nahi gaya?
+function _ch173HasBareCnic(cell) {
+  const w = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT, null);
+  let n;
+  while ((n = w.nextNode())) {
+    if (n.parentNode && n.parentNode.classList && n.parentNode.classList.contains('cn')) continue;
+    _CH173_CNIC_RE.lastIndex = 0;
+    if (_CH173_CNIC_RE.test(n.nodeValue)) return true;
+  }
+  return false;
+}
+
+// ═══ Har satar: NAAM ooper, CNIC neeche — sab CNIC aik SEEDH mein ═══
+// Pehle CNIC wahin se shuru hota tha jahan naam khatam hota — naam chhote
+// bare hone ki wajah se har CNIC alag jagah par aa jata tha (koi ooper, koi
+// neeche) aur bhadda lagta tha. Ab har satar apne khane (.ln) mein hai
+// jismein naam SHURU (ooper) aur CNIC AAKHIR (neeche) par jamta hai —
+// is liye tamam CNIC aik hi seedh mein aate hain.
 function _ch173WrapCnics(root) {
   root = root || document.getElementById('ch173-doc');
   if (!root) return;
+  const E = (t) => String(t == null ? '' : t)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   root.querySelectorAll('.ch173-table td.rotcell .rotinner').forEach(cell => {
-    if (document.activeElement === cell) return;   // likhte waqt haath na lagao
-    const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT, null);
-    const targets = [];
-    let n;
-    while ((n = walker.nextNode())) {
-      // pehle se .cn ke andar ho to chhoro
-      if (n.parentNode && n.parentNode.classList && n.parentNode.classList.contains('cn')) continue;
-      _CH173_CNIC_RE.lastIndex = 0;
-      if (_CH173_CNIC_RE.test(n.nodeValue)) targets.push(n);
-    }
-    targets.forEach(node => {
-      const text = node.nodeValue;
-      const frag = document.createDocumentFragment();
-      let last = 0, m;
-      _CH173_CNIC_RE.lastIndex = 0;
-      while ((m = _CH173_CNIC_RE.exec(text))) {
-        if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
-        const sp = document.createElement('span');
-        sp.className = 'cn';
-        sp.textContent = m[0];
-        frag.appendChild(sp);
-        last = m.index + m[0].length;
-      }
-      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
-      node.parentNode.replaceChild(frag, node);
-    });
+    if (document.activeElement === cell) return;      // likhte waqt haath na lagao
+    if (!_ch173PlainCell(cell)) return;               // apni formatting mehfooz rahe
+    // pehle se lapeta hua hai aur kuch naya nahi aaya → dobara mehnat na karo
+    if (cell.querySelector('.ln') && !_ch173HasBareCnic(cell)) return;
+    const raw = (cell.innerText || '').replace(/\u00A0/g, ' ');
+    if (!raw.trim()) return;
+    const lines = raw.split(/\r?\n/);
+    let found = false;
+    const html = lines.map(line => {
+      const m = line.match(/^([\s\S]*?)[\s]*(\d{5}-\d{7}-\d)[\s]*$/);
+      if (!m) return '<div class="ln">' + E(line) + '</div>';
+      found = true;
+      return '<div class="ln"><span class="nm">' + E(m[1].trim()) + '</span>' +
+             '<span class="cn">' + E(m[2]) + '</span></div>';
+    }).join('');
+    if (!found) return;                               // koi CNIC hi nahi
+    cell.innerHTML = html;
   });
 }
 window._ch173WrapCnics = _ch173WrapCnics;
 
-// Save se pehle .cn spans ko wapas saada matn banao (markup mehfooz na ho)
+// Save se pehle sab lapet khol do — sirf SAADA matn mehfooz ho (markup nahi)
 function _ch173UnwrapCnics(root) {
   root = root || document.getElementById('ch173-doc');
   if (!root) return;
+  root.querySelectorAll('.ch173-table td.rotcell .rotinner').forEach(cell => {
+    if (!cell.querySelector('.ln')) return;
+    const lines = [...cell.querySelectorAll('.ln')].map(d => {
+      const nm = d.querySelector('.nm'), cn = d.querySelector('.cn');
+      if (nm || cn) {
+        return ((nm ? nm.textContent : '').trim() + ' ' +
+                (cn ? cn.textContent : '').trim()).trim();
+      }
+      return (d.textContent || '').trim();
+    });
+    cell.innerText = lines.join('\n');
+  });
+  // baqi kahin koi akela .cn reh gaya ho
   root.querySelectorAll('span.cn').forEach(sp => {
     sp.replaceWith(document.createTextNode(sp.textContent || ''));
   });
