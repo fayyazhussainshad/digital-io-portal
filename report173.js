@@ -570,6 +570,9 @@ function _collectR173() {
   // Challan types (فارم 25.56(1)) — apna doc id hai
   const chDoc = document.getElementById('ch173-doc');
   if (chDoc && typeof R173_BLANK_TYPES !== 'undefined' && R173_BLANK_TYPES.includes(_r173Type)) {
+    // Mehfooz karne se pehle bhi overflow chalao — taake کالم 7 ka izafi matn
+    // neeche wale khane mein darj ho kar SAATH mehfooz ho (chhupa na reh jaye).
+    try { _ch173Overflow(); } catch (_) {}
     // CNIC ke display-spans hata do — sirf saada matn mehfooz ho (markup nahi)
     try { _ch173UnwrapCnics(chDoc); } catch(_) {}
     const d = {};
@@ -684,6 +687,10 @@ function _printR173() {
   // Challan types (فارم 25.56(1)) — apna doc + apni styles
   const chDoc = document.getElementById('ch173-doc');
   if (chDoc) {
+    // AHEM: print se PEHLE overflow chalao. Warna کالم 7 ka jo matn khane mein
+    // na samaya ho woh CHHUPA hi chhap jata tha (print sirf mojooda HTML ki
+    // nakal leta hai — woh khud matn neeche nahi bhejta).
+    try { _ch173Overflow(); } catch (_) {}
     const chHtml = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
       <style>
         /* Charon taraf BARABAR margin — kaghaz chune hue naap ka */
@@ -813,6 +820,44 @@ function _ch173MakeResizable() {
     const ths = row2.querySelectorAll('th');
     if (ths[0]) addGrip(ths[0], 2, 3);   // زیر حراست ↔ برضمانت
     if (ths[1]) addGrip(ths[1], 3, 4);   // برضمانت ↔ مال قبضہ
+  }
+
+  // ── "ملزمان" ke NEECHE wali lakeer — ooper/neeche kheench kar hilao ──
+  // Yeh lakeer "ملزمان" (super-header) aur "زیر حراست/برضمانت" ke darmiyan hai.
+  // Kheenchne par ooper wala khana bara/chhota hota hai aur neeche wala us ke
+  // ulat — is liye header ki KUL unchai wahi rehti hai (form ka naksha nahi bigarta).
+  const _hR2 = table.querySelector('thead tr:nth-child(2)');
+  const _mulzimanTh = [...table.querySelectorAll('thead tr:first-child th')]
+    .find(th => parseInt(th.getAttribute('colspan') || '1') > 1);
+  if (_hR2 && _mulzimanTh) {
+    _hR2.querySelectorAll('th').forEach(th => {
+      const tg = document.createElement('div');
+      tg.className = 'rowgrip rowgrip-top';
+      tg.title = '"ملزمان" کی لکیر اوپر نیچے کھینچیں';
+      th.appendChild(tg);
+      tg.addEventListener('mousedown', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        const startY = e.clientY;
+        const startTop = _mulzimanTh.offsetHeight;
+        const startBot = _hR2.offsetHeight;
+        document.body.style.cursor = 'row-resize';
+        const onMove = (ev) => {
+          const d = ev.clientY - startY;
+          const nTop = startTop + d, nBot = startBot - d;
+          if (nTop < 18 || nBot < 18) return;
+          _mulzimanTh.style.height = nTop + 'px';
+          _hR2.querySelectorAll('th').forEach(c => { c.style.height = nBot + 'px'; });
+        };
+        const onUp = () => {
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+          document.body.style.cursor = '';
+          try { _r173Dirty = true; } catch (_) {}
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+    });
   }
 
   // ── ROW 2 ki NEECHE wali lakeer se HEADER ki unchai badalna ──
@@ -1056,7 +1101,9 @@ function _ch173WitnessText() {
   // AIK GAWAH = AIK SATAR: نمبر + naam + uska CNIC
   return L.map(function (w, i) {
     const cn = (w.cnic && String(w.cnic).trim()) ? String(w.cnic).trim() : '00000-0000000-0';
-    return (i + 1) + '\u06D4 ' + (w.full_name || '') + ' ' + cn;
+    // CNIC HAMESHA satar ke shuru mein — taake uska pehla digit har
+    // surat mein Row 2 wali lakeer se shuru ho (naam chhota ho ya lamba).
+    return cn + ' ' + (i + 1) + '\u06D4 ' + (w.full_name || '');
   }).join('\n');
 }
 
@@ -1070,8 +1117,8 @@ function _ch173UsedAccused(exceptKey) {
     if (!el) return;
     el.innerText.split(/\r?\n/).forEach(n => {
       let t = n.trim();
-      t = t.replace(/^\d+\u06D4\s*/, '');                   // نمبر شمار hatao
-      t = t.replace(/\s*\d{5}-\d{7}-\d\s*$/, '').trim();    // CNIC hatao
+      t = t.replace(/\s*\d{5}-\d{7}-\d\s*/g, ' ');          // CNIC hatao (ab shuru mein hota hai)
+      t = t.replace(/^\s*\d+\u06D4\s*/, '').trim();          // نمبر شمار hatao
       if (t) used.add(t);
     });
   });
@@ -1092,8 +1139,8 @@ function _ch173AccPicker(ev, key) {
   // Pehle se chune hue naam — CNIC aur نمبر شمار hata kar sirf naam
   const mine = new Set(cell ? cell.innerText.split(/\r?\n/).map(t => {
     let x = t.trim();
-    x = x.replace(/^\d+\u06D4\s*/, '');                    // نمبر شمار hatao
-    x = x.replace(/\s*\d{5}-\d{7}-\d\s*$/, '').trim();     // CNIC hatao
+    x = x.replace(/\s*\d{5}-\d{7}-\d\s*/g, ' ');           // CNIC hatao (ab shuru mein hota hai)
+    x = x.replace(/^\s*\d+\u06D4\s*/, '').trim();           // نمبر شمار hatao
     return x;
   }).filter(Boolean) : []);
 
@@ -1156,7 +1203,8 @@ function _ch173AccPicker(ev, key) {
       cell.innerText = picked.map((nm, i) => {
         const a = (_ch173Accused || []).find(x => (x.name || '').trim() === nm);
         const c = (a && a.cnic && String(a.cnic).trim()) ? String(a.cnic).trim() : '00000-0000000-0';
-        return (i + 1) + '\u06D4 ' + nm + ' ' + c;
+        // CNIC pehle — har satar ka aaghaz aik hi jagah se
+        return c + ' ' + (i + 1) + '\u06D4 ' + nm;
       }).join('\n');
     }
     box.remove();
@@ -1951,8 +1999,8 @@ function _ch173CSS() {
         position:relative; line-height:1.15;
       }
       /* Header row 1: jagah ke hisab se chhota font */
-      #ch173-doc .ch173-table thead th{ font-size:14pt; vertical-align:middle; line-height:1.15;
-        font-weight:normal; position:relative; }
+      #ch173-doc .ch173-table thead th{ font-size:14pt; vertical-align:middle; line-height:1.1;
+        font-weight:normal; position:relative; padding:1px 4px; }
       /* Data khane: columns 1–6 → Ascending (neeche se ooper). AHEM: CSS transform
          seedha <td> par kaam nahi karta (browser nazar-andaz kar deta hai), is liye
          matn andar <div> wrapper mein rakh kar us par lagate hain. */
@@ -2144,11 +2192,14 @@ function _ch173CSS() {
         transform:rotate(180deg); -webkit-transform:rotate(180deg);
         white-space:nowrap; line-height:1.2; text-align:center;
       }
-      #ch173-doc th.vcell{ vertical-align:middle; padding:0; text-align:center; height:150px; }
+      /* Header ki unchai kam — pehle 150px thi jis se row 1-2 ke alfaz ke
+         ooper-neeche kaafi khali jagah bach jati thi. (Haath se kheench kar
+         bhi badal sakte hain.) */
+      #ch173-doc th.vcell{ vertical-align:middle; padding:0; text-align:center; height:96px; }
       /* Header ki khadi likhayi — data khanon jaisa hi wrapper (Ascending) */
       /* مال قبضہ پولیس — lakeeron se hat kar, khane ke beech mein */
       #ch173-doc .rothead{ justify-content:center !important; align-items:center;
-        white-space:normal; padding:8px 6px; font-size:12pt; line-height:1.3; }
+        white-space:normal; padding:2px 4px; font-size:12pt; line-height:1.2; }
 
       #ch173-doc th.hcell{ vertical-align:middle; text-align:center; direction:rtl; white-space:normal; }
 
@@ -2176,6 +2227,8 @@ function _ch173CSS() {
         position:absolute; bottom:0; left:0; width:100%; height:12px;
         cursor:row-resize; user-select:none; z-index:20;
       }
+      /* "ملزمان" ke NEECHE wali lakeer wali grip — khane ke OOPER kinare par */
+      #ch173-doc .rowgrip-top{ top:0; bottom:auto; }
       #ch173-doc .rowgrip:hover{ background:rgba(56,189,248,0.45); }
       #ch173-doc .colgrip:hover{ background:rgba(56,189,248,0.35); }
 `;
@@ -2213,7 +2266,8 @@ function _ch173MudaiLine(c) {
   if (!nm) return '';
   const cn = String((cross ? c.cross_complainant_cnic : c.complainant_cnic) || '').trim()
              || '00000-0000000-0';
-  return '1\u06D4 ' + nm + ' ' + cn;
+  // CNIC pehle — Row 2 wali lakeer se shuru
+  return cn + ' 1\u06D4 ' + nm;
 }
 window._ch173MudaiLine = _ch173MudaiLine;
 
