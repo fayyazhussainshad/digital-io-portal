@@ -344,7 +344,7 @@ function _renderR173() {
         </div>
       </div>
       <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
-        <div id="ch173-doc" style="width:100%;max-width:none;min-height:${_ch173Paper==='a4'?'11.7in':'13in'};margin:0 auto;
+        <div id="ch173-doc" style="width:${_ch173Paper==='a4'?'8.27in':'8.5in'};max-width:none;min-height:${_ch173Paper==='a4'?'11.7in':'13in'};margin:0 auto;
              padding:1cm ${_ch173SideMargin()};
              background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;
              line-height:1.4;box-sizing:border-box;">
@@ -468,6 +468,8 @@ function _renderR173() {
       } catch(_) {}
       // Format painter — naye safhe par band halat se shuru
       try { _ch173BrushOff(); _ch173BindBrush(); } catch(_) {}
+      // چالان ko poora safha do (chips + neeche wali patti chhupao)
+      try { _ch173FocusMode(true); } catch(_) {}
       // Font kis khane par lage — us khane ko yaad rakhne wala nizam
       try { _ch173BindCellPick(); } catch(_) {}
       // Har khane ka apna mehfooz shuda font wapas lagao
@@ -478,6 +480,9 @@ function _renderR173() {
     if (typeof applyMicButtons === 'function') setTimeout(() => applyMicButtons(area), 80);
     return;
   }
+
+  // چالان wala safha nahi — chips aur neeche wali patti wapas
+  try { _ch173FocusMode(false); } catch (_) {}
 
   area.innerHTML = `
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
@@ -1864,6 +1869,42 @@ function _ch173WatchFit() {
 }
 window._ch173WatchFit = _ch173WatchFit;
 
+// ═══════════════════════════════════════════════════════════════════
+//  چالان کا صفحہ = پورا صفحہ (FOCUS MODE)
+//  چالان khulte hi ooper wali chips ki patti aur neeche wali patti chhup
+//  jati hain, taake poora safha چالان ko mile. Chips ghayब nahi hotin —
+//  cursor ooper le jate hi nazar aa jati hain, aur hatate hi phir chhup
+//  jati hain.
+// ═══════════════════════════════════════════════════════════════════
+function _ch173FocusMode(on) {
+  const b = document.body;
+  if (!b) return;
+  if (!on) {
+    b.classList.remove('ch173-focus');
+    const bar = document.getElementById('misal-doc-bar');
+    if (bar) bar.classList.remove('peek');
+    return;
+  }
+  b.classList.add('ch173-focus');
+  if (window._ch173PeekBound) return;
+  window._ch173PeekBound = true;
+  // Cursor safhe ke ooper wale hisse mein aaye to chips dikhao
+  document.addEventListener('mousemove', (e) => {
+    if (!document.body.classList.contains('ch173-focus')) return;
+    const bar = document.getElementById('misal-doc-bar');
+    if (!bar) return;
+    let near = e.clientY <= 90;                    // ooper ki patti ka ilaqa
+    if (!near) {
+      try {
+        const r = bar.getBoundingClientRect();
+        near = e.clientY >= r.top - 12 && e.clientY <= r.bottom + 12;
+      } catch (_) {}
+    }
+    bar.classList.toggle('peek', near);
+  }, { passive: true });
+}
+window._ch173FocusMode = _ch173FocusMode;
+
 // ═══ Chuni hui jagah YAAD rakho ═══
 // Toolbar ke select/button par tap karte hi contenteditable se focus hat jata
 // hai aur chuna hua matn zaya ho jata hai — isi liye font size lagta hi nahi
@@ -2290,6 +2331,8 @@ window._ch173HasCross = _ch173HasCross;
 //  (ضمنیات جیسی table: # | چالان | ہیڈ | تاریخ | مضمون | ایکشن)
 // ═══════════════════════════════════════════════════════════════════
 function _renderR173List() {
+  // Fehrist par wapas — chips aur neeche wali patti dobara nazar aayen
+  try { _ch173FocusMode(false); } catch (_) {}
   const area = document.getElementById('workspace-editor-area')
             || document.getElementById('workspace-tab-content')
             || document.getElementById('page-content');
@@ -2606,7 +2649,22 @@ window._ch173FillHalaat = _ch173FillHalaat;
 //  آتا تھا (اسکرین، پرنٹ، PDF)۔ اب ایک ہی نقل ہے۔
 // ═══════════════════════════════════════════════════════════════════
 function _ch173CSS() {
-  return `      #ch173-doc{ direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; color:#000; }
+  return `
+      /* ── چالان = پورا صفحہ (focus mode) ── */
+      /* Chips ki patti sirf CHHUP jati hai — hoti wahin hai. Cursor ooper
+         le jate hi .peek lag jati hai aur patti wapas nazar aa jati hai. */
+      body.ch173-focus #misal-doc-bar{
+        max-height:0 !important; padding-top:0 !important; padding-bottom:0 !important;
+        opacity:0; overflow:hidden;
+        transition:max-height .18s ease, opacity .18s ease, padding .18s ease;
+      }
+      body.ch173-focus #misal-doc-bar.peek{
+        max-height:220px !important; opacity:1;
+        padding-top:6px !important; padding-bottom:6px !important;
+      }
+      /* Neeche wali chaori patti bhi hat jaye */
+      body.ch173-focus .bottombar{ display:none !important; }
+      #ch173-doc{ direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; color:#000; }
       /* Unwan: FORM No. aur Urdu heading — dono AIK hi flex dhanche mein,
          is liye dono ka center bilkul aik (linked) */
       /* Unwan: beech wala hissa HAMESHA sacche page-center par (absolute 50%),
