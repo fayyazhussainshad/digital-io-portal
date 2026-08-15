@@ -2102,21 +2102,26 @@ function _ch173CSS() {
         direction:rtl; outline:none; unicode-bidi:plaintext;
         line-height:1.2; white-space:pre; word-break:keep-all;
         overflow-wrap:normal; overflow:hidden; font-size:14pt;
-        padding:4px 6px;
+        /* Khadi likhayi mein pehli qeemat OOPER/NEECHE ki jagah hai —
+           isay kam rakha hai taake har record Row 2 ki lakeer se bilkul
+           saath shuru ho (ooper-neeche fazool jagah na bane). */
+        padding:1px 4px;
         /* NAAM: OOPER se NEECHE ki taraf. Khadi likhayi mein flex ka rukh
            OOPER→NEECHE hai, is liye flex-start = OOPER. */
         display:flex; flex-direction:row; justify-content:flex-start;
       }
-      /* CNIC — naam ke saath, magar NEECHE se OOPER, LTR (numbers seedhi
-         tarteeb mein). Chrome mein sideways-lr nahi chalta, is liye horizontal
-         number ko -90deg ghuma kar neeche-se-ooper banate hain. Naam ki
-         khadi likhayi jaisa hi rukh, magar digits apni LTR tarteeb rakhti hain. */
+      /* CNIC — naam ke saath usi satar mein, magar OOPER se NEECHE parhi jaye
+         aur numbers LTR (seedhi tarteeb) mein rahen.
+         AHEM: yahan 'transform:rotate' HARGIZ na lagayen — transform sirf
+         dikhawa ghumata hai, JAGAH nahi. Us se CNIC ka khaka chaurai wala hi
+         rehta tha, jis se naam kinare par dhakel jata tha aur ooper-neeche
+         fazool jagah ban jati thi. writing-mode + text-orientation se khaka
+         bhi durust naapa jata hai (aur yeh Chrome mein chalta hai —
+         'sideways-lr' sirf Firefox ka hai, woh nahi use karna). */
       #ch173-doc .rotinner .cn{
-        display:inline-block; vertical-align:middle;
-        writing-mode:horizontal-tb; -webkit-writing-mode:horizontal-tb;
-        direction:ltr; unicode-bidi:isolate; white-space:nowrap; line-height:1;
-        transform:rotate(-90deg); -webkit-transform:rotate(-90deg);
-        transform-origin:center center;
+        writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
+        text-orientation:sideways; -webkit-text-orientation:sideways;
+        direction:ltr; unicode-bidi:isolate; white-space:nowrap;
       }
       /* CNIC ka apna khana — naam ke saath, OOPER se NEECHE parhi jaye,
          aur naam se 1.5cm ka fasla */
