@@ -1151,6 +1151,23 @@ function _ch173Overflow() {
     cell.appendChild(first);
     if (full()) { cont.insertBefore(first, cont.firstChild); break; }
   }
+
+  // (c) TUKRE WAPAS JORO — matn lafz-ba-lafz hilta hai, is liye har lafz ka
+  // apna alag tukra ban jata hai. Yeh tukre khud-ba-khud aik nahi hote, aur
+  // itne saare tukron ki wajah se likhayi mein khali jagah (gap) nazar aane
+  // lagti hai. normalize() saath saath ke tukron ko dobara aik kar deta hai.
+  try { cell.normalize(); cont.normalize(); } catch (_) {}
+  // Aik se zyada khali jagah aik hi rakho (bar bar torne-jorne se banti hai)
+  try {
+    [cell, cont].forEach(host => {
+      const w = document.createTreeWalker(host, NodeFilter.SHOW_TEXT, null);
+      let n;
+      while ((n = w.nextNode())) {
+        const fixed = n.nodeValue.replace(/[ \t\u00A0]{2,}/g, ' ');
+        if (fixed !== n.nodeValue) n.nodeValue = fixed;
+      }
+    });
+  } catch (_) {}
 }
 window._ch173Overflow = _ch173Overflow;
 
