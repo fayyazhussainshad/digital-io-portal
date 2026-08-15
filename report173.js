@@ -300,13 +300,9 @@ function _renderR173() {
         <select id="r173-type-sel" onchange="_r173Pick(this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
           ${R173_TYPES.map(t => `<option value="${t.id}" ${t.id===_r173Type?'selected':''}>${t.name}</option>`).join('')}
         </select>
-        <select id="ch173-head-sel" onchange="_r173SetHead(this.value)" title="ہیڈ / عنوان"
-          style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);
-                 color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;max-width:260px;">
-          <option value="">— ہیڈ منتخب کریں —</option>
-          ${(['ikhraj','adampata'].includes(_r173Type) ? R173_IKHRAJ_HEADS : R173_HEADS)
-            .map(h => `<option value="${esc(h)}" ${_r173Head===h?'selected':''}>${esc(h)}</option>`).join('')}
-        </select>
+        <!-- "ہیڈ منتخب کریں" wali fehrist filhaal hata di gayi hai (zaroorat nahi).
+             Zaroorat par wapas lagane ke liye: yahan select dobara daal dein —
+             _r173SetHead() aur R173_HEADS / R173_IKHRAJ_HEADS mojood hain. -->
         <select id="ch173-ver-sel" onchange="_ch173SetVersion(this.value)" title="ورژن"
           style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
           <option value="fir" ${_ch173Version==='fir'?'selected':''}>FIR</option>
@@ -472,6 +468,12 @@ function _renderR173() {
       } catch(_) {}
       // Format painter — naye safhe par band halat se shuru
       try { _ch173BrushOff(); _ch173BindBrush(); } catch(_) {}
+      // Font kis khane par lage — us khane ko yaad rakhne wala nizam
+      try { _ch173BindCellPick(); } catch(_) {}
+      // Har khane ka apna mehfooz shuda font wapas lagao
+      try { _ch173ApplyCellFonts(bs.cell_fonts); } catch(_) {}
+      // Safha poori tarah lag jane ke baad naap dobara theek karo
+      try { _ch173WatchFit(); } catch(_) {}
     }, 60);
     if (typeof applyMicButtons === 'function') setTimeout(() => applyMicButtons(area), 80);
     return;
@@ -669,6 +671,8 @@ function _collectR173() {
     });
     // MS Word jaisi drag se badli hui column widths bhi mehfooz
     try { const cw = _ch173ColWidths(); if (cw) d.col_widths = cw; } catch(_) {}
+    // Har khane ka apna font bhi mehfooz (warna reload par kho jata hai)
+    try { const cf = _ch173CellFonts(); if (cf) d.cell_fonts = cf; } catch(_) {}
     // Save ke liye lapet kholi thi — screen par seedh wapas laga do
     try { _ch173WrapCnics(chDoc); } catch(_) {}
     try {
@@ -1717,13 +1721,36 @@ function _ch173FitPaper() {
   // Side margin bhi kaghaz ke hisab se — warna A4 chunne par purani (tang)
   // margin lagi reh jati hai aur kinare ke alfaz kat jate hain.
   try { doc.style.padding = '1cm ' + _ch173SideMargin(); } catch (_) {}
-  // Mojooda jagah ke hisab se bara/chhota (magar naap wahi)
-  const avail = Math.max(200, host.clientWidth - 32);
-  let k = avail / wPx;
-  if (k > 1.7) k = 1.7;
-  if (k < 0.35) k = 0.35;
   doc.style.transformOrigin = 'top center';
-  doc.style.transform = (k === 1) ? 'none' : ('scale(' + k.toFixed(4) + ')');
+
+  // Jitni jagah WAQAI nazar aa rahi hai — container ki chaudai aur khirki
+  // (window) dono mein se JO KAM ho. Sirf container par bharosa karna ghalat
+  // tha: kabhi container khud khirki se chaura ho jata hai (jaise case mein
+  // aik se zyada tab khuli hon), aur tab safha screen se bahar nikal jata tha.
+  const visible = () => Math.max(200,
+    Math.min(host.clientWidth || 0, window.innerWidth || 0) || (host.clientWidth || 800));
+
+  const setK = (k) => {
+    doc.style.transform = (Math.abs(k - 1) < 0.005) ? 'none' : ('scale(' + k.toFixed(4) + ')');
+    return k;
+  };
+
+  let k = Math.min(1.4, Math.max(0.35, (visible() - 32) / wPx));
+  setK(k);
+
+  // ═══ Ab NAAP kar TASDEEQ karo ═══
+  // Sirf hisaab par bharosa nahi karte — safha lagne ke baad us ki asal
+  // chaudai maap kar dekhte hain. Agar phir bhi nazar aane wali jagah se
+  // bara ho to chhota kar dete hain (teen koshishon tak).
+  try {
+    for (let i = 0; i < 3; i++) {
+      const w = doc.getBoundingClientRect().width;
+      const limit = visible() - 16;
+      if (!w || w <= limit) break;
+      k = setK(Math.max(0.3, k * (limit / w)));
+    }
+  } catch (_) {}
+
   // scale se asli unchai nahi badalti — neeche ki khali jagah barabar karo
   try {
     const h = doc.offsetHeight;
@@ -1731,6 +1758,33 @@ function _ch173FitPaper() {
   } catch (_) {}
 }
 window._ch173FitPaper = _ch173FitPaper;
+
+// ═══ Jagah badle to naap KHUD dobara theek ho ═══
+// Case mein aik se zyada tab khulne/band hone par safhe wali jagah ki chaudai
+// badal jati thi, magar naap purani hi lagi rehti thi — is liye safha screen
+// se bahar nikal jata tha. Ab container par nazar rakhi jati hai: jaise hi
+// us ki naap badle, safha khud apne aap ko dobara fit kar leta hai.
+function _ch173WatchFit() {
+  const doc = document.getElementById('ch173-doc');
+  if (!doc) return;
+  const host = doc.parentElement;
+  if (!host) return;
+  try { _ch173FitPaper(); } catch (_) {}
+  // Safha lagne ke foran baad naap abhi tay nahi hoti — chand dafa dohrao
+  [60, 200, 500, 1000].forEach(ms => setTimeout(() => {
+    try { _ch173FitPaper(); } catch (_) {}
+  }, ms));
+  if (host._fitObs) return;                      // aik hi dafa lagani hai
+  if (typeof ResizeObserver === 'undefined') return;
+  try {
+    host._fitObs = new ResizeObserver(() => {
+      clearTimeout(host._fitT);
+      host._fitT = setTimeout(() => { try { _ch173FitPaper(); } catch (_) {} }, 80);
+    });
+    host._fitObs.observe(host);
+  } catch (_) {}
+}
+window._ch173WatchFit = _ch173WatchFit;
 
 // ═══ Chuni hui jagah YAAD rakho ═══
 // Toolbar ke select/button par tap karte hi contenteditable se focus hat jata
@@ -1819,15 +1873,88 @@ function _ch173SetFont(val) {
   _ch173RestoreRange();                        // chuna hua matn wapas lagao
   const _fs = document.getElementById('ch173-font-sel');
   if (_fs) _fs.value = String(pt);             // dropdown wapas na palte
+  // 1) Matn chuna hua ho → sirf usi par
   if (_ch173FontToSelection(pt)) {
     _ch173SaveRange();
     try { _r173Dirty = true; } catch(_) {}
     return;
   }
+  // 2) Kisi khane par click kiya hua ho → SIRF USI khane par.
+  //    (Pehle yahan seedha poore safhe par lagta tha — isi liye header ke
+  //     aik khane ka font badalne se TAMAM khanon ka font badal jata tha.
+  //     Header ke khane likhne wale nahi, is liye un mein matn chuna hi
+  //     nahi ja sakta tha aur har dafa poora safha badal jata tha.)
+  if (_ch173FontToCell(window._ch173LastCell, pt)) {
+    try { _r173Dirty = true; } catch(_) {}
+    return;
+  }
+  // 3) Kahin bhi click na kiya ho → poora safha (purana tareeqa)
   _ch173FontToDoc(pt);
   try { _r173Dirty = true; } catch(_) {}
 }
 window._ch173SetFont = _ch173SetFont;
+
+// ═══ SIRF aik khane ka font ═══
+function _ch173FontToCell(cell, pt) {
+  const doc = document.getElementById('ch173-doc');
+  if (!cell || !doc || !doc.contains(cell)) return false;
+  cell.style.fontSize = pt + 'pt';
+  // Khane ke andar ka matn rakhne wala hissa bhi
+  cell.querySelectorAll('.rotinner, .rothead, .normwrap, .hinner').forEach(el => {
+    el.style.fontSize = pt + 'pt';
+  });
+  if (typeof _ch173Overflow === 'function') setTimeout(_ch173Overflow, 60);
+  return true;
+}
+window._ch173FontToCell = _ch173FontToCell;
+
+// Aakhri khana jis par click hua — font isi par lagta hai
+function _ch173BindCellPick() {
+  const doc = document.getElementById('ch173-doc');
+  if (!doc || doc._cellPickBound) return;
+  doc._cellPickBound = true;
+  doc.addEventListener('mousedown', (e) => {
+    try {
+      const c = e.target.closest(
+        '.ch173-table thead th, .ch173-table tbody td, .ch173-cont, ' +
+        '.sho-cell-row, .sho-papers-head, .sho-papers-body');
+      if (c) window._ch173LastCell = c;
+    } catch (_) {}
+  }, true);
+}
+window._ch173BindCellPick = _ch173BindCellPick;
+
+// ═══ Har khane ka apna font — mehfooz karne/wapas lagane ke liye ═══
+function _ch173CellFonts() {
+  const doc = document.getElementById('ch173-doc');
+  if (!doc) return null;
+  const out = { th: [], k: {} };
+  doc.querySelectorAll('.ch173-table thead th').forEach(th => out.th.push(th.style.fontSize || ''));
+  doc.querySelectorAll('[data-k]').forEach(el => {
+    if (el.style && el.style.fontSize) out.k[el.dataset.k] = el.style.fontSize;
+  });
+  return JSON.stringify(out);
+}
+window._ch173CellFonts = _ch173CellFonts;
+
+function _ch173ApplyCellFonts(raw) {
+  if (!raw) return;
+  let o; try { o = JSON.parse(raw); } catch (_) { return; }
+  const doc = document.getElementById('ch173-doc');
+  if (!doc || !o) return;
+  const ths = doc.querySelectorAll('.ch173-table thead th');
+  (o.th || []).forEach((f, i) => {
+    if (f && ths[i]) {
+      ths[i].style.fontSize = f;
+      ths[i].querySelectorAll('.rotinner, .rothead').forEach(el => { el.style.fontSize = f; });
+    }
+  });
+  Object.keys(o.k || {}).forEach(k => {
+    const el = doc.querySelector('[data-k="' + k + '"]');
+    if (el) el.style.fontSize = o.k[k];
+  });
+}
+window._ch173ApplyCellFonts = _ch173ApplyCellFonts;
 
 // Cursor jahan ho, dropdown wahi size dikhaye (MS Word jaisa)
 function _ch173SyncFontSel() {
