@@ -206,9 +206,20 @@ function _renderR173() {
     _r173ForceBlank = false;          // sirf aik bar
     const bv = (k) => _ch173StripSpan(sanitizeHtml(bs[k] !== undefined ? bs[k] : ''));
     // Mehfooz shuda column widths (MS Word jaisi drag-adjust ke baad)
-    const savedW = (() => { try { return JSON.parse(bs.col_widths || 'null'); } catch(_) { return null; } })();
-    // Naam + CNIC aik hi line mein aate hain, is liye columns 1–4 chaure
-  const W = savedW || [13, 13, 11, 12, 5, 21, 25];
+    let savedW = (() => { try { return JSON.parse(bs.col_widths || 'null'); } catch(_) { return null; } })();
+    // Agar mehfooz naap bilkul PURANI default jaisi hai (yani officer ne khud
+    // drag kar ke nahi badli), to usay nayi default par le aao — warna purane
+    // چالان par کالم 1 hamesha chaura hi rehta.
+    try {
+      const OLD_W = [13, 13, 11, 12, 5, 21, 25];
+      if (Array.isArray(savedW) && savedW.length === OLD_W.length &&
+          savedW.every((v, i) => Math.abs((parseFloat(v) || 0) - OLD_W[i]) < 0.51)) {
+        savedW = null;
+      }
+    } catch(_) {}
+    // کالم 1 (مدعی) mein sirf aik shakhs ka naam + CNIC aata hai, is liye
+    // woh tang rakha gaya hai; bachi hui jagah کالم 7 (حالات) ko di gayi hai.
+    const W = savedW || [9, 13, 11, 12, 5, 21, 29];
 
     area.innerHTML = `
     <style>${_ch173CSS()}</style>
@@ -266,7 +277,7 @@ function _renderR173() {
       </div>
       <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
         <div id="ch173-doc" style="width:100%;max-width:none;min-height:${_ch173Paper==='a4'?'11.7in':'13in'};margin:0 auto;
-             padding:1cm 0.5cm;
+             padding:1cm 0.2cm;
              background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;
              line-height:1.4;box-sizing:border-box;">
 
@@ -698,8 +709,12 @@ function _printR173() {
     // Hal: chapai se pehle safhe ko KAGHAZ ki asal chaudai par le jao,
     // wahan naap lo, matn neeche bhejo — phir screen wapas apni halat par.
     const _pw = chDoc.style.width, _pmw = chDoc.style.maxWidth;
+    const _ptf = chDoc.style.transform, _pmb = chDoc.style.marginBottom;
     let _inner = chDoc.innerHTML;
     try {
+      // Dikhane wala 'scale' hata do — naap par asar nahi, magar saaf rahe
+      chDoc.style.transform = 'none';
+      chDoc.style.marginBottom = '0';
       chDoc.style.width = (_ch173Paper === 'a4') ? '8.27in' : '8.5in';
       chDoc.style.maxWidth = 'none';
       void chDoc.offsetHeight;                 // nayi naap lagne do
@@ -708,9 +723,10 @@ function _printR173() {
       _inner = chDoc.innerHTML;                // kaghaz ki naap wala natija
     } catch (_) {
     } finally {
-      // Screen wapas apni poori chaudai par
+      // Screen wapas apni halat par
       try {
         chDoc.style.width = _pw; chDoc.style.maxWidth = _pmw;
+        chDoc.style.transform = _ptf; chDoc.style.marginBottom = _pmb;
         void chDoc.offsetHeight;
         _ch173OverflowSettle(4);               // screen ki halat bhi durust
       } catch (__) {}
@@ -719,7 +735,7 @@ function _printR173() {
       <style>
         /* Charon taraf BARABAR margin — kaghaz chune hue naap ka */
         /* Sides tang aur barabar — table poori qabil-e-tabaat chaudai le */
-        @page{ size:${_ch173Paper === 'a4' ? 'A4 portrait' : '8.5in 13in'}; margin:1cm 0.5cm; }
+        @page{ size:${_ch173Paper === 'a4' ? 'A4 portrait' : '8.5in 13in'}; margin:1cm 0.2cm; }
         html, body{ margin:0 !important; padding:0 !important;
           font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
           direction:rtl; line-height:1.4; color:#000; }
@@ -731,6 +747,7 @@ function _printR173() {
         #ch173-doc{ width:100% !important; max-width:none !important;
           height:auto !important; min-height:0 !important;
           padding:0 !important; margin:0 !important;
+          transform:none !important;   /* dikhane wala scale chapai mein na jaye */
           box-shadow:none !important; border-radius:0 !important; }
         .ch173-table thead{ display:table-row-group !important; }   /* header dohra na ho */
         .ch173-table{ page-break-inside:avoid; break-inside:avoid; } /* agle safhe par na jaye */
@@ -1348,18 +1365,55 @@ function _ch173FullPage(area) {
       w.style.display = 'block';
       w.style.gridTemplateColumns = '1fr';
     });
-    // Poore safhe wale view (dio-docview) ke andar safha poori chaudai le
-    // چالان کا صفحہ ہمیشہ پوری چوڑائی لے (8.5in کی حد بڑی سکرین پر
-    // آدھا صفحہ لگتی تھی — چاہے پورے صفحے والا منظر ہو یا نہ ہو)
+    // ═══ SCREEN par bhi KAGHAZ ki asal naap ═══
+    // Pehle safha screen ki 100% chaudai leta tha jabke chapai 8.5in par hoti
+    // hai. Alag chaudai ka matlab: satren alag tarah tootti hain — isi liye
+    // screen, print-view aur chhapa hua چالان teeno alag nazar aate the.
+    // Ab safha asal kaghaz jitna chaura rehta hai (naap bilkul chapai wali)
+    // aur sirf DIKHANE ke liye bara kar diya jata hai (scale) — is se shakl
+    // nahi badalti, sirf bara nazar aata hai.
     const doc = document.getElementById('ch173-doc');
     if (doc) {
-      doc.style.width = '100%';
       doc.style.maxWidth = 'none';
       doc.style.margin = '0 auto';
+      _ch173FitPaper();
+      if (!window._ch173FitBound) {
+        window._ch173FitBound = true;
+        window.addEventListener('resize', () => { try { _ch173FitPaper(); } catch (_) {} });
+      }
     }
   } catch(_) {}
 }
 window._ch173FullPage = _ch173FullPage;
+
+// ═══ Safha = kaghaz ki asal chaudai, phir dikhane ke liye bara ═══
+// AHEM: yahan 'zoom' ke bajaye 'transform:scale' use hota hai. Zoom naap
+// dobara ginta hai (satren badal sakti hain), jabke scale sirf bari tasveer
+// banata hai — naap wahi rehti hai jo kaghaz par hogi.
+function _ch173FitPaper() {
+  const doc = document.getElementById('ch173-doc');
+  if (!doc) return;
+  const host = doc.parentElement;
+  if (!host) return;
+  const IN = 96;                                        // 1 inch = 96px
+  const wPx = ((_ch173Paper === 'a4') ? 8.27 : 8.5) * IN;
+  doc.style.width = wPx + 'px';
+  doc.style.maxWidth = 'none';
+  doc.style.minHeight = ((_ch173Paper === 'a4') ? 11.7 : 13) * IN + 'px';
+  // Mojooda jagah ke hisab se bara/chhota (magar naap wahi)
+  const avail = Math.max(200, host.clientWidth - 32);
+  let k = avail / wPx;
+  if (k > 1.7) k = 1.7;
+  if (k < 0.35) k = 0.35;
+  doc.style.transformOrigin = 'top center';
+  doc.style.transform = (k === 1) ? 'none' : ('scale(' + k.toFixed(4) + ')');
+  // scale se asli unchai nahi badalti — neeche ki khali jagah barabar karo
+  try {
+    const h = doc.offsetHeight;
+    doc.style.marginBottom = Math.round(h * (k - 1)) + 'px';
+  } catch (_) {}
+}
+window._ch173FitPaper = _ch173FitPaper;
 
 // ═══ Chuni hui jagah YAAD rakho ═══
 // Toolbar ke select/button par tap karte hi contenteditable se focus hat jata
@@ -1959,9 +2013,9 @@ window._ch173BindKeys = _ch173BindKeys;
 function _ch173SetPaper(v) {
   _ch173Paper = (v === 'a4') ? 'a4' : 'legal';
   try { localStorage.setItem('dio_ch173_paper', _ch173Paper); } catch (_) {}
-  // صفحہ نئے سائز پر دوبارہ بنائیں
-  const doc = document.getElementById('ch173-doc');
-  if (doc) doc.style.minHeight = (_ch173Paper === 'a4') ? '11.7in' : '13in';
+  // صفحہ نئے سائز پر دوبارہ بنائیں (چوڑائی + اونچائی دونوں)
+  try { _ch173FitPaper(); } catch (_) {}
+  try { _ch173OverflowSettle(4); } catch (_) {}
   if (typeof showToast === 'function')
     showToast(_ch173Paper === 'a4' ? '📄 A4 منتخب' : '📄 لیگل (8.5×13) منتخب', 'info');
 }
