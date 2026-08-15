@@ -441,6 +441,7 @@ function _renderR173() {
       // BAAD hi maloom hoti hai. Aik hi dafa chalane se matn chhupa reh
       // jata tha (khane ki naap us waqt tak 0 hoti thi).
       [0, 150, 400, 800, 1500].forEach(ms => setTimeout(() => {
+        try { _ch173StretchRow(); } catch(_) {}      // safha poora bharo
         try { _ch173OverflowSettle(3); } catch(_) {}
         try { _ch173WrapCnics(); } catch(_) {}
       }, ms));
@@ -803,6 +804,7 @@ function _printR173() {
       chDoc.style.width = (_ch173Paper === 'a4') ? '8.27in' : '8.5in';
       chDoc.style.maxWidth = 'none';
       void chDoc.offsetHeight;                 // nayi naap lagne do
+      try { _ch173StretchRow(); } catch (__) {}      // safha poora bharo
       _ch173OverflowSettle(6);
       try { _ch173WrapCnics(chDoc); } catch (__) {}   // CNIC ki seedh chapai mein bhi
       void chDoc.offsetHeight;
@@ -1118,9 +1120,66 @@ window._ch173SizeRotated = _ch173SizeRotated;
 // Usool: khana apni muqarrar unchai se bara nahi hota (table khud nahi phailta).
 // Jo matn khane mein na samaye woh neeche wali jagah mein chala jata hai.
 let _ch173OverflowTimer = null;
+// ═══ Hamesha NAZAR AANE wala چالان pakro ═══
+// AHEM: jab doosri tabs bhi khuli hon to safhe par چالان ke AIK SE ZYADA
+// khane mojood ho sakte hain (chhupe hue purane tab wale bhi). Pehle code
+// "pehla milne wala" khana pakarta tha — jo aksar CHHUPA hua hota hai; us ki
+// unchai 0 hoti hai, is liye kaam wahin ruk jata tha aur NAZAR AANE wale
+// khane ka matn chhupa reh jata tha. Akele kholne par aik hi khana hota hai,
+// isi liye masla sirf doosri tabs ke saath aata tha.
+function _ch173Doc() {
+  const all = document.querySelectorAll('#ch173-doc');
+  if (!all.length) return null;
+  for (let i = all.length - 1; i >= 0; i--) {
+    const el = all[i];
+    if (el.offsetParent !== null || el.getClientRects().length) return el;   // yeh nazar aa raha hai
+  }
+  return all[all.length - 1];
+}
+window._ch173Doc = _ch173Doc;
+
+function _ch173Cells() {
+  const doc = _ch173Doc();
+  if (!doc) return {};
+  return {
+    doc,
+    cell: doc.querySelector('#ch173-table [data-k="halaat"]') || doc.querySelector('[data-k="halaat"]'),
+    cont: doc.querySelector('[data-k="cont_text"]'),
+  };
+}
+window._ch173Cells = _ch173Cells;
+
+// ═══ چالان poore SAFHE par — neeche khali jagah na bache ═══
+// Table ki qatar ko itna barha dete hain ke unwan + table + neeche wala matn
+// + SHO ka khana mil kar poora safha bhar den. Qatar sirf BARHTI hai, kabhi
+// chhoti nahi hoti — taake jo matn pehle se neeche gaya hua hai woh ulat-pulat
+// na ho. Officer phir bhi lakeer kheench kar apni marzi ki naap le sakta hai.
+function _ch173StretchRow() {
+  const doc = _ch173Doc();
+  if (!doc) return;
+  const row = doc.querySelector('#ch173-table tbody tr');
+  if (!row) return;
+  const cur = row.offsetHeight;
+  if (!cur) return;                                   // abhi naapa nahi gaya
+  let padY = 0;
+  try {
+    const cs = getComputedStyle(doc);
+    padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+  } catch (_) {}
+  const pageH  = ((_ch173Paper === 'a4') ? 11.7 : 13) * 96;
+  const avail  = pageH - padY;                        // safhe mein kaam ki unchai
+  const content = doc.scrollHeight - padY;            // is waqt ka poora matn
+  const rest   = content - cur;                       // qatar ke ilawa sab kuch
+  const target = Math.round(avail - rest);
+  if (target > cur + 2) {                             // SIRF barhao
+    row.querySelectorAll('td').forEach(c => { c.style.height = target + 'px'; });
+    try { _ch173OverflowSettle(3); } catch (_) {}
+  }
+}
+window._ch173StretchRow = _ch173StretchRow;
+
 function _ch173Overflow() {
-  const cell = document.querySelector('#ch173-table [data-k="halaat"]');
-  const cont = document.querySelector('#ch173-doc [data-k="cont_text"]');
+  const { cell, cont } = _ch173Cells();
   if (!cell || !cont) return;
   // Khane ki naap abhi hui hi nahi (unchai 0) — abhi kuch na karo. Warna
   // "sab kuch bahar hai" samajh kar poora matn neeche dhakel diya jata hai.
@@ -1245,7 +1304,7 @@ window._ch173OverflowSettle = _ch173OverflowSettle;
 function _ch173StartOverflowWatch() {
   try { if (window._ch173OvWatch) clearInterval(window._ch173OvWatch); } catch (_) {}
   window._ch173OvWatch = setInterval(function () {
-    const cell = document.querySelector('#ch173-table [data-k="halaat"]');
+    const cell = (_ch173Cells() || {}).cell;
     if (!cell) { try { clearInterval(window._ch173OvWatch); } catch (_) {} window._ch173OvWatch = null; return; }
     if (document.activeElement === cell) return;          // likhte waqt haath na lagao
     if (!cell.clientHeight) return;                        // abhi naapa nahi gaya
@@ -1256,7 +1315,7 @@ window._ch173StartOverflowWatch = _ch173StartOverflowWatch;
 
 
 function _ch173BindOverflow() {
-  const cell = document.querySelector('#ch173-table [data-k="halaat"]');
+  const cell = (_ch173Cells() || {}).cell;
   if (!cell || cell._ovBound) return;
   cell._ovBound = true;
   // LIKHTE WAQT bhi khud-kar behe — magar sirf JAB khana bhar jaye.
@@ -2644,7 +2703,7 @@ window._ch173LoadFirMatn = _ch173LoadFirMatn;
 // خانہ خالی ہو تو فقرہ ڈالو (لکھا ہوا متن کبھی نہ مٹے)
 function _ch173FillHalaat() {
   try {
-    const cell = document.querySelector('#ch173-table [data-k="halaat"]');
+    const cell = (_ch173Cells() || {}).cell;
     if (!cell) return;
     if (cell.innerText.replace(/\s/g, '').length) return;   // پہلے سے کچھ لکھا ہے
     cell.innerText = _ch173HalaatText();
