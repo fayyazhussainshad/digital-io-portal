@@ -1795,6 +1795,19 @@ function _ch173FitPaper() {
   if (!doc) return;
   const host = doc.parentElement;
   if (!host) return;
+  // ═══ Dekhne wala khana KHIRKI ke NEECHE tak ═══
+  // Yeh khana khud ba khud poori unchai nahi leta tha — beech mein hi khatam
+  // ho jata tha aur us ke neeche khali jagah (chaori patti) reh jati thi,
+  // jis se چالان neeche se kat jata tha. Ab isay seedha khirki ke neeche tak
+  // le jate hain, taake poora چالان aur us ka neeche wala matn nazar aaye.
+  try {
+    const r = host.getBoundingClientRect();
+    const hh = Math.max(240, (window.innerHeight || 0) - r.top - 2);
+    host.style.height = hh + 'px';
+    host.style.maxHeight = 'none';
+    host.style.overflow = 'auto';
+  } catch (_) {}
+
   const IN = 96;                                        // 1 inch = 96px
   const wPx = ((_ch173Paper === 'a4') ? 8.27 : 8.5) * IN;
   doc.style.width = wPx + 'px';
