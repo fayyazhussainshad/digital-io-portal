@@ -360,6 +360,7 @@ function _renderR173() {
       // jata tha (khane ki naap us waqt tak 0 hoti thi).
       [0, 150, 400, 800, 1500].forEach(ms => setTimeout(() => {
         try { _ch173Overflow(); } catch(_) {}
+        try { _ch173WrapCnics(); } catch(_) {}
       }, ms));
       if (_ch173FirMatn === null) _ch173LoadFirMatn(); else _ch173FillHalaat();
       window.addEventListener('resize', _ch173SizeRotated);
@@ -569,6 +570,8 @@ function _collectR173() {
   // Challan types (فارم 25.56(1)) — apna doc id hai
   const chDoc = document.getElementById('ch173-doc');
   if (chDoc && typeof R173_BLANK_TYPES !== 'undefined' && R173_BLANK_TYPES.includes(_r173Type)) {
+    // CNIC ke display-spans hata do — sirf saada matn mehfooz ho (markup nahi)
+    try { _ch173UnwrapCnics(chDoc); } catch(_) {}
     const d = {};
     chDoc.querySelectorAll('[data-k]').forEach(el => {
       d[el.dataset.k] = (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') ? el.value : el.innerHTML;
@@ -1039,6 +1042,7 @@ async function _ch173LoadPeople() {
     // innerHTML — kyunki _ch173WitnessText() mein CNIC ka <span> hota hai.
     // (innerText se woh <span> ka code khud nazar aa jata tha.)
     if (wcell && !wcell.innerText.trim()) wcell.innerText = _ch173WitnessText();
+    try { _ch173WrapCnics(); } catch(_) {}
     if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
   } catch(_) {}
 }
@@ -1052,7 +1056,7 @@ function _ch173WitnessText() {
   // AIK GAWAH = AIK SATAR: نمبر + naam + uska CNIC
   return L.map(function (w, i) {
     const cn = (w.cnic && String(w.cnic).trim()) ? String(w.cnic).trim() : '00000-0000000-0';
-    return (i + 1) + '\u06D4 ' + (w.full_name || '') + '   ' + cn;
+    return (i + 1) + '\u06D4 ' + (w.full_name || '') + ' ' + cn;
   }).join('\n');
 }
 
@@ -1152,10 +1156,11 @@ function _ch173AccPicker(ev, key) {
       cell.innerText = picked.map((nm, i) => {
         const a = (_ch173Accused || []).find(x => (x.name || '').trim() === nm);
         const c = (a && a.cnic && String(a.cnic).trim()) ? String(a.cnic).trim() : '00000-0000000-0';
-        return (i + 1) + '\u06D4 ' + nm + '   ' + c;
+        return (i + 1) + '\u06D4 ' + nm + ' ' + c;
       }).join('\n');
     }
     box.remove();
+    try { _ch173WrapCnics(); } catch(_) {}
     if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
     try { _r173Dirty = true; } catch(_) {}
   };
@@ -2102,6 +2107,17 @@ function _ch173CSS() {
            OOPER→NEECHE hai, is liye flex-start = OOPER. */
         display:flex; flex-direction:row; justify-content:flex-start;
       }
+      /* CNIC — naam ke saath, magar NEECHE se OOPER, LTR (numbers seedhi
+         tarteeb mein). Chrome mein sideways-lr nahi chalta, is liye horizontal
+         number ko -90deg ghuma kar neeche-se-ooper banate hain. Naam ki
+         khadi likhayi jaisa hi rukh, magar digits apni LTR tarteeb rakhti hain. */
+      #ch173-doc .rotinner .cn{
+        display:inline-block; vertical-align:middle;
+        writing-mode:horizontal-tb; -webkit-writing-mode:horizontal-tb;
+        direction:ltr; unicode-bidi:isolate; white-space:nowrap; line-height:1;
+        transform:rotate(-90deg); -webkit-transform:rotate(-90deg);
+        transform-origin:center center;
+      }
       /* CNIC ka apna khana — naam ke saath, OOPER se NEECHE parhi jaye,
          aur naam se 1.5cm ka fasla */
       /* Khaka print mein BHI aaye — pehle print par yeh chhupa diya jata
@@ -2192,7 +2208,7 @@ function _ch173MudaiLine(c) {
   if (!nm) return '';
   const cn = String((cross ? c.cross_complainant_cnic : c.complainant_cnic) || '').trim()
              || '00000-0000000-0';
-  return '1\u06D4 ' + nm + '   ' + cn;
+  return '1\u06D4 ' + nm + ' ' + cn;
 }
 window._ch173MudaiLine = _ch173MudaiLine;
 
@@ -2200,11 +2216,61 @@ window._ch173MudaiLine = _ch173MudaiLine;
 // متن بن کر محفوظ ہو گیا تھا، اُسے ہٹا کر صرف نام + CNIC چھوڑ دو
 function _ch173StripSpan(html) {
   let t = String(html || '');
-  // asal <span> tags (agar HTML ki shakl mein hon)
-  t = t.replace(/<span class="cn">(.*?)<\/span>/g, '   $1');
+  // asal <span> tags (agar HTML ki shakl mein hon) → sirf saada matn (ek space)
+  t = t.replace(/<span class="cn">(.*?)<\/span>/g, ' $1');
   // aur woh jo MATN ki tarah mehfooz ho gaye
-  t = t.replace(/&lt;span class=&quot;cn&quot;&gt;/g, '   ').replace(/&lt;\/span&gt;/g, '');
-  t = t.replace(/<span class="cn">/g, '   ').replace(/<\/span>/g, '');
+  t = t.replace(/&lt;span class=&quot;cn&quot;&gt;/g, ' ').replace(/&lt;\/span&gt;/g, '');
+  t = t.replace(/<span class="cn">/g, ' ').replace(/<\/span>/g, '');
   return t;
 }
 window._ch173StripSpan = _ch173StripSpan;
+
+// ═══ CNIC ko <span class="cn"> mein lapeto — SIRF dikhane ke liye ═══
+// (Isi span par CSS se CNIC neeche-se-ooper LTR banti hai.)
+// Yeh SIRF display ke liye hai — mehfooz karte waqt _ch173UnwrapCnics se
+// wapas saada matn bana dete hain, taake data-base mein koi markup na jaye
+// (pehle span ka code khud matn ban kar mehfooz ho jata tha — woh bug na aaye).
+const _CH173_CNIC_RE = /\d{5}-\d{7}-\d/g;
+function _ch173WrapCnics(root) {
+  root = root || document.getElementById('ch173-doc');
+  if (!root) return;
+  root.querySelectorAll('.ch173-table td.rotcell .rotinner').forEach(cell => {
+    if (document.activeElement === cell) return;   // likhte waqt haath na lagao
+    const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT, null);
+    const targets = [];
+    let n;
+    while ((n = walker.nextNode())) {
+      // pehle se .cn ke andar ho to chhoro
+      if (n.parentNode && n.parentNode.classList && n.parentNode.classList.contains('cn')) continue;
+      _CH173_CNIC_RE.lastIndex = 0;
+      if (_CH173_CNIC_RE.test(n.nodeValue)) targets.push(n);
+    }
+    targets.forEach(node => {
+      const text = node.nodeValue;
+      const frag = document.createDocumentFragment();
+      let last = 0, m;
+      _CH173_CNIC_RE.lastIndex = 0;
+      while ((m = _CH173_CNIC_RE.exec(text))) {
+        if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+        const sp = document.createElement('span');
+        sp.className = 'cn';
+        sp.textContent = m[0];
+        frag.appendChild(sp);
+        last = m.index + m[0].length;
+      }
+      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+    });
+  });
+}
+window._ch173WrapCnics = _ch173WrapCnics;
+
+// Save se pehle .cn spans ko wapas saada matn banao (markup mehfooz na ho)
+function _ch173UnwrapCnics(root) {
+  root = root || document.getElementById('ch173-doc');
+  if (!root) return;
+  root.querySelectorAll('span.cn').forEach(sp => {
+    sp.replaceWith(document.createTextNode(sp.textContent || ''));
+  });
+}
+window._ch173UnwrapCnics = _ch173UnwrapCnics;
