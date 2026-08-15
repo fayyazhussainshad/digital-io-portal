@@ -58,6 +58,10 @@
         nahi lagaya jata (_ch173PlainCell).
 
    6) کالم 7 (مختصر حالات)
+      • Satron ka fasla (line-height) = 1.5 — کالم 7 aur us ke neeche wale
+        "باقی متن" (cont_text) DONO ka aik jaisa (1.15 → 1.3 → 1.5, Shafi ki
+        sareeh hidayat par). Dono hamesha BARABAR rakhe jayen, warna neeche
+        jane wala matn alag shakl ka lagta hai.
       • Jo matn khane mein na samaye woh table ke NEECHE (cont_text) jata hai.
       • Overflow 'input' par (350ms baad) aur 'paste' par chalta hai —
         'blur' par KABHI nahi (innerText formatting mita deta hai).
@@ -2337,7 +2341,7 @@ function _ch173CSS() {
         padding:5px; box-sizing:border-box;
         font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
         direction:rtl; text-align:justify; text-align-last:right;
-        outline:none; line-height:1.15; font-size:14pt;
+        outline:none; line-height:1.5; font-size:14pt;   /* satron ka fasla — 1.5 */
         overflow-wrap:break-word; word-wrap:break-word;
         overflow:hidden;   /* jo na samaye woh neeche wale khane mein jayega */
       }
@@ -2355,7 +2359,7 @@ function _ch173CSS() {
       #ch173-doc .ch173-cont{
         margin:0 !important; border:none !important; padding:0 5px !important;
         min-height:0; direction:rtl; text-align:justify; text-align-last:right;
-        font-size:14pt; line-height:1.15; outline:none;
+        font-size:14pt; line-height:1.5; outline:none;   /* کالم 7 jaisa hi — 1.5 */
         overflow-wrap:break-word; word-wrap:break-word; white-space:pre-wrap;
       }
       #ch173-doc .ch173-cont:empty{ min-height:0; padding:0 !important; }
