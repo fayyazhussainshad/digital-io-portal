@@ -388,13 +388,13 @@ function _renderR173() {
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'bar_zamanat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="mal_qabza">${bv('mal_qabza')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="shahadat">${bs.shahadat !== undefined ? sanitizeHtml(_ch173StripSpan(bs.shahadat)) : esc(_ch173WitnessText())}</div></div></div></td>
-                <td class="normcell"><div class="normwrap" contenteditable="true" data-mic="true" data-k="halaat">${bv('halaat')}</div></td>
+                <td class="normcell"><div class="normwrap" contenteditable="true" data-mic="true" data-k="halaat">${bs.halaat !== undefined ? sanitizeHtml(bs.halaat) : ''}</div></td>
               </tr>
             </tbody>
           </table>
 
           <!-- خانہ 1: باقی متن (اوپر والے کالم سے خود آتا ہے) — تسلسل/overflow -->
-          <div class="ch173-cont" contenteditable="true" data-k="cont_text">${bv('cont_text')}</div>
+          <div class="ch173-cont" contenteditable="true" data-k="cont_text">${bs.cont_text !== undefined ? sanitizeHtml(bs.cont_text) : ''}</div>
 
           <!-- اختتامی خانہ — 2 برابر کالم (flex)
                دائیں: تفصیل کاغذات + لکھنے کی جگہ | بائیں: SHO/تاریخ (اوپر اور نیچے)
@@ -1426,16 +1426,40 @@ const CH173_PAPERS_DEFAULT = [
   'اصل ضمنی SHO',
 ];
 
+// ═══ Har qism ke چالان ki APNI fehrist ═══
+// چالان مکمل / نامکمل / 512 ض ف — teeno ka aik hi kaghazon ka set.
+// تتمہ چالان, اخراج aur عدم پتہ — har aik ka ALAG set (officer khud bharega).
+function _ch173PapersGroup() {
+  if (_r173Type === 'tatima_challan') return 'tatima';
+  if (_r173Type === 'ikhraj')         return 'ikhraj';
+  if (_r173Type === 'adampata')       return 'adampata';
+  return 'challan';                 // مکمل / نامکمل / 512 / انٹیرم
+}
+window._ch173PapersGroup = _ch173PapersGroup;
+
+function _ch173PapersKey() {
+  return 'dio_ch173_papers_' + _ch173PapersGroup();
+}
+
 // Officer ki apni fehrist (naam badla hua, naya shamil kiya hua, tarteeb badli hui)
 function _ch173PapersList() {
+  const g = _ch173PapersGroup();
   try {
-    const a = JSON.parse(localStorage.getItem('dio_ch173_papers') || 'null');
-    if (Array.isArray(a) && a.length) return a.map(String);
+    const a = JSON.parse(localStorage.getItem(_ch173PapersKey()) || 'null');
+    if (Array.isArray(a)) return a.map(String);      // khali fehrist bhi qabool
   } catch (_) {}
-  return CH173_PAPERS_DEFAULT.slice();
+  // Purani (mushtarka) fehrist sirf چالان walon ko milegi
+  if (g === 'challan') {
+    try {
+      const old = JSON.parse(localStorage.getItem('dio_ch173_papers') || 'null');
+      if (Array.isArray(old) && old.length) return old.map(String);
+    } catch (_) {}
+    return CH173_PAPERS_DEFAULT.slice();
+  }
+  return [];                                          // تتمہ / اخراج / عدم پتہ — officer khud bharega
 }
 function _ch173PapersSave(arr) {
-  try { localStorage.setItem('dio_ch173_papers', JSON.stringify(arr)); } catch (_) {}
+  try { localStorage.setItem(_ch173PapersKey(), JSON.stringify(arr)); } catch (_) {}
 }
 window._ch173PapersList = _ch173PapersList;
 
@@ -2881,6 +2905,11 @@ window._ch173MudaiLine = _ch173MudaiLine;
 
 // پرانی محفوظ شدہ سطروں کی صفائی — جہاں <span class="cn"> کا کوڈ خود
 // متن بن کر محفوظ ہو گیا تھا، اُسے ہٹا کر صرف نام + CNIC چھوڑ دو
+// AHEM: yeh SIRF khadi likhayi wale khanon (naam + CNIC) ke liye hai.
+// Yeh tamam </div> aur </span> hata deta hai — is liye ise کالم 7 (halaat)
+// ya neeche wale "باقی متن" (cont_text) par KABHI na lagayen. Un khanon mein
+// likhte/paste karte waqt browser khud <div>/<span> banata hai; band hone
+// wale tags hatne se dhancha toot jata hai aur matn ka hissa CHHUP jata hai.
 function _ch173StripSpan(html) {
   let t = String(html || '');
   // asal <span> tags (agar HTML ki shakl mein hon) → sirf saada matn (ek space)
