@@ -1101,9 +1101,8 @@ function _ch173WitnessText() {
   // AIK GAWAH = AIK SATAR: نمبر + naam + uska CNIC
   return L.map(function (w, i) {
     const cn = (w.cnic && String(w.cnic).trim()) ? String(w.cnic).trim() : '00000-0000000-0';
-    // CNIC HAMESHA satar ke shuru mein — taake uska pehla digit har
-    // surat mein Row 2 wali lakeer se shuru ho (naam chhota ho ya lamba).
-    return cn + ' ' + (i + 1) + '\u06D4 ' + (w.full_name || '');
+    // AIK SATAR = AIK SHAKHS: نمبر + naam + uska CNIC (naam PEHLE, CNIC BAAD mein)
+    return (i + 1) + '\u06D4 ' + (w.full_name || '') + ' ' + cn;
   }).join('\n');
 }
 
@@ -1117,8 +1116,8 @@ function _ch173UsedAccused(exceptKey) {
     if (!el) return;
     el.innerText.split(/\r?\n/).forEach(n => {
       let t = n.trim();
-      t = t.replace(/\s*\d{5}-\d{7}-\d\s*/g, ' ');          // CNIC hatao (ab shuru mein hota hai)
-      t = t.replace(/^\s*\d+\u06D4\s*/, '').trim();          // نمبر شمار hatao
+      t = t.replace(/^\s*\d+\u06D4\s*/, '');                  // نمبر شمار hatao
+      t = t.replace(/\s*\d{5}-\d{7}-\d\s*$/, '').trim();     // CNIC hatao
       if (t) used.add(t);
     });
   });
@@ -1139,8 +1138,8 @@ function _ch173AccPicker(ev, key) {
   // Pehle se chune hue naam — CNIC aur نمبر شمار hata kar sirf naam
   const mine = new Set(cell ? cell.innerText.split(/\r?\n/).map(t => {
     let x = t.trim();
-    x = x.replace(/\s*\d{5}-\d{7}-\d\s*/g, ' ');           // CNIC hatao (ab shuru mein hota hai)
-    x = x.replace(/^\s*\d+\u06D4\s*/, '').trim();           // نمبر شمار hatao
+    x = x.replace(/^\s*\d+\u06D4\s*/, '');                   // نمبر شمار hatao
+    x = x.replace(/\s*\d{5}-\d{7}-\d\s*$/, '').trim();      // CNIC hatao
     return x;
   }).filter(Boolean) : []);
 
@@ -1203,8 +1202,7 @@ function _ch173AccPicker(ev, key) {
       cell.innerText = picked.map((nm, i) => {
         const a = (_ch173Accused || []).find(x => (x.name || '').trim() === nm);
         const c = (a && a.cnic && String(a.cnic).trim()) ? String(a.cnic).trim() : '00000-0000000-0';
-        // CNIC pehle — har satar ka aaghaz aik hi jagah se
-        return c + ' ' + (i + 1) + '\u06D4 ' + nm;
+        return (i + 1) + '\u06D4 ' + nm + ' ' + c;
       }).join('\n');
     }
     box.remove();
@@ -2154,9 +2152,12 @@ function _ch173CSS() {
            isay kam rakha hai taake har record Row 2 ki lakeer se bilkul
            saath shuru ho (ooper-neeche fazool jagah na bane). */
         padding:1px 4px;
-        /* NAAM: OOPER se NEECHE ki taraf. Khadi likhayi mein flex ka rukh
-           OOPER→NEECHE hai, is liye flex-start = OOPER. */
-        display:flex; flex-direction:row; justify-content:flex-start;
+        /* HAR SATAR ka aaghaz OOPER (Row 2 wali lakeer) se.
+           AHEM: yahan 'flex' HARGIZ na lagayen — khadi likhayi (vertical
+           writing-mode) mein flex ka rukh ghair-yaqeeni hai, isi wajah se
+           doosra/teesra naam aage-ooper khisak jata tha. Saada block mein
+           har satar khud ooper se shuru hoti hai. */
+        display:block; text-align:start;
       }
       /* CNIC — naam ke saath usi satar mein, magar OOPER se NEECHE parhi jaye
          aur numbers LTR (seedhi tarteeb) mein rahen.
@@ -2198,7 +2199,7 @@ function _ch173CSS() {
       #ch173-doc th.vcell{ vertical-align:middle; padding:0; text-align:center; height:96px; }
       /* Header ki khadi likhayi — data khanon jaisa hi wrapper (Ascending) */
       /* مال قبضہ پولیس — lakeeron se hat kar, khane ke beech mein */
-      #ch173-doc .rothead{ justify-content:center !important; align-items:center;
+      #ch173-doc .rothead{ text-align:center !important;
         white-space:normal; padding:2px 4px; font-size:12pt; line-height:1.2; }
 
       #ch173-doc th.hcell{ vertical-align:middle; text-align:center; direction:rtl; white-space:normal; }
@@ -2266,8 +2267,7 @@ function _ch173MudaiLine(c) {
   if (!nm) return '';
   const cn = String((cross ? c.cross_complainant_cnic : c.complainant_cnic) || '').trim()
              || '00000-0000000-0';
-  // CNIC pehle — Row 2 wali lakeer se shuru
-  return cn + ' 1\u06D4 ' + nm;
+  return '1\u06D4 ' + nm + ' ' + cn;
 }
 window._ch173MudaiLine = _ch173MudaiLine;
 
@@ -2280,6 +2280,10 @@ function _ch173StripSpan(html) {
   // aur woh jo MATN ki tarah mehfooz ho gaye
   t = t.replace(/&lt;span class=&quot;cn&quot;&gt;/g, ' ').replace(/&lt;\/span&gt;/g, '');
   t = t.replace(/<span class="cn">/g, ' ').replace(/<\/span>/g, '');
+  // Purani mehfooz satron mein naam aur CNIC ke darmiyan TEEN space the
+  // (bara khali fasla). Unhen kholte waqt aik space par le aate hain —
+  // warna purane چالان mein purana chaura fasla hi nazar aata rehta hai.
+  t = t.replace(/[ \t\u00A0]{2,}(?=\d{5}-\d{7}-\d)/g, ' ');
   return t;
 }
 window._ch173StripSpan = _ch173StripSpan;
