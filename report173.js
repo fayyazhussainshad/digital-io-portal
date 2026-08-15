@@ -406,7 +406,10 @@ function _renderR173() {
           <div class="ch173-sho-flex">
             <div class="sho-col sho-papers">
               <div class="sho-papers-head">تفصیل کاغذات<button class="papers-pick no-print" onclick="_ch173PapersPicker(event)" title="کاغذات منتخب کریں">▾</button></div>
-              <div class="sho-papers-body" contenteditable="true" data-k="papers_body">${bv('papers_body')}</div>
+              <!-- AHEM: yahan bv() istemal NA karein — woh tamam </span> hata
+                   deta hai aur kaghazon ka dhancha (naam + neeche tadaad)
+                   toot jata hai. Seedha sanitizeHtml. -->
+              <div class="sho-papers-body" contenteditable="true" data-k="papers_body">${bs.papers_body !== undefined ? sanitizeHtml(bs.papers_body) : ''}</div>
             </div>
             <div class="sho-col sho-cell">
               <div class="sho-block">
@@ -1432,6 +1435,34 @@ function _ch173PapersSave(arr) {
 }
 window._ch173PapersList = _ch173PapersList;
 
+// ═══ کاغذات کے خانے کو پڑھنا / لکھنا ═══
+// Shakl: har kaghaz ka naam UNDERLINED, aur us ke BILKUL neeche tadaad ka
+// khana (jise IO khud bhar sakta hai). Kaghaz dayen se bayen aik ke baad aik
+// lagte hain, darmiyan mein MS Word ke aik Tab jitni jagah; satar bhar jaye
+// to agla kaghaz khud NAYI satar par chala jata hai (wrap).
+function _ch173PapersRead(body) {
+  const out = [];
+  if (!body) return out;
+  body.querySelectorAll('.pp-item').forEach(el => {
+    const n = el.querySelector('.pp-name'), q = el.querySelector('.pp-qty');
+    const name = (n ? n.textContent : '').trim();
+    if (name) out.push({ name, qty: (q ? q.textContent : '').trim() });
+  });
+  return out;
+}
+window._ch173PapersRead = _ch173PapersRead;
+
+function _ch173PapersRender(body, items) {
+  if (!body) return;
+  body.innerHTML = (items || []).map(it =>
+    '<span class="pp-item" contenteditable="false">' +
+      '<span class="pp-name">' + esc(it.name) + '</span>' +
+      '<span class="pp-qty" contenteditable="true">' + esc(it.qty || '') + '</span>' +
+    '</span>'
+  ).join('');
+}
+window._ch173PapersRender = _ch173PapersRender;
+
 function _ch173PapersPicker(ev) {
   ev.preventDefault(); ev.stopPropagation();
   document.getElementById('ch173-papers-menu')?.remove();
@@ -1439,10 +1470,11 @@ function _ch173PapersPicker(ev) {
   if (!body) return;
 
   let list = _ch173PapersList();
-  const origList = list.slice();
-  // Pehle se likhi hui satren — jo fehrist mein hain woh ✔ nazar aayen
-  const lines = (body.innerText || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-  const checked = new Set(lines.filter(l => list.includes(l)));
+  // Khane mein jo kaghaz pehle se lage hain woh ✔ nazar aayen
+  const already = _ch173PapersRead(body).map(it => it.name);
+  const checked = new Set(already.filter(l => list.includes(l)));
+  // Jo kaghaz khane mein hai magar fehrist mein nahi — usay fehrist mein le aao
+  already.forEach(n => { if (n && !list.includes(n)) { list.push(n); checked.add(n); } });
 
   const box = document.createElement('div');
   box.id = 'ch173-papers-menu';
@@ -1568,10 +1600,12 @@ function _ch173PapersPicker(ev) {
   box.querySelector('#ch173-pp-ok').onclick = () => {
     readDom();
     _ch173PapersSave(list);
-    const picked = list.filter(p => checked.has(p));
-    // Officer ki apni likhi hui satren (jo fehrist mein nahi thin) mehfooz rakho
-    const custom = lines.filter(l => !origList.includes(l) && !list.includes(l));
-    body.innerText = [...custom, ...picked].join('\n');
+    // Pehle se likhi hui tadaad zaya na ho — usi kaghaz ki purani tadaad rakho
+    const oldQty = {};
+    _ch173PapersRead(body).forEach(it => { oldQty[it.name] = it.qty; });
+    const items = list.filter(p => checked.has(p))
+                      .map(p => ({ name: p, qty: oldQty[p] || '' }));
+    _ch173PapersRender(body, items);
     box.remove();
     try { _r173Dirty = true; } catch (_) {}
   };
@@ -2470,13 +2504,33 @@ function _ch173CSS() {
       }
       /* کرسر یہاں بلنک کرتا ہے — ڈیٹا عنوان کے نیچے سے شروع ہوتا ہے */
       #ch173-doc .sho-papers-body{
-        font-size:14pt; line-height:1.25; text-align:right; white-space:pre-wrap;
+        font-size:14pt; line-height:1.25; text-align:right; white-space:normal;
+        direction:rtl;
         outline:1px dashed rgba(120,120,120,0.35); padding:3px 4px; margin-top:4px;
         min-height:22px; overflow-wrap:break-word;
       }
       #ch173-doc .sho-papers-body:empty::before{
         content:'یہاں کاغذات کی تفصیل لکھیں'; color:#bbb; font-size:12pt;
       }
+      /* ── کاغذات: نام (انڈر لائن) + بالکل نیچے تعداد کا خانہ ──
+         Kaghaz dayen se bayen aik ke baad aik lagte hain; darmiyan mein MS Word
+         ke aik Tab (0.5in = 1.27cm) jitni jagah. Satar bhar jane par agla
+         kaghaz KHUD nayi satar par chala jata hai (inline-block ka wrap). */
+      #ch173-doc .pp-item{
+        display:inline-block; vertical-align:top; text-align:center;
+        margin-left:1.27cm; margin-bottom:4px;
+      }
+      #ch173-doc .pp-name{
+        display:block; text-decoration:underline; white-space:nowrap;
+        line-height:1.25;
+      }
+      /* Tadaad — har kaghaz ke bilkul neeche, IO khud likhta hai */
+      #ch173-doc .pp-qty{
+        display:block; min-width:2.2em; min-height:1.15em; outline:none;
+        line-height:1.25; text-align:center; unicode-bidi:plaintext;
+      }
+      #ch173-doc .pp-qty:empty::before{ content:'—'; color:#c9c9c9; }
+      @media print{ #ch173-doc .pp-qty:empty::before{ content:''; } }
 
       /* بائیں کالم — SHO/تاریخ: ایک اوپر، ایک نیچے */
       #ch173-doc .sho-cell{
