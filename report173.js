@@ -377,7 +377,7 @@ function _renderR173() {
                 <th colspan="2">ملزمان</th>
                 <th rowspan="2" class="vcell rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner rothead">مال قبضہ پولیس</div></div></div></th>
                 <th rowspan="2">تفصیل شہادت</th>
-                <th rowspan="2">مختصر حالات مقدمہ معہ<br>جرم مندرجہ بالا</th>
+                <th rowspan="2">مختصر حالات مقدمہ معہ جرم<br>مندرجہ بالا</th>
               </tr>
               <tr>
                 <th class="hcell">زیر حراست</th>
