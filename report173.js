@@ -377,7 +377,7 @@ function _renderR173() {
                 <th colspan="2">ملزمان</th>
                 <th rowspan="2" class="vcell rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner rothead">مال قبضہ پولیس</div></div></div></th>
                 <th rowspan="2">تفصیل شہادت</th>
-                <th rowspan="2">مختصر حالات مقدمہ معہ جرم مندرجہ بالا</th>
+                <th rowspan="2">مختصر حالات مقدمہ معہ<br>جرم مندرجہ بالا</th>
               </tr>
               <tr>
                 <th class="hcell">زیر حراست</th>
@@ -2546,9 +2546,12 @@ function _ch173CSS() {
         min-height:20px; margin:0; font-size:14pt; text-align:right; white-space:nowrap;
         font-weight:700;
       }
-      /* تاریخ bold nahi — sirf SHO ki line */
+      /* تاریخ bold nahi — sirf SHO ki line.
+         SHO ki line aur تاریخ ka darmiyani faasla kam rakha gaya hai
+         (ooper wali padding ghata kar) — dono qareeb nazar aayen. */
       #ch173-doc .sho-cell-date{ font-weight:normal; font-size:14pt; color:#333;
-        cursor:pointer; text-align:center; }
+        cursor:pointer; text-align:center;
+        padding-top:0; margin-top:-3px; }
       #ch173-doc .sho-cell-date:empty::before{ content:'تاریخ…'; color:#aaa; }
       /* SHO ka naam set na ho to saaf hidayat (اوزار → SHO se set karein) */
       #ch173-doc .sho-cell-row:empty::before{
