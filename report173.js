@@ -220,6 +220,8 @@ function _renderR173() {
     // کالم 1 (مدعی) mein sirf aik shakhs ka naam + CNIC aata hai, is liye
     // woh tang rakha gaya hai; bachi hui jagah کالم 7 (حالات) ko di gayi hai.
     const W = savedW || [9, 13, 11, 12, 5, 21, 29];
+    // کالم 1 ki chaurai PAKKI hai — 1.5cm. Yeh mehfooz naap se bhi nahi
+    // badalti aur kheench kar bhi nahi badli ja sakti (neeche grip band hai).
 
     area.innerHTML = `
     <style>${_ch173CSS()}</style>
@@ -296,7 +298,7 @@ function _renderR173() {
 
           <table class="ch173-table" id="ch173-table">
             <colgroup>
-              ${W.map(w => `<col style="width:${w}%">`).join('')}
+              ${W.map((w, i) => `<col style="width:${i === 0 ? CH173_COL1_W : _ch173WCss(w)}">`).join('')}
             </colgroup>
             <thead>
               <tr>
@@ -818,6 +820,7 @@ function _ch173MakeResizable() {
   // Grip lagane ka common helper
   const addGrip = (cell, iA, iB) => {
     if (iB >= cols.length) return;              // aakhri column ke bayen kuch nahi
+    if (iA === 0 || iB === 0) return;           // کالم 1 ki chaurai PAKKI — kheenchi na jaye
     const grip = document.createElement('div');
     grip.className = 'colgrip';
     grip.title = 'چوڑائی بدلنے کے لیے کھینچیں';
@@ -970,12 +973,27 @@ function _ch173MakeResizable() {
 }
 window._ch173MakeResizable = _ch173MakeResizable;
 
+// ═══ کالم 1 (نام و پتہ مدعی) ki chaurai — PAKKI, 1.5cm ═══
+// Yeh har haal mein wahi rehti hai: na mehfooz shuda naap se badalti hai,
+// na kheench kar badli ja sakti hai (us ki grip band kar di gayi hai).
+const CH173_COL1_W = '1.5cm';
+
+// Chaurai ko CSS ki shakl mein — purane چالان mein naap sirf number (13) ki
+// tarah mehfooz thi, naye mein unit ke saath ('13%' / '1.5cm'). Dono chalen.
+function _ch173WCss(w) {
+  if (typeof w === 'string' && /[a-z%]/i.test(w)) return w.trim();
+  const n = parseFloat(w);
+  return (isNaN(n) || n <= 0) ? 'auto' : (n + '%');
+}
+window._ch173WCss = _ch173WCss;
+
 // Column widths ko save/collect karne ke liye helper
 function _ch173ColWidths() {
   const table = document.getElementById('ch173-table');
   if (!table) return null;
+  // Naap unit ke SAATH mehfooz (kuch cm mein hain, kuch % mein)
   return JSON.stringify([...table.querySelectorAll('colgroup col')]
-    .map(c => parseFloat(c.style.width) || 0));
+    .map(c => c.style.width || ''));
 }
 
 // ═══ Khadi likhayi ki naap set karo — box ko khane ke barabar banata hai ═══
