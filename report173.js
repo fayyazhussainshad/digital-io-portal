@@ -405,7 +405,7 @@ function _renderR173() {
                دونوں کالم ہمیشہ برابر چوڑے، اور ایک ساتھ ہی نیچے بڑھتے ہیں -->
           <div class="ch173-sho-flex">
             <div class="sho-col sho-papers">
-              <div class="sho-papers-head">تفصیل کاغذات</div>
+              <div class="sho-papers-head">تفصیل کاغذات<button class="papers-pick no-print" onclick="_ch173PapersPicker(event)" title="کاغذات منتخب کریں">▾</button></div>
               <div class="sho-papers-body" contenteditable="true" data-k="papers_body">${bv('papers_body')}</div>
             </div>
             <div class="sho-col sho-cell">
@@ -1398,6 +1398,88 @@ function _ch173AccPicker(ev, key) {
   };
 }
 window._ch173AccPicker   = _ch173AccPicker;
+
+// ═══════════════════════════════════════════════════════════════════
+//  تفصیل کاغذات — چیک لسٹ (▾)
+//  Neeche wali fehrist mein jo کاغذ چیک ہو جائے وہ خانے میں لکھا جاتا ہے.
+//  AHEM: yahan matn SAADA (seedhi, RTL) shakl mein aata hai — ملزمان wali
+//  khadi likhayi, نمبر شمار aur CNIC ka andaz yahan NAHI lagta.
+//  (Fehrist ka matn baad mein barhaya ja sakta hai — sirf CH173_PAPERS
+//   mein nayi satar shamil kar dein.)
+// ═══════════════════════════════════════════════════════════════════
+const CH173_PAPERS = [
+  'فارم ہذا',
+  'نقل ایف آئی آر',
+  'اصل تحریر',
+  'فارم ریمانڈ',
+  'نقشہ موقع',
+  'اطلاع نامہ مدعی',
+  'اصل ضمنی SHO',
+];
+
+function _ch173PapersPicker(ev) {
+  ev.preventDefault(); ev.stopPropagation();
+  document.getElementById('ch173-papers-menu')?.remove();
+  const body = document.querySelector('#ch173-doc [data-k="papers_body"]');
+  if (!body) return;
+
+  // Pehle se likhi hui satren — jo fehrist mein hain woh ✔ nazar aayen,
+  // aur jo officer ne khud likhi hain woh mehfooz rahen.
+  const lines = (body.innerText || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  const mine  = new Set(lines);
+
+  const box = document.createElement('div');
+  box.id = 'ch173-papers-menu';
+  box.style.cssText =
+    'position:fixed;z-index:99999;background:#fff;border:1px solid #0369a1;border-radius:10px;' +
+    'box-shadow:0 10px 30px rgba(0,0,0,.28);direction:rtl;width:260px;max-width:92vw;' +
+    'display:flex;flex-direction:column;max-height:min(60vh,340px);overflow:hidden;';
+  const rows = CH173_PAPERS.map(p => `
+    <label style="display:flex;align-items:center;gap:8px;padding:7px 6px;cursor:pointer;font-size:13px;
+            border-bottom:1px solid #f1f5f9;font-family:'Jameel Noori Nastaleeq',serif;">
+      <input type="checkbox" ${mine.has(p) ? 'checked' : ''} value="${esc(p)}"> <span>${esc(p)}</span></label>`).join('');
+  box.innerHTML = `
+    <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:700;color:#0369a1;
+                font-family:'Jameel Noori Nastaleeq',serif;background:#f8fafc;">
+      کاغذات منتخب کریں
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:4px 8px;min-height:0;">${rows}</div>
+    <div style="display:flex;gap:6px;padding:8px;border-top:1px solid #e5e7eb;background:#f8fafc;flex-shrink:0;">
+      <button id="ch173-pp-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;
+        color:#fff;cursor:pointer;font-size:13px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">✔ شامل کریں</button>
+      <button id="ch173-pp-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;
+        cursor:pointer;font-size:13px;font-family:'Jameel Noori Nastaleeq',serif;">بند</button>
+    </div>`;
+  document.body.appendChild(box);
+
+  // Jagah: button ke qareeb, magar screen se bahar kabhi nahi
+  const r = ev.currentTarget.getBoundingClientRect();
+  const bw = box.offsetWidth, bh = box.offsetHeight;
+  let top = r.bottom + 6;
+  if (top + bh > window.innerHeight - 8) top = Math.max(8, r.top - bh - 6);
+  if (top + bh > window.innerHeight - 8) top = Math.max(8, window.innerHeight - bh - 8);
+  let left = r.left + r.width / 2 - bw / 2;
+  left = Math.max(8, Math.min(left, window.innerWidth - bw - 8));
+  box.style.top = top + 'px';
+  box.style.left = left + 'px';
+
+  setTimeout(() => {
+    const off = (e) => { if (!box.contains(e.target)) { box.remove(); document.removeEventListener('mousedown', off); } };
+    document.addEventListener('mousedown', off);
+  }, 0);
+
+  box.querySelector('#ch173-pp-x').onclick = () => box.remove();
+  box.querySelector('#ch173-pp-ok').onclick = () => {
+    const picked = [...box.querySelectorAll('input:checked')].map(i => i.value);
+    // Officer ki apni likhi hui satren (jo fehrist mein nahi) mehfooz rakho
+    const custom = lines.filter(l => !CH173_PAPERS.includes(l));
+    body.innerText = [...custom, ...picked].join('\n');
+    box.remove();
+    try { _r173Dirty = true; } catch (_) {}
+  };
+}
+window._ch173PapersPicker = _ch173PapersPicker;
+
 window._ch173LoadPeople  = _ch173LoadPeople;
 window._ch173WitnessText = _ch173WitnessText;
 
@@ -2280,6 +2362,13 @@ function _ch173CSS() {
       #ch173-doc .sho-papers-head{
         font-weight:700; text-decoration:underline; white-space:nowrap;
         font-size:14pt; line-height:1.25; margin:0;
+      }
+      /* تفصیل کاغذات — چیک لسٹ کھولنے والا چھوٹا بٹن (چھپائی میں نہیں آتا) */
+      #ch173-doc .papers-pick{
+        margin-right:6px; width:20px; height:20px; line-height:1; padding:0;
+        border:1px solid var(--border,#999); border-radius:4px; vertical-align:middle;
+        background:#eef6ff; color:#0369a1; cursor:pointer; font-size:12px;
+        text-decoration:none; font-weight:400;
       }
       /* کرسر یہاں بلنک کرتا ہے — ڈیٹا عنوان کے نیچے سے شروع ہوتا ہے */
       #ch173-doc .sho-papers-body{
