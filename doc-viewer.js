@@ -51,8 +51,15 @@ function _dioEnterDocView() {
       '#dio-dv-body{display:flex;flex-direction:column;}' +
       '#dio-dv-body > #workspace-editor-area{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;}' +
       '#dio-dv-body #workspace-editor-area > *{flex:1;min-height:0;}' +
-      /* چالان ka safha bhi poori chaudai le */
-      '#dio-dv-body #ch173-doc{width:100% !important;max-width:none !important;}' +
+      /* AHEM — چالان ka safha yahan se ZABARDASTI chaura NA kiya jaye.
+         Pehle yahan 'width:100% !important' tha. Us waqt چالان ki apni koi
+         naap nahi thi, is liye woh theek tha. Ab چالان khud KAGHAZ ki asal
+         naap (Legal 8.5in / A4 8.27in) par chalta hai, aur yeh !important
+         us naap ko zabardasti tor deta tha — safha 816px ki bajaye 1244px
+         chaura ho jata tha. Us se کالم 7 screen par chaura ho kar matn nigal
+         leta tha (system samajhta tha kuch bahar hai hi nahi), magar kaghaz
+         8.5in ka hone ki wajah se chapai mein matn KAT jata tha. Isi liye
+         چالان akele theek chalta tha aur doosri tabs ke saath kharab. */
       '#dio-dv-body #misal-editor{min-height:calc(100vh - 160px) !important;}';
     document.head.appendChild(st);
   }
