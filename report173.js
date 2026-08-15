@@ -3,6 +3,72 @@
    5 types: چالان مکمل/نامکمل/انٹیرم/اخراج/عدم پتہ
    ═══════════════════════════════════════════════════════════ */
 
+/* ╔═══════════════════════════════════════════════════════════╗
+   ║  🔒 چالان کی طے شدہ (LOCKED) سیٹنگز — v311                ║
+   ║  ASI Fayyaz Hussain Shad ki sareeh ijazat ke BAGHAIR      ║
+   ║  in mein se koi cheez tabdeel NA ki jaye. Naye kaam karte ║
+   ║  waqt sab se pehle yeh fehrist parh li jaye.              ║
+   ╚═══════════════════════════════════════════════════════════╝
+
+   1) KAGHAZ
+      • لیگل/فولیو = 8.5in × 13in   |   A4 = 8.27in × 11.7in
+      • Ooper/neeche margin = 1cm (dono kaghaz)
+      • Side margin: لیگل/فولیو = 0.2cm  |  A4 = 0.5cm
+        → SIRF _ch173SideMargin() se aati hai. Yeh AIK hi jagah
+          screen aur print dono ko deti hai — kabhi do jagah na likhi jaye,
+          warna screen aur chapai phir alag ho jayenge.
+
+   2) SCREEN = PRINT (WYSIWYG)
+      • Safha screen par bhi KAGHAZ ki asal chaudai par rehta hai
+        (_ch173FitPaper) aur sirf dikhane ke liye transform:scale hota hai.
+      • 'zoom' kabhi istemal na kiya jaye — woh naap dobara ginta hai
+        aur satren badal deta hai. Sirf transform:scale.
+      • Print ke waqt: kaghaz ki chaudai par le jao → overflow settle →
+        snapshot → phir screen wapas. (_printR173)
+
+   3) TABLE
+      • کالم 1 ki chaurai = PAKKI 1.5cm (CH173_COL1_W). Mehfooz naap se
+        bhi nahi badalti; us ki drag-grip band hai (addGrip mein iA/iB===0).
+      • Baqi columns ki default naap: [_, 13, 11, 12, 5, 21, 29]
+      • Row 3 (data) ki unchai: 185mm (لیگل) / 150mm (A4)
+      • Header: th.vcell height 96px
+      • "ملزمان" ke neeche wali lakeer kheench kar hilai ja sakti hai
+        (rowgrip-top) — header ki KUL unchai wahi rehti hai.
+
+   4) KHADI LIKHAYI (columns 1–6)
+      • .rotinner = writing-mode:vertical-rl + display:block + text-align:start
+      • FLEX yahan HARGIZ na lagayen — khadi likhayi mein us ka rukh
+        ghair-yaqeeni hai (satren aage-ooper khisak jati hain).
+      • transform:rotate bhi na lagayen — woh sirf dikhawa ghumata hai,
+        JAGAH nahi (naam kinare par dhakel jata tha).
+      • sideways-lr sirf Firefox ka hai — Chrome mein NAHI chalta.
+
+   5) NAAM + CNIC
+      • Tarteeb: نمبر شمار + NAAM pehle, phir CNIC.
+      • Har satar apne khane (.ln) mein: naam OOPER, CNIC NEECHE
+        (flex + space-between) → tamam CNIC AIK SEEDH mein.
+      • CNIC ka rukh: OOPER se NEECHE, LTR
+        (writing-mode:vertical-rl + text-orientation:sideways).
+      • CNIC ki pehchan = satar ke AAKHIR wala number — dashes ke saath
+        (36302-2931394-5) aur BAGHAIR dashes (36302010673363) dono.
+      • Yeh lapet SIRF dikhane ke liye hai. Save se pehle _ch173UnwrapCnics
+        se khul jati hai — database mein hamesha SAADA matn jata hai.
+        (Pehle markup save ho kar matn kharab ho chuka hai — dobara na ho.)
+      • Agar officer ne khud formatting lagayi ho to us khane ko haath
+        nahi lagaya jata (_ch173PlainCell).
+
+   6) کالم 7 (مختصر حالات)
+      • Jo matn khane mein na samaye woh table ke NEECHE (cont_text) jata hai.
+      • Overflow 'input' par (350ms baad) aur 'paste' par chalta hai —
+        'blur' par KABHI nahi (innerText formatting mita deta hai).
+      • Print aur Save dono se pehle _ch173OverflowSettle chalta hai.
+
+   7) AAM USOOL
+      • Har tabdeeli ke baad sw.js ka CACHE_NAME barhana zaroori.
+      • Tareekhein sirf DD/MM/YYYY (formatDate).
+      • "پنجاب پولیس" ka koi عنوان kahin nahi.
+      ═══════════════════════════════════════════════════════════ */
+
 let _r173CaseId = null;
 let _r173Case = null;
 // کاغذ کا سائز — لیگل (8.5×13) یا A4 (اوپر ہی رکھنا ضروری، نیچے استعمال ہوتا ہے)
