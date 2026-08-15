@@ -359,9 +359,11 @@ function _renderR173() {
       // BAAD hi maloom hoti hai. Aik hi dafa chalane se matn chhupa reh
       // jata tha (khane ki naap us waqt tak 0 hoti thi).
       [0, 150, 400, 800, 1500].forEach(ms => setTimeout(() => {
-        try { _ch173Overflow(); } catch(_) {}
+        try { _ch173OverflowSettle(3); } catch(_) {}
         try { _ch173WrapCnics(); } catch(_) {}
       }, ms));
+      // Nigrani chalu — koi matn chhupa reh jaye to khud neeche chala jaye
+      try { _ch173StartOverflowWatch(); } catch(_) {}
       if (_ch173FirMatn === null) _ch173LoadFirMatn(); else _ch173FillHalaat();
       window.addEventListener('resize', _ch173SizeRotated);
       // Mehfooz shuda row height wapas lagao
@@ -570,9 +572,9 @@ function _collectR173() {
   // Challan types (فارم 25.56(1)) — apna doc id hai
   const chDoc = document.getElementById('ch173-doc');
   if (chDoc && typeof R173_BLANK_TYPES !== 'undefined' && R173_BLANK_TYPES.includes(_r173Type)) {
-    // Mehfooz karne se pehle bhi overflow chalao — taake کالم 7 ka izafi matn
-    // neeche wale khane mein darj ho kar SAATH mehfooz ho (chhupa na reh jaye).
-    try { _ch173Overflow(); } catch (_) {}
+    // Mehfooz karne se pehle bhi overflow JAMNE TAK chalao — taake کالم 7 ka
+    // izafi matn neeche wale khane mein darj ho kar SAATH mehfooz ho.
+    try { _ch173OverflowSettle(5); } catch (_) {}
     // CNIC ke display-spans hata do — sirf saada matn mehfooz ho (markup nahi)
     try { _ch173UnwrapCnics(chDoc); } catch(_) {}
     const d = {};
@@ -687,10 +689,32 @@ function _printR173() {
   // Challan types (فارم 25.56(1)) — apna doc + apni styles
   const chDoc = document.getElementById('ch173-doc');
   if (chDoc) {
-    // AHEM: print se PEHLE overflow chalao. Warna کالم 7 ka jo matn khane mein
-    // na samaya ho woh CHHUPA hi chhap jata tha (print sirf mojooda HTML ki
-    // nakal leta hai — woh khud matn neeche nahi bhejta).
-    try { _ch173Overflow(); } catch (_) {}
+    // ═══ AHEM — کالم 7 ka matn chhup jane ki ASAL wajah ═══
+    // Overflow ka hisaab us chaudai par lagta hai jo us waqt SCREEN par hai.
+    // Screen chaudi hoti hai, is liye matn wahan poora sama jata hai aur
+    // system samajhta hai "kuch bahar nahi gaya" — chunanche kuch neeche
+    // nahi bhejta. Magar KAGHAZ tang hota hai, wahan wohi matn zyada satren
+    // leta hai, bahar nikal jata hai aur KAT kar chhup jata hai.
+    // Hal: chapai se pehle safhe ko KAGHAZ ki asal chaudai par le jao,
+    // wahan naap lo, matn neeche bhejo — phir screen wapas apni halat par.
+    const _pw = chDoc.style.width, _pmw = chDoc.style.maxWidth;
+    let _inner = chDoc.innerHTML;
+    try {
+      chDoc.style.width = (_ch173Paper === 'a4') ? '8.27in' : '8.5in';
+      chDoc.style.maxWidth = 'none';
+      void chDoc.offsetHeight;                 // nayi naap lagne do
+      _ch173OverflowSettle(6);
+      void chDoc.offsetHeight;
+      _inner = chDoc.innerHTML;                // kaghaz ki naap wala natija
+    } catch (_) {
+    } finally {
+      // Screen wapas apni poori chaudai par
+      try {
+        chDoc.style.width = _pw; chDoc.style.maxWidth = _pmw;
+        void chDoc.offsetHeight;
+        _ch173OverflowSettle(4);               // screen ki halat bhi durust
+      } catch (__) {}
+    }
     const chHtml = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
       <style>
         /* Charon taraf BARABAR margin — kaghaz chune hue naap ka */
@@ -715,7 +739,7 @@ function _printR173() {
         .sho-papers-body, .sho-cell-row, .ch173-cont{ outline:none !important; }
         .sho-papers-body:empty::before, .sho-cell-date:empty::before,
         .sho-cell-row:empty::before, .ch173-cont:empty::before{ content:'' !important; }
-      </style></head><body><div id="ch173-doc">${chDoc.innerHTML}</div></body></html>`;
+      </style></head><body><div id="ch173-doc">${_inner}</div></body></html>`;
     // Print se pehle rotated khanon ki naap inline kar do (print iframe mein JS nahi chalta)
     try { if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated(); } catch(_) {}
     if (typeof dioPrint === 'function') dioPrint(chHtml);
@@ -967,6 +991,9 @@ function _ch173Overflow() {
   const cell = document.querySelector('#ch173-table [data-k="halaat"]');
   const cont = document.querySelector('#ch173-doc [data-k="cont_text"]');
   if (!cell || !cont) return;
+  // Khane ki naap abhi hui hi nahi (unchai 0) — abhi kuch na karo. Warna
+  // "sab kuch bahar hai" samajh kar poora matn neeche dhakel diya jata hai.
+  if (!cell.clientHeight) return;
   const full = () => cell.scrollHeight > cell.clientHeight + 1;
   let guard = 0;
 
@@ -1002,6 +1029,48 @@ function _ch173Overflow() {
   }
 }
 window._ch173Overflow = _ch173Overflow;
+
+// ═══ Cursor ko khane ke AAKHIR par le jao ═══
+// Matn neeche bhejne ke baad likhayi wahin se jari rahe (warna cursor
+// shuru mein chala jata hai). AHEM: yeh function pehle KAHIN define hi
+// nahi tha magar neeche pukara ja raha tha — is wajah se jab bhi khana
+// bhar jata, wahan error aa kar amal beech mein hi ruk jata tha.
+function _ch173CaretEnd(el) {
+  try {
+    if (!el) return;
+    const r = document.createRange();
+    r.selectNodeContents(el);
+    r.collapse(false);                 // aakhir par
+    const s = window.getSelection();
+    s.removeAllRanges();
+    s.addRange(r);
+  } catch (_) {}
+}
+window._ch173CaretEnd = _ch173CaretEnd;
+
+// Overflow ko bar bar chalao jab tak halat theek na ho jaye.
+// (Aik dafa chalane se hamesha poora matn neeche nahi jata — matn hatne
+//  ke baad khane ki naap badal jati hai, is liye dobara jaanchna zaroori hai.)
+function _ch173OverflowSettle(times) {
+  const n = times || 4;
+  for (let i = 0; i < n; i++) { try { _ch173Overflow(); } catch (_) {} }
+}
+window._ch173OverflowSettle = _ch173OverflowSettle;
+
+// ═══ Nigrani — khana bhara reh jaye to khud neeche bhej do ═══
+// Sirf tab chalta hai jab (a) matn waqai chhupa hua ho, aur (b) user us
+// khane mein likh NA raha ho — is liye cursor kabhi nahi hilta.
+function _ch173StartOverflowWatch() {
+  try { if (window._ch173OvWatch) clearInterval(window._ch173OvWatch); } catch (_) {}
+  window._ch173OvWatch = setInterval(function () {
+    const cell = document.querySelector('#ch173-table [data-k="halaat"]');
+    if (!cell) { try { clearInterval(window._ch173OvWatch); } catch (_) {} window._ch173OvWatch = null; return; }
+    if (document.activeElement === cell) return;          // likhte waqt haath na lagao
+    if (!cell.clientHeight) return;                        // abhi naapa nahi gaya
+    if (cell.scrollHeight > cell.clientHeight + 1) _ch173OverflowSettle(2);
+  }, 1200);
+}
+window._ch173StartOverflowWatch = _ch173StartOverflowWatch;
 
 
 function _ch173BindOverflow() {
