@@ -663,7 +663,7 @@ function _renderR173() {
 // ── SAVE ──────────────────────────────────────────────────────
 function _collectR173() {
   // Challan types (فارم 25.56(1)) — apna doc id hai
-  const chDoc = document.getElementById('ch173-doc');
+  const chDoc = _ch173Doc();          // hamesha NAZAR AANE wala چالان
   if (chDoc && typeof R173_BLANK_TYPES !== 'undefined' && R173_BLANK_TYPES.includes(_r173Type)) {
     // Mehfooz karne se pehle bhi overflow JAMNE TAK chalao — taake کالم 7 ka
     // izafi matn neeche wale khane mein darj ho kar SAATH mehfooz ho.
@@ -784,7 +784,7 @@ async function _saveR173() {
 // ── PRINT (only the form) ─────────────────────────────────────
 function _printR173() {
   // Challan types (فارم 25.56(1)) — apna doc + apni styles
-  const chDoc = document.getElementById('ch173-doc');
+  const chDoc = _ch173Doc();          // hamesha NAZAR AANE wala چالان
   if (chDoc) {
     // ═══ AHEM — کالم 7 ka matn chhup jane ki ASAL wajah ═══
     // Overflow ka hisaab us chaudai par lagta hai jo us waqt SCREEN par hai.
@@ -1831,7 +1831,7 @@ function _ch173FullPage(area) {
     // Ab safha asal kaghaz jitna chaura rehta hai (naap bilkul chapai wali)
     // aur sirf DIKHANE ke liye bara kar diya jata hai (scale) — is se shakl
     // nahi badalti, sirf bara nazar aata hai.
-    const doc = document.getElementById('ch173-doc');
+    const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
     if (doc) {
       doc.style.maxWidth = 'none';
       doc.style.margin = '0 auto';
@@ -1850,7 +1850,7 @@ window._ch173FullPage = _ch173FullPage;
 // dobara ginta hai (satren badal sakti hain), jabke scale sirf bari tasveer
 // banata hai — naap wahi rehti hai jo kaghaz par hogi.
 function _ch173FitPaper() {
-  const doc = document.getElementById('ch173-doc');
+  const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!doc) return;
   const host = doc.parentElement;
   if (!host) return;
@@ -1923,7 +1923,7 @@ window._ch173FitPaper = _ch173FitPaper;
 // se bahar nikal jata tha. Ab container par nazar rakhi jati hai: jaise hi
 // us ki naap badle, safha khud apne aap ko dobara fit kar leta hai.
 function _ch173WatchFit() {
-  const doc = document.getElementById('ch173-doc');
+  const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!doc) return;
   const host = doc.parentElement;
   if (!host) return;
@@ -1986,7 +1986,7 @@ window._ch173FocusMode = _ch173FocusMode;
 let _ch173Range = null;
 
 function _ch173SaveRange() {
-  const doc = document.getElementById('ch173-doc');
+  const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!doc) return;
   const sel = window.getSelection();
   if (!sel || !sel.rangeCount) return;
@@ -1996,7 +1996,7 @@ function _ch173SaveRange() {
 window._ch173SaveRange = _ch173SaveRange;
 
 function _ch173RestoreRange() {
-  const doc = document.getElementById('ch173-doc');
+  const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!doc || !_ch173Range) return false;
   if (!doc.contains(_ch173Range.commonAncestorContainer)) { _ch173Range = null; return false; }
   try {
@@ -2017,7 +2017,7 @@ window._ch173RestoreRange = _ch173RestoreRange;
 // execCommand('fontSize') sirf 1–7 leta hai, is liye size=7 laga kar un <font> tags
 // ko foran <span> se badal dete hain — phir un par koi bhi style lagai ja sakti hai.
 function _ch173WrapSelection() {
-  const doc = document.getElementById('ch173-doc');
+  const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!doc) return [];
   const sel = window.getSelection();
   if (!sel || sel.isCollapsed || !sel.rangeCount) return [];
@@ -2046,7 +2046,7 @@ function _ch173FontToSelection(pt) {
 
 // Poore document ka font
 function _ch173FontToDoc(pt) {
-  const doc = document.getElementById('ch173-doc');
+  const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!doc) return;
   doc.dataset.fs = pt;
   doc.querySelectorAll('.ch173-table th, .ch173-table td, .rotinner, .hinner, .normwrap, .ch173-cont, .sho-cell-row, .sho-papers-head, .sho-papers-body')
@@ -2088,7 +2088,7 @@ window._ch173SetFont = _ch173SetFont;
 
 // ═══ SIRF aik khane ka font ═══
 function _ch173FontToCell(cell, pt) {
-  const doc = document.getElementById('ch173-doc');
+  const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!cell || !doc || !doc.contains(cell)) return false;
   cell.style.fontSize = pt + 'pt';
   // Khane ke andar ka matn rakhne wala hissa bhi
@@ -2102,7 +2102,7 @@ window._ch173FontToCell = _ch173FontToCell;
 
 // Aakhri khana jis par click hua — font isi par lagta hai
 function _ch173BindCellPick() {
-  const doc = document.getElementById('ch173-doc');
+  const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!doc || doc._cellPickBound) return;
   doc._cellPickBound = true;
   doc.addEventListener('mousedown', (e) => {
@@ -2118,7 +2118,7 @@ window._ch173BindCellPick = _ch173BindCellPick;
 
 // ═══ Har khane ka apna font — mehfooz karne/wapas lagane ke liye ═══
 function _ch173CellFonts() {
-  const doc = document.getElementById('ch173-doc');
+  const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!doc) return null;
   const out = { th: [], k: {} };
   doc.querySelectorAll('.ch173-table thead th').forEach(th => out.th.push(th.style.fontSize || ''));
@@ -2132,7 +2132,7 @@ window._ch173CellFonts = _ch173CellFonts;
 function _ch173ApplyCellFonts(raw) {
   if (!raw) return;
   let o; try { o = JSON.parse(raw); } catch (_) { return; }
-  const doc = document.getElementById('ch173-doc');
+  const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!doc || !o) return;
   const ths = doc.querySelectorAll('.ch173-table thead th');
   (o.th || []).forEach((f, i) => {
@@ -2150,7 +2150,7 @@ window._ch173ApplyCellFonts = _ch173ApplyCellFonts;
 
 // Cursor jahan ho, dropdown wahi size dikhaye (MS Word jaisa)
 function _ch173SyncFontSel() {
-  const doc = document.getElementById('ch173-doc');
+  const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   const selEl = document.getElementById('ch173-font-sel');
   if (!doc || !selEl) return;
   // Dropdown khud khula ho to us ki qeemat mat badlo (warna wapas palat jati hai)
@@ -2178,7 +2178,7 @@ let _ch173BrushMode = null;  // 'once' | 'sticky' | null
 
 // Cursor jahan hai wahan ki formatting naqal karo
 function _ch173BrushCopy() {
-  const doc = document.getElementById('ch173-doc');
+  const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!doc) return null;
   const sel = window.getSelection();
   if (!sel || !sel.rangeCount || !sel.anchorNode || !doc.contains(sel.anchorNode)) return null;
@@ -2218,7 +2218,7 @@ function _ch173BrushPaint() {
 // Button ki halat (on/off) dikhao
 function _ch173BrushUI() {
   const btn = document.getElementById('ch173-brush-btn');
-  const doc = document.getElementById('ch173-doc');
+  const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   const on = !!_ch173BrushMode;
   if (btn) {
     btn.style.background = on ? '#0369a1' : 'var(--bg-card,#fff)';
@@ -2254,7 +2254,7 @@ window._ch173BrushClick = _ch173BrushClick;
 
 // Document par matn chunte hi formatting lag jaye
 function _ch173BindBrush() {
-  const doc = document.getElementById('ch173-doc');
+  const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!doc || doc._brushBound) return;
   doc._brushBound = true;
   doc.addEventListener('mouseup', () => {
@@ -2292,7 +2292,7 @@ function _ch173Fmt(cmd) {
   // (basi) selection wapas mat lagao — bold lagne ke baad safha badal
   // jata hai, aur basi selection ghalat jagah par lagti thi, isi liye
   // dobara dabane par bold KHATAM nahi hota tha.
-  const doc = document.getElementById('ch173-doc');
+  const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   const sel = window.getSelection();
   const live = doc && sel && sel.rangeCount &&
                doc.contains(sel.getRangeAt(0).commonAncestorContainer);
@@ -2304,7 +2304,7 @@ function _ch173Fmt(cmd) {
 }
 // Purana naam bhi chalta rahe (kahin aur se pukara ja raha ho to)
 function _ch173FontStep(dir) {
-  const doc = document.getElementById('ch173-doc');
+  const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!doc) return;
   const cur = parseFloat(doc.dataset.fs || String(R173_FONT_DEFAULT));
   const i = R173_FONT_SIZES.indexOf(cur);
@@ -2506,7 +2506,7 @@ if (!window._r173DirtyBound) {
   window._r173DirtyBound = true;
   window.addEventListener('beforeunload', function (e) {
     if (!_r173Dirty) return;
-    if (!document.getElementById('ch173-doc')) return;
+    if (!_ch173Doc()) return;
     e.preventDefault(); e.returnValue = '';
   });
   document.addEventListener('input', function (e) {
@@ -2608,7 +2608,7 @@ window.openR173List = openR173List;
 //  یہ الگ سے لگانا ضروری ہے)
 // ═══════════════════════════════════════════════════════════════════
 function _ch173BindKeys() {
-  const doc = document.getElementById('ch173-doc');
+  const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!doc || doc._keysBound) return;
   doc._keysBound = true;
   doc.addEventListener('keydown', function (e) {
@@ -3162,7 +3162,7 @@ function _ch173PlainCell(cell) {
 // jismein naam SHURU (ooper) aur CNIC AAKHIR (neeche) par jamta hai —
 // is liye tamam CNIC aik hi seedh mein aate hain.
 function _ch173WrapCnics(root) {
-  root = root || document.getElementById('ch173-doc');
+  root = root || _ch173Doc();
   if (!root) return;
   const E = (t) => String(t == null ? '' : t)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -3191,7 +3191,7 @@ window._ch173WrapCnics = _ch173WrapCnics;
 
 // Save se pehle sab lapet khol do — sirf SAADA matn mehfooz ho (markup nahi)
 function _ch173UnwrapCnics(root) {
-  root = root || document.getElementById('ch173-doc');
+  root = root || _ch173Doc();
   if (!root) return;
   root.querySelectorAll('.ch173-table td.rotcell .rotinner').forEach(cell => {
     if (!cell.querySelector('.ln')) return;
