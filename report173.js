@@ -1044,6 +1044,9 @@ function _ch173MakeResizable() {
           document.removeEventListener('mousemove', onMove);
           document.removeEventListener('mouseup', onUp);
           document.body.style.cursor = '';
+          // Chhorne ke baad matn poori tarah jam jaye (aik dafa kaafi nahi)
+          try { _ch173OverflowSettle(4); } catch (_) {}
+          try { _r173Dirty = true; } catch (_) {}
         };
         document.addEventListener('mousemove', onMove);
         document.addEventListener('mouseup', onUp);
@@ -1144,12 +1147,46 @@ function _ch173Overflow() {
     if (par && par !== cell && !par.childNodes.length) par.remove();
   }
 
-  // (b) Jagah bache to neeche se WAPAS uthao
+  // (b) Jagah bache to neeche se WAPAS uthao — LAFZ-BA-LAFZ
+  // AHEM: yahan poora tukra na uthayen. Neeche ka matn aksar aik hi bara
+  // tukra hota hai; usay poora uthane par woh khane mein samata nahi aur
+  // foran wapas chala jata hai — natija yeh ke table bara karne par bhi
+  // kuch WAPAS nahi aata tha. Is liye aik aik lafz kar ke uthate hain,
+  // bilkul waise hi jaise neeche bhejte waqt karte hain.
   guard = 0;
   while (!full() && cont.firstChild && guard++ < 8000) {
-    const first = cont.firstChild;
-    cell.appendChild(first);
-    if (full()) { cont.insertBefore(first, cont.firstChild); break; }
+    let node = cont.firstChild;
+    while (node.nodeType === 1 && node.firstChild) node = node.firstChild;
+
+    if (node.nodeType === 3) {
+      const t = node.nodeValue;
+      const m = t.match(/^\s*\S+\s?/);            // sab se pehla lafz
+      if (m && m[0].length < t.length) {
+        const moved = m[0];
+        node.nodeValue = t.slice(moved.length);
+        const tn = document.createTextNode(moved);
+        cell.appendChild(tn);
+        if (full()) {                              // jagah nahi bani — wapas
+          tn.remove();
+          node.nodeValue = moved + node.nodeValue;
+          break;
+        }
+        continue;
+      }
+    }
+
+    // Aakhri/poora tukra
+    const par = node.parentNode;
+    const mark = document.createComment('');
+    par.insertBefore(mark, node);                  // wapasi ke liye nishan
+    cell.appendChild(node);
+    if (full()) {                                  // jagah nahi bani — wapas
+      par.insertBefore(node, mark);
+      mark.remove();
+      break;
+    }
+    mark.remove();
+    if (par && par !== cont && !par.childNodes.length) par.remove();
   }
 
   // (c) TUKRE WAPAS JORO — matn lafz-ba-lafz hilta hai, is liye har lafz ka
