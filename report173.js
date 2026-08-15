@@ -2465,7 +2465,13 @@ window._ch173StripSpan = _ch173StripSpan;
 // Yeh SIRF display ke liye hai — mehfooz karte waqt _ch173UnwrapCnics se
 // wapas saada matn bana dete hain, taake data-base mein koi markup na jaye
 // (pehle span ka code khud matn ban kar mehfooz ho jata tha — woh bug na aaye).
+// CNIC ki pehchan — DONO shaklon mein:
+//   • dashes ke saath : 36302-2931394-5
+//   • baghair dashes  : 36302293139455
+// (Kuch گواہان/ملزمان ka CNIC baghair dashes mehfooz hota hai, isi liye un
+//  par seedh nahi lag rahi thi.) Satar ke AAKHIR wala number hi CNIC hai.
 const _CH173_CNIC_RE = /\d{5}-\d{7}-\d/g;
+const _CH173_CNIC_LINE_RE = /^([\s\S]*?)[\s]*(\d[\d\u2010-\u2015-]{8,}\d)[\s]*$/;
 // Khana "saada" hai? (officer ne apni formatting nahi lagayi)
 // Sirf aisi soorat mein satren dobara tarteeb deni mehfooz hai — warna
 // bold/italic wagera mit jayegi.
@@ -2482,17 +2488,10 @@ function _ch173PlainCell(cell) {
   return true;
 }
 
-// Kahin koi CNIC aisa to nahi jo abhi tak lapeta nahi gaya?
-function _ch173HasBareCnic(cell) {
-  const w = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT, null);
-  let n;
-  while ((n = w.nextNode())) {
-    if (n.parentNode && n.parentNode.classList && n.parentNode.classList.contains('cn')) continue;
-    _CH173_CNIC_RE.lastIndex = 0;
-    if (_CH173_CNIC_RE.test(n.nodeValue)) return true;
-  }
-  return false;
-}
+// NOTE: pehle yahan "koi bina-lapeta CNIC to nahi?" wali jaanch thi jo
+// purane (sirf dashes wale) namoone par chalti thi — isi liye baghair-dash
+// wale CNIC par seedh nahi lagti thi. Ab us ki jagah 'nishani' (signature)
+// ka tareeqa hai: matn badla ho to hi dobara tarteeb di jati hai.
 
 // ═══ Har satar: NAAM ooper, CNIC neeche — sab CNIC aik SEEDH mein ═══
 // Pehle CNIC wahin se shuru hota tha jahan naam khatam hota — naam chhote
@@ -2508,14 +2507,14 @@ function _ch173WrapCnics(root) {
   root.querySelectorAll('.ch173-table td.rotcell .rotinner').forEach(cell => {
     if (document.activeElement === cell) return;      // likhte waqt haath na lagao
     if (!_ch173PlainCell(cell)) return;               // apni formatting mehfooz rahe
-    // pehle se lapeta hua hai aur kuch naya nahi aaya → dobara mehnat na karo
-    if (cell.querySelector('.ln') && !_ch173HasBareCnic(cell)) return;
     const raw = (cell.innerText || '').replace(/\u00A0/g, ' ');
+    // pehle se lapeta hua hai aur matn badla bhi nahi → dobara mehnat na karo
+    if (cell.dataset.cnSig === raw && cell.querySelector('.ln')) return;
     if (!raw.trim()) return;
     const lines = raw.split(/\r?\n/);
     let found = false;
     const html = lines.map(line => {
-      const m = line.match(/^([\s\S]*?)[\s]*(\d{5}-\d{7}-\d)[\s]*$/);
+      const m = line.match(_CH173_CNIC_LINE_RE);
       if (!m) return '<div class="ln">' + E(line) + '</div>';
       found = true;
       return '<div class="ln"><span class="nm">' + E(m[1].trim()) + '</span>' +
@@ -2523,6 +2522,7 @@ function _ch173WrapCnics(root) {
     }).join('');
     if (!found) return;                               // koi CNIC hi nahi
     cell.innerHTML = html;
+    try { cell.dataset.cnSig = cell.innerText; } catch (_) {}
   });
 }
 window._ch173WrapCnics = _ch173WrapCnics;
@@ -2542,6 +2542,7 @@ function _ch173UnwrapCnics(root) {
       return (d.textContent || '').trim();
     });
     cell.innerText = lines.join('\n');
+    try { delete cell.dataset.cnSig; } catch (_) {}   // nishani mitao
   });
   // baqi kahin koi akela .cn reh gaya ho
   root.querySelectorAll('span.cn').forEach(sp => {
