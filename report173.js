@@ -1780,16 +1780,52 @@ function _ch173BindOverflow() {
   // underline) mita deta tha. Ab likhi hui formatting mehfooz rehti hai.
   // USOOL: column 7 ka jo matn khane mein na samaye woh KHUD table ke
   // neeche wale khane mein chala jaye (aur jagah bane to wapas aa jaye).
-  const run = () => {
-    if (!cell) return;
-    if (cell.scrollHeight <= cell.clientHeight + 1) { _ch173Overflow(); return; }
-    let inCell = false;
+  // Cursor khane ke SHURU se kitne harf aage hai
+  const caretOffset = () => {
     try {
       const sel = window.getSelection();
-      inCell = sel && sel.rangeCount && cell.contains(sel.anchorNode);
+      if (!sel || !sel.rangeCount || !cell.contains(sel.anchorNode)) return -1;
+      const rg = sel.getRangeAt(0).cloneRange();
+      const nap = document.createRange();
+      nap.selectNodeContents(cell);
+      nap.setEnd(rg.endContainer, rg.endOffset);
+      return nap.toString().length;
+    } catch (_) { return -1; }
+  };
+  // Cursor wapas usi jagah par
+  const caretSet = (off) => {
+    if (off < 0) return;
+    try {
+      const w = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT, null);
+      let jama = 0, n, node = null, pos = 0;
+      while ((n = w.nextNode())) {
+        const L = n.nodeValue.length;
+        if (jama + L >= off) { node = n; pos = off - jama; break; }
+        jama += L; node = n; pos = L;
+      }
+      if (!node) return;
+      const rg = document.createRange();
+      rg.setStart(node, Math.min(pos, node.nodeValue.length));
+      rg.collapse(true);
+      const sel = window.getSelection();
+      sel.removeAllRanges(); sel.addRange(rg);
     } catch (_) {}
+  };
+
+  const run = () => {
+    if (!cell) return;
+    const off  = caretOffset();
+    const inCell = off >= 0;
+    const bhara  = cell.scrollHeight > cell.clientHeight + 1;
+    // AHEM: agar officer khane ke ANDAR likh raha hai aur khana abhi BHARA
+    // NAHI to kuch bhi na hilao. Pehle yahan bhi matn ko neeche-ooper karne
+    // wala kaam chal padta tha — us se cursor ki jagah zaya ho jati thi aur
+    // browser usay matn ke SHURU par le jata tha (aakhri aadhi satar mukammal
+    // karte waqt yehi hota tha).
+    if (inCell && !bhara) return;
     _ch173Overflow();
-    if (inCell) _ch173CaretEnd(cell);
+    // Cursor wahin wapas jahan tha (aakhir par nahi — theek usi jagah)
+    if (inCell) caretSet(off);
   };
   let _t = null;
   cell.addEventListener('input', () => { clearTimeout(_t); _t = setTimeout(run, 350); });
@@ -2495,6 +2531,20 @@ function _ch173FocusMode(on) {
     }
     if (near) {
       clearTimeout(window._ch173PeekT);
+      // AHEM: patti TOOLBAR ke NEECHE se khule — us ke OOPER nahi. Warna
+      // woh toolbar ko hi dhak leti hai aur button dabaya hi nahi ja sakta.
+      try {
+        const d0   = _ch173Doc();
+        const host = d0 && d0.parentElement;            // safhe wala khana
+        const wrap = host && host.parentElement;        // toolbar + khana
+        const tbar = wrap && wrap.querySelector('.no-print');   // چالان ka toolbar
+        const par  = bar.offsetParent || bar.parentElement;
+        if (tbar && par) {
+          const rp = par.getBoundingClientRect();
+          const rt = tbar.getBoundingClientRect();
+          bar.style.top = Math.max(0, Math.round(rt.bottom - rp.top)) + 'px';
+        }
+      } catch (_) {}
       bar.classList.add('peek');
     } else if (bar.classList.contains('peek')) {
       // Foran gayab na ho — thora waqt do, warna button tak pohanchte hi
