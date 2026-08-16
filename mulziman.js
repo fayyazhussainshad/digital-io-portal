@@ -89,16 +89,18 @@ function _accInjectCSS() {
   s.textContent = `
   .acc-form{direction:rtl;text-align:right;}
   .acc-form .acc-label{
-    display:block;font-size:16pt;font-weight:700;text-align:center;
+    display:block;font-size:14pt;font-weight:700;text-align:center;
     font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
-    margin:8px 0 4px;color:var(--text,#111);line-height:1.7;
+    margin:8px 0 4px;color:var(--text,#111);line-height:1.6;
   }
   .acc-form .acc-field{display:flex;flex-direction:column;}
   .acc-form .acc-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;align-items:start;}
-  .acc-form .acc-grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px 10px;align-items:start;}
+  .acc-form .acc-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 10px;align-items:start;}
+  .acc-form .acc-grid5{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:6px 8px;align-items:start;}
   .acc-form .form-input{width:100%;box-sizing:border-box;}
   .acc-form select.form-input,.acc-form input.form-input{text-align:center;}
-  @media(max-width:560px){.acc-form .acc-grid4{grid-template-columns:1fr 1fr;}}
+  @media(max-width:640px){.acc-form .acc-grid5{grid-template-columns:1fr 1fr 1fr;}}
+  @media(max-width:560px){.acc-form .acc-grid3{grid-template-columns:1fr 1fr;}}
   `;
   document.head.appendChild(s);
 }
@@ -153,11 +155,11 @@ function _renderAccCards(list) {
     </div>`).join('');
 }
 
-// Format YYYY-MM-DD → dd-mm-yyyy
+// Format YYYY-MM-DD → dd/mm/yyyy
 function _fmtDateDMY(d) {
   if (!d) return '';
   const p = String(d).split('-');
-  if (p.length === 3) return p[2].slice(0,2) + '-' + p[1] + '-' + p[0];
+  if (p.length === 3) return p[2].slice(0,2) + '/' + p[1] + '/' + p[0];
   return d;
 }
 
@@ -202,6 +204,34 @@ function _accCustomSelect(opts, val, fid, key, dir) {
   </select>`;
 }
 
+// ── KEYBOARD NAVIGATION (Tab / Arrow Up-Down / Space) ─────────
+// Tab is native. Arrow Up/Down move between fields. Space opens a
+// focused dropdown or clicks a focused button (types normally in text).
+function _accKeyNav(e) {
+  const form = document.querySelector('.acc-form');
+  if (!form || !form.contains(e.target)) return;
+  const t = e.target;
+  const k = e.key;
+
+  const els = Array.from(form.querySelectorAll('input, select, button, textarea'))
+    .filter(el => !el.disabled && el.type !== 'file' && el.getClientRects().length);
+  const i = els.indexOf(t);
+
+  if (k === 'ArrowDown') {
+    if (i > -1 && i < els.length - 1) { e.preventDefault(); els[i + 1].focus(); }
+  } else if (k === 'ArrowUp') {
+    if (i > 0) { e.preventDefault(); els[i - 1].focus(); }
+  } else if (k === ' ' || k === 'Spacebar' || k === 'Space') {
+    if (t.tagName === 'SELECT') {
+      if (typeof t.showPicker === 'function') { e.preventDefault(); try { t.showPicker(); } catch(_) {} }
+    } else if (t.tagName === 'BUTTON') {
+      e.preventDefault(); t.click();
+    }
+    // text/date inputs: space types normally
+  }
+  // Tab / Shift+Tab: native handling walks every field in order
+}
+
 // ── ADD / EDIT MODAL ──────────────────────────────────────────
 function _openAccusedForm(id, type) {
   _accInjectCSS();
@@ -227,8 +257,8 @@ function _openAccusedForm(id, type) {
     <label class="acc-label">نام و پتہ ملزم</label>
     <input class="form-input" id="acc-name" value="${_escA(a.name)}" placeholder="نام، ولدیت، پتہ" style="margin-bottom:6px;text-align:right;">
 
-    <!-- شناختی کارڈ | موبائل -->
-    <div class="acc-grid">
+    <!-- شناختی کارڈ | موبائل | پیشہ (ایک لائن) -->
+    <div class="acc-grid3">
       <div class="acc-field">
         <label class="acc-label">شناختی کارڈ</label>
         <input class="form-input" id="acc-cnic" dir="ltr" maxlength="15" value="${_escA(a.cnic)}" placeholder="00000-0000000-0" oninput="_fmtCnicInput(this)">
@@ -237,18 +267,14 @@ function _openAccusedForm(id, type) {
         <label class="acc-label">موبائل</label>
         <input class="form-input" id="acc-mobile" dir="ltr" maxlength="12" value="${_escA(a.mobile)}" placeholder="0000-0000000" oninput="_fmtMobileInput(this)">
       </div>
-
-      <!-- تاریخ گرفتاری | پیشہ -->
-      <div class="acc-field">
-        <label class="acc-label">تاریخ گرفتاری</label>
-        <input class="form-input" id="acc-arrest" type="date" dir="ltr" value="${_escA(a.arrest_date)}">
-      </div>
       <div class="acc-field">
         <label class="acc-label">پیشہ</label>
         <input class="form-input" id="acc-pesha" value="${_escA(a.pesha)}" placeholder="مثلاً: مزدور، ڈرائیور">
       </div>
+    </div>
 
-      <!-- تعلیم | عمر -->
+    <!-- تعلیم | عمر | تاریخ گرفتاری (ایک لائن) -->
+    <div class="acc-grid3">
       <div class="acc-field">
         <label class="acc-label">تعلیم</label>
         <select class="form-input" id="acc-taleem">
@@ -260,21 +286,23 @@ function _openAccusedForm(id, type) {
         <label class="acc-label">عمر</label>
         ${_accCustomSelect(ACC_UMAR, a.umar, 'acc-umar', 'umar')}
       </div>
+      <div class="acc-field">
+        <label class="acc-label">تاریخ گرفتاری</label>
+        <input class="form-input" id="acc-arrest" type="date" dir="ltr" value="${_escA(a.arrest_date)}">
+      </div>
     </div>
 
-    <!-- حلیہ -->
+    <!-- حلیہ (رنگ، چہرہ، جسم، قد، نشان — ایک لائن) -->
     <label class="acc-label" style="margin-top:12px;">حلیہ</label>
-    <div class="acc-grid4">
+    <div class="acc-grid5">
       ${dd('رنگ',   ACC_RANG,   a.rang,   'acc-rang')}
       ${dd('چہرہ',  ACC_CHEHRA, a.chehra, 'acc-chehra')}
       ${dd('جسم',   ACC_JISM,   a.jism,   'acc-jism')}
       ${dd('قد',    ACC_QAD,    a.qad,    'acc-qad', 'ltr')}
-    </div>
-
-    <!-- نشان (پوری چوڑائی) -->
-    <div style="margin-top:8px;">
-      <label class="acc-label">نشان</label>
-      ${_accCustomSelect(ACC_NISHAN, a.nishan, 'acc-nishan', 'nishan')}
+      <div class="acc-field">
+        <label class="acc-label">نشان</label>
+        ${_accCustomSelect(ACC_NISHAN, a.nishan, 'acc-nishan', 'nishan')}
+      </div>
     </div>
 
     <!-- Photo + CNIC copy uploads -->
@@ -415,3 +443,9 @@ async function _deleteAccused(id) {
 
 // ── HELPERS ───────────────────────────────────────────────────
 function _escA(s) { return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// Bind keyboard navigation once (capture phase so it beats native arrow-on-select)
+if (typeof window !== 'undefined' && !window._accKeyNavBound) {
+  document.addEventListener('keydown', _accKeyNav, true);
+  window._accKeyNavBound = true;
+}
