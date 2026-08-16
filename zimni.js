@@ -150,7 +150,6 @@ function _renderZimniEditor() {
     <!-- Formatting buttons yahan nahi — jab kisi khane mein likhenge to
          MS Word wala toolbar khud wahin nazar aa jayega -->
     <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
-      <button onclick="_zAddRow()" title="نئی قطار" style="${_zBtn()}font-size:11px;">➕ قطار</button>
       <div style="margin-right:auto;display:flex;gap:6px;">
         <button class="btn btn-primary btn-sm" onclick="_saveZimni()">💾 محفوظ</button>
         <button class="btn btn-secondary btn-sm" onclick="_printZimni()">🖨️ پرنٹ</button>
@@ -188,69 +187,9 @@ function _renderZimniEditor() {
   }, 80);
 }
 
-// Default document body (Police Form 25-54(1))
+// Default document body — completely blank writing area
 function _zimniDefaultBody(o, c) {
-  const z = _zimniActive || {};
-  const station = o.station || '________';
-  const district = o.district || '________';
-  const year = new Date().getFullYear();
-  const cell = (v) => v || '';
-  return `
-  <div style="text-align:left;font-size:11px;color:#555;margin-bottom:6px;">پولیس فارم نمبر 25—54(1) — بیرونی</div>
-  <div style="text-align:center;font-size:18px;font-weight:800;margin-bottom:4px;">رپورٹ ضمنی</div>
-  <div style="text-align:center;font-size:13px;margin-bottom:12px;">ضلع ${district} تھانہ ${station} — سال ${year} — ضمنی نمبر <b>${z.serial_no||''}</b></div>
-
-  <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:10px;">
-    <tr>
-      <td style="border:1px solid #999;padding:6px;width:33%;"><b>مقدمہ نمبر:</b> ${cell(c.fir_number)}</td>
-      <td style="border:1px solid #999;padding:6px;width:33%;"><b>مورخہ:</b> ${cell(c.occurrence_date)}</td>
-      <td style="border:1px solid #999;padding:6px;"><b>تھانہ میں پہنچنے کا وقت و تاریخ:</b> </td>
-    </tr>
-    <tr>
-      <td style="border:1px solid #999;padding:6px;"><b>تاریخ و مقام وقوعہ:</b> </td>
-      <td style="border:1px solid #999;padding:6px;" colspan="2"><b>تھانہ سے روانگی کا وقت و تاریخ:</b> </td>
-    </tr>
-    <tr>
-      <td style="border:1px solid #999;padding:6px;"><b>بحد:</b> </td>
-      <td style="border:1px solid #999;padding:6px;" colspan="2"><b>جرم:</b> ${cell(c.section_of_law)} ${cell(c.offence_type)}</td>
-    </tr>
-  </table>
-
-  <!-- Main 4-column table -->
-  <table style="width:100%;border-collapse:collapse;font-size:13px;" id="zimni-main-table">
-    <thead>
-      <tr style="background:#f0f0f0;">
-        <th style="border:1px solid #999;padding:6px;width:18%;">از۔تھانہ</th>
-        <th style="border:1px solid #999;padding:6px;">حالاتِ تفتیش</th>
-        <th style="border:1px solid #999;padding:6px;width:12%;">رپورٹ نمبر شمار سلسلہ وار</th>
-        <th style="border:1px solid #999;padding:6px;width:16%;">تاریخ و وقت کارروائی</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td style="border:1px solid #999;padding:8px;vertical-align:top;">${esc(o.full_name)||''}<br>${esc(station)}</td>
-        <td style="border:1px solid #999;padding:8px;vertical-align:top;text-align:justify;min-height:200px;"> </td>
-        <td style="border:1px solid #999;padding:8px;text-align:center;vertical-align:top;">${z.serial_no||''}</td>
-        <td style="border:1px solid #999;padding:8px;vertical-align:top;"> </td>
-      </tr>
-    </tbody>
-  </table>`;
-}
-
-// Add a new row to the main table
-function _zAddRow() {
-  const ed = document.getElementById('zimni-doc');
-  if (!ed) return;
-  const tbody = ed.querySelector('#zimni-main-table tbody');
-  if (!tbody) { showToast('⚠️ ٹیبل نہیں ملا', 'warn'); return; }
-  const o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td style="border:1px solid #999;padding:8px;vertical-align:top;">${esc(o.full_name)||''}<br>${esc(o.station)||''}</td>
-    <td style="border:1px solid #999;padding:8px;vertical-align:top;text-align:justify;"> </td>
-    <td style="border:1px solid #999;padding:8px;text-align:center;vertical-align:top;"> </td>
-    <td style="border:1px solid #999;padding:8px;vertical-align:top;"> </td>`;
-  tbody.appendChild(tr);
+  return '';
 }
 
 // ── FORMATTING ────────────────────────────────────────────────
