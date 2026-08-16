@@ -1192,7 +1192,23 @@ function _ch173TrimRowGap() {
   if (!doc || !cell) return;
   const row = doc.querySelector('#ch173-table tbody tr');
   if (!row) return;
-  const bacha = cell.clientHeight - cell.scrollHeight;      // khali jagah
+  // AHEM: yahan 'scrollHeight' se naap NA li jaye. Jab matn khane se CHHOTA
+  // ho to scrollHeight khane ki poori unchai hi batata hai — yani khali jagah
+  // hamesha 0 nikalti hai aur yeh kaam kabhi chalta hi nahi. Asal naap Range
+  // se leni parti hai, jo batati hai ke matn WAQAI kahan khatam hua.
+  let bacha = 0;
+  try {
+    const rg = document.createRange();
+    rg.selectNodeContents(cell);
+    const rr = rg.getBoundingClientRect();
+    const cr = cell.getBoundingClientRect();
+    if (!rr.height) return;                                 // khana khali hai
+    let padB = 0;
+    try { padB = parseFloat(getComputedStyle(cell).paddingBottom) || 0; } catch (_) {}
+    // Safha scale hua ho to naap ko wapas asal paimane par lao
+    const scale = (cell.offsetHeight && cr.height) ? (cr.height / cell.offsetHeight) : 1;
+    bacha = Math.round(((cr.bottom - rr.bottom) / (scale || 1)) - padB);
+  } catch (_) { return; }
   if (bacha <= 4) return;                                   // pehle se chipki hui
   const cur = row.offsetHeight;
   const naya = Math.max(80, cur - bacha);
