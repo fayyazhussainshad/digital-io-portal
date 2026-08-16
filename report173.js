@@ -4,74 +4,96 @@
    ═══════════════════════════════════════════════════════════ */
 
 /* ╔═══════════════════════════════════════════════════════════╗
-   ║  🔒 چالان کی طے شدہ (LOCKED) سیٹنگز — v311                ║
+   ║  🔒 چالان کی طے شدہ (LOCKED) سیٹنگز — v352                ║
    ║  ASI Fayyaz Hussain Shad ki sareeh ijazat ke BAGHAIR      ║
    ║  in mein se koi cheez tabdeel NA ki jaye. Naye kaam karte ║
    ║  waqt sab se pehle yeh fehrist parh li jaye.              ║
    ╚═══════════════════════════════════════════════════════════╝
 
+   ═══ SAB SE AHEM USOOL ═══
+   Naap ka POORA kaam SIRF _ch173Layout() se hota hai, aik pakki tarteeb mein:
+       1. _ch173FitPaper    — safha kaghaz ki naap par + dabba khirki tak
+       2. _ch173AutoFitCols — khanon ki chaurai
+       3. _ch173AutoSize    — chaurai + lambai (matn ke mutabiq)
+       4. _ch173RoundRow    — qatar ko POORI satron par gol (yahin gap khatam)
+       5. _ch173StretchRow  — sirf tab jab table ke neeche kuch bhi na ho
+       6. _ch173OverflowSettle — matn jama do
+       7. _ch173WrapCnics / _ch173AlignSho
+   In mein se koi kaam ALAG SE (apne waqt par) na chalaya jaye. Pehle yeh
+   bikhre hue chalte the aur aik doosre ki naap badal dete the — isi se
+   pehli dafa matn chhupa milta tha aur doosri dafa gap reh jata tha.
+
    1) KAGHAZ
-      • لیگل/فولیو = 8.5in × 13in   |   A4 = 8.27in × 11.7in
-      • Ooper/neeche margin = 1cm (dono kaghaz)
-      • Side margin: لیگل/فولیو = 0.2cm  |  A4 = 0.5cm
-        → SIRF _ch173SideMargin() se aati hai. Yeh AIK hi jagah
-          screen aur print dono ko deti hai — kabhi do jagah na likhi jaye,
-          warna screen aur chapai phir alag ho jayenge.
+      • لیگل/فولیو = 8.5in × 13in  |  A4 = 8.27in × 11.7in
+      • Ooper/neeche margin 1cm; side margin: لیگل 0.2cm | A4 0.5cm
+        → SIRF _ch173SideMargin() se (aik hi jagah, screen aur print dono)
+      • Safha SHURU se hi kaghaz ki chaurai par khulta hai (container par
+        nirbhar nahi) — warna doosri tabs ke saath matn chhup jata tha.
+      • Safha kabhi BARA na kiya jaye (scale <= 1) — warna neeche fazool
+        khali patti ban jati hai. Bara dekhna ho to browser ka zoom.
+      • doc-viewer.js mein '#dio-dv-body #ch173-doc{width:100%!important}'
+        DOBARA NA daala jaye — wohi asal mujrim tha (safha 1244px ho jata tha).
 
-   2) SCREEN = PRINT (WYSIWYG)
-      • Safha screen par bhi KAGHAZ ki asal chaudai par rehta hai
-        (_ch173FitPaper) aur sirf dikhane ke liye transform:scale hota hai.
-      • 'zoom' kabhi istemal na kiya jaye — woh naap dobara ginta hai
-        aur satren badal deta hai. Sirf transform:scale.
-      • Print ke waqt: kaghaz ki chaudai par le jao → overflow settle →
-        snapshot → phir screen wapas. (_printR173)
+   2) TABLE
+      • کالم 1 تا 6 — chaurai aur lambai KHUD-KAR (matn ke mutabiq).
+        Naap lene se PEHLE tamam pabandiyan hatai jati hain, warna tang khane
+        ki naap chhoti nikalti hai aur khana har dafa aur tang hota jata hai.
+      • کالم 7 ke liye kam az kam 22% chaurai hamesha mehfooz.
+      • Qatar ki unchai poori satron par GOL hoti hai → gap sifar.
+      • "ملزمان" ke neeche wali lakeer kheenchi ja sakti hai (rowgrip-top).
 
-   3) TABLE
-      • کالم 1 ki chaurai = PAKKI 1.5cm (CH173_COL1_W). Mehfooz naap se
-        bhi nahi badalti; us ki drag-grip band hai (addGrip mein iA/iB===0).
-      • Baqi columns ki default naap: [_, 13, 11, 12, 5, 21, 29]
-      • Row 3 (data) ki unchai: 185mm (لیگل) / 150mm (A4)
-      • Header: th.vcell height 96px
-      • "ملزمان" ke neeche wali lakeer kheench kar hilai ja sakti hai
-        (rowgrip-top) — header ki KUL unchai wahi rehti hai.
-
-   4) KHADI LIKHAYI (columns 1–6)
+   3) KHADI LIKHAYI (columns 1–6)
       • .rotinner = writing-mode:vertical-rl + display:block + text-align:start
-      • FLEX yahan HARGIZ na lagayen — khadi likhayi mein us ka rukh
-        ghair-yaqeeni hai (satren aage-ooper khisak jati hain).
-      • transform:rotate bhi na lagayen — woh sirf dikhawa ghumata hai,
-        JAGAH nahi (naam kinare par dhakel jata tha).
-      • sideways-lr sirf Firefox ka hai — Chrome mein NAHI chalta.
+      • FLEX aur transform:rotate yahan HARGIZ nahi. sideways-lr Chrome mein
+        nahi chalta (sirf Firefox).
 
-   5) NAAM + CNIC
+   4) NAAM + CNIC
       • Tarteeb: نمبر شمار + NAAM pehle, phir CNIC.
-      • Har satar apne khane (.ln) mein: naam OOPER, CNIC NEECHE
-        (flex + space-between) → tamam CNIC AIK SEEDH mein.
-      • CNIC ka rukh: OOPER se NEECHE, LTR
-        (writing-mode:vertical-rl + text-orientation:sideways).
-      • CNIC ki pehchan = satar ke AAKHIR wala number — dashes ke saath
-        (36302-2931394-5) aur BAGHAIR dashes (36302010673363) dono.
-      • Yeh lapet SIRF dikhane ke liye hai. Save se pehle _ch173UnwrapCnics
-        se khul jati hai — database mein hamesha SAADA matn jata hai.
-        (Pehle markup save ho kar matn kharab ho chuka hai — dobara na ho.)
-      • Agar officer ne khud formatting lagayi ho to us khane ko haath
-        nahi lagaya jata (_ch173PlainCell).
+      • Har satar apne khane (.ln) mein: naam OOPER, CNIC NEECHE → tamam CNIC
+        AIK SEEDH mein. CNIC ka rukh ooper se neeche, LTR.
+      • CNIC dashes ke saath AUR baghair, dono shaklon mein pehchana jata hai.
+      • Yeh lapet SIRF dikhane ke liye — save se pehle _ch173UnwrapCnics se
+        khul jati hai, database mein hamesha SAADA matn.
 
-   6) کالم 7 (مختصر حالات)
-      • Satron ka fasla (line-height) = 1.5 — کالم 7 aur us ke neeche wale
-        "باقی متن" (cont_text) DONO ka aik jaisa (1.15 → 1.3 → 1.5, Shafi ki
-        sareeh hidayat par). Dono hamesha BARABAR rakhe jayen, warna neeche
-        jane wala matn alag shakl ka lagta hai.
-      • Jo matn khane mein na samaye woh table ke NEECHE (cont_text) jata hai.
-      • Overflow 'input' par (350ms baad) aur 'paste' par chalta hai —
-        'blur' par KABHI nahi (innerText formatting mita deta hai).
-      • Print aur Save dono se pehle _ch173OverflowSettle chalta hai.
+   5) کالم 7 aur نیچے والا متن
+      • Satron ka fasla (line-height) = 1.5 — کالم 7 aur cont_text DONO ka.
+      • Matn lafz-ba-lafz neeche jata hai AUR lafz-ba-lafz wapas bhi aata hai
+        (table bari/chhoti karne par). Poora tukra na uthaya jaye.
+      • _ch173StripSpan in khanon par KABHI na lagaya jaye — woh </div> aur
+        </span> hata deta hai aur matn ka beech ka hissa chhup jata hai.
+      • Khane ke aakhir ki khali satren khud hat jati hain.
 
-   7) AAM USOOL
+   6) تفصیل کاغذات
+      • Fehrist localStorage mein, HAR qism ki alag:
+        مکمل/نامکمل/512/انٹیرم = aik (17 kaghaz default) | تتمہ | اخراج | عدم پتہ
+      • KHALI fehrist ko "mehfooz shuda" na mana jaye (warna default wapas
+        nahi aate). Purani 7-wali default fehrist khud nayi par aa jati hai.
+      • ▾ se: naam badalna, ＋ naya, ▲▼ tarteeb, ✕ hatana, ↑↓ aur Ctrl+↑↓
+      • Har kaghaz: naam UNDERLINED + neeche BEECH mein tadaad ka khana
+        (width:2.6em; margin:0 auto — warna aik taraf ho jata hai)
+      • Kaghaz ke darmiyan Tab = 0.635cm (4 spaces). Fehrist justified.
+      • Rukh PAKKA RTL (direction:rtl !important) — app-core.js ka aam qanoon
+        'unicode-bidi:plaintext' warna tarteeb ulat deta hai.
+
+   7) SHO ki lines
+      • Pehli line bayen kinare par "behti" hai (float) aur kaghaz us ke
+        ird-gird se guzar kar us ke NEECHE bhi chale jate hain.
+      • Pehli line theek AIK SATAR neeche (تاریخ wali jagah par) — naap satar
+        se khud li jati hai. Doosri line tamam kaghazon ke neeche, us ke
+        ooper 0.6cm (dastkhat ke liye).
+      • Izafi matn aur تفصیل کاغذات ke darmiyan AIK satar ki jagah.
+
+   8) CHAPAI
+      • Chapai wahi naql leti hai jo screen par hai — naap DOBARA na li jaye
+        (screen aur print ki chaurai bilkul barabar 801px hai).
+      • Misal bandhne ki tikoni jagah: doosre safhe se, ooper bayen kone mein,
+        dono bazoo 2-2 inch; matn us se bach kar behta hai. Sirf chapai mein.
+
+   9) AAM USOOL
       • Har tabdeeli ke baad sw.js ka CACHE_NAME barhana zaroori.
       • Tareekhein sirf DD/MM/YYYY (formatDate).
       • "پنجاب پولیس" ka koi عنوان kahin nahi.
-      ═══════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════ */
 
 let _r173CaseId = null;
 let _r173Case = null;
@@ -3311,7 +3333,8 @@ function _ch173CSS() {
          us ke NEECHE bhi chale jate hain — poori chaurai kaam mein aati hai.
          SHO ki doosri line tamam kaghazon ke neeche aati hai. */
       #ch173-doc .ch173-sho-flex{
-        display:block; direction:rtl; margin-top:6px;
+        display:block; direction:rtl;
+        margin-top:1.25em;      /* izafi matn aur تفصیل کاغذات ke darmiyan AIK satar */
       }
       #ch173-doc .ch173-sho-flex::after{ content:''; display:block; clear:both; }
       /* SHO ki lines ke OOPER ki jagah:
