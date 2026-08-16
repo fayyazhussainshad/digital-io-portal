@@ -2462,24 +2462,48 @@ function _ch173FocusMode(on) {
   if (!on) {
     b.classList.remove('ch173-focus');
     const bar = document.getElementById('misal-doc-bar');
-    if (bar) bar.classList.remove('peek');
+    if (bar) {
+      bar.classList.remove('peek');
+      // Us ke khane ki jo tabdeeli ki thi woh wapas
+      try { if (bar.parentElement) bar.parentElement.style.position = ''; } catch (_) {}
+    }
+    try { clearTimeout(window._ch173PeekT); } catch (_) {}
     return;
   }
   b.classList.add('ch173-focus');
+  // Patti ko us ke apne khane ke andar rakhna hai (absolute), warna woh
+  // safhe ke bilkul ooper chali jayegi.
+  try {
+    const bar0 = document.getElementById('misal-doc-bar');
+    const par  = bar0 && bar0.parentElement;
+    if (par && getComputedStyle(par).position === 'static') par.style.position = 'relative';
+  } catch (_) {}
   if (window._ch173PeekBound) return;
   window._ch173PeekBound = true;
   document.addEventListener('mousemove', (e) => {
     if (!document.body.classList.contains('ch173-focus')) return;
     const bar = document.getElementById('misal-doc-bar');
     if (!bar) return;
-    let near = e.clientY <= 90;                   // ooper ka ilaqa
+    let near = e.clientY <= 70;                   // ooper ka ilaqa
     if (!near) {
       try {
         const r = bar.getBoundingClientRect();
-        near = e.clientY >= r.top - 12 && e.clientY <= r.bottom + 12;
+        // Patti par (ya us ke bilkul qareeb) cursor ho to khuli rahe
+        near = e.clientY >= r.top - 10 && e.clientY <= r.bottom + 10 &&
+               e.clientX >= r.left  && e.clientX <= r.right;
       } catch (_) {}
     }
-    bar.classList.toggle('peek', near);
+    if (near) {
+      clearTimeout(window._ch173PeekT);
+      bar.classList.add('peek');
+    } else if (bar.classList.contains('peek')) {
+      // Foran gayab na ho — thora waqt do, warna button tak pohanchte hi
+      // patti band ho jati hai
+      clearTimeout(window._ch173PeekT);
+      window._ch173PeekT = setTimeout(() => {
+        try { bar.classList.remove('peek'); } catch (_) {}
+      }, 400);
+    }
   }, { passive: true });
 }
 window._ch173FocusMode = _ch173FocusMode;
@@ -3249,14 +3273,23 @@ function _ch173CSS() {
   return `
       /* ── چالان = پورا صفحہ ── chips ki patti sirf CHHUPTI hai, hoti wahin
          hai; cursor ooper le jate hi .peek lag kar wapas nazar aa jati hai. */
+      /* AHEM: patti matn ke OOPER (absolute) nazar aati hai — neeche wali
+         cheezon ko DHAKELTI nahi. Pehle woh dhakel deti thi, jis se toolbar
+         neeche aa jata tha; button tak pohanchte hi cursor ooper wale ilaqe
+         se nikal jata, patti chhup jati aur toolbar wapas ooper chala jata —
+         button haath se nikal jata tha. Ab toolbar apni jagah se hilta hi
+         nahi. */
       body.ch173-focus #misal-doc-bar{
+        position:absolute; top:0; left:0; right:0; z-index:60;
         max-height:0 !important; padding-top:0 !important; padding-bottom:0 !important;
         opacity:0; overflow:hidden;
+        background:var(--bg-secondary, #fff);
         transition:max-height .18s ease, opacity .18s ease, padding .18s ease;
       }
       body.ch173-focus #misal-doc-bar.peek{
-        max-height:220px !important; opacity:1;
+        max-height:240px !important; opacity:1;
         padding-top:6px !important; padding-bottom:6px !important;
+        box-shadow:0 8px 18px rgba(0,0,0,.18);
       }
       /* Neeche wali patti bhi hat jaye — poora safha چالان ko mile */
       body.ch173-focus .bottombar{ display:none !important; }
