@@ -11,10 +11,39 @@ let _accusedFormType = 'fir'; // 'fir' or 'tahqeeqati'
 
 // Physical description dropdown options
 const ACC_RANG   = ['گندمی','گورا','سانولا','کالا','زرد'];
-const ACC_CHEHRA = ['گول','لمبا','بیضوی','چوڑا'];
-const ACC_JISM   = ['دبلا','موٹا','درمیانہ','مضبوط'];
-const ACC_QAD    = ['پستہ','درمیانہ','لمبا','نہایت لمبا'];
-const ACC_NISHAN = ['کوئی نہیں','چہرے پر','بازو پر','ہاتھ پر','گردن پر','دیگر'];
+const ACC_CHEHRA = ['گول','لمبا','لمبوترہ','بیضوی','چوڑا'];
+const ACC_JISM   = ['پتلا پھرتیلا','کمزور','درمیانہ','مضبوط','بھاری مضبوط'];
+
+// قد: 4'-5" سے 7'-0" تک (ہر انچ)
+const ACC_QAD = (function(){
+  const o = [];
+  for (let inch = 53; inch <= 84; inch++) {   // 53 = 4'5", 84 = 7'0"
+    o.push(Math.floor(inch/12) + "'-" + (inch%12) + '"');
+  }
+  return o;
+})();
+
+// عمر: 15/16 سال سے 35/36 سال تک (+ اپنی مرضی سے اضافہ ممکن)
+const ACC_UMAR = (function(){
+  const o = [];
+  for (let y = 15; y <= 35; y++) o.push(y + '/' + (y+1) + ' سال');
+  return o;
+})();
+
+// نشان: (+ اپنی مرضی سے اضافہ ممکن)
+const ACC_NISHAN = [
+  'گردن پر تل',
+  'رخسار پر تل',
+  'دائیں ہاتھ پر نشان زخم صحت شدہ',
+  'بائیں ہاتھ پر نشان زخم صحت شدہ',
+  'بائیں ہاتھ کی پشت پر نشان زخم صحت شدہ',
+  'دائیں ہاتھ کی پشت پر نشان زخم صحت شدہ',
+  'دائیں بازو پر نشان زخم صحت شدہ',
+  'بائیں بازو پر نشان زخم صحت شدہ'
+];
+
+// تعلیم
+const ACC_TALEEM = ['پرائمری','مڈل','میٹرک','FSc','FA','BA','BSc','MA','MSc','حافظ قرآن'];
 
 let _accusedViewType = 'fir'; // which type this view shows
 
@@ -52,9 +81,32 @@ async function _loadAccused() {
   }
 }
 
+// ── FORM CSS (injected once) ──────────────────────────────────
+function _accInjectCSS() {
+  if (document.getElementById('acc-form-css')) return;
+  const s = document.createElement('style');
+  s.id = 'acc-form-css';
+  s.textContent = `
+  .acc-form{direction:rtl;text-align:right;}
+  .acc-form .acc-label{
+    display:block;font-size:16pt;font-weight:700;text-align:center;
+    font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
+    margin:8px 0 4px;color:var(--text,#111);line-height:1.7;
+  }
+  .acc-form .acc-field{display:flex;flex-direction:column;}
+  .acc-form .acc-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;align-items:start;}
+  .acc-form .acc-grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px 10px;align-items:start;}
+  .acc-form .form-input{width:100%;box-sizing:border-box;}
+  .acc-form select.form-input,.acc-form input.form-input{text-align:center;}
+  @media(max-width:560px){.acc-form .acc-grid4{grid-template-columns:1fr 1fr;}}
+  `;
+  document.head.appendChild(s);
+}
+
 // ── LIST VIEW ─────────────────────────────────────────────────
 // ── LIST VIEW (two columns: FIR ملزم | تفتیشی ملزمان) ─────────
 function _renderAccusedArea() {
+  _accInjectCSS();
   const area = document.getElementById('workspace-editor-area')
             || document.getElementById('workspace-tab-content')
             || document.getElementById('page-content');
@@ -67,7 +119,7 @@ function _renderAccusedArea() {
 
   area.innerHTML = `
   <div style="direction:rtl;height:100%;overflow-y:auto;padding:10px;width:100%;box-sizing:border-box;">
-    <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:${color};border-bottom:2px solid ${color};padding-bottom:6px;margin-bottom:12px;text-align:right;width:100%;box-sizing:border-box;">${heading}</div>
+    <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:${color};border-bottom:2px solid ${color};padding-bottom:6px;margin-bottom:12px;text-align:center;width:100%;box-sizing:border-box;">${heading}</div>
     <div id="acc-list" style="width:100%;">${_renderAccCards(list)}</div>
     <div style="display:flex;gap:6px;margin-top:12px;">
       <button class="btn btn-primary btn-sm" onclick="_openAccusedForm(null,'${_accusedViewType}')">➕ ملزم</button>
@@ -76,7 +128,6 @@ function _renderAccusedArea() {
   </div>`;
 }
 
-// Inject responsive CSS once (avoids brace issues in template literals)
 function _renderAccCards(list) {
   if (!list.length) {
     return `<div style="text-align:center;padding:24px 12px;color:var(--text-muted);font-size:12px;">
@@ -93,6 +144,8 @@ function _renderAccCards(list) {
         <div style="font-size:12px;color:var(--text-muted);display:flex;gap:8px;flex-wrap:wrap;">
           ${a.cnic?`<span dir="ltr">🪪 ${_escA(a.cnic)}</span>`:''}
           ${a.pesha?`<span>${_escA(a.pesha)}</span>`:''}
+          ${a.taleem?`<span>🎓 ${_escA(a.taleem)}</span>`:''}
+          ${a.umar?`<span>${_escA(a.umar)}</span>`:''}
           ${a.arrest_date?`<span dir="ltr">📅 ${_fmtDateDMY(a.arrest_date)}</span>`:''}
         </div>
       </div>
@@ -100,11 +153,11 @@ function _renderAccCards(list) {
     </div>`).join('');
 }
 
-// Format YYYY-MM-DD → dd/mm/yy
+// Format YYYY-MM-DD → dd-mm-yyyy
 function _fmtDateDMY(d) {
   if (!d) return '';
   const p = String(d).split('-');
-  if (p.length === 3) return p[2].slice(0,2) + '/' + p[1] + '/' + p[0].slice(2);
+  if (p.length === 3) return p[2].slice(0,2) + '-' + p[1] + '-' + p[0];
   return d;
 }
 
@@ -116,74 +169,122 @@ function _deleteLastAcc(type) {
   _deleteAccused(last.id);
 }
 
+// ── CUSTOM-OPTION STORAGE (for عمر / نشان "+" additions) ───────
+function _accCustomOpts(key) {
+  try { return JSON.parse(localStorage.getItem('dio_acc_opts_' + key) || '[]'); }
+  catch(_) { return []; }
+}
+function _accSaveCustomOpt(key, val) {
+  const l = _accCustomOpts(key);
+  if (!l.includes(val)) { l.push(val); try { localStorage.setItem('dio_acc_opts_' + key, JSON.stringify(l)); } catch(_) {} }
+}
+function _accDdAdd(el, key) {
+  if (el.value !== '__add__') return;
+  const v = (prompt('نیا آپشن لکھیں:') || '').trim();
+  if (!v) { el.value = ''; return; }
+  _accSaveCustomOpt(key, v);
+  const addOpt = el.querySelector('option[value="__add__"]');
+  const opt = document.createElement('option');
+  opt.value = v; opt.textContent = v;
+  el.insertBefore(opt, addOpt);
+  el.value = v;
+}
+// Select with default options + saved-custom options + "➕" add row
+function _accCustomSelect(opts, val, fid, key, dir) {
+  const custom = _accCustomOpts(key);
+  const all = opts.slice();
+  custom.forEach(c => { if (!all.includes(c)) all.push(c); });
+  if (val && !all.includes(val)) all.unshift(val);
+  return `<select class="form-input" id="${fid}" ${dir?`dir="${dir}"`:''} onchange="_accDdAdd(this,'${key}')">
+    <option value="">—</option>
+    ${all.map(o => `<option value="${_escA(o)}" ${val===o?'selected':''}>${_escA(o)}</option>`).join('')}
+    <option value="__add__">➕ اپنی مرضی سے لکھیں</option>
+  </select>`;
+}
+
 // ── ADD / EDIT MODAL ──────────────────────────────────────────
 function _openAccusedForm(id, type) {
+  _accInjectCSS();
   const a = id ? (_accusedList.find(x => x.id === id) || {}) : {};
   _accusedFormType = type || a.accused_type || 'fir';
   _accusedPhoto = a.photo_url || null;
   _accusedCnicCopy = a.cnic_copy_url || null;
 
-  const dd = (label, opts, val, fid) => `
-    <div style="flex:1;min-width:90px;">
-      <label style="font-size:11px;color:var(--text-muted);">${label}</label>
-      <select class="form-input" id="${fid}" style="font-size:13px;padding:6px;">
+  // plain dropdown (label + select) inside a grid cell
+  const dd = (label, opts, val, fid, dir) => `
+    <div class="acc-field">
+      <label class="acc-label">${label}</label>
+      <select class="form-input" id="${fid}" ${dir?`dir="${dir}"`:''}>
         <option value="">—</option>
-        ${opts.map(o => `<option ${val===o?'selected':''}>${o}</option>`).join('')}
+        ${opts.map(o => `<option value="${_escA(o)}" ${val===o?'selected':''}>${_escA(o)}</option>`).join('')}
       </select>
     </div>`;
 
   const body = `
-  <div class="dio-2col" style="direction:rtl;text-align:right;max-height:74vh;overflow-y:auto;padding:0;">
-    <!-- نام و پتہ -->
-    <label class="form-label">نام و پتہ ملزم</label>
-    <input class="form-input" id="acc-name" value="${_escA(a.name)}" placeholder="نام، ولدیت، پتہ" style="margin-bottom:10px;">
+  <div class="acc-form" style="max-height:74vh;overflow-y:auto;padding:2px 4px;">
 
-    <!-- CNIC + Mobile -->
-    <div style="display:flex;gap:8px;margin-bottom:10px;">
-      <div style="flex:1;">
-        <label class="form-label">شناختی کارڈ</label>
+    <!-- نام و پتہ -->
+    <label class="acc-label">نام و پتہ ملزم</label>
+    <input class="form-input" id="acc-name" value="${_escA(a.name)}" placeholder="نام، ولدیت، پتہ" style="margin-bottom:6px;text-align:right;">
+
+    <!-- شناختی کارڈ | موبائل -->
+    <div class="acc-grid">
+      <div class="acc-field">
+        <label class="acc-label">شناختی کارڈ</label>
         <input class="form-input" id="acc-cnic" dir="ltr" maxlength="15" value="${_escA(a.cnic)}" placeholder="00000-0000000-0" oninput="_fmtCnicInput(this)">
       </div>
-      <div style="flex:1;">
-        <label class="form-label">موبائل</label>
+      <div class="acc-field">
+        <label class="acc-label">موبائل</label>
         <input class="form-input" id="acc-mobile" dir="ltr" maxlength="12" value="${_escA(a.mobile)}" placeholder="0000-0000000" oninput="_fmtMobileInput(this)">
       </div>
-    </div>
 
-    <!-- Arrest date + Aliha -->
-    <div style="display:flex;gap:8px;margin-bottom:10px;">
-      <div style="flex:1;">
-        <label class="form-label">تاریخ گرفتاری</label>
+      <!-- تاریخ گرفتاری | پیشہ -->
+      <div class="acc-field">
+        <label class="acc-label">تاریخ گرفتاری</label>
         <input class="form-input" id="acc-arrest" type="date" dir="ltr" value="${_escA(a.arrest_date)}">
       </div>
-      <div style="flex:1;">
-        <label class="form-label">پیشہ</label>
+      <div class="acc-field">
+        <label class="acc-label">پیشہ</label>
         <input class="form-input" id="acc-pesha" value="${_escA(a.pesha)}" placeholder="مثلاً: مزدور، ڈرائیور">
+      </div>
+
+      <!-- تعلیم | عمر -->
+      <div class="acc-field">
+        <label class="acc-label">تعلیم</label>
+        <select class="form-input" id="acc-taleem">
+          <option value="">—</option>
+          ${ACC_TALEEM.map(o => `<option value="${_escA(o)}" ${a.taleem===o?'selected':''}>${_escA(o)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="acc-field">
+        <label class="acc-label">عمر</label>
+        ${_accCustomSelect(ACC_UMAR, a.umar, 'acc-umar', 'umar')}
       </div>
     </div>
 
-    <!-- Physical description -->
-    <label class="form-label">حلیہ</label>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+    <!-- حلیہ -->
+    <label class="acc-label" style="margin-top:12px;">حلیہ</label>
+    <div class="acc-grid4">
       ${dd('رنگ',   ACC_RANG,   a.rang,   'acc-rang')}
       ${dd('چہرہ',  ACC_CHEHRA, a.chehra, 'acc-chehra')}
       ${dd('جسم',   ACC_JISM,   a.jism,   'acc-jism')}
-      ${dd('قد',    ACC_QAD,    a.qad,    'acc-qad')}
-      <div style="flex:1;min-width:70px;">
-        <label style="font-size:11px;color:var(--text-muted);">عمر</label>
-        <input class="form-input" id="acc-umar" dir="ltr" value="${_escA(a.umar)}" placeholder="سال" style="font-size:13px;padding:6px;">
-      </div>
-      ${dd('نشان',  ACC_NISHAN, a.nishan, 'acc-nishan')}
+      ${dd('قد',    ACC_QAD,    a.qad,    'acc-qad', 'ltr')}
+    </div>
+
+    <!-- نشان (پوری چوڑائی) -->
+    <div style="margin-top:8px;">
+      <label class="acc-label">نشان</label>
+      ${_accCustomSelect(ACC_NISHAN, a.nishan, 'acc-nishan', 'nishan')}
     </div>
 
     <!-- Photo + CNIC copy uploads -->
-    <div style="display:flex;gap:10px;margin-bottom:6px;">
-      <div style="flex:1;">
+    <div class="acc-grid" style="margin-top:12px;">
+      <div class="acc-field">
         <input type="file" id="acc-photo-input" accept="image/*" capture="environment" style="display:none;" onchange="_accPhotoSelect(this)">
         <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="document.getElementById('acc-photo-input').click()">📷 تصویر ملزم</button>
         <div id="acc-photo-preview" style="margin-top:6px;text-align:center;">${_accusedPhoto?`<img src="${_accusedPhoto}" style="max-width:80px;border-radius:6px;">`:''}</div>
       </div>
-      <div style="flex:1;">
+      <div class="acc-field">
         <input type="file" id="acc-cnic-input" accept="image/*,application/pdf" style="display:none;" onchange="_accCnicSelect(this)">
         <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="document.getElementById('acc-cnic-input').click()">🪪 شناختی کارڈ کاپی</button>
         <div id="acc-cnic-preview" style="margin-top:6px;text-align:center;font-size:11px;color:var(--green);">${_accusedCnicCopy?'✅ منسلک':''}</div>
@@ -254,6 +355,10 @@ function _fmtMobileInput(el) {
 async function _saveAccused(id) {
   const name = document.getElementById('acc-name')?.value.trim();
   if (!name) { showToast('⚠️ ملزم کا نام لکھیں', 'error'); return; }
+
+  const _umar   = document.getElementById('acc-umar')?.value;
+  const _nishan = document.getElementById('acc-nishan')?.value;
+
   const rec = {
     case_id: _accusedCaseId,
     name,
@@ -262,12 +367,13 @@ async function _saveAccused(id) {
     mobile: document.getElementById('acc-mobile')?.value.trim() || null,
     arrest_date: document.getElementById('acc-arrest')?.value || null,
     pesha: document.getElementById('acc-pesha')?.value.trim() || null,
+    taleem: document.getElementById('acc-taleem')?.value || null,
     rang: document.getElementById('acc-rang')?.value || null,
     chehra: document.getElementById('acc-chehra')?.value || null,
     jism: document.getElementById('acc-jism')?.value || null,
     qad: document.getElementById('acc-qad')?.value || null,
-    umar: document.getElementById('acc-umar')?.value.trim() || null,
-    nishan: document.getElementById('acc-nishan')?.value || null,
+    umar: (_umar && _umar !== '__add__') ? _umar : null,
+    nishan: (_nishan && _nishan !== '__add__') ? _nishan : null,
     photo_url: _accusedPhoto || null,
     cnic_copy_url: _accusedCnicCopy || null,
   };
