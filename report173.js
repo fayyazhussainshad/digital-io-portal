@@ -400,6 +400,14 @@ function _renderR173() {
                دائیں: تفصیل کاغذات + لکھنے کی جگہ | بائیں: SHO/تاریخ (اوپر اور نیچے)
                دونوں کالم ہمیشہ برابر چوڑے، اور ایک ساتھ ہی نیچے بڑھتے ہیں -->
           <div class="ch173-sho-flex">
+            <!-- SHO ki PEHLI line bayen kinare par; kaghaz is ke ird-gird beh
+                 kar poori chaurai lete hain aur is ke neeche bhi chale jate
+                 hain (jaise asal form mein hota hai). -->
+            <div class="sho-block sho-b1">
+              <div class="sho-cell-row" contenteditable="true" data-k="sho_line2">${bs.sho_line2 !== undefined ? sanitizeHtml(bs.sho_line2) : (bs.sho_line !== undefined ? sanitizeHtml(bs.sho_line) : esc(_ch173ShoLine(o)))}</div>
+              <div class="sho-cell-row sho-cell-date" contenteditable="true" data-k="sho_date2"
+                   onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bs.sho_date2 !== undefined ? sanitizeHtml(bs.sho_date2) : (bs.sho_date !== undefined ? sanitizeHtml(bs.sho_date) : esc(_ch173Today()))}</div>
+            </div>
             <div class="sho-col sho-papers">
               <div class="sho-papers-head">تفصیل کاغذات<button class="papers-pick no-print" onclick="_ch173PapersPicker(event)" title="کاغذات منتخب کریں">▾</button></div>
               <!-- AHEM: yahan bv() istemal NA karein — woh tamam </span> hata
@@ -407,20 +415,11 @@ function _renderR173() {
                    toot jata hai. Seedha sanitizeHtml. -->
               <div class="sho-papers-body" contenteditable="true" data-k="papers_body">${bs.papers_body !== undefined ? sanitizeHtml(bs.papers_body) : ''}</div>
             </div>
-            <div class="sho-col sho-cell">
-              <div class="sho-block">
-                <!-- خالی سطر — SHO کی لائن "تفصیل کاغذات" کے برابر نہ آئے،
-                     بلکہ ایک سطر نیچے (جہاں پہلے تاریخ تھی) اور تاریخ اُس کے نیچے -->
-                <div class="sho-spacer"></div>
-                <div class="sho-cell-row" contenteditable="true" data-k="sho_line2">${bs.sho_line2 !== undefined ? sanitizeHtml(bs.sho_line2) : (bs.sho_line !== undefined ? sanitizeHtml(bs.sho_line) : esc(_ch173ShoLine(o)))}</div>
-                <div class="sho-cell-row sho-cell-date" contenteditable="true" data-k="sho_date2"
-                     onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bs.sho_date2 !== undefined ? sanitizeHtml(bs.sho_date2) : (bs.sho_date !== undefined ? sanitizeHtml(bs.sho_date) : esc(_ch173Today()))}</div>
-              </div>
-              <div class="sho-block">
-                <div class="sho-cell-row" contenteditable="true" data-k="sho_line5">${bs.sho_line5 !== undefined ? sanitizeHtml(bs.sho_line5) : esc(_ch173ShoLine(o))}</div>
-                <div class="sho-cell-row sho-cell-date" contenteditable="true" data-k="sho_date5"
-                     onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bs.sho_date5 !== undefined ? sanitizeHtml(bs.sho_date5) : esc(_ch173Today())}</div>
-              </div>
+            <!-- SHO ki DOOSRI line — tamam kaghazon ke neeche, bayen kinare par -->
+            <div class="sho-block sho-b2">
+              <div class="sho-cell-row" contenteditable="true" data-k="sho_line5">${bs.sho_line5 !== undefined ? sanitizeHtml(bs.sho_line5) : esc(_ch173ShoLine(o))}</div>
+              <div class="sho-cell-row sho-cell-date" contenteditable="true" data-k="sho_date5"
+                   onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bs.sho_date5 !== undefined ? sanitizeHtml(bs.sho_date5) : esc(_ch173Today())}</div>
             </div>
           </div>
 
@@ -1409,36 +1408,13 @@ window._ch173RoundRow = _ch173RoundRow;
 // hindsa (tadaad) khatam hota hai. Yeh naap CSS se nahi ho sakti kyunki
 // کاغذات ki unchai un ki tadaad par munhasir hai — is liye yahan naap kar
 // jagah tay karte hain.
+// SHO ki lines ki jagah ab KHUD beh kar banti hai (float) — naap kar
+// jagah tay karne ki zaroorat nahi rahi. Yeh sirf itna karta hai ke purani
+// naap ke nishan (margins) saaf kar de, warna wo naye behao se takrate hain.
 function _ch173AlignSho() {
   const doc = _ch173Doc();
   if (!doc) return;
-  const papers = doc.querySelector('.sho-papers');
-  const cell   = doc.querySelector('.sho-cell');
-  if (!papers || !cell) return;
-  const blocks = cell.querySelectorAll('.sho-block');
-  if (blocks.length < 2) return;
-  const pH = papers.offsetHeight;                 // کاغذات ka poora khana
-  if (!pH) return;
-
-  // ── SHO ki PEHLI line: عنوان "تفصیل کاغذات" ke barabar nahi, balke us ke
-  //    NEECHE wali satar ke barabar (jahan kaghaz aur un ki tadaad hai) ──
-  const head = doc.querySelector('.sho-papers-head');
-  let ooper = 0;
-  if (head) {
-    ooper = head.offsetHeight;
-    try {
-      const body = doc.querySelector('.sho-papers-body');
-      if (body) ooper += parseFloat(getComputedStyle(body).marginTop) || 0;
-    } catch (_) {}
-  }
-  blocks[0].style.marginTop = Math.max(0, Math.round(ooper)) + 'px';
-
-  // ── SHO ki DOOSRI line: theek wahan se jahan کاغذات ka aakhri hindsa
-  //    khatam hota hai (تاریخ apni usi shakl mein us ke neeche rehti hai) ──
-  const b1 = blocks[0].offsetHeight;              // pehli SHO line + tareekh
-  if (!b1) return;
-  const neeche = Math.max(0, Math.round(pH - ooper - b1));
-  blocks[1].style.marginTop = neeche + 'px';
+  doc.querySelectorAll('.sho-block').forEach(b => { b.style.marginTop = ''; });
 }
 window._ch173AlignSho = _ch173AlignSho;
 
@@ -3196,9 +3172,18 @@ function _ch173CSS() {
       }
       /* اختتامی خانہ — 2 برابر کالم۔ flex اس لیے کہ دونوں کالم ہمیشہ ایک جتنے
          چوڑے رہیں اور ایک ساتھ ہی نیچے بڑھیں (ایک دوسرے سے آگے نہ نکلے) */
+      /* ── اختتامی خانہ ──
+         Pehle yeh do alag column the (kaghaz dayen, SHO bayen), is liye SHO ki
+         dono lines ke DARMIYAN ki jagah zaya jati thi. Ab SHO ki pehli line
+         bayen kinare par "behti" hai aur kaghaz us ke ird-gird se guzar kar
+         us ke NEECHE bhi chale jate hain — poori chaurai kaam mein aati hai.
+         SHO ki doosri line tamam kaghazon ke neeche aati hai. */
       #ch173-doc .ch173-sho-flex{
-        display:flex; direction:rtl; align-items:stretch; gap:0; margin-top:6px;
+        display:block; direction:rtl; margin-top:6px;
       }
+      #ch173-doc .ch173-sho-flex::after{ content:''; display:block; clear:both; }
+      #ch173-doc .sho-b1{ float:left; margin-right:0.7cm; }
+      #ch173-doc .sho-b2{ clear:both; float:left; margin-top:4px; }
       #ch173-doc .ch173-sho-flex > .sho-col{ min-width:0; box-sizing:border-box; }
       /* تفصیل کاغذات کا خانہ SHO لائن کے دائیں کنارے سے 1cm پہلے تک پھیلتا ہے */
       #ch173-doc .ch173-sho-flex > .sho-papers{ flex:1 1 auto; }
@@ -3244,7 +3229,7 @@ function _ch173CSS() {
          kaghaz KHUD nayi satar par chala jata hai (inline-block ka wrap). */
       #ch173-doc .pp-item{
         display:inline-block; vertical-align:top; text-align:center;
-        margin-left:0.95cm; margin-bottom:4px;   /* Tab = 6 spaces (pehle 8 = 1.27cm) */
+        margin-left:0.635cm; margin-bottom:4px;  /* Tab = 4 spaces (1.27cm = 8) */
       }
       #ch173-doc .pp-name{
         display:block; text-decoration:underline; white-space:nowrap;
