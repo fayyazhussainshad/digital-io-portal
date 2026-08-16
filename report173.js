@@ -443,6 +443,7 @@ function _renderR173() {
       [0, 150, 400, 800, 1500].forEach(ms => setTimeout(() => {
         try { _ch173StretchRow(); } catch(_) {}      // safha poora bharo
         try { _ch173OverflowSettle(3); } catch(_) {}
+        try { _ch173TrimRowGap(); } catch(_) {}      // neeche bachi khali jagah khatam
         try { _ch173WrapCnics(); } catch(_) {}
       }, ms));
       // Nigrani chalu — koi matn chhupa reh jaye to khud neeche chala jaye
@@ -806,6 +807,7 @@ function _printR173() {
       void chDoc.offsetHeight;                 // nayi naap lagne do
       try { _ch173StretchRow(); } catch (__) {}      // safha poora bharo
       _ch173OverflowSettle(6);
+      try { _ch173TrimRowGap(); } catch (__) {}      // neeche bachi khali jagah khatam
       try { _ch173WrapCnics(chDoc); } catch (__) {}   // CNIC ki seedh chapai mein bhi
       void chDoc.offsetHeight;
       _inner = chDoc.innerHTML;                // kaghaz ki naap wala natija
@@ -1171,12 +1173,34 @@ function _ch173StretchRow() {
   const content = doc.scrollHeight - padY;            // is waqt ka poora matn
   const rest   = content - cur;                       // qatar ke ilawa sab kuch
   const target = Math.round(avail - rest);
-  if (target > cur + 2) {                             // SIRF barhao
+  if (target > cur + 24) {                            // SIRF barhao (chhoti tabdeeli par nahi)
     row.querySelectorAll('td').forEach(c => { c.style.height = target + 'px'; });
     try { _ch173OverflowSettle(3); } catch (_) {}
   }
 }
 window._ch173StretchRow = _ch173StretchRow;
+
+// ═══ کالم 7 ke neeche bachi KHALI JAGAH khatam karo ═══
+// Matn satar-ba-satar behta hai, is liye aakhri satar ke baad thori jagah
+// bach jati hai aur table ki lakeer us khali jagah ke neeche reh jati hai —
+// yehi table aur us ke neeche wale matn ke darmiyan "gap" nazar aata tha.
+// Ab qatar ko utna hi chhota kar dete hain jitni jagah khali bachi thi, taake
+// lakeer aakhri satar ke saath aa jaye. Matn ZAYA nahi hota — neeche wala
+// hissa bas thora ooper aa jata hai.
+function _ch173TrimRowGap() {
+  const { doc, cell } = _ch173Cells();
+  if (!doc || !cell) return;
+  const row = doc.querySelector('#ch173-table tbody tr');
+  if (!row) return;
+  const bacha = cell.clientHeight - cell.scrollHeight;      // khali jagah
+  if (bacha <= 4) return;                                   // pehle se chipki hui
+  const cur = row.offsetHeight;
+  const naya = Math.max(80, cur - bacha);
+  if (naya >= cur) return;
+  row.querySelectorAll('td').forEach(c => { c.style.height = naya + 'px'; });
+  try { _ch173OverflowSettle(2); } catch (_) {}
+}
+window._ch173TrimRowGap = _ch173TrimRowGap;
 
 function _ch173Overflow() {
   const { cell, cont } = _ch173Cells();
