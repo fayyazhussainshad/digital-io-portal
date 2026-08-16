@@ -364,7 +364,7 @@ function _renderR173() {
 
           <table class="ch173-table" id="ch173-table">
             <colgroup>
-              ${W.map((w, i) => `<col style="width:${i === 0 ? CH173_COL1_W : _ch173WCss(w)}">`).join('')}
+              ${W.map((w) => `<col style="width:${_ch173WCss(w)}">`).join('')}
             </colgroup>
             <thead>
               <tr>
@@ -441,10 +441,12 @@ function _renderR173() {
       // BAAD hi maloom hoti hai. Aik hi dafa chalane se matn chhupa reh
       // jata tha (khane ki naap us waqt tak 0 hoti thi).
       [0, 150, 400, 800, 1500].forEach(ms => setTimeout(() => {
-        try { _ch173StretchRow(); } catch(_) {}      // safha poora bharo
+        try { _ch173WrapCnics(); } catch(_) {}       // naam+CNIC tayyar
+        try { _ch173AutoFitCols(); } catch(_) {}     // jitna mawad, utni chaurai
+        try { _ch173AutoSize(); } catch(_) {}        // khane apne matn ke barabar
+        try { _ch173StretchRow(); } catch(_) {}      // phir bhi safha khali ho to bharo
         try { _ch173OverflowSettle(3); } catch(_) {}
         try { _ch173TrimRowGap(); } catch(_) {}      // neeche bachi khali jagah khatam
-        try { _ch173WrapCnics(); } catch(_) {}
       }, ms));
       // Nigrani chalu — koi matn chhupa reh jaye to khud neeche chala jaye
       try { _ch173StartOverflowWatch(); } catch(_) {}
@@ -472,6 +474,13 @@ function _renderR173() {
       try { _ch173BrushOff(); _ch173BindBrush(); } catch(_) {}
       // چالان ko poora safha do
       try { _ch173FocusMode(true); } catch(_) {}
+      // Officer ki apni naap yaad ho to khud-ba-khud chaurai band rahe
+      try {
+        if (bs.cols_manual === '1') {
+          const t = document.querySelector('#ch173-table');
+          if (t) t.dataset.colsManual = '1';
+        }
+      } catch(_) {}
       // Font kis khane par lage — us khane ko yaad rakhne wala nizam
       try { _ch173BindCellPick(); } catch(_) {}
       // Har khane ka apna mehfooz shuda font wapas lagao
@@ -677,6 +686,11 @@ function _collectR173() {
     });
     // MS Word jaisi drag se badli hui column widths bhi mehfooz
     try { const cw = _ch173ColWidths(); if (cw) d.col_widths = cw; } catch(_) {}
+    // Officer ne khud chaurai kheenchi thi? — yaad rakho
+    try {
+      const t = document.querySelector('#ch173-table');
+      if (t && t.dataset.colsManual === '1') d.cols_manual = '1';
+    } catch(_) {}
     // Har khane ka apna font bhi mehfooz (warna reload par kho jata hai)
     try { const cf = _ch173CellFonts(); if (cf) d.cell_fonts = cf; } catch(_) {}
     // Save ke liye lapet kholi thi — screen par seedh wapas laga do
@@ -805,10 +819,12 @@ function _printR173() {
       chDoc.style.width = (_ch173Paper === 'a4') ? '8.27in' : '8.5in';
       chDoc.style.maxWidth = 'none';
       void chDoc.offsetHeight;                 // nayi naap lagne do
-      try { _ch173StretchRow(); } catch (__) {}      // safha poora bharo
+      try { _ch173AutoSize(); } catch (__) {}        // khane apne matn ke barabar
+      try { _ch173StretchRow(); } catch (__) {}      // phir bhi safha khali ho to bharo
       _ch173OverflowSettle(6);
       try { _ch173TrimRowGap(); } catch (__) {}      // neeche bachi khali jagah khatam
       try { _ch173WrapCnics(chDoc); } catch (__) {}   // CNIC ki seedh chapai mein bhi
+      try { _ch173AutoFitCols(); } catch (__) {}      // jitna mawad, utni chaurai
       void chDoc.offsetHeight;
       _inner = chDoc.innerHTML;                // kaghaz ki naap wala natija
     } catch (_) {
@@ -908,7 +924,6 @@ function _ch173MakeResizable() {
   // Grip lagane ka common helper
   const addGrip = (cell, iA, iB) => {
     if (iB >= cols.length) return;              // aakhri column ke bayen kuch nahi
-    if (iA === 0 || iB === 0) return;           // کالم 1 ki chaurai PAKKI — kheenchi na jaye
     const grip = document.createElement('div');
     grip.className = 'colgrip';
     grip.title = 'چوڑائی بدلنے کے لیے کھینچیں';
@@ -932,6 +947,8 @@ function _ch173MakeResizable() {
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup', onUp);
         document.body.style.cursor = '';
+        // Officer ne KHUD naap li — ab khud-ba-khud chaurai us par bhaari na pade
+        try { table.dataset.colsManual = '1'; _r173Dirty = true; } catch (_) {}
       };
       document.addEventListener('mousemove', onMove);
       document.addEventListener('mouseup', onUp);
@@ -1211,12 +1228,160 @@ function _ch173TrimRowGap() {
   } catch (_) { return; }
   if (bacha <= 4) return;                                   // pehle se chipki hui
   const cur = row.offsetHeight;
-  const naya = Math.max(80, cur - bacha);
+  // Naamon ko jitni lambai chahiye us se neeche kabhi na jao — warna
+  // khadi likhayi aur CNIC kat jayen.
+  const farsh = Math.max(80, window._ch173MinRowH || 0);
+  const naya = Math.max(farsh, cur - bacha);
   if (naya >= cur) return;
   row.querySelectorAll('td').forEach(c => { c.style.height = naya + 'px'; });
   try { _ch173OverflowSettle(2); } catch (_) {}
 }
 window._ch173TrimRowGap = _ch173TrimRowGap;
+
+// ═══════════════════════════════════════════════════════════════════
+//  خانہ نمبر 1 تا 6 — چوڑائی اور لمبائی خودکار
+//  • CHAURAI : jitni satren (log) us khane mein hain, utni chaurai.
+//  • LAMBAI  : sab se lambi satar (naam + CNIC) jitni.
+//  CNIC ki seedh yahan BILKUL nahi chhiri jati — har satar ka khana poori
+//  unchai leta hai aur CNIC neeche jamta hai (wohi purana usool), is liye
+//  naap badalne par bhi tamam CNIC aik hi seedh mein rehte hain.
+// ═══════════════════════════════════════════════════════════════════
+function _ch173AutoSize() {
+  const doc = _ch173Doc();
+  if (!doc) return;
+  const table = doc.querySelector('#ch173-table');
+  if (!table) return;
+  const cols = [...table.querySelectorAll('colgroup col')];
+  const tds  = [...table.querySelectorAll('tbody tr > td')];
+  if (cols.length < 7 || tds.length < 7) return;
+
+  const kul = table.clientWidth;
+  if (!kul) return;                                   // abhi naapa nahi gaya
+
+  // ── 1) Har khadi khane ki DARKAR chaurai ──
+  const darkar = [];
+  let jama = 0;
+  for (let i = 0; i < 6; i++) {
+    const inner = tds[i].querySelector('.rotinner');
+    let w = 0;
+    if (inner) {
+      w = inner.scrollWidth || 0;                     // satron ka phailao
+      try {
+        const rg = document.createRange();
+        rg.selectNodeContents(inner);
+        const rr = rg.getBoundingClientRect();
+        if (rr.width) w = Math.max(w, Math.ceil(rr.width));
+      } catch (_) {}
+    }
+    w = Math.max(26, w + 8);                          // khali khana bhi nazar aaye
+    darkar.push(w);
+    jama += w;
+  }
+
+  // ── 2) کالم 7 ke liye kam az kam jagah bacha kar rakho ──
+  const col7Kam = Math.max(140, Math.round(kul * 0.22));
+  if (jama > kul - col7Kam) {                         // jagah kam pad rahi hai
+    const paimana = (kul - col7Kam) / jama;
+    for (let i = 0; i < 6; i++) darkar[i] = Math.max(24, Math.floor(darkar[i] * paimana));
+    jama = darkar.reduce((a, b) => a + b, 0);
+  }
+  // Gol karne se kabhi kul naap zyada ho jati hai — usay theek kar lo,
+  // warna table apne khane se bahar nikal jata hai.
+  let zyada = (jama + col7Kam) - kul;
+  for (let g = 0; zyada > 0 && g < 40; g++) {
+    let bara = 0;
+    for (let i = 1; i < 6; i++) if (darkar[i] > darkar[bara]) bara = i;
+    if (darkar[bara] <= 26) break;
+    const kaato = Math.min(zyada, darkar[bara] - 26);
+    darkar[bara] -= kaato; jama -= kaato; zyada -= kaato;
+  }
+  for (let i = 0; i < 6; i++) cols[i].style.width = darkar[i] + 'px';
+  cols[6].style.width = Math.max(col7Kam, kul - jama) + 'px';
+
+  // ── 3) DARKAR lambai — sab se lambi satar jitni ──
+  let lambi = 0;
+  for (let i = 0; i < 6; i++) {
+    const inner = tds[i].querySelector('.rotinner');
+    if (!inner) continue;
+    const lns = inner.querySelectorAll('.ln');
+    if (lns.length) {
+      lns.forEach(ln => {
+        const nm = ln.querySelector('.nm'), cn = ln.querySelector('.cn');
+        // Khadi likhayi mein kisi cheez ki "lambai" us ki offsetHeight hoti hai
+        const t = (nm ? nm.offsetHeight : 0) + (cn ? cn.offsetHeight : 0);
+        if (t > lambi) lambi = t;
+      });
+    } else {
+      try {
+        const rg = document.createRange();
+        rg.selectNodeContents(inner);
+        const rr = rg.getBoundingClientRect();
+        if (rr.height > lambi) lambi = Math.ceil(rr.height);
+      } catch (_) {}
+    }
+  }
+  if (lambi > 0) {
+    const row = table.querySelector('tbody tr');
+    if (row) {
+      const naya = Math.max(120, lambi + 14);         // thori saans ki jagah
+      row.querySelectorAll('td').forEach(c => { c.style.height = naya + 'px'; });
+      window._ch173MinRowH = naya;                    // is se neeche kabhi na jaye
+    }
+  }
+  try { _ch173OverflowSettle(3); } catch (_) {}
+}
+window._ch173AutoSize = _ch173AutoSize;
+
+// ═══ کالم 1 تا 6 ki chaurai KHUD-BA-KHUD (jitna mawad, utni chaurai) ═══
+// Khadi likhayi mein har shakhs aik satar hai, aur satren dayen se bayen
+// jamti hain — is liye khane ki zaroori chaurai = us ke andar ki tamam
+// satron ki chaurai. Yehi naap kar har khane ko utni hi chaurai dete hain,
+// aur bachi hui saari jagah کالم 7 (حالات) ko mil jati hai.
+// AHEM: CNIC ki seedh yahan se BILKUL nahi chhirti — woh khane ki UNCHAI
+// par mabni hai (.ln / space-between), chaurai par nahi.
+function _ch173AutoFitCols() {
+  const doc = _ch173Doc();
+  if (!doc) return;
+  const table = doc.querySelector('#ch173-table');
+  if (!table) return;
+  if (table.dataset.colsManual === '1') return;      // officer ne khud naap li hai
+  const cols = table.querySelectorAll('colgroup col');
+  if (cols.length < 7) return;
+  const tW = table.offsetWidth;
+  if (!tW) return;
+
+  // Har khane (1–6) ki zaroori chaurai naapo
+  const need = [];
+  for (let i = 0; i < 6; i++) {
+    const td = table.querySelector('tbody tr td:nth-child(' + (i + 1) + ')');
+    const inner = td ? td.querySelector('.rotinner') : null;
+    if (!inner) { need.push(0); continue; }
+    let w = 0;
+    const purani = inner.style.maxWidth;
+    try {
+      inner.style.maxWidth = 'none';                 // hadd hata kar asal naap lo
+      w = inner.scrollWidth;
+    } catch (_) {}
+    inner.style.maxWidth = purani;
+    need.push(Math.ceil(w) + 6);                     // thori si saans
+  }
+
+  // Kam az kam itni jagah کالم 7 ke liye chhoro
+  const kam7 = Math.max(140, Math.round(tW * 0.22));
+  let kul = need.reduce((a, b) => a + b, 0);
+  const mojood = tW - kam7;
+  if (kul > mojood && kul > 0) {                     // jagah kam pare to sab ko barabar ghatao
+    const k = mojood / kul;
+    for (let i = 0; i < 6; i++) need[i] = Math.floor(need[i] * k);
+    kul = need.reduce((a, b) => a + b, 0);
+  }
+
+  for (let i = 0; i < 6; i++) {
+    cols[i].style.width = Math.max(24, need[i]) + 'px';
+  }
+  cols[6].style.width = Math.max(kam7, tW - kul) + 'px';
+}
+window._ch173AutoFitCols = _ch173AutoFitCols;
 
 function _ch173Overflow() {
   const { cell, cont } = _ch173Cells();
@@ -2862,7 +3027,11 @@ function _ch173CSS() {
       /* "ت پ" — دفعات کے بعد آخر میں، اپنا الگ خانہ */
       #ch173-doc .ch173-caseline .fl-suf{ min-width:24px; }
 
-      #ch173-doc .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
+      /* AUTO NAAP: 'fixed' ki bajaye 'auto' — ab har khana apne matn ke
+         hisab se chaura hota hai (jitna mawad, utni chaurai). کالم 7 ko
+         colgroup mein 100% diya gaya hai, is liye bachi hui saari jagah
+         wohi le leta hai. */
+      #ch173-doc .ch173-table{ width:100%; border-collapse:collapse; table-layout:auto; direction:rtl; }
       #ch173-doc .ch173-table th, #ch173-doc .ch173-table td{
         border:1px solid #000; padding:2px 4px; text-align:center;
         white-space:normal; word-wrap:break-word; overflow-wrap:break-word;
@@ -2883,7 +3052,12 @@ function _ch173CSS() {
       /* Khane ki unchai MUQARRAR — isi se (a) neeche wali lakeer se unchai
          badalti hai, aur (b) column 7 ka izafi matn neeche wale khane mein
          jata hai. Unchai aap khud drag kar ke badal sakte hain. */
-      #ch173-doc .ch173-table tbody td{ height:${_ch173Paper==='a4'?'150mm':'185mm'};
+      /* Unchai bhi matn ke hisab se. Muqarrar naap hata di gayi hai —
+         qatar apne matn jitni hoti hai, phir _ch173StretchRow() usay safha
+         bharne tak barha deta hai aur _ch173TrimRowGap() fazool jagah kaat
+         deta hai. Yani "jitna mawad, utni lambai" — magar safha khali nahi
+         rehta. (Officer phir bhi lakeer kheench kar apni naap le sakta hai.) */
+      #ch173-doc .ch173-table tbody td{ height:auto;
         padding:0; overflow:visible; position:relative; vertical-align:top; }
       /* ASCENDING (neeche se ooper) — writing-mode Chrome mein na-qabil-e-aitbaar
          hai, is liye seedha ghumao (rotate) use karte hain. Khana relative,
