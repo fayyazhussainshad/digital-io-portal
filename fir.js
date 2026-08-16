@@ -75,12 +75,14 @@ function _renderMatnTable(rows) {
   return `<table style="width:100%;border-collapse:collapse;font-size:14px;direction:rtl;margin-bottom:6px;">
     <thead><tr style="background:var(--bg-secondary);">
       <th style="padding:8px;text-align:right;border:1px solid var(--border);">مضمون</th>
-      <th style="padding:8px;text-align:center;border:1px solid var(--border);width:90px;">ایکشن</th>
+      <th style="padding:8px;text-align:center;border:1px solid var(--border);width:100px;">ایکشن</th>
     </tr></thead><tbody>
     ${rows.map(m => `<tr style="background:rgba(245,158,11,0.08);">
-      <td style="padding:10px;border:1px solid var(--border);text-align:justify;font-family:'Jameel Noori Nastaleeq',serif;line-height:1.8;font-size:14px;min-height:80px;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;">${esc(m.matn)||''}</td>
-      <td style="padding:6px;border:1px solid var(--border);text-align:center;">
+      <td style="padding:10px;border:1px solid var(--border);text-align:justify;font-family:'Jameel Noori Nastaleeq',serif;line-height:1.8;font-size:14px;min-height:200px;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:12;-webkit-box-orient:vertical;">${esc(m.matn)||''}</td>
+      <td style="padding:6px;border:1px solid var(--border);text-align:center;white-space:nowrap;vertical-align:top;">
         <button class="btn btn-secondary btn-sm" style="padding:2px 7px;" onclick="_openMatnModal('${m.type||'fir'}','${m.id}')">✏️</button>
+        <button class="btn btn-secondary btn-sm" style="padding:2px 7px;margin-top:3px;" onclick="_viewMatn('${m.id}')">👁️</button>
+        <button class="btn btn-secondary btn-sm" style="padding:2px 7px;margin-top:3px;" onclick="_printMatn('${m.id}')">🖨️</button>
         <button class="btn btn-danger btn-sm" style="padding:2px 7px;margin-top:3px;" onclick="_deleteMatn('${m.id}')">🗑️</button>
       </td></tr>`).join('')}
     </tbody></table>`;
@@ -223,4 +225,60 @@ async function _deleteFirCopy(id) {
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
 
-// ── PRINT ONE COPY (no app UI) ────────────────────────────────
+// ── VIEW MATN (read-only modal) ───────────────────────────────
+function _viewMatn(id) {
+  const row = _firMatn.find(m => m.id === id);
+  if (!row) { showToast('❌ متن نہیں ملا', 'error'); return; }
+  const heading = (row.type === 'cross_version') ? 'کراس ورژن' : 'الف آئی آر';
+  openModal('👁️ متن ' + heading, `
+    <div style="direction:rtl;width:80vw;max-width:90vw;">
+      <div style="width:100%;box-sizing:border-box;padding:20px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:18px;line-height:2;text-align:justify;direction:rtl;max-height:70vh;overflow-y:auto;white-space:pre-wrap;">${esc(row.matn)||''}</div>
+    </div>
+  `, `
+    <button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>
+    <button class="btn btn-primary" onclick="_printMatn('${id}')">🖨️ پرنٹ</button>
+  `);
+  setTimeout(() => {
+    const box = document.querySelector('#modal-backdrop > div, .modal-box, #modal-box');
+    if (box) { box.style.maxWidth = '90vw'; box.style.width = 'auto'; }
+  }, 20);
+}
+
+// ── PRINT MATN (only the document, no app UI) ─────────────────
+function _printMatn(id) {
+  const row = _firMatn.find(m => m.id === id);
+  if (!row) { showToast('❌ متن نہیں ملا', 'error'); return; }
+  const heading = (row.type === 'cross_version') ? 'متن کراس ورژن' : 'متن الف آئی آر';
+  const body = esc(row.matn) || '';
+  const html = `<!DOCTYPE html><html dir="rtl" lang="ur"><head><meta charset="utf-8">
+    <title>${heading}</title>
+    <style>
+      @page { size: A4; margin: 20mm; }
+      * { box-sizing: border-box; }
+      html, body { margin:0; padding:0; }
+      body { font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl; color:#000; }
+      h2 { text-align:center; font-size:22px; margin:0 0 18px; font-weight:700; }
+      .matn { font-size:18px; line-height:2.1; text-align:justify; white-space:pre-wrap; }
+    </style></head>
+    <body>
+      <h2>${heading}</h2>
+      <div class="matn">${body}</div>
+    </body></html>`;
+
+  const ifr = document.createElement('iframe');
+  ifr.style.position = 'fixed';
+  ifr.style.right = '-9999px';
+  ifr.style.bottom = '0';
+  ifr.style.width = '0';
+  ifr.style.height = '0';
+  ifr.style.border = '0';
+  document.body.appendChild(ifr);
+  const doc = ifr.contentWindow.document;
+  doc.open(); doc.write(html); doc.close();
+  const done = () => {
+    try { ifr.contentWindow.focus(); ifr.contentWindow.print(); } catch(_) {}
+    setTimeout(() => { try { ifr.remove(); } catch(_) {} }, 1000);
+  };
+  if (ifr.contentWindow.document.readyState === 'complete') setTimeout(done, 300);
+  else ifr.onload = () => setTimeout(done, 300);
+}
