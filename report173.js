@@ -1411,10 +1411,22 @@ window._ch173RoundRow = _ch173RoundRow;
 // SHO ki lines ki jagah ab KHUD beh kar banti hai (float) — naap kar
 // jagah tay karne ki zaroorat nahi rahi. Yeh sirf itna karta hai ke purani
 // naap ke nishan (margins) saaf kar de, warna wo naye behao se takrate hain.
+// ═══ Ooper wali SHO line — theek تاریخ wali jagah par ═══
+// Khane ke andar tarteeb hai: pehle SHO ki line, phir us ke neeche تاریخ.
+// Poore khane ko THEEK AIK SATAR neeche khiska dete hain — is se SHO ki line
+// wahan aa jati hai jahan pehle تاریخ thi, aur تاریخ apni usi shakl mein aik
+// satar neeche chali jati hai. Naap khud satar se li jati hai, is liye font
+// ya satar ka fasla badle to bhi jagah theek rehti hai.
 function _ch173AlignSho() {
   const doc = _ch173Doc();
   if (!doc) return;
-  doc.querySelectorAll('.sho-block').forEach(b => { b.style.marginTop = ''; });
+  const b1 = doc.querySelector('.sho-b1');
+  if (!b1) return;
+  const rows = b1.querySelectorAll('.sho-cell-row');
+  if (rows.length < 2) return;
+  const aikSatar = rows[0].offsetHeight;          // SHO ki line ki unchai
+  if (!aikSatar) return;
+  b1.style.marginTop = Math.round(aikSatar) + 'px';
 }
 window._ch173AlignSho = _ch173AlignSho;
 
