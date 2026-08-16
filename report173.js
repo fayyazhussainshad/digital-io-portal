@@ -1184,6 +1184,15 @@ function _ch173StretchRow() {
   if (!doc) return;
   const row = doc.querySelector('#ch173-table tbody tr');
   if (!row) return;
+  // AHEM: agar table ke NEECHE pehle se matn mojood hai to table ko safha
+  // bharne ke liye BARHANA nahi. Barhane se sab khanon ke neeche khali jagah
+  // bach jati hai (satar gap) — jab ke safha to neeche wale matn se khud hi
+  // bhar jata hai. Barhana sirf us waqt jab neeche kuch bhi na ho (chhota
+  // چالان), taake safha aadha khali na lage.
+  try {
+    const cont = doc.querySelector('[data-k="cont_text"]');
+    if (cont && cont.innerText.replace(/\s/g, '').length) return;
+  } catch (_) {}
   const cur = row.offsetHeight;
   if (!cur) return;                                   // abhi naapa nahi gaya
   let padY = 0;
