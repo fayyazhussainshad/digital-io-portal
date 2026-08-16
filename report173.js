@@ -1368,6 +1368,7 @@ function _ch173Layout() {
   try { _ch173StretchRow(); } catch (_) {}      // sirf tab jab neeche kuch na ho
   try { _ch173OverflowSettle(4); } catch (_) {}
   try { _ch173WrapCnics(); } catch (_) {}
+  try { _ch173AlignSho(); } catch (_) {}        // SHO ki doosri line کاغذات ke neeche
 }
 window._ch173Layout = _ch173Layout;
 
@@ -1401,6 +1402,28 @@ function _ch173RoundRow() {
   }
 }
 window._ch173RoundRow = _ch173RoundRow;
+
+// ═══ SHO ki doosri line — کاغذات ke بالکل نیچے ═══
+// Pehli line تفصیل کاغذات ke khane ke barabar ooper se shuru hoti hai.
+// Doosri line theek WAHAN se shuru honi chahiye jahan کاغذات ka aakhri
+// hindsa (tadaad) khatam hota hai. Yeh naap CSS se nahi ho sakti kyunki
+// کاغذات ki unchai un ki tadaad par munhasir hai — is liye yahan naap kar
+// jagah tay karte hain.
+function _ch173AlignSho() {
+  const doc = _ch173Doc();
+  if (!doc) return;
+  const papers = doc.querySelector('.sho-papers');
+  const cell   = doc.querySelector('.sho-cell');
+  if (!papers || !cell) return;
+  const blocks = cell.querySelectorAll('.sho-block');
+  if (blocks.length < 2) return;
+  const pH = papers.offsetHeight;                 // کاغذات ka poora khana
+  const b1 = blocks[0].offsetHeight;              // pehli SHO line + tareekh
+  if (!pH || !b1) return;
+  const neeche = Math.max(0, Math.round(pH - b1));
+  blocks[1].style.marginTop = neeche + 'px';
+}
+window._ch173AlignSho = _ch173AlignSho;
 
 // ═══ کالم 1 تا 6 ki chaurai KHUD-BA-KHUD (jitna mawad, utni chaurai) ═══
 // Khadi likhayi mein har shakhs aik satar hai, aur satren dayen se bayen
@@ -3186,7 +3209,8 @@ function _ch173CSS() {
          kar bayen-se-dayen ho gaya tha aur tarteeb ulti ho gayi thi. Yahan
          !important se rukh pakka RTL kar dete hain. */
       #ch173-doc .sho-papers-body{
-        font-size:14pt; line-height:1.25; text-align:right; white-space:normal;
+        font-size:14pt; line-height:1.25; white-space:normal;
+        text-align:justify; text-align-last:right;    /* kaghaz barabar phaile */
         direction:rtl !important; unicode-bidi:embed !important;
         outline:1px dashed rgba(120,120,120,0.35); padding:3px 4px; margin-top:4px;
         min-height:22px; overflow-wrap:break-word;
@@ -3203,7 +3227,7 @@ function _ch173CSS() {
          kaghaz KHUD nayi satar par chala jata hai (inline-block ka wrap). */
       #ch173-doc .pp-item{
         display:inline-block; vertical-align:top; text-align:center;
-        margin-left:1.27cm; margin-bottom:4px;
+        margin-left:0.95cm; margin-bottom:4px;   /* Tab = 6 spaces (pehle 8 = 1.27cm) */
       }
       #ch173-doc .pp-name{
         display:block; text-decoration:underline; white-space:nowrap;
@@ -3218,14 +3242,18 @@ function _ch173CSS() {
       @media print{ #ch173-doc .pp-qty:empty::before{ content:''; } }
 
       /* بائیں کالم — SHO/تاریخ: ایک اوپر، ایک نیچے */
+      /* SHO ka khana OOPER se shuru — pehli line تفصیل کاغذات ke khane ke
+         bilkul barabar. Doosri line ki jagah JS naap kar tay karta hai
+         (_ch173AlignSho) taake woh theek wahan se shuru ho jahan کاغذات ka
+         aakhri hindsa khatam hota hai. */
       #ch173-doc .sho-cell{
-        display:flex; flex-direction:column; justify-content:space-between;
+        display:flex; flex-direction:column; justify-content:flex-start;
         min-height:42mm;
       }
       /* align-self:flex-end → RTL میں بائیں کنارے پر (جیسے اصل فارم میں) */
       #ch173-doc .sho-block{ align-self:flex-end; }
       /* SHO ki line ko aik satar neeche laane wali khali jagah */
-      #ch173-doc .sho-spacer{ height:1.6em; }
+      #ch173-doc .sho-spacer{ height:0; }   /* SHO ki pehli line ab ooper se barabar */
       #ch173-doc .sho-cell-row{
         outline:1px dashed rgba(120,120,120,0.35); padding:3px 6px; line-height:1.25;
         min-height:20px; margin:0; font-size:14pt; text-align:right; white-space:nowrap;
