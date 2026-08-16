@@ -3182,9 +3182,11 @@ function _ch173CSS() {
         display:block; direction:rtl; margin-top:6px;
       }
       #ch173-doc .ch173-sho-flex::after{ content:''; display:block; clear:both; }
-      /* SHO ki dono lines ke OOPER dastkhat ke liye khali jagah */
-      #ch173-doc .sho-b1{ float:left; margin-right:0.7cm; margin-top:1.2cm; }
-      #ch173-doc .sho-b2{ clear:both; float:left; margin-top:1.2cm; }
+      /* SHO ki lines ke OOPER ki jagah:
+         • pehli line — ooper wali lakeer ke saath lagi hui (bilkul thori jagah)
+         • doosri line — pehle 1.2cm thi, ab aadhi (0.6cm) */
+      #ch173-doc .sho-b1{ float:left; margin-right:0.7cm; margin-top:0.1cm; }
+      #ch173-doc .sho-b2{ clear:both; float:left; margin-top:0.6cm; }
       #ch173-doc .ch173-sho-flex > .sho-col{ min-width:0; box-sizing:border-box; }
       /* تفصیل کاغذات کا خانہ SHO لائن کے دائیں کنارے سے 1cm پہلے تک پھیلتا ہے */
       #ch173-doc .ch173-sho-flex > .sho-papers{ flex:1 1 auto; }
