@@ -1418,9 +1418,26 @@ function _ch173AlignSho() {
   const blocks = cell.querySelectorAll('.sho-block');
   if (blocks.length < 2) return;
   const pH = papers.offsetHeight;                 // کاغذات ka poora khana
+  if (!pH) return;
+
+  // ── SHO ki PEHLI line: عنوان "تفصیل کاغذات" ke barabar nahi, balke us ke
+  //    NEECHE wali satar ke barabar (jahan kaghaz aur un ki tadaad hai) ──
+  const head = doc.querySelector('.sho-papers-head');
+  let ooper = 0;
+  if (head) {
+    ooper = head.offsetHeight;
+    try {
+      const body = doc.querySelector('.sho-papers-body');
+      if (body) ooper += parseFloat(getComputedStyle(body).marginTop) || 0;
+    } catch (_) {}
+  }
+  blocks[0].style.marginTop = Math.max(0, Math.round(ooper)) + 'px';
+
+  // ── SHO ki DOOSRI line: theek wahan se jahan کاغذات ka aakhri hindsa
+  //    khatam hota hai (تاریخ apni usi shakl mein us ke neeche rehti hai) ──
   const b1 = blocks[0].offsetHeight;              // pehli SHO line + tareekh
-  if (!pH || !b1) return;
-  const neeche = Math.max(0, Math.round(pH - b1));
+  if (!b1) return;
+  const neeche = Math.max(0, Math.round(pH - ooper - b1));
   blocks[1].style.marginTop = neeche + 'px';
 }
 window._ch173AlignSho = _ch173AlignSho;
