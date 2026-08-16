@@ -1292,6 +1292,32 @@ function _ch173Overflow() {
     if (par && par !== cont && !par.childNodes.length) par.remove();
   }
 
+  // (c0) KHANE ke AAKHIR ki KHALI SATREN hatao.
+  // Matn lafz-ba-lafz neeche jata hai, is liye khane ke aakhir mein fazool
+  // khali jagah (spaces / khali satren / <br>) reh jati hai. Naap unhen
+  // "matn" gin leti hai — is liye hisaab kehta tha "khali jagah sirf 4px" —
+  // magar aankh ko woh poori khali satar nazar aati thi. Yehi table aur
+  // neeche wale matn ke darmiyan bacha hua gap tha.
+  try {
+    for (let g = 0; g < 200; g++) {
+      let last = cell.lastChild;
+      if (!last) break;
+      if (last.nodeType === 3) {
+        const t = last.nodeValue.replace(/[\s\u00A0]+$/, '');
+        if (t === last.nodeValue) break;          // aakhir mein kuch fazool nahi
+        if (t) { last.nodeValue = t; break; }
+        last.remove();                            // poora khali tukra
+        continue;
+      }
+      if (last.nodeType === 1) {
+        const tag = last.tagName;
+        const khali = !last.textContent.replace(/[\s\u00A0]/g, '');
+        if (tag === 'BR' || khali) { last.remove(); continue; }
+      }
+      break;
+    }
+  } catch (_) {}
+
   // (c) TUKRE WAPAS JORO — matn lafz-ba-lafz hilta hai, is liye har lafz ka
   // apna alag tukra ban jata hai. Yeh tukre khud-ba-khud aik nahi hote, aur
   // itne saare tukron ki wajah se likhayi mein khali jagah (gap) nazar aane
@@ -2977,7 +3003,7 @@ function _ch173CSS() {
         position:relative; overflow:hidden; }
       #ch173-doc .normwrap{
         position:absolute; inset:0;    /* khane ke barabar — table lamba nahi hota */
-        padding:5px; box-sizing:border-box;
+        padding:5px 5px 0 5px; box-sizing:border-box;   /* neeche ki padding 0 */
         font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
         direction:rtl; text-align:justify; text-align-last:right;
         outline:none; line-height:1.5; font-size:14pt;   /* satron ka fasla — 1.5 */
