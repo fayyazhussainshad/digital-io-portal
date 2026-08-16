@@ -829,7 +829,12 @@ function _printR173() {
       // wohi shakl deti hai jo screen par nazar aa rahi hoti hai.
       try { _ch173Layout(); } catch (__) {}
       void chDoc.offsetHeight;
+      // Misal bandhne ki tikoni jagah (sirf chapai ke liye)
+      let _tri = [];
+      try { _tri = _ch173AddBindMarks() || []; } catch (__) {}
       _inner = chDoc.innerHTML;                // kaghaz ki naap wala natija
+      // Nishan foran hata do — screen par kuch badla hua nazar na aaye
+      try { _tri.forEach(t => t.remove()); chDoc.normalize(); } catch (__) {}
     } catch (_) {
     } finally {
       // Screen wapas apni halat par
@@ -862,6 +867,8 @@ function _printR173() {
         .ch173-table{ page-break-inside:avoid; break-inside:avoid; } /* agle safhe par na jaye */
         .ch173-cont:empty{ display:none !important; }
         .colgrip,.rowgrip,.acc-pick,.no-print,button,select{ display:none !important; }
+        /* Misal bandhne wali tikoni jagah — chapai mein zaroori */
+        #ch173-doc .ch173-bind{ display:block !important; }
         .sho-papers-body, .sho-cell-row, .ch173-cont{ outline:none !important; }
         .sho-papers-body:empty::before, .sho-cell-date:empty::before,
         .sho-cell-row:empty::before, .ch173-cont:empty::before{ content:'' !important; }
@@ -1429,6 +1436,98 @@ function _ch173AlignSho() {
   b1.style.marginTop = Math.round(aikSatar) + 'px';
 }
 window._ch173AlignSho = _ch173AlignSho;
+
+// ═══════════════════════════════════════════════════════════════════
+//  مثل باندھنے کی جگہ — دوسرے صفحے کے اوپر بائیں کونے میں مثلث
+//  Misal bandhne ke liye back side par ooper BAYEN kone mein tikoni (triangle)
+//  jagah khali chhori jati hai: us ki nok top-left kone se juri, aur dono
+//  lambe bazoo top margin aur left margin ke saath — har aik 2 inch.
+//  Matn is tikone se bach kar behta hai.
+//  NOTE: yeh SIRF chapai ke liye lagta hai; screen par koi tabdeeli nahi.
+//  Sirf un safhon par jahan matn aata hai (pehle safhe par nahi).
+// ═══════════════════════════════════════════════════════════════════
+const CH173_BIND_IN = 2;                       // tikone ke bazoo — 2 inch
+
+function _ch173AddBindMarks() {
+  const daale = [];
+  const doc = _ch173Doc();
+  if (!doc) return daale;
+  const cont = doc.querySelector('[data-k="cont_text"]');
+  if (!cont || !cont.firstChild) return daale;
+
+  // Aik safhe mein kitni jagah hai (kaghaz minus ooper/neeche ke hashiye)
+  const IN = 96;
+  const safhaH = ((_ch173Paper === 'a4') ? 11.7 : 13) * IN;
+  let hashiya = 0;
+  try {
+    const cs = getComputedStyle(doc);
+    hashiya = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+  } catch (_) {}
+  const kaam = safhaH - hashiya;                // aik safhe ki kaam ki unchai
+  if (kaam < 100) return daale;
+
+  const docTop = doc.getBoundingClientRect().top;
+
+  // cont ke tamam matn ke tukre + un ki lambai
+  const tukre = [];
+  let kul = 0;
+  const w = document.createTreeWalker(cont, NodeFilter.SHOW_TEXT, null);
+  let n;
+  while ((n = w.nextNode())) {
+    if (!n.nodeValue.length) continue;
+    tukre.push({ node: n, shuru: kul });
+    kul += n.nodeValue.length;
+  }
+  if (!kul) return daale;
+
+  const jagah = (i) => {                        // i-wein harf ki jagah
+    for (let k = 0; k < tukre.length; k++) {
+      const t = tukre[k];
+      if (i >= t.shuru && i < t.shuru + t.node.nodeValue.length) {
+        try {
+          const rg = document.createRange();
+          rg.setStart(t.node, i - t.shuru);
+          rg.setEnd(t.node, i - t.shuru + 1);
+          const r = rg.getBoundingClientRect();
+          return r.height ? (r.top - docTop) : null;
+        } catch (_) { return null; }
+      }
+    }
+    return null;
+  };
+
+  // Har safhe ki hadd par tikona daalo (pehla safha chhor kar)
+  const aakhri = jagah(kul - 1);
+  if (aakhri == null) return daale;
+  const safhe = Math.floor(aakhri / kaam);      // matn kitne safhon tak gaya
+  for (let p = 1; p <= safhe; p++) {
+    const hadd = p * kaam;
+    // Binary search — pehla harf jo is safhe par aata hai
+    let lo = 0, hi = kul - 1, mila = -1;
+    for (let g = 0; g < 24 && lo <= hi; g++) {
+      const mid = (lo + hi) >> 1;
+      const y = jagah(mid);
+      if (y == null) { lo = mid + 1; continue; }
+      if (y >= hadd) { mila = mid; hi = mid - 1; } else { lo = mid + 1; }
+    }
+    if (mila < 0) continue;
+    for (const t of tukre) {
+      const off = mila - t.shuru;
+      if (off >= 0 && off < t.node.nodeValue.length) {
+        try {
+          const baad = t.node.splitText(off);
+          const tri = document.createElement('span');
+          tri.className = 'ch173-bind';
+          t.node.parentNode.insertBefore(tri, baad);
+          daale.push(tri);
+        } catch (_) {}
+        break;
+      }
+    }
+  }
+  return daale;
+}
+window._ch173AddBindMarks = _ch173AddBindMarks;
 
 // ═══ کالم 1 تا 6 ki chaurai KHUD-BA-KHUD (jitna mawad, utni chaurai) ═══
 // Khadi likhayi mein har shakhs aik satar hai, aur satren dayen se bayen
@@ -2054,6 +2153,27 @@ function _ch173PapersPicker(ev) {
       list.splice(i, 1);
       _ch173PapersSave(list); render(); return;
     }
+  });
+
+  // ── Ooper / Neeche wali keys — satron ke darmiyan aana jana ──
+  // (Tab pehle se chalta tha; ab ↑ ↓ bhi. Ctrl ke saath dabane par satar
+  //  KHUD ooper/neeche khisak jati hai — tarteeb badalne ka chhota raasta.)
+  wrap.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    const boxes = [...wrap.querySelectorAll('.pp-txt')];
+    const i = boxes.indexOf(e.target);
+    if (i < 0) return;
+    e.preventDefault();
+    if (e.ctrlKey) {                                   // satar hi hila do
+      const btn = e.target.closest('.pp-row')
+        .querySelector(e.key === 'ArrowUp' ? '.pp-up' : '.pp-down');
+      if (btn && !btn.disabled) btn.click();
+      const naya = wrap.querySelectorAll('.pp-txt')[e.key === 'ArrowUp' ? i - 1 : i + 1];
+      if (naya) { naya.focus(); naya.select(); }
+      return;
+    }
+    const agla = boxes[e.key === 'ArrowUp' ? i - 1 : i + 1];
+    if (agla) { agla.focus(); agla.select(); }
   });
 
   box.querySelector('#pp-add').onclick = (e) => {
@@ -3341,6 +3461,20 @@ function _ch173CSS() {
         overflow-wrap:break-word; word-wrap:break-word; white-space:pre-wrap;
       }
       #ch173-doc .ch173-cont:empty{ min-height:0; padding:0 !important; }
+      /* ── مثل باندھنے کی جگہ — دوسرے صفحے کے اوپر بائیں کونے میں مثلث ──
+         Nok top-left kone par, dono lambe bazoo (top aur left margin ke saath)
+         2-2 inch ke. Matn is se bach kar behta hai. Saath hi pehli satar ko
+         ooper wale hashiye se aik satar ka fasla milta hai. */
+      #ch173-doc .ch173-bind{
+        float:left; width:2in; height:2in; margin-top:1.25em;
+        shape-outside:polygon(0 0, 2in 0, 0 2in);
+        -webkit-shape-outside:polygon(0 0, 2in 0, 0 2in);
+        shape-margin:3mm; -webkit-shape-margin:3mm;
+        clip-path:polygon(0 0, 2in 0, 0 2in);
+      }
+      /* Screen par yeh nishan nazar nahi aata — sirf chapai ke liye hai */
+      #ch173-doc .ch173-bind{ display:none; }
+      @media print{ #ch173-doc .ch173-bind{ display:block; } }
       /* CNIC ka APNA khana — naam se alag.
          • Naam  : NEECHE se OOPER (direction:rtl ke saath vertical-rl)
          • CNIC  : OOPER se NEECHE (direction:ltr)
