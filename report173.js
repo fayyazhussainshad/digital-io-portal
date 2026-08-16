@@ -1601,12 +1601,22 @@ window._ch173AccPicker   = _ch173AccPicker;
 // Shuru ki fehrist — har IO isay khud badal sakta hai (neeche mehfooz hoti hai)
 const CH173_PAPERS_DEFAULT = [
   'فارم ہذا',
+  'فارم ریمانڈ',
   'نقل ایف آئی آر',
   'اصل تحریر',
-  'فارم ریمانڈ',
-  'نقشہ موقع',
-  'اطلاع نامہ مدعی',
-  'اصل ضمنی SHO',
+  'فرد بقائیگی ض',
+  'نقشہ موقع جائے وقوعہ',
+  'نقشہ موقع جائے برآمدگی',
+  'میڈیکل معہ ڈاکٹ',
+  'سرٹیفکیٹ شناخت ملزم',
+  'سزا سلپ',
+  'نقل بیانات 161 ض ف',
+  'مصدقہ نقل بیانات 164 ض ف',
+  'پوسٹ مارٹم رپورٹ',
+  'فردات بقائیگی ض',
+  'نقشہ موقع با اسکیل',
+  'وارنٹ گرفتاری بلا ضمانت معہ درخواست',
+  'اشتہار زیر دفعہ 87 ض ف معہ درخواست',
 ];
 
 // ═══ Har qism ke چالان ki APNI fehrist ═══
@@ -1629,7 +1639,10 @@ function _ch173PapersList() {
   const g = _ch173PapersGroup();
   try {
     const a = JSON.parse(localStorage.getItem(_ch173PapersKey()) || 'null');
-    if (Array.isArray(a)) return a.map(String);      // khali fehrist bhi qabool
+    // AHEM: KHALI fehrist ko mehfooz shuda na samjho. Pehle yahan khali bhi
+    // qabool thi, is liye jab nayi (khali) fehrist ban gayi to officer ke
+    // shamil kiye hue kaghaz wapas hi nahi aate the.
+    if (Array.isArray(a) && a.length) return a.map(String);
   } catch (_) {}
   // Purani (mushtarka) fehrist sirf چالان walon ko milegi
   if (g === 'challan') {
