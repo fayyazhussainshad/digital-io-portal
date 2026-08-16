@@ -61,7 +61,7 @@ function _witInjectCSS() {
   }
   .wit-form .wit-field{display:flex;flex-direction:column;}
   .wit-form .wit-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 10px;align-items:start;}
-  .wit-form .wit-grid5{display:grid;grid-template-columns:2.6fr 1.6fr 1.4fr 1fr 1.2fr;gap:6px 8px;align-items:start;}
+  .wit-form .wit-grid5{display:grid;grid-template-columns:4fr 1.4fr 1.2fr 0.9fr 1.1fr;gap:6px 8px;align-items:start;}
   .wit-form .form-input{width:100%;box-sizing:border-box;font-size:14pt;}
   .wit-form select.form-input,.wit-form input.form-input{text-align:center;font-size:14pt;}
   @media(max-width:640px){.wit-form .wit-grid5{grid-template-columns:1fr 1fr;}}
