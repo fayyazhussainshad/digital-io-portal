@@ -225,6 +225,7 @@ async function _loadR173() {
       // is liye har satar par aik hi تاریخ dikhti thi.
       date: (r.form_data && (r.form_data.sho_date2 || r.form_data.sho_date))
             || (r.created_at ? String(r.created_at).slice(0,10) : ''),
+      saved: (r.form_data && r.form_data.saved_at) || r.updated_at || r.created_at || '',
     }));
     (data||[]).forEach(r => {
       // Chaabi bilkul waisi jaisi SAVE karte waqt banti hai (warna dohri entries)
@@ -761,6 +762,7 @@ async function _saveR173() {
     if (oid) rec.officer_id = oid;
     // ہیڈ/عنوان بھی محفوظ (ایک ہی قسم کے کئی چالان ہو سکتے ہیں)
     form_data.head = _r173Head || form_data.head || '';
+    form_data.saved_at = new Date().toISOString();     // mehfooz karne ka waqt
     rec.form_data = form_data;
     if (!navigator.onLine) {
       // OFFLINE — mahfooz maqami tor par + qatar mein daal do (data zaya na ho)
@@ -786,7 +788,8 @@ async function _saveR173() {
       const entry = { id: _r173DocId, type: _r173Type,
         subtype: isTatima ? _r173Subtype : (R173_BLANK_TYPES.includes(_r173Type) ? _ch173Version : ''),
         head: form_data.head, form_data,
-        date: form_data.sho_date2 || form_data.sho_date || _ch173Today() };
+        date: form_data.sho_date2 || form_data.sho_date || _ch173Today(),
+        saved: form_data.saved_at };
       if (idx >= 0) _r173Docs[idx] = entry; else _r173Docs.push(entry);
     } catch(_) {}
     try { localStorage.setItem('dio_r173_'+_r173CaseId, JSON.stringify(_r173Records)); } catch(_) {}
@@ -2920,16 +2923,30 @@ function _renderR173List() {
     const f = d.form_data || {};
     const t = [f.halaat, f.cont_text, f.shahadat].filter(Boolean).join(' ')
       .replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-    return t ? (t.length > 95 ? t.slice(0, 95) + '…' : t) : '';
+    return t ? (t.length > 400 ? t.slice(0, 400) + '…' : t) : '';
   };
   const dt = (d) => d.date ? (typeof formatDate === 'function' ? formatDate(d.date) : d.date) : '';
+  // Mehfooz karne ka waqt (تاریخ ke neeche)
+  const wq = (d) => {
+    const iso = d.saved || '';
+    if (!iso) return '';
+    try {
+      const x = new Date(iso);
+      if (isNaN(x)) return '';
+      let h = x.getHours(); const m = String(x.getMinutes()).padStart(2, '0');
+      const ap = h < 12 ? 'am' : 'pm';
+      h = h % 12; if (!h) h = 12;
+      return String(h).padStart(2, '0') + ':' + m + ' ' + ap;
+    } catch (_) { return ''; }
+  };
 
   const rows = (list) => list.map((d, i) => `
     <tr ondblclick="_r173OpenDoc('${d.id}')" style="cursor:pointer;">
       <td class="num">${i + 1}</td>
       <td>${esc(d.head || typeName(d.type))}</td>
       <td style="text-align:center;">${esc(typeName(d.type))}</td>
-      <td style="text-align:center;white-space:nowrap;font-family:var(--font-mono);">${esc(dt(d))}</td>
+      <td style="text-align:center;white-space:nowrap;font-family:var(--font-mono);">
+        ${esc(dt(d))}${wq(d) ? `<div class="wq">${esc(wq(d))}</div>` : ''}</td>
       <td class="mz">${esc(mazmoon(d))}</td>
       <td class="act">
         <button class="cab" onclick="event.stopPropagation();_r173OpenDoc('${d.id}')" title="ترمیم">✏️</button>
@@ -2944,13 +2961,18 @@ function _renderR173List() {
     .ct{ width:100%; border-collapse:collapse; font-size:13px; direction:rtl;
          font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
     .ct th{ background:var(--bg-tertiary); border:1px solid var(--border); padding:7px 6px;
-            font-weight:700; white-space:nowrap; }
+            font-weight:700; white-space:nowrap; text-align:center; }
     .ct td{ border:1px solid var(--border); padding:6px; vertical-align:middle; }
     .ct tbody tr:nth-child(odd){ background:var(--bg-secondary); }
     .ct tbody tr:hover{ background:var(--hover-bg); }
     .ct .num{ text-align:center; font-weight:700; width:44px; }
     .ct .act{ white-space:nowrap; text-align:center; width:160px; }
-    .ct .mz{ font-size:12px; color:var(--text-secondary); }
+    /* مضمون — satar POORI bharta hai; jo na samaye woh kinare par '…' ban jata hai */
+    .ct .mz{ font-size:12px; color:var(--text-secondary);
+             width:100%; max-width:0; white-space:nowrap;
+             overflow:hidden; text-overflow:ellipsis; text-align:right; }
+    /* mehfooz karne ka waqt — تاریخ ke neeche, chhota */
+    .ct .wq{ font-size:11px; color:var(--text-muted); margin-top:2px; }
     .cab{ border:1px solid var(--border); background:var(--bg-card); border-radius:6px;
           padding:3px 7px; margin:0 1px; cursor:pointer; font-size:14px; line-height:1; }
     .cab:hover{ background:var(--hover-bg); }
@@ -2963,7 +2985,7 @@ function _renderR173List() {
     </div>
     <table class="ct">
       <thead><tr>
-        <th class="num">#</th><th>چالان</th><th>ہیڈ</th><th>تاریخ</th><th>مضمون</th><th class="act">ایکشن</th>
+        <th class="num">#</th><th>قسم چالان</th><th>ہیڈ</th><th>تاریخ وقت</th><th>مضمون</th><th class="act">ایکشن</th>
       </tr></thead>
       <tbody>${_r173Docs.length ? rows(_r173Docs)
         : `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:22px;">ابھی کوئی اندراج نہیں</td></tr>`}</tbody>
