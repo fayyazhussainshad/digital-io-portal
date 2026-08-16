@@ -61,8 +61,10 @@ function _witInjectCSS() {
   }
   .wit-form .wit-field{display:flex;flex-direction:column;}
   .wit-form .wit-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 10px;align-items:start;}
+  .wit-form .wit-grid5{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:6px 8px;align-items:start;}
   .wit-form .form-input{width:100%;box-sizing:border-box;}
   .wit-form select.form-input,.wit-form input.form-input{text-align:center;}
+  @media(max-width:640px){.wit-form .wit-grid5{grid-template-columns:1fr 1fr 1fr;}}
   @media(max-width:560px){.wit-form .wit-grid3{grid-template-columns:1fr 1fr;}}
   `;
   document.head.appendChild(s);
@@ -148,13 +150,12 @@ function _openWitnessForm(id, type) {
     <div class="wit-form">
       <div style="font-size:16px;font-weight:800;color:var(--accent);text-align:center;margin-bottom:4px;font-family:'Jameel Noori Nastaleeq',serif;">${id?'✏️ گواہ کی ترمیم':'➕ نیا گواہ'}</div>
 
-      <!-- نام -->
-      <label class="wit-label">نام</label>
-      <input class="form-input" id="w-name" value="${_escW(w.full_name)}" placeholder="پورا نام" oninput="_checkPriorRecord(this.value)">
-      <div id="w-prior-record" style="margin-top:6px;"></div>
-
-      <!-- شناختی کارڈ | فون نمبر | پیشہ (ایک لائن) -->
-      <div class="wit-grid3" style="margin-top:6px;">
+      <!-- نام | شناختی کارڈ | فون نمبر | پیشہ | حیثیت (سب ایک لائن) -->
+      <div class="wit-grid5">
+        <div class="wit-field">
+          <label class="wit-label">نام</label>
+          <input class="form-input" id="w-name" value="${_escW(w.full_name)}" placeholder="پورا نام" oninput="_checkPriorRecord(this.value)">
+        </div>
         <div class="wit-field">
           <label class="wit-label">شناختی کارڈ</label>
           <input class="form-input" id="w-cnic" dir="ltr" maxlength="15" value="${_escW(w.cnic)}" placeholder="00000-0000000-0" oninput="_witFmtCnic(this);_checkPriorByContact()">
@@ -167,17 +168,19 @@ function _openWitnessForm(id, type) {
           <label class="wit-label">پیشہ</label>
           <input class="form-input" id="w-profession" value="${_escW(w.profession)}" placeholder="پیشہ">
         </div>
+        <div class="wit-field">
+          <label class="wit-label">حیثیت</label>
+          <div style="display:flex;gap:4px;align-items:stretch;">
+            <select class="form-input" id="w-status" style="flex:1;min-width:0;">
+              ${WITNESS_STATUS.map(s => `<option value="${s.v}" ${w.status===s.v?'selected':''}>${s.label}</option>`).join('')}
+              ${w.status && !WITNESS_STATUS.find(s=>s.v===w.status) ? `<option value="${w.status}" selected>${w.status}</option>` : ''}
+            </select>
+            <button class="btn btn-secondary btn-sm" style="flex-shrink:0;padding:0 8px;" onclick="_addCustomStatus()" title="نیا اسٹیٹس">➕</button>
+          </div>
+        </div>
       </div>
 
-      <!-- حیثیت (Status) -->
-      <label class="wit-label" style="margin-top:8px;">حیثیت (Status)</label>
-      <div style="display:flex;gap:5px;align-items:stretch;">
-        <select class="form-input" id="w-status" style="flex:1;">
-          ${WITNESS_STATUS.map(s => `<option value="${s.v}" ${w.status===s.v?'selected':''}>${s.label}</option>`).join('')}
-          ${w.status && !WITNESS_STATUS.find(s=>s.v===w.status) ? `<option value="${w.status}" selected>${w.status}</option>` : ''}
-        </select>
-        <button class="btn btn-secondary btn-sm" onclick="_addCustomStatus()" title="نیا اسٹیٹس">➕</button>
-      </div>
+      <div id="w-prior-record" style="margin-top:8px;"></div>
 
       <div style="display:flex;gap:8px;margin-top:14px;justify-content:center;">
         <button class="btn btn-primary" onclick="_saveWitness()">💾 محفوظ کریں</button>
