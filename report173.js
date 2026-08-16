@@ -1859,12 +1859,24 @@ function _ch173FitPaper() {
   // ho jata tha aur us ke neeche khali jagah (chaori patti) reh jati thi,
   // jis se چالان neeche se kat jata tha. Ab isay seedha khirki ke neeche tak
   // le jate hain, taake poora چالان aur us ka neeche wala matn nazar aaye.
+  // AHEM: sirf is dabbe ko unchai dena KAAFI NAHI. Yeh dabba aik "flex" khane
+  // ke andar hai — aur aise khane ki khasiyat hai ke agar us ka WALID chhota
+  // ho to woh apni muqarrar unchai ke BAWAJOOD sikur jata hai. Isi liye pehle
+  // unchai lagti to theek thi (588px) magar asal mein 371px reh jati thi.
+  // Hal: dabbe ke saath saath us ke walidain ko bhi khirki ke neeche tak
+  // le jao, aur sikurne se rok do (flex-shrink:0).
   try {
-    const r = host.getBoundingClientRect();
-    const hh = Math.max(240, (window.innerHeight || 0) - r.top - 2);
-    host.style.height = hh + 'px';
-    host.style.maxHeight = 'none';
+    let el = host, hops = 0;
+    while (el && el !== document.body && hops++ < 4) {
+      const top = el.getBoundingClientRect().top;
+      const hh = Math.max(200, (window.innerHeight || 0) - top - 2);
+      el.style.height = hh + 'px';
+      el.style.maxHeight = 'none';
+      el.style.flexShrink = '0';                 // ab sikur nahi sakta
+      el = el.parentElement;
+    }
     host.style.overflow = 'auto';
+    host.style.flexShrink = '0';
   } catch (_) {}
 
   const IN = 96;                                        // 1 inch = 96px
