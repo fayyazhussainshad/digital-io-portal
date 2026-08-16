@@ -894,6 +894,11 @@ function _printR173() {
         .colgrip,.rowgrip,.acc-pick,.no-print,button,select{ display:none !important; }
         /* Misal bandhne wali tikoni jagah — chapai mein zaroori */
         #ch173-doc .ch173-bind{ display:block !important; }
+        /* Safhe ka tor theek apni jagah par */
+        #ch173-doc .ch173-pgbrk{ display:block !important; height:0 !important;
+          break-before:page !important; page-break-before:always !important; }
+        /* Koi satar akeli na chhute (safhe ke kinare par) */
+        #ch173-doc, #ch173-doc *{ orphans:2; widows:2; }
         .sho-papers-body, .sho-cell-row, .ch173-cont{ outline:none !important; }
         .sho-papers-body:empty::before, .sho-cell-date:empty::before,
         .sho-cell-row:empty::before, .ch173-cont:empty::before{ content:'' !important; }
@@ -1541,6 +1546,14 @@ function _ch173AddBindMarks() {
       if (off >= 0 && off < t.node.nodeValue.length) {
         try {
           const baad = t.node.splitText(off);
+          // Safhe ka TOR theek yahan — taake aakhri satar BEECH se na kate.
+          // Browser apne aap torta hai to nastaleeq ke lambe huroof us tor par
+          // kat jate hain; hum jagah pehle se jante hain, is liye tor khud
+          // lagate hain aur satar poori reh kar agle safhe par jati hai.
+          const brk = document.createElement('span');
+          brk.className = 'ch173-pgbrk';
+          t.node.parentNode.insertBefore(brk, baad);
+          daale.push(brk);
           const tri = document.createElement('span');
           tri.className = 'ch173-bind';
           t.node.parentNode.insertBefore(tri, baad);
@@ -3599,6 +3612,14 @@ function _ch173CSS() {
         -webkit-shape-outside:polygon(0 0, 2in 0, 0 2in);
         shape-margin:3mm; -webkit-shape-margin:3mm;
         clip-path:polygon(0 0, 2in 0, 0 2in);
+      }
+      /* Safhe ka tor — sirf chapai mein */
+      #ch173-doc .ch173-pgbrk{ display:none; }
+      @media print{
+        #ch173-doc .ch173-pgbrk{
+          display:block; height:0; margin:0; padding:0;
+          break-before:page; page-break-before:always;
+        }
       }
       /* Screen par yeh nishan nazar nahi aata — sirf chapai ke liye hai */
       #ch173-doc .ch173-bind{ display:none; }
