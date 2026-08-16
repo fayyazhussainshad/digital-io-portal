@@ -443,14 +443,16 @@ function _renderR173() {
       [0, 150, 400, 800, 1500].forEach(ms => setTimeout(() => {
         try { _ch173WrapCnics(); } catch(_) {}       // naam+CNIC tayyar
         try { _ch173AutoFitCols(); } catch(_) {}     // jitna mawad, utni chaurai
-        try { _ch173AutoSize(); } catch(_) {}        // khane apne matn ke barabar
-        try { _ch173StretchRow(); } catch(_) {}      // phir bhi safha khali ho to bharo
+        try { _ch173StretchRow(); } catch(_) {}      // safha khali ho to bharo
         try { _ch173OverflowSettle(3); } catch(_) {}
         try { _ch173TrimRowGap(); } catch(_) {}      // neeche bachi khali jagah khatam
       }, ms));
       // Nigrani chalu — koi matn chhupa reh jaye to khud neeche chala jaye
       try { _ch173StartOverflowWatch(); } catch(_) {}
       if (_ch173FirMatn === null) _ch173LoadFirMatn(); else _ch173FillHalaat();
+      // Khanon ki naap SIRF AIK DAFA — matn poori tarah lag jane ke baad.
+      // (Baar baar chalane se har dafa khana aur tang hota chala jata tha.)
+      setTimeout(() => { try { _ch173AutoSize(); } catch (_) {} }, 900);
       window.addEventListener('resize', _ch173SizeRotated);
       // Mehfooz shuda row height wapas lagao
       try {
@@ -1253,80 +1255,83 @@ function _ch173AutoSize() {
   if (!table) return;
   const cols = [...table.querySelectorAll('colgroup col')];
   const tds  = [...table.querySelectorAll('tbody tr > td')];
-  if (cols.length < 7 || tds.length < 7) return;
+  const row  = table.querySelector('tbody tr');
+  if (cols.length < 7 || tds.length < 7 || !row) return;
 
   const kul = table.clientWidth;
-  if (!kul) return;                                   // abhi naapa nahi gaya
+  if (!kul) return;
 
-  // ── 1) Har khadi khane ki DARKAR chaurai ──
+  // ═══ AHEM — naap lene se PEHLE tamam pabandiyan hata do ═══
+  // Warna naap us tang khane ki aati hai jo pehle se lagi hui hai, aur har
+  // dafa chalne par khana aur tang hota chala jata hai — matn kat jata hai.
+  const puraniW = cols.map(c => c.style.width);
+  const puraniH = row.querySelector('td') ? row.querySelector('td').style.height : '';
+  cols.forEach(c => { c.style.width = ''; });
+  row.querySelectorAll('td').forEach(c => { c.style.height = '2400px'; });
+  void table.offsetWidth;                              // nayi (khuli) naap lagne do
+
+  const naapo = (el) => {                              // asal (qudrati) naap
+    if (!el) return { w: 0, h: 0 };
+    try {
+      const rg = document.createRange();
+      rg.selectNodeContents(el);
+      const r = rg.getBoundingClientRect();
+      return { w: Math.ceil(r.width), h: Math.ceil(r.height) };
+    } catch (_) { return { w: el.scrollWidth || 0, h: el.scrollHeight || 0 }; }
+  };
+
+  // ── 1) Har khadi khane ki DARKAR chaurai + sab se lambi satar ──
   const darkar = [];
-  let jama = 0;
+  let lambi = 0, jama = 0;
   for (let i = 0; i < 6; i++) {
     const inner = tds[i].querySelector('.rotinner');
     let w = 0;
     if (inner) {
-      w = inner.scrollWidth || 0;                     // satron ka phailao
-      try {
-        const rg = document.createRange();
-        rg.selectNodeContents(inner);
-        const rr = rg.getBoundingClientRect();
-        if (rr.width) w = Math.max(w, Math.ceil(rr.width));
-      } catch (_) {}
+      w = Math.max(naapo(inner).w, inner.scrollWidth || 0);
+      const lns = inner.querySelectorAll('.ln');
+      if (lns.length) {
+        lns.forEach(ln => {
+          // Khadi likhayi mein kisi cheez ki "lambai" us ki UNCHAI hoti hai
+          const a = naapo(ln.querySelector('.nm')).h;
+          const b = naapo(ln.querySelector('.cn')).h;
+          if (a + b > lambi) lambi = a + b;
+        });
+      } else {
+        const h = naapo(inner).h;
+        if (h > lambi) lambi = h;
+      }
     }
-    w = Math.max(26, w + 8);                          // khali khana bhi nazar aaye
-    darkar.push(w);
-    jama += w;
+    w = Math.max(30, w + 12);                          // saans ki jagah
+    darkar.push(w); jama += w;
   }
 
-  // ── 2) کالم 7 ke liye kam az kam jagah bacha kar rakho ──
+  // ── 2) کالم 7 ke liye jagah mehfooz ──
   const col7Kam = Math.max(140, Math.round(kul * 0.22));
-  if (jama > kul - col7Kam) {                         // jagah kam pad rahi hai
+  if (jama > kul - col7Kam) {
     const paimana = (kul - col7Kam) / jama;
-    for (let i = 0; i < 6; i++) darkar[i] = Math.max(24, Math.floor(darkar[i] * paimana));
+    for (let i = 0; i < 6; i++) darkar[i] = Math.max(28, Math.floor(darkar[i] * paimana));
     jama = darkar.reduce((a, b) => a + b, 0);
   }
-  // Gol karne se kabhi kul naap zyada ho jati hai — usay theek kar lo,
-  // warna table apne khane se bahar nikal jata hai.
   let zyada = (jama + col7Kam) - kul;
   for (let g = 0; zyada > 0 && g < 40; g++) {
     let bara = 0;
     for (let i = 1; i < 6; i++) if (darkar[i] > darkar[bara]) bara = i;
-    if (darkar[bara] <= 26) break;
-    const kaato = Math.min(zyada, darkar[bara] - 26);
+    if (darkar[bara] <= 28) break;
+    const kaato = Math.min(zyada, darkar[bara] - 28);
     darkar[bara] -= kaato; jama -= kaato; zyada -= kaato;
   }
-  for (let i = 0; i < 6; i++) cols[i].style.width = darkar[i] + 'px';
-  cols[6].style.width = Math.max(col7Kam, kul - jama) + 'px';
 
-  // ── 3) DARKAR lambai — sab se lambi satar jitni ──
-  let lambi = 0;
-  for (let i = 0; i < 6; i++) {
-    const inner = tds[i].querySelector('.rotinner');
-    if (!inner) continue;
-    const lns = inner.querySelectorAll('.ln');
-    if (lns.length) {
-      lns.forEach(ln => {
-        const nm = ln.querySelector('.nm'), cn = ln.querySelector('.cn');
-        // Khadi likhayi mein kisi cheez ki "lambai" us ki offsetHeight hoti hai
-        const t = (nm ? nm.offsetHeight : 0) + (cn ? cn.offsetHeight : 0);
-        if (t > lambi) lambi = t;
-      });
-    } else {
-      try {
-        const rg = document.createRange();
-        rg.selectNodeContents(inner);
-        const rr = rg.getBoundingClientRect();
-        if (rr.height > lambi) lambi = Math.ceil(rr.height);
-      } catch (_) {}
-    }
-  }
-  if (lambi > 0) {
-    const row = table.querySelector('tbody tr');
-    if (row) {
-      const naya = Math.max(120, lambi + 14);         // thori saans ki jagah
-      row.querySelectorAll('td').forEach(c => { c.style.height = naya + 'px'; });
-      window._ch173MinRowH = naya;                    // is se neeche kabhi na jaye
-    }
+  // ── 3) Naap lagao ──
+  if (jama > 0 && lambi > 0) {
+    for (let i = 0; i < 6; i++) cols[i].style.width = darkar[i] + 'px';
+    cols[6].style.width = Math.max(col7Kam, kul - jama) + 'px';
+    const nayiH = Math.max(140, lambi + 24);           // matn kabhi na kate
+    row.querySelectorAll('td').forEach(c => { c.style.height = nayiH + 'px'; });
+    window._ch173MinRowH = nayiH;
+  } else {
+    // Naap na mili to purani halat wapas — kuch bigadne se behtar hai
+    cols.forEach((c, i) => { c.style.width = puraniW[i] || ''; });
+    row.querySelectorAll('td').forEach(c => { c.style.height = puraniH || ''; });
   }
   try { _ch173OverflowSettle(3); } catch (_) {}
 }
