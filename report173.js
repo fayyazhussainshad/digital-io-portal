@@ -821,8 +821,12 @@ function _printR173() {
       chDoc.style.width = (_ch173Paper === 'a4') ? '8.27in' : '8.5in';
       chDoc.style.maxWidth = 'none';
       void chDoc.offsetHeight;                 // nayi naap lagne do
-      try { _ch173AutoSize(); } catch (__) {}        // khane apne matn ke barabar
-      try { _ch173StretchRow(); } catch (__) {}      // phir bhi safha khali ho to bharo
+      // AHEM: yahan khanon ki naap DOBARA na lein. Screen pehle se kaghaz ki
+      // naap par hai; chapai ke waqt dobara naapne se halaat thore badal jate
+      // hain (hashiye alag hote hain) aur natija alag nikalta hai — isi wajah
+      // se screen aur chapai ka چالان alag nazar aata tha. Chapai ab wahi naql
+      // leti hai jo screen par mojood hai.
+      try { _ch173StretchRow(); } catch (__) {}      // safha khali ho to bharo
       _ch173OverflowSettle(6);
       try { _ch173TrimRowGap(); } catch (__) {}      // neeche bachi khali jagah khatam
       try { _ch173WrapCnics(chDoc); } catch (__) {}   // CNIC ki seedh chapai mein bhi
