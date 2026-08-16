@@ -1,6 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
    DIGITAL IO — WITNESSES / PERSONS (per case, universal)
    Compact horizontal strip cards + cross-reference
+   FORM FIELDS unchanged — format/font/settings mirrored from
+   mulziman.js (centered Nastaliq labels, centered inputs, grid,
+   CNIC/phone auto-format, keyboard navigation).
    ═══════════════════════════════════════════════════════════ */
 
 // Default witness status options (officer can add custom via +)
@@ -44,7 +47,29 @@ async function _loadWitnesses() {
   } catch(_) { _witnessList = []; }
 }
 
+// ── FORM CSS (injected once — mirrors mulziman's acc-form styling) ──
+function _witInjectCSS() {
+  if (document.getElementById('wit-form-css')) return;
+  const s = document.createElement('style');
+  s.id = 'wit-form-css';
+  s.textContent = `
+  .wit-form{direction:rtl;text-align:right;}
+  .wit-form .wit-label{
+    display:block;font-size:14pt;font-weight:700;text-align:center;
+    font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
+    margin:8px 0 4px;color:var(--text,#111);line-height:1.6;
+  }
+  .wit-form .wit-field{display:flex;flex-direction:column;}
+  .wit-form .wit-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 10px;align-items:start;}
+  .wit-form .form-input{width:100%;box-sizing:border-box;}
+  .wit-form select.form-input,.wit-form input.form-input{text-align:center;}
+  @media(max-width:560px){.wit-form .wit-grid3{grid-template-columns:1fr 1fr;}}
+  `;
+  document.head.appendChild(s);
+}
+
 function _renderWitnessesArea() {
+  _witInjectCSS();
   const area = document.getElementById('workspace-editor-area')
             || document.getElementById('workspace-tab-content')
             || document.getElementById('page-content');
@@ -110,50 +135,100 @@ function _renderWitnessList(list, type) {
   }).join('');
 }
 
+// ── ADD / EDIT FORM (fields unchanged — mulziman format/font/settings) ──
 function _openWitnessForm(id, type) {
+  _witInjectCSS();
   _editingWitnessId = id || null;
   _witnessFormType = type || (id ? (_witnessList.find(x=>x.id===id)||{}).witness_type : null) || 'fir';
   const w = id ? (_witnessList.find(x => x.id === id) || {}) : {};
   const box = document.getElementById('witness-form-box');
   if (!box) return;
   box.innerHTML = `
-  <div class="card" style="padding:12px 14px;border:1px solid var(--accent);margin:0;">
-    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px;">${id?'✏️ گواہ کی ترمیم':'➕ نیا گواہ'}</div>
-    <div class="dio-form-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px 12px;">
-      <div style="grid-column:1/-1;">
-        <label class="form-label">نام *</label>
-        <input class="form-input" id="w-name" value="${_escW(w.full_name)}" placeholder="پورا نام" oninput="_checkPriorRecord(this.value)">
-        <div id="w-prior-record" style="margin-top:6px;"></div>
-      </div>
-      <div>
-        <label class="form-label">شناختی کارڈ</label>
-        <input class="form-input" id="w-cnic" dir="ltr" value="${_escW(w.cnic)}" placeholder="00000-0000000-0" oninput="_checkPriorByContact()">
-      </div>
-      <div>
-        <label class="form-label">فون نمبر</label>
-        <input class="form-input" id="w-cell" dir="ltr" value="${_escW(w.cell)}" placeholder="0000-0000000" oninput="_checkPriorByContact()">
-      </div>
-      <div>
-        <label class="form-label">پیشہ</label>
-        <input class="form-input" id="w-profession" value="${_escW(w.profession)}" placeholder="پیشہ">
-      </div>
-      <div>
-        <label class="form-label">حیثیت (Status)</label>
-        <div style="display:flex;gap:5px;">
-          <select class="form-input" id="w-status" style="flex:1;">
-            ${WITNESS_STATUS.map(s => `<option value="${s.v}" ${w.status===s.v?'selected':''}>${s.label}</option>`).join('')}
-            ${w.status && !WITNESS_STATUS.find(s=>s.v===w.status) ? `<option value="${w.status}" selected>${w.status}</option>` : ''}
-          </select>
-          <button class="btn btn-secondary btn-sm" onclick="_addCustomStatus()" title="نیا اسٹیٹس">➕</button>
+  <div class="card" style="padding:12px 14px;border:1px solid var(--accent);margin:0 0 12px;">
+    <div class="wit-form">
+      <div style="font-size:16px;font-weight:800;color:var(--accent);text-align:center;margin-bottom:4px;font-family:'Jameel Noori Nastaleeq',serif;">${id?'✏️ گواہ کی ترمیم':'➕ نیا گواہ'}</div>
+
+      <!-- نام -->
+      <label class="wit-label">نام</label>
+      <input class="form-input" id="w-name" value="${_escW(w.full_name)}" placeholder="پورا نام" oninput="_checkPriorRecord(this.value)">
+      <div id="w-prior-record" style="margin-top:6px;"></div>
+
+      <!-- شناختی کارڈ | فون نمبر | پیشہ (ایک لائن) -->
+      <div class="wit-grid3" style="margin-top:6px;">
+        <div class="wit-field">
+          <label class="wit-label">شناختی کارڈ</label>
+          <input class="form-input" id="w-cnic" dir="ltr" maxlength="15" value="${_escW(w.cnic)}" placeholder="00000-0000000-0" oninput="_witFmtCnic(this);_checkPriorByContact()">
+        </div>
+        <div class="wit-field">
+          <label class="wit-label">فون نمبر</label>
+          <input class="form-input" id="w-cell" dir="ltr" maxlength="12" value="${_escW(w.cell)}" placeholder="0000-0000000" oninput="_witFmtMobile(this);_checkPriorByContact()">
+        </div>
+        <div class="wit-field">
+          <label class="wit-label">پیشہ</label>
+          <input class="form-input" id="w-profession" value="${_escW(w.profession)}" placeholder="پیشہ">
         </div>
       </div>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:12px;">
-      <button class="btn btn-primary" onclick="_saveWitness()">💾 محفوظ کریں</button>
-      <button class="btn btn-secondary" onclick="document.getElementById('witness-form-box').innerHTML=''">منسوخ</button>
+
+      <!-- حیثیت (Status) -->
+      <label class="wit-label" style="margin-top:8px;">حیثیت (Status)</label>
+      <div style="display:flex;gap:5px;align-items:stretch;">
+        <select class="form-input" id="w-status" style="flex:1;">
+          ${WITNESS_STATUS.map(s => `<option value="${s.v}" ${w.status===s.v?'selected':''}>${s.label}</option>`).join('')}
+          ${w.status && !WITNESS_STATUS.find(s=>s.v===w.status) ? `<option value="${w.status}" selected>${w.status}</option>` : ''}
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="_addCustomStatus()" title="نیا اسٹیٹس">➕</button>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:14px;justify-content:center;">
+        <button class="btn btn-primary" onclick="_saveWitness()">💾 محفوظ کریں</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('witness-form-box').innerHTML=''">منسوخ</button>
+      </div>
     </div>
   </div>`;
   box.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// ── CNIC / Phone auto-format (copied from mulziman settings) ───
+function _witFmtCnic(el) {
+  let v = el.value.replace(/\D/g, '').slice(0, 13);
+  if (v.length > 5) v = v.slice(0,5) + '-' + v.slice(5);
+  if (v.length > 13) v = v.slice(0,13) + '-' + v.slice(13);
+  el.value = v;
+}
+function _witFmtMobile(el) {
+  let v = el.value.replace(/\D/g, '').slice(0, 11);
+  if (v.length > 4) v = v.slice(0,4) + '-' + v.slice(4);
+  el.value = v;
+}
+
+// ── KEYBOARD NAVIGATION (mirrors mulziman: Tab / Arrow / Space) ──
+function _witKeyNav(e) {
+  const form = document.querySelector('.wit-form');
+  if (!form || !form.contains(e.target)) return;
+  const t = e.target;
+  const k = e.key;
+
+  const els = Array.from(form.querySelectorAll('input, select, button, textarea'))
+    .filter(el => !el.disabled && el.type !== 'file' && el.getClientRects().length);
+  const i = els.indexOf(t);
+
+  if (k === 'ArrowDown') {
+    if (i > -1 && i < els.length - 1) { e.preventDefault(); els[i + 1].focus(); }
+  } else if (k === 'ArrowUp') {
+    if (i > 0) { e.preventDefault(); els[i - 1].focus(); }
+  } else if (k === ' ' || k === 'Spacebar' || k === 'Space') {
+    if (t.tagName === 'SELECT') {
+      if (typeof t.showPicker === 'function') { e.preventDefault(); try { t.showPicker(); } catch(_) {} }
+    } else if (t.tagName === 'BUTTON') {
+      e.preventDefault(); t.click();
+    }
+    // text/date inputs: space types normally
+  }
+  // Tab / Shift+Tab: native handling walks every field in order
+}
+if (typeof window !== 'undefined' && !window._witKeyNavBound) {
+  document.addEventListener('keydown', _witKeyNav, true);
+  window._witKeyNavBound = true;
 }
 
 // Add a custom status option to the dropdown
