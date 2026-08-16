@@ -440,12 +440,12 @@ function _renderR173() {
       // Overflow kai martaba aazmao — khane ki asal naap CSS/font lagne ke
       // BAAD hi maloom hoti hai. Aik hi dafa chalane se matn chhupa reh
       // jata tha (khane ki naap us waqt tak 0 hoti thi).
-      [0, 150, 400, 800, 1500].forEach(ms => setTimeout(() => {
-        try { _ch173WrapCnics(); } catch(_) {}       // naam+CNIC tayyar
-        try { _ch173AutoFitCols(); } catch(_) {}     // jitna mawad, utni chaurai
-        try { _ch173StretchRow(); } catch(_) {}      // safha khali ho to bharo
-        try { _ch173OverflowSettle(3); } catch(_) {}
-        try { _ch173TrimRowGap(); } catch(_) {}      // neeche bachi khali jagah khatam
+      // Naap ka poora kaam AIK hi tarteeb se (_ch173Layout dekhein). Pehle
+      // yeh paanch kaam alag alag waqton par chalte the aur aik doosre ki
+      // naap badal dete the — isi se pehli dafa matn chhupa milta tha aur
+      // doosri dafa gap reh jata tha.
+      [250, 900, 1800].forEach(ms => setTimeout(() => {
+        try { _ch173Layout(); } catch(_) {}
       }, ms));
       // Nigrani chalu — koi matn chhupa reh jaye to khud neeche chala jaye
       try { _ch173StartOverflowWatch(); } catch(_) {}
@@ -826,11 +826,9 @@ function _printR173() {
       // hain (hashiye alag hote hain) aur natija alag nikalta hai — isi wajah
       // se screen aur chapai ka چالان alag nazar aata tha. Chapai ab wahi naql
       // leti hai jo screen par mojood hai.
-      try { _ch173StretchRow(); } catch (__) {}      // safha khali ho to bharo
-      _ch173OverflowSettle(6);
-      try { _ch173TrimRowGap(); } catch (__) {}      // neeche bachi khali jagah khatam
-      try { _ch173WrapCnics(chDoc); } catch (__) {}   // CNIC ki seedh chapai mein bhi
-      try { _ch173AutoFitCols(); } catch (__) {}      // jitna mawad, utni chaurai
+      // Wahi AIK tarteeb jo screen par chalti hai — is liye chapai bilkul
+      // wohi shakl deti hai jo screen par nazar aa rahi hoti hai.
+      try { _ch173Layout(); } catch (__) {}
       void chDoc.offsetHeight;
       _inner = chDoc.innerHTML;                // kaghaz ki naap wala natija
     } catch (_) {
@@ -1349,6 +1347,60 @@ function _ch173AutoSize() {
   try { _ch173OverflowSettle(3); } catch (_) {}
 }
 window._ch173AutoSize = _ch173AutoSize;
+
+// ═══════════════════════════════════════════════════════════════════
+//  چالان کی ناپ — سب کچھ ایک ہی جگہ، ایک ہی ترتیب سے
+//  Pehle yeh kaam alag alag waqton par chalte the (0/150/400/900/1500ms
+//  aur har 1200ms nigrani) — har aik doosre ki naap badal deta tha. Isi
+//  se pehli dafa kholne par matn chhupa milta tha aur doosri dafa gap
+//  reh jata tha. Ab tarteeb PAKKI hai:
+//    1. safha kaghaz ki naap par
+//    2. khane apne matn ke barabar (chaurai + lambai)
+//    3. qatar ko poori satron par gol karo  ← gap yahin khatam hota hai
+//    4. matn jama do (jo na samaye woh neeche)
+//    5. CNIC ki seedh
+// ═══════════════════════════════════════════════════════════════════
+function _ch173Layout() {
+  try { _ch173FitPaper(); } catch (_) {}
+  try { _ch173AutoFitCols(); } catch (_) {}     // khanon ki chaurai (file ka apna)
+  try { _ch173AutoSize(); } catch (_) {}        // chaurai + lambai (matn ke mutabiq)
+  try { _ch173RoundRow(); } catch (_) {}
+  try { _ch173StretchRow(); } catch (_) {}      // sirf tab jab neeche kuch na ho
+  try { _ch173OverflowSettle(4); } catch (_) {}
+  try { _ch173WrapCnics(); } catch (_) {}
+}
+window._ch173Layout = _ch173Layout;
+
+// ═══ GAP ka asal ilaj — qatar ko POORI SATRON par gol karo ═══
+// کالم 7 ka matn hamesha POORI satron mein behta hai. Agar qatar ki unchai
+// satron ki naap ka theek guna na ho, to aakhir mein aadhi satar ki jagah
+// KHALI bach jati hai — yehi "gap" hai. Isay chhota kar ke khatam nahi kiya
+// ja sakta (warna naam kat jate hain), is liye ULTA karte hain: qatar ko
+// agli POORI satar tak BARHA dete hain. Us se aik satar zyada matn khane
+// mein aa jata hai aur khali jagah bilkul sifar ho jati hai — aur naam bhi
+// mehfooz rehte hain (CNIC apni seedh mein hi rehte hain).
+function _ch173RoundRow() {
+  const { doc, cell } = _ch173Cells();
+  if (!doc || !cell) return;
+  const row = doc.querySelector('#ch173-table tbody tr');
+  if (!row) return;
+  let lh = 0, padT = 0;
+  try {
+    const cs = getComputedStyle(cell);
+    lh = parseFloat(cs.lineHeight) || 0;
+    padT = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+  } catch (_) {}
+  if (!lh || lh < 4) return;
+  const chahiye = Math.max(row.offsetHeight, window._ch173MinRowH || 0);
+  const andar   = Math.max(lh, chahiye - padT);
+  const gol     = Math.ceil(andar / lh) * lh;              // poori satron par
+  const naya    = Math.round(gol + padT);
+  if (naya > 0 && Math.abs(naya - row.offsetHeight) >= 1) {
+    row.querySelectorAll('td').forEach(c => { c.style.height = naya + 'px'; });
+    window._ch173MinRowH = naya;
+  }
+}
+window._ch173RoundRow = _ch173RoundRow;
 
 // ═══ کالم 1 تا 6 ki chaurai KHUD-BA-KHUD (jitna mawad, utni chaurai) ═══
 // Khadi likhayi mein har shakhs aik satar hai, aur satren dayen se bayen
