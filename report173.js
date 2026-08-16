@@ -3182,8 +3182,9 @@ function _ch173CSS() {
         display:block; direction:rtl; margin-top:6px;
       }
       #ch173-doc .ch173-sho-flex::after{ content:''; display:block; clear:both; }
-      #ch173-doc .sho-b1{ float:left; margin-right:0.7cm; }
-      #ch173-doc .sho-b2{ clear:both; float:left; margin-top:4px; }
+      /* SHO ki dono lines ke OOPER dastkhat ke liye khali jagah */
+      #ch173-doc .sho-b1{ float:left; margin-right:0.7cm; margin-top:1.2cm; }
+      #ch173-doc .sho-b2{ clear:both; float:left; margin-top:1.2cm; }
       #ch173-doc .ch173-sho-flex > .sho-col{ min-width:0; box-sizing:border-box; }
       /* تفصیل کاغذات کا خانہ SHO لائن کے دائیں کنارے سے 1cm پہلے تک پھیلتا ہے */
       #ch173-doc .ch173-sho-flex > .sho-papers{ flex:1 1 auto; }
@@ -3236,8 +3237,12 @@ function _ch173CSS() {
         line-height:1.25;
       }
       /* Tadaad — har kaghaz ke bilkul neeche, IO khud likhta hai */
+      /* Tadaad ka khana naam ke bilkul NEECHE, BEECH mein.
+         'margin:0 auto' hi wo cheez hai jo isay beech mein laati hai —
+         pehle yeh poori chaurai le kar aik taraf ho jata tha. */
       #ch173-doc .pp-qty{
-        display:block; min-width:2.2em; min-height:1.15em; outline:none;
+        display:block; width:2.6em; margin:0 auto;
+        min-height:1.15em; outline:none;
         line-height:1.25; text-align:center; unicode-bidi:plaintext;
       }
       #ch173-doc .pp-qty:empty::before{ content:'—'; color:#c9c9c9; }
