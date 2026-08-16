@@ -4,7 +4,7 @@
    ═══════════════════════════════════════════════════════════ */
 
 /* ╔═══════════════════════════════════════════════════════════╗
-   ║  🔒 چالان کی طے شدہ (LOCKED) سیٹنگز — v352                ║
+   ║  🔒 چالان کی طے شدہ (LOCKED) سیٹنگز — v357                ║
    ║  ASI Fayyaz Hussain Shad ki sareeh ijazat ke BAGHAIR      ║
    ║  in mein se koi cheez tabdeel NA ki jaye. Naye kaam karte ║
    ║  waqt sab se pehle yeh fehrist parh li jaye.              ║
@@ -89,7 +89,22 @@
       • Misal bandhne ki tikoni jagah: doosre safhe se, ooper bayen kone mein,
         dono bazoo 2-2 inch; matn us se bach kar behta hai. Sirf chapai mein.
 
-   9) AAM USOOL
+   9) LIKHNE aur SAFHON ke USOOL (aakhir mein tay hue)
+      • کالم 7 mein likhte waqt: agar khana BHARA NAHI to matn hilaya hi na
+        jaye. Bhar jaye to matn neeche bhejo aur cursor THEEK USI jagah wapas
+        (aakhir par nahi) — warna cursor matn ke SHURU par chala jata tha.
+      • Matn wapas laate waqt neeche ke SHURU ke khali nishan (<br>/khali
+        tukre) HATA diye jate hain — warna woh poori satar kha kar kaam pehle
+        hi qadam par rok dete the aur aakhri satar adhoori reh jati thi.
+        (Khali JAGAH na hatai jaye — warna lafz aapas mein jud jate hain.)
+      • Chapai mein safhe ka TOR khud lagaya jata hai (.ch173-pgbrk) — browser
+        ka apna tor satar ke beech mein padta tha aur nastaleeq ke huroof kat
+        jate the. Saath orphans/widows = 2.
+      • Chips ki patti چالان mein chhupti hai aur cursor ooper jane par nazar
+        aati hai — magar woh TOOLBAR ke NEECHE se khulti hai (overlay), taake
+        toolbar apni jagah se hile nahi aur button dabaya ja sake.
+
+  10) AAM USOOL
       • Har tabdeeli ke baad sw.js ka CACHE_NAME barhana zaroori.
       • Tareekhein sirf DD/MM/YYYY (formatDate).
       • "پنجاب پولیس" ka koi عنوان kahin nahi.
@@ -1656,10 +1671,37 @@ function _ch173Overflow() {
   // foran wapas chala jata hai — natija yeh ke table bara karne par bhi
   // kuch WAPAS nahi aata tha. Is liye aik aik lafz kar ke uthate hain,
   // bilkul waise hi jaise neeche bhejte waqt karte hain.
+  // (b0) NEECHE wale matn ke SHURU ke fazool nishan hatao.
+  // AHEM: wahan aksar khali satar / <br> reh jata hai. Matn wapas laate waqt
+  // sab se pehle wohi uthta hai aur khane mein POORI satar ghair leta hai —
+  // is se kaam PEHLE hi qadam par ruk jata tha aur کالم 7 ki aakhri satar
+  // adhoori reh jati thi. (Khali JAGAH nahi hatate — sirf khali nishan,
+  //  warna lafz aapas mein jud jayen.)
+  try {
+    for (let g = 0; g < 200; g++) {
+      const f = cont.firstChild;
+      if (!f) break;
+      if (f.nodeType === 1 &&
+          (f.tagName === 'BR' || !f.textContent.replace(/[\s\u00A0]/g, ''))) {
+        f.remove(); continue;
+      }
+      break;
+    }
+  } catch (_) {}
+
   guard = 0;
   while (!full() && cont.firstChild && guard++ < 8000) {
     let node = cont.firstChild;
     while (node.nodeType === 1 && node.firstChild) node = node.firstChild;
+    // Khali nishan (jaise <br>) ko khane mein na le jao — woh poori satar
+    // kha jata hai aur kaam wahin ruk jata hai
+    if (node.nodeType === 1 &&
+        (node.tagName === 'BR' || !node.textContent.replace(/[\s\u00A0]/g, ''))) {
+      const par0 = node.parentNode;
+      node.remove();
+      if (par0 && par0 !== cont && !par0.childNodes.length) par0.remove();
+      continue;
+    }
 
     if (node.nodeType === 3) {
       const t = node.nodeValue;
