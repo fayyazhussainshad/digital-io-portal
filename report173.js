@@ -1639,10 +1639,17 @@ function _ch173PapersList() {
   const g = _ch173PapersGroup();
   try {
     const a = JSON.parse(localStorage.getItem(_ch173PapersKey()) || 'null');
-    // AHEM: KHALI fehrist ko mehfooz shuda na samjho. Pehle yahan khali bhi
-    // qabool thi, is liye jab nayi (khali) fehrist ban gayi to officer ke
-    // shamil kiye hue kaghaz wapas hi nahi aate the.
-    if (Array.isArray(a) && a.length) return a.map(String);
+    // AHEM: KHALI fehrist ko mehfooz shuda na samjho.
+    if (Array.isArray(a) && a.length) {
+      // Agar mehfooz fehrist bilkul PURANI default jaisi hai (yani officer ne
+      // khud nahi banai — woh sirf ▾ kholne aur band karne se mehfooz ho gayi
+      // thi), to usay nazar-andaz kar ke asal fehrist par aa jao.
+      const PURANI = ['فارم ہذا','نقل ایف آئی آر','اصل تحریر','فارم ریمانڈ',
+                      'نقشہ موقع','اطلاع نامہ مدعی','اصل ضمنی SHO'];
+      const wahi = a.length === PURANI.length &&
+                   a.every(x => PURANI.includes(String(x).trim()));
+      if (!wahi) return a.map(String);        // officer ki apni fehrist — mehfooz
+    }
   } catch (_) {}
   // Purani (mushtarka) fehrist sirf چالان walon ko milegi
   if (g === 'challan') {
