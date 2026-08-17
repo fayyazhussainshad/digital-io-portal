@@ -182,10 +182,14 @@ const R173_TYPES = [
 const R173_BLANK_TYPES = ['mukammal','namukammal','ch512','tatima_challan','interim'];
 
 const R173_TATIMA_SUBS = [
-  { id:'aslha',  name:'تتمہ چالان — اسلحہ' },
-  { id:'chars',  name:'تتمہ چالان — چرس/منشیات' },
-  { id:'sharab', name:'تتمہ چالان — شراب' },
-  { id:'zina',   name:'تتمہ چالان — زنا/ڈی این اے' },
+  { id:'aslha',    name:'تتمہ چالان — اسلحہ' },
+  { id:'chars',    name:'تتمہ چالان — چرس/منشیات' },
+  { id:'sharab',   name:'تتمہ چالان — شراب' },
+  { id:'zina',     name:'تتمہ چالان — زنا/ڈی این اے' },
+  { id:'sharab2',  name:'تتمہ چالان — شراب' },
+  { id:'chars2',   name:'تتمہ چالان — چرس' },
+  { id:'ice',      name:'تتمہ چالان — آئس' },
+  { id:'antirape', name:'تتمہ چالان — انٹی ریپ ایکٹ' },
 ];
 
 const R173_TATIMA_BOILER = {
@@ -2077,6 +2081,14 @@ window._ch173AccPicker   = _ch173AccPicker;
 //   rehta hai: 'dio_ch173_papers'.)
 // ═══════════════════════════════════════════════════════════════════
 // Shuru ki fehrist — har IO isay khud badal sakta hai (neeche mehfooz hoti hai)
+// تتمہ چالان ke default kaghaz (چالان walon se alag)
+const CH173_TATIMA_PAPERS_DEFAULT = [
+  'فارم ہذا',
+  'نقل FIR',
+  'اصل رزلٹ نمبری',
+  'سزا سلپ',
+];
+
 const CH173_PAPERS_DEFAULT = [
   'فارم ہذا',
   'فارم ریمانڈ',
@@ -2101,7 +2113,11 @@ const CH173_PAPERS_DEFAULT = [
 // چالان مکمل / نامکمل / 512 ض ف — teeno ka aik hi kaghazon ka set.
 // تتمہ چالان, اخراج aur عدم پتہ — har aik ka ALAG set (officer khud bharega).
 function _ch173PapersGroup() {
-  if (_r173Type === 'tatima_challan') return 'tatima';
+  // تتمہ چالان aur us ke tamam sub-types (شراب/چرس/آئس/انٹی ریپ waghera) —
+  // sab aik hi تتمہ fehrist istemal karte hain
+  if (_r173Type === 'tatima_challan' ||
+      (typeof R173_TATIMA_SUBS !== 'undefined' &&
+       R173_TATIMA_SUBS.some(x => x.id === _r173Type))) return 'tatima';
   if (_r173Type === 'ikhraj')         return 'ikhraj';
   if (_r173Type === 'adampata')       return 'adampata';
   return 'challan';                 // مکمل / نامکمل / 512 / انٹیرم
@@ -2137,7 +2153,9 @@ function _ch173PapersList() {
     } catch (_) {}
     return CH173_PAPERS_DEFAULT.slice();
   }
-  return [];                                          // تتمہ / اخراج / عدم پتہ — officer khud bharega
+  // تتمہ چالان ki apni default fehrist (چالان walon se alag)
+  if (g === 'tatima') return CH173_TATIMA_PAPERS_DEFAULT.slice();
+  return [];                                          // اخراج / عدم پتہ — officer khud bharega
 }
 function _ch173PapersSave(arr) {
   try { localStorage.setItem(_ch173PapersKey(), JSON.stringify(arr)); } catch (_) {}
