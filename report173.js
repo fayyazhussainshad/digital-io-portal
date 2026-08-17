@@ -181,15 +181,14 @@ const R173_TYPES = [
 // owner/admin khud set karega). Yeh types khali safed safhe par khulte hain.
 const R173_BLANK_TYPES = ['mukammal','namukammal','ch512','tatima_challan','interim'];
 
+// تتمہ چالان ka ذیلی (sub) menu — koi cheez repeat na ho.
 const R173_TATIMA_SUBS = [
-  { id:'aslha',    name:'تتمہ چالان — اسلحہ' },
-  { id:'chars',    name:'تتمہ چالان — چرس/منشیات' },
-  { id:'sharab',   name:'تتمہ چالان — شراب' },
-  { id:'zina',     name:'تتمہ چالان — زنا/ڈی این اے' },
-  { id:'sharab2',  name:'تتمہ چالان — شراب' },
-  { id:'chars2',   name:'تتمہ چالان — چرس' },
-  { id:'ice',      name:'تتمہ چالان — آئس' },
-  { id:'antirape', name:'تتمہ چالان — انٹی ریپ ایکٹ' },
+  { id:'aslha',    name:'اسلحہ' },
+  { id:'sharab',   name:'شراب' },
+  { id:'chars',    name:'چرس' },
+  { id:'ice',      name:'آئس' },
+  { id:'zina',     name:'زنا/ڈی این اے (DNA)' },
+  { id:'antirape', name:'انٹی ریپ ایکٹ' },
 ];
 
 const R173_TATIMA_BOILER = {
@@ -2297,21 +2296,52 @@ function _ch173PapersPicker(ev) {
   // (Tab pehle se chalta tha; ab ↑ ↓ bhi. Ctrl ke saath dabane par satar
   //  KHUD ooper/neeche khisak jati hai — tarteeb badalne ka chhota raasta.)
   wrap.addEventListener('keydown', (e) => {
-    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    const t = e.target;
+    if (!t.classList || !t.classList.contains('pp-txt')) return;
     const boxes = [...wrap.querySelectorAll('.pp-txt')];
-    const i = boxes.indexOf(e.target);
+    const i = boxes.indexOf(t);
     if (i < 0) return;
-    e.preventDefault();
-    if (e.ctrlKey) {                                   // satar hi hila do
-      const btn = e.target.closest('.pp-row')
+
+    // Ctrl + ↑↓ → poori satar hi ooper/neeche khisak jaye
+    if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+      e.preventDefault();
+      const btn = t.closest('.pp-row')
         .querySelector(e.key === 'ArrowUp' ? '.pp-up' : '.pp-down');
       if (btn && !btn.disabled) btn.click();
       const naya = wrap.querySelectorAll('.pp-txt')[e.key === 'ArrowUp' ? i - 1 : i + 1];
       if (naya) { naya.focus(); naya.select(); }
       return;
     }
-    const agla = boxes[e.key === 'ArrowUp' ? i - 1 : i + 1];
-    if (agla) { agla.focus(); agla.select(); }
+
+    // ↑ ↓ → agli/pichhli satar ke khane mein (magar SIRF jab cursor kinare par ho,
+    // warna arrow lafz ke andar cursor chalaye — yani aam likhayi na ruke)
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      const atStart = t.selectionStart === 0 && t.selectionEnd === 0;
+      const atEnd   = t.selectionStart === t.value.length && t.selectionEnd === t.value.length;
+      if ((e.key === 'ArrowUp' && atStart) || (e.key === 'ArrowDown' && atEnd)) {
+        const agla = boxes[e.key === 'ArrowUp' ? i - 1 : i + 1];
+        if (agla) { e.preventDefault(); agla.focus(); agla.select(); }
+      }
+      return;                          // warna normal cursor movement chalne do
+    }
+
+    // Enter → nayi satar (naya kaghaz) is ke theek neeche
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      readDom();
+      list.splice(i + 1, 0, '');
+      _ch173PapersSave(list);
+      render(i + 1);
+      return;
+    }
+
+    // Tab → agli satar (Shift+Tab → pichhli)
+    if (e.key === 'Tab') {
+      const agla = boxes[e.shiftKey ? i - 1 : i + 1];
+      if (agla) { e.preventDefault(); agla.focus(); agla.select(); }
+      return;
+    }
+    // baqi tamam keys (harf, space, backspace, ←→) aam tarah chalen
   });
 
   box.querySelector('#pp-add').onclick = (e) => {
@@ -3523,7 +3553,7 @@ function _ch173CSS() {
          • pehli line — ooper wali lakeer ke saath lagi hui (bilkul thori jagah)
          • doosri line — pehle 1.2cm thi, ab aadhi (0.6cm) */
       #ch173-doc .sho-b1{ float:left; margin-right:0.7cm; margin-top:0.1cm; }
-      #ch173-doc .sho-b2{ clear:both; float:left; margin-top:0.6cm; }
+      #ch173-doc .sho-b2{ clear:both; float:left; margin-top:1.4cm; }  /* dastkhat ke liye munasib fasla */
       #ch173-doc .ch173-sho-flex > .sho-col{ min-width:0; box-sizing:border-box; }
       /* تفصیل کاغذات کا خانہ SHO لائن کے دائیں کنارے سے 1cm پہلے تک پھیلتا ہے */
       #ch173-doc .ch173-sho-flex > .sho-papers{ flex:1 1 auto; }
