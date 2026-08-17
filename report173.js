@@ -181,15 +181,15 @@ const R173_TYPES = [
 // owner/admin khud set karega). Yeh types khali safed safhe par khulte hain.
 const R173_BLANK_TYPES = ['mukammal','namukammal','ch512','tatima_challan','interim'];
 
-// تتمہ چالان ka ZAILI (sub) menu — تتمہ چالان chunne par khulta hai.
-// (Duplicate na rakhe jayen — pehle شراب/چرس do-do baar aa gaye the.)
 const R173_TATIMA_SUBS = [
-  { id:'sharab',   name:'شراب' },
-  { id:'chars',    name:'چرس' },
-  { id:'ice',      name:'آئس' },
-  { id:'aslha',    name:'اسلحہ' },
-  { id:'antirape', name:'انٹی ریپ ایکٹ' },
-  { id:'zina',     name:'زنا/ڈی این اے' },
+  { id:'aslha',    name:'تتمہ چالان — اسلحہ' },
+  { id:'chars',    name:'تتمہ چالان — چرس/منشیات' },
+  { id:'sharab',   name:'تتمہ چالان — شراب' },
+  { id:'zina',     name:'تتمہ چالان — زنا/ڈی این اے' },
+  { id:'sharab2',  name:'تتمہ چالان — شراب' },
+  { id:'chars2',   name:'تتمہ چالان — چرس' },
+  { id:'ice',      name:'تتمہ چالان — آئس' },
+  { id:'antirape', name:'تتمہ چالان — انٹی ریپ ایکٹ' },
 ];
 
 const R173_TATIMA_BOILER = {
@@ -342,6 +342,10 @@ function _renderR173() {
         <select id="r173-type-sel" onchange="_r173Pick(this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
           ${R173_TYPES.map(t => `<option value="${t.id}" ${t.id===_r173Type?'selected':''}>${t.name}</option>`).join('')}
         </select>
+        ${_r173Type === 'tatima_challan' ? `
+        <select id="r173-sub-sel" onchange="_r173PickSub(this.value)" style="padding:6px 10px;border:1px solid var(--amber,#d97706);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
+          ${R173_TATIMA_SUBS.map(sb => `<option value="${sb.id}" ${sb.id===_r173Subtype?'selected':''}>${sb.name}</option>`).join('')}
+        </select>` : ''}
         <!-- "ہیڈ منتخب کریں" wali fehrist filhaal hata di gayi hai (zaroorat nahi).
              Zaroorat par wapas lagane ke liye: yahan select dobara daal dein —
              _r173SetHead() aur R173_HEADS / R173_IKHRAJ_HEADS mojood hain. -->
