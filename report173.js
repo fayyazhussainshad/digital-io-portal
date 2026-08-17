@@ -181,15 +181,15 @@ const R173_TYPES = [
 // owner/admin khud set karega). Yeh types khali safed safhe par khulte hain.
 const R173_BLANK_TYPES = ['mukammal','namukammal','ch512','tatima_challan','interim'];
 
+// تتمہ چالان ka ZAILI (sub) menu — تتمہ چالان chunne par khulta hai.
+// (Duplicate na rakhe jayen — pehle شراب/چرس do-do baar aa gaye the.)
 const R173_TATIMA_SUBS = [
-  { id:'aslha',    name:'تتمہ چالان — اسلحہ' },
-  { id:'chars',    name:'تتمہ چالان — چرس/منشیات' },
-  { id:'sharab',   name:'تتمہ چالان — شراب' },
-  { id:'zina',     name:'تتمہ چالان — زنا/ڈی این اے' },
-  { id:'sharab2',  name:'تتمہ چالان — شراب' },
-  { id:'chars2',   name:'تتمہ چالان — چرس' },
-  { id:'ice',      name:'تتمہ چالان — آئس' },
-  { id:'antirape', name:'تتمہ چالان — انٹی ریپ ایکٹ' },
+  { id:'sharab',   name:'شراب' },
+  { id:'chars',    name:'چرس' },
+  { id:'ice',      name:'آئس' },
+  { id:'aslha',    name:'اسلحہ' },
+  { id:'antirape', name:'انٹی ریپ ایکٹ' },
+  { id:'zina',     name:'زنا/ڈی این اے' },
 ];
 
 const R173_TATIMA_BOILER = {
