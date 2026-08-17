@@ -193,7 +193,7 @@ const R173_TATIMA_SUBS = [
 
 const R173_TATIMA_BOILER = {
   // Khali — owner khud set karega
-  _unused_aslha: 'جناب عالیٰ! مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر 3 کے خلاف چالان نامکمل مرتب ہو چکا ہے اب PFSA لاہور سے رزلٹ نمبری ____________ موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریر فرمائی ہے۔ "The item P1 pistol was examined and found to be in mechanical operating condition" رزلٹ میں پارسل کو item P1 سے ظاہر کیا گیا ہے لہٰذا مقدمہ ہذا میں ملزم بالا کے خلاف تتمہ چالان مکمل مرتب ہو کر ارسال خدمت ہے سماعت فرمائی جائے۔',
+  aslha: 'جناب عالیٰ! مختصر حالات مقدمہ اس طرح ہیں کہ مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر3کے خلاف چالان نامکمل مرتب ہو چکاہے اب PFSA لاہور سے رزلٹ نمبری {{RESULT}} موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریرفرمائی ہے ۔ "The item P1 pistol was examined and found to be in mechanical operating condition" رزلٹ میں پارسل کو item P1 سے ظاہرکیاگیاہے لہٰذا مقدمہ ہذامیں ملزم بالاکے خلاف تتمہ چالان مکمل مرتب ہو کرارسال خدمت ہے سماعت فرمائی جائے ۔',
   chars: 'جناب عالیٰ! مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر 3 کے خلاف چالان نامکمل مرتب ہو چکا ہے PFSA لاہور سے موصولہ متعلقہ مقدمہ ہذا ایک رزلٹ نمبر ____________ موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریر فرمائی ہے۔ "Sample 01 having net weight ______ grams of dark brown resinous material in sealed parcel contains Chars. Sample is Narcotic Drug as defined in the section 2 of the CNS Act, 1997." تصدیق چرس ہو چکی ہے لہٰذا مقدمہ ہذا میں ملزم بالا کے خلاف تتمہ چالان مکمل مرتب ہو کر ارسال خدمت ہے سماعت فرمائی جائے۔',
   sharab: 'جناب عالیٰ! مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر 3 کے خلاف چالان نامکمل مرتب ہو چکا ہے اب PFSA لاہور سے رزلٹ نمبری ____________ موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریر فرمائی ہے۔ "Presumptive test indicated the presence of alcohol in item 1." لہٰذا مقدمہ ہذا میں ملزم بالا کے خلاف تتمہ چالان مکمل مرتب ہو کر ارسال خدمت ہے سماعت فرمائی جائے۔',
   zina: 'جناب عالیٰ! مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر 3 کے خلاف چالان نامکمل مرتب ہو چکا ہے اب PFSA لاہور سے رزلٹ نمبری ____________ موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریر فرمائی ہے۔ "No seminal material was found on item no.1 and 2.1-2.3; therefore no further DNA analysis was conducted on these." مقدمہ ہذا میں تکمیل تفتیش ہو چکی ہے لہٰذا ملزم بالا کے خلاف تتمہ چالان مکمل مرتب ہو کر ارسال خدمت ہے سماعت فرمائی جائے۔',
@@ -300,7 +300,11 @@ function _renderR173() {
   const isAdampata = _r173Type === 'adampata';
   const isClosing = isIkhraj || isAdampata; // both use the 3-col 8-row table layout
   // Boilerplate: tatima uses subtype boiler, others use type boiler
-  const boiler = isTatima ? (R173_TATIMA_BOILER[_r173Subtype]||'') : (R173_BOILER[_r173Type]||'');
+  let boiler = isTatima ? (R173_TATIMA_BOILER[_r173Subtype]||'') : (R173_BOILER[_r173Type]||'');
+  // Result number ki jagah — {{RESULT}} ko asal number se badlo (khali ho to
+  // likhne ki jagah _____ chhor do)
+  const _rno = (saved.result_no || '').trim();
+  if (boiler) boiler = boiler.replace(/\{\{RESULT\}\}/g, _rno || '____________');
 
   // ── CHALLAN types: koi format software NAHI deta ──────────────────────
   // چالان مکمل / نامکمل / 512 ض ف / تتمہ چالان — yeh sarkari manzoor-shuda
@@ -344,7 +348,12 @@ function _renderR173() {
         ${_r173Type === 'tatima_challan' ? `
         <select id="r173-sub-sel" onchange="_r173PickSub(this.value)" style="padding:6px 10px;border:1px solid var(--amber,#d97706);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
           ${R173_TATIMA_SUBS.map(sb => `<option value="${sb.id}" ${sb.id===_r173Subtype?'selected':''}>${sb.name}</option>`).join('')}
-        </select>` : ''}
+        </select>
+        <input id="r173-result-no" type="text" value="${esc(saved.result_no || '')}"
+          oninput="_ch173SetResultNo(this.value)"
+          placeholder="رزلٹ نمبری"
+          style="padding:6px 10px;border:1px solid var(--amber,#d97706);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;width:140px;"
+          title="رزلٹ نمبری — تحریر اور تفصیل کاغذات دونوں جگہ خودبخود لگ جائے گا">` : ''}
         <!-- "ہیڈ منتخب کریں" wali fehrist filhaal hata di gayi hai (zaroorat nahi).
              Zaroorat par wapas lagane ke liye: yahan select dobara daal dein —
              _r173SetHead() aur R173_HEADS / R173_IKHRAJ_HEADS mojood hain. -->
@@ -2393,6 +2402,54 @@ function _ch173PapersPicker(ev) {
   };
 }
 window._ch173PapersPicker = _ch173PapersPicker;
+
+// ═══ رزلٹ نمبری — تحریر اور تفصیل کاغذات دونوں جگہ ═══
+// Officer aik hi jagah (top bar) number likhta hai; woh (1) کالم 7 ki تحریر
+// mein {{RESULT}} ki jagah, aur (2) تفصیل کاغذات ke "اصل رزلٹ نمبری" ke aage
+// khud lag jata hai.
+function _ch173SetResultNo(val) {
+  val = (val || '').trim();
+  // Mehfooz karne ke liye — save mein bhi jaye
+  try {
+    const doc = _ch173Doc();
+    if (doc) {
+      let h = doc.querySelector('input[data-k="result_no"]');
+      if (!h) {
+        h = document.createElement('input');
+        h.type = 'hidden'; h.setAttribute('data-k', 'result_no');
+        doc.appendChild(h);
+      }
+      h.value = val;
+    }
+  } catch (_) {}
+  // (1) کالم 7 ki تحریر mein — jahan "رزلٹ نمبری" ke baad khali/____ hai
+  try {
+    const cell = (_ch173Cells() || {}).cell;
+    if (cell) {
+      const re = /(رزلٹ نمبری\s*)(?:[_\u0640]{3,}|\[[^\]]*\]|[\d\/\-]{0,20})/;
+      const cur = cell.innerText || '';
+      if (re.test(cur)) {
+        cell.innerText = cur.replace(re, '$1' + (val || '____________'));
+        try { _ch173Layout(); } catch (_) {}
+      }
+    }
+  } catch (_) {}
+  // (2) تفصیل کاغذات — "اصل رزلٹ نمبری" wale kaghaz ki tadaad wali jagah number
+  try {
+    const doc = _ch173Doc();
+    if (doc) {
+      doc.querySelectorAll('.pp-item').forEach(it => {
+        const nm = it.querySelector('.pp-name');
+        if (nm && nm.textContent.indexOf('رزلٹ نمبری') !== -1) {
+          const q = it.querySelector('.pp-qty');
+          if (q) q.textContent = val;
+        }
+      });
+    }
+  } catch (_) {}
+  try { _r173Dirty = true; } catch (_) {}
+}
+window._ch173SetResultNo = _ch173SetResultNo;
 
 window._ch173LoadPeople  = _ch173LoadPeople;
 window._ch173WitnessText = _ch173WitnessText;
