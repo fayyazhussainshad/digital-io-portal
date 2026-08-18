@@ -296,6 +296,30 @@ function _renderR173() {
   let recKey = isTatima ? 'tatima_challan_' + _r173Subtype : _r173Type;
   const saved = _r173CurrentData(recKey);
   const v = (k, def) => sanitizeHtml(saved[k] !== undefined ? saved[k] : (def || ''));
+  // کالم 7 ki shuruati تحریر: تتمہ mein — agar officer ne khud kuch nahi likha
+  // to boilerplate (aslha/chars waghera ka matn) lagao. Warna jo mehfooz hai.
+  // تفصیل کاغذات: تتمہ mein — agar khali ho to default kaghaz KHUD bhar do
+  // (dropdown ▾ barqarar rahega, us se badal bhi sakte hain).
+  const _ch173PapersInit = (sv) => {
+    if (sv && sv.papers_body !== undefined &&
+        String(sv.papers_body).replace(/<[^>]*>/g, '').trim().length) {
+      return sanitizeHtml(sv.papers_body);           // pehle se kuch hai
+    }
+    if (_r173Type === 'tatima_challan' &&
+        typeof CH173_TATIMA_PAPERS_DEFAULT !== 'undefined') {
+      return CH173_TATIMA_PAPERS_DEFAULT.map(nm =>
+        '<span class="pp-item" contenteditable="false">' +
+        '<span class="pp-name">' + esc(nm) + '</span>' +
+        '<span class="pp-qty" contenteditable="true"></span></span>').join('');
+    }
+    return sv && sv.papers_body !== undefined ? sanitizeHtml(sv.papers_body) : '';
+  };
+  const _ch173HalaatInit = (sv, boil) => {
+    const cur = (sv && sv.halaat !== undefined) ? String(sv.halaat) : '';
+    const khali = !cur.replace(/<[^>]*>/g, '').replace(/[\s\u00A0]/g, '').length;
+    if (_r173Type === 'tatima_challan' && khali) return sanitizeHtml(boil || '');
+    return sanitizeHtml(sv && sv.halaat !== undefined ? sv.halaat : (boil || ''));
+  };
   const isIkhraj = _r173Type === 'ikhraj';
   const isAdampata = _r173Type === 'adampata';
   const isClosing = isIkhraj || isAdampata; // both use the 3-col 8-row table layout
@@ -467,7 +491,7 @@ function _renderR173() {
               <!-- AHEM: yahan bv() istemal NA karein — woh tamam </span> hata
                    deta hai aur kaghazon ka dhancha (naam + neeche tadaad)
                    toot jata hai. Seedha sanitizeHtml. -->
-              <div class="sho-papers-body" contenteditable="true" data-k="papers_body">${bs.papers_body !== undefined ? sanitizeHtml(bs.papers_body) : ''}</div>
+              <div class="sho-papers-body" contenteditable="true" data-k="papers_body">${_ch173PapersInit(bs)}</div>
             </div>
             <!-- SHO ki DOOSRI line — tamam kaghazon ke neeche, bayen kinare par -->
             <div class="sho-block sho-b2">
@@ -615,7 +639,7 @@ function _renderR173() {
         <!-- مختصر حالات مقدمہ (separate — NOT for closing reports) -->
         ${!isClosing ? `
         <div style="margin-top:12px;font-weight:700;">مختصر حالات مقدمہ معہ جرم:</div>
-        <div contenteditable="true" data-mic="true" data-k="halaat" data-ph="یہاں پر مختصر حالات لکھیں" style="border:1px solid #999;padding:10px;min-height:120px;text-align:justify;margin-top:4px;${v('halaat', boiler)?'':'color:#999;'}" onfocus="if(this.dataset.ph&&!this.innerText.trim()){this.style.color='#000';}" oninput="this.style.color=this.innerText.trim()?'#000':'#999';">${v('halaat', boiler)}</div>
+        <div contenteditable="true" data-mic="true" data-k="halaat" data-ph="یہاں پر مختصر حالات لکھیں" style="border:1px solid #999;padding:10px;min-height:120px;text-align:justify;text-align-last:right;margin-top:4px;${_ch173HalaatInit(saved, boiler)?'':'color:#999;'}" onfocus="if(this.dataset.ph&&!this.innerText.trim()){this.style.color='#000';}" oninput="this.style.color=this.innerText.trim()?'#000':'#999';">${_ch173HalaatInit(saved, boiler)}</div>
         <style>[data-k="halaat"]:empty:before{content:attr(data-ph);color:#999;}</style>` : ''}
 
         ${isTatima ? `
