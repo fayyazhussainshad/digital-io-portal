@@ -1464,6 +1464,22 @@ function _ch173Layout() {
   try { _ch173OverflowSettle(4); } catch (_) {}
   try { _ch173WrapCnics(); } catch (_) {}
   try { _ch173AlignSho(); } catch (_) {}        // SHO ki doosri line کاغذات ke neeche
+  // Mehfooz result number کاغذات mein "اصل رزلٹ نمبری" ke neeche lagao
+  try {
+    const doc = _ch173Doc();
+    const h = doc && doc.querySelector('input[data-k="result_no"]');
+    const rv = h ? (h.value || '') : '';
+    if (rv && doc) {
+      doc.querySelectorAll('.pp-item').forEach(it => {
+        const nm = it.querySelector('.pp-name');
+        const t = nm ? nm.textContent.replace(/\s/g, '') : '';
+        if (t.indexOf('رزلٹنمبری') !== -1) {
+          const q = it.querySelector('.pp-qty');
+          if (q && q.textContent.trim() !== rv) q.textContent = rv;
+        }
+      });
+    }
+  } catch (_) {}
 }
 window._ch173Layout = _ch173Layout;
 
@@ -2468,8 +2484,22 @@ function _ch173SetResultNo(val) {
       }
     }
   } catch (_) {}
-  // NOTE: تفصیل کاغذات ki tadaad (1) ko haath NA lagayen — result number sirf
-  // تحریر mein "رزلٹ نمبری" ke saath lagta hai, kaghazon ki tadaad wahi rahegi.
+  // (2) تفصیل کاغذات — "اصل رزلٹ نمبری" wale kaghaz ke NEECHE result number
+  // (baqi tamam kaghazon ki tadaad 1 jyun ki tyun rahegi — sirf isi kaghaz
+  //  ke neeche number aata hai).
+  try {
+    const doc = _ch173Doc();
+    if (doc) {
+      doc.querySelectorAll('.pp-item').forEach(it => {
+        const nm = it.querySelector('.pp-name');
+        const t = nm ? nm.textContent.replace(/\s/g, '') : '';
+        if (t.indexOf('رزلٹنمبری') !== -1) {         // "اصل رزلٹ نمبری" bhi match
+          const q = it.querySelector('.pp-qty');
+          if (q) q.textContent = val || '1';
+        }
+      });
+    }
+  } catch (_) {}
   try { _r173Dirty = true; } catch (_) {}
 }
 window._ch173SetResultNo = _ch173SetResultNo;
