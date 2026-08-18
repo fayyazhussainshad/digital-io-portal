@@ -1472,11 +1472,13 @@ function _ch173Layout() {
     if (rv && doc) {
       doc.querySelectorAll('.pp-item').forEach(it => {
         const nm = it.querySelector('.pp-name');
-        const t = nm ? nm.textContent.replace(/\s/g, '') : '';
-        if (t.indexOf('رزلٹنمبری') !== -1) {
-          const q = it.querySelector('.pp-qty');
-          if (q && q.textContent.trim() !== rv) q.textContent = rv;
-        }
+        if (!nm) return;
+        const t = nm.textContent.replace(/\s/g, '');
+        if (t.indexOf('رزلٹنمبری') === -1) return;
+        let rn = nm.querySelector('.pp-rno');
+        if (!rn) { rn = document.createElement('span'); rn.className = 'pp-rno'; nm.appendChild(rn); }
+        const want = rv ? (' ' + rv) : '';
+        if (rn.textContent !== want) rn.textContent = want;
       });
     }
   } catch (_) {}
@@ -2228,7 +2230,12 @@ function _ch173PapersRead(body) {
   if (!body) return out;
   body.querySelectorAll('.pp-item').forEach(el => {
     const n = el.querySelector('.pp-name'), q = el.querySelector('.pp-qty');
-    const name = (n ? n.textContent : '').trim();
+    // رزلٹ نمبری ka number naam ka hissa nahi — usay nikaal kar saaf naam lo
+    let name = '';
+    if (n) {
+      const rn = n.querySelector('.pp-rno');
+      name = (rn ? n.textContent.replace(rn.textContent, '') : n.textContent).trim();
+    }
     if (name) out.push({ name, qty: (q ? q.textContent : '').trim() });
   });
   return out;
@@ -2492,11 +2499,17 @@ function _ch173SetResultNo(val) {
     if (doc) {
       doc.querySelectorAll('.pp-item').forEach(it => {
         const nm = it.querySelector('.pp-name');
-        const t = nm ? nm.textContent.replace(/\s/g, '') : '';
-        if (t.indexOf('رزلٹنمبری') !== -1) {         // "اصل رزلٹ نمبری" bhi match
-          const q = it.querySelector('.pp-qty');
-          if (q) q.textContent = val || '1';
+        if (!nm) return;
+        const t = nm.textContent.replace(/\s/g, '');
+        if (t.indexOf('رزلٹنمبری') === -1) return;    // "اصل رزلٹ نمبری" hi
+        // Naam ke SAATH usi satar mein number ka alag khana (tadaad NA chhero)
+        let rn = nm.querySelector('.pp-rno');
+        if (!rn) {
+          rn = document.createElement('span');
+          rn.className = 'pp-rno';
+          nm.appendChild(rn);
         }
+        rn.textContent = val ? (' ' + val) : '';
       });
     }
   } catch (_) {}
@@ -3717,6 +3730,8 @@ function _ch173CSS() {
         display:inline-block; vertical-align:top; text-align:center;
         margin-left:0.635cm; margin-bottom:4px;  /* Tab = 4 spaces (1.27cm = 8) */
       }
+      /* رزلٹ نمبری — naam ke saath usi satar mein (underline ke bagair) */
+      #ch173-doc .pp-rno{ text-decoration:none; font-weight:normal; }
       #ch173-doc .pp-name{
         display:block; text-decoration:underline; white-space:nowrap;
         line-height:1.25;
