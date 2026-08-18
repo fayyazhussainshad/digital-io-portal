@@ -502,7 +502,10 @@ function _renderR173() {
       }, ms));
       // Nigrani chalu — koi matn chhupa reh jaye to khud neeche chala jaye
       try { _ch173StartOverflowWatch(); } catch(_) {}
-      if (_ch173FirMatn === null) _ch173LoadFirMatn(); else _ch173FillHalaat();
+      // تتمہ چالان mein boilerplate rehne do — FIR ka matn na uthao
+      if (_r173Type !== 'tatima_challan') {
+        if (_ch173FirMatn === null) _ch173LoadFirMatn(); else _ch173FillHalaat();
+      }
       // Khanon ki naap SIRF AIK DAFA — matn poori tarah lag jane ke baad.
       // (Baar baar chalane se har dafa khana aur tang hota chala jata tha.)
       setTimeout(() => { try { _ch173AutoSize(); } catch (_) {} }, 900);
@@ -3466,6 +3469,9 @@ window._ch173LoadFirMatn = _ch173LoadFirMatn;
 // خانہ خالی ہو تو فقرہ ڈالو (لکھا ہوا متن کبھی نہ مٹے)
 function _ch173FillHalaat() {
   try {
+    // تتمہ چالان mein کالم 7 ka apna (boilerplate) matn rehta hai — FIR ka
+    // matn yahan NA bhara jaye. (Pehle تتمہ mein bhi FIR ka matn aa jata tha.)
+    if (_r173Type === 'tatima_challan') return;
     const cell = (_ch173Cells() || {}).cell;
     if (!cell) return;
     if (cell.innerText.replace(/\s/g, '').length) return;   // پہلے سے کچھ لکھا ہے
