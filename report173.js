@@ -193,7 +193,7 @@ const R173_TATIMA_SUBS = [
 
 const R173_TATIMA_BOILER = {
   // Khali — owner khud set karega
-  aslha: 'جناب عالیٰ! مختصر حالات مقدمہ اس طرح ہیں کہ مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر3کے خلاف چالان نامکمل مرتب ہو چکاہے اب PFSA لاہور سے رزلٹ نمبری {{RESULT}} موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریرفرمائی ہے ۔ "The item P1 pistol was examined and found to be in mechanical operating condition" رزلٹ میں پارسل کو item P1 سے ظاہرکیاگیاہے لہٰذا مقدمہ ہذامیں ملزم بالاکے خلاف تتمہ چالان مکمل مرتب ہو کرارسال خدمت ہے سماعت فرمائی جائے ۔',
+  aslha: 'جناب عالیٰ! مختصر حالات مقدمہ اس طرح ہیں کہ مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر3کے خلاف چالان نامکمل مرتب ہو چکاہے اب PFSA لاہور سے رزلٹ نمبری {{RESULT}} موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریرفرمائی ہے ۔<br>"The item P1 pistol was examined and found to be in mechanical operating condition"<br>رزلٹ میں پارسل کو item P1 سے ظاہرکیاگیاہے لہٰذا مقدمہ ہذامیں ملزم بالاکے خلاف تتمہ چالان مکمل مرتب ہو کرارسال خدمت ہے سماعت فرمائی جائے ۔',
   chars: 'جناب عالیٰ! مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر 3 کے خلاف چالان نامکمل مرتب ہو چکا ہے PFSA لاہور سے موصولہ متعلقہ مقدمہ ہذا ایک رزلٹ نمبر ____________ موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریر فرمائی ہے۔ "Sample 01 having net weight ______ grams of dark brown resinous material in sealed parcel contains Chars. Sample is Narcotic Drug as defined in the section 2 of the CNS Act, 1997." تصدیق چرس ہو چکی ہے لہٰذا مقدمہ ہذا میں ملزم بالا کے خلاف تتمہ چالان مکمل مرتب ہو کر ارسال خدمت ہے سماعت فرمائی جائے۔',
   sharab: 'جناب عالیٰ! مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر 3 کے خلاف چالان نامکمل مرتب ہو چکا ہے اب PFSA لاہور سے رزلٹ نمبری ____________ موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریر فرمائی ہے۔ "Presumptive test indicated the presence of alcohol in item 1." لہٰذا مقدمہ ہذا میں ملزم بالا کے خلاف تتمہ چالان مکمل مرتب ہو کر ارسال خدمت ہے سماعت فرمائی جائے۔',
   zina: 'جناب عالیٰ! مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر 3 کے خلاف چالان نامکمل مرتب ہو چکا ہے اب PFSA لاہور سے رزلٹ نمبری ____________ موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریر فرمائی ہے۔ "No seminal material was found on item no.1 and 2.1-2.3; therefore no further DNA analysis was conducted on these." مقدمہ ہذا میں تکمیل تفتیش ہو چکی ہے لہٰذا ملزم بالا کے خلاف تتمہ چالان مکمل مرتب ہو کر ارسال خدمت ہے سماعت فرمائی جائے۔',
@@ -310,7 +310,7 @@ function _renderR173() {
       return CH173_TATIMA_PAPERS_DEFAULT.map(nm =>
         '<span class="pp-item" contenteditable="false">' +
         '<span class="pp-name">' + esc(nm) + '</span>' +
-        '<span class="pp-qty" contenteditable="true"></span></span>').join('');
+        '<span class="pp-qty" contenteditable="true">1</span></span>').join('');
     }
     return sv && sv.papers_body !== undefined ? sanitizeHtml(sv.papers_body) : '';
   };
@@ -556,6 +556,7 @@ function _renderR173() {
       try { _ch173BrushOff(); _ch173BindBrush(); } catch(_) {}
       // چالان ko poora safha do
       try { _ch173FocusMode(true); } catch(_) {}
+      try { document.body.classList.toggle('tatima-active', _r173Type === 'tatima_challan'); } catch(_) {}
       // Officer ki apni naap yaad ho to khud-ba-khud chaurai band rahe
       try {
         if (bs.cols_manual === '1') {
@@ -2688,6 +2689,9 @@ function _ch173FocusMode(on) {
   if (!b) return;
   if (!on) {
     b.classList.remove('ch173-focus');
+    b.classList.remove('tatima-active');            // CNIC doosre challan mein wapas
+    // تتمہ mein CNIC hata ya lapet — cnSig reset taake dobara sahi lage
+    try { _ch173Doc()?.querySelectorAll('.rotinner').forEach(c => { delete c.dataset.cnSig; }); } catch (_) {}
     const bar = document.getElementById('misal-doc-bar');
     if (bar) {
       bar.classList.remove('peek');
@@ -3849,6 +3853,12 @@ function _ch173CSS() {
         display:flex; flex-direction:row; justify-content:space-between;
         align-items:flex-start; inline-size:100%; min-inline-size:0;
       }
+      /* تتمہ چالان — CNIC nahi, is liye satar poori unchai na ghere,
+         sirf naam jitni jagah le */
+      #ch173-doc.tatima-doc .rotinner .ln,
+      body.tatima-active #ch173-doc .rotinner .ln{
+        inline-size:auto; justify-content:flex-start;
+      }
       #ch173-doc .rotinner .nm{ flex:0 1 auto; min-inline-size:0; overflow:hidden; }
       #ch173-doc .rotinner .ln > .cn{ flex:0 0 auto; }
       /* CNIC ka apna khana — naam ke saath, OOPER se NEECHE parhi jaye,
@@ -4030,8 +4040,16 @@ function _ch173WrapCnics(root) {
     if (!raw.trim()) return;
     const lines = raw.split(/\r?\n/);
     let found = false;
+    // تتمہ چالان mein CNIC nahi dikhana — satar mein se aakhri CNIC hata kar
+    // sirf naam rakho (CNIC ki khadi jagah bhi khatam ho jayegi).
+    const tatima = (typeof _r173Type !== 'undefined' && _r173Type === 'tatima_challan');
     const html = lines.map(line => {
       const m = line.match(_CH173_CNIC_LINE_RE);
+      if (tatima) {
+        found = true;
+        const naam = m ? m[1].trim() : line;         // CNIC hata do
+        return '<div class="ln"><span class="nm">' + E(naam) + '</span></div>';
+      }
       if (!m) return '<div class="ln">' + E(line) + '</div>';
       found = true;
       return '<div class="ln"><span class="nm">' + E(m[1].trim()) + '</span>' +
