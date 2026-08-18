@@ -2454,27 +2454,22 @@ function _ch173SetResultNo(val) {
   try {
     const cell = (_ch173Cells() || {}).cell;
     if (cell) {
-      const re = /(رزلٹ نمبری\s*)(?:[_\u0640]{3,}|\[[^\]]*\]|[\d\/\-]{0,20})/;
+      // "رزلٹ نمبری" ke foran baad ka number/khali-nishan uthao aur usi
+      // satar mein naya number jama do (رزلٹ نمبری33333333 nahi — رزلٹ نمبری 333...)
+      // "رزلٹ نمبری" + purana number/nishan (agar ho) uthao, us ke baad ka
+      // AIK space bhi — phir naya number aur AIK space wapas rakho. Is se
+      // number رزلٹ نمبری ke saath usi satar mein aata hai, dono taraf theek
+      // fasla rehta hai, aur baar baar badalne par purana hat kar naya lagta.
+      const re = /(رزلٹ نمبری)(?:[ \u00A0]+[0-9\u06f0-\u06f9A-Za-z_\u0640][0-9\u06f0-\u06f9A-Za-z_\u0640\/\-]*)?[ \u00A0]*/;
       const cur = cell.innerText || '';
       if (re.test(cur)) {
-        cell.innerText = cur.replace(re, '$1' + (val || '____________'));
+        cell.innerText = cur.replace(re, '$1 ' + (val || '____________') + ' ');
         try { _ch173Layout(); } catch (_) {}
       }
     }
   } catch (_) {}
-  // (2) تفصیل کاغذات — "اصل رزلٹ نمبری" wale kaghaz ki tadaad wali jagah number
-  try {
-    const doc = _ch173Doc();
-    if (doc) {
-      doc.querySelectorAll('.pp-item').forEach(it => {
-        const nm = it.querySelector('.pp-name');
-        if (nm && nm.textContent.indexOf('رزلٹ نمبری') !== -1) {
-          const q = it.querySelector('.pp-qty');
-          if (q) q.textContent = val;
-        }
-      });
-    }
-  } catch (_) {}
+  // NOTE: تفصیل کاغذات ki tadaad (1) ko haath NA lagayen — result number sirf
+  // تحریر mein "رزلٹ نمبری" ke saath lagta hai, kaghazon ki tadaad wahi rahegi.
   try { _r173Dirty = true; } catch (_) {}
 }
 window._ch173SetResultNo = _ch173SetResultNo;
