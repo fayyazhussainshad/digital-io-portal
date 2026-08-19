@@ -194,7 +194,7 @@ const R173_TATIMA_SUBS = [
 const R173_TATIMA_BOILER = {
   // Khali — owner khud set karega
   aslha: 'جناب عالیٰ! مختصر حالات مقدمہ اس طرح ہیں کہ مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر3کے خلاف چالان نامکمل مرتب ہو چکاہے اب PFSA لاہور سے رزلٹ نمبری {{RESULT}} موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریرفرمائی ہے ۔<br>"The item P1 pistol was examined and found to be in mechanical operating condition"<br>رزلٹ میں پارسل کو item P1 سے ظاہرکیاگیاہے لہٰذا مقدمہ ہذامیں ملزم بالاکے خلاف تتمہ چالان مکمل مرتب ہو کرارسال خدمت ہے سماعت فرمائی جائے ۔',
-  chars: 'جناب عالیٰ! مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر 3 کے خلاف چالان نامکمل مرتب ہو چکا ہے PFSA لاہور سے موصولہ متعلقہ مقدمہ ہذا ایک رزلٹ نمبر ____________ موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریر فرمائی ہے۔ "Sample 01 having net weight ______ grams of dark brown resinous material in sealed parcel contains Chars. Sample is Narcotic Drug as defined in the section 2 of the CNS Act, 1997." تصدیق چرس ہو چکی ہے لہٰذا مقدمہ ہذا میں ملزم بالا کے خلاف تتمہ چالان مکمل مرتب ہو کر ارسال خدمت ہے سماعت فرمائی جائے۔',
+  chars: 'جناب عالیٰ! مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر 3 کے خلاف چالان نامکمل مرتب ہو چکا ہے PFSA لاہور سے موصولہ متعلقہ مقدمہ ہذا ایک رزلٹ نمبر {{RESULT}} موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریر فرمائی ہے۔<br>"Sample 01 having net weight ______ grams of dark brown resinous material in sealed parcel contains Chars. Sample is Narcotic Drug as defined in the section 2 of the CNS Act, 1997."<br>تصدیق چرس ہو چکی ہے لہٰذا مقدمہ ہذا میں ملزم بالا کے خلاف تتمہ چالان مکمل مرتب ہو کر ارسال خدمت ہے سماعت فرمائی جائے۔',
   sharab: 'جناب عالیٰ! مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر 3 کے خلاف چالان نامکمل مرتب ہو چکا ہے اب PFSA لاہور سے رزلٹ نمبری ____________ موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریر فرمائی ہے۔ "Presumptive test indicated the presence of alcohol in item 1." لہٰذا مقدمہ ہذا میں ملزم بالا کے خلاف تتمہ چالان مکمل مرتب ہو کر ارسال خدمت ہے سماعت فرمائی جائے۔',
   zina: 'جناب عالیٰ! مقدمہ ہذا میں قبل ازیں ملزم مندرجہ خانہ نمبر 3 کے خلاف چالان نامکمل مرتب ہو چکا ہے اب PFSA لاہور سے رزلٹ نمبری ____________ موصول ہوا ہے جس پر جناب ایگزامینر صاحب نے بحروف انگریزی ذیل رائے تحریر فرمائی ہے۔ "No seminal material was found on item no.1 and 2.1-2.3; therefore no further DNA analysis was conducted on these." مقدمہ ہذا میں تکمیل تفتیش ہو چکی ہے لہٰذا ملزم بالا کے خلاف تتمہ چالان مکمل مرتب ہو کر ارسال خدمت ہے سماعت فرمائی جائے۔',
 };
@@ -3741,9 +3741,9 @@ function _ch173CSS() {
          'margin:0 auto' hi wo cheez hai jo isay beech mein laati hai —
          pehle yeh poori chaurai le kar aik taraf ho jata tha. */
       #ch173-doc .pp-qty{
-        display:block; width:2.6em; margin:0 auto;
+        display:block; width:100%; margin:0;
         min-height:1.15em; outline:none;
-        line-height:1.25; text-align:center; unicode-bidi:plaintext;
+        line-height:1.25; text-align:center !important; unicode-bidi:plaintext;
       }
       #ch173-doc .pp-qty:empty::before{ content:'—'; color:#c9c9c9; }
       @media print{ #ch173-doc .pp-qty:empty::before{ content:''; } }
