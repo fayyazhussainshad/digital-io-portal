@@ -2483,7 +2483,7 @@ function _ch173SetResultNo(val) {
       // AIK space bhi — phir naya number aur AIK space wapas rakho. Is se
       // number رزلٹ نمبری ke saath usi satar mein aata hai, dono taraf theek
       // fasla rehta hai, aur baar baar badalne par purana hat kar naya lagta.
-      const re = /(رزلٹ نمبری)(?:[ \u00A0]+[0-9\u06f0-\u06f9A-Za-z_\u0640][0-9\u06f0-\u06f9A-Za-z_\u0640\/\-]*)?[ \u00A0]*/;
+      const re = /(رزلٹ نمبری?)(?:[ \u00A0]+[0-9\u06f0-\u06f9A-Za-z_\u0640][0-9\u06f0-\u06f9A-Za-z_\u0640\/\-]*)?[ \u00A0]*/;
       const cur = cell.innerText || '';
       if (re.test(cur)) {
         cell.innerText = cur.replace(re, '$1 ' + (val || '____________') + ' ');
@@ -3741,9 +3741,10 @@ function _ch173CSS() {
          'margin:0 auto' hi wo cheez hai jo isay beech mein laati hai —
          pehle yeh poori chaurai le kar aik taraf ho jata tha. */
       #ch173-doc .pp-qty{
-        display:block; width:100%; margin:0;
-        min-height:1.15em; outline:none;
-        line-height:1.25; text-align:center !important; unicode-bidi:plaintext;
+        display:block; width:100%; margin:0; box-sizing:border-box;
+        min-height:1.15em; outline:none; padding:0;
+        line-height:1.25; text-align:center !important;
+        direction:ltr; unicode-bidi:isolate;      /* hindsa poore khane ke theek beech mein */
       }
       #ch173-doc .pp-qty:empty::before{ content:'—'; color:#c9c9c9; }
       @media print{ #ch173-doc .pp-qty:empty::before{ content:''; } }
