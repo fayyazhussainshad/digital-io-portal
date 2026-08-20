@@ -676,6 +676,9 @@ function _renderR173() {
       try { _ch173BindCellPick(); } catch(_) {}
       // Har khane ka apna mehfooz shuda font wapas lagao
       try { _ch173ApplyCellFonts(bs.cell_fonts); } catch(_) {}
+      // Purani ghalat 10.5 (doc ya kisi khane par) ko 14 par force karo — sab
+      // 173 forms. Toolbar bhi 14 dikhaye.
+      try { _ch173Force14FromHalf(); } catch(_) {}
       // Safha poori tarah lag jane ke baad naap dobara theek karo
       try { _ch173WatchFit(); } catch(_) {}
     }, 60);
@@ -2728,7 +2731,7 @@ function _chBtn() {
          'font-size:13px;padding:0 7px;margin:0 1px;';
 }
 // ═══ فونٹ سائز — MS Word جیسی فہرست (پوائنٹ میں) ═══
-const R173_FONT_SIZES = [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72];
+const R173_FONT_SIZES = [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72];
 const R173_FONT_DEFAULT = 14;
 
 // Mehfooz shuda doc font (na ho to default 14pt)
@@ -3082,22 +3085,17 @@ function _ch173SetFont(val) {
   _ch173RestoreRange();                        // chuna hua matn wapas lagao
   const _fs = document.getElementById('ch173-font-sel');
   if (_fs) _fs.value = String(pt);             // dropdown wapas na palte
-  // 1) Matn chuna hua ho → sirf usi par
-  if (_ch173FontToSelection(pt)) {
+  // 1) Agar koi matn CHUNA hua hai → sirf usi chune hue matn par
+  const sel = window.getSelection();
+  const hasSelection = sel && sel.rangeCount && !sel.getRangeAt(0).collapsed;
+  if (hasSelection && _ch173FontToSelection(pt)) {
     _ch173SaveRange();
     try { _r173Dirty = true; } catch(_) {}
     return;
   }
-  // 2) Kisi khane par click kiya hua ho → SIRF USI khane par.
-  //    (Pehle yahan seedha poore safhe par lagta tha — isi liye header ke
-  //     aik khane ka font badalne se TAMAM khanon ka font badal jata tha.
-  //     Header ke khane likhne wale nahi, is liye un mein matn chuna hi
-  //     nahi ja sakta tha aur har dafa poora safha badal jata tha.)
-  if (_ch173FontToCell(window._ch173LastCell, pt)) {
-    try { _r173Dirty = true; } catch(_) {}
-    return;
-  }
-  // 3) Kahin bhi click na kiya ho → poora safha (purana tareeqa)
+  // 2) Koi matn chuna nahi → POORE safhe par lagao (yehi aam soorat hai).
+  //    (Pehle yahan aakhri click kiye khane par lagta tha jo nazar nahi aata
+  //     tha — isi liye font selection kaam na karta mehsoos hota tha.)
   _ch173FontToDoc(pt);
   try { _r173Dirty = true; } catch(_) {}
 }
@@ -3172,6 +3170,27 @@ function _ch173ApplyCellFonts(raw) {
   });
 }
 window._ch173ApplyCellFonts = _ch173ApplyCellFonts;
+
+// Purani (ghalat) 10.5 font ko har jagah 14 par le aao — چالان/تتمہ/اخراج/عدم پتہ
+function _ch173Force14FromHalf() {
+  const doc = _ch173Doc();
+  if (!doc) return;
+  const DEF = R173_FONT_DEFAULT + 'pt';
+  let touched = false;
+  // Har us element ka font jis par 10.5 laga hai
+  doc.querySelectorAll('[style*="10.5"]').forEach(el => {
+    if (parseFloat(el.style.fontSize) === 10.5) { el.style.fontSize = DEF; touched = true; }
+  });
+  // doc ka apna dataset + hidden doc_font
+  if (parseFloat(doc.dataset.fs) === 10.5) doc.dataset.fs = R173_FONT_DEFAULT;
+  const hid = doc.querySelector('[data-k="doc_font"]');
+  if (hid && parseFloat(hid.value) === 10.5) hid.value = R173_FONT_DEFAULT;
+  // Toolbar dropdown 14 dikhaye
+  const sel = document.getElementById('ch173-font-sel');
+  if (sel && parseFloat(sel.value) === 10.5) sel.value = String(R173_FONT_DEFAULT);
+  if (touched && typeof _ch173Layout === 'function') { try { _ch173Layout(); } catch(_) {} }
+}
+window._ch173Force14FromHalf = _ch173Force14FromHalf;
 
 // Cursor jahan ho, dropdown wahi size dikhaye (MS Word jaisa)
 function _ch173SyncFontSel() {
