@@ -2706,6 +2706,9 @@ const R173_FONT_DEFAULT = 14;
 // Mehfooz shuda doc font (na ho to default 14pt)
 function _ch173DocFont(bs) {
   const n = parseFloat((bs && bs.doc_font) || '');
+  // Purani (ghalat update wali) 10.5 mehfooz value ko nazar-andaz kar ke
+  // default 14 par le aao — naye AUR purane dono challan 14 par.
+  if (n === 10.5) return R173_FONT_DEFAULT;
   return (n && !isNaN(n)) ? n : R173_FONT_DEFAULT;
 }
 
