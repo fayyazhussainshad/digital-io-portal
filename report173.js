@@ -328,28 +328,13 @@ function _renderR173() {
   // to boilerplate (aslha/chars waghera ka matn) lagao. Warna jo mehfooz hai.
   // تفصیل کاغذات: تتمہ mein — agar khali ho to default kaghaz KHUD bhar do
   // (dropdown ▾ barqarar rahega, us se badal bhi sakte hain).
+  // تفصیل کاغذات KHUD nahi bharti — tafteeshi officer ▾ se apni zaroorat ke
+  // mutabiq kaghaz khud chunega. (Har qism ki default fehrist dropdown mein
+  // maujood rehti hai.)
   const _ch173PapersInit = (sv) => {
-    if (sv && sv.papers_body !== undefined &&
-        String(sv.papers_body).replace(/<[^>]*>/g, '').trim().length) {
-      return sanitizeHtml(sv.papers_body);           // pehle se kuch hai
-    }
-    // اخراج / عدم پتہ: form mein kaghaz KHUD na bharo — tafteeshi officer
-    // dropdown (▾) se apni zaroorat ke mutabiq khud add karega. (Dropdown mein
-    // 10 default fehrist maujood rehti hai, bas form khali khulta hai.)
-    if (_r173Type === 'ikhraj' || _r173Type === 'adampata') {
-      return sv && sv.papers_body !== undefined ? sanitizeHtml(sv.papers_body) : '';
-    }
-    // Har qism ki apni default fehrist — har kaghaz ke neeche tadaad 1 (editable)
-    let def = [];
-    try { def = _ch173PapersList(); } catch (_) {}
-    if (def && def.length) {
-      return def.map(nm =>
-        '<span class="pp-item" contenteditable="false">' +
-        '<span class="pp-name">' + esc(nm) + '</span>' +
-        '<span class="pp-qty" contenteditable="true">1</span></span>').join('');
-    }
     return sv && sv.papers_body !== undefined ? sanitizeHtml(sv.papers_body) : '';
   };
+
   const _ch173HalaatInit = (sv, boil) => {
     const cur = (sv && sv.halaat !== undefined) ? String(sv.halaat) : '';
     const khali = !cur.replace(/<[^>]*>/g, '').replace(/[\s\u00A0]/g, '').length;
@@ -1023,6 +1008,7 @@ function _printR173() {
       const _sideM  = _ch173SideMargin();
       chDoc.style.width = 'calc(' + _paperW + ' - ' + _sideM + ' - ' + _sideM + ')';
       chDoc.style.maxWidth = 'none';
+      window._ch173PrintMode = true;      // FitPaper is chaurai ko na badle
       void chDoc.offsetHeight;                 // nayi naap lagne do
       // AHEM: yahan khanon ki naap DOBARA na lein. Screen pehle se kaghaz ki
       // naap par hai; chapai ke waqt dobara naapne se halaat thore badal jate
@@ -1065,6 +1051,7 @@ function _printR173() {
     } finally {
       // Screen wapas apni halat par
       try {
+        window._ch173PrintMode = false;   // ab FitPaper phir se apna kaam kare
         chDoc.style.width = _pw; chDoc.style.maxWidth = _pmw;
         chDoc.style.transform = _ptf; chDoc.style.marginBottom = _pmb;
         // AKHRAJ table ki print-ke-liye lagai gayi inline naap wapas hatao
@@ -2855,6 +2842,10 @@ window._ch173FullPage = _ch173FullPage;
 function _ch173FitPaper() {
   const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!doc) return;
+  // AHEM: chapai ke waqt safhe ki chaurai pehle se ASAL chapai naap par set
+  // hoti hai. Yahan usay badalna sab bigaad deta hai (matn phans jata hai,
+  // izafi matn neeche nahi jata). Is liye print mode mein chaurai na chhero.
+  if (window._ch173PrintMode) return;
   const host = doc.parentElement;
   if (!host) return;
   // ═══ Dekhne wala khana KHIRKI ke NEECHE tak ═══
@@ -3105,6 +3096,11 @@ function _ch173FontToDoc(pt) {
   const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!doc) return;
   doc.dataset.fs = pt;
+  // Andar ke purane inline font saaf karo (warna purana 10pt bacha reh jata
+  // hai aur toolbar 15 dikhata hai magar matn 10 par rehta hai)
+  doc.querySelectorAll('[style*="font-size"]').forEach(el => {
+    if (!el.closest('.pp-qty')) el.style.fontSize = '';
+  });
   doc.querySelectorAll('.ch173-table th, .ch173-table td, .rotinner, .hinner, .normwrap, .ch173-cont, .sho-cell-row, .sho-papers-head, .sho-papers-body')
      .forEach(el => { el.style.fontSize = pt + 'pt'; });
   const hid = doc.querySelector('[data-k="doc_font"]');
@@ -3118,7 +3114,18 @@ window._ch173FontToDoc = _ch173FontToDoc;
 function _ch173SetFont(val) {
   const pt = parseFloat(val);
   if (!pt || isNaN(pt)) return;
-  _ch173RestoreRange();                        // chuna hua matn wapas lagao
+  // AHEM: pehle yahan hamesha _ch173RestoreRange() chalta tha jo PURANA (basi)
+  // chuna hua matn wapas laga deta tha — font ghalat jagah lagta aur nazar
+  // kuch nahi aata tha. Ab: agar ABHI koi matn chuna hua hai to wohi lo;
+  // sirf tab purana wapas lao jab abhi kuch chuna hua na ho.
+  let _live = false;
+  try {
+    const sl = window.getSelection();
+    const dc = _ch173Doc();
+    _live = !!(sl && sl.rangeCount && !sl.getRangeAt(0).collapsed &&
+               dc && dc.contains(sl.anchorNode));
+  } catch (_) {}
+  if (!_live) _ch173RestoreRange();
   const _fs = document.getElementById('ch173-font-sel');
   if (_fs) _fs.value = String(pt);             // dropdown wapas na palte
   // 1) Matn chuna hua ho → sirf usi par
