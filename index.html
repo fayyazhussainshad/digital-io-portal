@@ -1009,6 +1009,40 @@ input[id*="cnic"], input[id*="cell"] {
 .login-card .login-method { font-size: 14pt !important; }
 .login-card .disclaimer-box,
 .login-card [class*="disclaimer"] { font-size: 12pt !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   عمومی ڈیٹا کا فونٹ — 14pt (poore system mein aik jaisa)
+   .page-content ke andar aam data text 14pt. Chhoti inline naapein
+   (11-13px) bhi 14pt ho jati hain. Ye cheezein MEHFOOZ (na chhirtin):
+   • headings (h1–h6, .page-title, .card-title, .section-title)
+   • bare aadad / stats (.stat-number, .stat-value)
+   • buttons, inputs, select, textarea, badges, chips, tags, icons, nav
+   • jis par 'font-lock' class ho
+   • locked چالان / report173 (#ch173-doc, doc-viewer)
+   ══════════════════════════════════════════════════════════════ */
+.page-content, .page-content div, .page-content span,
+.page-content p, .page-content td, .page-content th,
+.page-content li, .page-content label, .page-content a {
+  font-size: 14pt !important;
+}
+/* MEHFOOZ — inpar 14pt lagu NA ho (apni set-shuda naap rahe) */
+.page-content h1, .page-content h2, .page-content h3,
+.page-content h4, .page-content h5, .page-content h6,
+.page-content .page-title, .page-content .card-title,
+.page-content .section-title, .page-content .page-header,
+.page-content .stat-number, .page-content .stat-value,
+.page-content .stat-big, .page-content .big-number,
+.page-content button, .page-content .btn, .page-content .btn *,
+.page-content input, .page-content select, .page-content textarea,
+.page-content .badge, .page-content .badge *,
+.page-content .chip, .page-content .tag, .page-content .pill,
+.page-content .nav-item, .page-content .nav-item *,
+.page-content .icon, .page-content [class*="icon"],
+.page-content .status-badge, .page-content .status-pill,
+.page-content .font-lock, .page-content .font-lock *,
+#ch173-doc, #ch173-doc *, #dio-dv-body, #dio-dv-body * {
+  font-size: revert !important;
+}
 </style>
 <!-- Supabase JS library (REQUIRED — must load before app-core.js) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
