@@ -305,6 +305,12 @@ function _renderR173() {
         String(sv.papers_body).replace(/<[^>]*>/g, '').trim().length) {
       return sanitizeHtml(sv.papers_body);           // pehle se kuch hai
     }
+    // اخراج / عدم پتہ: form mein kaghaz KHUD na bharo — tafteeshi officer
+    // dropdown (▾) se apni zaroorat ke mutabiq khud add karega. (Dropdown mein
+    // 10 default fehrist maujood rehti hai, bas form khali khulta hai.)
+    if (_r173Type === 'ikhraj' || _r173Type === 'adampata') {
+      return sv && sv.papers_body !== undefined ? sanitizeHtml(sv.papers_body) : '';
+    }
     // Har qism ki apni default fehrist — har kaghaz ke neeche tadaad 1 (editable)
     let def = [];
     try { def = _ch173PapersList(); } catch (_) {}
@@ -473,14 +479,14 @@ function _renderR173() {
                   const val = bs[r[0]] !== undefined ? sanitizeHtml(bs[r[0]]) : esc(r[2]);
                   return `<tr>
                     <td style="border:1px solid #000;padding:6px;text-align:center;font-weight:bold;">${i+1}</td>
-                    <td style="border:1px solid #000;padding:6px;font-weight:600;">${r[1]}</td>
+                    <td class="akh-col2" style="border:1px solid #000;padding:6px;font-weight:600;text-align:justify;text-align-last:right;direction:rtl;position:relative;"><span class="akh-grip no-print" title="لکیر کو کھینچ کر چوڑائی بدلیں"></span>${r[1]}</td>
                     <td class="normcell" contenteditable="true" data-k="${r[0]}" style="border:1px solid #000;padding:6px;">${val}</td>
                   </tr>`;
                 }).join('');
               })()}
               <tr>
                 <td style="border:1px solid #000;padding:6px;text-align:center;vertical-align:top;font-weight:bold;">8</td>
-                <td style="border:1px solid #000;padding:6px;font-weight:600;text-align:right;vertical-align:top;">مختصر حالات مقدمہ معہ جرم</td>
+                <td class="akh-col2" style="border:1px solid #000;padding:6px;font-weight:600;text-align:justify;text-align-last:right;direction:rtl;vertical-align:top;position:relative;"><span class="akh-grip no-print" title="لکیر کو کھینچ کر چوڑائی بدلیں"></span>مختصر حالات مقدمہ معہ جرم</td>
                 <td class="normcell" style="border:1px solid #000;padding:6px;"><div class="normwrap" contenteditable="true" data-mic="true" data-k="halaat">${_ch173HalaatInit(bs, boiler)}</div></td>
               </tr>
             </tbody>
@@ -1507,6 +1513,7 @@ function _ch173Layout() {
   // اخراج/عدم پتہ ki simple 3-column table hai (khadi likhayi nahi) — us par
   // چالان wali column auto-sizing na chalao. Baqi sab (SHO, کاغذات) chalti hai.
   const _akhrajTbl = !!document.querySelector('.ch173-akhraj-table');
+  if (_akhrajTbl) { try { _ch173AkhrajGrips(); } catch (_) {} }
   if (!_akhrajTbl) {
     try { _ch173AutoFitCols(); } catch (_) {}     // khanon ki chaurai (file ka apna)
     try { _ch173AutoSize(); } catch (_) {}        // chaurai + lambai (matn ke mutabiq)
@@ -1536,6 +1543,69 @@ function _ch173Layout() {
   } catch (_) {}
 }
 window._ch173Layout = _ch173Layout;
+
+// ═══ اخراج table — column 2 ki bayen lakeer kheench kar chaurai badlo ═══
+function _ch173AkhrajGrips() {
+  const doc = _ch173Doc();
+  if (!doc) return;
+  const table = doc.querySelector('.ch173-akhraj-table');
+  if (!table) return;
+  const cols = table.querySelectorAll('colgroup col');
+  if (cols.length < 3) return;
+  // Mehfooz chaurai (agar officer ne khud set ki thi) wapas lagao;
+  // warna column 2 apne content (sab se lambe unwaan) ke hisaab se KHUD theek.
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem('dio_akhraj_col2') || 'null'); } catch (_) {}
+  if (saved && saved.c2 && saved.c3) {
+    cols[1].style.width = saved.c2; cols[2].style.width = saved.c3;
+  } else {
+    // AUTO-FIX chaurai — column 2 ke sab se lambe unwaan jitni
+    try {
+      let need = 0;
+      table.querySelectorAll('.akh-col2').forEach(td => {
+        const sw = td.scrollWidth;
+        if (sw > need) need = sw;
+      });
+      const tW = table.offsetWidth;
+      if (need && tW) {
+        // thori saans ki jagah, magar 45% se zyada nahi (col 3 ko jagah rahe)
+        let pct = Math.min(45, Math.max(18, (need + 16) / tW * 100));
+        cols[1].style.width = pct.toFixed(2) + '%';
+        cols[2].style.width = (93 - pct).toFixed(2) + '%';   // col1 ~7%
+      }
+    } catch (_) {}
+  }
+  table.querySelectorAll('.akh-grip').forEach(g => {
+    if (g.dataset.bound) return;
+    g.dataset.bound = '1';
+    g.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      const startX = e.clientX;
+      const tW = table.offsetWidth;
+      const c2 = cols[1].getBoundingClientRect().width;
+      const c3 = cols[2].getBoundingClientRect().width;
+      const move = (ev) => {
+        // RTL: column 2 ki BAYEN lakeer — dayen kheenchne se col2 barhta hai
+        let d = ev.clientX - startX;
+        let n2 = c2 - d, n3 = c3 + d;
+        if (n2 < 60 || n3 < 80) return;
+        cols[1].style.width = (n2 / tW * 100).toFixed(2) + '%';
+        cols[2].style.width = (n3 / tW * 100).toFixed(2) + '%';
+      };
+      const up = () => {
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', up);
+        try {
+          localStorage.setItem('dio_akhraj_col2',
+            JSON.stringify({ c2: cols[1].style.width, c3: cols[2].style.width }));
+        } catch (_) {}
+      };
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    });
+  });
+}
+window._ch173AkhrajGrips = _ch173AkhrajGrips;
 
 // ═══ GAP ka asal ilaj — qatar ko POORI SATRON par gol karo ═══
 // کالم 7 ka matn hamesha POORI satron mein behta hai. Agar qatar ki unchai
@@ -3896,6 +3966,13 @@ function _ch173CSS() {
         overflow-wrap:break-word; word-wrap:break-word; white-space:pre-wrap;
       }
       #ch173-doc .ch173-cont:empty{ min-height:0; padding:0 !important; }
+      /* اخراج table — column 2 ki BAYEN lakeer ko kheenchne wala grip */
+      #ch173-doc .akh-col2{ }
+      #ch173-doc .akh-grip{
+        position:absolute; left:-3px; top:0; width:7px; height:100%;
+        cursor:col-resize; z-index:5; background:transparent;
+      }
+      #ch173-doc .akh-grip:hover{ background:rgba(3,105,161,.25); }
       /* ── مثل باندھنے کی جگہ — دوسرے صفحے کے اوپر بائیں کونے میں مثلث ──
          Nok top-left kone par, dono lambe bazoo (top aur left margin ke saath)
          2-2 inch ke. Matn is se bach kar behta hai. Saath hi pehli satar ko
