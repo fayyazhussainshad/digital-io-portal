@@ -487,16 +487,20 @@ function _renderR173() {
                   // us ke bayen kinare par (jahan jurm khatam ho wahin).
                   if (r[0] === 'jurm_i' && bs[r[0]] === undefined) {
                     const jp = _ch173JurmParts(c.section_of_law);
+                    // Upar wali (caseline) jaisa hi format: body phir space phir ت پ
                     return `<tr>
                     <td style="border:1px solid #000;padding:6px;text-align:center;font-weight:bold;">${i+1}</td>
                     <td class="akh-col2" style="border:1px solid #000;padding:6px;font-weight:600;text-align:justify;text-align-last:right;direction:rtl;position:relative;"><span class="akh-grip no-print" title="لکیر کو کھینچ کر چوڑائی بدلیں"></span>${r[1]}</td>
-                    <td class="normcell" contenteditable="true" data-k="${r[0]}" style="border:1px solid #000;padding:6px;text-align:center;direction:rtl;"><span class="akh-jurm-body">${esc(jp.body)}</span> <span class="akh-jurm-suf">${esc(jp.suffix)}</span></td>
+                    <td class="normcell" contenteditable="true" data-k="${r[0]}" style="border:1px solid #000;padding:6px;text-align:center;direction:rtl;">${esc(jp.body)} ${esc(jp.suffix)}</td>
                   </tr>`;
                   }
+                  // DASH (خالی) rows ka '-----------' center; باقی (مدعی wagera) right.
+                  const isDash = (val === DASH);
+                  const cellAlign = isDash ? 'center' : 'right';
                   return `<tr>
                     <td style="border:1px solid #000;padding:6px;text-align:center;font-weight:bold;">${i+1}</td>
                     <td class="akh-col2" style="border:1px solid #000;padding:6px;font-weight:600;text-align:justify;text-align-last:right;direction:rtl;position:relative;"><span class="akh-grip no-print" title="لکیر کو کھینچ کر چوڑائی بدلیں"></span>${r[1]}</td>
-                    <td class="normcell" contenteditable="true" data-k="${r[0]}" style="border:1px solid #000;padding:6px;text-align:right;direction:rtl;">${val}</td>
+                    <td class="normcell" contenteditable="true" data-k="${r[0]}" style="border:1px solid #000;padding:6px;text-align:${cellAlign};direction:rtl;">${val}</td>
                   </tr>`;
                 }).join('');
               })()}
@@ -3996,9 +4000,6 @@ function _ch173CSS() {
         cursor:col-resize; z-index:5; background:transparent;
       }
       #ch173-doc .akh-grip:hover{ background:rgba(3,105,161,.25); }
-      /* اخراج row 2 (جرم) — body center, 'ت پ' body ke bayen (saath) */
-      #ch173-doc .akh-jurm-body{ }
-      #ch173-doc .akh-jurm-suf{ margin-right:4px; direction:ltr; unicode-bidi:isolate; }
       /* ── مثل باندھنے کی جگہ — دوسرے صفحے کے اوپر بائیں کونے میں مثلث ──
          Nok top-left kone par, dono lambe bazoo (top aur left margin ke saath)
          2-2 inch ke. Matn is se bach kar behta hai. Saath hi pehli satar ko
