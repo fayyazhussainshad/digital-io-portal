@@ -491,7 +491,7 @@ function _renderR173() {
                     return `<tr>
                     <td style="border:1px solid #000;padding:6px;text-align:center;font-weight:bold;">${i+1}</td>
                     <td class="akh-col2" style="border:1px solid #000;padding:6px;font-weight:600;text-align:justify;text-align-last:right;direction:rtl;position:relative;"><span class="akh-grip no-print" title="لکیر کو کھینچ کر چوڑائی بدلیں"></span>${r[1]}</td>
-                    <td class="normcell" contenteditable="true" data-k="${r[0]}" style="border:1px solid #000;padding:6px;text-align:center;direction:rtl;">${esc(jp.body)} ${esc(jp.suffix)}</td>
+                    <td class="normcell" contenteditable="true" data-k="${r[0]}" style="border:1px solid #000;padding:6px;text-align:center;direction:rtl;unicode-bidi:plaintext;"><span style="unicode-bidi:isolate;direction:rtl;">${esc(jp.suffix)}</span> <span style="unicode-bidi:isolate;direction:ltr;">${esc(jp.body)}</span></td>
                   </tr>`;
                   }
                   // DASH (خالی) rows ka '-----------' center; باقی (مدعی wagera) right.
