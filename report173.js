@@ -1014,7 +1014,14 @@ function _printR173() {
       // Dikhane wala 'scale' hata do — naap par asar nahi, magar saaf rahe
       chDoc.style.transform = 'none';
       chDoc.style.marginBottom = '0';
-      chDoc.style.width = (_ch173Paper === 'a4') ? '8.27in' : '8.5in';
+      // AHEM: safhe ki POORI chaurai par naap na lo — chapai par side ke
+      // hashiye nikalne ke baad jo ASAL jagah bachti hai, naap usi par lo.
+      // (Pehle 8.5in par naapte the magar chapai 801px par hoti thi — 15px
+      //  ka farq matn ko dobara behne par majboor karta tha aur khanon mein
+      //  phans jata tha, izafi matn neeche bhi nahi jata tha.)
+      const _paperW = (_ch173Paper === 'a4') ? '8.27in' : '8.5in';
+      const _sideM  = _ch173SideMargin();
+      chDoc.style.width = 'calc(' + _paperW + ' - ' + _sideM + ' - ' + _sideM + ')';
       chDoc.style.maxWidth = 'none';
       void chDoc.offsetHeight;                 // nayi naap lagne do
       // AHEM: yahan khanon ki naap DOBARA na lein. Screen pehle se kaghaz ki
