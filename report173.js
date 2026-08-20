@@ -179,7 +179,7 @@ const R173_TYPES = [
 
 // CHALLAN types — inka format software NAHI deta (sarkari manzoor-shuda form
 // owner/admin khud set karega). Yeh types khali safed safhe par khulte hain.
-const R173_BLANK_TYPES = ['mukammal','namukammal','ch512','tatima_challan','interim'];
+const R173_BLANK_TYPES = ['mukammal','namukammal','ch512','tatima_challan','interim','ikhraj','adampata'];
 
 // تتمہ چالان ka ذیلی (sub) menu — koi cheez repeat na ho.
 const R173_TATIMA_SUBS = [
@@ -324,7 +324,11 @@ function _renderR173() {
   };
   const isIkhraj = _r173Type === 'ikhraj';
   const isAdampata = _r173Type === 'adampata';
-  const isClosing = isIkhraj || isAdampata; // both use the 3-col 8-row table layout
+  // اخراج / عدم پتہ ab CHALAN jaisa hi banta hai (7-column table + poora locked
+  // layout). Purana 3-column closing table hata diya gaya. isClosing hamesha
+  // false — sirf عنوان (صیغہ) alag hai.
+  const isClosing = false;
+  const _origClosing = isIkhraj || isAdampata;   // sirf heading/صیغہ ke liye
   // Boilerplate: tatima uses subtype boiler, others use type boiler
   let boiler = isTatima ? (R173_TATIMA_BOILER[_r173Subtype]||'') : (R173_BOILER[_r173Type]||'');
   // Result number ki jagah — {{RESULT}} ko asal number se badlo (khali ho to
@@ -604,7 +608,7 @@ function _renderR173() {
         <div style="text-align:center;font-size:12px;color:#555;">فارم نمبر 25.56(1)</div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0;">
           <span style="font-weight:bold;text-decoration:underline;">تھانہ ${o.station||'صدر ملتان'}</span>
-          <span style="font-weight:bold;text-decoration:underline;font-size:17px;">${isClosing ? `فارم رپورٹ اختتامی بصیغہ ${isIkhraj?'اخراج':'عدم پتہ'} زیر دفعہ 173 ض ف` : `فارم رپورٹ ${typeName} زیر دفعہ 173 ض ف`}</span>
+          <span style="font-weight:bold;text-decoration:underline;font-size:17px;">${_origClosing ? `فارم رپورٹ اختتامی بصیغہ ${isIkhraj?'اخراج':'عدم پتہ'} زیر دفعہ 173 ض ف` : `فارم رپورٹ ${typeName} زیر دفعہ 173 ض ف`}</span>
           <span style="font-weight:bold;text-decoration:underline;">ضلع ${o.district||'ملتان'}</span>
         </div>
 
@@ -2142,6 +2146,20 @@ window._ch173AccPicker   = _ch173AccPicker;
 // ═══════════════════════════════════════════════════════════════════
 // Shuru ki fehrist — har IO isay khud badal sakta hai (neeche mehfooz hoti hai)
 // تتمہ چالان ke default kaghaz (چالان walon se alag)
+// اخراج / عدم پتہ ke default kaghaz (AKHRAJ.docx se) — har ek ki tadaad 1
+const CH173_IKHRAJ_PAPERS_DEFAULT = [
+  'رپورٹ ہذا',
+  'فارم ریمانڈ و ڈسچارجگی',
+  'نقل FIR',
+  'اصل تحریر',
+  'نقشہ موقع نظری بلا سکیل',
+  'مصدقہ نقل بیان 164ض ف',
+  'اطلاع نامہ مدعی',
+  'نقول بیانات 161ض ف',
+  'اصل ضمنی SHO',
+  'فہرست گواہان',
+];
+
 const CH173_TATIMA_PAPERS_DEFAULT = [
   'فارم ہذا',
   'نقل FIR',
@@ -2215,7 +2233,8 @@ function _ch173PapersList() {
   }
   // تتمہ چالان ki apni default fehrist (چالان walon se alag)
   if (g === 'tatima') return CH173_TATIMA_PAPERS_DEFAULT.slice();
-  return [];                                          // اخراج / عدم پتہ — officer khud bharega
+  if (g === 'ikhraj' || g === 'adampata') return CH173_IKHRAJ_PAPERS_DEFAULT.slice();
+  return [];
 }
 function _ch173PapersSave(arr) {
   try { localStorage.setItem(_ch173PapersKey(), JSON.stringify(arr)); } catch (_) {}
