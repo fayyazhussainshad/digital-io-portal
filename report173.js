@@ -451,7 +451,7 @@ function _renderR173() {
           <div class="ch173-caseline">
             <span>مقدمہ نمبر <span class="fl" contenteditable="true" data-k="cl_fir">${bs.cl_fir !== undefined ? sanitizeHtml(bs.cl_fir) : esc(c.fir_number||'')}</span></span>
             <span>مورخہ <span class="fl" contenteditable="true" data-k="cl_date">${bs.cl_date !== undefined ? sanitizeHtml(bs.cl_date) : esc(formatDate(c.fir_date)||'')}</span></span>
-            <span class="jurm-wrap">جرم <span class="fl fl-lg" contenteditable="true" data-k="cl_jurm">${bs.cl_jurm !== undefined ? sanitizeHtml(bs.cl_jurm) : esc(_ch173JurmParts(c.section_of_law).body)}</span><span class="fl fl-suf" contenteditable="true" data-k="cl_jurm_suf">${bs.cl_jurm_suf !== undefined ? sanitizeHtml(bs.cl_jurm_suf) : esc(_ch173JurmParts(c.section_of_law).suffix)}</span></span>
+            <span>جرم <span class="fl fl-lg" contenteditable="true" data-k="cl_jurm">${bs.cl_jurm !== undefined ? sanitizeHtml(bs.cl_jurm) : esc(_ch173JurmParts(c.section_of_law).body)}</span> <span class="fl fl-suf" contenteditable="true" data-k="cl_jurm_suf">${bs.cl_jurm_suf !== undefined ? sanitizeHtml(bs.cl_jurm_suf) : esc(_ch173JurmParts(c.section_of_law).suffix)}</span></span>
           </div>
 
           ${_isAkhraj ? `
@@ -483,6 +483,16 @@ function _renderR173() {
                 ];
                 return rows.map((r,i) => {
                   const val = bs[r[0]] !== undefined ? sanitizeHtml(bs[r[0]]) : esc(r[2]);
+                  // Row 2 (مختصر کیفیت جرم): jurm CENTER, aur 'ت پ' jurm ke SAATH
+                  // us ke bayen kinare par (jahan jurm khatam ho wahin).
+                  if (r[0] === 'jurm_i' && bs[r[0]] === undefined) {
+                    const jp = _ch173JurmParts(c.section_of_law);
+                    return `<tr>
+                    <td style="border:1px solid #000;padding:6px;text-align:center;font-weight:bold;">${i+1}</td>
+                    <td class="akh-col2" style="border:1px solid #000;padding:6px;font-weight:600;text-align:justify;text-align-last:right;direction:rtl;position:relative;"><span class="akh-grip no-print" title="لکیر کو کھینچ کر چوڑائی بدلیں"></span>${r[1]}</td>
+                    <td class="normcell" contenteditable="true" data-k="${r[0]}" style="border:1px solid #000;padding:6px;text-align:center;direction:rtl;"><span class="akh-jurm-body">${esc(jp.body)}</span> <span class="akh-jurm-suf">${esc(jp.suffix)}</span></td>
+                  </tr>`;
+                  }
                   return `<tr>
                     <td style="border:1px solid #000;padding:6px;text-align:center;font-weight:bold;">${i+1}</td>
                     <td class="akh-col2" style="border:1px solid #000;padding:6px;font-weight:600;text-align:justify;text-align-last:right;direction:rtl;position:relative;"><span class="akh-grip no-print" title="لکیر کو کھینچ کر چوڑائی بدلیں"></span>${r[1]}</td>
@@ -3757,11 +3767,6 @@ function _ch173CSS() {
       #ch173-doc .ch173-caseline .fl-lg{ min-width:60px; }
       /* "ت پ" — دفعات کے بعد آخر میں، اپنا الگ خانہ */
       #ch173-doc .ch173-caseline .fl-suf{ min-width:24px; }
-      /* جرم ka 'ت پ' (suffix) sab se BAYEN kinare par — body dayen rehta hai */
-      #ch173-doc .ch173-caseline{ }
-      #ch173-doc .ch173-caseline .jurm-wrap{ display:inline-flex; align-items:baseline; gap:6px; flex:1 1 auto; min-width:220px; }
-      #ch173-doc .ch173-caseline .jurm-wrap .fl-lg{ flex:0 0 auto; }
-      #ch173-doc .ch173-caseline .jurm-wrap .fl-suf{ margin-inline-start:auto; }
 
       /* AUTO NAAP: 'fixed' ki bajaye 'auto' — ab har khana apne matn ke
          hisab se chaura hota hai (jitna mawad, utni chaurai). کالم 7 ko
@@ -3991,6 +3996,9 @@ function _ch173CSS() {
         cursor:col-resize; z-index:5; background:transparent;
       }
       #ch173-doc .akh-grip:hover{ background:rgba(3,105,161,.25); }
+      /* اخراج row 2 (جرم) — body center, 'ت پ' body ke bayen (saath) */
+      #ch173-doc .akh-jurm-body{ }
+      #ch173-doc .akh-jurm-suf{ margin-right:4px; direction:ltr; unicode-bidi:isolate; }
       /* ── مثل باندھنے کی جگہ — دوسرے صفحے کے اوپر بائیں کونے میں مثلث ──
          Nok top-left kone par, dono lambe bazoo (top aur left margin ke saath)
          2-2 inch ke. Matn is se bach kar behta hai. Saath hi pehli satar ko
