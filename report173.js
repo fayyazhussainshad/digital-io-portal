@@ -451,7 +451,7 @@ function _renderR173() {
           <div class="ch173-caseline">
             <span>مقدمہ نمبر <span class="fl" contenteditable="true" data-k="cl_fir">${bs.cl_fir !== undefined ? sanitizeHtml(bs.cl_fir) : esc(c.fir_number||'')}</span></span>
             <span>مورخہ <span class="fl" contenteditable="true" data-k="cl_date">${bs.cl_date !== undefined ? sanitizeHtml(bs.cl_date) : esc(formatDate(c.fir_date)||'')}</span></span>
-            <span>جرم <span class="fl fl-lg" contenteditable="true" data-k="cl_jurm">${bs.cl_jurm !== undefined ? sanitizeHtml(bs.cl_jurm) : esc(_ch173JurmParts(c.section_of_law).body)}</span> <span class="fl fl-suf" contenteditable="true" data-k="cl_jurm_suf">${bs.cl_jurm_suf !== undefined ? sanitizeHtml(bs.cl_jurm_suf) : esc(_ch173JurmParts(c.section_of_law).suffix)}</span></span>
+            <span class="jurm-wrap">جرم <span class="fl fl-lg" contenteditable="true" data-k="cl_jurm">${bs.cl_jurm !== undefined ? sanitizeHtml(bs.cl_jurm) : esc(_ch173JurmParts(c.section_of_law).body)}</span><span class="fl fl-suf" contenteditable="true" data-k="cl_jurm_suf">${bs.cl_jurm_suf !== undefined ? sanitizeHtml(bs.cl_jurm_suf) : esc(_ch173JurmParts(c.section_of_law).suffix)}</span></span>
           </div>
 
           ${_isAkhraj ? `
@@ -463,11 +463,17 @@ function _renderR173() {
             </colgroup>
             <tbody>
               ${(() => {
-                const autoMadai = _ch173MudaiLine(c);
+                // اخراج/عدم پتہ ke liye مدعی — CNIC aur numbering ke BAGHAIR
+                // (چالان se alag; چالان mein 1۔ aur CNIC rehta hai).
+                const cross0 = (_ch173Version === 'cross_version');
+                const nm0 = String((cross0 ? (c.cross_complainant || c.cross_complainant_name)
+                                            : (c.complainant || c.complainant_name)) || '').trim();
+                const addr0 = String((cross0 ? c.cross_complainant_address : c.complainant_address) || '').trim();
+                const autoMadai = nm0 ? (nm0 + (addr0 ? ' ساکن ' + addr0 : '')) : '';
                 const autoJurm  = ((c.section_of_law||'') + ' ' + (c.offence_type||'')).trim();
                 const DASH = '-----------';
                 const rows = [
-                  ['madai','نام وپتہ مدعی و مستغیث', autoMadai],
+                  ['madai_i','نام وپتہ مدعی و مستغیث', autoMadai],
                   ['jurm_i','مختصر کیفیت جرم', autoJurm],
                   ['masruqa_i','تفصیل مال مسروقہ اگر کوئی ہو', DASH],
                   ['namzad_i','تفصیل ملزمان نامزد', DASH],
@@ -480,12 +486,12 @@ function _renderR173() {
                   return `<tr>
                     <td style="border:1px solid #000;padding:6px;text-align:center;font-weight:bold;">${i+1}</td>
                     <td class="akh-col2" style="border:1px solid #000;padding:6px;font-weight:600;text-align:justify;text-align-last:right;direction:rtl;position:relative;"><span class="akh-grip no-print" title="لکیر کو کھینچ کر چوڑائی بدلیں"></span>${r[1]}</td>
-                    <td class="normcell" contenteditable="true" data-k="${r[0]}" style="border:1px solid #000;padding:6px;">${val}</td>
+                    <td class="normcell" contenteditable="true" data-k="${r[0]}" style="border:1px solid #000;padding:6px;text-align:right;direction:rtl;">${val}</td>
                   </tr>`;
                 }).join('');
               })()}
               <tr>
-                <td style="border:1px solid #000;padding:6px;text-align:center;vertical-align:top;font-weight:bold;">8</td>
+                <td style="border:1px solid #000;padding:6px;text-align:center;vertical-align:top;font-weight:bold;"></td>
                 <td class="akh-col2" style="border:1px solid #000;padding:6px;font-weight:600;text-align:justify;text-align-last:right;direction:rtl;vertical-align:top;position:relative;"><span class="akh-grip no-print" title="لکیر کو کھینچ کر چوڑائی بدلیں"></span>مختصر حالات مقدمہ معہ جرم</td>
                 <td class="normcell" style="border:1px solid #000;padding:6px;"><div class="normwrap" contenteditable="true" data-mic="true" data-k="halaat">${_ch173HalaatInit(bs, boiler)}</div></td>
               </tr>
@@ -1559,19 +1565,26 @@ function _ch173AkhrajGrips() {
   if (saved && saved.c2 && saved.c3) {
     cols[1].style.width = saved.c2; cols[2].style.width = saved.c3;
   } else {
-    // AUTO-FIX chaurai — column 2 ke sab se lambe unwaan jitni
+    // AUTO-FIX chaurai — column 2 SAB SE LAMBI likhayi wali row jitni.
+    // Har unwaan ko aarzi tor par nowrap kar ke us ki asal (bina toote) chaurai
+    // naapo, sab se bara lo, phir wapas normal.
     try {
       let need = 0;
       table.querySelectorAll('.akh-col2').forEach(td => {
-        const sw = td.scrollWidth;
-        if (sw > need) need = sw;
+        const prevWS = td.style.whiteSpace;
+        td.style.whiteSpace = 'nowrap';
+        const w = td.scrollWidth;
+        td.style.whiteSpace = prevWS;
+        if (w > need) need = w;
       });
       const tW = table.offsetWidth;
       if (need && tW) {
-        // thori saans ki jagah, magar 45% se zyada nahi (col 3 ko jagah rahe)
-        let pct = Math.min(45, Math.max(18, (need + 16) / tW * 100));
-        cols[1].style.width = pct.toFixed(2) + '%';
-        cols[2].style.width = (93 - pct).toFixed(2) + '%';   // col1 ~7%
+        const c1 = cols[0].getBoundingClientRect().width || (tW * 0.07);
+        let px = need + 10;                        // thori saans
+        const maxPx = tW - c1 - 120;               // col 3 ke liye kam az kam 120px
+        if (px > maxPx) px = maxPx;
+        cols[1].style.width = (px / tW * 100).toFixed(2) + '%';
+        cols[2].style.width = ((tW - c1 - px) / tW * 100).toFixed(2) + '%';
       }
     } catch (_) {}
   }
@@ -3744,6 +3757,11 @@ function _ch173CSS() {
       #ch173-doc .ch173-caseline .fl-lg{ min-width:60px; }
       /* "ت پ" — دفعات کے بعد آخر میں، اپنا الگ خانہ */
       #ch173-doc .ch173-caseline .fl-suf{ min-width:24px; }
+      /* جرم ka 'ت پ' (suffix) sab se BAYEN kinare par — body dayen rehta hai */
+      #ch173-doc .ch173-caseline{ }
+      #ch173-doc .ch173-caseline .jurm-wrap{ display:inline-flex; align-items:baseline; gap:6px; flex:1 1 auto; min-width:220px; }
+      #ch173-doc .ch173-caseline .jurm-wrap .fl-lg{ flex:0 0 auto; }
+      #ch173-doc .ch173-caseline .jurm-wrap .fl-suf{ margin-inline-start:auto; }
 
       /* AUTO NAAP: 'fixed' ki bajaye 'auto' — ab har khana apne matn ke
          hisab se chaura hota hai (jitna mawad, utni chaurai). کالم 7 ko
