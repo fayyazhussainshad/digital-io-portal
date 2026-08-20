@@ -179,7 +179,7 @@ const R173_TYPES = [
 
 // CHALLAN types — inka format software NAHI deta (sarkari manzoor-shuda form
 // owner/admin khud set karega). Yeh types khali safed safhe par khulte hain.
-const R173_BLANK_TYPES = ['mukammal','namukammal','ch512','tatima_challan','interim'];
+const R173_BLANK_TYPES = ['mukammal','namukammal','ch512','tatima_challan','interim','ikhraj','adampata'];
 
 // تتمہ چالان ka ذیلی (sub) menu — koi cheez repeat na ho.
 const R173_TATIMA_SUBS = [
@@ -325,8 +325,12 @@ function _renderR173() {
   const isIkhraj = _r173Type === 'ikhraj';
   const isAdampata = _r173Type === 'adampata';
   // اخراج / عدم پتہ apni 3-column (نمبر شمار / تفصیل / قدر) 8-row table par
-  const isClosing = isIkhraj || isAdampata;
-  const _origClosing = isClosing;
+  // اخراج/عدم پتہ ab CHALAN path par (izafi matn, تفصیل کاغذات, SHO, agla
+  // safha, data fetch, alfaz — SAB چالان jaise). Farq SIRF table ka:
+  // چالان ki 7-column vertical table ki jagah اخراج ki 3-column table.
+  const isClosing = false;
+  const _isAkhraj = isIkhraj || isAdampata;    // sirf table + heading ke liye
+  const _origClosing = _isAkhraj;   // heading اخراج/عدم پتہ ke liye
   // Boilerplate: tatima uses subtype boiler, others use type boiler
   let boiler = isTatima ? (R173_TATIMA_BOILER[_r173Subtype]||'') : (R173_BOILER[_r173Type]||'');
   // Result number ki jagah — {{RESULT}} ko asal number se badlo (khali ho to
@@ -444,6 +448,43 @@ function _renderR173() {
             <span>جرم <span class="fl fl-lg" contenteditable="true" data-k="cl_jurm">${bs.cl_jurm !== undefined ? sanitizeHtml(bs.cl_jurm) : esc(_ch173JurmParts(c.section_of_law).body)}</span> <span class="fl fl-suf" contenteditable="true" data-k="cl_jurm_suf">${bs.cl_jurm_suf !== undefined ? sanitizeHtml(bs.cl_jurm_suf) : esc(_ch173JurmParts(c.section_of_law).suffix)}</span></span>
           </div>
 
+          ${_isAkhraj ? `
+          <!-- اخراج / عدم پتہ ki apni 3-column table (AKHRAJ.docx jaisi).
+               Baqi sab (izafi matn, تفصیل کاغذات, SHO, agla safha) چالان jaisa. -->
+          <table class="ch173-table ch173-akhraj-table" id="ch173-table" style="width:100%;border-collapse:collapse;">
+            <colgroup>
+              <col style="width:7%"><col style="width:32%"><col style="width:61%">
+            </colgroup>
+            <tbody>
+              ${(() => {
+                const autoMadai = _ch173MudaiLine(c);
+                const autoJurm  = ((c.section_of_law||'') + ' ' + (c.offence_type||'')).trim();
+                const DASH = '-----------';
+                const rows = [
+                  ['madai','نام وپتہ مدعی و مستغیث', autoMadai],
+                  ['jurm_i','مختصر کیفیت جرم', autoJurm],
+                  ['masruqa_i','تفصیل مال مسروقہ اگر کوئی ہو', DASH],
+                  ['namzad_i','تفصیل ملزمان نامزد', DASH],
+                  ['giraftar_i','تفصیل ملزمان گرفتار شدہ', DASH],
+                  ['raha_i','تفصیل ملزمان رہا شدہ', DASH],
+                  ['baramad_i','تفصیل مال برآمدہ مقبوضہ پولیس', DASH]
+                ];
+                return rows.map((r,i) => {
+                  const val = bs[r[0]] !== undefined ? sanitizeHtml(bs[r[0]]) : esc(r[2]);
+                  return `<tr>
+                    <td style="border:1px solid #000;padding:6px;text-align:center;font-weight:bold;">${i+1}</td>
+                    <td style="border:1px solid #000;padding:6px;font-weight:600;">${r[1]}</td>
+                    <td class="normcell" contenteditable="true" data-k="${r[0]}" style="border:1px solid #000;padding:6px;">${val}</td>
+                  </tr>`;
+                }).join('');
+              })()}
+              <tr>
+                <td style="border:1px solid #000;padding:6px;text-align:center;vertical-align:top;font-weight:bold;">8</td>
+                <td style="border:1px solid #000;padding:6px;font-weight:600;text-align:right;vertical-align:top;">مختصر حالات مقدمہ معہ جرم</td>
+                <td class="normcell" style="border:1px solid #000;padding:6px;"><div class="normwrap" contenteditable="true" data-mic="true" data-k="halaat">${_ch173HalaatInit(bs, boiler)}</div></td>
+              </tr>
+            </tbody>
+          </table>` : `
           <table class="ch173-table" id="ch173-table">
             <colgroup>
               ${W.map((w) => `<col style="width:${_ch173WCss(w)}">`).join('')}
@@ -473,7 +514,7 @@ function _renderR173() {
                 <td class="normcell"><div class="normwrap" contenteditable="true" data-mic="true" data-k="halaat">${_ch173HalaatInit(bs, boiler)}</div></td>
               </tr>
             </tbody>
-          </table>
+          </table>`}
 
           <!-- خانہ 1: باقی متن (اوپر والے کالم سے خود آتا ہے) — تسلسل/overflow -->
           <div class="ch173-cont" contenteditable="true" data-k="cont_text">${bs.cont_text !== undefined ? sanitizeHtml(bs.cont_text) : ''}</div>
@@ -1463,9 +1504,14 @@ window._ch173AutoSize = _ch173AutoSize;
 // ═══════════════════════════════════════════════════════════════════
 function _ch173Layout() {
   try { _ch173FitPaper(); } catch (_) {}
-  try { _ch173AutoFitCols(); } catch (_) {}     // khanon ki chaurai (file ka apna)
-  try { _ch173AutoSize(); } catch (_) {}        // chaurai + lambai (matn ke mutabiq)
-  try { _ch173RoundRow(); } catch (_) {}
+  // اخراج/عدم پتہ ki simple 3-column table hai (khadi likhayi nahi) — us par
+  // چالان wali column auto-sizing na chalao. Baqi sab (SHO, کاغذات) chalti hai.
+  const _akhrajTbl = !!document.querySelector('.ch173-akhraj-table');
+  if (!_akhrajTbl) {
+    try { _ch173AutoFitCols(); } catch (_) {}     // khanon ki chaurai (file ka apna)
+    try { _ch173AutoSize(); } catch (_) {}        // chaurai + lambai (matn ke mutabiq)
+    try { _ch173RoundRow(); } catch (_) {}
+  }
   try { _ch173StretchRow(); } catch (_) {}      // sirf tab jab neeche kuch na ho
   try { _ch173OverflowSettle(4); } catch (_) {}
   try { _ch173WrapCnics(); } catch (_) {}
