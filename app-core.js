@@ -361,10 +361,11 @@ window.addMicButton = function(inputElement) {
     try { recognition.start(); } catch(_) { micBtn.innerHTML='🎙️'; }
   });
 };
-// Apply mic to any field marked data-mic="true" (call after rendering a form)
-window.applyMicButtons = function(root) {
-  (root||document).querySelectorAll('[data-mic="true"]').forEach(el => window.addMicButton(el));
-};
+// Apply mic to any field marked data-mic="true"
+// BAND KAR DIYA GAYA — ab poore system ka AIK global mic button hai
+// (global-mic.js). Purane bikhre hue mic buttons (har field par) khatam.
+// data-mic="true" jyun ka tyun reh sakta hai, us se ab koi button nahi banta.
+window.applyMicButtons = function(root) { /* no-op: global mic ab kaam karta hai */ };
 
 // ── GLOBAL: complainant name from case (Rule 8) ────────────────
 window.getComplainantName = async function(caseId) {
