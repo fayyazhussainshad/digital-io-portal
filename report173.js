@@ -179,7 +179,7 @@ const R173_TYPES = [
 
 // CHALLAN types — inka format software NAHI deta (sarkari manzoor-shuda form
 // owner/admin khud set karega). Yeh types khali safed safhe par khulte hain.
-const R173_BLANK_TYPES = ['mukammal','namukammal','ch512','tatima_challan','interim','ikhraj','adampata'];
+const R173_BLANK_TYPES = ['mukammal','namukammal','ch512','tatima_challan','interim'];
 
 // تتمہ چالان ka ذیلی (sub) menu — koi cheez repeat na ho.
 const R173_TATIMA_SUBS = [
@@ -324,11 +324,9 @@ function _renderR173() {
   };
   const isIkhraj = _r173Type === 'ikhraj';
   const isAdampata = _r173Type === 'adampata';
-  // اخراج / عدم پتہ ab CHALAN jaisa hi banta hai (7-column table + poora locked
-  // layout). Purana 3-column closing table hata diya gaya. isClosing hamesha
-  // false — sirf عنوان (صیغہ) alag hai.
-  const isClosing = false;
-  const _origClosing = isIkhraj || isAdampata;   // sirf heading/صیغہ ke liye
+  // اخراج / عدم پتہ apni 3-column (نمبر شمار / تفصیل / قدر) 8-row table par
+  const isClosing = isIkhraj || isAdampata;
+  const _origClosing = isClosing;
   // Boilerplate: tatima uses subtype boiler, others use type boiler
   let boiler = isTatima ? (R173_TATIMA_BOILER[_r173Subtype]||'') : (R173_BOILER[_r173Type]||'');
   // Result number ki jagah — {{RESULT}} ko asal number se badlo (khali ho to
@@ -661,22 +659,18 @@ function _renderR173() {
         ${isClosing ? `
         <!-- Closing report 3-column 8-row table (اخراج / عدم پتہ) -->
         <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:12px;">
-          <tr style="background:#f0f0f0;">
-            <th style="border:1px solid #000;padding:6px;width:8%;">نمبر شمار</th>
-            <th style="border:1px solid #000;padding:6px;width:30%;">تفصیل</th>
-            <th style="border:1px solid #000;padding:6px;width:62%;">قدر</th>
-          </tr>
           ${(() => {
             const autoMadai = (c.complainant_name||'') + (c.complainant_address?(' ساکن '+c.complainant_address):'');
             const autoJurm  = (c.section_of_law||'') + ' ' + (c.offence_type||'');
+            const DASH = '-----------';
             const rows = [
               ['madai_i','نام وپتہ مدعی و مستغیث', autoMadai],
               ['jurm_i','مختصر کیفیت جرم', autoJurm.trim()],
-              ['masruqa_i','تفصیل مال مسروقہ اگر کوئی ہو',''],
-              ['namzad_i','تفصیل ملزمان نامزد',''],
-              ['giraftar_i','تفصیل ملزمان گرفتار شدہ',''],
-              ['raha_i','تفصیل ملزمان رہا شدہ',''],
-              ['baramad_i','تفصیل مال برآمدہ مقبوضہ پولیس','']
+              ['masruqa_i','تفصیل مال مسروقہ اگر کوئی ہو', DASH],
+              ['namzad_i','تفصیل ملزمان نامزد', DASH],
+              ['giraftar_i','تفصیل ملزمان گرفتار شدہ', DASH],
+              ['raha_i','تفصیل ملزمان رہا شدہ', DASH],
+              ['baramad_i','تفصیل مال برآمدہ مقبوضہ پولیس', DASH]
             ];
             return rows.map((r,i)=>{
               const val = v(r[0], r[2]);
@@ -701,7 +695,13 @@ function _renderR173() {
         <!-- تفصیل کاغذات -->
         ${isClosing ? (() => {
           const _sho = (typeof getSHOSignLine==='function') ? getSHOSignLine(o.station||'صدر ملتان') : '';
-          const items6 = ['فارم ہذا','نقل FIR','اصل تحریر','نقشہ موقع','اطلاع نامہ مدعی','اصل ضمنی SHO'];
+          // اخراج / عدم پتہ ki apni 10 default fehrist (AKHRAJ.docx se).
+          // Officer ki mehfooz fehrist ho to wohi, warna ye 10.
+          let items6;
+          try {
+            const saved = _ch173PapersList();
+            items6 = (saved && saved.length) ? saved : CH173_IKHRAJ_PAPERS_DEFAULT.slice();
+          } catch (_) { items6 = CH173_IKHRAJ_PAPERS_DEFAULT.slice(); }
           return `
         <!-- Header row: top SHO (left) + heading (right), full-width line below -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin:16px 0 4px;">
@@ -2196,8 +2196,8 @@ function _ch173PapersGroup() {
   if (_r173Type === 'tatima_challan' ||
       (typeof R173_TATIMA_SUBS !== 'undefined' &&
        R173_TATIMA_SUBS.some(x => x.id === _r173Type))) return 'tatima';
-  if (_r173Type === 'ikhraj')         return 'ikhraj';
-  if (_r173Type === 'adampata')       return 'adampata';
+  // اخراج aur عدم پتہ 100% same form — aik hi fehrist (sirf heading ka lafz alag)
+  if (_r173Type === 'ikhraj' || _r173Type === 'adampata') return 'ikhraj';
   return 'challan';                 // مکمل / نامکمل / 512 / انٹیرم
 }
 window._ch173PapersGroup = _ch173PapersGroup;
