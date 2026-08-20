@@ -1027,17 +1027,13 @@ function _printR173() {
       try { _ch173Layout(); } catch (__) {}
       void chDoc.offsetHeight;
       // Misal bandhne ki tikoni jagah (sirf chapai ke liye)
-      // AKHRAJ table: print se pehle column widths ko PX mein pakka kar do
-      // (percent print mein doc 100% hone par badal jate the -> unwaan wrap).
-      // Aur unwaan (column 2) ko nowrap taake kabhi na toote. + 10.5 -> 14.
+      // AKHRAJ table ho to hi: print se pehle column widths PX mein pakka +
+      // unwaan nowrap. (Challan ki 7-column table ko HAATH NA LAGAO — wo apni
+      // screen wali naap se hi print hoti hai.)
       try {
         const at = chDoc.querySelector('.ch173-akhraj-table');
         if (at) {
           const cols = at.querySelectorAll('colgroup col');
-          cols.forEach(cc => {
-            const w = cc.getBoundingClientRect ? 0 : 0;
-          });
-          // har col ki asal px chaurai lelo
           const body = at.querySelector('tbody');
           if (body) {
             const firstRow = body.querySelector('tr');
@@ -1050,11 +1046,9 @@ function _printR173() {
           }
           at.style.width = Math.round(at.getBoundingClientRect().width) + 'px';
           at.style.tableLayout = 'fixed';
-          // column 2 (unwaan) nowrap taake print mein na toote
           at.querySelectorAll('.akh-col2').forEach(td => { td.style.whiteSpace = 'nowrap'; });
         }
       } catch (__) {}
-      try { _ch173Force14FromHalf(); } catch (__) {}
       let _tri = [];
       try { _tri = _ch173AddBindMarks() || []; } catch (__) {}
       _inner = chDoc.innerHTML;                // kaghaz ki naap wala natija
@@ -1071,10 +1065,10 @@ function _printR173() {
         if (at2) {
           at2.style.width = ''; at2.style.tableLayout = '';
           at2.querySelectorAll('.akh-col2').forEach(td => { td.style.whiteSpace = ''; });
+          try { _ch173AkhrajGrips(); } catch (___) {}  // sirf akhraj ki column-2 naap dobara
         }
         void chDoc.offsetHeight;
         _ch173OverflowSettle(4);               // screen ki halat bhi durust
-        try { _ch173AkhrajGrips(); } catch (___) {}  // screen ki column-2 naap dobara
       } catch (__) {}
     }
     const chHtml = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
@@ -3223,7 +3217,8 @@ function _ch173Force14FromHalf() {
   // Toolbar dropdown 14 dikhaye
   const sel = document.getElementById('ch173-font-sel');
   if (sel && parseFloat(sel.value) === 10.5) sel.value = String(R173_FONT_DEFAULT);
-  if (touched && typeof _ch173Layout === 'function') { try { _ch173Layout(); } catch(_) {} }
+  // NOTE: yahan _ch173Layout() NAHI chalana — font badalna layout se alag hai,
+  // aur print ke waqt layout chalane se screen ki naap bigad jati thi.
 }
 window._ch173Force14FromHalf = _ch173Force14FromHalf;
 
