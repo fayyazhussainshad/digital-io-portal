@@ -305,9 +305,11 @@ function _renderR173() {
         String(sv.papers_body).replace(/<[^>]*>/g, '').trim().length) {
       return sanitizeHtml(sv.papers_body);           // pehle se kuch hai
     }
-    if (_r173Type === 'tatima_challan' &&
-        typeof CH173_TATIMA_PAPERS_DEFAULT !== 'undefined') {
-      return CH173_TATIMA_PAPERS_DEFAULT.map(nm =>
+    // Har qism ki apni default fehrist — har kaghaz ke neeche tadaad 1 (editable)
+    let def = [];
+    try { def = _ch173PapersList(); } catch (_) {}
+    if (def && def.length) {
+      return def.map(nm =>
         '<span class="pp-item" contenteditable="false">' +
         '<span class="pp-name">' + esc(nm) + '</span>' +
         '<span class="pp-qty" contenteditable="true">1</span></span>').join('');
@@ -2247,7 +2249,7 @@ function _ch173PapersRender(body, items) {
   body.innerHTML = (items || []).map(it =>
     '<span class="pp-item" contenteditable="false">' +
       '<span class="pp-name">' + esc(it.name) + '</span>' +
-      '<span class="pp-qty" contenteditable="true">' + esc(it.qty || '') + '</span>' +
+      '<span class="pp-qty" contenteditable="true">' + esc(it.qty || '1') + '</span>' +
     '</span>'
   ).join('');
 }
@@ -3727,7 +3729,8 @@ function _ch173CSS() {
          ke aik Tab (0.5in = 1.27cm) jitni jagah. Satar bhar jane par agla
          kaghaz KHUD nayi satar par chala jata hai (inline-block ka wrap). */
       #ch173-doc .pp-item{
-        display:inline-block; vertical-align:top; text-align:center;
+        display:inline-flex; flex-direction:column; align-items:center;
+        vertical-align:top; text-align:center;
         margin-left:0.635cm; margin-bottom:4px;  /* Tab = 4 spaces (1.27cm = 8) */
       }
       /* رزلٹ نمبری — naam ke saath usi satar mein (underline ke bagair) */
@@ -3741,10 +3744,10 @@ function _ch173CSS() {
          'margin:0 auto' hi wo cheez hai jo isay beech mein laati hai —
          pehle yeh poori chaurai le kar aik taraf ho jata tha. */
       #ch173-doc .pp-qty{
-        display:block; width:100%; margin:0; box-sizing:border-box;
+        display:block; min-width:1.6em; margin:0 auto; box-sizing:border-box;
         min-height:1.15em; outline:none; padding:0;
         line-height:1.25; text-align:center !important;
-        direction:ltr; unicode-bidi:isolate;      /* hindsa poore khane ke theek beech mein */
+        direction:ltr; unicode-bidi:isolate;      /* hindsa naam ke theek neeche beech mein */
       }
       #ch173-doc .pp-qty:empty::before{ content:'—'; color:#c9c9c9; }
       @media print{ #ch173-doc .pp-qty:empty::before{ content:''; } }
