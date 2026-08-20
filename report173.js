@@ -326,6 +326,15 @@ function _renderR173() {
     const cur = (sv && sv.halaat !== undefined) ? String(sv.halaat) : '';
     const khali = !cur.replace(/<[^>]*>/g, '').replace(/[\s\u00A0]/g, '').length;
     if (_r173Type === 'tatima_challan' && khali) return sanitizeHtml(boil || '');
+    // اخراج / عدم پتہ: agar officer ne kuch nahi likha to FIR ka matn khud
+    // bhar do (bilkul چالان jaisa). Matn baad mein _ch173FillHalaat/LoadFirMatn
+    // se bhi aata hai; yahan pehli render par bhi laga do agar mojood ho.
+    if ((_r173Type === 'ikhraj' || _r173Type === 'adampata') && khali) {
+      try {
+        const ft = _ch173FirText();
+        if (ft) return sanitizeHtml(R173_HALAAT_START + ft + R173_HALAAT_END);
+      } catch (_) {}
+    }
     return sanitizeHtml(sv && sv.halaat !== undefined ? sv.halaat : (boil || ''));
   };
   const isIkhraj = _r173Type === 'ikhraj';
