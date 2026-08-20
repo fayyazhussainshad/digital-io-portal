@@ -1,10 +1,38 @@
 /* ═══════════════════════════════════════════════════════════
    DIGITAL IO — رپورٹ 173 ض ف (FORM 25.56(1))
    5 types: چالان مکمل/نامکمل/انٹیرم/اخراج/عدم پتہ
+
+   11) اخراج / عدم پتہ (dono aik hi form — farq sirf naam ka)
+       • Ye CHALAN path par hain (izafi matn, تفصیل کاغذات, SHO, agla safha,
+         data-fetch, alfaz — SAB چالان jaise). Farq SIRF table ka:
+         چالان ki 7-column vertical table ki jagah اخراج ki 3-column table
+         (نمبر شمار / تفصیل / قدر), 8 rows.
+       • Heading: «فارم رپورٹ اختتامی بصیغہ اخراج/عدم پتہ زیر دفعہ 173 ض ف».
+       • Row 1 (مدعی): CNIC aur numbering (1۔) ke BAGHAIR — sirf naam+pata.
+       • Row 2 (جرم): body CENTER; mix likhayi ka bidi formula — Urdu (ت پ)
+         RTL isolate, English/number (337A2..) LTR isolate.
+       • Rows 3-7 ki khali قدر mein '-----------' CENTER.
+       • Aakhri row (مختصر حالات) mein NUMBER nahi (docx jaisa). Us mein FIR
+         ka matn khud fetch hota hai (چالان jaisa).
+       • Column 2 ki bayen lakeer MOVE-ABLE (grip) + AUTO-FIT (sab se lambi
+         row jitni); mehfooz bhi rehti hai. Column auto-sizing (چالان wali)
+         is simple table par NAHI chalti.
+       • تفصیل کاغذات form mein KHALI khulta hai — 10 default kaghaz dropdown
+         (▾) mein maujood, officer khud add karta hai.
+
+   12) تتمہ چالان — sub-menu (شراب/چرس/آئس/اسلحہ/انٹی ریپ/زنا). Har sub-type
+       ka apna boilerplate (aslha/chars set). FIR ka matn تتمہ mein NA bhare.
+       CNIC columns se hata (body.tatima-active). رزلٹ نمبری top-bar khane se
+       do jagah lagti hai: (1) تحریر mein "رزلٹ نمبر[ی]" ke saath usi satar,
+       (2) تفصیل کاغذات mein "اصل رزلٹ نمبری" ke naam ke SAATH (.pp-rno) —
+       tadaad (1) ko haath NA lagaye.
+
+   13) FONT: default 14 (R173_FONT_DEFAULT). Purani ghalat 10.5 mehfooz value
+       nazar-andaz ho kar 14 par aati hai; officer ki apni doosri naap barqarar.
    ═══════════════════════════════════════════════════════════ */
 
 /* ╔═══════════════════════════════════════════════════════════╗
-   ║  🔒 چالان کی طے شدہ (LOCKED) سیٹنگز — v357                ║
+   ║  🔒 رپورٹ 173 — تمام اقسام طے شدہ (LOCKED) — v385         ║
    ║  ASI Fayyaz Hussain Shad ki sareeh ijazat ke BAGHAIR      ║
    ║  in mein se koi cheez tabdeel NA ki jaye. Naye kaam karte ║
    ║  waqt sab se pehle yeh fehrist parh li jaye.              ║
@@ -3123,8 +3151,16 @@ function _ch173ApplyCellFonts(raw) {
   let o; try { o = JSON.parse(raw); } catch (_) { return; }
   const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!doc || !o) return;
+  // Purani (ghalat update wali) 10.5 saved cell-font ko nazar-andaz karo —
+  // 14pt par le aao. Officer ki apni doosri chuni hui naap barqarar rehti hai.
+  const fix = (f) => {
+    if (!f) return f;
+    const n = parseFloat(f);
+    return (n === 10.5) ? (R173_FONT_DEFAULT + 'pt') : f;
+  };
   const ths = doc.querySelectorAll('.ch173-table thead th');
-  (o.th || []).forEach((f, i) => {
+  (o.th || []).forEach((f0, i) => {
+    const f = fix(f0);
     if (f && ths[i]) {
       ths[i].style.fontSize = f;
       ths[i].querySelectorAll('.rotinner, .rothead').forEach(el => { el.style.fontSize = f; });
@@ -3132,7 +3168,7 @@ function _ch173ApplyCellFonts(raw) {
   });
   Object.keys(o.k || {}).forEach(k => {
     const el = doc.querySelector('[data-k="' + k + '"]');
-    if (el) el.style.fontSize = o.k[k];
+    if (el) el.style.fontSize = fix(o.k[k]);
   });
 }
 window._ch173ApplyCellFonts = _ch173ApplyCellFonts;
