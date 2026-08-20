@@ -1027,6 +1027,34 @@ function _printR173() {
       try { _ch173Layout(); } catch (__) {}
       void chDoc.offsetHeight;
       // Misal bandhne ki tikoni jagah (sirf chapai ke liye)
+      // AKHRAJ table: print se pehle column widths ko PX mein pakka kar do
+      // (percent print mein doc 100% hone par badal jate the -> unwaan wrap).
+      // Aur unwaan (column 2) ko nowrap taake kabhi na toote. + 10.5 -> 14.
+      try {
+        const at = chDoc.querySelector('.ch173-akhraj-table');
+        if (at) {
+          const cols = at.querySelectorAll('colgroup col');
+          cols.forEach(cc => {
+            const w = cc.getBoundingClientRect ? 0 : 0;
+          });
+          // har col ki asal px chaurai lelo
+          const body = at.querySelector('tbody');
+          if (body) {
+            const firstRow = body.querySelector('tr');
+            if (firstRow) {
+              const tds = firstRow.querySelectorAll('td');
+              tds.forEach((td, i) => {
+                if (cols[i]) cols[i].style.width = Math.round(td.getBoundingClientRect().width) + 'px';
+              });
+            }
+          }
+          at.style.width = Math.round(at.getBoundingClientRect().width) + 'px';
+          at.style.tableLayout = 'fixed';
+          // column 2 (unwaan) nowrap taake print mein na toote
+          at.querySelectorAll('.akh-col2').forEach(td => { td.style.whiteSpace = 'nowrap'; });
+        }
+      } catch (__) {}
+      try { _ch173Force14FromHalf(); } catch (__) {}
       let _tri = [];
       try { _tri = _ch173AddBindMarks() || []; } catch (__) {}
       _inner = chDoc.innerHTML;                // kaghaz ki naap wala natija
@@ -1038,8 +1066,15 @@ function _printR173() {
       try {
         chDoc.style.width = _pw; chDoc.style.maxWidth = _pmw;
         chDoc.style.transform = _ptf; chDoc.style.marginBottom = _pmb;
+        // AKHRAJ table ki print-ke-liye lagai gayi inline naap wapas hatao
+        const at2 = chDoc.querySelector('.ch173-akhraj-table');
+        if (at2) {
+          at2.style.width = ''; at2.style.tableLayout = '';
+          at2.querySelectorAll('.akh-col2').forEach(td => { td.style.whiteSpace = ''; });
+        }
         void chDoc.offsetHeight;
         _ch173OverflowSettle(4);               // screen ki halat bhi durust
+        try { _ch173AkhrajGrips(); } catch (___) {}  // screen ki column-2 naap dobara
       } catch (__) {}
     }
     const chHtml = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
