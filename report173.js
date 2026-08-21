@@ -520,9 +520,10 @@ function _renderR173() {
                     <td class="normcell" contenteditable="true" data-k="${r[0]}" style="border:1px solid #000;padding:6px;text-align:center;direction:rtl;unicode-bidi:plaintext;"><span style="unicode-bidi:isolate;direction:rtl;">${esc(jp.suffix)}</span> <span style="unicode-bidi:isolate;direction:ltr;">${esc(jp.body)}</span></td>
                   </tr>`;
                   }
-                  // DASH (خالی) rows ka '-----------' center; باقی (مدعی wagera) right.
+                  // DASH (خالی) rows ka '-----------' center; row 1 (مدعی) bhi
+                  // CENTER (officer ki hidayat); baqi right.
                   const isDash = (val === DASH);
-                  const cellAlign = isDash ? 'center' : 'right';
+                  const cellAlign = (isDash || r[0] === 'madai_i') ? 'center' : 'right';
                   return `<tr>
                     <td style="border:1px solid #000;padding:6px;text-align:center;font-weight:bold;">${i+1}</td>
                     <td class="akh-col2" style="border:1px solid #000;padding:6px;font-weight:600;text-align:justify;text-align-last:right;direction:rtl;position:relative;"><span class="akh-grip no-print" title="لکیر کو کھینچ کر چوڑائی بدلیں"></span>${r[1]}</td>
@@ -1934,6 +1935,19 @@ window._ch173AutoFitCols = _ch173AutoFitCols;
 function _ch173Overflow() {
   const { cell, cont } = _ch173Cells();
   if (!cell || !cont) return;
+  // ═══ اخراج / عدم پتہ — yahan matn NEECHE bhejne ka nizam chalta hi nahi ═══
+  // Is table mein مختصر حالات ka khana apne matn ke saath KHUD barhta hai
+  // (CSS dekhein), is liye kuch bahar jata hi nahi. Agar pichhli dafa ka koi
+  // matn neeche pada ho to usay AIK HI DAFA apni qatar mein wapas le aao —
+  // lafz-ba-lafz wapas laane ki zaroorat nahi (woh sust bhi hota).
+  try {
+    const doc0 = _ch173Doc();
+    if (doc0 && doc0.querySelector('.ch173-akhraj-table')) {
+      while (cont.firstChild) cell.appendChild(cont.firstChild);
+      try { cell.normalize(); } catch (_) {}
+      return;
+    }
+  } catch (_) {}
   // Khane ki naap abhi hui hi nahi (unchai 0) — abhi kuch na karo. Warna
   // "sab kuch bahar hai" samajh kar poora matn neeche dhakel diya jata hai.
   if (!cell.clientHeight) return;
@@ -4160,6 +4174,29 @@ function _ch173CSS() {
         cursor:col-resize; z-index:5; background:transparent;
       }
       #ch173-doc .akh-grip:hover{ background:rgba(3,105,161,.25); }
+
+      /* ══ اخراج / عدم پتہ ki 3-column table — SIRF is table ke usool ══
+         (چالان ki 7-column table in se bilkul mutasir nahi hoti) */
+
+      /* 1) SATRON ka fasla thora KHULA — pehle qatarein bahut chipki hui thin */
+      #ch173-doc .ch173-akhraj-table td{ line-height:1.9; }
+
+      /* 2) Row 8 (مختصر حالات) ka khana APNE MATN ke saath BARHE.
+         AHEM: چالان mein کالم 7 ka khana 'position:absolute; inset:0' hota hai
+         — yani qatar ki muqarrar unchai se bara nahi hota, aur jo matn na
+         samaye woh table ke NEECHE chala jata hai. اخراج ki table mein qatar ki
+         koi muqarrar unchai hai hi nahi (woh baqi khanon ke matn se banti hai,
+         yani sirf aik satar) — is liye font 14 se barhate hi pehli satar bhi
+         na samati thi aur POORA matn qatar chhor kar neeche chala jata tha.
+         Yahan khane ko aam behne wala (in-flow) bana dete hain: matn apni
+         qatar mein hi rehta hai aur qatar us ke saath neeche barhti jati hai. */
+      #ch173-doc .ch173-akhraj-table td.normcell{
+        overflow:visible; height:auto; position:static;
+      }
+      #ch173-doc .ch173-akhraj-table td.normcell .normwrap{
+        position:static; inset:auto; height:auto; min-height:1.9em;
+        overflow:visible; line-height:1.9;
+      }
       /* ── مثل باندھنے کی جگہ — دوسرے صفحے کے اوپر بائیں کونے میں مثلث ──
          Nok top-left kone par, dono lambe bazoo (top aur left margin ke saath)
          2-2 inch ke. Matn is se bach kar behta hai. Saath hi pehli satar ko
@@ -4452,13 +4489,18 @@ function _ch173BakeSizes() {
     }
   });
   // 2) کالم 7 (حالات) — 'inset:0' ki jagah pakki px naap, warna chapai mein
-  //    khana bara/chhota ho kar matn kat jata tha
-  doc.querySelectorAll('.ch173-table td.normcell').forEach(td => {
-    const h = td.clientHeight;
-    const nw = td.querySelector('.normwrap');
-    if (!nw || !h) return;
-    set(nw, 'height', h + 'px');
-  });
+  //    khana bara/chhota ho kar matn kat jata tha.
+  //    AHEM: اخراج / عدم پتہ ki table par yeh NAHI lagta — wahan yeh khana aam
+  //    behne wala hai aur apne matn ke saath khud barhta hai; us par pakki
+  //    unchai lagane se matn kat sakta hai.
+  if (!doc.querySelector('.ch173-akhraj-table')) {
+    doc.querySelectorAll('.ch173-table td.normcell').forEach(td => {
+      const h = td.clientHeight;
+      const nw = td.querySelector('.normwrap');
+      if (!nw || !h) return;
+      set(nw, 'height', h + 'px');
+    });
+  }
   return undo;
 }
 window._ch173BakeSizes = _ch173BakeSizes;
