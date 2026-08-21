@@ -3087,7 +3087,14 @@ function _ch173WrapSelection() {
 function _ch173FontToSelection(pt) {
   const spans = _ch173WrapSelection();
   if (!spans.length) return false;
-  spans.forEach(s => { s.style.fontSize = pt + 'pt'; });
+  spans.forEach(s => {
+    s.style.fontSize = pt + 'pt';
+    // Andar ke purane font-size wale span saaf karo (warna wo bhaari reh kar
+    // naye font ko nazar aane se rok dete hain)
+    s.querySelectorAll('[style*="font-size"]').forEach(inner => {
+      if (!inner.closest('.pp-qty')) inner.style.fontSize = '';
+    });
+  });
   return true;
 }
 
@@ -3150,7 +3157,12 @@ function _ch173FontToCell(cell, pt) {
   const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!cell || !doc || !doc.contains(cell)) return false;
   cell.style.fontSize = pt + 'pt';
-  // Khane ke andar ka matn rakhne wala hissa bhi
+  // Khane ke andar ke PURANE inline font pehle saaf karo (warna purana 10pt
+  // span bhaari reh jata hai aur naya font nazar nahi aata) — sivaye tadaad
+  // (.pp-qty) ke.
+  cell.querySelectorAll('[style*="font-size"]').forEach(el => {
+    if (!el.closest('.pp-qty')) el.style.fontSize = '';
+  });
   cell.querySelectorAll('.rotinner, .rothead, .normwrap, .hinner').forEach(el => {
     el.style.fontSize = pt + 'pt';
   });
