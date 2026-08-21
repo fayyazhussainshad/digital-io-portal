@@ -328,13 +328,28 @@ function _renderR173() {
   // to boilerplate (aslha/chars waghera ka matn) lagao. Warna jo mehfooz hai.
   // تفصیل کاغذات: تتمہ mein — agar khali ho to default kaghaz KHUD bhar do
   // (dropdown ▾ barqarar rahega, us se badal bhi sakte hain).
-  // تفصیل کاغذات KHUD nahi bharti — tafteeshi officer ▾ se apni zaroorat ke
-  // mutabiq kaghaz khud chunega. (Har qism ki default fehrist dropdown mein
-  // maujood rehti hai.)
   const _ch173PapersInit = (sv) => {
+    if (sv && sv.papers_body !== undefined &&
+        String(sv.papers_body).replace(/<[^>]*>/g, '').trim().length) {
+      return sanitizeHtml(sv.papers_body);           // pehle se kuch hai
+    }
+    // اخراج / عدم پتہ: form mein kaghaz KHUD na bharo — tafteeshi officer
+    // dropdown (▾) se apni zaroorat ke mutabiq khud add karega. (Dropdown mein
+    // 10 default fehrist maujood rehti hai, bas form khali khulta hai.)
+    if (_r173Type === 'ikhraj' || _r173Type === 'adampata') {
+      return sv && sv.papers_body !== undefined ? sanitizeHtml(sv.papers_body) : '';
+    }
+    // Har qism ki apni default fehrist — har kaghaz ke neeche tadaad 1 (editable)
+    let def = [];
+    try { def = _ch173PapersList(); } catch (_) {}
+    if (def && def.length) {
+      return def.map(nm =>
+        '<span class="pp-item" contenteditable="false">' +
+        '<span class="pp-name">' + esc(nm) + '</span>' +
+        '<span class="pp-qty" contenteditable="true">1</span></span>').join('');
+    }
     return sv && sv.papers_body !== undefined ? sanitizeHtml(sv.papers_body) : '';
   };
-
   const _ch173HalaatInit = (sv, boil) => {
     const cur = (sv && sv.halaat !== undefined) ? String(sv.halaat) : '';
     const khali = !cur.replace(/<[^>]*>/g, '').replace(/[\s\u00A0]/g, '').length;
@@ -661,9 +676,6 @@ function _renderR173() {
       try { _ch173BindCellPick(); } catch(_) {}
       // Har khane ka apna mehfooz shuda font wapas lagao
       try { _ch173ApplyCellFonts(bs.cell_fonts); } catch(_) {}
-      // Purani ghalat 10.5 (doc ya kisi khane par) ko 14 par force karo — sab
-      // 173 forms. Toolbar bhi 14 dikhaye.
-      try { _ch173Force14FromHalf(); } catch(_) {}
       // Safha poori tarah lag jane ke baad naap dobara theek karo
       try { _ch173WatchFit(); } catch(_) {}
     }, 60);
@@ -999,16 +1011,8 @@ function _printR173() {
       // Dikhane wala 'scale' hata do — naap par asar nahi, magar saaf rahe
       chDoc.style.transform = 'none';
       chDoc.style.marginBottom = '0';
-      // AHEM: safhe ki POORI chaurai par naap na lo — chapai par side ke
-      // hashiye nikalne ke baad jo ASAL jagah bachti hai, naap usi par lo.
-      // (Pehle 8.5in par naapte the magar chapai 801px par hoti thi — 15px
-      //  ka farq matn ko dobara behne par majboor karta tha aur khanon mein
-      //  phans jata tha, izafi matn neeche bhi nahi jata tha.)
-      const _paperW = (_ch173Paper === 'a4') ? '8.27in' : '8.5in';
-      const _sideM  = _ch173SideMargin();
-      chDoc.style.width = 'calc(' + _paperW + ' - ' + _sideM + ' - ' + _sideM + ')';
+      chDoc.style.width = (_ch173Paper === 'a4') ? '8.27in' : '8.5in';
       chDoc.style.maxWidth = 'none';
-      window._ch173PrintMode = true;      // FitPaper is chaurai ko na badle
       void chDoc.offsetHeight;                 // nayi naap lagne do
       // AHEM: yahan khanon ki naap DOBARA na lein. Screen pehle se kaghaz ki
       // naap par hai; chapai ke waqt dobara naapne se halaat thore badal jate
@@ -1020,28 +1024,6 @@ function _printR173() {
       try { _ch173Layout(); } catch (__) {}
       void chDoc.offsetHeight;
       // Misal bandhne ki tikoni jagah (sirf chapai ke liye)
-      // AKHRAJ table ho to hi: print se pehle column widths PX mein pakka +
-      // unwaan nowrap. (Challan ki 7-column table ko HAATH NA LAGAO — wo apni
-      // screen wali naap se hi print hoti hai.)
-      try {
-        const at = chDoc.querySelector('.ch173-akhraj-table');
-        if (at) {
-          const cols = at.querySelectorAll('colgroup col');
-          const body = at.querySelector('tbody');
-          if (body) {
-            const firstRow = body.querySelector('tr');
-            if (firstRow) {
-              const tds = firstRow.querySelectorAll('td');
-              tds.forEach((td, i) => {
-                if (cols[i]) cols[i].style.width = Math.round(td.getBoundingClientRect().width) + 'px';
-              });
-            }
-          }
-          at.style.width = Math.round(at.getBoundingClientRect().width) + 'px';
-          at.style.tableLayout = 'fixed';
-          at.querySelectorAll('.akh-col2').forEach(td => { td.style.whiteSpace = 'nowrap'; });
-        }
-      } catch (__) {}
       let _tri = [];
       try { _tri = _ch173AddBindMarks() || []; } catch (__) {}
       _inner = chDoc.innerHTML;                // kaghaz ki naap wala natija
@@ -1051,16 +1033,8 @@ function _printR173() {
     } finally {
       // Screen wapas apni halat par
       try {
-        window._ch173PrintMode = false;   // ab FitPaper phir se apna kaam kare
         chDoc.style.width = _pw; chDoc.style.maxWidth = _pmw;
         chDoc.style.transform = _ptf; chDoc.style.marginBottom = _pmb;
-        // AKHRAJ table ki print-ke-liye lagai gayi inline naap wapas hatao
-        const at2 = chDoc.querySelector('.ch173-akhraj-table');
-        if (at2) {
-          at2.style.width = ''; at2.style.tableLayout = '';
-          at2.querySelectorAll('.akh-col2').forEach(td => { td.style.whiteSpace = ''; });
-          try { _ch173AkhrajGrips(); } catch (___) {}  // sirf akhraj ki column-2 naap dobara
-        }
         void chDoc.offsetHeight;
         _ch173OverflowSettle(4);               // screen ki halat bhi durust
       } catch (__) {}
@@ -2754,8 +2728,8 @@ function _chBtn() {
          'font-size:13px;padding:0 7px;margin:0 1px;';
 }
 // ═══ فونٹ سائز — MS Word جیسی فہرست (پوائنٹ میں) ═══
-const R173_FONT_SIZES = [8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72];
-const R173_FONT_DEFAULT = 15;
+const R173_FONT_SIZES = [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72];
+const R173_FONT_DEFAULT = 14;
 
 // Mehfooz shuda doc font (na ho to default 14pt)
 function _ch173DocFont(bs) {
@@ -2842,10 +2816,6 @@ window._ch173FullPage = _ch173FullPage;
 function _ch173FitPaper() {
   const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!doc) return;
-  // AHEM: chapai ke waqt safhe ki chaurai pehle se ASAL chapai naap par set
-  // hoti hai. Yahan usay badalna sab bigaad deta hai (matn phans jata hai,
-  // izafi matn neeche nahi jata). Is liye print mode mein chaurai na chhero.
-  if (window._ch173PrintMode) return;
   const host = doc.parentElement;
   if (!host) return;
   // ═══ Dekhne wala khana KHIRKI ke NEECHE tak ═══
@@ -3087,14 +3057,7 @@ function _ch173WrapSelection() {
 function _ch173FontToSelection(pt) {
   const spans = _ch173WrapSelection();
   if (!spans.length) return false;
-  spans.forEach(s => {
-    s.style.fontSize = pt + 'pt';
-    // Andar ke purane font-size wale span saaf karo (warna wo bhaari reh kar
-    // naye font ko nazar aane se rok dete hain)
-    s.querySelectorAll('[style*="font-size"]').forEach(inner => {
-      if (!inner.closest('.pp-qty')) inner.style.fontSize = '';
-    });
-  });
+  spans.forEach(s => { s.style.fontSize = pt + 'pt'; });
   return true;
 }
 
@@ -3103,11 +3066,6 @@ function _ch173FontToDoc(pt) {
   const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!doc) return;
   doc.dataset.fs = pt;
-  // Andar ke purane inline font saaf karo (warna purana 10pt bacha reh jata
-  // hai aur toolbar 15 dikhata hai magar matn 10 par rehta hai)
-  doc.querySelectorAll('[style*="font-size"]').forEach(el => {
-    if (!el.closest('.pp-qty')) el.style.fontSize = '';
-  });
   doc.querySelectorAll('.ch173-table th, .ch173-table td, .rotinner, .hinner, .normwrap, .ch173-cont, .sho-cell-row, .sho-papers-head, .sho-papers-body')
      .forEach(el => { el.style.fontSize = pt + 'pt'; });
   const hid = doc.querySelector('[data-k="doc_font"]');
@@ -3121,18 +3079,7 @@ window._ch173FontToDoc = _ch173FontToDoc;
 function _ch173SetFont(val) {
   const pt = parseFloat(val);
   if (!pt || isNaN(pt)) return;
-  // AHEM: pehle yahan hamesha _ch173RestoreRange() chalta tha jo PURANA (basi)
-  // chuna hua matn wapas laga deta tha — font ghalat jagah lagta aur nazar
-  // kuch nahi aata tha. Ab: agar ABHI koi matn chuna hua hai to wohi lo;
-  // sirf tab purana wapas lao jab abhi kuch chuna hua na ho.
-  let _live = false;
-  try {
-    const sl = window.getSelection();
-    const dc = _ch173Doc();
-    _live = !!(sl && sl.rangeCount && !sl.getRangeAt(0).collapsed &&
-               dc && dc.contains(sl.anchorNode));
-  } catch (_) {}
-  if (!_live) _ch173RestoreRange();
+  _ch173RestoreRange();                        // chuna hua matn wapas lagao
   const _fs = document.getElementById('ch173-font-sel');
   if (_fs) _fs.value = String(pt);             // dropdown wapas na palte
   // 1) Matn chuna hua ho → sirf usi par
@@ -3142,11 +3089,15 @@ function _ch173SetFont(val) {
     return;
   }
   // 2) Kisi khane par click kiya hua ho → SIRF USI khane par.
+  //    (Pehle yahan seedha poore safhe par lagta tha — isi liye header ke
+  //     aik khane ka font badalne se TAMAM khanon ka font badal jata tha.
+  //     Header ke khane likhne wale nahi, is liye un mein matn chuna hi
+  //     nahi ja sakta tha aur har dafa poora safha badal jata tha.)
   if (_ch173FontToCell(window._ch173LastCell, pt)) {
     try { _r173Dirty = true; } catch(_) {}
     return;
   }
-  // 3) Kahin bhi click na kiya ho → poora safha
+  // 3) Kahin bhi click na kiya ho → poora safha (purana tareeqa)
   _ch173FontToDoc(pt);
   try { _r173Dirty = true; } catch(_) {}
 }
@@ -3157,12 +3108,7 @@ function _ch173FontToCell(cell, pt) {
   const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!cell || !doc || !doc.contains(cell)) return false;
   cell.style.fontSize = pt + 'pt';
-  // Khane ke andar ke PURANE inline font pehle saaf karo (warna purana 10pt
-  // span bhaari reh jata hai aur naya font nazar nahi aata) — sivaye tadaad
-  // (.pp-qty) ke.
-  cell.querySelectorAll('[style*="font-size"]').forEach(el => {
-    if (!el.closest('.pp-qty')) el.style.fontSize = '';
-  });
+  // Khane ke andar ka matn rakhne wala hissa bhi
   cell.querySelectorAll('.rotinner, .rothead, .normwrap, .hinner').forEach(el => {
     el.style.fontSize = pt + 'pt';
   });
@@ -3205,16 +3151,8 @@ function _ch173ApplyCellFonts(raw) {
   let o; try { o = JSON.parse(raw); } catch (_) { return; }
   const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!doc || !o) return;
-  // Purani (ghalat update wali) 10.5 saved cell-font ko nazar-andaz karo —
-  // 14pt par le aao. Officer ki apni doosri chuni hui naap barqarar rehti hai.
-  const fix = (f) => {
-    if (!f) return f;
-    const n = parseFloat(f);
-    return (n === 10.5) ? (R173_FONT_DEFAULT + 'pt') : f;
-  };
   const ths = doc.querySelectorAll('.ch173-table thead th');
-  (o.th || []).forEach((f0, i) => {
-    const f = fix(f0);
+  (o.th || []).forEach((f, i) => {
     if (f && ths[i]) {
       ths[i].style.fontSize = f;
       ths[i].querySelectorAll('.rotinner, .rothead').forEach(el => { el.style.fontSize = f; });
@@ -3222,32 +3160,10 @@ function _ch173ApplyCellFonts(raw) {
   });
   Object.keys(o.k || {}).forEach(k => {
     const el = doc.querySelector('[data-k="' + k + '"]');
-    if (el) el.style.fontSize = fix(o.k[k]);
+    if (el) el.style.fontSize = o.k[k];
   });
 }
 window._ch173ApplyCellFonts = _ch173ApplyCellFonts;
-
-// Purani (ghalat) 10.5 font ko har jagah 14 par le aao — چالان/تتمہ/اخراج/عدم پتہ
-function _ch173Force14FromHalf() {
-  const doc = _ch173Doc();
-  if (!doc) return;
-  const DEF = R173_FONT_DEFAULT + 'pt';
-  let touched = false;
-  // Har us element ka font jis par 10.5 laga hai
-  doc.querySelectorAll('[style*="10.5"]').forEach(el => {
-    if (parseFloat(el.style.fontSize) === 10.5) { el.style.fontSize = DEF; touched = true; }
-  });
-  // doc ka apna dataset + hidden doc_font
-  if (parseFloat(doc.dataset.fs) === 10.5) doc.dataset.fs = R173_FONT_DEFAULT;
-  const hid = doc.querySelector('[data-k="doc_font"]');
-  if (hid && parseFloat(hid.value) === 10.5) hid.value = R173_FONT_DEFAULT;
-  // Toolbar dropdown 14 dikhaye
-  const sel = document.getElementById('ch173-font-sel');
-  if (sel && parseFloat(sel.value) === 10.5) sel.value = String(R173_FONT_DEFAULT);
-  // NOTE: yahan _ch173Layout() NAHI chalana — font badalna layout se alag hai,
-  // aur print ke waqt layout chalane se screen ki naap bigad jati thi.
-}
-window._ch173Force14FromHalf = _ch173Force14FromHalf;
 
 // Cursor jahan ho, dropdown wahi size dikhaye (MS Word jaisa)
 function _ch173SyncFontSel() {
@@ -4095,7 +4011,7 @@ function _ch173CSS() {
         padding:5px 5px 0 5px; box-sizing:border-box;   /* neeche ki padding 0 */
         font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
         direction:rtl; text-align:justify; text-align-last:right;
-        outline:none; line-height:1.5; font-size:15pt;   /* default 15, satron ka fasla 1.5 */
+        outline:none; line-height:1.5; font-size:14pt;   /* satron ka fasla — 1.5 */
         overflow-wrap:break-word; word-wrap:break-word;
         overflow:hidden;   /* jo na samaye woh neeche wale khane mein jayega */
       }
@@ -4113,7 +4029,7 @@ function _ch173CSS() {
       #ch173-doc .ch173-cont{
         margin:0 !important; border:none !important; padding:0 5px !important;
         min-height:0; direction:rtl; text-align:justify; text-align-last:right;
-        font-size:15pt; line-height:1.5; outline:none;   /* کالم 7 jaisa hi — 15 / 1.5 */
+        font-size:14pt; line-height:1.5; outline:none;   /* کالم 7 jaisa hi — 1.5 */
         overflow-wrap:break-word; word-wrap:break-word; white-space:pre-wrap;
       }
       #ch173-doc .ch173-cont:empty{ min-height:0; padding:0 !important; }
@@ -4156,7 +4072,7 @@ function _ch173CSS() {
         writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
         direction:rtl; outline:none; unicode-bidi:plaintext;
         line-height:1.2; white-space:pre; word-break:keep-all;
-        overflow-wrap:normal; overflow:hidden; font-size:15pt;
+        overflow-wrap:normal; overflow:hidden; font-size:14pt;
         /* Khadi likhayi mein pehli qeemat OOPER/NEECHE ki jagah hai —
            isay kam rakha hai taake har record Row 2 ki lakeer se bilkul
            saath shuru ho (ooper-neeche fazool jagah na bane). */
