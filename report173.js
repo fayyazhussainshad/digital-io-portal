@@ -3073,16 +3073,37 @@ function _ch173FontToSelection(pt) {
   return true;
 }
 
-// Poore document ka font
+// Poore document ka font (naap hamesha POINT/pt mein — px kahin nahi)
 function _ch173FontToDoc(pt) {
   const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!doc) return;
   doc.dataset.fs = pt;
   // Safhe ki JAR par bhi — taake jin khanon ki apni koi alag naap nahi
-  // (unwan, مقدمہ ki satar, کاغذات waghera) woh bhi saath badlen
+  // (unwan, کاغذات waghera) woh bhi saath badlen
   doc.style.fontSize = pt + 'pt';
-  doc.querySelectorAll('.ch173-table th, .ch173-table td, .rotinner, .hinner, .normwrap, .ch173-cont, .sho-cell-row, .sho-papers-head, .sho-papers-body')
-     .forEach(el => { el.style.fontSize = pt + 'pt'; });
+  // PEHLE: andar reh gayi PURANI naapein saaf karo. Matn idhar udhar hilte
+  // waqt (کالم 7 se neeche aur wapas) chhote chhote span ban jate hain jin par
+  // pichhli naap chipki reh jati hai — woh nayi naap ko rok deti thi.
+  // AHEM: yeh kaam nayi naap lagane se PEHLE hona chahiye, warna yeh khud usi
+  // nayi naap ko mita deta hai. Chune hue matn ki apni naap alag raaste
+  // (_ch173FontToSelection) se lagti hai, wahan yeh nahi chalta.
+  try { _ch173ClearInnerFontSizes(doc); } catch (_) {}
+  // Har woh hissa jis ki apni naap CSS mein likhi hai — usay seedha naap do.
+  // AHEM: '.ch173-caseline' (مقدمہ نمبر / مورخہ / جرم wali satar) aur کالم 7
+  // (.normwrap = row 3 ka حالات khana, aur .ch173-cont = table ke neeche wala
+  // tasalsul) pehle is fehrist mein SHAMIL NAHI the — un ki apni CSS ki 14pt
+  // naap jyun ki tyun rehti thi, is liye font ghatane/barhane se baqi tamam
+  // khane to badal jate the magar YEHI TEEN nahi badalte the.
+  // (caseline ke andar wale span ki apni naap nahi — woh khud wirasat mein
+  //  le lete hain, is liye unhen alag se naap dene ki zaroorat nahi.)
+  const HISSE = [
+    '.ch173-table th', '.ch173-table td',
+    '.rotinner', '.hinner',
+    '.normwrap', '.ch173-cont',       // کالم 7 (row 3) + neeche wala tasalsul
+    '.ch173-caseline',                // مقدمہ نمبر / مورخہ / جرم wali satar
+    '.sho-cell-row', '.sho-papers-head', '.sho-papers-body'
+  ].join(', ');
+  doc.querySelectorAll(HISSE).forEach(el => { el.style.fontSize = pt + 'pt'; });
   const hid = doc.querySelector('[data-k="doc_font"]');
   if (hid) hid.value = pt;
   if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
@@ -3094,6 +3115,26 @@ function _ch173FontToDoc(pt) {
   else if (typeof _ch173Overflow === 'function') setTimeout(_ch173Overflow, 60);
 }
 window._ch173FontToDoc = _ch173FontToDoc;
+
+// ═══ Andar ke chhote tukron par chipki purani naap hatao ═══
+// Matn جب کالم 7 se neeche jata hai aur wapas aata hai to har lafz ka apna
+// span ban sakta hai. Agar us par pichhli inline naap lagi ho to poore safhe
+// ki nayi naap us par asar nahi karti — woh lafz purani naap par hi reh jata
+// hai. Yahan sirf DASTAWEZ ke matn wale hisson ke ANDAR se naap hatate hain
+// (khud khane ki naap nahi chhirti — woh abhi lagayi gayi hai).
+function _ch173ClearInnerFontSizes(doc) {
+  if (!doc) return;
+  const MATN = ['.rotinner', '.normwrap', '.ch173-cont', '.ch173-caseline',
+                '.sho-papers-body'];
+  doc.querySelectorAll(MATN.join(', ')).forEach(host => {
+    host.querySelectorAll('*').forEach(el => {
+      // کاغذات ki tadaad (.pp-qty) aur naam (.pp-name) ki apni shakl hai —
+      // un ki naap CSS se aati hai, chhirne ki zaroorat nahi
+      if (el.style && el.style.fontSize) el.style.fontSize = '';
+    });
+  });
+}
+window._ch173ClearInnerFontSizes = _ch173ClearInnerFontSizes;
 
 // Dropdown se font — matn chuna ho to usi par, warna POORE doc par
 function _ch173SetFont(val) {
