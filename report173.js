@@ -333,21 +333,10 @@ function _renderR173() {
         String(sv.papers_body).replace(/<[^>]*>/g, '').trim().length) {
       return sanitizeHtml(sv.papers_body);           // pehle se kuch hai
     }
-    // اخراج / عدم پتہ: form mein kaghaz KHUD na bharo — tafteeshi officer
-    // dropdown (▾) se apni zaroorat ke mutabiq khud add karega. (Dropdown mein
-    // 10 default fehrist maujood rehti hai, bas form khali khulta hai.)
-    if (_r173Type === 'ikhraj' || _r173Type === 'adampata') {
-      return sv && sv.papers_body !== undefined ? sanitizeHtml(sv.papers_body) : '';
-    }
-    // Har qism ki apni default fehrist — har kaghaz ke neeche tadaad 1 (editable)
-    let def = [];
-    try { def = _ch173PapersList(); } catch (_) {}
-    if (def && def.length) {
-      return def.map(nm =>
-        '<span class="pp-item" contenteditable="false">' +
-        '<span class="pp-name">' + esc(nm) + '</span>' +
-        '<span class="pp-qty" contenteditable="true">1</span></span>').join('');
-    }
+    // HAR qism (چالان مکمل/نامکمل/512/انٹیرم، تتمہ، اخراج، عدم پتہ):
+    // form mein kaghaz KHUD-BA-KHUD na bharen — تفتیشی افسر dropdown (▾)
+    // se apni zaroorat ke mutabiq khud chun kar add karega. Dropdown mein
+    // har qism ki apni default fehrist maujood rehti hai, bas form KHALI khulta hai.
     return sv && sv.papers_body !== undefined ? sanitizeHtml(sv.papers_body) : '';
   };
   const _ch173HalaatInit = (sv, boil) => {
@@ -3071,7 +3060,12 @@ function _ch173FontToDoc(pt) {
   const hid = doc.querySelector('[data-k="doc_font"]');
   if (hid) hid.value = pt;
   if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
-  if (typeof _ch173Overflow === 'function') setTimeout(_ch173Overflow, 60);
+  // Font size badalne se khanon ki chaurai (columns 1-6) aur قطار ki unchai
+  // (کالم 7) dono naye naap ke mutabiq honi chahiye — sirf _ch173Overflow()
+  // kaafi nahi, warna purani (chhoti font ki) naap par CNIC/naam aapas mein
+  // mil jate hain aur کالم 7 ka izafi matn neeche jane ki bajaye chhup jata hai.
+  if (typeof _ch173Layout === 'function') setTimeout(_ch173Layout, 60);
+  else if (typeof _ch173Overflow === 'function') setTimeout(_ch173Overflow, 60);
 }
 window._ch173FontToDoc = _ch173FontToDoc;
 
@@ -3112,7 +3106,9 @@ function _ch173FontToCell(cell, pt) {
   cell.querySelectorAll('.rotinner, .rothead, .normwrap, .hinner').forEach(el => {
     el.style.fontSize = pt + 'pt';
   });
-  if (typeof _ch173Overflow === 'function') setTimeout(_ch173Overflow, 60);
+  // Poore doc jaisi wajah: khane ki naap bhi naye font ke mutabiq dobara ho.
+  if (typeof _ch173Layout === 'function') setTimeout(_ch173Layout, 60);
+  else if (typeof _ch173Overflow === 'function') setTimeout(_ch173Overflow, 60);
   return true;
 }
 window._ch173FontToCell = _ch173FontToCell;
