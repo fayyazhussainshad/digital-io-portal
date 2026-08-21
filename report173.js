@@ -1415,26 +1415,54 @@ function _ch173AkhrajRowH() {
   const td  = row.querySelector('td.normcell');
   const wrap = td && td.querySelector('.normwrap');
   if (!td || !wrap) return;
-  let lh = 0, padV = 0;
+
+  let lh = 0, wrapPad = 0;
   try {
     const cw = getComputedStyle(wrap);
     lh = parseFloat(cw.lineHeight) || 0;
     if (!lh) lh = (parseFloat(cw.fontSize) || 16) * 1.9;
-    const ct = getComputedStyle(td);
-    padV = (parseFloat(ct.paddingTop) || 0) + (parseFloat(ct.paddingBottom) || 0);
+    // normwrap ki apni padding (ooper 5px, neeche 0) — jagah ka hissa hai
+    wrapPad = (parseFloat(cw.paddingTop) || 0) + (parseFloat(cw.paddingBottom) || 0);
   } catch (_) { return; }
   if (!lh) return;
-  // Unwaan wale khane ki qudrati unchai — qatar us se chhoti nahi honi chahiye
-  let need = 0;
+
+  // Kitni SATREIN? Qatar ki qudrati unchai (bayen unwaan se) dekho — us se
+  // kam az kam AIK poori satar. Naapne se pehle apni lagayi hui unchai hatao,
+  // warna pichhli naap hi dobara naap li jati hai.
+  const prev = td.style.height;
+  td.style.height = '';
+  let natural = 0;
   try {
     const lbl = row.querySelector('.akh-col2');
-    if (lbl) need = lbl.offsetHeight || 0;
+    natural = (lbl ? lbl.clientHeight : 0) || 0;
+    if (lbl) {
+      const cl = getComputedStyle(lbl);
+      natural -= (parseFloat(cl.paddingTop) || 0) + (parseFloat(cl.paddingBottom) || 0);
+    }
   } catch (_) {}
-  // Muqarrar unchai: kam az kam AIK poori satar, warna jitni satrein samati hain
-  let lines = Math.floor((need - padV) / lh);
+  let lines = Math.floor(natural / lh);
   if (!(lines >= 1)) lines = 1;
-  const h = Math.round(lines * lh + padV);
-  if (td.style.height !== h + 'px') td.style.height = h + 'px';
+
+  // ═══ HISAB nahi — NAAP kar theek karo ═══
+  // AHEM: pehle unchai seedha hisab se lagayi thi (satrein × lh + padding).
+  // Magar khane ki padding aur 'box-sizing' ki wajah se matn ke liye ASAL
+  // jagah us hisab se ZYADA ban jati thi — nateeje mein aakhri satar ke baad
+  // aadhi/poori satar KHALI bach jati thi, aur wohi table ke matn aur neeche
+  // wale matn ke darmiyan ka FASLA nazar aata tha.
+  // Ab seedha wohi naapte hain jo asal mein matn ko milti hai (wrap ki apni
+  // clientHeight) aur usay theek POORI satron par le aate hain — bilkul waise
+  // hi jaise چالان mein _ch173RoundRow karta hai.
+  const target = lines * lh + wrapPad;            // matn ki asal jagah
+  let h = td.clientHeight || (target);
+  td.style.height = Math.round(h) + 'px';
+  for (let i = 0; i < 4; i++) {
+    const diff = target - wrap.clientHeight;
+    if (Math.abs(diff) < 1) break;
+    h += diff;
+    if (h < lh) h = lh;
+    td.style.height = Math.round(h) + 'px';
+  }
+  if (!td.style.height) td.style.height = prev;
 }
 window._ch173AkhrajRowH = _ch173AkhrajRowH;
 
