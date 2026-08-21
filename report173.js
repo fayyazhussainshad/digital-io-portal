@@ -1395,6 +1395,12 @@ window._ch173Cells = _ch173Cells;
 function _ch173StretchRow() {
   const doc = _ch173Doc();
   if (!doc) return;
+  // اخراج / عدم پتہ ki 3-column table par yeh kaam NAHI chalta. Yahan neeche
+  // wala 'querySelector' PEHLI qatar uthata hai — چالان mein pehli qatar hi
+  // واحد data qatar hai (is liye wahan durust hai), magar اخراج mein 8 qatarein
+  // hain aur woh pehli qatar (نام و پتہ مدعی) ko kheench kar poora safha bharne
+  // ki koshish karta — table ka pehla khana bhadda lamba ho jata.
+  if (doc.querySelector('.ch173-akhraj-table')) return;
   const row = doc.querySelector('#ch173-table tbody tr');
   if (!row) return;
   // AHEM: agar table ke NEECHE pehle se matn mojood hai to table ko safha
@@ -1626,24 +1632,42 @@ function _ch173AkhrajGrips() {
   if (saved && saved.c2 && saved.c3) {
     cols[1].style.width = saved.c2; cols[2].style.width = saved.c3;
   } else {
-    // AUTO-FIX chaurai — column 2 SAB SE LAMBI likhayi wali row jitni.
-    // Har unwaan ko aarzi tor par nowrap kar ke us ki asal (bina toote) chaurai
-    // naapo, sab se bara lo, phir wapas normal.
+    // AUTO-FIT chaurai — column 2 SAB SE LAMBI likhayi wali row jitni.
+    // AHEM: pehle yahan 'td.scrollWidth' se naap li jati thi. Table ke khane
+    // ka scrollWidth us ki MOJOODA chaurai hi batata hai (matn chhota ho to
+    // bhi) — is liye column sirf BARA ho sakta tha, kabhi CHHOTA nahi. Yehi
+    // wajah thi ke unwaan ke bayen taraf khali jagah bach jati thi.
+    // Ab aik chhupa hua paimana (probe) bana kar matn ki ASAL chaurai naapte
+    // hain — khane ki chaurai us par asar nahi karti, is liye column ab
+    // theek utna hi rehta hai jitni sab se lambi satar hai.
     try {
-      let need = 0;
+      const probe = document.createElement('span');
+      probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;' +
+                            'top:-9999px;left:-9999px;pointer-events:none;';
+      doc.appendChild(probe);
+      let need = 0, padX = 0;
       table.querySelectorAll('.akh-col2').forEach(td => {
-        const prevWS = td.style.whiteSpace;
-        td.style.whiteSpace = 'nowrap';
-        const w = td.scrollWidth;
-        td.style.whiteSpace = prevWS;
+        let cs;
+        try { cs = getComputedStyle(td); } catch (_) { return; }
+        probe.style.font       = cs.font;
+        probe.style.fontFamily = cs.fontFamily;
+        probe.style.fontSize   = cs.fontSize;
+        probe.style.fontWeight = cs.fontWeight;
+        probe.style.letterSpacing = cs.letterSpacing;
+        probe.textContent = (td.textContent || '').trim();
+        const w = probe.offsetWidth;             // 'scale' is par asar nahi karta
         if (w > need) need = w;
+        const p = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+        if (p > padX) padX = p;
       });
+      probe.remove();
       const tW = table.offsetWidth;
       if (need && tW) {
         const c1 = cols[0].getBoundingClientRect().width || (tW * 0.07);
-        let px = need + 10;                        // thori saans
+        let px = need + padX + 6;                  // thori saans
         const maxPx = tW - c1 - 120;               // col 3 ke liye kam az kam 120px
         if (px > maxPx) px = maxPx;
+        if (px < 60) px = 60;
         cols[1].style.width = (px / tW * 100).toFixed(2) + '%';
         cols[2].style.width = ((tW - c1 - px) / tW * 100).toFixed(2) + '%';
       }
@@ -1658,6 +1682,7 @@ function _ch173AkhrajGrips() {
       const tW = table.offsetWidth;
       const c2 = cols[1].getBoundingClientRect().width;
       const c3 = cols[2].getBoundingClientRect().width;
+      let moveWait = false;
       const move = (ev) => {
         // RTL: column 2 ki BAYEN lakeer — dayen kheenchne se col2 barhta hai
         let d = ev.clientX - startX;
@@ -1665,6 +1690,17 @@ function _ch173AkhrajGrips() {
         if (n2 < 60 || n3 < 80) return;
         cols[1].style.width = (n2 / tW * 100).toFixed(2) + '%';
         cols[2].style.width = (n3 / tW * 100).toFixed(2) + '%';
+        // Column 3 tang/chaura hone se مختصر حالات ka matn dobara toot-ta hai —
+        // jo na samaye woh table ke NEECHE chala jaye, aur jagah bane to wapas
+        // ooper aa jaye. Kheenchte hue hi nazar aata rahe (har frame par aik
+        // hi dafa — warna kheenchna bhaari ho jata hai).
+        if (!moveWait) {
+          moveWait = true;
+          requestAnimationFrame(() => {
+            moveWait = false;
+            try { _ch173OverflowSettle(1); } catch (_) {}
+          });
+        }
       };
       const up = () => {
         document.removeEventListener('mousemove', move);
@@ -1673,6 +1709,10 @@ function _ch173AkhrajGrips() {
           localStorage.setItem('dio_akhraj_col2',
             JSON.stringify({ c2: cols[1].style.width, c3: cols[2].style.width }));
         } catch (_) {}
+        // Chhorne par matn poori tarah jam jaye (ooper/neeche theek ho)
+        try { _ch173OverflowSettle(4); } catch (_) {}
+        try { _ch173AlignSho(); } catch (_) {}
+        try { _r173Dirty = true; } catch (_) {}
       };
       document.addEventListener('mousemove', move);
       document.addEventListener('mouseup', up);
