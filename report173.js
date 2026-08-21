@@ -333,10 +333,10 @@ function _renderR173() {
         String(sv.papers_body).replace(/<[^>]*>/g, '').trim().length) {
       return sanitizeHtml(sv.papers_body);           // pehle se kuch hai
     }
-    // HAR qism (چالان مکمل/نامکمل/512/انٹیرم، تتمہ، اخراج، عدم پتہ):
-    // form mein kaghaz KHUD-BA-KHUD na bharen — تفتیشی افسر dropdown (▾)
-    // se apni zaroorat ke mutabiq khud chun kar add karega. Dropdown mein
-    // har qism ki apni default fehrist maujood rehti hai, bas form KHALI khulta hai.
+    // HAR qism (چالان مکمل/نامکمل/512/انٹیرم، تتمہ، اخراج، عدم پتہ) mein
+    // form KHALI khulta hai — kaghaz KHUD-BA-KHUD na bharen. Tafteeshi afsar
+    // dropdown (▾) se apni zaroorat ke mutabiq khud chun kar lagayega.
+    // Har qism ki apni default fehrist dropdown mein maujood rehti hai.
     return sv && sv.papers_body !== undefined ? sanitizeHtml(sv.papers_body) : '';
   };
   const _ch173HalaatInit = (sv, boil) => {
@@ -637,10 +637,16 @@ function _renderR173() {
         if (rh) document.querySelectorAll('#ch173-table tbody td').forEach(td => td.style.height = rh);
         _ch173SizeRotated();
       } catch(_) {}
-      // Mehfooz shuda فونٹ سائز wapas lagao
+      // Mehfooz shuda فونٹ سائز wapas lagao.
+      // AHEM: pehle yahan shart thi "agar df 14 ke ILAWA ho" — is liye 14 par
+      // koi INLINE naap lagti hi nahi thi aur doc sirf CSS ke bharose rehta tha.
+      // Us soorat mein baad mein aane wale per-cell (purane 12pt) font us par
+      // hawi ho jate the. Ab font HAR HAAL mein poore doc par lagta hai.
       try {
         const df = _ch173DocFont(bs);
-        if (df && df !== R173_FONT_DEFAULT) _ch173FontToDoc(df);
+        if (df) _ch173FontToDoc(df);
+        const _fsel = document.getElementById('ch173-font-sel');
+        if (_fsel && df) _fsel.value = String(df);
       } catch(_) {}
       // Cursor ke mutabiq dropdown khud badalta rahe (MS Word jaisa)
       try {
@@ -665,6 +671,9 @@ function _renderR173() {
       try { _ch173BindCellPick(); } catch(_) {}
       // Har khane ka apna mehfooz shuda font wapas lagao
       try { _ch173ApplyCellFonts(bs.cell_fonts); } catch(_) {}
+      // Tamam font lag jane ke BAAD hi naap ka poora kaam — warna khanon ki
+      // chaurai/qatar ki unchai purane (chhote) font par naapi jati thi.
+      setTimeout(() => { try { _ch173Layout(); } catch(_) {} }, 120);
       // Safha poori tarah lag jane ke baad naap dobara theek karo
       try { _ch173WatchFit(); } catch(_) {}
     }, 60);
@@ -1012,12 +1021,24 @@ function _printR173() {
       // wohi shakl deti hai jo screen par nazar aa rahi hoti hai.
       try { _ch173Layout(); } catch (__) {}
       void chDoc.offsetHeight;
+      // ═══ Naap ko PAKKA (inline px) kar do — chapai ke liye ═══
+      // Screen par khadi khanon ki unchai 'height:100%' ki zanjeer se banti
+      // hai (td → .cellbox/.rotclip → .rotinner), aur CNIC ka fasla .ln ke
+      // 'inline-size:100%' + space-between se. Chapai ki khirki AIK NAYA
+      // document hai jahan yeh percent wali zanjeer usi tarah nahi bandhti —
+      // is liye .ln apne matn jitni hi reh jati thi, space-between ka fasla
+      // khatam ho jata tha aur NAAM ke saath CNIC aa kar mil jate the.
+      // Hal: chapai ki naql lene se PEHLE asal px naap inline likh do (inline
+      // naap innerHTML ke saath chali jati hai), naql ke baad hata do.
+      let _baked = [];
+      try { _baked = _ch173BakeSizes(); } catch (__) {}
       // Misal bandhne ki tikoni jagah (sirf chapai ke liye)
       let _tri = [];
       try { _tri = _ch173AddBindMarks() || []; } catch (__) {}
       _inner = chDoc.innerHTML;                // kaghaz ki naap wala natija
       // Nishan foran hata do — screen par kuch badla hua nazar na aaye
       try { _tri.forEach(t => t.remove()); chDoc.normalize(); } catch (__) {}
+      try { _ch173UnbakeSizes(_baked); } catch (__) {}
     } catch (_) {
     } finally {
       // Screen wapas apni halat par
@@ -2721,11 +2742,13 @@ const R173_FONT_SIZES = [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28,
 const R173_FONT_DEFAULT = 14;
 
 // Mehfooz shuda doc font (na ho to default 14pt)
+// AHEM: purani ghalat default qeematein (10.5 aur 12) ko nazar-andaz kar ke
+// 14 par le aate hain — naye AUR purane dono چالان 14 par. Officer ki apni
+// chuni hui doosri naapein (16, 18, 20 ...) jyun ki tyun rehti hain.
+const R173_FONT_LEGACY = [10.5, 12];
 function _ch173DocFont(bs) {
   const n = parseFloat((bs && bs.doc_font) || '');
-  // Purani (ghalat update wali) 10.5 mehfooz value ko nazar-andaz kar ke
-  // default 14 par le aao — naye AUR purane dono challan 14 par.
-  if (n === 10.5) return R173_FONT_DEFAULT;
+  if (R173_FONT_LEGACY.indexOf(n) !== -1) return R173_FONT_DEFAULT;
   return (n && !isNaN(n)) ? n : R173_FONT_DEFAULT;
 }
 
@@ -3060,38 +3083,36 @@ function _ch173FontToDoc(pt) {
   const hid = doc.querySelector('[data-k="doc_font"]');
   if (hid) hid.value = pt;
   if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
-  // Font size badalne se khanon ki chaurai (columns 1-6) aur قطار ki unchai
-  // (کالم 7) dono naye naap ke mutabiq honi chahiye — sirf _ch173Overflow()
-  // kaafi nahi, warna purani (chhoti font ki) naap par CNIC/naam aapas mein
-  // mil jate hain aur کالم 7 ka izafi matn neeche jane ki bajaye chhup jata hai.
+  // Font badalne par khanon ki CHAURAI (1–6) aur QATAR ki unchai dono naye
+  // naap par honi chahiyen. Sirf _ch173Overflow() kaafi nahi tha — us se naap
+  // purane (chhote) font ki hi rehti thi, is liye naam aur CNIC aapas mein mil
+  // jate the aur کالم 7 ka izafi matn neeche jane ki bajaye chhup jata tha.
   if (typeof _ch173Layout === 'function') setTimeout(_ch173Layout, 60);
   else if (typeof _ch173Overflow === 'function') setTimeout(_ch173Overflow, 60);
 }
 window._ch173FontToDoc = _ch173FontToDoc;
 
-// Dropdown se font — matn chuna ho to usi par, warna poore doc par
+// Dropdown se font — matn chuna ho to usi par, warna POORE doc par
 function _ch173SetFont(val) {
   const pt = parseFloat(val);
   if (!pt || isNaN(pt)) return;
   _ch173RestoreRange();                        // chuna hua matn wapas lagao
   const _fs = document.getElementById('ch173-font-sel');
   if (_fs) _fs.value = String(pt);             // dropdown wapas na palte
-  // 1) Matn chuna hua ho → sirf usi par
+  // 1) Matn WAQAI chuna hua ho → sirf usi par
   if (_ch173FontToSelection(pt)) {
     _ch173SaveRange();
     try { _r173Dirty = true; } catch(_) {}
     return;
   }
-  // 2) Kisi khane par click kiya hua ho → SIRF USI khane par.
-  //    (Pehle yahan seedha poore safhe par lagta tha — isi liye header ke
-  //     aik khane ka font badalne se TAMAM khanon ka font badal jata tha.
-  //     Header ke khane likhne wale nahi, is liye un mein matn chuna hi
-  //     nahi ja sakta tha aur har dafa poora safha badal jata tha.)
-  if (_ch173FontToCell(window._ch173LastCell, pt)) {
-    try { _r173Dirty = true; } catch(_) {}
-    return;
-  }
-  // 3) Kahin bhi click na kiya ho → poora safha (purana tareeqa)
+  // 2) Warna POORA safha.
+  //    AHEM: yahan pehle "sirf us khane par jahan click hua tha" wala raasta
+  //    tha. Officer cursor rakhne ke liye khane par click karta hi hai, is
+  //    liye 14 chunne par SIRF aik khana badalta tha aur baqi safha 12 par
+  //    reh jata tha — officer ko lagta tha ke font selector kaam hi nahi kar
+  //    raha. Ab bina matn chune font POORE safhe par lagta hai (jaisi tawaqqo
+  //    hai). Kisi aik khane ka alag font chahiye to us khane ka matn chun kar
+  //    naap badlein.
   _ch173FontToDoc(pt);
   try { _r173Dirty = true; } catch(_) {}
 }
@@ -3106,7 +3127,7 @@ function _ch173FontToCell(cell, pt) {
   cell.querySelectorAll('.rotinner, .rothead, .normwrap, .hinner').forEach(el => {
     el.style.fontSize = pt + 'pt';
   });
-  // Poore doc jaisi wajah: khane ki naap bhi naye font ke mutabiq dobara ho.
+  // Poore doc jaisi wajah — khane ki naap bhi naye font ke mutabiq dobara ho
   if (typeof _ch173Layout === 'function') setTimeout(_ch173Layout, 60);
   else if (typeof _ch173Overflow === 'function') setTimeout(_ch173Overflow, 60);
   return true;
@@ -3142,6 +3163,19 @@ function _ch173CellFonts() {
 }
 window._ch173CellFonts = _ch173CellFonts;
 
+// AHEM — YEH WOHI JAGAH THI JAHAN "font 14 nahi hota" wala masla banta tha:
+// _ch173FontToDoc() har khane par INLINE font-size lagata hai, aur un mein se
+// aksar khanon par data-k mojood hai. Chunanche _ch173CellFonts() poore doc ka
+// font "har khane ka apna font" samajh kar mehfooz kar leta tha. Agle dafa
+// safha khulne par yeh function un PURANI (12pt) qeematon ko DOBARA laga deta
+// tha — aur woh doc ke 14 ko kha jati thin. Is liye ab legacy naapein
+// (10.5pt / 12pt) yahan se nazar-andaz hoti hain; officer ki apni chuni hui
+// asal naapein (16, 18, 20 ...) pehle ki tarah mehfooz rehti hain.
+function _ch173IsLegacyFont(f) {
+  const n = parseFloat(f);
+  return !isNaN(n) && R173_FONT_LEGACY.indexOf(n) !== -1;
+}
+
 function _ch173ApplyCellFonts(raw) {
   if (!raw) return;
   let o; try { o = JSON.parse(raw); } catch (_) { return; }
@@ -3149,14 +3183,16 @@ function _ch173ApplyCellFonts(raw) {
   if (!doc || !o) return;
   const ths = doc.querySelectorAll('.ch173-table thead th');
   (o.th || []).forEach((f, i) => {
-    if (f && ths[i]) {
+    if (f && !_ch173IsLegacyFont(f) && ths[i]) {
       ths[i].style.fontSize = f;
       ths[i].querySelectorAll('.rotinner, .rothead').forEach(el => { el.style.fontSize = f; });
     }
   });
   Object.keys(o.k || {}).forEach(k => {
+    const f = o.k[k];
+    if (!f || _ch173IsLegacyFont(f)) return;      // purani 12pt/10.5pt na lagao
     const el = doc.querySelector('[data-k="' + k + '"]');
-    if (el) el.style.fontSize = o.k[k];
+    if (el) el.style.fontSize = f;
   });
 }
 window._ch173ApplyCellFonts = _ch173ApplyCellFonts;
@@ -4275,6 +4311,77 @@ function _ch173PlainCell(cell) {
 // neeche) aur bhadda lagta tha. Ab har satar apne khane (.ln) mein hai
 // jismein naam SHURU (ooper) aur CNIC AAKHIR (neeche) par jamta hai —
 // is liye tamam CNIC aik hi seedh mein aate hain.
+// ═══ Chapai ke liye NAAP ko PAKKA karna ═══
+// Screen par khadi khanon ki naap 'percent' ki zanjeer se banti hai:
+//   td (inline px) → .cellbox height:100% → .rotclip inset:0 → .rotinner
+//   height:100% → .ln inline-size:100% → space-between se CNIC ka fasla.
+// Chapai aik ALAG document mein hoti hai; wahan yeh zanjeer usi tarah nahi
+// bandhti aur .ln apne matn jitni reh jati hai — chunanche NAAM aur CNIC ka
+// fasla khatam ho kar dono aapas mein mil jate the (aur کالم 7 ka matn kat
+// jata tha). Yahan naql lene se PEHLE har khane ki ASAL px naap inline likh
+// dete hain (inline naap innerHTML ke saath chapai mein chali jati hai), aur
+// naql ke foran baad _ch173UnbakeSizes se hata dete hain — screen par koi
+// tabdeeli nazar nahi aati.
+// AHEM: offsetHeight/offsetWidth istemal karte hain kyunki inhen safhe ka
+// 'scale' (transform) nahi chhirta — getBoundingClientRect chhirta hai.
+function _ch173BakeSizes() {
+  const doc = _ch173Doc();
+  const undo = [];
+  if (!doc) return undo;
+  const set = (el, prop, val) => {
+    if (!el) return;
+    undo.push([el, prop, el.style[prop]]);
+    el.style[prop] = val;
+  };
+  // 1) Khadi khane (columns 1–6) — poori zanjeer ko pakki px naap.
+  //    AHEM: clientHeight (offsetHeight NAHI) — 'absolute' khane ki naap khane
+  //    ke PADDING-BOX se banti hai, aur offsetHeight mein lakeer (border) bhi
+  //    shamil hoti hai. Us se har khana 2px bara ho kar matn phir kat jata.
+  doc.querySelectorAll('.ch173-table .rotcell').forEach(td => {
+    const h = td.clientHeight;
+    if (!h) return;
+    set(td.querySelector('.cellbox'), 'height', h + 'px');
+    const clip = td.querySelector('.rotclip');
+    set(clip, 'height', h + 'px');
+    const inner = td.querySelector('.rotinner');
+    if (!inner) return;
+    const ih = inner.offsetHeight || h;
+    set(inner, 'height', ih + 'px');
+    // .ln ka 'inline-size' — khadi likhayi mein yehi UNCHAI hoti hai.
+    // Isi par CNIC ka space-between wala fasla mabni hai.
+    let padY = 0;
+    try {
+      const cs = getComputedStyle(inner);
+      padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+    } catch (_) {}
+    const lnH = Math.max(0, ih - padY);
+    if (lnH > 0) {
+      inner.querySelectorAll('.ln').forEach(ln => {
+        // تتمہ mein CNIC hota hi nahi — wahan satar apne matn jitni rehti hai
+        if (!ln.querySelector('.cn')) return;
+        set(ln, 'inlineSize', lnH + 'px');
+      });
+    }
+  });
+  // 2) کالم 7 (حالات) — 'inset:0' ki jagah pakki px naap, warna chapai mein
+  //    khana bara/chhota ho kar matn kat jata tha
+  doc.querySelectorAll('.ch173-table td.normcell').forEach(td => {
+    const h = td.clientHeight;
+    const nw = td.querySelector('.normwrap');
+    if (!nw || !h) return;
+    set(nw, 'height', h + 'px');
+  });
+  return undo;
+}
+window._ch173BakeSizes = _ch173BakeSizes;
+
+function _ch173UnbakeSizes(undo) {
+  (undo || []).forEach(([el, prop, val]) => {
+    try { el.style[prop] = val || ''; } catch (_) {}
+  });
+}
+window._ch173UnbakeSizes = _ch173UnbakeSizes;
+
 function _ch173WrapCnics(root) {
   root = root || _ch173Doc();
   if (!root) return;
