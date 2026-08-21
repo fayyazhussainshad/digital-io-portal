@@ -83,11 +83,24 @@ function _renderZimniList() {
         </tr>
       </thead>
       <tbody>
-        ${_zimniList.map((z, i) => {
+        ${_zimniList.slice().sort((a,b)=>(parseInt(b.serial_no)||0)-(parseInt(a.serial_no)||0)).map((z, i) => {
           const c = z.content || {};
           const plain = (c.bodyHtml || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
           const khulasa = plain ? (plain.length > 90 ? plain.slice(0, 90) + '…' : plain) : '—';
           const dt = z.report_date ? (typeof formatDate === 'function' ? formatDate(z.report_date) : z.report_date) : '—';
+          // Save ka WAQT (challan jaisa) — تاریخ ke neeche
+          let wq = '';
+          try {
+            const iso = c.saved_at || '';
+            if (iso) { const x = new Date(iso); if (!isNaN(x)) {
+              let h = x.getHours(); const m = String(x.getMinutes()).padStart(2,'0');
+              const ap = h < 12 ? 'am' : 'pm'; h = h % 12 || 12;
+              wq = String(h).padStart(2,'0') + ':' + m + ' ' + ap;
+            } }
+          } catch (_) {}
+          // بنام — body se "بنام۔" ke aage wala نکالو (agar mojood)
+          let banam = c.banam || '';
+          if (!banam) { const mm = (c.bodyHtml||'').match(/بنام[۔:\s]*<\/span>\s*<span[^>]*>([^<]*)</); if (mm) banam = mm[1].trim(); }
           const murattib = (typeof getIOSignLine === 'function') ? getIOSignLine()
                          : ((currentOfficer && currentOfficer.full_name ? currentOfficer.full_name + ' ' : '')
                             + (currentOfficer && currentOfficer.designation ? currentOfficer.designation + ' ' : '')
@@ -95,10 +108,10 @@ function _renderZimniList() {
           return `
           <tr ondblclick="_openZimni('${z.id}')" style="cursor:pointer;">
             <td class="num">${esc(String(z.serial_no || (i + 1)))}</td>
-            <td>${esc(c.unwan || 'ضمنی رپورٹ')}</td>
-            <td>${esc(c.banam || '')}</td>
+            <td>${esc(c.unwan || 'رپورٹ ضمنی')}</td>
+            <td>${esc(banam)}</td>
             <td style="white-space:nowrap;">${esc(murattib)}</td>
-            <td style="text-align:center;white-space:nowrap;font-family:var(--font-mono);">${esc(dt)}</td>
+            <td style="text-align:center;white-space:nowrap;font-family:var(--font-mono);">${esc(dt)}${wq?`<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${esc(wq)}</div>`:''}</td>
             <td style="text-align:center;">${esc(String(c.faqra_no || 1))}</td>
             <td class="khulasa">${esc(khulasa)}</td>
             <td class="act">
@@ -192,9 +205,9 @@ function _renderZimniEditor() {
       </div>
     </div>
 
-    <!-- Document — kaghaz asal naap par (challan/akhraj jaisa), margins 1cm / side -->
+    <!-- Document — poora editable (har jaga likha ja sake), kaghaz asal naap par -->
     <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
-      <div id="ch173-doc" spellcheck="false" style="
+      <div id="ch173-doc" contenteditable="true" spellcheck="false" style="
         width:${paper==='a4'?'8.27in':'8.5in'};max-width:none;
         min-height:${paper==='a4'?'11.7in':'13in'};margin:0 auto;
         padding:1cm ${side};background:#fff;
@@ -215,6 +228,7 @@ function _renderZimniEditor() {
     try { if (typeof _ch173BindCellPick === 'function') _ch173BindCellPick(); } catch (_) {}
     try { if (typeof _ch173FocusMode === 'function') _ch173FocusMode(true); } catch (_) {} // chips peek
     try { if (typeof _ch173WatchFit === 'function') _ch173WatchFit(); } catch (_) {}
+    try { _zimniBindFindReplace(); } catch (_) {}                                          // Ctrl+F / Ctrl+H
     // Cursor ke mutabiq font dropdown khud badle (MS Word jaisa)
     try {
       if (!window._ch173FontSelBound && typeof _ch173SyncFontSel === 'function') {
@@ -226,50 +240,200 @@ function _renderZimniEditor() {
   }, 60);
 }
 
-// Berooni Zimni form ki CSS (editor + print) — sab #ch173-doc ke andar,
-// naap POINT (pt) mein. RTL: بیرونی دائیں، ضلع بائیں (flex ordering).
+// ═══════════════════════════════════════════════════════════════
+//  MS Word جیسا Find (Ctrl+F) اور Replace (Ctrl+H) — editor (#ch173-doc)
+// ═══════════════════════════════════════════════════════════════
+let _zfrIdx = -1;
+
+function _zimniBindFindReplace() {
+  if (window._zfrBound) return;
+  window._zfrBound = true;
+  document.addEventListener('keydown', (e) => {
+    if (!(e.ctrlKey || e.metaKey)) return;
+    const k = String(e.key || '').toLowerCase();
+    if (k !== 'f' && k !== 'h') return;
+    // Sirf tab jab editor (#ch173-doc) safhe par mojood ho
+    const doc = (typeof _ch173Doc === 'function') ? _ch173Doc() : document.getElementById('ch173-doc');
+    if (!doc) return;
+    e.preventDefault();
+    _zimniFindReplaceUI(k === 'h');
+  }, true);
+}
+window._zimniBindFindReplace = _zimniBindFindReplace;
+
+function _zfrMatches(term, matchCase) {
+  const doc = (typeof _ch173Doc === 'function') ? _ch173Doc() : document.getElementById('ch173-doc');
+  const out = [];
+  if (!doc || !term) return out;
+  const w = document.createTreeWalker(doc, NodeFilter.SHOW_TEXT, null);
+  const t = matchCase ? term : term.toLowerCase();
+  let n;
+  while ((n = w.nextNode())) {
+    const raw = n.nodeValue || '';
+    const hay = matchCase ? raw : raw.toLowerCase();
+    let i = 0;
+    while ((i = hay.indexOf(t, i)) !== -1) { out.push({ node: n, start: i, end: i + term.length }); i += term.length; }
+  }
+  return out;
+}
+
+function _zfrSelect(m) {
+  try {
+    const r = document.createRange();
+    r.setStart(m.node, m.start); r.setEnd(m.node, m.end);
+    const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    const el = m.node.parentElement;
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  } catch (_) {}
+}
+
+function _zfrFindNext(back) {
+  const box = document.getElementById('zfr-box'); if (!box) return;
+  const term = box.querySelector('#zfr-find').value;
+  const mc = box.querySelector('#zfr-mc').checked;
+  const ms = _zfrMatches(term, mc);
+  const cnt = box.querySelector('#zfr-count');
+  if (!ms.length) { if (cnt) cnt.textContent = '0/0'; _zfrIdx = -1; return; }
+  _zfrIdx = back ? (_zfrIdx <= 0 ? ms.length - 1 : _zfrIdx - 1)
+                 : (_zfrIdx >= ms.length - 1 ? 0 : _zfrIdx + 1);
+  _zfrSelect(ms[_zfrIdx]);
+  if (cnt) cnt.textContent = (_zfrIdx + 1) + '/' + ms.length;
+}
+
+function _zfrReplaceOne() {
+  const box = document.getElementById('zfr-box'); if (!box) return;
+  const term = box.querySelector('#zfr-find').value;
+  const rep  = box.querySelector('#zfr-rep-in') ? box.querySelector('#zfr-rep-in').value : '';
+  const mc = box.querySelector('#zfr-mc').checked;
+  const sel = window.getSelection();
+  const cur = sel && sel.toString();
+  const eq = mc ? (cur === term) : (String(cur).toLowerCase() === String(term).toLowerCase());
+  if (cur && eq && sel.rangeCount) {
+    const r = sel.getRangeAt(0);
+    r.deleteContents(); r.insertNode(document.createTextNode(rep));
+    try { _r173Dirty = true; } catch (_) {}
+  }
+  _zfrFindNext(false);
+}
+
+function _zfrReplaceAll() {
+  const box = document.getElementById('zfr-box'); if (!box) return;
+  const term = box.querySelector('#zfr-find').value;
+  const rep  = box.querySelector('#zfr-rep-in') ? box.querySelector('#zfr-rep-in').value : '';
+  const mc = box.querySelector('#zfr-mc').checked;
+  const doc = (typeof _ch173Doc === 'function') ? _ch173Doc() : document.getElementById('ch173-doc');
+  if (!doc || !term) return;
+  let count = 0;
+  const w = document.createTreeWalker(doc, NodeFilter.SHOW_TEXT, null);
+  const re = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), mc ? 'g' : 'gi');
+  let n;
+  while ((n = w.nextNode())) {
+    const before = n.nodeValue;
+    const after = before.replace(re, () => { count++; return rep; });
+    if (after !== before) n.nodeValue = after;
+  }
+  const cnt = box.querySelector('#zfr-count');
+  if (cnt) cnt.textContent = count + ' بدلے';
+  try { _r173Dirty = true; } catch (_) {}
+}
+
+function _zimniFindReplaceUI(withReplace) {
+  let box = document.getElementById('zfr-box');
+  if (box) {
+    box.style.display = 'flex';
+    box.querySelector('#zfr-rep-row').style.display = withReplace ? 'flex' : 'none';
+    const f = box.querySelector('#zfr-find'); f.focus(); f.select();
+    return;
+  }
+  box = document.createElement('div');
+  box.id = 'zfr-box';
+  box.style.cssText = 'position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:100000;' +
+    'background:var(--bg-card,#fff);border:1px solid #0369a1;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.28);' +
+    "direction:rtl;padding:8px;display:flex;flex-direction:column;gap:6px;font-family:'Jameel Noori Nastaleeq',serif;min-width:300px;";
+  const inp = "flex:1;min-width:0;border:1px solid var(--border,#cbd5e1);border-radius:6px;padding:5px 8px;font-size:14px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;outline:none;";
+  const b = "border:1px solid var(--border,#cbd5e1);border-radius:6px;background:var(--bg-secondary,#f8fafc);cursor:pointer;padding:5px 9px;font-size:13px;font-family:'Jameel Noori Nastaleeq',serif;";
+  box.innerHTML = `
+    <div style="display:flex;gap:6px;align-items:center;">
+      <input id="zfr-find" placeholder="تلاش کریں…" style="${inp}">
+      <span id="zfr-count" style="font-size:11px;color:var(--text-muted);min-width:38px;text-align:center;">0/0</span>
+      <button id="zfr-prev" title="پچھلا" style="${b}">▲</button>
+      <button id="zfr-next" title="اگلا" style="${b}">▼</button>
+      <button id="zfr-x" title="بند" style="${b}">✕</button>
+    </div>
+    <div id="zfr-rep-row" style="display:${withReplace ? 'flex' : 'none'};gap:6px;align-items:center;">
+      <input id="zfr-rep-in" placeholder="بدلیں…" style="${inp}">
+      <button id="zfr-rep1" style="${b}">بدلیں</button>
+      <button id="zfr-repall" style="${b}">سب بدلیں</button>
+    </div>
+    <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-secondary);">
+      <input type="checkbox" id="zfr-mc"> حروف کا فرق (Case)
+    </label>`;
+  document.body.appendChild(box);
+  box.querySelector('#zfr-next').onclick  = () => _zfrFindNext(false);
+  box.querySelector('#zfr-prev').onclick  = () => _zfrFindNext(true);
+  box.querySelector('#zfr-x').onclick     = () => { box.style.display = 'none'; };
+  box.querySelector('#zfr-rep1').onclick  = () => _zfrReplaceOne();
+  box.querySelector('#zfr-repall').onclick= () => _zfrReplaceAll();
+  const fi = box.querySelector('#zfr-find');
+  fi.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); _zfrFindNext(!!e.shiftKey); }
+    if (e.key === 'Escape') { e.preventDefault(); box.style.display = 'none'; }
+  });
+  fi.addEventListener('input', () => { _zfrIdx = -1; });
+  fi.focus();
+}
+window._zimniFindReplaceUI = _zimniFindReplaceUI;
+
+// Berooni Zimni form ki CSS (editor + print) — sab #ch173-doc ke andar, naap pt mein.
 function _zimniFormCSS() {
   return `
-  /* ── HEADER ── flex RTL: pehla bachcha (بیرونی) DAYEN, aakhri (ضلع) BAYEN ── */
-  #ch173-doc .zf-head{ display:flex; justify-content:space-between; align-items:flex-start; direction:rtl; column-gap:6px; }
-  #ch173-doc .zf-hr{ width:20%; text-align:right; font-size:14pt; font-weight:700; padding-top:2px; }   /* بیرونی — دائیں */
-  #ch173-doc .zf-hc{ flex:1; text-align:center; }                                                        /* عنوان — درمیان */
-  #ch173-doc .zf-hl{ width:20%; text-align:center; }                                                     /* ضلع — بائیں */
-  #ch173-doc .zf-hl .zf-zila{ font-size:14pt; font-weight:600; }
-  #ch173-doc .zf-seal{ width:22mm; height:22mm; border:1.5px solid #000; border-radius:50%; margin:3px auto 0; }
-  #ch173-doc .zf-hc .zf-formno{ font-size:13pt; font-weight:600; margin-bottom:6px; direction:ltr; }
-  #ch173-doc .zf-hc .zf-title{ font-size:20pt; font-weight:700; text-decoration:underline; text-underline-offset:5px; line-height:1.3; }
-  #ch173-doc .zf-hc .zf-zname{ font-size:14pt; font-weight:600; margin-top:2px; }
+  /* ── HEADER ── sab CENTERED, koi circle/side berونی nahi ── */
+  #ch173-doc .zf-head{ text-align:center; direction:rtl; margin-bottom:6px; }
+  #ch173-doc .zf-formno{ font-size:14pt; font-weight:600; direction:ltr; margin-bottom:4px; }
+  #ch173-doc .zf-title{ font-size:20pt; font-weight:700; text-decoration:underline; text-underline-offset:5px; line-height:1.35; }
+  #ch173-doc .zf-berooni{ font-size:14pt; font-weight:700; }          /* (بیرونی) — 14pt */
+  #ch173-doc .zf-zname{ font-size:16pt; font-weight:normal; margin-top:2px; }
 
-  /* ── METADATA (fill-in lines) ── */
-  #ch173-doc .zf-meta{ margin:12px 0 8px; font-size:14pt; direction:rtl; }
+  /* ── METADATA (report ضمنی aur table ke darmiyan) ── 16pt, bold nahi,
+     zabaan ke mutabiq rukh (Urdu RTL / English LTR / mix → plaintext) ── */
+  #ch173-doc .zf-meta{ margin:12px 0 8px; font-size:16pt; font-weight:normal; direction:rtl; }
   #ch173-doc .zf-mrow{ display:flex; gap:22px; flex-wrap:wrap; align-items:baseline; margin-bottom:9px; direction:rtl; }
+  #ch173-doc .zf-mrow2{ display:flex; gap:22px; align-items:baseline; margin-bottom:9px; direction:rtl; }
+  #ch173-doc .zf-half{ flex:1 1 0; display:flex; align-items:baseline; gap:8px; min-width:0; }  /* dono waqت/تاریخ fields aik seedh mein */
   #ch173-doc .zf-fld{ display:flex; align-items:baseline; gap:6px; }
   #ch173-doc .zf-fld.grow{ flex:1; }
-  #ch173-doc .zf-lbl{ font-weight:700; white-space:nowrap; }
-  #ch173-doc .zf-lbl.b{ font-weight:800; }
-  #ch173-doc .zf-ln{ flex:1; min-width:60px; border-bottom:1px solid #000; min-height:1.4em; padding:0 4px; outline:none; }
+  #ch173-doc .zf-lbl{ font-weight:normal; white-space:nowrap; }
+  #ch173-doc .zf-ln{ flex:1; min-width:40px; padding:0 4px; outline:none; unicode-bidi:plaintext; }  /* koi lakeer nahi — khali jagah, auto-fetch */
 
   /* ── MAIN TABLE ── */
   #ch173-doc table.zf-tbl{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
   #ch173-doc table.zf-tbl thead{ display:table-header-group; }
-  #ch173-doc table.zf-tbl th{ border:1.5px solid #000; padding:6px 5px; font-size:13pt; font-weight:700; text-align:center; line-height:1.5; vertical-align:middle; }
-  #ch173-doc table.zf-tbl td{ border:1.5px solid #000; padding:8px 9px; font-size:14pt; vertical-align:top; overflow-wrap:anywhere; word-break:break-word; }
-  #ch173-doc .zf-c-action{ width:14%; text-align:center; }
-  #ch173-doc .zf-c-serial{ width:14%; text-align:center; }
-  #ch173-doc .zf-c-body{ width:60%; }
-  #ch173-doc .zf-c-from{ width:12%; text-align:center; }
-  #ch173-doc table.zf-tbl tbody td{ height:21cm; }              /* register jaisa poora safha */
+  /* First row (header) — 16pt, BOLD nahi */
+  #ch173-doc table.zf-tbl th{ border:1px solid #000; padding:6px 5px; font-size:16pt; font-weight:normal; text-align:center; line-height:1.4; vertical-align:middle; }
+  /* Tamam table text JUSTIFIED */
+  #ch173-doc table.zf-tbl td{ border:1px solid #000; padding:8px 9px; font-size:14pt; vertical-align:top;
+    text-align:justify; text-align-last:right; overflow-wrap:anywhere; word-break:break-word; }
+  #ch173-doc .zf-c-action{ width:14%; }
+  #ch173-doc .zf-c-serial{ width:7%; white-space:normal; }             /* col2 aadhi + wrap */
+  #ch173-doc .zf-c-body  { width:55%; }
+  #ch173-doc .zf-c-from  { width:24%; }                                 /* col4 (از) dugni */
+  #ch173-doc td.zf-c-action{ text-align:center; text-align-last:center; }
+  #ch173-doc td.zf-c-serial{ text-align:center; text-align-last:center; }
+  #ch173-doc td.zf-c-from{ text-align:right; text-align-last:right; }    /* col4 matn دائیں */
+  #ch173-doc table.zf-tbl tbody td{ height:21cm; }                      /* register jaisa poora safha */
+  /* Bahar ki DAYEN, BAYEN aur NEECHE ki lines HATAO (challan jaisa) */
+  #ch173-doc .zf-tbl tr > th:first-child, #ch173-doc .zf-tbl tr > td:first-child{ border-right:none; }
+  #ch173-doc .zf-tbl tr > th:last-child,  #ch173-doc .zf-tbl tr > td:last-child{ border-left:none; }
+  #ch173-doc .zf-tbl tbody td{ border-bottom:none; }
+  /* body cell — سرکار بذریعہ/بنام/مرتبہ + main matn (koi dotted line nahi) */
   #ch173-doc .zf-bl{ margin-bottom:8px; }
-  #ch173-doc .zf-bdyln{ display:inline-block; min-width:55%; border-bottom:1px dotted #000; outline:none; }
-  #ch173-doc .zf-body{ margin-top:10px; line-height:2.0; text-align:justify; outline:none; }
-  #ch173-doc [contenteditable="true"]{ outline:none; }
+  #ch173-doc .zf-bdyln{ display:inline; border:none; outline:none; }    /* dotted lines HATAI */
+  #ch173-doc .zf-body{ margin-top:10px; line-height:2.0; text-align:justify; text-align-last:right; outline:none; }
 
-  /* Paste kiya hua matn apna font saath na laye — hamesha Nastaliq */
-  #ch173-doc .zf-body *, #ch173-doc .zf-tbl td *, #ch173-doc .zf-ln *{
+  /* Paste kiya hua matn hamesha Nastaliq */
+  #ch173-doc .zf-body *, #ch173-doc .zf-tbl td *, #ch173-doc .zf-meta *{
     font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif !important;
   }
-  /* Table thead agle safhe par na kate; body row qudrati tor par tootay */
   @media print{ #ch173-doc table.zf-tbl thead{ page-break-inside:avoid; } }`;
 }
 
@@ -284,43 +448,44 @@ function _zimniDefaultBody(o, c) {
   const year = new Date().getFullYear();
   const io = (typeof getIOSignLine === 'function') ? getIOSignLine()
            : ((o.full_name || '') + (o.designation ? ' ' + o.designation : '') + (o.station ? ' تھانہ ' + o.station : ''));
-  const thana   = E(o.station || '');
-  const firNo   = E(c.fir_number || '');
-  const firDate = E(D(c.occurrence_date || c.fir_date || ''));
-  const jurm    = E(((c.section_of_law || '') + ' ' + (c.offence_type || '')).trim());
-  const compl   = E(c.complainant_name || c.complainant || '');
-  const serial  = E(z.serial_no || '');
-  const ioE     = E(io);
+  // ── Auto-fetch (case + officer record se) ──
+  const district = E(o.district || '');
+  const thana    = E(o.station || '');
+  const firNo    = E(c.fir_number || '');
+  const firDate  = E(D(c.fir_date || ''));                                   // مورخہ = FIR کی تاریخ
+  const waqoia   = E([D(c.occurrence_date || ''),
+                      (c.place_of_occurrence || c.occurrence_place || c.jaye_waqoia || '')]
+                      .filter(Boolean).join(' '));                          // تاریخ و مقام وقوعہ
+  const behad    = E(c.behad || c.distance || c.samt || '');                // بحد
+  const jurm     = E(((c.section_of_law || '') + ' ' + (c.offence_type || '')).trim());
+  const compl    = E(c.complainant_name || c.complainant || '');
+  const serial   = E(z.serial_no || '');
+  const ioE      = E(io);
 
   return `
   <div class="zf-head">
-    <div class="zf-hr">بیرونی</div>
-    <div class="zf-hc">
-      <div class="zf-formno">پولیس فارم نمبر&nbsp;25—54(1)</div>
-      <div class="zf-title">رپورٹ ضمنی</div>
-      <div class="zf-zname">ملتان</div>
-    </div>
-    <div class="zf-hl"><div class="zf-zila">ضلع</div><div class="zf-seal"></div></div>
+    <div class="zf-formno">پولیس فارم نمبر&nbsp;25—54(1)</div>
+    <div class="zf-title">رپورٹ ضمنی <span class="zf-berooni">(بیرونی)</span></div>
+    <div class="zf-zname">ضلع ${district}</div>
   </div>
 
   <div class="zf-meta">
     <div class="zf-mrow">
-      <div class="zf-fld grow"><span class="zf-lbl">تھانہ۔</span><span class="zf-ln" contenteditable="true" data-k="thana">${thana}</span></div>
-      <div class="zf-fld"><span class="zf-lbl">سال</span><span class="zf-ln" contenteditable="true" data-k="saal" style="min-width:80px">${year}</span></div>
-      <div class="zf-fld"><span class="zf-lbl">ضمنی نمبر</span><span class="zf-ln" contenteditable="true" data-k="zno" style="min-width:90px">${serial}</span></div>
+      <div class="zf-fld grow"><span class="zf-lbl">تھانہ۔</span><span class="zf-ln" data-k="thana">${thana}</span></div>
+      <div class="zf-fld"><span class="zf-lbl">سال</span><span class="zf-ln" data-k="saal" style="min-width:70px">${year}</span></div>
+      <div class="zf-fld"><span class="zf-lbl">ضمنی نمبر</span><span class="zf-ln" data-k="zno" style="min-width:70px">${serial}</span></div>
+    </div>
+    <div class="zf-mrow2">
+      <div class="zf-half"><span class="zf-lbl">مقدمہ نمبر</span><span class="zf-ln" data-k="fir">${firNo}</span><span class="zf-lbl">مورخہ</span><span class="zf-ln" data-k="fdate">${firDate}</span></div>
+      <div class="zf-half"><span class="zf-lbl">تھانہ میں پہنچنے کا وقت و تاریخ</span><span class="zf-ln" data-k="arrival"></span></div>
+    </div>
+    <div class="zf-mrow2">
+      <div class="zf-half"><span class="zf-lbl">تاریخ و مقام وقوعہ۔</span><span class="zf-ln" data-k="waqoia">${waqoia}</span></div>
+      <div class="zf-half"><span class="zf-lbl">تھانہ سے روانگی کا وقت و تاریخ</span><span class="zf-ln" data-k="depart"></span></div>
     </div>
     <div class="zf-mrow">
-      <div class="zf-fld"><span class="zf-lbl">مقدمہ نمبر</span><span class="zf-ln" contenteditable="true" data-k="fir" style="min-width:120px">${firNo}</span></div>
-      <div class="zf-fld"><span class="zf-lbl">مورخہ</span><span class="zf-ln" contenteditable="true" data-k="fdate" style="min-width:120px">${firDate}</span></div>
-      <div class="zf-fld grow"><span class="zf-lbl">تھانہ میں پہنچنے کا وقت و تاریخ</span><span class="zf-ln" contenteditable="true" data-k="arrival"></span></div>
-    </div>
-    <div class="zf-mrow">
-      <div class="zf-fld grow"><span class="zf-lbl">تاریخ و مقام وقوعہ۔</span><span class="zf-ln" contenteditable="true" data-k="waqoia"></span></div>
-      <div class="zf-fld grow"><span class="zf-lbl">تھانہ سے روانگی کا وقت و تاریخ</span><span class="zf-ln" contenteditable="true" data-k="depart"></span></div>
-    </div>
-    <div class="zf-mrow">
-      <div class="zf-fld"><span class="zf-lbl">بحد۔</span><span class="zf-ln" contenteditable="true" data-k="behad" style="min-width:140px"></span></div>
-      <div class="zf-fld grow"><span class="zf-lbl b">جرم۔</span><span class="zf-ln" contenteditable="true" data-k="jurm">${jurm}</span></div>
+      <div class="zf-fld"><span class="zf-lbl">بحد۔</span><span class="zf-ln" data-k="behad" style="min-width:120px">${behad}</span></div>
+      <div class="zf-fld grow"><span class="zf-lbl">جرم۔</span><span class="zf-ln" data-k="jurm">${jurm}</span></div>
     </div>
   </div>
 
@@ -335,15 +500,15 @@ function _zimniDefaultBody(o, c) {
     </thead>
     <tbody>
       <tr>
-        <td class="zf-c-action" contenteditable="true" data-k="action"></td>
-        <td class="zf-c-serial" contenteditable="true" data-k="serial">${serial}</td>
+        <td class="zf-c-action" data-k="action"></td>
+        <td class="zf-c-serial" data-k="serial">${serial}</td>
         <td class="zf-c-body">
-          <div class="zf-bl"><span class="zf-lbl">سرکار بذریعہ ۔</span> <span class="zf-bdyln" contenteditable="true" data-k="sarkar">${compl}</span></div>
-          <div class="zf-bl"><span class="zf-lbl">بنام۔</span> <span class="zf-bdyln" contenteditable="true" data-k="banam"></span></div>
-          <div class="zf-bl"><span class="zf-lbl">مرتبہ ۔</span> <span class="zf-bdyln" contenteditable="true" data-k="murattib">${ioE}</span></div>
-          <div class="zf-body" contenteditable="true" data-mic="true" data-k="halaat"><br></div>
+          <div class="zf-bl"><span class="zf-lbl">سرکار بذریعہ ۔</span> <span class="zf-bdyln" data-k="sarkar">${compl}</span></div>
+          <div class="zf-bl"><span class="zf-lbl">بنام۔</span> <span class="zf-bdyln" data-k="banam"></span></div>
+          <div class="zf-bl"><span class="zf-lbl">مرتبہ ۔</span> <span class="zf-bdyln" data-k="murattib">${ioE}</span></div>
+          <div class="zf-body" data-mic="true" data-k="halaat"><br></div>
         </td>
-        <td class="zf-c-from" contenteditable="true" data-k="az">${ioE}</td>
+        <td class="zf-c-from" data-k="az">${ioE}</td>
       </tr>
     </tbody>
   </table>`;
@@ -355,17 +520,26 @@ async function _saveZimni() {
   if (!ed) return;
   const bodyHtml = ed.innerHTML;
   const z = _zimniActive || {};
+  // ضمنی نمبر ab EDITABLE hai — doc ke field se parho (khali ho to purana/1)
+  let serialNo = z.serial_no || 1;
+  try {
+    const sf = ed.querySelector('[data-k="zno"]') || ed.querySelector('[data-k="serial"]');
+    const sv = sf ? parseInt(String(sf.innerText || sf.textContent).replace(/[^\d]/g, ''), 10) : NaN;
+    if (!isNaN(sv) && sv > 0) serialNo = sv;
+  } catch (_) {}
+  z.serial_no = serialNo;
+  const savedAt = new Date().toISOString();
   const rec = {
     case_id: _zimniCaseId,
-    serial_no: z.serial_no || 1,
-    report_date: new Date().toISOString().slice(0,10),
-    content: { bodyHtml },
+    serial_no: serialNo,
+    report_date: savedAt.slice(0,10),
+    content: { bodyHtml, saved_at: savedAt },   // waqت bhi (challan jaisa: تاریخ + وقت + نمبر)
   };
   // محفوظ فائلوں کی فہرست میں درج (نمبر شمار + تاریخ)
   try {
     if (typeof dioRegisterSaved === 'function')
-      dioRegisterSaved('zimni', 'ضمنی نمبر ' + (z.serial_no || 1),
-        { case_id: _zimniCaseId, serial_no: z.serial_no || 1 });
+      dioRegisterSaved('zimni', 'ضمنی نمبر ' + serialNo,
+        { case_id: _zimniCaseId, serial_no: serialNo });
   } catch(_) {}
   try {
     const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
