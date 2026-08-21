@@ -1018,29 +1018,49 @@ input[id*="cnic"], input[id*="cell"] {
    • bare aadad / stats (.stat-number, .stat-value)
    • buttons, inputs, select, textarea, badges, chips, tags, icons, nav
    • jis par 'font-lock' class ho
-   • locked چالان / report173 (#ch173-doc, doc-viewer)
+   • چالان / report173 (#ch173-doc, doc-viewer)
+
+   ╔═══════════════════════════════════════════════════════════════╗
+   ║ AHEM — YAHI WOH JAGAH THI JAHAN "FONT SET NAHI HOTA" WALA     ║
+   ║ MASLA BANTA THA. Pehle چالان ko bachane ke liye neeche wale   ║
+   ║ qanoon mein 'font-size: revert !important' likha tha. Magar    ║
+   ║ CSS mein 'revert' ka matlab hai: "is safhe ki TAMAM apni       ║
+   ║ naapein bhool jao" — yani #ch173-doc ki apni CSS (14pt) AUR    ║
+   ║ woh naap bhi jo JavaScript khane par seedhi lagati hai (inline ║
+   ║ style), DONO zaya ho jati thin. Us par tura yeh ke ooper wala  ║
+   ║ '14px !important' inline naap se ZYADA taqatwar hai.           ║
+   ║ Natija: poora چالان hamesha 14 PIXEL par chipak jata tha       ║
+   ║ (= theek 10.5 point — isi liye dropdown 10.5 dikhata tha), aur ║
+   ║ font badalne ka koi asar nazar nahi aata tha.                  ║
+   ║ HAL: چالان ko is qanoon se bachane ke liye 'revert' ki bajaye  ║
+   ║ ':not()' istemal karte hain — yani qanoon چالان par lagta hi   ║
+   ║ NAHI. Ab us ki apni naap (aur font selector) kaam karti hai.   ║
+   ║ SAATH HI: chapai ki khirki alag document hai jahan yeh 14px    ║
+   ║ wala qanoon hai hi nahi. Isi liye screen (14px) aur chapai     ║
+   ║ (14pt) ka matn alag alag jagah tootta tha — aur کالم 7 ka      ║
+   ║ izafi matn sirf CHAPAI mein bahar nikal kar chhup jata tha.    ║
+   ╚═══════════════════════════════════════════════════════════════╝
    ══════════════════════════════════════════════════════════════ */
-.page-content, .page-content div, .page-content span,
-.page-content p, .page-content td, .page-content th,
-.page-content li, .page-content label, .page-content a {
+.page-content:not(#ch173-doc):not(#dio-dv-body),
+.page-content :is(div, span, p, td, th, li, label, a):not(#ch173-doc):not(#ch173-doc *):not(#dio-dv-body):not(#dio-dv-body *) {
   font-size: 14px !important;
 }
-/* MEHFOOZ — inpar 14pt lagu NA ho (apni set-shuda naap rahe) */
-.page-content h1, .page-content h2, .page-content h3,
-.page-content h4, .page-content h5, .page-content h6,
-.page-content .page-title, .page-content .card-title,
-.page-content .section-title, .page-content .page-header,
-.page-content .stat-number, .page-content .stat-value,
-.page-content .stat-big, .page-content .big-number,
-.page-content button, .page-content .btn, .page-content .btn *,
-.page-content input, .page-content select, .page-content textarea,
-.page-content .badge, .page-content .badge *,
-.page-content .chip, .page-content .tag, .page-content .pill,
-.page-content .nav-item, .page-content .nav-item *,
-.page-content .icon, .page-content [class*="icon"],
-.page-content .status-badge, .page-content .status-pill,
-.page-content .font-lock, .page-content .font-lock *,
-#ch173-doc, #ch173-doc *, #dio-dv-body, #dio-dv-body * {
+/* MEHFOOZ — inpar 14pt lagu NA ho (apni set-shuda naap rahe).
+   چالان (#ch173-doc) aur doc-viewer yahan se BHI bahar hain — un ke andar
+   ki har naap un ki apni CSS aur font selector se aati hai. */
+.page-content :is(
+  h1, h2, h3, h4, h5, h6,
+  .page-title, .card-title, .section-title, .page-header,
+  .stat-number, .stat-value, .stat-big, .big-number,
+  button, .btn, .btn *,
+  input, select, textarea,
+  .badge, .badge *,
+  .chip, .tag, .pill,
+  .nav-item, .nav-item *,
+  .icon, [class*="icon"],
+  .status-badge, .status-pill,
+  .font-lock, .font-lock *
+):not(#ch173-doc):not(#ch173-doc *):not(#dio-dv-body):not(#dio-dv-body *) {
   font-size: revert !important;
 }
 </style>

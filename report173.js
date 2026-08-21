@@ -3078,6 +3078,9 @@ function _ch173FontToDoc(pt) {
   const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!doc) return;
   doc.dataset.fs = pt;
+  // Safhe ki JAR par bhi — taake jin khanon ki apni koi alag naap nahi
+  // (unwan, مقدمہ ki satar, کاغذات waghera) woh bhi saath badlen
+  doc.style.fontSize = pt + 'pt';
   doc.querySelectorAll('.ch173-table th, .ch173-table td, .rotinner, .hinner, .normwrap, .ch173-cont, .sho-cell-row, .sho-papers-head, .sho-papers-body')
      .forEach(el => { el.style.fontSize = pt + 'pt'; });
   const hid = doc.querySelector('[data-k="doc_font"]');
@@ -3815,7 +3818,11 @@ function _ch173CSS() {
       }
       /* Neeche wali patti bhi hat jaye — poora safha چالان ko mile */
       body.ch173-focus .bottombar{ display:none !important; }
-      #ch173-doc{ direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; color:#000; }
+      /* Safhe ki apni BUNYADI naap — 14pt. Ye zaroori hai: warna چالان bahar
+         wale ('.page-content' wale) 14 PIXEL ko wirasat mein le leta tha aur
+         har khana chhota chhap jata tha. Yahan se har woh khana theek rehta
+         hai jis par apni koi alag naap nahi lagi. */
+      #ch173-doc{ direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; color:#000; font-size:14pt; }
       /* Unwan: FORM No. aur Urdu heading — dono AIK hi flex dhanche mein,
          is liye dono ka center bilkul aik (linked) */
       /* Unwan: beech wala hissa HAMESHA sacche page-center par (absolute 50%),
