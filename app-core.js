@@ -865,7 +865,9 @@ async function initApp() {
   });
   // Check license
   if (typeof checkLicense==='function') checkLicense();
-  showPage('dashboard', document.querySelector('.nav-item'));
+  // "جہاں بند ہوا وہیں سے کھلے" — resume.js آخری صفحہ یاد رکھتی ہے
+  showPage((typeof _dioResumePage === 'function' ? _dioResumePage() : 'dashboard'),
+           document.querySelector('.nav-item'));
   setTimeout(()=>triggerBackup('app_init'), 3000);
   setTimeout(_initNotifications, 2000);
   setTimeout(_checkDueReminders, 5000);

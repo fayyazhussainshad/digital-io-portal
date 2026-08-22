@@ -403,7 +403,7 @@ function _renderZimniEditor() {
         });
       }
     } catch (_) {}
-    try { if (typeof _ch173StartOverflowWatch === 'function') _ch173StartOverflowWatch(); } catch (_) {}
+    try { _zimniOverflowWatch(); } catch (_) {}
     [250, 900, 1800].forEach(ms => setTimeout(() => { try { _zimniLayout(); } catch (_) {} }, ms));                                                // table ki lakeerein moveable
     // Cursor ke mutabiq font dropdown + B/I/U ki halat khud badle (MS Word jaisa)
     try {
@@ -684,6 +684,31 @@ function _zimniBindSerialSync() {
   pull();
 }
 window._zimniBindSerialSync = _zimniBindSerialSync;
+
+// ═══════════════════════════════════════════════════════════════
+//  نگرانی — متن چھپا رہ جائے تو خود نیچے بھیج دو
+//  AHEM: report173 کا _ch173StartOverflowWatch یہاں استعمال نہیں کیا جا
+//  سکتا۔ وہ جانچتا ہے کہ 'document.activeElement === cell' — چالان میں
+//  خانہ خود editable ہوتا ہے، مگر ضمنی میں پورا صفحہ editable ہے، اس لیے
+//  activeElement ہمیشہ #ch173-doc ہوتا ہے، .zf-body نہیں۔ نتیجہ: وہ ہر
+//  1.2 سیکنڈ بعد "کوئی لکھ نہیں رہا" سمجھ کر متن ہلا دیتا تھا — جس سے
+//  کرسر (اور مائیک کا محفوظ کیا ہوا مقام) ٹوٹ جاتا تھا اور بولی ہوئی
+//  تحریر کہیں نہیں لگتی تھی۔ یہاں جانچ صفحے کے پورے حصے پر ہے۔
+function _zimniOverflowWatch() {
+  try { if (window._zfOvWatch) clearInterval(window._zfOvWatch); } catch (_) {}
+  window._zfOvWatch = setInterval(function () {
+    const doc = _zimniDoc();
+    if (!doc) { try { clearInterval(window._zfOvWatch); } catch (_) {} window._zfOvWatch = null; return; }
+    // صفحے کے کسی بھی حصے میں لکھا جا رہا ہو (یا مائیک چل رہا ہو) تو ہاتھ نہ لگاؤ
+    try { if (doc.contains(document.activeElement)) return; } catch (_) {}
+    const body = doc.querySelector('.zf-body');
+    if (!body || !body.clientHeight) return;
+    if (body.scrollHeight > body.clientHeight + 1) {
+      try { if (typeof _ch173OverflowSettle === 'function') _ch173OverflowSettle(2); } catch (_) {}
+    }
+  }, 1500);
+}
+window._zimniOverflowWatch = _zimniOverflowWatch;
 
 function _zimniFitTable() {
   const doc = _zimniDoc();
