@@ -179,27 +179,27 @@ function _renderZimniEditor() {
         <option value="a4"    ${paper==='a4'   ?'selected':''}>A4 (8.27×11.7)</option>
       </select>
       <div style="margin-right:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-        <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('bold')" title="بولڈ" style="${btn}font-weight:900;">B</button>
-        <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('italic')" title="ترچھا" style="${btn}font-style:italic;">I</button>
-        <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('underline')" title="انڈر لائن" style="${btn}text-decoration:underline;">U</button>
+        <button id="zf-btn-b" onmousedown="event.preventDefault()" onclick="_zimniFmt('bold')" title="بولڈ" style="${btn}font-weight:900;">B</button>
+        <button id="zf-btn-i" onmousedown="event.preventDefault()" onclick="_zimniFmt('italic')" title="ترچھا" style="${btn}font-style:italic;">I</button>
+        <button id="zf-btn-u" onmousedown="event.preventDefault()" onclick="_zimniFmt('underline')" title="انڈر لائن" style="${btn}text-decoration:underline;">U</button>
         ${sep}
-        <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('justifyRight')" title="دائیں سیدھ" style="${btn}">⇥</button>
-        <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('justifyCenter')" title="درمیان" style="${btn}">⇔</button>
-        <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('justifyLeft')" title="بائیں سیدھ" style="${btn}">⇤</button>
-        <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('justifyFull')" title="دونوں طرف برابر" style="${btn}">☰</button>
+        <button onmousedown="event.preventDefault()" onclick="_zimniFmt('justifyRight')" title="دائیں سیدھ" style="${btn}">⇥</button>
+        <button onmousedown="event.preventDefault()" onclick="_zimniFmt('justifyCenter')" title="درمیان" style="${btn}">⇔</button>
+        <button onmousedown="event.preventDefault()" onclick="_zimniFmt('justifyLeft')" title="بائیں سیدھ" style="${btn}">⇤</button>
+        <button onmousedown="event.preventDefault()" onclick="_zimniFmt('justifyFull')" title="دونوں طرف برابر" style="${btn}">☰</button>
         ${sep}
-        <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('insertUnorderedList')" title="نقطہ دار فہرست" style="${btn}">•</button>
-        <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('insertOrderedList')" title="نمبر والی فہرست" style="${btn}font-size:11px;">1.</button>
+        <button onmousedown="event.preventDefault()" onclick="_zimniFmt('insertUnorderedList')" title="نقطہ دار فہرست" style="${btn}">•</button>
+        <button onmousedown="event.preventDefault()" onclick="_zimniFmt('insertOrderedList')" title="نمبر والی فہرست" style="${btn}font-size:11px;">1.</button>
         <button onmousedown="event.preventDefault()" onclick="_ch173ClearFmt()" title="فارمیٹ ختم کریں" style="${btn}">🧹</button>
         ${sep}
         <button id="ch173-brush-btn" onmousedown="event.preventDefault()"
           onclick="_ch173BrushClick(false)" ondblclick="_ch173BrushClick(true)"
           title="فارمیٹ پینٹر — ایک کلک: ایک بار، ڈبل کلک: بار بار" style="${btn}">🖌</button>
-        <select id="ch173-font-sel" onchange="_ch173SetFont(this.value)" title="فونٹ سائز" style="${selCss}">
+        <select id="ch173-font-sel" onchange="_zimniSetFont(this.value)" title="فونٹ سائز" style="${selCss}">
           ${sizes.map(s => `<option value="${s}" ${String(s)==='14'?'selected':''}>${s}</option>`).join('')}
         </select>
-        <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('undo')" title="واپس (Undo)" style="${btn}">↶</button>
-        <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('redo')" title="دوبارہ (Redo)" style="${btn}">↷</button>
+        <button onmousedown="event.preventDefault()" onclick="_zimniFmt('undo')" title="واپس (Undo)" style="${btn}">↶</button>
+        <button onmousedown="event.preventDefault()" onclick="_zimniFmt('redo')" title="دوبارہ (Redo)" style="${btn}">↷</button>
         <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveZimni()">💾 محفوظ</button>
         <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printZimni()">🖨️ پرنٹ</button>
       </div>
@@ -229,11 +229,12 @@ function _renderZimniEditor() {
     try { if (typeof _ch173FocusMode === 'function') _ch173FocusMode(true); } catch (_) {} // chips peek
     try { if (typeof _ch173WatchFit === 'function') _ch173WatchFit(); } catch (_) {}
     try { _zimniBindFindReplace(); } catch (_) {}                                          // Ctrl+F / Ctrl+H
-    // Cursor ke mutabiq font dropdown khud badle (MS Word jaisa)
+    try { _zimniColResize(); } catch (_) {}                                                // table ki lakeerein moveable
+    // Cursor ke mutabiq font dropdown + B/I/U ki halat khud badle (MS Word jaisa)
     try {
-      if (!window._ch173FontSelBound && typeof _ch173SyncFontSel === 'function') {
-        window._ch173FontSelBound = true;
-        document.addEventListener('selectionchange', _ch173SyncFontSel);
+      if (!window._zfSyncBound) {
+        window._zfSyncBound = true;
+        document.addEventListener('selectionchange', () => { try { _zimniSyncFmtBtns(); } catch (_) {} });
       }
     } catch (_) {}
     if (typeof applyMicButtons === 'function') applyMicButtons(area);
@@ -384,51 +385,253 @@ function _zimniFindReplaceUI(withReplace) {
 }
 window._zimniFindReplaceUI = _zimniFindReplaceUI;
 
+// ═══════════════════════════════════════════════════════════════
+//  فونٹ سائز — ضمنی کے اپنے خانوں پر (report173 کا _ch173FontToDoc
+//  صرف چالان کی classes پر چلتا ہے، اسی لیے یہاں الگ ضروری ہے)
+// ═══════════════════════════════════════════════════════════════
+function _zimniDoc() {
+  return (typeof _ch173Doc === 'function' && _ch173Doc()) || document.getElementById('ch173-doc');
+}
+window._zimniDoc = _zimniDoc;
+
+function _zimniFontToDoc(pt) {
+  const doc = _zimniDoc();
+  if (!doc) return;
+  doc.dataset.fs = pt;
+  doc.style.fontSize = pt + 'pt';
+  // PEHLE andar chipki purani naapein saaf (warna nayi naap un par nahi lagti)
+  try {
+    doc.querySelectorAll('.zf-meta *, .zf-body *, .zf-tbl td *, .zf-tbl th *')
+       .forEach(el => { if (el.style && el.style.fontSize) el.style.fontSize = ''; });
+  } catch (_) {}
+  // Har woh hissa jis ki apni naap CSS mein likhi hai — usay seedha naap do
+  // (عنوان "رپورٹ ضمنی" apni 20pt par rehta hai; usay badalna ho to matn chun kar badlein)
+  const HISSE = ['.zf-formno', '.zf-zila', '.zf-meta', '.zf-lbl', '.zf-ln',
+                 '.zf-tbl th', '.zf-tbl td', '.zf-bl', '.zf-bdyln', '.zf-body'].join(', ');
+  try { doc.querySelectorAll(HISSE).forEach(el => { el.style.fontSize = pt + 'pt'; }); } catch (_) {}
+  try { _r173Dirty = true; } catch (_) {}
+}
+window._zimniFontToDoc = _zimniFontToDoc;
+
+// Dropdown se font — matn chuna ho to sirf usi par, warna poore safhe par
+function _zimniSetFont(val) {
+  const pt = parseFloat(val);
+  if (!pt || isNaN(pt)) return;
+  try { if (typeof _ch173RestoreRange === 'function') _ch173RestoreRange(); } catch (_) {}
+  const fs = document.getElementById('ch173-font-sel');
+  if (fs) fs.value = String(pt);                       // dropdown wapas na palte
+  try {
+    if (typeof _ch173FontToSelection === 'function' && _ch173FontToSelection(pt)) {
+      if (typeof _ch173SaveRange === 'function') _ch173SaveRange();
+      try { _r173Dirty = true; } catch (_) {}
+      return;
+    }
+  } catch (_) {}
+  _zimniFontToDoc(pt);
+}
+window._zimniSetFont = _zimniSetFont;
+
+// ═══ B / I / U — cursor jahan ho wahan ki halat button par nazar aaye ═══
+function _zimniSyncFmtBtns() {
+  const doc = _zimniDoc();
+  if (!doc) return;
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount || !sel.anchorNode || !doc.contains(sel.anchorNode)) return;
+  const st = (c) => { try { return document.queryCommandState(c); } catch (_) { return false; } };
+  [['zf-btn-b','bold'], ['zf-btn-i','italic'], ['zf-btn-u','underline']].forEach(([id, cmd]) => {
+    const b = document.getElementById(id);
+    if (!b) return;
+    const on = st(cmd);
+    b.style.background = on ? '#0369a1' : 'var(--bg-card,#fff)';
+    b.style.color      = on ? '#fff'    : 'var(--text-primary,#111)';
+  });
+  // Font dropdown bhi cursor ke mutabiq
+  try {
+    const selEl = document.getElementById('ch173-font-sel');
+    if (selEl && document.activeElement !== selEl) {
+      let n = sel.anchorNode; if (n.nodeType === 3) n = n.parentElement;
+      if (n) {
+        const px = parseFloat(getComputedStyle(n).fontSize);
+        if (px) {
+          const pt = Math.round(px * 0.75 * 2) / 2;
+          if ([...selEl.options].some(op => parseFloat(op.value) === pt)) selEl.value = String(pt);
+        }
+      }
+    }
+  } catch (_) {}
+}
+window._zimniSyncFmtBtns = _zimniSyncFmtBtns;
+
+// Formatting lagao + button ki halat foran update
+function _zimniFmt(cmd) {
+  try { if (typeof _ch173Fmt === 'function') _ch173Fmt(cmd); }
+  catch (_) { try { document.execCommand(cmd, false, null); } catch (__) {} }
+  setTimeout(_zimniSyncFmtBtns, 10);
+}
+window._zimniFmt = _zimniFmt;
+
+// ═══════════════════════════════════════════════════════════════
+//  ٹیبل کی لکیریں MOVEABLE — MS Word جیسی (چوڑائی + اونچائی)
+// ═══════════════════════════════════════════════════════════════
+function _zimniColResize() {
+  const doc = _zimniDoc();
+  const table = doc && doc.querySelector('table.zf-tbl');
+  if (!table || table._zfResizeReady) return;
+  table._zfResizeReady = true;
+  const cols = [...table.querySelectorAll('colgroup col')];
+  if (cols.length < 2) return;
+
+  // ── Column ki BAYEN lakeer — chaurai badlo (RTL) ──
+  [...table.querySelectorAll('thead th')].forEach((th, i) => {
+    if (i + 1 >= cols.length) return;                     // aakhri column ke bayen kuch nahi
+    const g = document.createElement('div');
+    g.className = 'zf-colgrip';
+    g.contentEditable = 'false';
+    g.title = 'چوڑائی بدلنے کے لیے کھینچیں';
+    th.appendChild(g);
+    g.addEventListener('mousedown', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      const tW = table.offsetWidth || 1;
+      const startX = e.clientX;
+      const wA = parseFloat(cols[i].style.width)     || (100 / cols.length);
+      const wB = parseFloat(cols[i + 1].style.width) || (100 / cols.length);
+      document.body.style.cursor = 'col-resize';
+      const onMove = (ev) => {
+        const dx = (startX - ev.clientX) / tW * 100;      // RTL
+        const nA = wA + dx, nB = wB - dx;
+        if (nA < 3 || nB < 3) return;
+        cols[i].style.width     = nA.toFixed(2) + '%';
+        cols[i + 1].style.width = nB.toFixed(2) + '%';
+      };
+      const onUp = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        document.body.style.cursor = '';
+        try { _r173Dirty = true; } catch (_) {}
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  });
+
+  // ── Header ki NEECHE wali lakeer — header ki unchai badlo ──
+  const hRow = table.querySelector('thead tr');
+  if (hRow) {
+    hRow.querySelectorAll('th').forEach(th => {
+      const g = document.createElement('div');
+      g.className = 'zf-rowgrip';
+      g.contentEditable = 'false';
+      g.title = 'اونچائی بدلنے کے لیے کھینچیں';
+      th.appendChild(g);
+      g.addEventListener('mousedown', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        const startY = e.clientY, startH = hRow.offsetHeight;
+        document.body.style.cursor = 'row-resize';
+        const onMove = (ev) => {
+          const nh = startH + (ev.clientY - startY);
+          if (nh < 26) return;
+          hRow.querySelectorAll('th').forEach(c => { c.style.height = nh + 'px'; });
+        };
+        const onUp = () => {
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+          document.body.style.cursor = '';
+          try { _r173Dirty = true; } catch (_) {}
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+    });
+  }
+
+  // ── Data row ki NEECHE wali lakeer — qatar ki unchai ──
+  const bRow = table.querySelector('tbody tr');
+  if (bRow) {
+    bRow.querySelectorAll('td').forEach(td => {
+      const g = document.createElement('div');
+      g.className = 'zf-rowgrip';
+      g.contentEditable = 'false';
+      g.title = 'اونچائی بدلنے کے لیے کھینچیں';
+      td.appendChild(g);
+      g.addEventListener('mousedown', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        const startY = e.clientY, startH = bRow.offsetHeight;
+        document.body.style.cursor = 'row-resize';
+        const onMove = (ev) => {
+          const nh = startH + (ev.clientY - startY);
+          if (nh < 80) return;
+          bRow.querySelectorAll('td').forEach(c => { c.style.height = nh + 'px'; });
+        };
+        const onUp = () => {
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+          document.body.style.cursor = '';
+          try { _r173Dirty = true; } catch (_) {}
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+    });
+  }
+}
+window._zimniColResize = _zimniColResize;
+
+// Grips مکمل طور پر دکھاوے کے لیے ہیں — محفوظ/چھپائی سے پہلے ہٹا دیے جاتے ہیں
+function _zimniCleanHTML(html) {
+  return String(html || '').replace(/<div[^>]*class="zf-(col|row)grip"[^>]*><\/div>/g, '');
+}
+window._zimniCleanHTML = _zimniCleanHTML;
+
 // Berooni Zimni form ki CSS (editor + print) — sab #ch173-doc ke andar, naap pt mein.
 function _zimniFormCSS() {
   return `
-  /* ── HEADER ── sab CENTERED, koi circle/side berونی nahi ── */
-  #ch173-doc .zf-head{ text-align:center; direction:rtl; margin-bottom:6px; }
-  #ch173-doc .zf-formno{ font-size:14pt; font-weight:600; direction:ltr; margin-bottom:4px; }
-  #ch173-doc .zf-title{ font-size:20pt; font-weight:700; text-decoration:underline; text-underline-offset:5px; line-height:1.35; }
-  #ch173-doc .zf-berooni{ font-size:14pt; font-weight:700; }          /* (بیرونی) — 14pt */
-  #ch173-doc .zf-zname{ font-size:16pt; font-weight:normal; margin-top:2px; }
+  /* ── HEADER ── form no + رپورٹ ضمنی page ke CENTER; ضلع top-LEFT usi seedh mein ── */
+  #ch173-doc .zf-head{ direction:rtl; margin-bottom:6px; line-height:1.5; }
+  #ch173-doc .zf-formno{ font-size:16pt; font-weight:600; direction:ltr; text-align:center; margin-bottom:4px; }
+  #ch173-doc .zf-titlerow{ position:relative; text-align:center; min-height:1.6em; }
+  #ch173-doc .zf-title{ font-size:20pt; font-weight:700; text-decoration:underline; text-underline-offset:5px; line-height:1.5; }
+  #ch173-doc .zf-berooni{ font-size:14pt; font-weight:700; }              /* (بیرونی) — 14pt */
+  #ch173-doc .zf-zila{ position:absolute; left:0; top:0; font-size:16pt; font-weight:normal; white-space:nowrap; }
 
-  /* ── METADATA (report ضمنی aur table ke darmiyan) ── 16pt, bold nahi,
-     zabaan ke mutabiq rukh (Urdu RTL / English LTR / mix → plaintext) ── */
-  #ch173-doc .zf-meta{ margin:12px 0 8px; font-size:16pt; font-weight:normal; direction:rtl; }
-  #ch173-doc .zf-mrow{ display:flex; gap:22px; flex-wrap:wrap; align-items:baseline; margin-bottom:9px; direction:rtl; }
-  #ch173-doc .zf-mrow2{ display:flex; gap:22px; align-items:baseline; margin-bottom:9px; direction:rtl; }
-  #ch173-doc .zf-half{ flex:1 1 0; display:flex; align-items:baseline; gap:8px; min-width:0; }  /* dono waqت/تاریخ fields aik seedh mein */
+  /* ── METADATA (table ke ooper ka poora hissa) ── 16pt, bold nahi, spacing 1.5 ── */
+  #ch173-doc .zf-meta{ margin:10px 0 8px; font-size:16pt; font-weight:normal; direction:rtl; line-height:1.5; }
+  #ch173-doc .zf-mrow{ display:flex; gap:22px; flex-wrap:wrap; align-items:baseline; margin-bottom:7px; direction:rtl; }
+  #ch173-doc .zf-mrow2{ display:flex; gap:22px; align-items:baseline; margin-bottom:7px; direction:rtl; }
+  #ch173-doc .zf-half{ flex:1 1 0; display:flex; align-items:baseline; gap:8px; min-width:0; }
   #ch173-doc .zf-fld{ display:flex; align-items:baseline; gap:6px; }
   #ch173-doc .zf-fld.grow{ flex:1; }
   #ch173-doc .zf-lbl{ font-weight:normal; white-space:nowrap; }
-  #ch173-doc .zf-ln{ flex:1; min-width:40px; padding:0 4px; outline:none; unicode-bidi:plaintext; }  /* koi lakeer nahi — khali jagah, auto-fetch */
+  #ch173-doc .zf-ln{ flex:1; min-width:40px; padding:0 4px; outline:none; unicode-bidi:plaintext; }
 
   /* ── MAIN TABLE ── */
   #ch173-doc table.zf-tbl{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
   #ch173-doc table.zf-tbl thead{ display:table-header-group; }
-  /* First row (header) — 16pt, BOLD nahi */
-  #ch173-doc table.zf-tbl th{ border:1px solid #000; padding:6px 5px; font-size:16pt; font-weight:normal; text-align:center; line-height:1.4; vertical-align:middle; }
-  /* Tamam table text JUSTIFIED */
+  /* ROW 1 (header) — 16pt, BOLD nahi */
+  #ch173-doc table.zf-tbl th{ border:1px solid #000; padding:6px 5px; font-size:16pt; font-weight:normal;
+    text-align:center; line-height:1.5; vertical-align:middle; position:relative; }
+  /* ROW 2 (data) — justified; column 3 (حالات) 14pt + spacing 1.5 */
   #ch173-doc table.zf-tbl td{ border:1px solid #000; padding:8px 9px; font-size:14pt; vertical-align:top;
-    text-align:justify; text-align-last:right; overflow-wrap:anywhere; word-break:break-word; }
-  #ch173-doc .zf-c-action{ width:14%; }
-  #ch173-doc .zf-c-serial{ width:7%; white-space:normal; }             /* col2 aadhi + wrap */
-  #ch173-doc .zf-c-body  { width:55%; }
-  #ch173-doc .zf-c-from  { width:24%; }                                 /* col4 (از) dugni */
+    line-height:1.5; text-align:justify; text-align-last:right; overflow-wrap:anywhere; word-break:break-word; position:relative; }
   #ch173-doc td.zf-c-action{ text-align:center; text-align-last:center; }
   #ch173-doc td.zf-c-serial{ text-align:center; text-align-last:center; }
-  #ch173-doc td.zf-c-from{ text-align:right; text-align-last:right; }    /* col4 matn دائیں */
-  #ch173-doc table.zf-tbl tbody td{ height:21cm; }                      /* register jaisa poora safha */
-  /* Bahar ki DAYEN, BAYEN aur NEECHE ki lines HATAO (challan jaisa) */
+  #ch173-doc table.zf-tbl tbody td{ height:21cm; }
+  /* Bahar ki DAYEN, BAYEN aur NEECHE ki lines nahi */
   #ch173-doc .zf-tbl tr > th:first-child, #ch173-doc .zf-tbl tr > td:first-child{ border-right:none; }
   #ch173-doc .zf-tbl tr > th:last-child,  #ch173-doc .zf-tbl tr > td:last-child{ border-left:none; }
   #ch173-doc .zf-tbl tbody td{ border-bottom:none; }
-  /* body cell — سرکار بذریعہ/بنام/مرتبہ + main matn (koi dotted line nahi) */
-  #ch173-doc .zf-bl{ margin-bottom:8px; }
-  #ch173-doc .zf-bdyln{ display:inline; border:none; outline:none; }    /* dotted lines HATAI */
-  #ch173-doc .zf-body{ margin-top:10px; line-height:2.0; text-align:justify; text-align-last:right; outline:none; }
+  /* body cell — 14pt, spacing 1.5, koi dotted line nahi */
+  #ch173-doc .zf-bl{ margin-bottom:6px; font-size:14pt; line-height:1.5; }
+  #ch173-doc .zf-bdyln{ display:inline; border:none; outline:none; }
+  #ch173-doc .zf-body{ margin-top:8px; font-size:14pt; line-height:1.5; text-align:justify; text-align-last:right; outline:none; }
+
+  /* ── Table ki lakeerein MOVEABLE (MS Word jaisi) ── */
+  #ch173-doc .zf-colgrip{ position:absolute; top:0; left:-3px; width:7px; height:100%;
+    cursor:col-resize; user-select:none; z-index:6; }
+  #ch173-doc .zf-colgrip:hover{ background:rgba(56,189,248,.35); }
+  #ch173-doc .zf-rowgrip{ position:absolute; bottom:0; left:0; width:100%; height:9px;
+    cursor:row-resize; user-select:none; z-index:6; }
+  #ch173-doc .zf-rowgrip:hover{ background:rgba(56,189,248,.45); }
+  @media print{ #ch173-doc .zf-colgrip, #ch173-doc .zf-rowgrip{ display:none !important; } }
 
   /* Paste kiya hua matn hamesha Nastaliq */
   #ch173-doc .zf-body *, #ch173-doc .zf-tbl td *, #ch173-doc .zf-meta *{
@@ -465,8 +668,10 @@ function _zimniDefaultBody(o, c) {
   return `
   <div class="zf-head">
     <div class="zf-formno">پولیس فارم نمبر&nbsp;25—54(1)</div>
-    <div class="zf-title">رپورٹ ضمنی <span class="zf-berooni">(بیرونی)</span></div>
-    <div class="zf-zname">ضلع ${district}</div>
+    <div class="zf-titlerow">
+      <span class="zf-zila" data-k="zila">ضلع ${district}</span>
+      <span class="zf-title">رپورٹ ضمنی <span class="zf-berooni">(بیرونی)</span></span>
+    </div>
   </div>
 
   <div class="zf-meta">
@@ -490,6 +695,9 @@ function _zimniDefaultBody(o, c) {
   </div>
 
   <table class="zf-tbl">
+    <colgroup>
+      <col style="width:14%"><col style="width:7%"><col style="width:55%"><col style="width:24%">
+    </colgroup>
     <thead>
       <tr>
         <th class="zf-c-action">تاریخ و وقت<br>کارروائی</th>
@@ -502,13 +710,12 @@ function _zimniDefaultBody(o, c) {
       <tr>
         <td class="zf-c-action" data-k="action"></td>
         <td class="zf-c-serial" data-k="serial">${serial}</td>
-        <td class="zf-c-body">
+        <td class="zf-c-body" colspan="2">
           <div class="zf-bl"><span class="zf-lbl">سرکار بذریعہ ۔</span> <span class="zf-bdyln" data-k="sarkar">${compl}</span></div>
           <div class="zf-bl"><span class="zf-lbl">بنام۔</span> <span class="zf-bdyln" data-k="banam"></span></div>
-          <div class="zf-bl"><span class="zf-lbl">مرتبہ ۔</span> <span class="zf-bdyln" data-k="murattib">${ioE}</span></div>
+          <div class="zf-bl">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="zf-lbl">مرتبہ ۔</span> <span class="zf-bdyln" data-k="murattib">${ioE}</span></div>
           <div class="zf-body" data-mic="true" data-k="halaat"><br></div>
         </td>
-        <td class="zf-c-from" data-k="az">${ioE}</td>
       </tr>
     </tbody>
   </table>`;
@@ -518,7 +725,7 @@ function _zimniDefaultBody(o, c) {
 async function _saveZimni() {
   const ed = (typeof _ch173Doc === 'function' && _ch173Doc()) || document.getElementById('ch173-doc');
   if (!ed) return;
-  const bodyHtml = ed.innerHTML;
+  const bodyHtml = _zimniCleanHTML(ed.innerHTML);   // grips (کھینچنے والی پٹیاں) محفوظ نہ ہوں
   const z = _zimniActive || {};
   // ضمنی نمبر ab EDITABLE hai — doc ke field se parho (khali ho to purana/1)
   let serialNo = z.serial_no || 1;
@@ -577,7 +784,7 @@ async function _deleteZimni(id) {
 function _printZimni() {
   const ed = (typeof _ch173Doc === 'function' && _ch173Doc()) || document.getElementById('ch173-doc');
   if (!ed) return;
-  _zimniPrintDoc(ed.innerHTML);
+  _zimniPrintDoc(_zimniCleanHTML(ed.innerHTML));
 }
 
 // چالان/اخراج jaisa print: kaghaz + margins (1cm / _ch173SideMargin) report173 se,
