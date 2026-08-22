@@ -386,6 +386,7 @@ function _renderZimniEditor() {
     try { _zimniBindFindReplace(); } catch (_) {}                                          // Ctrl+F / Ctrl+H
     try { _zimniColResize(); } catch (_) {}
     // خانے کی ناپ + اضافی متن نیچے (چالان کا اصل نظام)
+    try { _zimniBindSerialSync(); } catch (_) {}                                          // ضمنی نمبر ↔ نمبر شمار
     try { _zimniLayout(); } catch (_) {}
     try { if (typeof _ch173BindOverflow === 'function') _ch173BindOverflow(); } catch (_) {}
     try { if (typeof _ch173StartOverflowWatch === 'function') _ch173StartOverflowWatch(); } catch (_) {}
@@ -639,6 +640,89 @@ window._zimniFmt = _zimniFmt;
 //  والے خانے میں چلا جاتا ہے (چالان کا _ch173Overflow یہی کرتا ہے)۔
 //  اسی سے دوسرے صفحے پر ٹیبل دوبارہ نہیں چھپتا۔
 // ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  ٹیبل بالکل صفحہ 1 پر — قطار کی اونچائی وہی جو صفحے میں بچی ہے
+//  (چالان کے _ch173StretchRow کا اصول۔ پہلے قطار 21cm پکی تھی، اس لیے
+//   عنوان + تفصیل کے بعد ٹیبل صفحے میں نہیں سماتا تھا اور پورا کا پورا
+//   دوسرے صفحے پر چلا جاتا تھا۔)
+// ═══════════════════════════════════════════════════════════════
+// ═══ ضمنی نمبر ↔ نمبر شمار — جو اوپر لکھا جائے وہی ٹیبل میں (اور اسی سے محفوظ) ═══
+function _zimniBindSerialSync() {
+  const doc = _zimniDoc();
+  if (!doc || doc._zfSerSync) return;
+  doc._zfSerSync = true;
+  const pull = () => {
+    try {
+      const zno = doc.querySelector('[data-k="zno"]');
+      const no  = doc.querySelector('.zf-serno');
+      if (!zno || !no) return;
+      const v = String(zno.innerText || zno.textContent || '').replace(/[^\d]/g, '');
+      if (v && no.innerText.trim() !== v) no.innerText = v;
+    } catch (_) {}
+  };
+  let t = null;
+  doc.addEventListener('input', (e) => {
+    const el = e.target && e.target.closest ? e.target.closest('[data-k]') : null;
+    if (!el) return;
+    if (el.dataset.k !== 'zno') return;
+    clearTimeout(t); t = setTimeout(pull, 250);
+  });
+  pull();
+}
+window._zimniBindSerialSync = _zimniBindSerialSync;
+
+function _zimniFitTable() {
+  const doc = _zimniDoc();
+  if (!doc) return;
+  const table = doc.querySelector('table.zf-tbl');
+  const row = table && table.querySelector('tbody tr');
+  if (!row) return;
+  const IN = 96;
+  const paper = (typeof _ch173Paper !== 'undefined') ? _ch173Paper : 'legal';
+  const pageH = ((paper === 'a4') ? 11.7 : 13) * IN;
+  let padY = 0;
+  try {
+    const cs = getComputedStyle(doc);
+    padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+  } catch (_) {}
+  const avail = pageH - padY;                       // ایک صفحے کی کام کی اونچائی
+  const cur = row.offsetHeight;
+  if (!cur || avail < 200) return;
+  // ٹیبل کے نیچے والا تسلسل شمار نہ ہو (وہ اگلے صفحوں پر جاتا ہے)
+  let contH = 0;
+  try { const c = doc.querySelector('[data-k="cont_text"]'); contH = c ? c.offsetHeight : 0; } catch (_) {}
+  const content = doc.scrollHeight - padY;
+  const rest = content - cur - contH;               // قطار کے علاوہ سب کچھ
+  const target = Math.round(avail - rest);
+  if (target > 140 && Math.abs(target - cur) > 2) {
+    row.querySelectorAll('td').forEach(td => { td.style.height = target + 'px'; });
+  }
+}
+window._zimniFitTable = _zimniFitTable;
+
+// ═══ نمبر شمار (کالم 2) — ٹھیک اُس سطر کے برابر جہاں سے "جناب عالی…"
+//     یعنی اصل تحریر شروع ہوتی ہے۔ مرتبہ کے نیچے، اور اُسی کے ساتھ اوپر نیچے۔
+function _zimniAlignSerial() {
+  const doc = _zimniDoc();
+  if (!doc) return;
+  const td = doc.querySelector('td.zf-c-serial');
+  const no = doc.querySelector('.zf-serno');
+  const body = doc.querySelector('.zf-body');
+  if (!td || !no || !body) return;
+  try {
+    no.style.marginTop = '0px';
+    const tr = td.getBoundingClientRect();
+    const br = body.getBoundingClientRect();
+    if (!tr.height || !br.height) return;
+    const scale = (td.offsetHeight && tr.height) ? (tr.height / td.offsetHeight) : 1;
+    let padT = 0;
+    try { padT = parseFloat(getComputedStyle(td).paddingTop) || 0; } catch (_) {}
+    const off = Math.round(((br.top - tr.top) / (scale || 1)) - padT);
+    if (off > 0) no.style.marginTop = off + 'px';
+  } catch (_) {}
+}
+window._zimniAlignSerial = _zimniAlignSerial;
+
 function _zimniFitBody() {
   const doc = _zimniDoc();
   if (!doc) return;
@@ -665,8 +749,10 @@ window._zimniFitBody = _zimniFitBody;
 
 // ناپ + متن جمانا — ایک ہی ترتیب سے (چالان کے _ch173Layout جیسا)
 function _zimniLayout() {
-  try { _zimniFitBody(); } catch (_) {}
+  try { _zimniFitTable(); } catch (_) {}       // 1. ٹیبل صفحہ 1 میں سما جائے
+  try { _zimniFitBody(); } catch (_) {}        // 2. حالاتِ تفتیش کے خانے کی ناپ
   try { if (typeof _ch173OverflowSettle === 'function') _ch173OverflowSettle(4); } catch (_) {}
+  try { _zimniAlignSerial(); } catch (_) {}    // 4. نمبر شمار "جناب عالی" کی سیدھ میں
 }
 window._zimniLayout = _zimniLayout;
 
@@ -1004,7 +1090,9 @@ function _zimniFormCSS() {
     line-height:1.5; text-align:justify; text-align-last:right; overflow-wrap:anywhere; word-break:break-word; position:relative; }
   #ch173-doc table.zf-tbl td.zf-c-action{ text-align:center; text-align-last:center; }
   #ch173-doc table.zf-tbl td.zf-c-serial{ text-align:center; text-align-last:center; }
-  #ch173-doc table.zf-tbl tbody td{ height:21cm; }
+  /* قطار کی اونچائی JS (_zimniFitTable) حساب سے دیتا ہے — یہ صرف ابتدائی ناپ */
+  #ch173-doc table.zf-tbl tbody td{ height:18cm; }
+  #ch173-doc .zf-serno{ display:block; }
   /* باہر کی دائیں، بائیں اور نیچے کی لکیریں نہیں */
   #ch173-doc .zf-tbl tr > th:first-child, #ch173-doc .zf-tbl tr > td:first-child{ border-right:none; }
   #ch173-doc .zf-tbl tr > th:last-child,  #ch173-doc .zf-tbl tr > td:last-child{ border-left:none; }
@@ -1158,7 +1246,7 @@ function _zimniDefaultBody(o, c) {
     <tbody>
       <tr>
         <td class="zf-c-action" data-k="action"></td>
-        <td class="zf-c-serial" data-k="serial">${serial}<button class="zf-pick no-print" contenteditable="false" onclick="_zimniAccPicker(event)" title="ملزمان منتخب کریں">&#9662;</button></td>
+        <td class="zf-c-serial"><span class="zf-serno" data-k="serial">${serial}</span><button class="zf-pick no-print" contenteditable="false" onclick="_zimniAccPicker(event)" title="ملزمان منتخب کریں">&#9662;</button></td>
         <td class="zf-c-body" colspan="2">
           <div class="zf-bl"><span class="zf-lbl">سرکار بذریعہ ۔</span> <span class="zf-bdyln" data-k="sarkar">${compl}</span></div>
           <div class="zf-bl zf-bl-banam"><span class="zf-lbl">بنام۔</span><span class="zf-bdyln zf-acclist" data-k="banam"></span></div>
