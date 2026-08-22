@@ -370,7 +370,12 @@ function _renderZimniEditor() {
     try { if (typeof _ch173FocusMode === 'function') _ch173FocusMode(true); } catch (_) {} // chips peek
     try { if (typeof _ch173WatchFit === 'function') _ch173WatchFit(); } catch (_) {}
     try { _zimniBindFindReplace(); } catch (_) {}                                          // Ctrl+F / Ctrl+H
-    try { _zimniColResize(); } catch (_) {}                                                // table ki lakeerein moveable
+    try { _zimniColResize(); } catch (_) {}
+    // خانے کی ناپ + اضافی متن نیچے (چالان کا اصل نظام)
+    try { _zimniLayout(); } catch (_) {}
+    try { if (typeof _ch173BindOverflow === 'function') _ch173BindOverflow(); } catch (_) {}
+    try { if (typeof _ch173StartOverflowWatch === 'function') _ch173StartOverflowWatch(); } catch (_) {}
+    [250, 900, 1800].forEach(ms => setTimeout(() => { try { _zimniLayout(); } catch (_) {} }, ms));                                                // table ki lakeerein moveable
     // Cursor ke mutabiq font dropdown + B/I/U ki halat khud badle (MS Word jaisa)
     try {
       if (!window._zfSyncBound) {
@@ -614,6 +619,43 @@ window._zimniFmt = _zimniFmt;
 // ═══════════════════════════════════════════════════════════════
 //  ٹیبل کی لکیریں MOVEABLE — MS Word جیسی (چوڑائی + اونچائی)
 // ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  حالاتِ تفتیش کے خانے کی ناپ پکی کرو
+//  خانہ اپنی ناپ سے بڑا نہیں ہوتا — جو متن نہ سمائے وہ ٹیبل کے نیچے
+//  والے خانے میں چلا جاتا ہے (چالان کا _ch173Overflow یہی کرتا ہے)۔
+//  اسی سے دوسرے صفحے پر ٹیبل دوبارہ نہیں چھپتا۔
+// ═══════════════════════════════════════════════════════════════
+function _zimniFitBody() {
+  const doc = _zimniDoc();
+  if (!doc) return;
+  const td   = doc.querySelector('td.zf-c-body');
+  const body = doc.querySelector('.zf-body');
+  if (!td || !body) return;
+  const prev = body.style.height;
+  body.style.height = '';
+  let h = 0;
+  try {
+    const tr = td.getBoundingClientRect();
+    const br = body.getBoundingClientRect();
+    if (!tr.height || !br.height) { body.style.height = prev; return; }
+    let padB = 0;
+    try { padB = parseFloat(getComputedStyle(td).paddingBottom) || 0; } catch (_) {}
+    // صفحہ scale ہوا ہو تو ناپ کو اصل پیمانے پر لاؤ
+    const scale = (td.offsetHeight && tr.height) ? (tr.height / td.offsetHeight) : 1;
+    h = Math.floor(((tr.bottom - br.top) / (scale || 1)) - padB);
+  } catch (_) { body.style.height = prev; return; }
+  if (h > 40) { body.style.height = h + 'px'; body.style.overflow = 'hidden'; }
+  else body.style.height = prev;
+}
+window._zimniFitBody = _zimniFitBody;
+
+// ناپ + متن جمانا — ایک ہی ترتیب سے (چالان کے _ch173Layout جیسا)
+function _zimniLayout() {
+  try { _zimniFitBody(); } catch (_) {}
+  try { if (typeof _ch173OverflowSettle === 'function') _ch173OverflowSettle(4); } catch (_) {}
+}
+window._zimniLayout = _zimniLayout;
+
 function _zimniColResize() {
   const doc = _zimniDoc();
   const table = doc && doc.querySelector('table.zf-tbl');
@@ -897,23 +939,26 @@ function _zimniFormCSS() {
     font-size:16pt; font-weight:normal; direction:rtl; line-height:1.5; }
   /* Row 1 : تھانہ | سال | ضمنی نمبر (ضمنی نمبر کا خانہ پکی چوڑائی پر) */
   #ch173-doc .zf-r1{ display:grid; grid-template-columns:1fr auto var(--zf-zcol,4.6cm);
-    gap:0 18px; align-items:baseline; margin-bottom:7px; direction:rtl; }
+    gap:0 9px; align-items:baseline; margin-bottom:7px; direction:rtl; }
   /* دو حصے — دائیں (مقدمہ/وقوعہ) اور بائیں (پہنچنے/روانگی) */
-  #ch173-doc .zf-mid{ display:grid; grid-template-columns:1.2fr 0.8fr; gap:0 18px; direction:rtl; margin-bottom:7px; }
+  #ch173-doc .zf-mid{ display:grid; grid-template-columns:1.2fr 0.8fr; gap:0 9px; direction:rtl; margin-bottom:7px; }
   /* دائیں حصہ : لیبل | قدر | لیبل | تاریخ — دونوں تاریخیں ایک ہی کالم میں */
   /* کالم : لیبل | مقدمہ نمبر (تنگ) | لیبل | تاریخ — دونوں تاریخیں ایک ہی کالم میں */
-  #ch173-doc .zf-gR{ display:grid; grid-template-columns:auto 2.6cm auto 3.4cm; gap:4px 8px; align-items:baseline; }
+  #ch173-doc .zf-gR{ display:grid; grid-template-columns:auto 2.1cm auto 2.9cm; gap:4px 4px; align-items:baseline; }
   /* مقام وقوعہ کالم 2-3 پر پھیلتا ہے تاکہ تاریخ کالم 4 (مورخہ کی سیدھ) میں رہے */
   #ch173-doc .zf-gR .zf-span2{ grid-column:span 2; }
   /* چھوٹی قدریں (نمبر/تاریخ) کبھی نہ ٹوٹیں */
   #ch173-doc .zf-nw{ white-space:nowrap; }
   /* بائیں حصہ : لیبل | قدر */
-  #ch173-doc .zf-gL{ display:grid; grid-template-columns:auto 1fr; gap:4px 8px; align-items:baseline; align-content:start; }
-  #ch173-doc .zf-mrow{ display:flex; gap:22px; flex-wrap:wrap; align-items:baseline; margin-bottom:7px; direction:rtl; }
-  #ch173-doc .zf-fld{ display:flex; align-items:baseline; gap:6px; }
+  #ch173-doc .zf-gL{ display:grid; grid-template-columns:auto 1fr; gap:4px 4px; align-items:baseline; align-content:start; }
+  #ch173-doc .zf-mrow{ display:flex; gap:11px; flex-wrap:wrap; align-items:baseline; margin-bottom:7px; direction:rtl; }
+  #ch173-doc .zf-fld{ display:flex; align-items:baseline; gap:3px; }
   #ch173-doc .zf-fld.grow{ flex:1; }
   #ch173-doc .zf-lbl{ font-weight:normal; white-space:nowrap; }
-  #ch173-doc .zf-ln{ min-width:40px; padding:0 4px; outline:none; unicode-bidi:plaintext; }
+  /* قدر ہمیشہ دائیں سے شروع — انگریزی/ہندسوں پر plaintext رخ اُلٹ کر
+     اسے بائیں چپکا دیتا تھا، اسی سے لیبل کے ساتھ خالی جگہ بچتی تھی */
+  #ch173-doc .zf-ln{ min-width:24px; padding:0 2px; outline:none;
+    unicode-bidi:plaintext; text-align:right; }
   #ch173-doc .zf-fld .zf-ln{ flex:1; }
   /* جرم : دفعات دائیں، "ت پ" بائیں (bidi isolation سے جگہ پکی) */
   #ch173-doc .zf-jurm{ display:flex; align-items:baseline; gap:8px; flex:1; min-width:0; }
@@ -924,12 +969,18 @@ function _zimniFormCSS() {
 
   /* ── MAIN TABLE ── (کوئی مارجن نہیں) */
   #ch173-doc table.zf-tbl{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; margin:0; }
-  #ch173-doc table.zf-tbl thead{ display:table-header-group; }
+  #ch173-doc table.zf-tbl thead{ display:table-row-group; }   /* header دوہرا نہ ہو */
   /* ROW 1 (header) — column 3 (حالاتِ تفتیش) 16pt، باقی (1،2،4) 14pt، bold نہیں */
   #ch173-doc table.zf-tbl th{ border:1px solid #000; padding:6px 5px; font-size:16pt; font-weight:normal;
     text-align:center; line-height:1.5; vertical-align:middle; position:relative; }
   #ch173-doc table.zf-tbl th.zf-c-action{ font-size:14pt; }          /* row 1 کالم 1 — 14pt */
-  #ch173-doc table.zf-tbl th.zf-c-serial{ font-size:12pt; }          /* row 1 کالم 2 — 12pt */
+  /* row 1 کالم 2 — 12pt اور کھڑی لکھائی (چالان کے گواہان جیسی) */
+  #ch173-doc table.zf-tbl th.zf-c-serial{ font-size:12pt; padding:3px 2px; vertical-align:middle; }
+  /* AHEM: چالان کا اصول — writing-mode استعمال کرو، flex یا transform:rotate کبھی نہیں */
+  #ch173-doc .zf-vert{
+    writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
+    display:block; margin:0 auto; direction:rtl;
+    white-space:nowrap; line-height:1.25; text-align:center; }
   #ch173-doc table.zf-tbl th.zf-c-from{ font-size:16pt; text-align:right; }   /* row 1 کالم 4 — 16pt، دائیں */
   /* ROW 2 (data) */
   #ch173-doc table.zf-tbl td{ border:1px solid #000; padding:8px 9px; font-size:14pt; vertical-align:top;
@@ -979,7 +1030,24 @@ function _zimniFormCSS() {
   #ch173-doc b, #ch173-doc strong{ font-weight:bold; }
   #ch173-doc i, #ch173-doc em{ font-style:italic; }
   #ch173-doc u{ text-decoration:underline; }
-  @media print{ #ch173-doc table.zf-tbl thead{ page-break-inside:avoid; } }`;
+  /* مثل باندھنے کی جگہ — دوسرے صفحے سے، اوپر بائیں کونے میں مثلث (صرف چھپائی) */
+  #ch173-doc .zf-bind{ display:none; }
+  @media print{
+    #ch173-doc table.zf-tbl thead{ page-break-inside:avoid; }
+    /* AHEM: header کو دہرانے نہ دو — ورنہ ہر صفحے پر ٹیبل دوبارہ چھپ جاتا ہے */
+    #ch173-doc table.zf-tbl thead{ display:table-row-group !important; }
+    /* AHEM: مثلث کو سفید بھر کر مت رکھو — وہ متن کو ڈھانپ لیتی ہے۔
+       چالان کا اصول: float + shape-outside، تاکہ متن اُس کے گرد سے بہہ جائے */
+    #ch173-doc .zf-bind{
+      display:block; float:left; width:2in; height:2in;
+      margin-top:1.25em;                       /* اوپر کے مارجن کے بعد ایک سطر کی جگہ */
+      shape-outside:polygon(0 0, 2in 0, 0 2in);
+      -webkit-shape-outside:polygon(0 0, 2in 0, 0 2in);
+      shape-margin:3mm; -webkit-shape-margin:3mm;
+      clip-path:polygon(0 0, 2in 0, 0 2in);
+      -webkit-clip-path:polygon(0 0, 2in 0, 0 2in);
+    }
+  }`;
 }
 // Default document body — editable بیرونی Zimni form (Police Form 25-54(1))
 // Fixed chrome (headings/labels/table header) = contenteditable=false.
@@ -1063,7 +1131,7 @@ function _zimniDefaultBody(o, c) {
     <thead>
       <tr>
         <th class="zf-c-action">تاریخ و وقت<br>کارروائی</th>
-        <th class="zf-c-serial">رپورٹ نمبر شمار<br>سلسلہ وار</th>
+        <th class="zf-c-serial"><div class="zf-vert">رپورٹ نمبر شمار<br>سلسلہ وار</div></th>
         <th class="zf-c-body">حالاتِ تفتیش</th>
         <th class="zf-c-from">از۔</th>
       </tr>
@@ -1080,7 +1148,11 @@ function _zimniDefaultBody(o, c) {
         </td>
       </tr>
     </tbody>
-  </table>`;
+  </table>
+
+  <!-- تسلسل — جو متن حالاتِ تفتیش کے خانے میں نہ سمائے وہ خود یہاں آ جاتا ہے
+       (چالان کا وہی نظام: _ch173Overflow / _ch173AddBindMarks) -->
+  <div class="ch173-cont zf-cont" data-k="cont_text"></div>`;
 }
 // ── SAVE ──────────────────────────────────────────────────────
 async function _saveZimni(silent) {
@@ -1195,11 +1267,54 @@ async function _deleteZimni(id, skipConfirm) {
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  مثل باندھنے کی جگہ — دوسرے صفحے سے، اوپر بائیں کونے میں مثلث
+//  (چالان جیسا۔ صرف چھپائی کے لیے — اسکرین پر کچھ نہیں بدلتا)
+//  اوپر کے مارجن کے بعد ایک سطر کی جگہ چھوڑی جاتی ہے۔
+// ═══════════════════════════════════════════════════════════════
+function _zimniBindHTML() {
+  const doc = _zimniDoc();
+  if (!doc) return '';
+  const IN = 96, CM = 37.8;
+  const paper = (typeof _ch173Paper !== 'undefined') ? _ch173Paper : 'legal';
+  const pageH = ((paper === 'a4') ? 11.7 : 13) * IN - (2 * CM);   // اوپر/نیچے 1cm مارجن
+  if (pageH < 100) return '';
+  let padY = 0, lh = 0;
+  try {
+    const cs = getComputedStyle(doc);
+    padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+    lh = parseFloat(cs.lineHeight) || 0;
+    if (!lh) lh = (parseFloat(cs.fontSize) || 19) * 1.5;
+  } catch (_) { lh = 28; }
+  const h = (doc.scrollHeight || 0) - padY;
+  const pages = Math.ceil(h / pageH);
+  let out = '';
+  for (let p = 1; p < pages && p < 40; p++) {          // صفحہ 2 سے آگے
+    out += '<div class="zf-bind" style="top:' + Math.round(p * pageH + lh) + 'px"></div>';
+  }
+  return out;
+}
+window._zimniBindHTML = _zimniBindHTML;
+
 // ── PRINT (only the document — MS-Word rule) ──────────────────
 function _printZimni() {
-  const ed = (typeof _ch173Doc === 'function' && _ch173Doc()) || document.getElementById('ch173-doc');
+  const ed = _zimniDoc();
   if (!ed) return;
-  _zimniPrintDoc(_zimniCleanHTML(ed.innerHTML));
+  // 1) متن پوری طرح جما لو — جو حالاتِ تفتیش کے خانے میں نہ سمائے وہ
+  //    ٹیبل کے نیچے والے خانے میں چلا جائے (اسی سے ٹیبل دوسرے صفحے پر
+  //    دوبارہ نہیں چھپتا)
+  try { _zimniLayout(); } catch (_) {}
+  // 2) مثل باندھنے کی تکونی جگہ + صفحے کا توڑ — چالان کا وہی نظام
+  //    (_ch173AddBindMarks بہتے ہوئے متن میں ٹھیک جگہ ناپ کر نشان لگاتا ہے،
+  //     اور اوپر کے مارجن کے بعد ایک سطر کی جگہ خود چھوڑتا ہے)
+  let marks = [];
+  try { if (typeof _ch173AddBindMarks === 'function') marks = _ch173AddBindMarks() || []; } catch (_) {}
+  let inner = _zimniCleanHTML(ed.innerHTML);
+  try { marks.forEach(m => m.remove()); ed.normalize(); } catch (_) {}
+  // اگر تسلسل والا خانہ خالی تھا (کوئی نشان نہ لگا) تو پرانا طریقہ آزماؤ
+  if (!marks.length) { try { inner += _zimniBindHTML(); } catch (_) {} }
+  try { _zimniLayout(); } catch (_) {}          // اسکرین واپس اپنی حالت پر
+  _zimniPrintDoc(inner);
 }
 
 // چالان/اخراج jaisa print: kaghaz + margins (1cm / _ch173SideMargin) report173 se,
@@ -1222,7 +1337,33 @@ function _zimniPrintHTML(inner) {
       #ch173-doc{ width:100% !important; max-width:none !important; height:auto !important;
         min-height:0 !important; padding:0 !important; margin:0 !important;
         transform:none !important; box-shadow:none !important; border-radius:0 !important; }
-      #ch173-doc table.zf-tbl thead{ display:table-header-group !important; page-break-inside:avoid; }
+      /* AHEM: header کو دہرانے نہ دو — ورنہ ہر صفحے پر ٹیبل دوبارہ چھپ جاتا ہے
+         (چالان کا بھی یہی اصول: thead{display:table-row-group}) */
+      #ch173-doc table.zf-tbl thead{ display:table-row-group !important; page-break-inside:avoid; }
+      /* مثل باندھنے کی مثلث — صفحہ 2 سے (float + shape-outside) */
+      #ch173-doc .zf-bind{ display:block !important; float:left; width:2in; height:2in;
+        margin-top:1.25em;
+        shape-outside:polygon(0 0, 2in 0, 0 2in);
+        -webkit-shape-outside:polygon(0 0, 2in 0, 0 2in);
+        shape-margin:3mm; -webkit-shape-margin:3mm;
+        clip-path:polygon(0 0, 2in 0, 0 2in);
+        -webkit-clip-path:polygon(0 0, 2in 0, 0 2in); }
+      /* ── مثل باندھنے کی جگہ — دوسرے صفحے سے، اوپر بائیں کونے میں مثلث ──
+         نوک اوپر بائیں کونے پر، دونوں بازو 2-2 انچ؛ متن اس سے بچ کر بہتا ہے۔
+         اوپر کے مارجن کے بعد ایک سطر کی جگہ (margin-top:1.25em)۔
+         (تعریف یہاں پوری لکھی ہے تاکہ report173 کی CSS پر انحصار نہ ہو) */
+      #ch173-doc .ch173-bind{ display:block !important; float:left;
+        width:2in; height:2in; margin-top:1.25em;
+        shape-outside:polygon(0 0, 2in 0, 0 2in);
+        -webkit-shape-outside:polygon(0 0, 2in 0, 0 2in);
+        shape-margin:3mm; -webkit-shape-margin:3mm;
+        clip-path:polygon(0 0, 2in 0, 0 2in);
+        -webkit-clip-path:polygon(0 0, 2in 0, 0 2in); }
+      #ch173-doc .ch173-pgbrk{ display:block !important; height:0 !important;
+        break-before:page !important; page-break-before:always !important; }
+      /* ٹیبل کبھی دوسرے صفحے پر نہ ٹوٹے */
+      #ch173-doc table.zf-tbl{ page-break-inside:avoid; break-inside:avoid; }
+      #ch173-doc .zf-cont:empty, #ch173-doc .ch173-cont:empty{ display:none !important; }
       .no-print, button, select{ display:none !important; }
       #ch173-doc, #ch173-doc *{ orphans:2; widows:2; }
     </style></head><body><div id="ch173-doc">${inner}</div></body></html>`;
