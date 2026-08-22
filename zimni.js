@@ -112,22 +112,36 @@ async function _zimniWrite(base, contentObj, id) {
 window._zimniWrite = _zimniWrite;
 
 async function _loadZimni() {
-  if (!navigator.onLine) {
-    try { _zimniList = JSON.parse(localStorage.getItem('dio_zimni_' + _zimniCaseId) || '[]'); }
-    catch(_) { _zimniList = []; }
+  // مقامی نقل ہمیشہ ہاتھ میں رکھو (آف لائن یا ناکام محفوظ والی ضمنیاں ضائع نہ ہوں)
+  let local = [];
+  try { local = JSON.parse(localStorage.getItem('dio_zimni_' + _zimniCaseId) || '[]'); } catch (_) { local = []; }
+
+  if (!navigator.onLine) { _zimniList = local; return; }
+
+  let rows = null;
+  try {
+    // AHEM: اگر ڈیٹابیس میں 'serial_no' کالم نہ ہو تو order() خود error دیتا ہے
+    // اور فہرست خالی آ جاتی ہے — اسی لیے پہلے ترتیب کے ساتھ، پھر بغیر ترتیب۔
+    let r = await supabaseClient.from('zimni_reports').select('*')
+      .eq('case_id', _zimniCaseId).order('serial_no', { ascending: true });
+    if (r.error) {
+      r = await supabaseClient.from('zimni_reports').select('*').eq('case_id', _zimniCaseId);
+    }
+    if (r.error) throw r.error;
+    rows = r.data || [];
+  } catch (e) {
+    try { console.error('[zimni load]', e); } catch (_) {}
+    _zimniList = local;
     return;
   }
-  try {
-    const { data } = await supabaseClient
-      .from('zimni_reports').select('*')
-      .eq('case_id', _zimniCaseId)
-      .order('serial_no', { ascending: true });
-    _zimniList = (data || []).map(r => Object.assign({}, r, { content: _zimniContentOf(r) }));
-    try { localStorage.setItem('dio_zimni_' + _zimniCaseId, JSON.stringify(_zimniList)); } catch(_) {}
-  } catch(_) {
-    try { _zimniList = JSON.parse(localStorage.getItem('dio_zimni_' + _zimniCaseId) || '[]'); }
-    catch(_2) { _zimniList = []; }
-  }
+
+  const fromDb = rows.map(r => Object.assign({}, r, { content: _zimniContentOf(r) }));
+  // ڈیٹابیس میں نہ پہنچنے والے مقامی اندراج بھی ساتھ رکھو
+  const ids = new Set(fromDb.map(r => String(r.id)));
+  const onlyLocal = local.filter(z => String(z.id).startsWith('local-') && !ids.has(String(z.id)));
+  _zimniList = fromDb.concat(onlyLocal)
+    .sort((a, b) => (parseInt(b.serial_no, 10) || 0) - (parseInt(a.serial_no, 10) || 0));
+  try { localStorage.setItem('dio_zimni_' + _zimniCaseId, JSON.stringify(_zimniList)); } catch (_) {}
 }
 
 // ── LIST VIEW (all zimni entries for this case) ───────────────
@@ -960,6 +974,9 @@ function _zimniFormCSS() {
   #ch173-doc .zf-ln{ min-width:24px; padding:0 2px; outline:none;
     unicode-bidi:plaintext; text-align:right; }
   #ch173-doc .zf-fld .zf-ln{ flex:1; }
+  /* چھوٹی قدریں (سال، ضمنی نمبر) لیبل کے ساتھ ہی رہیں — پھیل کر بائیں
+     کنارے (مارجن) سے نہ جا لگیں */
+  #ch173-doc .zf-fld .zf-ln.zf-nw{ flex:0 0 auto; min-width:1.4em; padding:0 4px 0 0; }
   /* جرم : دفعات دائیں، "ت پ" بائیں (bidi isolation سے جگہ پکی) */
   #ch173-doc .zf-jurm{ display:flex; align-items:baseline; gap:8px; flex:1; min-width:0; }
   #ch173-doc .zf-j-body{ unicode-bidi:isolate; direction:ltr; text-align:right; }
@@ -1009,8 +1026,10 @@ function _zimniFormCSS() {
   #ch173-doc .zf-acc{ display:block; direction:rtl; text-align:right; text-align-last:right; }
   #ch173-doc .zf-acc .nm{ unicode-bidi:plaintext; }
   /* ملزمان منتخب کرنے کا چھوٹا بٹن (چھپائی میں نہیں) */
-  #ch173-doc .zf-pick{ margin-right:6px; width:20px; height:20px; line-height:1; padding:0;
-    border:1px solid var(--border,#999); border-radius:4px; vertical-align:middle;
+  /* ملزمان منتخب کرنے کا بٹن — کالم 2 (رپورٹ نمبر شمار) کی row 2 میں،
+     نمبر کے نیچے، بنام کی دائیں طرف */
+  #ch173-doc .zf-pick{ display:block; margin:6px auto 0; width:20px; height:20px;
+    line-height:1; padding:0; border:1px solid var(--border,#999); border-radius:4px;
     background:#eef6ff; color:#0369a1; cursor:pointer; font-size:12px; font-weight:400; }
   @media print{ #ch173-doc .zf-pick{ display:none !important; } }
 
@@ -1139,10 +1158,10 @@ function _zimniDefaultBody(o, c) {
     <tbody>
       <tr>
         <td class="zf-c-action" data-k="action"></td>
-        <td class="zf-c-serial" data-k="serial">${serial}</td>
+        <td class="zf-c-serial" data-k="serial">${serial}<button class="zf-pick no-print" contenteditable="false" onclick="_zimniAccPicker(event)" title="ملزمان منتخب کریں">&#9662;</button></td>
         <td class="zf-c-body" colspan="2">
           <div class="zf-bl"><span class="zf-lbl">سرکار بذریعہ ۔</span> <span class="zf-bdyln" data-k="sarkar">${compl}</span></div>
-          <div class="zf-bl zf-bl-banam"><span class="zf-lbl">بنام۔</span><button class="zf-pick no-print" contenteditable="false" onclick="_zimniAccPicker(event)" title="ملزمان منتخب کریں">&#9662;</button><span class="zf-bdyln zf-acclist" data-k="banam"></span></div>
+          <div class="zf-bl zf-bl-banam"><span class="zf-lbl">بنام۔</span><span class="zf-bdyln zf-acclist" data-k="banam"></span></div>
           <div class="zf-bl"><span class="zf-tab"></span><span class="zf-tab"></span><span class="zf-tab"></span><span class="zf-lbl">مرتبہ ۔</span> <span class="zf-bdyln zf-io" data-k="murattib">${ioE}</span></div>
           <div class="zf-body" data-mic="true" data-k="halaat"><br></div>
         </td>
@@ -1234,7 +1253,27 @@ async function _saveZimni(silent) {
     savedRec = Object.assign({}, savedRec, { content: rec.content });   // مواد ہمیشہ ہاتھ میں
     _zimniActive = savedRec;
     localSave(savedRec);
-    if (!silent) showToast('✅ ضمنی نمبر ' + serialNo + ' محفوظ ہو گئی', 'success');
+
+    // ═══ تصدیق — واقعی ڈیٹابیس میں پہنچی یا نہیں؟ ═══
+    // (صرف "کامیاب" کا پیغام کافی نہیں تھا — کبھی سطر جاتی ہی نہیں تھی
+    //  اور ضمنیات کی فہرست خالی رہتی تھی۔)
+    let ok = true;
+    try {
+      const chk = await supabaseClient.from('zimni_reports')
+        .select('id').eq('case_id', _zimniCaseId).eq('id', savedRec.id);
+      if (chk.error || !chk.data || !chk.data.length) ok = false;
+    } catch (_) { ok = false; }
+
+    if (!silent) {
+      if (ok) showToast('✅ ضمنی نمبر ' + serialNo + ' محفوظ ہو گئی', 'success');
+      else showToast('⚠️ ضمنی نمبر ' + serialNo + ' مقامی طور پر محفوظ ہے، مگر ڈیٹابیس میں تصدیق نہ ہو سکی', 'warn', 7000);
+    }
+
+    // فہرست تازہ کر کے کھول دو — افسر کو فوراً نظر آ جائے
+    try {
+      await _loadZimni();
+      if (!silent) setTimeout(() => { try { _renderZimniList(); } catch (_) {} }, 200);
+    } catch (_) {}
     return true;
   } catch (e) {
     // مقامی نقل پھر بھی محفوظ — کام ضائع نہ ہو
