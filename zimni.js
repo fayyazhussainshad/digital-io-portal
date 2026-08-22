@@ -46,83 +46,75 @@ function _renderZimniList() {
             || document.getElementById('page-content');
   if (!area) return;
   try { if (typeof _ch173FullPage === 'function') _ch173FullPage(area); } catch (_) {}
+
+  // ── ہمیشہ ضمنی نمبر کے حساب سے، بڑے سے چھوٹا (descending) ──
+  const list = _zimniList.slice()
+    .sort((a, b) => (parseInt(b.serial_no, 10) || 0) - (parseInt(a.serial_no, 10) || 0));
+
+  const dt = (z) => z.report_date
+    ? (typeof formatDate === 'function' ? formatDate(z.report_date) : z.report_date) : '—';
+  const wq = (z) => {
+    try {
+      const iso = (z.content || {}).saved_at || '';
+      if (!iso) return '';
+      const x = new Date(iso); if (isNaN(x)) return '';
+      let h = x.getHours(); const m = String(x.getMinutes()).padStart(2, '0');
+      const ap = h < 12 ? 'am' : 'pm'; h = h % 12 || 12;
+      return String(h).padStart(2, '0') + ':' + m + ' ' + ap;
+    } catch (_) { return ''; }
+  };
+  const head = (z) => ((z.content || {}).head || 'رپورٹ ضمنی');
+
   area.innerHTML = `
   <style>
     .zt{ width:100%; border-collapse:collapse; font-size:13px; direction:rtl;
          font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
-    .zt th{ background:var(--bg-tertiary); border:1px solid var(--border);
-            padding:7px 6px; font-weight:700; white-space:nowrap; }
+    .zt th{ background:var(--bg-tertiary); border:1px solid var(--border); padding:7px 6px;
+            font-weight:700; white-space:nowrap; text-align:center; }
     .zt td{ border:1px solid var(--border); padding:6px; vertical-align:middle; }
     .zt tbody tr:nth-child(odd){ background:var(--bg-secondary); }
     .zt tbody tr:hover{ background:var(--hover-bg); }
-    .zt .num{ text-align:center; font-weight:700; width:52px; }
-    .zt .act{ white-space:nowrap; text-align:center; width:190px; }
+    .zt .num{ text-align:center; font-weight:700; width:60px; }
+    .zt .dtc{ text-align:center; white-space:nowrap; width:130px; font-family:var(--font-mono); }
+    .zt .wq{ font-size:11px; color:var(--text-muted); margin-top:2px; }
+    .zt .act{ white-space:nowrap; text-align:center; width:300px; }
     .zab{ border:1px solid var(--border); background:var(--bg-card); border-radius:6px;
-          padding:3px 7px; margin:0 1px; cursor:pointer; font-size:14px; line-height:1; }
+          padding:3px 6px; margin:0 1px; cursor:pointer; font-size:13px; line-height:1; }
     .zab:hover{ background:var(--hover-bg); }
-    .zt .khulasa{ font-size:12px; color:var(--text-secondary); max-width:340px; }
   </style>
   <div style="padding:14px;direction:rtl;height:100%;overflow-y:auto;">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap;">
       <button class="btn btn-primary btn-sm" onclick="_newZimni()">➕ ضمنی درج کریں</button>
-      <button class="btn btn-secondary btn-sm" onclick="_printAllZimni()">🖨️ تمام ضمنیاں پرنٹ کریں</button>
-      <div style="margin-right:auto;font-weight:700;font-size:15px;">ضمنیات</div>
+      <button class="btn btn-secondary btn-sm" onclick="_printAllZimni()">🖨️ تمام ضمنیاں</button>
+      <div style="flex:1;"></div>
+      <span style="font-size:11px;color:var(--text-muted);">ترتیب: ضمنی نمبر — بڑے سے چھوٹا</span>
     </div>
-    ${_zimniList.length ? `
+    ${list.length ? `
     <table class="zt">
-      <thead>
-        <tr>
-          <th class="num">ضمنی نمبر</th>
-          <th>ضمنی</th>
-          <th>بنام</th>
-          <th>مرتبہ</th>
-          <th>تاریخ</th>
-          <th>فقرہ نمبر</th>
-          <th>خلاصہ</th>
-          <th class="act">ایکشن</th>
-        </tr>
-      </thead>
+      <thead><tr>
+        <th class="num">نمبر شمار</th>
+        <th class="dtc">تاریخ و وقت</th>
+        <th>ہیڈ (قسم)</th>
+        <th class="act">ایکشن</th>
+      </tr></thead>
       <tbody>
-        ${_zimniList.slice().sort((a,b)=>(parseInt(b.serial_no)||0)-(parseInt(a.serial_no)||0)).map((z, i) => {
-          const c = z.content || {};
-          const plain = (c.bodyHtml || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-          const khulasa = plain ? (plain.length > 90 ? plain.slice(0, 90) + '…' : plain) : '—';
-          const dt = z.report_date ? (typeof formatDate === 'function' ? formatDate(z.report_date) : z.report_date) : '—';
-          // Save ka WAQT (challan jaisa) — تاریخ ke neeche
-          let wq = '';
-          try {
-            const iso = c.saved_at || '';
-            if (iso) { const x = new Date(iso); if (!isNaN(x)) {
-              let h = x.getHours(); const m = String(x.getMinutes()).padStart(2,'0');
-              const ap = h < 12 ? 'am' : 'pm'; h = h % 12 || 12;
-              wq = String(h).padStart(2,'0') + ':' + m + ' ' + ap;
-            } }
-          } catch (_) {}
-          // بنام — body se "بنام۔" ke aage wala نکالو (agar mojood)
-          let banam = c.banam || '';
-          if (!banam) { const mm = (c.bodyHtml||'').match(/بنام[۔:\s]*<\/span>\s*<span[^>]*>([^<]*)</); if (mm) banam = mm[1].trim(); }
-          const murattib = (typeof getIOSignLine === 'function') ? getIOSignLine()
-                         : ((currentOfficer && currentOfficer.full_name ? currentOfficer.full_name + ' ' : '')
-                            + (currentOfficer && currentOfficer.designation ? currentOfficer.designation + ' ' : '')
-                            + 'تھانہ ' + ((currentOfficer && currentOfficer.station) || ''));
-          return `
+        ${list.map(z => `
           <tr ondblclick="_openZimni('${z.id}')" style="cursor:pointer;">
-            <td class="num">${esc(String(z.serial_no || (i + 1)))}</td>
-            <td>${esc(c.unwan || 'رپورٹ ضمنی')}</td>
-            <td>${esc(banam)}</td>
-            <td style="white-space:nowrap;">${esc(murattib)}</td>
-            <td style="text-align:center;white-space:nowrap;font-family:var(--font-mono);">${esc(dt)}${wq?`<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${esc(wq)}</div>`:''}</td>
-            <td style="text-align:center;">${esc(String(c.faqra_no || 1))}</td>
-            <td class="khulasa">${esc(khulasa)}</td>
+            <td class="num">${esc(String(z.serial_no || ''))}</td>
+            <td class="dtc">${esc(dt(z))}${wq(z) ? `<div class="wq">${esc(wq(z))}</div>` : ''}</td>
+            <td>${esc(head(z))}</td>
             <td class="act">
               <button class="zab" onclick="event.stopPropagation();_openZimni('${z.id}')" title="ترمیم">✏️</button>
-              <button class="zab" onclick="event.stopPropagation();_deleteZimni('${z.id}')" title="حذف">🗑️</button>
+              <button class="zab" onclick="event.stopPropagation();_updateZimni('${z.id}')" title="اپ ڈیٹ">💾</button>
+              <button class="zab" onclick="event.stopPropagation();_copyZimni('${z.id}')" title="نقل (Copy)">📋</button>
+              <button class="zab" onclick="event.stopPropagation();_cutZimni('${z.id}')" title="کاٹیں (Cut)">✂️</button>
+              <button class="zab" onclick="event.stopPropagation();_moveZimni('${z.id}')" title="نمبر بدلیں (Move)">↕️</button>
               <button class="zab" onclick="event.stopPropagation();_printZimniById('${z.id}')" title="پرنٹ">🖨️</button>
-              <button class="zab" onclick="event.stopPropagation();_emailZimni('${z.id}')" title="بھیجیں">✉️</button>
+              <button class="zab" onclick="event.stopPropagation();_emailZimni('${z.id}')" title="شیئر">📤</button>
               <button class="zab" onclick="event.stopPropagation();_pdfZimni('${z.id}')" title="PDF" style="font-size:10px;font-weight:800;color:#b91c1c;">PDF</button>
+              <button class="zab" onclick="event.stopPropagation();_deleteZimni('${z.id}')" title="حذف">🗑️</button>
             </td>
-          </tr>`;
-        }).join('')}
+          </tr>`).join('')}
       </tbody>
     </table>` : `
     <div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
@@ -132,6 +124,58 @@ function _renderZimniList() {
     </div>`}
   </div>`;
 }
+
+// ── فہرست کے ایکشن ─────────────────────────────────────────────
+const _zimniRec = (id) => _zimniList.find(z => String(z.id) === String(id));
+
+// 💾 اپ ڈیٹ — کھول کر دوبارہ محفوظ (تاریخ و وقت تازہ)
+async function _updateZimni(id) {
+  await _openZimni(id);
+  setTimeout(async () => { await _saveZimni(); _renderZimniList(); }, 500);
+}
+window._updateZimni = _updateZimni;
+
+// 📋 نقل — متن clipboard میں
+async function _copyZimni(id) {
+  const z = _zimniRec(id); if (!z) return;
+  const txt = String((z.content || {}).bodyHtml || '')
+    .replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  try {
+    await navigator.clipboard.writeText(txt);
+    showToast('📋 نقل ہو گئی', 'success');
+  } catch (_) { showToast('❌ نقل نہ ہو سکی', 'error'); }
+}
+window._copyZimni = _copyZimni;
+
+// ✂️ کاٹیں — نقل کر کے حذف
+async function _cutZimni(id) {
+  const z = _zimniRec(id); if (!z) return;
+  if (!confirm('ضمنی نمبر ' + (z.serial_no || '') + ' نقل کر کے حذف کر دیں؟')) return;
+  await _copyZimni(id);
+  await _deleteZimni(id, true);
+}
+window._cutZimni = _cutZimni;
+
+// ↕️ Move — ضمنی نمبر بدلو (ترتیب خود بدل جائے گی)
+async function _moveZimni(id) {
+  const z = _zimniRec(id); if (!z) return;
+  const inp = prompt('نیا ضمنی نمبر درج کریں:', String(z.serial_no || ''));
+  if (inp === null) return;
+  const n = parseInt(String(inp).replace(/[^\d]/g, ''), 10);
+  if (!n || n < 1) { showToast('⚠️ درست نمبر درج کریں', 'warn'); return; }
+  try {
+    if (navigator.onLine && !String(z.id).startsWith('local-')) {
+      const { error } = await supabaseClient.from('zimni_reports')
+        .update({ serial_no: n }).eq('id', z.id);
+      if (error) throw error;
+    }
+    z.serial_no = n;
+    try { localStorage.setItem('dio_zimni_' + _zimniCaseId, JSON.stringify(_zimniList)); } catch (_) {}
+    showToast('✅ ضمنی نمبر ' + n + ' ہو گیا', 'success');
+  } catch (e) { showToast('❌ ' + (e.message || e), 'error'); }
+  _renderZimniList();
+}
+window._moveZimni = _moveZimni;
 
 function _newZimni() {
   const nextSerial = (_zimniList.reduce((m,z)=>Math.max(m, parseInt(z.serial_no)||0), 0)) + 1;
@@ -178,6 +222,9 @@ function _renderZimniEditor() {
         <option value="legal" ${paper==='legal'?'selected':''}>لیگل (8.5×13)</option>
         <option value="a4"    ${paper==='a4'   ?'selected':''}>A4 (8.27×11.7)</option>
       </select>
+      <input id="zf-head-in" type="text" value="${esc(((saved && saved.head) || 'رپورٹ ضمنی'))}"
+        placeholder="ہیڈ (قسم)" title="ہیڈ / قسم — فہرست میں یہی نظر آتا ہے"
+        style="${selCss}width:150px;font-family:'Jameel Noori Nastaleeq',serif;">
       <div style="margin-right:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
         <button id="zf-btn-b" onmousedown="event.preventDefault()" onclick="_zimniFmt('bold')" title="بولڈ" style="${btn}font-weight:900;">B</button>
         <button id="zf-btn-i" onmousedown="event.preventDefault()" onclick="_zimniFmt('italic')" title="ترچھا" style="${btn}font-style:italic;">I</button>
@@ -222,7 +269,8 @@ function _renderZimniEditor() {
   setTimeout(() => {
     try { if (typeof _ch173FullPage === 'function') _ch173FullPage(area); } catch (_) {}
     try { if (typeof _ch173FitPaper === 'function') _ch173FitPaper(); } catch (_) {}
-    try { _zimniBindKeys(); } catch (_) {}                                                 // Tab/Enter/Ctrl+BIU/paste
+    try { _zimniBindKeys(); } catch (_) {}
+    try { _dioBindCtrlS(); } catch (_) {}                                                  // Ctrl+S = اپ ڈیٹ                                                 // Tab/Enter/Ctrl+BIU/paste
     try { _zimniLoadAccused(); } catch (_) {}                                              // بنام ▾ کی فہرست
     try { if (typeof _ch173BrushOff === 'function') _ch173BrushOff(); } catch (_) {}
     try { if (typeof _ch173BindBrush === 'function') _ch173BindBrush(); } catch (_) {}     // format painter
@@ -939,55 +987,117 @@ function _zimniDefaultBody(o, c) {
   </table>`;
 }
 // ── SAVE ──────────────────────────────────────────────────────
-async function _saveZimni() {
-  const ed = (typeof _ch173Doc === 'function' && _ch173Doc()) || document.getElementById('ch173-doc');
-  if (!ed) return;
-  const bodyHtml = _zimniCleanHTML(ed.innerHTML);   // grips (کھینچنے والی پٹیاں) محفوظ نہ ہوں
+async function _saveZimni(silent) {
+  const ed = _zimniDoc();
+  if (!ed) return false;
+  const bodyHtml = _zimniCleanHTML(ed.innerHTML);   // grips محفوظ نہ ہوں
   const z = _zimniActive || {};
-  // ضمنی نمبر ab EDITABLE hai — doc ke field se parho (khali ho to purana/1)
-  let serialNo = z.serial_no || 1;
+
+  // ضمنی نمبر — EDITABLE خانے سے
+  let serialNo = parseInt(z.serial_no, 10) || 0;
   try {
     const sf = ed.querySelector('[data-k="zno"]') || ed.querySelector('[data-k="serial"]');
     const sv = sf ? parseInt(String(sf.innerText || sf.textContent).replace(/[^\d]/g, ''), 10) : NaN;
     if (!isNaN(sv) && sv > 0) serialNo = sv;
   } catch (_) {}
-  z.serial_no = serialNo;
+  if (!serialNo) {   // نیا — سب سے بڑے نمبر سے ایک آگے
+    try { serialNo = Math.max(0, ..._zimniList.map(x => parseInt(x.serial_no, 10) || 0)) + 1; }
+    catch (_) { serialNo = 1; }
+  }
+  // ہیڈ (قسم) — toolbar کے خانے سے
+  let head = '';
+  try {
+    const hi = document.getElementById('zf-head-in');
+    head = hi ? String(hi.value || '').trim() : '';
+  } catch (_) {}
+  if (!head) head = (z.content && z.content.head) || 'رپورٹ ضمنی';
+
   const savedAt = new Date().toISOString();
   const rec = {
     case_id: _zimniCaseId,
     serial_no: serialNo,
-    report_date: savedAt.slice(0,10),
-    content: { bodyHtml, saved_at: savedAt },   // waqت bhi (challan jaisa: تاریخ + وقت + نمبر)
+    report_date: (z.report_date || savedAt.slice(0, 10)),   // پہلی بار کی تاریخ برقرار
+    content: { bodyHtml, head, saved_at: savedAt },
   };
-  // محفوظ فائلوں کی فہرست میں درج (نمبر شمار + تاریخ)
+
   try {
     if (typeof dioRegisterSaved === 'function')
-      dioRegisterSaved('zimni', 'ضمنی نمبر ' + serialNo,
+      dioRegisterSaved('zimni', head + ' — نمبر ' + serialNo,
         { case_id: _zimniCaseId, serial_no: serialNo });
-  } catch(_) {}
+  } catch (_) {}
+
+  // مقامی فہرست ہمیشہ تازہ (آن لائن ہو یا نہ ہو — ضمنی کبھی ضائع نہ ہو)
+  const localSave = (obj) => {
+    try {
+      const i = _zimniList.findIndex(x => String(x.id) === String(obj.id));
+      if (i >= 0) _zimniList[i] = obj; else _zimniList.push(obj);
+      _zimniList.sort((a, b) => (parseInt(b.serial_no, 10) || 0) - (parseInt(a.serial_no, 10) || 0));
+      localStorage.setItem('dio_zimni_' + _zimniCaseId, JSON.stringify(_zimniList));
+    } catch (_) {}
+  };
+
+  // ── OFFLINE — مقامی محفوظ + قطار میں (پہلے یہاں ضمنی ضائع ہو جاتی تھی) ──
+  if (!navigator.onLine) {
+    const id = z.id || ('local-' + Date.now());
+    const obj = Object.assign({ id }, rec);
+    _zimniActive = obj; localSave(obj);
+    try {
+      if (typeof offlineStore !== 'undefined' && offlineStore.enqueue) {
+        await offlineStore.enqueue('zimni_reports',
+          String(id).startsWith('local-') ? 'insert' : 'update',
+          String(id).startsWith('local-') ? rec : Object.assign({ id }, rec));
+      }
+    } catch (_) {}
+    if (!silent) showToast('📴 آف لائن محفوظ — انٹرنیٹ آنے پر sync ہوگا', 'info');
+    return true;
+  }
+
   try {
-    const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
-    if (oid) rec.officer_id = oid;
+    try {
+      const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
+      if (oid) rec.officer_id = oid;
+    } catch (_) {}
+
     let savedRec = null;
-    if (z.id) {
-      const { data } = await supabaseClient.from('zimni_reports').update(rec).eq('id', z.id).select().single();
-      savedRec = data || { ...rec, id: z.id };
-      const idx = _zimniList.findIndex(x => x.id === z.id);
-      if (idx >= 0) _zimniList[idx] = savedRec;
-    } else {
-      const { data, error } = await supabaseClient.from('zimni_reports').insert(rec).select().single();
+    if (z.id && !String(z.id).startsWith('local-') && !String(z.id).startsWith('tmp_')) {
+      // ── ترمیم ──
+      const { data, error } = await supabaseClient.from('zimni_reports')
+        .update(rec).eq('id', z.id).select();
       if (error) throw error;
-      savedRec = data || { ...rec, id: 'tmp_'+Date.now() };
-      _zimniList.push(savedRec);
+      savedRec = (data && data[0]) || Object.assign({ id: z.id }, rec);
+    } else {
+      // ── نیا ──
+      const { data, error } = await supabaseClient.from('zimni_reports')
+        .insert(rec).select();
+      if (error) throw error;
+      savedRec = (data && data[0]) || Object.assign({ id: 'tmp_' + Date.now() }, rec);
     }
     _zimniActive = savedRec;
-    try { localStorage.setItem('dio_zimni_' + _zimniCaseId, JSON.stringify(_zimniList)); } catch(_) {}
-    showToast('✅ ضمنی محفوظ ہو گئی', 'success');
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+    localSave(savedRec);
+    if (!silent) showToast('✅ ضمنی نمبر ' + serialNo + ' محفوظ ہو گئی', 'success');
+    return true;
+  } catch (e) {
+    // مقامی نقل پھر بھی محفوظ — کام ضائع نہ ہو
+    const id = z.id || ('local-' + Date.now());
+    const obj = Object.assign({ id }, rec);
+    _zimniActive = obj; localSave(obj);
+    // ═══ پورا پیغام دکھاؤ — صرف e.message اکثر خالی ہوتا ہے ═══
+    let msg = '';
+    try {
+      msg = [e && e.message, e && e.details, e && e.hint,
+             (e && e.code) ? ('code ' + e.code) : '']
+            .filter(Boolean).join(' — ');
+    } catch (_) {}
+    if (!msg) { try { msg = JSON.stringify(e); } catch (_) { msg = String(e); } }
+    try { console.error('[zimni save]', e); } catch (_) {}
+    showToast('❌ محفوظ نہ ہو سکی: ' + msg + ' (مقامی نقل محفوظ ہے)', 'error', 8000);
+    return false;
+  }
 }
+window._saveZimni = _saveZimni;
 
-async function _deleteZimni(id) {
-  if (!confirm('کیا آپ یہ ضمنی حذف کرنا چاہتے ہیں؟')) return;
+async function _deleteZimni(id, skipConfirm) {
+  if (!skipConfirm && !confirm('کیا آپ یہ ضمنی حذف کرنا چاہتے ہیں؟')) return;
   try {
     await supabaseClient.from('zimni_reports').delete().eq('id', id);
     _zimniList = _zimniList.filter(z => z.id !== id);
@@ -1104,3 +1214,39 @@ window._printAllZimni  = _printAllZimni;
 window._pdfZimni       = _pdfZimni;
 window._emailZimni     = _emailZimni;
 window._zimniDocHTML   = _zimniDocHTML;
+
+// ═══════════════════════════════════════════════════════════════
+//  Ctrl+S — پورے سسٹم میں: جو بھی فارم کھلا ہو وہ محفوظ/اپ ڈیٹ ہو
+//  (براؤزر کا "صفحہ محفوظ کریں" رک جاتا ہے)
+// ═══════════════════════════════════════════════════════════════
+function _dioBindCtrlS() {
+  if (window._dioCtrlSBound) return;
+  window._dioCtrlSBound = true;
+  document.addEventListener('keydown', function (e) {
+    if (!(e.ctrlKey || e.metaKey)) return;
+    if (String(e.key || '').toLowerCase() !== 's') return;
+    if (e.shiftKey || e.altKey) return;
+    // کون سا فارم کھلا ہے؟ — پہلے ضمنی، پھر چالان، پھر عام محفوظ
+    let done = false;
+    try {
+      const doc = (typeof _ch173Doc === 'function') ? _ch173Doc() : document.getElementById('ch173-doc');
+      if (doc) {
+        e.preventDefault();
+        // ضمنی کا صفحہ اپنی .zf-tbl سے پہچانا جاتا ہے
+        if (doc.querySelector('.zf-tbl')) { _saveZimni(); done = true; }
+        else if (typeof _saveR173 === 'function') { _saveR173(); done = true; }
+      }
+    } catch (_) {}
+    if (done) return;
+    // باقی فارم — صفحے کا "محفوظ" بٹن دبا دو
+    try {
+      const btn = [...document.querySelectorAll('button')].find(b => {
+        const t = (b.textContent || '');
+        return /محفوظ|Save/i.test(t) && b.offsetParent !== null && !b.disabled;
+      });
+      if (btn) { e.preventDefault(); btn.click(); }
+    } catch (_) {}
+  }, true);
+}
+window._dioBindCtrlS = _dioBindCtrlS;
+try { _dioBindCtrlS(); } catch (_) {}
