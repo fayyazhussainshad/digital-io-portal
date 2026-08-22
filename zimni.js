@@ -223,8 +223,7 @@ function _renderZimniEditor() {
     try { if (typeof _ch173FullPage === 'function') _ch173FullPage(area); } catch (_) {}
     try { if (typeof _ch173FitPaper === 'function') _ch173FitPaper(); } catch (_) {}
     try { _zimniBindKeys(); } catch (_) {}                                                 // Tab/Enter/Ctrl+BIU/paste
-    try { if (typeof _ch173LoadPeople === 'function' &&
-              (typeof _ch173Accused === 'undefined' || _ch173Accused === null)) _ch173LoadPeople(); } catch (_) {}
+    try { _zimniLoadAccused(); } catch (_) {}                                              // بنام ▾ کی فہرست
     try { if (typeof _ch173BrushOff === 'function') _ch173BrushOff(); } catch (_) {}
     try { if (typeof _ch173BindBrush === 'function') _ch173BindBrush(); } catch (_) {}     // format painter
     try { if (typeof _ch173BindCellPick === 'function') _ch173BindCellPick(); } catch (_) {}
@@ -636,30 +635,52 @@ window._zimniBindKeys = _zimniBindKeys;
 //  ایک سطر = ایک ملزم : نمبر شمار + نام (دائیں) اور CNIC (بائیں)
 //  → تمام نام ایک سیدھ میں، تمام CNIC ایک سیدھ میں
 // ═══════════════════════════════════════════════════════════════
-function _zimniAccLine(nm, cnic, i) {
-  const E = (v) => (typeof esc === 'function') ? esc(v == null ? '' : String(v)) : String(v || '');
-  const cn = (cnic && String(cnic).trim()) ? String(cnic).trim() : '00000-0000000-0';
-  return '<div class="zf-acc"><span class="nm">' + (i + 1) + '\u06D4 ' + E(nm) +
-         '</span><span class="cn">' + E(cn) + '</span></div>';
+let _zimniAccused = null;    // اس مقدمہ کے ملزمان
+
+// ملزمان لوڈ کرو — ضمنی کا اپنا case id سے
+// (report173 کا _ch173LoadPeople صرف _misalCaseId / currentCaseId دیکھتا ہے،
+//  اسی لیے ضمنی میں فہرست خالی آ رہی تھی۔)
+async function _zimniLoadAccused() {
+  const cid = _zimniCaseId
+           || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
+           || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
+  if (!cid || typeof supabaseClient === 'undefined') { _zimniAccused = []; return _zimniAccused; }
+  try {
+    const { data } = await supabaseClient.from('case_accused')
+      .select('id,name,cnic,accused_type').eq('case_id', cid)
+      .order('created_at', { ascending: true });
+    _zimniAccused = data || [];
+  } catch (_) { _zimniAccused = []; }
+  return _zimniAccused;
 }
+window._zimniLoadAccused = _zimniLoadAccused;
+
+// ایک سطر = ایک ملزم : نمبر شمار + نام (CNIC ساتھ نہیں)
+// تمام نام ایک ہی سیدھ سے شروع، دائیں طرف
+function _zimniAccLine(nm, i) {
+  const E = (v) => (typeof esc === 'function') ? esc(v == null ? '' : String(v)) : String(v || '');
+  return '<div class="zf-acc"><span class="nm">' + (i + 1) + '\u06D4 ' + E(nm) + '</span></div>';
+}
+window._zimniAccLine = _zimniAccLine;
 
 async function _zimniAccPicker(ev) {
   ev.preventDefault(); ev.stopPropagation();
   document.getElementById('zf-acc-menu')?.remove();
-  // ملزمان چالان والے ہی ذخیرے سے — report173 کا _ch173LoadPeople
-  try {
-    if (typeof _ch173Accused === 'undefined' || _ch173Accused === null) {
-      if (typeof _ch173LoadPeople === 'function') await _ch173LoadPeople();
-    }
-  } catch (_) {}
-  let list = [];
-  try {
-    list = (typeof _ch173AccList === 'function') ? _ch173AccList() : (_ch173Accused || []);
-  } catch (_) { list = []; }
+  const btn = ev.currentTarget;
+
+  // ملزمان — ضمنی کے اپنے case id سے (ہر بار تازہ اگر خالی ہوں)
+  let list = _zimniAccused;
+  if (!list || !list.length) list = await _zimniLoadAccused();
+  // اگر پھر بھی خالی، تو چالان والی فہرست آزماؤ
+  if ((!list || !list.length) && typeof _ch173Accused !== 'undefined' && _ch173Accused && _ch173Accused.length) {
+    list = _ch173Accused;
+  }
+  list = (list || []).filter(a => (a.name || '').trim());
   if (!list.length) {
     if (typeof showToast === 'function') showToast('ℹ️ اس مقدمہ میں کوئی ملزم درج نہیں', 'info');
     return;
   }
+
   const doc = _zimniDoc();
   const cell = doc && doc.querySelector('[data-k="banam"]');
   const E = (v) => (typeof esc === 'function') ? esc(v == null ? '' : String(v)) : String(v || '');
@@ -695,7 +716,7 @@ async function _zimniAccPicker(ev) {
     </div>`;
   document.body.appendChild(box);
 
-  const r = ev.currentTarget.getBoundingClientRect();
+  const r = btn.getBoundingClientRect();
   const bw = box.offsetWidth, bh = box.offsetHeight;
   let top = r.bottom + 6;
   if (top + bh > window.innerHeight - 8) top = Math.max(8, r.top - bh - 6);
@@ -711,12 +732,7 @@ async function _zimniAccPicker(ev) {
   box.querySelector('#zf-acc-x').onclick = () => box.remove();
   box.querySelector('#zf-acc-ok').onclick = () => {
     const picked = [...box.querySelectorAll('input:checked')].map(i => i.value);
-    if (cell) {
-      cell.innerHTML = picked.map((nm, i) => {
-        const a = (_ch173Accused || []).find(x => (x.name || '').trim() === nm);
-        return _zimniAccLine(nm, a && a.cnic, i);
-      }).join('');
-    }
+    if (cell) cell.innerHTML = picked.map((nm, i) => _zimniAccLine(nm, i)).join('');
     box.remove();
     try { _r173Dirty = true; } catch (_) {}
   };
@@ -728,10 +744,9 @@ function _zimniFormCSS() {
   return `
   /* ── HEADER ── form no + رپورٹ ضمنی page ke CENTER; ضلع top-LEFT ── */
   #ch173-doc .zf-head{ direction:rtl; margin-bottom:6px; line-height:1.5; }
-  #ch173-doc .zf-formno{ font-size:12pt; font-weight:600; direction:ltr; text-align:center; margin-bottom:4px; }
+  #ch173-doc .zf-formno{ font-size:12pt; font-weight:normal; direction:ltr; text-align:center; margin-bottom:4px; }
   #ch173-doc .zf-titlerow{ position:relative; text-align:center; min-height:1.6em; }
-  #ch173-doc .zf-title{ font-size:20pt; font-weight:700; text-decoration:underline; text-underline-offset:5px; line-height:1.5; }
-  #ch173-doc .zf-berooni{ font-size:14pt; font-weight:700; }
+  #ch173-doc .zf-title{ font-size:24pt; font-weight:700; text-decoration:underline; text-underline-offset:5px; line-height:1.5; }
   /* ضلع … — ضمنی نمبر کی سیدھ میں (دونوں کی چوڑائی ایک: --zf-zcol) */
   #ch173-doc .zf-zila{ position:absolute; left:0; top:0; width:var(--zf-zcol,4.6cm);
     text-align:right; font-size:16pt; font-weight:normal; white-space:nowrap; unicode-bidi:plaintext; }
@@ -746,7 +761,10 @@ function _zimniFormCSS() {
   /* دو حصے — دائیں (مقدمہ/وقوعہ) اور بائیں (پہنچنے/روانگی) */
   #ch173-doc .zf-mid{ display:grid; grid-template-columns:1.2fr 0.8fr; gap:0 18px; direction:rtl; margin-bottom:7px; }
   /* دائیں حصہ : لیبل | قدر | لیبل | تاریخ — دونوں تاریخیں ایک ہی کالم میں */
-  #ch173-doc .zf-gR{ display:grid; grid-template-columns:auto minmax(0,1fr) auto 3.4cm; gap:4px 8px; align-items:baseline; }
+  /* کالم : لیبل | مقدمہ نمبر (تنگ) | لیبل | تاریخ — دونوں تاریخیں ایک ہی کالم میں */
+  #ch173-doc .zf-gR{ display:grid; grid-template-columns:auto 2.6cm auto 3.4cm; gap:4px 8px; align-items:baseline; }
+  /* مقام وقوعہ کالم 2-3 پر پھیلتا ہے تاکہ تاریخ کالم 4 (مورخہ کی سیدھ) میں رہے */
+  #ch173-doc .zf-gR .zf-span2{ grid-column:span 2; }
   /* چھوٹی قدریں (نمبر/تاریخ) کبھی نہ ٹوٹیں */
   #ch173-doc .zf-nw{ white-space:nowrap; }
   /* بائیں حصہ : لیبل | قدر */
@@ -770,10 +788,9 @@ function _zimniFormCSS() {
   /* ROW 1 (header) — column 3 (حالاتِ تفتیش) 16pt، باقی (1،2،4) 14pt، bold نہیں */
   #ch173-doc table.zf-tbl th{ border:1px solid #000; padding:6px 5px; font-size:16pt; font-weight:normal;
     text-align:center; line-height:1.5; vertical-align:middle; position:relative; }
-  #ch173-doc table.zf-tbl th.zf-c-action,
-  #ch173-doc table.zf-tbl th.zf-c-serial,
-  #ch173-doc table.zf-tbl th.zf-c-from{ font-size:14pt; }            /* row 1 کے کالم 1،2،4 — 14pt */
-  #ch173-doc table.zf-tbl th.zf-c-from{ text-align:right; }          /* row 1 کالم 4 — دائیں */
+  #ch173-doc table.zf-tbl th.zf-c-action{ font-size:14pt; }          /* row 1 کالم 1 — 14pt */
+  #ch173-doc table.zf-tbl th.zf-c-serial{ font-size:12pt; }          /* row 1 کالم 2 — 12pt */
+  #ch173-doc table.zf-tbl th.zf-c-from{ font-size:16pt; text-align:right; }   /* row 1 کالم 4 — 16pt، دائیں */
   /* ROW 2 (data) */
   #ch173-doc table.zf-tbl td{ border:1px solid #000; padding:8px 9px; font-size:14pt; vertical-align:top;
     line-height:1.5; text-align:justify; text-align-last:right; overflow-wrap:anywhere; word-break:break-word; position:relative; }
@@ -787,15 +804,15 @@ function _zimniFormCSS() {
   /* body cell */
   #ch173-doc .zf-bl{ margin-bottom:6px; font-size:14pt; line-height:1.5; position:relative; }
   #ch173-doc .zf-bdyln{ display:inline; border:none; outline:none; }
+  /* تفتیشی افسر — بولڈ + انڈر لائن */
+  #ch173-doc .zf-io{ font-weight:bold; text-decoration:underline; text-underline-offset:3px; }
   #ch173-doc .zf-body{ margin-top:8px; font-size:14pt; line-height:1.5;
     text-align:justify; text-align-last:right; outline:none; white-space:pre-wrap; }
 
   /* ── ملزمان — ایک سطر = ایک ملزم : نمبر+نام دائیں، CNIC بائیں ──
      سب نام ایک سیدھ میں، سب CNIC ایک سیدھ میں (space-between) */
-  #ch173-doc .zf-acc{ display:flex; justify-content:space-between; align-items:baseline;
-    gap:12px; direction:rtl; text-align-last:right; }
-  #ch173-doc .zf-acc .nm{ flex:0 1 auto; }
-  #ch173-doc .zf-acc .cn{ flex:0 0 auto; direction:ltr; unicode-bidi:isolate; white-space:nowrap; }
+  #ch173-doc .zf-acc{ display:block; direction:rtl; text-align:right; text-align-last:right; }
+  #ch173-doc .zf-acc .nm{ unicode-bidi:plaintext; }
   /* ملزمان منتخب کرنے کا چھوٹا بٹن (چھپائی میں نہیں) */
   #ch173-doc .zf-pick{ margin-right:6px; width:20px; height:20px; line-height:1; padding:0;
     border:1px solid var(--border,#999); border-radius:4px; vertical-align:middle;
@@ -857,7 +874,7 @@ function _zimniDefaultBody(o, c) {
     <div class="zf-formno">پولیس فارم نمبر&nbsp;25—54(1)</div>
     <div class="zf-titlerow">
       <span class="zf-zila" data-k="zila">ضلع ${district}</span>
-      <span class="zf-title">رپورٹ ضمنی <span class="zf-berooni">(بیرونی)</span></span>
+      <span class="zf-title">رپورٹ ضمنی بیرونی</span>
     </div>
   </div>
 
@@ -877,8 +894,7 @@ function _zimniDefaultBody(o, c) {
         <span class="zf-ln zf-nw" data-k="fdate">${firDate}</span>
 
         <span class="zf-lbl">تاریخ و مقام وقوعہ۔</span>
-        <span class="zf-ln" data-k="wplace">${wPlace}</span>
-        <span></span>
+        <span class="zf-ln zf-span2" data-k="wplace">${wPlace}</span>
         <span class="zf-ln zf-nw" data-k="wdate">${wDate}</span>
       </div>
       <!-- بائیں : تھانہ میں پہنچنے / تھانہ سے روانگی -->
@@ -915,7 +931,7 @@ function _zimniDefaultBody(o, c) {
         <td class="zf-c-body" colspan="2">
           <div class="zf-bl"><span class="zf-lbl">سرکار بذریعہ ۔</span> <span class="zf-bdyln" data-k="sarkar">${compl}</span></div>
           <div class="zf-bl"><span class="zf-lbl">بنام۔</span><button class="zf-pick no-print" contenteditable="false" onclick="_zimniAccPicker(event)" title="ملزمان منتخب کریں">&#9662;</button> <span class="zf-bdyln" data-k="banam"></span></div>
-          <div class="zf-bl"><span class="zf-tab"></span><span class="zf-tab"></span><span class="zf-tab"></span><span class="zf-lbl">مرتبہ ۔</span> <span class="zf-bdyln" data-k="murattib">${ioE}</span></div>
+          <div class="zf-bl"><span class="zf-tab"></span><span class="zf-tab"></span><span class="zf-tab"></span><span class="zf-lbl">مرتبہ ۔</span> <span class="zf-bdyln zf-io" data-k="murattib">${ioE}</span></div>
           <div class="zf-body" data-mic="true" data-k="halaat"><br></div>
         </td>
       </tr>
