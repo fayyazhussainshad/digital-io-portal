@@ -389,6 +389,20 @@ function _renderZimniEditor() {
     try { _zimniBindSerialSync(); } catch (_) {}                                          // ضمنی نمبر ↔ نمبر شمار
     try { _zimniLayout(); } catch (_) {}
     try { if (typeof _ch173BindOverflow === 'function') _ch173BindOverflow(); } catch (_) {}
+    // ضمنی نمبر بدلتے ہی نیچے "نمبر شمار" بھی وہی ہو جائے
+    try {
+      const d0 = _zimniDoc();
+      if (d0 && !d0._zfSerBound) {
+        d0._zfSerBound = true;
+        d0.addEventListener('input', (ev) => {
+          try {
+            if (ev.target && ev.target.closest && ev.target.closest('[data-k="zno"]')) _zimniSyncSerial();
+          } catch (_) {}
+          clearTimeout(d0._zfAlignT);
+          d0._zfAlignT = setTimeout(() => { try { _zimniAlignSerial(); } catch (_) {} }, 250);
+        });
+      }
+    } catch (_) {}
     try { if (typeof _ch173StartOverflowWatch === 'function') _ch173StartOverflowWatch(); } catch (_) {}
     [250, 900, 1800].forEach(ms => setTimeout(() => { try { _zimniLayout(); } catch (_) {} }, ms));                                                // table ki lakeerein moveable
     // Cursor ke mutabiq font dropdown + B/I/U ki halat khud badle (MS Word jaisa)
@@ -748,11 +762,89 @@ function _zimniFitBody() {
 window._zimniFitBody = _zimniFitBody;
 
 // ناپ + متن جمانا — ایک ہی ترتیب سے (چالان کے _ch173Layout جیسا)
+// ═══ ٹیبل ٹھیک ایک صفحے میں — دوسرے صفحے پر نہ جائے ═══
+// AHEM: پہلے tbody کی اونچائی پکی 21cm تھی۔ اوپر کا حصہ (عنوان + تفصیل)
+// جتنا بڑھتا، ٹیبل اتنا نیچے سرکتا اور ایک صفحے میں نہ سماتا — اور
+// 'page-break-inside:avoid' کی وجہ سے پورا ٹیبل دوسرے صفحے پر چلا جاتا،
+// پہلا صفحہ خالی رہ جاتا۔ اب اونچائی ناپ کر رکھی جاتی ہے: ٹیبل بالکل
+// صفحے کے نیچے تک جاتا ہے، اس سے آگے نہیں۔
+function _zimniFitTable() {
+  const doc = _zimniDoc();
+  if (!doc) return;
+  const table = doc.querySelector('table.zf-tbl');
+  const td = doc.querySelector('table.zf-tbl tbody td');
+  if (!table || !td) return;
+  const IN = 96;
+  const paper = (typeof _ch173Paper !== 'undefined') ? _ch173Paper : 'legal';
+  let padY = 0;
+  try {
+    const cs = getComputedStyle(doc);
+    padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+  } catch (_) {}
+  const kaam = ((paper === 'a4') ? 11.7 : 13) * IN - padY;      // ایک صفحے کی کام کی اونچائی
+  if (kaam < 200) return;
+  try {
+    const dRect = doc.getBoundingClientRect();
+    const tRect = table.getBoundingClientRect();
+    const scale = (doc.offsetHeight && dRect.height) ? (dRect.height / doc.offsetHeight) : 1;
+    let padT = 0;
+    try { padT = parseFloat(getComputedStyle(doc).paddingTop) || 0; } catch (_) {}
+    // ٹیبل کا آغاز — صفحے کے کام والے حصے کے شروع سے
+    const tTop = ((tRect.top - dRect.top) / (scale || 1)) - padT;
+    const thead = table.querySelector('thead');
+    const hH = thead ? thead.offsetHeight : 0;
+    let h = Math.floor(kaam - tTop - hH - 2);
+    if (h < 120) h = 120;
+    if (String(td.style.height) !== (h + 'px')) {
+      table.querySelectorAll('tbody td').forEach(c => { c.style.height = h + 'px'; });
+    }
+  } catch (_) {}
+}
+window._zimniFitTable = _zimniFitTable;
+
+// ═══ نمبر شمار — "جناب عالی" والی سطر کے بالکل برابر ═══
+// (کالم 2 row 2 میں ہی رہتا ہے، بس اُسی سطر کے ساتھ اوپر نیچے ہوتا ہے)
+function _zimniAlignSerial() {
+  const doc = _zimniDoc();
+  if (!doc) return;
+  const no   = doc.querySelector('.zf-serno');
+  const body = doc.querySelector('.zf-body');
+  const td   = doc.querySelector('td.zf-c-serial');
+  if (!no || !body || !td) return;
+  try {
+    no.style.marginTop = '0px';
+    const tRect = td.getBoundingClientRect();
+    const bRect = body.getBoundingClientRect();
+    const nRect = no.getBoundingClientRect();
+    if (!tRect.height || !bRect.height) return;
+    const scale = (td.offsetHeight && tRect.height) ? (tRect.height / td.offsetHeight) : 1;
+    const gap = Math.round((bRect.top - nRect.top) / (scale || 1));
+    if (gap > 0 && gap < 2000) no.style.marginTop = gap + 'px';
+  } catch (_) {}
+}
+window._zimniAlignSerial = _zimniAlignSerial;
+
+// ═══ ضمنی نمبر ↔ نمبر شمار — ایک ہی نمبر ═══
+// اوپر "ضمنی نمبر" کے آگے جو نمبر لکھا جائے، وہی نیچے "نمبر شمار" میں
+// آتا ہے، اور اسی نمبر سے ضمنی محفوظ ہوتی ہے۔
+function _zimniSyncSerial() {
+  const doc = _zimniDoc();
+  if (!doc) return;
+  const src = doc.querySelector('[data-k="zno"]');
+  const dst = doc.querySelector('.zf-serno');
+  if (!src || !dst) return;
+  const v = String(src.innerText || src.textContent || '').replace(/[^\d]/g, '');
+  if (v && String(dst.innerText || '').trim() !== v) dst.textContent = v;
+}
+window._zimniSyncSerial = _zimniSyncSerial;
+
+// ناپ + متن جمانا — ایک ہی ترتیب سے (چالان کے _ch173Layout جیسا)
 function _zimniLayout() {
-  try { _zimniFitTable(); } catch (_) {}       // 1. ٹیبل صفحہ 1 میں سما جائے
-  try { _zimniFitBody(); } catch (_) {}        // 2. حالاتِ تفتیش کے خانے کی ناپ
+  try { _zimniFitTable(); } catch (_) {}
+  try { _zimniFitBody(); } catch (_) {}
   try { if (typeof _ch173OverflowSettle === 'function') _ch173OverflowSettle(4); } catch (_) {}
-  try { _zimniAlignSerial(); } catch (_) {}    // 4. نمبر شمار "جناب عالی" کی سیدھ میں
+  try { _zimniSyncSerial(); } catch (_) {}
+  try { _zimniAlignSerial(); } catch (_) {}
 }
 window._zimniLayout = _zimniLayout;
 
