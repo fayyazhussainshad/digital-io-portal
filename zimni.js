@@ -19,6 +19,98 @@ async function openZimniEditor(caseId) {
   _renderZimniList();
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  zimni_reports کا اصل ڈھانچہ خود پہچانو
+//  مسئلہ: کچھ ڈیٹابیس میں 'content' نام کا کالم ہے ہی نہیں
+//  (PGRST204). اندازہ لگانے کے بجائے: (1) موجودہ سطر سے کالم پڑھو،
+//  (2) نہ ملے تو ممکنہ ناموں کو باری باری آزماؤ اور جو چل جائے
+//  اُسے یاد رکھو۔
+// ═══════════════════════════════════════════════════════════════
+const ZIMNI_CONTENT_COLS = ['content', 'content_json', 'data', 'form_data',
+                            'body', 'body_html', 'html', 'report_content', 'details'];
+
+function _zimniColPref() {
+  try { return localStorage.getItem('dio_zimni_col') || ''; } catch (_) { return ''; }
+}
+function _zimniColSet(c) {
+  try { if (c) localStorage.setItem('dio_zimni_col', c); } catch (_) {}
+}
+
+// کسی سطر میں سے دستاویز کا مواد نکالو (کالم کا نام جو بھی ہو)
+function _zimniContentOf(row) {
+  if (!row) return {};
+  for (const c of [_zimniColPref(), ...ZIMNI_CONTENT_COLS]) {
+    if (!c || !(c in row)) continue;
+    let v = row[c];
+    if (v == null) continue;
+    if (typeof v === 'string') {
+      const t = v.trim();
+      if (t.startsWith('{')) { try { return JSON.parse(t); } catch (_) {} }
+      if (t) { _zimniColSet(c); return { bodyHtml: v }; }      // سادہ HTML کالم
+      continue;
+    }
+    if (typeof v === 'object') { _zimniColSet(c); return v; }
+  }
+  return {};
+}
+window._zimniContentOf = _zimniContentOf;
+
+// PGRST204 کے پیغام سے غائب کالم کا نام نکالو
+function _zimniMissingCol(e) {
+  try {
+    const m = String((e && e.message) || '').match(/'([^']+)'\s+column/i);
+    return m ? m[1] : '';
+  } catch (_) { return ''; }
+}
+
+// محفوظ کرو — کالم کا نام خود ڈھونڈتے ہوئے
+async function _zimniWrite(base, contentObj, id) {
+  const tried = new Set();
+  const cands = [_zimniColPref(), ...ZIMNI_CONTENT_COLS].filter(c => c && !tried.has(c) && (tried.add(c) || true));
+  const payloadBase = Object.assign({}, base);
+  let lastErr = null;
+
+  for (let ci = 0; ci < cands.length; ci++) {
+    const col = cands[ci];
+    // ایک ہی کالم کے ساتھ چند بار — دوسرے غائب کالم ہٹاتے ہوئے
+    for (let g = 0; g < 6; g++) {
+      const rec = Object.assign({}, payloadBase);
+      rec[col] = contentObj;
+      try {
+        let res;
+        if (id) res = await supabaseClient.from('zimni_reports').update(rec).eq('id', id).select();
+        else    res = await supabaseClient.from('zimni_reports').insert(rec).select();
+        if (res.error) throw res.error;
+        _zimniColSet(col);
+        return (res.data && res.data[0]) || Object.assign({ id: id || ('tmp_' + Date.now()) }, rec);
+      } catch (e) {
+        lastErr = e;
+        if (e && e.code === 'PGRST204') {
+          const miss = _zimniMissingCol(e);
+          if (miss && miss === col) break;                 // یہ کالم نہیں — اگلا نام آزماؤ
+          if (miss && miss in payloadBase) { delete payloadBase[miss]; continue; }  // فالتو کالم ہٹا کر دوبارہ
+        }
+        // JSON کالم نہ ہو تو سادہ HTML متن کے طور پر ایک بار آزماؤ
+        if (e && (e.code === '22P02' || /invalid input syntax|json/i.test(String(e.message || '')))
+              && typeof contentObj === 'object') {
+          try {
+            const rec2 = Object.assign({}, payloadBase);
+            rec2[col] = JSON.stringify(contentObj);
+            let r2;
+            if (id) r2 = await supabaseClient.from('zimni_reports').update(rec2).eq('id', id).select();
+            else    r2 = await supabaseClient.from('zimni_reports').insert(rec2).select();
+            if (!r2.error) { _zimniColSet(col); return (r2.data && r2.data[0]) || Object.assign({ id: id || ('tmp_' + Date.now()) }, rec2); }
+            lastErr = r2.error;
+          } catch (e2) { lastErr = e2; }
+        }
+        break;
+      }
+    }
+  }
+  throw lastErr || new Error('محفوظ نہ ہو سکی');
+}
+window._zimniWrite = _zimniWrite;
+
 async function _loadZimni() {
   if (!navigator.onLine) {
     try { _zimniList = JSON.parse(localStorage.getItem('dio_zimni_' + _zimniCaseId) || '[]'); }
@@ -30,7 +122,7 @@ async function _loadZimni() {
       .from('zimni_reports').select('*')
       .eq('case_id', _zimniCaseId)
       .order('serial_no', { ascending: true });
-    _zimniList = data || [];
+    _zimniList = (data || []).map(r => Object.assign({}, r, { content: _zimniContentOf(r) }));
     try { localStorage.setItem('dio_zimni_' + _zimniCaseId, JSON.stringify(_zimniList)); } catch(_) {}
   } catch(_) {
     try { _zimniList = JSON.parse(localStorage.getItem('dio_zimni_' + _zimniCaseId) || '[]'); }
@@ -859,6 +951,10 @@ function _zimniFormCSS() {
 
   /* ── ملزمان — ایک سطر = ایک ملزم : نمبر+نام دائیں، CNIC بائیں ──
      سب نام ایک سیدھ میں، سب CNIC ایک سیدھ میں (space-between) */
+  /* بنام کی سطر : لیبل + ▾ + ملزمان کی فہرست — پہلا نام لیبل کے ساتھ اسی سطر میں،
+     باقی تمام نام بالکل اُسی سیدھ سے شروع (نمبر شمار برقرار) */
+  #ch173-doc .zf-bl-banam{ display:flex; align-items:baseline; gap:6px; }
+  #ch173-doc .zf-acclist{ display:block; flex:1 1 auto; min-width:0; }
   #ch173-doc .zf-acc{ display:block; direction:rtl; text-align:right; text-align-last:right; }
   #ch173-doc .zf-acc .nm{ unicode-bidi:plaintext; }
   /* ملزمان منتخب کرنے کا چھوٹا بٹن (چھپائی میں نہیں) */
@@ -978,7 +1074,7 @@ function _zimniDefaultBody(o, c) {
         <td class="zf-c-serial" data-k="serial">${serial}</td>
         <td class="zf-c-body" colspan="2">
           <div class="zf-bl"><span class="zf-lbl">سرکار بذریعہ ۔</span> <span class="zf-bdyln" data-k="sarkar">${compl}</span></div>
-          <div class="zf-bl"><span class="zf-lbl">بنام۔</span><button class="zf-pick no-print" contenteditable="false" onclick="_zimniAccPicker(event)" title="ملزمان منتخب کریں">&#9662;</button> <span class="zf-bdyln" data-k="banam"></span></div>
+          <div class="zf-bl zf-bl-banam"><span class="zf-lbl">بنام۔</span><button class="zf-pick no-print" contenteditable="false" onclick="_zimniAccPicker(event)" title="ملزمان منتخب کریں">&#9662;</button><span class="zf-bdyln zf-acclist" data-k="banam"></span></div>
           <div class="zf-bl"><span class="zf-tab"></span><span class="zf-tab"></span><span class="zf-tab"></span><span class="zf-lbl">مرتبہ ۔</span> <span class="zf-bdyln zf-io" data-k="murattib">${ioE}</span></div>
           <div class="zf-body" data-mic="true" data-k="halaat"><br></div>
         </td>
@@ -1058,20 +1154,12 @@ async function _saveZimni(silent) {
       if (oid) rec.officer_id = oid;
     } catch (_) {}
 
-    let savedRec = null;
-    if (z.id && !String(z.id).startsWith('local-') && !String(z.id).startsWith('tmp_')) {
-      // ── ترمیم ──
-      const { data, error } = await supabaseClient.from('zimni_reports')
-        .update(rec).eq('id', z.id).select();
-      if (error) throw error;
-      savedRec = (data && data[0]) || Object.assign({ id: z.id }, rec);
-    } else {
-      // ── نیا ──
-      const { data, error } = await supabaseClient.from('zimni_reports')
-        .insert(rec).select();
-      if (error) throw error;
-      savedRec = (data && data[0]) || Object.assign({ id: 'tmp_' + Date.now() }, rec);
-    }
+    // کالم کا نام خود ڈھونڈتے ہوئے محفوظ کرو ('content' ہر ڈیٹابیس میں نہیں ہوتا)
+    const base = {};
+    Object.keys(rec).forEach(k => { if (k !== 'content') base[k] = rec[k]; });
+    const editing = z.id && !String(z.id).startsWith('local-') && !String(z.id).startsWith('tmp_');
+    let savedRec = await _zimniWrite(base, rec.content, editing ? z.id : null);
+    savedRec = Object.assign({}, savedRec, { content: rec.content });   // مواد ہمیشہ ہاتھ میں
     _zimniActive = savedRec;
     localSave(savedRec);
     if (!silent) showToast('✅ ضمنی نمبر ' + serialNo + ' محفوظ ہو گئی', 'success');
