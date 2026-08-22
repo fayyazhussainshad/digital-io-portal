@@ -719,21 +719,36 @@ window._zimniFitTable = _zimniFitTable;
 function _zimniAlignSerial() {
   const doc = _zimniDoc();
   if (!doc) return;
-  const td = doc.querySelector('td.zf-c-serial');
-  const no = doc.querySelector('.zf-serno');
-  const body = doc.querySelector('.zf-body');
-  if (!td || !no || !body) return;
-  try {
-    no.style.marginTop = '0px';
-    const tr = td.getBoundingClientRect();
-    const br = body.getBoundingClientRect();
-    if (!tr.height || !br.height) return;
-    const scale = (td.offsetHeight && tr.height) ? (tr.height / td.offsetHeight) : 1;
-    let padT = 0;
-    try { padT = parseFloat(getComputedStyle(td).paddingTop) || 0; } catch (_) {}
-    const off = Math.round(((br.top - tr.top) / (scale || 1)) - padT);
-    if (off > 0) no.style.marginTop = off + 'px';
-  } catch (_) {}
+  const td    = doc.querySelector('td.zf-c-serial');
+  const body  = doc.querySelector('.zf-body');
+  const banam = doc.querySelector('.zf-bl-banam');
+  const pick  = doc.querySelector('.zf-pick');
+  const no    = doc.querySelector('.zf-serno');
+  if (!td) return;
+  const scaleOf = () => {
+    try {
+      const r = td.getBoundingClientRect();
+      return (td.offsetHeight && r.height) ? (r.height / td.offsetHeight) : 1;
+    } catch (_) { return 1; }
+  };
+  // (1) ▾ بٹن — بنام والی سطر کے برابر
+  if (pick && banam) {
+    try {
+      pick.style.marginTop = '0px';
+      const k = scaleOf() || 1;
+      const gap = Math.round((banam.getBoundingClientRect().top - pick.getBoundingClientRect().top) / k);
+      if (gap > 0 && gap < 2000) pick.style.marginTop = gap + 'px';
+    } catch (_) {}
+  }
+  // (2) نمبر شمار — "جناب عالی" والی سطر کے برابر
+  if (no && body) {
+    try {
+      no.style.marginTop = '0px';
+      const k = scaleOf() || 1;
+      const gap = Math.round((body.getBoundingClientRect().top - no.getBoundingClientRect().top) / k);
+      if (gap > 0 && gap < 2000) no.style.marginTop = gap + 'px';
+    } catch (_) {}
+  }
 }
 window._zimniAlignSerial = _zimniAlignSerial;
 
@@ -756,8 +771,15 @@ function _zimniFitBody() {
     const scale = (td.offsetHeight && tr.height) ? (tr.height / td.offsetHeight) : 1;
     h = Math.floor(((tr.bottom - br.top) / (scale || 1)) - padB);
   } catch (_) { body.style.height = prev; return; }
-  if (h > 40) { body.style.height = h + 'px'; body.style.overflow = 'hidden'; }
-  else body.style.height = prev;
+  // AHEM: جگہ کم ہو تب بھی خانہ کھلا نہ چھوڑو — ورنہ متن خانے کو بڑا کر کے
+  // پورے ٹیبل کو اگلے صفحے پر دھکیل دیتا ہے۔ کم از کم ایک سطر رکھو، باقی
+  // متن خودبخود ٹیبل کے نیچے چلا جائے گا۔
+  let lh = 0;
+  try { lh = parseFloat(getComputedStyle(body).lineHeight) || 0; } catch (_) {}
+  if (!lh) lh = 30;
+  if (h < lh) h = Math.round(lh);
+  body.style.height = h + 'px';
+  body.style.overflow = 'hidden';
 }
 window._zimniFitBody = _zimniFitBody;
 
@@ -840,9 +862,13 @@ window._zimniSyncSerial = _zimniSyncSerial;
 
 // ناپ + متن جمانا — ایک ہی ترتیب سے (چالان کے _ch173Layout جیسا)
 function _zimniLayout() {
-  try { _zimniFitTable(); } catch (_) {}
-  try { _zimniFitBody(); } catch (_) {}
-  try { if (typeof _ch173OverflowSettle === 'function') _ch173OverflowSettle(4); } catch (_) {}
+  // ترتیب: ٹیبل صفحے میں فٹ → خانے کی ناپ → اضافی متن نیچے → دوبارہ
+  // (ایک چکر کافی نہیں: متن نیچے جانے سے ناپ بدلتی ہے، اسی لیے تین بار)
+  for (let i = 0; i < 3; i++) {
+    try { _zimniFitTable(); } catch (_) {}
+    try { _zimniFitBody(); } catch (_) {}
+    try { if (typeof _ch173OverflowSettle === 'function') _ch173OverflowSettle(3); } catch (_) {}
+  }
   try { _zimniSyncSerial(); } catch (_) {}
   try { _zimniAlignSerial(); } catch (_) {}
 }
@@ -1135,9 +1161,9 @@ function _zimniFormCSS() {
   /* دو حصے — دائیں (مقدمہ/وقوعہ) اور بائیں (پہنچنے/روانگی) */
   #ch173-doc .zf-mid{ display:grid; grid-template-columns:1.2fr 0.8fr; gap:0 9px; direction:rtl; margin-bottom:7px; }
   /* دائیں حصہ : لیبل | قدر | لیبل | تاریخ — دونوں تاریخیں ایک ہی کالم میں */
-  /* کالم : لیبل | مقدمہ نمبر (تنگ) | لیبل | تاریخ — دونوں تاریخیں ایک ہی کالم میں */
-  #ch173-doc .zf-gR{ display:grid; grid-template-columns:auto 2.1cm auto 2.9cm; gap:4px 4px; align-items:baseline; }
-  /* مقام وقوعہ کالم 2-3 پر پھیلتا ہے تاکہ تاریخ کالم 4 (مورخہ کی سیدھ) میں رہے */
+  /* ہر قدر اپنے لیبل کے ساتھ (فاصلہ 0.25cm — 1cm سے کہیں کم) */
+  #ch173-doc .zf-gR{ display:grid; grid-template-columns:auto auto auto minmax(0,1fr);
+    gap:4px 0.25cm; align-items:baseline; }
   #ch173-doc .zf-gR .zf-span2{ grid-column:span 2; }
   /* چھوٹی قدریں (نمبر/تاریخ) کبھی نہ ٹوٹیں */
   #ch173-doc .zf-nw{ white-space:nowrap; }
@@ -1206,9 +1232,9 @@ function _zimniFormCSS() {
   #ch173-doc .zf-acc{ display:block; direction:rtl; text-align:right; text-align-last:right; }
   #ch173-doc .zf-acc .nm{ unicode-bidi:plaintext; }
   /* ملزمان منتخب کرنے کا چھوٹا بٹن (چھپائی میں نہیں) */
-  /* ملزمان منتخب کرنے کا بٹن — کالم 2 (رپورٹ نمبر شمار) کی row 2 میں،
-     نمبر کے نیچے، بنام کی دائیں طرف */
-  #ch173-doc .zf-pick{ display:block; margin:6px auto 0; width:20px; height:20px;
+  /* ملزمان منتخب کرنے کا بٹن — کالم 2 row 2 میں، بنام کی بالکل سیدھ میں
+     (JS اسے بنام والی سطر کے برابر رکھتا ہے) */
+  #ch173-doc .zf-pick{ display:block; margin:0 auto; width:20px; height:20px;
     line-height:1; padding:0; border:1px solid var(--border,#999); border-radius:4px;
     background:#eef6ff; color:#0369a1; cursor:pointer; font-size:12px; font-weight:400; }
   @media print{ #ch173-doc .zf-pick{ display:none !important; } }
@@ -1305,8 +1331,8 @@ function _zimniDefaultBody(o, c) {
         <span class="zf-ln zf-nw" data-k="fdate">${firDate}</span>
 
         <span class="zf-lbl">تاریخ و مقام وقوعہ۔</span>
-        <span class="zf-ln zf-span2" data-k="wplace">${wPlace}</span>
         <span class="zf-ln zf-nw" data-k="wdate">${wDate}</span>
+        <span class="zf-ln zf-span2" data-k="wplace">${wPlace}</span>
       </div>
       <!-- بائیں : تھانہ میں پہنچنے / تھانہ سے روانگی -->
       <div class="zf-gL">
@@ -1338,7 +1364,7 @@ function _zimniDefaultBody(o, c) {
     <tbody>
       <tr>
         <td class="zf-c-action" data-k="action"></td>
-        <td class="zf-c-serial"><span class="zf-serno" data-k="serial">${serial}</span><button class="zf-pick no-print" contenteditable="false" onclick="_zimniAccPicker(event)" title="ملزمان منتخب کریں">&#9662;</button></td>
+        <td class="zf-c-serial"><button class="zf-pick no-print" contenteditable="false" onclick="_zimniAccPicker(event)" title="ملزمان منتخب کریں">&#9662;</button><span class="zf-serno" data-k="serial">${serial}</span></td>
         <td class="zf-c-body" colspan="2">
           <div class="zf-bl"><span class="zf-lbl">سرکار بذریعہ ۔</span> <span class="zf-bdyln" data-k="sarkar">${compl}</span></div>
           <div class="zf-bl zf-bl-banam"><span class="zf-lbl">بنام۔</span><span class="zf-bdyln zf-acclist" data-k="banam"></span></div>
@@ -1351,7 +1377,7 @@ function _zimniDefaultBody(o, c) {
 
   <!-- تسلسل — جو متن حالاتِ تفتیش کے خانے میں نہ سمائے وہ خود یہاں آ جاتا ہے
        (چالان کا وہی نظام: _ch173Overflow / _ch173AddBindMarks) -->
-  <div class="ch173-cont zf-cont" data-k="cont_text"></div>`;
+  <div class="zf-cont" data-k="cont_text"></div>`;
 }
 // ── SAVE ──────────────────────────────────────────────────────
 async function _saveZimni(silent) {
