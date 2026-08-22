@@ -154,8 +154,10 @@ function _renderZimniList() {
   try { if (typeof _ch173FullPage === 'function') _ch173FullPage(area); } catch (_) {}
 
   // ── ہمیشہ ضمنی نمبر کے حساب سے، بڑے سے چھوٹا (descending) ──
-  const list = _zimniList.slice()
-    .sort((a, b) => (parseInt(b.serial_no, 10) || 0) - (parseInt(a.serial_no, 10) || 0));
+  // نمبر شمار — پہلے ڈیٹابیس کا کالم، نہ ہو تو دستاویز کے ساتھ محفوظ نمبر
+  const sno = (z) => parseInt(z.serial_no, 10)
+    || parseInt((z.content || {}).serial_no, 10) || 0;
+  const list = _zimniList.slice().sort((a, b) => sno(b) - sno(a));
 
   const dt = (z) => z.report_date
     ? (typeof formatDate === 'function' ? formatDate(z.report_date) : z.report_date) : '—';
@@ -206,7 +208,7 @@ function _renderZimniList() {
       <tbody>
         ${list.map(z => `
           <tr ondblclick="_openZimni('${z.id}')" style="cursor:pointer;">
-            <td class="num">${esc(String(z.serial_no || ''))}</td>
+            <td class="num">${esc(String(sno(z) || ''))}</td>
             <td class="dtc">${esc(dt(z))}${wq(z) ? `<div class="wq">${esc(wq(z))}</div>` : ''}</td>
             <td>${esc(head(z))}</td>
             <td class="act">
@@ -284,7 +286,8 @@ async function _moveZimni(id) {
 window._moveZimni = _moveZimni;
 
 function _newZimni() {
-  const nextSerial = (_zimniList.reduce((m,z)=>Math.max(m, parseInt(z.serial_no)||0), 0)) + 1;
+  const nextSerial = (_zimniList.reduce((m,z)=>Math.max(m,
+    parseInt(z.serial_no,10) || parseInt((z.content||{}).serial_no,10) || 0), 0)) + 1;
   _zimniActive = { id: null, serial_no: nextSerial, content: null };
   _renderZimniEditor();
 }
@@ -388,7 +391,6 @@ function _renderZimniEditor() {
     // خانے کی ناپ + اضافی متن نیچے (چالان کا اصل نظام)
     try { _zimniBindSerialSync(); } catch (_) {}                                          // ضمنی نمبر ↔ نمبر شمار
     try { _zimniLayout(); } catch (_) {}
-    try { if (typeof _ch173BindOverflow === 'function') _ch173BindOverflow(); } catch (_) {}
     // ضمنی نمبر بدلتے ہی نیچے "نمبر شمار" بھی وہی ہو جائے
     try {
       const d0 = _zimniDoc();
@@ -403,7 +405,6 @@ function _renderZimniEditor() {
         });
       }
     } catch (_) {}
-    try { _zimniOverflowWatch(); } catch (_) {}
     [250, 900, 1800].forEach(ms => setTimeout(() => { try { _zimniLayout(); } catch (_) {} }, ms));                                                // table ki lakeerein moveable
     // Cursor ke mutabiq font dropdown + B/I/U ki halat khud badle (MS Word jaisa)
     try {
@@ -694,21 +695,93 @@ window._zimniBindSerialSync = _zimniBindSerialSync;
 //  1.2 سیکنڈ بعد "کوئی لکھ نہیں رہا" سمجھ کر متن ہلا دیتا تھا — جس سے
 //  کرسر (اور مائیک کا محفوظ کیا ہوا مقام) ٹوٹ جاتا تھا اور بولی ہوئی
 //  تحریر کہیں نہیں لگتی تھی۔ یہاں جانچ صفحے کے پورے حصے پر ہے۔
-function _zimniOverflowWatch() {
-  try { if (window._zfOvWatch) clearInterval(window._zfOvWatch); } catch (_) {}
-  window._zfOvWatch = setInterval(function () {
-    const doc = _zimniDoc();
-    if (!doc) { try { clearInterval(window._zfOvWatch); } catch (_) {} window._zfOvWatch = null; return; }
-    // صفحے کے کسی بھی حصے میں لکھا جا رہا ہو (یا مائیک چل رہا ہو) تو ہاتھ نہ لگاؤ
-    try { if (doc.contains(document.activeElement)) return; } catch (_) {}
-    const body = doc.querySelector('.zf-body');
-    if (!body || !body.clientHeight) return;
-    if (body.scrollHeight > body.clientHeight + 1) {
-      try { if (typeof _ch173OverflowSettle === 'function') _ch173OverflowSettle(2); } catch (_) {}
+
+// ═══════════════════════════════════════════════════════════════
+//  مثل باندھنے کی جگہ — دوسرے صفحے سے، اوپر بائیں کونے میں مثلث
+//  نوک اوپر بائیں کونے پر، دونوں بازو 2-2 انچ؛ متن اس سے بچ کر بہتا ہے۔
+//  اوپر کے مارجن کے بعد ایک سطر کی جگہ (margin-top:1.25em)۔
+//  NOTE: چالان میں یہ کام cont_text پر ہوتا ہے؛ ضمنی میں اضافی متن کا
+//  خانہ ہوتا ہی نہیں، اس لیے یہ سیدھا .zf-body کے متن پر لگتا ہے۔
+//  صرف چھپائی کے لیے — اسکرین پر کوئی تبدیلی نہیں۔
+// ═══════════════════════════════════════════════════════════════
+function _zimniAddBindMarks() {
+  const daale = [];
+  const doc = _zimniDoc();
+  if (!doc) return daale;
+  const host = doc.querySelector('.zf-body');
+  if (!host || !host.firstChild) return daale;
+
+  const IN = 96;
+  const paper = (typeof _ch173Paper !== 'undefined') ? _ch173Paper : 'legal';
+  const safhaH = ((paper === 'a4') ? 11.7 : 13) * IN;
+  let hashiya = 0;
+  try {
+    const cs = getComputedStyle(doc);
+    hashiya = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+  } catch (_) {}
+  const kaam = safhaH - hashiya;                  // ایک صفحے کی کام کی اونچائی
+  if (kaam < 100) return daale;
+
+  const docTop = doc.getBoundingClientRect().top;
+
+  // متن کے تمام ٹکڑے + ان کی لمبائی
+  const tukre = [];
+  let kul = 0;
+  const w = document.createTreeWalker(host, NodeFilter.SHOW_TEXT, null);
+  let n;
+  while ((n = w.nextNode())) {
+    if (!n.nodeValue.length) continue;
+    tukre.push({ node: n, shuru: kul });
+    kul += n.nodeValue.length;
+  }
+  if (!kul) return daale;
+
+  const jagah = (i) => {                          // i-ویں حرف کی جگہ
+    for (let k = 0; k < tukre.length; k++) {
+      const t = tukre[k];
+      if (i >= t.shuru && i < t.shuru + t.node.nodeValue.length) {
+        try {
+          const rg = document.createRange();
+          rg.setStart(t.node, i - t.shuru);
+          rg.setEnd(t.node, i - t.shuru + 1);
+          const r = rg.getBoundingClientRect();
+          return r.height ? (r.top - docTop) : null;
+        } catch (_) { return null; }
+      }
     }
-  }, 1500);
+    return null;
+  };
+
+  const aakhri = jagah(kul - 1);
+  if (aakhri == null) return daale;
+  const safhe = Math.floor(aakhri / kaam);        // متن کتنے صفحوں تک گیا
+  for (let p = 1; p <= safhe; p++) {
+    const hadd = p * kaam;
+    let lo = 0, hi = kul - 1, mila = -1;
+    for (let g = 0; g < 24 && lo <= hi; g++) {
+      const mid = (lo + hi) >> 1;
+      const y = jagah(mid);
+      if (y == null) { lo = mid + 1; continue; }
+      if (y >= hadd) { mila = mid; hi = mid - 1; } else { lo = mid + 1; }
+    }
+    if (mila < 0) continue;
+    for (const t of tukre) {
+      const off = mila - t.shuru;
+      if (off >= 0 && off < t.node.nodeValue.length) {
+        try {
+          const baad = t.node.splitText(off);
+          const tri = document.createElement('span');
+          tri.className = 'zf-bindmark';
+          t.node.parentNode.insertBefore(tri, baad);
+          daale.push(tri);
+        } catch (_) {}
+        break;
+      }
+    }
+  }
+  return daale;
 }
-window._zimniOverflowWatch = _zimniOverflowWatch;
+window._zimniAddBindMarks = _zimniAddBindMarks;
 
 function _zimniFitTable() {
   const doc = _zimniDoc();
@@ -777,36 +850,6 @@ function _zimniAlignSerial() {
 }
 window._zimniAlignSerial = _zimniAlignSerial;
 
-function _zimniFitBody() {
-  const doc = _zimniDoc();
-  if (!doc) return;
-  const td   = doc.querySelector('td.zf-c-body');
-  const body = doc.querySelector('.zf-body');
-  if (!td || !body) return;
-  const prev = body.style.height;
-  body.style.height = '';
-  let h = 0;
-  try {
-    const tr = td.getBoundingClientRect();
-    const br = body.getBoundingClientRect();
-    if (!tr.height || !br.height) { body.style.height = prev; return; }
-    let padB = 0;
-    try { padB = parseFloat(getComputedStyle(td).paddingBottom) || 0; } catch (_) {}
-    // صفحہ scale ہوا ہو تو ناپ کو اصل پیمانے پر لاؤ
-    const scale = (td.offsetHeight && tr.height) ? (tr.height / td.offsetHeight) : 1;
-    h = Math.floor(((tr.bottom - br.top) / (scale || 1)) - padB);
-  } catch (_) { body.style.height = prev; return; }
-  // AHEM: جگہ کم ہو تب بھی خانہ کھلا نہ چھوڑو — ورنہ متن خانے کو بڑا کر کے
-  // پورے ٹیبل کو اگلے صفحے پر دھکیل دیتا ہے۔ کم از کم ایک سطر رکھو، باقی
-  // متن خودبخود ٹیبل کے نیچے چلا جائے گا۔
-  let lh = 0;
-  try { lh = parseFloat(getComputedStyle(body).lineHeight) || 0; } catch (_) {}
-  if (!lh) lh = 30;
-  if (h < lh) h = Math.round(lh);
-  body.style.height = h + 'px';
-  body.style.overflow = 'hidden';
-}
-window._zimniFitBody = _zimniFitBody;
 
 // ناپ + متن جمانا — ایک ہی ترتیب سے (چالان کے _ch173Layout جیسا)
 // ═══ ٹیبل ٹھیک ایک صفحے میں — دوسرے صفحے پر نہ جائے ═══
@@ -842,6 +885,9 @@ function _zimniFitTable() {
     const hH = thead ? thead.offsetHeight : 0;
     let h = Math.floor(kaam - tTop - hH - 2);
     if (h < 120) h = 120;
+    // AHEM: خانے کی 'height' دراصل کم از کم ناپ ہے۔ متن کم ہو تو ٹیبل پورا
+    // صفحہ بھرتا ہے؛ متن زیادہ ہو تو خانہ خود بڑا ہو کر قطار اگلے صفحے پر
+    // جاری رہتی ہے (ضمنی بیرونی کا یہی اصول ہے)۔
     if (String(td.style.height) !== (h + 'px')) {
       table.querySelectorAll('tbody td').forEach(c => { c.style.height = h + 'px'; });
     }
@@ -887,13 +933,7 @@ window._zimniSyncSerial = _zimniSyncSerial;
 
 // ناپ + متن جمانا — ایک ہی ترتیب سے (چالان کے _ch173Layout جیسا)
 function _zimniLayout() {
-  // ترتیب: ٹیبل صفحے میں فٹ → خانے کی ناپ → اضافی متن نیچے → دوبارہ
-  // (ایک چکر کافی نہیں: متن نیچے جانے سے ناپ بدلتی ہے، اسی لیے تین بار)
-  for (let i = 0; i < 3; i++) {
-    try { _zimniFitTable(); } catch (_) {}
-    try { _zimniFitBody(); } catch (_) {}
-    try { if (typeof _ch173OverflowSettle === 'function') _ch173OverflowSettle(3); } catch (_) {}
-  }
+  try { _zimniFitTable(); } catch (_) {}      // ٹیبل کم از کم پورا صفحہ بھرے
   try { _zimniSyncSerial(); } catch (_) {}
   try { _zimniAlignSerial(); } catch (_) {}
 }
@@ -1194,7 +1234,10 @@ function _zimniFormCSS() {
   #ch173-doc .zf-nw{ white-space:nowrap; }
   /* بائیں حصہ : لیبل | قدر */
   #ch173-doc .zf-gL{ display:grid; grid-template-columns:auto 1fr; gap:4px 4px; align-items:baseline; align-content:start; }
-  #ch173-doc .zf-mrow{ display:flex; gap:11px; flex-wrap:wrap; align-items:baseline; margin-bottom:7px; direction:rtl; }
+  #ch173-doc .zf-mrow{ display:flex; gap:5px; flex-wrap:wrap; align-items:baseline; margin-bottom:7px; direction:rtl; }
+  /* بحد — اپنے مواد جتنا؛ متن بڑھے تو خود پھیل جائے، جرم خود سِمٹ جائے */
+  #ch173-doc .zf-mrow > .zf-fld{ flex:0 1 auto; min-width:0; }
+  #ch173-doc .zf-mrow > .zf-fld .zf-ln{ flex:0 1 auto; min-width:2em; }
   #ch173-doc .zf-fld{ display:flex; align-items:baseline; gap:3px; }
   #ch173-doc .zf-fld.grow{ flex:1; }
   #ch173-doc .zf-lbl{ font-weight:normal; white-space:nowrap; }
@@ -1236,6 +1279,8 @@ function _zimniFormCSS() {
   /* قطار کی اونچائی JS (_zimniFitTable) حساب سے دیتا ہے — یہ صرف ابتدائی ناپ */
   #ch173-doc table.zf-tbl tbody td{ height:18cm; }
   #ch173-doc .zf-serno{ display:block; }
+  /* مثل باندھنے کی جگہ — صرف چھپائی میں */
+  #ch173-doc .zf-bindmark{ display:none; }
   /* باہر کی دائیں، بائیں اور نیچے کی لکیریں نہیں */
   #ch173-doc .zf-tbl tr > th:first-child, #ch173-doc .zf-tbl tr > td:first-child{ border-right:none; }
   #ch173-doc .zf-tbl tr > th:last-child,  #ch173-doc .zf-tbl tr > td:last-child{ border-left:none; }
@@ -1369,7 +1414,7 @@ function _zimniDefaultBody(o, c) {
     </div>
 
     <div class="zf-mrow">
-      <span class="zf-fld"><span class="zf-lbl">بحد۔</span><span class="zf-ln" data-k="behad" style="min-width:120px">${behad}</span></span>
+      <span class="zf-fld"><span class="zf-lbl">بحد۔</span><span class="zf-ln" data-k="behad">${behad}</span></span>
       <span class="zf-jurm"><span class="zf-lbl">جرم۔</span><span class="zf-ln zf-j-body" data-k="jurm">${E(jBody)}</span><span class="zf-j-suf" data-k="jurm_suf">${E(jSuf)}</span></span>
     </div>
   </div>
@@ -1394,15 +1439,11 @@ function _zimniDefaultBody(o, c) {
           <div class="zf-bl"><span class="zf-lbl">سرکار بذریعہ ۔</span> <span class="zf-bdyln" data-k="sarkar">${compl}</span></div>
           <div class="zf-bl zf-bl-banam"><span class="zf-lbl">بنام۔</span><span class="zf-bdyln zf-acclist" data-k="banam"></span></div>
           <div class="zf-bl"><span class="zf-tab"></span><span class="zf-tab"></span><span class="zf-tab"></span><span class="zf-lbl">مرتبہ ۔</span> <span class="zf-bdyln zf-io" data-k="murattib">${ioE}</span></div>
-          <div class="zf-body" data-mic="true" data-k="halaat"><br></div>
+          <div class="zf-body" data-mic="true" data-k="halaat">جناب عالیٰ! بحوالہ رپورٹ </div>
         </td>
       </tr>
     </tbody>
-  </table>
-
-  <!-- تسلسل — جو متن حالاتِ تفتیش کے خانے میں نہ سمائے وہ خود یہاں آ جاتا ہے
-       (چالان کا وہی نظام: _ch173Overflow / _ch173AddBindMarks) -->
-  <div class="zf-cont" data-k="cont_text"></div>`;
+  </table>`;
 }
 // ── SAVE ──────────────────────────────────────────────────────
 async function _saveZimni(silent) {
@@ -1419,7 +1460,8 @@ async function _saveZimni(silent) {
     if (!isNaN(sv) && sv > 0) serialNo = sv;
   } catch (_) {}
   if (!serialNo) {   // نیا — سب سے بڑے نمبر سے ایک آگے
-    try { serialNo = Math.max(0, ..._zimniList.map(x => parseInt(x.serial_no, 10) || 0)) + 1; }
+    try { serialNo = Math.max(0, ..._zimniList.map(x =>
+      parseInt(x.serial_no, 10) || parseInt((x.content||{}).serial_no, 10) || 0)) + 1; }
     catch (_) { serialNo = 1; }
   }
   // ہیڈ (قسم) — toolbar کے خانے سے
@@ -1435,7 +1477,7 @@ async function _saveZimni(silent) {
     case_id: _zimniCaseId,
     serial_no: serialNo,
     report_date: (z.report_date || savedAt.slice(0, 10)),   // پہلی بار کی تاریخ برقرار
-    content: { bodyHtml, head, saved_at: savedAt },
+    content: { bodyHtml, head, serial_no: serialNo, saved_at: savedAt },
   };
 
   try {
@@ -1578,11 +1620,9 @@ function _printZimni() {
   //    (_ch173AddBindMarks بہتے ہوئے متن میں ٹھیک جگہ ناپ کر نشان لگاتا ہے،
   //     اور اوپر کے مارجن کے بعد ایک سطر کی جگہ خود چھوڑتا ہے)
   let marks = [];
-  try { if (typeof _ch173AddBindMarks === 'function') marks = _ch173AddBindMarks() || []; } catch (_) {}
+  try { marks = _zimniAddBindMarks() || []; } catch (_) {}
   let inner = _zimniCleanHTML(ed.innerHTML);
   try { marks.forEach(m => m.remove()); ed.normalize(); } catch (_) {}
-  // اگر تسلسل والا خانہ خالی تھا (کوئی نشان نہ لگا) تو پرانا طریقہ آزماؤ
-  if (!marks.length) { try { inner += _zimniBindHTML(); } catch (_) {} }
   try { _zimniLayout(); } catch (_) {}          // اسکرین واپس اپنی حالت پر
   _zimniPrintDoc(inner);
 }
@@ -1620,20 +1660,18 @@ function _zimniPrintHTML(inner) {
         -webkit-clip-path:polygon(0 0, 2in 0, 0 2in); }
       /* ── مثل باندھنے کی جگہ — دوسرے صفحے سے، اوپر بائیں کونے میں مثلث ──
          نوک اوپر بائیں کونے پر، دونوں بازو 2-2 انچ؛ متن اس سے بچ کر بہتا ہے۔
-         اوپر کے مارجن کے بعد ایک سطر کی جگہ (margin-top:1.25em)۔
-         (تعریف یہاں پوری لکھی ہے تاکہ report173 کی CSS پر انحصار نہ ہو) */
-      #ch173-doc .ch173-bind{ display:block !important; float:left;
+         اوپر کے مارجن کے بعد ایک سطر کی جگہ (margin-top:1.25em) */
+      #ch173-doc .zf-bindmark{ display:block !important; float:left;
         width:2in; height:2in; margin-top:1.25em;
         shape-outside:polygon(0 0, 2in 0, 0 2in);
         -webkit-shape-outside:polygon(0 0, 2in 0, 0 2in);
         shape-margin:3mm; -webkit-shape-margin:3mm;
         clip-path:polygon(0 0, 2in 0, 0 2in);
         -webkit-clip-path:polygon(0 0, 2in 0, 0 2in); }
-      #ch173-doc .ch173-pgbrk{ display:block !important; height:0 !important;
-        break-before:page !important; page-break-before:always !important; }
-      /* ٹیبل کبھی دوسرے صفحے پر نہ ٹوٹے */
-      #ch173-doc table.zf-tbl{ page-break-inside:avoid; break-inside:avoid; }
-      #ch173-doc .zf-cont:empty, #ch173-doc .ch173-cont:empty{ display:none !important; }
+      /* قطار 3 اگلے صفحے پر جاری رہے */
+      #ch173-doc table.zf-tbl, #ch173-doc table.zf-tbl tbody,
+      #ch173-doc table.zf-tbl tbody tr, #ch173-doc table.zf-tbl tbody td{
+        page-break-inside:auto !important; break-inside:auto !important; }
       .no-print, button, select{ display:none !important; }
       #ch173-doc, #ch173-doc *{ orphans:2; widows:2; }
     </style></head><body><div id="ch173-doc">${inner}</div></body></html>`;
