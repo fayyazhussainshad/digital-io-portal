@@ -406,6 +406,7 @@ function _renderZimniEditor() {
     try { if (saved && saved.saved_at) _zimniStampUpdated(saved.saved_at); } catch (_) {}
     // خانے کی ناپ + اضافی متن نیچے (چالان کا اصل نظام)
     try { _zimniLayout(); } catch (_) {}
+    try { _zimniStartNumbers(); } catch (_) {}          // خودکار نمبر — ہر حال میں چالو
     // ضمنی نمبر بدلتے ہی نیچے "نمبر شمار" بھی وہی ہو جائے
     try {
       const d0 = _zimniDoc();
@@ -900,6 +901,62 @@ function _zimniParas() {
   return paras;
 }
 
+// ═══ نمبروں کو ہر حال میں چالو رکھو ═══
+// (1) لکھنے پر  (2) کسی بھی DOM تبدیلی پر (MutationObserver)  (3) وقفے سے
+// ایک ہی راستے پر بھروسہ نہیں — پہلے صرف 'input' پر چلتا تھا اور بعض
+// صورتوں میں (paste، undo، مائیک، متن ہٹنے) نمبر پرانے رہ جاتے تھے۔
+function _zimniStartNumbers() {
+  const doc = _zimniDoc();
+  if (!doc) return;
+  const kick = () => {
+    clearTimeout(doc._zfNumT);
+    doc._zfNumT = setTimeout(() => {
+      try { _zimniAutoNumbers(); } catch (_) {}
+      try { _zimniAlignSerial(); } catch (_) {}
+    }, 200);
+  };
+  // افسر خود نمبر بدلے تو وہ نمبر پکا (خودکار اُسے نہیں چھیڑے گا)
+  if (!doc._zfNumEdit) {
+    doc._zfNumEdit = true;
+    doc.addEventListener('input', (e) => {
+      try {
+        const n = e.target && e.target.closest ? e.target.closest('.zf-num') : null;
+        if (n) { n.dataset.manual = '1'; return; }      // نمبر کی اپنی ترمیم
+        const inNums = e.target && e.target.closest && e.target.closest('.zf-nums');
+        if (inNums) return;
+      } catch (_) {}
+      kick();
+    });
+  }
+  // DOM بدلے تو بھی (Enter سے نئے خانے بننا، paste، undo وغیرہ)
+  try {
+    if (!doc._zfNumObs && typeof MutationObserver !== 'undefined') {
+      doc._zfNumObs = new MutationObserver((muts) => {
+        // نمبروں کے اپنے خانے کی تبدیلی پر دوبارہ نہ چلو (ورنہ چکر بن جائے)
+        for (const m of muts) {
+          const t = m.target;
+          if (t && t.closest && t.closest('.zf-nums')) continue;
+          kick(); return;
+        }
+      });
+      doc._zfNumObs.observe(doc, { childList: true, subtree: true, characterData: true });
+    }
+  } catch (_) {}
+  // حفاظتی جال — ہر 2 سیکنڈ بعد جانچ (صرف تب چلتا ہے جب تعداد بدلی ہو)
+  try { if (doc._zfNumIv) clearInterval(doc._zfNumIv); } catch (_) {}
+  doc._zfNumIv = setInterval(() => {
+    const d = _zimniDoc();
+    if (!d) { try { clearInterval(doc._zfNumIv); } catch (_) {} return; }
+    try {
+      const chahiye = _zimniParas().length;
+      const mojood  = d.querySelectorAll('.zf-num').length;
+      if (chahiye !== mojood) { _zimniAutoNumbers(); _zimniAlignSerial(); }
+    } catch (_) {}
+  }, 2000);
+  kick();
+}
+window._zimniStartNumbers = _zimniStartNumbers;
+
 function _zimniAutoNumbers() {
   const doc = _zimniDoc();
   if (!doc) return;
@@ -909,11 +966,14 @@ function _zimniAutoNumbers() {
   // ہوتا ہی نہیں (وہ پرانے .zf-serno کے ساتھ محفوظ ہوئی تھیں)، اس لیے
   // نمبر لگنے کی جگہ ہی نہیں ملتی تھی۔ نہ ہو تو یہیں بنا دو۔
   let nums = doc.querySelector('.zf-nums');
+  if (nums && nums.getAttribute('contenteditable') !== 'true') {
+    nums.setAttribute('contenteditable', 'true');     // پرانی ضمنیوں کے لیے
+  }
   if (!nums) {
     try { td.querySelectorAll('.zf-serno').forEach(el => el.remove()); } catch (_) {}
     nums = document.createElement('div');
     nums.className = 'zf-nums';
-    nums.setAttribute('contenteditable', 'false');
+    nums.setAttribute('contenteditable', 'true');
     td.appendChild(nums);
   }
   // ▾ بٹن بھی نہ ہو تو لگا دو (پرانی ضمنیوں میں وہ بنام کی سطر میں تھا)
@@ -939,8 +999,11 @@ function _zimniAutoNumbers() {
     nums.appendChild(d);
   }
   [...nums.children].forEach((d, i) => {
-    const t = String(i + 1);
-    if (d.textContent !== t) d.textContent = t;
+    // افسر نے خود کوئی نمبر بدلا ہو تو اُسے ہاتھ نہ لگاؤ
+    if (d.dataset.manual !== '1') {
+      const t = String(i + 1);
+      if (d.textContent !== t) d.textContent = t;
+    }
     d.style.marginTop = '0px';
   });
   if (!paras.length) return;
@@ -1470,8 +1533,8 @@ function _zimniDefaultBody(o, c) {
         <span class="zf-ln zf-nw" data-k="fdate">${firDate}</span>
 
         <span class="zf-lbl">تاریخ و مقام وقوعہ۔</span>
-        <span class="zf-ln zf-nw" data-k="wdate">${wDate}</span>
         <span class="zf-ln zf-span2" data-k="wplace">${wPlace}</span>
+        <span class="zf-ln zf-nw" data-k="wdate">${wDate}</span>
       </div>
       <!-- بائیں : تھانہ میں پہنچنے / تھانہ سے روانگی -->
       <div class="zf-gL">
@@ -1503,7 +1566,7 @@ function _zimniDefaultBody(o, c) {
     <tbody>
       <tr>
         <td class="zf-c-action" data-k="action"></td>
-        <td class="zf-c-serial"><button class="zf-pick no-print" contenteditable="false" onclick="_zimniAccPicker(event)" title="ملزمان منتخب کریں">&#9662;</button><div class="zf-nums" contenteditable="false"></div></td>
+        <td class="zf-c-serial"><button class="zf-pick no-print" contenteditable="false" onclick="_zimniAccPicker(event)" title="ملزمان منتخب کریں">&#9662;</button><div class="zf-nums" contenteditable="true"></div></td>
         <td class="zf-c-body" colspan="2">
           <div class="zf-bl"><span class="zf-lbl">سرکار بذریعہ ۔</span> <span class="zf-bdyln" data-k="sarkar">${compl}</span></div>
           <div class="zf-bl zf-bl-banam"><span class="zf-lbl">بنام۔</span><span class="zf-bdyln zf-acclist" data-k="banam"></span></div>
