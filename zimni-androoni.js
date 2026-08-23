@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_A_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_A_VER = 'zimni-androoni v10 — topbar simplified (no paper/head/link fields), single Save button, tighter top padding';
+const ZIMNI_A_VER = 'zimni-androoni v11 — witness statement starts with FIR matn ("بیان کیا کہ"), print-all label updated';
 window.ZIMNI_A_VER = ZIMNI_A_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -229,7 +229,7 @@ function _renderZimniAList() {
   <div style="padding:14px;direction:rtl;height:100%;overflow-y:auto;">
     <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap;">
       <button class="btn btn-primary btn-sm" onclick="_newZimniA()">➕ بیان درج کریں</button>
-      <button class="btn btn-secondary btn-sm" onclick="_printAllZimniA()">🖨️ تمام اندرونی ضمنیاں</button>
+      <button class="btn btn-secondary btn-sm" onclick="_printAllZimniA()">🖨️ تمام بیانات</button>
       <div style="flex:1;"></div>
       <span style="font-size:11px;color:var(--text-muted);">ترتیب: ضمنی نمبر — بڑے سے چھوٹا</span>
     </div>
@@ -488,7 +488,7 @@ window._zaLoadWitnesses = _zaLoadWitnesses;
 // AHEM: "display:flex" yahan bhi nahi (copy/paste par newline-per-item
 // bug — meta-line ke masle se seekha gaya sabaq). Left-pinning ke liye
 // sirf "float:left" (normal block flow, flex nahi) — copy-safe.
-function _zaInsertWitnessStatement(witness) {
+async function _zaInsertWitnessStatement(witness) {
   if (!witness) return;
   const doc = _zimniDoc();
   const body = doc && doc.querySelector('.zfa-body');
@@ -501,6 +501,18 @@ function _zaInsertWitnessStatement(witness) {
   const nm  = E(witness.full_name || witness.name || '');
   const zno = (_zaActive && _zaActive.serial_no) ? E(_zaActive.serial_no) : '۔۔۔۔';
 
+  // گواہ کا بیان FIR کے متن سے شروع ہوتا ہے — report173 کے موجودہ
+  // fetch functions (_ch173LoadFirMatn/_ch173FirText، fir_matn table
+  // سے) دوبارہ استعمال، کوئی نیا اندازہ نہیں لگایا۔
+  let firText = '';
+  try {
+    if (typeof _ch173LoadFirMatn === 'function' &&
+        (typeof _ch173FirMatn === 'undefined' || _ch173FirMatn === null)) {
+      await _ch173LoadFirMatn();
+    }
+    if (typeof _ch173FirText === 'function') firText = _ch173FirText() || '';
+  } catch (_) {}
+
   const block = document.createElement('div');
   block.className = 'zfa-wit-block';
   block.setAttribute('data-witness-id', witness.id || '');
@@ -510,7 +522,7 @@ function _zaInsertWitnessStatement(witness) {
       '<span class="zfa-wit-head">بیان ازاں (' + nm + '&nbsp;ولد&nbsp;۔۔۔۔۔۔۔۔&nbsp;قوم&nbsp;۔۔۔۔۔۔۔۔&nbsp;سکنہ&nbsp;۔۔۔۔۔۔۔۔۔۔)</span>' +
       '<span class="zfa-wit-ref">(بحوالہ ضمنی نمبر&nbsp;' + zno + '&nbsp;&nbsp;فقرہ نمبر&nbsp;۔۔۔۔۔۔۔۔۔۔&nbsp;&nbsp;زیردفعہ 161 ض ف)</span>' +
     '</div>' +
-    '<div class="zfa-wit-stmt" data-mic="true"><br></div>' +
+    '<div class="zfa-wit-stmt" data-mic="true">بیان کیا کہ&nbsp;' + E(firText) + '</div>' +
     '<div class="zfa-wit-close">بیان سن لیا ہے درست ہے</div>' +
     '<div class="zfa-wit-sign"><div class="zfa-wit-io">' + E(io) + '</div>' +
     '<div class="zfa-wit-date">' + E(today) + '</div></div>';
@@ -518,7 +530,7 @@ function _zaInsertWitnessStatement(witness) {
 
   try { _zaLayout(); } catch (_) {}
   try { _r173Dirty = true; } catch (_) {}
-  // کرسر نئے بیان کے خالی حصے میں لے جاؤ
+  // کرسر نئے بیان کے آخر میں لے جاؤ (تاکہ officer فوراً اپنی بات جوڑ سکے)
   try {
     const stmt = block.querySelector('.zfa-wit-stmt');
     const r = document.createRange(); r.selectNodeContents(stmt); r.collapse(false);
