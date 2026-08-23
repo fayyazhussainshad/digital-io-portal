@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_A_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_A_VER = 'zimni-androoni v6 — meta line center-aligned, form no. 25-54(2), gutter cell explicit-editable';
+const ZIMNI_A_VER = 'zimni-androoni v8 — multi-witness 161 statements, witness picker, list view گواہان column';
 window.ZIMNI_A_VER = ZIMNI_A_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -197,7 +197,13 @@ function _renderZimniAList() {
       return String(h).padStart(2, '0') + ':' + m + ' ' + ap;
     } catch (_) { return ''; }
   };
-  const head = (z) => ((z.content || {}).head || 'اندرونی ضمنی');
+  const head = (z) => ((z.content || {}).head || 'بیان');
+  const wits = (z) => {
+    try {
+      const arr = ((z.content || {}).witnesses) || [];
+      return arr.length ? arr.join('، ') : '—';
+    } catch (_) { return '—'; }
+  };
 
   area.innerHTML = `
   <style>
@@ -222,7 +228,7 @@ function _renderZimniAList() {
   </style>
   <div style="padding:14px;direction:rtl;height:100%;overflow-y:auto;">
     <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap;">
-      <button class="btn btn-primary btn-sm" onclick="_newZimniA()">➕ اندرونی ضمنی درج کریں</button>
+      <button class="btn btn-primary btn-sm" onclick="_newZimniA()">➕ بیان درج کریں</button>
       <button class="btn btn-secondary btn-sm" onclick="_printAllZimniA()">🖨️ تمام اندرونی ضمنیاں</button>
       <div style="flex:1;"></div>
       <span style="font-size:11px;color:var(--text-muted);">ترتیب: ضمنی نمبر — بڑے سے چھوٹا</span>
@@ -232,7 +238,8 @@ function _renderZimniAList() {
       <thead><tr>
         <th class="num">نمبر شمار</th>
         <th class="dtc">تاریخ و وقت</th>
-        <th>ہیڈ (قسم)</th>
+        <th>بیان</th>
+        <th>گواہان</th>
         <th class="act">ایکشن</th>
       </tr></thead>
       <tbody>
@@ -241,6 +248,7 @@ function _renderZimniAList() {
             <td class="num">${esc(String(sno(z) || ''))}</td>
             <td class="dtc">${esc(dt(z))}${wq(z) ? `<div class="wq">${esc(wq(z))}</div>` : ''}</td>
             <td>${esc(head(z))}</td>
+            <td>${esc(wits(z))}</td>
             <td class="act">
               <button class="zab" onclick="event.stopPropagation();_openZimniA('${z.id}')" title="ترمیم">✏️</button>
               <button class="zab" onclick="event.stopPropagation();_copyZimniA('${z.id}')" title="نقل (Copy)">📋</button>
@@ -254,8 +262,8 @@ function _renderZimniAList() {
     </table>` : `
     <div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
       <div style="font-size:40px;margin-bottom:10px;">📋</div>
-      <div style="font-size:14px;">ابھی کوئی اندرونی ضمنی نہیں</div>
-      <div style="font-size:11px;margin-top:6px;">اوپر "اندرونی ضمنی درج کریں" پر کلک کریں</div>
+      <div style="font-size:14px;">ابھی کوئی بیان درج نہیں</div>
+      <div style="font-size:11px;margin-top:6px;">اوپر "بیان درج کریں" پر کلک کریں</div>
     </div>`}
   </div>`;
 }
@@ -321,7 +329,7 @@ function _renderZimniAEditor() {
         <option value="legal" ${paper==='legal'?'selected':''}>لیگل (8.5×13)</option>
         <option value="a4"    ${paper==='a4'   ?'selected':''}>A4 (8.27×11.7)</option>
       </select>
-      <input id="zfa-head-in" type="text" value="${esc(((saved && saved.head) || 'اندرونی ضمنی'))}"
+      <input id="zfa-head-in" type="text" value="${esc(((saved && saved.head) || 'بیان'))}"
         placeholder="ہیڈ (قسم)" title="ہیڈ / قسم — فہرست میں یہی نظر آتا ہے"
         style="${selCss}width:150px;font-family:'Jameel Noori Nastaleeq',serif;">
       <div style="margin-right:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
@@ -351,6 +359,7 @@ function _renderZimniAEditor() {
         <span id="zfa-updated" style="font-size:11px;color:var(--text-muted);white-space:nowrap;align-self:center;"></span>
         <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printZimniA()">🖨️ پرنٹ</button>
         ${sep}
+        <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_zaWitnessPickerOpen(event)" title="کسی گواہ کا بیان اس صفحے میں شامل کریں">👤 گواہ کا بیان</button>
         <button class="btn btn-secondary btn-sm dio-modbtn" onclick="if(typeof openZimniEditor==='function') openZimniEditor(_zaCaseId)" title="اسی مقدمہ کی بیرونی ضمنی">🔗 بیرونی ضمنی</button>
       </div>
     </div>
@@ -454,6 +463,134 @@ window._zaStampUpdated = _zaStampUpdated;
 //  نہیں (اصل فارم میں ہیڈر سطر ہے ہی نہیں) — اسی لیے grips سیدھا
 //  tbody کی قطار کے td پر لگتے ہیں۔
 // ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  گواہان کے بیانات — aik androoni zimni par 2 ya ziada gawahan ke
+//  byanat add kiye ja sakte hain (161 CrPC). Har gawah ke liye:
+//  naam ka heading + khali statement jagah + neeche tafteeshi
+//  afsar ka naam+tareekh (khud add hota hai jahan bayan khatam hota).
+//  Gawah case_witnesses table (witnesses.js) se fetch hota hai.
+// ═══════════════════════════════════════════════════════════════
+let _zaWitnesses = null;
+
+async function _zaLoadWitnesses() {
+  const cid = _zaCaseId
+           || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
+           || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
+  if (!cid || typeof supabaseClient === 'undefined') { _zaWitnesses = []; return _zaWitnesses; }
+  try {
+    const { data } = await supabaseClient.from('case_witnesses')
+      .select('id,full_name,witness_type').eq('case_id', cid)
+      .order('created_at', { ascending: true });
+    _zaWitnesses = data || [];
+  } catch (_) { _zaWitnesses = []; }
+  return _zaWitnesses;
+}
+window._zaLoadWitnesses = _zaLoadWitnesses;
+
+// Gawah ka bayan block sfhe mein daalna — naam (fixed) + khali jagah
+// (yahan officer likhta hai) + neeche khud-ba-khud tafteeshi afsar
+// ka naam aur tareekh (jahan bayan khatam hota hai)
+function _zaInsertWitnessStatement(witness) {
+  if (!witness) return;
+  const doc = _zimniDoc();
+  const body = doc && doc.querySelector('.zfa-body');
+  if (!body) return;
+  const o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
+  const io = (typeof getIOSignLine === 'function') ? getIOSignLine()
+           : ((o.full_name || '') + (o.designation ? ' ' + o.designation : ''));
+  const today = (typeof formatDate === 'function') ? formatDate(new Date()) : '';
+  const E = (v) => (typeof esc === 'function') ? esc(v == null ? '' : String(v)) : String(v == null ? '' : v);
+  const nm = E(witness.full_name || witness.name || '');
+
+  const block = document.createElement('div');
+  block.className = 'zfa-wit-block';
+  block.setAttribute('data-witness-id', witness.id || '');
+  block.setAttribute('data-witness-name', (witness.full_name || witness.name || '').trim());
+  block.innerHTML =
+    '<div class="zfa-wit-head">بیان گواہ:&nbsp;<span class="zfa-wit-name">' + nm + '</span></div>' +
+    '<div class="zfa-wit-stmt" data-mic="true"><br></div>' +
+    '<div class="zfa-wit-sign">تفتیشی افسر:&nbsp;<span class="zfa-wit-io">' + E(io) + '</span>' +
+    '&nbsp;&nbsp;&nbsp;تاریخ:&nbsp;<span class="zfa-wit-date">' + E(today) + '</span></div>';
+  body.appendChild(block);
+
+  try { _zaLayout(); } catch (_) {}
+  try { _r173Dirty = true; } catch (_) {}
+  // کرسر نئے بیان کے خالی حصے میں لے جاؤ
+  try {
+    const stmt = block.querySelector('.zfa-wit-stmt');
+    const r = document.createRange(); r.selectNodeContents(stmt); r.collapse(false);
+    const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    stmt.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  } catch (_) {}
+}
+window._zaInsertWitnessStatement = _zaInsertWitnessStatement;
+
+// گواہ چننے کی فہرست — چالان/بیرونی ضمنی کے ▾ جیسی، مگر SINGLE-select
+// (ایک وقت میں ایک ہی گواہ — checkbox نہیں، radio)
+async function _zaWitnessPickerOpen(ev) {
+  if (ev && ev.preventDefault) ev.preventDefault();
+  const old = document.getElementById('zfa-wit-menu');
+  if (old) old.remove();
+  const btn = (ev && ev.currentTarget) || document.body;
+
+  let list = _zaWitnesses;
+  if (!list || !list.length) list = await _zaLoadWitnesses();
+  if ((!list || !list.length) && typeof _witnessList !== 'undefined' && _witnessList && _witnessList.length) list = _witnessList;
+  list = (list || []).filter(w => (w.full_name || '').trim());
+  if (!list.length) {
+    if (typeof showToast === 'function') showToast('ℹ️ اس مقدمہ میں کوئی گواہ درج نہیں', 'info');
+    return;
+  }
+
+  const E = (v) => (typeof esc === 'function') ? esc(v == null ? '' : String(v)) : String(v == null ? '' : v);
+  const box = document.createElement('div');
+  box.id = 'zfa-wit-menu';
+  box.style.cssText =
+    'position:fixed;z-index:99999;background:#fff;border:1px solid #0369a1;border-radius:10px;' +
+    'box-shadow:0 10px 30px rgba(0,0,0,.28);direction:rtl;width:270px;max-width:92vw;' +
+    'display:flex;flex-direction:column;max-height:min(60vh,340px);overflow:hidden;';
+  const rows = list.map((w, i) => {
+    const nm = (w.full_name || '').trim();
+    return `<label style="display:flex;align-items:center;gap:8px;padding:7px 6px;cursor:pointer;font-size:13px;
+              border-bottom:1px solid #f1f5f9;font-family:'Jameel Noori Nastaleeq',serif;">
+              <input type="radio" name="zfa-wit-pick" value="${i}"> <span>${E(nm)}</span></label>`;
+  }).join('');
+  box.innerHTML = `
+    <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:700;color:#0369a1;
+                font-family:'Jameel Noori Nastaleeq',serif;background:#f8fafc;">گواہ منتخب کریں (ایک وقت میں ایک)</div>
+    <div style="flex:1;overflow-y:auto;padding:4px 8px;min-height:0;">${rows}</div>
+    <div style="display:flex;gap:6px;padding:8px;border-top:1px solid #e5e7eb;background:#f8fafc;flex-shrink:0;">
+      <button id="zfa-wit-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;color:#fff;
+        cursor:pointer;font-size:13px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">✔ بیان شامل کریں</button>
+      <button id="zfa-wit-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;
+        cursor:pointer;font-size:13px;font-family:'Jameel Noori Nastaleeq',serif;">بند</button>
+    </div>`;
+  document.body.appendChild(box);
+
+  const r = btn.getBoundingClientRect();
+  const bw = box.offsetWidth, bh = box.offsetHeight;
+  let top = r.bottom + 6;
+  if (top + bh > window.innerHeight - 8) top = Math.max(8, r.top - bh - 6);
+  let left = r.left + r.width / 2 - bw / 2;
+  left = Math.max(8, Math.min(left, window.innerWidth - bw - 8));
+  box.style.top = top + 'px'; box.style.left = left + 'px';
+
+  setTimeout(() => {
+    const off = (e) => { if (!box.contains(e.target)) { box.remove(); document.removeEventListener('mousedown', off); } };
+    document.addEventListener('mousedown', off);
+  }, 0);
+
+  box.querySelector('#zfa-wit-x').onclick = () => box.remove();
+  box.querySelector('#zfa-wit-ok').onclick = () => {
+    const sel = box.querySelector('input[name="zfa-wit-pick"]:checked');
+    if (!sel) { if (typeof showToast === 'function') showToast('⚠️ پہلے گواہ منتخب کریں', 'warn'); return; }
+    const w = list[parseInt(sel.value, 10)];
+    box.remove();
+    _zaInsertWitnessStatement(w);
+  };
+}
+window._zaWitnessPickerOpen = _zaWitnessPickerOpen;
+
 function _zaColResize() {
   const doc = _zimniDoc();
   const table = doc && doc.querySelector('table.zfa-tbl');
@@ -767,14 +904,21 @@ function _zaFormCSS() {
     text-align:justify; text-align-last:right; outline:none; white-space:pre-wrap; }
   #ch173-doc .zfa-body > div, #ch173-doc .zfa-body > p{ margin:0 0 1em 0; }
 
+  /* ── گواہ کا بیان — naam (fixed heading) + khali statement jagah +
+     neeche tafteeshi afsar ka naam+tareekh (jahan bayan khatam hota) ── */
+  #ch173-doc .zfa-wit-block{ margin:6px 0 16px; }
+  #ch173-doc .zfa-wit-head{ font-weight:bold; text-decoration:underline;
+    text-underline-offset:3px; margin-bottom:6px; }
+  #ch173-doc .zfa-wit-stmt{ min-height:1.6em; margin:4px 0 10px; outline:none; }
+  #ch173-doc .zfa-wit-sign{ margin-top:4px; text-align:left; unicode-bidi:isolate; }
+
   /* مثل باندھنے کی جگہ — صرف چھپائی میں */
   #ch173-doc .zfa-bindmark{ display:none; }
-  #ch173-doc .zfa-bind{ display:none; }
   @media print{
     #ch173-doc table.zfa-tbl, #ch173-doc table.zfa-tbl tbody,
     #ch173-doc table.zfa-tbl tbody tr, #ch173-doc table.zfa-tbl tbody td{
       page-break-inside:auto !important; break-inside:auto !important; }
-    #ch173-doc .zfa-bind{
+    #ch173-doc .zfa-bindmark{
       display:block; float:left; width:2in; height:2in; margin-top:1.25em;
       shape-outside:polygon(0 0, 2in 0, 0 2in);
       -webkit-shape-outside:polygon(0 0, 2in 0, 0 2in);
@@ -858,6 +1002,15 @@ async function _saveZimniA(silent, keepOpen) {
   const bodyHtml = _zimniCleanHTML(ed.innerHTML);
   const z = _zaActive || {};
 
+  // گواہان کے نام — DOM سے براہ راست نکالو (ہمیشہ اصل مواد کے مطابق رہتا
+  // ہے، الگ سے یاد رکھی ہوئی فہرست کبھی غلط ہم آہنگ نہیں ہو سکتی)
+  let witnessNames = [];
+  try {
+    witnessNames = [...new Set([...ed.querySelectorAll('.zfa-wit-block')]
+      .map(b => (b.getAttribute('data-witness-name') || '').trim())
+      .filter(Boolean))];
+  } catch (_) {}
+
   let serialNo = parseInt(z.serial_no, 10) || 0;
   if (!serialNo) {
     try { serialNo = Math.max(0, ..._zaList.map(x =>
@@ -870,14 +1023,14 @@ async function _saveZimniA(silent, keepOpen) {
     const hi = document.getElementById('zfa-head-in');
     head = hi ? String(hi.value || '').trim() : '';
   } catch (_) {}
-  if (!head) head = (z.content && z.content.head) || 'اندرونی ضمنی';
+  if (!head) head = (z.content && z.content.head) || 'بیان';
 
   const savedAt = new Date().toISOString();
   const rec = {
     case_id: _zaCaseId,
     serial_no: serialNo,
     report_date: (z.report_date || savedAt.slice(0, 10)),
-    content: { bodyHtml, head, serial_no: serialNo, saved_at: savedAt },
+    content: { bodyHtml, head, serial_no: serialNo, saved_at: savedAt, witnesses: witnessNames },
   };
 
   try {
@@ -1077,6 +1230,17 @@ function _zaPrintHTML(inner) {
       #ch173-doc table.zfa-tbl, #ch173-doc table.zfa-tbl tbody,
       #ch173-doc table.zfa-tbl tbody tr, #ch173-doc table.zfa-tbl tbody td{
         page-break-inside:auto !important; break-inside:auto !important; }
+      /* AHEM: bug tha — JS (_zaAddBindMarks) '.zfa-bindmark' class banata hai,
+         lekin CSS pehle sirf '.zfa-bind' ko style karti thi (naam mismatch),
+         isi liye 2nd page wali مثلث kabhi nazar hi nahi aati thi. bairooni ke
+         _zimniPrintHTML jaisa — yahan seedha (unconditional) sahi class: */
+      #ch173-doc .zfa-bindmark{ display:block !important; float:left; width:2in; height:2in;
+        margin-top:1.25em;
+        shape-outside:polygon(0 0, 2in 0, 0 2in);
+        -webkit-shape-outside:polygon(0 0, 2in 0, 0 2in);
+        shape-margin:3mm; -webkit-shape-margin:3mm;
+        clip-path:polygon(0 0, 2in 0, 0 2in);
+        -webkit-clip-path:polygon(0 0, 2in 0, 0 2in); }
       .no-print, button, select{ display:none !important; }
       #ch173-doc, #ch173-doc *{ orphans:2; widows:2; }
     </style></head><body><div id="ch173-doc">${inner}</div></body></html>`;
