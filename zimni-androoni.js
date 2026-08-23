@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_A_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_A_VER = 'zimni-androoni v12 — no duplicate ولد/قوم/سکنہ, IO+تھانہ, centered closing line, col3 always editable, col1 numbers off';
+const ZIMNI_A_VER = 'zimni-androoni v13 — FIXED FIR-boilerplate collision (data-k=halaat), tighter spacing, ref note own line left, no bold/underline';
 window.ZIMNI_A_VER = ZIMNI_A_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -197,7 +197,6 @@ function _renderZimniAList() {
       return String(h).padStart(2, '0') + ':' + m + ' ' + ap;
     } catch (_) { return ''; }
   };
-  const head = (z) => ((z.content || {}).head || 'بیان');
   const wits = (z) => {
     try {
       const arr = ((z.content || {}).witnesses) || [];
@@ -231,14 +230,12 @@ function _renderZimniAList() {
       <button class="btn btn-primary btn-sm" onclick="_newZimniA()">➕ بیان درج کریں</button>
       <button class="btn btn-secondary btn-sm" onclick="_printAllZimniA()">🖨️ تمام بیانات</button>
       <div style="flex:1;"></div>
-      <span style="font-size:11px;color:var(--text-muted);">ترتیب: ضمنی نمبر — بڑے سے چھوٹا</span>
     </div>
     ${list.length ? `
     <table class="zt">
       <thead><tr>
         <th class="num">نمبر شمار</th>
         <th class="dtc">تاریخ و وقت</th>
-        <th>بیان</th>
         <th>گواہان</th>
         <th class="act">ایکشن</th>
       </tr></thead>
@@ -247,7 +244,6 @@ function _renderZimniAList() {
           <tr ondblclick="_openZimniA('${z.id}')" style="cursor:pointer;">
             <td class="num">${esc(String(sno(z) || ''))}</td>
             <td class="dtc">${esc(dt(z))}${wq(z) ? `<div class="wq">${esc(wq(z))}</div>` : ''}</td>
-            <td>${esc(head(z))}</td>
             <td>${esc(wits(z))}</td>
             <td class="act">
               <button class="zab" onclick="event.stopPropagation();_openZimniA('${z.id}')" title="ترمیم">✏️</button>
@@ -324,7 +320,7 @@ function _renderZimniAEditor() {
   <style>${(typeof _ch173CSS === 'function') ? _ch173CSS() : ''}${_zaFormCSS()}</style>
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
     <!-- Topbar — bairooni zimni jaisa (chips patti cursor upar jane par nazar aati hai) -->
-    <div class="no-print" style="display:flex;align-items:center;gap:8px;padding:3px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
+    <div class="no-print" style="display:flex;align-items:center;gap:8px;padding:2px 10px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
       <div style="margin-right:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
         <button id="zf-btn-b" onmousedown="event.preventDefault()" onclick="_zimniFmt('bold')" title="بولڈ" style="${btn}font-weight:900;">B</button>
         <button id="zf-btn-i" onmousedown="event.preventDefault()" onclick="_zimniFmt('italic')" title="ترچھا" style="${btn}font-style:italic;">I</button>
@@ -481,15 +477,15 @@ async function _zaLoadWitnesses() {
 window._zaLoadWitnesses = _zaLoadWitnesses;
 
 // Gawah ka bayan block sfhe mein daalna:
-//   1) عنوان: "بیان ازاں (نام ولد۔۔۔ قوم۔۔۔ سکنہ۔۔۔)" — dayen، aur
-//      "(بحوالہ ضمنی نمبر۔۔ فقرہ نمبر۔۔ زیردفعہ 161 ض ف)" — bayen kinare
-//   2) khali statement jagah (officer likhta hai)
+//   1) عنوان: "بیان ازاں [نام]" — dayen (koi bracket nahi)، uske NEECHE
+//      "(بحوالہ ضمنی نمبر ... فقرہ نمبر ... زیردفعہ 161 ض ف)" — bayen taraf
+//   2) FIR ke matn se shuru hone wali khali statement jagah ("بیان کیا کہ ...")
 //   3) "بیان سن لیا ہے درست ہے" — khud-ba-khud, jahan bayan khatam hota
-//   4) تفتیشی افسر ka naam (bila label) + neeche center mein tareekh —
-//      poora hissa bayen taraf
-// AHEM: "display:flex" yahan bhi nahi (copy/paste par newline-per-item
-// bug — meta-line ke masle se seekha gaya sabaq). Left-pinning ke liye
-// sirf "float:left" (normal block flow, flex nahi) — copy-safe.
+//   4) تفتیشی افسر (تھانہ سمیت) + neeche center mein tareekh — bayen taraf
+// AHEM: "display:flex" yahan nahi (copy/paste par newline-per-item bug —
+// meta-line ke masle se seekha gaya sabaq). IO+date ke liye "float:left"
+// (normal block flow) kaafi hai — ref note ab apni line par hai, float
+// ki zaroorat nahi.
 async function _zaInsertWitnessStatement(witness) {
   if (!witness) return;
   const doc = _zimniDoc();
@@ -522,8 +518,8 @@ async function _zaInsertWitnessStatement(witness) {
   block.setAttribute('data-witness-name', (witness.full_name || witness.name || '').trim());
   block.innerHTML =
     '<div class="zfa-wit-headrow">' +
-      '<span class="zfa-wit-head">بیان ازاں (' + nm + ')</span>' +
-      '<span class="zfa-wit-ref">(بحوالہ ضمنی نمبر&nbsp;' + zno + '&nbsp;&nbsp;فقرہ نمبر&nbsp;۔۔۔۔۔۔۔۔۔۔&nbsp;&nbsp;زیردفعہ 161 ض ف)</span>' +
+      '<div class="zfa-wit-head">بیان ازاں ' + nm + '</div>' +
+      '<div class="zfa-wit-ref">(بحوالہ ضمنی نمبر&nbsp;' + zno + '&nbsp;&nbsp;فقرہ نمبر&nbsp;&nbsp;&nbsp;زیردفعہ 161 ض ف)</div>' +
     '</div>' +
     '<div class="zfa-wit-stmt" data-mic="true">بیان کیا کہ&nbsp;' + E(firText) + '</div>' +
     '<div class="zfa-wit-close">بیان سن لیا ہے درست ہے</div>' +
@@ -871,9 +867,9 @@ function _zaFormCSS() {
   return `
   /* ── سرنامہ ── پولیس فارم نمبر — bairooni ke zf-formno jaisa، درمیان ── */
   #ch173-doc .zfa-formno{ font-size:14pt; font-weight:normal; direction:ltr; text-align:center; margin-bottom:4px; }
-  #ch173-doc .zfa-head{ direction:rtl; margin-bottom:6px; line-height:1.5; text-align:center; }
+  #ch173-doc .zfa-head{ direction:rtl; margin-bottom:2px; line-height:1.3; text-align:center; }
   /* عنوان — باقی پورے صفحے سے الگ سائز (26pt) اور انڈر لائن — bairooni ke zf-title jaisa */
-  #ch173-doc .zfa-title{ font-size:26pt; font-weight:normal; text-align:center; line-height:1.5;
+  #ch173-doc .zfa-title{ font-size:26pt; font-weight:normal; text-align:center; line-height:1.3;
     text-decoration:underline; text-underline-offset:5px; }
 
   /* ── سطر: مقدمہ نمبر | مورخہ | جرم | تھانہ — ایک لائن، پورے صفحے کے 14pt پر ──
@@ -887,8 +883,8 @@ function _zaFormCSS() {
      jaisa) — yeh copy/print/screen teeno mein aik jaisa, sahih line par rehta
      hai, aur khud apni jagah lambai ke mutabiq phailta hai (auto-expand)۔
      دائیں کنارے سے شروع — کوئی اضافی padding-right نہیں (ٹیبل کی سیدھ میں)۔ */
-  #ch173-doc .zfa-meta{ margin:8px 0 10px; padding-right:0; font-size:14pt; font-weight:normal;
-    direction:rtl; text-align:center; line-height:2.1; }
+  #ch173-doc .zfa-meta{ margin:2px 0 4px; padding-right:0; font-size:14pt; font-weight:normal;
+    direction:rtl; text-align:center; line-height:1.8; }
   #ch173-doc .zfa-fld{ display:inline; margin-left:22px; }
   #ch173-doc .zfa-lbl{ font-weight:normal; white-space:nowrap; }
   #ch173-doc .zfa-ln{ padding:0 1px; outline:none; unicode-bidi:plaintext; }
@@ -923,12 +919,12 @@ function _zaFormCSS() {
   #ch173-doc .zfa-body > div, #ch173-doc .zfa-body > p{ margin:0 0 1em 0; }
 
   /* ── گواہ کا بیان ── */
-  #ch173-doc .zfa-wit-block{ margin:6px 0 16px; display:flow-root; }
-  /* عنوان — دائیں: "بیان ازاں (...)"، بائیں کنارے پر حوالہ (float — flex نہیں) */
-  #ch173-doc .zfa-wit-headrow{ margin-bottom:6px; }
-  #ch173-doc .zfa-wit-head{ font-weight:bold; text-decoration:underline;
-    text-underline-offset:3px; unicode-bidi:isolate; }
-  #ch173-doc .zfa-wit-ref{ float:left; font-weight:normal; unicode-bidi:isolate; white-space:nowrap; }
+  #ch173-doc .zfa-wit-block{ margin:4px 0 16px; }
+  /* عنوان — "بیان ازاں نام" (دائیں، عام وزن)، اُس کے نیچے حوالہ (بائیں) */
+  #ch173-doc .zfa-wit-headrow{ margin-bottom:4px; }
+  #ch173-doc .zfa-wit-head{ font-weight:normal; }
+  #ch173-doc .zfa-wit-ref{ text-align:left; font-weight:normal; unicode-bidi:isolate;
+    margin-top:2px; }
   #ch173-doc .zfa-wit-stmt{ min-height:1.6em; margin:4px 0 8px; outline:none; }
   #ch173-doc .zfa-wit-close{ margin:2px 0 10px; text-align:center; }
   /* تفتیشی افسر (بغیر لیبل) — بائیں طرف، نام کے نیچے تاریخ خود مرکز میں */
@@ -1012,7 +1008,7 @@ function _zaDefaultBody(o, c) {
         <td class="zfa-c-serial"><div class="zfa-nums" contenteditable="true"></div></td>
         <td class="zfa-c-gutter" contenteditable="true"><br></td>
         <td class="zfa-c-body">
-          <div class="zfa-body" data-mic="true" data-k="halaat"><br></div>
+          <div class="zfa-body" data-mic="true"><br></div>
         </td>
       </tr>
     </tbody>
