@@ -183,9 +183,13 @@ function _renderZimniList() {
     .zt tbody tr:nth-child(odd){ background:var(--bg-secondary); }
     .zt tbody tr:hover{ background:var(--hover-bg); }
     .zt .num{ text-align:center; font-weight:700; width:60px; }
-    .zt .dtc{ text-align:center; white-space:nowrap; width:130px; font-family:var(--font-mono); }
-    .zt .wq{ font-size:11px; color:var(--text-muted); margin-top:2px; }
-    .zt .act{ white-space:nowrap; text-align:center; width:300px; }
+    .zt .dtc{ text-align:center; white-space:nowrap; width:140px;
+      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
+      font-size:13px; direction:ltr; unicode-bidi:isolate; }
+    .zt .wq{ font-size:12px; color:var(--text-muted); margin-top:2px;
+      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
+      direction:ltr; unicode-bidi:isolate; }
+    .zt .act{ white-space:nowrap; text-align:center; width:220px; }
     .zab{ border:1px solid var(--border); background:var(--bg-card); border-radius:6px;
           padding:3px 6px; margin:0 1px; cursor:pointer; font-size:13px; line-height:1; }
     .zab:hover{ background:var(--hover-bg); }
@@ -213,10 +217,7 @@ function _renderZimniList() {
             <td>${esc(head(z))}</td>
             <td class="act">
               <button class="zab" onclick="event.stopPropagation();_openZimni('${z.id}')" title="ترمیم">✏️</button>
-              <button class="zab" onclick="event.stopPropagation();_updateZimni('${z.id}')" title="اپ ڈیٹ">💾</button>
               <button class="zab" onclick="event.stopPropagation();_copyZimni('${z.id}')" title="نقل (Copy)">📋</button>
-              <button class="zab" onclick="event.stopPropagation();_cutZimni('${z.id}')" title="کاٹیں (Cut)">✂️</button>
-              <button class="zab" onclick="event.stopPropagation();_moveZimni('${z.id}')" title="نمبر بدلیں (Move)">↕️</button>
               <button class="zab" onclick="event.stopPropagation();_printZimniById('${z.id}')" title="پرنٹ">🖨️</button>
               <button class="zab" onclick="event.stopPropagation();_emailZimni('${z.id}')" title="شیئر">📤</button>
               <button class="zab" onclick="event.stopPropagation();_pdfZimni('${z.id}')" title="PDF" style="font-size:10px;font-weight:800;color:#b91c1c;">PDF</button>
@@ -357,6 +358,8 @@ function _renderZimniEditor() {
         <button onmousedown="event.preventDefault()" onclick="_zimniFmt('undo')" title="واپس (Undo)" style="${btn}">↶</button>
         <button onmousedown="event.preventDefault()" onclick="_zimniFmt('redo')" title="دوبارہ (Redo)" style="${btn}">↷</button>
         <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveZimni()">💾 محفوظ</button>
+        <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_saveZimni(false,true)" title="محفوظ کریں مگر ضمنی کھلی رہے (Ctrl+S)">🔄 اپ ڈیٹ</button>
+        <span id="zf-updated" style="font-size:11px;color:var(--text-muted);white-space:nowrap;align-self:center;"></span>
         <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printZimni()">🖨️ پرنٹ</button>
       </div>
     </div>
@@ -388,6 +391,7 @@ function _renderZimniEditor() {
     try { if (typeof _ch173WatchFit === 'function') _ch173WatchFit(); } catch (_) {}
     try { _zimniBindFindReplace(); } catch (_) {}                                          // Ctrl+F / Ctrl+H
     try { _zimniColResize(); } catch (_) {}
+    try { if (saved && saved.saved_at) _zimniStampUpdated(saved.saved_at); } catch (_) {}
     // خانے کی ناپ + اضافی متن نیچے (چالان کا اصل نظام)
     try { _zimniBindSerialSync(); } catch (_) {}                                          // ضمنی نمبر ↔ نمبر شمار
     try { _zimniLayout(); } catch (_) {}
@@ -398,10 +402,13 @@ function _renderZimniEditor() {
         d0._zfSerBound = true;
         d0.addEventListener('input', (ev) => {
           try {
-            if (ev.target && ev.target.closest && ev.target.closest('[data-k="zno"]')) _zimniSyncSerial();
+            /* ضمنی نمبر صرف محفوظ کرنے کے لیے پڑھا جاتا ہے */
           } catch (_) {}
           clearTimeout(d0._zfAlignT);
-          d0._zfAlignT = setTimeout(() => { try { _zimniAlignSerial(); } catch (_) {} }, 250);
+          d0._zfAlignT = setTimeout(() => {
+            try { _zimniAlignSerial(); } catch (_) {}
+            try { _zimniAutoNumbers(); } catch (_) {}
+          }, 250);
         });
       }
     } catch (_) {}
@@ -565,6 +572,27 @@ window._zimniFindReplaceUI = _zimniFindReplaceUI;
 //  فونٹ سائز — ضمنی کے اپنے خانوں پر (report173 کا _ch173FontToDoc
 //  صرف چالان کی classes پر چلتا ہے، اسی لیے یہاں الگ ضروری ہے)
 // ═══════════════════════════════════════════════════════════════
+// ── آخری اپ ڈیٹ کا وقت — toolbar میں ──
+function _zimniFmtStamp(iso) {
+  try {
+    const x = new Date(iso);
+    if (isNaN(x)) return '';
+    const dd = String(x.getDate()).padStart(2, '0');
+    const mm = String(x.getMonth() + 1).padStart(2, '0');
+    let h = x.getHours(); const mi = String(x.getMinutes()).padStart(2, '0');
+    const ap = h < 12 ? 'am' : 'pm'; h = h % 12 || 12;
+    return dd + '/' + mm + '/' + x.getFullYear() + ' — ' +
+           String(h).padStart(2, '0') + ':' + mi + ' ' + ap;
+  } catch (_) { return ''; }
+}
+function _zimniStampUpdated(iso) {
+  const el = document.getElementById('zf-updated');
+  if (!el) return;
+  const t = _zimniFmtStamp(iso || new Date().toISOString());
+  el.textContent = t ? ('آخری اپ ڈیٹ: ' + t) : '';
+}
+window._zimniStampUpdated = _zimniStampUpdated;
+
 function _zimniDoc() {
   return (typeof _ch173Doc === 'function' && _ch173Doc()) || document.getElementById('ch173-doc');
 }
@@ -895,47 +923,86 @@ function _zimniFitTable() {
 }
 window._zimniFitTable = _zimniFitTable;
 
-// ═══ نمبر شمار — "جناب عالی" والی سطر کے بالکل برابر ═══
-// (کالم 2 row 2 میں ہی رہتا ہے، بس اُسی سطر کے ساتھ اوپر نیچے ہوتا ہے)
+// ═══════════════════════════════════════════════════════════════
+//  کالم 2 — خودکار نمبر شمار
+//  حالاتِ تفتیش (کالم 3) میں جتنے پیراگراف ہوں، کالم 2 میں اُتنے ہی
+//  نمبر (1، 2، 3 …) — اور ہر نمبر ٹھیک اپنے پیراگراف کی پہلی سطر کے
+//  برابر۔ پہلا نمبر "جناب عالیٰ" والی سطر سے شروع ہوتا ہے۔
+//  خالی سطریں (صرف Enter) شمار نہیں ہوتیں۔
+// ═══════════════════════════════════════════════════════════════
+function _zimniParas() {
+  const doc = _zimniDoc();
+  const body = doc && doc.querySelector('.zf-body');
+  if (!body) return [];
+  const kids = [...body.children].filter(el =>
+    (el.tagName === 'DIV' || el.tagName === 'P') &&
+    String(el.textContent || '').replace(/[\s\u00A0]/g, '').length);
+  if (kids.length) return kids;
+  // کوئی الگ پیراگراف نہیں — پورا خانہ ہی پہلا پیراگراف ہے
+  return String(body.textContent || '').replace(/[\s\u00A0]/g, '').length ? [body] : [];
+}
+
+function _zimniAutoNumbers() {
+  const doc = _zimniDoc();
+  if (!doc) return;
+  const nums = doc.querySelector('.zf-nums');
+  const td   = doc.querySelector('td.zf-c-serial');
+  if (!nums || !td) return;
+  const paras = _zimniParas();
+
+  // نمبروں کی تعداد پیراگرافوں کے برابر رکھو
+  while (nums.children.length > paras.length) nums.lastChild.remove();
+  while (nums.children.length < paras.length) {
+    const d = document.createElement('div');
+    d.className = 'zf-num';
+    nums.appendChild(d);
+  }
+  [...nums.children].forEach((d, i) => {
+    const t = String(i + 1);
+    if (d.textContent !== t) d.textContent = t;
+    d.style.marginTop = '0px';
+  });
+  if (!paras.length) return;
+
+  // ہر نمبر کو اُس کے پیراگراف کی پہلی سطر کے برابر لاؤ
+  try {
+    const scale = (() => {
+      const r = td.getBoundingClientRect();
+      return (td.offsetHeight && r.height) ? (r.height / td.offsetHeight) : 1;
+    })() || 1;
+    for (let i = 0; i < paras.length; i++) {
+      const d = nums.children[i];
+      if (!d) continue;
+      const gap = Math.round((paras[i].getBoundingClientRect().top - d.getBoundingClientRect().top) / scale);
+      if (gap > 0 && gap < 5000) d.style.marginTop = gap + 'px';
+    }
+  } catch (_) {}
+}
+window._zimniAutoNumbers = _zimniAutoNumbers;
+
+// ▾ بٹن — بنام والی سطر کے برابر
 function _zimniAlignSerial() {
   const doc = _zimniDoc();
   if (!doc) return;
-  const no   = doc.querySelector('.zf-serno');
-  const body = doc.querySelector('.zf-body');
-  const td   = doc.querySelector('td.zf-c-serial');
-  if (!no || !body || !td) return;
+  const td    = doc.querySelector('td.zf-c-serial');
+  const banam = doc.querySelector('.zf-bl-banam');
+  const pick  = doc.querySelector('.zf-pick');
+  if (!td || !pick || !banam) return;
   try {
-    no.style.marginTop = '0px';
-    const tRect = td.getBoundingClientRect();
-    const bRect = body.getBoundingClientRect();
-    const nRect = no.getBoundingClientRect();
-    if (!tRect.height || !bRect.height) return;
-    const scale = (td.offsetHeight && tRect.height) ? (tRect.height / td.offsetHeight) : 1;
-    const gap = Math.round((bRect.top - nRect.top) / (scale || 1));
-    if (gap > 0 && gap < 2000) no.style.marginTop = gap + 'px';
+    pick.style.marginTop = '0px';
+    const r = td.getBoundingClientRect();
+    const k = (td.offsetHeight && r.height) ? (r.height / td.offsetHeight) : 1;
+    const gap = Math.round((banam.getBoundingClientRect().top - pick.getBoundingClientRect().top) / (k || 1));
+    if (gap > 0 && gap < 2000) pick.style.marginTop = gap + 'px';
   } catch (_) {}
 }
 window._zimniAlignSerial = _zimniAlignSerial;
 
-// ═══ ضمنی نمبر ↔ نمبر شمار — ایک ہی نمبر ═══
-// اوپر "ضمنی نمبر" کے آگے جو نمبر لکھا جائے، وہی نیچے "نمبر شمار" میں
-// آتا ہے، اور اسی نمبر سے ضمنی محفوظ ہوتی ہے۔
-function _zimniSyncSerial() {
-  const doc = _zimniDoc();
-  if (!doc) return;
-  const src = doc.querySelector('[data-k="zno"]');
-  const dst = doc.querySelector('.zf-serno');
-  if (!src || !dst) return;
-  const v = String(src.innerText || src.textContent || '').replace(/[^\d]/g, '');
-  if (v && String(dst.innerText || '').trim() !== v) dst.textContent = v;
-}
-window._zimniSyncSerial = _zimniSyncSerial;
-
 // ناپ + متن جمانا — ایک ہی ترتیب سے (چالان کے _ch173Layout جیسا)
 function _zimniLayout() {
   try { _zimniFitTable(); } catch (_) {}      // ٹیبل کم از کم پورا صفحہ بھرے
-  try { _zimniSyncSerial(); } catch (_) {}
-  try { _zimniAlignSerial(); } catch (_) {}
+  try { _zimniAlignSerial(); } catch (_) {}   // ▾ بٹن بنام کے برابر
+  try { _zimniAutoNumbers(); } catch (_) {}   // کالم 2 کے خودکار نمبر
 }
 window._zimniLayout = _zimniLayout;
 
@@ -1228,7 +1295,7 @@ function _zimniFormCSS() {
   /* دائیں حصہ : لیبل | قدر | لیبل | تاریخ — دونوں تاریخیں ایک ہی کالم میں */
   /* ہر قدر اپنے لیبل کے ساتھ (فاصلہ 0.25cm — 1cm سے کہیں کم) */
   #ch173-doc .zf-gR{ display:grid; grid-template-columns:auto auto auto minmax(0,1fr);
-    gap:4px 0.25cm; align-items:baseline; }
+    gap:4px 0.12cm; align-items:baseline; }
   #ch173-doc .zf-gR .zf-span2{ grid-column:span 2; }
   /* چھوٹی قدریں (نمبر/تاریخ) کبھی نہ ٹوٹیں */
   #ch173-doc .zf-nw{ white-space:nowrap; }
@@ -1278,7 +1345,9 @@ function _zimniFormCSS() {
   #ch173-doc table.zf-tbl td.zf-c-serial{ text-align:center; text-align-last:center; }
   /* قطار کی اونچائی JS (_zimniFitTable) حساب سے دیتا ہے — یہ صرف ابتدائی ناپ */
   #ch173-doc table.zf-tbl tbody td{ height:18cm; }
-  #ch173-doc .zf-serno{ display:block; }
+  /* کالم 2 — ہر پیراگراف کا اپنا نمبر (خودکار) */
+  #ch173-doc .zf-nums{ display:block; }
+  #ch173-doc .zf-num{ display:block; text-align:center; line-height:1.5; }
   /* مثل باندھنے کی جگہ — صرف چھپائی میں */
   #ch173-doc .zf-bindmark{ display:none; }
   /* باہر کی دائیں، بائیں اور نیچے کی لکیریں نہیں */
@@ -1290,6 +1359,8 @@ function _zimniFormCSS() {
   #ch173-doc .zf-bdyln{ display:inline; border:none; outline:none; }
   /* تفتیشی افسر — بولڈ + انڈر لائن */
   #ch173-doc .zf-io{ font-weight:bold; text-decoration:underline; text-underline-offset:3px; }
+  /* ہر پیراگراف کے درمیان ایک سطر کا فاصلہ (مزید Enter سے بڑھایا جا سکتا ہے) */
+  #ch173-doc .zf-body > div, #ch173-doc .zf-body > p{ margin:0 0 1em 0; }
   #ch173-doc .zf-body{ margin-top:8px; font-size:14pt; line-height:1.5;
     text-align:justify; text-align-last:right; outline:none; white-space:pre-wrap; }
 
@@ -1434,7 +1505,7 @@ function _zimniDefaultBody(o, c) {
     <tbody>
       <tr>
         <td class="zf-c-action" data-k="action"></td>
-        <td class="zf-c-serial"><button class="zf-pick no-print" contenteditable="false" onclick="_zimniAccPicker(event)" title="ملزمان منتخب کریں">&#9662;</button><span class="zf-serno" data-k="serial">${serial}</span></td>
+        <td class="zf-c-serial"><button class="zf-pick no-print" contenteditable="false" onclick="_zimniAccPicker(event)" title="ملزمان منتخب کریں">&#9662;</button><div class="zf-nums" contenteditable="false"></div></td>
         <td class="zf-c-body" colspan="2">
           <div class="zf-bl"><span class="zf-lbl">سرکار بذریعہ ۔</span> <span class="zf-bdyln" data-k="sarkar">${compl}</span></div>
           <div class="zf-bl zf-bl-banam"><span class="zf-lbl">بنام۔</span><span class="zf-bdyln zf-acclist" data-k="banam"></span></div>
@@ -1446,7 +1517,7 @@ function _zimniDefaultBody(o, c) {
   </table>`;
 }
 // ── SAVE ──────────────────────────────────────────────────────
-async function _saveZimni(silent) {
+async function _saveZimni(silent, keepOpen) {
   const ed = _zimniDoc();
   if (!ed) return false;
   const bodyHtml = _zimniCleanHTML(ed.innerHTML);   // grips محفوظ نہ ہوں
@@ -1509,6 +1580,8 @@ async function _saveZimni(silent) {
       }
     } catch (_) {}
     if (!silent) showToast('📴 آف لائن محفوظ — انٹرنیٹ آنے پر sync ہوگا', 'info');
+    try { _zimniStampUpdated(savedAt); } catch (_) {}
+    if (!keepOpen && !silent) setTimeout(() => { try { _renderZimniList(); } catch (_) {} }, 200);
     return true;
   }
 
@@ -1542,11 +1615,13 @@ async function _saveZimni(silent) {
       else showToast('⚠️ ضمنی نمبر ' + serialNo + ' مقامی طور پر محفوظ ہے، مگر ڈیٹابیس میں تصدیق نہ ہو سکی', 'warn', 7000);
     }
 
-    // فہرست تازہ کر کے کھول دو — افسر کو فوراً نظر آ جائے
+    // فہرست تازہ کرو۔ AHEM: 'keepOpen' ہو تو ضمنی کھلی ہی رہے —
+    // Ctrl+S اور اوپر والے "اپ ڈیٹ" بٹن پر ضمنی بند نہیں ہونی چاہیے۔
     try {
       await _loadZimni();
-      if (!silent) setTimeout(() => { try { _renderZimniList(); } catch (_) {} }, 200);
+      if (!silent && !keepOpen) setTimeout(() => { try { _renderZimniList(); } catch (_) {} }, 200);
     } catch (_) {}
+    if (keepOpen) { try { _zimniStampUpdated(savedAt); } catch (_) {} }
     return true;
   } catch (e) {
     // مقامی نقل پھر بھی محفوظ — کام ضائع نہ ہو
@@ -1770,7 +1845,7 @@ function _dioBindCtrlS() {
       if (doc) {
         e.preventDefault();
         // ضمنی کا صفحہ اپنی .zf-tbl سے پہچانا جاتا ہے
-        if (doc.querySelector('.zf-tbl')) { _saveZimni(); done = true; }
+        if (doc.querySelector('.zf-tbl')) { _saveZimni(false, true); done = true; }   // کھلی رہے
         else if (typeof _saveR173 === 'function') { _saveR173(); done = true; }
       }
     } catch (_) {}

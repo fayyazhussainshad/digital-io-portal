@@ -38,19 +38,14 @@
 
   // شروع میں کون سا صفحہ کھولنا ہے
   window._dioResumePage = function () {
-    // (1) پتے میں hash ہو تو اُسے پہل (مثلاً کسی نے لنک کھولا)
-    try {
-      var h = (window.location.hash || '').replace('#', '').toLowerCase().trim();
-      if (h && typeof canAccess === 'function' ? (h && canAccess(h)) : h) {
-        if (h) return h;
-      }
-    } catch (_) {}
-    // (2) پچھلی بار کا صفحہ
-    var p = '';
-    try { p = localStorage.getItem(key()) || ''; } catch (_) {}
+    // (1) پتے میں hash ہو تو اُسے پہل
+    var h = '';
+    try { h = (window.location.hash || '').replace('#', '').toLowerCase().trim(); } catch (_) {}
+    // (2) ورنہ پچھلی بار کا صفحہ
+    var p = h;
+    if (!p) { try { p = localStorage.getItem(key()) || ''; } catch (_) {} }
     if (!p) return 'dashboard';
-    // اجازت نہ ہو تو ڈیش بورڈ
-    try { if (typeof canAccess === 'function' && !canAccess(p)) return 'dashboard'; } catch (_) {}
+    if (SKIP.indexOf(p) !== -1) return 'dashboard';
     return p;
   };
 
@@ -73,6 +68,27 @@
       if (wrap() || ++tries > 200) clearInterval(iv);   // ~20 سیکنڈ تک
     }, 100);
   }
+
+  // ═══ خود بحالی — اگر app-core.js والی سطر نہ بدلی ہو تب بھی چلے ═══
+  // ایپ تیار ہونے کا انتظار کرو (لاگ اِن مکمل + پہلا صفحہ کھل چکا)، پھر
+  // اگر محفوظ صفحہ مختلف ہو تو وہیں لے جاؤ۔ صرف ایک بار، اور صرف اُس وقت
+  // جب افسر نے خود ابھی کہیں نیویگیٹ نہ کیا ہو۔
+  (function () {
+    var done = false, tries = 0;
+    var iv = setInterval(function () {
+      if (done || ++tries > 120) { clearInterval(iv); return; }   // ~24 سیکنڈ
+      if (typeof window.showPage !== 'function') return;
+      if (!window._activePage) return;                            // پہلا صفحہ ابھی نہیں کھلا
+      var ls = document.getElementById('login-screen');
+      if (ls && ls.offsetParent !== null) return;                 // ابھی لاگ اِن اسکرین پر ہے
+      done = true; clearInterval(iv);
+      var want = '';
+      try { want = window._dioResumePage(); } catch (_) { want = ''; }
+      if (want && want !== window._activePage) {
+        try { window.showPage(want, null); } catch (_) {}
+      }
+    }, 200);
+  })();
 
   // صفحہ بند/چھپنے سے پہلے بھی محفوظ (آخری حالت ضائع نہ ہو)
   window.addEventListener('beforeunload', function () {
