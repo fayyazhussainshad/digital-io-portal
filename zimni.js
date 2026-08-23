@@ -118,19 +118,30 @@ async function _loadZimni() {
 
   if (!navigator.onLine) { _zimniList = local; return; }
 
+  // ═══ ڈیٹابیس کا ڈھانچہ ہی نہ ملے تو بار بار کوشش نہ کرو ═══
+  // (کنسول میں درجنوں 400 آ رہے تھے۔ ایک بار ناکامی کے بعد مقامی نقل پر
+  //  چلو اور افسر کو ایک بار صاف پیغام دو۔)
+  if (window._zimniDbBroken) { _zimniList = local; return; }
+
   let rows = null;
   try {
-    // AHEM: اگر ڈیٹابیس میں 'serial_no' کالم نہ ہو تو order() خود error دیتا ہے
-    // اور فہرست خالی آ جاتی ہے — اسی لیے پہلے ترتیب کے ساتھ، پھر بغیر ترتیب۔
+    // 'serial_no' یا 'case_id' کالم نہ ہو تو query خود 400 دیتی ہے —
+    // اسی لیے پہلے ترتیب کے ساتھ، پھر بغیر ترتیب، پھر بغیر چھانٹی۔
     let r = await supabaseClient.from('zimni_reports').select('*')
       .eq('case_id', _zimniCaseId).order('serial_no', { ascending: true });
-    if (r.error) {
-      r = await supabaseClient.from('zimni_reports').select('*').eq('case_id', _zimniCaseId);
-    }
+    if (r.error) r = await supabaseClient.from('zimni_reports').select('*').eq('case_id', _zimniCaseId);
+    if (r.error) r = await supabaseClient.from('zimni_reports').select('*').limit(50);
     if (r.error) throw r.error;
     rows = r.data || [];
   } catch (e) {
-    try { console.error('[zimni load]', e); } catch (_) {}
+    window._zimniDbBroken = true;
+    try { console.error('[zimni load] zimni_reports کا ڈھانچہ درست نہیں:', e); } catch (_) {}
+    if (!window._zimniDbWarned) {
+      window._zimniDbWarned = true;
+      try {
+        showToast('⚠️ ڈیٹابیس میں zimni_reports کے کالم درست نہیں — ضمنیاں فی الحال اسی کمپیوٹر پر محفوظ ہو رہی ہیں', 'warn', 9000);
+      } catch (_) {}
+    }
     _zimniList = local;
     return;
   }
@@ -945,9 +956,32 @@ function _zimniParas() {
 function _zimniAutoNumbers() {
   const doc = _zimniDoc();
   if (!doc) return;
-  const nums = doc.querySelector('.zf-nums');
-  const td   = doc.querySelector('td.zf-c-serial');
-  if (!nums || !td) return;
+  const td = doc.querySelector('td.zf-c-serial');
+  if (!td) return;
+  // ── پرانی محفوظ شدہ ضمنیوں کے لیے ── ان کے HTML میں نمبروں کا خانہ
+  // ہوتا ہی نہیں (وہ پرانے .zf-serno کے ساتھ محفوظ ہوئی تھیں)، اس لیے
+  // نمبر لگنے کی جگہ ہی نہیں ملتی تھی۔ نہ ہو تو یہیں بنا دو۔
+  let nums = doc.querySelector('.zf-nums');
+  if (!nums) {
+    try { td.querySelectorAll('.zf-serno').forEach(el => el.remove()); } catch (_) {}
+    nums = document.createElement('div');
+    nums.className = 'zf-nums';
+    nums.setAttribute('contenteditable', 'false');
+    td.appendChild(nums);
+  }
+  // ▾ بٹن بھی نہ ہو تو لگا دو (پرانی ضمنیوں میں وہ بنام کی سطر میں تھا)
+  if (!td.querySelector('.zf-pick')) {
+    try {
+      doc.querySelectorAll('.zf-bl-banam .zf-pick').forEach(el => el.remove());
+      const b = document.createElement('button');
+      b.className = 'zf-pick no-print';
+      b.setAttribute('contenteditable', 'false');
+      b.title = 'ملزمان منتخب کریں';
+      b.textContent = '\u25BE';
+      b.onclick = (e) => { try { _zimniAccPicker(e); } catch (_) {} };
+      td.insertBefore(b, td.firstChild);
+    } catch (_) {}
+  }
   const paras = _zimniParas();
 
   // نمبروں کی تعداد پیراگرافوں کے برابر رکھو
@@ -1567,8 +1601,8 @@ async function _saveZimni(silent, keepOpen) {
     } catch (_) {}
   };
 
-  // ── OFFLINE — مقامی محفوظ + قطار میں (پہلے یہاں ضمنی ضائع ہو جاتی تھی) ──
-  if (!navigator.onLine) {
+  // ── آف لائن یا ڈیٹابیس کا ڈھانچہ ناقص — مقامی محفوظ ──
+  if (!navigator.onLine || window._zimniDbBroken) {
     const id = z.id || ('local-' + Date.now());
     const obj = Object.assign({ id }, rec);
     _zimniActive = obj; localSave(obj);
