@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_A_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_A_VER = 'zimni-androoni v16 — FIR matn fetch decoupled from shared report173 cache, signature space above IO name';
+const ZIMNI_A_VER = 'zimni-androoni v17 — ref-note shares line with short names (float, wraps naturally for long names), FIR-matn query diagnostics';
 window.ZIMNI_A_VER = ZIMNI_A_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -511,8 +511,9 @@ async function _zaInsertWitnessStatement(witness) {
     const cid = _zaCaseId || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
              || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
     if (cid && typeof supabaseClient !== 'undefined') {
-      const { data } = await supabaseClient.from('fir_matn')
+      const { data, error } = await supabaseClient.from('fir_matn')
         .select('matn,type').eq('case_id', cid).order('created_at', { ascending: true });
+      try { console.log('[zimni-androoni] fir_matn query:', { cid, error, rows: data }); } catch (_) {}
       const rows = (data || []).filter(m => (m.type || 'fir') === 'fir');
       firText = rows.map(m => String(m.matn || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim())
                      .filter(Boolean).join(' ');
@@ -532,8 +533,8 @@ async function _zaInsertWitnessStatement(witness) {
   block.setAttribute('data-witness-name', (witness.full_name || witness.name || '').trim());
   block.innerHTML =
     '<div class="zfa-wit-headrow">' +
-      '<div class="zfa-wit-head">بیان ازاں ' + nm + '</div>' +
       '<div class="zfa-wit-ref">(بحوالہ ضمنی نمبر&nbsp;' + zno + '&nbsp;&nbsp;فقرہ نمبر&nbsp;&nbsp;&nbsp;زیردفعہ 161 ض ف)</div>' +
+      '<div class="zfa-wit-head">بیان ازاں ' + nm + '</div>' +
     '</div>' +
     '<div class="zfa-wit-stmt" data-mic="true">بیان کیا کہ&nbsp;' + E(firText) + '</div>' +
     '<div class="zfa-wit-close">بیان سن لیا ہے درست ہے</div>' +
@@ -935,10 +936,13 @@ function _zaFormCSS() {
   /* ── گواہ کا بیان ── */
   #ch173-doc .zfa-wit-block{ margin:4px 0 16px; }
   /* عنوان — "بیان ازاں نام" (دائیں، عام وزن)، اُس کے نیچے حوالہ (بائیں) */
-  #ch173-doc .zfa-wit-headrow{ margin-bottom:4px; }
+  /* عنوان — "بیان ازاں نام" (دائیں)، حوالہ float سے بائیں کنارے پر —
+     نام مختصر ہو تو دونوں ایک ہی لائن میں؛ نام طویل ہو کر لپٹے تو حوالہ
+     اپنی جگہ (بائیں کنارے) پر رہتا ہے، نام کی اگلی سطریں پوری چوڑائی لیتی ہیں */
+  #ch173-doc .zfa-wit-headrow{ margin-bottom:4px; display:flow-root; }
   #ch173-doc .zfa-wit-head{ font-weight:bold; }
-  #ch173-doc .zfa-wit-ref{ text-align:left !important; text-align-last:left !important;
-    font-weight:normal; unicode-bidi:isolate; margin-top:2px; }
+  #ch173-doc .zfa-wit-ref{ float:left; font-weight:normal; unicode-bidi:isolate;
+    white-space:nowrap; margin-left:10px; }
   #ch173-doc .zfa-wit-stmt{ min-height:1.6em; margin:4px 0 8px; outline:none; }
   #ch173-doc .zfa-wit-close{ margin:2px 0 10px; text-align:center !important;
     text-align-last:center !important; }
