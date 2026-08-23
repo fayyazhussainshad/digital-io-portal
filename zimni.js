@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_VER = 'zimni v16 — topbar link to Androoni Zimni (161)';
+const ZIMNI_VER = 'zimni v15 — closing line + IO signature block';
 window.ZIMNI_VER = ZIMNI_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -377,8 +377,6 @@ function _renderZimniEditor() {
         <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_saveZimni(false,true)" title="محفوظ کریں مگر ضمنی کھلی رہے (Ctrl+S)">🔄 اپ ڈیٹ</button>
         <span id="zf-updated" style="font-size:11px;color:var(--text-muted);white-space:nowrap;align-self:center;"></span>
         <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printZimni()">🖨️ پرنٹ</button>
-        ${sep}
-        <button class="btn btn-secondary btn-sm dio-modbtn" onclick="if(typeof openZimniAndrooniEditor==='function') openZimniAndrooniEditor(_zimniCaseId)" title="بیانات 161 ض ف اسی مقدمہ کی اندرونی ضمنی">🔗 اندرونی ضمنی (161)</button>
       </div>
     </div>
 
@@ -413,6 +411,7 @@ function _renderZimniEditor() {
     try { if (saved && saved.saved_at) _zimniStampUpdated(saved.saved_at); } catch (_) {}
     // خانے کی ناپ + اضافی متن نیچے (چالان کا اصل نظام)
     try { _zimniLayout(); } catch (_) {}
+    try { _zimniEnsureClosing(); } catch (_) {}   // اختتامی سطر (پرانی ضمنیوں کے لیے)
     try { _zimniStartNumbers(); } catch (_) {}          // خودکار نمبر — ہر حال میں چالو
     // ضمنی نمبر بدلتے ہی نیچے "نمبر شمار" بھی وہی ہو جائے
     try {
@@ -611,6 +610,15 @@ function _zimniStampUpdated(iso) {
   el.textContent = t ? ('آخری اپ ڈیٹ: ' + t) : '';
 }
 window._zimniStampUpdated = _zimniStampUpdated;
+
+// آج کی تاریخ — ہمیشہ DD/MM/YYYY
+function _zimniToday() {
+  try { if (typeof _ch173Today === 'function') return _ch173Today(); } catch (_) {}
+  const d = new Date();
+  return String(d.getDate()).padStart(2, '0') + '/' +
+         String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+}
+window._zimniToday = _zimniToday;
 
 function _zimniDoc() {
   return (typeof _ch173Doc === 'function' && _ch173Doc()) || document.getElementById('ch173-doc');
@@ -935,9 +943,10 @@ function _zimniParas() {
     // پرانی/مختلف ساخت — حالاتِ تفتیش کا خانہ (لیبل والی سطریں چھوڑ کر)
     const cell = doc.querySelector('td.zf-c-body');
     if (!cell) return [];
+    const SKIP = ['zf-bl', 'zf-close', 'zf-signblk', 'zf-gap', 'zf-sign', 'zf-signdate'];
     const rest = [...cell.children].filter(el =>
       (el.tagName === 'DIV' || el.tagName === 'P') &&
-      !el.classList.contains('zf-bl') && hasText(el));
+      !SKIP.some(c => el.classList.contains(c)) && hasText(el));
     if (rest.length) { rest.forEach(scan); return marks; }
     scan(cell);
     return marks;
@@ -945,6 +954,26 @@ function _zimniParas() {
   bodies.forEach(scan);
   return marks;
 }
+
+// پرانی محفوظ شدہ ضمنیوں میں اختتامی سطر اور دستخط کا خانہ نہ ہو تو لگا دو
+function _zimniEnsureClosing() {
+  const doc = _zimniDoc();
+  if (!doc) return;
+  const cell = doc.querySelector('td.zf-c-body');
+  if (!cell || cell.querySelector('.zf-close')) return;
+  const E = (v) => (typeof esc === 'function') ? esc(v == null ? '' : String(v)) : String(v || '');
+  const io = (typeof getIOSignLine === 'function') ? getIOSignLine() : '';
+  const wrap = document.createElement('div');
+  wrap.innerHTML =
+    '<div class="zf-close" data-k="close">رپورٹ ضمنی مرتب ہو کرارسال خدمت ہے</div>' +
+    '<div class="zf-signblk">' +
+      '<div class="zf-gap"><br></div><div class="zf-gap"><br></div>' +
+      '<div class="zf-sign" data-k="io_sign">' + E(io) + '</div>' +
+      '<div class="zf-signdate" data-k="io_date">' + E(_zimniToday()) + '</div>' +
+    '</div>';
+  while (wrap.firstChild) cell.appendChild(wrap.firstChild);
+}
+window._zimniEnsureClosing = _zimniEnsureClosing;
 
 function _zimniStartNumbers() {
   const doc = _zimniDoc();
@@ -1473,6 +1502,15 @@ function _zimniFormCSS() {
   #ch173-doc .zf-io{ font-weight:bold; text-decoration:underline; text-underline-offset:3px; }
   /* ہر پیراگراف کے درمیان ایک سطر کا فاصلہ (مزید Enter سے بڑھایا جا سکتا ہے) */
   #ch173-doc .zf-body > div, #ch173-doc .zf-body > p{ margin:0 0 1em 0; }
+  /* ── اختتامی سطر — درمیان میں ── */
+  #ch173-doc .zf-close{ margin-top:1em; font-size:14pt; line-height:1.5;
+    text-align:center; text-align-last:center; outline:none; }
+  /* دستخط کا خانہ — 2 Enter کی جگہ کے بعد تفتیشی افسر کا نام اور تاریخ */
+  #ch173-doc .zf-signblk{ font-size:14pt; line-height:1.5; }
+  #ch173-doc .zf-gap{ min-height:1.5em; }
+  #ch173-doc .zf-sign{ font-weight:bold; text-decoration:underline;
+    text-underline-offset:3px; outline:none; }
+  #ch173-doc .zf-signdate{ outline:none; }
   #ch173-doc .zf-body{ margin-top:8px; font-size:14pt; line-height:1.5;
     text-align:justify; text-align-last:right; outline:none; white-space:pre-wrap; }
 
@@ -1623,6 +1661,14 @@ function _zimniDefaultBody(o, c) {
           <div class="zf-bl zf-bl-banam"><span class="zf-lbl">بنام۔</span><span class="zf-bdyln zf-acclist" data-k="banam"></span></div>
           <div class="zf-bl"><span class="zf-tab"></span><span class="zf-tab"></span><span class="zf-lbl">مرتبہ ۔</span> <span class="zf-bdyln zf-io" data-k="murattib">${ioE}</span></div>
           <div class="zf-body" data-mic="true" data-k="halaat">جناب عالیٰ! بحوالہ رپورٹ </div>
+          <!-- اختتام — تحریر جہاں بھی ختم ہو (کسی بھی صفحے پر) اس کے نیچے آتا ہے -->
+          <div class="zf-close" data-k="close">رپورٹ ضمنی مرتب ہو کرارسال خدمت ہے</div>
+          <div class="zf-signblk">
+            <div class="zf-gap"><br></div>
+            <div class="zf-gap"><br></div>
+            <div class="zf-sign" data-k="io_sign">${ioE}</div>
+            <div class="zf-signdate" data-k="io_date">${E(_zimniToday())}</div>
+          </div>
         </td>
       </tr>
     </tbody>
@@ -1956,10 +2002,8 @@ function _dioBindCtrlS() {
       const doc = (typeof _ch173Doc === 'function') ? _ch173Doc() : document.getElementById('ch173-doc');
       if (doc) {
         e.preventDefault();
-        // ضمنی (بیرونی) کا صفحہ اپنی .zf-tbl سے پہچانا جاتا ہے
+        // ضمنی کا صفحہ اپنی .zf-tbl سے پہچانا جاتا ہے
         if (doc.querySelector('.zf-tbl')) { _saveZimni(false, true); done = true; }   // کھلی رہے
-        // ضمنی اندرونی — اپنی .zfa-tbl سے (zimni-androoni.js)
-        else if (doc.querySelector('.zfa-tbl') && typeof _saveZimniA === 'function') { _saveZimniA(false, true); done = true; }
         else if (typeof _saveR173 === 'function') { _saveR173(); done = true; }
       }
     } catch (_) {}
