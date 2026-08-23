@@ -394,7 +394,8 @@ function _renderZimniEditor() {
     try { if (typeof _ch173FitPaper === 'function') _ch173FitPaper(); } catch (_) {}
     try { _zimniBindKeys(); } catch (_) {}
     try { _dioBindCtrlS(); } catch (_) {}                                                  // Ctrl+S = اپ ڈیٹ                                                 // Tab/Enter/Ctrl+BIU/paste
-    try { _zimniLoadAccused(); } catch (_) {}                                              // بنام ▾ کی فہرست
+    // ملزمان لوڈ کر کے بنام کے آگے خود لگا دو (▾ سے unselect ہو سکتا ہے)
+    try { _zimniLoadAccused().then(() => { try { _zimniFillBanam(false); } catch (_) {} }); } catch (_) {}                                              // بنام ▾ کی فہرست
     try { if (typeof _ch173BrushOff === 'function') _ch173BrushOff(); } catch (_) {}
     try { if (typeof _ch173BindBrush === 'function') _ch173BindBrush(); } catch (_) {}     // format painter
     try { if (typeof _ch173BindCellPick === 'function') _ch173BindCellPick(); } catch (_) {}
@@ -404,7 +405,6 @@ function _renderZimniEditor() {
     try { _zimniColResize(); } catch (_) {}
     try { if (saved && saved.saved_at) _zimniStampUpdated(saved.saved_at); } catch (_) {}
     // خانے کی ناپ + اضافی متن نیچے (چالان کا اصل نظام)
-    try { _zimniBindSerialSync(); } catch (_) {}                                          // ضمنی نمبر ↔ نمبر شمار
     try { _zimniLayout(); } catch (_) {}
     // ضمنی نمبر بدلتے ہی نیچے "نمبر شمار" بھی وہی ہو جائے
     try {
@@ -700,30 +700,6 @@ window._zimniFmt = _zimniFmt;
 //   عنوان + تفصیل کے بعد ٹیبل صفحے میں نہیں سماتا تھا اور پورا کا پورا
 //   دوسرے صفحے پر چلا جاتا تھا۔)
 // ═══════════════════════════════════════════════════════════════
-// ═══ ضمنی نمبر ↔ نمبر شمار — جو اوپر لکھا جائے وہی ٹیبل میں (اور اسی سے محفوظ) ═══
-function _zimniBindSerialSync() {
-  const doc = _zimniDoc();
-  if (!doc || doc._zfSerSync) return;
-  doc._zfSerSync = true;
-  const pull = () => {
-    try {
-      const zno = doc.querySelector('[data-k="zno"]');
-      const no  = doc.querySelector('.zf-serno');
-      if (!zno || !no) return;
-      const v = String(zno.innerText || zno.textContent || '').replace(/[^\d]/g, '');
-      if (v && no.innerText.trim() !== v) no.innerText = v;
-    } catch (_) {}
-  };
-  let t = null;
-  doc.addEventListener('input', (e) => {
-    const el = e.target && e.target.closest ? e.target.closest('[data-k]') : null;
-    if (!el) return;
-    if (el.dataset.k !== 'zno') return;
-    clearTimeout(t); t = setTimeout(pull, 250);
-  });
-  pull();
-}
-window._zimniBindSerialSync = _zimniBindSerialSync;
 
 // ═══════════════════════════════════════════════════════════════
 //  نگرانی — متن چھپا رہ جائے تو خود نیچے بھیج دو
@@ -851,43 +827,6 @@ function _zimniFitTable() {
 }
 window._zimniFitTable = _zimniFitTable;
 
-// ═══ نمبر شمار (کالم 2) — ٹھیک اُس سطر کے برابر جہاں سے "جناب عالی…"
-//     یعنی اصل تحریر شروع ہوتی ہے۔ مرتبہ کے نیچے، اور اُسی کے ساتھ اوپر نیچے۔
-function _zimniAlignSerial() {
-  const doc = _zimniDoc();
-  if (!doc) return;
-  const td    = doc.querySelector('td.zf-c-serial');
-  const body  = doc.querySelector('.zf-body');
-  const banam = doc.querySelector('.zf-bl-banam');
-  const pick  = doc.querySelector('.zf-pick');
-  const no    = doc.querySelector('.zf-serno');
-  if (!td) return;
-  const scaleOf = () => {
-    try {
-      const r = td.getBoundingClientRect();
-      return (td.offsetHeight && r.height) ? (r.height / td.offsetHeight) : 1;
-    } catch (_) { return 1; }
-  };
-  // (1) ▾ بٹن — بنام والی سطر کے برابر
-  if (pick && banam) {
-    try {
-      pick.style.marginTop = '0px';
-      const k = scaleOf() || 1;
-      const gap = Math.round((banam.getBoundingClientRect().top - pick.getBoundingClientRect().top) / k);
-      if (gap > 0 && gap < 2000) pick.style.marginTop = gap + 'px';
-    } catch (_) {}
-  }
-  // (2) نمبر شمار — "جناب عالی" والی سطر کے برابر
-  if (no && body) {
-    try {
-      no.style.marginTop = '0px';
-      const k = scaleOf() || 1;
-      const gap = Math.round((body.getBoundingClientRect().top - no.getBoundingClientRect().top) / k);
-      if (gap > 0 && gap < 2000) no.style.marginTop = gap + 'px';
-    } catch (_) {}
-  }
-}
-window._zimniAlignSerial = _zimniAlignSerial;
 
 
 // ناپ + متن جمانا — ایک ہی ترتیب سے (چالان کے _ch173Layout جیسا)
@@ -943,14 +882,22 @@ window._zimniFitTable = _zimniFitTable;
 // ═══════════════════════════════════════════════════════════════
 function _zimniParas() {
   const doc = _zimniDoc();
-  const body = doc && doc.querySelector('.zf-body');
-  if (!body) return [];
-  const kids = [...body.children].filter(el =>
-    (el.tagName === 'DIV' || el.tagName === 'P') &&
-    String(el.textContent || '').replace(/[\s\u00A0]/g, '').length);
-  if (kids.length) return kids;
-  // کوئی الگ پیراگراف نہیں — پورا خانہ ہی پہلا پیراگراف ہے
-  return String(body.textContent || '').replace(/[\s\u00A0]/g, '').length ? [body] : [];
+  if (!doc) return [];
+  const hasText = (el) => String(el.textContent || '').replace(/[\s\u00A0]/g, '').length > 0;
+  // ═══ AHEM — یہی وہ بگ تھا جس سے نمبر نہیں لگتے تھے ═══
+  // Enter دبانے پر Chrome خانے کو توڑ دیتا ہے: ایک .zf-body کی جگہ کئی
+  // .zf-body بھائی بن جاتے ہیں۔ پہلے صرف پہلا خانہ دیکھا جاتا تھا، اس لیے
+  // ہمیشہ ایک ہی نمبر (1) آتا تھا۔ اب تمام .zf-body خانے دیکھے جاتے ہیں۔
+  const bodies = [...doc.querySelectorAll('.zf-body')];
+  if (!bodies.length) return [];
+  const paras = [];
+  bodies.forEach(b => {
+    const kids = [...b.children].filter(el =>
+      (el.tagName === 'DIV' || el.tagName === 'P') && hasText(el));
+    if (kids.length) kids.forEach(k => paras.push(k));
+    else if (hasText(b)) paras.push(b);
+  });
+  return paras;
 }
 
 function _zimniAutoNumbers() {
@@ -1228,6 +1175,23 @@ function _zimniAccLine(nm, i) {
   return '<div class="zf-acc"><span class="nm">' + (i + 1) + '\u06D4 ' + E(nm) + '</span></div>';
 }
 window._zimniAccLine = _zimniAccLine;
+
+// ملزمان کے تمام نام خود بخود "بنام" کے آگے (▾ سے کوئی نام ہٹایا جا سکتا ہے)
+async function _zimniFillBanam(force) {
+  const doc = _zimniDoc();
+  const cell = doc && doc.querySelector('[data-k="banam"]');
+  if (!cell) return;
+  // پہلے سے کچھ لکھا/چنا ہوا ہو تو ہاتھ نہ لگاؤ (افسر کی اپنی ترمیم محفوظ)
+  if (!force && String(cell.textContent || '').replace(/[\s\u00A0]/g, '').length) return;
+  let list = _zimniAccused;
+  if (!list || !list.length) list = await _zimniLoadAccused();
+  if ((!list || !list.length) && typeof _ch173Accused !== 'undefined' && _ch173Accused) list = _ch173Accused;
+  list = (list || []).filter(a => (a.name || '').trim());
+  if (!list.length) return;
+  cell.innerHTML = list.map((a, i) => _zimniAccLine((a.name || '').trim(), i)).join('');
+  try { _zimniAutoNumbers(); } catch (_) {}
+}
+window._zimniFillBanam = _zimniFillBanam;
 
 async function _zimniAccPicker(ev) {
   ev.preventDefault(); ev.stopPropagation();
