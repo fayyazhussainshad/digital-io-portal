@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_A_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_A_VER = 'zimni-androoni v5 — meta line inline (no flex, copy-safe), 14pt uniform + underlined title, flush-right meta';
+const ZIMNI_A_VER = 'zimni-androoni v6 — meta line center-aligned, form no. 25-54(2), gutter cell explicit-editable';
 window.ZIMNI_A_VER = ZIMNI_A_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -733,7 +733,7 @@ function _zaFormCSS() {
      hai, aur khud apni jagah lambai ke mutabiq phailta hai (auto-expand)۔
      دائیں کنارے سے شروع — کوئی اضافی padding-right نہیں (ٹیبل کی سیدھ میں)۔ */
   #ch173-doc .zfa-meta{ margin:8px 0 10px; padding-right:0; font-size:14pt; font-weight:normal;
-    direction:rtl; line-height:2.1; }
+    direction:rtl; text-align:center; line-height:2.1; }
   #ch173-doc .zfa-fld{ display:inline; margin-left:22px; }
   #ch173-doc .zfa-lbl{ font-weight:normal; white-space:nowrap; }
   #ch173-doc .zfa-ln{ padding:0 1px; outline:none; unicode-bidi:plaintext; }
@@ -824,7 +824,7 @@ function _zaDefaultBody(o, c) {
 
   return `
   <div class="zfa-head">
-    <div class="zfa-formno">پولیس فارم نمبر&nbsp;25—54(ii)</div>
+    <div class="zfa-formno">پولیس فارم نمبر&nbsp;25—54(2)</div>
     <div class="zfa-title">اندرونی ضمنی</div>
   </div>
 
@@ -842,7 +842,7 @@ function _zaDefaultBody(o, c) {
     <tbody>
       <tr>
         <td class="zfa-c-serial"><div class="zfa-nums" contenteditable="true"></div></td>
-        <td class="zfa-c-gutter"></td>
+        <td class="zfa-c-gutter" contenteditable="true"><br></td>
         <td class="zfa-c-body">
           <div class="zfa-body" data-mic="true" data-k="halaat"></div>
         </td>
