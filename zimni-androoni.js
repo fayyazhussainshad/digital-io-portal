@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_A_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_A_VER = 'zimni-androoni v2 — title 26pt (matches docx), title locked from bulk font-size';
+const ZIMNI_A_VER = 'zimni-androoni v3 — statements_161 chip hookup, topbar link to beroni zimni';
 window.ZIMNI_A_VER = ZIMNI_A_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -350,6 +350,8 @@ function _renderZimniAEditor() {
         <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_saveZimniA(false,true)" title="محفوظ کریں مگر ضمنی کھلی رہے (Ctrl+S)">🔄 اپ ڈیٹ</button>
         <span id="zfa-updated" style="font-size:11px;color:var(--text-muted);white-space:nowrap;align-self:center;"></span>
         <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printZimniA()">🖨️ پرنٹ</button>
+        ${sep}
+        <button class="btn btn-secondary btn-sm dio-modbtn" onclick="if(typeof openZimniEditor==='function') openZimniEditor(_zaCaseId)" title="اسی مقدمہ کی بیرونی ضمنی">🔗 بیرونی ضمنی</button>
       </div>
     </div>
 

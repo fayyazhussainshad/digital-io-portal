@@ -193,6 +193,7 @@ async function _doAddMisalDoc(docId) {
   const isPersonForm = (docId === 'witnesses_fir' || docId === 'witnesses_cross' ||
                         docId === 'named_accused' || docId === 'unknown_accused' ||
                         docId === 'zamniyat' || docId === 'memorandum' ||
+                        docId === 'statements_161' ||
                         docId === 'cdr_imei' || docId === 'cro_card' || docId === 'staff');
   // If already added — open it (form for persons, editor for docs)
   if (_misalDocs[docId]) { _openMisalEditor(docId); return; }
@@ -264,6 +265,16 @@ function _openMisalEditor(docId, _fromTab) {
   if (docId === 'cro_card') {
     _openDocId = docId;
     if (typeof openCroCard === 'function') openCroCard(_misalCaseId);
+    return;
+  }
+
+  // Special: بیانات 161 ض ف → Androoni Zimni editor
+  // (mojooda govt rules ke mutabiq gawahan ke 161 CrPC byanat andarooni
+  //  zimni par hi likhe jate hain — isi liye yeh chip seedha wahi khulti hai,
+  //  alag koi generic khali document editor nahi)
+  if (docId === 'statements_161') {
+    _openDocId = docId;
+    if (typeof openZimniAndrooniEditor === 'function') openZimniAndrooniEditor(_misalCaseId);
     return;
   }
 

@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_VER = 'zimni v15 — Ctrl+S now also recognizes zimni-androoni (.zfa-tbl)';
+const ZIMNI_VER = 'zimni v16 — topbar link to Androoni Zimni (161)';
 window.ZIMNI_VER = ZIMNI_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -377,6 +377,8 @@ function _renderZimniEditor() {
         <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_saveZimni(false,true)" title="محفوظ کریں مگر ضمنی کھلی رہے (Ctrl+S)">🔄 اپ ڈیٹ</button>
         <span id="zf-updated" style="font-size:11px;color:var(--text-muted);white-space:nowrap;align-self:center;"></span>
         <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printZimni()">🖨️ پرنٹ</button>
+        ${sep}
+        <button class="btn btn-secondary btn-sm dio-modbtn" onclick="if(typeof openZimniAndrooniEditor==='function') openZimniAndrooniEditor(_zimniCaseId)" title="بیانات 161 ض ف اسی مقدمہ کی اندرونی ضمنی">🔗 اندرونی ضمنی (161)</button>
       </div>
     </div>
 
