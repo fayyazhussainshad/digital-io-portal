@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_A_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_A_VER = 'zimni-androoni v14 — leftover <br> cleanup, name bold, reduced top padding above form-no.';
+const ZIMNI_A_VER = 'zimni-androoni v15 — alignment fix (!important + text-align-last) for ref-note/closing-line/date, real root-cause of stuck right-align';
 window.ZIMNI_A_VER = ZIMNI_A_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -930,12 +930,14 @@ function _zaFormCSS() {
   /* عنوان — "بیان ازاں نام" (دائیں، عام وزن)، اُس کے نیچے حوالہ (بائیں) */
   #ch173-doc .zfa-wit-headrow{ margin-bottom:4px; }
   #ch173-doc .zfa-wit-head{ font-weight:bold; }
-  #ch173-doc .zfa-wit-ref{ text-align:left; font-weight:normal; unicode-bidi:isolate;
-    margin-top:2px; }
+  #ch173-doc .zfa-wit-ref{ text-align:left !important; text-align-last:left !important;
+    font-weight:normal; unicode-bidi:isolate; margin-top:2px; }
   #ch173-doc .zfa-wit-stmt{ min-height:1.6em; margin:4px 0 8px; outline:none; }
-  #ch173-doc .zfa-wit-close{ margin:2px 0 10px; text-align:center; }
+  #ch173-doc .zfa-wit-close{ margin:2px 0 10px; text-align:center !important;
+    text-align-last:center !important; }
   /* تفتیشی افسر (بغیر لیبل) — بائیں طرف، نام کے نیچے تاریخ خود مرکز میں */
-  #ch173-doc .zfa-wit-sign{ float:left; text-align:center; margin-top:4px; }
+  #ch173-doc .zfa-wit-sign{ float:left; text-align:center !important;
+    text-align-last:center !important; margin-top:4px; }
   #ch173-doc .zfa-wit-io{ font-weight:normal; white-space:nowrap; }
   #ch173-doc .zfa-wit-date{ margin-top:2px; unicode-bidi:isolate; }
 
