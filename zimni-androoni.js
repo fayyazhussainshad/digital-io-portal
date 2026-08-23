@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_A_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_A_VER = 'zimni-androoni v3 — statements_161 chip hookup, topbar link to beroni zimni';
+const ZIMNI_A_VER = 'zimni-androoni v4 — form no. line, جرم ت پ left-fix, real-space gaps';
 window.ZIMNI_A_VER = ZIMNI_A_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -415,7 +415,7 @@ function _zaFontToDoc(pt) {
   // AHEM: bairooni ka usool — '.zf-title' HISSE mein nahi hota, isi tarah
   // yahan '.zfa-title' bhi shamil nahi (unwan apni 26pt par rehta hai;
   // badalna ho to matn chun kar badlein)
-  const HISSE = ['.zfa-lbl', '.zfa-ln', '.zfa-tbl td', '.zfa-num', '.zfa-body'].join(', ');
+  const HISSE = ['.zfa-formno', '.zfa-lbl', '.zfa-ln', '.zfa-j-suf', '.zfa-tbl td', '.zfa-num', '.zfa-body'].join(', ');
   try { doc.querySelectorAll(HISSE).forEach(el => { el.style.fontSize = pt + 'pt'; }); } catch (_) {}
   try { _r173Dirty = true; } catch (_) {}
 }
@@ -715,17 +715,29 @@ window._zaLayout = _zaLayout;
 function _zaFormCSS() {
   return `
   /* ── HEADER ── صرف "اندرونی ضمنی" — درمیان، کوئی پولیس فارم نمبر کی سطر نہیں ── */
+  /* ── سرنامہ ── پولیس فارم نمبر — bairooni ke zf-formno jaisa (12pt، bold نہیں، درمیان) ── */
+  #ch173-doc .zfa-formno{ font-size:12pt; font-weight:normal; direction:ltr; text-align:center; margin-bottom:4px; }
   #ch173-doc .zfa-head{ direction:rtl; margin-bottom:6px; line-height:1.5; text-align:center; }
   #ch173-doc .zfa-title{ font-size:26pt; font-weight:normal; text-align:center; line-height:1.5; }
 
-  /* ── سطر: مقدمہ نمبر | مورخہ | جرم | تھانہ — ایک لائن، 16pt، bold نہیں ── */
+  /* ── سطر: مقدمہ نمبر | مورخہ | جرم | تھانہ — ایک لائن، 16pt، bold نہیں ──
+     AHEM: صرف flex "gap" پر بھروسہ نہ کرو — یہ صرف بصری فاصلہ ہے، print/copy
+     میں اکثر ضائع ہو جاتا ہے (الفاظ آپس میں مل جاتے ہیں)۔ اسی لیے ٹیمپلیٹ میں
+     ہر لیبل کے بعد &nbsp; بھی رکھا گیا ہے — اصل حروف کا فاصلہ، ہمیشہ نظر آئے۔ */
   #ch173-doc .zfa-meta{ margin:8px 0 10px; padding-right:1cm; font-size:16pt; font-weight:normal;
     direction:rtl; line-height:1.5; display:flex; flex-wrap:wrap; align-items:baseline;
     gap:6px 26px; justify-content:flex-end; }
   #ch173-doc .zfa-fld{ display:flex; align-items:baseline; gap:4px; }
   #ch173-doc .zfa-lbl{ font-weight:normal; white-space:nowrap; }
-  #ch173-doc .zfa-ln{ min-width:2.4cm; padding:0 1px; outline:none;
-    unicode-bidi:plaintext; text-align:right; }
+  /* قدر — اپنے مواد جتنی خودکار پھیلے (پکی min-width نہیں، ورنہ لمبی قدریں
+     سکڑ کر اگلے لیبل سے مل جاتی ہیں)؛ اپنے بعد بھی حقیقی فاصلہ رکھا گیا ہے */
+  #ch173-doc .zfa-ln{ display:inline-block; width:auto; padding:0 1px; margin-left:10px;
+    outline:none; unicode-bidi:plaintext; text-align:right; white-space:nowrap; }
+  /* جرم — دفعات دائیں، "ت پ" ہمیشہ بائیں کنارے پر (bairooni کا وہی ثابت شدہ اصول:
+     bidi isolation + margin-left:auto — سادہ متن جوڑنے سے "ت پ" غلط جگہ آ جاتا ہے) */
+  #ch173-doc .zfa-jurm{ display:flex; align-items:baseline; gap:4px; }
+  #ch173-doc .zfa-j-body{ unicode-bidi:isolate; direction:ltr; text-align:right; }
+  #ch173-doc .zfa-j-suf{ unicode-bidi:isolate; direction:rtl; margin-left:auto; }
 
   /* ── MAIN TABLE — 3 کالم: نمبر شمار (دائیں) | تنگ خالی کالم | حالات (بائیں، چوڑا) ── */
   #ch173-doc table.zfa-tbl{ width:100%; border-collapse:collapse; table-layout:fixed;
@@ -792,18 +804,29 @@ function _zaDefaultBody(o, c) {
   const thana   = E(o.station || '');
   const firNo   = E(c.fir_number || '');
   const firDate = E(D(c.fir_date || ''));
-  const jurm    = E(((c.section_of_law || '') + ' ' + (c.offence_type || '')).trim());
+  // جرم — دفعات اور "ت پ" الگ الگ (ت پ ہمیشہ بائیں کنارے پر — bairooni ka wahi
+  // rule, _ch173JurmParts se؛ AHEM: sadha concatenation kabhi na karein, warna
+  // "ت پ" RTL matn ke andar seedhe dayen taraf aa kar ghalat jagah baith jata hai)
+  let jBody = ((c.section_of_law || '') + ' ' + (c.offence_type || '')).trim();
+  let jSuf  = 'ت پ';
+  try {
+    if (typeof _ch173JurmParts === 'function') {
+      const jp = _ch173JurmParts(c.section_of_law);
+      jBody = jp.body; jSuf = jp.suffix;
+    }
+  } catch (_) {}
 
   return `
   <div class="zfa-head">
+    <div class="zfa-formno">پولیس فارم نمبر&nbsp;25—54(ii)</div>
     <div class="zfa-title">اندرونی ضمنی</div>
   </div>
 
   <div class="zfa-meta">
-    <span class="zfa-fld"><span class="zfa-lbl">مقدمہ نمبر</span><span class="zfa-ln" data-k="fir">${firNo}</span></span>
-    <span class="zfa-fld"><span class="zfa-lbl">مورخہ</span><span class="zfa-ln" data-k="fdate">${firDate}</span></span>
-    <span class="zfa-fld"><span class="zfa-lbl">جرم</span><span class="zfa-ln" data-k="jurm">${jurm}</span></span>
-    <span class="zfa-fld"><span class="zfa-lbl">تھانہ</span><span class="zfa-ln" data-k="thana">${thana}</span></span>
+    <span class="zfa-fld"><span class="zfa-lbl">مقدمہ نمبر</span>&nbsp;<span class="zfa-ln" data-k="fir">${firNo}</span></span>
+    <span class="zfa-fld"><span class="zfa-lbl">مورخہ</span>&nbsp;<span class="zfa-ln" data-k="fdate">${firDate}</span></span>
+    <span class="zfa-jurm"><span class="zfa-lbl">جرم</span>&nbsp;<span class="zfa-ln zfa-j-body" data-k="jurm">${E(jBody)}</span><span class="zfa-j-suf" data-k="jurm_suf">${E(jSuf)}</span></span>
+    <span class="zfa-fld"><span class="zfa-lbl">تھانہ</span>&nbsp;<span class="zfa-ln" data-k="thana">${thana}</span></span>
   </div>
 
   <table class="zfa-tbl">
