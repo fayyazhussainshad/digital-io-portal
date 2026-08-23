@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_A_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_A_VER = 'zimni-androoni v19 — CRITICAL: witness-block clearfix (was bleeding into next block), fresh witness list every time (no stale cache)';
+const ZIMNI_A_VER = 'zimni-androoni v20 — IO name bold, "add new witness/محرر" shortcut inside picker';
 window.ZIMNI_A_VER = ZIMNI_A_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -571,7 +571,12 @@ async function _zaWitnessPickerOpen(ev) {
   if ((!list || !list.length) && typeof _witnessList !== 'undefined' && _witnessList && _witnessList.length) list = _witnessList;
   list = (list || []).filter(w => (w.full_name || '').trim());
   if (!list.length) {
-    if (typeof showToast === 'function') showToast('ℹ️ اس مقدمہ میں کوئی گواہ درج نہیں', 'info');
+    if (typeof openWitnessesCard === 'function') {
+      if (typeof showToast === 'function') showToast('ℹ️ ابھی کوئی گواہ درج نہیں — گواہان اسکرین کھول دی', 'info');
+      openWitnessesCard(_zaCaseId, 'fir');
+    } else if (typeof showToast === 'function') {
+      showToast('ℹ️ اس مقدمہ میں کوئی گواہ درج نہیں', 'info');
+    }
     return;
   }
 
@@ -593,6 +598,11 @@ async function _zaWitnessPickerOpen(ev) {
     <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:700;color:#0369a1;
                 font-family:'Jameel Noori Nastaleeq',serif;background:#f8fafc;">گواہ منتخب کریں (ایک وقت میں ایک)</div>
     <div style="flex:1;overflow-y:auto;padding:4px 8px;min-height:0;">${rows}</div>
+    <div style="padding:4px 8px;border-top:1px solid #f1f5f9;">
+      <button id="zfa-wit-addnew" style="width:100%;padding:6px;border:1px dashed #94a3b8;border-radius:6px;
+        background:#fff;color:#0369a1;cursor:pointer;font-size:12px;font-family:'Jameel Noori Nastaleeq',serif;">
+        ➕ نیا گواہ / محرر شامل کریں</button>
+    </div>
     <div style="display:flex;gap:6px;padding:8px;border-top:1px solid #e5e7eb;background:#f8fafc;flex-shrink:0;">
       <button id="zfa-wit-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;color:#fff;
         cursor:pointer;font-size:13px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">✔ بیان شامل کریں</button>
@@ -615,6 +625,12 @@ async function _zaWitnessPickerOpen(ev) {
   }, 0);
 
   box.querySelector('#zfa-wit-x').onclick = () => box.remove();
+  // نیا گواہ/محرر — سیدھا گواہان اسکرین کھول دو (status وہاں سے "محرر" چنیں)
+  box.querySelector('#zfa-wit-addnew').onclick = () => {
+    box.remove();
+    if (typeof openWitnessesCard === 'function') openWitnessesCard(_zaCaseId, 'fir');
+    else if (typeof showToast === 'function') showToast('گواہان اسکرین سے شامل کریں', 'info');
+  };
   box.querySelector('#zfa-wit-ok').onclick = () => {
     const sel = box.querySelector('input[name="zfa-wit-pick"]:checked');
     if (!sel) { if (typeof showToast === 'function') showToast('⚠️ پہلے گواہ منتخب کریں', 'warn'); return; }
@@ -954,7 +970,7 @@ function _zaFormCSS() {
   /* تفتیشی افسر (بغیر لیبل) — بائیں طرف، نام کے نیچے تاریخ خود مرکز میں */
   #ch173-doc .zfa-wit-sign{ float:left; text-align:center !important;
     text-align-last:center !important; margin-top:36px; }
-  #ch173-doc .zfa-wit-io{ font-weight:normal; white-space:nowrap; }
+  #ch173-doc .zfa-wit-io{ font-weight:bold; white-space:nowrap; }
   #ch173-doc .zfa-wit-date{ margin-top:2px; unicode-bidi:isolate; }
 
   /* مثل باندھنے کی جگہ — صرف چھپائی میں */
