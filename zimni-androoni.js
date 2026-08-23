@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_A_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_A_VER = 'zimni-androoni v18 — Muharrir tag in picker + no FIR-matn auto-fill for Muharrir statements';
+const ZIMNI_A_VER = 'zimni-androoni v19 — CRITICAL: witness-block clearfix (was bleeding into next block), fresh witness list every time (no stale cache)';
 window.ZIMNI_A_VER = ZIMNI_A_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -567,8 +567,7 @@ async function _zaWitnessPickerOpen(ev) {
   if (old) old.remove();
   const btn = (ev && ev.currentTarget) || document.body;
 
-  let list = _zaWitnesses;
-  if (!list || !list.length) list = await _zaLoadWitnesses();
+  let list = await _zaLoadWitnesses();
   if ((!list || !list.length) && typeof _witnessList !== 'undefined' && _witnessList && _witnessList.length) list = _witnessList;
   list = (list || []).filter(w => (w.full_name || '').trim());
   if (!list.length) {
@@ -940,7 +939,7 @@ function _zaFormCSS() {
   #ch173-doc .zfa-body > div, #ch173-doc .zfa-body > p{ margin:0 0 1em 0; }
 
   /* ── گواہ کا بیان ── */
-  #ch173-doc .zfa-wit-block{ margin:4px 0 16px; }
+  #ch173-doc .zfa-wit-block{ margin:4px 0 16px; display:flow-root; }
   /* عنوان — "بیان ازاں نام" (دائیں، عام وزن)، اُس کے نیچے حوالہ (بائیں) */
   /* عنوان — "بیان ازاں نام" (دائیں)، حوالہ float سے بائیں کنارے پر —
      نام مختصر ہو تو دونوں ایک ہی لائن میں؛ نام طویل ہو کر لپٹے تو حوالہ
