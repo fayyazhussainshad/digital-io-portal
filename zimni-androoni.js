@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_A_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_A_VER = 'zimni-androoni v8 — multi-witness 161 statements, witness picker, list view گواہان column';
+const ZIMNI_A_VER = 'zimni-androoni v9 — بیان ازاں heading + left-pinned reference note, IO name/date stacked left, closing line default';
 window.ZIMNI_A_VER = ZIMNI_A_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -487,9 +487,16 @@ async function _zaLoadWitnesses() {
 }
 window._zaLoadWitnesses = _zaLoadWitnesses;
 
-// Gawah ka bayan block sfhe mein daalna — naam (fixed) + khali jagah
-// (yahan officer likhta hai) + neeche khud-ba-khud tafteeshi afsar
-// ka naam aur tareekh (jahan bayan khatam hota hai)
+// Gawah ka bayan block sfhe mein daalna:
+//   1) عنوان: "بیان ازاں (نام ولد۔۔۔ قوم۔۔۔ سکنہ۔۔۔)" — dayen، aur
+//      "(بحوالہ ضمنی نمبر۔۔ فقرہ نمبر۔۔ زیردفعہ 161 ض ف)" — bayen kinare
+//   2) khali statement jagah (officer likhta hai)
+//   3) "بیان سن لیا ہے درست ہے" — khud-ba-khud, jahan bayan khatam hota
+//   4) تفتیشی افسر ka naam (bila label) + neeche center mein tareekh —
+//      poora hissa bayen taraf
+// AHEM: "display:flex" yahan bhi nahi (copy/paste par newline-per-item
+// bug — meta-line ke masle se seekha gaya sabaq). Left-pinning ke liye
+// sirf "float:left" (normal block flow, flex nahi) — copy-safe.
 function _zaInsertWitnessStatement(witness) {
   if (!witness) return;
   const doc = _zimniDoc();
@@ -500,17 +507,22 @@ function _zaInsertWitnessStatement(witness) {
            : ((o.full_name || '') + (o.designation ? ' ' + o.designation : ''));
   const today = (typeof formatDate === 'function') ? formatDate(new Date()) : '';
   const E = (v) => (typeof esc === 'function') ? esc(v == null ? '' : String(v)) : String(v == null ? '' : v);
-  const nm = E(witness.full_name || witness.name || '');
+  const nm  = E(witness.full_name || witness.name || '');
+  const zno = (_zaActive && _zaActive.serial_no) ? E(_zaActive.serial_no) : '۔۔۔۔';
 
   const block = document.createElement('div');
   block.className = 'zfa-wit-block';
   block.setAttribute('data-witness-id', witness.id || '');
   block.setAttribute('data-witness-name', (witness.full_name || witness.name || '').trim());
   block.innerHTML =
-    '<div class="zfa-wit-head">بیان گواہ:&nbsp;<span class="zfa-wit-name">' + nm + '</span></div>' +
+    '<div class="zfa-wit-headrow">' +
+      '<span class="zfa-wit-head">بیان ازاں (' + nm + '&nbsp;ولد&nbsp;۔۔۔۔۔۔۔۔&nbsp;قوم&nbsp;۔۔۔۔۔۔۔۔&nbsp;سکنہ&nbsp;۔۔۔۔۔۔۔۔۔۔)</span>' +
+      '<span class="zfa-wit-ref">(بحوالہ ضمنی نمبر&nbsp;' + zno + '&nbsp;&nbsp;فقرہ نمبر&nbsp;۔۔۔۔۔۔۔۔۔۔&nbsp;&nbsp;زیردفعہ 161 ض ف)</span>' +
+    '</div>' +
     '<div class="zfa-wit-stmt" data-mic="true"><br></div>' +
-    '<div class="zfa-wit-sign">تفتیشی افسر:&nbsp;<span class="zfa-wit-io">' + E(io) + '</span>' +
-    '&nbsp;&nbsp;&nbsp;تاریخ:&nbsp;<span class="zfa-wit-date">' + E(today) + '</span></div>';
+    '<div class="zfa-wit-close">بیان سن لیا ہے درست ہے</div>' +
+    '<div class="zfa-wit-sign"><div class="zfa-wit-io">' + E(io) + '</div>' +
+    '<div class="zfa-wit-date">' + E(today) + '</div></div>';
   body.appendChild(block);
 
   try { _zaLayout(); } catch (_) {}
@@ -904,13 +916,19 @@ function _zaFormCSS() {
     text-align:justify; text-align-last:right; outline:none; white-space:pre-wrap; }
   #ch173-doc .zfa-body > div, #ch173-doc .zfa-body > p{ margin:0 0 1em 0; }
 
-  /* ── گواہ کا بیان — naam (fixed heading) + khali statement jagah +
-     neeche tafteeshi afsar ka naam+tareekh (jahan bayan khatam hota) ── */
-  #ch173-doc .zfa-wit-block{ margin:6px 0 16px; }
+  /* ── گواہ کا بیان ── */
+  #ch173-doc .zfa-wit-block{ margin:6px 0 16px; display:flow-root; }
+  /* عنوان — دائیں: "بیان ازاں (...)"، بائیں کنارے پر حوالہ (float — flex نہیں) */
+  #ch173-doc .zfa-wit-headrow{ margin-bottom:6px; }
   #ch173-doc .zfa-wit-head{ font-weight:bold; text-decoration:underline;
-    text-underline-offset:3px; margin-bottom:6px; }
-  #ch173-doc .zfa-wit-stmt{ min-height:1.6em; margin:4px 0 10px; outline:none; }
-  #ch173-doc .zfa-wit-sign{ margin-top:4px; text-align:left; unicode-bidi:isolate; }
+    text-underline-offset:3px; unicode-bidi:isolate; }
+  #ch173-doc .zfa-wit-ref{ float:left; font-weight:normal; unicode-bidi:isolate; white-space:nowrap; }
+  #ch173-doc .zfa-wit-stmt{ min-height:1.6em; margin:4px 0 8px; outline:none; }
+  #ch173-doc .zfa-wit-close{ margin:2px 0 10px; }
+  /* تفتیشی افسر (بغیر لیبل) — بائیں طرف، نام کے نیچے تاریخ خود مرکز میں */
+  #ch173-doc .zfa-wit-sign{ float:left; text-align:center; margin-top:4px; }
+  #ch173-doc .zfa-wit-io{ font-weight:normal; white-space:nowrap; }
+  #ch173-doc .zfa-wit-date{ margin-top:2px; unicode-bidi:isolate; }
 
   /* مثل باندھنے کی جگہ — صرف چھپائی میں */
   #ch173-doc .zfa-bindmark{ display:none; }
