@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_VER = 'zimni v15 — closing line + IO signature block';
+const ZIMNI_VER = 'zimni v16 — androoni zimni auto-attach as page 3';
 window.ZIMNI_VER = ZIMNI_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -340,7 +340,7 @@ function _renderZimniEditor() {
   const selCss = 'height:28px;border:1px solid var(--border,#ccc);border-radius:6px;background:var(--bg-card,#fff);color:var(--text-primary,#111);font-size:13px;padding:0 6px;margin:0 1px;cursor:pointer;';
 
   area.innerHTML = `
-  <style>${(typeof _ch173CSS === 'function') ? _ch173CSS() : ''}${_zimniFormCSS()}</style>
+  <style>${(typeof _ch173CSS === 'function') ? _ch173CSS() : ''}${_zimniFormCSS()}${(typeof _zaFormCSS === 'function') ? _zaFormCSS() : ''}</style>
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
     <!-- Topbar — report173 jaisa (chips patti cursor upar jane par nazar aati hai) -->
     <div class="no-print" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
@@ -1120,10 +1120,105 @@ function _zimniAlignSerial() {
 window._zimniAlignSerial = _zimniAlignSerial;
 
 // ناپ + متن جمانا — ایک ہی ترتیب سے (چالان کے _ch173Layout جیسا)
+// ═══════════════════════════════════════════════════════════════
+//  ضمنی 2 صفحوں سے آگے جائے تو صفحہ 3 پر اندرونی ضمنی خود لگ جائے
+//  • اندرونی کا فارم زیرِ استعمال اصل ماڈیول (zimni-androoni.js) سے آتا
+//    ہے — یہاں کوئی نقل نہیں بنائی گئی۔
+//  • کالم 3 بالکل خالی — FIR کے متن کی نقل والا اصول یہاں نہیں چلتا۔
+//  • خودکار نمبر شمار اندرونی پر بھی چلتے ہیں (_zaAutoNumbers)۔
+//  • اختتامی سطر اور تفتیشی افسر کے دستخط اندرونی کے آخر میں جاتے ہیں۔
+// ═══════════════════════════════════════════════════════════════
+function _zimniNeedsAndrooni() {
+  const doc = _zimniDoc();
+  if (!doc) return false;
+  const IN = 96;
+  const paper = (typeof _ch173Paper !== 'undefined') ? _ch173Paper : 'legal';
+  let padY = 0;
+  try {
+    const cs = getComputedStyle(doc);
+    padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+  } catch (_) {}
+  const kaam = ((paper === 'a4') ? 11.7 : 13) * IN - padY;   // ایک صفحہ
+  if (kaam < 100) return false;
+  // اندرونی کا اپنا حصہ ناپ سے نکال دو (ورنہ وہ خود ہی شرط پوری کرتا رہے گا)
+  let apna = 0;
+  try {
+    const wrap = doc.querySelector('.zf-androoni');
+    if (wrap) apna = wrap.offsetHeight || 0;
+  } catch (_) {}
+  const matn = (doc.scrollHeight - padY) - apna;
+  return matn > (2 * kaam);
+}
+
+function _zimniEnsureAndrooni() {
+  const doc = _zimniDoc();
+  if (!doc) return;
+  let wrap = doc.querySelector('.zf-androoni');
+  const chahiye = _zimniNeedsAndrooni();
+
+  // ── ضرورت نہ ہو اور اندرونی خالی ہو تو ہٹا دو (لکھا ہوا کبھی نہ مٹے) ──
+  if (!chahiye) {
+    if (wrap) {
+      let khali = true;
+      try {
+        const b = wrap.querySelector('.zfa-body');
+        khali = !b || !String(b.textContent || '').replace(/[\s\u00A0]/g, '').length;
+      } catch (_) {}
+      if (khali) {
+        try { _zimniMoveClosing(null); } catch (_) {}   // اختتامی خانہ واپس بیرونی میں
+        wrap.remove();
+      }
+    }
+    return;
+  }
+  if (wrap) { try { _zimniMoveClosing(wrap); } catch (_) {} return; }
+
+  // ── اندرونی کا فارم — اصل ماڈیول سے ──
+  if (typeof _zaDefaultBody !== 'function') {
+    try {
+      if (!window._zaMissingWarned) {
+        window._zaMissingWarned = true;
+        showToast('⚠️ اندرونی ضمنی کا ماڈیول (zimni-androoni.js) لوڈ نہیں ہوا', 'warn', 6000);
+      }
+    } catch (_) {}
+    return;
+  }
+  const o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
+  const c = _zimniCase || {};
+  wrap = document.createElement('div');
+  wrap.className = 'zf-androoni';
+  try { wrap.innerHTML = _zaDefaultBody(o, c); } catch (_) { return; }
+  // کالم 3 بالکل خالی (FIR کا متن یہاں نہیں آتا) — تصدیق
+  try {
+    const b = wrap.querySelector('.zfa-body');
+    if (b) b.innerHTML = '<br>';
+  } catch (_) {}
+  doc.appendChild(wrap);
+  try { _zimniMoveClosing(wrap); } catch (_) {}
+  try { if (typeof _zaAutoNumbers === 'function') _zaAutoNumbers(); } catch (_) {}
+}
+window._zimniEnsureAndrooni = _zimniEnsureAndrooni;
+
+// اختتامی سطر + دستخط کہاں رہیں: اندرونی ہو تو اُس کے آخر میں، ورنہ بیرونی میں
+function _zimniMoveClosing(wrap) {
+  const doc = _zimniDoc();
+  if (!doc) return;
+  const close = doc.querySelector('.zf-close');
+  const sign  = doc.querySelector('.zf-signblk');
+  if (!close && !sign) return;
+  const manzil = wrap ? wrap.querySelector('.zfa-c-body') : doc.querySelector('td.zf-c-body');
+  if (!manzil) return;
+  if (close && close.parentElement !== manzil) manzil.appendChild(close);
+  if (sign  && sign.parentElement  !== manzil) manzil.appendChild(sign);
+}
+window._zimniMoveClosing = _zimniMoveClosing;
+
 function _zimniLayout() {
   try { _zimniFitTable(); } catch (_) {}      // ٹیبل کم از کم پورا صفحہ بھرے
   try { _zimniAlignSerial(); } catch (_) {}   // ▾ بٹن بنام کے برابر
   try { _zimniAutoNumbers(); } catch (_) {}   // کالم 2 کے خودکار نمبر
+  try { _zimniEnsureAndrooni(); } catch (_) {}          // 2 صفحوں سے آگے → اندرونی
+  try { if (typeof _zaAutoNumbers === 'function') _zaAutoNumbers(); } catch (_) {}
 }
 window._zimniLayout = _zimniLayout;
 
@@ -1502,6 +1597,12 @@ function _zimniFormCSS() {
   #ch173-doc .zf-io{ font-weight:bold; text-decoration:underline; text-underline-offset:3px; }
   /* ہر پیراگراف کے درمیان ایک سطر کا فاصلہ (مزید Enter سے بڑھایا جا سکتا ہے) */
   #ch173-doc .zf-body > div, #ch173-doc .zf-body > p{ margin:0 0 1em 0; }
+  /* ── اندرونی ضمنی — ہمیشہ نئے صفحے سے (بیرونی 2 صفحوں سے آگے جائے تو) ── */
+  #ch173-doc .zf-androoni{ margin-top:1.25em; }
+  @media print{
+    #ch173-doc .zf-androoni{ break-before:page !important; page-break-before:always !important;
+      margin-top:0 !important; }
+  }
   /* ── اختتامی سطر — درمیان میں ── */
   #ch173-doc .zf-close{ margin-top:1em; font-size:14pt; line-height:1.5;
     text-align:center; text-align-last:center; outline:none; }
@@ -1876,6 +1977,7 @@ function _zimniPrintHTML(inner) {
             direction:rtl; text-align:justify; color:#000; line-height:1.4; }
       ${css173}
       ${_zimniFormCSS()}
+      ${(typeof _zaFormCSS === 'function') ? _zaFormCSS() : ''}
       /* Print overrides — sirf working document (koi toolbar/button nahi) */
       #ch173-doc{ width:100% !important; max-width:none !important; height:auto !important;
         min-height:0 !important; padding:0 !important; margin:0 !important;
