@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_A_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_A_VER = 'zimni-androoni v15 — alignment fix (!important + text-align-last) for ref-note/closing-line/date, real root-cause of stuck right-align';
+const ZIMNI_A_VER = 'zimni-androoni v16 — FIR matn fetch decoupled from shared report173 cache, signature space above IO name';
 window.ZIMNI_A_VER = ZIMNI_A_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -500,16 +500,23 @@ async function _zaInsertWitnessStatement(witness) {
   const nm  = E(witness.full_name || witness.name || '');
   const zno = (_zaActive && _zaActive.serial_no) ? E(_zaActive.serial_no) : '۔۔۔۔';
 
-  // گواہ کا بیان FIR کے متن سے شروع ہوتا ہے — report173 کے موجودہ
-  // fetch functions (_ch173LoadFirMatn/_ch173FirText، fir_matn table
-  // سے) دوبارہ استعمال، کوئی نیا اندازہ نہیں لگایا۔
+  // گواہ کا بیان FIR کے متن سے شروع ہوتا ہے — 'fir_matn' table سے، اُسی
+  // طریقے سے جو report173 کا _ch173FirText استعمال کرتا ہے۔ AHEM: report173
+  // کا اپنا _ch173FirMatn (shared/global) دوبارہ استعمال نہیں کیا — وہ کسی
+  // اور مقدمہ کے لیے پہلے سے بھرا ہو سکتا ہے (report173 پہلے کھلا ہو تو)،
+  // جس سے یہاں غلط/پرانا یا خالی متن آ جاتا (بالکل data-k="halaat" والی
+  // ٹکراؤ کی طرح)۔ اسی مقدمہ کے لیے ہمیشہ تازہ سوال۔
   let firText = '';
   try {
-    if (typeof _ch173LoadFirMatn === 'function' &&
-        (typeof _ch173FirMatn === 'undefined' || _ch173FirMatn === null)) {
-      await _ch173LoadFirMatn();
+    const cid = _zaCaseId || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
+             || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
+    if (cid && typeof supabaseClient !== 'undefined') {
+      const { data } = await supabaseClient.from('fir_matn')
+        .select('matn,type').eq('case_id', cid).order('created_at', { ascending: true });
+      const rows = (data || []).filter(m => (m.type || 'fir') === 'fir');
+      firText = rows.map(m => String(m.matn || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim())
+                     .filter(Boolean).join(' ');
     }
-    if (typeof _ch173FirText === 'function') firText = _ch173FirText() || '';
   } catch (_) {}
 
   // خالی حالت کا رکھا ہوا <br> (کالم 3 کو خالی ہونے پر بھی کلک ایبل رکھنے کے
@@ -937,7 +944,7 @@ function _zaFormCSS() {
     text-align-last:center !important; }
   /* تفتیشی افسر (بغیر لیبل) — بائیں طرف، نام کے نیچے تاریخ خود مرکز میں */
   #ch173-doc .zfa-wit-sign{ float:left; text-align:center !important;
-    text-align-last:center !important; margin-top:4px; }
+    text-align-last:center !important; margin-top:36px; }
   #ch173-doc .zfa-wit-io{ font-weight:normal; white-space:nowrap; }
   #ch173-doc .zfa-wit-date{ margin-top:2px; unicode-bidi:isolate; }
 
