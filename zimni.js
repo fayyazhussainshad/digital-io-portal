@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_VER = 'zimni v13 — numbering counts <br> paragraphs too';
+const ZIMNI_VER = 'zimni v14 — tab = 8 spaces, tighter FIR gap';
 window.ZIMNI_VER = ZIMNI_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -1223,8 +1223,11 @@ function _zimniBindKeys() {
     if (e.key === 'Tab') {
       e.preventDefault();
       if (!e.shiftKey) {
-        if (typeof _ch173Insert === 'function') _ch173Insert('\u00A0\u00A0\u00A0\u00A0\u00A0');
-        else document.execCommand('insertText', false, '\u00A0\u00A0\u00A0\u00A0\u00A0');
+        const TAB = '\u00A0'.repeat(8);              // ایک Tab = 8 خالی جگہیں
+        let ok = false;
+        try { ok = document.execCommand('insertText', false, TAB); } catch (_) {}
+        if (!ok && typeof _ch173Insert === 'function') _ch173Insert(TAB);
+        try { _r173Dirty = true; } catch (_) {}
       }
       return;
     }
@@ -1402,7 +1405,7 @@ function _zimniFormCSS() {
   /* دائیں حصہ : لیبل | قدر | لیبل | تاریخ — دونوں تاریخیں ایک ہی کالم میں */
   /* ہر قدر اپنے لیبل کے ساتھ (فاصلہ 0.25cm — 1cm سے کہیں کم) */
   #ch173-doc .zf-gR{ display:grid; grid-template-columns:auto auto auto minmax(0,1fr);
-    gap:4px 0.12cm; align-items:baseline; }
+    gap:4px 0.05cm; align-items:baseline; }
   #ch173-doc .zf-gR .zf-span2{ grid-column:span 2; }
   /* چھوٹی قدریں (نمبر/تاریخ) کبھی نہ ٹوٹیں */
   #ch173-doc .zf-nw{ white-space:nowrap; }
@@ -1417,7 +1420,7 @@ function _zimniFormCSS() {
   #ch173-doc .zf-lbl{ font-weight:normal; white-space:nowrap; }
   /* قدر ہمیشہ دائیں سے شروع — انگریزی/ہندسوں پر plaintext رخ اُلٹ کر
      اسے بائیں چپکا دیتا تھا، اسی سے لیبل کے ساتھ خالی جگہ بچتی تھی */
-  #ch173-doc .zf-ln{ min-width:24px; padding:0 2px; outline:none;
+  #ch173-doc .zf-ln{ min-width:20px; padding:0 1px; outline:none;
     unicode-bidi:plaintext; text-align:right; }
   #ch173-doc .zf-fld .zf-ln{ flex:1; }
   /* چھوٹی قدریں (سال، ضمنی نمبر) لیبل کے ساتھ ہی رہیں — پھیل کر بائیں
@@ -1616,7 +1619,7 @@ function _zimniDefaultBody(o, c) {
         <td class="zf-c-body" colspan="2">
           <div class="zf-bl"><span class="zf-lbl">سرکار بذریعہ ۔</span> <span class="zf-bdyln" data-k="sarkar">${compl}</span></div>
           <div class="zf-bl zf-bl-banam"><span class="zf-lbl">بنام۔</span><span class="zf-bdyln zf-acclist" data-k="banam"></span></div>
-          <div class="zf-bl"><span class="zf-tab"></span><span class="zf-tab"></span><span class="zf-tab"></span><span class="zf-lbl">مرتبہ ۔</span> <span class="zf-bdyln zf-io" data-k="murattib">${ioE}</span></div>
+          <div class="zf-bl"><span class="zf-tab"></span><span class="zf-tab"></span><span class="zf-lbl">مرتبہ ۔</span> <span class="zf-bdyln zf-io" data-k="murattib">${ioE}</span></div>
           <div class="zf-body" data-mic="true" data-k="halaat">جناب عالیٰ! بحوالہ رپورٹ </div>
         </td>
       </tr>
