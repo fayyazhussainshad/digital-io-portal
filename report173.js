@@ -1415,54 +1415,26 @@ function _ch173AkhrajRowH() {
   const td  = row.querySelector('td.normcell');
   const wrap = td && td.querySelector('.normwrap');
   if (!td || !wrap) return;
-
-  let lh = 0, wrapPad = 0;
+  let lh = 0, padV = 0;
   try {
     const cw = getComputedStyle(wrap);
     lh = parseFloat(cw.lineHeight) || 0;
     if (!lh) lh = (parseFloat(cw.fontSize) || 16) * 1.9;
-    // normwrap ki apni padding (ooper 5px, neeche 0) — jagah ka hissa hai
-    wrapPad = (parseFloat(cw.paddingTop) || 0) + (parseFloat(cw.paddingBottom) || 0);
+    const ct = getComputedStyle(td);
+    padV = (parseFloat(ct.paddingTop) || 0) + (parseFloat(ct.paddingBottom) || 0);
   } catch (_) { return; }
   if (!lh) return;
-
-  // Kitni SATREIN? Qatar ki qudrati unchai (bayen unwaan se) dekho — us se
-  // kam az kam AIK poori satar. Naapne se pehle apni lagayi hui unchai hatao,
-  // warna pichhli naap hi dobara naap li jati hai.
-  const prev = td.style.height;
-  td.style.height = '';
-  let natural = 0;
+  // Unwaan wale khane ki qudrati unchai — qatar us se chhoti nahi honi chahiye
+  let need = 0;
   try {
     const lbl = row.querySelector('.akh-col2');
-    natural = (lbl ? lbl.clientHeight : 0) || 0;
-    if (lbl) {
-      const cl = getComputedStyle(lbl);
-      natural -= (parseFloat(cl.paddingTop) || 0) + (parseFloat(cl.paddingBottom) || 0);
-    }
+    if (lbl) need = lbl.offsetHeight || 0;
   } catch (_) {}
-  let lines = Math.floor(natural / lh);
+  // Muqarrar unchai: kam az kam AIK poori satar, warna jitni satrein samati hain
+  let lines = Math.floor((need - padV) / lh);
   if (!(lines >= 1)) lines = 1;
-
-  // ═══ HISAB nahi — NAAP kar theek karo ═══
-  // AHEM: pehle unchai seedha hisab se lagayi thi (satrein × lh + padding).
-  // Magar khane ki padding aur 'box-sizing' ki wajah se matn ke liye ASAL
-  // jagah us hisab se ZYADA ban jati thi — nateeje mein aakhri satar ke baad
-  // aadhi/poori satar KHALI bach jati thi, aur wohi table ke matn aur neeche
-  // wale matn ke darmiyan ka FASLA nazar aata tha.
-  // Ab seedha wohi naapte hain jo asal mein matn ko milti hai (wrap ki apni
-  // clientHeight) aur usay theek POORI satron par le aate hain — bilkul waise
-  // hi jaise چالان mein _ch173RoundRow karta hai.
-  const target = lines * lh + wrapPad;            // matn ki asal jagah
-  let h = td.clientHeight || (target);
-  td.style.height = Math.round(h) + 'px';
-  for (let i = 0; i < 4; i++) {
-    const diff = target - wrap.clientHeight;
-    if (Math.abs(diff) < 1) break;
-    h += diff;
-    if (h < lh) h = lh;
-    td.style.height = Math.round(h) + 'px';
-  }
-  if (!td.style.height) td.style.height = prev;
+  const h = Math.round(lines * lh + padV);
+  if (td.style.height !== h + 'px') td.style.height = h + 'px';
 }
 window._ch173AkhrajRowH = _ch173AkhrajRowH;
 
@@ -2316,12 +2288,215 @@ async function _ch173LoadPeople() {
     // innerHTML — kyunki _ch173WitnessText() mein CNIC ka <span> hota hai.
     // (innerText se woh <span> ka code khud nazar aa jata tha.)
     if (wcell && !wcell.innerText.trim()) wcell.innerText = _ch173WitnessText();
+    // محرر aur تفتیشی افسر BHI گواہ hote hain — inhen KHUD shamil karo.
+    // (Pehle se maujood hon to dobara nahi lagte, is liye mehfooz چالان
+    //  dobara kholne par naam dohre nahi hote.)
+    try { _ch173AddDefaultOfficials(); } catch(_) {}
+    // Agar کاغذات mein pehle se ایم ایل سی / پوسٹ مارٹم mojood hai to
+    // میڈیکل آفیسر bhi
+    try {
+      const pb = document.querySelector('#ch173-doc [data-k="papers_body"]');
+      if (pb) {
+        const nms = _ch173PapersRead(pb).map(it => it.name);
+        if (nms.length) _ch173EnsureMedicalWitness(nms);
+      }
+    } catch(_) {}
     try { _ch173WrapCnics(); } catch(_) {}
     if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
   } catch(_) {}
 }
 
 // Tamam گواہان aik line mein
+// ═══════════════════════════════════════════════════════════════
+//  SARKARI GAWAH — محرر · تفتیشی افسر · میڈیکل آفیسر
+//  USOOL: محرر, تفتیشی افسر aur میڈیکل آفیسر BHI گواہ hote hain.
+//   • محرر         — نیا مقدمہ درج karte waqt jo naam likha jata hai
+//                    (case ka 'fir_writer' khana).
+//   • تفتیشی افسر  — jo afsar is software ka subscriber hai, yani abhi
+//                    logged-in officer (currentOfficer.full_name).
+//   • میڈیکل آفیسر — SIRF us waqt jab تفصیل کاغذات mein ایم ایل سی /
+//                    میڈیکل سرٹیفکیٹ / پوسٹ مارٹم رپورٹ chuna jaye.
+//                    Naam mehfooz na ho to system aik dafa poochta hai.
+//  Teenon کالم 6 (تفصیل شہادت) mein naam + CNIC ke saath lagte hain.
+//  CNIC na mile to '00000-0000000-0' (bilkul baqi گواہان ki tarah).
+// ═══════════════════════════════════════════════════════════════
+const R173_CNIC_KHALI = '00000-0000000-0';
+
+function _ch173CnicFmt(v) {
+  const d = String(v || '').replace(/\D/g, '');
+  if (d.length !== 13) return R173_CNIC_KHALI;
+  return d.slice(0, 5) + '-' + d.slice(5, 12) + '-' + d.slice(12);
+}
+
+// محرر — mojooda مقدمہ ke card se
+function _ch173Muharrir() {
+  const c = _r173Case || {};
+  const nm = String(c.fir_writer || '').trim();
+  if (!nm) return null;
+  return { name: nm, cnic: _ch173CnicFmt(c.fir_writer_cnic) };
+}
+
+// تفتیشی افسر — yehi subscriber (abhi logged-in) afsar hai
+function _ch173IO() {
+  const o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
+  const nm = String(o.full_name || '').trim();
+  if (!nm) return null;
+  return { name: nm, cnic: _ch173CnicFmt(o.cnic) };
+}
+
+// میڈیکل آفیسر — aik dafa poochne ke baad mehfooz (thane ke hisab se)
+const R173_MED_KEY = 'dio_ch173_medical_officer';
+function _ch173MedGet() {
+  try {
+    const o = JSON.parse(localStorage.getItem(R173_MED_KEY) || 'null');
+    if (o && String(o.name || '').trim()) {
+      return { name: String(o.name).trim(), cnic: _ch173CnicFmt(o.cnic) };
+    }
+  } catch (_) {}
+  return null;
+}
+function _ch173MedSet(name, cnic) {
+  try {
+    localStorage.setItem(R173_MED_KEY, JSON.stringify({
+      name: String(name || '').trim(), cnic: String(cnic || '').trim()
+    }));
+  } catch (_) {}
+}
+window._ch173MedSet = _ch173MedSet;
+
+// کالم 6 ka khana
+function _ch173WitCell() {
+  return document.querySelector('#ch173-doc [data-k="shahadat"]');
+}
+
+// Khane mein pehle se maujood naam (نمبر aur CNIC hata kar)
+function _ch173WitNames(el) {
+  const out = new Set();
+  if (!el) return out;
+  el.innerText.split(/\r?\n/).forEach(line => {
+    let t = line.trim();
+    t = t.replace(/^\s*\d+\u06D4\s*/, '');                 // نمبر شمار hatao
+    t = t.replace(/\d{5}-\d{7}-\d/g, ' ');                 // CNIC kahin bhi ho — hatao
+    t = t.replace(/\s+/g, ' ').trim();
+    if (t) out.add(t);
+  });
+  return out;
+}
+
+// Aik گواہ کالم 6 mein — pehle se ho to DOBARA nahi
+function _ch173AddWitness(name, cnic) {
+  name = String(name || '').trim();
+  if (!name) return false;
+  const el = _ch173WitCell();
+  if (!el) return false;
+  // AHEM: naam PARHNE se PEHLE CNIC ke <span> khol do. Mehfooz چالان dobara
+  // kholne par CNIC '.ln/.cn' mein lipta hota hai — us soorat mein satar ki
+  // shakl badal jati hai aur purana naam pehchana nahi jata. Nateeja: har
+  // dafa kholne par محرر/تفتیشی افسر ka naam DOBARA lag jata. Unwrap pehle
+  // karne se dono kaam theek hote hain — pehchan bhi, aur naya matn bhi
+  // span ke andar nahi girta.
+  try { _ch173UnwrapCnics(el); } catch (_) {}
+  if (_ch173WitNames(el).has(name)) return false;          // pehle se maujood
+  const cur = el.innerText.replace(/\s+$/, '');
+  const next = cur ? (cur.split(/\r?\n/).filter(l => l.trim()).length + 1) : 1;
+  el.innerText = (cur ? cur + '\n' : '') +
+                 next + '\u06D4 ' + name + ' ' + _ch173CnicFmt(cnic);
+  try { _r173Dirty = true; } catch (_) {}
+  return true;
+}
+window._ch173AddWitness = _ch173AddWitness;
+
+// محرر aur تفتیشی افسر — کالم 6 mein KHUD lag jayen
+function _ch173AddDefaultOfficials() {
+  let kuch = false;
+  [_ch173Muharrir(), _ch173IO()].forEach(o => {
+    if (o && _ch173AddWitness(o.name, o.cnic)) kuch = true;
+  });
+  if (kuch) { try { _ch173Layout(); } catch (_) {} }
+  return kuch;
+}
+window._ch173AddDefaultOfficials = _ch173AddDefaultOfficials;
+
+// کاغذات mein ایم ایل سی / میڈیکل / پوسٹ مارٹم hai ya nahi
+const R173_MED_RE = /(ایم\s*ایل\s*سی|MLC|میڈیکل|میڈیکو|پوسٹ\s*مارٹم|پوسٹمارٹم)/i;
+function _ch173NeedsMedical(names) {
+  return (names || []).some(n => R173_MED_RE.test(String(n || '')));
+}
+
+// میڈیکل آفیسر ko کالم 6 mein lao — naam mehfooz na ho to POOCHO
+function _ch173EnsureMedicalWitness(names) {
+  if (!_ch173NeedsMedical(names)) return;
+  const el = _ch173WitCell();
+  if (!el) return;
+  const saved = _ch173MedGet();
+  if (saved) {
+    if (_ch173AddWitness(saved.name, saved.cnic)) {
+      try { _ch173Layout(); } catch (_) {}
+      if (typeof showToast === 'function') {
+        showToast('میڈیکل آفیسر بطور گواہ شامل — ' + saved.name, 'success');
+      }
+    }
+    return;
+  }
+  _ch173AskMedical();
+}
+window._ch173EnsureMedicalWitness = _ch173EnsureMedicalWitness;
+
+// میڈیکل آفیسر ka naam poochne wala chhota sa khana
+function _ch173AskMedical() {
+  document.getElementById('ch173-med-ask')?.remove();
+  const cur = _ch173MedGet() || { name: '', cnic: '' };
+  const ov = document.createElement('div');
+  ov.id = 'ch173-med-ask';
+  ov.style.cssText =
+    'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.45);' +
+    'display:flex;align-items:center;justify-content:center;padding:16px;';
+  ov.innerHTML = `
+    <div style="background:#fff;border-radius:12px;width:340px;max-width:94vw;padding:16px;
+                direction:rtl;box-shadow:0 18px 50px rgba(0,0,0,.3);">
+      <div style="font-family:'Jameel Noori Nastaleeq',serif;font-weight:700;color:#0369a1;
+                  font-size:15pt;margin-bottom:4px;">میڈیکل آفیسر کا نام</div>
+      <div style="font-size:11pt;color:#64748b;margin-bottom:12px;
+                  font-family:'Jameel Noori Nastaleeq',serif;">
+        کاغذات میں ایم ایل سی / پوسٹ مارٹم شامل ہے — میڈیکل آفیسر بھی گواہ ہیں۔
+      </div>
+      <input id="ch173-med-nm" placeholder="نام" dir="auto" value="${esc(cur.name)}"
+             style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:7px;
+                    margin-bottom:8px;font-size:12pt;direction:rtl;">
+      <input id="ch173-med-cn" placeholder="${R173_CNIC_KHALI}" dir="ltr" value="${esc(cur.cnic === R173_CNIC_KHALI ? '' : cur.cnic)}"
+             style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:7px;
+                    margin-bottom:14px;font-size:12pt;">
+      <div style="display:flex;gap:8px;">
+        <button id="ch173-med-ok" style="flex:1;padding:9px;border:none;border-radius:7px;
+                background:#0369a1;color:#fff;cursor:pointer;font-size:12pt;
+                font-family:'Jameel Noori Nastaleeq',serif;">شامل کریں</button>
+        <button id="ch173-med-x" style="padding:9px 14px;border:1px solid #cbd5e1;border-radius:7px;
+                background:#fff;cursor:pointer;font-size:12pt;
+                font-family:'Jameel Noori Nastaleeq',serif;">رہنے دیں</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  const nm = ov.querySelector('#ch173-med-nm');
+  setTimeout(() => nm.focus(), 30);
+  const shut = () => ov.remove();
+  ov.querySelector('#ch173-med-x').onclick = shut;
+  ov.onmousedown = e => { if (e.target === ov) shut(); };
+  ov.querySelector('#ch173-med-ok').onclick = () => {
+    const n = nm.value.trim();
+    if (!n) { nm.focus(); return; }
+    const c = ov.querySelector('#ch173-med-cn').value.trim();
+    _ch173MedSet(n, c);                       // agli dafa nahi poochega
+    shut();
+    if (_ch173AddWitness(n, c)) {
+      try { _ch173Layout(); } catch (_) {}
+      if (typeof showToast === 'function') {
+        showToast('میڈیکل آفیسر بطور گواہ شامل — ' + n, 'success');
+      }
+    }
+  };
+}
+window._ch173AskMedical = _ch173AskMedical;
+
 function _ch173WitnessText() {
   const L = (typeof _ch173WitList === 'function') ? _ch173WitList() : (_ch173Witnesses || []);
   if (!L.length) return '';
@@ -2778,6 +2953,9 @@ function _ch173PapersPicker(ev) {
     _ch173PapersRender(body, items);
     box.remove();
     try { _r173Dirty = true; } catch (_) {}
+    // ایم ایل سی / میڈیکل سرٹیفکیٹ / پوسٹ مارٹم chuna gaya ho to میڈیکل آفیسر
+    // bhi گواہ hain — un ka naam کالم 6 mein. Naam mehfooz na ho to poochta hai.
+    try { _ch173EnsureMedicalWitness(items.map(it => it.name)); } catch (_) {}
   };
 }
 window._ch173PapersPicker = _ch173PapersPicker;
