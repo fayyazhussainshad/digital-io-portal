@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_A_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_A_VER = 'zimni-androoni v17 — ref-note shares line with short names (float, wraps naturally for long names), FIR-matn query diagnostics';
+const ZIMNI_A_VER = 'zimni-androoni v18 — Muharrir tag in picker + no FIR-matn auto-fill for Muharrir statements';
 window.ZIMNI_A_VER = ZIMNI_A_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -468,7 +468,7 @@ async function _zaLoadWitnesses() {
   if (!cid || typeof supabaseClient === 'undefined') { _zaWitnesses = []; return _zaWitnesses; }
   try {
     const { data } = await supabaseClient.from('case_witnesses')
-      .select('id,full_name,witness_type').eq('case_id', cid)
+      .select('id,full_name,witness_type,status').eq('case_id', cid)
       .order('created_at', { ascending: true });
     _zaWitnesses = data || [];
   } catch (_) { _zaWitnesses = []; }
@@ -506,17 +506,22 @@ async function _zaInsertWitnessStatement(witness) {
   // اور مقدمہ کے لیے پہلے سے بھرا ہو سکتا ہے (report173 پہلے کھلا ہو تو)،
   // جس سے یہاں غلط/پرانا یا خالی متن آ جاتا (بالکل data-k="halaat" والی
   // ٹکراؤ کی طرح)۔ اسی مقدمہ کے لیے ہمیشہ تازہ سوال۔
+  // محرر (moharrir) کے لیے FIR کا متن نہیں بھرا جاتا — اُس کا بیان FIR
+  // کے واقعے کی تکرار نہیں ہوتا، اسی لیے خالی رہنے دو۔
+  const isMoharrir = (witness.status === 'moharrir');
   let firText = '';
   try {
-    const cid = _zaCaseId || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
-             || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
-    if (cid && typeof supabaseClient !== 'undefined') {
-      const { data, error } = await supabaseClient.from('fir_matn')
-        .select('matn,type').eq('case_id', cid).order('created_at', { ascending: true });
-      try { console.log('[zimni-androoni] fir_matn query:', { cid, error, rows: data }); } catch (_) {}
-      const rows = (data || []).filter(m => (m.type || 'fir') === 'fir');
-      firText = rows.map(m => String(m.matn || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim())
-                     .filter(Boolean).join(' ');
+    if (!isMoharrir) {
+      const cid = _zaCaseId || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
+               || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
+      if (cid && typeof supabaseClient !== 'undefined') {
+        const { data, error } = await supabaseClient.from('fir_matn')
+          .select('matn,type').eq('case_id', cid).order('created_at', { ascending: true });
+        try { console.log('[zimni-androoni] fir_matn query:', { cid, error, rows: data }); } catch (_) {}
+        const rows = (data || []).filter(m => (m.type || 'fir') === 'fir');
+        firText = rows.map(m => String(m.matn || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim())
+                       .filter(Boolean).join(' ');
+      }
     }
   } catch (_) {}
 
@@ -580,9 +585,10 @@ async function _zaWitnessPickerOpen(ev) {
     'display:flex;flex-direction:column;max-height:min(60vh,340px);overflow:hidden;';
   const rows = list.map((w, i) => {
     const nm = (w.full_name || '').trim();
+    const tag = (w.status === 'moharrir') ? ' <span style="color:#0369a1;font-size:11px;">(محرر)</span>' : '';
     return `<label style="display:flex;align-items:center;gap:8px;padding:7px 6px;cursor:pointer;font-size:13px;
               border-bottom:1px solid #f1f5f9;font-family:'Jameel Noori Nastaleeq',serif;">
-              <input type="radio" name="zfa-wit-pick" value="${i}"> <span>${E(nm)}</span></label>`;
+              <input type="radio" name="zfa-wit-pick" value="${i}"> <span>${E(nm)}${tag}</span></label>`;
   }).join('');
   box.innerHTML = `
     <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:700;color:#0369a1;
