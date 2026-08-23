@@ -1,3 +1,8 @@
+// ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
+// کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
+const ZIMNI_VER = 'zimni v12 — auto numbering + editable numbers';
+window.ZIMNI_VER = ZIMNI_VER;
+
 /* ═══════════════════════════════════════════════════════════
    DIGITAL IO — رپورٹ ضمنی (ZIMNI / PROGRESS REPORT)
    Police Form 25-54(1) — rich text editor
@@ -889,8 +894,19 @@ function _zimniParas() {
   // Enter دبانے پر Chrome خانے کو توڑ دیتا ہے: ایک .zf-body کی جگہ کئی
   // .zf-body بھائی بن جاتے ہیں۔ پہلے صرف پہلا خانہ دیکھا جاتا تھا، اس لیے
   // ہمیشہ ایک ہی نمبر (1) آتا تھا۔ اب تمام .zf-body خانے دیکھے جاتے ہیں۔
-  const bodies = [...doc.querySelectorAll('.zf-body')];
-  if (!bodies.length) return [];
+  let bodies = [...doc.querySelectorAll('.zf-body')];
+  // ── پرانی/مختلف ساخت والی ضمنی کے لیے ──
+  // اگر .zf-body کہیں نہ ملے تو حالاتِ تفتیش کے خانے کو ہی دیکھو، اور
+  // سرکار بذریعہ/بنام/مرتبہ والی سطروں (.zf-bl) کو چھوڑ دو۔
+  if (!bodies.length) {
+    const cell = doc.querySelector('td.zf-c-body');
+    if (!cell) return [];
+    const rest = [...cell.children].filter(el =>
+      (el.tagName === 'DIV' || el.tagName === 'P') &&
+      !el.classList.contains('zf-bl') && hasText(el));
+    if (rest.length) return rest;
+    return hasText(cell) ? [cell] : [];
+  }
   const paras = [];
   bodies.forEach(b => {
     const kids = [...b.children].filter(el =>
@@ -957,11 +973,13 @@ function _zimniStartNumbers() {
 }
 window._zimniStartNumbers = _zimniStartNumbers;
 
+// واپسی کی قدر تشخیص کے لیے — کنسول میں _zimniAutoNumbers() چلا کر
+// فوراً پتا چل جاتا ہے کہ کہاں رکا: { doc, cell, paras, numbers }
 function _zimniAutoNumbers() {
   const doc = _zimniDoc();
-  if (!doc) return;
+  if (!doc) return { ok: false, wajah: 'ضمنی کا صفحہ (#ch173-doc) نہیں ملا' };
   const td = doc.querySelector('td.zf-c-serial');
-  if (!td) return;
+  if (!td) return { ok: false, wajah: 'کالم 2 کا خانہ (td.zf-c-serial) نہیں ملا' };
   // ── پرانی محفوظ شدہ ضمنیوں کے لیے ── ان کے HTML میں نمبروں کا خانہ
   // ہوتا ہی نہیں (وہ پرانے .zf-serno کے ساتھ محفوظ ہوئی تھیں)، اس لیے
   // نمبر لگنے کی جگہ ہی نہیں ملتی تھی۔ نہ ہو تو یہیں بنا دو۔
@@ -1006,7 +1024,10 @@ function _zimniAutoNumbers() {
     }
     d.style.marginTop = '0px';
   });
-  if (!paras.length) return;
+  if (!paras.length) {
+    return { ok: false, wajah: 'کوئی پیراگراف نہیں ملا (حالاتِ تفتیش خالی ہے؟)',
+             bodies: doc.querySelectorAll('.zf-body').length };
+  }
 
   // ہر نمبر کو اُس کے پیراگراف کی پہلی سطر کے برابر لاؤ
   try {
@@ -1021,6 +1042,8 @@ function _zimniAutoNumbers() {
       if (gap > 0 && gap < 5000) d.style.marginTop = gap + 'px';
     }
   } catch (_) {}
+  return { ok: true, paras: paras.length, numbers: nums.children.length,
+           bodies: doc.querySelectorAll('.zf-body').length };
 }
 window._zimniAutoNumbers = _zimniAutoNumbers;
 
