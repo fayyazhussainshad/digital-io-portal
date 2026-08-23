@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_A_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_A_VER = 'zimni-androoni v4 — form no. line, جرم ت پ left-fix, real-space gaps';
+const ZIMNI_A_VER = 'zimni-androoni v5 — meta line inline (no flex, copy-safe), 14pt uniform + underlined title, flush-right meta';
 window.ZIMNI_A_VER = ZIMNI_A_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -714,30 +714,36 @@ window._zaLayout = _zaLayout;
 // Bairooni Zimni form ki CSS jaisa hi pattern — androoni ke apne zfa-* classes
 function _zaFormCSS() {
   return `
-  /* ── HEADER ── صرف "اندرونی ضمنی" — درمیان، کوئی پولیس فارم نمبر کی سطر نہیں ── */
-  /* ── سرنامہ ── پولیس فارم نمبر — bairooni ke zf-formno jaisa (12pt، bold نہیں، درمیان) ── */
-  #ch173-doc .zfa-formno{ font-size:12pt; font-weight:normal; direction:ltr; text-align:center; margin-bottom:4px; }
+  /* ── سرنامہ ── پولیس فارم نمبر — bairooni ke zf-formno jaisa، درمیان ── */
+  #ch173-doc .zfa-formno{ font-size:14pt; font-weight:normal; direction:ltr; text-align:center; margin-bottom:4px; }
   #ch173-doc .zfa-head{ direction:rtl; margin-bottom:6px; line-height:1.5; text-align:center; }
-  #ch173-doc .zfa-title{ font-size:26pt; font-weight:normal; text-align:center; line-height:1.5; }
+  /* عنوان — باقی پورے صفحے سے الگ سائز (26pt) اور انڈر لائن — bairooni ke zf-title jaisa */
+  #ch173-doc .zfa-title{ font-size:26pt; font-weight:normal; text-align:center; line-height:1.5;
+    text-decoration:underline; text-underline-offset:5px; }
 
-  /* ── سطر: مقدمہ نمبر | مورخہ | جرم | تھانہ — ایک لائن، 16pt، bold نہیں ──
-     AHEM: صرف flex "gap" پر بھروسہ نہ کرو — یہ صرف بصری فاصلہ ہے، print/copy
-     میں اکثر ضائع ہو جاتا ہے (الفاظ آپس میں مل جاتے ہیں)۔ اسی لیے ٹیمپلیٹ میں
-     ہر لیبل کے بعد &nbsp; بھی رکھا گیا ہے — اصل حروف کا فاصلہ، ہمیشہ نظر آئے۔ */
-  #ch173-doc .zfa-meta{ margin:8px 0 10px; padding-right:1cm; font-size:16pt; font-weight:normal;
-    direction:rtl; line-height:1.5; display:flex; flex-wrap:wrap; align-items:baseline;
-    gap:6px 26px; justify-content:flex-end; }
-  #ch173-doc .zfa-fld{ display:flex; align-items:baseline; gap:4px; }
+  /* ── سطر: مقدمہ نمبر | مورخہ | جرم | تھانہ — ایک لائن، پورے صفحے کے 14pt پر ──
+     AHEM: yahan pehle "display:flex" tha — har field apna alag flex-item tha۔
+     Iska masla: screen par to yeh sab EK LINE mein theek dikhta tha، lekin jab
+     matn select/copy kiya jata (ya kabhi kabhi print) to browser flex-item ki
+     "boundary" par khud-ba-khud newline daal deta hai — is se har label aur
+     qadar apni ALAG line par nazar ati (jaisa Shafi bhai ne bheja: مقدمہ نمبر
+     phir agli line par 347/26 waghera)۔ Halanke asal masla flex ka tha, koi
+     "gap" ka nahi۔ Hal: plain inline elements (bilkul normal paragraph text
+     jaisa) — yeh copy/print/screen teeno mein aik jaisa, sahih line par rehta
+     hai, aur khud apni jagah lambai ke mutabiq phailta hai (auto-expand)۔
+     دائیں کنارے سے شروع — کوئی اضافی padding-right نہیں (ٹیبل کی سیدھ میں)۔ */
+  #ch173-doc .zfa-meta{ margin:8px 0 10px; padding-right:0; font-size:14pt; font-weight:normal;
+    direction:rtl; line-height:2.1; }
+  #ch173-doc .zfa-fld{ display:inline; margin-left:22px; }
   #ch173-doc .zfa-lbl{ font-weight:normal; white-space:nowrap; }
-  /* قدر — اپنے مواد جتنی خودکار پھیلے (پکی min-width نہیں، ورنہ لمبی قدریں
-     سکڑ کر اگلے لیبل سے مل جاتی ہیں)؛ اپنے بعد بھی حقیقی فاصلہ رکھا گیا ہے */
-  #ch173-doc .zfa-ln{ display:inline-block; width:auto; padding:0 1px; margin-left:10px;
-    outline:none; unicode-bidi:plaintext; text-align:right; white-space:nowrap; }
-  /* جرم — دفعات دائیں، "ت پ" ہمیشہ بائیں کنارے پر (bairooni کا وہی ثابت شدہ اصول:
-     bidi isolation + margin-left:auto — سادہ متن جوڑنے سے "ت پ" غلط جگہ آ جاتا ہے) */
-  #ch173-doc .zfa-jurm{ display:flex; align-items:baseline; gap:4px; }
-  #ch173-doc .zfa-j-body{ unicode-bidi:isolate; direction:ltr; text-align:right; }
-  #ch173-doc .zfa-j-suf{ unicode-bidi:isolate; direction:rtl; margin-left:auto; }
+  #ch173-doc .zfa-ln{ padding:0 1px; outline:none; unicode-bidi:plaintext; }
+  /* جرم — دفعات دائیں، "ت پ" ہمیشہ بائیں کنارے پر — bidi isolation کافی ہے
+     (flex/margin-left:auto کی ضرورت نہیں: RTL سیدھ میں پہلے آنے والا حصہ
+     خود دائیں طرف اور بعد والا خود بائیں طرف بیٹھتا ہے) */
+  #ch173-doc .zfa-jurm{ display:inline; margin-left:22px; }
+  #ch173-doc .zfa-j-body{ unicode-bidi:isolate; direction:ltr; }
+  #ch173-doc .zfa-j-suf{ unicode-bidi:isolate; direction:rtl; }
+
 
   /* ── MAIN TABLE — 3 کالم: نمبر شمار (دائیں) | تنگ خالی کالم | حالات (بائیں، چوڑا) ── */
   #ch173-doc table.zfa-tbl{ width:100%; border-collapse:collapse; table-layout:fixed;
@@ -825,7 +831,7 @@ function _zaDefaultBody(o, c) {
   <div class="zfa-meta">
     <span class="zfa-fld"><span class="zfa-lbl">مقدمہ نمبر</span>&nbsp;<span class="zfa-ln" data-k="fir">${firNo}</span></span>
     <span class="zfa-fld"><span class="zfa-lbl">مورخہ</span>&nbsp;<span class="zfa-ln" data-k="fdate">${firDate}</span></span>
-    <span class="zfa-jurm"><span class="zfa-lbl">جرم</span>&nbsp;<span class="zfa-ln zfa-j-body" data-k="jurm">${E(jBody)}</span><span class="zfa-j-suf" data-k="jurm_suf">${E(jSuf)}</span></span>
+    <span class="zfa-jurm"><span class="zfa-lbl">جرم</span>&nbsp;<span class="zfa-ln zfa-j-body" data-k="jurm">${E(jBody)}</span>&nbsp;<span class="zfa-j-suf" data-k="jurm_suf">${E(jSuf)}</span></span>
     <span class="zfa-fld"><span class="zfa-lbl">تھانہ</span>&nbsp;<span class="zfa-ln" data-k="thana">${thana}</span></span>
   </div>
 
