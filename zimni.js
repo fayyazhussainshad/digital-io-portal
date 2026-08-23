@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_VER = 'zimni v14 — tab = 8 spaces, tighter FIR gap';
+const ZIMNI_VER = 'zimni v15 — Ctrl+S now also recognizes zimni-androoni (.zfa-tbl)';
 window.ZIMNI_VER = ZIMNI_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -1954,8 +1954,10 @@ function _dioBindCtrlS() {
       const doc = (typeof _ch173Doc === 'function') ? _ch173Doc() : document.getElementById('ch173-doc');
       if (doc) {
         e.preventDefault();
-        // ضمنی کا صفحہ اپنی .zf-tbl سے پہچانا جاتا ہے
+        // ضمنی (بیرونی) کا صفحہ اپنی .zf-tbl سے پہچانا جاتا ہے
         if (doc.querySelector('.zf-tbl')) { _saveZimni(false, true); done = true; }   // کھلی رہے
+        // ضمنی اندرونی — اپنی .zfa-tbl سے (zimni-androoni.js)
+        else if (doc.querySelector('.zfa-tbl') && typeof _saveZimniA === 'function') { _saveZimniA(false, true); done = true; }
         else if (typeof _saveR173 === 'function') { _saveR173(); done = true; }
       }
     } catch (_) {}
