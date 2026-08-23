@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_VER = 'zimni v12 — auto numbering + editable numbers';
+const ZIMNI_VER = 'zimni v13 — numbering counts <br> paragraphs too';
 window.ZIMNI_VER = ZIMNI_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -890,37 +890,60 @@ function _zimniParas() {
   const doc = _zimniDoc();
   if (!doc) return [];
   const hasText = (el) => String(el.textContent || '').replace(/[\s\u00A0]/g, '').length > 0;
-  // ═══ AHEM — یہی وہ بگ تھا جس سے نمبر نہیں لگتے تھے ═══
-  // Enter دبانے پر Chrome خانے کو توڑ دیتا ہے: ایک .zf-body کی جگہ کئی
-  // .zf-body بھائی بن جاتے ہیں۔ پہلے صرف پہلا خانہ دیکھا جاتا تھا، اس لیے
-  // ہمیشہ ایک ہی نمبر (1) آتا تھا۔ اب تمام .zf-body خانے دیکھے جاتے ہیں۔
+  const marks = [];
+
+  // متن کے ایک ٹکڑے کی جگہ ناپنے کے لیے (Range سے — عنصر ہو یا سادہ متن)
+  const markOf = (nodes) => {
+    try {
+      const rg = document.createRange();
+      rg.setStartBefore(nodes[0]);
+      rg.setEndAfter(nodes[nodes.length - 1]);
+      const r = rg.getBoundingClientRect();
+      if (!r.height) return null;
+      return { getBoundingClientRect: () => rg.getBoundingClientRect() };
+    } catch (_) { return null; }
+  };
+
+  // ═══ ایک خانے کے اندر کے پیراگراف ═══
+  // AHEM: پیراگراف صرف الگ <div> نہیں ہوتے۔ Enter دبانے پر براؤزر کبھی
+  // نیا <div> بناتا ہے اور کبھی صرف <br> ڈالتا ہے — پہلے صرف <div>/<p>
+  // گِنے جاتے تھے، اسی لیے کنسول میں bodies:3 مگر paras:1 آ رہا تھا۔
+  // اب <br> سے ٹوٹے ہوئے پیراگراف بھی شمار ہوتے ہیں۔
+  const scan = (host) => {
+    const kids = [...host.children].filter(el =>
+      (el.tagName === 'DIV' || el.tagName === 'P') && hasText(el));
+    if (kids.length) { kids.forEach(k => marks.push(k)); return; }
+    // <br> سے الگ ہونے والے حصے
+    let run = [];
+    const flush = () => {
+      if (!run.length) return;
+      const txt = run.map(n => n.textContent || '').join('').replace(/[\s\u00A0]/g, '');
+      if (txt) { const m = markOf(run); if (m) marks.push(m); }
+      run = [];
+    };
+    [...host.childNodes].forEach(n => {
+      if (n.nodeType === 1 && n.tagName === 'BR') { flush(); return; }
+      run.push(n);
+    });
+    flush();
+  };
+
   let bodies = [...doc.querySelectorAll('.zf-body')];
-  // ── پرانی/مختلف ساخت والی ضمنی کے لیے ──
-  // اگر .zf-body کہیں نہ ملے تو حالاتِ تفتیش کے خانے کو ہی دیکھو، اور
-  // سرکار بذریعہ/بنام/مرتبہ والی سطروں (.zf-bl) کو چھوڑ دو۔
   if (!bodies.length) {
+    // پرانی/مختلف ساخت — حالاتِ تفتیش کا خانہ (لیبل والی سطریں چھوڑ کر)
     const cell = doc.querySelector('td.zf-c-body');
     if (!cell) return [];
     const rest = [...cell.children].filter(el =>
       (el.tagName === 'DIV' || el.tagName === 'P') &&
       !el.classList.contains('zf-bl') && hasText(el));
-    if (rest.length) return rest;
-    return hasText(cell) ? [cell] : [];
+    if (rest.length) { rest.forEach(scan); return marks; }
+    scan(cell);
+    return marks;
   }
-  const paras = [];
-  bodies.forEach(b => {
-    const kids = [...b.children].filter(el =>
-      (el.tagName === 'DIV' || el.tagName === 'P') && hasText(el));
-    if (kids.length) kids.forEach(k => paras.push(k));
-    else if (hasText(b)) paras.push(b);
-  });
-  return paras;
+  bodies.forEach(scan);
+  return marks;
 }
 
-// ═══ نمبروں کو ہر حال میں چالو رکھو ═══
-// (1) لکھنے پر  (2) کسی بھی DOM تبدیلی پر (MutationObserver)  (3) وقفے سے
-// ایک ہی راستے پر بھروسہ نہیں — پہلے صرف 'input' پر چلتا تھا اور بعض
-// صورتوں میں (paste، undo، مائیک، متن ہٹنے) نمبر پرانے رہ جاتے تھے۔
 function _zimniStartNumbers() {
   const doc = _zimniDoc();
   if (!doc) return;
