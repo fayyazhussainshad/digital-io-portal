@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_A_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_A_VER = 'zimni-androoni v11 — witness statement starts with FIR matn ("بیان کیا کہ"), print-all label updated';
+const ZIMNI_A_VER = 'zimni-androoni v12 — no duplicate ولد/قوم/سکنہ, IO+تھانہ, centered closing line, col3 always editable, col1 numbers off';
 window.ZIMNI_A_VER = ZIMNI_A_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -383,7 +383,9 @@ function _renderZimniAEditor() {
     try { _zaColResize(); } catch (_) {}
     try { if (saved && saved.saved_at) _zaStampUpdated(saved.saved_at); } catch (_) {}
     try { _zaLayout(); } catch (_) {}
-    try { _zaStartNumbers(); } catch (_) {}          // خودکار نمبر — ہر حال میں چالو
+    // AHEM: خودکار نمبر شمار جان بوجھ کر بند — کالم 1 اب خالی/manual ہے
+    // (har گواہ کا بلاک اپنا "بحوالہ ضمنی نمبر... فقرہ نمبر..." خود رکھتا
+    //  ہے، اس لیے _zaStartNumbers()/_zaAutoNumbers() یہاں نہیں چلائے جاتے)
     [250, 900, 1800].forEach(ms => setTimeout(() => { try { _zaLayout(); } catch (_) {} }, ms));
     // Cursor ke mutabiq font dropdown + B/I/U ki halat khud badle (bairooni ka wahi generic sync)
     try {
@@ -494,8 +496,9 @@ async function _zaInsertWitnessStatement(witness) {
   const body = doc && doc.querySelector('.zfa-body');
   if (!body) return;
   const o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
+  // بیرونی ضمنی کے "مرتبہ" جیسا — صرف نام نہیں، تھانہ بھی شامل
   const io = (typeof getIOSignLine === 'function') ? getIOSignLine()
-           : ((o.full_name || '') + (o.designation ? ' ' + o.designation : ''));
+           : ((o.full_name || '') + (o.designation ? ' ' + o.designation : '') + (o.station ? ' تھانہ ' + o.station : ''));
   const today = (typeof formatDate === 'function') ? formatDate(new Date()) : '';
   const E = (v) => (typeof esc === 'function') ? esc(v == null ? '' : String(v)) : String(v == null ? '' : v);
   const nm  = E(witness.full_name || witness.name || '');
@@ -519,7 +522,7 @@ async function _zaInsertWitnessStatement(witness) {
   block.setAttribute('data-witness-name', (witness.full_name || witness.name || '').trim());
   block.innerHTML =
     '<div class="zfa-wit-headrow">' +
-      '<span class="zfa-wit-head">بیان ازاں (' + nm + '&nbsp;ولد&nbsp;۔۔۔۔۔۔۔۔&nbsp;قوم&nbsp;۔۔۔۔۔۔۔۔&nbsp;سکنہ&nbsp;۔۔۔۔۔۔۔۔۔۔)</span>' +
+      '<span class="zfa-wit-head">بیان ازاں (' + nm + ')</span>' +
       '<span class="zfa-wit-ref">(بحوالہ ضمنی نمبر&nbsp;' + zno + '&nbsp;&nbsp;فقرہ نمبر&nbsp;۔۔۔۔۔۔۔۔۔۔&nbsp;&nbsp;زیردفعہ 161 ض ف)</span>' +
     '</div>' +
     '<div class="zfa-wit-stmt" data-mic="true">بیان کیا کہ&nbsp;' + E(firText) + '</div>' +
@@ -859,7 +862,7 @@ window._zaFitTable = _zaFitTable;
 
 function _zaLayout() {
   try { _zaFitTable(); } catch (_) {}
-  try { _zaAutoNumbers(); } catch (_) {}
+  // AHEM: _zaAutoNumbers() جان بوجھ کر یہاں سے ہٹایا — کالم 1 اب manual ہے
 }
 window._zaLayout = _zaLayout;
 
@@ -927,7 +930,7 @@ function _zaFormCSS() {
     text-underline-offset:3px; unicode-bidi:isolate; }
   #ch173-doc .zfa-wit-ref{ float:left; font-weight:normal; unicode-bidi:isolate; white-space:nowrap; }
   #ch173-doc .zfa-wit-stmt{ min-height:1.6em; margin:4px 0 8px; outline:none; }
-  #ch173-doc .zfa-wit-close{ margin:2px 0 10px; }
+  #ch173-doc .zfa-wit-close{ margin:2px 0 10px; text-align:center; }
   /* تفتیشی افسر (بغیر لیبل) — بائیں طرف، نام کے نیچے تاریخ خود مرکز میں */
   #ch173-doc .zfa-wit-sign{ float:left; text-align:center; margin-top:4px; }
   #ch173-doc .zfa-wit-io{ font-weight:normal; white-space:nowrap; }
@@ -1009,7 +1012,7 @@ function _zaDefaultBody(o, c) {
         <td class="zfa-c-serial"><div class="zfa-nums" contenteditable="true"></div></td>
         <td class="zfa-c-gutter" contenteditable="true"><br></td>
         <td class="zfa-c-body">
-          <div class="zfa-body" data-mic="true" data-k="halaat"></div>
+          <div class="zfa-body" data-mic="true" data-k="halaat"><br></div>
         </td>
       </tr>
     </tbody>
