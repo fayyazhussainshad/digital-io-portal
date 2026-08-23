@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_A_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_A_VER = 'zimni-androoni v13 — FIXED FIR-boilerplate collision (data-k=halaat), tighter spacing, ref note own line left, no bold/underline';
+const ZIMNI_A_VER = 'zimni-androoni v14 — leftover <br> cleanup, name bold, reduced top padding above form-no.';
 window.ZIMNI_A_VER = ZIMNI_A_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -352,11 +352,11 @@ function _renderZimniAEditor() {
     </div>
 
     <!-- Document — poora editable, kaghaz asal naap par (report173 ke asal functions se) -->
-    <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
+    <div style="flex:1;overflow:auto;min-height:0;padding:10px;background:var(--bg-tertiary);">
       <div id="ch173-doc" contenteditable="true" spellcheck="false" style="
         width:${paper==='a4'?'8.27in':'8.5in'};max-width:none;
         min-height:${paper==='a4'?'11.7in':'13in'};margin:0 auto;
-        padding:1cm ${side};background:#fff;
+        padding:0.35cm ${side} 1cm ${side};background:#fff;
         box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;
         line-height:1.4;box-sizing:border-box;">${savedBody}</div>
     </div>
@@ -510,6 +510,13 @@ async function _zaInsertWitnessStatement(witness) {
       await _ch173LoadFirMatn();
     }
     if (typeof _ch173FirText === 'function') firText = _ch173FirText() || '';
+  } catch (_) {}
+
+  // خالی حالت کا رکھا ہوا <br> (کالم 3 کو خالی ہونے پر بھی کلک ایبل رکھنے کے
+  // لیے) — گواہ کا پہلا بلاک آنے پر یہ اضافی خالی سطر کے طور پر رہ جاتا تھا،
+  // ہٹا دو تاکہ کوئی اضافی Enter/خالی سطر نہ بچے
+  try {
+    if (body.innerHTML.trim() === '<br>') body.innerHTML = '';
   } catch (_) {}
 
   const block = document.createElement('div');
@@ -922,7 +929,7 @@ function _zaFormCSS() {
   #ch173-doc .zfa-wit-block{ margin:4px 0 16px; }
   /* عنوان — "بیان ازاں نام" (دائیں، عام وزن)، اُس کے نیچے حوالہ (بائیں) */
   #ch173-doc .zfa-wit-headrow{ margin-bottom:4px; }
-  #ch173-doc .zfa-wit-head{ font-weight:normal; }
+  #ch173-doc .zfa-wit-head{ font-weight:bold; }
   #ch173-doc .zfa-wit-ref{ text-align:left; font-weight:normal; unicode-bidi:isolate;
     margin-top:2px; }
   #ch173-doc .zfa-wit-stmt{ min-height:1.6em; margin:4px 0 8px; outline:none; }
