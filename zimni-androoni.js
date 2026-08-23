@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_A_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_A_VER = 'zimni-androoni v9 — بیان ازاں heading + left-pinned reference note, IO name/date stacked left, closing line default';
+const ZIMNI_A_VER = 'zimni-androoni v10 — topbar simplified (no paper/head/link fields), single Save button, tighter top padding';
 window.ZIMNI_A_VER = ZIMNI_A_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -324,14 +324,7 @@ function _renderZimniAEditor() {
   <style>${(typeof _ch173CSS === 'function') ? _ch173CSS() : ''}${_zaFormCSS()}</style>
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
     <!-- Topbar — bairooni zimni jaisa (chips patti cursor upar jane par nazar aati hai) -->
-    <div class="no-print" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
-      <select id="ch173-paper-sel" onchange="_ch173SetPaper(this.value)" title="کاغذ کا سائز" style="${selCss}font-family:'Jameel Noori Nastaleeq',serif;">
-        <option value="legal" ${paper==='legal'?'selected':''}>لیگل (8.5×13)</option>
-        <option value="a4"    ${paper==='a4'   ?'selected':''}>A4 (8.27×11.7)</option>
-      </select>
-      <input id="zfa-head-in" type="text" value="${esc(((saved && saved.head) || 'بیان'))}"
-        placeholder="ہیڈ (قسم)" title="ہیڈ / قسم — فہرست میں یہی نظر آتا ہے"
-        style="${selCss}width:150px;font-family:'Jameel Noori Nastaleeq',serif;">
+    <div class="no-print" style="display:flex;align-items:center;gap:8px;padding:3px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
       <div style="margin-right:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
         <button id="zf-btn-b" onmousedown="event.preventDefault()" onclick="_zimniFmt('bold')" title="بولڈ" style="${btn}font-weight:900;">B</button>
         <button id="zf-btn-i" onmousedown="event.preventDefault()" onclick="_zimniFmt('italic')" title="ترچھا" style="${btn}font-style:italic;">I</button>
@@ -354,13 +347,11 @@ function _renderZimniAEditor() {
         </select>
         <button onmousedown="event.preventDefault()" onclick="_zimniFmt('undo')" title="واپس (Undo)" style="${btn}">↶</button>
         <button onmousedown="event.preventDefault()" onclick="_zimniFmt('redo')" title="دوبارہ (Redo)" style="${btn}">↷</button>
-        <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveZimniA()">💾 محفوظ</button>
-        <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_saveZimniA(false,true)" title="محفوظ کریں مگر ضمنی کھلی رہے (Ctrl+S)">🔄 اپ ڈیٹ</button>
+        <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveZimniA(false,true)" title="محفوظ کریں — ضمنی کھلی رہے گی (Ctrl+S)">💾 محفوظ</button>
         <span id="zfa-updated" style="font-size:11px;color:var(--text-muted);white-space:nowrap;align-self:center;"></span>
         <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printZimniA()">🖨️ پرنٹ</button>
         ${sep}
         <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_zaWitnessPickerOpen(event)" title="کسی گواہ کا بیان اس صفحے میں شامل کریں">👤 گواہ کا بیان</button>
-        <button class="btn btn-secondary btn-sm dio-modbtn" onclick="if(typeof openZimniEditor==='function') openZimniEditor(_zaCaseId)" title="اسی مقدمہ کی بیرونی ضمنی">🔗 بیرونی ضمنی</button>
       </div>
     </div>
 
