@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_A_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_A_VER = 'zimni-androoni v21 — Muharrir auto-loaded from case fir_writer field + "محرر" & thana appended to his name';
+const ZIMNI_A_VER = 'zimni-androoni v22 — مدعی (complainant) also auto-loaded from case card as witness';
 window.ZIMNI_A_VER = ZIMNI_A_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -478,17 +478,20 @@ async function _zaLoadWitnesses() {
   // 'fir_writer' field — wahi source jo report173 ka _ch173Muharrir use
   // karta hai)۔ case_witnesses mein عموماً الگ record نہیں ہوتا، اس لیے
   // اسے یہاں خود بطور پہلا "گواہ" (status:moharrir) شامل کر دو۔
+  // مدعی — 'complainant' field se (مدعی بھی گواہ ہوتا ہے)۔
   try {
     const c = _zaCase || {};
-    const mn = String(c.fir_writer || '').trim();
-    if (mn) {
-      const already = rows.some(w =>
-        (w.status === 'moharrir') ||
-        String(w.full_name || '').replace(/\s+/g, '') === mn.replace(/\s+/g, ''));
-      if (!already) {
-        rows.unshift({ id: 'muharrir-card', full_name: mn, status: 'moharrir', _fromCard: true });
-      }
-    }
+    const nameKey = (s) => String(s || '').replace(/\s+/g, '');
+    const inject = (nm, status) => {
+      nm = String(nm || '').trim();
+      if (!nm) return;
+      const dup = rows.some(w => w.status === status ||
+        nameKey(w.full_name) === nameKey(nm));
+      if (!dup) rows.unshift({ id: status + '-card', full_name: nm, status, _fromCard: true });
+    };
+    // ترتیب: مدعی پہلے آئے، پھر محرر (unshift اُلٹا لگاتا ہے، اس لیے پہلے محرر)
+    inject(c.fir_writer, 'moharrir');
+    inject(c.complainant, 'mudai');
   } catch (_) {}
 
   _zaWitnesses = rows;
@@ -617,7 +620,9 @@ async function _zaWitnessPickerOpen(ev) {
     'display:flex;flex-direction:column;max-height:min(60vh,340px);overflow:hidden;';
   const rows = list.map((w, i) => {
     const nm = (w.full_name || '').trim();
-    const tag = (w.status === 'moharrir') ? ' <span style="color:#0369a1;font-size:11px;">(محرر)</span>' : '';
+    const tag = (w.status === 'moharrir') ? ' <span style="color:#0369a1;font-size:11px;">(محرر)</span>'
+              : (w.status === 'mudai') ? ' <span style="color:#0369a1;font-size:11px;">(مدعی)</span>'
+              : '';
     return `<label style="display:flex;align-items:center;gap:8px;padding:7px 6px;cursor:pointer;font-size:13px;
               border-bottom:1px solid #f1f5f9;font-family:'Jameel Noori Nastaleeq',serif;">
               <input type="radio" name="zfa-wit-pick" value="${i}"> <span>${E(nm)}${tag}</span></label>`;
