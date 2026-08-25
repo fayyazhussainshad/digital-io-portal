@@ -70,13 +70,14 @@ function _witInjectCSS() {
   .wit-form select.form-input,.wit-form input.form-input{text-align:center;font-size:14pt;}
   @media(max-width:640px){.wit-form .wit-grid5{grid-template-columns:1fr 1fr;}}
 
-  /* Saved witnesses list — same column proportions & 14pt as the form */
-  .wit-list-grid{display:grid;grid-template-columns:2.2em 4fr 1.4fr 1.2fr 0.9fr 1.1fr max-content;gap:6px 8px;align-items:center;direction:rtl;min-width:640px;}
+  /* Saved witnesses list — aligned columns, RTL names, 14pt */
+  .wit-list-grid{display:grid;grid-template-columns:2.2em 4fr 1.4fr 1.2fr 0.9fr 1.1fr 92px;gap:6px 8px;align-items:center;direction:rtl;min-width:640px;box-sizing:border-box;}
   .wit-list-grid > div{font-size:14pt;text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .wit-list-head{padding:0 12px 4px;}
-  .wit-list-head > div{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-weight:700;color:var(--text-muted);font-size:12pt;}
+  .wit-list-grid > div:nth-child(2){text-align:right;direction:rtl;}
+  .wit-list-head{padding:4px 12px;border:1px solid transparent;border-right:3px solid transparent;}
+  .wit-list-head > div{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-weight:700;color:var(--text-muted);font-size:14pt;}
   .wit-list-row{background:var(--bg-card);border:1px solid var(--border);border-right:3px solid var(--accent);border-radius:8px;padding:8px 12px;margin-bottom:7px;}
-  .wit-list-row .wit-idx{font-weight:800;color:var(--accent);font-size:13pt;}
+  .wit-list-row .wit-idx{font-weight:800;color:var(--accent);font-size:14pt;}
   .wit-list-row .wit-name{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-weight:700;}
   .wit-list-row .wit-actions{display:flex;gap:5px;overflow:visible;}
   @media(max-width:560px){.wit-form .wit-grid3{grid-template-columns:1fr 1fr;}}
