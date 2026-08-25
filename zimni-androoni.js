@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_A_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_A_VER = 'zimni-androoni v22 — مدعی (complainant) also auto-loaded from case card as witness';
+const ZIMNI_A_VER = 'zimni-androoni v23 — FIR matn also skipped for مدعی (like محرر)';
 window.ZIMNI_A_VER = ZIMNI_A_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -523,6 +523,9 @@ async function _zaInsertWitnessStatement(witness) {
   // محرر ہو تو نام کے ساتھ لفظ "محرر" اور تھانہ کا نام بھی — باقی گواہ کے لیے
   // صرف نام (اُن کا ولد/قوم/سکنہ نام ہی میں شامل ہوتا ہے)
   const isMoharrir = (witness.status === 'moharrir');
+  const isMudai    = (witness.status === 'mudai');
+  // محرر اور مدعی — دونوں کے بیان میں FIR کا متن خود بخود نہیں آتا
+  const skipFir    = (isMoharrir || isMudai);
   let nmRaw = String(witness.full_name || witness.name || '').trim();
   if (isMoharrir) {
     const stn = String((_zaCase && (_zaCase.station || _zaCase.police_station)) || o.station || '').trim();
@@ -538,11 +541,10 @@ async function _zaInsertWitnessStatement(witness) {
   // اور مقدمہ کے لیے پہلے سے بھرا ہو سکتا ہے (report173 پہلے کھلا ہو تو)،
   // جس سے یہاں غلط/پرانا یا خالی متن آ جاتا (بالکل data-k="halaat" والی
   // ٹکراؤ کی طرح)۔ اسی مقدمہ کے لیے ہمیشہ تازہ سوال۔
-  // محرر (moharrir) کے لیے FIR کا متن نہیں بھرا جاتا — اُس کا بیان FIR
-  // کے واقعے کی تکرار نہیں ہوتا، اسی لیے خالی رہنے دو۔
+  // محرر اور مدعی کے لیے FIR کا متن نہیں بھرا جاتا۔
   let firText = '';
   try {
-    if (!isMoharrir) {
+    if (!skipFir) {
       const cid = _zaCaseId || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
                || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
       if (cid && typeof supabaseClient !== 'undefined') {
