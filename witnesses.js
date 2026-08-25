@@ -16,6 +16,10 @@ const WITNESS_STATUS = [
   { v:'maghvi',   label:'مغوی' },
   { v:'mudai',    label:'مدعی' },
   { v:'moharrir', label:'محرر / FIR writer' },
+  { v:'shanakht_naash',    label:'شناخت نعش' },
+  { v:'postmortem',        label:'پوسٹمارٹم' },
+  { v:'naqsha_navees',     label:'نقشہ نویس' },
+  { v:'tafteeshi_officer', label:'تفتیشی افیسر' },
 ];
 
 let _witnessList = [];
@@ -65,6 +69,16 @@ function _witInjectCSS() {
   .wit-form .form-input{width:100%;box-sizing:border-box;font-size:14pt;}
   .wit-form select.form-input,.wit-form input.form-input{text-align:center;font-size:14pt;}
   @media(max-width:640px){.wit-form .wit-grid5{grid-template-columns:1fr 1fr;}}
+
+  /* Saved witnesses list — same column proportions & 14pt as the form */
+  .wit-list-grid{display:grid;grid-template-columns:2.2em 4fr 1.4fr 1.2fr 0.9fr 1.1fr max-content;gap:6px 8px;align-items:center;direction:rtl;min-width:640px;}
+  .wit-list-grid > div{font-size:14pt;text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .wit-list-head{padding:0 12px 4px;}
+  .wit-list-head > div{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-weight:700;color:var(--text-muted);font-size:12pt;}
+  .wit-list-row{background:var(--bg-card);border:1px solid var(--border);border-right:3px solid var(--accent);border-radius:8px;padding:8px 12px;margin-bottom:7px;}
+  .wit-list-row .wit-idx{font-weight:800;color:var(--accent);font-size:13pt;}
+  .wit-list-row .wit-name{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-weight:700;}
+  .wit-list-row .wit-actions{display:flex;gap:5px;overflow:visible;}
   @media(max-width:560px){.wit-form .wit-grid3{grid-template-columns:1fr 1fr;}}
   `;
   document.head.appendChild(s);
@@ -83,11 +97,13 @@ function _renderWitnessesArea() {
   area.innerHTML = `
   <div style="padding:10px;direction:rtl;height:100%;overflow-y:auto;width:100%;box-sizing:border-box;">
     <div id="witness-form-box"></div>
-    <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:${color};border-bottom:2px solid ${color};padding-bottom:6px;margin-bottom:12px;text-align:right;width:100%;box-sizing:border-box;">${heading}</div>
-    <div style="width:100%;">${_renderWitnessList(list, _witnessViewType)}</div>
-    <div style="margin-top:12px;text-align:right;">
-      <button class="btn btn-primary btn-sm" onclick="_openWitnessForm(null,'${_witnessViewType}')">➕ گواہ</button>
+    <div style="border-bottom:2px solid ${color};margin-bottom:12px;padding-bottom:6px;">
+      <div style="position:relative;min-height:34px;display:flex;align-items:center;justify-content:center;">
+        <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:${color};text-align:center;">${heading}</div>
+        <button class="btn btn-primary btn-sm" style="position:absolute;right:0;top:50%;transform:translateY(-50%);" onclick="_openWitnessForm(null,'${_witnessViewType}')">➕ گواہ</button>
+      </div>
     </div>
+    <div style="width:100%;overflow-x:auto;">${_renderWitnessList(list, _witnessViewType)}</div>
   </div>`;
 }
 
@@ -114,27 +130,39 @@ async function _saveAutoWitnesses(auto) {
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
 }
 
-// Compact single-row strips
+// Saved witnesses — aligned rows (same column widths & 14pt as the form)
 function _renderWitnessList(list, type) {
   list = list || _witnessList;
   if (!list.length) {
     return `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:14px;">کوئی گواہ شامل نہیں</div>`;
   }
-  return list.map((w, i) => {
+  const head = `
+    <div class="wit-list-grid wit-list-head">
+      <div></div>
+      <div>نام</div>
+      <div>شناختی کارڈ</div>
+      <div>فون نمبر</div>
+      <div>پیشہ</div>
+      <div>حیثیت</div>
+      <div></div>
+    </div>`;
+  const rows = list.map((w, i) => {
     const statusLabel = (WITNESS_STATUS.find(s => s.v === w.status) || {}).label || w.status || '—';
     return `
-    <div style="display:flex;align-items:center;gap:10px;background:var(--bg-card);border:1px solid var(--border);border-right:3px solid var(--accent);border-radius:8px;padding:10px 12px;margin-bottom:7px;direction:rtl;font-size:14px;flex-wrap:nowrap;overflow-x:auto;">
-      <span style="font-weight:800;color:var(--accent);white-space:nowrap;">گواہ ${i+1}</span>
-      <span style="font-weight:700;white-space:nowrap;font-family:'Jameel Noori Nastaleeq',serif;">${esc(w.full_name)||'—'}</span>
-      ${w.cnic?`<span style="color:var(--text-muted);direction:ltr;white-space:nowrap;">${esc(w.cnic)}</span>`:''}
-      ${w.cell?`<span style="color:var(--text-muted);direction:ltr;white-space:nowrap;">${esc(w.cell)}</span>`:''}
-      ${w.profession?`<span style="color:var(--text-muted);white-space:nowrap;">${esc(w.profession)}</span>`:''}
-      <span style="background:var(--accent-glow);color:var(--accent);border-radius:10px;padding:2px 8px;white-space:nowrap;font-size:13px;">${statusLabel}</span>
-      <span style="flex:1;"></span>
-      <button class="btn btn-secondary btn-sm" style="padding:2px 8px;" onclick="_openWitnessForm('${w.id}')">✏️</button>
-      <button class="btn btn-danger btn-sm" style="padding:2px 8px;" onclick="_deleteWitness('${w.id}')">🗑️</button>
+    <div class="wit-list-grid wit-list-row">
+      <div class="wit-idx">${i+1}</div>
+      <div class="wit-name">${esc(w.full_name)||'—'}</div>
+      <div dir="ltr">${w.cnic?esc(w.cnic):'—'}</div>
+      <div dir="ltr">${w.cell?esc(w.cell):'—'}</div>
+      <div>${w.profession?esc(w.profession):'—'}</div>
+      <div>${esc(statusLabel)}</div>
+      <div class="wit-actions">
+        <button class="btn btn-secondary btn-sm" style="padding:2px 8px;" onclick="_openWitnessForm('${w.id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" style="padding:2px 8px;" onclick="_deleteWitness('${w.id}')">🗑️</button>
+      </div>
     </div>`;
   }).join('');
+  return head + rows;
 }
 
 // ── ADD / EDIT FORM (fields unchanged — mulziman format/font/settings) ──
