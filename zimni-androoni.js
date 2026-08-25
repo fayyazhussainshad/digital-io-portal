@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_A_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_A_VER = 'zimni-androoni v20 — IO name bold, "add new witness/محرر" shortcut inside picker';
+const ZIMNI_A_VER = 'zimni-androoni v21 — Muharrir auto-loaded from case fir_writer field + "محرر" & thana appended to his name';
 window.ZIMNI_A_VER = ZIMNI_A_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -466,12 +466,32 @@ async function _zaLoadWitnesses() {
            || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
            || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
   if (!cid || typeof supabaseClient === 'undefined') { _zaWitnesses = []; return _zaWitnesses; }
+  let rows = [];
   try {
     const { data } = await supabaseClient.from('case_witnesses')
       .select('id,full_name,witness_type,status').eq('case_id', cid)
       .order('created_at', { ascending: true });
-    _zaWitnesses = data || [];
-  } catch (_) { _zaWitnesses = []; }
+    rows = data || [];
+  } catch (_) { rows = []; }
+
+  // محرر — نیا مقدمہ درج کرتے وقت FIR کی تفصیل میں لکھا جاتا ہے (case ka
+  // 'fir_writer' field — wahi source jo report173 ka _ch173Muharrir use
+  // karta hai)۔ case_witnesses mein عموماً الگ record نہیں ہوتا، اس لیے
+  // اسے یہاں خود بطور پہلا "گواہ" (status:moharrir) شامل کر دو۔
+  try {
+    const c = _zaCase || {};
+    const mn = String(c.fir_writer || '').trim();
+    if (mn) {
+      const already = rows.some(w =>
+        (w.status === 'moharrir') ||
+        String(w.full_name || '').replace(/\s+/g, '') === mn.replace(/\s+/g, ''));
+      if (!already) {
+        rows.unshift({ id: 'muharrir-card', full_name: mn, status: 'moharrir', _fromCard: true });
+      }
+    }
+  } catch (_) {}
+
+  _zaWitnesses = rows;
   return _zaWitnesses;
 }
 window._zaLoadWitnesses = _zaLoadWitnesses;
@@ -497,7 +517,16 @@ async function _zaInsertWitnessStatement(witness) {
            : ((o.full_name || '') + (o.designation ? ' ' + o.designation : '') + (o.station ? ' تھانہ ' + o.station : ''));
   const today = (typeof formatDate === 'function') ? formatDate(new Date()) : '';
   const E = (v) => (typeof esc === 'function') ? esc(v == null ? '' : String(v)) : String(v == null ? '' : v);
-  const nm  = E(witness.full_name || witness.name || '');
+  // محرر ہو تو نام کے ساتھ لفظ "محرر" اور تھانہ کا نام بھی — باقی گواہ کے لیے
+  // صرف نام (اُن کا ولد/قوم/سکنہ نام ہی میں شامل ہوتا ہے)
+  const isMoharrir = (witness.status === 'moharrir');
+  let nmRaw = String(witness.full_name || witness.name || '').trim();
+  if (isMoharrir) {
+    const stn = String((_zaCase && (_zaCase.station || _zaCase.police_station)) || o.station || '').trim();
+    if (!/محرر/.test(nmRaw)) nmRaw = nmRaw + ' محرر';
+    if (stn && nmRaw.indexOf(stn) === -1) nmRaw = nmRaw + ' تھانہ ' + stn;
+  }
+  const nm  = E(nmRaw);
   const zno = (_zaActive && _zaActive.serial_no) ? E(_zaActive.serial_no) : '۔۔۔۔';
 
   // گواہ کا بیان FIR کے متن سے شروع ہوتا ہے — 'fir_matn' table سے، اُسی
@@ -508,7 +537,6 @@ async function _zaInsertWitnessStatement(witness) {
   // ٹکراؤ کی طرح)۔ اسی مقدمہ کے لیے ہمیشہ تازہ سوال۔
   // محرر (moharrir) کے لیے FIR کا متن نہیں بھرا جاتا — اُس کا بیان FIR
   // کے واقعے کی تکرار نہیں ہوتا، اسی لیے خالی رہنے دو۔
-  const isMoharrir = (witness.status === 'moharrir');
   let firText = '';
   try {
     if (!isMoharrir) {
@@ -535,7 +563,7 @@ async function _zaInsertWitnessStatement(witness) {
   const block = document.createElement('div');
   block.className = 'zfa-wit-block';
   block.setAttribute('data-witness-id', witness.id || '');
-  block.setAttribute('data-witness-name', (witness.full_name || witness.name || '').trim());
+  block.setAttribute('data-witness-name', nmRaw.trim());
   block.innerHTML =
     '<div class="zfa-wit-headrow">' +
       '<div class="zfa-wit-ref">(بحوالہ ضمنی نمبر&nbsp;' + zno + '&nbsp;&nbsp;فقرہ نمبر&nbsp;&nbsp;&nbsp;زیردفعہ 161 ض ف)</div>' +
