@@ -975,6 +975,28 @@ function _zimniEnsureClosing() {
 }
 window._zimniEnsureClosing = _zimniEnsureClosing;
 
+// ═══════════════════════════════════════════════════════════════
+//  ضمنی 2 صفحوں سے آگے جائے تو تیسرے صفحے پر اندرونی ضمنی
+//  • اندرونی کا کالم 3 بالکل خالی (FIR کا متن یہاں نہیں بھرتا)
+//  • اندرونی پر بھی وہی خودکار نمبر کا اصول (_zaAutoNumbers)
+//  • اختتامی سطر اور تفتیشی افسر کے دستخط اندرونی کے آخر میں آتے ہیں
+//  ساخت اور دستخط کا انداز zimni-androoni.js سے ہو بہو (اندازہ نہیں)
+// ═══════════════════════════════════════════════════════════════
+
+// صفحے کی کام کی اونچائی (px)
+function _zimniPageH() {
+  const doc = _zimniDoc();
+  const IN = 96;
+  const paper = (typeof _ch173Paper !== 'undefined') ? _ch173Paper : 'legal';
+  let padY = 0;
+  try {
+    const cs = getComputedStyle(doc);
+    padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+  } catch (_) {}
+  return ((paper === 'a4') ? 11.7 : 13) * IN - padY;
+}
+
+
 function _zimniStartNumbers() {
   const doc = _zimniDoc();
   if (!doc) return;
@@ -1210,6 +1232,27 @@ function _zimniMoveClosing(wrap) {
   if (!manzil) return;
   if (close && close.parentElement !== manzil) manzil.appendChild(close);
   if (sign  && sign.parentElement  !== manzil) manzil.appendChild(sign);
+  // ═══ دستخط کا انداز ═══
+  // اندرونی میں ہو تو بالکل وہی انداز جو zimni-androoni.js میں ہے:
+  //   .zfa-wit-sign > .zfa-wit-io (bold، بائیں طرف) + .zfa-wit-date
+  // بیرونی میں واپس آئے تو اپنا پرانا انداز (.zf-sign / .zf-signdate)
+  try {
+    if (!sign) return;
+    const io = sign.querySelector('[data-k="io_sign"]');
+    const dt = sign.querySelector('[data-k="io_date"]');
+    if (wrap) {
+      sign.className = 'zfa-wit-sign';
+      if (io) io.className = 'zfa-wit-io';
+      if (dt) dt.className = 'zfa-wit-date';
+      // اندرونی کے انداز میں 2 خالی سطروں کی جگہ CSS (margin-top:36px) سے آتی ہے
+      sign.querySelectorAll('.zf-gap').forEach(g => { g.style.display = 'none'; });
+    } else {
+      sign.className = 'zf-signblk';
+      if (io) io.className = 'zf-sign';
+      if (dt) dt.className = 'zf-signdate';
+      sign.querySelectorAll('.zf-gap').forEach(g => { g.style.display = ''; });
+    }
+  } catch (_) {}
 }
 window._zimniMoveClosing = _zimniMoveClosing;
 
@@ -1584,6 +1627,18 @@ function _zimniFormCSS() {
   /* کالم 2 — ہر پیراگراف کا اپنا نمبر (خودکار) */
   #ch173-doc .zf-nums{ display:block; }
   #ch173-doc .zf-num{ display:block; text-align:center; line-height:1.5; }
+  /* اندرونی ضمنی — تیسرے صفحے پر (صفحے کا توڑ صرف چھپائی میں) */
+  #ch173-doc .zf-pgbrk{ display:block; height:0; }
+  #ch173-doc .zf-androoni{ margin-top:1.5em; }
+  @media print{
+    #ch173-doc .zf-pgbrk{ break-before:page !important; page-break-before:always !important;
+      height:0 !important; margin:0 !important; }
+    #ch173-doc .zf-androoni{ margin-top:0; }
+  }
+  /* اسکرین پر اندرونی کہاں سے شروع ہوتی ہے — ایک ہلکی لکیر */
+  #ch173-doc .zf-androoni{ border-top:2px dashed #bbb; padding-top:1em; }
+  @media print{ #ch173-doc .zf-androoni{ border-top:none; padding-top:0; } }
+
   /* مثل باندھنے کی جگہ — صرف چھپائی میں */
   #ch173-doc .zf-bindmark{ display:none; }
   /* باہر کی دائیں، بائیں اور نیچے کی لکیریں نہیں */
@@ -1977,6 +2032,7 @@ function _zimniPrintHTML(inner) {
             direction:rtl; text-align:justify; color:#000; line-height:1.4; }
       ${css173}
       ${_zimniFormCSS()}
+      ${(typeof _zaFormCSS === 'function') ? _zaFormCSS() : ''}
       ${(typeof _zaFormCSS === 'function') ? _zaFormCSS() : ''}
       /* Print overrides — sirf working document (koi toolbar/button nahi) */
       #ch173-doc{ width:100% !important; max-width:none !important; height:auto !important;
