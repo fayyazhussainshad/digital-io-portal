@@ -102,10 +102,16 @@ function _accInjectCSS() {
   .acc-form .acc-field{display:flex;flex-direction:row;align-items:center;gap:6px;}
   .acc-form .acc-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px 12px;align-items:center;}
   .acc-form .acc-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px 10px;align-items:center;}
+  .acc-form .acc-gridN{display:grid;grid-template-columns:1.7fr 1fr 1fr;gap:7px 10px;align-items:center;}
+  .acc-form .acc-grid4b{display:grid;grid-template-columns:1.35fr 1.1fr 1.2fr 1fr;gap:7px 10px;align-items:center;}
   .acc-form .acc-grid5{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:7px 8px;align-items:center;}
   .acc-form .form-input{flex:1;min-width:0;width:auto;box-sizing:border-box;font-size:14pt;padding:5px 6px;}
   .acc-form select.form-input,.acc-form input.form-input{text-align:center;}
-  @media(max-width:640px){.acc-form .acc-grid5{grid-template-columns:1fr 1fr 1fr;}}
+  @media(max-width:640px){
+    .acc-form .acc-grid5{grid-template-columns:1fr 1fr 1fr;}
+    .acc-form .acc-gridN{grid-template-columns:1fr 1fr;}
+    .acc-form .acc-grid4b{grid-template-columns:1fr 1fr;}
+  }
   @media(max-width:560px){.acc-form .acc-grid3{grid-template-columns:1fr 1fr;}}
   `;
   document.head.appendChild(s);
@@ -129,7 +135,6 @@ function _renderAccusedArea() {
   <div style="direction:rtl;height:100%;overflow-y:auto;padding:10px;width:100%;box-sizing:border-box;">
     <div style="display:flex;align-items:center;gap:8px;border-bottom:2px solid ${color};padding-bottom:6px;margin-bottom:12px;width:100%;box-sizing:border-box;">
       <button class="btn btn-primary btn-sm" style="flex:0 0 auto;" onclick="_openAccusedForm(null,'${_accusedViewType}')">➕ ملزم</button>
-      ${list.length ? `<button class="btn btn-danger btn-sm" style="flex:0 0 auto;" onclick="_deleteLastAcc('${_accusedViewType}')">➖</button>` : ''}
       <div style="flex:1;font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:${color};text-align:center;">${heading}</div>
     </div>
     <div id="acc-list" style="width:100%;">${_renderAccCards(list)}</div>
@@ -144,20 +149,25 @@ function _renderAccCards(list) {
     </div>`;
   }
   return list.map(a => `
-    <div onclick="_openAccusedForm('${a.id}','${a.accused_type||'fir'}')"
-         style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:pointer;display:flex;align-items:center;gap:8px;">
-      ${a.photo_url ? `<img src="${a.photo_url}" style="width:38px;height:38px;border-radius:6px;object-fit:cover;flex-shrink:0;">` : '<span style="font-size:22px;flex-shrink:0;">👤</span>'}
-      <div style="flex:1;min-width:0;">
-        <div style="font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_escA(a.name)}</div>
-        <div style="font-size:12px;color:var(--text-muted);display:flex;gap:8px;flex-wrap:wrap;">
-          ${a.cnic?`<span dir="ltr">🪪 ${_escA(a.cnic)}</span>`:''}
-          ${a.pesha?`<span>${_escA(a.pesha)}</span>`:''}
-          ${a.taleem?`<span>🎓 ${_escA(a.taleem)}</span>`:''}
-          ${a.umar?`<span>${_escA(a.umar)}</span>`:''}
-          ${a.arrest_date?`<span dir="ltr">📅 ${_fmtDateDMY(a.arrest_date)}</span>`:''}
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:8px;">
+      <div onclick="_accViewDetail('${a.id}')" style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;cursor:pointer;">
+        ${a.photo_url ? `<img src="${a.photo_url}" style="width:38px;height:38px;border-radius:6px;object-fit:cover;flex-shrink:0;">` : '<span style="font-size:22px;flex-shrink:0;">👤</span>'}
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_escA(a.name)}</div>
+          <div style="font-size:12px;color:var(--text-muted);display:flex;gap:8px;flex-wrap:wrap;">
+            ${a.cnic?`<span dir="ltr">🪪 ${_escA(a.cnic)}</span>`:''}
+            ${a.pesha?`<span>${_escA(a.pesha)}</span>`:''}
+            ${a.taleem?`<span>🎓 ${_escA(a.taleem)}</span>`:''}
+            ${a.umar?`<span>${_escA(a.umar)}</span>`:''}
+            ${a.arrest_date?`<span dir="ltr">📅 ${_fmtDateDMY(a.arrest_date)}</span>`:''}
+          </div>
         </div>
       </div>
-      <button class="btn btn-danger btn-sm" style="padding:2px 7px;flex-shrink:0;" onclick="event.stopPropagation();_deleteAccused('${a.id}')">🗑️</button>
+      <div style="display:flex;gap:4px;flex-shrink:0;">
+        <button class="btn btn-secondary btn-sm" style="padding:2px 7px;" title="ترمیم" onclick="event.stopPropagation();_openAccusedForm('${a.id}','${a.accused_type||'fir'}')">✏️</button>
+        <button class="btn btn-secondary btn-sm" style="padding:2px 7px;" title="سابقہ ریکارڈ" onclick="event.stopPropagation();_accPrevRecord('${a.id}')">📋 سابقہ ریکارڈ</button>
+        <button class="btn btn-danger btn-sm" style="padding:2px 7px;" title="حذف" onclick="event.stopPropagation();_deleteAccused('${a.id}')">🗑️</button>
+      </div>
     </div>`).join('');
 }
 
@@ -258,30 +268,12 @@ function _openAccusedForm(id, type) {
   const body = `
   <div class="acc-form" style="max-height:74vh;overflow-y:auto;padding:2px 4px;">
 
-    <!-- نام و پتہ -->
-    <div class="acc-field" style="margin-bottom:6px;">
-      <label class="acc-label">نام و پتہ ملزم</label>
-      <input class="form-input" id="acc-name" value="${_escA(a.name)}" placeholder="نام، ولدیت، پتہ" style="text-align:right;">
-    </div>
-
-    <!-- شناختی کارڈ | موبائل | پیشہ (ایک لائن) -->
-    <div class="acc-grid3">
+    <!-- نام و پتہ | تعلیم | عمر (ایک لائن) -->
+    <div class="acc-gridN">
       <div class="acc-field">
-        <label class="acc-label">شناختی کارڈ</label>
-        <input class="form-input" id="acc-cnic" dir="ltr" maxlength="15" value="${_escA(a.cnic)}" placeholder="00000-0000000-0" oninput="_fmtCnicInput(this)">
+        <label class="acc-label">نام و پتہ</label>
+        <input class="form-input" id="acc-name" value="${_escA(a.name)}" placeholder="نام، ولدیت، پتہ" style="text-align:right;">
       </div>
-      <div class="acc-field">
-        <label class="acc-label">موبائل</label>
-        <input class="form-input" id="acc-mobile" dir="ltr" maxlength="12" value="${_escA(a.mobile)}" placeholder="0000-0000000" oninput="_fmtMobileInput(this)">
-      </div>
-      <div class="acc-field">
-        <label class="acc-label">پیشہ</label>
-        <input class="form-input" id="acc-pesha" value="${_escA(a.pesha)}" placeholder="مثلاً: مزدور، ڈرائیور">
-      </div>
-    </div>
-
-    <!-- تعلیم | عمر | تاریخ گرفتاری (ایک لائن) -->
-    <div class="acc-grid3">
       <div class="acc-field">
         <label class="acc-label">تعلیم</label>
         <select class="form-input" id="acc-taleem">
@@ -293,9 +285,25 @@ function _openAccusedForm(id, type) {
         <label class="acc-label">عمر</label>
         ${_accCustomSelect(ACC_UMAR, a.umar, 'acc-umar', 'umar')}
       </div>
+    </div>
+
+    <!-- شناختی کارڈ | موبائل | تاریخ گرفتاری | پیشہ (ایک لائن) -->
+    <div class="acc-grid4b" style="margin-top:7px;">
+      <div class="acc-field">
+        <label class="acc-label">شناختی کارڈ</label>
+        <input class="form-input" id="acc-cnic" dir="ltr" maxlength="15" value="${_escA(a.cnic)}" placeholder="00000-0000000-0" oninput="_fmtCnicInput(this)">
+      </div>
+      <div class="acc-field">
+        <label class="acc-label">موبائل</label>
+        <input class="form-input" id="acc-mobile" dir="ltr" maxlength="12" value="${_escA(a.mobile)}" placeholder="0000-0000000" oninput="_fmtMobileInput(this)">
+      </div>
       <div class="acc-field">
         <label class="acc-label">تاریخ گرفتاری</label>
         <input class="form-input" id="acc-arrest" type="date" dir="ltr" value="${_escA(a.arrest_date)}">
+      </div>
+      <div class="acc-field">
+        <label class="acc-label">پیشہ</label>
+        <input class="form-input" id="acc-pesha" value="${_escA(a.pesha)}" placeholder="مثلاً: مزدور">
       </div>
     </div>
 
@@ -446,6 +454,145 @@ async function _deleteAccused(id) {
     _renderAccusedArea();
     showToast('🗑️ حذف ہو گیا', 'info');
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+// ── READ-ONLY DETAIL VIEW (name click) — edit ONLY via ترمیم btn ──
+function _accViewDetail(id) {
+  const a = _accusedList.find(x => x.id === id);
+  if (!a) return;
+  const row = (label, val) => val ? `<div style="display:flex;gap:8px;padding:5px 0;border-bottom:1px dashed var(--border);">
+      <span style="font-weight:700;min-width:120px;">${label}</span>
+      <span style="flex:1;">${_escA(val)}</span></div>` : '';
+  const haleeya = [
+    a.rang   && ('رنگ: '   + a.rang),
+    a.chehra && ('چہرہ: '  + a.chehra),
+    a.jism   && ('جسم: '   + a.jism),
+    a.qad    && ('قد: '    + a.qad),
+    a.nishan && ('نشان: '  + a.nishan)
+  ].filter(Boolean).join(' ، ');
+
+  const thumbs = (a.photo_url || a.cnic_copy_url) ? `
+    <div style="display:flex;gap:14px;justify-content:center;margin-top:12px;flex-wrap:wrap;">
+      ${a.photo_url ? `<div style="text-align:center;">
+        <img src="${a.photo_url}" onclick="_accViewDoc('${a.id}','photo')" style="width:100px;height:100px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--border);">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">📷 تصویر (کھولیں)</div></div>` : ''}
+      ${a.cnic_copy_url ? `<div style="text-align:center;">
+        <div onclick="_accViewDoc('${a.id}','cnic')" style="width:100px;height:100px;border-radius:8px;cursor:pointer;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:40px;background:var(--bg-card);">🪪</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">شناختی کاپی (کھولیں)</div></div>` : ''}
+    </div>` : '';
+
+  const body = `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
+    ${row('نام و پتہ', a.name)}
+    ${row('شناختی کارڈ', a.cnic)}
+    ${row('موبائل', a.mobile)}
+    ${row('پیشہ', a.pesha)}
+    ${row('تعلیم', a.taleem)}
+    ${row('عمر', a.umar)}
+    ${row('تاریخ گرفتاری', a.arrest_date ? _fmtDateDMY(a.arrest_date) : '')}
+    ${row('حلیہ', haleeya)}
+    ${thumbs}
+  </div>`;
+
+  openModal('👤 ملزم کی تفصیل', body, `
+    <button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>
+    <button class="btn btn-primary" onclick="closeModal();_openAccusedForm('${a.id}','${a.accused_type||'fir'}')">✏️ ترمیم</button>
+  `);
+}
+
+// ── PHOTO / CNIC-COPY VIEWER (view • print • download) ─────────
+let _accViewUrl = null;
+let _accViewName = 'file';
+function _accViewDoc(id, which) {
+  const a = _accusedList.find(x => x.id === id);
+  if (!a) return;
+  const url = which === 'cnic' ? a.cnic_copy_url : a.photo_url;
+  if (!url) { showToast('کوئی فائل موجود نہیں', 'info'); return; }
+  _accViewUrl = url;
+  _accViewName = ((a.name || 'mulzim').replace(/\s+/g,'_')) + '_' + (which === 'cnic' ? 'cnic' : 'photo');
+  const title = which === 'cnic' ? '🪪 شناختی کارڈ کاپی' : '📷 تصویر ملزم';
+  const isPdf = /^data:application\/pdf/.test(url);
+  const viewer = isPdf
+    ? `<iframe src="${url}" style="width:100%;height:62vh;border:none;background:#fff;"></iframe>`
+    : `<img src="${url}" style="max-width:100%;max-height:62vh;display:block;margin:0 auto;border-radius:6px;">`;
+  openModal(title, `<div style="direction:rtl;text-align:center;">${viewer}</div>`, `
+    <button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>
+    <button class="btn btn-secondary" onclick="_accDownloadDoc()">⬇️ ڈاؤن لوڈ</button>
+    <button class="btn btn-primary" onclick="_accPrintDoc()">🖨️ پرنٹ</button>
+  `);
+}
+function _accDownloadDoc() {
+  if (!_accViewUrl) return;
+  const isPdf = /^data:application\/pdf/.test(_accViewUrl);
+  const el = document.createElement('a');
+  el.href = _accViewUrl;
+  el.download = _accViewName + (isPdf ? '.pdf' : '.jpg');
+  document.body.appendChild(el); el.click(); el.remove();
+}
+function _accPrintDoc() {
+  if (!_accViewUrl) return;
+  const w = window.open('', '_blank');
+  if (!w) { showToast('پاپ اپ کی اجازت دیں', 'error'); return; }
+  const isPdf = /^data:application\/pdf/.test(_accViewUrl);
+  const content = isPdf
+    ? `<iframe src="${_accViewUrl}" style="width:100%;height:100vh;border:none;" onload="setTimeout(function(){window.focus();window.print();},400)"></iframe>`
+    : `<img src="${_accViewUrl}" style="max-width:100%;" onload="setTimeout(function(){window.focus();window.print();},400)">`;
+  w.document.write('<!DOCTYPE html><html><head><title>' + _accViewName + '</title></head><body style="margin:0;text-align:center;">' + content + '</body></html>');
+  w.document.close();
+}
+
+// ── سابقہ ریکارڈ (record of this accused in OTHER cases) ───────
+async function _accPrevRecord(id) {
+  const a = _accusedList.find(x => x.id === id);
+  if (!a) return;
+  if (!a.cnic && !a.name) { showToast('شناخت دستیاب نہیں', 'info'); return; }
+  if (!navigator.onLine) { showToast('سابقہ ریکارڈ کے لیے انٹرنیٹ درکار ہے', 'info'); return; }
+  showToast('🔎 تلاش جاری...', 'info');
+  try {
+    let q = supabaseClient.from('case_accused').select('*').neq('case_id', _accusedCaseId);
+    if (a.cnic) q = q.eq('cnic', a.cnic); else q = q.ilike('name', a.name);
+    const { data: recs } = await q;
+    const list = recs || [];
+    if (!list.length) {
+      openModal('📋 سابقہ ریکارڈ', `<div style="direction:rtl;text-align:center;padding:24px;color:var(--text-muted);">اس ملزم کا کسی دیگر مقدمہ میں کوئی ریکارڈ نہیں ملا۔</div>`,
+        `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`);
+      return;
+    }
+    // Fetch case labels for the matched records
+    const ids = [...new Set(list.map(r => r.case_id).filter(Boolean))];
+    const caseMap = {};
+    if (ids.length) {
+      try {
+        const { data: cases } = await supabaseClient.from('cases').select('*').in('id', ids);
+        (cases || []).forEach(c => { caseMap[c.id] = c; });
+      } catch(_) {}
+    }
+    const rows = list.map(r => {
+      const label = _accCaseLabel(caseMap[r.case_id], r.case_id);
+      return `<div style="border:1px solid var(--border);border-radius:8px;padding:9px 11px;margin-bottom:6px;direction:rtl;">
+        <div style="font-weight:700;font-size:14px;">${_escA(label)}</div>
+        <div style="font-size:12px;color:var(--text-muted);display:flex;gap:10px;flex-wrap:wrap;margin-top:3px;">
+          ${r.name?`<span>${_escA(r.name)}</span>`:''}
+          ${r.cnic?`<span dir="ltr">🪪 ${_escA(r.cnic)}</span>`:''}
+          ${r.pesha?`<span>${_escA(r.pesha)}</span>`:''}
+          ${r.arrest_date?`<span dir="ltr">📅 ${_fmtDateDMY(r.arrest_date)}</span>`:''}
+        </div>
+      </div>`;
+    }).join('');
+    openModal('📋 سابقہ ریکارڈ (' + list.length + ')', `<div style="direction:rtl;">${rows}</div>`,
+      `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`);
+  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+}
+// Build a readable case label from whatever columns exist
+function _accCaseLabel(c, fallbackId) {
+  if (!c || !Object.keys(c).length) return 'مقدمہ #' + (fallbackId || '');
+  const fir   = c.fir_no || c.fir_number || c.firno || c.muqadma_no || c.case_no || c.number || '';
+  const thana = c.thana || c.police_station || c.ps || c.thana_name || '';
+  const secs  = c.u_s || c.section || c.dafaat || c.offence || '';
+  const parts = [];
+  if (fir)   parts.push('ایف آئی آر ' + fir);
+  if (thana) parts.push(thana);
+  if (secs)  parts.push(secs);
+  return parts.length ? parts.join(' — ') : ('مقدمہ #' + (c.id || fallbackId || ''));
 }
 
 // ── HELPERS ───────────────────────────────────────────────────
