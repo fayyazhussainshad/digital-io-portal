@@ -59,25 +59,26 @@ function _witInjectCSS() {
   s.textContent = `
   .wit-form{direction:rtl;text-align:right;}
   .wit-form .wit-label{
-    display:block;font-size:14pt;font-weight:700;text-align:center;
+    display:block;font-size:14pt !important;font-weight:700;text-align:center;
     font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
     margin:8px 0 4px;color:var(--text,#111);line-height:1.6;
   }
   .wit-form .wit-field{display:flex;flex-direction:column;}
   .wit-form .wit-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 10px;align-items:start;}
   .wit-form .wit-grid5{display:grid;grid-template-columns:4fr 1.4fr 1.2fr 0.9fr 1.1fr;gap:6px 8px;align-items:start;}
-  .wit-form .form-input{width:100%;box-sizing:border-box;font-size:14pt;}
-  .wit-form select.form-input,.wit-form input.form-input{text-align:center;font-size:14pt;}
+  .wit-form .form-input{width:100%;box-sizing:border-box;font-size:14pt !important;}
+  .wit-form select.form-input,.wit-form input.form-input{text-align:center;font-size:14pt !important;}
   @media(max-width:640px){.wit-form .wit-grid5{grid-template-columns:1fr 1fr;}}
 
   /* Saved witnesses list — aligned columns, RTL names, 14pt */
   .wit-list-grid{display:grid;grid-template-columns:2.2em 4fr 1.4fr 1.2fr 0.9fr 1.1fr 92px;gap:6px 8px;align-items:center;direction:rtl;min-width:640px;box-sizing:border-box;}
-  .wit-list-grid > div{font-size:14pt;text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .wit-list-grid > div{font-size:14pt !important;text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .wit-list-grid > div:nth-child(2){text-align:right;direction:rtl;}
   .wit-list-head{padding:4px 12px;border:1px solid transparent;border-right:3px solid transparent;}
-  .wit-list-head > div{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-weight:700;color:var(--text-muted);font-size:14pt;}
+  .wit-list-head > div{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-weight:700;color:var(--text-muted);font-size:14pt !important;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.25;}
+  .wit-list-head > div:nth-child(2){text-align:right;}
   .wit-list-row{background:var(--bg-card);border:1px solid var(--border);border-right:3px solid var(--accent);border-radius:8px;padding:8px 12px;margin-bottom:7px;}
-  .wit-list-row .wit-idx{font-weight:800;color:var(--accent);font-size:14pt;}
+  .wit-list-row .wit-idx{font-weight:800;color:var(--accent);font-size:14pt !important;}
   .wit-list-row .wit-name{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-weight:700;}
   .wit-list-row .wit-actions{display:flex;gap:5px;overflow:visible;}
   @media(max-width:560px){.wit-form .wit-grid3{grid-template-columns:1fr 1fr;}}
