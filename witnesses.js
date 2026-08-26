@@ -66,7 +66,7 @@ function _witInjectCSS() {
   .wit-form .wit-field{display:flex;flex-direction:column;}
   .wit-form .wit-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 10px;align-items:start;}
   .wit-form .wit-grid5{display:grid;grid-template-columns:4fr 1.4fr 1.2fr 0.9fr 1.1fr;gap:6px 8px;align-items:start;}
-  .wit-form .form-input{width:100%;box-sizing:border-box;font-size:14pt !important;}
+  .wit-form .form-input{width:100%;box-sizing:border-box;font-size:14pt !important;padding:5px 6px;}
   .wit-form select.form-input,.wit-form input.form-input{text-align:center;font-size:14pt !important;}
   @media(max-width:640px){.wit-form .wit-grid5{grid-template-columns:1fr 1fr;}}
 
@@ -184,7 +184,7 @@ function _openWitnessForm(id, type) {
       <div class="wit-grid5">
         <div class="wit-field">
           <label class="wit-label">نام</label>
-          <input class="form-input" id="w-name" value="${_escW(w.full_name)}" placeholder="پورا نام" oninput="_checkPriorRecord(this.value)">
+          <input class="form-input" id="w-name" value="${_escW(w.full_name)}" placeholder="پورا نام" style="text-align:right;" oninput="_checkPriorRecord(this.value)">
         </div>
         <div class="wit-field">
           <label class="wit-label">شناختی کارڈ</label>
@@ -234,30 +234,28 @@ function _witFmtMobile(el) {
   el.value = v;
 }
 
-// ── KEYBOARD NAVIGATION (mirrors mulziman: Tab / Arrow / Space) ──
+// ── KEYBOARD BEHAVIOUR (identical to mulziman's _accKeyNav) ──
+//  • Tab / Shift+Tab  → next / previous field  (native)
+//  • Up / Down        → work INSIDE the field only (native)
+//  • Left / Right     → move text cursor; on a dropdown they do NOTHING
+//  • Space            → open the focused dropdown
 function _witKeyNav(e) {
   const form = document.querySelector('.wit-form');
   if (!form || !form.contains(e.target)) return;
   const t = e.target;
   const k = e.key;
 
-  const els = Array.from(form.querySelectorAll('input, select, button, textarea'))
-    .filter(el => !el.disabled && el.type !== 'file' && el.getClientRects().length);
-  const i = els.indexOf(t);
-
-  if (k === 'ArrowDown') {
-    if (i > -1 && i < els.length - 1) { e.preventDefault(); els[i + 1].focus(); }
-  } else if (k === 'ArrowUp') {
-    if (i > 0) { e.preventDefault(); els[i - 1].focus(); }
-  } else if (k === ' ' || k === 'Spacebar' || k === 'Space') {
-    if (t.tagName === 'SELECT') {
-      if (typeof t.showPicker === 'function') { e.preventDefault(); try { t.showPicker(); } catch(_) {} }
-    } else if (t.tagName === 'BUTTON') {
-      e.preventDefault(); t.click();
-    }
-    // text/date inputs: space types normally
+  // On a dropdown, Left/Right must not change the option (up/down's job)
+  if (t.tagName === 'SELECT' && (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'Left' || k === 'Right')) {
+    e.preventDefault();
+    return;
   }
-  // Tab / Shift+Tab: native handling walks every field in order
+
+  // Space opens the focused dropdown
+  if ((k === ' ' || k === 'Spacebar' || k === 'Space') && t.tagName === 'SELECT') {
+    if (typeof t.showPicker === 'function') { e.preventDefault(); try { t.showPicker(); } catch(_) {} }
+  }
+  // Tab, Up/Down and cursor keys in text = native (stay within the field)
 }
 if (typeof window !== 'undefined' && !window._witKeyNavBound) {
   document.addEventListener('keydown', _witKeyNav, true);
