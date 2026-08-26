@@ -113,6 +113,12 @@ function _accInjectCSS() {
     .acc-form .acc-grid4b{grid-template-columns:1fr 1fr;}
   }
   @media(max-width:560px){.acc-form .acc-grid3{grid-template-columns:1fr 1fr;}}
+  @keyframes accBlink{0%,100%{opacity:1;}50%{opacity:0.4;}}
+  .acc-blink{
+    animation:accBlink 0.9s steps(1,end) infinite;
+    background:#f59e0b!important;color:#fff!important;border-color:#f59e0b!important;
+    font-weight:700;
+  }
   `;
   document.head.appendChild(s);
 }
@@ -139,6 +145,9 @@ function _renderAccusedArea() {
     </div>
     <div id="acc-list" style="width:100%;">${_renderAccCards(list)}</div>
   </div>`;
+
+  // Background: blink the سابقہ ریکارڈ button for anyone with a record in other cases
+  _accCheckPrevRecords(list);
 }
 
 function _renderAccCards(list) {
@@ -165,7 +174,7 @@ function _renderAccCards(list) {
       </div>
       <div style="display:flex;gap:4px;flex-shrink:0;">
         <button class="btn btn-secondary btn-sm" style="padding:2px 7px;" title="ترمیم" onclick="event.stopPropagation();_openAccusedForm('${a.id}','${a.accused_type||'fir'}')">✏️</button>
-        <button class="btn btn-secondary btn-sm" style="padding:2px 7px;" title="سابقہ ریکارڈ" onclick="event.stopPropagation();_accPrevRecord('${a.id}')">📋 سابقہ ریکارڈ</button>
+        <button id="acc-prev-btn-${a.id}" class="btn btn-secondary btn-sm" style="padding:2px 7px;" title="سابقہ ریکارڈ" onclick="event.stopPropagation();_accPrevRecord('${a.id}')">📋 سابقہ ریکارڈ</button>
         <button class="btn btn-danger btn-sm" style="padding:2px 7px;" title="حذف" onclick="event.stopPropagation();_deleteAccused('${a.id}')">🗑️</button>
       </div>
     </div>`).join('');
@@ -586,6 +595,33 @@ function _accPrintDoc() {
 }
 
 // ── سابقہ ریکارڈ (record of this accused in OTHER cases) ───────
+// Batch check: blink the button for anyone who has a record elsewhere
+async function _accCheckPrevRecords(list) {
+  if (!navigator.onLine || !list || !list.length) return;
+  const cnics = [...new Set(list.map(a => a.cnic).filter(Boolean))];
+  const names = [...new Set(list.filter(a => !a.cnic && a.name).map(a => a.name))];
+  const matchedCnic = new Set(), matchedName = new Set();
+  try {
+    if (cnics.length) {
+      const { data } = await supabaseClient.from('case_accused')
+        .select('cnic,case_id').neq('case_id', _accusedCaseId).in('cnic', cnics);
+      (data || []).forEach(r => { if (r.cnic) matchedCnic.add(r.cnic); });
+    }
+    if (names.length) {
+      const { data } = await supabaseClient.from('case_accused')
+        .select('name,case_id').neq('case_id', _accusedCaseId).in('name', names);
+      (data || []).forEach(r => { if (r.name) matchedName.add(r.name); });
+    }
+  } catch(_) { return; }
+  list.forEach(a => {
+    const has = (a.cnic && matchedCnic.has(a.cnic)) || (!a.cnic && a.name && matchedName.has(a.name));
+    if (has) {
+      const btn = document.getElementById('acc-prev-btn-' + a.id);
+      if (btn) { btn.classList.add('acc-blink'); btn.title = '⚠️ سابقہ ریکارڈ موجود ہے — چیک کریں'; }
+    }
+  });
+}
+
 async function _accPrevRecord(id) {
   const a = _accusedList.find(x => x.id === id);
   if (!a) return;
