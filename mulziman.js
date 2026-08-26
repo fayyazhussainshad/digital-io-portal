@@ -105,7 +105,7 @@ function _accInjectCSS() {
   .acc-form .acc-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px 10px;align-items:center;width:100%;}
   .acc-form .acc-gridN{display:grid;grid-template-columns:3.2fr 1fr 1fr;gap:7px 10px;align-items:center;width:100%;}
   .acc-form .acc-grid4b{display:grid;grid-template-columns:1.9fr 1.35fr 1.95fr 1fr;gap:7px 10px;align-items:center;width:100%;}
-  .acc-form .acc-grid5{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:7px 8px;align-items:center;width:100%;}
+  .acc-form .acc-grid5{display:grid;grid-template-columns:1fr 1fr 1.2fr 1fr 2.4fr;gap:7px 8px;align-items:center;width:100%;}
   .acc-form .form-input{flex:1;min-width:0;width:auto;box-sizing:border-box;font-size:14pt;padding:5px 6px;}
   .acc-form select.form-input,.acc-form input.form-input{text-align:center;}
   @media(max-width:640px){
@@ -265,14 +265,11 @@ function _openAccusedForm(id, type) {
   _accusedPhoto = a.photo_url || null;
   _accusedCnicCopy = a.cnic_copy_url || null;
 
-  // plain dropdown (label + select) inside a grid cell
-  const dd = (label, opts, val, fid, dir) => `
+  // dropdown WITH "➕ اپنی مرضی" custom-add option, inside a grid cell
+  const dd = (label, opts, val, fid, key, dir) => `
     <div class="acc-field">
       <label class="acc-label">${label}</label>
-      <select class="form-input" id="${fid}" ${dir?`dir="${dir}"`:''}>
-        <option value="">—</option>
-        ${opts.map(o => `<option value="${_escA(o)}" ${val===o?'selected':''}>${_escA(o)}</option>`).join('')}
-      </select>
+      ${_accCustomSelect(opts, val, fid, key, dir)}
     </div>`;
 
   const body = `
@@ -286,10 +283,7 @@ function _openAccusedForm(id, type) {
       </div>
       <div class="acc-field">
         <label class="acc-label">تعلیم</label>
-        <select class="form-input" id="acc-taleem">
-          <option value="">—</option>
-          ${ACC_TALEEM.map(o => `<option value="${_escA(o)}" ${a.taleem===o?'selected':''}>${_escA(o)}</option>`).join('')}
-        </select>
+        ${_accCustomSelect(ACC_TALEEM, a.taleem, 'acc-taleem', 'taleem')}
       </div>
       <div class="acc-field">
         <label class="acc-label">عمر</label>
@@ -309,7 +303,13 @@ function _openAccusedForm(id, type) {
       </div>
       <div class="acc-field">
         <label class="acc-label">تاریخ گرفتاری</label>
-        <input class="form-input" id="acc-arrest" type="date" dir="ltr" value="${_escA(a.arrest_date)}">
+        <div style="display:flex;flex:1;min-width:0;gap:4px;align-items:center;">
+          <input class="form-input" id="acc-arrest-disp" dir="ltr" inputmode="numeric" maxlength="10" placeholder="DD/MM/YYYY" value="${a.arrest_date?_fmtDateDMY(a.arrest_date):''}" oninput="_accFmtDateInput(this)" style="flex:1;min-width:0;">
+          <div style="position:relative;flex:0 0 auto;">
+            <button type="button" class="btn btn-secondary btn-sm" style="padding:5px 7px;">📅</button>
+            <input type="date" id="acc-arrest" value="${_escA(a.arrest_date||'')}" onchange="_accSyncDateFromPicker()" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;">
+          </div>
+        </div>
       </div>
       <div class="acc-field">
         <label class="acc-label">پیشہ</label>
@@ -320,10 +320,10 @@ function _openAccusedForm(id, type) {
     <!-- حلیہ (رنگ، چہرہ، جسم، قد، نشان — ایک لائن) -->
     <div class="acc-section">حلیہ</div>
     <div class="acc-grid5">
-      ${dd('رنگ',   ACC_RANG,   a.rang,   'acc-rang')}
-      ${dd('چہرہ',  ACC_CHEHRA, a.chehra, 'acc-chehra')}
-      ${dd('جسم',   ACC_JISM,   a.jism,   'acc-jism')}
-      ${dd('قد',    ACC_QAD,    a.qad,    'acc-qad', 'ltr')}
+      ${dd('رنگ',   ACC_RANG,   a.rang,   'acc-rang',   'rang')}
+      ${dd('چہرہ',  ACC_CHEHRA, a.chehra, 'acc-chehra', 'chehra')}
+      ${dd('جسم',   ACC_JISM,   a.jism,   'acc-jism',   'jism')}
+      ${dd('قد',    ACC_QAD,    a.qad,    'acc-qad',    'qad', 'ltr')}
       <div class="acc-field">
         <label class="acc-label">نشان</label>
         ${_accCustomSelect(ACC_NISHAN, a.nishan, 'acc-nishan', 'nishan')}
@@ -416,13 +416,39 @@ function _fmtMobileInput(el) {
   el.value = v;
 }
 
+// ── DATE (always shown DD/MM/YYYY; stored YYYY-MM-DD) ─────────
+function _accFmtDateInput(el) {
+  let v = el.value.replace(/\D/g, '').slice(0, 8); // ddmmyyyy
+  if (v.length >= 5) v = v.slice(0,2) + '/' + v.slice(2,4) + '/' + v.slice(4);
+  else if (v.length >= 3) v = v.slice(0,2) + '/' + v.slice(2);
+  el.value = v;
+  const hp = document.getElementById('acc-arrest');
+  if (hp) hp.value = _accDMYtoISO(v) || '';
+}
+function _accDMYtoISO(dmy) {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec((dmy || '').trim());
+  if (!m) return '';
+  const d = +m[1], mo = +m[2], y = +m[3];
+  const dt = new Date(y, mo - 1, d);
+  if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return '';
+  return m[3] + '-' + m[2] + '-' + m[1];
+}
+function _accSyncDateFromPicker() {
+  const hp = document.getElementById('acc-arrest');
+  const disp = document.getElementById('acc-arrest-disp');
+  if (hp && disp) disp.value = hp.value ? _fmtDateDMY(hp.value) : '';
+}
+
 // ── SAVE ──────────────────────────────────────────────────────
 async function _saveAccused(id) {
   const name = document.getElementById('acc-name')?.value.trim();
   if (!name) { showToast('⚠️ ملزم کا نام لکھیں', 'error'); return; }
 
-  const _umar   = document.getElementById('acc-umar')?.value;
-  const _nishan = document.getElementById('acc-nishan')?.value;
+  // value of a dropdown, ignoring the "➕" add sentinel
+  const gv = (id) => { const v = document.getElementById(id)?.value; return (v && v !== '__add__') ? v : null; };
+  // arrest date: read the DD/MM/YYYY display, store as YYYY-MM-DD
+  const arrestISO = _accDMYtoISO(document.getElementById('acc-arrest-disp')?.value)
+                 || (document.getElementById('acc-arrest')?.value || null);
 
   const rec = {
     case_id: _accusedCaseId,
@@ -430,15 +456,15 @@ async function _saveAccused(id) {
     accused_type: _accusedFormType || 'fir',
     cnic: document.getElementById('acc-cnic')?.value.trim() || null,
     mobile: document.getElementById('acc-mobile')?.value.trim() || null,
-    arrest_date: document.getElementById('acc-arrest')?.value || null,
+    arrest_date: arrestISO || null,
     pesha: document.getElementById('acc-pesha')?.value.trim() || null,
-    taleem: document.getElementById('acc-taleem')?.value || null,
-    rang: document.getElementById('acc-rang')?.value || null,
-    chehra: document.getElementById('acc-chehra')?.value || null,
-    jism: document.getElementById('acc-jism')?.value || null,
-    qad: document.getElementById('acc-qad')?.value || null,
-    umar: (_umar && _umar !== '__add__') ? _umar : null,
-    nishan: (_nishan && _nishan !== '__add__') ? _nishan : null,
+    taleem: gv('acc-taleem'),
+    rang: gv('acc-rang'),
+    chehra: gv('acc-chehra'),
+    jism: gv('acc-jism'),
+    qad: gv('acc-qad'),
+    umar: gv('acc-umar'),
+    nishan: gv('acc-nishan'),
     photo_url: _accusedPhoto || null,
     cnic_copy_url: _accusedCnicCopy || null,
   };
