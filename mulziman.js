@@ -12,7 +12,7 @@ let _accusedFormType = 'fir'; // 'fir' or 'tahqeeqati'
 // Physical description dropdown options
 const ACC_RANG   = ['گندمی','گورا','سانولا','کالا','زرد'];
 const ACC_CHEHRA = ['گول','لمبا','لمبوترہ','بیضوی','چوڑا'];
-const ACC_JISM   = ['پتلا پھرتیلا','کمزور','درمیانہ','مضبوط','بھاری مضبوط'];
+const ACC_JISM   = ['پتلا پھرتیلا','کمزور','پتلاکمزور جسم','درمیانہ','مضبوط','بھاری مضبوط'];
 
 // قد: 4'-5" سے 7'-0" تک (ہر انچ)
 const ACC_QAD = (function(){
@@ -210,32 +210,31 @@ function _accCustomSelect(opts, val, fid, key, dir) {
   </select>`;
 }
 
-// ── KEYBOARD NAVIGATION (Tab / Arrow Up-Down / Space) ─────────
-// Tab is native. Arrow Up/Down move between fields. Space opens a
-// focused dropdown or clicks a focused button (types normally in text).
+// ── KEYBOARD BEHAVIOUR (MS Word / Excel style) ────────────────
+//  • Tab / Shift+Tab  → next / previous field  (native)
+//  • Up / Down        → work INSIDE the field only
+//                        - dropdown: change the selected option (native)
+//                        - text/date: native (no field jump)
+//  • Left / Right     → move the text cursor; on a dropdown they do
+//                        NOTHING (they must not change the option)
+//  • Space            → open the focused dropdown
 function _accKeyNav(e) {
   const form = document.querySelector('.acc-form');
   if (!form || !form.contains(e.target)) return;
   const t = e.target;
   const k = e.key;
 
-  const els = Array.from(form.querySelectorAll('input, select, button, textarea'))
-    .filter(el => !el.disabled && el.type !== 'file' && el.getClientRects().length);
-  const i = els.indexOf(t);
-
-  if (k === 'ArrowDown') {
-    if (i > -1 && i < els.length - 1) { e.preventDefault(); els[i + 1].focus(); }
-  } else if (k === 'ArrowUp') {
-    if (i > 0) { e.preventDefault(); els[i - 1].focus(); }
-  } else if (k === ' ' || k === 'Spacebar' || k === 'Space') {
-    if (t.tagName === 'SELECT') {
-      if (typeof t.showPicker === 'function') { e.preventDefault(); try { t.showPicker(); } catch(_) {} }
-    } else if (t.tagName === 'BUTTON') {
-      e.preventDefault(); t.click();
-    }
-    // text/date inputs: space types normally
+  // On a dropdown, Left/Right must not change the option (up/down's job)
+  if (t.tagName === 'SELECT' && (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'Left' || k === 'Right')) {
+    e.preventDefault();
+    return;
   }
-  // Tab / Shift+Tab: native handling walks every field in order
+
+  // Space opens the focused dropdown
+  if ((k === ' ' || k === 'Spacebar' || k === 'Space') && t.tagName === 'SELECT') {
+    if (typeof t.showPicker === 'function') { e.preventDefault(); try { t.showPicker(); } catch(_) {} }
+  }
+  // Tab, Up/Down and cursor keys in text = native (stay within the field)
 }
 
 // ── ADD / EDIT MODAL ──────────────────────────────────────────
