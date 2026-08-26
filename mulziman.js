@@ -89,15 +89,21 @@ function _accInjectCSS() {
   s.textContent = `
   .acc-form{direction:rtl;text-align:right;}
   .acc-form .acc-label{
-    display:block;font-size:14pt;font-weight:700;text-align:center;
+    font-size:14pt;font-weight:700;text-align:right;white-space:nowrap;
     font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
-    margin:8px 0 4px;color:var(--text,#111);line-height:1.6;
+    margin:0;color:var(--text,#111);line-height:1.4;flex:0 0 auto;
   }
-  .acc-form .acc-field{display:flex;flex-direction:column;}
-  .acc-form .acc-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;align-items:start;}
-  .acc-form .acc-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 10px;align-items:start;}
-  .acc-form .acc-grid5{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:6px 8px;align-items:start;}
-  .acc-form .form-input{width:100%;box-sizing:border-box;}
+  .acc-form .acc-section{
+    display:block;font-size:14pt;font-weight:800;text-align:right;
+    font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
+    margin:10px 0 5px;color:var(--text,#111);
+    border-bottom:1px dashed var(--border);padding-bottom:2px;
+  }
+  .acc-form .acc-field{display:flex;flex-direction:row;align-items:center;gap:6px;}
+  .acc-form .acc-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px 12px;align-items:center;}
+  .acc-form .acc-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px 10px;align-items:center;}
+  .acc-form .acc-grid5{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:7px 8px;align-items:center;}
+  .acc-form .form-input{flex:1;min-width:0;width:auto;box-sizing:border-box;font-size:14pt;padding:5px 6px;}
   .acc-form select.form-input,.acc-form input.form-input{text-align:center;}
   @media(max-width:640px){.acc-form .acc-grid5{grid-template-columns:1fr 1fr 1fr;}}
   @media(max-width:560px){.acc-form .acc-grid3{grid-template-columns:1fr 1fr;}}
@@ -121,12 +127,12 @@ function _renderAccusedArea() {
 
   area.innerHTML = `
   <div style="direction:rtl;height:100%;overflow-y:auto;padding:10px;width:100%;box-sizing:border-box;">
-    <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:${color};border-bottom:2px solid ${color};padding-bottom:6px;margin-bottom:12px;text-align:center;width:100%;box-sizing:border-box;">${heading}</div>
-    <div id="acc-list" style="width:100%;">${_renderAccCards(list)}</div>
-    <div style="display:flex;gap:6px;margin-top:12px;">
-      <button class="btn btn-primary btn-sm" onclick="_openAccusedForm(null,'${_accusedViewType}')">➕ ملزم</button>
-      ${list.length ? `<button class="btn btn-danger btn-sm" onclick="_deleteLastAcc('${_accusedViewType}')">➖ ہٹائیں</button>` : ''}
+    <div style="display:flex;align-items:center;gap:8px;border-bottom:2px solid ${color};padding-bottom:6px;margin-bottom:12px;width:100%;box-sizing:border-box;">
+      <button class="btn btn-primary btn-sm" style="flex:0 0 auto;" onclick="_openAccusedForm(null,'${_accusedViewType}')">➕ ملزم</button>
+      ${list.length ? `<button class="btn btn-danger btn-sm" style="flex:0 0 auto;" onclick="_deleteLastAcc('${_accusedViewType}')">➖</button>` : ''}
+      <div style="flex:1;font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:${color};text-align:center;">${heading}</div>
     </div>
+    <div id="acc-list" style="width:100%;">${_renderAccCards(list)}</div>
   </div>`;
 }
 
@@ -254,8 +260,10 @@ function _openAccusedForm(id, type) {
   <div class="acc-form" style="max-height:74vh;overflow-y:auto;padding:2px 4px;">
 
     <!-- نام و پتہ -->
-    <label class="acc-label">نام و پتہ ملزم</label>
-    <input class="form-input" id="acc-name" value="${_escA(a.name)}" placeholder="نام، ولدیت، پتہ" style="margin-bottom:6px;text-align:right;">
+    <div class="acc-field" style="margin-bottom:6px;">
+      <label class="acc-label">نام و پتہ ملزم</label>
+      <input class="form-input" id="acc-name" value="${_escA(a.name)}" placeholder="نام، ولدیت، پتہ" style="text-align:right;">
+    </div>
 
     <!-- شناختی کارڈ | موبائل | پیشہ (ایک لائن) -->
     <div class="acc-grid3">
@@ -293,7 +301,7 @@ function _openAccusedForm(id, type) {
     </div>
 
     <!-- حلیہ (رنگ، چہرہ، جسم، قد، نشان — ایک لائن) -->
-    <label class="acc-label" style="margin-top:12px;">حلیہ</label>
+    <div class="acc-section">حلیہ</div>
     <div class="acc-grid5">
       ${dd('رنگ',   ACC_RANG,   a.rang,   'acc-rang')}
       ${dd('چہرہ',  ACC_CHEHRA, a.chehra, 'acc-chehra')}
@@ -307,12 +315,12 @@ function _openAccusedForm(id, type) {
 
     <!-- Photo + CNIC copy uploads -->
     <div class="acc-grid" style="margin-top:12px;">
-      <div class="acc-field">
+      <div style="display:flex;flex-direction:column;">
         <input type="file" id="acc-photo-input" accept="image/*" capture="environment" style="display:none;" onchange="_accPhotoSelect(this)">
         <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="document.getElementById('acc-photo-input').click()">📷 تصویر ملزم</button>
         <div id="acc-photo-preview" style="margin-top:6px;text-align:center;">${_accusedPhoto?`<img src="${_accusedPhoto}" style="max-width:80px;border-radius:6px;">`:''}</div>
       </div>
-      <div class="acc-field">
+      <div style="display:flex;flex-direction:column;">
         <input type="file" id="acc-cnic-input" accept="image/*,application/pdf" style="display:none;" onchange="_accCnicSelect(this)">
         <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="document.getElementById('acc-cnic-input').click()">🪪 شناختی کارڈ کاپی</button>
         <div id="acc-cnic-preview" style="margin-top:6px;text-align:center;font-size:11px;color:var(--green);">${_accusedCnicCopy?'✅ منسلک':''}</div>
