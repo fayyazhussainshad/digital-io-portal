@@ -86,6 +86,19 @@ function _witInjectCSS() {
   document.head.appendChild(s);
 }
 
+// ── FORCE 14pt (inline !important beats index.html's global font rule) ──
+// The app's global CSS forces font-size with ID-level specificity + !important,
+// which defeats stylesheet rules. Inline !important (set via JS) always wins.
+function _witForce14() {
+  try {
+    const sel = '#witness-form-box .wit-label, #witness-form-box .form-input,'
+              + ' .wit-list-head > div, .wit-list-row > div:not(.wit-actions)';
+    document.querySelectorAll(sel).forEach(el => {
+      el.style.setProperty('font-size', '14pt', 'important');
+    });
+  } catch(_) {}
+}
+
 function _renderWitnessesArea() {
   _witInjectCSS();
   const area = document.getElementById('workspace-editor-area')
@@ -107,6 +120,7 @@ function _renderWitnessesArea() {
     </div>
     <div style="width:100%;overflow-x:auto;">${_renderWitnessList(list, _witnessViewType)}</div>
   </div>`;
+  _witForce14();
 }
 
 // Built-in case persons who are automatically considered witnesses:
@@ -219,6 +233,7 @@ function _openWitnessForm(id, type) {
     </div>
   </div>`;
   box.scrollIntoView({ behavior:'smooth', block:'start' });
+  _witForce14();
 }
 
 // ── CNIC / Phone auto-format (copied from mulziman settings) ───
