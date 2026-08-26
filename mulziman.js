@@ -87,7 +87,8 @@ function _accInjectCSS() {
   const s = document.createElement('style');
   s.id = 'acc-form-css';
   s.textContent = `
-  .acc-form{direction:rtl;text-align:right;width:700px;max-width:94vw;margin:0 auto;}
+  .acc-form{direction:rtl;text-align:right;width:100%;box-sizing:border-box;}
+  .acc-form *{box-sizing:border-box;}
   .acc-form .acc-label{
     font-size:14pt;font-weight:700;text-align:right;white-space:nowrap;
     font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
@@ -99,17 +100,17 @@ function _accInjectCSS() {
     margin:10px 0 5px;color:var(--text,#111);
     border-bottom:1px dashed var(--border);padding-bottom:2px;
   }
-  .acc-form .acc-field{display:flex;flex-direction:row;align-items:center;gap:6px;}
-  .acc-form .acc-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px 12px;align-items:center;}
-  .acc-form .acc-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px 10px;align-items:center;}
-  .acc-form .acc-gridN{display:grid;grid-template-columns:2.6fr 1fr 1fr;gap:7px 10px;align-items:center;}
-  .acc-form .acc-grid4b{display:grid;grid-template-columns:1.3fr 1fr 1.35fr 1fr;gap:7px 10px;align-items:center;}
-  .acc-form .acc-grid5{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:7px 8px;align-items:center;}
+  .acc-form .acc-field{display:flex;flex-direction:row;align-items:center;gap:6px;min-width:0;}
+  .acc-form .acc-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px 12px;align-items:center;width:100%;}
+  .acc-form .acc-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px 10px;align-items:center;width:100%;}
+  .acc-form .acc-gridN{display:grid;grid-template-columns:3.2fr 1fr 1fr;gap:7px 10px;align-items:center;width:100%;}
+  .acc-form .acc-grid4b{display:grid;grid-template-columns:1.9fr 1.35fr 1.95fr 1fr;gap:7px 10px;align-items:center;width:100%;}
+  .acc-form .acc-grid5{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:7px 8px;align-items:center;width:100%;}
   .acc-form .form-input{flex:1;min-width:0;width:auto;box-sizing:border-box;font-size:14pt;padding:5px 6px;}
   .acc-form select.form-input,.acc-form input.form-input{text-align:center;}
   @media(max-width:640px){
     .acc-form .acc-grid5{grid-template-columns:1fr 1fr 1fr;}
-    .acc-form .acc-gridN{grid-template-columns:1fr 1fr;}
+    .acc-form .acc-gridN{grid-template-columns:2fr 1fr 1fr;}
     .acc-form .acc-grid4b{grid-template-columns:1fr 1fr;}
   }
   @media(max-width:560px){.acc-form .acc-grid3{grid-template-columns:1fr 1fr;}}
