@@ -87,7 +87,7 @@ function _accInjectCSS() {
   const s = document.createElement('style');
   s.id = 'acc-form-css';
   s.textContent = `
-  .acc-form{direction:rtl;text-align:right;}
+  .acc-form{direction:rtl;text-align:right;width:700px;max-width:94vw;margin:0 auto;}
   .acc-form .acc-label{
     font-size:14pt;font-weight:700;text-align:right;white-space:nowrap;
     font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
@@ -102,8 +102,8 @@ function _accInjectCSS() {
   .acc-form .acc-field{display:flex;flex-direction:row;align-items:center;gap:6px;}
   .acc-form .acc-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px 12px;align-items:center;}
   .acc-form .acc-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px 10px;align-items:center;}
-  .acc-form .acc-gridN{display:grid;grid-template-columns:1.7fr 1fr 1fr;gap:7px 10px;align-items:center;}
-  .acc-form .acc-grid4b{display:grid;grid-template-columns:1.35fr 1.1fr 1.2fr 1fr;gap:7px 10px;align-items:center;}
+  .acc-form .acc-gridN{display:grid;grid-template-columns:2.6fr 1fr 1fr;gap:7px 10px;align-items:center;}
+  .acc-form .acc-grid4b{display:grid;grid-template-columns:1.3fr 1fr 1.35fr 1fr;gap:7px 10px;align-items:center;}
   .acc-form .acc-grid5{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:7px 8px;align-items:center;}
   .acc-form .form-input{flex:1;min-width:0;width:auto;box-sizing:border-box;font-size:14pt;padding:5px 6px;}
   .acc-form select.form-input,.acc-form input.form-input{text-align:center;}
@@ -325,12 +325,12 @@ function _openAccusedForm(id, type) {
       <div style="display:flex;flex-direction:column;">
         <input type="file" id="acc-photo-input" accept="image/*" capture="environment" style="display:none;" onchange="_accPhotoSelect(this)">
         <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="document.getElementById('acc-photo-input').click()">📷 تصویر ملزم</button>
-        <div id="acc-photo-preview" style="margin-top:6px;text-align:center;">${_accusedPhoto?`<img src="${_accusedPhoto}" style="max-width:80px;border-radius:6px;">`:''}</div>
+        <div id="acc-photo-preview" style="margin-top:6px;text-align:center;">${_accThumb('photo', _accusedPhoto)}</div>
       </div>
       <div style="display:flex;flex-direction:column;">
         <input type="file" id="acc-cnic-input" accept="image/*,application/pdf" style="display:none;" onchange="_accCnicSelect(this)">
         <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="document.getElementById('acc-cnic-input').click()">🪪 شناختی کارڈ کاپی</button>
-        <div id="acc-cnic-preview" style="margin-top:6px;text-align:center;font-size:11px;color:var(--green);">${_accusedCnicCopy?'✅ منسلک':''}</div>
+        <div id="acc-cnic-preview" style="margin-top:6px;text-align:center;">${_accThumb('cnic', _accusedCnicCopy)}</div>
       </div>
     </div>
   </div>`;
@@ -344,25 +344,37 @@ function _openAccusedForm(id, type) {
 // ── IMAGE HANDLING (base64 compressed — offline-safe) ─────────
 function _accPhotoSelect(input) {
   const f = input.files[0]; if (!f) return;
-  _compressImg(f, 600, 0.7, (b64) => {
+  _compressImg(f, 900, 0.78, (b64) => {
     _accusedPhoto = b64;
     const p = document.getElementById('acc-photo-preview');
-    if (p) p.innerHTML = `<img src="${b64}" style="max-width:80px;border-radius:6px;">`;
+    if (p) p.innerHTML = _accThumb('photo', b64);
   });
 }
 function _accCnicSelect(input) {
   const f = input.files[0]; if (!f) return;
   if (f.type === 'application/pdf') {
     const r = new FileReader();
-    r.onload = e => { _accusedCnicCopy = e.target.result; const p=document.getElementById('acc-cnic-preview'); if(p)p.innerHTML='✅ PDF منسلک'; };
+    r.onload = e => { _accusedCnicCopy = e.target.result; const p=document.getElementById('acc-cnic-preview'); if(p)p.innerHTML=_accThumb('cnic', e.target.result); };
     r.readAsDataURL(f);
   } else {
-    _compressImg(f, 1000, 0.7, (b64) => {
+    _compressImg(f, 1400, 0.8, (b64) => {
       _accusedCnicCopy = b64;
       const p = document.getElementById('acc-cnic-preview');
-      if (p) p.innerHTML = '✅ منسلک';
+      if (p) p.innerHTML = _accThumb('cnic', b64);
     });
   }
+}
+// Clickable thumbnail for the form previews (opens viewer with print/download)
+function _accThumb(which, url) {
+  if (!url) return '';
+  const isPdf = /^data:application\/pdf/.test(url);
+  const inner = isPdf
+    ? `<div style="width:120px;height:120px;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:44px;background:var(--bg-card);">📄</div>`
+    : `<img src="${url}" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">`;
+  return `<div onclick="_accViewCurrent('${which}')" style="cursor:pointer;display:inline-block;">
+      ${inner}
+      <div style="font-size:11px;color:var(--green);margin-top:3px;">✅ منسلک — کھولیں</div>
+    </div>`;
 }
 function _compressImg(file, maxW, quality, cb) {
   const r = new FileReader();
@@ -474,11 +486,13 @@ function _accViewDetail(id) {
   const thumbs = (a.photo_url || a.cnic_copy_url) ? `
     <div style="display:flex;gap:14px;justify-content:center;margin-top:12px;flex-wrap:wrap;">
       ${a.photo_url ? `<div style="text-align:center;">
-        <img src="${a.photo_url}" onclick="_accViewDoc('${a.id}','photo')" style="width:100px;height:100px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--border);">
+        <img src="${a.photo_url}" onclick="_accViewDoc('${a.id}','photo')" style="width:120px;height:120px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--border);">
         <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">📷 تصویر (کھولیں)</div></div>` : ''}
       ${a.cnic_copy_url ? `<div style="text-align:center;">
-        <div onclick="_accViewDoc('${a.id}','cnic')" style="width:100px;height:100px;border-radius:8px;cursor:pointer;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:40px;background:var(--bg-card);">🪪</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">شناختی کاپی (کھولیں)</div></div>` : ''}
+        ${/^data:application\/pdf/.test(a.cnic_copy_url)
+          ? `<div onclick="_accViewDoc('${a.id}','cnic')" style="width:120px;height:120px;border-radius:8px;cursor:pointer;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:44px;background:var(--bg-card);">📄</div>`
+          : `<img src="${a.cnic_copy_url}" onclick="_accViewDoc('${a.id}','cnic')" style="width:120px;height:120px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--border);">`}
+        <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">🪪 شناختی کاپی (کھولیں)</div></div>` : ''}
     </div>` : '';
 
   const body = `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
@@ -502,23 +516,54 @@ function _accViewDetail(id) {
 // ── PHOTO / CNIC-COPY VIEWER (view • print • download) ─────────
 let _accViewUrl = null;
 let _accViewName = 'file';
+
+// From a saved record (detail view / list card)
 function _accViewDoc(id, which) {
   const a = _accusedList.find(x => x.id === id);
   if (!a) return;
   const url = which === 'cnic' ? a.cnic_copy_url : a.photo_url;
   if (!url) { showToast('کوئی فائل موجود نہیں', 'info'); return; }
+  _accOpenViewer(url,
+    ((a.name || 'mulzim').replace(/\s+/g,'_')) + '_' + which,
+    which === 'cnic' ? '🪪 شناختی کارڈ کاپی' : '📷 تصویر ملزم');
+}
+// From the OPEN edit form (uses in-memory just-attached files, keeps form alive)
+function _accViewCurrent(which) {
+  const url = which === 'cnic' ? _accusedCnicCopy : _accusedPhoto;
+  if (!url) return;
+  _accOpenViewer(url, 'mulzim_' + which,
+    which === 'cnic' ? '🪪 شناختی کارڈ کاپی' : '📷 تصویر ملزم');
+}
+// Independent overlay lightbox (does NOT replace whatever modal is behind it)
+function _accOpenViewer(url, name, title) {
   _accViewUrl = url;
-  _accViewName = ((a.name || 'mulzim').replace(/\s+/g,'_')) + '_' + (which === 'cnic' ? 'cnic' : 'photo');
-  const title = which === 'cnic' ? '🪪 شناختی کارڈ کاپی' : '📷 تصویر ملزم';
+  _accViewName = name || 'file';
   const isPdf = /^data:application\/pdf/.test(url);
   const viewer = isPdf
-    ? `<iframe src="${url}" style="width:100%;height:62vh;border:none;background:#fff;"></iframe>`
-    : `<img src="${url}" style="max-width:100%;max-height:62vh;display:block;margin:0 auto;border-radius:6px;">`;
-  openModal(title, `<div style="direction:rtl;text-align:center;">${viewer}</div>`, `
-    <button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>
-    <button class="btn btn-secondary" onclick="_accDownloadDoc()">⬇️ ڈاؤن لوڈ</button>
-    <button class="btn btn-primary" onclick="_accPrintDoc()">🖨️ پرنٹ</button>
-  `);
+    ? `<iframe src="${url}" style="width:80vw;height:74vh;border:none;background:#fff;border-radius:6px;"></iframe>`
+    : `<img src="${url}" style="max-width:88vw;max-height:74vh;border-radius:6px;display:block;margin:0 auto;">`;
+  _accCloseViewer();
+  const ov = document.createElement('div');
+  ov.id = 'acc-lightbox';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.82);display:flex;align-items:center;justify-content:center;padding:14px;box-sizing:border-box;';
+  ov.innerHTML = `
+    <div style="background:var(--bg,#fff);border-radius:10px;padding:12px;max-width:96vw;max-height:92vh;overflow:auto;direction:rtl;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">
+        <strong style="font-family:'Jameel Noori Nastaleeq',serif;font-size:16px;">${title}</strong>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-secondary btn-sm" onclick="_accDownloadDoc()">⬇️ ڈاؤن لوڈ</button>
+          <button class="btn btn-primary btn-sm" onclick="_accPrintDoc()">🖨️ پرنٹ</button>
+          <button class="btn btn-danger btn-sm" onclick="_accCloseViewer()">✕</button>
+        </div>
+      </div>
+      <div style="text-align:center;">${viewer}</div>
+    </div>`;
+  ov.addEventListener('click', (e) => { if (e.target === ov) _accCloseViewer(); });
+  document.body.appendChild(ov);
+}
+function _accCloseViewer() {
+  const ov = document.getElementById('acc-lightbox');
+  if (ov) ov.remove();
 }
 function _accDownloadDoc() {
   if (!_accViewUrl) return;
