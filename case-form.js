@@ -20,15 +20,16 @@ function _cfInjectCSS() {
     + '.cf-row2{display:grid;grid-template-columns:1fr 1fr;gap:2px 14px;align-items:center;width:100%;}'
     + '.cf-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px 10px;align-items:center;width:100%;}'
     + '.cf-row4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:2px 8px;align-items:center;width:100%;}'
+    + '.cf-row4-rapat{display:grid;grid-template-columns:0.5fr 1fr 1fr 1.5fr;gap:2px 8px;align-items:center;width:100%;}'
     + '.cf-row-7030{display:grid;grid-template-columns:7fr 3fr;gap:2px 10px;align-items:center;width:100%;}'
-    + '.cf-row2 .cf-field,.cf-row3 .cf-field,.cf-row4 .cf-field,.cf-row-7030 .cf-field{margin-bottom:9px;}'
+    + '.cf-row2 .cf-field,.cf-row3 .cf-field,.cf-row4 .cf-field,.cf-row4-rapat .cf-field,.cf-row-7030 .cf-field{margin-bottom:9px;}'
     + '.cf-box{padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:12px;}'
     + '.cf-box-title{font-size:14pt;font-weight:800;color:var(--accent);margin-bottom:9px;text-align:right;'
     +   'font-family:\'Jameel Noori Nastaleeq\',\'Noto Nastaliq Urdu\',serif;}'
     + '.cf-hint{font-size:11px;color:var(--text-muted);margin:-4px 0 9px;padding-right:2px;}'
-    + '@media(max-width:640px){.cf-row3{grid-template-columns:1fr 1fr;}.cf-row4{grid-template-columns:1fr 1fr;}}'
+    + '@media(max-width:640px){.cf-row3{grid-template-columns:1fr 1fr;}.cf-row4,.cf-row4-rapat{grid-template-columns:1fr 1fr;}}'
     + '@media(max-width:480px){'
-    +   '.cf-row2,.cf-row3,.cf-row4,.cf-row-7030{grid-template-columns:1fr;}'
+    +   '.cf-row2,.cf-row3,.cf-row4,.cf-row4-rapat,.cf-row-7030{grid-template-columns:1fr;}'
     +   '.cf-field{flex-wrap:wrap;}'
     +   '.cf-label{white-space:normal;}'
     + '}';
@@ -351,15 +352,15 @@ function buildCrossFields(c) {
   return '<div class="cf-hint" style="margin-bottom:10px;">'
     + '&#x0645;&#x0642;&#x062F;&#x0645;&#x06C1; &#x0646;&#x0645;&#x0628;&#x0631; &#x0648;&#x06C1;&#x06CC; &#x0631;&#x06C1;&#x06D2; &#x06AF;&#x0627; &#x06C1;&#x06D2;</div>'
 
-    // رپٹ نمبر + رپٹ تاریخ + کراس ورژن مقدمہ نمبر + کراس ورژن مقدمہ تاریخ (چاروں ایک سطر)
-    + '<div class="cf-row4">'
+    // رپٹ نمبر (آدھی چوڑائی) + رپٹ تاریخ + کراس ورژن مقدمہ نمبر + کراس ورژن مقدمہ کی تاریخ (چاروں ایک سطر)
+    + '<div class="cf-row4-rapat">'
     + '<div class="cf-field"><label class="cf-label">&#x0631;&#x067E;&#x0679; &#x0646;&#x0645;&#x0628;&#x0631;</label>'
     + '<input class="form-input" id="cf-cross-rapat" value="'+crn+'" placeholder="e.g. 12" dir="auto"></div>'
     + '<div class="cf-field"><label class="cf-label">&#x0631;&#x067E;&#x0679; &#x062A;&#x0627;&#x0631;&#x06CC;&#x062E;</label>'
     + '<input class="form-input" id="cf-cross-rapat-date" value="'+crd+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)"></div>'
     + '<div class="cf-field"><label class="cf-label">کراس ورژن مقدمہ نمبر</label>'
     + '<input class="form-input" id="cf-cross-fir" value="'+cfn+'" placeholder="e.g. 246/2025" dir="auto"></div>'
-    + '<div class="cf-field"><label class="cf-label">کراس ورژن مقدمہ تاریخ</label>'
+    + '<div class="cf-field"><label class="cf-label">کراس ورژن مقدمہ کی تاریخ</label>'
     + '<input class="form-input" id="cf-cross-fir-date" value="'+cfd+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)"></div>'
     + '</div>'
 
