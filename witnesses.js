@@ -202,7 +202,7 @@ function _openWitnessForm(id, type) {
     <div id="w-prior-record" style="margin-top:6px;"></div>
 
     <!-- شناختی کارڈ | فون نمبر | پیشہ | حیثیت (ایک لائن) -->
-    <div class="acc-grid4b" style="margin-top:7px;">
+    <div class="acc-grid4b" style="margin-top:7px;grid-template-columns:1.3fr 1.2fr 0.8fr 1.7fr;">
       <div class="acc-field">
         <label class="acc-label">شناختی کارڈ</label>
         <input class="form-input" id="w-cnic" dir="ltr" maxlength="15" value="${_escW(w.cnic)}" placeholder="00000-0000000-0" oninput="_witFmtCnic(this);_checkPriorByContact()">
