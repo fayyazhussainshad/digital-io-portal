@@ -509,7 +509,7 @@ function _toggleMobileFields() {
   const show = item === 'mobile';
   ['cf-mobile-imei-wrap','cf-mobile-brand-wrap','cf-mobile-cell-wrap'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.style.display = show ? 'block' : 'none';
+    if (el) el.style.display = show ? 'flex' : 'none';
   });
 }
 
