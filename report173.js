@@ -585,14 +585,6 @@ function _renderR173() {
                    onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bs.sho_date2 !== undefined ? sanitizeHtml(bs.sho_date2) : (bs.sho_date !== undefined ? sanitizeHtml(bs.sho_date) : esc(_ch173Today()))}</div>
             </div>
             <div class="sho-col sho-papers">
-              ${(_r173Type === 'ikhraj' || _r173Type === 'adampata') ? `
-              <!-- اخراج / عدم پتہ ke saath فہرست گواہان HAR BAAR banti hai.
-                   Sarkari 3-column table mein گواہان ka koi khana nahi, is liye
-                   yeh fehrist table ke NEECHE, تفصیل کاغذات se ooper rakhi hai
-                   (usi chaurai mein — form ka dhancha bilkul nahi chhirta). -->
-              <div class="sho-papers-head">فہرست گواہان</div>
-              <div class="sho-papers-body akh-gawah" contenteditable="true" data-k="gawah_body">${bs.gawah_body !== undefined ? sanitizeHtml(bs.gawah_body) : esc(_ch173AkhrajWitnessText())}</div>
-              ` : ''}
               <div class="sho-papers-head">تفصیل کاغذات<button class="papers-pick no-print" onclick="_ch173PapersPicker(event)" title="کاغذات منتخب کریں">▾</button></div>
               <!-- AHEM: yahan bv() istemal NA karein — woh tamam </span> hata
                    deta hai aur kaghazon ka dhancha (naam + neeche tadaad)
@@ -606,6 +598,30 @@ function _renderR173() {
                    onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bs.sho_date5 !== undefined ? sanitizeHtml(bs.sho_date5) : esc(_ch173Today())}</div>
             </div>
           </div>
+
+          ${_r173Type === 'ikhraj' ? `
+          <!-- ═══ فہرست گواہان — ALAG KAGHAZ (sirf اخراج ke saath) ═══
+               عدم پتہ ke saath yeh fehrist NAHI banti.
+               Satrein: (1) تھانہ dayen kinare se 1 inch andar + ضلع bayen kinare
+               par  (2) مدعی  (3) مقدمہ نمبر / تاریخ / جرم  (4) beech mein
+               "فہرست گواہان" 20pt  → phir گواہان  → aakhir mein SHO + تاریخ. -->
+          <div class="ch173-pgbrk"></div>
+          <div class="akh-gw-page">
+            <div class="akh-gw-l1">
+              <span class="akh-gw-thana" contenteditable="true" data-k="gw_thana">${bs.gw_thana !== undefined ? sanitizeHtml(bs.gw_thana) : esc(_ch173GwThana())}</span>
+              <span class="akh-gw-zila" contenteditable="true" data-k="gw_zila">${bs.gw_zila !== undefined ? sanitizeHtml(bs.gw_zila) : esc(_ch173GwZila())}</span>
+            </div>
+            <div class="akh-gw-l2" contenteditable="true" data-k="gw_madai">${bs.gw_madai !== undefined ? sanitizeHtml(bs.gw_madai) : esc(_ch173GwMadai())}</div>
+            <div class="akh-gw-l3" contenteditable="true" data-k="gw_case">${bs.gw_case !== undefined ? sanitizeHtml(bs.gw_case) : esc(_ch173GwCaseLine(c))}</div>
+            <div class="akh-gw-title">فہرست گواہان</div>
+            <div class="akh-gw-body" contenteditable="true" data-k="gawah_body">${bs.gawah_body !== undefined ? sanitizeHtml(bs.gawah_body) : esc(_ch173AkhrajWitnessText())}</div>
+            <div class="akh-gw-sho">
+              <div class="sho-cell-row" contenteditable="true" data-k="gw_sho">${bs.gw_sho !== undefined ? sanitizeHtml(bs.gw_sho) : esc(_ch173ShoLine(o))}</div>
+              <div class="sho-cell-row sho-cell-date" contenteditable="true" data-k="gw_sho_date"
+                   onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bs.gw_sho_date !== undefined ? sanitizeHtml(bs.gw_sho_date) : esc(_ch173Today())}</div>
+            </div>
+          </div>
+          ` : ''}
 
           <input type="hidden" data-k="doc_font" value="${esc(String(_ch173DocFont(bs)))}">
 
@@ -2409,29 +2425,100 @@ function _ch173WitCell() {
   return document.querySelector('#ch173-doc [data-k="shahadat"]');
 }
 
-// ═══ اخراج / عدم پتہ ki فہرست گواہان ═══
+// ═══ فہرست گواہان (اخراج) ke ALAG safhe ki satrein ═══
+function _ch173GwThana() {
+  const c = _r173Case || {};
+  const o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
+  const st = String(c.case_station || o.station || '').trim();
+  return st ? 'تھانہ ' + st : 'تھانہ';
+}
+function _ch173GwZila() {
+  const o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
+  const c = _r173Case || {};
+  const d = String(o.district || c.case_district || '').trim();
+  return d ? 'ضلع ' + d : 'ضلع';
+}
+function _ch173GwMadai() {
+  const c = _r173Case || {};
+  const nm = String(c.complainant || '').trim();
+  return nm ? 'مدعی: ' + nm : 'مدعی:';
+}
+function _ch173GwCaseLine(c) {
+  c = c || _r173Case || {};
+  const j = (typeof _ch173JurmParts === 'function')
+    ? _ch173JurmParts(c.section_of_law) : { body: c.section_of_law || '', suffix: '' };
+  return 'مقدمہ نمبر ' + (c.fir_number || '') +
+         '   مورخہ ' + (formatDate(c.fir_date) || '') +
+         '   جرم ' + [j.body, j.suffix].filter(Boolean).join(' ');
+}
+
+// ═══ گواہان ki PAKKI TARTEEB (darja bandi) ═══
+// 1 مدعی · 2 FIR گواہان · 3 دیگر گواہان · 4 میڈیکل آفیسر ·
+// 5 کانسٹیبل (مثلاً فاروق 4525/C) · 6 ہیڈ کانسٹیبل (مثلاً ذاکر 1009/HC) ·
+// 7 محرر · 8 تفتیشی افسر (subscriber)
+// Constable / Head Constable ka pata un ke NUMBER se chalta hai — naam ke
+// aakhir mein '4525/C' ya '1009/HC'. Isi liye officer jo bhi is shakl mein
+// likhega woh khud apni jagah par chala jayega.
+const _CH173_HC_RE = /\d+\s*\/\s*H\.?\s*C\b/i;   // 1009/HC
+const _CH173_C_RE  = /\d+\s*\/\s*C\b/i;          // 4525/C
+
+function _ch173WitRank(name, hint) {
+  if (hint) return hint;                          // pehle se maloom darja
+  const n = String(name || '');
+  const mh = _ch173Muharrir(), io = _ch173IO(), md = _ch173Madai();
+  if (md && _ch173SameName(n, md.name)) return 1;
+  if (io && _ch173SameName(n, io.name)) return 8;
+  if (mh && _ch173SameName(n, mh.name)) return 7;
+  if (/محرر/.test(n)) return 7;
+  if (_CH173_HC_RE.test(n)) return 6;             // ہیڈ کانسٹیبل
+  if (_CH173_C_RE.test(n))  return 5;             // کانسٹیبل
+  const med = _ch173MedGet();
+  if (med && _ch173SameName(n, med.name)) return 4;
+  return 3;                                       // دیگر گواہ
+}
+
+// Fehrist ko darje ke mutabiq jamao — aik hi darje ke andar tarteeb wohi
+// rehti hai jo officer ne rakhi hai (stable sort).
+function _ch173WitSort(list) {
+  return list
+    .map((w, i) => ({ w: w, i: i, r: _ch173WitRank(w.name, w.rank) }))
+    .sort((a, b) => (a.r - b.r) || (a.i - b.i))
+    .map(x => x.w);
+}
+
+// ═══ اخراج ki فہرست گواہان ═══
 // Sarkari 3-column table mein گواہان ka khana nahi hota, magar اخراج ke saath
 // fehrist HAR BAAR muratab honi chahiye. Is liye woh table ke neeche apne
 // alag khane mein banti hai — tarteeb wohi jo چالان mein hai:
 // PEHLA مدعی → baqi گواہان → محرر → AAKHRI تفتیشی افسر.
+// Sirf اخراج ke saath — ALAG kaghaz par. عدم پتہ ke saath yeh fehrist nahi hoti.
 function _ch173AkhrajWitnessText() {
   const L = (typeof _ch173WitList === 'function') ? _ch173WitList() : (_ch173Witnesses || []);
   const list = [];
+  const push = (o) => {
+    if (!o || !o.name) return;
+    if (list.some(x => _ch173SameName(x.name, o.name))) return;
+    list.push(o);
+  };
   const madai = _ch173Madai();
-  if (madai) list.push(madai);
+  if (madai) push({ name: madai.name, cnic: madai.cnic, rank: 1 });
+  // FIR گواہان (darja 2) aur دیگر گواہان (darja 3) — گواہ ki apni حیثیت se
   (L || []).forEach(w => {
     const nm = String(w.full_name || '').trim();
     if (!nm) return;
-    if (list.some(x => _ch173SameName(x.name, nm))) return;
-    list.push({ name: nm, cnic: _ch173CnicFmt(w.cnic) });
+    const t = String(w.witness_type || w.status || '');
+    const isFir = /FIR|چشم\s*دید/i.test(t);
+    push({ name: nm, cnic: _ch173CnicFmt(w.cnic), rank: isFir ? 2 : 3 });
   });
+  const med = _ch173MedGet();
+  if (med) push({ name: med.name, cnic: _ch173CnicFmt(med.cnic), rank: 4 });
   const mh = _ch173Muharrir();
-  if (mh && !list.some(x => _ch173SameName(x.name, mh.name))) list.push(mh);
+  if (mh) push({ name: mh.name, cnic: mh.cnic, rank: 7 });
   const io = _ch173IO();
-  if (io && !list.some(x => _ch173SameName(x.name, io.name))) list.push(io);
+  if (io) push({ name: io.name, cnic: io.cnic, rank: 8 });
   if (!list.length) return '';
   // CNIC mile to LAZMI darj; na mile to jagah KHALI
-  return list.map((w, i) =>
+  return _ch173WitSort(list).map((w, i) =>
     (i + 1) + '\u06D4 ' + w.name + (w.cnic ? ' ' + w.cnic : '')
   ).join('\n');
 }
@@ -2559,13 +2646,14 @@ function _ch173AddDefaultOfficials() {
 
   const [madai, muharrir, io] = khaas;
   const fin = [];
-  if (madai) fin.push(madai);                  // 1) PEHLA — مدعی
-  fin.push(...list);                           // 2) baqi گواہان
-  if (muharrir) fin.push(muharrir);            // 3) محرر
-  if (io) fin.push(io);                        // 4) AAKHRI — تفتیشی افسر
+  if (madai) fin.push({ name: madai.name, cnic: madai.cnic, rank: 1 });
+  fin.push(...list);                           // baqi گواہان (darja khud lagta hai)
+  if (muharrir) fin.push({ name: muharrir.name, cnic: muharrir.cnic, rank: 7 });
+  if (io) fin.push({ name: io.name, cnic: io.cnic, rank: 8 });
   if (!fin.length) return false;
 
-  _ch173WitWrite(el, fin);
+  // Muqarrara darja bandi par jamao (مدعی pehla … تفتیشی افسر aakhri)
+  _ch173WitWrite(el, _ch173WitSort(fin));
   if (el.innerText === pehle) return false;    // kuch badla hi nahi
   try { _ch173Layout(); } catch (_) {}
   return true;
@@ -4565,15 +4653,35 @@ function _ch173CSS() {
         overflow-wrap:break-word; word-wrap:break-word; white-space:pre-wrap;
       }
       #ch173-doc .ch173-cont:empty{ min-height:0; padding:0 !important; }
-      /* اخراج / عدم پتہ ki فہرست گواہان — har گواہ apni satar mein */
-      #ch173-doc .akh-gawah{
-        white-space:pre-wrap; text-align:right; text-align-last:right;
-        direction:rtl !important; line-height:1.9; margin-bottom:10px;
+      /* ═══ فہرست گواہان — اخراج ka ALAG kaghaz ═══ */
+      #ch173-doc .akh-gw-page{ direction:rtl; padding-top:10px; }
+      /* Pehli satar: تھانہ dayen kinare se THEEK 1 INCH andar, ضلع bayen kinare par */
+      #ch173-doc .akh-gw-l1{
+        display:flex; justify-content:space-between; align-items:baseline;
+        padding-right:1in; margin-bottom:14px;
       }
-      #ch173-doc .akh-gawah:empty::before{
+      #ch173-doc .akh-gw-l1 .akh-gw-thana{ text-align:right; outline:none; }
+      #ch173-doc .akh-gw-l1 .akh-gw-zila{ text-align:left; outline:none; }
+      #ch173-doc .akh-gw-l2,
+      #ch173-doc .akh-gw-l3{
+        text-align:right; text-align-last:right; margin-bottom:12px; outline:none;
+      }
+      /* Chauthi satar — beech mein, 20pt */
+      #ch173-doc .akh-gw-title{
+        text-align:center; font-size:20pt; font-weight:700;
+        margin:18px 0 14px; text-decoration:underline;
+      }
+      #ch173-doc .akh-gw-body{
+        white-space:pre-wrap; text-align:right; text-align-last:right;
+        direction:rtl !important; line-height:1.9; outline:none;
+        min-height:3em; margin-bottom:26px;
+      }
+      #ch173-doc .akh-gw-body:empty::before{
         content:'یہاں گواہان کی فہرست لکھیں'; color:#aaa;
       }
-      @media print{ #ch173-doc .akh-gawah:empty::before{ content:''; } }
+      @media print{ #ch173-doc .akh-gw-body:empty::before{ content:''; } }
+      /* Aakhir mein SHO + تاریخ — bilkul چالان ke aakhir jaisa (bayen kinare par) */
+      #ch173-doc .akh-gw-sho{ margin-top:34px; width:max-content; margin-left:0; margin-right:auto; }
 
       /* اخراج table — column 2 ki BAYEN lakeer ko kheenchne wala grip */
       #ch173-doc .akh-col2{ }
