@@ -20,14 +20,15 @@ function _cfInjectCSS() {
     + '.cf-row2{display:grid;grid-template-columns:1fr 1fr;gap:2px 14px;align-items:center;width:100%;}'
     + '.cf-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px 10px;align-items:center;width:100%;}'
     + '.cf-row4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:2px 8px;align-items:center;width:100%;}'
-    + '.cf-row2 .cf-field,.cf-row3 .cf-field,.cf-row4 .cf-field{margin-bottom:9px;}'
+    + '.cf-row-7030{display:grid;grid-template-columns:7fr 3fr;gap:2px 10px;align-items:center;width:100%;}'
+    + '.cf-row2 .cf-field,.cf-row3 .cf-field,.cf-row4 .cf-field,.cf-row-7030 .cf-field{margin-bottom:9px;}'
     + '.cf-box{padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:12px;}'
     + '.cf-box-title{font-size:14pt;font-weight:800;color:var(--accent);margin-bottom:9px;text-align:right;'
     +   'font-family:\'Jameel Noori Nastaleeq\',\'Noto Nastaliq Urdu\',serif;}'
     + '.cf-hint{font-size:11px;color:var(--text-muted);margin:-4px 0 9px;padding-right:2px;}'
     + '@media(max-width:640px){.cf-row3{grid-template-columns:1fr 1fr;}.cf-row4{grid-template-columns:1fr 1fr;}}'
     + '@media(max-width:480px){'
-    +   '.cf-row2,.cf-row3,.cf-row4{grid-template-columns:1fr;}'
+    +   '.cf-row2,.cf-row3,.cf-row4,.cf-row-7030{grid-template-columns:1fr;}'
     +   '.cf-field{flex-wrap:wrap;}'
     +   '.cf-label{white-space:normal;}'
     + '}';
@@ -234,10 +235,6 @@ function buildCrossFields(c) {
     + '<input class="form-input" id="cf-cross-fir-date" value="'+cfd+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)"></div>'
     + '</div>'
 
-    // کراس ورژن محرر (اوپر منتقل)
-    + '<div class="cf-field"><label class="cf-label">کراس ورژن محرر</label>'
-    + '<input class="form-input" id="cf-cross-fir-writer" value="'+cfw+'" placeholder="محرر کا نام" dir="auto"></div>'
-
     // کراس ورژن مدعی کا نام (پوری چوڑائی)
     + '<div class="cf-field"><label class="cf-label">کراس ورژن مدعی کا نام</label>'
     + '<input class="form-input" id="cf-cross-complainant" value="'+cc+'" placeholder="&#x0645;&#x062F;&#x0639;&#x06CC; &#x06A9;&#x0627; &#x0646;&#x0627;&#x0645;" dir="auto"></div>'
@@ -252,9 +249,13 @@ function buildCrossFields(c) {
     + '<input class="form-input" id="cf-cross-complainant-profession" value="'+ccp+'" placeholder="&#x067E;&#x06CC;&#x0634;&#x06C1;" dir="auto"></div>'
     + '</div>'
 
-    // کراس ورژن دفعات (نوعیت جرم ہٹا دی گئی — پوری چوڑائی)
+    // کراس ورژن دفعات (70%) + کراس ورژن محرر (30%، سطر کے آخر میں)
+    + '<div class="cf-row-7030">'
     + '<div class="cf-field"><label class="cf-label">کراس ورژن دفعات</label>'
     + '<input class="form-input" id="cf-cross-section" value="'+cs+'" placeholder="e.g. 302 PPC + 34 PPC" dir="auto"></div>'
+    + '<div class="cf-field"><label class="cf-label">کراس ورژن محرر</label>'
+    + '<input class="form-input" id="cf-cross-fir-writer" value="'+cfw+'" placeholder="محرر کا نام" dir="auto"></div>'
+    + '</div>'
     + '<div style="padding:8px 10px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);font-size:11px;color:var(--red);margin-top:4px;">'
     + '&#x26A0;&#xFE0F; Cross Version cases are linked to the original FIR. Both cases will appear in the case workspace under the same folder.'
     + '</div>';
