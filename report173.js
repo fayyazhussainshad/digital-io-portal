@@ -585,6 +585,14 @@ function _renderR173() {
                    onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bs.sho_date2 !== undefined ? sanitizeHtml(bs.sho_date2) : (bs.sho_date !== undefined ? sanitizeHtml(bs.sho_date) : esc(_ch173Today()))}</div>
             </div>
             <div class="sho-col sho-papers">
+              ${(_r173Type === 'ikhraj' || _r173Type === 'adampata') ? `
+              <!-- اخراج / عدم پتہ ke saath فہرست گواہان HAR BAAR banti hai.
+                   Sarkari 3-column table mein گواہان ka koi khana nahi, is liye
+                   yeh fehrist table ke NEECHE, تفصیل کاغذات se ooper rakhi hai
+                   (usi chaurai mein — form ka dhancha bilkul nahi chhirta). -->
+              <div class="sho-papers-head">فہرست گواہان</div>
+              <div class="sho-papers-body akh-gawah" contenteditable="true" data-k="gawah_body">${bs.gawah_body !== undefined ? sanitizeHtml(bs.gawah_body) : esc(_ch173AkhrajWitnessText())}</div>
+              ` : ''}
               <div class="sho-papers-head">تفصیل کاغذات<button class="papers-pick no-print" onclick="_ch173PapersPicker(event)" title="کاغذات منتخب کریں">▾</button></div>
               <!-- AHEM: yahan bv() istemal NA karein — woh tamam </span> hata
                    deta hai aur kaghazon ka dhancha (naam + neeche tadaad)
@@ -2285,6 +2293,9 @@ async function _ch173LoadPeople() {
   // Data aane par گواہان wala khana bhar do (agar khali ho)
   try {
     const wcell = document.querySelector('#ch173-table [data-k="shahadat"]');
+    // چالان مکمل ke گواہان — نامکمل / تتمہ / 512 / انٹیرم mein bhi wohi.
+    // (Yeh مقدمے wali fehrist se PEHLE, taake بنیاد چالان مکمل ki fehrist bane.)
+    try { _ch173InheritWitnesses(); } catch(_) {}
     // innerHTML — kyunki _ch173WitnessText() mein CNIC ka <span> hota hai.
     // (innerText se woh <span> ka code khud nazar aa jata tha.)
     if (wcell && !wcell.innerText.trim()) wcell.innerText = _ch173WitnessText();
@@ -2397,6 +2408,75 @@ window._ch173MedSet = _ch173MedSet;
 function _ch173WitCell() {
   return document.querySelector('#ch173-doc [data-k="shahadat"]');
 }
+
+// ═══ اخراج / عدم پتہ ki فہرست گواہان ═══
+// Sarkari 3-column table mein گواہان ka khana nahi hota, magar اخراج ke saath
+// fehrist HAR BAAR muratab honi chahiye. Is liye woh table ke neeche apne
+// alag khane mein banti hai — tarteeb wohi jo چالان mein hai:
+// PEHLA مدعی → baqi گواہان → محرر → AAKHRI تفتیشی افسر.
+function _ch173AkhrajWitnessText() {
+  const L = (typeof _ch173WitList === 'function') ? _ch173WitList() : (_ch173Witnesses || []);
+  const list = [];
+  const madai = _ch173Madai();
+  if (madai) list.push(madai);
+  (L || []).forEach(w => {
+    const nm = String(w.full_name || '').trim();
+    if (!nm) return;
+    if (list.some(x => _ch173SameName(x.name, nm))) return;
+    list.push({ name: nm, cnic: _ch173CnicFmt(w.cnic) });
+  });
+  const mh = _ch173Muharrir();
+  if (mh && !list.some(x => _ch173SameName(x.name, mh.name))) list.push(mh);
+  const io = _ch173IO();
+  if (io && !list.some(x => _ch173SameName(x.name, io.name))) list.push(io);
+  if (!list.length) return '';
+  // CNIC mile to LAZMI darj; na mile to jagah KHALI
+  return list.map((w, i) =>
+    (i + 1) + '\u06D4 ' + w.name + (w.cnic ? ' ' + w.cnic : '')
+  ).join('\n');
+}
+window._ch173AkhrajWitnessText = _ch173AkhrajWitnessText;
+
+// ═══ چالان مکمل ke گواہان — baqi چالان iqsam mein bhi ═══
+// USOOL: جتنے گواہان چالان مکمل میں ہوں، وہی سب چالان نامکمل، تتمہ چالان
+// اور چالان 512 ض ف میں بھی شامل ہوں گے. (اخراج / عدم پتہ ki alag fehrist
+// hoti hai — us ka apna khana hai, wahan yeh naqal nahi hoti.)
+const R173_WIT_INHERIT = ['namukammal', 'ch512', 'tatima_challan'];
+
+// چالان مکمل ka mehfooz shuda کالم 6 — jahan se naqal hoti hai
+function _ch173MukammalWitnesses() {
+  try {
+    const keys = Object.keys(_r173Records || {});
+    // 'mukammal' ya 'mukammal::<version>' — jo bhi mile
+    const k = keys.filter(x => x === 'mukammal' || x.indexOf('mukammal::') === 0);
+    for (let i = k.length - 1; i >= 0; i--) {
+      const d = _r173Records[k[i]];
+      const s = d && d.shahadat;
+      if (s && String(s).replace(/<[^>]*>/g, '').trim()) return String(s);
+    }
+  } catch (_) {}
+  return '';
+}
+
+// چالان مکمل ke گواہان mojooda چالان mein le aao (sirf un iqsam mein jinhen
+// wirasat milni chahiye, aur SIRF jab khana khali ho — officer ka likha hua
+// kabhi zaya nahi hota).
+function _ch173InheritWitnesses() {
+  if (R173_WIT_INHERIT.indexOf(_r173Type) === -1) return false;
+  const el = _ch173WitCell();
+  if (!el || el.innerText.trim()) return false;            // pehle se kuch hai
+  const raw = _ch173MukammalWitnesses();
+  if (!raw) return false;
+  // Mehfooz matn mein CNIC ke <span> hote hain — saada matn nikal lo
+  const tmp = document.createElement('div');
+  tmp.innerHTML = raw;
+  const txt = (tmp.innerText || '').trim();
+  if (!txt) return false;
+  el.innerText = txt;
+  try { _r173Dirty = true; } catch (_) {}
+  return true;
+}
+window._ch173InheritWitnesses = _ch173InheritWitnesses;
 
 // Khane ki har satar ko { naam, CNIC } mein tor lo
 function _ch173WitParse(el) {
@@ -4485,6 +4565,16 @@ function _ch173CSS() {
         overflow-wrap:break-word; word-wrap:break-word; white-space:pre-wrap;
       }
       #ch173-doc .ch173-cont:empty{ min-height:0; padding:0 !important; }
+      /* اخراج / عدم پتہ ki فہرست گواہان — har گواہ apni satar mein */
+      #ch173-doc .akh-gawah{
+        white-space:pre-wrap; text-align:right; text-align-last:right;
+        direction:rtl !important; line-height:1.9; margin-bottom:10px;
+      }
+      #ch173-doc .akh-gawah:empty::before{
+        content:'یہاں گواہان کی فہرست لکھیں'; color:#aaa;
+      }
+      @media print{ #ch173-doc .akh-gawah:empty::before{ content:''; } }
+
       /* اخراج table — column 2 ki BAYEN lakeer ko kheenchne wala grip */
       #ch173-doc .akh-col2{ }
       #ch173-doc .akh-grip{
