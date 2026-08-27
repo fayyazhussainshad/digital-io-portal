@@ -22,14 +22,15 @@ function _cfInjectCSS() {
     + '.cf-row4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:2px 8px;align-items:center;width:100%;}'
     + '.cf-row4-rapat{display:grid;grid-template-columns:0.5fr 1fr 1fr 1.5fr;gap:2px 8px;align-items:center;width:100%;}'
     + '.cf-row-7030{display:grid;grid-template-columns:7fr 3fr;gap:2px 10px;align-items:center;width:100%;}'
-    + '.cf-row2 .cf-field,.cf-row3 .cf-field,.cf-row4 .cf-field,.cf-row4-rapat .cf-field,.cf-row-7030 .cf-field{margin-bottom:9px;}'
+    + '.cf-row-sim{display:grid;grid-template-columns:repeat(4,1fr);gap:2px 8px;width:100%;}'
+    + '.cf-row2 .cf-field,.cf-row3 .cf-field,.cf-row4 .cf-field,.cf-row4-rapat .cf-field,.cf-row-7030 .cf-field,.cf-row-sim .cf-field{margin-bottom:9px;}'
     + '.cf-box{padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:12px;}'
     + '.cf-box-title{font-size:14pt;font-weight:800;color:var(--accent);margin-bottom:9px;text-align:right;'
     +   'font-family:\'Jameel Noori Nastaleeq\',\'Noto Nastaliq Urdu\',serif;}'
     + '.cf-hint{font-size:11px;color:var(--text-muted);margin:-4px 0 9px;padding-right:2px;}'
-    + '@media(max-width:640px){.cf-row3{grid-template-columns:1fr 1fr;}.cf-row4,.cf-row4-rapat{grid-template-columns:1fr 1fr;}}'
+    + '@media(max-width:640px){.cf-row3{grid-template-columns:1fr 1fr;}.cf-row4,.cf-row4-rapat{grid-template-columns:1fr 1fr;}.cf-row-sim{grid-template-columns:repeat(2,1fr);}}'
     + '@media(max-width:480px){'
-    +   '.cf-row2,.cf-row3,.cf-row4,.cf-row4-rapat,.cf-row-7030{grid-template-columns:1fr;}'
+    +   '.cf-row2,.cf-row3,.cf-row4,.cf-row4-rapat,.cf-row-7030,.cf-row-sim{grid-template-columns:1fr;}'
     +   '.cf-field{flex-wrap:wrap;}'
     +   '.cf-label{white-space:normal;}'
     + '}';
@@ -74,7 +75,7 @@ function _cfParseMobilePhones(c) {
   return phones;
 }
 
-// ── Mobile-theft: build one phone's field block ──
+// ── Mobile-theft: build one phone's field block (IMEI + brand only; SIMs are pooled below) ──
 function _cfPhoneBlockHTML(i, p) {
   p = p || {};
   return '<div class="cf-mobile-phone-block" style="border-top:1px dashed var(--border);padding-top:6px;margin-top:6px;">'
@@ -87,13 +88,13 @@ function _cfPhoneBlockHTML(i, p) {
     +   '<div class="cf-field"><label class="cf-label">ماڈل / کمپنی</label>'
     +     '<input class="form-input" id="cf-mobile-brand-'+i+'" value="'+esc(p.brand)+'" placeholder="IMEI سے خودکار، یا خود لکھیں"></div>'
     + '</div>'
-    + '<div class="cf-row2">'
-    +   '<div class="cf-field"><label class="cf-label">سم 1</label>'
-    +     '<input class="form-input" dir="ltr" id="cf-mobile-sim-'+i+'-1" value="'+esc(p.sim1)+'" placeholder="0000-0000000" oninput="autoFormatCell(this)"></div>'
-    +   '<div class="cf-field"><label class="cf-label">سم 2</label>'
-    +     '<input class="form-input" dir="ltr" id="cf-mobile-sim-'+i+'-2" value="'+esc(p.sim2)+'" placeholder="0000-0000000" oninput="autoFormatCell(this)"></div>'
-    + '</div>'
     + '</div>';
+}
+
+// ── Mobile-theft: one pooled SIM field (labeled with which phone it belongs to) ──
+function _cfSimFieldHTML(phoneIdx, simIdx, value) {
+  return '<div class="cf-field"><label class="cf-label">موبائل '+phoneIdx+' - سم '+simIdx+'</label>'
+    + '<input class="form-input" dir="ltr" id="cf-mobile-sim-'+phoneIdx+'-'+simIdx+'" value="'+esc(value)+'" placeholder="0000-0000000" oninput="autoFormatCell(this)"></div>';
 }
 
 // ── Mobile-theft: read current values back out of the DOM ──
@@ -115,13 +116,14 @@ function _cfCollectMobilePhones() {
   return out;
 }
 
-// ── Mobile-theft: (re)generate the N phone blocks based on the count field ──
+// ── Mobile-theft: (re)generate the N phone blocks + pooled SIM fields based on the count field ──
 function _cfRenderMobilePhones() {
   var countEl = document.getElementById('cf-mobile-count');
   var n = Math.max(1, Math.min(20, parseInt((countEl && countEl.value) || '1', 10) || 1));
   if (countEl) countEl.value = n;
   var container = document.getElementById('cf-mobile-phones-container');
-  if (!container) return;
+  var simContainer = document.getElementById('cf-mobile-sims-container');
+  if (!container || !simContainer) return;
   var isFirst = container.children.length === 0;
   var prev;
   if (isFirst) {
@@ -131,10 +133,15 @@ function _cfRenderMobilePhones() {
     prev = _cfCollectMobilePhones();
   }
   var html = '';
+  var simHtml = '';
   for (var i = 1; i <= n; i++) {
-    html += _cfPhoneBlockHTML(i, prev[i-1] || {});
+    var p = prev[i-1] || {};
+    html += _cfPhoneBlockHTML(i, p);
+    simHtml += _cfSimFieldHTML(i, 1, p.sim1);
+    simHtml += _cfSimFieldHTML(i, 2, p.sim2);
   }
   container.innerHTML = html;
+  simContainer.innerHTML = simHtml;
 }
 
 // ── Mobile-theft: indexed IMEI → brand auto-detect (editable, doesn't overwrite manual entry) ──
@@ -278,6 +285,8 @@ function caseFormHTML(c) {
     +   '</div>'
     +   '<input type="hidden" id="cf-mobile-seed" value="'+esc(JSON.stringify(_mobilePhonesSeed))+'">'
     +   '<div id="cf-mobile-phones-container"></div>'
+    +   '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin:10px 0 6px;border-top:1px dashed var(--border);padding-top:8px;">📶 سم نمبرز</div>'
+    +   '<div id="cf-mobile-sims-container" class="cf-row-sim"></div>'
     + '</div>'
 
 
