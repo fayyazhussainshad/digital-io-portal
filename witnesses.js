@@ -111,7 +111,6 @@ function _renderWitnessesArea() {
   const color = isCross ? 'var(--amber)' : 'var(--accent)';
   area.innerHTML = `
   <div style="padding:10px;direction:rtl;height:100%;overflow-y:auto;width:100%;box-sizing:border-box;">
-    <div id="witness-form-box"></div>
     <div style="border-bottom:2px solid ${color};margin-bottom:12px;padding-bottom:6px;">
       <div style="position:relative;min-height:34px;display:flex;align-items:center;justify-content:center;">
         <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:${color};text-align:center;">${heading}</div>
@@ -181,59 +180,55 @@ function _renderWitnessList(list, type) {
   return head + rows;
 }
 
-// ── ADD / EDIT FORM (fields unchanged — mulziman format/font/settings) ──
+// ── ADD / EDIT FORM — SAME SETTING AS MULZIMAN (opens in a modal) ──
 function _openWitnessForm(id, type) {
   _witInjectCSS();
+  if (typeof _accInjectCSS === 'function') _accInjectCSS(); // reuse mulziman's form CSS
   _editingWitnessId = id || null;
   _witnessFormType = type || (id ? (_witnessList.find(x=>x.id===id)||{}).witness_type : null) || 'fir';
   const w = id ? (_witnessList.find(x => x.id === id) || {}) : {};
-  const box = document.getElementById('witness-form-box');
-  if (!box) return;
-  box.innerHTML = `
-  <div class="card" style="padding:12px 14px;border:1px solid var(--accent);margin:0 0 12px;">
-    <div class="wit-form">
-      <div style="font-size:16px;font-weight:800;color:var(--accent);text-align:center;margin-bottom:4px;font-family:'Jameel Noori Nastaleeq',serif;">${id?'✏️ گواہ کی ترمیم':'➕ نیا گواہ'}</div>
 
-      <!-- نام | شناختی کارڈ | فون نمبر | پیشہ | حیثیت (سب ایک لائن) -->
-      <div class="wit-grid5">
-        <div class="wit-field">
-          <label class="wit-label">نام</label>
-          <input class="form-input" id="w-name" value="${_escW(w.full_name)}" placeholder="پورا نام" style="text-align:right;" oninput="_checkPriorRecord(this.value)">
-        </div>
-        <div class="wit-field">
-          <label class="wit-label">شناختی کارڈ</label>
-          <input class="form-input" id="w-cnic" dir="ltr" maxlength="15" value="${_escW(w.cnic)}" placeholder="00000-0000000-0" oninput="_witFmtCnic(this);_checkPriorByContact()">
-        </div>
-        <div class="wit-field">
-          <label class="wit-label">فون نمبر</label>
-          <input class="form-input" id="w-cell" dir="ltr" maxlength="12" value="${_escW(w.cell)}" placeholder="0000-0000000" oninput="_witFmtMobile(this);_checkPriorByContact()">
-        </div>
-        <div class="wit-field">
-          <label class="wit-label">پیشہ</label>
-          <input class="form-input" id="w-profession" value="${_escW(w.profession)}" placeholder="پیشہ">
-        </div>
-        <div class="wit-field">
-          <label class="wit-label">حیثیت</label>
-          <div style="display:flex;gap:4px;align-items:stretch;">
-            <select class="form-input" id="w-status" style="flex:1;min-width:0;">
-              ${WITNESS_STATUS.map(s => `<option value="${s.v}" ${w.status===s.v?'selected':''}>${s.label}</option>`).join('')}
-              ${w.status && !WITNESS_STATUS.find(s=>s.v===w.status) ? `<option value="${w.status}" selected>${w.status}</option>` : ''}
-            </select>
-            <button class="btn btn-secondary btn-sm" style="flex-shrink:0;padding:0 8px;" onclick="_addCustomStatus()" title="نیا اسٹیٹس">➕</button>
-          </div>
-        </div>
+  const statusOptions = WITNESS_STATUS.map(s => `<option value="${s.v}" ${w.status===s.v?'selected':''}>${s.label}</option>`).join('')
+    + (w.status && !WITNESS_STATUS.find(s=>s.v===w.status) ? `<option value="${w.status}" selected>${w.status}</option>` : '');
+
+  const body = `
+  <div class="acc-form" style="max-height:74vh;overflow-y:auto;padding:2px 4px;">
+
+    <!-- نام (اپنی لائن، پوری چوڑائی) -->
+    <div class="acc-field">
+      <label class="acc-label">نام</label>
+      <input class="form-input" id="w-name" value="${_escW(w.full_name)}" placeholder="پورا نام" style="text-align:right;" oninput="_checkPriorRecord(this.value)">
+    </div>
+    <div id="w-prior-record" style="margin-top:6px;"></div>
+
+    <!-- شناختی کارڈ | فون نمبر | پیشہ | حیثیت (ایک لائن) -->
+    <div class="acc-grid4b" style="margin-top:7px;">
+      <div class="acc-field">
+        <label class="acc-label">شناختی کارڈ</label>
+        <input class="form-input" id="w-cnic" dir="ltr" maxlength="15" value="${_escW(w.cnic)}" placeholder="00000-0000000-0" oninput="_witFmtCnic(this);_checkPriorByContact()">
       </div>
-
-      <div id="w-prior-record" style="margin-top:8px;"></div>
-
-      <div style="display:flex;gap:8px;margin-top:14px;justify-content:center;">
-        <button class="btn btn-primary" onclick="_saveWitness()">💾 محفوظ کریں</button>
-        <button class="btn btn-secondary" onclick="document.getElementById('witness-form-box').innerHTML=''">منسوخ</button>
+      <div class="acc-field">
+        <label class="acc-label">فون نمبر</label>
+        <input class="form-input" id="w-cell" dir="ltr" maxlength="12" value="${_escW(w.cell)}" placeholder="0000-0000000" oninput="_witFmtMobile(this);_checkPriorByContact()">
+      </div>
+      <div class="acc-field">
+        <label class="acc-label">پیشہ</label>
+        <input class="form-input" id="w-profession" value="${_escW(w.profession)}" placeholder="پیشہ">
+      </div>
+      <div class="acc-field">
+        <label class="acc-label">حیثیت</label>
+        <div style="display:flex;gap:4px;flex:1;min-width:0;align-items:stretch;">
+          <select class="form-input" id="w-status" style="flex:1;min-width:0;">${statusOptions}</select>
+          <button class="btn btn-secondary btn-sm" style="flex:0 0 auto;padding:0 8px;" onclick="_addCustomStatus()" title="نیا اسٹیٹس">➕</button>
+        </div>
       </div>
     </div>
   </div>`;
-  box.scrollIntoView({ behavior:'smooth', block:'start' });
-  _witForce14();
+
+  openModal(id ? '✏️ گواہ میں ترمیم' : '➕ گواہ درج کریں', body, `
+    <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    <button class="btn btn-primary" onclick="_saveWitness()">💾 محفوظ کریں</button>
+  `);
 }
 
 // ── CNIC / Phone auto-format (copied from mulziman settings) ───
@@ -380,7 +375,7 @@ async function _saveWitness() {
         });
       } catch(_) {}
     }
-    document.getElementById('witness-form-box').innerHTML = '';
+    if (typeof closeModal === 'function') closeModal();
     _witnessFormType = 'fir';  // reset
     await _loadWitnesses();     // reload from DB (gets all records)
     _renderWitnessesArea();
