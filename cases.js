@@ -562,7 +562,7 @@ document.addEventListener('click', function(e) {
 });
 
 // ── MODAL OPENERS + SAVE/VIEW ──
-function openAddCaseModal(){openModal('',caseFormHTML(),`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveNewCase()">💾 اندراج محفوظ کریں</button>`);}
+function openAddCaseModal(){openModal('',caseFormHTML(),`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveNewCase()">💾 اندراج محفوظ کریں</button>`);setTimeout(_cfRenderMobilePhones,50);}
 async function _updateDocCheck(caseId, checkbox) {
   const doc = checkbox.value;
   const val = checkbox.checked;

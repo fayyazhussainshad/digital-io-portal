@@ -49,6 +49,127 @@ function _cfToggleCross(el) {
   }
 }
 
+// ── Mobile-theft: parse saved comma-strings back into per-phone objects ──
+function _cfParseMobilePhones(c) {
+  c = c || {};
+  var imeis = (c.theft_imei || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+  var brands = (c.theft_brand || '').split(',').map(function(s){ return s.trim(); });
+  var sims = (c.theft_cell || '').split(',').map(function(s){ return s.trim(); });
+  var count = Math.max(1, Math.ceil(imeis.length / 2), brands.filter(Boolean).length, sims.filter(Boolean).length);
+  var phones = [];
+  for (var i = 0; i < count; i++) {
+    phones.push({
+      imei1: imeis[i*2] || '',
+      imei2: imeis[i*2+1] || '',
+      brand: brands[i] || '',
+      sim: sims[i] || ''
+    });
+  }
+  return phones;
+}
+
+// ── Mobile-theft: build one phone's field block ──
+function _cfPhoneBlockHTML(i, p) {
+  p = p || {};
+  return '<div class="cf-mobile-phone-block" style="border-top:1px dashed var(--border);padding-top:8px;margin-top:8px;">'
+    + '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:6px;">📱 موبائل نمبر '+i+'</div>'
+    + '<div class="cf-row3">'
+    +   '<div class="cf-field"><label class="cf-label">IMEI 1</label>'
+    +     '<input class="form-input" dir="ltr" inputmode="numeric" maxlength="15" id="cf-mobile-imei-'+i+'-1" value="'+esc(p.imei1)+'" placeholder="000000000000000" oninput="_imeiLookupIdx(this,'+i+')"></div>'
+    +   '<div class="cf-field"><label class="cf-label">IMEI 2</label>'
+    +     '<input class="form-input" dir="ltr" inputmode="numeric" maxlength="15" id="cf-mobile-imei-'+i+'-2" value="'+esc(p.imei2)+'" placeholder="000000000000000" oninput="_imeiLookupIdx(this,'+i+')"></div>'
+    +   '<div class="cf-field"><label class="cf-label">ماڈل / کمپنی</label>'
+    +     '<input class="form-input" id="cf-mobile-brand-'+i+'" value="'+esc(p.brand)+'" placeholder="IMEI سے خودکار، یا خود لکھیں"></div>'
+    + '</div>'
+    + '<div class="cf-field"><label class="cf-label">سم نمبر</label>'
+    +   '<input class="form-input" dir="ltr" id="cf-mobile-sim-'+i+'" value="'+esc(p.sim)+'" placeholder="0000-0000000"></div>'
+    + '</div>';
+}
+
+// ── Mobile-theft: read current values back out of the DOM ──
+function _cfCollectMobilePhones() {
+  var out = [];
+  var container = document.getElementById('cf-mobile-phones-container');
+  if (!container) return out;
+  var blocks = container.querySelectorAll('.cf-mobile-phone-block');
+  for (var idx = 0; idx < blocks.length; idx++) {
+    var i = idx + 1;
+    out.push({
+      imei1: (document.getElementById('cf-mobile-imei-'+i+'-1') || {}).value || '',
+      imei2: (document.getElementById('cf-mobile-imei-'+i+'-2') || {}).value || '',
+      brand: (document.getElementById('cf-mobile-brand-'+i) || {}).value || '',
+      sim: (document.getElementById('cf-mobile-sim-'+i) || {}).value || ''
+    });
+  }
+  return out;
+}
+
+// ── Mobile-theft: (re)generate the N phone blocks based on the count field ──
+function _cfRenderMobilePhones() {
+  var countEl = document.getElementById('cf-mobile-count');
+  var n = Math.max(1, Math.min(20, parseInt((countEl && countEl.value) || '1', 10) || 1));
+  if (countEl) countEl.value = n;
+  var container = document.getElementById('cf-mobile-phones-container');
+  if (!container) return;
+  var isFirst = container.children.length === 0;
+  var prev;
+  if (isFirst) {
+    var seedEl = document.getElementById('cf-mobile-seed');
+    try { prev = seedEl ? JSON.parse(seedEl.value || '[]') : []; } catch(e) { prev = []; }
+  } else {
+    prev = _cfCollectMobilePhones();
+  }
+  var html = '';
+  for (var i = 1; i <= n; i++) {
+    html += _cfPhoneBlockHTML(i, prev[i-1] || {});
+  }
+  container.innerHTML = html;
+}
+
+// ── Mobile-theft: indexed IMEI → brand auto-detect (editable, doesn't overwrite manual entry) ──
+function _imeiLookupIdx(input, idx) {
+  var v = (input.value || '').replace(/\D/g, '').slice(0, 15);
+  input.value = v;
+  var brandField = document.getElementById('cf-mobile-brand-'+idx);
+  if (!brandField || v.length < 8) return;
+  var TAC_BRANDS = {
+    '35':'(عام GSM)','01':'Apple iPhone','35332':'Apple','35326':'Apple',
+    '86':'Xiaomi / Redmi','86891':'Xiaomi','86553':'Oppo','86742':'Vivo',
+    '35846':'Samsung','35649':'Samsung','35878':'Samsung','35291':'Nokia',
+    '35395':'Huawei','86095':'Huawei','86227':'Tecno','86303':'Infinix',
+    '86997':'Realme','35775':'OnePlus','86452':'itel'
+  };
+  var brand = '';
+  for (var len = 6; len >= 2; len--) {
+    var pre = v.slice(0, len);
+    if (TAC_BRANDS[pre]) { brand = TAC_BRANDS[pre]; break; }
+  }
+  if (brand && (!brandField.value || brandField.dataset.auto === '1')) {
+    brandField.value = brand;
+    brandField.dataset.auto = '1';
+  }
+  brandField.oninput = function() { brandField.dataset.auto = '0'; };
+}
+
+// ── Mobile-theft: join all phone blocks into the theft_* DB columns (comma-separated) ──
+function _cfMobileFieldsPayload() {
+  var phones = _cfCollectMobilePhones();
+  var imeis = [], brands = [], sims = [];
+  phones.forEach(function(p){
+    if (p.imei1) imeis.push(p.imei1);
+    if (p.imei2) imeis.push(p.imei2);
+    brands.push(p.brand || '');
+    sims.push(p.sim || '');
+  });
+  var hasAny = imeis.length > 0 || brands.some(Boolean) || sims.some(Boolean);
+  return {
+    theft_item: hasAny ? 'mobile' : null,
+    theft_imei: imeis.length ? imeis.join(',') : null,
+    theft_brand: brands.some(Boolean) ? brands.join(',') : null,
+    theft_cell: sims.some(Boolean) ? sims.join(',') : null
+  };
+}
+
 function caseFormHTML(c) {
   _cfInjectCSS();
   c = c || {};
@@ -62,6 +183,7 @@ function caseFormHTML(c) {
   } catch(e) { selectedDocuments = []; }
 
   var fir = c.fir_number || '';
+  var _mobilePhonesSeed = _cfParseMobilePhones(c);
   var date = c.fir_date || '';
   var occ = c.occurrence_date || '';
   var accused = c.accused_name || '';
@@ -138,22 +260,14 @@ function caseFormHTML(c) {
     +   '<div style="font-size:14pt;font-weight:700;color:var(--amber);margin-bottom:8px;font-family:\'Jameel Noori Nastaleeq\',\'Noto Nastaliq Urdu\',serif;">📱 موبائل چوری کی تفصیل</div>'
     +   '<div class="cf-row2">'
     +     '<div class="cf-field"><label class="cf-label">چوری شدہ چیز</label>'
-    +       '<select class="form-input" id="cf-theft-item" onchange="_toggleMobileFields()">'
-    +         '<option value="">— منتخب کریں —</option>'
-    +         '<option value="mobile"'+(c.theft_item==='mobile'?' selected':'')+'>📱 موبائل فون</option>'
-    +         '<option value="motorcycle"'+(c.theft_item==='motorcycle'?' selected':'')+'>🏍️ موٹرسائیکل</option>'
-    +         '<option value="car"'+(c.theft_item==='car'?' selected':'')+'>🚗 گاڑی</option>'
-    +         '<option value="cash"'+(c.theft_item==='cash'?' selected':'')+'>💵 نقدی</option>'
-    +         '<option value="jewelry"'+(c.theft_item==='jewelry'?' selected':'')+'>💍 زیورات</option>'
-    +         '<option value="other"'+(c.theft_item==='other'?' selected':'')+'>دیگر</option>'
+    +       '<select class="form-input" id="cf-theft-item">'
+    +         '<option value="mobile" selected>📱 موبائل فون</option>'
     +       '</select></div>'
-    +     '<div id="cf-mobile-imei-wrap" class="cf-field" style="display:'+(c.theft_item==='mobile'?'flex':'none')+';"><label class="cf-label">IMEI نمبر</label>'
-    +       '<input class="form-input" id="cf-mobile-imei" dir="ltr" inputmode="numeric" maxlength="15" value="'+(c.theft_imei||'')+'" placeholder="000000000000000" oninput="_imeiLookup(this)"></div>'
-    +     '<div id="cf-mobile-brand-wrap" class="cf-field" style="display:'+(c.theft_item==='mobile'?'flex':'none')+';"><label class="cf-label">کمپنی / ماڈل</label>'
-    +       '<input class="form-input" id="cf-mobile-brand" value="'+(c.theft_brand||'')+'" placeholder="IMEI سے خودکار، یا خود لکھیں"></div>'
-    +     '<div id="cf-mobile-cell-wrap" class="cf-field" style="display:'+(c.theft_item==='mobile'?'flex':'none')+';grid-column:1/-1;"><label class="cf-label">چوری شدہ نمبر</label>'
-    +       '<input class="form-input" id="cf-mobile-cell" dir="ltr" value="'+(c.theft_cell||'')+'" placeholder="0000-0000000، 0000-0000000"></div>'
+    +     '<div class="cf-field"><label class="cf-label">تعداد موبائل فون</label>'
+    +       '<input class="form-input" type="number" id="cf-mobile-count" min="1" max="20" value="'+_mobilePhonesSeed.length+'" oninput="_cfRenderMobilePhones()"></div>'
     +   '</div>'
+    +   '<input type="hidden" id="cf-mobile-seed" value="'+esc(JSON.stringify(_mobilePhonesSeed))+'">'
+    +   '<div id="cf-mobile-phones-container"></div>'
     + '</div>'
 
 
@@ -284,7 +398,7 @@ function sectionTag(sectionStr) {
 }
 
 
-async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;openModal(`✏️ ترمیم — مقدمہ ${c.fir_number}`,caseFormHTML(c),`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveEditCase('${id}')">💾 تبدیلیاں محفوظ کریں</button>`);}
+async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;openModal(`✏️ ترمیم — مقدمہ ${c.fir_number}`,caseFormHTML(c),`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveEditCase('${id}')">💾 تبدیلیاں محفوظ کریں</button>`);setTimeout(_cfRenderMobilePhones,50);}
 
 async function saveNewCase(){
   // Check case limit
@@ -304,6 +418,7 @@ async function saveNewCase(){
   if(!section){showToast('⚠️ دفعہ قانون درج کریں','error');document.getElementById('cf-section-search')?.focus();return;}
   if(!complainant){showToast('⚠️ مدعی کا نام درج کریں','error');document.getElementById('cf-complainant')?.focus();return;}
   try{
+    var _cfMobile = _cfMobileFieldsPayload();
     await addCase({
       fir_number:fir,
       fir_date:document.getElementById('cf-date').value.trim(),
@@ -315,10 +430,10 @@ async function saveNewCase(){
       fir_writer:document.getElementById('cf-fir-writer')?.value.trim()||'',
       complaint_sender:document.getElementById('cf-complaint-sender')?.value.trim()||'',
       section_of_law:section,
-      theft_item:document.getElementById('cf-theft-item')?.value||null,
-      theft_imei:document.getElementById('cf-mobile-imei')?.value?.trim()||null,
-      theft_brand:document.getElementById('cf-mobile-brand')?.value?.trim()||null,
-      theft_cell:document.getElementById('cf-mobile-cell')?.value?.trim()||null,
+      theft_item:_cfMobile.theft_item,
+      theft_imei:_cfMobile.theft_imei,
+      theft_brand:_cfMobile.theft_brand,
+      theft_cell:_cfMobile.theft_cell,
       offence_type:document.getElementById('cf-offence')?.value?.trim()||'',
       sho:document.getElementById('cf-sho')?.value.trim()||'',
       sdpo:document.getElementById('cf-sdpo')?.value.trim()||'',
@@ -368,6 +483,7 @@ async function saveEditCase(id){
     if(_typed) _editSection=_typed;
   }
   try{
+    var _cfMobile = _cfMobileFieldsPayload();
     await updateCase(id,{
       fir_number:document.getElementById('cf-fir').value.trim(),
       fir_date:document.getElementById('cf-date').value.trim(),
@@ -379,10 +495,10 @@ async function saveEditCase(id){
       fir_writer:document.getElementById('cf-fir-writer')?.value.trim()||'',
       complaint_sender:document.getElementById('cf-complaint-sender')?.value.trim()||'',
       section_of_law:_editSection,
-      theft_item:document.getElementById('cf-theft-item')?.value||null,
-      theft_imei:document.getElementById('cf-mobile-imei')?.value?.trim()||null,
-      theft_brand:document.getElementById('cf-mobile-brand')?.value?.trim()||null,
-      theft_cell:document.getElementById('cf-mobile-cell')?.value?.trim()||null,
+      theft_item:_cfMobile.theft_item,
+      theft_imei:_cfMobile.theft_imei,
+      theft_brand:_cfMobile.theft_brand,
+      theft_cell:_cfMobile.theft_cell,
       offence_type:document.getElementById('cf-offence')?.value?.trim()||'',
       sho:document.getElementById('cf-sho')?.value.trim()||'',
       sdpo:document.getElementById('cf-sdpo')?.value.trim()||'',
