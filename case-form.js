@@ -36,18 +36,22 @@ function _cfInjectCSS() {
   document.head.appendChild(s);
 }
 
-// ── Toggle cross-version box + auto-fill case number/date from the top fields ──
+// ── Keep کراس ورژن مقدمہ نمبر/تاریخ live-synced with the top مقدمہ نمبر/تاریخ اندراج ──
+// (runs on every keystroke in the top fields; stops touching a field once the officer types into it manually)
+function _cfLiveSyncCross() {
+  var mFir = document.getElementById('cf-fir');
+  var mDate = document.getElementById('cf-date');
+  var cfirEl = document.getElementById('cf-cross-fir');
+  var cfirDateEl = document.getElementById('cf-cross-fir-date');
+  if (cfirEl && mFir && cfirEl.dataset.auto !== '0') cfirEl.value = mFir.value;
+  if (cfirDateEl && mDate && cfirDateEl.dataset.auto !== '0') cfirDateEl.value = mDate.value;
+}
+
+// ── Toggle cross-version box + do an immediate sync when it's switched on ──
 function _cfToggleCross(el) {
   var box = document.getElementById('cross-version-fields');
   if (box) box.style.display = el.checked ? 'block' : 'none';
-  if (el.checked) {
-    var cfirEl = document.getElementById('cf-cross-fir');
-    var cfirDateEl = document.getElementById('cf-cross-fir-date');
-    var mFir = document.getElementById('cf-fir');
-    var mDate = document.getElementById('cf-date');
-    if (cfirEl && !cfirEl.value && mFir && mFir.value) cfirEl.value = mFir.value;
-    if (cfirDateEl && !cfirDateEl.value && mDate && mDate.value) cfirDateEl.value = mDate.value;
-  }
+  if (el.checked) _cfLiveSyncCross();
 }
 
 // ── Mobile-theft: parse saved comma-strings back into per-phone objects ──
@@ -229,9 +233,9 @@ function caseFormHTML(c) {
     // Row 1: مقدمہ نمبر + تاریخ اندراج + تاریخ وقوعہ + ملزمان (چاروں ایک ہی سطر)
     + '<div class="cf-row4">'
     + '<div class="cf-field"><label class="cf-label">مقدمہ نمبر *</label>'
-    + '<input class="form-input" id="cf-fir" value="'+fir+'" placeholder="e.g. 245/2025" dir="ltr" style="text-align:left;"></div>'
+    + '<input class="form-input" id="cf-fir" value="'+fir+'" placeholder="e.g. 245/2025" dir="ltr" style="text-align:left;" oninput="_cfLiveSyncCross()"></div>'
     + '<div class="cf-field"><label class="cf-label">تاریخ اندراج *</label>'
-    + '<input class="form-input" id="cf-date" value="'+date+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" dir="ltr" style="text-align:left;"></div>'
+    + '<input class="form-input" id="cf-date" value="'+date+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this);_cfLiveSyncCross()" dir="ltr" style="text-align:left;"></div>'
     + '<div class="cf-field"><label class="cf-label">تاریخ وقوعہ</label>'
     + '<input class="form-input" id="cf-occurrence-date" value="'+occ+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" dir="ltr" style="text-align:left;"></div>'
     + '<div class="cf-field"><label class="cf-label">ملزمان</label>'
@@ -341,6 +345,9 @@ function buildCrossFields(c) {
   c = c || {};
   var cfn = c.cross_fir_number || c.fir_number || '';
   var cfd = c.cross_fir_date || c.fir_date || '';
+  // Stay auto-synced with the top مقدمہ نمبر/تاریخ unless a genuinely different value was saved before
+  var cfnAuto = !c.cross_fir_number || c.cross_fir_number === c.fir_number;
+  var cfdAuto = !c.cross_fir_date || c.cross_fir_date === c.fir_date;
   var cc = c.cross_complainant || '';
   var ccc = c.cross_complainant_cnic || '';
   var ccl = c.cross_complainant_cell || '';
@@ -359,9 +366,9 @@ function buildCrossFields(c) {
     + '<div class="cf-field"><label class="cf-label">&#x0631;&#x067E;&#x0679; &#x062A;&#x0627;&#x0631;&#x06CC;&#x062E;</label>'
     + '<input class="form-input" id="cf-cross-rapat-date" value="'+crd+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)"></div>'
     + '<div class="cf-field"><label class="cf-label">کراس ورژن مقدمہ نمبر</label>'
-    + '<input class="form-input" id="cf-cross-fir" value="'+cfn+'" placeholder="e.g. 246/2025" dir="auto"></div>'
+    + '<input class="form-input" id="cf-cross-fir" data-auto="'+(cfnAuto?'1':'0')+'" value="'+cfn+'" placeholder="e.g. 246/2025" dir="auto" oninput="this.dataset.auto=\'0\'"></div>'
     + '<div class="cf-field"><label class="cf-label">کراس ورژن مقدمہ کی تاریخ</label>'
-    + '<input class="form-input" id="cf-cross-fir-date" value="'+cfd+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)"></div>'
+    + '<input class="form-input" id="cf-cross-fir-date" data-auto="'+(cfdAuto?'1':'0')+'" value="'+cfd+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this);this.dataset.auto=\'0\'"></div>'
     + '</div>'
 
     // کراس ورژن مدعی کا نام (پوری چوڑائی)
