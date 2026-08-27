@@ -2320,28 +2320,57 @@ async function _ch173LoadPeople() {
 //  Teenon کالم 6 (تفصیل شہادت) mein naam + CNIC ke saath lagte hain.
 //  CNIC na mile to '00000-0000000-0' (bilkul baqi گواہان ki tarah).
 // ═══════════════════════════════════════════════════════════════
+// CNIC ka nishan sirf FORM ke khali khane (placeholder) ke liye — گواہان
+// wale khane mein CNIC na mile to jagah BILKUL KHALI rehti hai (zero wala
+// nishan wahan nahi lagta).
 const R173_CNIC_KHALI = '00000-0000000-0';
 
+// CNIC — mile to LAZMI darj ho; na mile to KHALI (koi zero wala nishan nahi)
 function _ch173CnicFmt(v) {
   const d = String(v || '').replace(/\D/g, '');
-  if (d.length !== 13) return R173_CNIC_KHALI;
+  if (d.length !== 13) return '';
   return d.slice(0, 5) + '-' + d.slice(5, 12) + '-' + d.slice(12);
 }
 
-// محرر — mojooda مقدمہ ke card se
+// تھانہ ka naam naam ke aage — sirf محرر aur تفتیشی افسر ke liye
+function _ch173WithThana(name, station) {
+  name = String(name || '').trim();
+  const st = String(station || '').trim();
+  if (!name || !st) return name;
+  if (name.indexOf(st) !== -1) return name;        // pehle se likha hai
+  return name + ' تھانہ ' + st;
+}
+
+// مدعی — کالم 6 mein SAB SE PEHLA گواہ
+function _ch173Madai() {
+  const c = _r173Case || {};
+  const nm = String(c.complainant || '').trim();
+  if (!nm) return null;
+  return { name: nm, cnic: _ch173CnicFmt(c.complainant_cnic) };
+}
+
+// محرر — mojooda مقدمہ ke card se (naam ke aage تھانہ)
 function _ch173Muharrir() {
   const c = _r173Case || {};
   const nm = String(c.fir_writer || '').trim();
   if (!nm) return null;
-  return { name: nm, cnic: _ch173CnicFmt(c.fir_writer_cnic) };
+  const o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
+  return {
+    name: _ch173WithThana(nm, c.case_station || o.station),
+    cnic: _ch173CnicFmt(c.fir_writer_cnic)
+  };
 }
 
-// تفتیشی افسر — yehi subscriber (abhi logged-in) afsar hai
+// تفتیشی افسر — yehi subscriber (abhi logged-in) afsar hai. SAB SE AAKHRI گواہ.
 function _ch173IO() {
   const o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
+  const c = _r173Case || {};
   const nm = String(o.full_name || '').trim();
   if (!nm) return null;
-  return { name: nm, cnic: _ch173CnicFmt(o.cnic) };
+  return {
+    name: _ch173WithThana(nm, o.station || c.case_station),
+    cnic: _ch173CnicFmt(o.cnic)
+  };
 }
 
 // میڈیکل آفیسر — aik dafa poochne ke baad mehfooz (thane ke hisab se)
@@ -2369,19 +2398,35 @@ function _ch173WitCell() {
   return document.querySelector('#ch173-doc [data-k="shahadat"]');
 }
 
-// Khane mein pehle se maujood naam (نمبر aur CNIC hata kar)
-function _ch173WitNames(el) {
-  const out = new Set();
+// Khane ki har satar ko { naam, CNIC } mein tor lo
+function _ch173WitParse(el) {
+  const out = [];
   if (!el) return out;
-  el.innerText.split(/\r?\n/).forEach(line => {
+  (el.innerText || '').replace(/\u00A0/g, ' ').split(/\r?\n/).forEach(line => {
     let t = line.trim();
+    if (!t) return;
     t = t.replace(/^\s*\d+\u06D4\s*/, '');                 // نمبر شمار hatao
-    t = t.replace(/\d{5}-\d{7}-\d/g, ' ');                 // CNIC kahin bhi ho — hatao
+    let cnic = '';
+    const m = t.match(/(\d{5}-\d{7}-\d)\s*$/);
+    if (m) { cnic = m[1]; t = t.slice(0, m.index).trim(); }
     t = t.replace(/\s+/g, ' ').trim();
-    if (t) out.add(t);
+    if (t) out.push({ name: t, cnic: cnic });
   });
   return out;
 }
+
+// Fehrist wapas khane mein — نمبر شمار nayi tarteeb se.
+// CNIC na ho to us ki jagah BILKUL KHALI (zero wala nishan nahi).
+function _ch173WitWrite(el, list) {
+  if (!el) return;
+  el.innerText = list.map((w, i) =>
+    (i + 1) + '\u06D4 ' + w.name + (w.cnic ? ' ' + w.cnic : '')
+  ).join('\n');
+  try { _r173Dirty = true; } catch (_) {}
+}
+
+const _ch173SameName = (a, b) =>
+  !!a && !!b && String(a).replace(/\s+/g, ' ').trim() === String(b).replace(/\s+/g, ' ').trim();
 
 // Aik گواہ کالم 6 mein — pehle se ho to DOBARA nahi
 function _ch173AddWitness(name, cnic) {
@@ -2392,28 +2437,58 @@ function _ch173AddWitness(name, cnic) {
   // AHEM: naam PARHNE se PEHLE CNIC ke <span> khol do. Mehfooz چالان dobara
   // kholne par CNIC '.ln/.cn' mein lipta hota hai — us soorat mein satar ki
   // shakl badal jati hai aur purana naam pehchana nahi jata. Nateeja: har
-  // dafa kholne par محرر/تفتیشی افسر ka naam DOBARA lag jata. Unwrap pehle
-  // karne se dono kaam theek hote hain — pehchan bhi, aur naya matn bhi
-  // span ke andar nahi girta.
+  // dafa kholne par naam DOBARA lag jata.
   try { _ch173UnwrapCnics(el); } catch (_) {}
-  if (_ch173WitNames(el).has(name)) return false;          // pehle se maujood
-  const cur = el.innerText.replace(/\s+$/, '');
-  const next = cur ? (cur.split(/\r?\n/).filter(l => l.trim()).length + 1) : 1;
-  el.innerText = (cur ? cur + '\n' : '') +
-                 next + '\u06D4 ' + name + ' ' + _ch173CnicFmt(cnic);
-  try { _r173Dirty = true; } catch (_) {}
+  const list = _ch173WitParse(el);
+  if (list.some(w => _ch173SameName(w.name, name))) return false;
+  // تفتیشی افسر hamesha AAKHRI گواہ — naya naam us se PEHLE aata hai
+  const io = _ch173IO();
+  let at = list.length;
+  if (io) {
+    const idx = list.findIndex(w => _ch173SameName(w.name, io.name));
+    if (idx !== -1) at = idx;
+  }
+  list.splice(at, 0, { name: name, cnic: _ch173CnicFmt(cnic) });
+  _ch173WitWrite(el, list);
   return true;
 }
 window._ch173AddWitness = _ch173AddWitness;
 
-// محرر aur تفتیشی افسر — کالم 6 mein KHUD lag jayen
+// ═══ کالم 6 ki PAKKI TARTEEB ═══
+// USOOL: PEHLA گواہ مدعی, AAKHRI گواہ تفتیشی افسر. Beech mein baqi گواہان,
+// aur un ke baad محرر. Officer ka apna likha hua matn zaya nahi hota —
+// sirf tarteeb theek hoti hai aur نمبر شمار nayi ginti par aa jate hain.
 function _ch173AddDefaultOfficials() {
-  let kuch = false;
-  [_ch173Muharrir(), _ch173IO()].forEach(o => {
-    if (o && _ch173AddWitness(o.name, o.cnic)) kuch = true;
+  const el = _ch173WitCell();
+  if (!el) return false;                       // اخراج/عدم پتہ mein yeh khana hai hi nahi
+  try { _ch173UnwrapCnics(el); } catch (_) {}
+  const pehle = el.innerText;
+  let list = _ch173WitParse(el);
+
+  const khaas = [_ch173Madai(), _ch173Muharrir(), _ch173IO()];
+  // Agar in ka naam pehle se fehrist mein hai to nikal lo — magar us par
+  // officer ka likha hua CNIC zaya na ho (system ke paas na ho to wohi rahe)
+  khaas.forEach(o => {
+    if (!o) return;
+    const idx = list.findIndex(w => _ch173SameName(w.name, o.name));
+    if (idx !== -1) {
+      if (!o.cnic && list[idx].cnic) o.cnic = list[idx].cnic;
+      list.splice(idx, 1);
+    }
   });
-  if (kuch) { try { _ch173Layout(); } catch (_) {} }
-  return kuch;
+
+  const [madai, muharrir, io] = khaas;
+  const fin = [];
+  if (madai) fin.push(madai);                  // 1) PEHLA — مدعی
+  fin.push(...list);                           // 2) baqi گواہان
+  if (muharrir) fin.push(muharrir);            // 3) محرر
+  if (io) fin.push(io);                        // 4) AAKHRI — تفتیشی افسر
+  if (!fin.length) return false;
+
+  _ch173WitWrite(el, fin);
+  if (el.innerText === pehle) return false;    // kuch badla hi nahi
+  try { _ch173Layout(); } catch (_) {}
+  return true;
 }
 window._ch173AddDefaultOfficials = _ch173AddDefaultOfficials;
 
@@ -2463,7 +2538,7 @@ function _ch173AskMedical() {
       <input id="ch173-med-nm" placeholder="نام" dir="auto" value="${esc(cur.name)}"
              style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:7px;
                     margin-bottom:8px;font-size:12pt;direction:rtl;">
-      <input id="ch173-med-cn" placeholder="${R173_CNIC_KHALI}" dir="ltr" value="${esc(cur.cnic === R173_CNIC_KHALI ? '' : cur.cnic)}"
+      <input id="ch173-med-cn" placeholder="${R173_CNIC_KHALI}" dir="ltr" value="${esc(cur.cnic)}"
              style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:7px;
                     margin-bottom:14px;font-size:12pt;">
       <div style="display:flex;gap:8px;">
@@ -2504,9 +2579,11 @@ function _ch173WitnessText() {
   // Har گواہ: نمبر شمار + naam, aur usi ke saath uska CNIC
   // AIK GAWAH = AIK SATAR: نمبر + naam + uska CNIC
   return L.map(function (w, i) {
-    const cn = (w.cnic && String(w.cnic).trim()) ? String(w.cnic).trim() : '00000-0000000-0';
+    // CNIC mile to LAZMI darj ho; na mile to jagah BILKUL KHALI rahe
+    // (pehle yahan '00000-0000000-0' lagta tha — woh ab nahi lagta).
+    const cn = _ch173CnicFmt(w.cnic);
     // AIK SATAR = AIK SHAKHS: نمبر + naam + uska CNIC (naam PEHLE, CNIC BAAD mein)
-    return (i + 1) + '\u06D4 ' + (w.full_name || '') + ' ' + cn;
+    return (i + 1) + '\u06D4 ' + (w.full_name || '') + (cn ? ' ' + cn : '');
   }).join('\n');
 }
 
