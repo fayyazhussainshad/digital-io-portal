@@ -59,15 +59,16 @@ function _cfParseMobilePhones(c) {
   c = c || {};
   var imeis = (c.theft_imei || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean);
   var brands = (c.theft_brand || '').split(',').map(function(s){ return s.trim(); });
-  var sims = (c.theft_cell || '').split(',').map(function(s){ return s.trim(); });
-  var count = Math.max(1, Math.ceil(imeis.length / 2), brands.filter(Boolean).length, sims.filter(Boolean).length);
+  var sims = c.theft_cell ? c.theft_cell.split(',').map(function(s){ return s.trim(); }) : [];
+  var count = Math.max(1, Math.ceil(imeis.length / 2), brands.filter(Boolean).length, Math.ceil(sims.length / 2));
   var phones = [];
   for (var i = 0; i < count; i++) {
     phones.push({
       imei1: imeis[i*2] || '',
       imei2: imeis[i*2+1] || '',
       brand: brands[i] || '',
-      sim: sims[i] || ''
+      sim1: sims[i*2] || '',
+      sim2: sims[i*2+1] || ''
     });
   }
   return phones;
@@ -76,8 +77,8 @@ function _cfParseMobilePhones(c) {
 // ── Mobile-theft: build one phone's field block ──
 function _cfPhoneBlockHTML(i, p) {
   p = p || {};
-  return '<div class="cf-mobile-phone-block" style="border-top:1px dashed var(--border);padding-top:8px;margin-top:8px;">'
-    + '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:6px;">📱 موبائل نمبر '+i+'</div>'
+  return '<div class="cf-mobile-phone-block" style="border-top:1px dashed var(--border);padding-top:6px;margin-top:6px;">'
+    + '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px;">📱 موبائل نمبر '+i+'</div>'
     + '<div class="cf-row3">'
     +   '<div class="cf-field"><label class="cf-label">IMEI 1</label>'
     +     '<input class="form-input" dir="ltr" inputmode="numeric" maxlength="15" id="cf-mobile-imei-'+i+'-1" value="'+esc(p.imei1)+'" placeholder="000000000000000" oninput="_imeiLookupIdx(this,'+i+')"></div>'
@@ -86,8 +87,12 @@ function _cfPhoneBlockHTML(i, p) {
     +   '<div class="cf-field"><label class="cf-label">ماڈل / کمپنی</label>'
     +     '<input class="form-input" id="cf-mobile-brand-'+i+'" value="'+esc(p.brand)+'" placeholder="IMEI سے خودکار، یا خود لکھیں"></div>'
     + '</div>'
-    + '<div class="cf-field"><label class="cf-label">سم نمبر</label>'
-    +   '<input class="form-input" dir="ltr" id="cf-mobile-sim-'+i+'" value="'+esc(p.sim)+'" placeholder="0000-0000000"></div>'
+    + '<div class="cf-row2">'
+    +   '<div class="cf-field"><label class="cf-label">سم 1</label>'
+    +     '<input class="form-input" dir="ltr" id="cf-mobile-sim-'+i+'-1" value="'+esc(p.sim1)+'" placeholder="0000-0000000" oninput="autoFormatCell(this)"></div>'
+    +   '<div class="cf-field"><label class="cf-label">سم 2</label>'
+    +     '<input class="form-input" dir="ltr" id="cf-mobile-sim-'+i+'-2" value="'+esc(p.sim2)+'" placeholder="0000-0000000" oninput="autoFormatCell(this)"></div>'
+    + '</div>'
     + '</div>';
 }
 
@@ -103,7 +108,8 @@ function _cfCollectMobilePhones() {
       imei1: (document.getElementById('cf-mobile-imei-'+i+'-1') || {}).value || '',
       imei2: (document.getElementById('cf-mobile-imei-'+i+'-2') || {}).value || '',
       brand: (document.getElementById('cf-mobile-brand-'+i) || {}).value || '',
-      sim: (document.getElementById('cf-mobile-sim-'+i) || {}).value || ''
+      sim1: (document.getElementById('cf-mobile-sim-'+i+'-1') || {}).value || '',
+      sim2: (document.getElementById('cf-mobile-sim-'+i+'-2') || {}).value || ''
     });
   }
   return out;
@@ -164,7 +170,8 @@ function _cfMobileFieldsPayload() {
     if (p.imei1) imeis.push(p.imei1);
     if (p.imei2) imeis.push(p.imei2);
     brands.push(p.brand || '');
-    sims.push(p.sim || '');
+    sims.push(p.sim1 || '');
+    sims.push(p.sim2 || '');
   });
   var hasAny = imeis.length > 0 || brands.some(Boolean) || sims.some(Boolean);
   return {
@@ -244,7 +251,6 @@ function caseFormHTML(c) {
     + '<option value="namaloom" '+(c.mulzman_type==='namaloom'||!c.mulzman_type?'selected':'')+'>⚠️ نامعلوم</option>'
     + '</select></div>'
     + '</div>'
-    + '<div class="cf-hint">⚠️ نامعلوم منتخب کریں تو 15 دن بعد خودکار یاددہانی ملے گی</div>'
 
     // Row 2: دفعات قانون (پوری چوڑائی — سرچ باکس)
     + '<div class="cf-field" style="align-items:flex-start;">'
@@ -258,7 +264,6 @@ function caseFormHTML(c) {
     + '<input type="hidden" id="cf-section" value="'+section+'">'
     + '</div>'
     + '</div>'
-    + '<div class="cf-hint" style="margin-top:-4px;">(ایک سے زیادہ دفعات منتخب کر سکتے ہیں)</div>'
 
     // Mobile theft detail (shown only when section 379-402 PPC selected)
     + '<div id="cf-mobile-box" style="display:'+(_hasMobileSection(selectedSections)?'block':'none')+';background:var(--bg-secondary);border:1px solid var(--amber);border-radius:8px;padding:12px;margin-bottom:12px;">'
@@ -356,9 +361,19 @@ function buildCrossFields(c) {
   var cfw = c.cross_fir_writer || '';
   var crn = c.cross_rapat_number || '';
   var crd = c.cross_rapat_date || '';
-  return '<div class="cf-hint" style="margin-bottom:10px;">'
-    + '&#x0645;&#x0642;&#x062F;&#x0645;&#x06C1; &#x0646;&#x0645;&#x0628;&#x0631; &#x0648;&#x06C1;&#x06CC; &#x0631;&#x06C1;&#x06D2; &#x06AF;&#x0627; &#x06C1;&#x06D2;</div>'
-
+  var crossStatus = c.cross_status || 'under';
+  var crossPosition = c.cross_position || 'pending';
+  var crossStatusOpts = ''
+    + '<option value="under"'+(crossStatus==='under'?' selected':'')+'>زیر تفتیش (Under Investigation)</option>'
+    + '<option value="complete"'+(crossStatus==='complete'?' selected':'')+'>مکمل چالان (Complete)</option>'
+    + '<option value="incomplete"'+(crossStatus==='incomplete'?' selected':'')+'>نامکمل چالان (Incomplete)</option>'
+    + '<option value="challan512"'+(crossStatus==='challan512'?' selected':'')+'>چالان 512ض ف (512 CrPC)</option>'
+    + '<option value="untrace"'+(crossStatus==='untrace'?' selected':'')+'>عدم پتہ (Untraced)</option>'
+    + '<option value="cancel"'+(crossStatus==='cancel'?' selected':'')+'>اخراج (Cancelled)</option>';
+  var crossPosOpts = ''
+    + '<option value="pending"'+(crossPosition==='pending'?' selected':'')+'>⏳ Pending</option>'
+    + '<option value="court"'+(crossPosition==='court'?' selected':'')+'>⚖️ In Court</option>';
+  return ''
     // رپٹ نمبر (آدھی چوڑائی) + رپٹ تاریخ + کراس ورژن مقدمہ نمبر + کراس ورژن مقدمہ کی تاریخ (چاروں ایک سطر)
     + '<div class="cf-row4-rapat">'
     + '<div class="cf-field"><label class="cf-label">&#x0631;&#x067E;&#x0679; &#x0646;&#x0645;&#x0628;&#x0631;</label>'
@@ -392,6 +407,15 @@ function buildCrossFields(c) {
     + '<div class="cf-field"><label class="cf-label">کراس ورژن محرر</label>'
     + '<input class="form-input" id="cf-cross-fir-writer" value="'+cfw+'" placeholder="محرر کا نام" dir="auto"></div>'
     + '</div>'
+
+    // کراس ورژن صورتحال + کراس ورژن پوزیشن (ایک ہی سطر، مرکزی فارم کی طرح)
+    + '<div class="cf-row2">'
+    + '<div class="cf-field"><label class="cf-label">کراس ورژن صورتحال</label>'
+    + '<select class="form-input" id="cf-cross-status">'+crossStatusOpts+'</select></div>'
+    + '<div class="cf-field"><label class="cf-label">کراس ورژن پوزیشن</label>'
+    + '<select class="form-input" id="cf-cross-position">'+crossPosOpts+'</select></div>'
+    + '</div>'
+
     + '<div style="padding:8px 10px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);font-size:11px;color:var(--red);margin-top:4px;">'
     + '&#x26A0;&#xFE0F; Cross Version cases are linked to the original FIR. Both cases will appear in the case workspace under the same folder.'
     + '</div>';
@@ -461,6 +485,8 @@ async function saveNewCase(){
       cross_rapat_number:document.getElementById('cf-cross-rapat')?.value.trim()||null,
       cross_rapat_date:document.getElementById('cf-cross-rapat-date')?.value.trim()||null,
       cross_fir_writer:document.getElementById('cf-cross-fir-writer')?.value.trim()||null,
+      cross_status:document.getElementById('cf-cross-status')?.value||null,
+      cross_position:document.getElementById('cf-cross-position')?.value||null,
       case_station:  currentOfficer?.station  || null,
       case_district: currentOfficer?.district || null,
     });
@@ -526,6 +552,8 @@ async function saveEditCase(id){
       cross_rapat_number:document.getElementById('cf-cross-rapat')?.value.trim()||null,
       cross_rapat_date:document.getElementById('cf-cross-rapat-date')?.value.trim()||null,
       cross_fir_writer:document.getElementById('cf-cross-fir-writer')?.value.trim()||null,
+      cross_status:document.getElementById('cf-cross-status')?.value||null,
+      cross_position:document.getElementById('cf-cross-position')?.value||null,
     });
     closeModal();
     showToast('✅ Case updated!','success');
