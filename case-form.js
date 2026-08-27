@@ -35,6 +35,20 @@ function _cfInjectCSS() {
   document.head.appendChild(s);
 }
 
+// ── Toggle cross-version box + auto-fill case number/date from the top fields ──
+function _cfToggleCross(el) {
+  var box = document.getElementById('cross-version-fields');
+  if (box) box.style.display = el.checked ? 'block' : 'none';
+  if (el.checked) {
+    var cfirEl = document.getElementById('cf-cross-fir');
+    var cfirDateEl = document.getElementById('cf-cross-fir-date');
+    var mFir = document.getElementById('cf-fir');
+    var mDate = document.getElementById('cf-date');
+    if (cfirEl && !cfirEl.value && mFir && mFir.value) cfirEl.value = mFir.value;
+    if (cfirDateEl && !cfirDateEl.value && mDate && mDate.value) cfirDateEl.value = mDate.value;
+  }
+}
+
 function caseFormHTML(c) {
   _cfInjectCSS();
   c = c || {};
@@ -193,7 +207,7 @@ function caseFormHTML(c) {
     + 'border:1px solid rgba(239,68,68,0.25);border-radius:var(--radius-sm);">'
     + '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;font-size:14pt;font-family:\'Jameel Noori Nastaleeq\',\'Noto Nastaliq Urdu\',serif;">'
     + '<input type="checkbox" id="cf-cross-version" ' + (isCross ? 'checked' : '')
-    + ' onchange="document.getElementById(\'cross-version-fields\').style.display = this.checked ? \'block\' : \'none\';"'
+    + ' onchange="_cfToggleCross(this)"'
     + ' style="width:18px;height:18px;cursor:pointer;">'
     + '&#x2694;&#xFE0F; &#x06A9;&#x0631;&#x0627;&#x0633; &#x0648;&#x0631;&#x0698;&#x0646; &#x0645;&#x0648;&#x062C;&#x0648;&#x062F; &#x06C1;&#x06D2;'
     + '</label>'
@@ -210,8 +224,8 @@ function caseFormHTML(c) {
 
 function buildCrossFields(c) {
   c = c || {};
-  var cfn = c.cross_fir_number || '';
-  var cfd = c.cross_fir_date || '';
+  var cfn = c.cross_fir_number || c.fir_number || '';
+  var cfd = c.cross_fir_date || c.fir_date || '';
   var cc = c.cross_complainant || '';
   var ccc = c.cross_complainant_cnic || '';
   var ccl = c.cross_complainant_cell || '';
@@ -223,15 +237,15 @@ function buildCrossFields(c) {
   return '<div class="cf-hint" style="margin-bottom:10px;">'
     + '&#x0645;&#x0642;&#x062F;&#x0645;&#x06C1; &#x0646;&#x0645;&#x0628;&#x0631; &#x0648;&#x06C1;&#x06CC; &#x0631;&#x06C1;&#x06D2; &#x06AF;&#x0627; &#x06C1;&#x06D2;</div>'
 
-    // رپٹ نمبر + رپٹ تاریخ + کراس ورژن ایف آئی آر نمبر + کراس ورژن ایف آئی آر تاریخ (چاروں ایک سطر)
+    // رپٹ نمبر + رپٹ تاریخ + کراس ورژن مقدمہ نمبر + کراس ورژن مقدمہ تاریخ (چاروں ایک سطر)
     + '<div class="cf-row4">'
     + '<div class="cf-field"><label class="cf-label">&#x0631;&#x067E;&#x0679; &#x0646;&#x0645;&#x0628;&#x0631;</label>'
     + '<input class="form-input" id="cf-cross-rapat" value="'+crn+'" placeholder="e.g. 12" dir="auto"></div>'
     + '<div class="cf-field"><label class="cf-label">&#x0631;&#x067E;&#x0679; &#x062A;&#x0627;&#x0631;&#x06CC;&#x062E;</label>'
     + '<input class="form-input" id="cf-cross-rapat-date" value="'+crd+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)"></div>'
-    + '<div class="cf-field"><label class="cf-label">کراس ورژن ایف آئی آر نمبر</label>'
+    + '<div class="cf-field"><label class="cf-label">کراس ورژن مقدمہ نمبر</label>'
     + '<input class="form-input" id="cf-cross-fir" value="'+cfn+'" placeholder="e.g. 246/2025" dir="auto"></div>'
-    + '<div class="cf-field"><label class="cf-label">کراس ورژن ایف آئی آر تاریخ</label>'
+    + '<div class="cf-field"><label class="cf-label">کراس ورژن مقدمہ تاریخ</label>'
     + '<input class="form-input" id="cf-cross-fir-date" value="'+cfd+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)"></div>'
     + '</div>'
 
