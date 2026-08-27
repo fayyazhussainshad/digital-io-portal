@@ -216,27 +216,30 @@ function buildCrossFields(c) {
   var ccl = c.cross_complainant_cell || '';
   var ccp = c.cross_complainant_profession || '';
   var cs = c.cross_section_of_law || '';
-  var co = c.cross_offence_type || '';
   var cfw = c.cross_fir_writer || '';
   var crn = c.cross_rapat_number || '';
   var crd = c.cross_rapat_date || '';
   return '<div class="cf-hint" style="margin-bottom:10px;">'
     + '&#x0645;&#x0642;&#x062F;&#x0645;&#x06C1; &#x0646;&#x0645;&#x0628;&#x0631; &#x0648;&#x06C1;&#x06CC; &#x0631;&#x06C1;&#x06D2; &#x06AF;&#x0627; &#x06C1;&#x06D2;</div>'
 
-    // رپٹ نمبر + رپٹ تاریخ + کراس ایف آئی آر نمبر + کراس ایف آئی آر تاریخ (چاروں ایک سطر)
+    // رپٹ نمبر + رپٹ تاریخ + کراس ورژن ایف آئی آر نمبر + کراس ورژن ایف آئی آر تاریخ (چاروں ایک سطر)
     + '<div class="cf-row4">'
     + '<div class="cf-field"><label class="cf-label">&#x0631;&#x067E;&#x0679; &#x0646;&#x0645;&#x0628;&#x0631;</label>'
     + '<input class="form-input" id="cf-cross-rapat" value="'+crn+'" placeholder="e.g. 12" dir="auto"></div>'
     + '<div class="cf-field"><label class="cf-label">&#x0631;&#x067E;&#x0679; &#x062A;&#x0627;&#x0631;&#x06CC;&#x062E;</label>'
     + '<input class="form-input" id="cf-cross-rapat-date" value="'+crd+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)"></div>'
-    + '<div class="cf-field"><label class="cf-label">&#x06A9;&#x0631;&#x0627;&#x0633; &#x0627;&#x06CC;&#x0641; &#x0622;&#x0626;&#x06CC; &#x0622;&#x0631; &#x0646;&#x0645;&#x0628;&#x0631;</label>'
+    + '<div class="cf-field"><label class="cf-label">کراس ورژن ایف آئی آر نمبر</label>'
     + '<input class="form-input" id="cf-cross-fir" value="'+cfn+'" placeholder="e.g. 246/2025" dir="auto"></div>'
-    + '<div class="cf-field"><label class="cf-label">&#x06A9;&#x0631;&#x0627;&#x0633; &#x0627;&#x06CC;&#x0641; &#x0622;&#x0626;&#x06CC; &#x0622;&#x0631; &#x062A;&#x0627;&#x0631;&#x06CC;&#x062E;</label>'
+    + '<div class="cf-field"><label class="cf-label">کراس ورژن ایف آئی آر تاریخ</label>'
     + '<input class="form-input" id="cf-cross-fir-date" value="'+cfd+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)"></div>'
     + '</div>'
 
-    // کراس مدعی کا نام (پوری چوڑائی)
-    + '<div class="cf-field"><label class="cf-label">&#x06A9;&#x0631;&#x0627;&#x0633; &#x0645;&#x062F;&#x0639;&#x06CC; &#x06A9;&#x0627; &#x0646;&#x0627;&#x0645;</label>'
+    // کراس ورژن محرر (اوپر منتقل)
+    + '<div class="cf-field"><label class="cf-label">کراس ورژن محرر</label>'
+    + '<input class="form-input" id="cf-cross-fir-writer" value="'+cfw+'" placeholder="محرر کا نام" dir="auto"></div>'
+
+    // کراس ورژن مدعی کا نام (پوری چوڑائی)
+    + '<div class="cf-field"><label class="cf-label">کراس ورژن مدعی کا نام</label>'
     + '<input class="form-input" id="cf-cross-complainant" value="'+cc+'" placeholder="&#x0645;&#x062F;&#x0639;&#x06CC; &#x06A9;&#x0627; &#x0646;&#x0627;&#x0645;" dir="auto"></div>'
 
     // شناختی کارڈ + موبائل نمبر + پیشہ (تینوں ایک سطر)
@@ -249,14 +252,9 @@ function buildCrossFields(c) {
     + '<input class="form-input" id="cf-cross-complainant-profession" value="'+ccp+'" placeholder="&#x067E;&#x06CC;&#x0634;&#x06C1;" dir="auto"></div>'
     + '</div>'
 
-    + '<div class="cf-row2">'
-    + '<div class="cf-field"><label class="cf-label">&#x06A9;&#x0631;&#x0627;&#x0633; &#x062F;&#x0641;&#x0639;&#x0627;&#x062A;</label>'
+    // کراس ورژن دفعات (نوعیت جرم ہٹا دی گئی — پوری چوڑائی)
+    + '<div class="cf-field"><label class="cf-label">کراس ورژن دفعات</label>'
     + '<input class="form-input" id="cf-cross-section" value="'+cs+'" placeholder="e.g. 302 PPC + 34 PPC" dir="auto"></div>'
-    + '<div class="cf-field"><label class="cf-label">&#x06A9;&#x0631;&#x0627;&#x0633; &#x0646;&#x0648;&#x0639;&#x06CC;&#x062A; &#x062C;&#x0631;&#x0645;</label>'
-    + '<input class="form-input" id="cf-cross-offence" value="'+co+'" placeholder="Cross offence" dir="auto"></div>'
-    + '</div>'
-    + '<div class="cf-field"><label class="cf-label">&#x06A9;&#x0631;&#x0627;&#x0633; &#x0645;&#x062D;&#x0631;&#x0631;</label>'
-    + '<input class="form-input" id="cf-cross-fir-writer" value="'+cfw+'" placeholder="&#x0645;&#x062D;&#x0631;&#x0631; &#x06A9;&#x0627; &#x0646;&#x0627;&#x0645;" dir="auto"></div>'
     + '<div style="padding:8px 10px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);font-size:11px;color:var(--red);margin-top:4px;">'
     + '&#x26A0;&#xFE0F; Cross Version cases are linked to the original FIR. Both cases will appear in the case workspace under the same folder.'
     + '</div>';
@@ -324,7 +322,6 @@ async function saveNewCase(){
       cross_section_of_law:document.getElementById('cf-cross-section')?.value.trim()||null,
       cross_rapat_number:document.getElementById('cf-cross-rapat')?.value.trim()||null,
       cross_rapat_date:document.getElementById('cf-cross-rapat-date')?.value.trim()||null,
-      cross_offence_type:document.getElementById('cf-cross-offence')?.value.trim()||null,
       cross_fir_writer:document.getElementById('cf-cross-fir-writer')?.value.trim()||null,
       case_station:  currentOfficer?.station  || null,
       case_district: currentOfficer?.district || null,
@@ -389,7 +386,6 @@ async function saveEditCase(id){
       cross_section_of_law:document.getElementById('cf-cross-section')?.value.trim()||null,
       cross_rapat_number:document.getElementById('cf-cross-rapat')?.value.trim()||null,
       cross_rapat_date:document.getElementById('cf-cross-rapat-date')?.value.trim()||null,
-      cross_offence_type:document.getElementById('cf-cross-offence')?.value.trim()||null,
       cross_fir_writer:document.getElementById('cf-cross-fir-writer')?.value.trim()||null,
     });
     closeModal();
