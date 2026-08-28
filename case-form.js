@@ -169,8 +169,19 @@ function _imeiLookupIdx(input, idx) {
   brandField.oninput = function() { brandField.dataset.auto = '0'; };
 }
 
+// ── Mobile-theft: reveal/hide the phone+SIM fields based on the "was a mobile stolen?" checkbox ──
+function _cfToggleMobileTheft(el) {
+  var wrap = document.getElementById('cf-mobile-fields-wrap');
+  if (wrap) wrap.style.display = el.checked ? 'block' : 'none';
+  if (el.checked) _cfRenderMobilePhones();
+}
+
 // ── Mobile-theft: join all phone blocks into the theft_* DB columns (comma-separated) ──
 function _cfMobileFieldsPayload() {
+  var checkEl = document.getElementById('cf-mobile-theft-check');
+  if (checkEl && !checkEl.checked) {
+    return { theft_item: null, theft_imei: null, theft_brand: null, theft_cell: null };
+  }
   var phones = _cfCollectMobilePhones();
   var imeis = [], brands = [], sims = [];
   phones.forEach(function(p){
@@ -203,6 +214,7 @@ function caseFormHTML(c) {
 
   var fir = c.fir_number || '';
   var _mobilePhonesSeed = _cfParseMobilePhones(c);
+  var _mobileTheftChecked = c.theft_item === 'mobile';
   var date = c.fir_date || '';
   var occ = c.occurrence_date || '';
   var accused = c.accused_name || '';
@@ -274,19 +286,19 @@ function caseFormHTML(c) {
 
     // Mobile theft detail (shown only when section 379-402 PPC selected)
     + '<div id="cf-mobile-box" style="display:'+(_hasMobileSection(selectedSections)?'block':'none')+';background:var(--bg-secondary);border:1px solid var(--amber);border-radius:8px;padding:12px;margin-bottom:12px;">'
-    +   '<div style="font-size:14pt;font-weight:700;color:var(--amber);margin-bottom:8px;font-family:\'Jameel Noori Nastaleeq\',\'Noto Nastaliq Urdu\',serif;">📱 موبائل چوری کی تفصیل</div>'
-    +   '<div class="cf-row2">'
-    +     '<div class="cf-field"><label class="cf-label">چوری شدہ چیز</label>'
-    +       '<select class="form-input" id="cf-theft-item">'
-    +         '<option value="mobile" selected>📱 موبائل فون</option>'
-    +       '</select></div>'
+    +   '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14pt;font-weight:700;color:var(--amber);'
+    +     'font-family:\'Jameel Noori Nastaleeq\',\'Noto Nastaliq Urdu\',serif;">'
+    +     '<input type="checkbox" id="cf-mobile-theft-check" '+(_mobileTheftChecked?'checked':'')+' onchange="_cfToggleMobileTheft(this)" style="width:18px;height:18px;cursor:pointer;">'
+    +     '📱 کیا موبائل فون چوری ہوا؟'
+    +   '</label>'
+    +   '<div id="cf-mobile-fields-wrap" style="display:'+(_mobileTheftChecked?'block':'none')+';margin-top:10px;">'
     +     '<div class="cf-field"><label class="cf-label">تعداد موبائل فون</label>'
     +       '<input class="form-input" type="number" id="cf-mobile-count" min="1" max="20" value="'+_mobilePhonesSeed.length+'" oninput="_cfRenderMobilePhones()"></div>'
+    +     '<input type="hidden" id="cf-mobile-seed" value="'+esc(JSON.stringify(_mobilePhonesSeed))+'">'
+    +     '<div id="cf-mobile-phones-container"></div>'
+    +     '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin:10px 0 6px;border-top:1px dashed var(--border);padding-top:8px;">📶 سم نمبرز</div>'
+    +     '<div id="cf-mobile-sims-container" class="cf-row-sim"></div>'
     +   '</div>'
-    +   '<input type="hidden" id="cf-mobile-seed" value="'+esc(JSON.stringify(_mobilePhonesSeed))+'">'
-    +   '<div id="cf-mobile-phones-container"></div>'
-    +   '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin:10px 0 6px;border-top:1px dashed var(--border);padding-top:8px;">📶 سم نمبرز</div>'
-    +   '<div id="cf-mobile-sims-container" class="cf-row-sim"></div>'
     + '</div>'
 
 
