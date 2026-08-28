@@ -1521,16 +1521,11 @@ function _ch173AkhrajRowH() {
   td.style.height = '';
   void table.offsetHeight;                        // naap dobara hone do
 
-  // Ab QUDRATI unchai — bilkul ooper wali qataron jaisi (alfaz ke mutabiq).
-  // Bayen unwaan wale khane ki POORI unchai (padding samet) hi qatar 1–7 ki
-  // unchai hai; row 8 ko theek utna hi rakhna hai — na ziada, na kam.
+  // Qatar ki unchai: THEEK poori satrein, aur kam az kam unwaan jitni.
+  // Koi faltu jagah nahi — na ooper, na neeche.
   let natural = 0;
   try { natural = lbl ? lbl.offsetHeight : 0; } catch (_) {}
-  if (!natural) natural = lh;
-
-  // Matn ko poori satrein milen, magar qatar ooper walon se ooncha na ho
-  let lines = Math.max(1, Math.round((natural - wrapPad) / lh));
-  const target = Math.max(lines * lh + wrapPad, natural - 2);
+  const target = Math.max(lh + wrapPad, natural);
   let h = td.clientHeight || target;
   td.style.height = Math.round(h) + 'px';
   for (let i = 0; i < 4; i++) {
@@ -4879,19 +4874,23 @@ function _ch173CSS() {
          مختصر حالات wale khane ko bhi wohi fasla (warna woh 1.5 par reh jata,
          kyunke us ka apna qanoon ooper likha hai). */
       #ch173-doc .ch173-akhraj-table td{ line-height:1.9; }
-      /* Row 8 (مختصر حالات) — unchai THEEK ooper wali qataron jitni.
-         AHEM: '.normwrap' ki apni OOPER wali 5px padding aur khane ki apni
-         6px padding, dono jurr kar qatar ko baqi qataron se ooncha kar deti
-         thin — aur unwaan ke NEECHE khali jagah nazar aati thi.
-         Sirf AAKHRI qatar par lagta hai: normwrap ki andar wali padding sifar,
-         aur us ke khane ki padding bhi sifar — ab qatar ki unchai sirf bayen
-         unwaan se banti hai, yani theek qataron 1–7 jitni.
-         (Qatarein 1–7 aur چالان ki table bilkul nahi chhirtin.) */
-      #ch173-doc .ch173-akhraj-table tbody tr:last-child td.normcell .normwrap{
-        line-height:1.9; padding-top:0; padding-bottom:0;
+      /* ═══ Row 8 (مختصر حالات) — ooper neeche ki KHALI JAGAH khatam ═══
+         AHEM: is jagah ki asal wajah 'line-height:1.9' thi. Aik satar ke
+         matn par 1.9 ka matlab hai ke lafzon ke OOPER aur NEECHE takreeban
+         9-9px khali chhor di jaye — yehi unwaan ke gird nazar aati thi.
+         Sirf AAKHRI qatar par satar ka fasla tang kar dete hain (1.25), aur
+         andar bahar ki tamam padding sifar. Qatarein 1-7 aur چالان ki table
+         bilkul nahi chhirtin. */
+      #ch173-doc .ch173-akhraj-table tbody tr:last-child td{
+        line-height:1.25; padding-top:1px !important; padding-bottom:1px !important;
+        vertical-align:middle;
       }
       #ch173-doc .ch173-akhraj-table tbody tr:last-child td.normcell{
         padding:0 !important;
+      }
+      /* Matn ka apna fasla — table ke NEECHE wale matn jaisa (1.5) */
+      #ch173-doc .ch173-akhraj-table tbody tr:last-child td.normcell .normwrap{
+        line-height:1.5; padding:0 4px 0 4px;
       }
       /* ── مثل باندھنے کی جگہ — دوسرے صفحے کے اوپر بائیں کونے میں مثلث ──
          Nok top-left kone par, dono lambe bazoo (top aur left margin ke saath)
