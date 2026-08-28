@@ -532,7 +532,7 @@ function _renderR173() {
                 }).join('');
               })()}
               <tr>
-                <td style="border:1px solid #000;padding:6px;text-align:center;vertical-align:top;font-weight:bold;">8</td>
+                <td style="border:1px solid #000;padding:6px;text-align:center;vertical-align:top;font-weight:bold;"></td>
                 <td class="akh-col2" style="border:1px solid #000;padding:6px;font-weight:600;text-align:justify;text-align-last:right;direction:rtl;vertical-align:top;position:relative;"><span class="akh-grip no-print" title="لکیر کو کھینچ کر چوڑائی بدلیں"></span>مختصر حالات مقدمہ معہ جرم</td>
                 <td class="normcell" style="border:1px solid #000;padding:6px;"><div class="normwrap" contenteditable="true" data-mic="true" data-k="halaat">${_ch173HalaatInit(bs, boiler)}</div></td>
               </tr>
@@ -1442,30 +1442,50 @@ function _ch173AkhrajRowH() {
   const row = rows[rows.length - 1];              // aakhri qatar = مختصر حالات
   const td  = row.querySelector('td.normcell');
   const wrap = td && td.querySelector('.normwrap');
+  const lbl = row.querySelector('.akh-col2');
   if (!td || !wrap) return;
-  let lh = 0, padV = 0;
+
+  let lh = 0, wrapPad = 0;
   try {
     const cw = getComputedStyle(wrap);
     lh = parseFloat(cw.lineHeight) || 0;
     if (!lh) lh = (parseFloat(cw.fontSize) || 16) * 1.9;
-    const ct = getComputedStyle(td);
-    padV = (parseFloat(ct.paddingTop) || 0) + (parseFloat(ct.paddingBottom) || 0);
+    wrapPad = (parseFloat(cw.paddingTop) || 0) + (parseFloat(cw.paddingBottom) || 0);
   } catch (_) { return; }
   if (!lh) return;
-  // Unwaan wale khane ki qudrati unchai — qatar us se chhoti nahi honi chahiye
-  let need = 0;
+
+  // ═══ PEHLE apni lagayi hui unchai HATAO ═══
+  // AHEM: yehi is masle ki jar thi. Neeche unwaan wale khane (کالم 2) ki
+  // unchai naapi jati hai — magar woh khana QATAR ke barabar ho jata hai.
+  // Agar apni pichhli (barhi hui) unchai lagi rahe to wohi dobara naap li
+  // jati thi aur qatar har dafa aur lambi hoti chali jati thi. Isi liye
+  // row 8 ka کالم 2 baqi qataron se kaheen ZYADA ooncha ho gaya tha.
+  td.style.height = '';
+  void table.offsetHeight;                        // naap dobara hone do
+
+  // Ab QUDRATI unchai — bilkul ooper wali qataron jaisi (alfaz ke mutabiq)
+  let natural = 0;
   try {
-    const lbl = row.querySelector('.akh-col2');
-    if (lbl) need = lbl.offsetHeight || 0;
+    natural = lbl ? lbl.clientHeight : 0;
+    if (lbl) {
+      const cl = getComputedStyle(lbl);
+      natural -= (parseFloat(cl.paddingTop) || 0) + (parseFloat(cl.paddingBottom) || 0);
+    }
   } catch (_) {}
-  // Muqarrar unchai: kam az kam AIK poori satar, warna jitni satrein samati hain.
-  // AHEM: ceil (na floor) — warna column 2 ke label se column 3 ki qatar
-  // THORI si chhoti reh jati thi aur row ka baqi hissa khali/gap dikhta tha
-  // (کالم 3 ki satar aur نیچے والی izafi/تسلسل field ke darmiyan).
-  let lines = Math.ceil((need - padV) / lh);
+  let lines = Math.round(natural / lh);
   if (!(lines >= 1)) lines = 1;
-  const h = Math.round(lines * lh + padV);
-  if (td.style.height !== h + 'px') td.style.height = h + 'px';
+
+  // Matn ko THEEK poori satrein milen — na kam, na koi adhoori khali satar
+  const target = lines * lh + wrapPad;
+  let h = td.clientHeight || target;
+  td.style.height = Math.round(h) + 'px';
+  for (let i = 0; i < 4; i++) {
+    const diff = target - wrap.clientHeight;
+    if (Math.abs(diff) < 1) break;
+    h += diff;
+    if (h < lh) h = lh;
+    td.style.height = Math.round(h) + 'px';
+  }
 }
 window._ch173AkhrajRowH = _ch173AkhrajRowH;
 
@@ -2457,10 +2477,13 @@ function _ch173FillWitnessCell() {
   if (!el) return;
   // 1) چالان مکمل ki fehrist — نامکمل / تتمہ / 512 mein bhi wohi
   try { _ch173InheritWitnesses(); } catch (_) {}
-  // 2) Phir bhi khali ho to مقدمے ke apne گواہان
-  if (!el.innerText.trim()) {
-    try { el.innerText = _ch173WitnessText(); } catch (_) {}
-  }
+  // 2) مقدمے ke apne گواہان — HAMESHA milao, sirf "khali ho to" NAHI.
+  //    AHEM: گواہان Supabase se aate hain (der lagti hai). Pehli dafa yeh
+  //    khana un se PEHLE hi مدعی/محرر/تفتیشی افسر se bhar jata tha, aur jab
+  //    گواہان aate the to "khana khali nahi hai" keh kar chhor diya jata tha.
+  //    Isi liye PEHLI dafa چالان مکمل adhoora aata tha, aur dobara kholne par
+  //    (jab list pehle se mehfooz thi) poora nazar aata tha.
+  try { _ch173MergeCaseWitnesses(); } catch (_) {}
   // 3) مدعی pehla, محرر aur تفتیشی افسر apni jagah par
   try { _ch173AddDefaultOfficials(); } catch (_) {}
   // 4) کاغذات mein ایم ایل سی / پوسٹ مارٹم ho to میڈیکل آفیسر bhi
@@ -2495,6 +2518,43 @@ const _CH173_RANKS = [
   [ 5, /\d+\s*\/\s*C\b|کانسٹیبل/i],                   // 4525/C
 ];
 
+// مقدمے ke گواہان jo abhi fehrist mein nahi — unhen milao (mojooda matn
+// zaya kiye baghair). Tarteeb baad mein _ch173WitSort khud theek kar deta hai.
+function _ch173MergeCaseWitnesses() {
+  const el = _ch173WitCell();
+  if (!el) return false;
+  const L = (typeof _ch173WitList === 'function') ? _ch173WitList() : (_ch173Witnesses || []);
+  if (!L || !L.length) return false;
+  try { _ch173UnwrapCnics(el); } catch (_) {}
+  const list = _ch173WitParse(el);
+  let naya = false;
+  L.forEach(w => {
+    const nm = String(w.full_name || '').trim();
+    if (!nm) return;
+    if (list.some(x => _ch173SameName(x.name, nm))) return;
+    list.push({ name: nm, cnic: _ch173CnicFmt(w.cnic) });
+    naya = true;
+  });
+  if (!naya) return false;
+  _ch173WitWrite(el, _ch173WitSort(list));
+  return true;
+}
+window._ch173MergeCaseWitnesses = _ch173MergeCaseWitnesses;
+
+// FIR گواہ hai ya دیگر — مقدمے ki apni fehrist se pehchano (naam ke zariye).
+// Yeh zaroori hai kyunki khane mein sirf naam likha hota hai, حیثیت nahi —
+// aur us ke baghair FIR گواہان (darja 2) aur دیگر (darja 3) alag nahi hote.
+function _ch173CaseWitRank(name) {
+  const L = _ch173Witnesses || [];
+  for (let i = 0; i < L.length; i++) {
+    if (_ch173SameName(L[i].full_name, name)) {
+      const t = String(L[i].witness_type || '');
+      return /fir|چشم\s*دید/i.test(t) ? 2 : 3;
+    }
+  }
+  return 0;
+}
+
 function _ch173WitRank(name, hint) {
   const n = String(name || '');
   // Khaas kirdaar pehle — inka darja pakka hai
@@ -2507,10 +2567,13 @@ function _ch173WitRank(name, hint) {
   const med = _ch173MedGet();
   if (med && _ch173SameName(n, med.name)) return 4;
   if (hint === 1 || hint === 2 || hint === 3 || hint === 4) return hint;
+  // مقدمے ka apna FIR گواہ (darja 2) — ohde walon se pehle dekho
+  const cw = _ch173CaseWitRank(n);
+  if (cw === 2) return 2;
   for (let i = 0; i < _CH173_RANKS.length; i++) {
     if (_CH173_RANKS[i][1].test(n)) return _CH173_RANKS[i][0];
   }
-  return hint || 3;                                   // دیگر گواہ
+  return hint || cw || 3;                             // دیگر گواہ
 }
 
 // Fehrist ko darje ke mutabiq jamao — aik hi darje ke andar tarteeb wohi
@@ -4700,7 +4763,7 @@ function _ch173CSS() {
       /* Pehli satar: تھانہ dayen kinare se THEEK 1 INCH andar, ضلع bayen kinare par */
       #ch173-doc .akh-gw-l1{
         display:flex; justify-content:space-between; align-items:baseline;
-        padding-right:1in; margin-bottom:28px;
+        padding-right:1in; margin-bottom:14px;
       }
       #ch173-doc .akh-gw-l1 .akh-gw-thana{ text-align:right; outline:none; }
       #ch173-doc .akh-gw-l1 .akh-gw-zila{ text-align:left; outline:none; }
