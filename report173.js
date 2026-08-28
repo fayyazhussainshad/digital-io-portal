@@ -1521,21 +1521,16 @@ function _ch173AkhrajRowH() {
   td.style.height = '';
   void table.offsetHeight;                        // naap dobara hone do
 
-  // Ab QUDRATI unchai — bilkul ooper wali qataron jaisi (alfaz ke mutabiq)
+  // Ab QUDRATI unchai — bilkul ooper wali qataron jaisi (alfaz ke mutabiq).
+  // Bayen unwaan wale khane ki POORI unchai (padding samet) hi qatar 1–7 ki
+  // unchai hai; row 8 ko theek utna hi rakhna hai — na ziada, na kam.
   let natural = 0;
-  try {
-    natural = lbl ? lbl.clientHeight : 0;
-    if (lbl) {
-      const cl = getComputedStyle(lbl);
-      natural -= (parseFloat(cl.paddingTop) || 0) + (parseFloat(cl.paddingBottom) || 0);
-    }
-  } catch (_) {}
-  let lines = Math.round(natural / lh);
-  if (!(lines >= 1)) lines = 1;
+  try { natural = lbl ? lbl.offsetHeight : 0; } catch (_) {}
+  if (!natural) natural = lh;
 
-  // Matn ko THEEK poori satrein milen — na kam, na koi adhoori khali satar.
-  // (Isi se khane ke matn aur neeche wale matn ka faasla kam se kam rehta hai.)
-  const target = lines * lh + wrapPad;
+  // Matn ko poori satrein milen, magar qatar ooper walon se ooncha na ho
+  let lines = Math.max(1, Math.round((natural - wrapPad) / lh));
+  const target = Math.max(lines * lh + wrapPad, natural - 2);
   let h = td.clientHeight || target;
   td.style.height = Math.round(h) + 'px';
   for (let i = 0; i < 4; i++) {
@@ -4884,7 +4879,20 @@ function _ch173CSS() {
          مختصر حالات wale khane ko bhi wohi fasla (warna woh 1.5 par reh jata,
          kyunke us ka apna qanoon ooper likha hai). */
       #ch173-doc .ch173-akhraj-table td{ line-height:1.9; }
-      #ch173-doc .ch173-akhraj-table td.normcell .normwrap{ line-height:1.9; }
+      /* Row 8 (مختصر حالات) — unchai THEEK ooper wali qataron jitni.
+         AHEM: '.normwrap' ki apni OOPER wali 5px padding aur khane ki apni
+         6px padding, dono jurr kar qatar ko baqi qataron se ooncha kar deti
+         thin — aur unwaan ke NEECHE khali jagah nazar aati thi.
+         Sirf AAKHRI qatar par lagta hai: normwrap ki andar wali padding sifar,
+         aur us ke khane ki padding bhi sifar — ab qatar ki unchai sirf bayen
+         unwaan se banti hai, yani theek qataron 1–7 jitni.
+         (Qatarein 1–7 aur چالان ki table bilkul nahi chhirtin.) */
+      #ch173-doc .ch173-akhraj-table tbody tr:last-child td.normcell .normwrap{
+        line-height:1.9; padding-top:0; padding-bottom:0;
+      }
+      #ch173-doc .ch173-akhraj-table tbody tr:last-child td.normcell{
+        padding:0 !important;
+      }
       /* ── مثل باندھنے کی جگہ — دوسرے صفحے کے اوپر بائیں کونے میں مثلث ──
          Nok top-left kone par, dono lambe bazoo (top aur left margin ke saath)
          2-2 inch ke. Matn is se bach kar behta hai. Saath hi pehli satar ko
