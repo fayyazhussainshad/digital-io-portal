@@ -531,10 +531,10 @@ function _renderR173() {
                   </tr>`;
                 }).join('');
               })()}
-              <tr>
-                <td style="border:1px solid #000;padding:6px;text-align:center;vertical-align:top;font-weight:bold;"></td>
+              <tr class="akh-row8">
+                <td style="border:1px solid #000;padding:6px;text-align:center;vertical-align:top;font-weight:bold;">8</td>
                 <td class="akh-col2" style="border:1px solid #000;padding:6px;font-weight:600;text-align:justify;text-align-last:right;direction:rtl;vertical-align:top;position:relative;"><span class="akh-grip no-print" title="لکیر کو کھینچ کر چوڑائی بدلیں"></span>مختصر حالات مقدمہ معہ جرم</td>
-                <td class="normcell" style="border:1px solid #000;padding:6px;"><div class="normwrap" contenteditable="true" data-mic="true" data-k="halaat">${_ch173HalaatInit(bs, boiler)}</div></td>
+                <td class="normcell" style="border:1px solid #000;padding:6px;"><div class="normwrap" contenteditable="true" data-mic="true" data-k="halaat">${_ch173HalaatInit(bs, boiler)}</div><span class="akh-hgrip no-print" title="نیچے کی لکیر کو اوپر نیچے کھینچیں"></span></td>
               </tr>
             </tbody>
           </table>` : `
@@ -1432,6 +1432,56 @@ window._ch173Cells = _ch173Cells;
 // Ab yahan bhi چالان jaisa hi hisab: khane ki unchai hamesha POORI satron ka
 // theek guna, aur kam az kam AIK satar. Is se matn apni qatar mein rehta hai
 // aur sirf bacha hua hissa neeche jata hai — chahe font kitna bhi bara ho.
+// ═══ Row 8 ki NEECHE wali lakeer — kheench kar unchai badlo ═══
+// Officer khud tay kare ke مختصر حالات ka khana kitna ooncha ho. Jo naap
+// woh chunta hai woh mehfooz rehti hai (khud-kar naap us par hawi nahi hoti).
+const R173_AKH_H_KEY = 'dio_akhraj_row8_h';
+
+function _ch173AkhrajSavedH() {
+  try {
+    const v = parseFloat(localStorage.getItem(R173_AKH_H_KEY) || '');
+    return (v && v > 20) ? v : 0;
+  } catch (_) { return 0; }
+}
+
+function _ch173AkhrajHGrip() {
+  const doc = _ch173Doc();
+  if (!doc) return;
+  const grip = doc.querySelector('.akh-hgrip');
+  if (!grip || grip.dataset.bound === '1') return;
+  grip.dataset.bound = '1';
+  grip.addEventListener('mousedown', ev => {
+    ev.preventDefault(); ev.stopPropagation();
+    const td = grip.closest('td.normcell');
+    const wrap = td && td.querySelector('.normwrap');
+    if (!td || !wrap) return;
+    const startY = ev.clientY;
+    const h0 = td.clientHeight;
+    let wait = false;
+    const move = e => {
+      let h = h0 + (e.clientY - startY);
+      if (h < 30) h = 30;
+      td.style.height = Math.round(h) + 'px';
+      // Matn foran theek ho — jo na samaye woh neeche, jagah bane to wapas
+      if (!wait) {
+        wait = true;
+        requestAnimationFrame(() => { wait = false; try { _ch173OverflowSettle(1); } catch (_) {} });
+      }
+    };
+    const up = () => {
+      document.removeEventListener('mousemove', move);
+      document.removeEventListener('mouseup', up);
+      try { localStorage.setItem(R173_AKH_H_KEY, String(td.clientHeight)); } catch (_) {}
+      try { _ch173OverflowSettle(4); } catch (_) {}
+      try { _ch173AlignSho(); } catch (_) {}
+      try { _r173Dirty = true; } catch (_) {}
+    };
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+  });
+}
+window._ch173AkhrajHGrip = _ch173AkhrajHGrip;
+
 function _ch173AkhrajRowH() {
   const doc = _ch173Doc();
   if (!doc) return;
@@ -1454,6 +1504,14 @@ function _ch173AkhrajRowH() {
   } catch (_) { return; }
   if (!lh) return;
 
+  // ═══ Officer ki apni naap sab se ooper ═══
+  // Agar us ne neeche wali lakeer kheench kar unchai chuni hai to wohi rahegi.
+  const chuni = _ch173AkhrajSavedH();
+  if (chuni) {
+    if (td.style.height !== Math.round(chuni) + 'px') td.style.height = Math.round(chuni) + 'px';
+    return;
+  }
+
   // ═══ PEHLE apni lagayi hui unchai HATAO ═══
   // AHEM: yehi is masle ki jar thi. Neeche unwaan wale khane (کالم 2) ki
   // unchai naapi jati hai — magar woh khana QATAR ke barabar ho jata hai.
@@ -1475,7 +1533,8 @@ function _ch173AkhrajRowH() {
   let lines = Math.round(natural / lh);
   if (!(lines >= 1)) lines = 1;
 
-  // Matn ko THEEK poori satrein milen — na kam, na koi adhoori khali satar
+  // Matn ko THEEK poori satrein milen — na kam, na koi adhoori khali satar.
+  // (Isi se khane ke matn aur neeche wale matn ka faasla kam se kam rehta hai.)
   const target = lines * lh + wrapPad;
   let h = td.clientHeight || target;
   td.style.height = Math.round(h) + 'px';
@@ -1684,8 +1743,9 @@ function _ch173Layout() {
   // چالان wali column auto-sizing na chalao. Baqi sab (SHO, کاغذات) chalti hai.
   const _akhrajTbl = !!document.querySelector('.ch173-akhraj-table');
   if (_akhrajTbl) {
-    try { _ch173AkhrajGrips(); } catch (_) {}    // khanon ki chaurai
-    try { _ch173AkhrajRowH(); } catch (_) {}     // row 8 ki muqarrar unchai
+    try { _ch173AkhrajGrips(); } catch (_) {}     // khanon ki chaurai
+    try { _ch173AkhrajRowH(); } catch (_) {}      // row 8 ki unchai
+    try { _ch173AkhrajHGrip(); } catch (_) {}     // neeche wali lakeer kheenchne wala
   }
   if (!_akhrajTbl) {
     try { _ch173AutoFitCols(); } catch (_) {}     // khanon ki chaurai (file ka apna)
@@ -4810,6 +4870,12 @@ function _ch173CSS() {
         cursor:col-resize; z-index:5; background:transparent;
       }
       #ch173-doc .akh-grip:hover{ background:rgba(3,105,161,.25); }
+      /* Row 8 ki NEECHE wali lakeer — ooper neeche kheenchne wali patti */
+      #ch173-doc .akh-hgrip{
+        position:absolute; left:0; right:0; bottom:-3px; height:7px;
+        cursor:row-resize; z-index:5; background:transparent;
+      }
+      #ch173-doc .akh-hgrip:hover{ background:rgba(3,105,161,.25); }
 
       /* ══ اخراج / عدم پتہ ki 3-column table — SIRF is table ke usool ══
          (چالان ki 7-column table in se bilkul mutasir nahi hoti) */
