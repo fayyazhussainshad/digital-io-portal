@@ -532,7 +532,7 @@ function _renderR173() {
                 }).join('');
               })()}
               <tr>
-                <td style="border:1px solid #000;padding:6px;text-align:center;vertical-align:top;font-weight:bold;"></td>
+                <td style="border:1px solid #000;padding:6px;text-align:center;vertical-align:top;font-weight:bold;">8</td>
                 <td class="akh-col2" style="border:1px solid #000;padding:6px;font-weight:600;text-align:justify;text-align-last:right;direction:rtl;vertical-align:top;position:relative;"><span class="akh-grip no-print" title="لکیر کو کھینچ کر چوڑائی بدلیں"></span>مختصر حالات مقدمہ معہ جرم</td>
                 <td class="normcell" style="border:1px solid #000;padding:6px;"><div class="normwrap" contenteditable="true" data-mic="true" data-k="halaat">${_ch173HalaatInit(bs, boiler)}</div></td>
               </tr>
@@ -1458,8 +1458,11 @@ function _ch173AkhrajRowH() {
     const lbl = row.querySelector('.akh-col2');
     if (lbl) need = lbl.offsetHeight || 0;
   } catch (_) {}
-  // Muqarrar unchai: kam az kam AIK poori satar, warna jitni satrein samati hain
-  let lines = Math.floor((need - padV) / lh);
+  // Muqarrar unchai: kam az kam AIK poori satar, warna jitni satrein samati hain.
+  // AHEM: ceil (na floor) — warna column 2 ke label se column 3 ki qatar
+  // THORI si chhoti reh jati thi aur row ka baqi hissa khali/gap dikhta tha
+  // (کالم 3 ki satar aur نیچے والی izafi/تسلسل field ke darmiyan).
+  let lines = Math.ceil((need - padV) / lh);
   if (!(lines >= 1)) lines = 1;
   const h = Math.round(lines * lh + padV);
   if (td.style.height !== h + 'px') td.style.height = h + 'px';
@@ -4697,7 +4700,7 @@ function _ch173CSS() {
       /* Pehli satar: تھانہ dayen kinare se THEEK 1 INCH andar, ضلع bayen kinare par */
       #ch173-doc .akh-gw-l1{
         display:flex; justify-content:space-between; align-items:baseline;
-        padding-right:1in; margin-bottom:14px;
+        padding-right:1in; margin-bottom:28px;
       }
       #ch173-doc .akh-gw-l1 .akh-gw-thana{ text-align:right; outline:none; }
       #ch173-doc .akh-gw-l1 .akh-gw-zila{ text-align:left; outline:none; }
