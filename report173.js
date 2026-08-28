@@ -4809,11 +4809,13 @@ function _ch173CSS() {
       }
       #ch173-doc .ch173-cont:empty{ min-height:0; padding:0 !important; }
       /* ═══ فہرست گواہان — اخراج ka ALAG kaghaz ═══ */
-      #ch173-doc .akh-gw-page{ direction:rtl; padding-top:10px; }
-      /* Pehli satar: تھانہ dayen kinare se THEEK 1 INCH andar, ضلع bayen kinare par */
+      /* Satar 1 ke OOPER 0.25 inch ka hashiya */
+      #ch173-doc .akh-gw-page{ direction:rtl; padding-top:0.25in; }
+      /* Pehli satar: تھانہ dayen kinare se THEEK 1 INCH andar, ضلع bayen kinare par.
+         Is ke aur agli satar (سرکار بذریعہ) ke darmiyan 0.4 inch ka faasla. */
       #ch173-doc .akh-gw-l1{
         display:flex; justify-content:space-between; align-items:baseline;
-        padding-right:1in; margin-bottom:14px;
+        padding-right:1in; margin-bottom:0.4in;
       }
       #ch173-doc .akh-gw-l1 .akh-gw-thana{ text-align:right; outline:none; }
       #ch173-doc .akh-gw-l1 .akh-gw-zila{ text-align:left; outline:none; }
