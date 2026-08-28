@@ -467,7 +467,7 @@ function _renderR173() {
              background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;
              line-height:1.4;box-sizing:border-box;">
 
-          <div class="ch173-title-row"><span></span><span class="form-no">FORM No. 25.56(1)</span><span></span></div>
+          <div class="ch173-title-row"><span></span><span class="form-no">FORM No. ${_r173Type === 'adampata' ? '25.57(2)' : '25.56(1)'}</span><span></span></div>
           <div class="ch173-title-row" style="margin:2px 0 8px;">
             <span class="tt-right">تھانہ ${esc(o.station||'')}</span>
             <span class="tt-mid">${esc(_ch173Heading(_r173Type, typeName))}</span>
