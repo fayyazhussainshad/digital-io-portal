@@ -1,33 +1,39 @@
 /* ═══════════════════════════════════════════════════════════
    DIGITAL IO — سزا سلپ  (Saza Slip · Form No. 27-2(1)(الف))
    Case workspace ke "misal-doc-bar" chip se khulti hai (modal).
-   Print alag se dioPrint() ke zariye saaf HTML document ban kar
-   jata hai — A4 aur 8.5×13in Folio/Legal ledger dono @page
-   rules support karta hai (toggle se chunte hain).
 
-   V2 — SAZA_SLIP.docx (asal manzoor-shuda form) ke hisab se dobara
-   banaya gaya. Woh docx word/document.xml se nikali gayi EXACT
-   qadrein is file mein hain: column widths (5130/990/900/3835 dxa
-   = 47.26/9.12/8.29/35.33%), column headers, font sizes (form no.
-   12pt · ضلع/تھانہ 16pt · عنوان 24pt bold+underline · جدول کے
-   headers 16-18pt · متن 16-18pt), "مندرجہ بالا" ki sahih ہجے (ر
-   ke sath), SHO block center-aligned (docx mein bhi center hai).
-   Column 3 ka header "جرم" hai (sirf repetition-mark nahi) — pehli
-   row mein asal جرم/دفعہ likha jata hai, agli rows mein "مندرجہ
-   بالا"۔ Column 4 ka header "حکم اخیر عدالت" hai (adalat ka aakhri
-   faisla — dastak/print ke baad دستی طور پر لکھا جاتا ہے).
+   V3 — Shafi ki hidayaat ke mutabiq DOBARA:
+     • Pehli tamam settings (kaghaz toggle, font selector, column
+       resize handles, niche wali "حکم اخیر عدالت" text field) HATA
+       di gayin.
+     • Font, table, headings, SHO name, تاریخ, aur directions bilkul
+       waise set kiye hain JAISE report173.js (چالان) mein hain —
+       _ch173CSS() ke conventions ki naql:
+         - Root doc: direction:rtl · Jameel Noori · color:#000 · 14pt
+         - Title row: FORM No.(12pt italic ltr, center) + عنوان
+           (20pt bold underline, center) + تھانہ(dayen, 14pt) /
+           ضلع(bayen, 14pt) — .tt-mid/.form-no absolute 50% par
+         - Case line: مقدمہ نمبر / مورخہ — center, 14pt
+         - Table: border 1px solid #000 · padding 2px 4px · center ·
+           14pt · header font-weight:normal
+     • FONT: 14pt (چالان jaisa), pehle 16/18pt tha.
+     • Table ke NEECHE koi izafi text field NAHI (حکم اخیر عدالت
+       sirf table ka column rehta hai — us se neeche kuch nahi).
+     • SHO block: NAAM se OOPER dastkhat ke liye JAGAH (khali lakeer),
+       phir SHO naam (bold), phir تاریخ neeche — bilkul چالان ke
+       "sho-signature-block-bottom" jaisa.
 
-   AHEM — mulziman.js is session mein bhi upload nahi hui, is liye
-   case_accused table ke column names (ولدیت/قومیت/سکونت/پیشہ/حلیہ/
-   تاریخ گرفتاری) ab bhi ANDAZE se try kiye ja rahe hain
-   (_sazaNormalizeAccused). Print mein jo khaana khaali aaye uska
-   asal column naam bata dein — ek line tabdeel karni hogi.
+   DATA — case_accused table (mulziman.js se confirmed columns):
+     name · cnic · mobile · arrest_date(YYYY-MM-DD) · pesha ·
+     rang · chehra · jism · qad · umar · nishan · taleem
+     (ولدیت/قومیت/سکونت columns MOJOOD NAHI — is liye حلیہ un
+      sub-fields se BANAYA jata hai, mulziman ke _accViewDetail
+      jaise: رنگ/چہرہ/جسم/قد/نشان.)
 
    CHIP WIRING: misal-doc-bar mein "سزا سلپ" chip PEHLE SE maujood
-   hai (Shafi ki screenshot se confirm) — is liye naya chip nahi
-   banate, jo hai USI ka onclick apne openSazaSlip() par mor dete
-   hain (neeche _sazaFindExistingChip). cases.js mein sirf EK line
-   add hui hai jo injectSazaSlipChip(c) call karti hai.
+   hai — naya nahi banate, usi ka onclick apne openSazaSlip() par
+   mor dete hain. cases.js mein sirf EK line add hui hai jo
+   injectSazaSlipChip(c) call karti hai.
    ═══════════════════════════════════════════════════════════ */
 
 // ── STATE ─────────────────────────────────────────────────────
@@ -56,23 +62,20 @@ async function openSazaSlip(caseId) {
 
     const normAccused = accused.map(_sazaNormalizeAccused);
     if (!normAccused.length) normAccused.push(_sazaBlankAccused());
-    // Column 3 "جرم" — pehli row case ke offence se auto-bharti hai,
-    // baqi rows "مندرجہ بالا" (repeat marker) — dono editable rehte hain.
+    // Column 3 "جرم" — pehli row case ke offence se auto, baqi rows "مندرجہ بالا"
     normAccused.forEach(function (a, i) {
-      a.jurm = i === 0 ? (c.offence_type || c.section_of_law || '') : 'مندرجہ بالا';
+      a.jurm = i === 0 ? (c.section_of_law || c.offence_type || '') : 'مندرجہ بالا';
     });
 
     _sazaState = {
       caseId,
       case: c,
       accused: normAccused,
-      paperSize: localStorage.getItem('dio_saza_paper') || 'a4',
-      fontKey: localStorage.getItem('dio_saza_font') || 'jameel',
-      colWidths: _sazaLoadColWidths(),
-      shoText: c.sho || '',
-      footerDate: formatDate(new Date()),
+      shoText: (typeof getSHOSignLine === 'function')
+        ? getSHOSignLine((currentOfficer && currentOfficer.station) || '')
+        : (c.sho || ''),
+      footerDate: '',
     };
-    _sazaInjectEditorCSS();
     _sazaRenderModal();
   } catch (err) {
     console.error('[SazaSlip] openSazaSlip error:', err);
@@ -81,63 +84,65 @@ async function openSazaSlip(caseId) {
 }
 window.openSazaSlip = openSazaSlip;
 
-function _sazaLoadColWidths() {
-  try {
-    const saved = JSON.parse(localStorage.getItem('dio_saza_colwidths') || 'null');
-    if (Array.isArray(saved) && saved.length === 4) {
-      const sum = saved.reduce((a, b) => a + b, 0);
-      if (sum > 95 && sum < 105) return saved;
-    }
-  } catch (_) {}
-  return [47.3, 9.1, 8.3, 35.3]; // ── LOCKED DEFAULT — asal SAZA_SLIP.docx ke gridCol se (5130/990/900/3835 dxa) ──
-}
-
-// ── DATA NORMALIZATION (best-guess field names — dekhein header note) ──
+// ── DATA NORMALIZATION (case_accused — real columns from mulziman.js) ──
 function _sazaNormalizeAccused(a) {
   a = a || {};
   return {
     id: a.id || null,
-    name: a.name || a.full_name || a.accused_name || '',
-    walid: a.walid || a.father_name || a.waldiat || a.s_o || a.wd_name || '',
-    qaumiyat: a.qaumiyat || a.caste || a.cast || a.nationality || '',
-    sukoonat: a.sukoonat || a.address || a.residence || a.sukunat || '',
-    pesha: a.pesha || a.occupation || a.profession || '',
-    halia: a.halia || a.halya || a.hulia || a.description || a.physical_description || a.appearance || '',
-    arrestDate: a.arrest_date || a.date_of_arrest || a.giraftari_date || a.tareekh_giraftari || a.arrested_on || '',
-    jurm: '',        // is Saza Slip ke liye khaas — row0 par case ke offence se auto-bhar jata hai
-    courtOrder: '',  // حکم اخیر عدالت — hamesha khaali/دستی (adalat ka faisla baad mein likha jata hai)
+    name: a.name || '',
+    cnic: a.cnic || '',
+    pesha: a.pesha || '',
+    arrestDate: a.arrest_date || '',
+    // حلیہ sub-fields (mulziman _accViewDetail jaisa)
+    rang: a.rang || '',
+    chehra: a.chehra || '',
+    jism: a.jism || '',
+    qad: a.qad || '',
+    umar: a.umar || '',
+    nishan: a.nishan || '',
+    // is form ke apne
+    halia: '',   // niche compose hoti hai (editor mein editable single field)
+    jurm: '',
   };
 }
 function _sazaBlankAccused() {
-  return { id: null, name: '', walid: '', qaumiyat: '', sukoonat: '', pesha: '', halia: '', arrestDate: '', jurm: '', courtOrder: '' };
+  return { id: null, name: '', cnic: '', pesha: '', arrestDate: '',
+           rang: '', chehra: '', jism: '', qad: '', umar: '', nishan: '',
+           halia: '', jurm: '' };
 }
 
-// نام ولدیت قومیت سکونت پیشہ — ek jumlay mein jorta hai (حلیہ alag line par)
+// حلیہ — sub-fields se banao (mulziman ke haleeya formula jaisa)
+function _sazaComposeHalia(a) {
+  if (a.halia) return a.halia; // user ne khud likh diya to wohi
+  return [
+    a.rang && ('رنگ: ' + a.rang),
+    a.chehra && ('چہرہ: ' + a.chehra),
+    a.jism && ('جسم: ' + a.jism),
+    a.qad && ('قد: ' + a.qad),
+    a.umar && ('عمر: ' + a.umar),
+    a.nishan && ('نشان: ' + a.nishan),
+  ].filter(Boolean).join(' ، ');
+}
+
+// نام + پیشہ ek line (ولدیت/قومیت/سکونت DB mein nahi)
 function _sazaAccusedLine(a) {
   const parts = [];
   if (a.name) parts.push(a.name);
-  if (a.walid) parts.push('ولد ' + a.walid);
-  if (a.qaumiyat) parts.push('قوم ' + a.qaumiyat);
-  if (a.sukoonat) parts.push('سکونت ' + a.sukoonat);
   if (a.pesha) parts.push('پیشہ ' + a.pesha);
   return parts.join('، ');
 }
 
 // ── CHIP WIRING ────────────────────────────────────────────────
-// Shafi ke real misal-doc-bar mein "سزا سلپ" / "سزاسلپ" chip PEHLE
-// SE maujood hai (misal-docs.js ki apni list mein — دیکھیں screenshot).
-// Is liye NAYA chip append nahi karte — jo chip pehle se hai USI ka
-// onclick apne openSazaSlip() par mor dete hain. Sirf agar (kisi wajah
-// se) woh chip bilkul na milay, tab hi ek fallback chip append hota
-// hai (neeche دوسرا حصہ).
+// misal-doc-bar mein "سزا سلپ" chip PEHLE SE maujood hai — naya nahi
+// banate, usi ka onclick apne openSazaSlip() par mor dete hain.
 function _sazaFindExistingChip(bar) {
   const all = bar.querySelectorAll('*');
   let best = null, bestLen = Infinity;
   for (const el of all) {
-    if (el.id === 'saza-slip-chip') continue; // apna hi fallback chip nazar-andaz karo
+    if (el.id === 'saza-slip-chip') continue;
     let ownText = '';
     for (const node of el.childNodes) {
-      if (node.nodeType === 3) ownText += node.textContent; // sirf is element ka APNA text (bachon ka nahi)
+      if (node.nodeType === 3) ownText += node.textContent;
     }
     const txt = ownText.replace(/\s+/g, '');
     if (txt.indexOf('سزا') !== -1 && txt.indexOf('سلپ') !== -1 && txt.length < bestLen) {
@@ -153,17 +158,15 @@ function injectSazaSlipChip(c) {
     const bar = document.getElementById('misal-doc-bar');
     if (!bar) return;
 
-    // 1) PEHLE SE maujood "سزا سلپ" chip dhoondo aur hijack karo
     const real = _sazaFindExistingChip(bar);
     if (real) {
-      real.setAttribute('onclick', '');   // purana inline handler (jo khaali page dikhata tha) hatao
+      real.setAttribute('onclick', '');
       real.onclick = () => openSazaSlip(c.id);
       real.style.cursor = 'pointer';
       real.dataset.sazaWired = '1';
       return;
     }
 
-    // 2) Fallback — agar bar mein "سزا سلپ" naam ka chip sirey se hi na ho
     const already = document.getElementById('saza-slip-chip');
     if (already) { already.onclick = () => openSazaSlip(c.id); return; }
     const rows = bar.querySelectorAll(':scope > div');
@@ -180,10 +183,7 @@ function injectSazaSlipChip(c) {
 }
 window.injectSazaSlipChip = injectSazaSlipChip;
 
-// Self-healing safety net — agar misal-doc-bar kabhi cases.js ke
-// hook se BAAHAR dobara render ho (kisi aur module se), wiring phir
-// se lag jaye. #page-content tak scoped hai (poori body nahi) taake
-// performance par asar na pade.
+// Self-healing — bar dobara render ho to wiring wapas lag jaye
 (function _sazaObserverInit() {
   function trySetup() {
     const target = document.getElementById('page-content');
@@ -203,30 +203,14 @@ window.injectSazaSlipChip = injectSazaSlipChip;
   else document.addEventListener('DOMContentLoaded', trySetup);
 })();
 
-// ── EDITOR CSS (ek dafa inject hoti hai) ───────────────────────
-function _sazaInjectEditorCSS() {
-  if (document.getElementById('saza-editor-css')) return;
-  const st = document.createElement('style');
-  st.id = 'saza-editor-css';
-  st.textContent = `
-    .saza-handle { position:absolute; top:0; bottom:0; width:14px; margin-inline-start:-7px; cursor:col-resize; touch-action:none; z-index:5; }
-    .saza-handle::after { content:''; position:absolute; top:0; bottom:0; left:6px; width:2px; background:transparent; }
-    .saza-handle:hover::after, .saza-handle.dragging::after { background: var(--accent,#2563eb); }
-    #saza-edit-tbl textarea, #saza-edit-tbl input { outline:none; }
-    #saza-edit-tbl textarea:focus, #saza-edit-tbl input:focus { background:#fffbea !important; }
-  `;
-  document.head.appendChild(st);
-}
-
-// ── MODAL RENDER ──────────────────────────────────────────────
+// ── MODAL RENDER (simple editor — koi paper/font/resize UI nahi) ──
 function _sazaRenderModal() {
   const footer = `
     <div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;flex-wrap:wrap;width:100%;">
       <button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>
       <button class="btn btn-primary" onclick="_sazaPrint()">🖨️ پرنٹ کریں</button>
     </div>`;
-  openModal('📜 سزا سلپ — فارم نمبر 27-2(1)(الف)', _sazaModalBodyHTML(), footer);
-  setTimeout(_sazaInitResize, 60);
+  openModal('📜 سزا سلپ — فارم نمبر27-2(1)(الف)', _sazaModalBodyHTML(), footer);
 }
 
 function _sazaModalBodyHTML() {
@@ -237,95 +221,64 @@ function _sazaModalBodyHTML() {
   const thana = o.station || c.case_station || '';
   const fir = c.fir_number || '';
   const firDate = formatDate(c.fir_date);
-  const offence = c.offence_type || c.section_of_law || '';
   const rowsHtml = st.accused.map(function (a, i) { return _sazaRowHTML(a, i); }).join('');
 
   return `
     <div style="direction:rtl;">
       <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);">
-        <div style="display:flex;gap:6px;align-items:center;">
-          <span style="font-size:11px;color:var(--text-muted);">کاغذ کا سائز</span>
-          <button type="button" id="saza-paper-a4" class="btn btn-sm ${st.paperSize === 'a4' ? 'btn-primary' : 'btn-secondary'}" onclick="_sazaSetPaper('a4')">A4</button>
-          <button type="button" id="saza-paper-legal" class="btn btn-sm ${st.paperSize === 'legal' ? 'btn-primary' : 'btn-secondary'}" onclick="_sazaSetPaper('legal')">Legal 8.5×13</button>
-        </div>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <span style="font-size:11px;color:var(--text-muted);">فونٹ</span>
-          <select id="saza-font-sel" onchange="_sazaSetFont(this.value)" style="background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:11px;color:var(--text-secondary);">
-            <option value="jameel" ${st.fontKey === 'jameel' ? 'selected' : ''}>Jameel Noori Nastaleeq</option>
-            <option value="noto" ${st.fontKey === 'noto' ? 'selected' : ''}>Noto Nastaliq Urdu</option>
-            <option value="times" ${st.fontKey === 'times' ? 'selected' : ''}>Times New Roman</option>
-            <option value="arial" ${st.fontKey === 'arial' ? 'selected' : ''}>Arial</option>
-          </select>
+        <div style="font-size:11px;color:var(--text-muted);">
+          مقدمہ نمبر <bdi class="dio-ltr">${esc(fir)}</bdi> · مورخہ <bdi class="dio-ltr">${esc(firDate)}</bdi> · ضلع ${esc(zila)} · تھانہ ${esc(thana)}
         </div>
         <button type="button" class="btn btn-secondary btn-sm" onclick="_sazaAddRow()" style="margin-inline-start:auto;">+ ملزم شامل کریں</button>
       </div>
 
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">
-        مقدمہ نمبر <bdi class="dio-ltr">${esc(fir)}</bdi> · مورخہ <bdi class="dio-ltr">${esc(firDate)}</bdi> · بجرم ${esc(offence)} · ضلع ${esc(zila)} · تھانہ ${esc(thana)}
+      <div style="overflow-x:auto;background:#fff;border-radius:6px;padding:10px;">
+        <table dir="rtl" style="width:100%;border-collapse:collapse;table-layout:fixed;color:#000;min-width:520px;">
+          <colgroup>
+            <col style="width:47%"><col style="width:12%"><col style="width:12%"><col style="width:29%">
+          </colgroup>
+          <thead>
+            <tr style="background:#f0f0f0;">
+              <th style="border:1px solid #999;padding:6px;font-size:12px;">نام و پیشہ و حلیہ ملزم</th>
+              <th style="border:1px solid #999;padding:6px;font-size:12px;">تاریخ گرفتاری</th>
+              <th style="border:1px solid #999;padding:6px;font-size:12px;">جرم</th>
+              <th style="border:1px solid #999;padding:6px;font-size:12px;">حکم اخیر عدالت</th>
+            </tr>
+          </thead>
+          <tbody id="saza-edit-tbody">${rowsHtml}</tbody>
+        </table>
       </div>
 
-      <div id="saza-tbl-wrap" style="overflow-x:auto;background:#fff;border-radius:6px;padding:10px;">
-        <div id="saza-resize-wrap" style="position:relative;min-width:460px;">
-          <table id="saza-edit-tbl" dir="rtl" style="width:100%;border-collapse:collapse;table-layout:fixed;color:#000;">
-            <colgroup>
-              <col id="saza-col-1" style="width:${st.colWidths[0]}%">
-              <col id="saza-col-2" style="width:${st.colWidths[1]}%">
-              <col id="saza-col-3" style="width:${st.colWidths[2]}%">
-              <col id="saza-col-4" style="width:${st.colWidths[3]}%">
-            </colgroup>
-            <thead>
-              <tr style="background:#f0f0f0;">
-                <th style="border:1px solid #999;padding:6px;font-size:12px;">نام ولدیت قومیت سکونت حلیہ و پیشہ ملزم</th>
-                <th style="border:1px solid #999;padding:6px;font-size:12px;font-weight:700;">تاریخ گرفتاری</th>
-                <th style="border:1px solid #999;padding:6px;font-size:12px;font-weight:700;">جرم</th>
-                <th style="border:1px solid #999;padding:6px;font-size:12px;">حکم اخیر عدالت</th>
-              </tr>
-            </thead>
-            <tbody id="saza-edit-tbody">${rowsHtml}</tbody>
-          </table>
-          <div class="saza-handle" data-idx="0"></div>
-          <div class="saza-handle" data-idx="1"></div>
-          <div class="saza-handle" data-idx="2"></div>
-        </div>
-      </div>
-      <div style="font-size:10px;color:var(--text-faint);margin-top:4px;">↔️ کالموں کے درمیان لکیر پکڑ کر چوڑائی گھٹائیں بڑھائیں — پرنٹ میں بھی یہی تناسب جائے گا</div>
-
-      <div style="margin-top:16px;padding-top:10px;border-top:1px dashed var(--border);width:45%;">
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">SHO — نام / رینک (پرنٹ پر بولڈ و انڈرلائن ہوگا، ساتھ تھانہ خودکار جڑے گا)</div>
-        <input id="saza-sho-input" class="form-input" style="margin-bottom:8px;" value="${esc(st.shoText)}" placeholder="مثلاً: محمد اسلم ASI">
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">تاریخ</div>
-        <input id="saza-date-input" class="form-input dio-ltr" style="text-align:left;" oninput="autoFormatDate(this)" value="${esc(st.footerDate)}">
+      <div style="margin-top:16px;padding-top:10px;border-top:1px dashed var(--border);max-width:340px;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">SHO — نام / رینک / تھانہ (پرنٹ پر بولڈ، اوپر دستخط کی جگہ خودکار)</div>
+        <input id="saza-sho-input" class="form-input" style="margin-bottom:8px;" value="${esc(st.shoText)}" placeholder="مثلاً: محمد اسلم انسپکٹر تھانہ صدر">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">تاریخ (خالی رہے تو پرنٹ پر لکیر آئے گی)</div>
+        <input id="saza-date-input" class="form-input dio-ltr" style="text-align:left;" oninput="autoFormatDate(this)" value="${esc(st.footerDate)}" placeholder="DD-MM-YYYY">
       </div>
     </div>`;
 }
 
 function _sazaRowHTML(a, i) {
   const dateVal = a.arrestDate ? formatDate(a.arrestDate) : '';
+  const halia = _sazaComposeHalia(a);
   const removeBtn = i > 0
     ? `<button type="button" onclick="_sazaRemoveRow(${i})" title="یہ ملزم ہٹائیں" style="position:absolute;top:2px;left:2px;border:none;background:rgba(200,0,0,0.08);color:#c00;cursor:pointer;font-size:12px;line-height:1;padding:2px 5px;border-radius:3px;z-index:2;">✕</button>`
     : '';
-  const miniInput = (cls, val, ph) =>
-    `<input class="${cls}" data-row="${i}" style="width:100%;border:1px solid #ddd;background:#fafafa;font-family:inherit;font-size:11px;color:#000;padding:2px 4px;margin-bottom:3px;" placeholder="${ph}" onblur="_sazaSyncRow(${i})" value="${esc(val)}">`;
   return `<tr data-row="${i}">
     <td style="border:1px solid #999;padding:6px;vertical-align:top;">
       <textarea class="saza-name-input" data-row="${i}" rows="1" style="width:100%;border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:600;resize:vertical;margin-bottom:4px;color:#000;" placeholder="نام ملزم" onblur="_sazaSyncRow(${i})">${esc(a.name)}</textarea>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
-        ${miniInput('saza-walid-input', a.walid, 'ولدیت')}
-        ${miniInput('saza-qaumiyat-input', a.qaumiyat, 'قومیت')}
-        ${miniInput('saza-sukoonat-input', a.sukoonat, 'سکونت')}
-        ${miniInput('saza-pesha-input', a.pesha, 'پیشہ')}
-      </div>
-      <textarea class="saza-halia-input" data-row="${i}" rows="2" style="width:100%;border:1px dashed #ccc;background:#fafafa;font-family:inherit;font-size:11px;resize:vertical;color:#000;margin-top:2px;" placeholder="حلیہ" onblur="_sazaSyncRow(${i})">${esc(a.halia)}</textarea>
+      <input class="saza-pesha-input" data-row="${i}" style="width:100%;border:1px solid #ddd;background:#fafafa;font-family:inherit;font-size:11px;color:#000;padding:2px 4px;margin-bottom:3px;" placeholder="پیشہ" onblur="_sazaSyncRow(${i})" value="${esc(a.pesha)}">
+      <textarea class="saza-halia-input" data-row="${i}" rows="2" style="width:100%;border:1px dashed #ccc;background:#fafafa;font-family:inherit;font-size:11px;resize:vertical;color:#000;" placeholder="حلیہ" onblur="_sazaSyncRow(${i})">${esc(halia)}</textarea>
     </td>
     <td style="border:1px solid #999;padding:4px;text-align:center;vertical-align:middle;">
-      <input class="saza-date-input-row dio-ltr" data-row="${i}" style="width:88%;text-align:center;border:1px solid #ccc;font-size:11px;color:#000;" oninput="autoFormatDate(this)" onblur="_sazaSyncRow(${i})" value="${esc(dateVal)}" placeholder="DD-MM-YYYY">
+      <input class="saza-date-input-row dio-ltr" data-row="${i}" style="width:92%;text-align:center;border:1px solid #ccc;font-size:11px;color:#000;" oninput="autoFormatDate(this)" onblur="_sazaSyncRow(${i})" value="${esc(dateVal)}" placeholder="DD-MM-YYYY">
     </td>
     <td style="border:1px solid #999;padding:4px;text-align:center;vertical-align:middle;">
       <textarea class="saza-jurm-input" data-row="${i}" rows="2" style="width:92%;border:1px solid #ccc;font-size:11px;color:#000;text-align:center;resize:vertical;" placeholder="جرم" onblur="_sazaSyncRow(${i})">${esc(a.jurm)}</textarea>
     </td>
     <td style="border:1px solid #999;padding:4px;position:relative;vertical-align:top;">
       ${removeBtn}
-      <textarea class="saza-court-input" data-row="${i}" rows="4" style="width:100%;border:1px solid #ddd;background:#fafafa;font-family:inherit;font-size:11px;color:#000;resize:vertical;padding-top:${i > 0 ? '18px' : '2px'};" placeholder="حکم اخیر عدالت (بعد میں دستی)" onblur="_sazaSyncRow(${i})">${esc(a.courtOrder)}</textarea>
+      <textarea class="saza-court-input" data-row="${i}" rows="3" style="width:100%;border:1px solid #ddd;background:#fafafa;font-family:inherit;font-size:11px;color:#000;resize:vertical;padding-top:${i > 0 ? '18px' : '2px'};" placeholder="حکم اخیر عدالت (اختیاری)" onblur="_sazaSyncRow(${i})">${esc(a.courtOrder || '')}</textarea>
     </td>
   </tr>`;
 }
@@ -335,17 +288,12 @@ function _sazaSyncRow(i) {
   const st = _sazaState;
   if (!st || !st.accused[i]) return;
   const q = (cls) => document.querySelector(cls + '[data-row="' + i + '"]');
-  const nameEl = q('.saza-name-input'), haliaEl = q('.saza-halia-input'), dateEl = q('.saza-date-input-row');
-  const walidEl = q('.saza-walid-input'), qaumEl = q('.saza-qaumiyat-input');
-  const sukoonEl = q('.saza-sukoonat-input'), peshaEl = q('.saza-pesha-input');
-  const jurmEl = q('.saza-jurm-input'), courtEl = q('.saza-court-input');
+  const nameEl = q('.saza-name-input'), peshaEl = q('.saza-pesha-input'), haliaEl = q('.saza-halia-input');
+  const dateEl = q('.saza-date-input-row'), jurmEl = q('.saza-jurm-input'), courtEl = q('.saza-court-input');
   if (nameEl) st.accused[i].name = nameEl.value;
-  if (haliaEl) st.accused[i].halia = haliaEl.value;
-  if (dateEl) st.accused[i].arrestDate = dateEl.value;
-  if (walidEl) st.accused[i].walid = walidEl.value;
-  if (qaumEl) st.accused[i].qaumiyat = qaumEl.value;
-  if (sukoonEl) st.accused[i].sukoonat = sukoonEl.value;
   if (peshaEl) st.accused[i].pesha = peshaEl.value;
+  if (haliaEl) st.accused[i].halia = haliaEl.value; // user-edited halia override
+  if (dateEl) st.accused[i].arrestDate = dateEl.value;
   if (jurmEl) st.accused[i].jurm = jurmEl.value;
   if (courtEl) st.accused[i].courtOrder = courtEl.value;
 }
@@ -356,7 +304,7 @@ function _sazaSyncAllRows() {
 function _sazaAddRow() {
   _sazaSyncAllRows();
   const blank = _sazaBlankAccused();
-  blank.jurm = 'مندرجہ بالا'; // naya row hamesha pehli row ke baad hi aata hai
+  blank.jurm = 'مندرجہ بالا';
   _sazaState.accused.push(blank);
   _sazaRefreshTable();
 }
@@ -374,94 +322,14 @@ window._sazaAddRow = _sazaAddRow;
 window._sazaRemoveRow = _sazaRemoveRow;
 window._sazaSyncRow = _sazaSyncRow;
 
-// ── PAPER / FONT TOGGLES ───────────────────────────────────────
-function _sazaSetPaper(v) {
-  _sazaState.paperSize = v;
-  localStorage.setItem('dio_saza_paper', v);
-  const a4 = document.getElementById('saza-paper-a4');
-  const lg = document.getElementById('saza-paper-legal');
-  if (a4) a4.className = 'btn btn-sm ' + (v === 'a4' ? 'btn-primary' : 'btn-secondary');
-  if (lg) lg.className = 'btn btn-sm ' + (v === 'legal' ? 'btn-primary' : 'btn-secondary');
-}
-function _sazaSetFont(v) {
-  _sazaState.fontKey = v;
-  localStorage.setItem('dio_saza_font', v);
-}
-window._sazaSetPaper = _sazaSetPaper;
-window._sazaSetFont = _sazaSetFont;
-
-// ── COLUMN RESIZE (drag handles — "movable/adjustable grid") ───
-function _sazaApplyColWidths() {
-  const w = _sazaState.colWidths;
-  ['saza-col-1', 'saza-col-2', 'saza-col-3', 'saza-col-4'].forEach(function (id, i) {
-    const el = document.getElementById(id);
-    if (el) el.style.width = w[i] + '%';
-  });
-}
-function _sazaPositionHandles() {
-  const wrap = document.getElementById('saza-resize-wrap');
-  if (!wrap) return;
-  const w = _sazaState.colWidths;
-  // Table dir=rtl → column 1 (index0) renders on the RIGHT. Handle
-  // "right" position = cumulative width from the right edge.
-  const cum = [w[0], w[0] + w[1], w[0] + w[1] + w[2]];
-  wrap.querySelectorAll('.saza-handle').forEach(function (h, i) {
-    h.style.right = cum[i] + '%';
-    h.style.left = 'auto';
-  });
-}
-function _sazaInitResize() {
-  const wrap = document.getElementById('saza-resize-wrap');
-  if (!wrap) return;
-  _sazaPositionHandles();
-  wrap.querySelectorAll('.saza-handle').forEach(function (h) {
-    h.addEventListener('pointerdown', _sazaHandleDown);
-  });
-}
-function _sazaHandleDown(e) {
-  e.preventDefault();
-  const handle = e.currentTarget;
-  const idx = parseInt(handle.dataset.idx, 10); // 0,1,2 → boundary between col(idx+1) & col(idx+2)
-  const wrap = document.getElementById('saza-resize-wrap');
-  if (!wrap) return;
-  const rect = wrap.getBoundingClientRect();
-  const startX = e.clientX;
-  const startWidths = _sazaState.colWidths.slice();
-  handle.classList.add('dragging');
-
-  function onMove(ev) {
-    const dx = ev.clientX - startX; // physical screen delta (rect is always LTR-measured)
-    const deltaPct = (dx / rect.width) * 100;
-    const MIN = 6;
-    let newA = startWidths[idx] - deltaPct;     // right-side column of this handle
-    let newB = startWidths[idx + 1] + deltaPct; // left-side column of this handle
-    if (newA < MIN) { newB -= (MIN - newA); newA = MIN; }
-    if (newB < MIN) { newA -= (MIN - newB); newB = MIN; }
-    const nw = startWidths.slice();
-    nw[idx] = newA;
-    nw[idx + 1] = newB;
-    _sazaState.colWidths = nw;
-    _sazaApplyColWidths();
-    _sazaPositionHandles();
-  }
-  function onUp() {
-    document.removeEventListener('pointermove', onMove);
-    document.removeEventListener('pointerup', onUp);
-    handle.classList.remove('dragging');
-    try { localStorage.setItem('dio_saza_colwidths', JSON.stringify(_sazaState.colWidths)); } catch (_) {}
-  }
-  document.addEventListener('pointermove', onMove);
-  document.addEventListener('pointerup', onUp);
-}
-
 // ── PRINT ────────────────────────────────────────────────────
 function _sazaPrint() {
   if (!_sazaState) return;
   _sazaSyncAllRows();
   const shoInput = document.getElementById('saza-sho-input');
   const dateInput = document.getElementById('saza-date-input');
-  _sazaState.shoText = shoInput ? shoInput.value : (_sazaState.case.sho || '');
-  _sazaState.footerDate = dateInput ? dateInput.value : formatDate(new Date());
+  if (shoInput) _sazaState.shoText = shoInput.value;
+  if (dateInput) _sazaState.footerDate = dateInput.value;
   const html = _sazaBuildPrintHTML(_sazaState);
   if (typeof dioPrint === 'function') dioPrint(html);
   else showToast('❌ پرنٹ فنکشن دستیاب نہیں (dioPrint missing)', 'error');
@@ -477,23 +345,6 @@ function _sazaBuildPrintHTML(state) {
   const thana = o.station || c.case_station || '';
   const fir = c.fir_number || '';
   const firDate = formatDate(c.fir_date);
-  const w = state.colWidths;
-
-  const fonts = {
-    jameel: "'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif",
-    noto: "'Noto Nastaliq Urdu',serif",
-    times: "'Times New Roman',serif",
-    arial: "Arial,sans-serif",
-  };
-  const fontFamily = fonts[state.fontKey] || fonts.jameel;
-
-  // ── DUAL PAPER SIZE — A4 (asal SAZA_SLIP.docx isi size mein hai)
-  // aur 8.5×13in Folio/Legal ledger. ("8x13" ko standard Folio ke
-  // barabar liya gaya hai — misal-templates.js ka index_naql bhi
-  // yehi size istemal karta hai.)
-  const pageCSS = state.paperSize === 'legal'
-    ? 'size: 8.5in 13in; margin: 0.5in 0.375in 0.5in 0.25in;'
-    : 'size: A4; margin: 0.5in 0.375in 0.5in 0.25in;'; // asal docx ke pgMar se (top/right/bottom/left)
 
   const rowsHtml = state.accused.map(function (a, i) {
     const dateHtml = a.arrestDate
@@ -501,8 +352,9 @@ function _sazaBuildPrintHTML(state) {
       : '';
     const jurmHtml = a.jurm ? '<span class="saza-vert">' + _sazaNl2br(a.jurm) + '</span>' : '';
     const detailLine = _sazaAccusedLine(a);
+    const halia = _sazaComposeHalia(a);
     return `<tr>
-      <td class="saza-c1">${detailLine ? _sazaNl2br(detailLine) : ''}${a.halia ? '<div class="saza-halia">حلیہ: ' + _sazaNl2br(a.halia) + '</div>' : ''}</td>
+      <td class="saza-c1">${detailLine ? _sazaNl2br(detailLine) : ''}${halia ? '<div class="saza-halia">حلیہ: ' + _sazaNl2br(halia) + '</div>' : ''}</td>
       <td class="saza-c2"><div class="saza-vwrap">${dateHtml}</div></td>
       <td class="saza-c3"><div class="saza-vwrap">${jurmHtml}</div></td>
       <td class="saza-c4">${a.courtOrder ? _sazaNl2br(a.courtOrder) : ''}</td>
@@ -510,8 +362,11 @@ function _sazaBuildPrintHTML(state) {
   }).join('');
 
   const shoLine = state.shoText ? esc(state.shoText) : '';
-  const thanaBit = thana ? ' — تھانہ ' + esc(thana) : '';
+  const dateLine = state.footerDate ? esc(state.footerDate) : '_______________';
 
+  // ── چالان (report173.js) jaisa print document — WAHI conventions ──
+  //   @page 8.5in×13in Folio (چالان ka default), side margin چالان jaisa.
+  //   Font 14pt, Jameel Noori, direction:rtl, color #000.
   return `<!DOCTYPE html>
 <html dir="rtl" lang="ur">
 <head>
@@ -525,63 +380,67 @@ function _sazaBuildPrintHTML(state) {
          url('https://cdn.jsdelivr.net/npm/jameel-noori/fonts/jameel-noori-nastaleeq4.woff2') format('woff2'),
          url('https://unpkg.com/jameel-noori/fonts/jameel-noori-nastaleeq4.woff2') format('woff2');
   }
-  @page { ${pageCSS} }
+  /* چالان jaisa: Folio 8.5×13, side margin tang, upar/neeche 1cm */
+  @page { size: 8.5in 13in; margin: 1cm 0.2cm; }
   * { box-sizing: border-box; }
-  html, body { margin:0; padding:0; }
+  html, body { margin:0 !important; padding:0 !important; }
+  /* ── چالان ke #ch173-doc jaisa root ── */
   body {
-    font-family: ${fontFamily};
+    font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
     direction: rtl;
-    text-align: right;
-    font-size: 16pt;
     color: #000;
+    font-size: 14pt;
+    line-height: 1.4;
   }
-  /* Mixed Urdu+English bidi — house convention (dioNameWithCnic pattern) */
+  /* Mixed Urdu+English bidi — چالان/dioNameWithCnic convention */
   .dio-ltr { direction: ltr; unicode-bidi: isolate; }
 
-  /* ── Form number — 12pt, center, unbold (asal docx ke mutabiq) ── */
-  .saza-formno { text-align:center; font-size:12pt; font-weight:normal; margin:0 0 3pt; }
+  /* ── عنوان کی سطر — چالان ke .ch173-title-row jaisa ──
+     FORM No. aur عنوان dono absolute 50% par (bilkul aik center) */
+  .saza-title-row { position:relative; display:flex; align-items:baseline;
+    justify-content:space-between; width:100%; min-height:1.6em; }
+  .saza-title-row > span { white-space:nowrap; }
+  .tt-right { text-align:right; font-size:14pt; padding-right:1in; }
+  .tt-left  { text-align:left; font-size:14pt; }
+  .tt-mid, .form-no { position:absolute; left:50%; transform:translateX(-50%); white-space:nowrap; }
+  .tt-mid  { font-weight:bold; text-decoration:underline; font-size:20pt; }
+  .form-no { font-style:italic; font-size:12pt; }
 
-  /* ── Line 2 — ضلع far-left(0.25in) / سزا سلپ exact-center(24pt bold+underline) / تھانہ far-right(1in) ── */
-  .saza-line2 { position:relative; width:100%; margin:0 0 6pt; min-height:26pt; }
-  .saza-zila { position:absolute; left:0.25in; top:50%; transform:translateY(-50%); font-size:16pt; font-weight:normal; white-space:nowrap; }
-  .saza-thana { position:absolute; right:1in; top:50%; transform:translateY(-50%); font-size:16pt; font-weight:normal; white-space:nowrap; }
-  .saza-title { text-align:center; font-size:24pt; font-weight:bold; text-decoration:underline; margin:0; }
+  /* مقدمہ نمبر / مورخہ — چالان ke .ch173-caseline jaisa (center, 14pt) */
+  .saza-caseline { display:flex; gap:22px; align-items:baseline; font-size:14pt;
+    margin:18px 0 16px 0; direction:rtl; flex-wrap:wrap; line-height:1.4; justify-content:center; }
 
-  /* Digital IO ka izafi (docx mein nahi tha) — sirf case identify karne ke liye, chhota aur halka */
-  .saza-sub { text-align:center; font-size:11pt; color:#444; margin:0 0 8pt; }
+  /* ── جدول — چالان ke .ch173-table jaisa: border 1px solid #000 · center · 14pt ── */
+  table.saza-tbl { width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; margin:0; }
+  table.saza-tbl th, table.saza-tbl td {
+    border:1px solid #000; padding:2px 4px; text-align:center;
+    white-space:normal; word-wrap:break-word; overflow-wrap:break-word;
+    line-height:1.15; font-size:14pt;
+  }
+  table.saza-tbl thead th { font-size:14pt; vertical-align:middle; font-weight:normal; }
+  /* Left/right OUTER borders remove — sirf andar ki + horizontal (asal saza form jaisa) */
+  .saza-c1 { border-right:none; }
+  .saza-c4 { border-left:none; }
+  .saza-c1 { vertical-align:top; text-align:justify; }
+  .saza-c2, .saza-c3 { vertical-align:middle; }
+  .saza-c4 { vertical-align:top; }
+  table.saza-tbl td.saza-c1 { padding:5px 6px; }
 
-  /* ── Table — outer left/right borders removed, only inner + horizontal remain ── */
-  table.saza-tbl { width:100%; border-collapse:collapse; table-layout:fixed; margin:0; }
-  table.saza-tbl th, table.saza-tbl td { padding:5pt 6pt; }
-  /* Data cells (defaults) — thead scoped selectors neeche INHI ko override karte hain (higher specificity, source-order se azad) */
-  .saza-c1 { border-top:1pt solid #000; border-bottom:1pt solid #000; border-left:1pt solid #000; vertical-align:top; font-size:16pt; text-align:justify; }
-  .saza-c2 { border-top:1pt solid #000; border-bottom:1pt solid #000; border-left:1pt solid #000; text-align:center; vertical-align:middle; font-size:16pt; }
-  .saza-c3 { border-top:1pt solid #000; border-bottom:1pt solid #000; border-left:1pt solid #000; text-align:center; vertical-align:middle; font-size:18pt; }
-  .saza-c4 { border-top:1pt solid #000; border-bottom:1pt solid #000; font-size:18pt; font-weight:bold; text-align:center; vertical-align:top; } /* koi left/right border nahi — bilkul khali/دستی */
-  /* Header cells — asal docx ke mutabiq: col1/col4 unbold, col2/col3 bold; col2 16pt, باقی 18pt */
-  thead .saza-c1 { font-size:18pt; font-weight:normal; vertical-align:middle; text-align:center; }
-  thead .saza-c2 { font-size:16pt; font-weight:bold; text-align:center; vertical-align:middle; }
-  thead .saza-c3 { font-size:18pt; font-weight:bold; text-align:center; vertical-align:middle; }
-  thead .saza-c4 { font-size:18pt; font-weight:normal; text-align:center; vertical-align:middle; }
+  /* Column 2/3 rotated (270deg) — tareekh + جرم khadi.
+     rotate layout mein jagah reserve nahi karta, is liye row ki
+     min-height se space diya (text single-line nowrap rehta hai). */
+  .saza-vwrap { display:flex; align-items:center; justify-content:center; min-height:90pt; }
+  .saza-vert  { display:inline-block; transform:rotate(270deg); white-space:nowrap; font-size:14pt; }
 
-  /* ── Column 2/3 rotated text — 270deg, center.
-     AHEM: transform:rotate() us jagah ke hisaab se apne CONTAINER
-     mein koi space reserve nahi karta (sirf paint hoti hai ghoom
-     kar) — un-rotated width hi row ki HEIGHT ban jati hai jab yeh
-     270° ghoomti hai. Is liye row ko generous min-height di gayi
-     hai (100pt) taake tareekh/جرم ka text agli/pichli row ke upar
-     na chadhe — asal text hamesha single-line (nowrap) rehta hai
-     taake un-rotated HEIGHT (= final WIDTH) hamesha column ki
-     tang chaudai (8-9%) mein aaram se sama jaye. ── */
-  .saza-vwrap { display:flex; align-items:center; justify-content:center; min-height:100pt; }
-  .saza-vert { display:inline-block; transform:rotate(270deg); white-space:nowrap; }
+  .saza-halia { font-size:14pt; margin-top:2px; }
 
-  .saza-halia { font-size:16pt; margin-top:2pt; }
-
-  /* ── SHO footer — column1 ke neeche, CENTER-aligned (asal docx ke mutabiq), col1 ki width ── */
-  .saza-footer { width:${w[0]}%; text-align:center; margin-top:26pt; }
-  .saza-sho-line { font-weight:bold; text-decoration:underline; font-size:18pt; }
-  .saza-sho-date { margin-top:4pt; font-size:16pt; font-weight:normal; }
+  /* ── SHO block — چالان ke .sho-signature-block-bottom jaisa:
+     upar dastkhat ki KHALI jagah → naam (bold) → تاریخ neeche.
+     Table ke NEECHE koi aur field nahi. ── */
+  .saza-sho-block { text-align:right; margin-top:20px; min-width:220px; display:inline-block; }
+  .saza-sho-sign  { border-bottom:1px solid #000; min-height:50px; margin-bottom:6px; }
+  .saza-sho-name  { font-weight:bold; font-size:14pt; }
+  .saza-sho-date  { font-size:14pt; margin-top:6px; }
 
   @media print {
     body { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
@@ -589,16 +448,19 @@ function _sazaBuildPrintHTML(state) {
 </style>
 </head>
 <body>
-  <div class="saza-formno">فارم نمبر27-2(1)(الف)</div>
-  <div class="saza-line2">
-    <span class="saza-zila">ضلع ${esc(zila)}</span>
-    <div class="saza-title">سزاسلپ</div>
-    <span class="saza-thana">تھانہ ${esc(thana)}</span>
+  <div class="saza-title-row"><span></span><span class="form-no">فارم نمبر27-2(1)(الف)</span><span></span></div>
+  <div class="saza-title-row" style="margin:2px 0 8px;">
+    <span class="tt-right">تھانہ ${esc(thana)}</span>
+    <span class="tt-mid">سزاسلپ</span>
+    <span class="tt-left">ضلع ${esc(zila)}</span>
   </div>
-  <div class="saza-sub">مقدمہ نمبر <bdi class="dio-ltr">${esc(fir)}</bdi> مورخہ <bdi class="dio-ltr">${esc(firDate)}</bdi></div>
+  <div class="saza-caseline">
+    <span>مقدمہ نمبر <bdi class="dio-ltr">${esc(fir)}</bdi></span>
+    <span>مورخہ <bdi class="dio-ltr">${esc(firDate)}</bdi></span>
+  </div>
   <table class="saza-tbl">
     <colgroup>
-      <col style="width:${w[0]}%"><col style="width:${w[1]}%"><col style="width:${w[2]}%"><col style="width:${w[3]}%">
+      <col style="width:47%"><col style="width:12%"><col style="width:12%"><col style="width:29%">
     </colgroup>
     <thead>
       <tr>
@@ -610,9 +472,10 @@ function _sazaBuildPrintHTML(state) {
     </thead>
     <tbody>${rowsHtml}</tbody>
   </table>
-  <div class="saza-footer">
-    <div class="saza-sho-line">${shoLine}${thanaBit}</div>
-    <div class="saza-sho-date">${esc(state.footerDate || '')}</div>
+  <div class="saza-sho-block">
+    <div class="saza-sho-sign"></div>
+    <div class="saza-sho-name">${shoLine}</div>
+    <div class="saza-sho-date">تاریخ: ${dateLine}</div>
   </div>
 </body>
 </html>`;
