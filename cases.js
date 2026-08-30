@@ -777,6 +777,9 @@ function renderWorkspace(c, docs, ev, container) {
   window._workspaceCase = c;
   window._workspaceDocs = docs;
   window._workspaceEv = ev;
+
+  // سزا سلپ chip — misal-doc-bar mein add (saza-slip.js, safe/additive)
+  if (typeof injectSazaSlipChip === 'function') injectSazaSlipChip(c);
 }
 
 function renderDocsTab(c, docs) {
