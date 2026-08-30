@@ -95,14 +95,49 @@ function _sazaNormalizeAccused(a) {
 }
 function _sazaBlankAccused() { return { id: null, name: '', halia: '', arrestDate: '' }; }
 
-// ── CHIP INJECTION (safe/additive — misal-docs.js chhera nahi gaya) ──
+// ── CHIP WIRING ────────────────────────────────────────────────
+// Shafi ke real misal-doc-bar mein "سزا سلپ" / "سزاسلپ" chip PEHLE
+// SE maujood hai (misal-docs.js ki apni list mein — دیکھیں screenshot).
+// Is liye NAYA chip append nahi karte — jo chip pehle se hai USI ka
+// onclick apne openSazaSlip() par mor dete hain. Sirf agar (kisi wajah
+// se) woh chip bilkul na milay, tab hi ek fallback chip append hota
+// hai (neeche دوسرا حصہ).
+function _sazaFindExistingChip(bar) {
+  const all = bar.querySelectorAll('*');
+  let best = null, bestLen = Infinity;
+  for (const el of all) {
+    if (el.id === 'saza-slip-chip') continue; // apna hi fallback chip nazar-andaz karo
+    let ownText = '';
+    for (const node of el.childNodes) {
+      if (node.nodeType === 3) ownText += node.textContent; // sirf is element ka APNA text (bachon ka nahi)
+    }
+    const txt = ownText.replace(/\s+/g, '');
+    if (txt.indexOf('سزا') !== -1 && txt.indexOf('سلپ') !== -1 && txt.length < bestLen) {
+      best = el; bestLen = txt.length;
+    }
+  }
+  return best;
+}
+
 function injectSazaSlipChip(c) {
   try {
     if (!c) return;
     const bar = document.getElementById('misal-doc-bar');
     if (!bar) return;
-    const existing = document.getElementById('saza-slip-chip');
-    if (existing) { existing.onclick = () => openSazaSlip(c.id); return; }
+
+    // 1) PEHLE SE maujood "سزا سلپ" chip dhoondo aur hijack karo
+    const real = _sazaFindExistingChip(bar);
+    if (real) {
+      real.setAttribute('onclick', '');   // purana inline handler (jo khaali page dikhata tha) hatao
+      real.onclick = () => openSazaSlip(c.id);
+      real.style.cursor = 'pointer';
+      real.dataset.sazaWired = '1';
+      return;
+    }
+
+    // 2) Fallback — agar bar mein "سزا سلپ" naam ka chip sirey se hi na ho
+    const already = document.getElementById('saza-slip-chip');
+    if (already) { already.onclick = () => openSazaSlip(c.id); return; }
     const rows = bar.querySelectorAll(':scope > div');
     const row = rows.length ? rows[rows.length - 1] : bar;
     const chip = document.createElement('span');
@@ -118,7 +153,7 @@ function injectSazaSlipChip(c) {
 window.injectSazaSlipChip = injectSazaSlipChip;
 
 // Self-healing safety net — agar misal-doc-bar kabhi cases.js ke
-// hook se BAAHAR dobara render ho (kisi aur module se), chip phir
+// hook se BAAHAR dobara render ho (kisi aur module se), wiring phir
 // se lag jaye. #page-content tak scoped hai (poori body nahi) taake
 // performance par asar na pade.
 (function _sazaObserverInit() {
@@ -129,9 +164,9 @@ window.injectSazaSlipChip = injectSazaSlipChip;
       const obs = new MutationObserver(function () {
         const bar = document.getElementById('misal-doc-bar');
         const c = window._workspaceCase;
-        if (bar && c && !document.getElementById('saza-slip-chip')) {
-          injectSazaSlipChip(c);
-        }
+        if (!bar || !c) return;
+        const alreadyWired = bar.querySelector('[data-saza-wired="1"]') || document.getElementById('saza-slip-chip');
+        if (!alreadyWired) injectSazaSlipChip(c);
       });
       obs.observe(target, { childList: true, subtree: true });
     } catch (_) {}
