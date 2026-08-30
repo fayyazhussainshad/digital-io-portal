@@ -1,17 +1,14 @@
 /* ═══════════════════════════════════════════════════════════
    DIGITAL IO — "جہاں بند ہوا، وہیں سے کھلے"
-   • آخری کھلا صفحہ یاد رکھتا ہے (localStorage میں، ہر افسر کا الگ)
+   • آخری کھلا صفحہ یاد رکھتی ہے (localStorage میں، ہر افسر کا الگ)
    • پاس ورڈ کے بعد ڈیش بورڈ کی بجائے وہی صفحہ کھلتا ہے
+   • خود بحالی بھی کرتی ہے — چاہے app-core.js والی سطر بدلی ہو یا نہ ہو
    • یہ فائل مستقل (standalone) ہے — کسی اور فائل کا کام نہیں بدلتی۔
-     app-core.js میں صرف ایک سطر بدلنی ہے (نیچے ہدایت دیکھیں)۔
 
-   app-core.js میں (تقریباً سطر 868):
-       showPage('dashboard', document.querySelector('.nav-item'));
-   کی جگہ:
-       showPage(_dioResumePage(), document.querySelector('.nav-item'));
-
-   index.html میں <script src="app-core.js"> سے پہلے:
+   index.html میں app-core.js سے پہلے یہ سطر:
        <script src="resume.js"></script>
+   app-core.js میں (تقریباً سطر 868) — یہ کر دیا گیا ہے:
+       showPage(_dioResumePage(), document.querySelector('.nav-item'));
    ═══════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
@@ -46,6 +43,8 @@
     if (!p) { try { p = localStorage.getItem(key()) || ''; } catch (_) {} }
     if (!p) return 'dashboard';
     if (SKIP.indexOf(p) !== -1) return 'dashboard';
+    // اجازت نہ ہو تو ڈیش بورڈ
+    try { if (typeof canAccess === 'function' && !canAccess(p)) return 'dashboard'; } catch (_) {}
     return p;
   };
 
@@ -70,9 +69,8 @@
   }
 
   // ═══ خود بحالی — اگر app-core.js والی سطر نہ بدلی ہو تب بھی چلے ═══
-  // ایپ تیار ہونے کا انتظار کرو (لاگ اِن مکمل + پہلا صفحہ کھل چکا)، پھر
-  // اگر محفوظ صفحہ مختلف ہو تو وہیں لے جاؤ۔ صرف ایک بار، اور صرف اُس وقت
-  // جب افسر نے خود ابھی کہیں نیویگیٹ نہ کیا ہو۔
+  // ایپ تیار ہونے کا انتظار کرو (لاگ اِن مکمل + پہلا صفحہ کھل چکا)، پھر اگر
+  // محفوظ صفحہ مختلف ہو تو وہیں لے جاؤ۔ صرف ایک بار۔
   (function () {
     var done = false, tries = 0;
     var iv = setInterval(function () {
