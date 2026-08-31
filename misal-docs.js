@@ -190,6 +190,9 @@ document.addEventListener('click', () => _closeAllDD());
 async function _doAddMisalDoc(docId) {
   const def = MISAL_CASE_DOCS.find(d => d.id === docId);
   if (!def || !_misalCaseId) return;
+  // سزا سلپ → seedha full-page editor kholo (record khud save par banega —
+  // report173/challan jaisa). Yahan khali record insert karne ki zaroorat nahi.
+  if (docId === 'saza_slip') { _openMisalEditor(docId); return; }
   const isPersonForm = (docId === 'witnesses_fir' || docId === 'witnesses_cross' ||
                         docId === 'named_accused' || docId === 'unknown_accused' ||
                         docId === 'zamniyat' || docId === 'memorandum' ||
@@ -265,6 +268,13 @@ function _openMisalEditor(docId, _fromTab) {
   if (docId === 'cro_card') {
     _openDocId = docId;
     if (typeof openCroCard === 'function') openCroCard(_misalCaseId);
+    return;
+  }
+
+  // Special: سزا سلپ → full-page Saza Slip editor (saza-slip.js)
+  if (docId === 'saza_slip') {
+    _openDocId = docId;
+    if (typeof openSazaSlip === 'function') openSazaSlip(_misalCaseId);
     return;
   }
 
