@@ -103,28 +103,24 @@ function _sazaAccList() {
   })).filter(a => a.name);
 }
 
-// ═══ جرم — "ت پ" (تعزیراتِ پاکستان) ka qanoon (report173 jaisa) ═══
-// Agar naye مقدمہ card / system data mein dafaat likhi hain to aakhir
-// mein "ت پ" khud lag jaye (agar pehle se na ho). "ت پ" ko ALAG span mein
-// rakhte hain (class saza-tp) taake khadi likhai (270°) mein woh BAYEN
-// kinare par aaye — asal فارم jaisa.
+// ═══ جرم — "ت پ" (تعزیراتِ پاکستان) ka qanoon — report173 (_ch173JurmParts)
+//    ka BILKUL wahi tareeqa: دفعات (body) aur "ت پ" (suffix) ALAG. Body LTR-
+//    isolate, ت پ RTL — is se ت پ hamesha دفعات ke BAAD, bayen kinare par. ═══
 const SAZA_TP_RE = /[\s،,\-]*(ت\s*\.?\s*پ|تعزیرات\s*پاکستان)\s*$/;
-function _sazaOffenceBody(raw) {
+function _sazaJurmParts(raw, savedSuf) {
   const txt = String(raw || '').trim();
-  if (!txt) return '';
-  return SAZA_TP_RE.test(txt) ? txt.replace(SAZA_TP_RE, '').trim() : txt;
+  const m = txt.match(SAZA_TP_RE);
+  const body = m ? txt.slice(0, m.index).trim() : txt;
+  let suffix;
+  if (savedSuf !== undefined && savedSuf !== null) suffix = String(savedSuf);
+  else if (m) suffix = m[1].replace(/\s+/g, ' ').trim();
+  else suffix = body ? 'ت پ' : '';       // dafaat hon to hi ت پ lagao
+  return { body, suffix };
 }
-// جرم ka poora HTML: body + (bayen par) ت پ
-function _sazaOffenceHTML(raw) {
-  const body = _sazaOffenceBody(raw);
-  if (!body) return '';
-  // bidi-isolate se dafaat (angrezi/hindse) aur "ت پ" apni jagah rahein.
-  return '<span class="saza-of-body">' + esc(body) + '</span><span class="saza-tp"> ت پ</span>';
-}
-// Sirf plain text (fallback/save ke liye)
+// Sirf plain text (fallback/save ke liye) — body + ت پ
 function _sazaOffenceWithTP(raw) {
-  const body = _sazaOffenceBody(raw);
-  return body ? (body + ' ت پ') : '';
+  const p = _sazaJurmParts(raw);
+  return p.body ? (p.body + (p.suffix ? ' ' + p.suffix : '')) : '';
 }
 
 // حلیہ — sub-fields se (mulziman _accViewDetail jaisa)
@@ -224,11 +220,11 @@ function _sazaRender() {
           <span class="saza-tt-left">ضلع <span class="fl" contenteditable="true" data-k="zila">${v('zila', esc(o.district||''))}</span></span>
         </div>
 
-        <!-- Line 3: FIR no / date / offence (system) -->
+        <!-- Line 3: FIR no / date / جرم (body LTR + "ت پ" suffix — report173 jaisa) -->
         <div class="saza-caseline">
           <span>مقدمہ نمبر <span class="fl" contenteditable="true" data-k="cl_fir">${v('cl_fir', esc(fir))}</span></span>
           <span>مورخہ <span class="fl" contenteditable="true" data-k="cl_date">${v('cl_date', esc(firDate))}</span></span>
-          <span>بجرم <span class="fl fl-lg" contenteditable="true" data-k="cl_jurm">${v('cl_jurm', esc(offence))}</span></span>
+          <span>جرم <span class="fl fl-lg" contenteditable="true" data-k="cl_jurm">${v('cl_jurm', esc(_sazaJurmParts(c.section_of_law || c.offence_type).body))}</span> <span class="fl fl-suf" contenteditable="true" data-k="cl_jurm_suf">${v('cl_jurm_suf', esc(_sazaJurmParts(c.section_of_law || c.offence_type).suffix))}</span></span>
         </div>
 
         <!-- ── TABLE: 4 columns · headings row + AIK data row ── -->
@@ -242,7 +238,7 @@ function _sazaRender() {
           </colgroup>
           <thead>
             <tr>
-              <th class="saza-h1">نام ولدیت قومیت سکونت حلیہ و پیشہ ملزم</th>
+              <th class="saza-h1">نام ولدیت قومیت سکونت حلیہ و پیشہ ملزم <button class="saza-acc-pick no-print" onclick="_sazaAccPicker(event)" title="ملزمان منتخب کریں">▾</button></th>
               <th class="saza-h2">تاریخ گرفتاری</th>
               <th class="saza-h3">جرم</th>
               <th class="saza-h4">حکم اخیر عدالت</th>
@@ -384,7 +380,8 @@ function _sazaBuildRows(sv, c, o) {
   const all = _sazaAccList();
   let people = chosenNames.map(nm => all.find(a => (a.name || '') === nm)).filter(Boolean);
 
-  const offence = _sazaOffenceHTML(c.section_of_law || c.offence_type || '');
+  // کالم 3 (جرم) ka matn — user ki hidayat: SIRF "مندرجہ بالا" (offence nahi).
+  const jurmDefault = 'مندرجہ بالا';
   const _v = (k, def) => (typeof sanitizeHtml === 'function'
     ? sanitizeHtml(sv[k] !== undefined ? sv[k] : (def || ''))
     : (sv[k] !== undefined ? sv[k] : (def || '')));
@@ -404,11 +401,10 @@ function _sazaBuildRows(sv, c, o) {
     return `
     <tr data-row="0" class="saza-acc-row">
       <td class="saza-c1">
-        <button class="saza-acc-pick no-print" onclick="_sazaAccPicker(event)" title="ملزمان منتخب کریں">▾</button>
-        <div class="saza-c1-body" contenteditable="true" data-k="c1_0"><span class="saza-hint no-print">▾ سے ملزمان منتخب کریں</span></div>
+        <div class="saza-c1-body" contenteditable="true" data-k="c1_0"><span class="saza-hint no-print">اوپر کالم 1 کی سرخی میں ▾ سے ملزمان منتخب کریں</span></div>
       </td>
       <td class="saza-c2 rotcell"><div class="rotcell-in" contenteditable="true" data-k="c2"></div></td>
-      <td class="saza-c3 rotcell"><div class="rotcell-in saza-jurm" contenteditable="true" data-k="c3">${offence}</div></td>
+      <td class="saza-c3 rotcell"><div class="rotcell-in saza-jurm" contenteditable="true" data-k="c3">${esc(jurmDefault)}</div></td>
       <td class="saza-c4"><div class="saza-c4-body" contenteditable="true" data-k="c4_0"></div></td>
     </tr>
     <tr data-row="sho">
@@ -427,7 +423,7 @@ function _sazaBuildRows(sv, c, o) {
     : esc(uniqDates.join(' / '));
   const jurmTxt = (sv.c3 !== undefined)
     ? (typeof sanitizeHtml === 'function' ? sanitizeHtml(sv.c3) : sv.c3)
-    : offence;
+    : esc(jurmDefault);
 
   const rowsHtml = people.map((a, i) => {
     const c1 = (sv['c1_' + i] !== undefined)
@@ -435,16 +431,13 @@ function _sazaBuildRows(sv, c, o) {
       : _sazaAccusedBlock(a);
     const cv = (sv['c4_' + i] !== undefined)
       ? (typeof sanitizeHtml === 'function' ? sanitizeHtml(sv['c4_' + i]) : sv['c4_' + i]) : '';
-    // Picker sirf pehli qatar ke کالم 1 ke bayen ooper kone par
-    const picker = (i === 0)
-      ? `<button class="saza-acc-pick no-print" onclick="_sazaAccPicker(event)" title="ملزمان منتخب کریں">▾</button>` : '';
     // کالم 2 (تاریخ) aur کالم 3 (جرم) SIRF pehli qatar par — rowspan = tamam ملزمان.
     const spanCells = (i === 0)
       ? `<td class="saza-c2 rotcell" rowspan="${N}"><div class="rotcell-in" contenteditable="true" data-k="c2">${dateTxt}</div></td>
       <td class="saza-c3 rotcell" rowspan="${N}"><div class="rotcell-in saza-jurm" contenteditable="true" data-k="c3">${jurmTxt}</div></td>`
       : '';
     return `<tr data-row="${i}" class="saza-acc-row">
-      <td class="saza-c1">${picker}<div class="saza-c1-body" contenteditable="true" data-k="c1_${i}">${c1}</div></td>
+      <td class="saza-c1"><div class="saza-c1-body" contenteditable="true" data-k="c1_${i}">${c1}</div></td>
       ${spanCells}
       <td class="saza-c4"><div class="saza-c4-body" contenteditable="true" data-k="c4_${i}">${cv}</div></td>
     </tr>`;
@@ -902,21 +895,21 @@ async function _sazaSave() {
 window._sazaSave = _sazaSave;
 
 // ═══ PRINT — report173 jaisa (screen wala hi document, WAHI CSS).
-//   AHEM: print se pehle SCREEN wali "stretch" (inline height) HATA dete
-//   hain — warna aakhri (SHO) qatar itni lambi ho jati thi ke poori table
-//   page 2 par chali jati thi (page-break-inside:avoid ki wajah se). Ab
-//   table page 1 se shuru hoti hai. ═══
+//   Screen ki "stretch" (SHO qatar ki inline height) ko RAKHTE hain — usi se
+//   khadi lakeerein safhe ke NEECHE tak jati hain, aur table PAGE 1 se shuru
+//   rehti hai (kyунke ab har ملزم ki alag chhoti qatar hai, sirf aakhri SHO
+//   qatar lambi hoti hai jo toot bhi sakti hai). Top margin sirf @page se. ═══
 function _sazaPrint() {
   const doc = _sazaDoc(); if (!doc) return;
+  // Print se pehle stretch ko taaza karo (SHO qatar theek page-bottom tak)
+  try { _sazaStretchTable(); } catch (_) {}
   const clone = doc.cloneNode(true);
-  // Har lagayi hui inline height (stretch) saaf karo
-  clone.querySelectorAll('[style*="height"]').forEach(el => { el.style.height = ''; el.style.minHeight = ''; });
-  clone.querySelectorAll('.no-print, .saza-acc-pick').forEach(el => el.remove());
+  clone.querySelectorAll('.no-print, .saza-acc-pick, .saza-colgrip').forEach(el => el.remove());
   const inner = clone.innerHTML;
   const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-      @page{ size:${_sazaPaper === 'a4' ? 'A4 portrait' : '8.5in 13in'}; margin:1cm ${_sazaSideMargin()}; }
+      @page{ size:${_sazaPaper === 'a4' ? 'A4 portrait' : '8.5in 13in'}; margin:6mm ${_sazaSideMargin()}; }
       html, body{ margin:0 !important; padding:0 !important;
         font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
         direction:rtl; line-height:1.4; color:#000; font-size:${_sazaDocFont(_sazaSaved)}pt; }
@@ -925,21 +918,13 @@ function _sazaPrint() {
         min-height:0 !important; padding:0 !important; margin:0 !important;
         transform:none !important; box-shadow:none !important; border-radius:0 !important; }
       .no-print, .saza-acc-pick, .saza-colgrip, button, select{ display:none !important; }
-      /* ── Table ki lakeerein safhe ke NEECHE tak (print) ──
-         Table ko poore pehle safhe (unwan ke baad) jitni min-height do; aakhri
-         (SHO) qatar bachi hui jagah khud le leti hai → khadi lakeerein neeche
-         tak. Table PAGE 1 se hi shuru hoti hai (koi fixed height nahi jo usay
-         dhakel de). Do tareeqe — table height + SHO cell ki min-height — taake
-         har browser (Chrome/Edge) mein bharosa-mand rahe. */
-      #saza-doc .saza-table{ height:${_sazaPaper === 'a4' ? '9.2in' : '10.4in'}; }
-      #saza-doc .saza-table td{ height:auto; }
-      #saza-doc .saza-c1-sho, #saza-doc .saza-c2, #saza-doc .saza-c3, #saza-doc .saza-c4{ height:100%; }
-      /* SHO ka matn OOPER hi rahe (khana neeche tak phaile, matn nahi) */
-      #saza-doc .saza-c1-sho{ vertical-align:top; }
+      /* Unwan (form no.) bilkul OOPER se shuru — koi izafi top margin nahi */
+      #saza-doc .saza-formno{ margin-top:0 !important; }
       /* Header har naye safhe par NA dohraye (sirf pehle safhe par) */
       .saza-table thead{ display:table-row-group; }
-      /* Sirf HAR ملزم ki qatar poori rahe; SHO qatar toot sakti hai */
+      /* Sirf HAR ملزم ki qatar poori rahe; SHO (lambi) qatar toot sakti hai */
       .saza-acc-row{ page-break-inside:avoid; break-inside:avoid; }
+      tr[data-row="sho"]{ page-break-inside:auto; break-inside:auto; }
       #saza-doc, #saza-doc *{ orphans:2; widows:2; }
       .saza-bind{ display:none; }
       @media print{ .saza-bind{ display:block; } }
@@ -978,18 +963,26 @@ function _sazaCSS() {
        AHEM: پہلے تھانہ کے دائیں 1in padding تھی جو ضلع کو بائیں کنارے سے
        باہر دھکیل دیتی تھی (پرنٹ میں ضلع کٹ جاتا تھا). اب دونوں کناروں پر
        تھوڑی سی (6mm) جگہ — ضلع پورا نظر آتا ہے. */
+    /* Line 2 — تھانہ(dayen) · سزاسلپ(center) · ضلع(bayen). Dono kinaron par
+       6mm jagah taake print mein ضلع/تھانہ kinare se na kate (0.2cm @page
+       margin ke ilawa). */
     #saza-doc .saza-title-row{ position:relative; display:flex; align-items:baseline;
-      justify-content:space-between; width:100%; min-height:1.8em; padding:0 2mm; }
+      justify-content:space-between; width:100%; min-height:1.8em; padding:0 6mm; box-sizing:border-box; }
     #saza-doc .saza-title-row > span{ white-space:nowrap; }
     #saza-doc .saza-tt-right{ text-align:right; font-size:14pt; }
     #saza-doc .saza-tt-left{ text-align:left; font-size:14pt; }
     #saza-doc .saza-tt-mid{ position:absolute; left:50%; transform:translateX(-50%);
       white-space:nowrap; font-size:24pt; text-decoration:underline; font-weight:normal; }
 
-    /* Line 3 — مقدمہ نمبر / مورخہ / بجرم (center, 14pt) */
+    /* Line 3 — مقدمہ نمبر / مورخہ / جرم (center, 14pt).
+       جرم: دفعات (body, LTR-isolate) + "ت پ" (suffix, alag khana) — report173
+       jaisa, taake ت پ hamesha دفعات ke BAAD bayen kinare par aaye. */
     #saza-doc .saza-caseline{ display:flex; gap:22px; align-items:baseline; font-size:14pt;
       margin:14px 0 12px 0; direction:rtl; flex-wrap:wrap; line-height:1.4; justify-content:center; }
+    #saza-doc .saza-caseline .fl{ display:inline-block; min-width:40px; border:none;
+      text-align:right; outline:none; font-weight:normal; unicode-bidi:isolate; direction:rtl; }
     #saza-doc .saza-caseline .fl-lg{ min-width:60px; }
+    #saza-doc .saza-caseline .fl-suf{ min-width:24px; }
 
     /* ── TABLE ── lakeerein PATLI (0.5pt) · sab khane editable · Urdu RTL
        + English LTR + poori satar barabar (justify). ── */
@@ -1023,15 +1016,16 @@ function _sazaCSS() {
     #saza-doc .saza-c1{ position:relative; vertical-align:top; }
     #saza-doc .saza-c1-body{ outline:none; padding:2px 4px; direction:rtl; unicode-bidi:plaintext;
       text-align:justify; text-align-last:right; }
-    #saza-doc tr[data-row="0"] .saza-c1-body{ padding-left:30px; }  /* picker ke liye jagah */
     #saza-doc .saza-acc-name{ font-weight:normal; font-size:14pt; }
     #saza-doc .saza-acc-desc{ font-weight:normal; font-size:14pt; }
     #saza-doc .saza-hint{ color:#999; font-size:12pt; }
-    /* ملزمان chunne wala ▾ — کالم 1 ke BAYEN OOPER kone par (SAAF nazar aaye) */
+    /* ملزمان chunne wala ▾ — کالم 1 ki SARKHI (header) mein, naam ke saath.
+       Ab yeh header ke andar inline button hai (data cell mein nahi). */
     #saza-doc .saza-acc-pick{
-      position:absolute; top:3px; left:3px; width:24px; height:24px; line-height:22px; padding:0;
+      display:inline-block; vertical-align:middle; margin-right:6px;
+      width:26px; height:24px; line-height:22px; padding:0;
       border:1px solid #0369a1; border-radius:5px; background:#0369a1; color:#fff;
-      cursor:pointer; font-size:13px; font-weight:700; z-index:5; text-align:center;
+      cursor:pointer; font-size:13px; font-weight:700; text-align:center;
     }
     #saza-doc .saza-acc-pick:hover{ background:#025687; }
 
@@ -1056,13 +1050,6 @@ function _sazaCSS() {
       white-space:nowrap; line-height:1.35; unicode-bidi:plaintext; font-size:14pt;
       outline:none; margin:6px auto 0; padding:2px;
     }
-    /* جرم — دفعات (LTR) beech mein, "ت پ" BAYEN kinare par (asal فارم jaisa).
-       Khadi column mein rotate(180) ke baad "shuru" hissa NEECHE (bayen) aata
-       hai, is liye ت پ ko span ke AAKHIR mein rakhte hain aur woh bayen par
-       aata hai. dono ko bidi-isolate. */
-    #saza-doc .saza-of-body{ unicode-bidi:isolate; direction:ltr; }
-    #saza-doc .saza-tp{ unicode-bidi:isolate; direction:rtl; }
-
     /* کالم 4 — حکم اخیر عدالت (khali/دستی) — RTL/justify */
     #saza-doc .saza-c4-body{ outline:none; direction:rtl; unicode-bidi:plaintext;
       text-align:justify; text-align-last:right; min-height:40px; }
