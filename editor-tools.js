@@ -222,8 +222,8 @@ function dioEnableFloatingToolbar() {
   document.addEventListener('focusin', e => {
     const el = e.target;
     if (!el || !el.isContentEditable) return;
-    // چالان کے صفحے پر تیرتی پٹی نہیں — وہاں اوپر اپنی مستقل toolbar موجود ہے
-    try { if (el.closest && el.closest('#ch173-doc')) { _dioHideFloatBar(); return; } } catch(_) {}
+    // چالان اور سزا سلپ کے صفحے پر تیرتی پٹی نہیں — وہاں اوپر اپنی مستقل toolbar موجود ہے
+    try { if (el.closest && el.closest('#ch173-doc, #saza-doc')) { _dioHideFloatBar(); return; } } catch(_) {}
     dioBindEditor(el.parentNode || document);
     _dioShowFloatBar(el);
   });
@@ -233,13 +233,13 @@ function dioEnableFloatingToolbar() {
   window.addEventListener('scroll', () => {
     const a = document.activeElement;
     if (!a || !a.isContentEditable) return;
-    try { if (a.closest && a.closest('#ch173-doc')) return; } catch(_) {}
+    try { if (a.closest && a.closest('#ch173-doc, #saza-doc')) return; } catch(_) {}
     _dioShowFloatBar(a);
   }, true);
   window.addEventListener('resize', () => {
     const a = document.activeElement;
     if (!a || !a.isContentEditable) return;
-    try { if (a.closest && a.closest('#ch173-doc')) return; } catch(_) {}
+    try { if (a.closest && a.closest('#ch173-doc, #saza-doc')) return; } catch(_) {}
     _dioShowFloatBar(a);
   });
 }
