@@ -216,7 +216,14 @@ function _dioHideFloatBar() {
 }
 
 // Poore safhe par: jahan bhi likhne wale khane mein jayen, toolbar wahin aa jaye
+// ── BAND — floating (تیرتی) toolbar POORE SYSTEM se hata di gayi hai.
+//    (Har dastawez mein ooper apni MUSTAQIL toolbar pehle se mojood hai.)
+//    Function barqarar hai (taake koi bhi jagah jo isay bulaye na tootay),
+//    magar ab yeh kuch nahi karta. Agar kabhi dobara chalu karni ho to
+//    neeche 'return;' hata dein.
 function dioEnableFloatingToolbar() {
+  return;   // ← floating toolbar band. Chalu karne ke liye yeh line hatayen.
+  /* eslint-disable no-unreachable */
   if (window._dioFloatBound) return;
   window._dioFloatBound = true;
   document.addEventListener('focusin', e => {
@@ -244,5 +251,3 @@ function dioEnableFloatingToolbar() {
   });
 }
 window.dioEnableFloatingToolbar = dioEnableFloatingToolbar;
-document.addEventListener('DOMContentLoaded', dioEnableFloatingToolbar);
-if (document.readyState !== 'loading') dioEnableFloatingToolbar();
