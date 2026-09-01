@@ -89,7 +89,10 @@ async function _sazaLoadAccused() {
   }
 }
 
-// FIR ke ملزمان (dropdown ke liye) — sirf naam + cnic
+// FIR ke ملزمان (dropdown + block ke liye)
+// name khane mein aksar ولدیت/قومیت/سکونت pehle se shamil hota hai
+// (mulziman card isi tarah save karta hai). پیشہ aur حلیہ ALAG —
+// yeh DOOSRI satar (body description) mein jate hain.
 function _sazaAccList() {
   return (_sazaAccused || []).map(a => ({
     name: (a.name || '').trim(),
@@ -98,6 +101,20 @@ function _sazaAccList() {
     arrest_date: a.arrest_date || '',
     halia: _sazaHalia(a),
   })).filter(a => a.name);
+}
+
+// ═══ جرم — "ت پ" (تعزیراتِ پاکستان) ka qanoon (report173 jaisa) ═══
+// Agar naye مقدمہ card / system data mein dafaat likhi hain to aakhir
+// mein "ت پ" khud lag jaye (agar pehle se na ho).
+const SAZA_TP_RE = /[\s،,\-]*(ت\s*\.?\s*پ|تعزیرات\s*پاکستان)\s*$/;
+function _sazaOffenceWithTP(raw) {
+  const txt = String(raw || '').trim();
+  if (!txt) return '';
+  if (SAZA_TP_RE.test(txt)) {
+    // pehle se ت پ / تعزیرات پاکستان hai — usay ek-jaisa "ت پ" bana do
+    return txt.replace(SAZA_TP_RE, '').trim() + ' ت پ';
+  }
+  return txt + ' ت پ';
 }
 
 // حلیہ — sub-fields se (mulziman _accViewDetail jaisa)
@@ -134,6 +151,9 @@ function _sazaRender() {
   const v = (k, def) => (typeof sanitizeHtml === 'function'
     ? sanitizeHtml(sv[k] !== undefined ? sv[k] : (def || ''))
     : (sv[k] !== undefined ? sv[k] : (def || '')));
+
+  // Chune hue ملزمان — saved se (warna khali; system ke tamam KHUD nahi bharte)
+  try { _sazaChosen = sv.acc ? (JSON.parse(sv.acc) || []) : []; } catch (_) { _sazaChosen = []; }
 
   const fir = c.fir_number || '';
   const firDate = (typeof formatDate === 'function') ? formatDate(c.fir_date) : (c.fir_date || '');
@@ -242,70 +262,54 @@ function _sazaRender() {
 window._sazaRender = _sazaRender;
 
 // ═══ Table ki lakeerein safhe ke NEECHE tak (default) ═══
-// Aik hi data row hai — us ki unchai itni kar do ke table ka neecha kinara
-// safhe ke neeche wale hashiye tak pohanche. Row barhne par کالم 1 ka flex
-// spacer khud phail kar SHO khana sab se neeche le jata hai.
+// Aakhri qatar (SHO wali) ki unchai itni kar do ke table ka neecha kinara
+// safhe ke neeche wale hashiye tak pohanche — magar SIRF SCREEN par. Print
+// par yeh naap nahi lagti (warna table page 2 par chala jata tha).
 function _sazaStretchTable() {
   const doc = _sazaDoc(); if (!doc) return;
   const table = doc.querySelector('#saza-table'); if (!table) return;
-  const td = doc.querySelector('#saza-tbody .saza-c1'); if (!td) return;
+  // Aakhri qatar ka کالم 1 khana (SHO wala) — usay barhao
+  const lastC1 = doc.querySelector('#saza-tbody tr:last-child .saza-c1'); if (!lastC1) return;
   const IN = 96;
   const pageH = ((_sazaPaper === 'a4') ? 11.7 : 13) * IN;
   let padB = 0;
   try { padB = parseFloat(getComputedStyle(doc).paddingBottom) || 0; } catch (_) {}
   const docTop = doc.getBoundingClientRect().top;
   const bottomLimit = docTop + pageH - padB - 2;
-  td.style.height = '';                        // pehle purani naap hatao
+  lastC1.style.height = '';                     // pehle purani naap hatao
   const tblBottom = table.getBoundingClientRect().bottom;
   const gap = bottomLimit - tblBottom;
   if (gap > 4) {
-    const cur = td.offsetHeight || 0;
-    td.style.height = (cur + gap) + 'px';
+    const cur = lastC1.offsetHeight || 0;
+    lastC1.style.height = (cur + gap) + 'px';
   }
 }
 window._sazaStretchTable = _sazaStretchTable;
 
-// ── Table body — AIK data row (headings row + aik data row).
-//    Tamam ملزمان کالم 1 mein STACK hote hain (beech mein koi lakeer/
-//    separator nahi). SHO ka khana bhi isi کالم 1 ke NEECHE (ملزمان
-//    ke baad) — report173/zimni jaisa. کالم 2/3 mein har ملزم ka
-//    تاریخ/جرم 270° khada (har ملزم ke saamne). ──
+// ── Table body — HAR ملزم ki apni QATAR (row). Har ملزم ka apna
+//    allocated khana charon کالم mein:
+//      کالم 1 — satar 1: naam(+ولدیت/قومیت/سکونت) · satar 2: پیشہ + حلیہ
+//      کالم 2 — us ملزم ki تاریخ گرفتاری (270° khadi)
+//      کالم 3 — جرم SIRF AIK DAFA (pehli qatar par rowspan, ت پ ke saath)
+//      کالم 4 — حکم اخیر عدالت (khali, har ملزم ka apna)
+//    Beech mein koi UFQI (horizontal) lakeer nahi. SHO ka khana aakhri
+//    ملزم ke NEECHE aik alag qatar mein (کالم 1), bayen sidh.
+//    SIRF woh ملزمان jo dropdown se chune gaye — baqi nahi. ──
 function _sazaBuildRows(sv, c, o) {
   o = o || (typeof currentOfficer !== 'undefined' && currentOfficer) || {};
-  let people = _sazaAccList();
-  if (!people.length) people = [{ name:'', cnic:'', pesha:'', arrest_date:'', halia:'' }];
 
-  // کالم 1 — tamam ملزمان stack (saved ho to seedha wahi)
-  const c1 = (sv.c1 !== undefined)
-    ? (typeof sanitizeHtml === 'function' ? sanitizeHtml(sv.c1) : sv.c1)
-    : people.map(a => _sazaAccusedBlock(a)).join('');
+  // Chune hue ملزمان: pehle saved (sv.acc = naam ki list), warna KHALI
+  // (system ke tamam ملزمان KHUD nahi bharte — sirf dropdown se aate hain).
+  let chosenNames = [];
+  if (sv.acc) { try { chosenNames = JSON.parse(sv.acc) || []; } catch (_) { chosenNames = []; } }
+  const all = _sazaAccList();
+  let people = chosenNames.map(nm => all.find(a => (a.name || '') === nm)).filter(Boolean);
 
-  // کالم 2 — har ملزم ka تاریخ گرفتاری (alag alag 270° item, ملزم ke saamne)
-  const dates = (sv.c2 !== undefined)
-    ? (typeof sanitizeHtml === 'function' ? sanitizeHtml(sv.c2) : sv.c2)
-    : people.map(a => {
-        const d = a.arrest_date ? ((typeof formatDate === 'function') ? formatDate(a.arrest_date) : a.arrest_date) : '';
-        return '<div class="rotitem">' + esc(d) + '</div>';
-      }).join('');
-
-  // کالم 3 — جرم (pehla ملزم = case ka جرم, باقی مندرجہ بالا)
-  const jurm = (sv.c3 !== undefined)
-    ? (typeof sanitizeHtml === 'function' ? sanitizeHtml(sv.c3) : sv.c3)
-    : people.map((a, i) => {
-        const j = (i === 0) ? (c.section_of_law || c.offence_type || '') : 'مندرجہ بالا';
-        return '<div class="rotitem">' + esc(j) + '</div>';
-      }).join('');
-
-  // کالم 4 — حکم اخیر عدالت (khali/دستی)
-  const court = (sv.c4 !== undefined)
-    ? (typeof sanitizeHtml === 'function' ? sanitizeHtml(sv.c4) : sv.c4) : '';
-
-  // SHO khana — کالم 1 ke NEECHE (ملزمان ke baad). report173/zimni jaisa:
-  // OOPER dastkhat ki KHALI jagah (koi lakeer nahi) → naam/رینک/تھانہ →
-  // تاریخ. (Koi border/underline OOPER nahi.)
+  const offence = _sazaOffenceWithTP(c.section_of_law || c.offence_type || '');
   const _v = (k, def) => (typeof sanitizeHtml === 'function'
     ? sanitizeHtml(sv[k] !== undefined ? sv[k] : (def || ''))
     : (sv[k] !== undefined ? sv[k] : (def || '')));
+
   const shoBlock = `
     <div class="saza-sho-inline">
       <div class="saza-sho-space"></div>
@@ -314,29 +318,84 @@ function _sazaBuildRows(sv, c, o) {
            onclick="_sazaPickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${_v('sho_date', '')}</div>
     </div>`;
 
-  return `<tr data-row="0">
-    <td class="saza-c1">
-      <button class="saza-acc-pick no-print" onclick="_sazaAccPicker(event)" title="ملزمان منتخب کریں">▾</button>
-      <div class="saza-c1-inner">
-        <div class="saza-c1-body" contenteditable="true" data-k="c1">${c1}</div>
-        ${shoBlock}
-      </div>
-    </td>
-    <td class="saza-c2 rotcell"><div class="rotcol" contenteditable="true" data-k="c2">${dates}</div></td>
-    <td class="saza-c3 rotcell"><div class="rotcol" contenteditable="true" data-k="c3">${jurm}</div></td>
-    <td class="saza-c4"><div class="saza-c4-body" contenteditable="true" data-k="c4">${court}</div></td>
+  // Koi ملزم nahi chuna → aik hint qatar + SHO qatar
+  if (!people.length) {
+    return `
+    <tr data-row="0" class="saza-acc-row">
+      <td class="saza-c1">
+        <button class="saza-acc-pick no-print" onclick="_sazaAccPicker(event)" title="ملزمان منتخب کریں">▾</button>
+        <div class="saza-c1-body" contenteditable="true" data-k="c1_0"><span class="saza-hint no-print">▾ سے ملزمان منتخب کریں</span></div>
+      </td>
+      <td class="saza-c2 rotcell"><div class="rotcell-in" contenteditable="true" data-k="c2"></div></td>
+      <td class="saza-c3 rotcell"><div class="rotcell-in saza-jurm" contenteditable="true" data-k="c3">${esc(offence)}</div></td>
+      <td class="saza-c4"><div class="saza-c4-body" contenteditable="true" data-k="c4_0"></div></td>
+    </tr>
+    <tr data-row="sho">
+      <td class="saza-c1 saza-c1-sho">${shoBlock}</td>
+      <td class="saza-c2"></td>
+      <td class="saza-c3"></td>
+      <td class="saza-c4"></td>
+    </tr>`;
+  }
+
+  const N = people.length;
+  // کالم 2 (تاریخ) aur کالم 3 (جرم) — dono AIK DAFA (rowspan), khadi (270°).
+  // (Asal form isi tarah: date aur جرم aik-aik khadi column, poori table
+  //  ke saamne — image 4 dekhein. Isi liye row ke overlap ka masla bhi nahi.)
+  // تاریخ: har ملزم ki گرفتاری تاریخ (agar sab aik jaisi to aik dafa). Do
+  //  qism ho sakti hain — برضمانت کنفرم + تاریخ، ya asal گرفتاری — officer
+  //  edit kar sakta hai.
+  const uniqDates = [...new Set(people.map(a => a.arrest_date
+    ? ((typeof formatDate === 'function') ? formatDate(a.arrest_date) : a.arrest_date) : '').filter(Boolean))];
+  const dateTxt = (sv.c2 !== undefined)
+    ? (typeof sanitizeHtml === 'function' ? sanitizeHtml(sv.c2) : sv.c2)
+    : esc(uniqDates.join(' / '));
+  const jurmTxt = (sv.c3 !== undefined)
+    ? (typeof sanitizeHtml === 'function' ? sanitizeHtml(sv.c3) : sv.c3)
+    : esc(_sazaOffenceWithTP(c.section_of_law || c.offence_type || ''));
+
+  const rowsHtml = people.map((a, i) => {
+    const c1 = (sv['c1_' + i] !== undefined)
+      ? (typeof sanitizeHtml === 'function' ? sanitizeHtml(sv['c1_' + i]) : sv['c1_' + i])
+      : _sazaAccusedBlock(a);
+    const cv = (sv['c4_' + i] !== undefined)
+      ? (typeof sanitizeHtml === 'function' ? sanitizeHtml(sv['c4_' + i]) : sv['c4_' + i]) : '';
+    // Picker sirf pehli qatar ke کالم 1 ke bayen ooper kone par
+    const picker = (i === 0)
+      ? `<button class="saza-acc-pick no-print" onclick="_sazaAccPicker(event)" title="ملزمان منتخب کریں">▾</button>` : '';
+    // کالم 2 (تاریخ) aur کالم 3 (جرم) SIRF pehli qatar par — rowspan = tamam ملزمان.
+    const spanCells = (i === 0)
+      ? `<td class="saza-c2 rotcell" rowspan="${N}"><div class="rotcell-in" contenteditable="true" data-k="c2">${dateTxt}</div></td>
+      <td class="saza-c3 rotcell" rowspan="${N}"><div class="rotcell-in saza-jurm" contenteditable="true" data-k="c3">${jurmTxt}</div></td>`
+      : '';
+    return `<tr data-row="${i}" class="saza-acc-row">
+      <td class="saza-c1">${picker}<div class="saza-c1-body" contenteditable="true" data-k="c1_${i}">${c1}</div></td>
+      ${spanCells}
+      <td class="saza-c4"><div class="saza-c4-body" contenteditable="true" data-k="c4_${i}">${cv}</div></td>
+    </tr>`;
+  }).join('');
+
+  // SHO qatar — aakhri ملزم ke NEECHE. کالم 1 mein SHO block (bayen sidh,
+  // کالم 1 ki bayen lakeer ke saath — image 4 jaisa). کالم 2/3 rowspan sirf
+  // ملزمان tak, is liye SHO qatar mein un ke apne (khali) khane bhi aate hain.
+  const shoRow = `<tr data-row="sho">
+    <td class="saza-c1 saza-c1-sho">${shoBlock}</td>
+    <td class="saza-c2"></td>
+    <td class="saza-c3"></td>
+    <td class="saza-c4"></td>
   </tr>`;
+
+  return rowsHtml + shoRow;
 }
 
-// کالم 1 ka block — naam (UNBOLD 14pt), phir حلیہ. Har ملزم ke baad
-// koi lakeer/separator NAHI (sirf halki si jagah).
+// کالم 1 ka block — satar 1: naam (+ولدیت/قومیت/سکونت, UNBOLD 14pt),
+// satar 2: پیشہ + حلیہ (body description). Beech mein koi lakeer nahi.
 function _sazaAccusedBlock(a) {
-  if (!a.name && !a.halia) return '';
+  if (!a.name && !a.halia && !a.pesha) return '';
   const parts = [];
-  const nameLine = [a.name, a.pesha ? ('پیشہ ' + a.pesha) : ''].filter(Boolean).join('، ');
-  const halia = a.halia ? ('حلیہ: ' + a.halia) : '';
-  const full = [nameLine, halia].filter(Boolean).join(' — ');
-  if (full) parts.push('<div class="saza-acc-item">' + esc(full) + '</div>');
+  if (a.name) parts.push('<div class="saza-acc-name">' + esc(a.name) + '</div>');
+  const desc = [a.pesha ? ('پیشہ ' + a.pesha) : '', a.halia || ''].filter(Boolean).join(' — ');
+  if (desc) parts.push('<div class="saza-acc-desc">' + esc(desc) + '</div>');
   return parts.join('');
 }
 
@@ -350,10 +409,10 @@ function _sazaAccPicker(ev) {
     return;
   }
   const tbody = document.getElementById('saza-tbody');
-  // Pehle se maujood naam (کالم 1 ke har ملزم item se)
-  const mine = new Set();
-  if (tbody) tbody.querySelectorAll('.saza-c1-body .saza-acc-item').forEach(el => {
-    const nm = (el.innerText || '').split(/،|—/)[0].trim();
+  // Pehle se chune hue naam (state se, warna کالم 1 ke naam-satar se)
+  const mine = new Set(_sazaChosen || []);
+  if (!mine.size && tbody) tbody.querySelectorAll('.saza-c1-body .saza-acc-name').forEach(el => {
+    const nm = (el.innerText || '').trim();
     if (nm) mine.add(nm);
   });
 
@@ -409,25 +468,26 @@ function _sazaAccPicker(ev) {
 }
 window._sazaAccPicker = _sazaAccPicker;
 
-// Chune hue ملزمان ke hisaab se کالم 1/2/3 dobara bharo (SHO khana barqarar)
+// Chune hue ملزمان (naam) — sirf yehi کالم 1 mein dikhte hain (#9)
+let _sazaChosen = [];
+
+// Dropdown se ملزمان chunne par poora tbody dobara banao (per-ملزم qatarein)
 function _sazaSetAccused(names) {
-  const all = _sazaAccList();
-  const chosen = names.map(nm => all.find(a => a.name === nm)).filter(Boolean);
-  if (!chosen.length) return;
-  const c = _sazaCase || {};
+  _sazaChosen = names.slice();
   const doc = _sazaDoc(); if (!doc) return;
-  const c1body = doc.querySelector('#saza-tbody .saza-c1-body');
-  const c2col  = doc.querySelector('#saza-tbody [data-k="c2"]');
-  const c3col  = doc.querySelector('#saza-tbody [data-k="c3"]');
-  if (c1body) c1body.innerHTML = chosen.map(a => _sazaAccusedBlock(a)).join('');
-  if (c2col) c2col.innerHTML = chosen.map(a => {
-    const d = a.arrest_date ? ((typeof formatDate === 'function') ? formatDate(a.arrest_date) : a.arrest_date) : '';
-    return '<div class="rotitem">' + esc(d) + '</div>';
-  }).join('');
-  if (c3col) c3col.innerHTML = chosen.map((a, i) => {
-    const j = (i === 0) ? (c.section_of_law || c.offence_type || '') : 'مندرجہ بالا';
-    return '<div class="rotitem">' + esc(j) + '</div>';
-  }).join('');
+  const tbody = doc.querySelector('#saza-tbody'); if (!tbody) return;
+  const c = _sazaCase || {};
+  const o = (typeof currentOfficer !== 'undefined' && currentOfficer) || {};
+  // Naye chunao par saved per-row matn nazar-andaz — sirf chosen se banao.
+  // (SHO/thana/zila waghera doc mein pehle se hain — unhein dobara na chھero:
+  //  save par woh apne data-k se collect ho jate hain.)
+  const sho = doc.querySelector('[data-k="sho"]');
+  const shoDate = doc.querySelector('[data-k="sho_date"]');
+  const shoHtml = sho ? sho.innerHTML : esc(_sazaShoLine(o));
+  const shoDateHtml = shoDate ? shoDate.innerHTML : '';
+  const svLike = { acc: JSON.stringify(names), sho: shoHtml, sho_date: shoDateHtml };
+  tbody.innerHTML = _sazaBuildRows(svLike, c, o);
+  try { _sazaBindKeys(); } catch (_) {}
   try { _sazaStretchTable(); } catch (_) {}
 }
 
@@ -706,6 +766,7 @@ async function _sazaSave() {
     else data[k] = el.innerHTML;
   });
   data.doc_font = doc.dataset.fs || String(SAZA_FONT_DEFAULT);
+  data.acc = JSON.stringify(_sazaChosen || []);   // chune hue ملزمان (naam)
   data.saved_at = new Date().toISOString();
   try {
     // case_documents mein 'saza_slip' record — misal-docs.js jaisa
@@ -741,10 +802,18 @@ async function _sazaSave() {
 }
 window._sazaSave = _sazaSave;
 
-// ═══ PRINT — report173 jaisa (screen wala hi document, WAHI CSS) ═══
+// ═══ PRINT — report173 jaisa (screen wala hi document, WAHI CSS).
+//   AHEM: print se pehle SCREEN wali "stretch" (inline height) HATA dete
+//   hain — warna aakhri (SHO) qatar itni lambi ho jati thi ke poori table
+//   page 2 par chali jati thi (page-break-inside:avoid ki wajah se). Ab
+//   table page 1 se shuru hoti hai. ═══
 function _sazaPrint() {
   const doc = _sazaDoc(); if (!doc) return;
-  const inner = doc.innerHTML;
+  const clone = doc.cloneNode(true);
+  // Har lagayi hui inline height (stretch) saaf karo
+  clone.querySelectorAll('[style*="height"]').forEach(el => { el.style.height = ''; el.style.minHeight = ''; });
+  clone.querySelectorAll('.no-print, .saza-acc-pick').forEach(el => el.remove());
+  const inner = clone.innerHTML;
   const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -757,12 +826,13 @@ function _sazaPrint() {
         min-height:0 !important; padding:0 !important; margin:0 !important;
         transform:none !important; box-shadow:none !important; border-radius:0 !important; }
       .no-print, .saza-acc-pick, button, select{ display:none !important; }
-      /* Table agle safhe par jaye to headings dobara na aayen */
+      /* Table page 1 se shuru — koi cell/row ko zabardasti lamba na karo */
+      #saza-doc .saza-table td{ height:auto !important; }
+      /* Header har naye safhe par NA dohraye (sirf pehle safhe par) */
       .saza-table thead{ display:table-row-group; }
-      /* Har row poori rahe (beech se na kate) */
-      .saza-table tr{ page-break-inside:avoid; break-inside:avoid; }
+      /* Sirf HAR ملزم ki qatar poori rahe; SHO qatar toot sakti hai */
+      .saza-acc-row{ page-break-inside:avoid; break-inside:avoid; }
       #saza-doc, #saza-doc *{ orphans:2; widows:2; }
-      /* Doosre safhe ki bind jagah (مثلث) — chapai mein */
       .saza-bind{ display:none; }
       @media print{ .saza-bind{ display:block; } }
     </style></head><body><div id="saza-doc">${inner}</div></body></html>`;
@@ -810,7 +880,7 @@ function _sazaCSS() {
       margin:14px 0 12px 0; direction:rtl; flex-wrap:wrap; line-height:1.4; justify-content:center; }
     #saza-doc .saza-caseline .fl-lg{ min-width:60px; }
 
-    /* ── TABLE ── lakeerein PATLI (0.5pt) — pehle 1px thi ── */
+    /* ── TABLE ── lakeerein PATLI (0.5pt) ── */
     #saza-doc .saza-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; margin:0; }
     #saza-doc .saza-table th, #saza-doc .saza-table td{
       border:0.5pt solid #000; padding:3px 5px; font-size:14pt; vertical-align:top;
@@ -819,29 +889,34 @@ function _sazaCSS() {
     /* Row 1 (headings) — sab کالم BOLD + 16pt, matn ke OOPER/NEECHE khuli jagah */
     #saza-doc .saza-table thead th{
       text-align:center; vertical-align:middle; font-weight:bold; font-size:16pt;
-      line-height:1.3; padding:10px 5px;
+      line-height:1.3; padding:12px 6px;
     }
     /* Baahri bayen/dayen kinare khule (sirf andar ki lakeerein) */
     #saza-doc .saza-table th:first-child, #saza-doc .saza-table td:first-child{ border-right:none; }
     #saza-doc .saza-table th:last-child, #saza-doc .saza-table td:last-child{ border-left:none; }
-    /* Table ki SAB SE NEECHE wali lakeer HATAO (aik data row hai) */
-    #saza-doc .saza-table tbody td{ border-bottom:none; }
+    /* HAR ملزم ki qatar ke DARMIYAN koi UFQI lakeer nahi (na ooper na neeche).
+       Sirf sab se ooper (header ke neeche) aur کالم ki khadi lakeerein rehti hain. */
+    #saza-doc .saza-table tbody td{ border-top:none; border-bottom:none; }
+    /* Har ملزم ki qatar poori rahe — beech se na kate */
+    #saza-doc .saza-acc-row{ page-break-inside:avoid; break-inside:avoid; }
 
-    /* کالم 1 — ملزمان (UNBOLD 14pt, beech mein koi lakeer nahi) + neeche SHO khana.
-       Poori unchai flex: ملزمان OOPER, SHO khana SAB SE NEECHE. */
+    /* کالم 1 — HAR ملزم: satar 1 naam (UNBOLD 14pt), satar 2 پیشہ+حلیہ. */
     #saza-doc .saza-c1{ position:relative; vertical-align:top; text-align:justify; text-align-last:right; }
-    #saza-doc .saza-c1-inner{ display:flex; flex-direction:column; min-height:100%; height:100%; }
-    #saza-doc .saza-c1-body{ outline:none; padding-left:26px; }
-    #saza-doc .saza-acc-item{ font-weight:normal; font-size:14pt; margin-bottom:6px; }
-    /* ملزمان chunne wala ▾ (chapai mein nahi) */
+    #saza-doc .saza-c1-body{ outline:none; padding:2px 4px; }
+    #saza-doc tr[data-row="0"] .saza-c1-body{ padding-left:28px; }  /* picker ke liye jagah */
+    #saza-doc .saza-acc-name{ font-weight:normal; font-size:14pt; }
+    #saza-doc .saza-acc-desc{ font-weight:normal; font-size:14pt; }
+    #saza-doc .saza-hint{ color:#999; font-size:12pt; }
+    /* ملزمان chunne wala ▾ — کالم 1 ke BAYEN OOPER kone par (chapai mein nahi) */
     #saza-doc .saza-acc-pick{
-      position:absolute; top:2px; left:2px; width:22px; height:22px; line-height:1; padding:0;
+      position:absolute; top:3px; left:3px; width:22px; height:22px; line-height:1; padding:0;
       border:0.5pt solid #0369a1; border-radius:5px; background:#eef6ff; color:#0369a1;
       cursor:pointer; font-size:13px; z-index:3;
     }
-    /* SHO khana — کالم 1 ke SAB SE NEECHE (ملزمان ke baad). report173/zimni jaisa:
-       OOPER dastkhat ki KHALI jagah (koi lakeer/border NAHI) → naام → تاریخ. */
-    #saza-doc .saza-sho-inline{ margin-top:auto; padding-top:10px; text-align:left; direction:rtl; }
+    /* SHO qatar — aakhri ملزم ke NEECHE (کالم 1). Bayen sidh. کالم 1 ki
+       BAYEN lakeer (کالم 2 se divider) ke saath (image 4 jaisa). */
+    #saza-doc .saza-c1-sho{ vertical-align:top; }
+    #saza-doc .saza-sho-inline{ padding-top:10px; text-align:left; direction:rtl; }
     #saza-doc .saza-sho-space{ min-height:52px; }  /* dastkhat ki khali jagah — koi lakeer nahi */
     #saza-doc .saza-sho-line{ font-weight:bold; font-size:14pt; text-align:left; outline:none;
       white-space:nowrap; min-height:20px; }
@@ -849,20 +924,18 @@ function _sazaCSS() {
     #saza-doc .saza-sho-date{ font-weight:normal; margin-top:4px; cursor:pointer; }
     #saza-doc .saza-sho-date:empty::before{ content:'تاریخ…'; color:#aaa; font-weight:normal; }
 
-    /* کالم 2 / 3 — 270° khadi matn, har ملزم ka apna item.
-       rotcol = flex column (top se), har rotitem alag khada block. */
+    /* کالم 2 (تاریخ) aur کالم 3 (جرم) — dono AIK khadi (270°) column (rowspan).
+       Matn OOPER se (pehle ملزم ke saamne), khane ke beech (afqi) mein. */
     #saza-doc .saza-table td.rotcell{ padding:0; text-align:center; vertical-align:top; position:relative; }
-    #saza-doc .rotcol{ display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
-      width:100%; min-height:120px; padding-top:6px; outline:none; }
-    #saza-doc .rotitem{
-      display:inline-block; writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
+    #saza-doc .rotcell-in{
+      writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
       transform:rotate(180deg); -webkit-transform:rotate(180deg);
-      white-space:nowrap; line-height:1.3; text-align:center; unicode-bidi:plaintext;
-      font-size:14pt; padding:2px; margin:0 auto 8px;
+      white-space:nowrap; line-height:1.35; unicode-bidi:plaintext; font-size:14pt;
+      outline:none; margin:6px auto 0; padding:2px;
     }
 
-    /* کالم 4 — حکم اخیر عدالت (khali/دستی) */
-    #saza-doc .saza-c4-body{ outline:none; text-align:justify; text-align-last:right; }
+    /* کالم 4 — حکم اخیر عدالت (khali/دستی) — har ملزم ka apna khana */
+    #saza-doc .saza-c4-body{ outline:none; text-align:justify; text-align-last:right; min-height:40px; }
 
     /* ── Doosre safhe ki bind جگہ — مثلث (report173 jaisa) ── */
     #saza-doc .saza-bind{
