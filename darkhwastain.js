@@ -68,6 +68,12 @@ async function openDarkhwast(caseId) {
   }
   await _dkLoadSaved();
   await _dkLoadAccused();
+  await _dkLoadFirText();
+  // Chune hue ملزمان — saved se, warna sab (bydefault sab select)
+  try {
+    if (_dkSaved && _dkSaved.acc !== undefined) _dkChosen = JSON.parse(_dkSaved.acc) || [];
+    else _dkChosen = _dkAccusedNames();
+  } catch (_) { _dkChosen = _dkAccusedNames(); }
   // Saved type (agar tha) warna default
   if (_dkSaved && _dkSaved.dk_type) _dkType = _dkSaved.dk_type;
   if (typeof _dioOpenDocTab === 'function') { try { _dioOpenDocTab('darkhwastain'); } catch (_) {} }
@@ -107,15 +113,53 @@ async function _dkLoadAccused() {
   }
 }
 
-// ملزمان ke naam ki fehrist (numbered) — templates ke liye
-function _dkAccusedNames() {
-  return (_dkAccused || []).map(a => (a.name || '').trim()).filter(Boolean);
+// ── FIR ka matn (case_documents document_type='fir', content.html) ──
+let _dkFirText = '';
+async function _dkLoadFirText() {
+  _dkFirText = '';
+  try {
+    if (typeof _misalDocs !== 'undefined' && _misalDocs && _misalDocs['fir'] && _misalDocs['fir'].content) {
+      _dkFirText = _misalDocs['fir'].content.html || _misalDocs['fir'].content.text || '';
+      if (_dkFirText) return;
+    }
+  } catch (_) {}
+  try {
+    const { data } = await supabaseClient.from('case_documents')
+      .select('content').eq('case_id', _dkCaseId).eq('document_type', 'fir')
+      .order('created_at', { ascending: false }).limit(1);
+    if (data && data[0] && data[0].content) _dkFirText = data[0].content.html || data[0].content.text || '';
+  } catch (_) {}
 }
-function _dkAccusedNamesHtml() {
-  const names = _dkAccusedNames();
-  if (!names.length) return '<span style="color:#c00;">[ملزمان کے نام درج نہیں]</span>';
+// FIR matn ko saada matn mein (tags nikaal kar) — درخواست ke andar copy ke liye
+function _dkFirPlain() {
+  const html = _dkFirText || '';
+  if (!html) return '';
+  try {
+    const d = document.createElement('div');
+    d.innerHTML = (typeof sanitizeHtml === 'function') ? sanitizeHtml(html) : html;
+    let t = (d.textContent || d.innerText || '').replace(/\s+/g, ' ').trim();
+    return t;
+  } catch (_) { return String(html).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(); }
+}
+
+// ملزمان ke naam ki fehrist — dropdown + numbering ke liye
+function _dkAccList() {
+  return (_dkAccused || []).map(a => ({ name: (a.name || '').trim() })).filter(a => a.name);
+}
+function _dkAccusedNames() { return _dkAccList().map(a => a.name); }
+// Chune hue ملزمان (bydefault sab) — numbered HTML
+function _dkChosenNamesHtml() {
+  let names;
+  if (_dkChosen && _dkChosen.length !== undefined) {
+    names = _dkChosen;
+  } else {
+    names = _dkAccusedNames();
+  }
+  names = names.filter(Boolean);
+  if (!names.length) return '<span style="color:#c00;">[ملزمان منتخب کریں]</span>';
   return names.map((n, i) => (i + 1) + '۔ ' + esc(n)).join('<br>');
 }
+let _dkChosen = null;   // null = abhi decide nahi (default sab)
 
 // ── SIDE MARGIN (report173 ke mutabiq) ──
 function _dkSideMargin() { return (_dkPaper === 'a4') ? '0.5cm' : '0.2cm'; }
@@ -157,60 +201,45 @@ function _dkShoLine(o) {
   return st ? ('تھانہ ' + st) : '';
 }
 
-// ═══ TEMPLATE — har qism ka khaka (placeholders KHUD bharte hain) ═══
+// ═══ استدعا (request line) — har qism ka apna, aakhir mein ═══
+function _dkIstidaa(typeId) {
+  switch (typeId) {
+    case 'remand_jismani':  return 'لہٰذا استدعا ہے کہ ملزمان بالا کا جسمانی ریمانڈ بحق پولیس عطا فرمایا جائے تاکہ تکمیلِ تفتیش عمل میں لائی جا سکے۔ مہربانی ہوگی۔';
+    case 'remand_judicial': return 'لہٰذا استدعا ہے کہ ملزمان بالا کو عدالتی ریمانڈ پر جیل بھیجا جائے۔ مہربانی ہوگی۔';
+    case 'byanat_164':      return 'لہٰذا استدعا ہے کہ گواہان/مدعی ہٰذا کے بیانات زیر دفعہ 164 ض ف قلمبند فرمائے جائیں۔ مہربانی ہوگی۔';
+    case 'shanakht_parade': return 'لہٰذا استدعا ہے کہ کسی مجسٹریٹ صاحب کی وساطت سے ملزمان بالا کی عدالتی شناخت پریڈ کروائی جائے۔ مہربانی ہوگی۔';
+    case 'talbi_mulziman':  return 'لہٰذا استدعا ہے کہ ملزمان بالا کو بغرضِ تفتیش عدالت میں طلب فرمایا جائے۔ مہربانی ہوگی۔';
+    case 'zamanat_qabl':    return 'لہٰذا استدعا ہے کہ ملزمان بالا کی ضمانت قبل از گرفتاری منسوخ فرمائی جائے۔ مہربانی ہوگی۔';
+    case 'superdari':       return 'لہٰذا استدعا ہے کہ مالِ مقدمہ بعد تکمیلِ قانونی کارروائی جائز مالک کے سپرد کیا جائے۔ مہربانی ہوگی۔';
+    case 'warrant_gift':    return 'لہٰذا استدعا ہے کہ ملزمان بالا کے وارنٹ گرفتاری جاری فرمائے جائیں۔ مہربانی ہوگی۔';
+    case 'ishtihaari':      return 'لہٰذا استدعا ہے کہ ملزمان بالا کو زیر دفعہ 87 ض ف اشتہاری قرار دیا جائے۔ مہربانی ہوگی۔';
+    case 'behri_dafat':     return 'لہٰذا استدعا ہے کہ مقدمہ ہٰذا میں مناسب دفعات کے اضافہ کی اجازت مرحمت فرمائی جائے۔ مہربانی ہوگی۔';
+    case 'kharaji_dafat':   return 'لہٰذا استدعا ہے کہ غیر متعلقہ دفعات کے اخراج کی اجازت مرحمت فرمائی جائے۔ مہربانی ہوگی۔';
+    case 'postmortem':      return 'لہٰذا استدعا ہے کہ متعلقہ میڈیکل آفیسر کو پوسٹ مارٹم/طبی معائنہ کی ہدایت فرمائی جائے۔ مہربانی ہوگی۔';
+    case 'dna':             return 'لہٰذا استدعا ہے کہ ڈی این اے نمونہ جات کے حصول کی اجازت مرحمت فرمائی جائے۔ مہربانی ہوگی۔';
+    case 'call_data':       return 'لہٰذا استدعا ہے کہ متعلقہ کمپنیوں سے کال ڈیٹا ریکارڈ (CDR) کے حصول کی اجازت مرحمت فرمائی جائے۔ مہربانی ہوگی۔';
+    case 'geo_fencing':     return 'لہٰذا استدعا ہے کہ جیو فینسنگ ڈیٹا کے حصول کی اجازت مرحمت فرمائی جائے۔ مہربانی ہوگی۔';
+    case 'medical_board':   return 'لہٰذا استدعا ہے کہ میڈیکل بورڈ تشکیل دیا جائے۔ مہربانی ہوگی۔';
+    case 'transfer_case':   return 'لہٰذا استدعا ہے کہ مقدمہ ہٰذا متعلقہ عدالت/تھانہ منتقل فرمایا جائے۔ مہربانی ہوگی۔';
+    case 'weapon_return':   return 'لہٰذا استدعا ہے کہ اسلحہ بعد قانونی کارروائی جائز مالک کو واپس کیا جائے۔ مہربانی ہوگی۔';
+    case 'record_talbi':    return 'لہٰذا استدعا ہے کہ متعلقہ ادارہ/محکمہ کو ریکارڈ فراہمی کی ہدایت فرمائی جائے۔ مہربانی ہوگی۔';
+    default:                return 'لہٰذا استدعا ہے کہ ______________________ ۔ مہربانی ہوگی۔';
+  }
+}
+
+// ═══ TEMPLATE (body) — Shafi ka structure (point 8):
+//   "جناب عالیٰ! مختصرحالات مقدمہ عنوان بالا اس طرح ہیں کہ [FIR ka matn]
+//    جس پر مقدمہ عنوان بالا درج ہوا تفتیش عمل میں لائی گئی۔ دورانِ تفتیش
+//    ______ [IO yahan apni تفتیش likhega] ______
+//    [استدعا line — qism ke hisaab se]" ═══
 function _dkTemplateBody(typeId, c, o) {
   c = c || {}; o = o || {};
-  const fir = esc(c.fir_number || '____');
-  const uZila = esc(o.district || c.case_district || '____');
-  const uThana = esc(o.station || c.case_station || '____');
-  const dafat = esc(c.section_of_law || c.offence_type || '____');
-  const accBlock = _dkAccusedNamesHtml();
-  const io = esc(_dkShoLine(o));
-
-  const P = (body) => body;   // shortcut
-
-  switch (typeId) {
-    case 'remand_jismani':
-      return P(`جناب عالیٰ! گزارش ہے کہ مقدمہ نمبر ${fir} زیر دفعہ ${dafat} تھانہ ${uThana} ضلع ${uZila} درج ہے۔ دورانِ تفتیش مندرجہ ذیل ملزم/ملزمان کو گرفتار کیا گیا ہے:<br>${accBlock}<br>چونکہ ملزمان سے برآمدگی/تفتیش مکمل کرنا باقی ہے اور مزید تفتیش کے لیے ملزمان کا جسمانی ریمانڈ درکار ہے، لہٰذا استدعا ہے کہ ملزمان بالا کا جسمانی ریمانڈ بحق پولیس عطا فرمایا جائے تاکہ تکمیلِ تفتیش عمل میں لائی جا سکے۔ مہربانی ہوگی۔`);
-    case 'remand_judicial':
-      return P(`جناب عالیٰ! گزارش ہے کہ مقدمہ نمبر ${fir} زیر دفعہ ${dafat} تھانہ ${uThana} ضلع ${uZila} درج ہے۔ مندرجہ ذیل ملزم/ملزمان زیرِ حراست ہیں:<br>${accBlock}<br>چونکہ ملزمان سے تفتیش/برآمدگی مکمل ہو چکی ہے اور فی الحال مزید جسمانی ریمانڈ کی ضرورت نہیں، لہٰذا استدعا ہے کہ ملزمان بالا کو عدالتی ریمانڈ پر جیل بھیجا جائے۔ مہربانی ہوگی۔`);
-    case 'byanat_164':
-      return P(`جناب عالیٰ! گزارش ہے کہ مقدمہ نمبر ${fir} زیر دفعہ ${dafat} تھانہ ${uThana} ضلع ${uZila} درج ہے۔ دورانِ تفتیش گواہان/مدعی کے بیانات زیر دفعہ 164 ض ف بحضورِ عدالت قلمبند کروانا ازحد ضروری ہے تاکہ شہادت کو قانونی تحفظ حاصل ہو۔ لہٰذا استدعا ہے کہ گواہان ہٰذا کے بیانات زیر دفعہ 164 ض ف قلمبند فرمائے جائیں۔ مہربانی ہوگی۔`);
-    case 'shanakht_parade':
-      return P(`جناب عالیٰ! گزارش ہے کہ مقدمہ نمبر ${fir} زیر دفعہ ${dafat} تھانہ ${uThana} ضلع ${uZila} درج ہے۔ مندرجہ ذیل ملزم/ملزمان زیرِ حراست ہیں:<br>${accBlock}<br>چونکہ ملزمان کی بذریعہ گواہان شناخت کروانا ضروری ہے، لہٰذا استدعا ہے کہ کسی مجسٹریٹ صاحب کی وساطت سے ملزمان بالا کی عدالتی شناخت پریڈ کروائی جائے۔ مہربانی ہوگی۔`);
-    case 'talbi_mulziman':
-      return P(`جناب عالیٰ! گزارش ہے کہ مقدمہ نمبر ${fir} زیر دفعہ ${dafat} تھانہ ${uThana} ضلع ${uZila} درج ہے۔ مندرجہ ذیل ملزم/ملزمان کی بابت تفتیش درکار ہے:<br>${accBlock}<br>لہٰذا استدعا ہے کہ ملزمان بالا کو بغرضِ تفتیش عدالت میں طلب فرمایا جائے۔ مہربانی ہوگی۔`);
-    case 'zamanat_qabl':
-      return P(`جناب عالیٰ! گزارش ہے کہ مقدمہ نمبر ${fir} زیر دفعہ ${dafat} تھانہ ${uThana} ضلع ${uZila} درج ہے۔ ملزم/ملزمان نے قبل از گرفتاری ضمانت حاصل کر رکھی ہے، تاہم تفتیش میں عدم تعاون کے باعث ضمانت کی منسوخی ناگزیر ہے۔ لہٰذا استدعا ہے کہ ملزمان بالا کی ضمانت قبل از گرفتاری منسوخ فرمائی جائے۔ مہربانی ہوگی۔`);
-    case 'superdari':
-      return P(`جناب عالیٰ! گزارش ہے کہ مقدمہ نمبر ${fir} زیر دفعہ ${dafat} تھانہ ${uThana} ضلع ${uZila} درج ہے۔ مالِ مقدمہ بمقام مالخانہ محفوظ ہے۔ چونکہ اصل مالک کی جانب سے سپردداری کی درخواست موصول ہوئی ہے، لہٰذا استدعا ہے کہ مالِ مقدمہ بعد تکمیلِ قانونی کارروائی جائز مالک کے سپرد کیا جائے۔ مہربانی ہوگی۔`);
-    case 'warrant_gift':
-      return P(`جناب عالیٰ! گزارش ہے کہ مقدمہ نمبر ${fir} زیر دفعہ ${dafat} تھانہ ${uThana} ضلع ${uZila} درج ہے۔ مندرجہ ذیل ملزم/ملزمان تاحال گرفتار نہیں ہو سکے:<br>${accBlock}<br>لہٰذا استدعا ہے کہ ملزمان بالا کے وارنٹ گرفتاری جاری فرمائے جائیں۔ مہربانی ہوگی۔`);
-    case 'ishtihaari':
-      return P(`جناب عالیٰ! گزارش ہے کہ مقدمہ نمبر ${fir} زیر دفعہ ${dafat} تھانہ ${uThana} ضلع ${uZila} درج ہے۔ مندرجہ ذیل ملزم/ملزمان وارنٹ گرفتاری کے باوجود روپوش ہیں:<br>${accBlock}<br>لہٰذا استدعا ہے کہ ملزمان بالا کو زیر دفعہ 87 ض ف اشتہاری قرار دیا جائے۔ مہربانی ہوگی۔`);
-    case 'behri_dafat':
-      return P(`جناب عالیٰ! گزارش ہے کہ مقدمہ نمبر ${fir} تھانہ ${uThana} ضلع ${uZila} درج ہے۔ دورانِ تفتیش نئے حقائق سامنے آئے ہیں جن کی روشنی میں دفعات قانون میں اضافہ ناگزیر ہے۔ لہٰذا استدعا ہے کہ مقدمہ ہٰذا میں مناسب دفعات کے اضافہ کی اجازت مرحمت فرمائی جائے۔ مہربانی ہوگی۔`);
-    case 'kharaji_dafat':
-      return P(`جناب عالیٰ! گزارش ہے کہ مقدمہ نمبر ${fir} زیر دفعہ ${dafat} تھانہ ${uThana} ضلع ${uZila} درج ہے۔ دورانِ تفتیش بعض دفعات کا اطلاق ثابت نہ ہو سکا۔ لہٰذا استدعا ہے کہ غیر متعلقہ دفعات کے اخراج کی اجازت مرحمت فرمائی جائے۔ مہربانی ہوگی۔`);
-    case 'postmortem':
-      return P(`جناب عالیٰ! گزارش ہے کہ مقدمہ نمبر ${fir} زیر دفعہ ${dafat} تھانہ ${uThana} ضلع ${uZila} درج ہے۔ لاشہ/مضروب کے پوسٹ مارٹم/طبی معائنہ کی رپورٹ بغرضِ تفتیش درکار ہے۔ لہٰذا استدعا ہے کہ متعلقہ میڈیکل آفیسر کو پوسٹ مارٹم/طبی معائنہ کی ہدایت فرمائی جائے۔ مہربانی ہوگی۔`);
-    case 'dna':
-      return P(`جناب عالیٰ! گزارش ہے کہ مقدمہ نمبر ${fir} زیر دفعہ ${dafat} تھانہ ${uThana} ضلع ${uZila} درج ہے۔ تفتیش کی غرض سے ملزمان/مضروب کے ڈی این اے نمونہ جات کا حصول ازحد ضروری ہے۔ لہٰذا استدعا ہے کہ ڈی این اے نمونہ جات کے حصول کی اجازت مرحمت فرمائی جائے۔ مہربانی ہوگی۔`);
-    case 'call_data':
-      return P(`جناب عالیٰ! گزارش ہے کہ مقدمہ نمبر ${fir} زیر دفعہ ${dafat} تھانہ ${uThana} ضلع ${uZila} درج ہے۔ تفتیش کے سلسلے میں متعلقہ موبائل نمبرز کا کال ڈیٹا ریکارڈ (CDR) درکار ہے۔ لہٰذا استدعا ہے کہ متعلقہ کمپنیوں سے کال ڈیٹا کے حصول کی اجازت مرحمت فرمائی جائے۔ مہربانی ہوگی۔`);
-    case 'geo_fencing':
-      return P(`جناب عالیٰ! گزارش ہے کہ مقدمہ نمبر ${fir} زیر دفعہ ${dafat} تھانہ ${uThana} ضلع ${uZila} درج ہے۔ وقوعہ کے مقام کی جیو فینسنگ ڈیٹا بغرضِ شناختِ ملزمان درکار ہے۔ لہٰذا استدعا ہے کہ جیو فینسنگ ڈیٹا کے حصول کی اجازت مرحمت فرمائی جائے۔ مہربانی ہوگی۔`);
-    case 'medical_board':
-      return P(`جناب عالیٰ! گزارش ہے کہ مقدمہ نمبر ${fir} زیر دفعہ ${dafat} تھانہ ${uThana} ضلع ${uZila} درج ہے۔ مضروب/ملزم کی طبی حالت کے تعین کے لیے میڈیکل بورڈ کی تشکیل ضروری ہے۔ لہٰذا استدعا ہے کہ میڈیکل بورڈ تشکیل دیا جائے۔ مہربانی ہوگی۔`);
-    case 'transfer_case':
-      return P(`جناب عالیٰ! گزارش ہے کہ مقدمہ نمبر ${fir} زیر دفعہ ${dafat} تھانہ ${uThana} ضلع ${uZila} درج ہے۔ بوجوہِ تفتیش/دائرہ اختیار مقدمہ ہٰذا کی منتقلی ناگزیر ہے۔ لہٰذا استدعا ہے کہ مقدمہ ہٰذا متعلقہ عدالت/تھانہ منتقل فرمایا جائے۔ مہربانی ہوگی۔`);
-    case 'weapon_return':
-      return P(`جناب عالیٰ! گزارش ہے کہ مقدمہ نمبر ${fir} زیر دفعہ ${dafat} تھانہ ${uThana} ضلع ${uZila} درج ہے۔ برآمد شدہ اسلحہ بابت مقدمہ ہٰذا لائسنس یافتہ ہے اور اصل مالک کی درخواست موصول ہوئی ہے۔ لہٰذا استدعا ہے کہ اسلحہ بعد قانونی کارروائی جائز مالک کو واپس کیا جائے۔ مہربانی ہوگی۔`);
-    case 'record_talbi':
-      return P(`جناب عالیٰ! گزارش ہے کہ مقدمہ نمبر ${fir} زیر دفعہ ${dafat} تھانہ ${uThana} ضلع ${uZila} درج ہے۔ تفتیش کی غرض سے متعلقہ ریکارڈ درکار ہے۔ لہٰذا استدعا ہے کہ متعلقہ ادارہ/محکمہ کو ریکارڈ فراہمی کی ہدایت فرمائی جائے۔ مہربانی ہوگی۔`);
-    default:
-      return P(`جناب عالیٰ! گزارش ہے کہ مقدمہ نمبر ${fir} زیر دفعہ ${dafat} تھانہ ${uThana} ضلع ${uZila} درج ہے۔ [یہاں درخواست کا مضمون تحریر کریں]۔ لہٰذا استدعا ہے کہ ______________________ ۔ مہربانی ہوگی۔`);
-  }
+  const firPlain = _dkFirPlain();
+  const firPart = firPlain
+    ? esc(firPlain)
+    : '<span style="color:#c00;">[ایف آئی آر کا متن یہاں آئے گا — پہلے ایف آئی آر درج کریں]</span>';
+  const istidaa = esc(_dkIstidaa(typeId));
+  return `جناب عالیٰ! مختصرحالات مقدمہ عنوان بالا اس طرح ہیں کہ ${firPart} جس پر مقدمہ عنوان بالا درج ہوا تفتیش عمل میں لائی گئی۔ دورانِ تفتیش <span style="color:#888;">[یہاں اپنی تفتیش تحریر کریں]</span><br><br>${istidaa}`;
 }
 
 // ═══ RENDER — poore safhe ka editor ═══
@@ -280,26 +309,45 @@ function _dkRender() {
            padding:1cm ${_dkSideMargin()};background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;
            line-height:1.9;box-sizing:border-box;font-size:${docFont}pt;">
 
-        <!-- عنوان (court) -->
-        <div class="dk-court" contenteditable="true" data-k="court">${v('court', 'بحضور جناب علاقہ مجسٹریٹ صاحب ' + esc(o.district || c.case_district || ''))}</div>
+        <!-- Line 1: تھانہ (dayen, 1in) · ضلع (bayen, 1cm) — چالان/saza jaisa -->
+        <div class="dk-title-row">
+          <span class="dk-tt-right">تھانہ <span class="dk-fl" contenteditable="true" data-k="thana">${v('thana', esc(o.station || c.case_station || ''))}</span></span>
+          <span class="dk-tt-left">ضلع <span class="dk-fl" contenteditable="true" data-k="zila">${v('zila', esc(o.district || c.case_district || ''))}</span></span>
+        </div>
 
-        <!-- Unwan (heading) — qism ke hisaab se, underline -->
-        <div class="dk-unwan" contenteditable="true" data-k="unwan">${v('unwan_' + _dkType, esc(typeDef.unwan))}</div>
+        <!-- (Line 1 ke baad 1 inch ki khali jagah — CSS margin se) -->
 
-        <!-- Case line -->
+        <!-- Line 2: سرکاربذریعہ + مدعی (system se) -->
+        <div class="dk-sarkar" contenteditable="true" data-k="sarkar">${v('sarkar', 'سرکار بذریعہ ' + esc(c.complainant || '____'))}</div>
+
+        <!-- Line 3: مقدمہ نمبر / تاریخ / دفعہ / تھانہ -->
         <div class="dk-caseline" contenteditable="true" data-k="caseline">${v('caseline', 'مقدمہ نمبر ' + esc(fir) + ' مورخہ ' + esc(firDate) + ' زیر دفعہ ' + esc(dafat) + ' تھانہ ' + esc(o.station || c.case_station || ''))}</div>
 
-        <!-- Body (rich text) -->
+        <!-- بنام (accused) — dayen ▾ dropdown, phir بنام + numbered ملزمان -->
+        <div class="dk-banam-row">
+          <button class="dk-acc-pick no-print" onclick="_dkAccPicker(event)" title="ملزمان منتخب کریں">▾</button>
+          <span class="dk-banam-lbl">بنام</span>
+          <span class="dk-banam-list" contenteditable="true" data-k="banam">${_dkChosenNamesHtml()}</span>
+        </div>
+
+        <!-- (بنام ke baad khali jagah — CSS margin se) -->
+
+        <!-- Heading (qism) — dropdown-selected magar EDITABLE, 18pt underline -->
+        <div class="dk-unwan" contenteditable="true" data-k="unwan_${_dkType}">${v('unwan_' + _dkType, esc(typeDef.unwan))}</div>
+
+        <!-- Body (rich text) — جناب عالیٰ! … FIR matn … تفتیش … استدعا -->
         <div class="dk-body" contenteditable="true" data-k="${savedBodyKey}">${bodyHtml}</div>
 
-        <!-- SHO/IO block — bayen sidh -->
+        <!-- IO block — bayen sidh: dastkhat ki jagah → naam/رینک/تھانہ (bold+underline) → تاریخ -->
         <div class="dk-sign">
+          <div class="dk-sign-space"></div>
           <div class="dk-sign-name" contenteditable="true" data-k="sho">${v('sho', esc(_dkShoLine(o)))}</div>
           <div class="dk-sign-date" contenteditable="true" data-k="sho_date">${v('sho_date', 'مورخہ ' + esc(_dkToday()))}</div>
         </div>
 
         <input type="hidden" data-k="doc_font" value="${esc(String(docFont))}">
         <input type="hidden" data-k="dk_type" value="${esc(_dkType)}">
+        <input type="hidden" data-k="acc" value="${esc(JSON.stringify(_dkChosen || _dkAccusedNames()))}">
       </div>
     </div>
   </div>`;
@@ -324,6 +372,56 @@ function _dkSetType(id) {
   _dkRender();
 }
 window._dkSetType = _dkSetType;
+
+// ═══ ملزمان منتخب کریں (▾) — چالان/saza jaisa. Default sab select. ═══
+function _dkAccPicker(ev) {
+  ev.preventDefault(); ev.stopPropagation();
+  document.getElementById('dk-acc-menu')?.remove();
+  const list = _dkAccList();
+  if (!list.length) { if (typeof showToast === 'function') showToast('ℹ️ اس مقدمہ میں کوئی ملزم درج نہیں', 'info'); return; }
+  const mine = new Set(_dkChosen && _dkChosen.length !== undefined ? _dkChosen : _dkAccusedNames());
+  const box = document.createElement('div');
+  box.id = 'dk-acc-menu';
+  box.style.cssText = 'position:fixed;z-index:99999;background:#fff;border:1px solid #0369a1;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.28);direction:rtl;width:280px;max-width:92vw;display:flex;flex-direction:column;max-height:min(60vh,360px);overflow:hidden;';
+  const rows = list.map(a => {
+    const on = mine.has(a.name);
+    return `<label style="display:flex;align-items:center;gap:8px;padding:7px 6px;cursor:pointer;font-size:13px;border-bottom:1px solid #f1f5f9;font-family:'Jameel Noori Nastaleeq',serif;"><input type="checkbox" ${on?'checked':''} value="${esc(a.name)}"> <span>${esc(a.name)}</span></label>`;
+  }).join('');
+  box.innerHTML = `
+    <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:700;color:#0369a1;font-family:'Jameel Noori Nastaleeq',serif;background:#f8fafc;">ملزمان منتخب کریں</div>
+    <div style="flex:1;overflow-y:auto;padding:4px 8px;min-height:0;">${rows}</div>
+    <div style="display:flex;gap:6px;padding:8px;border-top:1px solid #e5e7eb;background:#f8fafc;flex-shrink:0;">
+      <button id="dk-acc-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;color:#fff;cursor:pointer;font-size:13px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">✔ شامل کریں</button>
+      <button id="dk-acc-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;font-family:'Jameel Noori Nastaleeq',serif;">بند</button>
+    </div>`;
+  document.body.appendChild(box);
+  const r = ev.currentTarget.getBoundingClientRect();
+  const bw = box.offsetWidth, bh = box.offsetHeight;
+  let top = r.bottom + 6; if (top + bh > window.innerHeight - 8) top = Math.max(8, r.top - bh - 6);
+  let left = r.left + r.width/2 - bw/2; left = Math.max(8, Math.min(left, window.innerWidth - bw - 8));
+  box.style.top = top + 'px'; box.style.left = left + 'px';
+  setTimeout(() => { const off = (e) => { if (!box.contains(e.target)) { box.remove(); document.removeEventListener('mousedown', off); } }; document.addEventListener('mousedown', off); }, 0);
+  box.querySelector('#dk-acc-x').onclick = () => box.remove();
+  box.querySelector('#dk-acc-ok').onclick = () => {
+    const picked = [...box.querySelectorAll('input:checked')].map(i => i.value);
+    box.remove();
+    _dkSetAccused(picked);
+  };
+}
+window._dkAccPicker = _dkAccPicker;
+
+// Chune hue ملزمان — بنام list dobara bharo (numbered), body ke andar bhi
+// koi accused-list ho to chھeड़te nahi (body IO ka apna matn hai).
+function _dkSetAccused(names) {
+  _dkChosen = names.slice();
+  const doc = _dkDoc(); if (!doc) return;
+  const list = doc.querySelector('.dk-banam-list');
+  if (list) list.innerHTML = _dkChosenNamesHtml();
+  const accInp = doc.querySelector('[data-k="acc"]');
+  if (accInp) accInp.value = JSON.stringify(_dkChosen);
+  _dkDirty = true;
+}
+window._dkSetAccused = _dkSetAccused;
 
 // Naya khaka (is qism ka) — mojooda body ko template se badlo
 function _dkResetBody() {
@@ -602,7 +700,7 @@ function _dkPrint() {
         direction:rtl; line-height:1.9; color:#000; font-size:${_dkDocFont(_dkSaved)}pt; }
       ${_dkCSS()}
       #dk-doc{ width:100% !important; max-width:none !important; height:auto !important;
-        min-height:0 !important; padding:0 !important; margin:0 !important;
+        min-height:0 !important; padding:0 1in 0 0 !important; margin:0 !important;
         transform:none !important; box-shadow:none !important; border-radius:0 !important; }
       .no-print, button, select{ display:none !important; }
       #dk-doc, #dk-doc *{ orphans:2; widows:2; }
@@ -624,19 +722,45 @@ function _dkCSS() {
     body.dk-focus #misal-doc-bar.peek{ max-height:240px !important; opacity:1; padding-top:6px !important; padding-bottom:6px !important; box-shadow:0 8px 18px rgba(0,0,0,.18); }
     body.dk-focus .bottombar{ display:none !important; }
 
-    #dk-doc{ direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; color:#000; font-size:14pt; text-align:justify; }
+    /* Root — RTL, 14pt (default), dayen 1 inch hashiya (point 11) */
+    #dk-doc{ direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; color:#000; font-size:14pt; text-align:justify; padding-right:1in !important; }
     #dk-doc [contenteditable]{ outline:none; }
-    /* عنوان (court) — center */
-    #dk-doc .dk-court{ text-align:center; font-size:15pt; font-weight:bold; margin:0 0 8pt; }
-    /* Unwan — center, underline */
-    #dk-doc .dk-unwan{ text-align:center; font-size:16pt; font-weight:bold; text-decoration:underline; margin:0 0 10pt; }
-    /* Case line — center */
-    #dk-doc .dk-caseline{ text-align:center; font-size:14pt; margin:0 0 14pt; }
-    /* Body — justified */
-    #dk-doc .dk-body{ text-align:justify; text-align-last:right; font-size:14pt; line-height:2; min-height:3in; }
-    /* SHO/IO — bayen sidh */
-    #dk-doc .dk-sign{ margin-top:28pt; text-align:left; }
-    #dk-doc .dk-sign-name{ font-weight:bold; font-size:14pt; text-align:left !important; white-space:nowrap; outline:none; }
+    #dk-doc .dk-fl{ unicode-bidi:isolate; direction:rtl; outline:none; min-width:24px; display:inline-block; }
+
+    /* Line 1 — تھانہ (dayen, right margin se 1 inch) · ضلع (bayen, 1cm).
+       چالان/saza jaisa. 14pt. (Root ka 1in padding-right تھانہ ko already
+       1 inch andar le aata hai; ضلع ke liye bayen 1cm.) */
+    #dk-doc .dk-title-row{ display:flex; align-items:baseline; justify-content:space-between; width:100%; font-size:14pt; }
+    #dk-doc .dk-tt-right{ text-align:right; white-space:nowrap; }
+    #dk-doc .dk-tt-left{ text-align:left; white-space:nowrap; margin-left:1cm; }
+
+    /* Line 1 ke baad 1 INCH ki khali jagah (point 2) */
+    #dk-doc .dk-sarkar{ margin-top:1in; font-size:14pt; text-align:right; }
+
+    /* Line 3 — مقدمہ نمبر/تاریخ/دفعہ/تھانہ, 14pt */
+    #dk-doc .dk-caseline{ font-size:14pt; margin:6pt 0 0; text-align:right; }
+
+    /* بنام — dayen ▾ dropdown + بنام + numbered ملزمان */
+    #dk-doc .dk-banam-row{ display:flex; align-items:flex-start; gap:6px; margin:10pt 0 0; font-size:14pt; }
+    #dk-doc .dk-banam-lbl{ font-weight:bold; white-space:nowrap; }
+    #dk-doc .dk-banam-list{ flex:1; text-align:right; outline:none; line-height:1.9; }
+    #dk-doc .dk-acc-pick{
+      flex-shrink:0; width:24px; height:24px; line-height:22px; padding:0; border:1px solid #0369a1;
+      border-radius:5px; background:#0369a1; color:#fff; cursor:pointer; font-size:13px; font-weight:700; text-align:center;
+    }
+    #dk-doc .dk-acc-pick:hover{ background:#025687; }
+
+    /* بنام ke baad khali jagah (point 6) → phir Heading */
+    /* Heading (qism) — center, underline, 18pt (point 7) */
+    #dk-doc .dk-unwan{ text-align:center; font-size:18pt; font-weight:bold; text-decoration:underline; margin:16pt 0 10pt; }
+
+    /* Body — justified, 14pt */
+    #dk-doc .dk-body{ text-align:justify; text-align-last:right; font-size:14pt; line-height:2; min-height:2.5in; }
+
+    /* IO block — bayen sidh: dastkhat ki jagah → naam (bold+underline) → تاریخ (point 9) */
+    #dk-doc .dk-sign{ margin-top:24pt; text-align:left; }
+    #dk-doc .dk-sign-space{ min-height:48px; }   /* dastkhat ki khali jagah — naam ke OOPER */
+    #dk-doc .dk-sign-name{ font-weight:bold; text-decoration:underline; font-size:14pt; text-align:left !important; white-space:nowrap; outline:none; }
     #dk-doc .dk-sign-date{ font-size:14pt; text-align:left !important; margin-top:4px; outline:none; }
   `;
 }
