@@ -37,8 +37,8 @@ let _dkPaper = (function () {
 //    naam hi heading ban jata hai (editable). Aakhir mein "+ اپنی درخواست"
 //    jis se IO apni koi bhi qism/عنوان khud likh sakta hai.
 const DK_TYPES = [
-  { id:'remand_jismani',   name:'درخواست ریمانڈ جسمانی ملزمان ۔۔۔۔ یوم' },
-  { id:'remand_judicial',  name:'درخواست ریمانڈ جوڈیشل ملزمان ۔۔۔۔۔۔۔۔ یوم' },
+  { id:'remand_jismani',   name:'درخواست ریمانڈ جسمانی ملزمان         یوم' },
+  { id:'remand_judicial',  name:'درخواست ریمانڈ جوڈیشل ملزمان         یوم' },
   { id:'byanat_164',       name:'درخواست برائے بیانات 164 ض ف' },
   { id:'talbi_mulziman',   name:'درخواست برائے طلبی ملزمان' },
   { id:'warrant_gift',     name:'درخواست برائے اجراء بلا ضمانت وارنٹ گرفتاری ملزمان' },
@@ -178,6 +178,26 @@ function _dkToday() {
     try { const f = formatDate(d); if (f && /^\d{2}\/\d{2}\/\d{4}$/.test(String(f).trim())) return String(f).trim(); } catch (_) {}
   }
   return dd + '/' + mm + '/' + d.getFullYear();
+}
+
+// تفتیشی افسر (subscriber) line — logged-in officer: naam + rank + تھانہ.
+function _dkIoLine(o) {
+  o = o || (typeof currentOfficer !== 'undefined' ? currentOfficer : {}) || {};
+  let name = '', rank = '';
+  try {
+    const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}');
+    name = (sho.name || '').trim(); rank = (sho.rank || '').trim();
+  } catch (_) {}
+  if (!name) name = (o.full_name || '').trim();
+  if (!rank) rank = (o.designation || '').trim();
+  const st = (o.station || '').trim();
+  const parts = [];
+  if (name) parts.push(name);
+  if (rank) parts.push(rank);
+  let line = parts.join(' ');
+  if (st) line += (line ? ' ' : '') + 'تھانہ ' + st;
+  if (!line.trim() && typeof getSHOSignLine === 'function') { const l = getSHOSignLine(st); if (l) return l; }
+  return line.trim();
 }
 
 // SHO/IO line (report173 _ch173ShoLine jaisa)
@@ -331,10 +351,11 @@ function _dkRender() {
         <!-- Body (rich text) — جناب عالیٰ! … FIR matn … تفتیش … استدعا -->
         <div class="dk-body" contenteditable="true" data-k="${savedBodyKey}">${bodyHtml}</div>
 
-        <!-- IO block — bayen sidh: dastkhat ki jagah → naam/رینک/تھانہ (bold+underline) → تاریخ (bina "مورخہ") -->
+        <!-- تفتیشی افسر (subscriber) block — bayen sidh: dastkhat ki jagah →
+             naam+rank+تھانہ (bold+underline) → تاریخ (bina "مورخہ") -->
         <div class="dk-sign">
           <div class="dk-sign-space"></div>
-          <div class="dk-sign-name" contenteditable="true" data-k="sho">${v('sho', esc(_dkShoLine(o)))}</div>
+          <div class="dk-sign-name" contenteditable="true" data-k="sho">${v('sho', esc(_dkIoLine(o)))}</div>
           <div class="dk-sign-date" contenteditable="true" data-k="sho_date">${v('sho_date', esc(_dkToday()))}</div>
         </div>
 
@@ -514,7 +535,19 @@ function _dkFontToSelection(pt) {
 }
 function _dkFontToDoc(pt) {
   const doc = _dkDoc(); if (!doc) return;
-  doc.dataset.fs = pt; doc.style.fontSize = pt + 'pt';
+  doc.dataset.fs = pt;
+  doc.style.fontSize = pt + 'pt';
+  // AHEM: har hissa (body/سرکار/caseline/بنام/IO) ki apni fixed 14pt CSS hoti
+  // hai jo doc ke font ko dabaa deti thi (is liye selector "kaam nahi karta"
+  // lagta tha). Ab aik dynamic style se un sab ko naye pt par set karte hain
+  // (heading 18pt apni jaga; woh alag rakha). Naya font matn (body) samet
+  // sab par lagta hai.
+  let st = document.getElementById('dk-font-override');
+  if (!st) { st = document.createElement('style'); st.id = 'dk-font-override'; document.head.appendChild(st); }
+  st.textContent = `#dk-doc, #dk-doc .dk-body, #dk-doc .dk-sarkar, #dk-doc .dk-caseline,
+    #dk-doc .dk-banam-row, #dk-doc .dk-banam-list, #dk-doc .dk-banam-lbl,
+    #dk-doc .dk-title-row, #dk-doc .dk-tt-right, #dk-doc .dk-tt-left,
+    #dk-doc .dk-sign-name, #dk-doc .dk-sign-date{ font-size:${pt}pt !important; }`;
   const fsel = document.getElementById('dk-font-sel'); if (fsel) fsel.value = String(pt);
 }
 function _dkBindKeys() {
@@ -693,8 +726,13 @@ function _dkPrint() {
         direction:rtl; line-height:1.9; color:#000; font-size:${_dkDocFont(_dkSaved)}pt; }
       ${_dkCSS()}
       #dk-doc{ width:100% !important; max-width:none !important; height:auto !important;
-        min-height:0 !important; padding:0 1in 0 0 !important; margin:0 !important;
+        min-height:0 !important; padding:0 1in 0 0.4in !important; margin:0 !important;
         transform:none !important; box-shadow:none !important; border-radius:0 !important; }
+      /* Chuna hua font (heading ke ilawa) — print par bhi lagu */
+      #dk-doc, #dk-doc .dk-body, #dk-doc .dk-sarkar, #dk-doc .dk-caseline,
+      #dk-doc .dk-banam-row, #dk-doc .dk-banam-list, #dk-doc .dk-banam-lbl,
+      #dk-doc .dk-title-row, #dk-doc .dk-tt-right, #dk-doc .dk-tt-left,
+      #dk-doc .dk-sign-name, #dk-doc .dk-sign-date{ font-size:${_dkDocFont(_dkSaved)}pt !important; }
       .no-print, button, select{ display:none !important; }
       #dk-doc, #dk-doc *{ orphans:2; widows:2; }
     </style></head><body><div id="dk-doc">${inner}</div></body></html>`;
@@ -715,47 +753,50 @@ function _dkCSS() {
     body.dk-focus #misal-doc-bar.peek{ max-height:240px !important; opacity:1; padding-top:6px !important; padding-bottom:6px !important; box-shadow:0 8px 18px rgba(0,0,0,.18); }
     body.dk-focus .bottombar{ display:none !important; }
 
-    /* Root — RTL, 14pt (default), dayen 1 inch hashiya (point 11) */
-    #dk-doc{ direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; color:#000; font-size:14pt; text-align:justify; padding-right:1in !important; }
+    /* Root — RTL, 14pt (default). Dayen 1 inch hashiya. Bayen bhi thoda hashiya
+       taake legal/folio print par IO naam (bayen sidh) kinare se na kate.
+       --dk-indent = satar 2/3 aur ملزمان list ka right-indent (بنام ke barabar). */
+    #dk-doc{ direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; color:#000; font-size:14pt; text-align:justify; padding-right:1in !important; padding-left:0.4in !important; --dk-indent:0.9in; }
     #dk-doc [contenteditable]{ outline:none; }
     #dk-doc .dk-fl{ unicode-bidi:isolate; direction:rtl; outline:none; min-width:24px; display:inline-block; }
 
-    /* Line 1 — تھانہ (dayen, right margin se 1 inch) · ضلع (bayen, 1cm).
-       چالان/saza jaisa. 14pt. (Root ka 1in padding-right تھانہ ko already
-       1 inch andar le aata hai; ضلع ke liye bayen 1cm.) */
+    /* Line 1 — تھانہ (dayen, right margin se 1 inch) · ضلع (bayen, 1cm). */
     #dk-doc .dk-title-row{ display:flex; align-items:baseline; justify-content:space-between; width:100%; font-size:14pt; }
     #dk-doc .dk-tt-right{ text-align:right; white-space:nowrap; }
     #dk-doc .dk-tt-left{ text-align:left; white-space:nowrap; margin-left:1cm; }
 
-    /* Line 1 ke baad 1 INCH ki khali jagah (point 2). سرکار aur caseline ko
-       aik TAB (0.5in) BAYEN move (point: satar 2 aur 3 indent) — بنام apni jaga. */
-    #dk-doc .dk-sarkar{ margin-top:1in; font-size:14pt; text-align:right; padding-right:0.5in; }
+    /* Line 1 ke baad AADHI (half) khali jagah (pehle 1in thi). */
+    #dk-doc .dk-sarkar{ margin-top:0.5in; font-size:14pt; text-align:right; padding-right:var(--dk-indent,0.9in); }
 
-    /* Line 3 — مقدمہ نمبر/تاریخ/دفعہ/تھانہ, 14pt, aik tab indent */
-    #dk-doc .dk-caseline{ font-size:14pt; margin:6pt 0 0; text-align:right; padding-right:0.5in; }
+    /* Line 3 — مقدمہ نمبر/تاریخ/دفعہ/تھانہ, 14pt. Satar 2 ki seedh mein
+       (بنام ke pehle serial number ke barabar indent). */
+    #dk-doc .dk-caseline{ font-size:14pt; margin:6pt 0 0; text-align:right; padding-right:var(--dk-indent,0.9in); }
 
-    /* بنام — dayen ▾ dropdown + بنام + numbered ملزمان */
-    #dk-doc .dk-banam-row{ display:flex; align-items:flex-start; gap:6px; margin:10pt 0 0; font-size:14pt; }
-    #dk-doc .dk-banam-lbl{ font-weight:bold; white-space:nowrap; }
-    #dk-doc .dk-banam-list{ flex:1; text-align:right; outline:none; line-height:1.9; }
+    /* بنام — "بنام" DAYEN kinare par (hanging), ملزمان list اسی indent par jahan
+       satar 2/3 hain — is se satar 2/3 pehle serial (1۔) ki seedh mein aa jate
+       hain (screen + print dono). */
+    #dk-doc .dk-banam-row{ position:relative; margin:10pt 0 0; font-size:14pt; padding-right:var(--dk-indent,0.9in); min-height:1.9em; }
+    #dk-doc .dk-banam-lbl{ position:absolute; right:0; top:0; font-weight:bold; white-space:nowrap; }
+    #dk-doc .dk-banam-list{ text-align:right; outline:none; line-height:1.9; display:block; }
     #dk-doc .dk-acc-pick{
-      flex-shrink:0; width:24px; height:24px; line-height:22px; padding:0; border:1px solid #0369a1;
+      position:absolute; right:-30px; top:0; width:24px; height:24px; line-height:22px; padding:0; border:1px solid #0369a1;
       border-radius:5px; background:#0369a1; color:#fff; cursor:pointer; font-size:13px; font-weight:700; text-align:center;
     }
     #dk-doc .dk-acc-pick:hover{ background:#025687; }
 
-    /* بنام ke baad khali jagah (point 6) → phir Heading */
-    /* Heading (qism) — center, underline, 18pt (point 7) */
+    /* بنام ke baad khali jagah → phir Heading */
+    /* Heading (qism) — center, underline, 18pt (editable) */
     #dk-doc .dk-unwan{ text-align:center; font-size:18pt; font-weight:bold; text-decoration:underline; margin:16pt 0 10pt; }
 
     /* Body — justified, 14pt */
-    #dk-doc .dk-body{ text-align:justify; text-align-last:right; font-size:14pt; line-height:2; min-height:2.5in; }
+    #dk-doc .dk-body{ text-align:justify; text-align-last:right; font-size:14pt; line-height:2; min-height:2in; }
 
-    /* IO block — bayen sidh: dastkhat ki jagah → naam (bold+underline) → تاریخ (point 9) */
-    #dk-doc .dk-sign{ margin-top:24pt; text-align:left; }
-    #dk-doc .dk-sign-space{ min-height:48px; }   /* dastkhat ki khali jagah — naam ke OOPER */
+    /* IO / تفتیشی افسر block — bayen sidh: dastkhat ki jagah → naam+rank+تھانہ
+       (bold+underline) → تاریخ. Aakhri satar aur is field ke darmiyan spacing KAM. */
+    #dk-doc .dk-sign{ margin-top:8pt; text-align:left; }
+    #dk-doc .dk-sign-space{ min-height:26px; }   /* dastkhat ki chhoti khali jagah */
     #dk-doc .dk-sign-name{ font-weight:bold; text-decoration:underline; font-size:14pt; text-align:left !important; white-space:nowrap; outline:none; }
-    #dk-doc .dk-sign-date{ font-size:14pt; text-align:left !important; margin-top:4px; outline:none; }
+    #dk-doc .dk-sign-date{ font-size:14pt; text-align:left !important; margin-top:2px; outline:none; }
   `;
 }
 window._dkCSS = _dkCSS;
