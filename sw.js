@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v414
+   DIGITAL IO — SERVICE WORKER v416
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v428';
+const CACHE_NAME = 'digital-io-v416';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -34,7 +34,6 @@ const CORE_ASSETS = [
   '/zimni.js',
   '/fir.js',
   '/report173.js',
-  '/saza-slip.js',
   '/global-mic.js',
   '/cdr-imei.js',
   '/cro-card.js',

@@ -2090,6 +2090,44 @@ function _ch173Overflow() {
   const full = () => cell.scrollHeight > cell.clientHeight + 1;
   let guard = 0;
 
+  // AHEM (BUG: "pehle 2 alfaz aapas mein jud jate hain") — jab matn ke
+  // ANDAR mic/bold jaisa <span> ho, to us span ke ANDAR ka aakhri lafz aur
+  // us ke BAHAR ka pehla lafz DO ALAG DOM node hote hain — darmiyan ki
+  // khali jagah (space) bhi apna ALAG node hoti hai. Jab yeh do tukre
+  // ALAG ALAG waqt par neeche bheje jate hain (jaise span khali ho kar
+  // hat jata hai), to un ke darmiyan wali khali-jagah wali node kabhi
+  // kabhi CHHOOT jati thi — natija: dono lafz seedha aapas mein jud jate.
+  // Yeh function har baar do tukron ko jorne se PEHLE zamin (guarantee)
+  // deta hai ke un ke darmiyan kam az kam aik khali jagah zaroor ho.
+  const ensureSpace = (a, b) => {
+    try {
+      if (!a || !b) return;
+      const at = (a.textContent || a.nodeValue || '');
+      const bt = (b.textContent || b.nodeValue || '');
+      const lastCh = at.slice(-1), firstCh = bt.slice(0, 1);
+      if (lastCh && firstCh && !/[\s\u00A0]/.test(lastCh) && !/[\s\u00A0]/.test(firstCh)) {
+        b.parentNode.insertBefore(document.createTextNode(' '), b);
+      }
+    } catch (_) {}
+  };
+
+  // Isi kaam ka doosra roop — jab wapasi (revert) ho sakti ho, taake
+  // dali gayi khali-jagah wapas hatayi ja sake.
+  const ensureSpace2 = (a, b) => {
+    try {
+      if (!a || !b) return null;
+      const at = (a.textContent || a.nodeValue || '');
+      const bt = (b.textContent || b.nodeValue || '');
+      const lastCh = at.slice(-1), firstCh = bt.slice(0, 1);
+      if (lastCh && firstCh && !/[\s\u00A0]/.test(lastCh) && !/[\s\u00A0]/.test(firstCh)) {
+        const sp = document.createTextNode(' ');
+        b.parentNode.insertBefore(sp, b);
+        return sp;
+      }
+    } catch (_) {}
+    return null;
+  };
+
   // (a) Jo matn na samaye woh NEECHE bhejo — LAFZ-BA-LAFZ.
   // AHEM: agar aakhri cheez aik bara tukra ho to usay POORA na bhejo,
   // balke us ke ANDAR ja kar aakhri lafz nikaalo — warna paste kiya hua
@@ -2104,12 +2142,17 @@ function _ch173Overflow() {
       if (k > 0) {
         const moved = t.slice(k);
         node.nodeValue = t.slice(0, k);
-        cont.insertBefore(document.createTextNode(moved), cont.firstChild);
+        const tn = document.createTextNode(moved);
+        const before = cont.firstChild;
+        cont.insertBefore(tn, before);
+        ensureSpace(tn, before);
         continue;
       }
     }
     const par = node.parentNode;
-    cont.insertBefore(node, cont.firstChild);
+    const before = cont.firstChild;
+    cont.insertBefore(node, before);
+    ensureSpace(node, before);
     if (par && par !== cell && !par.childNodes.length) par.remove();
   }
 
@@ -2172,8 +2215,11 @@ function _ch173Overflow() {
     const par = node.parentNode;
     const mark = document.createComment('');
     par.insertBefore(mark, node);                  // wapasi ke liye nishan
+    const prevLast = cell.lastChild;                // BOUNDARY se pehle ki naap
     cell.appendChild(node);
+    const sp = ensureSpace2(prevLast, node);        // zaroorat ho to darmiyan mein jagah
     if (full()) {                                  // jagah nahi bani — wapas
+      if (sp) sp.remove();
       par.insertBefore(node, mark);
       mark.remove();
       break;
@@ -2182,27 +2228,39 @@ function _ch173Overflow() {
     if (par && par !== cont && !par.childNodes.length) par.remove();
   }
 
-  // (c0) KHANE ke AAKHIR ki KHALI SATREN hatao.
-  // Matn lafz-ba-lafz neeche jata hai, is liye khane ke aakhir mein fazool
-  // khali jagah (spaces / khali satren / <br>) reh jati hai. Naap unhen
-  // "matn" gin leti hai — is liye hisaab kehta tha "khali jagah sirf 4px" —
-  // magar aankh ko woh poori khali satar nazar aati thi. Yehi table aur
-  // neeche wale matn ke darmiyan bacha hua gap tha.
+  // (c0) KHANE ke AAKHIR ki KHALI SATREN hatao — HAR GAHRAI (nesting) mein.
+  // AHEM: yehi "کالم 7 ki akhri satar ke akhir mein khali jagah" wale bug
+  // ki asal jarr thi. Pehle yeh sirf cell ke sab se OOPAR wale lastChild ko
+  // dekhti thi. Agar aakhri matn kisi <span> (bold/mic wrapper) ke ANDAR ho
+  // aur usi span ke andar TRAILING khali jagah bhi ho, to yeh foran 'break'
+  // ho jati thi (span khud khali NAHI hai) — us andar wali khali jagah
+  // kabhi saaf nahi hoti thi, aur wohi table ke andar aakhri satar ke baad
+  // gap ki soorat mein nazar aati thi.
+  // Ab pehle sab se GAHRE (deepest) aakhri node tak jate hain, phir wahan
+  // se saaf karte hain.
   try {
-    for (let g = 0; g < 200; g++) {
+    for (let g = 0; g < 400; g++) {
       let last = cell.lastChild;
       if (!last) break;
+      while (last.nodeType === 1 && last.lastChild) last = last.lastChild;
       if (last.nodeType === 3) {
         const t = last.nodeValue.replace(/[\s\u00A0]+$/, '');
         if (t === last.nodeValue) break;          // aakhir mein kuch fazool nahi
         if (t) { last.nodeValue = t; break; }
+        const par0 = last.parentNode;
         last.remove();                            // poora khali tukra
+        if (par0 && par0 !== cell && !par0.childNodes.length) par0.remove();
         continue;
       }
       if (last.nodeType === 1) {
         const tag = last.tagName;
         const khali = !last.textContent.replace(/[\s\u00A0]/g, '');
-        if (tag === 'BR' || khali) { last.remove(); continue; }
+        if (tag === 'BR' || khali) {
+          const par0 = last.parentNode;
+          last.remove();
+          if (par0 && par0 !== cell && !par0.childNodes.length) par0.remove();
+          continue;
+        }
       }
       break;
     }
@@ -2448,13 +2506,30 @@ function _ch173Muharrir() {
 }
 
 // تفتیشی افسر — yehi subscriber (abhi logged-in) afsar hai. SAB SE AAKHRI گواہ.
+// Naam ke saath OHDA (ASI/SI/Inspector waghera) bhi — currentOfficer.designation.
 function _ch173IO() {
   const o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
   const c = _r173Case || {};
   const nm = String(o.full_name || '').trim();
   if (!nm) return null;
+  // AHEM: pehle sirf currentOfficer.designation dekha jata tha — magar woh
+  // registration ke waqt aksar KHALI reh jata hai, isi liye ASI kabhi nazar
+  // nahi aata tha. ASI ka ASAL zariya SHO ki setting hai (localStorage
+  // 'digital_io_sho' — {name, rank}), jo dastkhat wali line mein pehle se
+  // theek "ASI" dikha raha tha. Agar SHO ka mehfooz naam isi officer se
+  // milta hai to wahi rank istemal karo.
+  let desig = String(o.designation || '').trim();
+  if (!desig) {
+    try {
+      const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}');
+      if (sho.rank && sho.name && _ch173StartsWithCore(nm, String(sho.name).trim())) {
+        desig = String(sho.rank).trim();
+      }
+    } catch (_) {}
+  }
+  const base = desig ? (nm + ' ' + desig) : nm;
   return {
-    name: _ch173WithThana(nm, o.station || c.case_station),
+    name: _ch173WithThana(base, o.station || c.case_station),
     cnic: _ch173CnicFmt(o.cnic)
   };
 }
@@ -2578,10 +2653,31 @@ function _ch173MergeCaseWitnesses() {
   try { _ch173UnwrapCnics(el); } catch (_) {}
   const list = _ch173WitParse(el);
   let naya = false;
+  // AHEM (BUG: "نام repeat ho rahe hain" ki DOOSRI jarr) — مدعی/محرر/تفتیشی
+  // افسر sajaye hue naam (ASI/تھانہ ke saath) se pehle hi list mein aa chuke
+  // hote hain. Agar wohi shakhs مقدمے ki گواہان table mein SAADA naam se bhi
+  // ho (misal ke tor par IO khud بھی گواہان mein darj ho), to _ch173SameName
+  // (poori string ka EXACT muqabla) inhen ALAG SHAKHS samajh kar DOBARA add
+  // kar deta tha. Ab دونوں taraf StartsWithCore se dekhte hain.
   L.forEach(w => {
     const nm = String(w.full_name || '').trim();
     if (!nm) return;
-    if (list.some(x => _ch173SameName(x.name, nm))) return;
+    // AHEM: sirf StartsWithCore kaafi nahi — agar koi ASAL گواہ ka naam
+    // itfaaqiya kisi sajaye hue (ASI/تھانہ wale) naam ka MUKHTASAR hissa ban
+    // jaye (misal 'علی' aur 'علی احمد خان تھانہ...'), to woh GHALAT tor par
+    // "wohi shakhs" samjha ja sakta hai aur AIK ASAL گواہ khamoshi se ghayab
+    // ho sakta hai — jo duplicate se bhi ZYADA khatarnaak hai (سرکاری گواہ
+    // ki fehrist se koi naam ghayab ho jaye). Is liye SIRF wahan core-match
+    // chalao jahan naam munasib lamba ho (kam az kam 2 lafz ya 6+ herf) —
+    // chhote naamon par sirf EXACT match hi kaafi hai.
+    const munasib = (n) => n.split(' ').length >= 2 || n.length >= 6;
+    const dohra = list.some(x => {
+      if (_ch173SameName(x.name, nm)) return true;
+      const shorter = x.name.length <= nm.length ? x.name : nm;
+      if (!munasib(shorter)) return false;
+      return _ch173StartsWithCore(x.name, nm) || _ch173StartsWithCore(nm, x.name);
+    });
+    if (dohra) return;
     list.push({ name: nm, cnic: _ch173CnicFmt(w.cnic) });
     naya = true;
   });
@@ -2649,7 +2745,14 @@ function _ch173AkhrajWitnessText() {
     if (list.some(x => _ch173SameName(x.name, o.name))) return;
     list.push(o);
   };
-  const madai = _ch173Madai();
+  const c = _r173Case || {};
+  const off = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
+  const madaiCore = String(c.complainant || '').trim();
+  const ioCore     = String(off.full_name || '').trim();
+  // مدعی=تفتیشی افسر ho to مدعی ki alag entry nahi — sirf تفتیشی افسر (aakhri)
+  const sameShakhs = madaiCore && ioCore &&
+    (_ch173StartsWithCore(ioCore, madaiCore) || _ch173StartsWithCore(madaiCore, ioCore));
+  const madai = sameShakhs ? null : _ch173Madai();
   if (madai) push({ name: madai.name, cnic: madai.cnic, rank: 1 });
   // FIR گواہان (darja 2) aur دیگر گواہان (darja 3) — گواہ ki apni حیثیت se
   (L || []).forEach(w => {
@@ -2750,6 +2853,20 @@ function _ch173WitWrite(el, list) {
 const _ch173SameName = (a, b) =>
   !!a && !!b && String(a).replace(/\s+/g, ' ').trim() === String(b).replace(/\s+/g, ' ').trim();
 
+// AHEM: تھانہ / عہدہ (designation) currentOfficer se aate hain, jo Supabase
+// se THORI DER baad load hote hain. Pehli baar khana bharte waqt yeh khali
+// ho sakte hain (naam SEEDHA), doosri baar bhar chuke hote hain (naam +
+// تھانہ/عہدہ) — yani DO ALAG STRINGS. _ch173SameName (poori string ka
+// muqabla) inhen ALAG SHAKHS samajh kar DOBARA add kar deta tha — yehi
+// "naam repeat ho rahe hain" wale masle ki asal jarr thi.
+// Hal: pehchan hamesha KACHCHE (raw) naam se — jo hamesha shuru mein aata
+// hai, chahe aage kuch bhi juda ho.
+function _ch173StartsWithCore(full, core) {
+  full = String(full || '').replace(/\s+/g, ' ').trim();
+  core = String(core || '').replace(/\s+/g, ' ').trim();
+  return !!core && (full === core || full.indexOf(core) === 0);
+}
+
 // Aik گواہ کالم 6 mein — pehle se ho to DOBARA nahi
 function _ch173AddWitness(name, cnic) {
   name = String(name || '').trim();
@@ -2787,24 +2904,51 @@ function _ch173AddDefaultOfficials() {
   const pehle = el.innerText;
   let list = _ch173WitParse(el);
 
-  const khaas = [_ch173Madai(), _ch173Muharrir(), _ch173IO()];
+  const c = _r173Case || {};
+  const o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
+  const madaiCore = String(c.complainant || '').trim();
+  const ioCore     = String(o.full_name || '').trim();
+
+  // بعض مقدمات میں مدعی aur تفتیشی افسر AIK HI shakhs hote hain (jaise SHO
+  // ki khud ki تحریر par darj hone wala مقدمہ). Us soorat mein "مدعی پہلا
+  // گواہ" wala usool ALAG se apply NAHI hota — warna WOHI shakhs DO dafa
+  // (pehla aur aakhri) nazar aata. Aisi soorat mein sirf تفتیشی افسر
+  // (aakhri) rehta hai, مدعی ki alag entry nahi banti.
+  const sameShakhs = madaiCore && ioCore &&
+    (_ch173StartsWithCore(ioCore, madaiCore) || _ch173StartsWithCore(madaiCore, ioCore));
+
+  const khaas = [
+    { obj: sameShakhs ? null : _ch173Madai(), core: madaiCore },
+    { obj: _ch173Muharrir(),                  core: String(c.fir_writer || '').trim() },
+    { obj: _ch173IO(),                        core: ioCore },
+  ];
   // Agar in ka naam pehle se fehrist mein hai to nikal lo — magar us par
-  // officer ka likha hua CNIC zaya na ho (system ke paas na ho to wohi rahe)
-  khaas.forEach(o => {
-    if (!o) return;
-    const idx = list.findIndex(w => _ch173SameName(w.name, o.name));
+  // officer ka likha hua CNIC zaya na ho (system ke paas na ho to wohi rahe).
+  // AHEM: pehchan ab KACHCHE naam (core) se hoti hai, poori sajaayi hui
+  // string se nahi — is liye تھانہ/عہدہ baad mein load hone se DOBARA add
+  // nahi hota, sirf update hota hai.
+  khaas.forEach(k => {
+    if (!k.obj || !k.core) return;
+    const idx = list.findIndex(w => _ch173StartsWithCore(w.name, k.core));
     if (idx !== -1) {
-      if (!o.cnic && list[idx].cnic) o.cnic = list[idx].cnic;
+      if (!k.obj.cnic && list[idx].cnic) k.obj.cnic = list[idx].cnic;
       list.splice(idx, 1);
     }
   });
+  // مدعی=تفتیشی افسر ہو to پرانی مدعی والی اندراج (agar pehle se mojood ho,
+  // jab woh abhi IO se pehchani nahi gayi thi) bhi nikal do — warna woh
+  // "دیگر گواہ" ban kar reh jati aur shakhs phir bhi do dafa nazar aata.
+  if (sameShakhs) {
+    const idx = list.findIndex(w => _ch173StartsWithCore(w.name, madaiCore));
+    if (idx !== -1) list.splice(idx, 1);
+  }
 
-  const [madai, muharrir, io] = khaas;
+  const [madaiK, muharrirK, ioK] = khaas;
   const fin = [];
-  if (madai) fin.push({ name: madai.name, cnic: madai.cnic, rank: 1 });
+  if (madaiK.obj) fin.push({ name: madaiK.obj.name, cnic: madaiK.obj.cnic, rank: 1 });
   fin.push(...list);                           // baqi گواہان (darja khud lagta hai)
-  if (muharrir) fin.push({ name: muharrir.name, cnic: muharrir.cnic, rank: 14 });
-  if (io) fin.push({ name: io.name, cnic: io.cnic, rank: 15 });
+  if (muharrirK.obj) fin.push({ name: muharrirK.obj.name, cnic: muharrirK.obj.cnic, rank: 14 });
+  if (ioK.obj) fin.push({ name: ioK.obj.name, cnic: ioK.obj.cnic, rank: 15 });
   if (!fin.length) return false;
 
   // Muqarrara darja bandi par jamao (مدعی pehla … تفتیشی افسر aakhri)
