@@ -1041,13 +1041,13 @@ input[id*="cnic"], input[id*="cell"] {
    ║ izafi matn sirf CHAPAI mein bahar nikal kar chhup jata tha.    ║
    ╚═══════════════════════════════════════════════════════════════╝
    ══════════════════════════════════════════════════════════════ */
-.page-content:not(#ch173-doc):not(#dio-dv-body),
-.page-content :is(div, span, p, td, th, li, label, a):not(#ch173-doc):not(#ch173-doc *):not(#dio-dv-body):not(#dio-dv-body *) {
+.page-content:not(#ch173-doc):not(#dio-dv-body):not(#saza-doc),
+.page-content :is(div, span, p, td, th, li, label, a):not(#ch173-doc):not(#ch173-doc *):not(#dio-dv-body):not(#dio-dv-body *):not(#saza-doc):not(#saza-doc *) {
   font-size: 14px !important;
 }
 /* MEHFOOZ — inpar 14pt lagu NA ho (apni set-shuda naap rahe).
-   چالان (#ch173-doc) aur doc-viewer yahan se BHI bahar hain — un ke andar
-   ki har naap un ki apni CSS aur font selector se aati hai. */
+   چالان (#ch173-doc), doc-viewer aur سزا سلپ (#saza-doc) yahan se BHI bahar
+   hain — un ke andar ki har naap un ki apni CSS aur font selector se aati hai. */
 .page-content :is(
   h1, h2, h3, h4, h5, h6,
   .page-title, .card-title, .section-title, .page-header,
@@ -1060,7 +1060,7 @@ input[id*="cnic"], input[id*="cell"] {
   .icon, [class*="icon"],
   .status-badge, .status-pill,
   .font-lock, .font-lock *
-):not(#ch173-doc):not(#ch173-doc *):not(#dio-dv-body):not(#dio-dv-body *) {
+):not(#ch173-doc):not(#ch173-doc *):not(#dio-dv-body):not(#dio-dv-body *):not(#saza-doc):not(#saza-doc *) {
   font-size: revert !important;
 }
 </style>
@@ -1409,6 +1409,7 @@ window.addEventListener('beforeunload', function (e) {
 })();
 </script>
 <script src="offline-store.js"></script>
+<script src="resume.js"></script>
 <script src="app-core.js"></script>
   <script src="data-api.js"></script>
   <script src="auth.js"></script>
@@ -1430,6 +1431,8 @@ window.addEventListener('beforeunload', function (e) {
 <script src="zimni.js"></script>
 <script src="fir.js"></script>
 <script src="report173.js"></script>
+<script src="saza-slip.js"></script>
+<script src="darkhwastain.js"></script>
 <script src="global-mic.js"></script>
 <script src="cdr-imei.js"></script>
 <script src="cro-card.js"></script>
