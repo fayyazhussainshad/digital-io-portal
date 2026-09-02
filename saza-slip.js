@@ -431,7 +431,10 @@ function _sazaBuildRows(sv, c, o) {
       : _sazaAccusedBlock(a);
     const cv = (sv['c4_' + i] !== undefined)
       ? (typeof sanitizeHtml === 'function' ? sanitizeHtml(sv['c4_' + i]) : sv['c4_' + i]) : '';
-    // کالم 2 (تاریخ) aur کالم 3 (جرم) SIRF pehli qatar par — rowspan = tamam ملزمان.
+    // کالم 2 (تاریخ) aur کالم 3 (جرم) SIRF pehli qatar par — rowspan = tamam
+    // ملزمان (asal form jaisa: aik hi khadi تاریخ aur aik hi "مندرجہ بالا").
+    // Safha-tor par Chrome in ki khadi lakeerein khud agle safhe par jari
+    // rakhta hai (safha 2 par "sirf lakeerein"). Matn OOPER (safha 1) rehta hai.
     const spanCells = (i === 0)
       ? `<td class="saza-c2 rotcell" rowspan="${N}"><div class="rotcell-in" contenteditable="true" data-k="c2">${dateTxt}</div></td>
       <td class="saza-c3 rotcell" rowspan="${N}"><div class="rotcell-in saza-jurm" contenteditable="true" data-k="c3">${jurmTxt}</div></td>`
@@ -443,9 +446,7 @@ function _sazaBuildRows(sv, c, o) {
     </tr>`;
   }).join('');
 
-  // SHO qatar — aakhri ملزم ke NEECHE. کالم 1 mein SHO block (bayen sidh,
-  // کالم 1 ki bayen lakeer ke saath — image 4 jaisa). کالم 2/3 rowspan sirf
-  // ملزمان tak, is liye SHO qatar mein un ke apne (khali) khane bhi aate hain.
+  // SHO qatar — aakhri ملزم ke NEECHE. کالم 1 mein SHO block (bayen sidh).
   const shoRow = `<tr data-row="sho">
     <td class="saza-c1 saza-c1-sho">${shoBlock}</td>
     <td class="saza-c2"></td>
@@ -894,17 +895,39 @@ async function _sazaSave() {
 }
 window._sazaSave = _sazaSave;
 
-// ═══ PRINT — report173 jaisa (screen wala hi document, WAHI CSS).
-//   Screen ki "stretch" (SHO qatar ki inline height) ko RAKHTE hain — usi se
-//   khadi lakeerein safhe ke NEECHE tak jati hain, aur table PAGE 1 se shuru
-//   rehti hai (kyунke ab har ملزم ki alag chhoti qatar hai, sirf aakhri SHO
-//   qatar lambi hoti hai jo toot bhi sakti hai). Top margin sirf @page se. ═══
+// ═══ PRINT — report173 jaisa. Agar data PAGE 1 se barh jaye:
+//   • سرخیاں (thead) SIRF page 1 par — page 2+ par sirf table ki (khadi)
+//     lakeerein (thead display:table-row-group se khud aisa hota hai).
+//   • Har naye safhe ke OOPER BAYEN kone mein مثلث (triangle) — misl
+//     baandhne ke liye — aur pehli satar ko OOPER se AIK satar ki jagah.
+//   Yeh report173 ke bind-marks (_ch173AddBindMarks) ka table-version hai:
+//   LIVE DOM se har ملزم-qatar ki jagah naap kar safhe ki hadd maloom karte
+//   hain, phir CLONE mein us qatar se pehle page-break + مثلث daal dete hain.
+// ═══
 function _sazaPrint() {
   const doc = _sazaDoc(); if (!doc) return;
-  // Print se pehle stretch ko taaza karo (SHO qatar theek page-bottom tak)
   try { _sazaStretchTable(); } catch (_) {}
+
+  // ── Safhe ki hadd par konsi ملزم-qatar page 2 par jati hai (LIVE naap) ──
+  const breakBeforeRows = _sazaComputePageBreaks(doc);   // Set of data-row values
+
   const clone = doc.cloneNode(true);
   clone.querySelectorAll('.no-print, .saza-acc-pick, .saza-colgrip').forEach(el => el.remove());
+
+  // Clone ki un qataron par page-break + مثلث lagao jo naye safhe par shuru hoti hain
+  breakBeforeRows.forEach(rk => {
+    const tr = clone.querySelector('#saza-tbody tr[data-row="' + rk + '"]');
+    if (!tr) return;
+    tr.classList.add('saza-pgbreak');
+    const firstTd = tr.querySelector('.saza-c1');
+    if (firstTd) {
+      // مثلث + aik satar ki jagah — کالم 1 (naye safhe ke top-left) mein
+      const tri = document.createElement('span');
+      tri.className = 'saza-bind';
+      firstTd.insertBefore(tri, firstTd.firstChild);
+    }
+  });
+
   const inner = clone.innerHTML;
   const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
@@ -920,19 +943,66 @@ function _sazaPrint() {
       .no-print, .saza-acc-pick, .saza-colgrip, button, select{ display:none !important; }
       /* Unwan (form no.) bilkul OOPER se shuru — koi izafi top margin nahi */
       #saza-doc .saza-formno{ margin-top:0 !important; }
-      /* Header har naye safhe par NA dohraye (sirf pehle safhe par) */
+      /* سرخیاں SIRF page 1 par (page 2+ par sirf lakeerein) */
       .saza-table thead{ display:table-row-group; }
-      /* Sirf HAR ملزم ki qatar poori rahe; SHO (lambi) qatar toot sakti hai */
+      /* Har ملزم ki qatar poori rahe; SHO (lambi) qatar toot sakti hai */
       .saza-acc-row{ page-break-inside:avoid; break-inside:avoid; }
       tr[data-row="sho"]{ page-break-inside:auto; break-inside:auto; }
+      /* ── Naye safhe par jane wali qatar — safha TOR + OOPER aik satar ki jagah ── */
+      #saza-doc tr.saza-pgbreak{ break-before:page; page-break-before:always; }
+      #saza-doc tr.saza-pgbreak .saza-c1{ padding-top:1.6em; }   /* aik satar ki jagah */
+      /* مثلث — naye safhe ke OOPER BAYEN kone mein (misl baandhne ke liye,
+         report173 jaisa). Nok top-left kone par; matn is se bach kar behta
+         hai (shape-outside). Andar halka bhara hua (nazar aata) taake print
+         par nishan zaahir ho. */
+      #saza-doc .saza-bind{
+        float:left; width:1.3in; height:1.3in; margin:0 0.15in 0.1in 0;
+        shape-outside:polygon(0 0, 1.3in 0, 0 1.3in);
+        -webkit-shape-outside:polygon(0 0, 1.3in 0, 0 1.3in);
+        shape-margin:3mm; -webkit-shape-margin:3mm;
+        clip-path:polygon(0 0, 1.3in 0, 0 1.3in);
+        -webkit-clip-path:polygon(0 0, 1.3in 0, 0 1.3in);
+        background:#000; opacity:0.14; display:block;
+      }
       #saza-doc, #saza-doc *{ orphans:2; widows:2; }
-      .saza-bind{ display:none; }
-      @media print{ .saza-bind{ display:block; } }
     </style></head><body><div id="saza-doc">${inner}</div></body></html>`;
   if (typeof dioPrint === 'function') dioPrint(html);
   else { const w = window.open('', '_blank'); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 300); }
 }
 window._sazaPrint = _sazaPrint;
+
+// ── Har ملزم-qatar ki jagah naap kar page ki hadd maloom karo ──
+//    Wapas: un data-row values ka Set jo NAYE safhe par shuru hoti hain.
+function _sazaComputePageBreaks(doc) {
+  const out = new Set();
+  try {
+    const rows = [...doc.querySelectorAll('#saza-tbody tr.saza-acc-row')];
+    if (rows.length < 2) return out;
+    const IN = 96;
+    const pageH = ((_sazaPaper === 'a4') ? 11.7 : 13) * IN;
+    // @page margin 6mm ooper + neeche = ~45px kul
+    const marginPx = (6 / 25.4) * IN * 2;
+    const usable = pageH - marginPx;                 // aik safhe ki kaam ki unchai
+    if (usable < 120) return out;
+    // Table doc ke top se kitna neeche shuru hoti hai (unwan ki unchai)
+    const docTop = doc.getBoundingClientRect().top;
+    let pageBottom = usable;                          // pehli hadd (doc-top se)
+    for (const tr of rows) {
+      const r = tr.getBoundingClientRect();
+      const top = r.top - docTop;
+      const bottom = r.bottom - docTop;
+      // Agar yeh qatar mojooda safhe ki hadd ko paar karti hai → agle safhe par
+      if (bottom > pageBottom + 1) {
+        const rk = tr.getAttribute('data-row');
+        if (rk) out.add(rk);
+        // Is qatar ke NAYE safhe se agli hadd ginno
+        pageBottom = top + usable;
+      }
+    }
+  } catch (_) {}
+  return out;
+}
+window._sazaComputePageBreaks = _sazaComputePageBreaks;
 
 // ═══ CSS — report173 ke #ch173-doc conventions ki naql ═══
 function _sazaCSS() {
@@ -1053,15 +1123,8 @@ function _sazaCSS() {
     /* کالم 4 — حکم اخیر عدالت (khali/دستی) — RTL/justify */
     #saza-doc .saza-c4-body{ outline:none; direction:rtl; unicode-bidi:plaintext;
       text-align:justify; text-align-last:right; min-height:40px; }
-
-    /* ── Doosre safhe ki bind جگہ — مثلث (report173 jaisa) ── */
-    #saza-doc .saza-bind{
-      float:left; width:2in; height:2in; margin-top:1.25em;
-      shape-outside:polygon(0 0, 2in 0, 0 2in);
-      -webkit-shape-outside:polygon(0 0, 2in 0, 0 2in);
-      shape-margin:3mm; -webkit-shape-margin:3mm;
-      clip-path:polygon(0 0, 2in 0, 0 2in);
-    }
+    /* Screen par مثلث nazar nahi aata — sirf chapai ke liye (print CSS mein). */
+    #saza-doc .saza-bind{ display:none; }
   `;
 }
 window._sazaCSS = _sazaCSS;
