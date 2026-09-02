@@ -386,14 +386,12 @@ function _sazaBuildRows(sv, c, o) {
     ? sanitizeHtml(sv[k] !== undefined ? sv[k] : (def || ''))
     : (sv[k] !== undefined ? sv[k] : (def || '')));
 
-  // SHO ki تاریخ — default aaj ki (report173 _ch173Today jaisa), phir editable
-  const shoDateDef = _sazaToday();
+  // SHO block — dastkhat ki khali jagah + naam/رینک/تھانہ. تاریخ HATA di
+  // (user ki hidayat). Bayen sidh.
   const shoBlock = `
     <div class="saza-sho-inline">
       <div class="saza-sho-space"></div>
       <div class="saza-sho-line" contenteditable="true" data-k="sho">${_v('sho', esc(_sazaShoLine(o)))}</div>
-      <div class="saza-sho-line saza-sho-date" contenteditable="true" data-k="sho_date"
-           onclick="_sazaPickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${_v('sho_date', 'تاریخ: ' + esc(shoDateDef))}</div>
     </div>`;
 
   // Koi ملزم nahi chuna → aik hint qatar + SHO qatar
@@ -551,10 +549,8 @@ function _sazaSetAccused(names) {
   // (SHO/thana/zila waghera doc mein pehle se hain — unhein dobara na chھero:
   //  save par woh apne data-k se collect ho jate hain.)
   const sho = doc.querySelector('[data-k="sho"]');
-  const shoDate = doc.querySelector('[data-k="sho_date"]');
   const shoHtml = sho ? sho.innerHTML : esc(_sazaShoLine(o));
-  const shoDateHtml = shoDate ? shoDate.innerHTML : '';
-  const svLike = { acc: JSON.stringify(names), sho: shoHtml, sho_date: shoDateHtml };
+  const svLike = { acc: JSON.stringify(names), sho: shoHtml };
   tbody.innerHTML = _sazaBuildRows(svLike, c, o);
   try { _sazaBindKeys(); } catch (_) {}
   try { _sazaStretchTable(); } catch (_) {}
@@ -895,37 +891,33 @@ async function _sazaSave() {
 }
 window._sazaSave = _sazaSave;
 
-// ═══ PRINT — report173 jaisa. Agar data PAGE 1 se barh jaye:
-//   • سرخیاں (thead) SIRF page 1 par — page 2+ par sirf table ki (khadi)
-//     lakeerein (thead display:table-row-group se khud aisa hota hai).
-//   • Har naye safhe ke OOPER BAYEN kone mein مثلث (triangle) — misl
-//     baandhne ke liye — aur pehli satar ko OOPER se AIK satar ki jagah.
-//   Yeh report173 ke bind-marks (_ch173AddBindMarks) ka table-version hai:
-//   LIVE DOM se har ملزم-qatar ki jagah naap kar safhe ki hadd maloom karte
-//   hain, phir CLONE mein us qatar se pehle page-break + مثلث daal dete hain.
+// ═══ PRINT — zimni/report173 jaisa multi-page. Agar data PAGE 1 se barh jaye:
+//   • سرخیاں (thead) SIRF page 1 par — thead{display:table-row-group}.
+//   • Table AAZADI se tootti hai (table/tbody/tr/td: break-inside:AUTO) —
+//     is se page 2 KHALI nahi rehta (pehle stretch+avoid ki wajah se rehta tha).
+//   • Har naye safhe ke OOPER BAYEN kone mein مثلث (float+shape-outside) aur
+//     pehli satar ko OOPER se aik satar (margin-top:1.25em) — zimni jaisa.
 // ═══
 function _sazaPrint() {
   const doc = _sazaDoc(); if (!doc) return;
-  try { _sazaStretchTable(); } catch (_) {}
-
-  // ── Safhe ki hadd par konsi ملزم-qatar page 2 par jati hai (LIVE naap) ──
-  const breakBeforeRows = _sazaComputePageBreaks(doc);   // Set of data-row values
+  // Safhe ki hadd par konsi qatar page 2+ par jati hai (LIVE naap)
+  const breakRows = _sazaComputePageBreaks(doc);
 
   const clone = doc.cloneNode(true);
   clone.querySelectorAll('.no-print, .saza-acc-pick, .saza-colgrip').forEach(el => el.remove());
+  // AHEM: screen wali "stretch" (inline height) SAAF karo — warna aakhri qatar
+  // itni lambi ho kar khali safhe bana deti thi (page 2 blank, page 3 data).
+  clone.querySelectorAll('[style*="height"]').forEach(el => { el.style.height = ''; el.style.minHeight = ''; });
 
-  // Clone ki un qataron par page-break + مثلث lagao jo naye safhe par shuru hoti hain
-  breakBeforeRows.forEach(rk => {
+  // Har page-2+ qatar ke کالم 1 mein مثلث + aik satar ki jagah (zimni jaisa)
+  breakRows.forEach(rk => {
     const tr = clone.querySelector('#saza-tbody tr[data-row="' + rk + '"]');
     if (!tr) return;
-    tr.classList.add('saza-pgbreak');
     const firstTd = tr.querySelector('.saza-c1');
-    if (firstTd) {
-      // مثلث + aik satar ki jagah — کالم 1 (naye safhe ke top-left) mein
-      const tri = document.createElement('span');
-      tri.className = 'saza-bind';
-      firstTd.insertBefore(tri, firstTd.firstChild);
-    }
+    if (!firstTd) return;
+    const tri = document.createElement('span');
+    tri.className = 'saza-bind';
+    firstTd.insertBefore(tri, firstTd.firstChild);
   });
 
   const inner = clone.innerHTML;
@@ -933,6 +925,7 @@ function _sazaPrint() {
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
       @page{ size:${_sazaPaper === 'a4' ? 'A4 portrait' : '8.5in 13in'}; margin:6mm ${_sazaSideMargin()}; }
+      *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; box-sizing:border-box; }
       html, body{ margin:0 !important; padding:0 !important;
         font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
         direction:rtl; line-height:1.4; color:#000; font-size:${_sazaDocFont(_sazaSaved)}pt; }
@@ -941,28 +934,24 @@ function _sazaPrint() {
         min-height:0 !important; padding:0 !important; margin:0 !important;
         transform:none !important; box-shadow:none !important; border-radius:0 !important; }
       .no-print, .saza-acc-pick, .saza-colgrip, button, select{ display:none !important; }
-      /* Unwan (form no.) bilkul OOPER se shuru — koi izafi top margin nahi */
       #saza-doc .saza-formno{ margin-top:0 !important; }
-      /* سرخیاں SIRF page 1 par (page 2+ par sirf lakeerein) */
-      .saza-table thead{ display:table-row-group; }
-      /* Har ملزم ki qatar poori rahe; SHO (lambi) qatar toot sakti hai */
-      .saza-acc-row{ page-break-inside:avoid; break-inside:avoid; }
-      tr[data-row="sho"]{ page-break-inside:auto; break-inside:auto; }
-      /* ── Naye safhe par jane wali qatar — safha TOR + OOPER aik satar ki jagah ── */
-      #saza-doc tr.saza-pgbreak{ break-before:page; page-break-before:always; }
-      #saza-doc tr.saza-pgbreak .saza-c1{ padding-top:1.6em; }   /* aik satar ki jagah */
-      /* مثلث — naye safhe ke OOPER BAYEN kone mein (misl baandhne ke liye,
-         report173 jaisa). Nok top-left kone par; matn is se bach kar behta
-         hai (shape-outside). Andar halka bhara hua (nazar aata) taake print
-         par nishan zaahir ho. */
+      /* سرخیاں SIRF page 1 par (dohrayein na) */
+      #saza-doc table.saza-table thead{ display:table-row-group !important; page-break-inside:avoid; }
+      /* Table AAZADI se toote (zimni ka asool) — KOI avoid/stretch nahi, warna
+         khali safha ban jata tha. */
+      #saza-doc table.saza-table, #saza-doc table.saza-table tbody,
+      #saza-doc table.saza-table tbody tr, #saza-doc table.saza-table tbody td{
+        page-break-inside:auto !important; break-inside:auto !important; height:auto !important; }
+      /* مثلث — page 2+ ke OOPER BAYEN kone mein (zimni zf-bind jaisa):
+         float+shape-outside, matn is se bach kar behta hai; OOPER 1.25em (aik satar). */
       #saza-doc .saza-bind{
-        float:left; width:1.3in; height:1.3in; margin:0 0.15in 0.1in 0;
-        shape-outside:polygon(0 0, 1.3in 0, 0 1.3in);
-        -webkit-shape-outside:polygon(0 0, 1.3in 0, 0 1.3in);
+        display:block !important; float:left; width:1.6in; height:1.6in; margin-top:1.25em;
+        shape-outside:polygon(0 0, 1.6in 0, 0 1.6in);
+        -webkit-shape-outside:polygon(0 0, 1.6in 0, 0 1.6in);
         shape-margin:3mm; -webkit-shape-margin:3mm;
-        clip-path:polygon(0 0, 1.3in 0, 0 1.3in);
-        -webkit-clip-path:polygon(0 0, 1.3in 0, 0 1.3in);
-        background:#000; opacity:0.14; display:block;
+        clip-path:polygon(0 0, 1.6in 0, 0 1.6in);
+        -webkit-clip-path:polygon(0 0, 1.6in 0, 0 1.6in);
+        background:#000; opacity:0.13;
       }
       #saza-doc, #saza-doc *{ orphans:2; widows:2; }
     </style></head><body><div id="saza-doc">${inner}</div></body></html>`;
@@ -1029,17 +1018,12 @@ function _sazaCSS() {
     #saza-doc .saza-formno{ text-align:center; font-size:12pt; margin:0 0 3pt; }
 
     /* Line 2 — تھانہ(dayen) · سزاسلپ(center, 24pt underline · UNBOLD) · ضلع(bayen).
-       tt-mid absolute 50% par — hamesha safha-center. تھانہ/ضلع 14pt.
-       AHEM: پہلے تھانہ کے دائیں 1in padding تھی جو ضلع کو بائیں کنارے سے
-       باہر دھکیل دیتی تھی (پرنٹ میں ضلع کٹ جاتا تھا). اب دونوں کناروں پر
-       تھوڑی سی (6mm) جگہ — ضلع پورا نظر آتا ہے. */
-    /* Line 2 — تھانہ(dayen) · سزاسلپ(center) · ضلع(bayen). Dono kinaron par
-       6mm jagah taake print mein ضلع/تھانہ kinare se na kate (0.2cm @page
-       margin ke ilawa). */
+       تھانہ ke DAYEN 1 inch ki jagah (user ki hidayat). ضلع bayen kinare par.
+       tt-mid absolute 50% par — hamesha safha-center. تھانہ/ضلع 14pt. */
     #saza-doc .saza-title-row{ position:relative; display:flex; align-items:baseline;
       justify-content:space-between; width:100%; min-height:1.8em; padding:0 6mm; box-sizing:border-box; }
     #saza-doc .saza-title-row > span{ white-space:nowrap; }
-    #saza-doc .saza-tt-right{ text-align:right; font-size:14pt; }
+    #saza-doc .saza-tt-right{ text-align:right; font-size:14pt; margin-right:1in; }
     #saza-doc .saza-tt-left{ text-align:left; font-size:14pt; }
     #saza-doc .saza-tt-mid{ position:absolute; left:50%; transform:translateX(-50%);
       white-space:nowrap; font-size:24pt; text-decoration:underline; font-weight:normal; }
@@ -1108,8 +1092,6 @@ function _sazaCSS() {
     #saza-doc .saza-sho-line{ font-weight:bold; font-size:14pt; text-align:left !important;
       text-align-last:left; outline:none; white-space:nowrap; min-height:20px; unicode-bidi:plaintext; }
     #saza-doc .saza-sho-line:empty::before{ content:'⚠ اوزار → SHO سے نام درج کریں'; color:#c00; font-size:11pt; font-weight:normal; }
-    #saza-doc .saza-sho-date{ font-weight:normal; margin-top:4px; cursor:pointer; text-align:left !important; }
-    #saza-doc .saza-sho-date:empty::before{ content:'تاریخ…'; color:#aaa; font-weight:normal; }
 
     /* کالم 2 (تاریخ) aur کالم 3 (جرم) — dono AIK khadi (270°) column (rowspan).
        Matn OOPER se (pehle ملزم ke saamne). */

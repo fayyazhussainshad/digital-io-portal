@@ -3,7 +3,7 @@
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v424';
+const CACHE_NAME = 'digital-io-v425';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
