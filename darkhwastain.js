@@ -33,28 +33,23 @@ let _dkPaper = (function () {
   try { return localStorage.getItem('dio_dk_paper') || 'legal'; } catch (_) { return 'legal'; }
 })();
 
-// ── APPLICATION TYPES (qismain) — id · naam · unwan (heading) ──
+// ── APPLICATION TYPES (Shafi ki فراہم کردہ فہرست) — id · naam ──
+//    naam hi heading ban jata hai (editable). Aakhir mein "+ اپنی درخواست"
+//    jis se IO apni koi bhi qism/عنوان khud likh sakta hai.
 const DK_TYPES = [
-  { id:'remand_jismani',   name:'ریمانڈ جسمانی',                unwan:'درخواست برائے حصولِ جسمانی ریمانڈ' },
-  { id:'remand_judicial',  name:'ریمانڈ عدالتی',                unwan:'درخواست برائے حصولِ عدالتی ریمانڈ' },
-  { id:'byanat_164',       name:'بیانات 164',                   unwan:'درخواست برائے قلمبند بیان زیر دفعہ 164 ض ف' },
-  { id:'shanakht_parade',  name:'شناخت پریڈ',                   unwan:'درخواست برائے عدالتی شناخت پریڈ' },
-  { id:'talbi_mulziman',   name:'طلبی ملزمان',                  unwan:'درخواست برائے طلبی ملزمان' },
-  { id:'zamanat_qabl',     name:'منسوخی ضمانت قبل از گرفتاری',  unwan:'درخواست برائے منسوخی ضمانت قبل از گرفتاری' },
-  { id:'superdari',        name:'سپردداری مال',                 unwan:'درخواست برائے سپردداری مال مقدمہ' },
-  { id:'warrant_gift',     name:'وارنٹ گرفتاری',                unwan:'درخواست برائے اجراء وارنٹ گرفتاری ملزمان' },
-  { id:'ishtihaari',       name:'اشتہاری ملزمان',               unwan:'درخواست برائے اعلانِ اشتہاری ملزمان زیر دفعہ 87 ض ف' },
-  { id:'behri_dafat',      name:'اضافہ دفعات',                  unwan:'درخواست برائے اضافہ دفعات قانون' },
-  { id:'kharaji_dafat',    name:'اخراج دفعات',                  unwan:'درخواست برائے اخراج دفعات قانون' },
-  { id:'postmortem',       name:'پوسٹ مارٹم',                   unwan:'درخواست برائے پوسٹ مارٹم/طبی معائنہ' },
-  { id:'dna',              name:'ڈی این اے',                    unwan:'درخواست برائے حصولِ ڈی این اے نمونہ جات' },
-  { id:'call_data',        name:'کال ڈیٹا (CDR)',               unwan:'درخواست برائے حصولِ کال ڈیٹا ریکارڈ' },
-  { id:'geo_fencing',      name:'جیو فینسنگ',                   unwan:'درخواست برائے حصولِ جیو فینسنگ ڈیٹا' },
-  { id:'medical_board',    name:'میڈیکل بورڈ',                  unwan:'درخواست برائے تشکیل میڈیکل بورڈ' },
-  { id:'transfer_case',    name:'منتقلی مقدمہ',                 unwan:'درخواست برائے منتقلی مقدمہ' },
-  { id:'weapon_return',    name:'واپسی اسلحہ',                  unwan:'درخواست برائے واپسی اسلحہ' },
-  { id:'record_talbi',     name:'طلبی ریکارڈ',                  unwan:'درخواست برائے طلبی ریکارڈ' },
-  { id:'other',            name:'دیگر درخواست',                 unwan:'درخواست بعنوانِ عدالت' },
+  { id:'remand_jismani',   name:'درخواست ریمانڈ جسمانی ملزمان ۔۔۔۔ یوم' },
+  { id:'remand_judicial',  name:'درخواست ریمانڈ جوڈیشل ملزمان ۔۔۔۔۔۔۔۔ یوم' },
+  { id:'byanat_164',       name:'درخواست برائے بیانات 164 ض ف' },
+  { id:'talbi_mulziman',   name:'درخواست برائے طلبی ملزمان' },
+  { id:'warrant_gift',     name:'درخواست برائے اجراء بلا ضمانت وارنٹ گرفتاری ملزمان' },
+  { id:'ishtihaari',       name:'درخواست برائے اجراء اشتہار ملزمان' },
+  { id:'shanakht_parade',  name:'درخواست برائے جوڈیشل شناخت پریڈ' },
+  { id:'postmortem',       name:'درخواست برائے پوسٹمارٹم' },
+  { id:'tibbi_victim',     name:'درخواست طبی ملاحظہ وکٹم' },
+  { id:'potency',          name:'درخواست برائے پوٹینسی ٹیسٹ ملزم' },
+  { id:'tibbi_mazroob',    name:'درخواست برائے طبی ملاحظہ مضروب' },
+  { id:'medical_board',    name:'درخواست برائے تشکیل دیئے جانے میڈیکل بورڈ' },
+  { id:'custom',           name:'➕ اپنی درخواست (خود لکھیں)' },
 ];
 
 // ═══ ENTRY POINT — chip se yahi khulta hai ═══
@@ -113,34 +108,38 @@ async function _dkLoadAccused() {
   }
 }
 
-// ── FIR ka matn (case_documents document_type='fir', content.html) ──
+// ── FIR ka matn — CHALLAN jaisa: 'fir_matn' table se (type='fir'). ──
 let _dkFirText = '';
 async function _dkLoadFirText() {
   _dkFirText = '';
+  const cid = _dkCaseId;
+  if (!cid) return;
+  // Pehle challan ka already-loaded matn (agar mojood)
   try {
-    if (typeof _misalDocs !== 'undefined' && _misalDocs && _misalDocs['fir'] && _misalDocs['fir'].content) {
-      _dkFirText = _misalDocs['fir'].content.html || _misalDocs['fir'].content.text || '';
-      if (_dkFirText) return;
+    if (typeof _ch173FirMatn !== 'undefined' && Array.isArray(_ch173FirMatn) && _ch173FirMatn.length) {
+      const rows = _ch173FirMatn.filter(m => (m.type || 'fir') === 'fir');
+      const t = rows.map(m => String(m.matn || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()).filter(Boolean).join(' ');
+      if (t) { _dkFirText = t; return; }
     }
   } catch (_) {}
+  // Warna seedha fir_matn table se (bilkul _ch173LoadFirMatn jaisa)
   try {
-    const { data } = await supabaseClient.from('case_documents')
-      .select('content').eq('case_id', _dkCaseId).eq('document_type', 'fir')
-      .order('created_at', { ascending: false }).limit(1);
-    if (data && data[0] && data[0].content) _dkFirText = data[0].content.html || data[0].content.text || '';
+    const { data } = await supabaseClient.from('fir_matn')
+      .select('matn,type').eq('case_id', cid).order('created_at', { ascending: true });
+    const rows = (data || []).filter(m => (m.type || 'fir') === 'fir');
+    _dkFirText = rows.map(m => String(m.matn || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()).filter(Boolean).join(' ');
+    if (_dkFirText) return;
+  } catch (_) {}
+  // Aakhri fallback — case_documents (agar kisi jagah FIR wahan ho)
+  try {
+    if (typeof _misalDocs !== 'undefined' && _misalDocs && _misalDocs['fir'] && _misalDocs['fir'].content) {
+      const h = _misalDocs['fir'].content.html || _misalDocs['fir'].content.text || '';
+      _dkFirText = String(h).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    }
   } catch (_) {}
 }
-// FIR matn ko saada matn mein (tags nikaal kar) — درخواست ke andar copy ke liye
-function _dkFirPlain() {
-  const html = _dkFirText || '';
-  if (!html) return '';
-  try {
-    const d = document.createElement('div');
-    d.innerHTML = (typeof sanitizeHtml === 'function') ? sanitizeHtml(html) : html;
-    let t = (d.textContent || d.innerText || '').replace(/\s+/g, ' ').trim();
-    return t;
-  } catch (_) { return String(html).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(); }
-}
+// FIR matn (already plain) — درخواست ke andar copy ke liye
+function _dkFirPlain() { return _dkFirText || ''; }
 
 // ملزمان ke naam ki fehrist — dropdown + numbering ke liye
 function _dkAccList() {
@@ -201,28 +200,21 @@ function _dkShoLine(o) {
   return st ? ('تھانہ ' + st) : '';
 }
 
-// ═══ استدعا (request line) — har qism ka apna, aakhir mein ═══
+// ═══ استدعا (request line) — qism ke hisaab se, aakhir mein ═══
 function _dkIstidaa(typeId) {
   switch (typeId) {
     case 'remand_jismani':  return 'لہٰذا استدعا ہے کہ ملزمان بالا کا جسمانی ریمانڈ بحق پولیس عطا فرمایا جائے تاکہ تکمیلِ تفتیش عمل میں لائی جا سکے۔ مہربانی ہوگی۔';
-    case 'remand_judicial': return 'لہٰذا استدعا ہے کہ ملزمان بالا کو عدالتی ریمانڈ پر جیل بھیجا جائے۔ مہربانی ہوگی۔';
+    case 'remand_judicial': return 'لہٰذا استدعا ہے کہ ملزمان بالا کو عدالتی (جوڈیشل) ریمانڈ پر جیل بھیجا جائے۔ مہربانی ہوگی۔';
     case 'byanat_164':      return 'لہٰذا استدعا ہے کہ گواہان/مدعی ہٰذا کے بیانات زیر دفعہ 164 ض ف قلمبند فرمائے جائیں۔ مہربانی ہوگی۔';
-    case 'shanakht_parade': return 'لہٰذا استدعا ہے کہ کسی مجسٹریٹ صاحب کی وساطت سے ملزمان بالا کی عدالتی شناخت پریڈ کروائی جائے۔ مہربانی ہوگی۔';
     case 'talbi_mulziman':  return 'لہٰذا استدعا ہے کہ ملزمان بالا کو بغرضِ تفتیش عدالت میں طلب فرمایا جائے۔ مہربانی ہوگی۔';
-    case 'zamanat_qabl':    return 'لہٰذا استدعا ہے کہ ملزمان بالا کی ضمانت قبل از گرفتاری منسوخ فرمائی جائے۔ مہربانی ہوگی۔';
-    case 'superdari':       return 'لہٰذا استدعا ہے کہ مالِ مقدمہ بعد تکمیلِ قانونی کارروائی جائز مالک کے سپرد کیا جائے۔ مہربانی ہوگی۔';
-    case 'warrant_gift':    return 'لہٰذا استدعا ہے کہ ملزمان بالا کے وارنٹ گرفتاری جاری فرمائے جائیں۔ مہربانی ہوگی۔';
+    case 'warrant_gift':    return 'لہٰذا استدعا ہے کہ ملزمان بالا کے بلا ضمانت وارنٹ گرفتاری جاری فرمائے جائیں۔ مہربانی ہوگی۔';
     case 'ishtihaari':      return 'لہٰذا استدعا ہے کہ ملزمان بالا کو زیر دفعہ 87 ض ف اشتہاری قرار دیا جائے۔ مہربانی ہوگی۔';
-    case 'behri_dafat':     return 'لہٰذا استدعا ہے کہ مقدمہ ہٰذا میں مناسب دفعات کے اضافہ کی اجازت مرحمت فرمائی جائے۔ مہربانی ہوگی۔';
-    case 'kharaji_dafat':   return 'لہٰذا استدعا ہے کہ غیر متعلقہ دفعات کے اخراج کی اجازت مرحمت فرمائی جائے۔ مہربانی ہوگی۔';
-    case 'postmortem':      return 'لہٰذا استدعا ہے کہ متعلقہ میڈیکل آفیسر کو پوسٹ مارٹم/طبی معائنہ کی ہدایت فرمائی جائے۔ مہربانی ہوگی۔';
-    case 'dna':             return 'لہٰذا استدعا ہے کہ ڈی این اے نمونہ جات کے حصول کی اجازت مرحمت فرمائی جائے۔ مہربانی ہوگی۔';
-    case 'call_data':       return 'لہٰذا استدعا ہے کہ متعلقہ کمپنیوں سے کال ڈیٹا ریکارڈ (CDR) کے حصول کی اجازت مرحمت فرمائی جائے۔ مہربانی ہوگی۔';
-    case 'geo_fencing':     return 'لہٰذا استدعا ہے کہ جیو فینسنگ ڈیٹا کے حصول کی اجازت مرحمت فرمائی جائے۔ مہربانی ہوگی۔';
+    case 'shanakht_parade': return 'لہٰذا استدعا ہے کہ کسی مجسٹریٹ صاحب کی وساطت سے ملزمان بالا کی جوڈیشل شناخت پریڈ کروائی جائے۔ مہربانی ہوگی۔';
+    case 'postmortem':      return 'لہٰذا استدعا ہے کہ متعلقہ میڈیکل آفیسر کو پوسٹ مارٹم کی ہدایت فرمائی جائے۔ مہربانی ہوگی۔';
+    case 'tibbi_victim':    return 'لہٰذا استدعا ہے کہ وکٹم کے طبی ملاحظہ کی ہدایت فرمائی جائے۔ مہربانی ہوگی۔';
+    case 'potency':         return 'لہٰذا استدعا ہے کہ ملزم کے پوٹینسی ٹیسٹ کی ہدایت فرمائی جائے۔ مہربانی ہوگی۔';
+    case 'tibbi_mazroob':   return 'لہٰذا استدعا ہے کہ مضروب کے طبی ملاحظہ کی ہدایت فرمائی جائے۔ مہربانی ہوگی۔';
     case 'medical_board':   return 'لہٰذا استدعا ہے کہ میڈیکل بورڈ تشکیل دیا جائے۔ مہربانی ہوگی۔';
-    case 'transfer_case':   return 'لہٰذا استدعا ہے کہ مقدمہ ہٰذا متعلقہ عدالت/تھانہ منتقل فرمایا جائے۔ مہربانی ہوگی۔';
-    case 'weapon_return':   return 'لہٰذا استدعا ہے کہ اسلحہ بعد قانونی کارروائی جائز مالک کو واپس کیا جائے۔ مہربانی ہوگی۔';
-    case 'record_talbi':    return 'لہٰذا استدعا ہے کہ متعلقہ ادارہ/محکمہ کو ریکارڈ فراہمی کی ہدایت فرمائی جائے۔ مہربانی ہوگی۔';
     default:                return 'لہٰذا استدعا ہے کہ ______________________ ۔ مہربانی ہوگی۔';
   }
 }
@@ -332,17 +324,18 @@ function _dkRender() {
 
         <!-- (بنام ke baad khali jagah — CSS margin se) -->
 
-        <!-- Heading (qism) — dropdown-selected magar EDITABLE, 18pt underline -->
-        <div class="dk-unwan" contenteditable="true" data-k="unwan_${_dkType}">${v('unwan_' + _dkType, esc(typeDef.unwan))}</div>
+        <!-- Heading (qism) — dropdown se selected magar EDITABLE, 18pt underline.
+             Naam hi عنوان hai. custom qism par khali (IO khud likhega). -->
+        <div class="dk-unwan" contenteditable="true" data-k="unwan_${_dkType}">${v('unwan_' + _dkType, (_dkType === 'custom' ? '' : esc(typeDef.name)))}</div>
 
         <!-- Body (rich text) — جناب عالیٰ! … FIR matn … تفتیش … استدعا -->
         <div class="dk-body" contenteditable="true" data-k="${savedBodyKey}">${bodyHtml}</div>
 
-        <!-- IO block — bayen sidh: dastkhat ki jagah → naam/رینک/تھانہ (bold+underline) → تاریخ -->
+        <!-- IO block — bayen sidh: dastkhat ki jagah → naam/رینک/تھانہ (bold+underline) → تاریخ (bina "مورخہ") -->
         <div class="dk-sign">
           <div class="dk-sign-space"></div>
           <div class="dk-sign-name" contenteditable="true" data-k="sho">${v('sho', esc(_dkShoLine(o)))}</div>
-          <div class="dk-sign-date" contenteditable="true" data-k="sho_date">${v('sho_date', 'مورخہ ' + esc(_dkToday()))}</div>
+          <div class="dk-sign-date" contenteditable="true" data-k="sho_date">${v('sho_date', esc(_dkToday()))}</div>
         </div>
 
         <input type="hidden" data-k="doc_font" value="${esc(String(docFont))}">
@@ -734,11 +727,12 @@ function _dkCSS() {
     #dk-doc .dk-tt-right{ text-align:right; white-space:nowrap; }
     #dk-doc .dk-tt-left{ text-align:left; white-space:nowrap; margin-left:1cm; }
 
-    /* Line 1 ke baad 1 INCH ki khali jagah (point 2) */
-    #dk-doc .dk-sarkar{ margin-top:1in; font-size:14pt; text-align:right; }
+    /* Line 1 ke baad 1 INCH ki khali jagah (point 2). سرکار aur caseline ko
+       aik TAB (0.5in) BAYEN move (point: satar 2 aur 3 indent) — بنام apni jaga. */
+    #dk-doc .dk-sarkar{ margin-top:1in; font-size:14pt; text-align:right; padding-right:0.5in; }
 
-    /* Line 3 — مقدمہ نمبر/تاریخ/دفعہ/تھانہ, 14pt */
-    #dk-doc .dk-caseline{ font-size:14pt; margin:6pt 0 0; text-align:right; }
+    /* Line 3 — مقدمہ نمبر/تاریخ/دفعہ/تھانہ, 14pt, aik tab indent */
+    #dk-doc .dk-caseline{ font-size:14pt; margin:6pt 0 0; text-align:right; padding-right:0.5in; }
 
     /* بنام — dayen ▾ dropdown + بنام + numbered ملزمان */
     #dk-doc .dk-banam-row{ display:flex; align-items:flex-start; gap:6px; margin:10pt 0 0; font-size:14pt; }
