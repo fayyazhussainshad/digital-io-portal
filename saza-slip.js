@@ -170,8 +170,12 @@ function _sazaRender() {
     ? sanitizeHtml(sv[k] !== undefined ? sv[k] : (def || ''))
     : (sv[k] !== undefined ? sv[k] : (def || '')));
 
-  // Chune hue ملزمان — saved se (warna khali; system ke tamam KHUD nahi bharte)
-  try { _sazaChosen = sv.acc ? (JSON.parse(sv.acc) || []) : []; } catch (_) { _sazaChosen = []; }
+  // Chune hue ملزمان — agar select mehfooz hai to WAHI, warna (naya) SAB
+  // ملزمان (sab select). _sazaBuildRows bhi yehi mantiq رکھتا ہے.
+  try {
+    if (sv.acc !== undefined) _sazaChosen = JSON.parse(sv.acc) || [];
+    else _sazaChosen = _sazaAccList().map(a => a.name);
+  } catch (_) { _sazaChosen = _sazaAccList().map(a => a.name); }
 
   const fir = c.fir_number || '';
   const firDate = (typeof formatDate === 'function') ? formatDate(c.fir_date) : (c.fir_date || '');
@@ -385,12 +389,21 @@ function _sazaColDragEnd() {
 function _sazaBuildRows(sv, c, o) {
   o = o || (typeof currentOfficer !== 'undefined' && currentOfficer) || {};
 
-  // Chune hue ملزمان: pehle saved (sv.acc = naam ki list), warna KHALI
-  // (system ke tamam ملزمان KHUD nahi bharte — sirf dropdown se aate hain).
-  let chosenNames = [];
-  if (sv.acc) { try { chosenNames = JSON.parse(sv.acc) || []; } catch (_) { chosenNames = []; } }
+  // Chune hue ملزمان — user ki hidayat: pehli dafa SAB ملزمان khud dikhein
+  // (sab select). IO jinhein nahi chahta, dropdown se un ka نشان hata dega.
+  //   • Agar pehle se select mehfooz hai (sv.acc), to WAHI (chahe khali list
+  //     ho — yani IO ne sab hata diye) — is se IO ki marzi barqarar rehti hai.
+  //   • Warna (naya/غير محفوظ) — system ke TAMAM ملزمان.
   const all = _sazaAccList();
-  let people = chosenNames.map(nm => all.find(a => (a.name || '') === nm)).filter(Boolean);
+  let people;
+  if (sv.acc !== undefined) {
+    let chosenNames = [];
+    try { chosenNames = JSON.parse(sv.acc) || []; } catch (_) { chosenNames = []; }
+    people = chosenNames.map(nm => all.find(a => (a.name || '') === nm)).filter(Boolean);
+  } else {
+    people = all.slice();                         // pehli dafa — sab ملزم, sab select
+    _sazaChosen = all.map(a => a.name);
+  }
 
   // کالم 3 (جرم) ka matn — user ki hidayat: SIRF "مندرجہ بالا" (offence nahi).
   const jurmDefault = 'مندرجہ بالا';
@@ -967,16 +980,33 @@ function _sazaPrint() {
   // itni lambi ho kar khali safhe bana deti thi (page 2 blank, page 3 data).
   clone.querySelectorAll('[style*="height"]').forEach(el => { el.style.height = ''; el.style.minHeight = ''; });
 
-  // Har page-2+ qatar ke کالم 1 mein مثلث + aik satar ki jagah (zimni jaisa)
+  // Har page-2+ qatar ke کالم 4 (BAYEN, page ka top-left kona) mein مثلث +
+  // aik satar ki jagah (zimni jaisa). RTL mein کالم 4 sab se bayen = safhe ka
+  // top-left kona.
   breakRows.forEach(rk => {
     const tr = clone.querySelector('#saza-tbody tr[data-row="' + rk + '"]');
     if (!tr) return;
-    const firstTd = tr.querySelector('.saza-c1');
-    if (!firstTd) return;
+    const c4 = tr.querySelector('.saza-c4');
+    const cell = c4 || tr.querySelector('td:last-child') || tr.querySelector('.saza-c1');
+    if (!cell) return;
     const tri = document.createElement('span');
     tri.className = 'saza-bind';
-    firstTd.insertBefore(tri, firstTd.firstChild);
+    // مثلث ke ird-gird matn na behe — is liye khane ke bilkul shuru mein
+    (cell.querySelector('.saza-c4-body') || cell).insertBefore
+      ? (cell.querySelector('.saza-c4-body') || cell).insertBefore(tri, (cell.querySelector('.saza-c4-body') || cell).firstChild)
+      : cell.appendChild(tri);
   });
+
+  // ── Lines-to-bottom (aakhri safhe par) — table ko poore safhe jitni height
+  //    do; aakhri (SHO) qatar bachi jagah khud le kar khadi lakeerein safhe ke
+  //    NEECHE tak le jati hai. break-inside:auto ki wajah se ab khali safha
+  //    nahi banta. ──
+  const IN = 96;
+  const pageContentH = (((_sazaPaper === 'a4') ? 11.7 : 13) * IN) - ((6 / 25.4) * IN * 2);
+  const tblEl = clone.querySelector('#saza-table');
+  if (tblEl) tblEl.style.height = pageContentH + 'px';   // aakhri safha bhar de
+  const shoTd = clone.querySelector('#saza-tbody tr[data-row="sho"] .saza-c1-sho');
+  if (shoTd) shoTd.style.verticalAlign = 'top';
 
   const inner = clone.innerHTML;
   const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
@@ -995,11 +1025,16 @@ function _sazaPrint() {
       #saza-doc .saza-formno{ margin-top:0 !important; }
       /* سرخیاں SIRF page 1 par (dohrayein na) */
       #saza-doc table.saza-table thead{ display:table-row-group !important; page-break-inside:avoid; }
-      /* Table AAZADI se toote (zimni ka asool) — KOI avoid/stretch nahi, warna
-         khali safha ban jata tha. */
-      #saza-doc table.saza-table, #saza-doc table.saza-table tbody,
+      /* Table AAZADI se toote (zimni ka asool) — qataron par KOI avoid nahi,
+         warna khali safha ban jata tha. Table ki apni height (lines-to-bottom
+         ke liye) barqarar — sirf tbody/tr/td ki height auto. */
+      #saza-doc table.saza-table tbody,
       #saza-doc table.saza-table tbody tr, #saza-doc table.saza-table tbody td{
-        page-break-inside:auto !important; break-inside:auto !important; height:auto !important; }
+        page-break-inside:auto !important; break-inside:auto !important; }
+      #saza-doc table.saza-table{ break-inside:auto !important; page-break-inside:auto !important; }
+      /* Aakhri (SHO) qatar bachi jagah le — is se khadi lakeerein safhe ke
+         NEECHE tak (image 1 ka masla). */
+      #saza-doc #saza-tbody tr[data-row="sho"] td{ height:auto; }
       /* مثلث — page 2+ ke OOPER BAYEN kone mein (zimni zf-bind jaisa):
          float+shape-outside, matn is se bach kar behta hai; OOPER 1.25em (aik satar). */
       #saza-doc .saza-bind{
