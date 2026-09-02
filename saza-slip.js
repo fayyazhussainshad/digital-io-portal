@@ -64,13 +64,25 @@ async function openSazaSlip(caseId) {
 }
 window.openSazaSlip = openSazaSlip;
 
-// Saved form_data (case_documents.content) — aik hi saza slip per case
+// Saved form_data — pehle _misalDocs (case_documents) se, warna localStorage se.
+// (Workspace khulte hi loadMisalDocs tamam case_documents laata hai, is liye
+//  agli baar saza slip khud wapas aa jati hai.)
 async function _sazaLoadSaved() {
   _sazaSaved = {};
   try {
     if (typeof _misalDocs !== 'undefined' && _misalDocs && _misalDocs['saza_slip']
-        && _misalDocs['saza_slip'].content) {
+        && _misalDocs['saza_slip'].content && Object.keys(_misalDocs['saza_slip'].content).length) {
       _sazaSaved = _misalDocs['saza_slip'].content || {};
+      return;
+    }
+  } catch (_) {}
+  // Fallback — localStorage backup (offline ya DB-miss ki soorat mein)
+  try {
+    const raw = localStorage.getItem('dio_saza_' + _sazaCaseId);
+    if (raw) {
+      _sazaSaved = JSON.parse(raw) || {};
+      // _misalDocs mein bhi bithao taake chip "مکمل" dikhe
+      try { _sazaMarkMisalSaved(_sazaSaved, 'complete'); } catch (_) {}
     }
   } catch (_) { _sazaSaved = {}; }
 }
@@ -836,7 +848,10 @@ function _sazaFocusMode(on) {
 }
 window._sazaFocusMode = _sazaFocusMode;
 
-// ═══ SAVE ═══
+// ═══ SAVE — zimni/چالان jaisa: case_documents table mein 'saza_slip'
+//   record. Save ke baad chip "مکمل" (mdoc-done) ho jati hai aur agli baar
+//   khulne par wahi mehfooz saza slip wapas aati hai. Offline/DB-fail par
+//   localStorage mein bhi mehfooz — kaam kabhi zaya na ho. ═══
 async function _sazaSave() {
   const doc = _sazaDoc(); if (!doc) return;
   const data = {};
@@ -847,7 +862,6 @@ async function _sazaSave() {
   });
   data.doc_font = doc.dataset.fs || String(SAZA_FONT_DEFAULT);
   data.acc = JSON.stringify(_sazaChosen || []);   // chune hue ملزمان (naam)
-  // کالم ki chaurai (%) — movable lakeeron ke baad mehfooz
   try {
     const cols = doc.querySelectorAll('#saza-table colgroup col');
     if (cols.length === 4) {
@@ -857,10 +871,23 @@ async function _sazaSave() {
     }
   } catch (_) {}
   data.saved_at = new Date().toISOString();
+
+  // Local backup pehle (kabhi zaya na ho)
+  try { localStorage.setItem('dio_saza_' + _sazaCaseId, JSON.stringify(data)); } catch (_) {}
+
+  // Offline → sirf localStorage; chip bhi "added" dikhao
+  if (typeof navigator !== 'undefined' && navigator && navigator.onLine === false) {
+    _sazaSaved = data; _sazaDirty = false;
+    _sazaMarkMisalSaved(data, 'complete');
+    if (typeof showToast === 'function')
+      showToast('📴 آف لائن محفوظ — انٹرنیٹ آنے پر sync ہوگا', 'info', 5000);
+    return;
+  }
+
   try {
-    // case_documents mein 'saza_slip' record — misal-docs.js jaisa
     let exists = false;
-    try { exists = !!(typeof _misalDocs !== 'undefined' && _misalDocs && _misalDocs['saza_slip']); } catch (_) {}
+    try { exists = !!(typeof _misalDocs !== 'undefined' && _misalDocs && _misalDocs['saza_slip'] && _misalDocs['saza_slip'].id); } catch (_) {}
+    let savedId = null;
     if (!exists) {
       const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
       const { data: ins, error } = await supabaseClient
@@ -868,28 +895,59 @@ async function _sazaSave() {
         .insert({ case_id: _sazaCaseId, officer_id: oid, document_type: 'saza_slip', status: 'complete', content: data })
         .select().single();
       if (error) throw error;
-      try { if (typeof _misalDocs !== 'undefined') _misalDocs['saza_slip'] = ins; } catch (_) {}
+      savedId = ins && ins.id;
+      _sazaMarkMisalSaved(data, 'complete', ins);
     } else {
       const { error } = await supabaseClient
         .from('case_documents')
         .update({ content: data, status: 'complete', updated_at: new Date().toISOString() })
         .eq('case_id', _sazaCaseId).eq('document_type', 'saza_slip');
       if (error) throw error;
-      try { _misalDocs['saza_slip'].content = data; } catch (_) {}
+      savedId = _misalDocs['saza_slip'].id;
+      _sazaMarkMisalSaved(data, 'complete');
     }
     _sazaSaved = data;
     _sazaDirty = false;
-    try { if (typeof _refreshMisalBar === 'function') _refreshMisalBar(); } catch (_) {}
+
+    // ═══ Tasdeeq — waqai DB mein pohanchi? (zimni jaisa) ═══
+    let ok = true;
+    try {
+      const chk = await supabaseClient.from('case_documents')
+        .select('id,status').eq('case_id', _sazaCaseId).eq('document_type', 'saza_slip');
+      if (chk.error || !chk.data || !chk.data.length) ok = false;
+    } catch (_) { ok = false; }
+
     try {
       if (typeof dioRegisterSaved === 'function')
         dioRegisterSaved('misal', 'سزا سلپ', { case_id: _sazaCaseId, doc_id: 'saza_slip' });
     } catch (_) {}
-    if (typeof showToast === 'function') showToast('✅ سزا سلپ محفوظ ہو گئی', 'success');
+
+    if (typeof showToast === 'function') {
+      if (ok) showToast('✅ سزا سلپ محفوظ ہو گئی — چپ پر "سزا سلپ" اب مکمل ہے، دوبارہ کھولنے پر یہی واپس آئے گی', 'success', 5000);
+      else showToast('⚠️ سزا سلپ مقامی طور پر محفوظ ہے، مگر ڈیٹابیس میں تصدیق نہ ہو سکی', 'warn', 7000);
+    }
   } catch (e) {
-    if (typeof showToast === 'function') showToast('❌ ' + (e.message || e), 'error');
+    // DB fail — localStorage mein to mehfooz hai
+    _sazaSaved = data; _sazaDirty = false;
+    _sazaMarkMisalSaved(data, 'complete');
+    if (typeof showToast === 'function')
+      showToast('⚠️ ڈیٹابیس میں محفوظ نہ ہو سکی (' + (e.message || e) + ') — مقامی طور پر محفوظ ہے', 'warn', 7000);
   }
 }
 window._sazaSave = _sazaSave;
+
+// _misalDocs mein saza_slip ko "saved/complete" mark karo aur chip patti taaza karo
+function _sazaMarkMisalSaved(content, status, insRec) {
+  try {
+    if (typeof _misalDocs === 'undefined') return;
+    if (insRec) { _misalDocs['saza_slip'] = insRec; }
+    if (!_misalDocs['saza_slip']) _misalDocs['saza_slip'] = { document_type: 'saza_slip' };
+    _misalDocs['saza_slip'].content = content;
+    _misalDocs['saza_slip'].status = status || 'complete';
+  } catch (_) {}
+  try { if (typeof _refreshMisalBar === 'function') _refreshMisalBar(); } catch (_) {}
+}
+window._sazaMarkMisalSaved = _sazaMarkMisalSaved;
 
 // ═══ PRINT — zimni/report173 jaisa multi-page. Agar data PAGE 1 se barh jaye:
 //   • سرخیاں (thead) SIRF page 1 par — thead{display:table-row-group}.
