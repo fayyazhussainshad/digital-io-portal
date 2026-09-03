@@ -776,7 +776,7 @@ function _dkCSS() {
 
     /* Line 3 — مقدمہ نمبر/تاریخ/دفعہ/تھانہ. Satar 2/3/4 ki line-spacing 1pt
        (bilkul tight). */
-    #dk-doc .dk-caseline{ font-size:14pt; margin:1pt 0 0; text-align:right; padding-right:var(--dk-indent,0.9in); line-height:1; }
+    #dk-doc .dk-caseline{ font-size:14pt; margin:1pt 0 0; text-align:right; padding-right:var(--dk-indent,0.9in); line-height:1; unicode-bidi:plaintext; }
 
     /* بنام — "بنام" DAYEN kinare par (hanging). ملزمان list usi indent par.
        Line-spacing 1pt (satar 2/3/4 tight). CNIC ki khatir do-satri layout. */

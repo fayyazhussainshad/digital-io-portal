@@ -115,9 +115,10 @@ function _sazaAccList() {
   })).filter(a => a.name);
 }
 
-// ═══ جرم — "ت پ" (تعزیراتِ پاکستان) ka qanoon — report173 (_ch173JurmParts)
-//    ka BILKUL wahi tareeqa: دفعات (body) aur "ت پ" (suffix) ALAG. Body LTR-
-//    isolate, ت پ RTL — is se ت پ hamesha دفعات ke BAAD, bayen kinare par. ═══
+// ═══ جرم — "ت پ" ka SETTLED SYSTEM RULE:
+//    ت پ SIRF tab dikhaya jaye jab offence field mein WAQAI ت پ / تعزیرات
+//    پاکستان likha ho. Agar field mein na ho to KHUD SE NA lagao.
+//    (report173 ka _ch173JurmParts jaisa: دفعات=body, ت پ=suffix, ALAG.) ═══
 const SAZA_TP_RE = /[\s،,\-]*(ت\s*\.?\s*پ|تعزیرات\s*پاکستان)\s*$/;
 function _sazaJurmParts(raw, savedSuf) {
   const txt = String(raw || '').trim();
@@ -125,14 +126,31 @@ function _sazaJurmParts(raw, savedSuf) {
   const body = m ? txt.slice(0, m.index).trim() : txt;
   let suffix;
   if (savedSuf !== undefined && savedSuf !== null) suffix = String(savedSuf);
-  else if (m) suffix = m[1].replace(/\s+/g, ' ').trim();
-  else suffix = body ? 'ت پ' : '';       // dafaat hon to hi ت پ lagao
+  else if (m) suffix = m[1].replace(/\s+/g, ' ').trim();  // field mein tha to hi
+  else suffix = '';                                        // field mein NAHI → NA lagao
   return { body, suffix };
 }
-// Sirf plain text (fallback/save ke liye) — body + ت پ
+// Sirf plain text (fallback/save ke liye) — body + (agar ho to) ت پ
 function _sazaOffenceWithTP(raw) {
   const p = _sazaJurmParts(raw);
   return p.body ? (p.body + (p.suffix ? ' ' + p.suffix : '')) : '';
+}
+// جرم body ki BIDI tarteeb — har hissa (jo ، , . se alag ho) apni alag
+// <bdi> mein, taake HAR segment ke andar "pehle English digits, phir Urdu"
+// wali tarteeb barqarar rahe. Separator (، , .) add karne par tarteeb dobara
+// shuru — English aur Urdu hisse اکٹھے NAHI hote. SETTLED SYSTEM RULE.
+function _sazaJurmBidi(body) {
+  const t = String(body || '');
+  if (!t) return '';
+  // Separators (، , . niz ان ke ird-gird ki space) ko rakhte hue split
+  const parts = t.split(/([،,\.]\s*)/);
+  let out = '';
+  parts.forEach(seg => {
+    if (seg === '') return;
+    if (/^[،,\.]\s*$/.test(seg)) { out += esc(seg); }          // separator jyun ka tyun
+    else { out += '<bdi>' + esc(seg) + '</bdi>'; }             // har hissa alag isolate
+  });
+  return out;
 }
 
 // حلیہ — sub-fields se (mulziman _accViewDetail jaisa)
@@ -240,7 +258,7 @@ function _sazaRender() {
         <div class="saza-caseline">
           <span>مقدمہ نمبر <span class="fl" contenteditable="true" data-k="cl_fir">${v('cl_fir', esc(fir))}</span></span>
           <span>مورخہ <span class="fl" contenteditable="true" data-k="cl_date">${v('cl_date', esc(firDate))}</span></span>
-          <span>جرم <span class="fl fl-lg" contenteditable="true" data-k="cl_jurm">${v('cl_jurm', esc(_sazaJurmParts(c.section_of_law || c.offence_type).body))}</span> <span class="fl fl-suf" contenteditable="true" data-k="cl_jurm_suf">${v('cl_jurm_suf', esc(_sazaJurmParts(c.section_of_law || c.offence_type).suffix))}</span></span>
+          <span>جرم <span class="fl fl-lg" contenteditable="true" data-k="cl_jurm">${v('cl_jurm', _sazaJurmBidi(_sazaJurmParts(c.section_of_law || c.offence_type).body))}</span> <span class="fl fl-suf" contenteditable="true" data-k="cl_jurm_suf">${v('cl_jurm_suf', esc(_sazaJurmParts(c.section_of_law || c.offence_type).suffix))}</span>${_sazaJurmParts(c.section_of_law || c.offence_type).suffix ? '' : ''}<span class="saza-jurm-dot">۔</span></span>
         </div>
 
         <!-- ── TABLE: 4 columns · headings row + AIK data row ── -->
@@ -400,7 +418,7 @@ function _sazaBuildRows(sv, c, o) {
     <div class="saza-sho-inline">
       <div class="saza-sho-space"></div>
       <div class="saza-sho-line" contenteditable="true" data-k="sho">${_v('sho', esc(_sazaShoLine(o)))}</div>
-      <div class="saza-sho-line saza-sho-date" contenteditable="true" data-k="sho_date">${_v('sho_date', 'مورخہ ' + esc(shoDateDef))}</div>
+      <div class="saza-sho-line saza-sho-date" contenteditable="true" data-k="sho_date">${_v('sho_date', esc(shoDateDef))}</div>
     </div>`;
 
   // Koi ملزم nahi chuna → aik hint qatar + SHO qatar
@@ -1151,12 +1169,12 @@ function _sazaCSS() {
     #saza-doc .saza-sho-line:empty::before{ content:'⚠ اوزار → SHO سے نام درج کریں'; color:#c00; font-size:11pt; font-weight:normal; }
     #saza-doc .saza-sho-date{ font-weight:normal !important; margin-top:3px; }
 
-    /* کالم 2 (تاریخ) aur کالم 3 (جرم) — dono AIK khadi (270°) column (rowspan).
-       Matn OOPER se (pehle ملزم ke saamne). */
+    /* کالم 2 (تاریخ) aur کالم 3 (جرم) — dono AIK khadi column (rowspan).
+       Matn OOPER se NEECHE ki taraf (top-to-bottom) — writing-mode:vertical-rl
+       bina rotate(180). (Pehle rotate(180) se neeche-se-ooper padha jata tha.) */
     #saza-doc .saza-table td.rotcell{ padding:0; text-align:center; vertical-align:top; position:relative; }
     #saza-doc .rotcell-in{
-      writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
-      transform:rotate(180deg); -webkit-transform:rotate(180deg);
+      writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl; text-orientation:mixed;
       white-space:nowrap; line-height:1.35; unicode-bidi:plaintext; font-size:14pt;
       outline:none; margin:6px auto 0; padding:2px;
     }
