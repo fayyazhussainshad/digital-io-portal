@@ -259,8 +259,10 @@ function _dkTemplateBody(typeId, c, o) {
   const firPart = firPlain
     ? esc(firPlain)
     : '<span style="color:#c00;">[ایف آئی آر کا متن یہاں آئے گا — پہلے ایف آئی آر درج کریں]</span>';
-  const istidaa = esc(_dkIstidaa(typeId));
-  return `جناب عالیٰ! مختصرحالات مقدمہ عنوان بالا اس طرح ہیں کہ ${firPart} جس پر مقدمہ عنوان بالا درج ہوا تفتیش عمل میں لائی گئی۔ دورانِ تفتیش <span style="color:#888;">[یہاں اپنی تفتیش تحریر کریں]</span><br><br>${istidaa}`;
+  // AHEM: "یہاں اپنی تفتیش تحریر کریں" ab NORMAL rang (siyah) mein — pehle
+  // madham (grey #888) tha. Default استدعا/request line aur us se pehle wali
+  // khali jagah HATA di — IO khud استدعا/درخواست likhega.
+  return `جناب عالیٰ! مختصرحالات مقدمہ عنوان بالا اس طرح ہیں کہ ${firPart} جس پر مقدمہ عنوان بالا درج ہوا تفتیش عمل میں لائی گئی۔ دورانِ تفتیش `;
 }
 
 // ═══ RENDER — poore safhe ka editor ═══
