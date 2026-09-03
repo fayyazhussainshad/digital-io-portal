@@ -53,28 +53,65 @@ const DK_TYPES = [
 ];
 
 // ═══ ENTRY POINT — chip se yahi khulta hai ═══
+//   Chalan/zimni jaisa: agar پہلے se محفوظ درخواستیں hain to FEHRIST kholo
+//   (تاریخ/وقت/سیریل ke saath) — warna seedha nayi درخواست ka editor.
+let _dkEntryId = null;   // mojooda khuli hui درخواست ka record id (null = nayi)
 async function openDarkhwast(caseId) {
-  _dkAccused = null;
   _dkCaseId = caseId
     || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
     || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
-  if (typeof getCase === 'function' && _dkCaseId) {
-    try { _dkCase = await getCase(_dkCaseId); } catch (_) { _dkCase = null; }
-  }
-  await _dkLoadSaved();
+  if (typeof _dioOpenDocTab === 'function') { try { _dioOpenDocTab('darkhwastain'); } catch (_) {} }
+  // Fehrist dekho
+  let entries = [];
+  try { entries = (typeof dioLoadDocEntries === 'function') ? await dioLoadDocEntries('darkhwastain', _dkCaseId) : []; } catch (_) { entries = []; }
+  if (entries.length) { _dkShowList(); return; }
+  await _dkNewEntry();
+}
+window.openDarkhwast = openDarkhwast;
+
+// محفوظ درخواستوں کی فہرست
+function _dkShowList() {
+  if (typeof dioRenderDocList !== 'function') { _dkNewEntry(); return; }
+  dioRenderDocList('darkhwastain', {
+    caseId: _dkCaseId,
+    heading: 'درخواستیں',
+    titleOf: (r) => (r.content && (r.content.__title || (DK_TYPES.find(t => t.id === r.content.dk_type) || {}).name)) || 'درخواست',
+    onNew: () => { _dkNewEntry(); },
+    onOpen: (entry) => { _dkOpenEntry(entry); },
+  });
+}
+window._dkShowList = _dkShowList;
+
+// نئی درخواست — khali/fresh editor
+async function _dkNewEntry() {
+  _dkEntryId = null;
+  _dkAccused = null;
+  _dkSaved = {};
+  if (typeof getCase === 'function' && _dkCaseId) { try { _dkCase = await getCase(_dkCaseId); } catch (_) { _dkCase = null; } }
   await _dkLoadAccused();
   await _dkLoadFirText();
-  // Chune hue ملزمان — saved se, warna sab (bydefault sab select)
+  _dkChosen = _dkAccusedNames();
+  _dkType = 'remand_jismani';
+  _dkRender();
+}
+window._dkNewEntry = _dkNewEntry;
+
+// محفوظ درخواست کھولیں (edit)
+async function _dkOpenEntry(entry) {
+  _dkEntryId = entry.id;
+  _dkAccused = null;
+  _dkSaved = (entry && entry.content) ? entry.content : {};
+  if (typeof getCase === 'function' && _dkCaseId) { try { _dkCase = await getCase(_dkCaseId); } catch (_) { _dkCase = null; } }
+  await _dkLoadAccused();
+  await _dkLoadFirText();
   try {
     if (_dkSaved && _dkSaved.acc !== undefined) _dkChosen = JSON.parse(_dkSaved.acc) || [];
     else _dkChosen = _dkAccusedNames();
   } catch (_) { _dkChosen = _dkAccusedNames(); }
-  // Saved type (agar tha) warna default
   if (_dkSaved && _dkSaved.dk_type) _dkType = _dkSaved.dk_type;
-  if (typeof _dioOpenDocTab === 'function') { try { _dioOpenDocTab('darkhwastain'); } catch (_) {} }
   _dkRender();
 }
-window.openDarkhwast = openDarkhwast;
+window._dkOpenEntry = _dkOpenEntry;
 
 // Saved content — pehle _misalDocs (case_documents), warna localStorage
 async function _dkLoadSaved() {
@@ -309,6 +346,7 @@ function _dkRender() {
         <option value="a4" ${_dkPaper==='a4'?'selected':''}>A4</option>
       </select>
       <button type="button" class="btn btn-secondary btn-sm" onclick="_dkResetBody()" title="اس قسم کا نیا خاکہ لائیں">↺ خاکہ</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="_dkShowList()" title="محفوظ درخواستوں کی فہرست">📋 فہرست</button>
       <div style="margin-right:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
         <button onmousedown="_dkKeep(event)" onclick="_dkFmt('bold')" title="بولڈ" style="${_dkBtn()}font-weight:900;">B</button>
         <button onmousedown="_dkKeep(event)" onclick="_dkFmt('italic')" title="ترچھا" style="${_dkBtn()}font-style:italic;">I</button>
@@ -770,36 +808,20 @@ async function _dkSave() {
   const doc = _dkDoc(); if (!doc) return;
   const data = _dkCollectInto(_dkSaved);
   data.saved_at = new Date().toISOString();
-  // localStorage backup (hamesha)
-  try { localStorage.setItem('dio_dk_' + _dkCaseId, JSON.stringify(data)); } catch (_) {}
+  // Fehrist mein dikhaya jane wala unwan (qism ka naam)
+  const typeDef = DK_TYPES.find(t => t.id === _dkType) || {};
+  const title = (data['unwan_' + _dkType] ? String(data['unwan_' + _dkType]).replace(/<[^>]*>/g, '').trim() : '') || typeDef.name || 'درخواست';
+  data.__title = title;
   try {
-    let exists = false;
-    try { exists = !!(typeof _misalDocs !== 'undefined' && _misalDocs && _misalDocs['darkhwastain'] && _misalDocs['darkhwastain'].id); } catch (_) {}
-    if (!exists) {
-      const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
-      const { data: ins, error } = await supabaseClient
-        .from('case_documents')
-        .insert({ case_id: _dkCaseId, officer_id: oid, document_type: 'darkhwastain', status: 'complete', content: data })
-        .select().single();
-      if (error) throw error;
-      try { if (typeof _misalDocs !== 'undefined') _misalDocs['darkhwastain'] = ins; } catch (_) {}
-    } else {
-      const { error } = await supabaseClient
-        .from('case_documents')
-        .update({ content: data, status: 'complete', updated_at: new Date().toISOString() })
-        .eq('case_id', _dkCaseId).eq('document_type', 'darkhwastain');
-      if (error) throw error;
-      try { _misalDocs['darkhwastain'].content = data; _misalDocs['darkhwastain'].status = 'complete'; } catch (_) {}
-    }
+    // NAYA record (ya _dkEntryId par ترمیم) — تاریخ/وقت/سیریل ke saath
+    const entry = await dioSaveDocEntry('darkhwastain', title, data, { caseId: _dkCaseId, id: _dkEntryId });
+    _dkEntryId = entry.id;
     _dkSaved = data; _dkDirty = false;
-    try { _dkMarkMisalSaved(data, 'complete'); } catch (_) {}
-    try { if (typeof _refreshMisalBar === 'function') _refreshMisalBar(); } catch (_) {}
-    try { if (typeof dioRegisterSaved === 'function') dioRegisterSaved('misal', 'درخواست', { case_id: _dkCaseId, doc_id: 'darkhwastain' }); } catch (_) {}
-    if (typeof showToast === 'function') showToast('✅ درخواست محفوظ ہو گئی — چپ پر "درخواستیں" اب مکمل ہے', 'success');
+    if (typeof showToast === 'function') showToast('✅ درخواست محفوظ — فہرست میں تاریخ/سیریل کے ساتھ آ گئی', 'success', 3500);
+    // Save ke baad FEHRIST kholo (chalan jaisa)
+    setTimeout(() => { try { _dkShowList(); } catch (_) {} }, 300);
   } catch (e) {
-    // DB fail — localStorage backup pehle hi ho chuka, chip bhi mark
-    try { _dkMarkMisalSaved(data, 'complete'); if (typeof _refreshMisalBar === 'function') _refreshMisalBar(); } catch (_) {}
-    if (typeof showToast === 'function') showToast('⚠️ آف لائن محفوظ (اس ڈیوائس پر) — ' + ((e && e.message) || e), 'warn', 4500);
+    if (typeof showToast === 'function') showToast('⚠️ محفوظ کرنے میں مسئلہ: ' + ((e && e.message) || e), 'warn', 4500);
   }
 }
 window._dkSave = _dkSave;

@@ -3,7 +3,7 @@
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v438';
+const CACHE_NAME = 'digital-io-v439';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -35,6 +35,7 @@ const CORE_ASSETS = [
   '/fir.js',
   '/report173.js',
   '/saza-slip.js',
+  '/saved-docs.js',
   '/darkhwastain.js',
   '/global-mic.js',
   '/cdr-imei.js',
