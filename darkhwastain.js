@@ -183,16 +183,22 @@ function _dkToday() {
   return dd + '/' + mm + '/' + d.getFullYear();
 }
 
-// تفتیشی افسر (subscriber) line — logged-in officer: naam + rank + تھانہ.
+// تفتیشی افسر (subscriber) line — درخواست likhne wala LOGGED-IN افسر (IO),
+// SHO nahi. currentOfficer se naam + rank/عہدہ + تھانہ.
 function _dkIoLine(o) {
   o = o || (typeof currentOfficer !== 'undefined' ? currentOfficer : {}) || {};
-  let name = '', rank = '';
-  try {
-    const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}');
-    name = (sho.name || '').trim(); rank = (sho.rank || '').trim();
-  } catch (_) {}
-  if (!name) name = (o.full_name || '').trim();
-  if (!rank) rank = (o.designation || '').trim();
+  // PEHLE logged-in officer (تفتیشی/subscriber)
+  let name = (o.full_name || '').trim();
+  let rank = (o.designation || '').trim();
+  // Agar currentOfficer mein rank khali ho to digital_io_sho se sirf rank le lo
+  // (naam nahi — naam hamesha logged-in officer ka)
+  if (!rank) {
+    try { const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}'); if ((sho.name||'').trim() === name || !name) rank = (sho.rank || '').trim(); } catch (_) {}
+  }
+  if (!name) {
+    // Aakhri fallback — SHO-saved naam
+    try { const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}'); name = (sho.name || '').trim(); if (!rank) rank = (sho.rank || '').trim(); } catch (_) {}
+  }
   const st = (o.station || '').trim();
   const parts = [];
   if (name) parts.push(name);
@@ -299,20 +305,31 @@ function _dkRender() {
         <option value="a4" ${_dkPaper==='a4'?'selected':''}>A4</option>
       </select>
       <button type="button" class="btn btn-secondary btn-sm" onclick="_dkResetBody()" title="اس قسم کا نیا خاکہ لائیں">↺ خاکہ</button>
-      <div style="margin-right:auto;display:flex;gap:6px;align-items:center;">
-        <button onmousedown="event.preventDefault()" onclick="_dkFmt('bold')" title="بولڈ" style="${_dkBtn()}font-weight:900;">B</button>
-        <button onmousedown="event.preventDefault()" onclick="_dkFmt('italic')" title="ترچھا" style="${_dkBtn()}font-style:italic;">I</button>
-        <button onmousedown="event.preventDefault()" onclick="_dkFmt('underline')" title="انڈر لائن" style="${_dkBtn()}text-decoration:underline;">U</button>
+      <div style="margin-right:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('bold')" title="بولڈ" style="${_dkBtn()}font-weight:900;">B</button>
+        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('italic')" title="ترچھا" style="${_dkBtn()}font-style:italic;">I</button>
+        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('underline')" title="انڈر لائن" style="${_dkBtn()}text-decoration:underline;">U</button>
         <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
-        <button onmousedown="event.preventDefault()" onclick="_dkFmt('justifyRight')" title="دائیں" style="${_dkBtn()}">⇥</button>
-        <button onmousedown="event.preventDefault()" onclick="_dkFmt('justifyFull')" title="برابر" style="${_dkBtn()}">☰</button>
+        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('justifyRight')" title="دائیں" style="${_dkBtn()}">≡</button>
+        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('justifyCenter')" title="درمیان" style="${_dkBtn()}">☰</button>
+        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('justifyLeft')" title="بائیں" style="${_dkBtn()}">≡</button>
+        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('justifyFull')" title="برابر" style="${_dkBtn()}">⚌</button>
         <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
-        <select id="dk-font-sel" onchange="_dkSetFont(this.value)" title="فونٹ سائز"
+        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('insertUnorderedList')" title="نقطہ دار فہرست" style="${_dkBtn()}">•</button>
+        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('insertOrderedList')" title="نمبر والی فہرست" style="${_dkBtn()}">1.</button>
+        <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
+        <select id="dk-font-sel" onmousedown="event.stopPropagation()" onchange="_dkSetFont(this.value)" title="فونٹ سائز"
           style="height:28px;border:1px solid var(--border,#ccc);border-radius:6px;background:var(--bg-card,#fff);color:var(--text-primary,#111);font-size:13px;padding:0 6px;">
-          ${DK_FONT_SIZES.map(s => `<option value="${s}" ${String(s)===String(docFont)?'selected':''}>${s}</option>`).join('')}
+          ${DK_FONT_SIZES.map(s => `<option value="${s}" ${String(s)===String(docFont)?'selected':''}>${s} pt</option>`).join('')}
         </select>
-        <button onmousedown="event.preventDefault()" onclick="_dkFmt('undo')" title="واپس" style="${_dkBtn()}">↶</button>
-        <button onmousedown="event.preventDefault()" onclick="_dkFmt('redo')" title="دوبارہ" style="${_dkBtn()}">↷</button>
+        <button onmousedown="_dkKeep(event)" onclick="_dkFontStep(1)" title="فونٹ بڑا" style="${_dkBtn()}">A+</button>
+        <button onmousedown="_dkKeep(event)" onclick="_dkFontStep(-1)" title="فونٹ چھوٹا" style="${_dkBtn()}font-size:11px;">A−</button>
+        <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
+        <button id="dk-fmtpaint-btn" onmousedown="_dkKeep(event)" onclick="_dkFormatPainter()" title="فارمیٹ پینٹر (پہلے متن منتخب کریں، پھر یہ دبائیں، پھر جہاں لگانا ہے وہاں منتخب کریں)" style="${_dkBtn()}">🖌️</button>
+        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('removeFormat')" title="فارمیٹنگ ہٹائیں" style="${_dkBtn()}">✕</button>
+        <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
+        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('undo')" title="واپس" style="${_dkBtn()}">↶</button>
+        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('redo')" title="دوبارہ" style="${_dkBtn()}">↷</button>
         <button class="btn btn-primary btn-sm dio-modbtn" onclick="_dkSave()">💾 محفوظ کریں</button>
         <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_dkPrint()">🖨️ پرنٹ کریں</button>
       </div>
@@ -507,6 +524,83 @@ function _dkFmt(cmd) {
   _dkDirty = true;
 }
 window._dkFmt = _dkFmt;
+
+// Button mousedown — range MEHFOOZ karo phir focus chhutne se roko. YEHI woh
+// cheez hai jis ke baghair toolbar buttons "kaam nahi karte" the (button dabate
+// hi editor ka selection/focus khatam ho jata tha).
+function _dkKeep(ev) {
+  try { _dkSaveRange(); } catch (_) {}
+  if (ev && ev.preventDefault) ev.preventDefault();
+}
+window._dkKeep = _dkKeep;
+
+// Font +/- (chune hue matn par, warna poore doc par)
+function _dkFontStep(dir) {
+  const doc = _dkDoc(); if (!doc) return;
+  const sel = window.getSelection();
+  const live = sel && sel.rangeCount && !sel.isCollapsed && doc.contains(sel.anchorNode);
+  if (!live) _dkRestoreRange();
+  let cur = parseFloat(doc.dataset.fs || String(DK_FONT_DEFAULT)) || 14;
+  // Agar selection hai to us ka font parhne ki koshish
+  try {
+    const s2 = window.getSelection();
+    if (s2 && s2.anchorNode) {
+      let n = s2.anchorNode; if (n.nodeType === 3) n = n.parentElement;
+      const cs = n && getComputedStyle ? parseFloat(getComputedStyle(n).fontSize) : 0;
+      if (cs) cur = Math.round(cs * 0.75);
+    }
+  } catch (_) {}
+  const next = Math.min(48, Math.max(8, cur + (dir > 0 ? 1 : -1)));
+  _dkSetFont(next);
+}
+window._dkFontStep = _dkFontStep;
+
+// ═══ Format Painter — pehle matn chunein → 🖌️ dabayen → phir jahan lagana ho
+//    woh matn chunein. Chune hue matn ki formatting (bold/italic/underline/
+//    font-size/align) copy kar ke doosri jagah lagti hai. ═══
+let _dkPaintFmt = null;
+function _dkFormatPainter() {
+  const doc = _dkDoc(); if (!doc) return;
+  const btn = document.getElementById('dk-fmtpaint-btn');
+  const sel = window.getSelection();
+  const hasSel = sel && sel.rangeCount && !sel.isCollapsed && doc.contains(sel.anchorNode);
+
+  // Agar painter pehle se on hai → OFF karo
+  if (_dkPaintFmt && !hasSel) { _dkPaintFmt = null; if (btn) btn.style.background = ''; return; }
+
+  if (hasSel && !_dkPaintFmt) {
+    // Source formatting parho (anchor element se)
+    let n = sel.anchorNode; if (n && n.nodeType === 3) n = n.parentElement;
+    if (!n) return;
+    const cs = getComputedStyle(n);
+    _dkPaintFmt = {
+      bold: (parseInt(cs.fontWeight, 10) >= 600) || cs.fontWeight === 'bold',
+      italic: cs.fontStyle === 'italic',
+      underline: (cs.textDecorationLine || cs.textDecoration || '').indexOf('underline') !== -1,
+      size: Math.round(parseFloat(cs.fontSize) * 0.75),
+    };
+    if (btn) btn.style.background = '#0369a1';
+    if (typeof showToast === 'function') showToast('🖌️ فارمیٹ کاپی ہو گئی — اب وہ متن منتخب کریں جہاں لگانی ہے', 'info', 3500);
+    return;
+  }
+
+  // Painter on hai aur ab target chuna gaya → apply
+  if (_dkPaintFmt && hasSel) {
+    _dkRestoreRange();
+    const f = _dkPaintFmt;
+    try { document.execCommand('styleWithCSS', false, false); } catch (_) {}
+    // pehle saaf karo phir source jaisa lagao
+    try { document.execCommand('removeFormat', false, null); } catch (_) {}
+    if (f.bold) { try { document.execCommand('bold', false, null); } catch (_) {} }
+    if (f.italic) { try { document.execCommand('italic', false, null); } catch (_) {} }
+    if (f.underline) { try { document.execCommand('underline', false, null); } catch (_) {} }
+    if (f.size) { try { _dkFontToSelection(f.size); } catch (_) {} }
+    _dkSaveRange(); _dkDirty = true;
+    _dkPaintFmt = null; if (btn) btn.style.background = '';
+    return;
+  }
+}
+window._dkFormatPainter = _dkFormatPainter;
 
 function _dkSetFont(val) {
   const pt = parseFloat(val); if (!pt) return;
