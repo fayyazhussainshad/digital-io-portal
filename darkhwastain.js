@@ -157,7 +157,9 @@ function _dkChosenNamesHtml() {
   return names.map((n, i) => {
     const a = all.find(x => x.name === n) || { name:n, cnic:'' };
     const cnic = a.cnic ? esc(a.cnic) : '';
-    return '<div class="dk-acc-line"><span class="dk-acc-nm">' + (i+1) + '۔ ' + esc(n) + '</span>' +
+    // Naam se koi غیر ضروری leading control/lone char hatao (bidi marks waghera)
+    const cleanN = String(n).replace(/^[\u200e\u200f\u061c\u202a-\u202e\s]+/, '').trim();
+    return '<div class="dk-acc-line"><span class="dk-acc-nm"><bdi>' + (i+1) + '۔</bdi> ' + esc(cleanN) + '</span>' +
            '<span class="dk-acc-cnic">' + cnic + '</span></div>';
   }).join('');
 }
@@ -358,10 +360,10 @@ function _dkRender() {
         <div class="dk-caseline" contenteditable="true" data-k="caseline">${v('caseline', 'مقدمہ نمبر ' + esc(fir) + ' مورخہ ' + esc(firDate) + ' زیر دفعہ ' + esc(dafat) + ' تھانہ ' + esc(o.station || c.case_station || ''))}</div>
 
         <!-- بنام (accused) — dayen ▾ dropdown, phir بنام + numbered ملزمان -->
-        <div class="dk-banam-row">
+        <div class="dk-banam-row" dir="rtl">
           <button class="dk-acc-pick no-print" onclick="_dkAccPicker(event)" title="ملزمان منتخب کریں">▾</button>
           <span class="dk-banam-lbl">بنام</span>
-          <span class="dk-banam-list" contenteditable="true" data-k="banam">${_dkChosenNamesHtml()}</span>
+          <span class="dk-banam-list" dir="rtl" contenteditable="true" data-k="banam">${_dkChosenNamesHtml()}</span>
         </div>
 
         <!-- (بنام ke baad khali jagah — CSS margin se) -->
@@ -868,17 +870,17 @@ function _dkCSS() {
     #dk-doc .dk-tt-left{ text-align:left; white-space:nowrap; margin-left:1cm; }
 
     /* Line 1 ke baad THORI (aur kam — 0.12in) khali jagah. */
-    #dk-doc .dk-sarkar{ margin-top:0.12in; font-size:14pt; text-align:right; padding-right:var(--dk-indent,0.9in); line-height:1; }
+    #dk-doc .dk-sarkar{ margin-top:0.12in; font-size:14pt; text-align:right; padding-right:var(--dk-indent,0.9in); line-height:1.8; }
 
     /* Line 3 — مقدمہ نمبر/تاریخ/دفعہ/تھانہ. Satar 2/3/4 ki line-spacing 1pt
        (bilkul tight). */
-    #dk-doc .dk-caseline{ font-size:14pt; margin:1pt 0 0; text-align:right; padding-right:var(--dk-indent,0.9in); line-height:1; unicode-bidi:plaintext; }
+    #dk-doc .dk-caseline{ font-size:14pt; margin:1pt 0 0; text-align:right; padding-right:var(--dk-indent,0.9in); line-height:1.8; unicode-bidi:plaintext; }
 
     /* بنام — "بنام" DAYEN kinare par (hanging). ملزمان list usi indent par.
        Line-spacing 1pt (satar 2/3/4 tight). CNIC ki khatir do-satri layout. */
-    #dk-doc .dk-banam-row{ position:relative; margin:1pt 0 0; font-size:14pt; padding-right:var(--dk-indent,0.9in); min-height:1.4em; line-height:1; }
-    #dk-doc .dk-banam-lbl{ position:absolute; right:0; top:0; font-weight:bold; white-space:nowrap; }
-    #dk-doc .dk-banam-list{ text-align:right; outline:none; line-height:1.4; display:block; }
+    #dk-doc .dk-banam-row{ position:relative; margin:1pt 0 0; font-size:14pt; padding-right:var(--dk-indent,0.9in); min-height:1.6em; line-height:1.8; }
+    #dk-doc .dk-banam-lbl{ position:absolute; right:0; top:0; font-weight:bold; white-space:nowrap; line-height:1.8; }
+    #dk-doc .dk-banam-list{ text-align:right; outline:none; line-height:1.8; display:block; }
     /* Har ملزم ki satar — naam dayen, CNIC (LTR) SIDH mein bayen kinare par */
     #dk-doc .dk-acc-line{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
     #dk-doc .dk-acc-nm{ text-align:right; flex:1; }
