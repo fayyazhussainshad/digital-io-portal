@@ -141,22 +141,25 @@ async function _dkLoadFirText() {
 // FIR matn (already plain) — درخواست ke andar copy ke liye
 function _dkFirPlain() { return _dkFirText || ''; }
 
-// ملزمان ke naam ki fehrist — dropdown + numbering ke liye
+// ملزمان — naam + CNIC (dropdown + بنام ke liye)
 function _dkAccList() {
-  return (_dkAccused || []).map(a => ({ name: (a.name || '').trim() })).filter(a => a.name);
+  return (_dkAccused || []).map(a => ({ name: (a.name || '').trim(), cnic: (a.cnic || '').trim() })).filter(a => a.name);
 }
 function _dkAccusedNames() { return _dkAccList().map(a => a.name); }
-// Chune hue ملزمان (bydefault sab) — numbered HTML
+// Chune hue ملزمان (bydefault sab) — numbered, naam dayen + CNIC (LTR) SIDH mein bayen
 function _dkChosenNamesHtml() {
+  const all = _dkAccList();
   let names;
-  if (_dkChosen && _dkChosen.length !== undefined) {
-    names = _dkChosen;
-  } else {
-    names = _dkAccusedNames();
-  }
+  if (_dkChosen && _dkChosen.length !== undefined) names = _dkChosen;
+  else names = _dkAccusedNames();
   names = names.filter(Boolean);
   if (!names.length) return '<span style="color:#c00;">[ملزمان منتخب کریں]</span>';
-  return names.map((n, i) => (i + 1) + '۔ ' + esc(n)).join('<br>');
+  return names.map((n, i) => {
+    const a = all.find(x => x.name === n) || { name:n, cnic:'' };
+    const cnic = a.cnic ? esc(a.cnic) : '';
+    return '<div class="dk-acc-line"><span class="dk-acc-nm">' + (i+1) + '۔ ' + esc(n) + '</span>' +
+           '<span class="dk-acc-cnic">' + cnic + '</span></div>';
+  }).join('');
 }
 let _dkChosen = null;   // null = abhi decide nahi (default sab)
 
@@ -352,11 +355,14 @@ function _dkRender() {
         <div class="dk-body" contenteditable="true" data-k="${savedBodyKey}">${bodyHtml}</div>
 
         <!-- تفتیشی افسر (subscriber) block — bayen sidh: dastkhat ki jagah →
-             naam+rank+تھانہ (bold+underline) → تاریخ (bina "مورخہ") -->
+             naam+rank+تھانہ (bold+underline) → neeche تاریخ (naam ke barabar
+             chaudai mein CENTER) -->
         <div class="dk-sign">
           <div class="dk-sign-space"></div>
-          <div class="dk-sign-name" contenteditable="true" data-k="sho">${v('sho', esc(_dkIoLine(o)))}</div>
-          <div class="dk-sign-date" contenteditable="true" data-k="sho_date">${v('sho_date', esc(_dkToday()))}</div>
+          <div class="dk-sign-io">
+            <div class="dk-sign-name" contenteditable="true" data-k="sho">${v('sho', esc(_dkIoLine(o)))}</div>
+            <div class="dk-sign-date" contenteditable="true" data-k="sho_date">${v('sho_date', esc(_dkToday()))}</div>
+          </div>
         </div>
 
         <input type="hidden" data-k="doc_font" value="${esc(String(docFont))}">
@@ -765,19 +771,23 @@ function _dkCSS() {
     #dk-doc .dk-tt-right{ text-align:right; white-space:nowrap; }
     #dk-doc .dk-tt-left{ text-align:left; white-space:nowrap; margin-left:1cm; }
 
-    /* Line 1 ke baad AADHI (half) khali jagah (pehle 1in thi). */
-    #dk-doc .dk-sarkar{ margin-top:0.5in; font-size:14pt; text-align:right; padding-right:var(--dk-indent,0.9in); }
+    /* Line 1 ke baad THORI (aur kam — 0.12in) khali jagah. */
+    #dk-doc .dk-sarkar{ margin-top:0.12in; font-size:14pt; text-align:right; padding-right:var(--dk-indent,0.9in); line-height:1; }
 
-    /* Line 3 — مقدمہ نمبر/تاریخ/دفعہ/تھانہ, 14pt. Satar 2 ki seedh mein
-       (بنام ke pehle serial number ke barabar indent). */
-    #dk-doc .dk-caseline{ font-size:14pt; margin:6pt 0 0; text-align:right; padding-right:var(--dk-indent,0.9in); }
+    /* Line 3 — مقدمہ نمبر/تاریخ/دفعہ/تھانہ. Satar 2/3/4 ki line-spacing 1pt
+       (bilkul tight). */
+    #dk-doc .dk-caseline{ font-size:14pt; margin:1pt 0 0; text-align:right; padding-right:var(--dk-indent,0.9in); line-height:1; }
 
-    /* بنام — "بنام" DAYEN kinare par (hanging), ملزمان list اسی indent par jahan
-       satar 2/3 hain — is se satar 2/3 pehle serial (1۔) ki seedh mein aa jate
-       hain (screen + print dono). */
-    #dk-doc .dk-banam-row{ position:relative; margin:10pt 0 0; font-size:14pt; padding-right:var(--dk-indent,0.9in); min-height:1.9em; }
+    /* بنام — "بنام" DAYEN kinare par (hanging). ملزمان list usi indent par.
+       Line-spacing 1pt (satar 2/3/4 tight). CNIC ki khatir do-satri layout. */
+    #dk-doc .dk-banam-row{ position:relative; margin:1pt 0 0; font-size:14pt; padding-right:var(--dk-indent,0.9in); min-height:1.4em; line-height:1; }
     #dk-doc .dk-banam-lbl{ position:absolute; right:0; top:0; font-weight:bold; white-space:nowrap; }
-    #dk-doc .dk-banam-list{ text-align:right; outline:none; line-height:1.9; display:block; }
+    #dk-doc .dk-banam-list{ text-align:right; outline:none; line-height:1.4; display:block; }
+    /* Har ملزم ki satar — naam dayen, CNIC (LTR) SIDH mein bayen kinare par */
+    #dk-doc .dk-acc-line{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+    #dk-doc .dk-acc-nm{ text-align:right; flex:1; }
+    #dk-doc .dk-acc-cnic{ direction:ltr; unicode-bidi:isolate; text-align:left; white-space:nowrap;
+      font-variant-numeric:tabular-nums; min-width:2in; }
     #dk-doc .dk-acc-pick{
       position:absolute; right:-30px; top:0; width:24px; height:24px; line-height:22px; padding:0; border:1px solid #0369a1;
       border-radius:5px; background:#0369a1; color:#fff; cursor:pointer; font-size:13px; font-weight:700; text-align:center;
@@ -786,17 +796,19 @@ function _dkCSS() {
 
     /* بنام ke baad khali jagah → phir Heading */
     /* Heading (qism) — center, underline, 18pt (editable) */
-    #dk-doc .dk-unwan{ text-align:center; font-size:18pt; font-weight:bold; text-decoration:underline; margin:16pt 0 10pt; }
+    #dk-doc .dk-unwan{ text-align:center; font-size:18pt; font-weight:bold; text-decoration:underline; margin:14pt 0 10pt; }
 
     /* Body — justified, 14pt */
     #dk-doc .dk-body{ text-align:justify; text-align-last:right; font-size:14pt; line-height:2; min-height:2in; }
 
-    /* IO / تفتیشی افسر block — bayen sidh: dastkhat ki jagah → naam+rank+تھانہ
-       (bold+underline) → تاریخ. Aakhri satar aur is field ke darmiyan spacing KAM. */
+    /* IO / تفتیشی افسر block — bayen sidh. OOPER dastkhat ki (barhi hui) jagah →
+       naam+rank+تھانہ (bold+underline) → neeche تاریخ (naam ke NEECHE CENTER,
+       naam ke barabar chaudai mein). IO aur date ke darmiyan bohat kam faasla. */
     #dk-doc .dk-sign{ margin-top:8pt; text-align:left; }
-    #dk-doc .dk-sign-space{ min-height:26px; }   /* dastkhat ki chhoti khali jagah */
-    #dk-doc .dk-sign-name{ font-weight:bold; text-decoration:underline; font-size:14pt; text-align:left !important; white-space:nowrap; outline:none; }
-    #dk-doc .dk-sign-date{ font-size:14pt; text-align:left !important; margin-top:2px; outline:none; }
+    #dk-doc .dk-sign-space{ min-height:64px; }   /* dastkhat ki (aur barhi hui) khali jagah — naam ke OOPER */
+    #dk-doc .dk-sign-io{ display:inline-block; text-align:left; }
+    #dk-doc .dk-sign-name{ font-weight:bold; text-decoration:underline; font-size:14pt; text-align:left !important; white-space:nowrap; outline:none; display:block; }
+    #dk-doc .dk-sign-date{ font-size:14pt; text-align:center !important; margin-top:0; line-height:1; outline:none; display:block; }
   `;
 }
 window._dkCSS = _dkCSS;
