@@ -27,6 +27,8 @@ const MISAL_CASE_DOCS = [
   { id:'preventive',       name:'انسدادی کاروائی',           desc:'Preventive Action' },
   { id:'saza_slip',        name:'سزا سلپ',                   desc:'Sentence Slip' },
   { id:'shahadatain',      name:'شہادتیں',                   desc:'Evidence / Testimonies' },
+  { id:'daakt_haye',       name:'ڈاکٹ ہائے',                 desc:'Docket / Dak' },
+  { id:'rfa_form',         name:'RFA فارم',                  desc:'RFA Form' },
 ];
 
 // ── STATE ─────────────────────────────────────────────────────
