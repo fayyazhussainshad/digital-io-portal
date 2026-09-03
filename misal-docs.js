@@ -87,16 +87,16 @@ function renderMisalBar(c) {
       ${_misalDropdown('fir-dd', 'الف آئی آر', [
         {label:'الف آئی آر', act:`_ddPick('fir-dd','fir')`},
         ...(typeof caseHasCross==='function' && caseHasCross(c) ? [{label:'کراس ورژن', act:`_ddPick('fir-dd','cross_version')`}] : [])
-      ])}
+      ], _misalHasData('fir'))}
       ${_misalDropdown('acc-dd', 'ملزمان', [
         {label:'ملزمان FIR', act:`_ddPick('acc-dd','named_accused')`},
         ...(typeof caseHasCross==='function' && caseHasCross(c) ? [{label:'ملزمان کراس ورژن', act:`_ddPick('acc-dd','accused_cross')`}] : [])
-      ])}
+      ], _misalHasData('named_accused'))}
       ${_misalDropdown('wit-dd', 'گواہان', [
         {label:'گواہان FIR', act:`_ddPick('wit-dd','witnesses_fir')`},
         ...(typeof caseHasCross==='function' && caseHasCross(c) ? [{label:'گواہان کراس ورژن', act:`_ddPick('wit-dd','witnesses_cross')`}] : [])
-      ])}
-      <span class="mdoc-chip mdoc-empty" onclick="openR173List()" title="رپورٹ 173 ض ف">رپورٹ 173 ض ف</span>
+      ], _misalHasData('witnesses_fir'))}
+      <span class="mdoc-chip ${_misalHasData('report_173') ? 'mdoc-done' : 'mdoc-empty'}" onclick="openR173List()" title="رپورٹ 173 ض ف">رپورٹ 173 ض ف</span>
       ${items}
     </div>
   </div>
@@ -115,26 +115,57 @@ function renderMisalBar(c) {
       line-height:1.6;
     }
     .mdoc-chip:hover{ transform:translateY(-1px); box-shadow:0 2px 8px rgba(0,0,0,0.25); }
+    /* RULE (poore system): sab chips DHEEMA (aik jaisa) — SIRF jis chip mein
+       data mehfooz ho jaye woh GREEN. (Pehle "added" alag neela tha — ab woh
+       bhi dheema, taake sirf green se pata chale ke kaam ho chuka hai.) */
     .mdoc-empty{ color:var(--text-muted);  background:var(--bg-tertiary);   border-color:var(--border); }
-    .mdoc-added{ color:var(--accent);      background:rgba(56,189,248,0.12); border-color:var(--accent); font-weight:600; }
-    .mdoc-done { color:var(--green);       background:rgba(34,197,94,0.12);  border-color:var(--green);  font-weight:600; }
+    .mdoc-added{ color:var(--text-muted);  background:var(--bg-tertiary);   border-color:var(--border); }
+    .mdoc-done { color:var(--green);       background:rgba(34,197,94,0.16);  border-color:var(--green);  font-weight:700; }
   </style>`;
 }
 
+// ── Kisi doc/type ka data mehfooz hai ya nahi (chip green karne ke liye) ──
+function _misalHasData(key) {
+  try {
+    // case_documents (misal) — _misalDocs mein status complete ya content
+    if (_misalDocs && _misalDocs[key]) {
+      const s = _misalDocs[key];
+      if (s.status === 'complete') return true;
+      if (s.content && Object.keys(s.content).length) return true;
+    }
+    // report_173 — alag table; localStorage flag se check
+    if (key === 'report_173') {
+      const cid = _misalCaseId || (_misalCase && _misalCase.id);
+      if (cid) {
+        const r = localStorage.getItem('dio_r173docs_' + cid);
+        if (r) { try { const a = JSON.parse(r); if (a && a.length) return true; } catch(_){} }
+        const r2 = localStorage.getItem('dio_r173_' + cid);
+        if (r2 && r2.length > 5) return true;
+      }
+    }
+    // saved-docs (shared) — localStorage list
+    const cid2 = _misalCaseId || (_misalCase && _misalCase.id);
+    if (cid2) {
+      const sd = localStorage.getItem('dio_sd_' + key + '_' + cid2);
+      if (sd) { try { const a = JSON.parse(sd); if (a && a.length) return true; } catch(_){} }
+    }
+  } catch (_) {}
+  return false;
+}
+window._misalHasData = _misalHasData;
+
 // ── DROPDOWN BUTTONS (merged FIR / ملزمان / گواہان) ────────────
-function _misalDropdown(ddId, label, options) {
-  // AHEM: agar fehrist mein sirf AIK hi cheez ho (jaise کراس ورژن na ho)
-  // to dropdown ka koi faida nahi — us surat mein SEEDHA button dikhao,
-  // warna khali sa menu khulta hai jismein aik "FIR" aur aik dash hota hai.
+function _misalDropdown(ddId, label, options, hasData) {
+  const cls = hasData ? 'mdoc-done' : 'mdoc-empty';
   if (!options || options.length <= 1) {
     const only = options && options[0];
     if (!only) return '';
-    return `<span class="mdoc-chip mdoc-empty" onclick="${only.act}"
+    return `<span class="mdoc-chip ${cls}" onclick="${only.act}"
               style="cursor:pointer;">${label}</span>`;
   }
   return `
   <span style="position:relative;display:inline-block;">
-    <span class="mdoc-chip mdoc-added" onclick="_toggleDD(event,'${ddId}')" style="cursor:pointer;">
+    <span class="mdoc-chip ${cls}" onclick="_toggleDD(event,'${ddId}')" style="cursor:pointer;">
       ${label} ▾
     </span>
     <div id="${ddId}" style="display:none;position:fixed;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:5000;min-width:180px;padding:6px;direction:rtl;">

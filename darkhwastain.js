@@ -916,7 +916,7 @@ function _dkCSS() {
 
     /* بنام ke baad khali jagah → phir Heading */
     /* Heading (qism) — center, underline, 18pt (editable) */
-    #dk-doc .dk-unwan{ text-align:center; font-size:18pt; font-weight:bold; text-decoration:underline; margin:14pt 0 10pt; }
+    #dk-doc .dk-unwan{ text-align:center; font-size:16pt; font-weight:bold; text-decoration:underline; margin:14pt 0 10pt; }
 
     /* Body — justified, 14pt */
     #dk-doc .dk-body{ text-align:justify; text-align-last:right; font-size:14pt; line-height:2; min-height:2in; }

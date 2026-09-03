@@ -182,7 +182,7 @@ async function dioRenderDocList(docType, cfg) {
     const esc2 = (typeof esc === 'function') ? esc : (s => String(s == null ? '' : s));
     return `<tr style="border-bottom:1px solid var(--border);">
       <td style="padding:10px 8px;text-align:center;font-weight:700;width:54px;">${i + 1}</td>
-      <td style="padding:10px 8px;text-align:right;font-size:14px;">${esc2(title)}</td>
+      <td style="padding:10px 8px;text-align:center;font-size:14px;">${esc2(title)}</td>
       <td style="padding:10px 8px;text-align:center;font-size:12px;color:var(--text-muted);white-space:nowrap;"><bdi class="dio-ltr">${esc2(dt.date)}</bdi><br><bdi class="dio-ltr">${esc2(dt.time)}</bdi></td>
       <td style="padding:8px;text-align:center;white-space:nowrap;">
         <button class="btn btn-primary btn-sm" onclick="_sdOpen('${docType}','${r.id}')" title="کھولیں">✏️ کھولیں</button>
@@ -198,15 +198,15 @@ async function dioRenderDocList(docType, cfg) {
   area.innerHTML = `
   <div style="direction:rtl;height:100%;display:flex;flex-direction:column;font-family:'Jameel Noori Nastaleeq',serif;">
     <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg-secondary);flex-wrap:wrap;">
-      <span style="font-size:16px;font-weight:700;color:var(--accent);">📋 ${(typeof esc==='function'?esc(heading):heading)} — محفوظ فہرست</span>
-      <button class="btn btn-primary" style="margin-right:auto;" onclick="_sdNew('${docType}')">➕ نیا</button>
+      <button class="btn btn-primary" onclick="_sdNew('${docType}')">➕ نیا</button>
+      <span style="font-size:16px;font-weight:700;color:var(--accent);margin-right:auto;">📋 ${(typeof esc==='function'?esc(heading):heading)} — محفوظ فہرست</span>
     </div>
     <div style="flex:1;overflow:auto;padding:16px;">
       ${rows.length ? `
       <table style="width:100%;border-collapse:collapse;background:var(--bg-card,#fff);border-radius:8px;overflow:hidden;">
         <thead><tr style="background:var(--bg-secondary);">
           <th style="padding:10px 8px;font-size:12px;">نمبر شمار</th>
-          <th style="padding:10px 8px;font-size:12px;text-align:right;">عنوان / قسم</th>
+          <th style="padding:10px 8px;font-size:12px;text-align:center;">عنوان / قسم</th>
           <th style="padding:10px 8px;font-size:12px;">تاریخ / وقت</th>
           <th style="padding:10px 8px;font-size:12px;">عمل</th>
         </tr></thead>
