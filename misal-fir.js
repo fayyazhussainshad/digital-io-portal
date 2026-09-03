@@ -178,15 +178,17 @@ function _doPrintFIR(html) {
   _printHTML += (`<!DOCTYPE html><html><head><meta charset="UTF-8">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
     <style>
-      @page{margin:15mm;} body{font-family:'Noto Nastaliq Urdu',serif;direction:rtl;font-size:14px;line-height:2;}
-      h2{text-align:center;} .header{text-align:center;border-bottom:2px solid #333;padding-bottom:10px;margin-bottom:16px;}
+      @page{margin:15mm;} body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;font-size:14pt;line-height:2;color:#000;}
+      h2{text-align:center;font-size:16pt;} .header{text-align:center;border-bottom:2px solid #333;padding-bottom:10px;margin-bottom:16px;}
+      /* FIR ka matn CENTER, headings 16pt, matn 14pt (user ki hidayat) */
+      .fir-body{ text-align:center; font-size:14pt; line-height:2; }
     </style></head><body>
     <div class="header">
-      <div style="font-size:18px;font-weight:bold;">تھانہ ${o.station||''} ضلع ${o.district||''}</div>
-      <div style="font-size:16px;font-weight:bold;margin-top:6px;">ایف آئی آر — مقدمہ نمبر: ${esc(c.fir_number||'')}</div>
-      <div style="font-size:13px;">تاریخ: ${formatDate(c.fir_date)} | دفعات: ${esc(c.section_of_law||'')}</div>
+      <div style="font-size:16pt;font-weight:bold;">تھانہ ${o.station||''} ضلع ${o.district||''}</div>
+      <div style="font-size:16pt;font-weight:bold;margin-top:6px;">ایف آئی آر — مقدمہ نمبر: ${esc(c.fir_number||'')}</div>
+      <div style="font-size:14pt;">تاریخ: ${formatDate(c.fir_date)} | دفعات: ${esc(c.section_of_law||'')}</div>
     </div>
-    ${html}
+    <div class="fir-body">${html}</div>
     </body></html>`);
   dioPrint(_printHTML);
   

@@ -1708,12 +1708,13 @@ function _zimniFormCSS() {
   /* ── اختتامی سطر — درمیان میں ── */
   #ch173-doc .zf-close{ margin-top:1em; font-size:14pt; line-height:1.5;
     text-align:center; text-align-last:center; outline:none; }
-  /* دستخط کا خانہ — 2 Enter کی جگہ کے بعد تفتیشی افسر کا نام اور تاریخ */
-  #ch173-doc .zf-signblk{ font-size:14pt; line-height:1.5; }
+  /* دستخط کا خانہ — 2 Enter کی جگہ کے بعد تفتیشی افسر کا نام اور تاریخ.
+     BAYEN sidh (چالان format jaisa — user ki hidayat par mirror kiya). */
+  #ch173-doc .zf-signblk{ font-size:14pt; line-height:1.5; text-align:left; }
   #ch173-doc .zf-gap{ min-height:1.5em; }
   #ch173-doc .zf-sign{ font-weight:bold; text-decoration:underline;
-    text-underline-offset:3px; outline:none; }
-  #ch173-doc .zf-signdate{ outline:none; }
+    text-underline-offset:3px; outline:none; text-align:left; }
+  #ch173-doc .zf-signdate{ outline:none; text-align:left; }
   #ch173-doc .zf-body{ margin-top:8px; font-size:14pt; line-height:1.5;
     text-align:justify; text-align-last:right; outline:none; white-space:pre-wrap; }
 
@@ -3087,11 +3088,11 @@ async function _zaWitnessPickerOpen(ev) {
               : '';
     return `<label style="display:flex;align-items:center;gap:8px;padding:7px 6px;cursor:pointer;font-size:13px;
               border-bottom:1px solid #f1f5f9;font-family:'Jameel Noori Nastaleeq',serif;">
-              <input type="radio" name="zfa-wit-pick" value="${i}"> <span>${E(nm)}${tag}</span></label>`;
+              <input type="checkbox" name="zfa-wit-pick" value="${i}"> <span>${E(nm)}${tag}</span></label>`;
   }).join('');
   box.innerHTML = `
     <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:700;color:#0369a1;
-                font-family:'Jameel Noori Nastaleeq',serif;background:#f8fafc;">گواہ منتخب کریں (ایک وقت میں ایک)</div>
+                font-family:'Jameel Noori Nastaleeq',serif;background:#f8fafc;">گواہان منتخب کریں (ایک سے زیادہ)</div>
     <div style="flex:1;overflow-y:auto;padding:4px 8px;min-height:0;">${rows}</div>
     <div style="padding:4px 8px;border-top:1px solid #f1f5f9;">
       <button id="zfa-wit-addnew" style="width:100%;padding:6px;border:1px dashed #94a3b8;border-radius:6px;
@@ -3127,11 +3128,11 @@ async function _zaWitnessPickerOpen(ev) {
     else if (typeof showToast === 'function') showToast('گواہان اسکرین سے شامل کریں', 'info');
   };
   box.querySelector('#zfa-wit-ok').onclick = () => {
-    const sel = box.querySelector('input[name="zfa-wit-pick"]:checked');
-    if (!sel) { if (typeof showToast === 'function') showToast('⚠️ پہلے گواہ منتخب کریں', 'warn'); return; }
-    const w = list[parseInt(sel.value, 10)];
+    const sels = [...box.querySelectorAll('input[name="zfa-wit-pick"]:checked')];
+    if (!sels.length) { if (typeof showToast === 'function') showToast('⚠️ پہلے گواہان منتخب کریں', 'warn'); return; }
     box.remove();
-    _zaInsertWitnessStatement(w);
+    // Chune hue TAMAM gawahan ke byanat aik-aik kar ke add karo (161 CrPC)
+    sels.forEach(s => { const w = list[parseInt(s.value, 10)]; if (w) _zaInsertWitnessStatement(w); });
   };
 }
 window._zaWitnessPickerOpen = _zaWitnessPickerOpen;
