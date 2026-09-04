@@ -1710,13 +1710,13 @@ function _zimniFormCSS() {
   /* ── اختتامی سطر — درمیان میں ── */
   #ch173-doc .zf-close{ margin-top:1em; font-size:14pt; line-height:1.5;
     text-align:center; text-align-last:center; outline:none; }
-  /* دستخط کا خانہ — 2 Enter کی جگہ کے بعد تفتیشی افسر کا نام اور تاریخ.
-     BAYEN sidh (چالان format jaisa — user ki hidayat par mirror kiya). */
-  #ch173-doc .zf-signblk{ font-size:14pt; line-height:1.5; text-align:left; }
+  /* دستخط کا خانہ — دستاویز کے اختتام پر IO (تفتیشی افسر/subscriber) کا نام
+     اور تاریخ۔ چالان کی طرح: بائیں سیدھ (LEFT)، bold، مگر انڈر لائن نہیں۔ */
+  #ch173-doc .zf-signblk{ font-size:14pt; line-height:1.5; text-align:left !important; }
   #ch173-doc .zf-gap{ min-height:1.5em; }
-  #ch173-doc .zf-sign{ font-weight:bold; text-decoration:underline;
-    text-underline-offset:3px; outline:none; text-align:left; }
-  #ch173-doc .zf-signdate{ outline:none; text-align:left; }
+  #ch173-doc .zf-sign{ font-weight:bold; text-decoration:none !important;
+    outline:none; text-align:left !important; display:block; }
+  #ch173-doc .zf-signdate{ outline:none; text-align:left !important; display:block; }
   #ch173-doc .zf-body{ margin-top:8px; font-size:14pt; line-height:1.5;
     text-align:justify; text-align-last:right; outline:none; white-space:pre-wrap; }
 
