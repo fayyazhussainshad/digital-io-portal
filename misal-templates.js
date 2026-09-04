@@ -186,6 +186,15 @@ function getMisalTemplate(docId, c) {
 
   const table = (rows) => `<table style="width:100%;border-collapse:collapse;margin-bottom:12px;">${rows}</table>`;
 
+  // ── RFA فارم (Annex-A/B/C) کے مخصوص اسٹائل ──
+  const rTh = 'border:1px solid #333;padding:6px 10px;background:#eaeaea;font-weight:700;text-align:center;font-size:12.5px;';
+  const rTd = 'border:1px solid #333;padding:7px 10px;font-size:13px;vertical-align:middle;';
+  const rHead = (dst) => `
+    <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #333;padding-bottom:6px;margin-bottom:2px;">
+      <span style="font-weight:bold;font-size:15px;">Police Department</span>
+      <span style="font-weight:bold;font-size:15px;">District ${dst}</span>
+    </div>`;
+
   const sig = `
     <div style="margin-top:40px;display:flex;justify-content:space-between;">
       <div style="text-align:center;">
@@ -443,6 +452,88 @@ function getMisalTemplate(docId, c) {
         </tbody>
       </table>
       ${sig}`,
+
+    // ══════════════════════════════════════════════
+    //  RFA FORM — Request for Assistance
+    //  Annex-A (RFA details) · Annex-B (assistance requested) · Annex-C (feedback)
+    //  Official bilingual-district correspondence form — kept in original
+    //  English format (as issued), matching the source RFA form exactly.
+    // ══════════════════════════════════════════════
+    rfa_form: `<div style="direction:ltr;text-align:left;font-family:Arial,'Times New Roman',sans-serif;font-size:13px;line-height:1.6;color:#111;">
+
+      <!-- Annex-A — Request for Assistance (RFA) -->
+      ${rHead(dst)}
+      <div style="text-align:right;font-size:12px;font-style:italic;margin-bottom:2px;">Annex-A</div>
+      <div style="text-align:center;font-size:17px;font-weight:bold;text-decoration:underline;margin-bottom:14px;">Request for Assistance (RFA)</div>
+
+      <table style="width:100%;border-collapse:collapse;margin-bottom:26px;">
+        <tr><th style="${rTh}width:8%;">Sr.</th><th style="${rTh}width:40%;">Particulars</th><th style="${rTh}">Details</th></tr>
+        ${[
+          ['1','RFA Number',''],
+          ['2','Requesting District', dst],
+          ['3','Date of Request',''],
+          ['4','Date when Assistance is Needed',''],
+          ['5','Date of Expiry of Request',''],
+          ['6','Case FIR No.', fir],
+          ['7','Police Station', sta],
+          ['8','Assisting District',''],
+          ['9','Police Station of Mission Jurisdiction',''],
+          ['10','Purpose of Request',''],
+          ['11','Name of Officer Requesting Assistance', ion],
+          ['12','Rank', rnk],
+          ['13','Posting', sta],
+          ['14','Cell Phone of the Officer',''],
+          ['15','Status',''],
+        ].map(r=>`<tr><td style="${rTd}text-align:center;">${r[0]}</td><td style="${rTd}font-weight:600;">${r[1]}</td><td style="${rTd}">${r[2]||'&nbsp;'}</td></tr>`).join('')}
+      </table>
+
+      <!-- Annex-B — Assistance Requested in the RFA -->
+      <div style="text-align:right;font-size:12px;font-style:italic;margin-bottom:2px;">Annex-B</div>
+      <div style="text-align:center;font-size:16px;font-weight:bold;text-decoration:underline;margin-bottom:14px;">Assistance Requested in the RFA</div>
+
+      <table style="width:100%;border-collapse:collapse;margin-bottom:30px;">
+        <tr><th style="${rTh}width:8%;">Sr.</th><th style="${rTh}width:52%;">Item</th><th style="${rTh}">Number / Quantity</th></tr>
+        ${[
+          ['1','Upper Subordinates'],
+          ['2','Lower Subordinates'],
+          ['3','Vehicles'],
+          ['4','Elite Teams'],
+          ['5','Locator'],
+          ['6','Other'],
+        ].map(r=>`<tr><td style="${rTd}text-align:center;">${r[0]}</td><td style="${rTd}">${r[1]}</td><td style="${rTd}">&nbsp;</td></tr>`).join('')}
+      </table>
+
+      <div style="margin-bottom:8px;">Forwarded please,</div>
+      <div style="display:flex;justify-content:space-between;margin-top:44px;">
+        <div style="text-align:left;">
+          <div>${ion}${(rnk && rnk!=='________') ? (', ' + rnk) : ''}</div>
+          <div>P.S ${sta}.</div>
+        </div>
+        <div style="text-align:right;">
+          <div>&nbsp;</div>
+          <div>SI/SHO PS ${sta}.</div>
+        </div>
+      </div>
+
+      <!-- Annex-C — Feedback Form (new page — filled by the assisting unit) -->
+      <div style="page-break-before:always;margin-top:10px;">
+        ${rHead(dst)}
+        <div style="text-align:right;font-size:12px;font-style:italic;margin-bottom:2px;">Annex-C</div>
+        <div style="text-align:center;font-size:17px;font-weight:bold;text-decoration:underline;margin-bottom:14px;">Feedback Form</div>
+
+        <table style="width:100%;border-collapse:collapse;margin-bottom:22px;">
+          <tr><th style="${rTh}width:8%;">Sr.</th><th style="${rTh}width:52%;">Question</th><th style="${rTh}">Feedback</th></tr>
+          ${[
+            ['1','Has the request been completed? Yes / No'],
+            ['2','Date of completion'],
+            ['3','Was the assistance provided? Yes / No'],
+            ['4','Check the items requested for assistance'],
+            ['5','Was the purpose of mission achieved?'],
+            ['6','If No, what was the reason?'],
+          ].map(r=>`<tr><td style="${rTd}text-align:center;">${r[0]}</td><td style="${rTd}">${r[1]}</td><td style="${rTd}">&nbsp;</td></tr>`).join('')}
+        </table>
+      </div>
+    </div>`,
 
   };
 
