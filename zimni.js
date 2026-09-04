@@ -2347,20 +2347,29 @@ function _zimniPrintHTML(inner) {
           var tops=[]; bodies.forEach(function(b){ tops=tops.concat(paraTops(b)); });
           var kids=[].slice.call(nums.children);
           if(!kids.length||!tops.length) return;
-          // ═══ FIX (numbers clump ka masla) ═══
-          //   Har number ko apne paragraph ke top par le jao. marginTop[i] =
-          //   paragraph[i]-top MINUS pichle number ka BOTTOM. (Pehle har number
-          //   ki natural jagah alag alag parhi ja rahi thi jabke woh khisak
-          //   rahe the — is se 3،4،5… sab aik jagah جمع ho jate the.)
-          for(var i=0;i<kids.length;i++){ kids[i].style.marginTop='0px'; }
-          var base = nums.getBoundingClientRect().top;
-          var prevBottom = base;               // pichle number ka bottom (viewport se)
-          for(i=0;i<kids.length&&i<tops.length;i++){
-            var h = kids[i].getBoundingClientRect().height || 20;
-            var m = Math.round(tops[i] - prevBottom);
-            if(m<0) m=0; if(m>40000) m=0;
-            kids[i].style.marginTop = m + 'px';
-            prevBottom = tops[i] + h;          // is number ka naya bottom = paragraph top + height
+          // ═══ ABSOLUTE POSITIONING (bulletproof — clump NAHI ho sakta) ═══
+          //   Har number ko serial-khane ke andar us ke paragraph ki THEEK Y
+          //   جگہ par ABSOLUTE rakho. marginTop wala tareeqa baar baar clump
+          //   kar raha tha (aik number set karte hi baqi khisak jate the) —
+          //   is liye ab bilkul chhor diya. Har number apne paragraph ke
+          //   saamne, aik doosre se مکمل آزاد.
+          var td = nums.closest('td') || nums.parentNode;
+          try { if (getComputedStyle(td).position === 'static') td.style.position = 'relative'; } catch(e){}
+          nums.style.position = 'static';
+          var cellTop = td.getBoundingClientRect().top;
+          var padTop = 0;
+          try { padTop = parseFloat(getComputedStyle(td).paddingTop) || 0; } catch(e){}
+          for(var i=0;i<kids.length;i++){
+            kids[i].style.marginTop='0px';
+            if(i<tops.length){
+              kids[i].style.position='absolute';
+              kids[i].style.left='0'; kids[i].style.right='0';
+              kids[i].style.top = Math.max(0, Math.round(tops[i]-cellTop)) + 'px';
+              kids[i].style.textAlign='center';
+            } else {
+              kids[i].style.position='absolute';
+              kids[i].style.opacity='0';   // extra number (agar ho) chhupa do
+            }
           }
         }
         function alignAll(){ [].slice.call(document.querySelectorAll('.zf-nums, .zfa-nums')).forEach(alignOne); }

@@ -814,6 +814,10 @@ async function _dkSave() {
   data.__title = title;
   try {
     // NAYA record (ya _dkEntryId par ترمیم) — تاریخ/وقت/سیریل ke saath
+    if (typeof dioSaveDocEntry !== 'function') {
+      if (typeof showToast === 'function') showToast('⚠️ saved-docs.js لوڈ نہیں ہوئی — دوبارہ اپلوڈ کریں', 'error', 5000);
+      return;
+    }
     const entry = await dioSaveDocEntry('darkhwastain', title, data, { caseId: _dkCaseId, id: _dkEntryId });
     _dkEntryId = entry.id;
     _dkSaved = data; _dkDirty = false;
