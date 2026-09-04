@@ -366,4 +366,3 @@ function _insertTextAtCursor(el, text) {
     el.textContent += text;
   }
 }
-
