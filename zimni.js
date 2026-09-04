@@ -1697,6 +1697,8 @@ function _zimniFormCSS() {
   #ch173-doc .zf-bdyln{ display:inline; border:none; outline:none; }
   /* تفتیشی افسر — بولڈ + انڈر لائن */
   #ch173-doc .zf-io{ font-weight:bold; text-decoration:underline; text-underline-offset:3px; }
+  /* مرتبہ (IO/تفتیشی افسر) کی سطر — بائیں سیدھ، بائیں بارڈر کے ساتھ (user hidayat) */
+  #ch173-doc .zf-bl-mor{ text-align:left !important; }
   /* ہر پیراگراف کے درمیان ایک سطر کا فاصلہ (مزید Enter سے بڑھایا جا سکتا ہے) */
   #ch173-doc .zf-body > div, #ch173-doc .zf-body > p{ margin:0 0 1em 0; }
   /* ── اندرونی ضمنی — ہمیشہ نئے صفحے سے (بیرونی 2 صفحوں سے آگے جائے تو) ── */
@@ -1863,7 +1865,7 @@ function _zimniDefaultBody(o, c) {
         <td class="zf-c-body" colspan="2">
           <div class="zf-bl"><span class="zf-lbl">سرکار بذریعہ ۔</span> <span class="zf-bdyln" data-k="sarkar">${compl}</span></div>
           <div class="zf-bl zf-bl-banam"><span class="zf-lbl">بنام۔</span><span class="zf-bdyln zf-acclist" data-k="banam"></span></div>
-          <div class="zf-bl"><span class="zf-tab"></span><span class="zf-tab"></span><span class="zf-lbl">مرتبہ ۔</span> <span class="zf-bdyln zf-io" data-k="murattib">${ioE}</span></div>
+          <div class="zf-bl zf-bl-mor"><span class="zf-lbl">مرتبہ ۔</span> <span class="zf-bdyln zf-io" data-k="murattib">${ioE}</span></div>
           <div class="zf-body" data-mic="true" data-k="halaat">جناب عالیٰ! بحوالہ رپورٹ </div>
           <!-- اختتام — تحریر جہاں بھی ختم ہو (کسی بھی صفحے پر) اس کے نیچے آتا ہے -->
           <div class="zf-close" data-k="close">رپورٹ ضمنی مرتب ہو کرارسال خدمت ہے</div>
@@ -2344,10 +2346,21 @@ function _zimniPrintHTML(inner) {
           if(!bodies.length) return;
           var tops=[]; bodies.forEach(function(b){ tops=tops.concat(paraTops(b)); });
           var kids=[].slice.call(nums.children);
-          for(var i=0;i<kids.length;i++) kids[i].style.marginTop='0px';
+          if(!kids.length||!tops.length) return;
+          // ═══ FIX (numbers clump ka masla) ═══
+          //   Har number ko apne paragraph ke top par le jao. marginTop[i] =
+          //   paragraph[i]-top MINUS pichle number ka BOTTOM. (Pehle har number
+          //   ki natural jagah alag alag parhi ja rahi thi jabke woh khisak
+          //   rahe the — is se 3،4،5… sab aik jagah جمع ho jate the.)
+          for(var i=0;i<kids.length;i++){ kids[i].style.marginTop='0px'; }
+          var base = nums.getBoundingClientRect().top;
+          var prevBottom = base;               // pichle number ka bottom (viewport se)
           for(i=0;i<kids.length&&i<tops.length;i++){
-            var g=Math.round(tops[i]-kids[i].getBoundingClientRect().top);
-            if(g>0&&g<40000) kids[i].style.marginTop=g+'px';
+            var h = kids[i].getBoundingClientRect().height || 20;
+            var m = Math.round(tops[i] - prevBottom);
+            if(m<0) m=0; if(m>40000) m=0;
+            kids[i].style.marginTop = m + 'px';
+            prevBottom = tops[i] + h;          // is number ka naya bottom = paragraph top + height
           }
         }
         function alignAll(){ [].slice.call(document.querySelectorAll('.zf-nums, .zfa-nums')).forEach(alignOne); }
