@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_VER = 'zimni v20 — androoni module MERGED back (161 chip) + v19 chaining/numbering';
+const ZIMNI_VER = 'zimni v21 — IO sign LEFT (inline) + serial absolute-position';
 window.ZIMNI_VER = ZIMNI_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -938,10 +938,10 @@ function _zimniEnsureClosing() {
   const wrap = document.createElement('div');
   wrap.innerHTML =
     '<div class="zf-close" data-k="close">رپورٹ ضمنی مرتب ہو کرارسال خدمت ہے</div>' +
-    '<div class="zf-signblk">' +
+    '<div class="zf-signblk" style="text-align:left !important;">' +
       '<div class="zf-gap"><br></div><div class="zf-gap"><br></div>' +
-      '<div class="zf-sign" data-k="io_sign">' + E(io) + '</div>' +
-      '<div class="zf-signdate" data-k="io_date">' + E(_zimniToday()) + '</div>' +
+      '<div class="zf-sign" data-k="io_sign" style="text-align:left !important;display:block;text-decoration:none;">' + E(io) + '</div>' +
+      '<div class="zf-signdate" data-k="io_date" style="text-align:left !important;display:block;">' + E(_zimniToday()) + '</div>' +
     '</div>';
   while (wrap.firstChild) cell.appendChild(wrap.firstChild);
 }
@@ -1869,11 +1869,11 @@ function _zimniDefaultBody(o, c) {
           <div class="zf-body" data-mic="true" data-k="halaat">جناب عالیٰ! بحوالہ رپورٹ </div>
           <!-- اختتام — تحریر جہاں بھی ختم ہو (کسی بھی صفحے پر) اس کے نیچے آتا ہے -->
           <div class="zf-close" data-k="close">رپورٹ ضمنی مرتب ہو کرارسال خدمت ہے</div>
-          <div class="zf-signblk">
+          <div class="zf-signblk" style="text-align:left !important;">
             <div class="zf-gap"><br></div>
             <div class="zf-gap"><br></div>
-            <div class="zf-sign" data-k="io_sign">${ioE}</div>
-            <div class="zf-signdate" data-k="io_date">${E(_zimniToday())}</div>
+            <div class="zf-sign" data-k="io_sign" style="text-align:left !important;display:block;text-decoration:none;">${ioE}</div>
+            <div class="zf-signdate" data-k="io_date" style="text-align:left !important;display:block;">${E(_zimniToday())}</div>
           </div>
         </td>
       </tr>
