@@ -2164,6 +2164,27 @@ function _zimniPrintHTML(inner) {
 
         function numDiv(n,cls){ var d=document.createElement('div'); d.className=cls||'zf-num'; d.textContent=String(n); return d; }
 
+        // ── ٹیبل کی لکیریں صفحے کے نیچے تک (اکلوتا صفحہ) — قطار 2 کے تمام خانوں
+        //    کی اونچائی بڑھا کر ٹیبل کا نیچے کنارہ صفحے کے ہاشیے تک لے جاؤ۔ ──
+        function stretchToBottom(topY){
+          try{
+            var doc=document.getElementById('ch173-doc'); if(!doc) return;
+            var tbl=doc.querySelector('table.zf-tbl'); if(!tbl) return;
+            var row=tbl.querySelector('tbody tr'); if(!row) return;
+            var tds=[].slice.call(row.querySelectorAll('td')); if(!tds.length) return;
+            // پہلے موجودہ اونچائیاں ہٹاؤ تاکہ اصل ناپ ملے
+            tds.forEach(function(td){ td.style.height=''; });
+            var limit = topY + contentH - SAFE;             // اکلوتے صفحے کی نچلی حد
+            var bottom = tbl.getBoundingClientRect().bottom;
+            var gap = Math.floor(limit - bottom);
+            if(gap>10){
+              var tallest = tds[0];
+              tds.forEach(function(td){ if(td.offsetHeight>tallest.offsetHeight) tallest=td; });
+              tds.forEach(function(td){ td.style.height=(td.offsetHeight+gap)+'px'; });
+            }
+          }catch(e){}
+        }
+
         // ── ایک صفحے پر کتنے پیراگراف سماتے ہیں (اوپر سے limit تک) ──
         function fitCount(paras, startIdx, topY, limit){
           var k=startIdx;
@@ -2243,8 +2264,19 @@ function _zimniPrintHTML(inner) {
           var binds=[];
           if(lastBottom<=twoPage){
             // اوور فلو نہیں — سب berooni میں، نمبر 1..N، اختتام berooni میں
-            if(beroNums){ beroNums.innerHTML=''; for(var i=0;i<P.length;i++) beroNums.appendChild(numDiv(i+1)); }
+            // AHEM: agar normalize se paragraph na milen (P.length===0) to bhi
+            // kam az kam 1 number zaroor lagao (screen par jitne the utne),
+            // warna print mein serial number GHAYAB ho jate the.
+            if(beroNums){
+              var cnt = P.length;
+              if(cnt<1){ try{ var scr=doc.querySelectorAll('.zf-nums .zf-num').length; cnt = scr>0?scr:1; }catch(e){ cnt=1; } }
+              beroNums.innerHTML='';
+              for(var i=0;i<cnt;i++) beroNums.appendChild(numDiv(i+1));
+            }
             putClose(doc.querySelector('td.zf-c-body'));
+            // ── ٹیبل کی لکیریں صفحے کے نیچے تک ── (SHO خانہ بیچ میں رکے تو کوئی
+            //    بات نہیں — قطار کی اونچائی بڑھا کر لکیریں نیچے لے جاؤ)
+            stretchToBottom(docTop);
             addBind(doc.querySelector('td.zf-c-body .zf-body'), docTop);   // صفحہ 2 کا مثلث
             return;
           }
