@@ -228,6 +228,8 @@ async function _doAddMisalDoc(docId) {
   if (docId === 'saza_slip') { _openMisalEditor(docId); return; }
   // درخواستیں → seedha full-page editor (darkhwastain.js)
   if (docId === 'darkhwastain') { _openMisalEditor(docId); return; }
+  // RFA فارم → seedha full-page editor (rfa-form.js); record khud save par banega
+  if (docId === 'rfa_form') { _openMisalEditor(docId); return; }
   const isPersonForm = (docId === 'witnesses_fir' || docId === 'witnesses_cross' ||
                         docId === 'named_accused' || docId === 'unknown_accused' ||
                         docId === 'zamniyat' || docId === 'memorandum' ||
@@ -317,6 +319,13 @@ function _openMisalEditor(docId, _fromTab) {
   if (docId === 'darkhwastain') {
     _openDocId = docId;
     if (typeof openDarkhwast === 'function') openDarkhwast(_misalCaseId);
+    return;
+  }
+
+  // Special: RFA فارم → full-page RFA editor (rfa-form.js)
+  if (docId === 'rfa_form') {
+    _openDocId = docId;
+    if (typeof openRfaForm === 'function') openRfaForm(_misalCaseId);
     return;
   }
 
