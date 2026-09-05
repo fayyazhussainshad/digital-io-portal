@@ -143,6 +143,14 @@ function _misalHasData(key) {
         if (r2 && r2.length > 5) return true;
       }
     }
+    // RFA فارم — alag table (rfa_forms); localStorage list se check
+    if (key === 'rfa_form') {
+      const cid = _misalCaseId || (_misalCase && _misalCase.id);
+      if (cid) {
+        const r = localStorage.getItem('dio_rfalist_' + cid);
+        if (r) { try { const a = JSON.parse(r); if (a && a.length) return true; } catch(_){} }
+      }
+    }
     // saved-docs (shared) — localStorage list
     const cid2 = _misalCaseId || (_misalCase && _misalCase.id);
     if (cid2) {
