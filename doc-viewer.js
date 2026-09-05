@@ -213,6 +213,9 @@ function _dioSaveCurrent() {
   if (id.startsWith('r173:')) {
     if (typeof _saveR173 === 'function') { _saveR173(); return; }
   }
+  if (id === 'rfa_form') {
+    if (typeof _saveRfa === 'function') { _saveRfa(); return; }
+  }
   if (document.getElementById('misal-editor') && typeof saveMisalDoc === 'function') {
     saveMisalDoc(_openDocId || id); return;
   }
@@ -305,6 +308,9 @@ function _dioPrintCurrent() {
   }
   if (id === 'fir' || id === 'cross_version') {
     if (typeof _printFIRAll === 'function') { _printFIRAll(); return; }
+  }
+  if (id === 'rfa_form') {
+    if (typeof _printRfa === 'function') { _printRfa(); return; }
   }
   if (typeof printMisalDoc === 'function') { printMisalDoc(_dioDocName(id)); return; }
   window.print();
