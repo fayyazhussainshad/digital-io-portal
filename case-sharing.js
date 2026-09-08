@@ -127,20 +127,38 @@ async function _shareWith(officerId, permission) {
       .is('revoked_at', null)
       .maybeSingle();
 
+    let shareRow = null;
     if (existing) {
       // Active share exists — permission + expiry update
-      await supabaseClient.from('case_shares')
+      const upd = await supabaseClient.from('case_shares')
         .update({ permission, expires_at, revoked_at: null, revoked_by: null })
-        .eq('id', existing.id);
+        .eq('id', existing.id).select().maybeSingle();
+      shareRow = (upd && upd.data) || { id: existing.id };
+      // AUDIT — share.updated
+      try {
+        if (window.DIO && DIO.audit) DIO.audit.log('share.updated', 'case_share', shareRow.id, {
+          case_id: _shareCaseId,
+          after: { permission, expires_at, shared_with: officerId }
+        });
+      } catch (_) {}
     } else {
       // Naya share
-      await supabaseClient.from('case_shares').insert({
+      const ins = await supabaseClient.from('case_shares').insert({
         case_id: _shareCaseId,
         shared_by: myId,
         shared_with: officerId,
         permission,
         expires_at
-      });
+      }).select().maybeSingle();
+      shareRow = (ins && ins.data) || null;
+      // AUDIT — share.granted
+      try {
+        if (window.DIO && DIO.audit) DIO.audit.log('share.granted', 'case_share',
+          (shareRow && shareRow.id) || null, {
+          case_id: _shareCaseId,
+          after: { permission, expires_at, shared_with: officerId }
+        });
+      } catch (_) {}
     }
 
     const durTxt = (days && days > 0) ? (days + ' دن کے لیے') : 'مستقل';
@@ -220,6 +238,13 @@ async function _unshare(shareId) {
       .update({ revoked_at: new Date().toISOString(), revoked_by: myId })
       .eq('id', shareId);
     if (error) throw error;
+    // AUDIT — share.revoked (Phase 4B)
+    try {
+      if (window.DIO && DIO.audit) DIO.audit.log('share.revoked', 'case_share', shareId, {
+        case_id: _shareCaseId,
+        metadata: { revoked_by: myId }
+      });
+    } catch (_) {}
     showToast('شیئر منسوخ کر دیا گیا — تاریخ محفوظ ہے', 'info');
     _loadCurrentShares();
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
