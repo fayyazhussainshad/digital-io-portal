@@ -234,6 +234,8 @@ function _sazaRender() {
         <button onmousedown="event.preventDefault()" onclick="_sazaFmt('redo')" title="دوبارہ" style="${_sazaBtn()}">↷</button>
         <button class="btn btn-primary btn-sm dio-modbtn" onclick="_sazaSave()">💾 محفوظ کریں</button>
         <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_sazaPrint()">🖨️ پرنٹ کریں</button>
+        <!-- Phase 2A: versions viewer — dio-modbtn NAHI (warna full-page overlay mein chhup jata) -->
+        <button class="btn btn-secondary btn-sm" onclick="_sazaOpenVersions()" title="پرانی نسخے دیکھیں">📜 نسخے</button>
       </div>
     </div>
 
@@ -1238,3 +1240,29 @@ window._sazaCSS = _sazaCSS;
   else document.addEventListener('DOMContentLoaded', init);
 })();
 
+
+// ═══════════════════════════════════════════════════════════════════
+//  PHASE 2A — Version history viewer bridge
+//  Saza slip case_documents mein 'saza_slip' document_type se save
+//  hoti hai, isi liye misal-docs.js ki generic viewer reuse ho sakti
+//  hai. Yahan sirf DB id nikaal ke pass kar dete hain.
+// ═══════════════════════════════════════════════════════════════════
+function _sazaOpenVersions() {
+  try {
+    var dbId = null;
+    if (typeof _misalDocs !== 'undefined' && _misalDocs && _misalDocs['saza_slip'])
+      dbId = _misalDocs['saza_slip'].id;
+    if (!dbId) {
+      if (typeof showToast === 'function')
+        showToast('⚠️ پہلے سزا سلپ محفوظ کریں — تب نسخے دستیاب ہوں گے', 'info');
+      return;
+    }
+    if (typeof openMisalVersionsModal === 'function')
+      openMisalVersionsModal('saza_slip', dbId);
+    else if (typeof showToast === 'function')
+      showToast('❌ نسخے دیکھنے والا حصہ لوڈ نہیں ہوا', 'error');
+  } catch (e) {
+    if (typeof showToast === 'function') showToast('❌ ' + (e.message || e), 'error');
+  }
+}
+window._sazaOpenVersions = _sazaOpenVersions;
