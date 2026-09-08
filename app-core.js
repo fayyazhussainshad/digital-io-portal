@@ -280,8 +280,21 @@ window.escapeHtml = esc;
 
 // ── SANITIZE rich-text HTML (for contenteditable-saved content) ──
 // Keeps formatting (<b>, <br>, tables) but strips scripts & event handlers.
+// ═══ Phase 3D — sanitizeHtml ab DIO.html.safe() par forward hoti hai ═══
+// (DOMPurify jab load ho — industry-grade; warna dio-html.js ka mazboot
+//  native fallback. Purani basic sanitization se behtar — vbscript:, data:,
+//  style expression(), srcdoc, formaction, svg xss sab block.)
+// Legacy in-file implementation neechay fallback ke tor par rakhi hai —
+// sirf tab use hoti hai jab dio-html.js load na ho.
 function sanitizeHtml(html) {
   if (html == null) return '';
+  // Prefer new Phase 3D pipeline agar available
+  try {
+    if (window.DIO && window.DIO.html && typeof window.DIO.html.safe === 'function') {
+      return window.DIO.html.safe(html);
+    }
+  } catch (_) {}
+  // ── Legacy fallback (agar dio-html.js load nahi hui) ──────
   const t = document.createElement('template');
   t.innerHTML = String(html);
   t.content.querySelectorAll('script,iframe,object,embed,link,style').forEach(n => n.remove());
