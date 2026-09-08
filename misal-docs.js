@@ -405,10 +405,20 @@ function _renderMisalEditor(docId, def) {
   const content = saved?.content?.html ? sanitizeHtml(saved.content.html) : getMisalTemplate(docId, _misalCase);
   const savedDate = saved?.content?.date || '';
 
+  // ═══ Version history availability (Phase 2A) — sirf saved docs ki nasKhen dikha ke ══
+  const _hasVersions = !!(saved && saved.id);
+  const _vBtn = _hasVersions
+    ? `<button onclick="openMisalVersionsModal('${docId}','${saved.id}')" title="پرانی نسخے دیکھیں"
+        style="position:absolute;top:8px;left:8px;z-index:10;padding:5px 10px;border:1px solid var(--border);
+               background:var(--bg-card);color:var(--text-primary);border-radius:8px;cursor:pointer;
+               font-size:12px;font-family:'Jameel Noori Nastaleeq',serif;">📜 نسخے</button>`
+    : '';
+
   area.innerHTML = `
-  <div style="display:flex;flex-direction:column;height:100%;min-height:400px;direction:rtl;">
+  <div style="display:flex;flex-direction:column;height:100%;min-height:400px;direction:rtl;position:relative;">
     <!-- Safha khali hi rehta hai (software koi format nahi deta) —
          lekin likhne ke liye MS Word jaise auzaar mojood hain -->
+    ${_vBtn}
     <input type="hidden" id="misal-date" value="${savedDate}">
     <div style="flex:1;overflow:auto;min-height:0;padding:14px;">
       <div id="misal-editor" contenteditable="true" spellcheck="false" style="
@@ -515,3 +525,127 @@ function _refreshMisalBar() {
 // ── URDU VOICE INPUT ──────────────────────────────────────────
 let _voiceRecognition = null;
 let _voiceActive      = false;
+
+// ═══════════════════════════════════════════════════════════════════
+//  PHASE 2A — VERSION HISTORY VIEWER
+//  case_document_versions table par depend karta hai (SQL alag file mein).
+//  Har save par purani halat khud-ba-khud snapshot ho jati hai (trigger),
+//  yahan sirf UI hai jo history dikhata hai. Restore functionality
+//  deliberately abhi nahi — sirf VIEW ka hak, taake koi ghalti se
+//  official document lose na kare.
+// ═══════════════════════════════════════════════════════════════════
+async function openMisalVersionsModal(docId, documentDbId) {
+  if (!documentDbId) { showToast('⚠️ پہلے دستاویز محفوظ کریں — تب نسخے دستیاب ہوں گے', 'info'); return; }
+  const docName = (MISAL_CASE_DOCS.find(d => d.id === docId) || {}).name || docId;
+
+  // Modal shell — pehle loading
+  openModal(
+    `📜 ${docName} — نسخوں کی تاریخ`,
+    `<div id="mv-body" style="direction:rtl;min-height:200px;padding:10px 4px;">
+       <div style="text-align:center;color:var(--text-muted);padding:24px;">⏳ نسخے لوڈ ہو رہے ہیں...</div>
+     </div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`
+  );
+
+  // Load versions + officer names
+  try {
+    const { data: versions, error } = await supabaseClient
+      .from('case_document_versions')
+      .select('*')
+      .eq('document_id', documentDbId)
+      .order('version_no', { ascending: false });
+
+    if (error) throw error;
+
+    // Officer names
+    const officerIds = [...new Set((versions || []).map(v => v.edited_by).filter(Boolean))];
+    let officerMap = {};
+    if (officerIds.length) {
+      try {
+        const { data: ofs } = await supabaseClient.from('officers')
+          .select('id,full_name,designation').in('id', officerIds);
+        (ofs || []).forEach(o => {
+          officerMap[o.id] = (o.full_name || '') + (o.designation ? ' (' + o.designation + ')' : '');
+        });
+      } catch (_) {}
+    }
+
+    const body = document.getElementById('mv-body');
+    if (!body) return;
+
+    if (!versions || !versions.length) {
+      body.innerHTML = `
+        <div style="text-align:center;padding:32px 20px;color:var(--text-muted);">
+          <div style="font-size:36px;margin-bottom:10px;">📄</div>
+          <div style="font-size:14px;">ابھی کوئی پرانا نسخہ نہیں — پہلی ترمیم کے بعد یہاں تاریخ نظر آنے لگے گی</div>
+        </div>`;
+      return;
+    }
+
+    body.innerHTML = `
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
+        کل ${versions.length} پرانا نسخہ · موجودہ نسخہ ایڈیٹر میں ہے
+      </div>
+      ${versions.map(v => {
+        const dt = v.edited_at ? new Date(v.edited_at).toLocaleString('en-GB', {
+          timeZone: 'Asia/Karachi', day:'2-digit', month:'2-digit', year:'numeric',
+          hour:'2-digit', minute:'2-digit', hour12:true
+        }) : '';
+        const ofc = officerMap[v.edited_by] || 'نامعلوم';
+        return `
+        <div style="display:flex;gap:10px;align-items:center;padding:10px 12px;background:var(--bg-card);
+                    border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
+          <div style="min-width:60px;text-align:center;font-weight:800;color:var(--accent);font-size:16px;">
+            v${v.version_no}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:700;">${esc(ofc)}</div>
+            <div style="font-size:11px;color:var(--text-muted);direction:ltr;text-align:right;">${esc(dt)}</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="_previewMisalVersion('${v.id}')">👁️ دیکھیں</button>
+        </div>`;
+      }).join('')}`;
+  } catch (e) {
+    const body = document.getElementById('mv-body');
+    if (body) body.innerHTML = `
+      <div style="padding:16px;color:var(--red);text-align:center;">
+        <div style="font-size:14px;font-weight:700;">نسخے نہیں مل سکے</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">
+          ممکن ہے <code>case_document_versions</code> ٹیبل ابھی نہ بنی ہو — Supabase SQL چلائیں
+        </div>
+        <div style="font-size:11px;color:var(--text-faint);margin-top:6px;font-family:monospace;direction:ltr;">${esc(e.message||e)}</div>
+      </div>`;
+  }
+}
+window.openMisalVersionsModal = openMisalVersionsModal;
+
+async function _previewMisalVersion(versionId) {
+  try {
+    const { data: v, error } = await supabaseClient
+      .from('case_document_versions')
+      .select('*')
+      .eq('id', versionId)
+      .single();
+    if (error) throw error;
+    const html = (v && v.content && v.content.html) ? sanitizeHtml(v.content.html) : '<em>خالی نسخہ</em>';
+    const dt = v.edited_at ? new Date(v.edited_at).toLocaleString('en-GB', {
+      timeZone: 'Asia/Karachi', day:'2-digit', month:'2-digit', year:'numeric',
+      hour:'2-digit', minute:'2-digit', hour12:true
+    }) : '';
+    openModal(
+      `👁️ نسخہ v${v.version_no} — ${esc(dt)}`,
+      `<div style="direction:rtl;max-height:60vh;overflow:auto;padding:14px;background:#fff;color:#111;
+                   border:1px solid var(--border);border-radius:8px;
+                   font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;line-height:2;">
+         ${html}
+       </div>
+       <div style="font-size:11px;color:var(--text-muted);margin-top:8px;text-align:center;">
+         یہ صرف مطالعہ کے لیے ہے — دستاویز کا موجودہ نسخہ تبدیل نہیں ہوا
+       </div>`,
+      `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`
+    );
+  } catch (e) {
+    showToast('❌ نسخہ نہیں ملا: ' + (e.message||e), 'error');
+  }
+}
+window._previewMisalVersion = _previewMisalVersion;
