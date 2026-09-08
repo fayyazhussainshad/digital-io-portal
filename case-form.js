@@ -472,7 +472,7 @@ async function saveNewCase(){
   if(!complainant){showToast('⚠️ مدعی کا نام درج کریں','error');document.getElementById('cf-complainant')?.focus();return;}
   try{
     var _cfMobile = _cfMobileFieldsPayload();
-    await addCase({
+    const _newCaseRow = await addCase({
       fir_number:fir,
       fir_date:document.getElementById('cf-date').value.trim(),
       occurrence_date:document.getElementById('cf-occurrence-date')?.value.trim()||'',
@@ -511,6 +511,21 @@ async function saveNewCase(){
       case_station:  currentOfficer?.station  || null,
       case_district: currentOfficer?.district || null,
     });
+    // AUDIT — case.created (Phase 4B). CNIC/cell auto-redact hoti hain.
+    try {
+      if (window.DIO && DIO.audit && _newCaseRow) {
+        DIO.audit.log('case.created', 'case', _newCaseRow.id, {
+          case_id: _newCaseRow.id,
+          after: {
+            fir_number: fir,
+            section_of_law: section,
+            status: _newCaseRow.status,
+            complainant: complainant,
+            is_cross_version: _newCaseRow.is_cross_version || false
+          }
+        });
+      }
+    } catch (_) {}
     // Auto reminders
     const firDate = document.getElementById('cf-date').value.trim();
     const mulzmanType = document.getElementById('cf-mulzman-type')?.value||'namaloom';
@@ -537,6 +552,13 @@ async function saveEditCase(id){
     var _typed=document.getElementById('cf-section-search')?.value.trim()||'';
     if(_typed) _editSection=_typed;
   }
+  // AUDIT — "before" snapshot (Phase 4B). Silent fail agar fetch na ho.
+  var _beforeCase = null;
+  try {
+    if (window.DIO && DIO.audit && typeof getCase === 'function') {
+      _beforeCase = await getCase(id);
+    }
+  } catch (_) {}
   try{
     var _cfMobile = _cfMobileFieldsPayload();
     await updateCase(id,{
@@ -576,6 +598,28 @@ async function saveEditCase(id){
       cross_status:document.getElementById('cf-cross-status')?.value||null,
       cross_position:document.getElementById('cf-cross-position')?.value||null,
     });
+    // AUDIT — case.updated (Phase 4B). Key fields ka before/after diff.
+    try {
+      if (window.DIO && DIO.audit) {
+        const _pickKeys = ['fir_number','fir_date','section_of_law','status','position','complainant','mulzman_type','sho','sdpo'];
+        const _pick = (o) => o ? _pickKeys.reduce((a,k)=>{ if(o[k]!==undefined) a[k]=o[k]; return a; }, {}) : null;
+        DIO.audit.log('case.updated', 'case', id, {
+          case_id: id,
+          before: _pick(_beforeCase),
+          after: {
+            fir_number: document.getElementById('cf-fir').value.trim(),
+            fir_date: document.getElementById('cf-date').value.trim(),
+            section_of_law: _editSection,
+            status: document.getElementById('cf-status').value,
+            position: document.getElementById('cf-position').value,
+            complainant: document.getElementById('cf-complainant').value.trim(),
+            mulzman_type: document.getElementById('cf-mulzman-type')?.value || 'namaloom',
+            sho: document.getElementById('cf-sho')?.value.trim() || '',
+            sdpo: document.getElementById('cf-sdpo')?.value.trim() || ''
+          }
+        });
+      }
+    } catch (_) {}
     closeModal();
     showToast('✅ Case updated!','success');
     // Wait briefly so DB write propagates through cases_decrypted view before re-fetching

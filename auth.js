@@ -199,6 +199,20 @@ async function loginSuccess() {
   // SECURITY: is browser session ka nishan. sessionStorage browser band hote hi
   // khud mit jata hai — is liye app dobara kholne par password lazmi hoga.
   try { sessionStorage.setItem('dio_sess_active', '1'); } catch(_) {}
+  // AUDIT — login success (Phase 4B). Ye chalega tab jab currentOfficer set ho jaye.
+  // Isliye chhota delay — initApp() mein officer profile fetch ho jata hai.
+  try {
+    setTimeout(function () {
+      try {
+        if (window.DIO && DIO.audit) DIO.audit.log('login', 'session', null, {
+          metadata: {
+            user_agent: (navigator.userAgent || '').slice(0, 120),
+            ts: new Date().toISOString()
+          }
+        });
+      } catch (_) {}
+    }, 1500);
+  } catch (_) {}
   const ls=document.getElementById('login-screen'), app=document.getElementById('main-app');
   ls.style.transition='opacity 0.4s'; ls.style.opacity='0';
   setTimeout(()=>{ ls.style.display='none'; app.style.display='flex'; setLoginLoading(false); initApp(); },400);
@@ -277,6 +291,18 @@ async function doLogout() {
   //  aur previews sab band karo, warna doosra afsar seat par baith kar
   //  purana ڈیٹا browser Back se dekh sakta hai.
   // ═══════════════════════════════════════════════════════════════════
+
+  // 0. AUDIT — logout event log karें AUR pending audit flush karें
+  //    signOut se PEHLE — warna auth.uid() nahi rahегi RLS ke liye.
+  try {
+    if (window.DIO && DIO.audit) {
+      DIO.audit.log('logout', 'session', null, {
+        metadata: { ts: new Date().toISOString() }
+      });
+      // Sync flush — sab pending audit rows DB mein bhejें
+      try { await DIO.audit.flush(); } catch (_) {}
+    }
+  } catch (_) {}
 
   // 1. Server sign-out (offline par fail ho to bhi jari raho)
   try { await supabaseClient.auth.signOut(); } catch(_) {}
