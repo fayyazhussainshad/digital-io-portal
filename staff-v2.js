@@ -47,7 +47,7 @@ function _stRender() {
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
     <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg-secondary);">
       <div style="font-weight:700;font-size:16px;">ہمراہی ملازمان</div>
-      <button class="btn btn-primary btn-sm" style="margin-right:auto;" onclick="_stForm(null)">➕ ملازم شامل کریں</button>
+      <button class="btn btn-primary btn-sm dio-add-btn" style="order:-1;margin-left:auto;" onclick="_stForm(null)">➕ ملازم شامل کریں</button>
     </div>
     <div style="flex:1;overflow-y:auto;padding:14px;">
       ${_stList.length ? _stList.map(_stCard).join('') : `

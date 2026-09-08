@@ -24,12 +24,12 @@ async function _buildCourt() {
 
   root.innerHTML = `
   <!-- Header -->
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;direction:rtl;"><div style="display:flex;align-items:center;gap:10px;">
+  <div style="display:flex;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;direction:rtl;"><div style="display:flex;align-items:center;gap:10px;">
     <div>
       <div style="font-size:18px;font-weight:800;">⚖️ عدالتی پیشیاں</div>
       <div style="font-size:12px;color:var(--text-muted);">آنے والی · گزری ہوئی · کیلنڈر</div>
     </div>
-    <button class="btn btn-primary" onclick="_openAddCourtDate()">+ پیشی شامل کریں</button>
+    <button class="btn btn-primary dio-add-btn" style="order:-1;" onclick="_openAddCourtDate()">+ پیشی شامل کریں</button>
   </div>
 
   <!-- Alert: overdue -->

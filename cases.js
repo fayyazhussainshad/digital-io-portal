@@ -193,8 +193,8 @@ async function renderCases(container,fStatus,fQuery,fStation){
       <div style="font-size:18px;font-weight:800;">📁 میرے مقدمات</div>
       <div style="font-size:12px;color:var(--text-muted);">${cases.length} مقدمات${isArchiveView?' · '+fStation+' آرکائیو':''}</div>
     </div>
-    <div style="display:flex;gap:6px;direction:rtl;margin-inline-start:auto;flex-wrap:wrap;">
-      <button class="btn btn-primary" onclick="openAddCaseModal()">+ نیا اندراج</button>
+    <div style="display:flex;gap:6px;direction:rtl;margin-left:auto;order:-1;flex-wrap:wrap;">
+      <button class="btn btn-primary dio-add-btn" onclick="openAddCaseModal()">+ نیا اندراج</button>
     </div>
   </div>
 

@@ -20,12 +20,12 @@ async function renderSuspects(container) {
   container.innerHTML = `
   <div style="direction:rtl;">
     <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
       <div>
         <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;">👤 ملزمان / گواہان ڈیٹابیس</div>
         <div style="font-size:12px;color:var(--text-muted);">تمام افراد ایک جگہ — مقدمات کے ساتھ منسلک</div>
       </div>
-      <button class="btn btn-primary" onclick="_openSuspectForm()">➕ نیا اندراج</button>
+      <button class="btn btn-primary dio-add-btn" style="order:-1;" onclick="_openSuspectForm()">➕ نیا اندراج</button>
     </div>
 
     <!-- Search -->

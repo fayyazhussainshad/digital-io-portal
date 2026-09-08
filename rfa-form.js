@@ -137,9 +137,11 @@ function _renderRfaList() {
 
   area.innerHTML = `
   <div style="padding:16px;direction:rtl;height:100%;overflow-y:auto;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;">
+    <!-- عنوان درمیان میں · "نیا" بٹن دائیں (SYSTEM RULE: add-new button ہمیشہ دائیں) -->
     <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:14px;">
-      <div style="font-size:18px;font-weight:800;color:var(--accent);">RFA فارم — فہرست</div>
-      <button class="btn btn-primary btn-sm" style="margin-right:auto;" onclick="_newRfa()">+ نیا RFA فارم</button>
+      <button class="btn btn-primary btn-sm dio-add-btn" onclick="_newRfa()">+ نیا RFA فارم</button>
+      <div style="flex:1;text-align:center;font-size:18px;font-weight:800;color:var(--accent);">RFA فارم — فہرست</div>
+      <span class="btn btn-primary btn-sm" style="visibility:hidden;pointer-events:none;">+ نیا RFA فارم</span>
     </div>
     ${_rfaList.length ? rows : `
       <div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
@@ -195,7 +197,8 @@ function _renderRfaForm() {
   // inline editable span (for header / signature)
   const es = (k, def, extra) => `<span contenteditable="true" data-k="${k}" oninput="_rfaBold(this)" style="${editFont}unicode-bidi:plaintext;${extra||''}${v(k,def)?'font-weight:bold;':''}">${v(k, def)}</span>`;
 
-  const pageStyle = "width:210mm;min-height:297mm;box-sizing:border-box;margin:0 auto 18px;padding:16mm 15mm;background:#fff;color:#111;direction:ltr;text-align:left;font-family:Arial,'Times New Roman',sans-serif;font-size:13px;line-height:1.6;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:3px;";
+  // Screen: A4 چوڑائی · اونچائی مواد کے مطابق (min-height نہیں — ورنہ آدھا صفحہ خالی نظر آتا تھا)
+  const pageStyle = "width:210mm;box-sizing:border-box;margin:0 auto 18px;padding:14mm 15mm;background:#fff;color:#111;direction:ltr;text-align:left;font-family:Arial,'Times New Roman',sans-serif;font-size:13px;line-height:1.6;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:3px;";
 
   const headBlock = (annex) => `
     <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #333;padding-bottom:6px;margin-bottom:2px;">
@@ -237,9 +240,12 @@ function _renderRfaForm() {
 
   area.innerHTML = `
   <div style="display:flex;flex-direction:column;height:100%;direction:ltr;">
-    <!-- Toolbar: formatting (challan/zimni جیسا) + save/print (full-page میں چھپ جاتے ہیں) -->
+    <!-- Toolbar (LTR): محفوظ/پرنٹ بائیں طرف · formatting · واپس فہرست دائیں -->
     <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
-      <button class="btn btn-secondary btn-sm" onclick="_rfaBackToList()" style="direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">← واپس فہرست</button>
+      <div style="display:flex;gap:6px;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
+        <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveRfa()">💾 محفوظ کریں</button>
+        <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printRfa()">🖨️ پرنٹ کریں</button>
+      </div>
       <span style="width:1px;height:22px;background:var(--border);margin:0 4px;"></span>
       <button onmousedown="event.preventDefault()" onclick="_rfaFmt('bold')" title="Bold" style="${_rfaBtn()}font-weight:900;">B</button>
       <button onmousedown="event.preventDefault()" onclick="_rfaFmt('italic')" title="Italic" style="${_rfaBtn()}font-style:italic;">I</button>
@@ -251,10 +257,7 @@ function _renderRfaForm() {
       <span style="width:1px;height:22px;background:var(--border);margin:0 4px;"></span>
       <button onmousedown="event.preventDefault()" onclick="_rfaFmt('undo')" title="Undo" style="${_rfaBtn()}">↶</button>
       <button onmousedown="event.preventDefault()" onclick="_rfaFmt('redo')" title="Redo" style="${_rfaBtn()}">↷</button>
-      <div style="margin-left:auto;display:flex;gap:6px;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
-        <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveRfa()">💾 محفوظ کریں</button>
-        <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printRfa()">🖨️ پرنٹ کریں</button>
-      </div>
+      <button class="btn btn-secondary btn-sm" onclick="_rfaBackToList()" style="margin-left:auto;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">← واپس فہرست</button>
     </div>
 
     <div style="flex:1;overflow-y:auto;padding:16px;background:var(--bg-tertiary);">
@@ -385,19 +388,19 @@ function _printRfa() {
   const html = `<!DOCTYPE html><html dir="ltr"><head><meta charset="UTF-8"><title> </title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
     <style>
-      @page{ size:A4; margin:11mm; }
+      @page{ size:A4; margin:14mm; }
       *{ box-sizing:border-box; }
       body{ font-family:Arial,'Jameel Noori Nastaleeq','Noto Nastaliq Urdu','Times New Roman',sans-serif;
-            direction:ltr; text-align:left; font-size:10.5px !important; line-height:1.32 !important; color:#111; margin:0; }
+            direction:ltr; text-align:left; font-size:12px !important; line-height:1.5 !important; color:#111; margin:0; }
       table{ border-collapse:collapse; width:100%; margin-bottom:12px !important; }
-      /* inline cell styles ko override (warna print 3 safhe par chala jata tha) */
-      td,th{ border:1px solid #333 !important; padding:2px 6px !important; font-size:10.5px !important; }
+      /* Page 1 اچھی طرح بھرے مگر ایک ہی صفحہ — rows کشادہ · inline cell styles override */
+      td,th{ border:1px solid #333 !important; padding:5px 9px !important; font-size:11.5px !important; }
       .rfa-page{ page-break-after:always; box-shadow:none !important; border-radius:0 !important;
                  width:auto !important; min-height:auto !important; padding:0 !important; margin:0 !important;
-                 font-size:10.5px !important; line-height:1.32 !important; }
+                 font-size:11.5px !important; line-height:1.42 !important; }
       .rfa-page:last-child{ page-break-after:auto; }
       .rfa-page tr{ page-break-inside:avoid; }
-      .rfa-page > div{ margin-top:4px !important; margin-bottom:4px !important; }
+      .rfa-page > div{ margin-top:6px !important; margin-bottom:6px !important; }
     </style></head><body>${doc.innerHTML}</body></html>`;
   if (typeof dioPrint === 'function') dioPrint(html);
   else { const w = window.open('', '_blank'); w.document.write(html); w.document.close(); setTimeout(()=>w.print(), 400); }

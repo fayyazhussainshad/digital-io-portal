@@ -198,9 +198,9 @@ function _renderPendingTab(pending) {
 // ── OFFICERS LIST ─────────────────────────────────────────────
 function _renderOfficersTab(officers, role) {
   return `<div class="card" style="padding:0;overflow:hidden;">
-    <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
       <div style="font-size:13px;font-weight:700;color:var(--accent);">👮 افسران (${officers.length})</div>
-      ${role==='superadmin'?`<button class="btn btn-primary btn-sm" onclick="_adminAddOfficer()">+ افسر شامل کریں</button>`:''}
+      ${role==='superadmin'?`<button class="btn btn-primary btn-sm dio-add-btn" style="order:-1;" onclick="_adminAddOfficer()">+ افسر شامل کریں</button>`:''}
     </div>
     <div style="overflow-x:auto;">
     <table class="data-table" style="width:100%;">
