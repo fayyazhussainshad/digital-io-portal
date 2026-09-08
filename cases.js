@@ -205,12 +205,14 @@ async function renderCases(container,fStatus,fQuery,fStation){
     <input class="search-input" id="case-search" style="flex:1;min-width:180px;" placeholder="🔍 FIR نمبر، مدعی، CNIC، دفعہ..." value="${fQuery}" oninput="clearTimeout(window._csTmr);window._csTmr=setTimeout(()=>renderCases(document.getElementById('page-content'),'',this.value,'${fStation}'),280)" dir="rtl">
     <select class="filter-select" id="case-status-filter" onchange="renderCases(document.getElementById('page-content'),this.value,document.getElementById('case-search').value,'${fStation}')">
       <option value="" ${!fStatus?'selected':''}>تمام صورتحال</option>
-      <option value="under"      ${fStatus==='under'?'selected':''}>زیر تفتیش</option>
-      <option value="complete"   ${fStatus==='complete'?'selected':''}>چالان مکمل</option>
-      <option value="incomplete" ${fStatus==='incomplete'?'selected':''}>چالان نامکمل</option>
-      <option value="challan512" ${fStatus==='challan512'?'selected':''}>چالان 512</option>
-      <option value="untrace"    ${fStatus==='untrace'?'selected':''}>عدم پتہ</option>
-      <option value="cancel"     ${fStatus==='cancel'?'selected':''}>اخراج</option>
+      ${(window.DIO && DIO.caseStatuses)
+        ? DIO.caseStatuses.toOptions(fStatus)
+        : `<option value="under"      ${fStatus==='under'?'selected':''}>زیر تفتیش</option>
+           <option value="complete"   ${fStatus==='complete'?'selected':''}>چالان مکمل</option>
+           <option value="incomplete" ${fStatus==='incomplete'?'selected':''}>چالان نامکمل</option>
+           <option value="challan512" ${fStatus==='challan512'?'selected':''}>چالان 512</option>
+           <option value="untrace"    ${fStatus==='untrace'?'selected':''}>عدم پتہ</option>
+           <option value="cancel"     ${fStatus==='cancel'?'selected':''}>اخراج</option>`}
     </select>
   </div>
   <div class="card" style="padding:0;overflow:hidden;">
