@@ -271,12 +271,57 @@ function showOnboardingAgain() { _showOnboarding(); }
 
 
 async function doLogout() {
-  // Sign out from server, but don't fail if offline
+  // ═══════════════════════════════════════════════════════════════════
+  //  SECURE LOGOUT (per audit "Correct 8: Logout behavior")
+  //  Sirf sign-out kaafi nahi — sensitive local data, cameras/microphones,
+  //  aur previews sab band karo, warna doosra afsar seat par baith kar
+  //  purana ڈیٹا browser Back se dekh sakta hai.
+  // ═══════════════════════════════════════════════════════════════════
+
+  // 1. Server sign-out (offline par fail ho to bhi jari raho)
   try { await supabaseClient.auth.signOut(); } catch(_) {}
+
+  // 2. Camera / microphone / voice recognition stop
+  try {
+    if (window._voiceRecognition && typeof window._voiceRecognition.stop === 'function')
+      window._voiceRecognition.stop();
+    window._voiceRecognition = null; window._voiceActive = false;
+  } catch(_) {}
+  try {
+    // koi bhi live MediaStream (evidence camera, mic) band karo
+    if (window._dioMediaStreams && Array.isArray(window._dioMediaStreams)) {
+      window._dioMediaStreams.forEach(s => { try { s.getTracks().forEach(t=>t.stop()); } catch(_){} });
+      window._dioMediaStreams = [];
+    }
+  } catch(_) {}
+
+  // 3. In-memory state saaf
   currentUser=null; currentOfficer=null;
-  // Clear cached session + any app-lock state so login screen shows
-  try { localStorage.removeItem('dio_officer_cache'); } catch(_) {}
-  try { localStorage.removeItem('digital_io_locked'); } catch(_) {}
+  try { window._workspaceCase = null; window._workspaceEv = null; } catch(_){}
+  try { _misalDocs = {}; _misalCaseId = null; _misalCase = null; } catch(_){}
+  try { _rfaList = []; _rfaCurrent = null; _rfaCaseId = null; } catch(_){}
+
+  // 4. Sensitive local caches — audit list ke mutabiq
+  //    (case-specific ڈیٹا, dashboards, tokens, cases, docs, evidence)
+  const _sensitivePrefixes = [
+    'dio_officer_cache','digital_io_locked','dio_last_backup_source','dio_gdrive_token',
+    'dio_r173_','dio_r173docs_','dio_zimni_','dio_za_','dio_accused_','dio_witness_',
+    'dio_cro_','dio_rfa_','dio_rfalist_','dio_sd_','dio_saved_','dio_cache_',
+    'dio_evidence_','dio_dashboard_','dio_notifications_'
+  ];
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (_sensitivePrefixes.some(p => k === p || k.startsWith(p))) {
+        try { localStorage.removeItem(k); } catch(_) {}
+      }
+    }
+  } catch(_) {}
+  try { sessionStorage.clear(); } catch(_) {}
+  try {
+    if ('caches' in window) caches.keys().then(ks => ks.forEach(k => caches.delete(k))).catch(()=>{});
+  } catch(_) {}
   const ov = document.getElementById('dio-pin-overlay'); if (ov) ov.remove();
   const app = document.getElementById('main-app');
   const login = document.getElementById('login-screen');
@@ -642,11 +687,22 @@ function resetSessionTimer() {
 }
 // ── PIN LOCK SCREEN (Priority 1B) ─────────────────────────────
 let _pinFailedAttempts = 0;
-function initBackupSystem() {
-  const t = localStorage.getItem('dio_gdrive_token');
-  if(t) googleDriveToken=t;
+// ═══════════════════════════════════════════════════════════════════
+//  BACKUP STUBS REMOVED — duplicates the real functions in backup.js.
+//  Pehle yahan initBackupSystem() + triggerBackup() ke stubs the jo
+//  script loading order ki wajah se backup.js ki asal functions ko
+//  override kar dete the (silent backup failure). Ab canonical
+//  implementations sirf backup.js mein rahें gi.
+// ═══════════════════════════════════════════════════════════════════
+// Ek chhoti utility yahां rakhi ja rahi hai jo aslah google-drive token
+// warm karti thi — is ke bina token load nahi hoga:
+function _authWarmDriveToken() {
+  try {
+    const t = localStorage.getItem('dio_gdrive_token');
+    if (t) googleDriveToken = t;
+  } catch (_) {}
 }
-function triggerBackup(src) { localStorage.setItem('dio_last_backup_source',src||'auto'); }
+_authWarmDriveToken();
 
 // (listeners kept but harmless — they just clear timers)
 document.addEventListener('click', resetSessionTimer);

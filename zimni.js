@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_VER = 'zimni v22 — IO sign LEFT via text-align-last (FIXED)';
+const ZIMNI_VER = 'zimni v21 — IO sign LEFT (inline) + serial absolute-position';
 window.ZIMNI_VER = ZIMNI_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -132,10 +132,13 @@ async function _loadZimni() {
   try {
     // 'serial_no' یا 'case_id' کالم نہ ہو تو query خود 400 دیتی ہے —
     // اسی لیے پہلے ترتیب کے ساتھ، پھر بغیر ترتیب، پھر بغیر چھانٹی۔
+    // ═══ SECURITY: unscoped fallback (.limit(50) without case_id) REMOVED ═══
+    // Pehle agar 'serial_no' order query fail hoti to code bina case_id ke
+    // 50 rows le aata tha — jo doosre مقدمات ka data leak kar sakta tha.
+    // Ab sirf case-scoped queries — error par safai se local cache par jao.
     let r = await supabaseClient.from('zimni_reports').select('*')
       .eq('case_id', _zimniCaseId).order('serial_no', { ascending: true });
     if (r.error) r = await supabaseClient.from('zimni_reports').select('*').eq('case_id', _zimniCaseId);
-    if (r.error) r = await supabaseClient.from('zimni_reports').select('*').limit(50);
     if (r.error) throw r.error;
     rows = r.data || [];
   } catch (e) {
@@ -938,10 +941,10 @@ function _zimniEnsureClosing() {
   const wrap = document.createElement('div');
   wrap.innerHTML =
     '<div class="zf-close" data-k="close">رپورٹ ضمنی مرتب ہو کرارسال خدمت ہے</div>' +
-    '<div class="zf-signblk" style="text-align:left !important;text-align-last:left !important;">' +
+    '<div class="zf-signblk" style="text-align:left !important;">' +
       '<div class="zf-gap"><br></div><div class="zf-gap"><br></div>' +
-      '<div class="zf-sign" data-k="io_sign" style="text-align:left !important;text-align-last:left !important;display:block;text-decoration:none;">' + E(io) + '</div>' +
-      '<div class="zf-signdate" data-k="io_date" style="text-align:left !important;text-align-last:left !important;display:block;">' + E(_zimniToday()) + '</div>' +
+      '<div class="zf-sign" data-k="io_sign" style="text-align:left !important;display:block;text-decoration:none;">' + E(io) + '</div>' +
+      '<div class="zf-signdate" data-k="io_date" style="text-align:left !important;display:block;">' + E(_zimniToday()) + '</div>' +
     '</div>';
   while (wrap.firstChild) cell.appendChild(wrap.firstChild);
 }
@@ -1712,11 +1715,11 @@ function _zimniFormCSS() {
     text-align:center; text-align-last:center; outline:none; }
   /* دستخط کا خانہ — دستاویز کے اختتام پر IO (تفتیشی افسر/subscriber) کا نام
      اور تاریخ۔ چالان کی طرح: بائیں سیدھ (LEFT)، bold، مگر انڈر لائن نہیں۔ */
-  #ch173-doc .zf-signblk{ font-size:14pt; line-height:1.5; text-align:left !important; text-align-last:left !important; }
+  #ch173-doc .zf-signblk{ font-size:14pt; line-height:1.5; text-align:left !important; }
   #ch173-doc .zf-gap{ min-height:1.5em; }
   #ch173-doc .zf-sign{ font-weight:bold; text-decoration:none !important;
-    outline:none; text-align:left !important; text-align-last:left !important; display:block; }
-  #ch173-doc .zf-signdate{ outline:none; text-align:left !important; text-align-last:left !important; display:block; }
+    outline:none; text-align:left !important; display:block; }
+  #ch173-doc .zf-signdate{ outline:none; text-align:left !important; display:block; }
   #ch173-doc .zf-body{ margin-top:8px; font-size:14pt; line-height:1.5;
     text-align:justify; text-align-last:right; outline:none; white-space:pre-wrap; }
 
@@ -1869,11 +1872,11 @@ function _zimniDefaultBody(o, c) {
           <div class="zf-body" data-mic="true" data-k="halaat">جناب عالیٰ! بحوالہ رپورٹ </div>
           <!-- اختتام — تحریر جہاں بھی ختم ہو (کسی بھی صفحے پر) اس کے نیچے آتا ہے -->
           <div class="zf-close" data-k="close">رپورٹ ضمنی مرتب ہو کرارسال خدمت ہے</div>
-          <div class="zf-signblk" style="text-align:left !important;text-align-last:left !important;">
+          <div class="zf-signblk" style="text-align:left !important;">
             <div class="zf-gap"><br></div>
             <div class="zf-gap"><br></div>
-            <div class="zf-sign" data-k="io_sign" style="text-align:left !important;text-align-last:left !important;display:block;text-decoration:none;">${ioE}</div>
-            <div class="zf-signdate" data-k="io_date" style="text-align:left !important;text-align-last:left !important;display:block;">${E(_zimniToday())}</div>
+            <div class="zf-sign" data-k="io_sign" style="text-align:left !important;display:block;text-decoration:none;">${ioE}</div>
+            <div class="zf-signdate" data-k="io_date" style="text-align:left !important;display:block;">${E(_zimniToday())}</div>
           </div>
         </td>
       </tr>
@@ -2660,10 +2663,10 @@ async function _loadZimniA() {
 
   let rows = null;
   try {
+    // ═══ SECURITY: unscoped fallback (.limit(50) bina case_id) REMOVED — data leak ka خطرہ ═══
     let r = await supabaseClient.from('zimni_androoni_reports').select('*')
       .eq('case_id', _zaCaseId).order('serial_no', { ascending: true });
     if (r.error) r = await supabaseClient.from('zimni_androoni_reports').select('*').eq('case_id', _zaCaseId);
-    if (r.error) r = await supabaseClient.from('zimni_androoni_reports').select('*').limit(50);
     if (r.error) throw r.error;
     rows = r.data || [];
   } catch (e) {
