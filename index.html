@@ -1414,6 +1414,8 @@ window.addEventListener('beforeunload', function (e) {
 <script src="app-core.js"></script>
   <script src="data-api.js"></script>
   <script src="auth.js"></script>
+<!-- backup.js EARLY (Phase 1 cleanup ke baad): initBackupSystem / triggerBackup canonical yahin hain — app-core ke callers se pehle available honi zaroori hain -->
+<script src="backup.js"></script>
 <script src="dashboard.js"></script>
 <script src="toolbar.js"></script>
 <script src="misal-docs.js"></script>
@@ -1450,7 +1452,7 @@ window.addEventListener('beforeunload', function (e) {
 <script src="notifications.js"></script>
 <script src="reminders.js"></script>
 <script src="performance.js"></script>
-<script src="backup.js"></script>
+<!-- backup.js pehle hi auth.js ke baad load ho chuki (Phase 1 cleanup) -->
 <script src="settings.js"></script>
 <script src="incident.js"></script>
 <script src="court.js"></script>

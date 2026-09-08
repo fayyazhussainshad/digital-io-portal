@@ -856,7 +856,12 @@ async function initApp() {
   updateConnectionStatus(navigator.onLine);
   await updateBadges();
   startClock();
-  initBackupSystem();
+  // ═══ DEFENSIVE (Phase 1 cleanup ke baad zarur) ═══
+  // Pehle auth.js mein stub tha jo agar backup.js load na hui ho to bhi
+  // crash nahi hone deta tha. Ab stub hata diya — is liye yahan typeof
+  // guard laga di taake stale/late load par bhi safe rahें.
+  try { if (typeof initBackupSystem === 'function') initBackupSystem(); }
+  catch(e) { console.warn('[app-core] initBackupSystem skipped:', e && e.message); }
   setupRealtimeSync(async(table)=>{
     await updateBadges();
     const pt = document.getElementById('topbar-title')?.textContent;
@@ -868,7 +873,7 @@ async function initApp() {
   // "جہاں بند ہوا وہیں سے کھلے" — resume.js آخری صفحہ یاد رکھتی ہے
   showPage((typeof _dioResumePage === 'function' ? _dioResumePage() : 'dashboard'),
            document.querySelector('.nav-item'));
-  setTimeout(()=>triggerBackup('app_init'), 3000);
+  setTimeout(function(){ try { if (typeof triggerBackup === 'function') triggerBackup('app_init'); } catch(_) {} }, 3000);
   setTimeout(_initNotifications, 2000);
   setTimeout(_checkDueReminders, 5000);
   setInterval(_checkDueReminders, 30*60*1000);
