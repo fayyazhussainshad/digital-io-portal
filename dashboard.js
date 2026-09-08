@@ -25,18 +25,29 @@ async function _buildDash() {
 
   const today = new Date().toISOString().split('T')[0];
 
-  // Status counts
-  const total       = cases.length;
-  const complete    = cases.filter(c=>c.status==='complete').length;
-  const incomplete  = cases.filter(c=>c.status==='incomplete').length;
-  const cancel      = cases.filter(c=>c.status==='cancel').length;
-  const challan512  = cases.filter(c=>c.status==='challan512').length;
-  const untrace     = cases.filter(c=>c.status==='untrace').length;
-  const under       = cases.filter(c=>c.status==='under').length;
+  // Status counts — canonical registry (Phase 2D). Naye status add hone par
+  // yahan tبdiلی nahi karni pade gi — DIO.caseStatuses.codes() se aa jayenge.
+  const total = cases.length;
+  const statusCounts = {};
+  if (window.DIO && DIO.caseStatuses) {
+    DIO.caseStatuses.codes().forEach(code => {
+      statusCounts[code] = cases.filter(c => c.status === code).length;
+    });
+  } else {
+    // Fallback (agar dio-statuses.js load na ho)
+    ['under','incomplete','challan512','complete','untrace','cancel'].forEach(code => {
+      statusCounts[code] = cases.filter(c => c.status === code).length;
+    });
+  }
+  // Backward-compat locals (existing code inhें use kar sakta hai)
+  const complete   = statusCounts.complete   || 0;
+  const incomplete = statusCounts.incomplete || 0;
+  const cancel     = statusCounts.cancel     || 0;
+  const challan512 = statusCounts.challan512 || 0;
+  const untrace    = statusCounts.untrace    || 0;
+  const under      = statusCounts.under      || 0;
   const pendRem     = reminders.filter(r=>!r.is_done);
   const todayCases  = cases.filter(c=>{ const d=_pd(c.fir_date); return d&&d.startsWith(today); });
-
-  const statusCounts = { complete, incomplete, cancel, challan512, untrace, under };
   const monthly = _monthlyTrend(cases);
 
   root.innerHTML = `

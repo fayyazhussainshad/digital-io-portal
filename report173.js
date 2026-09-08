@@ -995,7 +995,8 @@ async function _saveR173() {
     _r173ShowList = true;
     setTimeout(() => { try { _renderR173List(); } catch(_) {} }, 250);
 
-    // P7: auto-update case status based on report type
+    // P7: auto-update case status based on report type — Phase 2D canonical
+    // registry (fallback local map agar dio-statuses.js load na ho)
     const statusMap = {
       mukammal: 'complete',
       namukammal: 'incomplete',
@@ -1005,7 +1006,8 @@ async function _saveR173() {
       adampata: 'untrace',
       tatima_challan: 'complete'
     };
-    const newStatus = statusMap[_r173Type];
+    const newStatus = (window.DIO && DIO.caseStatuses && DIO.caseStatuses.fromR173Type(_r173Type))
+                      || statusMap[_r173Type];
     if (newStatus) {
       try {
         await supabaseClient.from('cases').update({ status: newStatus }).eq('id', _r173CaseId);
