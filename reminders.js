@@ -6,9 +6,11 @@
 registerPage('reminders', renderReminders);
 
 async function renderReminders(container) {
-  container.innerHTML = `<div style="max-width:800px;margin:0 auto;" id="rem-root">
-    <div style="text-align:center;padding:20px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>
-  </div>`;
+  // Phase 3C — DIO.states.loading()
+  const _loadingHtml = (window.DIO && DIO.states)
+    ? DIO.states.loading('یاددہانیاں لوڈ ہو رہی ہیں')
+    : `<div style="text-align:center;padding:20px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>`;
+  container.innerHTML = `<div style="max-width:800px;margin:0 auto;" id="rem-root">${_loadingHtml}</div>`;
   await _buildReminders();
 }
 

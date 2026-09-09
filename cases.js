@@ -231,7 +231,14 @@ async function renderCases(container,fStatus,fQuery,fStation){
           <th style="text-align:center;">اقدامات</th>
         </tr></thead>
         <tbody>
-          ${cases.length ? cases.map((c,i)=>renderCaseRow(c,i+1)).join('') : `<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text-muted);">کوئی مقدمہ نہیں</td></tr>`}
+          ${cases.length ? cases.map((c,i)=>renderCaseRow(c,i+1)).join('')
+            : `<tr><td colspan="10" style="padding:0;">${
+                (window.DIO && DIO.states)
+                  ? DIO.states.empty('📁', 'کوئی مقدمہ نہیں', fQuery
+                      ? 'اس تلاش سے کوئی مقدمہ نہیں ملا — لفظ بدل کر کوشش کریں'
+                      : 'نیا مقدمہ درج کرنے کے لیے اوپر "+ نیا اندراج" پر دبائیں')
+                  : `<div style="text-align:center;padding:30px;color:var(--text-muted);">کوئی مقدمہ نہیں</div>`
+              }</td></tr>`}
         </tbody>
       </table>
     </div>

@@ -6,9 +6,11 @@
 registerPage('dashboard', renderDashboard);
 
 async function renderDashboard(container) {
-  container.innerHTML = `<div id="dash-root">
-    <div style="text-align:center;padding:32px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq',serif;">⏳ لوڈ ہو رہا ہے...</div>
-  </div>`;
+  // Phase 3C — DIO.states.loading() with fallback
+  const _loadingHtml = (window.DIO && DIO.states)
+    ? DIO.states.loading('ڈیش بورڈ لوڈ ہو رہا ہے')
+    : `<div style="text-align:center;padding:32px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq',serif;">⏳ لوڈ ہو رہا ہے...</div>`;
+  container.innerHTML = `<div id="dash-root">${_loadingHtml}</div>`;
   await _buildDash();
 }
 

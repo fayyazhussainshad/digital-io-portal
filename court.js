@@ -6,9 +6,11 @@
 registerPage('court', renderCourt);
 
 async function renderCourt(container) {
-  container.innerHTML = `<div id="court-root" style="max-width:900px;margin:0 auto;">
-    <div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ Loading...</div>
-  </div>`;
+  // Phase 3C — DIO.states.loading() (was English "Loading...")
+  const _loadingHtml = (window.DIO && DIO.states)
+    ? DIO.states.loading('عدالتی پیشیاں لوڈ ہو رہی ہیں')
+    : `<div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>`;
+  container.innerHTML = `<div id="court-root" style="max-width:900px;margin:0 auto;">${_loadingHtml}</div>`;
   await _buildCourt();
 }
 
