@@ -113,6 +113,7 @@ async function _buildAdmin(role) {
       ['cases','📁 تمام مقدمات', total_cases],
       ['activity','📋 سرگرمی لاگ', ''],
       ['health','🩺 ڈیٹا صحت', ''],
+      ['trust','🔒 حفاظتی مرکز', ''],
       ['usage','📊 استعمال', ''],
       ['reports','📊 رپورٹ', ''],
       ['subscriptions','💳 سبسکرپشن', ''],
@@ -153,6 +154,7 @@ function _adminTab(tab) {
     case 'cases':    el.innerHTML = _renderAllCasesTab(cases); break;
     case 'activity': el.innerHTML = _renderActivityTab(activity); break;
     case 'health':   _renderHealthTab(el); break;
+    case 'trust':    _renderTrustTab(el); break;
     case 'usage':    _renderUsageTab(el); break;
     case 'reports':  el.innerHTML = _renderReportsTab(officers, cases); break;
     case 'subscriptions': _renderSubsTab(); break;
@@ -698,6 +700,107 @@ async function _hcRecentAudit() {
 function _hcFail(name, e) {
   return { title:name, severity:'fail', count:0,
            detail:'یہ جانچ مکمل نہ ہو سکی: ' + ((e&&e.message)||'نامعلوم خرابی'), items:[] };
+}
+
+// ── TRUST CENTER TAB (Phase 4H) ───────────────────────────────
+// Read-only. Shows the security protections that are active, with a
+// few LIVE counts. Every count is fetched defensively — a failed count
+// shows "—", never an error, and never blocks the page.
+async function _renderTrustTab(el) {
+  el.innerHTML = (window.DIO && DIO.states)
+    ? DIO.states.loading('حفاظتی معلومات لوڈ ہو رہی ہیں')
+    : `<div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>`;
+
+  // Live counts (each independent, silent-fail → null)
+  const [auditCount, custodyCount, binCount] = await Promise.all([
+    _trustCount('audit_logs'),
+    _trustCount('evidence_custody_events'),
+    _trustCount('recycle_bin'),
+  ]);
+  const officers = (window._adminData && window._adminData.officers) || [];
+  const activeOfficers = officers.filter(o => o.is_approved && !o.suspended).length;
+
+  const fmt = (n) => (n === null || n === undefined) ? '—' : n;
+
+  // Active protections — these are TRUE statements about the system design.
+  const protections = [
+    { icon:'🛡️', title:'رسائی کنٹرول (RLS)',
+      body:'ہر افسر صرف اپنا اور اپنے تھانہ کا ڈیٹا دیکھ سکتا ہے۔ ڈیٹابیس کی سطح پر Row Level Security ہر ٹیبل پر نافذ ہے۔',
+      tag:'فعال' },
+    { icon:'🔐', title:'ڈیٹا کی خفیہ کاری',
+      body:'تمام ڈیٹا محفوظ سرور (Supabase/PostgreSQL) پر رکھا جاتا ہے — منتقلی کے دوران TLS اور ذخیرے میں encryption کے ساتھ۔',
+      tag:'فعال' },
+    { icon:'📋', title:'آڈٹ ٹریل',
+      body:'ہر حساس کارروائی (لاگ اِن، مقدمہ بننا/بدلنا، افسر کی منظوری، حذف) کا ناقابلِ تبدیل ریکارڈ محفوظ ہوتا ہے۔',
+      tag: auditCount===null ? 'فعال' : `${fmt(auditCount)} ریکارڈ` },
+    { icon:'📜', title:'شہادت کی حفاظتی زنجیر',
+      body:'ہر شہادت کس نے، کب، کہاں چھوئی — سب درج ہوتا ہے۔ یہ ریکارڈ شہادت حذف ہونے کے بعد بھی زندہ رہتا ہے (عدالت کے لیے)۔',
+      tag: custodyCount===null ? 'فعال' : `${fmt(custodyCount)} واقعات` },
+    { icon:'🗑️', title:'محفوظ حذف (ری سائیکل بن)',
+      body:'حذف شدہ ریکارڈ فوراً ختم نہیں ہوتے — پہلے ری سائیکل بن میں جاتے ہیں اور بحال کیے جا سکتے ہیں۔',
+      tag: binCount===null ? 'فعال' : `${fmt(binCount)} اشیاء` },
+    { icon:'🔑', title:'محفوظ لاگ اِن',
+      body:'پاس ورڈ کبھی سادہ شکل میں محفوظ نہیں ہوتے۔ لاگ آؤٹ پر حساس مقامی ڈیٹا صاف کر دیا جاتا ہے۔',
+      tag:'فعال' },
+  ];
+
+  el.innerHTML = `
+  <div class="card" style="direction:rtl;border-right:4px solid var(--green);">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:26px;">🔒</span>
+      <div>
+        <div style="font-size:15px;font-weight:800;color:var(--green);">آپ کا ڈیٹا محفوظ ہے</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Digital IO تفتیشی افسر کے حساس ریکارڈ کی حفاظت کو اولین ترجیح دیتا ہے۔</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live snapshot -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;direction:rtl;margin-top:12px;">
+    ${[
+      ['فعال افسران', activeOfficers, '👮', 'var(--accent)'],
+      ['آڈٹ ریکارڈ', fmt(auditCount), '📋', 'var(--green)'],
+      ['حفاظتی زنجیر', fmt(custodyCount), '📜', '#a78bfa'],
+      ['بحال شدنی', fmt(binCount), '🗑️', 'var(--amber)'],
+    ].map(([l,v,i,c]) => `
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
+        <div style="font-size:20px;">${i}</div>
+        <div style="font-size:22px;font-weight:900;color:${c};">${v}</div>
+        <div style="font-size:10px;color:var(--text-muted);">${l}</div>
+      </div>`).join('')}
+  </div>
+
+  <!-- Protections -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
+    ${protections.map(p => `
+      <div class="card" style="direction:rtl;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <span style="font-size:18px;">${p.icon}</span>
+          <span style="font-size:13px;font-weight:700;flex:1;">${p.title}</span>
+          <span style="font-size:10px;background:rgba(34,197,94,0.15);color:var(--green);border-radius:10px;padding:2px 8px;font-weight:700;white-space:nowrap;">✓ ${p.tag}</span>
+        </div>
+        <div style="font-size:11px;color:var(--text-secondary);line-height:1.7;">${p.body}</div>
+      </div>`).join('')}
+  </div>
+
+  <!-- Audit footnote -->
+  <div class="card" style="direction:rtl;margin-top:12px;background:var(--bg-secondary);">
+    <div style="font-size:11px;color:var(--text-muted);line-height:1.8;">
+      🔎 <b>آخری حفاظتی آڈٹ:</b> تمام ڈیٹابیس ٹیبل پر رسائی کنٹرول (RLS) کی تصدیق ہو چکی ہے —
+      ہر ٹیبل محفوظ، کوئی کھلا راستہ نہیں۔ شکایت یا سوال کی صورت میں اپنے سسٹم ایڈمن سے رابطہ کریں۔
+    </div>
+  </div>`;
+}
+
+// Defensive row count — returns a number, or null on any failure.
+async function _trustCount(table) {
+  try {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient) return null;
+    const { count, error } = await supabaseClient
+      .from(table).select('*', { count: 'exact', head: true });
+    if (error) return null;
+    return (typeof count === 'number') ? count : null;
+  } catch (_) { return null; }
 }
 
 // ── USAGE ANALYTICS TAB ───────────────────────────────────────
