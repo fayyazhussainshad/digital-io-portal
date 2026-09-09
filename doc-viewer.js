@@ -87,7 +87,10 @@ function _dioEnterDocView() {
           style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 16px;
                  font-size:13px;font-weight:700;cursor:pointer;
                  font-family:'Jameel Noori Nastaleeq',serif;">🖨️ پرنٹ</button>
-        
+        <button onclick="_dioRequestApproval()" title="منظوری کے لیے بھیجیں"
+          style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--amber,#f59e0b);
+                 border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;
+                 font-family:'Jameel Noori Nastaleeq',serif;">✅ منظوری</button>
       </div>
     </div>
     <div id="dio-dv-body" style="flex:1;min-height:0;overflow:auto;"></div>`;
@@ -225,6 +228,62 @@ function _dioSaveCurrent() {
 window._dioAddDocPicker = _dioAddDocPicker;
 window._dioPickDoc      = _dioPickDoc;
 window._dioSaveCurrent  = _dioSaveCurrent;
+
+// ── DOCUMENT APPROVAL (Phase 4H) — additive; save/print ko nahi chhoota ──
+async function _dioRequestApproval() {
+  if (!(window.DIO && DIO.approvals)) {
+    if (typeof showToast === 'function') showToast('ℹ️ منظوری کی سہولت دستیاب نہیں', 'info');
+    return;
+  }
+  const id = _dioActiveTab;
+  if (!id) { if (typeof showToast === 'function') showToast('ℹ️ پہلے کوئی دستاویز کھولیں', 'info'); return; }
+  const label = (typeof _dioDocName === 'function') ? _dioDocName(id) : id;
+  const caseId = (typeof _misalCase !== 'undefined' && _misalCase) ? _misalCase.id : null;
+  const fir = (typeof _misalCase !== 'undefined' && _misalCase) ? _misalCase.fir_number : null;
+
+  // Pehle maujooda status dikhayen (agar koi request pehle se ho)
+  let existing = null;
+  try { existing = await DIO.approvals.latestFor(id); } catch (_) {}
+  const existingLine = existing
+    ? `<div style="margin-bottom:10px;font-size:12px;direction:rtl;">موجودہ حالت: ${DIO.approvals.badge(existing.status)}${existing.decision_note ? ` — <span style="color:var(--text-muted);">${_dioEsc(existing.decision_note)}</span>` : ''}</div>`
+    : '';
+
+  if (typeof openModal !== 'function') {
+    // Fallback: seedha request bhej den
+    const r = await DIO.approvals.request(id, { label, case_id: caseId, fir_number: fir });
+    if (typeof showToast === 'function') showToast(r ? '✅ منظوری کے لیے بھیج دیا گیا' : '❌ نہیں بھیجا جا سکا', r ? 'success' : 'error');
+    return;
+  }
+
+  openModal('✅ منظوری کے لیے بھیجیں',
+    `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
+       ${existingLine}
+       <div style="font-size:13px;color:var(--text-secondary);line-height:1.9;">
+         یہ دستاویز (<b>${_dioEsc(label)}</b>) SHO / سینئر افسر کو منظوری کے لیے بھیجی جائے گی۔
+         منظوری کے بعد آپ کو اطلاع مل جائے گی۔
+       </div>
+     </div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+     <button class="btn btn-primary" onclick="_dioDoRequestApproval()">✅ بھیجیں</button>`);
+  // Context stash for the confirm handler
+  window._dioApprovalCtx = { id, label, caseId, fir };
+}
+
+async function _dioDoRequestApproval() {
+  const ctx = window._dioApprovalCtx || {};
+  if (typeof closeModal === 'function') closeModal();
+  if (!(window.DIO && DIO.approvals) || !ctx.id) return;
+  const r = await DIO.approvals.request(ctx.id, { label: ctx.label, case_id: ctx.caseId, fir_number: ctx.fir });
+  if (typeof showToast === 'function') showToast(r ? '✅ منظوری کے لیے بھیج دیا گیا' : '❌ نہیں بھیجا جا سکا', r ? 'success' : 'error');
+}
+
+function _dioEsc(s) {
+  s = (s == null) ? '' : String(s);
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+window._dioRequestApproval   = _dioRequestApproval;
+window._dioDoRequestApproval = _dioDoRequestApproval;
 
 // ── Tab kholo (ya pehle se khuli ho to us par jao) ──
 

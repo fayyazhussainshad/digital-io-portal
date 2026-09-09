@@ -112,6 +112,7 @@ async function _buildAdmin(role) {
       ['officers','👮 افسران', officers.length],
       ['cases','📁 تمام مقدمات', total_cases],
       ['activity','📋 سرگرمی لاگ', ''],
+      ['approvals','✅ منظوریاں', ''],
       ['health','🩺 ڈیٹا صحت', ''],
       ['trust','🔒 حفاظتی مرکز', ''],
       ['usage','📊 استعمال', ''],
@@ -153,6 +154,7 @@ function _adminTab(tab) {
     case 'officers': el.innerHTML = _renderOfficersTab(officers, role); break;
     case 'cases':    el.innerHTML = _renderAllCasesTab(cases); break;
     case 'activity': el.innerHTML = _renderActivityTab(activity); break;
+    case 'approvals': _renderApprovalsTab(el); break;
     case 'health':   _renderHealthTab(el); break;
     case 'trust':    _renderTrustTab(el); break;
     case 'usage':    _renderUsageTab(el); break;
@@ -700,6 +702,77 @@ async function _hcRecentAudit() {
 function _hcFail(name, e) {
   return { title:name, severity:'fail', count:0,
            detail:'یہ جانچ مکمل نہ ہو سکی: ' + ((e&&e.message)||'نامعلوم خرابی'), items:[] };
+}
+
+// ── DOCUMENT APPROVALS TAB (Phase 4H) ─────────────────────────
+// SHO / admin apne thana ke pending document approvals dekhta hai
+// aur approve / reject karta hai. Read + decide; koi delete nahi.
+async function _renderApprovalsTab(el) {
+  el.innerHTML = (window.DIO && DIO.states)
+    ? DIO.states.loading('منظوری کی درخواستیں لوڈ ہو رہی ہیں')
+    : `<div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>`;
+
+  if (!(window.DIO && DIO.approvals)) {
+    el.innerHTML = `<div class="card" style="padding:24px;text-align:center;color:var(--text-muted);direction:rtl;">
+      منظوری کی سہولت دستیاب نہیں (dio-approvals.js لوڈ نہیں ہوا)</div>`;
+    return;
+  }
+
+  const rows = await DIO.approvals.pending();
+  const fmt = (d) => (window.DIO && DIO.date) ? DIO.date.datetime(d) : (d || '');
+
+  if (!rows.length) {
+    el.innerHTML = `<div class="card" style="text-align:center;padding:40px;color:var(--text-muted);direction:rtl;">
+      <div style="font-size:44px;margin-bottom:10px;">✅</div>
+      <div style="font-weight:600;">کوئی زیرِ منظوری دستاویز نہیں</div>
+      <div style="font-size:11px;margin-top:6px;">جب کوئی افسر دستاویز بھیجے گا تو یہاں نظر آئے گی</div>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = `
+  <div class="card" style="direction:rtl;">
+    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;">
+      ✅ زیرِ منظوری دستاویزات (${rows.length})
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      ${rows.map(r => `
+        <div class="card" style="direction:rtl;border-right:3px solid var(--amber,#f59e0b);">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span style="font-size:13px;font-weight:800;">${_hgAdminEsc(r.document_label || r.document_key)}</span>
+            ${r.fir_number ? `<span style="font-size:11px;color:var(--accent);font-family:var(--font-mono,monospace);">FIR ${_hgAdminEsc(r.fir_number)}</span>` : ''}
+            <span style="margin-inline-start:auto;font-size:10px;color:var(--text-faint);">${fmt(r.requested_at)}</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">
+            بھیجنے والا: ${_hgAdminEsc(r.requested_by_name || '—')}
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button class="btn btn-primary btn-sm" onclick="_adminDecideDoc('${r.id}','approved')" style="font-family:'Jameel Noori Nastaleeq',serif;">✅ منظور</button>
+            <button class="btn btn-secondary btn-sm" onclick="_adminDecideDoc('${r.id}','rejected')" style="font-family:'Jameel Noori Nastaleeq',serif;">❌ مسترد</button>
+          </div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+async function _adminDecideDoc(id, status) {
+  if (!(window.DIO && DIO.approvals)) return;
+  // Reject par wajah poochein (optional)
+  let note = null;
+  if (status === 'rejected' && typeof prompt === 'function') {
+    note = prompt('مسترد کرنے کی وجہ (اختیاری):') || null;
+  }
+  const ok = await DIO.approvals.decide(id, status, note);
+  if (typeof showToast === 'function') {
+    showToast(ok ? (status === 'approved' ? '✅ منظور کر دیا' : '❌ مسترد کر دیا')
+                 : '⚠️ فیصلہ محفوظ نہیں ہوا — شاید آپ کو اجازت نہیں (صرف SHO/ایڈمن)', ok ? 'success' : 'error', ok ? 3000 : 6000);
+  }
+  if (ok) { const el = document.getElementById('admin-tab-content'); if (el) _renderApprovalsTab(el); }
+}
+
+function _hgAdminEsc(s) {
+  s = (s == null) ? '' : String(s);
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ── TRUST CENTER TAB (Phase 4H) ───────────────────────────────
