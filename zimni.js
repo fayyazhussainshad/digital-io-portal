@@ -935,7 +935,17 @@ function _zimniEnsureClosing() {
   const doc = _zimniDoc();
   if (!doc) return;
   const cell = doc.querySelector('td.zf-c-body');
-  if (!cell || cell.querySelector('.zf-close')) return;
+  if (!cell) return;
+  // BUG FIX: purani محفوظ زمنیوں mein تفتیشی ka naam kabhi RIGHT-align reh jata tha.
+  // Rule: signature hamesha LEFT border ke sath. Har render par force LEFT karo —
+  // ye editor mein foran theek kar deta hai, aur save par HTML mein bhi persist ho
+  // jata hai (phir print bhi LEFT). Purani inline right-align ko override karta hai.
+  try {
+    cell.querySelectorAll('.zf-signblk, .zf-sign, .zf-signdate').forEach(el => {
+      el.style.setProperty('text-align', 'left', 'important');
+    });
+  } catch (_) {}
+  if (cell.querySelector('.zf-close')) return;   // closing pehle se maujood — sirf normalize kiya
   const E = (v) => (typeof esc === 'function') ? esc(v == null ? '' : String(v)) : String(v || '');
   const io = (typeof getIOSignLine === 'function') ? getIOSignLine() : '';
   const wrap = document.createElement('div');
