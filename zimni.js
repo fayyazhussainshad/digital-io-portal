@@ -1802,7 +1802,7 @@ function _zimniDefaultBody(o, c) {
   const firDate  = E(D(c.fir_date || ''));
   const wDate    = E(D(c.occurrence_date || ''));                                     // وقوعہ کی تاریخ
   const wPlace   = E(c.place_of_occurrence || c.occurrence_place || c.jaye_waqoia || ''); // مقام وقوعہ
-  const behad    = E(c.behad || c.distance || c.samt || '');
+  const behad    = E(c.behad || c.occurrence_place || c.distance || c.samt || ''); // بحد — نئے فارم کی "بحد" فیلڈ (occurrence_place) سے
   const compl    = E(c.complainant_name || c.complainant || '');
   const serial   = E(z.serial_no || '');
   const ioE      = E(io);
@@ -2387,7 +2387,71 @@ function _zimniPrintHTML(inner) {
         }
         function alignAll(){ [].slice.call(document.querySelectorAll('.zf-nums, .zfa-nums')).forEach(alignOne); }
 
-        function go(){ try{ chain(); }catch(e){} alignAll(); }
+        // ═══ PER-PARAGRAPH numbering (page-break safe) ═══
+        // Masla: absolute number serial-khane mein td se relative tha — 2-page par
+        // paragraph page-break se neeche khiskta tha magar number wahin reh jata tha.
+        // Hal: har number ki NAQAL us ke PARAGRAPH ke ANDAR rakho (absolute, serial
+        // column ke x-range par runtime-measured). Number ab paragraph ka child hai,
+        // is liye page break par paragraph ke SAATH jata hai. Original serial-number
+        // ko chhupa dete hain (jagah reserve rehti hai). ALL-OR-NOTHING: koi unit
+        // mismatch ho to false return, aur purana alignAll() chal jata hai (safe).
+        function parasOf(body){
+          return [].slice.call(body.children).filter(function(el){
+            return (el.tagName==='DIV'||el.tagName==='P') &&
+              (el.textContent||'').replace(/[\\s\\u00A0]/g,'').length; });
+        }
+        function alignByParent(){
+          var doc=document.getElementById('ch173-doc'); if(!doc) return false;
+          var units=[];
+          var bB=doc.querySelector('td.zf-c-body .zf-body');
+          var bS=doc.querySelector('td.zf-c-serial');
+          if(bB&&bS){ var bN=bS.querySelector('.zf-nums'); if(bN) units.push({body:bB,serialTd:bS,nums:bN,cls:'zf-pnum'}); }
+          [].slice.call(doc.querySelectorAll('.zf-androoni')).forEach(function(sh){
+            var b=sh.querySelector('.zfa-body'); var st=sh.querySelector('td.zfa-c-serial');
+            var n=st?st.querySelector('.zfa-nums'):null;
+            if(b&&st&&n) units.push({body:b,serialTd:st,nums:n,cls:'zfa-pnum'});
+          });
+          if(!units.length) return false;
+          // ── validate: har unit mein paragraph 1..N number ke barabar/kam hon ──
+          // aur serial column ki measurement sahih ho (warna number ghayab ho sakta) ──
+          for(var u=0;u<units.length;u++){
+            units[u].paras=parasOf(units[u].body);
+            units[u].numEls=[].slice.call(units[u].nums.children);
+            if(!units[u].paras.length || units[u].paras.length>units[u].numEls.length) return false;
+            var srW=units[u].serialTd.getBoundingClientRect().width;
+            if(!(srW>4 && srW<400)) return false;        // measurement mashkook — fallback
+          }
+          // ── apply ──
+          for(var v=0;v<units.length;v++){
+            var U=units[v];
+            for(var i=0;i<U.paras.length;i++){
+              var src=U.numEls[i]; if(!src) continue;
+              src.style.visibility='hidden';               // original reserves space
+              var p=U.paras[i];
+              try{ if(getComputedStyle(p).position==='static') p.style.position='relative'; }catch(e){}
+              var sr=U.serialTd.getBoundingClientRect();
+              var pr=p.getBoundingClientRect();
+              var cl=document.createElement('div');
+              cl.className=U.cls;
+              cl.textContent=src.textContent;
+              cl.setAttribute('contenteditable','false');
+              cl.style.cssText='position:absolute;top:0;left:'+Math.round(sr.left-pr.left)+
+                'px;width:'+Math.round(sr.width)+'px;text-align:center;pointer-events:none;';
+              p.appendChild(cl);
+            }
+          }
+          return true;
+        }
+        function go(){
+          // پچھلی نقلیں ہٹاؤ + اصل نمبر دوبارہ ظاہر (idempotent)
+          try{ [].slice.call(document.querySelectorAll('.zf-pnum,.zfa-pnum')).forEach(function(e){ if(e.parentNode)e.parentNode.removeChild(e); }); }catch(e){}
+          try{ [].slice.call(document.querySelectorAll('.zf-num,.zfa-num')).forEach(function(e){ e.style.visibility=''; }); }catch(e){}
+          try{ chain(); }catch(e){}
+          var ok=false; try{ ok=alignByParent(); }catch(e){ ok=false; }
+          if(!ok){ try{ [].slice.call(document.querySelectorAll('.zf-pnum,.zfa-pnum')).forEach(function(e){ if(e.parentNode)e.parentNode.removeChild(e); }); }catch(e){}
+                   try{ [].slice.call(document.querySelectorAll('.zf-num,.zfa-num')).forEach(function(e){ e.style.visibility=''; }); }catch(e){}
+                   alignAll(); }
+        }
         // AHEM: chain ہمیشہ فونٹ لوڈ ہونے کے بعد چلے — ورنہ ناپ چھوٹی آتی ہے اور
         // زیادہ پیراگراف ایک شیٹ میں سما جاتے ہیں (split غلط)۔ idempotent ہے، اس
         // لیے دوبارہ چلنا محفوظ ہے۔

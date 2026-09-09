@@ -245,6 +245,9 @@ function openModal(title, body, footer) {
 function closeModal() {
   const bd = document.getElementById('modal-backdrop');
   if (bd) bd.style.display = 'none';
+  // مشترکہ modal card کی چوڑائی واپس default (کیس فارم اسے 760px کرتا ہے — باقی modals متاثر نہ ہوں)
+  const _mc = document.querySelector('#modal-backdrop .modal-card');
+  if (_mc) _mc.style.maxWidth = '980px';
 }
 
 // ── TOAST ─────────────────────────────────────────────────────

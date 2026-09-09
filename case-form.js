@@ -37,6 +37,13 @@ function _cfInjectCSS() {
   document.head.appendChild(s);
 }
 
+// ── نیا/ترمیمی مقدمہ کارڈ کو smart (چھوٹا) رکھو — مشترکہ modal card کی چوڑائی محدود ──
+//    (closeModal اسے واپس default 980px کر دیتی ہے تاکہ باقی modals متاثر نہ ہوں)
+function _cfSizeModal() {
+  var c = document.querySelector('#modal-backdrop .modal-card');
+  if (c) c.style.maxWidth = '760px';
+}
+
 // ── Keep کراس ورژن مقدمہ نمبر/تاریخ live-synced with the top مقدمہ نمبر/تاریخ اندراج ──
 // (runs on every keystroke in the top fields; stops touching a field once the officer types into it manually)
 function _cfLiveSyncCross() {
@@ -217,6 +224,7 @@ function caseFormHTML(c) {
   var _mobileTheftChecked = c.theft_item === 'mobile';
   var date = c.fir_date || '';
   var occ = c.occurrence_date || '';
+  var occPlace = c.occurrence_place || '';   // بحد / جائے وقوعہ (پرانی occurrence_place کالم — کوئی نیا کالم نہیں)
   var accused = c.accused_name || '';
   var cnic = c.accused_cnic || '';
   var cell = c.accused_cell || '';
@@ -271,7 +279,10 @@ function caseFormHTML(c) {
     + '</select></div>'
     + '</div>'
 
-    // Row 2: دفعات قانون (پوری چوڑائی — سرچ باکس)
+    // Row 2: دفعات قانون (70%) + بحد/جائے وقوعہ (30% — سطر کے آخر یعنی بائیں کنارے)
+    //   بحد کی قدر پرانی occurrence_place کالم میں محفوظ ہوتی ہے اور ضمنی بیرونی میں
+    //   ٹیبل کے اوپر آخری سطر (بحد۔) میں خودکار آ جاتی ہے۔
+    + '<div class="cf-row-7030" style="align-items:flex-start;">'
     + '<div class="cf-field" style="align-items:flex-start;">'
     + '<label class="cf-label" style="margin-top:8px;">دفعات قانون *</label>'
     + '<div style="flex:1;min-width:0;">'
@@ -282,6 +293,10 @@ function caseFormHTML(c) {
     + '<div id="selected-sections" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">'+sectionTags+'</div>'
     + '<input type="hidden" id="cf-section" value="'+section+'">'
     + '</div>'
+    + '</div>'
+    + '<div class="cf-field" style="align-items:flex-start;">'
+    + '<label class="cf-label" style="margin-top:8px;">بحد</label>'
+    + '<input class="form-input" id="cf-occurrence-place" value="'+esc(occPlace)+'" placeholder="جائے وقوعہ / بحد" dir="auto"></div>'
     + '</div>'
 
     // Mobile theft detail (shown only when section 379-402 PPC selected)
@@ -451,7 +466,7 @@ function sectionTag(sectionStr) {
 }
 
 
-async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;openModal(`✏️ ترمیم — مقدمہ ${c.fir_number}`,caseFormHTML(c),`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveEditCase('${id}')">💾 تبدیلیاں محفوظ کریں</button>`);setTimeout(_cfRenderMobilePhones,50);}
+async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;openModal(`✏️ ترمیم — مقدمہ ${c.fir_number}`,caseFormHTML(c),`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveEditCase('${id}')">💾 تبدیلیاں محفوظ کریں</button>`);setTimeout(function(){_cfRenderMobilePhones();_cfSizeModal();},50);}
 
 async function saveNewCase(){
   // Check case limit
@@ -476,6 +491,7 @@ async function saveNewCase(){
       fir_number:fir,
       fir_date:document.getElementById('cf-date').value.trim(),
       occurrence_date:document.getElementById('cf-occurrence-date')?.value.trim()||'',
+      occurrence_place:document.getElementById('cf-occurrence-place')?.value.trim()||'',   // بحد / جائے وقوعہ
       complainant:complainant,
       complainant_cnic:document.getElementById('cf-complainant-cnic')?.value.trim()||'',
       complainant_cell:document.getElementById('cf-complainant-cell')?.value.trim()||'',
@@ -565,6 +581,7 @@ async function saveEditCase(id){
       fir_number:document.getElementById('cf-fir').value.trim(),
       fir_date:document.getElementById('cf-date').value.trim(),
       occurrence_date:document.getElementById('cf-occurrence-date')?.value.trim()||'',
+      occurrence_place:document.getElementById('cf-occurrence-place')?.value.trim()||'',   // بحد / جائے وقوعہ
       complainant:document.getElementById('cf-complainant').value.trim(),
       complainant_cnic:document.getElementById('cf-complainant-cnic')?.value.trim()||'',
       complainant_cell:document.getElementById('cf-complainant-cell')?.value.trim()||'',
