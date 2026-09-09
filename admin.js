@@ -432,10 +432,10 @@ async function _doRejectReg(regId) {
       metadata: { source: 'pending_registration' }
     });
   } catch (_) {}
-  // Remove the officer record (and clear any audit_log refs first)
-  try {
-    await supabaseClient.from('audit_log').delete().eq('officer_id', regId);
-  } catch(_) {}
+  // NOTE: audit trail is intentionally IMMUTABLE (Phase 4B) — we do NOT
+  // delete audit records when rejecting an officer. The officer.rejected
+  // event logged above must survive. (Removed a stale delete on a
+  // non-existent 'audit_log' table that would have contradicted this.)
   await supabaseClient.from('officers').delete().eq('id', regId);
   // Remove card from DOM immediately
   const card = document.getElementById('pending-card-'+regId);
