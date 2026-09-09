@@ -52,7 +52,11 @@ async function _buildDash() {
   const todayCases  = cases.filter(c=>{ const d=_pd(c.fir_date); return d&&d.startsWith(today); });
   const monthly = _monthlyTrend(cases);
 
+  // First-run onboarding card (shows once; dismiss stored in localStorage — non-sensitive flag)
+  const _onboardBanner = (typeof _dioOnboardCard === 'function') ? _dioOnboardCard() : '';
+
   root.innerHTML = `
+  ${_onboardBanner}
   <!-- Welcome -->
   <div style="background:linear-gradient(135deg,#0d2a45,#1a3a5c);border-radius:12px;padding:14px 18px;margin-bottom:14px;direction:rtl;">
     <div style="display:flex;align-items:center;gap:12px;">
@@ -181,4 +185,42 @@ async function _dFetchFivec() {
   if(!oid || !navigator.onLine) return 0;
   try { const{count}=await supabaseClient.from('applications_5c').select('*',{count:'exact',head:true}).eq('officer_id',oid); return count||0; }
   catch(_){ return 0; }
+}
+
+// ── FIRST-RUN ONBOARDING CARD (Phase 4H) ──────────────────────
+// Naye afsar ko sirf PEHLI baar dashboard par nazar aata hai.
+// Dismiss flag localStorage mein (non-sensitive). Har cheez try/catch
+// mein — storage na ho to card har baar dikhega (koi kharabi nahi).
+function _dioOnboardCard() {
+  let seen = false;
+  try { seen = localStorage.getItem('dio_seen_welcome_v1') === '1'; } catch (_) {}
+  if (seen) return '';
+  return `
+  <div id="dio-onboard-card" style="background:linear-gradient(135deg,#134e4a,#0f766e);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:16px 18px;margin-bottom:14px;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
+    <div style="display:flex;align-items:flex-start;gap:12px;">
+      <div style="font-size:30px;line-height:1;">👋</div>
+      <div style="flex:1;">
+        <div style="font-size:15px;font-weight:800;color:#fff;">Digital IO میں خوش آمدید!</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.8);margin-top:5px;line-height:1.9;">
+          یہ آپ کا دفتری کام آسان بنانے کے لیے ہے — کاغذی بوجھ کم، اطمینان زیادہ۔
+          پہلی بار استعمال کر رہے ہیں؟ ایک نظر رہنمائی پر ڈال لیں۔
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" style="font-family:'Jameel Noori Nastaleeq',serif;" onclick="_dioOnboardOpenHelp()">📖 رہنمائی کھولیں</button>
+          <button class="btn btn-secondary btn-sm" style="font-family:'Jameel Noori Nastaleeq',serif;" onclick="_dioOnboardDismiss()">✓ سمجھ گیا</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function _dioOnboardDismiss() {
+  try { localStorage.setItem('dio_seen_welcome_v1', '1'); } catch (_) {}
+  const el = document.getElementById('dio-onboard-card');
+  if (el) el.remove();
+}
+
+function _dioOnboardOpenHelp() {
+  _dioOnboardDismiss();
+  if (typeof showPage === 'function') showPage('help', null);
 }
