@@ -271,6 +271,7 @@ window.addEventListener('online', () => { _remindersFailedAt = 0; });
 async function getEvidence(firNumber) {
   try {
     const oid = await getOfficerId();
+    if (!oid) return [];  // afsar shanakht nahi — malformed query se bachao (getCases/getReminders jaisa)
     let q = supabaseClient.from('evidence').select('*').eq('officer_id',oid).order('fir_number',{ascending:true});
     if (firNumber) q = q.eq('fir_number', firNumber);
     const { data } = await q;
@@ -281,6 +282,7 @@ async function getEvidence(firNumber) {
 
 async function addEvidence(ev) {
   const oid = await getOfficerId();
+  if (!oid) throw new Error('افسر کی شناخت دستیاب نہیں — دوبارہ لاگ اِن کریں');  // orphan (officer_id:null) row se bachao
   const { data, error } = await supabaseClient.from('evidence').insert({...ev, officer_id:oid}).select().single();
   if (error) throw error;
   return data;
@@ -295,6 +297,7 @@ async function deleteEvidence(id) {
 
 async function addReminder(rem) {
   const oid = await getOfficerId();
+  if (!oid) throw new Error('افسر کی شناخت دستیاب نہیں — دوبارہ لاگ اِن کریں');  // orphan (officer_id:null) row se bachao
   const { data, error } = await supabaseClient.from('reminders').insert({...rem,officer_id:oid}).select().single();
   if (error) throw error;
   return data;
@@ -316,6 +319,7 @@ async function deleteReminder(id) {
 
 async function updateOfficerProfile(updates) {
   const oid = await getOfficerId();
+  if (!oid) throw new Error('افسر کی شناخت دستیاب نہیں — دوبارہ لاگ اِن کریں');  // id=eq.null update se bachao
   const { data, error } = await supabaseClient.from('officers').update(updates).eq('id',oid).select().single();
   if (error) throw error;
   currentOfficer = {...currentOfficer,...updates,...data};
