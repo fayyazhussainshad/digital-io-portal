@@ -112,6 +112,7 @@ async function _buildAdmin(role) {
       ['officers','👮 افسران', officers.length],
       ['cases','📁 تمام مقدمات', total_cases],
       ['activity','📋 سرگرمی لاگ', ''],
+      ['health','🩺 ڈیٹا صحت', ''],
       ['usage','📊 استعمال', ''],
       ['reports','📊 رپورٹ', ''],
       ['subscriptions','💳 سبسکرپشن', ''],
@@ -151,6 +152,7 @@ function _adminTab(tab) {
     case 'officers': el.innerHTML = _renderOfficersTab(officers, role); break;
     case 'cases':    el.innerHTML = _renderAllCasesTab(cases); break;
     case 'activity': el.innerHTML = _renderActivityTab(activity); break;
+    case 'health':   _renderHealthTab(el); break;
     case 'usage':    _renderUsageTab(el); break;
     case 'reports':  el.innerHTML = _renderReportsTab(officers, cases); break;
     case 'subscriptions': _renderSubsTab(); break;
@@ -529,6 +531,173 @@ async function _adminChangeRole(officerId, newRole) {
     showToast(`✅ Role تبدیل: ${newRole}`, 'success');
     _adminRefresh();
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
+}
+
+// ── DATA HEALTH TAB ───────────────────────────────────────────
+// Read-only diagnostics. Every check is wrapped independently so one
+// failing query never blocks the others. Nothing here writes/deletes.
+async function _renderHealthTab(el) {
+  el.innerHTML = (window.DIO && DIO.states)
+    ? DIO.states.loading('ڈیٹا کی صحت جانچی جا رہی ہے')
+    : `<div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>`;
+
+  const cases = (window._adminData && window._adminData.cases) || [];
+
+  // Run each diagnostic independently — failure of one returns a "ناکام" card
+  const checks = await Promise.all([
+    _hcInvalidStatus(cases),
+    _hcDuplicateFir(cases),
+    _hcMissingFir(cases),
+    _hcOrphanDocs(cases),
+    _hcRecentAudit(),
+  ]);
+
+  const problemTotal = checks.reduce((s,c)=> s + (c.severity==='ok' ? 0 : (c.count||0)), 0);
+  const worst = checks.some(c=>c.severity==='error') ? 'error'
+              : checks.some(c=>c.severity==='warn') ? 'warn' : 'ok';
+  const headColor = worst==='error' ? 'var(--red)' : worst==='warn' ? 'var(--amber)' : 'var(--green)';
+  const headMsg   = worst==='ok'
+    ? '✅ کوئی مسئلہ نہیں ملا — ڈیٹا صحت مند ہے'
+    : `⚠️ ${problemTotal} ممکنہ مسائل کی نشاندہی ہوئی — تفصیل نیچے`;
+
+  el.innerHTML = `
+  <div class="card" style="direction:rtl;border-right:4px solid ${headColor};">
+    <div style="font-size:14px;font-weight:800;color:${headColor};">🩺 ڈیٹا صحت کی جانچ</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">${headMsg}</div>
+    <div style="font-size:10px;color:var(--text-faint);margin-top:6px;">صرف پڑھنے کے لیے — یہ صفحہ کوئی ڈیٹا تبدیل یا حذف نہیں کرتا</div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px;">
+    ${checks.map(_hcCard).join('')}
+  </div>`;
+}
+
+function _hcCard(c) {
+  const clr = c.severity==='error' ? 'var(--red)'
+            : c.severity==='warn'  ? 'var(--amber)'
+            : c.severity==='fail'  ? 'var(--text-muted)'
+            : 'var(--green)';
+  const icon = c.severity==='error' ? '❌' : c.severity==='warn' ? '⚠️' : c.severity==='fail' ? '⚙️' : '✅';
+  const items = (c.items && c.items.length)
+    ? `<div style="margin-top:10px;display:flex;flex-direction:column;gap:5px;">
+        ${c.items.slice(0,15).map(t=>`<div style="font-size:11px;background:var(--bg-secondary);border-radius:6px;padding:6px 9px;color:var(--text-secondary);">${t}</div>`).join('')}
+        ${c.items.length>15?`<div style="font-size:10px;color:var(--text-faint);">…اور ${c.items.length-15} مزید</div>`:''}
+       </div>`
+    : '';
+  return `
+  <div class="card" style="direction:rtl;border-right:3px solid ${clr};">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:16px;">${icon}</span>
+      <span style="font-size:13px;font-weight:700;">${c.title}</span>
+      ${c.severity!=='ok' && c.severity!=='fail' ? `<span style="margin-inline-start:auto;background:${clr};color:#fff;border-radius:10px;padding:1px 9px;font-size:11px;font-weight:700;">${c.count}</span>` : `<span style="margin-inline-start:auto;font-size:11px;color:${clr};">${c.severity==='fail'?'جانچ ناکام':'ٹھیک'}</span>`}
+    </div>
+    <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${c.detail||''}</div>
+    ${items}
+  </div>`;
+}
+
+// Each returns {title, severity:'ok'|'warn'|'error'|'fail', count, detail, items[]}
+async function _hcInvalidStatus(cases) {
+  try {
+    const valid = (window.DIO && DIO.caseStatuses) ? (s)=>DIO.caseStatuses.isValid(s) : null;
+    const bad = cases.filter(c => {
+      const s = c.status;
+      if (!s) return true;
+      return valid ? !valid(s) : false;
+    });
+    return {
+      title: 'مقدمات جن کی حالت (status) غلط یا خالی ہے',
+      severity: bad.length ? 'warn' : 'ok',
+      count: bad.length,
+      detail: bad.length ? 'ان مقدمات کی حالت دوبارہ سیٹ کرنے کی ضرورت ہے' : 'تمام مقدمات کی حالت درست ہے',
+      items: bad.map(c => `FIR ${c.fir_number||'—'} · حالت: "${c.status||'خالی'}"`),
+    };
+  } catch(e) { return _hcFail('حالت کی جانچ', e); }
+}
+
+async function _hcDuplicateFir(cases) {
+  try {
+    const seen = {};
+    cases.forEach(c => {
+      const key = `${(c.station||'').trim()}|${(c.fir_number||'').toString().trim()}|${(c.fir_year||c.year||'').toString().trim()}`;
+      if (!c.fir_number) return;
+      (seen[key] = seen[key] || []).push(c);
+    });
+    const dups = Object.entries(seen).filter(([,arr]) => arr.length > 1);
+    const totalRows = dups.reduce((s,[,arr])=>s+arr.length,0);
+    return {
+      title: 'دہرے (duplicate) FIR نمبر',
+      severity: dups.length ? 'warn' : 'ok',
+      count: dups.length,
+      detail: dups.length ? 'ایک ہی تھانہ و سال میں ایک FIR نمبر ایک سے زیادہ بار درج ہے' : 'کوئی دہرا FIR نمبر نہیں',
+      items: dups.map(([,arr]) => `FIR ${arr[0].fir_number} (${arr[0].station||'—'}) — ${arr.length} اندراج`),
+    };
+  } catch(e) { return _hcFail('دہرے FIR کی جانچ', e); }
+}
+
+async function _hcMissingFir(cases) {
+  try {
+    const bad = cases.filter(c => !c.fir_number || !String(c.fir_number).trim());
+    return {
+      title: 'مقدمات جن میں FIR نمبر درج نہیں',
+      severity: bad.length ? 'warn' : 'ok',
+      count: bad.length,
+      detail: bad.length ? 'ان مقدمات میں FIR نمبر خالی ہے' : 'تمام مقدمات میں FIR نمبر موجود ہے',
+      items: bad.slice(0,15).map(c => `مقدمہ ID ${String(c.id||'').slice(0,8)} · ${c.section_of_law||'—'}`),
+    };
+  } catch(e) { return _hcFail('FIR نمبر کی جانچ', e); }
+}
+
+async function _hcOrphanDocs(cases) {
+  try {
+    const { data, error } = await supabaseClient
+      .from('case_documents').select('id,case_id').limit(2000);
+    if (error) throw error;
+    const ids = new Set(cases.map(c => c.id));
+    const docs = data || [];
+    const orphans = docs.filter(d => d.case_id && !ids.has(d.case_id));
+    // Group orphans by their (missing) case_id
+    const byCase = {};
+    orphans.forEach(d => { byCase[d.case_id] = (byCase[d.case_id]||0)+1; });
+    return {
+      title: 'بے سہارا دستاویزات (متعلقہ مقدمہ موجود نہیں)',
+      severity: orphans.length ? 'error' : 'ok',
+      count: orphans.length,
+      detail: orphans.length
+        ? 'یہ دستاویزات ایسے مقدمات سے جُڑی ہیں جو اب موجود نہیں — صفائی کی ضرورت'
+        : 'تمام دستاویزات درست مقدمات سے جُڑی ہیں',
+      items: Object.entries(byCase).map(([cid,n]) => `مقدمہ ID ${String(cid).slice(0,8)} — ${n} دستاویزات`),
+    };
+  } catch(e) { return _hcFail('دستاویزات کی جانچ', e); }
+}
+
+async function _hcRecentAudit() {
+  try {
+    const since = new Date(Date.now() - 7*24*60*60*1000).toISOString();
+    const { data, error } = await supabaseClient
+      .from('audit_logs').select('action,created_at').gte('created_at', since).limit(2000);
+    if (error) throw error;
+    const rows = data || [];
+    const byAction = {};
+    rows.forEach(r => { byAction[r.action] = (byAction[r.action]||0)+1; });
+    const top = Object.entries(byAction).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    return {
+      title: 'گزشتہ 7 دن کی سرگرمی (audit log)',
+      severity: 'ok',
+      count: rows.length,
+      detail: rows.length ? `کل ${rows.length} کارروائیاں ریکارڈ ہوئیں` : 'گزشتہ ہفتے کوئی سرگرمی ریکارڈ نہیں (یا audit_logs ٹیبل ابھی خالی ہے)',
+      items: top.map(([a,n]) => `${a} — ${n} بار`),
+    };
+  } catch(e) {
+    // audit_logs may not exist yet — treat as informational, not an error
+    return { title:'گزشتہ 7 دن کی سرگرمی (audit log)', severity:'fail', count:0,
+             detail:'audit_logs ٹیبل دستیاب نہیں یا اجازت نہیں — یہ اختیاری جانچ ہے', items:[] };
+  }
+}
+
+function _hcFail(name, e) {
+  return { title:name, severity:'fail', count:0,
+           detail:'یہ جانچ مکمل نہ ہو سکی: ' + ((e&&e.message)||'نامعلوم خرابی'), items:[] };
 }
 
 // ── USAGE ANALYTICS TAB ───────────────────────────────────────
