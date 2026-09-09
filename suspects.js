@@ -229,21 +229,56 @@ async function _viewSuspect(id) {
   `);
 }
 
-// Cross-reference engine: match person to cases by name or CNIC
+// Cross-reference engine: match a person to cases by name or CNIC.
+// Phase 2B (safe version): ab cases-table ke ilawa case_accused aur
+// case_witnesses child-tables mein bhi dhoondta hai — kyunke asal ملزم/گواہ
+// wahan store hote hain (challan wahin se parhta hai). READ-ONLY: koi schema
+// change nahi, koi write nahi — sirf poori talaash. Challan ko nahi chhoota.
 async function _findCasesForPerson(p) {
   try {
     const allCases = await getCases();
-    const name = (p.full_name || '').toLowerCase();
-    const cnic = (p.cnic || '').replace(/\D/g, '');
-    return allCases.filter(c => {
-      const fields = [
-        c.complainant, c.complainant_cnic, c.accused_name,
-        c.mulzman_name, c.witness_name, c.notes
-      ].filter(Boolean).join(' ').toLowerCase();
-      const fieldsDigits = fields.replace(/\D/g, '');
-      return (name && fields.includes(name)) || (cnic && cnic.length >= 10 && fieldsDigits.includes(cnic));
-    });
-  } catch(_) { return []; }
+    const name = (p.full_name || '').toLowerCase().trim();
+    const cnicDigits = (p.cnic || '').replace(/\D/g, '');
+    const cnicOk = cnicDigits && cnicDigits.length >= 10;
+    if (!name && !cnicOk) return [];
+
+    // Kisi bhi row ke saare text fields ko jorr kar match karo (name substring
+    // ya CNIC digits). Yehi tareeqa purana code istemal karta tha.
+    const _match = (obj) => {
+      if (!obj) return false;
+      let blob = '';
+      for (const k in obj) { if (typeof obj[k] === 'string') blob += ' ' + obj[k]; }
+      blob = blob.toLowerCase();
+      if (name && blob.includes(name)) return true;
+      if (cnicOk && blob.replace(/\D/g, '').includes(cnicDigits)) return true;
+      return false;
+    };
+
+    const matchedIds = new Set();
+
+    // 1) cases table (purana behavior — ab poore row par)
+    allCases.forEach(c => { if (_match(c)) matchedIds.add(c.id); });
+
+    // 2) child tables: case_accused + case_witnesses (2B ka asal gap)
+    const caseIds = allCases.map(c => c.id).filter(Boolean);
+    for (const tbl of ['case_accused', 'case_witnesses']) {
+      // .in() par bara array URL torr sakta hai — 100 ke chunks mein
+      for (let i = 0; i < caseIds.length; i += 100) {
+        const chunk = caseIds.slice(i, i + 100);
+        if (!chunk.length) continue;
+        try {
+          const { data, error } = await supabaseClient.from(tbl).select('*').in('case_id', chunk);
+          if (error) { if (window.DIO && DIO.errors) DIO.errors.log(error, 'suspects.child.' + tbl); continue; }
+          (data || []).forEach(row => { if (row.case_id && _match(row)) matchedIds.add(row.case_id); });
+        } catch (e) { if (window.DIO && DIO.errors) DIO.errors.log(e, 'suspects.child.' + tbl); }
+      }
+    }
+
+    return allCases.filter(c => matchedIds.has(c.id));
+  } catch (e) {
+    if (window.DIO && DIO.errors) DIO.errors.log(e, 'suspects.findCasesForPerson');
+    return [];
+  }
 }
 
 async function _deleteSuspect(id) {
