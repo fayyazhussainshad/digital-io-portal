@@ -13,7 +13,7 @@ const SUSPECT_TYPES = {
 };
 
 async function renderSuspects(container) {
-  container.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq',serif;">⏳ لوڈ ہو رہا ہے...</div>`;
+  container.innerHTML = (window.DIO && DIO.states) ? DIO.states.loading('ملزمان / گواہان لوڈ ہو رہے ہیں') : `<div style="text-align:center;padding:32px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq',serif;">⏳ لوڈ ہو رہا ہے...</div>`;
 
   const people = await _getSuspects();
 

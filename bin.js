@@ -6,9 +6,8 @@
 registerPage('bin', renderBin);
 
 async function renderBin(container) {
-  container.innerHTML = `<div id="bin-root" style="max-width:800px;margin:0 auto;">
-    <div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ Loading...</div>
-  </div>`;
+  const _loading = (window.DIO && DIO.states) ? DIO.states.loading('بن لوڈ ہو رہا ہے') : '<div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>';
+  container.innerHTML = `<div id="bin-root" style="max-width:800px;margin:0 auto;">${_loading}</div>`;
   await _buildBin();
 }
 

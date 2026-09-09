@@ -38,7 +38,7 @@ async function renderAdmin(container) {
   container.innerHTML = `
   <div style="max-width:1000px;margin:0 auto;" id="admin-root" data-admin-page="1">
     
-    <div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ Loading...</div>
+    ${(window.DIO && DIO.states) ? DIO.states.loading('انتظامیہ صفحہ لوڈ ہو رہا ہے') : '<div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>'}
   </div>`;
   await _buildAdmin(role);
 }
@@ -501,7 +501,7 @@ const _PAGE_NAMES = {
 };
 
 async function _renderUsageTab(el) {
-  el.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>`;
+  el.innerHTML = (window.DIO && DIO.states) ? DIO.states.loading('استعمال کی تفصیل لوڈ ہو رہی ہے') : `<div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>`;
   try {
     // Aggregate usage across all officers
     const { data } = await supabaseClient.from('usage_stats').select('page,count');
@@ -715,7 +715,7 @@ function _adminPrintReport() {
 async function _renderSubsTab() {
   const el = document.getElementById('admin-tab-content');
   if (!el) return;
-  el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>';
+  el.innerHTML = (window.DIO && DIO.states) ? DIO.states.loading() : '<div style="padding:20px;text-align:center;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>';
 
   try {
     const { data } = await supabaseClient

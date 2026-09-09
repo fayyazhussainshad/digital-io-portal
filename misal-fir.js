@@ -25,7 +25,7 @@ async function _renderFIRView() {
 
     <!-- FIR entries list -->
     <div style="flex:1;overflow-y:auto;padding:16px;" id="fir-entries-area">
-      <div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>
+      ${(window.DIO && DIO.states) ? DIO.states.loading('FIR اندراجات لوڈ ہو رہے ہیں') : '<div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>'}
     </div>
   </div>`;
 

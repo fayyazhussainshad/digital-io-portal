@@ -6,9 +6,8 @@
 registerPage('performance', renderPerformance);
 
 async function renderPerformance(container) {
-  container.innerHTML = `<div id="perf-root" style="max-width:none;">
-    <div style="text-align:center;padding:20px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>
-  </div>`;
+  const _loading = (window.DIO && DIO.states) ? DIO.states.loading('کارکردگی رپورٹ لوڈ ہو رہی ہے') : '<div style="text-align:center;padding:20px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>';
+  container.innerHTML = `<div id="perf-root" style="max-width:none;">${_loading}</div>`;
   await _buildPerf();
 }
 

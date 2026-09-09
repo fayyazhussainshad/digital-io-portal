@@ -34,7 +34,7 @@ async function renderLawLibrary(container) {
     </div>
 
     <div id="law-table-wrap" style="overflow-x:auto;margin:0 -20px;">
-      <div style="text-align:center;padding:40px;color:var(--text-muted);width:100%;">⏳ لوڈ ہو رہا ہے...</div>
+      ${(window.DIO && DIO.states) ? DIO.states.loading('قانونی لائبریری لوڈ ہو رہی ہے') : '<div style="text-align:center;padding:40px;color:var(--text-muted);width:100%;">⏳ لوڈ ہو رہا ہے...</div>'}
     </div>
   </div>`;
 
