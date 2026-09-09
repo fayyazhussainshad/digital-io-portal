@@ -403,6 +403,13 @@ async function _doApproveReg(regId) {
     // Remove card from DOM immediately (no wait for reload)
     const card = document.getElementById('pending-card-'+regId);
     if (card) card.remove();
+    // AUDIT — officer.approved (Phase 4B)
+    try {
+      if (window.DIO && DIO.audit) DIO.audit.log('officer.approved', 'officer', regId, {
+        after: { is_approved: true },
+        metadata: { source: 'pending_registration' }
+      });
+    } catch (_) {}
     showToast('✅ درخواست منظور ہو گئی — افسر اب لاگ ان کر سکتا ہے', 'success');
     _adminRefresh();
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
@@ -417,6 +424,12 @@ async function _adminRejectReg(regId, name) {
 }
 
 async function _doRejectReg(regId) {
+  // AUDIT — officer.rejected (Phase 4B). Delete se PEHLE log — record dostiyab.
+  try {
+    if (window.DIO && DIO.audit) DIO.audit.log('officer.rejected', 'officer', regId, {
+      metadata: { source: 'pending_registration' }
+    });
+  } catch (_) {}
   // Remove the officer record (and clear any audit_log refs first)
   try {
     await supabaseClient.from('audit_log').delete().eq('officer_id', regId);
@@ -459,6 +472,12 @@ async function _doSuspend(officerId) {
     p_officer_id: officerId, p_suspended: true, p_reason: reason
   });
   if (error) { showToast('❌ ' + error.message, 'error'); return; }
+  // AUDIT — officer.suspended (Phase 4B). Reason plain-text — koi sensitive redaction nahi.
+  try {
+    if (window.DIO && DIO.audit) DIO.audit.log('officer.suspended', 'officer', officerId, {
+      after: { is_suspended: true, suspension_reason: reason }
+    });
+  } catch (_) {}
   showToast('🚫 افسر معطل کر دیا گیا', 'info');
   _adminRefresh();
 }
@@ -476,16 +495,37 @@ async function _doUnsuspend(officerId) {
     p_officer_id: officerId, p_suspended: false, p_reason: null
   });
   if (error) { showToast('❌ ' + error.message, 'error'); return; }
+  // AUDIT — officer.unsuspended (Phase 4B)
+  try {
+    if (window.DIO && DIO.audit) DIO.audit.log('officer.unsuspended', 'officer', officerId, {
+      after: { is_suspended: false }
+    });
+  } catch (_) {}
   showToast('✅ افسر بحال', 'success');
   _adminRefresh();
 }
 
 async function _adminChangeRole(officerId, newRole) {
   try {
+    // AUDIT — "before" role capture (Phase 4B). Silent fail agar fetch na ho.
+    let _prevRole = null;
+    try {
+      const chk = await supabaseClient.from('officers').select('role').eq('id', officerId).maybeSingle();
+      _prevRole = (chk && chk.data && chk.data.role) || null;
+    } catch (_) {}
     const { error } = await supabaseClient.rpc('admin_set_officer_role', {
       p_officer_id: officerId, p_new_role: newRole
     });
     if (error) throw error;
+    // AUDIT — role.changed with before/after
+    try {
+      if (window.DIO && DIO.audit && _prevRole !== newRole) {
+        DIO.audit.log('role.changed', 'officer', officerId, {
+          before: { role: _prevRole },
+          after: { role: newRole }
+        });
+      }
+    } catch (_) {}
     showToast(`✅ Role تبدیل: ${newRole}`, 'success');
     _adminRefresh();
   } catch(e) { showToast('❌ ' + e.message, 'error'); }
