@@ -21,7 +21,10 @@ async function _buildDash() {
 
   const [cases, reminders, fivecApps] = await Promise.all([
     getCases().catch(()=>[]),
-    _dFetchRem().catch(()=>[]),
+    // FIX: pehle _dFetchRem() offline par [] deta tha (dashboard khali) — getReminders()
+    // mein offline cache fallback hai, is liye field afsar ko offline bhi apni yaddashtیں
+    // nazar aati hain. Dashboard neeche khud !is_done filter karta hai (line ~51).
+    getReminders().catch(()=>[]),
     _dFetchFivec().catch(()=>0),
   ]);
 
@@ -174,12 +177,8 @@ function _pd(d) {
   const p=d.split(/[-\/]/);
   return p.length===3&&p[2].length===4?`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`:null;
 }
-async function _dFetchRem() {
-  const oid=await getOfficerId();
-  if(!oid || !navigator.onLine) return [];
-  try { const{data}=await supabaseClient.from('reminders').select('*').eq('officer_id',oid).eq('is_done',false).order('reminder_date',{ascending:true}); return data||[]; }
-  catch(_){ return []; }
-}
+// NOTE: _dFetchRem() hataa diya — ab dashboard getReminders() istemal karta hai
+// (offline cache fallback ke sath). Neeche filter(!is_done) pending nikaal leta hai.
 async function _dFetchFivec() {
   const oid=await getOfficerId();
   if(!oid || !navigator.onLine) return 0;
