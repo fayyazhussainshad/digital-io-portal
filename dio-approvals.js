@@ -118,7 +118,7 @@
     } catch (e) { _log('approvals.pending', e); return []; }
   }
 
-  function _log(where, e) { if (DIO.errors) DIO.errors.silent(where, e); }
+  function _log(where, e) { if (DIO.errors) DIO.errors.log(e, where); }
 
   DIO.approvals = {
     request: request,

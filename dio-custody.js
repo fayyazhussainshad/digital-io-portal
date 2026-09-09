@@ -65,10 +65,10 @@
       };
       var res = await supabaseClient.from('evidence_custody_events').insert(row);
       if (res && res.error && window.DIO && DIO.errors) {
-        DIO.errors.silent('custody.record', res.error);
+        DIO.errors.log(res.error, 'custody.record');
       }
     } catch (e) {
-      if (window.DIO && DIO.errors) DIO.errors.silent('custody.record', e);
+      if (window.DIO && DIO.errors) DIO.errors.log(e, 'custody.record');
     }
   }
 
@@ -83,7 +83,7 @@
         .order('created_at', { ascending: true });
       return (r && r.data) || [];
     } catch (e) {
-      if (window.DIO && DIO.errors) DIO.errors.silent('custody.chain', e);
+      if (window.DIO && DIO.errors) DIO.errors.log(e, 'custody.chain');
       return [];
     }
   }

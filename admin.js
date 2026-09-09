@@ -114,6 +114,7 @@ async function _buildAdmin(role) {
       ['activity','📋 سرگرمی لاگ', ''],
       ['approvals','✅ منظوریاں', ''],
       ['health','🩺 ڈیٹا صحت', ''],
+      ['errors','⚠️ خرابیاں', ''],
       ['trust','🔒 حفاظتی مرکز', ''],
       ['usage','📊 استعمال', ''],
       ['reports','📊 رپورٹ', ''],
@@ -156,6 +157,7 @@ function _adminTab(tab) {
     case 'activity': el.innerHTML = _renderActivityTab(activity); break;
     case 'approvals': _renderApprovalsTab(el); break;
     case 'health':   _renderHealthTab(el); break;
+    case 'errors':   _renderErrorsTab(el); break;
     case 'trust':    _renderTrustTab(el); break;
     case 'usage':    _renderUsageTab(el); break;
     case 'reports':  el.innerHTML = _renderReportsTab(officers, cases); break;
@@ -702,6 +704,66 @@ async function _hcRecentAudit() {
 function _hcFail(name, e) {
   return { title:name, severity:'fail', count:0,
            detail:'یہ جانچ مکمل نہ ہو سکی: ' + ((e&&e.message)||'نامعلوم خرابی'), items:[] };
+}
+
+// ── ERROR LOG TAB (Phase 3E — makes DIO.errors visible) ───────
+// Read-only. Shows the in-memory error ring buffer for THIS session/browser
+// (DIO.errors.recent()). Helps diagnose what silently failed. Not persisted
+// server-side (session-local) — a note says so, no false impression.
+function _renderErrorsTab(el) {
+  if (!(window.DIO && DIO.errors && typeof DIO.errors.recent === 'function')) {
+    el.innerHTML = `<div class="card" style="padding:24px;text-align:center;color:var(--text-muted);direction:rtl;">
+      خرابی لاگ دستیاب نہیں (dio-errors.js لوڈ نہیں ہوا)</div>`;
+    return;
+  }
+  const rows = (DIO.errors.recent(100) || []).slice().reverse(); // newest first
+  const fmt = (d) => (window.DIO && DIO.date) ? DIO.date.datetime(d) : (d || '');
+
+  const head = `
+  <div class="card" style="direction:rtl;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:15px;font-weight:800;color:${rows.length ? 'var(--amber,#f59e0b)' : 'var(--green)'};">
+        ⚠️ خرابی لاگ (${rows.length})
+      </span>
+      <span style="margin-inline-start:auto;display:flex;gap:6px;">
+        <button class="btn btn-secondary btn-sm" onclick="_adminRefreshErrors()">🔄 تازہ</button>
+        ${rows.length ? `<button class="btn btn-secondary btn-sm" onclick="_adminClearErrors()">🗑️ صاف</button>` : ''}
+      </span>
+    </div>
+    <div style="font-size:10px;color:var(--text-faint);margin-top:6px;">
+      یہ صرف اسی براؤزر/سیشن کی خرابیاں ہیں (سرور پر محفوظ نہیں) — مسئلہ سمجھنے میں مدد کے لیے۔
+    </div>
+  </div>`;
+
+  if (!rows.length) {
+    el.innerHTML = head + `<div class="card" style="text-align:center;padding:36px;color:var(--text-muted);direction:rtl;margin-top:10px;">
+      <div style="font-size:40px;margin-bottom:8px;">✅</div>
+      <div style="font-weight:600;">اس سیشن میں کوئی خرابی ریکارڈ نہیں</div>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = head + `
+  <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px;">
+    ${rows.map(e => `
+      <div class="card" style="direction:ltr;text-align:left;border-right:3px solid var(--red,#dc2626);padding:10px 12px;">
+        <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;">
+          <span style="font-size:11px;font-weight:800;color:var(--accent);font-family:var(--font-mono,monospace);">${_hgAdminEsc(e.ctx||'—')}</span>
+          ${e.code ? `<span style="font-size:10px;color:var(--text-muted);">[${_hgAdminEsc(String(e.code))}]</span>` : ''}
+          <span style="margin-left:auto;font-size:10px;color:var(--text-faint);direction:rtl;">${fmt(e.ts)}</span>
+        </div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;font-family:var(--font-mono,monospace);word-break:break-word;">${_hgAdminEsc(e.msg||'')}</div>
+      </div>`).join('')}
+  </div>`;
+}
+
+function _adminRefreshErrors() {
+  const el = document.getElementById('admin-tab-content');
+  if (el) _renderErrorsTab(el);
+}
+function _adminClearErrors() {
+  try { if (window.DIO && DIO.errors && DIO.errors.clear) DIO.errors.clear(); } catch(_) {}
+  _adminRefreshErrors();
 }
 
 // ── DOCUMENT APPROVALS TAB (Phase 4H) ─────────────────────────
