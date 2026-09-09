@@ -1212,6 +1212,7 @@ window.addEventListener('unhandledrejection', function(e){
       </div>
 
       <div class="nav-item" id="admin-nav-item" style="display:none;" onclick="closeMobileSidebar();showPage('admin',this)"><span class="nav-icon">👮</span> ایڈمن</div>
+      <div class="nav-item" onclick="closeMobileSidebar();showPage('help',this)"><span class="nav-icon">❓</span> مدد و رہنمائی</div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('settings',this)"><span class="nav-icon">⚙️</span> ترتیبات</div>
     </nav>
     <div class="sidebar-footer"><button class="logout-btn" onclick="window.doLogout&&doLogout()">🚪 لاگ آؤٹ</button></div>
@@ -1254,6 +1255,7 @@ window.addEventListener('unhandledrejection', function(e){
             <a class="topmore-item" onclick="showSubscriptionPage();_closeTopDD()">💎 سبسکرپشن</a>
             <a class="topmore-item" onclick="showPage('bin',null);_closeTopDD()">🗑️ حذف شدہ مواد</a>
             <a class="topmore-item" id="top-admin-item" style="display:none;" onclick="showPage('admin',null);_closeTopDD()">👮 ایڈمن</a>
+            <a class="topmore-item" onclick="showPage('help',null);_closeTopDD()">❓ مدد و رہنمائی</a>
             <a class="topmore-item" onclick="showPage('settings',null);_closeTopDD()">⚙️ ترتیبات</a>
             <a class="topmore-item" style="color:var(--red);border-top:1px solid var(--border);margin-top:4px;" onclick="window.doLogout&&doLogout()">🚪 لاگ آؤٹ</a>
           </div>
@@ -1452,6 +1454,7 @@ window.addEventListener('beforeunload', function (e) {
 <script src="staff-v2.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script src="law-library.js"></script>
+<script src="help-guide.js"></script>
 <script src="templates.js"></script>
 <script src="editor-tools.js"></script>
   <script src="saved-files.js"></script>
