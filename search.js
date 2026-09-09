@@ -107,8 +107,10 @@ async function _runGlobalSearch(q) {
   const wit = mine(witnessR);
   const fir = mine(firR);
   const zim = mine(zimniR).filter(z => JSON.stringify(z.content||'').toLowerCase().includes(q.toLowerCase()));
-  const ham = hamrahiR || [];
-  const gari = gariR || [];
+  // SECURITY FIX (Add 7): hamrahi + gari bhi sirf APNE muqadmaat tak mehdood —
+  // baaqi categories ki tarah `mine()` se scope karo (dusre afsar ke record na dikhein).
+  const ham = mine(hamrahiR);
+  const gari = mine(gariR);
   const cdr = mine(cdrR);
 
   _renderSearchResults(q, { cases: casesR, accused: acc, witnesses: wit, fir, zimni: zim, hamrahi: ham, gari, cdr });
