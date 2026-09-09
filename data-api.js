@@ -268,6 +268,37 @@ window.addEventListener('online', () => { _remindersFailedAt = 0; });
 
 // ── EVIDENCE ──────────────────────────────────────────────────
 
+// SECURITY (Correct-5): evidence bucket ko PRIVATE karne ki tayyari.
+// Public URL private bucket par kaam nahi karti — is liye har row ke liye
+// aik short-lived SIGNED URL banate hain (jaisa fivec.js pehle se karti hai).
+// createSignedUrl PUBLIC aur PRIVATE dono par chalti hai → ye code bucket
+// private karne se PEHLE bhi mehfooz hai (koi downtime nahi). Agar signing
+// fail ho ya path na mile, purani public file_url par khud-ba-khud fallback.
+function _evidenceStoragePath(e) {
+  if (e && e.storage_path) return e.storage_path;
+  const u = e && e.file_url;
+  if (!u || u.indexOf('data:') === 0) return null;     // data: URL — as-is chhor do
+  const marker = '/object/public/evidence/';
+  const idx = u.indexOf(marker);
+  if (idx === -1) return null;
+  const raw = u.substring(idx + marker.length).split('?')[0];
+  try { return decodeURIComponent(raw); } catch(_) { return raw; }
+}
+
+async function _attachEvidenceViewUrls(rows) {
+  if (!Array.isArray(rows) || !rows.length) return rows;
+  await Promise.all(rows.map(async e => {
+    e._viewUrl = e.file_url || null;                    // fallback (public bucket / signing fail)
+    const p = _evidenceStoragePath(e);
+    if (!p) return;
+    try {
+      const { data, error } = await supabaseClient.storage.from('evidence').createSignedUrl(p, 3600);
+      if (!error && data && data.signedUrl) e._viewUrl = data.signedUrl;
+    } catch(_) { /* file_url fallback pehle se set hai */ }
+  }));
+  return rows;
+}
+
 async function getEvidence(firNumber) {
   try {
     const oid = await getOfficerId();
@@ -275,7 +306,7 @@ async function getEvidence(firNumber) {
     let q = supabaseClient.from('evidence').select('*').eq('officer_id',oid).order('fir_number',{ascending:true});
     if (firNumber) q = q.eq('fir_number', firNumber);
     const { data } = await q;
-    return data||[];
+    return await _attachEvidenceViewUrls(data||[]);       // signed view URL (_viewUrl) attach karo
   } catch(_) { return []; }
 }
 
