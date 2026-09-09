@@ -333,7 +333,12 @@ async function doLogout() {
     'dio_officer_cache','digital_io_locked','dio_last_backup_source','dio_gdrive_token',
     'dio_r173_','dio_r173docs_','dio_zimni_','dio_za_','dio_accused_','dio_witness_',
     'dio_cro_','dio_rfa_','dio_rfalist_','dio_sd_','dio_saved_','dio_cache_',
-    'dio_evidence_','dio_dashboard_','dio_notifications_'
+    'dio_evidence_','dio_dashboard_','dio_notifications_',
+    // Security fix (Remove 8 / Correct 8): ye sensitive case-data caches pehle logout par
+    // saaf NAHI hote the — shared device par agla shakhs parh sakta tha. Ab clear hote hain.
+    'dio_cdr_','dio_firmatn_','dio_fircopies_','dio_saza_','dio_staff_',
+    'dio_acc_opts_','dio_notifs_cache','dio_recent_cases','case_status_',
+    'digital_io_sarkari_gari'
   ];
   try {
     for (let i = localStorage.length - 1; i >= 0; i--) {
