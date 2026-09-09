@@ -8,7 +8,19 @@
 registerPage('evidence',renderEvidence);
 async function renderEvidence(container){const all=await getEvidence();container.innerHTML=`<div class="page-header"><div><div class="page-title">🔬 Evidence & Media</div><div class="page-subtitle">${all.length} items</div></div><div style="display:flex;gap:8px;"><button class="btn btn-secondary btn-sm" onclick="selectAllEvidence()">☑️ Select All</button><button class="btn btn-secondary btn-sm" onclick="printSelectedEvidence()">🖨️ Print Selected</button><button class="btn btn-primary" onclick="openAddEvidenceModal()">+ Attach Evidence</button></div></div><div class="evidence-grid" id="evidence-grid">${all.length===0?`<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px;font-size:12px;">No evidence attached yet.</div>`:all.map(e=>`<div class="evidence-card" id="ev-card-${e.id}"><div class="evidence-thumb" style="position:relative;">${e.file_url?`<img src="${e.file_url}" style="width:100%;height:100%;object-fit:cover;" alt="">`:`<span style="font-size:36px;">${e.type==='Photo'?'📷':e.type==='Video'?'🎥':e.type==='Audio'?'🎙️':'📄'}</span>`}<input type="checkbox" class="ev-select-cb" data-id="${e.id}" style="position:absolute;top:8px;left:8px;width:16px;height:16px;accent-color:var(--accent);"></div><div class="evidence-info" onclick="viewEvidenceDetail('${e.id}')"><div class="evidence-name">${esc(e.name)}</div><div class="evidence-tag">${esc(e.fir_number)||'—'}</div><div style="display:flex;justify-content:space-between;margin-top:4px;"><span style="font-size:10px;background:var(--hover-bg);color:var(--text-muted);padding:2px 6px;border-radius:4px;">${e.type}</span><span style="font-size:9px;color:var(--text-faint);">${e.evidence_date||formatDate(e.created_at)}</span></div></div></div>`).join('')}</div>`;}
 function selectAllEvidence(){document.querySelectorAll('.ev-select-cb').forEach(cb=>cb.checked=true);}
-function printSelectedEvidence(){const sel=[...document.querySelectorAll('.ev-select-cb:checked')].map(cb=>cb.dataset.id);if(!sel.length){showToast('⚠️ Select at least one item.','error');return;}printContent(`<h1>🔬 Evidence Report</h1><p>${sel.length} item(s) selected</p>`,'Evidence Report');}
+async function printSelectedEvidence(){const sel=[...document.querySelectorAll('.ev-select-cb:checked')].map(cb=>cb.dataset.id);if(!sel.length){showToast('⚠️ Select at least one item.','error');return;}
+  // CHAIN OF CUSTODY — record a print/export access for each item (Phase 4C)
+  try {
+    if (window.DIO && DIO.custody) {
+      const all = await getEvidence();
+      sel.forEach(sid => {
+        const e = (all||[]).find(x=>x.id===sid);
+        DIO.custody.record('printed', sid,
+          { fir_number: e && e.fir_number, evidence_name: e && e.name, details: { batch: sel.length } });
+      });
+    }
+  } catch (_) {}
+  printContent(`<h1>🔬 Evidence Report</h1><p>${sel.length} item(s) selected</p>`,'Evidence Report');}
 let cameraStream=null;
 function openAddEvidenceModal(){openModal('➕ Attach Evidence',`<div style="display:flex;gap:8px;margin-bottom:14px;"><button class="btn btn-secondary btn-sm" onclick="openCamera()">📸 Live Camera</button><button class="btn btn-secondary btn-sm" onclick="openFileSelect()">📎 Select File</button></div><div id="camera-preview" style="display:none;margin-bottom:12px;"><video id="cam-video" style="width:100%;border-radius:8px;max-height:200px;" autoplay playsinline></video><div style="display:flex;gap:8px;margin-top:8px;"><button class="btn btn-primary btn-sm" onclick="snapPhoto()">📸 Capture</button><button class="btn btn-secondary btn-sm" onclick="stopCamera()">✕ Stop</button></div><canvas id="cam-canvas" style="display:none;"></canvas><img id="cam-snap" style="display:none;width:100%;border-radius:8px;margin-top:8px;border:2px solid var(--accent);" alt=""></div><div class="form-row"><div class="form-group"><label class="form-label">Name *</label><input class="form-input" id="ev-name" placeholder="Evidence name"></div><div class="form-group"><label class="form-label">Linked FIR *</label><input class="form-input" id="ev-fir-link" placeholder="e.g. 245/2025"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Type</label><select class="form-input" id="ev-type-input"><option>Photo</option><option>Video</option><option>Audio</option><option>Document</option></select></div><div class="form-group"><label class="form-label">Date</label><input class="form-input" id="ev-date-input" placeholder="DD-MM-YYYY"></div></div><div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="ev-notes-input" rows="2" placeholder="Description..."></textarea></div>`,`<button class="btn btn-secondary" onclick="stopCamera();closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveEvidenceItem()">💾 Attach</button>`);}
 function openCamera(){document.getElementById('camera-preview').style.display='block';navigator.mediaDevices?.getUserMedia({video:{facingMode:'environment'}}).then(stream=>{cameraStream=stream;document.getElementById('cam-video').srcObject=stream;}).catch(()=>showToast('⚠️ Camera not available.','error'));}
@@ -31,10 +43,39 @@ async function saveEvidenceItem(){
         metadata: { has_notes: !!(evNotes && evNotes.length) }
       });
     } catch (_) {}
+    // CHAIN OF CUSTODY — created (Phase 4C)
+    try {
+      if (window.DIO && DIO.custody) DIO.custody.record('created', (_row && _row.id) || null,
+        { fir_number: fir, evidence_name: name, details: { type: evType } });
+    } catch (_) {}
     stopCamera();closeModal();showToast('✅ Evidence attached: '+name,'success');renderEvidence(document.getElementById('page-content'));
   }catch(err){showToast('❌ Error: '+err.message,'error');}
 }
-async function viewEvidenceDetail(id){const all=await getEvidence(),e=all.find(x=>x.id===id);if(!e)return;openModal('🔬 Evidence Details',`<div>${[['Name',e.name],['FIR',e.fir_number||'—'],['Type',e.type],['Date',e.evidence_date||'—'],['Notes',e.notes||'—']].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${esc(v)}</span></div>`).join('')}</div><div style="text-align:center;padding:16px;font-size:48px;">${e.type==='Photo'?'📷':e.type==='Video'?'🎥':e.type==='Audio'?'🎙️':'📄'}</div>`,`<button class="btn btn-secondary" onclick="closeModal()">Close</button><button class="btn btn-danger btn-sm" onclick="closeModal();doDeleteEvidence('${id}')">🗑️ Delete</button>`);}
+async function viewEvidenceDetail(id){
+  const all=await getEvidence(),e=all.find(x=>x.id===id);if(!e)return;
+  // CHAIN OF CUSTODY — record this access BEFORE fetching the chain,
+  // so the officer's own view appears in the timeline they see.
+  try {
+    if (window.DIO && DIO.custody) await DIO.custody.record('viewed', id,
+      { fir_number: e.fir_number, evidence_name: e.name });
+  } catch (_) {}
+  openModal('🔬 Evidence Details',
+    `<div>${[['Name',e.name],['FIR',e.fir_number||'—'],['Type',e.type],['Date',e.evidence_date||'—'],['Notes',e.notes||'—']].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${esc(v)}</span></div>`).join('')}</div>`+
+    `<div style="text-align:center;padding:16px;font-size:48px;">${e.type==='Photo'?'📷':e.type==='Video'?'🎥':e.type==='Audio'?'🎙️':'📄'}</div>`+
+    `<div style="border-top:1px solid var(--border);margin-top:8px;padding-top:12px;direction:rtl;">
+       <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:8px;">📜 حفاظتی زنجیر (Chain of Custody)</div>
+       <div id="ev-custody-chain"><div style="font-size:11px;color:var(--text-muted);">⏳ لوڈ ہو رہی ہے…</div></div>
+     </div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Close</button><button class="btn btn-danger btn-sm" onclick="closeModal();doDeleteEvidence('${id}')">🗑️ Delete</button>`);
+  // Async-load the chain into the placeholder (never blocks the modal).
+  try {
+    if (window.DIO && DIO.custody) {
+      const events = await DIO.custody.chain(id);
+      const box = document.getElementById('ev-custody-chain');
+      if (box) box.innerHTML = DIO.custody.renderChain(events);
+    }
+  } catch (_) {}
+}
 async function doDeleteEvidence(id){
   try{
     // AUDIT — "before" snapshot (Phase 4B). Delete se pehle capture.
@@ -45,6 +86,13 @@ async function doDeleteEvidence(id){
         const e = (all||[]).find(x=>x.id===id);
         if (e) _before = { name: e.name, fir_number: e.fir_number, type: e.type, evidence_date: e.evidence_date };
       }
+    } catch (_) {}
+    // CHAIN OF CUSTODY — record deletion BEFORE it happens. The custody
+    // table has no FK to evidence, so this proof survives the delete.
+    try {
+      if (window.DIO && DIO.custody) await DIO.custody.record('deleted', id,
+        { fir_number: _before && _before.fir_number, evidence_name: _before && _before.name,
+          details: { type: _before && _before.type } });
     } catch (_) {}
     await deleteEvidence(id);
     // AUDIT — evidence.deleted (critical — evidence tampering track)
