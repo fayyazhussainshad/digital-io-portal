@@ -172,7 +172,7 @@ async function dioRenderDocList(docType, cfg) {
   const caseId = _sdCaseId(cfg.caseId);
   const heading = cfg.heading || cfg.chipName || 'محفوظ دستاویزات';
   area.innerHTML = `<div style="direction:rtl;padding:16px;font-family:'Jameel Noori Nastaleeq',serif;">
-    <div style="text-align:center;color:var(--text-muted);padding:24px;">⏳ فہرست لوڈ ہو رہی ہے…</div></div>`;
+    ${(window.DIO && DIO.states) ? DIO.states.loading('فہرست لوڈ ہو رہی ہے') : '<div style="text-align:center;color:var(--text-muted);padding:24px;">⏳ فہرست لوڈ ہو رہی ہے…</div>'}</div>`;
 
   const rows = await dioLoadDocEntries(docType, caseId);
 

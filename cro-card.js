@@ -15,6 +15,10 @@ let _croDirty = false;
 async function openCroCard(caseId) {
   _croCaseId = caseId || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
             || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
+  const _croArea = document.getElementById('workspace-editor-area')
+            || document.getElementById('workspace-tab-content')
+            || document.getElementById('page-content');
+  if (_croArea && window.DIO && DIO.states) _croArea.innerHTML = DIO.states.loading('CRO کارڈ لوڈ ہو رہا ہے');
   if (typeof getCase === 'function' && _croCaseId) {
     try { _croCase = await getCase(_croCaseId); } catch(_) { _croCase = null; }
   }

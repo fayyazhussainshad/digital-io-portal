@@ -16,6 +16,8 @@ const ST_RANKS = [
 
 async function openStaffV2(caseId) {
   _stCaseId = caseId || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null);
+  const _a = _stArea();
+  if (_a && window.DIO && DIO.states) _a.innerHTML = DIO.states.loading('ہمراہی ملازمان لوڈ ہو رہے ہیں');
   await _stLoad();
   _stRender();
 }

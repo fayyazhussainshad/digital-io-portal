@@ -41,7 +41,7 @@ async function renderTemplates(container) {
     </div>
 
     <div id="tpl-table-wrap" style="overflow-x:auto;margin:0 -20px;">
-      <div style="text-align:center;padding:40px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>
+      ${(window.DIO && DIO.states) ? DIO.states.loading('ٹمپلیٹس لوڈ ہو رہے ہیں') : '<div style="text-align:center;padding:40px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>'}
     </div>
   </div>`;
 

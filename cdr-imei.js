@@ -10,6 +10,10 @@ let _cdrISaved = null;
 async function openCdrImei(caseId) {
   _cdrICaseId = caseId || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
             || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
+  const _cdrArea = document.getElementById('workspace-editor-area')
+            || document.getElementById('workspace-tab-content')
+            || document.getElementById('page-content');
+  if (_cdrArea && window.DIO && DIO.states) _cdrArea.innerHTML = DIO.states.loading('CDR/IMEI درخواست لوڈ ہو رہی ہے');
   if (typeof getCase === 'function' && _cdrICaseId) {
     try { _cdrICase = await getCase(_cdrICaseId); } catch(_) { _cdrICase = null; }
   }
