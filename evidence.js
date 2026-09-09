@@ -15,8 +15,47 @@ function openCamera(){document.getElementById('camera-preview').style.display='b
 function stopCamera(){cameraStream?.getTracks().forEach(t=>t.stop());cameraStream=null;}
 function snapPhoto(){const v=document.getElementById('cam-video'),c=document.getElementById('cam-canvas'),s=document.getElementById('cam-snap');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);s.src=c.toDataURL('image/jpeg',0.9);s.style.display='block';v.style.display='none';stopCamera();const ni=document.getElementById('ev-name');if(ni&&!ni.value)ni.value='Live Photo '+new Date().toLocaleString('en-PK');document.getElementById('ev-type-input').value='Photo';showToast('✅ Photo captured!','success');}
 function openFileSelect(){const i=document.createElement('input');i.type='file';i.accept='image/*,video/*,audio/*,.pdf,.doc,.docx';i.onchange=e=>{const f=e.target.files[0];if(!f)return;const ni=document.getElementById('ev-name');if(ni&&!ni.value)ni.value=f.name;const ti=document.getElementById('ev-type-input');if(ti){if(f.type.startsWith('image'))ti.value='Photo';else if(f.type.startsWith('video'))ti.value='Video';else if(f.type.startsWith('audio'))ti.value='Audio';else ti.value='Document';}showToast('📎 File selected: '+f.name,'success');};i.click();}
-async function saveEvidenceItem(){const name=document.getElementById('ev-name').value.trim(),fir=document.getElementById('ev-fir-link').value.trim();if(!name||!fir){showToast('⚠️ Name and FIR are required.','error');return;}try{await addEvidence({name,fir_number:fir,type:document.getElementById('ev-type-input').value,evidence_date:document.getElementById('ev-date-input').value,notes:document.getElementById('ev-notes-input').value,is_readonly:true});stopCamera();closeModal();showToast('✅ Evidence attached: '+name,'success');renderEvidence(document.getElementById('page-content'));}catch(err){showToast('❌ Error: '+err.message,'error');}}
+async function saveEvidenceItem(){
+  const name=document.getElementById('ev-name').value.trim(),fir=document.getElementById('ev-fir-link').value.trim();
+  if(!name||!fir){showToast('⚠️ Name and FIR are required.','error');return;}
+  try{
+    const evType = document.getElementById('ev-type-input').value;
+    const evDate = document.getElementById('ev-date-input').value;
+    const evNotes = document.getElementById('ev-notes-input').value;
+    const _row = await addEvidence({name,fir_number:fir,type:evType,evidence_date:evDate,notes:evNotes,is_readonly:true});
+    // AUDIT — evidence.uploaded (Phase 4B)
+    try {
+      if (window.DIO && DIO.audit) DIO.audit.log('evidence.uploaded', 'evidence',
+        (_row && _row.id) || null, {
+        after: { name, fir_number: fir, type: evType, evidence_date: evDate },
+        metadata: { has_notes: !!(evNotes && evNotes.length) }
+      });
+    } catch (_) {}
+    stopCamera();closeModal();showToast('✅ Evidence attached: '+name,'success');renderEvidence(document.getElementById('page-content'));
+  }catch(err){showToast('❌ Error: '+err.message,'error');}
+}
 async function viewEvidenceDetail(id){const all=await getEvidence(),e=all.find(x=>x.id===id);if(!e)return;openModal('🔬 Evidence Details',`<div>${[['Name',e.name],['FIR',e.fir_number||'—'],['Type',e.type],['Date',e.evidence_date||'—'],['Notes',e.notes||'—']].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${esc(v)}</span></div>`).join('')}</div><div style="text-align:center;padding:16px;font-size:48px;">${e.type==='Photo'?'📷':e.type==='Video'?'🎥':e.type==='Audio'?'🎙️':'📄'}</div>`,`<button class="btn btn-secondary" onclick="closeModal()">Close</button><button class="btn btn-danger btn-sm" onclick="closeModal();doDeleteEvidence('${id}')">🗑️ Delete</button>`);}
-async function doDeleteEvidence(id){try{await deleteEvidence(id);showToast('🗑️ Evidence deleted.');renderEvidence(document.getElementById('page-content'));}catch(err){showToast('❌ Error: '+err.message,'error');}}
+async function doDeleteEvidence(id){
+  try{
+    // AUDIT — "before" snapshot (Phase 4B). Delete se pehle capture.
+    let _before = null;
+    try {
+      if (window.DIO && DIO.audit) {
+        const all = await getEvidence();
+        const e = (all||[]).find(x=>x.id===id);
+        if (e) _before = { name: e.name, fir_number: e.fir_number, type: e.type, evidence_date: e.evidence_date };
+      }
+    } catch (_) {}
+    await deleteEvidence(id);
+    // AUDIT — evidence.deleted (critical — evidence tampering track)
+    try {
+      if (window.DIO && DIO.audit) DIO.audit.log('evidence.deleted', 'evidence', id, {
+        before: _before
+      });
+    } catch (_) {}
+    showToast('🗑️ Evidence deleted.');
+    renderEvidence(document.getElementById('page-content'));
+  }catch(err){showToast('❌ Error: '+err.message,'error');}
+}
 
 

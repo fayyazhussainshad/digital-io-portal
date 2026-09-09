@@ -1009,9 +1009,29 @@ async function _saveR173() {
     const newStatus = (window.DIO && DIO.caseStatuses && DIO.caseStatuses.fromR173Type(_r173Type))
                       || statusMap[_r173Type];
     if (newStatus) {
+      // AUDIT — "before" status pehle capture karें (Phase 4B)
+      let _prevStatus = null;
+      try {
+        if (window.DIO && DIO.audit) {
+          const chk = await supabaseClient.from('cases')
+            .select('status').eq('id', _r173CaseId).maybeSingle();
+          _prevStatus = (chk && chk.data && chk.data.status) || null;
+        }
+      } catch (_) {}
       try {
         await supabaseClient.from('cases').update({ status: newStatus }).eq('id', _r173CaseId);
         try { localStorage.setItem('case_status_'+_r173CaseId, newStatus); } catch(_) {}
+        // AUDIT — case.status_changed (Report 173 par transition)
+        try {
+          if (window.DIO && DIO.audit && _prevStatus !== newStatus) {
+            DIO.audit.log('case.status_changed', 'case', _r173CaseId, {
+              case_id: _r173CaseId,
+              before: { status: _prevStatus },
+              after: { status: newStatus },
+              metadata: { source: 'report_173', report_type: _r173Type }
+            });
+          }
+        } catch (_) {}
         showToast('✅ رپورٹ محفوظ — مقدمہ کی حالت اپ ڈیٹ ہو گئی', 'success');
       } catch(_) { showToast('✅ رپورٹ محفوظ ہو گئی', 'success'); }
     } else {
