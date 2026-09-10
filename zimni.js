@@ -24,6 +24,15 @@ async function openZimniEditor(caseId) {
   _renderZimniList();
 }
 
+// دوبارہ کوشش — DB ٹوٹنے کے بعد error کارڈ کا "🔄 دوبارہ کوشش" بٹن اسے پکارتا ہے
+async function _zimniRetryLoad() {
+  window._zimniDbBroken = false;
+  window._zimniDbWarned = false;
+  try { await _loadZimni(); } catch (_) {}
+  _renderZimniList();
+}
+window._zimniRetryLoad = _zimniRetryLoad;
+
 // ═══════════════════════════════════════════════════════════════
 //  zimni_reports کا اصل ڈھانچہ خود پہچانو
 //  مسئلہ: کچھ ڈیٹابیس میں 'content' نام کا کالم ہے ہی نہیں
@@ -171,6 +180,19 @@ function _renderZimniList() {
             || document.getElementById('page-content');
   if (!area) return;
   try { if (typeof _ch173FullPage === 'function') _ch173FullPage(area); } catch (_) {}
+
+  // ── DB ٹوٹ گیا اور کوئی مقامی نقل بھی نہیں: صاف error کارڈ + دوبارہ کوشش ──
+  //    (اگر cache موجود ہو تو نیچے نارمل فہرست — field افسر آف لائن نہ پھنسے)
+  if ((!_zimniList || _zimniList.length === 0) && window._zimniDbBroken
+      && typeof DIO !== 'undefined' && DIO.states && DIO.states.error) {
+    try {
+      area.innerHTML = DIO.states.error(
+        { message: 'اس مقدمے کی ضمنیات لوڈ نہیں ہو سکیں۔ انٹرنیٹ اور مقدمہ چیک کر کے دوبارہ کوشش کریں۔' },
+        '_zimniRetryLoad'
+      );
+      return;
+    } catch (_) { /* fail-open: error کارڈ نہ بنے تو نیچے نارمل رینڈر */ }
+  }
 
   // ── ہمیشہ ضمنی نمبر کے حساب سے، بڑے سے چھوٹا (descending) ──
   // نمبر شمار — پہلے ڈیٹابیس کا کالم، نہ ہو تو دستاویز کے ساتھ محفوظ نمبر
