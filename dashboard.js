@@ -86,59 +86,117 @@ async function _buildDash() {
     </div>
   </div>
 
-  <!-- اسلامی ٹِکر (درود + قرآن/حدیث، ہر 1 منٹ بدلتا) -->
+  <!-- Cases Stats — 7 سفید کارڈ (mockup اسٹائل — outline آئیکن) -->
+  <div style="font-size:11px;color:var(--text-muted);margin:0 0 8px;direction:rtl;font-weight:700;">📊 مقدمات کی صورتحال</div>
+  ${_dashStatCards(total, statusCounts)}
+
+  <!-- اسلامی ٹِکر — اسٹیٹس کے نیچے (درود + قرآن/حدیث، ہر 6 سیکنڈ) -->
   ${_islamicBarHTML()}
 
-  <!-- Cases Stats — 7 cards in one row (کل + 6 statuses) -->
-  <div style="margin-bottom:14px;">
-    <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;direction:rtl;font-weight:700;">📊 مقدمات کی صورتحال</div>
-    <div class="dash-stats-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;direction:rtl;">
-      <!-- کل مقدمات -->
-      <div onclick="showPage('cases',null)" style="background:linear-gradient(135deg,var(--accent),#0ea5e9);border-radius:10px;padding:10px 4px;cursor:pointer;height:88px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;">
-        <div style="font-size:11px;color:rgba(255,255,255,0.9);font-family:'Jameel Noori Nastaleeq',serif;text-align:center;line-height:1.25;">کل مقدمات</div>
-        <div style="font-size:24px;font-weight:900;color:#fff;text-align:center;">${total}</div>
-      </div>
-      ${[
-        {k:'complete',   l:'چالان مکمل',  v:complete,   c:'var(--green)'},
-        {k:'incomplete', l:'چالان نامکمل', v:incomplete, c:'var(--amber)'},
-        {k:'cancel',     l:'اخراج',        v:cancel,     c:'var(--red)'},
-        {k:'untrace',    l:'عدم پتہ',       v:untrace,    c:'#a78bfa'},
-        {k:'under',      l:'زیر تفتیش',     v:under,      c:'var(--accent)'},
-        {k:'challan512', l:'چالان 512',     v:challan512, c:'#f97316'},
-      ].map(s=>`
-      <div onclick="showPage('cases',null)"
-        style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 4px;cursor:pointer;border-bottom:3px solid ${s.c};height:88px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;"
-        onmouseover="this.style.background='var(--bg-secondary)'"
-        onmouseout="this.style.background='var(--bg-card)'">
-        <div style="font-size:11px;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq',serif;line-height:1.25;text-align:center;">${s.l}</div>
-        <div style="font-size:24px;font-weight:900;color:${s.c};text-align:center;">${s.v}</div>
-      </div>`).join('')}
-    </div>
-    <style>
-      @media (max-width:768px){
-        .dash-stats-grid{ grid-template-columns:repeat(4,1fr) !important; }
-      }
-      @media (max-width:420px){
-        .dash-stats-grid{ grid-template-columns:repeat(3,1fr) !important; }
-      }
-    </style>
-  </div>
-
-  <!-- Recently viewed (moved below stats, right-aligned) -->
+  <!-- Recently viewed -->
   <div style="direction:rtl;text-align:right;margin-bottom:14px;">
     ${_recentlyViewedBar()}
   </div>
 
-  <!-- ── SMART DAILY BRIEF (مقدمات کی بورنگ لسٹ کی جگہ — کارآمد + دلکش) ── -->
+  <!-- آج کی ترجیحات (حقیقی reminders/cases) -->
   ${_dashPriorityCards(nextRem, upcomingRem.length, overdueRem.length, thisMonthCount)}
-  ${_dashPerfChart(monthly, total, complete)}
-  ${_dashTipOfDay()}
-  ${_dashKnowledgeCard()}`;
 
-  // اسلامی ٹِکر (ہر 6 سیکنڈ) + سوال/جواب خودکار (ہر 12 سیکنڈ) — render ke baad
+  <!-- خبریں — ضلع + پنجاب/پاکستان (حالیہ مقدمات کی جگہ) -->
+  ${_dashNewsCard(o.district)}
+
+  <!-- سوالات — قانون و مسل (خودکار) -->
+  ${_dashKnowledgeCard()}
+
+  <!-- مفید نکتہ -->
+  ${_dashTipOfDay()}`;
+
+  // ٹِکر (6s) + سوالات خودکار (12s) + خبریں لوڈ — render ke baad
   try { initIslamicMessages(); } catch(_) {}
   try { initQARotation(); } catch(_) {}
+  try { _loadDashNews(); } catch(_) {}
 }
+
+// ── STAT CARDS — mockup اسٹائل (سفید کارڈ + outline آئیکن، theme-aware) ──
+function _dashStatCards(total, sc) {
+  sc = sc || {};
+  const cards = [
+    { l:'کل مقدمات',      v:total,             col:'var(--accent)', ic:'<path d="m12 2 9 4.5-9 4.5-9-4.5L12 2Z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 17 9 4.5 9-4.5"/>' },
+    { l:'زیر تفتیش',      v:sc.under||0,       col:'#2563eb',       ic:'<path d="M7 3h10M7 21h10M8 3v3.5a4 4 0 0 0 1.5 3.1l2.5 2 2.5-2A4 4 0 0 0 16 6.5V3M8 21v-3.5a4 4 0 0 1 1.5-3.1l2.5-2 2.5 2A4 4 0 0 1 16 17.5V21"/>' },
+    { l:'عدم پتہ',        v:sc.untrace||0,     col:'#7c3aed',       ic:'<path d="M4 6a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M11 11a1.5 1.5 0 1 1 2 1.3c-.6.3-1 .7-1 1.4M12 16.5h.01"/>' },
+    { l:'چالان 512 ض ف',  v:sc.challan512||0,  col:'#ea8a2f',       ic:'<path d="M4 6a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/>' },
+    { l:'چالان نامکمل',   v:sc.incomplete||0,  col:'#d97706',       ic:'<path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M9 13h4M9 16h6"/>' },
+    { l:'چالان مکمل',     v:sc.complete||0,    col:'var(--green)',  ic:'<circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/>' },
+    { l:'اخراج',          v:sc.cancel||0,      col:'var(--red)',    ic:'<path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="m9.5 12 5 5M14.5 12l-5 5"/>' },
+  ];
+  return `
+  <div style="margin-bottom:14px;">
+    <div class="dash-stats-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:10px;direction:rtl;">
+      ${cards.map(c=>`
+      <div onclick="showPage('cases',null)"
+        style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:14px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:0 1px 3px rgba(16,24,40,0.05);transition:box-shadow .15s,transform .12s;"
+        onmouseover="this.style.boxShadow='0 6px 18px rgba(16,24,40,0.12)';this.style.transform='translateY(-2px)'"
+        onmouseout="this.style.boxShadow='0 1px 3px rgba(16,24,40,0.05)';this.style.transform='none'">
+        <svg viewBox="0 0 24 24" style="width:28px;height:28px;fill:none;stroke:${c.col};stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;">${c.ic}</svg>
+        <div style="font-size:12.5px;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq',serif;text-align:center;line-height:1.3;">${c.l}</div>
+        <div style="font-size:26px;font-weight:900;color:${c.col};">${c.v}</div>
+      </div>`).join('')}
+    </div>
+    <style>@media(max-width:768px){.dash-stats-grid{display:flex !important;overflow-x:auto;gap:8px;}.dash-stats-grid>div{min-width:120px;flex:0 0 auto;}}</style>
+  </div>`;
+}
+
+// ── خبریں — ضلع + پنجاب/پاکستان (بہترین کوشش؛ ناکامی پر graceful fallback) ──
+function _dashNewsCard(district) {
+  return `
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:14px;direction:rtl;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);">
+      <div style="font-size:14px;font-weight:800;color:var(--accent);font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;">📰 تازہ خبریں — ${(typeof esc==='function'?esc(district||'پنجاب'):(district||'پنجاب'))} و پنجاب</div>
+      <button onclick="_loadDashNews()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 12px;font-size:11px;color:var(--text-muted);cursor:pointer;font-family:inherit;">↻ تازہ</button>
+    </div>
+    <div id="dash-news" style="padding:8px 16px;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;">
+      <div style="color:var(--text-muted);font-size:13px;padding:6px 0;">⏳ خبریں لوڈ ہو رہی ہیں…</div>
+    </div>
+  </div>`;
+}
+async function _loadDashNews() {
+  const box = document.getElementById('dash-news');
+  if (!box) return;
+  const o = (typeof currentOfficer!=='undefined' && currentOfficer) ? currentOfficer : {};
+  const district = o.district || '';
+  const qStr = (district ? district + ' ' : '') + 'پنجاب پاکستان';
+  const q = encodeURIComponent(qStr);
+  const rss = 'https://news.google.com/rss/search?q=' + q + '&hl=ur&gl=PK&ceid=PK:ur';
+  const api = 'https://api.rss2json.com/v1/api.json?count=6&_=' + Date.now() + '&rss_url=' + encodeURIComponent(rss);
+  box.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:6px 0;">⏳ خبریں لوڈ ہو رہی ہیں…</div>';
+  try {
+    const ctrl = new AbortController();
+    const tm = setTimeout(() => ctrl.abort(), 8000);
+    const res = await fetch(api, { signal: ctrl.signal });
+    clearTimeout(tm);
+    const data = await res.json();
+    if (!data || data.status !== 'ok' || !Array.isArray(data.items) || !data.items.length) throw new Error('no items');
+    const E = (s) => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    box.innerHTML = data.items.slice(0,6).map(it => {
+      const title = E(it.title);
+      const src = E(it.author || (it.source && it.source.title) || '');
+      const link = E(it.link || '#');
+      let dt = '';
+      try { dt = it.pubDate ? new Date(it.pubDate).toLocaleDateString('ur-PK') : ''; } catch(_) {}
+      return '<a href="'+link+'" target="_blank" rel="noopener noreferrer" style="display:block;padding:9px 0;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text-primary);">'
+        + '<div style="font-size:13.5px;font-weight:600;line-height:1.8;">'+title+'</div>'
+        + '<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">'+src+(dt?' · '+dt:'')+'</div></a>';
+    }).join('');
+  } catch (e) {
+    const gnews = 'https://news.google.com/search?q=' + q + '&hl=ur&gl=PK';
+    box.innerHTML = '<div style="color:var(--text-muted);font-size:13px;line-height:1.9;padding:6px 0;">'
+      + 'خبریں ابھی دستیاب نہیں (انٹرنیٹ یا سروس کا مسئلہ)۔'
+      + '<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">'
+      + '<button onclick="_loadDashNews()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:inherit;">دوبارہ کوشش</button>'
+      + '<a href="'+gnews+'" target="_blank" rel="noopener noreferrer" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:12px;color:var(--accent);text-decoration:none;">Google News کھولیں</a>'
+      + '</div></div>';
+  }
+}
+window._loadDashNews = _loadDashNews;
 
 // ── SMART BRIEF — آج کی ترجیحات (real reminders/cases data) ──
 function _dashPriorityCards(nextRem, upCount, overdueCount, monthCount) {
