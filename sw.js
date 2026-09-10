@@ -119,49 +119,46 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // HTML navigation — serve the cached APP so it works offline
+  // ── HTML navigation — STALE-WHILE-REVALIDATE ──
+  //   Cached shell FORAN dikhao (ایپ ہوا کی طرح فوری کھلے), background mein
+  //   fresh laa kar cache update karo → agli baar naya. Offline bhi foran chale.
   if (event.request.mode === 'navigate') {
-    // OFFLINE: serve cache immediately (no slow network timeout)
-    if (!navigator.onLine) {
-      event.respondWith(
-        caches.match('/index.html')
-          .then(cached => cached || caches.match('/'))
-          .then(cached => cached || caches.match('/offline.html'))
-      );
-      return;
-    }
+    const navFresh = fetch(event.request).then(response => {
+      if (response && response.status === 200) {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put('/index.html', clone));
+      }
+      return response;
+    }).catch(() => null);
+    event.waitUntil(navFresh);   // SW ko zinda rakho taake background cache-update mukammal ho
     event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put('/index.html', clone));
-          return response;
-        })
-        .catch(() =>
-          caches.match('/index.html')
-            .then(cached => cached || caches.match('/'))
-            .then(cached => cached || caches.match('/offline.html'))
-        )
+      caches.match('/index.html').then(cached => cached
+        || navFresh.then(r => r
+          || caches.match('/').then(c => c || caches.match('/offline.html'))))
     );
     return;
   }
 
-  // ── JS & CSS — NETWORK FIRST (never serve stale code) ──
-  // This is the key fix for the recurring "old version" problem.
+  // ── JS & CSS — STALE-WHILE-REVALIDATE (ایپ ہوا کی طرح ہلکا) ──
+  //   Pehle network-first + cache:'reload' tha → har bar poori 1.59MB dobara
+  //   download hoti thi (isi liye app dheere khulta tha). Ab: cached copy FORAN
+  //   serve karo, background mein 'reload' se fresh la kar cache update karo.
+  //   Natija: fauri load + khud-ba-khud taza (aik load peeche) — CACHE_NAME bump
+  //   ki zaroorat bhi nahi. Purana "stale version" masla isse behtar hal hota hai.
   if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
-    // AHEM: 'reload' se browser ka apna purana cache nazar-andaz hota hai.
-    // Warna nayi file upload karne ke bawajood purani file chalti rehti thi.
-    const fresh = new Request(event.request.url, {
+    const assetFresh = fetch(new Request(event.request.url, {
       cache: 'reload', credentials: 'same-origin', mode: 'same-origin'
-    });
+    })).then(response => {
+      if (response && response.status === 200) {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+      }
+      return response;
+    }).catch(() => null);
+    event.waitUntil(assetFresh);   // background update mukammal hone tak SW zinda
     event.respondWith(
-      fetch(fresh).then(response => {
-        if (response && response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        }
-        return response;
-      }).catch(() => caches.match(event.request))   // offline → cached copy
+      caches.match(event.request).then(cached => cached
+        || assetFresh.then(r => r || caches.match(event.request)))
     );
     return;
   }
