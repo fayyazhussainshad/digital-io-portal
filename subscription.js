@@ -28,6 +28,64 @@ DIO.sub = {
   }
 };
 
+// ═══════════════════════════════════════════════════════════════
+//  CENTRAL WRITE-GUARD [4E.2] — "بالکل کوئی کام نہیں، صرف view"
+//  میعاد ختم/معطل پر ہر DB write (insert/update/upsert/delete) بند — پورے
+//  سسٹم میں، ہر ماڈیول (RFA/CDR/5C/CRO/سزا/درخواستیں/ٹیمپلیٹ/گواہ/عملہ… سب)۔
+//  دو حفاظتی اصول:
+//   1) کبھی THROW نہیں کرتا — {data:null,error} لوٹاتا ہے — تاکہ view/login کبھی نہ ٹوٹے۔
+//   2) whitelist: subscriptions/subscription_plans کھلے — ورنہ تجدید ممکن نہ ہو (افسر پھنس جائے)۔
+//  FAIL-OPEN: guard لگانے میں خرابی ہو تو writes معمول کے مطابق چلیں۔
+// ═══════════════════════════════════════════════════════════════
+var _DIO_WRITE_WL = { subscriptions: 1, subscription_plans: 1 };
+var _dioSubPromptTs = 0;
+function _dioSubWritePrompt() {
+  var now = Date.now();
+  if (now - _dioSubPromptTs < 1500) return;           // throttle — ایک عمل کے کئی writes پر spam نہ ہو
+  _dioSubPromptTs = now;
+  try { showToast('⛔ سبسکرپشن ختم — صرف دیکھ سکتے ہیں۔ تجدید کریں۔', 'error', 3500); } catch (_) {}
+  try { if (typeof _showPlans === 'function') _showPlans(); } catch (_) {}
+}
+// blocked "query builder" — chain (.select().single().eq()… ) سب چلے، await پر {data:null,error}
+function _dioBlockedBuilder() {
+  _dioSubWritePrompt();
+  var res = { data: null, error: { message: 'subscription_expired_view_only', code: 'DIO_SUB' } };
+  var p = Promise.resolve(res);
+  var proxy = new Proxy({}, {
+    get: function (_t, prop) {
+      if (typeof prop === 'symbol') return undefined;
+      if (prop === 'then')    return p.then.bind(p);
+      if (prop === 'catch')   return p.catch.bind(p);
+      if (prop === 'finally') return p.finally.bind(p);
+      return function () { return proxy; };            // ہر chain method → وہی proxy
+    }
+  });
+  return proxy;
+}
+function _installDioWriteGuard() {
+  try {
+    if (window._dioWriteGuardOn) return;
+    if (!window.supabaseClient || typeof supabaseClient.from !== 'function') return;
+    window._dioWriteGuardOn = true;
+    var origFrom = supabaseClient.from.bind(supabaseClient);
+    supabaseClient.from = function (table) {
+      var qb = origFrom(table);
+      if (_DIO_WRITE_WL[table]) return qb;             // تجدید/پلان کھلے
+      ['insert', 'update', 'upsert', 'delete'].forEach(function (m) {
+        if (typeof qb[m] !== 'function') return;
+        var orig = qb[m].bind(qb);
+        qb[m] = function () {
+          if (window.DIO && DIO.sub && DIO.sub.blocked()) return _dioBlockedBuilder();
+          return orig.apply(qb, arguments);
+        };
+      });
+      return qb;
+    };
+  } catch (_) { /* fail-open */ }
+}
+// load par bhi koshish (agar supabaseClient mojood ho) + showSubscriptionBanner se bhi (reliable)
+try { setTimeout(_installDioWriteGuard, 3000); } catch (_) {}
+
 // ── SUBSCRIPTION CHECK ON LOGIN ───────────────────────────────
 async function checkSubscription() {
   try {
@@ -103,6 +161,7 @@ async function showSubscriptionBanner() {
   // ہوتا ہے — افسر اپنا ڈیٹا دیکھ/کھول سکتا ہے؛ پرنٹ/ترمیم/نیا اندراج گارڈز سے رکتے
   // ہیں۔ فوٹر بیج (updateSubBadge) حالت دکھاتا ہے۔
   if (window.DIO && DIO.sub) DIO.sub.setFromStatus(sub.status);
+  _installDioWriteGuard();   // central write-guard yaqeeni tor par lagao (supabaseClient ab mojood hai)
 }
 
 function showSubscriptionRequired(sub) {
