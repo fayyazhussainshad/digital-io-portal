@@ -55,6 +55,13 @@ async function _buildDash() {
   const todayCases  = cases.filter(c=>{ const d=_pd(c.fir_date); return d&&d.startsWith(today); });
   const monthly = _monthlyTrend(cases);
 
+  // ── SMART BRIEF data (سب حقیقی ڈیٹا — reminders + cases; کوئی فرضی چیز نہیں) ──
+  const overdueRem  = pendRem.filter(r => r.reminder_date && r.reminder_date < today);
+  const upcomingRem = pendRem.filter(r => !r.reminder_date || r.reminder_date >= today)
+                             .sort((a,b) => (a.reminder_date||'9999-99-99').localeCompare(b.reminder_date||'9999-99-99'));
+  const nextRem     = upcomingRem[0] || null;
+  const thisMonthCount = cases.filter(c => { const p=_pd(c.fir_date); return p && p.startsWith(today.slice(0,7)); }).length;
+
   // First-run onboarding card (shows once; dismiss stored in localStorage — non-sensitive flag)
   const _onboardBanner = (typeof _dioOnboardCard === 'function') ? _dioOnboardCard() : '';
 
@@ -78,6 +85,9 @@ async function _buildDash() {
       </div>
     </div>
   </div>
+
+  <!-- اسلامی ٹِکر (درود + قرآن/حدیث، ہر 1 منٹ بدلتا) -->
+  ${_islamicBarHTML()}
 
   <!-- Cases Stats — 7 cards in one row (کل + 6 statuses) -->
   <div style="margin-bottom:14px;">
@@ -119,29 +129,240 @@ async function _buildDash() {
     ${_recentlyViewedBar()}
   </div>
 
-  <!-- Recent Cases (full width) -->
-  <div class="card" style="padding:0;overflow:hidden;margin-bottom:14px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);direction:rtl;">
-      <div style="font-size:13px;font-weight:700;color:var(--accent);">📁 حالیہ مقدمات</div>
-      <button class="btn btn-secondary btn-sm" onclick="showPage('cases',null)" style="font-size:11px;">سب دیکھیں →</button>
+  <!-- ── SMART DAILY BRIEF (مقدمات کی بورنگ لسٹ کی جگہ — کارآمد + دلکش) ── -->
+  ${_dashPriorityCards(nextRem, upcomingRem.length, overdueRem.length, thisMonthCount)}
+  ${_dashPerfChart(monthly, total, complete)}
+  ${_dashTipOfDay()}
+  ${_dashKnowledgeCard()}`;
+
+  // اسلامی ٹِکر شروع کرو (ہر 1 منٹ) — dashboard render ke baad
+  try { initIslamicMessages(); } catch(_) {}
+}
+
+// ── SMART BRIEF — آج کی ترجیحات (real reminders/cases data) ──
+function _dashPriorityCards(nextRem, upCount, overdueCount, monthCount) {
+  const F = (d) => (typeof formatDate === 'function' && d) ? formatDate(d) : '—';
+  const cards = [
+    { grad:'linear-gradient(135deg,#0369a1,#0ea5e9)', ic:'📅', big:upCount,
+      lbl:'آنے والی یاددہانیاں', sub: nextRem ? ('اگلی: ' + F(nextRem.reminder_date)) : 'کوئی آئندہ نہیں',
+      go:"showPage('reminders',null)" },
+    { grad: overdueCount>0 ? 'linear-gradient(135deg,#b91c1c,#ef4444)' : 'linear-gradient(135deg,#047857,#10b981)',
+      ic: overdueCount>0 ? '⏰' : '✅', big: overdueCount,
+      lbl:'زیر التواء (گزر چکیں)', sub: overdueCount>0 ? 'فوری توجہ درکار' : 'سب وقت پر',
+      go:"showPage('reminders',null)" },
+    { grad:'linear-gradient(135deg,#6d28d9,#a78bfa)', ic:'🗂️', big:monthCount,
+      lbl:'اس ماہ نئے مقدمات', sub:'رواں مہینہ', go:"showPage('cases',null)" },
+  ];
+  return `
+  <div style="margin-bottom:14px;">
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;direction:rtl;font-weight:700;">⚡ آج کی ترجیحات</div>
+    <div class="dash-brief-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;direction:rtl;">
+      ${cards.map(c=>`
+        <div onclick="${c.go}" style="background:${c.grad};border-radius:12px;padding:13px 14px;cursor:pointer;color:#fff;display:flex;flex-direction:column;min-height:94px;box-shadow:0 2px 10px rgba(0,0,0,0.12);transition:transform .12s;"
+          onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:20px;line-height:1;">${c.ic}</span>
+            <span style="font-size:30px;font-weight:900;line-height:1;">${c.big}</span>
+          </div>
+          <div style="font-size:13px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;margin-top:7px;">${c.lbl}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.82);font-family:'Jameel Noori Nastaleeq',serif;margin-top:1px;">${c.sub}</div>
+        </div>`).join('')}
     </div>
-    <div style="overflow-x:auto;">
-    <table class="data-table" style="width:100%;">
-      <thead><tr><th>مقدمہ نمبر</th><th>مدعی</th><th>دفعہ</th><th>صورتحال</th><th>تاریخ</th><th></th></tr></thead>
-      <tbody>
-        ${cases.length ? cases.slice(0,10).map(c=>`<tr>
-          <td style="font-weight:800;color:var(--accent);cursor:pointer;font-size:12px;" onclick="openCaseWorkspace('${c.id}')">${c.fir_number||'—'}</td>
-          <td style="font-size:11px;">${esc((c.complainant||'—').slice(0,20))}</td>
-          <td style="font-size:10px;">${(c.section_of_law||'—').slice(0,15)}</td>
-          <td><span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}" style="font-size:9px;">${STATUS_LABELS[c.status]||c.status}</span></td>
-          <td style="font-size:10px;">${formatDate(c.fir_date)}</td>
-          <td><button class="btn btn-secondary btn-sm" onclick="openCaseWorkspace('${c.id}')" style="padding:3px 8px;font-size:10px;">📄</button></td>
-        </tr>`).join('') : `<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-muted);">کوئی مقدمہ نہیں</td></tr>`}
-      </tbody>
-    </table>
+    <style>@media(max-width:600px){.dash-brief-grid{grid-template-columns:1fr !important;}}</style>
+  </div>`;
+}
+
+// ── SMART BRIEF — 6 ماہ کی کارکردگی (visual bar chart، real monthly data) ──
+function _dashPerfChart(monthly, total, complete) {
+  const max = Math.max(1, ...monthly.map(m=>m.count));
+  const bars = monthly.map(m=>{
+    const h = Math.round((m.count/max)*100);
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+      <div style="font-size:11px;font-weight:800;color:var(--accent);">${m.count}</div>
+      <div style="width:100%;max-width:34px;height:70px;display:flex;align-items:flex-end;">
+        <div style="width:100%;height:${Math.max(6,h)}%;background:linear-gradient(180deg,var(--accent),#0ea5e9);border-radius:6px 6px 3px 3px;transition:height .45s;"></div>
+      </div>
+      <div style="font-size:9px;color:var(--text-muted);">${m.label}</div>
+    </div>`;
+  }).join('');
+  return `
+  <div class="card" style="padding:14px;margin-bottom:14px;direction:rtl;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:800;color:var(--accent);font-family:'Jameel Noori Nastaleeq',serif;">📈 6 ماہ کی کارکردگی</div>
+      <div style="font-size:10px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq',serif;">کل ${total} · مکمل ${complete}</div>
+    </div>
+    <div style="display:flex;align-items:flex-end;gap:6px;direction:ltr;">${bars}</div>
+  </div>`;
+}
+
+// ── SMART BRIEF — آج کا نکتہ (روزانہ بدلتا پیشہ ورانہ مشورہ؛ curated، محفوظ) ──
+// ── مفید نکات (روزانہ + "اگلا" بٹن سے مزید) ──
+const _DIO_TIPS = [
+  'شہادت کا بروقت اور مکمل اندراج مقدمے کی مضبوطی کی بنیاد ہے۔',
+  'ہر ضمنی میں تاریخ، وقت اور جائے وقوعہ واضح درج کریں — عدالت میں یہی تفصیل کام آتی ہے۔',
+  'گواہان کے بیانات جلد قلمبند کریں؛ وقت کے ساتھ یادداشت کمزور ہوتی ہے۔',
+  'چالان جمع کرانے سے پہلے تمام دستاویزات کی فہرست ایک بار ضرور جانچ لیں۔',
+  'ملزم کے کوائف (شناختی کارڈ، پتہ، موبائل) کی تصدیق تفتیش کو مضبوط بناتی ہے۔',
+  'بروقت پیشی اور یاددہانی — کوئی مقدمہ بلاوجہ زیرِ التوا نہ رہے۔',
+  'شہادتی نمونہ جات کی حفاظتی زنجیر برقرار رکھیں — عدالت میں یہی معتبر ٹھہرتی ہے۔',
+  'منظم ریکارڈ آدھی تفتیش ہے — ہر دستاویز اپنی جگہ رکھیں۔',
+  'موبائل/CDR اور فرانزک شہادت کو تحریری ریکارڈ سے مربوط رکھیں۔',
+  'روزانہ اپنی یاددہانیاں ایک نظر دیکھیں — کوئی عدالتی تاریخ نہ چھوٹے۔',
+  'موقعِ وقوعہ کی تصاویر اور نقشہ جائے وقوعہ تفتیش کو مضبوط بناتے ہیں۔',
+  'ہر بیان پر گواہ کے دستخط/نشانِ انگوٹھا اور تاریخ ضرور لیں۔',
+  'برآمدگی کا میمو موقع پر گواہان کی موجودگی میں مکمل کریں۔',
+];
+function _dashNextTip(btn) {
+  const el = document.getElementById('dash-tip-text');
+  if (!el) return;
+  let idx = (parseInt(el.dataset.idx||'0',10) + 1) % _DIO_TIPS.length;
+  el.dataset.idx = idx; el.textContent = _DIO_TIPS[idx];
+}
+window._dashNextTip = _dashNextTip;
+
+function _dashTipOfDay() {
+  const idx = Math.floor(Date.now()/86400000) % _DIO_TIPS.length;
+  return `
+  <div style="background:linear-gradient(135deg,#0f766e,#134e4a);border-radius:12px;padding:15px 18px;margin-bottom:14px;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;box-shadow:0 2px 10px rgba(0,0,0,0.12);">
+    <div style="display:flex;align-items:flex-start;gap:12px;">
+      <div style="font-size:26px;line-height:1;">💡</div>
+      <div style="flex:1;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <div style="font-size:12px;font-weight:800;color:#5eead4;">مفید نکتہ</div>
+          <button onclick="_dashNextTip(this)" style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;padding:3px 12px;font-size:11px;color:#fff;cursor:pointer;font-family:inherit;">اگلا ↻</button>
+        </div>
+        <div id="dash-tip-text" data-idx="${idx}" style="font-size:14px;color:#fff;line-height:1.9;">${_DIO_TIPS[idx]}</div>
+      </div>
     </div>
   </div>`;
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  اسلامی ٹِکر — درود + قرآن (~60%) + حدیث (~40%) + آثارِ صحابہؓ/سلف
+//  ہر ~1 منٹ بعد بدلتا ہے۔ درود کا نشان (ﷺ) ہمیشہ موجود = ہر منٹ درود کا ذکر۔
+//  ⚠ یہ مستند، معروف، حوالہ جاتی مواد کا CURATED مجموعہ ہے — گھڑا ہوا نہیں۔
+//     مزید مستند مواد نیچے arrays میں آسانی سے شامل کیا جا سکتا ہے (کسی معتبر
+//     تصدیق شدہ ماخذ سے)۔ استعمال سے پہلے کسی عالمِ دین سے تصدیق بہتر ہے۔
+// ═══════════════════════════════════════════════════════════════
+const _DIO_ISLAMIC = {
+  quran: [
+    { t:'اِنَّ مَعَ الْعُسْرِ يُسْرًا — بے شک ہر مشکل کے ساتھ آسانی ہے', r:'الشرح 94:6' },
+    { t:'وَقُلْ رَّبِّ زِدْنِيْ عِلْمًا — اے میرے رب! میرے علم میں اضافہ فرما', r:'طٰہٰ 20:114' },
+    { t:'اِنَّ اللّٰهَ مَعَ الصّٰبِرِيْنَ — بے شک اللہ صبر کرنے والوں کے ساتھ ہے', r:'البقرة 2:153' },
+    { t:'فَاذْكُرُوْنِيْۤ اَذْكُرْكُمْ — تم مجھے یاد کرو، میں تمہیں یاد کروں گا', r:'البقرة 2:152' },
+    { t:'اِنَّ اللّٰهَ يُحِبُّ الْمُحْسِنِيْنَ — بے شک اللہ نیکی کرنے والوں سے محبت کرتا ہے', r:'البقرة 2:195' },
+    { t:'وَتَعَاوَنُوْا عَلَى الْبِرِّ وَالتَّقْوٰى — نیکی اور تقویٰ پر ایک دوسرے کی مدد کرو', r:'المائدة 5:2' },
+    { t:'اِنَّ اللّٰهَ لَا يُضِيْعُ اَجْرَ الْمُحْسِنِيْنَ — اللہ نیکوکاروں کا اجر ضائع نہیں کرتا', r:'التوبة 9:120' },
+    { t:'حَسْبُنَا اللّٰهُ وَنِعْمَ الْوَكِيْلُ — ہمیں اللہ کافی ہے اور وہ بہترین کارساز ہے', r:'آل عمران 3:173' },
+    { t:'وَعَسٰۤى اَنْ تَكْرَهُوْا شَيْئًا وَّهُوَ خَيْرٌ لَّكُمْ — ہو سکتا ہے تم کسی چیز کو ناپسند کرو اور وہ تمہارے لیے بہتر ہو', r:'البقرة 2:216' },
+    { t:'رَبَّنَاۤ اٰتِنَا فِى الدُّنْيَا حَسَنَةً وَّفِى الْاٰخِرَةِ حَسَنَةً — اے رب! ہمیں دنیا و آخرت میں بھلائی دے', r:'البقرة 2:201' },
+    { t:'وَاللّٰهُ خَيْرُ الرّٰزِقِيْنَ — اور اللہ سب سے بہتر رزق دینے والا ہے', r:'الجمعة 62:11' },
+    { t:'وَبَشِّرِ الصّٰبِرِيْنَ — اور صبر کرنے والوں کو خوشخبری دے دو', r:'البقرة 2:155' },
+    { t:'اِنَّ اللّٰهَ يَاْمُرُ بِالْعَدْلِ وَالْاِحْسَانِ — بے شک اللہ عدل اور احسان کا حکم دیتا ہے', r:'النحل 16:90' },
+    { t:'وَقُوْلُوْا لِلنَّاسِ حُسْنًا — اور لوگوں سے اچھی بات کہو', r:'البقرة 2:83' },
+    { t:'وَمَنْ يَّتَّقِ اللّٰهَ يَجْعَلْ لَّهٗ مَخْرَجًا — جو اللہ سے ڈرے، اللہ اس کے لیے راہ نکال دیتا ہے', r:'الطلاق 65:2' },
+    { t:'وَلَا تَبْخَسُوا النَّاسَ اَشْيَآءَهُمْ — لوگوں کو ان کی چیزیں کم نہ دو', r:'الاعراف 7:85' },
+  ],
+  hadith: [
+    { t:'اِنَّمَا الْاَعْمَالُ بِالنِّيَّاتِ — اعمال کا دارومدار نیتوں پر ہے', r:'صحیح بخاری' },
+    { t:'اَلدِّيْنُ النَّصِيْحَةُ — دین خیرخواہی کا نام ہے', r:'صحیح مسلم' },
+    { t:'مَنْ لَّا يَرْحَمِ النَّاسَ لَا يَرْحَمْهُ اللّٰهُ — جو لوگوں پر رحم نہیں کرتا، اللہ اس پر رحم نہیں کرتا', r:'بخاری و مسلم' },
+    { t:'اَلْمُسْلِمُ مَنْ سَلِمَ الْمُسْلِمُوْنَ مِنْ لِّسَانِهٖ وَيَدِهٖ — مسلمان وہ ہے جس کی زبان و ہاتھ سے لوگ محفوظ رہیں', r:'صحیح بخاری' },
+    { t:'اَلظُّلْمُ ظُلُمَاتٌ يَّوْمَ الْقِيَامَةِ — ظلم قیامت کے دن اندھیرے ہوں گے', r:'بخاری و مسلم' },
+    { t:'اِتَّقِ اللّٰهَ حَيْثُمَا كُنْتَ — جہاں کہیں رہو اللہ سے ڈرو', r:'جامع ترمذی' },
+    { t:'اَلْحَيَاءُ مِنَ الْاِيْمَانِ — حیا ایمان کا حصہ ہے', r:'بخاری و مسلم' },
+    { t:'اَلصِّدْقُ يَهْدِيْۤ اِلَى الْبِرِّ — سچائی نیکی کی طرف لے جاتی ہے', r:'بخاری و مسلم' },
+    { t:'اَلْمُؤْمِنُ لِلْمُؤْمِنِ كَالْبُنْيَانِ يَشُدُّ بَعْضُهٗ بَعْضًا — مومن مومن کے لیے عمارت کی طرح ہے', r:'بخاری و مسلم' },
+    { t:'لَا يُؤْمِنُ اَحَدُكُمْ حَتّٰى يُحِبَّ لِاَخِيْهِ مَا يُحِبُّ لِنَفْسِهٖ — کوئی مومن نہیں جب تک اپنے بھائی کے لیے وہی نہ چاہے جو اپنے لیے', r:'بخاری و مسلم' },
+    { t:'اَلْكَلِمَةُ الطَّيِّبَةُ صَدَقَةٌ — اچھی بات (بھی) صدقہ ہے', r:'بخاری و مسلم' },
+  ],
+  athar: [
+    { t:'علم مال سے بہتر ہے؛ علم تمہاری حفاظت کرتا ہے اور مال کی تم حفاظت کرتے ہو', r:'منسوب: حضرت علیؓ' },
+    { t:'حساب لیے جانے سے پہلے اپنا محاسبہ خود کر لو', r:'منسوب: حضرت عمرؓ' },
+    { t:'انصاف کے ساتھ کیا گیا کام عبادت میں شمار ہوتا ہے', r:'اقوالِ سلف' },
+  ]
+};
+function _islamicBarHTML() {
+  return `
+  <div id="islamic-bar" onclick="_islamicNext&&_islamicNext()" title="اگلا پیغام"
+    style="display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,rgba(15,118,110,0.12),rgba(56,189,248,0.07));border:1px solid rgba(15,118,110,0.25);border-radius:10px;padding:8px 14px;margin-bottom:14px;direction:rtl;overflow:hidden;cursor:pointer;">
+    <span title="درود شریف — ﷺ" style="font-size:19px;flex-shrink:0;color:#0f766e;">ﷺ</span>
+    <span id="islamic-text" style="font-size:14px;font-weight:600;color:var(--text-primary);font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;transition:opacity .4s;">﷽</span>
+    <span id="islamic-ref" style="font-size:10px;color:var(--text-muted);flex-shrink:0;font-family:'Jameel Noori Nastaliq','Noto Nastaliq Urdu',serif;"></span>
+  </div>`;
+}
+function _islamicPick() {
+  const r = Math.random();
+  let pool;
+  if (r < 0.60) pool = _DIO_ISLAMIC.quran;        // ~60% قرآن
+  else if (r < 0.94) pool = _DIO_ISLAMIC.hadith;  // ~34% حدیث (قرآن:حدیث ≈ 60:40)
+  else pool = _DIO_ISLAMIC.athar;                 // ~6% آثار
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+function _islamicRender() {
+  const tEl = document.getElementById('islamic-text');
+  const rEl = document.getElementById('islamic-ref');
+  if (!tEl) return;
+  const m = _islamicPick();
+  tEl.style.opacity = '0';
+  setTimeout(() => {
+    tEl.textContent = m.t;
+    if (rEl) rEl.textContent = m.r ? '— ' + m.r : '';
+    tEl.style.opacity = '1';
+  }, 160);
+}
+function _islamicNext() { _islamicRender(); }
+window._islamicNext = _islamicNext;
+function initIslamicMessages() {
+  try {
+    if (!document.getElementById('islamic-bar')) return;   // sirf dashboard par
+    _islamicRender();
+    if (window._dioIslamicTimer) clearInterval(window._dioIslamicTimer);
+    window._dioIslamicTimer = setInterval(() => {
+      if (!document.getElementById('islamic-bar')) { clearInterval(window._dioIslamicTimer); window._dioIslamicTimer = null; return; }
+      _islamicRender();
+    }, 60000);   // ہر 1 منٹ
+  } catch (_) {}
+}
+window.initIslamicMessages = initIslamicMessages;
+
+// ── قانون و مسل — "کیا آپ جانتے ہیں؟" (تعلیمی سوال/جواب؛ ایپ کے document types
+//    اور معروف طریقہ کار سے۔ قانونی حوالوں کی تصدیق/توسیع خود کی جا سکتی ہے) ──
+const _DIO_QA = [
+  { q:'ضمنی بیرونی اور اندرونی میں کیا فرق ہے؟', a:'بیرونی: موقع/تفتیش کی کارروائی۔ اندرونی: تھانہ کی داخلی کارروائی کا اندراج۔' },
+  { q:'رپورٹ 173 ض ف (چالان) کب پیش ہوتی ہے؟', a:'تفتیش مکمل ہونے پر متعلقہ عدالت میں پیش کی جاتی ہے۔' },
+  { q:'173 ض ف رپورٹ کی اقسام کون سی ہیں؟', a:'مکمل، نامکمل، عبوری، تتمہ، اخراج، عدم پتہ، اور چالان 512۔' },
+  { q:'مسل میں انڈیکس (فہرست) کیوں ضروری ہے؟', a:'دستاویزات کی ترتیب عدالتی پیشی اور تلاش کو آسان و منظم بناتی ہے۔' },
+  { q:'حفاظتی زنجیر (Chain of Custody) کیا ہے؟', a:'شہادت کس کے پاس، کب اور کیسے رہی — اس کا مسلسل ریکارڈ؛ عدالت میں شہادت کی صداقت کی بنیاد۔' },
+  { q:'چالان 512 ض ف کب استعمال ہوتا ہے؟', a:'جب ملزم مفرور/عدم دستیاب ہو تو اس کی غیر موجودگی میں کارروائی کے لیے۔' },
+  { q:'بیان زیر دفعہ 161 ض ف کیا ہے؟', a:'تفتیش کے دوران گواہ کا بیان جو تفتیشی افسر قلمبند کرتا ہے۔' },
+  { q:'برآمدگی کا میمو کب مکمل کریں؟', a:'موقع پر، گواہان کی موجودگی میں — بعد میں تنازع سے بچنے کے لیے۔' },
+  { q:'نقشہ جائے وقوعہ کیوں اہم ہے؟', a:'واقعے کی جگہ، فاصلے اور سمت واضح کرتا ہے — عدالت میں منظرکشی آسان۔' },
+  { q:'CDR/IMEI شہادت کو کیسے مضبوط بنائیں؟', a:'تحریری ریکارڈ سے مربوط رکھیں اور مجاز اتھارٹی سے تصدیق شدہ حاصل کریں۔' },
+];
+function _dashKnowledgeCard() {
+  const idx = Math.floor(Date.now()/86400000) % _DIO_QA.length;
+  const qa = _DIO_QA[idx];
+  return `
+  <div class="card" style="padding:14px;margin-bottom:14px;direction:rtl;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="font-size:13px;font-weight:800;color:#a78bfa;">❓ کیا آپ جانتے ہیں؟ — قانون و مسل</div>
+      <button onclick="_dashNextQA(this)" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 12px;font-size:11px;color:var(--text-muted);cursor:pointer;font-family:inherit;">اگلا سوال ↻</button>
+    </div>
+    <div id="dash-qa-q" data-idx="${idx}" style="font-size:14px;font-weight:700;color:var(--text-primary);line-height:1.8;">${qa.q}</div>
+    <div id="dash-qa-a" style="font-size:13px;color:var(--text-secondary);line-height:1.9;margin-top:6px;">${qa.a}</div>
+  </div>`;
+}
+function _dashNextQA(btn) {
+  const qEl = document.getElementById('dash-qa-q');
+  const aEl = document.getElementById('dash-qa-a');
+  if (!qEl) return;
+  let idx = (parseInt(qEl.dataset.idx||'0',10) + 1) % _DIO_QA.length;
+  qEl.dataset.idx = idx;
+  qEl.textContent = _DIO_QA[idx].q;
+  if (aEl) aEl.textContent = _DIO_QA[idx].a;
+}
+window._dashNextQA = _dashNextQA;
 
 // ── HELPERS ───────────────────────────────────────────────────
 function _recentlyViewedBar() {
