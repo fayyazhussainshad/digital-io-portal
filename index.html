@@ -526,7 +526,7 @@ input, textarea, select { font-family: var(--font-main); }
 .logout-btn:hover { background: rgba(239,68,68,0.15); }
 .sidebar-version { font-size: 9px; color: var(--text-faint); text-align: center; margin-top: 6px; }
 .main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; width: 100%; min-width: 0; margin-right: 0; }
-.topbar { display:flex; align-items:center; gap:8px; height: var(--topbar-height); background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; justify-content: space-between; flex-shrink: 0; }
+.topbar { display:flex; align-items:center; gap:8px; height: var(--topbar-height); background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 10px; justify-content: space-between; flex-shrink: 0; }
 body.workspace-mode .topbar { display: none !important; }
 body.workspace-mode .page-content { height: 100vh !important; }
 .topbar-left { display: flex; align-items: center; gap: 12px; }
@@ -538,10 +538,13 @@ body.workspace-mode .page-content { height: 100vh !important; }
 .topbar-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); background: var(--bg-tertiary); padding: 5px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); }
 
 /* ═══ TOP NAVIGATION BUTTONS (replace sidebar) ═══ */
-.topnav-btn { background: none; border: 1px solid transparent; border-radius: 8px; padding: 6px 10px; color: var(--text-secondary); font-size: 15px; cursor: pointer; white-space: nowrap; transition: all 0.15s; font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; flex-shrink: 0; }
+.topnav-btn { display: inline-flex; align-items: center; gap: 7px; background: none; border: 1px solid transparent; border-radius: 9px; padding: 7px 13px; height: 38px; box-sizing: border-box; color: var(--text-secondary); font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s, border-color .15s; font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; flex-shrink: 0; }
 .topnav-btn:hover { background: var(--hover-bg); color: var(--text-primary); }
-.topnav-btn.active { background: var(--nav-active); color: var(--accent); font-weight: 700; }
+.topnav-btn.active { background: var(--nav-active); color: var(--accent); border-color: rgba(56,189,248,0.28); font-weight: 700; }
 .topnav-label { font-size: 14px; }
+/* Professional monochrome line icons — currentColor se theme + active state khud match */
+.tn-svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; display: block; }
+.topnav-btn .tn-caret { font-size: 10px; opacity: .7; margin-inline-start: 1px; }
 .topmore-item { display: block; padding: 9px 12px; border-radius: 6px; font-size: 15px; color: var(--text-secondary); cursor: pointer; font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; transition: all 0.12s; }
 .topdd-menu { position: fixed; top: 48px; left: 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 9999; min-width: 180px; max-height: 80vh; overflow-y: auto; padding: 6px; direction: rtl; }
 .topmore-item:hover { background: var(--hover-bg); color: var(--accent); }
@@ -1227,16 +1230,16 @@ window.addEventListener('unhandledrejection', function(e){
                font-size:18px;font-weight:900;padding:6px 12px;direction:ltr;">←</button>
       <div class="topbar-left" style="display:flex;align-items:center;gap:4px;flex-wrap:nowrap;overflow-x:auto;flex:1;min-width:0;">
         <!-- Main nav buttons (desktop top nav) -->
-        <button class="topnav-btn active" onclick="showPage('dashboard',null);window._setTopNav&&_setTopNav(this)" title="ڈیش بورڈ">🏠<span class="topnav-label"> ڈیش بورڈ</span></button>
-        <button class="topnav-btn" onclick="showPage('cases',null);window._setTopNav&&_setTopNav(this)" title="مقدمات">📁<span class="topnav-label"> مقدمات</span></button>
-        <button class="topnav-btn" onclick="showPage('fivec',null);window._setTopNav&&_setTopNav(this)" title="5-C درخواستیں">📋<span class="topnav-label"> C-5</span></button>
-        <button class="topnav-btn" onclick="showPage('search',null);window._setTopNav&&_setTopNav(this)" title="تلاش">🔍<span class="topnav-label"> تلاش</span></button>
-        <button class="topnav-btn" onclick="showPage('reminders',null);window._setTopNav&&_setTopNav(this)" title="یاددہانیاں">🔔<span class="topnav-label"> یاددہانی</span></button>
-        <button class="topnav-btn" onclick="showPage('law',null);window._setTopNav&&_setTopNav(this)" title="قانونی لائبریری">⚖️<span class="topnav-label"> قانونی لائبریری</span></button>
+        <button class="topnav-btn active" onclick="showPage('dashboard',null);window._setTopNav&&_setTopNav(this)" title="ڈیش بورڈ"><svg class="tn-svg" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg><span class="topnav-label">ڈیش بورڈ</span></button>
+        <button class="topnav-btn" onclick="showPage('cases',null);window._setTopNav&&_setTopNav(this)" title="مقدمات"><svg class="tn-svg" viewBox="0 0 24 24"><path d="M4 5h5l2 2.5h9A1.5 1.5 0 0 1 21.5 9v8.5A1.5 1.5 0 0 1 20 19H4a1.5 1.5 0 0 1-1.5-1.5v-11A1.5 1.5 0 0 1 4 5Z"/></svg><span class="topnav-label">مقدمات</span></button>
+        <button class="topnav-btn" onclick="showPage('fivec',null);window._setTopNav&&_setTopNav(this)" title="5-C درخواستیں"><svg class="tn-svg" viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9.5 4V3.2A1.2 1.2 0 0 1 10.7 2h2.6a1.2 1.2 0 0 1 1.2 1.2V4"/><path d="M9 10h6M9 13.5h6M9 17h4"/></svg><span class="topnav-label">C-5</span></button>
+        <button class="topnav-btn" onclick="showPage('search',null);window._setTopNav&&_setTopNav(this)" title="تلاش"><svg class="tn-svg" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20.5 20.5-4-4"/></svg><span class="topnav-label">تلاش</span></button>
+        <button class="topnav-btn" onclick="showPage('reminders',null);window._setTopNav&&_setTopNav(this)" title="یاددہانیاں"><svg class="tn-svg" viewBox="0 0 24 24"><path d="M18 8.5a6 6 0 0 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 14.5 18 8.5Z"/><path d="M13.7 19.5a2 2 0 0 1-3.4 0"/></svg><span class="topnav-label">یاددہانی</span></button>
+        <button class="topnav-btn" onclick="showPage('law',null);window._setTopNav&&_setTopNav(this)" title="قانونی لائبریری"><svg class="tn-svg" viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M7 21h10"/><path d="M4 7h16"/><path d="M12 3.5 5 6M12 3.5 19 6"/><path d="m5 6-2.5 6.5a3 3 0 0 0 5 0z"/><path d="m19 6-2.5 6.5a3 3 0 0 0 5 0z"/></svg><span class="topnav-label">قانونی لائبریری</span></button>
 
         <!-- اوزار (Tools) dropdown -->
         <div style="position:relative;display:inline-block;">
-          <button class="topnav-btn" onclick="window._toggleTopDD&&_toggleTopDD(event,'tools-menu')" title="اوزار">🔧<span class="topnav-label"> اوزار</span> ▾</button>
+          <button class="topnav-btn" onclick="window._toggleTopDD&&_toggleTopDD(event,'tools-menu')" title="اوزار"><svg class="tn-svg" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg><span class="topnav-label">اوزار</span><span class="tn-caret">▾</span></button>
           <div id="tools-menu" class="topdd-menu" style="display:none;">
             <a class="topmore-item" id="topbar-sho-btn" onclick="openShoDspModal('sho');_closeTopDD()" title="SHO کا نام">🏛️ SHO</a>
             <a class="topmore-item" id="topbar-dsp-btn" onclick="openShoDspModal('dsp');_closeTopDD()" title="DSP/SDPO کا نام">🎖️ DSP/SDPO</a>
@@ -1250,7 +1253,7 @@ window.addEventListener('unhandledrejection', function(e){
 
         <!-- اکاؤنٹ (Account) dropdown -->
         <div style="position:relative;display:inline-block;">
-          <button class="topnav-btn" onclick="window._toggleTopDD&&_toggleTopDD(event,'account-menu')" title="اکاؤنٹ">👤<span class="topnav-label"> اکاؤنٹ</span> ▾</button>
+          <button class="topnav-btn" onclick="window._toggleTopDD&&_toggleTopDD(event,'account-menu')" title="اکاؤنٹ"><svg class="tn-svg" viewBox="0 0 24 24"><path d="M19 21v-1.5a4.5 4.5 0 0 0-4.5-4.5h-5A4.5 4.5 0 0 0 5 19.5V21"/><circle cx="12" cy="7.5" r="4"/></svg><span class="topnav-label">اکاؤنٹ</span><span class="tn-caret">▾</span></button>
           <div id="account-menu" class="topdd-menu" style="display:none;">
             <a class="topmore-item" onclick="showSubscriptionPage();_closeTopDD()">💎 سبسکرپشن</a>
             <a class="topmore-item" onclick="showPage('bin',null);_closeTopDD()">🗑️ حذف شدہ مواد</a>
