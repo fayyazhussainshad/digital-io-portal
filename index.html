@@ -503,8 +503,12 @@ input, textarea, select { font-family: var(--font-main); }
   z-index: 1001;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  /* RTL animated drawer — دائیں سے سلائیڈ (بند حالت میں پوشیدہ) */
+  transform: translateX(100%);
+  transition: transform 0.28s ease;
+  box-shadow: -8px 0 30px rgba(0,0,0,0.28);
 }
-.sidebar.mobile-open { transform: translateX(0); }
+.sidebar.mobile-open, .sidebar.open { transform: translateX(0) !important; }
 .sidebar-logo { padding: 18px 16px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
 .sidebar-logo-icon { font-size: 24px; }
 .sidebar-logo-text { font-family: var(--font-display); font-size: 18px; font-weight: 800; letter-spacing: 2px; color: var(--accent); }
@@ -550,13 +554,13 @@ body.workspace-mode .page-content { height: 100vh !important; }
 .topmore-item:hover { background: var(--hover-bg); color: var(--accent); }
 
 /* SIDEBAR FULLY REMOVED — top-nav is used on all screens, workspace gets full width */
-.sidebar { display: none !important; }
+.sidebar { display: flex !important; }
 .main-area { margin-right: 0 !important; }
 #menu-toggle { display: none !important; }
 
 /* DESKTOP: full width workspace */
 @media (min-width: 769px) {
-  .sidebar { display: none !important; }
+  .sidebar { display: flex !important; }
   .main-area { margin-right: 0 !important; }
   #menu-toggle { display: none !important; }
 }
@@ -1229,6 +1233,10 @@ window.addEventListener('unhandledrejection', function(e){
         style="display:none;order:99;margin-left:0;margin-right:auto;flex-shrink:0;
                font-size:18px;font-weight:900;padding:6px 12px;direction:ltr;">←</button>
       <div class="topbar-left" style="display:flex;align-items:center;gap:4px;flex-wrap:nowrap;overflow-x:auto;flex:1;min-width:0;">
+        <!-- ☰ مینو — RTL سائیڈبار drawer کھولے -->
+        <button class="topnav-btn" onclick="window.toggleSidebar&&toggleSidebar()" title="مینو" aria-label="مینو" style="padding:7px 10px;flex-shrink:0;">
+          <svg class="tn-svg" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
         <!-- Main nav buttons (desktop top nav) -->
         <button class="topnav-btn active" onclick="showPage('dashboard',null);window._setTopNav&&_setTopNav(this)" title="ڈیش بورڈ"><svg class="tn-svg" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg><span class="topnav-label">ڈیش بورڈ</span></button>
         <button class="topnav-btn" onclick="showPage('cases',null);window._setTopNav&&_setTopNav(this)" title="مقدمات"><svg class="tn-svg" viewBox="0 0 24 24"><path d="M4 5h5l2 2.5h9A1.5 1.5 0 0 1 21.5 9v8.5A1.5 1.5 0 0 1 20 19H4a1.5 1.5 0 0 1-1.5-1.5v-11A1.5 1.5 0 0 1 4 5Z"/></svg><span class="topnav-label">مقدمات</span></button>
@@ -1565,7 +1573,7 @@ function _sidebarClose() { closeMobileSidebar(); }
 
 <!-- ── Mobile sidebar CSS ── -->
 <style>
-.topbar { padding-right: 64px !important; }
+.topbar { padding-right: 10px !important; }
 @media (max-width: 768px) {
   .topbar { padding-right: 60px !important; }
   .sidebar {
