@@ -1801,7 +1801,7 @@ function _zimniDefaultBody(o, c) {
   const firNo    = E(c.fir_number || '');
   const firDate  = E(D(c.fir_date || ''));
   const wDate    = E(D(c.occurrence_date || ''));                                     // وقوعہ کی تاریخ
-  const wPlace   = E(c.place_of_occurrence || c.occurrence_place || c.jaye_waqoia || ''); // مقام وقوعہ
+  const wPlace   = E(c.place_of_occurrence || c.jaye_waqoia || ''); // مقام وقوعہ — occurrence_place ہٹا دیا (اب صرف "بحد" خانے میں آتا ہے)
   const behad    = E(c.behad || c.occurrence_place || c.distance || c.samt || ''); // بحد — نئے فارم کی "بحد" فیلڈ (occurrence_place) سے
   const compl    = E(c.complainant_name || c.complainant || '');
   const serial   = E(z.serial_no || '');
