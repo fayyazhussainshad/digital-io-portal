@@ -907,6 +907,9 @@ async function initApp() {
 //  GLOBAL PRINT HELPER — iframe-based, no double-close, no full-screen stuck
 // ═══════════════════════════════════════════════════════════
 function dioPrint(htmlContent) {
+  // VIEW-ONLY ENFORCEMENT [4E]: میعاد ختم/معطل پر تمام پرنٹنگ بند (ہر دستاویز
+  // یہیں سے پرنٹ ہوتی ہے)۔ fail-open: DIO.sub نہ ہو تو پرنٹ چلے۔
+  if (window.DIO && DIO.sub && !DIO.sub.guard('پرنٹ')) return;
   // DIRECT PRINT: pehle aik extra in-app preview aata tha (بند کریں/پرنٹ کریں).
   // Woh fazool tha kyunki browser ka apna print dialog pehle se preview deta hai.
   // Ab seedha print par jate hain. (Purana preview chahiye to localStorage mein

@@ -1895,6 +1895,9 @@ function _zimniDefaultBody(o, c) {
 }
 // ── SAVE ──────────────────────────────────────────────────────
 async function _saveZimni(silent, keepOpen) {
+  // VIEW-ONLY ENFORCEMENT [4E]: میعاد ختم پر ضمنی محفوظ/ترمیم بند۔ silent (خودکار)
+  // پر خاموشی سے رکو، صرف manual save پر renew prompt۔
+  if (window.DIO && DIO.sub && DIO.sub.blocked()) { if (!silent) DIO.sub.guard('ضمنی محفوظ'); return false; }
   const ed = _zimniDoc();
   if (!ed) return false;
   const bodyHtml = _zimniCleanHTML(ed.innerHTML);   // grips محفوظ نہ ہوں
@@ -3685,6 +3688,8 @@ function _zaDefaultBody(o, c) {
 
 // ── SAVE ──────────────────────────────────────────────────────
 async function _saveZimniA(silent, keepOpen) {
+  // VIEW-ONLY ENFORCEMENT [4E]: میعاد ختم پر ضمنی اندرونی محفوظ/ترمیم بند
+  if (window.DIO && DIO.sub && DIO.sub.blocked()) { if (!silent) DIO.sub.guard('ضمنی محفوظ'); return false; }
   const ed = _zimniDoc();
   if (!ed) return false;
   const bodyHtml = _zimniCleanHTML(ed.innerHTML);

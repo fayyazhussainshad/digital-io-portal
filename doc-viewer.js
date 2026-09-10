@@ -360,6 +360,8 @@ function _dioRenderTabContent(docId) {
 // ── Smart print — active dastawez ke hisab se ──
 
 function _dioPrintCurrent() {
+  // VIEW-ONLY [4E]: میعاد ختم پر پرنٹ بند (window.print() fallback سمیت)
+  if (window.DIO && DIO.sub && !DIO.sub.guard('پرنٹ')) return;
   const id = _dioActiveTab;
   if (!id) return;
   if (id.startsWith('r173:')) {

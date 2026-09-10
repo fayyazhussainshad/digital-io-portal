@@ -3,6 +3,31 @@
    Plans · Payment · Trial · License · Admin verify
    ═══════════════════════════════════════════════════════════ */
 
+// ═══════════════════════════════════════════════════════════════
+//  VIEW-ONLY ENFORCEMENT (میعاد ختم پر) — DIO.sub   [4E]
+//  Owner rule: میعاد ختم/معطل → ایپ کھلا رہے، ڈیٹا نظر آئے (view),
+//  مگر PRINT + EDITING + NEW ADDITION بند۔ کوئی گریس نہیں۔
+//  FAIL-OPEN: کسی بھی شک/خرابی پر ہمیشہ ALLOW (اصل افسر کبھی غلط لاک نہ ہو)۔
+//  اہم: تجدید/ادائیگی کا راستہ (_submitPayment) کبھی گارڈ نہیں ہوتا — ورنہ
+//       افسر پھنس جائے گا۔
+// ═══════════════════════════════════════════════════════════════
+window.DIO = window.DIO || {};
+DIO.sub = {
+  _blocked: false,
+  setFromStatus: function (status) {
+    this._blocked = (status === 'expired' || status === 'suspended');
+    return this._blocked;
+  },
+  blocked: function () { return this._blocked === true; },
+  // guard(label) → true = آگے بڑھو، false = بند (renew prompt دکھایا)۔
+  guard: function (label) {
+    if (this._blocked !== true) return true;          // allow (default + fail-open)
+    try { showToast('⛔ سبسکرپشن ختم — ' + (label || 'یہ عمل') + ' بند ہے۔ تجدید کریں۔', 'error', 4000); } catch (_) {}
+    try { if (typeof _showPlans === 'function') _showPlans(); } catch (_) {}
+    return false;
+  }
+};
+
 // ── SUBSCRIPTION CHECK ON LOGIN ───────────────────────────────
 async function checkSubscription() {
   try {
@@ -70,14 +95,14 @@ async function _createTrial(oid) {
 // ── SUBSCRIPTION BANNER ───────────────────────────────────────
 async function showSubscriptionBanner() {
   // Trial/active info now shows in the BOTTOM bar (footer-license), not below topbar.
-  // Remove any existing top banner.
   const existing = document.getElementById('sub-banner');
   if (existing) existing.remove();
-  // Only show blocking screen if subscription expired/suspended.
   const sub = await checkSubscription();
-  if (sub.status === 'expired' || sub.status === 'suspended') {
-    showSubscriptionRequired(sub);
-  }
+  // VIEW-ONLY ENFORCEMENT [4E]: میعاد ختم/معطل پر اب پورا ایپ LOCK نہیں ہوتا
+  // (پہلے showSubscriptionRequired پورا main-app بدل دیتا تھا)۔ اب صرف فلیگ سیٹ
+  // ہوتا ہے — افسر اپنا ڈیٹا دیکھ/کھول سکتا ہے؛ پرنٹ/ترمیم/نیا اندراج گارڈز سے رکتے
+  // ہیں۔ فوٹر بیج (updateSubBadge) حالت دکھاتا ہے۔
+  if (window.DIO && DIO.sub) DIO.sub.setFromStatus(sub.status);
 }
 
 function showSubscriptionRequired(sub) {
@@ -290,9 +315,16 @@ async function updateSubBadge() {
     } else if (sub.status==='trial') {
       el.textContent = `🎁 آزمائشی · ${sub.daysLeft} دن باقی`;
       el.style.color = 'var(--amber)';
-    } else {
-      el.textContent = '❌ مدت ختم';
+    } else if (sub.status==='suspended') {
+      el.textContent = '🔒 معطل · صرف دیکھیں — ایڈمن سے رابطہ';
       el.style.color = 'var(--red)';
+      el.style.cursor = 'pointer';
+      el.onclick = function(){ try{ _showPlans(); }catch(_){} };
+    } else {
+      el.textContent = '🔒 میعاد ختم · صرف دیکھیں — تجدید کریں';
+      el.style.color = 'var(--red)';
+      el.style.cursor = 'pointer';
+      el.onclick = function(){ try{ _showPlans(); }catch(_){} };
     }
   } catch(_) {}
 }

@@ -932,6 +932,8 @@ function _collectR173() {
 }
 
 async function _saveR173() {
+  // VIEW-ONLY ENFORCEMENT [4E]: میعاد ختم پر چالان محفوظ/ترمیم بند
+  if (window.DIO && DIO.sub && !DIO.sub.guard('چالان محفوظ')) return;
   const form_data = _collectR173();
   // محفوظ فائلوں کی فہرست میں درج (نمبر شمار + تاریخ کے ساتھ)
   try {

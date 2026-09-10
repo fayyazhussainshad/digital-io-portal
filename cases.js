@@ -1036,6 +1036,8 @@ function wevOpenFile() {
 let _currentWorkspaceCaseId = null;
 
 async function wevSave(caseId, firNumber) {
+  // VIEW-ONLY ENFORCEMENT [4E]: میعاد ختم پر نئی شہادت منسلک کرنا بند
+  if (window.DIO && DIO.sub && !DIO.sub.guard('شہادت منسلک')) return;
   const name = document.getElementById('wev-name')?.value.trim();
   if (!name) { showToast('⚠️ Evidence name is required.', 'error'); return; }
   _currentWorkspaceCaseId = caseId;

@@ -28,6 +28,8 @@ function stopCamera(){cameraStream?.getTracks().forEach(t=>t.stop());cameraStrea
 function snapPhoto(){const v=document.getElementById('cam-video'),c=document.getElementById('cam-canvas'),s=document.getElementById('cam-snap');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);s.src=c.toDataURL('image/jpeg',0.9);s.style.display='block';v.style.display='none';stopCamera();const ni=document.getElementById('ev-name');if(ni&&!ni.value)ni.value='Live Photo '+new Date().toLocaleString('en-PK');document.getElementById('ev-type-input').value='Photo';showToast('✅ Photo captured!','success');}
 function openFileSelect(){const i=document.createElement('input');i.type='file';i.accept='image/*,video/*,audio/*,.pdf,.doc,.docx';i.onchange=e=>{const f=e.target.files[0];if(!f)return;const ni=document.getElementById('ev-name');if(ni&&!ni.value)ni.value=f.name;const ti=document.getElementById('ev-type-input');if(ti){if(f.type.startsWith('image'))ti.value='Photo';else if(f.type.startsWith('video'))ti.value='Video';else if(f.type.startsWith('audio'))ti.value='Audio';else ti.value='Document';}showToast('📎 File selected: '+f.name,'success');};i.click();}
 async function saveEvidenceItem(){
+  // VIEW-ONLY ENFORCEMENT [4E]: میعاد ختم پر نئی شہادت شامل کرنا بند
+  if (window.DIO && DIO.sub && !DIO.sub.guard('شہادت شامل')) return;
   const name=document.getElementById('ev-name').value.trim(),fir=document.getElementById('ev-fir-link').value.trim();
   if(!name||!fir){showToast('⚠️ Name and FIR are required.','error');return;}
   try{

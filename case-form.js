@@ -469,6 +469,8 @@ function sectionTag(sectionStr) {
 async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;openModal(`✏️ ترمیم — مقدمہ ${c.fir_number}`,caseFormHTML(c),`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveEditCase('${id}')">💾 تبدیلیاں محفوظ کریں</button>`);setTimeout(function(){_cfRenderMobilePhones();_cfSizeModal();},50);}
 
 async function saveNewCase(){
+  // VIEW-ONLY ENFORCEMENT [4E]: میعاد ختم پر نیا مقدمہ بند
+  if (window.DIO && DIO.sub && !DIO.sub.guard('نیا مقدمہ')) return;
   // Check case limit
   if (typeof checkCaseLimit==='function') {
     const allowed = await checkCaseLimit();
@@ -562,6 +564,8 @@ const _DOCS_LIST = [
 
 
 async function saveEditCase(id){
+  // VIEW-ONLY ENFORCEMENT [4E]: میعاد ختم پر ترمیم بند
+  if (window.DIO && DIO.sub && !DIO.sub.guard('ترمیم محفوظ')) return;
   // Resolve section: use selected, else typed search value
   var _editSection=document.getElementById('cf-section').value.trim();
   if(!_editSection){
