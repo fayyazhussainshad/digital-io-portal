@@ -190,7 +190,16 @@ async function addCase(caseData) {
     showToast('📴 آف لائن محفوظ — انٹرنیٹ آنے پر sync ہوگا', 'info');
     return localRec;
   }
-  const { data, error } = await supabaseClient.from('cases').insert(rec).select().single();
+  let { data, error } = await supabaseClient.from('cases').insert(rec).select().single();
+  // SELF-HEAL: اگر کوئی کالم DB میں موجود نہ ہو (schema mismatch، مثلاً بحد/occurrence_place)
+  // تو اسے نکال کر دوبارہ کوشش — مقدمہ محفوظ ہونا کبھی نہ رکے۔
+  let _g = 0;
+  while (error && _g++ < 8) {
+    const m = /Could not find the '([^']+)' column/i.exec((error && error.message) || '');
+    if (!m || !(m[1] in rec)) break;
+    delete rec[m[1]];
+    ({ data, error } = await supabaseClient.from('cases').insert(rec).select().single());
+  }
   if (error) throw error;
   if (typeof offlineStore !== 'undefined') { try { await offlineStore.cache('cases_cache', data); } catch(_) {} }
   return data;
@@ -206,7 +215,15 @@ async function updateCase(id, updates) {
     showToast('📴 آف لائن محفوظ — sync باقی', 'info');
     return merged;
   }
-  const { data, error } = await supabaseClient.from('cases').update(updates).eq('id',id).select().single();
+  let { data, error } = await supabaseClient.from('cases').update(updates).eq('id',id).select().single();
+  // SELF-HEAL: missing column (schema mismatch) نکال کر دوبارہ — ترمیم کبھی نہ رکے۔
+  let _g = 0;
+  while (error && _g++ < 8) {
+    const m = /Could not find the '([^']+)' column/i.exec((error && error.message) || '');
+    if (!m || !(m[1] in updates)) break;
+    delete updates[m[1]];
+    ({ data, error } = await supabaseClient.from('cases').update(updates).eq('id',id).select().single());
+  }
   if (error) throw error;
   if (typeof offlineStore !== 'undefined') { try { await offlineStore.cache('cases_cache', data); } catch(_) {} }
   return data;
