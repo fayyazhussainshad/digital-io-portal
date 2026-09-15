@@ -1410,65 +1410,65 @@ window.addEventListener('beforeunload', function (e) {
 </script>
 <!-- DOMPurify — industry-grade XSS filter (Phase 3D) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
-<script src="dio-date.js"></script>
-<script src="dio-statuses.js"></script>
-<script src="dio-errors.js"></script>
-<script src="dio-html.js"></script>
-<script src="dio-states.js"></script>
-<script src="dio-audit.js"></script>
-<script src="dio-custody.js"></script>
-<script src="dio-approvals.js"></script>
-<script src="offline-store.js"></script>
-<script src="resume.js"></script>
-<script src="app-core.js"></script>
-  <script src="data-api.js"></script>
-  <script src="auth.js"></script>
+<script defer src="dio-date.js"></script>
+<script defer src="dio-statuses.js"></script>
+<script defer src="dio-errors.js"></script>
+<script defer src="dio-html.js"></script>
+<script defer src="dio-states.js"></script>
+<script defer src="dio-audit.js"></script>
+<script defer src="dio-custody.js"></script>
+<script defer src="dio-approvals.js"></script>
+<script defer src="offline-store.js"></script>
+<script defer src="resume.js"></script>
+<script defer src="app-core.js"></script>
+  <script defer src="data-api.js"></script>
+  <script defer src="auth.js"></script>
 <!-- backup.js EARLY (Phase 1 cleanup ke baad): initBackupSystem / triggerBackup canonical yahin hain — app-core ke callers se pehle available honi zaroori hain -->
-<script src="backup.js"></script>
-<script src="dashboard.js"></script>
-<script src="toolbar.js"></script>
-<script src="misal-docs.js"></script>
-  <script src="misal-templates.js"></script>
-  <script src="misal-fir.js"></script>
-  <script src="doc-viewer.js"></script>
-<script src="cases.js"></script>
-  <script src="case-form.js"></script>
-  <script src="case-docs.js"></script>
-<script src="fivec.js"></script>
-<script src="evidence.js"></script>
-<script src="search.js"></script>
-<script src="suspects.js"></script>
-<script src="witnesses.js"></script>
-<script src="mulziman.js"></script>
-<script src="zimni.js"></script>
-<script src="fir.js"></script>
-<script src="report173.js"></script>
-<script src="saza-slip.js"></script>
-<script src="saved-docs.js"></script>
-<script src="darkhwastain.js"></script>
-<script src="global-mic.js"></script>
-<script src="cdr-imei.js"></script>
-<script src="cro-card.js"></script>
-<script src="rfa-form.js"></script>
-<script src="staff-v2.js"></script>
+<script defer src="backup.js"></script>
+<script defer src="dashboard.js"></script>
+<script defer src="toolbar.js"></script>
+<script defer src="misal-docs.js"></script>
+  <script defer src="misal-templates.js"></script>
+  <script defer src="misal-fir.js"></script>
+  <script defer src="doc-viewer.js"></script>
+<script defer src="cases.js"></script>
+  <script defer src="case-form.js"></script>
+  <script defer src="case-docs.js"></script>
+<script defer src="fivec.js"></script>
+<script defer src="evidence.js"></script>
+<script defer src="search.js"></script>
+<script defer src="suspects.js"></script>
+<script defer src="witnesses.js"></script>
+<script defer src="mulziman.js"></script>
+<script defer src="zimni.js"></script>
+<script defer src="fir.js"></script>
+<script defer src="report173.js"></script>
+<script defer src="saza-slip.js"></script>
+<script defer src="saved-docs.js"></script>
+<script defer src="darkhwastain.js"></script>
+<script defer src="global-mic.js"></script>
+<script defer src="cdr-imei.js"></script>
+<script defer src="cro-card.js"></script>
+<script defer src="rfa-form.js"></script>
+<script defer src="staff-v2.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-<script src="law-library.js"></script>
-<script src="help-guide.js"></script>
-<script src="templates.js"></script>
-<script src="editor-tools.js"></script>
-  <script src="saved-files.js"></script>
-  <script src="sho-dsp.js"></script>
-<script src="case-sharing.js"></script>
-<script src="notifications.js"></script>
-<script src="reminders.js"></script>
-<script src="performance.js"></script>
+<script defer src="law-library.js"></script>
+<script defer src="help-guide.js"></script>
+<script defer src="templates.js"></script>
+<script defer src="editor-tools.js"></script>
+  <script defer src="saved-files.js"></script>
+  <script defer src="sho-dsp.js"></script>
+<script defer src="case-sharing.js"></script>
+<script defer src="notifications.js"></script>
+<script defer src="reminders.js"></script>
+<script defer src="performance.js"></script>
 <!-- backup.js pehle hi auth.js ke baad load ho chuki (Phase 1 cleanup) -->
-<script src="settings.js"></script>
-<script src="incident.js"></script>
-<script src="court.js"></script>
-<script src="bin.js"></script>
-<script src="subscription.js"></script>
-<script src="admin.js"></script>
+<script defer src="settings.js"></script>
+<script defer src="incident.js"></script>
+<script defer src="court.js"></script>
+<script defer src="bin.js"></script>
+<script defer src="subscription.js"></script>
+<script defer src="admin.js"></script>
 
 <!-- ── Sidebar ── -->
 <script>
@@ -1688,14 +1688,19 @@ window.addEventListener('load', function() {
   setTimeout(_handleHashNav, 2000);
 });
 
-// Update URL hash when page changes
-const _origShowPageHash = showPage;
-window.showPage = function(page, el) {
-  if (history && history.replaceState) {
-    history.replaceState(null, '', '#' + page);
-  }
-  return _origShowPageHash(page, el);
-};
+// Update URL hash when page changes.
+// Scripts ab 'defer' hain — showPage baad mein define hota hai. Is liye is
+// override ko DOMContentLoaded tak rok do (jab tamam defer scripts chal chuki hon).
+document.addEventListener('DOMContentLoaded', function () {
+  if (typeof window.showPage !== 'function') return;
+  const _origShowPageHash = window.showPage;
+  window.showPage = function(page, el) {
+    if (history && history.replaceState) {
+      try { history.replaceState(null, '', '#' + page); } catch(_) {}
+    }
+    return _origShowPageHash(page, el);
+  };
+});
 </script>
 
 <!-- Generic Modal (used by openModal/closeModal) -->
