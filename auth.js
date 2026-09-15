@@ -30,11 +30,67 @@ async function _dioLoginWithToken(key) {
 window._dioSaveAuthToken  = _dioSaveAuthToken;
 window._dioLoginWithToken = _dioLoginWithToken;
 
+// ═══════════════════════════════════════════════════════════════
+//  OFFLINE LOGIN — بغیر انٹرنیٹ کے (cached session سے)
+//  Jab officer pehle ONLINE login kar chuka ho (session + officer
+//  cache ho chuka ho) to internet na hone par PIN/biometric se
+//  local tasdeeq ke baad yeh function currentUser/currentOfficer
+//  bahaal kar deta hai — koi network call nahi.
+// ═══════════════════════════════════════════════════════════════
+async function _dioOfflineRestore() {
+  try {
+    let sess = null;
+    if (typeof offlineStore !== 'undefined' && offlineStore.loadSession) {
+      try { sess = await offlineStore.loadSession(); } catch (_) {}
+    }
+    let officer = null, uid = null, email = null;
+    if (sess && sess.userId) { uid = sess.userId; email = sess.email; officer = sess.officer || null; }
+    if (!officer) {
+      try { officer = JSON.parse(localStorage.getItem('dio_officer_cache') || 'null'); } catch (_) {}
+    }
+    if (!uid && officer) uid = officer.user_id;
+    if (!email && officer) email = officer.email || null;
+    if (!uid) return false;                       // koi cached session nahi — offline login mumkin nahi
+    currentUser = { id: uid, email: email || '' };
+    currentOfficer = officer || { user_id: uid, email: email || '', station: '', district: '', designation: '', role: 'officer' };
+    try { localStorage.setItem('dio_officer_cache', JSON.stringify(currentOfficer)); } catch (_) {}
+    return true;
+  } catch (_) { return false; }
+}
+window._dioOfflineRestore = _dioOfflineRestore;
+
+// Kya is device par offline login ke liye kuch mojood hai? (cached session)
+async function _dioHasOfflineSession() {
+  try {
+    if (typeof offlineStore !== 'undefined' && offlineStore.loadSession) {
+      const s = await offlineStore.loadSession();
+      if (s && s.userId) return true;
+    }
+  } catch (_) {}
+  try { return !!JSON.parse(localStorage.getItem('dio_officer_cache') || 'null'); } catch (_) { return false; }
+}
+window._dioHasOfflineSession = _dioHasOfflineSession;
+
 
 async function doLogin() {
   const email = document.getElementById('login-email')?.value.trim();
   const pass  = document.getElementById('login-password')?.value;
   if (!email||!pass) { showToast('⚠️ ای میل اور پاسورڈ ضروری ہے','error'); return; }
+
+  // ── OFFLINE: پاسورڈ Supabase سے تصدیق نہیں ہو سکتا۔ PIN/بایومیٹرک آفلائن چلتے ہیں ──
+  if (!navigator.onLine) {
+    const hasOffline = await _dioHasOfflineSession();
+    const hasPin = !!localStorage.getItem('dio_pin');
+    const hasBio = !!(localStorage.getItem('dio_biometric_cred') && localStorage.getItem('dio_biometric_email'));
+    if (hasOffline && (hasPin || hasBio)) {
+      showToast('📴 آپ آفلائن ہیں — ' + (hasPin ? 'PIN' : 'بایومیٹرک') + ' سے لاگ اِن کریں', 'warn', 6000);
+      if (hasPin) { const b = document.querySelectorAll('.login-method')[1]; if (b) setLoginMethod('pin', b); }
+      else { const b = document.querySelectorAll('.login-method')[2]; if (b) setLoginMethod('biometric', b); }
+    } else {
+      showToast('📴 آفلائن لاگ اِن کے لیے پہلے انٹرنیٹ کے ساتھ ایک بار لاگ اِن کر کے (ترتیبات میں) PIN یا بایومیٹرک سیٹ کریں', 'warn', 7000);
+    }
+    return;
+  }
 
   // ── Failed-login lockout (UX ONLY — NOT a security control) ──────────────
   // SECURITY NOTE (Fix 3): Yeh localStorage-based lockout sirf user-experience
@@ -417,9 +473,24 @@ async function _verifyPin() {
     return;
   }
 
-  // PIN theek — ab refresh-token se login (password kahin mehfooz nahi)
+  // PIN theek —
   _pinValue = ''; _renderPinDots();
   setLoginLoading(true);
+
+  // ── OFFLINE: cached session se seedha andar (koi network nahi) ──
+  if (!navigator.onLine) {
+    const off = await _dioOfflineRestore();
+    setLoginLoading(false);
+    if (off) {
+      showToast('📴 آفلائن موڈ — انٹرنیٹ آنے پر کام خودبخود sync ہو جائے گا', 'info', 4000);
+      loginSuccess();
+      return;
+    }
+    showToast('⚠️ آفلائن لاگ اِن دستیاب نہیں — پہلے ایک بار انٹرنیٹ کے ساتھ لاگ اِن کریں', 'warn', 6000);
+    return;
+  }
+
+  // ── ONLINE: refresh-token se poora login (session taza; password kahin mehfooz nahi) ──
   const ok = await _dioLoginWithToken('dio_pin_rt');
   if (ok) { loginSuccess(); return; }
 
@@ -435,13 +506,40 @@ async function _verifyPin() {
 
 function _dioDefaultLoginPanel() {
   try {
-    if (localStorage.getItem('dio_pin') && localStorage.getItem('dio_pin_token')) {
+    // PIN set ho to login screen khud PIN panel par khule (bar bar password na maange)
+    if (localStorage.getItem('dio_pin')) {
       const pinBtn = document.querySelectorAll('.login-method')[1];  // PIN button
-      if (pinBtn && typeof setLoginMethod === 'function') setLoginMethod('pin', pinBtn);
+      if (pinBtn && typeof setLoginMethod === 'function') { setLoginMethod('pin', pinBtn); return; }
+    }
+    // Warna biometric set ho to biometric panel
+    if (localStorage.getItem('dio_biometric_cred') && localStorage.getItem('dio_biometric_email')) {
+      const bioBtn = document.querySelectorAll('.login-method')[2];
+      if (bioBtn && typeof setLoginMethod === 'function') setLoginMethod('biometric', bioBtn);
     }
   } catch(_) {}
 }
 window._dioDefaultLoginPanel = _dioDefaultLoginPanel;
+
+// ── Login screen boot: offline hint + default panel ──────────────
+function _dioInitLoginScreen() {
+  try {
+    const ls = document.getElementById('login-screen');
+    // Sirf jab login screen nazar aa rahi ho
+    if (!ls || ls.style.display === 'none') return;
+    _dioDefaultLoginPanel();
+    const hint = document.getElementById('offline-login-hint');
+    if (hint) hint.style.display = navigator.onLine ? 'none' : 'block';
+  } catch (_) {}
+}
+window._dioInitLoginScreen = _dioInitLoginScreen;
+window.addEventListener('load', function () { setTimeout(_dioInitLoginScreen, 300); });
+window.addEventListener('offline', function () {
+  try { const h = document.getElementById('offline-login-hint'); const ls = document.getElementById('login-screen');
+    if (h && ls && ls.style.display !== 'none') h.style.display = 'block'; } catch (_) {}
+});
+window.addEventListener('online', function () {
+  try { const h = document.getElementById('offline-login-hint'); if (h) h.style.display = 'none'; } catch (_) {}
+});
 
 
 function setLoginMethod(m, btn) {
@@ -552,7 +650,19 @@ async function doBiometric() {
       }
     });
 
-    // Biometric verified — log in with saved session
+    // Biometric tasdeeq ho gayi (WebAuthn offline bhi chalta hai)
+    // ── OFFLINE: cached session se seedha andar ──
+    if (!navigator.onLine) {
+      const off = await _dioOfflineRestore();
+      if (off) {
+        showToast('📴 آفلائن موڈ — بایومیٹرک کامیاب، انٹرنیٹ آنے پر sync', 'info', 4000);
+        loginSuccess();
+      } else {
+        showToast('⚠️ آفلائن لاگ اِن دستیاب نہیں — پہلے ایک بار انٹرنیٹ کے ساتھ لاگ اِن کریں', 'warn', 6000);
+      }
+      return;
+    }
+    // ── ONLINE: saved session se login ──
     const savedPass = localStorage.getItem('dio_biometric_token');
     if (savedPass) {
       document.getElementById('login-email').value = savedEmail;
