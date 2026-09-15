@@ -414,12 +414,22 @@ function _renderMisalEditor(docId, def) {
                font-size:12px;font-family:'Jameel Noori Nastaleeq',serif;">📜 نسخے</button>`
     : '';
 
+  // MS Word jaisa toolbar (ooper mustaqil) — likhai ke liye
+  const _msWordBar = (typeof dioEditorToolbar === 'function')
+    ? `<div class="editor-toolbar no-print" style="position:sticky;top:0;z-index:20;display:flex;
+             align-items:center;gap:3px;flex-wrap:wrap;padding:7px 10px;direction:rtl;
+             background:var(--bg-secondary,#f3f6f9);border-bottom:1px solid var(--border,#ddd);">
+         ${dioEditorToolbar()}
+       </div>`
+    : '';
+
   area.innerHTML = `
   <div style="display:flex;flex-direction:column;height:100%;min-height:400px;direction:rtl;position:relative;">
     <!-- Safha khali hi rehta hai (software koi format nahi deta) —
          lekin likhne ke liye MS Word jaise auzaar mojood hain -->
     ${_vBtn}
     <input type="hidden" id="misal-date" value="${savedDate}">
+    ${_msWordBar}
     <div style="flex:1;overflow:auto;min-height:0;padding:14px;">
       <div id="misal-editor" contenteditable="true" spellcheck="false" style="
         width:100%;min-height:100%;
@@ -450,7 +460,8 @@ function _renderMisalEditor(docId, def) {
     }
     // Auto text-direction for fields in this document editor
     if (typeof applyAutoDirection === 'function') applyAutoDirection(area);
-    // MS Word jaise auzaar: Tab, Ctrl+B/I/U waghera
+    // MS Word jaise auzaar: Tab, Ctrl+B/I/U waghera + toolbar CSS
+    if (typeof dioEditorToolbarCSS === 'function') dioEditorToolbarCSS();
     if (typeof dioBindEditor === 'function') dioBindEditor(area);
     // انڈکس نقل مسل — fresh doc: ملزمان + ضمنیاں database se auto-fill
     if (docId === 'index_naql' && !(saved?.content?.html)) _fillIndexNaqlData();
