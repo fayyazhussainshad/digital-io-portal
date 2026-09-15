@@ -2440,19 +2440,28 @@ function _zimniPrintHTML(inner) {
           // ── validate: har unit mein paragraph 1..N number ke barabar/kam hon ──
           // aur serial column ki measurement sahih ho (warna number ghayab ho sakta) ──
           for(var u=0;u<units.length;u++){
+            // manual-space mode — افسر نے خود (خالی لائنوں سے) نمبر رکھے → چھوؤ مت (fallback)
+            if(units[u].nums.getAttribute('data-manual-space')==='1') return false;
             units[u].paras=parasOf(units[u].body);
-            units[u].numEls=[].slice.call(units[u].nums.children);
-            if(!units[u].paras.length || units[u].paras.length>units[u].numEls.length) return false;
+            // صرف بھرے (non-empty) نمبر گنیں — خالی divs شمار نہ ہوں
+            units[u].numEls=[].slice.call(units[u].nums.children).filter(function(el){
+              return (el.textContent||'').replace(/[\\s\\u00A0]/g,'').length; });
+            // نیا: صرف کم از کم 1 نمبر اور 1 پیراگراف چاہیے۔ (پہلے paras>nums پر
+            // fallback ہو جاتا تھا — اسی لیے asli zimni (زیادہ پیراگراف) پر یہ
+            // page-break-safe طریقہ کبھی نہ چلتا اور نمبر دوسرے صفحے پر کھسک جاتے)۔
+            if(!units[u].numEls.length || !units[u].paras.length) return false;
             var srW=units[u].serialTd.getBoundingClientRect().width;
             if(!(srW>4 && srW<400)) return false;        // measurement mashkook — fallback
           }
-          // ── apply ──
+          // ── apply: number[i] ↔ paragraph[i] (index-wise، جتنے کم ہوں اتنے) ──
+          //   number ki naqal us ke paragraph ke ANDAR → page-break par SAATH khiskti hai.
           for(var v=0;v<units.length;v++){
             var U=units[v];
-            for(var i=0;i<U.paras.length;i++){
-              var src=U.numEls[i]; if(!src) continue;
-              src.style.visibility='hidden';               // original reserves space
-              var p=U.paras[i];
+            var cnt=Math.min(U.numEls.length, U.paras.length);
+            for(var i=0;i<cnt;i++){
+              var src=U.numEls[i]; var p=U.paras[i];
+              if(!src||!p) continue;
+              src.style.visibility='hidden';               // original jagah reserve
               try{ if(getComputedStyle(p).position==='static') p.style.position='relative'; }catch(e){}
               var sr=U.serialTd.getBoundingClientRect();
               var pr=p.getBoundingClientRect();
