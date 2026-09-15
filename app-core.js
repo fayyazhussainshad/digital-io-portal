@@ -975,8 +975,13 @@ function _dioDoPrint(htmlContent) {
   if (!document.getElementById('dio-print-style')) {
     const st = document.createElement('style');
     st.id = 'dio-print-style';
+    // AHEM: :has(#dio-print-frame) se scope kiya — yeh style aik dafa head mein
+    // add ho kar hamesha rehti hai. Pehle 'body > *:not(#dio-print-frame)' bina
+    // shart tha → app-print ke baad iframe hat jata, magar rule reh jata, is liye
+    // agli dafa NATIVE (Ctrl+P) print par sab kuch chhup kar KHALI safha chhapta.
+    // Ab yeh rule sirf tab lagta hai jab print-iframe MOJOOD ho (app ka apna print).
     st.textContent = `@media print {
-      body > *:not(#dio-print-frame) { display: none !important; visibility: hidden !important; }
+      body:has(#dio-print-frame) > *:not(#dio-print-frame) { display: none !important; visibility: hidden !important; }
       #sidebar, .sidebar, #topbar, .topbar, .nav-item, nav, .workspace-tabs,
       .case-tabs, .doc-toolbar, .editor-toolbar, .no-print, #islamic-bar { display: none !important; }
     }`;
