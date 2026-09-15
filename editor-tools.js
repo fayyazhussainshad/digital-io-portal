@@ -15,6 +15,17 @@ function dioEditorToolbar(opts) {
     `<button type="button" class="dio-etb-btn" onmousedown="event.preventDefault()" ` +
     `onclick="dioExec('${cmd}')" title="${tip}" style="${style || ''}">${label}</button>`;
 
+  // Alignment ke saaf SVG icons (MS Word jaise) — unicode se zyada wazeh
+  const _sv = (lines) => `<svg width="15" height="15" viewBox="0 0 16 16" fill="none" ` +
+    `stroke="currentColor" stroke-width="1.6" stroke-linecap="round">${lines}</svg>`;
+  const AL = (svg, cmd, tip) =>
+    `<button type="button" class="dio-etb-btn" onmousedown="event.preventDefault()" ` +
+    `onclick="dioExec('${cmd}')" title="${tip}">${svg}</button>`;
+  const AL_LEFT   = _sv('<line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="10" y2="8"/><line x1="2" y1="12" x2="13" y2="12"/>');
+  const AL_CENTER = _sv('<line x1="3" y1="4" x2="13" y2="4"/><line x1="4" y1="8" x2="12" y2="8"/><line x1="3" y1="12" x2="13" y2="12"/>');
+  const AL_RIGHT  = _sv('<line x1="2" y1="4" x2="14" y2="4"/><line x1="6" y1="8" x2="14" y2="8"/><line x1="3" y1="12" x2="14" y2="12"/>');
+  const AL_JUST   = _sv('<line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="14" y2="8"/><line x1="2" y1="12" x2="14" y2="12"/>');
+
   return `
   <div class="${cls} no-print" style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;">
     <button type="button" class="dio-etb-btn" onmousedown="event.preventDefault()"
@@ -39,15 +50,23 @@ function dioEditorToolbar(opts) {
     <button type="button" class="dio-etb-btn" onmousedown="event.preventDefault()"
       onclick="dioFontStep(-1)" title="فونٹ چھوٹا" style="font-size:11px;">A−</button>
     <span class="dio-etb-sep"></span>
-    ${B('≡', 'justifyRight', 'دائیں')}
-    ${B('☰', 'justifyCenter', 'درمیان')}
-    ${B('⚌', 'justifyFull', 'دونوں طرف برابر')}
-    <span class="dio-etb-sep"></span>
-    ${B('•', 'insertUnorderedList', 'نقطہ دار فہرست')}
-    ${B('1.', 'insertOrderedList', 'نمبر والی فہرست')}
+    ${AL(AL_RIGHT,  'justifyRight',  'دائیں (Right)')}
+    ${AL(AL_CENTER, 'justifyCenter', 'درمیان (Center)')}
+    ${AL(AL_LEFT,   'justifyLeft',   'بائیں (Left)')}
+    ${AL(AL_JUST,   'justifyFull',   'دونوں طرف برابر (Justify)')}
     <span class="dio-etb-sep"></span>
     <button type="button" class="dio-etb-btn" onmousedown="event.preventDefault()"
-      onclick="dioExec('removeFormat')" title="فارمیٹنگ ہٹائیں">✕</button>
+      onclick="dioSetDir('rtl')" title="اردو — دائیں سے بائیں (RTL)" style="font-weight:800;">؈</button>
+    <button type="button" class="dio-etb-btn" onmousedown="event.preventDefault()"
+      onclick="dioSetDir('ltr')" title="English — Left to Right (LTR)" style="font-weight:800;direction:ltr;">EN</button>
+    <span class="dio-etb-sep"></span>
+    ${B('•', 'insertUnorderedList', 'نقطہ دار فہرست (Bullets)')}
+    ${B('1.', 'insertOrderedList', 'نمبر والی فہرست (Numbering)')}
+    <span class="dio-etb-sep"></span>
+    <button type="button" class="dio-etb-btn" onmousedown="event.preventDefault()"
+      onclick="dioFindReplace()" title="ڈھونڈیں اور بدلیں (Find &amp; Replace)">🔎</button>
+    <button type="button" class="dio-etb-btn" onmousedown="event.preventDefault()"
+      onclick="dioExec('removeFormat')" title="فارمیٹنگ ہٹائیں (Clear)">✕</button>
   </div>`;
 }
 
@@ -125,6 +144,195 @@ function _dioActiveEditable() {
     n = n.parentNode;
   }
   return null;
+}
+
+// ── DIRECTION (RTL/LTR) — Urdu/English mix, MS Word jaisa ──────────────
+// Chune hue paragraph (ya jis khane mein cursor hai) ka rukh badalta hai.
+function dioSetDir(dir) {
+  const el = _dioActiveEditable();
+  if (!el) { if (typeof showToast === 'function') showToast('پہلے کسی خانے میں کلک کریں', 'info'); return; }
+  // Cursor jis block (paragraph/div/li) mein hai wohi dhoondo; na mile to poora khana
+  let node = null;
+  try { const s = window.getSelection(); node = s && s.anchorNode; } catch (_) {}
+  let n = (node && node.nodeType === 1) ? node : (node && node.parentNode);
+  let block = null;
+  while (n && n !== el && n !== document.body) {
+    let disp = '';
+    try { disp = getComputedStyle(n).display; } catch (_) {}
+    const tag = n.tagName;
+    if (disp === 'block' || disp === 'list-item' || tag === 'P' || tag === 'DIV' || tag === 'LI') { block = n; break; }
+    n = n.parentNode;
+  }
+  const target = block || el;
+  target.setAttribute('dir', dir);
+  target.style.textAlign = (dir === 'rtl') ? 'right' : 'left';
+  try { el.focus(); } catch (_) {}
+}
+window.dioSetDir = dioSetDir;
+
+// ── FIND & REPLACE — MS Word jaisa (chhota panel) ─────────────────────
+let _dioFRTarget = null;   // jis editable par kaam ho raha hai
+let _dioFRPos = 0;         // agli talash yahan se
+
+function _dioFRPickTarget() {
+  // Pehle active editable; warna khula bara editor
+  let t = _dioActiveEditable();
+  if (t) return t;
+  const CAND = ['#misal-editor', '#dk-doc', '#ch173-doc', '#saza-doc', '#dio-dv-body [contenteditable="true"]'];
+  for (let i = 0; i < CAND.length; i++) {
+    const e = document.querySelector(CAND[i]);
+    if (e && (e.isContentEditable || e.querySelector('[contenteditable="true"]'))) {
+      return e.isContentEditable ? e : e.querySelector('[contenteditable="true"]');
+    }
+  }
+  return null;
+}
+
+function dioFindReplace() {
+  // Target ko ABHI pakad lo (panel ke input par focus jaate hi active editable badal jata hai)
+  _dioFRTarget = _dioFRPickTarget();
+  if (!_dioFRTarget) { if (typeof showToast === 'function') showToast('پہلے کسی دستاویز کے خانے میں لکھنے کے لیے کلک کریں', 'info'); return; }
+  _dioFRPos = 0;
+  let p = document.getElementById('dio-fr-panel');
+  if (p) { p.style.display = 'block'; document.getElementById('dio-fr-find').focus(); return; }
+  p = document.createElement('div');
+  p.id = 'dio-fr-panel';
+  p.className = 'no-print';
+  p.style.cssText =
+    'position:fixed;z-index:2147483000;top:64px;left:50%;transform:translateX(-50%);' +
+    'background:var(--bg-card,#fff);color:var(--text-primary,#111);border:1px solid var(--border,#ccc);' +
+    'border-radius:12px;box-shadow:0 10px 34px rgba(0,0,0,.28);padding:12px 14px;direction:rtl;' +
+    "font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;max-width:94vw;width:360px;";
+  p.innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
+      '<span style="font-weight:800;font-size:15px;">🔎 ڈھونڈیں اور بدلیں</span>' +
+      '<button type="button" onclick="dioFRClose()" title="بند کریں" style="border:none;background:none;font-size:18px;cursor:pointer;color:var(--text-muted,#777);line-height:1;">✕</button>' +
+    '</div>' +
+    '<input id="dio-fr-find" type="text" placeholder="کیا ڈھونڈنا ہے؟" ' +
+      'style="width:100%;box-sizing:border-box;padding:8px 10px;margin-bottom:7px;border:1px solid var(--border,#ccc);border-radius:8px;background:var(--bg-tertiary,#f6f8fa);color:inherit;font-size:14px;">' +
+    '<input id="dio-fr-repl" type="text" placeholder="کس سے بدلنا ہے؟" ' +
+      'style="width:100%;box-sizing:border-box;padding:8px 10px;margin-bottom:9px;border:1px solid var(--border,#ccc);border-radius:8px;background:var(--bg-tertiary,#f6f8fa);color:inherit;font-size:14px;">' +
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+      '<button type="button" onclick="dioFRFindNext()" style="flex:1;min-width:80px;padding:8px;border:1px solid var(--accent,#2563eb);background:var(--bg-tertiary,#eef);color:var(--text-primary,#111);border-radius:8px;cursor:pointer;font-weight:700;font-family:inherit;">ڈھونڈیں ▸</button>' +
+      '<button type="button" onclick="dioFRReplaceOne()" style="flex:1;min-width:80px;padding:8px;border:1px solid var(--border,#ccc);background:var(--bg-card,#fff);color:var(--text-primary,#111);border-radius:8px;cursor:pointer;font-weight:700;font-family:inherit;">بدلیں</button>' +
+      '<button type="button" onclick="dioFRReplaceAll()" style="flex:1;min-width:96px;padding:8px;border:none;background:var(--accent,#2563eb);color:#fff;border-radius:8px;cursor:pointer;font-weight:800;font-family:inherit;">سب بدلیں</button>' +
+    '</div>' +
+    '<div id="dio-fr-note" style="margin-top:8px;font-size:12px;color:var(--text-muted,#777);min-height:16px;"></div>';
+  document.body.appendChild(p);
+  const fi = document.getElementById('dio-fr-find');
+  fi.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); dioFRFindNext(); } });
+  fi.focus();
+}
+window.dioFindReplace = dioFindReplace;
+
+function dioFRClose() {
+  const p = document.getElementById('dio-fr-panel');
+  if (p) p.style.display = 'none';
+}
+window.dioFRClose = dioFRClose;
+
+function _dioFRNote(msg) {
+  const n = document.getElementById('dio-fr-note');
+  if (n) n.textContent = msg || '';
+}
+function _dioFRTextNodes(root) {
+  const out = [];
+  if (!root) return out;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+  let t; while ((t = w.nextNode())) out.push(t);
+  return out;
+}
+
+// Agli match dhoondo aur select karo (case-insensitive)
+function dioFRFindNext() {
+  const q = (document.getElementById('dio-fr-find') || {}).value || '';
+  if (!q) { _dioFRNote('لکھیں کہ کیا ڈھونڈنا ہے'); return; }
+  const root = _dioFRTarget;
+  if (!root || !document.body.contains(root)) { _dioFRNote('خانہ دستیاب نہیں'); return; }
+  const nodes = _dioFRTextNodes(root);
+  const ql = q.toLowerCase();
+  // Poora text jorr kar position track karte hain
+  let acc = 0, found = null;
+  for (let i = 0; i < nodes.length; i++) {
+    const txt = nodes[i].nodeValue || '';
+    const start = (acc >= _dioFRPos) ? 0 : Math.max(0, _dioFRPos - acc);
+    const idx = txt.toLowerCase().indexOf(ql, start);
+    if (idx !== -1) { found = { node: nodes[i], idx: idx, globalEnd: acc + idx + q.length }; break; }
+    acc += txt.length;
+  }
+  if (!found) {
+    // Shuru se dobara koshish (loop)
+    if (_dioFRPos !== 0) { _dioFRPos = 0; _dioFRNote('آخر تک پہنچ گئے — شروع سے دوبارہ'); return dioFRFindNext(); }
+    _dioFRNote('کوئی نتیجہ نہیں'); return;
+  }
+  try {
+    const r = document.createRange();
+    r.setStart(found.node, found.idx);
+    r.setEnd(found.node, found.idx + q.length);
+    const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    const sp = found.node.parentElement;
+    if (sp && sp.scrollIntoView) sp.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    _dioFRPos = found.globalEnd;
+    _dioFRNote('ملا ✓');
+  } catch (e) { _dioFRNote('نتیجہ منتخب نہ ہو سکا'); }
+}
+window.dioFRFindNext = dioFRFindNext;
+
+// Mojooda select shuda match ko badlo, phir agli dhoondo
+function dioFRReplaceOne() {
+  const q = (document.getElementById('dio-fr-find') || {}).value || '';
+  const rep = (document.getElementById('dio-fr-repl') || {}).value || '';
+  if (!q) { _dioFRNote('لکھیں کہ کیا ڈھونڈنا ہے'); return; }
+  const sel = window.getSelection();
+  const selText = sel ? String(sel).toLowerCase() : '';
+  if (selText && selText === q.toLowerCase() && sel.rangeCount) {
+    try {
+      const r = sel.getRangeAt(0);
+      r.deleteContents();
+      const tn = document.createTextNode(rep);
+      r.insertNode(tn);
+      // cursor match ke baad
+      _dioFRPos = Math.max(0, _dioFRPos - q.length + rep.length);
+      try { _dioFRTarget && (_dioFRTarget._dioDirtyPing = true); } catch (_) {}
+      _markDirtyMaybe();
+      _dioFRNote('بدل دیا ✓');
+    } catch (e) { _dioFRNote('نہ بدل سکا'); }
+  }
+  dioFRFindNext();
+}
+window.dioFRReplaceOne = dioFRReplaceOne;
+
+// Sab matches badlo (case-insensitive) — sirf text nodes, formatting mehfooz
+function dioFRReplaceAll() {
+  const q = (document.getElementById('dio-fr-find') || {}).value || '';
+  const rep = (document.getElementById('dio-fr-repl') || {}).value || '';
+  if (!q) { _dioFRNote('لکھیں کہ کیا ڈھونڈنا ہے'); return; }
+  const root = _dioFRTarget;
+  if (!root || !document.body.contains(root)) { _dioFRNote('خانہ دستیاب نہیں'); return; }
+  const nodes = _dioFRTextNodes(root);
+  const esc = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(esc, 'gi');
+  let count = 0;
+  nodes.forEach(nd => {
+    const before = nd.nodeValue || '';
+    if (!before) return;
+    const after = before.replace(re, function (m) { count++; return rep; });
+    if (after !== before) nd.nodeValue = after;
+  });
+  if (count > 0) { _markDirtyMaybe(); _dioFRNote(count + ' جگہ بدل دیں ✓'); }
+  else _dioFRNote('کوئی نتیجہ نہیں');
+}
+window.dioFRReplaceAll = dioFRReplaceAll;
+
+// Editor ko "dirty" mark karo (taake wapsi/محفوظ warning theek chale)
+function _markDirtyMaybe() {
+  try { if (typeof _misalDirty !== 'undefined') window._misalDirty = true; } catch (_) {}
+  try { if (typeof _r173Dirty !== 'undefined') window._r173Dirty = true; } catch (_) {}
+  try { if (typeof _zimniDirty !== 'undefined') window._zimniDirty = true; } catch (_) {}
+  // input event fire karo taake har module ka apna oninput=dirty chal jaye
+  try {
+    if (_dioFRTarget) _dioFRTarget.dispatchEvent(new Event('input', { bubbles: true }));
+  } catch (_) {}
 }
 
 // ── Tab / Shift+Tab / keyboard shortcuts ──────────────────────────────
