@@ -869,9 +869,14 @@ function setFontSize(key) {
 function getFontSize() {
   return localStorage.getItem('dio_font_size') || 'medium';
 }
-// Apply saved font-size on load (default medium = 16px)
-(function(){ setFontSize(getFontSize()); })();
-window.setFontSize = setFontSize;
+// Font-size option HATA diya gaya (settings se). Poora system ab aik hi
+// معیاری size par (medium = 16px). Purana save-shuda choice (chhota/bara)
+// clear kar do taake koi us par "phansa" na rahe — sab standard par aa jayen.
+(function(){
+  try { localStorage.removeItem('dio_font_size'); } catch(_) {}
+  document.documentElement.style.fontSize = DIO_FONT_SIZES.medium;   // 16px
+})();
+window.setFontSize = setFontSize;   // (baqi code kahin call kare to mehfooz — no-op-ish)
 window.getFontSize = getFontSize;
 
 // ── AUTH ──────────────────────────────────────────────────────
