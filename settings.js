@@ -81,25 +81,8 @@ async function renderSettings(container) {
     </div>
   </div>
 
-  <!-- ── FONT SIZE CARD (accessibility) ───────────────────── -->
-  <div class="card" style="margin-bottom:16px;">
-    <div class="card-title" style="margin-bottom:6px;">🔠 فونٹ سائز</div>
-    <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">متن کا سائز اپنی پسند کے مطابق منتخب کریں</div>
-    <div id="dio-font-size-btns" style="display:flex;gap:8px;flex-wrap:wrap;direction:rtl;">
-      ${[['small','چھوٹا','A'],['medium','درمیانہ','A'],['large','بڑا','A'],['xlarge','بہت بڑا','A']].map(([k,label,a])=>{
-        const cur = (typeof getFontSize==='function'?getFontSize():'medium')===k;
-        const sizePx = {small:'14px',medium:'16px',large:'19px',xlarge:'22px'}[k];
-        return `<button onclick="_pickFontSize('${k}')" data-fs="${k}"
-          style="flex:1;min-width:70px;padding:12px 8px;border-radius:10px;cursor:pointer;
-                 border:2px solid ${cur?'var(--accent)':'var(--border)'};
-                 background:${cur?'var(--accent-bg,rgba(56,189,248,0.12))':'var(--bg-tertiary)'};
-                 color:var(--text-primary);display:flex;flex-direction:column;align-items:center;gap:4px;transition:all 0.15s;">
-          <span style="font-size:${sizePx};font-weight:800;line-height:1;">${a}</span>
-          <span style="font-size:11px;font-family:'Jameel Noori Nastaleeq',serif;">${label}</span>
-        </button>`;
-      }).join('')}
-    </div>
-  </div>
+  <!-- FONT SIZE CARD hata diya gaya (user ki hidayat) — poora system ab
+       aik hi معیاری size (16px) par. Neeche security card se jari. -->
 
   <!-- ── SECURITY CARD (below name card) ─────────────────── -->
   <div class="card" style="margin-bottom:16px;">
