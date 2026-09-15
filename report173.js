@@ -1131,6 +1131,14 @@ function _printR173() {
           break-before:page !important; page-break-before:always !important; }
         /* Koi satar akeli na chhute (safhe ke kinare par) */
         #ch173-doc, #ch173-doc *{ orphans:2; widows:2; }
+        /* ═══ پرنٹ میں الفاظ جُڑنے کا حل ═══
+           Chrome کی چھپائی میں Urdu/Nastaliq justified متن کی inter-word space
+           صفر ہو جاتی ہے → الفاظ آپس میں مل جاتے ہیں۔ اس لیے صرف چھپائی میں
+           justify کی جگہ سیدھی دائیں سیدھ (معمول کی جگہ)۔ اسکرین ویسی کی ویسی۔ */
+        #ch173-doc .hinner,
+        #ch173-doc .akh-col2,
+        #ch173-doc .sho-papers-body,
+        #ch173-doc [data-k="halaat"]{ text-align:right !important; text-align-last:right !important; }
         .sho-papers-body, .sho-cell-row, .ch173-cont{ outline:none !important; }
         .sho-papers-body:empty::before, .sho-cell-date:empty::before,
         .sho-cell-row:empty::before, .ch173-cont:empty::before{ content:'' !important; }
@@ -2748,15 +2756,22 @@ window._ch173InheritWitnesses = _ch173InheritWitnesses;
 function _ch173WitParse(el) {
   const out = [];
   if (!el) return out;
-  (el.innerText || '').replace(/\u00A0/g, ' ').split(/\r?\n/).forEach(line => {
-    let t = line.trim();
-    if (!t) return;
-    t = t.replace(/^\s*\d+\u06D4\s*/, '');                 // نمبر شمار hatao
-    let cnic = '';
-    const m = t.match(/(\d{5}-\d{7}-\d)\s*$/);
-    if (m) { cnic = m[1]; t = t.slice(0, m.index).trim(); }
-    t = t.replace(/\s+/g, ' ').trim();
-    if (t) out.push({ name: t, cnic: cnic });
+  // Aik satar mein aik YA do gawah ho sakte hain (chhote naam do-per-satar).
+  // Is liye har satar ko andar mojood '<number>\u06D4 ' markers par bhi tor kar
+  // har hissay ko alag gawah samjho — warna do-per-satar wala data kharab hota.
+  const raw = (el.innerText || '').replace(/\u00A0/g, ' ');
+  raw.split(/\r?\n/).forEach(line => {
+    if (!line.trim()) return;
+    // Har '<digits>\u06D4 ' se pehle tor do; pehla khali hissa chhod do.
+    line.split(/\s*\d+\u06D4\s+/).forEach(seg => {
+      let t = String(seg || '').trim();
+      if (!t) return;
+      let cnic = '';
+      const m = t.match(/(\d{5}-\d{7}-\d)\s*$/);
+      if (m) { cnic = m[1]; t = t.slice(0, m.index).trim(); }
+      t = t.replace(/\s+/g, ' ').trim();
+      if (t) out.push({ name: t, cnic: cnic });
+    });
   });
   return out;
 }
@@ -2765,9 +2780,24 @@ function _ch173WitParse(el) {
 // CNIC na ho to us ki jagah BILKUL KHALI (zero wala nishan nahi).
 function _ch173WitWrite(el, list) {
   if (!el) return;
-  el.innerText = list.map((w, i) =>
-    (i + 1) + '\u06D4 ' + w.name + (w.cnic ? ' ' + w.cnic : '')
-  ).join('\n');
+  // gawahan column: sirf number + naam (CNIC nahi). Chhote naam do-per-satar.
+  const _out = [];
+  let _sr = 0, _i = 0;
+  while (_i < list.length) {
+    const a = String((list[_i] && list[_i].name) || '').trim();
+    const aShort = a.length > 0 && a.length <= 14;
+    const nb = (_i + 1 < list.length) ? String((list[_i + 1] && list[_i + 1].name) || '').trim() : null;
+    const bShort = nb != null && nb.length > 0 && nb.length <= 14;
+    if (aShort && bShort) {
+      const s1 = ++_sr, s2 = ++_sr;
+      _out.push(s1 + '\u06D4 ' + a + '\u2003' + s2 + '\u06D4 ' + nb);
+      _i += 2;
+    } else {
+      _out.push((++_sr) + '\u06D4 ' + a);
+      _i += 1;
+    }
+  }
+  el.innerText = _out.join('\n');
   try { _r173Dirty = true; } catch (_) {}
 }
 
@@ -2925,13 +2955,28 @@ function _ch173WitnessText() {
   // Aik line mein aik گواہ
   // Har گواہ: نمبر شمار + naam, aur usi ke saath uska CNIC
   // AIK GAWAH = AIK SATAR: نمبر + naam + uska CNIC
-  return L.map(function (w, i) {
-    // CNIC mile to LAZMI darj ho; na mile to jagah BILKUL KHALI rahe
-    // (pehle yahan '00000-0000000-0' lagta tha — woh ab nahi lagta).
-    const cn = _ch173CnicFmt(w.cnic);
-    // AIK SATAR = AIK SHAKHS: نمبر + naam + uska CNIC (naam PEHLE, CNIC BAAD mein)
-    return (i + 1) + '\u06D4 ' + (w.full_name || '') + (cn ? ' ' + cn : '');
-  }).join('\n');
+  // gawahan column: sirf number + naam (CNIC ab nahi lagta). Naam chhota ho
+  // (aadhe column se km) to usi satar mein doosra chhota gawah bhi naye number
+  // ke sath aa jata hai (do-per-satar).
+  const _names = L.map(function (w) { return (w.full_name || '').trim(); });
+  const _SHORT = 14;
+  const _out = [];
+  let _sr = 0, _i = 0;
+  while (_i < _names.length) {
+    const a = _names[_i];
+    const aShort = a.length > 0 && a.length <= _SHORT;
+    const b = (_i + 1 < _names.length) ? _names[_i + 1] : null;
+    const bShort = b != null && b.length > 0 && b.length <= _SHORT;
+    if (aShort && bShort) {
+      const s1 = ++_sr, s2 = ++_sr;
+      _out.push(s1 + '\u06D4 ' + a + '\u2003' + s2 + '\u06D4 ' + b);
+      _i += 2;
+    } else {
+      _out.push((++_sr) + '\u06D4 ' + a);
+      _i += 1;
+    }
+  }
+  return _out.join('\n');
 }
 
 // Kaunse ملزمان pehle se kisi column mein chune ja chuke hain
