@@ -1018,6 +1018,49 @@ input[id*="cnic"], input[id*="cell"] {
   #law-reader-content, #law-reader-body { overflow: visible !important; height: auto !important; }
 }
 
+/* ══════════════════════════════════════════════════════════════
+   NATIVE PRINT (Ctrl+P / browser menu) — MS Word ki tarah sirf
+   khula document chhape, poori app-screen nahi. App ke apne
+   🖨️ print buttons pehle se saaf chhapte hain (alag iframe se);
+   yeh block SIRF native print ke liye hai. Neeche ka script
+   beforeprint par khule document ko #dio-nprint-host mein le jata
+   hai aur afterprint par wapas rakh deta hai.
+   ══════════════════════════════════════════════════════════════ */
+@media print {
+  /* App ka chrome native print par hamesha chhupao */
+  #sidebar, .sidebar, #topbar, .topbar, #mob-overlay, #menu-toggle,
+  #dio-back-btn, #sync-bar, #islamic-bar, #dio-error-banner,
+  #dio-update-banner, #dio-dv-bar, .no-print, .dio-etb, .doc-toolbar,
+  .editor-toolbar, .workspace-tabs, .case-tabs, .dio-modbtn, .zf-pick,
+  .zf-colgrip, .zf-rowgrip, .akh-grip, .akh-hgrip { display: none !important; }
+
+  /* Jab koi document isolate ho: sirf host (yani wohi document) chhape */
+  body.dio-nprint > *:not(#dio-nprint-host) { display: none !important; }
+  #dio-nprint-host {
+    display: block !important; position: static !important; inset: auto !important;
+    left: auto !important; top: auto !important; margin: 0 !important;
+    padding: 0 !important; width: auto !important; height: auto !important;
+    min-height: 0 !important; background: #fff !important; box-shadow: none !important;
+    z-index: auto !important; overflow: visible !important;
+  }
+  #dio-nprint-host #ch173-doc, #dio-nprint-host #dk-doc,
+  #dio-nprint-host #saza-doc, #dio-nprint-host #dio-dv-body,
+  #dio-nprint-host #workspace-editor-area, #dio-nprint-host #misal-editor {
+    box-shadow: none !important; border-radius: 0 !important; margin: 0 auto !important;
+    width: auto !important; max-width: 100% !important; display: block !important;
+  }
+  #dio-nprint-host #workspace-editor-area > *,
+  #dio-nprint-host #dio-dv-body > * {
+    flex: none !important; min-height: 0 !important; height: auto !important;
+  }
+  @page { margin: 12mm; }
+}
+/* Print-host on-screen kabhi nazar na aaye (sirf print ke lamhe host mein
+   document hota hai; native print dialog screen dhak leta hai, phir script
+   use foran wapas rakh deti hai). */
+#dio-nprint-host { position: fixed; left: -99999px; top: 0; width: 0; height: 0; overflow: hidden; }
+@media print { #dio-nprint-host { position: static; width: auto; height: auto; overflow: visible; } }
+
 /* ── لاگ اِن کارڈ کا فونٹ 14pt ── */
 .login-card,
 .login-card input,
@@ -1701,6 +1744,85 @@ document.addEventListener('DOMContentLoaded', function () {
     return _origShowPageHash(page, el);
   };
 });
+</script>
+
+<!-- ══════════════════════════════════════════════════════════════
+     NATIVE PRINT ISOLATION — Ctrl+P / browser-menu print par sirf
+     khula document chhape (poori app nahi). App ke apne print buttons
+     is se mutasir nahi (woh #dio-print-frame se chhapte hain).
+     ══════════════════════════════════════════════════════════════ -->
+<script>
+(function () {
+  // Tarteeb ke saath — pehla jo MOJOOD aur NAZAR aa raha ho wohi chhapega.
+  var TARGETS = [
+    '#dio-docview #dio-dv-body',  // poore safhe wala doc-view (andar ka editor)
+    '#ch173-doc',                 // چالان / ضمنی
+    '#dk-doc',                    // درخواستیں
+    '#saza-doc',                  // سزا سلپ
+    '#law-reader-content',        // قانون ریڈر
+    '#misal-editor',
+    '#workspace-editor-area'
+  ];
+  var _moved = null;   // { node, parent, next }
+
+  function _visible(el) {
+    if (!el) return false;
+    if (el.offsetParent !== null) return true;      // sab se aam
+    var r = el.getClientRects();                    // fixed/overlay ke liye
+    return !!(r && r.length);
+  }
+  function _findOpenDoc() {
+    for (var i = 0; i < TARGETS.length; i++) {
+      var el = document.querySelector(TARGETS[i]);
+      if (el && _visible(el)) return el;
+    }
+    return null;
+  }
+  function _setup() {
+    // App ke apne saaf-print (iframe) ke waqt DAKHAL NA do
+    if (document.getElementById('dio-print-frame')) return;
+    if (_moved) return;                             // pehle se ho chuka
+    var node = _findOpenDoc();
+    if (!node) return;                              // koi doc nahi — sirf chrome chhupega
+    var host = document.getElementById('dio-nprint-host');
+    if (!host) {
+      host = document.createElement('div');
+      host.id = 'dio-nprint-host';
+      document.body.appendChild(host);
+    }
+    // ASLI node move karo (clone nahi) — taake id-based print styles (jaise
+    // #ch173-doc ke qwaid) barqarar rahen aur duplicate-id na bane.
+    _moved = { node: node, parent: node.parentNode, next: node.nextSibling };
+    document.body.classList.add('dio-nprint');
+    host.appendChild(node);
+  }
+  function _restore() {
+    document.body.classList.remove('dio-nprint');
+    if (_moved) {
+      var m = _moved; _moved = null;
+      try {
+        if (m.next && m.next.parentNode === m.parent) m.parent.insertBefore(m.node, m.next);
+        else m.parent.appendChild(m.node);
+      } catch (e) {
+        try { m.parent.appendChild(m.node); } catch (_) {}
+      }
+    }
+    var h = document.getElementById('dio-nprint-host');
+    if (h) h.remove();
+  }
+  window.addEventListener('beforeprint', _setup);
+  window.addEventListener('afterprint', _restore);
+  // Dusra safety net — agar afterprint na chale to print-mode se nikalte hi restore
+  try {
+    var mq = window.matchMedia('print');
+    var onChange = function (e) {
+      var on = (e && e.matches !== undefined) ? e.matches : mq.matches;
+      if (on) _setup(); else _restore();
+    };
+    if (mq.addEventListener) mq.addEventListener('change', onChange);
+    else if (mq.addListener) mq.addListener(onChange);
+  } catch (_) {}
+})();
 </script>
 
 <!-- Generic Modal (used by openModal/closeModal) -->
