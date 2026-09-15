@@ -487,6 +487,11 @@ async function saveNewCase(){
   if(!fir){showToast('⚠️ مقدمہ نمبر درج کریں','error');document.getElementById('cf-fir')?.focus();return;}
   if(!section){showToast('⚠️ دفعہ قانون درج کریں','error');document.getElementById('cf-section-search')?.focus();return;}
   if(!complainant){showToast('⚠️ مدعی کا نام درج کریں','error');document.getElementById('cf-complainant')?.focus();return;}
+  // تاریخ کی جانچ — دن ۱–۳۱، مہینہ ۱–۱۲، سال ۴ ہندسے (نامکمل/غلط تاریخ محفوظ نہ ہو)
+  if(typeof _dioValidDate==='function'){
+    if(!_dioValidDate(document.getElementById('cf-date')?.value)){showToast('⚠️ تاریخ اندراج درست درج کریں — دن ۱–۳۱، مہینہ ۱–۱۲، سال مکمل ۴ ہندسے','error');document.getElementById('cf-date')?.focus();return;}
+    if(!_dioValidDate(document.getElementById('cf-occurrence-date')?.value)){showToast('⚠️ تاریخ وقوعہ درست درج کریں — دن ۱–۳۱، مہینہ ۱–۱۲، سال مکمل ۴ ہندسے','error');document.getElementById('cf-occurrence-date')?.focus();return;}
+  }
   try{
     var _cfMobile = _cfMobileFieldsPayload();
     const _newCaseRow = await addCase({
@@ -566,6 +571,11 @@ const _DOCS_LIST = [
 async function saveEditCase(id){
   // VIEW-ONLY ENFORCEMENT [4E]: میعاد ختم پر ترمیم بند
   if (window.DIO && DIO.sub && !DIO.sub.guard('ترمیم محفوظ')) return;
+  // تاریخ کی جانچ — دن ۱–۳۱، مہینہ ۱–۱۲، سال ۴ ہندسے
+  if(typeof _dioValidDate==='function'){
+    if(!_dioValidDate(document.getElementById('cf-date')?.value)){showToast('⚠️ تاریخ اندراج درست درج کریں — دن ۱–۳۱، مہینہ ۱–۱۲، سال مکمل ۴ ہندسے','error');document.getElementById('cf-date')?.focus();return;}
+    if(!_dioValidDate(document.getElementById('cf-occurrence-date')?.value)){showToast('⚠️ تاریخ وقوعہ درست درج کریں — دن ۱–۳۱، مہینہ ۱–۱۲، سال مکمل ۴ ہندسے','error');document.getElementById('cf-occurrence-date')?.focus();return;}
+  }
   // Resolve section: use selected, else typed search value
   var _editSection=document.getElementById('cf-section').value.trim();
   if(!_editSection){

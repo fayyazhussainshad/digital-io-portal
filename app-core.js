@@ -589,11 +589,29 @@ function autoFormatCell(input) {
 }
 function autoFormatDate(input) {
   input.setAttribute('dir','ltr'); input.style.textAlign='left';
-  let v = input.value.replace(/\D/g,'').slice(0,8);
-  if (v.length>4) v = v.slice(0,2)+'-'+v.slice(2,4)+'-'+v.slice(4);
-  else if (v.length>2) v = v.slice(0,2)+'-'+v.slice(2);
-  input.value = v;
+  const s = input.value.replace(/\D/g,'').slice(0,8);   // DDMMYYYY (زیادہ سے زیادہ 8 ہندسے)
+  let dd = s.slice(0,2), mm = s.slice(2,4), yy = s.slice(4,8);
+  // دن: 01–31 (31 سے آگے نہ جائے)
+  if (dd.length === 2) { const n = +dd; if (n > 31) dd = '31'; else if (n === 0) dd = '01'; }
+  // مہینہ: 01–12 (12 سے آگے نہ جائے)
+  if (mm.length === 2) { const n = +mm; if (n > 12) mm = '12'; else if (n === 0) mm = '01'; }
+  // سال: زیادہ سے زیادہ 4 ہندسے (yy پہلے ہی 4 پر محدود)
+  let out = dd;
+  if (s.length > 2) out += '-' + mm;
+  if (s.length > 4) out += '-' + yy;
+  input.value = out;
 }
+
+// تاریخ مکمل و درست ہے؟ (خالی = اختیاری، اجازت)۔ DD-MM-YYYY، دن ۱–۳۱، مہینہ ۱–۱۲، سال ۴ ہندسے۔
+function _dioValidDate(s) {
+  s = (s || '').trim();
+  if (!s) return true;
+  const m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(s);
+  if (!m) return false;                          // مکمل 4-ہندسی سال نہ ہو تو غلط (مثلاً سال "00")
+  const d = +m[1], mo = +m[2];
+  return d >= 1 && d <= 31 && mo >= 1 && mo <= 12;
+}
+window._dioValidDate = _dioValidDate;
 
 // ── SUPABASE DATA FUNCTIONS ───────────────────────────────────
 async function updateBadges() {
