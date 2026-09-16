@@ -1103,7 +1103,19 @@ function _printR173() {
       } catch (__) {}
     }
     const chHtml = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
+      <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
       <style>
+        /* Print iframe apna font KHUD load kare — warna woh officer ke PC par
+           installed font par ya serif par gir jata tha (isi wajah se teeno print
+           alag lagte the aur الفاظ جُڑتے تھے). Yeh wahi @font-face hai jo
+           index.html mein hai — screen jaisa hi font, har PC par yaksan. */
+        @font-face{
+          font-family:'Jameel Noori Nastaleeq';
+          src: local('Jameel Noori Nastaleeq'), local('Jameel Noori Nastaleeq Regular'),
+               url('https://cdn.jsdelivr.net/npm/jameel-noori/fonts/jameel-noori-nastaleeq4.woff2') format('woff2'),
+               url('https://unpkg.com/jameel-noori/fonts/jameel-noori-nastaleeq4.woff2') format('woff2');
+          font-display: swap;
+        }
         /* Charon taraf BARABAR margin — kaghaz chune hue naap ka */
         /* Sides tang aur barabar — table poori qabil-e-tabaat chaudai le */
         @page{ size:${_ch173Paper === 'a4' ? 'A4 portrait' : '8.5in 13in'}; margin:1cm ${_ch173SideMargin()}; }
