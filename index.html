@@ -1851,6 +1851,24 @@ document.addEventListener('DOMContentLoaded', function () {
     if (mq.addEventListener) mq.addEventListener('change', onChange);
     else if (mq.addListener) mq.addListener(onChange);
   } catch (_) {}
+
+  // ═══ چالان: Ctrl+P کو ایپ کے اپنے صاف پرنٹ (_printR173) پر بھیجو ═══
+  // Pehle teeno tareeqe (Ctrl+P / button / saved) ALAG natija dete the — kyunke
+  // Ctrl+P live node ko chapta tha aur button _printR173 (saaf HTML) use karta.
+  // Ab چالان khula ho to Ctrl+P bhi WAHI _printR173 chalata hai → teeno YAKSAN.
+  document.addEventListener('keydown', function (e) {
+    var isP = (e.key === 'p' || e.key === 'P');
+    if (!isP || !(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey) return;
+    try {
+      // #ch173-table sirf چالان mein hota hai (zimni mein nahi) — is se pehchano
+      var challan = document.querySelector('#ch173-doc #ch173-table');
+      if (challan && typeof window._printR173 === 'function') {
+        e.preventDefault();
+        e.stopPropagation();
+        window._printR173();
+      }
+    } catch (_) {}
+  }, true);
 })();
 </script>
 
