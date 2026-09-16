@@ -200,6 +200,10 @@ const offlineStore={
     if(op==='insert'){
       const payload={...data};
       delete payload._offline; delete payload._tempId;
+      // Offline par jo local cache row dikhane ke liye rakhi thi (jaise
+      // metadata-only evidence) — sync ke baad hata do (duplicate se bachao).
+      const _localId = payload._localId;   delete payload._localId;
+      const _cacheStore = payload._cacheStore; delete payload._cacheStore;
 
       // Cases: use trigger-based station auto-fill; numbers handled below
       if(table==='fivec'){
@@ -216,6 +220,7 @@ const offlineStore={
         if(error) throw error;
         if(tempId){ await this.remove(table+'_cache',tempId); await this.cache(table+'_cache',rec); }
       }
+      if(_localId && _cacheStore){ try{ await this.remove(_cacheStore, _localId); }catch(_){} }
 
     // ── UPDATE ──────────────────────────────────────────────
     } else if(op==='update'){
@@ -267,6 +272,9 @@ const offlineStore={
       });
       if(dbErr) throw dbErr;
       await this.removeFile(data.fid);
+      // Offline par jo "local-" evidence row dikhane ke liye cache mein rakhi thi,
+      // sync hone ke baad hata do — warna asal DB row ke saath DO nazar aati.
+      if(data.localId){ try{ await this.remove('evidence_cache', data.localId); }catch(_){} }
 
     // ── REMINDER TOGGLE ──────────────────────────────────────
     } else if(op==='toggle_reminder'){

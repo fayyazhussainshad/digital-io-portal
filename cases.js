@@ -1042,33 +1042,39 @@ async function wevSave(caseId, firNumber) {
   if (!name) { showToast('⚠️ Evidence name is required.', 'error'); return; }
   _currentWorkspaceCaseId = caseId;
 
-  let fileUrl = null;
-  let storagePath = null;
   const type = document.getElementById('wev-type')?.value || 'Document';
   const date = document.getElementById('wev-date')?.value || '';
   const notes = document.getElementById('wev-notes')?.value || '';
 
   try {
-    // Upload file to Supabase Storage if a file is attached
-    if (window._wevFile || window._wevDataUrl) {
-      let blob, ext;
-      if (window._wevDataUrl) {
-        const res = await fetch(window._wevDataUrl); blob = await res.blob(); ext = 'jpg';
-      } else {
-        blob = window._wevFile; ext = window._wevFile.name.split('.').pop();
+    // Photo/file (camera dataURL ya select ki hui file) — online upload ya OFFLINE store+queue.
+    // addEvidenceWithFile dono soorton (online/offline) ko sambhalta hai.
+    const _fileInfo = window._wevDataUrl ? { dataUrl: window._wevDataUrl }
+                    : (window._wevFile ? { file: window._wevFile } : null);
+    const _meta = { name, fir_number: firNumber, type, evidence_date: date, notes };
+    let _row;
+    if (typeof addEvidenceWithFile === 'function') {
+      _row = await addEvidenceWithFile(_meta, _fileInfo);
+    } else {
+      // Fallback (purana raasta) — sirf online
+      let fileUrl = null, storagePath = null;
+      if (window._wevFile || window._wevDataUrl) {
+        let blob, ext;
+        if (window._wevDataUrl) { const res = await fetch(window._wevDataUrl); blob = await res.blob(); ext = 'jpg'; }
+        else { blob = window._wevFile; ext = window._wevFile.name.split('.').pop(); }
+        const path = `${currentUser?.id||'officer'}/${firNumber}/${Date.now()}_${name.replace(/\s+/g,'_')}.${ext}`;
+        const { error: upErr } = await supabaseClient.storage.from('evidence').upload(path, blob, { upsert: true });
+        if (upErr) throw upErr;
+        const { data: urlData } = supabaseClient.storage.from('evidence').getPublicUrl(path);
+        fileUrl = urlData?.publicUrl || null; storagePath = path;
       }
-      const path = `${currentUser?.id||'officer'}/${firNumber}/${Date.now()}_${name.replace(/\s+/g,'_')}.${ext}`;
-      const { error: upErr } = await supabaseClient.storage.from('evidence').upload(path, blob, { upsert: true });
-      if (upErr) throw upErr;
-      const { data: urlData } = supabaseClient.storage.from('evidence').getPublicUrl(path);
-      fileUrl = urlData?.publicUrl || null;
-      storagePath = path;   // SECURITY (Correct-5): private-bucket signed URL ke liye path save karo
+      _row = await addEvidence({ name, fir_number: firNumber, type, evidence_date: date, notes, file_url: fileUrl, storage_path: storagePath });
     }
-
-    await addEvidence({ name, fir_number: firNumber, type, evidence_date: date, notes, file_url: fileUrl, storage_path: storagePath });
+    window._wevDataUrl = null; window._wevFile = null;
     wevStopCamera();
     closeModal();
-    showToast('✅ Evidence attached: ' + name, 'success');
+    if (_row && _row._pendingUpload) showToast('📴 آف لائن محفوظ — انٹرنیٹ آنے پر شہادت اپلوڈ ہو گی', 'info', 4000);
+    else showToast('✅ Evidence attached: ' + name, 'success');
 
     // Refresh evidence tab
     const c = await getCase(caseId);

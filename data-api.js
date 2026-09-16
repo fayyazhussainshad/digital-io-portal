@@ -305,6 +305,8 @@ function _evidenceStoragePath(e) {
 async function _attachEvidenceViewUrls(rows) {
   if (!Array.isArray(rows) || !rows.length) return rows;
   await Promise.all(rows.map(async e => {
+    // Offline "local-" row jis ka apna preview (dataURL) hai — usay na chhero
+    if ((e._local || e._pendingUpload) && e._viewUrl) return;
     e._viewUrl = e.file_url || null;                    // fallback (public bucket / signing fail)
     const p = _evidenceStoragePath(e);
     if (!p) return;
@@ -317,14 +319,35 @@ async function _attachEvidenceViewUrls(rows) {
 }
 
 async function getEvidence(firNumber) {
+  let rows = [];
+  const oid = await getOfficerId().catch(() => null);
+  // ── ONLINE: Supabase se lo + offline dekhne ke liye cache karo ──
+  if (navigator.onLine && oid) {
+    try {
+      let q = supabaseClient.from('evidence').select('*').eq('officer_id',oid).order('fir_number',{ascending:true});
+      if (firNumber) q = q.eq('fir_number', firNumber);
+      const { data } = await q;
+      rows = data || [];
+      try { if (typeof offlineStore !== 'undefined' && rows.length) await offlineStore.cache('evidence_cache', rows); } catch(_) {}
+    } catch(_) { rows = []; }
+  }
+  // ── offline cache se local/pending rows merge (ya offline par poori list) ──
   try {
-    const oid = await getOfficerId();
-    if (!oid) return [];  // afsar shanakht nahi — malformed query se bachao (getCases/getReminders jaisa)
-    let q = supabaseClient.from('evidence').select('*').eq('officer_id',oid).order('fir_number',{ascending:true});
-    if (firNumber) q = q.eq('fir_number', firNumber);
-    const { data } = await q;
-    return await _attachEvidenceViewUrls(data||[]);       // signed view URL (_viewUrl) attach karo
-  } catch(_) { return []; }
+    if (typeof offlineStore !== 'undefined') {
+      const cached = await offlineStore.getAll('evidence_cache');
+      if (!navigator.onLine) {
+        rows = cached || [];                              // offline: sab kuch cache se
+      } else {
+        // online: woh "sync ke muntazir" local rows jo abhi DB mein nahi aaye
+        (cached || []).forEach(c => {
+          if (c && (c._pendingUpload || String(c.id).startsWith('local-')) &&
+              !rows.some(r => String(r.id) === String(c.id))) rows.push(c);
+        });
+      }
+      if (firNumber) rows = rows.filter(r => !r.fir_number || String(r.fir_number) === String(firNumber));
+    }
+  } catch(_) {}
+  return await _attachEvidenceViewUrls(rows);             // signed view URL (_viewUrl) attach karo
 }
 
 
@@ -336,10 +359,77 @@ async function addEvidence(ev) {
   return data;
 }
 
+// ── EVIDENCE + FILE (photo/file) — online upload, ya OFFLINE store+queue ──
+// meta: { name, fir_number, type, evidence_date, notes, is_readonly }
+// fileInfo: { dataUrl } (camera) | { file } (File) | null (sirf metadata)
+function _blobToDataUrl(blob) {
+  return new Promise((res, rej) => {
+    try { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsDataURL(blob); }
+    catch (e) { rej(e); }
+  });
+}
+
+async function addEvidenceWithFile(meta, fileInfo) {
+  const oid = await getOfficerId();
+  if (!oid) throw new Error('افسر کی شناخت دستیاب نہیں — دوبارہ لاگ اِن کریں');
+  const firHint = meta.fir_number || 'general';
+
+  // blob + fileName tay karo
+  let blob = null, fileName = '';
+  if (fileInfo && fileInfo.dataUrl) {
+    const r = await fetch(fileInfo.dataUrl); blob = await r.blob();
+    fileName = ((meta.name || 'evidence').replace(/\s+/g, '_')) + '.jpg';
+  } else if (fileInfo && fileInfo.file) {
+    blob = fileInfo.file;
+    fileName = String(fileInfo.file.name || ((meta.name || 'evidence') + '.dat')).replace(/\s+/g, '_');
+  }
+
+  // ── ONLINE ──
+  if (navigator.onLine) {
+    let file_url = null, storage_path = null;
+    if (blob) {
+      const path = `${(typeof currentUser !== 'undefined' && currentUser && currentUser.id) || oid}/${firHint}/${Date.now()}_${fileName}`;
+      const { error: upErr } = await supabaseClient.storage.from('evidence').upload(path, blob, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: urlData } = supabaseClient.storage.from('evidence').getPublicUrl(path);
+      file_url = urlData?.publicUrl || null; storage_path = path;
+    }
+    const { data, error } = await supabaseClient.from('evidence')
+      .insert({ ...meta, officer_id: oid, file_url, storage_path }).select().single();
+    if (error) throw error;
+    try { if (typeof offlineStore !== 'undefined') await offlineStore.cache('evidence_cache', data); } catch(_) {}
+    return data;
+  }
+
+  // ── OFFLINE ──
+  if (typeof offlineStore === 'undefined') throw new Error('آف لائن محفوظ دستیاب نہیں');
+  const localId = 'local-ev-' + Date.now();
+  let fid = null, previewUrl = null;
+  if (blob) {
+    fid = 'fid-' + Date.now() + '-' + Math.floor(Math.random() * 1e6);
+    previewUrl = (fileInfo && fileInfo.dataUrl) || await _blobToDataUrl(blob);
+    try { await offlineStore.storeFile(fid, previewUrl, { mimeType: blob.type || 'image/jpeg', fileName }); } catch(_) {}
+  }
+  const localRow = { id: localId, ...meta, officer_id: oid, _local: true, _pendingUpload: true,
+    _viewUrl: previewUrl || null, file_url: null, storage_path: null, created_at: new Date().toISOString() };
+  try { await offlineStore.cache('evidence_cache', localRow); } catch(_) {}
+  // sync op: file ho to upload_evidence, warna sada insert
+  if (fid) {
+    await offlineStore.enqueue('evidence', 'upload_evidence', {
+      fid, officerId: oid, caseId: firHint, fileName, localId, meta: { ...meta }
+    });
+  } else {
+    await offlineStore.enqueue('evidence', 'insert', { ...meta, officer_id: oid, _localId: localId, _cacheStore: 'evidence_cache' });
+  }
+  return localRow;
+}
+window.addEvidenceWithFile = addEvidenceWithFile;
+
 
 async function deleteEvidence(id) {
   const { error } = await supabaseClient.from('evidence').delete().eq('id',id);
   if (error) throw error;
+  try { if (typeof offlineStore !== 'undefined') await offlineStore.remove('evidence_cache', id); } catch(_) {}
 }
 
 
