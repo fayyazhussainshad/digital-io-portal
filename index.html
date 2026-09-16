@@ -1057,16 +1057,21 @@ input[id*="cnic"], input[id*="cell"] {
      (الف) کوئی متن نہ کٹے: خانے اپنی اونچائی خود لیں، overflow نظر آئے۔
      (ب) justify برقرار + الفاظ نہ جُڑیں (کم از کم word-spacing)۔
      (ج) گواہان / rotated کالم کا متن بھی مکمل نظر آئے۔ */
+  #dio-nprint-host #ch173-doc .ch173-table tbody td,
   #dio-nprint-host #ch173-doc .normcell,
   #dio-nprint-host #ch173-doc .normwrap,
   #dio-nprint-host #ch173-doc td,
   #dio-nprint-host #ch173-doc .rotcell,
   #dio-nprint-host #ch173-doc .cellbox,
   #dio-nprint-host #ch173-doc .rotclip,
+  #dio-nprint-host #ch173-doc .rotinner,
+  #dio-nprint-host #ch173-doc .hinner,
   #dio-nprint-host #ch173-doc [data-k] {
+    position: static !important; inset: auto !important;
     overflow: visible !important; height: auto !important; min-height: 0 !important;
     max-height: none !important;
   }
+  #dio-nprint-host #ch173-doc .rotinner { display: inline-block !important; }
   #dio-nprint-host #ch173-doc .hinner,
   #dio-nprint-host #ch173-doc .akh-col2,
   #dio-nprint-host #ch173-doc .normwrap,

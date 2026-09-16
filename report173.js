@@ -1124,6 +1124,21 @@ function _printR173() {
         .ch173-table{ page-break-inside:avoid; break-inside:avoid; } /* agle safhe par na jaye */
         .ch173-cont:empty{ display:none !important; }
         .colgrip,.rowgrip,.acc-pick,.no-print,button,select{ display:none !important; }
+        /* ═══ متن چھپنے/کٹنے کا اصل حل (verified in Chromium print) ═══
+           Table body ke khane 'position:absolute' + fixed height + overflow:hidden
+           par the — is liye jo matn baked-unchai se zyada hota woh CLIP ho kar
+           chhup jata tha (halaat ki aakhri satar, gawahan/ملزمان ke naam). Print
+           mein har khana STATIC + auto-height + overflow:visible → poora matn nazar
+           aata hai, row khud barh jati hai, kuch clip nahi hota. */
+        #ch173-doc .ch173-table tbody td,
+        #ch173-doc .ch173-table tbody td.normcell,
+        #ch173-doc .ch173-table td.rotcell,
+        #ch173-doc .cellbox, #ch173-doc .rotclip,
+        #ch173-doc .normwrap, #ch173-doc .rotinner, #ch173-doc .hinner{
+          position:static !important; inset:auto !important;
+          height:auto !important; min-height:0 !important; max-height:none !important;
+          overflow:visible !important; }
+        #ch173-doc .rotinner{ display:inline-block !important; }
         /* Misal bandhne wali tikoni jagah — chapai mein zaroori */
         #ch173-doc .ch173-bind{ display:block !important; }
         /* Safhe ka tor theek apni jagah par */
@@ -1208,12 +1223,17 @@ function _ch173MakeResizable() {
   if (!headRow) return;
 
   // Grip lagane ka common helper
+  const _colGrips = [];
   const addGrip = (cell, iA, iB) => {
     if (iB >= cols.length) return;              // aakhri column ke bayen kuch nahi
     const grip = document.createElement('div');
     grip.className = 'colgrip';
     grip.title = 'چوڑائی بدلنے کے لیے کھینچیں';
     cell.appendChild(grip);
+    // Grip ko POORE table ki unchai tak phailao — taake column ki lakeer
+    // sirf header mein nahi, NEECHE data waale hissey mein bhi pakri ja sake.
+    try { cell.style.overflow = 'visible'; } catch (_) {}
+    _colGrips.push(grip);
     grip.addEventListener('mousedown', (e) => {
       e.preventDefault(); e.stopPropagation();
       const tW = table.offsetWidth;
@@ -1357,6 +1377,7 @@ function _ch173MakeResizable() {
           document.body.style.cursor = '';
           // Chhorne ke baad matn poori tarah jam jaye (aik dafa kaafi nahi)
           try { _ch173OverflowSettle(4); } catch (_) {}
+          try { table._syncColGripHeights && table._syncColGripHeights(); } catch (_) {}
           try { _r173Dirty = true; } catch (_) {}
         };
         document.addEventListener('mousemove', onMove);
@@ -1364,6 +1385,28 @@ function _ch173MakeResizable() {
       });
     });
   }
+
+  // ── Column grips ki unchai = POORE table ki unchai (header + data) ──
+  // Is se har column ki لکیر neeche data waale hissey mein bhi qabil-e-pakar
+  // ho jati hai (pehle sirf header ki patli patti pakri ja sakti thi).
+  function _syncColGripHeights() {
+    let h = 0;
+    try { h = table.offsetHeight || 0; } catch (_) {}
+    if (!h) return;
+    _colGrips.forEach(g => {
+      try {
+        const cell = g.parentElement;
+        const top = cell ? cell.offsetTop : 0;      // grip cell ke top se table ke neeche tak
+        g.style.height = Math.max(0, h - top) + 'px';
+      } catch (_) {}
+    });
+  }
+  table._syncColGripHeights = _syncColGripHeights;
+  // Pehli dafa + thora baad (fonts/rotated naap ke baad)
+  _syncColGripHeights();
+  setTimeout(_syncColGripHeights, 300);
+  setTimeout(_syncColGripHeights, 900);
+  try { window.addEventListener('resize', _syncColGripHeights); } catch (_) {}
 }
 window._ch173MakeResizable = _ch173MakeResizable;
 
