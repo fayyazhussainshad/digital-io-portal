@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v414
+   DIGITAL IO — SERVICE WORKER v449
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v447';
+const CACHE_NAME = 'digital-io-v449';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -42,6 +42,7 @@ const CORE_ASSETS = [
   '/cro-card.js',
   '/staff-v2.js',
   '/law-library.js',
+  '/ahkamat.js',
   '/templates.js',
   '/sho-dsp.js',
   '/editor-tools.js',

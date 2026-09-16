@@ -119,11 +119,12 @@
     var st = readState();
     if (!st) return;
 
+    // ── عام صفحہ (cases/search وغیرہ) کو بحال نہ کرو ──
+    //  افسر کی درخواست: لاگ اِن پر ہمیشہ ڈیش بورڈ کھلے (initApp پہلے ہی dashboard
+    //  دکھاتا ہے)۔ پہلے یہاں آخری صفحہ بحال ہوتا تھا → لاگ اِن پر مقدمات کھل جاتے
+    //  تھے۔ اب صرف کھلا ہوا کیس/دستاویز (نیچے) بحال ہوتا ہے، عام صفحہ نہیں۔
     if (st.t === 'page') {
-      if (st.page && st.page !== window._activePage && typeof window.showPage === 'function') {
-        try { window.showPage(st.page, null); } catch (_) {}
-      }
-      return;
+      return;   // ڈیش بورڈ پر ہی رہو
     }
 
     if (st.t === 'case' && st.caseId && typeof window.openCaseWorkspace === 'function') {
