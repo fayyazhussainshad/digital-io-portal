@@ -4730,7 +4730,10 @@ function _ch173CSS() {
         position:relative; line-height:1.15;
       }
       /* Header row 1: jagah ke hisab se chhota font */
-      #ch173-doc .ch173-table thead th{ font-size:14pt; vertical-align:middle; line-height:1.1;
+      /* Heading font 14pt → 11pt: تنگ کالموں میں heading کم سطروں میں سماتی ہے
+         (جیسا user کی image 4 میں target ہے)، اور 96px vcell کی حد کے اندر رہتی
+         ہے — heading کبھی اُس سے زیادہ اونچی/زیادہ سطروں والی نہیں ہوتی۔ */
+      #ch173-doc .ch173-table thead th{ font-size:11pt; vertical-align:middle; line-height:1.1;
         font-weight:normal; position:relative; padding:1px 4px; }
       /* Data khane: columns 1–6 → Ascending (neeche se ooper). AHEM: CSS transform
          seedha <td> par kaam nahi karta (browser nazar-andaz kar deta hai), is liye
