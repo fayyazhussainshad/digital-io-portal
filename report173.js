@@ -4664,7 +4664,11 @@ function _ch173CSS() {
          hisab se chaura hota hai (jitna mawad, utni chaurai). کالم 7 ko
          colgroup mein 100% diya gaya hai, is liye bachi hui saari jagah
          wohi le leta hai. */
-      #ch173-doc .ch173-table{ width:100%; border-collapse:collapse; table-layout:auto; direction:rtl; }
+      /* table-layout:fixed — کالم چوڑائیاں <col> کے مطابق پکی رہتی ہیں۔ پہلے
+         'auto' تھا: براؤزر خود مواد کے حساب سے کالم بدل دیتا تھا، اسی لیے ایک
+         کالم adjust کرتے ہی پورا table اپنی مرضی سے کھل/بگڑ جاتا تھا۔ اب چوڑائی
+         صرف IO کے drag سے بدلے گی، خود بخود نہیں۔ */
+      #ch173-doc .ch173-table{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; }
       #ch173-doc .ch173-table th, #ch173-doc .ch173-table td{
         border:1px solid #000; padding:2px 4px; text-align:center;
         white-space:normal; word-wrap:break-word; overflow-wrap:break-word;
