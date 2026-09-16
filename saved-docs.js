@@ -78,6 +78,12 @@ async function dioSaveDocEntry(docType, title, content, opts) {
   try {
     const i = localList.findIndex(x => String(x.id) === String(entry.id));
     const lite = { id: entry.id, content: payload, created_at: entry.created_at || now, updated_at: now };
+    // Agar DB save NAKAAM raha (offline/ڈھانچہ) to is entry ko "sync ke muntazir"
+    // nishan lagao — internet aane par _dioSyncDocs() ise Supabase par bhej dega.
+    if (entry._local) {
+      lite._pendingSync = true;
+      lite._syncOp = (opts.id && !String(opts.id).startsWith('local-')) ? 'update' : 'insert';
+    }
     if (i >= 0) localList[i] = lite; else localList.push(lite);
     localStorage.setItem(lsKey, JSON.stringify(localList));
   } catch (_) {}
@@ -110,6 +116,16 @@ async function dioLoadDocEntries(docType, explicitCaseId) {
       .order('created_at', { ascending: true });
     if (error) throw error;
     rows = data || [];
+    // Online fetch ko localStorage mein cache karo — taake OFFLINE bhi yeh
+    // dastawezat nazar aayen. "sync ke muntazir" (pending/local-) entries mehfooz.
+    try {
+      const key = _sdKey(caseId, docType);
+      let prev = []; try { prev = JSON.parse(localStorage.getItem(key) || '[]') || []; } catch (_2) {}
+      const pending = prev.filter(x => x && (x._pendingSync || String(x.id).startsWith('local-')));
+      const fresh = rows.map(r => ({ id: r.id, content: r.content, created_at: r.created_at, updated_at: r.updated_at }));
+      const merged = fresh.concat(pending.filter(p => !fresh.some(f => String(f.id) === String(p.id))));
+      localStorage.setItem(key, JSON.stringify(merged));
+    } catch (_3) {}
   } catch (_) {
     // DB fail — localStorage se
     try {
@@ -148,6 +164,85 @@ async function dioDeleteDocEntry(docType, id, explicitCaseId) {
   } catch (_) {}
 }
 window.dioDeleteDocEntry = dioDeleteDocEntry;
+
+// ═══════════════════════════════════════════════════════════════
+//  OFFLINE → ONLINE SYNC (Phase 2) — case_documents ke woh saves
+//  jo offline localStorage mein "local-" ban kar reh gaye (ya offline
+//  edits) — internet aane par Supabase par bhej do. Baqi (cases,
+//  zimni, challan/report_173, 5C) apna offline-sync khud rakhte hain;
+//  yeh SIRF is shared doc layer (darkhwastain/saza/misal chips/RFA) ke liye.
+// ═══════════════════════════════════════════════════════════════
+let _dioDocsSyncing = false;
+
+async function _dioSyncDocs() {
+  if (_dioDocsSyncing) return 0;
+  if (!navigator.onLine || typeof supabaseClient === 'undefined' || !supabaseClient) return 0;
+  _dioDocsSyncing = true;
+  let synced = 0;
+  try {
+    let oid = null;
+    try { oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null; } catch (_) {}
+
+    // Tamam 'dio_sd_<docType>_<caseId>' keys jama karo
+    const keys = [];
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.indexOf('dio_sd_') === 0) keys.push(k);
+      }
+    } catch (_) { _dioDocsSyncing = false; return 0; }
+
+    for (const k of keys) {
+      let list;
+      try { list = JSON.parse(localStorage.getItem(k) || '[]') || []; } catch (_) { continue; }
+      if (!Array.isArray(list) || !list.length) continue;
+
+      // key ke aakhri '_' ke baad caseId (UUID mein '_' nahi hota),
+      // us se pehle docType (jaise 'saza_slip' mein '_' ho sakta hai).
+      const rest = k.slice(7);              // 'dio_sd_'.length === 7
+      const us = rest.lastIndexOf('_');
+      if (us < 0) continue;
+      const docType = rest.slice(0, us);
+      const caseId  = rest.slice(us + 1);
+      if (!caseId) continue;
+
+      let changed = false;
+      for (let j = 0; j < list.length; j++) {
+        const it = list[j];
+        if (!it || !it._pendingSync) continue;
+        try {
+          if (it._syncOp === 'update' && !String(it.id).startsWith('local-')) {
+            const { error } = await supabaseClient.from('case_documents')
+              .update({ content: it.content, status: 'complete', updated_at: new Date().toISOString() })
+              .eq('id', it.id);
+            if (error) throw error;
+          } else {
+            const { data, error } = await supabaseClient.from('case_documents')
+              .insert({ case_id: caseId, officer_id: oid, document_type: docType, status: 'complete', content: it.content })
+              .select().single();
+            if (error) throw error;
+            if (data && data.id) { it.id = data.id; it.created_at = data.created_at || it.created_at; }
+          }
+          delete it._pendingSync; delete it._syncOp;
+          changed = true; synced++;
+        } catch (e) {
+          // Abhi bhi nakaam (offline/server) — pending chhod do, agli dafa retry
+        }
+      }
+      if (changed) { try { localStorage.setItem(k, JSON.stringify(list)); } catch (_) {} }
+    }
+  } catch (_) {}
+  _dioDocsSyncing = false;
+  if (synced > 0 && typeof showToast === 'function') showToast('✅ ' + synced + ' دستاویزات sync ہو گئیں', 'success');
+  return synced;
+}
+window._dioSyncDocs = _dioSyncDocs;
+
+// Internet wapas aane par + app-start par sync (baqi sync ke saath)
+try {
+  window.addEventListener('online', function () { setTimeout(function () { try { _dioSyncDocs(); } catch (_) {} }, 1800); });
+  setTimeout(function () { if (navigator.onLine) { try { _dioSyncDocs(); } catch (_) {} } }, 4500);
+} catch (_) {}
 
 // ── تاریخ/وقت — DD/MM/YYYY، ہر ماحول میں ──
 function _sdDateTime(iso) {
