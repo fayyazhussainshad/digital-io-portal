@@ -1171,7 +1171,7 @@ function _printR173() {
         #ch173-doc [data-k="halaat"],
         #ch173-doc [data-k="papers_body"]{
           text-align:justify !important; text-align-last:right !important;
-          text-justify:inter-word !important; word-spacing:0.08em !important; }
+          text-justify:inter-word !important; word-spacing:0.12em !important; }
         .sho-papers-body, .sho-cell-row, .ch173-cont{ outline:none !important; }
         .sho-papers-body:empty::before, .sho-cell-date:empty::before,
         .sho-cell-row:empty::before, .ch173-cont:empty::before{ content:'' !important; }
