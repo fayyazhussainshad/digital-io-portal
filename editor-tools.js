@@ -432,8 +432,10 @@ function _dioHideFloatBar() {
 // Neeche comma-separated selectors likhen. Jis khane ka ye selector se
 // closest match hoga wahan floating toolbar NAHI aayega.
 //   • #misal-editor  → is par pehle se OOPER mustaqil toolbar hai (double na ho).
+//   • .zf-editor     → ضمنی ایڈیٹر — floating toolbar کے تمام بٹن اب اوپر مستقل
+//                       toolbar میں شامل ہیں، اس لیے یہاں تیرتی پٹی نہ آئے (متن نہ ڈھکے)۔
 // User jab kahe "falan jagah se hatao" to us jagah ka selector yahan add kar dein.
-const _DIO_FLOAT_SKIP = '#misal-editor';
+const _DIO_FLOAT_SKIP = '#misal-editor, .zf-editor';
 
 function _dioFloatSkip(el) {
   try { return !!(el && el.closest && _DIO_FLOAT_SKIP && el.closest(_DIO_FLOAT_SKIP)); }

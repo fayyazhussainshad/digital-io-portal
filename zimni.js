@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_VER = 'zimni v23 — manual serial + cols editable + 1-page print + IO LEFT';
+const ZIMNI_VER = 'zimni v24 — toolbar merged (no print/update) + save keeps-open';
 window.ZIMNI_VER = ZIMNI_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -398,16 +398,22 @@ function _renderZimniEditor() {
         </select>
         <button onmousedown="event.preventDefault()" onclick="_zimniFmt('undo')" title="واپس (Undo)" style="${btn}">↶</button>
         <button onmousedown="event.preventDefault()" onclick="_zimniFmt('redo')" title="دوبارہ (Redo)" style="${btn}">↷</button>
-        <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveZimni()">💾 محفوظ</button>
-        <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_saveZimni(false,true)" title="محفوظ کریں مگر ضمنی کھلی رہے (Ctrl+S)">🔄 اپ ڈیٹ</button>
+        ${sep}
+        <!-- ── نیچے والا تیرتا (floating) toolbar اب مکمل یہیں (اوپر) شامل ── -->
+        <button onmousedown="event.preventDefault()" onclick="dioFontStep(1)" title="فونٹ بڑا" style="${btn}">A+</button>
+        <button onmousedown="event.preventDefault()" onclick="dioFontStep(-1)" title="فونٹ چھوٹا" style="${btn}font-size:11px;">A−</button>
+        <button onmousedown="event.preventDefault()" onclick="dioSetDir('rtl')" title="اردو — دائیں سے بائیں (RTL)" style="${btn}font-weight:800;">؈</button>
+        <button onmousedown="event.preventDefault()" onclick="dioSetDir('ltr')" title="English — Left to Right (LTR)" style="${btn}font-weight:800;direction:ltr;">EN</button>
+        <button onmousedown="event.preventDefault()" onclick="_zimniFindReplaceUI(false)" title="ڈھونڈیں اور بدلیں (Find & Replace)" style="${btn}">🔎</button>
+        ${sep}
+        <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveZimni(false,true)" title="محفوظ کریں — سب کچھ محفوظ ہو جائے گا (ضمنی کھلی رہے گی)">💾 محفوظ</button>
         <span id="zf-updated" style="font-size:11px;color:var(--text-muted);white-space:nowrap;align-self:center;"></span>
-        <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printZimni()">🖨️ پرنٹ</button>
       </div>
     </div>
 
     <!-- Document — poora editable (har jaga likha ja sake), kaghaz asal naap par -->
     <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
-      <div id="ch173-doc" contenteditable="true" spellcheck="false" style="
+      <div id="ch173-doc" class="zf-editor" contenteditable="true" spellcheck="false" style="
         width:${paper==='a4'?'8.27in':'8.5in'};max-width:none;
         min-height:${paper==='a4'?'11.7in':'13in'};margin:0 auto;
         padding:1cm ${side};background:#fff;
