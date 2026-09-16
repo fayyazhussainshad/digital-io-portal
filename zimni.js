@@ -2158,6 +2158,11 @@ function _zimniPrintHTML(inner) {
       /* #3: ہر androoni sheet نئے صفحے سے شروع (page 3، 5، 7 …) */
       #ch173-doc .zf-androoni{ break-before:page !important; page-break-before:always !important; }
       .no-print, button, select{ display:none !important; }
+      /* تفتیشی افسر کا نام و تاریخ — پرنٹ میں ہمیشہ بائیں (LEFT)، کلاس/ڈیٹا دونوں پر */
+      #ch173-doc [data-k="io_sign"], #ch173-doc [data-k="io_date"],
+      #ch173-doc .zf-signblk, #ch173-doc .zf-sign, #ch173-doc .zf-signdate,
+      #ch173-doc .zfa-wit-sign, #ch173-doc .zfa-wit-io, #ch173-doc .zfa-wit-date{
+        text-align:left !important; text-align-last:left !important; }
       #ch173-doc, #ch173-doc *{ orphans:2; widows:2; }
     </style></head><body>
     <script>window.__ZA_SKEL=${JSON.stringify(zaSkel)};window.__PAPER=${JSON.stringify(paper)};</script>
@@ -2172,15 +2177,35 @@ function _zimniPrintHTML(inner) {
         var fitLimit=twoPage-SAFE;
         function T(el){ return (el.textContent||'').replace(/[\\s\\u00A0]/g,''); }
 
-        // ── ایک body کو الگ الگ <div> پیراگرافوں میں توڑو (br اور کئی .zf-body سنبھالو) ──
+        // ── ایک body کو الگ الگ <div> پیراگرافوں میں توڑو ──
+        //  (br، کئی .zf-body، اور — اہم — text node کے اندر نئی سطر سنبھالو)
+        //  ضمنی کا خانہ white-space:pre-wrap ہے: افسر Enter دبائے تو براؤزر
+        //  اکثر newline کو ایک ہی text node میں ڈال دیتا ہے (نیا div نہیں)۔
+        //  پہلے normalize صرف DIV/P/BR پر توڑتا تھا → newline نظرانداز → سارا متن
+        //  ایک پیراگراف بن جاتا اور سیریل نمبر بھی صرف ایک چھپتا۔ اب newline کو بھی
+        //  پیراگراف کی حد مانتے ہیں۔
         function normalize(host){
           var groups=[],cur=[];
+          function brk(){ if(cur.length){groups.push(cur);cur=[];} }
+          function addTextWithNL(str){
+            var parts=String(str==null?'':str).split('\\n');
+            for(var i=0;i<parts.length;i++){
+              if(i>0) brk();                                  // newline = نیا پیراگراف
+              if(parts[i].length) cur.push(document.createTextNode(parts[i]));
+            }
+          }
           [].slice.call(host.childNodes).forEach(function(n){
-            if(n.nodeType===1&&(n.tagName==='DIV'||n.tagName==='P')){ if(cur.length){groups.push(cur);cur=[];} groups.push([n]); }
-            else if(n.nodeType===1&&n.tagName==='BR'){ if(cur.length){groups.push(cur);cur=[];} }
-            else { cur.push(n); }
+            if(n.nodeType===1&&(n.tagName==='DIV'||n.tagName==='P')){
+              // سادہ (بغیر child element) بلاک جس کے اندر newline ہو → اُسے بھی توڑو
+              if(n.children.length===0 && /\\n/.test(n.textContent||'')){
+                brk(); addTextWithNL(n.textContent||''); brk();
+              } else { brk(); groups.push([n]); }
+            }
+            else if(n.nodeType===1&&n.tagName==='BR'){ brk(); }
+            else if(n.nodeType===3){ addTextWithNL(n.nodeValue||''); }   // ← اصل مسئلہ یہاں تھا
+            else { cur.push(n); }                                        // inline (span/b/i/u)
           });
-          if(cur.length) groups.push(cur);
+          brk();
           while(host.firstChild) host.removeChild(host.firstChild);
           var out=[];
           groups.forEach(function(g){
@@ -2298,6 +2323,9 @@ function _zimniPrintHTML(inner) {
                 sign.querySelectorAll('.zf-gap').forEach(function(g){g.style.display='none';}); }
               else { sign.className='zf-signblk'; if(io)io.className='zf-sign'; if(dt)dt.className='zf-signdate';
                 sign.querySelectorAll('.zf-gap').forEach(function(g){g.style.display='';}); }
+              // ── تفتیشی افسر کا نام + تاریخ ہمیشہ بائیں (LEFT) — پرانی محفوظ ضمنی
+              //    میں inline text-align:right ہو سکتا ہے، اِسے یہاں زبردستی ہٹاؤ ──
+              [sign,io,dt].forEach(function(el){ if(el){ try{ el.style.setProperty('text-align','left','important'); }catch(_){}}});
             }
           };
 
@@ -3966,6 +3994,11 @@ function _zaPrintHTML(inner) {
         clip-path:polygon(0 0, 2in 0, 0 2in);
         -webkit-clip-path:polygon(0 0, 2in 0, 0 2in); }
       .no-print, button, select{ display:none !important; }
+      /* تفتیشی افسر کا نام و تاریخ — پرنٹ میں ہمیشہ بائیں (LEFT)، کلاس/ڈیٹا دونوں پر */
+      #ch173-doc [data-k="io_sign"], #ch173-doc [data-k="io_date"],
+      #ch173-doc .zf-signblk, #ch173-doc .zf-sign, #ch173-doc .zf-signdate,
+      #ch173-doc .zfa-wit-sign, #ch173-doc .zfa-wit-io, #ch173-doc .zfa-wit-date{
+        text-align:left !important; text-align-last:left !important; }
       #ch173-doc, #ch173-doc *{ orphans:2; widows:2; }
     </style></head><body><div id="ch173-doc">${inner}</div></body></html>`;
 }
