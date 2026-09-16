@@ -1131,14 +1131,20 @@ function _printR173() {
           break-before:page !important; page-break-before:always !important; }
         /* Koi satar akeli na chhute (safhe ke kinare par) */
         #ch173-doc, #ch173-doc *{ orphans:2; widows:2; }
-        /* ═══ پرنٹ میں الفاظ جُڑنے کا حل ═══
+        /* ═══ پرنٹ میں الفاظ جُڑنے کا حل (justify برقرار) ═══
            Chrome کی چھپائی میں Urdu/Nastaliq justified متن کی inter-word space
-           صفر ہو جاتی ہے → الفاظ آپس میں مل جاتے ہیں۔ اس لیے صرف چھپائی میں
-           justify کی جگہ سیدھی دائیں سیدھ (معمول کی جگہ)۔ اسکرین ویسی کی ویسی۔ */
+           صفر ہو جاتی ہے → الفاظ جُڑ جاتے ہیں۔ حل: justify رہنے دو (لائن پوری
+           بھرے، خالی جگہ نہ ہو) مگر word-spacing کی کم از کم مقدار مقرر کر دو،
+           تاکہ چاہے justify صفر کرنے کی کوشش کرے، الفاظ کے بیچ گیپ باقی رہے۔
+           آخری سطر دائیں سیدھ (کھنچاؤ نہ ہو)۔ اسکرین ویسی کی ویسی۔ */
         #ch173-doc .hinner,
         #ch173-doc .akh-col2,
+        #ch173-doc .normwrap,
         #ch173-doc .sho-papers-body,
-        #ch173-doc [data-k="halaat"]{ text-align:right !important; text-align-last:right !important; }
+        #ch173-doc [data-k="halaat"],
+        #ch173-doc [data-k="papers_body"]{
+          text-align:justify !important; text-align-last:right !important;
+          text-justify:inter-word !important; word-spacing:0.08em !important; }
         .sho-papers-body, .sho-cell-row, .ch173-cont{ outline:none !important; }
         .sho-papers-body:empty::before, .sho-cell-date:empty::before,
         .sho-cell-row:empty::before, .ch173-cont:empty::before{ content:'' !important; }

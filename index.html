@@ -1053,7 +1053,31 @@ input[id*="cnic"], input[id*="cell"] {
   #dio-nprint-host #dio-dv-body > * {
     flex: none !important; min-height: 0 !important; height: auto !important;
   }
-  @page { margin: 12mm; }
+  /* ── چالان (report 173) کے لیے native Ctrl+P خاص اصول ──
+     (الف) کوئی متن نہ کٹے: خانے اپنی اونچائی خود لیں، overflow نظر آئے۔
+     (ب) justify برقرار + الفاظ نہ جُڑیں (کم از کم word-spacing)۔
+     (ج) گواہان / rotated کالم کا متن بھی مکمل نظر آئے۔ */
+  #dio-nprint-host #ch173-doc .normcell,
+  #dio-nprint-host #ch173-doc .normwrap,
+  #dio-nprint-host #ch173-doc td,
+  #dio-nprint-host #ch173-doc .rotcell,
+  #dio-nprint-host #ch173-doc .cellbox,
+  #dio-nprint-host #ch173-doc .rotclip,
+  #dio-nprint-host #ch173-doc [data-k] {
+    overflow: visible !important; height: auto !important; min-height: 0 !important;
+    max-height: none !important;
+  }
+  #dio-nprint-host #ch173-doc .hinner,
+  #dio-nprint-host #ch173-doc .akh-col2,
+  #dio-nprint-host #ch173-doc .normwrap,
+  #dio-nprint-host #ch173-doc .sho-papers-body,
+  #dio-nprint-host #ch173-doc [data-k="halaat"],
+  #dio-nprint-host #ch173-doc [data-k="papers_body"] {
+    text-align: justify !important; text-align-last: right !important;
+    text-justify: inter-word !important; word-spacing: 0.08em !important;
+  }
+  /* @page margin NAHI diya — margins ab print dialog / system ki setting ke
+     mutabiq rahenge (khud-ba-khud force nahi honge). */
 }
 /* Print-host on-screen kabhi nazar na aaye (sirf print ke lamhe host mein
    document hota hai; native print dialog screen dhak leta hai, phir script

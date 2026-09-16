@@ -83,6 +83,13 @@ function renderMisalBar(c) {
         style="order:999;margin-right:auto;width:34px;height:34px;border-radius:50%;flex-shrink:0;
                cursor:pointer;border:1px solid var(--border);background:var(--bg-card);
                color:var(--text-primary);font-size:18px;font-weight:900;line-height:1;direction:ltr;">←</button>
+      <!-- مقدمہ نمبر — case khulte hi hamesha nazar aaye (kaunsa muqadma khula hai) -->
+      <span title="مقدمہ نمبر" style="flex-shrink:0;display:inline-flex;align-items:center;gap:6px;
+            padding:5px 12px;border-radius:8px;background:var(--accent-glow,rgba(56,189,248,0.14));
+            border:1px solid var(--accent,#38bdf8);color:var(--accent,#38bdf8);font-weight:800;
+            font-size:13px;font-family:'Jameel Noori Nastaleeq',serif;white-space:nowrap;">
+        📁 مقدمہ<bdi style="direction:ltr;font-family:var(--font-mono,monospace);font-weight:700;">${(typeof esc==='function'?esc(c&&c.fir_number||'—'):(c&&c.fir_number||'—'))}</bdi>
+      </span>
       ${indexChip}
       ${_misalDropdown('fir-dd', 'الف آئی آر', [
         {label:'الف آئی آر', act:`_ddPick('fir-dd','fir')`},
