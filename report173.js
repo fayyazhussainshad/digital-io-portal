@@ -1168,7 +1168,9 @@ function _printR173() {
         #ch173-doc .akh-col2,
         #ch173-doc .normwrap,
         #ch173-doc .sho-papers-body,
+        #ch173-doc .ch173-cont,
         #ch173-doc [data-k="halaat"],
+        #ch173-doc [data-k="cont_text"],
         #ch173-doc [data-k="papers_body"]{
           text-align:justify !important; text-align-last:right !important;
           text-justify:inter-word !important; word-spacing:0.12em !important; }
