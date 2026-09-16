@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_VER = 'zimni v22 — print: newline→paragraph + serial per-para + IO LEFT';
+const ZIMNI_VER = 'zimni v23 — manual serial + cols editable + 1-page print + IO LEFT';
 window.ZIMNI_VER = ZIMNI_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -963,8 +963,10 @@ function _zimniEnsureClosing() {
   // ye editor mein foran theek kar deta hai, aur save par HTML mein bhi persist ho
   // jata hai (phir print bhi LEFT). Purani inline right-align ko override karta hai.
   try {
-    cell.querySelectorAll('.zf-signblk, .zf-sign, .zf-signdate').forEach(el => {
+    // کلاس اور data-k دونوں پکڑو — پرانی محفوظ ضمنیوں میں کلاس مختلف ہو سکتی ہے
+    cell.querySelectorAll('.zf-signblk, .zf-sign, .zf-signdate, [data-k="io_sign"], [data-k="io_date"]').forEach(el => {
       el.style.setProperty('text-align', 'left', 'important');
+      el.style.setProperty('text-align-last', 'left', 'important');
     });
   } catch (_) {}
   if (cell.querySelector('.zf-close')) return;   // closing pehle se maujood — sirf normalize kiya
@@ -1007,6 +1009,20 @@ function _zimniPageH() {
 function _zimniStartNumbers() {
   const doc = _zimniDoc();
   if (!doc) return;
+  // ═══ خودکار نمبر بند (MANUAL موڈ) ═══ افسر کی درخواست پر کالم 2 اب مکمل
+  //  دستی ہے — سسٹم خود نمبر نہ لگائے، نہ افسر کے لکھے کو چھیڑے۔ صرف یقینی
+  //  بناؤ کہ نمبروں کا خانہ editable ہے (تاکہ افسر خود لکھ سکے)۔
+  try {
+    const _n = doc.querySelector('.zf-nums');
+    if (_n) {
+      _n.setAttribute('contenteditable', 'true');
+      if (!_n.querySelector('.zf-num') && !String(_n.textContent||'').trim()) {
+        const _d = document.createElement('div'); _d.className = 'zf-num'; _d.textContent = '1';
+        _n.appendChild(_d);
+      }
+    }
+  } catch (_) {}
+  return;                       // ↓ نیچے پرانا خودکار نظام (اب غیر فعال)
   const kick = () => {
     clearTimeout(doc._zfNumT);
     doc._zfNumT = setTimeout(() => {
@@ -1093,6 +1109,7 @@ window._zimniStartNumbers = _zimniStartNumbers;
 // ═══ berooni + androoni کے نمبر ایک ہی مسلسل سلسلے میں ═══
 // berooni کے پیراگراف 1..N، پھر androoni کے N+1، N+2 … (نمبر جاری رہتا ہے)
 function _zimniNumberAll() {
+  return null;   // ═══ خودکار نمبر بند (MANUAL موڈ) ═══
   let r = null;
   try { r = _zimniAutoNumbers(); } catch (_) {}
   try { _zimniAlignSerial(); } catch (_) {}
@@ -1121,6 +1138,7 @@ function _zimniNumberAll() {
 window._zimniNumberAll = _zimniNumberAll;
 
 function _zimniAutoNumbers() {
+  return { ok: true, manual: true };   // ═══ خودکار نمبر بند (MANUAL موڈ) ═══
   const doc = _zimniDoc();
   if (!doc) return { ok: false, wajah: 'ضمنی کا صفحہ (#ch173-doc) نہیں ملا' };
   const td = doc.querySelector('td.zf-c-serial');
@@ -1209,6 +1227,7 @@ window._zimniAutoNumbers = _zimniAutoNumbers;
 
 // ▾ بٹن — بنام والی سطر کے برابر
 function _zimniAlignSerial() {
+  return;   // ═══ خودکار سیدھ بند (MANUAL موڈ) ═══ افسر خود نمبر لکھتا ہے
   const doc = _zimniDoc();
   if (!doc) return;
   const td    = doc.querySelector('td.zf-c-serial');
@@ -1702,8 +1721,12 @@ function _zimniFormCSS() {
   /* ROW 2 (data) */
   #ch173-doc table.zf-tbl td{ border:1px solid #000; padding:8px 9px; font-size:14pt; vertical-align:top;
     line-height:1.5; text-align:justify; text-align-last:right; overflow-wrap:anywhere; word-break:break-word; position:relative; }
-  #ch173-doc table.zf-tbl td.zf-c-action{ text-align:center; text-align-last:center; }
+  /* کالم 1 (تاریخ و وقت کارروائی) — editable + justified (افسر خود لکھے) */
+  #ch173-doc table.zf-tbl td.zf-c-action{ text-align:justify; text-align-last:right; }
+  #ch173-doc .zf-actbody{ display:block; min-height:1.6em; text-align:justify; text-align-last:right; outline:none; }
+  /* کالم 2 (سیریل نمبر) — editable + center (افسر خود لکھے، شروع میں 1) */
   #ch173-doc table.zf-tbl td.zf-c-serial{ text-align:center; text-align-last:center; }
+  #ch173-doc .zf-nums{ outline:none; }
   /* قطار کی اونچائی JS (_zimniFitTable) حساب سے دیتا ہے — یہ صرف ابتدائی ناپ */
   #ch173-doc table.zf-tbl tbody td{ height:18cm; }
   /* کالم 2 — ہر پیراگراف کا اپنا نمبر (خودکار) */
@@ -1752,6 +1775,9 @@ function _zimniFormCSS() {
   #ch173-doc .zf-sign{ font-weight:bold; text-decoration:none !important;
     outline:none; text-align:left !important; display:block; }
   #ch173-doc .zf-signdate{ outline:none; text-align:left !important; display:block; }
+  /* پرانی محفوظ ضمنیوں کے لیے — کلاس کچھ بھی ہو، IO نام و تاریخ data-k سے بھی بائیں */
+  #ch173-doc [data-k="io_sign"], #ch173-doc [data-k="io_date"]{
+    text-align:left !important; text-align-last:left !important; display:block; }
   #ch173-doc .zf-body{ margin-top:8px; font-size:14pt; line-height:1.5;
     text-align:justify; text-align-last:right; outline:none; white-space:pre-wrap; }
 
@@ -1895,8 +1921,8 @@ function _zimniDefaultBody(o, c) {
     </thead>
     <tbody>
       <tr>
-        <td class="zf-c-action" data-k="action"></td>
-        <td class="zf-c-serial"><button class="zf-pick no-print" contenteditable="false" onclick="_zimniAccPicker(event)" title="ملزمان منتخب کریں">&#9662;</button><div class="zf-nums" contenteditable="true"></div></td>
+        <td class="zf-c-action"><div class="zf-actbody" data-k="action" contenteditable="true"><br></div></td>
+        <td class="zf-c-serial"><button class="zf-pick no-print" contenteditable="false" onclick="_zimniAccPicker(event)" title="ملزمان منتخب کریں">&#9662;</button><div class="zf-nums" contenteditable="true"><div class="zf-num">1</div></div></td>
         <td class="zf-c-body" colspan="2">
           <div class="zf-bl"><span class="zf-lbl">سرکار بذریعہ ۔</span> <span class="zf-bdyln" data-k="sarkar">${compl}</span></div>
           <div class="zf-bl zf-bl-banam"><span class="zf-lbl">بنام۔</span><span class="zf-bdyln zf-acclist" data-k="banam"></span></div>
@@ -2231,22 +2257,27 @@ function _zimniPrintHTML(inner) {
 
         // ── ٹیبل کی لکیریں صفحے کے نیچے تک (اکلوتا صفحہ) — قطار 2 کے تمام خانوں
         //    کی اونچائی بڑھا کر ٹیبل کا نیچے کنارہ صفحے کے ہاشیے تک لے جاؤ۔ ──
-        function stretchToBottom(topY){
+        function stretchToBottom(){
           try{
             var doc=document.getElementById('ch173-doc'); if(!doc) return;
             var tbl=doc.querySelector('table.zf-tbl'); if(!tbl) return;
             var row=tbl.querySelector('tbody tr'); if(!row) return;
             var tds=[].slice.call(row.querySelectorAll('td')); if(!tds.length) return;
-            // پہلے موجودہ اونچائیاں ہٹاؤ تاکہ اصل ناپ ملے
+            // پہلے موجودہ اونچائیاں ہٹاؤ تاکہ اصل (قدرتی) ناپ ملے
             tds.forEach(function(td){ td.style.height=''; });
-            var limit = topY + contentH - SAFE;             // اکلوتے صفحے کی نچلی حد
-            var bottom = tbl.getBoundingClientRect().bottom;
-            var gap = Math.floor(limit - bottom);
-            if(gap>10){
-              var tallest = tds[0];
-              tds.forEach(function(td){ if(td.offsetHeight>tallest.offsetHeight) tallest=td; });
-              tds.forEach(function(td){ td.style.height=(td.offsetHeight+gap)+'px'; });
-            }
+            // ═══ صفحہ ضائع نہ ہو ═══ پہلے پوری دستاویز کی موجودہ اونچائی ناپو۔
+            //  اگر وہ ایک صفحے سے کم ہے تو صرف اتنا کھینچو کہ ٹیبل صفحے کے نیچے
+            //  تک پہنچے مگر دستاویز ایک صفحے سے آگے نہ جائے۔ اگر مواد پہلے ہی ایک
+            //  صفحہ یا زیادہ ہے تو بالکل نہ کھینچو (ورنہ خالی دوسرا صفحہ بنتا تھا)۔
+            var r=doc.getBoundingClientRect();
+            var used=r.bottom - r.top;                       // دستاویز کی موجودہ اونچائی
+            var pageLimit=contentH - SAFE;                   // ایک صفحے کی کام کی حد
+            if(used >= pageLimit - 12) return;               // پہلے ہی بھر چکی — مت کھینچو
+            var gap=Math.floor(pageLimit - used);
+            if(gap<=10) return;
+            var tallest=tds[0];
+            tds.forEach(function(td){ if(td.offsetHeight>tallest.offsetHeight) tallest=td; });
+            tallest.style.height=(tallest.offsetHeight+gap)+'px';   // صرف سب سے لمبے خانے کو بڑھاؤ
           }catch(e){}
         }
 
@@ -2331,21 +2362,15 @@ function _zimniPrintHTML(inner) {
 
           var binds=[];
           if(lastBottom<=twoPage){
-            // اوور فلو نہیں — سب berooni میں، نمبر 1..N، اختتام berooni میں
-            // AHEM: agar normalize se paragraph na milen (P.length===0) to bhi
-            // kam az kam 1 number zaroor lagao (screen par jitne the utne),
-            // warna print mein serial number GHAYAB ho jate the.
-            if(beroNums){
-              var cnt = P.length;
-              if(cnt<1){ try{ var scr=doc.querySelectorAll('.zf-nums .zf-num').length; cnt = scr>0?scr:1; }catch(e){ cnt=1; } }
-              beroNums.innerHTML='';
-              for(var i=0;i<cnt;i++) beroNums.appendChild(numDiv(i+1));
-            }
+            // اوور فلو نہیں — سب berooni میں۔
+            // ═══ MANUAL سیریل ═══ اب خودکار نمبر نہیں لگتے۔ کالم 2 میں افسر نے
+            //  جو لکھا (شروع میں "1") وہی جوں کا توں چھپتا ہے — نہ دوبارہ بنتے،
+            //  نہ پیراگراف کے ساتھ خودکار سیدھ ہوتی۔ (پرانا کوڈ یہاں 1..N نمبر
+            //  دوبارہ بناتا تھا جو افسر کے لکھے کو مٹا دیتا تھا۔)
             putClose(doc.querySelector('td.zf-c-body'));
-            // ── ٹیبل کی لکیریں صفحے کے نیچے تک ── (SHO خانہ بیچ میں رکے تو کوئی
-            //    بات نہیں — قطار کی اونچائی بڑھا کر لکیریں نیچے لے جاؤ)
-            stretchToBottom(docTop);
-            addBind(doc.querySelector('td.zf-c-body .zf-body'), docTop);   // صفحہ 2 کا مثلث
+            // ── ٹیبل کی لکیریں صفحے کے نیچے تک (مگر ایک صفحے سے آگے نہیں) ──
+            stretchToBottom();
+            addBind(doc.querySelector('td.zf-c-body .zf-body'), docTop);   // صفحہ 2 کا مثلث (صرف اگر واقعی 2 صفحے ہوں)
             return;
           }
 
@@ -2509,10 +2534,8 @@ function _zimniPrintHTML(inner) {
           try{ [].slice.call(document.querySelectorAll('.zf-pnum,.zfa-pnum')).forEach(function(e){ if(e.parentNode)e.parentNode.removeChild(e); }); }catch(e){}
           try{ [].slice.call(document.querySelectorAll('.zf-num,.zfa-num')).forEach(function(e){ e.style.visibility=''; }); }catch(e){}
           try{ chain(); }catch(e){}
-          var ok=false; try{ ok=alignByParent(); }catch(e){ ok=false; }
-          if(!ok){ try{ [].slice.call(document.querySelectorAll('.zf-pnum,.zfa-pnum')).forEach(function(e){ if(e.parentNode)e.parentNode.removeChild(e); }); }catch(e){}
-                   try{ [].slice.call(document.querySelectorAll('.zf-num,.zfa-num')).forEach(function(e){ e.style.visibility=''; }); }catch(e){}
-                   alignAll(); }
+          // ═══ MANUAL سیریل ═══ خودکار سیدھ (alignByParent/alignAll) بند کر دی —
+          //  کالم 2 میں افسر کا لکھا نمبر جوں کا توں رہے (center align بذریعہ CSS)۔
         }
         // AHEM: chain ہمیشہ فونٹ لوڈ ہونے کے بعد چلے — ورنہ ناپ چھوٹی آتی ہے اور
         // زیادہ پیراگراف ایک شیٹ میں سما جاتے ہیں (split غلط)۔ idempotent ہے، اس
