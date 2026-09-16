@@ -423,22 +423,30 @@ function _dioHideFloatBar() {
   }, 200);
 }
 
-// Poore safhe par: jahan bhi likhne wale khane mein jayen, toolbar wahin aa jaye
-// ── BAND — floating (تیرتی) toolbar POORE SYSTEM se hata di gayi hai.
-//    (Har dastawez mein ooper apni MUSTAQIL toolbar pehle se mojood hai.)
-//    Function barqarar hai (taake koi bhi jagah jo isay bulaye na tootay),
-//    magar ab yeh kuch nahi karta. Agar kabhi dobara chalu karni ho to
-//    neeche 'return;' hata dein.
+// Poore safhe par: jahan bhi likhne wale khane (contenteditable) mein jayen,
+// MS Word jaisa toolbar wahin aa jata hai — is tarah HAR jagah (mojooda aur
+// AAGE banne wale NAYE forms bhi) khud-ba-khud toolbar mil jata hai, kisi
+// alag file ko chhoo-e baghair.
+//
+// ── JAHAN TOOLBAR NAHI CHAHIYE (skip list) ───────────────────────────────
+// Neeche comma-separated selectors likhen. Jis khane ka ye selector se
+// closest match hoga wahan floating toolbar NAHI aayega.
+//   • #misal-editor  → is par pehle se OOPER mustaqil toolbar hai (double na ho).
+// User jab kahe "falan jagah se hatao" to us jagah ka selector yahan add kar dein.
+const _DIO_FLOAT_SKIP = '#misal-editor';
+
+function _dioFloatSkip(el) {
+  try { return !!(el && el.closest && _DIO_FLOAT_SKIP && el.closest(_DIO_FLOAT_SKIP)); }
+  catch (_) { return false; }
+}
+
 function dioEnableFloatingToolbar() {
-  return;   // ← floating toolbar band. Chalu karne ke liye yeh line hatayen.
-  /* eslint-disable no-unreachable */
   if (window._dioFloatBound) return;
   window._dioFloatBound = true;
   document.addEventListener('focusin', e => {
     const el = e.target;
     if (!el || !el.isContentEditable) return;
-    // چالان اور سزا سلپ کے صفحے پر تیرتی پٹی نہیں — وہاں اوپر اپنی مستقل toolbar موجود ہے
-    try { if (el.closest && el.closest('#ch173-doc, #saza-doc')) { _dioHideFloatBar(); return; } } catch(_) {}
+    if (_dioFloatSkip(el)) { _dioHideFloatBar(); return; }
     dioBindEditor(el.parentNode || document);
     _dioShowFloatBar(el);
   });
@@ -448,14 +456,21 @@ function dioEnableFloatingToolbar() {
   window.addEventListener('scroll', () => {
     const a = document.activeElement;
     if (!a || !a.isContentEditable) return;
-    try { if (a.closest && a.closest('#ch173-doc, #saza-doc')) return; } catch(_) {}
+    if (_dioFloatSkip(a)) return;
     _dioShowFloatBar(a);
   }, true);
   window.addEventListener('resize', () => {
     const a = document.activeElement;
     if (!a || !a.isContentEditable) return;
-    try { if (a.closest && a.closest('#ch173-doc, #saza-doc')) return; } catch(_) {}
+    if (_dioFloatSkip(a)) return;
     _dioShowFloatBar(a);
   });
 }
 window.dioEnableFloatingToolbar = dioEnableFloatingToolbar;
+
+// ── KHUD-BA-KHUD chalu — app load hote hi (har jagah + naye forms) ──────────
+(function () {
+  function _start() { try { dioEnableFloatingToolbar(); } catch (_) {} }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _start);
+  else _start();
+})();
