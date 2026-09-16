@@ -909,9 +909,9 @@ async function initApp() {
   });
   // Check license
   if (typeof checkLicense==='function') checkLicense();
-  // "جہاں بند ہوا وہیں سے کھلے" — resume.js آخری صفحہ یاد رکھتی ہے
-  showPage((typeof _dioResumePage === 'function' ? _dioResumePage() : 'dashboard'),
-           document.querySelector('.nav-item'));
+  // لاگ اِن کے بعد ہمیشہ ڈیش بورڈ کھلے (پہلے آخری صفحہ resume ہوتا تھا، جس سے
+  // لاگ اِن پر "میرے مقدمات" کھل جاتا تھا — اب ہمیشہ dashboard)۔
+  showPage('dashboard', document.querySelector('.nav-item'));
   setTimeout(function(){ try { if (typeof triggerBackup === 'function') triggerBackup('app_init'); } catch(_) {} }, 3000);
   setTimeout(_initNotifications, 2000);
   setTimeout(_checkDueReminders, 5000);

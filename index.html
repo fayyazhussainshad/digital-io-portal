@@ -1386,13 +1386,17 @@ window.dioGoBack = function () {
     // Agar koi modal khula hai to woh band karo
     const m = document.querySelector('.modal-overlay,[id$="-overlay"]');
     if (m && m.style.display !== 'none' && typeof closeModal === 'function') { closeModal(); return; }
-    // ضمنی ka editor khula hai? → ضمنیات ki fehrist par
-    if (document.getElementById('zimni-doc') && typeof _renderZimniList === 'function') {
-      _renderZimniList(); return;
-    }
-    // چالان ka form khula hai? → چالان ki fehrist par
-    if (document.getElementById('ch173-doc') && typeof _renderR173List === 'function') {
-      _renderR173List(); return;
+    // ضمنی اور چالان — دونوں ایک ہی #ch173-doc استعمال کرتے ہیں، اس لیے پہلے
+    // فرق کرو: چالان میں #ch173-table ہوتا ہے، ضمنی (آزاد متن) میں نہیں۔
+    // پہلے صرف #ch173-doc دیکھ کر ہمیشہ چالان کھل جاتا تھا (ضمنی سے واپسی پر بھی)۔
+    var _chDoc = document.getElementById('ch173-doc');
+    if (_chDoc) {
+      var _isChallan = !!document.querySelector('#ch173-table');   // صرف چالان میں
+      if (_isChallan) {
+        if (typeof _renderR173List === 'function') { _renderR173List(); return; }
+      } else {
+        if (typeof _renderZimniList === 'function') { _renderZimniList(); return; }
+      }
     }
     // Case ka workspace khula hai? → مقدمات ki fehrist par wapas
     if (document.getElementById('misal-doc-bar') || document.getElementById('workspace-editor-area')) {
