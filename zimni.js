@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_VER = 'zimni v26 — col1 date + serial 1 both aligned to halaat first line';
+const ZIMNI_VER = 'zimni v27 — col1/col2 align via padding-top (works on saved zimnis too)';
 window.ZIMNI_VER = ZIMNI_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -2278,20 +2278,22 @@ function _zimniPrintHTML(inner) {
         function alignSerialToBody(){
           try{
             var doc=document.getElementById('ch173-doc'); if(!doc) return;
+            // پہلے دونوں خانوں کی اپنی padding reset (idempotent)
+            var aTd=doc.querySelector('td.zf-c-action');
+            var sTd=doc.querySelector('td.zf-c-serial');
+            if(aTd) aTd.style.paddingTop='';
+            if(sTd) sTd.style.paddingTop='';
             var body=doc.querySelector('td.zf-c-body .zf-body'); if(!body) return;
             var bodyTop=body.getBoundingClientRect().top;
-            var nums=doc.querySelector('td.zf-c-serial .zf-nums');
-            if(nums){
-              nums.style.marginTop='0px';
-              var g1=Math.round(bodyTop - nums.getBoundingClientRect().top);
-              if(g1>0 && g1<2000) nums.style.marginTop=g1+'px';
-            }
-            var act=doc.querySelector('td.zf-c-action .zf-actbody') || doc.querySelector('td.zf-c-action');
-            if(act){
-              act.style.marginTop='0px';
-              var g2=Math.round(bodyTop - act.getBoundingClientRect().top);
-              if(g2>0 && g2<2000) act.style.marginTop=g2+'px';
-            }
+            // ═══ td پر MARGIN کام نہیں کرتا — اس لیے PADDING-TOP سے نیچے کرو ═══
+            //  (محفوظ ضمنی میں تاریخ سیدھی td میں ہو سکتی ہے، بغیر .zf-actbody کے —
+            //   padding ہر صورت میں چلتا ہے)۔ خانے کے اوپری کنارے سے .zf-body تک
+            //   کا فاصلہ = padding-top۔
+            [aTd, sTd].forEach(function(td){
+              if(!td) return;
+              var pad=Math.round(bodyTop - td.getBoundingClientRect().top);
+              if(pad>0 && pad<2000) td.style.paddingTop=pad+'px';
+            });
           }catch(e){}
         }
 
