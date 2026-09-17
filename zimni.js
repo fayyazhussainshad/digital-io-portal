@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_VER = 'zimni v28 — EDITOR also aligns date+serial to halaat (matches print)';
+const ZIMNI_VER = 'zimni v30 — blocks: no inter-row lines, all cols editable, date only block1 (time later)';
 window.ZIMNI_VER = ZIMNI_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -444,6 +444,7 @@ function _renderZimniEditor() {
     try { _zimniLayout(); } catch (_) {}
     try { _zimniEnsureClosing(); } catch (_) {}   // اختتامی سطر (پرانی ضمنیوں کے لیے)
     try { _zimniStartNumbers(); } catch (_) {}          // خودکار نمبر — ہر حال میں چالو
+    try { _zimniBindBlockKeys(); } catch (_) {}          // BLOCK نظام — سیریل پر Enter = نیا block
     // ضمنی نمبر بدلتے ہی نیچے "نمبر شمار" بھی وہی ہو جائے
     try {
       const d0 = _zimniDoc();
@@ -964,6 +965,17 @@ function _zimniParas() {
 function _zimniEnsureClosing() {
   const doc = _zimniDoc();
   if (!doc) return;
+  // ═══ BLOCK نظام ═══ اختتام + دستخط پہلے سے .zf-endrow میں ہیں — صرف بائیں سیدھ
+  //  یقینی بناؤ اور واپس (تمہید کی قطار میں غلطی سے اختتام نہ لگے)۔
+  if (doc.querySelector('tr.zf-blk')) {
+    try {
+      doc.querySelectorAll('.zf-signblk, .zf-sign, .zf-signdate, [data-k="io_sign"], [data-k="io_date"]').forEach(el => {
+        el.style.setProperty('text-align', 'left', 'important');
+        el.style.setProperty('text-align-last', 'left', 'important');
+      });
+    } catch (_) {}
+    return;
+  }
   const cell = doc.querySelector('td.zf-c-body');
   if (!cell) return;
   // BUG FIX: purani محفوظ زمنیوں mein تفتیشی ka naam kabhi RIGHT-align reh jata tha.
@@ -1368,6 +1380,10 @@ function _zimniMoveClosing(wrap) {
 window._zimniMoveClosing = _zimniMoveClosing;
 
 function _zimniLayout() {
+  // ═══ BLOCK نظام ═══ نئی block ساخت میں قطاریں خود مواد کے مطابق اونچی ہوتی
+  //  ہیں اور ٹیبل قدرتی طور پر صفحہ در صفحہ بٹتا ہے — پرانا fit/androoni/height
+  //  نظام یہاں نہ چلاؤ (ورنہ ہر قطار پر 18cm/height لگ کر صفحے ضائع ہوتے)۔
+  try { const d = _zimniDoc(); if (d && d.querySelector('tr.zf-blk')) return; } catch (_) {}
   try { _zimniFitTable(); } catch (_) {}      // ٹیبل کم از کم پورا صفحہ بھرے
   try { _zimniEnsureAndrooni(); } catch (_) {}  // 2 صفحوں سے آگے → اندرونی
   try { _zimniNumberAll(); } catch (_) {}       // berooni + androoni مسلسل نمبر + ▾ سیدھ
@@ -1382,6 +1398,7 @@ window._zimniLayout = _zimniLayout;
 function _zimniAlignCols() {
   try {
     const doc = _zimniDoc(); if (!doc) return;
+    if (doc.querySelector('tr.zf-blk')) return;   // BLOCK نظام — قطاریں خود سیدھ میں، alignment کی ضرورت نہیں
     const body = doc.querySelector('td.zf-c-body .zf-body'); if (!body) return;
     const bodyTop = body.getBoundingClientRect().top;
     const ae = document.activeElement;
@@ -1764,9 +1781,19 @@ function _zimniFormCSS() {
   #ch173-doc .zf-nums{ outline:none; }
   /* قطار کی اونچائی JS (_zimniFitTable) حساب سے دیتا ہے — یہ صرف ابتدائی ناپ */
   #ch173-doc table.zf-tbl tbody td{ height:18cm; }
-  /* کالم 2 — ہر پیراگراف کا اپنا نمبر (خودکار) */
+  /* ═══ BLOCK نظام ═══ block/تمہید/اختتام کی قطاروں کی اونچائی مواد کے مطابق
+     (18cm نہ ہو ورنہ ہر قطار پورا صفحہ لے لے)۔ ہر block ایک ساتھ رہے۔ */
+  #ch173-doc table.zf-tbl tbody tr.zf-blk td,
+  #ch173-doc table.zf-tbl tbody tr.zf-prerow td,
+  #ch173-doc table.zf-tbl tbody tr.zf-endrow td{ height:auto; vertical-align:top;
+    /* blocks کے درمیان افقی لکیر نہ ہو (پرنٹ + ایڈیٹر دونوں) — صرف عمودی کالم
+       لکیریں اور ہیڈر کی لکیر باقی رہیں */
+    border-top:none !important; border-bottom:none !important; }
+  #ch173-doc table.zf-tbl tbody tr.zf-blk{ break-inside:avoid; page-break-inside:avoid; }
+  /* کالم 2 — ہر block کا اپنا سیریل نمبر */
   #ch173-doc .zf-nums{ display:block; }
   #ch173-doc .zf-num{ display:block; text-align:center; line-height:1.5; }
+  #ch173-doc td.zf-c-serial .zf-num{ min-height:1.4em; outline:none; }
   /* اندرونی ضمنی — تیسرے صفحے پر (صفحے کا توڑ صرف چھپائی میں) */
   #ch173-doc .zf-pgbrk{ display:block; height:0; }
   #ch173-doc .zf-androoni{ margin-top:1.5em; }
@@ -1955,15 +1982,30 @@ function _zimniDefaultBody(o, c) {
       </tr>
     </thead>
     <tbody>
-      <tr>
-        <td class="zf-c-action"><div class="zf-actbody" data-k="action" contenteditable="true"><br></div></td>
-        <td class="zf-c-serial"><button class="zf-pick no-print" contenteditable="false" onclick="_zimniAccPicker(event)" title="ملزمان منتخب کریں">&#9662;</button><div class="zf-nums" contenteditable="true"><div class="zf-num">1</div></div></td>
+      <!-- ═══ BLOCK نظام ═══ ہر اندراج ایک الگ قطار (block): کالم1 تاریخ |
+           کالم2 سیریل | کالم3 حالات۔ تینوں ایک ہی row میں → سیریل ہمیشہ اپنے
+           پیراگراف کے سامنے، editing block کے اندر، ڈیٹا محفوظ۔ -->
+      <!-- تمہید (بغیر نمبر) — سرکار/بنام/مرتبہ -->
+      <tr class="zf-prerow">
+        <td class="zf-c-action"></td>
+        <td class="zf-c-serial"><button class="zf-pick no-print" contenteditable="false" onclick="_zimniAccPicker(event)" title="ملزمان منتخب کریں">&#9662;</button></td>
         <td class="zf-c-body" colspan="2">
           <div class="zf-bl"><span class="zf-lbl">سرکار بذریعہ ۔</span> <span class="zf-bdyln" data-k="sarkar">${compl}</span></div>
           <div class="zf-bl zf-bl-banam"><span class="zf-lbl">بنام۔</span><span class="zf-bdyln zf-acclist" data-k="banam"></span></div>
           <div class="zf-bl zf-bl-mor"><span class="zf-lbl">مرتبہ ۔</span> <span class="zf-bdyln zf-io" data-k="murattib">${ioE}</span></div>
-          <div class="zf-body" data-mic="true" data-k="halaat">جناب عالیٰ! بحوالہ رپورٹ </div>
-          <!-- اختتام — تحریر جہاں بھی ختم ہو (کسی بھی صفحے پر) اس کے نیچے آتا ہے -->
+        </td>
+      </tr>
+      <!-- پہلا block (سیریل 1) — کالم 1 میں تاریخ صرف پہلے block پر -->
+      <tr class="zf-blk">
+        <td class="zf-c-action"><div class="zf-actbody" data-k="action" contenteditable="true">${E(_zimniToday())}</div></td>
+        <td class="zf-c-serial"><div class="zf-num" data-k="serial" contenteditable="true">1</div></td>
+        <td class="zf-c-body" colspan="2"><div class="zf-body" data-mic="true" data-k="halaat" contenteditable="true">جناب عالیٰ! بحوالہ رپورٹ </div></td>
+      </tr>
+      <!-- اختتام + دستخط (بغیر نمبر) -->
+      <tr class="zf-endrow">
+        <td class="zf-c-action"></td>
+        <td class="zf-c-serial"></td>
+        <td class="zf-c-body" colspan="2">
           <div class="zf-close" data-k="close">رپورٹ ضمنی مرتب ہو کرارسال خدمت ہے</div>
           <div class="zf-signblk" style="text-align:left !important;">
             <div class="zf-gap"><br></div>
@@ -1976,6 +2018,102 @@ function _zimniDefaultBody(o, c) {
     </tbody>
   </table>`;
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  BLOCK نظام — ہر اندراج ایک قطار۔ کالم 2 (سیریل) میں Enter دبانے پر
+//  نیا block (نئی قطار) بن جاتا ہے، اگلا سیریل نمبر خودبخود، اور تینوں
+//  کالم (تاریخ/سیریل/حالات) ایک ساتھ بندھے رہتے ہیں۔ کوئی نیا بٹن نہیں۔
+// ═══════════════════════════════════════════════════════════════
+function _zimniBlockRowHTML(serial) {
+  // نئے block میں کالم 1 خالی (وقت/مواد کے لیے) — خالی ہو تو پرنٹ میں کچھ نہیں آتا۔
+  // تینوں خانے editable۔ تاریخ صرف پہلے block پر (template میں) آتی ہے۔
+  return '<td class="zf-c-action"><div class="zf-actbody" data-k="action" contenteditable="true"><br></div></td>'
+    + '<td class="zf-c-serial"><div class="zf-num" data-k="serial" contenteditable="true">' + (serial || '') + '</div></td>'
+    + '<td class="zf-c-body" colspan="2"><div class="zf-body" data-mic="true" data-k="halaat" contenteditable="true"><br></div></td>';
+}
+function _zimniRenumberBlocks() {
+  const doc = _zimniDoc(); if (!doc) return;
+  let n = 0;
+  doc.querySelectorAll('tr.zf-blk').forEach(function (tr) {
+    n++;
+    const num = tr.querySelector('td.zf-c-serial .zf-num, td.zf-c-serial [data-k="serial"]');
+    if (num) {
+      const t = String(num.textContent || '').replace(/[\s ]/g, '');
+      // صرف خالی یا خالص عددی نمبر خودبخود درست کرو (افسر کا خاص لیبل نہ بدلو)
+      if (t === '' || /^\d+$/.test(t)) { const v = String(n); if (num.textContent !== v) num.textContent = v; }
+    }
+  });
+}
+window._zimniRenumberBlocks = _zimniRenumberBlocks;
+
+function _zimniAddBlock(afterRow) {
+  const doc = _zimniDoc(); if (!doc) return;
+  afterRow = afterRow || (function () {
+    const b = doc.querySelectorAll('tr.zf-blk'); return b.length ? b[b.length - 1] : null;
+  })();
+  const tbody = afterRow ? afterRow.parentNode : (doc.querySelector('table.zf-tbl tbody'));
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.className = 'zf-blk';
+  tr.innerHTML = _zimniBlockRowHTML('');
+  if (afterRow && afterRow.nextSibling) tbody.insertBefore(tr, afterRow.nextSibling);
+  else if (afterRow) tbody.appendChild(tr);
+  else {
+    // کوئی block نہ ہو تو اختتام سے پہلے ڈالو
+    const endr = tbody.querySelector('tr.zf-endrow');
+    if (endr) tbody.insertBefore(tr, endr); else tbody.appendChild(tr);
+  }
+  _zimniRenumberBlocks();
+  try {
+    const h = tr.querySelector('.zf-body');
+    const r = document.createRange(); r.setStart(h, 0); r.collapse(true);
+    const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  } catch (_) {}
+  try { _r173Dirty = true; } catch (_) {}
+}
+window._zimniAddBlock = _zimniAddBlock;
+
+function _zimniRemoveBlock(row) {
+  const doc = _zimniDoc(); if (!doc || !row) return;
+  if (doc.querySelectorAll('tr.zf-blk').length <= 1) return;   // کم از کم ایک block رہے
+  const prev = row.previousElementSibling;
+  if (row.parentNode) row.parentNode.removeChild(row);
+  _zimniRenumberBlocks();
+  try {
+    if (prev) {
+      const h = prev.querySelector('.zf-body') || prev.querySelector('.zf-actbody');
+      if (h) { const r = document.createRange(); r.selectNodeContents(h); r.collapse(false);
+        const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+    }
+  } catch (_) {}
+  try { _r173Dirty = true; } catch (_) {}
+}
+
+// keydown — سیریل خانے میں Enter = نیا block؛ خالی block میں Backspace = block حذف
+function _zimniBindBlockKeys() {
+  const doc = _zimniDoc(); if (!doc || doc._zfBlkKeys) return;
+  doc._zfBlkKeys = true;
+  doc.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== 'Backspace') return;
+    const sel = window.getSelection(); if (!sel || !sel.anchorNode) return;
+    let node = sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement;
+    if (!node || !node.closest) return;
+    const blk = node.closest('tr.zf-blk'); if (!blk) return;
+    const serialCell = node.closest('td.zf-c-serial');
+    if (e.key === 'Enter' && serialCell) {
+      // کالم 2 (سیریل) میں Enter → نیا block
+      e.preventDefault(); e.stopPropagation();
+      _zimniAddBlock(blk);
+      return;
+    }
+    if (e.key === 'Backspace') {
+      // خالی block (تینوں خانے خالی) میں Backspace → block حذف
+      const t = String(blk.textContent || '').replace(/[\s ]/g, '');
+      if (t === '') { e.preventDefault(); e.stopPropagation(); _zimniRemoveBlock(blk); }
+    }
+  }, true);
+}
+window._zimniBindBlockKeys = _zimniBindBlockKeys;
 // ── SAVE ──────────────────────────────────────────────────────
 async function _saveZimni(silent, keepOpen) {
   // VIEW-ONLY ENFORCEMENT [4E]: میعاد ختم پر ضمنی محفوظ/ترمیم بند۔ silent (خودکار)
@@ -2388,7 +2526,22 @@ function _zimniPrintHTML(inner) {
         function chain(){
           var doc=document.getElementById('ch173-doc'); if(!doc) return;
           if(contentH<200) return;
-          // اختتامی خانہ الگ رکھو (screen پر androoni میں ہو تو class بدل چکی: .zfa-wit-sign)
+          // ═══ BLOCK نظام ═══ اگر ضمنی نئی block ساخت میں ہے (ہر اندراج ایک قطار)
+          //  تو پرانا پیچیدہ نظام (normalize/androoni/serial-align) بالکل نہ چلاؤ —
+          //  ٹیبل قدرتی طور پر صفحہ در صفحہ خود بٹ جاتا ہے، سیریل ہر قطار میں اپنے
+          //  حالات کے سامنے رہتا ہے۔ صرف دستخط بائیں یقینی بناؤ۔
+          if(doc.querySelector('tr.zf-blk')){
+            try{
+              // پرانی layout سے چپکی inline اونچائیاں ہٹاؤ (ورنہ قطاریں 18cm رہتیں)
+              doc.querySelectorAll('table.zf-tbl td,table.zf-tbl tr').forEach(function(el){ el.style.height=''; });
+              doc.querySelectorAll('.zf-signblk,.zf-sign,.zf-signdate,[data-k="io_sign"],[data-k="io_date"]').forEach(function(el){
+                el.style.setProperty('text-align','left','important');
+                el.style.setProperty('text-align-last','left','important');
+              });
+            }catch(e){}
+            return;
+          }
+          // اختتامی خانہ الگ رکھو (screن پر androoni میں ہو تو class بدل چکی: .zfa-wit-sign)
           var closeNodes=[];
           doc.querySelectorAll('.zf-close,.zf-signblk,.zfa-wit-sign').forEach(function(e){ closeNodes.push(e); if(e.parentNode)e.parentNode.removeChild(e); });
           // ═══ IDEMPOTENT ═══ chain کئی بار چلتا ہے (load + fonts.ready + timeouts)۔
