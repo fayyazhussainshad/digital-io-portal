@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_VER = 'zimni v31 — date LEFT + Up/Down cross-cell nav + col1 "بوقت" placeholder (print-hidden)';
+const ZIMNI_VER = 'zimni v32 — top-bar head text hidden';
 window.ZIMNI_VER = ZIMNI_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -373,9 +373,9 @@ function _renderZimniEditor() {
         <option value="legal" ${paper==='legal'?'selected':''}>لیگل (8.5×13)</option>
         <option value="a4"    ${paper==='a4'   ?'selected':''}>A4 (8.27×11.7)</option>
       </select>
-      <input id="zf-head-in" type="text" value="${esc(((saved && saved.head) || 'رپورٹ ضمنی'))}"
-        placeholder="ہیڈ (قسم)" title="ہیڈ / قسم — فہرست میں یہی نظر آتا ہے"
-        style="${selCss}width:150px;font-family:'Jameel Noori Nastaleeq',serif;">
+      <!-- ٹاپ بار سے "رپورٹ ضمنی" کا خانہ ہٹا دیا (افسر کی درخواست)۔ قدر save کے لیے
+           hidden رکھی ہے تاکہ فہرست کا عنوان نہ ٹوٹے۔ -->
+      <input id="zf-head-in" type="hidden" value="${esc(((saved && saved.head) || 'رپورٹ ضمنی'))}">
       <div style="margin-right:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
         <button id="zf-btn-b" onmousedown="event.preventDefault()" onclick="_zimniFmt('bold')" title="بولڈ" style="${btn}font-weight:900;">B</button>
         <button id="zf-btn-i" onmousedown="event.preventDefault()" onclick="_zimniFmt('italic')" title="ترچھا" style="${btn}font-style:italic;">I</button>
