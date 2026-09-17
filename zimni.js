@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_VER = 'zimni v30 — blocks: no inter-row lines, all cols editable, date only block1 (time later)';
+const ZIMNI_VER = 'zimni v31 — date LEFT + Up/Down cross-cell nav + col1 "بوقت" placeholder (print-hidden)';
 window.ZIMNI_VER = ZIMNI_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -457,6 +457,7 @@ function _renderZimniEditor() {
           clearTimeout(d0._zfAlignT);
           d0._zfAlignT = setTimeout(() => {
             try { _zimniAlignCols(); } catch (_) {}   // تاریخ + سیریل کو جناب عالیٰ کے سامنے
+            try { _zimniPlaceholders(); } catch (_) {}  // کالم 1 کا "بوقت" اشارہ
           }, 250);
         });
       }
@@ -464,6 +465,7 @@ function _renderZimniEditor() {
     [250, 900, 1800].forEach(ms => setTimeout(() => {
       try { _zimniLayout(); } catch (_) {}
       try { _zimniAlignCols(); } catch (_) {}   // ایڈیٹر میں تاریخ + سیریل "1" کی سیدھ
+      try { _zimniPlaceholders(); } catch (_) {}  // کالم 1 کا "بوقت" اشارہ
     }, ms));                                                // table ki lakeerein moveable
     // Cursor ke mutabiq font dropdown + B/I/U ki halat khud badle (MS Word jaisa)
     try {
@@ -1774,8 +1776,11 @@ function _zimniFormCSS() {
   #ch173-doc table.zf-tbl td{ border:1px solid #000; padding:8px 9px; font-size:14pt; vertical-align:top;
     line-height:1.5; text-align:justify; text-align-last:right; overflow-wrap:anywhere; word-break:break-word; position:relative; }
   /* کالم 1 (تاریخ و وقت کارروائی) — editable + justified (افسر خود لکھے) */
-  #ch173-doc table.zf-tbl td.zf-c-action{ text-align:justify; text-align-last:right; }
-  #ch173-doc .zf-actbody{ display:block; min-height:1.6em; text-align:justify; text-align-last:right; outline:none; }
+  #ch173-doc table.zf-tbl td.zf-c-action{ text-align:left; text-align-last:left; }
+  #ch173-doc .zf-actbody{ display:block; min-height:1.6em; text-align:left; text-align-last:left; outline:none; direction:ltr; }
+  /* کالم 1 — خالی ہو تو "بوقت" اشارہ (صرف ایڈیٹر میں؛ پرنٹ میں نہیں)۔ افسر وقت لکھے
+     تو صرف اُس کا لکھا چھپتا ہے، خالی رہے تو کچھ نہیں (نہ "بوقت")۔ */
+  #ch173-doc .zf-actbody.zf-ph::before{ content:'بوقت'; color:#9aa; }
   /* کالم 2 (سیریل نمبر) — editable + center (افسر خود لکھے، شروع میں 1) */
   #ch173-doc table.zf-tbl td.zf-c-serial{ text-align:center; text-align-last:center; }
   #ch173-doc .zf-nums{ outline:none; }
@@ -2064,6 +2069,7 @@ function _zimniAddBlock(afterRow) {
     if (endr) tbody.insertBefore(tr, endr); else tbody.appendChild(tr);
   }
   _zimniRenumberBlocks();
+  try { _zimniPlaceholders(); } catch (_) {}   // نئے block کے کالم 1 پر "بوقت" اشارہ
   try {
     const h = tr.querySelector('.zf-body');
     const r = document.createRange(); r.setStart(h, 0); r.collapse(true);
@@ -2089,15 +2095,82 @@ function _zimniRemoveBlock(row) {
   try { _r173Dirty = true; } catch (_) {}
 }
 
-// keydown — سیریل خانے میں Enter = نیا block؛ خالی block میں Backspace = block حذف
+// کالم 1 خالی ہو تو "بوقت" اشارہ (class .zf-ph) — ایڈیٹر میں دکھتا ہے، پرنٹ میں نہیں
+function _zimniPlaceholders() {
+  try {
+    const doc = _zimniDoc(); if (!doc) return;
+    doc.querySelectorAll('td.zf-c-action .zf-actbody').forEach(function (el) {
+      const t = String(el.textContent || '').replace(/[\s ]/g, '');
+      if (t === '') el.classList.add('zf-ph'); else el.classList.remove('zf-ph');
+    });
+  } catch (_) {}
+}
+window._zimniPlaceholders = _zimniPlaceholders;
+
+function _zimniCaretRect() {
+  try {
+    const s = window.getSelection(); if (!s || !s.rangeCount) return null;
+    const r = s.getRangeAt(0).cloneRange();
+    const rects = r.getClientRects();
+    if (rects && rects.length) return rects[rects.length - 1];
+    let n = r.startContainer; if (n && n.nodeType === 3) n = n.parentElement;
+    if (n && n.getBoundingClientRect) return n.getBoundingClientRect();
+  } catch (_) {}
+  return null;
+}
+function _zimniColClass(td) {
+  if (!td || !td.classList) return null;
+  if (td.classList.contains('zf-c-action')) return 'zf-c-action';
+  if (td.classList.contains('zf-c-serial')) return 'zf-c-serial';
+  if (td.classList.contains('zf-c-body'))   return 'zf-c-body';
+  return null;
+}
+function _zimniEditableIn(td) {
+  if (!td) return null;
+  return td.querySelector('.zf-actbody, .zf-num, .zf-body')
+      || td.querySelector('[contenteditable="true"]') || td;
+}
+function _zimniPlaceCaret(el, atEnd) {
+  try {
+    if (el.focus) el.focus();
+    const r = document.createRange();
+    r.selectNodeContents(el); r.collapse(!atEnd);
+    const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  } catch (_) {}
+}
+
+// keydown — سیریل خانے میں Enter = نیا block؛ خالی block میں Backspace = block حذف؛
+//   Up/Down = ساتھ والی قطار کے اسی کالم میں (تیر صحیح کام کریں)
 function _zimniBindBlockKeys() {
   const doc = _zimniDoc(); if (!doc || doc._zfBlkKeys) return;
   doc._zfBlkKeys = true;
   doc.addEventListener('keydown', function (e) {
-    if (e.key !== 'Enter' && e.key !== 'Backspace') return;
+    if (e.key !== 'Enter' && e.key !== 'Backspace' && e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
     const sel = window.getSelection(); if (!sel || !sel.anchorNode) return;
     let node = sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement;
     if (!node || !node.closest) return;
+    const td = node.closest('td');
+    const tr = node.closest('tr');
+    // ── Up/Down — ساتھ والی قطار کے اسی کالم میں (کراس-سیل عمودی حرکت) ──
+    if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') && td && tr && tr.closest('table.zf-tbl')) {
+      const editable = _zimniEditableIn(td);
+      const cr = _zimniCaretRect(); if (!cr || !editable) return;
+      const er = editable.getBoundingClientRect();
+      let lh = 20; try { lh = parseFloat(getComputedStyle(editable).lineHeight) || 20; } catch (_) {}
+      const cls = _zimniColClass(td);
+      if (e.key === 'ArrowUp') {
+        if ((cr.top - er.top) > lh * 0.7) return;
+        const ptr = tr.previousElementSibling; if (!ptr || !ptr.querySelector) return;
+        const tgt = _zimniEditableIn(cls ? ptr.querySelector('td.' + cls) : null); if (!tgt) return;
+        e.preventDefault(); e.stopPropagation(); _zimniPlaceCaret(tgt, true);
+      } else {
+        if ((er.bottom - cr.bottom) > lh * 0.7) return;
+        const ntr = tr.nextElementSibling; if (!ntr || !ntr.querySelector) return;
+        const tgt = _zimniEditableIn(cls ? ntr.querySelector('td.' + cls) : null); if (!tgt) return;
+        e.preventDefault(); e.stopPropagation(); _zimniPlaceCaret(tgt, false);
+      }
+      return;
+    }
     const blk = node.closest('tr.zf-blk'); if (!blk) return;
     const serialCell = node.closest('td.zf-c-serial');
     if (e.key === 'Enter' && serialCell) {
@@ -2362,6 +2435,8 @@ function _zimniPrintHTML(inner) {
       #ch173-doc .zf-signblk, #ch173-doc .zf-sign, #ch173-doc .zf-signdate,
       #ch173-doc .zfa-wit-sign, #ch173-doc .zfa-wit-io, #ch173-doc .zfa-wit-date{
         text-align:left !important; text-align-last:left !important; }
+      /* کالم 1 کا "بوقت" اشارہ پرنٹ میں کبھی نہ چھپے (خالی ہو تو کچھ نہیں) */
+      #ch173-doc .zf-actbody::before{ content:none !important; }
       #ch173-doc, #ch173-doc *{ orphans:2; widows:2; }
     </style></head><body>
     <script>window.__ZA_SKEL=${JSON.stringify(zaSkel)};window.__PAPER=${JSON.stringify(paper)};</script>
@@ -4247,6 +4322,8 @@ function _zaPrintHTML(inner) {
       #ch173-doc .zf-signblk, #ch173-doc .zf-sign, #ch173-doc .zf-signdate,
       #ch173-doc .zfa-wit-sign, #ch173-doc .zfa-wit-io, #ch173-doc .zfa-wit-date{
         text-align:left !important; text-align-last:left !important; }
+      /* کالم 1 کا "بوقت" اشارہ پرنٹ میں کبھی نہ چھپے (خالی ہو تو کچھ نہیں) */
+      #ch173-doc .zf-actbody::before{ content:none !important; }
       #ch173-doc, #ch173-doc *{ orphans:2; widows:2; }
     </style></head><body><div id="ch173-doc">${inner}</div></body></html>`;
 }
