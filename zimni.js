@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_VER = 'zimni v32 — top-bar head text hidden';
+const ZIMNI_VER = 'zimni v33 — saved list date = block1 col1 date';
 window.ZIMNI_VER = ZIMNI_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -200,8 +200,14 @@ function _renderZimniList() {
     || parseInt((z.content || {}).serial_no, 10) || 0;
   const list = _zimniList.slice().sort((a, b) => sno(b) - sno(a));
 
-  const dt = (z) => z.report_date
-    ? (typeof formatDate === 'function' ? formatDate(z.report_date) : z.report_date) : '—';
+  // تاریخ — block 1 کالم 1 کی لکھی تاریخ کو ترجیح؛ اگر پہلے سے dd/mm/yyyy شکل میں
+  //  ہو تو جوں کی توں دکھاؤ (formatDate اُسے خراب نہ کرے)
+  const dt = (z) => {
+    const raw = ((z.content || {}).col1_date || z.report_date || '').toString().trim();
+    if (!raw) return '—';
+    if (/[\/]/.test(raw)) return raw;   // پہلے سے تاریخ کی شکل → جوں کی توں
+    return (typeof formatDate === 'function' ? formatDate(raw) : raw);
+  };
   const wq = (z) => {
     try {
       const iso = (z.content || {}).saved_at || '';
@@ -2217,12 +2223,21 @@ async function _saveZimni(silent, keepOpen) {
   } catch (_) {}
   if (!head) head = (z.content && z.content.head) || 'رپورٹ ضمنی';
 
+  // تاریخ و وقت — فہرست میں وہی دکھے جو block 1 کے کالم 1 میں افسر نے لکھی
+  let col1Date = '';
+  try {
+    const b1 = ed.querySelector('tr.zf-blk td.zf-c-action .zf-actbody')
+            || ed.querySelector('tr.zf-blk td.zf-c-action');
+    if (b1) col1Date = String(b1.innerText || b1.textContent || '').replace(/\s+/g, ' ').trim();
+  } catch (_) {}
+
   const savedAt = new Date().toISOString();
   const rec = {
     case_id: _zimniCaseId,
     serial_no: serialNo,
-    report_date: (z.report_date || savedAt.slice(0, 10)),   // پہلی بار کی تاریخ برقرار
-    content: { bodyHtml, head, serial_no: serialNo, saved_at: savedAt },
+    // block 1 کالم 1 کی تاریخ کو ترجیح؛ نہ ہو تو پرانی/آج کی
+    report_date: (col1Date || z.report_date || savedAt.slice(0, 10)),
+    content: { bodyHtml, head, serial_no: serialNo, saved_at: savedAt, col1_date: col1Date },
   };
 
   try {
@@ -3162,8 +3177,14 @@ function _renderZimniAList() {
     || parseInt((z.content || {}).serial_no, 10) || 0;
   const list = _zaList.slice().sort((a, b) => sno(b) - sno(a));
 
-  const dt = (z) => z.report_date
-    ? (typeof formatDate === 'function' ? formatDate(z.report_date) : z.report_date) : '—';
+  // تاریخ — block 1 کالم 1 کی لکھی تاریخ کو ترجیح؛ اگر پہلے سے dd/mm/yyyy شکل میں
+  //  ہو تو جوں کی توں دکھاؤ (formatDate اُسے خراب نہ کرے)
+  const dt = (z) => {
+    const raw = ((z.content || {}).col1_date || z.report_date || '').toString().trim();
+    if (!raw) return '—';
+    if (/[\/]/.test(raw)) return raw;   // پہلے سے تاریخ کی شکل → جوں کی توں
+    return (typeof formatDate === 'function' ? formatDate(raw) : raw);
+  };
   const wq = (z) => {
     try {
       const iso = (z.content || {}).saved_at || '';
