@@ -101,19 +101,15 @@ async function _buildDash() {
   <!-- آج کی ترجیحات (حقیقی reminders/cases) -->
   ${_dashPriorityCards(nextRem, upcomingRem.length, overdueRem.length, thisMonthCount)}
 
-  <!-- خبریں — ضلع + پنجاب/پاکستان (حالیہ مقدمات کی جگہ) -->
-  ${_dashNewsCard(o.district)}
-
   <!-- سوالات — قانون و مسل (خودکار) -->
   ${_dashKnowledgeCard()}
 
   <!-- مفید نکتہ -->
   ${_dashTipOfDay()}`;
 
-  // ٹِکر (6s) + سوالات خودکار (12s) + خبریں لوڈ — render ke baad
+  // ٹِکر (6s) + سوالات خودکار (12s) — render ke baad
   try { initIslamicMessages(); } catch(_) {}
   try { initQARotation(); } catch(_) {}
-  try { _loadDashNews(); } catch(_) {}
 }
 
 // ── STAT CARDS — mockup اسٹائل (سفید کارڈ + outline آئیکن، theme-aware) ──
@@ -145,58 +141,7 @@ function _dashStatCards(total, sc) {
   </div>`;
 }
 
-// ── خبریں — ضلع + پنجاب/پاکستان (بہترین کوشش؛ ناکامی پر graceful fallback) ──
-function _dashNewsCard(district) {
-  return `
-  <div class="card" style="padding:0;overflow:hidden;margin-bottom:14px;direction:rtl;">
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);">
-      <div style="font-size:14px;font-weight:800;color:var(--accent);font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;">📰 تازہ خبریں — ${(typeof esc==='function'?esc(district||'پنجاب'):(district||'پنجاب'))} و پنجاب</div>
-      <button onclick="_loadDashNews()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 12px;font-size:11px;color:var(--text-muted);cursor:pointer;font-family:inherit;">↻ تازہ</button>
-    </div>
-    <div id="dash-news" style="padding:8px 16px;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;">
-      <div style="color:var(--text-muted);font-size:13px;padding:6px 0;">⏳ خبریں لوڈ ہو رہی ہیں…</div>
-    </div>
-  </div>`;
-}
-async function _loadDashNews() {
-  const box = document.getElementById('dash-news');
-  if (!box) return;
-  const o = (typeof currentOfficer!=='undefined' && currentOfficer) ? currentOfficer : {};
-  const district = o.district || '';
-  const qStr = (district ? district + ' ' : '') + 'پنجاب پاکستان';
-  const q = encodeURIComponent(qStr);
-  const rss = 'https://news.google.com/rss/search?q=' + q + '&hl=ur&gl=PK&ceid=PK:ur';
-  const api = 'https://api.rss2json.com/v1/api.json?count=6&_=' + Date.now() + '&rss_url=' + encodeURIComponent(rss);
-  box.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:6px 0;">⏳ خبریں لوڈ ہو رہی ہیں…</div>';
-  try {
-    const ctrl = new AbortController();
-    const tm = setTimeout(() => ctrl.abort(), 8000);
-    const res = await fetch(api, { signal: ctrl.signal });
-    clearTimeout(tm);
-    const data = await res.json();
-    if (!data || data.status !== 'ok' || !Array.isArray(data.items) || !data.items.length) throw new Error('no items');
-    const E = (s) => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    box.innerHTML = data.items.slice(0,6).map(it => {
-      const title = E(it.title);
-      const src = E(it.author || (it.source && it.source.title) || '');
-      const link = E(it.link || '#');
-      let dt = '';
-      try { dt = it.pubDate ? new Date(it.pubDate).toLocaleDateString('ur-PK') : ''; } catch(_) {}
-      return '<a href="'+link+'" target="_blank" rel="noopener noreferrer" style="display:block;padding:9px 0;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text-primary);">'
-        + '<div style="font-size:13.5px;font-weight:600;line-height:1.8;">'+title+'</div>'
-        + '<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">'+src+(dt?' · '+dt:'')+'</div></a>';
-    }).join('');
-  } catch (e) {
-    const gnews = 'https://news.google.com/search?q=' + q + '&hl=ur&gl=PK';
-    box.innerHTML = '<div style="color:var(--text-muted);font-size:13px;line-height:1.9;padding:6px 0;">'
-      + 'خبریں ابھی دستیاب نہیں (انٹرنیٹ یا سروس کا مسئلہ)۔'
-      + '<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">'
-      + '<button onclick="_loadDashNews()" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:inherit;">دوبارہ کوشش</button>'
-      + '<a href="'+gnews+'" target="_blank" rel="noopener noreferrer" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:12px;color:var(--accent);text-decoration:none;">Google News کھولیں</a>'
-      + '</div></div>';
-  }
-}
-window._loadDashNews = _loadDashNews;
+// ── (خبریں / نیوز کا حصہ افسر کی درخواست پر مکمل ہٹا دیا گیا) ──
 
 // ── SMART BRIEF — آج کی ترجیحات (real reminders/cases data) ──
 function _dashPriorityCards(nextRem, upCount, overdueCount, monthCount) {
