@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_VER = 'zimni v24 — toolbar merged (no print/update) + save keeps-open';
+const ZIMNI_VER = 'zimni v25 — saved-print recursive split + serial 1 aligned to halaat';
 window.ZIMNI_VER = ZIMNI_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -2216,37 +2216,45 @@ function _zimniPrintHTML(inner) {
         //  پہلے normalize صرف DIV/P/BR پر توڑتا تھا → newline نظرانداز → سارا متن
         //  ایک پیراگراف بن جاتا اور سیریل نمبر بھی صرف ایک چھپتا۔ اب newline کو بھی
         //  پیراگراف کی حد مانتے ہیں۔
+        //  مکمل RECURSIVE flatten — کسی بھی گہرائی پر br، newline، اور block
+        //  (div/p) کی حد کو پیراگراف کی حد مانو۔ محفوظ شدہ ضمنی کا HTML اکثر
+        //  پیراگراف ایک wrapper div کے اندر br سے جوڑ دیتا ہے
+        //  (<div>a<br>b<br>c</div>) — پرانا normalize صرف اوپری سطح دیکھتا تھا،
+        //  اس لیے وہ سب ایک پیراگراف بن جاتے (چھپائی میں ملے ہوئے)۔ اب ہر br/
+        //  newline پر ٹوٹتا ہے، اندرونی div/p پر بھی۔
         function normalize(host){
-          var groups=[],cur=[];
-          function brk(){ if(cur.length){groups.push(cur);cur=[];} }
-          function addTextWithNL(str){
+          var out=[], cur=null;
+          function ensure(){ if(!cur) cur=document.createElement('div'); return cur; }
+          function endPara(){ if(cur){ if(T(cur).length) out.push(cur); cur=null; } }
+          function addText(str){
             var parts=String(str==null?'':str).split('\\n');
             for(var i=0;i<parts.length;i++){
-              if(i>0) brk();                                  // newline = نیا پیراگراف
-              if(parts[i].length) cur.push(document.createTextNode(parts[i]));
+              if(i>0) endPara();                              // newline = نیا پیراگراف
+              if(parts[i].length) ensure().appendChild(document.createTextNode(parts[i]));
             }
           }
-          [].slice.call(host.childNodes).forEach(function(n){
-            if(n.nodeType===1&&(n.tagName==='DIV'||n.tagName==='P')){
-              // سادہ (بغیر child element) بلاک جس کے اندر newline ہو → اُسے بھی توڑو
-              if(n.children.length===0 && /\\n/.test(n.textContent||'')){
-                brk(); addTextWithNL(n.textContent||''); brk();
-              } else { brk(); groups.push([n]); }
+          function walk(node){
+            for(var i=0;i<node.childNodes.length;i++){
+              var n=node.childNodes[i];
+              if(n.nodeType===3){ addText(n.nodeValue||''); }
+              else if(n.nodeType===1){
+                var tag=n.tagName;
+                if(tag==='BR'){ endPara(); }
+                else if(tag==='DIV'||tag==='P'){ endPara(); walk(n); endPara(); }   // بلاک — اندر جاؤ، حدیں توڑیں
+                else {
+                  // inline (span/b/i/u/a...) — اگر اندر br/newline ہو تو اندر جاؤ، ورنہ جوں کا توں
+                  var hasBrk=false;
+                  try{ hasBrk = (n.querySelector && n.querySelector('br,div,p')) || /\\n/.test(n.textContent||''); }catch(e){}
+                  if(hasBrk) walk(n);
+                  else ensure().appendChild(n.cloneNode(true));
+                }
+              }
             }
-            else if(n.nodeType===1&&n.tagName==='BR'){ brk(); }
-            else if(n.nodeType===3){ addTextWithNL(n.nodeValue||''); }   // ← اصل مسئلہ یہاں تھا
-            else { cur.push(n); }                                        // inline (span/b/i/u)
-          });
-          brk();
+          }
+          walk(host);
+          endPara();
           while(host.firstChild) host.removeChild(host.firstChild);
-          var out=[];
-          groups.forEach(function(g){
-            var d;
-            if(g.length===1&&g[0].nodeType===1&&(g[0].tagName==='DIV'||g[0].tagName==='P')) d=g[0];
-            else { d=document.createElement('div'); g.forEach(function(n){ d.appendChild(n); }); }
-            host.appendChild(d);
-            if(T(d).length) out.push(d);
-          });
+          out.forEach(function(d){ host.appendChild(d); });
           return out;
         }
 
@@ -2260,6 +2268,22 @@ function _zimniPrintHTML(inner) {
         }
 
         function numDiv(n,cls){ var d=document.createElement('div'); d.className=cls||'zf-num'; d.textContent=String(n); return d; }
+
+        // ── سیریل کالم کو حالاتِ تفتیش (.zf-body) کی پہلی سطر کے سامنے لاؤ ──
+        //  کالم 3 میں پہلے "سرکار/بنام/مرتبہ" (.zf-bl) آتی ہیں، پھر اصل تحریر
+        //  "جناب عالیٰ! …" (.zf-body)۔ افسر چاہتا ہے سیریل "1" اُسی "جناب عالیٰ"
+        //  کے سامنے ہو — اس لیے سیریل کے خانے کو اتنا نیچے کرو کہ وہ .zf-body سے
+        //  شروع ہو (idempotent — ہر بار پہلے reset)۔
+        function alignSerialToBody(){
+          try{
+            var doc=document.getElementById('ch173-doc'); if(!doc) return;
+            var nums=doc.querySelector('td.zf-c-serial .zf-nums'); if(!nums) return;
+            var body=doc.querySelector('td.zf-c-body .zf-body'); if(!body) return;
+            nums.style.marginTop='0px';
+            var gap=Math.round(body.getBoundingClientRect().top - nums.getBoundingClientRect().top);
+            if(gap>0 && gap<2000) nums.style.marginTop=gap+'px';
+          }catch(e){}
+        }
 
         // ── ٹیبل کی لکیریں صفحے کے نیچے تک (اکلوتا صفحہ) — قطار 2 کے تمام خانوں
         //    کی اونچائی بڑھا کر ٹیبل کا نیچے کنارہ صفحے کے ہاشیے تک لے جاؤ۔ ──
@@ -2374,6 +2398,7 @@ function _zimniPrintHTML(inner) {
             //  نہ پیراگراف کے ساتھ خودکار سیدھ ہوتی۔ (پرانا کوڈ یہاں 1..N نمبر
             //  دوبارہ بناتا تھا جو افسر کے لکھے کو مٹا دیتا تھا۔)
             putClose(doc.querySelector('td.zf-c-body'));
+            alignSerialToBody();   // سیریل "1" کو "جناب عالیٰ!" (حالات کی پہلی سطر) کے سامنے لاؤ
             // ── ٹیبل کی لکیریں صفحے کے نیچے تک (مگر ایک صفحے سے آگے نہیں) ──
             stretchToBottom();
             addBind(doc.querySelector('td.zf-c-body .zf-body'), docTop);   // صفحہ 2 کا مثلث (صرف اگر واقعی 2 صفحے ہوں)
