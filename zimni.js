@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_VER = 'zimni v25 — saved-print recursive split + serial 1 aligned to halaat';
+const ZIMNI_VER = 'zimni v26 — col1 date + serial 1 both aligned to halaat first line';
 window.ZIMNI_VER = ZIMNI_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -2269,19 +2269,29 @@ function _zimniPrintHTML(inner) {
 
         function numDiv(n,cls){ var d=document.createElement('div'); d.className=cls||'zf-num'; d.textContent=String(n); return d; }
 
-        // ── سیریل کالم کو حالاتِ تفتیش (.zf-body) کی پہلی سطر کے سامنے لاؤ ──
+        // ── کالم 1 (تاریخ) اور کالم 2 (سیریل) کو حالاتِ تفتیش (.zf-body) کی
+        //    پہلی سطر "جناب عالیٰ! …" کے سامنے لاؤ ──
         //  کالم 3 میں پہلے "سرکار/بنام/مرتبہ" (.zf-bl) آتی ہیں، پھر اصل تحریر
-        //  "جناب عالیٰ! …" (.zf-body)۔ افسر چاہتا ہے سیریل "1" اُسی "جناب عالیٰ"
-        //  کے سامنے ہو — اس لیے سیریل کے خانے کو اتنا نیچے کرو کہ وہ .zf-body سے
-        //  شروع ہو (idempotent — ہر بار پہلے reset)۔
+        //  (.zf-body)۔ افسر چاہتا ہے تاریخ اور سیریل "1" دونوں اُسی "جناب عالیٰ"
+        //  کے سامنے ہوں — اس لیے دونوں خانوں کو اتنا نیچے کرو کہ وہ .zf-body سے
+        //  شروع ہوں (idempotent — ہر بار پہلے reset)۔
         function alignSerialToBody(){
           try{
             var doc=document.getElementById('ch173-doc'); if(!doc) return;
-            var nums=doc.querySelector('td.zf-c-serial .zf-nums'); if(!nums) return;
             var body=doc.querySelector('td.zf-c-body .zf-body'); if(!body) return;
-            nums.style.marginTop='0px';
-            var gap=Math.round(body.getBoundingClientRect().top - nums.getBoundingClientRect().top);
-            if(gap>0 && gap<2000) nums.style.marginTop=gap+'px';
+            var bodyTop=body.getBoundingClientRect().top;
+            var nums=doc.querySelector('td.zf-c-serial .zf-nums');
+            if(nums){
+              nums.style.marginTop='0px';
+              var g1=Math.round(bodyTop - nums.getBoundingClientRect().top);
+              if(g1>0 && g1<2000) nums.style.marginTop=g1+'px';
+            }
+            var act=doc.querySelector('td.zf-c-action .zf-actbody') || doc.querySelector('td.zf-c-action');
+            if(act){
+              act.style.marginTop='0px';
+              var g2=Math.round(bodyTop - act.getBoundingClientRect().top);
+              if(g2>0 && g2<2000) act.style.marginTop=g2+'px';
+            }
           }catch(e){}
         }
 
