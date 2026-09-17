@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_VER = 'zimni v27 — col1/col2 align via padding-top (works on saved zimnis too)';
+const ZIMNI_VER = 'zimni v28 — EDITOR also aligns date+serial to halaat (matches print)';
 window.ZIMNI_VER = ZIMNI_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -455,13 +455,15 @@ function _renderZimniEditor() {
           } catch (_) {}
           clearTimeout(d0._zfAlignT);
           d0._zfAlignT = setTimeout(() => {
-            try { _zimniAlignSerial(); } catch (_) {}
-            try { _zimniAutoNumbers(); } catch (_) {}
+            try { _zimniAlignCols(); } catch (_) {}   // تاریخ + سیریل کو جناب عالیٰ کے سامنے
           }, 250);
         });
       }
     } catch (_) {}
-    [250, 900, 1800].forEach(ms => setTimeout(() => { try { _zimniLayout(); } catch (_) {} }, ms));                                                // table ki lakeerein moveable
+    [250, 900, 1800].forEach(ms => setTimeout(() => {
+      try { _zimniLayout(); } catch (_) {}
+      try { _zimniAlignCols(); } catch (_) {}   // ایڈیٹر میں تاریخ + سیریل "1" کی سیدھ
+    }, ms));                                                // table ki lakeerein moveable
     // Cursor ke mutabiq font dropdown + B/I/U ki halat khud badle (MS Word jaisa)
     try {
       if (!window._zfSyncBound) {
@@ -1371,6 +1373,33 @@ function _zimniLayout() {
   try { _zimniNumberAll(); } catch (_) {}       // berooni + androoni مسلسل نمبر + ▾ سیدھ
 }
 window._zimniLayout = _zimniLayout;
+
+// ── ایڈیٹر میں کالم 1 (تاریخ) اور کالم 2 (سیریل) کو حالاتِ تفتیش کی پہلی سطر
+//    "جناب عالیٰ! …" (.zf-body) کے سامنے لاؤ — بالکل ویسا جیسا پرنٹ میں ہوتا ہے،
+//    تاکہ جو اسکرین پر نظر آئے وہی چھپے۔ کالم 3 میں پہلے سرکار/بنام/مرتبہ آتی ہیں،
+//    پھر .zf-body۔ نمبر/تاریخ کے div کا marginTop اتنا کرو کہ وہ .zf-body سے شروع ہوں۔
+//    (جس خانے میں کرسر ہو اُسے مت چھیڑو — ورنہ ٹائپنگ کے دوران کرسر اچھلتا)۔
+function _zimniAlignCols() {
+  try {
+    const doc = _zimniDoc(); if (!doc) return;
+    const body = doc.querySelector('td.zf-c-body .zf-body'); if (!body) return;
+    const bodyTop = body.getBoundingClientRect().top;
+    const ae = document.activeElement;
+    const nums = doc.querySelector('td.zf-c-serial .zf-nums');
+    if (nums && !(ae && nums.contains(ae))) {
+      nums.style.marginTop = '0px';
+      const g = Math.round(bodyTop - nums.getBoundingClientRect().top);
+      if (g > 0 && g < 3000) nums.style.marginTop = g + 'px';
+    }
+    const act = doc.querySelector('td.zf-c-action .zf-actbody');
+    if (act && !(ae && act.contains(ae))) {
+      act.style.marginTop = '0px';
+      const g2 = Math.round(bodyTop - act.getBoundingClientRect().top);
+      if (g2 > 0 && g2 < 3000) act.style.marginTop = g2 + 'px';
+    }
+  } catch (_) {}
+}
+window._zimniAlignCols = _zimniAlignCols;
 
 function _zimniColResize() {
   const doc = _zimniDoc();
