@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_VER = 'zimni v33 — saved list date = block1 col1 date';
+const ZIMNI_VER = 'zimni v34 — main+sub ضمنی dropdowns, global Ctrl+H, ضمنی spelling';
 window.ZIMNI_VER = ZIMNI_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -347,6 +347,119 @@ function _openZimni(id) {
 }
 
 // ── EDITOR (Police Form 25-54(1)) ──────────────
+// ═══════════════════════════════════════════════════════════════
+//  ضمنی کی اقسام — مرکزی (Main) + ذیلی (Sub) dropdown
+//  چالان/رپورٹ 173 کے فارمیٹ کو ہاتھ نہیں لگتا — یہ صرف ضمنی کی قسم کا انتخاب ہے۔
+//  ہر فہرست کے آخر میں "➕ نئی قسم" — افسر اپنی مرضی کی قسم شامل کرے (صرف اپنے لیے،
+//  per-officer localStorage)۔
+// ═══════════════════════════════════════════════════════════════
+const _ZIMNI_TYPES = {
+  'اول ضمنی': ['اول ضمنی'],
+  'متفرق': ['متفرق ضمنی'],
+  'SHO ضمنی': [
+    'رپورٹ 173 — مکمل چالان',
+    'رپورٹ 173 — نامکمل/عبوری (512 ض ف)',
+    'عدمِ سراغ (عدم پتہ)',
+    'اخراج',
+    'SHO نگرانی نوٹ',
+    'تتمہ چالان مکمل — شراب',
+    'تتمہ چالان مکمل — چرس',
+    'تتمہ چالان مکمل — DNA',
+    'تتمہ چالان مکمل — آئس',
+    'تتمہ چالان مکمل — افیون',
+    'تتمہ چالان مکمل — ہیروئن',
+  ],
+  'DSP / SDPO ضمنی': [
+    'DSP نگرانی نوٹ و ہدایات',
+    'تصدیق رپورٹ اخراج',
+    'تصدیق رپورٹ عدم پتہ',
+  ],
+  'عدالتی درخواستیں': [
+    'ریمانڈ جسمانی',
+    'ریمانڈ عدالتی (judicial)',
+    'بیان بمطابق 164 ض ف',
+    'اجازتِ میڈیکل / پوسٹ مارٹم',
+    'CDR / کال ریکارڈ',
+    'IMEI / موبائل ڈیٹا',
+    'اشتہاری / مفرور',
+    'درخواست تلفی',
+    'متفرق درخواست',
+  ],
+};
+const _ZIMNI_TYPE_ADD = '__add__';
+function _zimniTypeSelCss() {
+  return "height:28px;border:1px solid var(--border,#ccc);border-radius:6px;background:var(--bg-card,#fff);color:var(--text-primary,#111);font-size:13px;padding:0 6px;margin:0 2px;cursor:pointer;max-width:190px;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;";
+}
+function _zimniTypeOfficerId() {
+  try { return String((typeof currentOfficer !== 'undefined' && currentOfficer && (currentOfficer.id || currentOfficer.user_id)) || 'x'); } catch (_) { return 'x'; }
+}
+function _zimniCustomTypes() {
+  try { return JSON.parse(localStorage.getItem('dio_zimni_types_' + _zimniTypeOfficerId()) || '{"main":[],"sub":{}}'); } catch (_) { return { main: [], sub: {} }; }
+}
+function _zimniSaveCustomTypes(o) { try { localStorage.setItem('dio_zimni_types_' + _zimniTypeOfficerId(), JSON.stringify(o)); } catch (_) {} }
+function _zimniAllMains() {
+  const c = _zimniCustomTypes(); const base = Object.keys(_ZIMNI_TYPES);
+  (c.main || []).forEach(m => { if (base.indexOf(m) < 0) base.push(m); });
+  return base;
+}
+function _zimniSubsFor(main) {
+  const base = (_ZIMNI_TYPES[main] || []).slice(); const c = _zimniCustomTypes();
+  (((c.sub || {})[main]) || []).forEach(s => { if (base.indexOf(s) < 0) base.push(s); });
+  return base;
+}
+function _zimniMainSelectHTML(sel) {
+  const E = (v) => (typeof esc === 'function') ? esc(v) : String(v == null ? '' : v);
+  const opts = _zimniAllMains().map(m => `<option value="${E(m)}" ${m === sel ? 'selected' : ''}>${E(m)}</option>`).join('');
+  return `<select id="zf-main-type" onchange="_zimniOnMainChange(this)" title="مرکزی ضمنی" style="${_zimniTypeSelCss()}">`
+    + `<option value="" ${!sel ? 'selected' : ''}>— مرکزی ضمنی —</option>${opts}`
+    + `<option value="${_ZIMNI_TYPE_ADD}">➕ نئی قسم…</option></select>`;
+}
+function _zimniSubSelectHTML(main, sel) {
+  const E = (v) => (typeof esc === 'function') ? esc(v) : String(v == null ? '' : v);
+  const subs = main ? _zimniSubsFor(main) : [];
+  const opts = subs.map(s => `<option value="${E(s)}" ${s === sel ? 'selected' : ''}>${E(s)}</option>`).join('');
+  return `<select id="zf-sub-type" onchange="_zimniOnSubChange(this)" title="ذیلی ضمنی" style="${_zimniTypeSelCss()}">`
+    + `<option value="" ${!sel ? 'selected' : ''}>— ذیلی ضمنی —</option>${opts}`
+    + `<option value="${_ZIMNI_TYPE_ADD}">➕ نئی قسم…</option></select>`;
+}
+function _zimniSetHead(v) { try { const hi = document.getElementById('zf-head-in'); if (hi) hi.value = v || 'رپورٹ ضمنی'; } catch (_) {} }
+function _zimniRebuildSub(main, selSub) {
+  const wrap = document.getElementById('zf-sub-wrap'); if (!wrap) return;
+  wrap.innerHTML = _zimniSubSelectHTML(main, selSub || '');
+  if (selSub) _zimniSetHead(selSub);
+}
+function _zimniOnMainChange(sel) {
+  if (sel.value === _ZIMNI_TYPE_ADD) {
+    const name = ((typeof prompt === 'function' ? prompt('نئی مرکزی ضمنی کا نام:') : '') || '').trim();
+    if (name) {
+      const c = _zimniCustomTypes(); c.main = c.main || []; if (c.main.indexOf(name) < 0) c.main.push(name); _zimniSaveCustomTypes(c);
+      const w = document.createElement('span'); w.innerHTML = _zimniMainSelectHTML(name);
+      if (sel.parentNode) sel.parentNode.replaceChild(w.firstElementChild, sel);
+      _zimniRebuildSub(name, '');
+    } else { sel.value = ''; }
+    return;
+  }
+  _zimniRebuildSub(sel.value, '');
+  try { _r173Dirty = true; } catch (_) {}
+}
+function _zimniOnSubChange(sel) {
+  const main = (document.getElementById('zf-main-type') || {}).value || '';
+  if (sel.value === _ZIMNI_TYPE_ADD) {
+    const name = ((typeof prompt === 'function' ? prompt('نئی ذیلی ضمنی کا نام:') : '') || '').trim();
+    if (name) {
+      const c = _zimniCustomTypes(); c.sub = c.sub || {}; c.sub[main] = c.sub[main] || []; if (c.sub[main].indexOf(name) < 0) c.sub[main].push(name); _zimniSaveCustomTypes(c);
+      _zimniRebuildSub(main, name);
+    } else { sel.value = ''; }
+    return;
+  }
+  _zimniSetHead(sel.value);
+  try { _r173Dirty = true; } catch (_) {}
+}
+window._zimniMainSelectHTML = _zimniMainSelectHTML;
+window._zimniSubSelectHTML = _zimniSubSelectHTML;
+window._zimniOnMainChange = _zimniOnMainChange;
+window._zimniOnSubChange = _zimniOnSubChange;
+
 function _renderZimniEditor() {
   const area = document.getElementById('workspace-editor-area')
             || document.getElementById('workspace-tab-content')
@@ -356,6 +469,8 @@ function _renderZimniEditor() {
   const c = _zimniCase || {};
   const z = _zimniActive || {};
   const saved = z.content || {};
+  const savedMain = (saved && saved.main_type) || '';   // مرکزی ضمنی
+  const savedSub  = (saved && saved.sub_type)  || '';   // ذیلی ضمنی
 
   const savedBody = saved.bodyHtml ? sanitizeHtml(saved.bodyHtml) : _zimniDefaultBody(o, c);
 
@@ -379,9 +494,10 @@ function _renderZimniEditor() {
         <option value="legal" ${paper==='legal'?'selected':''}>لیگل (8.5×13)</option>
         <option value="a4"    ${paper==='a4'   ?'selected':''}>A4 (8.27×11.7)</option>
       </select>
-      <!-- ٹاپ بار سے "رپورٹ ضمنی" کا خانہ ہٹا دیا (افسر کی درخواست)۔ قدر save کے لیے
-           hidden رکھی ہے تاکہ فہرست کا عنوان نہ ٹوٹے۔ -->
-      <input id="zf-head-in" type="hidden" value="${esc(((saved && saved.head) || 'رپورٹ ضمنی'))}">
+      <!-- مرکزی ضمنی — دائیں کونے میں (تھانہ کے اوپر) -->
+      ${_zimniMainSelectHTML(savedMain)}
+      <!-- "رپورٹ ضمنی" کا خانہ hidden — قدر save کے لیے (فہرست کا عنوان نہ ٹوٹے) -->
+      <input id="zf-head-in" type="hidden" value="${esc(((saved && saved.head) || savedSub || 'رپورٹ ضمنی'))}">
       <div style="margin-right:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
         <button id="zf-btn-b" onmousedown="event.preventDefault()" onclick="_zimniFmt('bold')" title="بولڈ" style="${btn}font-weight:900;">B</button>
         <button id="zf-btn-i" onmousedown="event.preventDefault()" onclick="_zimniFmt('italic')" title="ترچھا" style="${btn}font-style:italic;">I</button>
@@ -410,11 +526,12 @@ function _renderZimniEditor() {
         <button onmousedown="event.preventDefault()" onclick="dioFontStep(-1)" title="فونٹ چھوٹا" style="${btn}font-size:11px;">A−</button>
         <button onmousedown="event.preventDefault()" onclick="dioSetDir('rtl')" title="اردو — دائیں سے بائیں (RTL)" style="${btn}font-weight:800;">؈</button>
         <button onmousedown="event.preventDefault()" onclick="dioSetDir('ltr')" title="English — Left to Right (LTR)" style="${btn}font-weight:800;direction:ltr;">EN</button>
-        <button onmousedown="event.preventDefault()" onclick="_zimniFindReplaceUI(false)" title="ڈھونڈیں اور بدلیں (Find & Replace)" style="${btn}">🔎</button>
         ${sep}
         <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveZimni(false,true)" title="محفوظ کریں — سب کچھ محفوظ ہو جائے گا (ضمنی کھلی رہے گی)">💾 محفوظ</button>
         <span id="zf-updated" style="font-size:11px;color:var(--text-muted);white-space:nowrap;align-self:center;"></span>
       </div>
+      <!-- ذیلی ضمنی — بائیں کونے میں (منتخب مرکزی کے مطابق) -->
+      <span id="zf-sub-wrap">${_zimniSubSelectHTML(savedMain, savedSub)}</span>
     </div>
 
     <!-- Document — poora editable (har jaga likha ja sake), kaghaz asal naap par -->
@@ -490,18 +607,11 @@ function _renderZimniEditor() {
 let _zfrIdx = -1;
 
 function _zimniBindFindReplace() {
-  if (window._zfrBound) return;
-  window._zfrBound = true;
-  document.addEventListener('keydown', (e) => {
-    if (!(e.ctrlKey || e.metaKey)) return;
-    const k = String(e.key || '').toLowerCase();
-    if (k !== 'f' && k !== 'h') return;
-    // Sirf tab jab editor (#ch173-doc) safhe par mojood ho
-    const doc = (typeof _ch173Doc === 'function') ? _ch173Doc() : document.getElementById('ch173-doc');
-    if (!doc) return;
-    e.preventDefault();
-    _zimniFindReplaceUI(k === 'h');
-  }, true);
+  // GHAIR-FAAAL (no-op): ab Ctrl+H / Ctrl+F ka kaam poore system ka
+  // waahid handler (editor-tools.js → dioFindReplace, MS Word ki tarah
+  // "replace with" wala panel) sambhalta hai. Yahan bind na karo warna
+  // do panel takra jate the.
+  return;
 }
 window._zimniBindFindReplace = _zimniBindFindReplace;
 
@@ -986,7 +1096,7 @@ function _zimniEnsureClosing() {
   }
   const cell = doc.querySelector('td.zf-c-body');
   if (!cell) return;
-  // BUG FIX: purani محفوظ زمنیوں mein تفتیشی ka naam kabhi RIGHT-align reh jata tha.
+  // BUG FIX: purani محفوظ ضمنیوں mein تفتیشی ka naam kabhi RIGHT-align reh jata tha.
   // Rule: signature hamesha LEFT border ke sath. Har render par force LEFT karo —
   // ye editor mein foran theek kar deta hai, aur save par HTML mein bhi persist ho
   // jata hai (phir print bhi LEFT). Purani inline right-align ko override karta hai.
@@ -2231,13 +2341,20 @@ async function _saveZimni(silent, keepOpen) {
     if (b1) col1Date = String(b1.innerText || b1.textContent || '').replace(/\s+/g, ' ').trim();
   } catch (_) {}
 
+  // مرکزی + ذیلی ضمنی کی قسم — dropdown سے
+  let mainType = '', subType = '';
+  try { mainType = String((document.getElementById('zf-main-type') || {}).value || '').replace('__add__', ''); } catch (_) {}
+  try { subType  = String((document.getElementById('zf-sub-type')  || {}).value || '').replace('__add__', ''); } catch (_) {}
+  if (subType) head = subType;   // فہرست کا عنوان = ذیلی قسم
+
   const savedAt = new Date().toISOString();
   const rec = {
     case_id: _zimniCaseId,
     serial_no: serialNo,
     // block 1 کالم 1 کی تاریخ کو ترجیح؛ نہ ہو تو پرانی/آج کی
     report_date: (col1Date || z.report_date || savedAt.slice(0, 10)),
-    content: { bodyHtml, head, serial_no: serialNo, saved_at: savedAt, col1_date: col1Date },
+    content: { bodyHtml, head, serial_no: serialNo, saved_at: savedAt, col1_date: col1Date,
+               main_type: mainType, sub_type: subType },
   };
 
   try {

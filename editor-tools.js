@@ -476,3 +476,27 @@ window.dioEnableFloatingToolbar = dioEnableFloatingToolbar;
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _start);
   else _start();
 })();
+
+// ── GLOBAL Ctrl+H / Ctrl+F — MS Word ki tarah "ڈھونڈیں اور بدلیں" (poore system me) ──
+//   Jahan bhi koi likhne wala khana active ho (contenteditable / input / textarea),
+//   Ctrl+H (ya Ctrl+F) dabate hi replace-with wala panel khul jata hai.
+(function () {
+  if (window._dioFRKeys) return;
+  window._dioFRKeys = true;
+  document.addEventListener('keydown', function (e) {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+    var k = String(e.key || '').toLowerCase();
+    if (k !== 'h' && k !== 'f') return;
+    // Sirf tab chalao jab koi editable khana zer-e-istemal ho
+    var tgt = null;
+    try { tgt = (typeof _dioFRPickTarget === 'function') ? _dioFRPickTarget() : null; } catch (_) {}
+    if (!tgt) {
+      var ae = document.activeElement;
+      var ok = ae && (ae.isContentEditable || /^(input|textarea)$/i.test(ae.tagName || ''));
+      if (!ok) return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    try { if (typeof dioFindReplace === 'function') dioFindReplace(); } catch (_) {}
+  }, true);
+})();
