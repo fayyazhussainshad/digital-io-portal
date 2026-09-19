@@ -35,7 +35,6 @@ digital-io-portal/
 ├── *.js                ← ~57 feature modules (cases, zimni, report173, evidence, admin, …)
 ├── dio-*.js            ← Shared utilities: dio-date, dio-statuses, dio-errors, dio-html,
 │                          dio-states, dio-audit, dio-custody, dio-approvals
-├── *.sql               ← Supabase schema / migrations (run these in the SQL editor)
 └── README.md           ← This file
 ```
 
@@ -57,16 +56,24 @@ To point the app at a different Supabase project, update `SUPABASE_URL` and `SUP
 
 ---
 
-## 🗄️ Database setup (Supabase SQL editor)
+## 🗄️ Database (Supabase)
 
-Run the SQL files to create/upgrade tables and their security policies:
+The database schema — tables, Row Level Security policies, the immutable audit trail
+and the evidence chain of custody — is already provisioned in the Supabase project and
+was set up directly in the **Supabase SQL editor**. It is **not** kept as `.sql` files in
+this repo, so there is nothing to run when deploying the static site.
 
-- `audit_logs.sql` — immutable audit trail
-- `case_document_versions.sql` — document version history
-- `case_shares_v2.sql` — case sharing (with expiry/revoke)
-- `evidence_custody_events.sql` — evidence chain of custody (immutable)
-- `document_approvals.sql` — document approval workflow
-- `rls_audit_DIAGNOSTIC.sql` — read-only RLS security check (run anytime to verify all tables are protected)
+Tables / features that make up the schema:
+
+- **audit_logs** — immutable audit trail (login, case create/update, approvals, deletes)
+- **case_document_versions** — document version history
+- **case_shares_v2** — case sharing (with expiry / revoke)
+- **evidence_custody_events** — evidence chain of custody (immutable)
+- **document_approvals** — document approval workflow
+
+> To re-create this schema in a fresh Supabase project, rebuild these tables and their
+> RLS policies in the Supabase SQL editor. (Keep a SQL backup of the editor scripts if
+> you want them version-controlled here later.)
 
 ---
 
