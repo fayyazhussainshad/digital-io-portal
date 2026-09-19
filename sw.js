@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v472
+   DIGITAL IO — SERVICE WORKER v473
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v472';
+const CACHE_NAME = 'digital-io-v473';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -11,7 +11,18 @@ const CORE_ASSETS = [
   '/index.html',
   '/offline.html',
   '/manifest.json',
+
+  // shared utilities (load first in index.html)
+  '/dio-date.js',
+  '/dio-statuses.js',
+  '/dio-errors.js',
+  '/dio-html.js',
+  '/dio-states.js',
+  '/dio-audit.js',
+  '/dio-custody.js',
+  '/dio-approvals.js',
   '/offline-store.js',
+  '/resume.js',
 
   '/app-core.js',
   '/data-api.js',
@@ -41,9 +52,11 @@ const CORE_ASSETS = [
   '/global-mic.js',
   '/cdr-imei.js',
   '/cro-card.js',
+  '/rfa-form.js',
   '/staff-v2.js',
   '/law-library.js',
   '/ahkamat.js',
+  '/help-guide.js',
   '/templates.js',
   '/sho-dsp.js',
   '/editor-tools.js',
