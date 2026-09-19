@@ -173,6 +173,9 @@
   async function openNaqsha(caseId) {
     const cid = caseId || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
       || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
+    // چالان/زمنی/درخواست کی طرح — پورے صفحے کی doc-view کھولو تاکہ مقدمہ کی
+    // دستاویزات کی chips patti ڈھک جائے (نہ کہ نقشہ اس کے نیچے inline کھلے)
+    if (typeof _dioOpenDocTab === 'function') { try { _dioOpenDocTab('crime_scene'); } catch (_) {} }
     const area = document.getElementById('workspace-editor-area')
       || document.getElementById('workspace-tab-content') || document.getElementById('page-content');
     if (!area) { setTimeout(() => openNaqsha(cid), 80); return; }
