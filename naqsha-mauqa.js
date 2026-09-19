@@ -135,12 +135,15 @@
   // موجودہ DOM + canvas سے فعال سکیچ اپڈیٹ کرو
   function _snapshot() {
     const a = _active(); if (!a) return;
-    const g = (id) => { const el = document.getElementById(id); return el ? el.value : undefined; };
+    const g = (id) => { const el = document.getElementById(id); if (!el) return undefined; return (el.tagName === 'INPUT') ? el.value : el.innerText.replace(/ /g, ' ').trim(); };
     a.header = a.header || {};
     ['thana', 'zila', 'sarkar', 'muqadma', 'morkha', 'bajurm'].forEach(k => { const v = g('naq-h-' + k); if (v !== undefined) a.header[k] = v; });
-    const t2 = g('naq-h-thana2'); if (t2 !== undefined) a.header.thana = t2;
+    const t2 = g('naq-h-thana2'); if (t2 !== undefined && t2 !== '') a.header.thana2 = t2;
     const ty = document.getElementById('naq-type'); if (ty) a.type = ty.value;
     a.header.banam = _chosenBanam();
+    const ionm = document.getElementById('naq-io-nm'); if (ionm) a.io = ionm.innerText.replace(/ /g, ' ').trim();
+    const iodt = document.getElementById('naq-io-dt'); if (iodt) a.date = iodt.innerText.replace(/ /g, ' ').trim();
+    const mh = document.getElementById('naq-map'); if (mh) a.mapH = mh.clientHeight;
     // امتیازی نشانات
     const rows = document.querySelectorAll('#naq-marks .naq-mtext');
     if (rows.length) a.marks = Array.from(rows).map(r => r.innerText.replace(/ /g, ' ').trim());
@@ -271,7 +274,11 @@
     const a = _active();
     const paper = a.paper || 'legal';
     const hv = Object.assign({}, _auto(), a.header || {});
-    const io = (typeof getIOSignLine === 'function') ? (getIOSignLine() || '') : '';
+    let io = (a && a.io) || ((typeof getIOSignLine === 'function') ? (getIOSignLine() || '') : '');
+    if (!io) {   // fallback — موجودہ افسر سے (نام + عہدہ + تھانہ)
+      const o = _naqOff || {};
+      io = [o.full_name || o.name, o.rank || o.designation, (o.station ? 'تھانہ ' + o.station : '')].map(x => (x || '').trim()).filter(Boolean).join(' ');
+    }
 
     container.innerHTML = `
     <style>${_css()}</style>
@@ -315,46 +322,45 @@
       <div class="naq-scroll">
         <div id="dio-naqsha-doc" class="naq-doc naq-${paper}">
 
-          <div class="naq-hrow naq-edge">
-            <span><span class="naq-lbl">تھانہ</span> <input id="naq-h-thana" class="naq-in" value="${E(hv.thana)}"></span>
-            <span><span class="naq-lbl">ضلع</span> <input id="naq-h-zila" class="naq-in" value="${E(hv.zila)}"></span>
+          <div class="naq-hrow naq-edge naq-row1">
+            <span><span class="naq-lbl">تھانہ</span> <span id="naq-h-thana" class="naq-f" contenteditable="true">${E(hv.thana)}</span></span>
+            <span class="naq-zila"><span class="naq-lbl">ضلع</span> <span id="naq-h-zila" class="naq-f" contenteditable="true">${E(hv.zila)}</span></span>
           </div>
-          <div class="naq-gap"></div>
-          <div class="naq-hrow">
+          <div class="naq-hrow naq-sp">
             <span class="naq-lbl">سرکار بذریعہ</span>
-            <input id="naq-h-sarkar" class="naq-in naq-in-grow" value="${E(hv.sarkar)}" placeholder="مدعی کا پورا نام، ذات و پتہ">
+            <span id="naq-h-sarkar" class="naq-f naq-f-grow" contenteditable="true">${E(hv.sarkar)}</span>
           </div>
-          <div class="naq-hrow naq-firrow">
-            <span class="naq-lbl">مقدمہ نمبر</span><input id="naq-h-muqadma" class="naq-in naq-in-sm" value="${E(hv.muqadma)}">
-            <span class="naq-lbl">مورخہ</span><input id="naq-h-morkha" class="naq-in naq-in-sm" value="${E(hv.morkha)}">
-            <span class="naq-lbl">بجرم</span><input id="naq-h-bajurm" class="naq-in naq-in-md" value="${E(hv.bajurm)}">
-            <span class="naq-lbl">تھانہ</span><input id="naq-h-thana2" class="naq-in naq-in-sm" value="${E(hv.thana)}"
-              oninput="var t=document.getElementById('naq-h-thana');if(t)t.value=this.value;">
+          <div class="naq-hrow naq-firrow naq-sp">
+            <span class="naq-seg"><span class="naq-lbl">مقدمہ نمبر</span> <span id="naq-h-muqadma" class="naq-f" contenteditable="true">${E(hv.muqadma)}</span></span>
+            <span class="naq-seg"><span class="naq-lbl">مورخہ</span> <span id="naq-h-morkha" class="naq-f" contenteditable="true">${E(hv.morkha)}</span></span>
+            <span class="naq-seg"><span class="naq-lbl">بجرم</span> <span id="naq-h-bajurm" class="naq-f" contenteditable="true">${E(hv.bajurm)}</span></span>
+            <span class="naq-seg"><span class="naq-lbl">تھانہ</span> <span id="naq-h-thana2" class="naq-f" contenteditable="true">${E(hv.thana2 || hv.thana)}</span></span>
           </div>
-          <div class="naq-banam">
+          <div class="naq-banam naq-sp">
             <button class="naq-caret no-print" title="ملزمان منتخب کریں" onclick="window._naqAccPicker&&_naqAccPicker(event)">▾</button>
             <span class="naq-lbl">بنام</span>
             <span id="naq-banam-list" class="naq-banam-list">${_banamHTML()}</span>
           </div>
 
-          <div class="naq-title">نقشہ موقع نظری بلاسکیل
+          <div class="naq-title">
+            ${_compassSVG()}
+            <span class="naq-title-t">نقشہ موقع نظری بلاسکیل</span>
             <select id="naq-type" class="naq-type" onchange="window._naqType&&_naqType(this.value)">
               <option value="waqia" ${a.type === 'waqia' ? 'selected' : ''}>جائے وقوعہ</option>
               <option value="baramad" ${a.type === 'baramad' ? 'selected' : ''}>جائے برامدگی</option>
             </select>
           </div>
 
-          <div class="naq-map" id="naq-map">
-            ${_compassSVG()}
-            ${fabricOk ? `<canvas id="naq-canvas"></canvas>` : `<div class="naq-nofab">ڈرائنگ لائبریری لوڈ نہیں ہو سکی — ایک بار انٹرنیٹ سے جوڑ کر دوبارہ کھولیں۔</div>`}
+          <div class="naq-map" id="naq-map" style="${a.mapH ? 'height:' + a.mapH + 'px;' : ''}">
+            ${fabricOk ? `<canvas id="naq-canvas"></canvas><div class="naq-map-resize no-print" title="کھینچ کر بڑا/چھوٹا کریں" onmousedown="window._naqResizeStart&&_naqResizeStart(event)" ontouchstart="window._naqResizeStart&&_naqResizeStart(event)"></div>` : `<div class="naq-nofab">ڈرائنگ لائبریری لوڈ نہیں ہو سکی — ایک بار انٹرنیٹ سے جوڑ کر دوبارہ کھولیں۔</div>`}
           </div>
 
-          <div class="naq-marks-l">امتیازی نشانات:</div>
-          <div id="naq-marks" onkeydown="window._naqMarksKey&&_naqMarksKey(event)" oninput="window._naqDirty&&_naqDirty()">${_marksHTML(a.marks)}</div>
+          <div class="naq-marks-l naq-sp">امتیازی نشانات:</div>
+          <div id="naq-marks" class="naq-sp-sm" onkeydown="window._naqMarksKey&&_naqMarksKey(event)" oninput="window._naqDirty&&_naqDirty()">${_marksHTML(a.marks)}</div>
 
           <div class="naq-io">
-            <div class="naq-io-nm" contenteditable="true">${E(io)}</div>
-            <div class="naq-io-dt" contenteditable="true">${E(a.date || _regDate())}</div>
+            <div id="naq-io-nm" class="naq-io-nm" contenteditable="true">${E(io)}</div>
+            <div id="naq-io-dt" class="naq-io-dt" contenteditable="true">${E(a.date || _regDate())}</div>
           </div>
 
         </div>
@@ -371,22 +377,45 @@
   window._naqType = function () { _saveSoon(); _refreshChips(); };
   window._naqSetPaper = function (v) { const a = _active(); if (a) a.paper = v; _snapshot(); _persistLocal(); _renderNaqsha(); };
 
-  // ══ Compass — E-W عنوان کی سیدھ میں (اوپر)، N-S لمبا اسی پر fixed ═════
+  // ══ Compass — E-W (افقی) عنوان کی سیدھ میں (y=48)، N-S لمبا اسی پر fixed؛
+  //   الفاظ arrow heads سے فاصلے پر ════════════════════════════════════
   function _compassSVG() {
     const F = "font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif";
-    return `<svg class="naq-compass" viewBox="0 0 92 118" aria-label="سمت نما">
-      <line x1="46" y1="10" x2="46" y2="112" stroke="#111" stroke-width="1.7"/>
-      <polygon points="46,3 41,15 51,15" fill="#111"/>
-      <polygon points="46,116 41,104 51,104" fill="#111"/>
-      <line x1="24" y1="30" x2="68" y2="30" stroke="#111" stroke-width="1.7"/>
-      <polygon points="72,30 60,25 60,35" fill="#111"/>
-      <polygon points="20,30 32,25 32,35" fill="#111"/>
-      <text x="46" y="9"   text-anchor="middle" font-size="11" font-weight="700" style="${F}">شمال</text>
-      <text x="46" y="118" text-anchor="middle" font-size="11" font-weight="700" style="${F}">جنوب</text>
-      <text x="74" y="33"  text-anchor="start"  font-size="11" font-weight="700" style="${F}">مشرق</text>
-      <text x="18" y="33"  text-anchor="end"    font-size="11" font-weight="700" style="${F}">مغرب</text>
+    // E-W افقی lline y=62 (عنوان کی سیدھ)؛ N-S عمودی لمبا؛ الفاظ arrow heads سے صاف فاصلے پر (middle anchor)
+    return `<svg class="naq-compass" viewBox="0 0 150 182" aria-label="سمت نما">
+      <line x1="75" y1="46" x2="75" y2="166" stroke="#111" stroke-width="1.8"/>
+      <polygon points="75,38 69,52 81,52" fill="#111"/>
+      <polygon points="75,174 69,160 81,160" fill="#111"/>
+      <line x1="47" y1="62" x2="103" y2="62" stroke="#111" stroke-width="1.8"/>
+      <polygon points="110,62 98,56 98,68" fill="#111"/>
+      <polygon points="40,62 52,56 52,68" fill="#111"/>
+      <text x="75"  y="30"  text-anchor="middle" font-size="13" font-weight="700" style="${F}">شمال</text>
+      <text x="75"  y="182" text-anchor="middle" font-size="13" font-weight="700" style="${F}">جنوب</text>
+      <text x="128" y="67"  text-anchor="middle" font-size="13" font-weight="700" style="${F}">مشرق</text>
+      <text x="22"  y="67"  text-anchor="middle" font-size="13" font-weight="700" style="${F}">مغرب</text>
     </svg>`;
   }
+
+  // ══ نقشہ ایریا — کھینچ کر بڑا/چھوٹا (expandable) ════════════════════
+  window._naqResizeStart = function (ev) {
+    ev.preventDefault();
+    const map = document.getElementById('naq-map'); if (!map) return;
+    const startY = (ev.touches ? ev.touches[0].clientY : ev.clientY);
+    const startH = map.clientHeight;
+    const move = (e) => {
+      const y = (e.touches ? e.touches[0].clientY : e.clientY);
+      const h = Math.max(140, Math.min(1400, startH + (y - startY)));
+      map.style.height = h + 'px';
+      if (_naqCanvas) { try { _naqCanvas.setHeight(h); _naqCanvas.renderAll(); } catch (_) {} }
+    };
+    const up = () => {
+      document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up);
+      document.removeEventListener('touchmove', move); document.removeEventListener('touchend', up);
+      _saveSoon();
+    };
+    document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
+    document.addEventListener('touchmove', move, { passive: false }); document.addEventListener('touchend', up);
+  };
 
   // ══ Chips (محفوظ نقشے) ═════════════════════════════════════════════
   function _chipsHTML() {
@@ -411,10 +440,12 @@
   // ══ Canvas ═════════════════════════════════════════════════════════
   function _sizeCanvas() {
     const map = document.getElementById('naq-map'); if (!map || !_naqCanvas) return;
+    const a = _active();
     const w = Math.max(280, map.clientWidth - 2);
-    const h = Math.round(w * 0.66);
+    // اونچائی: محفوظ شدہ (a.mapH) ورنہ default؛ صارف کھینچ کر بدل سکتا ہے
+    const h = Math.max(140, (a && a.mapH) ? a.mapH : Math.round(w * 0.6));
     _naqCanvas.setWidth(w); _naqCanvas.setHeight(h); _naqCanvas.renderAll();
-    map.style.minHeight = h + 'px';
+    map.style.height = h + 'px';
   }
   function _initCanvas(a) {
     const el = document.getElementById('naq-canvas'); if (!el || !window.fabric) return;
@@ -576,14 +607,13 @@
     clone.querySelectorAll('[contenteditable]').forEach(n => n.removeAttribute('contenteditable'));
 
     const a = _active(); const paper = (a && a.paper) || 'legal';
-    const side = (typeof _ch173SideMargin === 'function') ? _ch173SideMargin() : (paper === 'a4' ? '0.5cm' : '0.2cm');
     const html = `<!DOCTYPE html><html dir="rtl" lang="ur"><head><meta charset="UTF-8">
       <style>
         @page{ size:${paper === 'a4' ? 'A4' : 'legal'}; margin:0; }
         *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; box-sizing:border-box; }
         html,body{ margin:0; }
         body{ direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; color:#000; }
-        ${_docCSS(true, side)}
+        ${_docCSS(true)}
         .naq-doc{ box-shadow:none !important; border-radius:0 !important; }
       </style></head><body>${clone.outerHTML}</body></html>`;
     if (typeof dioPrint === 'function') dioPrint(html);
@@ -592,43 +622,53 @@
 
   // ══ CSS ════════════════════════════════════════════════════════════
   // دستاویز کی CSS — screen اور print دونوں ایک ہی (WYSIWYG)
-  function _docCSS(forPrint, sideMargin) {
-    const side = sideMargin || '0.2cm';
+  function _docCSS(forPrint) {
+    // چالان/زمنی کی طرح: دائیں 1 انچ indent، بائیں 0.4 انچ۔ کوئی dotted line نہیں۔
     return `
     .naq-doc{ background:#fff; color:#111; font-size:14pt; line-height:1.6;
-      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
-    .naq-doc.naq-legal{ width:8.5in; padding:0.5in ${side}; }
-    .naq-doc.naq-a4{ width:8.27in; padding:0.5in ${side}; }
+      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; padding:0.5in 1in 0.5in 0.4in; }
+    .naq-doc.naq-legal{ width:8.5in; }
+    .naq-doc.naq-a4{ width:8.27in; }
     ${forPrint ? `.naq-doc{ width:100% !important; }` : ''}
-    .naq-hrow{ display:flex; align-items:baseline; gap:6px; margin:3px 0; flex-wrap:wrap; }
+    .naq-hrow{ display:flex; align-items:baseline; gap:6px 10px; margin:2px 0; flex-wrap:wrap; }
     .naq-edge{ justify-content:space-between; flex-wrap:nowrap; }
     .naq-edge > span{ display:inline-flex; align-items:baseline; gap:6px; }
-    .naq-firrow{ gap:4px; }
+    .naq-firrow{ gap:4px 16px; }
+    .naq-seg{ display:inline-flex; align-items:baseline; gap:6px; white-space:nowrap; }
+    .naq-firrow .naq-f{ white-space:normal; }
     .naq-lbl{ font-weight:700; white-space:nowrap; }
-    .naq-gap{ height:1.1em; }
-    .naq-in{ border:none; border-bottom:1px dotted #7a7a7a; background:transparent; color:#111;
-      font-family:inherit; font-size:14pt; padding:1px 5px; min-width:64px; outline:none; }
-    .naq-in:focus{ border-bottom-color:#2563eb; }
-    .naq-in-sm{ min-width:88px; } .naq-in-md{ min-width:150px; flex:1 1 auto; } .naq-in-grow{ flex:1 1 auto; min-width:200px; }
-    .naq-banam{ display:flex; align-items:baseline; gap:8px; margin-top:4px; }
+    .naq-sp{ margin-top:0.5in; }          /* آدھا انچ (سطر 2/3/4 اور امتیازی سے پہلے) */
+    .naq-sp-sm{ margin-top:6px; }
+    /* inline editable خانہ — کوئی dotted line/gap نہیں، مواد کے مطابق سکڑے/بڑھے */
+    .naq-f{ display:inline-block; min-width:1.5ch; font-family:inherit; font-size:14pt; color:#111; outline:none; }
+    .naq-f:focus{ background:rgba(37,99,235,0.06); border-radius:3px; }
+    .naq-f-grow{ display:inline; }
+    .naq-banam{ display:flex; align-items:baseline; gap:8px; }
     .naq-caret{ width:22px; height:22px; border:1px solid #cbd5e1; border-radius:5px; background:#fff; font-size:12px; cursor:pointer; flex:0 0 auto; }
     .naq-banam-list{ flex:1; }
-    .naq-acc{ padding-inline-start:1in; margin:2px 0; }
+    .naq-acc{ padding-inline-start:0.7in; margin:2px 0; }
     .naq-accno{ font-weight:700; }
-    .naq-title{ text-align:center; font-weight:700; font-size:16pt; margin:12px 0 6px;
-      text-decoration:underline; text-underline-offset:5px; }
-    .naq-type{ font-family:inherit; font-size:13pt; border:1px solid #cbd5e1; border-radius:6px; padding:1px 6px; background:#fff; color:#111; }
-    .naq-map{ position:relative; min-height:3.2in; margin:2px 0 6px; }
+    /* عنوان — پوری سطر underline؛ قسم dropdown بھی سادہ underline متن (کوئی دائرہ/باکس نہیں) */
+    .naq-title{ position:relative; z-index:5; text-align:center; font-weight:700; font-size:16pt; margin:12px 0 6px; }
+    .naq-title-t{ text-decoration:underline; text-underline-offset:5px; }
+    .naq-type{ -webkit-appearance:none; -moz-appearance:none; appearance:none; font-family:inherit; font-size:16pt; font-weight:700;
+      border:none; background:transparent; color:#111; padding:0 2px; cursor:pointer; text-decoration:underline; text-underline-offset:5px; outline:none; }
+    .naq-map{ position:relative; margin:2px 0 6px; }
     .naq-map .canvas-container{ margin:0 auto; }
     #naq-canvas{ display:block; }
-    .naq-compass{ position:absolute; top:0; right:6px; width:78px; height:100px; z-index:5; pointer-events:none; }
+    .naq-map-resize{ position:absolute; left:0; right:0; bottom:0; height:14px; cursor:ns-resize;
+      background:linear-gradient(180deg,transparent,rgba(37,99,235,0.10)); }
+    .naq-map-resize::after{ content:'⋯'; position:absolute; left:50%; bottom:0; transform:translateX(-50%); color:#9aa; font-size:12px; }
+    /* سمت نما — عنوان کے اندر، E-W افقی lline بالکل عنوان کی سیدھ میں؛ N-S لمبا نیچے */
+    .naq-compass{ position:absolute; top:50%; right:4px; width:116px; height:141px; transform:translateY(-48px); z-index:6; pointer-events:none; }
     .naq-nofab{ padding:36px 16px; text-align:center; color:#b91c1c; }
-    .naq-marks-l{ font-weight:700; text-decoration:underline; text-underline-offset:4px; margin:6px 0 4px; }
+    .naq-marks-l{ font-weight:700; text-decoration:underline; text-underline-offset:4px; }
     .naq-mrow{ display:flex; align-items:baseline; gap:6px; margin:4px 0; }
-    .naq-mno{ white-space:nowrap; }
-    .naq-mtext{ flex:1; min-width:60px; border-bottom:1px dotted #7a7a7a; outline:none; }
-    .naq-io{ margin-top:20px; text-align:left; direction:rtl; line-height:1.5; }
-    .naq-io-nm{ font-weight:700; } .naq-io-dt{ font-size:13pt; }
+    .naq-mno{ white-space:nowrap; font-weight:600; }
+    .naq-mtext{ flex:1; min-width:60px; outline:none; }
+    .naq-io{ margin-top:20px; }
+    .naq-io-nm{ font-weight:700; text-align:left; }
+    .naq-io-dt{ font-size:13pt; text-align:left; }
     `;
   }
   // پورا صفحہ (topbar + scroll) کی CSS
@@ -636,9 +676,13 @@
     return `
     .naq-wrap{ display:flex; flex-direction:column; height:100%; direction:rtl;
       font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
-    .naq-topbar{ display:flex; align-items:center; gap:8px; padding:7px 10px; border-bottom:1px solid var(--border,#ccc);
+    .naq-topbar{ display:flex; align-items:center; gap:8px; padding:6px 10px; border-bottom:1px solid var(--border,#ccc);
       background:var(--bg-secondary,#f3f4f6); flex-wrap:wrap; position:sticky; top:0; z-index:20; }
-    .naq-chips{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+    /* chip bar — چلتی (افقی scroll)، سطریں نہ ٹوٹیں تاکہ کام کے لیے جگہ ملے */
+    .naq-chips{ display:flex; gap:6px; align-items:center; flex-wrap:nowrap; overflow-x:auto; flex:1 1 220px; min-width:0;
+      scrollbar-width:thin; }
+    .naq-chips::-webkit-scrollbar{ height:6px; }
+    .naq-chip{ flex:0 0 auto; }
     .naq-chip{ padding:4px 11px; border:1px solid var(--border,#cbd5e1); border-radius:16px; background:var(--bg-card,#fff);
       color:var(--text-primary,#111); cursor:pointer; font-size:12pt; }
     .naq-chip.on{ background:var(--nav-active,#e0edff); color:var(--accent,#2563eb); border-color:var(--accent,#2563eb); font-weight:700; }
@@ -653,7 +697,8 @@
     .naq-sel{ height:30px; border:1px solid var(--border,#cbd5e1); border-radius:7px; background:#fff; color:#111; font-size:11pt; padding:0 6px; cursor:pointer; }
     .naq-sep{ width:1px; height:22px; background:var(--border,#ccc); margin:0 3px; }
     .naq-scroll{ flex:1; overflow:auto; min-height:0; padding:16px; background:var(--bg-tertiary,#eef1f4); }
-    .naq-doc{ margin:0 auto; box-shadow:0 4px 22px rgba(0,0,0,0.15); border-radius:4px; max-width:100%; }
+    /* دستاویز اصل کاغذ کی چوڑائی پر (screen=print)؛ تنگ اسکرین پر افقی scroll — squish نہیں */
+    .naq-doc{ margin:0 auto; box-shadow:0 4px 22px rgba(0,0,0,0.15); border-radius:4px; }
     ${_docCSS(false)}
     @media print{ .naq-topbar,#global-mic-btn{ display:none !important; } }
     `;
