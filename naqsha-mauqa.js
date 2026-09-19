@@ -78,6 +78,7 @@
       muqadma: (c.fir_number || '').trim(),
       morkha: FDATE(c.fir_date) || '',
       bajurm: jurm,
+      bahad: (c.occurrence_place || '').trim(),   // بحد (نیا کیس کارڈ کا خانہ)
       banam: _naqAccList.map(a => a.name),   // default: تمام ملزمان
     };
   }
@@ -137,7 +138,7 @@
     const a = _active(); if (!a) return;
     const g = (id) => { const el = document.getElementById(id); if (!el) return undefined; return (el.tagName === 'INPUT') ? el.value : el.innerText.replace(/ /g, ' ').trim(); };
     a.header = a.header || {};
-    ['thana', 'zila', 'sarkar', 'muqadma', 'morkha', 'bajurm'].forEach(k => { const v = g('naq-h-' + k); if (v !== undefined) a.header[k] = v; });
+    ['thana', 'zila', 'sarkar', 'muqadma', 'morkha', 'bajurm', 'bahad'].forEach(k => { const v = g('naq-h-' + k); if (v !== undefined) a.header[k] = v; });
     const t2 = g('naq-h-thana2'); if (t2 !== undefined && t2 !== '') a.header.thana2 = t2;
     const ty = document.getElementById('naq-type'); if (ty) a.type = ty.value;
     a.header.banam = _chosenBanam();
@@ -185,12 +186,13 @@
     const a = _active(); const h = (a && a.header) || {};
     return Array.isArray(h.banam) ? h.banam : _naqAccList.map(x => x.name);
   }
-  // پہلا بلا نمبر، پھر 2،3 … (انگریزی)
+  // اصول: ایک ملزم → کوئی نمبر نہیں؛ ایک سے زائد → تمام کو نمبر (1،2،3… انگریزی)
   function _banamHTML() {
     const names = _chosenBanam().filter(Boolean);
     if (!names.length) return '<div class="naq-acc" style="color:#999;">—</div>';
+    if (names.length === 1) return `<div class="naq-acc">${E(names[0])}</div>`;
     return names.map((n, i) =>
-      `<div class="naq-acc">${i === 0 ? '' : '<span class="naq-accno">' + (i + 1) + '.</span> '}${E(n)}</div>`
+      `<div class="naq-acc"><span class="naq-accno">${i + 1}.</span> ${E(n)}</div>`
     ).join('');
   }
   function _naqRebuildBanam() { const w = document.getElementById('naq-banam-list'); if (w) w.innerHTML = _banamHTML(); }
@@ -329,19 +331,18 @@
             <span><span class="naq-lbl">تھانہ</span> <span id="naq-h-thana" class="naq-f" contenteditable="true">${E(hv.thana)}</span></span>
             <span class="naq-zila"><span class="naq-lbl">ضلع</span> <span id="naq-h-zila" class="naq-f" contenteditable="true">${E(hv.zila)}</span></span>
           </div>
-          <div class="naq-hrow naq-sp">
+          <div class="naq-hrow naq-sp2">
             <span class="naq-lbl">سرکار بذریعہ</span>
             <span id="naq-h-sarkar" class="naq-f naq-f-grow" contenteditable="true">${E(hv.sarkar)}</span>
           </div>
-          <div class="naq-hrow naq-firrow">
+          <div class="naq-hrow naq-firrow naq-sp2">
             <span class="naq-seg"><span class="naq-lbl">مقدمہ نمبر</span> <span id="naq-h-muqadma" class="naq-f" contenteditable="true">${E(hv.muqadma)}</span></span>
             <span class="naq-seg"><span class="naq-lbl">مورخہ</span> <span id="naq-h-morkha" class="naq-f" contenteditable="true">${E(hv.morkha)}</span></span>
             <span class="naq-seg"><span class="naq-lbl">بجرم</span> <span id="naq-h-bajurm" class="naq-f" contenteditable="true">${E(hv.bajurm)}</span></span>
             <span class="naq-seg"><span class="naq-lbl">تھانہ</span> <span id="naq-h-thana2" class="naq-f" contenteditable="true">${E(hv.thana2 || hv.thana)}</span></span>
           </div>
           <div class="naq-banam naq-sp">
-            <button class="naq-caret no-print" title="ملزمان منتخب کریں" onclick="window._naqAccPicker&&_naqAccPicker(event)">▾</button>
-            <span class="naq-lbl">بنام</span>
+            <span class="naq-banam-lbl"><button class="naq-caret no-print" title="ملزمان منتخب کریں" onclick="window._naqAccPicker&&_naqAccPicker(event)">▾</button> بنام</span>
             <span id="naq-banam-list" class="naq-banam-list">${_banamHTML()}</span>
           </div>
 
@@ -353,6 +354,7 @@
               <option value="baramad" ${a.type === 'baramad' ? 'selected' : ''}>جائے برامدگی</option>
             </select>
           </div>
+          <div class="naq-bahad"><span class="naq-lbl">بحد۔</span> <span id="naq-h-bahad" class="naq-f naq-f-grow" contenteditable="true">${E(hv.bahad)}</span></div>
 
           <div class="naq-map" id="naq-map" style="${a.mapH ? 'height:' + a.mapH + 'px;' : ''}">
             ${fabricOk ? `<canvas id="naq-canvas"></canvas><div class="naq-map-resize no-print" title="کھینچ کر بڑا/چھوٹا کریں" onmousedown="window._naqResizeStart&&_naqResizeStart(event)" ontouchstart="window._naqResizeStart&&_naqResizeStart(event)"></div>` : `<div class="naq-nofab">ڈرائنگ لائبریری لوڈ نہیں ہو سکی — ایک بار انٹرنیٹ سے جوڑ کر دوبارہ کھولیں۔</div>`}
@@ -370,7 +372,7 @@
       </div>
     </div>`;
 
-    ['thana', 'zila', 'sarkar', 'muqadma', 'morkha', 'bajurm', 'thana2'].forEach(k => {
+    ['thana', 'zila', 'sarkar', 'muqadma', 'morkha', 'bajurm', 'thana2', 'bahad'].forEach(k => {
       const el = document.getElementById('naq-h-' + k); if (el) el.addEventListener('input', _saveSoon);
     });
     if (fabricOk) _initCanvas(a);
@@ -642,17 +644,22 @@
     .naq-seg{ display:inline-flex; align-items:baseline; gap:6px; white-space:nowrap; }
     .naq-firrow .naq-f{ white-space:normal; }
     .naq-lbl{ font-weight:400; white-space:nowrap; }   /* لیبل bold نہیں */
-    .naq-sp{ margin-top:16px; }            /* درخواست جیسی tight spacing */
+    .naq-sp{ margin-top:16px; }            /* بنام / امتیازی سے پہلے */
+    .naq-sp2{ margin-top:0.5in; }          /* سطر 2 اور 3 سے پہلے (آدھا انچ زائد) */
     .naq-sp-sm{ margin-top:6px; }
     /* inline editable خانہ — کوئی dotted line/gap نہیں، مواد کے مطابق سکڑے/بڑھے */
     .naq-f{ display:inline-block; min-width:1.5ch; font-family:inherit; font-size:14pt; color:#111; outline:none; }
     .naq-f:focus{ background:rgba(37,99,235,0.06); border-radius:3px; }
     .naq-f-grow{ display:inline; }
-    .naq-banam{ display:flex; align-items:baseline; gap:8px; }
-    .naq-caret{ width:22px; height:22px; border:1px solid #cbd5e1; border-radius:5px; background:#fff; font-size:12px; cursor:pointer; flex:0 0 auto; }
-    .naq-banam-list{ flex:1; }
-    .naq-acc{ padding-inline-start:0.7in; margin:2px 0; }
+    /* بنام — پہلی سطروں کی سیدھ سے باہر دائیں (hanging)؛ ملزمان اوپر والی سطروں کی سیدھ میں */
+    .naq-banam{ position:relative; }
+    .naq-banam-lbl{ position:absolute; right:-0.8in; top:0; white-space:nowrap; }
+    .naq-caret{ width:20px; height:20px; border:1px solid #cbd5e1; border-radius:5px; background:#fff; font-size:11px; cursor:pointer; }
+    .naq-banam-list{ }
+    .naq-acc{ margin:2px 0; }
     .naq-accno{ font-weight:400; }
+    /* بحد — بائیں بارڈر کی سیدھ میں */
+    .naq-bahad{ margin-top:6px; text-align:left; }
     /* عنوان — 18pt، پوری سطر underline؛ bold نہیں؛ قسم dropdown سادہ underline متن (کوئی دائرہ/باکس نہیں) */
     .naq-title{ position:relative; z-index:5; text-align:center; font-weight:400; font-size:18pt; margin:16px 0 6px; }
     .naq-title-t{ text-decoration:underline; text-underline-offset:5px; }
