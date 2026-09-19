@@ -331,17 +331,17 @@
             <span><span class="naq-lbl">تھانہ</span> <span id="naq-h-thana" class="naq-f" contenteditable="true">${E(hv.thana)}</span></span>
             <span class="naq-zila"><span class="naq-lbl">ضلع</span> <span id="naq-h-zila" class="naq-f" contenteditable="true">${E(hv.zila)}</span></span>
           </div>
-          <div class="naq-hrow naq-sp2">
+          <div class="naq-hrow naq-sp3">
             <span class="naq-lbl">سرکار بذریعہ</span>
             <span id="naq-h-sarkar" class="naq-f naq-f-grow" contenteditable="true">${E(hv.sarkar)}</span>
           </div>
-          <div class="naq-hrow naq-firrow naq-sp2">
+          <div class="naq-hrow naq-firrow">
             <span class="naq-seg"><span class="naq-lbl">مقدمہ نمبر</span> <span id="naq-h-muqadma" class="naq-f" contenteditable="true">${E(hv.muqadma)}</span></span>
             <span class="naq-seg"><span class="naq-lbl">مورخہ</span> <span id="naq-h-morkha" class="naq-f" contenteditable="true">${E(hv.morkha)}</span></span>
             <span class="naq-seg"><span class="naq-lbl">بجرم</span> <span id="naq-h-bajurm" class="naq-f" contenteditable="true">${E(hv.bajurm)}</span></span>
             <span class="naq-seg"><span class="naq-lbl">تھانہ</span> <span id="naq-h-thana2" class="naq-f" contenteditable="true">${E(hv.thana2 || hv.thana)}</span></span>
           </div>
-          <div class="naq-banam naq-sp">
+          <div class="naq-banam naq-sp3">
             <span class="naq-banam-lbl"><button class="naq-caret no-print" title="ملزمان منتخب کریں" onclick="window._naqAccPicker&&_naqAccPicker(event)">▾</button> بنام</span>
             <span id="naq-banam-list" class="naq-banam-list">${_banamHTML()}</span>
           </div>
@@ -354,7 +354,7 @@
               <option value="baramad" ${a.type === 'baramad' ? 'selected' : ''}>جائے برامدگی</option>
             </select>
           </div>
-          <div class="naq-bahad"><span class="naq-lbl">بحد۔</span> <span id="naq-h-bahad" class="naq-f naq-f-grow" contenteditable="true">${E(hv.bahad)}</span></div>
+          <div class="naq-bahad"><span class="naq-lbl">بحد۔</span> <span class="naq-paren">(</span><span id="naq-h-bahad" class="naq-f naq-f-grow" contenteditable="true">${E(hv.bahad)}</span><span class="naq-paren">)</span></div>
 
           <div class="naq-map" id="naq-map" style="${a.mapH ? 'height:' + a.mapH + 'px;' : ''}">
             ${fabricOk ? `<canvas id="naq-canvas"></canvas><div class="naq-map-resize no-print" title="کھینچ کر بڑا/چھوٹا کریں" onmousedown="window._naqResizeStart&&_naqResizeStart(event)" ontouchstart="window._naqResizeStart&&_naqResizeStart(event)"></div>` : `<div class="naq-nofab">ڈرائنگ لائبریری لوڈ نہیں ہو سکی — ایک بار انٹرنیٹ سے جوڑ کر دوبارہ کھولیں۔</div>`}
@@ -644,8 +644,8 @@
     .naq-seg{ display:inline-flex; align-items:baseline; gap:6px; white-space:nowrap; }
     .naq-firrow .naq-f{ white-space:normal; }
     .naq-lbl{ font-weight:400; white-space:nowrap; }   /* لیبل bold نہیں */
-    .naq-sp{ margin-top:16px; }            /* بنام / امتیازی سے پہلے */
-    .naq-sp2{ margin-top:0.5in; }          /* سطر 2 اور 3 سے پہلے (آدھا انچ زائد) */
+    .naq-sp{ margin-top:16px; }            /* امتیازی سے پہلے */
+    .naq-sp3{ margin-top:0.9in; }          /* سطر 2 (سرکار) اور 4 (بنام) سے پہلے — کھلی جگہ */
     .naq-sp-sm{ margin-top:6px; }
     /* inline editable خانہ — کوئی dotted line/gap نہیں، مواد کے مطابق سکڑے/بڑھے */
     .naq-f{ display:inline-block; min-width:1.5ch; font-family:inherit; font-size:14pt; color:#111; outline:none; }
@@ -658,8 +658,10 @@
     .naq-banam-list{ }
     .naq-acc{ margin:2px 0; }
     .naq-accno{ font-weight:400; }
-    /* بحد — بائیں بارڈر کی سیدھ میں */
-    .naq-bahad{ margin-top:6px; text-align:left; }
+    /* بحد — بائیں بارڈر کی سیدھ میں، 12pt، ڈیٹا کے گرد ( ) */
+    .naq-bahad{ margin-top:6px; text-align:left; font-size:12pt; }
+    .naq-bahad .naq-f{ font-size:12pt; }
+    .naq-paren{ font-size:12pt; }
     /* عنوان — 18pt، پوری سطر underline؛ bold نہیں؛ قسم dropdown سادہ underline متن (کوئی دائرہ/باکس نہیں) */
     .naq-title{ position:relative; z-index:5; text-align:center; font-weight:400; font-size:18pt; margin:16px 0 6px; }
     .naq-title-t{ text-decoration:underline; text-underline-offset:5px; }

@@ -435,7 +435,7 @@ function _dioHideFloatBar() {
 //   • .zf-editor     → ضمنی ایڈیٹر — floating toolbar کے تمام بٹن اب اوپر مستقل
 //                       toolbar میں شامل ہیں، اس لیے یہاں تیرتی پٹی نہ آئے (متن نہ ڈھکے)۔
 // User jab kahe "falan jagah se hatao" to us jagah ka selector yahan add kar dein.
-const _DIO_FLOAT_SKIP = '#misal-editor, .zf-editor';
+const _DIO_FLOAT_SKIP = '#misal-editor, .zf-editor, #dio-naqsha-doc';
 
 function _dioFloatSkip(el) {
   try { return !!(el && el.closest && _DIO_FLOAT_SKIP && el.closest(_DIO_FLOAT_SKIP)); }
