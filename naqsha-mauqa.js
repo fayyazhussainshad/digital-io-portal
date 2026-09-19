@@ -56,9 +56,10 @@
   }
 
   // ══ Case data auto-fetch (وہی ماخذ جو چالان/report173 پڑھتا ہے) ═════
-  async function _loadCase() {
-    _naqCaseId = (typeof currentCaseId !== 'undefined' && currentCaseId)
-              || (typeof _misalCaseId !== 'undefined' && _misalCaseId) || null;
+  async function _loadCase(forceId) {
+    _naqCaseId = forceId
+              || (typeof _misalCaseId !== 'undefined' && _misalCaseId)
+              || (typeof currentCaseId !== 'undefined' && currentCaseId) || null;
     _naqOff = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
     _naqCase = {};
     if (_naqCaseId && typeof getCase === 'function') {
@@ -133,20 +134,34 @@
     _naqSaveT = setTimeout(() => { _snapshot(); _persist(); }, 500);
   }
 
-  // ══ Sidebar registration ═══════════════════════════════════════════
-  if (typeof registerPage === 'function') registerPage('naqsha', _renderNaqsha);
+  // ══ Entry (مقدمہ کے chip «نقشہ موقع» سے کھلتا ہے — misal-docs.js) ════
+  //   یہ الگ ماڈیول نہیں؛ ہر مقدمہ کی دستاویزات کی patti کا حصہ ہے۔
+  async function openNaqsha(caseId) {
+    const cid = caseId
+      || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
+      || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
+    const area = document.getElementById('workspace-editor-area')
+              || document.getElementById('workspace-tab-content')
+              || document.getElementById('page-content');
+    if (!area) { setTimeout(() => openNaqsha(cid), 80); return; }
+    await _renderNaqsha(area, cid);
+  }
+  window.openNaqsha = openNaqsha;
   window._renderNaqsha = _renderNaqsha;
   window._naqGetCanvas = () => _naqCanvas;   // فعال canvas تک رسائی
 
   // ══ Render ═════════════════════════════════════════════════════════
-  async function _renderNaqsha(container) {
-    container = container || document.getElementById('page-content');
+  async function _renderNaqsha(container, forceId) {
+    container = container
+      || document.getElementById('workspace-editor-area')
+      || document.getElementById('workspace-tab-content')
+      || document.getElementById('page-content');
     if (!container) return;
     container.innerHTML = `<div style="padding:40px;text-align:center;direction:rtl;color:var(--text-muted);">
       <div style="font-size:40px;">🗺️</div>
       <div style="font-size:14pt;margin-top:8px;">نقشہ موقع کھل رہا ہے…</div></div>`;
 
-    await _loadCase();
+    await _loadCase(forceId);
     _load();
 
     let fabricOk = true;
@@ -242,13 +257,13 @@
     if (id === _naqData.activeId) return;
     _snapshot(); _persist();
     _naqData.activeId = id; _persist();
-    _renderNaqsha(document.getElementById('page-content'));
+    _renderNaqsha();
   };
   window._naqAddSketch = function () {
     _snapshot();
     const s = _newSketch(_naqData.sketches.some(x => x.type === 'waqia') ? 'baramad' : 'waqia');
     _naqData.sketches.push(s); _naqData.activeId = s.id; _persist();
-    _renderNaqsha(document.getElementById('page-content'));
+    _renderNaqsha();
   };
   window._naqDelSketch = function (id) {
     if (_naqData.sketches.length <= 1) return;
@@ -256,7 +271,7 @@
     _naqData.sketches = _naqData.sketches.filter(s => s.id !== id);
     if (_naqData.activeId === id) _naqData.activeId = _naqData.sketches[0].id;
     _persist();
-    _renderNaqsha(document.getElementById('page-content'));
+    _renderNaqsha();
   };
   window._naqTypeChange = function () { _saveSoon(); _refreshChips(); };
   window._naqDirty = _saveSoon;

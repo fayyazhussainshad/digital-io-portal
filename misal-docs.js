@@ -6,7 +6,7 @@
 
 // ── ALL 33 OFFICIAL DOCUMENTS ────────────────────────────────
 const MISAL_CASE_DOCS = [
-  { id:'crime_scene',      name:'جائے واردات',               desc:'Scene of Crime' },
+  { id:'crime_scene',      name:'نقشہ موقع',                 desc:'Site Plan / Scene Sketch (نقشہ موقع)' },
   { id:'statements_161',   name:'بیانات 161 ض ف',            desc:'Statements u/s 161 CrPC' },
   { id:'incidents',        name:'وقوعہ جات',                 desc:'Incidents' },
   { id:'fardat',           name:'فردات',                     desc:'Fardat' },
@@ -238,6 +238,8 @@ document.addEventListener('click', () => _closeAllDD());
 async function _doAddMisalDoc(docId) {
   const def = MISAL_CASE_DOCS.find(d => d.id === docId);
   if (!def || !_misalCaseId) return;
+  // نقشہ موقع → seedha full-page naqsha editor (apna localStorage — DB record ni banta)
+  if (docId === 'crime_scene') { _openMisalEditor(docId); return; }
   // سزا سلپ → seedha full-page editor kholo (record khud save par banega —
   // report173/challan jaisa). Yahan khali record insert karne ki zaroorat nahi.
   if (docId === 'saza_slip') { _openMisalEditor(docId); return; }
@@ -313,6 +315,13 @@ function _openMisalEditor(docId, _fromTab) {
   if (docId === 'staff') {
     _openDocId = docId;
     if (typeof openStaffV2 === 'function') openStaffV2(_misalCaseId);
+    return;
+  }
+
+  // Special: نقشہ موقع → full-page naqsha (scene-sketch) editor (naqsha-mauqa.js)
+  if (docId === 'crime_scene') {
+    _openDocId = docId;
+    if (typeof openNaqsha === 'function') openNaqsha(_misalCaseId);
     return;
   }
 

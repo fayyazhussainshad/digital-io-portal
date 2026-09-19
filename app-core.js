@@ -63,10 +63,10 @@ const ROLE_LEVELS = { officer:1, supervisor:2, admin:3, superadmin:4 };
 
 // Which pages each role can access
 const ROLE_PAGES = {
-  officer:    ['dashboard','cases','fivec','incident','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence','naqsha'],
-  supervisor: ['dashboard','cases','fivec','incident','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence','naqsha'],
-  admin:      ['dashboard','cases','fivec','incident','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence','naqsha','admin'],
-  superadmin: ['dashboard','cases','fivec','incident','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence','naqsha','admin'],
+  officer:    ['dashboard','cases','fivec','incident','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence'],
+  supervisor: ['dashboard','cases','fivec','incident','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence'],
+  admin:      ['dashboard','cases','fivec','incident','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence','admin'],
+  superadmin: ['dashboard','cases','fivec','incident','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence','admin'],
 };
 
 function getRole() {
@@ -152,7 +152,6 @@ function showPage(page, el) {
     settings:'ترتیبات', admin:'ایڈمن', bin:'حذف شدہ مواد',
     reminders:'یاددہانیاں', search:'تلاش',
     court:'عدالتی پیشیاں', evidence:'شہادتیں', suspects:'ملزمان / گواہان',
-    naqsha:'نقشہ موقع',
   };
   const titleEl = document.getElementById('topbar-title');
   if (titleEl) titleEl.textContent = (titles[page]||page);
