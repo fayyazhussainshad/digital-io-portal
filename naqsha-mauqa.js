@@ -334,17 +334,17 @@
             <span><span class="naq-lbl">تھانہ</span> <span id="naq-h-thana" class="naq-f" contenteditable="true">${E(hv.thana)}</span></span>
             <span class="naq-zila"><span class="naq-lbl">ضلع</span> <span id="naq-h-zila" class="naq-f" contenteditable="true">${E(hv.zila)}</span></span>
           </div>
-          <div class="naq-hrow naq-sp3">
+          <div class="naq-hrow naq-l2">
             <span class="naq-lbl">سرکار بذریعہ</span>
             <span id="naq-h-sarkar" class="naq-f naq-f-grow" contenteditable="true">${E(hv.sarkar)}</span>
           </div>
-          <div class="naq-hrow naq-firrow">
+          <div class="naq-hrow naq-firrow naq-l3">
             <span class="naq-seg"><span class="naq-lbl">مقدمہ نمبر</span> <span id="naq-h-muqadma" class="naq-f" contenteditable="true">${E(hv.muqadma)}</span></span>
             <span class="naq-seg"><span class="naq-lbl">مورخہ</span> <span id="naq-h-morkha" class="naq-f" contenteditable="true">${E(hv.morkha)}</span></span>
             <span class="naq-seg"><span class="naq-lbl">بجرم</span> <span id="naq-h-bajurm" class="naq-f" contenteditable="true">${E(hv.bajurm)}</span></span>
             <span class="naq-seg"><span class="naq-lbl">تھانہ</span> <span id="naq-h-thana2" class="naq-f" contenteditable="true">${E(hv.thana2 || hv.thana)}</span></span>
           </div>
-          <div class="naq-banam naq-sp3">
+          <div class="naq-banam">
             <span class="naq-banam-lbl"><button class="naq-caret no-print" title="ملزمان منتخب کریں" onclick="window._naqAccPicker&&_naqAccPicker(event)">▾</button> بنام</span>
             <span id="naq-banam-list" class="naq-banam-list">${_banamHTML()}</span>
           </div>
@@ -635,31 +635,37 @@
   function _docCSS(forPrint) {
     // چالان/زمنی کی طرح: دائیں 1 انچ indent، بائیں 0.4 انچ۔ کوئی dotted line نہیں۔
     return `
-    .naq-doc{ background:#fff; color:#111; font-size:14pt; line-height:1.6;
-      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; padding:0.5in 1in 0.5in 0.4in; }
+    /* درخواست (darkhwastain) کی ہو بہو top-4-line ترتیب: دائیں 1in، بائیں 0.4in،
+       اوپر/نیچے 1cm؛ line-height 1.9؛ سطر 2/3/4 کا right-indent 0.9in۔ */
+    .naq-doc{ background:#fff; color:#111; font-size:14pt; line-height:1.9;
+      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; padding:1cm 1in 1cm 0.4in; --naq-indent:0.9in; }
     .naq-doc.naq-legal{ width:8.5in; }
     .naq-doc.naq-a4{ width:8.27in; }
     ${forPrint ? `.naq-doc{ width:100% !important; }` : ''}
     .naq-hrow{ display:flex; align-items:baseline; gap:6px 10px; margin:2px 0; flex-wrap:wrap; }
+    /* سطر 1 — تھانہ (دائیں) · ضلع (بائیں)، بغیر indent (کناروں پر) */
     .naq-edge{ justify-content:space-between; flex-wrap:nowrap; }
     .naq-edge > span{ display:inline-flex; align-items:baseline; gap:6px; }
+    /* سطر 2 (سرکار): سطر 1 کے بعد صرف 0.12in؛ indent 0.9in؛ line-height 1.8 */
+    .naq-l2{ margin-top:0.12in; padding-right:var(--naq-indent,0.9in); line-height:1.8; }
+    /* سطر 3 (مقدمہ/دفعہ): tight 1pt؛ indent 0.9in */
+    .naq-l3{ margin-top:1pt; padding-right:var(--naq-indent,0.9in); line-height:1.8; }
     .naq-firrow{ gap:4px 16px; }
     .naq-seg{ display:inline-flex; align-items:baseline; gap:6px; white-space:nowrap; }
     .naq-firrow .naq-f{ white-space:normal; }
     .naq-lbl{ font-weight:400; white-space:nowrap; }   /* لیبل bold نہیں */
     .naq-sp{ margin-top:16px; }            /* امتیازی سے پہلے */
-    .naq-sp3{ margin-top:0.9in; }          /* سطر 2 (سرکار) اور 4 (بنام) سے پہلے — کھلی جگہ */
     .naq-sp-sm{ margin-top:6px; }
     /* inline editable خانہ — کوئی dotted line/gap نہیں، مواد کے مطابق سکڑے/بڑھے */
     .naq-f{ display:inline-block; min-width:1.5ch; font-family:inherit; font-size:14pt; color:#111; outline:none; }
     .naq-f:focus{ background:rgba(37,99,235,0.06); border-radius:3px; }
     .naq-f-grow{ display:inline; }
-    /* بنام — پہلی سطروں کی سیدھ سے باہر دائیں (hanging)؛ ملزمان اوپر والی سطروں کی سیدھ میں */
-    .naq-banam{ position:relative; }
-    .naq-banam-lbl{ position:absolute; right:-0.8in; top:0; white-space:nowrap; }
+    /* سطر 4 بنام — «بنام» دائیں کنارے (تھانہ کی سیدھ) hanging؛ ملزمان 0.9in indent (سرکار کی سیدھ)؛ tight 1pt */
+    .naq-banam{ position:relative; margin-top:1pt; padding-right:var(--naq-indent,0.9in); line-height:1.8; min-height:1.6em; }
+    .naq-banam-lbl{ position:absolute; right:0; top:0; white-space:nowrap; }
     .naq-caret{ width:20px; height:20px; border:1px solid #cbd5e1; border-radius:5px; background:#fff; font-size:11px; cursor:pointer; }
-    .naq-banam-list{ }
-    .naq-acc{ margin:2px 0; }
+    .naq-banam-list{ display:block; }
+    .naq-acc{ margin:0; }
     .naq-accno{ font-weight:400; }
     /* بحد — بائیں بارڈر کی سیدھ میں، 12pt، ڈیٹا کے گرد ( ) */
     .naq-bahad{ margin-top:6px; text-align:left; font-size:12pt; }
