@@ -284,7 +284,8 @@
     <style>${_css()}</style>
     <div class="naq-wrap" dir="rtl">
 
-      <div class="naq-topbar no-print">
+      <div class="naq-topwrap no-print" id="naq-topwrap">
+       <div class="naq-topbar">
         <div class="naq-chips" id="naq-chips">${_chipsHTML()}</div>
         <div class="naq-tools">
           <select id="naq-paper" class="naq-sel" onchange="window._naqSetPaper&&_naqSetPaper(this.value)" title="کاغذ">
@@ -317,6 +318,8 @@
           <button class="naq-tb naq-save" title="محفوظ" onclick="window.naqSaveNow&&naqSaveNow()">💾 محفوظ</button>
           <button class="naq-tb naq-print" title="چھپائی" onclick="window._naqPrint&&_naqPrint()">🖨️</button>
         </div>
+       </div>
+       <div class="naq-toplip" onclick="window._naqToggleBar&&_naqToggleBar()" title="ٹول بار دکھائیں/چھپائیں">⋯</div>
       </div>
 
       <div class="naq-scroll">
@@ -330,7 +333,7 @@
             <span class="naq-lbl">سرکار بذریعہ</span>
             <span id="naq-h-sarkar" class="naq-f naq-f-grow" contenteditable="true">${E(hv.sarkar)}</span>
           </div>
-          <div class="naq-hrow naq-firrow naq-sp">
+          <div class="naq-hrow naq-firrow">
             <span class="naq-seg"><span class="naq-lbl">مقدمہ نمبر</span> <span id="naq-h-muqadma" class="naq-f" contenteditable="true">${E(hv.muqadma)}</span></span>
             <span class="naq-seg"><span class="naq-lbl">مورخہ</span> <span id="naq-h-morkha" class="naq-f" contenteditable="true">${E(hv.morkha)}</span></span>
             <span class="naq-seg"><span class="naq-lbl">بجرم</span> <span id="naq-h-bajurm" class="naq-f" contenteditable="true">${E(hv.bajurm)}</span></span>
@@ -376,23 +379,25 @@
   window._naqDirty = _saveSoon;
   window._naqType = function () { _saveSoon(); _refreshChips(); };
   window._naqSetPaper = function (v) { const a = _active(); if (a) a.paper = v; _snapshot(); _persistLocal(); _renderNaqsha(); };
+  window._naqToggleBar = function () { const w = document.getElementById('naq-topwrap'); if (w) w.classList.toggle('show'); };
 
   // ══ Compass — E-W (افقی) عنوان کی سیدھ میں (y=48)، N-S لمبا اسی پر fixed؛
   //   الفاظ arrow heads سے فاصلے پر ════════════════════════════════════
   function _compassSVG() {
     const F = "font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif";
     // E-W افقی lline y=62 (عنوان کی سیدھ)؛ N-S عمودی لمبا؛ الفاظ arrow heads سے صاف فاصلے پر (middle anchor)
-    return `<svg class="naq-compass" viewBox="0 0 150 182" aria-label="سمت نما">
-      <line x1="75" y1="46" x2="75" y2="166" stroke="#111" stroke-width="1.8"/>
+    // N-S عمودی وہی؛ E-W افقی تھوڑا نیچے (y=78)
+    return `<svg class="naq-compass" viewBox="0 0 150 190" aria-label="سمت نما">
+      <line x1="75" y1="46" x2="75" y2="170" stroke="#111" stroke-width="1.8"/>
       <polygon points="75,38 69,52 81,52" fill="#111"/>
-      <polygon points="75,174 69,160 81,160" fill="#111"/>
-      <line x1="47" y1="62" x2="103" y2="62" stroke="#111" stroke-width="1.8"/>
-      <polygon points="110,62 98,56 98,68" fill="#111"/>
-      <polygon points="40,62 52,56 52,68" fill="#111"/>
-      <text x="75"  y="30"  text-anchor="middle" font-size="13" font-weight="700" style="${F}">شمال</text>
-      <text x="75"  y="182" text-anchor="middle" font-size="13" font-weight="700" style="${F}">جنوب</text>
-      <text x="128" y="67"  text-anchor="middle" font-size="13" font-weight="700" style="${F}">مشرق</text>
-      <text x="22"  y="67"  text-anchor="middle" font-size="13" font-weight="700" style="${F}">مغرب</text>
+      <polygon points="75,178 69,164 81,164" fill="#111"/>
+      <line x1="47" y1="78" x2="103" y2="78" stroke="#111" stroke-width="1.8"/>
+      <polygon points="110,78 98,72 98,84" fill="#111"/>
+      <polygon points="40,78 52,72 52,84" fill="#111"/>
+      <text x="75"  y="30"  text-anchor="middle" font-size="13" style="${F}">شمال</text>
+      <text x="75"  y="190" text-anchor="middle" font-size="13" style="${F}">جنوب</text>
+      <text x="128" y="83"  text-anchor="middle" font-size="13" style="${F}">مشرق</text>
+      <text x="22"  y="83"  text-anchor="middle" font-size="13" style="${F}">مغرب</text>
     </svg>`;
   }
 
@@ -636,8 +641,8 @@
     .naq-firrow{ gap:4px 16px; }
     .naq-seg{ display:inline-flex; align-items:baseline; gap:6px; white-space:nowrap; }
     .naq-firrow .naq-f{ white-space:normal; }
-    .naq-lbl{ font-weight:700; white-space:nowrap; }
-    .naq-sp{ margin-top:0.5in; }          /* آدھا انچ (سطر 2/3/4 اور امتیازی سے پہلے) */
+    .naq-lbl{ font-weight:400; white-space:nowrap; }   /* لیبل bold نہیں */
+    .naq-sp{ margin-top:16px; }            /* درخواست جیسی tight spacing */
     .naq-sp-sm{ margin-top:6px; }
     /* inline editable خانہ — کوئی dotted line/gap نہیں، مواد کے مطابق سکڑے/بڑھے */
     .naq-f{ display:inline-block; min-width:1.5ch; font-family:inherit; font-size:14pt; color:#111; outline:none; }
@@ -647,11 +652,11 @@
     .naq-caret{ width:22px; height:22px; border:1px solid #cbd5e1; border-radius:5px; background:#fff; font-size:12px; cursor:pointer; flex:0 0 auto; }
     .naq-banam-list{ flex:1; }
     .naq-acc{ padding-inline-start:0.7in; margin:2px 0; }
-    .naq-accno{ font-weight:700; }
-    /* عنوان — پوری سطر underline؛ قسم dropdown بھی سادہ underline متن (کوئی دائرہ/باکس نہیں) */
-    .naq-title{ position:relative; z-index:5; text-align:center; font-weight:700; font-size:16pt; margin:12px 0 6px; }
+    .naq-accno{ font-weight:400; }
+    /* عنوان — 18pt، پوری سطر underline؛ bold نہیں؛ قسم dropdown سادہ underline متن (کوئی دائرہ/باکس نہیں) */
+    .naq-title{ position:relative; z-index:5; text-align:center; font-weight:400; font-size:18pt; margin:16px 0 6px; }
     .naq-title-t{ text-decoration:underline; text-underline-offset:5px; }
-    .naq-type{ -webkit-appearance:none; -moz-appearance:none; appearance:none; font-family:inherit; font-size:16pt; font-weight:700;
+    .naq-type{ -webkit-appearance:none; -moz-appearance:none; appearance:none; font-family:inherit; font-size:18pt; font-weight:400;
       border:none; background:transparent; color:#111; padding:0 2px; cursor:pointer; text-decoration:underline; text-underline-offset:5px; outline:none; }
     .naq-map{ position:relative; margin:2px 0 6px; }
     .naq-map .canvas-container{ margin:0 auto; }
@@ -659,16 +664,17 @@
     .naq-map-resize{ position:absolute; left:0; right:0; bottom:0; height:14px; cursor:ns-resize;
       background:linear-gradient(180deg,transparent,rgba(37,99,235,0.10)); }
     .naq-map-resize::after{ content:'⋯'; position:absolute; left:50%; bottom:0; transform:translateX(-50%); color:#9aa; font-size:12px; }
-    /* سمت نما — عنوان کے اندر، E-W افقی lline بالکل عنوان کی سیدھ میں؛ N-S لمبا نیچے */
-    .naq-compass{ position:absolute; top:50%; right:4px; width:116px; height:141px; transform:translateY(-48px); z-index:6; pointer-events:none; }
+    /* سمت نما — دائیں بارڈر کی طرف؛ N-S لمبا وہی؛ E-W افقی تھوڑا نیچے */
+    .naq-compass{ position:absolute; top:50%; right:-40px; width:116px; height:147px; transform:translateY(-48px); z-index:6; pointer-events:none; }
     .naq-nofab{ padding:36px 16px; text-align:center; color:#b91c1c; }
     .naq-marks-l{ font-weight:700; text-decoration:underline; text-underline-offset:4px; }
     .naq-mrow{ display:flex; align-items:baseline; gap:6px; margin:4px 0; }
-    .naq-mno{ white-space:nowrap; font-weight:600; }
+    .naq-mno{ white-space:nowrap; font-weight:400; }
     .naq-mtext{ flex:1; min-width:60px; outline:none; }
-    .naq-io{ margin-top:20px; }
-    .naq-io-nm{ font-weight:700; text-align:left; }
-    .naq-io-dt{ font-size:13pt; text-align:left; }
+    /* IO — بائیں کونے؛ نام bold بائیں، تاریخ نام کے نیچے وسط میں */
+    .naq-io{ margin-top:18px; width:fit-content; margin-inline-start:auto; }
+    .naq-io-nm{ font-weight:700; text-align:left; white-space:nowrap; }
+    .naq-io-dt{ font-size:13pt; font-weight:400; text-align:center; }
     `;
   }
   // پورا صفحہ (topbar + scroll) کی CSS
@@ -676,8 +682,14 @@
     return `
     .naq-wrap{ display:flex; flex-direction:column; height:100%; direction:rtl;
       font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
-    .naq-topbar{ display:flex; align-items:center; gap:8px; padding:6px 10px; border-bottom:1px solid var(--border,#ccc);
-      background:var(--bg-secondary,#f3f4f6); flex-wrap:wrap; position:sticky; top:0; z-index:20; }
+    /* ٹول بار — چالان/زمنی کی طرح چھپی رہے، cursor اوپر لاتے ہی ظاہر (یا لکیر پر tap) */
+    .naq-topwrap{ position:sticky; top:0; z-index:30; background:var(--bg-secondary,#f3f4f6); }
+    .naq-topbar{ display:flex; align-items:center; gap:8px; padding:0 10px; overflow:hidden;
+      max-height:0; opacity:0; transition:max-height .2s ease, opacity .2s ease, padding .2s ease; flex-wrap:wrap; }
+    .naq-topwrap:hover .naq-topbar, .naq-topwrap.show .naq-topbar{ max-height:260px; opacity:1; padding:6px 10px; border-bottom:1px solid var(--border,#ccc); }
+    .naq-toplip{ height:8px; cursor:pointer; text-align:center; line-height:6px; color:#8aa; font-size:14px;
+      background:linear-gradient(180deg,var(--bg-secondary,#eef1f4),rgba(37,99,235,0.10)); border-bottom:1px solid var(--border,#ddd); }
+    .naq-topwrap:hover .naq-toplip, .naq-topwrap.show .naq-toplip{ color:var(--accent,#2563eb); }
     /* chip bar — چلتی (افقی scroll)، سطریں نہ ٹوٹیں تاکہ کام کے لیے جگہ ملے */
     .naq-chips{ display:flex; gap:6px; align-items:center; flex-wrap:nowrap; overflow-x:auto; flex:1 1 220px; min-width:0;
       scrollbar-width:thin; }
