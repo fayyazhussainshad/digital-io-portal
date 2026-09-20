@@ -153,9 +153,14 @@
     const iodt = document.getElementById('naq-io-dt'); if (iodt) a.date = iodt.innerText.replace(/ /g, ' ').trim();
     const mh = document.getElementById('naq-map'); if (mh) a.mapH = mh.clientHeight;
     // امتیازی نشانات
-    const rows = document.querySelectorAll('#naq-marks .naq-mtext');
-    if (rows.length) a.marks = Array.from(rows).map(r => r.innerText.replace(/ /g, ' ').trim());
-    if (_naqCanvas) { try { a.canvas = _naqCanvas.toJSON(['naqLabel', 'naqSym']); } catch (_) {} }
+    const mrows = document.querySelectorAll('#naq-marks .naq-mrow');
+    if (mrows.length) a.marks = Array.from(mrows).map(r => {
+      const tx = r.querySelector('.naq-mtext');
+      const t = tx ? tx.innerText.replace(/\u00a0/g, ' ').trim() : '';
+      const id = r.getAttribute('data-markid') || '';
+      return id ? { id, t } : t;
+    });
+    if (_naqCanvas) { try { a.canvas = _naqCanvas.toJSON(['naqLabel', 'naqSym', 'naqMark', 'naqMarkId', 'naqMarkSeq']); } catch (_) {} }
   }
   function _saveSoon() {
     clearTimeout(_naqSaveT);
@@ -235,12 +240,15 @@
 
   // ══ امتیازی نشانات — auto-نمبر فہرست ════════════════════════════════
   const _MARK_PREFIX = (n) => 'نمبر' + n + ' سے مراد وہ مقام';
+  // marks item: string (پرانا) یا {id, t} (نئے — نقشے کے نشان سے منسلک)
   function _marksHTML(list) {
     const arr = (list && list.length) ? list : [''];
-    return arr.map((t, i) =>
-      `<div class="naq-mrow"><span class="naq-mno" contenteditable="false">${_MARK_PREFIX(i + 1)}</span>` +
-      `<span class="naq-mtext" contenteditable="true" data-mic="true">${E(t)}</span></div>`
-    ).join('');
+    return arr.map((it, i) => {
+      const t = (it && typeof it === 'object') ? (it.t || '') : (it || '');
+      const id = (it && typeof it === 'object') ? (it.id || '') : '';
+      return `<div class="naq-mrow"${id ? ` data-markid="${E(id)}"` : ''}><span class="naq-mno" contenteditable="false">${_MARK_PREFIX(i + 1)}</span>` +
+        `<span class="naq-mtext" contenteditable="true" data-mic="true">${E(t)}</span></div>`;
+    }).join('');
   }
   function _renumberMarks() {
     const rows = document.querySelectorAll('#naq-marks .naq-mrow');
@@ -258,6 +266,9 @@
       const nt = nr.querySelector('.naq-mtext'); if (nt) nt.focus();
       _saveSoon();
     } else if (e.key === 'Backspace' && !t.innerText.trim()) {
+      const row0 = t.closest('.naq-mrow');
+      // نقشے کے نشان سے منسلک سطر یہاں سے حذف نہ ہو — نشان مٹانے پر خود ہٹے گی
+      if (row0 && row0.hasAttribute('data-markid')) { e.preventDefault(); return; }
       const rows = document.querySelectorAll('#naq-marks .naq-mrow');
       if (rows.length > 1) {
         e.preventDefault();
@@ -313,6 +324,7 @@
           <button class="naq-tb naq-tool" data-tool="rect" title="مستطیل" onclick="window._naqSetTool&&_naqSetTool('rect')">▭</button>
           <button class="naq-tb naq-tool" data-tool="ellipse" title="دائرہ / بیضوی" onclick="window._naqSetTool&&_naqSetTool('ellipse')">◯</button>
           <button class="naq-tb" title="پولیس علامات (لاش، اسلحہ، گاڑی…)" onclick="window._naqToggleSyms&&_naqToggleSyms(event)">🚔</button>
+          <button class="naq-tb" title="امتیازی نشان لگائیں (①②③ — نیچے فہرست خود بنے)" onclick="window._naqAddMark&&_naqAddMark()">①</button>
           <input type="color" class="naq-color" value="#111111" title="لکیر کا رنگ" onchange="window._naqSetColor&&_naqSetColor(this.value)">
           <select class="naq-sel" title="لکیر کی موٹائی" onchange="window._naqSetWidth&&_naqSetWidth(this.value)">
             ${[1, 2, 3, 4, 6, 8].map(w => `<option value="${w}" ${w === 2 ? 'selected' : ''}>${w}px</option>`).join('')}
@@ -487,15 +499,21 @@
   function _initCanvas(a) {
     const el = document.getElementById('naq-canvas'); if (!el || !window.fabric) return;
     _naqCanvas = new fabric.Canvas('naq-canvas', { backgroundColor: 'transparent', preserveObjectStacking: true, selection: true });
-    _naqTool = 'select'; _naqZoom = 1; _naqPanning = false; _naqDrawing = null;
+    _naqTool = 'select'; _naqZoom = 1; _naqPanning = false; _naqDrawing = null; _naqMarkSeq = 0;
     _naqHist = []; _naqHistI = -1; _naqRestoring = false;
     _sizeCanvas();
     window.addEventListener('resize', _sizeCanvas);
-    const _afterLoad = () => { _naqCanvas.renderAll(); _histInit(); };
+    const _afterLoad = () => {
+      // محفوظ نشانوں کا max seq بحال کرو، پھر فہرست ہم آہنگ
+      try { _markGroups().forEach(m => { if ((m.naqMarkSeq || 0) > _naqMarkSeq) _naqMarkSeq = m.naqMarkSeq; }); } catch (_) {}
+      _naqCanvas.renderAll(); _naqSyncMarks(); _histInit();
+    };
     if (a && a.canvas) { try { _naqCanvas.loadFromJSON(a.canvas, _afterLoad); } catch (_) { _histInit(); } }
     else _histInit();
     ['object:modified', 'object:added', 'object:removed', 'text:changed', 'path:created'].forEach(ev => _naqCanvas.on(ev, _saveSoon));
     ['object:modified', 'object:added', 'object:removed', 'text:changed', 'path:created'].forEach(ev => _naqCanvas.on(ev, _histPush));
+    // نشان مٹنے پر فہرست خودکار ہم آہنگ (undo/redo restore کے دوران نہیں)
+    _naqCanvas.on('object:removed', (e) => { if (_naqRestoring) return; const o = e && e.target; if (o && o.naqMark) _naqSyncMarks(); });
     const map = document.getElementById('naq-map');
     if (map) { map.addEventListener('paste', _pasteEvt); map.setAttribute('tabindex', '0'); }
     document.addEventListener('paste', _docPaste);
@@ -671,6 +689,73 @@
     });
   };
 
+  // ══ امتیازی نشان (نمبر مارکر) — نقشے پر ①②③ + نیچے فہرست خودکار ═════════
+  let _naqMarkSeq = 0;
+  const _mkId = () => 'mk' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+  function _makeMarkGroup(n, id, seq) {
+    const circle = new fabric.Circle({ radius: 14, fill: '#fff', stroke: _naqStroke, strokeWidth: 2, originX: 'center', originY: 'center' });
+    const txt = new fabric.Text(String(n), { fontSize: 18, fontWeight: 'bold', fontFamily: 'Arial', fill: _naqStroke, originX: 'center', originY: 'center' });
+    const g = new fabric.Group([circle, txt], { originX: 'center', originY: 'center' });
+    g.naqMark = true; g.naqMarkId = id || _mkId(); g.naqMarkSeq = (seq != null) ? seq : (++_naqMarkSeq);
+    if (g.naqMarkSeq > _naqMarkSeq) _naqMarkSeq = g.naqMarkSeq;
+    return g;
+  }
+  function _markGroups() {
+    if (!_naqCanvas) return [];
+    return _naqCanvas.getObjects().filter(o => o.naqMark).sort((a, b) => (a.naqMarkSeq || 0) - (b.naqMarkSeq || 0));
+  }
+  function _setMarkNumber(g, n) {
+    try {
+      const t = g.getObjects && g.getObjects().find(o => o.type === 'text' || o.type === 'i-text');
+      if (t && t.text !== String(n)) { t.set('text', String(n)); g.dirty = true; g.addWithUpdate && g.addWithUpdate(); }
+    } catch (_) {}
+  }
+  function _makeMarkRow(id) {
+    const row = document.createElement('div'); row.className = 'naq-mrow'; row.setAttribute('data-markid', id);
+    row.innerHTML = `<span class="naq-mno" contenteditable="false"></span><span class="naq-mtext" contenteditable="true" data-mic="true"></span>`;
+    return row;
+  }
+  // نشان اور فہرست کی سطریں ہم آہنگ کرو (نمبر + ترتیب + orphan صفائی)
+  function _naqSyncMarks() {
+    const list = document.getElementById('naq-marks'); if (!list || !_naqCanvas) return;
+    const marks = _markGroups();
+    // orphan منسلک سطریں ہٹاؤ (جن کا نشان موجود نہیں)
+    Array.from(list.querySelectorAll('.naq-mrow[data-markid]')).forEach(r => {
+      if (!marks.some(m => m.naqMarkId === r.getAttribute('data-markid'))) r.remove();
+    });
+    // ہر نشان کی سطر یقینی بناؤ اور نشان کی ترتیب میں سب سے اوپر رکھو
+    marks.forEach((m, i) => {
+      let row = list.querySelector(`.naq-mrow[data-markid="${m.naqMarkId}"]`);
+      if (!row) row = _makeMarkRow(m.naqMarkId);
+      const ref = list.children[i] || null;
+      if (row !== ref) list.insertBefore(row, ref);
+    });
+    // نشان موجود ہوں تو خالی غیر-منسلک سطریں ہٹا دو (چھپائی میں خالی نمبر نہ آئے)
+    if (marks.length) {
+      Array.from(list.querySelectorAll('.naq-mrow:not([data-markid])')).forEach(r => {
+        const tx = r.querySelector('.naq-mtext');
+        if (!tx || !tx.innerText.trim()) r.remove();
+      });
+    }
+    // اگر کوئی سطر باقی نہ ہو تو ایک خالی manual سطر رہنے دو
+    if (!list.querySelector('.naq-mrow')) list.innerHTML = _marksHTML(['']);
+    _renumberMarks();
+    marks.forEach((m, i) => _setMarkNumber(m, i + 1));
+    _naqCanvas.renderAll();
+  }
+  window._naqAddMark = function () {
+    if (!_naqCanvas || !window.fabric) return;
+    window._naqSetTool('select');
+    const n = _markGroups().length + 1;
+    const g = _makeMarkGroup(n, _mkId());
+    g.set({ left: _naqCanvas.getWidth() / 2, top: _naqCanvas.getHeight() / 2 });
+    _naqCanvas.add(g); _naqCanvas.setActiveObject(g);
+    _naqSyncMarks();
+    // نئی سطر پر focus تاکہ افسر فوراً تفصیل لکھ سکے
+    try { const r = document.querySelector(`#naq-marks .naq-mrow[data-markid="${g.naqMarkId}"] .naq-mtext`); if (r) r.focus(); } catch (_) {}
+    _saveSoon(); _histPush(true);
+  };
+
   // ══ Zoom / Pan ═════════════════════════════════════════════════════
   function _setZoom(z) {
     if (!_naqCanvas) return;
@@ -694,7 +779,7 @@
   }
 
   // ══ Undo / Redo ════════════════════════════════════════════════════
-  function _histSnap() { try { return JSON.stringify(_naqCanvas.toJSON(['naqLabel', 'naqSym'])); } catch (_) { return null; } }
+  function _histSnap() { try { return JSON.stringify(_naqCanvas.toJSON(['naqLabel', 'naqSym', 'naqMark', 'naqMarkId', 'naqMarkSeq'])); } catch (_) { return null; } }
   function _histInit() {
     if (!_naqCanvas) return;
     const j = _histSnap(); if (j == null) return;
@@ -718,7 +803,10 @@
   function _histRestore(json) {
     if (!_naqCanvas || json == null) return;
     _naqRestoring = true;
-    _naqCanvas.loadFromJSON(json, () => { _naqCanvas.renderAll(); _naqRestoring = false; _updUndoBtns(); _saveSoon(); });
+    _naqCanvas.loadFromJSON(json, () => {
+      try { _markGroups().forEach(m => { if ((m.naqMarkSeq || 0) > _naqMarkSeq) _naqMarkSeq = m.naqMarkSeq; }); } catch (_) {}
+      _naqCanvas.renderAll(); _naqRestoring = false; _naqSyncMarks(); _updUndoBtns(); _saveSoon();
+    });
   }
   window._naqUndo = function () { if (_naqHistI <= 0) return; _naqHistI--; _histRestore(_naqHist[_naqHistI]); };
   window._naqRedo = function () { if (_naqHistI >= _naqHist.length - 1) return; _naqHistI++; _histRestore(_naqHist[_naqHistI]); };
