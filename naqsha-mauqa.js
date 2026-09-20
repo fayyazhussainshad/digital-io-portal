@@ -28,6 +28,13 @@
   let _naqData   = { sketches: [], activeId: null };
   let _naqRowId  = null;                // case_documents row id (cloud)
   let _naqCanvas = null, _naqClip = null, _naqSaveT = null, _naqCrop = null, _naqReplaceMode = false;
+  // ── ڈرائنگ حالت (لکیر/تیر/شکلیں + قلم + pan + رنگ/موٹائی) ──
+  let _naqTool = 'select';          // select | pen | line | arrow | rect | ellipse | pan
+  let _naqStroke = '#111111', _naqStrokeW = 2;
+  let _naqDrawing = null, _naqDrawStart = null;   // زیرِ تعمیر عارضی شکل
+  let _naqPanning = false, _naqPanLast = null, _naqZoom = 1;
+  // ── Undo/Redo history ──
+  let _naqHist = [], _naqHistI = -1, _naqRestoring = false, _naqHistT = null;
   const FABRIC_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js';
 
   const _key = () => 'dio_naqsha_' + (_naqCaseId || 'nocase');
@@ -299,6 +306,17 @@
           </select>
           ${fabricOk ? `
           <span class="naq-sep"></span>
+          <button class="naq-tb naq-tool on" data-tool="select" title="منتخب / حرکت" onclick="window._naqSetTool&&_naqSetTool('select')">↖</button>
+          <button class="naq-tb naq-tool" data-tool="pen" title="قلم (آزاد ڈرائنگ)" onclick="window._naqSetTool&&_naqSetTool('pen')">✏️</button>
+          <button class="naq-tb naq-tool" data-tool="line" title="لکیر" onclick="window._naqSetTool&&_naqSetTool('line')">╱</button>
+          <button class="naq-tb naq-tool" data-tool="arrow" title="تیر" onclick="window._naqSetTool&&_naqSetTool('arrow')">➜</button>
+          <button class="naq-tb naq-tool" data-tool="rect" title="مستطیل" onclick="window._naqSetTool&&_naqSetTool('rect')">▭</button>
+          <button class="naq-tb naq-tool" data-tool="ellipse" title="دائرہ / بیضوی" onclick="window._naqSetTool&&_naqSetTool('ellipse')">◯</button>
+          <input type="color" class="naq-color" value="#111111" title="لکیر کا رنگ" onchange="window._naqSetColor&&_naqSetColor(this.value)">
+          <select class="naq-sel" title="لکیر کی موٹائی" onchange="window._naqSetWidth&&_naqSetWidth(this.value)">
+            ${[1, 2, 3, 4, 6, 8].map(w => `<option value="${w}" ${w === 2 ? 'selected' : ''}>${w}px</option>`).join('')}
+          </select>
+          <span class="naq-sep"></span>
           <button class="naq-tb" title="تصویر داخل کریں" onclick="window._naqInsertImg&&_naqInsertImg()">🖼️</button>
           <button class="naq-tb" title="تصویر بدلیں" onclick="window._naqReplaceImg&&_naqReplaceImg()">🔁</button>
           <button class="naq-tb" title="متن کا خانہ" onclick="window._naqAddText&&_naqAddText()">🅣</button>
@@ -317,6 +335,14 @@
           <select class="naq-sel" title="متن سائز pt" onchange="window._naqSetFont&&_naqSetFont(this.value)">
             ${[10, 12, 14, 16, 18, 20, 24, 28].map(p => `<option value="${p}" ${p === 16 ? 'selected' : ''}>${p}pt</option>`).join('')}
           </select>
+          <span class="naq-sep"></span>
+          <button class="naq-tb" id="naq-undo" title="واپس (Ctrl+Z)" onclick="window._naqUndo&&_naqUndo()">↶</button>
+          <button class="naq-tb" id="naq-redo" title="دوبارہ (Ctrl+Y)" onclick="window._naqRedo&&_naqRedo()">↷</button>
+          <span class="naq-sep"></span>
+          <button class="naq-tb naq-tool" title="پین (کھینچ کر گھمائیں)" data-tool="pan" onclick="window._naqSetTool&&_naqSetTool('pan')">✋</button>
+          <button class="naq-tb" title="زوم اِن" onclick="window._naqZoomIn&&_naqZoomIn()">＋</button>
+          <button class="naq-tb" title="زوم آؤٹ" onclick="window._naqZoomOut&&_naqZoomOut()">－</button>
+          <button class="naq-tb" title="زوم ری سیٹ (1:1)" onclick="window._naqZoomReset&&_naqZoomReset()">1:1</button>
           <input type="file" id="naq-file" accept="image/*" style="display:none" onchange="window._naqFilePicked&&_naqFilePicked(event)">
           ` : ''}
           <span class="naq-sep"></span>
@@ -460,14 +486,192 @@
   function _initCanvas(a) {
     const el = document.getElementById('naq-canvas'); if (!el || !window.fabric) return;
     _naqCanvas = new fabric.Canvas('naq-canvas', { backgroundColor: 'transparent', preserveObjectStacking: true, selection: true });
+    _naqTool = 'select'; _naqZoom = 1; _naqPanning = false; _naqDrawing = null;
+    _naqHist = []; _naqHistI = -1; _naqRestoring = false;
     _sizeCanvas();
     window.addEventListener('resize', _sizeCanvas);
-    if (a && a.canvas) { try { _naqCanvas.loadFromJSON(a.canvas, () => _naqCanvas.renderAll()); } catch (_) {} }
-    ['object:modified', 'object:added', 'object:removed', 'text:changed'].forEach(ev => _naqCanvas.on(ev, _saveSoon));
+    const _afterLoad = () => { _naqCanvas.renderAll(); _histInit(); };
+    if (a && a.canvas) { try { _naqCanvas.loadFromJSON(a.canvas, _afterLoad); } catch (_) { _histInit(); } }
+    else _histInit();
+    ['object:modified', 'object:added', 'object:removed', 'text:changed', 'path:created'].forEach(ev => _naqCanvas.on(ev, _saveSoon));
+    ['object:modified', 'object:added', 'object:removed', 'text:changed', 'path:created'].forEach(ev => _naqCanvas.on(ev, _histPush));
     const map = document.getElementById('naq-map');
     if (map) { map.addEventListener('paste', _pasteEvt); map.setAttribute('tabindex', '0'); }
     document.addEventListener('paste', _docPaste);
+    // pointer handlers: crop → draw → pan (ہر ایک اپنی حالت خود چیک کرتا ہے)
     _naqCanvas.on('mouse:down', _cropDown); _naqCanvas.on('mouse:move', _cropMove); _naqCanvas.on('mouse:up', _cropUp);
+    _naqCanvas.on('mouse:down', _drawDown); _naqCanvas.on('mouse:move', _drawMove); _naqCanvas.on('mouse:up', _drawUp);
+    _naqCanvas.on('mouse:wheel', _wheelZoom);
+    _naqCanvas.on('path:created', () => _histPush(true));   // قلم سٹروک الگ undo step
+    if (!window._naqKeyBound) { document.addEventListener('keydown', _naqKey); window._naqKeyBound = true; }
+    _updUndoBtns();
+  }
+
+  // ══ ڈرائنگ ٹولز — لکیر/تیر/مستطیل/دائرہ/قلم + رنگ/موٹائی ═══════════════
+  window._naqSetTool = function (t) {
+    _naqTool = t; if (!_naqCanvas) return;
+    const pen = (t === 'pen');
+    _naqPanning = false;
+    _naqCanvas.isDrawingMode = pen;
+    if (pen) {
+      try { _naqCanvas.freeDrawingBrush = new fabric.PencilBrush(_naqCanvas); } catch (_) {}
+      if (_naqCanvas.freeDrawingBrush) { _naqCanvas.freeDrawingBrush.color = _naqStroke; _naqCanvas.freeDrawingBrush.width = _naqStrokeW; }
+    }
+    _naqCanvas.selection = (t === 'select');
+    _naqCanvas.skipTargetFind = (t !== 'select');
+    _naqCanvas.defaultCursor = (t === 'pan') ? 'grab' : (t === 'select' ? 'default' : 'crosshair');
+    document.querySelectorAll('.naq-tool').forEach(b => b.classList.toggle('on', b.getAttribute('data-tool') === t));
+    if (t !== 'select') { _naqCanvas.discardActiveObject(); }
+    _naqCanvas.requestRenderAll();
+  };
+  window._naqSetColor = function (v) {
+    _naqStroke = v || '#111111';
+    if (_naqCanvas && _naqCanvas.freeDrawingBrush) _naqCanvas.freeDrawingBrush.color = _naqStroke;
+    const o = _act();
+    if (o) {
+      if (/text/.test(o.type)) o.set('fill', _naqStroke);
+      else if (o.type === 'group') o.forEachObject(x => { if (x.type === 'triangle') x.set('fill', _naqStroke); else if (x.stroke) x.set('stroke', _naqStroke); });
+      else if (o.type !== 'image') o.set('stroke', _naqStroke);
+      _naqCanvas.renderAll(); _saveSoon();
+    }
+  };
+  window._naqSetWidth = function (v) {
+    _naqStrokeW = Math.max(1, parseFloat(v) || 2);
+    if (_naqCanvas && _naqCanvas.freeDrawingBrush) _naqCanvas.freeDrawingBrush.width = _naqStrokeW;
+    const o = _act();
+    if (o) {
+      if (o.type === 'group') o.forEachObject(x => { if (x.stroke) x.set('strokeWidth', _naqStrokeW); });
+      else if (o.type !== 'image' && !/text/.test(o.type)) o.set('strokeWidth', _naqStrokeW);
+      _naqCanvas.renderAll(); _saveSoon();
+    }
+  };
+  // تیر — لکیر + سرہ (triangle) کا گروپ
+  function _makeArrow(x1, y1, x2, y2) {
+    const line = new fabric.Line([x1, y1, x2, y2], { stroke: _naqStroke, strokeWidth: _naqStrokeW, selectable: false, evented: false, strokeLineCap: 'round' });
+    const deg = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+    const hs = Math.max(12, _naqStrokeW * 5);
+    const tri = new fabric.Triangle({ left: x2, top: y2, originX: 'center', originY: 'center', angle: deg + 90, width: hs, height: hs, fill: _naqStroke, selectable: false, evented: false });
+    return new fabric.Group([line, tri], { selectable: true, evented: true });
+  }
+  function _drawDown(opt) {
+    if (_naqCrop) return;                              // کراپ حالت خود سنبھالتی ہے
+    if (_naqTool === 'pan') {
+      const e = opt.e; _naqPanning = true; _naqPanLast = { x: e.clientX, y: e.clientY };
+      _naqCanvas.setCursor('grabbing'); return;
+    }
+    if (_naqTool === 'select' || _naqTool === 'pen') return;
+    const p = _naqCanvas.getPointer(opt.e); _naqDrawStart = { x: p.x, y: p.y };
+    const s = { stroke: _naqStroke, strokeWidth: _naqStrokeW, fill: 'transparent', selectable: false, evented: false };
+    if (_naqTool === 'line' || _naqTool === 'arrow') _naqDrawing = new fabric.Line([p.x, p.y, p.x, p.y], { stroke: _naqStroke, strokeWidth: _naqStrokeW, selectable: false, evented: false, strokeLineCap: 'round' });
+    else if (_naqTool === 'rect') _naqDrawing = new fabric.Rect(Object.assign({ left: p.x, top: p.y, width: 1, height: 1 }, s));
+    else if (_naqTool === 'ellipse') _naqDrawing = new fabric.Ellipse(Object.assign({ left: p.x, top: p.y, rx: 1, ry: 1, originX: 'left', originY: 'top' }, s));
+    if (_naqDrawing) { _naqCanvas.add(_naqDrawing); _naqCanvas.renderAll(); }
+  }
+  function _drawMove(opt) {
+    if (_naqPanning) {
+      const e = opt.e, vpt = _naqCanvas.viewportTransform;
+      vpt[4] += e.clientX - _naqPanLast.x; vpt[5] += e.clientY - _naqPanLast.y;
+      _naqPanLast = { x: e.clientX, y: e.clientY }; _naqCanvas.requestRenderAll(); return;
+    }
+    if (!_naqDrawing || !_naqDrawStart) return;
+    const p = _naqCanvas.getPointer(opt.e), s = _naqDrawStart;
+    if (_naqTool === 'line' || _naqTool === 'arrow') _naqDrawing.set({ x2: p.x, y2: p.y });
+    else if (_naqTool === 'rect') _naqDrawing.set({ left: Math.min(p.x, s.x), top: Math.min(p.y, s.y), width: Math.abs(p.x - s.x), height: Math.abs(p.y - s.y) });
+    else if (_naqTool === 'ellipse') _naqDrawing.set({ left: Math.min(p.x, s.x), top: Math.min(p.y, s.y), rx: Math.abs(p.x - s.x) / 2, ry: Math.abs(p.y - s.y) / 2 });
+    _naqDrawing.setCoords(); _naqCanvas.renderAll();
+  }
+  function _drawUp() {
+    if (_naqPanning) { _naqPanning = false; _naqCanvas.setCursor('grab'); return; }
+    if (!_naqDrawing) return;
+    const d = _naqDrawing, tool = _naqTool; _naqDrawing = null; _naqDrawStart = null;
+    let tiny = false;
+    if (tool === 'line' || tool === 'arrow') tiny = Math.hypot((d.x2 - d.x1), (d.y2 - d.y1)) < 8;
+    else if (tool === 'rect') tiny = (d.width < 6 && d.height < 6);
+    else if (tool === 'ellipse') tiny = (d.rx < 4 && d.ry < 4);
+    if (tiny) { _naqCanvas.remove(d); _naqCanvas.renderAll(); return; }
+    if (tool === 'arrow') {
+      const x1 = d.x1, y1 = d.y1, x2 = d.x2, y2 = d.y2;
+      _naqCanvas.remove(d);
+      const arw = _makeArrow(x1, y1, x2, y2);
+      _naqCanvas.add(arw); _naqCanvas.setActiveObject(arw);
+    } else {
+      d.set({ selectable: true, evented: true }); d.setCoords(); _naqCanvas.setActiveObject(d);
+    }
+    _naqCanvas.renderAll(); _saveSoon(); _histPush(true);   // ہر شکل الگ undo step
+  }
+
+  // ══ Zoom / Pan ═════════════════════════════════════════════════════
+  function _setZoom(z) {
+    if (!_naqCanvas) return;
+    z = Math.max(0.3, Math.min(4, z)); _naqZoom = z;
+    const c = _naqCanvas, pt = new fabric.Point(c.getWidth() / 2, c.getHeight() / 2);
+    c.zoomToPoint(pt, z); c.requestRenderAll();
+  }
+  window._naqZoomIn = function () { _setZoom(_naqZoom * 1.2); };
+  window._naqZoomOut = function () { _setZoom(_naqZoom / 1.2); };
+  window._naqZoomReset = function () {
+    if (!_naqCanvas) return; _naqZoom = 1;
+    _naqCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]); _naqCanvas.setZoom(1); _naqCanvas.requestRenderAll();
+  };
+  function _wheelZoom(opt) {
+    if (!_naqCanvas) return;
+    const e = opt.e; if (!(e.ctrlKey || e.metaKey)) return;   // Ctrl+wheel = زوم (ورنہ عام scroll)
+    e.preventDefault(); e.stopPropagation();
+    let z = _naqCanvas.getZoom() * (0.999 ** e.deltaY);
+    z = Math.max(0.3, Math.min(4, z)); _naqZoom = z;
+    _naqCanvas.zoomToPoint(new fabric.Point(opt.pointer.x, opt.pointer.y), z);
+  }
+
+  // ══ Undo / Redo ════════════════════════════════════════════════════
+  function _histSnap() { try { return JSON.stringify(_naqCanvas.toJSON(['naqLabel'])); } catch (_) { return null; } }
+  function _histInit() {
+    if (!_naqCanvas) return;
+    const j = _histSnap(); if (j == null) return;
+    _naqHist = [j]; _naqHistI = 0; _updUndoBtns();
+  }
+  function _histCommit() {
+    const j = _histSnap(); if (j == null) return;
+    if (_naqHistI >= 0 && _naqHist[_naqHistI] === j) return;   // کوئی تبدیلی نہیں
+    _naqHist = _naqHist.slice(0, _naqHistI + 1);
+    _naqHist.push(j); _naqHistI = _naqHist.length - 1;
+    if (_naqHist.length > 40) { _naqHist.shift(); _naqHistI--; }
+    _updUndoBtns();
+  }
+  // immediate=true → فوری commit (ہر مکمل شکل/سٹروک الگ undo)؛ ورنہ debounce (متن ٹائپنگ)
+  function _histPush(immediate) {
+    if (_naqRestoring || !_naqCanvas) return;
+    clearTimeout(_naqHistT);
+    if (immediate === true) { _histCommit(); return; }
+    _naqHistT = setTimeout(_histCommit, 250);
+  }
+  function _histRestore(json) {
+    if (!_naqCanvas || json == null) return;
+    _naqRestoring = true;
+    _naqCanvas.loadFromJSON(json, () => { _naqCanvas.renderAll(); _naqRestoring = false; _updUndoBtns(); _saveSoon(); });
+  }
+  window._naqUndo = function () { if (_naqHistI <= 0) return; _naqHistI--; _histRestore(_naqHist[_naqHistI]); };
+  window._naqRedo = function () { if (_naqHistI >= _naqHist.length - 1) return; _naqHistI++; _histRestore(_naqHist[_naqHistI]); };
+  function _updUndoBtns() {
+    const u = document.getElementById('naq-undo'), r = document.getElementById('naq-redo');
+    if (u) u.style.opacity = (_naqHistI <= 0) ? '0.4' : '1';
+    if (r) r.style.opacity = (_naqHistI >= _naqHist.length - 1) ? '0.4' : '1';
+  }
+
+  // ══ کی بورڈ — Ctrl+Z / Ctrl+Y / Delete (صرف نقشہ کھلا ہو اور متن edit نہ ہو رہا ہو) ══
+  function _naqKey(e) {
+    if (!document.getElementById('dio-naqsha-doc')) return;
+    const ae = document.activeElement;
+    const editing = ae && (ae.isContentEditable || /^(input|textarea|select)$/i.test(ae.tagName || ''));
+    const ao = _naqCanvas && _naqCanvas.getActiveObject();
+    if (ao && ao.isEditing) return;                    // canvas متن edit ہو رہا ہے
+    if ((e.ctrlKey || e.metaKey) && !editing) {
+      const k = (e.key || '').toLowerCase();
+      if (k === 'z' && !e.shiftKey) { e.preventDefault(); window._naqUndo(); return; }
+      if (k === 'y' || (k === 'z' && e.shiftKey)) { e.preventDefault(); window._naqRedo(); return; }
+    }
+    if ((e.key === 'Delete') && !editing && _naqCanvas && ao) {
+      e.preventDefault(); _naqCanvas.remove(ao); _naqCanvas.discardActiveObject(); _naqCanvas.renderAll(); _saveSoon();
+    }
   }
 
   // تصویر compress (لمبا رخ ≤1600px, JPEG ~0.82)
@@ -600,7 +804,17 @@
     _snapshot(); _persistLocal();
     const doc = document.getElementById('dio-naqsha-doc'); if (!doc) return;
     let png = '', cw = 0, ch = 0;
-    if (_naqCanvas) { try { _naqCanvas.discardActiveObject(); _naqCanvas.renderAll(); cw = _naqCanvas.getWidth(); ch = _naqCanvas.getHeight(); png = _naqCanvas.toDataURL({ format: 'png', multiplier: 2 }); } catch (_) {} }
+    if (_naqCanvas) {
+      try {
+        _naqCanvas.discardActiveObject();
+        // زوم/پین کو نظر انداز کر کے اصل (1:1) viewport پر capture کرو
+        const vpt = (_naqCanvas.viewportTransform || [1, 0, 0, 1, 0, 0]).slice();
+        _naqCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]); _naqCanvas.renderAll();
+        cw = _naqCanvas.getWidth(); ch = _naqCanvas.getHeight();
+        png = _naqCanvas.toDataURL({ format: 'png', multiplier: 2 });
+        _naqCanvas.setViewportTransform(vpt); _naqCanvas.renderAll();
+      } catch (_) {}
+    }
     const clone = doc.cloneNode(true);
     // canvas → img
     const cwrap = clone.querySelector('#naq-map');
@@ -722,6 +936,8 @@
     .naq-tb{ min-width:32px; height:30px; padding:0 8px; border:1px solid var(--border,#cbd5e1); border-radius:7px;
       background:var(--bg-card,#fff); color:var(--text-primary,#111); cursor:pointer; font-size:14px; }
     .naq-tb:hover{ background:var(--hover-bg,#eef6ff); }
+    .naq-tool.on{ background:var(--nav-active,#e0edff); border-color:var(--accent,#2563eb); color:var(--accent,#2563eb); font-weight:700; }
+    .naq-color{ width:32px; height:30px; padding:2px; border:1px solid var(--border,#cbd5e1); border-radius:7px; background:#fff; cursor:pointer; }
     .naq-save{ background:#e8f5e9; border-color:#3a923e; color:#1b5e20; font-weight:700; }
     .naq-print{ background:var(--accent,#2563eb); color:#fff; border-color:var(--accent,#2563eb); }
     .naq-sel{ height:30px; border:1px solid var(--border,#cbd5e1); border-radius:7px; background:#fff; color:#111; font-size:11pt; padding:0 6px; cursor:pointer; }
