@@ -155,7 +155,7 @@
     // امتیازی نشانات
     const rows = document.querySelectorAll('#naq-marks .naq-mtext');
     if (rows.length) a.marks = Array.from(rows).map(r => r.innerText.replace(/ /g, ' ').trim());
-    if (_naqCanvas) { try { a.canvas = _naqCanvas.toJSON(['naqLabel']); } catch (_) {} }
+    if (_naqCanvas) { try { a.canvas = _naqCanvas.toJSON(['naqLabel', 'naqSym']); } catch (_) {} }
   }
   function _saveSoon() {
     clearTimeout(_naqSaveT);
@@ -312,6 +312,7 @@
           <button class="naq-tb naq-tool" data-tool="arrow" title="تیر" onclick="window._naqSetTool&&_naqSetTool('arrow')">➜</button>
           <button class="naq-tb naq-tool" data-tool="rect" title="مستطیل" onclick="window._naqSetTool&&_naqSetTool('rect')">▭</button>
           <button class="naq-tb naq-tool" data-tool="ellipse" title="دائرہ / بیضوی" onclick="window._naqSetTool&&_naqSetTool('ellipse')">◯</button>
+          <button class="naq-tb" title="پولیس علامات (لاش، اسلحہ، گاڑی…)" onclick="window._naqToggleSyms&&_naqToggleSyms(event)">🚔</button>
           <input type="color" class="naq-color" value="#111111" title="لکیر کا رنگ" onchange="window._naqSetColor&&_naqSetColor(this.value)">
           <select class="naq-sel" title="لکیر کی موٹائی" onchange="window._naqSetWidth&&_naqSetWidth(this.value)">
             ${[1, 2, 3, 4, 6, 8].map(w => `<option value="${w}" ${w === 2 ? 'selected' : ''}>${w}px</option>`).join('')}
@@ -600,6 +601,76 @@
     _naqCanvas.renderAll(); _saveSoon(); _histPush(true);   // ہر شکل الگ undo step
   }
 
+  // ══ پولیس علامات کی لائبریری (تیار symbols) ═════════════════════════
+  //   ہر علامت سادہ schematic SVG — پولیس نقشے کی روایتی طرز۔ کلک پر canvas میں
+  //   ڈلتی ہے، پھر عام شکل کی طرح حرکت/سائز/گھماؤ/رنگ/حذف۔
+  const _S = (inner) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">${inner}</svg>`;
+  const _ST = 'fill="none" stroke="#111" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"';
+  const _NAQ_SYMS = [
+    { key: 'laash', label: 'لاش', svg: _S(`<circle cx="32" cy="12" r="7" ${_ST}/><path d="M32 19V44M32 26L18 34M32 26L46 34M32 44L24 58M32 44L40 58" ${_ST}/>`) },
+    { key: 'pistol', label: 'پستول', svg: _S(`<path d="M6 18H46V26H24L20 44H9L13 26H6Z" fill="#111"/>`) },
+    { key: 'rifle', label: 'بندوق', svg: _S(`<path d="M4 25H54V30H30L27 39H22L25 30H4Z" fill="#111"/><rect x="45" y="20" width="5" height="6" fill="#111"/>`) },
+    { key: 'chaqu', label: 'چاقو', svg: _S(`<path d="M6 22L40 30L6 38Z" fill="#111"/><rect x="40" y="26" width="18" height="8" rx="3" fill="#111"/>`) },
+    { key: 'khol', label: 'خول', svg: _S(`<path d="M24 20L32 8L40 20Z" fill="#111"/><rect x="24" y="20" width="16" height="24" fill="#111"/><rect x="23" y="44" width="18" height="6" fill="#111"/>`) },
+    { key: 'khoon', label: 'خون', svg: _S(`<path d="M32 8C40 24 46 30 46 38A14 14 0 1 1 18 38C18 30 24 24 32 8Z" fill="#b3261e"/><circle cx="52" cy="18" r="3" fill="#b3261e"/><circle cx="13" cy="16" r="2.5" fill="#b3261e"/>`) },
+    { key: 'car', label: 'گاڑی', svg: _S(`<rect x="12" y="8" width="40" height="48" rx="9" ${_ST}/><rect x="18" y="15" width="28" height="13" rx="3" ${_ST}/><rect x="18" y="36" width="28" height="12" rx="3" ${_ST}/>`) },
+    { key: 'moto', label: 'موٹرسائیکل', svg: _S(`<circle cx="16" cy="44" r="10" ${_ST}/><circle cx="48" cy="44" r="10" ${_ST}/><path d="M16 44L30 44L38 28L48 44M30 44L34 28H44" ${_ST}/>`) },
+    { key: 'door', label: 'دروازہ', svg: _S(`<path d="M20 56V12H44" ${_ST}/><path d="M44 12A32 32 0 0 1 20 56" fill="none" stroke="#111" stroke-width="1.5" stroke-dasharray="4 3"/>`) },
+    { key: 'window', label: 'کھڑکی', svg: _S(`<rect x="12" y="16" width="40" height="32" ${_ST}/><path d="M32 16V48M12 32H52" fill="none" stroke="#111" stroke-width="2"/>`) },
+    { key: 'stairs', label: 'سیڑھی', svg: _S(`<path d="M8 54V44H20V36H32V28H44V20H56" ${_ST}/>`) },
+    { key: 'tree', label: 'درخت', svg: _S(`<circle cx="32" cy="19" r="13" ${_ST}/><path d="M32 32V58M32 44L23 38M32 42L41 36" ${_ST}/>`) },
+    { key: 'charpai', label: 'چارپائی', svg: _S(`<rect x="10" y="18" width="44" height="28" rx="2" ${_ST}/><path d="M14 46V54M50 46V54M14 18V12M50 18V12" ${_ST}/><path d="M10 27H54M10 37H54M24 18V46M40 18V46" fill="none" stroke="#111" stroke-width="1.1"/>`) },
+    { key: 'chair', label: 'کرسی', svg: _S(`<path d="M20 12V38H46M20 38V54M46 38V54M20 26H40" ${_ST}/>`) },
+    { key: 'table', label: 'میز', svg: _S(`<path d="M8 24H56M14 24V50M50 24V50" ${_ST}/>`) },
+    { key: 'well', label: 'کنواں', svg: _S(`<circle cx="32" cy="34" r="16" ${_ST}/><circle cx="32" cy="34" r="9" fill="none" stroke="#111" stroke-width="1.6"/><path d="M14 20H50" ${_ST}/>`) },
+    { key: 'pole', label: 'بجلی کھمبا', svg: _S(`<path d="M32 10V56M18 18H46M22 24H42" ${_ST}/>`) },
+    { key: 'north', label: 'شمال تیر', svg: _S(`<path d="M32 56V14" ${_ST}/><path d="M32 8L25 22H39Z" fill="#111"/><text x="32" y="54" text-anchor="middle" font-size="12" fill="#111" font-family="serif">N</text>`) },
+  ];
+  function _symSVGscaled(sv) { return sv.replace('<svg ', '<svg style="width:34px;height:34px" '); }
+  window._naqToggleSyms = function (ev) {
+    ev && ev.stopPropagation && ev.stopPropagation();
+    const ex = document.getElementById('naq-sym-panel');
+    if (ex) { ex.remove(); return; }
+    const box = document.createElement('div'); box.id = 'naq-sym-panel'; box.className = 'naq-sympanel no-print';
+    box.innerHTML =
+      '<div class="naq-sympanel-h"><span>🚔 پولیس علامات — کلک کر کے نقشے میں رکھیں</span>' +
+      '<b class="naq-sym-x" onclick="window._naqToggleSyms&&_naqToggleSyms(event)">✕</b></div>' +
+      '<div class="naq-symgrid">' +
+      _NAQ_SYMS.map(s => `<button type="button" class="naq-symcell" title="${E(s.label)}" onclick="window._naqAddSymbol&&_naqAddSymbol('${s.key}')">${_symSVGscaled(s.svg)}<span>${E(s.label)}</span></button>`).join('') +
+      '</div>';
+    document.body.appendChild(box);
+    // بٹن کے قریب رکھو
+    try {
+      const r = (ev.currentTarget || ev.target).getBoundingClientRect();
+      box.style.top = Math.min(r.bottom + 6, window.innerHeight - box.offsetHeight - 8) + 'px';
+      box.style.right = Math.max(8, window.innerWidth - r.right) + 'px';
+    } catch (_) { box.style.top = '70px'; box.style.right = '16px'; }
+    setTimeout(() => document.addEventListener('mousedown', _symOutside), 0);
+  };
+  function _symOutside(e) {
+    const box = document.getElementById('naq-sym-panel'); if (!box) { document.removeEventListener('mousedown', _symOutside); return; }
+    if (!box.contains(e.target) && !(e.target.closest && e.target.closest('[onclick*="_naqToggleSyms"]'))) {
+      box.remove(); document.removeEventListener('mousedown', _symOutside);
+    }
+  }
+  window._naqAddSymbol = function (key) {
+    const sym = _NAQ_SYMS.find(s => s.key === key);
+    if (!sym || !_naqCanvas || !window.fabric) return;
+    window._naqSetTool('select');   // ڈالنے کے بعد فوراً حرکت/سائز ممکن
+    fabric.loadSVGFromString(sym.svg, (objects, options) => {
+      let obj;
+      try { obj = fabric.util.groupSVGElements(objects, options); } catch (_) { return; }
+      const cw = _naqCanvas.getWidth(), ch = _naqCanvas.getHeight();
+      const target = 76;
+      const bw = obj.width || 64, bh = obj.height || 64;
+      const sc = Math.min(target / bw, target / bh);
+      obj.set({ left: cw / 2, top: ch / 2, originX: 'center', originY: 'center', scaleX: sc, scaleY: sc });
+      obj.naqSym = key;
+      _naqCanvas.add(obj); _naqCanvas.setActiveObject(obj); _naqCanvas.renderAll();
+      _saveSoon(); _histPush(true);
+    });
+  };
+
   // ══ Zoom / Pan ═════════════════════════════════════════════════════
   function _setZoom(z) {
     if (!_naqCanvas) return;
@@ -623,7 +694,7 @@
   }
 
   // ══ Undo / Redo ════════════════════════════════════════════════════
-  function _histSnap() { try { return JSON.stringify(_naqCanvas.toJSON(['naqLabel'])); } catch (_) { return null; } }
+  function _histSnap() { try { return JSON.stringify(_naqCanvas.toJSON(['naqLabel', 'naqSym'])); } catch (_) { return null; } }
   function _histInit() {
     if (!_naqCanvas) return;
     const j = _histSnap(); if (j == null) return;
@@ -946,7 +1017,20 @@
     /* دستاویز اصل کاغذ کی چوڑائی پر (screen=print)؛ تنگ اسکرین پر افقی scroll — squish نہیں */
     .naq-doc{ margin:0 auto; box-shadow:0 4px 22px rgba(0,0,0,0.15); border-radius:4px; }
     ${_docCSS(false)}
-    @media print{ .naq-topbar,#global-mic-btn{ display:none !important; } }
+    /* پولیس علامات پینل */
+    .naq-sympanel{ position:fixed; z-index:99998; background:#fff; border:1px solid #0369a1; border-radius:12px;
+      box-shadow:0 12px 34px rgba(0,0,0,.28); direction:rtl; width:340px; max-width:94vw; max-height:min(66vh,460px);
+      display:flex; flex-direction:column; overflow:hidden; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+    .naq-sympanel-h{ padding:9px 12px; font-weight:700; color:#0369a1; background:#f8fafc; border-bottom:1px solid #e5e7eb;
+      display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:13px; }
+    .naq-sym-x{ color:#b91c1c; cursor:pointer; font-size:14px; padding:0 4px; }
+    .naq-symgrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:7px; padding:11px; overflow:auto; }
+    .naq-symcell{ display:flex; flex-direction:column; align-items:center; gap:4px; padding:7px 3px;
+      border:1px solid #e5e7eb; border-radius:9px; background:#fff; cursor:pointer; }
+    .naq-symcell:hover{ background:#eef6ff; border-color:#2563eb; }
+    .naq-symcell svg{ width:34px; height:34px; }
+    .naq-symcell span{ font-size:11px; color:#334155; line-height:1.2; }
+    @media print{ .naq-topbar,#global-mic-btn,.naq-sympanel{ display:none !important; } }
     `;
   }
 
