@@ -5,23 +5,73 @@
    AHEM: یہ فائل app-core.js کے BAAD لوڈ ہوتی ہے۔
    ═══════════════════════════════════════════════════════════ */
 
+// ══ ٹوکن انکرپشن at rest — AES-GCM، کلید IndexedDB میں non-extractable ══════
+//   refresh-token اب localStorage میں سادہ نہیں بلکہ انکرپٹڈ محفوظ ہوتا ہے۔
+//   کلید IndexedDB میں غیر قابلِ اخراج (JS سے نکالی نہیں جا سکتی)۔ پرانا سادہ
+//   ٹوکن خودکار پڑھ کر اگلی بار انکرپٹڈ محفوظ (migration)۔ IndexedDB/crypto نہ
+//   ہو تو محفوظ طور پر پرانے رویے (سادہ) پر واپس — لاگ اِن نہیں ٹوٹتا۔
+let _dioKeyP = null;
+function _dioIDB() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('dio_sec', 1);
+    r.onupgradeneeded = () => { try { r.result.createObjectStore('keys'); } catch (_) {} };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+function _dioIDBget(db, k) { return new Promise((res, rej) => { const t = db.transaction('keys', 'readonly').objectStore('keys').get(k); t.onsuccess = () => res(t.result); t.onerror = () => rej(t.error); }); }
+function _dioIDBput(db, k, v) { return new Promise((res, rej) => { const t = db.transaction('keys', 'readwrite').objectStore('keys').put(v, k); t.onsuccess = () => res(); t.onerror = () => rej(t.error); }); }
+async function _dioCryptoKey() {
+  if (_dioKeyP) return _dioKeyP;
+  _dioKeyP = (async () => {
+    const db = await _dioIDB();
+    let key = await _dioIDBget(db, 'tok');
+    if (!key) { key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']); await _dioIDBput(db, 'tok', key); }
+    return key;
+  })();
+  return _dioKeyP;
+}
+const _dioB64 = (u) => btoa(String.fromCharCode.apply(null, new Uint8Array(u)));
+const _dioUnB64 = (s) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function _dioEnc(plain) {
+  try {
+    const key = await _dioCryptoKey();
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(plain));
+    return 'enc1$' + _dioB64(iv) + '$' + _dioB64(ct);
+  } catch (_) { return plain; }   // انکرپشن نہ ہو سکے تو سادہ (پرانا رویہ) — لاگ اِن نہ ٹوٹے
+}
+async function _dioDec(stored) {
+  if (!stored) return stored;
+  if (stored.indexOf('enc1$') !== 0) return stored;   // legacy سادہ ٹوکن
+  try {
+    const key = await _dioCryptoKey();
+    const p = stored.split('$');
+    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: _dioUnB64(p[1]) }, key, _dioUnB64(p[2]));
+    return new TextDecoder().decode(pt);
+  } catch (_) { return null; }   // decrypt ناکام → null (دوبارہ پاسورڈ لاگ اِن)
+}
+window._dioEnc = _dioEnc; window._dioDec = _dioDec;
+
 async function _dioSaveAuthToken(key) {
   try {
     const { data } = await supabaseClient.auth.getSession();
     const rt = data && data.session && data.session.refresh_token;
-    if (rt) { localStorage.setItem(key, rt); return true; }
+    if (rt) { localStorage.setItem(key, await _dioEnc(rt)); return true; }
   } catch (_) {}
   return false;
 }
 
 async function _dioLoginWithToken(key) {
-  const rt = localStorage.getItem(key);
-  if (!rt) return false;
+  const stored = localStorage.getItem(key);
+  if (!stored) return false;
+  const rt = await _dioDec(stored);
+  if (!rt) { localStorage.removeItem(key); return false; }   // خراب/ناقابلِ decrypt
   try {
     const { data, error } = await supabaseClient.auth.refreshSession({ refresh_token: rt });
     if (error || !data || !data.session) { localStorage.removeItem(key); return false; }
-    // نیا token محفوظ (پرانا استعمال ہو چکا)
-    if (data.session.refresh_token) localStorage.setItem(key, data.session.refresh_token);
+    // نیا token انکرپٹڈ محفوظ (پرانا استعمال ہو چکا)
+    if (data.session.refresh_token) localStorage.setItem(key, await _dioEnc(data.session.refresh_token));
     currentUser = data.session.user;
     await _loadOfficerProfile();
     return true;
