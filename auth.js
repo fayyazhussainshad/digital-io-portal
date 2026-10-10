@@ -820,13 +820,17 @@ async function _doChangePassword() {
 
 // ── SESSION TIMER ─────────────────────────────────────────────
 let _sessionTimer, _sessionWarnTimer;
-const SESSION_TIMEOUT = 30 * 60 * 1000;       // 30 minutes inactivity (Priority 1A)
-const SESSION_WARN_AT = 29 * 60 * 1000;       // warn at 29 min
+const SESSION_TIMEOUT = 5 * 60 * 1000;        // 5 منٹ بے عملی پر خودکار لاک
 
 function resetSessionTimer() {
-  // App lock DISABLED — no session timeout, no PIN lock.
   clearTimeout(_sessionTimer);
   clearTimeout(_sessionWarnTimer);
+  // لاک ٹائمر صرف تب لگاؤ جب لاک PIN مقرر ہو اور افسر لاگ اِن ہو
+  try {
+    if (!localStorage.getItem('digital_io_pin_hash')) return;
+    if (!(typeof currentUser !== 'undefined' && currentUser)) return;
+    _sessionTimer = setTimeout(lockApp, SESSION_TIMEOUT);
+  } catch (_) {}
 }
 // ── PIN LOCK SCREEN (Priority 1B) ─────────────────────────────
 let _pinFailedAttempts = 0;
@@ -847,18 +851,27 @@ function _authWarmDriveToken() {
 }
 _authWarmDriveToken();
 
-// (listeners kept but harmless — they just clear timers)
+// بے عملی پر ٹائمر ری سیٹ (سرگرمی کے اشارے)
 document.addEventListener('click', resetSessionTimer);
 document.addEventListener('keypress', resetSessionTimer);
 document.addEventListener('touchstart', resetSessionTimer);
+// پس منظر میں جاتے ہی فوری لاک (اسکرین بند / دوسری ایپ)
+document.addEventListener('visibilitychange', () => { try { if (document.hidden) lockApp(); } catch (_) {} });
 
 
 function _hashPin(pin) { try { return btoa('dio_'+pin+'_lock'); } catch(_) { return pin; } }
 
 
 function lockApp() {
-  // App lock DISABLED — never lock.
-  return;
+  // لاک صرف تب: لاک PIN مقرر ہو، افسر لاگ اِن ہو، پہلے سے لاک نہ ہو، اور مین ایپ کھلی ہو
+  try {
+    if (!localStorage.getItem('digital_io_pin_hash')) return;   // PIN نہیں تو لاک نہیں (لاک آؤٹ سے بچاؤ)
+    if (!(typeof currentUser !== 'undefined' && currentUser)) return;
+    if (document.getElementById('pin-lock-overlay')) return;    // پہلے سے لاک
+    const app = document.getElementById('main-app');
+    if (!app || app.style.display === 'none') return;           // لاگ اِن اسکرین پر لاک نہیں
+    _showPinScreen('unlock');
+  } catch (_) {}
 }
 window.lockApp = lockApp;
 
@@ -891,6 +904,7 @@ function _showPinScreen(mode) {
       localStorage.setItem('digital_io_pin_hash', _hashPin(pin));
       ov.remove();
       showToast('✅ PIN مقرر ہو گیا', 'success');
+      resetSessionTimer();   // لاک ٹائمر فوراً فعال
     } else {
       if (_hashPin(pin) === localStorage.getItem('digital_io_pin_hash')) {
         _pinFailedAttempts = 0;
@@ -910,5 +924,33 @@ function _showPinScreen(mode) {
   if (lo) lo.onclick = () => { ov.remove(); doLogout(); };
 }
 
-// PIN setup DISABLED (app lock removed)
-window.maybeSetupPin = function() { return; };
+// لاگ اِن کے بعد ایک بار (اختیاری) لاک PIN مقرر کرنے کی پیشکش
+window.maybeSetupPin = function() {
+  try {
+    if (localStorage.getItem('digital_io_pin_hash')) return;   // پہلے سے مقرر
+    if (localStorage.getItem('dio_pin_offered')) return;       // پہلے پوچھ چکے
+    localStorage.setItem('dio_pin_offered', '1');
+    if (typeof openModal !== 'function') return;
+    openModal('🛡️ ایپ لاک',
+      `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;line-height:1.9;">کیا آپ ایپ کو 4 ہندسی PIN سے محفوظ کرنا چاہتے ہیں؟ بے عملی (5 منٹ) یا پس منظر میں جانے پر ایپ خود لاک ہو جائے گی۔ بعد میں سیٹنگز سے بھی مقرر/تبدیل کیا جا سکتا ہے۔</div>`,
+      `<div style="display:flex;gap:8px;direction:rtl;">
+        <button class="btn btn-secondary" onclick="closeModal()">ابھی نہیں</button>
+        <button class="btn btn-primary" onclick="closeModal();_showPinScreen('set')">PIN مقرر کریں</button>
+      </div>`);
+  } catch (_) {}
+};
+
+// سیٹنگز سے ایپ لاک PIN مقرر/تبدیل/ہٹائیں
+window.dioLockPinSettings = function() {
+  try {
+    const has = !!localStorage.getItem('digital_io_pin_hash');
+    if (typeof openModal !== 'function') { _showPinScreen('set'); return; }
+    openModal('🛡️ ایپ لاک PIN',
+      `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;line-height:1.9;">${has ? 'PIN پہلے سے مقرر ہے۔ آپ نیا PIN مقرر کر سکتے ہیں یا لاک ہٹا سکتے ہیں۔' : 'ابھی کوئی لاک PIN مقرر نہیں۔ بے عملی یا پس منظر میں جانے پر خودکار لاک کے لیے PIN مقرر کریں۔'}</div>`,
+      `<div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;">
+        <button class="btn btn-secondary" onclick="closeModal()">بند</button>
+        ${has ? `<button class="btn btn-danger" onclick="localStorage.removeItem('digital_io_pin_hash');resetSessionTimer();closeModal();showToast('🔓 ایپ لاک ہٹا دیا گیا','info')">لاک ہٹائیں</button>` : ''}
+        <button class="btn btn-primary" onclick="closeModal();_showPinScreen('set')">${has ? 'نیا PIN' : 'PIN مقرر کریں'}</button>
+      </div>`);
+  } catch (_) {}
+};
