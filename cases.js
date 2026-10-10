@@ -362,8 +362,8 @@ async function _downloadCaseHTML(id) {
   <div class="row"><span class="lbl">موبائل:</span><span class="val">${esc(c.complainant_cell)||'—'}</span></div>
   <div class="row"><span class="lbl">پیشہ:</span><span class="val">${esc(c.complainant_profession)||'—'}</span></div>
   <div class="sec">رپورٹنگ افسر</div>
-  <div class="row"><span class="lbl">نام:</span><span class="val">${o.full_name||'—'}</span></div>
-  <div class="row"><span class="lbl">عہدہ:</span><span class="val">${o.designation||'—'}</span></div>
+  <div class="row"><span class="lbl">نام:</span><span class="val">${esc(o.full_name||'—')}</span></div>
+  <div class="row"><span class="lbl">عہدہ:</span><span class="val">${esc(o.designation||'—')}</span></div>
   <div class="row"><span class="lbl">تھانہ:</span><span class="val">${o.station||'—'}</span></div>
   <div style="margin-top:50px;display:flex;justify-content:space-between;">
     <div style="text-align:center;"><div style="border-top:1px solid #333;width:200px;padding-top:6px;">دستخط رپورٹنگ افسر</div></div>
@@ -671,7 +671,7 @@ function _generateInterim173(c) {
     <div style="margin-top:14px;">لہٰذا عبوری رپورٹ بغرض ملاحظہ پیش خدمت ہے۔ تفتیش مکمل ہونے پر حتمی چالان پیش کر دیا جائے گا۔</div>
     <div style="margin-top:40px;text-align:left;">
       <div>_______________________</div>
-      <div style="font-size:13px;font-weight:700;">${o.designation||''} ${o.full_name||''}</div>
+      <div style="font-size:13px;font-weight:700;">${esc(o.designation||'')} ${esc(o.full_name||'')}</div>
       <div style="font-size:12px;">تفتیشی افسر — تھانہ ${esc(c.case_station||o.station||'')}</div>
       <div style="font-size:12px;">تاریخ: ${today}</div>
     </div>
@@ -865,9 +865,9 @@ function renderEvidenceTab(c, ev) {
        </div>`
     : ev.map(e => { const hf = (e.storage_path || e.file_url); const vu = (e._viewUrl || e.file_url); return `
       <div class="evidence-card" id="ev-${e.id}">
-        <div class="evidence-thumb" onclick="openEvidenceFile('${e.id}','${((vu)||'').replace(/'/g,"\\'")}','${e.name.replace(/'/g,"\\'")}','${e.type}')" style="cursor:${hf?'pointer':'default'};" title="${hf?'Click to open file':'No file attached'}">
+        <div class="evidence-thumb" onclick="openEvidenceFile('${e.id}','${_dioJsHtml(vu||'')}','${_dioJsHtml(e.name)}','${esc(e.type)}')" style="cursor:${hf?'pointer':'default'};" title="${hf?'Click to open file':'No file attached'}">
           ${hf && e.type==='Photo'
-            ? `<img src="${vu||''}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;" alt="${e.name}" onerror="this.style.display='none';this.parentElement.querySelector('.ev-fallback').style.display='flex'"><div class="ev-fallback" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:36px;">📷</div>`
+            ? `<img src="${esc(vu||'')}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;" alt="${esc(e.name)}" onerror="this.style.display='none';this.parentElement.querySelector('.ev-fallback').style.display='flex'"><div class="ev-fallback" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:36px;">📷</div>`
             : `<span style="font-size:36px;">${icon(e.type)}</span>`}
           ${hf ? `<div style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,0.6);border-radius:4px;padding:2px 5px;font-size:9px;color:#fff;">Open</div>` : ''}
         </div>
@@ -876,8 +876,8 @@ function renderEvidenceTab(c, ev) {
           <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${esc(e.type)} · ${e.evidence_date||formatDate(e.created_at)}</div>
           ${e.notes ? `<div style="font-size:10px;color:var(--text-faint);margin-top:3px;font-style:italic;">${esc(e.notes)}</div>` : ''}
           <div style="display:flex;gap:6px;direction:rtl;margin-top:8px;">
-            ${hf ? `<button class="btn btn-secondary btn-sm" onclick="openEvidenceFile('${e.id}','${((vu)||'').replace(/'/g,"\\'")}','${e.name.replace(/'/g,"\\'")}','${e.type}')" title="Open File">📂 Open</button>` : ''}
-            <button class="btn btn-secondary btn-sm" onclick="renameEvidence('${e.id}','${e.name.replace(/'/g,"\\'")}','${c.fir_number}')" title="Rename">✏️ Rename</button>
+            ${hf ? `<button class="btn btn-secondary btn-sm" onclick="openEvidenceFile('${e.id}','${_dioJsHtml(vu||'')}','${_dioJsHtml(e.name)}','${esc(e.type)}')" title="Open File">📂 Open</button>` : ''}
+            <button class="btn btn-secondary btn-sm" onclick="renameEvidence('${e.id}','${_dioJsHtml(e.name)}','${esc(c.fir_number)}')" title="Rename">✏️ Rename</button>
             <button class="btn btn-danger btn-sm" onclick="deleteWorkspaceEvidence('${e.id}','${c.fir_number}')" title="Delete">🗑️</button>
           </div>
         </div>
@@ -906,7 +906,7 @@ function openEvidenceFile(id, url, name, type) {
 function renameEvidence(id, currentName, firNumber) {
   openModal('✏️ Rename Evidence',
     `<div style="margin-bottom:8px;font-size:12px;color:var(--text-muted);">Enter a new name for this evidence item.</div>
-     <input class="form-input" id="ev-rename-input" value="${currentName}" style="width:100%;box-sizing:border-box;" placeholder="Evidence name">`,
+     <input class="form-input" id="ev-rename-input" value="${esc(currentName)}" style="width:100%;box-sizing:border-box;" placeholder="Evidence name">`,
     `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
      <button class="btn btn-primary" onclick="saveEvidenceRename('${id}','${firNumber}')">✏️ Rename</button>`
   );

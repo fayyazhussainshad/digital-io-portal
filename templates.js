@@ -344,7 +344,7 @@ async function _tplRenderWord(url, body, autoPrint) {
         .tpl-fmt-btn{padding:4px 10px;border:1px solid #dee2e6;border-radius:4px;background:#fff;cursor:pointer;font-size:14px;}
         .tpl-fmt-btn:hover{background:#f1f3f4;}
       </style>
-      <div id="word-doc-editable" contenteditable="true" spellcheck="false" dir="rtl">${result.value || 'مواد دستیاب نہیں'}</div>`;
+      <div id="word-doc-editable" contenteditable="true" spellcheck="false" dir="rtl">${result.value ? (window.DIO&&DIO.html&&DIO.html.safe?DIO.html.safe(result.value):esc(result.value)) : 'مواد دستیاب نہیں'}</div>`;
     _tplBuildFormatToolbar();
     if (autoPrint) setTimeout(_tplPrintDoc, 500);
   } catch(e) {

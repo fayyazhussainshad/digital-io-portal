@@ -383,7 +383,7 @@ async function _renderWordLaw(url, body, autoPrint) {
         #law-html-content img{max-width:100%;}
         #law-html-content hr{border:none;border-top:1px solid #000;margin:12px 0;}
       </style>
-      <div id="law-html-content">${result.value || '<div style="text-align:center;color:#999;">مواد دستیاب نہیں</div>'}</div>`;
+      <div id="law-html-content">${result.value ? (window.DIO&&DIO.html&&DIO.html.safe?DIO.html.safe(result.value):esc(result.value)) : '<div style="text-align:center;color:#999;">مواد دستیاب نہیں</div>'}</div>`;
     if (autoPrint) setTimeout(_printLawReader, 300);
   } catch(e) {
     body.innerHTML = `<div style="text-align:center;padding:40px;color:#6c757d;">

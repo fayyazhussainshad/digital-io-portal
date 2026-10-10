@@ -586,7 +586,7 @@ function _hcCard(c) {
   const icon = c.severity==='error' ? '❌' : c.severity==='warn' ? '⚠️' : c.severity==='fail' ? '⚙️' : '✅';
   const items = (c.items && c.items.length)
     ? `<div style="margin-top:10px;display:flex;flex-direction:column;gap:5px;">
-        ${c.items.slice(0,15).map(t=>`<div style="font-size:11px;background:var(--bg-secondary);border-radius:6px;padding:6px 9px;color:var(--text-secondary);">${t}</div>`).join('')}
+        ${c.items.slice(0,15).map(t=>`<div style="font-size:11px;background:var(--bg-secondary);border-radius:6px;padding:6px 9px;color:var(--text-secondary);">${esc(t)}</div>`).join('')}
         ${c.items.length>15?`<div style="font-size:10px;color:var(--text-faint);">…اور ${c.items.length-15} مزید</div>`:''}
        </div>`
     : '';
@@ -1149,7 +1149,7 @@ function _adminPrintReport() {
     const t = (cases||[]).filter(c=>c.officer_id===of.id).length;
     const a = (cases||[]).filter(c=>c.officer_id===of.id&&c.status==='under').length;
     const cp = (cases||[]).filter(c=>c.officer_id===of.id&&c.status==='complete').length;
-    html += `<tr><td>${of.full_name||'—'}</td><td>${of.designation||'—'}</td><td>${t}</td><td>${a}</td><td>${cp}</td></tr>`;
+    html += `<tr><td>${esc(of.full_name||'—')}</td><td>${esc(of.designation||'—')}</td><td>${t}</td><td>${a}</td><td>${cp}</td></tr>`;
   });
   html += `</table>`;
   let _printHTML = '';

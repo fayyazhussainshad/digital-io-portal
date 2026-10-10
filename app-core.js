@@ -277,6 +277,13 @@ function esc(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 window.esc = esc;
+// اِن لائن onclick="..(' ${data} ')" جیسے مقامات کے لیے: پہلے JS-string محفوظ
+// (backslash)، پھر HTML-attribute محفوظ (esc)۔ دونوں تہوں سے XSS رک جاتا ہے۔
+function _dioJsHtml(s) {
+  return esc(String(s == null ? '' : s).replace(/[\\'"\r\n]/g,
+    m => ({ '\\': '\\\\', "'": "\\'", '"': '\\"', '\r': '\\r', '\n': '\\n' }[m])));
+}
+window._dioJsHtml = _dioJsHtml;
 // Alias — same HTML-escaper under the name used across print/innerHTML sinks.
 const escapeHtml = esc;
 window.escapeHtml = esc;

@@ -461,7 +461,7 @@ async function _ahkFileReader(a, url, isPdf, autoPrint){
           #ahk-html-content td,#ahk-html-content th{border:1px solid #000;padding:6px 10px;text-align:right;}
           #ahk-html-content p,#ahk-html-content td{unicode-bidi:plaintext;}
         </style>
-        <div id="ahk-html-content">${result.value || 'مواد دستیاب نہیں'}</div>`;
+        <div id="ahk-html-content">${result.value ? (window.DIO&&DIO.html&&DIO.html.safe?DIO.html.safe(result.value):esc(result.value)) : 'مواد دستیاب نہیں'}</div>`;
       if (autoPrint) setTimeout(()=>window.print(), 400);
       return;
     } catch(_){}

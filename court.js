@@ -152,11 +152,11 @@ async function _openAddCourtDate(existing) {
       </div>
       <div>
         <label class="form-label">پیشی کی تاریخ *</label>
-        <input class="form-input" type="date" id="cd-date" value="${e.hearing_date||''}">
+        <input class="form-input" type="date" id="cd-date" value="${esc(e.hearing_date||'')}">
       </div>
       <div>
         <label class="form-label">پیشی کا وقت</label>
-        <input class="form-input" type="time" id="cd-time" value="${e.hearing_time||''}">
+        <input class="form-input" type="time" id="cd-time" value="${esc(e.hearing_time||'')}">
       </div>
       <div>
         <label class="form-label">عدالت کا نام *</label>

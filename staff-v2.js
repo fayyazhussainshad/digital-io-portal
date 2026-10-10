@@ -71,7 +71,7 @@ function _stCard(s) {
     <span style="font-size:15px;font-weight:700;">${esc(s.name)||'—'}</span>
     <span style="color:var(--text-muted);font-size:13px;" dir="ltr">${b(s.service_number)}</span>
     <span style="color:var(--text-muted);font-size:13px;" dir="ltr">${b(s.mobile)}</span>
-    <span style="color:var(--text-muted);font-size:12px;" dir="ltr">${s.cnic||''}</span>
+    <span style="color:var(--text-muted);font-size:12px;" dir="ltr">${esc(s.cnic||'')}</span>
     <span style="margin-right:auto;display:flex;gap:4px;">
       <button class="btn btn-secondary btn-sm" onclick="_stForm('${s.id}')">✏️</button>
       <button class="btn btn-danger btn-sm" onclick="_stDelete('${s.id}','${(s.name||'').replace(/'/g,'')}')">🗑️</button>
@@ -85,18 +85,18 @@ function _stForm(id) {
   openModal(id ? '✏️ ملازم میں ترمیم' : '➕ ملازم شامل کریں', `
     <div style="direction:rtl;display:flex;flex-direction:column;gap:10px;font-family:'Jameel Noori Nastaleeq',serif;">
       <div><label style="font-size:13px;">نام</label>
-        <input id="st-name" type="text" value="${s.name||''}" placeholder="ملازم کا نام" style="${inp}direction:rtl;"></div>
+        <input id="st-name" type="text" value="${esc(s.name||'')}" placeholder="ملازم کا نام" style="${inp}direction:rtl;"></div>
       <div><label style="font-size:13px;">عہدہ</label>
         <select id="st-rank" style="${inp}">
           <option value="">— منتخب کریں —</option>
           ${ST_RANKS.map(r=>`<option value="${r.v}" ${s.rank===r.v?'selected':''}>${r.label}</option>`).join('')}
         </select></div>
       <div><label style="font-size:13px;">محکمانہ نمبر</label>
-        <input id="st-service" type="text" dir="ltr" value="${s.service_number||''}" placeholder="866/M" style="${inp}direction:ltr;text-align:left;"></div>
+        <input id="st-service" type="text" dir="ltr" value="${esc(s.service_number||'')}" placeholder="866/M" style="${inp}direction:ltr;text-align:left;"></div>
       <div><label style="font-size:13px;">سیل نمبر</label>
-        <input id="st-mobile" type="text" dir="ltr" value="${s.mobile||''}" placeholder="0000-0000000" style="${inp}direction:ltr;text-align:left;"></div>
+        <input id="st-mobile" type="text" dir="ltr" value="${esc(s.mobile||'')}" placeholder="0000-0000000" style="${inp}direction:ltr;text-align:left;"></div>
       <div><label style="font-size:13px;">شناختی کارڈ</label>
-        <input id="st-cnic" type="text" dir="ltr" value="${s.cnic||''}" placeholder="00000-0000000-0" style="${inp}direction:ltr;text-align:left;"></div>
+        <input id="st-cnic" type="text" dir="ltr" value="${esc(s.cnic||'')}" placeholder="00000-0000000-0" style="${inp}direction:ltr;text-align:left;"></div>
     </div>
   `, `
     <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>

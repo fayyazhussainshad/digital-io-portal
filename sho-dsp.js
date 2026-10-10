@@ -43,7 +43,7 @@ function openShoDspModal(type) {
       </div>
       <div style="display:flex;gap:10px;align-items:center;">
         <label style="min-width:60px;">نام:</label>
-        <input id="shodsp-name" type="text" value="${cur.name||''}" placeholder="نام لکھیں"
+        <input id="shodsp-name" type="text" value="${esc(cur.name||'')}" placeholder="نام لکھیں"
           style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:14px;font-family:'Jameel Noori Nastaleeq',serif;">
       </div>
     </div>
@@ -92,12 +92,12 @@ function openSarkariGari() {
     <div style="direction:rtl;display:flex;flex-direction:column;gap:12px;">
       <div style="display:flex;gap:10px;align-items:center;">
         <label style="min-width:90px;">گاڑی نمبر:</label>
-        <input id="gari-number" type="text" dir="ltr" value="${cur.vehicle_number||''}" placeholder="ABC-123"
+        <input id="gari-number" type="text" dir="ltr" value="${esc(cur.vehicle_number||'')}" placeholder="ABC-123"
           style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:14px;direction:ltr;text-align:left;">
       </div>
       <div style="display:flex;gap:10px;align-items:center;">
         <label style="min-width:90px;">ڈرائیور کا نام:</label>
-        <input id="gari-driver" type="text" value="${cur.driver_name||''}" placeholder="نام لکھیں"
+        <input id="gari-driver" type="text" value="${esc(cur.driver_name||'')}" placeholder="نام لکھیں"
           style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:14px;font-family:'Jameel Noori Nastaleeq',serif;">
       </div>
     </div>
