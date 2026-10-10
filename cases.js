@@ -863,25 +863,25 @@ function renderEvidenceTab(c, ev) {
         <div style="font-weight:600;margin-bottom:4px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">ابھی کوئی شہادت نہیں</div>
         <div style="font-size:12px;">+ شہادت شامل کریں بٹن دبائیں</div>
        </div>`
-    : ev.map(e => `
+    : ev.map(e => { const hf = (e.storage_path || e.file_url); const vu = (e._viewUrl || e.file_url); return `
       <div class="evidence-card" id="ev-${e.id}">
-        <div class="evidence-thumb" onclick="openEvidenceFile('${e.id}','${((e._viewUrl||e.file_url)||'').replace(/'/g,"\\'")}','${e.name.replace(/'/g,"\\'")}','${e.type}')" style="cursor:${e.file_url?'pointer':'default'};" title="${e.file_url?'Click to open file':'No file attached'}">
-          ${e.file_url && e.type==='Photo'
-            ? `<img src="${e._viewUrl||e.file_url}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;" alt="${e.name}" onerror="this.style.display='none';this.parentElement.querySelector('.ev-fallback').style.display='flex'"><div class="ev-fallback" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:36px;">📷</div>`
+        <div class="evidence-thumb" onclick="openEvidenceFile('${e.id}','${((vu)||'').replace(/'/g,"\\'")}','${e.name.replace(/'/g,"\\'")}','${e.type}')" style="cursor:${hf?'pointer':'default'};" title="${hf?'Click to open file':'No file attached'}">
+          ${hf && e.type==='Photo'
+            ? `<img src="${vu||''}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;" alt="${e.name}" onerror="this.style.display='none';this.parentElement.querySelector('.ev-fallback').style.display='flex'"><div class="ev-fallback" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:36px;">📷</div>`
             : `<span style="font-size:36px;">${icon(e.type)}</span>`}
-          ${e.file_url ? `<div style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,0.6);border-radius:4px;padding:2px 5px;font-size:9px;color:#fff;">Open</div>` : ''}
+          ${hf ? `<div style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,0.6);border-radius:4px;padding:2px 5px;font-size:9px;color:#fff;">Open</div>` : ''}
         </div>
         <div class="evidence-info">
           <div class="evidence-name" id="ev-name-${e.id}">${esc(e.name)}</div>
           <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${esc(e.type)} · ${e.evidence_date||formatDate(e.created_at)}</div>
           ${e.notes ? `<div style="font-size:10px;color:var(--text-faint);margin-top:3px;font-style:italic;">${esc(e.notes)}</div>` : ''}
           <div style="display:flex;gap:6px;direction:rtl;margin-top:8px;">
-            ${e.file_url ? `<button class="btn btn-secondary btn-sm" onclick="openEvidenceFile('${e.id}','${((e._viewUrl||e.file_url)||'').replace(/'/g,"\\'")}','${e.name.replace(/'/g,"\\'")}','${e.type}')" title="Open File">📂 Open</button>` : ''}
+            ${hf ? `<button class="btn btn-secondary btn-sm" onclick="openEvidenceFile('${e.id}','${((vu)||'').replace(/'/g,"\\'")}','${e.name.replace(/'/g,"\\'")}','${e.type}')" title="Open File">📂 Open</button>` : ''}
             <button class="btn btn-secondary btn-sm" onclick="renameEvidence('${e.id}','${e.name.replace(/'/g,"\\'")}','${c.fir_number}')" title="Rename">✏️ Rename</button>
             <button class="btn btn-danger btn-sm" onclick="deleteWorkspaceEvidence('${e.id}','${c.fir_number}')" title="Delete">🗑️</button>
           </div>
         </div>
-      </div>`).join('');
+      </div>`; }).join('');
 
   return `<div class="case-tab-content">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;direction:rtl;">
@@ -1065,8 +1065,8 @@ async function wevSave(caseId, firNumber) {
         const path = `${currentUser?.id||'officer'}/${firNumber}/${Date.now()}_${name.replace(/\s+/g,'_')}.${ext}`;
         const { error: upErr } = await supabaseClient.storage.from('evidence').upload(path, blob, { upsert: true });
         if (upErr) throw upErr;
-        const { data: urlData } = supabaseClient.storage.from('evidence').getPublicUrl(path);
-        fileUrl = urlData?.publicUrl || null; storagePath = path;
+        // عوامی URL محفوظ نہ کریں (leak سے بچاؤ) — صرف storage_path؛ دیکھنا signed URL سے
+        storagePath = path;
       }
       _row = await addEvidence({ name, fir_number: firNumber, type, evidence_date: date, notes, file_url: fileUrl, storage_path: storagePath });
     }

@@ -263,11 +263,11 @@ const offlineStore={
       const{error:upErr}=await sb.storage.from('evidence').upload(path,uploadData);
       if(upErr) throw upErr;
 
-      const{data:url}=sb.storage.from('evidence').getPublicUrl(path);
+      // عوامی URL محفوظ نہ کریں — صرف storage_path (دیکھنا signed URL سے)
       const{error:dbErr}=await sb.from('evidence').insert({
         ...data.meta,
         officer_id: data.officerId,
-        file_url:   url?.publicUrl||null,
+        file_url:   null,
         storage_path: path,
       });
       if(dbErr) throw dbErr;

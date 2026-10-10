@@ -307,13 +307,13 @@ async function _attachEvidenceViewUrls(rows) {
   await Promise.all(rows.map(async e => {
     // Offline "local-" row jis ka apna preview (dataURL) hai — usay na chhero
     if ((e._local || e._pendingUpload) && e._viewUrl) return;
-    e._viewUrl = e.file_url || null;                    // fallback (public bucket / signing fail)
+    e._viewUrl = null;                                  // عوامی URL کبھی نہیں — صرف signed
     const p = _evidenceStoragePath(e);
     if (!p) return;
     try {
       const { data, error } = await supabaseClient.storage.from('evidence').createSignedUrl(p, 3600);
       if (!error && data && data.signedUrl) e._viewUrl = data.signedUrl;
-    } catch(_) { /* file_url fallback pehle se set hai */ }
+    } catch(_) { /* signing fail → koi preview nahi (public URL expose nahi karte) */ }
   }));
   return rows;
 }
@@ -391,8 +391,8 @@ async function addEvidenceWithFile(meta, fileInfo) {
       const path = `${(typeof currentUser !== 'undefined' && currentUser && currentUser.id) || oid}/${firHint}/${Date.now()}_${fileName}`;
       const { error: upErr } = await supabaseClient.storage.from('evidence').upload(path, blob, { upsert: true });
       if (upErr) throw upErr;
-      const { data: urlData } = supabaseClient.storage.from('evidence').getPublicUrl(path);
-      file_url = urlData?.publicUrl || null; storage_path = path;
+      // عوامی URL محفوظ نہ کریں — صرف storage_path (دیکھنا signed URL سے)
+      storage_path = path;
     }
     const { data, error } = await supabaseClient.from('evidence')
       .insert({ ...meta, officer_id: oid, file_url, storage_path }).select().single();
