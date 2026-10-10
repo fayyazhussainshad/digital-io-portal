@@ -1,69 +1,67 @@
-# Digital IO — DB اسکیما و RLS (قدم 4: خامی 9 اور 10)
+# dio-license — آف لائن لائسنس ٹوکن (خامی 9 کا آف لائن حصہ)
 
-یہ فولڈر ڈیٹا بیس سے متعلق فکسز کو **ورژن کنٹرول میں** لاتا ہے (خامی 10) اور
-سبسکرپشن کے سرور سائیڈ نفاذ کی مائیگریشن دیتا ہے (خامی 9)۔ تمام SQL آپ
-**Supabase → SQL Editor** میں چلائیں گے۔ (کلاؤڈ سیشن سے Supabase تک رسائی نہیں،
-اس لیے یہ مسودے آپ چلائیں گے۔)
+مقصد: قدم 4 کی DB enforcement **آن لائن** لکھائی روکتی ہے۔ یہ Edge Function
+**آف لائن** کے لیے حل دیتا ہے: لاگ اِن پر سرور subscription جانچ کر ایک
+**مختصر مدت، دستخط شدہ (ECDSA P-256) لائسنس ٹوکن** دیتا ہے۔ کلائنٹ صرف **عوامی
+کلید** سے تصدیق کرتا ہے — جعل سازی یا میعاد بڑھانا ممکن نہیں۔ آف لائن رسائی صرف
+اسی ٹوکن کی میعاد تک؛ کوئی خودکار 30-دن trial نہیں۔
 
-## فائلیں
+کرپٹو اسکیم Node پر جانچی گئی: valid ✓ · tampered ✗ · expired ✗ · forged ✗۔
 
-| فائل | کیا کرتی ہے | کہاں چلائیں |
-|---|---|---|
-| `00_export_current_schema.sql` | **صرف پڑھتی ہے** — موجودہ tables، columns، RLS on/off، policies، functions، triggers، FKs، اور storage buckets ایکسپورٹ کرتی ہے۔ | Supabase SQL Editor |
-| `10_subscription_enforcement.sql` | `dio_has_active_sub()` فنکشن + content tables پر **restrictive write-gate** policies۔ میعاد ختم = صرف پڑھنے (view-only)، لکھنا DB سطح پر بند۔ | Supabase SQL Editor |
-| `10_subscription_enforcement_ROLLBACK.sql` | اوپر والی ہر پالیسی و فنکشن ہٹا دیتی ہے (حفاظتی واپسی)۔ | ضرورت پڑنے پر |
+## 1) کلید کی جوڑی بنائیں (ایک بار)
 
-## ترتیب (اہم)
+مقامی طور پر یہ چلائیں (Node 18+):
 
-1. **پہلے `00_export_current_schema.sql` چلائیں۔** ہر نتیجہ (خاص طور پر سیکشن 2:
-   `rls_enabled`) کاپی کر کے اس فولڈر میں `current_schema/` کے تحت محفوظ کریں۔
-   اس سے خامی 10 حل ہوتی ہے (schema/RLS اب ریپو میں) اور اگلا قدم "بغیر ہوا میں"
-   ہوتا ہے۔
+```js
+// keygen.mjs
+const s = globalThis.crypto.subtle;
+const kp = await s.generateKey({ name:'ECDSA', namedCurve:'P-256' }, true, ['sign','verify']);
+const pub = await s.exportKey('jwk', kp.publicKey);
+const priv = await s.exportKey('jwk', kp.privateKey);
+console.log('PRIVATE (Supabase secret):', JSON.stringify(priv));
+console.log('PUBLIC  (client):', JSON.stringify({ kty:pub.kty, crv:pub.crv, x:pub.x, y:pub.y }));
+```
+`node keygen.mjs`
 
-2. **پھر `10_subscription_enforcement.sql` — مگر پہلے صرف ایک table پر ٹیسٹ کریں۔**
-   فائل کے آخر میں دی گئی 3 لائنیں صرف `cases` پر چلائیں، ایک میعاد-ختم اور ایک
-   فعال افسر سے لکھ کر دیکھیں، پھر پورا `do $$ ... $$` بلاک چلائیں۔
+- **PRIVATE JWK** → صرف سرور (نیچے secret)۔ کبھی کلائنٹ میں نہ ڈالیں۔
+- **PUBLIC JWK** → `license-token.js` میں `DIO_LICENSE_PUB_JWK` کی جگہ (x, y)۔
 
-## یہ کیسے کام کرتا ہے (تصدیق شدہ)
+## 2) Deploy + secrets
 
-- **رشتے (کوڈ سے تصدیق شدہ):** `officers.user_id = auth.uid()`،
-  `subscriptions.officer_id = officers.id`، `subscriptions.status` in
-  (trial/active/suspended/expired)، `subscriptions.expires_at`۔
-- **`dio_has_active_sub()`** (security definer) true دیتا ہے اگر افسر کے پاس فعال/trial
-  (غیر منقضی) سبسکرپشن ہو، یا وہ superadmin/admin ہو۔
-- **Restrictive write-gate:** ہر content table پر صرف insert/update/delete پر
-  `dio_has_active_sub()` لازمی۔ **SELECT کو ہاتھ نہیں لگایا** — اس لیے میعاد ختم
-  ہونے پر افسر ڈیٹا **دیکھ** سکتا ہے مگر **بدل/بڑھا** نہیں سکتا۔ کلائنٹ کوڈ بدلنے
-  سے فرق نہیں پڑتا — فیصلہ DB کرتا ہے۔
+```bash
+supabase functions deploy dio-license --no-verify-jwt
+supabase secrets set DIO_LICENSE_PRIV_JWK='{"kty":"EC","crv":"P-256","d":"...","x":"...","y":"..."}'
+# SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY khud-ba-khud mojood hote hain
+```
+(`--no-verify-jwt` اس لیے کہ ہم JWT خود function میں verify کرتے ہیں۔)
 
-### حقیقی PostgreSQL پر جانچ کا نتیجہ
-| صارف | `dio_has_active_sub()` | insert | select |
-|---|---|---|---|
-| فعال افسر | true | ✅ کامیاب | ✅ |
-| **میعاد ختم افسر** | false | ⛔ **بلاک** (RLS violation) | ✅ (view-only) |
-| admin (بلا سبسکرپشن) | true | ✅ کامیاب | ✅ |
+## 3) کلائنٹ وائرنگ (subscription.js)
 
-Rollback نے تینوں پالیسیاں + فنکشن صاف ہٹا دیے۔
+`index.html` میں `license-token.js` شامل کریں (subscription.js سے پہلے)، پھر:
 
-## حفاظتی اصول (پڑھ لیں)
+- **آن لائن لاگ اِن کے بعد** (مثلاً `loginSuccess` یا `checkSubscription` کے آن لائن راستے میں):
+  ```js
+  try { await dioRefreshLicense(); } catch(_){}
+  ```
+- **`checkSubscription()` کے OFFLINE branch** میں `trial/30` کی جگہ:
+  ```js
+  if (!navigator.onLine) {
+    const lic = await dioLicenseValid();
+    if (lic.valid) return { status:'active', daysLeft: Math.ceil((lic.entitledUntil-Date.now())/86400000), plan:'آف لائن اجازت' };
+    return { status:'expired', daysLeft:0, plan:'میعاد ختم — ایک بار آن لائن آئیں' };
+  }
+  ```
+  اسی طرح top-level `catch` اور error branch میں بھی `trial/30` واپس کرنے کے بجائے
+  `dioLicenseValid()` پر انحصار کریں (fail-open ختم)۔
 
-- یہ اسکرپٹ کسی table پر **RLS enable نہیں کرتا**۔ صرف restrictive policies جوڑتا ہے
-  جو **صرف اُنہی tables پر فعال** ہوتی ہیں جہاں RLS پہلے سے آن ہے۔ جہاں RLS بند ہے
-  وہاں یہ غیر فعال رہتی ہیں (کچھ نہیں ٹوٹتا)۔
-- کسی table پر **خود سے RLS enable نہ کریں** جب تک اُس پر ایک permissive SELECT
-  policy موجود نہ ہو — ورنہ اُس کا پڑھنا رک جائے گا۔ (اسی لیے پہلے export چلائیں۔)
-- `subscriptions` اور `subscription_plans` جان بوجھ کر gate سے باہر ہیں تاکہ میعاد
-  ختم افسر **تجدید** کر سکے (پھنس نہ جائے)۔ `officers` بھی باہر (پروفائل)۔ لاگ tables
-  (`audit_logs`, `evidence_custody_events`) بھی باہر تاکہ ریکارڈ چلتا رہے۔
+> احتیاط (لاک آؤٹ سے بچاؤ): پہلی بار جب افسر آن لائن ہو، `dioRefreshLicense()`
+> ضرور چلے تاکہ ٹوکن مل جائے۔ ورنہ نیا افسر جو کبھی آن لائن نہ آیا ہو، آف لائن
+> بلاک ہو سکتا ہے۔ اسی لیے اسے آن لائن لاگ اِن کے فوراً بعد اور وقتاً فوقتاً چلائیں۔
 
-## باقی کام (اس قدم سے آگے)
+## 4) میعاد
 
-1. **کلائنٹ fail-open (offline trial):** یہ SQL صرف **آن لائن** لکھائی نافذ کرتا ہے۔
-   `subscription.js` اب بھی آف لائن/error پر 30-دن trial دیتا ہے۔ مکمل حل کے لیے
-   ایک **Edge Function** درکار ہے جو لاگ اِن پر مختصر مدت (24–72 گھنٹے) کا **دستخط
-   شدہ لائسنس ٹوکن** جاری کرے، اور کلائنٹ آف لائن صرف اُسی کی میعاد تک چلے (خودکار
-   trial نہیں)۔ یہ الگ ٹاسک ہے۔
-2. **profile allowlist کا DB جڑواں (خامی 6):** قدم 1 میں کلائنٹ allowlist لگا؛
-   مکمل ضمانت کے لیے `officers` پر ایک BEFORE UPDATE trigger بنائیں جو `role`،
-   `is_approved`، `subscription_*` وغیرہ کو کلائنٹ سے بدلنے سے روکے (صرف
-   service_role/RPC اجازت)۔ (چاہیں تو اگلا مسودہ دے دوں۔)
+- عام افسر: `min(subscription.expires_at, اب + 48 گھنٹے)` — یعنی زیادہ سے زیادہ 48
+  گھنٹے کی آف لائن کھڑکی، پھر آن لائن تجدید۔
+- superadmin/admin: ہر بار 72 گھنٹے۔
+
+یہ نمبر `index.ts` میں تبدیل کیے جا سکتے ہیں۔
