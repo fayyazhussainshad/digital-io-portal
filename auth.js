@@ -30,6 +30,35 @@ async function _dioLoginWithToken(key) {
 window._dioSaveAuthToken  = _dioSaveAuthToken;
 window._dioLoginWithToken = _dioLoginWithToken;
 
+// ══ PIN ہیشنگ (WebCrypto PBKDF2 + نمک) ══════════════════════════════
+//   پرانے سادہ (dio_pin) اور btoa (app-lock) PIN درست داخلے پر خودکار
+//   ہیش میں بدل جاتے ہیں (migration)۔ صرف ہیش محفوظ ہوتا ہے، خام PIN نہیں۔
+async function _dioHashPin(pin, saltB64) {
+  try {
+    const enc = new TextEncoder();
+    const salt = saltB64
+      ? Uint8Array.from(atob(saltB64), c => c.charCodeAt(0))
+      : crypto.getRandomValues(new Uint8Array(16));
+    const km = await crypto.subtle.importKey('raw', enc.encode(String(pin)), 'PBKDF2', false, ['deriveBits']);
+    const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 150000, hash: 'SHA-256' }, km, 256);
+    const hex = Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, '0')).join('');
+    const sb64 = btoa(String.fromCharCode.apply(null, salt));
+    return 'pbkdf2$' + sb64 + '$' + hex;
+  } catch (_) { return 'plain$' + String(pin); }   // crypto دستیاب نہ ہو (نایاب)
+}
+// true/false اگر معلوم فارمیٹ ہو؛ null اگر پرانا (legacy) — caller migrate کرے
+async function _dioPinMatches(pin, stored) {
+  if (!stored) return false;
+  if (stored.indexOf('pbkdf2$') === 0) {
+    const p = stored.split('$');
+    return (await _dioHashPin(pin, p[1])) === stored;
+  }
+  if (stored.indexOf('plain$') === 0) return ('plain$' + String(pin)) === stored;
+  return null;
+}
+window._dioHashPin = _dioHashPin;
+window._dioPinMatches = _dioPinMatches;
+
 // ═══════════════════════════════════════════════════════════════
 //  OFFLINE LOGIN — بغیر انٹرنیٹ کے (cached session سے)
 //  Jab officer pehle ONLINE login kar chuka ho (session + officer
@@ -466,8 +495,13 @@ async function _verifyPin() {
     return;
   }
 
-  // Galat PIN
-  if (_pinValue !== savedPin) {
+  // PIN تصدیق (ہیش شدہ)؛ پرانا سادہ PIN درست ہونے پر خودکار ہیش میں بدل جائے
+  let _pinOk = await _dioPinMatches(_pinValue, savedPin);
+  if (_pinOk === null) {                      // legacy — خام محفوظ تھا
+    _pinOk = (_pinValue === savedPin);
+    if (_pinOk) { try { localStorage.setItem('dio_pin', await _dioHashPin(_pinValue)); } catch (_) {} }
+  }
+  if (!_pinOk) {
     showToast('❌ غلط PIN', 'error');
     _pinValue = ''; _renderPinDots();
     return;
@@ -602,7 +636,7 @@ async function _savePin() {
   } catch(_) {}
 
   try {
-    localStorage.setItem('dio_pin', pin);
+    localStorage.setItem('dio_pin', await _dioHashPin(pin));   // خام نہیں — PBKDF2 ہیش
     localStorage.setItem('dio_pin_email', email);
     // پاسورڈ نہیں — صرف refresh-token (محدود مدت، پاسورڈ ظاہر نہیں کرتا)
     await _dioSaveAuthToken('dio_pin_rt');
@@ -897,16 +931,22 @@ function _showPinScreen(mode) {
   const msg = ov.querySelector('#pin-msg');
   input.focus();
 
-  const submit = () => {
+  const submit = async () => {
     const pin = (input.value||'').trim();
     if (!/^\d{4}$/.test(pin)) { msg.textContent = '4 ہندسوں کا PIN درج کریں'; return; }
     if (isSet) {
-      localStorage.setItem('digital_io_pin_hash', _hashPin(pin));
+      localStorage.setItem('digital_io_pin_hash', await _dioHashPin(pin));   // PBKDF2 ہیش
       ov.remove();
       showToast('✅ PIN مقرر ہو گیا', 'success');
       resetSessionTimer();   // لاک ٹائمر فوراً فعال
     } else {
-      if (_hashPin(pin) === localStorage.getItem('digital_io_pin_hash')) {
+      const stored = localStorage.getItem('digital_io_pin_hash');
+      let ok = await _dioPinMatches(pin, stored);
+      if (ok === null) {                          // legacy btoa — درست ہونے پر migrate
+        ok = (btoa('dio_' + pin + '_lock') === stored);
+        if (ok) { try { localStorage.setItem('digital_io_pin_hash', await _dioHashPin(pin)); } catch (_) {} }
+      }
+      if (ok) {
         _pinFailedAttempts = 0;
         ov.remove();
         resetSessionTimer();
