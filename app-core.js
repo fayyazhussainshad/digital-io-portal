@@ -882,13 +882,30 @@ window.getFontSize = getFontSize;
 // ── AUTH ──────────────────────────────────────────────────────
 
 // ── INIT APP ──────────────────────────────────────────────────
+// #11: admin.js صرف ایڈمن/سپرایڈمن کو dynamically لوڈ (غیر-ایڈمن کو 68KB ایڈمن
+//   کوڈ نہ بھیجا/چلایا جائے)۔ admin.js لوڈ ہوتے ہی registerPage('admin', …) چلتا ہے۔
+let _dioAdminLoaded = false;
+function _dioEnsureAdminBundle() {
+  if (_dioAdminLoaded) return Promise.resolve(true);
+  const role = (typeof currentOfficer !== 'undefined' && currentOfficer && currentOfficer.role) || '';
+  if (role !== 'admin' && role !== 'superadmin') return Promise.resolve(false);
+  _dioAdminLoaded = true;
+  return new Promise((res) => {
+    const s = document.createElement('script'); s.src = 'admin.js'; s.defer = true;
+    s.onload = () => res(true);
+    s.onerror = () => { _dioAdminLoaded = false; res(false); };
+    document.head.appendChild(s);
+  });
+}
+window._dioEnsureAdminBundle = _dioEnsureAdminBundle;
+
 async function initApp() {
-  // App lock removed — clear any leftover lock state and overlays
-  try {
-    localStorage.removeItem('digital_io_locked');
-    localStorage.removeItem('digital_io_pin_hash');
-  } catch(_) {}
-  ['pin-lock-overlay','dio-pin-overlay'].forEach(id => { const e=document.getElementById(id); if(e) e.remove(); });
+  // پرانا lock flag صاف کرو۔ نوٹ: digital_io_pin_hash کو NA ہٹائیں — یہ فعال ایپ
+  // لاک PIN ہے (قدم 3)؛ پہلے یہاں یہ مٹ جاتا تھا جس سے لاک ہر init پر ختم ہو جاتا۔
+  try { localStorage.removeItem('digital_io_locked'); } catch(_) {}
+  ['dio-pin-overlay'].forEach(id => { const e=document.getElementById(id); if(e) e.remove(); });
+  // #11: admin بنڈل صرف ایڈمن/سپرایڈمن کو لوڈ کرو (غیر-ایڈمن کے آلے پر admin.js نہ چلے)
+  try { if (typeof _dioEnsureAdminBundle === 'function') _dioEnsureAdminBundle(); } catch(_) {}
   updateSidebarProfile();
   // Refresh avatar again after profile fully loads (photo persistence)
   setTimeout(() => { if (typeof updateSidebarProfile === 'function') updateSidebarProfile(); }, 600);
