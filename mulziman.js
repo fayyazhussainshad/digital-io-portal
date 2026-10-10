@@ -161,7 +161,7 @@ function _renderAccCards(list) {
   return list.map(a => `
     <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:8px;">
       <div onclick="_accViewDetail('${a.id}')" style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;cursor:pointer;">
-        ${a.photo_url ? `<img src="${a.photo_url}" style="width:38px;height:38px;border-radius:6px;object-fit:cover;flex-shrink:0;">` : '<span style="font-size:22px;flex-shrink:0;">👤</span>'}
+        ${a.photo_url ? `<img src="${esc(a.photo_url)}" style="width:38px;height:38px;border-radius:6px;object-fit:cover;flex-shrink:0;">` : '<span style="font-size:22px;flex-shrink:0;">👤</span>'}
         <div style="flex:1;min-width:0;">
           <div style="font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_escA(a.name)}</div>
           <div style="font-size:12px;color:var(--text-muted);display:flex;gap:8px;flex-wrap:wrap;">
@@ -304,7 +304,7 @@ function _openAccusedForm(id, type) {
       <div class="acc-field">
         <label class="acc-label">تاریخ گرفتاری</label>
         <div style="display:flex;flex:1;min-width:0;gap:4px;align-items:center;">
-          <input class="form-input" id="acc-arrest-disp" dir="ltr" inputmode="numeric" maxlength="10" placeholder="DD/MM/YYYY" value="${a.arrest_date?_fmtDateDMY(a.arrest_date):''}" oninput="_accFmtDateInput(this)" style="flex:1;min-width:0;">
+          <input class="form-input" id="acc-arrest-disp" dir="ltr" inputmode="numeric" maxlength="10" placeholder="DD/MM/YYYY" value="${esc(a.arrest_date?_fmtDateDMY(a.arrest_date):'')}" oninput="_accFmtDateInput(this)" style="flex:1;min-width:0;">
           <div style="position:relative;flex:0 0 auto;">
             <button type="button" class="btn btn-secondary btn-sm" style="padding:5px 7px;">📅</button>
             <input type="date" id="acc-arrest" value="${_escA(a.arrest_date||'')}" onchange="_accSyncDateFromPicker()" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;">
@@ -380,7 +380,7 @@ function _accThumb(which, url) {
   const isPdf = /^data:application\/pdf/.test(url);
   const inner = isPdf
     ? `<div style="width:120px;height:120px;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:44px;background:var(--bg-card);">📄</div>`
-    : `<img src="${url}" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">`;
+    : `<img src="${esc(url)}" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">`;
   return `<div onclick="_accViewCurrent('${which}')" style="cursor:pointer;display:inline-block;">
       ${inner}
       <div style="font-size:11px;color:var(--green);margin-top:3px;">✅ منسلک — کھولیں</div>
@@ -522,12 +522,12 @@ function _accViewDetail(id) {
   const thumbs = (a.photo_url || a.cnic_copy_url) ? `
     <div style="display:flex;gap:14px;justify-content:center;margin-top:12px;flex-wrap:wrap;">
       ${a.photo_url ? `<div style="text-align:center;">
-        <img src="${a.photo_url}" onclick="_accViewDoc('${a.id}','photo')" style="width:120px;height:120px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--border);">
+        <img src="${esc(a.photo_url)}" onclick="_accViewDoc('${_dioJsHtml(a.id)}','photo')" style="width:120px;height:120px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--border);">
         <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">📷 تصویر (کھولیں)</div></div>` : ''}
       ${a.cnic_copy_url ? `<div style="text-align:center;">
         ${/^data:application\/pdf/.test(a.cnic_copy_url)
           ? `<div onclick="_accViewDoc('${a.id}','cnic')" style="width:120px;height:120px;border-radius:8px;cursor:pointer;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:44px;background:var(--bg-card);">📄</div>`
-          : `<img src="${a.cnic_copy_url}" onclick="_accViewDoc('${a.id}','cnic')" style="width:120px;height:120px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--border);">`}
+          : `<img src="${esc(a.cnic_copy_url)}" onclick="_accViewDoc('${_dioJsHtml(a.id)}','cnic')" style="width:120px;height:120px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--border);">`}
         <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">🪪 شناختی کاپی (کھولیں)</div></div>` : ''}
     </div>` : '';
 
@@ -576,8 +576,8 @@ function _accOpenViewer(url, name, title) {
   _accViewName = name || 'file';
   const isPdf = /^data:application\/pdf/.test(url);
   const viewer = isPdf
-    ? `<iframe src="${url}" style="width:80vw;height:74vh;border:none;background:#fff;border-radius:6px;"></iframe>`
-    : `<img src="${url}" style="max-width:88vw;max-height:74vh;border-radius:6px;display:block;margin:0 auto;">`;
+    ? `<iframe src="${esc(url)}" style="width:80vw;height:74vh;border:none;background:#fff;border-radius:6px;"></iframe>`
+    : `<img src="${esc(url)}" style="max-width:88vw;max-height:74vh;border-radius:6px;display:block;margin:0 auto;">`;
   _accCloseViewer();
   const ov = document.createElement('div');
   ov.id = 'acc-lightbox';
@@ -615,9 +615,9 @@ function _accPrintDoc() {
   if (!w) { showToast('پاپ اپ کی اجازت دیں', 'error'); return; }
   const isPdf = /^data:application\/pdf/.test(_accViewUrl);
   const content = isPdf
-    ? `<iframe src="${_accViewUrl}" style="width:100%;height:100vh;border:none;" onload="setTimeout(function(){window.focus();window.print();},400)"></iframe>`
-    : `<img src="${_accViewUrl}" style="max-width:100%;" onload="setTimeout(function(){window.focus();window.print();},400)">`;
-  w.document.write('<!DOCTYPE html><html><head><title>' + _accViewName + '</title></head><body style="margin:0;text-align:center;">' + content + '</body></html>');
+    ? `<iframe src="${esc(_accViewUrl)}" style="width:100%;height:100vh;border:none;" onload="setTimeout(function(){window.focus();window.print();},400)"></iframe>`
+    : `<img src="${esc(_accViewUrl)}" style="max-width:100%;" onload="setTimeout(function(){window.focus();window.print();},400)">`;
+  w.document.write('<!DOCTYPE html><html><head><title>' + esc(_accViewName) + '</title></head><body style="margin:0;text-align:center;">' + content + '</body></html>');
   w.document.close();
 }
 

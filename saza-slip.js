@@ -269,7 +269,7 @@ function _sazaRender() {
             ${(function(){
               let w = [45,10,10,35];
               try { const s = JSON.parse(sv.col_w || 'null'); if (Array.isArray(s) && s.length===4) w = s; } catch(_){}
-              return w.map(x => `<col style="width:${x}%">`).join('');
+              return w.map(x => `<col style="width:${Number(x)||0}%">`).join('');
             })()}
           </colgroup>
           <thead>

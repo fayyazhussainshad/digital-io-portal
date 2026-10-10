@@ -451,7 +451,8 @@ function _wbDoReplace(editorId) {
   if (!find) return;
   var ed = document.getElementById(editorId);
   if (!ed) return;
-  ed.innerHTML = ed.innerHTML.split(find).join(repl);
+  // XSS: repl khaam text hai — HTML ki tarah daalna stored-XSS tha
+    ed.innerHTML = ed.innerHTML.split(find).join(esc(repl));
   showToast('✅ Replaced all occurrences', 'success');
 }
 

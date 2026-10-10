@@ -444,7 +444,7 @@ function _renderMisalEditor(docId, def) {
     <!-- Safha khali hi rehta hai (software koi format nahi deta) —
          lekin likhne ke liye MS Word jaise auzaar mojood hain -->
     ${_vBtn}
-    <input type="hidden" id="misal-date" value="${savedDate}">
+    <input type="hidden" id="misal-date" value="${esc(savedDate)}">
     ${_msWordBar}
     <div style="flex:1;overflow:auto;min-height:0;padding:14px;">
       <div id="misal-editor" contenteditable="true" spellcheck="false" style="

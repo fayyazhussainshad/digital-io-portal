@@ -736,18 +736,18 @@ function _renderR173() {
         <!-- Header -->
         <div style="text-align:center;font-size:12px;color:#555;">فارم نمبر 25.56(1)</div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0;">
-          <span style="font-weight:bold;text-decoration:underline;">تھانہ ${o.station||'صدر ملتان'}</span>
+          <span style="font-weight:bold;text-decoration:underline;">تھانہ ${esc(o.station||'صدر ملتان')}</span>
           <span style="font-weight:bold;text-decoration:underline;font-size:17px;">${_origClosing ? `فارم رپورٹ اختتامی بصیغہ ${isIkhraj?'اخراج':'عدم پتہ'} زیر دفعہ 173 ض ف` : `فارم رپورٹ ${typeName} زیر دفعہ 173 ض ف`}</span>
-          <span style="font-weight:bold;text-decoration:underline;">ضلع ${o.district||'ملتان'}</span>
+          <span style="font-weight:bold;text-decoration:underline;">ضلع ${esc(o.district||'ملتان')}</span>
         </div>
 
         <!-- Case info -->
         <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:10px;">
           <tr>
-            <td style="border:1px solid #999;padding:6px;"><b>مقدمہ نمبر:</b> ${c.fir_number||''}</td>
-            <td style="border:1px solid #999;padding:6px;"><b>مورخہ:</b> ${c.fir_date||''}</td>
-            <td style="border:1px solid #999;padding:6px;"><b>جرم:</b> ${c.section_of_law||''} ${c.offence_type||''}</td>
-            <td style="border:1px solid #999;padding:6px;"><b>تھانہ:</b> ${o.station||''}</td>
+            <td style="border:1px solid #999;padding:6px;"><b>مقدمہ نمبر:</b> ${esc(c.fir_number||'')}</td>
+            <td style="border:1px solid #999;padding:6px;"><b>مورخہ:</b> ${esc(c.fir_date||'')}</td>
+            <td style="border:1px solid #999;padding:6px;"><b>جرم:</b> ${esc(c.section_of_law||'')} ${esc(c.offence_type||'')}</td>
+            <td style="border:1px solid #999;padding:6px;"><b>تھانہ:</b> ${esc(o.station||'')}</td>
           </tr>
         </table>
 
@@ -837,7 +837,7 @@ function _renderR173() {
         <!-- Header row: top SHO (left) + heading (right), full-width line below -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin:16px 0 4px;">
           <div class="sho-signature-block-top" style="text-align:right;">
-            <div class="sho-name-line" style="font-weight:${_sho?'bold':'normal'};font-size:14px;">${_sho}</div>
+            <div class="sho-name-line" style="font-weight:${_sho?'bold':'normal'};font-size:14px;">${esc(_sho)}</div>
           </div>
           <div style="font-weight:bold;font-size:15px;">تفصیل کاغذات:</div>
         </div>
@@ -847,7 +847,7 @@ function _renderR173() {
         <div style="display:flex;flex-direction:row-reverse;justify-content:space-around;align-items:flex-start;margin:12px 0 40px;">
           ${items6.map((p,i)=>`
             <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-              <span style="font-size:14px;text-decoration:underline;">${p}</span>
+              <span style="font-size:14px;text-decoration:underline;">${esc(p)}</span>
               <input type="text" inputmode="numeric" pattern="[0-9]*" class="qita-input" data-k="paper_${i}" value="${v('paper_'+i)}" oninput="_r173Qita(this)"
                 style="width:45px;border:none;border-bottom:1px solid #000;text-align:center;background:transparent;outline:none;font-size:13px;">
               <span class="qita-label" style="font-size:11px;min-height:14px;">${(() => { const n=parseInt(v('paper_'+i)); return n===1?'قطعہ':(n>1?'قطعات':''); })()}</span>
@@ -857,7 +857,7 @@ function _renderR173() {
         <!-- Bottom SHO block (left): signature space → name → date -->
         <div class="sho-signature-block-bottom" style="text-align:right;margin-top:8px;min-width:220px;display:inline-block;">
           <div style="border-bottom:1px solid #000;min-height:50px;margin-bottom:6px;"></div>
-          <div class="sho-name-line" style="font-weight:${_sho?'bold':'normal'};font-size:14px;">${_sho}</div>
+          <div class="sho-name-line" style="font-weight:${_sho?'bold':'normal'};font-size:14px;">${esc(_sho)}</div>
           <div style="font-size:13px;margin-top:6px;">تاریخ: _______________</div>
         </div>`;
         })() : `
@@ -866,7 +866,7 @@ function _renderR173() {
         <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:13px;justify-content:center;margin-top:8px;">
           ${['فارم ہذا','نقل FIR','اصل تحریر','فارم ریمانڈ','نقشہ موقع','اطلاع نامہ مدعی','اصل ضمنی SHO'].map((p,i)=>`
             <div style="display:inline-flex;flex-direction:column;align-items:center;margin:0 6px;">
-              <span style="text-decoration:underline;">${p}</span>
+              <span style="text-decoration:underline;">${esc(p)}</span>
               <input type="text" inputmode="numeric" pattern="[0-9]*" data-k="paper_${i}" value="${v('paper_'+i)}" oninput="_r173Qita(this)"
                 style="width:45px;border:none;border-bottom:1px solid #000;text-align:center;background:transparent;margin-top:4px;font-size:14px;outline:none;">
               <span class="qita-label" style="font-size:11px;min-height:14px;color:#555;">${(() => { const n=parseInt(v('paper_'+i)); return n===1?'قطعہ':(n>1?'قطعات':''); })()}</span>
@@ -4355,7 +4355,7 @@ function _renderR173List() {
   };
 
   const rows = (list) => list.map((d, i) => `
-    <tr ondblclick="_r173OpenDoc('${d.id}')" style="cursor:pointer;">
+    <tr ondblclick="_r173OpenDoc('${_dioJsHtml(d.id)}')" style="cursor:pointer;">
       <td class="num">${i + 1}</td>
       <td>${esc(d.head || typeName(d.type))}</td>
       <td style="text-align:center;">${esc(typeName(d.type))}</td>
@@ -4363,10 +4363,10 @@ function _renderR173List() {
         ${esc(dt(d))}${wq(d) ? `<div class="wq">${esc(wq(d))}</div>` : ''}</td>
       <td class="mz">${esc(mazmoon(d))}</td>
       <td class="act">
-        <button class="cab" onclick="event.stopPropagation();_r173OpenDoc('${d.id}')" title="ترمیم">✏️</button>
-        <button class="cab" onclick="event.stopPropagation();_r173DeleteDoc('${d.id}')" title="حذف">🗑️</button>
-        <button class="cab" onclick="event.stopPropagation();_r173PrintDoc('${d.id}')" title="پرنٹ">🖨️</button>
-        <button class="cab" onclick="event.stopPropagation();_r173EmailDoc('${d.id}')" title="بھیجیں">✉️</button>
+        <button class="cab" onclick="event.stopPropagation();_r173OpenDoc('${_dioJsHtml(d.id)}')" title="ترمیم">✏️</button>
+        <button class="cab" onclick="event.stopPropagation();_r173DeleteDoc('${_dioJsHtml(d.id)}')" title="حذف">🗑️</button>
+        <button class="cab" onclick="event.stopPropagation();_r173PrintDoc('${_dioJsHtml(d.id)}')" title="پرنٹ">🖨️</button>
+        <button class="cab" onclick="event.stopPropagation();_r173EmailDoc('${_dioJsHtml(d.id)}')" title="بھیجیں">✉️</button>
       </td>
     </tr>`).join('');
 

@@ -104,7 +104,7 @@ function render5CRow(a){
     <td style="font-family:var(--font-mono);font-size:11px;">${esc5C(formatCell(a.complainant_cell))}</td>
     <td>${nums}</td>
     <td style="font-size:11px;">${toDisplayDate(a.application_date)||'—'}</td>
-    <td><span class="pill ${FIVEC_STATUS_CLS[a.status]||'pill-blue'}">${FIVEC_STATUS[a.status]||a.status}</span></td>
+    <td><span class="pill ${FIVEC_STATUS_CLS[a.status]||'pill-blue'}">${esc5C(FIVEC_STATUS[a.status]||a.status)}</span></td>
     <td style="text-align:center;">📎 ${att}</td>
     <td style="white-space:nowrap;direction:rtl;">
       <button class="btn btn-secondary btn-sm" onclick="open5CForm('${a.id}')" title="ترمیم">✏️</button>
@@ -280,7 +280,7 @@ async function open5CResponse(id){
              background-image:
                linear-gradient(to left,  transparent 0.7cm, #888 0.7cm, #888 calc(0.7cm + 1px), transparent calc(0.7cm + 1px)),
                linear-gradient(to right, transparent 0.5cm, #aaa 0.5cm, #aaa calc(0.5cm + 1px), transparent calc(0.5cm + 1px));
-             background-color:white;">${initial}</div>
+             background-color:white;">${(window.DIO&&DIO.html&&DIO.html.safe)?DIO.html.safe(initial):esc5C(initial)}</div>
   </div>`;
   document.body.appendChild(overlay);
   document.body.classList.add('r5c-open');
@@ -351,7 +351,7 @@ function _toggleTablePicker5C(){
 async function save5CResponse(id){
   const html=document.getElementById('a4-paper').innerHTML;
   try{
-    await supabaseClient.from('applications_5c').update({response_text:html,response_date:new Date().toISOString().split('T')[0],status:'responded'}).eq('id',id);
+    await supabaseClient.from('applications_5c').update({response_text:((window.DIO&&DIO.html&&DIO.html.safe)?DIO.html.safe(html):html),response_date:new Date().toISOString().split('T')[0],status:'responded'}).eq('id',id);
     showToast('✅ Response saved online','success');
   }catch(e){showToast('❌ Save failed: '+e.message,'error',5000);}
 }
@@ -442,7 +442,7 @@ async function _print5C(id) {
       <tr><th>موضوع</th><td>${esc5C(a.subject)||'—'}</td></tr>
     </table>
     <div style="font-weight:700;margin-top:10px;">جواب / رپورٹ:</div>
-    <div class="resp">${(a.response_text||'').replace(/\n/g,'<br>') || '&nbsp;'}</div>
+    <div class="resp">${((window.DIO&&DIO.html&&DIO.html.safe)?DIO.html.safe(String(a.response_text||'').replace(/\n/g,'<br>')):esc5C(a.response_text||'')) || '&nbsp;'}</div>
     <div style="display:flex;justify-content:flex-start;direction:ltr;margin-top:30px;">
       <div style="text-align:center;min-width:200px;">
         <div style="border-top:1px solid #000;padding-top:6px;margin-top:35px;font-weight:700;direction:rtl;text-align:center;">

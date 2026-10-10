@@ -86,6 +86,66 @@ function _installDioWriteGuard() {
 // load par bhi koshish (agar supabaseClient mojood ho) + showSubscriptionBanner se bhi (reliable)
 try { setTimeout(_installDioWriteGuard, 3000); } catch (_) {}
 
+
+// ── #9 FAIL-CLOSED OFFLINE IJAZAT ─────────────────────────────
+//  Pehle: har offline/DB-error par NAYA 30-din trial mil jata tha (fail-open)
+//  — yaani mo'attal/miyaad-khatam afsar bhi sirf internet band kar ke kaam
+//  jari rakh sakta tha. Ab tarteeb ye hai:
+//    1) Server ka ECDSA dastkhat-shuda license token (sab se mazboot)
+//    2) Aakhri KAMYAB online natija (guzray dinon ki katauti ke sath)
+//    3) Kabhi online tasdeeq na hui ho → sirf MUKHTASIR grace, naya trial nahi
+//  Field officer phanse na — is liye tasdeeq-shuda afsar ki offline ijazat
+//  utni hi chalti hai jitni server ne aakhri baar kahi thi.
+const _SUB_CACHE_KEY  = 'dio_sub_cache';
+const _SUB_GRACE_DAYS = 3;
+
+function _dioCacheSub(res, oid) {
+  try {
+    if (!res || !res.status || res.status === 'none') return;
+    var closed = (res.status === 'suspended' || res.status === 'expired');
+    localStorage.setItem(_SUB_CACHE_KEY, JSON.stringify({
+      s: res.status, d: closed ? 0 : (res.daysLeft || 0),
+      p: res.plan || '', o: oid || null, t: Date.now()
+    }));
+  } catch (_) {}
+}
+
+function _dioReadSubCache(oid) {
+  try {
+    var raw = localStorage.getItem(_SUB_CACHE_KEY);
+    if (!raw) return null;
+    var c = JSON.parse(raw);
+    if (!c || !c.t) return null;
+    if (oid && c.o && c.o !== oid) return null;   // dusre afsar ka cache na chale
+    if (c.s === 'suspended' || c.s === 'expired')
+      return { status: c.s, daysLeft: 0, plan: c.p || 'بند' };
+    var elapsed = Math.floor((Date.now() - c.t) / 86400000);
+    var left = (c.d || 0) - elapsed;
+    if (left <= 0)
+      return { status: 'expired', daysLeft: 0, plan: 'میعاد ختم — آن لائن تجدید کریں' };
+    return { status: c.s, daysLeft: left, plan: (c.p || 'اجازت') + ' (آف لائن)' };
+  } catch (_) { return null; }
+}
+
+async function _dioOfflineStatus(oid) {
+  try {
+    if (typeof dioLicenseValid === 'function') {
+      var lic = await dioLicenseValid();
+      if (lic && lic.valid) {
+        return { status: 'active',
+                 daysLeft: Math.max(1, Math.ceil((lic.entitledUntil - Date.now()) / 86400000)),
+                 plan: lic.plan || 'آف لائن اجازت' };
+      }
+      if (lic && lic.expired)
+        return { status: 'expired', daysLeft: 0, plan: 'میعاد ختم — آن لائن تجدید کریں' };
+    }
+  } catch (_) {}
+  var cached = _dioReadSubCache(oid);
+  if (cached) return cached;
+  return { status: 'trial', daysLeft: _SUB_GRACE_DAYS,
+           plan: 'عارضی اجازت — آن لائن تصدیق درکار' };
+}
+
 // ── SUBSCRIPTION CHECK ON LOGIN ───────────────────────────────
 async function checkSubscription() {
   try {
@@ -96,7 +156,8 @@ async function checkSubscription() {
     if (currentOfficer && currentOfficer.role === 'superadmin') {
       return { status:'active', daysLeft:36500, plan:'مالک — لائف ٹائم' };
     }
-    if (!navigator.onLine) return { status:'trial', daysLeft:30, plan:'آزمائشی' };
+    // #9 fail-closed: offline par naya trial NAHI — token/cache/grace
+    if (!navigator.onLine) return await _dioOfflineStatus(oid);
 
     const { data, error } = await supabaseClient
       .from('subscriptions')
@@ -106,13 +167,16 @@ async function checkSubscription() {
       .limit(1)
       .maybeSingle();
 
-    // If table not accessible (RLS/401) — just allow access silently
-    if (error) return { status:'trial', daysLeft:30, plan:'آزمائشی' };
+    // #9 fail-closed: RLS/401/DB kharabi par bhi naya trial NAHI
+    if (error) return await _dioOfflineStatus(oid);
 
     if (!data) {
       // First time — create trial (ignore errors)
       try { await _createTrial(oid); } catch(_) {}
-      return { status:'trial', daysLeft:30, plan:'آزمائشی' };
+      var _fresh = { status:'trial', daysLeft:30, plan:'آزمائشی' };
+      _dioCacheSub(_fresh, oid);
+      try { if (typeof dioRefreshLicense === 'function') dioRefreshLicense(); } catch(_) {}
+      return _fresh;
     }
 
     const now  = new Date();
@@ -121,17 +185,28 @@ async function checkSubscription() {
 
     window._currentSub = data;
 
+    var out;
     if (data.status === 'active' && diff > 0) {
-      return { status:'active', daysLeft:diff, plan:data.subscription_plans?.name||'فعال' };
+      out = { status:'active', daysLeft:diff, plan:data.subscription_plans?.name||'فعال' };
     } else if (data.status === 'trial' && diff > 0) {
-      return { status:'trial', daysLeft:diff, plan:'آزمائشی' };
+      out = { status:'trial', daysLeft:diff, plan:'آزمائشی' };
     } else if (data.status === 'suspended') {
-      return { status:'suspended', daysLeft:0, plan:'معطل' };
+      out = { status:'suspended', daysLeft:0, plan:'معطل' };
     } else {
-      return { status:'expired', daysLeft:diff, plan:'میعاد ختم' };
+      out = { status:'expired', daysLeft:diff, plan:'میعاد ختم' };
     }
+    // #9: kamyab ONLINE natije ko cache karo + dastkhat-shuda license taza karo
+    _dioCacheSub(out, oid);
+    try {
+      if (typeof dioRefreshLicense === 'function' &&
+          (out.status === 'active' || out.status === 'trial')) dioRefreshLicense();
+    } catch(_) {}
+    return out;
   } catch(_) {
-    return { status:'trial', daysLeft:30, plan:'آزمائشی' };
+    // #9 fail-closed: ghair-mutawaqqa khrabi par bhi naya trial NAHI
+    try { return await _dioOfflineStatus(null); } catch(_e) {
+      return { status:'expired', daysLeft:0, plan:'میعاد ختم — آن لائن تجدید کریں' };
+    }
   }
 }
 

@@ -101,12 +101,12 @@ function _renderCopyTable(rows) {
       return `<tr>
       <td style="padding:10px;border:1px solid var(--border);">
         ${isImage ?
-          `<img src="${c.file_url}" style="max-width:60px;max-height:60px;border-radius:4px;cursor:pointer;" onclick="_dioViewFile('${c.file_url}','${(c.display_name||c.file_name||'فائل').replace(/'/g,'')}')">` :
-          `<span style="cursor:pointer;color:var(--accent);" onclick="_dioViewFile('${c.file_url}','${(c.display_name||c.file_name||'فائل').replace(/'/g,'')}')">📄 ${shownName}</span>`}
+          `<img src="${esc(c.file_url)}" style="max-width:60px;max-height:60px;border-radius:4px;cursor:pointer;" onclick="_dioViewFile('${_dioJsHtml(c.file_url)}','${_dioJsHtml(c.display_name||c.file_name||'فائل')}')">` :
+          `<span style="cursor:pointer;color:var(--accent);" onclick="_dioViewFile('${_dioJsHtml(c.file_url)}','${_dioJsHtml(c.display_name||c.file_name||'فائل')}')">📄 ${esc(shownName)}</span>`}
       </td>
       <td style="padding:6px;border:1px solid var(--border);text-align:center;">
-        <button class="btn btn-secondary btn-sm" style="padding:2px 6px;" onclick="_dioViewFile('${c.file_url}','${(c.display_name||c.file_name||'فائل').replace(/'/g,'')}')">👁️</button>
-        <button class="btn btn-secondary btn-sm" style="padding:2px 6px;" onclick="_dioViewFile('${c.file_url}','${shownName.replace(/'/g,'')}')">🖨️</button>
+        <button class="btn btn-secondary btn-sm" style="padding:2px 6px;" onclick="_dioViewFile('${_dioJsHtml(c.file_url)}','${_dioJsHtml(c.display_name||c.file_name||'فائل')}')">👁️</button>
+        <button class="btn btn-secondary btn-sm" style="padding:2px 6px;" onclick="_dioViewFile('${_dioJsHtml(c.file_url)}','${_dioJsHtml(shownName)}')">🖨️</button>
         <button class="btn btn-danger btn-sm" style="padding:2px 6px;" onclick="_deleteFirCopy('${c.id}')">🗑️</button>
       </td></tr>`;
     }).join('')}

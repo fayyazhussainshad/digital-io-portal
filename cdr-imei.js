@@ -87,18 +87,18 @@ function _renderCdr() {
 
         <!-- Header -->
         <div style="display:flex;justify-content:space-between;">
-          <span>تھانہ: <b contenteditable="true">${o.station||'صدر ملتان'}</b></span>
+          <span>تھانہ: <b contenteditable="true">${esc(o.station||'صدر ملتان')}</b></span>
           <span>ڈائری نمبر: <span contenteditable="true" data-k="diary_number" style="border-bottom:1px solid #999;min-width:200px;display:inline-block;">${v('diary_number')}</span> مورخہ: <span contenteditable="true" data-k="diary_date" style="border-bottom:1px solid #999;min-width:140px;display:inline-block;">${v('diary_date')}</span></span>
-          <span>ضلع: <b contenteditable="true">${o.district||'ملتان'}</b></span>
+          <span>ضلع: <b contenteditable="true">${esc(o.district||'ملتان')}</b></span>
         </div>
         <div style="margin-top:6px;">مقدمہ نمبر: <b>${esc(c.fir_number)||''}</b> &nbsp; مورخہ: <b>${esc(c.fir_date)||''}</b> &nbsp; بجرم: <b>${esc(c.section_of_law)||''} ${esc(c.offence_type)||''}</b> ت پ تھانہ ${o.station||'صدر ملتان'}</div>
-        <div style="margin-top:4px;display:flex;justify-content:space-between;"><span>تاریخ/وقت وقوعہ: <b>${c.occurrence_date||''}</b></span><span style="min-width:40%;text-align:right;">مقام وقوعہ: <b>${c.occurrence_place||''}</b></span></div>
+        <div style="margin-top:4px;display:flex;justify-content:space-between;"><span>تاریخ/وقت وقوعہ: <b>${esc(c.occurrence_date||'')}</b></span><span style="min-width:40%;text-align:right;">مقام وقوعہ: <b>${esc(c.occurrence_place||'')}</b></span></div>
         <div style="margin-top:4px;display:flex;justify-content:space-between;"><span>تفتیشی آفیسر: <b>${(() => {
           let rank = o.rank || o.designation || '';
           let nm = o.full_name || '';
           if (!nm) { try { const p = JSON.parse(localStorage.getItem('officer_profile')||localStorage.getItem('dio_officer_cache')||'{}'); rank = rank||p.rank||p.designation||''; nm = p.name||p.full_name||''; } catch(_) {} }
-          return [rank, nm].filter(Boolean).join(' ');
-        })()}</b></span><span style="min-width:40%;text-align:right;">موبائل نمبر: <b>${o.phone||''}</b></span></div>
+          return esc([rank, nm].filter(Boolean).join(' '));
+        })()}</b></span><span style="min-width:40%;text-align:right;">موبائل نمبر: <b>${esc(o.phone||'')}</b></span></div>
 
         <!-- Main table -->
         <table style="width:100%;border-collapse:collapse;font-size:18.67px;margin-top:10px;" id="cdr-table">
@@ -112,10 +112,10 @@ function _renderCdr() {
           <tbody>
             ${rows.map((r,i)=>`<tr>
               <td style="border:1px solid #999;padding:5px;text-align:center;">${i+1}</td>
-              <td contenteditable="true" data-c="req" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;" dir="ltr">${r.req||''}</td>
-              <td contenteditable="true" data-c="model" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;">${r.model||''}</td>
-              <td contenteditable="true" data-c="from" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;" dir="ltr">${r.from||''}</td>
-              <td contenteditable="true" data-c="to" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;" dir="ltr">${r.to||''}</td>
+              <td contenteditable="true" data-c="req" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;" dir="ltr">${esc(r.req||'')}</td>
+              <td contenteditable="true" data-c="model" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;">${esc(r.model||'')}</td>
+              <td contenteditable="true" data-c="from" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;" dir="ltr">${esc(r.from||'')}</td>
+              <td contenteditable="true" data-c="to" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;" dir="ltr">${esc(r.to||'')}</td>
             </tr>`).join('')}
           </tbody>
         </table>
@@ -161,7 +161,7 @@ function _renderCdr() {
               const fullTitle = [rank, nm].filter(Boolean).join(' ');
               if (fullTitle) {
                 // مرتبہ + name, both normal weight, no line
-                return `<span>مرتبہ</span> <span>${fullTitle}</span>`;
+                return `<span>مرتبہ</span> <span>${esc(fullTitle)}</span>`;
               }
               return `مرتبہ <span contenteditable="true" data-k="zimni_marba" style="min-width:90px;display:inline-block;">${v('zimni_marba')}</span>`;
             })()}</span>
@@ -176,14 +176,14 @@ function _renderCdr() {
           <div style="flex:1;text-align:center;">
             <div style="font-weight:600;text-align:center;">Forwarded Please</div>
             <div style="height:60px;"></div>
-            <div style="font-weight:bold;text-align:center;">${(typeof getDSPName==='function'?getDSPName():'')}</div>
+            <div style="font-weight:bold;text-align:center;">${esc(typeof getDSPName==='function'?getDSPName():'')}</div>
             <div style="border-top:1px solid #333;width:70%;margin:0 auto;padding-top:6px;text-align:center;">سرکل DSP/SDPO</div>
           </div>
           <div style="flex:1;text-align:center;">
             <div style="font-weight:600;text-align:center;">Forwarded</div>
             <div style="height:60px;"></div>
             <div style="height:6px;"></div>
-            <div style="border-top:1px solid #333;width:70%;margin:0 auto;padding-top:6px;text-align:center;font-weight:bold;">${(typeof getSHOSignLine==='function') ? getSHOSignLine(o.station||'صدر ملتان') : ''}</div>
+            <div style="border-top:1px solid #333;width:70%;margin:0 auto;padding-top:6px;text-align:center;font-weight:bold;">${(typeof getSHOSignLine==='function') ? esc(getSHOSignLine(o.station||'صدر ملتان')) : ''}</div>
           </div>
         </div>
 

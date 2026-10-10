@@ -124,7 +124,7 @@ async function _buildBin() {
 
   } catch(e) {
     document.getElementById('bin-root').innerHTML =
-      `<div style="text-align:center;padding:40px;color:var(--red);">❌ ${e.message}</div>`;
+      `<div style="text-align:center;padding:40px;color:var(--red);">❌ ${esc(e.message)}</div>`;
   }
 }
 

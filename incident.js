@@ -39,8 +39,8 @@ function renderIncident(container) {
 
       <!-- Row 1: Thana (right, 0.7in gap) ... Zila (left) -->
       <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:16px;font-weight:800;color:#1a3a5c;margin-bottom:4px;">
-        <div style="padding-right:0.7in;">تھانہ ${o.station||'_______'}</div>
-        <div>ضلع ${o.district||'_______'}</div>
+        <div style="padding-right:0.7in;">تھانہ ${esc(o.station||'_______')}</div>
+        <div>ضلع ${esc(o.district||'_______')}</div>
       </div>
 
       <!-- Row 2: واقعاتی رپورٹ (centered, underlined) -->
@@ -125,7 +125,7 @@ function renderIncident(container) {
           <div style="text-align:center;min-width:260px;">
             <div style="height:40px;border-bottom:1px solid #1a3a5c;"></div>
             <div style="font-size:17px;font-weight:800;color:#1a3a5c;padding-top:6px;">
-              ${(typeof getSHOSignLine==='function') ? getSHOSignLine(o.station||'صدر ملتان') : ''}
+              ${(typeof getSHOSignLine==='function') ? esc(getSHOSignLine(o.station||'صدر ملتان')) : ''}
             </div>
             <input id="inc-sign-date" value="${today}"
               style="border:none;border-bottom:1px solid #aaa;padding:1px 4px;text-align:center;width:130px;outline:none;background:transparent;display:block;margin:0 auto 0;font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
@@ -200,14 +200,14 @@ async function _viewIncReport(id) {
     openModal('🚨 ' + (data.report_number||'Incident Report'),
       `<div style="font-size:13px;line-height:2.2;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
         <div><b>رپورٹ نمبر:</b> ${esc(data.report_number)||'—'}</div>
-        <div><b>تاریخ:</b> ${data.incident_date||'—'} &nbsp;·&nbsp; <b>وقت:</b> ${data.incident_time||'—'}</div>
+        <div><b>تاریخ:</b> ${esc(data.incident_date||'—')} &nbsp;·&nbsp; <b>وقت:</b> ${esc(data.incident_time||'—')}</div>
         <div><b>قسم:</b> ${esc(data.incident_type)||'—'}</div>
         <div><b>مقام:</b> ${esc(data.address)||'—'}</div>
-        ${fir ? `<div><b>FIR نمبر:</b> <span style="color:var(--accent);font-weight:700;">${fir}</span>
-          <button class="btn btn-secondary btn-sm" onclick="closeModal();showPage('cases',null);setTimeout(()=>{const c=Array.from(document.querySelectorAll('td')).find(t=>t.textContent.includes('${fir}')); if(c)c.click();},800);">مقدمہ دیکھیں →</button>
+        ${fir ? `<div><b>FIR نمبر:</b> <span style="color:var(--accent);font-weight:700;">${esc(fir)}</span>
+          <button class="btn btn-secondary btn-sm" onclick="closeModal();showPage('cases',null);setTimeout(()=>{const c=Array.from(document.querySelectorAll('td')).find(t=>t.textContent.includes('${_dioJsHtml(fir)}')); if(c)c.click();},800);">مقدمہ دیکھیں →</button>
         </div>` : ''}
-        <div style="border-top:1px solid #ddd;margin:8px 0;padding-top:8px;"><b>روداد:</b> ${data.narrative||'—'}</div>
-        <div><b>اقدامات:</b> ${data.action_taken||'—'}</div>
+        <div style="border-top:1px solid #ddd;margin:8px 0;padding-top:8px;"><b>روداد:</b> ${esc(data.narrative||'—')}</div>
+        <div><b>اقدامات:</b> ${esc(data.action_taken||'—')}</div>
       </div>`,
       `<button class="btn btn-danger btn-sm" onclick="closeModal();_delIncReport('${id}')">🗑️ حذف</button>
        <button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`
@@ -340,9 +340,9 @@ async function _showPrevReports() {
             <span style="font-size:18px;">🚨</span>
             <div style="flex:1;">
               <div style="font-size:13px;font-weight:700;color:var(--accent);">${esc(r.report_number)||'—'}</div>
-              <div style="font-size:11px;color:var(--text-muted);">${esc(r.incident_type)||'—'} · ${r.incident_date||'—'}</div>
+              <div style="font-size:11px;color:var(--text-muted);">${esc(r.incident_type)||'—'} · ${esc(r.incident_date||'—')}</div>
               <div style="font-size:11px;color:var(--text-faint);">${esc(r.address)||'—'}</div>
-              ${r.data?.fir_number ? `<div style="font-size:10px;color:var(--accent);">FIR: ${r.data.fir_number}</div>` : ''}
+              ${r.data?.fir_number ? `<div style="font-size:10px;color:var(--accent);">FIR: ${esc(r.data.fir_number)}</div>` : ''}
             </div>
             <div style="display:flex;flex-direction:column;gap:4px;">
               <button class="btn btn-secondary btn-sm" onclick="_viewIncReport('${r.id}')">👁️</button>

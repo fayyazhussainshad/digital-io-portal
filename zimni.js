@@ -258,17 +258,17 @@ function _renderZimniList() {
       </tr></thead>
       <tbody>
         ${list.map(z => `
-          <tr ondblclick="_openZimni('${z.id}')" style="cursor:pointer;">
+          <tr ondblclick="_openZimni('${_dioJsHtml(z.id)}')" style="cursor:pointer;">
             <td class="num">${esc(String(sno(z) || ''))}</td>
             <td class="dtc">${esc(dt(z))}${wq(z) ? `<div class="wq">${esc(wq(z))}</div>` : ''}</td>
             <td>${esc(head(z))}</td>
             <td class="act">
-              <button class="zab" onclick="event.stopPropagation();_openZimni('${z.id}')" title="ترمیم">✏️</button>
-              <button class="zab" onclick="event.stopPropagation();_copyZimni('${z.id}')" title="نقل (Copy)">📋</button>
-              <button class="zab" onclick="event.stopPropagation();_printZimniById('${z.id}')" title="پرنٹ">🖨️</button>
-              <button class="zab" onclick="event.stopPropagation();_emailZimni('${z.id}')" title="شیئر">📤</button>
-              <button class="zab" onclick="event.stopPropagation();_pdfZimni('${z.id}')" title="PDF" style="font-size:10px;font-weight:800;color:#b91c1c;">PDF</button>
-              <button class="zab" onclick="event.stopPropagation();_deleteZimni('${z.id}')" title="حذف">🗑️</button>
+              <button class="zab" onclick="event.stopPropagation();_openZimni('${_dioJsHtml(z.id)}')" title="ترمیم">✏️</button>
+              <button class="zab" onclick="event.stopPropagation();_copyZimni('${_dioJsHtml(z.id)}')" title="نقل (Copy)">📋</button>
+              <button class="zab" onclick="event.stopPropagation();_printZimniById('${_dioJsHtml(z.id)}')" title="پرنٹ">🖨️</button>
+              <button class="zab" onclick="event.stopPropagation();_emailZimni('${_dioJsHtml(z.id)}')" title="شیئر">📤</button>
+              <button class="zab" onclick="event.stopPropagation();_pdfZimni('${_dioJsHtml(z.id)}')" title="PDF" style="font-size:10px;font-weight:800;color:#b91c1c;">PDF</button>
+              <button class="zab" onclick="event.stopPropagation();_deleteZimni('${_dioJsHtml(z.id)}')" title="حذف">🗑️</button>
             </td>
           </tr>`).join('')}
       </tbody>
@@ -2999,7 +2999,8 @@ function _zimniPrintDoc(inner) {
 // Aik ضمنی ka poora chhapne wala safha — sirf working document
 function _zimniDocHTML(z) {
   const c = z.content || {};
-  return _zimniPrintHTML(c.bodyHtml || '');
+  // XSS: print/PDF raasta sanitize nahi karta tha (editor karta hai)
+  return _zimniPrintHTML(((window.DIO&&DIO.html&&DIO.html.safe)?DIO.html.safe(c.bodyHtml||''):(c.bodyHtml||'')));
 }
 
 function _zimniById(id) { return (_zimniList || []).find(z => String(z.id) === String(id)); }
@@ -3021,7 +3022,7 @@ function _printAllZimni() {
   const body = _zimniList.map((z, i) => {
     const c = z.content || {};
     const brk = (i < _zimniList.length - 1) ? 'style="page-break-after:always;"' : '';
-    return `<div ${brk}>${c.bodyHtml || ''}</div>`;
+    return `<div ${brk}>${((window.DIO&&DIO.html&&DIO.html.safe)?DIO.html.safe(c.bodyHtml||''):(c.bodyHtml||''))}</div>`;
   }).join('');
   const html = _zimniPrintHTML(body);
   if (typeof dioPrint === 'function') dioPrint(html);
@@ -3356,17 +3357,17 @@ function _renderZimniAList() {
       </tr></thead>
       <tbody>
         ${list.map(z => `
-          <tr ondblclick="_openZimniA('${z.id}')" style="cursor:pointer;">
+          <tr ondblclick="_openZimniA('${_dioJsHtml(z.id)}')" style="cursor:pointer;">
             <td class="num">${esc(String(sno(z) || ''))}</td>
             <td class="dtc">${esc(dt(z))}${wq(z) ? `<div class="wq">${esc(wq(z))}</div>` : ''}</td>
             <td>${esc(wits(z))}</td>
             <td class="act">
-              <button class="zab" onclick="event.stopPropagation();_openZimniA('${z.id}')" title="ترمیم">✏️</button>
-              <button class="zab" onclick="event.stopPropagation();_copyZimniA('${z.id}')" title="نقل (Copy)">📋</button>
+              <button class="zab" onclick="event.stopPropagation();_openZimniA('${_dioJsHtml(z.id)}')" title="ترمیم">✏️</button>
+              <button class="zab" onclick="event.stopPropagation();_copyZimniA('${_dioJsHtml(z.id)}')" title="نقل (Copy)">📋</button>
               <button class="zab" onclick="event.stopPropagation();_printZimniAById('${z.id}')" title="پرنٹ">🖨️</button>
-              <button class="zab" onclick="event.stopPropagation();_emailZimniA('${z.id}')" title="شیئر">📤</button>
-              <button class="zab" onclick="event.stopPropagation();_pdfZimniA('${z.id}')" title="PDF" style="font-size:10px;font-weight:800;color:#b91c1c;">PDF</button>
-              <button class="zab" onclick="event.stopPropagation();_deleteZimniA('${z.id}')" title="حذف">🗑️</button>
+              <button class="zab" onclick="event.stopPropagation();_emailZimniA('${_dioJsHtml(z.id)}')" title="شیئر">📤</button>
+              <button class="zab" onclick="event.stopPropagation();_pdfZimniA('${_dioJsHtml(z.id)}')" title="PDF" style="font-size:10px;font-weight:800;color:#b91c1c;">PDF</button>
+              <button class="zab" onclick="event.stopPropagation();_deleteZimniA('${_dioJsHtml(z.id)}')" title="حذف">🗑️</button>
             </td>
           </tr>`).join('')}
       </tbody>
@@ -4492,7 +4493,8 @@ window._printZimniA = _printZimniA;
 // ═══════════════════════════════════════════════════════════════
 function _zaDocHTML(z) {
   const c = z.content || {};
-  return _zaPrintHTML(c.bodyHtml || '');
+  // XSS: androoni print/PDF raasta bhi sanitize nahi karta tha
+  return _zaPrintHTML(((window.DIO&&DIO.html&&DIO.html.safe)?DIO.html.safe(c.bodyHtml||''):(c.bodyHtml||'')));
 }
 function _zaById(id) { return (_zaList || []).find(z => String(z.id) === String(id)); }
 
@@ -4511,7 +4513,7 @@ function _printAllZimniA() {
   const body = _zaList.map((z, i) => {
     const c = z.content || {};
     const brk = (i < _zaList.length - 1) ? 'style="page-break-after:always;"' : '';
-    return `<div ${brk}>${c.bodyHtml || ''}</div>`;
+    return `<div ${brk}>${((window.DIO&&DIO.html&&DIO.html.safe)?DIO.html.safe(c.bodyHtml||''):(c.bodyHtml||''))}</div>`;
   }).join('');
   const html = _zaPrintHTML(body);
   if (typeof dioPrint === 'function') dioPrint(html);

@@ -326,12 +326,12 @@ async function _doPriorCheck(name, cnic, cell) {
       const role = (SUS[p.person_type]||{}).label || p.person_type;
       const icon = (SUS[p.person_type]||{}).icon || '•';
       html += `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:3px 0;">
-        <span>${icon} <b>${esc(p.full_name)}</b> — ${role}</span>
-        <button class="btn btn-secondary btn-sm" style="font-size:10px;padding:2px 8px;" onclick='_autoFillWitness(${JSON.stringify(p).replace(/'/g,"&#39;")})'>📋 بھریں</button>
+        <span>${icon} <b>${esc(p.full_name)}</b> — ${esc(role)}</span>
+        <button class="btn btn-secondary btn-sm" style="font-size:10px;padding:2px 8px;" onclick='_autoFillWitness(${_dioJsHtml(JSON.stringify(p))})'>📋 بھریں</button>
       </div>`;
     });
     matchC.forEach(c => {
-      html += `<div style="padding:3px 0;">📢 <b>مدعی</b> FIR ${c.fir_number||'—'} — ${STATUS_LABELS[c.status]||c.status||''}</div>`;
+      html += `<div style="padding:3px 0;">📢 <b>مدعی</b> FIR ${esc(c.fir_number||'—')} — ${esc(STATUS_LABELS[c.status]||c.status||'')}</div>`;
     });
     html += `</div>`;
     box.innerHTML = html;

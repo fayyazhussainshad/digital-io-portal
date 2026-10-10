@@ -102,7 +102,8 @@
     return '<div style="display:flex;flex-direction:column;gap:0;direction:rtl;">' +
       events.map(function (ev, i) {
         var last = i === events.length - 1;
-        var who = (ev.actor_name || 'نامعلوم') + (ev.actor_role ? ' — ' + ev.actor_role : '');
+        var _ce = (window.esc || function(x){return String(x==null?'':x).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});});
+        var who = _ce(ev.actor_name || 'نامعلوم') + (ev.actor_role ? ' — ' + _ce(ev.actor_role) : '');
         return '' +
           '<div style="display:flex;gap:8px;align-items:flex-start;">' +
             '<div style="display:flex;flex-direction:column;align-items:center;">' +
@@ -113,7 +114,7 @@
               '<div style="font-size:12px;font-weight:700;">' + label(ev.event_type) + '</div>' +
               '<div style="font-size:11px;color:var(--text-secondary);">' + who + '</div>' +
               '<div style="font-size:10px;color:var(--text-faint);">' + fmt(ev.created_at) +
-                (ev.station ? ' · ' + ev.station : '') + '</div>' +
+                (ev.station ? ' · ' + _ce(ev.station) : '') + '</div>' +
             '</div>' +
           '</div>';
       }).join('') +

@@ -27,8 +27,15 @@ if (!window.supabase || !window.supabase.createClient) {
     }, 2500);
   });
 }
+// Khami 2: Supabase apna session default localStorage me SADA rakhta hai.
+// dioSecureStorage (secure-storage.js) use encrypt kar ke rakhta hai.
+// Wo file na mile to purana bartao — login kabhi na toote.
+const _dioAuthOpts = (window.dioSecureStorage)
+  ? { auth: { storage: window.dioSecureStorage, persistSession: true,
+              autoRefreshToken: true, detectSessionInUrl: true } }
+  : undefined;
 const supabaseClient = (window.supabase && window.supabase.createClient)
-  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, _dioAuthOpts)
   : null;
 window.supabaseClient = supabaseClient;
 

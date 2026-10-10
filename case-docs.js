@@ -12,9 +12,9 @@ function renderDocChecklist(docs, selected) {
     html += `<div style="font-size:9px;color:var(--text-faint);letter-spacing:2px;text-transform:uppercase;padding:6px 0 4px;">${cat}</div>`;
     filtered.forEach(doc => {
       const checked = selected.includes(doc);
-      html += `<div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:4px;cursor:pointer;transition:background 0.1s;" onmouseenter="this.style.background='var(--hover-bg)'" onmouseleave="this.style.background=''" onclick="toggleDoc('${doc.replace(/'/g,"\\'")}',this)">
+      html += `<div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:4px;cursor:pointer;transition:background 0.1s;" onmouseenter="this.style.background='var(--hover-bg)'" onmouseleave="this.style.background=''" onclick="toggleDoc('${_dioJsHtml(doc)}',this)">
         <input type="checkbox" ${checked?'checked':''} style="accent-color:var(--accent);width:14px;height:14px;pointer-events:none;">
-        <span style="font-size:12px;color:${checked?'var(--accent)':'var(--text-secondary)'};">${doc}</span>
+        <span style="font-size:12px;color:${checked?'var(--accent)':'var(--text-secondary)'};">${esc(doc)}</span>
       </div>`;
     });
   }
@@ -23,10 +23,10 @@ function renderDocChecklist(docs, selected) {
   if (customDocs.length) {
     html += `<div style="font-size:9px;color:var(--text-faint);letter-spacing:2px;text-transform:uppercase;padding:6px 0 4px;">Custom Documents</div>`;
     customDocs.forEach(doc => {
-      html += `<div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:4px;cursor:pointer;" onclick="toggleDoc('${doc.replace(/'/g,"\\'")}',this)">
+      html += `<div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:4px;cursor:pointer;" onclick="toggleDoc('${_dioJsHtml(doc)}',this)">
         <input type="checkbox" checked style="accent-color:var(--accent);width:14px;height:14px;pointer-events:none;">
-        <span style="font-size:12px;color:var(--accent);">${doc}</span>
-        <span onclick="event.stopPropagation();removeCustomDoc('${doc.replace(/'/g,"\\'")}');" style="margin-inline-start:auto;color:var(--red);font-size:12px;cursor:pointer;">×</span>
+        <span style="font-size:12px;color:var(--accent);">${esc(doc)}</span>
+        <span onclick="event.stopPropagation();removeCustomDoc('${_dioJsHtml(doc)}');" style="margin-inline-start:auto;color:var(--red);font-size:12px;cursor:pointer;">×</span>
       </div>`;
     });
   }
@@ -56,7 +56,7 @@ function openDocEditor(docIndex) {
   editor.innerHTML = `
     <!-- Toolbar -->
     <div class="template-toolbar">
-      <span style="font-size:13px;font-weight:700;color:var(--accent);flex:1;">📄 ${docName}</span>
+      <span style="font-size:13px;font-weight:700;color:var(--accent);flex:1;">📄 ${esc(docName)}</span>
       <select id="font-family-sel" onchange="changeFont(this.value)" style="background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:4px 8px;color:var(--text-secondary);font-size:11px;">
         <option value="jameel" selected>Jameel Noori Nastaleeq</option>
         <option value="noto">Noto Nastaliq Urdu</option>
@@ -73,7 +73,7 @@ function openDocEditor(docIndex) {
       </select>
       <button class="btn btn-secondary btn-sm" onclick="toggleDirection()">⇄ LTR/RTL</button>
       <button class="btn btn-secondary btn-sm" onclick="saveDocDraft(${docIndex})">💾 Save Draft</button>
-      <button class="btn btn-secondary btn-sm" onclick="printThisDoc('${docName}')">🖨️ Print</button>
+      <button class="btn btn-secondary btn-sm" onclick="printThisDoc('${_dioJsHtml(docName)}')">🖨️ Print</button>
       <button class="btn btn-primary btn-sm" onclick="markDocDone(${docIndex})">✅ Mark Complete</button>
     </div>
     <!-- Editor -->
@@ -86,7 +86,8 @@ function openDocEditor(docIndex) {
 
 
 function buildDocTemplate(docName, c, savedContent) {
-  if (savedContent) return savedContent;
+  // mehfooz karda contenteditable HTML — sanitize kar ke wapas
+  if (savedContent) return (window.DIO&&DIO.html&&DIO.html.safe)?DIO.html.safe(savedContent):savedContent;
 
   // Auto-fill values
   const fir = c.fir_number || '____________';
@@ -106,7 +107,9 @@ function buildDocTemplate(docName, c, savedContent) {
   const io = currentOfficer?.full_name || '____________';
   const year = new Date().getFullYear();
 
-  const field = (val) => `<span class="template-field" contenteditable="true">${val}</span>`;
+  // XSS: ye chaar helpers poori dastavez ke sink hain — yahin escape
+  const _cdE = (v) => (window.esc ? esc(v) : String(v == null ? '' : v));
+  const field = (val) => `<span class="template-field" contenteditable="true">${_cdE(val)}</span>`;
 
   // Generic template — specific templates will be added when sample files are provided
   const ts = 'border:1px solid #333;padding:6px 8px;';
@@ -114,9 +117,9 @@ function buildDocTemplate(docName, c, savedContent) {
   const td = 'border:1px solid #333;padding:6px 8px;';
   const tdr = 'border:1px solid #333;padding:6px 8px;text-align:right;';
   const wrap = 'font-family:\'Jameel Noori Nastaleeq\',\'Noto Nastaliq Urdu\',serif;direction:rtl;font-size:14px;line-height:2;color:#000;';
-  const etd = (v) => `<td style="${td}"><span class="template-field" contenteditable="true">${v}</span></td>`;
-  const etdr = (v) => `<td style="${tdr}"><span class="template-field" contenteditable="true">${v}</span></td>`;
-  const ef = (v) => `<span class="template-field" contenteditable="true">${v}</span>`;
+  const etd = (v) => `<td style="${td}"><span class="template-field" contenteditable="true">${_cdE(v)}</span></td>`;
+  const etdr = (v) => `<td style="${tdr}"><span class="template-field" contenteditable="true">${_cdE(v)}</span></td>`;
+  const ef = (v) => `<span class="template-field" contenteditable="true">${_cdE(v)}</span>`;
 
   const templates = {
 

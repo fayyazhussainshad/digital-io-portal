@@ -72,14 +72,14 @@ async function _buildDash() {
     <div style="display:flex;align-items:center;gap:12px;">
       <div style="text-align:right;flex:1;">
         <div style="font-size:16px;font-weight:800;color:#fff;font-family:'Jameel Noori Nastaleeq',serif;">خوش آمدید، ${esc(o.full_name)||'افسر'}</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.6);">${o.designation||''} · تھانہ ${o.station||''} · ضلع ${o.district||''}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.6);">${esc(o.designation||'')} · تھانہ ${esc(o.station||'')} · ضلع ${esc(o.district||'')}</div>
         <div style="font-size:10px;color:rgba(255,255,255,0.4);">${formatDate(new Date())}</div>
       </div>
       <div id="dash-welcome-avatar" style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0;overflow:hidden;cursor:pointer;" onclick="showPage('settings',null)">
         ${(() => {
           let p = o.profile_photo;
           if (!p) { try { p = localStorage.getItem('dio_profile_photo') || localStorage.getItem('officer_photo_url'); } catch(_) {} }
-          if (p) return `<img src="${p}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+          if (p) return `<img src="${esc(p)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
           return (o.full_name||'IO').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
         })()}
       </div>
@@ -405,7 +405,7 @@ function _recentlyViewedBar() {
         <button onclick="openCaseWorkspace('${r.id}')"
           style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:11px;cursor:pointer;color:var(--text-secondary);display:flex;align-items:center;gap:6px;"
           onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-          <span style="color:var(--accent);font-weight:700;">FIR ${r.fir}</span>
+          <span style="color:var(--accent);font-weight:700;">FIR ${esc(r.fir)}</span>
           ${r.name?`<span style="font-size:10px;color:var(--text-muted);">${esc(r.name.slice(0,15))}</span>`:''}
         </button>`).join('')}
     </div>

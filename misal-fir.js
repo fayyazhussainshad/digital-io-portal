@@ -71,7 +71,7 @@ async function _loadFIREntries() {
             <td style="padding:12px;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;line-height:2;vertical-align:top;">
               <span style="font-size:11px;color:var(--text-faint);display:block;margin-bottom:4px;">${e.status==='complete'?'✅ مکمل':'📝 مسودہ'} · ${formatDate(e.updated_at||e.created_at)}</span>
               <div id="fir-preview-${e.id}" style="max-height:120px;overflow:hidden;">
-                ${e.content?.html ? _stripTags(e.content.html).slice(0,300)+'...' : '—'}
+                ${e.content?.html ? esc(_stripTags(e.content.html).slice(0,300)+'...') : '—'}
               </div>
             </td>
             <td style="padding:8px;text-align:center;vertical-align:top;">
@@ -89,7 +89,7 @@ async function _loadFIREntries() {
     // Store entries for print/share
     window._firEntries = entries;
   } catch(e) {
-    if (area) area.innerHTML = `<div style="color:var(--red);padding:20px;">❌ ${e.message}</div>`;
+    if (area) area.innerHTML = `<div style="color:var(--red);padding:20px;">❌ ${esc(e.message)}</div>`;
   }
 }
 
@@ -184,7 +184,7 @@ function _doPrintFIR(html) {
       .fir-body{ text-align:center; font-size:14pt; line-height:2; }
     </style></head><body>
     <div class="header">
-      <div style="font-size:16pt;font-weight:bold;">تھانہ ${o.station||''} ضلع ${o.district||''}</div>
+      <div style="font-size:16pt;font-weight:bold;">تھانہ ${esc(o.station||'')} ضلع ${esc(o.district||'')}</div>
       <div style="font-size:16pt;font-weight:bold;margin-top:6px;">ایف آئی آر — مقدمہ نمبر: ${esc(c.fir_number||'')}</div>
       <div style="font-size:14pt;">تاریخ: ${formatDate(c.fir_date)} | دفعات: ${esc(c.section_of_law||'')}</div>
     </div>

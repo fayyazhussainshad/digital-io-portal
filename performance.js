@@ -44,7 +44,7 @@ async function _buildPerf() {
     
     <div>
       <div style="font-size:18px;font-weight:800;">📊 کارکردگی کا جائزہ</div>
-      <div style="font-size:12px;color:var(--text-muted);">${currentOfficer?.full_name||''} · ${currentOfficer?.station||''} · ${formatDate(new Date())}</div>
+      <div style="font-size:12px;color:var(--text-muted);">${esc(currentOfficer?.full_name||'')} · ${esc(currentOfficer?.station||'')} · ${formatDate(new Date())}</div>
     </div>
   </div>
 
@@ -107,7 +107,7 @@ async function _buildPerf() {
       <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;direction:rtl;">📋 اہم دفعات</div>
       ${bySection.slice(0,5).map(s=>`
       <div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;direction:rtl;">
-        <div style="font-size:10px;font-family:monospace;color:var(--accent);min-width:70px;">${s.section}</div>
+        <div style="font-size:10px;font-family:monospace;color:var(--accent);min-width:70px;">${esc(s.section)}</div>
         <div style="flex:1;background:var(--bg-tertiary);border-radius:4px;overflow:hidden;height:8px;">
           <div style="background:var(--accent);height:100%;width:${Math.round(s.count/Math.max(...bySection.map(x=>x.count))*100)}%;"></div>
         </div>
@@ -124,7 +124,7 @@ async function _buildPerf() {
       ${usage.slice(0,9).map((u,i)=>`
       <div style="background:var(--bg-secondary);border-radius:8px;padding:8px;direction:rtl;border-right:3px solid ${i<3?'var(--accent)':'var(--border)'};">
         <div style="font-size:11px;font-weight:700;color:${i<3?'var(--accent)':'var(--text-secondary)'};">${u.count}x</div>
-        <div style="font-size:10px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${u.label}</div>
+        <div style="font-size:10px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(u.label)}</div>
       </div>`).join('')}
     </div>
     <div style="text-align:center;margin-top:8px;">

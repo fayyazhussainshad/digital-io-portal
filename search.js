@@ -63,7 +63,7 @@ function _renderSearchHistory() {
   box.innerHTML = `
     <div style="font-size:13px;color:var(--text-muted);margin-bottom:10px;">پچھلی تلاش:</div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
-      ${h.map(q => `<span onclick="_srFromHistory('${q.replace(/'/g,"\\'")}')" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:6px 14px;font-size:14px;cursor:pointer;color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">🕐 ${q}</span>`).join('')}
+      ${h.map(q => `<span onclick="_srFromHistory('${_dioJsHtml(q)}')" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:6px 14px;font-size:14px;cursor:pointer;color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">🕐 ${q}</span>`).join('')}
     </div>
     <button onclick="_clearSearchHistory()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;color:var(--text-muted);cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">🗑️ تاریخ صاف کریں</button>`;
 }

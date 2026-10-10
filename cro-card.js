@@ -141,7 +141,7 @@ function _renderCro() {
         <div style="display:flex;gap:6px;margin-top:8px;">
           ${['سامنے مل','سامنے چہرہ','بائیں رخ چہرہ','دائیں رخ چہرہ'].map((lbl,i)=>`
           <div style="flex:1;border:1px solid #000;height:120px;display:flex;align-items:flex-end;justify-content:center;font-size:9px;text-align:center;overflow:hidden;position:relative;">
-            ${(i===3 && photo) ? `<img src="${photo}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">` : ''}
+            ${(i===3 && photo) ? `<img src="${esc(photo)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">` : ''}
             <span style="position:relative;background:rgba(255,255,255,0.7);padding:1px;">${lbl}<br>یہاں نہ چپاں کریں</span>
           </div>`).join('')}
         </div>

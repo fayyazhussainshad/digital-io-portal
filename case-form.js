@@ -267,11 +267,11 @@ function caseFormHTML(c) {
     // Row 1: مقدمہ نمبر + تاریخ اندراج + تاریخ وقوعہ + ملزمان (چاروں ایک ہی سطر)
     + '<div class="cf-row4">'
     + '<div class="cf-field"><label class="cf-label">مقدمہ نمبر *</label>'
-    + '<input class="form-input" id="cf-fir" value="'+fir+'" placeholder="e.g. 245/2025" dir="ltr" style="text-align:left;" oninput="_cfLiveSyncCross()"></div>'
+    + '<input class="form-input" id="cf-fir" value="'+esc(fir)+'" placeholder="e.g. 245/2025" dir="ltr" style="text-align:left;" oninput="_cfLiveSyncCross()"></div>'
     + '<div class="cf-field"><label class="cf-label">تاریخ اندراج *</label>'
-    + '<input class="form-input" id="cf-date" value="'+date+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this);_cfLiveSyncCross()" dir="ltr" style="text-align:left;"></div>'
+    + '<input class="form-input" id="cf-date" value="'+esc(date)+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this);_cfLiveSyncCross()" dir="ltr" style="text-align:left;"></div>'
     + '<div class="cf-field"><label class="cf-label">تاریخ وقوعہ</label>'
-    + '<input class="form-input" id="cf-occurrence-date" value="'+occ+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" dir="ltr" style="text-align:left;"></div>'
+    + '<input class="form-input" id="cf-occurrence-date" value="'+esc(occ)+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" dir="ltr" style="text-align:left;"></div>'
     + '<div class="cf-field"><label class="cf-label">ملزمان</label>'
     + '<select class="form-input" id="cf-mulzman-type">'
     + '<option value="maloom" '+(c.mulzman_type==='maloom'?'selected':'')+'>✅ معلوم</option>'
@@ -291,7 +291,7 @@ function caseFormHTML(c) {
     + '<div id="section-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg-card);border:1px solid var(--accent);border-radius:0 0 var(--radius-sm) var(--radius-sm);max-height:180px;overflow-y:auto;z-index:200;box-shadow:var(--shadow);"></div>'
     + '</div>'
     + '<div id="selected-sections" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">'+sectionTags+'</div>'
-    + '<input type="hidden" id="cf-section" value="'+section+'">'
+    + '<input type="hidden" id="cf-section" value="'+esc(section)+'">'
     + '</div>'
     + '</div>'
     + '<div class="cf-field" style="align-items:flex-start;">'
@@ -325,7 +325,7 @@ function caseFormHTML(c) {
     + '<label class="cf-label">مدعی *</label>'
     + '<div style="display:flex;gap:6px;direction:rtl;align-items:center;flex:1;min-width:0;">'
     + '<div style="flex:1;position:relative;">'
-    + '<input class="form-input" id="cf-complainant" value="'+complainant+'" placeholder="مدعی کا نام" dir="auto" oninput="var _cc=document.getElementById(\'cf-comp-count\');if(_cc)_cc.textContent=this.value.length+\' حروف\';">'
+    + '<input class="form-input" id="cf-complainant" value="'+esc(complainant)+'" placeholder="مدعی کا نام" dir="auto" oninput="var _cc=document.getElementById(\'cf-comp-count\');if(_cc)_cc.textContent=this.value.length+\' حروف\';">'
     + '<span id="cf-comp-count" style="position:absolute;bottom:4px;left:8px;font-size:9px;color:var(--text-faint);">'+(complainant?complainant.length+' حروف':'')+'</span>'
     + '</div>'
     + '<button id="vmb-cf-complainant" type="button" onclick="voiceType(\'cf-complainant\',\'vmb-cf-complainant\')" style="width:36px;height:36px;flex-shrink:0;border:1px solid var(--border);border-radius:6px;background:var(--bg-tertiary);font-size:16px;cursor:pointer;">🎙️</button>'
@@ -335,11 +335,11 @@ function caseFormHTML(c) {
     // Row 2: شناختی کارڈ + موبائل نمبر + پیشہ (تینوں ایک ہی سطر)
     + '<div class="cf-row3">'
     + '<div class="cf-field"><label class="cf-label">شناختی کارڈ</label>'
-    + '<input class="form-input" id="cf-complainant-cnic" value="'+cmpCnic+'" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)" dir="ltr" style="text-align:left;"></div>'
+    + '<input class="form-input" id="cf-complainant-cnic" value="'+esc(cmpCnic)+'" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)" dir="ltr" style="text-align:left;"></div>'
     + '<div class="cf-field"><label class="cf-label">موبائل نمبر</label>'
-    + '<input class="form-input" id="cf-complainant-cell" value="'+cmpCell+'" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)" dir="ltr" style="text-align:left;"></div>'
+    + '<input class="form-input" id="cf-complainant-cell" value="'+esc(cmpCell)+'" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)" dir="ltr" style="text-align:left;"></div>'
     + '<div class="cf-field"><label class="cf-label">پیشہ</label>'
-    + '<input class="form-input" id="cf-complainant-profession" value="'+cmpProf+'" placeholder="پیشہ" dir="auto"></div>'
+    + '<input class="form-input" id="cf-complainant-profession" value="'+esc(cmpProf)+'" placeholder="پیشہ" dir="auto"></div>'
     + '</div>'
 
     + '</div>'
@@ -348,9 +348,9 @@ function caseFormHTML(c) {
     + '<div class="cf-box">'
     + '<div class="cf-row2">'
     + '<div class="cf-field"><label class="cf-label">مرتبہ مرسلہ</label>'
-    + '<div style="display:flex;gap:4px;direction:rtl;flex:1;min-width:0;"><input class="form-input" id="cf-complaint-sender" value="'+compSender+'" placeholder="مرتبہ مرسلہ" dir="auto" style="flex:1;"><button id="vmb-cs" type="button" onclick="voiceType(\'cf-complaint-sender\',\'vmb-cs\')" style="width:34px;height:34px;flex-shrink:0;border:1px solid var(--border);border-radius:5px;background:var(--bg-tertiary);font-size:14px;cursor:pointer;">🎙️</button></div></div>'
+    + '<div style="display:flex;gap:4px;direction:rtl;flex:1;min-width:0;"><input class="form-input" id="cf-complaint-sender" value="'+esc(compSender)+'" placeholder="مرتبہ مرسلہ" dir="auto" style="flex:1;"><button id="vmb-cs" type="button" onclick="voiceType(\'cf-complaint-sender\',\'vmb-cs\')" style="width:34px;height:34px;flex-shrink:0;border:1px solid var(--border);border-radius:5px;background:var(--bg-tertiary);font-size:14px;cursor:pointer;">🎙️</button></div></div>'
     + '<div class="cf-field"><label class="cf-label">محرر</label>'
-    + '<div style="display:flex;gap:4px;direction:rtl;flex:1;min-width:0;"><input class="form-input" id="cf-fir-writer" value="'+firWriter+'" placeholder="محرر کا نام" dir="auto" style="flex:1;"><button id="vmb-fw" type="button" onclick="voiceType(\'cf-fir-writer\',\'vmb-fw\')" style="width:34px;height:34px;flex-shrink:0;border:1px solid var(--border);border-radius:5px;background:var(--bg-tertiary);font-size:14px;cursor:pointer;">🎙️</button></div></div>'
+    + '<div style="display:flex;gap:4px;direction:rtl;flex:1;min-width:0;"><input class="form-input" id="cf-fir-writer" value="'+esc(firWriter)+'" placeholder="محرر کا نام" dir="auto" style="flex:1;"><button id="vmb-fw" type="button" onclick="voiceType(\'cf-fir-writer\',\'vmb-fw\')" style="width:34px;height:34px;flex-shrink:0;border:1px solid var(--border);border-radius:5px;background:var(--bg-tertiary);font-size:14px;cursor:pointer;">🎙️</button></div></div>'
     + '</div>'
     + '</div>'
 
@@ -413,35 +413,35 @@ function buildCrossFields(c) {
     // رپٹ نمبر (آدھی چوڑائی) + رپٹ تاریخ + کراس ورژن مقدمہ نمبر + کراس ورژن مقدمہ کی تاریخ (چاروں ایک سطر)
     + '<div class="cf-row4-rapat">'
     + '<div class="cf-field"><label class="cf-label">&#x0631;&#x067E;&#x0679; &#x0646;&#x0645;&#x0628;&#x0631;</label>'
-    + '<input class="form-input" id="cf-cross-rapat" value="'+crn+'" placeholder="e.g. 12" dir="auto"></div>'
+    + '<input class="form-input" id="cf-cross-rapat" value="'+esc(crn)+'" placeholder="e.g. 12" dir="auto"></div>'
     + '<div class="cf-field"><label class="cf-label">&#x0631;&#x067E;&#x0679; &#x062A;&#x0627;&#x0631;&#x06CC;&#x062E;</label>'
-    + '<input class="form-input" id="cf-cross-rapat-date" value="'+crd+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)"></div>'
+    + '<input class="form-input" id="cf-cross-rapat-date" value="'+esc(crd)+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)"></div>'
     + '<div class="cf-field"><label class="cf-label">کراس ورژن مقدمہ نمبر</label>'
-    + '<input class="form-input" id="cf-cross-fir" data-auto="'+(cfnAuto?'1':'0')+'" value="'+cfn+'" placeholder="e.g. 246/2025" dir="auto" oninput="this.dataset.auto=\'0\'"></div>'
+    + '<input class="form-input" id="cf-cross-fir" data-auto="'+(cfnAuto?'1':'0')+'" value="'+esc(cfn)+'" placeholder="e.g. 246/2025" dir="auto" oninput="this.dataset.auto=\'0\'"></div>'
     + '<div class="cf-field"><label class="cf-label">کراس ورژن مقدمہ کی تاریخ</label>'
-    + '<input class="form-input" id="cf-cross-fir-date" data-auto="'+(cfdAuto?'1':'0')+'" value="'+cfd+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this);this.dataset.auto=\'0\'"></div>'
+    + '<input class="form-input" id="cf-cross-fir-date" data-auto="'+(cfdAuto?'1':'0')+'" value="'+esc(cfd)+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this);this.dataset.auto=\'0\'"></div>'
     + '</div>'
 
     // کراس ورژن مدعی کا نام (پوری چوڑائی)
     + '<div class="cf-field"><label class="cf-label">کراس ورژن مدعی کا نام</label>'
-    + '<input class="form-input" id="cf-cross-complainant" value="'+cc+'" placeholder="&#x0645;&#x062F;&#x0639;&#x06CC; &#x06A9;&#x0627; &#x0646;&#x0627;&#x0645;" dir="auto"></div>'
+    + '<input class="form-input" id="cf-cross-complainant" value="'+esc(cc)+'" placeholder="&#x0645;&#x062F;&#x0639;&#x06CC; &#x06A9;&#x0627; &#x0646;&#x0627;&#x0645;" dir="auto"></div>'
 
     // شناختی کارڈ + موبائل نمبر + پیشہ (تینوں ایک سطر)
     + '<div class="cf-row3">'
     + '<div class="cf-field"><label class="cf-label">&#x0634;&#x0646;&#x0627;&#x062E;&#x062A;&#x06CC; &#x06A9;&#x0627;&#x0631;&#x0688;</label>'
-    + '<input class="form-input" id="cf-cross-complainant-cnic" value="'+ccc+'" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)"></div>'
+    + '<input class="form-input" id="cf-cross-complainant-cnic" value="'+esc(ccc)+'" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)"></div>'
     + '<div class="cf-field"><label class="cf-label">&#x0645;&#x0648;&#x0628;&#x0627;&#x0626;&#x0644; &#x0646;&#x0645;&#x0628;&#x0631;</label>'
-    + '<input class="form-input" id="cf-cross-complainant-cell" value="'+ccl+'" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)"></div>'
+    + '<input class="form-input" id="cf-cross-complainant-cell" value="'+esc(ccl)+'" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)"></div>'
     + '<div class="cf-field"><label class="cf-label">&#x067E;&#x06CC;&#x0634;&#x06C1;</label>'
-    + '<input class="form-input" id="cf-cross-complainant-profession" value="'+ccp+'" placeholder="&#x067E;&#x06CC;&#x0634;&#x06C1;" dir="auto"></div>'
+    + '<input class="form-input" id="cf-cross-complainant-profession" value="'+esc(ccp)+'" placeholder="&#x067E;&#x06CC;&#x0634;&#x06C1;" dir="auto"></div>'
     + '</div>'
 
     // کراس ورژن دفعات (70%) + کراس ورژن محرر (30%، سطر کے آخر میں)
     + '<div class="cf-row-7030">'
     + '<div class="cf-field"><label class="cf-label">کراس ورژن دفعات</label>'
-    + '<input class="form-input" id="cf-cross-section" value="'+cs+'" placeholder="e.g. 302 PPC + 34 PPC" dir="auto"></div>'
+    + '<input class="form-input" id="cf-cross-section" value="'+esc(cs)+'" placeholder="e.g. 302 PPC + 34 PPC" dir="auto"></div>'
     + '<div class="cf-field"><label class="cf-label">کراس ورژن محرر</label>'
-    + '<input class="form-input" id="cf-cross-fir-writer" value="'+cfw+'" placeholder="محرر کا نام" dir="auto"></div>'
+    + '<input class="form-input" id="cf-cross-fir-writer" value="'+esc(cfw)+'" placeholder="محرر کا نام" dir="auto"></div>'
     + '</div>'
 
     // کراس ورژن صورتحال + کراس ورژن پوزیشن (ایک ہی سطر، مرکزی فارم کی طرح)
@@ -460,8 +460,8 @@ function buildCrossFields(c) {
 
 function sectionTag(sectionStr) {
   return `<div style="display:inline-flex;align-items:center;gap:6px;background:var(--nav-active);border:1px solid var(--accent);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--accent);">
-    <b>${sectionStr}</b>
-    <span onclick="removeSection('${sectionStr}')" style="cursor:pointer;color:var(--text-muted);font-size:14px;line-height:1;" title="Remove">×</span>
+    <b>${esc(sectionStr)}</b>
+    <span onclick="removeSection('${_dioJsHtml(sectionStr)}')" style="cursor:pointer;color:var(--text-muted);font-size:14px;line-height:1;" title="Remove">×</span>
   </div>`;
 }
 
