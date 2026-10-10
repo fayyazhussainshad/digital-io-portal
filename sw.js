@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v486
+   DIGITAL IO — SERVICE WORKER v487
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v486';
+const CACHE_NAME = 'digital-io-v487';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -163,7 +163,7 @@ self.addEventListener('fetch', event => {
   //   ki zaroorat bhi nahi. Purana "stale version" masla isse behtar hal hota hai.
   if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
     const assetFresh = fetch(new Request(event.request.url, {
-      cache: 'reload', credentials: 'same-origin', mode: 'same-origin'
+      cache: 'no-cache', credentials: 'same-origin', mode: 'same-origin'
     })).then(response => {
       if (response && response.status === 200) {
         const clone = response.clone();
