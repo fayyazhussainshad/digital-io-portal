@@ -792,7 +792,9 @@ async function submitRegistration() {
 }
 
 
-function openChangePasswordModal() {
+// نوٹ: settings.js میں اسی نام کا فنکشن بعد میں لوڈ ہو کر اسے دبا دیتا تھا (دہرا گلوبل)۔
+// اب یہ منفرد نام سے ہے تاکہ تصادم نہ ہو؛ فعال modal settings.js والا ہے۔
+function _authChangePasswordModal() {
   openModal('🔑 پاسورڈ تبدیل کریں',
     `<div style="direction:rtl;">
       <label class="form-label">موجودہ پاسورڈ</label>

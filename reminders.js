@@ -103,7 +103,7 @@ function _remCard(r, isOverdue, isDone=false) {
     </div>
     <div style="display:flex;flex-direction:column;gap:3px;">
       ${!r._isCourtDate ? `<button class="btn btn-danger btn-sm" onclick="_deleteRem('${r.id}')" style="padding:3px 8px;font-size:11px;">✕</button>` :
-        `<button class="btn btn-secondary btn-sm" onclick="_markCourtDone('${r._courtId}')" style="padding:3px 8px;font-size:11px;">✅</button>`}
+        `<button class="btn btn-secondary btn-sm" onclick="_remMarkCourtDone('${r._courtId}')" style="padding:3px 8px;font-size:11px;">✅</button>`}
     </div>
   </div>`;
 }
@@ -125,7 +125,9 @@ async function _deleteRem(id) {
   _buildReminders();
 }
 
-async function _markCourtDone(courtId) {
+// پہلے یہ نام court.js کے _markCourtDone سے ٹکراتا تھا (court بعد میں لوڈ ہو کر اسے دبا دیتا،
+// جس سے یاددہانی سے مکمل کرنے پر غلطی سے عدالت کا صفحہ رینڈر ہوتا)۔ اب منفرد نام۔
+async function _remMarkCourtDone(courtId) {
   await supabaseClient.from('court_dates').update({status:'done'}).eq('id', courtId);
   showToast('✅ پیشی مکمل', 'success');
   _buildReminders();

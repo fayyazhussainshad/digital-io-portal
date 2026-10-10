@@ -455,12 +455,23 @@ async function deleteReminder(id) {
 }
 
 
+// کلائنٹ سے کبھی نہ بدلنے والے حساس کالم (اختیار/اکاؤنٹ کی چوری روکنے کے لیے)۔
+// یہ defense-in-depth ہے — اصل نفاذ DB trigger/RLS میں ہونا چاہیے۔
+const _OFFICER_PROTECTED = [
+  'role','is_approved','is_admin','approved_by','approved_at','is_verified','verified',
+  'subscription_status','subscription_plan','subscription_expiry','subscription_ends_at',
+  'subscription_started_at','trial_ends_at','trial_used',
+  'id','officer_id','user_id','auth_id','created_at'
+];
 async function updateOfficerProfile(updates) {
   const oid = await getOfficerId();
   if (!oid) throw new Error('افسر کی شناخت دستیاب نہیں — دوبارہ لاگ اِن کریں');  // id=eq.null update se bachao
-  const { data, error } = await supabaseClient.from('officers').update(updates).eq('id',oid).select().single();
+  // حساس کالم چھان کر نکال دو — افسر خود کو ایڈمن/منظور شدہ/سبسکرائبڈ نہ بنا سکے
+  const safe = {};
+  for (const k in updates) { if (Object.prototype.hasOwnProperty.call(updates, k) && !_OFFICER_PROTECTED.includes(k)) safe[k] = updates[k]; }
+  const { data, error } = await supabaseClient.from('officers').update(safe).eq('id',oid).select().single();
   if (error) throw error;
-  currentOfficer = {...currentOfficer,...updates,...data};
+  currentOfficer = {...currentOfficer,...safe,...data};
   return currentOfficer;
 }
 
