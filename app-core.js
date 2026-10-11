@@ -293,7 +293,6 @@ function _dioJsHtml(s) {
 }
 window._dioJsHtml = _dioJsHtml;
 // Alias — same HTML-escaper under the name used across print/innerHTML sinks.
-const escapeHtml = esc;
 window.escapeHtml = esc;
 
 // ── SANITIZE rich-text HTML (for contenteditable-saved content) ──
@@ -676,25 +675,6 @@ function updateSidebarProfile() {
 }
 
 // ── TOPBAR SHO/DSP ────────────────────────────────────────────
-function _updateTopbarShoDsp(o) {
-  const shoEl = document.getElementById('topbar-sho');
-  const dspEl = document.getElementById('topbar-dsp');
-  if (shoEl) { shoEl.style.display='block'; shoEl.innerHTML=`<span style="color:var(--accent);font-weight:700;">SHO</span>`; }
-  if (dspEl) { dspEl.style.display='block'; dspEl.innerHTML=`<span style="color:var(--accent);font-weight:700;">DSP/SDPO</span>`; }
-}
-
-async function _saveTopbarField(field) {
-  const val = document.getElementById('topbar-edit-val')?.value.trim()||'';
-  const rank = document.getElementById('topbar-edit-rank')?.value || '';
-  const update = field==='sho' ? { sho_name:val, ...(rank?{sho_rank:rank}:{}) } : { dsp_name:val };
-  try {
-    const updated = await updateOfficerProfile(update);
-    _updateTopbarShoDsp(updated);
-    closeModal();
-    showToast('محفوظ','success');
-  } catch(e) { showToast(''+e.message,'error'); }
-}
-
 // ── CONNECTION STATUS ──────────────────────────────────────────
 function updateConnectionStatus(online) {
   const dot  = document.getElementById('status-dot');
@@ -842,12 +822,47 @@ function voiceType(targetId, btnId) {
   rec.start();
 }
 
+/* Theme chunne ka khana.
+   PEHLE: sirf 5 theme dikhti thin (dark/light/forest/ocean/sunset)
+   halanke index.html mein GYARAH mukammal tor par mojood hain —
+   lavender, blossom, peaks, cosmos, autumn, aurora afsar tak
+   pahunchti hi nahi thin (CSS likhi hui thi, faida sifar).
+   Naam bhi angrezi + emoji the.
+   AB: gyarah ki gyarah, Urdu naam, aur har aik ka apna rang
+   namoona (swatch) taake afsar dekh kar chun sake. */
+const DIO_THEMES = [
+  { k: 'light',    n: 'روشن',        c: ['#ffffff', '#0b3d64'] },
+  { k: 'dark',     n: 'تاریک',        c: ['#111f2e', '#38bdf8'] },
+  { k: 'forest',   n: 'سبزہ',        c: ['#0f2218', '#34d399'] },
+  { k: 'ocean',    n: 'سمندر',      c: ['#0c3030', '#2dd4bf'] },
+  { k: 'sunset',   n: 'غروب',        c: ['#1c0e00', '#fb923c'] },
+  { k: 'lavender', n: 'نیلوفر',     c: ['#2e1065', '#c4b5fd'] },
+  { k: 'blossom',  n: 'گلاب',        c: ['#3b0a25', '#f9a8d4'] },
+  { k: 'peaks',    n: 'پہاڑ',        c: ['#0b1a2b', '#93c5fd'] },
+  { k: 'cosmos',   n: 'کہکشاں',     c: ['#0a0a1f', '#a78bfa'] },
+  { k: 'autumn',   n: 'خزاں',        c: ['#231204', '#fbbf24'] },
+  { k: 'aurora',   n: 'شفق',          c: ['#04121c', '#5eead4'] }
+];
+
 function openThemePicker() {
-  const themes = ['dark','light','forest','ocean','sunset'];
-  const labels = {dark:'🌙 Dark',light:'☀️ Light',forest:'🌿 Forest',ocean:'🌊 Ocean',sunset:'🌅 Sunset'};
-  openModal('🎨 تھیم منتخب کریں',
-    `<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
-      ${themes.map(t=>`<button onclick="setTheme('${t}');closeModal();" style="padding:10px 20px;border-radius:8px;border:2px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);cursor:pointer;font-size:13px;">${labels[t]}</button>`).join('')}
+  let cur = '';
+  try { cur = localStorage.getItem('dio_theme') || 'light'; } catch (_) { cur = 'light'; }
+  openModal('تھیم منتخب کریں',
+    `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;direction:rtl;">
+      ${DIO_THEMES.map(t => `
+        <button type="button" onclick="setTheme('${t.k}');closeModal();"
+          aria-pressed="${t.k === cur ? 'true' : 'false'}"
+          style="display:flex;flex-direction:column;align-items:center;gap:7px;padding:11px 8px;
+                 border-radius:11px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;
+                 border:2px solid ${t.k === cur ? 'var(--accent)' : 'var(--border)'};
+                 background:var(--bg-secondary);color:var(--text-primary);">
+          <span style="width:42px;height:28px;border-radius:7px;flex:none;
+                       border:1px solid var(--border);overflow:hidden;display:flex;">
+            <span style="flex:2;background:${t.c[0]};"></span>
+            <span style="flex:1;background:${t.c[1]};"></span>
+          </span>
+          ${t.n}
+        </button>`).join('')}
     </div>`,
     `<button class="btn btn-secondary" onclick="closeModal()">بند</button>`
   );

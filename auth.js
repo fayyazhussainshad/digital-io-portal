@@ -945,30 +945,6 @@ async function submitRegistration() {
 
 // نوٹ: settings.js میں اسی نام کا فنکشن بعد میں لوڈ ہو کر اسے دبا دیتا تھا (دہرا گلوبل)۔
 // اب یہ منفرد نام سے ہے تاکہ تصادم نہ ہو؛ فعال modal settings.js والا ہے۔
-function _authChangePasswordModal() {
-  openModal('🔑 پاسورڈ تبدیل کریں',
-    `<div style="direction:rtl;">
-      <label class="form-label">موجودہ پاسورڈ</label>
-      <input class="form-input" type="password" id="cp-old" placeholder="موجودہ پاسورڈ" style="margin-bottom:8px;">
-      <label class="form-label">نیا پاسورڈ</label>
-      <input class="form-input" type="password" id="cp-new" placeholder="نیا پاسورڈ (کم از کم 8)" style="margin-bottom:8px;">
-    </div>`,
-    `<div style="display:flex;gap:8px;direction:rtl;">
-      <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-      <button class="btn btn-primary" onclick="_doChangePassword()">💾 تبدیل</button>
-    </div>`
-  );
-}
-
-
-async function _doChangePassword() {
-  const np = document.getElementById('cp-new')?.value;
-  if(!np||np.length<8){showToast('کم از کم 8 حروف','error');return;}
-  const{error}=await supabaseClient.auth.updateUser({password:np});
-  if(error){showToast(''+error.message,'error');return;}
-  closeModal(); showToast('پاسورڈ تبدیل ہو گیا','success');
-}
-
 // ── SESSION TIMER ─────────────────────────────────────────────
 let _sessionTimer, _sessionWarnTimer;
 const SESSION_TIMEOUT = 5 * 60 * 1000;        // 5 منٹ بے عملی پر خودکار لاک
@@ -1008,9 +984,6 @@ document.addEventListener('keypress', resetSessionTimer);
 document.addEventListener('touchstart', resetSessionTimer);
 // پس منظر میں جاتے ہی فوری لاک (اسکرین بند / دوسری ایپ)
 document.addEventListener('visibilitychange', () => { try { if (document.hidden) lockApp(); } catch (_) {} });
-
-
-function _hashPin(pin) { try { return btoa('dio_'+pin+'_lock'); } catch(_) { return pin; } }
 
 
 function lockApp() {

@@ -80,18 +80,65 @@ async function deleteAttachment5C(id,path){await supabaseClient.storage.from('5c
 
 // ── PAGE RENDERER ──
 registerPage('fivec',renderFiveC);
-async function renderFiveC(container,query){
-  query=query||'';
-  const apps=await getApplications5C(query);
-  container.innerHTML=`<div class="page-header"><div style="display:flex;align-items:center;gap:10px;"><div><div class="page-title">مارک شدہ درخواستیں</div></div></div><button class="btn btn-primary" onclick="open5CForm()">+ New Application</button></div>
+/* ═══════════════════════════════════════════════════════════
+   PURANI KHARABI: talaash ke khane ka `oninput` poore safhe ko
+   dobara banata tha (`renderFiveC(page-content, ...)`). Khana
+   khud mit kar naya ban jata tha — is liye do-teen harf ke baad
+   cursor gayab, aur aage likha hi nahi ja sakta tha.
+   AB: sirf `#f5c-rows` (qatarein) aur ginti badalti hai.
+   Is safhe ki apni halat `_f5cQuery` mein — koi doosri file
+   is ko nahi chhuti.
+   ═══════════════════════════════════════════════════════════ */
+let _f5cQuery = '';
+
+async function _f5cRefreshRows() {
+  const tb = document.getElementById('f5c-rows');
+  if (!tb) return;
+  const apps = await getApplications5C(_f5cQuery);
+  tb.innerHTML = apps.length === 0
+    ? `<tr><td colspan="9">${
+        (window.DIO && DIO.states)
+          ? DIO.states.empty('doc',
+              _f5cQuery ? '\u06a9\u0648\u0626\u06cc \u062f\u0631\u062e\u0648\u0627\u0633\u062a \u0646\u06c1\u06cc\u06ba \u0645\u0644\u06cc' : '\u0627\u0628\u06be\u06cc \u06a9\u0648\u0626\u06cc \u062f\u0631\u062e\u0648\u0627\u0633\u062a \u0646\u06c1\u06cc\u06ba',
+              _f5cQuery ? '\u0644\u0641\u0638 \u0628\u062f\u0644 \u06a9\u0631 \u062f\u06cc\u06a9\u06be\u06cc\u06ba' : '"+ \u0646\u0626\u06cc \u062f\u0631\u062e\u0648\u0627\u0633\u062a" \u067e\u0631 \u062f\u0628\u0627\u0626\u06cc\u06ba')
+          : '<div style="text-align:center;padding:36px;color:var(--text-muted);">\u06a9\u0648\u0626\u06cc \u062f\u0631\u062e\u0648\u0627\u0633\u062a \u0646\u06c1\u06cc\u06ba</div>'
+      }</td></tr>`
+    : apps.map(render5CRow).join('');
+  const c = document.getElementById('f5c-count');
+  if (c) c.textContent = apps.length;
+}
+window._f5cRefreshRows = _f5cRefreshRows;
+
+function _f5cOnSearch(v) {
+  _f5cQuery = String(v || '').trim();
+  clearTimeout(window._5cTmr);
+  window._5cTmr = setTimeout(_f5cRefreshRows, 280);
+}
+window._f5cOnSearch = _f5cOnSearch;
+
+async function renderFiveC(container, query) {
+  _f5cQuery = query || '';
+  const apps = await getApplications5C(_f5cQuery);
+  container.innerHTML = `<div class="page-header">
+    <button class="btn btn-primary dio-add-btn" onclick="open5CForm()">+ \u0646\u0626\u06cc \u062f\u0631\u062e\u0648\u0627\u0633\u062a</button>
+    <div>
+      <div class="page-title">\u0645\u0627\u0631\u06a9 \u0634\u062f\u06c1 \u062f\u0631\u062e\u0648\u0627\u0633\u062a\u06cc\u06ba</div>
+      <div class="page-subtitle"><span id="f5c-count">${apps.length}</span> \u062f\u0631\u062e\u0648\u0627\u0633\u062a\u06cc\u06ba</div>
+    </div>
+  </div>
   <div class="card" style="margin-bottom:14px;padding:12px;">
-    <input class="search-input" id="fivec-search" style="width:100%;" placeholder="Search by complainant name, CNIC, cell, application number, designation..." value="${esc5C(query)}" oninput="clearTimeout(window._5cTmr);window._5cTmr=setTimeout(()=>renderFiveC(document.getElementById('page-content'),this.value),250)">
-    <div style="margin-top:6px;font-size:11px;color:var(--text-muted);">${apps.length} application${apps.length===1?'':'s'} ${query?'matching':'total'}</div>
+    <input class="search-input" id="fivec-search" style="width:100%;" dir="rtl"
+      placeholder="\u0645\u062f\u0639\u06cc \u06a9\u0627 \u0646\u0627\u0645\u060c \u0634\u0646\u0627\u062e\u062a\u06cc \u06a9\u0627\u0631\u0688\u060c \u0645\u0648\u0628\u0627\u0626\u0644\u060c \u062f\u0631\u062e\u0648\u0627\u0633\u062a \u0646\u0645\u0628\u0631 \u06cc\u0627 \u0639\u06c1\u062f\u06c1\u2026"
+      value="${esc5C(_f5cQuery)}" oninput="_f5cOnSearch(this.value)">
   </div>
   <div class="card" style="padding:0;overflow:hidden;">
     <div style="overflow-x:auto;"><table class="data-table fivec-center-table" style="width:100%;">
-      <thead><tr><th>S/N</th><th>Complainant</th><th>CNIC</th><th>Cell</th><th>Application No(s) — Designation</th><th>App Date</th><th>Status</th><th>Files</th><th>Actions</th></tr></thead>
-      <tbody>${apps.length===0?`<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-muted);">${query?'No matches.':'No applications yet. Click <b>+ New Application</b> to add one.'}</td></tr>`:apps.map(render5CRow).join('')}</tbody>
+      <thead><tr><th>#</th><th>\u0645\u062f\u0639\u06cc</th><th>\u0634\u0646\u0627\u062e\u062a\u06cc \u06a9\u0627\u0631\u0688</th><th>\u0645\u0648\u0628\u0627\u0626\u0644</th><th>\u062f\u0631\u062e\u0648\u0627\u0633\u062a \u0646\u0645\u0628\u0631 \u2014 \u0639\u06c1\u062f\u06c1</th><th>\u062a\u0627\u0631\u06cc\u062e</th><th>\u0635\u0648\u0631\u062a\u062d\u0627\u0644</th><th>\u0645\u0646\u0633\u0644\u06a9\u0627\u062a</th><th>\u0627\u0642\u062f\u0627\u0645\u0627\u062a</th></tr></thead>
+      <tbody id="f5c-rows">${apps.length === 0
+        ? `<tr><td colspan="9">${(window.DIO && DIO.states)
+            ? DIO.states.empty('doc', '\u0627\u0628\u06be\u06cc \u06a9\u0648\u0626\u06cc \u062f\u0631\u062e\u0648\u0627\u0633\u062a \u0646\u06c1\u06cc\u06ba', '"+ \u0646\u0626\u06cc \u062f\u0631\u062e\u0648\u0627\u0633\u062a" \u067e\u0631 \u062f\u0628\u0627\u0626\u06cc\u06ba')
+            : '<div style="text-align:center;padding:36px;color:var(--text-muted);">\u06a9\u0648\u0626\u06cc \u062f\u0631\u062e\u0648\u0627\u0633\u062a \u0646\u06c1\u06cc\u06ba</div>'}</td></tr>`
+        : apps.map(render5CRow).join('')}</tbody>
     </table></div>
   </div>`;
 }
@@ -188,7 +235,6 @@ function confirmDelete5C(id,sn){if(!confirm(`Delete Application #${sn} and ALL i
 
 // ── RESPONSE WRITER ──
 // Saved selection — restored after clicking toolbar selects so text stays highlighted
-let _r5cSel=null;
 async function open5CResponse(id){
   const app=await getApplication5C(id);if(!app){showToast('Not found','error');return;}
   const o=currentOfficer||{};
@@ -344,10 +390,6 @@ async function open5CResponse(id){
 }
 
 // ── EDITOR COMMANDS ──
-function _toggleTablePicker5C(){
-  const p=document.getElementById('r5-table-picker');
-  if(p)p.style.display=p.style.display==='none'?'block':'none';
-}
 async function save5CResponse(id){
   const html=document.getElementById('a4-paper').innerHTML;
   try{

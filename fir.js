@@ -5,8 +5,6 @@
 let _firCaseId = null;
 let _firMatn = [];     // all fir_matn rows for this case
 let _firCopies = [];   // all fir_copies rows for this case
-let _firCopyUpload = null;
-
 // Entry point — type: 'fir' or 'cross_version'
 async function openFirView(caseId, type) {
   _firCaseId = caseId || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)

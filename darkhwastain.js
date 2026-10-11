@@ -114,24 +114,6 @@ async function _dkOpenEntry(entry) {
 window._dkOpenEntry = _dkOpenEntry;
 
 // Saved content — pehle _misalDocs (case_documents), warna localStorage
-async function _dkLoadSaved() {
-  _dkSaved = {};
-  try {
-    if (typeof _misalDocs !== 'undefined' && _misalDocs && _misalDocs['darkhwastain']
-        && _misalDocs['darkhwastain'].content && Object.keys(_misalDocs['darkhwastain'].content).length) {
-      _dkSaved = _misalDocs['darkhwastain'].content || {};
-      return;
-    }
-  } catch (_) {}
-  try {
-    const raw = localStorage.getItem('dio_dk_' + _dkCaseId);
-    if (raw) {
-      _dkSaved = JSON.parse(raw) || {};
-      try { _dkMarkMisalSaved(_dkSaved, 'complete'); } catch (_) {}
-    }
-  } catch (_) { _dkSaved = {}; }
-}
-
 async function _dkLoadAccused() {
   const cid = _dkCaseId;
   if (!cid) { _dkAccused = []; return; }
@@ -249,44 +231,7 @@ function _dkIoLine(o) {
 }
 
 // SHO/IO line (report173 _ch173ShoLine jaisa)
-function _dkShoLine(o) {
-  o = o || (typeof currentOfficer !== 'undefined' ? currentOfficer : {}) || {};
-  const st = o.station || '';
-  if (typeof getSHOSignLine === 'function') {
-    const line = getSHOSignLine(st);
-    if (line && line.trim()) return line;
-  }
-  try {
-    const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}');
-    const parts = [];
-    if (sho.name) parts.push(String(sho.name).trim());
-    if (sho.rank) parts.push(String(sho.rank).trim());
-    let l = parts.join(' ');
-    if (st) l += (l ? ' ' : '') + 'تھانہ ' + st;
-    if (l.trim()) return l;
-  } catch (_) {}
-  return st ? ('تھانہ ' + st) : '';
-}
-
 // ═══ استدعا (request line) — qism ke hisaab se, aakhir mein ═══
-function _dkIstidaa(typeId) {
-  switch (typeId) {
-    case 'remand_jismani':  return 'لہٰذا استدعا ہے کہ ملزمان بالا کا جسمانی ریمانڈ بحق پولیس عطا فرمایا جائے تاکہ تکمیلِ تفتیش عمل میں لائی جا سکے۔ مہربانی ہوگی۔';
-    case 'remand_judicial': return 'لہٰذا استدعا ہے کہ ملزمان بالا کو عدالتی (جوڈیشل) ریمانڈ پر جیل بھیجا جائے۔ مہربانی ہوگی۔';
-    case 'byanat_164':      return 'لہٰذا استدعا ہے کہ گواہان/مدعی ہٰذا کے بیانات زیر دفعہ 164 ض ف قلمبند فرمائے جائیں۔ مہربانی ہوگی۔';
-    case 'talbi_mulziman':  return 'لہٰذا استدعا ہے کہ ملزمان بالا کو بغرضِ تفتیش عدالت میں طلب فرمایا جائے۔ مہربانی ہوگی۔';
-    case 'warrant_gift':    return 'لہٰذا استدعا ہے کہ ملزمان بالا کے بلا ضمانت وارنٹ گرفتاری جاری فرمائے جائیں۔ مہربانی ہوگی۔';
-    case 'ishtihaari':      return 'لہٰذا استدعا ہے کہ ملزمان بالا کو زیر دفعہ 87 ض ف اشتہاری قرار دیا جائے۔ مہربانی ہوگی۔';
-    case 'shanakht_parade': return 'لہٰذا استدعا ہے کہ کسی مجسٹریٹ صاحب کی وساطت سے ملزمان بالا کی جوڈیشل شناخت پریڈ کروائی جائے۔ مہربانی ہوگی۔';
-    case 'postmortem':      return 'لہٰذا استدعا ہے کہ متعلقہ میڈیکل آفیسر کو پوسٹ مارٹم کی ہدایت فرمائی جائے۔ مہربانی ہوگی۔';
-    case 'tibbi_victim':    return 'لہٰذا استدعا ہے کہ وکٹم کے طبی ملاحظہ کی ہدایت فرمائی جائے۔ مہربانی ہوگی۔';
-    case 'potency':         return 'لہٰذا استدعا ہے کہ ملزم کے پوٹینسی ٹیسٹ کی ہدایت فرمائی جائے۔ مہربانی ہوگی۔';
-    case 'tibbi_mazroob':   return 'لہٰذا استدعا ہے کہ مضروب کے طبی ملاحظہ کی ہدایت فرمائی جائے۔ مہربانی ہوگی۔';
-    case 'medical_board':   return 'لہٰذا استدعا ہے کہ میڈیکل بورڈ تشکیل دیا جائے۔ مہربانی ہوگی۔';
-    default:                return 'لہٰذا استدعا ہے کہ ______________________ ۔ مہربانی ہوگی۔';
-  }
-}
-
 // ═══ TEMPLATE (body) — Shafi ka structure (point 8):
 //   "جناب عالیٰ! مختصرحالات مقدمہ عنوان بالا اس طرح ہیں کہ [FIR ka matn]
 //    جس پر مقدمہ عنوان بالا درج ہوا تفتیش عمل میں لائی گئی۔ دورانِ تفتیش

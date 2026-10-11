@@ -40,9 +40,6 @@ window._zimniRetryLoad = _zimniRetryLoad;
 //  (2) نہ ملے تو ممکنہ ناموں کو باری باری آزماؤ اور جو چل جائے
 //  اُسے یاد رکھو۔
 // ═══════════════════════════════════════════════════════════════
-const ZIMNI_CONTENT_COLS = ['content', 'content_json', 'data', 'form_data',
-                            'body', 'body_html', 'html', 'report_content', 'details'];
-
 function _zimniColPref() {
   try { return localStorage.getItem('dio_zimni_col') || ''; } catch (_) { return ''; }
 }
@@ -1131,19 +1128,6 @@ window._zimniEnsureClosing = _zimniEnsureClosing;
 // ═══════════════════════════════════════════════════════════════
 
 // صفحے کی کام کی اونچائی (px)
-function _zimniPageH() {
-  const doc = _zimniDoc();
-  const IN = 96;
-  const paper = (typeof _ch173Paper !== 'undefined') ? _ch173Paper : 'legal';
-  let padY = 0;
-  try {
-    const cs = getComputedStyle(doc);
-    padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
-  } catch (_) {}
-  return ((paper === 'a4') ? 11.7 : 13) * IN - padY;
-}
-
-
 function _zimniStartNumbers() {
   const doc = _zimniDoc();
   if (!doc) return;
@@ -2490,19 +2474,6 @@ function _zimniBindHTML() {
 window._zimniBindHTML = _zimniBindHTML;
 
 // ── PRINT (only the document — MS-Word rule) ──────────────────
-function _printZimni() {
-  const ed = _zimniDoc();
-  if (!ed) return;
-  // 1) متن پوری طرح جما لو — جو حالاتِ تفتیش کے خانے میں نہ سمائے وہ
-  //    ٹیبل کے نیچے والے خانے میں چلا جائے (اسی سے ٹیبل دوسرے صفحے پر
-  //    دوبارہ نہیں چھپتا)
-  try { _zimniLayout(); } catch (_) {}
-  // 2) مثل باندھنے کی تکونی جگہ + صفحہ بندی سب اب چھپائی کی دستاویز کے اندر
-  //    (print width پر) chain script کرتا ہے — screen-width نشان غلط بیٹھتے تھے۔
-  let inner = _zimniCleanHTML(ed.innerHTML);
-  _zimniPrintDoc(inner);
-}
-
 // چالان/اخراج jaisa print: kaghaz + margins (1cm / _ch173SideMargin) report173 se,
 // CSS bhi report173 (_ch173CSS) + zimni form CSS — screen aur print bilkul aik.
 // ── PRINT ke liye MEHFOOZ body ────────────────────────────────
@@ -3004,12 +2975,6 @@ function _zimniPrintHTML(inner) {
 }
 window._zimniPrintHTML = _zimniPrintHTML;
 
-function _zimniPrintDoc(inner) {
-  const html = _zimniPrintHTML(inner);
-  if (typeof dioPrint === 'function') dioPrint(html);
-  else { const w = window.open('', '_blank'); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 300); }
-}
-
 // ═══════════════════════════════════════════════════════════════
 //  ضمنیات — fehrist ke ایکشن buttons (پرنٹ / بھیجیں / PDF)
 // ═══════════════════════════════════════════════════════════════
@@ -3184,9 +3149,6 @@ window.openZimniAndrooniEditor = openZimniAndrooniEditor;
 //  طرح (کچھ ڈیٹابیس میں 'content' نام کا کالم نہ ہو تو، اندازہ لگانے
 //  کے بجائے ممکنہ ناموں کو باری باری آزماؤ اور جو چل جائے یاد رکھو)
 // ═══════════════════════════════════════════════════════════════
-const ZIMNI_A_CONTENT_COLS = ['content', 'content_json', 'data', 'form_data',
-                               'body', 'body_html', 'html', 'report_content', 'details'];
-
 function _zaColPref() {
   try { return localStorage.getItem('dio_zimni_a_col') || ''; } catch (_) { return ''; }
 }

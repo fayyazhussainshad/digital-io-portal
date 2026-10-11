@@ -131,10 +131,6 @@ function _sazaJurmParts(raw, savedSuf) {
   return { body, suffix };
 }
 // Sirf plain text (fallback/save ke liye) — body + (agar ho to) ت پ
-function _sazaOffenceWithTP(raw) {
-  const p = _sazaJurmParts(raw);
-  return p.body ? (p.body + (p.suffix ? ' ' + p.suffix : '')) : '';
-}
 // جرم body ki BIDI tarteeb — har hissa (jo ، , . se alag ho) apni alag
 // <bdi> mein, taake HAR segment ke andar "pehle English digits, phir Urdu"
 // wali tarteeb barqarar rahe. Separator (، , .) add karne par tarteeb dobara

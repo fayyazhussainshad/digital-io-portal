@@ -50,19 +50,6 @@ function _openDB(){
 
 // Koi bhi kaam — agar connection band ho gaya ho to NAYA khol kar
 // aik dafa DOBARA aazmao (warna kaam zaya ho jata tha)
-async function _odbRetry(fn){
-  try { return await fn(); }
-  catch(e){
-    const m = String((e && e.message) || e || '');
-    if (m.includes('closing') || m.includes('InvalidState') || m.includes('not allowed')) {
-      _odbClosing = true; _odb = null;
-      await _openDB();
-      return await fn();
-    }
-    throw e;
-  }
-}
-
 // ── helpers ──────────────────────────────────────────────────
 function _tx(store,mode='readonly'){
   try {

@@ -190,13 +190,6 @@ function _fmtDateDMY(d) {
 }
 
 // Delete the last-added accused in a column
-function _deleteLastAcc(type) {
-  const list = _accusedList.filter(a => (a.accused_type||'fir') === type);
-  if (!list.length) return;
-  const last = list[list.length - 1];
-  _deleteAccused(last.id);
-}
-
 // ── CUSTOM-OPTION STORAGE (for عمر / نشان "+" additions) ───────
 function _accCustomOpts(key) {
   try { return JSON.parse(localStorage.getItem('dio_acc_opts_' + key) || '[]'); }

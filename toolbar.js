@@ -261,9 +261,6 @@ function _styleBtn(E, ps, label, css, display) {
 
 // ── ACTIONS ───────────────────────────────────────────────────
 var _wbSavedRange = null;
-var _wbFPActive   = false;
-var _wbFPStyle    = null;
-
 function _wbSaveSel() {
   var sel = window.getSelection();
   if (sel && sel.rangeCount > 0) _wbSavedRange = sel.getRangeAt(0).cloneRange();

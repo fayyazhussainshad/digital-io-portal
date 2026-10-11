@@ -15,28 +15,65 @@
    index.html me SAB SE AAKHIR me load karein.
    ═══════════════════════════════════════════════════════════════ */
 
+/* ═══════════════════════════════════════════════════════════════
+   RANG KA WAAHID ZARIA
+   ───────────────────────────────────────────────────────────────
+   BARI KHARABI JO YAHAN THEEK KI GAYI:
+
+   Pehle yahan apni ALAG rangon ki fehrist thi, aur tareek surat
+   sirf `@media (prefers-color-scheme: dark)` se aati thi — yani
+   COMPUTER/FOUN ki setting se, app ki apni theme se nahi.
+
+   App mein gyarah theme hain (dark, forest, ocean, sunset,
+   lavender, blossom, peaks, cosmos, autumn, aurora, light) aur
+   wo `html[data-theme]` se chalti hain. Natija (naap kar dekha
+   gaya): afsar ne app mein "dark"/"forest"/"ocean"/"sunset"
+   chuna to app ke khane tareek ho gaye —
+       --bg-card: #111f2e , --text-primary: #e2e8f0
+   magar YE file roshan hi rahi —
+       --dio-surface: #ffffff , --dio-ink: #0f1b2a
+   aur chunke yahan ke qaide `!important` hain, natija:
+   TAREEK safhe par SAFAID card aur us par tqreeban safaid matn.
+   Gyarah mein se das theme is tarah kharab thin.
+
+   HAL: yahan apni alag fehrist rakhi hi na jaye. Har rang app ke
+   apne khane se aaye (`--bg-card`, `--text-primary`, `--accent`…).
+   Ab jo bhi theme afsar chune — aaj ki ya kal ki nayi — ye file
+   khud-ba-khud uske sath dhal jati hai. Do jagah rang rakhne ka
+   matlab hi yahi tha ke kabhi na kabhi wo aapas mein na miltin.
+
+   `var(--x, fallback)` is liye ke agar kabhi koi khana na mile
+   to bhi safha bad-soorat na ho.
+   ═══════════════════════════════════════════════════════════════ */
 :root {
-  --dio-ink:      #0f1b2a;   /* sab se gehra matn */
-  --dio-ink-2:    #475569;   /* sanwi matn */
-  --dio-ink-3:    #7c8ea3;   /* halka/lebal */
-  --dio-line:     #e2e8f0;   /* lakeer */
-  --dio-surface:  #ffffff;
-  --dio-canvas:   #f6f8fb;   /* safhe ka pas-manzar */
-  --dio-brand:    #0b3d64;   /* sarkari neela — lehja */
-  --dio-brand-2:  #145b91;
-  --dio-ok:       #15803d;
-  --dio-warn:     #b45309;
-  --dio-alert:    #b91c1c;
+  --dio-ink:      var(--text-primary,   #0f1b2a);  /* sab se gehra matn */
+  --dio-ink-2:    var(--text-secondary, #475569);  /* sanwi matn */
+  --dio-ink-3:    var(--text-muted,     #7c8ea3);  /* halka / lebal */
+  --dio-line:     var(--border,         #e2e8f0);  /* lakeer */
+  --dio-surface:  var(--bg-card,        #ffffff);  /* card ki satah */
+  --dio-canvas:   var(--bg-primary,     #f6f8fb);  /* safhe ka pas-manzar */
+  --dio-brand:    var(--accent,         #0b3d64);  /* lehja */
+  --dio-brand-2:  var(--accent-dark,    #145b91);
+  --dio-ok:       var(--green,  #15803d);
+  --dio-warn:     var(--amber,  #b45309);
+  --dio-alert:    var(--red,    #b91c1c);
   --dio-r:        12px;
   --dio-shadow:   0 1px 2px rgba(15,27,42,.06), 0 1px 3px rgba(15,27,42,.04);
   --dio-shadow-2: 0 4px 14px rgba(15,27,42,.10);
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --dio-ink: #e8eef5; --dio-ink-2: #a8bbcd; --dio-ink-3: #7b90a6;
-    --dio-line: #22303f; --dio-surface: #0f1b28; --dio-canvas: #0a121c;
-    --dio-brand: #4aa3e0; --dio-brand-2: #6fb8ec;
-  }
+
+/* ROSHAN (light) theme par sarkari gehra neela lehja — app ka
+   `--accent` wahan halka aasmani hai jo baRe button par kamzor
+   lagta hai. Sirf yahi aik jagah rang badla gaya hai, aur wo bhi
+   sirf roshan theme ke liye. */
+html[data-theme="light"] {
+  --dio-brand:   #0b3d64;
+  --dio-brand-2: #145b91;
+}
+/* Tareek theme par saya gehra ho, warna nazar hi nahi aata */
+html:not([data-theme="light"]) {
+  --dio-shadow:   0 1px 2px rgba(0,0,0,.34), 0 1px 3px rgba(0,0,0,.26);
+  --dio-shadow-2: 0 6px 18px rgba(0,0,0,.42);
 }
 
 /* ────────────────────────────────────────────────────────────────
@@ -605,4 +642,89 @@ b.dio-stat-num { margin-bottom: 2px; }
 .page-header .page-subtitle {
   display: block !important;
   font-size: 12.5px; color: var(--dio-ink-3); line-height: 1.9;
+}
+
+/* ── 3.14 JADWAL — qatarein aur khanay (rows / columns) ───────
+   Maqsad: afsar aankh se aik qatar ko doosri se alag kar sake,
+   aur adad (mocaddma number, tareekh, shanakhti card, mobile)
+   hamesha seedhe LTR mein parhe jayen — RTL mein ye ulat kar
+   "2025/205" ban jate the. */
+
+/* Unwan ki patti safhe ke sath chipki rahe — lambi fehrist mein
+   afsar ko yaad rahe ke kaunsa khana kis cheez ka hai. */
+.page-content .data-table thead th {
+  position: sticky; top: 0; z-index: 3;
+  white-space: nowrap;
+  font-size: 12.5px !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+/* Aik qatar chhoRte hue halka farq — ginti mein aasani */
+.page-content .data-table tbody tr:nth-child(even) td {
+  background: color-mix(in srgb, var(--dio-canvas) 55%, transparent);
+}
+.page-content .data-table tbody tr:hover td {
+  background: var(--dio-canvas) !important;
+}
+.page-content .data-table tbody td {
+  vertical-align: middle !important;
+  line-height: 1.9 !important;
+}
+/* Ginti ka khana (#) hamesha tang aur darmiyan mein */
+.page-content .data-table thead th:first-child,
+.page-content .data-table tbody td:first-child {
+  width: 44px; text-align: center !important;
+}
+/* Aakhri khana = aqdamat ke button; unhen aik satar mein rakho */
+.page-content .data-table td:last-child {
+  white-space: nowrap; text-align: center !important;
+}
+.page-content .data-table td:last-child > * { vertical-align: middle; }
+
+/* Adad/tareekh wale khane — LTR aur aik hi mono font.
+   `unicode-bidi: isolate` lazmi hai, warna RTL safhe par
+   "205 / 2025" ke tukRe aapas mein ulat jate hain. */
+.page-content .data-table td [dir="ltr"],
+.page-content .data-table th [dir="ltr"] {
+  unicode-bidi: isolate !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Qatar ke aqdamat wale chhote button — sab hum-shakl, hum-wazan */
+.page-content .data-table .btn-sm,
+.page-content .data-table .cab,
+.page-content .data-table .zab {
+  width: 32px; height: 32px; padding: 0 !important;
+  display: inline-flex !important; align-items: center; justify-content: center;
+  margin: 0 2px;
+}
+.page-content .data-table .btn-sm.btn-danger:hover {
+  background: var(--dio-alert) !important; border-color: var(--dio-alert) !important; color: #fff !important;
+}
+
+/* ── 3.15 CHIP — har jagah aik hi shakl ──────────────────────
+   Pehle har safha apni chip khud banata tha (alag gol-pan, alag
+   rang, alag naap). Ab aik hi soorat. */
+.page-content .suspect-filter,
+.page-content .dio-chip {
+  border-radius: 999px !important;
+  padding: 6px 14px !important;
+  font-weight: 700 !important;
+  border: 1px solid var(--dio-line) !important;
+  background: var(--dio-surface) !important;
+  color: var(--dio-ink-2) !important;
+  display: inline-flex !important; align-items: center; gap: 6px;
+}
+.page-content .suspect-filter:hover,
+.page-content .dio-chip:hover { border-color: var(--dio-brand) !important; color: var(--dio-brand) !important; }
+.page-content .suspect-filter.active,
+.page-content .dio-chip.active {
+  background: var(--dio-brand) !important; border-color: var(--dio-brand) !important; color: #fff !important;
+}
+.page-content .suspect-filter svg, .page-content .dio-chip svg { flex: none; }
+
+/* Chhapai par jadwal ki sajawat na jaye — kaghaz saaf rahe */
+@media print {
+  .page-content .data-table thead th { position: static !important; }
+  .page-content .data-table tbody tr:nth-child(even) td { background: transparent !important; }
 }

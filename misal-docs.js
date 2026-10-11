@@ -482,10 +482,6 @@ function _renderMisalEditor(docId, def) {
 }
 
 // ── انڈکس نقل مسل — AUTO-FILL (ملزمان + ضمنیاں) ─────────────────
-function _mToggleTablePicker() {
-  const p = document.getElementById('misal-table-picker');
-  if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none';
-}
 async function saveMisalDoc(docId) {
   const editor = document.getElementById('misal-editor');
   if (!editor) return;

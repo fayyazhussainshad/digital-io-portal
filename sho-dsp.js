@@ -6,7 +6,7 @@
 // SHO ke liye SIRF do عہدے; DSP/SDPO ke liye apni fehrist
 const SHO_RANKS = ['SI/SHO', 'I/SHO'];
 const DSP_RANKS = ['DSP','SDPO','SP','SSP'];
-const SHO_DSP_RANKS = SHO_RANKS;   // backward compatible
+   // backward compatible
 
 // Helper: get SHO rank+name
 function getSHOName() {

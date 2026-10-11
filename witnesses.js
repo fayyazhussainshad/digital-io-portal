@@ -124,27 +124,6 @@ function _renderWitnessesArea() {
 
 // Built-in case persons who are automatically considered witnesses:
 // مدعی (complainant), محرر/FIR writer, مضروب/مغوی/victim if recorded on the case
-async function _saveAutoWitnesses(auto) {
-  if (!auto || !auto.length) return;
-  try {
-    const oid = await getOfficerId();
-    let added = 0;
-    for (const a of auto) {
-      // Skip if a witness with same name already exists
-      if (_witnessList.some(w => (w.full_name||'').trim() === (a.name||'').trim())) continue;
-      await supabaseClient.from('case_witnesses').insert({
-        case_id: _witnessCaseId, officer_id: oid,
-        full_name: a.name, cnic: a.cnic||null, cell: a.cell||null,
-        status: a.role || 'گواہ',
-      });
-      added++;
-    }
-    await _loadWitnesses();
-    _renderWitnessesArea();
-    showToast(added ? `${added} فریقین گواہان میں شامل ہو گئے` : 'یہ پہلے ہی شامل ہیں', 'success');
-  } catch(e) { showToast('' + e.message, 'error'); }
-}
-
 // Saved witnesses — aligned rows (same column widths & 14pt as the form)
 function _renderWitnessList(list, type) {
   list = list || _witnessList;

@@ -237,14 +237,6 @@ function _incHandwriting() {
   const ta = document.getElementById('inc-narrative');
   if (ta) ta.focus();
 }
-function _lbl() { return 'font-size:13px;color:#555;margin-bottom:4px;display:block;'; }
-function _checkOtherUhda(selId, inputId) {
-  const sel = document.getElementById(selId);
-  const inp = document.getElementById(inputId);
-  if (!sel || !inp) return;
-  inp.style.display = sel.value === '+' ? 'block' : 'none';
-}
-
 // ── VOICE INPUT ───────────────────────────────────────────────
 let _incVoiceRec = null, _incVoiceOn = false, _incVoiceTgt = null;
 function _incVoice(targetId, btnId) {

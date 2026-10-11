@@ -1436,8 +1436,6 @@ window._ch173SideMargin = _ch173SideMargin;
 // ═══ کالم 1 (نام و پتہ مدعی) ki chaurai — PAKKI, 1.5cm ═══
 // Yeh har haal mein wahi rehti hai: na mehfooz shuda naap se badalti hai,
 // na kheench kar badli ja sakti hai (us ki grip band kar di gayi hai).
-const CH173_COL1_W = '1.5cm';
-
 // Chaurai ko CSS ki shakl mein — purane چالان mein naap sirf number (13) ki
 // tarah mehfooz thi, naye mein unit ke saath ('13%' / '1.5cm'). Dono chalen.
 function _ch173WCss(w) {
@@ -1481,7 +1479,6 @@ window._ch173SizeRotated = _ch173SizeRotated;
 // ═══ Khane se baqaya matn khud table ke NEECHE wali jagah mein ═══
 // Usool: khana apni muqarrar unchai se bara nahi hota (table khud nahi phailta).
 // Jo matn khane mein na samaye woh neeche wali jagah mein chala jata hai.
-let _ch173OverflowTimer = null;
 // ═══ Hamesha NAZAR AANE wala چالان pakro ═══
 // AHEM: jab doosri tabs bhi khuli hon to safhe par چالان ke AIK SE ZYADA
 // khane mojood ho sakte hain (chhupe hue purane tab wale bhi). Pehle code
@@ -2034,7 +2031,7 @@ window._ch173AlignSho = _ch173AlignSho;
 //  NOTE: yeh SIRF chapai ke liye lagta hai; screen par koi tabdeeli nahi.
 //  Sirf un safhon par jahan matn aata hai (pehle safhe par nahi).
 // ═══════════════════════════════════════════════════════════════════
-const CH173_BIND_IN = 2;                       // tikone ke bazoo — 2 inch
+                       // tikone ke bazoo — 2 inch
 
 function _ch173AddBindMarks() {
   const daale = [];
@@ -5244,7 +5241,6 @@ window._ch173StripSpan = _ch173StripSpan;
 //   • baghair dashes  : 36302293139455
 // (Kuch گواہان/ملزمان ka CNIC baghair dashes mehfooz hota hai, isi liye un
 //  par seedh nahi lag rahi thi.) Satar ke AAKHIR wala number hi CNIC hai.
-const _CH173_CNIC_RE = /\d{5}-\d{7}-\d/g;
 const _CH173_CNIC_LINE_RE = /^([\s\S]*?)[\s]*(\d[\d\u2010-\u2015-]{8,}\d)[\s]*$/;
 // Khana "saada" hai? (officer ne apni formatting nahi lagayi)
 // Sirf aisi soorat mein satren dobara tarteeb deni mehfooz hai — warna

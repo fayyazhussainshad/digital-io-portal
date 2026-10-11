@@ -9,7 +9,11 @@ const TPL_BUCKET = 'template-files';
 const TPL_CACHE_KEY = 'cache_templates';
 let _tplList = [];
 let _tplSearchTmr = null;
+/* IS SAFHE KI APNI CHHAAN-BEEN KI HALAT — koi doosri file ise nahi chhuti.
+   `cat` sirf chip bharti hai, `q` sirf talaash. Dono guzarte aik hi
+   raaste (`_tplVisible`) se hain, is liye aik doosre ko mita nahi sakte. */
 let _tplActiveCat = '';
+let _tplQuery = '';
 let _tplDocId = null;
 
 const TPL_CATEGORIES = {
@@ -45,6 +49,7 @@ async function renderTemplates(container) {
     </div>
   </div>`;
 
+  _tplActiveCat = ''; _tplQuery = '';   // naya safha, nayi chhaan-been
   await _loadTemplates();
   _renderTplTable();
 }
@@ -83,12 +88,25 @@ async function _loadTemplates() {
 }
 
 // ── TABLE ────────────────────────────────────────────────────
+// Dono shartein SATH — chip aur talaash kabhi aik doosri ko nahi mitatin
+function _tplVisible() {
+  let list = _tplList.slice();
+  if (_tplActiveCat) list = list.filter(t => t.category === _tplActiveCat);
+  const q = _tplQuery;
+  if (q) {
+    list = list.filter(t =>
+      (t.title || '').toLowerCase().includes(q) ||
+      _tplCatLabel(t.category).toLowerCase().includes(q) ||
+      (t.content || '').toLowerCase().includes(q));
+  }
+  return list;
+}
+
 function _renderTplTable() {
   const wrap = document.getElementById('tpl-table-wrap');
   if (!wrap) return;
 
-  let list = _tplList;
-  if (_tplActiveCat) list = list.filter(t => t.category === _tplActiveCat);
+  const list = _tplVisible();
 
   if (!list.length) {
     wrap.innerHTML = `
@@ -143,22 +161,23 @@ function _renderTplTable() {
 }
 function _tplBtn(bg){ return `padding:5px 9px;background:${bg};color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;`; }
 
-// ── SEARCH FILTER ────────────────────────────────────────────
+/* ── TALAASH ──────────────────────────────────────────────────
+   PURANA TAREEQA KHATARNAK THA:
+       const saved = _tplList; _tplList = list;   // ASAL fehrist badal di
+       _renderTplTable(); _tplList = saved;       // phir wapas
+   Yani chand lamhon ke liye SAB ki asal fehrist chhoti kar di jati
+   thi. Us darmiyan agar koi doosra kaam (save, sync, dobara render)
+   chal jata to wo ADHOORI fehrist dekhta — aur usay hi "sab kuch"
+   samajh leta. Yahi wo soorat hai jahan aik chip ka data doosri
+   jagah pahunch jata hai.
+   AB: asal fehrist kabhi nahi badalti; chhaanti hui NAQAL banti hai. */
 function _tplFilter(val) {
   clearTimeout(_tplSearchTmr);
+  const v = (val || '').trim().toLowerCase();
   _tplSearchTmr = setTimeout(() => {
-    const q = (val||'').trim().toLowerCase();
-    const wrap = document.getElementById('tpl-table-wrap');
-    if (!wrap) return;
-    if (!q) { _renderTplTable(); return; }
-    let list = _tplList.filter(t =>
-      (t.title||'').toLowerCase().includes(q) ||
-      _tplCatLabel(t.category).toLowerCase().includes(q) ||
-      (t.content||'').toLowerCase().includes(q));
-    if (_tplActiveCat) list = list.filter(t => t.category === _tplActiveCat);
-    // temporarily render filtered
-    const saved = _tplList; _tplList = list; _renderTplTable(); _tplList = saved;
-  }, 300);
+    _tplQuery = v;
+    _renderTplTable();
+  }, 260);
 }
 
 // ── ADD NEW TEMPLATE ─────────────────────────────────────────

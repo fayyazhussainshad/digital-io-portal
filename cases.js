@@ -577,47 +577,7 @@ function _updateMobileBox() {
   const box = document.getElementById('cf-mobile-box');
   if (box) box.style.display = _hasMobileSection(selectedSections) ? 'block' : 'none';
 }
-function _toggleMobileFields() {
-  const item = document.getElementById('cf-theft-item')?.value;
-  const show = item === 'mobile';
-  ['cf-mobile-imei-wrap','cf-mobile-brand-wrap','cf-mobile-cell-wrap'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = show ? 'flex' : 'none';
-  });
-}
-
 // IMEI brand/model lookup from TAC (first 8 digits = Type Allocation Code)
-function _imeiLookup(input) {
-  // Keep only digits, max 15
-  let v = (input.value || '').replace(/\D/g, '').slice(0, 15);
-  input.value = v;
-  const brandField = document.getElementById('cf-mobile-brand');
-  if (!brandField) return;
-  if (v.length < 8) return;
-  const tac = v.slice(0, 8);
-  // Common TAC prefixes → brand (partial DB; officer can edit)
-  const TAC_BRANDS = {
-    '35':'(عام GSM)','01':'Apple iPhone','35332':'Apple','35326':'Apple',
-    '86':'Xiaomi / Redmi','86891':'Xiaomi','86553':'Oppo','86742':'Vivo',
-    '35846':'Samsung','35649':'Samsung','35878':'Samsung','35291':'Nokia',
-    '35395':'Huawei','86095':'Huawei','86227':'Tecno','86303':'Infinix',
-    '86997':'Realme','35775':'OnePlus','86452':'itel',
-  };
-  // Try longest prefix match
-  let brand = '';
-  for (let len = 6; len >= 2; len--) {
-    const pre = v.slice(0, len);
-    if (TAC_BRANDS[pre]) { brand = TAC_BRANDS[pre]; break; }
-  }
-  // Only auto-fill if field empty or was auto-filled before (don't overwrite manual entry)
-  if (brand && (!brandField.value || brandField.dataset.auto === '1')) {
-    brandField.value = brand;
-    brandField.dataset.auto = '1';
-  }
-  // If user types manually, stop auto
-  brandField.oninput = () => { brandField.dataset.auto = '0'; };
-}
-
 function removeSection(sectionStr) {
   selectedSections = selectedSections.filter(s => s !== sectionStr);
   document.getElementById('cf-section').value = selectedSections.join(' + ');
@@ -636,26 +596,6 @@ document.addEventListener('click', function(e) {
 
 // ── MODAL OPENERS + SAVE/VIEW ──
 function openAddCaseModal(){openModal('',caseFormHTML(),`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveNewCase()">اندراج محفوظ کریں</button>`);setTimeout(function(){_cfRenderMobilePhones();if(typeof _cfSizeModal==='function')_cfSizeModal();},50);}
-async function _updateDocCheck(caseId, checkbox) {
-  const doc = checkbox.value;
-  const val = checkbox.checked;
-  const label = checkbox.closest('label');
-  if (label) label.style.borderColor = val ? 'var(--green)' : 'var(--border)';
-
-  // Update count
-  const allChecked = document.querySelectorAll('input[type=checkbox]:checked').length;
-  const countEl = document.getElementById('docs-done-count');
-  if (countEl) countEl.textContent = allChecked;
-
-  try {
-    // Get current checklist
-    const { data } = await supabaseClient.from('cases').select('docs_checklist').eq('id',caseId).single();
-    const current = data?.docs_checklist || {};
-    current[doc] = val;
-    await supabaseClient.from('cases').update({ docs_checklist: current }).eq('id', caseId);
-  } catch(e) { console.warn('docs checklist:', e.message); }
-}
-
 // ── AUTO REMINDERS ────────────────────────────────────────────
 async function _createAutoReminders(firNum, firDateStr, mulzmanType, complainant) {
   try {
@@ -702,81 +642,9 @@ function viewCase(id) { openCaseWorkspace(id); }
 // ════════════════════════════════════════════
 let currentCaseId = null;
 let currentDocIndex = null;
-const docDrafts = {}; // stores edited content per case+doc
+ // stores edited content per case+doc
 
 // ── RELATED CASES LINKING ─────────────────────────────────────
-function _daysSinceReg(c) {
-  const d = c.fir_date || c.created_at;
-  if (!d) return 0;
-  const reg = new Date(d);
-  if (isNaN(reg)) return 0;
-  return Math.floor((Date.now() - reg.getTime()) / (1000*60*60*24));
-}
-
-function _generateInterim173(c) {
-  const o = currentOfficer || {};
-  const days = _daysSinceReg(c);
-  const today = formatDate(new Date().toISOString());
-  const html = `
-  <div style="font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;padding:30px;line-height:2.2;font-size:15px;color:#000;">
-    <div style="text-align:center;font-weight:800;font-size:18px;margin-bottom:4px;">تھانہ ${esc(c.case_station||o.station||'_____')} ضلع ${esc(c.case_district||o.district||'_____')}</div>
-    <div style="text-align:center;font-size:16px;font-weight:700;border-bottom:2px solid #000;display:inline-block;margin:0 auto 16px;padding-bottom:2px;width:100%;">عبوری رپورٹ زیر دفعہ 173 ضابطہ فوجداری</div>
-    <table style="width:100%;border-collapse:collapse;margin-bottom:14px;">
-      <tr><td style="border:1px solid #555;padding:6px 10px;font-weight:700;background:#f0f0f0;">مقدمہ نمبر</td><td style="border:1px solid #555;padding:6px 10px;">${c.fir_number||'—'}</td>
-          <td style="border:1px solid #555;padding:6px 10px;font-weight:700;background:#f0f0f0;">دفعات</td><td style="border:1px solid #555;padding:6px 10px;">${esc(c.section_of_law)||'—'}</td></tr>
-      <tr><td style="border:1px solid #555;padding:6px 10px;font-weight:700;background:#f0f0f0;">مدعی</td><td style="border:1px solid #555;padding:6px 10px;">${esc(c.complainant)||'—'}</td>
-          <td style="border:1px solid #555;padding:6px 10px;font-weight:700;background:#f0f0f0;">تاریخ اندراج</td><td style="border:1px solid #555;padding:6px 10px;">${formatDate(c.fir_date)}</td></tr>
-    </table>
-    <div style="margin:12px 0;">
-      جناب عالی،<br><br>
-      گزارش ہے کہ مقدمہ ہذا کو درج ہوئے ${days} دن گزر چکے ہیں۔ تفتیش تاحال جاری ہے۔ مندرجہ ذیل وجوہات کی بنا پر چالان مکمل نہیں ہو سکا:
-    </div>
-    <div style="min-height:120px;border:1px solid #ccc;padding:12px;border-radius:4px;" contenteditable="true">۱۔ ...<br>۲۔ ...</div>
-    <div style="margin-top:14px;">لہٰذا عبوری رپورٹ بغرض ملاحظہ پیش خدمت ہے۔ تفتیش مکمل ہونے پر حتمی چالان پیش کر دیا جائے گا۔</div>
-    <div style="margin-top:40px;text-align:left;">
-      <div>_______________________</div>
-      <div style="font-size:13px;font-weight:700;">${esc(o.designation||'')} ${esc(o.full_name||'')}</div>
-      <div style="font-size:12px;">تفتیشی افسر — تھانہ ${esc(c.case_station||o.station||'')}</div>
-      <div style="font-size:12px;">تاریخ: ${today}</div>
-    </div>
-  </div>`;
-  if (typeof dioPrint === 'function') dioPrint(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><style>@page{margin:15mm}body{margin:0}</style></head><body>${html}</body></html>`);
-  showToast('عبوری 173 رپورٹ تیار — پرنٹ کریں یا محفوظ کریں', 'success', 4000);
-}
-
-function _suggest161Questions(c) {
-  const sections = (c.section_of_law || '').replace(/\s/g, '');
-  // Find matching crime type by section
-  let matched = null;
-  for (const [key, val] of Object.entries(_Q161)) {
-    if (val.sections.some(s => sections.includes(s))) { matched = val; break; }
-  }
-
-  openModal('تجویز کردہ سوالات — بیان 161', `
-    <div style="direction:rtl;">
-      ${matched ? `
-        <div style="font-size:13px;color:var(--accent);font-weight:700;margin-bottom:10px;">
-          ${matched.title} — متعلقہ سوالات (دفعات: ${esc(c.section_of_law)})
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px;">
-          ${matched.questions.map((q,i)=>`
-            <div style="background:var(--bg-secondary);border-radius:8px;padding:10px;font-size:13px;display:flex;gap:8px;">
-              <span style="color:var(--accent);font-weight:700;flex-shrink:0;">${i+1}.</span>
-              <span>${q}</span>
-            </div>`).join('')}
-        </div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:10px;">یہ صرف تجاویز ہیں — تفتیش کے مطابق سوالات کریں</div>
-      ` : `
-        <div style="text-align:center;padding:20px;color:var(--text-muted);">
-          <div style="font-size:40px;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><circle cx="12" cy="12" r="8.5"/><path d="M9.5 9.5a2.6 2.6 0 0 1 5 1c0 1.8-2.5 2-2.5 3.6"/><path d="M12 17.4h.01"/></svg></div>
-          <div style="font-size:13px;">اس دفعہ (${esc(c.section_of_law)||'—'}) کے لیے مخصوص سوالات دستیاب نہیں۔</div>
-          <div style="font-size:11px;margin-top:8px;">عام سوالات: واقعہ کہاں ہوا؟ کب ہوا؟ کون ملوث ہے؟ گواہ کون ہیں؟</div>
-        </div>
-      `}
-    </div>
-  `, `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`);
-}
-
 async function openCaseWorkspace(id) {
   closeMobileSidebar();
   window._inWorkspace = true;  // Prevent background refresh from redirecting back to list
@@ -863,60 +731,6 @@ function renderDocsTab(c, docs) {
       </div>
     </div>
   </div>`;
-}
-
-function saveDocDraft(docIndex) {
-  const editor = document.getElementById('doc-template-editor');
-  if (!editor) return;
-  const key = currentCaseId + '_' + docIndex;
-  docDrafts[key] = editor.innerHTML;
-  // Update card status
-  const card = document.getElementById('doc-card-' + docIndex);
-  if (card) {
-    const statusEl = card.querySelector('.doc-card-status');
-    if (statusEl) { statusEl.textContent = 'Draft'; statusEl.className = 'doc-card-status doc-status-draft'; }
-  }
-  showToast('Draft saved!', 'success', 1500);
-}
-
-function markDocDone(docIndex) {
-  saveDocDraft(docIndex);
-  const card = document.getElementById('doc-card-' + docIndex);
-  if (card) {
-    const statusEl = card.querySelector('.doc-card-status');
-    if (statusEl) { statusEl.textContent = 'Done'; statusEl.className = 'doc-card-status doc-status-done'; }
-  }
-  showToast('Document marked as complete!', 'success');
-}
-
-function changeFont(fontKey) {
-  const editor = document.getElementById('doc-template-editor');
-  if (!editor) return;
-  const fonts = {
-    jameel: "'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif",
-    noto: "'Noto Nastaliq Urdu', serif",
-    times: "'Times New Roman', serif",
-    arial: "Arial, sans-serif",
-  };
-  editor.style.fontFamily = fonts[fontKey] || fonts.jameel;
-}
-
-function changeFontSize(size) {
-  const editor = document.getElementById('doc-template-editor');
-  if (editor) editor.style.fontSize = size + 'px';
-}
-
-function toggleDirection() {
-  const editor = document.getElementById('doc-template-editor');
-  if (!editor) return;
-  editor.dir = editor.dir === 'rtl' ? 'ltr' : 'rtl';
-  editor.style.textAlign = editor.dir === 'rtl' ? 'right' : 'left';
-}
-
-function printThisDoc(docName) {
-  const editor = document.getElementById('doc-template-editor');
-  if (!editor) return;
-  printContent(`<h2>${docName}</h2>${editor.innerHTML}`, docName + ' — Digital IO');
 }
 
 function renderEvidenceTab(c, ev) {

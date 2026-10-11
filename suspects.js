@@ -23,12 +23,12 @@ async function renderSuspects(container) {
   container.innerHTML = `
   <div style="direction:rtl;">
     <!-- Header -->
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+    <div class="page-header">
+      <button class="btn btn-primary dio-add-btn" onclick="_openSuspectForm()">+ نیا اندراج</button>
       <div>
-        <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;">ملزمان / گواہان</div>
-        <div style="font-size:12px;color:var(--text-muted);">تمام افراد ایک جگہ — مقدمات کے ساتھ منسلک</div>
+        <div class="page-title">ملزمان / گواہان</div>
+        <div class="page-subtitle"><span id="susp-count">${people.length}</span> افراد — مقدمات کے ساتھ منسلک</div>
       </div>
-      <button class="btn btn-primary dio-add-btn" onclick="_openSuspectForm()">نیا اندراج</button>
     </div>
 
     <!-- Search -->
@@ -51,6 +51,8 @@ async function renderSuspects(container) {
   </div>`;
 
   window._suspectsCache = people;
+  // Naye sire se safha khula — chhaan-been bhi naye sire se
+  _suspFilter.type = ''; _suspFilter.q = '';
 }
 
 function _renderSuspectList(people) {
@@ -92,26 +94,68 @@ async function _getSuspects() {
   } catch(_) { return []; }
 }
 
-// ── SEARCH / FILTER ───────────────────────────────────────────
-function _filterSuspects(q) {
-  const people = window._suspectsCache || [];
-  q = (q || '').toLowerCase().trim();
-  const filtered = !q ? people : people.filter(p =>
-    (p.full_name || '').toLowerCase().includes(q) ||
-    (p.cnic || '').includes(q) ||
-    (p.cell || '').includes(q)
-  );
-  const list = document.getElementById('suspects-list');
-  if (list) list.innerHTML = _renderSuspectList(filtered);
+/* ═══════════════════════════════════════════════════════════
+   CHHAAN-BEEN (filter) — IS SAFHE KI APNI HALAT
+   ───────────────────────────────────────────────────────────
+   PURANI KHARABI (afsar ko yun nazar aati thi ke "aik chip ka
+   data doosri chip mein chala gaya"):
+
+     `_filterSuspects()` aur `_filterByType()` DONO alag alag
+     poori fehrist se chhaanti thin. Natija:
+       • Afsar ne "اللہ دتہ" likha  → fehrist chhoti hui
+       • phir "گواہ" chip dabayi → likha hua matn NAZAR-ANDAZ,
+         SAARE gawah aa gaye (chip ne talaash mita di)
+       • chip dabane ke baad likha    → chip NAZAR-ANDAZ, har qism
+         ke log aa gaye (talaash ne chip mita di)
+     Yani jo chip roshan thi, us ka matlab hi khatam ho jata tha.
+
+   AB KA USOOL (poore system mein wahi):
+     1. Is safhe ki AIK halat: `_suspFilter` — sirf yahi file
+        is ko chhuti hai, koi doosri file nahi.
+     2. Har chip sirf APNA khana bharti hai (`type`), talaash
+        sirf apna (`q`) — koi doosre ka khana nahi chheRti.
+     3. Dono guzarte AIK hi raaste se hain: `_suspVisible()` →
+        `_suspRender()`. Is liye dono shartein HAMESHA sath
+        chalti hain aur aik doosri ko mita nahi sakti.
+   ═══════════════════════════════════════════════════════════ */
+const _suspFilter = { type: '', q: '' };
+
+// Dono shartein sath — yahi is safhe ka WAAHID chhaanne wala raasta
+function _suspVisible() {
+  let list = (window._suspectsCache || []).slice();
+  if (_suspFilter.type) list = list.filter(p => p.person_type === _suspFilter.type);
+  const q = _suspFilter.q;
+  if (q) {
+    list = list.filter(p =>
+      (p.full_name || '').toLowerCase().includes(q) ||
+      (p.cnic || '').includes(q) ||
+      (p.cell || '').includes(q) ||
+      (p.address || '').toLowerCase().includes(q) ||
+      (p.fir_number || '').toLowerCase().includes(q)
+    );
+  }
+  return list;
 }
 
+function _suspRender() {
+  const list = document.getElementById('suspects-list');
+  if (list) list.innerHTML = _renderSuspectList(_suspVisible());
+  const n = document.getElementById('susp-count');
+  if (n) n.textContent = _suspVisible().length;
+}
+
+// Talaash — sirf apna khana bhare
+function _filterSuspects(q) {
+  _suspFilter.q = (q || '').toLowerCase().trim();
+  _suspRender();
+}
+
+// Qism ki chip — sirf apna khana bhare
 function _filterByType(type, el) {
   document.querySelectorAll('.suspect-filter').forEach(b => b.classList.remove('active'));
   if (el) el.classList.add('active');
-  const people = window._suspectsCache || [];
-  const filtered = !type ? people : people.filter(p => p.person_type === type);
-  const list = document.getElementById('suspects-list');
-  if (list) list.innerHTML = _renderSuspectList(filtered);
+  _suspFilter.type = type || '';
+  _suspRender();
 }
 
 // ── ADD / EDIT FORM ───────────────────────────────────────────
