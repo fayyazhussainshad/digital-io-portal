@@ -85,16 +85,16 @@ async function renderAhkamat(container){
 }
 
 function _ahkChipsHtml(){
+  /* Chip ki shakl ab `theme-pro.css` ke `.dio-chip` se aati hai —
+     yahan apne rang/naap nahi likhe jate. Teen safhon par teen
+     alag chip hoti thin (yahan 18px, templates me 16px + apna rang,
+     mulzimaan me class wali) — ab teenon aik jaisi. */
   const mk = (key, label, icon) => {
     const on = (_ahkActiveCat === key);
-    return `<button onclick="_ahkSetCat('${key}')" style="
-      padding:6px 13px;border-radius:18px;cursor:pointer;font-size:13px;white-space:nowrap;
-      border:1px solid ${on?'var(--accent)':'var(--border)'};
-      background:${on?'var(--accent)':'var(--bg-card)'};
-      color:${on?'#fff':'var(--text-primary)'};font-weight:${on?'800':'600'};
-      font-family:'Jameel Noori Nastaleeq',serif;">${icon} ${label}</button>`;
+    return `<button type="button" class="dio-chip${on ? ' active' : ''}"
+      aria-pressed="${on}" onclick="_ahkSetCat('${key}')">${icon || ''} ${label}</button>`;
   };
-  let html = mk('all','سب','🗃️');
+  let html = mk('all','سب','');
   for (const [k,v] of Object.entries(AHK_CATEGORIES)) html += mk(k, v, _ahkCatIcon(k));
   return html;
 }
@@ -182,10 +182,10 @@ function _ahkRender(){
       </td>
       <td style="padding:10px 8px;text-align:center;">
         <div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap;">
-          ${(hasText||hasFile)?`<button aria-label="پڑھیں" onclick="_ahkView('${a.id}')" title="پڑھیں" style="padding:5px 9px;background:#1a73e8;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg></button>`:''}
-          ${(hasText||hasFile)?`<button aria-label="پرنٹ" onclick="_ahkView('${a.id}',true)" title="پرنٹ" style="padding:5px 9px;background:#334155;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M7 9.5V3.5h10v6"/><path d="M4.5 9.5h15v7h-15z"/><path d="M7 13.5h10V21H7z"/></svg></button>`:''}
-          ${canMng?`<button aria-label="ترمیم" onclick="_ahkEdit('${a.id}')" title="ترمیم" style="padding:5px 9px;background:#fd7e14;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>`:''}
-          ${canMng?`<button aria-label="حذف" onclick="_ahkDelete('${a.id}')" title="حذف" style="padding:5px 9px;background:#dc3545;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>`:''}
+          ${(hasText||hasFile)?`<button aria-label="پڑھیں" onclick="_ahkView('${a.id}')" title="پڑھیں" style="padding:5px 9px;background:var(--accent);color:#fff;border:1px solid var(--accent);border-radius:6px;cursor:pointer;font-size:13px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg></button>`:''}
+          ${(hasText||hasFile)?`<button aria-label="پرنٹ" onclick="_ahkView('${a.id}',true)" title="پرنٹ" style="padding:5px 9px;background:var(--text-secondary);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M7 9.5V3.5h10v6"/><path d="M4.5 9.5h15v7h-15z"/><path d="M7 13.5h10V21H7z"/></svg></button>`:''}
+          ${canMng?`<button aria-label="ترمیم" onclick="_ahkEdit('${a.id}')" title="ترمیم" style="padding:5px 9px;background:var(--amber);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>`:''}
+          ${canMng?`<button aria-label="حذف" onclick="_ahkDelete('${a.id}')" title="حذف" style="padding:5px 9px;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>`:''}
         </div>
       </td>
     </tr>`;
@@ -381,14 +381,14 @@ function _ahkTextReader(a, autoPrint){
   overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(10,16,25,0.97);display:flex;flex-direction:column;';
   overlay.innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border-bottom:1px solid #dee2e6;direction:rtl;flex-wrap:wrap;">
-      <div style="font-weight:800;font-size:16px;color:#1a3a5c;flex:1;min-width:140px;">${_ahkEsc(a.title)}</div>
+      <div style="font-weight:800;font-size:16px;color:var(--text-primary);flex:1;min-width:140px;">${_ahkEsc(a.title)}</div>
       <input id="ahk-internal-search" type="text" dir="rtl" placeholder="متن میں تلاش کریں..." oninput="_ahkInternalSearch(this.value)"
         style="padding:7px 12px;border:1px solid var(--border);border-radius:20px;font-size:13px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;min-width:150px;">
       <button onclick="_ahkNavMatch(-1)" title="پچھلا" aria-label="پچھلا" style="border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);border-radius:8px;padding:6px 9px;cursor:pointer;display:inline-flex;align-items:center;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
       <button onclick="_ahkNavMatch(1)" title="اگلا" aria-label="اگلا" style="border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);border-radius:8px;padding:6px 9px;cursor:pointer;display:inline-flex;align-items:center;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
       <span id="ahk-search-count" style="font-size:12px;color:#6c757d;"></span>
-      <button onclick="_ahkPrintOne('${a.id}')" style="background:#1a73e8;color:#fff;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;">پرنٹ</button>
-      <button onclick="_ahkCloseReader()" style="background:#e2e8f0;color:#1a3a5c;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;font-weight:700;">بند</button>
+      <button onclick="_ahkPrintOne('${a.id}')" style="background:var(--accent);color:#fff;border:1px solid var(--accent);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;">پرنٹ</button>
+      <button onclick="_ahkCloseReader()" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;font-weight:700;">بند</button>
     </div>
     <div id="ahk-reader-body" style="flex:1;overflow:auto;background:#fff;">
       <style>
@@ -406,7 +406,7 @@ function _ahkTextReader(a, autoPrint){
           ${a.issue_date?`<br>تاریخِ اجرا: ${_ahkEsc(_ahkFmtDate(a.issue_date))}`:''}
         </div>
         ${_ahkBodyToHtml(a.body_text)}
-        ${(a.storage_path||a.file_url)?`<div style="margin-top:20px;"><button onclick="_ahkOpenFile('${a.id}')" style="background:#28a745;color:#fff;border:none;border-radius:8px;padding:9px 16px;cursor:pointer;font-size:14px;">منسلک فائل کھولیں</button></div>`:''}
+        ${(a.storage_path||a.file_url)?`<div style="margin-top:20px;"><button onclick="_ahkOpenFile('${a.id}')" style="background:var(--green);color:#fff;border:none;border-radius:8px;padding:9px 16px;cursor:pointer;font-size:14px;">منسلک فائل کھولیں</button></div>`:''}
       </div>
     </div>`;
   document.body.appendChild(overlay);
@@ -421,11 +421,11 @@ async function _ahkFileReader(a, url, isPdf, autoPrint){
   const gview = 'https://docs.google.com/viewer?url=' + encodeURIComponent(url) + '&embedded=true';
   overlay.innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border-bottom:1px solid #dee2e6;direction:rtl;flex-wrap:wrap;">
-      <div style="font-weight:800;font-size:16px;color:#1a3a5c;flex:1;min-width:140px;">${_ahkEsc(a.title)}</div>
-      <a href="${url}" target="_blank" style="background:#1a73e8;color:#fff;border-radius:8px;padding:7px 12px;text-decoration:none;font-size:13px;">براؤزر</a>
+      <div style="font-weight:800;font-size:16px;color:var(--text-primary);flex:1;min-width:140px;">${_ahkEsc(a.title)}</div>
+      <a href="${url}" target="_blank" style="background:var(--accent);color:#fff;border-radius:8px;padding:7px 12px;text-decoration:none;font-size:13px;">براؤزر</a>
       <a href="${gview}" target="_blank" style="background:#ea4335;color:#fff;border-radius:8px;padding:7px 12px;text-decoration:none;font-size:13px;">Google Docs</a>
-      <a href="${url}" download="${_ahkEsc(a.file_display_name||a.title||'ahkam')}" style="background:#28a745;color:#fff;border-radius:8px;padding:7px 12px;text-decoration:none;font-size:13px;">ڈاؤنلوڈ</a>
-      <button onclick="_ahkCloseReader()" style="background:#e2e8f0;color:#1a3a5c;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;font-weight:700;">بند</button>
+      <a href="${url}" download="${_ahkEsc(a.file_display_name||a.title||'ahkam')}" style="background:var(--green);color:#fff;border-radius:8px;padding:7px 12px;text-decoration:none;font-size:13px;">ڈاؤنلوڈ</a>
+      <button onclick="_ahkCloseReader()" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;font-weight:700;">بند</button>
     </div>
     <div id="ahk-reader-body" style="flex:1;overflow:auto;background:#fff;">
       <div style="text-align:center;padding:40px;color:#6c757d;">فائل کھل رہی ہے...</div>
@@ -482,9 +482,9 @@ async function _ahkFileReader(a, url, isPdf, autoPrint){
       <div style="font-size:44px;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
       <div style="font-size:15px;color:#444;margin-bottom:20px;">فائل کھولنے کے لیے منتخب کریں:</div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-        <a href="${url}" target="_blank" style="padding:11px 20px;background:#1a73e8;color:#fff;border-radius:8px;text-decoration:none;">براؤزر میں کھولیں</a>
+        <a href="${url}" target="_blank" style="padding:11px 20px;background:var(--accent);color:#fff;border-radius:8px;text-decoration:none;">براؤزر میں کھولیں</a>
         <a href="${gview}" target="_blank" style="padding:11px 20px;background:#ea4335;color:#fff;border-radius:8px;text-decoration:none;">Google Docs</a>
-        <a href="${url}" download style="padding:11px 20px;background:#28a745;color:#fff;border-radius:8px;text-decoration:none;">ڈاؤنلوڈ</a>
+        <a href="${url}" download style="padding:11px 20px;background:var(--green);color:#fff;border-radius:8px;text-decoration:none;">ڈاؤنلوڈ</a>
       </div>
     </div>`;
 }

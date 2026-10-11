@@ -21,7 +21,7 @@ if (!window.supabase || !window.supabase.createClient) {
           + '<div style="font-size:48px;margin-bottom:16px;"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M4.5 15a10.5 10.5 0 0 1 15 0"/><path d="M8 18.2a6 6 0 0 1 8 0"/><path d="M12 21h.01"/><path d="M2 11.5a14.5 14.5 0 0 1 20 0"/></svg></div>'
           + '<div style="font-size:18px;font-weight:700;margin-bottom:10px;">کنکشن کا مسئلہ</div>'
           + '<div style="font-size:14px;color:#7d97ad;line-height:1.8;margin-bottom:20px;">انٹرنیٹ سے لائبریری لوڈ نہیں ہو سکی۔ براہِ کرم انٹرنیٹ چیک کریں اور دوبارہ کوشش کریں۔</div>'
-          + '<button onclick="location.reload(true)" style="background:#38bdf8;color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:15px;font-weight:700;cursor:pointer;">🔄 دوبارہ کوشش کریں</button>'
+          + '<button onclick="location.reload(true)" style="background:#38bdf8;color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:15px;font-weight:700;cursor:pointer;">دوبارہ کوشش کریں</button>'
           + '</div>';
       }
     }, 2500);
@@ -199,10 +199,10 @@ function showPage(page, el) {
     } catch(err) {
       console.error('Page render error ['+page+']:', err);
       container.innerHTML = `<div style="padding:30px;direction:rtl;text-align:center;">
-        <div style="font-size:40px;">⚠️</div>
+        <div style="font-size:40px;"><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M12 4L3 19.5h18z'/><path d='M12 10v4.5'/><path d='M12 17.2h.01'/></svg></div>
         <div style="font-size:15px;margin-top:10px;color:var(--text-secondary);">صفحہ کھولنے میں مسئلہ</div>
         <div style="font-size:11px;color:var(--text-muted);margin-top:8px;font-family:monospace;direction:ltr;">${(err&&err.message)||err}</div>
-        <button class="btn btn-secondary btn-sm" style="margin-top:14px;" onclick="showPage('${page}',null)">🔄 دوبارہ کوشش</button>
+        <button class="btn btn-secondary btn-sm" style="margin-top:14px;" onclick="showPage('${page}',null)">دوبارہ کوشش</button>
       </div>`;
     }
   } else {
@@ -371,41 +371,6 @@ function formatDate(d) {
 window.formatDate = formatDate;
 
 // ── GLOBAL: voice-to-text mic button (Rule 7) ──────────────────
-window.addMicButton = function(inputElement) {
-  if (!inputElement || inputElement._micAdded) return;
-  inputElement._micAdded = true;
-  const micBtn = document.createElement('button');
-  micBtn.innerHTML = '🎙️';
-  micBtn.type = 'button';
-  micBtn.style.cssText = 'border:none;background:transparent;cursor:pointer;font-size:18px;padding:2px 6px;vertical-align:middle;';
-  micBtn.title = 'آواز سے لکھیں';
-  // Place the mic button right after the field
-  if (inputElement.nextSibling) inputElement.parentNode.insertBefore(micBtn, inputElement.nextSibling);
-  else inputElement.parentNode.appendChild(micBtn);
-
-  let recognition;
-  micBtn.addEventListener('click', () => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) { alert('آپ کا براؤزر آواز کی پہچان کی حمایت نہیں کرتا'); return; }
-    if (recognition) { try { recognition.stop(); } catch(_) {} recognition = null; micBtn.innerHTML='🎙️'; return; }
-    recognition = new SR();
-    recognition.lang = 'ur-PK';
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    micBtn.innerHTML = '🔴';
-    const isCE = inputElement.isContentEditable;
-    const base = isCE ? (inputElement.innerText||'') : (inputElement.value||'');
-    recognition.onresult = (e) => {
-      let t = '';
-      for (let i = e.resultIndex; i < e.results.length; i++) t += e.results[i][0].transcript;
-      if (isCE) { inputElement.innerText = (base?base+' ':'') + t; inputElement.style.fontWeight='bold'; }
-      else { inputElement.value = (base?base+' ':'') + t; inputElement.style.fontWeight='bold'; }
-    };
-    recognition.onend = () => { micBtn.innerHTML = '🎙️'; recognition = null; };
-    recognition.onerror = () => { micBtn.innerHTML = '🎙️'; recognition = null; };
-    try { recognition.start(); } catch(_) { micBtn.innerHTML='🎙️'; }
-  });
-};
 // Apply mic to any field marked data-mic="true"
 // BAND KAR DIYA GAYA — ab poore system ka AIK global mic button hai
 // (global-mic.js). Purane bikhre hue mic buttons (har field par) khatam.
@@ -432,12 +397,12 @@ window.confirmDelete = function(itemName, onConfirm) {
   dialog.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:99999;display:flex;align-items:center;justify-content:center;';
   dialog.innerHTML = `
     <div style="background:var(--bg-card,#fff);padding:24px;border-radius:14px;max-width:340px;width:90%;text-align:center;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
-      <div style="font-size:34px;margin-bottom:10px;">⚠️</div>
+      <div style="font-size:34px;margin-bottom:10px;"><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M12 4L3 19.5h18z'/><path d='M12 10v4.5'/><path d='M12 17.2h.01'/></svg></div>
       <div style="font-size:17px;font-weight:bold;margin-bottom:6px;color:var(--text-primary,#111);">کیا آپ واقعی حذف کرنا چاہتے ہیں؟</div>
       <div style="font-size:14px;color:var(--text-secondary,#777);margin-bottom:20px;">${itemName||''}</div>
       <div style="display:flex;gap:12px;justify-content:center;">
         <button id="_cd-cancel" style="padding:10px 22px;border:1px solid var(--border,#ccc);border-radius:8px;background:transparent;color:var(--text-primary,#111);cursor:pointer;font-size:15px;">منسوخ</button>
-        <button id="_cd-ok" style="padding:10px 22px;border:none;border-radius:8px;background:#dc3545;color:#fff;cursor:pointer;font-size:15px;">✕ حذف کریں</button>
+        <button id="_cd-ok" style="padding:10px 22px;border:none;border-radius:8px;background:var(--red);color:#fff;cursor:pointer;font-size:15px;">حذف کریں</button>
       </div>
     </div>`;
   document.body.appendChild(dialog);
@@ -451,7 +416,7 @@ window.showEmptyState = function(container, message, actionHint) {
   if (!container) return;
   container.innerHTML = `
     <div style="text-align:center;padding:40px 20px;color:var(--text-muted,#888);direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
-      <div style="font-size:46px;margin-bottom:14px;">📂</div>
+      <div style="font-size:46px;margin-bottom:14px;"><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M3.5 7.5h6l2 2.5h9V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z'/></svg></div>
       <div style="font-size:16px;margin-bottom:8px;color:var(--text-secondary,#aaa);">${message||''}</div>
       ${actionHint ? `<div style="font-size:13px;color:var(--text-faint,#999);">${actionHint}</div>` : ''}
     </div>`;
@@ -697,8 +662,32 @@ function updateConnectionStatus(online) {
   const badge= document.getElementById('db-badge');
   if (dot)  dot.className  = 'status-dot' + (online?' status-online':' status-offline');
   if (text) text.textContent = online ? 'آن لائن' : 'آف لائن';
-  if (badge) badge.textContent = online ? '🔗 Connected' : '⚡ Offline';
+  if (badge) badge.textContent = online ? 'متصل' : 'آف لائن';
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   KHARABI JO THEEK KI GAYI:
+   `updateConnectionStatus()` sirf `online`/`offline` EVENTS par
+   chalta tha. Event tab aata hai jab haalat BADLE. Agar app pehle
+   se hi aaf line khuli (jo maidan me aam hai — afsar signal se
+   bahar jaga par app kholta hai) to koi event nahi aata, aur
+   topbar par likha hua pehla matn "آن لائن" wahin laga rehta hai.
+   Naapa gaya: navigator.onLine = false, magar patti par "آن لائن".
+   Afsar samajhta ke uska kaam server tak pahunch raha hai — halanke
+   nahi pahunch raha.
+   AB: shuru me aik baar asal haalat se nishan lagaya jata hai.
+   ═══════════════════════════════════════════════════════════════ */
+function _dioInitConnectionStatus() {
+  try { updateConnectionStatus(navigator.onLine); } catch (_) {}
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _dioInitConnectionStatus);
+} else {
+  _dioInitConnectionStatus();
+}
+// Topbar baad me bhi ban sakti hai — do dafa aur yaqeeni bana lo
+setTimeout(_dioInitConnectionStatus, 600);
+setTimeout(_dioInitConnectionStatus, 2000);
 
 // ── SYNC STATUS (S4) ──────────────────────────────────────────
 function markSynced() {
@@ -795,9 +784,9 @@ async function _checkDueReminders() {
     const due = rems.filter(r=>!r.is_done&&r.reminder_date&&r.reminder_date<=today);
     if (!due.length) return;
     due.slice(0,3).forEach((r,i)=>{
-      setTimeout(()=>_showNotification(`🔔 یاددہانی — ${r.reminder_date===today?'آج':'گزر گئی'}`,r.text.slice(0,100),'rem-'+r.id),i*1500);
+      setTimeout(()=>_showNotification(`یاددہانی — ${r.reminder_date===today?'آج':'گزر گئی'}`,r.text.slice(0,100),'rem-'+r.id),i*1500);
     });
-    if (due.length>3) setTimeout(()=>_showNotification('🔔 Digital IO',`${due.length} یاددہانیاں باقی`,'rem-count'),5000);
+    if (due.length>3) setTimeout(()=>_showNotification('Digital IO',`${due.length} یاددہانیاں باقی`,'rem-count'),5000);
   } catch(_) {}
 }
 
@@ -827,13 +816,13 @@ function voiceType(targetId, btnId) {
   const rec = new SR();
   rec.lang = 'ur-PK'; rec.continuous = false; rec.interimResults = false;
   const btn = document.getElementById(btnId);
-  if (btn) { btn.textContent='🔴'; btn.disabled=true; }
+  if (btn) { btn.innerHTML="<svg viewBox='0 0 24 24' width='15' height='15' aria-hidden='true'><circle cx='12' cy='12' r='6' fill='currentColor'/></svg>"; btn.disabled=true; }
   rec.onresult = e => {
     const inp = document.getElementById(targetId);
     if (inp) { inp.value += (inp.value?' ':'')+e.results[0][0].transcript; inp.dispatchEvent(new Event('input')); }
   };
   rec.onerror = () => showToast('آواز سننے میں مشکل','warn');
-  rec.onend   = () => { if(btn){btn.textContent='🎙️';btn.disabled=false;} };
+  rec.onend   = () => { if(btn){btn.textContent='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>';btn.disabled=false;} };
   rec.start();
 }
 
@@ -1027,8 +1016,8 @@ function _dioPrintPreview(htmlContent) {
   ov.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:99998;background:rgba(0,0,0,0.8);display:flex;flex-direction:column;align-items:center;padding:12px 0;overflow:auto;';
   ov.innerHTML = `
     <div style="display:flex;gap:12px;margin-bottom:10px;direction:rtl;">
-      <button id="dio-prev-print" style="background:#1a73e8;color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:16px;cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">🖨️ پرنٹ کریں</button>
-      <button id="dio-prev-close" style="background:#dc3545;color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:16px;cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">✕ بند کریں</button>
+      <button id="dio-prev-print" style="background:var(--accent);color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:16px;cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">پرنٹ کریں</button>
+      <button id="dio-prev-close" style="background:var(--red);color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:16px;cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">بند کریں</button>
     </div>
     <iframe id="dio-preview-frame" style="width:210mm;max-width:96vw;height:80vh;background:#fff;border:none;border-radius:4px;box-shadow:0 8px 40px rgba(0,0,0,0.5);"></iframe>`;
   document.body.appendChild(ov);
@@ -1105,7 +1094,7 @@ function _showInstallButton() {
   if (document.getElementById('pwa-install-btn')) return;
   const btn = document.createElement('button');
   btn.id = 'pwa-install-btn';
-  btn.innerHTML = '📲 ایپ انسٹال کریں';
+  btn.innerHTML = 'ایپ انسٹال کریں';
   btn.style.cssText = 'position:fixed;bottom:20px;left:20px;z-index:9999;background:var(--accent,#38bdf8);color:#fff;border:none;border-radius:24px;padding:12px 20px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.3);font-family:"Jameel Noori Nastaleeq",sans-serif;';
   btn.onclick = _installApp;
   document.body.appendChild(btn);
@@ -1199,8 +1188,8 @@ function _dioViewFile(url, name) {
                line-height:1;direction:ltr;">←</button>
       <span style="font-weight:700;font-size:14px;">${esc(name || 'فائل')}</span>
       <div style="margin-right:auto;display:flex;gap:6px;">
-        <button class="btn btn-secondary btn-sm" onclick="_dioPrintFileView()">🖨️ پرنٹ</button>
-        <button class="btn btn-secondary btn-sm" onclick="_dioDownloadFileView()">⬇️ محفوظ</button>
+        <button class="btn btn-secondary btn-sm" onclick="_dioPrintFileView()">پرنٹ</button>
+        <button class="btn btn-secondary btn-sm" onclick="_dioDownloadFileView()">محفوظ</button>
       </div>
     </div>
     <div style="flex:1;min-height:0;background:#525659;overflow:auto;display:flex;
@@ -1211,10 +1200,10 @@ function _dioViewFile(url, name) {
              onload="this.dataset.ok='1'"></iframe>
            <div id="dio-fv-fallback" style="display:none;color:#fff;text-align:center;padding:40px 20px;
                 font-family:'Jameel Noori Nastaleeq',serif;">
-             <div style="font-size:40px;margin-bottom:12px;">📄</div>
+             <div style="font-size:40px;margin-bottom:12px;"><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M7 3h7l4 4v14H7z'/><path d='M14 3v5h5'/></svg></div>
              <div style="font-size:15px;margin-bottom:6px;">یہ فائل یہاں نہیں دکھائی جا سکی</div>
              <div style="font-size:12px;color:#cbd5e1;margin-bottom:16px;">نیچے سے محفوظ کر کے کھول لیں</div>
-             <button class="btn btn-primary" onclick="_dioDownloadFileView()">⬇️ فائل محفوظ کریں</button>
+             <button class="btn btn-primary" onclick="_dioDownloadFileView()">فائل محفوظ کریں</button>
            </div>`}
     </div>`;
   document.body.appendChild(ov);

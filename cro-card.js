@@ -64,7 +64,7 @@ function _renderCroList() {
     return `
     <div onclick="_openCroForAccused('${a.id}')" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;direction:rtl;"
       onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-      <span style="font-size:20px;">${hasCard ? '✅' : '➕'}</span>
+      <span style="font-size:20px;">${hasCard ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M4.5 12.5l5 5 10-11"/></svg>' : '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M12 5v14"/><path d="M5 12h14"/></svg>'}</span>
       <div style="flex:1;">
         <div style="font-weight:700;font-size:16px;font-family:'Jameel Noori Nastaleeq',serif;">${esc(a.name)||'—'}</div>
         <div style="font-size:13px;color:var(--text-muted);">${esc(a.cnic)||'بدون شناختی کارڈ'} · <span style="color:${typeColor};">${typeName}</span></div>

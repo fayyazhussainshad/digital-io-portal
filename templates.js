@@ -59,9 +59,10 @@ async function renderTemplates(container) {
 }
 
 function _tplChip(cat, label) {
+  // Shakl `theme-pro.css` ke `.dio-chip` se — baqi safhon jaisi
   const active = _tplActiveCat === cat;
-  const color = cat ? _tplCatColor(cat) : 'var(--accent)';
-  return `<button onclick="_tplSetCat('${cat}')" style="padding:5px 14px;border-radius:16px;border:1px solid ${active?color:'var(--border)'};background:${active?color:'transparent'};color:${active?'#fff':'var(--text-secondary)'};cursor:pointer;font-size:13px;font-family:'Jameel Noori Nastaleeq',serif;">${label}</button>`;
+  return `<button type="button" class="dio-chip${active ? ' active' : ''}"
+    aria-pressed="${active}" onclick="_tplSetCat('${cat}')">${label}</button>`;
 }
 
 function _tplSetCat(cat) {
@@ -313,9 +314,9 @@ async function _tplRenderPdf(url, body, autoPrint) {
         <div style="font-size:44px;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
         <div style="font-size:15px;color:#444;margin-bottom:20px;">فائل ان لائن کھولیں:</div>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-          <a href="${url}" target="_blank" style="padding:11px 20px;background:#1a73e8;color:#fff;border-radius:8px;text-decoration:none;">براؤزر میں کھولیں</a>
+          <a href="${url}" target="_blank" style="padding:11px 20px;background:var(--accent);color:#fff;border-radius:8px;text-decoration:none;">براؤزر میں کھولیں</a>
           <a href="https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true" target="_blank" style="padding:11px 20px;background:#ea4335;color:#fff;border-radius:8px;text-decoration:none;">Google Docs</a>
-          <a href="${url}" download style="padding:11px 20px;background:#28a745;color:#fff;border-radius:8px;text-decoration:none;">ڈاؤنلوڈ</a>
+          <a href="${url}" download style="padding:11px 20px;background:var(--green);color:#fff;border-radius:8px;text-decoration:none;">ڈاؤنلوڈ</a>
         </div>
       </div>`;
   }
@@ -365,7 +366,7 @@ async function _tplRenderWord(url, body, autoPrint) {
         #word-doc-editable:focus{box-shadow:0 0 30px rgba(0,0,0,0.2),0 0 0 2px rgba(26,115,232,0.3);}
         @media (max-width:768px){#word-doc-editable{width:100% !important;min-height:auto;padding:10px;margin:0;box-shadow:none;font-size:14pt;}}
         .tpl-fmt-btn{padding:4px 10px;border:1px solid #dee2e6;border-radius:4px;background:#fff;cursor:pointer;font-size:14px;}
-        .tpl-fmt-btn:hover{background:#f1f3f4;}
+        .tpl-fmt-btn:hover{background:var(--bg-secondary);}
       </style>
       <div id="word-doc-editable" contenteditable="true" spellcheck="false" dir="rtl">${result.value ? (window.DIO&&DIO.html&&DIO.html.safe?DIO.html.safe(result.value):esc(result.value)) : 'مواد دستیاب نہیں'}</div>`;
     _tplBuildFormatToolbar();
@@ -374,7 +375,7 @@ async function _tplRenderWord(url, body, autoPrint) {
     body.innerHTML = `<div style="text-align:center;padding:40px;color:#6c757d;">
       <div style="font-size:40px;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
       <div style="margin-bottom:16px;">فائل اس براؤزر میں نہیں کھل سکی</div>
-      <button onclick="window.open('${url}','_blank')" style="background:#1a73e8;color:#fff;border:none;border-radius:8px;padding:10px 20px;cursor:pointer;">نئے ٹیب میں کھولیں</button>
+      <button onclick="window.open('${url}','_blank')" style="background:var(--accent);color:#fff;border:1px solid var(--accent);border-radius:8px;padding:10px 20px;cursor:pointer;">نئے ٹیب میں کھولیں</button>
     </div>`;
   }
 }
@@ -497,7 +498,7 @@ function _editTpl(id, autoPrint) {
     ov.id='tpl-editor-overlay';
     ov.style.cssText='position:fixed;inset:0;z-index:99999;background:#fff;display:flex;flex-direction:column;direction:rtl;';
     ov.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#fd7e14;color:#fff;flex-shrink:0;gap:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--amber);color:#fff;flex-shrink:0;gap:8px;">
         <button onclick="_closeTplViewer()" style="${_tplTbBtn()}">بند کریں</button>
         <div style="font-weight:800;" id="tpl-viewer-title">${_tplEsc(t.title)}</div>
         <button onclick="_renameTpl('${t.id}')" style="${_tplTbBtn()}">نام</button>
@@ -519,7 +520,7 @@ function _editTpl(id, autoPrint) {
   ov.id = 'tpl-editor-overlay';
   ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#fff;display:flex;flex-direction:column;direction:rtl;';
   ov.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#fd7e14;color:#fff;flex-shrink:0;flex-wrap:wrap;gap:8px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--amber);color:#fff;flex-shrink:0;flex-wrap:wrap;gap:8px;">
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button onclick="_printTplEditor()" style="${_tplTbBtn()}">پرنٹ</button>
         <button onclick="_copyTplEditor()" style="${_tplTbBtn()}">کاپی</button>

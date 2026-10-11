@@ -93,10 +93,10 @@ async function _buildAdmin(role) {
   <!-- Stats -->
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;direction:rtl;margin-bottom:16px;">
     ${[
-      ['کل افسران', officers.length, '👮', 'var(--accent)'],
-      ['فعال افسران', active.length, '✅', 'var(--green)'],
-      ['زیر التواء', pending.length, '⏳', 'var(--amber)'],
-      ['کل مقدمات', total_cases, '📁', '#a78bfa'],
+      ['کل افسران', officers.length, '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="12" cy="9" r="3.4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/><path d="M7 6.5h10"/></svg>', 'var(--accent)'],
+      ['فعال افسران', active.length, '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M4.5 12.5l5 5 10-11"/></svg>', 'var(--green)'],
+      ['زیر التواء', pending.length, '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5.2l3.2 2"/></svg>', 'var(--amber)'],
+      ['کل مقدمات', total_cases, '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M3.5 7.5h6l2 2.5h9V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z"/></svg>', '#a78bfa'],
     ].map(([l,v,i,c]) => `
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
         <div style="font-size:24px;">${i}</div>
@@ -184,10 +184,10 @@ function _renderPendingTab(pending) {
         <div style="flex:1;">
           <div style="font-size:14px;font-weight:700;">${esc(p.full_name)||'—'}</div>
           <div style="font-size:12px;color:var(--text-muted);">
-            ${esc(p.email)||'—'} &nbsp;·&nbsp; 🏷️ ${esc(p.badge_number)||'—'}
+            ${esc(p.email)||'—'} &nbsp;·&nbsp; <svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M3.5 11V4.5H10L20.5 15 14 21.5 3.5 11z'/><circle cx='7.5' cy='8' r='1.3'/></svg> ${esc(p.badge_number)||'—'}
           </div>
           <div style="font-size:12px;color:var(--text-secondary);">
-            ${esc(p.station)||'—'} · ${esc(p.district)||'—'} &nbsp;·&nbsp; 👮 ${esc(p.designation)||'—'}
+            ${esc(p.station)||'—'} · ${esc(p.district)||'—'} &nbsp;·&nbsp; <svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><circle cx='12' cy='9' r='3.4'/><path d='M4.5 20.5a7.5 7.5 0 0 1 15 0'/><path d='M7 6.5h10'/></svg> ${esc(p.designation)||'—'}
           </div>
           ${p.cnic ? `<div style="font-size:12px;color:var(--text-secondary);" dir="ltr">${esc(p.cnic)}</div>` : ''}
           <div style="font-size:10px;color:var(--text-faint);margin-top:4px;">
@@ -583,7 +583,7 @@ function _hcCard(c) {
             : c.severity==='warn'  ? 'var(--amber)'
             : c.severity==='fail'  ? 'var(--text-muted)'
             : 'var(--green)';
-  const icon = c.severity==='error' ? '❌' : c.severity==='warn' ? '⚠️' : c.severity==='fail' ? '⚙️' : '✅';
+  const icon = c.severity==='error' ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg>' : c.severity==='warn' ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M12 4L3 19.5h18z"/><path d="M12 10v4.5"/><path d="M12 17.2h.01"/></svg>' : c.severity==='fail' ? '⚙️' : '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M4.5 12.5l5 5 10-11"/></svg>';
   const items = (c.items && c.items.length)
     ? `<div style="margin-top:10px;display:flex;flex-direction:column;gap:5px;">
         ${c.items.slice(0,15).map(t=>`<div style="font-size:11px;background:var(--bg-secondary);border-radius:6px;padding:6px 9px;color:var(--text-secondary);">${esc(t)}</div>`).join('')}
@@ -893,10 +893,10 @@ async function _renderTrustTab(el) {
   <!-- Live snapshot -->
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;direction:rtl;margin-top:12px;">
     ${[
-      ['فعال افسران', activeOfficers, '👮', 'var(--accent)'],
-      ['آڈٹ ریکارڈ', fmt(auditCount), '📋', 'var(--green)'],
-      ['حفاظتی زنجیر', fmt(custodyCount), '📜', '#a78bfa'],
-      ['بحال شدنی', fmt(binCount), '🗑️', 'var(--amber)'],
+      ['فعال افسران', activeOfficers, '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="12" cy="9" r="3.4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/><path d="M7 6.5h10"/></svg>', 'var(--accent)'],
+      ['آڈٹ ریکارڈ', fmt(auditCount), '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M8 4h8v3H8z"/><path d="M9 4H6v17h12V4h-3"/><path d="M9 11h6"/><path d="M9 15h6"/></svg>', 'var(--green)'],
+      ['حفاظتی زنجیر', fmt(custodyCount), '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M6 3.5h10.5v17H6z"/><path d="M9 8h5M9 12h5M9 16h3"/></svg>', '#a78bfa'],
+      ['بحال شدنی', fmt(binCount), '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg>', 'var(--amber)'],
     ].map(([l,v,i,c]) => `
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
         <div style="font-size:20px;">${i}</div>
@@ -921,7 +921,7 @@ async function _renderTrustTab(el) {
   <!-- Audit footnote -->
   <div class="card" style="direction:rtl;margin-top:12px;background:var(--bg-secondary);">
     <div style="font-size:11px;color:var(--text-muted);line-height:1.8;">
-      🔎 <b>آخری حفاظتی آڈٹ:</b> تمام ڈیٹابیس ٹیبل پر رسائی کنٹرول (RLS) کی تصدیق ہو چکی ہے —
+      <svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><circle cx='11' cy='11' r='6.5'/><path d='M16 16l4.5 4.5'/></svg> <b>آخری حفاظتی آڈٹ:</b> تمام ڈیٹابیس ٹیبل پر رسائی کنٹرول (RLS) کی تصدیق ہو چکی ہے —
       ہر ٹیبل محفوظ، کوئی کھلا راستہ نہیں۔ شکایت یا سوال کی صورت میں اپنے سسٹم ایڈمن سے رابطہ کریں۔
     </div>
   </div>`;
@@ -976,7 +976,7 @@ async function _renderUsageTab(el) {
           const pct = Math.round(count/max*100);
           const share = Math.round(count/grandTotal*100);
           const name = _PAGE_NAMES[page] || page;
-          const rank = i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`;
+          const rank = `${i+1}`;   // tamghe ki jagah sada ginti — har aale par aik jaisi
           return `
           <div style="display:flex;align-items:center;gap:10px;">
             <div style="width:28px;text-align:center;font-size:${i<3?'16px':'12px'};font-weight:700;color:${i<3?'var(--accent)':'var(--text-muted)'};">${rank}</div>
@@ -1063,14 +1063,14 @@ async function _adminViewOfficer(officerId) {
   const cases = (window._adminData?.cases||[]).filter(c=>c.officer_id===officerId);
   openModal(`${esc(o.full_name)||'—'}`,
     `<div style="font-size:13px;line-height:2.2;">
-      <div>📧 <b>Email:</b> ${o.email||'—'}</div>
-      <div>🏷️ <b>Badge:</b> ${esc(o.badge_number)||'—'}</div>
-      <div>👮 <b>عہدہ:</b> ${esc(o.designation)||'—'}</div>
-      <div>🏛️ <b>تھانہ:</b> ${esc(o.station)||'—'} · ${esc(o.district)||'—'}</div>
-      <div>🔑 <b>Role:</b> ${o.role||'officer'}</div>
-      <div>📊 <b>Status:</b> ${(o.is_suspended || o.suspended)?'<span style="color:var(--red);">معطل</span>':o.is_approved?'<span style="color:var(--green);">فعال</span>':'زیر التواء'}</div>
-      <div>📁 <b>کل مقدمات:</b> ${cases.length}</div>
-      ${o.suspension_reason?`<div>📝 <b>معطلی وجہ:</b> ${esc(o.suspension_reason)}</div>`:''}
+      <div><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M3.5 5.5h17v13h-17z'/><path d='M3.5 6.5l8.5 6 8.5-6'/></svg> <b>Email:</b> ${o.email||'—'}</div>
+      <div><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M3.5 11V4.5H10L20.5 15 14 21.5 3.5 11z'/><circle cx='7.5' cy='8' r='1.3'/></svg> <b>Badge:</b> ${esc(o.badge_number)||'—'}</div>
+      <div><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><circle cx='12' cy='9' r='3.4'/><path d='M4.5 20.5a7.5 7.5 0 0 1 15 0'/><path d='M7 6.5h10'/></svg> <b>عہدہ:</b> ${esc(o.designation)||'—'}</div>
+      <div><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M12 3.5l8.5 4.5h-17z'/><path d='M5.5 10v8M10 10v8M14 10v8M18.5 10v8'/><path d='M3.5 20.5h17'/></svg> <b>تھانہ:</b> ${esc(o.station)||'—'} · ${esc(o.district)||'—'}</div>
+      <div><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><circle cx='8' cy='12' r='3.5'/><path d='M11.5 12h9'/><path d='M17 12v3.5M20 12v2.5'/></svg> <b>Role:</b> ${o.role||'officer'}</div>
+      <div><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M4 20h16'/><path d='M7 20V11'/><path d='M12 20V5'/><path d='M17 20v-6'/></svg> <b>Status:</b> ${(o.is_suspended || o.suspended)?'<span style="color:var(--red);">معطل</span>':o.is_approved?'<span style="color:var(--green);">فعال</span>':'زیر التواء'}</div>
+      <div><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M3.5 7.5h6l2 2.5h9V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z'/></svg> <b>کل مقدمات:</b> ${cases.length}</div>
+      ${o.suspension_reason?`<div><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M4 20h4L18 10l-4-4L4 16v4z'/><path d='M14 6l4 4'/></svg> <b>معطلی وجہ:</b> ${esc(o.suspension_reason)}</div>`:''}
     </div>`,
     `<button class="btn btn-primary" onclick="closeModal()">بند کریں</button>`
   );

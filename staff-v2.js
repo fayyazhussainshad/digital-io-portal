@@ -56,7 +56,7 @@ function _stRender() {
         <div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
           <div style="font-size:42px;margin-bottom:12px;"><svg viewBox='0 0 24 24' width='42' height='42' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><circle cx='12' cy='9' r='3.4'/><path d='M4.5 20.5a7.5 7.5 0 0 1 15 0'/><path d='M7 6.5h10'/></svg></div>
           <div style="font-size:15px;">کوئی ملازم درج نہیں</div>
-          <div style="font-size:13px;color:var(--text-faint);">شروع کرنے کے لیے اوپر ➕ بٹن دبائیں</div>
+          <div style="font-size:13px;color:var(--text-faint);">شروع کرنے کے لیے اوپر <svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M12 5v14'/><path d='M5 12h14'/></svg> بٹن دبائیں</div>
         </div>`}
     </div>
   </div>`;

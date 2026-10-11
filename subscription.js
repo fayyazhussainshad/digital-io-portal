@@ -22,7 +22,15 @@ DIO.sub = {
                      status === 'none'    || status === 'unknown');
     return this._blocked;
   },
-  blocked: function () { return this._blocked === true; },
+  /* `_blocked` ko console se `false` kiya ja sakta hai. Is liye tala
+     lagne ki surat (`window._dioLocked`) ko bhi yahin dekha jata hai —
+     wo alag nishan hai jo har 1.2 second baad khud ko dobara laga leta
+     hai. Do me se koi aik bhi sach ho to sab likhai band. */
+  blocked: function () {
+    var hardLocked = false;
+    try { hardLocked = (typeof _dioLockActive === 'function') && _dioLockActive(); } catch (_) {}
+    return this._blocked === true || hardLocked;
+  },
   // guard(label) → true = آگے بڑھو، false = بند (renew prompt دکھایا)۔
   guard: function (label) {
     if (this._blocked !== true) return true;          // allow (default + fail-open)
@@ -321,17 +329,31 @@ async function showSubscriptionBanner() {
   // ہیں۔ فوٹر بیج (updateSubBadge) حالت دکھاتا ہے۔
   if (window.DIO && DIO.sub) DIO.sub.setFromStatus(sub.status);
 
-  // ── MO'ATTAL = DAAKHLA BAND ───────────────────────────────────
-  //  4E ka faisla (view-only) sirf `expired` (miyaad khatam) ke liye
-  //  barqarar hai — afsar apna purana record/adaalati kaam dekh sake.
-  //  Magar `suspended` (mo'attal) alag cheez hai: us par ab poora
-  //  daakhla band hai, sirf tajdeed ka safha khulta hai.
-  //  Maalik (superadmin) par ye kabhi lagu nahi.
+  // ══════════════════════════════════════════════════════════════
+  //  MIYAAD KHATAM = DAAKHLA MUKAMMAL BAND   (maalik ki nayi hidayat)
+  //  ──────────────────────────────────────────────────────────────
+  //  PEHLE: sirf `suspended` par daakhla band tha; `expired` par
+  //  "view-only" chalta tha — afsar ander aa kar apna record dekh
+  //  sakta tha, bas likh/chhap nahi sakta tha.
+  //  AB: miyaad khatam hote hi afsar KISI BHI TARAH ander nahi aa
+  //  sakta — jab tak tajdeed na kar le. Yahi maalik ka faisla hai.
+  //
+  //  Kin haalaton par band: expired, suspended, none, unknown.
+  //  'none'/'unknown' bhi is liye ke agar halat maloom hi na ho to
+  //  shak ka faida DAAKHLE ko nahi, ROKNE ko jata hai (fail-closed).
+  //
+  //  Do cheezen HAMESHA khuli rehti hain, warna afsar phans jaye:
+  //    • tajdeed/adaayegi ka raasta (dio_request_subscription RPC)
+  //    • logout
+  //  Aur maalik (superadmin) par ye kabhi lagu nahi hota.
+  // ══════════════════════════════════════════════════════════════
   var _owner = (typeof currentOfficer !== 'undefined' && currentOfficer &&
                 currentOfficer.role === 'superadmin');
   var _suspOfficer = (typeof _dioIsSuspended === 'function') &&
                      _dioIsSuspended(typeof currentOfficer !== 'undefined' ? currentOfficer : null);
-  if (!_owner && (sub.status === 'suspended' || _suspOfficer)) {
+  var _noEntry = (sub.status === 'expired'  || sub.status === 'suspended' ||
+                  sub.status === 'none'     || sub.status === 'unknown');
+  if (!_owner && (_noEntry || _suspOfficer)) {
     // AHEM: sirf #main-app ka innerHTML badalna KAAFI NAHI tha — session
     // zinda rehta, write-guard ka flag false rehta (wo sirf subscription ki
     // halat se set hota hai), to mo'attal afsar print bhi kar leta aur
@@ -339,7 +361,7 @@ async function showSubscriptionBanner() {
     // install, safha dikhao, aur session KHATAM karo.
     try { if (window.DIO && DIO.sub) DIO.sub._blocked = true; } catch (_) {}
     _installDioWriteGuard();
-    try { showSubscriptionRequired(sub); } catch (_) {}
+    try { _dioHardLock(sub); } catch (_) { try { showSubscriptionRequired(sub); } catch (_e) {} }
     if (_suspOfficer) {
       // Idara-jati mo'attali → device se raasta band + logout
       try { if (typeof _dioPurgeOnSuspend === 'function') await _dioPurgeOnSuspend(); } catch (_) {}
@@ -350,6 +372,163 @@ async function showSubscriptionBanner() {
   }
 
   _installDioWriteGuard();   // central write-guard yaqeeni tor par lagao (supabaseClient ab mojood hai)
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MUKAMMAL NAAKA-BANDI (hard lock)
+   ───────────────────────────────────────────────────────────────
+   Sirf safhe ka mawad badal dena KAAFI NAHI hai. Jo shakhs
+   chahta ho, wo bara aasani se:
+     • Developer Tools khol kar lock wala `<div>` mita de
+     • console me `showPage('cases')` likh kar UI wapas le aaye
+     • `DIO.sub._blocked = false` kar de
+     • localStorage me apni halat 'active' likh de
+   In sab par daakhla nahi milna chahiye. Is liye:
+
+     1. `_dioLocked` nishan — poore nizam ka waahid sach.
+     2. Lock ka safha har 1.2 second baad KHUD ko dobara laga
+        leta hai (agar mita diya jaye).
+     3. `showPage()` lapeta gaya — lock ke doran koi safha nahi
+        khulta, lock hi dobara aa jata hai.
+     4. `DIO.sub.blocked()` par bhi nishan chalta hai — koi
+        `_blocked = false` kar bhi de to write-guard band rehta hai.
+     5. localStorage ki cache par bharosa NAHI — cache sirf OFFLINE
+        surat me kaam aati hai aur wo bhi dastkhat-shuda token ke
+        baad; yahan faisla `checkSubscription()` ka hai.
+
+   Do raaste KHULE rehte hain (warna afsar phans jaye):
+     • tajdeed/adaayegi
+     • logout
+   ═══════════════════════════════════════════════════════════════ */
+/* Tale ki halat CLOSURE ke andar — `window` par nahi.
+   HAMLA JO IS NE PAKRA (naapa gaya): pehle halat `window._dioLocked`
+   par thi. Console me `window._dioLocked = false` likhte hi:
+     • pehra (interval) khud ko band kar leta tha — kyunki wo usi
+       nishan ko dekh kar chalta tha jise hamla-aawar ne ulta diya
+     • aur likhai ka guard bhi khul jata tha
+   Ab halat bahar se chhui hi nahi ja sakti. Khulne ka SIRF aik
+   raasta hai: `_dioUnlockIfRenewed()` — aur wo bhi tab jab ONLINE
+   ja kar server se tasdeeq ho jaye.
+
+   YAAD RAHE: asal rok SERVER par hai (sql/70_no_entry_on_expiry.sql).
+   Client ka tala afsar ke apne aale par hai — wo har haal mein
+   tora ja sakta hai. Is liye ye tala sirf SAAF aur foran rukawat
+   ke liye hai; data ki asal hifazat RLS karti hai. */
+var _dioLockTimer = null;
+var _dioLockState = (function () {
+  var locked = false;
+  return {
+    on:  function () { locked = true; },
+    off: function () { locked = false; },
+    is:  function () { return locked === true; }
+  };
+})();
+
+function _dioLockActive() { return _dioLockState.is(); }
+
+function _dioHardLock(sub) {
+  _dioLockState.on();
+  try { if (window.DIO && DIO.sub) DIO.sub._blocked = true; } catch (_) {}
+
+  // showPage ko lapeto — lock ke doran koi safha na khule
+  try {
+    if (typeof window.showPage === 'function' && !window.showPage._dioLockWrapped) {
+      var _origShow = window.showPage;
+      var wrapped = function (page, el) {
+        if (_dioLockActive()) { _dioPaintLock(sub); return; }
+        return _origShow.call(window, page, el);
+      };
+      wrapped._dioLockWrapped = true;
+      wrapped._dioOrig = _origShow;
+      window.showPage = wrapped;
+    }
+  } catch (_) {}
+
+  _dioPaintLock(sub);
+
+  // Har 1.2 second — agar lock mita diya gaya ho to dobara laga do
+  try { if (_dioLockTimer) clearInterval(_dioLockTimer); } catch (_) {}
+  _dioLockTimer = setInterval(function () {
+    // Pehra SIRF tab rukta hai jab tala waqai khul chuka ho (tajdeed ke
+    // baad). Console se koi nishan ulta de to pehra chalta rehta hai.
+    if (!_dioLockState.is()) { clearInterval(_dioLockTimer); _dioLockTimer = null; return; }
+    try {
+      if (window.DIO && DIO.sub) DIO.sub._blocked = true;   // koi false kar de to wapas
+      window._dioLocked = true;                              // sirf dikhane ke liye
+      if (!document.getElementById('dio-sub-lock')) _dioPaintLock(sub);
+    } catch (_) {}
+  }, 1200);
+}
+window._dioHardLock = _dioHardLock;
+
+// Tajdeed ke baad tala khole — sirf ONLINE tasdeeq par
+async function _dioUnlockIfRenewed() {
+  var btn = document.getElementById('dio-lock-recheck');
+  if (btn) { btn.disabled = true; btn.textContent = '\u062c\u0627\u0646\u0686\u0627 \u062c\u0627 \u0631\u06c1\u0627 \u06c1\u06d2\u2026'; }
+  try {
+    if (!navigator.onLine) {
+      try { showToast('\u062a\u062c\u062f\u06cc\u062f \u06a9\u06cc \u062a\u0635\u062f\u06cc\u0642 \u06a9\u06d2 \u0644\u06cc\u06d2 \u0627\u0646\u0679\u0631\u0646\u06cc\u0679 \u062f\u0631\u06a9\u0627\u0631 \u06c1\u06d2\u06d4','error'); } catch (_) {}
+      return;
+    }
+    var fresh = await checkSubscription();
+    if (fresh && (fresh.status === 'active' || fresh.status === 'trial')) {
+      _dioLockState.off();
+      window._dioLocked = false;
+      try { if (window.DIO && DIO.sub) DIO.sub.setFromStatus(fresh.status); } catch (_) {}
+      try { if (_dioLockTimer) { clearInterval(_dioLockTimer); _dioLockTimer = null; } } catch (_) {}
+      try { var L = document.getElementById('dio-sub-lock'); if (L) L.remove(); } catch (_) {}
+      try { showToast('\u062a\u062c\u062f\u06cc\u062f \u062a\u0633\u0644\u06cc\u0645 \u2014 \u062e\u0648\u0634 \u0622\u0645\u062f\u06cc\u062f\u06d4','success'); } catch (_) {}
+      try { location.reload(); } catch (_) {}
+      return;
+    }
+    try { showToast('\u062a\u062c\u062f\u06cc\u062f \u0627\u0628\u06be\u06cc \u062a\u0633\u0644\u06cc\u0645 \u0646\u06c1\u06cc\u06ba \u06c1\u0648\u0626\u06cc\u06d4 \u0627\u06cc\u0688\u0645\u0646 \u06a9\u06cc \u0645\u0646\u0638\u0648\u0631\u06cc کا \u0627\u0646\u062a\u0638\u0627\u0631 \u06a9\u0631\u06cc\u06ba\u06d4','error',4000); } catch (_) {}
+  } catch (_) {
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '\u0645\u06cc\u06ba \u0646\u06d2 \u062a\u062c\u062f\u06cc\u062f \u06a9\u0631 \u0644\u06cc \u2014 \u062f\u0648\u0628\u0627\u0631\u06c1 \u062c\u0627\u0646\u0686\u06cc\u06ba'; }
+  }
+}
+window._dioUnlockIfRenewed = _dioUnlockIfRenewed;
+
+function _dioPaintLock(sub) {
+  sub = sub || { status: 'expired' };
+  var susp = (sub.status === 'suspended');
+  var old = document.getElementById('dio-sub-lock');
+  if (old) old.remove();
+  var box = document.createElement('div');
+  box.id = 'dio-sub-lock';
+  box.className = 'no-print';
+  box.setAttribute('role', 'alertdialog');
+  box.style.cssText = 'position:fixed;inset:0;z-index:2147483600;display:flex;' +
+    'align-items:center;justify-content:center;padding:20px;direction:rtl;' +
+    'background:var(--bg-primary,#f0f4f8);';
+  box.innerHTML =
+    '<div style="background:var(--bg-card,#fff);border:1px solid var(--border,#e2e8f0);' +
+      'border-radius:16px;padding:32px 26px;max-width:460px;width:100%;text-align:center;' +
+      'box-shadow:0 10px 34px rgba(15,27,42,.18);">' +
+      '<svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="currentColor" ' +
+        'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ' +
+        'style="opacity:.45;margin-bottom:14px;">' +
+        '<path d="M5.5 11h13v9.5h-13z"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></svg>' +
+      '<div style="font-size:19px;font-weight:800;color:var(--text-primary,#0f1b2a);' +
+        'margin-bottom:8px;line-height:1.9;">' +
+        (susp ? '\u0627\u06a9\u0627\u0624\u0646\u0679 \u0645\u0639\u0637\u0644 \u06c1\u06d2'
+              : '\u0633\u0628\u0633\u06a9\u0631\u067e\u0634\u0646 \u06a9\u06cc \u0645\u06cc\u0639\u0627\u062f \u062e\u062a\u0645 \u06c1\u0648 \u06af\u0626\u06cc') +
+      '</div>' +
+      '<div style="font-size:13.5px;color:var(--text-secondary,#475569);line-height:2;' +
+        'margin-bottom:22px;">' +
+        (susp ? '\u0622\u067e \u06a9\u0627 \u0627\u06a9\u0627\u0624\u0646\u0679 \u0627\u06cc\u0688\u0645\u0646 \u0646\u06d2 \u0645\u0639\u0637\u0644 \u06a9\u06cc\u0627 \u06c1\u06d2\u06d4 \u0631\u0627\u0628\u0637\u06c1 \u06a9\u0631\u06cc\u06ba\u06d4'
+              : '\u062a\u062c\u062f\u06cc\u062f \u06a9\u06d2 \u0628\u063a\u06cc\u0631 \u0633\u06cc\u0633\u0679\u0645 \u0645\u06cc\u06ba \u062f\u0627\u062e\u0644\u06c1 \u0646\u06c1\u06cc\u06ba\u06d4 \u0622\u067e \u06a9\u0627 \u062a\u0645\u0627\u0645 \u0631\u06cc\u06a9\u0627\u0631\u0688 \u0645\u062d\u0641\u0648\u0638 \u06c1\u06d2 \u2014 \u062a\u062c\u062f\u06cc\u062f \u06a9\u0631\u062a\u06d2 \u06c1\u06cc \u0648\u0627\u067e\u0633 \u0645\u0644 \u062c\u0627\u0626\u06d2 \u06af\u0627\u06d4') +
+      '</div>' +
+      (susp ? '' :
+        '<button class="btn btn-primary" style="width:100%;padding:13px;font-size:15px;' +
+          'margin-bottom:9px;" onclick="_showPlans()">\u062a\u062c\u062f\u06cc\u062f \u06a9\u0631\u06cc\u06ba</button>' +
+        '<button class="btn btn-secondary" id="dio-lock-recheck" style="width:100%;' +
+          'margin-bottom:9px;" onclick="_dioUnlockIfRenewed()">' +
+          '\u0645\u06cc\u06ba \u0646\u06d2 \u062a\u062c\u062f\u06cc\u062f \u06a9\u0631 \u0644\u06cc \u2014 \u062f\u0648\u0628\u0627\u0631\u06c1 \u062c\u0627\u0646\u0686\u06cc\u06ba</button>') +
+      '<button class="btn btn-secondary" style="width:100%;" onclick="doLogout()">' +
+        '\u0644\u0627\u06af \u0622\u0624\u0679</button>' +
+    '</div>';
+  document.body.appendChild(box);
 }
 
 function showSubscriptionRequired(sub) {

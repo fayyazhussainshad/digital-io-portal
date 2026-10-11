@@ -310,7 +310,7 @@ async function _doPriorCheck(name, cnic, cell) {
       </div>`;
     });
     matchC.forEach(c => {
-      html += `<div style="padding:3px 0;">📢 <b>مدعی</b> FIR ${esc(c.fir_number||'—')} — ${esc(STATUS_LABELS[c.status]||c.status||'')}</div>`;
+      html += `<div style="padding:3px 0;"><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M4 10v4h3l7 4V6l-7 4z'/><path d='M17.5 8.5a5 5 0 0 1 0 7'/></svg> <b>مدعی</b> FIR ${esc(c.fir_number||'—')} — ${esc(STATUS_LABELS[c.status]||c.status||'')}</div>`;
     });
     html += `</div>`;
     box.innerHTML = html;

@@ -4,7 +4,7 @@
      loading · loaded · empty · offline · permission-denied · session-expired
      · server-error · retrying · saving · saved · pending-sync
 
-   Kyun zaruri: currently 43+ ad-hoc "⏳ لوڈ..." strings, alag alag styles.
+   Kyun zaruri: currently 43+ ad-hoc "لوڈ..." strings, alag alag styles.
    User ko yaqeen nahi kya ho raha — audit ne isko dramatically improve
    trust wala issue kaha hai.
 

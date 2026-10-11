@@ -38,7 +38,7 @@ function renderIncident(container) {
       padding:24px;">
 
       <!-- Row 1: Thana (right, 0.7in gap) ... Zila (left) -->
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:16px;font-weight:800;color:#1a3a5c;margin-bottom:4px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:16px;font-weight:800;color:var(--text-primary);margin-bottom:4px;">
         <div style="padding-right:0.7in;">تھانہ ${esc(o.station||'_______')}</div>
         <div>ضلع ${esc(o.district||'_______')}</div>
       </div>
@@ -52,7 +52,7 @@ function renderIncident(container) {
       <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #ccc;">
         <div style="font-size:14px;">
           <span style="color:#555;">واقعاتی رپورٹ نمبر:</span>
-          <input value="${esc(incNum)}" id="inc-num" style="${_iStyle('150px')}font-family:monospace;font-weight:700;color:#1a3a5c;">
+          <input value="${esc(incNum)}" id="inc-num" style="${_iStyle('150px')}font-family:monospace;font-weight:700;color:var(--text-primary);">
         </div>
         <div style="font-size:14px;">
           <span style="color:#555;">نوعیت:</span>
@@ -107,7 +107,7 @@ function renderIncident(container) {
             <tr>
               <td colspan="4" style="border:1px solid #1a3a5c;padding:8px 10px;">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-                  <span style="font-weight:800;font-size:14px;color:#1a3a5c;">مختصر حالات:</span>
+                  <span style="font-weight:800;font-size:14px;color:var(--text-primary);">مختصر حالات:</span>
                   <div style="display:flex;gap:6px;">
                     <button aria-label="وائس ٹائپنگ" onclick="_incVoice('inc-narrative','mic-narr')" id="mic-narr" style="width:32px;height:32px;border:1px solid #ccc;border-radius:6px;background:#f0f4f8;font-size:15px;cursor:pointer;" title="وائس ٹائپنگ"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button>
                     <button aria-label="ہینڈ رائٹنگ" onclick="_incHandwriting()" style="width:32px;height:32px;border:1px solid #ccc;border-radius:6px;background:#f0f4f8;font-size:15px;cursor:pointer;" title="ہینڈ رائٹنگ"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>
@@ -124,7 +124,7 @@ function renderIncident(container) {
         <div style="margin-top:30px;display:flex;justify-content:flex-end;">
           <div style="text-align:center;min-width:260px;">
             <div style="height:40px;border-bottom:1px solid #1a3a5c;"></div>
-            <div style="font-size:17px;font-weight:800;color:#1a3a5c;padding-top:6px;">
+            <div style="font-size:17px;font-weight:800;color:var(--text-primary);padding-top:6px;">
               ${(typeof getSHOSignLine==='function') ? esc(getSHOSignLine(o.station||'صدر ملتان')) : ''}
             </div>
             <input id="inc-sign-date" value="${today}"
@@ -220,7 +220,7 @@ function _iStyle(w) {
   return `border:none;border-bottom:1px solid #aaa;padding:3px 6px;font-family:'Jameel Noori Nastaleeq',serif;font-size:15px;background:transparent;outline:none;width:${w};direction:rtl;`;
 }
 // Table cell helpers for واقعاتی رپورٹ one-page layout
-function _tdL() { return 'border:1px solid #1a3a5c;padding:8px 10px;background:#f0f4f8;font-weight:700;font-size:13px;color:#1a3a5c;white-space:nowrap;width:1%;'; }
+function _tdL() { return 'border:1px solid #1a3a5c;padding:8px 10px;background:#f0f4f8;font-weight:700;font-size:13px;color:var(--text-primary);white-space:nowrap;width:1%;'; }
 function _tdV() { return 'border:1px solid #1a3a5c;padding:4px 8px;'; }
 function _tIn() { return "border:none;outline:none;background:transparent;font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;width:100%;direction:rtl;padding:3px 4px;box-sizing:border-box;"; }
 function _incAddPersonType() {
@@ -244,19 +244,19 @@ function _incVoice(targetId, btnId) {
   if (!SR) { showToast('Browser mein voice support nahi','error'); return; }
   if (_incVoiceOn && _incVoiceTgt === targetId) {
     _incVoiceRec?.stop(); _incVoiceOn=false; _incVoiceTgt=null;
-    const b=document.getElementById(btnId); if(b){b.style.background='#f0f4f8';b.textContent='🎙️';}
+    const b=document.getElementById(btnId); if(b){b.style.background='#f0f4f8';b.textContent='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>';}
     return;
   }
   if (_incVoiceOn) _incVoiceRec?.stop();
   _incVoiceTgt=targetId; _incVoiceOn=true;
-  const b=document.getElementById(btnId); if(b){b.style.background='#ef4444';b.style.color='#fff';b.textContent='⏹';}
+  const b=document.getElementById(btnId); if(b){b.style.background='#ef4444';b.style.color='#fff';b.innerHTML="<svg viewBox='0 0 24 24' width='15' height='15' aria-hidden='true'><rect x='7' y='7' width='10' height='10' rx='2' fill='currentColor'/></svg>";}
   _incVoiceRec=new SR(); _incVoiceRec.lang='ur-PK'; _incVoiceRec.continuous=false; _incVoiceRec.interimResults=false;
   _incVoiceRec.onresult=e=>{
     const inp=document.getElementById(targetId);
     if(inp)inp.value+=(inp.value?' ':'')+e.results[0][0].transcript;
   };
-  _incVoiceRec.onend=()=>{_incVoiceOn=false;_incVoiceTgt=null;const b=document.getElementById(btnId);if(b){b.style.background='#f0f4f8';b.style.color='';b.textContent='🎙️';}};
-  _incVoiceRec.onerror=()=>{_incVoiceOn=false;const b=document.getElementById(btnId);if(b){b.style.background='#f0f4f8';b.style.color='';b.textContent='🎙️';}};
+  _incVoiceRec.onend=()=>{_incVoiceOn=false;_incVoiceTgt=null;const b=document.getElementById(btnId);if(b){b.style.background='#f0f4f8';b.style.color='';b.textContent='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>';}};
+  _incVoiceRec.onerror=()=>{_incVoiceOn=false;const b=document.getElementById(btnId);if(b){b.style.background='#f0f4f8';b.style.color='';b.textContent='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>';}};
   _incVoiceRec.start();
 }
 

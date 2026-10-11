@@ -407,7 +407,7 @@ async function _downloadCaseHTML(id) {
     body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',Arial,sans-serif;direction:rtl;margin:30px;color:#111;font-size:14px;}
     h2,h3{text-align:center;} .row{display:flex;gap:20px;margin-bottom:8px;}
     .lbl{color:#555;min-width:140px;font-weight:600;} .val{flex:1;}
-    .sec{border-top:1px solid #ccc;margin:16px 0 8px;padding-top:8px;font-weight:700;color:#1a3a5c;}
+    .sec{border-top:1px solid #ccc;margin:16px 0 8px;padding-top:8px;font-weight:700;color:var(--text-primary);}
     .footer{text-align:left;font-size:11px;color:#888;margin-top:40px;border-top:1px solid #ccc;padding-top:10px;direction:ltr;}
     @media print{body{margin:15mm;}}
   </style></head><body>
