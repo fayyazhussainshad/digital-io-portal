@@ -40,6 +40,21 @@ window._zimniRetryLoad = _zimniRetryLoad;
 //  (2) نہ ملے تو ممکنہ ناموں کو باری باری آزماؤ اور جو چل جائے
 //  اُسے یاد رکھو۔
 // ═══════════════════════════════════════════════════════════════
+
+/* ممکنہ کالم ناموں کی فہرست — اوپر والا طریقہ اسی پر چلتا ہے۔
+   یہ فہرست پہلے کہیں موجود نہیں تھی (نہ اِس فائل میں، نہ کسی اور
+   فائل میں)، حالانکہ `_zimniContentOf` اور `_zimniWrite` دونوں اسے
+   استعمال کرتے ہیں۔ نتیجہ: ضمنی محفوظ کرتے وقت
+   "ZIMNI_CONTENT_COLS is not defined" اور کام رُک جاتا تھا۔
+
+   ترتیب صرف رفتار کے لیے ہے — جو کالم چل جائے وہ localStorage میں
+   یاد رہ جاتا ہے (`_zimniColSet`)، اور غلط نام PGRST204 دے کر خود
+   ہی اگلے نام پر منتقل کر دیتا ہے۔ اس لیے فہرست فراخ رکھی گئی ہے۔ */
+const ZIMNI_CONTENT_COLS = [
+  'content', 'content_json', 'data', 'body', 'body_html',
+  'details', 'matn', 'text', 'report', 'zimni_content'
+];
+
 function _zimniColPref() {
   try { return localStorage.getItem('dio_zimni_col') || ''; } catch (_) { return ''; }
 }
@@ -3149,6 +3164,17 @@ window.openZimniAndrooniEditor = openZimniAndrooniEditor;
 //  طرح (کچھ ڈیٹابیس میں 'content' نام کا کالم نہ ہو تو، اندازہ لگانے
 //  کے بجائے ممکنہ ناموں کو باری باری آزماؤ اور جو چل جائے یاد رکھو)
 // ═══════════════════════════════════════════════════════════════
+
+/* بیرونی ضمنی کی `ZIMNI_CONTENT_COLS` کی طرح — یہ فہرست بھی کہیں
+   موجود نہیں تھی، اور یہی وہ خرابی تھی جو میدان میں سامنے آئی:
+   "ZIMNI_A_CONTENT_COLS is not defined"۔ ضمنی اندرونی کا اپنا الگ
+   کالم ہو سکتا ہے، اس لیے فہرست الگ رکھی گئی ہے (یاد رکھنے کی کلید
+   بھی الگ ہے: dio_zimni_a_col)۔ */
+const ZIMNI_A_CONTENT_COLS = [
+  'content', 'content_json', 'data', 'body', 'body_html',
+  'details', 'matn', 'text', 'report', 'zimni_content'
+];
+
 function _zaColPref() {
   try { return localStorage.getItem('dio_zimni_a_col') || ''; } catch (_) { return ''; }
 }
