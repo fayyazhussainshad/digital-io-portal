@@ -1255,33 +1255,41 @@ async function _renderSubsTab() {
   }
 }
 
-async function _approveSub(subId, officerId) {
+/* ═══ سبسکرپشن کے فیصلے اب RPC سے ═══════════════════════════════
+   پہلے یہ تینوں سیدھا `subscriptions` پر update کرتے تھے۔ اُس راستے میں
+   "کون ایڈمن ہے" کا فیصلہ صرف اِس صفحے کے کھلنے سے ہوتا تھا — یعنی app کا
+   کوڈ بدل کر کوئی بھی افسر خود کو 'active' کر سکتا تھا۔
+
+   اب فیصلہ سرور کرتا ہے (`94a/94b/94c`): ہر RPC خود جانچتا ہے کہ بلانے
+   والا غیر معطل، منظور شدہ admin/superadmin ہے۔ میعاد بھی سرور plan کے
+   `duration_days` سے لگاتا ہے، کلائنٹ سے نہیں۔
+   اگر اجازت نہ ہو تو RPC 42501 دیتا ہے اور نیچے toast میں وجہ آ جاتی ہے۔ */
+
+// دوسری دلیل (officer_id) اب استعمال نہیں ہوتی — سرور خود سطر سے نکالتا
+// ہے۔ بلانے والے بٹن ویسے ہی رہنے دیے گئے ہیں (زائد دلیل بےضرر ہے)۔
+async function _approveSub(subId, _officerId) {
   try {
-    const { data:sub } = await supabaseClient.from('subscriptions').select('*,subscription_plans(duration_days)').eq('id',subId).single();
-    const days = sub?.subscription_plans?.duration_days || 30;
-    const exp  = new Date();
-    exp.setDate(exp.getDate() + days);
-
-    await supabaseClient.from('subscriptions').update({
-      status:      'active',
-      verified_by: await getOfficerId(),
-      verified_at: new Date().toISOString(),
-      expires_at:  exp.toISOString(),
-    }).eq('id', subId);
-
+    const { error } = await supabaseClient.rpc('dio_verify_subscription', { p_sub_id: subId });
+    if (error) throw error;
     showToast('سبسکرپشن منظور', 'success');
     _renderSubsTab();
-  } catch(e) { showToast(''+e.message,'error'); }
+  } catch(e) { showToast(''+(e.message||e),'error',6000); }
 }
 
 async function _rejectSub(subId) {
-  await supabaseClient.from('subscriptions').update({status:'rejected'}).eq('id',subId);
-  showToast('رد کر دی', 'info');
-  _renderSubsTab();
+  try {
+    const { error } = await supabaseClient.rpc('dio_reject_subscription', { p_sub_id: subId });
+    if (error) throw error;
+    showToast('رد کر دی', 'info');
+    _renderSubsTab();
+  } catch(e) { showToast(''+(e.message||e),'error',6000); }
 }
 
 async function _suspendSub(subId) {
-  await supabaseClient.from('subscriptions').update({status:'suspended'}).eq('id',subId);
-  showToast('معطل', 'info');
-  _renderSubsTab();
+  try {
+    const { error } = await supabaseClient.rpc('dio_suspend_subscription', { p_sub_id: subId });
+    if (error) throw error;
+    showToast('معطل', 'info');
+    _renderSubsTab();
+  } catch(e) { showToast(''+(e.message||e),'error',6000); }
 }

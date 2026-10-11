@@ -282,12 +282,21 @@ async function checkSubscription() {
     if (error) return await _dioOfflineStatus(oid);
 
     if (!data) {
-      // First time — create trial (ignore errors)
-      try { await _createTrial(oid); } catch(_) {}
-      var _fresh = { status:'trial', daysLeft:30, plan:'آزمائشی' };
-      _dioCacheSub(_fresh, oid);
-      try { if (typeof dioRefreshLicense === 'function') dioRefreshLicense(); } catch(_) {}
-      return _fresh;
+      // ═══ TRIAL AB SERVER DETA HAI ═══════════════════════════════
+      //  پہلے یہاں کلائنٹ خود اپنے لیے 30 دن کا trial بنا لیتا تھا
+      //  (`_createTrial`)۔ یہی سب سے بڑا سوراخ تھا: جس کے پاس بھی app
+      //  کا کوڈ ہو، وہ خود کو مسلسل trial دے سکتا تھا — یعنی سبسکرپشن
+      //  کا نفاذ بےمعنی ہو جاتا تھا۔
+      //
+      //  اب trial ڈیٹابیس خود بناتا ہے، اُس لمحے جب ایڈمن افسر کو منظور
+      //  کرتا ہے (`dio_trial_on_approval` trigger)۔ اِس لیے یہاں "کوئی
+      //  record نہیں" کا مطلب واقعی "کوئی حق نہیں" ہے۔
+      //
+      //  'none' پہلے سے fail-closed ہے (اوپر والے گارڈز اسے بلاک کرتے
+      //  ہیں)، اور `_dioCacheSub` اسے محفوظ نہیں کرتا — یعنی اگلی بار
+      //  پھر سرور ہی سے پوچھا جائے گا۔
+      return { status:'none', daysLeft:0,
+               plan:'کوئی سبسکرپشن نہیں — ایڈمن سے رابطہ کریں' };
     }
 
     const now  = new Date();
@@ -322,20 +331,11 @@ async function checkSubscription() {
   }
 }
 
-async function _createTrial(oid) {
-  const exp = new Date();
-  exp.setDate(exp.getDate() + 30);
-  try {
-    await supabaseClient.from('subscriptions').insert({
-      officer_id: oid,
-      status: 'trial',
-      started_at: new Date().toISOString(),
-      expires_at: exp.toISOString(),
-      amount: 0,
-      payment_method: 'trial',
-    });
-  } catch(_) { /* silent — non-critical */ }
-}
+/* `_createTrial` جان بوجھ کر ہٹا دیا گیا۔
+   یہ کلائنٹ سے `subscriptions` میں status:'trial' کی سطر ڈالتا تھا — یعنی
+   app خود کو حق دے دیتی تھی۔ اب یہ کام صرف ڈیٹابیس کرتا ہے (ایڈمن کی
+   منظوری پر، 30 دن، اور صرف ایک بار)۔ دیکھیں: sql/91a, 91b.
+   یہاں کوئی بدل نہیں رکھا گیا — کوئی بھی کلائنٹ کوڈ trial نہیں بنا سکتا۔ */
 
 // ── SUBSCRIPTION BANNER ───────────────────────────────────────
 async function showSubscriptionBanner() {
@@ -720,22 +720,28 @@ async function _submitPayment(planName, amount, days) {
   if (!txnId) { showToast('Transaction ID ضروری ہے','error'); return; }
 
   try {
-    const oid = await getOfficerId();
-    const exp = new Date();
-    exp.setDate(exp.getDate() + days);
-
     // Get plan id
     const { data:plans } = await supabaseClient.from('subscription_plans').select('id').eq('name',planName).single();
 
-    await supabaseClient.from('subscriptions').insert({
-      officer_id:     oid,
-      plan_id:        plans?.id||null,
-      status:         'pending', // pending until admin verifies
-      expires_at:     exp.toISOString(),
-      payment_ref:    txnId,
-      amount:         amount,
-      payment_method: method,
+    // ═══ درخواست اب RPC سے جاتی ہے ═══════════════════════════════
+    //  پہلے یہاں سیدھا `subscriptions` میں insert ہوتا تھا۔ اُس راستے
+    //  میں status اور expires_at دونوں کلائنٹ طے کرتا تھا — یعنی app کا
+    //  کوڈ بدل کر خود کو 'active' اور لمبی میعاد دی جا سکتی تھی۔
+    //
+    //  اب `dio_request_subscription` (security definer) یہ سب سرور پر
+    //  کرتا ہے: status ہمیشہ 'pending'، میعاد خالی (ایڈمن منظوری پر
+    //  plan کے duration_days سے لگتی ہے)، اور معطل/غیر منظور افسر کی
+    //  درخواست وہیں رُک جاتی ہے۔
+    //
+    //  `days` اب استعمال نہیں ہوتا — میعاد کا فیصلہ سرور plan سے کرتا
+    //  ہے، تاکہ ایک ہی جگہ سچ ہو۔ (دلیل برقرار ہے تاکہ بلانے والے نہ بدلیں۔)
+    const { error: rpcErr } = await supabaseClient.rpc('dio_request_subscription', {
+      p_plan_id: plans?.id || null,
+      p_amount:  amount,
+      p_ref:     txnId,
+      p_method:  method,
     });
+    if (rpcErr) throw rpcErr;
 
     closeModal();
     showToast('درخواست بھیج دی — ایڈمن تصدیق کرے گا','success');
