@@ -25,8 +25,8 @@
   //  afsar offline likh nahi payega.
   const DIO_LICENSE_PUB_JWK = {
     "kty": "EC", "crv": "P-256",
-    "x": "j6I-frbOFS5-uRk26D2EvAKXTi93ku7PgZdoRQioquA",
-    "y": "9WdwdnKA6i5UEJxnEWOQV5r530fVX_y27GVVzO70ENo"
+    "x": "AUgVhrkD57b75bVUycWpnFNrdb7GVVdiLATNoYt0T3s",
+    "y": "UgfV94EI6nk785CEyBNXhmnaX_T49GWaKMDWIUISrcw"
   };
 
   const _unb64url = (s) => {
