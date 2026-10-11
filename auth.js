@@ -228,7 +228,29 @@ async function doLogin() {
   const pass  = document.getElementById('login-password')?.value;
   if (!email||!pass) { showToast('ای میل اور پاسورڈ ضروری ہے','error'); return; }
 
-  // ── OFFLINE: پاسورڈ Supabase سے تصدیق نہیں ہو سکتا۔ PIN/بایومیٹرک آفلائن چلتے ہیں ──
+  /* ══════════════════════════════════════════════════════════════
+     OFFLINE LOGIN — "offline first" ka asal taqaza
+
+     MASLA JO THA: offline daakhle ka SIRF do raaste the — PIN ya
+     biometric. Jis afsar ne yeh set na kiye hon (aur app sirf AIK BAAR
+     poochti hai — `dio_pin_offered`), us ke liye maidan mein koi raasta
+     hi nahi bachta tha: paigham aata tha "pehle internet ke sath login
+     kar ke PIN set karein" — jo us waqt mumkin hi nahi hota.
+
+     Ghaur talab baat: ONLINE par yehi afsar BINA kuch type kiye andar
+     aa jata hai, kyunke Supabase ka session pehle se mehfooz hota hai.
+     Yaani PIN ki shart sirf OFFLINE par lagti thi — wohi aala, wohi
+     session, magar net band hote hi daakhla band. Yeh tanasub ghalat tha.
+
+     AB: agar is aale par pehle se session mehfooz hai to offline bhi
+     daakhla milta hai — bilkul utna hi jitna ONLINE par milta. PIN ya
+     biometric mojood hon to unhi ko tarjeeh (wo aik mazeed taala hain).
+     Hifazat ka darja ONLINE se neeche nahi gaya.
+
+     Saath AIK NAYI jaanch: likhi hui ای میل mehfooz session wale afsar
+     ki hi honi chahiye — warna koi doosra shakhs apni ای میل daal kar
+     is aale par mehfooz afsar ke record mein nahi ghus sakta.
+     ══════════════════════════════════════════════════════════════ */
   if (!navigator.onLine) {
     const hasOffline = await _dioHasOfflineSession();
     const hasPin = !!localStorage.getItem('dio_pin');
@@ -237,9 +259,29 @@ async function doLogin() {
       showToast('آپ آفلائن ہیں — ' + (hasPin ? 'PIN' : 'بایومیٹرک') + ' سے لاگ اِن کریں', 'warn', 6000);
       if (hasPin) { const b = document.querySelectorAll('.login-method')[1]; if (b) setLoginMethod('pin', b); }
       else { const b = document.querySelectorAll('.login-method')[2]; if (b) setLoginMethod('biometric', b); }
-    } else {
-      showToast('آفلائن لاگ اِن کے لیے پہلے انٹرنیٹ کے ساتھ ایک بار لاگ اِن کر کے (ترتیبات میں) PIN یا بایومیٹرک سیٹ کریں', 'warn', 7000);
+      return;
     }
+    if (hasOffline) {
+      // Mehfooz session ka afsar koi aur to nahi?
+      let _savedEmail = '';
+      try {
+        const _o = JSON.parse(localStorage.getItem('dio_officer_cache') || 'null');
+        _savedEmail = (_o && _o.email) ? String(_o.email).trim().toLowerCase() : '';
+      } catch (_) {}
+      if (_savedEmail && _savedEmail !== String(email).trim().toLowerCase()) {
+        showToast('یہ آلہ کسی اور افسر کے نام پر محفوظ ہے — آف لائن صرف وہی داخل ہو سکتے ہیں', 'error', 7000);
+        return;
+      }
+      setLoginLoading(true);
+      const off = await _dioOfflineRestore();
+      setLoginLoading(false);
+      if (off) {
+        showToast('آفلائن موڈ — انٹرنیٹ آنے پر کام خودبخود sync ہو جائے گا', 'info', 4000);
+        loginSuccess();
+        return;
+      }
+    }
+    showToast('آفلائن لاگ اِن دستیاب نہیں — اس آلے پر پہلے ایک بار انٹرنیٹ کے ساتھ لاگ اِن کریں', 'warn', 7000);
     return;
   }
 
