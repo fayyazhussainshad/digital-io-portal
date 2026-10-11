@@ -1,6 +1,6 @@
 <div dir="rtl">
 
-# Digital IO — مکمل سیکیورٹی پیکج (SW v489)
+# Digital IO — مکمل سیکیورٹی پیکج (SW v490)
 
 14 نکاتی آڈٹ کے **تمام** نکات بند۔ ہر فائل `origin/main` سے حقیقی طور پر مختلف ہے
 (بے تبدیلی فائل ایک بھی نہیں)۔ فولڈر کا ڈھانچہ repo جیسا ہے — GitHub پر اسی جگہ اپلوڈ کریں۔
@@ -44,7 +44,7 @@
 `subscription.js`، `suspects.js`، `sw.js`، `templates.js`، `toolbar.js`،
 `vercel.json`، `witnesses.js`، `zimni.js`
 
-اپلوڈ کے بعد سائٹ ری فریش کریں — نیا SW (**v489**) پرانا کیش صاف کر دے گا۔
+اپلوڈ کے بعد سائٹ ری فریش کریں — نیا SW (**v490**) پرانا کیش صاف کر دے گا۔
 
 ### خاص طور پر دھیان دینے والی تبدیلیاں
 - **`app-core.js` لازمی ہے** — initApp سے PIN-wipe لائن ہٹائی گئی؛ اس کے بغیر ایپ لاک کام نہیں کرتا۔
@@ -157,6 +157,69 @@ unsafe-eval، admin.js static load، SW precache)۔
 داخلہ بند، (3) **ڈیٹابیس** — `sql/50_suspend_hard_gate.sql`، جو کلائنٹ بائی پاس ہونے پر بھی روکتا ہے۔
 
 > SQL کی ترتیب میں اب **`50`** بھی شامل ہے: `00` → `40` → `10` → `41` → `20` → **`50`** → `30`
+
+---
+
+## تیسرے دور کا جائزہ — 17 مزید خامیاں (SW v490)
+
+اس دور میں SQL، Edge Function، آف لائن sync اور service worker کا گہرا جائزہ لیا گیا — یہ حصے
+پہلے نہیں دیکھے گئے تھے۔ سب سے اہم یہ نکلا:
+
+### 🔴 نظام کی بنیادی خامی — ایک INSERT سے پورا نفاذ ختم
+`dio_has_active_sub()` فیصلہ `subscriptions` ٹیبل سے کرتا ہے — **مگر وہی ٹیبل افسر کے لیے کھلی تھی**
+(نہ RLS، نہ policy؛ کلائنٹ whitelist میں بھی "تجدید کے لیے")۔ یعنی:
+`insert into subscriptions values (<اپنا id>,'active','2099-01-01')` — اور 21 ٹیبل کی گیٹ، معطلی،
+سب بند۔ پھر Edge Function اسی جعلی row پر دستخط شدہ لائسنس بھی دے دیتا۔
+**حل:** `sql/60_subscriptions_lockdown.sql` — افسر اپنی سبسکرپشن صرف **پڑھ** سکتا ہے؛ تجدید اب
+`dio_request_subscription()` سے، جو صرف `pending` بناتی ہے۔ `active` صرف ایڈمن/service_role۔
+
+### 🔴 `officers` میں INSERT سے superadmin بن جانا
+پرانا trigger صرف `before update` تھا۔ افسر اپنے `user_id` کے ساتھ نئی row `role='superadmin'`
+ڈال دیتا — اور گیٹ `exists(... role='superadmin')` دیکھتی ہے، یعنی مستقل مالک۔ ساتھ ہی: کسی بھی
+دوسرے افسر کی row بدلی اور مٹائی جا سکتی تھی، اور `auth.uid() is null` کو "service_role" مان لیا گیا تھا
+(حالانکہ anon پر بھی null آتا ہے)۔
+**حل:** `sql/21_officers_protect_v2.sql` — INSERT + UPDATE + DELETE، `user_id` پر unique index،
+ملکیت کا چیک، اور `current_user`/`auth.role()` سے اصل کردار کی جانچ۔
+
+### 🔴 Edge Function نے وہی سوراخ دوبارہ کھولا
+صرف `id, role` پڑھتا تھا — نہ معطلی، نہ منظوری — اور **ایڈمن کو بلا شرط 72 گھنٹے** دیتا تھا (بالکل وہی
+خامی جو `50_suspend_hard_gate.sql` میں بند کی تھی)۔ معطل افسر کا refresh token زندہ رہتا ہے، تو وہ
+curl سے نیا ٹوکن لے کر 48–72 گھنٹے آف لائن پورا کام کر لیتا۔
+**حل:** دستخط سے **پہلے** معطلی/منظوری کا گیٹ؛ صرف superadmin مستثنیٰ؛ بلا حق `403 not_entitled`
+(کوئی دستخط نہیں)؛ payload میں `sub`/`kid`؛ اندرونی error باہر نہیں جاتا۔
+
+### دیگر (سب ٹھیک)
+| # | خامی | حل |
+|---|---|---|
+| 4 | `41` کا rollback اُن ٹیبلز کی RLS بھی بند کر دیتا جو اُس نے چھوئی ہی نہ تھیں — سسٹم **پہلے سے زیادہ کھلا** | `dio_migration_state` میں ریکارڈ |
+| 5 | `41` اُن ٹیبلز پر allow-all لگا دیتا جن پر per-officer policies پہلے سے تھیں (انہیں ہمیشہ کے لیے بے اثر) | ایسی ٹیبل چھوڑ کر warning |
+| 6 | `coalesce(is_approved, true)` — NULL کو **منظور** مان لیتا | `false` (fail-closed) |
+| 7 | `expires_at IS NULL` پر اصلی paying افسر **block** ہو جاتا | `active` + NULL = مستقل |
+| 8 | `status:'none'` پر write-guard **بالکل بند** — cache مٹا کر آف لائن جانا کافی تھا | `none`/`unknown` بھی blocked |
+| 9 | 3-دن grace **ہر کال پر نئی** بن جاتی — یعنی ہمیشہ کی چھوٹ | `dio_grace_start` سے ایک ہی بار |
+| 10 | `storage.from()` گیٹ سے باہر — معطل افسر فائلیں اپلوڈ کرتا رہتا | storage + rpc بھی guard میں |
+| 11 | SW ہر navigation کا جواب `/index.html` پر لکھتا — **cache poisoning**، deep link ٹوٹنا | اپنی key پر + 503 fallback |
+| 12 | لائسنس binding دو short-circuit سے fail-open | دونوں طرف لازمی |
+| 13 | write-guard 3 سیکنڈ بعد لگتا — شروع کی ہر write بلا روک | فوراً |
+| 14 | مسترد شدہ آف لائن اندراج **ہمیشہ pending** — افسر سمجھتا زمنی محفوظ ہے | مستقل غلطی = `failed` + اطلاع + `dioFailedSyncs()` |
+| 15 | `client_errors`: `= (select ...)` دو rows پر exception؛ `is null` سے بے پہچان inserts | `in (...)`، NULL شاخ ختم |
+| 16 | `secure-storage` کی key IndexedDB transaction کے **اندر** بنتی — سست فون پر لاگ اِن **hang** | key پہلے، پھر ایک transaction |
+| 17 | میری اپنی: `offline-store.js` دوبارہ کاپی کرنے سے `getPublicUrl` واپس آ گیا تھا | ٹیسٹ نے پکڑا، ہٹا دیا |
+
+### SQL کی حتمی ترتیب
+`00` → `40` (audit) → `10` → `41` → **`21`** → **`60`** → `50` → `30`
+(`20` کی جگہ اب `21` ہے۔ ہر ایک کا ROLLBACK موجود اور جانچا ہوا۔)
+
+## ⚠️ ایک بڑی بات جو ابھی کھلی ہے — ضرور پڑھیں
+
+`41_rls_enable_safe.sql` جو `dio_base_all` policy لگاتی ہے وہ `using(true)` ہے۔ اس کا مطلب:
+سبسکرپشن گیٹ پاس کرنے کے بعد **ایک افسر دوسرے تھانے کے کیس بھی پڑھ اور بدل سکتا ہے**۔
+یہ **نئی خامی نہیں** — جن ٹیبلز پر RLS پہلے سے بند تھی وہاں یہ پہلے بھی ممکن تھا، اور ایپ کی
+حفاظت صرف query-scoping (`mine()`) سے تھی۔ مگر اب یہ policy کی شکل میں لکھی ہوئی ہے۔
+
+**اصل حل** per-officer policies ہیں (`officer_id = dio_my_officer_id()` + ایڈمن + case-sharing)۔
+یہ ہر ٹیبل کے ownership کالم پر منحصر ہے، اس لیے اندازے سے لکھنا خطرناک ہے — اگلے مرحلے میں
+`40_rls_status_audit.sql` کی رپورٹ دیکھ کر ٹیبل بہ ٹیبل کرنا چاہیے۔
 
 
 </div>

@@ -15,7 +15,11 @@ window.DIO = window.DIO || {};
 DIO.sub = {
   _blocked: false,
   setFromStatus: function (status) {
-    this._blocked = (status === 'expired' || status === 'suspended');
+    // 'none' pehle BLOCK NAHI karta tha — afsar offline ja kar
+    // dio_officer_cache mita de to getOfficerId() null deta, status 'none'
+    // aata, aur guard poori tarah band ho jata. Ab fail-closed.
+    this._blocked = (status === 'expired' || status === 'suspended' ||
+                     status === 'none'    || status === 'unknown');
     return this._blocked;
   },
   blocked: function () { return this._blocked === true; },
@@ -37,7 +41,11 @@ DIO.sub = {
 //   2) whitelist: subscriptions/subscription_plans کھلے — ورنہ تجدید ممکن نہ ہو (افسر پھنس جائے)۔
 //  FAIL-OPEN: guard لگانے میں خرابی ہو تو writes معمول کے مطابق چلیں۔
 // ═══════════════════════════════════════════════════════════════
-var _DIO_WRITE_WL = { subscriptions: 1, subscription_plans: 1 };
+// KHAMI: yahan `subscriptions` bhi khuli thi "tajdeed ke liye" — magar
+// gate KA FAISLA isi table se hota hai, to afsar khud ko 'active' likh kar
+// poora nafaz band kar sakta tha. Ab sirf PARHNA khula; tajdeed
+// dio_request_subscription() RPC se hoti hai (sirf 'pending' banati hai).
+var _DIO_WRITE_WL = { subscription_plans: 1 };
 var _dioSubPromptTs = 0;
 function _dioSubWritePrompt() {
   var now = Date.now();
@@ -81,10 +89,51 @@ function _installDioWriteGuard() {
       });
       return qb;
     };
+
+    // ── storage bhi guard me ───────────────────────────────────
+    //  KHAMI THI: guard sirf .from() par tha. supabaseClient.storage.from()
+    //  bilkul khula tha — mo'attal/miyaad-khatam afsar shahadat, templates
+    //  aur law-library ki files upload karta rehta (data-api, cases, fivec,
+    //  templates, law-library, ahkamat — sab me live call sites hain).
+    try {
+      if (supabaseClient.storage && typeof supabaseClient.storage.from === 'function') {
+        var origSFrom = supabaseClient.storage.from.bind(supabaseClient.storage);
+        supabaseClient.storage.from = function (bucket) {
+          var sb = origSFrom(bucket);
+          ['upload', 'remove', 'copy', 'move', 'createSignedUploadUrl', 'uploadToSignedUrl']
+            .forEach(function (m) {
+              if (typeof sb[m] !== 'function') return;
+              var o = sb[m].bind(sb);
+              sb[m] = function () {
+                if (window.DIO && DIO.sub && DIO.sub.blocked()) {
+                  return Promise.resolve({ data: null,
+                    error: { code: 'DIO_SUB', message: 'سبسکرپشن غیر فعال — فائل اپلوڈ بند' } });
+                }
+                return o.apply(sb, arguments);
+              };
+            });
+          return sb;
+        };
+      }
+    } catch (_) {}
+
+    // ── rpc: sirf tajdeed/jaanch ki darkhwast khuli ────────────
+    try {
+      if (typeof supabaseClient.rpc === 'function') {
+        var origRpc = supabaseClient.rpc.bind(supabaseClient);
+        var RPC_WL = { dio_request_subscription: 1, dio_has_active_sub: 1, dio_my_officer_id: 1 };
+        supabaseClient.rpc = function (fn) {
+          if (!RPC_WL[fn] && window.DIO && DIO.sub && DIO.sub.blocked()) return _dioBlockedBuilder();
+          return origRpc.apply(supabaseClient, arguments);
+        };
+      }
+    } catch (_) {}
   } catch (_) { /* fail-open */ }
 }
-// load par bhi koshish (agar supabaseClient mojood ho) + showSubscriptionBanner se bhi (reliable)
-try { setTimeout(_installDioWriteGuard, 3000); } catch (_) {}
+// Guard FAURAN lagao — pehle 3 second ka window tha jis me har write bina
+// rok guzar jati thi. setTimeout ab sirf fallback hai (client abhi na bana ho to).
+try { _installDioWriteGuard(); } catch (_) {}
+try { setTimeout(_installDioWriteGuard, 1200); } catch (_) {}
 
 
 // ── #9 FAIL-CLOSED OFFLINE IJAZAT ─────────────────────────────
@@ -144,7 +193,10 @@ async function _dioOfflineStatus(oid) {
       var lic = await dioLicenseValid();
       // Token BEARER na ban jaye: doosre afsar ka token copy kar lena
       // kaafi nahi hona chahiye — officer_id milna zaroori hai.
-      if (lic && lic.valid && oid && lic.officerId && lic.officerId !== oid) {
+      // Pehle do short-circuit the (`oid &&`, `lic.officerId &&`) — yaani
+      // oid maloom na ho ya token me officer_id na ho to kisi AUR afsar ka
+      // token bhi qabool ho jata. Ab dono taraf lazmi aur barabar.
+      if (lic && lic.valid && !(oid && lic.officerId && lic.officerId === oid)) {
         lic = { valid: false };
       }
       if (lic && lic.valid) {
@@ -158,8 +210,23 @@ async function _dioOfflineStatus(oid) {
   } catch (_) {}
   var cached = _dioReadSubCache(oid);
   if (cached) return cached;
-  return { status: 'trial', daysLeft: _SUB_GRACE_DAYS,
-           plan: 'عارضی اجازت — آن لائن تصدیق درکار' };
+
+  // Grace AIK BAAR — pehle HAR call par naye 3 din ban jate the, yaani
+  // cache mita kar offline rehne se hamesha ki chhoot. Ab pehli baar ka
+  // waqt likh liya jata hai aur usi se ginti hoti hai.
+  try {
+    var GK = 'dio_grace_start';
+    var st = +(localStorage.getItem(GK) || 0);
+    if (!st) { st = Date.now(); localStorage.setItem(GK, String(st)); }
+    var used = Math.max(0, Math.floor((Date.now() - st) / 86400000));
+    var left = _SUB_GRACE_DAYS - used;
+    if (left > 0) {
+      return { status: 'trial', daysLeft: left,
+               plan: 'عارضی اجازت — آن لائن تصدیق درکار' };
+    }
+  } catch (_) {}
+  return { status: 'expired', daysLeft: 0,
+           plan: 'آن لائن تصدیق درکار — تجدید کریں' };
 }
 
 // ── SUBSCRIPTION CHECK ON LOGIN ───────────────────────────────
@@ -213,6 +280,7 @@ async function checkSubscription() {
     }
     // #9: kamyab ONLINE natije ko cache karo + dastkhat-shuda license taza karo
     _dioCacheSub(out, oid);
+    try { localStorage.removeItem('dio_grace_start'); } catch (_) {}
     try {
       if (typeof dioRefreshLicense === 'function' &&
           (out.status === 'active' || out.status === 'trial')) dioRefreshLicense();

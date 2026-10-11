@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v489
+   DIGITAL IO — SERVICE WORKER v490
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v489';
+const CACHE_NAME = 'digital-io-v490';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -143,18 +143,32 @@ self.addEventListener('fetch', event => {
   //   Cached shell FORAN dikhao (ایپ ہوا کی طرح فوری کھلے), background mein
   //   fresh laa kar cache update karo → agli baar naya. Offline bhi foran chale.
   if (event.request.mode === 'navigate') {
+    // KHAMI THI: request ka URL bilkul nazar-andaaz hota tha — har navigation
+    // ka jawab '/index.html' ke cache se aata tha AUR har navigation ka jawab
+    // wapas usi '/index.html' key par likh diya jata tha. Yaani /admin.html
+    // (ya kisi bhi 200 dene wale same-origin safhe) par jate hi app ka asal
+    // shell us safhe se badal jata — cache poisoning + deep link toot jana.
+    // Ab: apne hi origin ka navigation, jawab apni key par, shell sirf fallback.
+    const navUrl = new URL(event.request.url);
+    if (navUrl.origin !== self.location.origin) return;   // bahar ka safha — chhoR do
+
     const navFresh = fetch(event.request).then(response => {
-      if (response && response.status === 200) {
+      if (response && response.status === 200 && response.type === 'basic') {
         const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put('/index.html', clone));
+        // Apni hi key par — doosre safhe ka jawab shell par na chhape
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
       }
       return response;
     }).catch(() => null);
-    event.waitUntil(navFresh);   // SW ko zinda rakho taake background cache-update mukammal ho
+    event.waitUntil(navFresh);
     event.respondWith(
-      caches.match('/index.html').then(cached => cached
+      caches.match(event.request).then(cached => cached
         || navFresh.then(r => r
-          || caches.match('/').then(c => c || caches.match('/offline.html'))))
+          // App shell sirf tab jab is safhe ka apna jawab na mile
+          || caches.match('/index.html')
+          || caches.match('/offline.html')
+          || new Response('', { status: 503, statusText: 'offline' })))
+        .then(r => r || new Response('', { status: 503, statusText: 'offline' }))
     );
     return;
   }

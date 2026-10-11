@@ -81,11 +81,12 @@ async function _dioLoginWithToken(key) {
         (_dioIsSuspended(currentOfficer) || _dioNotApproved(currentOfficer))) {
       try { await supabaseClient.auth.signOut(); } catch (_) {}
       try { await _dioPurgeOnSuspend(); } catch (_) {}
+      // paigham PEHLE tay karo — neeche currentOfficer null ho jata hai
+      var _msg = _dioIsSuspended(currentOfficer)
+        ? '🚫 آپ کا اکاؤنٹ معطل ہے۔ ایڈمن سے رابطہ کریں۔'
+        : '⏳ آپ کا اکاؤنٹ منظوری کے انتظار میں ہے۔';
       currentUser = null; currentOfficer = null;
-      try {
-        showToast(_dioIsSuspended(currentOfficer) ? '🚫 آپ کا اکاؤنٹ معطل ہے۔' :
-                  '⏳ آپ کا اکاؤنٹ منظوری کے انتظار میں ہے۔', 'error', 7000);
-      } catch (_) {}
+      try { showToast(_msg, 'error', 7000); } catch (_) {}
       return false;
     }
     return true;

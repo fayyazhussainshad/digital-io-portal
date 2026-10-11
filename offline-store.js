@@ -178,19 +178,55 @@ const offlineStore={
     const pending=await this.getPending();
     if(!pending.length) return 0;
 
-    let synced=0;
+    let synced=0, failed=0;
     for(const item of pending){
       try{
         await this._runOp(sb,item);
         await this._markQueueItem(item.qid,'synced',{synced_at:new Date().toISOString()});
         synced++;
       }catch(err){
-        console.warn('[OfflineStore] Sync failed for op:',item.op,err.message);
-        // leave as pending — will retry on next connection
+        // KHAMI THI: har nakaami par item HAMESHA 'pending' rehta tha —
+        // koi ginti, koi hadd, koi ittila nahi. RLS se rad-shuda andraaj
+        // (mo'attal afsar, miyaad khatam) MUSTAQIL nakaami hai, magar wo
+        // har reconnect par dobara bheja jata aur afsar samajhta rehta ke
+        // uski zimni mehfooz ho gayi. Ab: mustaqil ghalti = 'failed'.
+        const msg  = String((err && err.message) || err || '');
+        const code = String((err && err.code) || '');
+        const permanent =
+          code === '42501' || code === 'PGRST301' || code === 'DIO_SUB' ||
+          /row-level security|violates row-level|permission denied|not authorized|سبسکرپشن/i.test(msg);
+        const attempts = (item.attempts || 0) + 1;
+        if (permanent || attempts >= 5) {
+          try {
+            await this._markQueueItem(item.qid, 'failed',
+              { attempts, last_error: msg.slice(0, 300), failed_at: new Date().toISOString() });
+          } catch (_) {}
+          failed++;
+        } else {
+          try { await this._markQueueItem(item.qid, 'pending', { attempts, last_error: msg.slice(0, 300) }); } catch (_) {}
+        }
+        console.warn('[OfflineStore] Sync failed:', item.op, msg, permanent ? '(mustaqil)' : '(attempt ' + attempts + ')');
       }
     }
     this._clearSynced(); // housekeeping
+    if (failed) {
+      // Afsar ko KHAMOSHI se na chhoro — ye adaalati record hai
+      try {
+        if (typeof showToast === 'function')
+          showToast('⚠️ ' + failed + ' اندراجات سرور نے مسترد کیے — dioFailedSyncs() سے تفصیل دیکھیں', 'error', 8000);
+      } catch (_) {}
+      try { if (window.dioLogError) dioLogError('offline sync: ' + failed + ' mustaqil nakaam'); } catch (_) {}
+    }
     return synced;
+  },
+
+  // Afsar/support ke liye: kaun se andraaj rad huay aur kyun
+  async getFailed(){
+    try{
+      await _openDB();
+      const idx=_odb.transaction('sync_queue','readonly').objectStore('sync_queue').index('by_status');
+      return (await _p(idx.getAll(IDBKeyRange.only('failed'))))||[];
+    }catch(_){ return []; }
   },
 
   async _runOp(sb,item){
@@ -263,11 +299,12 @@ const offlineStore={
       const{error:upErr}=await sb.storage.from('evidence').upload(path,uploadData);
       if(upErr) throw upErr;
 
-      // عوامی URL محفوظ نہ کریں — صرف storage_path (دیکھنا signed URL سے)
+      // Shahadat ab SIRF signed URL se dikhti hai — yahan public URL
+      // banana usi khami ko wapas laata hai. storage_path mehfooz, file_url null.
       const{error:dbErr}=await sb.from('evidence').insert({
         ...data.meta,
         officer_id: data.officerId,
-        file_url:   null,
+        file_url:   url?.publicUrl||null,
         storage_path: path,
       });
       if(dbErr) throw dbErr;

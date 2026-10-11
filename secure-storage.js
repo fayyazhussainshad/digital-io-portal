@@ -52,28 +52,41 @@
   // Do tab/PWA window aik sath cold-start karein to dono key bana kar
   // aik dusre ki key par likh dete the — purane enc1$ blob phir kabhi na
   // khulte. Is liye get-or-create AIK hi readwrite transaction me.
-  function _getOrCreate(db) {
+  //  AHEM: pehle key IndexedDB transaction ke ANDAR banayi jati thi. Magar
+  //  IndexedDB ka transaction tab khud band ho jata hai jab event loop khali
+  //  ho, aur crypto.subtle.generateKey sust device par der se jawab de sakta
+  //  hai — us waqt tak tx murda, `put` nakaam, aur promise KABHI hal na ho
+  //  (yaani login hang). Is liye ab: key PEHLE banao, phir AIK readwrite
+  //  transaction me "jo pehle se hai wo lo, warna ye rakh do".
+  function _getOrCreate(db, fresh) {
     return new Promise(function (res, rej) {
-      var tx = db.transaction(STORE, 'readwrite');
-      var os = tx.objectStore(STORE);
-      var g = os.get(REC);
-      g.onerror = function () { rej(g.error); };
+      var tx, os, g;
+      try { tx = db.transaction(STORE, 'readwrite'); os = tx.objectStore(STORE); }
+      catch (e) { rej(e); return; }
+      var done = false;
+      var finish = function (k) { if (!done) { done = true; res(k); } };
+      g = os.get(REC);
+      g.onerror   = function () { rej(g.error); };
       g.onsuccess = function () {
-        if (g.result) { res(g.result); return; }
-        crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt'])
-          .then(function (k) {
-            try { os.put(k, REC); } catch (_) {}
-            tx.oncomplete = function () { res(k); };
-            tx.onerror = function () { res(k); };   // key phir bhi is session me chale
-          }, rej);
+        if (g.result) { finish(g.result); return; }     // dusre tab ki key jeet gayi
+        try { os.put(fresh, REC); } catch (e) { rej(e); return; }
       };
+      tx.oncomplete = function () { finish(fresh); };
+      tx.onabort    = function () { rej(tx.error || new Error('tx abort')); };
+      tx.onerror    = function () { rej(tx.error || new Error('tx error')); };
     });
   }
 
   var _keyP = null;
   function _key() {
     if (_keyP) return _keyP;
-    _keyP = (async function () { return await _getOrCreate(await _idb()); })();
+    _keyP = (async function () {
+      var db = await _idb();
+      // key pehle — transaction ke bahar
+      var fresh = await crypto.subtle.generateKey(
+        { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+      return await _getOrCreate(db, fresh);
+    })();
     _keyP.catch(function () { _keyP = null; });   // nakaami cache na ho — agli baar phir koshish
     return _keyP;
   }
