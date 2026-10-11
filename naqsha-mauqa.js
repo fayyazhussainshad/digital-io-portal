@@ -1065,6 +1065,7 @@
 
     const a = _active(); const paper = (a && a.paper) || 'legal';
     const html = `<!DOCTYPE html><html dir="rtl" lang="ur"><head><meta charset="UTF-8">
+      ${typeof dioFontHead==='function'?dioFontHead():''}
       <style>
         @page{ size:${paper === 'a4' ? 'A4' : 'legal'}; margin:0; }
         *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; box-sizing:border-box; }
