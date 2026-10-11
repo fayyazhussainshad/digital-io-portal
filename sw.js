@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v503
+   DIGITAL IO — SERVICE WORKER v504
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v503';
+const CACHE_NAME = 'digital-io-v504';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -167,15 +167,35 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       caches.match(event.request).then(cached => {
         if (cached) return cached;
+        /* ═══ v504 — ASLI MAIDAN SE MILI KHARABI ═══
+           `mode:'cors'` wali darkhwast `connect-src` ke taht aati hai
+           (jabke `<link rel=stylesheet>` `style-src` ke taht). CSP ki
+           `connect-src` fehrist mein font ke pate NAHI the, is liye yeh
+           darkhwast ROK di jati thi aur neeche wala `catch` 504 laut-ta
+           tha — yani URDU FONT BILKUL HI NA AATA:
+               "Refused to connect … violates connect-src"
+               "GET …Noto+Nastaliq+Urdu… net::ERR_ABORTED 504 (offline)"
+           Do darustiyan:
+             1) CSP ki `connect-src` mein dono font ke pate shamil
+                (index.html ki meta aur vercel.json ka header — dono).
+             2) Yahan: cors ki koshish NAKAM ho jaye to 504 ki bajaye
+                SAADI (asli) darkhwast se font le aao. Cache na ho sake to
+                na sahi — font ka aana cache hone se zyada zaroori hai. */
         const corsReq = new Request(event.request.url, { mode: 'cors', credentials: 'omit' });
+        const saadi = () => fetch(event.request).catch(() => null);
         return fetch(corsReq).then(r => {
           if (r && r.status === 200) {
             const c = r.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, c));
+            caches.open(CACHE_NAME).then(cache => {
+              // opaque jawab `put` qabool nahi karta — khamoshi se chhoR do
+              try { cache.put(event.request, c); } catch (_) {}
+            }).catch(() => {});
+            return r;
           }
-          return r;
-        }).catch(() => caches.match(event.request).then(c => c
-          || new Response('', { status: 504, statusText: 'offline' })));
+          return saadi().then(x => x || r);
+        }).catch(() => saadi().then(x => x
+          || caches.match(event.request).then(c => c
+          || new Response('', { status: 504, statusText: 'offline' }))));
       })
     );
     return;
