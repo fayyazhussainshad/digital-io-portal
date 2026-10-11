@@ -16,12 +16,17 @@
 (function () {
   'use strict';
 
-  // ⚠️ KEYGEN ke baad public key JWK yahan paste karein (dekho README.md)
-  //    Ye PUBLIC key hai — client me rakhna mehfooz hai.
+  // ═══ OWNER ki AAMA (public) chaabi — 11 October 2026 ko banai gayi ═══
+  //  Yeh PUBLIC chaabi hai: client mein rakhna bilkul mehfooz hai. Is se
+  //  sirf dastkhat JAANCHA ja sakta hai, BANAYA nahi. Dastkhat banane wali
+  //  (nijee) chaabi sirf Supabase ke raaz `DIO_LICENSE_PRIV_JWK` mein hai.
+  //  AHEM: agar kabhi chaabiyan badlein to DONO jagah ek sath badalni hain —
+  //  warna purane license token jaanche nahi ja sakenge aur maidan mein
+  //  afsar offline likh nahi payega.
   const DIO_LICENSE_PUB_JWK = {
     "kty": "EC", "crv": "P-256",
-    "x": "REPLACE_WITH_PUBLIC_X",
-    "y": "REPLACE_WITH_PUBLIC_Y"
+    "x": "j6I-frbOFS5-uRk26D2EvAKXTi93ku7PgZdoRQioquA",
+    "y": "9WdwdnKA6i5UEJxnEWOQV5r530fVX_y27GVVzO70ENo"
   };
 
   const _unb64url = (s) => {
