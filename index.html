@@ -1154,6 +1154,45 @@ input[id*="cnic"], input[id*="cell"] {
 ):not(#ch173-doc):not(#ch173-doc *):not(#dio-dv-body):not(#dio-dv-body *):not(#saza-doc):not(#saza-doc *):not(#dk-doc):not(#dk-doc *):not(#dio-naqsha-doc):not(#dio-naqsha-doc *) {
   font-size: revert !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   عنوانات کا پیمانہ — تین درجے، پورے نظام کے لیے
+
+   KHAMI THI (asli browser mein naapi gayi): ooper wale qaide mein
+   unwanon ko "font-size: revert !important" diya gaya tha — neeyat yeh
+   thi ke unwan apni naap rakhen. Magar CSS mein `revert` ka matlab hai
+   "is safhe ki TAMAM apni naapein bhool jao aur browser ki bunyadi halat
+   par chale jao". Browser ke paas `div` (yani .page-title, .card-title)
+   ki koi apni naap hoti hi nahi, is liye woh apne WALID se naap leta tha
+   — aur walid par ooper wale qaide ka `font-size:14px !important` laga
+   hua tha. Natija: har safhe ka unwan 14px, bilkul aam matn jitna:
+       .page-title → 14px   (jabke us ki apni CSS 20px kehti hai)
+       h2          → 21px   (browser ki bunyadi naap, nizam se koi taluq nahi)
+   Yani poore nizam mein unwan ka koi paimana tha hi nahi.
+
+   Ab teen darje (naap `theme-pro.css` ke :root se — clamp() mobile par
+   chhoti, desktop par poori):
+       1) مرکزی عنوان      h1 · .page-title · .dio-h1
+       2) ذیلی مرکزی عنوان h2 · .card-title · .section-title · .dio-h2
+       3) عام عنوان        h3 · h4 · .dio-h3 · جدول کے سر نامے
+   چالان/ضمنی jaisi dastavezein yahan se bhi bahar hain — un ka apna
+   (point wala) paimana `_ch173CSS()` mein hai.
+   ═══════════════════════════════════════════════════════════════ */
+.page-content :is(h1, .page-title, .dio-h1):not(#ch173-doc):not(#ch173-doc *):not(#dio-dv-body):not(#dio-dv-body *):not(#saza-doc):not(#saza-doc *):not(#dk-doc):not(#dk-doc *):not(#dio-naqsha-doc):not(#dio-naqsha-doc *) {
+  font-size: var(--dio-h1, 20px) !important;
+  font-weight: 800 !important;
+  line-height: 1.95 !important;
+}
+.page-content :is(h2, .card-title, .section-title, .dio-h2):not(#ch173-doc):not(#ch173-doc *):not(#dio-dv-body):not(#dio-dv-body *):not(#saza-doc):not(#saza-doc *):not(#dk-doc):not(#dk-doc *):not(#dio-naqsha-doc):not(#dio-naqsha-doc *) {
+  font-size: var(--dio-h2, 17px) !important;
+  font-weight: 750 !important;
+  line-height: 1.85 !important;
+}
+.page-content :is(h3, h4, .dio-h3, .data-table thead th, table thead th):not(#ch173-doc):not(#ch173-doc *):not(#dio-dv-body):not(#dio-dv-body *):not(#saza-doc):not(#saza-doc *):not(#dk-doc):not(#dk-doc *):not(#dio-naqsha-doc):not(#dio-naqsha-doc *) {
+  font-size: var(--dio-h3, 15px) !important;
+  font-weight: 700 !important;
+  line-height: 1.8 !important;
+}
 </style>
 <!-- Supabase JS library (REQUIRED — must load before app-core.js) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>

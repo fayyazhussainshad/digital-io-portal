@@ -430,6 +430,59 @@ b.dio-stat-num { margin-bottom: 2px; }
 .dio-tb-status .status-dot { width: 7px; height: 7px; border-radius: 50%; }
 
 /* ── 3.2 SAFHE KA UNWAN ────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════
+   عنوانات کا ایک ہی پیمانہ — پورے نظام کے لیے
+   Pehle har safha apna unwan khud naapta tha (kahin 18px, kahin 20px,
+   kahin 15px) — isi liye do safhe aik jaise nahi lagte the. Ab TEEN
+   darje hain aur bas:
+     1) مرکزی عنوان      .dio-h1  — safhe/dastavez ka naam
+     2) ذیلی مرکزی عنوان .dio-h2  — hissay ka unwan
+     3) عام عنوان        .dio-h3  — chhote unwan, jadwal ke sar-naame
+   clamp() ki wajah se naap MOBILE par khud chhoti aur DESKTOP par poori
+   ho jati hai — dono jagah wohi tarteeb, wohi tanasub. Nastaliq ke liye
+   satron ka fasla kushada (1.75–1.95), warna nuqte aapas mein mil jate.
+   Kaghaz (چھپائی) ka apna paimana report173.js ke _ch173CSS() mein hai.
+   ═══════════════════════════════════════════════════════════ */
+:root {
+  --dio-h1: clamp(18px, 0.9vw + 14.5px, 23px);
+  --dio-h2: clamp(15.5px, 0.5vw + 13.5px, 19px);
+  /* Aam unwan kabhi aam MATN (14px) se chhota na ho — warna mobile par
+     jadwal ka sar-nama apne hi data se halka lagta tha */
+  --dio-h3: clamp(14.5px, 0.3vw + 13.4px, 16px);
+}
+
+.page-content h1, .page-content .dio-h1, .page-content .page-title, .dio-h1 {
+  font-size: var(--dio-h1) !important; font-weight: 800 !important;
+  line-height: 1.95 !important; color: var(--dio-ink) !important; letter-spacing: 0;
+}
+.page-content h2, .page-content .dio-h2, .page-content .section-title,
+.page-content .card-title, .dio-h2 {
+  font-size: var(--dio-h2) !important; font-weight: 750 !important;
+  line-height: 1.85 !important; color: var(--dio-ink) !important;
+}
+.page-content h3, .page-content h4, .page-content .dio-h3, .dio-h3,
+.page-content .data-table thead th {
+  font-size: var(--dio-h3) !important; font-weight: 700 !important; line-height: 1.8 !important;
+}
+.page-content .page-subtitle { font-size: var(--dio-h3) !important; font-weight: 400 !important; }
+
+/* ── نقطہ دار / نمبر والی فہرست — نشان متن پر نہ چڑھے ──
+   App ki bunyadi CSS mein "*{margin:0;padding:0}" hai, jo ul/ol ki apni
+   jagah kha jata hai; nishan khane se BAHAR chhapta hai, yani RTL mein
+   seedha matn par. Yeh qaida har us jagah lagta hai jahan afsar ka likha
+   hua matn dikhta hai — safhe par bhi, chhapai mein bhi. */
+.page-content ul:not(.dio-plain), .page-content ol:not(.dio-plain),
+#law-html-content ul, #law-html-content ol,
+#ahk-html-content ul, #ahk-html-content ol,
+.dio-prose ul, .dio-prose ol {
+  padding-inline-start: 1.9em;
+  margin: 0.35em 0;
+  list-style-position: outside;
+}
+.page-content li, #law-html-content li, #ahk-html-content li, .dio-prose li {
+  text-align: start; margin: 0.12em 0;
+}
+
 .page-header {
   border-bottom: 1px solid var(--dio-line);
   padding-bottom: 12px; margin-bottom: 16px;
@@ -728,6 +781,22 @@ b.dio-stat-num { margin-bottom: 2px; }
   background: var(--dio-brand) !important; border-color: var(--dio-brand) !important; color: #fff !important;
 }
 .page-content .suspect-filter svg, .page-content .dio-chip svg { flex: none; }
+
+/* ── 3.16 NISHAN (tag) — jadwal ke andar qisam ka chhota lebal ─────
+   Chip DABANE ke liye hai; yeh sirf BATANE ke liye. Pehle yahan bhi
+   chip lagti thi to mobile ke card mein bara sa dabba ban jata tha. */
+.page-content .dio-tag {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.9;
+  border: 1px solid var(--dio-line);
+  background: var(--dio-canvas);
+  color: var(--dio-ink-2);
+  max-width: 100%;
+}
 
 /* Chhapai par jadwal ki sajawat na jaye — kaghaz saaf rahe */
 @media print {

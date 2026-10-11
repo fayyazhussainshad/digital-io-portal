@@ -281,6 +281,7 @@ function _printCdr() {
   if (!doc) return;
   const dateStr = formatDate(new Date());
   const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
+    ${typeof dioFontHead==='function'?dioFontHead():''}
     <style>@page{size:A4;margin:8mm}
       body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;font-size:13px;line-height:1.3;color:#000;margin:0;}
       table{border-collapse:collapse;width:100%;}

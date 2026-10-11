@@ -402,6 +402,7 @@ async function _downloadCaseHTML(id) {
   if (!c) return;
   const o = currentOfficer || {};
   const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
+    ${typeof dioFontHead==='function'?dioFontHead():''}
   <title>FIR ${c.fir_number||''}</title>
   <style>
     body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',Arial,sans-serif;direction:rtl;margin:30px;color:#111;font-size:14px;}

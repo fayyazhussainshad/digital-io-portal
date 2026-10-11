@@ -989,6 +989,34 @@ async function initApp() {
   }, 2000);
 }
 
+/* ═══════════════════════════════════════════════════════════
+   CHHAPAI KA URDU FONT — `dioFontHead()`
+
+   MASLA (asli browser mein naapa gaya): `dioPrint()` chhapai ka safha aik
+   ALAG iframe mein likhta hai. `index.html` ka `@font-face` us iframe tak
+   NAHI pohnchta — iframe sirf wohi font istemal karta hai jiska ELAAN uske
+   apne <head> mein ho. Kai safhe apni chhapai ke CSS mein sirf
+   `font-family:'Jameel Noori Nastaleeq'` likhte the, elaan nahi — natija:
+   Nastaliq ke bajaye `serif` (Naskh) chhapta tha, yaani "فونٹ ٹوٹ گیا"۔
+   (Naap: 627px = serif, 707px = asli font — barabar aane ka matlab font
+   laga hi nahi.)
+
+   Ab har chhapai isi aik jagah se font leti hai. `font-display:block` —
+   taake chhapai se pehle font aa jaye, adha-adha na chhape. Aakhir mein
+   system ke Urdu font bhi rakhe hain (aale par jo mil jaye).
+   ═══════════════════════════════════════════════════════════ */
+function dioFontHead() {
+  return '<link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=block" rel="stylesheet">'
+    + '<style>'
+    + "@font-face{font-family:'Jameel Noori Nastaleeq';"
+    + "src:local('Jameel Noori Nastaleeq'),local('JameelNooriNastaleeq'),local('Jameel Noori Nastaleeq Regular'),"
+    + "url('https://cdn.jsdelivr.net/npm/jameel-noori/fonts/jameel-noori-nastaleeq4.woff2') format('woff2'),"
+    + "url('https://unpkg.com/jameel-noori/fonts/jameel-noori-nastaleeq4.woff2') format('woff2');"
+    + 'font-weight:normal;font-style:normal;font-display:block;}'
+    + '</style>';
+}
+window.dioFontHead = dioFontHead;
+
 // ═══════════════════════════════════════════════════════════
 //  GLOBAL PRINT HELPER — iframe-based, no double-close, no full-screen stuck
 // ═══════════════════════════════════════════════════════════

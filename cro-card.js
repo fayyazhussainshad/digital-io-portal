@@ -307,6 +307,7 @@ function _printCro() {
   const doc = document.getElementById('cro-doc');
   if (!doc) return;
   const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
+    ${typeof dioFontHead==='function'?dioFontHead():''}
     <style>@page{size:A4;margin:8mm}
       body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;font-size:10pt;color:#000;margin:0;}
       table{border-collapse:collapse;width:100%;}td,th{border:1px solid #000;padding:2px 4px;}

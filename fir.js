@@ -249,6 +249,7 @@ function _printMatn(id) {
   const heading = (row.type === 'cross_version') ? 'متن کراس ورژن' : 'متن الف آئی آر';
   const body = esc(row.matn) || '';
   const html = `<!DOCTYPE html><html dir="rtl" lang="ur"><head><meta charset="utf-8">
+    ${typeof dioFontHead==='function'?dioFontHead():''}
     <title>${heading}</title>
     <style>
       @page { size: A4; margin: 20mm; }

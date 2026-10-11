@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v501
+   DIGITAL IO — SERVICE WORKER v503
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v501';
+const CACHE_NAME = 'digital-io-v503';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -127,10 +127,61 @@ self.addEventListener('fetch', event => {
 
   // Skip non-GET and external API calls
   if (event.request.method !== 'GET') return;
+
+  /* ═══ QANOONI LIBRARY KI FILEIN — offline bhi khulen ═══
+     Yeh Supabase ke `return` se PEHLE hai, warna neeche wali shart inhe
+     chhoR deti hai aur maidan mein (net ke baghair) qanoon nahi khulta.
+     Sirf PUBLIC bucket ka GET — is mein koi niji data nahi hota.
+     Pehle cache (foran), background mein taza; net na ho to cache hi. */
+  if (url.hostname.includes('supabase') && url.pathname.includes('/storage/v1/object/public/law-library/')) {
+    event.respondWith(
+      caches.match(event.request).then(cached => {
+        const fresh = fetch(event.request).then(r => {
+          if (r && r.status === 200) {
+            const c = r.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, c));
+          }
+          return r;
+        }).catch(() => null);
+        if (cached) { event.waitUntil(fresh); return cached; }
+        return fresh.then(r => r || new Response('', { status: 504, statusText: 'offline' }));
+      })
+    );
+    return;
+  }
+
   if (url.hostname === 'supabase.co' || url.hostname.includes('supabase')) return;
   if (url.hostname === 'nominatim.openstreetmap.org') return;
   if (url.hostname === 'api.anthropic.com') return;
-  // External CDN libraries (Supabase, fonts) — network-first, but CACHE for offline
+  /* ═══ URDU FONT — hamesha ke liye cache (cache-first) ═══
+     KAMI THI: `fonts.googleapis.com` / `fonts.gstatic.com` kisi shart mein
+     nahi the, yaani Noto Nastaliq Urdu OFFLINE nahi milta tha → maidan mein
+     Urdu Naskh mein dikhti aur chhapti thi.
+     AHEM BAREEKI: `<link rel=stylesheet>` ki darkhwast `no-cors` hoti hai,
+     uska jawab "opaque" (status 0) hota hai aur `cache.put` usay rakh nahi
+     sakta. Is liye hum KHUD `mode:'cors'` se laate hain (Google Fonts
+     `Access-Control-Allow-Origin: *` deta hai) — phir yeh cache mein aa
+     jata hai aur agli dafa net ke baghair bhi milta hai. Font badalta nahi,
+     is liye cache pehle. */
+  if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
+    event.respondWith(
+      caches.match(event.request).then(cached => {
+        if (cached) return cached;
+        const corsReq = new Request(event.request.url, { mode: 'cors', credentials: 'omit' });
+        return fetch(corsReq).then(r => {
+          if (r && r.status === 200) {
+            const c = r.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, c));
+          }
+          return r;
+        }).catch(() => caches.match(event.request).then(c => c
+          || new Response('', { status: 504, statusText: 'offline' })));
+      })
+    );
+    return;
+  }
+
+  // External CDN libraries — network-first, but CACHE for offline
   if (url.hostname.includes('jsdelivr.net') || url.hostname.includes('unpkg.com') || url.hostname.includes('cdnjs.cloudflare.com') || url.hostname.includes('esm.sh')) {
     event.respondWith(
       fetch(event.request).then(response => {

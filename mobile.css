@@ -209,6 +209,11 @@
   }
   table.dio-cards thead { display: none !important; }
 
+  /* Card khud tarteeb mein hain — un par "# 1" ka poora khana fazool jagah
+     leta tha. Sirf un jadwalon par jo khud `dio-col-num` lagayen. */
+  .page-content table.dio-cards td.dio-col-num,
+  .page-content table.dio-cards th.dio-col-num { display: none !important; }
+
   /* ═══════════════════════════════════════════════════════════
      TANG SAKREEN PAR BAHUT ZYADA KHANE
      Kuch safhon ne apne khane seedhe inline style mein `repeat(4,1fr)`

@@ -548,6 +548,7 @@ function _ahkPrintOne(id){
     _ahkOpenFile(id); return;
   }
   const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
+    ${typeof dioFontHead==='function'?dioFontHead():''}
     <style>
       @page{size:A4;margin:15mm 12mm;}
       body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;text-align:right;font-size:14px;line-height:2.1;color:#111;}
@@ -584,6 +585,7 @@ function _ahkPrintList(){
       <td style="border:1px solid #000;padding:6px;text-align:center;">${a.issue_date?_ahkEsc(_ahkFmtDate(a.issue_date)):'—'}</td>
     </tr>`).join('');
   const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
+    ${typeof dioFontHead==='function'?dioFontHead():''}
     <style>
       @page{size:A4;margin:15mm 12mm;}
       body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;color:#111;}

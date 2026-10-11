@@ -187,9 +187,42 @@ function _r173CurrentData(fallbackKey) {
   if (_r173ForceBlank) return {};
   if (_r173DocId) {
     const d = _r173Docs.find(x => String(x.id) === String(_r173DocId));
-    if (d && d.form_data) return d.form_data;
+    /* ═══ AHEM — QISM BHI MILNI CHAHIYE ═══
+       Pehle yahan sirf id dekhi jati thi. Afsar aik محفوظ چالان مکمل khol
+       kar قسم ki fehrist se «اخراج» chun leta to `_r173DocId` wohi purana
+       reh jata aur اخراج ka فارم چالان مکمل ke data se BHAR jata tha — aur
+       «محفوظ کریں» dabate hi wohi purani satar UPDATE ho kar چالان مکمل
+       HAMESHA ke liye khatam ho jata tha (us ka report_type ikhraj ban jata).
+       Ab id ke saath qism (aur ورژن / ذیلی qism) bhi milni zaroori hai. */
+    if (d && d.form_data && _r173DocMatches(d)) return d.form_data;
   }
   return _r173Records[fallbackKey] || {};
+}
+
+// Khula hua record mojooda قسم/ورژن ka hi hai?
+function _r173DocMatches(d) {
+  if (!d) return false;
+  if (String(d.type || '') !== String(_r173Type || '')) return false;
+  if (_r173Type === 'tatima_challan') return String(d.subtype || 'aslha') === String(_r173Subtype || 'aslha');
+  if (R173_BLANK_TYPES.includes(_r173Type)) {
+    const dv = (d.subtype === 'cross_version') ? 'cross_version' : 'fir';
+    return dv === _ch173Version;
+  }
+  return true;
+}
+
+/* ═══ CHAABI — AIK HI JAGAH SE ═══
+   Pehle chaabi teen jagah teen tarah banti thi:
+     load   → 'tatima_challan_aslha'        (bina ورژن)
+     render → 'tatima_challan_aslha::fir'   (ورژن ke saath)
+     save   → 'tatima_challan_aslha::fir'
+   Natija: تتمہ چالان محفوظ kar ke app dobara kholne par فارم KHALI khulta
+   tha, aur phir se محفوظ karne par DOOSRI satar ban jati thi.
+   تتمہ ki ورژن ڈیٹا بیس mein rakhi hi nahi ja sakti (wahan `report_subtype`
+   mein ذیلی qism hoti hai), is liye تتمہ ki chaabi mein ورژن nahi aati. */
+function _r173Key(type, subtype, version) {
+  if (type === 'tatima_challan') return 'tatima_challan_' + (subtype || 'aslha');
+  return String(type || 'mukammal') + '::' + (version === 'cross_version' ? 'cross_version' : 'fir');
 }
 let _r173ShowList = false;   // save ke baad چالان ki fehrist
 
@@ -274,12 +307,8 @@ async function _loadR173() {
       saved: (r.form_data && r.form_data.saved_at) || r.updated_at || r.created_at || '',
     }));
     (data||[]).forEach(r => {
-      // Chaabi bilkul waisi jaisi SAVE karte waqt banti hai (warna dohri entries)
-      let key;
-      if (r.report_type === 'tatima_challan') key = 'tatima_challan_' + (r.report_subtype || 'aslha');
-      else if (R173_BLANK_TYPES.includes(r.report_type)) key = r.report_type + '::' + (r.report_subtype || 'fir');
-      else key = r.report_type;
-      _r173Records[key] = r.form_data || {};
+      // Chaabi bilkul waisi jaisi SAVE aur RENDER banate hain — aik hi jagah se
+      _r173Records[_r173Key(r.report_type, r.report_subtype, r.report_subtype)] = r.form_data || {};
     });
     try { localStorage.setItem('dio_r173_'+_r173CaseId, JSON.stringify(_r173Records)); } catch(_) {}
     try { localStorage.setItem('dio_r173docs_'+_r173CaseId, JSON.stringify(_r173Docs)); } catch(_) {}
@@ -288,14 +317,34 @@ async function _loadR173() {
   }
 }
 
+/* قسم / ذیلی قسم badalna = DOOSRA چالان. Purana `_r173DocId` saath le jane
+   se woh satar UPDATE ho kar purana چالان mit jata tha. */
 function _r173Pick(type) {
+  if (String(type) === String(_r173Type)) { _closeAllDD && _closeAllDD(); return; }
   _r173Type = type;
+  _r173SyncDocId();
   _closeAllDD && _closeAllDD();
   _renderR173();
 }
 function _r173PickSub(sub) {
+  if (String(sub) === String(_r173Subtype)) return;
   _r173Subtype = sub;
+  _r173SyncDocId();
   _renderR173();
+}
+
+// Mojooda قسم/ورژن ka محفوظ چالان dhoondo — na mile to nayi (khali) satar
+function _r173SyncDocId() {
+  try {
+    if (_r173DocId) {
+      const cur = _r173Docs.find(x => String(x.id) === String(_r173DocId));
+      if (cur && _r173DocMatches(cur)) return;
+    }
+    const m = _r173Docs.filter(_r173DocMatches);
+    m.sort((a, b) => String(b.saved || '').localeCompare(String(a.saved || '')));
+    _r173DocId = m.length ? m[0].id : null;
+    _r173Head  = m.length ? (m[0].head || '') : '';
+  } catch (_) { _r173DocId = null; }
 }
 
 // ── RENDER ────────────────────────────────────────────────────
@@ -303,10 +352,20 @@ function _r173PickSub(sub) {
 // Har challan type ka apna unwan (512 ka andaz alag hai)
 function _ch173Heading(type, typeName) {
   if (type === 'ch512') return 'فارم رپورٹ چالان زیردفعہ 512 ض ف';
+  // اخراج / عدم پتہ ka unwan «اختتامی بصیغہ …» hai (AKHRAJ.docx ke mutabiq).
+  // Durust unwan file mein mojood to tha magar us (matrook) hissay mein jahan
+  // amal kabhi pohnchta hi nahi tha — kaghaz par sada «فارم رپورٹ اخراج …»
+  // chhapta raha.
+  if (type === 'ikhraj')   return 'فارم رپورٹ اختتامی بصیغہ اخراج زیر دفعہ 173 ض ف';
+  if (type === 'adampata') return 'فارم رپورٹ اختتامی بصیغہ عدم پتہ زیر دفعہ 173 ض ف';
   return 'فارم رپورٹ ' + typeName + ' زیر دفعہ 173 ض ف';
 }
 
 function _renderR173() {
+  // Anjaan qism (purani ڈیٹا بیس ki satar ya ghalat tab) — manzoor-shuda
+  // فارم par le aao. Isi se neeche wala matrook safha nakabil-e-rasai sabit
+  // hota hai aur usay hata dena mehfooz hai.
+  if (!R173_TYPES.some(t => t.id === _r173Type)) _r173Type = 'mukammal';
   // Fehrist ya فارم — yeh halat SIRF user ke amal se badalti hai.
   // (Pehle yeh flag khud saaf ho jata tha, is liye tab dobara render hone par
   //  ghalat safha khul jata tha — yani "fake" report 173.)
@@ -320,8 +379,10 @@ function _renderR173() {
   const isTatima = _r173Type === 'tatima_challan';
   let typeName = (R173_TYPES.find(t => t.id === _r173Type) || {}).name || '';
   if (isTatima) typeName = 'تتمہ چالان مکمل';
-  // Saved record key (tatima uses subtype)
-  let recKey = isTatima ? 'tatima_challan_' + _r173Subtype : _r173Type;
+  // Saved record key — AIK hi jagah se (`_r173Key`). Pehle yahan ورژن ke
+  // BAGHAIR chaabi banti thi aur neeche ورژن ke SAATH — is liye `saved`
+  // (رزلٹ نمبری waghera) aur `bs` (فارم ka jism) do alag records se aate the.
+  const recKey = _r173Key(_r173Type, _r173Subtype, _ch173Version);
   const saved = _r173CurrentData(recKey);
   const v = (k, def) => sanitizeHtml(saved[k] !== undefined ? saved[k] : (def || ''));
   // کالم 7 ki shuruati تحریر: تتمہ mein — agar officer ne khud kuch nahi likha
@@ -378,9 +439,8 @@ function _renderR173() {
   if (R173_BLANK_TYPES.includes(_r173Type)) {
     // ملزمان aur گواہان case record se — dropdown + auto-fill ke liye
     if (!_ch173Accused) _ch173LoadPeople();
-    // FIR aur کراس ورژن ka data alag mehfooz hota hai
-    recKey = recKey + '::' + _ch173Version;
     // ═══ فارم نمبر 25.56(1) — رپورٹ زیر دفعہ 173 ض ف ═══
+    // (FIR aur کراس ورژن ka data alag — yeh farq `_r173Key` mein hai)
     const bs = _r173CurrentData(recKey);
     _r173ForceBlank = false;          // sirf aik bar
     const bv = (k) => _ch173StripSpan(sanitizeHtml(bs[k] !== undefined ? bs[k] : ''));
@@ -457,7 +517,7 @@ function _renderR173() {
           </select>
           <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('undo')" title="واپس (Undo)" style="${_chBtn()}">↶</button>
           <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('redo')" title="دوبارہ (Redo)" style="${_chBtn()}">↷</button>
-          <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveR173()">💾 محفوظ کریں</button>
+          <button id="r173-save-btn" class="btn btn-primary btn-sm dio-modbtn" onclick="_saveR173()">💾 محفوظ کریں</button>
           <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printR173()">🖨️ پرنٹ کریں</button>
         </div>
       </div>
@@ -516,7 +576,7 @@ function _renderR173() {
                     // Upar wali (caseline) jaisa hi format: body phir space phir ت پ
                     return `<tr>
                     <td style="border:1px solid #000;padding:6px;text-align:center;font-weight:bold;">${i+1}</td>
-                    <td class="akh-col2" style="border:1px solid #000;padding:6px;font-weight:600;text-align:justify;text-align-last:right;direction:rtl;position:relative;"><span class="akh-grip no-print" title="لکیر کو کھینچ کر چوڑائی بدلیں"></span>${r[1]}</td>
+                    <td class="akh-col2" style="border:1px solid #000;padding:6px;font-weight:600;text-align:justify;text-align-last:right;direction:rtl;position:relative;"><span class="akh-grip no-print" ondblclick="_ch173AkhrajResetCol()" title="لکیر کو کھینچ کر چوڑائی بدلیں · دو بار کلک = خودکار"></span>${r[1]}</td>
                     <td class="normcell" contenteditable="true" data-k="${r[0]}" style="border:1px solid #000;padding:6px;text-align:center;direction:rtl;unicode-bidi:plaintext;"><span style="unicode-bidi:isolate;direction:rtl;">${esc(jp.suffix)}</span> <span style="unicode-bidi:isolate;direction:ltr;">${esc(jp.body)}</span></td>
                   </tr>`;
                   }
@@ -526,14 +586,14 @@ function _renderR173() {
                   const cellAlign = (isDash || r[0] === 'madai_i') ? 'center' : 'right';
                   return `<tr>
                     <td style="border:1px solid #000;padding:6px;text-align:center;font-weight:bold;">${i+1}</td>
-                    <td class="akh-col2" style="border:1px solid #000;padding:6px;font-weight:600;text-align:justify;text-align-last:right;direction:rtl;position:relative;"><span class="akh-grip no-print" title="لکیر کو کھینچ کر چوڑائی بدلیں"></span>${r[1]}</td>
+                    <td class="akh-col2" style="border:1px solid #000;padding:6px;font-weight:600;text-align:justify;text-align-last:right;direction:rtl;position:relative;"><span class="akh-grip no-print" ondblclick="_ch173AkhrajResetCol()" title="لکیر کو کھینچ کر چوڑائی بدلیں · دو بار کلک = خودکار"></span>${r[1]}</td>
                     <td class="normcell" contenteditable="true" data-k="${r[0]}" style="border:1px solid #000;padding:6px;text-align:${cellAlign};direction:rtl;">${val}</td>
                   </tr>`;
                 }).join('');
               })()}
               <tr class="akh-row8">
                 <td style="border:1px solid #000;padding:6px;text-align:center;vertical-align:top;font-weight:bold;">8</td>
-                <td class="akh-col2" style="border:1px solid #000;padding:6px;font-weight:600;text-align:justify;text-align-last:right;direction:rtl;vertical-align:top;position:relative;"><span class="akh-grip no-print" title="لکیر کو کھینچ کر چوڑائی بدلیں"></span>مختصر حالات مقدمہ معہ جرم</td>
+                <td class="akh-col2" style="border:1px solid #000;padding:6px;font-weight:600;text-align:justify;text-align-last:right;direction:rtl;vertical-align:top;position:relative;"><span class="akh-grip no-print" ondblclick="_ch173AkhrajResetCol()" title="لکیر کو کھینچ کر چوڑائی بدلیں · دو بار کلک = خودکار"></span>مختصر حالات مقدمہ معہ جرم</td>
                 <td class="normcell" style="border:1px solid #000;padding:6px;"><div class="normwrap" contenteditable="true" data-mic="true" data-k="halaat">${_ch173HalaatInit(bs, boiler)}</div><span class="akh-hgrip no-print" title="نیچے کی لکیر کو اوپر نیچے کھینچیں"></span></td>
               </tr>
             </tbody>
@@ -710,184 +770,19 @@ function _renderR173() {
     return;
   }
 
-  try { _ch173FocusMode(false); } catch (_) {}     // chips wapas
-
-  area.innerHTML = `
-  <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
-    <!-- Toolbar -->
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
-      <select id="r173-type-sel" onchange="_r173Pick(this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
-        ${R173_TYPES.map(t => `<option value="${t.id}" ${t.id===_r173Type?'selected':''}>${t.name}</option>`).join('')}
-      </select>
-      ${isTatima ? `
-      <select id="r173-sub-sel" onchange="_r173PickSub(this.value)" style="padding:6px 10px;border:1px solid var(--amber);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
-        ${R173_TATIMA_SUBS.map(s => `<option value="${s.id}" ${s.id===_r173Subtype?'selected':''}>${s.name}</option>`).join('')}
-      </select>` : ''}
-      <div style="margin-right:auto;display:flex;gap:6px;">
-        <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveR173()">💾 محفوظ کریں</button>
-        <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printR173()">🖨️ پرنٹ کریں</button>
-      </div>
-    </div>
-
-    <!-- Form -->
-    <div style="flex:1;overflow-y:auto;padding:16px;background:var(--bg-tertiary);">
-      <div id="r173-doc" style="max-width:210mm;margin:0 auto;padding:16mm;background:#fff;color:#111;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:14px;line-height:1.9;direction:rtl;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;">
-
-        <!-- Header -->
-        <div style="text-align:center;font-size:12px;color:#555;">فارم نمبر 25.56(1)</div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0;">
-          <span style="font-weight:bold;text-decoration:underline;">تھانہ ${esc(o.station||'صدر ملتان')}</span>
-          <span style="font-weight:bold;text-decoration:underline;font-size:17px;">${_origClosing ? `فارم رپورٹ اختتامی بصیغہ ${isIkhraj?'اخراج':'عدم پتہ'} زیر دفعہ 173 ض ف` : `فارم رپورٹ ${typeName} زیر دفعہ 173 ض ف`}</span>
-          <span style="font-weight:bold;text-decoration:underline;">ضلع ${esc(o.district||'ملتان')}</span>
-        </div>
-
-        <!-- Case info -->
-        <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:10px;">
-          <tr>
-            <td style="border:1px solid #999;padding:6px;"><b>مقدمہ نمبر:</b> ${esc(c.fir_number||'')}</td>
-            <td style="border:1px solid #999;padding:6px;"><b>مورخہ:</b> ${esc(c.fir_date||'')}</td>
-            <td style="border:1px solid #999;padding:6px;"><b>جرم:</b> ${esc(c.section_of_law||'')} ${esc(c.offence_type||'')}</td>
-            <td style="border:1px solid #999;padding:6px;"><b>تھانہ:</b> ${esc(o.station||'')}</td>
-          </tr>
-        </table>
-
-        <!-- Main data table (NOT in closing reports — اخراج/عدم پتہ use 3-col table) -->
-        ${!isClosing ? `
-        <table style="width:100%;border-collapse:collapse;font-size:13px;">
-          <tr style="background:#f0f0f0;">
-            <th style="border:1px solid #999;padding:6px;">نام و پتہ مدعی و مستغیث</th>
-            <th style="border:1px solid #999;padding:6px;">ملزمان جو گرفتار نہ ہوئے</th>
-            <th style="border:1px solid #999;padding:6px;">ملزمان زیر حراست</th>
-            <th style="border:1px solid #999;padding:6px;">ملزمان بر ضمانت</th>
-            <th style="border:1px solid #999;padding:6px;">مال قبضہ پولیس</th>
-            <th style="border:1px solid #999;padding:6px;">تفصیل شہادت</th>
-          </tr>
-          <tr>
-            <td contenteditable="true" data-k="madai" style="border:1px solid #999;padding:8px;vertical-align:top;">${v('madai')}</td>
-            <td contenteditable="true" data-k="ghair_giraftar" style="border:1px solid #999;padding:8px;vertical-align:top;">${v('ghair_giraftar')}</td>
-            <td contenteditable="true" data-k="zer_hirasat" style="border:1px solid #999;padding:8px;vertical-align:top;">${v('zer_hirasat')}</td>
-            <td contenteditable="true" data-k="bar_zamanat" style="border:1px solid #999;padding:8px;vertical-align:top;">${v('bar_zamanat')}</td>
-            <td contenteditable="true" data-k="mal_qabza" style="border:1px solid #999;padding:8px;vertical-align:top;">${v('mal_qabza')}</td>
-            <td contenteditable="true" data-k="shahadat" style="border:1px solid #999;padding:8px;vertical-align:top;">${v('shahadat')}</td>
-          </tr>
-        </table>` : ''}
-
-        <!-- مختصر حالات مقدمہ (separate — NOT for closing reports) -->
-        ${!isClosing ? `
-        <div style="margin-top:12px;font-weight:700;">مختصر حالات مقدمہ معہ جرم:</div>
-        <div contenteditable="true" data-mic="true" data-k="halaat" data-ph="یہاں پر مختصر حالات لکھیں" style="border:1px solid #999;padding:10px;min-height:120px;text-align:justify;text-align-last:right;margin-top:4px;${_ch173HalaatInit(saved, boiler)?'':'color:#999;'}" onfocus="if(this.dataset.ph&&!this.innerText.trim()){this.style.color='#000';}" oninput="this.style.color=this.innerText.trim()?'#000':'#999';">${_ch173HalaatInit(saved, boiler)}</div>
-        <style>[data-k="halaat"]:empty:before{content:attr(data-ph);color:#999;}</style>` : ''}
-
-        ${isTatima ? `
-        <!-- Tatima: رزلٹ نمبر + checkboxes -->
-        <div style="margin-top:10px;">رزلٹ نمبر: <span contenteditable="true" data-k="result_no" style="border-bottom:1px solid #999;min-width:120px;display:inline-block;">${v('result_no')}</span></div>
-        <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:13px;">
-          <label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" data-pk="t_form" ${v('t_form')?'checked':''}> فارم ہذا/یک</label>
-          <label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" data-pk="t_result" ${v('t_result')?'checked':''}> اصل رزلٹ نمبری/یک</label>
-          <label style="display:flex;align-items:center;gap:4px;"><input type="checkbox" data-pk="t_fir" ${v('t_fir')?'checked':''}> نقل FIR/یک</label>
-        </div>` : ''}
-
-        ${isClosing ? `
-        <!-- Closing report 3-column 8-row table (اخراج / عدم پتہ) -->
-        <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:12px;">
-          ${(() => {
-            const autoMadai = (c.complainant_name||'') + (c.complainant_address?(' ساکن '+c.complainant_address):'');
-            const autoJurm  = (c.section_of_law||'') + ' ' + (c.offence_type||'');
-            const DASH = '-----------';
-            const rows = [
-              ['madai_i','نام وپتہ مدعی و مستغیث', autoMadai],
-              ['jurm_i','مختصر کیفیت جرم', autoJurm.trim()],
-              ['masruqa_i','تفصیل مال مسروقہ اگر کوئی ہو', DASH],
-              ['namzad_i','تفصیل ملزمان نامزد', DASH],
-              ['giraftar_i','تفصیل ملزمان گرفتار شدہ', DASH],
-              ['raha_i','تفصیل ملزمان رہا شدہ', DASH],
-              ['baramad_i','تفصیل مال برآمدہ مقبوضہ پولیس', DASH]
-            ];
-            return rows.map((r,i)=>{
-              const val = v(r[0], r[2]);
-              const bold = (val && String(val).trim()) ? 'font-weight:bold;' : '';
-              return `<tr>
-                <td style="border:1px solid #000;padding:6px;text-align:center;">${i+1}</td>
-                <td style="border:1px solid #000;padding:6px;font-weight:600;">${r[1]}</td>
-                <td contenteditable="true" data-k="${r[0]}" oninput="this.style.fontWeight=this.innerText.trim()?'bold':'normal';" style="border:1px solid #000;padding:6px;${bold}">${val}</td>
-              </tr>`;
-            }).join('');
-          })()}
-          <tr>
-            <td style="border:1px solid #000;padding:8px;text-align:center;vertical-align:top;width:8%;font-weight:bold;">8</td>
-            <td style="border:1px solid #000;padding:8px;font-weight:bold;text-align:right;vertical-align:top;width:30%;">مختصر حالات مقدمہ</td>
-            <td style="border:1px solid #000;padding:8px;width:62%;">
-              <div contenteditable="true" data-mic="true" data-k="halaat" data-ph="یہاں پر متن FIR، متن کراس ورژن، تفتیشی وجوہات ${isIkhraj?'اخراج':'عدم پتہ'} لکھیں" style="width:100%;box-sizing:border-box;min-height:120px;direction:rtl;text-align:justify;font-size:15px;${v('halaat')?'':'color:#999;'}" oninput="this.style.color=this.innerText.trim()?'#000':'#999';">${v('halaat')}</div>
-            </td>
-          </tr>
-        </table>
-        <style>[data-k="halaat"]:empty:before{content:attr(data-ph);color:#999;}</style>` : ''}
-
-        <!-- تفصیل کاغذات -->
-        ${isClosing ? (() => {
-          const _sho = (typeof getSHOSignLine==='function') ? getSHOSignLine(o.station||'صدر ملتان') : '';
-          // اخراج / عدم پتہ ki apni 10 default fehrist (AKHRAJ.docx se).
-          // Officer ki mehfooz fehrist ho to wohi, warna ye 10.
-          let items6;
-          try {
-            const saved = _ch173PapersList();
-            items6 = (saved && saved.length) ? saved : CH173_IKHRAJ_PAPERS_DEFAULT.slice();
-          } catch (_) { items6 = CH173_IKHRAJ_PAPERS_DEFAULT.slice(); }
-          return `
-        <!-- Header row: top SHO (left) + heading (right), full-width line below -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin:16px 0 4px;">
-          <div class="sho-signature-block-top" style="text-align:right;">
-            <div class="sho-name-line" style="font-weight:${_sho?'bold':'normal'};font-size:14px;">${esc(_sho)}</div>
-          </div>
-          <div style="font-weight:bold;font-size:15px;">تفصیل کاغذات:</div>
-        </div>
-        <hr style="border:none;border-top:1px solid #000;margin:0 0 16px 0;">
-
-        <!-- Items: one straight horizontal line, evenly spaced -->
-        <div style="display:flex;flex-direction:row-reverse;justify-content:space-around;align-items:flex-start;margin:12px 0 40px;">
-          ${items6.map((p,i)=>`
-            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-              <span style="font-size:14px;text-decoration:underline;">${esc(p)}</span>
-              <input type="text" inputmode="numeric" pattern="[0-9]*" class="qita-input" data-k="paper_${i}" value="${v('paper_'+i)}" oninput="_r173Qita(this)"
-                style="width:45px;border:none;border-bottom:1px solid #000;text-align:center;background:transparent;outline:none;font-size:13px;">
-              <span class="qita-label" style="font-size:11px;min-height:14px;">${(() => { const n=parseInt(v('paper_'+i)); return n===1?'قطعہ':(n>1?'قطعات':''); })()}</span>
-            </div>`).join('')}
-        </div>
-
-        <!-- Bottom SHO block (left): signature space → name → date -->
-        <div class="sho-signature-block-bottom" style="text-align:right;margin-top:8px;min-width:220px;display:inline-block;">
-          <div style="border-bottom:1px solid #000;min-height:50px;margin-bottom:6px;"></div>
-          <div class="sho-name-line" style="font-weight:${_sho?'bold':'normal'};font-size:14px;">${esc(_sho)}</div>
-          <div style="font-size:13px;margin-top:6px;">تاریخ: _______________</div>
-        </div>`;
-        })() : `
-        <!-- تفصیل کاغذات (non-closing types) -->
-        <div style="margin-top:14px;font-weight:700;text-align:right;">تفصیل کاغذات:</div>
-        <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:13px;justify-content:center;margin-top:8px;">
-          ${['فارم ہذا','نقل FIR','اصل تحریر','فارم ریمانڈ','نقشہ موقع','اطلاع نامہ مدعی','اصل ضمنی SHO'].map((p,i)=>`
-            <div style="display:inline-flex;flex-direction:column;align-items:center;margin:0 6px;">
-              <span style="text-decoration:underline;">${esc(p)}</span>
-              <input type="text" inputmode="numeric" pattern="[0-9]*" data-k="paper_${i}" value="${v('paper_'+i)}" oninput="_r173Qita(this)"
-                style="width:45px;border:none;border-bottom:1px solid #000;text-align:center;background:transparent;margin-top:4px;font-size:14px;outline:none;">
-              <span class="qita-label" style="font-size:11px;min-height:14px;color:#555;">${(() => { const n=parseInt(v('paper_'+i)); return n===1?'قطعہ':(n>1?'قطعات':''); })()}</span>
-            </div>`).join('')}
-        </div>`}
-
-        <!-- SHO signature — non-closing types only (one line, SHO only) -->
-        ${!isClosing ? `
-        <div style="margin-top:24px;display:flex;justify-content:flex-start;">
-          <div style="border-top:1px solid #333;padding-top:6px;display:flex;flex-direction:row-reverse;gap:8px;align-items:center;font-weight:bold;">
-            ${(() => {
-              const shoName = (typeof getSHOSignLine === 'function') ? getSHOSignLine(o.station||'صدر ملتان') : '';
-              const val = v('sho_name', shoName);
-              return `<span contenteditable="true" data-k="sho_name" oninput="this.style.fontWeight='bold';" style="min-width:120px;">${val}</span>`;
-            })()}
-          </div>
-        </div>` : ''}
-      </div>
-    </div>
-  </div>`;
-  if (typeof applyMicButtons === 'function') setTimeout(() => applyMicButtons(area), 50);
+  /* ═══════════════════════════════════════════════════════════
+     MATROOK (dead) SAFHA — HATA DIYA GAYA
+     Yahan aik purana "sada" فارم tha. Us tak amal KABHI nahi pohnchta tha:
+     oopar `if (R173_BLANK_TYPES.includes(_r173Type)) { … return; }` hai aur
+     `R173_BLANK_TYPES` mein TAMAM SAAT aqsam mojood hain — yani har soorat
+     mein oopar hi se wapsi ho jati thi. Us ke andar `isClosing` bhi pakka
+     `false` tha, is liye us ka اخراج wala jadwal bhi murda tha.
+     (Anjaan qism ab is function ke shuru mein «مکمل» par le aai jati hai.)
+     Us ke saath do aur murda cheezein bhi gayin:
+       • `_r173Qita()` — sirf isi hissay se bulaya jata tha
+       • تتمہ ke teen checkbox (`data-pk`) — kabhi render hi nahi hote the
+     ═══════════════════════════════════════════════════════════ */
+  return;
 }
 
 // ── SAVE ──────────────────────────────────────────────────────
@@ -921,36 +816,33 @@ function _collectR173() {
     } catch(_) {}
     return d;
   }
-  const doc = document.getElementById('r173-doc');
-  if (!doc) return {};
-  const data = {};
-  doc.querySelectorAll('[data-k]').forEach(el => {
-    data[el.dataset.k] = (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') ? el.value : el.innerHTML;
-  });
-  doc.querySelectorAll('[data-pk]').forEach(el => { data[el.dataset.pk] = el.checked; });
-  return data;
+  // `#r173-doc` wala purana safha hata diya gaya (dekhen `_renderR173`) —
+  // ab چالان hamesha `#ch173-doc` par hota hai.
+  return {};
 }
+
+let _r173Saving = false;   // aik waqt mein aik hi save
 
 async function _saveR173() {
   // VIEW-ONLY ENFORCEMENT [4E]: میعاد ختم پر چالان محفوظ/ترمیم بند
   if (window.DIO && DIO.sub && !DIO.sub.guard('چالان محفوظ')) return;
+  // Do dafa dabane par DO satren ban jati thin (dono ko `_r173DocId` khali
+  // milta tha). Ab pehla kaam mukammal hone tak doosra nahi chalta.
+  if (_r173Saving) return;
+  _r173Saving = true;
+  const _saveBtn = document.getElementById('r173-save-btn');
+  if (_saveBtn) { _saveBtn.disabled = true; _saveBtn.textContent = 'محفوظ ہو رہا ہے…'; }
+  try { await _saveR173Inner(); }
+  finally {
+    _r173Saving = false;
+    if (_saveBtn) { _saveBtn.disabled = false; _saveBtn.innerHTML = '💾 محفوظ کریں'; }
+  }
+}
+
+async function _saveR173Inner() {
   const form_data = _collectR173();
-  // محفوظ فائلوں کی فہرست میں درج (نمبر شمار + تاریخ کے ساتھ)
-  try {
-    if (typeof dioRegisterSaved === 'function') {
-      const tName = (R173_TYPES.find(t => t.id === _r173Type) || {}).name || 'رپورٹ 173';
-      const verTxt = R173_BLANK_TYPES.includes(_r173Type)
-        ? (_ch173Version === 'cross_version' ? ' (کراس ورژن)' : ' (FIR)') : '';
-      dioRegisterSaved('report_173', tName + verTxt, {
-        case_id: _r173CaseId, report_type: _r173Type,
-        report_subtype: R173_BLANK_TYPES.includes(_r173Type) ? _ch173Version : (_r173Subtype || null)
-      });
-    }
-  } catch(_) {}
   const isTatima = _r173Type === 'tatima_challan';
-  let recKey = isTatima ? 'tatima_challan_' + _r173Subtype : _r173Type;
-  // Challan types: FIR aur کراس ورژن ka data alag mehfooz
-  if (R173_BLANK_TYPES.includes(_r173Type)) recKey = recKey + '::' + _ch173Version;
+  const recKey = _r173Key(_r173Type, _r173Subtype, _ch173Version);
   _r173Records[recKey] = form_data;
   const rec = { case_id: _r173CaseId, report_type: _r173Type, form_data };
   if (R173_BLANK_TYPES.includes(_r173Type)) rec.report_subtype = _ch173Version;
@@ -965,20 +857,36 @@ async function _saveR173() {
     if (!navigator.onLine) {
       // OFFLINE — mahfooz maqami tor par + qatar mein daal do (data zaya na ho)
       if (!_r173DocId) _r173DocId = 'local-' + Date.now();
+      // Qatar mein DALNA kamyab hua ya nahi — yeh afsar ko sach sach batana
+      // zaroori hai. Pehle nakami chupa kar bhi "sync ہوگا" likh diya jata
+      // tha, halankeh woh چالان kabhi server tak pohnchta hi nahi tha.
+      let queued = false;
       try {
         if (typeof offlineStore !== 'undefined' && offlineStore.enqueue) {
           await offlineStore.enqueue('report_173', String(_r173DocId).startsWith('local-') ? 'insert' : 'update',
             String(_r173DocId).startsWith('local-') ? rec : { id: _r173DocId, ...rec });
+          queued = true;
         }
-      } catch(_) {}
-      showToast('آف لائن محفوظ — انٹرنیٹ آنے پر sync ہوگا', 'info');
+      } catch(_) { queued = false; }
+      showToast(queued
+        ? 'آف لائن محفوظ — انٹرنیٹ آنے پر خود بھیج دیا جائے گا'
+        : 'صرف اس آلے پر محفوظ — قطار نہیں بنی، انٹرنیٹ آنے پر دوبارہ محفوظ کریں',
+        queued ? 'info' : 'warn', queued ? 3000 : 6000);
     } else if (_r173DocId && !String(_r173DocId).startsWith('local-')) {
       // موجودہ چالان میں ترمیم
-      await supabaseClient.from('report_173').update(rec).eq('id', _r173DocId);
+      const { error: upErr } = await supabaseClient.from('report_173').update(rec).eq('id', _r173DocId);
+      if (upErr) throw upErr;
     } else {
       // نیا چالان — الگ ریکارڈ
-      const { data: ins } = await supabaseClient.from('report_173').insert(rec).select('id').single();
-      if (ins && ins.id) _r173DocId = ins.id;
+      // AHEM: supabase-js NAKAMI par exception nahi phenkta — woh
+      // `{ data:null, error }` deta hai. Pehle `error` pakra hi nahi jata tha,
+      // is liye RLS ya server ki nakami par bhi afsar ko «رپورٹ محفوظ ہو گئی»
+      // likh kar dikha diya jata tha aur چالان kahin mojood hi nahi hota tha.
+      const { data: ins, error: insErr } = await supabaseClient
+        .from('report_173').insert(rec).select('id').single();
+      if (insErr) throw insErr;
+      if (!ins || !ins.id) throw new Error('ڈیٹا بیس نے کوئی شناخت واپس نہیں کی');
+      _r173DocId = ins.id;
     }
     // مقامی فہرست تازہ کرو
     try {
@@ -992,6 +900,20 @@ async function _saveR173() {
     } catch(_) {}
     try { localStorage.setItem('dio_r173_'+_r173CaseId, JSON.stringify(_r173Records)); } catch(_) {}
     try { localStorage.setItem('dio_r173docs_'+_r173CaseId, JSON.stringify(_r173Docs)); } catch(_) {}
+    // محفوظ فائلوں کی فہرست میں درج — KAMYABI ke BAAD (pehle yeh likhne se
+    // PEHLE hi darj ho jata tha, is liye nakaam save bhi «محفوظ فائلیں» mein
+    // nazar aata tha). تتمہ ki ذیلی qism bhi sahi darj ho, ورژن nahi.
+    try {
+      if (typeof dioRegisterSaved === 'function') {
+        const tName = (R173_TYPES.find(t => t.id === _r173Type) || {}).name || 'رپورٹ 173';
+        const verTxt = isTatima ? '' : (_ch173Version === 'cross_version' ? ' (کراس ورژن)' : ' (FIR)');
+        dioRegisterSaved('report_173', tName + verTxt, {
+          case_id: _r173CaseId, report_type: _r173Type,
+          report_subtype: isTatima ? (_r173Subtype || null) : _ch173Version,
+          doc_id: _r173DocId || null
+        });
+      }
+    } catch(_) {}
     // Save ke baad چالان ki FEHRIST kholo
     _r173Dirty = false;
     _r173ShowList = true;
@@ -1039,7 +961,14 @@ async function _saveR173() {
     } else {
       showToast('رپورٹ محفوظ ہو گئی', 'success');
     }
-  } catch(e) { showToast('' + e.message, 'error'); }
+  } catch(e) {
+    // Nakami CHUPAI na jaye — afsar ko pata hona chahiye ke چالان mehfooz
+    // NAHI hua (warna woh samajh kar chala jata hai ke kaam ho gaya).
+    _r173Dirty = true;
+    showToast('محفوظ نہیں ہوا — ' + ((e && e.message) || 'نامعلوم خرابی') +
+              ' · دوبارہ کوشش کریں', 'error', 7000);
+    try { if (window.DIO && DIO.errors && DIO.errors.log) DIO.errors.log('report_173.save', e); } catch(_) {}
+  }
 }
 
 // ── PRINT (only the form) ─────────────────────────────────────
@@ -1060,6 +989,7 @@ function _printR173() {
     let _inner = chDoc.innerHTML;
     try {
       // Dikhane wala 'scale' hata do — naap par asar nahi, magar saaf rahe
+      _ch173PrintMeasuring = true;         // naap ke dauran scale na lage
       chDoc.style.transform = 'none';
       chDoc.style.marginBottom = '0';
       chDoc.style.width = (_ch173Paper === 'a4') ? '8.27in' : '8.5in';
@@ -1096,9 +1026,11 @@ function _printR173() {
     } finally {
       // Screen wapas apni halat par
       try {
+        _ch173PrintMeasuring = false;
         chDoc.style.width = _pw; chDoc.style.maxWidth = _pmw;
         chDoc.style.transform = _ptf; chDoc.style.marginBottom = _pmb;
         void chDoc.offsetHeight;
+        try { _ch173FitPaper(); } catch (__) {}  // dikhane wali naap wapas
         _ch173OverflowSettle(4);               // screen ki halat bhi durust
       } catch (__) {}
     }
@@ -1184,15 +1116,10 @@ function _printR173() {
     else { const w = window.open('','_blank'); w.document.write(chHtml); w.document.close(); setTimeout(()=>w.print(),300); }
     return;
   }
-  const doc = document.getElementById('r173-doc');
-  if (!doc) return;
-  const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
-    <style>@page{size:legal;margin:12mm}
-      body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;font-size:14px;line-height:1.9;color:#000;}
-      table{border-collapse:collapse;width:100%;}td,th{border:1px solid #000;padding:6px;}
-    </style></head><body>${doc.innerHTML}</body></html>`;
-  if (typeof dioPrint === 'function') dioPrint(html);
-  else { const w = window.open('','_blank'); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),300); }
+  // `#ch173-doc` na mile to chhapne ko kuch hai hi nahi — afsar ko bata do
+  // (pehle yahan `#r173-doc` wale purane safhe ki chhapai thi jo ab mojood
+  //  nahi; woh khamoshi se kuch na karti thi).
+  try { showToast('پرنٹ کے لیے فارم کھلا نہیں', 'error'); } catch (_) {}
 }
 
 // Open report 173 with a specific type pre-selected (from dropdown)
@@ -1213,19 +1140,14 @@ async function openReport173WithType(type, _fromTab) {
   if (!_fromTab && typeof _dioOpenDocTab === 'function') _dioOpenDocTab('r173:' + (type || 'mukammal'));
   await openReport173(_misalCaseId || (typeof currentCaseId !== 'undefined' ? currentCaseId : null));
   _r173Type = type || 'mukammal';
+  // Is qism ka apna محفوظ چالان (ya nayi khali satar) — kisi doosri qism ki
+  // satar par kaam jari na rahe
+  try { _r173SyncDocId(); } catch (_) {}
   // Fehrist ka nishan saaf — warna فارم ki bajaye fehrist khul jati hai
   _r173ShowList = false;
   _renderR173();
 }
 
-// Update قطعہ/قطعات label based on count
-function _r173Qita(input) {
-  if (!input) return;
-  const label = input.parentElement && input.parentElement.querySelector('.qita-label');
-  if (!label) return;
-  const n = parseInt(input.value);
-  label.textContent = n === 1 ? 'قطعہ' : (n > 1 ? 'قطعات' : '');
-}
 
 // ═══ MS Word jaisi column resize — header ki lakeer pakar kar chaudai badlein ═══
 function _ch173MakeResizable() {
@@ -1248,27 +1170,46 @@ function _ch173MakeResizable() {
     // sirf header mein nahi, NEECHE data waale hissey mein bhi pakri ja sake.
     try { cell.style.overflow = 'visible'; } catch (_) {}
     _colGrips.push(grip);
+    /* ═══ لکیر کھینچ کر چوڑائی — دو خرابیاں تھیں ═══
+       1) NAAP KI IKAI: `_ch173AutoSize` aur `_ch173AutoFitCols` chaurai
+          hamesha **px** mein likhte hain ("36px"), magar yahan
+          `parseFloat("36px")` = 36 ko **فیصد** samajh kar "36.00%" wapas
+          likh diya jata tha — 36px ka khana 36% ka ho jata, poora jadwal
+          bigar jata aur ملزمان ke khaRe naam kuchal jate.
+          Ab naap RENDER ki hui asal chaurai (px) se, aur wapas bhi px.
+       2) SCALE: tang khirki mein safha `scale()` par hota hai, is liye
+          mouse ke px aur layout ke px barabar nahi hote.
+       Saath: kul chaurai barqarar, kam az kam 24px, aur `colsManual` SIRF
+       tab jab lakeer sach much HILI ho (pehle khali click se bhi lag jata). */
     grip.addEventListener('mousedown', (e) => {
       e.preventDefault(); e.stopPropagation();
-      const tW = table.offsetWidth;
+      const tRect = table.getBoundingClientRect();
+      const scale = (tRect.width && table.offsetWidth) ? (tRect.width / table.offsetWidth) : 1;
       const startX = e.clientX;
-      const wA = parseFloat(cols[iA].style.width) || (100/cols.length);
-      const wB = parseFloat(cols[iB].style.width) || (100/cols.length);
+      const pxOf = (i) => {
+        const r = cols[i].getBoundingClientRect();
+        const w = (r && r.width) ? (r.width / (scale || 1)) : 0;
+        return w || (table.offsetWidth / cols.length);
+      };
+      const wA = pxOf(iA), wB = pxOf(iB);
+      const MIN = 24;
+      let moved = false;
       document.body.style.cursor = 'col-resize';
       const onMove = (ev) => {
-        const dx = (startX - ev.clientX) / tW * 100;   // RTL
+        const dx = (startX - ev.clientX) / (scale || 1);   // RTL
+        if (Math.abs(dx) > 1) moved = true;
         let nA = wA + dx, nB = wB - dx;
-        if (nA < 3 || nB < 3) return;
-        cols[iA].style.width = nA.toFixed(2) + '%';
-        cols[iB].style.width = nB.toFixed(2) + '%';
+        if (nA < MIN || nB < MIN) return;
+        cols[iA].style.width = Math.round(nA) + 'px';
+        cols[iB].style.width = Math.round(nB) + 'px';
         if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
       };
       const onUp = () => {
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup', onUp);
         document.body.style.cursor = '';
-        // Officer ne KHUD naap li — ab khud-ba-khud chaurai us par bhaari na pade
-        try { table.dataset.colsManual = '1'; _r173Dirty = true; } catch (_) {}
+        if (moved) { try { table.dataset.colsManual = '1'; _r173Dirty = true; } catch (_) {} }
+        try { table._syncColGripHeights && table._syncColGripHeights(); } catch (_) {}
       };
       document.addEventListener('mousemove', onMove);
       document.addEventListener('mouseup', onUp);
@@ -1403,15 +1344,27 @@ function _ch173MakeResizable() {
   // ── Column grips ki unchai = POORE table ki unchai (header + data) ──
   // Is se har column ki لکیر neeche data waale hissey mein bhi qabil-e-pakar
   // ho jati hai (pehle sirf header ki patli patti pakri ja sakti thi).
+  /* KHARABI THI (asli browser mein naapi gayi): yahan `cell.offsetTop`
+     istemal hota tha. `offsetTop` TABLE se nahi, sab se qareeb wale
+     "positioned" ﺁba (offsetParent) se naapa jata hai — aur `th` khud
+     `position:relative` hai, is liye us ka offsetParent poora safha nikla.
+     Naap: table.offsetHeight = 222 magar th.offsetTop = 254 → 222-254 manfi
+     → `Math.max(0, …)` = **0px**. Yani HAR grip ki unchai sifar thi aur
+     لکیر mouse se PAKRI HI NAHI JA SAKTI THI — jabke toolbar mein likha hai
+     «↔ کالم کی لکیر کو پکڑ کر چوڑائی بدلیں». Ab naap table ke apne dabbe se
+     (rect se rect), is liye scale ka bhi koi asar nahi. */
   function _syncColGripHeights() {
-    let h = 0;
-    try { h = table.offsetHeight || 0; } catch (_) {}
-    if (!h) return;
+    let tr = null;
+    try { tr = table.getBoundingClientRect(); } catch (_) {}
+    if (!tr || !tr.height) return;
+    const sc = (tr.width && table.offsetWidth) ? (tr.width / table.offsetWidth) : 1;
     _colGrips.forEach(g => {
       try {
         const cell = g.parentElement;
-        const top = cell ? cell.offsetTop : 0;      // grip cell ke top se table ke neeche tak
-        g.style.height = Math.max(0, h - top) + 'px';
+        if (!cell) return;
+        const cr = cell.getBoundingClientRect();
+        const top = cr.top - tr.top;
+        g.style.height = Math.round(Math.max(0, tr.height - top) / (sc || 1)) + 'px';
       } catch (_) {}
     });
   }
@@ -1420,7 +1373,21 @@ function _ch173MakeResizable() {
   _syncColGripHeights();
   setTimeout(_syncColGripHeights, 300);
   setTimeout(_syncColGripHeights, 900);
-  try { window.addEventListener('resize', _syncColGripHeights); } catch (_) {}
+  /* Pehle har render par aik NAYA `resize` sunne wala jamta jata tha (har
+     dafa naya closure — browser purane ko pehchan kar hata nahi sakta), aur
+     hataya kabhi nahi jata tha. Ab: poore nizam ka AIK hi sunne wala jo
+     hamesha MOJOODA table par kaam karta hai. */
+  try {
+    if (!window._ch173GripResizeBound) {
+      window._ch173GripResizeBound = true;
+      window.addEventListener('resize', () => {
+        try {
+          const t = document.getElementById('ch173-table');
+          if (t && t._syncColGripHeights) t._syncColGripHeights();
+        } catch (_) {}
+      });
+    }
+  } catch (_) {}
 }
 window._ch173MakeResizable = _ch173MakeResizable;
 
@@ -1527,14 +1494,54 @@ window._ch173Cells = _ch173Cells;
 // ═══ Row 8 ki NEECHE wali lakeer — kheench kar unchai badlo ═══
 // Officer khud tay kare ke مختصر حالات ka khana kitna ooncha ho. Jo naap
 // woh chunta hai woh mehfooz rehti hai (khud-kar naap us par hawi nahi hoti).
-const R173_AKH_H_KEY = 'dio_akhraj_row8_h';
+/* KHAMI THI: yeh AIK hi chaabi thi jo اخراج aur عدم پتہ dono aqsam aur
+   TAMAM muqadmat ke liye mushtarik thi, koi bari hadd nahi thi, aur mouse
+   ka sirf aik CLICK (bina hilaye) bhi isay likh deta tha. Aik dafa lag jane
+   ke baad khud-kar unchai HAMESHA ke liye band — kisi bhi doosre مقدمہ mein
+   مختصر حالات ka khana wahi purani naap le kar aata tha, aur wapsi ka koi
+   raasta nahi tha.
+   Ab: har qism ki apni chaabi, naap ki hadd, aur SIRF sach much kheenchne
+   par mehfooz. Grip par DOUBLE-CLICK se dobara khud-kar. */
+function _r173AkhHKey() { return 'dio_akhraj_row8_h_' + (_r173Type === 'ikhraj' ? 'ikhraj' : 'adampata'); }
+function _r173AkhColKey() { return 'dio_akhraj_col2_' + (_r173Type === 'ikhraj' ? 'ikhraj' : 'adampata'); }
+const R173_AKH_H_MIN = 40;
+const R173_AKH_H_MAX = 11 * 96;
+
+// Sirf maqool فیصد qabool — "120.34%" jaisi naap poora jadwal bigaR deti hai
+function _r173AkhColOk(w) {
+  const v = parseFloat(w);
+  return String(w || '').indexOf('%') > -1 && v >= 8 && v <= 80;
+}
+function _ch173AkhrajResetCol() {
+  try { localStorage.removeItem(_r173AkhColKey()); } catch (_) {}
+  try {
+    const t = document.getElementById('ch173-table');
+    const cs = t ? t.querySelectorAll('colgroup col') : [];
+    if (cs.length >= 3) { cs[1].style.width = ''; cs[2].style.width = ''; }
+  } catch (_) {}
+  try { _ch173AkhrajGrips(); _ch173OverflowSettle(3); } catch (_) {}
+  try { showToast('خانوں کی چوڑائی خودکار', 'info'); } catch (_) {}
+}
+window._ch173AkhrajResetCol = _ch173AkhrajResetCol;
 
 function _ch173AkhrajSavedH() {
   try {
-    const v = parseFloat(localStorage.getItem(R173_AKH_H_KEY) || '');
-    return (v && v > 20) ? v : 0;
+    const v = parseFloat(localStorage.getItem(_r173AkhHKey()) || '');
+    return (v >= R173_AKH_H_MIN && v <= R173_AKH_H_MAX) ? v : 0;
   } catch (_) { return 0; }
 }
+// Khud-kar naap par wapas
+function _ch173AkhrajResetH() {
+  try { localStorage.removeItem(_r173AkhHKey()); } catch (_) {}
+  try {
+    const g = document.querySelector('#ch173-doc .akh-hgrip');
+    const td = g && g.closest('td.normcell');
+    if (td) td.style.height = '';
+  } catch (_) {}
+  try { _ch173AkhrajRowH(); _ch173OverflowSettle(3); } catch (_) {}
+  try { showToast('مختصر حالات کی اونچائی خودکار', 'info'); } catch (_) {}
+}
+window._ch173AkhrajResetH = _ch173AkhrajResetH;
 
 function _ch173AkhrajHGrip() {
   const doc = _ch173Doc();
@@ -1542,6 +1549,8 @@ function _ch173AkhrajHGrip() {
   const grip = doc.querySelector('.akh-hgrip');
   if (!grip || grip.dataset.bound === '1') return;
   grip.dataset.bound = '1';
+  grip.title = 'نیچے کی لکیر کو اوپر نیچے کھینچیں · دو بار کلک = خودکار';
+  grip.addEventListener('dblclick', ev => { ev.preventDefault(); _ch173AkhrajResetH(); });
   grip.addEventListener('mousedown', ev => {
     ev.preventDefault(); ev.stopPropagation();
     const td = grip.closest('td.normcell');
@@ -1549,8 +1558,9 @@ function _ch173AkhrajHGrip() {
     if (!td || !wrap) return;
     const startY = ev.clientY;
     const h0 = td.clientHeight;
-    let wait = false;
+    let wait = false, moved = false;
     const move = e => {
+      if (Math.abs(e.clientY - startY) > 1) moved = true;
       let h = h0 + (e.clientY - startY);
       if (h < 30) h = 30;
       td.style.height = Math.round(h) + 'px';
@@ -1563,7 +1573,13 @@ function _ch173AkhrajHGrip() {
     const up = () => {
       document.removeEventListener('mousemove', move);
       document.removeEventListener('mouseup', up);
-      try { localStorage.setItem(R173_AKH_H_KEY, String(td.clientHeight)); } catch (_) {}
+      // SIRF tab mehfooz jab afsar ne waqai lakeer kheenchi ho
+      if (moved) {
+        const hh = Math.round(td.clientHeight);
+        if (hh >= R173_AKH_H_MIN && hh <= R173_AKH_H_MAX) {
+          try { localStorage.setItem(_r173AkhHKey(), String(hh)); } catch (_) {}
+        }
+      }
       try { _ch173OverflowSettle(4); } catch (_) {}
       try { _ch173AlignSho(); } catch (_) {}
       try { _r173Dirty = true; } catch (_) {}
@@ -1734,19 +1750,25 @@ function _ch173AutoSize() {
   // ═══ AHEM — naap lene se PEHLE tamam pabandiyan hata do ═══
   // Warna naap us tang khane ki aati hai jo pehle se lagi hui hai, aur har
   // dafa chalne par khana aur tang hota chala jata hai — matn kat jata hai.
+  // Afsar ne khud lakeer kheench kar chaurai tay ki ho to usay HARGIZ na
+  // badlo (pehle yeh function har dafa chalte hi us ki mehnat mita deta tha —
+  // font badalte hi ya khirki chhoti karte hi chaurai wapas khud-kar ho jati).
+  // Unchai phir bhi khud-kar rehti hai, warna matn kat sakta hai.
+  const manual = (table.dataset.colsManual === '1');
   const puraniW = cols.map(c => c.style.width);
   const puraniH = row.querySelector('td') ? row.querySelector('td').style.height : '';
-  cols.forEach(c => { c.style.width = ''; });
+  if (!manual) cols.forEach(c => { c.style.width = ''; });
   row.querySelectorAll('td').forEach(c => { c.style.height = '2400px'; });
   void table.offsetWidth;                              // nayi (khuli) naap lagne do
 
+  const _sc = _ch173Scale();                           // scale ka hisaab
   const naapo = (el) => {                              // asal (qudrati) naap
     if (!el) return { w: 0, h: 0 };
     try {
       const rg = document.createRange();
       rg.selectNodeContents(el);
       const r = rg.getBoundingClientRect();
-      return { w: Math.ceil(r.width), h: Math.ceil(r.height) };
+      return { w: Math.ceil(r.width / _sc), h: Math.ceil(r.height / _sc) };
     } catch (_) { return { w: el.scrollWidth || 0, h: el.scrollHeight || 0 }; }
   };
 
@@ -1793,8 +1815,12 @@ function _ch173AutoSize() {
 
   // ── 3) Naap lagao ──
   if (jama > 0 && lambi > 0) {
-    for (let i = 0; i < 6; i++) cols[i].style.width = darkar[i] + 'px';
-    cols[6].style.width = Math.max(col7Kam, kul - jama) + 'px';
+    if (manual) {
+      cols.forEach((c, i) => { c.style.width = puraniW[i] || c.style.width; });
+    } else {
+      for (let i = 0; i < 6; i++) cols[i].style.width = darkar[i] + 'px';
+      cols[6].style.width = Math.max(col7Kam, kul - jama) + 'px';
+    }
     const nayiH = Math.max(140, lambi + 24);           // matn kabhi na kate
     row.querySelectorAll('td').forEach(c => { c.style.height = nayiH + 'px'; });
     window._ch173MinRowH = nayiH;
@@ -1869,9 +1895,15 @@ function _ch173AkhrajGrips() {
   if (cols.length < 3) return;
   // Mehfooz chaurai (agar officer ne khud set ki thi) wapas lagao;
   // warna column 2 apne content (sab se lambe unwaan) ke hisaab se KHUD theek.
+  /* KHAMI THI: chaabi `dio_akhraj_col2` AIK thi — اخراج aur عدم پتہ, har
+     مقدمہ, har aale par wohi. Aur neeche `up()` mouse ke khali CLICK par bhi
+     likh deti thi. Aik dafa likhi jane ke baad neeche wali khud-kar chaurai
+     (jo unwaan ki lambai ke mutabiq hoti hai) DOBARA kabhi nahi chalti thi.
+     Ab: har qism ki apni chaabi, naap ki hadd, sirf sach much kheenchne par
+     mehfooz, aur grip par DOUBLE-CLICK se dobara khud-kar. */
   let saved = null;
-  try { saved = JSON.parse(localStorage.getItem('dio_akhraj_col2') || 'null'); } catch (_) {}
-  if (saved && saved.c2 && saved.c3) {
+  try { saved = JSON.parse(localStorage.getItem(_r173AkhColKey()) || 'null'); } catch (_) {}
+  if (saved && _r173AkhColOk(saved.c2) && _r173AkhColOk(saved.c3)) {
     cols[1].style.width = saved.c2; cols[2].style.width = saved.c3;
   } else {
     // AUTO-FIT chaurai — column 2 SAB SE LAMBI likhayi wali row jitni.
@@ -1922,12 +1954,18 @@ function _ch173AkhrajGrips() {
       e.preventDefault();
       const startX = e.clientX;
       const tW = table.offsetWidth;
-      const c2 = cols[1].getBoundingClientRect().width;
-      const c3 = cols[2].getBoundingClientRect().width;
-      let moveWait = false;
+      // Safha chhoti khirki mein `scale` par hota hai: rect ki naap chhoti
+      // aati hai jabke `offsetWidth` asli. Dono ko aik paimane par lao,
+      // warna lakeer mouse ke saath nahi chalti (chhalang lagati hai).
+      const tRect = table.getBoundingClientRect();
+      const sc = (tRect.width && tW) ? (tRect.width / tW) : 1;
+      const c2 = cols[1].getBoundingClientRect().width / (sc || 1);
+      const c3 = cols[2].getBoundingClientRect().width / (sc || 1);
+      let moveWait = false, moved = false;
       const move = (ev) => {
         // RTL: column 2 ki BAYEN lakeer — dayen kheenchne se col2 barhta hai
-        let d = ev.clientX - startX;
+        let d = (ev.clientX - startX) / (sc || 1);
+        if (Math.abs(d) > 1) moved = true;
         let n2 = c2 - d, n3 = c3 + d;
         if (n2 < 60 || n3 < 80) return;
         cols[1].style.width = (n2 / tW * 100).toFixed(2) + '%';
@@ -1947,10 +1985,12 @@ function _ch173AkhrajGrips() {
       const up = () => {
         document.removeEventListener('mousemove', move);
         document.removeEventListener('mouseup', up);
-        try {
-          localStorage.setItem('dio_akhraj_col2',
-            JSON.stringify({ c2: cols[1].style.width, c3: cols[2].style.width }));
-        } catch (_) {}
+        if (moved) {
+          const c2w = cols[1].style.width, c3w = cols[2].style.width;
+          if (_r173AkhColOk(c2w) && _r173AkhColOk(c3w)) {
+            try { localStorage.setItem(_r173AkhColKey(), JSON.stringify({ c2: c2w, c3: c3w })); } catch (_) {}
+          }
+        }
         // Chhorne par matn poori tarah jam jaye (ooper/neeche theek ho)
         try { _ch173OverflowSettle(4); } catch (_) {}
         try { _ch173AlignSho(); } catch (_) {}
@@ -2448,7 +2488,11 @@ let _ch173Version = 'fir';   // 'fir' ya 'cross_version'
 
 // Version badlo — ملزمان/گواہان aur mehfooz data dono badal jate hain
 function _ch173SetVersion(v) {
-  _ch173Version = (v === 'cross_version') ? 'cross_version' : 'fir';
+  const nv = (v === 'cross_version') ? 'cross_version' : 'fir';
+  if (nv === _ch173Version) return;
+  _ch173Version = nv;
+  // FIR aur کراس ورژن do ALAG چالان hain — purani satar par na likho
+  try { _r173SyncDocId(); } catch (_) { _r173DocId = null; }
   if (typeof _renderR173 === 'function') _renderR173();
 }
 window._ch173SetVersion = _ch173SetVersion;
@@ -3649,6 +3693,25 @@ window._ch173FullPage = _ch173FullPage;
 // AHEM: yahan 'zoom' ke bajaye 'transform:scale' use hota hai. Zoom naap
 // dobara ginta hai (satren badal sakti hain), jabke scale sirf bari tasveer
 // banata hai — naap wahi rehti hai jo kaghaz par hogi.
+// Chapai ki naap ka lamha — is dauran safha KAGHAZ ki asli naap par rehta hai
+let _ch173PrintMeasuring = false;
+
+/* ═══ صفحے کا موجودہ «scale» ═══
+   Tang khirki mein safha chhota kar ke dikhaya jata hai. Aisi soorat mein
+   `getBoundingClientRect()` CHHOTI naap deta hai, jabke `offsetWidth`,
+   `clientWidth` aur kaghaz ke naap (inch × 96) ASLI rehte hain. Dono ko
+   milane se khanon ki chaurai aur qatar ki unchai (tang khirki par) taqreeban
+   20% kam nikalti thi — aur wohi ghalat naap mehfooz bhi ho jati thi. */
+function _ch173Scale() {
+  try {
+    const d = _ch173Doc();
+    if (!d) return 1;
+    const r = d.getBoundingClientRect();
+    const k = (r && r.width && d.offsetWidth) ? (r.width / d.offsetWidth) : 1;
+    return (k > 0.05 && k <= 1.5) ? k : 1;
+  } catch (_) { return 1; }
+}
+
 function _ch173FitPaper() {
   const doc = _ch173Doc();            // hamesha NAZAR AANE wala چالان
   if (!doc) return;
@@ -3696,7 +3759,19 @@ function _ch173FitPaper() {
   const visible = () => Math.max(200,
     Math.min(host.clientWidth || 0, window.innerWidth || 0) || (host.clientWidth || 800));
 
+  /* ═══ چھپائی کی ناپ کے دوران «scale» ہرگز نہیں ═══
+     Safha tang khirki mein chhota kar ke dikhaya jata hai. Yeh sirf DIKHANE
+     ke liye hai, magar naap par POORA asar daalta hai: rect ki naap scale
+     wali aati hai jabke `offsetHeight` aur kaghaz ke naap (13in × 96) asli.
+     `_printR173` chapai se pehle scale hata deta tha — magar usi ke baad
+     chalne wala `_ch173Layout()` yahan aa kar usay DOBARA laga deta tha.
+     Natija (asli browser mein naapa gaya, aik hi چالان):
+         1500px khirki → 4 safha-tor
+          700px khirki → 3 safha-tor
+     Yani chhapa hua چالان is baat par munhasir tha ke khirki kitni chauri
+     hai. Ab chapai ki naap ke dauran scale band. */
   const setK = (k) => {
+    if (_ch173PrintMeasuring) { doc.style.transform = 'none'; return 1; }
     doc.style.transform = (Math.abs(k - 1) < 0.005) ? 'none' : ('scale(' + k.toFixed(4) + ')');
     return k;
   };
@@ -3723,8 +3798,8 @@ function _ch173FitPaper() {
 
   // scale se asli unchai nahi badalti — neeche ki khali jagah barabar karo
   try {
-    const h = doc.offsetHeight;
-    doc.style.marginBottom = Math.round(h * (k - 1)) + 'px';
+    if (_ch173PrintMeasuring) { doc.style.marginBottom = '0'; }
+    else { const h = doc.offsetHeight; doc.style.marginBottom = Math.round(h * (k - 1)) + 'px'; }
   } catch (_) {}
 }
 window._ch173FitPaper = _ch173FitPaper;
@@ -4659,6 +4734,59 @@ window._ch173FillHalaat = _ch173FillHalaat;
 // ═══════════════════════════════════════════════════════════════════
 function _ch173CSS() {
   return `
+      /* ═══════════════════════════════════════════════════════════
+         کاغذ کے عنوانات کا پیمانہ — تین درجے، ایک ہی جگہ
+         Dastavez (چالان، ضمنی، اندرونی ضمنی — sab) inhi naapon se unwan
+         lagate hain. Kaghaz par naap POINT (pt) mein hi honi chahiye,
+         kyunke inch/point chhapai ka asal paimana hai.
+             --doc-h1  20pt  مرکزی عنوان       (فارم کا نام — bold + لکیر)
+             --doc-h2  16pt  ذیلی مرکزی عنوان  (حصے کا عنوان)
+             --doc-h3  14pt  عام عنوان         (تھانہ/ضلع، خانوں کے سر نامے)
+             --doc-h4  12pt  چھوٹی تحریر       (فارم نمبر وغیرہ)
+         Safhe (app) ka apna paimana "theme-pro.css" mein hai — aik hi
+         tanasub par, is liye safha aur kaghaz aik dikhte hain.
+         ═══════════════════════════════════════════════════════════ */
+      #ch173-doc{
+        --doc-h1: 20pt;
+        --doc-h2: 16pt;
+        --doc-h3: 14pt;
+        --doc-h4: 12pt;
+      }
+      #ch173-doc .dio-doc-h1{ font-size:var(--doc-h1); font-weight:bold; text-decoration:underline; line-height:1.9; }
+      #ch173-doc .dio-doc-h2{ font-size:var(--doc-h2); font-weight:bold; line-height:1.85; }
+      #ch173-doc .dio-doc-h3{ font-size:var(--doc-h3); font-weight:bold; line-height:1.8; }
+      #ch173-doc table.ch173-table thead th{ font-size:var(--doc-h3); font-weight:bold; }
+
+      /* ═══════════════════════════════════════════════════════════
+         نقطہ دار / نمبر والی فہرست — نشان متن پر نہ چڑھے
+         MASLA (asli browser mein naapa gaya): app ki bunyadi CSS mein
+         "*{ margin:0; padding:0 }" hai — is se ul/ol ki apni jagah
+         (padding-inline-start) KHATAM ho jati hai. Nishan ki jagah
+         "outside" hoti hai, yani woh khane se BAHAR chhapta hai — RTL
+         mein matn ke DAYEN, seedha matn par. Naap:
+             safhe par : ul ka dayan kinara 875px = matn ka dayan kinara 875px
+                          → nishan ke liye jagah SIFAR
+             chhapai   : wahan reset nahi lagta, is liye 40px jagah
+         Yani safha aur kaghaz alag the, aur safhe par (aur browser ki apni
+         Ctrl+P chhapai mein) nishan matn par charhta tha. Ab dono jagah
+         aik hi qaida — jagah bhi aur tarteeb bhi.
+         ═══════════════════════════════════════════════════════════ */
+      #ch173-doc ul, #ch173-doc ol{
+        padding-inline-start: 1.9em !important;
+        margin: 0.35em 0 !important;
+        list-style-position: outside !important;
+      }
+      #ch173-doc ul{ list-style-type: disc !important; }
+      #ch173-doc ol{ list-style-type: decimal !important; }
+      #ch173-doc li{
+        text-align: start !important;
+        text-align-last: start !important;
+        margin: 0.12em 0 !important;
+        padding: 0 !important;
+        unicode-bidi: plaintext;
+      }
+      #ch173-doc li::marker{ font-size: 0.9em; }
+      #ch173-doc li > br:only-child{ display:none; }
       /* ── چالان = پورا صفحہ ── chips ki patti sirf CHHUPTI hai, hoti wahin
          hai; cursor ooper le jate hi .peek lag kar wapas nazar aa jati hai. */
       /* AHEM: patti matn ke OOPER (absolute) nazar aati hai — neeche wali
@@ -4691,16 +4819,31 @@ function _ch173CSS() {
       /* Unwan: beech wala hissa HAMESHA sacche page-center par (absolute 50%),
          chahe kinaron ka matn kitna bhi lamba ho. FORM No. bhi usi 50% par →
          dono ka center bilkul aik (linked). */
-      #ch173-doc .ch173-title-row{ position:relative; display:flex; align-items:baseline;
-        justify-content:space-between; width:100%; min-height:1.6em; }
-      #ch173-doc .ch173-title-row > span{ white-space:nowrap; }
-      #ch173-doc .tt-right{ text-align:right; font-size:14pt; padding-right:1in; }
-      #ch173-doc .tt-left{ text-align:left; font-size:14pt; }
-      #ch173-doc .tt-mid, #ch173-doc .form-no{
-        position:absolute; left:50%; transform:translateX(-50%); white-space:nowrap;
+      /* ═══ عنوان کی سطر — ٹکراؤ ختم ═══
+         PEHLE: unwan (.tt-mid) aur فارم نمبر (.form-no) DONO
+         "position:absolute; left:50%" par the, aur satar ki unchai sirf
+         1.6em muqarrar thi. 20pt ka unwan us se kahin ooncha hai, is liye
+         woh apni satar se BAHAR nikal kar OOPER wali satar (فارم نمبر) par
+         charh jata tha — aur chaurai mein «تھانہ صدر ملتان» par bhi.
+         Screenshot mein saaf nazar aata tha: "تھانہ صدر ملتا|فارم رپورٹ…".
+         AB: teen khanon wali grid — "1fr auto 1fr". Dono kinare ke khane
+         BILKUL barabar hote hain, is liye beech wala unwan KAGHAZ ke theek
+         darmiyan rehta hai (sarkari فارم ka taqaza), aur satar apne matn ke
+         mutabiq oonchi ho jati hai — koi cheez kisi par nahi charhti.
+         RTL mein pehla khana DAYEN hota hai: تھانہ → unwan → ضلع. */
+      #ch173-doc .ch173-title-row{
+        display:grid; grid-template-columns:1fr auto 1fr;
+        align-items:baseline; column-gap:12px; width:100%;
       }
-      #ch173-doc .tt-mid{ font-weight:bold; text-decoration:underline; font-size:20pt; }
-      #ch173-doc .form-no{ font-style:italic; font-size:12pt; direction:ltr; }
+      #ch173-doc .ch173-title-row > span{ min-width:0; }
+      #ch173-doc .tt-right{ justify-self:start; text-align:right; font-size:var(--doc-h3); padding-right:0.35in; }
+      #ch173-doc .tt-left{ justify-self:end; text-align:left; font-size:var(--doc-h3); padding-left:0.35in; }
+      #ch173-doc .tt-mid{
+        justify-self:center; text-align:center;
+        font-weight:bold; text-decoration:underline; font-size:var(--doc-h1);
+        line-height:1.75; text-underline-offset:0.12em;
+      }
+      #ch173-doc .form-no{ justify-self:center; font-style:italic; font-size:var(--doc-h4); direction:ltr; }
 
       /* مقدمہ نمبر / مورخہ / جرم — unwan ke neeche, table se pehle */
       /* مقدمہ نمبر / مورخہ / جرم — koi dashes nahi, data ke hisab se khud fit */
