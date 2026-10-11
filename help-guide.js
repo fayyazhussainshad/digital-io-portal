@@ -73,7 +73,7 @@ function renderHelpGuide(container) {
 
     <!-- Quick start -->
     <div class="card" style="margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px;">🚀 جلدی شروع کریں</div>
+      <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px;">جلدی شروع کریں</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
         ${[
           ['📁','نیا مقدمہ','cases'],
@@ -105,7 +105,7 @@ function renderHelpGuide(container) {
     <!-- Reassurance footer -->
     <div class="card" style="margin-top:16px;background:var(--bg-secondary);text-align:center;">
       <div style="font-size:13px;line-height:2;color:var(--text-secondary);">
-        💙 یاد رکھیں: آپ کا کام خودکار محفوظ ہوتا ہے، اور غلطی سے حذف شدہ چیزیں بحال ہو سکتی ہیں۔
+        یاد رکھیں: آپ کا کام خودکار محفوظ ہوتا ہے، اور غلطی سے حذف شدہ چیزیں بحال ہو سکتی ہیں۔
         اطمینان سے کام کریں۔ مزید مدد کے لیے اپنے سسٹم ایڈمن سے رابطہ کریں۔
       </div>
     </div>

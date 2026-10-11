@@ -1329,23 +1329,38 @@ window.addEventListener('unhandledrejection', function(e){
   <div class="main-area">
     <!-- TOP BAR -->
     <div class="topbar">
-      <!-- واپس — صفحے کا حصہ (تیرتا ہوا نہیں)، بائیں سرے پر -->
-      <button id="dio-back-btn" class="topnav-btn" onclick="window.dioGoBack&&dioGoBack()" title="واپس" aria-label="واپس"
-        style="display:none;order:99;margin-left:0;margin-right:auto;flex-shrink:0;
-               font-size:18px;font-weight:900;padding:6px 12px;direction:ltr;">←</button>
       <div class="topbar-left" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
-        <!-- ☰ مینو — RTL سائیڈبار drawer (تمام نیویگیشن سائیڈبار میں) -->
+        <!-- مینو — RTL سائیڈبار drawer -->
         <button class="topnav-btn" onclick="window.toggleSidebar&&toggleSidebar()" title="مینو" aria-label="مینو" style="padding:7px 10px;flex-shrink:0;">
           <svg class="tn-svg" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
         </button>
+        <!-- واپس — HAMESHA yahin: menu ke saath, DAAIN (shuru waali) taraf.
+             Urdu RTL mein "wapas" ka rukh DAAIN hota hai, is liye teer bhi
+             daain ko hai aur sath "واپس" ka lafz bhi likha hai. Pehle ye
+             baain kone mein tha jabke dastavez/misal ke apne button alag
+             jagah thay — ab har safhe par aik hi jagah, aik hi shakl. -->
+        <button id="dio-back-btn" class="topnav-btn dio-backbtn" onclick="window.dioGoBack&&dioGoBack()"
+          title="واپس" aria-label="واپس" style="display:none;">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6l6 6-6 6"/><path d="M20 12H4"/></svg>
+          <span>واپس</span>
+        </button>
         <!-- درمیانی عنوان -->
-        <div style="flex:1;text-align:center;font-size:18px;font-weight:800;color:var(--accent);font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-          <span style="direction:ltr;">Digital IO</span> — تفتیشی افسر کا چھوٹو
+        <!-- AHEM: `#topbar-title` yahan LAZMI hai. app-core.js har safhe par
+             is me safhe ka naam likhta hai, aur `setupRealtimeSync` bhi isi
+             ke matn se faisla karta hai ke mocaddmat/yaad-dihaniyan ka safha
+             khula hai ya nahi. Pehle ise hata diya gaya tha — natija: afsar
+             ko pata hi nahi chalta tha ke wo kis safhe par hai, aur live
+             refresh bhi band ho gaya tha. -->
+        <div class="dio-tb-brand">
+          <span class="dio-tb-name" dir="ltr">DIGITAL IO</span>
+          <span class="dio-tb-sub" id="topbar-title">ڈیش بورڈ</span>
         </div>
       </div>
       <div class="topbar-right">
-        <button class="topbar-btn" id="theme-picker-btn" onclick="openThemePicker()" title="تھیم" style="font-size:16px;">🎨</button>
-        <div class="topbar-status" style="display:flex;align-items:center;gap:4px;"><span class="status-dot" id="status-dot"></span><span id="status-text" style="font-size:11px;">Online</span></div>
+        <button class="topbar-btn dio-tb-icon" id="theme-picker-btn" onclick="openThemePicker()" title="تھیم" aria-label="تھیم">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="9.5" r="1.1"/><circle cx="14.5" cy="9" r="1.1"/><circle cx="16" cy="14" r="1.1"/><path d="M12 21a3 3 0 0 0 3-3 2 2 0 0 1 2-2h1"/></svg>
+        </button>
+        <div class="topbar-status dio-tb-status"><span class="status-dot" id="status-dot"></span><span id="status-text">آن لائن</span></div>
       </div>
     </div>
 

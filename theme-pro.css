@@ -326,3 +326,283 @@ small.dio-prio-sub {
    harf (ج، ح، ی) adad se na takrayen */
 b.dio-stat-num { margin-bottom: 2px; }
 .dio-stat-lbl  { padding-bottom: 2px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   3. MUSHTARIK AJZA — poore app par wohi sanjeeda shakl
+   (Topbar, sidebar, safhe ke unwan, table, button, input, pill, modal)
+
+   AHEM — DASTAVEZ SE DOOR RAHO: zimni/challan/saza/naqsha ke khane
+   apni px-naap par chalte hain aur chhapai unhi se banti hai. Is liye
+   har qaide me unhein saaf alag rakha gaya hai.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── 3.1 TOPBAR ────────────────────────────────────────────── */
+.topbar {
+  background: var(--dio-surface) !important;
+  border-bottom: 1px solid var(--dio-line) !important;
+  box-shadow: none !important;
+}
+.dio-tb-brand {
+  /* Topbar sirf 48px ooncha hai — do satren Nastaliq ke saath nahi samati
+     theen (zer-unwan dab kar na-qabil-e-parh ho jata tha). Ab AIK satar. */
+  flex: 1; display: flex; align-items: baseline; justify-content: center;
+  gap: 9px; min-width: 0; overflow: hidden; white-space: nowrap;
+}
+.dio-tb-name {
+  font-size: 15px; font-weight: 800; letter-spacing: .18em;
+  color: var(--dio-brand); white-space: nowrap;
+}
+.dio-tb-sub {
+  font-size: 12.5px; color: var(--dio-ink-3); white-space: nowrap;
+  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  padding-inline-start: 9px; border-inline-start: 1px solid var(--dio-line);
+}
+/* Tang sakreen par sirf naam — zer-unwan login safhe par pehle se hai */
+/* Chhoti sakreen par afsar ke liye ZAROORI cheez safhe ka naam hai,
+   wordmark nahi — is liye tang jagah par `DIGITAL IO` chhup jata hai
+   aur safhe ka naam (#topbar-title) barqarar rehta hai. */
+@media (max-width: 760px) {
+  .dio-tb-name { display: none; }
+  .dio-tb-sub  {
+    font-size: 14px; font-weight: 800; color: var(--dio-ink);
+    padding-inline-start: 0; border-inline-start: 0;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+}
+
+.topbar-btn, .topnav-btn {
+  background: transparent !important; border: 0 !important;
+  color: var(--dio-ink-2) !important; border-radius: 9px !important;
+  min-width: 38px; min-height: 38px;
+}
+.topbar-btn:hover, .topnav-btn:hover { background: var(--dio-canvas) !important; }
+.dio-tb-icon svg, .topnav-btn .tn-svg {
+  width: 19px; height: 19px; fill: none; stroke: currentColor;
+  stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+}
+/* Halat — bhaRkeeli pill nahi, khamosh nuqta */
+.dio-tb-status {
+  display: flex; align-items: center; gap: 6px;
+  background: transparent !important; border: 0 !important;
+  padding: 0 6px !important; box-shadow: none !important;
+}
+.dio-tb-status #status-text {
+  font-size: 11px !important; color: var(--dio-ink-3) !important;
+  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+}
+.dio-tb-status .status-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+/* ── 3.2 SAFHE KA UNWAN ────────────────────────────────────── */
+.page-header {
+  border-bottom: 1px solid var(--dio-line);
+  padding-bottom: 12px; margin-bottom: 16px;
+}
+.page-title {
+  color: var(--dio-ink) !important; font-weight: 800 !important;
+  letter-spacing: 0;
+}
+.page-subtitle { color: var(--dio-ink-3) !important; }
+
+/* ── 3.3 CARD / SURFACE ────────────────────────────────────── */
+.card, .dio-card, .stat-card, .settings-card, .info-card {
+  background: var(--dio-surface) !important;
+  border: 1px solid var(--dio-line) !important;
+  border-radius: var(--dio-r) !important;
+  box-shadow: var(--dio-shadow) !important;
+}
+
+/* ── 3.4 TABLE ─────────────────────────────────────────────── */
+.data-table {
+  background: var(--dio-surface); border-radius: var(--dio-r);
+  border: 1px solid var(--dio-line); overflow: hidden;
+  border-collapse: separate; border-spacing: 0;
+}
+.data-table thead th {
+  background: var(--dio-canvas) !important;
+  color: var(--dio-ink-2) !important;
+  border-bottom: 1px solid var(--dio-line) !important;
+  font-weight: 800 !important; padding: 11px 10px !important;
+}
+.data-table tbody td {
+  border-bottom: 1px solid var(--dio-line) !important;
+  color: var(--dio-ink) !important; padding: 10px !important;
+}
+.data-table tbody tr:last-child td { border-bottom: 0 !important; }
+.data-table tbody tr:hover td { background: var(--dio-canvas) !important; }
+/* Adad/FIR number — LTR me, taake "205 / 2025" toot kar na bikhre */
+.data-table td [dir="ltr"], .data-table td .ltr { unicode-bidi: isolate; }
+
+/* ── 3.5 BUTTON ────────────────────────────────────────────── */
+.btn {
+  border-radius: 9px !important; font-weight: 700 !important;
+  box-shadow: none !important; border: 1px solid var(--dio-line) !important;
+  background: var(--dio-surface) !important; color: var(--dio-ink) !important;
+}
+.btn:hover { background: var(--dio-canvas) !important; }
+.btn-primary {
+  background: var(--dio-brand) !important; border-color: var(--dio-brand) !important;
+  color: #fff !important;
+}
+.btn-primary:hover { background: var(--dio-brand-2) !important; }
+.btn-secondary {
+  background: var(--dio-canvas) !important; color: var(--dio-ink-2) !important;
+  border-color: var(--dio-line) !important;
+}
+.btn-danger { background: var(--dio-alert) !important; border-color: var(--dio-alert) !important; color: #fff !important; }
+/* Qatar ke amal wale chhote button — hum-wazan, aik jaisa */
+.data-table .btn-sm, .data-table .cab, .data-table .zab {
+  background: var(--dio-canvas) !important;
+  border: 1px solid var(--dio-line) !important;
+  color: var(--dio-ink-2) !important; border-radius: 8px !important;
+  box-shadow: none !important;
+}
+.data-table .btn-sm:hover { background: var(--dio-surface) !important; border-color: var(--dio-brand) !important; }
+
+/* ── 3.6 INPUT / SELECT (dastavez ke khane NAHI) ───────────── */
+.page-content input:not([type="checkbox"]):not([type="radio"]),
+.page-content select,
+.page-content textarea {
+  background: var(--dio-surface) !important;
+  border: 1px solid var(--dio-line) !important;
+  border-radius: 9px !important; color: var(--dio-ink) !important;
+}
+#ch173-doc input, #ch173-doc select, #ch173-doc textarea,
+#saza-doc input, #dk-doc input, #dio-naqsha-doc input { background: revert !important; border: revert !important; }
+.page-content input:focus, .page-content select:focus, .page-content textarea:focus {
+  border-color: var(--dio-brand) !important;
+  box-shadow: 0 0 0 3px rgba(11,61,100,.10) !important; outline: none !important;
+}
+
+/* ── 3.7 HAALAT KE PILL ────────────────────────────────────── */
+.status-badge, .status-pill, .pill {
+  border-radius: 999px !important; font-weight: 700 !important;
+  border: 1px solid currentColor !important; background: transparent !important;
+  padding: 3px 10px !important; box-shadow: none !important;
+}
+
+/* ── 3.8 MODAL ─────────────────────────────────────────────── */
+.modal-box, #modal-box, .modal-card {
+  background: var(--dio-surface) !important;
+  border: 1px solid var(--dio-line) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 16px 48px rgba(15,27,42,.20) !important;
+}
+.modal-header, #modal-header {
+  border-bottom: 1px solid var(--dio-line) !important;
+  background: transparent !important; color: var(--dio-ink) !important;
+}
+
+/* ── 3.9 SIDEBAR ───────────────────────────────────────────── */
+.sidebar {
+  background: var(--dio-surface) !important;
+  border-inline-start: 1px solid var(--dio-line) !important;
+}
+.sidebar .nav-item {
+  border-radius: 9px !important; color: var(--dio-ink-2) !important;
+  font-weight: 700 !important;
+}
+.sidebar .nav-item:hover { background: var(--dio-canvas) !important; }
+.sidebar .nav-item.active {
+  background: var(--dio-brand) !important; color: #fff !important;
+}
+
+/* ── 3.10 Mike ka tairta button ─────────────────────────────
+   YAHAN KUCH NAHI. Pehle is jagah `#dio-mic-fab`, `.dio-mic-fab`
+   aur `#mic-fab` ke qaide thay — magar system mein aisa koi element
+   hai hi nahi. Asal button ki id `#global-mic-btn` hai (global-mic.js),
+   aur uski jagah (angoothe ki patti se ooper rehna bhi) ab usi file
+   mein tay hoti hai. Yahan dobara likhne se do jagah se larai hoti. */
+
+/* ── 3.11 CARD ka unwan ────────────────────────────────────────
+   MASLA: asal styles.css me
+       .card-title { font-size:10px; color:var(--text-faint);
+                     letter-spacing:2px; text-transform:uppercase; }
+   ye angrezi ke chhote label ke liye banaya gaya tha. Urdu par is ka
+   asar bura hai — 10px par Nastaleeq parhi nahi jati, `letter-spacing`
+   Urdu ke jurey huay huroof ko toRta hai, aur `uppercase` ne angrezi
+   ko "OFFICER INFORMATION CONTACT ADMIN TO UPDATE" bana diya tha.
+   Yahan ise sada, parha jane wala unwan bana diya gaya hai.
+   Dastavez (#ch173-doc, #saza-doc, #dk-doc, #dio-naqsha-doc) is se
+   mutasir nahi — wahan `.card-title` istemal hi nahi hota. */
+.card-title, .section-title {
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: var(--dio-ink) !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  line-height: 1.9 !important;
+}
+.card-title > span, .section-title > span {
+  text-transform: none !important; letter-spacing: 0 !important;
+}
+
+/* ── 3.12 "واپس" — har safhe par AIK hi jagah, AIK hi shakl ────
+   MASLA jo theek kiya gaya: topbar ka teer baain kone mein tha,
+   jabke dastavez (doc-viewer) aur misal ke apne button alag jagah
+   aur alag shakl ke thay. Afsar ko har safhe par dhoondna paRta tha.
+
+   Faisla: Urdu RTL software hai — "wapas" ka rukh DAAIN hai. Is liye
+   button menu (☰) ke saath DAAIN sirey par, teer DAAIN ko, aur sath
+   lafz "واپس" bhi — sirf nishan par bharosa nahi kiya gaya. */
+.dio-backbtn {
+  display: inline-flex !important;
+  align-items: center; gap: 6px;
+  flex-shrink: 0;
+  padding: 6px 12px 6px 10px !important;
+  border-radius: 9px !important;
+  border: 1px solid var(--dio-line) !important;
+  background: var(--dio-surface) !important;
+  color: var(--dio-ink-2) !important;
+  font-family: inherit; font-size: 13px; font-weight: 700;
+  line-height: 1.9; cursor: pointer;
+  white-space: nowrap;
+}
+.dio-backbtn:hover { background: var(--dio-canvas) !important; color: var(--dio-brand) !important; }
+.dio-backbtn svg {
+  width: 17px; height: 17px; flex: none;
+  fill: none; stroke: currentColor; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+/* `display:none` (JS se) hamesha jeetay — warna ye button dashboard par
+   bhi nazar aane lagta. Is liye inline style ko upar rakha gaya hai. */
+#dio-back-btn[style*="display:none"], #dio-back-btn[style*="display: none"] {
+  display: none !important;
+}
+/* Lafz "واپس" ko jitna mumkin ho rakha jaye — afsar ke liye lafz
+   nishan se zyada wazeh hai. Sirf bohat tang sakreen (360px se kam)
+   par sirf teer rehta hai. */
+@media (max-width: 360px) { .dio-backbtn span { display: none; } }
+
+/* ── 3.13 "+ نیا اندراج" — har safhe par DAAIN taraf ───────────
+   MASLA: `.dio-add-btn` ka koi qaida tha hi nahi. Har safha apni
+   marzi se jagah deta tha — mocaddmat mein baain (`margin-left:auto`),
+   mulzimaan mein daain (`order:-1`), adalat/yaad-dihani mein baain.
+   Afsar ka haath har safhe par nayi jagah dhoondta tha.
+
+   Ab: har safhe par safhe ke unwan se PEHLE, yani DAAIN sirey par. */
+.page-header {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  direction: rtl;
+  justify-content: flex-start !important;
+  margin-bottom: 14px;
+}
+.dio-add-btn {
+  order: -1 !important;
+  margin-inline-start: 0 !important;
+  margin-inline-end: 0 !important;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+/* index.html `.page-title` aur `.page-subtitle` dono ko chhupa deta hai
+   (topbar safhe ka naam dikhata hai, is liye unwan dobara na aaye).
+   Magar ZAILI unwan mein asal maloomat hoti hai — "12 مقدمات",
+   "آنے والی · گزری ہوئی · کیلنڈر" — wo kahin aur nahi dikhti.
+   Is liye unwan chhupa rehta hai, zaili unwan wapas nazar aata hai. */
+.page-header .page-subtitle {
+  display: block !important;
+  font-size: 12.5px; color: var(--dio-ink-3); line-height: 1.9;
+}

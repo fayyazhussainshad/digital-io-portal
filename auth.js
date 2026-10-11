@@ -188,7 +188,7 @@ async function _dioOfflineRestore() {
     if (!officer) { try { await _dioPurgeOnSuspend(); } catch (_) {} return false; }
     if (!_dioIsOwner(officer) && (_dioIsSuspended(officer) || _dioNotApproved(officer))) {
       try { await _dioPurgeOnSuspend(); } catch (_) {}
-      try { showToast('🚫 آپ کا اکاؤنٹ معطل ہے۔ ایڈمن سے رابطہ کریں۔', 'error', 7000); } catch (_) {}
+      try { showToast('آپ کا اکاؤنٹ معطل ہے۔ ایڈمن سے رابطہ کریں۔', 'error', 7000); } catch (_) {}
       return false;
     }
     currentUser = { id: uid, email: email || '' };
@@ -215,7 +215,7 @@ window._dioHasOfflineSession = _dioHasOfflineSession;
 async function doLogin() {
   const email = document.getElementById('login-email')?.value.trim();
   const pass  = document.getElementById('login-password')?.value;
-  if (!email||!pass) { showToast('⚠️ ای میل اور پاسورڈ ضروری ہے','error'); return; }
+  if (!email||!pass) { showToast('ای میل اور پاسورڈ ضروری ہے','error'); return; }
 
   // ── OFFLINE: پاسورڈ Supabase سے تصدیق نہیں ہو سکتا۔ PIN/بایومیٹرک آفلائن چلتے ہیں ──
   if (!navigator.onLine) {
@@ -223,11 +223,11 @@ async function doLogin() {
     const hasPin = !!localStorage.getItem('dio_pin');
     const hasBio = !!(localStorage.getItem('dio_biometric_cred') && localStorage.getItem('dio_biometric_email'));
     if (hasOffline && (hasPin || hasBio)) {
-      showToast('📴 آپ آفلائن ہیں — ' + (hasPin ? 'PIN' : 'بایومیٹرک') + ' سے لاگ اِن کریں', 'warn', 6000);
+      showToast('آپ آفلائن ہیں — ' + (hasPin ? 'PIN' : 'بایومیٹرک') + ' سے لاگ اِن کریں', 'warn', 6000);
       if (hasPin) { const b = document.querySelectorAll('.login-method')[1]; if (b) setLoginMethod('pin', b); }
       else { const b = document.querySelectorAll('.login-method')[2]; if (b) setLoginMethod('biometric', b); }
     } else {
-      showToast('📴 آفلائن لاگ اِن کے لیے پہلے انٹرنیٹ کے ساتھ ایک بار لاگ اِن کر کے (ترتیبات میں) PIN یا بایومیٹرک سیٹ کریں', 'warn', 7000);
+      showToast('آفلائن لاگ اِن کے لیے پہلے انٹرنیٹ کے ساتھ ایک بار لاگ اِن کر کے (ترتیبات میں) PIN یا بایومیٹرک سیٹ کریں', 'warn', 7000);
     }
     return;
   }
@@ -243,7 +243,7 @@ async function doLogin() {
   const lockData = JSON.parse(localStorage.getItem('dio_login_lock')||'{}');
   if (lockData.until && Date.now() < lockData.until) {
     const mins = Math.ceil((lockData.until - Date.now())/60000);
-    showToast(`🔒 بہت زیادہ غلط کوششیں — ${mins} منٹ بعد دوبارہ کوشش کریں`, 'error', 5000);
+    showToast(`بہت زیادہ غلط کوششیں — ${mins} منٹ بعد دوبارہ کوشش کریں`, 'error', 5000);
     return;
   }
 
@@ -267,7 +267,7 @@ async function doLogin() {
       await supabaseClient.auth.signOut();
       currentUser = null; currentOfficer = null;
       setLoginLoading(false);
-      showToast('⏳ آپ کا اکاؤنٹ ابھی منظوری کے انتظار میں ہے۔ ایڈمن سے رابطہ کریں۔', 'warn', 6000);
+      showToast('آپ کا اکاؤنٹ ابھی منظوری کے انتظار میں ہے۔ ایڈمن سے رابطہ کریں۔', 'warn', 6000);
       return;
     }
     // ── MO'ATTALI KA GATE ─────────────────────────────────────
@@ -281,7 +281,7 @@ async function doLogin() {
       try { await _dioPurgeOnSuspend(); } catch (_) {}
       currentUser = null; currentOfficer = null;
       setLoginLoading(false);
-      showToast('🚫 آپ کا اکاؤنٹ معطل ہے۔ ایڈمن سے رابطہ کریں۔', 'error', 7000);
+      showToast('آپ کا اکاؤنٹ معطل ہے۔ ایڈمن سے رابطہ کریں۔', 'error', 7000);
       return;
     }
 
@@ -295,10 +295,10 @@ async function doLogin() {
       lock.until = Date.now() + 5*60*1000; // lock for 5 minutes
       lock.count = 0;
       localStorage.setItem('dio_login_lock', JSON.stringify(lock));
-      showToast('🔒 5 غلط کوششیں — اکاؤنٹ 5 منٹ کے لیے بند', 'error', 5000);
+      showToast('5 غلط کوششیں — اکاؤنٹ 5 منٹ کے لیے بند', 'error', 5000);
     } else {
       localStorage.setItem('dio_login_lock', JSON.stringify(lock));
-      showToast(`❌ ${e.message} (${5-lock.count} کوششیں باقی)`, 'error');
+      showToast(`${e.message} (${5-lock.count} کوششیں باقی)`, 'error');
     }
     setLoginLoading(false);
   }
@@ -560,7 +560,7 @@ async function doLogout() {
   const login = document.getElementById('login-screen');
   if (app) app.style.display='none';
   if (login) { login.style.display='flex'; login.style.opacity='1'; }
-  showToast('✅ لاگ آؤٹ ہو گئے','info');
+  showToast('لاگ آؤٹ ہو گئے','info');
 }
 
 
@@ -606,7 +606,7 @@ async function _verifyPin() {
 
   // PIN bilkul set hi nahi hua
   if (!savedPin) {
-    showToast('⚠️ پہلے پاسورڈ سے لاگ ان کر کے PIN سیٹ کریں (ترتیبات میں)', 'warn', 5000);
+    showToast('پہلے پاسورڈ سے لاگ ان کر کے PIN سیٹ کریں (ترتیبات میں)', 'warn', 5000);
     _pinValue = ''; _renderPinDots();
     setLoginMethod('password', document.querySelectorAll('.login-method')[0]);
     return;
@@ -619,7 +619,7 @@ async function _verifyPin() {
     if (_pinOk) { try { localStorage.setItem('dio_pin', await _dioHashPin(_pinValue)); } catch (_) {} }
   }
   if (!_pinOk) {
-    showToast('❌ غلط PIN', 'error');
+    showToast('غلط PIN', 'error');
     _pinValue = ''; _renderPinDots();
     return;
   }
@@ -633,11 +633,11 @@ async function _verifyPin() {
     const off = await _dioOfflineRestore();
     setLoginLoading(false);
     if (off) {
-      showToast('📴 آفلائن موڈ — انٹرنیٹ آنے پر کام خودبخود sync ہو جائے گا', 'info', 4000);
+      showToast('آفلائن موڈ — انٹرنیٹ آنے پر کام خودبخود sync ہو جائے گا', 'info', 4000);
       loginSuccess();
       return;
     }
-    showToast('⚠️ آفلائن لاگ اِن دستیاب نہیں — پہلے ایک بار انٹرنیٹ کے ساتھ لاگ اِن کریں', 'warn', 6000);
+    showToast('آفلائن لاگ اِن دستیاب نہیں — پہلے ایک بار انٹرنیٹ کے ساتھ لاگ اِن کریں', 'warn', 6000);
     return;
   }
 
@@ -647,7 +647,7 @@ async function _verifyPin() {
 
   // Token khatam ho gaya ya mojood nahi → aik dafa password se login
   setLoginLoading(false);
-  showToast('⚠️ سیشن ختم ہو گیا — ایک بار پاسورڈ سے لاگ ان کریں', 'warn', 5000);
+  showToast('سیشن ختم ہو گیا — ایک بار پاسورڈ سے لاگ ان کریں', 'warn', 5000);
   if (savedEmail) { const el = document.getElementById('login-email'); if (el) el.value = savedEmail; }
   setLoginMethod('password', document.querySelectorAll('.login-method')[0]);
 }
@@ -731,25 +731,25 @@ async function _savePin() {
   const pass = document.getElementById('setup-pin-pass')?.value;
 
   if (!pin || pin.length !== 6 || !/^\d{6}$/.test(pin)) {
-    showToast('⚠️ PIN 6 ہندسوں کا ہونا چاہیے', 'error'); return;
+    showToast('PIN 6 ہندسوں کا ہونا چاہیے', 'error'); return;
   }
   if (pin !== pin2) {
-    showToast('⚠️ دونوں PIN مختلف ہیں', 'error'); return;
+    showToast('دونوں PIN مختلف ہیں', 'error'); return;
   }
   if (!pass) {
-    showToast('⚠️ موجودہ پاسورڈ درکار ہے', 'error'); return;
+    showToast('موجودہ پاسورڈ درکار ہے', 'error'); return;
   }
 
   const email = currentOfficer?.email || currentUser?.email;
   if (!email) {
-    showToast('❌ ای میل نہیں ملی', 'error'); return;
+    showToast('ای میل نہیں ملی', 'error'); return;
   }
 
   // Pehle password tasdeeq karo — warna galat password mehfooz ho kar
   // PIN login hamesha nakaam karta rahega
   try {
     const { error: vErr } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
-    if (vErr) { showToast('❌ موجودہ پاسورڈ غلط ہے', 'error'); return; }
+    if (vErr) { showToast('موجودہ پاسورڈ غلط ہے', 'error'); return; }
   } catch(_) {}
 
   try {
@@ -759,9 +759,9 @@ async function _savePin() {
     await _dioSaveAuthToken('dio_pin_rt');
     try { localStorage.removeItem('dio_pin_token'); } catch(_) {}
     closeModal();
-    showToast('✅ PIN سیٹ ہو گیا — اب لاگ ان اسکرین پر PIN استعمال کریں', 'success', 5000);
+    showToast('PIN سیٹ ہو گیا — اب لاگ ان اسکرین پر PIN استعمال کریں', 'success', 5000);
   } catch(e) {
-    showToast('❌ ' + e.message, 'error');
+    showToast('' + e.message, 'error');
   }
 }
 
@@ -770,7 +770,7 @@ async function _savePin() {
 async function doBiometric() {
   const ring = document.getElementById('bio-ring');
   if (!window.PublicKeyCredential) {
-    showToast('⚠️ یہ ڈیوائس بایومیٹرک سپورٹ نہیں کرتی', 'warn');
+    showToast('یہ ڈیوائس بایومیٹرک سپورٹ نہیں کرتی', 'warn');
     return;
   }
 
@@ -806,10 +806,10 @@ async function doBiometric() {
     if (!navigator.onLine) {
       const off = await _dioOfflineRestore();
       if (off) {
-        showToast('📴 آفلائن موڈ — بایومیٹرک کامیاب، انٹرنیٹ آنے پر sync', 'info', 4000);
+        showToast('آفلائن موڈ — بایومیٹرک کامیاب، انٹرنیٹ آنے پر sync', 'info', 4000);
         loginSuccess();
       } else {
-        showToast('⚠️ آفلائن لاگ اِن دستیاب نہیں — پہلے ایک بار انٹرنیٹ کے ساتھ لاگ اِن کریں', 'warn', 6000);
+        showToast('آفلائن لاگ اِن دستیاب نہیں — پہلے ایک بار انٹرنیٹ کے ساتھ لاگ اِن کریں', 'warn', 6000);
       }
       return;
     }
@@ -820,11 +820,11 @@ async function doBiometric() {
       document.getElementById('login-password').value = atob(savedPass);
       await doLogin();
     } else {
-      showToast('✅ بایومیٹرک کامیاب — ای میل/پاسورڈ سے لاگ ان کریں', 'success');
+      showToast('بایومیٹرک کامیاب — ای میل/پاسورڈ سے لاگ ان کریں', 'success');
       document.getElementById('login-email').value = savedEmail;
     }
   } catch(e) {
-    showToast('❌ بایومیٹرک ناکام — دوبارہ کوشش کریں', 'error');
+    showToast('بایومیٹرک ناکام — دوبارہ کوشش کریں', 'error');
   } finally {
     if (ring) ring.classList.remove('scanning');
   }
@@ -834,7 +834,7 @@ async function doBiometric() {
 
 async function enableBiometric() {
   if (!window.PublicKeyCredential) {
-    showToast('⚠️ یہ ڈیوائس بایومیٹرک سپورٹ نہیں کرتی', 'warn');
+    showToast('یہ ڈیوائس بایومیٹرک سپورٹ نہیں کرتی', 'warn');
     return;
   }
   try {
@@ -863,9 +863,9 @@ async function enableBiometric() {
 
     localStorage.setItem('dio_biometric_cred', _bufToB64(cred.rawId));
     localStorage.setItem('dio_biometric_email', currentUser?.email || '');
-    showToast('✅ بایومیٹرک فعال ہو گیا — اب فنگرپرنٹ سے لاگ ان کریں', 'success');
+    showToast('بایومیٹرک فعال ہو گیا — اب فنگرپرنٹ سے لاگ ان کریں', 'success');
   } catch(e) {
-    showToast('❌ بایومیٹرک فعال نہیں ہوا: ' + (e.message||''), 'error');
+    showToast('بایومیٹرک فعال نہیں ہوا: ' + (e.message||''), 'error');
   }
 }
 
@@ -885,10 +885,10 @@ async function verifyOTP() { showToast('OTP کی تصدیق جلد آ رہی ہ�
 
 async function resetPassword() {
   const email = document.getElementById('forgot-email')?.value.trim();
-  if (!email) { showToast('⚠️ ای میل ضروری ہے','error'); return; }
+  if (!email) { showToast('ای میل ضروری ہے','error'); return; }
   const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
-  if (error) { showToast('❌ '+error.message,'error'); return; }
-  showToast('✅ پاسورڈ ری سیٹ ای میل بھیج دی','success');
+  if (error) { showToast(''+error.message,'error'); return; }
+  showToast('پاسورڈ ری سیٹ ای میل بھیج دی','success');
   hideForgotModal();
 }
 
@@ -913,9 +913,9 @@ async function submitRegistration() {
   const district=document.getElementById('reg-district')?.value.trim();
   const desig = document.getElementById('reg-designation')?.value.trim();
   const cnic = document.getElementById('reg-cnic')?.value.trim();
-  if(!name||!email||!pass){showToast('⚠️ تمام ضروری خانے بھریں','error');return;}
-  if(pass.length<8){showToast('⚠️ پاسورڈ کم از کم 8 حروف کا ہو','error');return;}
-  if(cnic && !/^\d{5}-\d{7}-\d$/.test(cnic)){showToast('⚠️ شناختی کارڈ نمبر کا فارمیٹ درست نہیں (00000-0000000-0)','error');return;}
+  if(!name||!email||!pass){showToast('تمام ضروری خانے بھریں','error');return;}
+  if(pass.length<8){showToast('پاسورڈ کم از کم 8 حروف کا ہو','error');return;}
+  if(cnic && !/^\d{5}-\d{7}-\d$/.test(cnic)){showToast('شناختی کارڈ نمبر کا فارمیٹ درست نہیں (00000-0000000-0)','error');return;}
   try {
     const{data,error}=await supabaseClient.auth.signUp({email,password:pass,options:{data:{full_name:name}}});
     if(error)throw error;
@@ -937,9 +937,9 @@ async function submitRegistration() {
       }
       if(insErr)throw insErr;
     }
-    showToast('✅ رجسٹریشن ہو گئی! ایڈمن کی منظوری کا انتظار کریں','success',6000);
+    showToast('رجسٹریشن ہو گئی! ایڈمن کی منظوری کا انتظار کریں','success',6000);
     hideRegister();
-  } catch(e){showToast('❌ '+e.message,'error',6000);}
+  } catch(e){showToast(''+e.message,'error',6000);}
 }
 
 
@@ -963,10 +963,10 @@ function _authChangePasswordModal() {
 
 async function _doChangePassword() {
   const np = document.getElementById('cp-new')?.value;
-  if(!np||np.length<8){showToast('⚠️ کم از کم 8 حروف','error');return;}
+  if(!np||np.length<8){showToast('کم از کم 8 حروف','error');return;}
   const{error}=await supabaseClient.auth.updateUser({password:np});
-  if(error){showToast('❌ '+error.message,'error');return;}
-  closeModal(); showToast('✅ پاسورڈ تبدیل ہو گیا','success');
+  if(error){showToast(''+error.message,'error');return;}
+  closeModal(); showToast('پاسورڈ تبدیل ہو گیا','success');
 }
 
 // ── SESSION TIMER ─────────────────────────────────────────────
@@ -1054,7 +1054,7 @@ function _showPinScreen(mode) {
     if (isSet) {
       localStorage.setItem('digital_io_pin_hash', await _dioHashPin(pin));   // PBKDF2 ہیش
       ov.remove();
-      showToast('✅ PIN مقرر ہو گیا', 'success');
+      showToast('PIN مقرر ہو گیا', 'success');
       resetSessionTimer();   // لاک ٹائمر فوراً فعال
     } else {
       const stored = localStorage.getItem('digital_io_pin_hash');
@@ -1069,7 +1069,7 @@ function _showPinScreen(mode) {
         resetSessionTimer();
       } else {
         _pinFailedAttempts++;
-        if (_pinFailedAttempts >= 5) { ov.remove(); showToast('🚫 5 غلط کوششیں — لاگ آؤٹ','error'); doLogout(); return; }
+        if (_pinFailedAttempts >= 5) { ov.remove(); showToast('5 غلط کوششیں — لاگ آؤٹ','error'); doLogout(); return; }
         msg.textContent = `غلط PIN (${5-_pinFailedAttempts} کوششیں باقی)`;
         input.value = '';
       }
@@ -1106,7 +1106,7 @@ window.dioLockPinSettings = function() {
       `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;line-height:1.9;">${has ? 'PIN پہلے سے مقرر ہے۔ آپ نیا PIN مقرر کر سکتے ہیں یا لاک ہٹا سکتے ہیں۔' : 'ابھی کوئی لاک PIN مقرر نہیں۔ بے عملی یا پس منظر میں جانے پر خودکار لاک کے لیے PIN مقرر کریں۔'}</div>`,
       `<div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;">
         <button class="btn btn-secondary" onclick="closeModal()">بند</button>
-        ${has ? `<button class="btn btn-danger" onclick="localStorage.removeItem('digital_io_pin_hash');resetSessionTimer();closeModal();showToast('🔓 ایپ لاک ہٹا دیا گیا','info')">لاک ہٹائیں</button>` : ''}
+        ${has ? `<button class="btn btn-danger" onclick="localStorage.removeItem('digital_io_pin_hash');resetSessionTimer();closeModal();showToast('ایپ لاک ہٹا دیا گیا','info')">لاک ہٹائیں</button>` : ''}
         <button class="btn btn-primary" onclick="closeModal();_showPinScreen('set')">${has ? 'نیا PIN' : 'PIN مقرر کریں'}</button>
       </div>`);
   } catch (_) {}

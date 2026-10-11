@@ -156,7 +156,7 @@ async function _loadZimni() {
     if (!window._zimniDbWarned) {
       window._zimniDbWarned = true;
       try {
-        showToast('⚠️ ڈیٹابیس میں zimni_reports کے کالم درست نہیں — ضمنیاں فی الحال اسی کمپیوٹر پر محفوظ ہو رہی ہیں', 'warn', 9000);
+        showToast('ڈیٹابیس میں zimni_reports کے کالم درست نہیں — ضمنیاں فی الحال اسی کمپیوٹر پر محفوظ ہو رہی ہیں', 'warn', 9000);
       } catch (_) {}
     }
     _zimniList = local;
@@ -298,8 +298,8 @@ async function _copyZimni(id) {
     .replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
   try {
     await navigator.clipboard.writeText(txt);
-    showToast('📋 نقل ہو گئی', 'success');
-  } catch (_) { showToast('❌ نقل نہ ہو سکی', 'error'); }
+    showToast('نقل ہو گئی', 'success');
+  } catch (_) { showToast('نقل نہ ہو سکی', 'error'); }
 }
 window._copyZimni = _copyZimni;
 
@@ -318,7 +318,7 @@ async function _moveZimni(id) {
   const inp = prompt('نیا ضمنی نمبر درج کریں:', String(z.serial_no || ''));
   if (inp === null) return;
   const n = parseInt(String(inp).replace(/[^\d]/g, ''), 10);
-  if (!n || n < 1) { showToast('⚠️ درست نمبر درج کریں', 'warn'); return; }
+  if (!n || n < 1) { showToast('درست نمبر درج کریں', 'warn'); return; }
   try {
     if (navigator.onLine && !String(z.id).startsWith('local-')) {
       const { error } = await supabaseClient.from('zimni_reports')
@@ -327,8 +327,8 @@ async function _moveZimni(id) {
     }
     z.serial_no = n;
     try { localStorage.setItem('dio_zimni_' + _zimniCaseId, JSON.stringify(_zimniList)); } catch (_) {}
-    showToast('✅ ضمنی نمبر ' + n + ' ہو گیا', 'success');
-  } catch (e) { showToast('❌ ' + (e.message || e), 'error'); }
+    showToast('ضمنی نمبر ' + n + ' ہو گیا', 'success');
+  } catch (e) { showToast('' + (e.message || e), 'error'); }
   _renderZimniList();
 }
 window._moveZimni = _moveZimni;
@@ -1441,7 +1441,7 @@ function _zimniEnsureAndrooni() {
     try {
       if (!window._zaMissingWarned) {
         window._zaMissingWarned = true;
-        showToast('⚠️ اندرونی ضمنی کا ماڈیول (zimni-androoni.js) لوڈ نہیں ہوا', 'warn', 6000);
+        showToast('اندرونی ضمنی کا ماڈیول (zimni-androoni.js) لوڈ نہیں ہوا', 'warn', 6000);
       }
     } catch (_) {}
     return;
@@ -2385,7 +2385,7 @@ async function _saveZimni(silent, keepOpen) {
           String(id).startsWith('local-') ? rec : Object.assign({ id }, rec));
       }
     } catch (_) {}
-    if (!silent) showToast('📴 آف لائن محفوظ — انٹرنیٹ آنے پر sync ہوگا', 'info');
+    if (!silent) showToast('آف لائن محفوظ — انٹرنیٹ آنے پر sync ہوگا', 'info');
     try { _zimniStampUpdated(savedAt); } catch (_) {}
     if (!keepOpen && !silent) setTimeout(() => { try { _renderZimniList(); } catch (_) {} }, 200);
     return true;
@@ -2417,8 +2417,8 @@ async function _saveZimni(silent, keepOpen) {
     } catch (_) { ok = false; }
 
     if (!silent) {
-      if (ok) showToast('✅ ضمنی نمبر ' + serialNo + ' محفوظ ہو گئی', 'success');
-      else showToast('⚠️ ضمنی نمبر ' + serialNo + ' مقامی طور پر محفوظ ہے، مگر ڈیٹابیس میں تصدیق نہ ہو سکی', 'warn', 7000);
+      if (ok) showToast('ضمنی نمبر ' + serialNo + ' محفوظ ہو گئی', 'success');
+      else showToast('ضمنی نمبر ' + serialNo + ' مقامی طور پر محفوظ ہے، مگر ڈیٹابیس میں تصدیق نہ ہو سکی', 'warn', 7000);
     }
 
     // فہرست تازہ کرو۔ AHEM: 'keepOpen' ہو تو ضمنی کھلی ہی رہے —
@@ -2443,7 +2443,7 @@ async function _saveZimni(silent, keepOpen) {
     } catch (_) {}
     if (!msg) { try { msg = JSON.stringify(e); } catch (_) { msg = String(e); } }
     try { console.error('[zimni save]', e); } catch (_) {}
-    showToast('❌ محفوظ نہ ہو سکی: ' + msg + ' (مقامی نقل محفوظ ہے)', 'error', 8000);
+    showToast('محفوظ نہ ہو سکی: ' + msg + ' (مقامی نقل محفوظ ہے)', 'error', 8000);
     return false;
   }
 }
@@ -2456,8 +2456,8 @@ async function _deleteZimni(id, skipConfirm) {
     _zimniList = _zimniList.filter(z => z.id !== id);
     try { localStorage.setItem('dio_zimni_' + _zimniCaseId, JSON.stringify(_zimniList)); } catch(_) {}
     _renderZimniList();
-    showToast('🗑️ حذف ہو گئی', 'info');
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+    showToast('حذف ہو گئی', 'info');
+  } catch(e) { showToast('' + e.message, 'error'); }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -3026,7 +3026,7 @@ function _zimniById(id) { return (_zimniList || []).find(z => String(z.id) === S
 // 🖨️ Aik ضمنی print
 function _printZimniById(id) {
   const z = _zimniById(id);
-  if (!z) { if (typeof showToast === 'function') showToast('⚠️ ضمنی نہیں ملی', 'error'); return; }
+  if (!z) { if (typeof showToast === 'function') showToast('ضمنی نہیں ملی', 'error'); return; }
   const html = _zimniDocHTML(z);
   if (typeof dioPrint === 'function') dioPrint(html);
   else { const w = window.open('', '_blank'); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 300); }
@@ -3035,7 +3035,7 @@ function _printZimniById(id) {
 // 🖨️ Tamam ضمنیاں aik saath
 function _printAllZimni() {
   if (!_zimniList || !_zimniList.length) {
-    if (typeof showToast === 'function') showToast('⚠️ کوئی ضمنی موجود نہیں', 'info'); return;
+    if (typeof showToast === 'function') showToast('کوئی ضمنی موجود نہیں', 'info'); return;
   }
   const body = _zimniList.map((z, i) => {
     const c = z.content || {};
@@ -3050,7 +3050,7 @@ function _printAllZimni() {
 // 📄 PDF — print window se "Save as PDF"
 function _pdfZimni(id) {
   if (typeof showToast === 'function')
-    showToast('📄 پرنٹ ونڈو میں "Save as PDF" منتخب کریں', 'info', 4000);
+    showToast('پرنٹ ونڈو میں "Save as PDF" منتخب کریں', 'info', 4000);
   _printZimniById(id);
 }
 
@@ -3069,7 +3069,7 @@ async function _emailZimni(id) {
     window.location.href = 'mailto:?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(text);
   } catch (_) {
     try { await navigator.clipboard.writeText(subj + '\n\n' + text);
-      if (typeof showToast === 'function') showToast('📋 نقل ہو گیا', 'success'); } catch (__) {}
+      if (typeof showToast === 'function') showToast('نقل ہو گیا', 'success'); } catch (__) {}
   }
 }
 
@@ -3285,7 +3285,7 @@ async function _loadZimniA() {
     if (!window._zaDbWarned) {
       window._zaDbWarned = true;
       try {
-        showToast('⚠️ ڈیٹابیس میں zimni_androoni_reports کے کالم درست نہیں — فی الحال اسی کمپیوٹر پر محفوظ ہو رہی ہیں', 'warn', 9000);
+        showToast('ڈیٹابیس میں zimni_androoni_reports کے کالم درست نہیں — فی الحال اسی کمپیوٹر پر محفوظ ہو رہی ہیں', 'warn', 9000);
       } catch (_) {}
     }
     _zaList = local;
@@ -3407,8 +3407,8 @@ async function _copyZimniA(id) {
     .replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
   try {
     await navigator.clipboard.writeText(txt);
-    showToast('📋 نقل ہو گئی', 'success');
-  } catch (_) { showToast('❌ نقل نہ ہو سکی', 'error'); }
+    showToast('نقل ہو گئی', 'success');
+  } catch (_) { showToast('نقل نہ ہو سکی', 'error'); }
 }
 window._copyZimniA = _copyZimniA;
 
@@ -3802,7 +3802,7 @@ async function _zaWitnessPickerOpen(ev) {
   };
   box.querySelector('#zfa-wit-ok').onclick = () => {
     const sels = [...box.querySelectorAll('input[name="zfa-wit-pick"]:checked')];
-    if (!sels.length) { if (typeof showToast === 'function') showToast('⚠️ پہلے گواہان منتخب کریں', 'warn'); return; }
+    if (!sels.length) { if (typeof showToast === 'function') showToast('پہلے گواہان منتخب کریں', 'warn'); return; }
     box.remove();
     // Chune hue TAMAM gawahan ke byanat aik-aik kar ke add karo (161 CrPC)
     sels.forEach(s => { const w = list[parseInt(s.value, 10)]; if (w) _zaInsertWitnessStatement(w); });
@@ -4291,7 +4291,7 @@ async function _saveZimniA(silent, keepOpen) {
           String(id).startsWith('local-') ? rec : Object.assign({ id }, rec));
       }
     } catch (_) {}
-    if (!silent) showToast('📴 آف لائن محفوظ — انٹرنیٹ آنے پر sync ہوگا', 'info');
+    if (!silent) showToast('آف لائن محفوظ — انٹرنیٹ آنے پر sync ہوگا', 'info');
     try { _zaStampUpdated(savedAt); } catch (_) {}
     if (!keepOpen && !silent) setTimeout(() => { try { _renderZimniAList(); } catch (_) {} }, 200);
     return true;
@@ -4319,8 +4319,8 @@ async function _saveZimniA(silent, keepOpen) {
     } catch (_) { ok = false; }
 
     if (!silent) {
-      if (ok) showToast('✅ اندرونی ضمنی نمبر ' + serialNo + ' محفوظ ہو گئی', 'success');
-      else showToast('⚠️ اندرونی ضمنی نمبر ' + serialNo + ' مقامی طور پر محفوظ ہے، مگر ڈیٹابیس میں تصدیق نہ ہو سکی', 'warn', 7000);
+      if (ok) showToast('اندرونی ضمنی نمبر ' + serialNo + ' محفوظ ہو گئی', 'success');
+      else showToast('اندرونی ضمنی نمبر ' + serialNo + ' مقامی طور پر محفوظ ہے، مگر ڈیٹابیس میں تصدیق نہ ہو سکی', 'warn', 7000);
     }
 
     try {
@@ -4341,7 +4341,7 @@ async function _saveZimniA(silent, keepOpen) {
     } catch (_) {}
     if (!msg) { try { msg = JSON.stringify(e); } catch (_) { msg = String(e); } }
     try { console.error('[zimni androoni save]', e); } catch (_) {}
-    showToast('❌ محفوظ نہ ہو سکی: ' + msg + ' (مقامی نقل محفوظ ہے)', 'error', 8000);
+    showToast('محفوظ نہ ہو سکی: ' + msg + ' (مقامی نقل محفوظ ہے)', 'error', 8000);
     return false;
   }
 }
@@ -4354,8 +4354,8 @@ async function _deleteZimniA(id, skipConfirm) {
     _zaList = _zaList.filter(z => z.id !== id);
     try { localStorage.setItem('dio_za_' + _zaCaseId, JSON.stringify(_zaList)); } catch (_) {}
     _renderZimniAList();
-    showToast('🗑️ حذف ہو گئی', 'info');
-  } catch (e) { showToast('❌ ' + e.message, 'error'); }
+    showToast('حذف ہو گئی', 'info');
+  } catch (e) { showToast('' + e.message, 'error'); }
 }
 window._deleteZimniA = _deleteZimniA;
 
@@ -4518,7 +4518,7 @@ function _zaById(id) { return (_zaList || []).find(z => String(z.id) === String(
 
 function _printZimniAById(id) {
   const z = _zaById(id);
-  if (!z) { if (typeof showToast === 'function') showToast('⚠️ اندرونی ضمنی نہیں ملی', 'error'); return; }
+  if (!z) { if (typeof showToast === 'function') showToast('اندرونی ضمنی نہیں ملی', 'error'); return; }
   const html = _zaDocHTML(z);
   if (typeof dioPrint === 'function') dioPrint(html);
   else { const w = window.open('', '_blank'); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 300); }
@@ -4526,7 +4526,7 @@ function _printZimniAById(id) {
 
 function _printAllZimniA() {
   if (!_zaList || !_zaList.length) {
-    if (typeof showToast === 'function') showToast('⚠️ کوئی اندرونی ضمنی موجود نہیں', 'info'); return;
+    if (typeof showToast === 'function') showToast('کوئی اندرونی ضمنی موجود نہیں', 'info'); return;
   }
   const body = _zaList.map((z, i) => {
     const c = z.content || {};
@@ -4540,7 +4540,7 @@ function _printAllZimniA() {
 
 function _pdfZimniA(id) {
   if (typeof showToast === 'function')
-    showToast('📄 پرنٹ ونڈو میں "Save as PDF" منتخب کریں', 'info', 4000);
+    showToast('پرنٹ ونڈو میں "Save as PDF" منتخب کریں', 'info', 4000);
   _printZimniAById(id);
 }
 
@@ -4558,7 +4558,7 @@ async function _emailZimniA(id) {
     window.location.href = 'mailto:?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(text);
   } catch (_) {
     try { await navigator.clipboard.writeText(subj + '\n\n' + text);
-      if (typeof showToast === 'function') showToast('📋 نقل ہو گیا', 'success'); } catch (__) {}
+      if (typeof showToast === 'function') showToast('نقل ہو گیا', 'success'); } catch (__) {}
   }
 }
 

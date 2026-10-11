@@ -49,7 +49,7 @@ function _stRender() {
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
     <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg-secondary);">
       <div style="font-weight:700;font-size:16px;">ہمراہی ملازمان</div>
-      <button class="btn btn-primary btn-sm dio-add-btn" style="order:-1;margin-left:auto;" onclick="_stForm(null)">➕ ملازم شامل کریں</button>
+      <button class="btn btn-primary btn-sm dio-add-btn" onclick="_stForm(null)">ملازم شامل کریں</button>
     </div>
     <div style="flex:1;overflow-y:auto;padding:14px;">
       ${_stList.length ? _stList.map(_stCard).join('') : `
@@ -73,8 +73,8 @@ function _stCard(s) {
     <span style="color:var(--text-muted);font-size:13px;" dir="ltr">${b(s.mobile)}</span>
     <span style="color:var(--text-muted);font-size:12px;" dir="ltr">${esc(s.cnic||'')}</span>
     <span style="margin-right:auto;display:flex;gap:4px;">
-      <button class="btn btn-secondary btn-sm" onclick="_stForm('${s.id}')">✏️</button>
-      <button class="btn btn-danger btn-sm" onclick="_stDelete('${s.id}','${(s.name||'').replace(/'/g,'')}')">🗑️</button>
+      <button title="ترمیم" aria-label="ترمیم" class="btn btn-secondary btn-sm" onclick="_stForm('${s.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>
+      <button title="حذف" aria-label="حذف" class="btn btn-danger btn-sm" onclick="_stDelete('${s.id}','${(s.name||'').replace(/'/g,'')}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
     </span>
   </div>`;
 }
@@ -82,7 +82,7 @@ function _stCard(s) {
 function _stForm(id) {
   const s = id ? (_stList.find(x => x.id === id) || {}) : {};
   const inp = 'width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:14px;';
-  openModal(id ? '✏️ ملازم میں ترمیم' : '➕ ملازم شامل کریں', `
+  openModal(id ? 'ملازم میں ترمیم' : 'ملازم شامل کریں', `
     <div style="direction:rtl;display:flex;flex-direction:column;gap:10px;font-family:'Jameel Noori Nastaleeq',serif;">
       <div><label style="font-size:13px;">نام</label>
         <input id="st-name" type="text" value="${esc(s.name||'')}" placeholder="ملازم کا نام" style="${inp}direction:rtl;"></div>
@@ -100,7 +100,7 @@ function _stForm(id) {
     </div>
   `, `
     <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-    <button class="btn btn-primary" onclick="_stSave('${id||''}')">💾 محفوظ کریں</button>
+    <button class="btn btn-primary" onclick="_stSave('${id||''}')">محفوظ کریں</button>
   `);
 }
 window._stForm = _stForm;
@@ -115,7 +115,7 @@ async function _stSave(id) {
     mobile: g('st-mobile'),
     cnic: g('st-cnic'),
   };
-  if (!rec.name) { showToast('⚠️ نام ضروری ہے','error'); return; }
+  if (!rec.name) { showToast('نام ضروری ہے','error'); return; }
   try {
     const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
     if (oid) rec.officer_id = oid;
@@ -136,9 +136,9 @@ async function _stSave(id) {
     closeModal();
     await _stLoad();
     _stRender();
-    showToast('✅ ملازم محفوظ ہو گیا', 'success');
+    showToast('ملازم محفوظ ہو گیا', 'success');
   } catch(e) {
-    showToast('❌ محفوظ نہیں ہوا: ' + (e.message||'') + ' — SQL ٹیبل چیک کریں', 'error', 6000);
+    showToast('محفوظ نہیں ہوا: ' + (e.message||'') + ' — SQL ٹیبل چیک کریں', 'error', 6000);
   }
 }
 window._stSave = _stSave;
@@ -158,6 +158,6 @@ async function _stDoDelete(id) {
     _stList = _stList.filter(x => x.id !== id);
     try { localStorage.setItem('dio_staff_'+_stCaseId, JSON.stringify(_stList)); } catch(_) {}
     _stRender();
-    showToast('🗑️ ملازم حذف ہو گیا', 'info');
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+    showToast('ملازم حذف ہو گیا', 'info');
+  } catch(e) { showToast('' + e.message, 'error'); }
 }

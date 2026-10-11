@@ -114,7 +114,7 @@ function _renderWitnessesArea() {
     <div style="border-bottom:2px solid ${color};margin-bottom:12px;padding-bottom:6px;">
       <div style="position:relative;min-height:34px;display:flex;align-items:center;justify-content:center;">
         <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:${color};text-align:center;">${heading}</div>
-        <button class="btn btn-primary btn-sm" style="position:absolute;right:0;top:50%;transform:translateY(-50%);" onclick="_openWitnessForm(null,'${_witnessViewType}')">➕ گواہ</button>
+        <button class="btn btn-primary btn-sm" style="position:absolute;right:0;top:50%;transform:translateY(-50%);" onclick="_openWitnessForm(null,'${_witnessViewType}')">گواہ</button>
       </div>
     </div>
     <div style="width:100%;overflow-x:auto;">${_renderWitnessList(list, _witnessViewType)}</div>
@@ -141,8 +141,8 @@ async function _saveAutoWitnesses(auto) {
     }
     await _loadWitnesses();
     _renderWitnessesArea();
-    showToast(added ? `✅ ${added} فریقین گواہان میں شامل ہو گئے` : 'یہ پہلے ہی شامل ہیں', 'success');
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+    showToast(added ? `${added} فریقین گواہان میں شامل ہو گئے` : 'یہ پہلے ہی شامل ہیں', 'success');
+  } catch(e) { showToast('' + e.message, 'error'); }
 }
 
 // Saved witnesses — aligned rows (same column widths & 14pt as the form)
@@ -172,8 +172,8 @@ function _renderWitnessList(list, type) {
       <div>${w.profession?esc(w.profession):'—'}</div>
       <div>${esc(statusLabel)}</div>
       <div class="wit-actions">
-        <button class="btn btn-secondary btn-sm" style="padding:2px 8px;" onclick="_openWitnessForm('${w.id}')">✏️</button>
-        <button class="btn btn-danger btn-sm" style="padding:2px 8px;" onclick="_deleteWitness('${w.id}')">🗑️</button>
+        <button title="ترمیم" aria-label="ترمیم" class="btn btn-secondary btn-sm" style="padding:2px 8px;" onclick="_openWitnessForm('${w.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>
+        <button title="حذف" aria-label="حذف" class="btn btn-danger btn-sm" style="padding:2px 8px;" onclick="_deleteWitness('${w.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
       </div>
     </div>`;
   }).join('');
@@ -219,15 +219,15 @@ function _openWitnessForm(id, type) {
         <label class="acc-label">حیثیت</label>
         <div style="display:flex;gap:4px;flex:1;min-width:0;align-items:stretch;">
           <select class="form-input" id="w-status" style="flex:1;min-width:0;">${statusOptions}</select>
-          <button class="btn btn-secondary btn-sm" style="flex:0 0 auto;padding:0 8px;" onclick="_addCustomStatus()" title="نیا اسٹیٹس">➕</button>
+          <button aria-label="نیا اسٹیٹس" class="btn btn-secondary btn-sm" style="flex:0 0 auto;padding:0 8px;" onclick="_addCustomStatus()" title="نیا اسٹیٹس"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button>
         </div>
       </div>
     </div>
   </div>`;
 
-  openModal(id ? '✏️ گواہ میں ترمیم' : '➕ گواہ درج کریں', body, `
+  openModal(id ? 'گواہ میں ترمیم' : 'گواہ درج کریں', body, `
     <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-    <button class="btn btn-primary" onclick="_saveWitness()">💾 محفوظ کریں</button>
+    <button class="btn btn-primary" onclick="_saveWitness()">محفوظ کریں</button>
   `);
 }
 
@@ -316,18 +316,18 @@ async function _doPriorCheck(name, cnic, cell) {
       return (name && cn===name) || (cnic.length>=10 && cc===cnic) || (cell.length>=7 && ce===cell);
     });
     if (!matchP.length && !matchC.length) {
-      box.innerHTML = `<div style="font-size:11px;color:var(--text-muted);">✓ پہلے کا کوئی ریکارڈ نہیں</div>`;
+      box.innerHTML = `<div style="font-size:11px;color:var(--text-muted);">پہلے کا کوئی ریکارڈ نہیں</div>`;
       return;
     }
     const SUS = (typeof SUSPECT_TYPES !== 'undefined') ? SUSPECT_TYPES : {};
     let html = `<div style="background:rgba(245,158,11,0.1);border:1px solid var(--amber);border-radius:8px;padding:8px;font-size:11px;">
-      <div style="font-weight:700;color:var(--amber);margin-bottom:5px;">⚠️ پہلے ریکارڈ موجود ہے:</div>`;
+      <div style="font-weight:700;color:var(--amber);margin-bottom:5px;">پہلے ریکارڈ موجود ہے:</div>`;
     matchP.forEach(p => {
       const role = (SUS[p.person_type]||{}).label || p.person_type;
       const icon = (SUS[p.person_type]||{}).icon || '•';
       html += `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:3px 0;">
         <span>${icon} <b>${esc(p.full_name)}</b> — ${esc(role)}</span>
-        <button class="btn btn-secondary btn-sm" style="font-size:10px;padding:2px 8px;" onclick='_autoFillWitness(${esc(JSON.stringify(p))})'>📋 بھریں</button>
+        <button class="btn btn-secondary btn-sm" style="font-size:10px;padding:2px 8px;" onclick='_autoFillWitness(${esc(JSON.stringify(p))})'>بھریں</button>
       </div>`;
     });
     matchC.forEach(c => {
@@ -342,7 +342,7 @@ function _autoFillWitness(p) {
   const set=(id,val)=>{const el=document.getElementById(id);if(el&&val)el.value=val;};
   set('w-name',p.full_name); set('w-profession',p.profession);
   set('w-cell',p.cell); set('w-cnic',p.cnic);
-  showToast('📋 پچھلا ڈیٹا بھر دیا — ضرورت ہو تو ترمیم کریں','success');
+  showToast('پچھلا ڈیٹا بھر دیا — ضرورت ہو تو ترمیم کریں','success');
 }
 
 async function _saveWitness() {
@@ -355,7 +355,7 @@ async function _saveWitness() {
     status: document.getElementById('w-status')?.value||null,
     witness_type: _witnessFormType || 'fir',
   };
-  if (!rec.full_name) { showToast('⚠️ نام ضروری ہے','error'); return; }
+  if (!rec.full_name) { showToast('نام ضروری ہے','error'); return; }
   try {
     const oid = await getOfficerId();
     if (oid) rec.officer_id = oid;
@@ -379,8 +379,8 @@ async function _saveWitness() {
     _witnessFormType = 'fir';  // reset
     await _loadWitnesses();     // reload from DB (gets all records)
     _renderWitnessesArea();
-    showToast('✅ گواہ محفوظ ہو گیا','success');
-  } catch(e) { showToast('❌ '+e.message,'error'); }
+    showToast('گواہ محفوظ ہو گیا','success');
+  } catch(e) { showToast(''+e.message,'error'); }
 }
 
 async function _deleteWitness(id) {
@@ -389,8 +389,8 @@ async function _deleteWitness(id) {
     await supabaseClient.from('case_witnesses').delete().eq('id', id);
     await _loadWitnesses();
     _renderWitnessesArea();
-    showToast('🗑️ حذف ہو گیا','info');
-  } catch(e) { showToast('❌ '+e.message,'error'); }
+    showToast('حذف ہو گیا','info');
+  } catch(e) { showToast(''+e.message,'error'); }
 }
 
 function _escW(s) {

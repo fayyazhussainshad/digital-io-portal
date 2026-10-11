@@ -51,12 +51,12 @@ async function renderAhkamat(container){
   <div style="max-width:100%;margin:0;direction:rtl;">
     <!-- سرخی + تلاش + (ایڈمن) شامل -->
     <div style="display:flex;align-items:center;gap:12px;padding:14px 4px;flex-wrap:wrap;margin-bottom:6px;">
-      <div style="font-size:20px;font-weight:800;display:flex;align-items:center;gap:8px;">📋 احکامات <span style="font-size:12px;color:var(--text-muted);font-weight:600;">(Orders / SOPs)</span></div>
+      <div style="font-size:20px;font-weight:800;display:flex;align-items:center;gap:8px;">احکامات <span style="font-size:12px;color:var(--text-muted);font-weight:600;">(Orders / SOPs)</span></div>
       <input id="ahk-main-search" type="text" dir="rtl" placeholder="عنوان، نمبر یا متن تلاش کریں..."
         oninput="_ahkFilter(this.value)"
         style="flex:1;min-width:180px;padding:10px 16px;border:1px solid var(--border);border-radius:24px;font-size:15px;outline:none;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;">
       ${canMng ? `<button onclick="_ahkOpenAdd()" class="btn btn-primary" style="white-space:nowrap;">+ نیا حکم شامل کریں</button>` : ''}
-      <button onclick="_ahkPrintList()" class="btn btn-secondary btn-sm" title="موجودہ فہرست پرنٹ کریں">🖨️ فہرست</button>
+      <button onclick="_ahkPrintList()" class="btn btn-secondary btn-sm" title="موجودہ فہرست پرنٹ کریں">فہرست</button>
     </div>
 
     <!-- درجہ بندی chips -->
@@ -67,7 +67,7 @@ async function renderAhkamat(container){
     ${!canMng ? `<div style="font-size:11px;color:var(--text-muted);padding:0 4px 8px;">ℹ️ احکامات صرف پڑھنے، تلاش اور پرنٹ کے لیے ہیں۔ نیا حکم صرف ایڈمن/ایس ایچ او شامل کر سکتا ہے۔</div>` : ''}
 
     <div id="ahk-table-wrap" style="overflow-x:auto;margin:0 -20px;">
-      ${(window.DIO && DIO.states) ? DIO.states.loading('احکامات لوڈ ہو رہے ہیں') : '<div style="text-align:center;padding:40px;color:var(--text-muted);width:100%;">⏳ لوڈ ہو رہا ہے...</div>'}
+      ${(window.DIO && DIO.states) ? DIO.states.loading('احکامات لوڈ ہو رہے ہیں') : '<div style="text-align:center;padding:40px;color:var(--text-muted);width:100%;">لوڈ ہو رہا ہے...</div>'}
     </div>
   </div>`;
 
@@ -143,7 +143,7 @@ function _ahkRender(){
     const empty = !_ahkList.length;
     wrap.innerHTML = `
       <div style="text-align:center;padding:56px 20px;color:var(--text-muted);width:100%;">
-        <div style="font-size:60px;margin-bottom:14px;">📋</div>
+        <div style="font-size:60px;margin-bottom:14px;"><svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M8 4h8v3H8z"/><path d="M9 4H6v17h12V4h-3"/><path d="M9 11h6"/><path d="M9 15h6"/></svg></div>
         <div style="font-size:18px;font-weight:800;margin-bottom:8px;">${empty?'ابھی کوئی حکم شامل نہیں':'اس تلاش/درجہ بندی میں کچھ نہیں ملا'}</div>
         <div style="font-size:14px;margin-bottom:${canMng&&empty?'22px':'0'};">${empty?'احکامات، سرکلر اور SOPs یہاں محفوظ ہوں گے':'دوسری درجہ بندی یا تلاش آزمائیں'}</div>
         ${canMng&&empty?`<button onclick="_ahkOpenAdd()" class="btn btn-primary">+ پہلا حکم شامل کریں</button>`:''}
@@ -173,10 +173,10 @@ function _ahkRender(){
       </td>
       <td style="padding:10px 8px;text-align:center;">
         <div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap;">
-          ${(hasText||hasFile)?`<button onclick="_ahkView('${a.id}')" title="پڑھیں" style="padding:5px 9px;background:#1a73e8;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">👁️</button>`:''}
-          ${(hasText||hasFile)?`<button onclick="_ahkView('${a.id}',true)" title="پرنٹ" style="padding:5px 9px;background:#334155;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">🖨️</button>`:''}
-          ${canMng?`<button onclick="_ahkEdit('${a.id}')" title="ترمیم" style="padding:5px 9px;background:#fd7e14;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">✏️</button>`:''}
-          ${canMng?`<button onclick="_ahkDelete('${a.id}')" title="حذف" style="padding:5px 9px;background:#dc3545;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">🗑️</button>`:''}
+          ${(hasText||hasFile)?`<button aria-label="پڑھیں" onclick="_ahkView('${a.id}')" title="پڑھیں" style="padding:5px 9px;background:#1a73e8;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg></button>`:''}
+          ${(hasText||hasFile)?`<button aria-label="پرنٹ" onclick="_ahkView('${a.id}',true)" title="پرنٹ" style="padding:5px 9px;background:#334155;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M7 9.5V3.5h10v6"/><path d="M4.5 9.5h15v7h-15z"/><path d="M7 13.5h10V21H7z"/></svg></button>`:''}
+          ${canMng?`<button aria-label="ترمیم" onclick="_ahkEdit('${a.id}')" title="ترمیم" style="padding:5px 9px;background:#fd7e14;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>`:''}
+          ${canMng?`<button aria-label="حذف" onclick="_ahkDelete('${a.id}')" title="حذف" style="padding:5px 9px;background:#dc3545;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>`:''}
         </div>
       </td>
     </tr>`;
@@ -204,22 +204,22 @@ function _ahkFilter(){
 
 // ── ADD MODAL (admin) ──────────────────────────────────────────
 function _ahkOpenAdd(){
-  if (!_ahkCanManage()) { showToast('🔒 صرف ایڈمن/ایس ایچ او نیا حکم شامل کر سکتا ہے','error'); return; }
+  if (!_ahkCanManage()) { showToast('صرف ایڈمن/ایس ایچ او نیا حکم شامل کر سکتا ہے','error'); return; }
   openModal('+ نیا حکم / SOP شامل کریں', _ahkFormHtml(null),
     `<div style="display:flex;gap:8px;direction:rtl;">
       <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-      <button class="btn btn-primary" id="ahk-save-btn" onclick="_ahkSave()">💾 محفوظ کریں</button>
+      <button class="btn btn-primary" id="ahk-save-btn" onclick="_ahkSave()">محفوظ کریں</button>
     </div>`);
 }
 
 function _ahkEdit(id){
-  if (!_ahkCanManage()) { showToast('🔒 صرف ایڈمن/ایس ایچ او ترمیم کر سکتا ہے','error'); return; }
+  if (!_ahkCanManage()) { showToast('صرف ایڈمن/ایس ایچ او ترمیم کر سکتا ہے','error'); return; }
   const a = _ahkList.find(x=>x.id===id);
   if (!a) return;
-  openModal('✏️ حکم میں ترمیم', _ahkFormHtml(a),
+  openModal('حکم میں ترمیم', _ahkFormHtml(a),
     `<div style="display:flex;gap:8px;direction:rtl;">
       <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-      <button class="btn btn-primary" id="ahk-save-btn" onclick="_ahkSave('${id}')">💾 محفوظ کریں</button>
+      <button class="btn btn-primary" id="ahk-save-btn" onclick="_ahkSave('${id}')">محفوظ کریں</button>
     </div>`);
 }
 
@@ -255,13 +255,13 @@ function _ahkFormHtml(a){
       <label class="form-label">منسلک فائل (PDF / Word) — اختیاری</label>
       ${a&&a.file_display_name?`<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">موجودہ: ${v(a.file_display_name)}</div>`:''}
       <input class="form-input" id="ahk-f-file" type="file" accept=".pdf,.doc,.docx" style="margin-bottom:6px;">
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">💡 متن یا فائل — کم از کم ایک ضرور دیں۔</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">متن یا فائل — کم از کم ایک ضرور دیں۔</div>
       <div id="ahk-f-progress" style="font-size:12px;color:var(--accent);margin-top:4px;"></div>
     </div>`;
 }
 
 async function _ahkSave(id){
-  if (!_ahkCanManage()) { showToast('🔒 اجازت نہیں','error'); return; }
+  if (!_ahkCanManage()) { showToast('اجازت نہیں','error'); return; }
   const title     = document.getElementById('ahk-f-title')?.value.trim();
   const category  = document.getElementById('ahk-f-category')?.value || 'misc';
   const number    = document.getElementById('ahk-f-number')?.value.trim();
@@ -273,10 +273,10 @@ async function _ahkSave(id){
   const btn       = document.getElementById('ahk-save-btn');
   const existing  = id ? _ahkList.find(x=>x.id===id) : null;
 
-  if (!title) { showToast('⚠️ عنوان ضروری ہے','error'); return; }
+  if (!title) { showToast('عنوان ضروری ہے','error'); return; }
   const hadFile = existing && (existing.storage_path || existing.file_url);
-  if (!body && !file && !hadFile) { showToast('⚠️ متن یا فائل میں سے کم از کم ایک ضروری ہے','error'); return; }
-  if (!navigator.onLine) { showToast('⚠️ احکامات شامل/تبدیل کرنے کے لیے انٹرنیٹ ضروری ہے','error'); return; }
+  if (!body && !file && !hadFile) { showToast('متن یا فائل میں سے کم از کم ایک ضروری ہے','error'); return; }
+  if (!navigator.onLine) { showToast('احکامات شامل/تبدیل کرنے کے لیے انٹرنیٹ ضروری ہے','error'); return; }
 
   if (btn) { btn.disabled = true; btn.textContent = 'محفوظ ہو رہا ہے...'; }
 
@@ -291,7 +291,7 @@ async function _ahkSave(id){
     };
 
     if (file) {
-      if (prog) prog.textContent = '📤 فائل اپلوڈ ہو رہی ہے...';
+      if (prog) prog.textContent = 'فائل اپلوڈ ہو رہی ہے...';
       const ext  = (file.name.split('.').pop() || 'pdf').toLowerCase().replace(/[^a-z0-9]/g,'');
       const rand = Math.random().toString(36).substring(2,8);
       const safe = `ahk_${Date.now()}_${rand}.${ext || 'pdf'}`;
@@ -306,7 +306,7 @@ async function _ahkSave(id){
       rec.file_url          = null;   // private bucket → signed URL on demand
     }
 
-    if (prog) prog.textContent = '💾 محفوظ ہو رہا ہے...';
+    if (prog) prog.textContent = 'محفوظ ہو رہا ہے...';
 
     let saved;
     if (id) {
@@ -325,11 +325,11 @@ async function _ahkSave(id){
 
     try { localStorage.setItem(AHK_CACHE_KEY, JSON.stringify(_ahkList)); } catch(_){}
     closeModal();
-    showToast(id?'✅ ترمیم محفوظ ہو گئی':'✅ حکم شامل ہو گیا','success');
+    showToast(id?'ترمیم محفوظ ہو گئی':'حکم شامل ہو گیا','success');
     _ahkRender();
   } catch(e){
-    showToast('❌ ' + (e.message || 'محفوظ نہیں ہو سکا'),'error');
-    if (btn) { btn.disabled = false; btn.textContent = '💾 محفوظ کریں'; }
+    showToast('' + (e.message || 'محفوظ نہیں ہو سکا'),'error');
+    if (btn) { btn.disabled = false; btn.textContent = 'محفوظ کریں'; }
   }
 }
 
@@ -355,7 +355,7 @@ async function _ahkView(id, autoPrint){
 
   // Warna file kholo (signed URL)
   const url = await _ahkFileUrl(a);
-  if (!url) { showToast('❌ اس حکم کے ساتھ کوئی متن یا فائل موجود نہیں','error'); return; }
+  if (!url) { showToast('اس حکم کے ساتھ کوئی متن یا فائل موجود نہیں','error'); return; }
   const isPdf = (a.file_type === 'pdf') || url.toLowerCase().includes('.pdf');
   _ahkFileReader(a, url, isPdf, autoPrint);
 }
@@ -378,8 +378,8 @@ function _ahkTextReader(a, autoPrint){
       <button onclick="_ahkNavMatch(-1)" title="پچھلا" style="border:1px solid #dee2e6;background:#f1f3f4;border-radius:6px;padding:6px 9px;cursor:pointer;font-size:12px;">▲</button>
       <button onclick="_ahkNavMatch(1)" title="اگلا" style="border:1px solid #dee2e6;background:#f1f3f4;border-radius:6px;padding:6px 9px;cursor:pointer;font-size:12px;">▼</button>
       <span id="ahk-search-count" style="font-size:12px;color:#6c757d;"></span>
-      <button onclick="_ahkPrintOne('${a.id}')" style="background:#1a73e8;color:#fff;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;">🖨️ پرنٹ</button>
-      <button onclick="_ahkCloseReader()" style="background:#e2e8f0;color:#1a3a5c;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;font-weight:700;">✕ بند</button>
+      <button onclick="_ahkPrintOne('${a.id}')" style="background:#1a73e8;color:#fff;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;">پرنٹ</button>
+      <button onclick="_ahkCloseReader()" style="background:#e2e8f0;color:#1a3a5c;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;font-weight:700;">بند</button>
     </div>
     <div id="ahk-reader-body" style="flex:1;overflow:auto;background:#fff;">
       <style>
@@ -397,7 +397,7 @@ function _ahkTextReader(a, autoPrint){
           ${a.issue_date?`<br>تاریخِ اجرا: ${_ahkEsc(_ahkFmtDate(a.issue_date))}`:''}
         </div>
         ${_ahkBodyToHtml(a.body_text)}
-        ${(a.storage_path||a.file_url)?`<div style="margin-top:20px;"><button onclick="_ahkOpenFile('${a.id}')" style="background:#28a745;color:#fff;border:none;border-radius:8px;padding:9px 16px;cursor:pointer;font-size:14px;">📎 منسلک فائل کھولیں</button></div>`:''}
+        ${(a.storage_path||a.file_url)?`<div style="margin-top:20px;"><button onclick="_ahkOpenFile('${a.id}')" style="background:#28a745;color:#fff;border:none;border-radius:8px;padding:9px 16px;cursor:pointer;font-size:14px;">منسلک فائل کھولیں</button></div>`:''}
       </div>
     </div>`;
   document.body.appendChild(overlay);
@@ -413,13 +413,13 @@ async function _ahkFileReader(a, url, isPdf, autoPrint){
   overlay.innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border-bottom:1px solid #dee2e6;direction:rtl;flex-wrap:wrap;">
       <div style="font-weight:800;font-size:16px;color:#1a3a5c;flex:1;min-width:140px;">${_ahkEsc(a.title)}</div>
-      <a href="${url}" target="_blank" style="background:#1a73e8;color:#fff;border-radius:8px;padding:7px 12px;text-decoration:none;font-size:13px;">🌐 براؤزر</a>
-      <a href="${gview}" target="_blank" style="background:#ea4335;color:#fff;border-radius:8px;padding:7px 12px;text-decoration:none;font-size:13px;">📄 Google Docs</a>
-      <a href="${url}" download="${_ahkEsc(a.file_display_name||a.title||'ahkam')}" style="background:#28a745;color:#fff;border-radius:8px;padding:7px 12px;text-decoration:none;font-size:13px;">⬇️ ڈاؤنلوڈ</a>
-      <button onclick="_ahkCloseReader()" style="background:#e2e8f0;color:#1a3a5c;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;font-weight:700;">✕ بند</button>
+      <a href="${url}" target="_blank" style="background:#1a73e8;color:#fff;border-radius:8px;padding:7px 12px;text-decoration:none;font-size:13px;">براؤزر</a>
+      <a href="${gview}" target="_blank" style="background:#ea4335;color:#fff;border-radius:8px;padding:7px 12px;text-decoration:none;font-size:13px;">Google Docs</a>
+      <a href="${url}" download="${_ahkEsc(a.file_display_name||a.title||'ahkam')}" style="background:#28a745;color:#fff;border-radius:8px;padding:7px 12px;text-decoration:none;font-size:13px;">ڈاؤنلوڈ</a>
+      <button onclick="_ahkCloseReader()" style="background:#e2e8f0;color:#1a3a5c;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;font-weight:700;">بند</button>
     </div>
     <div id="ahk-reader-body" style="flex:1;overflow:auto;background:#fff;">
-      <div style="text-align:center;padding:40px;color:#6c757d;">⏳ فائل کھل رہی ہے...</div>
+      <div style="text-align:center;padding:40px;color:#6c757d;">فائل کھل رہی ہے...</div>
     </div>`;
   document.body.appendChild(overlay);
   const body = document.getElementById('ahk-reader-body');
@@ -470,12 +470,12 @@ async function _ahkFileReader(a, url, isPdf, autoPrint){
   // Fallback: reliable open options
   body.innerHTML = `
     <div style="text-align:center;padding:50px 20px;direction:rtl;">
-      <div style="font-size:44px;margin-bottom:12px;">📄</div>
+      <div style="font-size:44px;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
       <div style="font-size:15px;color:#444;margin-bottom:20px;">فائل کھولنے کے لیے منتخب کریں:</div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-        <a href="${url}" target="_blank" style="padding:11px 20px;background:#1a73e8;color:#fff;border-radius:8px;text-decoration:none;">🌐 براؤزر میں کھولیں</a>
-        <a href="${gview}" target="_blank" style="padding:11px 20px;background:#ea4335;color:#fff;border-radius:8px;text-decoration:none;">📄 Google Docs</a>
-        <a href="${url}" download style="padding:11px 20px;background:#28a745;color:#fff;border-radius:8px;text-decoration:none;">⬇️ ڈاؤنلوڈ</a>
+        <a href="${url}" target="_blank" style="padding:11px 20px;background:#1a73e8;color:#fff;border-radius:8px;text-decoration:none;">براؤزر میں کھولیں</a>
+        <a href="${gview}" target="_blank" style="padding:11px 20px;background:#ea4335;color:#fff;border-radius:8px;text-decoration:none;">Google Docs</a>
+        <a href="${url}" download style="padding:11px 20px;background:#28a745;color:#fff;border-radius:8px;text-decoration:none;">ڈاؤنلوڈ</a>
       </div>
     </div>`;
 }
@@ -485,7 +485,7 @@ async function _ahkOpenFile(id){
   const a = _ahkList.find(x=>x.id===id);
   if (!a) return;
   const url = await _ahkFileUrl(a);
-  if (!url) { showToast('❌ فائل دستیاب نہیں','error'); return; }
+  if (!url) { showToast('فائل دستیاب نہیں','error'); return; }
   window.open(url, '_blank');
 }
 
@@ -533,7 +533,7 @@ function _ahkNavMatch(dir){
 // ── PRINT one order (text) ─────────────────────────────────────
 function _ahkPrintOne(id){
   const a = _ahkList.find(x=>x.id===id);
-  if (!a) { showToast('❌ پرنٹ کے لیے مواد نہیں','error'); return; }
+  if (!a) { showToast('پرنٹ کے لیے مواد نہیں','error'); return; }
   if (!(a.body_text && a.body_text.trim())) {
     // no text → open file for printing
     _ahkOpenFile(id); return;
@@ -564,7 +564,7 @@ function _ahkPrintOne(id){
 // ── PRINT the current (filtered) list ──────────────────────────
 function _ahkPrintList(){
   const list = _ahkVisible();
-  if (!list.length) { showToast('⚠️ پرنٹ کے لیے کوئی حکم نہیں','error'); return; }
+  if (!list.length) { showToast('پرنٹ کے لیے کوئی حکم نہیں','error'); return; }
   const catTitle = _ahkActiveCat==='all' ? 'تمام درجہ بندیاں' : _ahkCatLabel(_ahkActiveCat);
   const rows = list.map((a,i)=>`
     <tr>
@@ -584,7 +584,7 @@ function _ahkPrintList(){
       th{border:1px solid #000;padding:6px;background:#f0f0f0;}
       .ahk-print-footer{position:fixed;bottom:4mm;left:4mm;font-size:8pt;color:#999;font-style:italic;}
     </style></head><body>
-    <h2>📋 احکامات (Orders / SOPs) — Digital IO</h2>
+    <h2>احکامات (Orders / SOPs) — Digital IO</h2>
     <div class="sub">${_ahkEsc(catTitle)}</div>
     <table>
       <tr><th style="width:7%;">نمبر</th><th>عنوان</th><th style="width:22%;">درجہ بندی</th><th style="width:15%;">حکم نمبر</th><th style="width:14%;">تاریخ</th></tr>
@@ -598,11 +598,11 @@ function _ahkPrintList(){
 
 // ── DELETE (admin) ─────────────────────────────────────────────
 function _ahkDelete(id){
-  if (!_ahkCanManage()) { showToast('🔒 صرف ایڈمن/ایس ایچ او حذف کر سکتا ہے','error'); return; }
+  if (!_ahkCanManage()) { showToast('صرف ایڈمن/ایس ایچ او حذف کر سکتا ہے','error'); return; }
   const a = _ahkList.find(x=>x.id===id);
   if (!a) return;
   const doDelete = async () => {
-    if (!navigator.onLine) { showToast('⚠️ حذف کرنے کے لیے انٹرنیٹ ضروری ہے','error'); return; }
+    if (!navigator.onLine) { showToast('حذف کرنے کے لیے انٹرنیٹ ضروری ہے','error'); return; }
     try {
       if (a.storage_path) { try { await supabaseClient.storage.from(AHK_BUCKET).remove([a.storage_path]); } catch(_){} }
       const { error } = await supabaseClient.from('ahkamat').delete().eq('id', id);
@@ -610,8 +610,8 @@ function _ahkDelete(id){
       _ahkList = _ahkList.filter(x=>x.id!==id);
       try { localStorage.setItem(AHK_CACHE_KEY, JSON.stringify(_ahkList)); } catch(_){}
       _ahkRender();
-      showToast('🗑️ حذف ہو گیا','info');
-    } catch(e){ showToast('❌ '+(e.message||'حذف ناکام'),'error'); }
+      showToast('حذف ہو گیا','info');
+    } catch(e){ showToast(''+(e.message||'حذف ناکام'),'error'); }
   };
   if (typeof confirmDelete === 'function') confirmDelete(a.title, doDelete);
   else if (confirm('حذف کریں؟')) doDelete();

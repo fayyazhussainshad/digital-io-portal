@@ -33,7 +33,7 @@ async function renderTemplates(container) {
   container.innerHTML = `
   <div style="max-width:100%;margin:0;direction:rtl;">
     <div style="display:flex;align-items:center;gap:12px;padding:14px 4px;flex-wrap:wrap;margin-bottom:6px;">
-      <div style="font-size:20px;font-weight:800;display:flex;align-items:center;gap:8px;">📄 ٹمپلیٹس</div>
+      <div style="font-size:20px;font-weight:800;display:flex;align-items:center;gap:8px;">ٹمپلیٹس</div>
       <input id="tpl-main-search" type="text" dir="rtl" placeholder="ٹمپلیٹ کا نام تلاش کریں..."
         oninput="_tplFilter(this.value)"
         style="flex:1;min-width:180px;padding:10px 16px;border:1px solid var(--border);border-radius:24px;font-size:15px;outline:none;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;">
@@ -41,7 +41,7 @@ async function renderTemplates(container) {
     </div>
 
     <div id="tpl-table-wrap" style="overflow-x:auto;margin:0 -20px;">
-      ${(window.DIO && DIO.states) ? DIO.states.loading('ٹمپلیٹس لوڈ ہو رہے ہیں') : '<div style="text-align:center;padding:40px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>'}
+      ${(window.DIO && DIO.states) ? DIO.states.loading('ٹمپلیٹس لوڈ ہو رہے ہیں') : '<div style="text-align:center;padding:40px;color:var(--text-muted);">لوڈ ہو رہا ہے...</div>'}
     </div>
   </div>`;
 
@@ -93,7 +93,7 @@ function _renderTplTable() {
   if (!list.length) {
     wrap.innerHTML = `
       <div style="text-align:center;padding:50px 20px;color:var(--text-muted);">
-        <div style="font-size:56px;margin-bottom:14px;">📄</div>
+        <div style="font-size:56px;margin-bottom:14px;"><svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
         <div style="font-size:17px;font-weight:800;margin-bottom:6px;">کوئی ٹمپلیٹ موجود نہیں</div>
         <div style="font-size:13px;margin-bottom:20px;">+ نیا ٹمپلیٹ شامل کریں بٹن دبائیں</div>
         <button onclick="_openAddTpl()" class="btn btn-primary">+ نیا ٹمپلیٹ</button>
@@ -117,12 +117,12 @@ function _renderTplTable() {
       </td>
       <td style="padding:10px 8px;text-align:center;">
         <div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap;">
-          <button onclick="_editTpl('${t.id}')" title="دیکھیں" style="${_tplBtn('#1a73e8')}">👁️</button>
-          <button onclick="_renameTpl('${t.id}')" title="نام بدلیں" style="${_tplBtn('#fd7e14')}">✏️</button>
-          <button onclick="_copyTpl('${t.id}')" title="نقل بنائیں" style="${_tplBtn('#20c997')}">📋</button>
-          ${hasFile?`<button onclick="_downloadTpl('${t.id}')" title="ڈاؤنلوڈ" style="${_tplBtn('#28a745')}">⬇️</button>`:''}
-          ${(hasContent||hasFile)?`<button onclick="_printTpl('${t.id}')" title="پرنٹ" style="${_tplBtn('#6c757d')}">🖨️</button>`:''}
-          <button onclick="_deleteTpl('${t.id}')" title="حذف" style="${_tplBtn('#dc3545')}">🗑️</button>
+          <button aria-label="دیکھیں" onclick="_editTpl('${t.id}')" title="دیکھیں" style="${_tplBtn('#1a73e8')}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg></button>
+          <button aria-label="نام بدلیں" onclick="_renameTpl('${t.id}')" title="نام بدلیں" style="${_tplBtn('#fd7e14')}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>
+          <button aria-label="نقل بنائیں" onclick="_copyTpl('${t.id}')" title="نقل بنائیں" style="${_tplBtn('#20c997')}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M9 8.5h10.5V20H9z"/><path d="M5 15.5V4h10"/></svg></button>
+          ${hasFile?`<button aria-label="ڈاؤنلوڈ" onclick="_downloadTpl('${t.id}')" title="ڈاؤنلوڈ" style="${_tplBtn('#28a745')}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M12 3.5v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M4.5 20h15"/></svg></button>`:''}
+          ${(hasContent||hasFile)?`<button aria-label="پرنٹ" onclick="_printTpl('${t.id}')" title="پرنٹ" style="${_tplBtn('#6c757d')}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M7 9.5V3.5h10v6"/><path d="M4.5 9.5h15v7h-15z"/><path d="M7 13.5h10V21H7z"/></svg></button>`:''}
+          <button aria-label="حذف" onclick="_deleteTpl('${t.id}')" title="حذف" style="${_tplBtn('#dc3545')}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
         </div>
       </td>
     </tr>`;
@@ -167,14 +167,14 @@ function _openAddTpl() {
     <div style="direction:rtl;">
       <label class="form-label">ٹمپلیٹ کا نام *</label>
       <input class="form-input" id="tpl-f-title" dir="rtl" placeholder="مثلاً: DSP صاحب کو درخواست" style="margin-bottom:14px;">
-      <label class="form-label">📤 ٹمپلیٹ اپلوڈ کریں (PDF / Word)</label>
+      <label class="form-label">ٹمپلیٹ اپلوڈ کریں (PDF / Word)</label>
       <input class="form-input" id="tpl-f-file" type="file" accept=".pdf,.doc,.docx" style="margin-bottom:6px;">
       <div id="tpl-f-fileinfo" style="font-size:12px;color:var(--text-muted);"></div>
       <div id="tpl-f-progress" style="font-size:12px;color:var(--accent);margin-top:8px;"></div>
     </div>`,
     `<div style="display:flex;gap:8px;direction:rtl;">
       <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-      <button class="btn btn-primary" id="tpl-save-btn" onclick="_saveTpl()">💾 محفوظ کریں</button>
+      <button class="btn btn-primary" id="tpl-save-btn" onclick="_saveTpl()">محفوظ کریں</button>
     </div>`);
 }
 
@@ -184,13 +184,13 @@ async function _saveTpl() {
   const prog = document.getElementById('tpl-f-progress');
   const btn = document.getElementById('tpl-save-btn');
 
-  if (!title) { showToast('⚠️ ٹمپلیٹ کا نام ضروری ہے','error'); return; }
-  if (!file) { showToast('⚠️ ٹمپلیٹ فائل اپلوڈ کریں','error'); return; }
+  if (!title) { showToast('ٹمپلیٹ کا نام ضروری ہے','error'); return; }
+  if (!file) { showToast('ٹمپلیٹ فائل اپلوڈ کریں','error'); return; }
   if (btn) { btn.disabled = true; btn.textContent = 'محفوظ ہو رہا ہے...'; }
 
   try {
     const oid = await getOfficerId();
-    if (prog) prog.textContent = '📤 فائل اپلوڈ ہو رہی ہے...';
+    if (prog) prog.textContent = 'فائل اپلوڈ ہو رہی ہے...';
     const ext = (file.name.split('.').pop()||'pdf').toLowerCase().replace(/[^a-z0-9]/g,'');
     const fileType = (ext==='pdf')?'pdf':'word';
     const fileDisplay = file.name;
@@ -202,18 +202,18 @@ async function _saveTpl() {
     const { data:urlData } = supabaseClient.storage.from(TPL_BUCKET).getPublicUrl(path);
     const fileUrl = urlData?.publicUrl || null;
 
-    if (prog) prog.textContent = '💾 محفوظ ہو رہا ہے...';
+    if (prog) prog.textContent = 'محفوظ ہو رہا ہے...';
     const rec = { officer_id:oid, title, category:'other', content:null, file_url:fileUrl, file_name:safe, file_display_name:fileDisplay, safe_file_name:safe, file_type:fileType, is_default:false, is_public:true };
     const { data, error } = await supabaseClient.from('templates').insert(rec).select().single();
     if (error) throw error;
     _tplList.unshift(data);
     try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) {}
     closeModal();
-    showToast('✅ ٹمپلیٹ شامل ہو گیا','success');
+    showToast('ٹمپلیٹ شامل ہو گیا','success');
     _renderTplTable();
   } catch(e) {
-    showToast('❌ ' + (e.message||'محفوظ نہیں ہو سکا'),'error');
-    if (btn) { btn.disabled=false; btn.textContent='💾 محفوظ کریں'; }
+    showToast('' + (e.message||'محفوظ نہیں ہو سکا'),'error');
+    if (btn) { btn.disabled=false; btn.textContent='محفوظ کریں'; }
   }
 }
 
@@ -221,19 +221,19 @@ async function _saveTpl() {
 function _renameTpl(id) {
   const t = _tplList.find(x => x.id === id);
   if (!t) return;
-  openModal('✏️ ٹمپلیٹ کا نام بدلیں', `
+  openModal('ٹمپلیٹ کا نام بدلیں', `
     <div style="direction:rtl;">
       <label class="form-label">ٹمپلیٹ کا نام *</label>
       <input class="form-input" id="tpl-rename-inp" dir="rtl" value="${_tplEsc(t.title||'')}" style="margin-bottom:6px;">
     </div>`,
     `<div style="display:flex;gap:8px;direction:rtl;">
       <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-      <button class="btn btn-primary" onclick="_doRenameTpl('${id}')">💾 محفوظ کریں</button>
+      <button class="btn btn-primary" onclick="_doRenameTpl('${id}')">محفوظ کریں</button>
     </div>`);
 }
 async function _doRenameTpl(id) {
   const newName = document.getElementById('tpl-rename-inp')?.value.trim();
-  if (!newName) { showToast('⚠️ نام ضروری ہے','error'); return; }
+  if (!newName) { showToast('نام ضروری ہے','error'); return; }
   try {
     await supabaseClient.from('templates').update({ title:newName, updated_at:new Date().toISOString() }).eq('id', id);
     const t = _tplList.find(x=>x.id===id); if (t) t.title = newName;
@@ -241,9 +241,9 @@ async function _doRenameTpl(id) {
     // Update open viewer title if present
     const vt = document.getElementById('tpl-viewer-title'); if (vt) vt.textContent = newName;
     closeModal();
-    showToast('✅ نام تبدیل ہو گیا','success');
+    showToast('نام تبدیل ہو گیا','success');
     _renderTplTable();
-  } catch(e) { showToast('❌ '+e.message,'error'); }
+  } catch(e) { showToast(''+e.message,'error'); }
 }
 
 // Render template PDF via blob (avoids "content blocked" in PWA)
@@ -263,7 +263,7 @@ function _ensurePdfJsTpl() {
 
 // Render PDF via PDF.js canvas — NO iframe, never "content blocked"
 async function _tplRenderPdf(url, body, autoPrint) {
-  body.innerHTML = `<div style="text-align:center;padding:40px;color:#6c757d;">⏳ فائل کھل رہی ہے...</div>`;
+  body.innerHTML = `<div style="text-align:center;padding:40px;color:#6c757d;">فائل کھل رہی ہے...</div>`;
   try {
     const pdfjsLib = await _ensurePdfJsTpl();
     const resp = await fetch(url, { mode:'cors' });
@@ -287,12 +287,12 @@ async function _tplRenderPdf(url, body, autoPrint) {
   } catch(e) {
     body.innerHTML = `
       <div style="text-align:center;padding:50px 20px;direction:rtl;">
-        <div style="font-size:44px;margin-bottom:12px;">📄</div>
+        <div style="font-size:44px;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
         <div style="font-size:15px;color:#444;margin-bottom:20px;">فائل ان لائن کھولیں:</div>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-          <a href="${url}" target="_blank" style="padding:11px 20px;background:#1a73e8;color:#fff;border-radius:8px;text-decoration:none;">🌐 براؤزر میں کھولیں</a>
-          <a href="https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true" target="_blank" style="padding:11px 20px;background:#ea4335;color:#fff;border-radius:8px;text-decoration:none;">📄 Google Docs</a>
-          <a href="${url}" download style="padding:11px 20px;background:#28a745;color:#fff;border-radius:8px;text-decoration:none;">⬇️ ڈاؤنلوڈ</a>
+          <a href="${url}" target="_blank" style="padding:11px 20px;background:#1a73e8;color:#fff;border-radius:8px;text-decoration:none;">براؤزر میں کھولیں</a>
+          <a href="https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true" target="_blank" style="padding:11px 20px;background:#ea4335;color:#fff;border-radius:8px;text-decoration:none;">Google Docs</a>
+          <a href="${url}" download style="padding:11px 20px;background:#28a745;color:#fff;border-radius:8px;text-decoration:none;">ڈاؤنلوڈ</a>
         </div>
       </div>`;
   }
@@ -300,7 +300,7 @@ async function _tplRenderPdf(url, body, autoPrint) {
 
 // Render template Word file as selectable HTML via mammoth
 async function _tplRenderWord(url, body, autoPrint) {
-  body.innerHTML = `<div style="text-align:center;padding:40px;color:#6c757d;">⏳ فائل کھل رہی ہے...</div>`;
+  body.innerHTML = `<div style="text-align:center;padding:40px;color:#6c757d;">فائل کھل رہی ہے...</div>`;
   try {
     if (typeof mammoth === 'undefined') {
       await new Promise((res, rej) => {
@@ -349,7 +349,7 @@ async function _tplRenderWord(url, body, autoPrint) {
     if (autoPrint) setTimeout(_tplPrintDoc, 500);
   } catch(e) {
     body.innerHTML = `<div style="text-align:center;padding:40px;color:#6c757d;">
-      <div style="font-size:40px;margin-bottom:12px;">📄</div>
+      <div style="font-size:40px;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
       <div style="margin-bottom:16px;">فائل اس براؤزر میں نہیں کھل سکی</div>
       <button onclick="window.open('${url}','_blank')" style="background:#1a73e8;color:#fff;border:none;border-radius:8px;padding:10px 20px;cursor:pointer;">نئے ٹیب میں کھولیں</button>
     </div>`;
@@ -382,8 +382,8 @@ function _tplBuildFormatToolbar() {
       <button class="tpl-fmt-btn" style="font-size:12px;color:#dc3545;" onclick="_tplRowDel()" title="قطار حذف">−قطار</button>
       <button class="tpl-fmt-btn" style="font-size:12px;color:#dc3545;" onclick="_tplColDel()" title="کالم حذف">−کالم</button>
       ${sep}
-      <button class="tpl-fmt-btn" style="font-size:12px;" onclick="_tplSaveDoc(_tplDocId)" title="محفوظ">💾</button>
-      <button class="tpl-fmt-btn" style="font-size:12px;" onclick="_tplPrintDoc()" title="پرنٹ">🖨️</button>
+      <button aria-label="محفوظ" class="tpl-fmt-btn" style="font-size:12px;" onclick="_tplSaveDoc(_tplDocId)" title="محفوظ"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4.5 4h11.5L19.5 7.5V20h-15z"/><path d="M8 4v6h7.5V4"/><path d="M8 20v-5.5h8V20"/></svg></button>
+      <button aria-label="پرنٹ" class="tpl-fmt-btn" style="font-size:12px;" onclick="_tplPrintDoc()" title="پرنٹ"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M7 9.5V3.5h10v6"/><path d="M4.5 9.5h15v7h-15z"/><path d="M7 13.5h10V21H7z"/></svg></button>
     </div>`;
 }
 
@@ -431,7 +431,7 @@ function _closeTplViewer() {
 // Print the edited Word document (clean A4)
 function _tplPrintDoc() {
   const doc = document.getElementById('word-doc-editable');
-  if (!doc) { showToast('❌ پرنٹ کے لیے مواد نہیں','error'); return; }
+  if (!doc) { showToast('پرنٹ کے لیے مواد نہیں','error'); return; }
   const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
     <style>@page{size:A4;margin:25.4mm;}*{box-sizing:border-box;}
     body{margin:0;font-family:'Jameel Noori Nastaleeq','Traditional Arabic',serif;font-size:12pt;line-height:1.6;direction:rtl;text-align:right;color:#000;}
@@ -446,7 +446,7 @@ function _tplCopyDoc() {
   const doc = document.getElementById('word-doc-editable');
   if (!doc) return;
   const text = doc.innerText || '';
-  if (navigator.clipboard) navigator.clipboard.writeText(text).then(()=>showToast('📋 کاپی ہو گیا','success')).catch(()=>showToast('کاپی ناکام','error'));
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(()=>showToast('کاپی ہو گیا','success')).catch(()=>showToast('کاپی ناکام','error'));
 }
 
 // Save edited Word content back as the template's text content
@@ -458,8 +458,8 @@ async function _tplSaveDoc(id) {
     await supabaseClient.from('templates').update({ content, updated_at:new Date().toISOString() }).eq('id', id);
     const t = _tplList.find(x=>x.id===id); if (t) t.content = content;
     try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) {}
-    showToast('✅ ترمیم محفوظ ہو گئی','success');
-  } catch(e) { showToast('❌ '+e.message,'error'); }
+    showToast('ترمیم محفوظ ہو گئی','success');
+  } catch(e) { showToast(''+e.message,'error'); }
 }
 
 // ── EDITABLE VIEWER (key feature) ────────────────────────────
@@ -475,14 +475,14 @@ function _editTpl(id, autoPrint) {
     ov.style.cssText='position:fixed;inset:0;z-index:99999;background:#fff;display:flex;flex-direction:column;direction:rtl;';
     ov.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#fd7e14;color:#fff;flex-shrink:0;gap:8px;">
-        <button onclick="_closeTplViewer()" style="${_tplTbBtn()}">✕ بند کریں</button>
+        <button onclick="_closeTplViewer()" style="${_tplTbBtn()}">بند کریں</button>
         <div style="font-weight:800;" id="tpl-viewer-title">${_tplEsc(t.title)}</div>
-        <button onclick="_renameTpl('${t.id}')" style="${_tplTbBtn()}">✏️ نام</button>
+        <button onclick="_renameTpl('${t.id}')" style="${_tplTbBtn()}">نام</button>
       </div>
       ${!isPdf?`<div id="tpl-format-toolbar" style="flex-shrink:0;"></div>
-      <div style="background:#fff3cd;padding:6px 16px;font-size:12px;direction:rtl;text-align:right;border-bottom:1px solid #ffc107;color:#664d03;flex-shrink:0;">✍️ متن سلیکٹ کر کے فارمیٹ کریں — یا کہیں بھی لکھیں</div>`:''}
+      <div style="background:#fff3cd;padding:6px 16px;font-size:12px;direction:rtl;text-align:right;border-bottom:1px solid #ffc107;color:#664d03;flex-shrink:0;">متن سلیکٹ کر کے فارمیٹ کریں — یا کہیں بھی لکھیں</div>`:''}
       <div id="tpl-viewer-body" style="flex:1;overflow:auto;background:#f5f5f5;">
-        <div style="text-align:center;padding:40px;color:#6c757d;">⏳ کھل رہی ہے...</div>
+        <div style="text-align:center;padding:40px;color:#6c757d;">کھل رہی ہے...</div>
       </div>`;
     document.body.appendChild(ov);
     _tplDocId = t.id;
@@ -498,12 +498,12 @@ function _editTpl(id, autoPrint) {
   ov.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#fd7e14;color:#fff;flex-shrink:0;flex-wrap:wrap;gap:8px;">
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button onclick="_printTplEditor()" style="${_tplTbBtn()}">🖨️ پرنٹ</button>
-        <button onclick="_copyTplEditor()" style="${_tplTbBtn()}">📋 کاپی</button>
-        <button onclick="_saveTplEditor('${t.id}')" style="${_tplTbBtn()}">💾 محفوظ</button>
+        <button onclick="_printTplEditor()" style="${_tplTbBtn()}">پرنٹ</button>
+        <button onclick="_copyTplEditor()" style="${_tplTbBtn()}">کاپی</button>
+        <button onclick="_saveTplEditor('${t.id}')" style="${_tplTbBtn()}">محفوظ</button>
       </div>
-      <div style="font-size:15px;font-weight:800;">✏️ ${_tplEsc(t.title)}</div>
-      <button onclick="document.getElementById('tpl-editor-overlay').remove()" style="${_tplTbBtn()}">✕ بند</button>
+      <div style="font-size:15px;font-weight:800;">${_tplEsc(t.title)}</div>
+      <button onclick="document.getElementById('tpl-editor-overlay').remove()" style="${_tplTbBtn()}">بند</button>
     </div>
 
     <!-- Editable template name -->
@@ -572,7 +572,7 @@ function _copyTplEditor() {
   const area = document.getElementById('tpl-editable-area');
   if (!area) return;
   const text = area.innerText || '';
-  if (navigator.clipboard) navigator.clipboard.writeText(text).then(()=>showToast('📋 کاپی ہو گیا','success'));
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(()=>showToast('کاپی ہو گیا','success'));
   else showToast('کاپی دستیاب نہیں','error');
 }
 
@@ -582,14 +582,14 @@ async function _saveTplEditor(id) {
   if (!area) return;
   const content = area.innerText || '';
   const title = (titleInp?.value || '').trim();
-  if (!title) { showToast('⚠️ ٹمپلیٹ کا نام ضروری ہے','error'); return; }
+  if (!title) { showToast('ٹمپلیٹ کا نام ضروری ہے','error'); return; }
   try {
     await supabaseClient.from('templates').update({ title, content, updated_at:new Date().toISOString() }).eq('id', id);
     const t = _tplList.find(x=>x.id===id); if (t) { t.content = content; t.title = title; }
     try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) {}
-    showToast('✅ محفوظ ہو گیا','success');
+    showToast('محفوظ ہو گیا','success');
     _renderTplTable();
-  } catch(e) { showToast('❌ '+e.message,'error'); }
+  } catch(e) { showToast(''+e.message,'error'); }
 }
 
 // ── COPY (duplicate) ─────────────────────────────────────────
@@ -605,16 +605,16 @@ async function _copyTpl(id) {
     if (error) throw error;
     _tplList.unshift(data);
     try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) {}
-    showToast('✅ نقل بن گئی','success');
+    showToast('نقل بن گئی','success');
     _renderTplTable();
-  } catch(e) { showToast('❌ '+e.message,'error'); }
+  } catch(e) { showToast(''+e.message,'error'); }
 }
 
 // ── MOVE (change category) ───────────────────────────────────
 function _moveTpl(id) {
   const t = _tplList.find(x => x.id === id);
   if (!t) return;
-  openModal('📂 قسم تبدیل کریں', `
+  openModal('قسم تبدیل کریں', `
     <div style="direction:rtl;">
       <label class="form-label">نئی قسم منتخب کریں</label>
       <select class="form-input" id="tpl-move-cat" style="direction:rtl;">
@@ -634,15 +634,15 @@ async function _doMoveTpl(id) {
     const t = _tplList.find(x=>x.id===id); if (t) t.category = cat;
     try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) {}
     closeModal();
-    showToast('✅ منتقل ہو گیا','success');
+    showToast('منتقل ہو گیا','success');
     _renderTplTable();
-  } catch(e) { showToast('❌ '+e.message,'error'); }
+  } catch(e) { showToast(''+e.message,'error'); }
 }
 
 // ── DOWNLOAD ─────────────────────────────────────────────────
 function _downloadTpl(id) {
   const t = _tplList.find(x => x.id === id);
-  if (!t || !t.file_url) { showToast('❌ فائل دستیاب نہیں','error'); return; }
+  if (!t || !t.file_url) { showToast('فائل دستیاب نہیں','error'); return; }
   const a = document.createElement('a');
   a.href = t.file_url; a.download = t.file_display_name || t.file_name || t.title; a.target='_blank';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
@@ -668,9 +668,9 @@ function _deleteTpl(id) {
       await supabaseClient.from('templates').delete().eq('id', id);
       _tplList = _tplList.filter(x => x.id !== id);
       try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) {}
-      showToast('🗑️ حذف ہو گیا','info');
+      showToast('حذف ہو گیا','info');
       _renderTplTable();
-    } catch(e) { showToast('❌ '+e.message,'error'); }
+    } catch(e) { showToast(''+e.message,'error'); }
   };
   if (typeof confirmDelete === 'function') confirmDelete(t.title, doDelete);
   else if (confirm('حذف کریں؟')) doDelete();

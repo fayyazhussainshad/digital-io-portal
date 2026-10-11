@@ -575,3 +575,202 @@ test('theme-pro.css jur gayi (html + sw)', () => {
   assert.ok(read('index.html').includes('theme-pro.css'));
   assert.ok(read('sw.js').includes("'/theme-pro.css'"), 'offline par bhi milni chahiye');
 });
+
+/* ═══════════════════════════════════════════════════════════════
+   ROUND 4 — Topbar aur baqi safhon ka peshawarana look
+   ═══════════════════════════════════════════════════════════════ */
+
+test('topbar me #topbar-title MOJOOD hai (do cheezen is par chalti hain)', () => {
+  const h = read('index.html');
+  assert.ok(/id="topbar-title"/.test(h),
+    'app-core.js is me safhe ka naam likhta hai AUR setupRealtimeSync isi ke ' +
+    'matn se faisla karta hai ke mocaddmat/yaad-dihaniyan khuli hain ya nahi. ' +
+    'Ise hatane se afsar ko safhe ka naam nazar nahi aata aur live refresh band ho jata hai.');
+  const a = read('app-core.js');
+  assert.ok(/getElementById\('topbar-title'\)/.test(a), 'app-core isi id par likhta hai');
+});
+
+test('chhoti sakreen par safhe ka naam rehta hai, wordmark chhupta hai', () => {
+  const c = read('theme-pro.css');
+  const m = c.match(/@media \(max-width: 760px\) \{[\s\S]*?\n\}/);
+  assert.ok(m, '760px ka media block mojood ho');
+  assert.ok(/\.dio-tb-name\s*\{\s*display:\s*none/.test(m[0]),
+    'tang jagah par wordmark chhupe — safhe ka naam zyada zaroori hai');
+  assert.ok(!/\.dio-tb-sub\s*\{\s*display:\s*none/.test(m[0]),
+    'safhe ka naam (#topbar-title) kabhi na chhupe');
+});
+
+test('.card-title Urdu ke liye parha ja sakta hai', () => {
+  const c = read('theme-pro.css');
+  const m = c.match(/\.card-title,\s*\.section-title\s*\{[\s\S]*?\}/);
+  assert.ok(m, '.card-title ka qaida mojood ho');
+  assert.ok(/text-transform:\s*none/.test(m[0]),
+    'uppercase ne "OFFICER INFORMATION CONTACT ADMIN TO UPDATE" bana diya tha');
+  assert.ok(/letter-spacing:\s*0/.test(m[0]), 'letter-spacing Urdu ke jurey huroof toRta hai');
+  assert.ok(/font-size:\s*13px/.test(m[0]), '10px par Nastaleeq parhi nahi jati');
+});
+
+test('settings ka "تعیناتی محفوظ کریں" button toota hua nahi', () => {
+  const s = read('settings.js');
+  assert.ok(!/getElementById\('set-official-phone'\)\.value/.test(s),
+    'ye khana markup me MOJOOD NAHI — seedha .value lene par TypeError aata tha ' +
+    'aur poora save button kaam karna chhoR deta tha');
+  assert.ok(/const _v = id =>/.test(s), 'mehfooz helper se padha jaye');
+});
+
+test('court aur reminders ke header ka <div> theek band hota hai', () => {
+  for (const f of ['court.js', 'reminders.js']) {
+    const s = read(f);
+    assert.ok(!/direction:rtl;"><div style="display:flex;align-items:center;gap:10px;"/.test(s),
+      f + ': do <div> khulte the magar aik band hota tha — poora safha header ki ' +
+      'flex row me chala jata tha');
+    assert.ok(/<div class="page-header"/.test(f === 'court.js' ? s : s), f + ': saaf header ho');
+  }
+});
+
+test('safha-sazi me emoji nahi bache (dastavez wali files mustasna)', () => {
+  const EMO = /[⌚-⏺☀-➿⬀-⯿\u{1F000}-\u{1FAFF}]/u;
+  const pages = ['settings.js', 'court.js', 'reminders.js', 'suspects.js',
+                 'cases.js', 'templates.js', 'law-library.js', 'bin.js'];
+  const bad = [];
+  for (const f of pages) {
+    read(f).split('\n').forEach((l, i) => { if (EMO.test(l)) bad.push(f + ':' + (i + 1)); });
+  }
+  assert.strictEqual(bad.length, 0, 'emoji har device par alag dikhte hain. Mile: ' + bad.slice(0, 8).join(', '));
+});
+
+test('nishan wale button khali nahi — SVG + aria-label', () => {
+  for (const f of ['cases.js', 'templates.js', 'law-library.js', 'fivec.js']) {
+    const s = read(f);
+    const empty = s.match(/<button\b(?:[^<>]|<(?!\/?button))*?>\s*<\/button>/g) || [];
+    assert.strictEqual(empty.length, 0, f + ': khali button mila');
+    assert.ok(/aria-label="/.test(s), f + ': nishan wale button par aria-label chahiye');
+  }
+});
+
+test('dio-states ke nishan SVG hain aur icon bahar se nahi aata', () => {
+  const s = read('dio-states.js');
+  assert.ok(/var ICON_PATHS = \{/.test(s), 'nishan ka daftar mojood ho');
+  assert.ok(!/\+ _esc\(icon\) \+/.test(s),
+    'icon ab matn nahi — daftar se aata hai, is liye bahar ka HTML yahan nahi pahunchta');
+  assert.ok(/_icon\(icon, 44\)/.test(s), 'empty() daftar hi se nishan le');
+  assert.ok(/width:100%/.test(s), 'khali-halat ka dabba poori chauRai le — warna markaz me nahi aata');
+});
+
+test('SW ka version bump hua (qaida: har tabdeeli par lazmi)', () => {
+  const sw = read('sw.js');
+  const m = sw.match(/const CACHE_NAME = 'digital-io-v(\d+)'/);
+  assert.ok(m, 'CACHE_NAME mojood ho');
+  assert.ok(Number(m[1]) >= 495, 'v495 ya us se aage hona chahiye, mila: v' + m[1]);
+  assert.ok(sw.includes('SERVICE WORKER v' + m[1]), 'header ka comment bhi wahi version dikhaye');
+});
+
+test('FIR/CNIC jaise angrezi adad LTR khane me hain (RTL me ulat jate the)', () => {
+  const c = read('cases.js');
+  assert.ok(/unicode-bidi:isolate/.test(c),
+    'RTL me "205/2025" ulta "2025/205" parha jata tha — isolate zaroori hai');
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   ROUND 5 — Afsar ke bataye huay 5 nuqat
+   ═══════════════════════════════════════════════════════════════ */
+
+test('1) "واپس" har jagah AIK hi shakl aur AIK hi taraf', () => {
+  const h = read('index.html');
+  assert.ok(/id="dio-back-btn"[\s\S]{0,400}class="topnav-btn dio-backbtn"|class="topnav-btn dio-backbtn"[\s\S]{0,200}id="dio-back-btn"/.test(h)
+            || /id="dio-back-btn" class="topnav-btn dio-backbtn"/.test(h),
+    'topbar ka button `dio-backbtn` class istemal kare');
+  assert.ok(!/margin-right:auto[^"]*"[^>]*id="dio-back-btn"|id="dio-back-btn"[^>]*margin-right:auto/.test(h),
+    'purana `margin-right:auto` (baain kona) na bacha ho');
+  assert.ok(/<span>واپس<\/span>/.test(h), 'sirf teer nahi — lafz "واپس" bhi ho');
+  // dono overlay bhi wahi class istemal karen
+  for (const f of ['doc-viewer.js', 'misal-docs.js']) {
+    const s = read(f);
+    assert.ok(/class="dio-backbtn"/.test(s), f + ': wahi class ho');
+    assert.ok(!/font-size:18px;font-weight:900;line-height:1;direction:ltr;">←</.test(s),
+      f + ': purana gol "←" wala button na bacha ho');
+  }
+  const c = read('theme-pro.css');
+  assert.ok(/\.dio-backbtn\s*\{/.test(c), 'shakl aik hi jagah se aaye');
+});
+
+test('2) mic — desktop par sust hone ki teeno wajuhat khatam', () => {
+  const m = read('global-mic.js');
+  assert.ok(/recog\.interimResults = true/.test(m),
+    'adhoora matn foran dikhe — warna afsar ko lagta hai mic chal hi nahi raha');
+  assert.ok(/id="global-mic-live"|'global-mic-live'/.test(m), 'sunta hua matn dikhane wali patti ho');
+  // onend par khud-ba-khud dobara chale
+  assert.ok(/if \(!wantOn\) \{ setBtn\(false\); say\(''\); return; \}/.test(m),
+    'sirf afsar ke band karne par ruke');
+  assert.ok(/setTimeout\(function \(\) \{ if \(wantOn\) spin\(\); \}, 180\);/.test(m),
+    'Chrome khud session band kare to chupke se dobara chale');
+  // waqti ghalti par band na ho
+  assert.ok(/code === 'not-allowed' \|\| code === 'service-not-allowed'/.test(m),
+    'sirf ijazat waali ghalti par band ho, no-speech/network par nahi');
+  assert.ok(/restarts > 5/.test(m), 'pe-dar-pe nakami par toofan se bachao ho');
+  // PAKKA matn hi dastavez mein
+  assert.ok(/if \(e\.results\[i\]\.isFinal\)/.test(m), 'aadha lafz zimni mein na jaye');
+  assert.ok(!/[\u{1F300}-\u{1FAFF}]/u.test(m), 'button par emoji nahi, SVG ho');
+});
+
+test('3) talaash likhte waqt cursor na jaye', () => {
+  const c = read('cases.js');
+  assert.ok(!/oninput="clearTimeout\(window\._csTmr\);window\._csTmr=setTimeout\(\(\)=>renderCases/.test(c),
+    'purana `oninput` poora safha dobara banata tha — do-teen harf ke baad cursor nikal jata tha');
+  assert.ok(/oninput="_csOnSearch\(this\.value\)"/.test(c), 'ab sirf qatarein badlen');
+  assert.ok(/function _csRefreshRows\(\)/.test(c), 'qatarein alag se badalne wala function ho');
+  assert.ok(/id="cs-rows"/.test(c), 'tbody ki apni id ho');
+
+  const a = read('data-api.js');
+  assert.ok(/document\.activeElement\.id === 'case-search'/.test(a),
+    'afsar likh raha ho to background refresh kuch na chheRe');
+
+  const s = read('search.js');
+  assert.ok(/if \(q\.length < 3\)/.test(s), 'aik-do harf par server na chale');
+  assert.ok(/_keepFocus/.test(s), 'natija aane par cursor khane hi mein rahe');
+});
+
+test('4) mocaddmat ka position filter apni jagah qaim rahe', () => {
+  const a = read('data-api.js');
+  // Ye asal kharabi thi: background refresh `renderCases(c)` bina daleel
+  // bulata tha, jis se afsar ka chuna hua filter saaf ho jata tha.
+  assert.ok(!/\n\s*renderCases\(c\);\n/.test(a) || /_csRefreshRows\(\);/.test(a),
+    'background refresh filter na toRe');
+  assert.ok(/typeof _csRefreshRows === 'function'/.test(a), 'sirf qatarein refresh hon');
+
+  const c = read('cases.js');
+  assert.ok(/window\._csFilter/.test(c), 'filter ki halat yaad rahe');
+  assert.ok(/fStatus\s*=\s*\(fStatus\s*===\s*undefined/.test(c),
+    'daleel na di jaye to PICHHLI halat chale, saaf na ho');
+  assert.ok(/onchange="_csOnStatus\(this\.value\)"/.test(c), 'filter apne handler se chale');
+
+  const ac = read('app-core.js');
+  assert.ok(/if \(_busy\) return;/.test(ac), 'realtime sync likhte waqt safha dobara na banaye');
+});
+
+test('5) "+ نیا اندراج" har safhe par DAAIN taraf', () => {
+  const css = read('theme-pro.css');
+  const m = css.match(/\.dio-add-btn\s*\{[\s\S]*?\}/);
+  assert.ok(m, '.dio-add-btn ka qaida mojood ho');
+  assert.ok(/order:\s*-1\s*!important/.test(m[0]), 'RTL mein sab se pehle = daain sira');
+  assert.ok(/margin-inline-end:\s*0\s*!important/.test(m[0]), 'koi auto margin ise baain na dhakele');
+
+  // kisi safhe mein apna alag qaida na bacha ho
+  for (const f of ['cases.js', 'suspects.js', 'admin.js', 'staff-v2.js', 'court.js', 'reminders.js']) {
+    const s = read(f);
+    const bad = (s.match(/class="[^"]*dio-add-btn[^"]*"\s+style="[^"]*(?:order|margin-left:auto)[^"]*"/g) || []);
+    assert.strictEqual(bad.length, 0, f + ': apna alag qaida CSS se larta hai — ' + bad.join(', '));
+  }
+  // court/reminders ab poori chauRai len (warna button andar chala jata tha)
+  assert.ok(!/id="court-root" style="max-width:900px/.test(read('court.js')),
+    'court poori chauRai le — warna button 190px andar reh jata tha');
+  assert.ok(!/max-width:800px;margin:0 auto;" id="rem-root"/.test(read('reminders.js')),
+    'reminders poori chauRai le');
+});
+
+test('SW version phir bump hua', () => {
+  const sw = read('sw.js');
+  const m = sw.match(/const CACHE_NAME = 'digital-io-v(\d+)'/);
+  assert.ok(m && Number(m[1]) >= 496, 'v496 ya aage, mila: v' + (m ? m[1] : '?'));
+  assert.ok(sw.includes("'/global-mic.js'"), 'mic offline par bhi mile');
+});

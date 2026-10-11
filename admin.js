@@ -38,7 +38,7 @@ async function renderAdmin(container) {
   container.innerHTML = `
   <div style="max-width:1000px;margin:0 auto;" id="admin-root" data-admin-page="1">
     
-    ${(window.DIO && DIO.states) ? DIO.states.loading('انتظامیہ صفحہ لوڈ ہو رہا ہے') : '<div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>'}
+    ${(window.DIO && DIO.states) ? DIO.states.loading('انتظامیہ صفحہ لوڈ ہو رہا ہے') : '<div style="text-align:center;padding:30px;color:var(--text-muted);">لوڈ ہو رہا ہے...</div>'}
   </div>`;
   await _buildAdmin(role);
 }
@@ -82,11 +82,11 @@ async function _buildAdmin(role) {
     <div>
       <div style="font-size:18px;font-weight:800;color:#fff;">Admin Panel</div>
       <div style="font-size:12px;color:rgba(255,255,255,0.6);">
-        ${role === 'superadmin' ? '👑 Super Admin' : '🏛️ SHO / Station Admin'} — ${currentOfficer?.station || ''} · ${currentOfficer?.district || ''}
+        ${role === 'superadmin' ? 'Super Admin' : 'SHO / Station Admin'} — ${currentOfficer?.station || ''} · ${currentOfficer?.district || ''}
       </div>
     </div>
     <div style="margin-inline-start:auto;">
-      <button class="btn btn-secondary btn-sm" onclick="_adminRefresh()">🔄 Refresh</button>
+      <button class="btn btn-secondary btn-sm" onclick="_adminRefresh()">Refresh</button>
     </div>
   </div>
 
@@ -108,17 +108,17 @@ async function _buildAdmin(role) {
   <!-- Tabs -->
   <div style="display:flex;gap:6px;direction:rtl;margin-bottom:14px;flex-wrap:wrap;">
     ${[
-      ['pending','⏳ زیر التواء درخواستیں', pending.length],
-      ['officers','👮 افسران', officers.length],
-      ['cases','📁 تمام مقدمات', total_cases],
-      ['activity','📋 سرگرمی لاگ', ''],
-      ['approvals','✅ منظوریاں', ''],
-      ['health','🩺 ڈیٹا صحت', ''],
-      ['errors','⚠️ خرابیاں', ''],
-      ['trust','🔒 حفاظتی مرکز', ''],
-      ['usage','📊 استعمال', ''],
-      ['reports','📊 رپورٹ', ''],
-      ['subscriptions','💳 سبسکرپشن', ''],
+      ['pending','زیر التواء درخواستیں', pending.length],
+      ['officers','افسران', officers.length],
+      ['cases','تمام مقدمات', total_cases],
+      ['activity','سرگرمی لاگ', ''],
+      ['approvals','منظوریاں', ''],
+      ['health','ڈیٹا صحت', ''],
+      ['errors','خرابیاں', ''],
+      ['trust','حفاظتی مرکز', ''],
+      ['usage','استعمال', ''],
+      ['reports','رپورٹ', ''],
+      ['subscriptions','سبسکرپشن', ''],
     ].map(([k,l,b],i) => `
       <button id="atab-${k}" onclick="_adminTab('${k}')"
         class="btn ${i===0?'btn-primary':'btn-secondary'}"
@@ -174,7 +174,7 @@ function _renderPendingTab(pending) {
     </div>`;
 
   return `<div class="card">
-    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;">⏳ نئے افسران کی درخواستیں (${pending.length})</div>
+    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;">نئے افسران کی درخواستیں (${pending.length})</div>
     ${pending.map(p => `
     <div id="pending-card-${p.id}" style="background:var(--bg-secondary);border:1px solid var(--amber);border-radius:10px;padding:14px;margin-bottom:10px;">
       <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
@@ -184,19 +184,19 @@ function _renderPendingTab(pending) {
         <div style="flex:1;">
           <div style="font-size:14px;font-weight:700;">${esc(p.full_name)||'—'}</div>
           <div style="font-size:12px;color:var(--text-muted);">
-            📧 ${esc(p.email)||'—'} &nbsp;·&nbsp; 🏷️ ${esc(p.badge_number)||'—'}
+            ${esc(p.email)||'—'} &nbsp;·&nbsp; 🏷️ ${esc(p.badge_number)||'—'}
           </div>
           <div style="font-size:12px;color:var(--text-secondary);">
-            🏛️ ${esc(p.station)||'—'} · ${esc(p.district)||'—'} &nbsp;·&nbsp; 👮 ${esc(p.designation)||'—'}
+            ${esc(p.station)||'—'} · ${esc(p.district)||'—'} &nbsp;·&nbsp; 👮 ${esc(p.designation)||'—'}
           </div>
-          ${p.cnic ? `<div style="font-size:12px;color:var(--text-secondary);" dir="ltr">🆔 ${esc(p.cnic)}</div>` : ''}
+          ${p.cnic ? `<div style="font-size:12px;color:var(--text-secondary);" dir="ltr">${esc(p.cnic)}</div>` : ''}
           <div style="font-size:10px;color:var(--text-faint);margin-top:4px;">
             درخواست: ${formatDate(p.created_at)}
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;">
-          <button class="btn btn-primary btn-sm" onclick="_adminApprove('${p.id}','${esc(p.full_name||'')}')">✅ منظور</button>
-          <button class="btn btn-danger btn-sm" onclick="_adminRejectReg('${p.id}','${esc(p.full_name||'')}')">❌ رد</button>
+          <button class="btn btn-primary btn-sm" onclick="_adminApprove('${p.id}','${esc(p.full_name||'')}')">منظور</button>
+          <button class="btn btn-danger btn-sm" onclick="_adminRejectReg('${p.id}','${esc(p.full_name||'')}')">رد</button>
         </div>
       </div>
     </div>`).join('')}
@@ -207,8 +207,8 @@ function _renderPendingTab(pending) {
 function _renderOfficersTab(officers, role) {
   return `<div class="card" style="padding:0;overflow:hidden;">
     <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
-      <div style="font-size:13px;font-weight:700;color:var(--accent);">👮 افسران (${officers.length})</div>
-      ${role==='superadmin'?`<button class="btn btn-primary btn-sm dio-add-btn" style="order:-1;" onclick="_adminAddOfficer()">+ افسر شامل کریں</button>`:''}
+      <div style="font-size:13px;font-weight:700;color:var(--accent);">افسران (${officers.length})</div>
+      ${role==='superadmin'?`<button class="btn btn-primary btn-sm dio-add-btn" onclick="_adminAddOfficer()">+ افسر شامل کریں</button>`:''}
     </div>
     <div style="overflow-x:auto;">
     <table class="data-table" style="width:100%;">
@@ -244,13 +244,13 @@ function _renderOfficersTab(officers, role) {
             </td>
             <td style="text-align:center;font-weight:700;color:var(--accent);">${cases}</td>
             <td style="white-space:nowrap;">
-              <button class="btn btn-secondary btn-sm" onclick="_adminViewOfficer('${o.id}')">👁️</button>
-              <button class="btn btn-secondary btn-sm" onclick="_adminEditOfficer('${o.id}')" title="معلومات ترمیم کریں">✏️</button>
+              <button title="دیکھیں" aria-label="دیکھیں" class="btn btn-secondary btn-sm" onclick="_adminViewOfficer('${o.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg></button>
+              <button aria-label="معلومات ترمیم کریں" class="btn btn-secondary btn-sm" onclick="_adminEditOfficer('${o.id}')" title="معلومات ترمیم کریں"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>
               ${(o.is_suspended || o.suspended)
-                ? `<button class="btn btn-primary btn-sm" onclick="_adminUnsuspend('${o.id}','${esc(o.full_name||'')}')">✅</button>`
-                : `<button class="btn btn-danger btn-sm" onclick="_adminSuspend('${o.id}','${esc(o.full_name||'')}')">🚫</button>`}
+                ? `<button title="منظور" aria-label="منظور" class="btn btn-primary btn-sm" onclick="_adminUnsuspend('${o.id}','${esc(o.full_name||'')}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4.5 12.5l5 5 10-11"/></svg></button>`
+                : `<button title="معطل" aria-label="معطل" class="btn btn-danger btn-sm" onclick="_adminSuspend('${o.id}','${esc(o.full_name||'')}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/></svg></button>`}
               ${!o.is_approved
-                ? `<button class="btn btn-primary btn-sm" onclick="_adminApproveOfficer('${o.id}')">✅ منظور</button>`:''}
+                ? `<button class="btn btn-primary btn-sm" onclick="_adminApproveOfficer('${o.id}')">منظور</button>`:''}
             </td>
           </tr>`;
         }).join('')}
@@ -264,7 +264,7 @@ function _renderOfficersTab(officers, role) {
 function _renderAllCasesTab(cases) {
   return `<div class="card" style="padding:0;overflow:hidden;">
     <div style="padding:14px 16px;border-bottom:1px solid var(--border);">
-      <div style="font-size:13px;font-weight:700;color:var(--accent);">📁 تمام مقدمات (${cases.length})</div>
+      <div style="font-size:13px;font-weight:700;color:var(--accent);">تمام مقدمات (${cases.length})</div>
     </div>
     <div style="overflow-x:auto;">
     <table class="data-table" style="width:100%;min-width:700px;">
@@ -293,7 +293,7 @@ function _renderAllCasesTab(cases) {
 // ── ACTIVITY LOG ──────────────────────────────────────────────
 function _renderActivityTab(activity) {
   return `<div class="card">
-    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;">📋 حالیہ سرگرمی</div>
+    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;">حالیہ سرگرمی</div>
     ${activity.length ? activity.map(a => {
       const officer = (window._adminData?.officers||[]).find(o=>o.id===a.officer_id);
       return `<div style="display:flex;gap:10px;direction:rtl;padding:8px 0;border-bottom:1px solid var(--border);align-items:flex-start;">
@@ -336,7 +336,7 @@ function _renderReportsTab(officers, cases) {
   <!-- Per officer table -->
   <div class="card" style="padding:0;overflow:hidden;">
     <div style="padding:12px 16px;border-bottom:1px solid var(--border);">
-      <div style="font-size:13px;font-weight:700;color:var(--accent);">📊 افسر وار کارکردگی</div>
+      <div style="font-size:13px;font-weight:700;color:var(--accent);">افسر وار کارکردگی</div>
     </div>
     <div style="overflow-x:auto;">
     <table class="data-table" style="width:100%;">
@@ -362,7 +362,7 @@ function _renderReportsTab(officers, cases) {
 
   <!-- Print report -->
   <div style="text-align:left;margin-top:12px;">
-    <button class="btn btn-primary" onclick="_adminPrintReport()">🖨️ رپورٹ پرنٹ کریں</button>
+    <button class="btn btn-primary" onclick="_adminPrintReport()">رپورٹ پرنٹ کریں</button>
   </div>`;
 }
 
@@ -390,10 +390,10 @@ async function _adminGetActivity() {
 
 // ── ACTIONS ───────────────────────────────────────────────────
 async function _adminApprove(regId, name) {
-  openModal('✅ درخواست منظور کریں',
+  openModal('درخواست منظور کریں',
     `<p style="color:var(--text-secondary);">کیا آپ <b style="color:var(--green);">${name}</b> کی درخواست منظور کرنا چاہتے ہیں؟</p>`,
     `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-     <button class="btn btn-primary" onclick="closeModal();_doApproveReg('${regId}')">✅ منظور</button>`
+     <button class="btn btn-primary" onclick="closeModal();_doApproveReg('${regId}')">منظور</button>`
   );
 }
 
@@ -405,7 +405,7 @@ async function _doApproveReg(regId) {
       .update({ is_approved: true }).eq('id', regId).select('id,is_approved');
     if (error) throw error;
     if (!data || !data.length || data[0].is_approved !== true) {
-      showToast('❌ منظوری محفوظ نہیں ہوئی — ڈیٹابیس اجازت (RLS) کا مسئلہ ہے', 'error', 6000);
+      showToast('منظوری محفوظ نہیں ہوئی — ڈیٹابیس اجازت (RLS) کا مسئلہ ہے', 'error', 6000);
       return;
     }
     // Remove card from DOM immediately (no wait for reload)
@@ -418,16 +418,16 @@ async function _doApproveReg(regId) {
         metadata: { source: 'pending_registration' }
       });
     } catch (_) {}
-    showToast('✅ درخواست منظور ہو گئی — افسر اب لاگ ان کر سکتا ہے', 'success');
+    showToast('درخواست منظور ہو گئی — افسر اب لاگ ان کر سکتا ہے', 'success');
     _adminRefresh();
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+  } catch(e) { showToast('' + e.message, 'error'); }
 }
 
 async function _adminRejectReg(regId, name) {
-  openModal('❌ درخواست رد کریں',
+  openModal('درخواست رد کریں',
     `<p style="color:var(--red);">کیا آپ <b>${name}</b> کی درخواست رد کرنا چاہتے ہیں؟</p>`,
     `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-     <button class="btn btn-danger" onclick="closeModal();_doRejectReg('${regId}')">❌ رد کریں</button>`
+     <button class="btn btn-danger" onclick="closeModal();_doRejectReg('${regId}')">رد کریں</button>`
   );
 }
 
@@ -446,7 +446,7 @@ async function _doRejectReg(regId) {
   // Remove card from DOM immediately
   const card = document.getElementById('pending-card-'+regId);
   if (card) card.remove();
-  showToast('❌ درخواست رد کر دی گئی', 'info');
+  showToast('درخواست رد کر دی گئی', 'info');
   _adminRefresh();
 }
 
@@ -454,22 +454,22 @@ async function _adminApproveOfficer(officerId) {
   const { data, error } = await supabaseClient.from('officers')
     .update({ is_approved: true }).eq('id', officerId).select('id,is_approved');
   if (error || !data || !data.length || data[0].is_approved !== true) {
-    showToast('❌ منظوری محفوظ نہیں ہوئی — ڈیٹابیس اجازت (RLS) کا مسئلہ ہے', 'error', 6000);
+    showToast('منظوری محفوظ نہیں ہوئی — ڈیٹابیس اجازت (RLS) کا مسئلہ ہے', 'error', 6000);
     return;
   }
-  showToast('✅ افسر منظور', 'success');
+  showToast('افسر منظور', 'success');
   _adminRefresh();
 }
 
 async function _adminSuspend(officerId, name) {
-  openModal('🚫 افسر معطل کریں',
+  openModal('افسر معطل کریں',
     `<div>
       <p style="color:var(--red);">کیا آپ <b>${name}</b> کو معطل کرنا چاہتے ہیں؟</p>
       <label class="form-label" style="margin-top:10px;">وجہ (ضروری)</label>
       <textarea class="form-input" id="suspend-reason" rows="3" placeholder="معطلی کی وجہ لکھیں..."></textarea>
     </div>`,
     `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-     <button class="btn btn-danger" onclick="closeModal();_doSuspend('${officerId}')">🚫 معطل کریں</button>`
+     <button class="btn btn-danger" onclick="closeModal();_doSuspend('${officerId}')">معطل کریں</button>`
   );
 }
 
@@ -479,22 +479,22 @@ async function _doSuspend(officerId) {
   const { error } = await supabaseClient.rpc('admin_set_officer_suspension', {
     p_officer_id: officerId, p_suspended: true, p_reason: reason
   });
-  if (error) { showToast('❌ ' + error.message, 'error'); return; }
+  if (error) { showToast('' + error.message, 'error'); return; }
   // AUDIT — officer.suspended (Phase 4B). Reason plain-text — koi sensitive redaction nahi.
   try {
     if (window.DIO && DIO.audit) DIO.audit.log('officer.suspended', 'officer', officerId, {
       after: { is_suspended: true, suspension_reason: reason }
     });
   } catch (_) {}
-  showToast('🚫 افسر معطل کر دیا گیا', 'info');
+  showToast('افسر معطل کر دیا گیا', 'info');
   _adminRefresh();
 }
 
 async function _adminUnsuspend(officerId, name) {
-  openModal('✅ معطلی ختم کریں',
+  openModal('معطلی ختم کریں',
     `<p>کیا آپ <b style="color:var(--green);">${name}</b> کی معطلی ختم کرنا چاہتے ہیں؟</p>`,
     `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-     <button class="btn btn-primary" onclick="closeModal();_doUnsuspend('${officerId}')">✅ بحال کریں</button>`
+     <button class="btn btn-primary" onclick="closeModal();_doUnsuspend('${officerId}')">بحال کریں</button>`
   );
 }
 
@@ -502,14 +502,14 @@ async function _doUnsuspend(officerId) {
   const { error } = await supabaseClient.rpc('admin_set_officer_suspension', {
     p_officer_id: officerId, p_suspended: false, p_reason: null
   });
-  if (error) { showToast('❌ ' + error.message, 'error'); return; }
+  if (error) { showToast('' + error.message, 'error'); return; }
   // AUDIT — officer.unsuspended (Phase 4B)
   try {
     if (window.DIO && DIO.audit) DIO.audit.log('officer.unsuspended', 'officer', officerId, {
       after: { is_suspended: false }
     });
   } catch (_) {}
-  showToast('✅ افسر بحال', 'success');
+  showToast('افسر بحال', 'success');
   _adminRefresh();
 }
 
@@ -534,9 +534,9 @@ async function _adminChangeRole(officerId, newRole) {
         });
       }
     } catch (_) {}
-    showToast(`✅ Role تبدیل: ${newRole}`, 'success');
+    showToast(`Role تبدیل: ${newRole}`, 'success');
     _adminRefresh();
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+  } catch(e) { showToast('' + e.message, 'error'); }
 }
 
 // ── DATA HEALTH TAB ───────────────────────────────────────────
@@ -545,7 +545,7 @@ async function _adminChangeRole(officerId, newRole) {
 async function _renderHealthTab(el) {
   el.innerHTML = (window.DIO && DIO.states)
     ? DIO.states.loading('ڈیٹا کی صحت جانچی جا رہی ہے')
-    : `<div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>`;
+    : `<div style="text-align:center;padding:30px;color:var(--text-muted);">لوڈ ہو رہا ہے...</div>`;
 
   const cases = (window._adminData && window._adminData.cases) || [];
 
@@ -563,12 +563,12 @@ async function _renderHealthTab(el) {
               : checks.some(c=>c.severity==='warn') ? 'warn' : 'ok';
   const headColor = worst==='error' ? 'var(--red)' : worst==='warn' ? 'var(--amber)' : 'var(--green)';
   const headMsg   = worst==='ok'
-    ? '✅ کوئی مسئلہ نہیں ملا — ڈیٹا صحت مند ہے'
-    : `⚠️ ${problemTotal} ممکنہ مسائل کی نشاندہی ہوئی — تفصیل نیچے`;
+    ? 'کوئی مسئلہ نہیں ملا — ڈیٹا صحت مند ہے'
+    : `${problemTotal} ممکنہ مسائل کی نشاندہی ہوئی — تفصیل نیچے`;
 
   el.innerHTML = `
   <div class="card" style="direction:rtl;border-right:4px solid ${headColor};">
-    <div style="font-size:14px;font-weight:800;color:${headColor};">🩺 ڈیٹا صحت کی جانچ</div>
+    <div style="font-size:14px;font-weight:800;color:${headColor};">ڈیٹا صحت کی جانچ</div>
     <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">${headMsg}</div>
     <div style="font-size:10px;color:var(--text-faint);margin-top:6px;">صرف پڑھنے کے لیے — یہ صفحہ کوئی ڈیٹا تبدیل یا حذف نہیں کرتا</div>
   </div>
@@ -723,11 +723,11 @@ function _renderErrorsTab(el) {
   <div class="card" style="direction:rtl;">
     <div style="display:flex;align-items:center;gap:8px;">
       <span style="font-size:15px;font-weight:800;color:${rows.length ? 'var(--amber,#f59e0b)' : 'var(--green)'};">
-        ⚠️ خرابی لاگ (${rows.length})
+        خرابی لاگ (${rows.length})
       </span>
       <span style="margin-inline-start:auto;display:flex;gap:6px;">
-        <button class="btn btn-secondary btn-sm" onclick="_adminRefreshErrors()">🔄 تازہ</button>
-        ${rows.length ? `<button class="btn btn-secondary btn-sm" onclick="_adminClearErrors()">🗑️ صاف</button>` : ''}
+        <button class="btn btn-secondary btn-sm" onclick="_adminRefreshErrors()">تازہ</button>
+        ${rows.length ? `<button class="btn btn-secondary btn-sm" onclick="_adminClearErrors()">صاف</button>` : ''}
       </span>
     </div>
     <div style="font-size:10px;color:var(--text-faint);margin-top:6px;">
@@ -772,7 +772,7 @@ function _adminClearErrors() {
 async function _renderApprovalsTab(el) {
   el.innerHTML = (window.DIO && DIO.states)
     ? DIO.states.loading('منظوری کی درخواستیں لوڈ ہو رہی ہیں')
-    : `<div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>`;
+    : `<div style="text-align:center;padding:30px;color:var(--text-muted);">لوڈ ہو رہا ہے...</div>`;
 
   if (!(window.DIO && DIO.approvals)) {
     el.innerHTML = `<div class="card" style="padding:24px;text-align:center;color:var(--text-muted);direction:rtl;">
@@ -795,7 +795,7 @@ async function _renderApprovalsTab(el) {
   el.innerHTML = `
   <div class="card" style="direction:rtl;">
     <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;">
-      ✅ زیرِ منظوری دستاویزات (${rows.length})
+      زیرِ منظوری دستاویزات (${rows.length})
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;">
       ${rows.map(r => `
@@ -809,8 +809,8 @@ async function _renderApprovalsTab(el) {
             بھیجنے والا: ${_hgAdminEsc(r.requested_by_name || '—')}
           </div>
           <div style="display:flex;gap:8px;margin-top:10px;">
-            <button class="btn btn-primary btn-sm" onclick="_adminDecideDoc('${r.id}','approved')" style="font-family:'Jameel Noori Nastaleeq',serif;">✅ منظور</button>
-            <button class="btn btn-secondary btn-sm" onclick="_adminDecideDoc('${r.id}','rejected')" style="font-family:'Jameel Noori Nastaleeq',serif;">❌ مسترد</button>
+            <button class="btn btn-primary btn-sm" onclick="_adminDecideDoc('${r.id}','approved')" style="font-family:'Jameel Noori Nastaleeq',serif;">منظور</button>
+            <button class="btn btn-secondary btn-sm" onclick="_adminDecideDoc('${r.id}','rejected')" style="font-family:'Jameel Noori Nastaleeq',serif;">مسترد</button>
           </div>
         </div>`).join('')}
     </div>
@@ -826,8 +826,8 @@ async function _adminDecideDoc(id, status) {
   }
   const ok = await DIO.approvals.decide(id, status, note);
   if (typeof showToast === 'function') {
-    showToast(ok ? (status === 'approved' ? '✅ منظور کر دیا' : '❌ مسترد کر دیا')
-                 : '⚠️ فیصلہ محفوظ نہیں ہوا — شاید آپ کو اجازت نہیں (صرف SHO/ایڈمن)', ok ? 'success' : 'error', ok ? 3000 : 6000);
+    showToast(ok ? (status === 'approved' ? 'منظور کر دیا' : 'مسترد کر دیا')
+                 : 'فیصلہ محفوظ نہیں ہوا — شاید آپ کو اجازت نہیں (صرف SHO/ایڈمن)', ok ? 'success' : 'error', ok ? 3000 : 6000);
   }
   if (ok) { const el = document.getElementById('admin-tab-content'); if (el) _renderApprovalsTab(el); }
 }
@@ -844,7 +844,7 @@ function _hgAdminEsc(s) {
 async function _renderTrustTab(el) {
   el.innerHTML = (window.DIO && DIO.states)
     ? DIO.states.loading('حفاظتی معلومات لوڈ ہو رہی ہیں')
-    : `<div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>`;
+    : `<div style="text-align:center;padding:30px;color:var(--text-muted);">لوڈ ہو رہا ہے...</div>`;
 
   // Live counts (each independent, silent-fail → null)
   const [auditCount, custodyCount, binCount] = await Promise.all([
@@ -912,7 +912,7 @@ async function _renderTrustTab(el) {
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
           <span style="font-size:18px;">${p.icon}</span>
           <span style="font-size:13px;font-weight:700;flex:1;">${p.title}</span>
-          <span style="font-size:10px;background:rgba(34,197,94,0.15);color:var(--green);border-radius:10px;padding:2px 8px;font-weight:700;white-space:nowrap;">✓ ${p.tag}</span>
+          <span style="font-size:10px;background:rgba(34,197,94,0.15);color:var(--green);border-radius:10px;padding:2px 8px;font-weight:700;white-space:nowrap;">${p.tag}</span>
         </div>
         <div style="font-size:11px;color:var(--text-secondary);line-height:1.7;">${p.body}</div>
       </div>`).join('')}
@@ -948,7 +948,7 @@ const _PAGE_NAMES = {
 };
 
 async function _renderUsageTab(el) {
-  el.innerHTML = (window.DIO && DIO.states) ? DIO.states.loading('استعمال کی تفصیل لوڈ ہو رہی ہے') : `<div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>`;
+  el.innerHTML = (window.DIO && DIO.states) ? DIO.states.loading('استعمال کی تفصیل لوڈ ہو رہی ہے') : `<div style="text-align:center;padding:30px;color:var(--text-muted);">لوڈ ہو رہا ہے...</div>`;
   try {
     // Aggregate usage across all officers
     const { data } = await supabaseClient.from('usage_stats').select('page,count');
@@ -969,7 +969,7 @@ async function _renderUsageTab(el) {
 
     el.innerHTML = `
     <div class="card" style="direction:rtl;">
-      <div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:4px;">📊 سب سے زیادہ استعمال ہونے والے صفحات</div>
+      <div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:4px;">سب سے زیادہ استعمال ہونے والے صفحات</div>
       <div style="font-size:11px;color:var(--text-muted);margin-bottom:16px;">کل ${grandTotal} مرتبہ · سب سے اوپر والے کو نمایاں کریں تاکہ افسران کو آسانی ہو</div>
       <div style="display:flex;flex-direction:column;gap:10px;">
         ${sorted.map(([page,count],i)=>{
@@ -993,20 +993,20 @@ async function _renderUsageTab(el) {
         }).join('')}
       </div>
       <div style="margin-top:16px;padding:10px;background:var(--bg-secondary);border-radius:8px;font-size:11px;color:var(--text-muted);">
-        💡 تجویز: سب سے اوپر والے 3 صفحات کو ڈیش بورڈ یا Quick Actions میں نمایاں رکھیں تاکہ افسران کو آسانی ہو۔
+        تجویز: سب سے اوپر والے 3 صفحات کو ڈیش بورڈ یا Quick Actions میں نمایاں رکھیں تاکہ افسران کو آسانی ہو۔
       </div>
     </div>`;
   } catch(e) {
-    el.innerHTML = `<div class="card" style="padding:20px;color:var(--red);">❌ ${e.message}</div>`;
+    el.innerHTML = `<div class="card" style="padding:20px;color:var(--red);">${e.message}</div>`;
   }
 }
 
 // ── ADMIN: EDIT OFFICER INFO ──────────────────────────────────
 async function _adminEditOfficer(officerId) {
   const o = (window._adminData?.officers||[]).find(x => x.id === officerId);
-  if (!o) { showToast('❌ افسر نہیں ملا', 'error'); return; }
+  if (!o) { showToast('افسر نہیں ملا', 'error'); return; }
 
-  openModal('✏️ افسر کی معلومات ترمیم کریں', `
+  openModal('افسر کی معلومات ترمیم کریں', `
     <div style="display:flex;flex-direction:column;gap:12px;direction:rtl;">
       <div>
         <label class="form-label">پورا نام</label>
@@ -1035,7 +1035,7 @@ async function _adminEditOfficer(officerId) {
     </div>
   `, `
     <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-    <button class="btn btn-primary" onclick="_adminSaveOfficer('${officerId}')">💾 محفوظ کریں</button>
+    <button class="btn btn-primary" onclick="_adminSaveOfficer('${officerId}')">محفوظ کریں</button>
   `);
 }
 
@@ -1052,16 +1052,16 @@ async function _adminSaveOfficer(officerId) {
     const { error } = await supabaseClient.from('officers').update(updates).eq('id', officerId);
     if (error) throw error;
     closeModal();
-    showToast('✅ افسر کی معلومات اپ ڈیٹ ہو گئیں', 'success');
+    showToast('افسر کی معلومات اپ ڈیٹ ہو گئیں', 'success');
     showPage('admin', document.querySelector('.nav-item.active'));
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+  } catch(e) { showToast('' + e.message, 'error'); }
 }
 
 async function _adminViewOfficer(officerId) {
   const o = (window._adminData?.officers||[]).find(x=>x.id===officerId);
   if (!o) return;
   const cases = (window._adminData?.cases||[]).filter(c=>c.officer_id===officerId);
-  openModal(`👮 ${esc(o.full_name)||'—'}`,
+  openModal(`${esc(o.full_name)||'—'}`,
     `<div style="font-size:13px;line-height:2.2;">
       <div>📧 <b>Email:</b> ${o.email||'—'}</div>
       <div>🏷️ <b>Badge:</b> ${esc(o.badge_number)||'—'}</div>
@@ -1109,8 +1109,8 @@ async function _doAddOfficer() {
   const role    = document.getElementById('ao-role')?.value;
   const pass    = document.getElementById('ao-pass')?.value;
 
-  if (!name||!email||!pass) { showToast('⚠️ نام، Email اور پاسورڈ ضروری ہے','error'); return; }
-  if (pass.length < 8) { showToast('⚠️ پاسورڈ کم از کم 8 حروف','error'); return; }
+  if (!name||!email||!pass) { showToast('نام، Email اور پاسورڈ ضروری ہے','error'); return; }
+  if (pass.length < 8) { showToast('پاسورڈ کم از کم 8 حروف','error'); return; }
 
   try {
     const { data, error } = await supabaseClient.auth.signUp({
@@ -1126,9 +1126,9 @@ async function _doAddOfficer() {
       });
     }
     closeModal();
-    showToast('✅ افسر شامل ہو گیا', 'success');
+    showToast('افسر شامل ہو گیا', 'success');
     _adminRefresh();
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+  } catch(e) { showToast('' + e.message, 'error'); }
 }
 
 async function _adminRefresh() {
@@ -1162,7 +1162,7 @@ function _adminPrintReport() {
 async function _renderSubsTab() {
   const el = document.getElementById('admin-tab-content');
   if (!el) return;
-  el.innerHTML = (window.DIO && DIO.states) ? DIO.states.loading() : '<div style="padding:20px;text-align:center;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>';
+  el.innerHTML = (window.DIO && DIO.states) ? DIO.states.loading() : '<div style="padding:20px;text-align:center;color:var(--text-muted);">لوڈ ہو رہا ہے...</div>';
 
   try {
     const { data } = await supabaseClient
@@ -1181,10 +1181,10 @@ async function _renderSubsTab() {
     <!-- Summary -->
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">
       ${[
-        ['⏳ زیر التواء', pending.length, 'var(--amber)'],
-        ['✅ فعال', active.length, 'var(--green)'],
-        ['🎁 آزمائشی', trial.length, 'var(--accent)'],
-        ['❌ ختم', expired.length, 'var(--red)'],
+        ['زیر التواء', pending.length, 'var(--amber)'],
+        ['فعال', active.length, 'var(--green)'],
+        ['آزمائشی', trial.length, 'var(--accent)'],
+        ['ختم', expired.length, 'var(--red)'],
       ].map(([l,v,c])=>`
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
         <div style="font-size:9px;color:var(--text-muted);">${l}</div>
@@ -1195,7 +1195,7 @@ async function _renderSubsTab() {
     <!-- Pending approvals -->
     ${pending.length ? `
     <div class="card" style="margin-bottom:12px;border:1px solid var(--amber);">
-      <div style="font-size:12px;font-weight:700;color:var(--amber);margin-bottom:10px;">⏳ زیر التواء تصدیق (${pending.length})</div>
+      <div style="font-size:12px;font-weight:700;color:var(--amber);margin-bottom:10px;">زیر التواء تصدیق (${pending.length})</div>
       ${pending.map(s=>`
       <div style="background:var(--bg-secondary);border-radius:8px;padding:12px;margin-bottom:8px;direction:rtl;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
@@ -1206,8 +1206,8 @@ async function _renderSubsTab() {
             <div style="font-size:11px;color:var(--text-muted);">TXN: <b>${s.payment_ref||'—'}</b> · ${s.payment_method||'—'}</div>
           </div>
           <div style="display:flex;gap:6px;">
-            <button class="btn btn-primary btn-sm" onclick="_approveSub('${s.id}','${s.officer_id}')">✅ منظور</button>
-            <button class="btn btn-danger btn-sm" onclick="_rejectSub('${s.id}')">❌ رد</button>
+            <button class="btn btn-primary btn-sm" onclick="_approveSub('${s.id}','${s.officer_id}')">منظور</button>
+            <button class="btn btn-danger btn-sm" onclick="_rejectSub('${s.id}')">رد</button>
           </div>
         </div>
       </div>`).join('')}
@@ -1216,7 +1216,7 @@ async function _renderSubsTab() {
     <!-- All subscriptions table -->
     <div class="card" style="padding:0;overflow:hidden;">
       <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--accent);">
-        💳 تمام سبسکرپشن (${subs.length})
+        تمام سبسکرپشن (${subs.length})
       </div>
       <div style="overflow-x:auto;">
       <table class="data-table" style="width:100%;">
@@ -1240,9 +1240,9 @@ async function _renderSubsTab() {
               <td style="font-size:11px;color:${diff<7?'var(--red)':'var(--text-secondary)'};">${formatDate(s.expires_at)} ${diff>0?'('+diff+'d)':''}</td>
               <td style="font-size:10px;font-family:monospace;">${s.payment_ref||'—'}</td>
               <td>
-                ${s.status==='pending'?`<button class="btn btn-primary btn-sm" onclick="_approveSub('${s.id}','${s.officer_id}')">✅</button>`:''}
-                ${s.status==='active'?`<button class="btn btn-danger btn-sm" onclick="_suspendSub('${s.id}')">🔒</button>`:''}
-                ${s.status==='suspended'||s.status==='expired'?`<button class="btn btn-primary btn-sm" onclick="_approveSub('${s.id}','${s.officer_id}')">🔓</button>`:''}
+                ${s.status==='pending'?`<button title="منظور" aria-label="منظور" class="btn btn-primary btn-sm" onclick="_approveSub('${s.id}','${s.officer_id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4.5 12.5l5 5 10-11"/></svg></button>`:''}
+                ${s.status==='active'?`<button title="بند کریں" aria-label="بند کریں" class="btn btn-danger btn-sm" onclick="_suspendSub('${s.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M5.5 11h13v9.5h-13z"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></svg></button>`:''}
+                ${s.status==='suspended'||s.status==='expired'?`<button title="کھولیں" aria-label="کھولیں" class="btn btn-primary btn-sm" onclick="_approveSub('${s.id}','${s.officer_id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M5.5 11h13v9.5h-13z"/><path d="M8.5 11V8a3.5 3.5 0 0 1 6.4-2"/></svg></button>`:''}
               </td>
             </tr>`;
           }).join('')}
@@ -1251,7 +1251,7 @@ async function _renderSubsTab() {
       </div>
     </div>`;
   } catch(e) {
-    el.innerHTML = `<div style="color:var(--red);padding:20px;">❌ ${e.message}</div>`;
+    el.innerHTML = `<div style="color:var(--red);padding:20px;">${e.message}</div>`;
   }
 }
 
@@ -1269,19 +1269,19 @@ async function _approveSub(subId, officerId) {
       expires_at:  exp.toISOString(),
     }).eq('id', subId);
 
-    showToast('✅ سبسکرپشن منظور', 'success');
+    showToast('سبسکرپشن منظور', 'success');
     _renderSubsTab();
-  } catch(e) { showToast('❌ '+e.message,'error'); }
+  } catch(e) { showToast(''+e.message,'error'); }
 }
 
 async function _rejectSub(subId) {
   await supabaseClient.from('subscriptions').update({status:'rejected'}).eq('id',subId);
-  showToast('❌ رد کر دی', 'info');
+  showToast('رد کر دی', 'info');
   _renderSubsTab();
 }
 
 async function _suspendSub(subId) {
   await supabaseClient.from('subscriptions').update({status:'suspended'}).eq('id',subId);
-  showToast('🔒 معطل', 'info');
+  showToast('معطل', 'info');
   _renderSubsTab();
 }

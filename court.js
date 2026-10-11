@@ -9,8 +9,8 @@ async function renderCourt(container) {
   // Phase 3C — DIO.states.loading() (was English "Loading...")
   const _loadingHtml = (window.DIO && DIO.states)
     ? DIO.states.loading('عدالتی پیشیاں لوڈ ہو رہی ہیں')
-    : `<div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>`;
-  container.innerHTML = `<div id="court-root" style="max-width:900px;margin:0 auto;">${_loadingHtml}</div>`;
+    : `<div style="text-align:center;padding:30px;color:var(--text-muted);">لوڈ ہو رہا ہے…</div>`;
+  container.innerHTML = `<div id="court-root">${_loadingHtml}</div>`;
   await _buildCourt();
 }
 
@@ -26,30 +26,30 @@ async function _buildCourt() {
 
   root.innerHTML = `
   <!-- Header -->
-  <div style="display:flex;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;direction:rtl;"><div style="display:flex;align-items:center;gap:10px;">
+  <div class="page-header">
     <div>
-      <div style="font-size:18px;font-weight:800;">⚖️ عدالتی پیشیاں</div>
-      <div style="font-size:12px;color:var(--text-muted);">آنے والی · گزری ہوئی · کیلنڈر</div>
+      <div class="page-title">عدالتی پیشیاں</div>
+      <div class="page-subtitle">آنے والی · گزری ہوئی · کیلنڈر</div>
     </div>
-    <button class="btn btn-primary dio-add-btn" style="order:-1;" onclick="_openAddCourtDate()">+ پیشی شامل کریں</button>
+    <button class="btn btn-primary dio-add-btn" onclick="_openAddCourtDate()">+ پیشی شامل کریں</button>
   </div>
 
   <!-- Alert: overdue -->
   ${overdue.length ? `
   <div style="background:rgba(239,68,68,0.1);border:1px solid var(--red);border-radius:10px;padding:12px 16px;margin-bottom:14px;">
-    <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:6px;">⚠️ ${overdue.length} پیشیاں گزر گئیں</div>
-    ${overdue.map(d=>`<div style="font-size:12px;color:var(--red);">FIR ${esc(d.fir_number)||'—'} — ${esc(d.hearing_date)} — ${esc(d.court_name)||'—'}</div>`).join('')}
+    <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:6px;">${overdue.length} پیشیاں گزر گئیں</div>
+    ${overdue.map(d=>`<div style="font-size:12px;color:var(--red);">مقدمہ <span dir="ltr" style="unicode-bidi:isolate;">${esc(d.fir_number)||'—'}</span> — <span dir="ltr" style="unicode-bidi:isolate;">${esc(d.hearing_date)}</span> — ${esc(d.court_name)||'—'}</div>`).join('')}
   </div>` : ''}
 
   <!-- Calendar -->
   <div class="card" style="margin-bottom:14px;">
-    <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;">📅 اس ماہ کی پیشیاں</div>
+    <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;">اس ماہ کی پیشیاں</div>
     ${_renderCalendar(dates)}
   </div>
 
   <!-- Upcoming -->
   <div class="card" style="margin-bottom:14px;">
-    <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;">🗓️ آنے والی پیشیاں (${upcoming.length})</div>
+    <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;">آنے والی پیشیاں (${upcoming.length})</div>
     ${upcoming.length ? upcoming.map(d=>_courtCard(d)).join('')
     : `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">کوئی آنے والی پیشی نہیں</div>`}
   </div>
@@ -57,7 +57,7 @@ async function _buildCourt() {
   <!-- Past -->
   ${past.length ? `
   <div class="card">
-    <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:12px;">📋 گزشتہ پیشیاں (${past.length})</div>
+    <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:12px;">گزشتہ پیشیاں (${past.length})</div>
     ${past.slice(0,10).map(d=>_courtCard(d,true)).join('')}
   </div>` : ''}`;
 }
@@ -70,7 +70,8 @@ function _renderCalendar(dates) {
   const first = new Date(year,month,1).getDay();
   const days  = new Date(year,month+1,0).getDate();
   const today = now.getDate();
-  const monthName = now.toLocaleString('default',{month:'long',year:'numeric'});
+  const _UR_MONTHS = ['جنوری','فروری','مارچ','اپریل','مئی','جون','جولائی','اگست','ستمبر','اکتوبر','نومبر','دسمبر'];
+  const monthName = _UR_MONTHS[month] + ' ' + year;
 
   // Map dates to day numbers
   const dateMap = {};
@@ -85,7 +86,7 @@ function _renderCalendar(dates) {
 
   let html = `<div style="text-align:center;font-size:13px;font-weight:700;margin-bottom:10px;">${monthName}</div>`;
   html += `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;direction:rtl;text-align:center;">`;
-  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d=>{
+  ['اتوار','پیر','منگل','بدھ','جمعرات','جمعہ','ہفتہ'].forEach(d=>{
     html+=`<div style="font-size:10px;color:var(--text-faint);padding:3px;">${d}</div>`;
   });
   // Empty cells
@@ -114,23 +115,23 @@ function _courtCard(d, isPast=false) {
   <div style="display:flex;gap:10px;direction:rtl;padding:10px;background:${isPast?'var(--bg-tertiary)':'var(--bg-secondary)'};border-radius:8px;margin-bottom:8px;border:1px solid ${isPast?'var(--border)':urgency};opacity:${isPast?'0.7':'1'};">
     <div style="background:${urgency};color:#fff;border-radius:8px;padding:6px 10px;text-align:center;flex-shrink:0;min-width:44px;">
       <div style="font-size:18px;font-weight:900;line-height:1;">${dt.getDate()}</div>
-      <div style="font-size:9px;">${dt.toLocaleString('default',{month:'short'})}</div>
+      <div style="font-size:9px;">${['جنوری','فروری','مارچ','اپریل','مئی','جون','جولائی','اگست','ستمبر','اکتوبر','نومبر','دسمبر'][dt.getMonth()]}</div>
     </div>
     <div style="flex:1;">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <span style="font-size:13px;font-weight:700;color:var(--accent);">FIR ${d.fir_number||'—'}</span>
+        <span style="font-size:13px;font-weight:700;color:var(--accent);">مقدمہ <span dir="ltr" style="unicode-bidi:isolate;display:inline-block;">${esc(d.fir_number)||'—'}</span></span>
         ${!isPast&&diff<=3?`<span style="font-size:10px;background:var(--red);color:#fff;padding:1px 6px;border-radius:8px;">${diff===0?'آج':diff<0?'گزر گئی':diff+'  دن باقی'}</span>`:''}
         <span class="pill ${d.status==='done'?'pill-green':'pill-blue'}" style="font-size:10px;">${d.status==='done'?'مکمل':'زیر التواء'}</span>
       </div>
-      <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">⚖️ ${esc(d.court_name)||'—'} &nbsp;·&nbsp; 🕐 ${d.hearing_time||'—'}</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${esc(d.court_name)||'—'} &nbsp;·&nbsp; <span dir="ltr" style="unicode-bidi:isolate;">${esc(d.hearing_time)||'—'}</span></div>
       ${d.judge_name?`<div style="font-size:11px;color:var(--text-muted);">جج: ${esc(d.judge_name)}</div>`:''}
       ${d.purpose?`<div style="font-size:11px;color:var(--text-muted);">مقصد: ${esc(d.purpose)}</div>`:''}
       ${d.notes?`<div style="font-size:11px;color:var(--text-faint);">${esc(d.notes)}</div>`:''}
     </div>
     <div style="display:flex;flex-direction:column;gap:4px;">
-      <button class="btn btn-secondary btn-sm" onclick="_editCourtDate('${d.id}')">✏️</button>
-      ${!isPast?`<button class="btn btn-secondary btn-sm" onclick="_markCourtDone('${d.id}')">✅</button>`:''}
-      <button class="btn btn-danger btn-sm" onclick="_deleteCourtDate('${d.id}')">🗑️</button>
+      <button class="btn btn-secondary btn-sm" onclick="_editCourtDate('${d.id}')" title="تبدیلی">تبدیلی</button>
+      ${!isPast?`<button class="btn btn-secondary btn-sm" onclick="_markCourtDone('${d.id}')" title="مکمل">مکمل</button>`:''}
+      <button class="btn btn-danger btn-sm" onclick="_deleteCourtDate('${d.id}')" title="خارج">خارج</button>
     </div>
   </div>`;
 }
@@ -141,12 +142,12 @@ async function _openAddCourtDate(existing) {
   const cases = await getCases().catch(()=>[]);
   const e = existing || {};
 
-  openModal(existing ? '✏️ پیشی تبدیل کریں' : '+ نئی پیشی شامل کریں', `
+  openModal(existing ? 'پیشی تبدیل کریں' : 'نئی پیشی شامل کریں', `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;direction:rtl;">
       <div>
-        <label class="form-label">FIR نمبر</label>
+        <label class="form-label">مقدمہ نمبر</label>
         <select class="form-input" id="cd-fir">
-          <option value="">-- FIR منتخب کریں --</option>
+          <option value="">— مقدمہ منتخب کریں —</option>
           ${cases.map(c=>`<option value="${esc(c.fir_number)}" data-id="${c.id}" ${e.fir_number===c.fir_number?'selected':''}>${c.fir_number} — ${c.complainant||'—'}</option>`).join('')}
         </select>
       </div>
@@ -178,7 +179,7 @@ async function _openAddCourtDate(existing) {
       <textarea class="form-input" id="cd-notes" rows="2" placeholder="کوئی خاص ہدایت...">${esc(e.notes||'')}</textarea>
     </div>`,
     `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-     <button class="btn btn-primary" onclick="_saveCourtDate('${existing?.id||''}')">💾 محفوظ کریں</button>`
+     <button class="btn btn-primary" onclick="_saveCourtDate('${existing?.id||''}')">محفوظ کریں</button>`
   );
 }
 
@@ -188,8 +189,8 @@ async function _saveCourtDate(existingId) {
   const caseId = firSel?.selectedOptions[0]?.dataset.id || null;
   const date   = document.getElementById('cd-date')?.value;
   const court  = document.getElementById('cd-court')?.value.trim();
-  if (!date) { showToast('⚠️ تاریخ درج کریں','error'); return; }
-  if (!court) { showToast('⚠️ عدالت کا نام درج کریں','error'); return; }
+  if (!date) { showToast('تاریخ درج کریں','error'); return; }
+  if (!court) { showToast('عدالت کا نام درج کریں','error'); return; }
 
   const payload = {
     fir_number:   firNum,
@@ -212,10 +213,10 @@ async function _saveCourtDate(existingId) {
       await supabaseClient.from('court_dates').insert(payload);
     }
     closeModal();
-    showToast('✅ پیشی محفوظ ہو گئی','success');
+    showToast('پیشی محفوظ ہو گئی','success');
     const c = document.getElementById('page-content');
     if (c) renderCourt(c);
-  } catch(e) { showToast('❌ '+e.message,'error'); }
+  } catch(e) { showToast(''+e.message,'error'); }
 }
 
 async function _editCourtDate(id) {
@@ -225,14 +226,14 @@ async function _editCourtDate(id) {
 
 async function _markCourtDone(id) {
   await supabaseClient.from('court_dates').update({status:'done'}).eq('id',id);
-  showToast('✅ پیشی مکمل','success');
+  showToast('پیشی مکمل','success');
   const c=document.getElementById('page-content'); if(c)renderCourt(c);
 }
 
 async function _deleteCourtDate(id) {
   try { const {data:cd}=await supabaseClient.from("court_dates").select("*").eq("id",id).single(); if(cd) await softDelete("court",id,cd); } catch(_) {}
   await supabaseClient.from("court_dates").delete().eq("id",id);
-  showToast("🗑️ پیشی Recycle Bin میں","info");
+  showToast("پیشی حذف شدہ مواد میں منتقل ہو گئی۔","info");
   const c=document.getElementById('page-content'); if(c)renderCourt(c);
 }
 

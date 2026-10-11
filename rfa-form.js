@@ -130,7 +130,7 @@ function _renderRfaList() {
         <div style="font-weight:700;font-size:15px;direction:ltr;text-align:left;font-family:Arial,sans-serif;">${esc(no)}</div>
         <div style="font-size:13px;color:var(--text-muted);direction:ltr;text-align:left;font-family:Arial,sans-serif;">Purpose: ${esc(purpose)}${dt ? '  ·  ' + dt : ''}</div>
       </div>
-      <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();_rfaDelete('${r.id}')" title="حذف کریں">🗑️</button>
+      <button aria-label="حذف کریں" class="btn btn-secondary btn-sm" onclick="event.stopPropagation();_rfaDelete('${r.id}')" title="حذف کریں"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
       <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();_openRfaDoc('${r.id}')">کھولیں</button>
     </div>`;
   }).join('');
@@ -145,7 +145,7 @@ function _renderRfaList() {
     </div>
     ${_rfaList.length ? rows : `
       <div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
-        <div style="font-size:40px;margin-bottom:10px;">📄</div>
+        <div style="font-size:40px;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
         <div style="font-size:16px;">ابھی کوئی RFA محفوظ نہیں — "نیا RFA فارم" دبائیں</div>
       </div>`}
   </div>`;
@@ -243,8 +243,8 @@ function _renderRfaForm() {
     <!-- Toolbar (LTR): محفوظ/پرنٹ بائیں طرف · formatting · واپس فہرست دائیں -->
     <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
       <div style="display:flex;gap:6px;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
-        <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveRfa()">💾 محفوظ کریں</button>
-        <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printRfa()">🖨️ پرنٹ کریں</button>
+        <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveRfa()">محفوظ کریں</button>
+        <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printRfa()">پرنٹ کریں</button>
       </div>
       <span style="width:1px;height:22px;background:var(--border);margin:0 4px;"></span>
       <button onmousedown="event.preventDefault()" onclick="_rfaFmt('bold')" title="Bold" style="${_rfaBtn()}font-weight:900;">B</button>
@@ -325,7 +325,7 @@ function _collectRfa() {
 }
 
 async function _saveRfa() {
-  if (!_rfaCaseId) { showToast('❌ مقدمہ منتخب نہیں', 'error'); return; }
+  if (!_rfaCaseId) { showToast('مقدمہ منتخب نہیں', 'error'); return; }
   const form_data = _collectRfa();
   const rfa_number = _rfaStrip(form_data.a_rfa_no) || null;
   try {
@@ -353,7 +353,7 @@ async function _saveRfa() {
     try { if (typeof _refreshMisalBar === 'function') _refreshMisalBar(); } catch(_) {}
     try { if (typeof dioRegisterSaved === 'function') dioRegisterSaved('rfa', 'RFA فارم', { case_id: _rfaCaseId, rfa_id: saved.id }); } catch(_) {}
     _rfaDirty = false;
-    showToast('✅ RFA فارم محفوظ ہو گیا', 'success');
+    showToast('RFA فارم محفوظ ہو گیا', 'success');
   } catch(e) {
     try {
       const tmp = { id: (_rfaCurrent && _rfaCurrent.id) || ('tmp_' + Date.now()), case_id: _rfaCaseId,
@@ -362,8 +362,8 @@ async function _saveRfa() {
       if (idx >= 0) _rfaList[idx] = tmp; else _rfaList.push(tmp);
       _rfaCurrent = tmp;
       localStorage.setItem('dio_rfalist_' + _rfaCaseId, JSON.stringify(_rfaList));
-      showToast('⚠️ آف لائن محفوظ (انٹرنیٹ آنے پر سنک کریں)', 'info');
-    } catch(_) { showToast('❌ ' + e.message, 'error'); }
+      showToast('آف لائن محفوظ (انٹرنیٹ آنے پر سنک کریں)', 'info');
+    } catch(_) { showToast('' + e.message, 'error'); }
   }
 }
 window._saveRfa = _saveRfa;
@@ -371,12 +371,12 @@ window._saveRfa = _saveRfa;
 async function _rfaDelete(id) {
   if (!confirm('یہ RFA فارم حذف کر دیا جائے؟')) return;
   try { if (String(id).indexOf('tmp_') !== 0) await supabaseClient.from('rfa_forms').delete().eq('id', id); }
-  catch(e) { showToast('❌ ' + e.message, 'error'); return; }
+  catch(e) { showToast('' + e.message, 'error'); return; }
   _rfaList = _rfaList.filter(r => String(r.id) !== String(id));
   try { localStorage.setItem('dio_rfalist_' + _rfaCaseId, JSON.stringify(_rfaList)); } catch(_) {}
   try { if (typeof _misalDocs !== 'undefined' && _misalDocs) { if (_rfaList.length) _misalDocs['rfa_form'] = { document_type:'rfa_form', status:'complete', content:{ count:_rfaList.length } }; else delete _misalDocs['rfa_form']; } } catch(_) {}
   try { if (typeof _refreshMisalBar === 'function') _refreshMisalBar(); } catch(_) {}
-  showToast('🗑️ حذف ہو گیا', 'success');
+  showToast('حذف ہو گیا', 'success');
   _renderRfaList();
 }
 window._rfaDelete = _rfaDelete;

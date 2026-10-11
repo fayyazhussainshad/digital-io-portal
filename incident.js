@@ -22,14 +22,14 @@ function renderIncident(container) {
 
     <!-- Action Bar — compact -->
     <div style="display:flex;gap:6px;direction:rtl;margin-bottom:12px;flex-wrap:wrap;align-items:center;background:var(--bg-card);padding:10px 12px;border-radius:10px;border:1px solid var(--border);">
-      <span style="font-size:13px;font-weight:700;color:var(--accent);">🚨 واقعاتی رپورٹ</span>
-      <button class="btn btn-secondary btn-sm" onclick="_incReset()">➕ نئی رپورٹ</button>
+      <span style="font-size:13px;font-weight:700;color:var(--accent);">واقعاتی رپورٹ</span>
+      <button class="btn btn-secondary btn-sm" onclick="_incReset()">نئی رپورٹ</button>
       <div style="flex:1;"></div>
-      <button class="btn btn-primary btn-sm" onclick="_incSaveAndPrint()">🖨️ محفوظ و پرنٹ</button>
-      <button class="btn btn-primary btn-sm" onclick="_incSaveToDB()">💾 محفوظ کریں</button>
-      <button class="btn btn-secondary btn-sm" onclick="_incDownload()">⬇️ ڈاؤنلوڈ</button>
-      <button class="btn btn-secondary btn-sm" onclick="_incShare()">📱 WhatsApp</button>
-      <button class="btn btn-secondary btn-sm" onclick="_showPrevReports()">📋 پرانی رپورٹس</button>
+      <button class="btn btn-primary btn-sm" onclick="_incSaveAndPrint()">محفوظ و پرنٹ</button>
+      <button class="btn btn-primary btn-sm" onclick="_incSaveToDB()">محفوظ کریں</button>
+      <button class="btn btn-secondary btn-sm" onclick="_incDownload()">ڈاؤنلوڈ</button>
+      <button class="btn btn-secondary btn-sm" onclick="_incShare()">WhatsApp</button>
+      <button class="btn btn-secondary btn-sm" onclick="_showPrevReports()">پرانی رپورٹس</button>
     </div>
 
     <!-- FORM -->
@@ -83,7 +83,7 @@ function renderIncident(container) {
                     <select id="inc-person-type" style="${_tIn()}flex:1;font-weight:700;">
                       <option>مقتول</option><option>مضروب</option><option>مغوی</option><option>victim</option><option>متاثرہ</option>
                     </select>
-                    <button onclick="_incAddPersonType()" style="border:1px solid #ccc;border-radius:4px;background:#f0f4f8;cursor:pointer;padding:2px 8px;flex-shrink:0;" title="نیا">➕</button>
+                    <button aria-label="نیا" onclick="_incAddPersonType()" style="border:1px solid #ccc;border-radius:4px;background:#f0f4f8;cursor:pointer;padding:2px 8px;flex-shrink:0;" title="نیا"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button>
                   </div>
                 </div>
               </td>
@@ -109,8 +109,8 @@ function renderIncident(container) {
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
                   <span style="font-weight:800;font-size:14px;color:#1a3a5c;">مختصر حالات:</span>
                   <div style="display:flex;gap:6px;">
-                    <button onclick="_incVoice('inc-narrative','mic-narr')" id="mic-narr" style="width:32px;height:32px;border:1px solid #ccc;border-radius:6px;background:#f0f4f8;font-size:15px;cursor:pointer;" title="وائس ٹائپنگ">🎙️</button>
-                    <button onclick="_incHandwriting()" style="width:32px;height:32px;border:1px solid #ccc;border-radius:6px;background:#f0f4f8;font-size:15px;cursor:pointer;" title="ہینڈ رائٹنگ">✍️</button>
+                    <button aria-label="وائس ٹائپنگ" onclick="_incVoice('inc-narrative','mic-narr')" id="mic-narr" style="width:32px;height:32px;border:1px solid #ccc;border-radius:6px;background:#f0f4f8;font-size:15px;cursor:pointer;" title="وائس ٹائپنگ"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button>
+                    <button aria-label="ہینڈ رائٹنگ" onclick="_incHandwriting()" style="width:32px;height:32px;border:1px solid #ccc;border-radius:6px;background:#f0f4f8;font-size:15px;cursor:pointer;" title="ہینڈ رائٹنگ"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>
                   </div>
                 </div>
                 <textarea id="inc-narrative" rows="6" placeholder="مختصر حالات یہاں سے شروع ہوں گے..."
@@ -169,13 +169,13 @@ async function _loadPrevReports() {
     }
     el.innerHTML = data.map(r => `
       <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);">
-        <span style="font-size:18px;">🚨</span>
+        <span style="font-size:18px;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M12 4L3 19.5h18z"/><path d="M12 10v4.5"/><path d="M12 17.2h.01"/></svg></span>
         <div style="flex:1;">
           <div style="font-size:12px;font-weight:700;color:var(--accent);">${esc(r.report_number)||'—'}</div>
           <div style="font-size:11px;color:var(--text-muted);">${esc(r.incident_type)||'—'} · ${esc(r.incident_date)||'—'} · ${esc(r.address)||'—'}</div>
         </div>
-        <button class="btn btn-secondary btn-sm" onclick="_viewIncReport('${r.id}')">👁️ دیکھیں</button>
-        <button class="btn btn-danger btn-sm" onclick="_delIncReport('${r.id}')">🗑️</button>
+        <button class="btn btn-secondary btn-sm" onclick="_viewIncReport('${r.id}')">دیکھیں</button>
+        <button title="حذف" aria-label="حذف" class="btn btn-danger btn-sm" onclick="_delIncReport('${r.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
       </div>`).join('');
   } catch(_) {
     el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);padding:8px;">ریکارڈ دستیاب نہیں</div>`;
@@ -186,18 +186,18 @@ async function _delIncReport(id) {
   try {
     try { const {data:ir}=await supabaseClient.from("incident_reports").select("*").eq("id",id).single(); if(ir) await softDelete("incident",id,ir); } catch(_) {}
     await supabaseClient.from("incident_reports").delete().eq("id",id);
-    showToast('🗑️ رپورٹ ہٹا دی گئی', 'info');
+    showToast('رپورٹ ہٹا دی گئی', 'info');
     _loadPrevReports();
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+  } catch(e) { showToast('' + e.message, 'error'); }
 }
 
 async function _viewIncReport(id) {
-  showToast('⏳ رپورٹ لوڈ ہو رہی ہے...', 'info');
+  showToast('رپورٹ لوڈ ہو رہی ہے...', 'info');
   try {
     const { data } = await supabaseClient.from('incident_reports').select('*').eq('id', id).single();
     if (!data) return;
     const fir = data.data?.fir_number || '';
-    openModal('🚨 ' + (data.report_number||'Incident Report'),
+    openModal('' + (data.report_number||'Incident Report'),
       `<div style="font-size:13px;line-height:2.2;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
         <div><b>رپورٹ نمبر:</b> ${esc(data.report_number)||'—'}</div>
         <div><b>تاریخ:</b> ${esc(data.incident_date||'—')} &nbsp;·&nbsp; <b>وقت:</b> ${esc(data.incident_time||'—')}</div>
@@ -209,10 +209,10 @@ async function _viewIncReport(id) {
         <div style="border-top:1px solid #ddd;margin:8px 0;padding-top:8px;"><b>روداد:</b> ${esc(data.narrative||'—')}</div>
         <div><b>اقدامات:</b> ${esc(data.action_taken||'—')}</div>
       </div>`,
-      `<button class="btn btn-danger btn-sm" onclick="closeModal();_delIncReport('${id}')">🗑️ حذف</button>
+      `<button class="btn btn-danger btn-sm" onclick="closeModal();_delIncReport('${id}')">حذف</button>
        <button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`
     );
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+  } catch(e) { showToast('' + e.message, 'error'); }
 }
 
 // ── HELPERS ───────────────────────────────────────────────────
@@ -233,7 +233,7 @@ function _incAddPersonType() {
   sel.appendChild(opt);
 }
 function _incHandwriting() {
-  showToast('✍️ ہینڈ رائٹنگ: اپنے فون کی کی بورڈ ہینڈ رائٹنگ استعمال کریں، یا ٹائپ کریں', 'info', 4000);
+  showToast('ہینڈ رائٹنگ: اپنے فون کی کی بورڈ ہینڈ رائٹنگ استعمال کریں، یا ٹائپ کریں', 'info', 4000);
   const ta = document.getElementById('inc-narrative');
   if (ta) ta.focus();
 }
@@ -249,7 +249,7 @@ function _checkOtherUhda(selId, inputId) {
 let _incVoiceRec = null, _incVoiceOn = false, _incVoiceTgt = null;
 function _incVoice(targetId, btnId) {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { showToast('⚠️ Browser mein voice support nahi','error'); return; }
+  if (!SR) { showToast('Browser mein voice support nahi','error'); return; }
   if (_incVoiceOn && _incVoiceTgt === targetId) {
     _incVoiceRec?.stop(); _incVoiceOn=false; _incVoiceTgt=null;
     const b=document.getElementById(btnId); if(b){b.style.background='#f0f4f8';b.textContent='🎙️';}
@@ -278,7 +278,7 @@ async function _incSaveAndPrint() {
 async function _incSaveToDB() {
   try {
     const oid = await getOfficerId();
-    if (!oid) { showToast('⚠️ لاگ ان نہیں', 'error'); return; }
+    if (!oid) { showToast('لاگ ان نہیں', 'error'); return; }
     const incType = document.getElementById('inc-severity')?.value || '';
     const num     = document.getElementById('inc-num')?.value?.trim() || '';
     const datetime = document.getElementById('inc-datetime')?.value?.trim() || '';
@@ -292,7 +292,7 @@ async function _incSaveToDB() {
     const officersText = document.getElementById('inc-visiting-officers')?.value?.trim() || '';
     const officers = officersText ? officersText.split(/[,،]/).map(s=>s.trim()).filter(Boolean) : [];
 
-    if (!num) { showToast('⚠️ رپورٹ نمبر ضروری ہے', 'error'); return; }
+    if (!num) { showToast('رپورٹ نمبر ضروری ہے', 'error'); return; }
 
     await supabaseClient.from('incident_reports').insert({
       officer_id:    oid,
@@ -315,9 +315,9 @@ async function _incSaveToDB() {
         sign_date:    document.getElementById('inc-sign-date')?.value,
       }
     });
-    showToast('✅ رپورٹ محفوظ ہو گئی', 'success');
+    showToast('رپورٹ محفوظ ہو گئی', 'success');
   } catch(e) {
-    showToast('❌ ' + e.message, 'error');
+    showToast('' + e.message, 'error');
     console.error('incident save error:', e);
   }
 }
@@ -333,11 +333,11 @@ async function _showPrevReports() {
       .limit(20);
 
     const items = data || [];
-    openModal('📋 پرانی Incident Reports',
+    openModal('پرانی Incident Reports',
       `<div style="max-height:60vh;overflow-y:auto;">
         ${items.length ? items.map(r => `
           <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);direction:rtl;">
-            <span style="font-size:18px;">🚨</span>
+            <span style="font-size:18px;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M12 4L3 19.5h18z"/><path d="M12 10v4.5"/><path d="M12 17.2h.01"/></svg></span>
             <div style="flex:1;">
               <div style="font-size:13px;font-weight:700;color:var(--accent);">${esc(r.report_number)||'—'}</div>
               <div style="font-size:11px;color:var(--text-muted);">${esc(r.incident_type)||'—'} · ${esc(r.incident_date||'—')}</div>
@@ -345,15 +345,15 @@ async function _showPrevReports() {
               ${r.data?.fir_number ? `<div style="font-size:10px;color:var(--accent);">FIR: ${esc(r.data.fir_number)}</div>` : ''}
             </div>
             <div style="display:flex;flex-direction:column;gap:4px;">
-              <button class="btn btn-secondary btn-sm" onclick="_viewIncReport('${r.id}')">👁️</button>
-              <button class="btn btn-danger btn-sm" onclick="_delIncReport('${r.id}')">🗑️</button>
+              <button title="دیکھیں" aria-label="دیکھیں" class="btn btn-secondary btn-sm" onclick="_viewIncReport('${r.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg></button>
+              <button title="حذف" aria-label="حذف" class="btn btn-danger btn-sm" onclick="_delIncReport('${r.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
             </div>
           </div>`).join('')
         : '<div style="text-align:center;padding:20px;color:var(--text-muted);">کوئی پرانی رپورٹ نہیں</div>'}
       </div>`,
       `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`
     );
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+  } catch(e) { showToast('' + e.message, 'error'); }
 }
 
 async function _loadPrevReports() { /* kept for compatibility */ }
@@ -411,7 +411,7 @@ function _incDownload() {
   a.href = URL.createObjectURL(new Blob([txt],{type:'text/plain;charset=utf-8'}));
   a.download = `Waqiati-Report-${num}.txt`;
   a.click();
-  showToast('⬇️ رپورٹ ڈاؤنلوڈ ہو رہی ہے','success');
+  showToast('رپورٹ ڈاؤنلوڈ ہو رہی ہے','success');
 }
 
 // ── SHARE ─────────────────────────────────────────────────────

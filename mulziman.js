@@ -141,7 +141,7 @@ function _renderAccusedArea() {
   area.innerHTML = `
   <div style="direction:rtl;height:100%;overflow-y:auto;padding:10px;width:100%;box-sizing:border-box;">
     <div style="display:flex;align-items:center;gap:8px;border-bottom:2px solid ${color};padding-bottom:6px;margin-bottom:12px;width:100%;box-sizing:border-box;">
-      <button class="btn btn-primary btn-sm" style="flex:0 0 auto;" onclick="_openAccusedForm(null,'${_accusedViewType}')">➕ ملزم</button>
+      <button class="btn btn-primary btn-sm" style="flex:0 0 auto;" onclick="_openAccusedForm(null,'${_accusedViewType}')">ملزم</button>
       <div style="flex:1;font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:${color};text-align:center;">${heading}</div>
     </div>
     <div id="acc-list" style="width:100%;">${_renderAccCards(list)}</div>
@@ -154,29 +154,29 @@ function _renderAccusedArea() {
 function _renderAccCards(list) {
   if (!list.length) {
     return `<div style="text-align:center;padding:24px 12px;color:var(--text-muted);font-size:12px;">
-      <div style="font-size:30px;margin-bottom:6px;">👤</div>
+      <div style="font-size:30px;margin-bottom:6px;"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg></div>
       کوئی ملزم نہیں
     </div>`;
   }
   return list.map(a => `
     <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:8px;">
       <div onclick="_accViewDetail('${a.id}')" style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;cursor:pointer;">
-        ${a.photo_url ? `<img src="${esc(a.photo_url)}" style="width:38px;height:38px;border-radius:6px;object-fit:cover;flex-shrink:0;">` : '<span style="font-size:22px;flex-shrink:0;">👤</span>'}
+        ${a.photo_url ? `<img src="${esc(a.photo_url)}" style="width:38px;height:38px;border-radius:6px;object-fit:cover;flex-shrink:0;">` : '<span style="font-size:22px;flex-shrink:0;"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg></span>'}
         <div style="flex:1;min-width:0;">
           <div style="font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_escA(a.name)}</div>
           <div style="font-size:12px;color:var(--text-muted);display:flex;gap:8px;flex-wrap:wrap;">
-            ${a.cnic?`<span dir="ltr">🪪 ${_escA(a.cnic)}</span>`:''}
+            ${a.cnic?`<span dir="ltr">${_escA(a.cnic)}</span>`:''}
             ${a.pesha?`<span>${_escA(a.pesha)}</span>`:''}
-            ${a.taleem?`<span>🎓 ${_escA(a.taleem)}</span>`:''}
+            ${a.taleem?`<span>${_escA(a.taleem)}</span>`:''}
             ${a.umar?`<span>${_escA(a.umar)}</span>`:''}
-            ${a.arrest_date?`<span dir="ltr">📅 ${_fmtDateDMY(a.arrest_date)}</span>`:''}
+            ${a.arrest_date?`<span dir="ltr">${_fmtDateDMY(a.arrest_date)}</span>`:''}
           </div>
         </div>
       </div>
       <div style="display:flex;gap:4px;flex-shrink:0;">
-        <button class="btn btn-secondary btn-sm" style="padding:2px 7px;" title="ترمیم" onclick="event.stopPropagation();_openAccusedForm('${a.id}','${a.accused_type||'fir'}')">✏️</button>
-        <button id="acc-prev-btn-${a.id}" class="btn btn-secondary btn-sm" style="padding:2px 7px;" title="سابقہ ریکارڈ" onclick="event.stopPropagation();_accPrevRecord('${a.id}')">📋 سابقہ ریکارڈ</button>
-        <button class="btn btn-danger btn-sm" style="padding:2px 7px;" title="حذف" onclick="event.stopPropagation();_deleteAccused('${a.id}')">🗑️</button>
+        <button aria-label="ترمیم" class="btn btn-secondary btn-sm" style="padding:2px 7px;" title="ترمیم" onclick="event.stopPropagation();_openAccusedForm('${a.id}','${a.accused_type||'fir'}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>
+        <button id="acc-prev-btn-${a.id}" class="btn btn-secondary btn-sm" style="padding:2px 7px;" title="سابقہ ریکارڈ" onclick="event.stopPropagation();_accPrevRecord('${a.id}')">سابقہ ریکارڈ</button>
+        <button aria-label="حذف" class="btn btn-danger btn-sm" style="padding:2px 7px;" title="حذف" onclick="event.stopPropagation();_deleteAccused('${a.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
       </div>
     </div>`).join('');
 }
@@ -226,7 +226,7 @@ function _accCustomSelect(opts, val, fid, key, dir) {
   return `<select class="form-input" id="${fid}" ${dir?`dir="${dir}"`:''} onchange="_accDdAdd(this,'${key}')">
     <option value="">—</option>
     ${all.map(o => `<option value="${_escA(o)}" ${val===o?'selected':''}>${_escA(o)}</option>`).join('')}
-    <option value="__add__">➕ اپنی مرضی سے لکھیں</option>
+    <option value="__add__">اپنی مرضی سے لکھیں</option>
   </select>`;
 }
 
@@ -265,7 +265,7 @@ function _openAccusedForm(id, type) {
   _accusedPhoto = a.photo_url || null;
   _accusedCnicCopy = a.cnic_copy_url || null;
 
-  // dropdown WITH "➕ اپنی مرضی" custom-add option, inside a grid cell
+  // dropdown WITH "اپنی مرضی" custom-add option, inside a grid cell
   const dd = (label, opts, val, fid, key, dir) => `
     <div class="acc-field">
       <label class="acc-label">${label}</label>
@@ -306,7 +306,7 @@ function _openAccusedForm(id, type) {
         <div style="display:flex;flex:1;min-width:0;gap:4px;align-items:center;">
           <input class="form-input" id="acc-arrest-disp" dir="ltr" inputmode="numeric" maxlength="10" placeholder="DD/MM/YYYY" value="${esc(a.arrest_date?_fmtDateDMY(a.arrest_date):'')}" oninput="_accFmtDateInput(this)" style="flex:1;min-width:0;">
           <div style="position:relative;flex:0 0 auto;">
-            <button type="button" class="btn btn-secondary btn-sm" style="padding:5px 7px;">📅</button>
+            <button title="تاریخ" aria-label="تاریخ" type="button" class="btn btn-secondary btn-sm" style="padding:5px 7px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 6.5h16V20H4z"/><path d="M4 10.5h16"/><path d="M8 3.5v4"/><path d="M16 3.5v4"/></svg></button>
             <input type="date" id="acc-arrest" value="${_escA(a.arrest_date||'')}" onchange="_accSyncDateFromPicker()" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;">
           </div>
         </div>
@@ -334,20 +334,20 @@ function _openAccusedForm(id, type) {
     <div class="acc-grid" style="margin-top:12px;">
       <div style="display:flex;flex-direction:column;">
         <input type="file" id="acc-photo-input" accept="image/*" capture="environment" style="display:none;" onchange="_accPhotoSelect(this)">
-        <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="document.getElementById('acc-photo-input').click()">📷 تصویر ملزم</button>
+        <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="document.getElementById('acc-photo-input').click()">تصویر ملزم</button>
         <div id="acc-photo-preview" style="margin-top:6px;text-align:center;">${_accThumb('photo', _accusedPhoto)}</div>
       </div>
       <div style="display:flex;flex-direction:column;">
         <input type="file" id="acc-cnic-input" accept="image/*,application/pdf" style="display:none;" onchange="_accCnicSelect(this)">
-        <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="document.getElementById('acc-cnic-input').click()">🪪 شناختی کارڈ کاپی</button>
+        <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="document.getElementById('acc-cnic-input').click()">شناختی کارڈ کاپی</button>
         <div id="acc-cnic-preview" style="margin-top:6px;text-align:center;">${_accThumb('cnic', _accusedCnicCopy)}</div>
       </div>
     </div>
   </div>`;
 
-  openModal(id ? '✏️ ملزم میں ترمیم' : '➕ ملزم درج کریں', body, `
+  openModal(id ? 'ملزم میں ترمیم' : 'ملزم درج کریں', body, `
     <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-    <button class="btn btn-primary" onclick="_saveAccused('${id||''}')">💾 محفوظ کریں</button>
+    <button class="btn btn-primary" onclick="_saveAccused('${id||''}')">محفوظ کریں</button>
   `);
 }
 
@@ -379,11 +379,11 @@ function _accThumb(which, url) {
   if (!url) return '';
   const isPdf = /^data:application\/pdf/.test(url);
   const inner = isPdf
-    ? `<div style="width:120px;height:120px;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:44px;background:var(--bg-card);">📄</div>`
+    ? `<div style="width:120px;height:120px;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:44px;background:var(--bg-card);"><svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>`
     : `<img src="${esc(url)}" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">`;
   return `<div onclick="_accViewCurrent('${which}')" style="cursor:pointer;display:inline-block;">
       ${inner}
-      <div style="font-size:11px;color:var(--green);margin-top:3px;">✅ منسلک — کھولیں</div>
+      <div style="font-size:11px;color:var(--green);margin-top:3px;">منسلک — کھولیں</div>
     </div>`;
 }
 function _compressImg(file, maxW, quality, cb) {
@@ -442,7 +442,7 @@ function _accSyncDateFromPicker() {
 // ── SAVE ──────────────────────────────────────────────────────
 async function _saveAccused(id) {
   const name = document.getElementById('acc-name')?.value.trim();
-  if (!name) { showToast('⚠️ ملزم کا نام لکھیں', 'error'); return; }
+  if (!name) { showToast('ملزم کا نام لکھیں', 'error'); return; }
 
   // value of a dropdown, ignoring the "➕" add sentinel
   const gv = (id) => { const v = document.getElementById(id)?.value; return (v && v !== '__add__') ? v : null; };
@@ -490,8 +490,8 @@ async function _saveAccused(id) {
     closeModal();
     await _loadAccused();    // reload from DB (gets ALL records, both types)
     _renderAccusedArea();
-    showToast('✅ ملزم محفوظ ہو گیا', 'success');
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+    showToast('ملزم محفوظ ہو گیا', 'success');
+  } catch(e) { showToast('' + e.message, 'error'); }
 }
 
 async function _deleteAccused(id) {
@@ -500,8 +500,8 @@ async function _deleteAccused(id) {
     await supabaseClient.from('case_accused').delete().eq('id', id);
     await _loadAccused();
     _renderAccusedArea();
-    showToast('🗑️ حذف ہو گیا', 'info');
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+    showToast('حذف ہو گیا', 'info');
+  } catch(e) { showToast('' + e.message, 'error'); }
 }
 
 // ── READ-ONLY DETAIL VIEW (name click) — edit ONLY via ترمیم btn ──
@@ -523,12 +523,12 @@ function _accViewDetail(id) {
     <div style="display:flex;gap:14px;justify-content:center;margin-top:12px;flex-wrap:wrap;">
       ${a.photo_url ? `<div style="text-align:center;">
         <img src="${esc(a.photo_url)}" onclick="_accViewDoc('${_dioJsHtml(a.id)}','photo')" style="width:120px;height:120px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--border);">
-        <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">📷 تصویر (کھولیں)</div></div>` : ''}
+        <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">تصویر (کھولیں)</div></div>` : ''}
       ${a.cnic_copy_url ? `<div style="text-align:center;">
         ${/^data:application\/pdf/.test(a.cnic_copy_url)
-          ? `<div onclick="_accViewDoc('${a.id}','cnic')" style="width:120px;height:120px;border-radius:8px;cursor:pointer;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:44px;background:var(--bg-card);">📄</div>`
+          ? `<div onclick="_accViewDoc('${a.id}','cnic')" style="width:120px;height:120px;border-radius:8px;cursor:pointer;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:44px;background:var(--bg-card);"><svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>`
           : `<img src="${esc(a.cnic_copy_url)}" onclick="_accViewDoc('${_dioJsHtml(a.id)}','cnic')" style="width:120px;height:120px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--border);">`}
-        <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">🪪 شناختی کاپی (کھولیں)</div></div>` : ''}
+        <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">شناختی کاپی (کھولیں)</div></div>` : ''}
     </div>` : '';
 
   const body = `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
@@ -543,9 +543,9 @@ function _accViewDetail(id) {
     ${thumbs}
   </div>`;
 
-  openModal('👤 ملزم کی تفصیل', body, `
+  openModal('ملزم کی تفصیل', body, `
     <button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>
-    <button class="btn btn-primary" onclick="closeModal();_openAccusedForm('${a.id}','${a.accused_type||'fir'}')">✏️ ترمیم</button>
+    <button class="btn btn-primary" onclick="closeModal();_openAccusedForm('${a.id}','${a.accused_type||'fir'}')">ترمیم</button>
   `);
 }
 
@@ -561,14 +561,14 @@ function _accViewDoc(id, which) {
   if (!url) { showToast('کوئی فائل موجود نہیں', 'info'); return; }
   _accOpenViewer(url,
     ((a.name || 'mulzim').replace(/\s+/g,'_')) + '_' + which,
-    which === 'cnic' ? '🪪 شناختی کارڈ کاپی' : '📷 تصویر ملزم');
+    which === 'cnic' ? 'شناختی کارڈ کاپی' : 'تصویر ملزم');
 }
 // From the OPEN edit form (uses in-memory just-attached files, keeps form alive)
 function _accViewCurrent(which) {
   const url = which === 'cnic' ? _accusedCnicCopy : _accusedPhoto;
   if (!url) return;
   _accOpenViewer(url, 'mulzim_' + which,
-    which === 'cnic' ? '🪪 شناختی کارڈ کاپی' : '📷 تصویر ملزم');
+    which === 'cnic' ? 'شناختی کارڈ کاپی' : 'تصویر ملزم');
 }
 // Independent overlay lightbox (does NOT replace whatever modal is behind it)
 function _accOpenViewer(url, name, title) {
@@ -587,9 +587,9 @@ function _accOpenViewer(url, name, title) {
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">
         <strong style="font-family:'Jameel Noori Nastaleeq',serif;font-size:16px;">${title}</strong>
         <div style="display:flex;gap:6px;">
-          <button class="btn btn-secondary btn-sm" onclick="_accDownloadDoc()">⬇️ ڈاؤن لوڈ</button>
-          <button class="btn btn-primary btn-sm" onclick="_accPrintDoc()">🖨️ پرنٹ</button>
-          <button class="btn btn-danger btn-sm" onclick="_accCloseViewer()">✕</button>
+          <button class="btn btn-secondary btn-sm" onclick="_accDownloadDoc()">ڈاؤن لوڈ</button>
+          <button class="btn btn-primary btn-sm" onclick="_accPrintDoc()">پرنٹ</button>
+          <button title="بند کریں" aria-label="بند کریں" class="btn btn-danger btn-sm" onclick="_accCloseViewer()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button>
         </div>
       </div>
       <div style="text-align:center;">${viewer}</div>
@@ -644,7 +644,7 @@ async function _accCheckPrevRecords(list) {
     const has = (a.cnic && matchedCnic.has(a.cnic)) || (!a.cnic && a.name && matchedName.has(a.name));
     if (has) {
       const btn = document.getElementById('acc-prev-btn-' + a.id);
-      if (btn) { btn.classList.add('acc-blink'); btn.title = '⚠️ سابقہ ریکارڈ موجود ہے — چیک کریں'; }
+      if (btn) { btn.classList.add('acc-blink'); btn.title = 'سابقہ ریکارڈ موجود ہے — چیک کریں'; }
     }
   });
 }
@@ -654,14 +654,14 @@ async function _accPrevRecord(id) {
   if (!a) return;
   if (!a.cnic && !a.name) { showToast('شناخت دستیاب نہیں', 'info'); return; }
   if (!navigator.onLine) { showToast('سابقہ ریکارڈ کے لیے انٹرنیٹ درکار ہے', 'info'); return; }
-  showToast('🔎 تلاش جاری...', 'info');
+  showToast('تلاش جاری...', 'info');
   try {
     let q = supabaseClient.from('case_accused').select('*').neq('case_id', _accusedCaseId);
     if (a.cnic) q = q.eq('cnic', a.cnic); else q = q.ilike('name', a.name);
     const { data: recs } = await q;
     const list = recs || [];
     if (!list.length) {
-      openModal('📋 سابقہ ریکارڈ', `<div style="direction:rtl;text-align:center;padding:24px;color:var(--text-muted);">اس ملزم کا کسی دیگر مقدمہ میں کوئی ریکارڈ نہیں ملا۔</div>`,
+      openModal('سابقہ ریکارڈ', `<div style="direction:rtl;text-align:center;padding:24px;color:var(--text-muted);">اس ملزم کا کسی دیگر مقدمہ میں کوئی ریکارڈ نہیں ملا۔</div>`,
         `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`);
       return;
     }
@@ -680,15 +680,15 @@ async function _accPrevRecord(id) {
         <div style="font-weight:700;font-size:14px;">${_escA(label)}</div>
         <div style="font-size:12px;color:var(--text-muted);display:flex;gap:10px;flex-wrap:wrap;margin-top:3px;">
           ${r.name?`<span>${_escA(r.name)}</span>`:''}
-          ${r.cnic?`<span dir="ltr">🪪 ${_escA(r.cnic)}</span>`:''}
+          ${r.cnic?`<span dir="ltr">${_escA(r.cnic)}</span>`:''}
           ${r.pesha?`<span>${_escA(r.pesha)}</span>`:''}
-          ${r.arrest_date?`<span dir="ltr">📅 ${_fmtDateDMY(r.arrest_date)}</span>`:''}
+          ${r.arrest_date?`<span dir="ltr">${_fmtDateDMY(r.arrest_date)}</span>`:''}
         </div>
       </div>`;
     }).join('');
-    openModal('📋 سابقہ ریکارڈ (' + list.length + ')', `<div style="direction:rtl;">${rows}</div>`,
+    openModal('سابقہ ریکارڈ (' + list.length + ')', `<div style="direction:rtl;">${rows}</div>`,
       `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`);
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+  } catch(e) { showToast('' + e.message, 'error'); }
 }
 // Build a readable case label from whatever columns exist
 function _accCaseLabel(c, fallbackId) {

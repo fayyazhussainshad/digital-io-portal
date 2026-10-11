@@ -17,15 +17,15 @@ async function _renderFIRView() {
         متن ایف آئی آر — مقدمہ ${esc(c.fir_number||'')}
       </div>
       <div style="display:flex;gap:6px;direction:rtl;flex-wrap:wrap;">
-        <button class="btn btn-primary" onclick="_openFIREditor()">📝 متن درج کریں</button>
-        <button class="btn btn-secondary dio-modbtn" onclick="_printFIRAll()">🖨️ پرنٹ</button>
-        <button class="btn btn-secondary" onclick="_shareFIRAll()">📱 شیئر</button>
+        <button class="btn btn-primary" onclick="_openFIREditor()">متن درج کریں</button>
+        <button class="btn btn-secondary dio-modbtn" onclick="_printFIRAll()">پرنٹ</button>
+        <button class="btn btn-secondary" onclick="_shareFIRAll()">شیئر</button>
       </div>
     </div>
 
     <!-- FIR entries list -->
     <div style="flex:1;overflow-y:auto;padding:16px;" id="fir-entries-area">
-      ${(window.DIO && DIO.states) ? DIO.states.loading('FIR اندراجات لوڈ ہو رہے ہیں') : '<div style="text-align:center;padding:30px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>'}
+      ${(window.DIO && DIO.states) ? DIO.states.loading('FIR اندراجات لوڈ ہو رہے ہیں') : '<div style="text-align:center;padding:30px;color:var(--text-muted);">لوڈ ہو رہا ہے...</div>'}
     </div>
   </div>`;
 
@@ -50,7 +50,7 @@ async function _loadFIREntries() {
     if (!entries.length) {
       area.innerHTML = `
         <div style="text-align:center;padding:48px;color:var(--text-muted);">
-          <div style="font-size:48px;margin-bottom:12px;">📄</div>
+          <div style="font-size:48px;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
           <div style="font-size:14px;font-weight:600;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">ابھی کوئی FIR متن نہیں</div>
           <div style="font-size:12px;margin-top:6px;">اوپر "متن درج کریں" بٹن دبائیں</div>
         </div>`;
@@ -69,17 +69,17 @@ async function _loadFIREntries() {
         ${entries.map((e,i) => `
           <tr style="border-bottom:1px solid var(--border);${i%2===0?'background:var(--bg-secondary);':''}">
             <td style="padding:12px;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;line-height:2;vertical-align:top;">
-              <span style="font-size:11px;color:var(--text-faint);display:block;margin-bottom:4px;">${e.status==='complete'?'✅ مکمل':'📝 مسودہ'} · ${formatDate(e.updated_at||e.created_at)}</span>
+              <span style="font-size:11px;color:var(--text-faint);display:block;margin-bottom:4px;">${e.status==='complete'?'مکمل':'مسودہ'} · ${formatDate(e.updated_at||e.created_at)}</span>
               <div id="fir-preview-${e.id}" style="max-height:120px;overflow:hidden;">
                 ${e.content?.html ? esc(_stripTags(e.content.html).slice(0,300)+'...') : '—'}
               </div>
             </td>
             <td style="padding:8px;text-align:center;vertical-align:top;">
               <div style="display:flex;flex-direction:column;gap:4px;align-items:center;">
-                <button class="btn btn-primary btn-sm" onclick="_editFIREntry('${e.id}')" title="ترمیم">✏️ ترمیم</button>
-                <button class="btn btn-secondary btn-sm" onclick="_printFIREntry('${e.id}')" title="پرنٹ">🖨️ پرنٹ</button>
-                <button class="btn btn-secondary btn-sm" onclick="_shareFIREntry('${e.id}')" title="شیئر">📱 شیئر</button>
-                <button class="btn btn-danger btn-sm" onclick="_deleteFIREntry('${e.id}')" title="حذف">🗑️</button>
+                <button class="btn btn-primary btn-sm" onclick="_editFIREntry('${e.id}')" title="ترمیم">ترمیم</button>
+                <button class="btn btn-secondary btn-sm" onclick="_printFIREntry('${e.id}')" title="پرنٹ">پرنٹ</button>
+                <button class="btn btn-secondary btn-sm" onclick="_shareFIREntry('${e.id}')" title="شیئر">شیئر</button>
+                <button aria-label="حذف" class="btn btn-danger btn-sm" onclick="_deleteFIREntry('${e.id}')" title="حذف"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
               </div>
             </td>
           </tr>`).join('')}
@@ -89,7 +89,7 @@ async function _loadFIREntries() {
     // Store entries for print/share
     window._firEntries = entries;
   } catch(e) {
-    if (area) area.innerHTML = `<div style="color:var(--red);padding:20px;">❌ ${esc(e.message)}</div>`;
+    if (area) area.innerHTML = `<div style="color:var(--red);padding:20px;">${esc(e.message)}</div>`;
   }
 }
 
@@ -122,7 +122,7 @@ async function _editFIREntry(entryId) {
       _misalDocs['fir'] = data;
       _openMisalEditorDirect('fir');
     }
-  } catch(e) { showToast('❌ '+e.message,'error'); }
+  } catch(e) { showToast(''+e.message,'error'); }
 }
 
 
@@ -137,10 +137,10 @@ function _openMisalEditorDirect(docId) {
 
 
 async function _deleteFIREntry(entryId) {
-  openModal('🗑️ FIR حذف کریں',
+  openModal('FIR حذف کریں',
     `<p style="color:var(--text-secondary);font-size:13px;">کیا آپ یہ FIR متن مستقل حذف کرنا چاہتے ہیں؟</p>`,
     `<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-     <button class="btn btn-danger" onclick="closeModal();_doDeleteFIR('${entryId}')">🗑️ حذف کریں</button>`
+     <button class="btn btn-danger" onclick="closeModal();_doDeleteFIR('${entryId}')">حذف کریں</button>`
   );
 }
 
@@ -149,10 +149,10 @@ async function _doDeleteFIR(entryId) {
   try {
     await supabaseClient.from('case_documents').delete().eq('id', entryId);
     delete _misalDocs['fir'];
-    showToast('🗑️ FIR حذف ہو گئی','info');
+    showToast('FIR حذف ہو گئی','info');
     _refreshMisalBar();
     _renderFIRView();
-  } catch(e) { showToast('❌ '+e.message,'error'); }
+  } catch(e) { showToast(''+e.message,'error'); }
 }
 
 
@@ -214,7 +214,7 @@ function _doShareFIR(txt) {
   const c = window._workspaceCase || {};
   const full = `ایف آئی آر — مقدمہ ${c.fir_number||''}\n\n${txt}`;
   if (navigator.share) { navigator.share({title:'FIR',text:full}).catch(()=>{}); }
-  else { navigator.clipboard.writeText(full).then(()=>showToast('📋 Copy ہو گئی — WhatsApp میں paste کریں','info')); }
+  else { navigator.clipboard.writeText(full).then(()=>showToast('Copy ہو گئی — WhatsApp میں paste کریں','info')); }
 }
 
 // ── SAVE (override to refresh FIR view after save) ────────────
@@ -231,12 +231,12 @@ function toggleVoiceInput() {
 async function _startVoice() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
-    showToast('⚠️ آپ کا براؤزر آواز کو سپورٹ نہیں کرتا — Chrome استعمال کریں', 'error', 6000);
+    showToast('آپ کا براؤزر آواز کو سپورٹ نہیں کرتا — Chrome استعمال کریں', 'error', 6000);
     return;
   }
 
   const editor = document.getElementById('misal-editor') || document.getElementById('a4-paper');
-  if (!editor) { showToast('⚠️ پہلے دستاویز کھولیں', 'error'); return; }
+  if (!editor) { showToast('پہلے دستاویز کھولیں', 'error'); return; }
 
   // Explicitly request microphone permission first
   try {
@@ -245,11 +245,11 @@ async function _startVoice() {
     stream.getTracks().forEach(t => t.stop());
   } catch(err) {
     if (err.name === 'NotAllowedError') {
-      showToast('❌ مائیکروفون کی اجازت نہیں — براؤزر میں Allow کریں', 'error', 6000);
+      showToast('مائیکروفون کی اجازت نہیں — براؤزر میں Allow کریں', 'error', 6000);
     } else if (err.name === 'NotFoundError') {
-      showToast('❌ کوئی مائیکروفون نہیں ملا — مائیکروفون جوڑیں', 'error', 6000);
+      showToast('کوئی مائیکروفون نہیں ملا — مائیکروفون جوڑیں', 'error', 6000);
     } else {
-      showToast('❌ مائیکروفون خرابی: ' + err.message, 'error', 6000);
+      showToast('مائیکروفون خرابی: ' + err.message, 'error', 6000);
     }
     return;
   }
@@ -275,16 +275,16 @@ async function _startVoice() {
     }
     if (final) _insertTextAtCursor(editor, final);
     const badge = document.getElementById('voice-status');
-    if (badge) badge.textContent = interim ? `🎙️ ${interim}` : '🎙️ سن رہا ہے...';
+    if (badge) badge.textContent = interim ? `${interim}` : 'سن رہا ہے...';
   };
 
   _voiceRecognition.onerror = (e) => {
     console.warn('[Voice] Error:', e.error);
     const msgs = {
-      'not-allowed':  '❌ مائیکروفون کی اجازت نہیں',
+      'not-allowed':  'مائیکروفون کی اجازت نہیں',
       'no-speech':    null, // ignore silence
-      'audio-capture':'❌ مائیکروفون نہیں ملا',
-      'network':      '❌ نیٹ ورک کی خرابی — آواز نہیں پہنچ رہی',
+      'audio-capture':'مائیکروفون نہیں ملا',
+      'network':      'نیٹ ورک کی خرابی — آواز نہیں پہنچ رہی',
       'aborted':      null,
     };
     const msg = msgs[e.error];
@@ -301,7 +301,7 @@ async function _startVoice() {
     _voiceRecognition.start();
     _voiceActive = true;
   } catch(err) {
-    showToast('❌ آواز شروع نہیں ہو سکی: ' + err.message, 'error', 5000);
+    showToast('آواز شروع نہیں ہو سکی: ' + err.message, 'error', 5000);
     return;
   }
 
@@ -310,7 +310,7 @@ async function _startVoice() {
     btn.style.background  = '#ef4444';
     btn.style.color       = '#fff';
     btn.style.borderColor = '#ef4444';
-    btn.textContent       = '⏹️ روکیں';
+    btn.textContent       = 'روکیں';
   }
 
   // Status bar
@@ -319,12 +319,12 @@ async function _startVoice() {
     badge = document.createElement('div');
     badge.id = 'voice-status';
     badge.style.cssText = 'padding:6px 16px;background:#1a1a2e;border-bottom:2px solid #ef4444;font-size:13px;color:#ef4444;direction:rtl;text-align:right;font-family:\'Jameel Noori Nastaleeq\',serif;';
-    badge.textContent = '🎙️ سن رہا ہے... اردو میں بولیں';
+    badge.textContent = 'سن رہا ہے... اردو میں بولیں';
     const editorArea = document.getElementById('workspace-editor-area');
     if (editorArea) editorArea.insertAdjacentElement('afterbegin', badge);
   }
 
-  showToast('🎙️ اردو میں بولنا شروع کریں', 'success', 3000);
+  showToast('اردو میں بولنا شروع کریں', 'success', 3000);
 }
 
 
@@ -337,13 +337,13 @@ function _stopVoice() {
     btn.style.background  = '';
     btn.style.color       = '';
     btn.style.borderColor = '';
-    btn.textContent       = '🎙️ آواز';
+    btn.textContent       = 'آواز';
   }
 
   const badge = document.getElementById('voice-status');
   if (badge) badge.remove();
 
-  showToast('⏹️ آواز کی ریکارڈنگ بند', 'info', 2000);
+  showToast('آواز کی ریکارڈنگ بند', 'info', 2000);
 }
 
 // Insert text at the current cursor position in a contenteditable element

@@ -9,7 +9,7 @@ async function renderDashboard(container) {
   // Phase 3C — DIO.states.loading() with fallback
   const _loadingHtml = (window.DIO && DIO.states)
     ? DIO.states.loading('ڈیش بورڈ لوڈ ہو رہا ہے')
-    : `<div style="text-align:center;padding:32px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq',serif;">⏳ لوڈ ہو رہا ہے...</div>`;
+    : `<div style="text-align:center;padding:32px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq',serif;">لوڈ ہو رہا ہے...</div>`;
   container.innerHTML = `<div id="dash-root">${_loadingHtml}</div>`;
   await _buildDash();
 }
@@ -177,7 +177,7 @@ function _dashPerfChart(monthly, total, complete) {
   return `
   <div class="card" style="padding:14px;margin-bottom:14px;direction:rtl;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <div style="font-size:13px;font-weight:800;color:var(--accent);font-family:'Jameel Noori Nastaleeq',serif;">📈 6 ماہ کی کارکردگی</div>
+      <div style="font-size:13px;font-weight:800;color:var(--accent);font-family:'Jameel Noori Nastaleeq',serif;">6 ماہ کی کارکردگی</div>
       <div style="font-size:10px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq',serif;">کل ${total} · مکمل ${complete}</div>
     </div>
     <div style="display:flex;align-items:flex-end;gap:6px;direction:ltr;">${bars}</div>
@@ -326,7 +326,7 @@ function _recentlyViewedBar() {
   if (!recent.length) return '';
   return `
   <div style="margin-bottom:14px;direction:rtl;">
-    <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;font-weight:700;">🕐 حال ہی میں دیکھے گئے</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;font-weight:700;">حال ہی میں دیکھے گئے</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;">
       ${recent.map(r=>`
         <button onclick="openCaseWorkspace('${r.id}')"
@@ -380,8 +380,8 @@ function _dioOnboardCard() {
           پہلی بار استعمال کر رہے ہیں؟ ایک نظر رہنمائی پر ڈال لیں۔
         </div>
         <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-          <button class="btn btn-primary btn-sm" style="font-family:'Jameel Noori Nastaleeq',serif;" onclick="_dioOnboardOpenHelp()">📖 رہنمائی کھولیں</button>
-          <button class="btn btn-secondary btn-sm" style="font-family:'Jameel Noori Nastaleeq',serif;" onclick="_dioOnboardDismiss()">✓ سمجھ گیا</button>
+          <button class="btn btn-primary btn-sm" style="font-family:'Jameel Noori Nastaleeq',serif;" onclick="_dioOnboardOpenHelp()">رہنمائی کھولیں</button>
+          <button class="btn btn-secondary btn-sm" style="font-family:'Jameel Noori Nastaleeq',serif;" onclick="_dioOnboardDismiss()">سمجھ گیا</button>
         </div>
       </div>
     </div>

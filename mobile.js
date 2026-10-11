@@ -51,8 +51,8 @@
     var bar = document.createElement('div');
     bar.className = 'dio-mbar no-print';
     bar.innerHTML =
-      '<button type="button" data-m="form">📝 فارم</button>' +
-      '<button type="button" data-m="paper">📄 کاغذ</button>' +
+      '<button type="button" data-m="form"><svg viewBox=\'0 0 24 24\' width=\'15\' height=\'15\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.9\' stroke-linecap=\'round\' stroke-linejoin=\'round\' aria-hidden=\'true\' style=\'vertical-align:-2px\'><path d=\'M4.5 4h15v16h-15z\'/><path d=\'M8 9h8\'/><path d=\'M8 12.5h8\'/><path d=\'M8 16h5\'/></svg> فارم</button>' +
+      '<button type="button" data-m="paper"><svg viewBox=\'0 0 24 24\' width=\'15\' height=\'15\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.9\' stroke-linecap=\'round\' stroke-linejoin=\'round\' aria-hidden=\'true\' style=\'vertical-align:-2px\'><path d=\'M7 3h7l4 4v14H7z\'/><path d=\'M14 3v5h5\'/></svg> کاغذ</button>' +
       '<span class="sp"></span>' +
       '<span style="font-size:11px;color:var(--text-muted,#7d97ad)">چھپائی ہمیشہ A4</span>';
     bar.addEventListener('click', function (e) {
@@ -65,7 +65,7 @@
       var add = document.createElement('button');
       add.type = 'button';
       add.className = 'dio-addblk no-print';
-      add.textContent = '＋ نیا اندراج';
+      add.innerHTML = "<svg viewBox=\'0 0 24 24\' width=\'15\' height=\'15\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.9\' stroke-linecap=\'round\' stroke-linejoin=\'round\' aria-hidden=\'true\' style=\'vertical-align:-2px\'><path d=\'M12 5v14\'/><path d=\'M5 12h14\'/></svg>" + ' نیا اندراج';
       add.addEventListener('click', function () {
         try {
           if (typeof window._zimniAddBlock === 'function') {
@@ -174,11 +174,13 @@
   }
 
   // ── 4) ANGOOTHE KI PATTI (aik haath se) ──────────────────────
+  /* Nishan SVG hain (emoji nahi): har Android/iOS par aik jaisa dikhte
+     hain aur `currentColor` se chaley hue safhe ka rang le lete hain. */
   var THUMB = [
-    { p: 'dashboard', ic: '🏠', t: 'ہوم' },
-    { p: 'cases',     ic: '📁', t: 'مقدمات' },
-    { p: 'search',    ic: '🔍', t: 'تلاش' },
-    { p: 'reminders', ic: '🔔', t: 'یاددہانی' }
+    { p: 'dashboard', ic: "<svg viewBox='0 0 24 24' width='21' height='21' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4 10.5L12 4l8 6.5V20H4z'/><path d='M9.5 20v-6h5v6'/></svg>", t: 'ہوم' },
+    { p: 'cases',     ic: "<svg viewBox='0 0 24 24' width='21' height='21' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 7.5h6l2 2.5h9V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z'/></svg>", t: 'مقدمات' },
+    { p: 'search',    ic: "<svg viewBox='0 0 24 24' width='21' height='21' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='11' cy='11' r='6.5'/><path d='M16 16l4.5 4.5'/></svg>", t: 'تلاش' },
+    { p: 'reminders', ic: "<svg viewBox='0 0 24 24' width='21' height='21' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M6.5 10a5.5 5.5 0 0 1 11 0c0 4 1.5 5.5 1.5 5.5H5S6.5 14 6.5 10z'/><path d='M10.2 19a2 2 0 0 0 3.6 0'/></svg>", t: 'یاددہانی' }
   ];
   function buildThumbBar() {
     if (!isMobile() || document.querySelector('.dio-thumbbar')) return;

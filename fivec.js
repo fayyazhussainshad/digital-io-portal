@@ -39,7 +39,7 @@ async function addApplication5C(d){
     const local={...d,id:tempId,officer_id:oid,created_at:new Date().toISOString(),_offline:true};
     await offlineStore.cache('fivec_cache',local);
     await offlineStore.enqueue('fivec','insert',{...d,officer_id:oid},tempId);
-    _showSyncBar('pending','📴 5-C application saved offline — will sync when connected');
+    _showSyncBar('pending','5-C application saved offline — will sync when connected');
     return local;
   }
   const{numbers,...main}=d;
@@ -54,7 +54,7 @@ async function updateApplication5C(id,d,numbers){
   if(cached)await offlineStore.cache('fivec_cache',{...cached,...d,application_5c_numbers:numbers!==undefined?numbers:(cached.application_5c_numbers||[])});
   if(!navigator.onLine){
     await offlineStore.enqueue('fivec','update',{id,...d,numbers});
-    _showSyncBar('pending','📴 5-C update saved offline — will sync when connected');
+    _showSyncBar('pending','5-C update saved offline — will sync when connected');
     return;
   }
   const{error}=await supabaseClient.from('applications_5c').update(d).eq('id',id);
@@ -65,7 +65,7 @@ async function deleteApplication5C(id){
   if(!navigator.onLine){
     await offlineStore.remove('fivec_cache',id);
     await offlineStore.enqueue('fivec','delete',{id});
-    _showSyncBar('pending','📴 5-C deletion queued — will sync when connected');
+    _showSyncBar('pending','5-C deletion queued — will sync when connected');
     return;
   }
   const{data:atts}=await supabaseClient.from('application_5c_attachments').select('storage_path').eq('application_5c_id',id);
@@ -83,9 +83,9 @@ registerPage('fivec',renderFiveC);
 async function renderFiveC(container,query){
   query=query||'';
   const apps=await getApplications5C(query);
-  container.innerHTML=`<div class="page-header"><div style="display:flex;align-items:center;gap:10px;"><div><div class="page-title">📋 5-C Applications</div></div></div><button class="btn btn-primary" onclick="open5CForm()">+ New Application</button></div>
+  container.innerHTML=`<div class="page-header"><div style="display:flex;align-items:center;gap:10px;"><div><div class="page-title">مارک شدہ درخواستیں</div></div></div><button class="btn btn-primary" onclick="open5CForm()">+ New Application</button></div>
   <div class="card" style="margin-bottom:14px;padding:12px;">
-    <input class="search-input" id="fivec-search" style="width:100%;" placeholder="🔍 Search by complainant name, CNIC, cell, application number, designation..." value="${esc5C(query)}" oninput="clearTimeout(window._5cTmr);window._5cTmr=setTimeout(()=>renderFiveC(document.getElementById('page-content'),this.value),250)">
+    <input class="search-input" id="fivec-search" style="width:100%;" placeholder="Search by complainant name, CNIC, cell, application number, designation..." value="${esc5C(query)}" oninput="clearTimeout(window._5cTmr);window._5cTmr=setTimeout(()=>renderFiveC(document.getElementById('page-content'),this.value),250)">
     <div style="margin-top:6px;font-size:11px;color:var(--text-muted);">${apps.length} application${apps.length===1?'':'s'} ${query?'matching':'total'}</div>
   </div>
   <div class="card" style="padding:0;overflow:hidden;">
@@ -105,14 +105,14 @@ function render5CRow(a){
     <td>${nums}</td>
     <td style="font-size:11px;">${toDisplayDate(a.application_date)||'—'}</td>
     <td><span class="pill ${FIVEC_STATUS_CLS[a.status]||'pill-blue'}">${esc5C(FIVEC_STATUS[a.status]||a.status)}</span></td>
-    <td style="text-align:center;">📎 ${att}</td>
+    <td style="text-align:center;">${att}</td>
     <td style="white-space:nowrap;direction:rtl;">
-      <button class="btn btn-secondary btn-sm" onclick="open5CForm('${a.id}')" title="ترمیم">✏️</button>
+      <button aria-label="ترمیم" class="btn btn-secondary btn-sm" onclick="open5CForm('${a.id}')" title="ترمیم"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>
       <label class="btn btn-secondary btn-sm" style="cursor:pointer;" title="فائل منسلک کریں"><input type="file" style="display:none;" onchange="upload5CFile('${a.id}','attachment',this.files[0])"> 📎</label>
-      <button class="btn btn-primary btn-sm" onclick="open5CResponse('${a.id}')" title="جواب">📝</button>
-      <button class="btn btn-secondary btn-sm" onclick="_print5C('${a.id}')" title="پرنٹ">🖨️</button>
-      <button class="btn btn-secondary btn-sm" onclick="_export5CPdf('${a.id}')" title="PDF عدالت کے لیے">📄 PDF</button>
-      <button class="btn btn-danger btn-sm" onclick="confirmDelete5C('${a.id}',${a.serial_number})" title="حذف">🗑️</button>
+      <button aria-label="جواب" class="btn btn-primary btn-sm" onclick="open5CResponse('${a.id}')" title="جواب"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4.5 4h15v12H8l-3.5 3.5z"/><path d="M8 9h8"/><path d="M8 12.5h5"/></svg></button>
+      <button aria-label="پرنٹ" class="btn btn-secondary btn-sm" onclick="_print5C('${a.id}')" title="پرنٹ"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M7 9.5V3.5h10v6"/><path d="M4.5 9.5h15v7h-15z"/><path d="M7 13.5h10V21H7z"/></svg></button>
+      <button class="btn btn-secondary btn-sm" onclick="_export5CPdf('${a.id}')" title="PDF عدالت کے لیے">PDF</button>
+      <button aria-label="حذف" class="btn btn-danger btn-sm" onclick="confirmDelete5C('${a.id}',${a.serial_number})" title="حذف"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
     </td>
   </tr>`;
 }
@@ -133,20 +133,20 @@ async function open5CForm(id){
     <div style="grid-column:1/-1;"><label style="${lbl}">Subject / Summary</label><textarea style="${inp};min-height:60px;font-family:inherit;" id="f5c-subject">${esc5C(app.subject)}</textarea></div>
   </div>
   <hr style="margin:18px 0;border:0;border-top:1px solid var(--border);">
-  <div style="font-weight:600;margin-bottom:10px;font-size:13px;">📋 Application Numbers <span style="font-weight:400;color:var(--text-muted);font-size:11px;">(each forwarding senior officer assigns their own number)</span></div>
+  <div style="font-weight:600;margin-bottom:10px;font-size:13px;">Application Numbers <span style="font-weight:400;color:var(--text-muted);font-size:11px;">(each forwarding senior officer assigns their own number)</span></div>
   <div id="f5c-numbers">${nums.map(render5CNumberRow).join('')}</div>
   <button class="btn btn-secondary btn-sm" type="button" onclick="add5CNumberRow()" style="margin-top:6px;">+ Add Another Number</button>
   ${id?`<hr style="margin:18px 0;border:0;border-top:1px solid var(--border);">
-  <div style="font-weight:600;margin-bottom:8px;font-size:13px;">📎 Attachments &amp; Scans</div>
+  <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Attachments &amp; Scans</div>
   <div id="f5c-attachments">${(app.application_5c_attachments||[]).map(render5CAttachmentRow).join('')||'<div style="color:var(--text-muted);font-size:12px;padding:8px;">No attachments yet.</div>'}</div>
   <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-    <label class="btn btn-secondary btn-sm" style="cursor:pointer;"><input type="file" style="display:none;" onchange="upload5CFile('${id}','application_scan',this.files[0])"> 📄 Upload Application Scan</label>
-    <label class="btn btn-secondary btn-sm" style="cursor:pointer;"><input type="file" style="display:none;" onchange="upload5CFile('${id}','response_scan',this.files[0])"> 📝 Upload Response Scan</label>
-    <label class="btn btn-secondary btn-sm" style="cursor:pointer;"><input type="file" style="display:none;" onchange="upload5CFile('${id}','attachment',this.files[0])"> 📎 Upload Other</label>
-    <label class="btn btn-primary btn-sm" style="cursor:pointer;"><input type="file" accept="image/*" capture="environment" style="display:none;" onchange="upload5CFile('${id}','application_scan',this.files[0])"> 📷 Scan with Camera</label>
-  </div>`:`<div style="color:var(--text-muted);font-size:12px;margin-top:14px;padding:10px;background:var(--bg-tertiary);border-radius:6px;">💾 Save the application first, then you can attach files and write a response.</div>`}`;
-  const footer=`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="save5CApp('${id||''}')">💾 Save</button>`;
-  openModal(`${id?'✏️ Edit':'➕ New'} 5-C Application${id?' #'+app.serial_number:''}`,body,footer);
+    <label class="btn btn-secondary btn-sm" style="cursor:pointer;"><input type="file" style="display:none;" onchange="upload5CFile('${id}','application_scan',this.files[0])"> Upload Application Scan</label>
+    <label class="btn btn-secondary btn-sm" style="cursor:pointer;"><input type="file" style="display:none;" onchange="upload5CFile('${id}','response_scan',this.files[0])"> Upload Response Scan</label>
+    <label class="btn btn-secondary btn-sm" style="cursor:pointer;"><input type="file" style="display:none;" onchange="upload5CFile('${id}','attachment',this.files[0])"> Upload Other</label>
+    <label class="btn btn-primary btn-sm" style="cursor:pointer;"><input type="file" accept="image/*" capture="environment" style="display:none;" onchange="upload5CFile('${id}','application_scan',this.files[0])"> Scan with Camera</label>
+  </div>`:`<div style="color:var(--text-muted);font-size:12px;margin-top:14px;padding:10px;background:var(--bg-tertiary);border-radius:6px;">Save the application first, then you can attach files and write a response.</div>`}`;
+  const footer=`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="save5CApp('${id||''}')">Save</button>`;
+  openModal(`${id?'Edit':'New'} 5-C Application${id?' #'+app.serial_number:''}`,body,footer);
   setTimeout(()=>{const c=document.querySelector('.modal-card');if(c){c.style.maxWidth='880px';c.style.width='94vw';}},10);
 }
 function render5CNumberRow(n){
@@ -159,7 +159,7 @@ function render5CNumberRow(n){
         <select style="${inp}" data-field="senior_officer_designation" onchange="handleDesig5C(this)"><option value="">— Select —</option>${FIVEC_DESIGNATIONS.map(d=>`<option value="${d}" ${n.senior_officer_designation===d?'selected':''}>${d}</option>`).join('')}</select>
         <input class="desig-custom" style="${inp};margin-top:6px;display:${isOther?'block':'none'};" placeholder="Enter designation..." data-field="senior_officer_designation_custom" value="${esc5C(isOther?n.senior_officer_name||'':'')}">
       </div>
-      <button class="btn btn-danger btn-sm" type="button" onclick="this.closest('.f5c-num-row').remove()">✕</button>
+      <button title="بند کریں" aria-label="بند کریں" class="btn btn-danger btn-sm" type="button" onclick="this.closest('.f5c-num-row').remove()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
       <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;font-weight:600;">Officer Name (optional)</div><input style="${inp}" placeholder="Officer full name" data-field="senior_officer_name" value="${esc5C(!isOther?n.senior_officer_name||'':'')}"></div>
@@ -169,28 +169,28 @@ function render5CNumberRow(n){
 }
 function handleDesig5C(sel){const c=sel.closest('.f5c-num-row').querySelector('.desig-custom');if(c){c.style.display=sel.value==='Other'?'block':'none';if(sel.value!=='Other')c.value='';}}
 function add5CNumberRow(){const c=document.getElementById('f5c-numbers');const tmp=document.createElement('div');tmp.innerHTML=render5CNumberRow({});c.appendChild(tmp.firstElementChild);}
-function render5CAttachmentRow(a){const ic=a.category==='application_scan'?'📄':a.category==='response_scan'?'📝':'📎';const lb=a.category==='application_scan'?'Application Scan':a.category==='response_scan'?'Response Scan':'Other';const sz=a.file_size?` · ${(a.file_size/1024).toFixed(1)}KB`:'';return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg-tertiary);border-radius:6px;margin-bottom:6px;"><span style="font-size:18px;">${ic}</span><span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;">${esc5C(a.file_name)} <span style="color:var(--text-muted);font-size:10px;">(${lb}${sz})</span></span><button class="btn btn-secondary btn-sm" onclick="view5CAttachment('${a.storage_path}')">👁️</button><button class="btn btn-danger btn-sm" onclick="delete5CAttachment('${a.id}','${a.storage_path}',this)">🗑️</button></div>`;}
-async function upload5CFile(appId,category,file){if(!file)return;if(file.size>10*1024*1024){showToast('⚠️ File too large (max 10 MB).','error');return;}showToast('⏳ Uploading...','info');try{await uploadAttachment5C(appId,file,category);showToast('✅ Uploaded!','success');open5CForm(appId);}catch(e){showToast('❌ Upload failed: '+e.message,'error',5000);}}
+function render5CAttachmentRow(a){const ic=a.category==='application_scan'?'📄':a.category==='response_scan'?'📝':'📎';const lb=a.category==='application_scan'?'Application Scan':a.category==='response_scan'?'Response Scan':'Other';const sz=a.file_size?` · ${(a.file_size/1024).toFixed(1)}KB`:'';return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg-tertiary);border-radius:6px;margin-bottom:6px;"><span style="font-size:18px;">${ic}</span><span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;">${esc5C(a.file_name)} <span style="color:var(--text-muted);font-size:10px;">(${lb}${sz})</span></span><button title="دیکھیں" aria-label="دیکھیں" class="btn btn-secondary btn-sm" onclick="view5CAttachment('${a.storage_path}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg></button><button title="حذف" aria-label="حذف" class="btn btn-danger btn-sm" onclick="delete5CAttachment('${a.id}','${a.storage_path}',this)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button></div>`;}
+async function upload5CFile(appId,category,file){if(!file)return;if(file.size>10*1024*1024){showToast('File too large (max 10 MB).','error');return;}showToast('Uploading...','info');try{await uploadAttachment5C(appId,file,category);showToast('Uploaded!','success');open5CForm(appId);}catch(e){showToast('Upload failed: '+e.message,'error',5000);}}
 async function view5CAttachment(path){
   const url = await getAttachmentUrl5C(path);
-  if (!url) { showToast('❌ فائل نہیں ملی', 'error'); return; }
+  if (!url) { showToast('فائل نہیں ملی', 'error'); return; }
   // App ke ANDAR kholo — nayi tab mein data: URL Chrome block karta hai (khali safha)
   if (typeof _dioViewFile === 'function') _dioViewFile(url, path.split('/').pop() || 'فائل');
   else window.open(url, '_blank');
 }
-async function delete5CAttachment(id,path,btn){if(!confirm('Delete this attachment?'))return;try{await deleteAttachment5C(id,path);if(btn&&btn.closest('div'))btn.closest('div').remove();showToast('🗑️ Deleted','info');}catch(e){showToast('❌ '+e.message,'error');}}
+async function delete5CAttachment(id,path,btn){if(!confirm('Delete this attachment?'))return;try{await deleteAttachment5C(id,path);if(btn&&btn.closest('div'))btn.closest('div').remove();showToast('Deleted','info');}catch(e){showToast(''+e.message,'error');}}
 async function save5CApp(id){
   const main={complainant_name:document.getElementById('f5c-name').value.trim()||null,complainant_cnic:document.getElementById('f5c-cnic').value.trim()||null,complainant_cell:document.getElementById('f5c-cell').value.trim()||null,application_date:toISODate(document.getElementById('f5c-appdate').value)||null,subject:document.getElementById('f5c-subject').value.trim()||null,status:document.getElementById('f5c-status').value};
   const numbers=Array.from(document.querySelectorAll('.f5c-num-row')).map(row=>{const r={};row.querySelectorAll('[data-field]').forEach(el=>{r[el.dataset.field]=el.value.trim()||null;});if(r.senior_officer_designation==='Other'){const c=row.querySelector('.desig-custom');r.senior_officer_designation=c&&c.value.trim()?c.value.trim():'Other';}if(r.forwarded_date)r.forwarded_date=toISODate(r.forwarded_date)||r.forwarded_date;delete r.senior_officer_designation_custom;return r;}).filter(n=>n.application_number);
-  try{if(id){await updateApplication5C(id,main,numbers);showToast('✅ Updated','success');}else{await addApplication5C({...main,numbers});showToast('✅ Application added','success');}closeModal();renderFiveC(document.getElementById('page-content'));}catch(e){showToast('❌ '+e.message,'error',5000);}
+  try{if(id){await updateApplication5C(id,main,numbers);showToast('Updated','success');}else{await addApplication5C({...main,numbers});showToast('Application added','success');}closeModal();renderFiveC(document.getElementById('page-content'));}catch(e){showToast(''+e.message,'error',5000);}
 }
-function confirmDelete5C(id,sn){if(!confirm(`Delete Application #${sn} and ALL its attachments?`))return;deleteApplication5C(id).then(()=>{showToast('🗑️ Deleted','info');renderFiveC(document.getElementById('page-content'));}).catch(e=>showToast('❌ '+e.message,'error'));}
+function confirmDelete5C(id,sn){if(!confirm(`Delete Application #${sn} and ALL its attachments?`))return;deleteApplication5C(id).then(()=>{showToast('Deleted','info');renderFiveC(document.getElementById('page-content'));}).catch(e=>showToast(''+e.message,'error'));}
 
 // ── RESPONSE WRITER ──
 // Saved selection — restored after clicking toolbar selects so text stays highlighted
 let _r5cSel=null;
 async function open5CResponse(id){
-  const app=await getApplication5C(id);if(!app){showToast('❌ Not found','error');return;}
+  const app=await getApplication5C(id);if(!app){showToast('Not found','error');return;}
   const o=currentOfficer||{};
   const today=formatDate(new Date());
   // Only pull application numbers — no officer rank or designation
@@ -258,11 +258,11 @@ async function open5CResponse(id){
   </style>
   <!-- Title bar -->
   <div id="r5c-titlebar" style="background:#0f1923;padding:8px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #1a3148;flex-wrap:wrap;">
-    <span style="font-weight:700;color:#e8f0fe;flex:1;font-size:13px;">📝 Response — App #${app.serial_number} · ${esc5C(app.complainant_name||'')}</span>
-    <button class="btn btn-primary btn-sm" onmousedown="event.preventDefault()" onclick="save5CResponse('${id}')">💾 Save</button>
-    <button class="btn btn-secondary btn-sm" onmousedown="event.preventDefault()" onclick="downloadResponse5C('${id}','${esc5C((app.complainant_name||'response').replace(/[^\w]/g,'_'))}')">⬇️ Download</button>
-    <button class="btn btn-secondary btn-sm" onmousedown="event.preventDefault()" onclick="print5CResponse()">🖨️ Print</button>
-    <button class="btn btn-danger btn-sm" onclick="document.body.classList.remove('r5c-open');document.getElementById('response5c-overlay').remove()">✕ Close</button>
+    <span style="font-weight:700;color:#e8f0fe;flex:1;font-size:13px;">Response — App #${app.serial_number} · ${esc5C(app.complainant_name||'')}</span>
+    <button class="btn btn-primary btn-sm" onmousedown="event.preventDefault()" onclick="save5CResponse('${id}')">Save</button>
+    <button class="btn btn-secondary btn-sm" onmousedown="event.preventDefault()" onclick="downloadResponse5C('${id}','${esc5C((app.complainant_name||'response').replace(/[^\w]/g,'_'))}')">Download</button>
+    <button class="btn btn-secondary btn-sm" onmousedown="event.preventDefault()" onclick="print5CResponse()">Print</button>
+    <button class="btn btn-danger btn-sm" onclick="document.body.classList.remove('r5c-open');document.getElementById('response5c-overlay').remove()">Close</button>
   </div>
   ${buildWordToolbar('a4-paper', { preserveSel: true })}
   <!-- Document area -->
@@ -352,8 +352,8 @@ async function save5CResponse(id){
   const html=document.getElementById('a4-paper').innerHTML;
   try{
     await supabaseClient.from('applications_5c').update({response_text:((window.DIO&&DIO.html&&DIO.html.safe)?DIO.html.safe(html):html),response_date:new Date().toISOString().split('T')[0],status:'responded'}).eq('id',id);
-    showToast('✅ Response saved online','success');
-  }catch(e){showToast('❌ Save failed: '+e.message,'error',5000);}
+    showToast('Response saved online','success');
+  }catch(e){showToast('Save failed: '+e.message,'error',5000);}
 }
 
 function downloadResponse5C(id,name){
@@ -362,7 +362,7 @@ function downloadResponse5C(id,name){
   const full=`<!DOCTYPE html><html lang="ur"><head><meta charset="utf-8"><title>5-C Response</title><link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet"><style>@page{size:A4;margin:20mm 18mm 20mm 15mm}body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',Aptos,serif;font-size:14pt;line-height:${lh};word-spacing:3px;direction:rtl;margin:0;padding:0;color:#000;}div,p,li{margin:0;padding:0;}</style></head><body>${html}</body></html>`;
   const blob=new Blob([full],{type:'text/html;charset=utf-8'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`5C_${name}_${id.slice(0,8)}.html`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
-  showToast('⬇️ Offline copy downloaded','success');
+  showToast('Offline copy downloaded','success');
 }
 
 // Fix: @page margin:0 pushes Chrome's timestamp/URL off the page.
@@ -404,7 +404,7 @@ function print5CResponse(){
 // ── 5-C PRINT ────────────────────────────────────────────────
 // ── 5-C PDF EXPORT (court-ready) ──────────────────────────────
 async function _export5CPdf(id) {
-  showToast('📄 PDF تیار ہو رہا ہے — پرنٹ ونڈو میں "Save as PDF" منتخب کریں', 'info', 5000);
+  showToast('PDF تیار ہو رہا ہے — پرنٹ ونڈو میں "Save as PDF" منتخب کریں', 'info', 5000);
   // Reuse the same court-ready layout; browser's print dialog → Save as PDF
   setTimeout(() => _print5C(id), 600);
 }
@@ -413,7 +413,7 @@ async function _print5C(id) {
   try {
     const { data: a } = await supabaseClient.from('applications_5c')
       .select('*, application_5c_numbers(*)').eq('id',id).single();
-    if (!a) { showToast('⚠️ درخواست نہیں ملی','error'); return; }
+    if (!a) { showToast('درخواست نہیں ملی','error'); return; }
     const o = currentOfficer || {};
     const nums = (a.application_5c_numbers||[]);
     let _printHTML = '';
@@ -455,5 +455,5 @@ async function _print5C(id) {
     
     </body></html>`);
     dioPrint(_printHTML);
-  } catch(e) { showToast('❌ '+e.message,'error'); }
+  } catch(e) { showToast(''+e.message,'error'); }
 }

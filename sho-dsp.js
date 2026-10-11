@@ -49,7 +49,7 @@ function openShoDspModal(type) {
     </div>
   `, `
     <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-    <button class="btn btn-primary" onclick="_saveShoDsp('${type}')">💾 محفوظ کریں</button>
+    <button class="btn btn-primary" onclick="_saveShoDsp('${type}')">محفوظ کریں</button>
   `);
 }
 window.openShoDspModal = openShoDspModal;
@@ -62,7 +62,7 @@ function _saveShoDsp(type) {
   try { localStorage.setItem(key, JSON.stringify({ rank, name })); } catch(_) {}
   closeModal();
   _updateShoDspButtons();
-  if (typeof showToast === 'function') showToast('✅ '+(isSho?'SHO':'DSP/SDPO')+' کا نام محفوظ', 'success');
+  if (typeof showToast === 'function') showToast(''+(isSho?'SHO':'DSP/SDPO')+' کا نام محفوظ', 'success');
 }
 window._saveShoDsp = _saveShoDsp;
 
@@ -71,8 +71,8 @@ function _updateShoDspButtons() {
   // Buttons always show fixed labels; names stored in localStorage, used in reports only
   const shoBtn = document.getElementById('topbar-sho-btn');
   const dspBtn = document.getElementById('topbar-dsp-btn');
-  if (shoBtn) shoBtn.innerHTML = '🏛️ SHO';
-  if (dspBtn) dspBtn.innerHTML = '🎖️ DSP/SDPO';
+  if (shoBtn) shoBtn.innerHTML = 'SHO';
+  if (dspBtn) dspBtn.innerHTML = 'DSP/SDPO';
 }
 window._updateShoDspButtons = _updateShoDspButtons;
 
@@ -88,7 +88,7 @@ window.getSarkariGari = getSarkariGari;
 
 function openSarkariGari() {
   const cur = getSarkariGari();
-  openModal('🚗 سرکاری گاڑی', `
+  openModal('سرکاری گاڑی', `
     <div style="direction:rtl;display:flex;flex-direction:column;gap:12px;">
       <div style="display:flex;gap:10px;align-items:center;">
         <label style="min-width:90px;">گاڑی نمبر:</label>
@@ -103,7 +103,7 @@ function openSarkariGari() {
     </div>
   `, `
     <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-    <button class="btn btn-primary" onclick="_saveSarkariGari()">💾 محفوظ کریں</button>
+    <button class="btn btn-primary" onclick="_saveSarkariGari()">محفوظ کریں</button>
   `);
 }
 window.openSarkariGari = openSarkariGari;
@@ -121,7 +121,7 @@ async function _saveSarkariGari() {
     await supabaseClient.from('sarkari_gari').insert(rec);
   } catch(_) {}
   closeModal();
-  if (typeof showToast === 'function') showToast('✅ سرکاری گاڑی محفوظ', 'success');
+  if (typeof showToast === 'function') showToast('سرکاری گاڑی محفوظ', 'success');
 }
 window._saveSarkariGari = _saveSarkariGari;
 

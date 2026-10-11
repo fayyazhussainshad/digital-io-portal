@@ -971,7 +971,7 @@ async function _saveR173() {
             String(_r173DocId).startsWith('local-') ? rec : { id: _r173DocId, ...rec });
         }
       } catch(_) {}
-      showToast('📴 آف لائن محفوظ — انٹرنیٹ آنے پر sync ہوگا', 'info');
+      showToast('آف لائن محفوظ — انٹرنیٹ آنے پر sync ہوگا', 'info');
     } else if (_r173DocId && !String(_r173DocId).startsWith('local-')) {
       // موجودہ چالان میں ترمیم
       await supabaseClient.from('report_173').update(rec).eq('id', _r173DocId);
@@ -1034,12 +1034,12 @@ async function _saveR173() {
             });
           }
         } catch (_) {}
-        showToast('✅ رپورٹ محفوظ — مقدمہ کی حالت اپ ڈیٹ ہو گئی', 'success');
-      } catch(_) { showToast('✅ رپورٹ محفوظ ہو گئی', 'success'); }
+        showToast('رپورٹ محفوظ — مقدمہ کی حالت اپ ڈیٹ ہو گئی', 'success');
+      } catch(_) { showToast('رپورٹ محفوظ ہو گئی', 'success'); }
     } else {
-      showToast('✅ رپورٹ محفوظ ہو گئی', 'success');
+      showToast('رپورٹ محفوظ ہو گئی', 'success');
     }
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+  } catch(e) { showToast('' + e.message, 'error'); }
 }
 
 // ── PRINT (only the form) ─────────────────────────────────────
@@ -4480,9 +4480,9 @@ async function _r173DeleteDoc(id) {
   try {
     await supabaseClient.from('report_173').delete().eq('id', d.id);
     _r173Docs = _r173Docs.filter(x => String(x.id) !== String(id));
-    if (typeof showToast === 'function') showToast('🗑️ حذف ہو گیا', 'info');
+    if (typeof showToast === 'function') showToast('حذف ہو گیا', 'info');
   } catch (e) {
-    if (typeof showToast === 'function') showToast('❌ ' + e.message, 'error');
+    if (typeof showToast === 'function') showToast('' + e.message, 'error');
   }
   _renderR173List();
 }
@@ -4507,7 +4507,7 @@ async function _r173EmailDoc(id) {
     window.location.href = 'mailto:?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(txt);
   } catch (_) {
     try { await navigator.clipboard.writeText(subj + '\n\n' + txt);
-      if (typeof showToast === 'function') showToast('📋 نقل ہو گیا', 'success'); } catch (__) {}
+      if (typeof showToast === 'function') showToast('نقل ہو گیا', 'success'); } catch (__) {}
   }
 }
 window._r173EmailDoc = _r173EmailDoc;
@@ -4517,10 +4517,10 @@ function _printAllR173(isIkhraj) {
   const IK = ['ikhraj','adampata'];
   const list = _r173Docs.filter(d => isIkhraj ? IK.includes(d.type) : !IK.includes(d.type));
   if (!list.length) {
-    if (typeof showToast === 'function') showToast('⚠️ کوئی اندراج نہیں', 'info'); return;
+    if (typeof showToast === 'function') showToast('کوئی اندراج نہیں', 'info'); return;
   }
   if (typeof showToast === 'function')
-    showToast('🖨️ ایک ایک کر کے کھول کر پرنٹ کریں', 'info', 4000);
+    showToast('ایک ایک کر کے کھول کر پرنٹ کریں', 'info', 4000);
   _r173PrintDoc(list[0].id);
 }
 window._printAllR173 = _printAllR173;

@@ -56,7 +56,7 @@ function openDocEditor(docIndex) {
   editor.innerHTML = `
     <!-- Toolbar -->
     <div class="template-toolbar">
-      <span style="font-size:13px;font-weight:700;color:var(--accent);flex:1;">📄 ${esc(docName)}</span>
+      <span style="font-size:13px;font-weight:700;color:var(--accent);flex:1;">${esc(docName)}</span>
       <select id="font-family-sel" onchange="changeFont(this.value)" style="background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:4px 8px;color:var(--text-secondary);font-size:11px;">
         <option value="jameel" selected>Jameel Noori Nastaleeq</option>
         <option value="noto">Noto Nastaliq Urdu</option>
@@ -72,9 +72,9 @@ function openDocEditor(docIndex) {
         <option value="22">22px</option>
       </select>
       <button class="btn btn-secondary btn-sm" onclick="toggleDirection()">⇄ LTR/RTL</button>
-      <button class="btn btn-secondary btn-sm" onclick="saveDocDraft(${docIndex})">💾 Save Draft</button>
-      <button class="btn btn-secondary btn-sm" onclick="printThisDoc('${_dioJsHtml(docName)}')">🖨️ Print</button>
-      <button class="btn btn-primary btn-sm" onclick="markDocDone(${docIndex})">✅ Mark Complete</button>
+      <button class="btn btn-secondary btn-sm" onclick="saveDocDraft(${docIndex})">Save Draft</button>
+      <button class="btn btn-secondary btn-sm" onclick="printThisDoc('${_dioJsHtml(docName)}')">Print</button>
+      <button class="btn btn-primary btn-sm" onclick="markDocDone(${docIndex})">Mark Complete</button>
     </div>
     <!-- Editor -->
     <div style="padding:24px;background:var(--bg-tertiary);min-height:calc(100% - 50px);">

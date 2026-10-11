@@ -213,7 +213,7 @@ const offlineStore={
       // Afsar ko KHAMOSHI se na chhoro — ye adaalati record hai
       try {
         if (typeof showToast === 'function')
-          showToast('⚠️ ' + failed + ' اندراجات سرور نے مسترد کیے — dioFailedSyncs() سے تفصیل دیکھیں', 'error', 8000);
+          showToast('' + failed + ' اندراجات سرور نے مسترد کیے — dioFailedSyncs() سے تفصیل دیکھیں', 'error', 8000);
       } catch (_) {}
       try { if (window.dioLogError) dioLogError('offline sync: ' + failed + ' mustaqil nakaam'); } catch (_) {}
     }

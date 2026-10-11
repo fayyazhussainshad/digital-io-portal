@@ -34,6 +34,14 @@ function _srDebounced() {
   const q = document.getElementById('sr-query')?.value.trim() || '';
   clearTimeout(_searchDebounce);
   if (!q) { _renderSearchHistory(); return; }
+  // Aik-do harf par talaash na chalao — har harf par server chalane se
+  // safha sust ho jata tha. Teen harf ya us se ooper par hi chalti hai.
+  if (q.length < 3) {
+    const b0 = document.getElementById('sr-results');
+    if (b0) b0.innerHTML = '<div style="text-align:center;padding:26px;color:var(--text-muted);' +
+      'font-size:13px;">\u06a9\u0645 \u0627\u0632 \u06a9\u0645 \u062a\u06cc\u0646 \u062d\u0631\u0648\u0641 \u0644\u06a9\u06be\u06cc\u06ba</div>';
+    return;
+  }
   const box = document.getElementById('sr-results');
   if (box) box.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-muted);"><div style="font-size:28px;">⏳</div><div style="font-size:14px;margin-top:8px;">تلاش ہو رہی ہے...</div></div>`;
   _searchDebounce = setTimeout(() => _runGlobalSearch(q), 300);
@@ -73,11 +81,23 @@ function _srFromHistory(q) {
 }
 
 async function _runGlobalSearch(q) {
+  // Natija `#sr-results` mein jata hai, khana alag hai — phir bhi kuch
+  // browser natija badalne par focus gira dete hain, is liye wapas rakho.
+  const _keepFocus = () => {
+    try {
+      const el = document.getElementById('sr-query');
+      if (el && document.activeElement !== el) {
+        const p = el.value.length;
+        el.focus(); el.setSelectionRange(p, p);
+      }
+    } catch (_) {}
+  };
   _addSearchHistory(q);
   const box = document.getElementById('sr-results');
   const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
   if (!oid || !navigator.onLine) {
-    if (box) box.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-muted);">${!navigator.onLine?'آف لائن — تلاش کے لیے انٹرنیٹ درکار ہے':'لاگ ان مکمل ہو رہا ہے...'}</div>`;
+    if (box) box.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-muted);">${!navigator.onLine?'آف لائن — تلاش کے لیے انٹرنیٹ درکار ہے':'لاگ ان مکمل ہو رہا ہے…'}</div>`;
+    _keepFocus();
     return;
   }
   const w = `%${q}%`;
@@ -122,7 +142,10 @@ function _renderSearchResults(q, r) {
   const total = r.cases.length + r.accused.length + r.witnesses.length + r.fir.length + r.zimni.length
               + (r.hamrahi?.length||0) + (r.gari?.length||0) + (r.cdr?.length||0);
   if (!total) {
-    box.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text-muted);"><div style="font-size:40px;margin-bottom:10px;">🔍</div><div style="font-size:15px;">"${esc(q)}" کے لیے کچھ نہیں ملا</div></div>`;
+    box.innerHTML = (window.DIO && DIO.states)
+      ? DIO.states.empty('search', `"${esc(q)}" کے لیے کچھ نہیں ملا`, 'لفظ بدل کر یا مقدمہ نمبر سے دیکھیں')
+      : `<div style="text-align:center;padding:40px 20px;color:var(--text-muted);">"${esc(q)}" کے لیے کچھ نہیں ملا</div>`;
+    _keepFocus();
     return;
   }
   const card = (label, color, title, sub, onclick) => `
@@ -143,4 +166,5 @@ function _renderSearchResults(q, r) {
   (r.gari||[]).forEach(g => html += card('سرکاری گاڑی','#64748b', g.vehicle_number||'—', `ڈرائیور: ${g.driver_name||''}`, g.case_id?`openCaseWorkspace('${g.case_id}')`:''));
   (r.cdr||[]).forEach(cd => html += card('CDR/IMEI','#8b5cf6', `ڈائری ${cd.diary_number||''}`, '', cd.case_id?`openCaseWorkspace('${cd.case_id}')`:''));
   box.innerHTML = html;
+  _keepFocus();
 }

@@ -64,13 +64,12 @@ function _dioEnterDocView() {
     document.head.appendChild(st);
   }
   ov.innerHTML = `
-    <div id="dio-dv-bar" style="display:flex;align-items:center;gap:8px;padding:8px 12px;
+    <div id="dio-dv-bar" style="display:flex;align-items:center;gap:8px;padding:8px 12px;direction:rtl;
          background:var(--bg-secondary);border-bottom:1px solid var(--border);flex-wrap:wrap;">
-      <!-- واپس — پورے صفحے پر اوپر والی پٹی ڈھک جاتی ہے، اس لیے یہاں بھی ضروری ہے -->
-      <button onclick="dioGoBack()" title="واپس" aria-label="واپس"
-        style="width:34px;height:34px;border-radius:50%;flex-shrink:0;cursor:pointer;
-               border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);
-               font-size:18px;font-weight:900;line-height:1;direction:ltr;">←</button>
+      <!-- واپس — poori sakreen wali dastavez topbar ko dhak leti hai, is liye
+           yahan apna button chahiye. Shakl aur jagah topbar jaisi hi hai
+           (daain taraf, teer + "واپس") taake afsar ko farq mehsoos na ho. -->
+      <button onclick="dioGoBack()" class="dio-backbtn" title="واپس" aria-label="واپس"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6l6 6-6 6"/><path d="M20 12H4"/></svg><span>واپس</span></button>
       <span id="dio-dv-fir" style="font-size:14px;font-weight:900;color:var(--accent);
             font-family:var(--font-mono);flex-shrink:0;white-space:nowrap;"></span>
       <div id="dio-dv-tabs" style="display:flex;gap:6px;flex:1;flex-wrap:wrap;min-width:0;"></div>
@@ -78,19 +77,19 @@ function _dioEnterDocView() {
         <button onclick="_dioAddDocPicker()" title="نئی دستاویز کھولیں (موجودہ بند نہیں ہوگی)"
           style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--accent);
                  border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;
-                 font-family:'Jameel Noori Nastaleeq',serif;">➕ نئی دستاویز</button>
+                 font-family:'Jameel Noori Nastaleeq',serif;">نئی دستاویز</button>
         <button onclick="_dioSaveCurrent()" title="محفوظ کریں"
           style="background:var(--green,#16a34a);color:#fff;border:none;border-radius:8px;padding:8px 16px;
                  font-size:13px;font-weight:700;cursor:pointer;
-                 font-family:'Jameel Noori Nastaleeq',serif;">💾 محفوظ</button>
+                 font-family:'Jameel Noori Nastaleeq',serif;">محفوظ</button>
         <button onclick="_dioPrintCurrent()" title="پرنٹ"
           style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 16px;
                  font-size:13px;font-weight:700;cursor:pointer;
-                 font-family:'Jameel Noori Nastaleeq',serif;">🖨️ پرنٹ</button>
+                 font-family:'Jameel Noori Nastaleeq',serif;">پرنٹ</button>
         <button onclick="_dioRequestApproval()" title="منظوری کے لیے بھیجیں"
           style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--amber,#f59e0b);
                  border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;
-                 font-family:'Jameel Noori Nastaleeq',serif;">✅ منظوری</button>
+                 font-family:'Jameel Noori Nastaleeq',serif;">منظوری</button>
       </div>
     </div>
     <div id="dio-dv-body" style="flex:1;min-height:0;overflow:auto;"></div>`;
@@ -128,7 +127,7 @@ function _dioExitDocView() {
     area.innerHTML = `
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
            height:100%;min-height:260px;color:var(--text-muted);direction:rtl;">
-        <div style="font-size:40px;margin-bottom:10px;">📄</div>
+        <div style="font-size:40px;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
         <div style="font-size:14px;">اوپر سے کوئی دستاویز منتخب کریں</div>
       </div>`;
   }
@@ -192,7 +191,7 @@ function _dioAddDocPicker() {
     `<div style="text-align:center;padding-top:6px;border-top:1px solid var(--border);">
        <span onclick="document.getElementById('dio-dv-picker')?.remove()"
          style="font-size:12px;color:var(--text-muted);cursor:pointer;
-                font-family:'Jameel Noori Nastaleeq',serif;">✕ بند کریں</span>
+                font-family:'Jameel Noori Nastaleeq',serif;">بند کریں</span>
      </div>`;
   document.getElementById('dio-docview')?.appendChild(box);
 }
@@ -251,11 +250,11 @@ async function _dioRequestApproval() {
   if (typeof openModal !== 'function') {
     // Fallback: seedha request bhej den
     const r = await DIO.approvals.request(id, { label, case_id: caseId, fir_number: fir });
-    if (typeof showToast === 'function') showToast(r ? '✅ منظوری کے لیے بھیج دیا گیا' : '❌ نہیں بھیجا جا سکا', r ? 'success' : 'error');
+    if (typeof showToast === 'function') showToast(r ? 'منظوری کے لیے بھیج دیا گیا' : 'نہیں بھیجا جا سکا', r ? 'success' : 'error');
     return;
   }
 
-  openModal('✅ منظوری کے لیے بھیجیں',
+  openModal('منظوری کے لیے بھیجیں',
     `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
        ${existingLine}
        <div style="font-size:13px;color:var(--text-secondary);line-height:1.9;">
@@ -264,7 +263,7 @@ async function _dioRequestApproval() {
        </div>
      </div>`,
     `<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-     <button class="btn btn-primary" onclick="_dioDoRequestApproval()">✅ بھیجیں</button>`);
+     <button class="btn btn-primary" onclick="_dioDoRequestApproval()">بھیجیں</button>`);
   // Context stash for the confirm handler
   window._dioApprovalCtx = { id, label, caseId, fir };
 }
@@ -274,7 +273,7 @@ async function _dioDoRequestApproval() {
   if (typeof closeModal === 'function') closeModal();
   if (!(window.DIO && DIO.approvals) || !ctx.id) return;
   const r = await DIO.approvals.request(ctx.id, { label: ctx.label, case_id: ctx.caseId, fir_number: ctx.fir });
-  if (typeof showToast === 'function') showToast(r ? '✅ منظوری کے لیے بھیج دیا گیا' : '❌ نہیں بھیجا جا سکا', r ? 'success' : 'error');
+  if (typeof showToast === 'function') showToast(r ? 'منظوری کے لیے بھیج دیا گیا' : 'نہیں بھیجا جا سکا', r ? 'success' : 'error');
 }
 
 function _dioEsc(s) {

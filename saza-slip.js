@@ -901,7 +901,7 @@ async function _sazaSave() {
     _sazaSaved = data; _sazaDirty = false;
     _sazaMarkMisalSaved(data, 'complete');
     if (typeof showToast === 'function')
-      showToast('📴 آف لائن محفوظ — انٹرنیٹ آنے پر sync ہوگا', 'info', 5000);
+      showToast('آف لائن محفوظ — انٹرنیٹ آنے پر sync ہوگا', 'info', 5000);
     return;
   }
 
@@ -944,15 +944,15 @@ async function _sazaSave() {
     } catch (_) {}
 
     if (typeof showToast === 'function') {
-      if (ok) showToast('✅ سزا سلپ محفوظ ہو گئی — چپ پر "سزا سلپ" اب مکمل ہے، دوبارہ کھولنے پر یہی واپس آئے گی', 'success', 5000);
-      else showToast('⚠️ سزا سلپ مقامی طور پر محفوظ ہے، مگر ڈیٹابیس میں تصدیق نہ ہو سکی', 'warn', 7000);
+      if (ok) showToast('سزا سلپ محفوظ ہو گئی — چپ پر "سزا سلپ" اب مکمل ہے، دوبارہ کھولنے پر یہی واپس آئے گی', 'success', 5000);
+      else showToast('سزا سلپ مقامی طور پر محفوظ ہے، مگر ڈیٹابیس میں تصدیق نہ ہو سکی', 'warn', 7000);
     }
   } catch (e) {
     // DB fail — localStorage mein to mehfooz hai
     _sazaSaved = data; _sazaDirty = false;
     _sazaMarkMisalSaved(data, 'complete');
     if (typeof showToast === 'function')
-      showToast('⚠️ ڈیٹابیس میں محفوظ نہ ہو سکی (' + (e.message || e) + ') — مقامی طور پر محفوظ ہے', 'warn', 7000);
+      showToast('ڈیٹابیس میں محفوظ نہ ہو سکی (' + (e.message || e) + ') — مقامی طور پر محفوظ ہے', 'warn', 7000);
   }
 }
 window._sazaSave = _sazaSave;
@@ -1254,15 +1254,15 @@ function _sazaOpenVersions() {
       dbId = _misalDocs['saza_slip'].id;
     if (!dbId) {
       if (typeof showToast === 'function')
-        showToast('⚠️ پہلے سزا سلپ محفوظ کریں — تب نسخے دستیاب ہوں گے', 'info');
+        showToast('پہلے سزا سلپ محفوظ کریں — تب نسخے دستیاب ہوں گے', 'info');
       return;
     }
     if (typeof openMisalVersionsModal === 'function')
       openMisalVersionsModal('saza_slip', dbId);
     else if (typeof showToast === 'function')
-      showToast('❌ نسخے دیکھنے والا حصہ لوڈ نہیں ہوا', 'error');
+      showToast('نسخے دیکھنے والا حصہ لوڈ نہیں ہوا', 'error');
   } catch (e) {
-    if (typeof showToast === 'function') showToast('❌ ' + (e.message || e), 'error');
+    if (typeof showToast === 'function') showToast('' + (e.message || e), 'error');
   }
 }
 window._sazaOpenVersions = _sazaOpenVersions;

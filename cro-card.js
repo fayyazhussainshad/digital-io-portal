@@ -119,8 +119,8 @@ function _renderCro() {
       <button class="btn btn-secondary btn-sm" onclick="_croBackToList()">← واپس فہرست</button>
       <div style="font-weight:700;font-size:14px;font-family:'Jameel Noori Nastaleeq',serif;">CRO کارڈ — ${esc(a.name)||'ملزم'}</div>
       <div style="margin-right:auto;display:flex;gap:6px;">
-        <button class="btn btn-primary btn-sm" onclick="_saveCro()">💾 محفوظ کریں</button>
-        <button class="btn btn-secondary btn-sm" onclick="_printCro()">🖨️ پرنٹ کریں (دونوں طرف)</button>
+        <button class="btn btn-primary btn-sm" onclick="_saveCro()">محفوظ کریں</button>
+        <button class="btn btn-secondary btn-sm" onclick="_printCro()">پرنٹ کریں (دونوں طرف)</button>
       </div>
     </div>
 
@@ -299,8 +299,8 @@ async function _saveCro() {
     try { localStorage.setItem('dio_cro_'+_croCaseId, JSON.stringify(_croSaved)); } catch(_) {}
     if (_croAccused && _croAccused.id) _croAllCards[_croAccused.id] = _croSaved;
     _croDirty = false;
-    showToast('✅ CRO کارڈ محفوظ ہو گیا', 'success');
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+    showToast('CRO کارڈ محفوظ ہو گیا', 'success');
+  } catch(e) { showToast('' + e.message, 'error'); }
 }
 
 function _printCro() {

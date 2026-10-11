@@ -6,7 +6,7 @@
 registerPage('performance', renderPerformance);
 
 async function renderPerformance(container) {
-  const _loading = (window.DIO && DIO.states) ? DIO.states.loading('کارکردگی رپورٹ لوڈ ہو رہی ہے') : '<div style="text-align:center;padding:20px;color:var(--text-muted);">⏳ لوڈ ہو رہا ہے...</div>';
+  const _loading = (window.DIO && DIO.states) ? DIO.states.loading('کارکردگی رپورٹ لوڈ ہو رہی ہے') : '<div style="text-align:center;padding:20px;color:var(--text-muted);">لوڈ ہو رہا ہے...</div>';
   container.innerHTML = `<div id="perf-root" style="max-width:none;">${_loading}</div>`;
   await _buildPerf();
 }
@@ -43,7 +43,7 @@ async function _buildPerf() {
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;direction:rtl;flex-wrap:wrap;">
     
     <div>
-      <div style="font-size:18px;font-weight:800;">📊 کارکردگی کا جائزہ</div>
+      <div style="font-size:18px;font-weight:800;">کارکردگی کا جائزہ</div>
       <div style="font-size:12px;color:var(--text-muted);">${esc(currentOfficer?.full_name||'')} · ${esc(currentOfficer?.station||'')} · ${formatDate(new Date())}</div>
     </div>
   </div>
@@ -59,7 +59,7 @@ async function _buildPerf() {
         </div>
         <div style="font-size:11px;color:rgba(255,255,255,0.6);">
           ${complete} مکمل / ${total} کل مقدمات
-          ${complRate>=70?'🌟 شاباش':''}${complRate>=40&&complRate<70?'👍 اچھا':''}${complRate<40?'⚠️ بہتری کی ضرورت':''}
+          ${complRate>=70?'شاباش':''}${complRate>=40&&complRate<70?'اچھا':''}${complRate<40?'بہتری کی ضرورت':''}
         </div>
       </div>
     </div>
@@ -88,7 +88,7 @@ async function _buildPerf() {
 
     <!-- Monthly trend -->
     <div class="card">
-      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;direction:rtl;">📈 ماہانہ اندراج (12 ماہ)</div>
+      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;direction:rtl;">ماہانہ اندراج (12 ماہ)</div>
       <div style="display:flex;align-items:flex-end;gap:3px;height:90px;margin-bottom:6px;">
         ${monthly.map((m,i)=>{
           const max=Math.max(...monthly.map(x=>x.count),1);
@@ -104,7 +104,7 @@ async function _buildPerf() {
 
     <!-- Section breakdown -->
     <div class="card">
-      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;direction:rtl;">📋 اہم دفعات</div>
+      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;direction:rtl;">اہم دفعات</div>
       ${bySection.slice(0,5).map(s=>`
       <div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;direction:rtl;">
         <div style="font-size:10px;font-family:monospace;color:var(--accent);min-width:70px;">${esc(s.section)}</div>
@@ -119,7 +119,7 @@ async function _buildPerf() {
   <!-- Button Usage Stats -->
   ${usage.length ? `
   <div class="card" style="margin-bottom:14px;">
-    <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;direction:rtl;">🖱️ سب سے زیادہ استعمال ہونے والے بٹن</div>
+    <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;direction:rtl;">سب سے زیادہ استعمال ہونے والے بٹن</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
       ${usage.slice(0,9).map((u,i)=>`
       <div style="background:var(--bg-secondary);border-radius:8px;padding:8px;direction:rtl;border-right:3px solid ${i<3?'var(--accent)':'var(--border)'};">
@@ -128,13 +128,13 @@ async function _buildPerf() {
       </div>`).join('')}
     </div>
     <div style="text-align:center;margin-top:8px;">
-      <button class="btn btn-secondary btn-sm" onclick="_clearUsageStats()">🗑️ Stats ری سیٹ</button>
+      <button class="btn btn-secondary btn-sm" onclick="_clearUsageStats()">Stats ری سیٹ</button>
     </div>
   </div>` : ''}
 
   <!-- Print Report -->
   <div style="text-align:left;margin-top:4px;">
-    <button class="btn btn-primary" onclick="_printPerfReport()">🖨️ کارکردگی رپورٹ پرنٹ کریں</button>
+    <button class="btn btn-primary" onclick="_printPerfReport()">کارکردگی رپورٹ پرنٹ کریں</button>
   </div>`;
 }
 
@@ -170,7 +170,7 @@ async function _perfCourtDates() {
 }
 
 function _clearUsageStats() {
-  try { localStorage.removeItem('dio_btn_usage'); showToast('✅ Stats صاف','info'); _buildPerf(); } catch(_) {}
+  try { localStorage.removeItem('dio_btn_usage'); showToast('Stats صاف','info'); _buildPerf(); } catch(_) {}
 }
 
 function _printPerfReport() {

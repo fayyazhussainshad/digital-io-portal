@@ -137,7 +137,7 @@ function registerPage(name, fn) { _pages[name] = fn; }
 function showPage(page, el) {
   // Role-based access check
   if (typeof canAccess === 'function' && !canAccess(page)) {
-    showToast('🔒 آپ کو اس صفحے تک رسائی نہیں ہے', 'error');
+    showToast('آپ کو اس صفحے تک رسائی نہیں ہے', 'error');
     return;
   }
   window._activePage = page;  // Track current page for background refresh
@@ -155,10 +155,11 @@ function showPage(page, el) {
   const titles = {
     dashboard:'ڈیش بورڈ', cases:'میرے مقدمات', templates:'ٹمپلیٹس',
     fivec:'مارک شدہ درخواستیں', incident:'واقعاتی رپورٹ',
-    law:'قانونی لائبریری', ahkamat:'احکامات (Orders / SOPs)', performance:'کارکردگی', backup:'بیک اپ',
+    law:'قانونی لائبریری', ahkamat:'احکامات و ضوابط', performance:'کارکردگی', backup:'بیک اپ',
     settings:'ترتیبات', admin:'ایڈمن', bin:'حذف شدہ مواد',
     reminders:'یاددہانیاں', search:'تلاش',
     court:'عدالتی پیشیاں', evidence:'شہادتیں', suspects:'ملزمان / گواہان',
+    help:'رہنمائی',
   };
   const titleEl = document.getElementById('topbar-title');
   if (titleEl) titleEl.textContent = (titles[page]||page);
@@ -690,8 +691,8 @@ async function _saveTopbarField(field) {
     const updated = await updateOfficerProfile(update);
     _updateTopbarShoDsp(updated);
     closeModal();
-    showToast('✅ محفوظ','success');
-  } catch(e) { showToast('❌ '+e.message,'error'); }
+    showToast('محفوظ','success');
+  } catch(e) { showToast(''+e.message,'error'); }
 }
 
 // ── CONNECTION STATUS ──────────────────────────────────────────
@@ -742,10 +743,10 @@ async function _syncOfflineQueue() {
   try {
     const count = await offlineStore.pendingCount();
     if (!count) return;
-    showToast(`🔄 ${count} تبدیلیاں sync ہو رہی ہیں...`, 'info');
+    showToast(`${count} تبدیلیاں sync ہو رہی ہیں...`, 'info');
     const synced = await offlineStore.processQueue(supabaseClient);
     if (synced > 0) {
-      showToast(`✅ ${synced} تبدیلیاں sync ہو گئیں`, 'success');
+      showToast(`${synced} تبدیلیاں sync ہو گئیں`, 'success');
       // Refresh cases page if currently shown
       if (window._activePage === 'cases') {
         showPage('cases', null);
@@ -778,7 +779,7 @@ async function _initNotifications() {
   if (!('Notification' in window)) return;
   if (Notification.permission==='default') {
     const perm = await Notification.requestPermission();
-    if (perm==='granted') showToast('🔔 اطلاعات فعال','success');
+    if (perm==='granted') showToast('اطلاعات فعال','success');
   }
 }
 
@@ -825,7 +826,7 @@ document.addEventListener('click',function(e){
 // ── VOICE INPUT ───────────────────────────────────────────────
 function voiceType(targetId, btnId) {
   if (!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)) {
-    showToast('⚠️ آواز کی سہولت دستیاب نہیں','warn'); return;
+    showToast('آواز کی سہولت دستیاب نہیں','warn'); return;
   }
   const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
   const rec = new SR();
@@ -836,7 +837,7 @@ function voiceType(targetId, btnId) {
     const inp = document.getElementById(targetId);
     if (inp) { inp.value += (inp.value?' ':'')+e.results[0][0].transcript; inp.dispatchEvent(new Event('input')); }
   };
-  rec.onerror = () => showToast('⚠️ آواز سننے میں مشکل','warn');
+  rec.onerror = () => showToast('آواز سننے میں مشکل','warn');
   rec.onend   = () => { if(btn){btn.textContent='🎙️';btn.disabled=false;} };
   rec.start();
 }
@@ -935,7 +936,19 @@ async function initApp() {
   setupRealtimeSync(async(table)=>{
     await updateBadges();
     const pt = document.getElementById('topbar-title')?.textContent;
-    if(table==='cases'&&pt?.includes('مقدمات')) renderCases&&renderCases(document.getElementById('page-content'));
+    // Afsar us waqt kuch likh raha ho (talaash ya koi khana) to safha
+    // dobara na banao — warna cursor nikal jata hai aur likhai ruk jati hai.
+    const _busy = (function(){
+      const a = document.activeElement;
+      if (!a) return false;
+      return a.isContentEditable || ['INPUT','TEXTAREA','SELECT'].indexOf(a.tagName) !== -1;
+    })();
+    if (_busy) return;
+    if(table==='cases'&&pt?.includes('مقدمات')){
+      // Sirf qatarein — filter aur talaash barqarar rahen
+      if (typeof _csRefreshRows === 'function' && document.getElementById('cs-rows')) _csRefreshRows();
+      else renderCases&&renderCases(document.getElementById('page-content'));
+    }
     if(table==='reminders'&&pt?.includes('یاددہانی')) renderReminders&&renderReminders(document.getElementById('page-content'));
   });
   // Check license
@@ -1073,7 +1086,7 @@ async function _installApp() {
   _deferredInstallPrompt.prompt();
   const { outcome } = await _deferredInstallPrompt.userChoice;
   if (outcome === 'accepted') {
-    showToast('✅ ایپ انسٹال ہو رہی ہے', 'success');
+    showToast('ایپ انسٹال ہو رہی ہے', 'success');
   }
   _deferredInstallPrompt = null;
   const btn = document.getElementById('pwa-install-btn');
@@ -1084,7 +1097,7 @@ async function _installApp() {
 window.addEventListener('appinstalled', function() {
   const btn = document.getElementById('pwa-install-btn');
   if (btn) btn.remove();
-  try { showToast('✅ Digital IO آپ کے آلے پر انسٹال ہو گئی', 'success'); } catch(_) {}
+  try { showToast('Digital IO آپ کے آلے پر انسٹال ہو گئی', 'success'); } catch(_) {}
 });
 
 // ── Explicit global bindings (ensure inline onclick handlers work) ──
@@ -1137,7 +1150,7 @@ function _dioIsImage(url, name) {
 
 // فائل ایپ کے اندر کھولیں
 function _dioViewFile(url, name) {
-  if (!url) { if (typeof showToast === 'function') showToast('❌ فائل نہیں ملی', 'error'); return; }
+  if (!url) { if (typeof showToast === 'function') showToast('فائل نہیں ملی', 'error'); return; }
   document.getElementById('dio-file-view')?.remove();
   const blob = _dioToBlobUrl(url);
   const isImg = _dioIsImage(url, name);

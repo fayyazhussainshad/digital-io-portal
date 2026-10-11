@@ -74,11 +74,11 @@ function _renderCdr() {
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
     <!-- Toolbar -->
     <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
-      <button class="btn btn-secondary btn-sm" onclick="_cdrAddRow()">➕ قطار شامل کریں</button>
+      <button class="btn btn-secondary btn-sm" onclick="_cdrAddRow()">قطار شامل کریں</button>
       <div style="margin-right:auto;display:flex;gap:6px;">
-        <button class="btn btn-primary btn-sm" onclick="_saveCdr()">💾 محفوظ کریں</button>
-        <button class="btn btn-secondary btn-sm" onclick="_printCdr()">🖨️ پرنٹ کریں</button>
-        <button class="btn btn-secondary btn-sm" onclick="_newCdr()">📄 نئی درخواست</button>
+        <button class="btn btn-primary btn-sm" onclick="_saveCdr()">محفوظ کریں</button>
+        <button class="btn btn-secondary btn-sm" onclick="_printCdr()">پرنٹ کریں</button>
+        <button class="btn btn-secondary btn-sm" onclick="_newCdr()">نئی درخواست</button>
       </div>
     </div>
 
@@ -266,14 +266,14 @@ async function _saveCdr() {
       _cdrISaved = data || { ...rec, id:'tmp_'+Date.now() };
     }
     try { localStorage.setItem('dio_cdr_'+_cdrICaseId, JSON.stringify(_cdrISaved)); } catch(_) {}
-    showToast('✅ درخواست محفوظ ہو گئی', 'success');
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+    showToast('درخواست محفوظ ہو گئی', 'success');
+  } catch(e) { showToast('' + e.message, 'error'); }
 }
 
 function _newCdr() {
   _cdrISaved = null;
   _renderCdr();
-  showToast('📄 نئی درخواست', 'info');
+  showToast('نئی درخواست', 'info');
 }
 
 function _printCdr() {

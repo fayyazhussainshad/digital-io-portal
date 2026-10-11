@@ -453,7 +453,7 @@ function _wbDoReplace(editorId) {
   if (!ed) return;
   // XSS: repl khaam text hai — HTML ki tarah daalna stored-XSS tha
     ed.innerHTML = ed.innerHTML.split(find).join(esc(repl));
-  showToast('✅ Replaced all occurrences', 'success');
+  showToast('Replaced all occurrences', 'success');
 }
 
 // Table

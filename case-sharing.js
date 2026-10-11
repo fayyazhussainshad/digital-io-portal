@@ -25,7 +25,7 @@ function _shareSanitize(s) {
 
 async function openCaseShareModal(caseId) {
   _shareCaseId = caseId;
-  openModal('🔗 مقدمہ شیئر کریں', `
+  openModal('مقدمہ شیئر کریں', `
     <div style="direction:rtl;display:flex;flex-direction:column;gap:12px;">
       <div style="font-size:13px;color:var(--text-secondary);">
         دوسرے افسر کو یہ مقدمہ دیکھنے یا ترمیم کی اجازت دیں۔ صرف اپنے تھانے کے فعال افسران دکھائے جاتے ہیں۔
@@ -99,8 +99,8 @@ function _searchOfficersForShare(q) {
             <div style="font-size:11px;color:var(--text-muted);">${esc(o.designation)||''} · <span dir="ltr">${esc(o.badge_number)||''}</span> · ${esc(o.station)||''}</div>
           </div>
           <div style="display:flex;gap:4px;">
-            <button class="btn btn-secondary btn-sm" onclick="_shareWith('${o.id}','read')" title="صرف پڑھ سکے گا">👁️ دیکھیں</button>
-            <button class="btn btn-primary btn-sm" onclick="_shareWith('${o.id}','write')" title="ترمیم بھی کر سکے گا">✏️ ترمیم</button>
+            <button class="btn btn-secondary btn-sm" onclick="_shareWith('${o.id}','read')" title="صرف پڑھ سکے گا">دیکھیں</button>
+            <button class="btn btn-primary btn-sm" onclick="_shareWith('${o.id}','write')" title="ترمیم بھی کر سکے گا">ترمیم</button>
           </div>
         </div>`).join('');
     } catch(e) {
@@ -163,12 +163,12 @@ async function _shareWith(officerId, permission) {
 
     const durTxt = (days && days > 0) ? (days + ' دن کے لیے') : 'مستقل';
     const permTxt = (permission === 'write') ? 'ترمیم کی اجازت' : 'صرف دیکھنے کی اجازت';
-    showToast('✅ شیئر ہو گیا — ' + permTxt + ' · ' + durTxt, 'success');
+    showToast('شیئر ہو گیا — ' + permTxt + ' · ' + durTxt, 'success');
 
     const sr = document.getElementById('share-officer-search'); if (sr) sr.value = '';
     const rb = document.getElementById('share-officer-results'); if (rb) rb.innerHTML = '';
     _loadCurrentShares();
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+  } catch(e) { showToast('' + e.message, 'error'); }
 }
 window._shareWith = _shareWith;
 
@@ -201,9 +201,9 @@ async function _loadCurrentShares() {
         ? ('ختم: ' + fmtDate(s.expires_at))
         : 'مستقل';
       const badge = s.revoked_at
-        ? '<span style="color:var(--red);font-size:11px;">✕ منسوخ</span>'
+        ? '<span style="color:var(--red);font-size:11px;">منسوخ</span>'
         : (s.expires_at && new Date(s.expires_at) <= new Date())
-          ? '<span style="color:var(--text-muted);font-size:11px;">⏳ مدت ختم</span>'
+          ? '<span style="color:var(--text-muted);font-size:11px;">مدت ختم</span>'
           : '<span style="color:var(--green);font-size:11px;">● فعال</span>';
       return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px;direction:rtl;
                           border:1px solid var(--border);border-radius:8px;margin-bottom:6px;
@@ -214,16 +214,16 @@ async function _loadCurrentShares() {
           </div>
           <div style="font-size:11px;color:var(--text-muted);">${badge} · ${exp}</div>
         </div>
-        ${!isPast ? `<button class="btn btn-danger btn-sm" onclick="_unshare('${s.id}')" title="منسوخ کریں">✕</button>` : ''}
+        ${!isPast ? `<button aria-label="منسوخ کریں" class="btn btn-danger btn-sm" onclick="_unshare('${s.id}')" title="منسوخ کریں"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button>` : ''}
       </div>`;
     };
 
     box.innerHTML =
       (active.length
-        ? `<div style="font-size:13px;font-weight:700;margin-bottom:6px;">✅ فعال شیئرز (${active.length}):</div>` + active.map(s => rowHtml(s, false)).join('')
+        ? `<div style="font-size:13px;font-weight:700;margin-bottom:6px;">فعال شیئرز (${active.length}):</div>` + active.map(s => rowHtml(s, false)).join('')
         : '') +
       (revoked.length
-        ? `<div style="font-size:12px;color:var(--text-muted);margin:10px 0 6px;">🗄️ گزشتہ / منسوخ (${revoked.length}):</div>` + revoked.map(s => rowHtml(s, true)).join('')
+        ? `<div style="font-size:12px;color:var(--text-muted);margin:10px 0 6px;">گزشتہ / منسوخ (${revoked.length}):</div>` + revoked.map(s => rowHtml(s, true)).join('')
         : '');
   } catch(e) {
     box.innerHTML = `<div style="font-size:12px;color:var(--text-muted);">شیئر لسٹ دستیاب نہیں: ${esc(e.message||e)}</div>`;
@@ -247,6 +247,6 @@ async function _unshare(shareId) {
     } catch (_) {}
     showToast('شیئر منسوخ کر دیا گیا — تاریخ محفوظ ہے', 'info');
     _loadCurrentShares();
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+  } catch(e) { showToast('' + e.message, 'error'); }
 }
 window._unshare = _unshare;

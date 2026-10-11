@@ -26,7 +26,7 @@ DIO.sub = {
   // guard(label) → true = آگے بڑھو، false = بند (renew prompt دکھایا)۔
   guard: function (label) {
     if (this._blocked !== true) return true;          // allow (default + fail-open)
-    try { showToast('⛔ سبسکرپشن ختم — ' + (label || 'یہ عمل') + ' بند ہے۔ تجدید کریں۔', 'error', 4000); } catch (_) {}
+    try { showToast('سبسکرپشن ختم — ' + (label || 'یہ عمل') + ' بند ہے۔ تجدید کریں۔', 'error', 4000); } catch (_) {}
     try { if (typeof _showPlans === 'function') _showPlans(); } catch (_) {}
     return false;
   }
@@ -51,7 +51,7 @@ function _dioSubWritePrompt() {
   var now = Date.now();
   if (now - _dioSubPromptTs < 1500) return;           // throttle — ایک عمل کے کئی writes پر spam نہ ہو
   _dioSubPromptTs = now;
-  try { showToast('⛔ سبسکرپشن ختم — صرف دیکھ سکتے ہیں۔ تجدید کریں۔', 'error', 3500); } catch (_) {}
+  try { showToast('سبسکرپشن ختم — صرف دیکھ سکتے ہیں۔ تجدید کریں۔', 'error', 3500); } catch (_) {}
   try { if (typeof _showPlans === 'function') _showPlans(); } catch (_) {}
 }
 // blocked "query builder" — chain (.select().single().eq()… ) سب چلے، await پر {data:null,error}
@@ -518,7 +518,7 @@ async function _submitPayment(planName, amount, days) {
   const method = document.getElementById('pay-method')?.value;
   const note   = document.getElementById('pay-note')?.value.trim();
 
-  if (!txnId) { showToast('⚠️ Transaction ID ضروری ہے','error'); return; }
+  if (!txnId) { showToast('Transaction ID ضروری ہے','error'); return; }
 
   try {
     const oid = await getOfficerId();
@@ -539,14 +539,14 @@ async function _submitPayment(planName, amount, days) {
     });
 
     closeModal();
-    showToast('✅ درخواست بھیج دی — ایڈمن تصدیق کرے گا','success');
+    showToast('درخواست بھیج دی — ایڈمن تصدیق کرے گا','success');
 
     // WhatsApp notification to admin
     const o = currentOfficer||{};
     const msg = `Digital IO ادائیگی درخواست:\n\nافسر: ${o.full_name||'—'}\nتھانہ: ${o.station||'—'}\nپلان: ${planName}\nرقم: Rs. ${amount}\nTransaction ID: ${txnId}\nطریقہ: ${method}`;
     window.open(`https://wa.me/923007339260?text=${encodeURIComponent(msg)}`);
 
-  } catch(e) { showToast('❌ '+e.message,'error'); }
+  } catch(e) { showToast(''+e.message,'error'); }
 }
 
 // ── SUBSCRIPTION STATUS IN SIDEBAR ───────────────────────────

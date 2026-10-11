@@ -5,15 +5,18 @@
 
 registerPage('suspects', renderSuspects);
 
+/* Nishan SVG hain, emoji nahi — har device par aik jaisa dikhne ke liye.
+   `currentColor` is liye ke gol badge ke andar safaid aur filter button
+   par matn ke rang me khud-ba-khud dhal jayen. */
 const SUSPECT_TYPES = {
-  suspect:    { label: 'ملزم',   icon: '🚨', color: 'var(--red)' },
-  witness:    { label: 'گواہ',   icon: '👁️', color: 'var(--accent)' },
-  complainant:{ label: 'مدعی',   icon: '📢', color: 'var(--green)' },
-  accused:    { label: 'مجرم',   icon: '⛓️', color: '#a78bfa' },
+  suspect:    { label: 'ملزم',   icon: "<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><path d=\"M12 4L3 19.5h18z\"/><path d=\"M12 10v4.5\"/><path d=\"M12 17.2h.01\"/></svg>", color: 'var(--red)' },
+  witness:    { label: 'گواہ',   icon: "<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><path d=\"M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12z\"/><circle cx=\"12\" cy=\"12\" r=\"2.6\"/></svg>", color: 'var(--accent)' },
+  complainant:{ label: 'مدعی',   icon: "<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><path d=\"M4 10v4h3l7 4V6l-7 4z\"/><path d=\"M17.5 8.5a5 5 0 0 1 0 7\"/></svg>", color: 'var(--green)' },
+  accused:    { label: 'مجرم',   icon: "<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><path d=\"M10 14a4.5 4.5 0 0 0 6.4 0l2.6-2.6a4.5 4.5 0 0 0-6.4-6.4L11.4 6.2\"/><path d=\"M14 10a4.5 4.5 0 0 0-6.4 0L5 12.6a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2\"/></svg>", color: '#a78bfa' },
 };
 
 async function renderSuspects(container) {
-  container.innerHTML = (window.DIO && DIO.states) ? DIO.states.loading('ملزمان / گواہان لوڈ ہو رہے ہیں') : `<div style="text-align:center;padding:32px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq',serif;">⏳ لوڈ ہو رہا ہے...</div>`;
+  container.innerHTML = (window.DIO && DIO.states) ? DIO.states.loading('ملزمان / گواہان لوڈ ہو رہے ہیں') : `<div style="text-align:center;padding:32px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq',serif;">لوڈ ہو رہا ہے...</div>`;
 
   const people = await _getSuspects();
 
@@ -22,15 +25,15 @@ async function renderSuspects(container) {
     <!-- Header -->
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
       <div>
-        <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;">👤 ملزمان / گواہان ڈیٹابیس</div>
+        <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;">ملزمان / گواہان</div>
         <div style="font-size:12px;color:var(--text-muted);">تمام افراد ایک جگہ — مقدمات کے ساتھ منسلک</div>
       </div>
-      <button class="btn btn-primary dio-add-btn" style="order:-1;" onclick="_openSuspectForm()">➕ نیا اندراج</button>
+      <button class="btn btn-primary dio-add-btn" onclick="_openSuspectForm()">نیا اندراج</button>
     </div>
 
     <!-- Search -->
     <div style="margin-bottom:14px;">
-      <input class="form-input" id="suspect-search" placeholder="🔍 نام، شناختی کارڈ، یا فون سے تلاش کریں..."
+      <input class="form-input" id="suspect-search" placeholder="نام، شناختی کارڈ، یا فون سے تلاش کریں..."
         oninput="_filterSuspects(this.value)" style="width:100%;">
     </div>
 
@@ -53,7 +56,7 @@ async function renderSuspects(container) {
 function _renderSuspectList(people) {
   if (!people.length) {
     return `<div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
-      <div style="font-size:48px;margin-bottom:12px;">👤</div>
+      <div style="font-size:48px;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg></div>
       <div style="font-size:14px;">کوئی اندراج نہیں</div>
     </div>`;
   }
@@ -115,7 +118,7 @@ function _filterByType(type, el) {
 function _openSuspectForm(existing) {
   const p = existing || {};
   const isEdit = !!existing;
-  openModal(isEdit ? '✏️ ترمیم' : '➕ نیا اندراج', `
+  openModal(isEdit ? 'ترمیم' : 'نیا اندراج', `
     <div style="display:flex;flex-direction:column;gap:12px;direction:rtl;">
       <div>
         <label class="form-label">قسم *</label>
@@ -158,7 +161,7 @@ function _openSuspectForm(existing) {
     </div>
   `, `
     <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-    <button class="btn btn-primary" onclick="_saveSuspect(${isEdit ? `'${p.id}'` : 'null'})">💾 محفوظ کریں</button>
+    <button class="btn btn-primary" onclick="_saveSuspect(${isEdit ? `'${p.id}'` : 'null'})">محفوظ کریں</button>
   `);
 }
 
@@ -174,7 +177,7 @@ async function _saveSuspect(id) {
     address:     document.getElementById('sp-address').value.trim() || null,
     notes:       document.getElementById('sp-notes').value.trim() || null,
   };
-  if (!rec.full_name) { showToast('⚠️ نام ضروری ہے', 'error'); return; }
+  if (!rec.full_name) { showToast('نام ضروری ہے', 'error'); return; }
 
   try {
     const oid = await getOfficerId();
@@ -184,9 +187,9 @@ async function _saveSuspect(id) {
       await supabaseClient.from('suspects').insert({ ...rec, officer_id: oid });
     }
     closeModal();
-    showToast('✅ محفوظ ہو گیا', 'success');
+    showToast('محفوظ ہو گیا', 'success');
     showPage('suspects', document.querySelector('.nav-item.active'));
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+  } catch(e) { showToast('' + e.message, 'error'); }
 }
 
 // ── VIEW DETAIL + CROSS-REFERENCE ─────────────────────────────
@@ -198,7 +201,7 @@ async function _viewSuspect(id) {
   // Cross-reference: find cases mentioning this person (by name or CNIC)
   const matchedCases = await _findCasesForPerson(p);
 
-  openModal(`${t.icon} ${esc(p.full_name)}`, `
+  openModal(`${esc(p.full_name)} — ${t.label}`, `
     <div style="direction:rtl;">
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;font-size:13px;">
         <div><b>قسم:</b> ${t.label}</div>
@@ -213,7 +216,7 @@ async function _viewSuspect(id) {
 
       <!-- Cross-referenced cases -->
       <div style="border-top:1px solid var(--border);padding-top:12px;">
-        <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px;">🔗 متعلقہ مقدمات (${matchedCases.length})</div>
+        <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px;">متعلقہ مقدمات (${matchedCases.length})</div>
         ${matchedCases.length ? matchedCases.map(c => `
           <div style="background:var(--bg-secondary);border-radius:8px;padding:10px;margin-bottom:6px;cursor:pointer;" onclick="closeModal();openCaseWorkspace('${c.id}')">
             <div style="font-size:13px;font-weight:700;color:var(--accent);">FIR ${c.fir_number || '—'}</div>
@@ -223,8 +226,8 @@ async function _viewSuspect(id) {
       </div>
     </div>
   `, `
-    <button class="btn btn-danger btn-sm" onclick="_deleteSuspect('${p.id}')">🗑️ حذف</button>
-    <button class="btn btn-secondary" onclick="_openSuspectForm(${JSON.stringify(p).replace(/"/g,'&quot;')})">✏️ ترمیم</button>
+    <button class="btn btn-danger btn-sm" onclick="_deleteSuspect('${p.id}')">حذف</button>
+    <button class="btn btn-secondary" onclick="_openSuspectForm(${JSON.stringify(p).replace(/"/g,'&quot;')})">ترمیم</button>
     <button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>
   `);
 }
@@ -286,9 +289,9 @@ async function _deleteSuspect(id) {
   try {
     await supabaseClient.from('suspects').delete().eq('id', id);
     closeModal();
-    showToast('✅ حذف ہو گیا', 'success');
+    showToast('حذف ہو گیا', 'success');
     showPage('suspects', document.querySelector('.nav-item.active'));
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+  } catch(e) { showToast('' + e.message, 'error'); }
 }
 
 function _escSp(s) {

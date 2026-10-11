@@ -86,7 +86,7 @@ function _cfParseMobilePhones(c) {
 function _cfPhoneBlockHTML(i, p) {
   p = p || {};
   return '<div class="cf-mobile-phone-block" style="border-top:1px dashed var(--border);padding-top:6px;margin-top:6px;">'
-    + '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px;">📱 موبائل نمبر '+i+'</div>'
+    + '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px;">موبائل نمبر '+i+'</div>'
     + '<div class="cf-row3">'
     +   '<div class="cf-field"><label class="cf-label">IMEI 1</label>'
     +     '<input class="form-input" dir="ltr" inputmode="numeric" maxlength="15" id="cf-mobile-imei-'+i+'-1" value="'+esc(p.imei1)+'" placeholder="000000000000000" oninput="_imeiLookupIdx(this,'+i+')"></div>'
@@ -274,8 +274,8 @@ function caseFormHTML(c) {
     + '<input class="form-input" id="cf-occurrence-date" value="'+esc(occ)+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" dir="ltr" style="text-align:left;"></div>'
     + '<div class="cf-field"><label class="cf-label">ملزمان</label>'
     + '<select class="form-input" id="cf-mulzman-type">'
-    + '<option value="maloom" '+(c.mulzman_type==='maloom'?'selected':'')+'>✅ معلوم</option>'
-    + '<option value="namaloom" '+(c.mulzman_type==='namaloom'||!c.mulzman_type?'selected':'')+'>⚠️ نامعلوم</option>'
+    + '<option value="maloom" '+(c.mulzman_type==='maloom'?'selected':'')+'>معلوم</option>'
+    + '<option value="namaloom" '+(c.mulzman_type==='namaloom'||!c.mulzman_type?'selected':'')+'>نامعلوم</option>'
     + '</select></div>'
     + '</div>'
 
@@ -287,7 +287,7 @@ function caseFormHTML(c) {
     + '<label class="cf-label" style="margin-top:8px;">دفعات قانون *</label>'
     + '<div style="flex:1;min-width:0;">'
     + '<div style="position:relative;">'
-    + '<input class="form-input" id="cf-section-search" placeholder="🔍 دفعہ نمبر یا کلیدی الفاظ..." dir="ltr" style="text-align:left;" oninput="searchPenalCodes(this.value)" autocomplete="off">'
+    + '<input class="form-input" id="cf-section-search" placeholder="دفعہ نمبر یا کلیدی الفاظ..." dir="ltr" style="text-align:left;" oninput="searchPenalCodes(this.value)" autocomplete="off">'
     + '<div id="section-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg-card);border:1px solid var(--accent);border-radius:0 0 var(--radius-sm) var(--radius-sm);max-height:180px;overflow-y:auto;z-index:200;box-shadow:var(--shadow);"></div>'
     + '</div>'
     + '<div id="selected-sections" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">'+sectionTags+'</div>'
@@ -304,14 +304,14 @@ function caseFormHTML(c) {
     +   '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14pt;font-weight:700;color:var(--amber);'
     +     'font-family:\'Jameel Noori Nastaleeq\',\'Noto Nastaliq Urdu\',serif;">'
     +     '<input type="checkbox" id="cf-mobile-theft-check" '+(_mobileTheftChecked?'checked':'')+' onchange="_cfToggleMobileTheft(this)" style="width:18px;height:18px;cursor:pointer;">'
-    +     '📱 کیا موبائل فون چوری ہوا؟'
+    +     'کیا موبائل فون چوری ہوا؟'
     +   '</label>'
     +   '<div id="cf-mobile-fields-wrap" style="display:'+(_mobileTheftChecked?'block':'none')+';margin-top:10px;">'
     +     '<div class="cf-field"><label class="cf-label">تعداد موبائل فون</label>'
     +       '<input class="form-input" type="number" id="cf-mobile-count" min="1" max="20" value="'+_mobilePhonesSeed.length+'" oninput="_cfRenderMobilePhones()"></div>'
     +     '<input type="hidden" id="cf-mobile-seed" value="'+esc(JSON.stringify(_mobilePhonesSeed))+'">'
     +     '<div id="cf-mobile-phones-container"></div>'
-    +     '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin:10px 0 6px;border-top:1px dashed var(--border);padding-top:8px;">📶 سم نمبرز</div>'
+    +     '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin:10px 0 6px;border-top:1px dashed var(--border);padding-top:8px;">سم نمبرز</div>'
     +     '<div id="cf-mobile-sims-container" class="cf-row-sim"></div>'
     +   '</div>'
     + '</div>'
@@ -328,7 +328,7 @@ function caseFormHTML(c) {
     + '<input class="form-input" id="cf-complainant" value="'+esc(complainant)+'" placeholder="مدعی کا نام" dir="auto" oninput="var _cc=document.getElementById(\'cf-comp-count\');if(_cc)_cc.textContent=this.value.length+\' حروف\';">'
     + '<span id="cf-comp-count" style="position:absolute;bottom:4px;left:8px;font-size:9px;color:var(--text-faint);">'+(complainant?complainant.length+' حروف':'')+'</span>'
     + '</div>'
-    + '<button id="vmb-cf-complainant" type="button" onclick="voiceType(\'cf-complainant\',\'vmb-cf-complainant\')" style="width:36px;height:36px;flex-shrink:0;border:1px solid var(--border);border-radius:6px;background:var(--bg-tertiary);font-size:16px;cursor:pointer;">🎙️</button>'
+    + '<button title="آواز سے لکھیں" aria-label="آواز سے لکھیں" id="vmb-cf-complainant" type="button" onclick="voiceType(\'cf-complainant\',\'vmb-cf-complainant\')" style="width:36px;height:36px;flex-shrink:0;border:1px solid var(--border);border-radius:6px;background:var(--bg-tertiary);font-size:16px;cursor:pointer;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button>'
     + '</div>'
     + '</div>'
 
@@ -348,9 +348,9 @@ function caseFormHTML(c) {
     + '<div class="cf-box">'
     + '<div class="cf-row2">'
     + '<div class="cf-field"><label class="cf-label">مرتبہ مرسلہ</label>'
-    + '<div style="display:flex;gap:4px;direction:rtl;flex:1;min-width:0;"><input class="form-input" id="cf-complaint-sender" value="'+esc(compSender)+'" placeholder="مرتبہ مرسلہ" dir="auto" style="flex:1;"><button id="vmb-cs" type="button" onclick="voiceType(\'cf-complaint-sender\',\'vmb-cs\')" style="width:34px;height:34px;flex-shrink:0;border:1px solid var(--border);border-radius:5px;background:var(--bg-tertiary);font-size:14px;cursor:pointer;">🎙️</button></div></div>'
+    + '<div style="display:flex;gap:4px;direction:rtl;flex:1;min-width:0;"><input class="form-input" id="cf-complaint-sender" value="'+esc(compSender)+'" placeholder="مرتبہ مرسلہ" dir="auto" style="flex:1;"><button title="آواز سے لکھیں" aria-label="آواز سے لکھیں" id="vmb-cs" type="button" onclick="voiceType(\'cf-complaint-sender\',\'vmb-cs\')" style="width:34px;height:34px;flex-shrink:0;border:1px solid var(--border);border-radius:5px;background:var(--bg-tertiary);font-size:14px;cursor:pointer;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button></div></div>'
     + '<div class="cf-field"><label class="cf-label">محرر</label>'
-    + '<div style="display:flex;gap:4px;direction:rtl;flex:1;min-width:0;"><input class="form-input" id="cf-fir-writer" value="'+esc(firWriter)+'" placeholder="محرر کا نام" dir="auto" style="flex:1;"><button id="vmb-fw" type="button" onclick="voiceType(\'cf-fir-writer\',\'vmb-fw\')" style="width:34px;height:34px;flex-shrink:0;border:1px solid var(--border);border-radius:5px;background:var(--bg-tertiary);font-size:14px;cursor:pointer;">🎙️</button></div></div>'
+    + '<div style="display:flex;gap:4px;direction:rtl;flex:1;min-width:0;"><input class="form-input" id="cf-fir-writer" value="'+esc(firWriter)+'" placeholder="محرر کا نام" dir="auto" style="flex:1;"><button title="آواز سے لکھیں" aria-label="آواز سے لکھیں" id="vmb-fw" type="button" onclick="voiceType(\'cf-fir-writer\',\'vmb-fw\')" style="width:34px;height:34px;flex-shrink:0;border:1px solid var(--border);border-radius:5px;background:var(--bg-tertiary);font-size:14px;cursor:pointer;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button></div></div>'
     + '</div>'
     + '</div>'
 
@@ -407,8 +407,8 @@ function buildCrossFields(c) {
     + '<option value="untrace"'+(crossStatus==='untrace'?' selected':'')+'>عدم پتہ (Untraced)</option>'
     + '<option value="cancel"'+(crossStatus==='cancel'?' selected':'')+'>اخراج (Cancelled)</option>';
   var crossPosOpts = ''
-    + '<option value="pending"'+(crossPosition==='pending'?' selected':'')+'>⏳ Pending</option>'
-    + '<option value="court"'+(crossPosition==='court'?' selected':'')+'>⚖️ In Court</option>';
+    + '<option value="pending"'+(crossPosition==='pending'?' selected':'')+'>Pending</option>'
+    + '<option value="court"'+(crossPosition==='court'?' selected':'')+'>In Court</option>';
   return ''
     // رپٹ نمبر (آدھی چوڑائی) + رپٹ تاریخ + کراس ورژن مقدمہ نمبر + کراس ورژن مقدمہ کی تاریخ (چاروں ایک سطر)
     + '<div class="cf-row4-rapat">'
@@ -466,7 +466,7 @@ function sectionTag(sectionStr) {
 }
 
 
-async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;openModal(`✏️ ترمیم — مقدمہ ${c.fir_number}`,caseFormHTML(c),`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveEditCase('${id}')">💾 تبدیلیاں محفوظ کریں</button>`);setTimeout(function(){_cfRenderMobilePhones();_cfSizeModal();},50);}
+async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;openModal(`ترمیم — مقدمہ ${c.fir_number}`,caseFormHTML(c),`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveEditCase('${id}')">تبدیلیاں محفوظ کریں</button>`);setTimeout(function(){_cfRenderMobilePhones();_cfSizeModal();},50);}
 
 async function saveNewCase(){
   // VIEW-ONLY ENFORCEMENT [4E]: میعاد ختم پر نیا مقدمہ بند
@@ -484,13 +484,13 @@ async function saveNewCase(){
     if(typedSec){ section=typedSec; var _sh=document.getElementById('cf-section'); if(_sh)_sh.value=typedSec; }
   }
   var complainant=document.getElementById('cf-complainant')?.value.trim()||'';
-  if(!fir){showToast('⚠️ مقدمہ نمبر درج کریں','error');document.getElementById('cf-fir')?.focus();return;}
-  if(!section){showToast('⚠️ دفعہ قانون درج کریں','error');document.getElementById('cf-section-search')?.focus();return;}
-  if(!complainant){showToast('⚠️ مدعی کا نام درج کریں','error');document.getElementById('cf-complainant')?.focus();return;}
+  if(!fir){showToast('مقدمہ نمبر درج کریں','error');document.getElementById('cf-fir')?.focus();return;}
+  if(!section){showToast('دفعہ قانون درج کریں','error');document.getElementById('cf-section-search')?.focus();return;}
+  if(!complainant){showToast('مدعی کا نام درج کریں','error');document.getElementById('cf-complainant')?.focus();return;}
   // تاریخ کی جانچ — دن ۱–۳۱، مہینہ ۱–۱۲، سال ۴ ہندسے (نامکمل/غلط تاریخ محفوظ نہ ہو)
   if(typeof _dioValidDate==='function'){
-    if(!_dioValidDate(document.getElementById('cf-date')?.value)){showToast('⚠️ تاریخ اندراج درست درج کریں — دن ۱–۳۱، مہینہ ۱–۱۲، سال مکمل ۴ ہندسے','error');document.getElementById('cf-date')?.focus();return;}
-    if(!_dioValidDate(document.getElementById('cf-occurrence-date')?.value)){showToast('⚠️ تاریخ وقوعہ درست درج کریں — دن ۱–۳۱، مہینہ ۱–۱۲، سال مکمل ۴ ہندسے','error');document.getElementById('cf-occurrence-date')?.focus();return;}
+    if(!_dioValidDate(document.getElementById('cf-date')?.value)){showToast('تاریخ اندراج درست درج کریں — دن ۱–۳۱، مہینہ ۱–۱۲، سال مکمل ۴ ہندسے','error');document.getElementById('cf-date')?.focus();return;}
+    if(!_dioValidDate(document.getElementById('cf-occurrence-date')?.value)){showToast('تاریخ وقوعہ درست درج کریں — دن ۱–۳۱، مہینہ ۱–۱۲، سال مکمل ۴ ہندسے','error');document.getElementById('cf-occurrence-date')?.focus();return;}
   }
   try{
     var _cfMobile = _cfMobileFieldsPayload();
@@ -553,7 +553,7 @@ async function saveNewCase(){
     const firDate = document.getElementById('cf-date').value.trim();
     const mulzmanType = document.getElementById('cf-mulzman-type')?.value||'namaloom';
     await _createAutoReminders(fir, firDate, mulzmanType, complainant);
-    closeModal();showToast('✅ مقدمہ درج ہو گیا: FIR '+fir,'success');await updateBadges();renderCases(document.getElementById('page-content'));
+    closeModal();showToast('مقدمہ درج ہو گیا: FIR '+fir,'success');await updateBadges();renderCases(document.getElementById('page-content'));
   }catch(err){showToast('Error: '+err.message,'error');}
 }
 
@@ -573,8 +573,8 @@ async function saveEditCase(id){
   if (window.DIO && DIO.sub && !DIO.sub.guard('ترمیم محفوظ')) return;
   // تاریخ کی جانچ — دن ۱–۳۱، مہینہ ۱–۱۲، سال ۴ ہندسے
   if(typeof _dioValidDate==='function'){
-    if(!_dioValidDate(document.getElementById('cf-date')?.value)){showToast('⚠️ تاریخ اندراج درست درج کریں — دن ۱–۳۱، مہینہ ۱–۱۲، سال مکمل ۴ ہندسے','error');document.getElementById('cf-date')?.focus();return;}
-    if(!_dioValidDate(document.getElementById('cf-occurrence-date')?.value)){showToast('⚠️ تاریخ وقوعہ درست درج کریں — دن ۱–۳۱، مہینہ ۱–۱۲، سال مکمل ۴ ہندسے','error');document.getElementById('cf-occurrence-date')?.focus();return;}
+    if(!_dioValidDate(document.getElementById('cf-date')?.value)){showToast('تاریخ اندراج درست درج کریں — دن ۱–۳۱، مہینہ ۱–۱۲، سال مکمل ۴ ہندسے','error');document.getElementById('cf-date')?.focus();return;}
+    if(!_dioValidDate(document.getElementById('cf-occurrence-date')?.value)){showToast('تاریخ وقوعہ درست درج کریں — دن ۱–۳۱، مہینہ ۱–۱۲، سال مکمل ۴ ہندسے','error');document.getElementById('cf-occurrence-date')?.focus();return;}
   }
   // Resolve section: use selected, else typed search value
   var _editSection=document.getElementById('cf-section').value.trim();
@@ -652,11 +652,11 @@ async function saveEditCase(id){
       }
     } catch (_) {}
     closeModal();
-    showToast('✅ Case updated!','success');
+    showToast('Case updated!','success');
     // Wait briefly so DB write propagates through cases_decrypted view before re-fetching
     await new Promise(r=>setTimeout(r,300));
     await updateBadges();
     await renderCases(document.getElementById('page-content'));
-  }catch(err){showToast('❌ Error: '+err.message,'error');}
+  }catch(err){showToast('Error: '+err.message,'error');}
 }
 // viewCase now opens workspace

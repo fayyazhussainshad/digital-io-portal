@@ -168,8 +168,74 @@ const PENAL_CODES = [
 // ── CASES LIST ──
 registerPage('cases',renderCases);
 let _casesCache = []; // cleared on every render — no stale data
+/* ───────────────────────────────────────────────────────────────
+   FILTER ki halat — safhe ke sath YAAD rehti hai.
+
+   MASLA jo theek kiya gaya:
+   1) `data-api.js` ka background refresh `renderCases(c)` ko BINA
+      daleel bulata tha. Us se har chand second baad filter khud-ba-khud
+      saaf ho jata tha — afsar "زیر تفتیش" chunta tha aur thoRi der
+      baad phir se saare mocaddme aa jate the.
+   2) Talaash ke khane ka `oninput` poore safhe ko dobara banata tha,
+      is liye do-teen huroof ke baad cursor khane se nikal jata tha
+      aur aage likha hi nahi ja sakta tha.
+
+   Hal: halat yahan mehfooz hai. Daleel na di jaye to WAHI halat chalti
+   hai (saaf nahi hoti), aur talaash/filter sirf TABLE ki qatarein
+   badalte hain — khana jyun ka tyun rehta hai, cursor bhi.
+   ─────────────────────────────────────────────────────────────── */
+window._csFilter = window._csFilter || { status:'', query:'', station:'' };
+
+// Sirf qatarein dobara banao — khana aur cursor ko haath na lagao
+async function _csRefreshRows(){
+  const tb = document.getElementById('cs-rows');
+  if (!tb) return;
+  const f = window._csFilter;
+  const o = currentOfficer||{};
+  let all = await getCases(f.status, f.query);
+  all.sort((a,b)=>{
+    const na=parseInt(String(a.fir_number||'0').split('/')[0])||0;
+    const nb=parseInt(String(b.fir_number||'0').split('/')[0])||0;
+    return nb-na;
+  });
+  _casesCache = all;
+  const rows = f.station ? all.filter(c=>(c.case_station||o.station)==f.station) : all;
+  tb.innerHTML = rows.length
+    ? rows.map((c,i)=>renderCaseRow(c,i+1)).join('')
+    : `<tr><td colspan="10" style="padding:0;">${
+        (window.DIO && DIO.states)
+          ? DIO.states.empty('folder', 'کوئی مقدمہ نہیں', (f.query||f.status)
+              ? 'اس چھان سے کوئی مقدمہ نہیں ملا — لفظ یا صورتحال بدل کر دیکھیں'
+              : 'نیا مقدمہ درج کرنے کے لیے "+ نیا اندراج" پر دبائیں')
+          : '<div style="text-align:center;padding:30px;color:var(--text-muted);">کوئی مقدمہ نہیں</div>'
+      }</td></tr>`;
+  const cnt = document.getElementById('cs-count');
+  if (cnt) cnt.textContent = rows.length;
+}
+window._csRefreshRows = _csRefreshRows;
+
+function _csOnSearch(v){
+  window._csFilter.query = String(v||'').trim();
+  clearTimeout(window._csTmr);
+  window._csTmr = setTimeout(_csRefreshRows, 280);
+}
+window._csOnSearch = _csOnSearch;
+
+function _csOnStatus(v){
+  window._csFilter.status = String(v||'');
+  _csRefreshRows();
+}
+window._csOnStatus = _csOnStatus;
+
 async function renderCases(container,fStatus,fQuery,fStation){
+  // Daleel na di jaye to PICHHLI halat chalti rahe (background refresh
+  // yahan bina daleel aata hai — pehle wo filter saaf kar deta tha).
+  const _f = window._csFilter;
+  fStatus  = (fStatus  === undefined || fStatus  === null) ? _f.status  : fStatus;
+  fQuery   = (fQuery   === undefined || fQuery   === null) ? _f.query   : fQuery;
+  fStation = (fStation === undefined || fStation === null) ? _f.station : fStation;
   fStatus=fStatus||'';fQuery=fQuery||'';fStation=fStation||'';
+  window._csFilter = { status:fStatus, query:fQuery, station:fStation };
   _casesCache = [];
   const allCases=await getCases(fStatus,fQuery);
   // Sort by FIR number — bigger number first (numeric, not text)
@@ -188,22 +254,20 @@ async function renderCases(container,fStatus,fQuery,fStation){
   const isArchiveView = fStation && fStation !== currentStation;
 
   container.innerHTML=`
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;direction:rtl;flex-wrap:wrap;">
+  <div class="page-header">
+    <button class="btn btn-primary dio-add-btn" onclick="openAddCaseModal()">+ نیا اندراج</button>
     <div>
-      <div style="font-size:18px;font-weight:800;">📁 میرے مقدمات</div>
-      <div style="font-size:12px;color:var(--text-muted);">${cases.length} مقدمات${isArchiveView?' · '+fStation+' آرکائیو':''}</div>
-    </div>
-    <div style="display:flex;gap:6px;direction:rtl;margin-left:auto;order:-1;flex-wrap:wrap;">
-      <button class="btn btn-primary dio-add-btn" onclick="openAddCaseModal()">+ نیا اندراج</button>
+      <div class="page-title">میرے مقدمات</div>
+      <div class="page-subtitle"><span id="cs-count">${cases.length}</span> مقدمات${isArchiveView?' · '+fStation+' آرکائیو':''}</div>
     </div>
   </div>
 
   <!-- Station filter buttons removed (FIX6) — all cases shown by default for more space -->
-  ${isArchiveView?`<div style="background:rgba(167,139,250,0.1);border:1px solid #a78bfa;border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:12px;color:#a78bfa;direction:rtl;">📦 آرکائیو — تھانہ ${fStation} کے پرانے مقدمات (صرف دیکھنے کے لیے)</div>`:''}
+  ${isArchiveView?`<div style="background:rgba(167,139,250,0.1);border:1px solid #a78bfa;border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:12px;color:#a78bfa;direction:rtl;">آرکائیو — تھانہ ${fStation} کے پرانے مقدمات (صرف دیکھنے کے لیے)</div>`:''}
 
   <div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;margin-bottom:14px;">
-    <input class="search-input" id="case-search" style="flex:1;min-width:180px;" placeholder="🔍 FIR نمبر، مدعی، CNIC، دفعہ..." value="${fQuery}" oninput="clearTimeout(window._csTmr);window._csTmr=setTimeout(()=>renderCases(document.getElementById('page-content'),'',this.value,'${fStation}'),280)" dir="rtl">
-    <select class="filter-select" id="case-status-filter" onchange="renderCases(document.getElementById('page-content'),this.value,document.getElementById('case-search').value,'${fStation}')">
+    <input class="search-input" id="case-search" style="flex:1;min-width:180px;" placeholder="مقدمہ نمبر، مدعی، شناختی کارڈ، دفعہ…" value="${fQuery}" oninput="_csOnSearch(this.value)" dir="rtl">
+    <select class="filter-select" id="case-status-filter" onchange="_csOnStatus(this.value)">
       <option value="" ${!fStatus?'selected':''}>تمام صورتحال</option>
       ${(window.DIO && DIO.caseStatuses)
         ? DIO.caseStatuses.toOptions(fStatus)
@@ -230,11 +294,11 @@ async function renderCases(container,fStatus,fQuery,fStation){
           <th>صورتحال</th>
           <th style="text-align:center;">اقدامات</th>
         </tr></thead>
-        <tbody>
+        <tbody id="cs-rows">
           ${cases.length ? cases.map((c,i)=>renderCaseRow(c,i+1)).join('')
             : `<tr><td colspan="10" style="padding:0;">${
                 (window.DIO && DIO.states)
-                  ? DIO.states.empty('📁', 'کوئی مقدمہ نہیں', fQuery
+                  ? DIO.states.empty('folder', 'کوئی مقدمہ نہیں', fQuery
                       ? 'اس تلاش سے کوئی مقدمہ نہیں ملا — لفظ بدل کر کوشش کریں'
                       : 'نیا مقدمہ درج کرنے کے لیے اوپر "+ نیا اندراج" پر دبائیں')
                   : `<div style="text-align:center;padding:30px;color:var(--text-muted);">کوئی مقدمہ نہیں</div>`
@@ -253,10 +317,10 @@ function renderCaseRow(c,sn){
   return `<tr>
     <td style="text-align:center;font-size:11px;color:var(--text-muted);font-weight:700;">${sn}</td>
     <td>
-      ${(() => { const fn=c.fir_number||'—'; const p=String(fn).split('/'); return p.length===2 ? `<span style="cursor:pointer;" onclick="openCaseWorkspace('${c.id}')" title="Open Case Workspace"><span style="font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:15px;display:block;line-height:1.1;text-decoration:underline;text-decoration-color:rgba(56,189,248,0.4);">${p[0]}</span><span style="font-family:var(--font-mono);font-size:10px;color:var(--text-muted);display:block;line-height:1;">/${p[1]}</span></span>` : `<span style="font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:12px;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(56,189,248,0.4);" onclick="openCaseWorkspace('${c.id}')" title="Open Case Workspace">${fn}</span>`; })()}
-      ${c.priority ? `<br><span style="font-size:9px;font-weight:700;color:${c.priority==='high'?'var(--red)':c.priority==='medium'?'var(--amber)':'var(--green)'};">${c.priority==='high'?'🔴 اہم':c.priority==='medium'?'🟡 درمیانہ':'🟢 کم'}</span>` : ''}
-      ${c.is_cross_version?'<br><span style="font-size:9px;color:var(--red);font-weight:600;">⚔️ Cross</span>':''}
-      ${c._shared?`<br><span style="font-size:9px;color:var(--accent);font-weight:600;" title="آپ کے ساتھ شیئر کیا گیا (${c._sharePermission==='write'?'ترمیم':'دیکھیں'})">🔗 شیئرڈ</span>`:''}
+      ${(() => { const fn=c.fir_number||'—'; const p=String(fn).split('/'); return p.length===2 ? `<span style="cursor:pointer;" onclick="openCaseWorkspace('${c.id}')" title="Open Case Workspace"><span dir="ltr" style="unicode-bidi:isolate;font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:15px;display:block;line-height:1.1;text-decoration:underline;text-decoration-color:rgba(56,189,248,0.4);">${p[0]}</span><span dir="ltr" style="unicode-bidi:isolate;font-family:var(--font-mono);font-size:10px;color:var(--text-muted);display:block;line-height:1;">/${p[1]}</span></span>` : `<span dir="ltr" style="unicode-bidi:isolate;font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:12px;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(56,189,248,0.4);" onclick="openCaseWorkspace('${c.id}')" title="Open Case Workspace">${fn}</span>`; })()}
+      ${c.priority ? `<br><span style="font-size:9px;font-weight:700;color:${c.priority==='high'?'var(--red)':c.priority==='medium'?'var(--amber)':'var(--green)'};">${c.priority==='high'?'اہم':c.priority==='medium'?'درمیانہ':'کم'}</span>` : ''}
+      ${c.is_cross_version?'<br><span style="font-size:9px;color:var(--red);font-weight:600;">Cross</span>':''}
+      ${c._shared?`<br><span style="font-size:9px;color:var(--accent);font-weight:600;" title="آپ کے ساتھ شیئر کیا گیا (${c._sharePermission==='write'?'ترمیم':'دیکھیں'})">شیئرڈ</span>`:''}
     </td>
     <td style="font-size:11px;white-space:nowrap;">${formatDate(c.fir_date)}</td>
     <td style="font-size:11px;white-space:nowrap;">${formatDate(c.occurrence_date)}</td>
@@ -267,11 +331,11 @@ function renderCaseRow(c,sn){
     <td><span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span></td>
     <td>
       <div style="display:flex;gap:2px;direction:rtl;justify-content:center;flex-direction:row-reverse;">
-        <button class="btn btn-secondary btn-sm" onclick="openCaseWorkspace('${c.id}')" title="مقدمہ کھولیں">📄</button>
-        <button class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')" title="ترمیم">✏️</button>
-        <button class="btn btn-secondary btn-sm" onclick="downloadCaseFile('${c.id}')" title="ڈاؤنلوڈ">⬇️</button>
-        <button class="btn btn-primary   btn-sm" onclick="openShareModal('${c.id}')"    title="شیئر">📤</button>
-        <button class="btn btn-danger    btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number||'?'}')" title="حذف">🗑️</button>
+        <button aria-label="مقدمہ کھولیں" class="btn btn-secondary btn-sm" onclick="openCaseWorkspace('${c.id}')" title="مقدمہ کھولیں"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M6.5 3.5h7l4.5 4.5V20.5h-11.5z"/><path d="M13.5 3.5V8H18"/></svg></button>
+        <button aria-label="ترمیم" class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')" title="ترمیم"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>
+        <button aria-label="ڈاؤنلوڈ" class="btn btn-secondary btn-sm" onclick="downloadCaseFile('${c.id}')" title="ڈاؤنلوڈ"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M12 3.5v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M4.5 20h15"/></svg></button>
+        <button aria-label="شیئر" class="btn btn-primary   btn-sm" onclick="openShareModal('${c.id}')"    title="شیئر"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M12 15V3.5"/><path d="M7.5 8L12 3.5 16.5 8"/><path d="M4.5 13.5V20h15v-6.5"/></svg></button>
+        <button aria-label="حذف" class="btn btn-danger    btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number||'?'}')" title="حذف"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
       </div>
     </td>
   </tr>`;
@@ -280,16 +344,16 @@ function renderCaseRow(c,sn){
 // ── DIRECT FIR PRINT ─────────────────────────────────────────
 async function downloadCaseFile(id) {
   const c = _casesCache.find(x=>x.id===id) || await getCase(id);
-  if (!c) { showToast('❌ Case not found','error'); return; }
+  if (!c) { showToast('Case not found','error'); return; }
 
-  openModal('⬇️ Case File Download — FIR ' + (c.fir_number||''),
+  openModal('Case File Download — FIR ' + (c.fir_number||''),
     `<div style="display:flex;flex-direction:column;gap:12px;padding:10px 0;">
       <div style="font-size:13px;color:var(--text-secondary);text-align:center;margin-bottom:4px;">FIR ${esc(c.fir_number)||'—'} · ${esc(c.complainant)||'—'}</div>
       <button class="btn btn-primary" style="padding:14px;font-size:14px;" onclick="closeModal();_downloadCaseTxt('${id}')">
-        📄 Text File Download کریں (.txt)
+        Text File Download کریں (.txt)
       </button>
       <button class="btn btn-secondary" style="padding:14px;font-size:14px;" onclick="closeModal();_downloadCaseHTML('${id}')">
-        🌐 HTML File Download کریں (Print → PDF)
+        HTML File Download کریں (Print → PDF)
       </button>
       <div style="font-size:10px;color:var(--text-faint);text-align:center;">PDF کے لیے: HTML کھولیں → Ctrl+P → Save as PDF</div>
     </div>`,
@@ -330,7 +394,7 @@ async function _downloadCaseTxt(id) {
   a.href = URL.createObjectURL(blob);
   a.download = `Case-FIR-${c.fir_number||'file'}-${new Date().toISOString().slice(0,10)}.txt`;
   a.click();
-  showToast('✅ File Download ہو رہی ہے','success');
+  showToast('File Download ہو رہی ہے','success');
 }
 
 async function _downloadCaseHTML(id) {
@@ -377,18 +441,18 @@ async function _downloadCaseHTML(id) {
   a.href = URL.createObjectURL(blob);
   a.download = `Case-FIR-${c.fir_number||'file'}-${new Date().toISOString().slice(0,10)}.html`;
   a.click();
-  showToast('✅ HTML file download ہوئی — browser میں کھولیں، Ctrl+P سے PDF بنائیں','success');
+  showToast('HTML file download ہوئی — browser میں کھولیں، Ctrl+P سے PDF بنائیں','success');
 }
 
 // ── SHARE CASE ──
 async function openShareModal(id){
   const c=_casesCache.find(x=>x.id===id)||await getCase(id);
-  if(!c){showToast('❌ Case not found','error');return;}
+  if(!c){showToast('Case not found','error');return;}
   const o=currentOfficer||{};
   const station=c.case_station||o.station||'—';
   const offence=[c.section_of_law,c.offence_type].filter(Boolean).join(' / ')||'—';
   const lines=[
-    '📋 CASE FILE — Digital IO Police Portal',
+    'CASE FILE — Digital IO Police Portal',
     '─────────────────────────────────',
     `تھانہ (Station):      ${station}`,
     `مقدمہ نمبر (FIR No):  ${c.fir_number||'—'}`,
@@ -406,16 +470,16 @@ async function openShareModal(id){
   const text=lines.join('\n');
   const enc=encodeURIComponent(text);
   const sub=encodeURIComponent(`Case File — FIR ${c.fir_number}`);
-  openModal(`📤 Share Case — FIR ${c.fir_number||''}`,
+  openModal(`Share Case — FIR ${c.fir_number||''}`,
     `<div style="margin-bottom:14px;background:var(--bg-tertiary);border-radius:8px;padding:12px;font-size:10.5px;color:var(--text-secondary);font-family:var(--font-mono);white-space:pre;line-height:1.7;max-height:180px;overflow-y:auto;">${text}</div>
      <div style="display:flex;gap:10px;direction:rtl;justify-content:center;flex-wrap:wrap;">
        <a href="https://wa.me/?text=${enc}" target="_blank" rel="noopener"
           style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;background:#25D366;color:#fff;font-weight:700;font-size:13px;text-decoration:none;">
-         💬 Share on WhatsApp
+         Share on WhatsApp
        </a>
        <a href="mailto:?subject=${sub}&body=${enc}"
           style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;background:var(--accent-dark);color:#fff;font-weight:700;font-size:13px;text-decoration:none;">
-         📧 Send via Email
+         Send via Email
        </a>
      </div>
      <div style="margin-top:10px;font-size:10px;color:var(--text-muted);text-align:center;">WhatsApp opens in a new tab · Email opens your default email app</div>`,
@@ -477,7 +541,7 @@ function searchPenalCodes(query) {
 
 function addSection(sectionStr, offence, bail) {
   if (selectedSections.includes(sectionStr)) {
-    showToast('⚠️ Section already added.', 'error'); return;
+    showToast('Section already added.', 'error'); return;
   }
   selectedSections.push(sectionStr);
 
@@ -501,7 +565,7 @@ function addSection(sectionStr, offence, bail) {
   document.getElementById('section-dropdown').style.display = 'none';
 
   _updateMobileBox();
-  showToast(`✅ Added: ${sectionStr}`, 'success', 1500);
+  showToast(`Added: ${sectionStr}`, 'success', 1500);
 }
 
 // Show/hide mobile theft box based on selected sections (379-402 PPC)
@@ -571,7 +635,7 @@ document.addEventListener('click', function(e) {
 });
 
 // ── MODAL OPENERS + SAVE/VIEW ──
-function openAddCaseModal(){openModal('',caseFormHTML(),`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveNewCase()">💾 اندراج محفوظ کریں</button>`);setTimeout(function(){_cfRenderMobilePhones();if(typeof _cfSizeModal==='function')_cfSizeModal();},50);}
+function openAddCaseModal(){openModal('',caseFormHTML(),`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveNewCase()">اندراج محفوظ کریں</button>`);setTimeout(function(){_cfRenderMobilePhones();if(typeof _cfSizeModal==='function')_cfSizeModal();},50);}
 async function _updateDocCheck(caseId, checkbox) {
   const doc = checkbox.value;
   const val = checkbox.checked;
@@ -613,7 +677,7 @@ async function _createAutoReminders(firNum, firDateStr, mulzmanType, complainant
     // 10-day: 173 CrPC interim report
     await supabaseClient.from('reminders').insert({
       officer_id: oid,
-      text: `📋 رپورٹ 173 ض ف — مقدمہ FIR ${firNum} (${complainant}) — ابتدائی رپورٹ مرتب کریں`,
+      text: `رپورٹ 173 ض ف — مقدمہ FIR ${firNum} (${complainant}) — ابتدائی رپورٹ مرتب کریں`,
       reminder_date: addDays(firDate, 10),
       is_done: false,
     });
@@ -622,12 +686,12 @@ async function _createAutoReminders(firNum, firDateStr, mulzmanType, complainant
     if (mulzmanType === 'namaloom') {
       await supabaseClient.from('reminders').insert({
         officer_id: oid,
-        text: `⚠️ عدم پتہ ہونے والا مقدمہ — FIR ${firNum} (${complainant}) — ملزمان نامعلوم، 15 دن مکمل`,
+        text: `عدم پتہ ہونے والا مقدمہ — FIR ${firNum} (${complainant}) — ملزمان نامعلوم، 15 دن مکمل`,
         reminder_date: addDays(firDate, 15),
         is_done: false,
       });
     }
-    showToast('🔔 خودکار یاددہانیاں بن گئیں','info');
+    showToast('خودکار یاددہانیاں بن گئیں','info');
   } catch(e) { console.warn('auto reminder:', e.message); }
 }
 function viewCase(id) { openCaseWorkspace(id); }
@@ -677,7 +741,7 @@ function _generateInterim173(c) {
     </div>
   </div>`;
   if (typeof dioPrint === 'function') dioPrint(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><style>@page{margin:15mm}body{margin:0}</style></head><body>${html}</body></html>`);
-  showToast('📄 عبوری 173 رپورٹ تیار — پرنٹ کریں یا محفوظ کریں', 'success', 4000);
+  showToast('عبوری 173 رپورٹ تیار — پرنٹ کریں یا محفوظ کریں', 'success', 4000);
 }
 
 function _suggest161Questions(c) {
@@ -688,11 +752,11 @@ function _suggest161Questions(c) {
     if (val.sections.some(s => sections.includes(s))) { matched = val; break; }
   }
 
-  openModal('🤖 تجویز کردہ سوالات — بیان 161', `
+  openModal('تجویز کردہ سوالات — بیان 161', `
     <div style="direction:rtl;">
       ${matched ? `
         <div style="font-size:13px;color:var(--accent);font-weight:700;margin-bottom:10px;">
-          📋 ${matched.title} — متعلقہ سوالات (دفعات: ${esc(c.section_of_law)})
+          ${matched.title} — متعلقہ سوالات (دفعات: ${esc(c.section_of_law)})
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;">
           ${matched.questions.map((q,i)=>`
@@ -704,7 +768,7 @@ function _suggest161Questions(c) {
         <div style="font-size:11px;color:var(--text-muted);margin-top:10px;">یہ صرف تجاویز ہیں — تفتیش کے مطابق سوالات کریں</div>
       ` : `
         <div style="text-align:center;padding:20px;color:var(--text-muted);">
-          <div style="font-size:40px;margin-bottom:10px;">🤔</div>
+          <div style="font-size:40px;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><circle cx="12" cy="12" r="8.5"/><path d="M9.5 9.5a2.6 2.6 0 0 1 5 1c0 1.8-2.5 2-2.5 3.6"/><path d="M12 17.4h.01"/></svg></div>
           <div style="font-size:13px;">اس دفعہ (${esc(c.section_of_law)||'—'}) کے لیے مخصوص سوالات دستیاب نہیں۔</div>
           <div style="font-size:11px;margin-top:8px;">عام سوالات: واقعہ کہاں ہوا؟ کب ہوا؟ کون ملوث ہے؟ گواہ کون ہیں؟</div>
         </div>
@@ -721,13 +785,13 @@ async function openCaseWorkspace(id) {
   _currentWorkspaceCaseId = id;
   currentDocIndex = null;
   const titleEl = document.getElementById('topbar-title');
-  if (titleEl) titleEl.textContent = '📁 Case Workspace';
+  if (titleEl) titleEl.textContent = 'Case Workspace';
   const container = document.getElementById('page-content');
   container.innerHTML = `<div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Opening Case Workspace...</div></div>`;
   try {
     const c = await getCase(id);
     if (!c) { 
-      container.innerHTML = `<div style="padding:30px;text-align:center;direction:rtl;"><div style="font-size:40px;">⚠️</div><div style="margin-top:10px;">مقدمہ نہیں ملا</div><button class="btn btn-secondary btn-sm" style="margin-top:14px;" onclick="showPage('cases',null)">← واپس مقدمات</button></div>`;
+      container.innerHTML = `<div style="padding:30px;text-align:center;direction:rtl;"><div style="font-size:40px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M12 4L3 19.5h18z"/><path d="M12 10v4.5"/><path d="M12 17.2h.01"/></svg></div><div style="margin-top:10px;">مقدمہ نہیں ملا</div><button class="btn btn-secondary btn-sm" style="margin-top:14px;" onclick="showPage('cases',null)">← واپس مقدمات</button></div>`;
       return; 
     }
     // Track recently viewed
@@ -751,7 +815,7 @@ async function openCaseWorkspace(id) {
   } catch(err) {
     console.error('openCaseWorkspace error:', err);
     container.innerHTML = `<div style="padding:30px;text-align:center;direction:rtl;">
-      <div style="font-size:40px;">⚠️</div>
+      <div style="font-size:40px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M12 4L3 19.5h18z"/><path d="M12 10v4.5"/><path d="M12 17.2h.01"/></svg></div>
       <div style="margin-top:10px;color:var(--text-secondary);">مقدمہ کھولنے میں مسئلہ</div>
       <div style="font-size:11px;color:var(--text-muted);direction:ltr;font-family:monospace;margin-top:8px;">${(err&&err.message)||err}</div>
       <button class="btn btn-secondary btn-sm" style="margin-top:14px;" onclick="showPage('cases',null)">← واپس مقدمات</button>
@@ -776,7 +840,7 @@ function renderWorkspace(c, docs, ev, container) {
     <!-- TAB CONTENT -->
     <div id="workspace-tab-content" style="height:calc(100vh - 220px);overflow:hidden;">
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">
-        <div style="font-size:48px;margin-bottom:12px;">📂</div>
+        <div style="font-size:48px;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M3.5 7.5h6l2 2.5h9V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z"/></svg></div>
         <div style="font-size:14px;font-weight:600;margin-bottom:6px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">دستاویز منتخب کریں</div>
         <div style="font-size:12px;">اوپر دستاویز کے نام پر کلک کریں</div>
       </div>
@@ -793,7 +857,7 @@ function renderDocsTab(c, docs) {
     <!-- Document Editor (full width — no side document list) -->
     <div class="workspace-main" id="workspace-editor-area" style="width:100%;">
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">
-        <div style="font-size:48px;margin-bottom:12px;">📂</div>
+        <div style="font-size:48px;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M3.5 7.5h6l2 2.5h9V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z"/></svg></div>
         <div style="font-size:14px;font-weight:600;margin-bottom:6px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">دستاویز منتخب کریں</div>
         <div style="font-size:12px;direction:rtl;">اوپر دستاویز کے نام پر کلک کریں</div>
       </div>
@@ -812,7 +876,7 @@ function saveDocDraft(docIndex) {
     const statusEl = card.querySelector('.doc-card-status');
     if (statusEl) { statusEl.textContent = 'Draft'; statusEl.className = 'doc-card-status doc-status-draft'; }
   }
-  showToast('💾 Draft saved!', 'success', 1500);
+  showToast('Draft saved!', 'success', 1500);
 }
 
 function markDocDone(docIndex) {
@@ -822,7 +886,7 @@ function markDocDone(docIndex) {
     const statusEl = card.querySelector('.doc-card-status');
     if (statusEl) { statusEl.textContent = 'Done'; statusEl.className = 'doc-card-status doc-status-done'; }
   }
-  showToast('✅ Document marked as complete!', 'success');
+  showToast('Document marked as complete!', 'success');
 }
 
 function changeFont(fontKey) {
@@ -856,10 +920,10 @@ function printThisDoc(docName) {
 }
 
 function renderEvidenceTab(c, ev) {
-  const icon = t => t==='Photo'?'📷':t==='Video'?'🎥':t==='Audio'?'🎙️':'📄';
+  const icon = t => t==='Photo'?"<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><path d=\"M3.5 8h3.2l1.6-2.4h7.4L17.3 8h3.2v11.5h-17z\"/><circle cx=\"12\" cy=\"13.5\" r=\"3.6\"/></svg>":t==='Video'?"<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><path d=\"M3.5 6.5h11v11h-11z\"/><path d=\"M14.5 10.5l6-3v9l-6-3z\"/></svg>":t==='Audio'?"<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><rect x=\"9\" y=\"3\" width=\"6\" height=\"11\" rx=\"3\"/><path d=\"M5 11a7 7 0 0 0 14 0\"/><path d=\"M12 18v3\"/></svg>":"<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><path d=\"M7 3h7l4 4v14H7z\"/><path d=\"M14 3v5h5\"/></svg>";
   const cards = ev.length === 0
     ? `<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text-muted);">
-        <div style="font-size:40px;margin-bottom:12px;">📋</div>
+        <div style="font-size:40px;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M8 4h8v3H8z"/><path d="M9 4H6v17h12V4h-3"/><path d="M9 11h6"/><path d="M9 15h6"/></svg></div>
         <div style="font-weight:600;margin-bottom:4px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">ابھی کوئی شہادت نہیں</div>
         <div style="font-size:12px;">+ شہادت شامل کریں بٹن دبائیں</div>
        </div>`
@@ -867,7 +931,7 @@ function renderEvidenceTab(c, ev) {
       <div class="evidence-card" id="ev-${e.id}">
         <div class="evidence-thumb" onclick="openEvidenceFile('${e.id}','${_dioJsHtml(vu||'')}','${_dioJsHtml(e.name)}','${_dioJsHtml(e.type)}')" style="cursor:${hf?'pointer':'default'};" title="${hf?'Click to open file':'No file attached'}">
           ${hf && e.type==='Photo'
-            ? `<img src="${esc(vu||'')}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;" alt="${esc(e.name)}" onerror="this.style.display='none';this.parentElement.querySelector('.ev-fallback').style.display='flex'"><div class="ev-fallback" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:36px;">📷</div>`
+            ? `<img src="${esc(vu||'')}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;" alt="${esc(e.name)}" onerror="this.style.display='none';this.parentElement.querySelector('.ev-fallback').style.display='flex'"><div class="ev-fallback" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:36px;"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M3.5 8h3.2l1.6-2.4h7.4L17.3 8h3.2v11.5h-17z"/><circle cx="12" cy="13.5" r="3.6"/></svg></div>`
             : `<span style="font-size:36px;">${icon(e.type)}</span>`}
           ${hf ? `<div style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,0.6);border-radius:4px;padding:2px 5px;font-size:9px;color:#fff;">Open</div>` : ''}
         </div>
@@ -876,9 +940,9 @@ function renderEvidenceTab(c, ev) {
           <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${esc(e.type)} · ${e.evidence_date||formatDate(e.created_at)}</div>
           ${e.notes ? `<div style="font-size:10px;color:var(--text-faint);margin-top:3px;font-style:italic;">${esc(e.notes)}</div>` : ''}
           <div style="display:flex;gap:6px;direction:rtl;margin-top:8px;">
-            ${hf ? `<button class="btn btn-secondary btn-sm" onclick="openEvidenceFile('${e.id}','${_dioJsHtml(vu||'')}','${_dioJsHtml(e.name)}','${_dioJsHtml(e.type)}')" title="Open File">📂 Open</button>` : ''}
-            <button class="btn btn-secondary btn-sm" onclick="renameEvidence('${e.id}','${_dioJsHtml(e.name)}','${_dioJsHtml(c.fir_number)}')" title="Rename">✏️ Rename</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteWorkspaceEvidence('${e.id}','${c.fir_number}')" title="Delete">🗑️</button>
+            ${hf ? `<button class="btn btn-secondary btn-sm" onclick="openEvidenceFile('${e.id}','${_dioJsHtml(vu||'')}','${_dioJsHtml(e.name)}','${_dioJsHtml(e.type)}')" title="Open File">Open</button>` : ''}
+            <button class="btn btn-secondary btn-sm" onclick="renameEvidence('${e.id}','${_dioJsHtml(e.name)}','${_dioJsHtml(c.fir_number)}')" title="Rename">Rename</button>
+            <button aria-label="Delete" class="btn btn-danger btn-sm" onclick="deleteWorkspaceEvidence('${e.id}','${c.fir_number}')" title="Delete"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
           </div>
         </div>
       </div>`; }).join('');
@@ -886,7 +950,7 @@ function renderEvidenceTab(c, ev) {
   return `<div class="case-tab-content">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;direction:rtl;">
       <div>
-        <div style="font-size:16px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">📋 شہادتیں — FIR ${c.fir_number}</div>
+        <div style="font-size:16px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">شہادتیں — FIR ${c.fir_number}</div>
         <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${ev.length} فائل منسلک</div>
       </div>
       <button class="btn btn-primary" onclick="openWorkspaceEvidenceModal('${c.id}','${c.fir_number}')">+ شہادت شامل کریں</button>
@@ -897,69 +961,69 @@ function renderEvidenceTab(c, ev) {
 
 // ── OPEN FILE ──────────────────────────────────────────────────
 function openEvidenceFile(id, url, name, type) {
-  if (!url) { showToast('⚠️ No file attached to this evidence item.', 'error'); return; }
+  if (!url) { showToast('No file attached to this evidence item.', 'error'); return; }
   // Open file in new tab
   window.open(url, '_blank', 'noopener');
 }
 
 // ── RENAME EVIDENCE ────────────────────────────────────────────
 function renameEvidence(id, currentName, firNumber) {
-  openModal('✏️ Rename Evidence',
+  openModal('Rename Evidence',
     `<div style="margin-bottom:8px;font-size:12px;color:var(--text-muted);">Enter a new name for this evidence item.</div>
      <input class="form-input" id="ev-rename-input" value="${esc(currentName)}" style="width:100%;box-sizing:border-box;" placeholder="Evidence name">`,
     `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-     <button class="btn btn-primary" onclick="saveEvidenceRename('${id}','${firNumber}')">✏️ Rename</button>`
+     <button class="btn btn-primary" onclick="saveEvidenceRename('${id}','${firNumber}')">Rename</button>`
   );
   setTimeout(() => { const i = document.getElementById('ev-rename-input'); if(i){i.focus();i.select();} }, 100);
 }
 
 async function saveEvidenceRename(id, firNumber) {
   const newName = document.getElementById('ev-rename-input')?.value.trim();
-  if (!newName) { showToast('⚠️ Name cannot be empty.', 'error'); return; }
+  if (!newName) { showToast('Name cannot be empty.', 'error'); return; }
   try {
     await supabaseClient.from('evidence').update({ name: newName }).eq('id', id);
     closeModal();
-    showToast('✅ Evidence renamed.', 'success');
+    showToast('Evidence renamed.', 'success');
     // Refresh evidence tab
     const c = await getCase(_currentWorkspaceCaseId);
     const ev = await getEvidence(firNumber);
     document.getElementById('workspace-tab-content').innerHTML = renderEvidenceTab(c, ev);
-  } catch(err) { showToast('❌ ' + err.message, 'error'); }
+  } catch(err) { showToast('' + err.message, 'error'); }
 }
 
 // ── DELETE EVIDENCE ────────────────────────────────────────────
 function deleteWorkspaceEvidence(id, firNumber) {
-  openModal('🗑️ Delete Evidence',
-    `<p style="color:var(--text-secondary);font-size:13px;">Are you sure you want to delete this evidence item?<br><span style="color:var(--red);font-size:11px;margin-top:8px;display:block;">⚠️ This cannot be undone.</span></p>`,
+  openModal('Delete Evidence',
+    `<p style="color:var(--text-secondary);font-size:13px;">Are you sure you want to delete this evidence item?<br><span style="color:var(--red);font-size:11px;margin-top:8px;display:block;">This cannot be undone.</span></p>`,
     `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-     <button class="btn btn-danger" onclick="closeModal();doDeleteWorkspaceEvidence('${id}','${firNumber}')">🗑️ Delete</button>`
+     <button class="btn btn-danger" onclick="closeModal();doDeleteWorkspaceEvidence('${id}','${firNumber}')">Delete</button>`
   );
 }
 
 async function doDeleteWorkspaceEvidence(id, firNumber) {
   try {
     await deleteEvidence(id);
-    showToast('🗑️ Evidence deleted.', 'info');
+    showToast('Evidence deleted.', 'info');
     const c = await getCase(_currentWorkspaceCaseId);
     const ev = await getEvidence(firNumber);
     document.getElementById('workspace-tab-content').innerHTML = renderEvidenceTab(c, ev);
-  } catch(err) { showToast('❌ ' + err.message, 'error'); }
+  } catch(err) { showToast('' + err.message, 'error'); }
 }
 
 // ── ATTACH EVIDENCE MODAL ──────────────────────────────────────
 function openWorkspaceEvidenceModal(caseId, firNumber) {
-  openModal('➕ Attach Evidence',
+  openModal('Attach Evidence',
     `<div style="margin-bottom:12px;">
        <div style="display:flex;gap:8px;direction:rtl;margin-bottom:12px;">
-         <button class="btn btn-secondary btn-sm" onclick="wevOpenCamera()">📸 Camera</button>
-         <button class="btn btn-secondary btn-sm" onclick="wevOpenFile()">📎 Select File</button>
+         <button class="btn btn-secondary btn-sm" onclick="wevOpenCamera()">Camera</button>
+         <button class="btn btn-secondary btn-sm" onclick="wevOpenFile()">Select File</button>
        </div>
        <!-- Camera preview -->
        <div id="wev-camera" style="display:none;margin-bottom:12px;">
          <video id="wev-video" style="width:100%;border-radius:8px;max-height:200px;" autoplay playsinline></video>
          <div style="display:flex;gap:8px;direction:rtl;margin-top:8px;">
-           <button class="btn btn-primary btn-sm" onclick="wevSnap()">📸 Capture</button>
-           <button class="btn btn-secondary btn-sm" onclick="wevStopCamera()">✕ Stop</button>
+           <button class="btn btn-primary btn-sm" onclick="wevSnap()">Capture</button>
+           <button class="btn btn-secondary btn-sm" onclick="wevStopCamera()">Stop</button>
          </div>
          <canvas id="wev-canvas" style="display:none;"></canvas>
        </div>
@@ -980,7 +1044,7 @@ function openWorkspaceEvidenceModal(caseId, firNumber) {
      <div style="margin-bottom:10px;"><label class="form-label">Date of Evidence</label><input class="form-input" id="wev-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
      <div><label class="form-label">Notes</label><textarea class="form-input" id="wev-notes" rows="2" placeholder="Description, location found, etc."></textarea></div>`,
     `<button class="btn btn-secondary" onclick="wevStopCamera();closeModal()">Cancel</button>
-     <button class="btn btn-primary" onclick="wevSave('${caseId}','${firNumber}')">💾 Attach</button>`
+     <button class="btn btn-primary" onclick="wevSave('${caseId}','${firNumber}')">Attach</button>`
   );
   window._wevFile = null;
   window._wevDataUrl = null;
@@ -992,7 +1056,7 @@ async function wevOpenCamera() {
   try {
     window._wevStream = await navigator.mediaDevices.getUserMedia({ video: true });
     document.getElementById('wev-video').srcObject = window._wevStream;
-  } catch(e) { showToast('⚠️ Camera not available.', 'error'); }
+  } catch(e) { showToast('Camera not available.', 'error'); }
 }
 function wevStopCamera() {
   if (window._wevStream) { window._wevStream.getTracks().forEach(t => t.stop()); window._wevStream = null; }
@@ -1008,7 +1072,7 @@ function wevSnap() {
   const prev = document.getElementById('wev-preview');
   const img = document.getElementById('wev-img-preview');
   prev.style.display = 'block'; img.style.display = 'block'; img.src = window._wevDataUrl;
-  document.getElementById('wev-file-name').textContent = '📸 Camera capture ready';
+  document.getElementById('wev-file-name').textContent = 'Camera capture ready';
   if (!document.getElementById('wev-name').value) document.getElementById('wev-name').value = 'Photo ' + formatDate(new Date());
   document.getElementById('wev-type').value = 'Photo';
 }
@@ -1020,7 +1084,7 @@ function wevOpenFile() {
     const prev = document.getElementById('wev-preview');
     const img = document.getElementById('wev-img-preview');
     prev.style.display = 'block';
-    document.getElementById('wev-file-name').textContent = '📎 ' + f.name + ' (' + (f.size/1024).toFixed(1) + ' KB)';
+    document.getElementById('wev-file-name').textContent = '' + f.name + ' (' + (f.size/1024).toFixed(1) + ' KB)';
     if (f.type.startsWith('image/')) {
       const r = new FileReader(); r.onload = ev => { img.src = ev.target.result; img.style.display = 'block'; }; r.readAsDataURL(f);
     } else { img.style.display = 'none'; }
@@ -1039,7 +1103,7 @@ async function wevSave(caseId, firNumber) {
   // VIEW-ONLY ENFORCEMENT [4E]: میعاد ختم پر نئی شہادت منسلک کرنا بند
   if (window.DIO && DIO.sub && !DIO.sub.guard('شہادت منسلک')) return;
   const name = document.getElementById('wev-name')?.value.trim();
-  if (!name) { showToast('⚠️ Evidence name is required.', 'error'); return; }
+  if (!name) { showToast('Evidence name is required.', 'error'); return; }
   _currentWorkspaceCaseId = caseId;
 
   const type = document.getElementById('wev-type')?.value || 'Document';
@@ -1073,15 +1137,15 @@ async function wevSave(caseId, firNumber) {
     window._wevDataUrl = null; window._wevFile = null;
     wevStopCamera();
     closeModal();
-    if (_row && _row._pendingUpload) showToast('📴 آف لائن محفوظ — انٹرنیٹ آنے پر شہادت اپلوڈ ہو گی', 'info', 4000);
-    else showToast('✅ Evidence attached: ' + name, 'success');
+    if (_row && _row._pendingUpload) showToast('آف لائن محفوظ — انٹرنیٹ آنے پر شہادت اپلوڈ ہو گی', 'info', 4000);
+    else showToast('Evidence attached: ' + name, 'success');
 
     // Refresh evidence tab
     const c = await getCase(caseId);
     const ev = await getEvidence(firNumber);
     const tabContent = document.getElementById('workspace-tab-content');
     if (tabContent) tabContent.innerHTML = renderEvidenceTab(c, ev);
-  } catch(err) { showToast('❌ ' + err.message, 'error'); }
+  } catch(err) { showToast('' + err.message, 'error'); }
 }
 
 
@@ -1095,17 +1159,17 @@ function goBackToCases() {
     container.style.overflow = 'auto';
   }
   const titleEl = document.getElementById('topbar-title');
-  if (titleEl) titleEl.textContent = '📁 My Cases';
+  if (titleEl) titleEl.textContent = 'My Cases';
   if (container) renderCases(container);
 }
-function confirmDeleteCase(id,fir){openModal('🗑️ Confirm Delete',`<p style="color:var(--text-secondary);font-size:13px;">Delete case <b style="color:var(--accent);">FIR ${fir}</b>?<br><br><span style="color:var(--red);font-size:11px;">⚠️ This cannot be undone.</span></p>`,`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="closeModal();doDeleteCase('${id}')">🗑️ Delete</button>`);}
+function confirmDeleteCase(id,fir){openModal('Confirm Delete',`<p style="color:var(--text-secondary);font-size:13px;">Delete case <b style="color:var(--accent);">FIR ${fir}</b>?<br><br><span style="color:var(--red);font-size:11px;">This cannot be undone.</span></p>`,`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="closeModal();doDeleteCase('${id}')">Delete</button>`);}
 async function doDeleteCase(id){
   try {
     const c = await getCase(id);
     if (c) await softDelete('case', id, c);
     await deleteCase(id);
-    showToast('🗑️ مقدمہ Recycle Bin میں','info');
+    showToast('مقدمہ حذف شدہ مواد میں منتقل ہو گیا۔','info');
     await updateBadges();
     renderCases(document.getElementById('page-content'));
-  } catch(err) { showToast('❌ Error: '+err.message,'error'); }
+  } catch(err) { showToast('Error: '+err.message,'error'); }
 }

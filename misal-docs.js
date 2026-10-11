@@ -78,17 +78,14 @@ function renderMisalBar(c) {
     background:var(--bg-secondary);
     border-bottom:1px solid var(--border);">
     <div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;align-items:center;">
-      <!-- واپس — چپس کی پٹی کا حصہ، بائیں سرے پر -->
-      <button onclick="dioGoBack()" title="واپس" aria-label="واپس"
-        style="order:999;margin-right:auto;width:34px;height:34px;border-radius:50%;flex-shrink:0;
-               cursor:pointer;border:1px solid var(--border);background:var(--bg-card);
-               color:var(--text-primary);font-size:18px;font-weight:900;line-height:1;direction:ltr;">←</button>
+      <!-- واپس — topbar jaisi hi shakl aur wahi taraf (daain sira) -->
+      <button onclick="dioGoBack()" class="dio-backbtn" style="order:-1;" title="واپس" aria-label="واپس"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6l6 6-6 6"/><path d="M20 12H4"/></svg><span>واپس</span></button>
       <!-- مقدمہ نمبر — case khulte hi hamesha nazar aaye (kaunsa muqadma khula hai) -->
       <span title="مقدمہ نمبر" style="flex-shrink:0;display:inline-flex;align-items:center;gap:6px;
             padding:5px 12px;border-radius:8px;background:var(--accent-glow,rgba(56,189,248,0.14));
             border:1px solid var(--accent,#38bdf8);color:var(--accent,#38bdf8);font-weight:800;
             font-size:13px;font-family:'Jameel Noori Nastaleeq',serif;white-space:nowrap;">
-        📁 مقدمہ<bdi style="direction:ltr;font-family:var(--font-mono,monospace);font-weight:700;">${(typeof esc==='function'?esc(c&&c.fir_number||'—'):(c&&c.fir_number||'—'))}</bdi>
+        مقدمہ<bdi style="direction:ltr;font-family:var(--font-mono,monospace);font-weight:700;">${(typeof esc==='function'?esc(c&&c.fir_number||'—'):(c&&c.fir_number||'—'))}</bdi>
       </span>
       ${indexChip}
       ${_misalDropdown('fir-dd', 'الف آئی آر', [
@@ -265,7 +262,7 @@ async function _doAddMisalDoc(docId) {
     _refreshMisalBar();
     // Persons (witnesses/accused) → open their card form. Other docs → silent.
     if (isPersonForm) _openMisalEditor(docId);
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+  } catch(e) { showToast('' + e.message, 'error'); }
 }
 
 // ── REMOVE FROM CASE ──────────────────────────────────────────
@@ -427,7 +424,7 @@ function _renderMisalEditor(docId, def) {
     ? `<button onclick="openMisalVersionsModal('${docId}','${saved.id}')" title="پرانی نسخے دیکھیں"
         style="position:absolute;top:8px;left:8px;z-index:10;padding:5px 10px;border:1px solid var(--border);
                background:var(--bg-card);color:var(--text-primary);border-radius:8px;cursor:pointer;
-               font-size:12px;font-family:'Jameel Noori Nastaleeq',serif;">📜 نسخے</button>`
+               font-size:12px;font-family:'Jameel Noori Nastaleeq',serif;">نسخے</button>`
     : '';
 
   // MS Word jaisa toolbar (ooper mustaqil) — likhai ke liye
@@ -510,8 +507,8 @@ async function saveMisalDoc(docId) {
         dioRegisterSaved('misal', dName, { case_id: _misalCaseId, doc_id: docId });
       }
     } catch(_) {}
-    showToast('✅ دستاویز محفوظ ہو گئی', 'success');
-  } catch(e) { showToast('❌ ' + e.message, 'error'); }
+    showToast('دستاویز محفوظ ہو گئی', 'success');
+  } catch(e) { showToast('' + e.message, 'error'); }
 }
 
 function printMisalDoc(name) {
@@ -562,14 +559,14 @@ let _voiceActive      = false;
 //  official document lose na kare.
 // ═══════════════════════════════════════════════════════════════════
 async function openMisalVersionsModal(docId, documentDbId) {
-  if (!documentDbId) { showToast('⚠️ پہلے دستاویز محفوظ کریں — تب نسخے دستیاب ہوں گے', 'info'); return; }
+  if (!documentDbId) { showToast('پہلے دستاویز محفوظ کریں — تب نسخے دستیاب ہوں گے', 'info'); return; }
   const docName = (MISAL_CASE_DOCS.find(d => d.id === docId) || {}).name || docId;
 
   // Modal shell — pehle loading
   openModal(
-    `📜 ${docName} — نسخوں کی تاریخ`,
+    `${docName} — نسخوں کی تاریخ`,
     `<div id="mv-body" style="direction:rtl;min-height:200px;padding:10px 4px;">
-       <div style="text-align:center;color:var(--text-muted);padding:24px;">⏳ نسخے لوڈ ہو رہے ہیں...</div>
+       <div style="text-align:center;color:var(--text-muted);padding:24px;">نسخے لوڈ ہو رہے ہیں...</div>
      </div>`,
     `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`
   );
@@ -603,7 +600,7 @@ async function openMisalVersionsModal(docId, documentDbId) {
     if (!versions || !versions.length) {
       body.innerHTML = `
         <div style="text-align:center;padding:32px 20px;color:var(--text-muted);">
-          <div style="font-size:36px;margin-bottom:10px;">📄</div>
+          <div style="font-size:36px;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
           <div style="font-size:14px;">ابھی کوئی پرانا نسخہ نہیں — پہلی ترمیم کے بعد یہاں تاریخ نظر آنے لگے گی</div>
         </div>`;
       return;
@@ -629,7 +626,7 @@ async function openMisalVersionsModal(docId, documentDbId) {
             <div style="font-size:13px;font-weight:700;">${esc(ofc)}</div>
             <div style="font-size:11px;color:var(--text-muted);direction:ltr;text-align:right;">${esc(dt)}</div>
           </div>
-          <button class="btn btn-secondary btn-sm" onclick="_previewMisalVersion('${v.id}')">👁️ دیکھیں</button>
+          <button class="btn btn-secondary btn-sm" onclick="_previewMisalVersion('${v.id}')">دیکھیں</button>
         </div>`;
       }).join('')}`;
   } catch (e) {
@@ -660,7 +657,7 @@ async function _previewMisalVersion(versionId) {
       hour:'2-digit', minute:'2-digit', hour12:true
     }) : '';
     openModal(
-      `👁️ نسخہ v${v.version_no} — ${esc(dt)}`,
+      `نسخہ v${v.version_no} — ${esc(dt)}`,
       `<div style="direction:rtl;max-height:60vh;overflow:auto;padding:14px;background:#fff;color:#111;
                    border:1px solid var(--border);border-radius:8px;
                    font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;line-height:2;">
@@ -672,7 +669,7 @@ async function _previewMisalVersion(versionId) {
       `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`
     );
   } catch (e) {
-    showToast('❌ نسخہ نہیں ملا: ' + (e.message||e), 'error');
+    showToast('نسخہ نہیں ملا: ' + (e.message||e), 'error');
   }
 }
 window._previewMisalVersion = _previewMisalVersion;

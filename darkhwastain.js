@@ -49,7 +49,7 @@ const DK_TYPES = [
   { id:'potency',          name:'درخواست برائے پوٹینسی ٹیسٹ ملزم' },
   { id:'tibbi_mazroob',    name:'درخواست برائے طبی ملاحظہ مضروب' },
   { id:'medical_board',    name:'درخواست برائے تشکیل دیئے جانے میڈیکل بورڈ' },
-  { id:'custom',           name:'➕ اپنی درخواست (خود لکھیں)' },
+  { id:'custom',           name:'اپنی درخواست (خود لکھیں)' },
 ];
 
 // ═══ ENTRY POINT — chip se yahi khulta hai ═══
@@ -335,7 +335,7 @@ function _dkRender() {
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
     <!-- ── FIXED TOOLBAR ── -->
     <div class="no-print" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
-      <span style="font-family:'Jameel Noori Nastaleeq',serif;font-size:15px;font-weight:700;color:var(--accent);">📝 درخواست</span>
+      <span style="font-family:'Jameel Noori Nastaleeq',serif;font-size:15px;font-weight:700;color:var(--accent);">درخواست</span>
       <select id="dk-type-sel" onchange="_dkSetType(this.value)" title="درخواست کی قسم"
         style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;max-width:220px;">
         ${DK_TYPES.map(t => `<option value="${t.id}" ${t.id === _dkType ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}
@@ -346,7 +346,7 @@ function _dkRender() {
         <option value="a4" ${_dkPaper==='a4'?'selected':''}>A4</option>
       </select>
       <button type="button" class="btn btn-secondary btn-sm" onclick="_dkResetBody()" title="اس قسم کا نیا خاکہ لائیں">↺ خاکہ</button>
-      <button type="button" class="btn btn-secondary btn-sm" onclick="_dkShowList()" title="محفوظ درخواستوں کی فہرست">📋 فہرست</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="_dkShowList()" title="محفوظ درخواستوں کی فہرست">فہرست</button>
       <div style="margin-right:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
         <button onmousedown="_dkKeep(event)" onclick="_dkFmt('bold')" title="بولڈ" style="${_dkBtn()}font-weight:900;">B</button>
         <button onmousedown="_dkKeep(event)" onclick="_dkFmt('italic')" title="ترچھا" style="${_dkBtn()}font-style:italic;">I</button>
@@ -368,12 +368,12 @@ function _dkRender() {
         <button onmousedown="_dkKeep(event)" onclick="_dkFontStep(-1)" title="فونٹ چھوٹا" style="${_dkBtn()}font-size:11px;">A−</button>
         <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
         <button id="dk-fmtpaint-btn" onmousedown="_dkKeep(event)" onclick="_dkFormatPainter()" title="فارمیٹ پینٹر (پہلے متن منتخب کریں، پھر یہ دبائیں، پھر جہاں لگانا ہے وہاں منتخب کریں)" style="${_dkBtn()}">🖌️</button>
-        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('removeFormat')" title="فارمیٹنگ ہٹائیں" style="${_dkBtn()}">✕</button>
+        <button aria-label="فارمیٹنگ ہٹائیں" onmousedown="_dkKeep(event)" onclick="_dkFmt('removeFormat')" title="فارمیٹنگ ہٹائیں" style="${_dkBtn()}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button>
         <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
         <button onmousedown="_dkKeep(event)" onclick="_dkFmt('undo')" title="واپس" style="${_dkBtn()}">↶</button>
         <button onmousedown="_dkKeep(event)" onclick="_dkFmt('redo')" title="دوبارہ" style="${_dkBtn()}">↷</button>
-        <button class="btn btn-primary btn-sm dio-modbtn" onclick="_dkSave()">💾 محفوظ کریں</button>
-        <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_dkPrint()">🖨️ پرنٹ کریں</button>
+        <button class="btn btn-primary btn-sm dio-modbtn" onclick="_dkSave()">محفوظ کریں</button>
+        <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_dkPrint()">پرنٹ کریں</button>
       </div>
     </div>
 
@@ -470,7 +470,7 @@ function _dkAccPicker(ev) {
     <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:700;color:#0369a1;font-family:'Jameel Noori Nastaleeq',serif;background:#f8fafc;">ملزمان منتخب کریں</div>
     <div style="flex:1;overflow-y:auto;padding:4px 8px;min-height:0;">${rows}</div>
     <div style="display:flex;gap:6px;padding:8px;border-top:1px solid #e5e7eb;background:#f8fafc;flex-shrink:0;">
-      <button id="dk-acc-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;color:#fff;cursor:pointer;font-size:13px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">✔ شامل کریں</button>
+      <button id="dk-acc-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;color:#fff;cursor:pointer;font-size:13px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">شامل کریں</button>
       <button id="dk-acc-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;font-family:'Jameel Noori Nastaleeq',serif;">بند</button>
     </div>`;
   document.body.appendChild(box);
@@ -622,7 +622,7 @@ function _dkFormatPainter() {
       size: Math.round(parseFloat(cs.fontSize) * 0.75),
     };
     if (btn) btn.style.background = '#0369a1';
-    if (typeof showToast === 'function') showToast('🖌️ فارمیٹ کاپی ہو گئی — اب وہ متن منتخب کریں جہاں لگانی ہے', 'info', 3500);
+    if (typeof showToast === 'function') showToast('فارمیٹ کاپی ہو گئی — اب وہ متن منتخب کریں جہاں لگانی ہے', 'info', 3500);
     return;
   }
 
@@ -815,17 +815,17 @@ async function _dkSave() {
   try {
     // NAYA record (ya _dkEntryId par ترمیم) — تاریخ/وقت/سیریل ke saath
     if (typeof dioSaveDocEntry !== 'function') {
-      if (typeof showToast === 'function') showToast('⚠️ saved-docs.js لوڈ نہیں ہوئی — دوبارہ اپلوڈ کریں', 'error', 5000);
+      if (typeof showToast === 'function') showToast('saved-docs.js لوڈ نہیں ہوئی — دوبارہ اپلوڈ کریں', 'error', 5000);
       return;
     }
     const entry = await dioSaveDocEntry('darkhwastain', title, data, { caseId: _dkCaseId, id: _dkEntryId });
     _dkEntryId = entry.id;
     _dkSaved = data; _dkDirty = false;
-    if (typeof showToast === 'function') showToast('✅ درخواست محفوظ — فہرست میں تاریخ/سیریل کے ساتھ آ گئی', 'success', 3500);
+    if (typeof showToast === 'function') showToast('درخواست محفوظ — فہرست میں تاریخ/سیریل کے ساتھ آ گئی', 'success', 3500);
     // Save ke baad FEHRIST kholo (chalan jaisa)
     setTimeout(() => { try { _dkShowList(); } catch (_) {} }, 300);
   } catch (e) {
-    if (typeof showToast === 'function') showToast('⚠️ محفوظ کرنے میں مسئلہ: ' + ((e && e.message) || e), 'warn', 4500);
+    if (typeof showToast === 'function') showToast('محفوظ کرنے میں مسئلہ: ' + ((e && e.message) || e), 'warn', 4500);
   }
 }
 window._dkSave = _dkSave;

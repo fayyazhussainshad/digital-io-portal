@@ -137,11 +137,27 @@ async function _refreshCasesInBackground(oid) {
       try { await offlineStore.cache('cases_cache', all); } catch(_) {}
       if (typeof markSynced === 'function') markSynced();
       // If cases page currently open AND not in a workspace, silently refresh the list
+      //
+      // AHEM — do purani kharabiyan yahin se aati thin:
+      //  1) `renderCases(c)` BINA daleel bulaya jata tha, is liye afsar ka
+      //     chuna hua filter (زیر تفتیش / چالان / عدم پتہ) khud-ba-khud
+      //     saaf ho jata tha aur saare mocaddme wapas aa jate the.
+      //  2) Poora safha dobara banta tha — talaash ke khane se cursor nikal
+      //     jata tha aur afsar do-teen huroof se aage likh hi nahi sakta tha.
+      // Ab: sirf TABLE ki qatarein badalti hain, aur agar afsar us waqt
+      // talaash ke khane mein likh raha ho to kuch bhi nahi chheRa jata.
       if (window._activePage === 'cases' && !window._inWorkspace) {
         const c = document.getElementById('page-content');
-        if (c && typeof renderCases === 'function') {
-          if (!document.querySelector('.workspace-tabs') && !document.querySelector('.modal-overlay[style*="flex"]')) {
-            renderCases(c);
+        if (c && !document.querySelector('.workspace-tabs') &&
+            !document.querySelector('.modal-overlay[style*="flex"]')) {
+          const typing = document.activeElement &&
+                         document.activeElement.id === 'case-search';
+          if (!typing) {
+            if (typeof _csRefreshRows === 'function' && document.getElementById('cs-rows')) {
+              _csRefreshRows();
+            } else if (typeof renderCases === 'function') {
+              renderCases(c);
+            }
           }
         }
       }
@@ -187,7 +203,7 @@ async function addCase(caseData) {
     const localRec = { ...rec, id: tempId, created_at: new Date().toISOString(), _pending: true };
     await offlineStore.cache('cases_cache', localRec);
     await offlineStore.enqueue('cases', 'insert', rec);
-    showToast('📴 آف لائن محفوظ — انٹرنیٹ آنے پر sync ہوگا', 'info');
+    showToast('آف لائن محفوظ — انٹرنیٹ آنے پر sync ہوگا', 'info');
     return localRec;
   }
   let { data, error } = await supabaseClient.from('cases').insert(rec).select().single();
@@ -212,7 +228,7 @@ async function updateCase(id, updates) {
     const merged = { ...existing, ...updates, id };
     await offlineStore.cache('cases_cache', merged);
     await offlineStore.enqueue('cases', 'update', { id, ...updates });
-    showToast('📴 آف لائن محفوظ — sync باقی', 'info');
+    showToast('آف لائن محفوظ — sync باقی', 'info');
     return merged;
   }
   let { data, error } = await supabaseClient.from('cases').update(updates).eq('id',id).select().single();
