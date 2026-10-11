@@ -242,10 +242,30 @@ async function checkSubscription() {
   try {
     const oid = await getOfficerId();
     if (!oid) return { status:'none' };
-    // PERMANENT RULE — superadmin (app ka maalik) par subscription kabhi
-    // apply nahi hoti. Owner ko system kabhi block nahi kar sakta.
+    /* PERMANENT RULE — superadmin (app ka maalik) par subscription kabhi
+       apply nahi hoti. Owner ko system kabhi block nahi kar sakta.
+
+       MAGAR: yeh faisla `currentOfficer.role` par hai, aur OFFLINE soorat
+       mein wo record afsar ke apne aale (`dio_officer_cache` / offlineStore)
+       se aata hai — yaani usay badla ja sakta hai. Pehle yahan se seedha
+       "لائف ٹائم" mil jata tha: jis afsar ki miyaad khatam ho chuki ho, wo
+       localStorage mein `"role":"superadmin"` likh kar hamesha ke liye
+       khul jata tha.
+       AB: chhoot sirf ONLINE — wahan `currentOfficer` usi session mein
+       server se aaya hai. OFFLINE par faisla `_dioOfflineStatus()` karta
+       hai, jo pehle DASTKHAT-SHUDA license token dekhta hai (jise jaali
+       nahi banaya ja sakta), phir kiash, phir mehdood grace.
+       Taake asal malik maidan mein na ruke: ONLINE hote hi us ka kiash bhi
+       likh dete hain aur license token bhi mangwa lete hain (Edge Function
+       malik ko 72 ghante ka dastkhat-shuda token deta hai). */
     if (currentOfficer && currentOfficer.role === 'superadmin') {
-      return { status:'active', daysLeft:36500, plan:'مالک — لائف ٹائم' };
+      if (navigator.onLine) {
+        var _ownerOut = { status:'active', daysLeft:36500, plan:'مالک — لائف ٹائم' };
+        try { _dioCacheSub(_ownerOut, oid); } catch (_) {}
+        try { if (typeof dioRefreshLicense === 'function') dioRefreshLicense(); } catch (_) {}
+        return _ownerOut;
+      }
+      return await _dioOfflineStatus(oid);
     }
     // #9 fail-closed: offline par naya trial NAHI — token/cache/grace
     if (!navigator.onLine) return await _dioOfflineStatus(oid);

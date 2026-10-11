@@ -186,7 +186,18 @@ async function _dioOfflineRestore() {
     // Fail-CLOSED: officer snapshot hi na ho to offline daakhla mat do —
     // warna mo'attal afsar cache mita kar saaf record bana leta tha.
     if (!officer) { try { await _dioPurgeOnSuspend(); } catch (_) {} return false; }
-    if (!_dioIsOwner(officer) && (_dioIsSuspended(officer) || _dioNotApproved(officer))) {
+    /* ═══ KHAMI BAND KI GAYI — "malik" ki chhoot sirf ONLINE ═══
+       Yeh snapshot `offlineStore` ya `dio_officer_cache` se aata hai, yaani
+       AFSAR KE APNE AALE se — usay koi bhi DevTools se badal sakta hai.
+       Pehle yahan `_dioIsOwner(officer)` ki chhoot thi: kaafi tha ke koi
+       `dio_officer_cache` mein `"role"` ko `superadmin` likh de, aur
+       mo'attali/manzoori ka gate poora ka poora chhoot jata.
+       Ab OFFLINE raaste par yeh chhoot hai hi nahi — jaanch sab par barabar.
+       Asal malik par is ka koi asar nahi: us ka `is_suspended` false aur
+       `is_approved` true hota hai, is liye wo waise hi guzar jata hai.
+       ONLINE raaste (line ~80) par chhoot barqarar hai, kyunke wahan record
+       SEEDHA server se aaya hota hai aur us par bharosa kiya ja sakta hai. */
+    if (_dioIsSuspended(officer) || _dioNotApproved(officer)) {
       try { await _dioPurgeOnSuspend(); } catch (_) {}
       try { showToast('آپ کا اکاؤنٹ معطل ہے۔ ایڈمن سے رابطہ کریں۔', 'error', 7000); } catch (_) {}
       return false;
