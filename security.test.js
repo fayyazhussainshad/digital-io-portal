@@ -1406,3 +1406,91 @@ test('SW version phir bump hua (v503)', () => {
   assert.ok(m && Number(m[1]) >= 503, 'v503 ya aage, mila: v' + (m ? m[1] : '?'));
   assert.ok(sw.includes('SERVICE WORKER v' + m[1]));
 });
+
+// ════════════════════════════════════════════════════════════════
+//  v507 — LICENSE KI NAKAMI AB KHAMOSH NAHI RAHEGI
+//  Maidan se: 403 {"error":"no_officer"} aaya aur na client ne kuch
+//  bataya, na server ne wajah alag ki. Char alag khrabiyan aik hi
+//  paighaam ke peechay chhup rahi thin.
+// ════════════════════════════════════════════════════════════════
+
+test('ایج فنکشن: افسر کی کوئری کی خرابی نگلی نہ جائے', () => {
+  const s = read('supabase/functions/dio-license/index.ts');
+  // purana code: `const { data: officer } = await admin.from("officers")` — error gayab
+  assert.ok(!/const \{ data: officer \} = await admin\.from\("officers"\)/.test(s),
+    'officers ki query ka error nazarandaz ho raha tha');
+  assert.ok(/error: offErr/.test(s) && /officer_lookup_failed/.test(s),
+    'DB ki kharabi ab apne naam se wapas aaye');
+  assert.ok(/sub_lookup_failed/.test(s),
+    'subscriptions ki kharabi khamoshi se not_entitled na ban jaye');
+  assert.ok(/server_misconfigured/.test(s) && /SUPABASE_SERVICE_ROLE_KEY/.test(s),
+    'secrets ghaib hon to saaf batao');
+});
+
+test('ایج فنکشن: ایک ہی uid پر دو ریکارڈ ہوں تو تالا نہ لگے', () => {
+  const s = read('supabase/functions/dio-license/index.ts');
+  // maybeSingle() duplicate par error deta hai → purana code "no_officer" dikhata tha
+  assert.ok(!/from\("officers"\)[\s\S]{0,220}maybeSingle\(\)/.test(s),
+    'officers par maybeSingle duplicate ko no_officer bana deta tha');
+  assert.ok(/offRows\.length > 1/.test(s) && /is_suspended !== true && r\.is_approved !== false/.test(s),
+    'duplicate me saaf-suthri row chuni jaye');
+});
+
+test('ایج فنکشن: عوامی کلید غلطی سے راز میں نہ لگ جائے', () => {
+  const s = read('supabase/functions/dio-license/index.ts');
+  assert.ok(/\.d === undefined/.test(s) && /PRIVATE_KEY_NOT_PUBLIC/.test(s),
+    "'d' ke baghair JWK public hai — us se dastkhat mumkin nahi");
+});
+
+test('کلائنٹ: لائسنس نہ ملنے کی وجہ محفوظ ہو', async () => {
+  const src = read('license-token.js');
+  assert.ok(/dio_license_err/.test(src), 'aakhri wajah mehfooz ho');
+  assert.ok(/window\.dioLicenseError/.test(src), 'tashkhees ke liye bahar bhi mile');
+  assert.ok(/_licInFlight/.test(src), 'aik waqt me aik hi darkhwast (console me do-do 403 aa rahe the)');
+  for (const k of ['no_officer', 'not_entitled', 'suspended', 'server_misconfigured'])
+    assert.ok(src.includes(k + ':'), 'Urdu wajah: ' + k);
+  // asli amal: 403 par false, wajah mehfooz, aur teen darkhwastein = aik fetch
+  const store = new Map();
+  let calls = 0;
+  const ctx = {
+    window: {}, console: { warn() {}, log() {}, error() {} },
+    crypto: globalThis.crypto, atob: globalThis.atob, btoa: globalThis.btoa,
+    TextDecoder, TextEncoder, Uint8Array, JSON, Date, Math, String, Number,
+    localStorage: {
+      getItem: (k) => (store.has(k) ? store.get(k) : null),
+      setItem: (k, v) => store.set(k, String(v)),
+      removeItem: (k) => store.delete(k),
+    },
+    fetch: async () => { calls++; await new Promise(r => setTimeout(r, 10));
+      return { ok: false, status: 403, json: async () => ({ error: 'no_officer' }) }; },
+    supabaseClient: {
+      functionsUrl: 'https://x.test/functions/v1',
+      auth: { getSession: async () => ({ data: { session: { access_token: 'J' } } }) },
+    },
+  };
+  ctx.globalThis = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(src, ctx);
+  const outs = await Promise.all([
+    ctx.window.dioRefreshLicense(), ctx.window.dioRefreshLicense(), ctx.window.dioRefreshLicense(),
+  ]);
+  assert.deepStrictEqual(outs, [false, false, false], 'teenon nakaam');
+  assert.strictEqual(calls, 1, 'sirf aik fetch, mila: ' + calls);
+  assert.strictEqual(JSON.parse(store.get('dio_license_err')).code, 'no_officer');
+});
+
+test('تشخیصی SQL صرف پڑھے، کچھ بدلے نہیں', () => {
+  const s = read('sql/71_license_diagnose.sql');
+  assert.ok(!/\b(update|delete|insert|drop|alter|truncate|grant|revoke)\b/i
+    .test(s.replace(/--[^\n]*/g, '')), 'koi tabdeeli wala hukm na ho');
+  assert.ok(/from auth\.users u/.test(s) && /left join public\.officers/.test(s),
+    'har user ka afsar record nazar aaye');
+  assert.ok(/having count\(\*\) > 1/.test(s), 'duplicate pakdne wali query');
+});
+
+test('SW version phir bump hua (v507)', () => {
+  const sw = read('sw.js');
+  const m = sw.match(/const CACHE_NAME = 'digital-io-v(\d+)'/);
+  assert.ok(m && Number(m[1]) >= 507, 'v507 ya aage, mila: v' + (m ? m[1] : '?'));
+  assert.ok(sw.includes('SERVICE WORKER v' + m[1]));
+});
