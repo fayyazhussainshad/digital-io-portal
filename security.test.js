@@ -1432,7 +1432,7 @@ test('ایج فنکشن: ایک ہی uid پر دو ریکارڈ ہوں تو تا
   // maybeSingle() duplicate par error deta hai → purana code "no_officer" dikhata tha
   assert.ok(!/from\("officers"\)[\s\S]{0,220}maybeSingle\(\)/.test(s),
     'officers par maybeSingle duplicate ko no_officer bana deta tha');
-  assert.ok(/offRows\.length > 1/.test(s) && /is_suspended !== true && r\.is_approved !== false/.test(s),
+  assert.ok(/offRows\.length > 1/.test(s) && /!afsarMoattal\(r\) && !afsarGhairManzoor\(r\)/.test(s),
     'duplicate me saaf-suthri row chuni jaye');
 });
 
@@ -1483,14 +1483,88 @@ test('تشخیصی SQL صرف پڑھے، کچھ بدلے نہیں', () => {
   const s = read('sql/71_license_diagnose.sql');
   assert.ok(!/\b(update|delete|insert|drop|alter|truncate|grant|revoke)\b/i
     .test(s.replace(/--[^\n]*/g, '')), 'koi tabdeeli wala hukm na ho');
-  assert.ok(/from auth\.users u/.test(s) && /left join public\.officers/.test(s),
+  assert.ok(/from auth\.users u/.test(s) && /left join o on o\.user_id = u\.id/.test(s),
     'har user ka afsar record nazar aaye');
   assert.ok(/having count\(\*\) > 1/.test(s), 'duplicate pakdne wali query');
 });
 
-test('SW version phir bump hua (v507)', () => {
+test('SW version phir bump hua (v508)', () => {
   const sw = read('sw.js');
   const m = sw.match(/const CACHE_NAME = 'digital-io-v(\d+)'/);
-  assert.ok(m && Number(m[1]) >= 507, 'v507 ya aage, mila: v' + (m ? m[1] : '?'));
+  assert.ok(m && Number(m[1]) >= 508, 'v508 ya aage, mila: v' + (m ? m[1] : '?'));
   assert.ok(sw.includes('SERVICE WORKER v' + m[1]));
+});
+
+// ════════════════════════════════════════════════════════════════
+//  v508 — COLUMN KA ASAL NAAM: `suspended` (is_suspended NAHI)
+//  11 Oct 2026, DB ne khud bataya:
+//    ERROR 42703: column "is_suspended" does not exist
+//    HINT: Perhaps you meant to reference the column "officers.suspended".
+// ════════════════════════════════════════════════════════════════
+
+test('ایج فنکشن: کالم کے نام پر بھروسہ نہ کرے', () => {
+  const s = read('supabase/functions/dio-license/index.ts');
+  assert.ok(/\.select\("\*"\)\s*\n\s*\.eq\("user_id", uid\)/.test(s),
+    'officers ka poora record parha jaye — column ke naam par bharosa nahi');
+  const amli = s.replace(/\/\*[\s\S]*?\*\//g, '')
+                .split('\n').filter(l => !l.trim().startsWith('//')).join('\n');
+  assert.ok(!/select\("id, role, is_suspended/.test(amli), 'purani (galat) column list na ho');
+  assert.ok(/SACH\(o\.is_suspended\) \|\| SACH\(o\.suspended\)/.test(s),
+    'donon naam parhe jayen');
+});
+
+test('ایج فنکشن: معطلی اور منظوری کا فیصلہ SQL جیسا ہو', () => {
+  const src = read('supabase/functions/dio-license/index.ts');
+  const a = src.indexOf('const SACH');
+  const b = src.indexOf('\n};', src.indexOf('const afsarGhairManzoor')) + 3;
+  const body = src.slice(a, b).replace(/: unknown/g, '').replace(/: OfficerRow/g, '');
+  const f = new Function(body + '; return { afsarMoattal, afsarGhairManzoor };')();
+
+  // wohi 8 soortein jo asal Postgres par dio_has_active_sub() se jaanchi gayin
+  const soortein = [
+    ['malik',        { role: 'superadmin', is_approved: true,  suspended: false }, false, false],
+    ['admin',        { role: 'admin',      is_approved: true,  suspended: false }, false, false],
+    ['faal afsar',   { role: 'officer',    is_approved: true,  suspended: false }, false, false],
+    ['moattal',      { role: 'officer',    is_approved: true,  suspended: true  }, true,  false],
+    ['moattal admin',{ role: 'admin',      is_approved: true,  suspended: true  }, true,  false],
+    ['zer-e-iltawa', { role: 'officer',    is_approved: null,  suspended: false }, false, true ],
+    ['ghair manzoor',{ role: 'officer',    is_approved: false, suspended: false }, false, true ],
+    ['purana schema',{ role: 'officer',    is_approved: true,  is_suspended: true }, true, false],
+  ];
+  for (const [naam, o, moattal, ghairManzoor] of soortein) {
+    assert.strictEqual(f.afsarMoattal(o), moattal, naam + ' — mo\'attali');
+    assert.strictEqual(f.afsarGhairManzoor(o), ghairManzoor, naam + ' — manzoori');
+  }
+  // column hi na ho to shart lagni hi nahi chahiye (kisi ko tala na lage)
+  assert.strictEqual(f.afsarGhairManzoor({ role: 'officer' }), false);
+  assert.strictEqual(f.afsarMoattal({ role: 'officer' }), false);
+});
+
+test('SQL گیٹ اب صحیح کالم پر', () => {
+  for (const f of ['sql/21_officers_protect_v2.sql', 'sql/50_suspend_hard_gate.sql',
+                   'sql/60_subscriptions_lockdown.sql', 'sql/20_officers_protect_trigger.sql']) {
+    const s = read(f).split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
+    assert.ok(!/is_suspended/.test(s), f + ' me ab bhi is_suspended hai (42703 se rad ho jayegi)');
+    assert.ok(/suspended/.test(s), f + ' me mo\'attali ki shart hi nahi rahi');
+    assert.ok(/column_name = 'suspended'/.test(read(f)),
+      f + ' me column ka guard nahi (kisi aur schema par khamoshi se ghalat chalegi)');
+  }
+});
+
+test('تشخیصی SQL کسی کالم پر بھروسہ نہ کرے', () => {
+  const s = read('sql/71_license_diagnose.sql');
+  const amli = s.split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
+  assert.ok(/to_jsonb\(/.test(amli), 'column mojood na ho to bhi query rad na ho');
+  assert.ok(!/\bo\.is_suspended\b/.test(amli), 'seedha column reference na ho');
+  assert.ok(!/\b(update|delete|insert|drop|alter|truncate|grant|revoke)\b/i.test(amli),
+    'sirf parhne wali file');
+});
+
+test('افسر تلاش: غلط کالم کی وجہ سے خانہ خالی نہ رہے', () => {
+  const s = read('case-sharing.js');
+  assert.ok(!/select\('id,full_name,badge_number,designation,station,is_approved,is_suspended'\)/.test(s),
+    'yahi query 42703 se rad hoti thi — fehrist hamesha khali');
+  assert.ok(/42703/.test(s), 'dusre naam par dobara koshish');
+  assert.ok(/o\.suspended !== true/.test(s) && /o\.is_suspended !== true/.test(s),
+    'donon naam par chhantai');
 });

@@ -72,20 +72,39 @@ function _searchOfficersForShare(q) {
       const myStation = (typeof currentOfficer !== 'undefined' && currentOfficer)
         ? (currentOfficer.station || '') : '';
 
-      // Base query: apne station ke active officers
-      let query = supabaseClient.from('officers')
-        .select('id,full_name,badge_number,designation,station,is_approved,is_suspended')
-        .or(`full_name.ilike.%${clean}%,badge_number.ilike.%${clean}%`)
-        .limit(15);
+      /* ────────────────────────────────────────────────────────────────
+         KHAMI (11 Oct 2026): yahan `is_suspended` maanga jata tha, magar
+         asal DB column ka naam `suspended` hai. PostgREST poori query
+         rad kar deta tha (42703) — yaani افسر تلاش کا یہ خانہ HAMESHA
+         khali rehta tha aur koi khata (error) bhi nazar nahi aati thi.
+         Ab dono naam aazmaye jate hain: pehle `suspended`, nakami par
+         `is_suspended`. Donon schema par chalega.
+         ──────────────────────────────────────────────────────────────── */
+      const BUNYAD = 'id,full_name,badge_number,designation,station,is_approved';
+      const _ofcQuery = (col) => {
+        let q = supabaseClient.from('officers')
+          .select(BUNYAD + ',' + col)
+          .or(`full_name.ilike.%${clean}%,badge_number.ilike.%${clean}%`)
+          .limit(15);
+        if (myStation) q = q.eq('station', myStation);   // audit: apne thane tak mehdood
+        return q;
+      };
 
-      // Station-scoped (audit: "search only active, authorized staff")
-      if (myStation) query = query.eq('station', myStation);
+      let { data, error } = await _ofcQuery('suspended');
+      if (error && String(error.code) === '42703') {
+        ({ data, error } = await _ofcQuery('is_suspended'));
+      }
+      if (error) {
+        box.innerHTML = '<div style="font-size:12px;color:var(--red);padding:8px;">افسران کی فہرست نہیں مل سکی</div>';
+        try { console.warn('[DIO] officers search:', error); } catch (_) {}
+        return;
+      }
 
-      const { data } = await query;
-      // Client-side filter: khud ko, unapproved, aur suspended ko chhod do
+      // Client-side filter: khud ko, unapproved, aur mo'attal ko chhod do
       const list = (data || []).filter(o =>
         o.id !== myId &&
         o.is_approved !== false &&
+        o.suspended !== true &&
         o.is_suspended !== true
       );
       if (!list.length) {
