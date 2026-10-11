@@ -14,7 +14,7 @@ function renderSearch(container) {
       
     </div>
     <div id="sr-page-searchbar" style="position:relative;margin-bottom:14px;">
-      <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none;">🔍</span>
+      <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none;"><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><circle cx='11' cy='11' r='6.5'/><path d='M16 16l4.5 4.5'/></svg></span>
       <input id="sr-query" type="text" autocomplete="off"
         placeholder="سب کچھ تلاش کریں — FIR، نام، CNIC، واقعہ، ضمنی، پیشہ..." dir="rtl"
         oninput="_srDebounced()"
@@ -43,7 +43,7 @@ function _srDebounced() {
     return;
   }
   const box = document.getElementById('sr-results');
-  if (box) box.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-muted);"><div style="font-size:28px;">⏳</div><div style="font-size:14px;margin-top:8px;">تلاش ہو رہی ہے...</div></div>`;
+  if (box) box.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-muted);"><div style="font-size:28px;"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5.2l3.2 2"/></svg></div><div style="font-size:14px;margin-top:8px;">تلاش ہو رہی ہے...</div></div>`;
   _searchDebounce = setTimeout(() => _runGlobalSearch(q), 300);
 }
 
@@ -65,15 +65,15 @@ function _renderSearchHistory() {
   if (!box) return;
   const h = _getSearchHistory();
   if (!h.length) {
-    box.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text-muted);"><div style="font-size:40px;margin-bottom:10px;">🔍</div><div style="font-size:15px;">تلاش کرنے کے لیے اوپر لکھیں</div><div style="font-size:12px;margin-top:6px;">مقدمات، ملزمان، گواہان، ضمنی، سب کچھ</div></div>`;
+    box.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text-muted);"><div style="font-size:40px;margin-bottom:10px;"><svg viewBox='0 0 24 24' width='40' height='40' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><circle cx='11' cy='11' r='6.5'/><path d='M16 16l4.5 4.5'/></svg></div><div style="font-size:15px;">تلاش کرنے کے لیے اوپر لکھیں</div><div style="font-size:12px;margin-top:6px;">مقدمات، ملزمان، گواہان، ضمنی، سب کچھ</div></div>`;
     return;
   }
   box.innerHTML = `
     <div style="font-size:13px;color:var(--text-muted);margin-bottom:10px;">پچھلی تلاش:</div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
-      ${h.map(q => `<span onclick="_srFromHistory('${_dioJsHtml(q)}')" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:6px 14px;font-size:14px;cursor:pointer;color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">🕐 ${q}</span>`).join('')}
+      ${h.map(q => `<span onclick="_srFromHistory('${_dioJsHtml(q)}')" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:6px 14px;font-size:14px;cursor:pointer;color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">${q}</span>`).join('')}
     </div>
-    <button onclick="_clearSearchHistory()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;color:var(--text-muted);cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">🗑️ تاریخ صاف کریں</button>`;
+    <button onclick="_clearSearchHistory()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;color:var(--text-muted);cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">تاریخ صاف کریں</button>`;
 }
 function _srFromHistory(q) {
   const inp = document.getElementById('sr-query');

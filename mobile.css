@@ -173,10 +173,121 @@
    `td[data-label]` se har khane par uska unwan aa jata hai.
    ──────────────────────────────────────────────────────────────── */
 @media screen and (max-width: 768px) {
+  /* ═══════════════════════════════════════════════════════════
+     ASAL KHARABI (mobile par mocaddmat ka safha na-qabil-e-istemal):
+       cases.js ka jadwal `style="min-width:900px"` ke sath aata hai
+       (desktop par das khane samane ke liye). Card-mode mein `display`
+       to block ho jata tha magar `min-width` jyun ka tyun rehta tha —
+       natija: 390px ki sakreen par har CARD 898px ka, aur afsar ko
+       sirf unwan (مقدمہ نمبر، تاریخ…) nazar aate the, QEEMATEIN
+       baain taraf sakreen se bahar. Bagal mein khiskana paRta tha.
+     Ab: card-mode mein har naap sakreen ke mutabiq.
+     ═══════════════════════════════════════════════════════════ */
+  table.dio-cards {
+    min-width: 0 !important;
+    width: 100% !important;
+    table-layout: auto !important;
+  }
+  /* Bahri lapeT bhi bagal mein na khiske */
+  .page-content .card > div[style*="overflow-x"],
+  .page-content div[style*="overflow-x:auto"] { overflow-x: visible !important; }
+
+  /* Desktop ke jadwal-qaide card ki satron par na lagen */
+  .page-content table.dio-cards tbody td:first-child,
+  .page-content table.dio-cards thead th:first-child {
+    width: auto !important;
+    text-align: start !important;
+  }
+  .page-content table.dio-cards td:last-child {
+    white-space: normal !important;
+    text-align: start !important;
+  }
+  .page-content table.dio-cards tbody tr:nth-child(even) td { background: transparent !important; }
+
   table.dio-cards, table.dio-cards tbody, table.dio-cards tr, table.dio-cards td {
     display: block !important; width: auto !important;
   }
   table.dio-cards thead { display: none !important; }
+
+  /* ═══════════════════════════════════════════════════════════
+     TANG SAKREEN PAR BAHUT ZYADA KHANE
+     Kuch safhon ne apne khane seedhe inline style mein `repeat(4,1fr)`
+     ya `repeat(3,1fr)` likhe hain. 390px par chaar khane ka matlab
+     hai har khana ~85px — Urdu ka aik lafz bhi poora nahi aata, aur
+     aakhri khana sakreen se BAHAR chala jata hai (naapa gaya:
+     performance ka card baain taraf -106px par).
+     Ab: chaar → do, teen → do. Mawad wahi, sirf tarteeb badalti hai.
+     ═══════════════════════════════════════════════════════════ */
+  .page-content [style*="repeat(4,1fr)"],
+  .page-content [style*="repeat(4, 1fr)"],
+  .page-content [style*="repeat(3,1fr)"],
+  .page-content [style*="repeat(3, 1fr)"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  /* ── GRID ka khana apne mawad se PHAIL kar bahar na jaye ─────
+     CSS mein `1fr` ka matlab "baraabar hissa" nahi, balke
+     "kam se kam apne mawad jitna, phir baraabar hissa" hai
+     (`minmax(auto,1fr)`). Is liye agar kisi khane ke andar koi
+     chauRi cheez ho to WO khana phail jata hai aur doosra khana
+     nichuR kar sakreen se bahar chala jata hai.
+     Naapa gaya (kaarkardagi ka safha): `1fr 1fr` likha tha magar
+     asal naap nikli `341.672px 132px` — doosra card baain taraf
+     -106px par, yani sakreen se BAHAR.
+     `min-width: 0` se har khana simat sakta hai aur hissa waqai
+     baraabar rehta hai. */
+  .page-content [style*="display:grid"] > * { min-width: 0; }
+  .page-content [style*="display:grid"] { max-width: 100%; }
+
+  /* ── PHONE par do khane bhi zyada hain ─────────────────────
+     Bohat se safhe `1fr 1fr` istemal karte hain (tarteebat ke do
+     card, thana/zila ke do khane). 390px par har khana ~180px ka
+     reh jata hai — Urdu ka unwan toot kar teen satron mein bikhar
+     jata hai. Phone par aik khana kaafi hai; mawad wahi rehta hai.
+     Dastavez ke andar ke grid ko haath nahi lagaya jata. */
+  @media (max-width: 520px) {
+    .page-content [style*="grid-template-columns:1fr 1fr"],
+    .page-content [style*="grid-template-columns: 1fr 1fr"],
+    .page-content [style*="repeat(2,1fr)"],
+    .page-content [style*="repeat(2, 1fr)"] {
+      grid-template-columns: 1fr !important;
+    }
+    /* Dastavez wali failen (report173, zimni, saza, naqsha, darkhwast)
+       inline `1fr 1fr` istemal KARTI HI NAHI — ginti kar ke dekha gaya
+       (sab mein sifar). Is liye yahan un ke liye alag chhoot ki zaroorat
+       nahi. Aur `#ch173-doc` ka naam bina `.zf-editor` ke likhna mana
+       hai: zimni aur challan ka id AIK hi hai, aur challan ki chhapai
+       ki px-naap CSS se kabhi chhui nahi jani chahiye. */
+  }
+
+  /* Do khane bhi tang paRen to aik */
+  @media (max-width: 400px) {
+    .page-content [style*="grid-template-columns:341"],
+    .page-content [style*="1fr 132px"] { grid-template-columns: 1fr !important; }
+  }
+
+  /* ── WAQIATI RIPORT (incident) ka form ──────────────────────
+     Ye form aik 4-khane wale JADWAL ki shakl mein bana hai
+     (unwan | qeemat | unwan | qeemat). Phone par khane itne tang
+     ho jate the ke matn bahar nikal jata tha. Ab har qatar apni
+     satar par — unwan ooper, khana neeche. */
+  #page-content .inc-form table,
+  #page-content table.inc-table {
+    display: block !important; width: 100% !important;
+  }
+  #page-content .inc-form table tbody,
+  #page-content table.inc-table tbody { display: block !important; width: 100% !important; }
+  #page-content .inc-form table tr,
+  #page-content table.inc-table tr {
+    display: block !important; width: 100% !important;
+    border-bottom: 1px solid var(--border-light, rgba(125,151,173,.16));
+    padding-bottom: 6px; margin-bottom: 6px;
+  }
+  #page-content .inc-form table td,
+  #page-content table.inc-table td {
+    display: block !important; width: 100% !important;
+    border: 0 !important; padding: 3px 0 !important;
+  }
+
   table.dio-cards tr {
     background: var(--bg-primary, #fff);
     border: 1px solid var(--border, #d7dee6);
@@ -186,16 +297,76 @@
     border: 0 !important; padding: 5px 0 !important;
     display: flex !important; gap: 10px; align-items: baseline;
     font-size: 14px;
+    /* Lamba matn (shanakhti card + mobile aik sath, ya lamba pata)
+       card se bahar nikal jata tha aur baain taraf kat jata tha.
+       Ab wo apni nayi satar le leta hai. */
+    flex-wrap: wrap;
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
+  /* Khane ki QEEMAT — jitni jagah bache, aur toot kar nayi satar par */
+  table.dio-cards td > * { min-width: 0; max-width: 100%; }
+  /* Angrezi/adad wale khane (shanakhti card, mobile) par `dir="ltr"`
+     KHUD TD par lagi hoti hai. Card-mode mein is se poori satar ki
+     tarteeb ulat jati thi — unwan baain chala jata aur qeemat us ke
+     OOPER chaRh jati thi. Ab: satar ki tarteeb RTL (baqi card jaisi),
+     aur andar ki qeemat apne aap mein LTR — dono alag. */
+  table.dio-cards td[dir="ltr"] { direction: rtl !important; text-align: start; }
+  table.dio-cards td[dir="ltr"] > * { direction: ltr; unicode-bidi: isolate; }
+  /* ═══════════════════════════════════════════════════════════
+     UNWAN APNI SATAR PAR — qeemat neeche.
+     Pehle unwan aur qeemat aik hi satar mein (34% / baqi) thay.
+     390px ki sakreen par lambe Urdu unwan ("شناختی کارڈ / موبائل")
+     apne 34% ke khane mein do satron mein tootte the, aur Nastaleeq
+     ke huroof ki lambi dumen neeche wali qeemat par chaRh jati thin —
+     donon aik doosre par likhe nazar aate the.
+     Nastaleeq ko OOPER-NEECHE jagah chahiye; is liye ab unwan poori
+     chauRai leta hai aur qeemat us ke neeche. Card thoRa lamba hota
+     hai magar har cheez saaf parhi jati hai — aur yahi asal maqsad hai.
+     ═══════════════════════════════════════════════════════════ */
   table.dio-cards td::before {
     content: attr(data-label);
-    flex: 0 0 34%; font-size: 12px; font-weight: 700;
+    flex: 0 0 100%; max-width: 100%;
+    font-size: 11.5px; font-weight: 700; line-height: 1.7;
     color: var(--text-muted, #7d97ad);
+    overflow-wrap: anywhere;
   }
+  table.dio-cards td { row-gap: 1px; align-items: flex-start; padding: 4px 0 !important; }
+
+  /* ═══════════════════════════════════════════════════════════
+     CARD KI TARTEEB — DO KHANE (2 columns)
+     Unwan apni satar par rakhne se har khana 2 satron ka ho gaya
+     aur AIK mocaddme ka card 748px ka — yani poori sakreen aik hi
+     mocaddme ke liye, aur saat mocaddmat ke liye 5,562px ka safar.
+     Afsar ko fehrist par nazar daalne ke liye bhi ungli ghisaani
+     paRti thi.
+     Ab: chhote khane DO-DO kar ke aik satar mein. Lambe khane
+     (shanakhti card/mobile, dafa qanoon, aqdamat) poori chauRai
+     lete hain. Mawad poora wahi rehta hai — kuch chhupaya nahi
+     gaya — bas jagah aadhi ho jati hai.
+     ═══════════════════════════════════════════════════════════ */
+  table.dio-cards tr {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 14px;
+    align-items: start;
+  }
+  /* Lambe/ahem khane poori chauRai par */
+  table.dio-cards td[dir="ltr"],
+  table.dio-cards td.dio-actions,
+  table.dio-cards td:last-child,
+  table.dio-cards td.dio-wide { grid-column: 1 / -1; }
+  /* Har khane ke neeche halki lakeer — do khane aapas mein na ghulen */
+  table.dio-cards td { border-bottom: 1px solid var(--border-light, rgba(125,151,173,.16)) !important; }
+  table.dio-cards td:last-child { border-bottom: 0 !important; }
   table.dio-cards td[data-label=""]::before,
   table.dio-cards td:not([data-label])::before { content: none; }
   /* Amal ke button — apni qatar, pura chauRa */
   table.dio-cards td.dio-actions { display: flex !important; gap: 8px; flex-wrap: wrap; padding-top: 10px !important; }
+  /* Aakhri khana = aqdamat ke button. Unwan ke sath aik satar mein
+     thuns kar bahar nikal jate the; ab apni poori satar par. */
+  table.dio-cards td:last-child { flex-wrap: wrap; row-gap: 8px; }
+  table.dio-cards td:last-child::before { flex: 0 0 100%; max-width: 100%; }
   table.dio-cards td.dio-actions::before { content: none; }
   table.dio-cards td.dio-actions .btn { flex: 1 1 auto; min-height: 42px; }
 }

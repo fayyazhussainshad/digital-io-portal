@@ -28,7 +28,7 @@ async function renderAdmin(container) {
   if (!['admin','superadmin'].includes(role)) {
     container.innerHTML = `
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;text-align:center;color:var(--text-muted);">
-        <div style="font-size:64px;margin-bottom:16px;">🔒</div>
+        <div style="font-size:64px;margin-bottom:16px;"><svg viewBox='0 0 24 24' width='64' height='64' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><path d='M5.5 11h13v9.5h-13z'/><path d='M8.5 11V8a3.5 3.5 0 0 1 7 0v3'/></svg></div>
         <div style="font-size:18px;font-weight:700;color:var(--text-primary);">رسائی نہیں</div>
         <div style="font-size:13px;margin-top:8px;">یہ صفحہ صرف Admin اور SHO کے لیے ہے</div>
       </div>`;
@@ -78,7 +78,7 @@ async function _buildAdmin(role) {
   root.innerHTML = `
   <!-- Header -->
   <div style="background:linear-gradient(135deg,#1a3a5c,#0d2a45);border-radius:12px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:14px;">
-    <div style="font-size:40px;">👮</div>
+    <div style="font-size:40px;"><svg viewBox='0 0 24 24' width='40' height='40' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><circle cx='12' cy='9' r='3.4'/><path d='M4.5 20.5a7.5 7.5 0 0 1 15 0'/><path d='M7 6.5h10'/></svg></div>
     <div>
       <div style="font-size:18px;font-weight:800;color:#fff;">Admin Panel</div>
       <div style="font-size:12px;color:rgba(255,255,255,0.6);">
@@ -169,7 +169,7 @@ function _adminTab(tab) {
 function _renderPendingTab(pending) {
   if (!pending.length) return `
     <div class="card" style="text-align:center;padding:40px;color:var(--text-muted);">
-      <div style="font-size:48px;margin-bottom:12px;">✅</div>
+      <div style="font-size:48px;margin-bottom:12px;"><svg viewBox='0 0 24 24' width='48' height='48' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><path d='M4.5 12.5l5 5 10-11'/></svg></div>
       <div style="font-weight:600;">کوئی زیر التواء درخواست نہیں</div>
     </div>`;
 
@@ -297,7 +297,7 @@ function _renderActivityTab(activity) {
     ${activity.length ? activity.map(a => {
       const officer = (window._adminData?.officers||[]).find(o=>o.id===a.officer_id);
       return `<div style="display:flex;gap:10px;direction:rtl;padding:8px 0;border-bottom:1px solid var(--border);align-items:flex-start;">
-        <span style="font-size:16px;">📋</span>
+        <span style="font-size:16px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M8 4h8v3H8z"/><path d="M9 4H6v17h12V4h-3"/><path d="M9 11h6"/><path d="M9 15h6"/></svg></span>
         <div style="flex:1;">
           <div style="font-size:12px;font-weight:600;">${officer?.full_name||'—'}</div>
           <div style="font-size:12px;">${a.action||'—'}</div>
@@ -737,7 +737,7 @@ function _renderErrorsTab(el) {
 
   if (!rows.length) {
     el.innerHTML = head + `<div class="card" style="text-align:center;padding:36px;color:var(--text-muted);direction:rtl;margin-top:10px;">
-      <div style="font-size:40px;margin-bottom:8px;">✅</div>
+      <div style="font-size:40px;margin-bottom:8px;"><svg viewBox='0 0 24 24' width='40' height='40' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><path d='M4.5 12.5l5 5 10-11'/></svg></div>
       <div style="font-weight:600;">اس سیشن میں کوئی خرابی ریکارڈ نہیں</div>
     </div>`;
     return;
@@ -785,7 +785,7 @@ async function _renderApprovalsTab(el) {
 
   if (!rows.length) {
     el.innerHTML = `<div class="card" style="text-align:center;padding:40px;color:var(--text-muted);direction:rtl;">
-      <div style="font-size:44px;margin-bottom:10px;">✅</div>
+      <div style="font-size:44px;margin-bottom:10px;"><svg viewBox='0 0 24 24' width='44' height='44' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><path d='M4.5 12.5l5 5 10-11'/></svg></div>
       <div style="font-weight:600;">کوئی زیرِ منظوری دستاویز نہیں</div>
       <div style="font-size:11px;margin-top:6px;">جب کوئی افسر دستاویز بھیجے گا تو یہاں نظر آئے گی</div>
     </div>`;
@@ -859,22 +859,22 @@ async function _renderTrustTab(el) {
 
   // Active protections — these are TRUE statements about the system design.
   const protections = [
-    { icon:'🛡️', title:'رسائی کنٹرول (RLS)',
+    { icon:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l7 2.6v5.4c0 4.2-2.9 7.3-7 8.9-4.1-1.6-7-4.7-7-8.9V6.1z"/></svg>', title:'رسائی کنٹرول (RLS)',
       body:'ہر افسر صرف اپنا اور اپنے تھانہ کا ڈیٹا دیکھ سکتا ہے۔ ڈیٹابیس کی سطح پر Row Level Security ہر ٹیبل پر نافذ ہے۔',
       tag:'فعال' },
-    { icon:'🔐', title:'ڈیٹا کی خفیہ کاری',
+    { icon:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 11h13v9.5h-13z"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></svg>', title:'ڈیٹا کی خفیہ کاری',
       body:'تمام ڈیٹا محفوظ سرور (Supabase/PostgreSQL) پر رکھا جاتا ہے — منتقلی کے دوران TLS اور ذخیرے میں encryption کے ساتھ۔',
       tag:'فعال' },
-    { icon:'📋', title:'آڈٹ ٹریل',
+    { icon:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v3H8z"/><path d="M9 4H6v17h12V4h-3"/><path d="M9 11h6"/><path d="M9 15h6"/></svg>', title:'آڈٹ ٹریل',
       body:'ہر حساس کارروائی (لاگ اِن، مقدمہ بننا/بدلنا، افسر کی منظوری، حذف) کا ناقابلِ تبدیل ریکارڈ محفوظ ہوتا ہے۔',
       tag: auditCount===null ? 'فعال' : `${fmt(auditCount)} ریکارڈ` },
-    { icon:'📜', title:'شہادت کی حفاظتی زنجیر',
+    { icon:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h10.5v17H6z"/><path d="M9 8h5M9 12h5M9 16h3"/></svg>', title:'شہادت کی حفاظتی زنجیر',
       body:'ہر شہادت کس نے، کب، کہاں چھوئی — سب درج ہوتا ہے۔ یہ ریکارڈ شہادت حذف ہونے کے بعد بھی زندہ رہتا ہے (عدالت کے لیے)۔',
       tag: custodyCount===null ? 'فعال' : `${fmt(custodyCount)} واقعات` },
-    { icon:'🗑️', title:'محفوظ حذف (ری سائیکل بن)',
+    { icon:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg>', title:'محفوظ حذف (ری سائیکل بن)',
       body:'حذف شدہ ریکارڈ فوراً ختم نہیں ہوتے — پہلے ری سائیکل بن میں جاتے ہیں اور بحال کیے جا سکتے ہیں۔',
       tag: binCount===null ? 'فعال' : `${fmt(binCount)} اشیاء` },
-    { icon:'🔑', title:'محفوظ لاگ اِن',
+    { icon:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="12" r="3.5"/><path d="M11.5 12h9"/><path d="M17 12v3.5M20 12v2.5"/></svg>', title:'محفوظ لاگ اِن',
       body:'پاس ورڈ کبھی سادہ شکل میں محفوظ نہیں ہوتے۔ لاگ آؤٹ پر حساس مقامی ڈیٹا صاف کر دیا جاتا ہے۔',
       tag:'فعال' },
   ];
@@ -882,7 +882,7 @@ async function _renderTrustTab(el) {
   el.innerHTML = `
   <div class="card" style="direction:rtl;border-right:4px solid var(--green);">
     <div style="display:flex;align-items:center;gap:10px;">
-      <span style="font-size:26px;">🔒</span>
+      <span style="font-size:26px;"><svg viewBox='0 0 24 24' width='26' height='26' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><path d='M5.5 11h13v9.5h-13z'/><path d='M8.5 11V8a3.5 3.5 0 0 1 7 0v3'/></svg></span>
       <div>
         <div style="font-size:15px;font-weight:800;color:var(--green);">آپ کا ڈیٹا محفوظ ہے</div>
         <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Digital IO تفتیشی افسر کے حساس ریکارڈ کی حفاظت کو اولین ترجیح دیتا ہے۔</div>
@@ -960,7 +960,7 @@ async function _renderUsageTab(el) {
 
     if (!sorted.length) {
       el.innerHTML = `<div class="card" style="text-align:center;padding:40px;color:var(--text-muted);">
-        <div style="font-size:40px;margin-bottom:10px;">📊</div>
+        <div style="font-size:40px;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M4 20h16"/><path d="M7 20V11"/><path d="M12 20V5"/><path d="M17 20v-6"/></svg></div>
         <div>ابھی استعمال کا ڈیٹا جمع نہیں ہوا</div>
         <div style="font-size:11px;margin-top:6px;">جیسے جیسے افسران ایپ استعمال کریں گے، یہاں ظاہر ہوگا</div>
       </div>`;

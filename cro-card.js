@@ -51,7 +51,7 @@ function _renderCroList() {
 
   if (!_croAllAccused.length) {
     area.innerHTML = `<div style="padding:40px 20px;text-align:center;direction:rtl;color:var(--text-muted);">
-      <div style="font-size:40px;margin-bottom:10px;">👤</div>
+      <div style="font-size:40px;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg></div>
       <div style="font-size:16px;font-family:'Jameel Noori Nastaleeq',serif;">ملزمان درج نہیں — پہلے ملزمان شامل کریں</div>
     </div>`;
     return;

@@ -18,7 +18,7 @@ if (!window.supabase || !window.supabase.createClient) {
     setTimeout(function(){
       if (!window.supabase || !window.supabase.createClient) {
         document.body.innerHTML = '<div style="font-family:sans-serif;direction:rtl;text-align:center;padding:40px 20px;max-width:400px;margin:60px auto;background:#0f1923;color:#e5eef5;border-radius:16px;border:1px solid #1e3a52;">'
-          + '<div style="font-size:48px;margin-bottom:16px;">📡</div>'
+          + '<div style="font-size:48px;margin-bottom:16px;"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M4.5 15a10.5 10.5 0 0 1 15 0"/><path d="M8 18.2a6 6 0 0 1 8 0"/><path d="M12 21h.01"/><path d="M2 11.5a14.5 14.5 0 0 1 20 0"/></svg></div>'
           + '<div style="font-size:18px;font-weight:700;margin-bottom:10px;">کنکشن کا مسئلہ</div>'
           + '<div style="font-size:14px;color:#7d97ad;line-height:1.8;margin-bottom:20px;">انٹرنیٹ سے لائبریری لوڈ نہیں ہو سکی۔ براہِ کرم انٹرنیٹ چیک کریں اور دوبارہ کوشش کریں۔</div>'
           + '<button onclick="location.reload(true)" style="background:#38bdf8;color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:15px;font-weight:700;cursor:pointer;">🔄 دوبارہ کوشش کریں</button>'
@@ -137,7 +137,22 @@ function registerPage(name, fn) { _pages[name] = fn; }
 function showPage(page, el) {
   // Role-based access check
   if (typeof canAccess === 'function' && !canAccess(page)) {
+    /* AHEM: pehle yahan sirf aik toast tha jo chand lamhon mein gayab
+       ho jata tha aur safhe par kuch bhi na likha jata. Agar us waqt
+       koi "khul raha hai…" wala paigham laga hua hota (boot.js ka
+       lazy-load), to afsar HAMESHA usi ko dekhta reh jata — usay pata
+       hi nahi chalta ke safha rok diya gaya hai.
+       Ab wajah safhe par bhi likhi jati hai. */
     showToast('آپ کو اس صفحے تک رسائی نہیں ہے', 'error');
+    try {
+      var _c = document.getElementById('page-content');
+      if (_c) {
+        _c.innerHTML = (window.DIO && DIO.states && DIO.states.permDenied)
+          ? DIO.states.permDenied()
+          : '<div style="text-align:center;padding:40px 20px;direction:rtl;' +
+            'color:var(--text-muted);">آپ کو اس صفحے تک رسائی نہیں ہے</div>';
+      }
+    } catch (_) {}
     return;
   }
   window._activePage = page;  // Track current page for background refresh
@@ -192,7 +207,7 @@ function showPage(page, el) {
     }
   } else {
     container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted);">
-      <div style="font-size:48px;">🚧</div>
+      <div style="font-size:48px;"><svg viewBox='0 0 24 24' width='48' height='48' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><path d='M12 4L3 19.5h18z'/><path d='M12 10v4.5'/><path d='M12 17.2h.01'/></svg></div>
       <div style="font-size:16px;margin-top:12px;">${page} — جلد آ رہا ہے</div>
     </div>`;
   }
@@ -485,7 +500,7 @@ window.attachSuggestions = function(inputEl, categoryKey, opts) {
     all.filter(s => s && s !== cur).forEach(s => {
       const chip = document.createElement('span');
       chip.style.cssText = 'display:inline-flex;align-items:center;gap:4px;font-style:italic;color:#888;font-size:12px;border:1px dashed #bbb;border-radius:12px;padding:2px 8px;cursor:pointer;';
-      chip.innerHTML = `${s} <b style="color:var(--accent,#2563eb);font-style:normal;">✓</b>`;
+      chip.innerHTML = `${s} <b style="color:var(--accent,#2563eb);font-style:normal;"><svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><path d='M4.5 12.5l5 5 10-11'/></svg></b>`;
       chip.title = 'قبول کریں';
       chip.onclick = () => { setVal(s); render(); };
       box.appendChild(chip);

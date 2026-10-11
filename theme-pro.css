@@ -645,6 +645,12 @@ b.dio-stat-num { margin-bottom: 2px; }
 }
 
 /* ── 3.14 JADWAL — qatarein aur khanay (rows / columns) ───────
+   AHEM — har qaida `:not(.dio-cards)` ke sath hai.
+   Mobile par `mobile.css` har qatar ko CARD bana deti hai
+   (`table.dio-cards`). Wahan `width:44px`, `text-align:center`
+   aur `white-space:nowrap` card ki satron par lag kar unhen
+   bigaaR dete hain. Is liye ye sab sirf ASAL jadwal par.
+
    Maqsad: afsar aankh se aik qatar ko doosri se alag kar sake,
    aur adad (mocaddma number, tareekh, shanakhti card, mobile)
    hamesha seedhe LTR mein parhe jayen — RTL mein ye ulat kar
@@ -652,7 +658,7 @@ b.dio-stat-num { margin-bottom: 2px; }
 
 /* Unwan ki patti safhe ke sath chipki rahe — lambi fehrist mein
    afsar ko yaad rahe ke kaunsa khana kis cheez ka hai. */
-.page-content .data-table thead th {
+.page-content .data-table:not(.dio-cards) thead th {
   position: sticky; top: 0; z-index: 3;
   white-space: nowrap;
   font-size: 12.5px !important;
@@ -660,10 +666,10 @@ b.dio-stat-num { margin-bottom: 2px; }
   text-transform: none !important;
 }
 /* Aik qatar chhoRte hue halka farq — ginti mein aasani */
-.page-content .data-table tbody tr:nth-child(even) td {
+.page-content .data-table:not(.dio-cards) tbody tr:nth-child(even) td {
   background: color-mix(in srgb, var(--dio-canvas) 55%, transparent);
 }
-.page-content .data-table tbody tr:hover td {
+.page-content .data-table:not(.dio-cards) tbody tr:hover td {
   background: var(--dio-canvas) !important;
 }
 .page-content .data-table tbody td {
@@ -671,15 +677,15 @@ b.dio-stat-num { margin-bottom: 2px; }
   line-height: 1.9 !important;
 }
 /* Ginti ka khana (#) hamesha tang aur darmiyan mein */
-.page-content .data-table thead th:first-child,
-.page-content .data-table tbody td:first-child {
+.page-content .data-table:not(.dio-cards) thead th:first-child,
+.page-content .data-table:not(.dio-cards) tbody td:first-child {
   width: 44px; text-align: center !important;
 }
 /* Aakhri khana = aqdamat ke button; unhen aik satar mein rakho */
-.page-content .data-table td:last-child {
+.page-content .data-table:not(.dio-cards) td:last-child {
   white-space: nowrap; text-align: center !important;
 }
-.page-content .data-table td:last-child > * { vertical-align: middle; }
+.page-content .data-table:not(.dio-cards) td:last-child > * { vertical-align: middle; }
 
 /* Adad/tareekh wale khane — LTR aur aik hi mono font.
    `unicode-bidi: isolate` lazmi hai, warna RTL safhe par

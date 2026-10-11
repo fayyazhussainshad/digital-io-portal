@@ -83,8 +83,8 @@ async function _dioLoginWithToken(key) {
       try { await _dioPurgeOnSuspend(); } catch (_) {}
       // paigham PEHLE tay karo — neeche currentOfficer null ho jata hai
       var _msg = _dioIsSuspended(currentOfficer)
-        ? '🚫 آپ کا اکاؤنٹ معطل ہے۔ ایڈمن سے رابطہ کریں۔'
-        : '⏳ آپ کا اکاؤنٹ منظوری کے انتظار میں ہے۔';
+        ? 'آپ کا اکاؤنٹ معطل ہے۔ ایڈمن سے رابطہ کریں۔'
+        : 'آپ کا اکاؤنٹ منظوری کے انتظار میں ہے۔';
       currentUser = null; currentOfficer = null;
       try { showToast(_msg, 'error', 7000); } catch (_) {}
       return false;
@@ -317,7 +317,7 @@ function _dioShowNoProfile(email, uid) {
     "font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;";
   d.innerHTML = `
     <div style="max-width:560px;background:#0f2136;border:1px solid #2a4a6b;border-radius:14px;padding:22px;">
-      <div style="font-size:19px;font-weight:800;margin-bottom:10px;">⚠️ افسر کا ریکارڈ نہیں ملا</div>
+      <div style="font-size:19px;font-weight:800;margin-bottom:10px;">افسر کا ریکارڈ نہیں ملا</div>
       <div style="font-size:15px;line-height:1.9;color:#cfe0f0;">
         آپ کا لاگ اِن تو کامیاب ہے، مگر اس اکاؤنٹ کے ساتھ کوئی <b>افسر پروفائل</b> منسلک نہیں۔
         اسی وجہ سے مقدمات، دستاویزات وغیرہ محفوظ نہیں ہو رہے۔
@@ -332,7 +332,7 @@ function _dioShowNoProfile(email, uid) {
       <div style="display:flex;gap:8px;margin-top:16px;">
         <button onclick="doLogout()" style="flex:1;padding:10px;border:none;border-radius:8px;
                 background:#2563eb;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;font-size:15px;">
-          🚪 لاگ آؤٹ</button>
+          لاگ آؤٹ</button>
         <button onclick="document.getElementById('dio-noprofile').remove()"
                 style="padding:10px 16px;border:1px solid #2a4a6b;border-radius:8px;background:transparent;
                        color:#cfe0f0;cursor:pointer;font-family:inherit;font-size:15px;">بند کریں</button>
@@ -393,7 +393,7 @@ async function _loadOfficerProfile() {
 
 function setLoginLoading(v) {
   const btn = document.getElementById('login-btn');
-  if (btn) { btn.disabled=v; btn.textContent=v?'⏳ لاگ ان ہو رہا ہے...':'🔑 لاگ ان'; }
+  if (btn) { btn.disabled=v; btn.textContent=v?'لاگ ان ہو رہا ہے...':'لاگ ان'; }
 }
 
 
@@ -434,11 +434,11 @@ function _maybeShowOnboarding() {
 }
 
 const _ONBOARD_STEPS = [
-  { icon:'🛡️', title:'خوش آمدید — Digital IO', text:'یہ ایک محفوظ، تیز اور آسان پیپرلیس کیس مینجمنٹ ایپ ہے۔ آئیے 4 آسان قدموں میں کام شروع کرنے کا طریقہ دیکھیں۔' },
-  { icon:'📁', title:'قدم 1 — نیا مقدمہ بنائیں', text:'"میرے مقدمات" کھولیں اور "+ نیا اندراج" پر دبائیں۔ FIR نمبر، مدعی، دفعات اور صورتحال درج کریں۔ یہی آپ کے ہر کام کی بنیاد ہے۔' },
-  { icon:'📋', title:'قدم 2 — مقدمہ کھولیں', text:'کسی بھی مقدمے پر دبائیں تو اس کا ورک سپیس کھل جائے گا — یہاں FIR متن، ملزمان، گواہان، ضمنی، رپورٹ 173، CDR/IMEI اور CRO سب موجود ہیں۔' },
-  { icon:'✍️', title:'قدم 3 — دستاویز بھریں اور پرنٹ کریں', text:'جو دستاویز چاہیے اسے کھولیں، خانے بھریں (بہت سا ڈیٹا خودکار بھر جاتا ہے)، پھر 🖨️ پرنٹ دبائیں۔ آواز سے لکھنے کے لیے 🎙️ بٹن استعمال کریں۔' },
-  { icon:'⚙️', title:'تیار ہیں!', text:'اوپر SHO/DSP کے نام ایک بار شامل کر لیں — وہ تمام رپورٹس میں خودبخود آ جائیں گے۔ کسی بھی وقت 🔧 اوزار سے مزید سہولیات حاصل کریں۔ اللہ آپ کے کام میں آسانی فرمائے۔' },
+  { icon:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l7 2.6v5.4c0 4.2-2.9 7.3-7 8.9-4.1-1.6-7-4.7-7-8.9V6.1z"/></svg>', title:'خوش آمدید — Digital IO', text:'یہ ایک محفوظ، تیز اور آسان پیپرلیس کیس مینجمنٹ ایپ ہے۔ آئیے 4 آسان قدموں میں کام شروع کرنے کا طریقہ دیکھیں۔' },
+  { icon:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 7.5h6l2 2.5h9V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z"/></svg>', title:'قدم 1 — نیا مقدمہ بنائیں', text:'"میرے مقدمات" کھولیں اور "+ نیا اندراج" پر دبائیں۔ FIR نمبر، مدعی، دفعات اور صورتحال درج کریں۔ یہی آپ کے ہر کام کی بنیاد ہے۔' },
+  { icon:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v3H8z"/><path d="M9 4H6v17h12V4h-3"/><path d="M9 11h6"/><path d="M9 15h6"/></svg>', title:'قدم 2 — مقدمہ کھولیں', text:'کسی بھی مقدمے پر دبائیں تو اس کا ورک سپیس کھل جائے گا — یہاں FIR متن، ملزمان، گواہان، ضمنی، رپورٹ 173، CDR/IMEI اور CRO سب موجود ہیں۔' },
+  { icon:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg>', title:'قدم 3 — دستاویز بھریں اور پرنٹ کریں', text:'جو دستاویز چاہیے اسے کھولیں، خانے بھریں (بہت سا ڈیٹا خودکار بھر جاتا ہے)، پھر اوپر پٹی میں پرنٹ کا نشان دبائیں۔ آواز سے لکھنے کے لیے نیچے گول مائیک کا بٹن دبائیں۔' },
+  { icon:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2.4M12 18.6V21M21 12h-2.4M5.4 12H3M18.4 5.6l-1.7 1.7M7.3 16.7l-1.7 1.7M18.4 18.4l-1.7-1.7M7.3 7.3L5.6 5.6"/></svg>', title:'تیار ہیں!', text:'اوپر SHO/DSP کے نام ایک بار شامل کر لیں — وہ تمام رپورٹس میں خودبخود آ جائیں گے۔ کسی بھی وقت مینو (اوپر دائیں) سے مزید سہولیات حاصل کریں۔ اللہ آپ کے کام میں آسانی فرمائے۔' },
 ];
 let _onboardIdx = 0;
 
@@ -467,7 +467,7 @@ function _renderOnboardStep() {
     <div style="display:flex;gap:8px;width:100%;direction:rtl;">
       <button class="btn btn-secondary" onclick="_skipOnboarding()" style="flex:1;">${isLast?'بند کریں':'چھوڑیں'}</button>
       ${!isFirst?`<button class="btn btn-secondary" onclick="_onboardPrev()">← پیچھے</button>`:''}
-      ${!isLast?`<button class="btn btn-primary" onclick="_onboardNext()" style="flex:1;">آگے →</button>`:`<button class="btn btn-primary" onclick="_skipOnboarding()" style="flex:1;">✅ شروع کریں</button>`}
+      ${!isLast?`<button class="btn btn-primary" onclick="_onboardNext()" style="flex:1;">آگے →</button>`:`<button class="btn btn-primary" onclick="_skipOnboarding()" style="flex:1;">شروع کریں</button>`}
     </div>
   `);
 }
@@ -710,17 +710,17 @@ function setLoginMethod(m, btn) {
 function togglePasswordVisibility(id) { const el=document.getElementById(id); if(el) el.type=el.type==='password'?'text':'password'; }
 
 function _setupPin() {
-  openModal('🔢 PIN سیٹ کریں', `
+  openModal('PIN سیٹ کریں', `
     <div style="direction:rtl;">
       <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">6 ہندسوں کا PIN منتخب کریں۔ اس سے آپ تیزی سے لاگ ان کر سکیں گے۔</p>
       <input class="form-input" type="password" id="setup-pin" inputmode="numeric" maxlength="6" placeholder="6 ہندسے" dir="ltr" style="text-align:center;font-size:24px;letter-spacing:8px;margin-bottom:10px;">
       <input class="form-input" type="password" id="setup-pin2" inputmode="numeric" maxlength="6" placeholder="دوبارہ PIN" dir="ltr" style="text-align:center;font-size:24px;letter-spacing:8px;">
-      <p style="font-size:11px;color:var(--text-muted);margin-top:10px;">⚠️ موجودہ پاسورڈ بھی درکار ہوگا تاکہ PIN لاگ ان کام کرے</p>
+      <p style="font-size:11px;color:var(--text-muted);margin-top:10px;">موجودہ پاسورڈ بھی درکار ہوگا تاکہ PIN لاگ ان کام کرے</p>
       <input class="form-input" type="password" id="setup-pin-pass" placeholder="موجودہ پاسورڈ" style="margin-top:8px;">
     </div>
   `, `
     <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-    <button class="btn btn-primary" onclick="_savePin()">💾 محفوظ کریں</button>
+    <button class="btn btn-primary" onclick="_savePin()">محفوظ کریں</button>
   `);
 }
 
@@ -1007,7 +1007,7 @@ function _showPinScreen(mode) {
   ov.id = 'pin-lock-overlay';
   ov.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:99999;background:var(--bg-primary,#0f1420);display:flex;flex-direction:column;align-items:center;justify-content:center;direction:rtl;';
   ov.innerHTML = `
-    <div style="font-size:40px;margin-bottom:8px;">🛡️</div>
+    <div style="font-size:40px;margin-bottom:8px;"><svg viewBox='0 0 24 24' width='40' height='40' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><path d='M12 3.5l7 2.6v5.4c0 4.2-2.9 7.3-7 8.9-4.1-1.6-7-4.7-7-8.9V6.1z'/></svg></div>
     <div style="font-size:22px;font-weight:800;color:var(--text-primary,#fff);margin-bottom:4px;">Digital IO</div>
     <div id="pin-prompt" style="font-size:15px;color:var(--text-secondary,#aaa);margin-bottom:20px;font-family:'Jameel Noori Nastaleeq',serif;">${isSet?'نیا PIN مقرر کریں (4 ہندسے)':'PIN درج کریں'}</div>
     <input id="pin-input" type="password" inputmode="numeric" maxlength="4" autocomplete="off"
@@ -1061,7 +1061,7 @@ window.maybeSetupPin = function() {
     if (localStorage.getItem('dio_pin_offered')) return;       // پہلے پوچھ چکے
     localStorage.setItem('dio_pin_offered', '1');
     if (typeof openModal !== 'function') return;
-    openModal('🛡️ ایپ لاک',
+    openModal('ایپ لاک',
       `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;line-height:1.9;">کیا آپ ایپ کو 4 ہندسی PIN سے محفوظ کرنا چاہتے ہیں؟ بے عملی (5 منٹ) یا پس منظر میں جانے پر ایپ خود لاک ہو جائے گی۔ بعد میں سیٹنگز سے بھی مقرر/تبدیل کیا جا سکتا ہے۔</div>`,
       `<div style="display:flex;gap:8px;direction:rtl;">
         <button class="btn btn-secondary" onclick="closeModal()">ابھی نہیں</button>
@@ -1075,7 +1075,7 @@ window.dioLockPinSettings = function() {
   try {
     const has = !!localStorage.getItem('digital_io_pin_hash');
     if (typeof openModal !== 'function') { _showPinScreen('set'); return; }
-    openModal('🛡️ ایپ لاک PIN',
+    openModal('ایپ لاک PIN',
       `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;line-height:1.9;">${has ? 'PIN پہلے سے مقرر ہے۔ آپ نیا PIN مقرر کر سکتے ہیں یا لاک ہٹا سکتے ہیں۔' : 'ابھی کوئی لاک PIN مقرر نہیں۔ بے عملی یا پس منظر میں جانے پر خودکار لاک کے لیے PIN مقرر کریں۔'}</div>`,
       `<div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;">
         <button class="btn btn-secondary" onclick="closeModal()">بند</button>

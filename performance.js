@@ -68,13 +68,13 @@ async function _buildPerf() {
   <!-- Stats Grid -->
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">
     ${[
-      {l:'چالان مکمل',   v:complete,   c:'var(--green)', i:'✅'},
-      {l:'زیر تفتیش',   v:under,      c:'var(--accent)',i:'🔍'},
-      {l:'عدم پتہ',      v:untrace,    c:'#a78bfa',     i:'❓'},
-      {l:'اخراج',        v:cancel,     c:'var(--red)',   i:'❌'},
-      {l:'چالان نامکمل', v:incomplete, c:'var(--amber)', i:'⚠️'},
-      {l:'چالان 512',    v:c512,       c:'#f97316',     i:'📋'},
-      {l:'گزشتہ پیشیاں',  v:overdueC,  c:'var(--red)',   i:'⚖️'},
+      {l:'چالان مکمل',   v:complete,   c:'var(--green)', i:"<svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M4.5 12.5l5 5 10-11'/></svg>"},
+      {l:'زیر تفتیش',   v:under,      c:'var(--accent)',i:"<svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='11' cy='11' r='6.5'/><path d='M16 16l4.5 4.5'/></svg>"},
+      {l:'عدم پتہ',      v:untrace,    c:'#a78bfa',     i:"<svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='12' cy='12' r='8.5'/><path d='M9.5 9.5a2.6 2.6 0 0 1 5 1c0 1.8-2.5 2-2.5 3.6'/><path d='M12 17.4h.01'/></svg>"},
+      {l:'اخراج',        v:cancel,     c:'var(--red)',   i:"<svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M6 6l12 12'/><path d='M18 6L6 18'/></svg>"},
+      {l:'چالان نامکمل', v:incomplete, c:'var(--amber)', i:"<svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 4L3 19.5h18z'/><path d='M12 10v4.5'/><path d='M12 17.2h.01'/></svg>"},
+      {l:'چالان 512',    v:c512,       c:'#f97316',     i:"<svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M8 4h8v3H8z'/><path d='M9 4H6v17h12V4h-3'/><path d='M9 11h6'/><path d='M9 15h6'/></svg>"},
+      {l:'گزشتہ پیشیاں',  v:overdueC,  c:'var(--red)',   i:"<svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M12 4v16'/><path d='M6 20h12'/><path d='M4 9l3-4 3 4'/><path d='M14 9l3-4 3 4'/></svg>"},
     ].map(s=>`
     <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px 8px;text-align:center;border-right:3px solid ${s.c};">
       <div style="font-size:16px;">${s.i}</div>

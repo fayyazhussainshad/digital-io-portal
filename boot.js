@@ -86,10 +86,33 @@
           // Halka sa "khul raha hai" — khali safha na dikhe
           try {
             var c = document.getElementById('page-content');
-            if (c) c.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted,#7d97ad);' +
-              'font-size:13px;direction:rtl;">⏳ کھل رہا ہے…</div>';
+            if (c) {
+              c.setAttribute('data-dio-loading', page);   // nishan — baad mein pehchan sakein
+              c.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted,#7d97ad);' +
+                'font-size:13px;direction:rtl;">کھل رہا ہے…</div>';
+            }
           } catch (_) {}
-          ensurePage(page).then(function () { orig.call(window, page, el); });
+          ensurePage(page).then(function () {
+            orig.call(window, page, el);
+            /* MEHFOOZ JAAL: agar safha kisi wajah se khula hi nahi
+               (misal: rasai ka darwaza band — `showPage` wahin se
+               wapas mud jata hai), to hamara "khul raha hai…" wala
+               paigham wahin laga reh jata tha aur afsar HAMESHA usay
+               dekhta rehta. Ab: agar mawad abhi bhi wahi paigham hai,
+               to saaf baat likh do. */
+            setTimeout(function () {
+              try {
+                var c = document.getElementById('page-content');
+                if (!c || c.getAttribute('data-dio-loading') !== page) return;
+                c.removeAttribute('data-dio-loading');
+                if (c.textContent.trim().indexOf('کھل رہا ہے') === 0) {
+                  c.innerHTML = '<div style="text-align:center;padding:40px 20px;' +
+                    'direction:rtl;color:var(--text-muted);font-size:13px;">' +
+                    'یہ صفحہ ابھی نہیں کھل سکا۔ دوبارہ کوشش کریں یا مینو سے دوسرا صفحہ چنیں۔</div>';
+                }
+              } catch (_) {}
+            }, 400);
+          });
           return;
         }
       } catch (_) {}

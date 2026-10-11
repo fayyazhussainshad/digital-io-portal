@@ -96,8 +96,8 @@
     p.className = 'dio-chform no-print';
 
     var html = '<div class="dio-chform-head">' +
-      '<button type="button" class="' + (wantForm() ? 'on' : '') + '" data-v="form">📝 فارم</button>' +
-      '<button type="button" class="' + (wantForm() ? '' : 'on') + '" data-v="paper">📄 کاغذ</button>' +
+      '<button type="button" class="' + (wantForm() ? 'on' : '') + '" data-v="form">فارم</button>' +
+      '<button type="button" class="' + (wantForm() ? '' : 'on') + '" data-v="paper">کاغذ</button>' +
       '<span class="sp"></span>' +
       '<span class="hint">چھپائی ہمیشہ اصل فارم پر</span></div>';
 

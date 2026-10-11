@@ -67,7 +67,7 @@ function renderIncident(container) {
 
       <!-- MAIN TABLE -->
       <div>
-        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+        <table class="inc-table" style="width:100%;border-collapse:collapse;font-size:14px;">
           <tbody>
             <!-- Row 1: Caller name only (no phone column) -->
             <tr>
