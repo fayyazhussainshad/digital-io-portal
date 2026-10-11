@@ -526,3 +526,52 @@ test('challan-form.js jur gayi (html + sw)', () => {
   assert.ok(read('index.html').includes('challan-form.js'));
   assert.ok(read('sw.js').includes("'/challan-form.js'"), 'offline par bhi milni chahiye');
 });
+
+// ══ PESHA-WARANA SHAKL (round-6) ═══════════════════════════════
+test('login ki hifazati satar ka BIDI masla band', () => {
+  const h = read('index.html');
+  const i = h.indexOf('256-bit AES Encrypted');
+  assert.ok(i > -1, 'satar mojood honi chahiye');
+  const around = h.slice(Math.max(0, i - 260), i);
+  assert.ok(/dir="ltr"/.test(around) && /unicode-bidi:\s*isolate/.test(around),
+    'RTL khane me angrezi satar toot kar "bit … -256" ban jati thi — dir=ltr + isolate lazmi');
+});
+
+test('login ke asal button me emoji nahi', () => {
+  const h = read('index.html');
+  const seg = h.slice(h.indexOf('id="login-submit-btn"'), h.indexOf('id="login-submit-btn"') + 300);
+  assert.ok(!/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(seg), 'CTA me emoji ghair-pesha-warana lagta hai');
+  assert.ok(/محفوظ لاگ اِن/.test(seg), 'CTA Urdu me hona chahiye (app Urdu-first hai)');
+});
+
+test('dashboard se sawal aur nukta hat gaye, AYAT barqarar', () => {
+  const d = read('dashboard.js');
+  assert.ok(!/\$\{_dashKnowledgeCard\(\)\}/.test(d), 'sawal ka card hat jana chahiye');
+  assert.ok(!/\$\{_dashTipOfDay\(\)\}/.test(d), 'nukta ka card hat jana chahiye');
+  assert.ok(!/initQARotation\(\)/.test(d), 'uska timer bhi band hona chahiye');
+  assert.ok(/_islamicBarHTML\(\)/.test(d), 'Qurani ayat BARQARAR rehni chahiye (afsar ki hidayat)');
+});
+
+test('dashboard par koi gehra gradient card nahi bacha', () => {
+  const d = read('dashboard.js');
+  const bad = (d.match(/background:\s*linear-gradient\(135deg,#[0-9a-f]{6},#[0-9a-f]{6}\)/gi) || []);
+  assert.strictEqual(bad.length, 0,
+    'aik hi sakreen par kai gehre gradient "sasta" tasur dete the. Mile: ' + bad.join(', '));
+});
+
+test('adad HERO hain — un ke element blanket font-size qaide se BAHAR', () => {
+  const d = read('dashboard.js');
+  // index.html ka qaida `:is(div,span,p,td,th,li,label,a)` par 14px !important
+  // thonkta hai (10 `:not(#id)` ki wajah se us ko haraya nahi ja sakta).
+  assert.ok(/<b class="dio-stat-num">/.test(d), 'stat ka adad <b> me hona chahiye, span me nahi');
+  assert.ok(/<b class="dio-prio-num">/.test(d), 'tarjeeh ka adad <b> me hona chahiye');
+  assert.ok(/<b class="dio-sec-h"[^>]*role="heading"/.test(d),
+    'unwan <h2> par `font-size: revert` lag jata hai — <b role=heading> chahiye');
+  const c = read('theme-pro.css');
+  assert.ok(/b\.dio-stat-num\s*\{[^}]*font-size:\s*30px/.test(c), 'adad numayan (30px) hona chahiye');
+});
+
+test('theme-pro.css jur gayi (html + sw)', () => {
+  assert.ok(read('index.html').includes('theme-pro.css'));
+  assert.ok(read('sw.js').includes("'/theme-pro.css'"), 'offline par bhi milni chahiye');
+});

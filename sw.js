@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v493
+   DIGITAL IO — SERVICE WORKER v494
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v493';
+const CACHE_NAME = 'digital-io-v494';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -73,6 +73,7 @@ const CORE_ASSETS = [
   '/icon-512.png',
   '/boot.js',
   '/mobile.css',
+  '/theme-pro.css',
   '/mobile.js',
   '/challan-form.js',
   '/secure-storage.js',

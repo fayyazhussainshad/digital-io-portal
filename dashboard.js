@@ -68,12 +68,12 @@ async function _buildDash() {
   root.innerHTML = `
   ${_onboardBanner}
   <!-- Welcome -->
-  <div style="background:linear-gradient(135deg,#0d2a45,#1a3a5c);border-radius:12px;padding:14px 18px;margin-bottom:14px;direction:rtl;">
-    <div style="display:flex;align-items:center;gap:12px;">
-      <div style="text-align:right;flex:1;">
-        <div style="font-size:16px;font-weight:800;color:#fff;font-family:'Jameel Noori Nastaleeq',serif;">خوش آمدید، ${esc(o.full_name)||'افسر'}</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.6);">${esc(o.designation||'')} · تھانہ ${esc(o.station||'')} · ضلع ${esc(o.district||'')}</div>
-        <div style="font-size:10px;color:rgba(255,255,255,0.4);">${formatDate(new Date())}</div>
+  <div class="dio-idcard">
+    <div class="dio-id-row">
+      <div class="dio-id-main">
+        <b class="dio-id-name">${esc(o.full_name)||'افسر'}</b>
+        <div class="dio-id-sub">${esc(o.designation||'')}${o.station?' · تھانہ '+esc(o.station):''}${o.district?' · ضلع '+esc(o.district):''}</div>
+        <small class="dio-id-date">${formatDate(new Date())}</small>
       </div>
       <div id="dash-welcome-avatar" style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0;overflow:hidden;cursor:pointer;" onclick="showPage('settings',null)">
         ${(() => {
@@ -87,7 +87,7 @@ async function _buildDash() {
   </div>
 
   <!-- Cases Stats — 7 سفید کارڈ (mockup اسٹائل — outline آئیکن) -->
-  <div style="font-size:11px;color:var(--text-muted);margin:0 0 8px;direction:rtl;font-weight:700;">📊 مقدمات کی صورتحال</div>
+  <b class="dio-sec-h" role="heading" aria-level="2">مقدمات کی صورتحال</b>
   ${_dashStatCards(total, statusCounts)}
 
   <!-- اسلامی ٹِکر — اسٹیٹس کے نیچے (درود + قرآن/حدیث، ہر 6 سیکنڈ) -->
@@ -101,15 +101,10 @@ async function _buildDash() {
   <!-- آج کی ترجیحات (حقیقی reminders/cases) -->
   ${_dashPriorityCards(nextRem, upcomingRem.length, overdueRem.length, thisMonthCount)}
 
-  <!-- سوالات — قانون و مسل (خودکار) -->
-  ${_dashKnowledgeCard()}
-
-  <!-- مفید نکتہ -->
-  ${_dashTipOfDay()}`;
+  <!-- (سوالات اور مفید نکتہ افسر کی ہدایت پر ہٹا دیے گئے — ڈیش بورڈ صرف کام پر) -->`;
 
   // ٹِکر (6s) + سوالات خودکار (12s) — render ke baad
   try { initIslamicMessages(); } catch(_) {}
-  try { initQARotation(); } catch(_) {}
 }
 
 // ── STAT CARDS — mockup اسٹائل (سفید کارڈ + outline آئیکن، theme-aware) ──
@@ -126,18 +121,14 @@ function _dashStatCards(total, sc) {
   ];
   return `
   <div style="margin-bottom:14px;">
-    <div class="dash-stats-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:10px;direction:rtl;">
+    <div class="dash-stats-grid dio-stats">
       ${cards.map(c=>`
-      <div onclick="showPage('cases',null)"
-        style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:14px 8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:0 1px 3px rgba(16,24,40,0.05);transition:box-shadow .15s,transform .12s;"
-        onmouseover="this.style.boxShadow='0 6px 18px rgba(16,24,40,0.12)';this.style.transform='translateY(-2px)'"
-        onmouseout="this.style.boxShadow='0 1px 3px rgba(16,24,40,0.05)';this.style.transform='none'">
-        <svg viewBox="0 0 24 24" style="width:28px;height:28px;fill:none;stroke:${c.col};stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;">${c.ic}</svg>
-        <div style="font-size:12.5px;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq',serif;text-align:center;line-height:1.3;">${c.l}</div>
-        <div style="font-size:26px;font-weight:900;color:${c.col};">${c.v}</div>
-      </div>`).join('')}
+      <button type="button" class="dio-stat${(+c.v)?'':' is-zero'}" style="--st:${c.col}" onclick="showPage('cases',null)" aria-label="${c.l}">
+        <svg class="dio-stat-ic" viewBox="0 0 24 24" aria-hidden="true">${c.ic}</svg>
+        <b class="dio-stat-num">${c.v}</b>
+        <span class="dio-stat-lbl">${c.l}</span>
+      </button>`).join('')}
     </div>
-    <style>@media(max-width:768px){.dash-stats-grid{display:flex !important;overflow-x:auto;gap:8px;}.dash-stats-grid>div{min-width:120px;flex:0 0 auto;}}</style>
   </div>`;
 }
 
@@ -147,32 +138,26 @@ function _dashStatCards(total, sc) {
 function _dashPriorityCards(nextRem, upCount, overdueCount, monthCount) {
   const F = (d) => (typeof formatDate === 'function' && d) ? formatDate(d) : '—';
   const cards = [
-    { grad:'linear-gradient(135deg,#0369a1,#0ea5e9)', ic:'📅', big:upCount,
+    { tone:'info', big:upCount,
       lbl:'آنے والی یاددہانیاں', sub: nextRem ? ('اگلی: ' + F(nextRem.reminder_date)) : 'کوئی آئندہ نہیں',
       go:"showPage('reminders',null)" },
-    { grad: overdueCount>0 ? 'linear-gradient(135deg,#b91c1c,#ef4444)' : 'linear-gradient(135deg,#047857,#10b981)',
-      ic: overdueCount>0 ? '⏰' : '✅', big: overdueCount,
+    { tone: overdueCount > 0 ? 'alert' : 'ok', big: overdueCount,
       lbl:'زیر التواء (گزر چکیں)', sub: overdueCount>0 ? 'فوری توجہ درکار' : 'سب وقت پر',
       go:"showPage('reminders',null)" },
-    { grad:'linear-gradient(135deg,#6d28d9,#a78bfa)', ic:'🗂️', big:monthCount,
+    { tone:'calm', big:monthCount,
       lbl:'اس ماہ نئے مقدمات', sub:'رواں مہینہ', go:"showPage('cases',null)" },
   ];
   return `
   <div style="margin-bottom:14px;">
-    <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;direction:rtl;font-weight:700;">⚡ آج کی ترجیحات</div>
-    <div class="dash-brief-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;direction:rtl;">
+    <b class="dio-sec-h" role="heading" aria-level="2">آج کی ترجیحات</b>
+    <div class="dash-brief-grid dio-prio">
       ${cards.map(c=>`
-        <div onclick="${c.go}" style="background:${c.grad};border-radius:12px;padding:13px 14px;cursor:pointer;color:#fff;display:flex;flex-direction:column;min-height:94px;box-shadow:0 2px 10px rgba(0,0,0,0.12);transition:transform .12s;"
-          onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:20px;line-height:1;">${c.ic}</span>
-            <span style="font-size:30px;font-weight:900;line-height:1;">${c.big}</span>
-          </div>
-          <div style="font-size:13px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;margin-top:7px;">${c.lbl}</div>
-          <div style="font-size:10px;color:rgba(255,255,255,0.82);font-family:'Jameel Noori Nastaleeq',serif;margin-top:1px;">${c.sub}</div>
-        </div>`).join('')}
+        <button type="button" class="dio-prio-card tone-${c.tone}" onclick="${c.go}">
+          <b class="dio-prio-num">${c.big}</b>
+          <span class="dio-prio-lbl">${c.lbl}</span>
+          <small class="dio-prio-sub">${c.sub}</small>
+        </button>`).join('')}
     </div>
-    <style>@media(max-width:600px){.dash-brief-grid{grid-template-columns:1fr !important;}}</style>
   </div>`;
 }
 
@@ -216,30 +201,7 @@ const _DIO_TIPS = [
   'ہر بیان پر گواہ کے دستخط/نشانِ انگوٹھا اور تاریخ ضرور لیں۔',
   'برآمدگی کا میمو موقع پر گواہان کی موجودگی میں مکمل کریں۔',
 ];
-function _dashNextTip(btn) {
-  const el = document.getElementById('dash-tip-text');
-  if (!el) return;
-  let idx = (parseInt(el.dataset.idx||'0',10) + 1) % _DIO_TIPS.length;
-  el.dataset.idx = idx; el.textContent = _DIO_TIPS[idx];
-}
-window._dashNextTip = _dashNextTip;
 
-function _dashTipOfDay() {
-  const idx = Math.floor(Date.now()/86400000) % _DIO_TIPS.length;
-  return `
-  <div style="background:linear-gradient(135deg,#0f766e,#134e4a);border-radius:12px;padding:15px 18px;margin-bottom:14px;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;box-shadow:0 2px 10px rgba(0,0,0,0.12);">
-    <div style="display:flex;align-items:flex-start;gap:12px;">
-      <div style="font-size:26px;line-height:1;">💡</div>
-      <div style="flex:1;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <div style="font-size:12px;font-weight:800;color:#5eead4;">مفید نکتہ</div>
-          <button onclick="_dashNextTip(this)" style="background:rgba(255,255,255,0.15);border:none;border-radius:8px;padding:3px 12px;font-size:11px;color:#fff;cursor:pointer;font-family:inherit;">اگلا ↻</button>
-        </div>
-        <div id="dash-tip-text" data-idx="${idx}" style="font-size:14px;color:#fff;line-height:1.9;">${_DIO_TIPS[idx]}</div>
-      </div>
-    </div>
-  </div>`;
-}
 
 // ═══════════════════════════════════════════════════════════════
 //  اسلامی ٹِکر — درود + قرآن (~60%) + حدیث (~40%) + آثارِ صحابہؓ/سلف
@@ -289,7 +251,7 @@ const _DIO_ISLAMIC = {
 function _islamicBarHTML() {
   return `
   <div id="islamic-bar" onclick="_islamicNext&&_islamicNext()" title="اگلا پیغام"
-    style="display:flex;align-items:center;gap:10px;background:linear-gradient(90deg,rgba(15,118,110,0.12),rgba(56,189,248,0.07));border:1px solid rgba(15,118,110,0.25);border-radius:10px;padding:8px 14px;margin-bottom:14px;direction:rtl;overflow:hidden;cursor:pointer;">
+    class="dio-ayat" style="border-radius:10px;padding:8px 14px;margin-bottom:14px;direction:rtl;overflow:hidden;cursor:pointer;">
     <span title="درود شریف — ﷺ" style="font-size:19px;flex-shrink:0;color:#0f766e;">ﷺ</span>
     <span id="islamic-text" style="font-size:14px;font-weight:600;color:var(--text-primary);font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;transition:opacity .4s;">﷽</span>
     <span id="islamic-ref" style="font-size:10px;color:var(--text-muted);flex-shrink:0;font-family:'Jameel Noori Nastaliq','Noto Nastaliq Urdu',serif;"></span>
@@ -356,41 +318,6 @@ const _DIO_QA = [
   { q:'برآمدگی کا میمو کب مکمل کریں؟', a:'موقع پر، گواہان کی موجودگی میں — بعد کے تنازع سے بچنے کے لیے۔' },
   { q:'نقشہ جائے وقوعہ کیوں اہم ہے؟', a:'واقعے کی جگہ، فاصلے اور سمت واضح کرتا ہے — عدالت میں منظرکشی آسان۔' },
 ];
-function _dashKnowledgeCard() {
-  const idx = Math.floor(Date.now()/86400000) % _DIO_QA.length;
-  const qa = _DIO_QA[idx];
-  return `
-  <div class="card" style="padding:14px;margin-bottom:14px;direction:rtl;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <div style="font-size:13px;font-weight:800;color:#a78bfa;">❓ کیا آپ جانتے ہیں؟ — قانون و مسل</div>
-      <button onclick="_dashNextQA(this)" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 12px;font-size:11px;color:var(--text-muted);cursor:pointer;font-family:inherit;">اگلا سوال ↻</button>
-    </div>
-    <div id="dash-qa-q" data-idx="${idx}" style="font-size:14px;font-weight:700;color:var(--text-primary);line-height:1.8;">${qa.q}</div>
-    <div id="dash-qa-a" style="font-size:13px;color:var(--text-secondary);line-height:1.9;margin-top:6px;">${qa.a}</div>
-  </div>`;
-}
-function _dashNextQA(btn) {
-  const qEl = document.getElementById('dash-qa-q');
-  const aEl = document.getElementById('dash-qa-a');
-  if (!qEl) return;
-  let idx = (parseInt(qEl.dataset.idx||'0',10) + 1) % _DIO_QA.length;
-  qEl.dataset.idx = idx;
-  qEl.textContent = _DIO_QA[idx].q;
-  if (aEl) aEl.textContent = _DIO_QA[idx].a;
-}
-window._dashNextQA = _dashNextQA;
-// سوال/جواب خودکار بدلیں (ہر 12 سیکنڈ — پڑھنے کا وقت ملے)
-function initQARotation() {
-  try {
-    if (!document.getElementById('dash-qa-q')) return;
-    if (window._dioQATimer) clearInterval(window._dioQATimer);
-    window._dioQATimer = setInterval(() => {
-      if (!document.getElementById('dash-qa-q')) { clearInterval(window._dioQATimer); window._dioQATimer = null; return; }
-      _dashNextQA();
-    }, 12000);
-  } catch (_) {}
-}
-window.initQARotation = initQARotation;
 
 // ── HELPERS ───────────────────────────────────────────────────
 function _recentlyViewedBar() {
@@ -444,9 +371,8 @@ function _dioOnboardCard() {
   try { seen = localStorage.getItem('dio_seen_welcome_v1') === '1'; } catch (_) {}
   if (seen) return '';
   return `
-  <div id="dio-onboard-card" style="background:linear-gradient(135deg,#134e4a,#0f766e);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:16px 18px;margin-bottom:14px;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
+  <div id="dio-onboard-card" class="dio-onboard">
     <div style="display:flex;align-items:flex-start;gap:12px;">
-      <div style="font-size:30px;line-height:1;">👋</div>
       <div style="flex:1;">
         <div style="font-size:15px;font-weight:800;color:#fff;">Digital IO میں خوش آمدید!</div>
         <div style="font-size:12px;color:rgba(255,255,255,0.8);margin-top:5px;line-height:1.9;">

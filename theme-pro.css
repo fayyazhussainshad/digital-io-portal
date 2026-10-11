@@ -1,0 +1,328 @@
+/* ═══════════════════════════════════════════════════════════════
+   DIGITAL IO — theme-pro.css
+   Sarkari/police aala jaisa SANJEEDA andaz.
+
+   USOOL (jo pehle nahi tha):
+     1. AIK lehja — poore safhe par aik accent; gehre gradient khatam.
+       (Pehle aik hi sakreen par 5 mukhtalif gradient the: teal banner,
+        navy banner, purple/green/blue cards, teal tip — isi se "sasta"
+        tasur banta tha.)
+     2. DARJA-BANDI — asal maloomat (adad) sab se numayan; sajawat peeche.
+       (Pehle adad 26px neeche tha aur icon 28px upar — nazar pehle
+        sajawat par jati thi, kaam par nahi.)
+     3. Surfaces: aik hi safaid/neutral satah, halki lakeer, halka saya.
+     4. Koi emoji lehje/CTA me nahi — saaf SVG ya khali.
+   index.html me SAB SE AAKHIR me load karein.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --dio-ink:      #0f1b2a;   /* sab se gehra matn */
+  --dio-ink-2:    #475569;   /* sanwi matn */
+  --dio-ink-3:    #7c8ea3;   /* halka/lebal */
+  --dio-line:     #e2e8f0;   /* lakeer */
+  --dio-surface:  #ffffff;
+  --dio-canvas:   #f6f8fb;   /* safhe ka pas-manzar */
+  --dio-brand:    #0b3d64;   /* sarkari neela — lehja */
+  --dio-brand-2:  #145b91;
+  --dio-ok:       #15803d;
+  --dio-warn:     #b45309;
+  --dio-alert:    #b91c1c;
+  --dio-r:        12px;
+  --dio-shadow:   0 1px 2px rgba(15,27,42,.06), 0 1px 3px rgba(15,27,42,.04);
+  --dio-shadow-2: 0 4px 14px rgba(15,27,42,.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --dio-ink: #e8eef5; --dio-ink-2: #a8bbcd; --dio-ink-3: #7b90a6;
+    --dio-line: #22303f; --dio-surface: #0f1b28; --dio-canvas: #0a121c;
+    --dio-brand: #4aa3e0; --dio-brand-2: #6fb8ec;
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   1. LANDING (لاگ اِن) — aik hi satah, sanjeeda
+   ──────────────────────────────────────────────────────────────── */
+#login-screen {
+  background: var(--dio-canvas) !important;
+  /* Halka sa sarkari andaz — koi bhaRkeela gradient nahi */
+  background-image:
+    radial-gradient(1200px 500px at 50% -12%, rgba(11,61,100,.10), transparent 70%) !important;
+}
+#login-screen .login-card,
+#login-screen .login-box,
+#login-screen .auth-card {
+  background: var(--dio-surface) !important;
+  border: 1px solid var(--dio-line) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--dio-shadow-2) !important;
+  color: var(--dio-ink) !important;
+}
+/* Brand — emblem + naam aik hi satar me, sanjeeda */
+#login-screen .login-card .brand-title,
+#login-screen .login-card h1 {
+  color: var(--dio-brand) !important;
+  letter-spacing: .14em !important;
+  font-weight: 800 !important;
+}
+#login-screen .login-card [class*="tagline"],
+#login-screen .login-card .subtitle {
+  color: var(--dio-ink-2) !important;
+}
+
+/* Qanooni ailamia — BAAREEK tehreer, sab se numayan cheez NAHI.
+   (Pehle bhoora khana motti lakeer ke sath sab par hawi tha.) */
+#login-screen .dio-legal,
+#login-screen .disclaimer-box,
+#login-screen [class*="disclaimer"] {
+  background: transparent !important;
+  border: 0 !important;
+  border-top: 1px solid var(--dio-line) !important;
+  border-radius: 0 !important;
+  padding: 12px 2px 0 !important;
+  margin-top: 6px !important;
+  color: var(--dio-ink-3) !important;
+  font-size: 11.5px !important;
+  line-height: 1.85 !important;
+  box-shadow: none !important;
+}
+#login-screen .dio-legal *,
+#login-screen .disclaimer-box * {
+  color: var(--dio-ink-3) !important;
+  font-size: 11.5px !important; line-height: 1.9 !important;
+}
+/* "Digital IO" ka naam ailamie me — halka numayan, bhaRkeela nahi */
+#login-screen .dio-legal span[style*="font-weight:800"] { color: var(--dio-ink-2) !important; }
+
+/* Tareeqa-e-daakhla ke teen button — saaf, hum-wazan */
+#login-screen .login-method,
+#login-screen .auth-method-btn,
+#login-screen .login-method-btn {
+  background: var(--dio-canvas) !important;
+  border: 1px solid var(--dio-line) !important;
+  border-radius: 10px !important;
+  color: var(--dio-ink-2) !important;
+  min-height: 46px !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+  display: flex !important; flex-direction: column !important;
+  align-items: center !important; justify-content: center !important; gap: 5px !important;
+  font-size: 13px !important; padding: 10px 6px !important;
+}
+#login-screen .login-method svg { opacity: .75; }
+#login-screen .login-method.active svg { opacity: 1; }
+#login-screen .login-method.active,
+#login-screen .auth-method-btn.active,
+#login-screen .login-method-btn.active {
+  background: var(--dio-brand) !important;
+  border-color: var(--dio-brand) !important;
+  color: #fff !important;
+}
+
+#login-screen input {
+  background: var(--dio-surface) !important;
+  border: 1px solid var(--dio-line) !important;
+  border-radius: 10px !important;
+  color: var(--dio-ink) !important;
+  min-height: 48px !important;
+}
+#login-screen input:focus {
+  border-color: var(--dio-brand) !important;
+  box-shadow: 0 0 0 3px rgba(11,61,100,.12) !important;
+  outline: none !important;
+}
+#login-screen input::placeholder { color: var(--dio-ink-3) !important; }
+
+/* Asal CTA — aik hi numayan cheez */
+#login-screen .btn-primary,
+#login-screen button[type="submit"] {
+  background: var(--dio-brand) !important;
+  border: 0 !important; border-radius: 10px !important;
+  color: #fff !important; min-height: 50px !important;
+  font-weight: 800 !important; letter-spacing: .01em !important;
+  box-shadow: 0 1px 2px rgba(11,61,100,.25) !important;
+}
+#login-screen .btn-primary:hover,
+#login-screen button[type="submit"]:hover { background: var(--dio-brand-2) !important; }
+
+/* Neeche ki hifazati satar — chhoti, khamosh.
+   NOTE: "256-bit" ka tootna aik BIDI masla tha (RTL me adad alag ho kar
+   aakhir me chala jata tha) — index.html me LTR ke andar band kiya gaya. */
+#login-screen .sec-note, #login-screen [class*="security-line"] {
+  color: var(--dio-ink-3) !important; font-size: 10.5px !important;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   2. DASHBOARD
+   ──────────────────────────────────────────────────────────────── */
+.page-content, #page-content { background: var(--dio-canvas); }
+
+
+/* ────────────────────────────────────────────────────────────────
+   AHEM — dashboard ke adad ke liye <b>, unwan ke liye <h2>:
+   index.html me aik AAM qaida hai —
+     .page-content :is(div, span, p, td, th, li, label, a):not(#…)×10
+       { font-size: 14px !important; }
+   Us me 10 `:not(#id)` hain, is liye us ki specificity itni oonchi hai ke
+   `!important` laga kar bhi usay haraya nahi ja sakta (adad 30px ke bajaye
+   14px reh jate the — rang/wazan lag rahe the, sirf NAAP haar rahi thi).
+   Aur aik DUSRA qaida `.page-content :is(h1..h6,…)` par `font-size: revert`
+   lagata hai — is liye <h2> bhi kaam nahi aaya (21px par chala jata).
+   Hal: DONO fehriston se BAHAR ke element — adad/unwan <b>, zaili <small>.
+   Unwan ki maaniyat `role="heading" aria-level="2"` se barqarar hai.
+   Yun koi !important nahi chahiye aur baqi app bilkul nahi chhirti.
+   ──────────────────────────────────────────────────────────────── */
+/* Unwan — chhota, khamosh, aik jaisa */
+b.dio-sec-h, .dio-sec-h {
+  display: block; font-size: 12px; font-weight: 800;
+  color: var(--dio-ink-3); letter-spacing: .02em;
+  margin: 2px 0 10px; padding: 0; direction: rtl; text-align: right;
+  font-family: inherit;
+}
+
+/* Afsar ki shanakht — aik satah, koi gradient nahi */
+.dio-idcard {
+  background: var(--dio-surface);
+  border: 1px solid var(--dio-line);
+  border-inline-start: 3px solid var(--dio-brand);
+  border-radius: var(--dio-r);
+  padding: 14px 16px; margin-bottom: 16px;
+  direction: rtl; box-shadow: var(--dio-shadow);
+}
+.dio-idcard .dio-id-row { display: flex; align-items: center; gap: 12px; }
+.dio-idcard .dio-id-main { flex: 1; text-align: right; min-width: 0; }
+b.dio-id-name {
+  display: block; font-size: 17px; font-weight: 800; color: var(--dio-ink);
+  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  line-height: 1.6;
+}
+.dio-id-sub  { font-size: 12px; color: var(--dio-ink-2); margin-top: 1px; }
+small.dio-id-date { display: block; font-size: 11px; color: var(--dio-ink-3); margin-top: 3px; }
+#dash-welcome-avatar {
+  background: var(--dio-brand) !important;
+  border: 0 !important; color: #fff !important; font-weight: 800 !important;
+}
+
+/* ── Aankaray — ADAD sab se numayan ── */
+.dio-stats {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  gap: 10px; direction: rtl;
+}
+.dio-stat {
+  position: relative; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 2px;
+  background: var(--dio-surface);
+  border: 1px solid var(--dio-line);
+  border-radius: var(--dio-r);
+  padding: 16px 8px 13px; cursor: pointer;
+  box-shadow: var(--dio-shadow);
+  transition: border-color .15s, box-shadow .15s, transform .12s;
+  font: inherit; text-align: center;
+}
+.dio-stat:hover {
+  border-color: var(--st, var(--dio-brand));
+  box-shadow: var(--dio-shadow-2); transform: translateY(-1px);
+}
+.dio-stat:focus-visible { outline: 2px solid var(--dio-brand); outline-offset: 2px; }
+/* Adad — HERO */
+b.dio-stat-num {
+  font-size: 30px; font-weight: 800; line-height: 1;
+  color: var(--st, var(--dio-brand));
+  font-variant-numeric: tabular-nums;
+}
+.dio-stat-lbl {
+  font-size: 12px; color: var(--dio-ink-2); line-height: 1.45;
+  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+}
+/* Icon — sirf ishara, hawi nahi (pehle ye sab se bara tha) */
+.dio-stat-ic {
+  position: absolute; inset-block-start: 9px; inset-inline-start: 10px;
+  width: 15px; height: 15px; fill: none;
+  stroke: var(--st, var(--dio-brand)); stroke-width: 1.7;
+  stroke-linecap: round; stroke-linejoin: round; opacity: .42;
+}
+/* Sifar — shor kam */
+.dio-stat.is-zero .dio-stat-num { color: var(--dio-ink-3); }
+.dio-stat.is-zero .dio-stat-ic  { opacity: .2; }
+
+/* ── Aaj ki tarjeehat — sanjeeda, bina gradient ── */
+.dio-prio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; direction: rtl; }
+.dio-prio-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  background: var(--dio-surface);
+  border: 1px solid var(--dio-line);
+  border-inline-start: 3px solid var(--dio-ink-3);
+  border-radius: var(--dio-r); padding: 13px 15px; cursor: pointer;
+  box-shadow: var(--dio-shadow); transition: box-shadow .15s, transform .12s;
+  font: inherit; text-align: right; direction: rtl;
+}
+.dio-prio-card:hover { box-shadow: var(--dio-shadow-2); transform: translateY(-1px); }
+b.dio-prio-num {
+  font-size: 28px; font-weight: 800; line-height: 1.1;
+  color: var(--dio-ink); font-variant-numeric: tabular-nums;
+}
+.dio-prio-lbl {
+  font-size: 13px; font-weight: 700; color: var(--dio-ink);
+  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+}
+small.dio-prio-sub {
+  font-size: 11px; color: var(--dio-ink-3);
+  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+}
+.dio-prio-card.tone-info  { border-inline-start-color: var(--dio-brand); }
+.dio-prio-card.tone-ok    { border-inline-start-color: var(--dio-ok); }
+.dio-prio-card.tone-alert { border-inline-start-color: var(--dio-alert); }
+.dio-prio-card.tone-alert .dio-prio-num { color: var(--dio-alert); }
+.dio-prio-card.tone-calm  { border-inline-start-color: var(--dio-ink-3); }
+
+/* ── Ayat — barqarar, magar khamosh andaz me ── */
+.dio-ayat {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--dio-surface) !important;
+  border: 1px solid var(--dio-line) !important;
+  border-inline-start: 3px solid var(--dio-ok) !important;
+  border-radius: var(--dio-r) !important;
+  box-shadow: var(--dio-shadow);
+}
+.dio-ayat #islamic-text { color: var(--dio-ink) !important; }
+
+/* ── Mobile ── */
+@media (max-width: 900px) {
+  .dio-stats { display: flex !important; overflow-x: auto; gap: 8px;
+               scroll-snap-type: x mandatory; padding-bottom: 4px; }
+  .dio-stat  { min-width: 116px; flex: 0 0 auto; scroll-snap-align: start; }
+  .dio-prio  { grid-template-columns: 1fr; }
+  .dio-id-name { font-size: 16px; }
+}
+
+/* ── Chhapai: dashboard ki sajawat kaghaz par nahi ── */
+@media print {
+  .dio-idcard, .dio-stats, .dio-prio, .dio-ayat { box-shadow: none !important; }
+}
+
+/* Pehli baar wala rehnumai card — sanjeeda, aik hi lehja (pehle gehra
+   teal gradient tha jo poore safhe par hawi ho jata tha). Ye card
+   "سمجھ گیا" dabate hi hamesha ke liye chala jata hai. */
+.dio-onboard {
+  background: var(--dio-surface);
+  border: 1px solid var(--dio-line);
+  border-inline-start: 3px solid var(--dio-brand);
+  border-radius: var(--dio-r);
+  padding: 14px 16px; margin-bottom: 16px;
+  direction: rtl; box-shadow: var(--dio-shadow);
+}
+.dio-onboard div[style*="color:#fff"],
+.dio-onboard div { color: var(--dio-ink) !important; }
+.dio-onboard div[style*="rgba(255,255,255,0.8)"] { color: var(--dio-ink-2) !important; }
+.dio-onboard button {
+  border-radius: 9px !important; min-height: 38px !important;
+  font-weight: 700 !important; border: 1px solid var(--dio-line) !important;
+  background: var(--dio-canvas) !important; color: var(--dio-ink-2) !important;
+}
+.dio-onboard button:first-of-type {
+  background: var(--dio-brand) !important; color: #fff !important; border-color: transparent !important;
+}
+
+/* Aankaray ke khane me unwan ko saans — Nastaliq ke neeche jane wale
+   harf (ج، ح، ی) adad se na takrayen */
+b.dio-stat-num { margin-bottom: 2px; }
+.dio-stat-lbl  { padding-bottom: 2px; }
