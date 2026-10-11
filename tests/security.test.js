@@ -1488,10 +1488,10 @@ test('تشخیصی SQL صرف پڑھے، کچھ بدلے نہیں', () => {
   assert.ok(/having count\(\*\) > 1/.test(s), 'duplicate pakdne wali query');
 });
 
-test('SW version phir bump hua (v508)', () => {
+test('SW version phir bump hua (v509)', () => {
   const sw = read('sw.js');
   const m = sw.match(/const CACHE_NAME = 'digital-io-v(\d+)'/);
-  assert.ok(m && Number(m[1]) >= 508, 'v508 ya aage, mila: v' + (m ? m[1] : '?'));
+  assert.ok(m && Number(m[1]) >= 509, 'v509 ya aage, mila: v' + (m ? m[1] : '?'));
   assert.ok(sw.includes('SERVICE WORKER v' + m[1]));
 });
 
@@ -1583,4 +1583,21 @@ test('ایج فنکشن: ?pubkey صرف عوامی حصہ دے، نجی کلید
   // ye shakh JWT se pehle hai, magar sirf GET + ?pubkey par
   assert.ok(/req\.method === "GET" && new URL\(req\.url\)\.searchParams\.has\("pubkey"\)/.test(src),
     'sirf GET ?pubkey par chale — POST wala license raasta na badle');
+});
+
+test('عوامی کلید اصلی P-256 نقطہ ہو (ٹائپنگ کی غلطی نہ رہ جائے)', () => {
+  const src = read('license-token.js');
+  const x = src.match(/"x":\s*"([^"]*)"/)[1];
+  const y = src.match(/"y":\s*"([^"]*)"/)[1];
+  assert.ok(!/REPLACE_WITH/.test(x + y), 'placeholder reh gaya');
+  const b = (s) => Buffer.from(s.replace(/-/g,'+').replace(/_/g,'/'), 'base64');
+  assert.strictEqual(b(x).length, 32, 'x 32 bytes ho');
+  assert.strictEqual(b(y).length, 32, 'y 32 bytes ho');
+  // y^2 = x^3 - 3x + b  (mod p) — aik harf bhi ghalat ho to ye shart toot jati hai
+  const p  = 2n**256n - 2n**224n + 2n**192n + 2n**96n - 1n;
+  const bb = 0x5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604bn;
+  const X = BigInt('0x' + b(x).toString('hex'));
+  const Y = BigInt('0x' + b(y).toString('hex'));
+  const mod = (v) => ((v % p) + p) % p;
+  assert.strictEqual(mod(Y*Y), mod(X*X*X - 3n*X + bb), 'kleed P-256 curve par nahi — naqal karte waqt harf badal gaya');
 });
