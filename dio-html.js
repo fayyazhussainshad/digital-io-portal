@@ -40,7 +40,10 @@
       'face','color','size'
     ],
     // Safe URI schemes
-    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel|data:image\/(?:png|jpe?g|gif|webp|svg\+xml));|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
+    // BUG THA: scheme ke baad ':' ki jagah ';' tha, is liye DOMPurify
+    // https/http/mailto/tel/blob SAB ke src/href kaat deta tha — zimni me
+    // lagayi tasveer aur dastavez ke link toot jate the. Ab durust:
+    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel|blob|data):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
     // form, input, script wغیرہ auto-strip
     FORBID_TAGS: ['form','input','button','select','textarea','script','style','iframe','object','embed','link','meta','base','svg','math'],
     FORBID_ATTR: ['formaction','action','srcdoc','ping'],

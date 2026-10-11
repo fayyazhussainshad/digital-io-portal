@@ -19,7 +19,12 @@
 (function () {
   'use strict';
 
-  var DB = 'dio_sec', STORE = 'k', REC = 'tok', PFX = 'enc1$';
+  // AHEM: auth.js bhi 'dio_sec' database (store 'keys') istemaal karta hai.
+  // Pehle yahan bhi 'dio_sec' magar store 'k' tha — aik hi DB, aik hi version:
+  // onupgradeneeded sirf AIK baar chalta hai, to sirf AIK store banta tha aur
+  // dusre module ka har transaction NotFoundError se marta tha — yaani do me se
+  // aik encryption layer KHAMOSHI se band ho jati thi. Ab ALAG database:
+  var DB = 'dio_sec_store', STORE = 'k', REC = 'tok', PFX = 'enc1$';
 
   function _idb() {
     return new Promise(function (res, rej) {
@@ -44,18 +49,32 @@
     });
   }
 
+  // Do tab/PWA window aik sath cold-start karein to dono key bana kar
+  // aik dusre ki key par likh dete the — purane enc1$ blob phir kabhi na
+  // khulte. Is liye get-or-create AIK hi readwrite transaction me.
+  function _getOrCreate(db) {
+    return new Promise(function (res, rej) {
+      var tx = db.transaction(STORE, 'readwrite');
+      var os = tx.objectStore(STORE);
+      var g = os.get(REC);
+      g.onerror = function () { rej(g.error); };
+      g.onsuccess = function () {
+        if (g.result) { res(g.result); return; }
+        crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt'])
+          .then(function (k) {
+            try { os.put(k, REC); } catch (_) {}
+            tx.oncomplete = function () { res(k); };
+            tx.onerror = function () { res(k); };   // key phir bhi is session me chale
+          }, rej);
+      };
+    });
+  }
+
   var _keyP = null;
   function _key() {
     if (_keyP) return _keyP;
-    _keyP = (async function () {
-      var db = await _idb();
-      var k = await _get(db, REC);
-      if (!k) {
-        k = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
-        await _put(db, REC, k);
-      }
-      return k;
-    })();
+    _keyP = (async function () { return await _getOrCreate(await _idb()); })();
+    _keyP.catch(function () { _keyP = null; });   // nakaami cache na ho — agli baar phir koshish
     return _keyP;
   }
 
@@ -85,12 +104,17 @@
         if (v === null || v === undefined) return null;
         if (String(v).indexOf(PFX) !== 0) return v;      // purani sada value — migrate
         var out = await _dec(v);
-        return (out === null) ? null : out;              // na khul saka → logout, crash nahi
+        if (out === null) { try { localStorage.removeItem(k); } catch (_) {} }  // kharab blob na chhoro
+        return out;
       } catch (_) { return null; }
     },
     setItem: async function (k, v) {
       try { localStorage.setItem(k, await _enc(String(v))); }
-      catch (_) { try { localStorage.setItem(k, String(v)); } catch (_e) {} }   // degrade, na ke fail
+      catch (e) {
+        // Encryption nakaam — sada rakh lo (login na tootay) MAGAR chup na raho
+        try { if (window.dioLogError) dioLogError('secure-storage: encryption band, sada storage par', e); } catch (_) {}
+        try { localStorage.setItem(k, String(v)); } catch (_e) {}
+      }
     },
     removeItem: async function (k) {
       try { localStorage.removeItem(k); } catch (_) {}

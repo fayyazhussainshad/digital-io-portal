@@ -74,6 +74,20 @@ async function _dioLoginWithToken(key) {
     if (data.session.refresh_token) localStorage.setItem(key, await _dioEnc(data.session.refresh_token));
     currentUser = data.session.user;
     await _loadOfficerProfile();
+    // GATE YAHIN — PIN/biometric/token ka HAR raasta isi se guzarta hai.
+    // Pehle gate sirf password-login par tha, to mo'attal afsar PIN se
+    // seedha andar aa jata tha (PIN default panel bhi hai).
+    if (!_dioIsOwner(currentOfficer) &&
+        (_dioIsSuspended(currentOfficer) || _dioNotApproved(currentOfficer))) {
+      try { await supabaseClient.auth.signOut(); } catch (_) {}
+      try { await _dioPurgeOnSuspend(); } catch (_) {}
+      currentUser = null; currentOfficer = null;
+      try {
+        showToast(_dioIsSuspended(currentOfficer) ? '🚫 آپ کا اکاؤنٹ معطل ہے۔' :
+                  '⏳ آپ کا اکاؤنٹ منظوری کے انتظار میں ہے۔', 'error', 7000);
+      } catch (_) {}
+      return false;
+    }
     return true;
   } catch (_) { localStorage.removeItem(key); return false; }
 }
@@ -116,6 +130,42 @@ window._dioPinMatches = _dioPinMatches;
 //  local tasdeeq ke baad yeh function currentUser/currentOfficer
 //  bahaal kar deta hai — koi network call nahi.
 // ═══════════════════════════════════════════════════════════════
+// ── MO'ATTALI KE MUSHTARIK HELPERS ───────────────────────────────
+//  DB column `is_suspended` hai; kuch purane record me `suspended` bhi ho
+//  sakta hai — dono dekhte hain taake koi darz na bach jaye.
+function _dioIsSuspended(o) {
+  if (!o) return false;
+  return (o.is_suspended === true || o.is_suspended === 'true' ||
+          o.suspended    === true || o.suspended    === 'true');
+}
+//  Manzoori: sirf `=== true` ko manzoor maano. Pehle `=== false` dekha jata
+//  tha, to 'false' (string), 0, ya "f" jaise PostgREST ke rup manzoor ban jate.
+function _dioNotApproved(o) {
+  if (!o) return true;                       // koi record hi nahi → fail-closed
+  if (o.is_approved === undefined || o.is_approved === null) return false;  // column hi nahi
+  return !(o.is_approved === true || o.is_approved === 'true' || o.is_approved === 't');
+}
+window._dioNotApproved = _dioNotApproved;
+//  Maalik (superadmin) par mo'attali/subscription kabhi lagu nahi.
+function _dioIsOwner(o) {
+  return !!(o && o.role === 'superadmin');
+}
+//  Mo'attal hone par is device se offline daakhle ka raasta band karo,
+//  warna afsar internet band kar ke cache se andar aa jata.
+async function _dioPurgeOnSuspend() {
+  try {
+    ['dio_officer_cache','dio_pin_rt','dio_bio_rt','dio_license','dio_sub_cache',
+     'dio_biometric_email','dio_biometric_token','dio_err_log'].forEach(function (k) {
+      try { localStorage.removeItem(k); } catch (_) {}
+    });
+  } catch (_) {}
+  try {
+    if (typeof offlineStore !== 'undefined' && offlineStore.clearSession) await offlineStore.clearSession();
+  } catch (_) {}
+}
+window._dioIsSuspended = _dioIsSuspended;
+window._dioIsOwner = _dioIsOwner;
+
 async function _dioOfflineRestore() {
   try {
     let sess = null;
@@ -130,8 +180,18 @@ async function _dioOfflineRestore() {
     if (!uid && officer) uid = officer.user_id;
     if (!email && officer) email = officer.email || null;
     if (!uid) return false;                       // koi cached session nahi — offline login mumkin nahi
+    // Offline raasta bhi mo'attali check kare — warna afsar internet
+    // band kar ke cached session se andar aa jata (gate ka bypass).
+    // Fail-CLOSED: officer snapshot hi na ho to offline daakhla mat do —
+    // warna mo'attal afsar cache mita kar saaf record bana leta tha.
+    if (!officer) { try { await _dioPurgeOnSuspend(); } catch (_) {} return false; }
+    if (!_dioIsOwner(officer) && (_dioIsSuspended(officer) || _dioNotApproved(officer))) {
+      try { await _dioPurgeOnSuspend(); } catch (_) {}
+      try { showToast('🚫 آپ کا اکاؤنٹ معطل ہے۔ ایڈمن سے رابطہ کریں۔', 'error', 7000); } catch (_) {}
+      return false;
+    }
     currentUser = { id: uid, email: email || '' };
-    currentOfficer = officer || { user_id: uid, email: email || '', station: '', district: '', designation: '', role: 'officer' };
+    currentOfficer = officer;
     try { localStorage.setItem('dio_officer_cache', JSON.stringify(currentOfficer)); } catch (_) {}
     return true;
   } catch (_) { return false; }
@@ -202,19 +262,25 @@ async function doLogin() {
     // Check if officer is approved (skip for admins/superadmins)
     const role = currentOfficer?.role || 'officer';
     const isPrivileged = ['admin','superadmin'].includes(role);
-    if (!isPrivileged && currentOfficer && currentOfficer.is_approved === false) {
+    if (!_dioIsOwner(currentOfficer) && _dioNotApproved(currentOfficer)) {
       await supabaseClient.auth.signOut();
       currentUser = null; currentOfficer = null;
       setLoginLoading(false);
       showToast('⏳ آپ کا اکاؤنٹ ابھی منظوری کے انتظار میں ہے۔ ایڈمن سے رابطہ کریں۔', 'warn', 6000);
       return;
     }
-    // Check if suspended
-    if (currentOfficer && currentOfficer.suspended === true) {
-      await supabaseClient.auth.signOut();
+    // ── MO'ATTALI KA GATE ─────────────────────────────────────
+    // BUG THA: yahan pehle `currentOfficer.suspended` check hota tha,
+    // magar DB ka column `is_suspended` hai (admin.js wahi likhta hai) —
+    // is liye ye check KABHI chala hi nahi aur mo'attal afsar poori app
+    // istemaal kar leta tha. Ab dono naam dekhte hain.
+    // Sirf SUPERADMIN (maalik) mustasna — use system kabhi band na kare.
+    if (!_dioIsOwner(currentOfficer) && _dioIsSuspended(currentOfficer)) {
+      try { await supabaseClient.auth.signOut(); } catch (_) {}
+      try { await _dioPurgeOnSuspend(); } catch (_) {}
       currentUser = null; currentOfficer = null;
       setLoginLoading(false);
-      showToast('🚫 آپ کا اکاؤنٹ معطل کر دیا گیا ہے۔ ایڈمن سے رابطہ کریں۔', 'error', 6000);
+      showToast('🚫 آپ کا اکاؤنٹ معطل ہے۔ ایڈمن سے رابطہ کریں۔', 'error', 7000);
       return;
     }
 

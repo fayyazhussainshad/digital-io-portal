@@ -17,6 +17,23 @@
   var KEY = 'dio_err_log', MAX = 50;
   var _recent = [];   // in-memory de-dupe (spam roko)
 
+  // ── REDACTION ─────────────────────────────────────────────────
+  //  Error ka matn aksar bheja hua data doharata hai (PostgREST ki ghalti
+  //  me field ki value aa jati hai). CNIC, mobile, token, password waghera
+  //  log me nahi jane chahiyen — khaas kar mushtarik thana device par.
+  function _redact(t) {
+    var x = String(t == null ? '' : t);
+    try {
+      x = x.replace(/\b\d{5}-\d{7}-\d\b/g, '[CNIC]')          // 35202-1234567-1
+           .replace(/\b\d{13}\b/g, '[CNIC]')                    // bina dash
+           .replace(/\b(?:\+92|0)3\d{2}[- ]?\d{7}\b/g, '[MOBILE]')
+           .replace(/\b[\w.%+-]+@[\w.-]+\.[a-z]{2,}\b/gi, '[EMAIL]')
+           .replace(/(eyJ[\w-]+\.[\w-]+\.)[\w-]+/g, '$1[JWT]')  // JWT
+           .replace(/((?:password|passwd|pin|token|apikey|api_key|secret|authorization)\s*[:=]\s*)\S+/gi, '$1[HIDDEN]');
+    } catch (_) {}
+    return x.slice(0, 500);                                        // lambai ki hadd
+  }
+
   function _store(rec) {
     try {
       var arr = JSON.parse(localStorage.getItem(KEY) || '[]');
@@ -50,8 +67,8 @@
       if (_recent.some(function (r) { return r.sig === sig; })) return;
       _recent.push({ sig: sig, t: now });
 
-      var rec = { k: kind, m: msg, s: source || '', l: line || 0, c: col || 0,
-        st: stack, u: location.href, ua: navigator.userAgent, t: new Date().toISOString() };
+      var rec = { k: kind, m: _redact(msg), s: source || '', l: line || 0, c: col || 0,
+        st: _redact(stack), u: String(location.hash || ''), ua: navigator.userAgent, t: new Date().toISOString() };
       try { console.error('[DIO error]', kind, msg, source ? ('@' + source + ':' + line) : '', err || ''); } catch (_) {}
       _store(rec);
       _remote(rec);

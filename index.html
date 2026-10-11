@@ -1173,14 +1173,14 @@ window.addEventListener('error', function(e){
   var b = document.getElementById('dio-error-banner');
   if (b) {
     b.style.display = 'block';
-    b.innerHTML += '⚠️ ' + (e.message||'error') + '<br><small>' + (e.filename||'').split('/').pop() + ':' + (e.lineno||'?') + '</small><hr style="border-color:rgba(255,255,255,0.2);margin:4px 0;">';
+    b.textContent += '⚠️ ' + (e.message||'error') + '<br><small>' + (e.filename||'').split('/').pop() + ':' + (e.lineno||'?') + '</small><hr style="border-color:rgba(255,255,255,0.2);margin:4px 0;">';
   }
 });
 window.addEventListener('unhandledrejection', function(e){
   var b = document.getElementById('dio-error-banner');
   if (b) {
     b.style.display = 'block';
-    b.innerHTML += '⚠️ Promise: ' + (e.reason && e.reason.message ? e.reason.message : e.reason) + '<hr style="border-color:rgba(255,255,255,0.2);margin:4px 0;">';
+    b.textContent += '⚠️ Promise: ' + (e.reason && e.reason.message ? e.reason.message : e.reason) + '<hr style="border-color:rgba(255,255,255,0.2);margin:4px 0;">';
   }
 });
 </script>

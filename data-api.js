@@ -461,6 +461,7 @@ const _OFFICER_PROTECTED = [
   'role','is_approved','is_admin','approved_by','approved_at','is_verified','verified',
   'subscription_status','subscription_plan','subscription_expiry','subscription_ends_at',
   'subscription_started_at','trial_ends_at','trial_used',
+  'is_suspended','suspended','suspension_reason','suspended_by','suspended_at',
   'id','officer_id','user_id','auth_id','created_at'
 ];
 async function updateOfficerProfile(updates) {

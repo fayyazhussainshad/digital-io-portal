@@ -116,10 +116,21 @@ function _dioReadSubCache(oid) {
     if (!raw) return null;
     var c = JSON.parse(raw);
     if (!c || !c.t) return null;
-    if (oid && c.o && c.o !== oid) return null;   // dusre afsar ka cache na chale
+    // Pehle sirf tab radd hota tha jab c.o MOJOOD aur MUKHTALIF ho — yaani
+    // `o` field hata dene se cache HAR afsar par lag jata tha. Ab sakht:
+    // afsar maloom ho to cache ka afsar bhi maloom AUR barabar hona chahiye.
+    if (!oid) return null;                       // afsar hi maloom nahi → cache na maano
+    if (!c.o || c.o !== oid) return null;        // ghayab ya mukhtalif → radd
     if (c.s === 'suspended' || c.s === 'expired')
       return { status: c.s, daysLeft: 0, plan: c.p || 'بند' };
-    var elapsed = Math.floor((Date.now() - c.t) / 86400000);
+    // Ghari peeche karne se elapsed manfi ho kar miyaad BAHRTI thi.
+    // Ab: kabhi manfi nahi, aur sab se zyada dekha gaya waqt yaad rakhte hain.
+    var _now = Date.now();
+    try {
+      var hw = +(localStorage.getItem('dio_hw_clock') || 0);
+      if (hw > _now) _now = hw; else localStorage.setItem('dio_hw_clock', String(_now));
+    } catch (_) {}
+    var elapsed = Math.max(0, Math.floor((_now - c.t) / 86400000));
     var left = (c.d || 0) - elapsed;
     if (left <= 0)
       return { status: 'expired', daysLeft: 0, plan: 'میعاد ختم — آن لائن تجدید کریں' };
@@ -131,6 +142,11 @@ async function _dioOfflineStatus(oid) {
   try {
     if (typeof dioLicenseValid === 'function') {
       var lic = await dioLicenseValid();
+      // Token BEARER na ban jaye: doosre afsar ka token copy kar lena
+      // kaafi nahi hona chahiye — officer_id milna zaroori hai.
+      if (lic && lic.valid && oid && lic.officerId && lic.officerId !== oid) {
+        lic = { valid: false };
+      }
       if (lic && lic.valid) {
         return { status: 'active',
                  daysLeft: Math.max(1, Math.ceil((lic.entitledUntil - Date.now()) / 86400000)),
@@ -236,6 +252,35 @@ async function showSubscriptionBanner() {
   // ہوتا ہے — افسر اپنا ڈیٹا دیکھ/کھول سکتا ہے؛ پرنٹ/ترمیم/نیا اندراج گارڈز سے رکتے
   // ہیں۔ فوٹر بیج (updateSubBadge) حالت دکھاتا ہے۔
   if (window.DIO && DIO.sub) DIO.sub.setFromStatus(sub.status);
+
+  // ── MO'ATTAL = DAAKHLA BAND ───────────────────────────────────
+  //  4E ka faisla (view-only) sirf `expired` (miyaad khatam) ke liye
+  //  barqarar hai — afsar apna purana record/adaalati kaam dekh sake.
+  //  Magar `suspended` (mo'attal) alag cheez hai: us par ab poora
+  //  daakhla band hai, sirf tajdeed ka safha khulta hai.
+  //  Maalik (superadmin) par ye kabhi lagu nahi.
+  var _owner = (typeof currentOfficer !== 'undefined' && currentOfficer &&
+                currentOfficer.role === 'superadmin');
+  var _suspOfficer = (typeof _dioIsSuspended === 'function') &&
+                     _dioIsSuspended(typeof currentOfficer !== 'undefined' ? currentOfficer : null);
+  if (!_owner && (sub.status === 'suspended' || _suspOfficer)) {
+    // AHEM: sirf #main-app ka innerHTML badalna KAAFI NAHI tha — session
+    // zinda rehta, write-guard ka flag false rehta (wo sirf subscription ki
+    // halat se set hota hai), to mo'attal afsar print bhi kar leta aur
+    // showPage() se UI wapas bhi le aata. Ab: flag zabardasti TRUE, guard
+    // install, safha dikhao, aur session KHATAM karo.
+    try { if (window.DIO && DIO.sub) DIO.sub._blocked = true; } catch (_) {}
+    _installDioWriteGuard();
+    try { showSubscriptionRequired(sub); } catch (_) {}
+    if (_suspOfficer) {
+      // Idara-jati mo'attali → device se raasta band + logout
+      try { if (typeof _dioPurgeOnSuspend === 'function') await _dioPurgeOnSuspend(); } catch (_) {}
+      try { await supabaseClient.auth.signOut(); } catch (_) {}
+      currentUser = null; currentOfficer = null;
+    }
+    return;
+  }
+
   _installDioWriteGuard();   // central write-guard yaqeeni tor par lagao (supabaseClient ab mojood hai)
 }
 

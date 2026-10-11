@@ -70,8 +70,8 @@ async function _buildAdmin(role) {
     return !keys.some(k => _approvedKeys.has(k));
   });
 
-  const active    = officers.filter(o => o.is_approved && !o.suspended);
-  const suspended = officers.filter(o => o.suspended);
+  const active    = officers.filter(o => o.is_approved && !(o.is_suspended || o.suspended));
+  const suspended = officers.filter(o => (o.is_suspended || o.suspended));
   const total_cases = cases.length;
   const active_cases = cases.filter(c => c.status === 'under').length;
 
@@ -219,7 +219,7 @@ function _renderOfficersTab(officers, role) {
       <tbody>
         ${officers.map(o => {
           const cases = (window._adminData?.cases||[]).filter(c=>c.officer_id===o.id).length;
-          return `<tr style="${o.suspended?'opacity:0.6;':''}">
+          return `<tr style="${(o.is_suspended || o.suspended)?'opacity:0.6;':''}">
             <td>
               <div style="font-weight:700;">${esc(o.full_name)||'—'}</div>
               <div style="font-size:10px;color:var(--text-muted);">${o.email||''}</div>
@@ -236,7 +236,7 @@ function _renderOfficersTab(officers, role) {
               </select>
             </td>
             <td>
-              ${o.suspended
+              ${(o.is_suspended || o.suspended)
                 ? `<span class="pill pill-red">معطل</span>`
                 : o.is_approved
                   ? `<span class="pill pill-green">فعال</span>`
@@ -246,7 +246,7 @@ function _renderOfficersTab(officers, role) {
             <td style="white-space:nowrap;">
               <button class="btn btn-secondary btn-sm" onclick="_adminViewOfficer('${o.id}')">👁️</button>
               <button class="btn btn-secondary btn-sm" onclick="_adminEditOfficer('${o.id}')" title="معلومات ترمیم کریں">✏️</button>
-              ${o.suspended
+              ${(o.is_suspended || o.suspended)
                 ? `<button class="btn btn-primary btn-sm" onclick="_adminUnsuspend('${o.id}','${esc(o.full_name||'')}')">✅</button>`
                 : `<button class="btn btn-danger btn-sm" onclick="_adminSuspend('${o.id}','${esc(o.full_name||'')}')">🚫</button>`}
               ${!o.is_approved
@@ -853,7 +853,7 @@ async function _renderTrustTab(el) {
     _trustCount('recycle_bin'),
   ]);
   const officers = (window._adminData && window._adminData.officers) || [];
-  const activeOfficers = officers.filter(o => o.is_approved && !o.suspended).length;
+  const activeOfficers = officers.filter(o => o.is_approved && !(o.is_suspended || o.suspended)).length;
 
   const fmt = (n) => (n === null || n === undefined) ? '—' : n;
 
@@ -1068,7 +1068,7 @@ async function _adminViewOfficer(officerId) {
       <div>👮 <b>عہدہ:</b> ${esc(o.designation)||'—'}</div>
       <div>🏛️ <b>تھانہ:</b> ${esc(o.station)||'—'} · ${esc(o.district)||'—'}</div>
       <div>🔑 <b>Role:</b> ${o.role||'officer'}</div>
-      <div>📊 <b>Status:</b> ${o.suspended?'<span style="color:var(--red);">معطل</span>':o.is_approved?'<span style="color:var(--green);">فعال</span>':'زیر التواء'}</div>
+      <div>📊 <b>Status:</b> ${(o.is_suspended || o.suspended)?'<span style="color:var(--red);">معطل</span>':o.is_approved?'<span style="color:var(--green);">فعال</span>':'زیر التواء'}</div>
       <div>📁 <b>کل مقدمات:</b> ${cases.length}</div>
       ${o.suspension_reason?`<div>📝 <b>معطلی وجہ:</b> ${esc(o.suspension_reason)}</div>`:''}
     </div>`,

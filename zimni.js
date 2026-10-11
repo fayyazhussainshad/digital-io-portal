@@ -2505,6 +2505,24 @@ function _printZimni() {
 
 // چالان/اخراج jaisa print: kaghaz + margins (1cm / _ch173SideMargin) report173 se,
 // CSS bhi report173 (_ch173CSS) + zimni form CSS — screen aur print bilkul aik.
+// ── PRINT ke liye MEHFOOZ body ────────────────────────────────
+//  DOMPurify `button` hata deta hai magar KEEP_CONTENT ki wajah se us ka
+//  andarooni text (accused-picker ka '▾') reh jata tha — aur chhupane wali
+//  CSS (`button{display:none}`) khali text node par nahi lagti, is liye
+//  har chhapi hui zimni me aik awara '▾' aa jata. Is liye sanitize se
+//  PEHLE picker buttons poore (text samet) nikal dete hain.
+function _zimniSafePrint(html) {
+  var h = String(html == null ? '' : html);
+  try {
+    h = h.replace(/<button\b[^>]*>[\s\S]*?<\/button>/gi, '');   // picker/grip buttons
+  } catch (_) {}
+  try {
+    if (window.DIO && DIO.html && DIO.html.safe) return DIO.html.safe(h);
+  } catch (_) {}
+  return h;   // sanitizer na mile to bina badle — chhapai kabhi na rukay
+}
+window._zimniSafePrint = _zimniSafePrint;
+
 function _zimniPrintHTML(inner) {
   const paper = (typeof _ch173Paper !== 'undefined') ? _ch173Paper : 'legal';
   const side  = (typeof _ch173SideMargin === 'function') ? _ch173SideMargin() : '0.2cm';
@@ -3000,7 +3018,7 @@ function _zimniPrintDoc(inner) {
 function _zimniDocHTML(z) {
   const c = z.content || {};
   // XSS: print/PDF raasta sanitize nahi karta tha (editor karta hai)
-  return _zimniPrintHTML(((window.DIO&&DIO.html&&DIO.html.safe)?DIO.html.safe(c.bodyHtml||''):(c.bodyHtml||'')));
+  return _zimniPrintHTML(_zimniSafePrint(c.bodyHtml));
 }
 
 function _zimniById(id) { return (_zimniList || []).find(z => String(z.id) === String(id)); }
@@ -3022,7 +3040,7 @@ function _printAllZimni() {
   const body = _zimniList.map((z, i) => {
     const c = z.content || {};
     const brk = (i < _zimniList.length - 1) ? 'style="page-break-after:always;"' : '';
-    return `<div ${brk}>${((window.DIO&&DIO.html&&DIO.html.safe)?DIO.html.safe(c.bodyHtml||''):(c.bodyHtml||''))}</div>`;
+    return `<div ${brk}>${_zimniSafePrint(c.bodyHtml)}</div>`;
   }).join('');
   const html = _zimniPrintHTML(body);
   if (typeof dioPrint === 'function') dioPrint(html);
@@ -4494,7 +4512,7 @@ window._printZimniA = _printZimniA;
 function _zaDocHTML(z) {
   const c = z.content || {};
   // XSS: androoni print/PDF raasta bhi sanitize nahi karta tha
-  return _zaPrintHTML(((window.DIO&&DIO.html&&DIO.html.safe)?DIO.html.safe(c.bodyHtml||''):(c.bodyHtml||'')));
+  return _zaPrintHTML(_zimniSafePrint(c.bodyHtml));
 }
 function _zaById(id) { return (_zaList || []).find(z => String(z.id) === String(id)); }
 
@@ -4513,7 +4531,7 @@ function _printAllZimniA() {
   const body = _zaList.map((z, i) => {
     const c = z.content || {};
     const brk = (i < _zaList.length - 1) ? 'style="page-break-after:always;"' : '';
-    return `<div ${brk}>${((window.DIO&&DIO.html&&DIO.html.safe)?DIO.html.safe(c.bodyHtml||''):(c.bodyHtml||''))}</div>`;
+    return `<div ${brk}>${_zimniSafePrint(c.bodyHtml)}</div>`;
   }).join('');
   const html = _zaPrintHTML(body);
   if (typeof dioPrint === 'function') dioPrint(html);
