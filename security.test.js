@@ -476,9 +476,10 @@ test('har lazy safhe ki file boot.js ke naqshe me hai', () => {
 
 // ══ CHALLAN KA MOBILE FORM (round-5) ═══════════════════════════
 test('zimni ka form-mode CSS SIRF .zf-editor par (challan mehfooz)', () => {
-  const c = read('mobile.css');
-  const bad = c.split('\n').filter((l) =>
-    /#ch173-doc(?!\.zf-editor)/.test(l) && !l.trim().startsWith('/*') && !l.trim().startsWith('*'));
+  // Block comment POORA nikalo — warna comment mein likhi wazahat
+  // (jo khud is qaide ki yaad-dihani hai) test ko toR deti hai.
+  const c = read('mobile.css').replace(/\/\*[\s\S]*?\*\//g, '');
+  const bad = c.split('\n').filter((l) => /#ch173-doc(?!\.zf-editor)/.test(l));
   assert.strictEqual(bad.length, 0,
     'zimni aur challan ka id AIK hi (ch173-doc) hai — bina .zf-editor ke qaida challan par bhi lagta hai, ' +
     'aur `width:100% !important` `_printR173` ki inline 8.5in naap ko HARA deta hai. Mile: ' + bad.join(' | '));
@@ -773,4 +774,635 @@ test('SW version phir bump hua', () => {
   const m = sw.match(/const CACHE_NAME = 'digital-io-v(\d+)'/);
   assert.ok(m && Number(m[1]) >= 496, 'v496 ya aage, mila: v' + (m ? m[1] : '?'));
   assert.ok(sw.includes("'/global-mic.js'"), 'mic offline par bhi mile');
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   ROUND 6 — Chip ki tanhai, murda code, rang ka waahid zaria
+   ═══════════════════════════════════════════════════════════════ */
+
+test('har chip ki APNI shart — koi chip doosri ko mitati nahi', () => {
+  // MULZIMAAN
+  const s = read('suspects.js');
+  assert.ok(/const _suspFilter = \{ type: '', q: '' \}/.test(s),
+    'is safhe ki apni halat ho \u2014 chip aur talaash ke ALAG khane');
+  assert.ok(/function _suspVisible\(\)/.test(s), 'dono shartein AIK hi raaste se guzren');
+  assert.ok(!/const people = window\._suspectsCache \|\| \[\];\n  q =/.test(s),
+    'purana tareeqa: talaash poori fehrist se chhaanti thi aur chip ko mita deti thi');
+  // chip sirf apna khana bhare
+  assert.ok(/_suspFilter\.type = type \|\| '';\n  _suspRender\(\)/.test(s));
+  assert.ok(/_suspFilter\.q = \(q \|\| ''\)\.toLowerCase\(\)\.trim\(\);\n  _suspRender\(\)/.test(s));
+
+  // TEMPLATES
+  const t = read('templates.js');
+  assert.ok(/function _tplVisible\(\)/.test(t), 'aik hi chhaanne wala raasta');
+  assert.ok(/let _tplQuery = ''/.test(t), 'talaash ka apna khana');
+});
+
+test('MASTER fehrist kabhi adal-badal na ho (sab se khatarnak amal)', () => {
+  const t = read('templates.js');
+  // asal code mein ye satr nahi honi chahiye (sirf comment mein wazahat)
+  // block comment poora nikalo — warna comment mein likhi wazahat hi test toR deti hai
+  const code = t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  assert.ok(!/const saved = _tplList; _tplList = list;/.test(code),
+    'ASAL fehrist ko chand lamhon ke liye chhota kar dena \u2014 us darmiyan koi ' +
+    'doosra kaam adhoori fehrist ko "sab kuch" samajh leta tha');
+  assert.ok(/_tplList\.slice\(\)/.test(t), 'hamesha NAQAL par kaam ho');
+});
+
+test('talaash likhte waqt safha dobara na bane (5-C bhi)', () => {
+  const f = read('fivec.js');
+  assert.ok(!/oninput="clearTimeout\(window\._5cTmr\);window\._5cTmr=setTimeout\(\(\)=>renderFiveC/.test(f),
+    'purana `oninput` poora safha dobara banata tha \u2014 cursor nikal jata tha');
+  assert.ok(/oninput="_f5cOnSearch\(this\.value\)"/.test(f));
+  assert.ok(/id="f5c-rows"/.test(f), 'sirf qatarein badlen');
+  assert.ok(!/Search by complainant name/.test(f), 'safha Urdu mein ho');
+});
+
+test('koi bhi do failen aik hi naam top-level par na banayen', () => {
+  // Classic <script> sab aik hi global scope mein chalti hain. Do files
+  // ne aik hi naam banaya to wo aik doosre ka kaam kharab kar sakti hain.
+  const fs = require('fs'), path = require('path');
+  const dir = path.join(__dirname, '..');
+  const files = fs.readdirSync(dir).filter(f => f.endsWith('.js') && f !== 'sw.js');
+  const seen = new Map(); const clash = [];
+  for (const f of files) {
+    const lines = fs.readFileSync(path.join(dir, f), 'utf8').split('\n');
+    let depth = 0, inBlock = false, inTpl = 0;
+    for (const raw of lines) {
+      let l = raw;
+      if (inBlock) { const e = l.indexOf('*/'); if (e === -1) continue; l = l.slice(e + 2); inBlock = false; }
+      const b = l.indexOf('/*');
+      if (b !== -1 && l.indexOf('*/', b) === -1) { inBlock = true; l = l.slice(0, b); }
+      l = l.replace(/\/\/.*$/, '');
+      const bt = (l.match(/`/g) || []).length;
+      if (inTpl) { inTpl = (inTpl + bt) % 2; continue; }
+      if (bt % 2) inTpl = 1;
+      if (depth === 0) {
+        const m = /^(?:\s*)(?:async\s+)?(function|const|let|var|class)\s+([A-Za-z_$][\w$]*)/.exec(l);
+        if (m) {
+          const n = m[2];
+          if (seen.has(n) && seen.get(n) !== f) clash.push(n + ' (' + seen.get(n) + ' + ' + f + ')');
+          else seen.set(n, f);
+        }
+      }
+      for (const ch of l) { if (ch === '{') depth++; else if (ch === '}') depth = Math.max(0, depth - 1); }
+    }
+  }
+  assert.strictEqual(clash.length, 0, 'takrao mile: ' + clash.slice(0, 6).join(', '));
+});
+
+test('rang ka WAAHID zaria — theme-pro app ki theme se chale', () => {
+  const c = read('theme-pro.css');
+  // apni alag fehrist nahi — app ke khanon se
+  assert.ok(/--dio-surface:\s*var\(--bg-card/.test(c),
+    'apni alag rangon ki fehrist rakhne se gyarah mein se das theme kharab thin: ' +
+    'app ke khane tareek ho jate the magar ye file roshan reh jati thi');
+  assert.ok(/--dio-ink:\s*var\(--text-primary/.test(c));
+  assert.ok(/--dio-line:\s*var\(--border/.test(c));
+  assert.ok(/--dio-canvas:\s*var\(--bg-primary/.test(c));
+  const css = c.replace(/\/\*[\s\S]*?\*\//g, '');   // comment ki wazahat ginti mein na aaye
+  assert.ok(!/@media \(prefers-color-scheme: dark\)/.test(css),
+    'OS ki setting se nahi \u2014 app ki apni theme se rang aayen');
+});
+
+test('theme chunne ka khana — gyarah ki gyarah, Urdu mein', () => {
+  const a = read('app-core.js');
+  const h = read('index.html');
+  const m = a.match(/const DIO_THEMES = \[[\s\S]*?\];/);
+  assert.ok(m, 'theme ki fehrist mojood ho');
+  const keys = [...m[0].matchAll(/k:\s*'([a-z]+)'/g)].map(x => x[1]);
+  // index.html mein jitni theme hain, utni hi chunne ko milen
+  const inCss = [...new Set([...h.matchAll(/html\[data-theme="([a-z]+)"\]/g)].map(x => x[1]))];
+  const missing = inCss.filter(k => !keys.includes(k));
+  assert.strictEqual(missing.length, 0,
+    'CSS mein likhi hui magar afsar tak na pahunchne wali theme: ' + missing.join(', '));
+  assert.ok(keys.includes('dark'), 'default (dark) bhi fehrist mein ho');
+  assert.ok(!/[\u{1F300}-\u{1FAFF}]/u.test(m[0]), 'naam Urdu mein, emoji nahi');
+});
+
+test('koi murda function ya khana na bacha ho', () => {
+  const fs = require('fs'), path = require('path');
+  const dir = path.join(__dirname, '..');
+  const files = fs.readdirSync(dir).filter(f => f.endsWith('.js') && f !== 'sw.js');
+  const corpus = files.map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n')
+               + '\n' + read('index.html');
+  const KEEP = new Set(['renderSettings','renderCases','renderSuspects','renderFiveC',
+    'renderTemplates','renderCourt','renderReminders','renderEvidence','renderDashboard',
+    'renderSearch','renderIncident','renderBackup','renderBin','renderPerformance']);
+  const dead = [];
+  for (const f of files) {
+    fs.readFileSync(path.join(dir, f), 'utf8').split('\n').forEach((l, i) => {
+      const m = /^(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/.exec(l);
+      if (!m || KEEP.has(m[1])) return;
+      const re = new RegExp('(?<!function\\s)(?<![\\w$.])' + m[1].replace(/\$/g, '\\$') + '(?![\\w$])', 'g');
+      if ((corpus.match(re) || []).length === 0) dead.push(f + ':' + (i + 1) + ' ' + m[1]);
+    });
+  }
+  assert.strictEqual(dead.length, 0, 'murda function: ' + dead.slice(0, 8).join(', '));
+});
+
+test('SW version phir bump hua (v497)', () => {
+  const sw = read('sw.js');
+  const m = sw.match(/const CACHE_NAME = 'digital-io-v(\d+)'/);
+  assert.ok(m && Number(m[1]) >= 501, 'v501 ya aage, mila: v' + (m ? m[1] : '?'));
+  assert.ok(sw.includes('SERVICE WORKER v' + m[1]), 'header ka comment bhi wahi');
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   ROUND 7 — MOBILE par wahi sab
+   ═══════════════════════════════════════════════════════════════ */
+
+test('mobile: card apni chauRai se bahar na jaye', () => {
+  const m = read('mobile.css');
+  // cases.js ka jadwal `min-width:900px` ke sath aata hai; card-mode
+  // mein wo bhi lagu rehta tha — 390px ki sakreen par 898px ka card.
+  const rule = m.match(/table\.dio-cards \{[\s\S]*?\}/);
+  assert.ok(rule, 'card-mode ke liye chauRai ka qaida ho');
+  assert.ok(/min-width:\s*0\s*!important/.test(rule[0]),
+    'desktop ka `min-width:900px` card-mode mein qeematein sakreen se bahar dhakel deta tha');
+  assert.ok(/width:\s*100%\s*!important/.test(rule[0]));
+});
+
+test('mobile: card ka unwan apni satar par (Nastaleeq ko jagah chahiye)', () => {
+  const m = read('mobile.css');
+  const b = m.match(/table\.dio-cards td::before \{[\s\S]*?\}/);
+  assert.ok(b, '::before ka qaida ho');
+  assert.ok(/flex:\s*0 0 100%/.test(b[0]),
+    'unwan aur qeemat aik hi satar par rakhne se Nastaleeq ke huroof ' +
+    'aik doosre par chaRh jate the');
+  // do khane — warna aik mocaddme ka card poori sakreen le leta hai
+  assert.ok(/table\.dio-cards tr \{[\s\S]*?grid-template-columns: 1fr 1fr/.test(m),
+    'chhote khane do-do kar ke — warna 7 mocaddmat = 5,562px ka safar');
+});
+
+test('mobile: grid ka khana apne mawad se phail kar bahar na jaye', () => {
+  const m = read('mobile.css');
+  assert.ok(/\.page-content \[style\*="display:grid"\] > \* \{ min-width: 0; \}/.test(m),
+    '`1fr` ka matlab "kam se kam apne mawad jitna" hai — is se ' +
+    'doosra khana nichuR kar sakreen se bahar chala jata tha');
+});
+
+test('mobile ke card-qaide ASAL jadwal ke qaidon se na takrayen', () => {
+  const c = read('theme-pro.css');
+  // desktop ke jadwal-qaide card-mode par na lagen
+  for (const sel of ['thead th \\{\\n  position: sticky',
+                     'tbody tr:nth-child\\(even\\) td',
+                     'thead th:first-child',
+                     'td:last-child \\{\\n  white-space: nowrap']) {
+    const re = new RegExp('\\.page-content \\.data-table:not\\(\\.dio-cards\\)[^{]*' + sel);
+    assert.ok(re.test(c) || new RegExp('\\.data-table:not\\(\\.dio-cards\\)').test(c),
+      'jadwal ka qaida `:not(.dio-cards)` ke sath hona chahiye: ' + sel);
+  }
+  assert.ok(!/\.page-content \.data-table thead th \{\n  position: sticky/.test(c),
+    'bina `:not(.dio-cards)` wala purana qaida na bache');
+});
+
+test('mobile: waqiati report ka form jadwal phone par sataron mein', () => {
+  assert.ok(/<table class="inc-table"/.test(read('incident.js')),
+    'form jadwal ko pehchanne ke liye class chahiye');
+  const m = read('mobile.css');
+  assert.ok(/table\.inc-table td \{[\s\S]*?display: block !important/.test(m) ||
+            /#page-content table\.inc-table td/.test(m),
+    'chaar khane wala form phone par har khana apni satar par');
+});
+
+test('mobile ke naye qaide SIRF phone par lagen (desktop na bigRe)', () => {
+  const m = read('mobile.css');
+  // har naya qaida media query ke ANDAR ho
+  const idx = m.indexOf('table.dio-cards tr {');
+  assert.ok(idx > 0, 'card-grid ka qaida mojood ho');
+  const before = m.slice(0, idx);
+  const opens = (before.match(/@media[^{]*\{/g) || []).length;
+  // us se pehle jitne @media khule, utne hi band na huay hon
+  let depth = 0, media = 0;
+  for (const ch of before) { if (ch === '{') depth++; else if (ch === '}') depth--; }
+  assert.ok(opens > 0 && depth > 0,
+    'ye qaide media query ke ANDAR hone chahiye, warna desktop ka jadwal bhi card ban jata');
+});
+
+test('roka hua safha "khul raha hai" par atka na reh jaye', () => {
+  const a = read('app-core.js');
+  assert.ok(/DIO\.states\.permDenied\(\)/.test(a),
+    'rasai na milne par sirf toast kaafi nahi — wajah safhe par bhi likhi jaye, ' +
+    'warna boot.js ka "کھل رہا ہے…" hamesha ke liye laga reh jata hai');
+  const b = read('boot.js');
+  assert.ok(/data-dio-loading/.test(b), 'loading ka nishan lagaya jaye taake baad mein pehchana ja sake');
+  assert.ok(/c\.removeAttribute\('data-dio-loading'\)/.test(b), 'aur hataya bhi jaye');
+});
+
+test('nishan har jagah SVG — safha-sazi mein emoji na bachen', () => {
+  const fs = require('fs'), path = require('path');
+  const dir = path.join(__dirname, '..');
+  // Dastavez/print banane wali failen mustasna — wahan nishan toolbar ke hain
+  const SKIP = new Set(['zimni.js','report173.js','toolbar.js','naqsha-mauqa.js',
+    'editor-tools.js','saza-slip.js','misal-templates.js','darkhwastain.js','doc-viewer.js','sw.js']);
+  const EMO = /[⌚-⏺☀-➿⬀-⯿\u{1F000}-\u{1FAFF}]/u;
+  const bad = [];
+  for (const f of fs.readdirSync(dir).filter(x => x.endsWith('.js') && !SKIP.has(x))) {
+    fs.readFileSync(path.join(dir, f), 'utf8').split('\n').forEach((l, i) => {
+      const t = l.trim();
+      if (t.startsWith('//') || t.startsWith('*') || t.startsWith('/*')) return;  // comment
+      if (/\bicon\s*:\s*['"]/.test(l) && EMO.test(l)) bad.push(f + ':' + (i + 1));
+    });
+  }
+  assert.strictEqual(bad.length, 0, 'nishan ke data mein emoji: ' + bad.slice(0, 6).join(', '));
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   ROUND 8 — Har safha AIK jaisa
+   ═══════════════════════════════════════════════════════════════ */
+
+test('har safha MAYARI sarnama istemal kare', () => {
+  // `.page-header` + `.page-title` har safhe par — warna har safhe ka
+  // unwan apni marzi ki jagah, apni marzi ke naap par hota hai.
+  const PAGES = ['cases.js','suspects.js','court.js','reminders.js','evidence.js',
+                 'templates.js','law-library.js','ahkamat.js','backup.js','bin.js',
+                 'performance.js','settings.js','fivec.js','search.js'];
+  const missing = [];
+  for (const f of PAGES) {
+    const s = read(f);
+    if (!/class="page-header"/.test(s)) missing.push(f + ' (page-header)');
+    else if (!/class="page-title"/.test(s)) missing.push(f + ' (page-title)');
+  }
+  assert.strictEqual(missing.length, 0, 'mayari sarnama nahi: ' + missing.join(', '));
+});
+
+test('"shamil karen" wala button har safhe par dio-add-btn ho', () => {
+  // Sirf `.dio-add-btn` par hi wo qaida lagta hai jo use DAAIN sirey
+  // par rakhta hai. Bina is class ke button apni marzi ki jagah chala jata hai.
+  const WITH_ADD = ['cases.js','suspects.js','court.js','reminders.js','evidence.js',
+                    'templates.js','law-library.js','backup.js','fivec.js'];
+  const bad = [];
+  for (const f of WITH_ADD) {
+    const s = read(f);
+    const hdr = s.slice(s.indexOf('class="page-header"'), s.indexOf('class="page-header"') + 900);
+    if (!/dio-add-btn/.test(hdr)) bad.push(f);
+  }
+  assert.strictEqual(bad.length, 0, 'sarnama mein dio-add-btn nahi: ' + bad.join(', '));
+});
+
+test('safha-sazi ka matn Urdu mein (barand ke naam mustasna)', () => {
+  const fs = require('fs'), path = require('path');
+  const dir = path.join(__dirname, '..');
+  // Sarkari/angrezi dastavez (RFA, CDR) aur dastavez-saaz failen mustasna
+  const SKIP = new Set(['zimni.js','report173.js','toolbar.js','naqsha-mauqa.js','editor-tools.js',
+    'saza-slip.js','misal-templates.js','darkhwastain.js','doc-viewer.js','sw.js','rfa-form.js',
+    'cdr-imei.js','admin.js','staff-v2.js','sho-dsp.js','error-handler.js','license-token.js',
+    'dio-html.js','dio-states.js','secure-storage.js','offline-store.js','boot.js','dio-custody.js',
+    'subscription.js','auth.js','app-core.js','data-api.js','misal-docs.js','misal-fir.js',
+    'case-sharing.js','saved-docs.js','cro-card.js','incident.js','help-guide.js','witnesses.js',
+    'mulziman.js','fir.js','search.js','dashboard.js','case-form.js']);
+  // Barand / tikniki naam — inhen angrezi mein hi rehna chahiye
+  // Barand aur tikniki naam — ye angrezi mein hi rehte hain (afsar bhi
+  // inhen isi tarah pehchanta hai). Baqi sab Urdu.
+  const OK = new Set(['Digital IO','PDF','Google Docs','Drive','OneDrive','Supabase',
+    'CSV','JSON','CNIC','PIN','SOPs','IGP','RPO','DPO','PFSA','Generated by Digital IO']);
+  const PAT = /<(?:div|span|button|label|option|th|td|h[1-6])\b[^<>]*>\s*([A-Z][a-zA-Z]{2,}(?:\s+[A-Za-z]{2,}){0,4})\s*</g;
+  const bad = [];
+  for (const f of fs.readdirSync(dir).filter(x => x.endsWith('.js') && !SKIP.has(x))) {
+    const s = fs.readFileSync(path.join(dir, f), 'utf8');
+    let m;
+    while ((m = PAT.exec(s)) !== null) {
+      const t = m[1].trim();
+      if (!OK.has(t)) bad.push(f + ': "' + t + '"');
+    }
+  }
+  assert.strictEqual(bad.length, 0, 'angrezi matn: ' + [...new Set(bad)].slice(0, 8).join(', '));
+});
+
+test('backup ka size hisaab NaN na de', () => {
+  // Comment poora nikalo — wahan purana (ghalat) code misal ke taur par
+  // likha hua hai taake aane wala samjh sake ke masla kya tha.
+  const b = read('backup.js').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  assert.ok(!/for \(let k in localStorage\)/.test(b),
+    '`for...in` localStorage ki wirasati khoobiyan (length, getItem…) bhi ginta hai — ' +
+    '`(12||\'\').length` = undefined, aur poora hisaab NaN ho jata tha ("NaN KB")');
+  assert.ok(/localStorage\.key\(i\)/.test(b), 'sirf asal chaabiyan ginen');
+  assert.ok(/String\(localStorage\.getItem\(k\) \|\| ''\)/.test(b), 'har qeemat String() se');
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   ROUND 9 — Miyaad khatam par DAAKHLA BAND · aaf-line · chip/button
+   ═══════════════════════════════════════════════════════════════ */
+
+test('miyaad khatam par daakhla BAND (sirf view-only nahi)', () => {
+  const s = read('subscription.js');
+  assert.ok(/var _noEntry = \(sub\.status === 'expired'/.test(s),
+    'maalik ki hidayat: miyaad khatam hote hi afsar ander na aa sake');
+  // shak ka faida ROKNE ko jaye, daakhle ko nahi
+  for (const st of ["'expired'", "'suspended'", "'none'", "'unknown'"])
+    assert.ok(new RegExp("sub\\.status === " + st).test(s), st + ' par bhi rukna chahiye');
+  assert.ok(/_dioHardLock\(sub\)/.test(s), 'poora tala lagna chahiye');
+});
+
+test('tale ki halat bahar se (console se) nahi badli ja sakti', () => {
+  const s = read('subscription.js');
+  // HAMLA JO NAAPA GAYA: `window._dioLocked = false` likhte hi pehra
+  // khud ko band kar leta tha aur likhai ka guard bhi khul jata tha.
+  assert.ok(/var _dioLockState = \(function \(\) \{/.test(s),
+    'halat closure ke andar honi chahiye, `window` par nahi');
+  assert.ok(/if \(!_dioLockState\.is\(\)\) \{ clearInterval/.test(s),
+    'pehra apni ANDRUNI halat dekhe — us nishan ko nahi jo hamla-aawar ulta sake');
+  assert.ok(/_dioLockState\.off\(\);/.test(s), 'khulne ka aik hi raasta ho');
+  // aur wo raasta ONLINE tasdeeq ke baghair na khule
+  const fn = s.slice(s.indexOf('async function _dioUnlockIfRenewed'),
+                     s.indexOf('window._dioUnlockIfRenewed'));
+  assert.ok(/if \(!navigator\.onLine\)/.test(fn), 'aaf-line par tala na khule');
+  assert.ok(/await checkSubscription\(\)/.test(fn), 'server se tasdeeq lazmi');
+});
+
+test('maalik (superadmin) kabhi band na ho', () => {
+  const s = read('subscription.js');
+  assert.ok(/currentOfficer\.role === 'superadmin'/.test(s), 'maalik mustasna ho');
+  assert.ok(/if \(!_owner && \(_noEntry \|\| _suspOfficer\)\)/.test(s),
+    'tala lagane se pehle maalik ki jaanch');
+});
+
+test('ASAL rok SERVER par hai — client ka tala kaafi nahi', () => {
+  const fs = require('fs'), path = require('path');
+  const sql = fs.readFileSync(path.join(__dirname, '..', 'sql', '70_no_entry_on_expiry.sql'), 'utf8');
+  assert.ok(/for select to authenticated using \(public\.dio_has_active_sub\(\)\)/.test(sql),
+    'PARHNE par bhi rok honi chahiye — warna client tor kar data parha ja sakta hai');
+  assert.ok(/as restrictive/.test(sql), 'restrictive ho, warna doosri policy se by-pass ho jayegi');
+  // jo tables khuli rehni chahiyen (warna afsar phans jaye)
+  const gated = sql.slice(sql.indexOf('gated text[]'), sql.indexOf('begin'));
+  for (const open of ['officers', 'subscription_plans'])
+    assert.ok(!new RegExp("'" + open + "'").test(gated),
+      open + ' khuli rehni chahiye warna tajdeed hi mumkin na ho');
+  assert.ok(fs.existsSync(path.join(__dirname, '..', 'sql', '70_no_entry_on_expiry_ROLLBACK.sql')),
+    'wapsi ki file bhi honi chahiye');
+});
+
+test('aaf-line par nishan SAHIH ho (shuru me bhi)', () => {
+  const a = read('app-core.js');
+  assert.ok(/function _dioInitConnectionStatus\(\)/.test(a),
+    '`updateConnectionStatus` sirf EVENT par chalta tha; agar app pehle se ' +
+    'aaf-line khuli to patti par "آن لائن" hi laga rehta tha');
+  assert.ok(/updateConnectionStatus\(navigator\.onLine\)/.test(a), 'asal haalat se nishan lage');
+  assert.ok(!/\U0001f517 Connected/.test(a), 'nishan ka matn Urdu mein ho');
+});
+
+test('chip har safhe par AIK hi shakl ki', () => {
+  // Teen safhon par teen alag chip thin: ahkamat (18px apna rang),
+  // templates (16px apna rang), mulzimaan (class wali).
+  for (const f of ['ahkamat.js', 'templates.js']) {
+    const s = read(f);
+    assert.ok(/class="dio-chip/.test(s), f + ': mushtarik `dio-chip` class istemal kare');
+    assert.ok(!/border-radius:1[68]px;cursor:pointer;font-size:13px/.test(s),
+      f + ': apni alag chip-shakl na bache');
+  }
+  const c = read('theme-pro.css');
+  assert.ok(/\.page-content \.suspect-filter,\n\.page-content \.dio-chip \{/.test(c) ||
+            /\.dio-chip \{/.test(c), 'chip ki shakl aik hi jagah se aaye');
+});
+
+test('button ke rang theme se aayen, hardcode na hon', () => {
+  const fs = require('fs'), path = require('path');
+  const dir = path.join(__dirname, '..');
+  // Dastavez/chhapai wali failen mustasna — wahan kaghaz ke rang hain
+  const SKIP = new Set(['report173.js','zimni.js','saza-slip.js','naqsha-mauqa.js',
+    'misal-templates.js','darkhwastain.js','toolbar.js','editor-tools.js','sw.js']);
+  const BAD = /background:#(1a73e8|f1f3f4|e2e8f0)\b/;
+  const bad = [];
+  for (const f of fs.readdirSync(dir).filter(x => x.endsWith('.js') && !SKIP.has(x))) {
+    fs.readFileSync(path.join(dir, f), 'utf8').split('\n').forEach((l, i) => {
+      if (BAD.test(l)) bad.push(f + ':' + (i + 1));
+    });
+  }
+  assert.strictEqual(bad.length, 0,
+    'hardcode rang tareek theme par safaid/neele dabbe bana dete hain: ' + bad.slice(0, 6).join(', '));
+});
+
+test('SW version phir bump hua (v501)', () => {
+  const sw = read('sw.js');
+  const m = sw.match(/const CACHE_NAME = 'digital-io-v(\d+)'/);
+  assert.ok(m && Number(m[1]) >= 501, 'v501 ya aage, mila: v' + (m ? m[1] : '?'));
+  assert.ok(sw.includes('SERVICE WORKER v' + m[1]));
+});
+
+/* ═══════════════════════════════════════════════════════════
+   RAUND 10 — QANOONI LIBRARY: download, font, aur safha
+   ═══════════════════════════════════════════════════════════ */
+
+test('download: doosre origin par `download` attribute par bharosa na ho', () => {
+  const s = read('law-library.js').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  // Purana tareeqa: a.href = file_url; a.download = ...; a.target='_blank'
+  assert.ok(!/a\.href\s*=\s*l\.file_url/.test(s),
+    'seedha file_url anchor par na lage — cross-origin par `download` nazar-andaaz hota hai');
+  assert.ok(!/a\.target\s*=\s*'_blank'/.test(s), "`target='_blank'` download ko rok deta hai");
+  assert.ok(/URL\.createObjectURL\(new Blob\(\[buf\]/.test(s), 'apne origin ka blob banaya jaye');
+  assert.ok(/revokeObjectURL/.test(s), 'blob ka pata baad mein chhoRa jaye');
+});
+
+test('download: extension aur MIME ki zamanat', () => {
+  const s = read('law-library.js');
+  assert.ok(/const LAW_MIME = \{/.test(s), 'MIME ki fehrist mojood ho');
+  for (const k of ['pdf:', 'docx:', 'doc:']) assert.ok(s.includes(k), 'MIME: ' + k);
+  assert.ok(/function _lawExt\(/.test(s) && /function _lawFileName\(/.test(s),
+    'extension aur naam banane wale function alag hon');
+  // Naam mein extension lazmi joRi jaye
+  assert.ok(/return base \+ '\.' \+ ext;/.test(s), 'naam ke aakhir mein sahi extension lage');
+  // File-system ke mana karda huroof nikaale jayen
+  assert.ok(s.includes('<>|#%'), 'naam se mana karda huroof nikaale jayen');
+});
+
+test('upload: `file.type` par bharosa na ho (khali aane par text/plain ban jata hai)', () => {
+  const s = read('law-library.js');
+  assert.ok(!/contentType:\s*file\.type\b/.test(s),
+    'contentType extension se tay ho — warna Word/PDF kachre ki tarah khulti hai');
+  assert.ok((s.match(/const ctype = LAW_MIME\[ext\] \|\| file\.type/g) || []).length >= 2,
+    'nayi file aur badli hui file — dono jagah');
+});
+
+test('chhapai ka Urdu font: har print-safhe mein ELAAN ho', () => {
+  const fs = require('fs'), path = require('path');
+  const dir = path.join(__dirname, '..');
+  const kami = [];
+  for (const f of fs.readdirSync(dir).filter(x => x.endsWith('.js'))) {
+    const s = fs.readFileSync(path.join(dir, f), 'utf8');
+    let i = -1;
+    while ((i = s.indexOf('<!DOCTYPE html>', i + 1)) !== -1) {
+      const seg = s.slice(i, i + 3000);
+      const end = seg.indexOf('</head>');
+      const head = seg.slice(0, end > 0 ? end : 1200);
+      const naam = head.includes('Jameel Noori') || head.includes('Nastaliq');
+      const elaan = head.includes('@font-face') || head.includes('fonts.googleapis.com') || head.includes('dioFontHead');
+      if (naam && !elaan) kami.push(f + ':' + (s.slice(0, i).split('\n').length));
+    }
+  }
+  assert.strictEqual(kami.length, 0,
+    'chhapai ka iframe sirf apne elaan wala font istemal karta hai — warna Naskh chhapta hai: ' + kami.join(', '));
+});
+
+test('`dioFontHead()` aik hi jagah, aur block par', () => {
+  const a = read('app-core.js');
+  assert.ok(/function dioFontHead\(\)/.test(a) && /window\.dioFontHead = dioFontHead;/.test(a));
+  assert.ok(/font-display:block/.test(a), 'chhapai se pehle font aa jaye (swap nahi)');
+  assert.ok(/jameel-noori-nastaleeq4\.woff2/.test(a) && /Noto\+Nastaliq\+Urdu/.test(a));
+});
+
+test('service worker: qanoon ki failen aur Urdu font offline bhi', () => {
+  const sw = read('sw.js');
+  assert.ok(/storage\/v1\/object\/public\/law-library\//.test(sw), 'qanoon ki failen cache hon');
+  const lawAt = sw.indexOf('law-library/');
+  const skipAt = sw.indexOf("url.hostname.includes('supabase')) return;");
+  assert.ok(lawAt > 0 && skipAt > 0 && lawAt < skipAt,
+    'qanoon wali shart Supabase ke `return` se PEHLE ho, warna chhoR di jayegi');
+  assert.ok(/fonts\.googleapis\.com/.test(sw) && /fonts\.gstatic\.com/.test(sw), 'Urdu font bhi cache ho');
+  assert.ok(/mode: 'cors'/.test(sw),
+    "`no-cors` ka jawab opaque hota hai jise cache.put rakh nahi sakti — khud cors se laana zaroori");
+});
+
+test('qanooni safha: mushtarik jadwal, chip aur apni haalat', () => {
+  const s = read('law-library.js');
+  assert.ok(/<table class="data-table"/.test(s), 'mushtarik `data-table` — mobile par card isi se bante hain');
+  assert.ok(/const _lawFilterState = \{ cat: '', q: '' \}/.test(s), 'safhe ki apni haalat apni file mein');
+  assert.ok(/function _lawVisible\(\)/.test(s) && /function _lawRender\(\)/.test(s),
+    'chip aur talash — dono aik hi raste se');
+  assert.ok(/class="dio-chip/.test(s), 'chip ki shakl mushtarik class se');
+  assert.ok(!/rgba\(56,189,248/.test(s), 'pakka rang na bache');
+});
+
+test('murda code aur purani khamiyan: law-library', () => {
+  const s = read('law-library.js').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  assert.ok(!/law-card-/.test(s),
+    '`law-card-<id>` purane design ka tha — hazf ke baad qatar isi wajah se nazar aati rehti thi');
+  assert.ok(!/_renameLaw/.test(s), 'murda `_renameLaw` hataya jaye');
+  assert.ok(!/law-pdf-viewer/.test(s), 'ab PDF canvas par banti hai — purana iframe id na dhoonda jaye');
+  assert.ok(/law-pdf-pages/.test(s), 'PDF ki chhapai canvas/blob se ho');
+  assert.ok(!/onclick="window\.open\('\$\{/.test(s), 'URL seedha onclick mein na rakha jaye');
+});
+
+test('SW version phir bump hua (v502)', () => {
+  const sw = read('sw.js');
+  const m = sw.match(/const CACHE_NAME = 'digital-io-v(\d+)'/);
+  assert.ok(m && Number(m[1]) >= 502, 'v502 ya aage, mila: v' + (m ? m[1] : '?'));
+  assert.ok(sw.includes('SERVICE WORKER v' + m[1]));
+});
+
+/* ═══════════════════════════════════════════════════════════
+   RAUND 11 — رپورٹ 173 (چاروں اقسام)، عنوانات کا پیمانہ، فہرست
+   ═══════════════════════════════════════════════════════════ */
+
+test('r173: aik چالان ka data doosri qism mein na jaye', () => {
+  const s = read('report173.js');
+  assert.ok(/function _r173DocMatches\(/.test(s), 'khule record ki QISM bhi milni chahiye');
+  assert.ok(/_r173DocMatches\(d\)\) return d\.form_data/.test(s),
+    'sirf id par bharosa na ho — warna اخراج ka فارم چالان مکمل ke data se bhar jata hai');
+  assert.ok(/function _r173SyncDocId\(/.test(s), 'qism badalte hi sahi satar chuni jaye');
+  for (const f of ['_r173Pick', '_r173PickSub', '_ch173SetVersion'])
+    assert.ok(new RegExp(f + '[\\s\\S]{0,600}_r173SyncDocId').test(s), f + ': satar dobara chuni jaye');
+});
+
+test('r173: chaabi AIK hi jagah se banti hai', () => {
+  const s = read('report173.js');
+  assert.ok(/function _r173Key\(type, subtype, version\)/.test(s));
+  // purane teen alag tareeqe na bachen
+  assert.ok(!/recKey = recKey \+ '::' \+ _ch173Version/.test(s), 'render apni alag chaabi na banaye');
+  assert.ok(!/key = 'tatima_challan_' \+ \(r\.report_subtype \|\| 'aslha'\)/.test(s), 'load apni alag chaabi na banaye');
+  assert.ok((s.match(/_r173Key\(/g) || []).length >= 4, 'load, render, save aur open — chaaron jagah wohi chaabi');
+});
+
+test('r173: محفوظ کرنے کی ناکامی چھپائی نہ جائے', () => {
+  const s = read('report173.js');
+  assert.ok(/const \{ data: ins, error: insErr \}/.test(s),
+    'supabase-js nakami par exception nahi phenkta — `error` khud dekhna zaroori hai');
+  assert.ok(/if \(insErr\) throw insErr;/.test(s));
+  assert.ok(/const \{ error: upErr \}[\s\S]{0,120}if \(upErr\) throw upErr;/.test(s));
+  assert.ok(/let _r173Saving = false/.test(s), 'do dafa dabane par do satren na banen');
+  assert.ok(/محفوظ نہیں ہوا/.test(s), 'nakami par saaf paigham');
+  // "محفوظ فائلیں" mein darj — kamyabi ke BAAD
+  const regIdx = s.indexOf('dioRegisterSaved');
+  const insIdx = s.indexOf('const { data: ins, error: insErr }');
+  assert.ok(regIdx > insIdx, 'nakaam save «محفوظ فائلیں» mein darj na ho');
+});
+
+test('r173: اخراج / عدم پتہ کا درست عنوان', () => {
+  const s = read('report173.js');
+  assert.ok(/فارم رپورٹ اختتامی بصیغہ اخراج زیر دفعہ 173 ض ف/.test(s));
+  assert.ok(/فارم رپورٹ اختتامی بصیغہ عدم پتہ زیر دفعہ 173 ض ف/.test(s));
+});
+
+test('r173: کالم کی لکیر واقعی پکڑی جا سکے اور ناپ px میں ہو', () => {
+  const s = read('report173.js');
+  // grip ki unchai: offsetTop (ghalat ﺁba) ki bajaye rect se rect
+  assert.ok(!/const top = cell \? cell\.offsetTop : 0;/.test(s),
+    'offsetTop offsetParent se naapa jata hai — is se unchai 0 aati thi');
+  assert.ok(/cr\.top - tr\.top/.test(s), 'naap table ke apne dabbe se');
+  // ikai: px, فیصد nahi
+  assert.ok(!/nA\.toFixed\(2\) \+ '%'/.test(s), 'px ko فیصد samajh kar wapas na likho');
+  assert.ok(/Math\.round\(nA\) \+ 'px'/.test(s));
+  assert.ok(/if \(moved\) \{ try \{ table\.dataset\.colsManual/.test(s), 'khali click par manual na lage');
+});
+
+test('r173: چھپائی کھڑکی کی چوڑائی پر منحصر نہ ہو', () => {
+  const s = read('report173.js');
+  assert.ok(/let _ch173PrintMeasuring = false/.test(s));
+  assert.ok(/if \(_ch173PrintMeasuring\) \{ doc\.style\.transform = 'none'; return 1; \}/.test(s),
+    'chapai ki naap ke dauran scale na lage');
+  assert.ok(/_ch173PrintMeasuring = true;/.test(s) && /_ch173PrintMeasuring = false;/.test(s));
+  assert.ok(/function _ch173Scale\(\)/.test(s), 'rect wali naap asal paimane par aaye');
+  assert.ok(/r\.width \/ _sc/.test(s), 'khanon ki naap bhi scale se paak ho');
+});
+
+test('r173: افسر کی اپنی چوڑائی خودکار ناپ سے نہ مٹے', () => {
+  const s = read('report173.js');
+  assert.ok(/const manual = \(table\.dataset\.colsManual === '1'\);/.test(s));
+  assert.ok(/if \(!manual\) cols\.forEach/.test(s));
+});
+
+test('r173: اخراج کی مقامی یادداشت محدود اور قسم کے مطابق', () => {
+  const s = read('report173.js');
+  assert.ok(!/'dio_akhraj_col2'/.test(s) || /_r173AkhColKey\(\)/.test(s), 'aik mushtarik chaabi na ho');
+  assert.ok(/function _r173AkhColKey\(\)/.test(s) && /function _r173AkhHKey\(\)/.test(s));
+  assert.ok(/R173_AKH_H_MIN/.test(s) && /R173_AKH_H_MAX/.test(s), 'naap ki hadd');
+  assert.ok(/function _r173AkhColOk\(/.test(s), 'bay-maqool فیصد qabool na ho');
+  assert.ok(/_ch173AkhrajResetH|_ch173AkhrajResetCol/.test(s), 'khud-kar par wapsi ka raasta');
+});
+
+test('r173: مردہ کوڈ باقی نہ رہے', () => {
+  const s = read('report173.js').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  assert.ok(!/document\.getElementById\('r173-doc'\)/.test(s), 'purana safha hata diya gaya');
+  assert.ok(!/function _r173Qita/.test(s));
+  assert.ok(!/data-pk/.test(s));
+  assert.ok(/if \(!R173_TYPES\.some\(t => t\.id === _r173Type\)\) _r173Type = 'mukammal';/.test(s),
+    'anjaan qism manzoor-shuda فارم par aaye');
+});
+
+test('عنوانات: تین درجے، ایک ہی جگہ سے', () => {
+  const css = read('theme-pro.css'), html = read('index.html');
+  for (const v of ['--dio-h1', '--dio-h2', '--dio-h3']) assert.ok(css.includes(v), 'paimana: ' + v);
+  assert.ok(/clamp\(/.test(css), 'mobile aur desktop — aik hi qaida se');
+  // index.html ka `revert` ab unwanon ko nigal na jaye
+  assert.ok(/font-size: var\(--dio-h1, 20px\) !important/.test(html));
+  assert.ok(/font-size: var\(--dio-h2, 17px\) !important/.test(html));
+  assert.ok(/font-size: var\(--dio-h3, 15px\) !important/.test(html));
+  // aam unwan kabhi aam matn (14px) se chhota na ho
+  const m = /--dio-h3: clamp\(([\d.]+)px/.exec(css);
+  assert.ok(m && parseFloat(m[1]) >= 14, 'aam unwan 14px se chhota na ho, mila: ' + (m ? m[1] : '?'));
+  // dastavez ka apna (point wala) paimana
+  const r = read('report173.js');
+  for (const v of ['--doc-h1: 20pt', '--doc-h2: 16pt', '--doc-h3: 14pt', '--doc-h4: 12pt'])
+    assert.ok(r.includes(v), 'kaghaz ka paimana: ' + v);
+});
+
+test('فہرست کا نشان متن پر نہ چڑھے', () => {
+  const r = read('report173.js'), css = read('theme-pro.css');
+  assert.ok(/#ch173-doc ul, #ch173-doc ol\{[\s\S]{0,160}padding-inline-start: 1\.9em !important/.test(r),
+    'dastavez mein nishan ki apni jagah (safhe par bhi, chhapai mein bhi)');
+  assert.ok(/padding-inline-start: 1\.9em/.test(css), 'baqi safhon par bhi');
+});
+
+test('عنوان کی سطر میں ٹکراؤ نہ ہو', () => {
+  const s = read('report173.js');
+  assert.ok(!/#ch173-doc \.tt-mid, #ch173-doc \.form-no\{\s*position:absolute/.test(s),
+    'absolute unwan apni satar se bahar nikal kar فارم نمبر par charh jata tha');
+  assert.ok(/grid-template-columns:1fr auto 1fr/.test(s), 'teen barabar khane — unwan theek beech mein');
+});
+
+test('SW version phir bump hua (v503)', () => {
+  const sw = read('sw.js');
+  const m = sw.match(/const CACHE_NAME = 'digital-io-v(\d+)'/);
+  assert.ok(m && Number(m[1]) >= 503, 'v503 ya aage, mila: v' + (m ? m[1] : '?'));
+  assert.ok(sw.includes('SERVICE WORKER v' + m[1]));
 });
