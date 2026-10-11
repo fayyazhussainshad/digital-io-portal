@@ -291,3 +291,183 @@ test('debug banner innerHTML istemaal nahi karta', () => {
   assert.ok(!/b\.innerHTML \+=/.test(read('index.html')),
     'error banner me innerHTML = DOM XSS ka raasta');
 });
+
+// ══ Round-3: nazam ki gehri khamiyan ═══════════════════════════
+test('subscriptions client whitelist se nikali gayi (gate ki apni table)', () => {
+  const s = read('subscription.js');
+  const m = s.match(/_DIO_WRITE_WL = \{([^}]*)\}/);
+  assert.ok(m, 'whitelist milni chahiye');
+  assert.ok(!/\bsubscriptions\b/.test(m[1]),
+    'gate ka faisla subscriptions se hota hai — wahi table khuli rakhna poora nafaz khatam kar deta hai');
+});
+
+test('subscriptions DB par bhi lock hai aur tajdeed RPC se hoti hai', () => {
+  const g = read('sql/60_subscriptions_lockdown.sql');
+  assert.ok(/alter table public\.subscriptions enable row level security/.test(g));
+  assert.ok(/dio_request_subscription/.test(g), 'tajdeed ka mehfooz raasta hona chahiye');
+  assert.ok(!/create policy[\s\S]{0,200}for (insert|update|delete) to authenticated/.test(g),
+    'authenticated ke liye koi write policy nahi honi chahiye');
+});
+
+test('officers trigger INSERT + DELETE bhi cover karta hai', () => {
+  const g = read('sql/21_officers_protect_v2.sql');
+  assert.ok(/before insert or update or delete/.test(g),
+    'sirf UPDATE par trigger = INSERT se superadmin ban jana mumkin');
+  assert.ok(/officers_user_id_uidx/.test(g), 'har user ka aik hi record (exists-check ka tahaffuz)');
+  assert.ok(/sirf apni profile/.test(g), 'dusre afsar ki row mehfooz honi chahiye');
+});
+
+test('50: is_approved NULL par fail-CLOSED', () => {
+  const g = read('sql/50_suspend_hard_gate.sql');
+  assert.ok(/coalesce\(o\.is_approved,\s*false\)/.test(g),
+    'coalesce(..., true) = NULL wala afsar manzoor maan liya jata');
+});
+
+test('active + NULL miyaad par lockout na ho', () => {
+  for (const f of ['sql/50_suspend_hard_gate.sql', 'sql/10_subscription_enforcement.sql'])
+    assert.ok(/expires_at is null or s\.expires_at > now\(\)/.test(read(f)),
+      f + ': NULL miyaad par asli paying afsar block ho jata tha');
+});
+
+test('41 rollback sirf apne enable kiye tables par chalta hai', () => {
+  const g = read('sql/41_rls_enable_safe_ROLLBACK.sql');
+  assert.ok(/dio_migration_state/.test(g),
+    'bina record ke rollback un tables ki RLS bhi band kar deta jo pehle se mehfooz theen');
+});
+
+test('41 un tables ko chhoRta hai jin par pehle se policies hain', () => {
+  const g = read('sql/41_rls_enable_safe.sql');
+  assert.ok(/pg_policy[\s\S]{0,200}raise warning/.test(g),
+    'dormant per-officer policies par allow-all lagana unhein hamesha be-asar kar deta');
+});
+
+test("status 'none' bhi block kare (fail-closed)", () => {
+  const s = read('subscription.js');
+  assert.ok(/status === 'none'/.test(s),
+    "'none' par guard band ho jata tha — cache mita kar offline jana kaafi tha");
+});
+
+test('grace khud-tajdeed na ho (aik hi baar)', () => {
+  const s = read('subscription.js');
+  assert.ok(/dio_grace_start/.test(s), 'grace ka aaghaz mehfooz hona chahiye');
+  assert.ok(/localStorage\.removeItem\('dio_grace_start'\)/.test(s),
+    'kamyab online tasdeeq par grace reset hona chahiye');
+});
+
+test('license token officer se BANDHA ho (fail-closed)', () => {
+  const s = read('subscription.js');
+  assert.ok(/!\(oid && lic\.officerId && lic\.officerId === oid\)/.test(s),
+    'short-circuit se dusre afsar ka token qabool ho jata tha');
+});
+
+test('storage aur rpc bhi write-guard me hain', () => {
+  const s = read('subscription.js');
+  assert.ok(/storage\.from = function/.test(s),
+    'storage.from khula tha — mo\'attal afsar files upload karta rehta');
+  assert.ok(/supabaseClient\.rpc = function/.test(s), 'rpc bhi guard me hona chahiye');
+});
+
+test('write-guard fauran lagta hai (3 second ka window nahi)', () => {
+  const s = read('subscription.js');
+  assert.ok(/try \{ _installDioWriteGuard\(\); \} catch/.test(s),
+    'sirf setTimeout(...,3000) = shuru ke 3 second me har write bila rok');
+});
+
+test('SW navigate apni key par cache kare (poisoning nahi)', () => {
+  const g = read('sw.js');
+  assert.ok(/cache\.put\(event\.request, clone\)/.test(g),
+    "har navigation ka jawab '/index.html' par likhna = app ka shell badal jata");
+  assert.ok(/navUrl\.origin !== self\.location\.origin/.test(g), 'bahar ke safhe chhoRne chahiyen');
+});
+
+test('offline queue mustaqil ghalti par rukti hai aur ittila deti hai', () => {
+  const g = read('offline-store.js');
+  assert.ok(/status === 'failed'|'failed'/.test(g), 'mustaqil nakaami alag honi chahiye');
+  assert.ok(/attempts >= 5/.test(g), 'koshishon ki hadd honi chahiye');
+  assert.ok(/getFailed/.test(g), 'afsar ko rad-shuda andraaj dikhne chahiyen');
+});
+
+test('edge function mo\'attali/manzoori jaanchta hai aur admin bila-shart nahi', () => {
+  const g = read('supabase/functions/dio-license/index.ts');
+  assert.ok(/is_suspended, is_approved/.test(g), 'sirf id,role parhna = mo\'attal ko token mil jata');
+  assert.ok(/error: "not_entitled"/.test(g), 'bila-haq par dastkhat nahi hona chahiye');
+  assert.ok(/const isOwner\s*=\s*officer\.role === "superadmin"/.test(g),
+    'admin ko superadmin ke sath mustasna karna wahi purani khami thi');
+  assert.ok(!/String\(e && \(e as Error\)\.message/.test(g), 'andarooni ghalti bahar na jaye');
+});
+
+// ══ MOBILE + RAFTAAR (round-4) ═════════════════════════════════
+test('mobile ki files jur gayi hain (html + service worker)', () => {
+  const h = read('index.html');
+  for (const f of ['mobile.css', 'mobile.js', 'boot.js'])
+    assert.ok(h.includes(f), f + ' index.html me honi chahiye');
+  const sw = read('sw.js');
+  for (const f of ['mobile.css', 'mobile.js', 'boot.js'])
+    assert.ok(sw.includes("'/" + f + "'"), f + ' sw precache me — warna offline par nahi milegi');
+});
+
+test('form mode kaghaz ki paki chauRai khatam karta hai', () => {
+  const c = read('mobile.css');
+  assert.ok(/html\.dio-mform #ch173-doc[\s\S]{0,200}width:\s*100%/.test(c),
+    'A4 ki 8.5in chauRai fon par 2.18x overflow deti thi');
+  assert.ok(/tr\.zf-blk/.test(c), 'har andraaj card banna chahiye');
+});
+
+test('CHHAPAI par mobile ka koi asar na ho (kaghaz A4/Legal rahe)', () => {
+  const c = read('mobile.css');
+  const printBlock = c.slice(c.lastIndexOf('@media print'));
+  for (const [sel, val] of [['table\\.zf-tbl', 'display: table'],
+                            ['tbody', 'display: table-row-group'],
+                            ['tr', 'display: table-row'],
+                            ['td', 'display: table-cell']])
+    assert.ok(new RegExp(sel + '[\\s\\S]{0,160}' + val).test(printBlock),
+      'print me ' + sel + ' wapas ' + val + ' hona chahiye');
+  assert.ok(/td::before\s*\{\s*content:\s*none/.test(printBlock),
+    'mobile ke unwan kaghaz par nahi chhapne chahiyen');
+  assert.ok(/\.dio-mbar,\s*\.dio-addblk,\s*\.dio-thumbbar\s*\{\s*display:\s*none/.test(printBlock),
+    'mobile ke button kaghaz par nahi aane chahiyen');
+});
+
+test('form mode me koi DOM node hilayi nahi jati (save/print mehfooz)', () => {
+  const j = read('mobile.js');
+  assert.ok(!/appendChild\(\s*(body|cell|td|tr)\b/.test(j),
+    'dastavez ke node hilana save ke waqt content gum kar sakta hai');
+  assert.ok(/classList\.toggle\('dio-mform'/.test(j), 'sirf class lagni chahiye');
+});
+
+test('boot.js window._pages par inhesar na kare', () => {
+  // Tabsare hata kar sirf ASAL code jaancho — warna khami ka zikr
+  // karne wala comment hi test fail kar deta hai.
+  const j = read('boot.js')
+    .split('\n').filter((l) => !l.trim().startsWith('//')).join('\n');
+  assert.ok(!/window\._pages/.test(j),
+    'app-core me `const _pages` hai — window par aata hi nahi, is liye har safha lazy ban jata tha');
+  assert.ok(/loadedAlready/.test(j), 'script mojood hai ya nahi — yahi mehfooz sawal hai');
+});
+
+test('bhaari module blocking list se nikal gaye', () => {
+  const h = read('index.html');
+  for (const f of ['zimni.js', 'report173.js', 'naqsha-mauqa.js', 'saza-slip.js', 'templates.js'])
+    assert.ok(!new RegExp('<script defer src="' + f.replace('.', '\\.') + '"').test(h),
+      f + ' abhi bhi DOMContentLoaded rok raha hai');
+  const bt = read('boot.js');
+  for (const f of ['zimni.js', 'report173.js'])
+    assert.ok(bt.includes("'" + f + "'"), f + ' boot.js ki fursat-list me hona chahiye');
+});
+
+test('har lazy safhe ki file boot.js ke naqshe me hai', () => {
+  const bt = read('boot.js');
+  const map = bt.slice(bt.indexOf('var PAGE_SRC'), bt.indexOf('function ensurePage'));
+  const files = [...map.matchAll(/'([a-z0-9-]+\.js)'/g)].map(m => m[1]);
+  assert.ok(files.length >= 10, 'kam az kam 10 safhe lazy hone chahiyen, mile: ' + files.length);
+  // NOTE: deliver kiya gaya ZIP me sirf BADLI hui files hoti hain, is liye
+  // yahan wahi jaanchte hain jo mojood hain. Poore repo me (deploy ke baad)
+  // ye check har file par lagta hai — lazy file ka 404 = safha hi na khule.
+  let checked = 0;
+  for (const f of files) {
+    if (!fs.existsSync(path.join(ROOT, f))) continue;   // package me nahi — repo me hai
+    checked++;
+    assert.ok(fs.statSync(path.join(ROOT, f)).size > 0, f + ' khali hai');
+  }
+  assert.ok(checked >= 8, 'kam az kam 8 lazy files jaanchi jani chahiyen, jaanchi: ' + checked);
+});

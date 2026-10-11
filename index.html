@@ -1163,6 +1163,8 @@ if (!window.supabase || !window.supabase.createClient) {
   document.write('<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"><\/script>');
 }
 </script>
+  <!-- Mobile: form mode, cards, angoothe ki patti -->
+  <link rel="stylesheet" href="mobile.css">
 </head>
 <body>
 <!-- Diagnostic error banner — shows JS errors on screen (helps debug mobile) -->
@@ -1487,6 +1489,7 @@ window.addEventListener('beforeunload', function (e) {
 <!-- DOMPurify — industry-grade XSS filter (Phase 3D) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
 <script defer src="error-handler.js"></script>
+<script defer src="boot.js"></script>
 <script defer src="secure-storage.js"></script>
 <script defer src="dio-date.js"></script>
 <script defer src="dio-statuses.js"></script>
@@ -1502,53 +1505,20 @@ window.addEventListener('beforeunload', function (e) {
   <script defer src="data-api.js"></script>
   <script defer src="auth.js"></script>
 <!-- backup.js EARLY (Phase 1 cleanup ke baad): initBackupSystem / triggerBackup canonical yahin hain — app-core ke callers se pehle available honi zaroori hain -->
-<script defer src="backup.js"></script>
 <script defer src="dashboard.js"></script>
-<script defer src="toolbar.js"></script>
-<script defer src="misal-docs.js"></script>
-  <script defer src="misal-templates.js"></script>
-  <script defer src="misal-fir.js"></script>
-  <script defer src="doc-viewer.js"></script>
-<script defer src="cases.js"></script>
-  <script defer src="case-form.js"></script>
-  <script defer src="case-docs.js"></script>
-<script defer src="fivec.js"></script>
-<script defer src="evidence.js"></script>
-<script defer src="search.js"></script>
-<script defer src="suspects.js"></script>
-<script defer src="witnesses.js"></script>
-<script defer src="mulziman.js"></script>
-<script defer src="zimni.js"></script>
-<script defer src="naqsha-mauqa.js"></script>
-<script defer src="fir.js"></script>
-<script defer src="report173.js"></script>
-<script defer src="saza-slip.js"></script>
-<script defer src="saved-docs.js"></script>
-<script defer src="darkhwastain.js"></script>
+      <script defer src="cases.js"></script>
+    <script defer src="search.js"></script>
 <script defer src="global-mic.js"></script>
-<script defer src="cdr-imei.js"></script>
-<script defer src="cro-card.js"></script>
-<script defer src="rfa-form.js"></script>
 <script defer src="staff-v2.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-<script defer src="law-library.js"></script>
-<script defer src="ahkamat.js"></script>
-<script defer src="help-guide.js"></script>
-<script defer src="templates.js"></script>
-<script defer src="editor-tools.js"></script>
   <script defer src="saved-files.js"></script>
   <script defer src="sho-dsp.js"></script>
-<script defer src="case-sharing.js"></script>
 <script defer src="notifications.js"></script>
 <script defer src="reminders.js"></script>
-<script defer src="performance.js"></script>
 <!-- backup.js pehle hi auth.js ke baad load ho chuki (Phase 1 cleanup) -->
-<script defer src="settings.js"></script>
-<script defer src="incident.js"></script>
-<script defer src="court.js"></script>
-<script defer src="bin.js"></script>
 <script defer src="license-token.js"></script>
 <script defer src="subscription.js"></script>
+<script defer src="mobile.js"></script>
 <!-- admin.js اب dynamically لوڈ ہوتا ہے (صرف ایڈمن) — _dioEnsureAdminBundle() -->
 
 <!-- ── Sidebar ── -->
