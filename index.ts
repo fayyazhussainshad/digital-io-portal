@@ -56,15 +56,34 @@ Deno.serve(async (req: Request) => {
 
     // 2) Service role se officer + subscription parho (RLS bypass — server par bharosa)
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
-    const { data: officer } = await admin.from("officers").select("id, role").eq("user_id", uid).maybeSingle();
+    const { data: officer } = await admin.from("officers")
+      .select("id, role, is_suspended, is_approved").eq("user_id", uid).maybeSingle();
     if (!officer) return new Response(JSON.stringify({ error: "no_officer" }), { status: 403, headers: cors });
 
     const now = Date.now();
     let entitledUntil = 0;
     let plan = "none";
 
-    if (officer.role === "superadmin" || officer.role === "admin") {
-      entitledUntil = now + 72 * 3600 * 1000; // owner/admin: 72h grace har baar
+    // ── MO'ATTALI/MANZOORI KA GATE — dastkhat se PEHLE ──────────────
+    //  KHAMI THI: ye function sirf `id, role` parhta tha aur admin ko
+    //  bila-shart 72 ghante deta tha. Yaani 50_suspend_hard_gate.sql me
+    //  band kiya gaya sooraakh yahin se dobara khul jata: mo'attal afsar
+    //  ka refresh token abhi zinda hota hai, wo curl se naya token le kar
+    //  48-72 ghante offline poora kaam kar leta. Ab SQL wali tarteeb hi
+    //  yahan bhi: superadmin → mo'attal/ghair-manzoor → admin → subscription.
+    const isOwner     = officer.role === "superadmin";
+    const suspended   = officer.is_suspended === true;
+    const notApproved = officer.is_approved === false;
+
+    if (!isOwner && (suspended || notApproved)) {
+      return new Response(
+        JSON.stringify({ error: suspended ? "suspended" : "not_approved" }),
+        { status: 403, headers: cors },
+      );
+    }
+
+    if (isOwner || officer.role === "admin") {
+      entitledUntil = now + 72 * 3600 * 1000;
       plan = "owner";
     } else {
       const { data: sub } = await admin.from("subscriptions")
@@ -73,17 +92,30 @@ Deno.serve(async (req: Request) => {
         .order("created_at", { ascending: false })
         .limit(1).maybeSingle();
       if (sub && (sub.status === "active" || sub.status === "trial")) {
-        const exp = new Date(sub.expires_at).getTime();
-        if (exp > now) {
-          // Token miyaad = min(subscription expiry, ab + 48h) — offline window mehdood
-          entitledUntil = Math.min(exp, now + 48 * 3600 * 1000);
+        // expires_at NULL: sirf 'active' ke liye mustaqil maana jata hai
+        // (SQL ke dio_has_active_sub() jaisa hi). NaN > now hamesha false
+        // tha, is liye pehle aisa afsar khamoshi se 0 le kar jata tha.
+        const raw = sub.expires_at ? new Date(sub.expires_at).getTime() : NaN;
+        const perpetual = (sub.status === "active" && !sub.expires_at);
+        if (perpetual) {
+          entitledUntil = now + 48 * 3600 * 1000;
+          plan = sub.status;
+        } else if (!Number.isNaN(raw) && raw > now) {
+          entitledUntil = Math.min(raw, now + 48 * 3600 * 1000);
           plan = sub.status;
         }
       }
     }
 
+    // Koi haq nahi → 403, aur kuch bhi dastkhat NA karein. Pehle 200 ke
+    // sath `entitled_until: 0` wala dastkhat-shuda token wapas jata tha.
+    if (entitledUntil <= 0) {
+      return new Response(JSON.stringify({ error: "not_entitled" }), { status: 403, headers: cors });
+    }
+
     // 3) Payload + ECDSA dastkhat
-    const payload = { v: 1, officer_id: officer.id, plan, entitled_until: entitledUntil, issued_at: now };
+    const payload = { v: 1, kid: "dio-1", sub: uid, officer_id: officer.id, plan,
+                      entitled_until: entitledUntil, issued_at: now };
     const payloadStr = JSON.stringify(payload);
     const key = await importPrivKey(PRIV_JWK);
     const sig = await crypto.subtle.sign(
@@ -95,6 +127,8 @@ Deno.serve(async (req: Request) => {
       headers: { ...cors, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e && (e as Error).message || e) }), { status: 500, headers: cors });
+    // Andarooni tafseel bahar na jaye (env naam, Postgres paighamat waghera)
+    try { console.error("dio-license:", e); } catch (_) { /* noop */ }
+    return new Response(JSON.stringify({ error: "internal" }), { status: 500, headers: cors });
   }
 });

@@ -3,7 +3,7 @@
    Maqsad: fon par utni hi rawani jitni desktop par.
 
    BUNYADI USOOL — kyun sab kuch CSS se:
-     Zimni/challan ka save aur print DONO `#ch173-doc` ki ASAL innerHTML
+     Zimni/challan ka save aur print DONO `#ch173-doc.zf-editor` ki ASAL innerHTML
      parhte hain. Is liye mobile ke liye DOM hilana (nodes ko form me le
      jana) khatarnak hai — form mode me save karte hi content gayab ho
      sakta tha. Yahan aik bhi node nahi hilti: WAHI contenteditable khane
@@ -20,7 +20,7 @@
 @media screen and (max-width: 900px) {
 
   /* Kaghaz ki paki chauRai khatam — ab sakreen ke mutabiq */
-  html.dio-mform #ch173-doc,
+  html.dio-mform #ch173-doc.zf-editor,
   html.dio-mform #r173-doc {
     width: 100% !important;
     max-width: 100% !important;
@@ -30,23 +30,24 @@
     border-radius: 0 !important;
     background: var(--bg-secondary, #fff) !important;
   }
-  html.dio-mform #ch173-doc { font-size: 16px !important; line-height: 1.75 !important; }
+  html.dio-mform #ch173-doc.zf-editor { font-size: 16px !important; line-height: 1.75 !important; }
 
   /* Table ka dhancha → seedhi (stacked) shakl */
-  html.dio-mform #ch173-doc table.zf-tbl,
-  html.dio-mform #ch173-doc table.zf-tbl tbody,
-  html.dio-mform #ch173-doc table.zf-tbl tr,
-  html.dio-mform #ch173-doc table.zf-tbl td {
+  html.dio-mform #ch173-doc.zf-editor table.zf-tbl,
+  html.dio-mform #ch173-doc.zf-editor table.zf-tbl tbody,
+  html.dio-mform #ch173-doc.zf-editor table.zf-tbl tr,
+  html.dio-mform #ch173-doc.zf-editor table.zf-tbl td {
     display: block !important;
     width: auto !important;
     height: auto !important;
     border: 0 !important;
   }
   /* Column headings (عمودی عنوان) fon par jagah khate hain */
-  html.dio-mform #ch173-doc table.zf-tbl thead { display: none !important; }
+  html.dio-mform #ch173-doc.zf-editor table.zf-tbl thead { display: none !important; }
 
   /* ── Har andraaj = aik CARD ── */
-  html.dio-mform #ch173-doc tr.zf-blk {
+  html.dio-mform #ch173-doc.zf-editor tr.zf-blk {
+    scroll-margin-top: 72px;
     background: var(--bg-primary, #fff);
     border: 1px solid var(--border, #d7dee6);
     border-radius: 12px;
@@ -57,24 +58,24 @@
   }
 
   /* Tareekh — upar, chhota lebal ke sath */
-  html.dio-mform #ch173-doc tr.zf-blk td.zf-c-action { padding: 0 0 6px !important; }
-  html.dio-mform #ch173-doc tr.zf-blk td.zf-c-action::before {
+  html.dio-mform #ch173-doc.zf-editor tr.zf-blk td.zf-c-action { padding: 0 0 6px !important; }
+  html.dio-mform #ch173-doc.zf-editor tr.zf-blk td.zf-c-action::before {
     content: 'تاریخ / وقت';
     display: block; font-size: 11px; font-weight: 700;
     color: var(--text-muted, #7d97ad); letter-spacing: .2px; margin-bottom: 2px;
   }
-  html.dio-mform #ch173-doc .zf-actbody {
+  html.dio-mform #ch173-doc.zf-editor .zf-actbody {
     font-size: 15px !important; min-height: 26px;
     padding: 6px 8px; border-radius: 8px;
     background: var(--bg-tertiary, #f2f5f8);
   }
 
   /* Serial — kone me chhota badge, apni qatar nahi khata */
-  html.dio-mform #ch173-doc tr.zf-blk td.zf-c-serial {
+  html.dio-mform #ch173-doc.zf-editor tr.zf-blk td.zf-c-serial {
     position: absolute !important; top: 8px; left: 10px;
     padding: 0 !important; width: auto !important;
   }
-  html.dio-mform #ch173-doc tr.zf-blk .zf-num {
+  html.dio-mform #ch173-doc.zf-editor tr.zf-blk .zf-num {
     min-width: 30px; height: 30px; line-height: 30px;
     text-align: center; font-weight: 800; font-size: 14px;
     border-radius: 50%; background: var(--accent, #38bdf8); color: #fff;
@@ -82,62 +83,62 @@
   }
 
   /* Halaat — asal likhne ki jagah, poori chauRai aur aaram se */
-  html.dio-mform #ch173-doc tr.zf-blk td.zf-c-body { padding: 0 !important; }
-  html.dio-mform #ch173-doc tr.zf-blk td.zf-c-body::before {
+  html.dio-mform #ch173-doc.zf-editor tr.zf-blk td.zf-c-body { padding: 0 !important; }
+  html.dio-mform #ch173-doc.zf-editor tr.zf-blk td.zf-c-body::before {
     content: 'حالاتِ تفتیش';
     display: block; font-size: 11px; font-weight: 700;
     color: var(--text-muted, #7d97ad); margin: 4px 0 3px;
   }
-  html.dio-mform #ch173-doc .zf-body {
+  html.dio-mform #ch173-doc.zf-editor .zf-body {
     font-size: 16px !important; line-height: 1.85 !important;
     min-height: 120px; padding: 10px 12px;
     border: 1px solid var(--border, #d7dee6); border-radius: 10px;
     background: var(--bg-secondary, #fff);
   }
-  html.dio-mform #ch173-doc .zf-body:focus {
+  html.dio-mform #ch173-doc.zf-editor .zf-body:focus {
     outline: 2px solid var(--accent, #38bdf8); outline-offset: 1px;
   }
 
   /* Tamheed (سرکار/بنام/مرتبہ) — apna card */
-  html.dio-mform #ch173-doc tr.zf-prerow {
+  html.dio-mform #ch173-doc.zf-editor tr.zf-prerow {
     background: var(--bg-primary, #fff);
     border: 1px solid var(--border, #d7dee6);
     border-inline-start: 4px solid var(--accent, #38bdf8);
     border-radius: 12px; margin: 0 0 14px; padding: 10px 12px;
   }
-  html.dio-mform #ch173-doc tr.zf-prerow td { padding: 0 !important; }
-  html.dio-mform #ch173-doc tr.zf-prerow .zf-bl {
+  html.dio-mform #ch173-doc.zf-editor tr.zf-prerow td { padding: 0 !important; }
+  html.dio-mform #ch173-doc.zf-editor tr.zf-prerow .zf-bl {
     display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline;
     padding: 6px 0; border-bottom: 1px dashed var(--border, #d7dee6);
   }
-  html.dio-mform #ch173-doc tr.zf-prerow .zf-bl:last-child { border-bottom: 0; }
-  html.dio-mform #ch173-doc tr.zf-prerow .zf-lbl {
+  html.dio-mform #ch173-doc.zf-editor tr.zf-prerow .zf-bl:last-child { border-bottom: 0; }
+  html.dio-mform #ch173-doc.zf-editor tr.zf-prerow .zf-lbl {
     font-size: 12px; font-weight: 700; color: var(--text-muted, #7d97ad);
     min-width: 88px;
   }
-  html.dio-mform #ch173-doc tr.zf-prerow .zf-bdyln {
+  html.dio-mform #ch173-doc.zf-editor tr.zf-prerow .zf-bdyln {
     flex: 1 1 60%; font-size: 15px; min-height: 24px;
     padding: 4px 8px; border-radius: 8px; background: var(--bg-tertiary, #f2f5f8);
   }
   /* Mulziman picker — asli tap-able button */
-  html.dio-mform #ch173-doc .zf-pick {
+  html.dio-mform #ch173-doc.zf-editor .zf-pick {
     width: 38px; height: 38px; border-radius: 10px; font-size: 18px;
     background: var(--accent, #38bdf8); color: #fff; border: 0;
   }
 
   /* Ikhtitam + dastkhat — aakhri card */
-  html.dio-mform #ch173-doc tr.zf-endrow {
+  html.dio-mform #ch173-doc.zf-editor tr.zf-endrow {
     background: var(--bg-primary, #fff);
     border: 1px solid var(--border, #d7dee6);
     border-radius: 12px; margin: 0 0 14px; padding: 10px 12px;
   }
-  html.dio-mform #ch173-doc tr.zf-endrow td { padding: 0 !important; }
-  html.dio-mform #ch173-doc .zf-close { font-size: 15px; }
-  html.dio-mform #ch173-doc .zf-gap { display: none !important; }  /* khali lines fon par bekaar */
+  html.dio-mform #ch173-doc.zf-editor tr.zf-endrow td { padding: 0 !important; }
+  html.dio-mform #ch173-doc.zf-editor .zf-close { font-size: 15px; }
+  html.dio-mform #ch173-doc.zf-editor .zf-gap { display: none !important; }  /* khali lines fon par bekaar */
 
   /* Column-resize grips mobile par bemani (ungli se nahi chalte) */
-  html.dio-mform #ch173-doc .zf-colgrip,
-  html.dio-mform #ch173-doc .zf-rowgrip { display: none !important; }
+  html.dio-mform #ch173-doc.zf-editor .zf-colgrip,
+  html.dio-mform #ch173-doc.zf-editor .zf-rowgrip { display: none !important; }
 
   /* ── Form/Kaghaz toggle + naya andraaj ── */
   .dio-mbar {
@@ -241,28 +242,86 @@
    5. CHHAPAI — mobile ka koi asar NA ho (kaghaz bilkul A4/Legal)
    ──────────────────────────────────────────────────────────────── */
 @media print {
-  html.dio-mform #ch173-doc,
+  html.dio-mform #ch173-doc.zf-editor,
   html.dio-mform #r173-doc { width: auto !important; max-width: none !important;
     padding: revert !important; box-shadow: none !important; background: #fff !important;
     font-size: revert !important; line-height: 1.4 !important; }
-  html.dio-mform #ch173-doc table.zf-tbl { display: table !important; }
-  html.dio-mform #ch173-doc table.zf-tbl thead { display: table-header-group !important; }
-  html.dio-mform #ch173-doc table.zf-tbl tbody { display: table-row-group !important; }
-  html.dio-mform #ch173-doc table.zf-tbl tr { display: table-row !important;
+  html.dio-mform #ch173-doc.zf-editor table.zf-tbl { display: table !important; }
+  html.dio-mform #ch173-doc.zf-editor table.zf-tbl thead { display: table-header-group !important; }
+  html.dio-mform #ch173-doc.zf-editor table.zf-tbl tbody { display: table-row-group !important; }
+  html.dio-mform #ch173-doc.zf-editor table.zf-tbl tr { display: table-row !important;
     background: none !important; border: 0 !important; border-radius: 0 !important;
     margin: 0 !important; padding: 0 !important; box-shadow: none !important; }
-  html.dio-mform #ch173-doc table.zf-tbl td { display: table-cell !important;
+  html.dio-mform #ch173-doc.zf-editor table.zf-tbl td { display: table-cell !important;
     border: revert !important; padding: revert !important; }
-  html.dio-mform #ch173-doc tr.zf-blk td.zf-c-serial { position: static !important; }
-  html.dio-mform #ch173-doc tr.zf-blk .zf-num { background: none !important; color: #000 !important;
+  html.dio-mform #ch173-doc.zf-editor tr.zf-blk td.zf-c-serial { position: static !important; }
+  html.dio-mform #ch173-doc.zf-editor tr.zf-blk .zf-num { background: none !important; color: #000 !important;
     border-radius: 0 !important; height: auto !important; line-height: revert !important;
     min-width: 0 !important; font-weight: revert !important; }
-  html.dio-mform #ch173-doc td::before { content: none !important; }   /* mobile lebal na chhapein */
-  html.dio-mform #ch173-doc .zf-body,
-  html.dio-mform #ch173-doc .zf-actbody,
-  html.dio-mform #ch173-doc .zf-bdyln { border: 0 !important; background: none !important;
+  html.dio-mform #ch173-doc.zf-editor td::before { content: none !important; }   /* mobile lebal na chhapein */
+  html.dio-mform #ch173-doc.zf-editor .zf-body,
+  html.dio-mform #ch173-doc.zf-editor .zf-actbody,
+  html.dio-mform #ch173-doc.zf-editor .zf-bdyln { border: 0 !important; background: none !important;
     padding: revert !important; min-height: 0 !important; font-size: revert !important;
     line-height: revert !important; }
-  html.dio-mform #ch173-doc .zf-gap { display: block !important; }
+  html.dio-mform #ch173-doc.zf-editor .zf-gap { display: block !important; }
   .dio-mbar, .dio-addblk, .dio-thumbbar { display: none !important; }
 }
+
+/* ────────────────────────────────────────────────────────────────
+   6. CHALLAN KA MOBILE FORM  (challan-form.js banata hai)
+   Challan zimni jaisa NAHI — wo aik hi qatar ka form hai jis ke 6
+   khane AMOODI likhayi par hain. Is liye yahan kaghaz ko CSS se card
+   nahi banaya jata (us se `_printR173` ki px-naap toot jati hai);
+   ye aik ALAG panel hai jo sirf [data-k] khano se juRa hai.
+   ──────────────────────────────────────────────────────────────── */
+@media screen and (max-width: 900px) {
+  .dio-chform { display: block; padding: 0 0 80px; }
+  .dio-chform-head {
+    position: sticky; top: 0; z-index: 30;
+    display: flex; gap: 8px; align-items: center;
+    padding: 8px 10px; margin-bottom: 14px;
+    background: var(--bg-secondary, #fff);
+    border-bottom: 1px solid var(--border, #d7dee6);
+  }
+  .dio-chform-head button {
+    min-height: 42px; padding: 0 14px; border-radius: 10px;
+    border: 1px solid var(--border, #d7dee6);
+    background: var(--bg-tertiary, #f2f5f8);
+    color: var(--text-primary, #0f1923); font-size: 14px; font-weight: 700;
+  }
+  .dio-chform-head button.on { background: var(--accent, #38bdf8); color: #fff; border-color: transparent; }
+  .dio-chform-head .sp { flex: 1 1 auto; }
+  .dio-chform-head .hint { font-size: 11px; color: var(--text-muted, #7d97ad); }
+
+  .dio-chf-row {
+    /* Chipakne wala header khane ko na dhampe jab khana nazar me laya jaye */
+    scroll-margin-top: 72px;
+    background: var(--bg-primary, #fff);
+    border: 1px solid var(--border, #d7dee6);
+    border-radius: 12px; margin: 0 10px 12px; padding: 10px 12px;
+  }
+  .dio-chf-lbl {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 800; margin-bottom: 6px;
+    color: var(--text-muted, #7d97ad);
+  }
+  .dio-chf-pick {
+    margin-inline-start: auto; min-height: 34px; padding: 0 12px;
+    border: 0; border-radius: 8px; font-size: 12px; font-weight: 700;
+    background: var(--accent, #38bdf8); color: #fff;
+  }
+  /* AMOODI likhayi yahan NAHI — form me matn hamesha seedha */
+  .dio-chf-in {
+    writing-mode: horizontal-tb; direction: rtl; text-align: right;
+    font-size: 16px; line-height: 1.8; padding: 8px 10px;
+    border: 1px solid var(--border, #d7dee6); border-radius: 10px;
+    background: var(--bg-secondary, #fff);
+    white-space: pre-wrap; overflow-wrap: break-word; word-break: normal;
+  }
+  .dio-chf-in.line { min-height: 42px; }
+  .dio-chf-in.area { min-height: 110px; }
+  .dio-chf-in:focus { outline: 2px solid var(--accent, #38bdf8); outline-offset: 1px; }
+}
+/* Chhapai par ye panel kabhi nahi */
+@media print { .dio-chform { display: none !important; } }

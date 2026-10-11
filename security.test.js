@@ -415,7 +415,9 @@ test('form mode kaghaz ki paki chauRai khatam karta hai', () => {
 
 test('CHHAPAI par mobile ka koi asar na ho (kaghaz A4/Legal rahe)', () => {
   const c = read('mobile.css');
-  const printBlock = c.slice(c.lastIndexOf('@media print'));
+  // Ab file me AIK se ZYADA @media print block hain (zimni + challan form).
+  // `lastIndexOf` aakhri wala pakaR leta tha — is liye SAB print blocks jorte hain.
+  const printBlock = c.split('@media print').slice(1).join('\n@media print');
   for (const [sel, val] of [['table\\.zf-tbl', 'display: table'],
                             ['tbody', 'display: table-row-group'],
                             ['tr', 'display: table-row'],
@@ -470,4 +472,57 @@ test('har lazy safhe ki file boot.js ke naqshe me hai', () => {
     assert.ok(fs.statSync(path.join(ROOT, f)).size > 0, f + ' khali hai');
   }
   assert.ok(checked >= 8, 'kam az kam 8 lazy files jaanchi jani chahiyen, jaanchi: ' + checked);
+});
+
+// ══ CHALLAN KA MOBILE FORM (round-5) ═══════════════════════════
+test('zimni ka form-mode CSS SIRF .zf-editor par (challan mehfooz)', () => {
+  const c = read('mobile.css');
+  const bad = c.split('\n').filter((l) =>
+    /#ch173-doc(?!\.zf-editor)/.test(l) && !l.trim().startsWith('/*') && !l.trim().startsWith('*'));
+  assert.strictEqual(bad.length, 0,
+    'zimni aur challan ka id AIK hi (ch173-doc) hai — bina .zf-editor ke qaida challan par bhi lagta hai, ' +
+    'aur `width:100% !important` `_printR173` ki inline 8.5in naap ko HARA deta hai. Mile: ' + bad.join(' | '));
+});
+
+test('challan ke apne khane (amoodi likhayi) CSS se chhue na jayen', () => {
+  const c = read('mobile.css');
+  for (const sel of ['.rotinner', '.rotclip', '.cellbox', '.normwrap', '.ch173-table'])
+    assert.ok(!new RegExp('\\' + sel + '\\s*[,{]').test(c),
+      sel + ' ko mobile.css chhu rahi hai — challan ki px-naap toot sakti hai');
+});
+
+test('challan form kaghaz ko display:none se NAHI chhupata', () => {
+  const j = read('challan-form.js');
+  const fn = j.slice(j.indexOf('function show(formOn)'), j.indexOf('function restoreForPrint'));
+  assert.ok(/style\.height = '0'/.test(fn), 'collapse height:0 se hona chahiye');
+  assert.ok(!/style\.display\s*=\s*'none'/.test(fn),
+    "display:none se element ki naap 0 ho jati hai — `_printR173` ki chhapai toot jati hai");
+});
+
+test('challan form asal [data-k] node me likhta hai (save/print wahi parhte hain)', () => {
+  const j = read('challan-form.js');
+  assert.ok(/node\.innerHTML = el\.innerHTML/.test(j),
+    'form ko asal document ke khane me likhna chahiye, warna save me kuch na jata');
+  assert.ok(!/appendChild\(node\)|insertBefore\(node/.test(j),
+    'dastavez ke node hilana save ke waqt content gum kar sakta hai');
+});
+
+test('chhapai par kaghaz wapas khulta hai (hawale se, parent se nahi)', () => {
+  const j = read('challan-form.js');
+  assert.ok(/window\.addEventListener\('beforeprint'/.test(j), 'beforeprint par bahaal hona chahiye');
+  const fn = j.slice(j.indexOf('function restoreForPrint'), j.indexOf("window.addEventListener('beforeprint'"));
+  assert.ok(/_wrapEl/.test(fn) && !/doc\.parentElement/.test(fn),
+    'beforeprint par app dastavez ko #dio-nprint-host me le jati hai — parentElement us waqt GHALAT dabba deta hai');
+});
+
+test('challan form ka intikhab yaad rehta hai', () => {
+  const j = read('challan-form.js');
+  assert.ok(/dio_challan_view/.test(j), 'afsar ka intikhab mehfooz hona chahiye');
+  assert.ok(/show\(wantForm\(\)\)/.test(j),
+    'refresh har baar zabardasti form na khole — warna "کاغذ" chunna bekaar ho jata hai');
+});
+
+test('challan-form.js jur gayi (html + sw)', () => {
+  assert.ok(read('index.html').includes('challan-form.js'));
+  assert.ok(read('sw.js').includes("'/challan-form.js'"), 'offline par bhi milni chahiye');
 });
