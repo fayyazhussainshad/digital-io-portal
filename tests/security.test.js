@@ -1568,3 +1568,19 @@ test('افسر تلاش: غلط کالم کی وجہ سے خانہ خالی نہ
   assert.ok(/o\.suspended !== true/.test(s) && /o\.is_suspended !== true/.test(s),
     'donon naam par chhantai');
 });
+
+test('ایج فنکشن: ?pubkey صرف عوامی حصہ دے، نجی کلید کبھی نہیں', () => {
+  const src = read('supabase/functions/dio-license/index.ts');
+  const a = src.indexOf('const pub = {');
+  const b = src.indexOf('};', a) + 2;
+  assert.ok(a > -1, '?pubkey shakh mojood ho');
+  const tukra = src.slice(a, b).replace(/\(PRIV_JWK as Record<string, unknown>\)/g, 'PRIV_JWK');
+  assert.ok(!/\bd\b\s*:/.test(tukra), 'object me `d` ka khana hi na ho');
+  const PRIV = { kty:'EC', crv:'P-256', d:'RAAZ-NIJJI-KLEED', x:'XX', y:'YY', ext:true };
+  const pub = new Function('PRIV_JWK', tukra + '; return pub;')(PRIV);
+  assert.strictEqual(JSON.stringify(Object.keys(pub).sort()), '["crv","kty","x","y"]');
+  assert.ok(JSON.stringify(pub).indexOf('RAAZ-NIJJI-KLEED') < 0, 'nijji kleed kisi soorat bahar na jaye');
+  // ye shakh JWT se pehle hai, magar sirf GET + ?pubkey par
+  assert.ok(/req\.method === "GET" && new URL\(req\.url\)\.searchParams\.has\("pubkey"\)/.test(src),
+    'sirf GET ?pubkey par chale — POST wala license raasta na badle');
+});
