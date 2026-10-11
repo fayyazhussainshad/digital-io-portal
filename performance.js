@@ -40,11 +40,10 @@ async function _buildPerf() {
 
   root.innerHTML = `
   <!-- Back + Header -->
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;direction:rtl;flex-wrap:wrap;">
-    
+  <div class="page-header">
     <div>
-      <div style="font-size:18px;font-weight:800;">کارکردگی کا جائزہ</div>
-      <div style="font-size:12px;color:var(--text-muted);">${esc(currentOfficer?.full_name||'')} · ${esc(currentOfficer?.station||'')} · ${formatDate(new Date())}</div>
+      <div class="page-title">کارکردگی کا جائزہ</div>
+      <div class="page-subtitle">${esc(currentOfficer?.full_name||'')} · ${esc(currentOfficer?.station||'')} · ${formatDate(new Date())}</div>
     </div>
   </div>
 
@@ -94,7 +93,7 @@ async function _buildPerf() {
           const max=Math.max(...monthly.map(x=>x.count),1);
           const pct=Math.round(m.count/max*100);
           const isCur=i===monthly.length-1;
-          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;" title="${m.label}: ${m.count}">
+          return `<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;" title="${m.label}: ${m.count}">
             ${m.count?`<div style="font-size:7px;color:${isCur?'var(--accent)':'var(--text-faint)'};font-weight:${isCur?'800':'400'};">${m.count}</div>`:'<div style="font-size:7px;"></div>'}
             <div style="width:100%;background:${isCur?'var(--accent)':'rgba(56,189,248,0.3)'};border-radius:2px 2px 0 0;height:${Math.max(pct*0.75,2)}px;"></div>
             <div style="font-size:6px;color:${isCur?'var(--accent)':'var(--text-faint)'};">${m.label}</div>
@@ -128,7 +127,7 @@ async function _buildPerf() {
       </div>`).join('')}
     </div>
     <div style="text-align:center;margin-top:8px;">
-      <button class="btn btn-secondary btn-sm" onclick="_clearUsageStats()">Stats ری سیٹ</button>
+      <button class="btn btn-secondary btn-sm" onclick="_clearUsageStats()">گنتی دوبارہ شروع کریں</button>
     </div>
   </div>` : ''}
 
@@ -144,7 +143,13 @@ function _perfMonthly(cases) {
   return Array.from({length:12},(_,i)=>{
     const d=new Date(now.getFullYear(),now.getMonth()-11+i,1);
     const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    const lbl=d.toLocaleString('default',{month:'short'});
+    // Maheene ka naam Urdu mein — `toLocaleString` browser ki zaban
+    // par chhoR deta tha, jis se safhe par "Sep Aug Jul…" aa jata tha.
+    /* Chhote naam: 12 maheene aik satar mein aate hain. Poore Urdu
+       naam ("جولائی", "ستمبر") angrezi ke 3-harfi naamon se chauRe
+       hain — phone par baarah khane sakreen se bahar nikal jate the. */
+    const _UR=['جنو','فرو','مار','اپر','مئی','جون','جول','اگس','ستم','اکت','نوم','دسم'];
+    const lbl=_UR[d.getMonth()];
     const count=cases.filter(c=>{ const p=_ppd(c.fir_date); return p&&p.startsWith(key); }).length;
     return {label:lbl,count};
   });
@@ -170,7 +175,7 @@ async function _perfCourtDates() {
 }
 
 function _clearUsageStats() {
-  try { localStorage.removeItem('dio_btn_usage'); showToast('Stats صاف','info'); _buildPerf(); } catch(_) {}
+  try { localStorage.removeItem('dio_btn_usage'); showToast('گنتی صاف ہو گئی۔','info'); _buildPerf(); } catch(_) {}
 }
 
 function _printPerfReport() {

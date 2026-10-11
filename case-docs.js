@@ -21,7 +21,7 @@ function renderDocChecklist(docs, selected) {
   // Custom documents
   const customDocs = selected.filter(d => !ALL_MISAL_DOCS.includes(d));
   if (customDocs.length) {
-    html += `<div style="font-size:9px;color:var(--text-faint);letter-spacing:2px;text-transform:uppercase;padding:6px 0 4px;">Custom Documents</div>`;
+    html += `<div style="font-size:9px;color:var(--text-faint);letter-spacing:2px;text-transform:uppercase;padding:6px 0 4px;">اپنی دستاویزات</div>`;
     customDocs.forEach(doc => {
       html += `<div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:4px;cursor:pointer;" onclick="toggleDoc('${_dioJsHtml(doc)}',this)">
         <input type="checkbox" checked style="accent-color:var(--accent);width:14px;height:14px;pointer-events:none;">

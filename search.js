@@ -9,9 +9,12 @@ let _searchDebounce = null;
 
 function renderSearch(container) {
   container.innerHTML = `
-  <div style="max-width:800px;margin:0 auto;padding:8px 0;direction:rtl;">
-    <div style="margin-bottom:12px;">
-      
+  <div style="max-width:100%;margin:0;direction:rtl;">
+    <div class="page-header">
+      <div>
+        <div class="page-title">تلاش</div>
+        <div class="page-subtitle">مقدمات، ملزمان، گواہان، ضمنی — سب ایک جگہ</div>
+      </div>
     </div>
     <div id="sr-page-searchbar" style="position:relative;margin-bottom:14px;">
       <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none;"><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><circle cx='11' cy='11' r='6.5'/><path d='M16 16l4.5 4.5'/></svg></span>

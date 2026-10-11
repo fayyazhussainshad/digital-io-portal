@@ -319,7 +319,7 @@ function renderCaseRow(c,sn){
     <td>
       ${(() => { const fn=c.fir_number||'—'; const p=String(fn).split('/'); return p.length===2 ? `<span style="cursor:pointer;" onclick="openCaseWorkspace('${c.id}')" title="Open Case Workspace"><span dir="ltr" style="unicode-bidi:isolate;font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:15px;display:block;line-height:1.1;text-decoration:underline;text-decoration-color:rgba(56,189,248,0.4);">${p[0]}</span><span dir="ltr" style="unicode-bidi:isolate;font-family:var(--font-mono);font-size:10px;color:var(--text-muted);display:block;line-height:1;">/${p[1]}</span></span>` : `<span dir="ltr" style="unicode-bidi:isolate;font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:12px;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(56,189,248,0.4);" onclick="openCaseWorkspace('${c.id}')" title="Open Case Workspace">${fn}</span>`; })()}
       ${c.priority ? `<br><span style="font-size:9px;font-weight:700;color:${c.priority==='high'?'var(--red)':c.priority==='medium'?'var(--amber)':'var(--green)'};">${c.priority==='high'?'اہم':c.priority==='medium'?'درمیانہ':'کم'}</span>` : ''}
-      ${c.is_cross_version?'<br><span style="font-size:9px;color:var(--red);font-weight:600;">Cross</span>':''}
+      ${c.is_cross_version?'<br><span style="font-size:9px;color:var(--red);font-weight:600;">کراس ورژن</span>':''}
       ${c._shared?`<br><span style="font-size:9px;color:var(--accent);font-weight:600;" title="آپ کے ساتھ شیئر کیا گیا (${c._sharePermission==='write'?'ترمیم':'دیکھیں'})">شیئرڈ</span>`:''}
     </td>
     <td style="font-size:11px;white-space:nowrap;">${formatDate(c.fir_date)}</td>
@@ -475,15 +475,15 @@ async function openShareModal(id){
      <div style="display:flex;gap:10px;direction:rtl;justify-content:center;flex-wrap:wrap;">
        <a href="https://wa.me/?text=${enc}" target="_blank" rel="noopener"
           style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;background:#25D366;color:#fff;font-weight:700;font-size:13px;text-decoration:none;">
-         Share on WhatsApp
+         وٹس ایپ پر بھیجیں
        </a>
        <a href="mailto:?subject=${sub}&body=${enc}"
           style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;background:var(--accent-dark);color:#fff;font-weight:700;font-size:13px;text-decoration:none;">
-         Send via Email
+         ای میل سے بھیجیں
        </a>
      </div>
      <div style="margin-top:10px;font-size:10px;color:var(--text-muted);text-align:center;">WhatsApp opens in a new tab · Email opens your default email app</div>`,
-    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">Close</button>`);
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`);
 }
 
 
@@ -747,15 +747,15 @@ function renderEvidenceTab(c, ev) {
           ${hf && e.type==='Photo'
             ? `<img src="${esc(vu||'')}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;" alt="${esc(e.name)}" onerror="this.style.display='none';this.parentElement.querySelector('.ev-fallback').style.display='flex'"><div class="ev-fallback" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:36px;"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M3.5 8h3.2l1.6-2.4h7.4L17.3 8h3.2v11.5h-17z"/><circle cx="12" cy="13.5" r="3.6"/></svg></div>`
             : `<span style="font-size:36px;">${icon(e.type)}</span>`}
-          ${hf ? `<div style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,0.6);border-radius:4px;padding:2px 5px;font-size:9px;color:#fff;">Open</div>` : ''}
+          ${hf ? `<div style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,0.6);border-radius:4px;padding:2px 5px;font-size:9px;color:#fff;">کھولیں</div>` : ''}
         </div>
         <div class="evidence-info">
           <div class="evidence-name" id="ev-name-${e.id}">${esc(e.name)}</div>
           <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${esc(e.type)} · ${e.evidence_date||formatDate(e.created_at)}</div>
           ${e.notes ? `<div style="font-size:10px;color:var(--text-faint);margin-top:3px;font-style:italic;">${esc(e.notes)}</div>` : ''}
           <div style="display:flex;gap:6px;direction:rtl;margin-top:8px;">
-            ${hf ? `<button class="btn btn-secondary btn-sm" onclick="openEvidenceFile('${e.id}','${_dioJsHtml(vu||'')}','${_dioJsHtml(e.name)}','${_dioJsHtml(e.type)}')" title="Open File">Open</button>` : ''}
-            <button class="btn btn-secondary btn-sm" onclick="renameEvidence('${e.id}','${_dioJsHtml(e.name)}','${_dioJsHtml(c.fir_number)}')" title="Rename">Rename</button>
+            ${hf ? `<button class="btn btn-secondary btn-sm" onclick="openEvidenceFile('${e.id}','${_dioJsHtml(vu||'')}','${_dioJsHtml(e.name)}','${_dioJsHtml(e.type)}')" title="Open File">کھولیں</button>` : ''}
+            <button class="btn btn-secondary btn-sm" onclick="renameEvidence('${e.id}','${_dioJsHtml(e.name)}','${_dioJsHtml(c.fir_number)}')" title="Rename">نام بدلیں</button>
             <button aria-label="Delete" class="btn btn-danger btn-sm" onclick="deleteWorkspaceEvidence('${e.id}','${c.fir_number}')" title="Delete"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
           </div>
         </div>
@@ -784,9 +784,9 @@ function openEvidenceFile(id, url, name, type) {
 function renameEvidence(id, currentName, firNumber) {
   openModal('Rename Evidence',
     `<div style="margin-bottom:8px;font-size:12px;color:var(--text-muted);">Enter a new name for this evidence item.</div>
-     <input class="form-input" id="ev-rename-input" value="${esc(currentName)}" style="width:100%;box-sizing:border-box;" placeholder="Evidence name">`,
-    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-     <button class="btn btn-primary" onclick="saveEvidenceRename('${id}','${firNumber}')">Rename</button>`
+     <input class="form-input" id="ev-rename-input" value="${esc(currentName)}" style="width:100%;box-sizing:border-box;" placeholder="شہادت کا نام">`,
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+     <button class="btn btn-primary" onclick="saveEvidenceRename('${id}','${firNumber}')">نام بدلیں</button>`
   );
   setTimeout(() => { const i = document.getElementById('ev-rename-input'); if(i){i.focus();i.select();} }, 100);
 }
@@ -809,8 +809,8 @@ async function saveEvidenceRename(id, firNumber) {
 function deleteWorkspaceEvidence(id, firNumber) {
   openModal('Delete Evidence',
     `<p style="color:var(--text-secondary);font-size:13px;">Are you sure you want to delete this evidence item?<br><span style="color:var(--red);font-size:11px;margin-top:8px;display:block;">This cannot be undone.</span></p>`,
-    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-     <button class="btn btn-danger" onclick="closeModal();doDeleteWorkspaceEvidence('${id}','${firNumber}')">Delete</button>`
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+     <button class="btn btn-danger" onclick="closeModal();doDeleteWorkspaceEvidence('${id}','${firNumber}')">حذف کریں</button>`
   );
 }
 
@@ -829,15 +829,15 @@ function openWorkspaceEvidenceModal(caseId, firNumber) {
   openModal('Attach Evidence',
     `<div style="margin-bottom:12px;">
        <div style="display:flex;gap:8px;direction:rtl;margin-bottom:12px;">
-         <button class="btn btn-secondary btn-sm" onclick="wevOpenCamera()">Camera</button>
-         <button class="btn btn-secondary btn-sm" onclick="wevOpenFile()">Select File</button>
+         <button class="btn btn-secondary btn-sm" onclick="wevOpenCamera()">کیمرہ</button>
+         <button class="btn btn-secondary btn-sm" onclick="wevOpenFile()">فائل منتخب کریں</button>
        </div>
        <!-- Camera preview -->
        <div id="wev-camera" style="display:none;margin-bottom:12px;">
          <video id="wev-video" style="width:100%;border-radius:8px;max-height:200px;" autoplay playsinline></video>
          <div style="display:flex;gap:8px;direction:rtl;margin-top:8px;">
-           <button class="btn btn-primary btn-sm" onclick="wevSnap()">Capture</button>
-           <button class="btn btn-secondary btn-sm" onclick="wevStopCamera()">Stop</button>
+           <button class="btn btn-primary btn-sm" onclick="wevSnap()">تصویر لیں</button>
+           <button class="btn btn-secondary btn-sm" onclick="wevStopCamera()">بند کریں</button>
          </div>
          <canvas id="wev-canvas" style="display:none;"></canvas>
        </div>
@@ -849,16 +849,16 @@ function openWorkspaceEvidenceModal(caseId, firNumber) {
      </div>
      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;direction:rtl;margin-bottom:10px;">
        <div><label class="form-label">Name *</label><input class="form-input" id="wev-name" placeholder="e.g. CCTV Screenshot"></div>
-       <div><label class="form-label">Type</label>
+       <div><label class="form-label">قسم</label>
          <select class="form-input" id="wev-type">
-           <option>Photo</option><option>Video</option><option>Audio</option><option>Document</option>
+           <option>تصویر</option><option>ویڈیو</option><option>آواز</option><option>دستاویز</option>
          </select>
        </div>
      </div>
-     <div style="margin-bottom:10px;"><label class="form-label">Date of Evidence</label><input class="form-input" id="wev-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
-     <div><label class="form-label">Notes</label><textarea class="form-input" id="wev-notes" rows="2" placeholder="Description, location found, etc."></textarea></div>`,
-    `<button class="btn btn-secondary" onclick="wevStopCamera();closeModal()">Cancel</button>
-     <button class="btn btn-primary" onclick="wevSave('${caseId}','${firNumber}')">Attach</button>`
+     <div style="margin-bottom:10px;"><label class="form-label">شہادت کی تاریخ</label><input class="form-input" id="wev-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
+     <div><label class="form-label">تفصیل</label><textarea class="form-input" id="wev-notes" rows="2" placeholder="تفصیل، کہاں سے ملی، وغیرہ"></textarea></div>`,
+    `<button class="btn btn-secondary" onclick="wevStopCamera();closeModal()">منسوخ</button>
+     <button class="btn btn-primary" onclick="wevSave('${caseId}','${firNumber}')">شامل کریں</button>`
   );
   window._wevFile = null;
   window._wevDataUrl = null;
@@ -976,7 +976,7 @@ function goBackToCases() {
   if (titleEl) titleEl.textContent = 'My Cases';
   if (container) renderCases(container);
 }
-function confirmDeleteCase(id,fir){openModal('Confirm Delete',`<p style="color:var(--text-secondary);font-size:13px;">Delete case <b style="color:var(--accent);">FIR ${fir}</b>?<br><br><span style="color:var(--red);font-size:11px;">This cannot be undone.</span></p>`,`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="closeModal();doDeleteCase('${id}')">Delete</button>`);}
+function confirmDeleteCase(id,fir){openModal('Confirm Delete',`<p style="color:var(--text-secondary);font-size:13px;">مقدمہ حذف کریں <b style="color:var(--accent);">FIR ${fir}</b>?<br><br><span style="color:var(--red);font-size:11px;">This cannot be undone.</span></p>`,`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-danger" onclick="closeModal();doDeleteCase('${id}')">حذف کریں</button>`);}
 async function doDeleteCase(id){
   try {
     const c = await getCase(id);

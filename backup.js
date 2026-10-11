@@ -34,13 +34,12 @@ async function _buildBackup() {
 
   root.innerHTML = `
   <!-- Header -->
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;direction:rtl;flex-wrap:wrap;">
-    
+  <div class="page-header">
+    <button class="btn btn-primary dio-add-btn" onclick="triggerBackupNow()">ابھی بیک اپ کریں</button>
     <div>
-      <div style="font-size:18px;font-weight:800;">بیک اپ و ڈیٹا</div>
-      <div style="font-size:12px;color:var(--text-muted);">آخری بیک اپ: ${lastBackup}</div>
+      <div class="page-title">بیک اپ و ڈیٹا</div>
+      <div class="page-subtitle">آخری بیک اپ: ${lastBackup}</div>
     </div>
-    <button class="btn btn-primary" onclick="triggerBackupNow()">ابھی بیک اپ</button>
   </div>
 
   <!-- Data Summary -->
@@ -66,7 +65,7 @@ async function _buildBackup() {
     <!-- Supabase Cloud -->
     <div class="card" style="text-align:center;">
       <div style="font-size:36px;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7.5 19a4.5 4.5 0 0 1 0-9 6 6 0 0 1 11.3 1.6A3.7 3.7 0 0 1 18 19z"/></svg></div>
-      <div style="font-size:13px;font-weight:700;margin-bottom:6px;direction:rtl;">Supabase Cloud</div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px;direction:rtl;">سرکاری کلاؤڈ <span style="font-size:10px;font-weight:600;color:var(--text-muted);" dir="ltr">Supabase</span></div>
       <div style="font-size:11px;color:var(--green);margin-bottom:10px;direction:rtl;">ہمیشہ فعال · AES-256</div>
       <div style="font-size:10px;color:var(--text-muted);direction:rtl;">تمام ڈیٹا خودکار محفوظ ہے</div>
     </div>
@@ -94,9 +93,9 @@ async function _buildBackup() {
   <div class="card">
     <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;direction:rtl;">سٹوریج کی معلومات</div>
     <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;direction:rtl;">
-      <div style="display:flex;justify-content:space-between;"><span>Supabase Cloud</span><span style="color:var(--green);">محفوظ</span></div>
-      <div style="display:flex;justify-content:space-between;"><span>Service Worker Cache</span><span style="color:var(--green);">آف لائن دستیاب</span></div>
-      <div style="display:flex;justify-content:space-between;"><span>Local Storage</span><span id="ls-size" style="color:var(--accent);">حساب ہو رہا ہے...</span></div>
+      <div style="display:flex;justify-content:space-between;"><span>سرکاری کلاؤڈ (Supabase)</span><span style="color:var(--green);">محفوظ</span></div>
+      <div style="display:flex;justify-content:space-between;"><span>آف لائن ذخیرہ</span><span style="color:var(--green);">دستیاب</span></div>
+      <div style="display:flex;justify-content:space-between;"><span>اس آلہ پر محفوظ</span><span id="ls-size" dir="ltr" style="color:var(--accent);">حساب ہو رہا ہے…</span></div>
     </div>
   </div>
 
@@ -126,13 +125,38 @@ async function _buildBackup() {
     </div>
   </div>`;
 
-  // Calculate local storage size
+  /* ═══════════════════════════════════════════════════════════
+     KHARABI: safhe par hamesha "NaN KB" likha aata tha.
+
+     `for (let k in localStorage)` sirf mehfooz shuda chaabiyan nahi,
+     balke wirasat mein mili khoobiyan bhi ginta hai — `length`,
+     `key`, `getItem`, `setItem`, `removeItem`, `clear`.
+     In par `(localStorage[k] || '').length` ka natija:
+         localStorage['length']  →  aik ADAD (misal 12)
+         (12 || '').length       →  undefined
+         size += undefined       →  NaN   ← aur phir sab NaN
+     Aik bhi aisi chaabi kaafi thi ke poora hisaab NaN ho jaye.
+
+     Ab: sirf ASAL chaabiyan (`key(i)`), aur har qeemat `String()`
+     se — taake koi adad ya function beech mein na aaye. */
   try {
     let size = 0;
-    for (let k in localStorage) size += (localStorage[k]||'').length + k.length;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k === null) continue;
+      size += String(localStorage.getItem(k) || '').length + k.length;
+    }
     const sizeEl = document.getElementById('ls-size');
-    if (sizeEl) sizeEl.textContent = Math.round(size/1024) + ' KB';
-  } catch(_) {}
+    if (sizeEl) {
+      const kb = size / 1024;
+      sizeEl.textContent = kb >= 1024
+        ? (kb / 1024).toFixed(1) + ' MB'
+        : Math.max(0, Math.round(kb)) + ' KB';
+    }
+  } catch(_) {
+    const sizeEl = document.getElementById('ls-size');
+    if (sizeEl) sizeEl.textContent = '\u062f\u0633\u062a\u06cc\u0627\u0628 \u0646\u06c1\u06cc\u06ba';
+  }
 }
 
 // ── EXPORT ALL DATA ───────────────────────────────────────────

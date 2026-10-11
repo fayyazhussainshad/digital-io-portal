@@ -24,12 +24,15 @@ async function renderLawLibrary(container) {
   container.innerHTML = `
   <div style="max-width:100%;margin:0;direction:rtl;">
     <!-- Header: search + add -->
-    <div style="display:flex;align-items:center;gap:12px;padding:14px 4px;flex-wrap:wrap;margin-bottom:8px;">
-      <div style="font-size:20px;font-weight:800;display:flex;align-items:center;gap:8px;">قانونی لائبریری</div>
-      <input id="law-main-search" type="text" dir="rtl" placeholder="قانون کا نام تلاش کریں..."
+    <div class="page-header">
+      <button onclick="_openAddLaw()" class="btn btn-primary dio-add-btn">+ نیا قانون</button>
+      <div>
+        <div class="page-title">قانونی لائبریری</div>
+        <div class="page-subtitle">قوانین، ضوابط اور حوالہ جاتی مواد</div>
+      </div>
+      <input id="law-main-search" type="text" dir="rtl" placeholder="قانون کا نام یا دفعہ تلاش کریں…"
         oninput="_lawFilter(this.value)"
         style="flex:1;min-width:180px;padding:10px 16px;border:1px solid var(--border);border-radius:24px;font-size:15px;outline:none;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;">
-      <button onclick="_openAddLaw()" class="btn btn-primary" style="white-space:nowrap;">+ نیا قانون شامل کریں</button>
       <button onclick="_printAllLaws()" class="btn btn-secondary btn-sm" title="پوری فہرست پرنٹ کریں">فہرست</button>
     </div>
 

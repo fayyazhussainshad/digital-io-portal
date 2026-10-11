@@ -172,27 +172,27 @@ async function open5CForm(id){
   const inp='width:100%;padding:8px 10px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:13px;box-sizing:border-box;';
   const lbl='display:block;font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:600;';
   const body=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-    <div><label style="${lbl}">Complainant Name</label><input style="${inp}" id="f5c-name" value="${esc5C(app.complainant_name)}"></div>
-    <div><label style="${lbl}">Complainant CNIC</label><input style="${inp}" id="f5c-cnic" placeholder="36302-1234567-1" value="${esc5C(app.complainant_cnic)}" oninput="autoFormatCNIC(this)"></div>
-    <div><label style="${lbl}">Complainant Cell</label><input style="${inp}" id="f5c-cell" placeholder="0300-1234567" value="${esc5C(app.complainant_cell)}" oninput="autoFormatCell(this)"></div>
-    <div><label style="${lbl}">Status</label><select style="${inp}" id="f5c-status">${Object.entries(FIVEC_STATUS).map(([k,v])=>`<option value="${k}" ${app.status===k?'selected':''}>${v}</option>`).join('')}</select></div>
+    <div><label style="${lbl}">مدعی کا نام</label><input style="${inp}" id="f5c-name" value="${esc5C(app.complainant_name)}"></div>
+    <div><label style="${lbl}">مدعی کا شناختی کارڈ</label><input style="${inp}" id="f5c-cnic" placeholder="36302-1234567-1" value="${esc5C(app.complainant_cnic)}" oninput="autoFormatCNIC(this)"></div>
+    <div><label style="${lbl}">مدعی کا موبائل</label><input style="${inp}" id="f5c-cell" placeholder="0300-1234567" value="${esc5C(app.complainant_cell)}" oninput="autoFormatCell(this)"></div>
+    <div><label style="${lbl}">صورتحال</label><select style="${inp}" id="f5c-status">${Object.entries(FIVEC_STATUS).map(([k,v])=>`<option value="${k}" ${app.status===k?'selected':''}>${v}</option>`).join('')}</select></div>
     <div><label style="${lbl}">Application Date (DD/MM/YYYY)</label><input style="${inp}" id="f5c-appdate" placeholder="DD/MM/YYYY" value="${toDisplayDate(app.application_date)}" oninput="autoMaskDate5C(this)"></div>
     <div style="grid-column:1/-1;"><label style="${lbl}">Subject / Summary</label><textarea style="${inp};min-height:60px;font-family:inherit;" id="f5c-subject">${esc5C(app.subject)}</textarea></div>
   </div>
   <hr style="margin:18px 0;border:0;border-top:1px solid var(--border);">
-  <div style="font-weight:600;margin-bottom:10px;font-size:13px;">Application Numbers <span style="font-weight:400;color:var(--text-muted);font-size:11px;">(each forwarding senior officer assigns their own number)</span></div>
+  <div style="font-weight:600;margin-bottom:10px;font-size:13px;">درخواست نمبر <span style="font-weight:400;color:var(--text-muted);font-size:11px;">(each forwarding senior officer assigns their own number)</span></div>
   <div id="f5c-numbers">${nums.map(render5CNumberRow).join('')}</div>
   <button class="btn btn-secondary btn-sm" type="button" onclick="add5CNumberRow()" style="margin-top:6px;">+ Add Another Number</button>
   ${id?`<hr style="margin:18px 0;border:0;border-top:1px solid var(--border);">
   <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Attachments &amp; Scans</div>
   <div id="f5c-attachments">${(app.application_5c_attachments||[]).map(render5CAttachmentRow).join('')||'<div style="color:var(--text-muted);font-size:12px;padding:8px;">No attachments yet.</div>'}</div>
   <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-    <label class="btn btn-secondary btn-sm" style="cursor:pointer;"><input type="file" style="display:none;" onchange="upload5CFile('${id}','application_scan',this.files[0])"> Upload Application Scan</label>
-    <label class="btn btn-secondary btn-sm" style="cursor:pointer;"><input type="file" style="display:none;" onchange="upload5CFile('${id}','response_scan',this.files[0])"> Upload Response Scan</label>
-    <label class="btn btn-secondary btn-sm" style="cursor:pointer;"><input type="file" style="display:none;" onchange="upload5CFile('${id}','attachment',this.files[0])"> Upload Other</label>
-    <label class="btn btn-primary btn-sm" style="cursor:pointer;"><input type="file" accept="image/*" capture="environment" style="display:none;" onchange="upload5CFile('${id}','application_scan',this.files[0])"> Scan with Camera</label>
+    <label class="btn btn-secondary btn-sm" style="cursor:pointer;"><input type="file" style="display:none;" onchange="upload5CFile('${id}','application_scan',this.files[0])"> درخواست کی نقل لگائیں</label>
+    <label class="btn btn-secondary btn-sm" style="cursor:pointer;"><input type="file" style="display:none;" onchange="upload5CFile('${id}','response_scan',this.files[0])"> جواب کی نقل لگائیں</label>
+    <label class="btn btn-secondary btn-sm" style="cursor:pointer;"><input type="file" style="display:none;" onchange="upload5CFile('${id}','attachment',this.files[0])"> دیگر فائل لگائیں</label>
+    <label class="btn btn-primary btn-sm" style="cursor:pointer;"><input type="file" accept="image/*" capture="environment" style="display:none;" onchange="upload5CFile('${id}','application_scan',this.files[0])"> کیمرے سے اسکین کریں</label>
   </div>`:`<div style="color:var(--text-muted);font-size:12px;margin-top:14px;padding:10px;background:var(--bg-tertiary);border-radius:6px;">Save the application first, then you can attach files and write a response.</div>`}`;
-  const footer=`<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="save5CApp('${id||''}')">Save</button>`;
+  const footer=`<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="save5CApp('${id||''}')">محفوظ کریں</button>`;
   openModal(`${id?'Edit':'New'} 5-C Application${id?' #'+app.serial_number:''}`,body,footer);
   setTimeout(()=>{const c=document.querySelector('.modal-card');if(c){c.style.maxWidth='880px';c.style.width='94vw';}},10);
 }
@@ -201,15 +201,15 @@ function render5CNumberRow(n){
   const isOther=n.senior_officer_designation==='Other';
   return `<div class="f5c-num-row" style="background:var(--bg-tertiary);border:1px solid var(--border-light);border-radius:8px;padding:10px;margin-bottom:8px;">
     <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-bottom:8px;">
-      <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;font-weight:600;">Application Number</div><input style="${inp}" dir="ltr" placeholder="e.g. 1234/IGP/2026" data-field="application_number" value="${esc5C(n.application_number||'')}"></div>
-      <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;font-weight:600;">Senior Officer Designation</div>
+      <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;font-weight:600;">درخواست نمبر</div><input style="${inp}" dir="ltr" placeholder="e.g. 1234/IGP/2026" data-field="application_number" value="${esc5C(n.application_number||'')}"></div>
+      <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;font-weight:600;">افسر بالا کا عہدہ</div>
         <select style="${inp}" data-field="senior_officer_designation" onchange="handleDesig5C(this)"><option value="">— Select —</option>${FIVEC_DESIGNATIONS.map(d=>`<option value="${d}" ${n.senior_officer_designation===d?'selected':''}>${d}</option>`).join('')}</select>
-        <input class="desig-custom" style="${inp};margin-top:6px;display:${isOther?'block':'none'};" placeholder="Enter designation..." data-field="senior_officer_designation_custom" value="${esc5C(isOther?n.senior_officer_name||'':'')}">
+        <input class="desig-custom" style="${inp};margin-top:6px;display:${isOther?'block':'none'};" placeholder="عہدہ لکھیں…" data-field="senior_officer_designation_custom" value="${esc5C(isOther?n.senior_officer_name||'':'')}">
       </div>
       <button title="بند کریں" aria-label="بند کریں" class="btn btn-danger btn-sm" type="button" onclick="this.closest('.f5c-num-row').remove()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;font-weight:600;">Officer Name (optional)</div><input style="${inp}" placeholder="Officer full name" data-field="senior_officer_name" value="${esc5C(!isOther?n.senior_officer_name||'':'')}"></div>
+      <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;font-weight:600;">Officer Name (optional)</div><input style="${inp}" placeholder="افسر کا پورا نام" data-field="senior_officer_name" value="${esc5C(!isOther?n.senior_officer_name||'':'')}"></div>
       <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;font-weight:600;">Forwarded Date (DD/MM/YYYY)</div><input style="${inp}" placeholder="DD/MM/YYYY" data-field="forwarded_date" value="${toDisplayDate(n.forwarded_date)}" oninput="autoMaskDate5C(this)"></div>
     </div>
   </div>`;
@@ -305,10 +305,10 @@ async function open5CResponse(id){
   <!-- Title bar -->
   <div id="r5c-titlebar" style="background:#0f1923;padding:8px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #1a3148;flex-wrap:wrap;">
     <span style="font-weight:700;color:#e8f0fe;flex:1;font-size:13px;">Response — App #${app.serial_number} · ${esc5C(app.complainant_name||'')}</span>
-    <button class="btn btn-primary btn-sm" onmousedown="event.preventDefault()" onclick="save5CResponse('${id}')">Save</button>
-    <button class="btn btn-secondary btn-sm" onmousedown="event.preventDefault()" onclick="downloadResponse5C('${id}','${esc5C((app.complainant_name||'response').replace(/[^\w]/g,'_'))}')">Download</button>
-    <button class="btn btn-secondary btn-sm" onmousedown="event.preventDefault()" onclick="print5CResponse()">Print</button>
-    <button class="btn btn-danger btn-sm" onclick="document.body.classList.remove('r5c-open');document.getElementById('response5c-overlay').remove()">Close</button>
+    <button class="btn btn-primary btn-sm" onmousedown="event.preventDefault()" onclick="save5CResponse('${id}')">محفوظ کریں</button>
+    <button class="btn btn-secondary btn-sm" onmousedown="event.preventDefault()" onclick="downloadResponse5C('${id}','${esc5C((app.complainant_name||'response').replace(/[^\w]/g,'_'))}')">ڈاؤن لوڈ</button>
+    <button class="btn btn-secondary btn-sm" onmousedown="event.preventDefault()" onclick="print5CResponse()">پرنٹ</button>
+    <button class="btn btn-danger btn-sm" onclick="document.body.classList.remove('r5c-open');document.getElementById('response5c-overlay').remove()">بند کریں</button>
   </div>
   ${buildWordToolbar('a4-paper', { preserveSel: true })}
   <!-- Document area -->

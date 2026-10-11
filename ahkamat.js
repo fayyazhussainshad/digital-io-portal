@@ -27,13 +27,19 @@ const AHK_CATEGORIES = {
   'court_orders':      'عدالتی احکامات و مثالیں',
   'misc':              'متفرق / دفتری احکامات'
 };
+/* Nishan SVG hain — har device par aik jaise, aur theme ke rang le lete hain */
 const AHK_CAT_ICON = {
-  'police_rules':'📕','igp_circulars':'📜','investigation_sops':'🔎',
-  'forensic':'🧪','crime_sops':'⚖️','human_rights':'🕊️',
-  'court_orders':'🏛️','misc':'🗂️'
+  'police_rules':       "<svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M4 4.5h6.5a2 2 0 0 1 2 2V20a1.6 1.6 0 0 0-1.6-1.5H4z'/><path d='M20 4.5h-6.5a2 2 0 0 0-2 2V20a1.6 1.6 0 0 1 1.6-1.5H20z'/></svg>",
+  'igp_circulars':      "<svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M6 3.5h10.5v17H6z'/><path d='M9 8h5M9 12h5M9 16h3'/></svg>",
+  'investigation_sops': "<svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><circle cx='11' cy='11' r='6.5'/><path d='M16 16l4.5 4.5'/></svg>",
+  'forensic':           "<svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M9.5 3.5v6L4.5 19a1.5 1.5 0 0 0 1.3 2.2h12.4A1.5 1.5 0 0 0 19.5 19l-5-9.5v-6'/><path d='M8 3.5h8'/></svg>",
+  'crime_sops':         "<svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M12 4v16'/><path d='M6 20h12'/><path d='M4 9l3-4 3 4'/><path d='M14 9l3-4 3 4'/></svg>",
+  'human_rights':       "<svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M12 20.5s-7-4.2-7-9a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11.5c0 4.8-7 9-7 9z'/></svg>",
+  'court_orders':       "<svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M12 3.5l8.5 4.5h-17z'/><path d='M5.5 10v8M10 10v8M14 10v8M18.5 10v8'/><path d='M3.5 20.5h17'/></svg>",
+  'misc':               "<svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M3.5 7.5h6l2 2.5h9V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z'/></svg>"
 };
 function _ahkCatLabel(c){ return AHK_CATEGORIES[c] || 'متفرق / دفتری احکامات'; }
-function _ahkCatIcon(c){ return AHK_CAT_ICON[c] || '📋'; }
+function _ahkCatIcon(c){ return AHK_CAT_ICON[c] || AHK_CAT_ICON.misc; }
 
 // Sirf admin / superadmin content manage kar sakta hai
 function _ahkCanManage(){
@@ -50,12 +56,15 @@ async function renderAhkamat(container){
   container.innerHTML = `
   <div style="max-width:100%;margin:0;direction:rtl;">
     <!-- سرخی + تلاش + (ایڈمن) شامل -->
-    <div style="display:flex;align-items:center;gap:12px;padding:14px 4px;flex-wrap:wrap;margin-bottom:6px;">
-      <div style="font-size:20px;font-weight:800;display:flex;align-items:center;gap:8px;">احکامات <span style="font-size:12px;color:var(--text-muted);font-weight:600;">(Orders / SOPs)</span></div>
-      <input id="ahk-main-search" type="text" dir="rtl" placeholder="عنوان، نمبر یا متن تلاش کریں..."
+    <div class="page-header">
+      ${canMng ? `<button onclick="_ahkOpenAdd()" class="btn btn-primary dio-add-btn">+ نیا حکم</button>` : ''}
+      <div>
+        <div class="page-title">احکامات و ضوابط</div>
+        <div class="page-subtitle">سرکلر، احکامات اور طریقہ کار</div>
+      </div>
+      <input id="ahk-main-search" type="text" dir="rtl" placeholder="عنوان، نمبر یا متن تلاش کریں…"
         oninput="_ahkFilter(this.value)"
         style="flex:1;min-width:180px;padding:10px 16px;border:1px solid var(--border);border-radius:24px;font-size:15px;outline:none;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;">
-      ${canMng ? `<button onclick="_ahkOpenAdd()" class="btn btn-primary" style="white-space:nowrap;">+ نیا حکم شامل کریں</button>` : ''}
       <button onclick="_ahkPrintList()" class="btn btn-secondary btn-sm" title="موجودہ فہرست پرنٹ کریں">فہرست</button>
     </div>
 

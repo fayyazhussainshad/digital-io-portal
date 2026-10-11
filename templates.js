@@ -36,12 +36,16 @@ function _tplCatColor(c){ return TPL_CAT_COLOR[c] || '#6c757d'; }
 async function renderTemplates(container) {
   container.innerHTML = `
   <div style="max-width:100%;margin:0;direction:rtl;">
-    <div style="display:flex;align-items:center;gap:12px;padding:14px 4px;flex-wrap:wrap;margin-bottom:6px;">
-      <div style="font-size:20px;font-weight:800;display:flex;align-items:center;gap:8px;">ٹمپلیٹس</div>
-      <input id="tpl-main-search" type="text" dir="rtl" placeholder="ٹمپلیٹ کا نام تلاش کریں..."
-        oninput="_tplFilter(this.value)"
-        style="flex:1;min-width:180px;padding:10px 16px;border:1px solid var(--border);border-radius:24px;font-size:15px;outline:none;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;">
-      <button onclick="_openAddTpl()" class="btn btn-primary" style="white-space:nowrap;">+ نیا ٹمپلیٹ شامل کریں</button>
+    <div class="page-header">
+      <button onclick="_openAddTpl()" class="btn btn-primary dio-add-btn">+ نیا ٹمپلیٹ</button>
+      <div>
+        <div class="page-title">ٹمپلیٹس</div>
+        <div class="page-subtitle">محفوظ شدہ مسودے — ایک دبائیں اور بھر لیں</div>
+      </div>
+      <div style="flex:1;min-width:180px;display:flex;gap:8px;margin-inline-start:auto;">
+        <input id="tpl-main-search" type="text" dir="rtl" placeholder="ٹمپلیٹ کا نام تلاش کریں…"
+          oninput="_tplFilter(this.value)" style="flex:1;min-width:180px;padding:10px 16px;border:1px solid var(--border);border-radius:24px;font-size:15px;outline:none;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;">
+      </div>
     </div>
 
     <div id="tpl-table-wrap" style="overflow-x:auto;margin:0 -20px;">

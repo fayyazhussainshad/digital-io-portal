@@ -63,7 +63,7 @@ function renderHelpGuide(container) {
 
     <!-- Welcome -->
     <div style="background:linear-gradient(135deg,#0d2a45,#1a3a5c);border-radius:14px;padding:20px;margin-bottom:16px;">
-      <div style="font-size:20px;font-weight:800;color:#fff;">خوش آمدید، ${_hgEsc(name)} 👋</div>
+      <div style="font-size:20px;font-weight:800;color:#fff;">خوش آمدید، ${_hgEsc(name)}</div>
       <div style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:6px;line-height:1.9;">
         Digital IO آپ کے دفتری کام کو آسان بنانے کے لیے ہے — تاکہ آپ کاغذی بوجھ سے آزاد ہو کر
         اطمینان سے تفتیش پر توجہ دے سکیں۔ نیچے ہر اہم کام کی سادہ رہنمائی موجود ہے۔ کسی خانے پر
@@ -76,9 +76,9 @@ function renderHelpGuide(container) {
       <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px;">جلدی شروع کریں</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
         ${[
-          ['📁','نیا مقدمہ','cases'],
-          ['🔔','یاددہانی','reminders'],
-          ['🔍','تلاش','search'],
+          ["<svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 7.5h6l2 2.5h9V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z'/></svg>",'نیا مقدمہ','cases'],
+          ["<svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M6.5 10a5.5 5.5 0 0 1 11 0c0 4 1.5 5.5 1.5 5.5H5S6.5 14 6.5 10z'/><path d='M10.2 19a2 2 0 0 0 3.6 0'/></svg>",'یاددہانی','reminders'],
+          ["<svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='11' cy='11' r='6.5'/><path d='M16 16l4.5 4.5'/></svg>",'تلاش','search'],
         ].map(([i,l,p])=>`
           <button class="btn btn-secondary" style="flex-direction:column;padding:14px 8px;font-family:'Jameel Noori Nastaleeq',serif;" onclick="showPage('${p}',null)">
             <div style="font-size:22px;">${i}</div>

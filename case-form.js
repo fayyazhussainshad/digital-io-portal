@@ -407,7 +407,7 @@ function buildCrossFields(c) {
     + '<option value="untrace"'+(crossStatus==='untrace'?' selected':'')+'>عدم پتہ (Untraced)</option>'
     + '<option value="cancel"'+(crossStatus==='cancel'?' selected':'')+'>اخراج (Cancelled)</option>';
   var crossPosOpts = ''
-    + '<option value="pending"'+(crossPosition==='pending'?' selected':'')+'>Pending</option>'
+    + '<option value="pending"'+(crossPosition==='pending'?' selected':'')+'>زیر التواء</option>'
     + '<option value="court"'+(crossPosition==='court'?' selected':'')+'>In Court</option>';
   return ''
     // رپٹ نمبر (آدھی چوڑائی) + رپٹ تاریخ + کراس ورژن مقدمہ نمبر + کراس ورژن مقدمہ کی تاریخ (چاروں ایک سطر)

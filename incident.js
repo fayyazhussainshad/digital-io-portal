@@ -28,7 +28,7 @@ function renderIncident(container) {
       <button class="btn btn-primary btn-sm" onclick="_incSaveAndPrint()">محفوظ و پرنٹ</button>
       <button class="btn btn-primary btn-sm" onclick="_incSaveToDB()">محفوظ کریں</button>
       <button class="btn btn-secondary btn-sm" onclick="_incDownload()">ڈاؤنلوڈ</button>
-      <button class="btn btn-secondary btn-sm" onclick="_incShare()">WhatsApp</button>
+      <button class="btn btn-secondary btn-sm" onclick="_incShare()">شیئر کریں</button>
       <button class="btn btn-secondary btn-sm" onclick="_showPrevReports()">پرانی رپورٹس</button>
     </div>
 
@@ -414,7 +414,7 @@ function _incShare() {
   const type  = document.getElementById('inc-severity')?.value||'';
   const txt = `واقعاتی رپورٹ\nنمبر: ${num}\nنوعیت: ${type}\nتاریخ و وقت: ${dt}\nمقام: ${place}\n\nDigital IO`;
   if (navigator.share) { navigator.share({title:'واقعاتی رپورٹ',text:txt}).catch(()=>{}); }
-  else { navigator.clipboard.writeText(txt).then(()=>showToast('Copy ہو گئی — WhatsApp میں paste کریں','info')); }
+  else { navigator.clipboard.writeText(txt).then(()=>showToast('متن نقل ہو گیا — جہاں بھیجنا ہو وہاں چسپاں کر دیں۔','info')); }
 }
 
 // ── RESET ─────────────────────────────────────────────────────

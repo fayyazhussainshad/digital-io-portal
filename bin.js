@@ -51,10 +51,10 @@ async function _buildBin() {
     <!-- Back -->
     
     <!-- Header -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;direction:rtl;">
+    <div class="page-header">
       <div>
-        <div style="font-size:18px;font-weight:800;">حذف شدہ مواد</div>
-        <div style="font-size:12px;color:var(--text-muted);">حذف شدہ اشیاء · 30 دن بعد خودبخود ختم</div>
+        <div class="page-title">حذف شدہ مواد</div>
+        <div class="page-subtitle">30 دن بعد خودبخود ختم ہو جاتا ہے</div>
       </div>
       <div style="display:flex;gap:8px;direction:rtl;">
         <button class="btn btn-secondary" onclick="_binRestoreAll()">سب بحال کریں</button>
