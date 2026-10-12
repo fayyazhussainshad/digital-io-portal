@@ -194,7 +194,12 @@
     bar.addEventListener('click', function (e) {
       var b = e.target.closest ? e.target.closest('[data-p]') : null;
       if (!b) return;
-      try { if (typeof showPage === 'function') showPage(b.getAttribute('data-p'), null); } catch (_) {}
+      try {
+        var _p = b.getAttribute('data-p');
+        // "مقدمات" = ہمیشہ تمام مقدمات (ڈیش بورڈ کا پچھلا فلٹر نہ چپکا رہے)
+        if (_p === 'cases' && typeof window.dioOpenCases === 'function') window.dioOpenCases('');
+        else if (typeof showPage === 'function') showPage(_p, null);
+      } catch (_) {}
       markThumb(b.getAttribute('data-p'));
     });
     document.body.appendChild(bar);

@@ -1,0 +1,293 @@
+/* ═══════════════════════════════════════════════════════════════
+   DIGITAL IO — ui-home.css  (v524)
+   1) لاگ اِن / لینڈنگ — دو حصے: تعارف (نیلا فائل کور) + لاگ اِن کارڈ
+   2) سائیڈ بار مکمل ختم — تمام بٹن اور تلاش ڈیش بورڈ پر
+   3) ڈیش بورڈ: مرکزی تلاش + اہم سیکشن + دیگر سہولیات
+   4) مقدمات کا فلٹر پٹی + پاس ورڈ بحالی کے پیغامات
+
+   USOOL: font-size hamesha pt; rang app ki theme (--dio-*) se.
+   Sirf aik "numayan" cheez: landing ka neela file-cover panel
+   (police case-file ka rang) aur us par peetal (brass) ki lakeer.
+   Ye file index.html me SAB SE AAKHIR me load hoti hai.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --dio-file:   #13294b;   /* case-file cover navy */
+  --dio-file-2: #0d1d36;
+  --dio-brass:  #c9a227;   /* badge brass */
+  --dio-paper:  #f4f6f9;
+}
+
+/* ───────────────── 1. LANDING / LOGIN ───────────────── */
+#login-screen {
+  display: flex; align-items: center !important; justify-content: center !important;
+  padding: 24px 16px !important;
+}
+#login-screen .dio-land {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 980px;
+  display: grid; grid-template-columns: 1.05fr 1fr;
+  border-radius: 18px; overflow: hidden;
+  background: var(--dio-surface);
+  border: 1px solid var(--dio-line);
+  box-shadow: 0 24px 60px rgba(9, 20, 40, .22);
+  direction: rtl;
+}
+
+/* Hero — نیلا فائل کور، رجسٹر کی ہلکی لکیریں */
+#login-screen .dio-land-hero {
+  background-color: var(--dio-file);
+  background-image:
+    repeating-linear-gradient(to bottom, transparent 0, transparent 31px, rgba(255,255,255,.045) 31px, rgba(255,255,255,.045) 32px),
+    linear-gradient(160deg, var(--dio-file) 0%, var(--dio-file-2) 100%);
+  color: #e8eef7;
+  padding: 44px 40px 40px;
+  display: flex; flex-direction: column; justify-content: center; gap: 22px;
+  border-inline-end: 4px solid var(--dio-brass);
+}
+#login-screen .dio-land-brand { text-align: center; }
+#login-screen .dio-land-emblem {
+  display: inline-flex; width: 58px; height: 58px; border-radius: 50%;
+  align-items: center; justify-content: center;
+  border: 2px solid var(--dio-brass); color: var(--dio-brass);
+  margin-bottom: 10px;
+}
+#login-screen .dio-land-emblem svg { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+#login-screen b.dio-land-title {
+  /* index.html: [dir="ltr"]{text-align:left !important} — yahan beech me rakhna lazmi */
+  display: block; direction: ltr; text-align: center !important;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 34pt; font-weight: 700; line-height: 1.05;
+  letter-spacing: .01em; color: #ffffff;
+}
+#login-screen strong.dio-land-sub {
+  display: block; margin-top: 10px; text-align: center;
+  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-size: 17pt; font-weight: 700; color: var(--dio-brass); line-height: 1.9;
+}
+#login-screen p.dio-land-lead {
+  margin: 0; text-align: center;
+  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-size: 13pt; line-height: 2.1; color: #c9d5e6;
+  max-width: 34em; margin-inline: auto;
+}
+#login-screen ul.dio-land-feats {
+  list-style: none; margin: 4px 0 0; padding: 0;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+#login-screen ul.dio-land-feats li {
+  display: grid; grid-template-columns: 26px 1fr; column-gap: 10px; align-items: start;
+  padding: 12px; border-radius: 10px;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
+  text-align: right;
+}
+#login-screen ul.dio-land-feats svg {
+  grid-row: span 2; width: 22px; height: 22px; margin-top: 4px;
+  fill: none; stroke: var(--dio-brass); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+}
+#login-screen ul.dio-land-feats b {
+  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-size: 12pt; color: #ffffff; line-height: 1.8;
+}
+#login-screen ul.dio-land-feats small {
+  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-size: 10.5pt; color: #a9b8cd; line-height: 1.8;
+}
+
+/* Login card — پرسکون، سفید / تھیم کے مطابق */
+#login-screen .dio-land .login-card {
+  max-width: none !important; width: auto !important; margin: 0 !important;
+  border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
+  backdrop-filter: none !important; animation: none !important;
+  padding: 36px 34px 26px !important;
+  background: var(--dio-surface) !important;
+  display: flex; flex-direction: column; justify-content: center;
+}
+#login-screen .dio-lc-head { text-align: right; margin-bottom: 18px; }
+#login-screen b.dio-lc-title {
+  display: block; font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-size: 20pt; font-weight: 700; color: var(--dio-ink); line-height: 1.6;
+}
+#login-screen small.dio-lc-sub {
+  display: block; font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-size: 11.5pt; color: var(--dio-ink-3);
+}
+#login-screen .dio-lc-hint {
+  background: rgba(245,158,11,.10); border: 1px solid rgba(245,158,11,.38);
+  border-radius: 10px; padding: 10px 12px; margin-bottom: 12px;
+  font-size: 11pt; line-height: 1.9; color: #b45309; text-align: right;
+}
+#login-screen .login-methods { margin-bottom: 18px !important; }
+#login-screen label.dio-lc-label {
+  display: block; margin: 0 0 6px; text-align: right;
+  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-size: 12pt !important; font-weight: 700; color: var(--dio-ink-2);
+}
+#login-screen .input-group { margin-bottom: 14px; position: relative; }
+#login-screen .login-input { font-size: 12.5pt !important; padding: 12px 14px !important; }
+#login-screen .dio-pw-group .login-input { padding-left: 46px !important; }
+#login-screen .dio-pw-group .input-eye {
+  position: absolute; left: 6px; top: 50%; transform: translateY(-50%);
+  width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;
+  background: none !important; border: 0 !important; color: var(--dio-ink-3); cursor: pointer; border-radius: 8px;
+}
+#login-screen .dio-pw-group .input-eye:hover { color: var(--dio-brand); }
+#login-screen .dio-pw-group .input-eye svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+#login-screen .dio-lc-row { display: flex; justify-content: flex-start; margin: -4px 0 14px; }
+#login-screen a.dio-lc-link {
+  color: var(--dio-brand) !important; font-weight: 700; text-decoration: none; cursor: pointer;
+  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif; font-size: 12pt !important;
+}
+#login-screen a.dio-lc-link:hover, #login-screen a.dio-lc-link:focus-visible { text-decoration: underline; }
+#login-screen .login-btn {
+  background: var(--dio-file) !important; color: #fff !important;
+  border-radius: 10px !important; min-height: 50px;
+  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif !important;
+  font-size: 14pt !important; font-weight: 700 !important;
+}
+#login-screen .login-btn:hover { background: var(--dio-file-2) !important; box-shadow: 0 6px 18px rgba(19,41,75,.32) !important; }
+#login-screen .dio-lc-alt {
+  margin-top: 14px; text-align: center; color: var(--dio-ink-3);
+  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif; font-size: 11.5pt;
+}
+#login-screen .login-method.active { background: var(--dio-file) !important; border-color: var(--dio-file) !important; }
+#login-screen .login-links { justify-content: center !important; gap: 16px; }
+#login-screen .login-links a { color: var(--dio-brand) !important; cursor: pointer; }
+#login-screen .biometric-icon svg { width: 44px; height: 44px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+#login-screen .dio-legal { margin-top: 18px !important; text-align: right; }
+#login-screen .login-security-badge { margin-top: 12px !important; font-size: 8.5pt !important; }
+#login-screen :focus-visible { outline: 2px solid var(--dio-brass); outline-offset: 2px; }
+
+/* Tareek themes: card ka matn theme se, file-cover wahi rehta hai */
+html:not([data-theme="light"]) #login-screen .dio-lc-hint { color: #f5b942; }
+
+/* Tablet + mobile: اوپر تعارف (مختصر)، نیچے لاگ اِن */
+@media (max-width: 860px) {
+  #login-screen { align-items: flex-start !important; padding: 12px !important; }
+  #login-screen .dio-land { grid-template-columns: 1fr; border-radius: 16px; }
+  #login-screen .dio-land-hero {
+    padding: 24px 18px 20px; gap: 12px;
+    border-inline-end: 0; border-bottom: 4px solid var(--dio-brass);
+  }
+  #login-screen .dio-land-emblem { width: 46px; height: 46px; margin-bottom: 6px; }
+  #login-screen .dio-land-emblem svg { width: 24px; height: 24px; }
+  #login-screen b.dio-land-title { font-size: 26pt; }
+  #login-screen strong.dio-land-sub { font-size: 14pt; margin-top: 4px; }
+  #login-screen p.dio-land-lead { font-size: 11.5pt; line-height: 2; }
+  #login-screen ul.dio-land-feats { display: none; }
+  #login-screen .dio-land .login-card { padding: 22px 16px 18px !important; }
+}
+
+/* ───────────────── 2. SIDEBAR مکمل ختم ───────────────── */
+#sidebar, .sidebar, #mob-overlay { display: none !important; }
+.main-area { margin: 0 !important; width: 100% !important; }
+.dio-homebtn .topnav-label { font-size: 12pt; }
+.dio-tb-logout svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; display: block; }
+.dio-tb-logout:hover { color: var(--dio-alert) !important; border-color: var(--dio-alert) !important; }
+
+/* ───────────────── 3. DASHBOARD ───────────────── */
+/* مرکزی تلاش */
+.page-content .dio-dsearch {
+  position: relative; margin: 0 0 8px; direction: rtl;
+}
+.page-content .dio-dsearch input#sr-query {
+  width: 100%; box-sizing: border-box;
+  padding: 14px 48px 14px 16px;
+  background: var(--dio-surface); color: var(--dio-ink);
+  border: 1.5px solid var(--dio-line); border-radius: 12px;
+  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-size: 13pt; outline: none; box-shadow: var(--dio-shadow);
+  -webkit-appearance: none; appearance: none;
+}
+.page-content .dio-dsearch input#sr-query:focus {
+  border-color: var(--dio-brand); box-shadow: 0 0 0 3px rgba(11,61,100,.14);
+}
+.page-content .dio-dsearch-ic {
+  position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+  width: 20px; height: 20px; fill: none; stroke: var(--dio-ink-3);
+  stroke-width: 2; stroke-linecap: round; pointer-events: none;
+}
+.page-content .dio-dsearch-res { margin-bottom: 14px; }
+.page-content .dio-dsearch-res:empty { display: none; }
+
+/* بٹنوں کی جالی */
+.page-content .dio-tiles {
+  display: grid; gap: 10px; margin: 0 0 16px; direction: rtl;
+}
+.page-content .dio-tiles-main { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.page-content .dio-tiles-more { grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); }
+.page-content button.dio-tile {
+  position: relative;
+  display: flex; align-items: center; gap: 10px;
+  min-height: 58px; padding: 12px 14px;
+  background: var(--dio-surface); color: var(--dio-ink);
+  border: 1px solid var(--dio-line); border-radius: 12px;
+  box-shadow: var(--dio-shadow);
+  cursor: pointer; text-align: right; font: inherit;
+  transition: border-color .15s, box-shadow .15s;
+}
+.page-content button.dio-tile:hover { border-color: var(--dio-brand); box-shadow: var(--dio-shadow-2); }
+.page-content button.dio-tile:focus-visible { outline: 2px solid var(--dio-brand); outline-offset: 2px; }
+.page-content button.dio-tile-big {
+  flex-direction: column; justify-content: center; gap: 8px;
+  min-height: 96px; text-align: center;
+}
+.page-content .dio-tile-ic {
+  width: 22px; height: 22px; flex-shrink: 0;
+  fill: none; stroke: var(--dio-brand); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+}
+.page-content .dio-tile-big .dio-tile-ic { width: 28px; height: 28px; }
+.page-content b.dio-tile-lbl {
+  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-size: 12pt; font-weight: 700; line-height: 1.7; color: var(--dio-ink);
+}
+.page-content .dio-tile-big b.dio-tile-lbl { font-size: 13pt; }
+.page-content small.dio-tile-badge {
+  position: absolute; top: 8px; left: 8px;
+  min-width: 22px; height: 22px; padding: 0 6px; box-sizing: border-box;
+  border-radius: 11px; background: var(--dio-brand); color: #fff;
+  font-size: 9pt; font-weight: 700; line-height: 22px; text-align: center;
+  direction: ltr;
+}
+/* نیا اندراج — واحد بھرا ہوا بٹن */
+.page-content button.dio-tile.tone-brand { background: var(--dio-file); border-color: var(--dio-file); }
+.page-content button.dio-tile.tone-brand b.dio-tile-lbl { color: #fff; }
+.page-content button.dio-tile.tone-brand .dio-tile-ic { stroke: var(--dio-brass); }
+.page-content button.dio-tile.tone-brand:hover { background: var(--dio-file-2); }
+.page-content button.dio-tile.tone-alert .dio-tile-ic { stroke: var(--dio-alert); }
+.page-content button.dio-tile.tone-alert b.dio-tile-lbl { color: var(--dio-alert); }
+
+@media (max-width: 900px) {
+  .page-content .dio-tiles-main { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 420px) {
+  .page-content .dio-tiles-more { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .page-content button.dio-tile-big { min-height: 84px; }
+}
+
+/* ───────────────── 4. مقدمات فلٹر پٹی + پاس ورڈ بحالی ───────────────── */
+.page-content .cs-filter-bar {
+  align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  margin: 0 0 12px; padding: 10px 14px; direction: rtl;
+  background: var(--dio-surface); border: 1px solid var(--dio-brand);
+  border-inline-start: 4px solid var(--dio-brand); border-radius: 10px;
+}
+.page-content b.cs-fb-lbl { font-size: 12.5pt; color: var(--dio-ink); }
+
+#forgot-modal .fp-card { max-width: 440px; width: calc(100% - 24px); }
+#forgot-modal .modal-title { font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif; font-size: 15pt; }
+#forgot-modal .modal-desc { font-size: 11.5pt; line-height: 2; text-align: right; }
+#forgot-modal .login-input { width: 100%; box-sizing: border-box; font-size: 12.5pt; }
+#forgot-modal .login-btn { font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif; font-size: 13pt; }
+#forgot-modal .login-btn[disabled] { opacity: .65; cursor: wait; }
+#forgot-modal .fp-email { font-weight: 700; text-align: center !important; margin: 4px 0 10px; font-size: 12pt; word-break: break-all; }
+#forgot-modal .fp-msg {
+  border-radius: 8px; padding: 10px 12px; margin-bottom: 12px;
+  font-size: 11.5pt; line-height: 1.9; text-align: right;
+}
+#forgot-modal .fp-msg.fp-err { background: rgba(239,68,68,.10); border: 1px solid rgba(239,68,68,.35); color: #dc2626; }
+#forgot-modal .fp-msg.fp-ok  { background: rgba(34,197,94,.10); border: 1px solid rgba(34,197,94,.35); color: #15803d; }
+
+@media (prefers-reduced-motion: reduce) {
+  .page-content button.dio-tile, #login-screen * { transition: none !important; animation: none !important; }
+}

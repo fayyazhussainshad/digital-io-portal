@@ -74,6 +74,7 @@ const CORE_ASSETS = [
   '/boot.js',
   '/mobile.css',
   '/theme-pro.css',
+  '/ui-home.css',
   '/mobile.js',
   '/challan-form.js',
   '/secure-storage.js',
