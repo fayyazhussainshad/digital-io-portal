@@ -444,8 +444,11 @@
           <div class="naq-marks-l naq-sp">امتیازی نشانات:</div>
           <div id="naq-marks" class="naq-sp-sm" onkeydown="window._naqMarksKey&&_naqMarksKey(event)" oninput="window._naqDirty&&_naqDirty()">${_marksHTML(a.marks)}</div>
 
-          <div class="naq-marks-l naq-sp2" id="naq-dist-l">فاصلہ جات (تخمیناً):</div>
-          <div id="naq-dist" class="naq-sp-sm" onkeydown="window._naqDistKey&&_naqDistKey(event)" oninput="window._naqDirty&&_naqDirty()">${_distHTML(a.dists)}</div>
+          <!-- «فاصلہ جات (تخمیناً)» کا حصہ صارف کی ہدایت پر ہٹا دیا گیا
+               (12 اکتوبر 2026)۔ متعلقہ معاون کوڈ (_distHTML / _naqDistKey /
+               چھپائی کی صفائی) جان بوجھ کر چھوڑا گیا ہے تاکہ پرانے محفوظ
+               نقشوں کا ڈیٹا ضائع نہ ہو — وہ صرف دکھایا نہیں جاتا۔ واپس لانا
+               ہو تو یہی دو سطریں بحال کر دیں۔ -->
 
           <div class="naq-io">
             <div id="naq-io-nm" class="naq-io-nm" contenteditable="true">${E(io)}</div>
@@ -483,7 +486,7 @@
      کرسر ہٹنے (یا نیچے scroll کرنے) پر خود چھپ جاتی ہے۔
      جگہ محفوظ رکھنے کے لیے #naq-topslot اُتنی ہی اونچائی لے لیتا ہے، تاکہ
      نیچے کا مواد ہلے نہیں۔                                                  */
-  let _naqPeekT = null, _naqLastY = 0;
+  let _naqPeekT = null, _naqLastY = 0, _naqPeekOn = false;
 
   /* پورے صفحے والے منظر کی اوپر والی پٹی (واپس / مقدمہ نمبر / chips) بھی اب
      کرسر اوپر لے جانے پر سامنے آتی ہے۔ اگر وہ اُس وقت نظر میں ہو تو نقشہ کی
@@ -532,44 +535,71 @@
       slot.style.height = h + 'px';
       bar.style.top = _naqDvOffset() + 'px';
       bar.classList.add('naq-peek');
+      _naqPeekOn = true;
     };
     const _hide = () => {
       if (!_peeking()) return;
       bar.classList.remove('naq-peek');
       bar.style.top = '';
       slot.style.height = '0px';
+      _naqPeekOn = false;
     };
 
     /* — ڈیسک ٹاپ: کرسر صفحے کے اوپری کنارے پر۔
          یہاں document پر mousemove سنا جاتا ہے، نہ کہ کسی باریک پٹی کا
          mouseenter — کیونکہ اگر کرسر پہلے ہی اوپر موجود ہو تو mouseenter
          کبھی چلتا ہی نہیں، اور پٹی سامنے نہ آتی۔                        */
+    /* ⚠ کارکردگی: پہلے یہ سننے والا HAR ماؤس حرکت پر چلتا تھا اور ہر بار
+       getElementById + offsetHeight + scrollTop پڑھتا تھا۔ ڈرائنگ کے دوران
+       ماؤس سیکنڈ میں سینکڑوں بار ہلتا ہے — اور ہر بار براؤزر کو صفحے کی
+       پیمائش دوبارہ کرنی پڑتی تھی۔ اِسی سے نقشہ موقع میں کرسر اور پٹی
+       «بھاری» ہو گئے تھے۔
+       اب تین چیزیں:
+         1) سب سے پہلے صرف e.clientY دیکھا جاتا ہے — کوئی DOM کام نہیں۔
+            ماؤس اوپر والے حصے سے نیچے ہو اور پٹی چھپی نہ ہو تو فوراً واپس۔
+         2) باقی کام فی فریم صرف ایک بار (requestAnimationFrame)۔
+         3) خانوں کے حوالے اور اونچائی ایک بار نکال کر یاد رکھی جاتی ہے۔     */
     if (!window._naqPeekMoveBound) {
       window._naqPeekMoveBound = true;
-      document.addEventListener('mousemove', (e) => {
+      let _pend = false, _y = 0;
+
+      const _kaam = () => {
+        _pend = false;
         const b = document.getElementById('naq-topwrap');
-        const s = document.getElementById('naq-topslot');
-        const c = document.querySelector('.naq-scroll');
-        if (!b || !s || !c) return;
-        const h = (s.dataset.h ? +s.dataset.h : (b.offsetHeight || 44));
+        const sl = document.getElementById('naq-topslot');
+        const c  = document.querySelector('.naq-scroll');
+        if (!b || !sl || !c) return;
+        const h = (sl.dataset.h ? +sl.dataset.h : (b.offsetHeight || 44));
         if (c.scrollTop <= h - 4) return;             // پٹی ویسے ہی نظر میں ہے
         const off = _naqDvOffset();
-        if (e.clientY <= off + 16) {
+        const on  = b.classList.contains('naq-peek');
+        if (_y <= off + 16) {
           clearTimeout(_naqPeekT);
           b.style.top = off + 'px';
-          if (!b.classList.contains('naq-peek')) {
-            s.dataset.h = b.offsetHeight || 44;
-            s.style.height = s.dataset.h + 'px';
+          if (!on) {
+            sl.dataset.h = b.offsetHeight || 44;
+            sl.style.height = sl.dataset.h + 'px';
             b.classList.add('naq-peek');
+            _naqPeekOn = true;
           }
-        } else if (b.classList.contains('naq-peek') && e.clientY > off + h + 24) {
+        } else if (on && _y > off + h + 24) {
           clearTimeout(_naqPeekT);
           _naqPeekT = setTimeout(() => {
             b.classList.remove('naq-peek');
             b.style.top = '';
-            s.style.height = '0px';
+            sl.style.height = '0px';
+            _naqPeekOn = false;
           }, 350);
         }
+      };
+
+      document.addEventListener('mousemove', (e) => {
+        _y = e.clientY;
+        // سستا پہرا — یہیں سے 99% حرکتیں واپس چلی جاتی ہیں، بغیر کسی DOM کام کے
+        if (_y > 170 && !_naqPeekOn) return;
+        if (_pend) return;
+        _pend = true;
+        requestAnimationFrame(_kaam);
       }, { passive: true });
     }
 
@@ -775,7 +805,12 @@
     if (_naqTool === 'line' || _naqTool === 'arrow') _naqDrawing.set({ x2: p.x, y2: p.y });
     else if (_naqTool === 'rect') _naqDrawing.set({ left: Math.min(p.x, s.x), top: Math.min(p.y, s.y), width: Math.abs(p.x - s.x), height: Math.abs(p.y - s.y) });
     else if (_naqTool === 'ellipse') _naqDrawing.set({ left: Math.min(p.x, s.x), top: Math.min(p.y, s.y), rx: Math.abs(p.x - s.x) / 2, ry: Math.abs(p.y - s.y) / 2 });
-    _naqDrawing.setCoords(); _naqCanvas.renderAll();
+    /* کارکردگی: پہلے یہاں renderAll() تھا — یہ ماؤس کی ہر حرکت پر پورا کینوس
+       فوراً (synchronously) دوبارہ بناتا ہے۔ شکل کھینچتے وقت ماؤس سیکنڈ میں
+       سینکڑوں بار ہلتا ہے، یعنی سینکڑوں مکمل redraw — اِسی سے لکیر/مستطیل
+       کھینچنا «بھاری» محسوس ہوتا تھا۔ requestRenderAll() وہی کام کرتا ہے مگر
+       فی فریم ایک بار — شکل بالکل ویسی ہی بنتی ہے، صرف روانی بہتر ہو جاتی ہے۔ */
+    _naqDrawing.setCoords(); _naqCanvas.requestRenderAll();
   }
   function _drawUp() {
     if (_naqPanning) { _naqPanning = false; _naqCanvas.setCursor('grab'); return; }
@@ -1173,7 +1208,7 @@
   function _cropMove(opt) {
     if (!_naqCrop || !_naqCrop.rect) return; const p = _naqCanvas.getPointer(opt.e);
     _naqCrop.rect.set({ left: Math.min(p.x, _naqCrop.sx), top: Math.min(p.y, _naqCrop.sy), width: Math.abs(p.x - _naqCrop.sx), height: Math.abs(p.y - _naqCrop.sy) });
-    _naqCanvas.renderAll();
+    _naqCanvas.requestRenderAll();   // ہر حرکت پر مکمل redraw نہیں — فی فریم ایک بار
   }
   function _cropUp() {
     if (!_naqCrop) return; const cr = _naqCrop.rect, img = _naqCrop.img;
@@ -1299,7 +1334,15 @@
     .naq-map{ position:relative; margin:2px 0 6px; }
     .naq-map .canvas-container{ margin:0 auto; }
     #naq-canvas{ display:block; }
+    /* نقشے کے نیچے کھینچنے والی پٹی — اب نظر نہیں آتی۔
+       پہلے یہ ہلکی نیلی پٹی (⋯ کے ساتھ) ہر وقت دکھائی دیتی تھی اور نقشے کے
+       خالی حصے کے نیچے ایک فالتو «پٹی» معلوم ہوتی تھی۔ اب صاف ہے — مگر کام
+       ویسا ہی: ماؤس اُس جگہ لے جائیں تو ہلکی سی نمودار ہو جاتی ہے اور نقشہ
+       پہلے کی طرح کھینچ کر بڑا/چھوٹا کیا جا سکتا ہے۔ (چھپائی میں پہلے بھی
+       نہیں آتی تھی — no-print.) */
     .naq-map-resize{ position:absolute; left:0; right:0; bottom:0; height:14px; cursor:ns-resize;
+      background:transparent; opacity:0; transition:opacity .15s ease; }
+    .naq-map:hover .naq-map-resize, .naq-map-resize:hover{ opacity:1;
       background:linear-gradient(180deg,transparent,rgba(37,99,235,0.10)); }
     .naq-map-resize::after{ content:'⋯'; position:absolute; left:50%; bottom:0; transform:translateX(-50%); color:#9aa; font-size:12px; }
     /* سمت نما — دائیں بارڈر کی طرف؛ N-S لمبا وہی؛ E-W افقی تھوڑا نیچے */

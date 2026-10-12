@@ -192,30 +192,48 @@ function _dioBarPeekInit(ov) {
   }, true);
 
   // ڈیسک ٹاپ: کرسر اوپری کنارے پر → پٹی واپس
+  /* ⚠ کارکردگی: یہ سننے والا بھی ہر ماؤس حرکت پر چلتا تھا اور ہر بار
+     getElementById + offsetHeight پڑھتا تھا۔ نقشہ موقع میں ڈرائنگ کے دوران
+     دونوں سننے والے (یہ اور نقشہ کا اپنا) مل کر ہر حرکت پر صفحے کی پیمائش
+     دو بار کرا دیتے تھے — کرسر بھاری ہو جاتا تھا۔
+     اب: پہلے صرف clientY کی سستی جانچ، پھر فی فریم ایک بار کام۔            */
   if (!window._dioBarMoveBound) {
     window._dioBarMoveBound = true;
-    document.addEventListener('mousemove', (e) => {
+    let _pend = false, _y = 0;
+
+    const _kaam = () => {
+      _pend = false;
       const o = document.getElementById('dio-docview');
       if (!o) return;
       const b = o.querySelector('#dio-dv-bar');
       if (!b || !b.classList.contains('dio-dv-off')) return;
       const h = +(b.dataset.h || b.offsetHeight || 48);
-      // نیچے والی پٹی (نقشہ) کو بھی نئی جگہ بتاؤ — ورنہ وہ اِس کے اوپر چڑھ جائے
       const _sync = () => { try { requestAnimationFrame(() => {
         try { window._naqSyncPeekTop && window._naqSyncPeekTop(); } catch (_) {}
       }); } catch (_) {} };
-      if (e.clientY <= 16) {
+      if (_y <= 16) {
         clearTimeout(window._dioBarT);
         b.classList.add('dio-dv-peek'); b.style.top = '0px';
+        window._dioBarPeekOn = true;
         _sync();
-      } else if (b.classList.contains('dio-dv-peek') && e.clientY > h + 24) {
+      } else if (b.classList.contains('dio-dv-peek') && _y > h + 24) {
         clearTimeout(window._dioBarT);
         window._dioBarT = setTimeout(() => {
           b.classList.remove('dio-dv-peek');
           b.style.top = '-' + h + 'px';
+          window._dioBarPeekOn = false;
           _sync();
         }, 350);
       }
+    };
+
+    document.addEventListener('mousemove', (e) => {
+      _y = e.clientY;
+      // سستا پہرا — زیادہ تر حرکتیں یہیں سے واپس
+      if (_y > 120 && !window._dioBarPeekOn) return;
+      if (_pend) return;
+      _pend = true;
+      requestAnimationFrame(_kaam);
     }, { passive: true });
   }
 
