@@ -299,7 +299,7 @@ function _renderCdr() {
 
         <div class="cdr-body">
           <b>جناب عالی!</b>&nbsp; گزارش ہے کہ مقدمہ عنوان بالا کی تفتیش کے لیے مندرجہ ذیل موبائل نمبروں/${EN('IMEI')} نمبروں کی ${EN('CDR')}<br>
-          مورخہ ${F('date_from', 0, 'min-width:1.15in;display:inline-block;')} سے ${F('date_to', 0, 'min-width:1.15in;display:inline-block;')}
+          مورخہ ${F('date_from', 0, '')} سے ${F('date_to', 0, '')}
           تک فراہم کی جائے تاکہ اصل حقائق کی روشنی میں مقدمہ عنوان بالا کو یکسو کیا جا سکے۔
         </div>
 
@@ -428,8 +428,10 @@ function _cdrCSS() {
     #cdr-doc .cdr-subj .cdr-l{ font-weight:bold; }
     #cdr-doc .cdr-subj-t{ font-weight:bold; text-decoration:underline; text-underline-offset:5pt; margin-right:1in; }
 
-    #cdr-doc .cdr-body{ text-align:justify; text-align-last:right; line-height:1.95; margin:0 0 calc(3pt + var(--cdr-x,0px)); word-spacing:1pt; }
-    #cdr-doc .cdr-body .cdr-f{ text-align:center; }
+    /* سطر 6 اور 7 — دونوں مکمل justify (سطر 6 کے آخر میں <br> ہے، اس لیے text-align-last بھی justify) */
+    #cdr-doc .cdr-body{ text-align:justify; text-align-last:justify; line-height:1.95; margin:0 0 calc(3pt + var(--cdr-x,0px)); word-spacing:1pt; }
+    /* تاریخ کے خانے — نقطہ دار لکیر نہیں؛ دونوں تاریخوں اور «سے» کے درمیان فاصلہ */
+    #cdr-doc .cdr-body .cdr-f{ display:inline; min-width:0; min-height:0; padding:0; border-bottom:none; margin:0 6pt; text-align:center; }
     #cdr-doc .cdr-numhead{ margin:0 0 2pt; font-weight:bold; }
 
     /* 10 نمبر — دائیں کالم 1–5، بائیں 6–10 (RTL گرڈ) */
