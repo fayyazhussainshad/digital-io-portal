@@ -31,8 +31,26 @@ function _dioDocName(docId) {
 
 function _dioEnterDocView() {
   if (document.getElementById('dio-docview')) return; // already open
-  const area = document.getElementById('workspace-editor-area');
-  if (!area) return;
+  /* ══ اصول: ہر دستاویز پورے صفحے والے منظر میں کھلے ══════════════════════
+     پہلے یہاں `if (!area) return;` تھا۔ مقدمہ کھلتے وقت درمیانی حصے میں صرف
+     «دستاویز منتخب کریں» کا پیغام ہوتا ہے — #workspace-editor-area موجود ہی
+     نہیں ہوتا۔ نتیجہ: یہ فنکشن خاموشی سے واپس چلا جاتا، اور دستاویز کیس کے
+     صفحے میں chip پٹی کے نیچے کھل جاتی (اصل ایپ پر ناپا گیا: 30 میں سے 0
+     دستاویزات پورے صفحے میں کھلتی تھیں)۔ چالان بھی صرف اتفاق سے پورے صفحے
+     میں آتا تھا — جب پہلے کوئی اور دستاویز یہ خانہ بنا چکی ہوتی۔
+     اب: خانہ نہ ہو تو یہیں بنا لو — جو کچھ دستاویز پہلے سے بنا چکی ہو وہ
+     اُسی خانے میں منتقل، کچھ ضائع نہیں — پھر پورا صفحہ عام طریقے سے۔ */
+  let area = document.getElementById('workspace-editor-area');
+  if (!area) {
+    const tc = document.getElementById('workspace-tab-content');
+    if (!tc) return;                       // مقدمہ کا صفحہ ہی نہیں — پہلے جیسا
+    area = document.createElement('div');
+    area.id = 'workspace-editor-area';
+    area.className = 'workspace-main';
+    area.style.width = '100%';
+    while (tc.firstChild) area.appendChild(tc.firstChild);
+    tc.appendChild(area);
+  }
   _dioAreaHome = area.parentElement;   // wapas isi jagah rakhenge
 
   const ov = document.createElement('div');
