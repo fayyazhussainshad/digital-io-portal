@@ -25,6 +25,8 @@
 | 93 | `93a` → `93b` | evidence کی UPDATE policy؛ 21 tables پر RLS ON | **چل چکی** |
 | 94 | `94a` → `94b` → `94c` → `94d` | admin کے تین RPC؛ request RPC کی درستگی | **چل چکی** |
 | 95 | `95_subs_lockdown.sql` | `subscriptions` پر client کی لکھائی بند | **چل چکی** |
+| 96 | `96_CHECK.sql` | `client_errors` کی پالیسی اور `officers` کا trigger براہِ راست DB سے جانچتی ہے | صرف پڑھتی ہے |
+| 97 | `97_officers_approved_fail_closed.sql` | `dio_protect_officers()`: manzoori NULL والا admin اب اختیار نہیں پاتا (fail-closed)۔ ایسا admin موجود ہو تو فائل کچھ نہیں بدلتی۔ واپسی: `97_ROLLBACK.sql` | **چل چکی** (13 اکتوبر 2026 — 96_CHECK: دونوں THEEK) |
 | 100 | `100_email_notify.sql` | رجسٹریشن / منظوری / سبسکرپشن پر خودکار ای میل (Edge Function `dio-notify` پہلے deploy کریں) | **نئی** |
 
 ہر قدم کے ساتھ `*_CHECK.sql` (ایک ہی statement — Supabase کا editor نتیجہ ضرور
@@ -70,6 +72,11 @@
   بند کر دی گئی — یعنی تحفظ ہی ختم ہو گیا۔ **دوبارہ نہ لگائیں۔**
 - `30_client_errors_optional.sql` — `client_errors` آپ کے DB میں پہلے سے موجود
   ہے (اپنی policy کے ساتھ)۔ یہ فائل اُس سے ٹکراتی ہے۔
+
+**ٹیسٹ (v529):** `tests/security.test.js` کے SQL ٹیسٹ پہلے اوپر والے مسودوں
+کو ڈھونڈتے تھے (اس لیے 10 ٹیسٹ ناکام تھے)۔ اب وہی حفاظتی شرطیں **اصل چلائی
+گئی** فائلوں (91–95) پر جانچی جاتی ہیں، اور یہ بھی کہ اوپر والے خطرناک مسودے
+(20/21/70) دوبارہ ریپو میں نہ آئیں۔
 
 ---
 

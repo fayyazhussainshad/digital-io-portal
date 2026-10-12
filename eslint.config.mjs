@@ -10,7 +10,7 @@ import globals from 'globals';
 export default [
   {
     files: ['**/*.js'],
-    ignores: ['node_modules/**', 'sw.js', 'supabase/**'],
+    ignores: ['node_modules/**', 'sw.js', 'supabase/**', 'backups/**'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'script',          // classic <script defer>, module nahi
