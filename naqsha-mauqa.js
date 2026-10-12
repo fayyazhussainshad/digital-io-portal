@@ -462,7 +462,141 @@
       const el = document.getElementById('naq-h-' + k); if (el) el.addEventListener('input', _saveSoon);
     });
     if (fabricOk) _initCanvas(a);
+    try { _naqWsOn(); } catch (_) {}
   }
+
+  /* ══ کیس صفحے پر نقشہ موقع: ترتیب + خالی پٹی ═══════════════════════════
+     حقیقی ایپ میں نقشہ موقع «پورے صفحے والے منظر» میں نہیں کھلتا بلکہ کیس کے
+     صفحے کے اندر — #misal-doc-bar (واپس / مقدمہ نمبر / دستاویزات کی chips)
+     کے نیچے، #workspace-tab-content میں۔ اِسی لیے پہلے کی ساری تبدیلیاں (جو
+     doc-viewer کی پٹی پر تھیں) یہاں کبھی لاگو ہی نہیں ہوئیں۔
+     اور #workspace-tab-content کی اونچائی cases.js میں «100vh - 220px» لکھی
+     ہوئی ہے: chip پٹی (~106px) + نیچے کی پٹی (~32px) صرف 138px لیتی ہیں —
+     باقی ~82px خالی رہ جاتے تھے۔ یہی وہ «خالی پٹی» تھی۔
+     نقشہ کھلا ہو تو:
+       1) chip پٹی بہاؤ سے باہر (fixed) — ترمیمی اوزار بالکل اوپر
+       2) chip پٹی چھپی رہتی ہے؛ کرسر اوپری کنارے پر → اوزاروں کے **نیچے**
+          نمودار؛ کرسر نیچے → غائب۔ موبائل پر اوپر scroll → نمودار
+       3) کام کی جگہ نیچے کی پٹی تک پوری — کوئی خالی پٹی نہیں
+     نقشہ بند ہوتے ہی سب کچھ پہلے جیسا (کیس کا عام صفحہ متاثر نہیں)۔ */
+  function _naqWsCSS() {
+    if (document.getElementById('naq-ws-style')) return;
+    const st = document.createElement('style');
+    st.id = 'naq-ws-style';
+    st.textContent =
+      'body.naq-ws #misal-doc-bar{position:fixed;z-index:70;' +
+      'left:var(--naq-chip-l,0px);width:var(--naq-chip-w,100%);top:var(--naq-chip-t,0px);' +
+      'box-sizing:border-box;opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-6px);' +
+      'transition:opacity .15s ease,transform .15s ease,visibility 0s linear .15s;' +
+      'box-shadow:0 8px 20px rgba(0,0,0,.18);}' +
+      'body.naq-ws.naq-chips-on #misal-doc-bar{opacity:1;visibility:visible;pointer-events:auto;transform:none;' +
+      'transition:opacity .15s ease,transform .15s ease;}' +
+      '@media print{body.naq-ws #misal-doc-bar{display:none !important;}}';
+    document.head.appendChild(st);
+  }
+
+  let _naqWsObs = null, _naqWsT = null, _naqWsLastY = null;
+
+  function _naqWsFit() {
+    // کام کی جگہ کو نیچے کی پٹی تک پورا کرو
+    const tc = document.getElementById('workspace-tab-content');
+    if (!tc || !document.body.classList.contains('naq-ws')) return;
+    if (tc.dataset.naqH === undefined) tc.dataset.naqH = tc.style.height || '';
+    const top = Math.max(0, tc.getBoundingClientRect().top);
+    const bb = document.querySelector('.bottombar');
+    let neeche = 0;
+    if (bb) { const cs = getComputedStyle(bb); if (cs.display !== 'none' && cs.visibility !== 'hidden') neeche = bb.offsetHeight || 0; }
+    tc.style.height = Math.max(200, Math.floor(window.innerHeight - top - neeche)) + 'px';
+  }
+
+  function _naqWsPlace() {
+    // chip پٹی کی جگہ: ترمیمی اوزاروں کے ٹھیک نیچے، صفحے کی چوڑائی میں
+    const tb = document.getElementById('naq-topwrap');
+    const pc = document.getElementById('page-content') || document.body;
+    if (!tb) return;
+    const t = tb.getBoundingClientRect(), r = pc.getBoundingClientRect();
+    const bs = document.body.style;
+    bs.setProperty('--naq-chip-t', Math.round(t.bottom) + 'px');
+    bs.setProperty('--naq-chip-l', Math.round(r.left) + 'px');
+    bs.setProperty('--naq-chip-w', Math.round(r.width) + 'px');
+  }
+
+  function _naqChips(on) {
+    const b = document.body;
+    if (!b.classList.contains('naq-ws')) return;
+    if (on) { _naqWsPlace(); b.classList.add('naq-chips-on'); }
+    else b.classList.remove('naq-chips-on');
+  }
+  window._naqChips = _naqChips;
+
+  function _naqWsOff() {
+    const b = document.body;
+    b.classList.remove('naq-ws', 'naq-chips-on');
+    const tc = document.getElementById('workspace-tab-content');
+    if (tc && tc.dataset.naqH !== undefined) { tc.style.height = tc.dataset.naqH; delete tc.dataset.naqH; }
+    if (_naqWsObs) { try { _naqWsObs.disconnect(); } catch (_) {} _naqWsObs = null; }
+  }
+
+  function _naqWsOn() {
+    // صرف کیس کے صفحے والی صورت — پورے صفحے والے منظر میں doc-viewer خود سنبھالتا ہے
+    if (!document.getElementById('misal-doc-bar') || document.getElementById('dio-docview')) { _naqWsOff(); return; }
+    _naqWsCSS();
+    document.body.classList.add('naq-ws');
+    document.body.classList.remove('naq-chips-on');
+    _naqWsFit();
+    requestAnimationFrame(() => { _naqWsFit(); requestAnimationFrame(_naqWsFit); });
+
+    // نقشہ بند ہوا (دوسری دستاویز / دوسرا صفحہ) → سب بحال
+    if (_naqWsObs) { try { _naqWsObs.disconnect(); } catch (_) {} }
+    _naqWsObs = new MutationObserver(() => { if (!document.querySelector('.naq-wrap')) _naqWsOff(); });
+    ['page-content', 'workspace-tab-content'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) _naqWsObs.observe(el, { childList: true });
+    });
+
+    // موبائل: اوپر scroll → chips، نیچے → غائب
+    const sc = document.querySelector('.naq-scroll');
+    if (sc && !sc._naqWsBound) {
+      sc._naqWsBound = true; _naqWsLastY = sc.scrollTop;
+      sc.addEventListener('scroll', () => {
+        const y = sc.scrollTop, d = y - (_naqWsLastY == null ? y : _naqWsLastY);
+        if (Math.abs(d) < 8) return;
+        _naqWsLastY = y;
+        _naqChips(d < 0 && y > 0);
+      }, { passive: true });
+    }
+
+    // ڈیسک ٹاپ: کرسر اوپری کنارے پر → chips؛ نیچے → غائب (فی فریم ایک بار)
+    if (!window._naqWsMoveBound) {
+      window._naqWsMoveBound = true;
+      let pend = false, y = 0;
+      const kaam = () => {
+        pend = false;
+        const b = document.body;
+        if (!b.classList.contains('naq-ws')) return;
+        const on = b.classList.contains('naq-chips-on');
+        if (y <= 10) { clearTimeout(_naqWsT); if (!on) _naqChips(true); return; }
+        if (!on) return;
+        const bar = document.getElementById('misal-doc-bar');
+        const neeche = bar ? bar.getBoundingClientRect().bottom : 0;
+        if (y > neeche + 24) {
+          clearTimeout(_naqWsT);
+          _naqWsT = setTimeout(() => _naqChips(false), 250);
+        } else clearTimeout(_naqWsT);
+      };
+      document.addEventListener('mousemove', (e) => {
+        y = e.clientY;
+        const b = document.body;
+        if (!b.classList.contains('naq-ws')) return;                       // نقشہ کھلا نہیں
+        if (y > 260 && !b.classList.contains('naq-chips-on')) return;      // سستا پہرا
+        if (pend) return; pend = true; requestAnimationFrame(kaam);
+      }, { passive: true });
+      window.addEventListener('resize', () => { _naqWsFit(); if (document.body.classList.contains('naq-chips-on')) _naqWsPlace(); });
+    }
+  }
+  window._naqWsOn = _naqWsOn;
+  window._naqWsOff = _naqWsOff;
+
   window._renderNaqsha = _renderNaqsha;
   window._naqDirty = _saveSoon;
   window._naqType = function () { _saveSoon(); _refreshChips(); };
