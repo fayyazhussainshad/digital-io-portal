@@ -1394,6 +1394,23 @@
     .naq-print{ background:var(--accent,#2563eb); color:#fff; border-color:var(--accent,#2563eb); }
     .naq-sel{ height:30px; border:1px solid var(--border,#cbd5e1); border-radius:7px; background:#fff; color:#111; font-size:11pt; padding:0 6px; cursor:pointer; }
     .naq-sep{ width:1px; height:22px; background:var(--border,#ccc); margin:0 3px; }
+    /* ── موبائل: ٹول بار ایک ہی قطار ─────────────────────────────────────
+       پہلے فون پر یہ 4 قطاروں میں ٹوٹ کر اسکرین کا تقریباً 30٪ لے لیتی تھی۔
+       اب ایک قطار، انگلی سے دائیں/بائیں سرکائیں — کوئی اوزار ہٹایا نہیں گیا۔
+       «محفوظ» اور «پرنٹ» بائیں کنارے پر ہمیشہ نظر میں رہتے ہیں (sticky)۔
+       ڈیسک ٹاپ پر کوئی تبدیلی نہیں۔ */
+    @media (max-width:760px){
+      .naq-toolbar{ padding:4px 6px; gap:4px; }
+      .naq-tools{ flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; gap:4px;
+        -webkit-overflow-scrolling:touch; scrollbar-width:none; overscroll-behavior-x:contain; }
+      .naq-tools::-webkit-scrollbar{ display:none; }
+      .naq-tools > *{ flex:0 0 auto; }
+      .naq-tb, .naq-sel, .naq-color{ height:34px; }
+      .naq-sep{ height:20px; margin:0 1px; }
+      .naq-print{ position:sticky; left:0; z-index:3; width:40px; min-width:40px; padding:0; }
+      .naq-save{ position:sticky; left:44px; z-index:3; padding:0 7px;
+        box-shadow:-6px 0 8px -4px rgba(0,0,0,.18); }
+    }
     .naq-scroll{ flex:1; overflow:auto; min-height:0; padding:16px; background:var(--bg-tertiary,#eef1f4); }
     /* دستاویز اصل کاغذ کی چوڑائی پر (screen=print)؛ تنگ اسکرین پر افقی scroll — squish نہیں */
     .naq-doc{ margin:0 auto; box-shadow:0 4px 22px rgba(0,0,0,0.15); border-radius:4px; }
