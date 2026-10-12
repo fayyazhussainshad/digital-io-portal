@@ -526,7 +526,7 @@ body:has(#login-screen:not([style*="display: none"]):not([style*="display:none"]
 #login-screen .dio-pw-group .login-input { padding-left: 46px !important; padding-right: 14px !important; }
 
 /* کم اونچی اسکرین (لیپ ٹاپ/ونڈو): کارڈ ایک نظر میں — قانونی پٹی سمیت */
-@media (min-width: 861px) and (max-height: 820px) {
+@media (min-width: 861px) and (max-height: 960px) {
   #login-screen { padding-top: 12px !important; padding-bottom: 12px !important; }
   #login-screen .dio-ikhlas-band { padding: 10px 22px 12px; }
   #login-screen .dio-land-hero { padding: 20px 32px 20px; gap: 12px; }
@@ -569,4 +569,12 @@ body:has(#login-screen:not([style*="display: none"]):not([style*="display:none"]
   #login-screen .dio-legal-band .dio-legal * { font-size: 9.5pt !important; line-height: 1.75 !important; }
   #login-screen .dio-legal-band .login-security-badge,
   #login-screen .dio-legal-band .login-security-badge * { font-size: 7.5pt !important; margin-top: 4px !important; }
+}
+
+/* ── ڈیسک ٹاپ پر افسر کی تصویر بڑی (v528) — کارڈ پھر بھی اسکرین میں ── */
+@media (min-width: 861px) {
+  #login-screen .dio-land-emblem.has-photo { width: 124px !important; height: 124px !important; border-width: 3px; margin-bottom: 6px; }
+}
+@media (min-width: 861px) and (max-height: 960px) {
+  #login-screen .dio-land-emblem.has-photo { width: 104px !important; height: 104px !important; }
 }
