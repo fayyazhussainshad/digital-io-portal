@@ -812,7 +812,7 @@ function renderEvidenceTab(c, ev) {
   return `<div class="case-tab-content">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;direction:rtl;">
       <div>
-        <div style="font-size:16px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">شہادتیں — FIR ${c.fir_number}</div>
+        <div class="dio-hs1" style="font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">شہادتیں — FIR ${c.fir_number}</div>
         <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${ev.length} فائل منسلک</div>
       </div>
       <button class="btn btn-primary" onclick="openWorkspaceEvidenceModal('${c.id}','${c.fir_number}')">+ شہادت شامل کریں</button>

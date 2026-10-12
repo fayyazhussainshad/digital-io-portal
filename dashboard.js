@@ -312,7 +312,7 @@ function _dioOnboardCard() {
   <div id="dio-onboard-card" class="dio-onboard">
     <div style="display:flex;align-items:flex-start;gap:12px;">
       <div style="flex:1;">
-        <div style="font-size:15px;font-weight:800;color:#fff;">Digital IO میں خوش آمدید!</div>
+        <div class="dio-hs2" style="font-size:15px;font-weight:800;color:#fff;">Digital IO میں خوش آمدید!</div>
         <div style="font-size:12px;color:rgba(255,255,255,0.8);margin-top:5px;line-height:1.9;">
           یہ آپ کا دفتری کام آسان بنانے کے لیے ہے — کاغذی بوجھ کم، اطمینان زیادہ۔
           پہلی بار استعمال کر رہے ہیں؟ ایک نظر رہنمائی پر ڈال لیں۔

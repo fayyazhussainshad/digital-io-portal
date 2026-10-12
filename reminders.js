@@ -66,7 +66,7 @@ async function _buildReminders() {
 
   <!-- Upcoming -->
   <div class="card" style="margin-bottom:12px;">
-    <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;">آنے والی یاددہانیاں (${upcoming.length})</div>
+    <div class="dio-hs2" style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;">آنے والی یاددہانیاں (${upcoming.length})</div>
     ${upcoming.length ? upcoming.map(r => _remCard(r, false)).join('')
     : `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">کوئی یاددہانی نہیں</div>`}
   </div>

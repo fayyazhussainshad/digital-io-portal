@@ -140,7 +140,7 @@ function _renderRfaList() {
     <!-- عنوان درمیان میں · "نیا" بٹن دائیں (SYSTEM RULE: add-new button ہمیشہ دائیں) -->
     <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:14px;">
       <button class="btn btn-primary btn-sm dio-add-btn" onclick="_newRfa()">+ نیا RFA فارم</button>
-      <div style="flex:1;text-align:center;font-size:18px;font-weight:800;color:var(--accent);">RFA فارم — فہرست</div>
+      <div class="dio-hs1" style="flex:1;text-align:center;font-weight:800;color:var(--accent);">RFA فارم — فہرست</div>
       <span class="btn btn-primary btn-sm" style="visibility:hidden;pointer-events:none;">+ نیا RFA فارم</span>
     </div>
     ${_rfaList.length ? rows : `
@@ -202,8 +202,8 @@ function _renderRfaForm() {
 
   const headBlock = (annex) => `
     <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #333;padding-bottom:6px;margin-bottom:2px;">
-      <span style="font-weight:bold;font-size:15px;">Police Department</span>
-      <span style="font-weight:bold;font-size:15px;">District ${es('h_district', dstEn)}</span>
+      <span style="font-weight:bold;font-size:14pt;">Police Department</span>
+      <span style="font-weight:bold;font-size:14pt;">District ${es('h_district', dstEn)}</span>
     </div>
     <div style="text-align:right;font-size:12px;font-style:italic;margin:2px 0;">${annex}</div>`;
 
@@ -266,14 +266,14 @@ function _renderRfaForm() {
         <!-- ═══ PAGE 1 — Annex-A + Annex-B ═══ -->
         <div class="rfa-page" style="${pageStyle}">
           ${headBlock('Annex-A')}
-          <div style="text-align:center;font-size:17px;font-weight:bold;text-decoration:underline;margin:8px 0 14px;">Request for Assistance (RFA)</div>
+          <div style="text-align:center;font-size:20pt;font-weight:bold;text-decoration:underline;margin:8px 0 14px;">Request for Assistance (RFA)</div>
           <table style="width:100%;border-collapse:collapse;margin-bottom:22px;">
             <tr><th style="${rThC}width:8%;">Sr.</th><th style="${rTh}width:44%;">Particulars</th><th style="${rTh}">Details</th></tr>
             ${aRows.map(r=>`<tr><td style="${rTdC}">${r[0]}</td><td style="${rTd}font-weight:600;">${r[1]}</td>${ec(r[2], r[3])}</tr>`).join('')}
           </table>
 
           ${headBlock('Annex-B')}
-          <div style="text-align:center;font-size:16px;font-weight:bold;text-decoration:underline;margin:8px 0 14px;">Assistance Requested in the RFA</div>
+          <div style="text-align:center;font-size:16pt;font-weight:bold;text-decoration:underline;margin:8px 0 14px;">Assistance Requested in the RFA</div>
           <table style="width:100%;border-collapse:collapse;margin-bottom:22px;">
             <tr><th style="${rThC}width:8%;">Sr.</th><th style="${rTh}width:56%;">Item</th><th style="${rTh}">Number / Quantity</th></tr>
             ${bRows.map(r=>`<tr><td style="${rTdC}">${r[0]}</td><td style="${rTd}">${r[1]}</td>${ec(r[2],'')}</tr>`).join('')}
@@ -296,7 +296,7 @@ function _renderRfaForm() {
         <!-- ═══ PAGE 2 — Annex-C ═══ -->
         <div class="rfa-page" style="${pageStyle}">
           ${headBlock('Annex-C')}
-          <div style="text-align:center;font-size:17px;font-weight:bold;text-decoration:underline;margin:8px 0 14px;">Feedback Form</div>
+          <div style="text-align:center;font-size:20pt;font-weight:bold;text-decoration:underline;margin:8px 0 14px;">Feedback Form</div>
           <table style="width:100%;border-collapse:collapse;">
             <tr><th style="${rThC}width:8%;">Sr.</th><th style="${rTh}width:56%;">Question</th><th style="${rTh}">Feedback</th></tr>
             ${cRows.map(r=>`<tr><td style="${rTdC}">${r[0]}</td><td style="${rTd}">${r[1]}</td>${ec(r[2],'')}</tr>`).join('')}

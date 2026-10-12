@@ -73,7 +73,7 @@ function renderHelpGuide(container) {
 
     <!-- Quick start -->
     <div class="card" style="margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px;">جلدی شروع کریں</div>
+      <div class="dio-hs2" style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px;">جلدی شروع کریں</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
         ${[
           ["<svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 7.5h6l2 2.5h9V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z'/></svg>",'نیا مقدمہ','cases'],

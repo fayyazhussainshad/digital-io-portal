@@ -142,7 +142,7 @@ function _renderAccusedArea() {
   <div style="direction:rtl;height:100%;overflow-y:auto;padding:10px;width:100%;box-sizing:border-box;">
     <div style="display:flex;align-items:center;gap:8px;border-bottom:2px solid ${color};padding-bottom:6px;margin-bottom:12px;width:100%;box-sizing:border-box;">
       <button class="btn btn-primary btn-sm" style="flex:0 0 auto;" onclick="_openAccusedForm(null,'${_accusedViewType}')">ملزم</button>
-      <div style="flex:1;font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:${color};text-align:center;">${heading}</div>
+      <div class="dio-hs1" style="flex:1;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:${color};text-align:center;">${heading}</div>
     </div>
     <div id="acc-list" style="width:100%;">${_renderAccCards(list)}</div>
   </div>`;

@@ -43,13 +43,13 @@ async function _buildCourt() {
 
   <!-- Calendar -->
   <div class="card" style="margin-bottom:14px;">
-    <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;">اس ماہ کی پیشیاں</div>
+    <div class="dio-hs2" style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;">اس ماہ کی پیشیاں</div>
     ${_renderCalendar(dates)}
   </div>
 
   <!-- Upcoming -->
   <div class="card" style="margin-bottom:14px;">
-    <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;">آنے والی پیشیاں (${upcoming.length})</div>
+    <div class="dio-hs2" style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;">آنے والی پیشیاں (${upcoming.length})</div>
     ${upcoming.length ? upcoming.map(d=>_courtCard(d)).join('')
     : `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">کوئی آنے والی پیشی نہیں</div>`}
   </div>

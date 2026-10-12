@@ -1099,7 +1099,7 @@ function _sazaCSS() {
     #saza-doc .saza-tt-right{ text-align:right; font-size:14pt; margin-right:1in; }
     #saza-doc .saza-tt-left{ text-align:left; font-size:14pt; }
     #saza-doc .saza-tt-mid{ position:absolute; left:50%; transform:translateX(-50%);
-      white-space:nowrap; font-size:24pt; text-decoration:underline; font-weight:normal; }
+      white-space:nowrap; font-size:20pt; text-decoration:underline; font-weight:normal; }   /* عنوانات کا اصول (پورا نظام، ہر کاغذ): مرکزی 20pt · ذیلی 16pt · تیسرا درجہ 14pt — چالان کے مطابق */
 
     /* Line 3 — مقدمہ نمبر / مورخہ / جرم (center, 14pt).
        جرم: دفعات (body, LTR-isolate) + "ت پ" (suffix, alag khana) — report173
@@ -1122,7 +1122,7 @@ function _sazaCSS() {
     #saza-doc .saza-table [contenteditable]{ direction:rtl; unicode-bidi:plaintext; outline:none; }
     /* Row 1 (headings) — sab کالم BOLD + 16pt, matn ke OOPER/NEECHE khuli jagah */
     #saza-doc .saza-table thead th{
-      text-align:center; vertical-align:middle; font-weight:bold; font-size:16pt;
+      text-align:center; vertical-align:middle; font-weight:bold; font-size:14pt;
       line-height:1.3; padding:12px 6px;
     }
     /* Baahri bayen/dayen kinare khule (sirf andar ki lakeerein) */

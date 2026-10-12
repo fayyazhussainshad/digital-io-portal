@@ -80,12 +80,12 @@ function getMisalTemplate(docId, c) {
     // Columns: <col> widths + per-cell width + break-word => long text wraps
     // INSIDE the cell (row grows down), column proportions stay put.
     const _cellWrap = 'word-wrap:break-word;overflow-wrap:break-word;white-space:normal;';
-    const _thBase = 'border:none;border-top:1.5pt solid #000;border-bottom:1.5pt solid #000;padding:2px 3px;font-weight:normal;text-align:center;font-size:17pt;line-height:1.7;vertical-align:middle;'+_cellWrap;
+    const _thBase = 'border:none;border-top:1.5pt solid #000;border-bottom:1.5pt solid #000;padding:2px 3px;font-weight:normal;text-align:center;font-size:14pt;line-height:1.7;vertical-align:middle;'+_cellWrap;
     const _tdBase = 'border:none;border-bottom:1.5pt solid #000;padding:3px;text-align:center;font-size:17pt;line-height:1.7;vertical-align:top;'+_cellWrap;
     const _vline  = 'border-left:0.5pt solid #000;';
 
     // ── Section 5 zimni: full 0.5pt grid (FIX 3: fixed layout too) ──
-    const _thZ = 'border:0.5pt solid #000;padding:1px 3px;font-weight:normal;text-align:center;font-size:15pt;line-height:1.6;height:6mm;vertical-align:middle;'+_cellWrap;
+    const _thZ = 'border:0.5pt solid #000;padding:1px 3px;font-weight:normal;text-align:center;font-size:14pt;line-height:1.6;height:6mm;vertical-align:middle;'+_cellWrap;
     const _tdZ = 'border:0.5pt solid #000;padding:1px 3px;text-align:center;font-size:15pt;line-height:1.6;height:7mm;vertical-align:middle;'+_cellWrap;
 
     // ── FIX 2: aligned dotted fill-line (fixed width, dotted bottom border) ──
@@ -125,9 +125,9 @@ function getMisalTemplate(docId, c) {
 
     return `
 <div style="display:flex;align-items:baseline;width:100%;margin:0 0 6px 0;">
-  <span style="flex:1 1 0;white-space:nowrap;text-align:right;padding-right:8%;font-size:18pt;">تھانہ ${_e(_sta)}</span>
-  <span style="flex:1 1 0;white-space:nowrap;text-align:center;font-size:22pt;font-weight:bold;text-decoration:underline;">انڈکس نقل مسل پولیس</span>
-  <span style="flex:1 1 0;white-space:nowrap;text-align:left;font-size:18pt;">ضلع ${_e(_dst)}</span>
+  <span style="flex:1 1 0;white-space:nowrap;text-align:right;padding-right:8%;font-size:14pt;">تھانہ ${_e(_sta)}</span>
+  <span style="flex:1 1 0;white-space:nowrap;text-align:center;font-size:20pt;font-weight:bold;text-decoration:underline;">انڈکس نقل مسل پولیس</span>
+  <span style="flex:1 1 0;white-space:nowrap;text-align:left;font-size:14pt;">ضلع ${_e(_dst)}</span>
 </div>
 <table style="width:100%;border-collapse:collapse;border:none;margin-bottom:6px;table-layout:fixed;">
   <colgroup>
@@ -155,7 +155,7 @@ function getMisalTemplate(docId, c) {
   <div style="font-size:16pt;line-height:8mm;">رابطہ نمبر <span id="idxn-mudai-cell" class="fill-line" style="display:inline-block;width:28%;border-bottom:1.5px dotted #000;vertical-align:bottom;text-align:center;${_ltrS}">${_e(_cCell)||'&nbsp;'}</span> شناختی کارڈ نمبر <span id="idxn-mudai-cnic" class="fill-line" style="display:inline-block;width:34%;border-bottom:1.5px dotted #000;vertical-align:bottom;text-align:center;${_ltrS}">${_e(_cCnic)||'&nbsp;'}</span></div>
   ${_bnam}
 </div>
-<div style="text-align:center;font-size:20pt;font-weight:bold;text-decoration:underline;margin:3px 0 2px;">انڈکس ضمنیات</div>
+<div style="text-align:center;font-size:16pt;font-weight:bold;text-decoration:underline;margin:3px 0 2px;">انڈکس ضمنیات</div>
 <table style="width:100%;border-collapse:collapse;table-layout:fixed;"><colgroup>${_zCols}</colgroup>${_zHead}${_zRows}</table>`;
   }
 

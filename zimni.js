@@ -1827,10 +1827,11 @@ function _zimniFormCSS() {
   #ch173-doc .zf-head{ direction:rtl; margin-bottom:6px; line-height:1.5; }
   #ch173-doc .zf-formno{ font-size:12pt; font-weight:normal; direction:ltr; text-align:center; margin-bottom:4px; }
   #ch173-doc .zf-titlerow{ position:relative; text-align:center; min-height:1.6em; }
-  #ch173-doc .zf-title{ font-size:24pt; font-weight:700; text-decoration:underline; text-underline-offset:5px; line-height:1.5; }
+  /* عنوانات کا اصول (پورا نظام، ہر کاغذ): مرکزی 20pt · ذیلی 16pt · تیسرا درجہ 14pt — چالان کے مطابق */
+  #ch173-doc .zf-title{ font-size:20pt; font-weight:700; text-decoration:underline; text-underline-offset:5px; line-height:1.5; }
   /* ضلع … — ضمنی نمبر کی سیدھ میں (دونوں کی چوڑائی ایک: --zf-zcol) */
   #ch173-doc .zf-zila{ position:absolute; left:0; top:0; width:var(--zf-zcol,4.6cm);
-    text-align:right; font-size:16pt; font-weight:normal; white-space:nowrap; unicode-bidi:plaintext; }
+    text-align:right; font-size:14pt; font-weight:normal; white-space:nowrap; unicode-bidi:plaintext; }
 
   /* ── METADATA (table کے اوپر والا حصہ) ── 16pt، bold نہیں، spacing 1.5،
      دائیں طرف 1cm مارجن (ٹیبل کو نہیں) ── */
@@ -1876,17 +1877,17 @@ function _zimniFormCSS() {
   #ch173-doc table.zf-tbl{ width:100%; border-collapse:collapse; table-layout:fixed; direction:rtl; margin:0; }
   #ch173-doc table.zf-tbl thead{ display:table-row-group; }   /* header دوہرا نہ ہو */
   /* ROW 1 (header) — column 3 (حالاتِ تفتیش) 16pt، باقی (1،2،4) 14pt، bold نہیں */
-  #ch173-doc table.zf-tbl th{ border:1px solid #000; padding:6px 5px; font-size:16pt; font-weight:normal;
+  #ch173-doc table.zf-tbl th{ border:1px solid #000; padding:6px 5px; font-size:14pt; font-weight:normal;
     text-align:center; line-height:1.5; vertical-align:middle; position:relative; }
   #ch173-doc table.zf-tbl th.zf-c-action{ font-size:14pt; }          /* row 1 کالم 1 — 14pt */
   /* row 1 کالم 2 — 12pt اور کھڑی لکھائی (چالان کے گواہان جیسی) */
-  #ch173-doc table.zf-tbl th.zf-c-serial{ font-size:12pt; padding:3px 2px; vertical-align:middle; }
+  #ch173-doc table.zf-tbl th.zf-c-serial{ font-size:14pt; padding:3px 2px; vertical-align:middle; }
   /* AHEM: چالان کا اصول — writing-mode استعمال کرو، flex یا transform:rotate کبھی نہیں */
   #ch173-doc .zf-vert{
     writing-mode:vertical-rl; -webkit-writing-mode:vertical-rl;
     display:block; margin:0 auto; direction:rtl;
     white-space:nowrap; line-height:1.25; text-align:center; }
-  #ch173-doc table.zf-tbl th.zf-c-from{ font-size:16pt; text-align:right; }   /* row 1 کالم 4 — 16pt، دائیں */
+  #ch173-doc table.zf-tbl th.zf-c-from{ font-size:14pt; text-align:right; }   /* row 1 کالم 4 — دائیں (سائز: عنوانات کا اصول، 14pt) */
   /* ROW 2 (data) */
   #ch173-doc table.zf-tbl td{ border:1px solid #000; padding:8px 9px; font-size:14pt; vertical-align:top;
     line-height:1.5; text-align:justify; text-align-last:right; overflow-wrap:anywhere; word-break:break-word; position:relative; }
@@ -4062,7 +4063,8 @@ function _zaFormCSS() {
   #ch173-doc .zfa-formno{ font-size:14pt; font-weight:normal; direction:ltr; text-align:center; margin-bottom:4px; }
   #ch173-doc .zfa-head{ direction:rtl; margin-bottom:2px; line-height:1.3; text-align:center; }
   /* عنوان — باقی پورے صفحے سے الگ سائز (26pt) اور انڈر لائن — bairooni ke zf-title jaisa */
-  #ch173-doc .zfa-title{ font-size:26pt; font-weight:normal; text-align:center; line-height:1.3;
+  /* عنوانات کا اصول (پورا نظام، ہر کاغذ): مرکزی 20pt · ذیلی 16pt · تیسرا درجہ 14pt — چالان کے مطابق */
+  #ch173-doc .zfa-title{ font-size:20pt; font-weight:normal; text-align:center; line-height:1.3;
     text-decoration:underline; text-underline-offset:5px; }
 
   /* ── سطر: مقدمہ نمبر | مورخہ | جرم | تھانہ — ایک لائن، پورے صفحے کے 14pt پر ──

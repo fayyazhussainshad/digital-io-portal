@@ -249,7 +249,7 @@ async function _loadCurrentShares() {
 
     box.innerHTML =
       (active.length
-        ? `<div style="font-size:13px;font-weight:700;margin-bottom:6px;">فعال شیئرز (${active.length}):</div>` + active.map(s => rowHtml(s, false)).join('')
+        ? `<div class="dio-hs2" style="font-size:13px;font-weight:700;margin-bottom:6px;">فعال شیئرز (${active.length}):</div>` + active.map(s => rowHtml(s, false)).join('')
         : '') +
       (revoked.length
         ? `<div style="font-size:12px;color:var(--text-muted);margin:10px 0 6px;">گزشتہ / منسوخ (${revoked.length}):</div>` + revoked.map(s => rowHtml(s, true)).join('')

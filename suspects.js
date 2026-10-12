@@ -260,7 +260,7 @@ async function _viewSuspect(id) {
 
       <!-- Cross-referenced cases -->
       <div style="border-top:1px solid var(--border);padding-top:12px;">
-        <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px;">متعلقہ مقدمات (${matchedCases.length})</div>
+        <div class="dio-hs2" style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px;">متعلقہ مقدمات (${matchedCases.length})</div>
         ${matchedCases.length ? matchedCases.map(c => `
           <div style="background:var(--bg-secondary);border-radius:8px;padding:10px;margin-bottom:6px;cursor:pointer;" onclick="closeModal();openCaseWorkspace('${c.id}')">
             <div style="font-size:13px;font-weight:700;color:var(--accent);">FIR ${c.fir_number || '—'}</div>

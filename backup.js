@@ -65,7 +65,7 @@ async function _buildBackup() {
     <!-- Supabase Cloud -->
     <div class="card" style="text-align:center;">
       <div style="font-size:36px;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7.5 19a4.5 4.5 0 0 1 0-9 6 6 0 0 1 11.3 1.6A3.7 3.7 0 0 1 18 19z"/></svg></div>
-      <div style="font-size:13px;font-weight:700;margin-bottom:6px;direction:rtl;">سرکاری کلاؤڈ <span style="font-size:10px;font-weight:600;color:var(--text-muted);" dir="ltr">Supabase</span></div>
+      <div class="dio-hs2" style="font-size:13px;font-weight:700;margin-bottom:6px;direction:rtl;">سرکاری کلاؤڈ <span style="font-size:10px;font-weight:600;color:var(--text-muted);" dir="ltr">Supabase</span></div>
       <div style="font-size:11px;color:var(--green);margin-bottom:10px;direction:rtl;">ہمیشہ فعال · AES-256</div>
       <div style="font-size:10px;color:var(--text-muted);direction:rtl;">تمام ڈیٹا خودکار محفوظ ہے</div>
     </div>
@@ -73,7 +73,7 @@ async function _buildBackup() {
     <!-- Local Backup -->
     <div class="card" style="text-align:center;">
       <div style="font-size:36px;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v6h7V4"/><path d="M8 20v-6h8v6"/></svg></div>
-      <div style="font-size:13px;font-weight:700;margin-bottom:6px;direction:rtl;">ڈیوائس بیک اپ</div>
+      <div class="dio-hs2" style="font-size:13px;font-weight:700;margin-bottom:6px;direction:rtl;">ڈیوائس بیک اپ</div>
       <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;direction:rtl;">JSON فائل ڈاؤنلوڈ کریں</div>
       <button class="btn btn-primary btn-sm" style="width:100%;" onclick="_exportAllData()">مکمل ڈیٹا ڈاؤنلوڈ</button>
       <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:6px;" onclick="_importData()">ڈیٹا درآمد کریں</button>
@@ -82,7 +82,7 @@ async function _buildBackup() {
     <!-- Export Options -->
     <div class="card" style="text-align:center;">
       <div style="font-size:36px;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M4 20h16"/><path d="M7 20V11"/><path d="M12 20V5"/><path d="M17 20v-6"/></svg></div>
-      <div style="font-size:13px;font-weight:700;margin-bottom:6px;direction:rtl;">برآمد کریں</div>
+      <div class="dio-hs2" style="font-size:13px;font-weight:700;margin-bottom:6px;direction:rtl;">برآمد کریں</div>
       <button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px;" onclick="_exportCases()">مقدمات (CSV)</button>
       <button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px;" onclick="_exportReminders()">یاددہانیاں (CSV)</button>
       <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="_printDataReport()">رپورٹ پرنٹ</button>
@@ -91,7 +91,7 @@ async function _buildBackup() {
 
   <!-- Storage Info -->
   <div class="card">
-    <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;direction:rtl;">سٹوریج کی معلومات</div>
+    <div class="dio-hs2" style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;direction:rtl;">سٹوریج کی معلومات</div>
     <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;direction:rtl;">
       <div style="display:flex;justify-content:space-between;"><span>سرکاری کلاؤڈ (Supabase)</span><span style="color:var(--green);">محفوظ</span></div>
       <div style="display:flex;justify-content:space-between;"><span>آف لائن ذخیرہ</span><span style="color:var(--green);">دستیاب</span></div>
@@ -101,7 +101,7 @@ async function _buildBackup() {
 
   <!-- Google Drive / Cloud Backup -->
   <div class="card" style="direction:rtl;">
-    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px;">Google Drive / کلاؤڈ بیک اپ</div>
+    <div class="dio-hs2" style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px;">Google Drive / کلاؤڈ بیک اپ</div>
     <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">اپنا ڈیٹا Google Drive یا OneDrive میں محفوظ رکھیں — 3 آسان قدم</div>
     <div style="display:flex;flex-direction:column;gap:10px;">
       <div style="display:flex;gap:10px;align-items:center;background:var(--bg-secondary);border-radius:8px;padding:10px;">

@@ -1317,9 +1317,10 @@
     .naq-bahad .naq-f{ font-size:12pt; }
     .naq-paren{ font-size:12pt; }
     /* عنوان — 18pt، پوری سطر underline؛ bold نہیں؛ قسم dropdown سادہ underline متن (کوئی دائرہ/باکس نہیں) */
-    .naq-title{ position:relative; z-index:5; text-align:center; font-weight:400; font-size:18pt; margin:16px 0 6px; }
+    /* عنوانات کا اصول (پورا نظام، ہر کاغذ): مرکزی 20pt · ذیلی 16pt · تیسرا درجہ 14pt — چالان کے مطابق */
+    .naq-title{ position:relative; z-index:5; text-align:center; font-weight:400; font-size:20pt; margin:16px 0 6px; }
     .naq-title-t{ text-decoration:underline; text-underline-offset:5px; }
-    .naq-type{ -webkit-appearance:none; -moz-appearance:none; appearance:none; font-family:inherit; font-size:18pt; font-weight:400;
+    .naq-type{ -webkit-appearance:none; -moz-appearance:none; appearance:none; font-family:inherit; font-size:20pt; font-weight:400;
       border:none; background:transparent; color:#111; padding:0 2px; cursor:pointer; text-decoration:underline; text-underline-offset:5px; outline:none; }
     .naq-map{ position:relative; margin:2px 0 6px; }
     .naq-map .canvas-container{ margin:0 auto; }
@@ -1338,7 +1339,7 @@
     /* سمت نما — دائیں بارڈر کی طرف؛ N-S لمبا وہی؛ E-W افقی تھوڑا نیچے */
     .naq-compass{ position:absolute; top:50%; right:-40px; width:116px; height:147px; transform:translateY(-48px); z-index:6; pointer-events:none; }
     .naq-nofab{ padding:36px 16px; text-align:center; color:#b91c1c; }
-    .naq-marks-l{ font-weight:700; text-decoration:underline; text-underline-offset:4px; }
+    .naq-marks-l{ font-size:16pt; font-weight:700; text-decoration:underline; text-underline-offset:4px; }
     .naq-mrow{ display:flex; align-items:baseline; gap:6px; margin:4px 0; }
     .naq-mno{ white-space:nowrap; font-weight:400; }
     .naq-mtext{ flex:1; min-width:60px; outline:none; }

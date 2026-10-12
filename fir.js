@@ -52,14 +52,14 @@ function _renderFir(type) {
 
     <!-- متن -->
     <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid ${color};padding-bottom:6px;margin-bottom:10px;">
-      <div style="font-size:19px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:${color};">متن ${heading}</div>
+      <div class="dio-hs2" style="font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:${color};">متن ${heading}</div>
       <button class="btn btn-primary btn-sm" onclick="_openMatnModal('${type}')">متن درج کریں</button>
     </div>
     ${_renderMatnTable(matn)}
 
     <!-- فوٹو کاپی -->
     <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:6px;margin:18px 0 10px;">
-      <div style="font-size:17px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">فوٹو کاپی ${heading}</div>
+      <div class="dio-hs2" style="font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">فوٹو کاپی ${heading}</div>
       <button class="btn btn-secondary btn-sm" onclick="document.getElementById('fir-copy-input').click()">فوٹو کاپی اپلوڈ کریں</button>
       <input type="file" id="fir-copy-input" accept="image/*,application/pdf" style="display:none;" onchange="_uploadFirCopy(this,'${type}')">
     </div>

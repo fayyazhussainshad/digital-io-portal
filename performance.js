@@ -87,7 +87,7 @@ async function _buildPerf() {
 
     <!-- Monthly trend -->
     <div class="card">
-      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;direction:rtl;">ماہانہ اندراج (12 ماہ)</div>
+      <div class="dio-hs2" style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;direction:rtl;">ماہانہ اندراج (12 ماہ)</div>
       <div style="display:flex;align-items:flex-end;gap:3px;height:90px;margin-bottom:6px;">
         ${monthly.map((m,i)=>{
           const max=Math.max(...monthly.map(x=>x.count),1);
@@ -103,7 +103,7 @@ async function _buildPerf() {
 
     <!-- Section breakdown -->
     <div class="card">
-      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;direction:rtl;">اہم دفعات</div>
+      <div class="dio-hs2" style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;direction:rtl;">اہم دفعات</div>
       ${bySection.slice(0,5).map(s=>`
       <div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;direction:rtl;">
         <div style="font-size:10px;font-family:monospace;color:var(--accent);min-width:70px;">${esc(s.section)}</div>
@@ -118,7 +118,7 @@ async function _buildPerf() {
   <!-- Button Usage Stats -->
   ${usage.length ? `
   <div class="card" style="margin-bottom:14px;">
-    <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;direction:rtl;">سب سے زیادہ استعمال ہونے والے بٹن</div>
+    <div class="dio-hs2" style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;direction:rtl;">سب سے زیادہ استعمال ہونے والے بٹن</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
       ${usage.slice(0,9).map((u,i)=>`
       <div style="background:var(--bg-secondary);border-radius:8px;padding:8px;direction:rtl;border-right:3px solid ${i<3?'var(--accent)':'var(--border)'};">

@@ -75,7 +75,7 @@ function _renderCroList() {
 
   area.innerHTML = `
   <div style="padding:14px;direction:rtl;height:100%;overflow-y:auto;">
-    <div style="font-size:18px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:14px;color:var(--accent);">CRO کارڈ — ملزمان کی فہرست</div>
+    <div class="dio-hs1" style="font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:14px;color:var(--accent);">CRO کارڈ — ملزمان کی فہرست</div>
     ${rows}
   </div>`;
 }
@@ -130,7 +130,8 @@ function _renderCro() {
       <!-- ═══ PAGE 1 — طرف الف ═══ -->
       <div class="cro-page" style="max-width:210mm;margin:0 auto 20px;padding:10mm;background:#fff;color:#000;font-size:11px;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;">
         <div style="text-align:left;font-size:10px;">طرف الف</div>
-        <div style="text-align:center;font-size:15px;font-weight:800;">سٹینڈرڈ کریمینل انڈکس کارڈ</div>
+        <!-- عنوانات کا اصول: مرکزی عنوان 20pt (پورا نظام) -->
+        <div style="text-align:center;font-size:20pt;font-weight:800;">سٹینڈرڈ کریمینل انڈکس کارڈ</div>
         <div style="text-align:center;font-size:11px;">(برائے جیل)</div>
         <div style="display:flex;justify-content:flex-start;gap:20px;margin-top:4px;font-size:11px;">
           <span>CRO نمبر: <span contenteditable="true" data-k="cro_number" oninput="_croBoldCell(this)" style="border-bottom:1px solid #999;min-width:80px;display:inline-block;${v('cro_number')?'font-weight:bold;':''}">${v('cro_number')}</span></span>

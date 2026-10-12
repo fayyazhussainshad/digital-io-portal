@@ -113,7 +113,7 @@ function _renderWitnessesArea() {
   <div style="padding:10px;direction:rtl;height:100%;overflow-y:auto;width:100%;box-sizing:border-box;">
     <div style="border-bottom:2px solid ${color};margin-bottom:12px;padding-bottom:6px;">
       <div style="position:relative;min-height:34px;display:flex;align-items:center;justify-content:center;">
-        <div style="font-size:20px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:${color};text-align:center;">${heading}</div>
+        <div class="dio-hs1" style="font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:${color};text-align:center;">${heading}</div>
         <button class="btn btn-primary btn-sm" style="position:absolute;right:0;top:50%;transform:translateY(-50%);" onclick="_openWitnessForm(null,'${_witnessViewType}')">گواہ</button>
       </div>
     </div>

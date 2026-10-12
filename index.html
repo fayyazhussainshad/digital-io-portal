@@ -479,7 +479,8 @@ input, textarea, select { font-family: var(--font-main); }
 .modal-overlay { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 20px; }
 .modal-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); width: 100%; max-width: 880px; max-height: 88vh; overflow-y: auto; box-shadow: var(--shadow); animation: cardSlideUp 0.3s ease; }
 .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-.modal-title { font-size: 16px; font-weight: 700; font-family: var(--font-display); }
+/* مکالمہ (modal) کا عنوان = اُس کھڑکی کا مرکزی عنوان */
+.modal-title, #modal-title { font-size: var(--dio-h1, 15pt) !important; font-weight: 700; font-family: var(--font-display); }
 .modal-close { background: none; border: none; color: var(--text-muted); font-size: 18px; transition: color 0.15s; cursor: pointer; }
 .modal-close:hover { color: var(--red); }
 .modal-body { padding: 20px; }
@@ -1179,20 +1180,32 @@ input[id*="cnic"], input[id*="cell"] {
    (point wala) paimana `_ch173CSS()` mein hai.
    ═══════════════════════════════════════════════════════════════ */
 .page-content :is(h1, .page-title, .dio-h1):not(#ch173-doc):not(#ch173-doc *):not(#dio-dv-body):not(#dio-dv-body *):not(#saza-doc):not(#saza-doc *):not(#dk-doc):not(#dk-doc *):not(#dio-naqsha-doc):not(#dio-naqsha-doc *) {
-  font-size: var(--dio-h1, 20px) !important;
+  font-size: var(--dio-h1, 15pt) !important;
   font-weight: 800 !important;
   line-height: 1.95 !important;
 }
 .page-content :is(h2, .card-title, .section-title, .dio-h2):not(#ch173-doc):not(#ch173-doc *):not(#dio-dv-body):not(#dio-dv-body *):not(#saza-doc):not(#saza-doc *):not(#dk-doc):not(#dk-doc *):not(#dio-naqsha-doc):not(#dio-naqsha-doc *) {
-  font-size: var(--dio-h2, 17px) !important;
+  font-size: var(--dio-h2, 12.75pt) !important;
   font-weight: 750 !important;
   line-height: 1.85 !important;
 }
 .page-content :is(h3, h4, .dio-h3, .data-table thead th, table thead th):not(#ch173-doc):not(#ch173-doc *):not(#dio-dv-body):not(#dio-dv-body *):not(#saza-doc):not(#saza-doc *):not(#dk-doc):not(#dk-doc *):not(#dio-naqsha-doc):not(#dio-naqsha-doc *) {
-  font-size: var(--dio-h3, 15px) !important;
+  font-size: var(--dio-h3, 11.25pt) !important;
   font-weight: 700 !important;
   line-height: 1.8 !important;
 }
+/* ── صرف سائز والے عنوان (.dio-hs1/2/3) — رنگ اور وزن جوں کے توں ──
+   یہ اُن سرخیوں کے لیے ہیں جن کا اپنا رنگ معنی رکھتا ہے (نیلا کارڈ عنوان،
+   FIR/کراس ورژن کا رنگ)۔ اوپر والا 14px قاعدہ (10 عدد :not) اتنا طاقتور
+   ہے کہ اکیلی کلاس اُسے نہیں ہرا سکتی — اِسی لیے یہاں وہی زنجیر۔ */
+.page-content .dio-hs1:not(#ch173-doc):not(#ch173-doc *):not(#dio-dv-body):not(#dio-dv-body *):not(#saza-doc):not(#saza-doc *):not(#dk-doc):not(#dk-doc *):not(#dio-naqsha-doc):not(#dio-naqsha-doc *) { font-size: var(--dio-h1, 15pt) !important; line-height: 1.95 !important; }
+.page-content .dio-hs2:not(#ch173-doc):not(#ch173-doc *):not(#dio-dv-body):not(#dio-dv-body *):not(#saza-doc):not(#saza-doc *):not(#dk-doc):not(#dk-doc *):not(#dio-naqsha-doc):not(#dio-naqsha-doc *) { font-size: var(--dio-h2, 12.75pt) !important; line-height: 1.85 !important; }
+.page-content .dio-hs3:not(#ch173-doc):not(#ch173-doc *):not(#dio-dv-body):not(#dio-dv-body *):not(#saza-doc):not(#saza-doc *):not(#dk-doc):not(#dk-doc *):not(#dio-naqsha-doc):not(#dio-naqsha-doc *) { font-size: var(--dio-h3, 11.25pt) !important; }
+/* ── کاغذ کے عنوان جو کسی ایپ صفحے پر ہوں (مثلاً واقعاتی رپورٹ) ──
+   چالان کا پیمانہ: مرکزی 20pt · ذیلی 16pt · تیسرا درجہ 14pt */
+.page-content .dio-doc-h1:not(#ch173-doc):not(#ch173-doc *):not(#dio-dv-body):not(#dio-dv-body *):not(#saza-doc):not(#saza-doc *):not(#dk-doc):not(#dk-doc *):not(#dio-naqsha-doc):not(#dio-naqsha-doc *) { font-size: 20pt !important; }
+.page-content .dio-doc-h2:not(#ch173-doc):not(#ch173-doc *):not(#dio-dv-body):not(#dio-dv-body *):not(#saza-doc):not(#saza-doc *):not(#dk-doc):not(#dk-doc *):not(#dio-naqsha-doc):not(#dio-naqsha-doc *) { font-size: 16pt !important; }
+.page-content .dio-doc-h3:not(#ch173-doc):not(#ch173-doc *):not(#dio-dv-body):not(#dio-dv-body *):not(#saza-doc):not(#saza-doc *):not(#dk-doc):not(#dk-doc *):not(#dio-naqsha-doc):not(#dio-naqsha-doc *) { font-size: 14pt !important; }
 </style>
 <!-- Supabase JS library (REQUIRED — must load before app-core.js) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>

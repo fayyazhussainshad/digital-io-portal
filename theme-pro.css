@@ -210,7 +210,8 @@ html:not([data-theme="light"]) {
    ──────────────────────────────────────────────────────────────── */
 /* Unwan — chhota, khamosh, aik jaisa */
 b.dio-sec-h, .dio-sec-h {
-  display: block; font-size: 12px; font-weight: 800;
+  /* ذیلی عنوان — باقی نظام کے ہر ذیلی عنوان جتنا (پہلے 12px، یعنی 9pt) */
+  display: block; font-size: var(--dio-h2); font-weight: 800;
   color: var(--dio-ink-3); letter-spacing: .02em;
   margin: 2px 0 10px; padding: 0; direction: rtl; text-align: right;
   font-family: inherit;
@@ -444,11 +445,33 @@ b.dio-stat-num { margin-bottom: 2px; }
    Kaghaz (چھپائی) ka apna paimana report173.js ke _ch173CSS() mein hai.
    ═══════════════════════════════════════════════════════════ */
 :root {
-  --dio-h1: clamp(18px, 0.9vw + 14.5px, 23px);
-  --dio-h2: clamp(15.5px, 0.5vw + 13.5px, 19px);
+  /* نظام کا اصول: فونٹ ہمیشہ pt میں۔ یہ وہی سابقہ ناپیں ہیں (px × 0.75) —
+     صرف اکائی بدلی، دکھنے میں کوئی فرق نہیں:
+       h1 18–23px = 13.5–17.25pt · h2 15.5–19px = 11.625–14.25pt · h3 14.5–16px = 10.875–12pt */
+  --dio-h1: clamp(13.5pt, 0.9vw + 10.875pt, 17.25pt);
+  --dio-h2: clamp(11.625pt, 0.5vw + 10.125pt, 14.25pt);
   /* Aam unwan kabhi aam MATN (14px) se chhota na ho — warna mobile par
      jadwal ka sar-nama apne hi data se halka lagta tha */
-  --dio-h3: clamp(14.5px, 0.3vw + 13.4px, 16px);
+  --dio-h3: clamp(10.875pt, 0.3vw + 10.05pt, 12pt);
+  /* کاغذ (چھپائی) کے عنوانات — چالان کا پیمانہ، ہر کاغذ پر ایک جیسا۔
+     ہر ماڈیول اپنی CSS میں یہی عدد لکھتا ہے (چھپائی کی کھڑکی الگ دستاویز ہوتی
+     ہے جہاں یہ فائل نہیں پہنچتی) — یہاں صرف حوالے کے لیے:
+       مرکزی 20pt · ذیلی 16pt · تیسرا درجہ 14pt */
+  --doc-h1: 20pt; --doc-h2: 16pt; --doc-h3: 14pt;
+}
+
+/* ── دستاویز کی اسکرین (پورے صفحے والا منظر) کے عنوانات ─────────────────
+   #dio-dv-body اوپر والے .page-content قواعد سے جان بوجھ کر باہر ہے (وہاں
+   کاغذ ہوتا ہے، جس کا اپنا pt پیمانہ ہے)۔ اسی لیے وہاں کی اسکرین سرخیاں
+   (فہرست کا نام، «محفوظ شدہ — …»، «متن الف آئی آر» وغیرہ) 9.8pt سے 15pt
+   تک بکھری ہوئی تھیں۔ یہ کلاسیں صرف **سائز** دیتی ہیں — رنگ اور وزن ویسے
+   ہی رہتے ہیں (FIR / کراس ورژن کا رنگ اسی سے پہچانا جاتا ہے)۔ */
+.dio-hs1 { font-size: var(--dio-h1) !important; line-height: 1.95 !important; }
+.dio-hs2 { font-size: var(--dio-h2) !important; line-height: 1.85 !important; }
+.dio-hs3 { font-size: var(--dio-h3) !important; }
+/* دستاویز کی اسکرین پر فہرستوں کے سر نامے (چالان / ضمنی / محفوظ شدہ) — تیسرا درجہ */
+#dio-dv-body :is(table.ct, table.zt, table.dio-saved-tbl) > thead th {
+  font-size: var(--dio-h3) !important;
 }
 
 .page-content h1, .page-content .dio-h1, .page-content .page-title, .dio-h1 {

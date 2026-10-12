@@ -38,14 +38,15 @@ function renderIncident(container) {
       padding:24px;">
 
       <!-- Row 1: Thana (right, 0.7in gap) ... Zila (left) -->
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:16px;font-weight:800;color:var(--text-primary);margin-bottom:4px;">
-        <div style="padding-right:0.7in;">تھانہ ${esc(o.station||'_______')}</div>
-        <div>ضلع ${esc(o.district||'_______')}</div>
+      <!-- عنوانات کا اصول (ہر کاغذ): مرکزی 20pt · تیسرا درجہ (تھانہ/ضلع) 14pt — چالان کے مطابق؛ اسکرین اور چھپائی دونوں -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:14pt;font-weight:800;color:var(--text-primary);margin-bottom:4px;">
+        <div class="dio-doc-h3" style="padding-right:0.7in;font-size:14pt;">تھانہ ${esc(o.station||'_______')}</div>
+        <div class="dio-doc-h3" style="font-size:14pt;">ضلع ${esc(o.district||'_______')}</div>
       </div>
 
       <!-- Row 2: واقعاتی رپورٹ (centered, underlined) -->
       <div style="text-align:center;margin:8px 0 12px;">
-        <span style="font-size:20px;font-weight:800;border-bottom:2px solid #1a3a5c;padding-bottom:2px;">واقعاتی رپورٹ</span>
+        <span class="dio-doc-h1" style="font-size:20pt;font-weight:800;border-bottom:2px solid #1a3a5c;padding-bottom:2px;">واقعاتی رپورٹ</span>
       </div>
 
       <!-- Report Number + Type -->

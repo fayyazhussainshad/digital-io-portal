@@ -75,9 +75,9 @@ function dioSavedBoxHTML(caseId, docKey, title) {
   <div id="dio-saved-box" style="margin-top:14px;border:1px solid var(--border);border-radius:10px;
        background:var(--bg-card);overflow:hidden;direction:rtl;">
     <div style="padding:8px 12px;background:var(--bg-secondary);border-bottom:1px solid var(--border);
-         font-weight:700;font-size:14px;">📁 ${title || 'محفوظ شدہ فائلیں'}</div>
+         font-weight:700;" class="dio-hs2">📁 ${title || 'محفوظ شدہ فائلیں'}</div>
     ${list.length ? `
-    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <table class="dio-saved-tbl" style="width:100%;border-collapse:collapse;font-size:13px;">
       <thead>
         <tr style="background:var(--bg-tertiary);">
           <th style="padding:6px;width:56px;">نمبر شمار</th>

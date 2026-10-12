@@ -174,7 +174,7 @@ function _renderPendingTab(pending) {
     </div>`;
 
   return `<div class="card">
-    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;">نئے افسران کی درخواستیں (${pending.length})</div>
+    <div class="dio-hs2" style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;">نئے افسران کی درخواستیں (${pending.length})</div>
     ${pending.map(p => `
     <div id="pending-card-${p.id}" style="background:var(--bg-secondary);border:1px solid var(--amber);border-radius:10px;padding:14px;margin-bottom:10px;">
       <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
@@ -293,7 +293,7 @@ function _renderAllCasesTab(cases) {
 // ── ACTIVITY LOG ──────────────────────────────────────────────
 function _renderActivityTab(activity) {
   return `<div class="card">
-    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;">حالیہ سرگرمی</div>
+    <div class="dio-hs2" style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;">حالیہ سرگرمی</div>
     ${activity.length ? activity.map(a => {
       const officer = (window._adminData?.officers||[]).find(o=>o.id===a.officer_id);
       return `<div style="display:flex;gap:10px;direction:rtl;padding:8px 0;border-bottom:1px solid var(--border);align-items:flex-start;">
@@ -794,7 +794,7 @@ async function _renderApprovalsTab(el) {
 
   el.innerHTML = `
   <div class="card" style="direction:rtl;">
-    <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;">
+    <div class="dio-hs2" style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;">
       زیرِ منظوری دستاویزات (${rows.length})
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;">
@@ -969,7 +969,7 @@ async function _renderUsageTab(el) {
 
     el.innerHTML = `
     <div class="card" style="direction:rtl;">
-      <div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:4px;">سب سے زیادہ استعمال ہونے والے صفحات</div>
+      <div class="dio-hs2" style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:4px;">سب سے زیادہ استعمال ہونے والے صفحات</div>
       <div style="font-size:11px;color:var(--text-muted);margin-bottom:16px;">کل ${grandTotal} مرتبہ · سب سے اوپر والے کو نمایاں کریں تاکہ افسران کو آسانی ہو</div>
       <div style="display:flex;flex-direction:column;gap:10px;">
         ${sorted.map(([page,count],i)=>{
