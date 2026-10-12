@@ -61,20 +61,16 @@ function _dioEnterDocView() {
          8.5in ka hone ki wajah se chapai mein matn KAT jata tha. Isi liye
          چالان akele theek chalta tha aur doosri tabs ke saath kharab. */
       '#dio-dv-body #misal-editor{min-height:calc(100vh - 160px) !important;}' +
-      /* ── اوپر والی پٹی (واپس / مقدمہ نمبر / دستاویزات کی chips) ─────────
-         پہلے یہ پٹی ہمیشہ اوپر چپکی رہتی تھی: وہ اِس پورے صفحے والے خانے کی
-         پہلی flex قطار ہے، اور نیچے والا حصہ اکیلا scroll ہوتا ہے — یعنی پٹی
-         کبھی ہٹتی ہی نہیں تھی اور کام کی جگہ کھاتی رہتی تھی۔
-         اب وہ چالان کے اندر کی پٹی کی طرح **چلتی** ہے:
-           • نیچے scroll کریں → اوپر سرک کر غائب
-           • کرسر صفحے کے اوپری کنارے پر لے جائیں → واپس سامنے (مواد پر، اُسے
-             ہلائے بغیر، کیونکہ اُس وقت وہ absolute ہوتی ہے)
-           • اوپر کی طرف scroll کریں → واپس سامنے (موبائل کے لیے)
-           • بالکل اوپر پہنچیں → دوبارہ اپنی اصل جگہ پر                      */
-      '#dio-dv-bar{transition:top .18s ease, box-shadow .18s ease;}' +
-      '#dio-dv-bar.dio-dv-off{position:absolute;left:0;right:0;z-index:20;}' +
-      '#dio-dv-bar.dio-dv-peek{position:absolute;left:0;right:0;top:0;z-index:20;' +
-      'box-shadow:0 6px 20px rgba(0,0,0,.18);}' +
+      /* ── مقدمہ کی chip پٹی (واپس / مقدمہ نمبر / دستاویزات کے بٹن) ───────
+         ترتیب (صارف کی وضاحت، چالان کی طرح):
+           1) سب سے اوپر: ماڈیول کے ترمیمی اوزار — ہمیشہ نظر میں
+           2) اُن کے نیچے: یہ chip پٹی — صرف اُس وقت جب کرسر اوپر جائے
+         یہ پٹی ہمیشہ بہاؤ سے باہر (absolute) رہتی ہے، اِس لیے نہ اوپر کوئی
+         خالی پٹی بنتی ہے نہ نیچے، اور ترمیمی اوزار خود بخود بالکل اوپر
+         آ جاتے ہیں۔ چھپی ہوئی حالت میں یہ اپنی اونچائی جتنی اوپر چلی جاتی
+         ہے؛ دکھاتے وقت اُوپر والے اوزاروں کے ٹھیک نیچے آ کر رکتی ہے۔     */
+      '#dio-dv-bar{position:absolute;left:0;right:0;z-index:60;' +
+      'transition:top .18s ease;box-shadow:0 6px 18px rgba(0,0,0,.16);}' +
       '@media print{#dio-dv-bar{display:none !important;}}';
     document.head.appendChild(st);
   }
@@ -123,80 +119,76 @@ function _dioEnterDocView() {
   try { _dioBarPeekInit(ov); } catch (_) {}
 }
 
-/* ══ اوپر والی پٹی کا چھپنا/سامنے آنا ═══════════════════════════════════
-   دستاویز کے اندر scroll کرنے والا خانہ ایک نہیں ہوتا — چالان اپنے خانے میں
-   scroll ہوتا ہے، نقشہ موقع اپنے `.naq-scroll` میں۔ اِس لیے scroll کو
-   capture کے ساتھ سنا جاتا ہے (scroll بلبلا کر اوپر نہیں آتا، مگر capture
-   میں پکڑا جاتا ہے)، اور فیصلہ اُسی خانے کی اپنی scroll پوزیشن سے ہوتا ہے
-   جو واقعی چل رہا ہو۔                                                     */
+/* ══ chip پٹی: کرسر اوپر → سامنے، کرسر نیچے → غائب ════════════════════
+   • پٹی ہمیشہ absolute ہے — بہاؤ میں جگہ نہیں لیتی، اِس لیے کوئی خالی پٹی
+     نہیں بنتی اور ماڈیول کے ترمیمی اوزار بالکل اوپر رہتے ہیں۔
+   • دکھاتے وقت وہ اوپر والے اوزاروں کے **نیچے** آتی ہے۔ اُن اوزاروں کی
+     اونچائی ناپی جاتی ہے — کسی ایک ماڈیول کا نام لکھے بغیر: دونوں
+     (نقشہ موقع کا #naq-topwrap اور چالان کی اپنی پٹی) پر `no-print` لگا
+     ہوا ہے، اِس لیے جو بھی `no-print` پٹی بالکل اوپر بیٹھی ہو اُسی کے نیچے
+     آ جاتی ہے۔ (report173.js کو ہاتھ نہیں لگایا گیا — وہ مقفل ہے۔)
+   • موبائل کے لیے: اوپر کی طرف scroll کرنے سے بھی سامنے آ جاتی ہے۔      */
 let _dioBarLastY = null;
-/* پٹی چھپانے/دکھانے سے خود layout بدلتا ہے (نیچے کا خانہ اونچا ہو جاتا ہے)،
-   جس پر براؤزر scrollTop کو چند pixel گھٹا دیتا ہے اور ایک نیا scroll واقعہ
-   بھیجتا ہے۔ وہ «اوپر کی طرف scroll» لگتا ہے اور پٹی فوراً واپس آ جاتی ہے —
-   یعنی ایک چکر بن جاتا ہے۔ اِس لیے اپنی ہی تبدیلی کے فوراً بعد والے واقعات
-   نظرانداز کیے جاتے ہیں۔ */
 let _dioBarBusy = 0;
+
+function _dioTopToolbarBottom(body) {
+  // جو `no-print` پٹی بالکل اوپر لگی ہو، اُس کا نچلا کنارہ
+  try {
+    const br = body.getBoundingClientRect();
+    let sab = 0;
+    body.querySelectorAll('.no-print').forEach(el => {
+      const r = el.getBoundingClientRect();
+      if (!r.height || !r.width) return;
+      if (r.top <= br.top + 6 && r.bottom > br.top && (r.bottom - br.top) < 260) {
+        sab = Math.max(sab, Math.round(r.bottom - br.top));
+      }
+    });
+    return sab;
+  } catch (_) { return 0; }
+}
 
 function _dioBarPeekInit(ov) {
   const bar = ov.querySelector('#dio-dv-bar');
-  if (!bar || ov._dioBarBound) return;
+  const body = ov.querySelector('#dio-dv-body');
+  if (!bar || !body || ov._dioBarBound) return;
   ov._dioBarBound = true;
   _dioBarLastY = new WeakMap();
 
   const H = () => bar.offsetHeight || 48;
+  const mark = () => { _dioBarBusy = Date.now(); };
 
-  const mark = () => {
-    _dioBarBusy = Date.now();
-    // نقشہ موقع کی اپنی پٹی کو نئی جگہ بتا دو (تاکہ اوپر نہ چڑھے)
-    try { requestAnimationFrame(() => { try { window._naqSyncPeekTop && window._naqSyncPeekTop(); } catch (_) {} }); } catch (_) {}
-  };
-  const rest = () => {
-    if (!bar.classList.contains('dio-dv-off') && !bar.classList.contains('dio-dv-peek')) return;
-    bar.classList.remove('dio-dv-off', 'dio-dv-peek'); bar.style.top = ''; mark();
-  };
-  const off  = () => {
-    if (bar.classList.contains('dio-dv-peek')) bar.classList.remove('dio-dv-peek');
-    if (!bar.classList.contains('dio-dv-off')) {
-      bar.dataset.h = H();
-      bar.classList.add('dio-dv-off');
-    }
-    bar.style.top = '-' + (bar.dataset.h || H()) + 'px';
+  const chupao = () => {
+    if (!window._dioBarShown && bar.style.top) return;
+    window._dioBarShown = false;
+    bar.style.top = '-' + (H() + 6) + 'px';
     mark();
   };
-  const peek = () => {
-    if (!bar.classList.contains('dio-dv-off')) { bar.dataset.h = H(); bar.classList.add('dio-dv-off'); }
-    bar.classList.add('dio-dv-peek');
-    bar.style.top = '0px';
-    mark();
+  const dikhao = () => {
+    const off = _dioTopToolbarBottom(body);
+    bar.style.top = off + 'px';
+    if (!window._dioBarShown) { window._dioBarShown = true; mark(); }
   };
-  const chupi = () => bar.classList.contains('dio-dv-off');
 
+  // شروع میں چھپی ہوئی
+  requestAnimationFrame(chupao);
+
+  // — موبائل/دونوں: اوپر کی طرف scroll سے سامنے، نیچے سے غائب
   ov.addEventListener('scroll', (e) => {
     const sc = e.target;
     if (!sc || sc.nodeType !== 1 || typeof sc.scrollTop !== 'number') return;
-    const h = +(bar.dataset.h || H());
     const y = sc.scrollTop;
     const pichla = _dioBarLastY.get(sc);
     _dioBarLastY.set(sc, y);
-    if (y <= h - 4) { rest(); return; }                 // بالکل اوپر — اصل جگہ
-    if (pichla == null) { off(); return; }
+    if (pichla == null) return;
     const farq = y - pichla;
-    if (Math.abs(farq) < 6) return;                     // معمولی حرکت — حالت نہ بدلو
-    /* اپنی ہی تبدیلی کا ردِ عمل: پٹی ہٹتے ہی نیچے کا خانہ اونچا ہوتا ہے اور
-       براؤزر scrollTop کو تقریباً پٹی کی اونچائی جتنا گھٹا دیتا ہے۔ وہ
-       «اوپر کی طرف scroll» لگتا ہے اور پٹی واپس آ جاتی ہے — چکر بن جاتا ہے۔
-       اِس لیے صرف اُسی صورت نظرانداز کرو جب تبدیلی ابھی ابھی ہوئی ہو **اور**
-       حرکت پٹی کی اونچائی جتنی ہی ہو۔ اِس سے اصل تیز scroll نہیں رُکتا۔    */
-    if ((Date.now() - _dioBarBusy) < 260 && Math.abs(farq) <= h + 8) return;
-    if (farq < 0) peek(); else off();
+    if (Math.abs(farq) < 6) return;
+    if ((Date.now() - _dioBarBusy) < 260 && Math.abs(farq) <= H() + 8) return;
+    if (farq < 0) dikhao(); else chupao();
   }, true);
 
-  // ڈیسک ٹاپ: کرسر اوپری کنارے پر → پٹی واپس
-  /* ⚠ کارکردگی: یہ سننے والا بھی ہر ماؤس حرکت پر چلتا تھا اور ہر بار
-     getElementById + offsetHeight پڑھتا تھا۔ نقشہ موقع میں ڈرائنگ کے دوران
-     دونوں سننے والے (یہ اور نقشہ کا اپنا) مل کر ہر حرکت پر صفحے کی پیمائش
-     دو بار کرا دیتے تھے — کرسر بھاری ہو جاتا تھا۔
-     اب: پہلے صرف clientY کی سستی جانچ، پھر فی فریم ایک بار کام۔            */
+  bar.addEventListener('mouseenter', () => clearTimeout(window._dioBarT));
+
+  // — ڈیسک ٹاپ: کرسر اوپری کنارے پر → سامنے؛ نیچے کی طرف → غائب
   if (!window._dioBarMoveBound) {
     window._dioBarMoveBound = true;
     let _pend = false, _y = 0;
@@ -206,38 +198,32 @@ function _dioBarPeekInit(ov) {
       const o = document.getElementById('dio-docview');
       if (!o) return;
       const b = o.querySelector('#dio-dv-bar');
-      if (!b || !b.classList.contains('dio-dv-off')) return;
-      const h = +(b.dataset.h || b.offsetHeight || 48);
-      const _sync = () => { try { requestAnimationFrame(() => {
-        try { window._naqSyncPeekTop && window._naqSyncPeekTop(); } catch (_) {}
-      }); } catch (_) {} };
-      if (_y <= 16) {
+      const bd = o.querySelector('#dio-dv-body');
+      if (!b || !bd) return;
+      const h = b.offsetHeight || 48;
+      const off = _dioTopToolbarBottom(bd);
+      if (_y <= off + 16) {
         clearTimeout(window._dioBarT);
-        b.classList.add('dio-dv-peek'); b.style.top = '0px';
-        window._dioBarPeekOn = true;
-        _sync();
-      } else if (b.classList.contains('dio-dv-peek') && _y > h + 24) {
+        b.style.top = off + 'px';
+        window._dioBarShown = true;
+      } else if (window._dioBarShown && _y > off + h + 24) {
         clearTimeout(window._dioBarT);
         window._dioBarT = setTimeout(() => {
-          b.classList.remove('dio-dv-peek');
-          b.style.top = '-' + h + 'px';
-          window._dioBarPeekOn = false;
-          _sync();
-        }, 350);
+          b.style.top = '-' + (h + 6) + 'px';
+          window._dioBarShown = false;
+        }, 300);
       }
     };
 
     document.addEventListener('mousemove', (e) => {
       _y = e.clientY;
-      // سستا پہرا — زیادہ تر حرکتیں یہیں سے واپس
-      if (_y > 120 && !window._dioBarPeekOn) return;
+      // سستا پہرا — زیادہ تر حرکتیں یہیں سے واپس، بغیر کسی DOM کام کے
+      if (_y > 220 && !window._dioBarShown) return;
       if (_pend) return;
       _pend = true;
       requestAnimationFrame(_kaam);
     }, { passive: true });
   }
-
-  bar.addEventListener('mouseenter', () => clearTimeout(window._dioBarT));
 }
 window._dioBarPeekInit = _dioBarPeekInit;
 

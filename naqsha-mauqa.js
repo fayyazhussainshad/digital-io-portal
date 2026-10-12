@@ -403,7 +403,6 @@
          <div class="naq-chips" id="naq-chips">${_chipsHTML()}</div>
        </div>
       </div>
-      <div id="naq-topslot" class="no-print"></div>
 
       <div class="naq-scroll">
         <div id="dio-naqsha-doc" class="naq-doc naq-${paper}">
@@ -463,7 +462,6 @@
       const el = document.getElementById('naq-h-' + k); if (el) el.addEventListener('input', _saveSoon);
     });
     if (fabricOk) _initCanvas(a);
-    try { _naqPeekInit(); } catch (_) {}
   }
   window._renderNaqsha = _renderNaqsha;
   window._naqDirty = _saveSoon;
@@ -477,148 +475,6 @@
     if (b) b.innerHTML = on ? '🗂️ نقشے ▴' : '🗂️ نقشے ▾';
   };
 
-  /* ══ ٹول بار کا «peek» — چالان جیسا سلوک ═══════════════════════════════
-     پہلے .naq-topwrap پر position:sticky تھا، اِس لیے پٹی ہر وقت اوپر چپکی
-     رہتی تھی۔ اب وہ صفحے کے ساتھ چلتی ہے (چالان کی طرح)۔ جب وہ نظر سے اوپر
-     نکل جائے تو:
-       • ڈیسک ٹاپ: کرسر صفحے کے اوپری کنارے پر لے جائیں → پٹی سامنے آ جاتی ہے
-       • موبائل: اوپر کی طرف سوائپ/scroll کریں → پٹی سامنے آ جاتی ہے
-     کرسر ہٹنے (یا نیچے scroll کرنے) پر خود چھپ جاتی ہے۔
-     جگہ محفوظ رکھنے کے لیے #naq-topslot اُتنی ہی اونچائی لے لیتا ہے، تاکہ
-     نیچے کا مواد ہلے نہیں۔                                                  */
-  let _naqPeekT = null, _naqLastY = 0, _naqPeekOn = false;
-
-  /* پورے صفحے والے منظر کی اوپر والی پٹی (واپس / مقدمہ نمبر / chips) بھی اب
-     کرسر اوپر لے جانے پر سامنے آتی ہے۔ اگر وہ اُس وقت نظر میں ہو تو نقشہ کی
-     اپنی پٹی اُس کے **نیچے** بیٹھے — ورنہ دونوں ایک دوسرے پر چڑھ جائیں۔ */
-  /* جب اوپر والی پٹی (واپس / مقدمہ نمبر) اپنی جگہ بدلے تو نقشہ کی پٹی بھی
-     فوراً اُس کے نیچے آ جائے — doc-viewer.js اِسی کو پکارتا ہے۔ */
-  window._naqSyncPeekTop = function () {
-    try {
-      const b = document.getElementById('naq-topwrap');
-      if (b && b.classList.contains('naq-peek')) b.style.top = _naqDvOffset() + 'px';
-    } catch (_) {}
-  };
-
-  function _naqDvOffset() {
-    try {
-      const b = document.getElementById('dio-dv-bar');
-      if (!b) return 0;
-      /* ⚠ یہاں getBoundingClientRect() استعمال نہ کریں: اُس پٹی پر top کی
-         نرم حرکت (transition .18s) لگی ہے، اِس لیے اُسی لمحے ناپنے پر وہ
-         ابھی راستے میں ہوتی ہے اور جواب 0 آتا ہے — نتیجتاً نقشہ کی پٹی
-         اُس کے اوپر چڑھ جاتی تھی۔ کلاس سے اُس کی **ارادی** حالت پڑھی جاتی
-         ہے، اور اونچائی offsetHeight سے (جس پر حرکت کا اثر نہیں)۔        */
-      const hati = b.classList.contains('dio-dv-off');
-      const peek = b.classList.contains('dio-dv-peek');
-      if (!hati || peek) return b.offsetHeight || 0;   // نظر میں (یا آ رہی ہے)
-      return 0;                                         // ہٹی ہوئی
-    } catch (_) { return 0; }
-  }
-
-  function _naqPeekInit() {
-    const bar  = document.getElementById('naq-topwrap');
-    const slot = document.getElementById('naq-topslot');
-    const scr  = document.querySelector('.naq-scroll');
-    if (!bar || !slot || !scr) return;
-
-    const barH = () => (slot.dataset.h ? +slot.dataset.h : (bar.offsetHeight || 44));
-
-    // پٹی اپنی اصل جگہ سے اوپر نکل گئی ہے؟
-    const _ooperNahi = () => scr.scrollTop > barH() - 4;
-    const _peeking   = () => bar.classList.contains('naq-peek');
-
-    const _show = () => {
-      if (_peeking()) return;
-      const h = bar.offsetHeight || 44;
-      slot.dataset.h = h;
-      slot.style.height = h + 'px';
-      bar.style.top = _naqDvOffset() + 'px';
-      bar.classList.add('naq-peek');
-      _naqPeekOn = true;
-    };
-    const _hide = () => {
-      if (!_peeking()) return;
-      bar.classList.remove('naq-peek');
-      bar.style.top = '';
-      slot.style.height = '0px';
-      _naqPeekOn = false;
-    };
-
-    /* — ڈیسک ٹاپ: کرسر صفحے کے اوپری کنارے پر۔
-         یہاں document پر mousemove سنا جاتا ہے، نہ کہ کسی باریک پٹی کا
-         mouseenter — کیونکہ اگر کرسر پہلے ہی اوپر موجود ہو تو mouseenter
-         کبھی چلتا ہی نہیں، اور پٹی سامنے نہ آتی۔                        */
-    /* ⚠ کارکردگی: پہلے یہ سننے والا HAR ماؤس حرکت پر چلتا تھا اور ہر بار
-       getElementById + offsetHeight + scrollTop پڑھتا تھا۔ ڈرائنگ کے دوران
-       ماؤس سیکنڈ میں سینکڑوں بار ہلتا ہے — اور ہر بار براؤزر کو صفحے کی
-       پیمائش دوبارہ کرنی پڑتی تھی۔ اِسی سے نقشہ موقع میں کرسر اور پٹی
-       «بھاری» ہو گئے تھے۔
-       اب تین چیزیں:
-         1) سب سے پہلے صرف e.clientY دیکھا جاتا ہے — کوئی DOM کام نہیں۔
-            ماؤس اوپر والے حصے سے نیچے ہو اور پٹی چھپی نہ ہو تو فوراً واپس۔
-         2) باقی کام فی فریم صرف ایک بار (requestAnimationFrame)۔
-         3) خانوں کے حوالے اور اونچائی ایک بار نکال کر یاد رکھی جاتی ہے۔     */
-    if (!window._naqPeekMoveBound) {
-      window._naqPeekMoveBound = true;
-      let _pend = false, _y = 0;
-
-      const _kaam = () => {
-        _pend = false;
-        const b = document.getElementById('naq-topwrap');
-        const sl = document.getElementById('naq-topslot');
-        const c  = document.querySelector('.naq-scroll');
-        if (!b || !sl || !c) return;
-        const h = (sl.dataset.h ? +sl.dataset.h : (b.offsetHeight || 44));
-        if (c.scrollTop <= h - 4) return;             // پٹی ویسے ہی نظر میں ہے
-        const off = _naqDvOffset();
-        const on  = b.classList.contains('naq-peek');
-        if (_y <= off + 16) {
-          clearTimeout(_naqPeekT);
-          b.style.top = off + 'px';
-          if (!on) {
-            sl.dataset.h = b.offsetHeight || 44;
-            sl.style.height = sl.dataset.h + 'px';
-            b.classList.add('naq-peek');
-            _naqPeekOn = true;
-          }
-        } else if (on && _y > off + h + 24) {
-          clearTimeout(_naqPeekT);
-          _naqPeekT = setTimeout(() => {
-            b.classList.remove('naq-peek');
-            b.style.top = '';
-            sl.style.height = '0px';
-            _naqPeekOn = false;
-          }, 350);
-        }
-      };
-
-      document.addEventListener('mousemove', (e) => {
-        _y = e.clientY;
-        // سستا پہرا — یہیں سے 99% حرکتیں واپس چلی جاتی ہیں، بغیر کسی DOM کام کے
-        if (_y > 170 && !_naqPeekOn) return;
-        if (_pend) return;
-        _pend = true;
-        requestAnimationFrame(_kaam);
-      }, { passive: true });
-    }
-
-    bar.addEventListener('mouseenter', () => clearTimeout(_naqPeekT));
-
-    /* — دونوں ڈیوائس: اوپر کی طرف scroll کرنے سے سامنے، نیچے سے چھپ جاتی۔
-         2px سے کم حرکت کو نظرانداز کیا جاتا ہے، کیونکہ براؤزر scroll رُکنے
-         پر وہی قیمت دوبارہ بھیج دیتا ہے — اور اُس سے پٹی فوراً چھپ جاتی۔ */
-    _naqLastY = scr.scrollTop;
-    scr.addEventListener('scroll', () => {
-      const y = scr.scrollTop;
-      const farq = y - _naqLastY;
-      if (!_ooperNahi()) { _naqLastY = y; _hide(); return; }
-      if (Math.abs(farq) < 2) return;                 // معمولی حرکت — حالت نہ بدلو
-      _naqLastY = y;
-      if (farq < 0) _show(); else _hide();
-    }, { passive: true });
-  }
-  window._naqPeekInit = _naqPeekInit;
 
   // ══ Compass — E-W (افقی) عنوان کی سیدھ میں (y=48)، N-S لمبا اسی پر fixed؛
   //   الفاظ arrow heads سے فاصلے پر ════════════════════════════════════
@@ -1369,15 +1225,14 @@
     return `
     .naq-wrap{ display:flex; flex-direction:column; height:100%; direction:rtl;
       font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
-    /* ٹول بار — چالان کی طرح صفحے کے ساتھ **چلتی** ہے (sticky نہیں)۔
-       نظر سے اوپر چلی جائے تو کرسر اوپر لے جانے پر خود سامنے آ جاتی ہے
-       (naq-peek) — اور موبائل پر اوپر کی طرف scroll کرنے سے۔ */
-    .naq-topwrap{ position:relative; z-index:30; background:var(--bg-secondary,#f3f4f6);
-      transition:transform .18s ease, box-shadow .18s ease; }
-    .naq-topwrap.naq-peek{ position:fixed; top:0; left:0; right:0; z-index:60;
-      box-shadow:0 6px 20px rgba(0,0,0,.18); }
-    /* جگہ محفوظ رکھنے والا خانہ — peek کے دوران نیچے کا مواد نہ ہلے */
-    #naq-topslot{ height:0; }
+    /* ٹول بار — ہمیشہ اوپر، ہر وقت نظر میں (چالان کی طرح)۔
+       پہلے میں نے اِسے صفحے کے ساتھ چلتا کر دیا تھا — وہ غلط تھا۔ صارف کی
+       وضاحت: ترمیم کے اوزار (کاٹنا، چسپاں، واپس…) ہمیشہ اوپر رہیں، اور
+       مقدمہ کی chip پٹی اُن کے **نیچے** صرف اُس وقت آئے جب کرسر اوپر جائے۔
+       یہ .naq-wrap (flex column) کی پہلی قطار ہے، اِس لیے خود بخود اوپر
+       ٹکی رہتی ہے اور نیچے والا حصہ اکیلا scroll ہوتا ہے — کوئی خالی پٹی
+       نہیں بنتی۔ */
+    .naq-topwrap{ position:relative; z-index:30; background:var(--bg-secondary,#f3f4f6); }
     .naq-toolbar{ display:flex; align-items:center; gap:8px; padding:6px 10px; flex-wrap:wrap;
       background:var(--bg-secondary,#f3f4f6); border-bottom:1px solid var(--border,#ccc); }
     .naq-chiptog{ font-weight:700; background:var(--bg-card,#fff); }
