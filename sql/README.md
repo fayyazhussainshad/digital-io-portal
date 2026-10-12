@@ -26,7 +26,7 @@
 | 94 | `94a` → `94b` → `94c` → `94d` | admin کے تین RPC؛ request RPC کی درستگی | **چل چکی** |
 | 95 | `95_subs_lockdown.sql` | `subscriptions` پر client کی لکھائی بند | **چل چکی** |
 | 96 | `96_CHECK.sql` | `client_errors` کی پالیسی اور `officers` کا trigger براہِ راست DB سے جانچتی ہے | صرف پڑھتی ہے |
-| 97 | `97_officers_approved_fail_closed.sql` | `dio_protect_officers()`: manzoori NULL والا admin اب اختیار نہیں پاتا (fail-closed)۔ ایسا admin موجود ہو تو فائل کچھ نہیں بدلتی۔ واپسی: `97_ROLLBACK.sql` | **منظوری کی منتظر** |
+| 97 | `97_officers_approved_fail_closed.sql` | `dio_protect_officers()`: manzoori NULL والا admin اب اختیار نہیں پاتا (fail-closed)۔ ایسا admin موجود ہو تو فائل کچھ نہیں بدلتی۔ واپسی: `97_ROLLBACK.sql` | **چل چکی** (13 اکتوبر 2026 — 96_CHECK: دونوں THEEK) |
 | 100 | `100_email_notify.sql` | رجسٹریشن / منظوری / سبسکرپشن پر خودکار ای میل (Edge Function `dio-notify` پہلے deploy کریں) | **نئی** |
 
 ہر قدم کے ساتھ `*_CHECK.sql` (ایک ہی statement — Supabase کا editor نتیجہ ضرور
