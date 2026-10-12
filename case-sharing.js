@@ -81,8 +81,18 @@ function _searchOfficersForShare(q) {
          `is_suspended`. Donon schema par chalega.
          ──────────────────────────────────────────────────────────────── */
       const BUNYAD = 'id,full_name,badge_number,designation,station,is_approved';
+      /* ──────────────────────────────────────────────────────────────
+         `officers` ki jagah ab `officers_directory` (SQL file 96).
+         Wajah: `officers` par parhne ki policy `using (true)` thi —
+         yaani koi bhi afsar har doosre afsar ka CNIC, ghar ka pata aur
+         تاریخ پیدائش bhi nikaal sakta tha. Ab us table par parhna sirf
+         APNA record hai (ya ghair-mo'attal admin ko sab).
+         `officers_directory` me SIRF ghair-zaati khanay hain — naam,
+         badge, عہدہ, تھانہ — is liye ساتھی افسر کی تلاش pehle ki tarah
+         chalti hai, magar kisi ka CNIC ya pata zahir nahi hota.
+         ────────────────────────────────────────────────────────────── */
       const _ofcQuery = (col) => {
-        let q = supabaseClient.from('officers')
+        let q = supabaseClient.from('officers_directory')
           .select(BUNYAD + ',' + col)
           .or(`full_name.ilike.%${clean}%,badge_number.ilike.%${clean}%`)
           .limit(15);

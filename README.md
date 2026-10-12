@@ -1,69 +1,110 @@
-# Digital IO — DB اسکیما و RLS (قدم 4: خامی 9 اور 10)
+# Digital IO — `sql/` (ڈیٹابیس کا ریکارڈ)
 
-یہ فولڈر ڈیٹا بیس سے متعلق فکسز کو **ورژن کنٹرول میں** لاتا ہے (خامی 10) اور
-سبسکرپشن کے سرور سائیڈ نفاذ کی مائیگریشن دیتا ہے (خامی 9)۔ تمام SQL آپ
-**Supabase → SQL Editor** میں چلائیں گے۔ (کلاؤڈ سیشن سے Supabase تک رسائی نہیں،
-اس لیے یہ مسودے آپ چلائیں گے۔)
+یہ فولڈر وہی سب کچھ ہے جو **11–12 اکتوبر 2026** کو اصل ڈیٹابیس پر چلایا گیا،
+اُسی ترتیب میں۔ مقصد: خامی 10 — یعنی schema/RLS کا فیصلہ ریپو میں، نہ کہ صرف
+کسی گفتگو میں۔
 
-## فائلیں
+ہر فائل اصل PostgreSQL 16 پر جانچی گئی، اور جہاں ممکن تھا پہلے خرابی **دوبارہ
+پیدا** کر کے دکھائی گئی، پھر فکس کے بعد دوبارہ ناپی گئی۔
 
-| فائل | کیا کرتی ہے | کہاں چلائیں |
-|---|---|---|
-| `00_export_current_schema.sql` | **صرف پڑھتی ہے** — موجودہ tables، columns، RLS on/off، policies، functions، triggers، FKs، اور storage buckets ایکسپورٹ کرتی ہے۔ | Supabase SQL Editor |
-| `10_subscription_enforcement.sql` | `dio_has_active_sub()` فنکشن + content tables پر **restrictive write-gate** policies۔ میعاد ختم = صرف پڑھنے (view-only)، لکھنا DB سطح پر بند۔ | Supabase SQL Editor |
-| `10_subscription_enforcement_ROLLBACK.sql` | اوپر والی ہر پالیسی و فنکشن ہٹا دیتی ہے (حفاظتی واپسی)۔ | ضرورت پڑنے پر |
+---
 
-## ترتیب (اہم)
+## چلانے کی ترتیب (یہی چلائی گئی تھی)
 
-1. **پہلے `00_export_current_schema.sql` چلائیں۔** ہر نتیجہ (خاص طور پر سیکشن 2:
-   `rls_enabled`) کاپی کر کے اس فولڈر میں `current_schema/` کے تحت محفوظ کریں۔
-   اس سے خامی 10 حل ہوتی ہے (schema/RLS اب ریپو میں) اور اگلا قدم "بغیر ہوا میں"
-   ہوتا ہے۔
-
-2. **پھر `10_subscription_enforcement.sql` — مگر پہلے صرف ایک table پر ٹیسٹ کریں۔**
-   فائل کے آخر میں دی گئی 3 لائنیں صرف `cases` پر چلائیں، ایک میعاد-ختم اور ایک
-   فعال افسر سے لکھ کر دیکھیں، پھر پورا `do $$ ... $$` بلاک چلائیں۔
-
-## یہ کیسے کام کرتا ہے (تصدیق شدہ)
-
-- **رشتے (کوڈ سے تصدیق شدہ):** `officers.user_id = auth.uid()`،
-  `subscriptions.officer_id = officers.id`، `subscriptions.status` in
-  (trial/active/suspended/expired)، `subscriptions.expires_at`۔
-- **`dio_has_active_sub()`** (security definer) true دیتا ہے اگر افسر کے پاس فعال/trial
-  (غیر منقضی) سبسکرپشن ہو، یا وہ superadmin/admin ہو۔
-- **Restrictive write-gate:** ہر content table پر صرف insert/update/delete پر
-  `dio_has_active_sub()` لازمی۔ **SELECT کو ہاتھ نہیں لگایا** — اس لیے میعاد ختم
-  ہونے پر افسر ڈیٹا **دیکھ** سکتا ہے مگر **بدل/بڑھا** نہیں سکتا۔ کلائنٹ کوڈ بدلنے
-  سے فرق نہیں پڑتا — فیصلہ DB کرتا ہے۔
-
-### حقیقی PostgreSQL پر جانچ کا نتیجہ
-| صارف | `dio_has_active_sub()` | insert | select |
+| # | فائل | کیا کیا | حالت |
 |---|---|---|---|
-| فعال افسر | true | ✅ کامیاب | ✅ |
-| **میعاد ختم افسر** | false | ⛔ **بلاک** (RLS violation) | ✅ (view-only) |
-| admin (بلا سبسکرپشن) | true | ✅ کامیاب | ✅ |
+| 00 | `00_export_one_shot.sql` | پورا schema/RLS/policies ایک JSON میں | صرف پڑھتی ہے |
+| 01 | `01_inspect_existing.sql` | پہلے سے موجود `dio_*` functions، triggers، grants | صرف پڑھتی ہے |
+| 02 | `02_remaining_policies.sql` | 17 tables کی policy کی اصل شرط | صرف پڑھتی ہے |
+| 71 | `71_license_diagnose.sql` | لائسنس نہ ملنے کی تشخیص | صرف پڑھتی ہے |
+| 80 | `80_close_anon_hole.sql` | 21 tables سے `anon` کا data حق واپس | **چل چکی** |
+| 81 | `81_anon_lockdown.sql` | `anon` سے سب کچھ واپس؛ TRUNCATE + VIEW کے سوراخ بند | **چل چکی** |
+| 90 | `90_fix_zimni_policies.sql` | ضمنی/ضمنی اندرونی کی کھلی policies درست | **چل چکی** |
+| 91 | `91a` → `91b` → `91c` | منظوری پر 30-دن کا trial (سرور سے) | **چل چکی** |
+| 92 | `92a` → `92b` | پڑھنے کی روک ہٹائی، لکھنے کی روک لگائی | **چل چکی** |
+| 93 | `93a` → `93b` | evidence کی UPDATE policy؛ 21 tables پر RLS ON | **چل چکی** |
+| 94 | `94a` → `94b` → `94c` → `94d` | admin کے تین RPC؛ request RPC کی درستگی | **چل چکی** |
+| 95 | `95_subs_lockdown.sql` | `subscriptions` پر client کی لکھائی بند | **چل چکی** |
+| 96 | `96_officers_privacy.sql` | افسر کے ذاتی کوائف (CNIC، پتہ، تاریخِ پیدائش) کی حفاظت | **12 اکتوبر** |
+| 97 | `97_audit_dead_tables.sql` | بے کار tables اور دوہری policies کی فہرست | صرف پڑھتی ہے |
+| 98 | `98_policy_cleanup.sql` | دوہری policies کی صفائی؛ views پر RLS لازمی | **12 اکتوبر** |
+| 99 | `99_verify_subscription_flow.sql` | `payment_ref` درست خانے میں گیا؟ | صرف پڑھتی ہے |
 
-Rollback نے تینوں پالیسیاں + فنکشن صاف ہٹا دیے۔
+ہر قدم کے ساتھ `*_CHECK.sql` (ایک ہی statement — Supabase کا editor نتیجہ ضرور
+دکھاتا ہے) اور جہاں خطرہ تھا وہاں `*_ROLLBACK.sql`۔
 
-## حفاظتی اصول (پڑھ لیں)
+---
 
-- یہ اسکرپٹ کسی table پر **RLS enable نہیں کرتا**۔ صرف restrictive policies جوڑتا ہے
-  جو **صرف اُنہی tables پر فعال** ہوتی ہیں جہاں RLS پہلے سے آن ہے۔ جہاں RLS بند ہے
-  وہاں یہ غیر فعال رہتی ہیں (کچھ نہیں ٹوٹتا)۔
-- کسی table پر **خود سے RLS enable نہ کریں** جب تک اُس پر ایک permissive SELECT
-  policy موجود نہ ہو — ورنہ اُس کا پڑھنا رک جائے گا۔ (اسی لیے پہلے export چلائیں۔)
-- `subscriptions` اور `subscription_plans` جان بوجھ کر gate سے باہر ہیں تاکہ میعاد
-  ختم افسر **تجدید** کر سکے (پھنس نہ جائے)۔ `officers` بھی باہر (پروفائل)۔ لاگ tables
-  (`audit_logs`, `evidence_custody_events`) بھی باہر تاکہ ریکارڈ چلتا رہے۔
+## بنیادی فیصلے (یہی اِن فائلوں میں نافذ ہیں)
 
-## باقی کام (اس قدم سے آگے)
+- **میعاد ختم = دیکھ سکتے ہو، بدل نہیں سکتے۔** پڑھنے پر کوئی روک نہیں؛ روک
+  صرف insert/update/delete پر (`dio_wgate_*`)۔
+- **Trial سرور دیتا ہے**، ایڈمن کی منظوری پر، 30 دن، اور صرف **پہلی بار** —
+  منظوری toggle کر کے دوبارہ trial نہیں ملتا۔
+- **`subscriptions` پر client کچھ نہیں لکھتا۔** چاروں راستے RPC ہیں
+  (`dio_request_subscription`, `dio_verify_subscription`,
+  `dio_reject_subscription`, `dio_suspend_subscription`)۔
+- **مو'عطلی کا کالم `suspended` ہے** (نہ کہ `is_suspended`) — DB نے خود بتایا:
+  `42703 ... Perhaps you meant officers.suspended`۔
+- **صرف `superadmin` بلا شرط مستثنیٰ ہے۔** معطل admin بھی روکا جاتا ہے۔
+- **افسر کا ریکارڈ صرف اُس کا اپنا۔** `officers` پر پڑھنا اب اپنے ریکارڈ تک
+  محدود ہے (یا غیر معطل admin کو سب)۔ ساتھی افسر کا نام/بیج `officers_directory`
+  سے آتا ہے، جس میں CNIC، پتہ، تاریخِ پیدائش، فون، email **کبھی نہیں** ہوں گے۔
+- **`officers_directory` جان بوجھ کر `security_invoker = false` ہے** — یہی اُس کا
+  مقصد ہے۔ فائل 98 کی صفائی اِسے مستثنیٰ رکھتی ہے۔ اگر کبھی اِس پر invoker لگا
+  دیا جائے تو افسر اپنے ساتھی کا نام بھی نہ دیکھ پائے اور case sharing رک جائے۔
 
-1. **کلائنٹ fail-open (offline trial):** یہ SQL صرف **آن لائن** لکھائی نافذ کرتا ہے۔
-   `subscription.js` اب بھی آف لائن/error پر 30-دن trial دیتا ہے۔ مکمل حل کے لیے
-   ایک **Edge Function** درکار ہے جو لاگ اِن پر مختصر مدت (24–72 گھنٹے) کا **دستخط
-   شدہ لائسنس ٹوکن** جاری کرے، اور کلائنٹ آف لائن صرف اُسی کی میعاد تک چلے (خودکار
-   trial نہیں)۔ یہ الگ ٹاسک ہے۔
-2. **profile allowlist کا DB جڑواں (خامی 6):** قدم 1 میں کلائنٹ allowlist لگا؛
-   مکمل ضمانت کے لیے `officers` پر ایک BEFORE UPDATE trigger بنائیں جو `role`،
-   `is_approved`، `subscription_*` وغیرہ کو کلائنٹ سے بدلنے سے روکے (صرف
-   service_role/RPC اجازت)۔ (چاہیں تو اگلا مسودہ دے دوں۔)
+---
+
+## ⚠ جو مسودے **نہ** چلائیں
+
+اِس کام کے شروع میں کچھ فائلیں میرے **اندازوں** پر لکھی گئی تھیں، اصل schema
+دیکھنے سے پہلے۔ بعد میں معلوم ہوا کہ آپ کے ڈیٹابیس پر پہلے سے بہتر چیزیں موجود
+ہیں۔ وہ مسودے جان بوجھ کر اِس فولڈر میں **شامل نہیں** ہیں:
+
+- `20_officers_protect_trigger.sql` / `21_officers_protect_v2.sql` — **خطرناک۔**
+  اِن میں `auth.uid() is null` کو "یہ سرور ہے، سب اجازت" مانا گیا تھا۔ مگر
+  `anon` کا بھی uid null ہوتا ہے — یعنی یہ trigger anon کو پورا راستہ دے دیتا۔
+  آپ کا موجودہ `dio_protect_officers()` `current_user = 'service_role'` دیکھتا
+  ہے، جو درست ہے۔ **اُسی کو رکھیں۔**
+- `50_suspend_hard_gate.sql` — آپ کا موجودہ `dio_has_active_sub()` بہتر ہے: وہ
+  `trial` کو خالی `expires_at` کے ساتھ قبول نہیں کرتا۔ **اُسی کو رکھیں۔**
+- `10_subscription_enforcement.sql` — `92b` نے یہ کام لے لیا۔
+- `41_rls_enable_safe.sql` — `93b` نے یہ کام لے لیا۔
+- `60_subscriptions_lockdown.sql` — `94a–94d` + `95` نے یہ کام لے لیا۔ (اِس میں
+  `notes` کالم فرض کیا گیا تھا، جو آپ کے schema میں نہیں ہے۔)
+- `70_no_entry_on_expiry.sql` — **منسوخ۔** یہ میعاد ختم پر پڑھنا بھی بند کرتی
+  ہے، جو "دیکھ سکتے ہو، بدل نہیں سکتے" کے فیصلے کے خلاف ہے۔ اصل میں یہی خیال
+  (`dio_sub_sel`) پہلے لگایا گیا تھا، افسر کا تالا لگا، اور حل کے طور پر RLS
+  بند کر دی گئی — یعنی تحفظ ہی ختم ہو گیا۔ **دوبارہ نہ لگائیں۔**
+- `30_client_errors_optional.sql` — `client_errors` آپ کے DB میں پہلے سے موجود
+  ہے (اپنی policy کے ساتھ)۔ یہ فائل اُس سے ٹکراتی ہے۔
+
+---
+
+## رہ گیا کام
+
+1. **Subscription کا بہاؤ live پر جانچیں** — یہی ایک چیز ہے جو ابھی تک اصل app
+   میں چلا کر نہیں دیکھی گئی۔ تفصیل `99_verify_subscription_flow.sql` کے سر پر۔
+2. **بے کار tables کا فیصلہ** — `97_audit_dead_tables.sql` چلا کر گنتی دیکھیں۔
+   جن میں صفر قطاریں ہوں اور app میں نام بھی نہ آتا ہو، وہ ہٹائی جا سکتی ہیں۔
+   **کوئی `DROP` خود بخود نہیں ہوتا — فیصلہ آپ کا۔** app میں اِن میں سے کسی کا
+   نام نہیں آتا: `patrol_logs`, `patrol_shifts`, `patrol_tokens`,
+   `shared_patrol_entries`, `diary_entries`, `pending_registrations`,
+   `cdr_uploads`, `admin_dashboard`, اور `audit_log` (واحد)۔
+3. **GAA 738 کا trial 10 نومبر 2026 کو ختم** — اُس کے بعد وہ افسر صرف پڑھ سکے گا
+   جب تک subscription منظور نہ ہو۔
+
+### طے ہو گیا (12 اکتوبر)
+
+- **کون سا audit table اصل ہے:** `audit_logs` (جمع)۔ `dio-audit.js` اُسی میں
+  لکھتا ہے، `admin.js` اُسی کو پڑھتا ہے۔ `audit_log` (واحد) صرف `admin.js` کے
+  ایک comment میں آتا ہے جہاں اُسے "non-existent" کہا گیا — یعنی وہ بے کار ہے۔
+- **`getIOSignLine`** اب `app-core.js` میں موجود ہے — وہی طریقہ جو
+  `getSHOSignLine` کا ہے (`typeof` گارڈ کے ساتھ)۔ منطق نئی نہیں بنائی، بلکہ
+  `darkhwastain.js` کے `_dkIoLine()` کی نقل ہے تاکہ پورے سسٹم میں تفتیشی افسر
+  کی لائن ایک جیسی رہے۔ 12 جانچیں پاس۔
+- **دوہری policies** — فائل 98 نے صاف کر دیں (صرف وہ جو بالکل ایک جیسی تھیں،
+  اِس لیے عمل ذرا برابر نہیں بدلا)۔
+- **`admin_dashboard`** — اب `security_invoker = true`، یعنی RLS کو نظرانداز
+  نہیں کر سکتا۔

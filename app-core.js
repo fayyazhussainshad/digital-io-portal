@@ -238,6 +238,48 @@ if (typeof window.getSHOSignLine !== 'function') {
   };
 }
 
+// ── تفتیشی افسر (IO) کی دستخطی لائن ─────────────────────────────
+// یہ فنکشن پہلے کہیں define نہیں تھا، مگر چار جگہ استعمال ہو رہا تھا:
+//   zimni.js (1124, 2026, 3641) اور naqsha-mauqa.js (335)
+// ہر جگہ `typeof getIOSignLine === 'function'` کی گارڈ لگی تھی، اس لیے
+// خرابی (error) کبھی نظر نہیں آئی — بس ضمنی کی دستاویزات میں تفتیشی
+// افسر کے دستخط کی لائن خاموشی سے خالی رہ جاتی تھی۔
+//
+// منطق نئی نہیں بنائی گئی۔ یہ darkhwastain.js کے `_dkIoLine()` کی نقل ہے
+// (وہیں پہلے سے جانچی ہوئی ہے)، تاکہ پورے سسٹم میں IO کی لائن ایک جیسی
+// رہے: نام + عہدہ + تھانہ۔
+//
+// اہم: نام ہمیشہ LOGGED-IN افسر کا (تفتیشی/subscriber) — SHO کا نہیں۔
+// `digital_io_sho` سے صرف عہدہ لیا جاتا ہے، اور وہ بھی اُسی صورت جب
+// افسر کے ریکارڈ میں عہدہ خالی ہو اور نام وہی ہو۔
+if (typeof window.getIOSignLine !== 'function') {
+  window.getIOSignLine = function (o) {
+    o = o || (typeof currentOfficer !== 'undefined' ? currentOfficer : {}) || {};
+    let name = (o.full_name || '').trim();
+    let rank = (o.designation || '').trim();   // officers میں کالم `designation` ہے
+    if (!rank) {
+      try {
+        const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}');
+        if ((sho.name || '').trim() === name || !name) rank = (sho.rank || '').trim();
+      } catch (_) {}
+    }
+    if (!name) {
+      try {
+        const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}');
+        name = (sho.name || '').trim();
+        if (!rank) rank = (sho.rank || '').trim();
+      } catch (_) {}
+    }
+    const st = (o.station || '').trim();
+    const parts = [];
+    if (name) parts.push(name);
+    if (rank) parts.push(rank);
+    let line = parts.join(' ');
+    if (st) line += (line ? ' ' : '') + 'تھانہ ' + st;
+    return line.trim();
+  };
+}
+
 
 // ═══════════════════════════════════════════════════════════════════
 //  ⚠️  SECURITY — PIN / Biometric کے لیے پاسورڈ محفوظ کرنا

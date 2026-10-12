@@ -582,7 +582,9 @@ async function openMisalVersionsModal(docId, documentDbId) {
     let officerMap = {};
     if (officerIds.length) {
       try {
-        const { data: ofs } = await supabaseClient.from('officers')
+        // `officers_directory` — doosre afsaron ke naam ke liye (SQL file 96).
+        // `officers` par ab sirf apna record parha ja sakta hai.
+        const { data: ofs } = await supabaseClient.from('officers_directory')
           .select('id,full_name,designation').in('id', officerIds);
         (ofs || []).forEach(o => {
           officerMap[o.id] = (o.full_name || '') + (o.designation ? ' (' + o.designation + ')' : '');
