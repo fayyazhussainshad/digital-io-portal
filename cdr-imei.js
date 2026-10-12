@@ -1,296 +1,636 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — CDR / IMEI REQUEST FORM
-   Auto-fills IMEI & SIM numbers from case mobile-theft data.
+   DIGITAL IO — CDR / IMEI درخواست فارم  (نیا فارم 2026)
+   «درخواست برائے فراہمی کال ڈیٹا ریکارڈ» — NEW_CDR_FORM_FOR_IO_2026 کے
+   عین مطابق (پرانا جدول والا فارم اس سے بدل دیا گیا)۔
+
+   • کاغذ: A4 · سسٹم کا طے شدہ مارجن (اوپر/نیچے 1cm، دائیں 1in، بائیں 0.4in) · ایک صفحہ
+     (fit to page — مواد زیادہ ہو تو چھپائی خود چھوٹی ہو کر ایک صفحے میں)
+   • تمام فونٹ pt میں · اردو RTL، انگریزی/نمبر LTR (ملی جلی سطر میں بھی)
+   • ڈیٹا سسٹم سے: تھانہ/ضلع، مدعی (سرکار بذریعہ)، مقدمہ نمبر/تاریخ/جرم،
+     ملزم (بنام — ▾ سے انتخاب)، موبائل/IMEI نمبر (مقدمے کے چوری ڈیٹا سے)،
+     درخواست دہندہ (نام + عہدہ + محکمانہ نمبر، فون)
+   • ہر خانہ قابلِ ترمیم · اوپر مستقل ترمیمی ٹول بار (floating نہیں)
+   • محفوظ: `cdr_imei_requests` (وہی ٹیبل/کالم جو پہلے تھے — schema نہیں بدلا)
+     نئے فارم کا ڈیٹا `rows` میں: 10 نمبر + آخر میں {_form:'cdr2', f, chk}
+     پرانی محفوظ درخواست کھلے تو اُس کے نمبر نئے فارم میں آ جاتے ہیں
    ═══════════════════════════════════════════════════════════ */
+
+/* global _misalCaseId, currentCaseId, getCase, dioEditorToolbar, dioEditorToolbarCSS, dioBindEditor,
+          dioRegisterSaved, _misalDocs, _refreshMisalBar, dioFontHead, dioPrint */
 
 let _cdrICaseId = null;
 let _cdrICase = null;
 let _cdrISaved = null;
+let _cdrAccused = [];
+let _cdrDirty = false;
+
+const CDR_FORM_TAG = 'cdr2';
+const CDR_NUM_COUNT = 10;
+// A4 پر 1 انچ مارجن کے بعد لکھنے کی جگہ (چوڑائی 6.27in · اونچائی 9.69in)
+const CDR_PX_PER_IN = 96;
+// سسٹم کا طے شدہ اصول (درخواستیں/نقشہ موقع): A4 · اوپر/نیچے 1cm · دائیں 1in · بائیں 0.4in
+const CDR_MARGIN_CSS = '1cm 1in 1cm 0.4in';
+const CDR_AVAIL_H_IN = 11.69 - 2 / 2.54;
 
 async function openCdrImei(caseId) {
   _cdrICaseId = caseId || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
             || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
-  const _cdrArea = document.getElementById('workspace-editor-area')
-            || document.getElementById('workspace-tab-content')
-            || document.getElementById('page-content');
-  if (_cdrArea && window.DIO && DIO.states) _cdrArea.innerHTML = DIO.states.loading('CDR/IMEI درخواست لوڈ ہو رہی ہے');
+  const area = _cdrArea();
+  if (area && window.DIO && DIO.states) area.innerHTML = DIO.states.loading('CDR/IMEI درخواست لوڈ ہو رہی ہے');
+  _cdrICase = null;
   if (typeof getCase === 'function' && _cdrICaseId) {
-    try { _cdrICase = await getCase(_cdrICaseId); } catch(_) { _cdrICase = null; }
+    try { _cdrICase = await getCase(_cdrICaseId); } catch (e) { _cdrICase = null; console.warn('cdr getCase:', e && e.message); }
   }
-  await _loadCdr();
+  await Promise.all([_loadCdr(), _cdrLoadAccused()]);
+  _cdrDirty = false;
   _renderCdr();
+}
+window.openCdrImei = openCdrImei;
+
+function _cdrArea() {
+  return document.getElementById('workspace-editor-area')
+      || document.getElementById('workspace-tab-content')
+      || document.getElementById('page-content');
 }
 
 async function _loadCdr() {
-  if (!navigator.onLine) {
-    try { _cdrISaved = JSON.parse(localStorage.getItem('dio_cdr_'+_cdrICaseId)||'null'); } catch(_) { _cdrISaved=null; }
-    return;
-  }
+  const key = 'dio_cdr_' + _cdrICaseId;
+  const fromCache = () => { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch { return null; } };
+  if (!navigator.onLine) { _cdrISaved = fromCache(); return; }
+  // آف لائن محفوظ شدہ (ابھی سرور پر نہیں گیا) نسخہ — سرور کا خالی/پرانا جواب
+  // اسے مٹا نہ دے؛ اگلی بار «محفوظ کریں» پر یہی سرور پر جائے گا
+  const local = fromCache();
+  if (local && local.id && String(local.id).indexOf('tmp_') === 0) { _cdrISaved = local; return; }
   try {
-    const { data } = await supabaseClient.from('cdr_imei_requests').select('*').eq('case_id', _cdrICaseId).order('created_at',{ascending:false}).limit(1).maybeSingle();
+    const { data, error } = await supabaseClient.from('cdr_imei_requests').select('*')
+      .eq('case_id', _cdrICaseId).order('created_at', { ascending: false }).limit(1).maybeSingle();
+    if (error) throw error;
     _cdrISaved = data || null;
-    try { localStorage.setItem('dio_cdr_'+_cdrICaseId, JSON.stringify(_cdrISaved)); } catch(_) {}
-  } catch(_) {
-    try { _cdrISaved = JSON.parse(localStorage.getItem('dio_cdr_'+_cdrICaseId)||'null'); } catch(_2) { _cdrISaved=null; }
+    try { localStorage.setItem(key, JSON.stringify(_cdrISaved)); } catch (e) { console.warn('cdr cache:', e && e.message); }
+  } catch {
+    _cdrISaved = fromCache();
   }
 }
 
-// Build initial rows — auto-fill from case IMEI & cell numbers
-function _cdrInitialRows() {
+// ملزمان (case_accused) — بنام کے لیے؛ آف لائن پر وہی cache جو ملزمان ماڈیول رکھتا ہے
+async function _cdrLoadAccused() {
+  _cdrAccused = [];
+  if (!_cdrICaseId) return;
+  try {
+    const { data, error } = await supabaseClient.from('case_accused').select('*')
+      .eq('case_id', _cdrICaseId).order('created_at', { ascending: true });
+    if (error) throw error;
+    _cdrAccused = data || [];
+  } catch {
+    try { _cdrAccused = JSON.parse(localStorage.getItem('dio_accused_' + _cdrICaseId) || '[]') || []; }
+    catch { _cdrAccused = []; }
+  }
+}
+
+// ── "نام ولد … قوم … سکنہ …" کو چار حصوں میں (سسٹم میں مدعی/ملزم ایک ہی
+//    خانے میں لکھے جاتے ہیں)۔ جو لفظ نہ ملے وہ حصہ خالی — اندازہ نہیں۔ ──
+function _cdrParsePerson(raw) {
+  const out = { name: '', father: '', qaum: '', address: '' };
+  let s = String(raw == null ? '' : raw).replace(/<[^>]*>/g, ' ')
+    .replace(/[‎‏؜‪-‮]/g, '').replace(/\s+/g, ' ').trim();
+  if (!s) return out;
+  const MARK = [
+    ['address', /(?:^|[\s،,])(?:سکنہ|ساکنہ|ساکن|سکنائے|سکنا)\s*[:：۔-]*\s*/],
+    ['qaum',    /(?:^|[\s،,])(?:قوم|ذات)\s*[:：۔-]*\s*/],
+    ['father',  /(?:^|[\s،,])(?:ولدیت|ولد|زوجہ|دختر|بنت)\s*[:：۔-]*\s*/],
+  ];
+  const hits = [];
+  MARK.forEach(([k, re]) => { const m = re.exec(s); if (m) hits.push({ k, at: m.index, end: m.index + m[0].length }); });
+  hits.sort((a, b) => a.at - b.at);
+  const clean = t => String(t || '').replace(/^[\s،,:۔-]+|[\s،,:۔-]+$/g, '').trim();
+  out.name = clean(s.slice(0, hits.length ? hits[0].at : s.length));
+  hits.forEach((h, i) => { out[h.k] = clean(s.slice(h.end, i + 1 < hits.length ? hits[i + 1].at : s.length)); });
+  return out;
+}
+
+// موبائل/IMEI نمبر — مقدمے کے چوری ڈیٹا سے (IMEI پہلے، پھر سم نمبر)
+function _cdrSystemNumbers() {
   const c = _cdrICase || {};
-  const rows = [];
-  // IMEI numbers
-  if (c.theft_imei) {
-    String(c.theft_imei).split(/[،,]/).map(s=>s.trim()).filter(Boolean).forEach(imei => {
-      rows.push({ req: imei, model: c.theft_brand||'', from:'', to:'' });
-    });
+  const list = [];
+  const add = v => String(v || '').split(/[،,;\n]/).map(x => x.trim()).filter(Boolean)
+    .forEach(x => { if (!list.includes(x)) list.push(x); });
+  add(c.theft_imei);
+  add(c.theft_cell);
+  return list.slice(0, CDR_NUM_COUNT);
+}
+
+// تفتیشی افسر / درخواست دہندہ — نام + عہدہ (+ محکمانہ نمبر)
+function _cdrOfficer() {
+  const o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
+  let name = (o.full_name || '').trim();
+  let rank = (o.designation || o.rank || '').trim();
+  if (!name || !rank) {
+    try {
+      const p = JSON.parse(localStorage.getItem('dio_officer_cache') || '{}');
+      if (!name) name = (p.full_name || '').trim();
+      if (!rank) rank = (p.designation || '').trim();
+    } catch { /* cache خراب — سسٹم کا ڈیٹا ہی کافی */ }
   }
-  // Cell / SIM numbers
-  if (c.theft_cell) {
-    String(c.theft_cell).split(/[،,]/).map(s=>s.trim()).filter(Boolean).forEach(cell => {
-      rows.push({ req: cell, model:'', from:'', to:'' });
-    });
+  const badge = String(o.badge_number || '').trim();
+  return {
+    line: [name, rank, badge].filter(Boolean).join(' '),
+    phone: String(o.official_phone || o.phone || '').trim(),
+    station: (o.station || '').trim(),
+    district: (o.district || '').trim(),
+  };
+}
+
+function _cdrFmtDate(d) {
+  if (!d) return '';
+  if (typeof formatDate === 'function') { const f = formatDate(d); return f === '—' ? '' : f; }
+  return String(d);
+}
+
+// پہلے سے طے شدہ ڈیٹا (سسٹم سے) — نیا فارم یا خالی خانہ
+function _cdrDefaults(accIdx) {
+  const c = _cdrICase || {};
+  const of = _cdrOfficer();
+  const cmp = _cdrParsePerson(c.complainant);
+  const acc = (_cdrAccused[accIdx] || null);
+  const ap = _cdrParsePerson(acc ? acc.name : '');
+  const jurm = [c.section_of_law, c.offence_type].map(x => String(x || '').trim()).filter(Boolean).join(' ');
+  return {
+    thana: of.station || c.case_station || '',
+    zila: of.district || c.case_district || '',
+    s_name: cmp.name, s_father: cmp.father, s_qaum: cmp.qaum, s_address: cmp.address,
+    fir: c.fir_number || '', fir_date: _cdrFmtDate(c.fir_date), jurm,
+    fir_thana: c.case_station || of.station || '',
+    b_name: ap.name, b_father: ap.father, b_qaum: ap.qaum, b_address: ap.address,
+    date_from: '', date_to: '',
+    applicant: of.line, applicant_phone: of.phone,
+    io_sign: '', dispatch_no: '', dispatch_date: '',
+    sho_note1: '', sho_note2: '', sdpo_note1: '', sdpo_note2: '', sp_note1: '', sp_note2: '',
+  };
+}
+
+// محفوظ ریکارڈ → {f, nums, chk, acc}
+function _cdrFromSaved(s) {
+  if (!s || !Array.isArray(s.rows)) return null;
+  const meta = s.rows.find(r => r && r._form === CDR_FORM_TAG);
+  const nums = s.rows.filter(r => r && !r._form).map(r => String(r.req || '').trim());
+  if (meta) {
+    while (nums.length < CDR_NUM_COUNT) nums.push('');
+    return { f: meta.f || {}, nums: nums.slice(0, CDR_NUM_COUNT), chk: meta.chk || [false, false, false], acc: meta.acc };
   }
-  // Pad to 9 rows
-  while (rows.length < 12) rows.push({ req:'', model:'', from:'', to:'' });
-  return rows;
+  // پرانا فارم — صرف نمبر منتقل؛ باقی سسٹم سے
+  const old = nums.filter(Boolean).slice(0, CDR_NUM_COUNT);
+  while (old.length < CDR_NUM_COUNT) old.push('');
+  return { f: {}, nums: old, chk: [false, false, false], acc: 0, legacy: true };
 }
 
 function _renderCdr() {
-  const area = document.getElementById('workspace-editor-area')
-            || document.getElementById('workspace-tab-content')
-            || document.getElementById('page-content');
+  const area = _cdrArea();
   if (!area) return;
-  const o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
-  const c = _cdrICase || {};
-  const s = _cdrISaved || {};
-  const rows = (s.rows && s.rows.length) ? s.rows : _cdrInitialRows();
-  const v = (k, def) => esc((s[k] !== undefined && s[k] !== null) ? s[k] : (def||''));
-  // Today in dd/mm/yyyy for auto-fill
-  const _t = new Date();
-  const _today = `${String(_t.getDate()).padStart(2,'0')}/${String(_t.getMonth()+1).padStart(2,'0')}/${_t.getFullYear()}`;
+  const saved = _cdrFromSaved(_cdrISaved);
+  const accIdx = (saved && Number.isInteger(saved.acc)) ? saved.acc : 0;
+  const def = _cdrDefaults(accIdx);
+  const sf = (saved && saved.f) || {};
+  const _san = (typeof sanitizeHtml === 'function') ? sanitizeHtml : (x => esc(x));
+  // محفوظ قیمت (HTML) — ورنہ سسٹم کی قیمت (escape)
+  const val = k => (sf[k] !== undefined && sf[k] !== null && String(sf[k]).replace(/<[^>]*>|&nbsp;/g, '').trim() !== '')
+    ? _san(sf[k]) : esc(def[k] || '');
+  let nums = saved ? saved.nums.slice() : [];
+  if (!saved || nums.every(n => !n)) {
+    const sys = _cdrSystemNumbers();
+    nums = Array.from({ length: CDR_NUM_COUNT }, (_, i) => sys[i] || '');
+  }
+  const chk = (saved && saved.chk) || [false, false, false];
+
+  // خانہ (field) — data-k، خالی ہو تو نقطہ دار لکیر، بھرا ہو تو بولڈ
+  const F = (k, grow, extra) => `<span class="cdr-f${val(k) ? ' cdr-has' : ''}" contenteditable="true" data-k="${k}"` +
+    ` style="flex:${grow} 1 0;${extra || ''}" oninput="_cdrOnInput(this)">${val(k)}</span>`;
+  const L = t => `<span class="cdr-l">${t}</span>`;
+  // پہلی چار سطروں کے لیے: لیبل اور سطر میں بہتا ہوا خانہ (اپنی چوڑائی جتنا)
+  const H = t => `<span class="cdr-h">${t}</span>`;
+  const FI = (k, extra) => `<span class="cdr-fi${val(k) ? ' cdr-has' : ''}" contenteditable="true" data-k="${k}"` +
+    ` style="${extra || ''}" oninput="_cdrOnInput(this)">${val(k)}</span>`;
+  const EN = t => `<bdi class="cdr-en" dir="ltr">${t}</bdi>`;
+
+  const numCell = i => `
+    <div class="cdr-num-row">
+      <span class="cdr-num-no">${i + 1})</span>
+      <span class="cdr-num${nums[i] ? ' cdr-has' : ''}" contenteditable="true" dir="ltr" data-n="${i}"
+        oninput="_cdrOnInput(this);_cdrCount()">${esc(nums[i] || '')}</span>
+    </div>`;
+
+  const approvalBlock = (title, noteLbl, k1, k2) => `
+    <div class="cdr-appr">
+      <div class="cdr-box">
+        <div class="cdr-box-t">${title}</div>
+        <div class="cdr-box-s">حصول ${EN('CDR/IMEI')} کی اہمیت اور ضرورت کی تصدیق</div>
+      </div>
+      <div class="cdr-notes">
+        <div class="cdr-line">${L('نوٹ ' + EN(noteLbl) + ':')}${F(k1, 1)}</div>
+        <div class="cdr-line">${F(k2, 1)}</div>
+      </div>
+    </div>`;
+
+  const sopRow = (i, txt) => `
+    <div class="cdr-sop-row">
+      <span class="cdr-sop-t">${txt}</span>
+      <span class="cdr-chk${chk[i] ? ' on' : ''}" data-chk="${i}" role="checkbox" aria-checked="${chk[i] ? 'true' : 'false'}"
+        tabindex="0" onclick="_cdrToggleChk(this)" onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();_cdrToggleChk(this);}"
+        title="نشان لگائیں / ہٹائیں">${chk[i] ? '✓' : ''}</span>
+    </div>`;
+
+  // ملزم کا انتخاب (بنام) — صرف سکرین پر
+  const accOpts = _cdrAccused.length
+    ? _cdrAccused.map((a, i) => `<option value="${i}" ${i === accIdx ? 'selected' : ''}>${esc(_cdrParsePerson(a.name).name || a.name || ('ملزم ' + (i + 1)))}</option>`).join('')
+    : '<option value="">کوئی ملزم درج نہیں</option>';
+
+  const tb = (typeof dioEditorToolbar === 'function') ? dioEditorToolbar() : '';
 
   area.innerHTML = `
-  <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
-    <!-- Toolbar -->
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
-      <button class="btn btn-secondary btn-sm" onclick="_cdrAddRow()">قطار شامل کریں</button>
-      <div style="margin-right:auto;display:flex;gap:6px;">
-        <button class="btn btn-primary btn-sm" onclick="_saveCdr()">محفوظ کریں</button>
-        <button class="btn btn-secondary btn-sm" onclick="_printCdr()">پرنٹ کریں</button>
-        <button class="btn btn-secondary btn-sm" onclick="_newCdr()">نئی درخواست</button>
-      </div>
+  <div class="cdr-wrap" style="display:flex;flex-direction:column;height:100%;direction:rtl;">
+    <!-- ترمیمی ٹول بار — اوپر مستقل (floating نہیں) -->
+    <div class="cdr-toolbar no-print">
+      ${tb}
+      <span class="dio-etb-sep"></span>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="_cdrRefill()" title="خالی خانے سسٹم کے ڈیٹا سے دوبارہ بھریں">↺ سسٹم ڈیٹا</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="_newCdr()">نئی درخواست</button>
+      <span style="margin-right:auto;"></span>
+      <button type="button" class="btn btn-primary btn-sm dio-modbtn cdr-save" onclick="_saveCdr()">محفوظ کریں</button>
+      <button type="button" class="btn btn-secondary btn-sm dio-modbtn cdr-print" onclick="_printCdr()">پرنٹ کریں</button>
     </div>
 
-    <div style="flex:1;overflow-y:auto;padding:16px;background:var(--bg-tertiary);">
-      <div id="cdr-doc" style="max-width:210mm;margin:0 auto;padding:14mm;background:#fff;color:#111;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:18.67px;line-height:1.8;direction:rtl;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;">
+    <div class="cdr-scroll" id="cdr-scroll">
+      <div class="cdr-zoom" id="cdr-zoom">
+      <div id="cdr-doc" class="cdr-page" data-acc="${accIdx}"><div class="cdr-inner" id="cdr-inner">
 
-        <!-- Header -->
-        <div style="display:flex;justify-content:space-between;">
-          <span>تھانہ: <b contenteditable="true">${esc(o.station||'صدر ملتان')}</b></span>
-          <span>ڈائری نمبر: <span contenteditable="true" data-k="diary_number" style="border-bottom:1px solid #999;min-width:200px;display:inline-block;">${v('diary_number')}</span> مورخہ: <span contenteditable="true" data-k="diary_date" style="border-bottom:1px solid #999;min-width:140px;display:inline-block;">${v('diary_date')}</span></span>
-          <span>ضلع: <b contenteditable="true">${esc(o.district||'ملتان')}</b></span>
-        </div>
-        <div style="margin-top:6px;">مقدمہ نمبر: <b>${esc(c.fir_number)||''}</b> &nbsp; مورخہ: <b>${esc(c.fir_date)||''}</b> &nbsp; بجرم: <b>${esc(c.section_of_law)||''} ${esc(c.offence_type)||''}</b> ت پ تھانہ ${o.station||'صدر ملتان'}</div>
-        <div style="margin-top:4px;display:flex;justify-content:space-between;"><span>تاریخ/وقت وقوعہ: <b>${esc(c.occurrence_date||'')}</b></span><span style="min-width:40%;text-align:right;">مقام وقوعہ: <b>${esc(c.occurrence_place||'')}</b></span></div>
-        <div style="margin-top:4px;display:flex;justify-content:space-between;"><span>تفتیشی آفیسر: <b>${(() => {
-          let rank = o.rank || o.designation || '';
-          let nm = o.full_name || '';
-          if (!nm) { try { const p = JSON.parse(localStorage.getItem('officer_profile')||localStorage.getItem('dio_officer_cache')||'{}'); rank = rank||p.rank||p.designation||''; nm = p.name||p.full_name||''; } catch(_) {} }
-          return esc([rank, nm].filter(Boolean).join(' '));
-        })()}</b></span><span style="min-width:40%;text-align:right;">موبائل نمبر: <b>${esc(o.phone||'')}</b></span></div>
-
-        <!-- Main table -->
-        <table style="width:100%;border-collapse:collapse;font-size:18.67px;margin-top:10px;" id="cdr-table">
-          <thead><tr style="background:#f0f0f0;">
-            <th style="border:1px solid #999;padding:8px 6px;width:8%;font-size:18.67px;font-weight:bold;text-align:center;vertical-align:middle;">نمبر شمار</th>
-            <th style="border:1px solid #999;padding:8px 6px;font-size:18.67px;font-weight:bold;text-align:center;vertical-align:middle;">مطلوبہ درکار CDR/IMEI</th>
-            <th style="border:1px solid #999;padding:8px 6px;font-size:18.67px;font-weight:bold;text-align:center;vertical-align:middle;">ماڈل فون (اگر معلوم ہو)</th>
-            <th style="border:1px solid #999;padding:8px 6px;font-size:18.67px;font-weight:bold;text-align:center;vertical-align:middle;">ڈیٹا کی ابتدائی تاریخ</th>
-            <th style="border:1px solid #999;padding:8px 6px;font-size:18.67px;font-weight:bold;text-align:center;vertical-align:middle;">ڈیٹا کی آخری تاریخ</th>
-          </tr></thead>
-          <tbody>
-            ${rows.map((r,i)=>`<tr>
-              <td style="border:1px solid #999;padding:5px;text-align:center;">${i+1}</td>
-              <td contenteditable="true" data-c="req" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;" dir="ltr">${esc(r.req||'')}</td>
-              <td contenteditable="true" data-c="model" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;">${esc(r.model||'')}</td>
-              <td contenteditable="true" data-c="from" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;" dir="ltr">${esc(r.from||'')}</td>
-              <td contenteditable="true" data-c="to" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;" dir="ltr">${esc(r.to||'')}</td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
-
-        <!-- Summary footer -->
-        <table style="width:100%;border-collapse:collapse;font-size:18.67px;margin-top:10px;">
-          <tr style="background:#f0f0f0;">
-            <th style="border:1px solid #999;padding:5px;">ٹوٹل تعداد</th>
-            <th style="border:1px solid #999;padding:5px;">تعداد سم نمبرز</th>
-            <th style="border:1px solid #999;padding:5px;">موبائل سیٹ نمبرز</th>
-            <th style="border:1px solid #999;padding:5px;">سم لوکیشن</th>
-            <th style="border:1px solid #999;padding:5px;">سم ملکیت</th>
-            <th style="border:1px solid #999;padding:5px;">دستخط درخواست کنندہ/تفتیشی آفیسر معہ تاریخ</th>
-          </tr>
-          <tr>
-            <td style="border:1px solid #999;padding:5px;text-align:center;" id="cdr-total">${rows.filter(r=>r.req).length}</td>
-            <td style="border:1px solid #999;padding:5px;text-align:center;" id="cdr-sim-count">0</td>
-            <td style="border:1px solid #999;padding:5px;text-align:center;" id="cdr-imei-count">0</td>
-            <td style="border:1px solid #999;padding:5px;text-align:center;">
-              <label><input type="radio" name="sim_loc" data-pk="sim_location" value="yes" ${v('sim_location')==='yes'?'checked':''}>YES</label>
-              <label><input type="radio" name="sim_loc" value="no" ${v('sim_location')==='no'?'checked':''}>NO</label>
-            </td>
-            <td style="border:1px solid #999;padding:5px;text-align:center;">
-              <label><input type="radio" name="sim_own" data-pk="sim_ownership" value="yes" ${v('sim_ownership')==='yes'?'checked':''}>YES</label>
-              <label><input type="radio" name="sim_own" value="no" ${v('sim_ownership')==='no'?'checked':''}>NO</label>
-            </td>
-            <td contenteditable="true" data-k="signature" style="border:1px solid #999;padding:5px;">${v('signature')}</td>
-          </tr>
-        </table>
-        <div style="font-size:11px;margin-top:4px;color:#444;">اس کیلئے یہی فارم علیحدہ سے بمعہ FIR لف کریں</div>
-
-        <!-- Notes -->
-        <div style="margin-top:12px;font-size:16px;line-height:1.7;color:#333;border:1px solid #ccc;padding:8px;">
-          <div>۱۔ موبائل فون کال ڈیٹا ریکارڈ صرف FIR یا FIR سے متعلقہ ہونے کی صورت میں فراہم کیا جائے گا۔</div>
-          <div>۲۔ اگر CDR's/IMEI's کا اندراج FIR میں نہ ہو تو ضمنی میں اندراج کریں۔</div>
-          <div style="display:flex;align-items:center;flex-direction:row;gap:14px;justify-content:flex-start;flex-wrap:wrap;">
-            <span style="display:flex;align-items:center;gap:4px;">ضمنی نمبر <span contenteditable="true" data-k="zimni_number" style="min-width:70px;display:inline-block;${v('zimni_number')?'font-weight:bold;':''}">${v('zimni_number')}</span></span>
-            <span style="display:flex;align-items:center;gap:6px;">تاریخ <span contenteditable="true" data-k="zimni_date" style="min-width:90px;display:inline-block;font-weight:bold;margin-right:4px;">${v('zimni_date', _today)}</span></span>
-            <span style="display:flex;align-items:center;gap:6px;">${(() => {
-              let rank = o.rank || o.designation || '';
-              let nm = o.full_name || '';
-              if (!nm) { try { const p = JSON.parse(localStorage.getItem('officer_profile')||localStorage.getItem('dio_officer_cache')||'{}'); rank = rank||p.rank||p.designation||''; nm = p.name||p.full_name||''; } catch(_) {} }
-              const fullTitle = [rank, nm].filter(Boolean).join(' ');
-              if (fullTitle) {
-                // مرتبہ + name, both normal weight, no line
-                return `<span>مرتبہ</span> <span>${esc(fullTitle)}</span>`;
-              }
-              return `مرتبہ <span contenteditable="true" data-k="zimni_marba" style="min-width:90px;display:inline-block;">${v('zimni_marba')}</span>`;
-            })()}</span>
-            <span style="white-space:nowrap;">(کاپی ضمنی ہمراہ بھجوائیں)</span>
-          </div>
-          <div>۴۔ CDR کے غلط استعمال کی صورت میں ذمہ دار افسر کے خلاف سخت محکمانہ کاروائی کی جائیگی۔</div>
-          <div>۵۔ CDR کے ذریعے کیس ٹریس ہونے/ملزمان/اشتہاری پکڑے جانے پر IT آفس (موبائل ٹریکنگ سیل ملتان) کو بھی رپورٹ ارسال کی جائے۔</div>
+        <!-- پہلی چار سطریں — درخواستیں (darkhwastain) کی ترتیب: تھانہ دائیں کنارے،
+             ضلع بائیں کنارے · سرکار بذریعہ/مقدمہ 0.9in اندر سے شروع، متن جہاں ختم
+             وہیں سطر ختم · بنام دائیں کنارے (hanging)، باقی اُسی 0.9in پر -->
+        <div class="cdr-title-row">
+          <span class="cdr-tt-right">${H('تھانہ:')} ${FI('thana')}</span>
+          <span class="cdr-tt-left">${H('ضلع:')} ${FI('zila')}</span>
         </div>
 
-        <!-- Forwarding (DSP right, SHO left, signature gap, all centered) -->
-        <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:24px;gap:20px;">
-          <div style="flex:1;text-align:center;">
-            <div style="font-weight:600;text-align:center;">Forwarded Please</div>
-            <div style="height:60px;"></div>
-            <div style="font-weight:bold;text-align:center;">${esc(typeof getDSPName==='function'?getDSPName():'')}</div>
-            <div style="border-top:1px solid #333;width:70%;margin:0 auto;padding-top:6px;text-align:center;">سرکل DSP/SDPO</div>
-          </div>
-          <div style="flex:1;text-align:center;">
-            <div style="font-weight:600;text-align:center;">Forwarded</div>
-            <div style="height:60px;"></div>
-            <div style="height:6px;"></div>
-            <div style="border-top:1px solid #333;width:70%;margin:0 auto;padding-top:6px;text-align:center;font-weight:bold;">${(typeof getSHOSignLine==='function') ? esc(getSHOSignLine(o.station||'صدر ملتان')) : ''}</div>
-          </div>
+        <div class="cdr-sarkar">${H('سرکار بذریعہ:۔')} ${H('نام')} ${FI('s_name')} ${H('ولد')} ${FI('s_father')} ${H('قوم')} ${FI('s_qaum')} ${H('ساکن')} ${FI('s_address')}</div>
+
+        <div class="cdr-caseline">${H('مقدمہ نمبر')} ${FI('fir', 'unicode-bidi:isolate;')} ${H('مورخہ')} ${FI('fir_date', 'unicode-bidi:isolate;')} ${H('بجرم')} ${FI('jurm')} ${H('تھانہ')} ${FI('fir_thana')}</div>
+
+        <div class="cdr-banam-row">
+          ${_cdrAccused.length ? `<span class="cdr-acc-pick no-print" title="ملزم منتخب کریں — بنام کے خانے بھر جائیں گے">▾<select onchange="_cdrPickAccused(this.value)" aria-label="ملزم منتخب کریں">${accOpts}</select></span>` : ''}
+          <span class="cdr-banam-lbl">بنام:۔</span>
+          <span class="cdr-banam-list">${H('نام')} ${FI('b_name')} ${H('ولد')} ${FI('b_father')} ${H('قوم')} ${FI('b_qaum')} ${H('ساکن')} ${FI('b_address')}</span>
         </div>
 
+        <div class="cdr-line cdr-subj">${L('عنوان:')}<span class="cdr-subj-t">درخواست برائے فراہمی کال ڈیٹا ریکارڈ</span></div>
+
+        <div class="cdr-body">
+          <b>جناب عالی!</b>&nbsp; گزارش ہے کہ مقدمہ عنوان بالا کی تفتیش کے لیے مندرجہ ذیل موبائل نمبروں/${EN('IMEI')} نمبروں کی ${EN('CDR')}<br>
+          مورخہ ${F('date_from', 0, 'min-width:1.15in;display:inline-block;')} سے ${F('date_to', 0, 'min-width:1.15in;display:inline-block;')}
+          تک فراہم کی جائے تاکہ اصل حقائق کی روشنی میں مقدمہ عنوان بالا کو یکسو کیا جا سکے۔
+        </div>
+
+        <div class="cdr-numhead">موبائل نمبر/${EN('IMEI')} نمبر:۔</div>
+        <div class="cdr-grid">
+          ${Array.from({ length: CDR_NUM_COUNT }, (_, i) => numCell(i)).join('')}
+        </div>
+
+        <div class="cdr-line cdr-center">
+          <span class="cdr-l cdr-b">کتنے نمبر فارورڈ کیے گئے:۔</span>
+          <span class="cdr-f cdr-count cdr-has" id="cdr-count" contenteditable="true" data-k="count" dir="ltr"
+            oninput="this.dataset.manual='1';_cdrOnInput(this)" ${sf.count_manual ? 'data-manual="1"' : ''}>${sf.count_manual ? _san(sf.count) : ''}</span>
+        </div>
+
+        <div class="cdr-line">
+          <span class="cdr-l cdr-b cdr-u">تفصیل درخواست دہندہ:</span><span class="cdr-l cdr-n">نام معہ عہدہ و محکمانہ نمبر</span>${F('applicant', 4, 'unicode-bidi:plaintext;')}<span class="cdr-l cdr-n">فون نمبر</span>${F('applicant_phone', 2, 'direction:ltr;unicode-bidi:isolate;')}
+        </div>
+
+        <div class="cdr-line cdr-sign">
+          <span class="cdr-l cdr-b">دستخط ${EN('IO')} معہ ${EN('STAMP')} تھانہ ہذا</span>${F('io_sign', 3)}<span class="cdr-l cdr-b">ڈسپیچ رجسٹر نمبر ${EN('5A')}</span>${F('dispatch_no', 2, 'unicode-bidi:plaintext;')}<span class="cdr-l cdr-b">مورخہ</span>${F('dispatch_date', 1.6, 'unicode-bidi:plaintext;')}
+        </div>
+
+        ${approvalBlock(`دستخط ${EN('SHO')} تھانہ ہذا معہ ${EN('STAMP')}`, 'SHO', 'sho_note1', 'sho_note2')}
+        ${approvalBlock(`دستخط ${EN('SDPO')} سرکل ہذا+${EN('STAMP')}`, 'SDPO', 'sdpo_note1', 'sdpo_note2')}
+        ${approvalBlock(`دستخط ${EN('STAMP+SP/INVESTIGATION')}`, 'SP/INV', 'sp_note1', 'sp_note2')}
+
+        <div class="cdr-foot">
+          <div class="cdr-sop">
+            ${sopRow(0, `نوٹ: 1۔ کیا ${EN('SOP')} کے مطابق ${EN('FIR')} کی فوٹو کاپی لف ہے`)}
+            ${sopRow(1, `2۔ کیا ${EN('SOP')} کے مطابق تمام نمبرز کی ضمنی ساتھ لف ہے`)}
+            ${sopRow(2, `3۔ کیا ${EN('SOP')} کے مطابق تمام نمبرز کی ضمنی ${EN('POLCOM')} میں درج ہے`)}
+          </div>
+          <div class="cdr-office">دفتری استعمال کے لیے۔</div>
+        </div>
+
+      </div></div>
       </div>
     </div>
-  </div>`;
+  </div>
+  <style id="cdr-style">${_cdrCSS()}</style>`;
 
-  setTimeout(_cdrUpdateCounts, 50);
+  if (typeof dioEditorToolbarCSS === 'function') dioEditorToolbarCSS();
+  if (typeof dioBindEditor === 'function') { try { dioBindEditor(area); } catch (e) { console.warn('cdr bind:', e && e.message); } }
+  _cdrCount();
+  _cdrFit();
+  if (!window._cdrResizeBound) { window._cdrResizeBound = true; window.addEventListener('resize', _cdrFit); }
 }
+window._renderCdr = _renderCdr;
 
-function _cdrAddRow() {
-  const tbody = document.querySelector('#cdr-table tbody');
-  if (!tbody) return;
-  const i = tbody.children.length;
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td style="border:1px solid #999;padding:5px;text-align:center;">${i+1}</td>
-    <td contenteditable="true" data-c="req" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;" dir="ltr"></td>
-    <td contenteditable="true" data-c="model" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;"></td>
-    <td contenteditable="true" data-c="from" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;" dir="ltr"></td>
-    <td contenteditable="true" data-c="to" style="border:1px solid #999;padding:8px 6px;font-size:18.67px;text-align:center;vertical-align:middle;" dir="ltr"></td>`;
-  tbody.appendChild(tr);
-}
-
-// Count totals: IMEI = 15 digits, SIM = phone-like
-function _cdrUpdateCounts() {
-  const tbody = document.querySelector('#cdr-table tbody');
-  if (!tbody) return;
-  let total=0, sim=0, imei=0;
-  tbody.querySelectorAll('tr').forEach(tr => {
-    const req = (tr.querySelector('[data-c="req"]')?.innerText||'').replace(/\D/g,'');
-    if (req) {
-      total++;
-      if (req.length === 15) imei++;
-      else if (req.length >= 10 && req.length <= 12) sim++;
+// ── CSS (سکرین + چھپائی دونوں — ایک ہی ناپ) ──
+function _cdrCSS() {
+  return `
+    .cdr-toolbar{ position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+      padding:7px 10px; direction:rtl; background:var(--bg-secondary,#f3f6f9); border-bottom:1px solid var(--border,#ddd); }
+    /* موبائل: ٹول بار ایک ہی قطار (نقشہ موقع کی طرح) — انگلی سے دائیں/بائیں
+       سرکائیں، کوئی بٹن ہٹایا نہیں · محفوظ/پرنٹ بائیں کنارے پر ہمیشہ نظر میں */
+    @media (max-width:760px){
+      .cdr-toolbar{ flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; gap:4px; padding:4px 6px;
+        -webkit-overflow-scrolling:touch; scrollbar-width:none; overscroll-behavior-x:contain; }
+      .cdr-toolbar::-webkit-scrollbar{ display:none; }
+      .cdr-toolbar > *, .cdr-toolbar .dio-etb > *{ flex:0 0 auto; }
+      .cdr-toolbar .dio-etb{ flex:0 0 auto; flex-wrap:nowrap !important; }
+      .cdr-toolbar .dio-etb-btn, .cdr-toolbar .dio-etb-sel, .cdr-toolbar .btn{ height:34px; white-space:nowrap; }
+      .cdr-toolbar .cdr-save{ position:sticky; left:0; z-index:3; }
+      .cdr-toolbar .cdr-print{ position:sticky; left:0; z-index:3; box-shadow:-6px 0 8px -4px rgba(0,0,0,.18); }
     }
-  });
-  const t=document.getElementById('cdr-total'); if(t)t.textContent=total;
-  const s=document.getElementById('cdr-sim-count'); if(s)s.textContent=sim;
-  const im=document.getElementById('cdr-imei-count'); if(im)im.textContent=imei;
+    /* کاغذ کے گرد کوئی خالی جگہ نہیں — A4 سیدھا اوپر سے شروع */
+    .cdr-scroll{ flex:1; min-height:0; overflow:auto; padding:0; background:var(--bg-tertiary,#e9eef3); }
+    .cdr-zoom{ width:8.27in; margin:0 auto; }
+
+    #cdr-doc{ width:8.27in; min-height:11.69in; box-sizing:border-box; padding:1cm 1in 1cm 0.4in; margin:0 auto;
+      background:#fff; color:#000; direction:rtl; text-align:right;
+      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; font-size:12pt; line-height:1.6;
+      box-shadow:0 0 0 1px rgba(0,0,0,0.08); border-radius:0; }
+    #cdr-doc *{ box-sizing:border-box; }
+    #cdr-doc .cdr-en{ font-family:'Times New Roman',Times,'Liberation Serif',serif; unicode-bidi:isolate; }
+
+    /* سطر — لیبل + خانے، ایک ہی سطر میں (لفظوں میں مناسب فاصلہ) */
+    #cdr-doc .cdr-line{ display:flex; align-items:baseline; gap:0 5pt; margin:0 0 9pt; flex-wrap:nowrap; }
+    /* ── پہلی چار سطریں — درخواستیں (#dk-doc) کے عین اصول، 14pt ── */
+    #cdr-doc{ --cdr-indent:0.9in; }
+    /* لیبل عام، بھرا ہوا ڈیٹا بولڈ (درخواستیں جیسا) · لیبل اور ڈیٹا کے درمیان واضح فاصلہ */
+    #cdr-doc .cdr-h{ font-weight:normal; white-space:nowrap; }
+    #cdr-doc .cdr-fi{ outline:none; unicode-bidi:plaintext; margin:0 4pt; }
+    #cdr-doc .cdr-fi.cdr-has{ font-weight:bold; }
+    /* خالی خانہ — ہاتھ سے لکھنے کے لیے نقطہ دار لکیر */
+    #cdr-doc .cdr-fi:not(.cdr-has){ display:inline-block; min-width:0.85in; border-bottom:1.2px dashed #000; vertical-align:baseline; }
+    #cdr-doc .cdr-fi:empty::before{ content:'\\200b'; }
+    #cdr-doc .cdr-title-row{ display:flex; align-items:baseline; justify-content:space-between; width:100%; font-size:14pt; line-height:1.8; }
+    #cdr-doc .cdr-tt-right{ text-align:right; white-space:nowrap; }
+    #cdr-doc .cdr-tt-left{ text-align:left; white-space:nowrap; margin-left:1cm; }
+    #cdr-doc .cdr-sarkar{ margin-top:0.12in; font-size:14pt; text-align:right; padding-right:var(--cdr-indent); line-height:1.8; }
+    #cdr-doc .cdr-caseline{ margin:1pt 0 0; font-size:14pt; text-align:right; padding-right:var(--cdr-indent); line-height:1.8; }
+    #cdr-doc .cdr-banam-row{ position:relative; margin:1pt 0 0; font-size:14pt; padding-right:var(--cdr-indent); min-height:1.6em; line-height:1.8; }
+    #cdr-doc .cdr-banam-lbl{ position:absolute; right:0; top:0; font-weight:bold; white-space:nowrap; line-height:1.8; }
+    #cdr-doc .cdr-banam-list{ display:block; text-align:right; line-height:1.8; }
+    /* ملزم کا انتخاب ▾ — درخواستیں کی طرح دائیں حاشیے میں (چھپائی میں نہیں) */
+    #cdr-doc .cdr-acc-pick{ position:absolute; right:-30px; top:4px; width:24px; height:24px; line-height:22px; border-radius:5px;
+      background:#0369a1; color:#fff; font-size:13px; font-weight:700; text-align:center; cursor:pointer; overflow:hidden; }
+    #cdr-doc .cdr-acc-pick select{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
+    #cdr-doc .cdr-center{ justify-content:center; }
+    #cdr-doc .cdr-l{ white-space:nowrap; flex:0 0 auto; font-weight:bold; }
+    #cdr-doc .cdr-l.cdr-n{ font-weight:normal; }
+    #cdr-doc .cdr-b{ font-weight:bold; }
+    #cdr-doc .cdr-u{ text-decoration:underline; text-underline-offset:4pt; }
+
+    /* خانہ — خالی ہو تو ڈیش لکیر (اصل فارم جیسی)؛ بھرا ہو تو بولڈ */
+    #cdr-doc .cdr-f{ display:inline-block; min-width:0.45in; min-height:1.45em; padding:0 3pt; text-align:center;
+      border-bottom:1.2px dashed #000; outline:none; unicode-bidi:plaintext; overflow-wrap:anywhere; vertical-align:baseline; }
+    #cdr-doc .cdr-f:empty::before, #cdr-doc .cdr-num:empty::before{ content:'\\200b'; }
+    #cdr-doc .cdr-f.cdr-has{ font-weight:bold; }
+    #cdr-doc .cdr-f:focus{ background:rgba(56,189,248,0.10); }
+    #cdr-doc .cdr-count{ flex:0 0 1.6in; }
+
+    #cdr-doc .cdr-subj{ margin-top:9pt; }
+    #cdr-doc .cdr-subj-t{ font-weight:bold; text-decoration:underline; text-underline-offset:5pt; margin-right:8pt; }
+
+    #cdr-doc .cdr-body{ text-align:justify; text-align-last:right; line-height:1.95; margin:0 0 3pt; word-spacing:1pt; }
+    #cdr-doc .cdr-body .cdr-f{ text-align:center; }
+    #cdr-doc .cdr-numhead{ margin:0 0 2pt; font-weight:bold; }
+
+    /* 10 نمبر — دائیں کالم 1–5، بائیں 6–10 (RTL گرڈ) */
+    #cdr-doc .cdr-grid{ display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(5, auto);
+      grid-auto-flow:column; column-gap:0.45in; row-gap:3pt; margin:0 0 8pt; }
+    #cdr-doc .cdr-num-row{ display:flex; align-items:baseline; gap:8pt; }
+    #cdr-doc .cdr-num-no{ flex:0 0 0.36in; font-family:Calibri,Carlito,Arial,sans-serif; font-weight:bold; font-size:12pt; text-align:right; }
+    #cdr-doc .cdr-num{ flex:1 1 0; min-height:1.45em; border-bottom:1.2px solid #000; outline:none; text-align:center;
+      font-family:Calibri,Carlito,Arial,sans-serif; font-size:12pt; letter-spacing:0.3pt; direction:ltr; unicode-bidi:isolate; }
+    #cdr-doc .cdr-num.cdr-has{ font-weight:bold; }
+
+    #cdr-doc .cdr-sign{ margin-top:2pt; margin-bottom:12pt; }
+
+    /* SHO / SDPO / SP — دائیں ڈبہ (دستخط + مہر)، بائیں نوٹ کی دو لکیریں */
+    #cdr-doc .cdr-appr{ display:flex; align-items:stretch; gap:0.2in; margin:0 0 12pt; }
+    #cdr-doc .cdr-box{ flex:0 0 51%; border:2px solid #000; min-height:0.76in; padding:3pt 6pt 2pt;
+      display:flex; flex-direction:column; justify-content:flex-end; align-items:center; text-align:center; }
+    #cdr-doc .cdr-box-t{ font-weight:bold; font-size:11.5pt; line-height:1.5; }
+    #cdr-doc .cdr-box-s{ font-size:8.5pt; line-height:1.5; }
+    #cdr-doc .cdr-notes{ flex:1 1 0; display:flex; flex-direction:column; justify-content:space-between; padding-top:2pt; }
+    #cdr-doc .cdr-notes .cdr-line{ margin:0 0 4pt; }
+
+    /* SOP نوٹ + نشان والے خانے · بائیں «دفتری استعمال کے لیے» */
+    #cdr-doc .cdr-foot{ display:flex; justify-content:space-between; align-items:flex-start; margin-top:2pt; font-size:10.5pt; }
+    /* گرڈ: دائیں متن، بائیں نشان کے خانے — تینوں خانے ایک ہی سیدھ میں (اصل فارم جیسا) */
+    #cdr-doc .cdr-sop{ display:grid; grid-template-columns:max-content 0.5in; column-gap:6pt; row-gap:2pt; align-items:center; }
+    #cdr-doc .cdr-sop-row{ display:contents; }
+    #cdr-doc .cdr-sop-t{ line-height:1.5; }
+    #cdr-doc .cdr-chk{ flex:0 0 auto; width:0.5in; height:0.24in; border:2px solid #000; border-radius:5px;
+      display:inline-flex; align-items:center; justify-content:center; font-family:Arial,sans-serif; font-size:11pt;
+      font-weight:bold; cursor:pointer; user-select:none; line-height:1; }
+    #cdr-doc .cdr-office{ font-weight:bold; padding-left:0.3in; white-space:nowrap; }
+
+    @media print{ .cdr-toolbar{ display:none !important; } }
+  `;
 }
+
+// ── سکرین پر کاغذ پورا نظر آئے (موبائل پر چھوٹا) — ناپ نہیں بدلتی، صرف zoom ──
+function _cdrFit() {
+  const sc = document.getElementById('cdr-scroll');
+  const z = document.getElementById('cdr-zoom');
+  if (!sc || !z) return;
+  const pageW = 8.27 * CDR_PX_PER_IN;
+  const avail = sc.clientWidth;
+  const k = (avail > 0 && avail < pageW) ? Math.max(0.3, avail / pageW) : 1;
+  z.style.zoom = String(k);
+}
+window._cdrFit = _cdrFit;
+
+function _cdrOnInput(el) {
+  _cdrDirty = true;
+  if (!el) return;
+  const t = (el.innerText || el.textContent || '').trim();
+  el.classList.toggle('cdr-has', !!t);
+}
+window._cdrOnInput = _cdrOnInput;
+
+// کتنے نمبر فارورڈ — بھرے ہوئے نمبر خانے گنو (ہاتھ سے لکھا ہو تو وہی رہے)
+function _cdrCount() {
+  const el = document.getElementById('cdr-count');
+  if (!el || el.dataset.manual === '1') return;
+  let n = 0;
+  document.querySelectorAll('#cdr-doc .cdr-num').forEach(x => { if ((x.innerText || '').trim()) n++; });
+  el.textContent = n ? String(n) : '';
+  el.classList.toggle('cdr-has', !!n);
+}
+window._cdrCount = _cdrCount;
+
+function _cdrToggleChk(el) {
+  if (!el) return;
+  const on = !el.classList.contains('on');
+  el.classList.toggle('on', on);
+  el.textContent = on ? '✓' : '';
+  el.setAttribute('aria-checked', on ? 'true' : 'false');
+  _cdrDirty = true;
+}
+window._cdrToggleChk = _cdrToggleChk;
+
+// بنام — منتخب ملزم کے چار خانے بھرو
+function _cdrPickAccused(idx) {
+  const i = parseInt(idx, 10);
+  if (!Number.isInteger(i) || !_cdrAccused[i]) return;
+  const p = _cdrParsePerson(_cdrAccused[i].name);
+  const doc = document.getElementById('cdr-doc');
+  if (!doc) return;
+  doc.dataset.acc = String(i);
+  [['b_name', p.name], ['b_father', p.father], ['b_qaum', p.qaum], ['b_address', p.address]].forEach(([k, v]) => {
+    const el = doc.querySelector('[data-k="' + k + '"]');
+    if (el) { el.textContent = v || ''; _cdrOnInput(el); }
+  });
+}
+window._cdrPickAccused = _cdrPickAccused;
+
+// خالی خانے سسٹم کے ڈیٹا سے (بھرے ہوئے نہیں چھیڑتے)
+function _cdrRefill() {
+  const doc = document.getElementById('cdr-doc');
+  if (!doc) return;
+  const def = _cdrDefaults(parseInt(doc.dataset.acc || '0', 10) || 0);
+  let n = 0;
+  doc.querySelectorAll('[data-k]').forEach(el => {
+    const k = el.dataset.k;
+    if (k === 'count') return;
+    if (!(el.innerText || '').trim() && def[k]) { el.textContent = def[k]; _cdrOnInput(el); n++; }
+  });
+  const sys = _cdrSystemNumbers();
+  const cells = Array.from(doc.querySelectorAll('.cdr-num'));
+  const have = cells.map(c => (c.innerText || '').trim()).filter(Boolean);
+  sys.filter(x => !have.includes(x)).forEach(x => {
+    const empty = cells.find(c => !(c.innerText || '').trim());
+    if (empty) { empty.textContent = x; _cdrOnInput(empty); n++; }
+  });
+  _cdrCount();
+  if (typeof showToast === 'function') showToast(n ? (n + ' خانے سسٹم ڈیٹا سے بھرے گئے') : 'کوئی خالی خانہ نہیں جس کا ڈیٹا سسٹم میں ہو', 'info');
+}
+window._cdrRefill = _cdrRefill;
 
 function _collectCdr() {
   const doc = document.getElementById('cdr-doc');
-  const data = { rows: [] };
-  doc.querySelectorAll('#cdr-table tbody tr').forEach(tr => {
-    data.rows.push({
-      req: tr.querySelector('[data-c="req"]')?.innerText.trim()||'',
-      model: tr.querySelector('[data-c="model"]')?.innerText.trim()||'',
-      from: tr.querySelector('[data-c="from"]')?.innerText.trim()||'',
-      to: tr.querySelector('[data-c="to"]')?.innerText.trim()||'',
-    });
+  const f = {};
+  const nums = [];
+  if (!doc) return { f, nums, chk: [false, false, false], acc: 0 };
+  doc.querySelectorAll('[data-k]').forEach(el => {
+    const t = (el.innerText || '').trim();
+    f[el.dataset.k] = t ? el.innerHTML : '';
   });
-  doc.querySelectorAll('[data-k]').forEach(el => { data[el.dataset.k] = el.innerText.trim(); });
-  doc.querySelectorAll('input[type="radio"]:checked[data-pk]').forEach(el => { data[el.dataset.pk] = el.value; });
-  return data;
+  const cnt = document.getElementById('cdr-count');
+  f.count_manual = !!(cnt && cnt.dataset.manual === '1');
+  doc.querySelectorAll('.cdr-num').forEach(el => nums.push((el.innerText || '').replace(/\s+/g, ' ').trim()));
+  const chk = Array.from(doc.querySelectorAll('.cdr-chk')).map(el => el.classList.contains('on'));
+  return { f, nums, chk, acc: parseInt(doc.dataset.acc || '0', 10) || 0 };
 }
 
 async function _saveCdr() {
-  _cdrUpdateCounts();
+  if (!_cdrICaseId) { if (typeof showToast === 'function') showToast('مقدمہ منتخب نہیں', 'error'); return; }
   const d = _collectCdr();
-  const rec = {
-    case_id: _cdrICaseId,
-    diary_number: d.diary_number||null,
-    diary_date: d.diary_date||null,
-    rows: d.rows,
-    sim_location: d.sim_location||null,
-    sim_ownership: d.sim_ownership||null,
-    zimni_number: d.zimni_number||null,
-    zimni_date: d.zimni_date||null,
-    signature: d.signature||null,
-  };
+  const rows = d.nums.map(n => ({ req: n }));
+  rows.push({ _form: CDR_FORM_TAG, f: d.f, chk: d.chk, acc: d.acc });
+  const rec = { case_id: _cdrICaseId, rows };
+  const key = 'dio_cdr_' + _cdrICaseId;
   try {
     const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
     if (oid) rec.officer_id = oid;
-    if (_cdrISaved && _cdrISaved.id) {
-      await supabaseClient.from('cdr_imei_requests').update(rec).eq('id', _cdrISaved.id);
+    if (_cdrISaved && _cdrISaved.id && String(_cdrISaved.id).indexOf('tmp_') !== 0) {
+      const { data, error } = await supabaseClient.from('cdr_imei_requests').update(rec).eq('id', _cdrISaved.id).select().maybeSingle();
+      if (error) throw error;
+      _cdrISaved = data || { ..._cdrISaved, ...rec };
     } else {
-      const { data } = await supabaseClient.from('cdr_imei_requests').insert(rec).select().single();
-      _cdrISaved = data || { ...rec, id:'tmp_'+Date.now() };
+      const { data, error } = await supabaseClient.from('cdr_imei_requests').insert(rec).select().single();
+      if (error) throw error;
+      _cdrISaved = data;
     }
-    try { localStorage.setItem('dio_cdr_'+_cdrICaseId, JSON.stringify(_cdrISaved)); } catch(_) {}
-    showToast('درخواست محفوظ ہو گئی', 'success');
-  } catch(e) { showToast('' + e.message, 'error'); }
+    try { localStorage.setItem(key, JSON.stringify(_cdrISaved)); } catch (e) { console.warn('cdr cache:', e && e.message); }
+    _cdrMarkChipDone();
+    try { if (typeof dioRegisterSaved === 'function') dioRegisterSaved('cdr', 'CDR/IMEI درخواست', { case_id: _cdrICaseId }); } catch (e) { console.warn('cdr register:', e && e.message); }
+    _cdrDirty = false;
+    if (typeof showToast === 'function') showToast('درخواست محفوظ ہو گئی', 'success');
+  } catch (e) {
+    // آف لائن / سرور خرابی — مقامی طور پر محفوظ (پرانا رویہ)
+    try {
+      _cdrISaved = { ...(_cdrISaved || {}), ...rec, id: (_cdrISaved && _cdrISaved.id) || ('tmp_' + Date.now()), created_at: new Date().toISOString() };
+      localStorage.setItem(key, JSON.stringify(_cdrISaved));
+      _cdrDirty = false;
+      if (typeof showToast === 'function') showToast('آف لائن محفوظ (انٹرنیٹ آنے پر دوبارہ محفوظ کریں)', 'info');
+    } catch { if (typeof showToast === 'function') showToast('' + (e && e.message), 'error'); }
+  }
+}
+window._saveCdr = _saveCdr;
+
+// چِپ سبز — محفوظ ہونے کا نشان (سسٹم کا اصول: صرف ڈیٹا والی chip سبز)
+function _cdrMarkChipDone() {
+  try {
+    if (typeof _misalDocs !== 'undefined' && _misalDocs) {
+      _misalDocs['cdr_imei'] = { ...(_misalDocs['cdr_imei'] || {}), document_type: 'cdr_imei', status: 'complete' };
+    }
+    if (typeof _refreshMisalBar === 'function') _refreshMisalBar();
+  } catch (e) { console.warn('cdr chip:', e && e.message); }
+  // case_documents میں بھی حالت «مکمل» — دوبارہ کھولنے پر chip سبز رہے
+  try {
+    supabaseClient.from('case_documents').update({ status: 'complete' })
+      .eq('case_id', _cdrICaseId).eq('document_type', 'cdr_imei')
+      .then(() => {}, e => console.warn('cdr doc status:', e && e.message));
+  } catch (e) { console.warn('cdr doc status:', e && e.message); }
 }
 
 function _newCdr() {
+  if (_cdrDirty && !confirm('غیر محفوظ تبدیلیاں ضائع ہو جائیں گی۔ نئی درخواست کھولیں؟')) return;
   _cdrISaved = null;
+  _cdrDirty = false;
   _renderCdr();
-  showToast('نئی درخواست', 'info');
+  if (typeof showToast === 'function') showToast('نئی درخواست — سسٹم کا ڈیٹا بھر دیا گیا', 'info');
 }
+window._newCdr = _newCdr;
 
+// ── چھپائی — A4، چاروں طرف 1 انچ، صرف فارم (ٹول بار نہیں)، ایک صفحہ ──
 function _printCdr() {
   const doc = document.getElementById('cdr-doc');
   if (!doc) return;
-  const dateStr = formatDate(new Date());
-  const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
-    ${typeof dioFontHead==='function'?dioFontHead():''}
-    <style>@page{size:A4;margin:8mm}
-      body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;font-size:13px;line-height:1.3;color:#000;margin:0;}
-      table{border-collapse:collapse;width:100%;}
-      td,th{border:1px solid #000;padding:2px 4px;line-height:1.2;font-size:12px;vertical-align:middle;}
-      tr{height:22px;}
-      #cdr-doc > div:first-child, #cdr-doc > div:nth-child(2){margin-bottom:3px !important;}
-      .dio-print-footer{position:fixed;bottom:3mm;left:4mm;text-align:left;font-size:9px;color:#999;direction:ltr;}
-    </style></head>
-    <body>${doc.innerHTML}<div class="dio-print-footer">Digital IO</div></body></html>`;
+  // ایک صفحے میں سمانا: مواد کی اصل اونچائی (سکرین پر وہی ناپ) بمقابلہ جگہ
+  const z = document.getElementById('cdr-zoom');
+  const prevZoom = z ? z.style.zoom : '';
+  if (z) z.style.zoom = '1';
+  const inner = document.getElementById('cdr-inner');
+  const contentH = inner ? inner.getBoundingClientRect().height : 0;
+  if (z) z.style.zoom = prevZoom;
+  const availH = CDR_AVAIL_H_IN * CDR_PX_PER_IN;
+  // 2% حفاظتی گنجائش (چھاپنے والے کا ناپ ذرا سا مختلف ہو سکتا ہے)
+  const fit = contentH > availH * 0.98 ? Math.max(0.75, Math.floor((availH * 0.98 / contentH) * 1000) / 1000) : 1;
+
+  const clone = doc.cloneNode(true);
+  clone.querySelectorAll('.no-print, button, select').forEach(el => el.remove());
+  clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+  clone.querySelectorAll('[oninput],[onclick],[onkeydown]').forEach(el => {
+    el.removeAttribute('oninput'); el.removeAttribute('onclick'); el.removeAttribute('onkeydown');
+  });
+  const html = `<!DOCTYPE html><html dir="rtl" lang="ur"><head><meta charset="UTF-8"><title> </title>
+    ${typeof dioFontHead === 'function' ? dioFontHead() : ''}
+    <style>
+      @page{ size:A4 portrait; margin:${CDR_MARGIN_CSS}; }
+      *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+      html,body{ margin:0; padding:0; background:#fff; }
+      ${_cdrCSS()}
+      #cdr-doc{ width:auto !important; min-height:0 !important; padding:0 !important; margin:0 !important;
+        box-shadow:none !important; border-radius:0 !important; ${fit < 1 ? 'zoom:' + fit + ';' : ''} }
+      #cdr-doc .cdr-f:focus{ background:none; }
+      #cdr-doc .cdr-appr, #cdr-doc .cdr-foot{ break-inside:avoid; }
+    </style></head><body>${clone.outerHTML}</body></html>`;
   if (typeof dioPrint === 'function') dioPrint(html);
-  else { const w=window.open('','_blank'); w.document.write(html); w.document.close(); setTimeout(()=>w.print(),300); }
+  else { const w = window.open('', '_blank'); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 400); }
 }
+window._printCdr = _printCdr;
