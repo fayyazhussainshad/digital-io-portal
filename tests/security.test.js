@@ -1648,3 +1648,13 @@ test('عوامی کلید اصلی P-256 نقطہ ہو (ٹائپنگ کی غلط
   const mod = (v) => ((v % p) + p) % p;
   assert.strictEqual(mod(Y*Y), mod(X*X*X - 3n*X + bb), 'kleed P-256 curve par nahi — naqal karte waqt harf badal gaya');
 });
+
+test('96_CHECK: sirf parhti hai, aur dono hisse jaanchti hai', () => {
+  const s = sqlAmli('sql/96_CHECK.sql');
+  assert.ok(!/\b(insert|update|delete|truncate|drop|alter|create|grant|revoke|comment)\s/i.test(
+    s.replace(/'[^']*'/g, "''")), 'jaanch kuch badle nahi — sirf select');
+  assert.strictEqual((s.match(/;/g) || []).length, 1, 'aik hi statement (editor natija zaroor dikhaye)');
+  assert.ok(/'1_client_errors'/.test(s) && /'2_officers_trigger'/.test(s));
+  assert.ok(/service_role/.test(s) && /auth\\\.uid\\\(\\\)\\s\+is\\s\+null/.test(s),
+    'server ki pehchan aur uid-null chhoot dono dekhe');
+});
