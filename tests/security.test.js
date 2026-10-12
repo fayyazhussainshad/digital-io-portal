@@ -1653,8 +1653,23 @@ test('96_CHECK: sirf parhti hai, aur dono hisse jaanchti hai', () => {
   const s = sqlAmli('sql/96_CHECK.sql');
   assert.ok(!/\b(insert|update|delete|truncate|drop|alter|create|grant|revoke|comment)\s/i.test(
     s.replace(/'[^']*'/g, "''")), 'jaanch kuch badle nahi — sirf select');
-  assert.strictEqual((s.match(/;/g) || []).length, 1, 'aik hi statement (editor natija zaroor dikhaye)');
+  assert.strictEqual((s.replace(/'[^']*'/g, "''").match(/;/g) || []).length, 1,
+    'aik hi statement (editor natija zaroor dikhaye) — qoutes ke andar ka ; ginti mein nahi');
   assert.ok(/'1_client_errors'/.test(s) && /'2_officers_trigger'/.test(s));
   assert.ok(/service_role/.test(s) && /auth\\\.uid\\\(\\\)\\s\+is\\s\+null/.test(s),
     'server ki pehchan aur uid-null chhoot dono dekhe');
+});
+
+test('97: admin ka ikhtiyar sirf manzoor-shuda ko — aur NULL admin ho to ruk jaye', () => {
+  const g = read('sql/97_officers_approved_fail_closed.sql');
+  const amli = g.split('\n').filter((l) => !l.trim().startsWith('--')).join('\n');
+  assert.ok(/coalesce\(o\.is_approved,false\)\s+= true/.test(amli), 'NULL = ghair-manzoor (fail-closed)');
+  assert.ok(!/coalesce\(o\.is_approved,\s*true\)/.test(amli), 'fail-open wapas na aaye');
+  assert.ok(/o\.is_approved is null[\s\S]{0,200}raise exception 'RUKA/.test(amli),
+    'NULL manzoori wala admin mojood ho to kuch na badle (warna wo foran ikhtiyar kho deta)');
+  // baqi hifazat bilkul wahi
+  assert.ok(/current_user = 'service_role'/.test(amli) && /if auth\.uid\(\) is null then\s+raise exception/.test(amli));
+  assert.ok(/sirf apni profile tabdeel ki ja sakti hai/.test(amli) && /new\.role\s+:= 'officer'/.test(amli));
+  const r = read('sql/97_ROLLBACK.sql');
+  assert.ok(/coalesce\(o\.is_approved,true\)/.test(r), 'wapsi bilkul asal halat lautaye');
 });

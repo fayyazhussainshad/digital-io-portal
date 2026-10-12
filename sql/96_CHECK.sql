@@ -8,8 +8,9 @@
 --      sirf likh sake, parh na sake.
 --   2) officers — dio_protect_officers() trigger INSERT + UPDATE + DELETE
 --      teeno par lage, server ki pehchan `service_role` se ho (na ke
---      `auth.uid() is null` se — wo anon ko bhi raasta de deta hai), aur
---      har user ka aik hi record ho.
+--      "uid null ho to chhoot" se — wo anon ko bhi raasta de deta hai),
+--      manzoori NULL par ikhtiyar na mile (fail-closed), aur har user ka
+--      aik hi record ho. (Tabsare jaanch se pehle hata diye jate hain.)
 --
 -- Natija: har hisse ka `nateeja` = 'THEEK' ya 'DEKHEN: <wajah>'.
 -- 'DEKHEN' aaye to poora natija bhej dein — kuch badalne se pehle dekha jayega.
@@ -55,7 +56,8 @@ prot as (
   from trg where proname = 'dio_protect_officers'
 ),
 fn as (
-  select p.prosrc
+  -- tabsare (-- ... aur /* ... */) hata kar sirf ASAL code jaancha jaye
+  select regexp_replace(regexp_replace(p.prosrc, '/\*.*?\*/', '', 'g'), '--[^\n]*', '', 'g') as prosrc
   from pg_proc p join pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'public' and p.proname = 'dio_protect_officers'
   limit 1
@@ -88,7 +90,10 @@ of_v as (
     (select count(*) from off) = 1                                        as mojood,
     (select prosrc from fn) is not null                                   as fn_mojood,
     coalesce((select prosrc from fn) ~ 'service_role', false)             as service_role,
-    coalesce((select prosrc from fn) ~* 'auth\.uid\(\)\s+is\s+null', false) as uid_null,
+    -- sirf CHHOOT pakRo: "uid null ho to RETURN" — "to RAISE" (rokna) theek hai
+    coalesce((select prosrc from fn) ~* 'auth\.uid\(\)\s+is\s+null[^;]*then\s+return', false) as uid_null,
+    -- manzoori NULL ho to ikhtiyar mil jana (fail-open)
+    coalesce((select prosrc from fn) ~* 'coalesce\(\s*[a-z_.]*is_approved\s*,\s*true\s*\)', false) as manzoori_khuli,
     coalesce((select ins from prot), false)                               as ins,
     coalesce((select upd from prot), false)                               as upd,
     coalesce((select del from prot), false)                               as del,
@@ -122,6 +127,7 @@ select jsonb_pretty(jsonb_build_object(
     'function_mojood',         of_v.fn_mojood,
     'service_role_se_pehchan', of_v.service_role,
     'uid_null_wali_chhoot',    of_v.uid_null,
+    'manzoori_null_par_khula', of_v.manzoori_khuli,
     'insert_par',              of_v.ins,
     'update_par',              of_v.upd,
     'delete_par',              of_v.del,
@@ -142,6 +148,7 @@ select jsonb_pretty(jsonb_build_object(
       when not of_v.fa_al                 then 'DEKHEN: trigger band (disabled) hai'
       when not of_v.service_role          then 'DEKHEN: server ki pehchan service_role se nahi'
       when of_v.uid_null                  then 'DEKHEN: auth.uid() is null wali chhoot — anon ko bhi raasta'
+      when of_v.manzoori_khuli            then 'DEKHEN: coalesce(is_approved, true) — NULL manzoori wala admin ikhtiyar pa leta hai'
       when not of_v.uniq                  then 'DEKHEN: user_id par unique index nahi — aik user ke do record ban sakte hain'
       else 'THEEK' end)
 )) as digital_io_96_check
