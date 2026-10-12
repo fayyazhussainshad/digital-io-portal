@@ -353,12 +353,12 @@
           </select>
           ${fabricOk ? `
           <span class="naq-sep"></span>
-          <button class="naq-tb naq-tool on" data-tool="select" title="منتخب / حرکت" onclick="window._naqSetTool&&_naqSetTool('select')">↖</button>
-          <button class="naq-tb naq-tool" data-tool="pen" title="قلم (آزاد ڈرائنگ)" onclick="window._naqSetTool&&_naqSetTool('pen')">✏️</button>
-          <button class="naq-tb naq-tool" data-tool="line" title="لکیر" onclick="window._naqSetTool&&_naqSetTool('line')">╱</button>
-          <button class="naq-tb naq-tool" data-tool="arrow" title="تیر" onclick="window._naqSetTool&&_naqSetTool('arrow')">➜</button>
-          <button class="naq-tb naq-tool" data-tool="rect" title="مستطیل" onclick="window._naqSetTool&&_naqSetTool('rect')">▭</button>
-          <button class="naq-tb naq-tool" data-tool="ellipse" title="دائرہ / بیضوی" onclick="window._naqSetTool&&_naqSetTool('ellipse')">◯</button>
+          <button class="naq-tb naq-tool on" data-tool="select" title="منتخب / حرکت" onclick="window._naqPickTool&&_naqPickTool('select')">↖</button>
+          <button class="naq-tb naq-tool" data-tool="pen" title="قلم (آزاد ڈرائنگ)" onclick="window._naqPickTool&&_naqPickTool('pen')">✏️</button>
+          <button class="naq-tb naq-tool" data-tool="line" title="لکیر" onclick="window._naqPickTool&&_naqPickTool('line')">╱</button>
+          <button class="naq-tb naq-tool" data-tool="arrow" title="تیر" onclick="window._naqPickTool&&_naqPickTool('arrow')">➜</button>
+          <button class="naq-tb naq-tool" data-tool="rect" title="مستطیل" onclick="window._naqPickTool&&_naqPickTool('rect')">▭</button>
+          <button class="naq-tb naq-tool" data-tool="ellipse" title="دائرہ / بیضوی" onclick="window._naqPickTool&&_naqPickTool('ellipse')">◯</button>
           <button class="naq-tb" title="پولیس علامات (لاش، اسلحہ، گاڑی…)" onclick="window._naqToggleSyms&&_naqToggleSyms(event)">🚔</button>
           <button class="naq-tb" title="امتیازی نشان لگائیں (①②③ — نیچے فہرست خود بنے)" onclick="window._naqAddMark&&_naqAddMark()">①</button>
           <input type="color" class="naq-color" value="#111111" title="لکیر کا رنگ" onchange="window._naqSetColor&&_naqSetColor(this.value)">
@@ -388,7 +388,7 @@
           <button class="naq-tb" id="naq-undo" title="واپس (Ctrl+Z)" onclick="window._naqUndo&&_naqUndo()">↶</button>
           <button class="naq-tb" id="naq-redo" title="دوبارہ (Ctrl+Y)" onclick="window._naqRedo&&_naqRedo()">↷</button>
           <span class="naq-sep"></span>
-          <button class="naq-tb naq-tool" title="پین (کھینچ کر گھمائیں)" data-tool="pan" onclick="window._naqSetTool&&_naqSetTool('pan')">✋</button>
+          <button class="naq-tb naq-tool" title="پین (کھینچ کر گھمائیں)" data-tool="pan" onclick="window._naqPickTool&&_naqPickTool('pan')">✋</button>
           <button class="naq-tb" title="زوم اِن" onclick="window._naqZoomIn&&_naqZoomIn()">＋</button>
           <button class="naq-tb" title="زوم آؤٹ" onclick="window._naqZoomOut&&_naqZoomOut()">－</button>
           <button class="naq-tb" title="زوم ری سیٹ (1:1)" onclick="window._naqZoomReset&&_naqZoomReset()">1:1</button>
@@ -403,6 +403,7 @@
          <div class="naq-chips" id="naq-chips">${_chipsHTML()}</div>
        </div>
       </div>
+      <div id="naq-topslot" class="no-print"></div>
 
       <div class="naq-scroll">
         <div id="dio-naqsha-doc" class="naq-doc naq-${paper}">
@@ -459,18 +460,102 @@
       const el = document.getElementById('naq-h-' + k); if (el) el.addEventListener('input', _saveSoon);
     });
     if (fabricOk) _initCanvas(a);
+    try { _naqPeekInit(); } catch (_) {}
   }
   window._renderNaqsha = _renderNaqsha;
   window._naqDirty = _saveSoon;
   window._naqType = function () { _saveSoon(); _refreshChips(); };
   window._naqSetPaper = function (v) { const a = _active(); if (a) a.paper = v; _snapshot(); _persistLocal(); _renderNaqsha(); };
   window._naqToggleBar = function () { const w = document.getElementById('naq-topwrap'); if (w) w.classList.toggle('show'); };
-  // چِپ بار (محفوظ نقشے) دکھائیں/چھپائیں — ٹول بار ہمیشہ فکسڈ رہتا ہے
+  // چِپ بار (محفوظ نقشے) دکھائیں/چھپائیں
   window._naqToggleChips = function () {
     const s = document.getElementById('naq-chipstrip'); const b = document.getElementById('naq-chiptog');
     if (!s) return; const on = s.classList.toggle('show');
     if (b) b.innerHTML = on ? '🗂️ نقشے ▴' : '🗂️ نقشے ▾';
   };
+
+  /* ══ ٹول بار کا «peek» — چالان جیسا سلوک ═══════════════════════════════
+     پہلے .naq-topwrap پر position:sticky تھا، اِس لیے پٹی ہر وقت اوپر چپکی
+     رہتی تھی۔ اب وہ صفحے کے ساتھ چلتی ہے (چالان کی طرح)۔ جب وہ نظر سے اوپر
+     نکل جائے تو:
+       • ڈیسک ٹاپ: کرسر صفحے کے اوپری کنارے پر لے جائیں → پٹی سامنے آ جاتی ہے
+       • موبائل: اوپر کی طرف سوائپ/scroll کریں → پٹی سامنے آ جاتی ہے
+     کرسر ہٹنے (یا نیچے scroll کرنے) پر خود چھپ جاتی ہے۔
+     جگہ محفوظ رکھنے کے لیے #naq-topslot اُتنی ہی اونچائی لے لیتا ہے، تاکہ
+     نیچے کا مواد ہلے نہیں۔                                                  */
+  let _naqPeekT = null, _naqLastY = 0;
+
+  function _naqPeekInit() {
+    const bar  = document.getElementById('naq-topwrap');
+    const slot = document.getElementById('naq-topslot');
+    const scr  = document.querySelector('.naq-scroll');
+    if (!bar || !slot || !scr) return;
+
+    const barH = () => (slot.dataset.h ? +slot.dataset.h : (bar.offsetHeight || 44));
+
+    // پٹی اپنی اصل جگہ سے اوپر نکل گئی ہے؟
+    const _ooperNahi = () => scr.scrollTop > barH() - 4;
+    const _peeking   = () => bar.classList.contains('naq-peek');
+
+    const _show = () => {
+      if (_peeking()) return;
+      const h = bar.offsetHeight || 44;
+      slot.dataset.h = h;
+      slot.style.height = h + 'px';
+      bar.classList.add('naq-peek');
+    };
+    const _hide = () => {
+      if (!_peeking()) return;
+      bar.classList.remove('naq-peek');
+      slot.style.height = '0px';
+    };
+
+    /* — ڈیسک ٹاپ: کرسر صفحے کے اوپری کنارے پر۔
+         یہاں document پر mousemove سنا جاتا ہے، نہ کہ کسی باریک پٹی کا
+         mouseenter — کیونکہ اگر کرسر پہلے ہی اوپر موجود ہو تو mouseenter
+         کبھی چلتا ہی نہیں، اور پٹی سامنے نہ آتی۔                        */
+    if (!window._naqPeekMoveBound) {
+      window._naqPeekMoveBound = true;
+      document.addEventListener('mousemove', (e) => {
+        const b = document.getElementById('naq-topwrap');
+        const s = document.getElementById('naq-topslot');
+        const c = document.querySelector('.naq-scroll');
+        if (!b || !s || !c) return;
+        const h = (s.dataset.h ? +s.dataset.h : (b.offsetHeight || 44));
+        if (c.scrollTop <= h - 4) return;             // پٹی ویسے ہی نظر میں ہے
+        if (e.clientY <= 16) {
+          clearTimeout(_naqPeekT);
+          if (!b.classList.contains('naq-peek')) {
+            s.dataset.h = b.offsetHeight || 44;
+            s.style.height = s.dataset.h + 'px';
+            b.classList.add('naq-peek');
+          }
+        } else if (b.classList.contains('naq-peek') && e.clientY > h + 24) {
+          clearTimeout(_naqPeekT);
+          _naqPeekT = setTimeout(() => {
+            b.classList.remove('naq-peek');
+            s.style.height = '0px';
+          }, 350);
+        }
+      }, { passive: true });
+    }
+
+    bar.addEventListener('mouseenter', () => clearTimeout(_naqPeekT));
+
+    /* — دونوں ڈیوائس: اوپر کی طرف scroll کرنے سے سامنے، نیچے سے چھپ جاتی۔
+         2px سے کم حرکت کو نظرانداز کیا جاتا ہے، کیونکہ براؤزر scroll رُکنے
+         پر وہی قیمت دوبارہ بھیج دیتا ہے — اور اُس سے پٹی فوراً چھپ جاتی۔ */
+    _naqLastY = scr.scrollTop;
+    scr.addEventListener('scroll', () => {
+      const y = scr.scrollTop;
+      const farq = y - _naqLastY;
+      if (!_ooperNahi()) { _naqLastY = y; _hide(); return; }
+      if (Math.abs(farq) < 2) return;                 // معمولی حرکت — حالت نہ بدلو
+      _naqLastY = y;
+      if (farq < 0) _show(); else _hide();
+    }, { passive: true });
+  }
+  window._naqPeekInit = _naqPeekInit;
 
   // ══ Compass — E-W (افقی) عنوان کی سیدھ میں (y=48)، N-S لمبا اسی پر fixed؛
   //   الفاظ arrow heads سے فاصلے پر ════════════════════════════════════
@@ -574,7 +659,20 @@
   }
 
   // ══ ڈرائنگ ٹولز — لکیر/تیر/مستطیل/دائرہ/قلم + رنگ/موٹائی ═══════════════
+  /* ── بٹن سے ٹول منتخب کرنا — دوبارہ دبانے سے چھوٹ جاتا ہے ────────────
+     پہلے ٹول بٹن «ایک طرفہ» تھے: ✋ دبانے سے pan لگ جاتا، مگر دوبارہ ✋
+     دبانے سے نہیں چھوٹتا تھا۔ اب وہی بٹن دوبارہ دبانے سے واپس «منتخب /
+     حرکت» (↖) پر آ جاتا ہے — یعنی ہر بٹن خود ہی on/off ہے۔
+     اندرونی کالیں (مثلاً تصویر ڈالنے کے بعد) براہِ راست _naqSetTool
+     استعمال کرتی ہیں، تاکہ اُن پر toggle کا اثر نہ ہو۔                   */
+  window._naqPickTool = function (t) {
+    if (t && t !== 'select' && _naqTool === t) { window._naqSetTool('select'); return; }
+    window._naqSetTool(t);
+  };
+
   window._naqSetTool = function (t) {
+    // ٹول بدلتے ہی کراپ کی «تیار» حالت منسوخ — ورنہ اگلی کھینچ تصویر کاٹ دیتی
+    if (_naqCrop && typeof _naqCropCancel === 'function') _naqCropCancel(true);
     _naqTool = t; if (!_naqCanvas) return;
     const pen = (t === 'pen');
     _naqPanning = false;
@@ -896,7 +994,48 @@
     if ((e.key === 'Delete') && !editing && _naqCanvas && ao) {
       e.preventDefault(); _naqCanvas.remove(ao); _naqCanvas.discardActiveObject(); _naqCanvas.renderAll(); _saveSoon();
     }
+    /* ── Escape — ہر حالت سے باہر نکلنے کا راستہ ──────────────────────
+       پہلے کوئی راستہ نہیں تھا: ٹول منتخب ہو جاتا تھا مگر چھوڑنے کا کوئی
+       طریقہ نہ تھا، اِس لیے سسٹم سے نکل کر دوبارہ لاگ اِن کرنا پڑتا تھا۔ */
+    if (e.key === 'Escape' && !editing) {
+      e.preventDefault();
+      _naqEscape();
+    }
   }
+
+  /* ══ ہر چپکی ہوئی حالت سے باہر ═══════════════════════════════════════
+     کراپ منسوخ + زیرِ تعمیر شکل ہٹاؤ + pan بند + ٹول واپس «منتخب»۔ */
+  function _naqEscape() {
+    let kuch = false;
+    if (_naqCrop) { _naqCropCancel(true); kuch = true; }
+    if (_naqDrawing) {
+      try { _naqCanvas && _naqCanvas.remove(_naqDrawing); } catch (_) {}
+      _naqDrawing = null; _naqDrawStart = null; kuch = true;
+    }
+    if (_naqPanning) { _naqPanning = false; kuch = true; }
+    if (_naqTool !== 'select') { window._naqSetTool('select'); kuch = true; }
+    if (_naqCanvas) { try { _naqCanvas.discardActiveObject(); _naqCanvas.requestRenderAll(); } catch (_) {} }
+    if (kuch) TOAST('ٹول چھوڑ دیا — اب «منتخب / حرکت» حالت میں ہیں', 'info');
+  }
+  window._naqEscape = _naqEscape;
+
+  /* ══ کراپ منسوخ ══════════════════════════════════════════════════════
+     پہلے منسوخی کا کوئی راستہ نہ تھا۔ کراپ «تیار» ہو جانے کے بعد اگلی
+     بار کینوس پر کھینچنے سے کراپ ہی ہوتا تھا — چاہے آپ نے مستطیل یا کوئی
+     اور ٹول منتخب کر لیا ہو۔ یعنی آپ سمجھتے کہ مستطیل بنا رہے ہیں، مگر
+     اصل میں تصویر کٹ جاتی تھی۔ اب ٹول بدلنے یا Esc دبانے سے کراپ منسوخ۔ */
+  function _naqCropCancel(chup) {
+    if (!_naqCrop) return;
+    try { if (_naqCrop.rect && _naqCanvas) _naqCanvas.remove(_naqCrop.rect); } catch (_) {}
+    _naqCrop = null;
+    if (_naqCanvas) {
+      _naqCanvas.selection = (_naqTool === 'select');
+      _naqCanvas.defaultCursor = 'default';
+      try { _naqCanvas.requestRenderAll(); } catch (_) {}
+    }
+    if (!chup) TOAST('کراپ منسوخ', 'info');
+  }
+  window._naqCropCancel = _naqCropCancel;
 
   // تصویر compress (لمبا رخ ≤1600px, JPEG ~0.82)
   function _compress(dataUrl, cb) {
@@ -1154,8 +1293,15 @@
     return `
     .naq-wrap{ display:flex; flex-direction:column; height:100%; direction:rtl;
       font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
-    /* ٹول بار — ہمیشہ اوپر فکسڈ (sticky)، ہر وقت نظر آئے */
-    .naq-topwrap{ position:sticky; top:0; z-index:30; background:var(--bg-secondary,#f3f4f6); }
+    /* ٹول بار — چالان کی طرح صفحے کے ساتھ **چلتی** ہے (sticky نہیں)۔
+       نظر سے اوپر چلی جائے تو کرسر اوپر لے جانے پر خود سامنے آ جاتی ہے
+       (naq-peek) — اور موبائل پر اوپر کی طرف scroll کرنے سے۔ */
+    .naq-topwrap{ position:relative; z-index:30; background:var(--bg-secondary,#f3f4f6);
+      transition:transform .18s ease, box-shadow .18s ease; }
+    .naq-topwrap.naq-peek{ position:fixed; top:0; left:0; right:0; z-index:60;
+      box-shadow:0 6px 20px rgba(0,0,0,.18); }
+    /* جگہ محفوظ رکھنے والا خانہ — peek کے دوران نیچے کا مواد نہ ہلے */
+    #naq-topslot{ height:0; }
     .naq-toolbar{ display:flex; align-items:center; gap:8px; padding:6px 10px; flex-wrap:wrap;
       background:var(--bg-secondary,#f3f4f6); border-bottom:1px solid var(--border,#ccc); }
     .naq-chiptog{ font-weight:700; background:var(--bg-card,#fff); }

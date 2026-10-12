@@ -4658,12 +4658,185 @@ window._ch173BindKeys = _ch173BindKeys;
 // سافٹ ویئر کا اصل اصول لیگل ہے، مگر بہت سے دفاتر A4 پر چھاپتے ہیں —
 // اس لیے دونوں کا اختیار۔ منتخب کردہ سائز محفوظ رہتا ہے۔
 
+/* کام کی چوڑائی (ٹیبل کا اپنا خانہ) — کاغذ بدلنے سے پہلے اور بعد میں ناپی
+   جاتی ہے، تاکہ نسبت نکالی جا سکے۔ */
+function _ch173KaamChaurai() {
+  try {
+    const doc = _ch173Doc(); if (!doc) return 0;
+    // ⚠ ٹیبل کی اپنی چوڑائی یہاں کام نہیں آتی: اگر ٹیبل صفحے سے باہر نکلا ہوا
+    // ہو تو وہ اپنی ہی (بڑی) چوڑائی بتاتا ہے — یعنی کاغذ بدلنے پر پہلے اور
+    // بعد کی قیمت ایک جیسی آتی ہے اور نسبت نکل ہی نہیں پاتی۔
+    // اِس لیے صفحے کے اندر کی **دستیاب** چوڑائی ناپی جاتی ہے (padding کے بعد)۔
+    const cs = getComputedStyle(doc);
+    const w = (doc.clientWidth || 0)
+            - (parseFloat(cs.paddingLeft)  || 0)
+            - (parseFloat(cs.paddingRight) || 0);
+    return Math.max(0, Math.round(w));
+  } catch (_) { return 0; }
+}
+
+/* افسر کی خود کھینچی ہوئی چوڑائیاں نئے کاغذ کی نسبت سے — صرف کاغذ بدلنے پر۔
+   • نسبت = نئی کام کی چوڑائی ÷ پرانی
+   • اگر اِس کے بعد بھی کل چوڑائی صفحے سے زیادہ ہو تو مزید سکیڑ کر بالکل
+     اندر لے آئی جاتی ہے (یعنی ٹیبل کبھی باہر نہ نکلے)
+   • کوئی خانہ 24px سے کم نہیں                                              */
+function _ch173RescaleManualCols(puraniChaurai) {
+  const doc = _ch173Doc(); if (!doc) return;
+  const table = doc.querySelector('#ch173-table'); if (!table) return;
+  if (table.dataset.colsManual !== '1') return;   // خود کار ناپ کو _ch173Layout سنبھالتا ہے
+  const cols = [...table.querySelectorAll('colgroup col')];
+  const row  = table.querySelector('tbody tr');
+  if (!cols.length || !row) return;
+  const tds = [...row.querySelectorAll('td')];
+  if (tds.length < cols.length) return;
+
+  const nayi = _ch173KaamChaurai();
+  if (!nayi || !puraniChaurai || nayi === puraniChaurai) return;
+
+  const sc = _ch173Scale() || 1;
+  let ab = tds.slice(0, cols.length).map(td => (td.getBoundingClientRect().width / sc) || 0);
+  if (!ab.reduce((a, b) => a + b, 0)) return;
+
+  const f = nayi / puraniChaurai;
+  let naya = ab.map(w => w * f);
+
+  // صفحے سے باہر نہ جائے
+  let kul = naya.reduce((a, b) => a + b, 0);
+  if (kul > nayi) { const g = nayi / kul; naya = naya.map(w => w * g); }
+
+  const MIN = 24;
+  naya = naya.map(w => Math.max(MIN, Math.round(w)));
+
+  // MIN لگنے سے کل بڑھ گیا ہو تو سب سے چوڑے خانے سے کمی کرو
+  let t2 = naya.reduce((a, b) => a + b, 0);
+  if (t2 > nayi) {
+    let extra = t2 - nayi;
+    let idx = naya.indexOf(Math.max(...naya));
+    naya[idx] = Math.max(MIN, naya[idx] - extra);
+  }
+
+  cols.forEach((c, i) => { if (naya[i]) c.style.width = naya[i] + 'px'; });
+  try { _r173Dirty = true; } catch (_) {}
+}
+window._ch173RescaleManualCols = _ch173RescaleManualCols;
+
+/* ── ہر کاغذ کی اپنی ناپ یاد رکھو ───────────────────────────────────────
+   لیگل → A4 → لیگل کرنے پر ناپ **بالکل وہی** واپس آ جائے جو پہلے تھی۔
+   صرف نسبت سے سکیڑنے پر ایسا نہیں ہوتا تھا: واپس آنے پر ناپ کی ترتیب صفحے
+   کی پوری چوڑائی بھر دیتی تھی، یعنی آپ کی اصل ناپ بدل جاتی تھی۔           */
+function _ch173RememberCols(kaghaz) {
+  try {
+    const doc = _ch173Doc(); if (!doc) return;
+    const table = doc.querySelector('#ch173-table'); if (!table) return;
+    if (table.dataset.colsManual !== '1') return;
+    const cols = [...table.querySelectorAll('colgroup col')];
+    if (!cols.length) return;
+    const w = cols.map(c => c.style.width || '');
+    if (!w.some(Boolean)) return;
+    table.dataset['colsFor' + (kaghaz === 'a4' ? 'A4' : 'Legal')] = JSON.stringify(w);
+  } catch (_) {}
+}
+
+function _ch173RestoreCols(kaghaz) {
+  try {
+    const doc = _ch173Doc(); if (!doc) return false;
+    const table = doc.querySelector('#ch173-table'); if (!table) return false;
+    if (table.dataset.colsManual !== '1') return false;
+    const raw = table.dataset['colsFor' + (kaghaz === 'a4' ? 'A4' : 'Legal')];
+    if (!raw) return false;
+    const w = JSON.parse(raw);
+    const cols = [...table.querySelectorAll('colgroup col')];
+    if (!Array.isArray(w) || w.length !== cols.length) return false;
+    cols.forEach((c, i) => { if (w[i]) c.style.width = w[i]; });
+    return true;
+  } catch (_) { return false; }
+}
+
+/* ── آخری ضمانت: ٹیبل کبھی صفحے سے باہر نہ نکلے ─────────────────────────
+   یہ صرف کاغذ بدلنے کے موقع پر چلتی ہے، پوری ناپ کی ترتیب کے **بعد**۔
+   چاہے چوڑائی افسر نے خود طے کی ہو یا خود کار ترتیب نے — اگر کل چوڑائی
+   صفحے کی دستیاب چوڑائی سے زیادہ ہو تو سب خانے اُسی نسبت سے سکیڑ کر اندر
+   لے آئے جاتے ہیں۔ یعنی A4 پر ٹیبل باہر نکلنے کی صورت باقی نہیں رہتی۔
+   (صرف تین آخری کام دوبارہ چلائے جاتے ہیں جو خانوں کی چوڑائی نہیں بدلتے:
+    متن جمانا، CNIC لپیٹنا، SHO کی سطر سیدھ میں کرنا۔)                    */
+function _ch173ClampCols() {
+  try {
+    const doc = _ch173Doc(); if (!doc) return false;
+    const table = doc.querySelector('#ch173-table'); if (!table) return false;
+    const cols = [...table.querySelectorAll('colgroup col')];
+    const row  = table.querySelector('tbody tr');
+    if (!cols.length || !row) return false;
+    const tds = [...row.querySelectorAll('td')];
+    if (tds.length < cols.length) return false;
+
+    const nayi = _ch173KaamChaurai();
+    if (!nayi) return false;
+    const sc = _ch173Scale() || 1;
+    const ab = tds.slice(0, cols.length).map(td => (td.getBoundingClientRect().width / sc) || 0);
+    const kul = ab.reduce((a, b) => a + b, 0);
+    if (!kul || kul <= nayi + 1) return false;          // پہلے ہی اندر ہے
+
+    const MIN = 24, g = nayi / kul;
+    let naya = ab.map(w => Math.max(MIN, Math.round(w * g)));
+    let t2 = naya.reduce((a, b) => a + b, 0);
+    if (t2 > nayi) {
+      const idx = naya.indexOf(Math.max(...naya));
+      naya[idx] = Math.max(MIN, naya[idx] - (t2 - nayi));
+    }
+    cols.forEach((c, i) => { if (naya[i]) c.style.width = naya[i] + 'px'; });
+
+    // صرف وہ آخری کام جو چوڑائی نہیں بدلتے
+    try { _ch173OverflowSettle(4); } catch (_) {}
+    try { _ch173WrapCnics(); } catch (_) {}
+    try { _ch173AlignSho(); } catch (_) {}
+    return true;
+  } catch (_) { return false; }
+}
+window._ch173ClampCols = _ch173ClampCols;
+
 function _ch173SetPaper(v) {
+  // کاغذ بدلنے سے پہلے: کام کی چوڑائی (نسبت کے لیے) + پرانے کاغذ کی ناپ یاد
+  const _puraniKaamChaurai = _ch173KaamChaurai();
+  const _puranaKaghaz = _ch173Paper;
+  try { _ch173RememberCols(_puranaKaghaz); } catch (_) {}
   _ch173Paper = (v === 'a4') ? 'a4' : 'legal';
   try { localStorage.setItem('dio_ch173_paper', _ch173Paper); } catch (_) {}
-  // صفحہ نئے سائز پر دوبارہ بنائیں (چوڑائی + اونچائی دونوں)
-  try { _ch173FitPaper(); } catch (_) {}
-  try { _ch173OverflowSettle(4); } catch (_) {}
+  /* صفحہ نئے سائز پر دوبارہ بنائیں — پوری ناپ کی ترتیب سے۔
+     ───────────────────────────────────────────────────────────────────
+     پہلے یہاں صرف دو کام الگ الگ چلتے تھے:
+         _ch173FitPaper()  اور  _ch173OverflowSettle(4)
+     یعنی صفحہ تو نئے کاغذ کی ناپ پر آ جاتا تھا، مگر خانوں کی چوڑائی
+     (_ch173AutoFitCols) دوبارہ نہیں لی جاتی تھی۔ A4 لیگل سے تنگ ہے اور
+     اُس کا side margin بھی بڑا (0.2cm → 0.5cm) — یعنی کام کی چوڑائی تقریباً
+     0.47in کم ہو جاتی ہے، مگر خانے اپنی پرانی px چوڑائی پر قائم رہتے تھے۔
+     نتیجہ: A4 منتخب کرنے پر ٹیبل صفحے سے باہر نکل جاتا تھا۔
+     براؤزر پر ناپا گیا: کام کی چوڑائی 801px → 756px، مگر خانے 910px پر
+     ہی رہے — یعنی 154px باہر۔
+
+     اِس فائل کا اپنا اصول (اوپر LOCKED فہرست میں) یہی کہتا ہے:
+       «Naap ka POORA kaam SIRF _ch173Layout() se hota hai, aik pakki
+        tarteeb mein … In mein se koi kaam ALAG SE na chalaya jaye.»
+     اِس لیے اب وہی ایک ترتیب چلتی ہے۔ _ch173Layout() خود پہلے
+     _ch173FitPaper() چلاتا ہے اور آخر میں _ch173OverflowSettle(4) — یعنی
+     جو کچھ پہلے ہوتا تھا وہ سب بہرحال ہوتا ہے، اور ساتھ خانوں کی چوڑائی
+     بھی نئے کاغذ کے مطابق ہو جاتی ہے۔
+
+     دوسرا حصہ — افسر کی خود کھینچی ہوئی چوڑائی:
+     اگر خانوں کی چوڑائی افسر نے خود لکیر کھینچ کر طے کی ہو
+     (data-cols-manual='1') تو یہ فائل اُسے جان بوجھ کر کبھی نہیں بدلتی —
+     اور یہ درست ہے۔ مگر کاغذ بدلنے پر وہی px چوڑائی A4 کے تنگ صفحے سے
+     باہر نکل جاتی تھی۔ اِس لیے اب صرف **کاغذ بدلنے** کے موقع پر وہ چوڑائیاں
+     اُسی نسبت سے چھوٹی/بڑی کر دی جاتی ہیں (نیچے _ch173RescaleManualCols)۔
+     نسبت برقرار رہتی ہے، اِس لیے شکل وہی رہتی ہے — اور واپس لیگل چُننے پر
+     ناپ واپس اپنی جگہ آ جاتی ہے۔ باقی ہر موقع پر (فونٹ، خِرکی، دوبارہ
+     ناپ) افسر کی چوڑائی پہلے کی طرح محفوظ ہے۔                           */
+  try { _ch173FitPaper(); } catch (_) {}                      // نیا کاغذ لگ جائے
+  // اِس کاغذ کی ناپ پہلے یاد ہو تو بالکل وہی واپس؛ ورنہ نسبت سے سکیڑو
+  let _bahaal = false;
+  try { _bahaal = _ch173RestoreCols(_ch173Paper); } catch (_) {}
+  if (!_bahaal) { try { _ch173RescaleManualCols(_puraniKaamChaurai); } catch (_) {} }
+  try { _ch173Layout(); } catch (_) {}
+  try { _ch173ClampCols(); } catch (_) {}                     // باہر نکلنے کی صورت باقی نہ رہے
   if (typeof showToast === 'function')
     showToast(_ch173Paper === 'a4' ? '📄 A4 منتخب' : '📄 لیگل (8.5×13) منتخب', 'info');
 }

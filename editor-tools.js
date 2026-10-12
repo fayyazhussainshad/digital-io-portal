@@ -442,39 +442,45 @@ function _dioFloatSkip(el) {
   catch (_) { return false; }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   ⛔ تیرتی پٹی (FLOATING TOOLBAR) — پورے سسٹم سے **بند**
+   ───────────────────────────────────────────────────────────────────────
+   صارف کی ہدایت: «remove floating tool bar from all system, no more
+   floating toolbar.»
+
+   پہلے یہ پٹی ہر contenteditable خانے پر focus آنے سے خود نمودار ہو جاتی
+   تھی (صرف skip-list کی جگہیں مستثنیٰ تھیں)، اور متن کے اوپر آ کر کام میں
+   رکاوٹ بنتی تھی۔ اب:
+     • کوئی listener نہیں لگتا (نہ focusin، نہ scroll، نہ resize)
+     • اگر پہلے سے کوئی پٹی DOM میں پڑی ہو تو ہٹا دی جاتی ہے
+
+   فنکشن کا نام قائم رکھا گیا ہے (ہٹایا نہیں) کیونکہ darkhwastain.js،
+   report173.js اور saza-slip.js میں اِسے روکنے کے لیے احتیاطی کالیں موجود
+   ہیں — نام ہٹانے سے وہ فائلیں ٹوٹ سکتی تھیں۔ اب یہ کال بے اثر ہے۔
+
+   ⚠ نوٹ: جن خانوں پر صرف یہی پٹی تھی، وہاں اب موٹا/ترچھا جیسے بٹن نہیں
+   ہوں گے۔ جن صفحات پر اوپر مستقل پٹی پہلے سے موجود ہے — مثلاً مسل
+   (misal-docs.js)، ضمنی (zimni.js) اور درخواستیں (darkhwastain.js) — وہاں
+   کوئی فرق نہیں پڑے گا۔ Ctrl+B / Ctrl+I جیسی براؤزر کی عام کلیدیں اور
+   Ctrl+H (ڈھونڈیں اور بدلیں) پہلے کی طرح چلتی رہیں گی۔
+   ═══════════════════════════════════════════════════════════════════════ */
 function dioEnableFloatingToolbar() {
-  if (window._dioFloatBound) return;
-  window._dioFloatBound = true;
-  document.addEventListener('focusin', e => {
-    const el = e.target;
-    if (!el || !el.isContentEditable) return;
-    if (_dioFloatSkip(el)) { _dioHideFloatBar(); return; }
-    dioBindEditor(el.parentNode || document);
-    _dioShowFloatBar(el);
-  });
-  document.addEventListener('focusout', e => {
-    if (e.target && e.target.isContentEditable) _dioHideFloatBar();
-  });
-  window.addEventListener('scroll', () => {
-    const a = document.activeElement;
-    if (!a || !a.isContentEditable) return;
-    if (_dioFloatSkip(a)) return;
-    _dioShowFloatBar(a);
-  }, true);
-  window.addEventListener('resize', () => {
-    const a = document.activeElement;
-    if (!a || !a.isContentEditable) return;
-    if (_dioFloatSkip(a)) return;
-    _dioShowFloatBar(a);
-  });
+  // جان بوجھ کر بے اثر — صرف پرانی پٹی کی صفائی کرتا ہے
+  try {
+    const old = document.getElementById('dio-float-bar');
+    if (old && old.parentNode) old.parentNode.removeChild(old);
+    _dioFloatBar = null;
+  } catch (_) {}
+  return false;
 }
 window.dioEnableFloatingToolbar = dioEnableFloatingToolbar;
+window.dioFloatingToolbarDisabled = true;
 
-// ── KHUD-BA-KHUD chalu — app load hote hi (har jagah + naye forms) ──────────
+// پرانی پٹی کی صفائی — اگر کسی پرانے cache سے DOM میں رہ گئی ہو
 (function () {
-  function _start() { try { dioEnableFloatingToolbar(); } catch (_) {} }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _start);
-  else _start();
+  function _saaf() { try { dioEnableFloatingToolbar(); } catch (_) {} }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _saaf);
+  else _saaf();
 })();
 
 // ── GLOBAL Ctrl+H / Ctrl+F — MS Word ki tarah "ڈھونڈیں اور بدلیں" (poore system me) ──

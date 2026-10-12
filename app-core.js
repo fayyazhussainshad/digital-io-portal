@@ -1329,3 +1329,62 @@ function _dioDownloadFileView() {
   document.body.appendChild(a); a.click(); a.remove();
 }
 window._dioDownloadFileView = _dioDownloadFileView;
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Ctrl+P — چالان (اور آگے دیگر دستاویزات) کی چھپائی ایک ہی راستے سے
+   ───────────────────────────────────────────────────────────────────────
+   مسئلہ: چالان کی چھپائی کے دو الگ راستے تھے، اور دونوں کا نتیجہ مختلف:
+
+     • سسٹم کا 🖨️ بٹن → `_printR173()` ایک **نیا** HTML دستاویز بناتا ہے،
+       کاغذ کی اصل چوڑائی پر ناپ لیتا ہے، خانوں کی ناپ inline px میں پکی
+       کرتا ہے، اور اپنا فونٹ خود لوڈ کرتا ہے۔
+     • Ctrl+P → براؤزر سیدھا **زندہ صفحہ** چھاپ دیتا تھا، صرف
+       `@media print` کے سہارے — نہ وہ ناپ، نہ وہ پکی inline قدریں۔
+
+   اِسی لیے دونوں کی شکل الگ آتی تھی (خاص طور پر خانوں کی چوڑائی اور
+   CNIC کے فاصلے)۔
+
+   حل: چالان کھلا ہو تو Ctrl+P کو روک کر اُسی سرکاری راستے (`_printR173`)
+   پر بھیج دیا جاتا ہے۔ یعنی دونوں طریقوں سے **بالکل ایک ہی** نتیجہ۔
+
+   اہم: report173.js کو ہاتھ نہیں لگایا گیا — وہ فائل v385 پر مقفل (LOCKED)
+   ہے اور ناپ کی ترتیب نہایت نازک ہے۔ یہ صرف ایک اضافی keydown سننے والا ہے۔
+   نقشہ موقع کا اپنا Ctrl+P پہلے سے موجود ہے، اِس لیے اُس کے کھلے ہونے پر
+   یہ خاموش رہتا ہے (دو بار چھپائی نہ ہو)۔
+   ═══════════════════════════════════════════════════════════════════════ */
+(function () {
+  if (window._dioCtrlPBound) return;
+  window._dioCtrlPBound = true;
+
+  function _nazarMein(el) {
+    if (!el) return false;
+    try {
+      if (el.offsetParent === null && getComputedStyle(el).position !== 'fixed') return false;
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0;
+    } catch (_) { return false; }
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
+    if (String(e.key || '').toLowerCase() !== 'p') return;
+
+    // نقشہ موقع کا اپنا handler ہے — یہاں کچھ نہ کریں
+    if (_nazarMein(document.getElementById('dio-naqsha-doc'))) return;
+
+    // چالان کھلا ہے؟
+    const ch = document.getElementById('ch173-doc');
+    if (!_nazarMein(ch)) return;
+    if (typeof window._printR173 !== 'function' && typeof _printR173 !== 'function') return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      (window._printR173 || _printR173)();
+    } catch (_) {
+      // آخری سہارا — کم از کم براؤزر کی چھپائی چل جائے
+      try { window.print(); } catch (__) {}
+    }
+  }, true);
+})();
