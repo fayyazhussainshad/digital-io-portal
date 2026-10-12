@@ -25,6 +25,7 @@
 | 93 | `93a` → `93b` | evidence کی UPDATE policy؛ 21 tables پر RLS ON | **چل چکی** |
 | 94 | `94a` → `94b` → `94c` → `94d` | admin کے تین RPC؛ request RPC کی درستگی | **چل چکی** |
 | 95 | `95_subs_lockdown.sql` | `subscriptions` پر client کی لکھائی بند | **چل چکی** |
+| 100 | `100_email_notify.sql` | رجسٹریشن / منظوری / سبسکرپشن پر خودکار ای میل (Edge Function `dio-notify` پہلے deploy کریں) | **نئی** |
 
 ہر قدم کے ساتھ `*_CHECK.sql` (ایک ہی statement — Supabase کا editor نتیجہ ضرور
 دکھاتا ہے) اور جہاں خطرہ تھا وہاں `*_ROLLBACK.sql`۔
