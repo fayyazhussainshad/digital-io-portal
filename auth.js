@@ -95,6 +95,69 @@ async function _dioLoginWithToken(key) {
 window._dioSaveAuthToken  = _dioSaveAuthToken;
 window._dioLoginWithToken = _dioLoginWithToken;
 
+/* ═══ فوری لاگ اِن (PIN / بایومیٹرک) — token ہمیشہ تازہ (v526) ═══════════
+   PEHLE KYUN KAAM NAHI KARTA THA (maidan ki shikayat: "bio active ho jata
+   hai magar kaam nahi karta"):
+   1) "بایومیٹرک فعال کریں" sirf fingerprint ka credential rakhta tha —
+      session token mehfooz HI nahi hota tha.
+   2) Fingerprint kamyab hone ke baad code purana `dio_biometric_token`
+      (sada password) dhoondta tha jo kab ka hata diya gaya tha — natija:
+      "ای میل/پاسورڈ سے لاگ ان کریں". Yani har bar password.
+   3) Supabase refresh token aik hi bar chalta hai. App khud har ~1 ghante
+      token badalti hai — mehfooz naqal purani ho jati thi. Aur LOG AUT par
+      signOut() isi session ko server par mansookh kar deta tha.
+   AB: token har tabdeeli par khud-ba-khud taza mehfooz hota hai, aur PIN/
+   biometric fa'al hon to log aut "taala" hai (session baqi, token encrypted). */
+const _DIO_QUICK = [['dio_pin_rt', 'dio_pin_email'], ['dio_bio_rt', 'dio_biometric_email']];
+function _dioSameEmail(a, b) {
+  return !!a && !!b && String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+}
+function _dioQuickKeysFor(email) {
+  try { return _DIO_QUICK.filter(([, ek]) => _dioSameEmail(localStorage.getItem(ek), email)).map(([rk]) => rk); }
+  catch (_) { return []; }
+}
+async function _dioSyncQuickTokens(session) {
+  if (!session || !session.refresh_token || !session.user) return;
+  const keys = _dioQuickKeysFor(session.user.email);
+  for (const k of keys) {
+    try { localStorage.setItem(k, await _dioEnc(session.refresh_token)); } catch (_) {}
+  }
+}
+// Supabase ke session ki storage key (app-core.js ka SUPABASE_URL)
+/* global SUPABASE_URL */
+function _dioAuthStorageKey() {
+  try { return 'sb-' + new URL(SUPABASE_URL).hostname.split('.')[0] + '-auth-token'; }
+  catch (_) { return null; }
+}
+// Log aut ke waqt: PIN/biometric fa'al ho to session server par baqi rakho,
+// is aale ki browser storage se hata do. true = taala laga (signOut na karo).
+async function _dioDetachForQuickLogin() {
+  const email = (typeof currentUser !== 'undefined' && currentUser && currentUser.email) || '';
+  if (!_dioQuickKeysFor(email).length) return false;
+  const { data } = await supabaseClient.auth.getSession();
+  const s = data && data.session;
+  if (!s || !s.refresh_token) return false;
+  await _dioSyncQuickTokens(s);
+  try { supabaseClient.auth.stopAutoRefresh(); } catch (_) {}
+  const key = _dioAuthStorageKey();
+  if (key) {
+    try { if (window.dioSecureStorage && window.dioSecureStorage.removeItem) await window.dioSecureStorage.removeItem(key); } catch (_) {}
+    try { localStorage.removeItem(key); } catch (_) {}
+  }
+  return true;
+}
+// Har token tabdeeli par mehfooz naqal taza (callback me await nahi — Supabase ki hidayat)
+try {
+  if (supabaseClient && supabaseClient.auth && supabaseClient.auth.onAuthStateChange) {
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+        setTimeout(() => { _dioSyncQuickTokens(session); }, 0);
+      }
+    });
+  }
+} catch (_) {}
+window._dioSyncQuickTokens = _dioSyncQuickTokens;
+
 // ══ PIN ہیشنگ (WebCrypto PBKDF2 + نمک) ══════════════════════════════
 //   پرانے سادہ (dio_pin) اور btoa (app-lock) PIN درست داخلے پر خودکار
 //   ہیش میں بدل جاتے ہیں (migration)۔ صرف ہیش محفوظ ہوتا ہے، خام PIN نہیں۔
@@ -307,10 +370,12 @@ async function doLogin() {
     currentUser = data.user;
     // Clear failed attempts on success
     localStorage.removeItem('dio_login_lock');
-    // If biometric is enabled for this email, save token for future biometric login
-    if (localStorage.getItem('dio_biometric_email') === email) {
-      try { await _dioSaveAuthToken('dio_bio_rt'); localStorage.removeItem('dio_biometric_token'); } catch(_) {}
-    }
+    // Biometric/PIN is ای میل کے لیے فعال ہو تو تازہ token محفوظ (v526: chhote-baRe huroof ka farq khatam)
+    try {
+      if (_dioSameEmail(localStorage.getItem('dio_biometric_email'), (data.user && data.user.email) || email)) {
+        await _dioSaveAuthToken('dio_bio_rt'); localStorage.removeItem('dio_biometric_token');
+      }
+    } catch(_) {}
     await _loadOfficerProfile();
 
     // Check if officer is approved (skip for admins/superadmins)
@@ -454,6 +519,9 @@ async function loginSuccess() {
   // SECURITY: is browser session ka nishan. sessionStorage browser band hote hi
   // khud mit jata hai — is liye app dobara kholne par password lazmi hoga.
   try { sessionStorage.setItem('dio_sess_active', '1'); } catch(_) {}
+  // v526: taala (quick-login logout) par token ka khud-taaza-karna rok diya jata hai —
+  // naye login par dobara chalao, warna ghante baad session expire ho jata.
+  try { if (supabaseClient && supabaseClient.auth && supabaseClient.auth.startAutoRefresh) supabaseClient.auth.startAutoRefresh(); } catch(_) {}
   // AUDIT — login success (Phase 4B). Ye chalega tab jab currentOfficer set ho jaye.
   // Isliye chhota delay — initApp() mein officer profile fetch ho jata hai.
   try {
@@ -560,7 +628,13 @@ async function doLogout() {
   } catch (_) {}
 
   // 1. Server sign-out (offline par fail ho to bhi jari raho)
-  try { await supabaseClient.auth.signOut(); } catch(_) {}
+  //    v526: agar is aale par PIN ya biometric fa'al hai to sign-out ki jagah
+  //    "taala" — session server par baqi, mehfooz (encrypted) token ke sath.
+  //    Warna signOut() wahi token mansookh kar deta tha aur agli dafa
+  //    fingerprint/PIN "kaam nahi karta" tha (asal shikayat).
+  let _quickKept = false;
+  try { _quickKept = await _dioDetachForQuickLogin(); } catch(_) { _quickKept = false; }
+  if (!_quickKept) { try { await supabaseClient.auth.signOut(); } catch(_) {} }
 
   // 2. Camera / microphone / voice recognition stop
   try {
@@ -1028,18 +1102,25 @@ async function doBiometric() {
       }
       return;
     }
-    // ── ONLINE: saved session se login ──
-    const savedPass = localStorage.getItem('dio_biometric_token');
-    if (savedPass) {
-      document.getElementById('login-email').value = savedEmail;
-      document.getElementById('login-password').value = atob(savedPass);
-      await doLogin();
-    } else {
-      showToast('بایومیٹرک کامیاب — ای میل/پاسورڈ سے لاگ ان کریں', 'success');
-      document.getElementById('login-email').value = savedEmail;
-    }
+    // ── ONLINE: mehfooz (encrypted) session token se poora login (v526) ──
+    // Pehle yahan purana sada password (`dio_biometric_token`) dhoonda jata
+    // tha jo kab ka hat chuka tha — is liye fingerprint ke baad bhi har bar
+    // password mangta tha.
+    setLoginLoading(true);
+    const ok = await _dioLoginWithToken('dio_bio_rt');
+    if (ok) { loginSuccess(); return; }
+    setLoginLoading(false);
+    showToast('سیشن ختم ہو گیا — ایک بار پاس ورڈ سے لاگ اِن کریں، بایومیٹرک پھر خود چل پڑے گا', 'warn', 6000);
+    const le = document.getElementById('login-email'); if (le) le.value = savedEmail;
+    try { setLoginMethod('password', document.querySelectorAll('.login-method')[0]); } catch (_) {}
   } catch(e) {
-    showToast('بایومیٹرک ناکام — دوبارہ کوشش کریں', 'error');
+    try { setLoginLoading(false); } catch (_) {}
+    const n = (e && e.name) || '';
+    showToast(n === 'NotAllowedError'
+      ? 'بایومیٹرک منسوخ ہوا یا وقت ختم ہو گیا — دوبارہ کوشش کریں'
+      : (n === 'InvalidStateError' || n === 'NotFoundError')
+        ? 'اس ڈیوائس پر بایومیٹرک رجسٹر نہیں — پاس ورڈ سے لاگ اِن کر کے ترتیبات میں دوبارہ فعال کریں'
+        : 'بایومیٹرک ناکام — دوبارہ کوشش کریں', 'error', 6000);
   } finally {
     if (ring) ring.classList.remove('scanning');
   }
@@ -1077,12 +1158,42 @@ async function enableBiometric() {
     });
 
     localStorage.setItem('dio_biometric_cred', _bufToB64(cred.rawId));
-    localStorage.setItem('dio_biometric_email', currentUser?.email || '');
-    showToast('بایومیٹرک فعال ہو گیا — اب فنگرپرنٹ سے لاگ ان کریں', 'success');
+    localStorage.setItem('dio_biometric_email', String(currentUser?.email || '').toLowerCase());
+    // v526: session token ABHI mehfooz karo — pehle yeh hota hi nahi tha,
+    // is liye fingerprint ke baad bhi login nahi hota tha.
+    const saved = await _dioSaveAuthToken('dio_bio_rt');
+    if (!saved) {
+      showToast('بایومیٹرک رجسٹر ہو گیا، مگر سیشن محفوظ نہ ہو سکا — ایک بار لاگ آؤٹ کر کے پاس ورڈ سے لاگ اِن کریں', 'warn', 7000);
+    } else {
+      showToast('بایومیٹرک فعال ہو گیا — اگلی بار فنگرپرنٹ/چہرے سے لاگ اِن کریں', 'success', 5000);
+    }
+    try { if (typeof showPage === 'function' && window._activePage === 'settings') showPage('settings', null); } catch (_) {}
   } catch(e) {
-    showToast('بایومیٹرک فعال نہیں ہوا: ' + (e.message||''), 'error');
+    const n = (e && e.name) || '';
+    showToast(n === 'NotAllowedError'
+      ? 'بایومیٹرک منسوخ ہوا یا وقت ختم ہو گیا'
+      : n === 'NotSupportedError'
+        ? 'اس ڈیوائس/براؤزر میں فنگرپرنٹ یا چہرے کی سہولت دستیاب نہیں'
+        : 'بایومیٹرک فعال نہیں ہوا: ' + (e.message || ''), 'error', 6000);
   }
 }
+
+// v526: بایومیٹرک بند کریں — credential اور محفوظ token دونوں ہٹاؤ
+function disableBiometric() {
+  ['dio_biometric_cred', 'dio_biometric_email', 'dio_bio_rt', 'dio_biometric_token'].forEach(k => {
+    try { localStorage.removeItem(k); } catch (_) {}
+  });
+  showToast('اس ڈیوائس پر بایومیٹرک بند کر دیا گیا', 'info', 4000);
+  try { if (typeof showPage === 'function' && window._activePage === 'settings') showPage('settings', null); } catch (_) {}
+}
+function isBiometricEnabled() {
+  try {
+    return !!(localStorage.getItem('dio_biometric_cred') &&
+      _dioSameEmail(localStorage.getItem('dio_biometric_email'), currentUser && currentUser.email));
+  } catch (_) { return false; }
+}
+window.disableBiometric = disableBiometric;
+window.isBiometricEnabled = isBiometricEnabled;
 
 
 function _bufToB64(buf) {

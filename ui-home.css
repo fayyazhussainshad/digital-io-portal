@@ -34,6 +34,51 @@
   direction: rtl;
 }
 
+/* ── سورۃ الاخلاص (v526) — Amiri Quran، خود میزبان (OFL)، ایک سطر ── */
+@font-face {
+  font-family: 'Amiri Quran DIO';
+  src: url('fonts/amiri-quran-arabic.woff2') format('woff2');
+  font-display: swap;
+}
+#login-screen .dio-ikhlas-band {
+  grid-column: 1 / -1;
+  container-type: inline-size;
+  background-color: var(--dio-file-2);
+  background-image: radial-gradient(120% 140% at 50% 0%, rgba(201,162,39,.16), transparent 60%);
+  padding: 16px 22px 18px;
+  border-bottom: 1px solid rgba(201,162,39,.35);
+}
+#login-screen p.dio-ikhlas {
+  margin: 0; padding: 0 0 12px;
+  font-family: 'Amiri Quran DIO', 'Amiri Quran', 'Amiri', 'Traditional Arabic', serif;
+  font-weight: 400; line-height: 1.85;
+  /* poori surah aik satar: matn ki chauraai ≈ 27.5 × font-size (naap kar) */
+  font-size: clamp(8pt, 3.45cqi, 26pt);
+  white-space: nowrap; text-align: center !important; direction: rtl;
+  color: #e9cf73;
+  background: linear-gradient(180deg, #f8ecc0 0%, #e2bd55 50%, #b98f2c 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(0,0,0,.4));
+  position: relative;
+}
+/* نیچے پیتل کی باریک آرائشی لکیر — درمیان میں چھوٹا ہیرا */
+#login-screen p.dio-ikhlas::after {
+  content: ""; position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
+  width: min(60%, 360px); height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201,162,39,.9), transparent);
+}
+#login-screen p.dio-ikhlas::before {
+  content: ""; position: absolute; left: 50%; bottom: -3px; width: 7px; height: 7px;
+  transform: translateX(-50%) rotate(45deg); background: var(--dio-brass);
+}
+@supports not (font-size: 1cqi) {
+  #login-screen p.dio-ikhlas { font-size: clamp(8pt, 2.4vw, 22pt); }
+}
+@media (max-width: 860px) {
+  #login-screen .dio-ikhlas-band { padding: 12px 8px 14px; }
+}
+
 /* Hero — نیلا فائل کور، رجسٹر کی ہلکی لکیریں */
 #login-screen .dio-land-hero {
   background-color: var(--dio-file);
@@ -290,4 +335,92 @@ html:not([data-theme="light"]) #login-screen .dio-lc-hint { color: #f5b942; }
 
 @media (prefers-reduced-motion: reduce) {
   .page-content button.dio-tile, #login-screen * { transition: none !important; animation: none !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   5. اندرونی صفحات — پیشہ ورانہ، یکساں شناخت (v526)
+   USOOL: landing ka "file-cover" neela + peetal (brass) yahan bhi —
+   topbar aik brand patti, har safhe ka unwan aik saaf patti, jadwal ka
+   sar-nama neela. Font size NAHI badle (unwan ka teen-darja paimana
+   index.html/theme-pro.css wala hi). Dastavez (چالان/ضمنی/پرنٹ) bilkul
+   alag — sirf @media screen aur sirf app ke dhanche par.
+   ═══════════════════════════════════════════════════════════════ */
+@media screen {
+  /* ── Topbar: neeli brand patti + peetal ki lakeer ── */
+  #main-app .topbar {
+    background: linear-gradient(180deg, var(--dio-file) 0%, var(--dio-file-2) 100%) !important;
+    border-bottom: 3px solid var(--dio-brass) !important;
+    box-shadow: 0 2px 10px rgba(9, 20, 40, .18) !important;
+  }
+  #main-app .dio-tb-name {
+    color: #ffffff !important;
+    font-family: Georgia, 'Times New Roman', serif !important;
+    font-size: 13.5pt !important; font-weight: 700 !important; letter-spacing: .02em !important;
+  }
+  #main-app .dio-tb-sub {
+    color: #e9cf73 !important;
+    border-inline-start-color: rgba(255, 255, 255, .25) !important;
+    font-size: 11.5pt !important;
+  }
+  #main-app .topbar-btn, #main-app .topnav-btn { color: #dbe5f3 !important; }
+  #main-app .topbar-btn:hover, #main-app .topnav-btn:hover,
+  #main-app .topnav-btn.active { background: rgba(255, 255, 255, .10) !important; color: #ffffff !important; }
+  #main-app .dio-tb-logout:hover { color: #fca5a5 !important; background: rgba(239, 68, 68, .16) !important; }
+  #main-app .dio-backbtn {
+    background: rgba(255, 255, 255, .06) !important;
+    border-color: rgba(255, 255, 255, .28) !important;
+    color: #ffffff !important;
+  }
+  #main-app .dio-backbtn:hover { background: rgba(255, 255, 255, .14) !important; color: #ffffff !important; }
+  #main-app .dio-tb-status #status-text { color: #c9d5e6 !important; }
+  #main-app :focus-visible { outline: 2px solid var(--dio-brass); outline-offset: 2px; }
+
+  /* ── Safhe ka unwan: aik saaf patti (unwan + zaili unwan + asal button) ── */
+  #main-app .page-content > .page-header,
+  #main-app .page-content > div > .page-header {
+    background: var(--dio-surface);
+    border: 1px solid var(--dio-line) !important;
+    border-inline-start: 4px solid var(--dio-brass) !important;
+    border-radius: 12px;
+    padding: 10px 16px !important;
+    box-shadow: var(--dio-shadow);
+  }
+  #main-app .page-header .page-title { display: block !important; color: var(--dio-ink) !important; }
+  #main-app .page-header .page-subtitle { margin-top: -2px; }
+
+  /* ── Card: unwan ke neeche halki lakeer ── */
+  #main-app .page-content .card > .card-title:first-child {
+    padding-bottom: 8px; margin-bottom: 12px !important;
+    border-bottom: 1px solid var(--dio-line);
+  }
+
+  /* ── Jadwal: neela sar-nama (sirf asal jadwal, mobile cards nahi) ── */
+  #main-app .page-content .data-table:not(.dio-cards) thead th {
+    background: var(--dio-file) !important;
+    color: #ffffff !important;
+    border-bottom: 2px solid var(--dio-brass) !important;
+  }
+
+  /* ── Modal: neela sar-nama, safaid unwan ── */
+  .modal-header,
+  #modal-backdrop .modal-card > div:first-child {
+    background: linear-gradient(180deg, var(--dio-file), var(--dio-file-2)) !important;
+    border-bottom: 2px solid var(--dio-brass) !important;
+    border-radius: 14px 14px 0 0;
+  }
+  .modal-header .modal-title, #modal-title { color: #ffffff !important; }
+  .modal-header .modal-close,
+  #modal-backdrop .modal-card > div:first-child > button { color: #dbe5f3 !important; }
+
+  /* ── Neeche ki patti ── */
+  #main-app .bottombar {
+    background: var(--dio-surface) !important;
+    border-top: 1px solid var(--dio-line) !important;
+  }
+}
+
+@media screen and (max-width: 760px) {
+  #main-app .dio-tb-sub { color: #ffffff !important; font-size: 12.5pt !important; }
+  #main-app .page-content > .page-header,
+  #main-app .page-content > div > .page-header { padding: 8px 12px !important; }
 }
