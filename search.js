@@ -7,6 +7,24 @@ registerPage('search', renderSearch);
 const _SEARCH_HISTORY_KEY = 'digital_io_search_history';
 let _searchDebounce = null;
 
+// FIX v524: ye pehle `_runGlobalSearch` ke ANDAR tha magar `_renderSearchResults`
+// bhi ise bulata tha → "ReferenceError: _keepFocus is not defined" (har natije par).
+// Natija `#sr-results` mein jata hai, khana alag hai — phir bhi kuch
+// browser natija badalne par focus gira dete hain, is liye wapas rakho.
+function _keepFocus() {
+  try {
+    const el = document.getElementById('sr-query');
+    if (el && document.activeElement !== el) {
+      const p = el.value.length;
+      el.focus(); el.setSelectionRange(p, p);
+    }
+  } catch (_) {}
+}
+
+// Dashboard par talaash ka khana hai (v524) — wahan khaali khane par
+// "پچھلی تلاش" ki badi khidki nahi, bas natije saaf.
+function _srOnDashboard() { return !!document.getElementById('dash-search'); }
+
 function renderSearch(container) {
   container.innerHTML = `
   <div style="max-width:100%;margin:0;direction:rtl;">
@@ -36,7 +54,11 @@ function renderSearch(container) {
 function _srDebounced() {
   const q = document.getElementById('sr-query')?.value.trim() || '';
   clearTimeout(_searchDebounce);
-  if (!q) { _renderSearchHistory(); return; }
+  if (!q) {
+    if (_srOnDashboard()) { const b = document.getElementById('sr-results'); if (b) b.innerHTML = ''; }
+    else _renderSearchHistory();
+    return;
+  }
   // Aik-do harf par talaash na chalao — har harf par server chalane se
   // safha sust ho jata tha. Teen harf ya us se ooper par hi chalti hai.
   if (q.length < 3) {
@@ -84,17 +106,6 @@ function _srFromHistory(q) {
 }
 
 async function _runGlobalSearch(q) {
-  // Natija `#sr-results` mein jata hai, khana alag hai — phir bhi kuch
-  // browser natija badalne par focus gira dete hain, is liye wapas rakho.
-  const _keepFocus = () => {
-    try {
-      const el = document.getElementById('sr-query');
-      if (el && document.activeElement !== el) {
-        const p = el.value.length;
-        el.focus(); el.setSelectionRange(p, p);
-      }
-    } catch (_) {}
-  };
   _addSearchHistory(q);
   const box = document.getElementById('sr-results');
   const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;

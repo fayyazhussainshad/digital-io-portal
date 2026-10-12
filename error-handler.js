@@ -68,7 +68,7 @@
       _recent.push({ sig: sig, t: now });
 
       var rec = { k: kind, m: _redact(msg), s: source || '', l: line || 0, c: col || 0,
-        st: _redact(stack), u: String(location.hash || ''), ua: navigator.userAgent, t: new Date().toISOString() };
+        st: _redact(stack), u: String(location.hash || '').replace(/(access_token|refresh_token|provider_token|token_hash|code)=[^&]*/g, '$1=***'), ua: navigator.userAgent, t: new Date().toISOString() };
       try { console.error('[DIO error]', kind, msg, source ? ('@' + source + ':' + line) : '', err || ''); } catch (_) {}
       _store(rec);
       _remote(rec);

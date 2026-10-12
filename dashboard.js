@@ -86,6 +86,12 @@ async function _buildDash() {
     </div>
   </div>
 
+  <!-- مرکزی تلاش — سائیڈ بار سے ہٹا کر یہاں (v524) -->
+  ${_dashSearchBox()}
+
+  <!-- مرکزی بٹن — سائیڈ بار ختم، سب کچھ یہیں (v524) -->
+  ${_dashMainTiles(total, pendRem.length)}
+
   <!-- Cases Stats — 7 سفید کارڈ (mockup اسٹائل — outline آئیکن) -->
   <b class="dio-sec-h" role="heading" aria-level="2">مقدمات کی صورتحال</b>
   ${_dashStatCards(total, statusCounts)}
@@ -110,26 +116,110 @@ async function _buildDash() {
 // ── STAT CARDS — mockup اسٹائل (سفید کارڈ + outline آئیکن، theme-aware) ──
 function _dashStatCards(total, sc) {
   sc = sc || {};
+  // `s` = status code jo "میرے مقدمات" par FILTER ban kar jata hai.
+  // (Pehle har card `showPage('cases')` bulata tha — har card TAMAM maqdmaat dikhata tha.)
   const cards = [
-    { l:'کل مقدمات',      v:total,             col:'var(--accent)', ic:'<path d="m12 2 9 4.5-9 4.5-9-4.5L12 2Z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 17 9 4.5 9-4.5"/>' },
-    { l:'زیر تفتیش',      v:sc.under||0,       col:'#2563eb',       ic:'<path d="M7 3h10M7 21h10M8 3v3.5a4 4 0 0 0 1.5 3.1l2.5 2 2.5-2A4 4 0 0 0 16 6.5V3M8 21v-3.5a4 4 0 0 1 1.5-3.1l2.5-2 2.5 2A4 4 0 0 1 16 17.5V21"/>' },
-    { l:'عدم پتہ',        v:sc.untrace||0,     col:'#7c3aed',       ic:'<path d="M4 6a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M11 11a1.5 1.5 0 1 1 2 1.3c-.6.3-1 .7-1 1.4M12 16.5h.01"/>' },
-    { l:'چالان 512 ض ف',  v:sc.challan512||0,  col:'#ea8a2f',       ic:'<path d="M4 6a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/>' },
-    { l:'چالان نامکمل',   v:sc.incomplete||0,  col:'#d97706',       ic:'<path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M9 13h4M9 16h6"/>' },
-    { l:'چالان مکمل',     v:sc.complete||0,    col:'var(--green)',  ic:'<circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/>' },
-    { l:'اخراج',          v:sc.cancel||0,      col:'var(--red)',    ic:'<path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="m9.5 12 5 5M14.5 12l-5 5"/>' },
+    { s:'',           l:'کل مقدمات',      v:total,             col:'var(--accent)', ic:'<path d="m12 2 9 4.5-9 4.5-9-4.5L12 2Z"/><path d="m3 12 9 4.5 9-4.5"/><path d="m3 17 9 4.5 9-4.5"/>' },
+    { s:'under',      l:'زیر تفتیش',      v:sc.under||0,       col:'#2563eb',       ic:'<path d="M7 3h10M7 21h10M8 3v3.5a4 4 0 0 0 1.5 3.1l2.5 2 2.5-2A4 4 0 0 0 16 6.5V3M8 21v-3.5a4 4 0 0 1 1.5-3.1l2.5-2 2.5 2A4 4 0 0 1 16 17.5V21"/>' },
+    { s:'untrace',    l:'عدم پتہ',        v:sc.untrace||0,     col:'#7c3aed',       ic:'<path d="M4 6a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M11 11a1.5 1.5 0 1 1 2 1.3c-.6.3-1 .7-1 1.4M12 16.5h.01"/>' },
+    { s:'challan512', l:'چالان 512 ض ف',  v:sc.challan512||0,  col:'#ea8a2f',       ic:'<path d="M4 6a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/>' },
+    { s:'incomplete', l:'چالان نامکمل',   v:sc.incomplete||0,  col:'#d97706',       ic:'<path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M9 13h4M9 16h6"/>' },
+    { s:'complete',   l:'چالان مکمل',     v:sc.complete||0,    col:'var(--green)',  ic:'<circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/>' },
+    { s:'cancel',     l:'اخراج',          v:sc.cancel||0,      col:'var(--red)',    ic:'<path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="m9.5 12 5 5M14.5 12l-5 5"/>' },
   ];
   return `
   <div style="margin-bottom:14px;">
     <div class="dash-stats-grid dio-stats">
       ${cards.map(c=>`
-      <button type="button" class="dio-stat${(+c.v)?'':' is-zero'}" style="--st:${c.col}" onclick="showPage('cases',null)" aria-label="${c.l}">
+      <button type="button" class="dio-stat${(+c.v)?'':' is-zero'}" style="--st:${c.col}" onclick="dioOpenCases('${c.s}')" aria-label="${c.l}">
         <svg class="dio-stat-ic" viewBox="0 0 24 24" aria-hidden="true">${c.ic}</svg>
         <b class="dio-stat-num">${c.v}</b>
         <span class="dio-stat-lbl">${c.l}</span>
       </button>`).join('')}
     </div>
   </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  مرکزی تلاش + مرکزی بٹن (v524)
+//  افسر کی ہدایت: سائیڈ بار نہیں چاہیے — تمام اہم بٹن اور تلاش
+//  مرکزی صفحے پر ہوں۔ تلاش وہی پورے سسٹم والی (search.js) ہے —
+//  یہاں صرف اس کا خانہ اور نتائج کی جگہ ہے (#sr-query / #sr-results)۔
+// ═══════════════════════════════════════════════════════════════
+function _dashSearchBox() {
+  return `
+  <div id="dash-search" class="dio-dsearch" role="search">
+    <svg class="dio-dsearch-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+    <input id="sr-query" type="search" autocomplete="off" dir="auto"
+      placeholder="تلاش — مقدمہ نمبر، مدعی، ملزم، گواہ، شناختی کارڈ، موبائل…"
+      aria-label="پورے سسٹم میں تلاش"
+      oninput="window._srDebounced&&_srDebounced()"
+      onkeydown="if(event.key==='Escape'){this.value='';window._srDebounced&&_srDebounced();}">
+  </div>
+  <div id="sr-results" class="dio-dsearch-res" aria-live="polite"></div>`;
+}
+
+const _DT_IC = {
+  add:    '<path d="M12 5v14M5 12h14"/>',
+  cases:  '<path d="M3.5 7.5h6l2 2.5h9V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z"/>',
+  rem:    '<path d="M6.5 10a5.5 5.5 0 0 1 11 0c0 4 1.5 5.5 1.5 5.5H5S6.5 14 6.5 10z"/><path d="M10.2 19a2 2 0 0 0 3.6 0"/>',
+  inc:    '<path d="M12 4 3 19.5h18z"/><path d="M12 10v4.5M12 17.2h.01"/>',
+  law:    '<path d="M12 4v16M5 8h14M7 8l-3 6a3 3 0 0 0 6 0L7 8ZM17 8l-3 6a3 3 0 0 0 6 0l-3-6ZM8 20h8"/>',
+  fivec:  '<rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/>',
+  people: '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14.2A4.5 4.5 0 0 1 21 18.5"/>',
+  tpl:    '<path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M8 13h8M8 17h5"/>',
+  orders: '<path d="M6 3.5h9l3 3V20.5H6z"/><path d="M9 10h6M9 14h6"/>',
+  sho:    '<path d="M4 20h16M6 20V9l6-4 6 4v11M10 20v-5h4v5"/>',
+  dsp:    '<circle cx="12" cy="9" r="5"/><path d="m9.5 13.5-1.5 7 4-2 4 2-1.5-7"/>',
+  car:    '<path d="M5 16V11l2-4.5h10L19 11v5"/><path d="M3.5 16h17v2.5h-17z"/><circle cx="7.5" cy="18.5" r="1.4"/><circle cx="16.5" cy="18.5" r="1.4"/>',
+  backup: '<path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 9.5a4 4 0 0 1-.5 8.5Z"/><path d="M12 11v6M9.5 13.5 12 11l2.5 2.5"/>',
+  sub:    '<path d="M6 4h12l3 5-9 11L3 9z"/><path d="M3 9h18"/>',
+  bin:    '<path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13"/>',
+  help:   '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.5M12 17h.01"/>',
+  set:    '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>',
+  admin:  '<path d="M12 2.6 20 5.4v6.1c0 4.7-3.2 8.2-8 9.9-4.8-1.7-8-5.2-8-9.9V5.4Z"/><path d="m8.6 12 2.4 2.4 4.4-4.8"/>',
+  out:    '<path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 16l-4-4 4-4M6 12h10"/>',
+};
+
+function _dashTile(t, big) {
+  return `
+    <button type="button" class="dio-tile${big ? ' dio-tile-big' : ''}${t.tone ? ' tone-' + t.tone : ''}" onclick="${t.go}" aria-label="${t.l}">
+      <svg class="dio-tile-ic" viewBox="0 0 24 24" aria-hidden="true">${_DT_IC[t.ic] || ''}</svg>
+      <b class="dio-tile-lbl">${t.l}</b>
+      ${(t.badge > 0) ? `<small class="dio-tile-badge">${t.badge}</small>` : ''}
+    </button>`;
+}
+
+function _dashMainTiles(totalCases, pendingRem) {
+  const isAdmin = (typeof canAccess === 'function') && canAccess('admin');
+  const primary = [
+    { l:'نیا اندراج',          ic:'add',    go:"window.openAddCaseModal&&openAddCaseModal()", tone:'brand' },
+    { l:'میرے مقدمات',         ic:'cases',  go:"dioOpenCases('')", badge: totalCases },
+    { l:'یاددہانیاں',          ic:'rem',    go:"showPage('reminders',null)", badge: pendingRem },
+    { l:'واقعاتی رپورٹ',       ic:'inc',    go:"showPage('incident',null)" },
+    { l:'قانونی لائبریری',     ic:'law',    go:"showPage('law',null)" },
+    { l:'مارک شدہ درخواستیں',  ic:'fivec',  go:"showPage('fivec',null)" },
+    { l:'ملزمان / گواہان',     ic:'people', go:"showPage('suspects',null)" },
+    { l:'ٹمپلیٹس',             ic:'tpl',    go:"showPage('templates',null)" },
+  ];
+  const more = [
+    { l:'احکامات و ضوابط',  ic:'orders', go:"showPage('ahkamat',null)" },
+    { l:'SHO کا نام',        ic:'sho',    go:"window.openShoDspModal&&openShoDspModal('sho')" },
+    { l:'DSP/SDPO کا نام',   ic:'dsp',    go:"window.openShoDspModal&&openShoDspModal('dsp')" },
+    { l:'سرکاری گاڑی',       ic:'car',    go:"window.openSarkariGari&&openSarkariGari()" },
+    { l:'بیک اپ',            ic:'backup', go:"showPage('backup',null)" },
+    { l:'سبسکرپشن',          ic:'sub',    go:"window.showSubscriptionPage&&showSubscriptionPage()" },
+    { l:'حذف شدہ مواد',      ic:'bin',    go:"showPage('bin',null)" },
+    { l:'مدد و رہنمائی',     ic:'help',   go:"showPage('help',null)" },
+    { l:'ترتیبات',           ic:'set',    go:"showPage('settings',null)" },
+  ];
+  if (isAdmin) more.push({ l:'ایڈمن', ic:'admin', go:"showPage('admin',null)" });
+  more.push({ l:'لاگ آؤٹ', ic:'out', go:"window.doLogout&&doLogout()", tone:'alert' });
+  return `
+  <b class="dio-sec-h" role="heading" aria-level="2">اہم سیکشن</b>
+  <div class="dio-tiles dio-tiles-main">${primary.map(t => _dashTile(t, true)).join('')}</div>
+  <b class="dio-sec-h" role="heading" aria-level="2">دیگر سہولیات</b>
+  <div class="dio-tiles dio-tiles-more">${more.map(t => _dashTile(t, false)).join('')}</div>`;
 }
 
 // ── (خبریں / نیوز کا حصہ افسر کی درخواست پر مکمل ہٹا دیا گیا) ──
@@ -145,7 +235,7 @@ function _dashPriorityCards(nextRem, upCount, overdueCount, monthCount) {
       lbl:'زیر التواء (گزر چکیں)', sub: overdueCount>0 ? 'فوری توجہ درکار' : 'سب وقت پر',
       go:"showPage('reminders',null)" },
     { tone:'calm', big:monthCount,
-      lbl:'اس ماہ نئے مقدمات', sub:'رواں مہینہ', go:"showPage('cases',null)" },
+      lbl:'اس ماہ نئے مقدمات', sub:'رواں مہینہ', go:"dioOpenCases('',{month:'"+new Date().toISOString().slice(0,7)+"'})" },
   ];
   return `
   <div style="margin-bottom:14px;">

@@ -37,13 +37,6 @@ async function getOfficerId() {
 async function getCases(status, query) {
   try {
     const oid = await getOfficerId();
-    if (!oid) {
-      if (typeof offlineStore !== 'undefined') {
-        try { return await offlineStore.getAll('cases_cache'); } catch(_) {}
-      }
-      return [];
-    }
-
     // Helper: filter cached list by status/query
     const filterCached = (all) => {
       if (status) all = all.filter(c => c.status === status);
@@ -57,6 +50,14 @@ async function getCases(status, query) {
       }
       return all.sort((a,b)=> String(a.fir_number||'').localeCompare(String(b.fir_number||''), undefined, {numeric:true}));
     };
+
+    if (!oid) {
+      if (typeof offlineStore !== 'undefined') {
+        // FIX v524: yahan bhi status/talaash lagao (pehle sab lauta deta tha)
+        try { return filterCached(await offlineStore.getAll('cases_cache') || []); } catch(_) {}
+      }
+      return [];
+    }
 
     // CACHE-FIRST: try to return cached instantly
     let cached = null;
@@ -96,6 +97,9 @@ async function getCases(status, query) {
     if (typeof offlineStore !== 'undefined' && all && !status && !query) {
       try { await offlineStore.cache('cases_cache', all); } catch(_) {}
     }
+    // FIX v524: shared maqdmaat upar BINA status/talaash ke jor diye jate thay —
+    // "چالان مکمل" chunne par bhi dusre status ke shared maqdmaat aa jate thay.
+    if (status || query) return filterCached(all);
     return all;
   } catch(e) {
     console.error('getCases error:', e);

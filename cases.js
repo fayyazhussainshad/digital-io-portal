@@ -184,14 +184,63 @@ let _casesCache = []; // cleared on every render — no stale data
    hai (saaf nahi hoti), aur talaash/filter sirf TABLE ki qatarein
    badalte hain — khana jyun ka tyun rehta hai, cursor bhi.
    ─────────────────────────────────────────────────────────────── */
-window._csFilter = window._csFilter || { status:'', query:'', station:'' };
+window._csFilter = window._csFilter || { status:'', query:'', station:'', month:'' };
+
+/* ───────────────────────────────────────────────────────────────
+   DASHBOARD → MAQDMAAT (v524)
+   MASLA: dashboard ke har button (زیر تفتیش، چالان مکمل، نامکمل، اخراج،
+   512 …) par `showPage('cases',null)` likha tha — koi status nahi jata
+   tha, is liye har button TAMAM maqdmaat dikhata tha.
+   HAL: har button `dioOpenCases(code)` bulata hai jo filter tay kar ke
+   safha kholta hai. Khaali code = tamam maqdmaat (filter saaf).
+   `month` = 'YYYY-MM' (اس ماہ نئے مقدمات) — tareekh-e-indraaj par.
+   ─────────────────────────────────────────────────────────────── */
+function _csMonthOf(d){
+  if (!d) return '';
+  const s = String(d);
+  if (/^\d{4}-\d{2}/.test(s)) return s.slice(0,7);
+  const p = s.split(/[-/]/);
+  return (p.length===3 && p[2].length===4) ? (p[2]+'-'+p[1].padStart(2,'0')) : '';
+}
+function _csApplyLocal(all, f){
+  const o = currentOfficer||{};
+  let rows = all;
+  // Daftari hifazat: server/cache jo bhi de, status yahan dobara parkha jata hai
+  if (f.status) rows = rows.filter(c => c.status === f.status);
+  if (f.month)  rows = rows.filter(c => _csMonthOf(c.fir_date) === f.month);
+  if (f.station) rows = rows.filter(c => (c.case_station||o.station) == f.station);
+  return rows;
+}
+function dioOpenCases(status, opts){
+  opts = opts || {};
+  window._csFilter = { status: String(status||''), query:'', station:'', month: String(opts.month||'') };
+  showPage('cases', null);
+}
+window.dioOpenCases = dioOpenCases;
+window._csMonthOf = _csMonthOf;
+window._csApplyLocal = _csApplyLocal;
+
+function _csClearFilter(){
+  window._csFilter = { status:'', query:'', station:'', month:'' };
+  showPage('cases', null);
+}
+window._csClearFilter = _csClearFilter;
+
+function _csFilterLabel(f){
+  const parts = [];
+  if (f.status) parts.push((window.DIO && DIO.caseStatuses) ? DIO.caseStatuses.label(f.status) : (STATUS_LABELS[f.status]||f.status));
+  if (f.month) {
+    const p = f.month.split('-');
+    parts.push('اندراج ماہ ' + p[1] + '/' + p[0]);
+  }
+  return parts.join(' · ');
+}
 
 // Sirf qatarein dobara banao — khana aur cursor ko haath na lagao
 async function _csRefreshRows(){
   const tb = document.getElementById('cs-rows');
   if (!tb) return;
   const f = window._csFilter;
-  const o = currentOfficer||{};
   let all = await getCases(f.status, f.query);
   all.sort((a,b)=>{
     const na=parseInt(String(a.fir_number||'0').split('/')[0])||0;
@@ -199,12 +248,12 @@ async function _csRefreshRows(){
     return nb-na;
   });
   _casesCache = all;
-  const rows = f.station ? all.filter(c=>(c.case_station||o.station)==f.station) : all;
+  const rows = _csApplyLocal(all, f);
   tb.innerHTML = rows.length
     ? rows.map((c,i)=>renderCaseRow(c,i+1)).join('')
     : `<tr><td colspan="10" style="padding:0;">${
         (window.DIO && DIO.states)
-          ? DIO.states.empty('folder', 'کوئی مقدمہ نہیں', (f.query||f.status)
+          ? DIO.states.empty('folder', 'کوئی مقدمہ نہیں', (f.query||f.status||f.month)
               ? 'اس چھان سے کوئی مقدمہ نہیں ملا — لفظ یا صورتحال بدل کر دیکھیں'
               : 'نیا مقدمہ درج کرنے کے لیے "+ نیا اندراج" پر دبائیں')
           : '<div style="text-align:center;padding:30px;color:var(--text-muted);">کوئی مقدمہ نہیں</div>'
@@ -224,7 +273,20 @@ window._csOnSearch = _csOnSearch;
 function _csOnStatus(v){
   window._csFilter.status = String(v||'');
   _csRefreshRows();
+  _csRenderFilterBar();
 }
+
+function _csRenderFilterBar(){
+  const bar = document.getElementById('cs-filter-bar');
+  if (!bar) return;
+  const lbl = _csFilterLabel(window._csFilter);
+  bar.style.display = lbl ? 'flex' : 'none';
+  bar.innerHTML = lbl
+    ? `<b class="cs-fb-lbl">فلٹر: ${esc(lbl)}</b>
+       <button type="button" class="btn btn-secondary btn-sm" onclick="_csClearFilter()">تمام مقدمات دکھائیں</button>`
+    : '';
+}
+window._csRenderFilterBar = _csRenderFilterBar;
 window._csOnStatus = _csOnStatus;
 
 async function renderCases(container,fStatus,fQuery,fStation){
@@ -235,7 +297,8 @@ async function renderCases(container,fStatus,fQuery,fStation){
   fQuery   = (fQuery   === undefined || fQuery   === null) ? _f.query   : fQuery;
   fStation = (fStation === undefined || fStation === null) ? _f.station : fStation;
   fStatus=fStatus||'';fQuery=fQuery||'';fStation=fStation||'';
-  window._csFilter = { status:fStatus, query:fQuery, station:fStation };
+  const fMonth = String(_f.month||'');
+  window._csFilter = { status:fStatus, query:fQuery, station:fStation, month:fMonth };
   _casesCache = [];
   const allCases=await getCases(fStatus,fQuery);
   // Sort by FIR number — bigger number first (numeric, not text)
@@ -249,7 +312,8 @@ async function renderCases(container,fStatus,fQuery,fStation){
 
   // Get unique stations from cases (for folder view)
   const stations=[...new Set(allCases.map(c=>c.case_station||o.station||'—').filter(Boolean))].sort();
-  const cases = fStation ? allCases.filter(c=>(c.case_station||o.station)==fStation) : allCases;
+  const cases = _csApplyLocal(allCases, window._csFilter);
+  const _fLbl = _csFilterLabel(window._csFilter);
   const currentStation = o.station||'—';
   const isArchiveView = fStation && fStation !== currentStation;
 
@@ -261,6 +325,11 @@ async function renderCases(container,fStatus,fQuery,fStation){
       <div class="page-subtitle"><span id="cs-count">${cases.length}</span> مقدمات${isArchiveView?' · '+fStation+' آرکائیو':''}</div>
     </div>
   </div>
+
+  <div id="cs-filter-bar" class="cs-filter-bar" style="display:${_fLbl?'flex':'none'};">${_fLbl
+    ? `<b class="cs-fb-lbl">فلٹر: ${esc(_fLbl)}</b>
+       <button type="button" class="btn btn-secondary btn-sm" onclick="_csClearFilter()">تمام مقدمات دکھائیں</button>`
+    : ''}</div>
 
   <!-- Station filter buttons removed (FIX6) — all cases shown by default for more space -->
   ${isArchiveView?`<div style="background:rgba(167,139,250,0.1);border:1px solid #a78bfa;border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:12px;color:#a78bfa;direction:rtl;">آرکائیو — تھانہ ${fStation} کے پرانے مقدمات (صرف دیکھنے کے لیے)</div>`:''}
@@ -298,8 +367,8 @@ async function renderCases(container,fStatus,fQuery,fStation){
           ${cases.length ? cases.map((c,i)=>renderCaseRow(c,i+1)).join('')
             : `<tr><td colspan="10" style="padding:0;">${
                 (window.DIO && DIO.states)
-                  ? DIO.states.empty('folder', 'کوئی مقدمہ نہیں', fQuery
-                      ? 'اس تلاش سے کوئی مقدمہ نہیں ملا — لفظ بدل کر کوشش کریں'
+                  ? DIO.states.empty('folder', 'کوئی مقدمہ نہیں', (fQuery||_fLbl)
+                      ? 'اس فلٹر/تلاش سے کوئی مقدمہ نہیں ملا'
                       : 'نیا مقدمہ درج کرنے کے لیے اوپر "+ نیا اندراج" پر دبائیں')
                   : `<div style="text-align:center;padding:30px;color:var(--text-muted);">کوئی مقدمہ نہیں</div>`
               }</td></tr>`}

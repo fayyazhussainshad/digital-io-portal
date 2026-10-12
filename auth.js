@@ -621,9 +621,171 @@ function showRegister()       { const m=document.getElementById('register-modal'
 
 function hideRegister()       { const m=document.getElementById('register-modal'); if(m) m.style.display='none'; }
 
-function showForgotPassword() { document.getElementById('forgot-card')?.style&&(document.getElementById('forgot-card').style.display='block'); document.getElementById('login-card')?.style&&(document.getElementById('login-card').style.display='none'); }
+/* ═══ پاس ورڈ بھول گئے (v524) ═══════════════════════════════════
+   PEHLE KYUN KAAM NAHI KARTA THA (teen alag kharabiyan):
+   1) `showForgotPassword()` `#forgot-card` / `#login-card` dhoondta tha —
+      page par aisa koi element hai hi nahi (asal modal `#forgot-modal` hai).
+      Natija: button dabane par KUCH bhi nahi hota tha.
+   2) Modal ka button `sendOTP()` bulata tha jo sirf "جلد آ رہی ہے" ka
+      toast tha — email kabhi bheji hi nahi jati thi.
+   3) Email ke link se wapas aane par naya pass word rakhne ki koi jagah
+      nahi thi (PASSWORD_RECOVERY ko koi sun hi nahi raha tha).
+   AB: (1) sahi modal khulta hai, (2) Supabase `resetPasswordForEmail`
+   asal email bhejta hai, (3) link se wapsi par "نیا پاس ورڈ" ka khana
+   khud khulta hai aur `updateUser` se pass word badalta hai.
+   ═══════════════════════════════════════════════════════════════ */
+function _fpStep(n) {
+  [1, 2, 3].forEach(i => {
+    const el = document.getElementById('forgot-step' + i);
+    if (el) el.style.display = (i === n) ? 'block' : 'none';
+  });
+}
+function _fpMsg(text, kind) {
+  const el = document.getElementById('forgot-msg');
+  if (!el) return;
+  el.textContent = text || '';
+  el.className = 'fp-msg' + (kind ? ' fp-' + kind : '');
+  el.style.display = text ? 'block' : 'none';
+}
+function _fpOpen(step) {
+  const m = document.getElementById('forgot-modal');
+  if (!m) { showToast('فارم لوڈ نہیں ہوا — صفحہ ریفریش کریں', 'error'); return; }
+  m.style.setProperty('display', 'flex', 'important');
+  m.style.zIndex = '99999';
+  _fpMsg('');
+  _fpStep(step || 1);
+  setTimeout(() => {
+    const f = document.getElementById(step === 3 ? 'new-pass1' : 'forgot-email');
+    if (f) f.focus();
+  }, 60);
+}
+function showForgotPassword() {
+  _fpOpen(1);
+  const le = document.getElementById('login-email'), fe = document.getElementById('forgot-email');
+  if (le && fe && !fe.value) fe.value = (le.value || '').trim();
+}
+function hideForgotModal() {
+  const m = document.getElementById('forgot-modal');
+  if (m) m.style.display = 'none';
+  // Recovery ke dauran band kiya to adhoora session na rahe
+  if (window.__dioRecoveryActive) {
+    window.__dioRecoveryActive = false;
+    try { supabaseClient.auth.signOut(); } catch (_) {}
+  }
+}
 
-function hideForgotModal()    { document.getElementById('forgot-card')?.style&&(document.getElementById('forgot-card').style.display='none'); document.getElementById('login-card')?.style&&(document.getElementById('login-card').style.display='block'); }
+// Supabase ki angrezi galti → saaf Urdu paigham (asal wajah chhupai nahi jati)
+function _fpErrText(error) {
+  const m = String((error && (error.message || error.msg)) || '').toLowerCase();
+  const code = String((error && (error.code || error.error_code)) || '').toLowerCase();
+  if (m.includes('not authorized') || code.includes('not_authorized'))
+    return 'ای میل سرور اس پتے پر ای میل بھیجنے کی اجازت نہیں دیتا۔ ایڈمن کو Supabase میں اپنا SMTP سرور لگانا ہوگا۔';
+  if (m.includes('rate limit') || code.includes('rate_limit') || (error && error.status === 429))
+    return 'بہت زیادہ کوششیں — کچھ دیر (تقریباً ایک گھنٹہ) بعد دوبارہ کوشش کریں۔';
+  if (m.includes('for security purposes'))
+    return 'حفاظتی وجہ سے چند سیکنڈ بعد دوبارہ کوشش کریں۔';
+  if (m.includes('redirect'))
+    return 'واپسی کا لنک (Redirect URL) Supabase میں منظور شدہ نہیں۔ ایڈمن سے رابطہ کریں۔';
+  if (m.includes('same') && m.includes('password'))
+    return 'نیا پاس ورڈ پرانے پاس ورڈ سے مختلف ہونا چاہیے۔';
+  if (m.includes('weak') || m.includes('at least'))
+    return 'پاس ورڈ کمزور ہے — کم از کم 8 حروف، حروف اور ہندسے ملا کر رکھیں۔';
+  if (m.includes('session') || m.includes('jwt') || m.includes('expired'))
+    return 'ری سیٹ لنک کی مدت ختم ہو گئی — دوبارہ "پاس ورڈ بھول گئے" سے نیا لنک منگوائیں۔';
+  if (m.includes('fetch') || m.includes('network'))
+    return 'انٹرنیٹ دستیاب نہیں — کنکشن چیک کر کے دوبارہ کوشش کریں۔';
+  return 'درخواست مکمل نہ ہو سکی: ' + ((error && error.message) || 'نامعلوم خرابی');
+}
+
+// Email ka link wapas ISI safhe par aaye (Vercel ya jahan bhi chal raha ho)
+function _fpRedirectUrl() {
+  try { return location.origin + location.pathname; } catch (_) { return undefined; }
+}
+
+async function sendResetEmail() {
+  const inp = document.getElementById('forgot-email');
+  const btn = document.getElementById('forgot-send-btn');
+  const email = (inp && inp.value || '').trim().toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    _fpMsg('درست ای میل پتہ درج کریں۔', 'err'); return;
+  }
+  if (!navigator.onLine) { _fpMsg('انٹرنیٹ دستیاب نہیں — ای میل بھیجنے کے لیے کنکشن درکار ہے۔', 'err'); return; }
+  if (!supabaseClient) { _fpMsg('سرور سے رابطہ نہیں ہو سکا — صفحہ ریفریش کریں۔', 'err'); return; }
+  if (btn) { btn.disabled = true; btn.dataset.t = btn.textContent; btn.textContent = 'بھیجی جا رہی ہے…'; }
+  try {
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: _fpRedirectUrl() });
+    if (error) { _fpMsg(_fpErrText(error), 'err'); return; }
+    // Hifazat: ye nahi bataya jata ke ye email darj hai ya nahi (account enumeration se bachao)
+    _fpStep(2);
+    const sent = document.getElementById('forgot-sent-to');
+    if (sent) sent.textContent = email;
+    _fpMsg('');
+  } catch (e) {
+    _fpMsg(_fpErrText(e), 'err');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = btn.dataset.t || 'ری سیٹ لنک بھیجیں'; }
+  }
+}
+// purane naam — kisi purani jagah se bulaye jaayen to bhi sahi kaam ho
+async function sendOTP() { return sendResetEmail(); }
+async function verifyOTP() { return sendResetEmail(); }
+
+async function resetPassword() {
+  const p1 = (document.getElementById('new-pass1') || {}).value || '';
+  const p2 = (document.getElementById('new-pass2') || {}).value || '';
+  if (p1.length < 8) { _fpMsg('پاس ورڈ کم از کم 8 حروف کا ہو۔', 'err'); return; }
+  if (!/[A-Za-z]/.test(p1) || !/\d/.test(p1)) { _fpMsg('پاس ورڈ میں حروف اور ہندسے دونوں شامل کریں۔', 'err'); return; }
+  if (p1 !== p2) { _fpMsg('دونوں پاس ورڈ ایک جیسے نہیں۔', 'err'); return; }
+  const btn = document.getElementById('forgot-save-btn');
+  if (btn) { btn.disabled = true; btn.dataset.t = btn.textContent; btn.textContent = 'محفوظ ہو رہا ہے…'; }
+  try {
+    const { data: s } = await supabaseClient.auth.getSession();
+    if (!s || !s.session) { _fpMsg(_fpErrText({ message: 'session expired' }), 'err'); return; }
+    const email = s.session.user && s.session.user.email;
+    const { error } = await supabaseClient.auth.updateUser({ password: p1 });
+    if (error) { _fpMsg(_fpErrText(error), 'err'); return; }
+    // Naye pass word se khud login karwayen — is liye recovery session band
+    window.__dioRecoveryActive = false;
+    try { await supabaseClient.auth.signOut(); } catch (_) {}
+    // Purana mehfooz token (PIN/biometric) ab bekaar — wo dobara password login par banega
+    hideForgotModal();
+    const le = document.getElementById('login-email');
+    if (le && email) le.value = email;
+    const lp = document.getElementById('login-password'); if (lp) lp.value = '';
+    try { setLoginMethod('password', document.querySelectorAll('.login-method')[0]); } catch (_) {}
+    showToast('پاس ورڈ تبدیل ہو گیا — اب نئے پاس ورڈ سے لاگ اِن کریں', 'success', 6000);
+  } catch (e) {
+    _fpMsg(_fpErrText(e), 'err');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = btn.dataset.t || 'نیا پاس ورڈ محفوظ کریں'; }
+  }
+}
+
+// Email ke link se wapsi: (a) PASSWORD_RECOVERY event, (b) <head> ka flag
+// (Supabase hash ko listener lagne se PEHLE parh kar saaf kar deta hai).
+function _fpInitRecovery() {
+  try {
+    if (window.__dioRecoveryError) {
+      window.__dioRecoveryError = false;
+      setTimeout(() => { _fpOpen(1); _fpMsg('یہ ری سیٹ لنک استعمال ہو چکا یا اس کی مدت ختم ہو گئی — نیا لنک منگوائیں۔', 'err'); }, 400);
+    }
+    if (window.__dioRecoveryHash) {
+      window.__dioRecoveryHash = false;
+      window.__dioRecoveryActive = true;
+      setTimeout(() => _fpOpen(3), 400);
+    }
+    if (supabaseClient && supabaseClient.auth && supabaseClient.auth.onAuthStateChange) {
+      supabaseClient.auth.onAuthStateChange((event) => {
+        if (event === 'PASSWORD_RECOVERY') {
+          window.__dioRecoveryActive = true;
+          setTimeout(() => _fpOpen(3), 50);
+        }
+      });
+    }
+  } catch (_) {}
+}
+_fpInitRecovery();
+window.sendResetEmail = sendResetEmail;
 // ── PIN LOGIN ─────────────────────────────────────────────────
 let _pinValue = '';
 
@@ -931,19 +1093,6 @@ function _b64ToBuf(b64) {
   return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
 }
 
-
-async function sendOTP() { showToast('OTP بھیجنے کی سہولت جلد آ رہی ہے','info'); }
-
-async function verifyOTP() { showToast('OTP کی تصدیق جلد آ رہی ہے','info'); }
-
-async function resetPassword() {
-  const email = document.getElementById('forgot-email')?.value.trim();
-  if (!email) { showToast('ای میل ضروری ہے','error'); return; }
-  const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
-  if (error) { showToast(''+error.message,'error'); return; }
-  showToast('پاسورڈ ری سیٹ ای میل بھیج دی','success');
-  hideForgotModal();
-}
 
 // Auto-format CNIC as 00000-0000000-0
 
