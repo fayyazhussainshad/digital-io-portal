@@ -4,46 +4,53 @@
    عین مطابق (پرانا جدول والا فارم اس سے بدل دیا گیا)۔
 
    • کاغذ: A4 · سسٹم کا طے شدہ مارجن (اوپر/نیچے 1cm، دائیں 1in، بائیں 0.4in) · ایک صفحہ
-     (fit to page — مواد زیادہ ہو تو چھپائی خود چھوٹی ہو کر ایک صفحے میں)
    • تمام فونٹ pt میں · اردو RTL، انگریزی/نمبر LTR (ملی جلی سطر میں بھی)
-   • ڈیٹا سسٹم سے: تھانہ/ضلع، مدعی (سرکار بذریعہ)، مقدمہ نمبر/تاریخ/جرم،
-     ملزم (بنام — ▾ سے انتخاب)، موبائل/IMEI نمبر (مقدمے کے چوری ڈیٹا سے)،
-     درخواست دہندہ (نام + عہدہ + محکمانہ نمبر، فون)
-   • ہر خانہ قابلِ ترمیم · اوپر مستقل ترمیمی ٹول بار (floating نہیں)
-   • محفوظ: `cdr_imei_requests` (وہی ٹیبل/کالم جو پہلے تھے — schema نہیں بدلا)
-     نئے فارم کا ڈیٹا `rows` میں: 10 نمبر + آخر میں {_form:'cdr2', f, chk}
-     پرانی محفوظ درخواست کھلے تو اُس کے نمبر نئے فارم میں آ جاتے ہیں
+   • ڈیٹا سسٹم سے: تھانہ/ضلع، مدعی (سرکار بذریعہ — جیسا سسٹم میں لکھا ہے)،
+     مقدمہ نمبر/تاریخ/دفعہ، ملزمان (بنام — ▾ سے انتخاب)، موبائل/IMEI نمبر،
+     درخواست دہندہ (نام + عہدہ + محکمانہ نمبر، فون)، CDR کی مدت (وقوعہ سے آج تک)
+   • کوئی ترمیمی ٹول بار نہیں — صرف سکرین پر ایک پٹی: «فہرست» اور CDR کی تاریخیں
+     (چھپائی میں نہیں)۔ ہر خانہ براہِ راست قابلِ ترمیم۔
+   • چھپائی: صرف براؤزر کی اپنی چھپائی (Ctrl+P / اوپر والا «پرنٹ» — دونوں ایک ہی)
+   • ایک مقدمے میں کئی CDR درخواستیں — ہر ایک الگ ریکارڈ، تاریخ کے ساتھ
+     (فہرست میں نئی سب سے اوپر)۔ پرانا ریکارڈ کبھی مٹتا/بدلتا نہیں جب تک خود نہ کھولیں۔
+   • ڈیٹابیس: `cdr_imei_requests` — ہر درخواست ایک قطار (schema نہیں بدلا)
+     ڈیٹا `rows` میں: 10 نمبر + آخر میں {_form:'cdr2', f, chk, acc, saved_at}
    ═══════════════════════════════════════════════════════════ */
 
-/* global _misalCaseId, currentCaseId, getCase, dioEditorToolbar, dioEditorToolbarCSS, dioBindEditor,
-          dioRegisterSaved, _misalDocs, _refreshMisalBar, dioFontHead, dioPrint */
+/* global _misalCaseId, currentCaseId, getCase, dioBindEditor,
+          dioRegisterSaved, _misalDocs, _refreshMisalBar */
 
 let _cdrICaseId = null;
 let _cdrICase = null;
-let _cdrISaved = null;
-let _cdrAccused = [];
+let _cdrList = [];        // اس مقدمے کی تمام CDR درخواستیں
+let _cdrISaved = null;    // کھلی ہوئی درخواست (null = نئی)
+let _cdrAccused = [];     // ملزمان کے نام (سسٹم سے)
 let _cdrDirty = false;
 
 const CDR_FORM_TAG = 'cdr2';
 const CDR_NUM_COUNT = 10;
-// A4 پر 1 انچ مارجن کے بعد لکھنے کی جگہ (چوڑائی 6.27in · اونچائی 9.69in)
 const CDR_PX_PER_IN = 96;
 // سسٹم کا طے شدہ اصول (درخواستیں/نقشہ موقع): A4 · اوپر/نیچے 1cm · دائیں 1in · بائیں 0.4in
-const CDR_MARGIN_CSS = '1cm 1in 1cm 0.4in';
 const CDR_AVAIL_H_IN = 11.69 - 2 / 2.54;
 
 async function openCdrImei(caseId) {
   _cdrICaseId = caseId || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
             || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
   const area = _cdrArea();
-  if (area && window.DIO && DIO.states) area.innerHTML = DIO.states.loading('CDR/IMEI درخواست لوڈ ہو رہی ہے');
+  if (area && window.DIO && DIO.states) area.innerHTML = DIO.states.loading('CDR/IMEI درخواستیں لوڈ ہو رہی ہیں');
   _cdrICase = null;
   if (typeof getCase === 'function' && _cdrICaseId) {
     try { _cdrICase = await getCase(_cdrICaseId); } catch (e) { _cdrICase = null; console.warn('cdr getCase:', e && e.message); }
   }
-  await Promise.all([_loadCdr(), _cdrLoadAccused()]);
+  await Promise.all([_cdrLoadList(), _cdrLoadAccused()]);
   _cdrDirty = false;
-  _renderCdr();
+  _cdrISaved = null;
+  // کوئی درخواست نہیں → سیدھا نیا فارم؛ ورنہ فہرست
+  if (_cdrList.length) _cdrRenderList(); else _renderCdr();
+  if (!window._cdrPrintBound) {
+    window._cdrPrintBound = true;
+    window.addEventListener('beforeprint', () => { if (document.getElementById('cdr-doc')) _cdrBalance(); });
+  }
 }
 window.openCdrImei = openCdrImei;
 
@@ -53,59 +60,64 @@ function _cdrArea() {
       || document.getElementById('page-content');
 }
 
-async function _loadCdr() {
-  const key = 'dio_cdr_' + _cdrICaseId;
-  const fromCache = () => { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch { return null; } };
-  if (!navigator.onLine) { _cdrISaved = fromCache(); return; }
-  // آف لائن محفوظ شدہ (ابھی سرور پر نہیں گیا) نسخہ — سرور کا خالی/پرانا جواب
-  // اسے مٹا نہ دے؛ اگلی بار «محفوظ کریں» پر یہی سرور پر جائے گا
-  const local = fromCache();
-  if (local && local.id && String(local.id).indexOf('tmp_') === 0) { _cdrISaved = local; return; }
-  try {
-    const { data, error } = await supabaseClient.from('cdr_imei_requests').select('*')
-      .eq('case_id', _cdrICaseId).order('created_at', { ascending: false }).limit(1).maybeSingle();
-    if (error) throw error;
-    _cdrISaved = data || null;
-    try { localStorage.setItem(key, JSON.stringify(_cdrISaved)); } catch (e) { console.warn('cdr cache:', e && e.message); }
-  } catch {
-    _cdrISaved = fromCache();
-  }
-}
+// ── فہرست: سرور + مقامی (آف لائن محفوظ، ابھی سرور پر نہیں گئی) ──
+function _cdrCacheKey() { return 'dio_cdrlist_' + _cdrICaseId; }
+function _cdrLocal() { try { return JSON.parse(localStorage.getItem(_cdrCacheKey()) || '[]') || []; } catch { return []; } }
+function _cdrStoreLocal() { try { localStorage.setItem(_cdrCacheKey(), JSON.stringify(_cdrList)); } catch (e) { console.warn('cdr cache:', e && e.message); } }
 
-// ملزمان (case_accused) — بنام کے لیے؛ آف لائن پر وہی cache جو ملزمان ماڈیول رکھتا ہے
+async function _cdrLoadList() {
+  const local = _cdrLocal();
+  // پرانے نظام کا ایک ہی ریکارڈ والا cache (dio_cdr_<id>) — ضائع نہ ہو
+  try {
+    const old = JSON.parse(localStorage.getItem('dio_cdr_' + _cdrICaseId) || 'null');
+    if (old && old.id && !local.some(x => String(x.id) === String(old.id))) {
+      local.push(String(old.id).indexOf('tmp_') === 0 ? { ...old, _pending: true } : old);
+    }
+  } catch { /* خراب cache — نظرانداز */ }
+  let server = null;
+  if (navigator.onLine) {
+    try {
+      const { data, error } = await supabaseClient.from('cdr_imei_requests').select('*')
+        .eq('case_id', _cdrICaseId).order('created_at', { ascending: false });
+      if (error) throw error;
+      server = data || [];
+    } catch (e) { console.warn('cdr list:', e && e.message); }
+  }
+  let list = server ? server.slice() : local.filter(x => !x._pending);
+  // مقامی زیرِ التوا ریکارڈ ہمیشہ غالب (ورنہ آف لائن کام ضائع)
+  local.filter(x => x._pending).forEach(p => {
+    const i = list.findIndex(x => String(x.id) === String(p.id));
+    if (i >= 0) list[i] = p; else list.push(p);
+  });
+  list.sort((a, b) => _cdrTimeCreated(b).localeCompare(_cdrTimeCreated(a)));
+  _cdrList = list;
+  _cdrStoreLocal();
+}
+function _cdrTimeCreated(r) { return String(r.created_at || ''); }
+
+// ملزمان — case_accused (FIR والے پہلے) · نہ ہوں تو مقدمے کا اپنا «ملزم» خانہ
 async function _cdrLoadAccused() {
-  _cdrAccused = [];
-  if (!_cdrICaseId) return;
-  try {
-    const { data, error } = await supabaseClient.from('case_accused').select('*')
-      .eq('case_id', _cdrICaseId).order('created_at', { ascending: true });
-    if (error) throw error;
-    _cdrAccused = data || [];
-  } catch {
-    try { _cdrAccused = JSON.parse(localStorage.getItem('dio_accused_' + _cdrICaseId) || '[]') || []; }
-    catch { _cdrAccused = []; }
+  let rows = [];
+  if (_cdrICaseId) {
+    try {
+      const { data, error } = await supabaseClient.from('case_accused').select('*')
+        .eq('case_id', _cdrICaseId).order('created_at', { ascending: true });
+      if (error) throw error;
+      rows = data || [];
+    } catch {
+      try { rows = JSON.parse(localStorage.getItem('dio_accused_' + _cdrICaseId) || '[]') || []; }
+      catch { rows = []; }
+    }
   }
-}
-
-// ── "نام ولد … قوم … سکنہ …" کو چار حصوں میں (سسٹم میں مدعی/ملزم ایک ہی
-//    خانے میں لکھے جاتے ہیں)۔ جو لفظ نہ ملے وہ حصہ خالی — اندازہ نہیں۔ ──
-function _cdrParsePerson(raw) {
-  const out = { name: '', father: '', qaum: '', address: '' };
-  let s = String(raw == null ? '' : raw).replace(/<[^>]*>/g, ' ')
-    .replace(/[‎‏؜‪-‮]/g, '').replace(/\s+/g, ' ').trim();
-  if (!s) return out;
-  const MARK = [
-    ['address', /(?:^|[\s،,])(?:سکنہ|ساکنہ|ساکن|سکنائے|سکنا)\s*[:：۔-]*\s*/],
-    ['qaum',    /(?:^|[\s،,])(?:قوم|ذات)\s*[:：۔-]*\s*/],
-    ['father',  /(?:^|[\s،,])(?:ولدیت|ولد|زوجہ|دختر|بنت)\s*[:：۔-]*\s*/],
-  ];
-  const hits = [];
-  MARK.forEach(([k, re]) => { const m = re.exec(s); if (m) hits.push({ k, at: m.index, end: m.index + m[0].length }); });
-  hits.sort((a, b) => a.at - b.at);
-  const clean = t => String(t || '').replace(/^[\s،,:۔-]+|[\s،,:۔-]+$/g, '').trim();
-  out.name = clean(s.slice(0, hits.length ? hits[0].at : s.length));
-  hits.forEach((h, i) => { out[h.k] = clean(s.slice(h.end, i + 1 < hits.length ? hits[i + 1].at : s.length)); });
-  return out;
+  const fir = rows.filter(a => !a.accused_type || a.accused_type === 'fir');
+  const use = fir.length ? fir : rows;
+  let names = use.map(a => String(a.name || '').replace(/\s+/g, ' ').trim()).filter(Boolean);
+  if (!names.length) {
+    const c = _cdrICase || {};
+    const own = String(c.accused_name || '').replace(/\s+/g, ' ').trim();
+    if (own) names = [own];
+  }
+  _cdrAccused = names;
 }
 
 // موبائل/IMEI نمبر — مقدمے کے چوری ڈیٹا سے (IMEI پہلے، پھر سم نمبر)
@@ -152,68 +164,177 @@ function _cdrFmtDate(d) {
   return String(d);
 }
 
+// محفوظ ہونے کا وقت — DD/MM/YYYY hh:mm (پاکستان وقت)
+function _cdrFmtStamp(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return _cdrFmtDate(iso);
+  try {
+    const p = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: true }).formatToParts(d);
+    const g = t => (p.find(x => x.type === t) || {}).value || '';
+    return `${g('day')}/${g('month')}/${g('year')}\u2003${g('hour')}:${g('minute')} ${g('dayPeriod').toLowerCase()}`;
+  } catch { return _cdrFmtDate(iso); }
+}
+
+// بنام — ملزمان کے نام (ایک ہو تو سادہ، زیادہ ہوں تو نمبر وار)
+function _cdrBanamHtml(names) {
+  const n = (names || []).filter(Boolean);
+  if (!n.length) return '';
+  if (n.length === 1) return esc(n[0]);
+  return n.map((x, i) => `<div class="cdr-acc-line"><bdi>${i + 1}۔</bdi> ${esc(x)}</div>`).join('');
+}
+
 // پہلے سے طے شدہ ڈیٹا (سسٹم سے) — نیا فارم یا خالی خانہ
-function _cdrDefaults(accIdx) {
+function _cdrDefaults() {
   const c = _cdrICase || {};
   const of = _cdrOfficer();
-  const cmp = _cdrParsePerson(c.complainant);
-  const acc = (_cdrAccused[accIdx] || null);
-  const ap = _cdrParsePerson(acc ? acc.name : '');
-  // بجرم = صرف دفعہ (مثلاً 379 ت پ) — جرم کی تفصیل (چوری موبائل وغیرہ) نہیں
-  const jurm = String(c.section_of_law || '').trim();
   return {
     thana: of.station || c.case_station || '',
     zila: of.district || c.case_district || '',
-    s_name: cmp.name, s_father: cmp.father, s_qaum: cmp.qaum, s_address: cmp.address,
-    fir: c.fir_number || '', fir_date: _cdrFmtDate(c.fir_date), jurm,
+    // سرکار بذریعہ — مدعی بالکل ویسا جیسا سسٹم میں درج ہے
+    s_full: String(c.complainant || '').replace(/\s+/g, ' ').trim(),
+    fir: c.fir_number || '', fir_date: _cdrFmtDate(c.fir_date),
+    // بجرم = صرف دفعہ (مثلاً 379 ت پ) — جرم کی تفصیل نہیں
+    jurm: String(c.section_of_law || '').trim(),
     fir_thana: c.case_station || of.station || '',
-    b_name: ap.name, b_father: ap.father, b_qaum: ap.qaum, b_address: ap.address,
-    // CDR کی مدت — پہلے سے: تاریخِ وقوعہ سے آج تک (ہر خانہ قابلِ ترمیم / ٹول بار سے تاریخ چنیں)
-    date_from: _cdrFmtDate(c.occurrence_date), date_to: _cdrToday(),
+    // CDR کی مدت — پہلے سے: تاریخِ وقوعہ سے آج تک (وقوعہ درج نہ ہو تو FIR کی تاریخ)
+    date_from: _cdrFmtDate(c.occurrence_date) || _cdrFmtDate(c.fir_date), date_to: _cdrToday(),
     applicant: of.line, applicant_phone: of.phone,
     io_sign: '', dispatch_no: '', dispatch_date: '',
     sho_note1: '', sho_note2: '', sdpo_note1: '', sdpo_note2: '', sp_note1: '', sp_note2: '',
   };
 }
 
+function _cdrMeta(r) { return (r && Array.isArray(r.rows)) ? r.rows.find(x => x && x._form === CDR_FORM_TAG) : null; }
+
 // محفوظ ریکارڈ → {f, nums, chk, acc}
 function _cdrFromSaved(s) {
   if (!s || !Array.isArray(s.rows)) return null;
-  const meta = s.rows.find(r => r && r._form === CDR_FORM_TAG);
+  const meta = _cdrMeta(s);
   const nums = s.rows.filter(r => r && !r._form).map(r => String(r.req || '').trim());
   if (meta) {
+    const f = { ...(meta.f || {}) };
+    // آج کے ابتدائی نسخے (نام/ولد/قوم/ساکن الگ خانے) → ایک سطر
+    const join = (a, b, c, d) => [a, b && ('ولد ' + b), c && ('قوم ' + c), d && ('سکنہ ' + d)]
+      .map(x => String(x || '').replace(/<[^>]*>/g, '').trim()).filter(Boolean).join(' ');
+    if (f.s_full === undefined && (f.s_name || f.s_father)) f.s_full = join(f.s_name, f.s_father, f.s_qaum, f.s_address);
+    if (f.banam === undefined && (f.b_name || f.b_father)) f.banam = esc(join(f.b_name, f.b_father, f.b_qaum, f.b_address));
     while (nums.length < CDR_NUM_COUNT) nums.push('');
-    return { f: meta.f || {}, nums: nums.slice(0, CDR_NUM_COUNT), chk: meta.chk || [false, false, false], acc: meta.acc };
+    return { f, nums: nums.slice(0, CDR_NUM_COUNT), chk: meta.chk || [false, false, false], acc: meta.acc };
   }
-  // پرانا فارم — صرف نمبر منتقل؛ باقی سسٹم سے
+  // پرانا (جدول والا) فارم — صرف نمبر منتقل؛ باقی سسٹم سے
   const old = nums.filter(Boolean).slice(0, CDR_NUM_COUNT);
   while (old.length < CDR_NUM_COUNT) old.push('');
-  return { f: {}, nums: old, chk: [false, false, false], acc: 0, legacy: true };
+  return { f: {}, nums: old, chk: [false, false, false], acc: 'all', legacy: true };
 }
 
+// ══════════════ فہرست ══════════════
+function _cdrRenderList() {
+  const area = _cdrArea();
+  if (!area) return;
+  const total = _cdrList.length;
+  const strip = s => String(s || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+  const rows = _cdrList.map((r, i) => {
+    const meta = _cdrMeta(r);
+    const f = (meta && meta.f) || {};
+    const nums = (r.rows || []).filter(x => x && !x._form && String(x.req || '').trim()).length;
+    const range = (strip(f.date_from) || strip(f.date_to)) ? `${strip(f.date_from) || '—'} سے ${strip(f.date_to) || '—'} تک` : '';
+    const no = total - i;   // پہلی بنی = 1
+    return `
+    <div class="cdr-li" onclick="_cdrOpen('${esc(String(r.id))}')">
+      <div class="cdr-li-no">${no}</div>
+      <div class="cdr-li-body">
+        <div class="cdr-li-t">CDR درخواست نمبر ${no}${r._pending ? ' <span class="cdr-li-pend">سرور پر نہیں گئی — کھول کر محفوظ کریں</span>' : ''}</div>
+        <div class="cdr-li-s">بنائی: <bdi dir="ltr">${esc(_cdrFmtStamp(r.created_at) || '—')}</bdi>
+          ${meta && meta.saved_at && _cdrFmtStamp(meta.saved_at) !== _cdrFmtStamp(r.created_at) ? ` · آخری محفوظ: <bdi dir="ltr">${esc(_cdrFmtStamp(meta.saved_at))}</bdi>` : ''}</div>
+        <div class="cdr-li-s">نمبرز: <bdi dir="ltr">${nums}</bdi>${range ? ' · مدت: <bdi>' + esc(range) + '</bdi>' : ''}</div>
+      </div>
+      <button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation();_cdrOpen('${esc(String(r.id))}')">کھولیں</button>
+    </div>`;
+  }).join('');
+
+  area.innerHTML = `
+  <div class="cdr-listwrap">
+    <!-- عنوان درمیان میں · «نیا» بٹن دائیں (SYSTEM RULE: add-new button ہمیشہ دائیں) -->
+    <div class="cdr-list-head">
+      <button type="button" class="btn btn-primary btn-sm dio-add-btn" onclick="_newCdr()">+ نئی CDR درخواست</button>
+      <div class="cdr-list-title">CDR/IMEI درخواستیں — فہرست (${total})</div>
+      <span class="btn btn-primary btn-sm" style="visibility:hidden;pointer-events:none;">+ نئی CDR درخواست</span>
+    </div>
+    ${rows}
+  </div>
+  <style>
+    .cdr-listwrap{ padding:16px; direction:rtl; height:100%; overflow-y:auto; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+    .cdr-list-head{ display:flex; align-items:center; gap:10px; border-bottom:2px solid var(--accent); padding-bottom:8px; margin-bottom:14px; }
+    .cdr-list-title{ flex:1; text-align:center; font-size:14pt; font-weight:800; color:var(--accent); }
+    .cdr-li{ display:flex; align-items:center; gap:12px; padding:10px 14px; background:var(--bg-card); border:1px solid var(--border);
+      border-radius:10px; margin-bottom:8px; cursor:pointer; }
+    .cdr-li:hover{ border-color:var(--accent); }
+    .cdr-li-no{ flex:0 0 34px; height:34px; border-radius:50%; background:var(--accent); color:#fff; font-weight:800;
+      display:flex; align-items:center; justify-content:center; font-family:Arial,sans-serif; font-size:11pt; }
+    .cdr-li-body{ flex:1; min-width:0; }
+    .cdr-li-t{ font-weight:700; font-size:12pt; }
+    .cdr-li-s{ font-size:10.5pt; color:var(--text-muted); }
+    .cdr-li-s bdi{ font-family:Arial,sans-serif; font-size:9.5pt; margin:0 5px; white-space:pre; }
+    .cdr-li-pend{ font-size:9.5pt; color:#b45309; font-weight:700; margin-right:6px; }
+  </style>`;
+}
+window._cdrRenderList = _cdrRenderList;
+
+function _cdrOpen(id) {
+  const r = _cdrList.find(x => String(x.id) === String(id));
+  if (!r) return;
+  _cdrISaved = r;
+  _cdrDirty = false;
+  _renderCdr();
+}
+window._cdrOpen = _cdrOpen;
+
+function _cdrBackToList() {
+  if (_cdrDirty && !confirm('غیر محفوظ تبدیلیاں ضائع ہو جائیں گی۔ فہرست پر جائیں؟')) return;
+  _cdrDirty = false;
+  _cdrRenderList();
+}
+window._cdrBackToList = _cdrBackToList;
+
+function _newCdr() {
+  if (_cdrDirty && !confirm('غیر محفوظ تبدیلیاں ضائع ہو جائیں گی۔ نئی درخواست کھولیں؟')) return;
+  _cdrISaved = null;
+  _cdrDirty = false;
+  _renderCdr();
+}
+window._newCdr = _newCdr;
+
+// ══════════════ فارم ══════════════
 function _renderCdr() {
   const area = _cdrArea();
   if (!area) return;
   const saved = _cdrFromSaved(_cdrISaved);
-  const accIdx = (saved && Number.isInteger(saved.acc)) ? saved.acc : 0;
-  const def = _cdrDefaults(accIdx);
+  const def = _cdrDefaults();
   const sf = (saved && saved.f) || {};
   const _san = (typeof sanitizeHtml === 'function') ? sanitizeHtml : (x => esc(x));
   // محفوظ قیمت (HTML) — ورنہ سسٹم کی قیمت (escape)
-  const val = k => (sf[k] !== undefined && sf[k] !== null && String(sf[k]).replace(/<[^>]*>|&nbsp;/g, '').trim() !== '')
-    ? _san(sf[k]) : esc(def[k] || '');
+  const has = k => sf[k] !== undefined && sf[k] !== null && String(sf[k]).replace(/<[^>]*>|&nbsp;/g, '').trim() !== '';
+  const val = k => has(k) ? _san(sf[k]) : esc(def[k] || '');
   let nums = saved ? saved.nums.slice() : [];
   if (!saved || nums.every(n => !n)) {
     const sys = _cdrSystemNumbers();
     nums = Array.from({ length: CDR_NUM_COUNT }, (_, i) => sys[i] || '');
   }
   const chk = (saved && saved.chk) || [false, false, false];
+  // بنام — محفوظ متن؛ ورنہ سسٹم کے تمام ملزمان
+  const acc = (saved && saved.acc !== undefined && saved.acc !== null) ? saved.acc : 'all';
+  const banam = has('banam') ? _san(sf.banam) : _cdrBanamHtml(_cdrAccused);
+  const total = _cdrList.length;
+  const idx = _cdrISaved ? _cdrList.findIndex(x => String(x.id) === String(_cdrISaved.id)) : -1;
+  const title = idx >= 0 ? `CDR درخواست نمبر ${total - idx}` : 'نئی CDR درخواست';
 
-  // خانہ (field) — data-k، خالی ہو تو نقطہ دار لکیر، بھرا ہو تو بولڈ
+  // خانہ (field) — نیچے کے حصے کے لیے: خالی ہو تو ڈیش لکیر (ہاتھ سے لکھنے کو)، بھرا ہو تو بولڈ
   const F = (k, grow, extra) => `<span class="cdr-f${val(k) ? ' cdr-has' : ''}" contenteditable="true" data-k="${k}"` +
     ` style="flex:${grow} 1 0;${extra || ''}" oninput="_cdrOnInput(this)">${val(k)}</span>`;
   const L = t => `<span class="cdr-l">${t}</span>`;
-  // پہلی چار سطروں کے لیے: لیبل اور سطر میں بہتا ہوا خانہ (اپنی چوڑائی جتنا)
+  // پہلی چار سطریں: لیبل + بہتا ہوا خانہ — کوئی لکیر نہیں
   const H = t => `<span class="cdr-h">${t}</span>`;
   const FI = (k, extra) => `<span class="cdr-fi${val(k) ? ' cdr-has' : ''}" contenteditable="true" data-k="${k}"` +
     ` style="${extra || ''}" oninput="_cdrOnInput(this)">${val(k)}</span>`;
@@ -226,10 +347,10 @@ function _renderCdr() {
         oninput="_cdrOnInput(this);_cdrCount()">${esc(nums[i] || '')}</span>
     </div>`;
 
-  const approvalBlock = (title, noteLbl, k1, k2) => `
+  const approvalBlock = (ttl, noteLbl, k1, k2) => `
     <div class="cdr-appr">
       <div class="cdr-box">
-        <div class="cdr-box-t">${title}</div>
+        <div class="cdr-box-t">${ttl}</div>
         <div class="cdr-box-s">حصول ${EN('CDR/IMEI')} کی اہمیت اور ضرورت کی تصدیق</div>
       </div>
       <div class="cdr-notes">
@@ -247,52 +368,40 @@ function _renderCdr() {
     </div>`;
 
   // ملزم کا انتخاب (بنام) — صرف سکرین پر
-  const accOpts = _cdrAccused.length
-    ? _cdrAccused.map((a, i) => `<option value="${i}" ${i === accIdx ? 'selected' : ''}>${esc(_cdrParsePerson(a.name).name || a.name || ('ملزم ' + (i + 1)))}</option>`).join('')
-    : '<option value="">کوئی ملزم درج نہیں</option>';
-
-  const tb = (typeof dioEditorToolbar === 'function') ? dioEditorToolbar() : '';
+  const accOpts = `<option value="all" ${acc === 'all' ? 'selected' : ''}>تمام ملزمان</option>` +
+    _cdrAccused.map((a, i) => `<option value="${i}" ${acc === i ? 'selected' : ''}>${esc(a)}</option>`).join('');
 
   area.innerHTML = `
   <div class="cdr-wrap" style="display:flex;flex-direction:column;height:100%;direction:rtl;">
-    <!-- ترمیمی ٹول بار — اوپر مستقل (floating نہیں) -->
-    <div class="cdr-toolbar no-print">
-      ${tb}
-      <span class="dio-etb-sep"></span>
-      <!-- CDR کی مدت — 📅 دبا کر تاریخ چنیں؛ فارم میں ہمیشہ DD/MM/YYYY (براؤزر کی مقامی ترتیب نہیں) -->
-      <span class="cdr-tb-lbl">CDR مورخہ
-        <span class="cdr-cal dio-etb-btn" title="کس تاریخ سے — تاریخ چنیں">📅<input type="date" class="cdr-date-in" data-for="date_from" value="${_cdrIso(val('date_from'))}" onclick="try{this.showPicker()}catch{}" onchange="_cdrSetDate('date_from', this.value)" aria-label="CDR کس تاریخ سے"></span>
-        تک
-        <span class="cdr-cal dio-etb-btn" title="کس تاریخ تک — تاریخ چنیں">📅<input type="date" class="cdr-date-in" data-for="date_to" value="${_cdrIso(val('date_to'))}" onclick="try{this.showPicker()}catch{}" onchange="_cdrSetDate('date_to', this.value)" aria-label="CDR کس تاریخ تک"></span>
-      </span>
-      <span class="dio-etb-sep"></span>
-      <button type="button" class="btn btn-secondary btn-sm" onclick="_cdrRefill()" title="خالی خانے سسٹم کے ڈیٹا سے دوبارہ بھریں">↺ سسٹم ڈیٹا</button>
-      <button type="button" class="btn btn-secondary btn-sm" onclick="_newCdr()">نئی درخواست</button>
-      <span style="margin-right:auto;"></span>
-      <button type="button" class="btn btn-primary btn-sm dio-modbtn cdr-save" onclick="_saveCdr()">محفوظ کریں</button>
-      <button type="button" class="btn btn-secondary btn-sm dio-modbtn cdr-print" onclick="_printCdr()">پرنٹ کریں</button>
-    </div>
-
     <div class="cdr-scroll" id="cdr-scroll">
+      <!-- سکرین کی پٹی (چھپائی میں نہیں): فہرست · CDR کی مدت -->
+      <div class="cdr-strip no-print">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="_cdrBackToList()" title="اس مقدمے کی تمام CDR درخواستیں">← فہرست</button>
+        <span class="cdr-strip-t">${esc(title)}</span>
+        <span class="cdr-tb-lbl">CDR مورخہ
+          <span class="cdr-cal" title="کس تاریخ سے — تاریخ چنیں">📅<input type="date" class="cdr-date-in" data-for="date_from" value="${_cdrIso(val('date_from'))}" onclick="try{this.showPicker()}catch{}" onchange="_cdrSetDate('date_from', this.value)" aria-label="CDR کس تاریخ سے"></span>
+          تک
+          <span class="cdr-cal" title="کس تاریخ تک — تاریخ چنیں">📅<input type="date" class="cdr-date-in" data-for="date_to" value="${_cdrIso(val('date_to'))}" onclick="try{this.showPicker()}catch{}" onchange="_cdrSetDate('date_to', this.value)" aria-label="CDR کس تاریخ تک"></span>
+        </span>
+        <button type="button" class="btn btn-primary btn-sm dio-modbtn" onclick="_saveCdr()">محفوظ کریں</button>
+      </div>
       <div class="cdr-zoom" id="cdr-zoom">
-      <div id="cdr-doc" class="cdr-page" data-acc="${accIdx}"><div class="cdr-inner" id="cdr-inner">
+      <div id="cdr-doc" class="cdr-page" data-acc="${esc(String(acc))}"><div class="cdr-inner" id="cdr-inner">
 
-        <!-- پہلی چار سطریں — درخواستیں (darkhwastain) کی ترتیب: تھانہ دائیں کنارے،
-             ضلع بائیں کنارے · سرکار بذریعہ/مقدمہ 0.9in اندر سے شروع، متن جہاں ختم
-             وہیں سطر ختم · بنام دائیں کنارے (hanging)، باقی اُسی 0.9in پر -->
+        <!-- پہلی چار سطریں — درخواستیں (darkhwastain) کی ترتیب -->
         <div class="cdr-title-row">
           <span class="cdr-tt-right">${H('تھانہ:')} ${FI('thana')}</span>
           <span class="cdr-tt-left">${H('ضلع:')} ${FI('zila')}</span>
         </div>
 
-        <div class="cdr-sarkar">${H('سرکار بذریعہ:۔')} ${H('نام')} ${FI('s_name')} ${H('ولد')} ${FI('s_father')} ${H('قوم')} ${FI('s_qaum')} ${H('ساکن')} ${FI('s_address')}</div>
+        <div class="cdr-sarkar">${H('سرکار بذریعہ:۔')} ${FI('s_full')}</div>
 
         <div class="cdr-caseline">${H('مقدمہ نمبر')} ${FI('fir', 'unicode-bidi:isolate;')} ${H('مورخہ')} ${FI('fir_date', 'unicode-bidi:isolate;')} ${H('بجرم')} ${FI('jurm')} ${H('تھانہ')} ${FI('fir_thana')}</div>
 
         <div class="cdr-banam-row">
-          ${_cdrAccused.length ? `<span class="cdr-acc-pick no-print" title="ملزم منتخب کریں — بنام کے خانے بھر جائیں گے">▾<select onchange="_cdrPickAccused(this.value)" aria-label="ملزم منتخب کریں">${accOpts}</select></span>` : ''}
+          ${_cdrAccused.length ? `<span class="cdr-acc-pick no-print" title="ملزم منتخب کریں">▾<select onchange="_cdrPickAccused(this.value)" aria-label="ملزم منتخب کریں">${accOpts}</select></span>` : ''}
           <span class="cdr-banam-lbl">بنام:۔</span>
-          <span class="cdr-banam-list">${H('نام')} ${FI('b_name')} ${H('ولد')} ${FI('b_father')} ${H('قوم')} ${FI('b_qaum')} ${H('ساکن')} ${FI('b_address')}</span>
+          <div class="cdr-banam-list cdr-fi${banam ? ' cdr-has' : ''}" contenteditable="true" data-k="banam" oninput="_cdrOnInput(this)">${banam}</div>
         </div>
 
         <div class="cdr-line cdr-subj">${L('عنوان:')}<span class="cdr-subj-t">درخواست برائے فراہمی کال ڈیٹا ریکارڈ</span></div>
@@ -341,7 +450,6 @@ function _renderCdr() {
   </div>
   <style id="cdr-style">${_cdrCSS()}</style>`;
 
-  if (typeof dioEditorToolbarCSS === 'function') dioEditorToolbarCSS();
   if (typeof dioBindEditor === 'function') { try { dioBindEditor(area); } catch (e) { console.warn('cdr bind:', e && e.message); } }
   _cdrCount();
   _cdrFit();
@@ -354,23 +462,17 @@ window._renderCdr = _renderCdr;
 // ── CSS (سکرین + چھپائی دونوں — ایک ہی ناپ) ──
 function _cdrCSS() {
   return `
-    .cdr-toolbar{ position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:6px; flex-wrap:wrap;
-      padding:7px 10px; direction:rtl; background:var(--bg-secondary,#f3f6f9); border-bottom:1px solid var(--border,#ddd); }
-    .cdr-tb-lbl{ display:inline-flex; align-items:center; gap:4px; white-space:nowrap; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; font-size:11pt; color:var(--text-primary,#111); }
-    .cdr-cal{ position:relative; display:inline-flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; }
+    /* سکرین کی پٹی — فہرست اور CDR کی تاریخیں (چھپائی میں نہیں) */
+    .cdr-strip{ position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:10px; flex-wrap:nowrap;
+      overflow-x:auto; scrollbar-width:none; padding:6px 10px; direction:rtl; background:var(--bg-secondary,#f3f6f9);
+      border-bottom:1px solid var(--border,#ddd); font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+    .cdr-strip::-webkit-scrollbar{ display:none; }
+    .cdr-strip > *{ flex:0 0 auto; white-space:nowrap; }
+    .cdr-strip-t{ font-weight:700; font-size:11pt; color:var(--accent,#0369a1); }
+    .cdr-tb-lbl{ display:inline-flex; align-items:center; gap:6px; white-space:nowrap; font-size:11pt; color:var(--text-primary,#111); }
+    .cdr-cal{ position:relative; display:inline-flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer;
+      width:34px; height:30px; border:1px solid var(--border,#ccc); border-radius:6px; background:var(--bg-card,#fff); font-size:15px; }
     .cdr-cal input{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:0; padding:0; }
-    /* موبائل: ٹول بار ایک ہی قطار (نقشہ موقع کی طرح) — انگلی سے دائیں/بائیں
-       سرکائیں، کوئی بٹن ہٹایا نہیں · محفوظ/پرنٹ بائیں کنارے پر ہمیشہ نظر میں */
-    @media (max-width:760px){
-      .cdr-toolbar{ flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; gap:4px; padding:4px 6px;
-        -webkit-overflow-scrolling:touch; scrollbar-width:none; overscroll-behavior-x:contain; }
-      .cdr-toolbar::-webkit-scrollbar{ display:none; }
-      .cdr-toolbar > *, .cdr-toolbar .dio-etb > *{ flex:0 0 auto; }
-      .cdr-toolbar .dio-etb{ flex:0 0 auto; flex-wrap:nowrap !important; }
-      .cdr-toolbar .dio-etb-btn, .cdr-toolbar .dio-etb-sel, .cdr-toolbar .btn{ height:34px; white-space:nowrap; }
-      .cdr-toolbar .cdr-save{ position:sticky; left:0; z-index:3; }
-      .cdr-toolbar .cdr-print{ position:sticky; left:0; z-index:3; box-shadow:-6px 0 8px -4px rgba(0,0,0,.18); }
-    }
     /* کاغذ کے گرد کوئی خالی جگہ نہیں — A4 سیدھا اوپر سے شروع */
     .cdr-scroll{ flex:1; min-height:0; overflow:auto; padding:0; background:var(--bg-tertiary,#e9eef3); }
     .cdr-zoom{ width:8.27in; margin:0 auto; }
@@ -382,32 +484,33 @@ function _cdrCSS() {
     #cdr-doc *{ box-sizing:border-box; }
     #cdr-doc .cdr-en{ font-family:'Times New Roman',Times,'Liberation Serif',serif; unicode-bidi:isolate; }
 
-    /* سطر — لیبل + خانے، ایک ہی سطر میں (لفظوں میں مناسب فاصلہ) */
     #cdr-doc .cdr-line{ display:flex; align-items:baseline; gap:0 5pt; margin:0 0 9pt; flex-wrap:nowrap; }
     /* ── پہلی چار سطریں — درخواستیں (#dk-doc) کے عین اصول، 14pt ── */
     #cdr-doc{ --cdr-indent:0.9in; }
-    /* لیبل عام، بھرا ہوا ڈیٹا بولڈ (درخواستیں جیسا) · لیبل اور ڈیٹا کے درمیان واضح فاصلہ */
     #cdr-doc .cdr-h{ font-weight:normal; white-space:nowrap; }
     #cdr-doc .cdr-fi{ outline:none; unicode-bidi:plaintext; margin:0 4pt; }
     #cdr-doc .cdr-fi.cdr-has{ font-weight:bold; }
-    /* سطر 2 تا 4 — ہر لفظ ایک ہی فونٹ، ایک ہی ناپ، ایک ہی وزن (لیبل اور ڈیٹا یکساں) */
+    /* سطر 2 تا 4 — ہر لفظ ایک ہی فونٹ، ایک ہی ناپ، ایک ہی وزن */
     #cdr-doc .cdr-sarkar, #cdr-doc .cdr-sarkar *, #cdr-doc .cdr-caseline, #cdr-doc .cdr-caseline *,
     #cdr-doc .cdr-banam-row, #cdr-doc .cdr-banam-row *{ font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif !important;
       font-size:14pt !important; font-weight:normal !important; }
-    /* خالی خانہ — ہاتھ سے لکھنے کے لیے نقطہ دار لکیر */
-    #cdr-doc .cdr-fi:not(.cdr-has){ display:inline-block; min-width:0.85in; border-bottom:1.2px dashed #000; vertical-align:baseline; }
+    /* خالی خانہ — کوئی نقطہ دار لکیر نہیں؛ صرف سکرین پر ہلکا رنگ تاکہ نظر آئے کہاں لکھنا ہے */
+    #cdr-doc .cdr-fi:empty{ display:inline-block; min-width:0.8in; vertical-align:baseline; }
     #cdr-doc .cdr-fi:empty::before{ content:'\\200b'; }
+    @media screen{ #cdr-doc .cdr-fi:empty{ background:rgba(56,189,248,0.13); border-radius:3px; } }
+    #cdr-doc .cdr-fi:focus{ background:rgba(56,189,248,0.10); border-radius:3px; }
     #cdr-doc .cdr-title-row{ display:flex; align-items:baseline; justify-content:space-between; width:100%; font-size:14pt; line-height:1.8; }
     #cdr-doc .cdr-tt-right{ text-align:right; white-space:nowrap; }
     #cdr-doc .cdr-tt-left{ text-align:left; white-space:nowrap; margin-left:1cm; }
     #cdr-doc .cdr-sarkar{ margin-top:0.12in; font-size:14pt; text-align:right; padding-right:var(--cdr-indent); line-height:1.8; }
     #cdr-doc .cdr-caseline{ margin:1pt 0 0; font-size:14pt; text-align:right; padding-right:var(--cdr-indent); line-height:1.8; }
     #cdr-doc .cdr-banam-row{ position:relative; margin:1pt 0 0; font-size:14pt; padding-right:var(--cdr-indent); min-height:1.6em; line-height:1.8; }
-    #cdr-doc .cdr-banam-lbl{ position:absolute; right:0; top:0; font-weight:bold; white-space:nowrap; line-height:1.8; }
-    #cdr-doc .cdr-banam-list{ display:block; text-align:right; line-height:1.8; }
+    #cdr-doc .cdr-banam-lbl{ position:absolute; right:0; top:0; white-space:nowrap; line-height:1.8; }
+    #cdr-doc .cdr-banam-list{ display:block; margin:0; text-align:right; line-height:1.8; min-width:2in; }
+    #cdr-doc .cdr-acc-line{ margin:0; }
     /* ملزم کا انتخاب ▾ — درخواستیں کی طرح دائیں حاشیے میں (چھپائی میں نہیں) */
     #cdr-doc .cdr-acc-pick{ position:absolute; right:-30px; top:4px; width:24px; height:24px; line-height:22px; border-radius:5px;
-      background:#0369a1; color:#fff; font-size:13px; font-weight:700; text-align:center; cursor:pointer; overflow:hidden; }
+      background:#0369a1; color:#fff; font-size:13px !important; font-weight:700; text-align:center; cursor:pointer; overflow:hidden; }
     #cdr-doc .cdr-acc-pick select{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
     #cdr-doc .cdr-center{ justify-content:center; }
     #cdr-doc .cdr-l{ white-space:nowrap; flex:0 0 auto; font-weight:bold; }
@@ -415,7 +518,7 @@ function _cdrCSS() {
     #cdr-doc .cdr-b{ font-weight:bold; }
     #cdr-doc .cdr-u{ text-decoration:underline; text-underline-offset:4pt; }
 
-    /* خانہ — خالی ہو تو ڈیش لکیر (اصل فارم جیسی)؛ بھرا ہو تو بولڈ */
+    /* نیچے کے حصے کے خانے — خالی ہو تو ڈیش لکیر (اصل فارم جیسی، ہاتھ سے لکھنے کو)؛ بھرا ہو تو بولڈ */
     #cdr-doc .cdr-f{ display:inline-block; min-width:0.45in; min-height:1.45em; padding:0 3pt; text-align:center;
       border-bottom:1.2px dashed #000; outline:none; unicode-bidi:plaintext; overflow-wrap:anywhere; vertical-align:baseline; }
     #cdr-doc .cdr-f:empty::before, #cdr-doc .cdr-num:empty::before{ content:'\\200b'; }
@@ -428,7 +531,7 @@ function _cdrCSS() {
     #cdr-doc .cdr-subj .cdr-l{ font-weight:bold; }
     #cdr-doc .cdr-subj-t{ font-weight:bold; text-decoration:underline; text-underline-offset:5pt; margin-right:1in; }
 
-    /* سطر 6 اور 7 — دونوں مکمل justify (سطر 6 کے آخر میں <br> ہے، اس لیے text-align-last بھی justify) */
+    /* سطر 6 اور 7 — دونوں مکمل justify */
     #cdr-doc .cdr-body{ text-align:justify; text-align-last:justify; line-height:1.95; margin:0 0 calc(3pt + var(--cdr-x,0px)); word-spacing:1pt; }
     /* تاریخ کے خانے — نقطہ دار لکیر نہیں؛ دونوں تاریخوں اور «سے» کے درمیان فاصلہ */
     #cdr-doc .cdr-body .cdr-f{ display:inline; min-width:0; min-height:0; padding:0; border-bottom:none; margin:0 6pt; text-align:center; }
@@ -456,7 +559,6 @@ function _cdrCSS() {
 
     /* SOP نوٹ + نشان والے خانے · بائیں «دفتری استعمال کے لیے» */
     #cdr-doc .cdr-foot{ display:flex; justify-content:space-between; align-items:flex-start; margin-top:2pt; font-size:10.5pt; }
-    /* گرڈ: دائیں متن، بائیں نشان کے خانے — تینوں خانے ایک ہی سیدھ میں (اصل فارم جیسا) */
     #cdr-doc .cdr-sop{ display:grid; grid-template-columns:max-content 0.5in; column-gap:6pt; row-gap:2pt; align-items:center; }
     #cdr-doc .cdr-sop-row{ display:contents; }
     #cdr-doc .cdr-sop-t{ line-height:1.5; }
@@ -465,7 +567,17 @@ function _cdrCSS() {
       font-weight:bold; cursor:pointer; user-select:none; line-height:1; }
     #cdr-doc .cdr-office{ font-weight:bold; padding-left:0.3in; white-space:nowrap; }
 
-    @media print{ .cdr-toolbar{ display:none !important; } }
+    /* ── چھپائی (Ctrl+P / اوپر والا «پرنٹ»): کاغذ = سکرین · مارجن کاغذ کے اندر (padding) ── */
+    @page{ size:A4 portrait; margin:0; }
+    @media print{
+      html, body{ background:#fff !important; }
+      .cdr-strip, .cdr-acc-pick, .no-print{ display:none !important; }
+      .cdr-wrap{ display:block !important; height:auto !important; }
+      .cdr-scroll{ overflow:visible !important; padding:0 !important; background:#fff !important; height:auto !important; }
+      .cdr-zoom{ zoom:1 !important; width:auto !important; margin:0 !important; }
+      #cdr-doc{ box-shadow:none !important; margin:0 !important; min-height:0 !important; zoom:var(--cdr-pz,1); }
+      #cdr-doc .cdr-fi:empty, #cdr-doc .cdr-fi:focus, #cdr-doc .cdr-f:focus{ background:none !important; }
+    }
   `;
 }
 
@@ -483,8 +595,8 @@ function _cdrSetDate(k, iso) {
 }
 window._cdrSetDate = _cdrSetDate;
 
-// ── صفحہ متوازن: نیچے بچی ہوئی جگہ فارم کے 8 وقفوں (اوپر سمیت) میں برابر بانٹو —
-//    نیچے زیادہ خالی اور اوپر تنگ نظر نہ آئے۔ مارجن (طے شدہ اصول) نہیں بدلتے۔ ──
+// ── صفحہ متوازن: نیچے بچی ہوئی جگہ فارم کے 8 وقفوں (اوپر سمیت) میں برابر بانٹو؛
+//    مواد زیادہ ہو تو چھپائی خود چھوٹی (--cdr-pz) — ہمیشہ ایک صفحہ ──
 const CDR_GAP_POINTS = 8;
 function _cdrBalance() {
   const doc = document.getElementById('cdr-doc');
@@ -496,9 +608,12 @@ function _cdrBalance() {
   doc.style.setProperty('--cdr-x', '0px');
   const h = inner.getBoundingClientRect().height;
   if (z) z.style.zoom = prev;
-  const spare = CDR_AVAIL_H_IN * CDR_PX_PER_IN * 0.96 - h;
+  const availH = CDR_AVAIL_H_IN * CDR_PX_PER_IN;
+  const spare = availH * 0.96 - h;
   const x = Math.max(0, Math.min(28, Math.floor(spare / CDR_GAP_POINTS)));
   doc.style.setProperty('--cdr-x', x + 'px');
+  const pz = h > availH * 0.98 ? Math.max(0.75, Math.floor((availH * 0.98 / h) * 1000) / 1000) : 1;
+  doc.style.setProperty('--cdr-pz', String(pz));
 }
 window._cdrBalance = _cdrBalance;
 
@@ -519,7 +634,7 @@ function _cdrOnInput(el) {
   if (!el) return;
   const t = (el.innerText || el.textContent || '').trim();
   el.classList.toggle('cdr-has', !!t);
-  // تاریخ ہاتھ سے لکھی تو ٹول بار کا تاریخ والا خانہ بھی ساتھ بدلے
+  // تاریخ ہاتھ سے لکھی تو پٹی کا تاریخ والا خانہ بھی ساتھ بدلے
   const k = el.dataset && el.dataset.k;
   if (k === 'date_from' || k === 'date_to') {
     const inp = document.querySelector('.cdr-date-in[data-for="' + k + '"]');
@@ -549,49 +664,25 @@ function _cdrToggleChk(el) {
 }
 window._cdrToggleChk = _cdrToggleChk;
 
-// بنام — منتخب ملزم کے چار خانے بھرو
-function _cdrPickAccused(idx) {
-  const i = parseInt(idx, 10);
-  if (!Number.isInteger(i) || !_cdrAccused[i]) return;
-  const p = _cdrParsePerson(_cdrAccused[i].name);
+// بنام — «تمام ملزمان» یا ایک ملزم
+function _cdrPickAccused(v) {
   const doc = document.getElementById('cdr-doc');
-  if (!doc) return;
-  doc.dataset.acc = String(i);
-  [['b_name', p.name], ['b_father', p.father], ['b_qaum', p.qaum], ['b_address', p.address]].forEach(([k, v]) => {
-    const el = doc.querySelector('[data-k="' + k + '"]');
-    if (el) { el.textContent = v || ''; _cdrOnInput(el); }
-  });
+  const el = doc && doc.querySelector('[data-k="banam"]');
+  if (!el) return;
+  const i = parseInt(v, 10);
+  const names = (v === 'all') ? _cdrAccused : (Number.isInteger(i) && _cdrAccused[i] ? [_cdrAccused[i]] : []);
+  doc.dataset.acc = (v === 'all') ? 'all' : String(i);
+  el.innerHTML = _cdrBanamHtml(names);
+  _cdrOnInput(el);
+  _cdrBalance();
 }
 window._cdrPickAccused = _cdrPickAccused;
-
-// خالی خانے سسٹم کے ڈیٹا سے (بھرے ہوئے نہیں چھیڑتے)
-function _cdrRefill() {
-  const doc = document.getElementById('cdr-doc');
-  if (!doc) return;
-  const def = _cdrDefaults(parseInt(doc.dataset.acc || '0', 10) || 0);
-  let n = 0;
-  doc.querySelectorAll('[data-k]').forEach(el => {
-    const k = el.dataset.k;
-    if (k === 'count') return;
-    if (!(el.innerText || '').trim() && def[k]) { el.textContent = def[k]; _cdrOnInput(el); n++; }
-  });
-  const sys = _cdrSystemNumbers();
-  const cells = Array.from(doc.querySelectorAll('.cdr-num'));
-  const have = cells.map(c => (c.innerText || '').trim()).filter(Boolean);
-  sys.filter(x => !have.includes(x)).forEach(x => {
-    const empty = cells.find(c => !(c.innerText || '').trim());
-    if (empty) { empty.textContent = x; _cdrOnInput(empty); n++; }
-  });
-  _cdrCount();
-  if (typeof showToast === 'function') showToast(n ? (n + ' خانے سسٹم ڈیٹا سے بھرے گئے') : 'کوئی خالی خانہ نہیں جس کا ڈیٹا سسٹم میں ہو', 'info');
-}
-window._cdrRefill = _cdrRefill;
 
 function _collectCdr() {
   const doc = document.getElementById('cdr-doc');
   const f = {};
   const nums = [];
-  if (!doc) return { f, nums, chk: [false, false, false], acc: 0 };
+  if (!doc) return { f, nums, chk: [false, false, false], acc: 'all' };
   doc.querySelectorAll('[data-k]').forEach(el => {
     const t = (el.innerText || '').trim();
     f[el.dataset.k] = t ? el.innerHTML : '';
@@ -600,44 +691,71 @@ function _collectCdr() {
   f.count_manual = !!(cnt && cnt.dataset.manual === '1');
   doc.querySelectorAll('.cdr-num').forEach(el => nums.push((el.innerText || '').replace(/\s+/g, ' ').trim()));
   const chk = Array.from(doc.querySelectorAll('.cdr-chk')).map(el => el.classList.contains('on'));
-  return { f, nums, chk, acc: parseInt(doc.dataset.acc || '0', 10) || 0 };
+  const a = doc.dataset.acc;
+  return { f, nums, chk, acc: (a === 'all' || a === undefined) ? 'all' : (parseInt(a, 10) || 0) };
+}
+
+function _cdrPutInList(rec) {
+  const i = _cdrList.findIndex(x => String(x.id) === String(rec.id));
+  if (i >= 0) _cdrList[i] = rec; else _cdrList.unshift(rec);
+  _cdrStoreLocal();
 }
 
 async function _saveCdr() {
   if (!_cdrICaseId) { if (typeof showToast === 'function') showToast('مقدمہ منتخب نہیں', 'error'); return; }
+  if (!document.getElementById('cdr-doc')) { if (typeof showToast === 'function') showToast('پہلے کوئی CDR درخواست کھولیں', 'info'); return; }
   const d = _collectCdr();
+  const now = new Date().toISOString();
   const rows = d.nums.map(n => ({ req: n }));
-  rows.push({ _form: CDR_FORM_TAG, f: d.f, chk: d.chk, acc: d.acc });
+  rows.push({ _form: CDR_FORM_TAG, f: d.f, chk: d.chk, acc: d.acc, saved_at: now });
   const rec = { case_id: _cdrICaseId, rows };
-  const key = 'dio_cdr_' + _cdrICaseId;
+  const cur = _cdrISaved;
+  const isTmp = !cur || !cur.id || String(cur.id).indexOf('tmp_') === 0;
   try {
     const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
     if (oid) rec.officer_id = oid;
-    if (_cdrISaved && _cdrISaved.id && String(_cdrISaved.id).indexOf('tmp_') !== 0) {
-      const { data, error } = await supabaseClient.from('cdr_imei_requests').update(rec).eq('id', _cdrISaved.id).select().maybeSingle();
+    let saved;
+    if (!isTmp) {
+      const { data, error } = await supabaseClient.from('cdr_imei_requests').update(rec).eq('id', cur.id).select().maybeSingle();
       if (error) throw error;
-      _cdrISaved = data || { ..._cdrISaved, ...rec };
+      saved = data || { ...cur, ...rec };
     } else {
       const { data, error } = await supabaseClient.from('cdr_imei_requests').insert(rec).select().single();
       if (error) throw error;
-      _cdrISaved = data;
+      saved = data;
+      // آف لائن والا عارضی ریکارڈ فہرست سے ہٹاؤ (اب سرور پر ہے)
+      if (cur && cur.id) _cdrList = _cdrList.filter(x => String(x.id) !== String(cur.id));
     }
-    try { localStorage.setItem(key, JSON.stringify(_cdrISaved)); } catch (e) { console.warn('cdr cache:', e && e.message); }
+    delete saved._pending;
+    _cdrISaved = saved;
+    _cdrPutInList(saved);
     _cdrMarkChipDone();
-    try { if (typeof dioRegisterSaved === 'function') dioRegisterSaved('cdr', 'CDR/IMEI درخواست', { case_id: _cdrICaseId }); } catch (e) { console.warn('cdr register:', e && e.message); }
+    try { if (typeof dioRegisterSaved === 'function') dioRegisterSaved('cdr', 'CDR/IMEI درخواست', { case_id: _cdrICaseId, cdr_id: saved.id }); } catch (e) { console.warn('cdr register:', e && e.message); }
     _cdrDirty = false;
+    _renderCdrTitle();
     if (typeof showToast === 'function') showToast('درخواست محفوظ ہو گئی', 'success');
   } catch (e) {
-    // آف لائن / سرور خرابی — مقامی طور پر محفوظ (پرانا رویہ)
+    // آف لائن / سرور خرابی — مقامی طور پر محفوظ؛ فہرست میں «سرور پر نہیں گئی»
     try {
-      _cdrISaved = { ...(_cdrISaved || {}), ...rec, id: (_cdrISaved && _cdrISaved.id) || ('tmp_' + Date.now()), created_at: new Date().toISOString() };
-      localStorage.setItem(key, JSON.stringify(_cdrISaved));
+      const local = { ...(cur || {}), ...rec, id: (cur && cur.id) || ('tmp_' + Date.now()),
+        created_at: (cur && cur.created_at) || now, _pending: true };
+      _cdrISaved = local;
+      _cdrPutInList(local);
       _cdrDirty = false;
+      _renderCdrTitle();
       if (typeof showToast === 'function') showToast('آف لائن محفوظ (انٹرنیٹ آنے پر دوبارہ محفوظ کریں)', 'info');
     } catch { if (typeof showToast === 'function') showToast('' + (e && e.message), 'error'); }
   }
 }
 window._saveCdr = _saveCdr;
+
+// پٹی کا عنوان (درخواست نمبر) — محفوظ ہونے کے بعد تازہ
+function _renderCdrTitle() {
+  const t = document.querySelector('.cdr-strip-t');
+  if (!t || !_cdrISaved) return;
+  const i = _cdrList.findIndex(x => String(x.id) === String(_cdrISaved.id));
+  if (i >= 0) t.textContent = 'CDR درخواست نمبر ' + (_cdrList.length - i);
+}
 
 // چِپ سبز — محفوظ ہونے کا نشان (سسٹم کا اصول: صرف ڈیٹا والی chip سبز)
 function _cdrMarkChipDone() {
@@ -647,7 +765,6 @@ function _cdrMarkChipDone() {
     }
     if (typeof _refreshMisalBar === 'function') _refreshMisalBar();
   } catch (e) { console.warn('cdr chip:', e && e.message); }
-  // case_documents میں بھی حالت «مکمل» — دوبارہ کھولنے پر chip سبز رہے
   try {
     supabaseClient.from('case_documents').update({ status: 'complete' })
       .eq('case_id', _cdrICaseId).eq('document_type', 'cdr_imei')
@@ -655,50 +772,12 @@ function _cdrMarkChipDone() {
   } catch (e) { console.warn('cdr doc status:', e && e.message); }
 }
 
-function _newCdr() {
-  if (_cdrDirty && !confirm('غیر محفوظ تبدیلیاں ضائع ہو جائیں گی۔ نئی درخواست کھولیں؟')) return;
-  _cdrISaved = null;
-  _cdrDirty = false;
-  _renderCdr();
-  if (typeof showToast === 'function') showToast('نئی درخواست — سسٹم کا ڈیٹا بھر دیا گیا', 'info');
-}
-window._newCdr = _newCdr;
-
-// ── چھپائی — A4، چاروں طرف 1 انچ، صرف فارم (ٹول بار نہیں)، ایک صفحہ ──
+// ── چھپائی — صرف براؤزر کی اپنی چھپائی (بالکل Ctrl+P جیسی)۔ پرانا iframe
+//    والا طریقہ ہٹا دیا گیا (اس میں صفحہ کھسک کر کٹ جاتا تھا)۔ ──
 function _printCdr() {
-  const doc = document.getElementById('cdr-doc');
-  if (!doc) return;
+  if (!document.getElementById('cdr-doc')) { if (typeof showToast === 'function') showToast('پہلے کوئی CDR درخواست کھولیں', 'info'); return; }
+  if (window.DIO && DIO.sub && !DIO.sub.guard('پرنٹ')) return;
   _cdrBalance();
-  // ایک صفحے میں سمانا: مواد کی اصل اونچائی (سکرین پر وہی ناپ) بمقابلہ جگہ
-  const z = document.getElementById('cdr-zoom');
-  const prevZoom = z ? z.style.zoom : '';
-  if (z) z.style.zoom = '1';
-  const inner = document.getElementById('cdr-inner');
-  const contentH = inner ? inner.getBoundingClientRect().height : 0;
-  if (z) z.style.zoom = prevZoom;
-  const availH = CDR_AVAIL_H_IN * CDR_PX_PER_IN;
-  // 2% حفاظتی گنجائش (چھاپنے والے کا ناپ ذرا سا مختلف ہو سکتا ہے)
-  const fit = contentH > availH * 0.98 ? Math.max(0.75, Math.floor((availH * 0.98 / contentH) * 1000) / 1000) : 1;
-
-  const clone = doc.cloneNode(true);
-  clone.querySelectorAll('.no-print, button, select').forEach(el => el.remove());
-  clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
-  clone.querySelectorAll('[oninput],[onclick],[onkeydown]').forEach(el => {
-    el.removeAttribute('oninput'); el.removeAttribute('onclick'); el.removeAttribute('onkeydown');
-  });
-  const html = `<!DOCTYPE html><html dir="rtl" lang="ur"><head><meta charset="UTF-8"><title> </title>
-    ${typeof dioFontHead === 'function' ? dioFontHead() : ''}
-    <style>
-      @page{ size:A4 portrait; margin:${CDR_MARGIN_CSS}; }
-      *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-      html,body{ margin:0; padding:0; background:#fff; }
-      ${_cdrCSS()}
-      #cdr-doc{ width:auto !important; min-height:0 !important; padding:0 !important; margin:0 !important;
-        box-shadow:none !important; border-radius:0 !important; ${fit < 1 ? 'zoom:' + fit + ';' : ''} }
-      #cdr-doc .cdr-f:focus{ background:none; }
-      #cdr-doc .cdr-appr, #cdr-doc .cdr-foot{ break-inside:avoid; }
-    </style></head><body>${clone.outerHTML}</body></html>`;
-  if (typeof dioPrint === 'function') dioPrint(html);
-  else { const w = window.open('', '_blank'); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 400); }
+  window.print();
 }
 window._printCdr = _printCdr;
