@@ -140,6 +140,12 @@ function _cdrOfficer() {
   };
 }
 
+// آج کی تاریخ DD/MM/YYYY (انگریزی ہندسے — مقامی ترتیب نہیں)
+function _cdrToday() {
+  const d = new Date();
+  return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+}
+
 function _cdrFmtDate(d) {
   if (!d) return '';
   if (typeof formatDate === 'function') { const f = formatDate(d); return f === '—' ? '' : f; }
@@ -153,7 +159,8 @@ function _cdrDefaults(accIdx) {
   const cmp = _cdrParsePerson(c.complainant);
   const acc = (_cdrAccused[accIdx] || null);
   const ap = _cdrParsePerson(acc ? acc.name : '');
-  const jurm = [c.section_of_law, c.offence_type].map(x => String(x || '').trim()).filter(Boolean).join(' ');
+  // بجرم = صرف دفعہ (مثلاً 379 ت پ) — جرم کی تفصیل (چوری موبائل وغیرہ) نہیں
+  const jurm = String(c.section_of_law || '').trim();
   return {
     thana: of.station || c.case_station || '',
     zila: of.district || c.case_district || '',
@@ -161,7 +168,8 @@ function _cdrDefaults(accIdx) {
     fir: c.fir_number || '', fir_date: _cdrFmtDate(c.fir_date), jurm,
     fir_thana: c.case_station || of.station || '',
     b_name: ap.name, b_father: ap.father, b_qaum: ap.qaum, b_address: ap.address,
-    date_from: '', date_to: '',
+    // CDR کی مدت — پہلے سے: تاریخِ وقوعہ سے آج تک (ہر خانہ قابلِ ترمیم / ٹول بار سے تاریخ چنیں)
+    date_from: _cdrFmtDate(c.occurrence_date), date_to: _cdrToday(),
     applicant: of.line, applicant_phone: of.phone,
     io_sign: '', dispatch_no: '', dispatch_date: '',
     sho_note1: '', sho_note2: '', sdpo_note1: '', sdpo_note2: '', sp_note1: '', sp_note2: '',
@@ -251,6 +259,13 @@ function _renderCdr() {
     <div class="cdr-toolbar no-print">
       ${tb}
       <span class="dio-etb-sep"></span>
+      <!-- CDR کی مدت — 📅 دبا کر تاریخ چنیں؛ فارم میں ہمیشہ DD/MM/YYYY (براؤزر کی مقامی ترتیب نہیں) -->
+      <span class="cdr-tb-lbl">CDR مورخہ
+        <span class="cdr-cal dio-etb-btn" title="کس تاریخ سے — تاریخ چنیں">📅<input type="date" class="cdr-date-in" data-for="date_from" value="${_cdrIso(val('date_from'))}" onclick="try{this.showPicker()}catch{}" onchange="_cdrSetDate('date_from', this.value)" aria-label="CDR کس تاریخ سے"></span>
+        تک
+        <span class="cdr-cal dio-etb-btn" title="کس تاریخ تک — تاریخ چنیں">📅<input type="date" class="cdr-date-in" data-for="date_to" value="${_cdrIso(val('date_to'))}" onclick="try{this.showPicker()}catch{}" onchange="_cdrSetDate('date_to', this.value)" aria-label="CDR کس تاریخ تک"></span>
+      </span>
+      <span class="dio-etb-sep"></span>
       <button type="button" class="btn btn-secondary btn-sm" onclick="_cdrRefill()" title="خالی خانے سسٹم کے ڈیٹا سے دوبارہ بھریں">↺ سسٹم ڈیٹا</button>
       <button type="button" class="btn btn-secondary btn-sm" onclick="_newCdr()">نئی درخواست</button>
       <span style="margin-right:auto;"></span>
@@ -330,6 +345,8 @@ function _renderCdr() {
   if (typeof dioBindEditor === 'function') { try { dioBindEditor(area); } catch (e) { console.warn('cdr bind:', e && e.message); } }
   _cdrCount();
   _cdrFit();
+  _cdrBalance();
+  try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(_cdrBalance); } catch { /* پرانا براؤزر */ }
   if (!window._cdrResizeBound) { window._cdrResizeBound = true; window.addEventListener('resize', _cdrFit); }
 }
 window._renderCdr = _renderCdr;
@@ -339,6 +356,9 @@ function _cdrCSS() {
   return `
     .cdr-toolbar{ position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:6px; flex-wrap:wrap;
       padding:7px 10px; direction:rtl; background:var(--bg-secondary,#f3f6f9); border-bottom:1px solid var(--border,#ddd); }
+    .cdr-tb-lbl{ display:inline-flex; align-items:center; gap:4px; white-space:nowrap; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; font-size:11pt; color:var(--text-primary,#111); }
+    .cdr-cal{ position:relative; display:inline-flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; }
+    .cdr-cal input{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:0; padding:0; }
     /* موبائل: ٹول بار ایک ہی قطار (نقشہ موقع کی طرح) — انگلی سے دائیں/بائیں
        سرکائیں، کوئی بٹن ہٹایا نہیں · محفوظ/پرنٹ بائیں کنارے پر ہمیشہ نظر میں */
     @media (max-width:760px){
@@ -370,6 +390,10 @@ function _cdrCSS() {
     #cdr-doc .cdr-h{ font-weight:normal; white-space:nowrap; }
     #cdr-doc .cdr-fi{ outline:none; unicode-bidi:plaintext; margin:0 4pt; }
     #cdr-doc .cdr-fi.cdr-has{ font-weight:bold; }
+    /* سطر 2 تا 4 — ہر لفظ ایک ہی فونٹ، ایک ہی ناپ، ایک ہی وزن (لیبل اور ڈیٹا یکساں) */
+    #cdr-doc .cdr-sarkar, #cdr-doc .cdr-sarkar *, #cdr-doc .cdr-caseline, #cdr-doc .cdr-caseline *,
+    #cdr-doc .cdr-banam-row, #cdr-doc .cdr-banam-row *{ font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif !important;
+      font-size:14pt !important; font-weight:normal !important; }
     /* خالی خانہ — ہاتھ سے لکھنے کے لیے نقطہ دار لکیر */
     #cdr-doc .cdr-fi:not(.cdr-has){ display:inline-block; min-width:0.85in; border-bottom:1.2px dashed #000; vertical-align:baseline; }
     #cdr-doc .cdr-fi:empty::before{ content:'\\200b'; }
@@ -399,26 +423,28 @@ function _cdrCSS() {
     #cdr-doc .cdr-f:focus{ background:rgba(56,189,248,0.10); }
     #cdr-doc .cdr-count{ flex:0 0 1.6in; }
 
-    #cdr-doc .cdr-subj{ margin-top:9pt; }
-    #cdr-doc .cdr-subj-t{ font-weight:bold; text-decoration:underline; text-underline-offset:5pt; margin-right:8pt; }
+    #cdr-doc .cdr-subj{ margin-top:calc(12pt + var(--cdr-x,0px)); }
+    #cdr-doc .cdr-inner{ padding-top:var(--cdr-x,0px); }
+    #cdr-doc .cdr-subj .cdr-l{ font-weight:bold; }
+    #cdr-doc .cdr-subj-t{ font-weight:bold; text-decoration:underline; text-underline-offset:5pt; margin-right:1in; }
 
-    #cdr-doc .cdr-body{ text-align:justify; text-align-last:right; line-height:1.95; margin:0 0 3pt; word-spacing:1pt; }
+    #cdr-doc .cdr-body{ text-align:justify; text-align-last:right; line-height:1.95; margin:0 0 calc(3pt + var(--cdr-x,0px)); word-spacing:1pt; }
     #cdr-doc .cdr-body .cdr-f{ text-align:center; }
     #cdr-doc .cdr-numhead{ margin:0 0 2pt; font-weight:bold; }
 
     /* 10 نمبر — دائیں کالم 1–5، بائیں 6–10 (RTL گرڈ) */
     #cdr-doc .cdr-grid{ display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(5, auto);
-      grid-auto-flow:column; column-gap:0.45in; row-gap:3pt; margin:0 0 8pt; }
+      grid-auto-flow:column; column-gap:0.45in; row-gap:9pt; margin:0 0 calc(8pt + var(--cdr-x,0px)); }
     #cdr-doc .cdr-num-row{ display:flex; align-items:baseline; gap:8pt; }
     #cdr-doc .cdr-num-no{ flex:0 0 0.36in; font-family:Calibri,Carlito,Arial,sans-serif; font-weight:bold; font-size:12pt; text-align:right; }
     #cdr-doc .cdr-num{ flex:1 1 0; min-height:1.45em; border-bottom:1.2px solid #000; outline:none; text-align:center;
       font-family:Calibri,Carlito,Arial,sans-serif; font-size:12pt; letter-spacing:0.3pt; direction:ltr; unicode-bidi:isolate; }
     #cdr-doc .cdr-num.cdr-has{ font-weight:bold; }
 
-    #cdr-doc .cdr-sign{ margin-top:2pt; margin-bottom:12pt; }
+    #cdr-doc .cdr-sign{ margin-top:2pt; margin-bottom:calc(12pt + var(--cdr-x,0px)); }
 
     /* SHO / SDPO / SP — دائیں ڈبہ (دستخط + مہر)، بائیں نوٹ کی دو لکیریں */
-    #cdr-doc .cdr-appr{ display:flex; align-items:stretch; gap:0.2in; margin:0 0 12pt; }
+    #cdr-doc .cdr-appr{ display:flex; align-items:stretch; gap:0.2in; margin:0 0 calc(12pt + var(--cdr-x,0px)); }
     #cdr-doc .cdr-box{ flex:0 0 51%; border:2px solid #000; min-height:0.76in; padding:3pt 6pt 2pt;
       display:flex; flex-direction:column; justify-content:flex-end; align-items:center; text-align:center; }
     #cdr-doc .cdr-box-t{ font-weight:bold; font-size:11.5pt; line-height:1.5; }
@@ -441,6 +467,39 @@ function _cdrCSS() {
   `;
 }
 
+// DD/MM/YYYY ⇄ YYYY-MM-DD (تاریخ چننے والے خانے کے لیے)
+function _cdrIso(t) {
+  const m = String(t || '').replace(/<[^>]*>/g, '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  return m ? `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}` : '';
+}
+function _cdrSetDate(k, iso) {
+  const el = document.querySelector('#cdr-doc [data-k="' + k + '"]');
+  if (!el) return;
+  el.textContent = iso ? _cdrFmtDate(iso) : '';
+  _cdrOnInput(el);
+  _cdrBalance();
+}
+window._cdrSetDate = _cdrSetDate;
+
+// ── صفحہ متوازن: نیچے بچی ہوئی جگہ فارم کے 8 وقفوں (اوپر سمیت) میں برابر بانٹو —
+//    نیچے زیادہ خالی اور اوپر تنگ نظر نہ آئے۔ مارجن (طے شدہ اصول) نہیں بدلتے۔ ──
+const CDR_GAP_POINTS = 8;
+function _cdrBalance() {
+  const doc = document.getElementById('cdr-doc');
+  const inner = document.getElementById('cdr-inner');
+  const z = document.getElementById('cdr-zoom');
+  if (!doc || !inner) return;
+  const prev = z ? z.style.zoom : '';
+  if (z) z.style.zoom = '1';
+  doc.style.setProperty('--cdr-x', '0px');
+  const h = inner.getBoundingClientRect().height;
+  if (z) z.style.zoom = prev;
+  const spare = CDR_AVAIL_H_IN * CDR_PX_PER_IN * 0.96 - h;
+  const x = Math.max(0, Math.min(28, Math.floor(spare / CDR_GAP_POINTS)));
+  doc.style.setProperty('--cdr-x', x + 'px');
+}
+window._cdrBalance = _cdrBalance;
+
 // ── سکرین پر کاغذ پورا نظر آئے (موبائل پر چھوٹا) — ناپ نہیں بدلتی، صرف zoom ──
 function _cdrFit() {
   const sc = document.getElementById('cdr-scroll');
@@ -458,6 +517,12 @@ function _cdrOnInput(el) {
   if (!el) return;
   const t = (el.innerText || el.textContent || '').trim();
   el.classList.toggle('cdr-has', !!t);
+  // تاریخ ہاتھ سے لکھی تو ٹول بار کا تاریخ والا خانہ بھی ساتھ بدلے
+  const k = el.dataset && el.dataset.k;
+  if (k === 'date_from' || k === 'date_to') {
+    const inp = document.querySelector('.cdr-date-in[data-for="' + k + '"]');
+    if (inp) inp.value = _cdrIso(t);
+  }
 }
 window._cdrOnInput = _cdrOnInput;
 
@@ -601,6 +666,7 @@ window._newCdr = _newCdr;
 function _printCdr() {
   const doc = document.getElementById('cdr-doc');
   if (!doc) return;
+  _cdrBalance();
   // ایک صفحے میں سمانا: مواد کی اصل اونچائی (سکرین پر وہی ناپ) بمقابلہ جگہ
   const z = document.getElementById('cdr-zoom');
   const prevZoom = z ? z.style.zoom : '';
