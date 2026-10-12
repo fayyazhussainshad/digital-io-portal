@@ -174,14 +174,27 @@ test('suspended par daakhla band, magar expired par view-only barqarar (4E)', ()
     'expired par poora lock 4E ke faisle ke khilaf hai');
 });
 
+// ── v529: SQL ke test ab unhi failon par jo ASAL DB par chali hain ──
+// (sql/README.md: 20/21/30/41/50/60/70 waale masaude jaan boojh kar repo
+//  mein NAHI — unka kaam 91–95 ne liya. Test ab inhi ko jaanchte hain.)
+const sqlAmli = (f) => read(f).split('\n').filter((l) => !l.trim().startsWith('--')).join('\n');
+const SQL_ADMIN_RPC = ['sql/94a_verify_rpc.sql', 'sql/94b_reject_rpc.sql', 'sql/94c_suspend_rpc.sql'];
+
 test('SQL write-gate mo\'attali aur manzoori dono dekhti hai', () => {
-  const g = read('sql/50_suspend_hard_gate.sql');
-  assert.ok(/is_suspended/.test(g), 'is_suspended check zaroori');
-  assert.ok(/is_approved/.test(g), 'is_approved check zaroori');
-  assert.ok(/role = 'superadmin'/.test(g), 'maalik mustasna rehna chahiye');
-  // purana masla: admin ko poora mustasna kar dena
-  assert.ok(!/role in \('superadmin', 'admin'\)/.test(g),
-    'admin ko poora mustasna karna = mo\'attal admin likh sakega');
+  // likhne ki rok (92b): insert/update/delete — RESTRICTIVE, dio_has_active_sub() se
+  const g = sqlAmli('sql/92b_add_write_gate.sql');
+  for (const cmd of ['insert', 'update', 'delete'])
+    assert.ok(new RegExp('as restrictive [\'\\s|]*for ' + cmd + ' to authenticated').test(g),
+      cmd + ' par restrictive rok honi chahiye');
+  assert.ok(/dio_has_active_sub\(\)/.test(g), 'rok ka faisla server ka function kare');
+  // admin ke kaam: mo'attal ya ghair-manzoor admin bhi ruke
+  for (const f of SQL_ADMIN_RPC) {
+    const r = sqlAmli(f);
+    assert.ok(/coalesce\(o\.suspended, false\) = false/.test(r), f + ': mo\'attali ki jaanch');
+    assert.ok(/coalesce\(o\.is_approved, false\) = true/.test(r), f + ': manzoori ki jaanch');
+    assert.ok(!/role in \('superadmin', 'admin'\)/.test(r),
+      f + ': admin ko poora mustasna karna = mo\'attal admin likh sakega');
+  }
 });
 
 // ── Jaiza-2 me mile masail (regression guards) ──────────────────
@@ -278,13 +291,17 @@ test('error log nijji maloomat redact karta hai', () => {
     assert.ok(!out.includes(bad), bad + ' log me nahi jana chahiye');
 });
 
-test('client_errors dusre afsar ke naam par darj na ho sake', () => {
-  // Tabsare (-- ...) hata kar sirf ASAL SQL jaanchein — warna purane
-  // code ka zikr karne wala comment hi test fail kar deta hai.
-  const g = read('sql/30_client_errors_optional.sql')
-    .split('\n').filter((l) => !l.trim().startsWith('--')).join('\n');
-  assert.ok(!/with check \(\s*true\s*\)/.test(g), 'with check(true) = kisi bhi officer_id par likh do');
-  assert.ok(/auth\.uid\(\)/.test(g), 'officer_id auth.uid() se bandha hona chahiye');
+test('client_errors: anon sirf likh sake, parh na sake — aur koi khuli policy nahi', () => {
+  // client_errors ki apni policy DB mein pehle se hai (README: file 30 repo mein nahi).
+  // Repo se jo jaancha ja sakta hai: anon ko sirf INSERT, aur kahin with check(true) nahi.
+  const a = sqlAmli('sql/81_anon_lockdown.sql');
+  assert.ok(/grant insert on public\.client_errors to anon/.test(a), 'login se pehle ki ghalti bhi darj ho');
+  assert.ok(!/grant (select|update|delete|all)[^;]*client_errors[^;]*to anon/.test(a),
+    'anon kisi aur ki ghaltiyan parh/badal na sake');
+  // ROLLBACK failen jaan boojh kar purani halat lautati hain — wo mustasna
+  for (const f of fs.readdirSync(path.join(ROOT, 'sql')).filter((x) => x.endsWith('.sql') && !/ROLLBACK/.test(x)))
+    assert.ok(!/with check \(\s*true\s*\)/i.test(sqlAmli('sql/' + f)),
+      f + ': with check(true) = kisi bhi officer_id par likh do');
 });
 
 test('debug banner innerHTML istemaal nahi karta', () => {
@@ -302,43 +319,71 @@ test('subscriptions client whitelist se nikali gayi (gate ki apni table)', () =>
 });
 
 test('subscriptions DB par bhi lock hai aur tajdeed RPC se hoti hai', () => {
-  const g = read('sql/60_subscriptions_lockdown.sql');
-  assert.ok(/alter table public\.subscriptions enable row level security/.test(g));
-  assert.ok(/dio_request_subscription/.test(g), 'tajdeed ka mehfooz raasta hona chahiye');
-  assert.ok(!/create policy[\s\S]{0,200}for (insert|update|delete) to authenticated/.test(g),
-    'authenticated ke liye koi write policy nahi honi chahiye');
+  const g = sqlAmli('sql/95_subs_lockdown.sql');
+  assert.ok(/drop policy if exists "Officers own subs"\s+on public\.subscriptions/.test(g),
+    'afsar ki apni likhne wali ALL policy hatni chahiye (khud ko trial de leta tha)');
+  assert.ok(!/create policy/.test(g), 'subscriptions par koi nayi likhne wali policy nahi');
+  assert.ok(/raise exception 'RUKA/.test(g), 'parhne ka raasta na bache to ruk jaye');
+  // chaaron raaste security definer RPC
+  for (const [f, fn] of [['sql/94a_verify_rpc.sql', 'dio_verify_subscription'],
+                         ['sql/94b_reject_rpc.sql', 'dio_reject_subscription'],
+                         ['sql/94c_suspend_rpc.sql', 'dio_suspend_subscription'],
+                         ['sql/94d_request_rpc_fix.sql', 'dio_request_subscription']]) {
+    const r = sqlAmli(f);
+    assert.ok(new RegExp('function public\\.' + fn + '\\(').test(r), f + ': ' + fn);
+    assert.ok(/security definer/.test(r) && /set search_path = pg_catalog, public, pg_temp/.test(r),
+      f + ': security definer + mehfooz search_path');
+  }
 });
 
-test('officers trigger INSERT + DELETE bhi cover karta hai', () => {
-  const g = read('sql/21_officers_protect_v2.sql');
-  assert.ok(/before insert or update or delete/.test(g),
-    'sirf UPDATE par trigger = INSERT se superadmin ban jana mumkin');
-  assert.ok(/officers_user_id_uidx/.test(g), 'har user ka aik hi record (exists-check ka tahaffuz)');
-  assert.ok(/sirf apni profile/.test(g), 'dusre afsar ki row mehfooz honi chahiye');
+test('officers: khatarnak masauda (auth.uid() is null = sab ijazat) kabhi wapas na aaye', () => {
+  // README: 20/21 waale trigger anon ko bhi raasta de dete (anon ka uid bhi null).
+  // DB ka mojooda dio_protect_officers() current_user = 'service_role' dekhta hai.
+  for (const f of ['20_officers_protect_trigger.sql', '21_officers_protect_v2.sql'])
+    assert.ok(!fs.existsSync(path.join(ROOT, 'sql', f)), f + ' repo mein na aaye (README: khatarnak)');
+  for (const f of fs.readdirSync(path.join(ROOT, 'sql')).filter((x) => x.endsWith('.sql')))
+    assert.ok(!/auth\.uid\(\)\s+is\s+null\s+then\s+return/i.test(sqlAmli('sql/' + f)),
+      f + ': uid null ko server maan kar chhoot dena = anon ko poora raasta');
 });
 
-test('50: is_approved NULL par fail-CLOSED', () => {
-  const g = read('sql/50_suspend_hard_gate.sql');
-  assert.ok(/coalesce\(o\.is_approved,\s*false\)/.test(g),
-    'coalesce(..., true) = NULL wala afsar manzoor maan liya jata');
+test('is_approved NULL par fail-CLOSED (har server function mein)', () => {
+  for (const f of [...SQL_ADMIN_RPC, 'sql/94d_request_rpc_fix.sql', 'sql/91a_function.sql']) {
+    const r = sqlAmli(f);
+    assert.ok(/coalesce\((o|new)\.is_approved,\s*false\)/.test(r), f + ': NULL = ghair-manzoor');
+    assert.ok(!/coalesce\([\w.]*is_approved,\s*true\)/.test(r),
+      f + ': coalesce(..., true) = NULL wala afsar manzoor maan liya jata');
+  }
 });
 
-test('active + NULL miyaad par lockout na ho', () => {
-  for (const f of ['sql/50_suspend_hard_gate.sql', 'sql/10_subscription_enforcement.sql'])
-    assert.ok(/expires_at is null or s\.expires_at > now\(\)/.test(read(f)),
-      f + ': NULL miyaad par asli paying afsar block ho jata tha');
+test('active/trial ko server hamesha miyaad deta hai (NULL miyaad na bane)', () => {
+  // purana masla: active + NULL expires_at par asli paying afsar block ho jata.
+  // Ab dono raaste server par expires_at khud likhte hain.
+  assert.ok(/'trial', now\(\), now\(\) \+ interval '30 days'/.test(sqlAmli('sql/91a_function.sql')),
+    'manzoori par trial: 30 din ki miyaad ke sath');
+  const v = sqlAmli('sql/94a_verify_rpc.sql');
+  assert.ok(/status\s+= 'active'/.test(v) && /expires_at\s+= now\(\) \+ make_interval\(days => _days\)/.test(v),
+    'manzoor sabscription: miyaad plan ke dinon se');
+  assert.ok(/coalesce\(sp\.duration_days, 30\)/.test(v), 'plan ke din na hon to bhi 30 din');
 });
 
-test('41 rollback sirf apne enable kiye tables par chalta hai', () => {
-  const g = read('sql/41_rls_enable_safe_ROLLBACK.sql');
-  assert.ok(/dio_migration_state/.test(g),
-    'bina record ke rollback un tables ki RLS bhi band kar deta jo pehle se mehfooz theen');
+test('93 rollback sirf unhi tables par chalta hai jin par 93b ne RLS lagai', () => {
+  const list = (f, name) => {
+    const m = new RegExp(name + ' text\\[\\] := array\\[([\\s\\S]*?)\\]').exec(read(f));
+    assert.ok(m, f + ': fehrist milni chahiye');
+    return [...m[1].matchAll(/'([a-z_0-9]+)'/g)].map((x) => x[1]).sort();
+  };
+  const on = list('sql/93b_enable_rls.sql', 'band');
+  const off = list('sql/93_ROLLBACK.sql', 'band');
+  assert.deepStrictEqual(off, on,
+    'wapsi ki fehrist alag ho to pehle se mehfooz tables ki RLS bhi band ho jati');
+  assert.ok(!/officers|subscriptions'/.test(off.join(',')), 'officers/subscriptions wapsi mein na hon');
 });
 
-test('41 un tables ko chhoRta hai jin par pehle se policies hain', () => {
-  const g = read('sql/41_rls_enable_safe.sql');
-  assert.ok(/pg_policy[\s\S]{0,200}raise warning/.test(g),
-    'dormant per-officer policies par allow-all lagana unhein hamesha be-asar kar deta');
+test('93b: bina policy wali table par RLS on na kare, aur allow-all na lagaye', () => {
+  const g = sqlAmli('sql/93b_enable_rls.sql');
+  assert.ok(/pg_policy[\s\S]{0,200}polpermissive[\s\S]{0,120}raise warning/.test(g),
+    'policy ke baghair RLS on = sab kuch band — aisi table chhoR kar khabar de');
+  assert.ok(!/create policy/.test(g), 'yahan koi allow-all policy nahi banni chahiye');
 });
 
 test("status 'none' bhi block kare (fail-closed)", () => {
@@ -1118,19 +1163,22 @@ test('maalik (superadmin) kabhi band na ho', () => {
     'tala lagane se pehle maalik ki jaanch');
 });
 
-test('ASAL rok SERVER par hai — client ka tala kaafi nahi', () => {
-  const fs = require('fs'), path = require('path');
-  const sql = fs.readFileSync(path.join(__dirname, '..', 'sql', '70_no_entry_on_expiry.sql'), 'utf8');
-  assert.ok(/for select to authenticated using \(public\.dio_has_active_sub\(\)\)/.test(sql),
-    'PARHNE par bhi rok honi chahiye — warna client tor kar data parha ja sakta hai');
-  assert.ok(/as restrictive/.test(sql), 'restrictive ho, warna doosri policy se by-pass ho jayegi');
-  // jo tables khuli rehni chahiyen (warna afsar phans jaye)
-  const gated = sql.slice(sql.indexOf('gated text[]'), sql.indexOf('begin'));
-  for (const open of ['officers', 'subscription_plans'])
-    assert.ok(!new RegExp("'" + open + "'").test(gated),
-      open + ' khuli rehni chahiye warna tajdeed hi mumkin na ho');
-  assert.ok(fs.existsSync(path.join(__dirname, '..', 'sql', '70_no_entry_on_expiry_ROLLBACK.sql')),
-    'wapsi ki file bhi honi chahiye');
+test('ASAL rok SERVER par hai — sirf LIKHNE par; parhna kabhi band nahi', () => {
+  // Qaida: miyaad khatam = dekh sakte ho, badal nahi sakte (README + 92a).
+  // 70_no_entry_on_expiry.sql MANSOOKH — parhna band karti thi.
+  assert.ok(!fs.existsSync(path.join(ROOT, 'sql', '70_no_entry_on_expiry.sql')), '70 wapas na aaye');
+  assert.ok(/drop policy if exists dio_sub_sel/.test(sqlAmli('sql/92a_drop_read_gate.sql')),
+    'parhne ki purani rok hatni chahiye');
+  const g = sqlAmli('sql/92b_add_write_gate.sql');
+  assert.ok(/as restrictive/.test(g), 'restrictive ho, warna doosri policy se by-pass ho jayegi');
+  assert.ok(!/for select/.test(g), 'parhne par rok nahi');
+  const gated = g.slice(g.indexOf('gated text[]'), g.indexOf('begin'));
+  for (const open of ['officers', 'subscriptions', 'subscription_plans', 'client_errors'])
+    assert.ok(!new RegExp("'" + open + "'").test(gated), open + ' khuli rehni chahiye warna tajdeed hi mumkin na ho');
+  // ROLLBACK ke siwa koi file parhne par sabscription ki rok na lagaye
+  for (const f of fs.readdirSync(path.join(ROOT, 'sql')).filter((x) => x.endsWith('.sql') && !/ROLLBACK/.test(x)))
+    assert.ok(!/for select to authenticated using \(public\.dio_has_active_sub\(\)\)/.test(sqlAmli('sql/' + f)),
+      f + ': parhne par miyaad ki rok — qaide ke khilaf');
 });
 
 test('aaf-line par nishan SAHIH ho (shuru me bhi)', () => {
@@ -1374,12 +1422,14 @@ test('عنوانات: تین درجے، ایک ہی جگہ سے', () => {
   for (const v of ['--dio-h1', '--dio-h2', '--dio-h3']) assert.ok(css.includes(v), 'paimana: ' + v);
   assert.ok(/clamp\(/.test(css), 'mobile aur desktop — aik hi qaida se');
   // index.html ka `revert` ab unwanon ko nigal na jaye
-  assert.ok(/font-size: var\(--dio-h1, 20px\) !important/.test(html));
-  assert.ok(/font-size: var\(--dio-h2, 17px\) !important/.test(html));
-  assert.ok(/font-size: var\(--dio-h3, 15px\) !important/.test(html));
-  // aam unwan kabhi aam matn (14px) se chhota na ho
-  const m = /--dio-h3: clamp\(([\d.]+)px/.exec(css);
-  assert.ok(m && parseFloat(m[1]) >= 14, 'aam unwan 14px se chhota na ho, mila: ' + (m ? m[1] : '?'));
+  // (qaida: font ka size hamesha pt mein — 20px=15pt, 17px=12.75pt, 15px=11.25pt)
+  assert.ok(/font-size: var\(--dio-h1, 15pt\) !important/.test(html));
+  assert.ok(/font-size: var\(--dio-h2, 12\.75pt\) !important/.test(html));
+  assert.ok(/font-size: var\(--dio-h3, 11\.25pt\) !important/.test(html));
+  assert.ok(!/var\(--dio-h[123], [\d.]+px\)/.test(html), 'unwan ka size px mein nahi — pt mein');
+  // aam unwan kabhi aam matn (14px = 10.5pt) se chhota na ho
+  const m = /--dio-h3: clamp\(([\d.]+)pt/.exec(css);
+  assert.ok(m && parseFloat(m[1]) >= 10.5, 'aam unwan 10.5pt (14px) se chhota na ho, mila: ' + (m ? m[1] : '?'));
   // dastavez ka apna (point wala) paimana
   const r = read('report173.js');
   for (const v of ['--doc-h1: 20pt', '--doc-h2: 16pt', '--doc-h3: 14pt', '--doc-h4: 12pt'])
@@ -1541,14 +1591,11 @@ test('ایج فنکشن: معطلی اور منظوری کا فیصلہ SQL جی
 });
 
 test('SQL گیٹ اب صحیح کالم پر', () => {
-  for (const f of ['sql/21_officers_protect_v2.sql', 'sql/50_suspend_hard_gate.sql',
-                   'sql/60_subscriptions_lockdown.sql', 'sql/20_officers_protect_trigger.sql']) {
-    const s = read(f).split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
-    assert.ok(!/is_suspended/.test(s), f + ' me ab bhi is_suspended hai (42703 se rad ho jayegi)');
-    assert.ok(/suspended/.test(s), f + ' me mo\'attali ki shart hi nahi rahi');
-    assert.ok(/column_name = 'suspended'/.test(read(f)),
-      f + ' me column ka guard nahi (kisi aur schema par khamoshi se ghalat chalegi)');
-  }
+  // DB ka kalam `suspended` hai (42703: Perhaps you meant officers.suspended)
+  for (const f of fs.readdirSync(path.join(ROOT, 'sql')).filter((x) => x.endsWith('.sql')))
+    assert.ok(!/is_suspended/.test(sqlAmli('sql/' + f)), f + ' me is_suspended hai (42703 se rad ho jayegi)');
+  for (const f of [...SQL_ADMIN_RPC, 'sql/94d_request_rpc_fix.sql'])
+    assert.ok(/o\.suspended/.test(sqlAmli(f)), f + ' me mo\'attali ki shart hi nahi rahi');
 });
 
 test('تشخیصی SQL کسی کالم پر بھروسہ نہ کرے', () => {
