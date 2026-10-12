@@ -596,7 +596,7 @@ document.addEventListener('click', function(e) {
 });
 
 // ── MODAL OPENERS + SAVE/VIEW ──
-function openAddCaseModal(){openModal('',caseFormHTML(),`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveNewCase()">اندراج محفوظ کریں</button>`);setTimeout(function(){_cfRenderMobilePhones();if(typeof _cfSizeModal==='function')_cfSizeModal();},50);}
+async function openAddCaseModal(){await _dioNeed(['case-form.js']);openModal('',caseFormHTML(),`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveNewCase()">اندراج محفوظ کریں</button>`);setTimeout(function(){_cfRenderMobilePhones();if(typeof _cfSizeModal==='function')_cfSizeModal();},50);}
 // ── AUTO REMINDERS ────────────────────────────────────────────
 async function _createAutoReminders(firNum, firDateStr, mulzmanType, complainant) {
   try {
@@ -646,7 +646,54 @@ let currentDocIndex = null;
  // stores edited content per case+doc
 
 // ── RELATED CASES LINKING ─────────────────────────────────────
+
+/* ═══════════════════════════════════════════════════════════════════
+   سست (lazy) ماڈیول — استعمال سے پہلے یقینی بنائیں
+   ───────────────────────────────────────────────────────────────────
+   boot.js رفتار کے لیے بھاری فائلیں «فرصت میں» ایک ایک کر کے لاتا ہے۔
+   `cases.js` فوراً لوڈ ہوتی ہے، مگر یہ اُن فائلوں کے فنکشن سیدھا پکارتی
+   تھی — بغیر یہ دیکھے کہ وہ آ بھی چکی ہیں یا نہیں۔ عام حالت میں فائلیں
+   cache سے فوراً مل جاتی تھیں، اِس لیے خرابی سامنے نہیں آتی تھی۔ مگر جب
+   cache نیا ہو (نیا ورژن چڑھنے کے بعد) تو ہر فائل نیٹ ورک سے آتی ہے اور
+   قطار لمبی ہو جاتی ہے — اُس وقفے میں مقدمہ کھولنے پر:
+       ReferenceError: loadMisalDocs is not defined
+   اور پورا ورک سپیس کھلنے سے رہ جاتا تھا۔
+   (`loadMisalDocs` misal-docs.js میں ہے، جو قطار میں 13ویں نمبر پر ہے۔)
+
+   اب ہر داخلی دروازہ پہلے اپنی ضروری فائلیں منگوا لیتا ہے۔ یہ انتظار صرف
+   پہلی بار ہوتا ہے؛ boot.js وہی promise دوبارہ دے دیتا ہے۔                */
+async function _dioNeed(files) {
+  if (typeof window.dioLoadScript !== 'function') return false;
+  for (var i = 0; i < files.length; i++) {
+    try { await window.dioLoadScript(files[i]); } catch (_) {}
+  }
+  return true;
+}
+window._dioNeed = _dioNeed;
+
+/* جو بٹن سیدھا کسی سست فائل کے فنکشن کو پکارتے ہیں، اُن کے لیے عارضی
+   قائم مقام — فائل منگوا کر اصل فنکشن چلا دیتا ہے۔ فائل آتے ہی اصل
+   تعریف خود اِس کی جگہ لے لیتی ہے۔ */
+(function () {
+  var SHIMS = { openEditCaseModal: 'case-form.js' };
+  Object.keys(SHIMS).forEach(function (fn) {
+    if (typeof window[fn] === 'function') return;
+    var shim = function () {
+      var args = Array.prototype.slice.call(arguments);
+      _dioNeed([SHIMS[fn]]).then(function () {
+        var real = window[fn];
+        if (typeof real === 'function' && !real._dioShim) { real.apply(null, args); return; }
+        try { if (typeof showToast === 'function') showToast('فائل لوڈ نہیں ہو سکی — ایک لمحے بعد دوبارہ کوشش کریں', 'error'); } catch (_) {}
+      });
+    };
+    shim._dioShim = true;
+    window[fn] = shim;
+  });
+})();
+
 async function openCaseWorkspace(id) {
+  // ورک سپیس کو جن سست فائلوں کی ضرورت ہے، پہلے وہ آ جائیں
+  await _dioNeed(['misal-docs.js', 'case-docs.js', 'case-form.js']);
   closeMobileSidebar();
   window._inWorkspace = true;  // Prevent background refresh from redirecting back to list
   document.body.classList.add('workspace-mode');  // Hide topbar for more space
