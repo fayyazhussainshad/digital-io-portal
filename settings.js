@@ -96,12 +96,16 @@ async function renderSettings(container) {
       <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;"><span dir="ltr" style="unicode-bidi:isolate;display:inline-block;">${_esc(currentUser?.email||'—')}</span></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-secondary btn-sm" onclick="openChangePasswordModal()">پاسورڈ تبدیل کریں</button>
-        <button class="btn btn-secondary btn-sm" onclick="enableBiometric()">بایومیٹرک فعال کریں</button>
+        ${(typeof window.isBiometricEnabled === 'function' && window.isBiometricEnabled())
+          ? `<button class="btn btn-secondary btn-sm" onclick="disableBiometric()">بایومیٹرک بند کریں</button>`
+          : `<button class="btn btn-secondary btn-sm" onclick="enableBiometric()">بایومیٹرک فعال کریں</button>`}
         <button class="btn btn-secondary btn-sm" onclick="_setupPin()"><span dir="ltr">PIN</span> سیٹ کریں</button>
         <button class="btn btn-secondary btn-sm" onclick="window.dioLockPinSettings&&dioLockPinSettings()">ایپ لاک <span dir="ltr">PIN</span></button>
         <button class="btn btn-secondary btn-sm" onclick="showOnboardingAgain()">گائیڈ دوبارہ دیکھیں</button>
       </div>
-      <div style="font-size:10px;color:var(--text-muted);margin-top:6px;">بایومیٹرک فعال کرنے سے آپ فنگرپرنٹ/فیس سے لاگ ان کر سکیں گے</div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:6px;">${(typeof window.isBiometricEnabled === 'function' && window.isBiometricEnabled())
+        ? 'بایومیٹرک اس ڈیوائس پر فعال ہے۔ لاگ آؤٹ اس ڈیوائس پر "تالا" کی طرح کام کرے گا؛ مکمل لاگ آؤٹ کے لیے پہلے بایومیٹرک اور PIN بند کریں۔'
+        : 'بایومیٹرک فعال کرنے سے آپ فنگرپرنٹ/فیس سے لاگ ان کر سکیں گے'}</div>
     </div>
   </div>
 
