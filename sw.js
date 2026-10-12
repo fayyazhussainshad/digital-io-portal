@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v519
+   DIGITAL IO — SERVICE WORKER v520
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v519';
+const CACHE_NAME = 'digital-io-v520';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -122,6 +122,64 @@ self.addEventListener('activate', event => {
 });
 
 // ── FETCH — Offline First Strategy ────────────────────────────
+
+/* ═══════════════════════════════════════════════════════════════════
+   سرور پہلے — محفوظ نقل صرف مجبوری میں   (v520)
+   ───────────────────────────────────────────────────────────────────
+   پہلے اپنی ہی فائلیں (صفحہ + JS + CSS) «stale-while-revalidate» سے آتی
+   تھیں: پہلے محفوظ نقل فوراً، نئی نقل پیچھے سے۔ نتیجہ:
+     • ہر نئی اپلوڈ ایک لوڈ پیچھے نظر آتی تھی
+     • اکثر sw.js کا ورژن بڑھائے بغیر تبدیلی دکھتی ہی نہیں تھی
+     • «سرور درست، براؤزر غلط» — یہی شکایت بار بار آتی رہی
+   اب:
+     • نیٹ ہو → ہمیشہ سرور کی تازہ فائل (no-cache = سرور سے تصدیق؛ فائل
+       نہ بدلی ہو تو 304 کا چھوٹا سا جواب، پوری فائل دوبارہ نہیں آتی)
+     • نیٹ نہ ہو → محفوظ نقل (آف لائن پہلے کی طرح چلتا ہے)
+     • نیٹ بہت سست ہو (TAAZA_MS سے زیادہ) → محفوظ نقل فوراً، اور تازہ
+       فائل پیچھے سے آ کر محفوظ ہو جاتی ہے — میدان میں انتظار نہیں
+   یعنی اپنی فائلوں کی تبدیلی کے لیے sw.js کا ورژن بڑھانا اب ضروری نہیں۔ */
+const TAAZA_MS = 1500;
+/* سست نیٹ کی یادداشت: اگر کسی فائل کے لیے سرور TAAZA_MS میں جواب نہ دے تو
+   مان لیا جاتا ہے کہ ابھی نیٹ سست ہے۔ اُس کے بعد کے 15 سیکنڈ تک باقی فائلیں
+   انتظار کیے بغیر سیدھی محفوظ نقل سے آتی ہیں (اور تازہ نقل پیچھے سے آ کر
+   محفوظ ہوتی رہتی ہے)۔ اِس کے بغیر صفحہ 1.5s انتظار کرتا، پھر ہر اسکرپٹ
+   مزید 1.5s — سست نیٹ پر ایپ کھلنے میں کئی سیکنڈ لگ جاتے (ٹیسٹ میں 8s ناپا
+   گیا تھا)۔ اب سست نیٹ پر زیادہ سے زیادہ ایک بار کا انتظار۔ */
+let _dheemaTak = 0;
+
+function _serverPehle(event, key, fallback) {
+  const req = event.request;
+  const net = fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' })
+    .then(async r => {
+      if (!r || r.status !== 200 || r.type !== 'basic') return r;
+      // navigation کا جواب redirected ہو تو سیدھا نہیں دیا جا سکتا — صاف نقل
+      if (r.redirected) {
+        r = new Response(await r.blob(), { status: r.status, statusText: r.statusText, headers: r.headers });
+      }
+      const c = r.clone();
+      caches.open(CACHE_NAME).then(cache => cache.put(key, c));
+      return r;
+    })
+    .catch(() => null);
+  event.waitUntil(net);                       // وقت ختم ہونے کے بعد بھی محفوظ نقل تازہ ہو جائے
+
+  const _bachao = (r) => caches.match(key).then(cached => {
+    if (cached) return cached;                // آف لائن / سست / سرور کی خرابی
+    if (r && r !== 'WAQT') return r;          // محفوظ نقل بھی نہیں — سرور کا جواب ہی
+    return net.then(n => n || (fallback ? fallback() : new Response('', { status: 503, statusText: 'offline' })));
+  });
+
+  // ابھی ابھی سست نیٹ دیکھا گیا ہے → انتظار نہیں، محفوظ نقل (اگر ہو)
+  if (Date.now() < _dheemaTak) return _bachao('WAQT');
+
+  const waqt = new Promise(res => setTimeout(() => res('WAQT'), TAAZA_MS));
+  return Promise.race([net, waqt]).then(r => {
+    if (r === 'WAQT') { _dheemaTak = Date.now() + 15000; return _bachao(r); }
+    if (r && r.ok) { _dheemaTak = 0; return r; }   // سرور نے بروقت تازہ دے دی
+    return _bachao(r);
+  });
+}
+
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
@@ -215,61 +273,26 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // ── HTML navigation — STALE-WHILE-REVALIDATE ──
-  //   Cached shell FORAN dikhao (ایپ ہوا کی طرح فوری کھلے), background mein
-  //   fresh laa kar cache update karo → agli baar naya. Offline bhi foran chale.
+  // ── HTML صفحہ — سرور پہلے ──
+  //   (پہلے stale-while-revalidate تھا — محفوظ صفحہ پہلے، نیا ایک لوڈ بعد)
   if (event.request.mode === 'navigate') {
-    // KHAMI THI: request ka URL bilkul nazar-andaaz hota tha — har navigation
-    // ka jawab '/index.html' ke cache se aata tha AUR har navigation ka jawab
-    // wapas usi '/index.html' key par likh diya jata tha. Yaani /admin.html
-    // (ya kisi bhi 200 dene wale same-origin safhe) par jate hi app ka asal
-    // shell us safhe se badal jata — cache poisoning + deep link toot jana.
-    // Ab: apne hi origin ka navigation, jawab apni key par, shell sirf fallback.
+    // اپنی ہی origin — جواب اپنی کلید پر (پرانی cache-poisoning کی درستی برقرار)
     const navUrl = new URL(event.request.url);
-    if (navUrl.origin !== self.location.origin) return;   // bahar ka safha — chhoR do
-
-    const navFresh = fetch(event.request).then(response => {
-      if (response && response.status === 200 && response.type === 'basic') {
-        const clone = response.clone();
-        // Apni hi key par — doosre safhe ka jawab shell par na chhape
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-      }
-      return response;
-    }).catch(() => null);
-    event.waitUntil(navFresh);
+    if (navUrl.origin !== self.location.origin) return;
     event.respondWith(
-      caches.match(event.request).then(cached => cached
-        || navFresh.then(r => r
-          // App shell sirf tab jab is safhe ka apna jawab na mile
-          || caches.match('/index.html')
-          || caches.match('/offline.html')
-          || new Response('', { status: 503, statusText: 'offline' })))
-        .then(r => r || new Response('', { status: 503, statusText: 'offline' }))
+      _serverPehle(event, event.request, () =>
+        caches.match('/index.html')
+          .then(r => r || caches.match('/offline.html'))
+          .then(r => r || new Response('', { status: 503, statusText: 'offline' })))
     );
     return;
   }
 
-  // ── JS & CSS — STALE-WHILE-REVALIDATE (ایپ ہوا کی طرح ہلکا) ──
-  //   Pehle network-first + cache:'reload' tha → har bar poori 1.59MB dobara
-  //   download hoti thi (isi liye app dheere khulta tha). Ab: cached copy FORAN
-  //   serve karo, background mein 'reload' se fresh la kar cache update karo.
-  //   Natija: fauri load + khud-ba-khud taza (aik load peeche) — CACHE_NAME bump
-  //   ki zaroorat bhi nahi. Purana "stale version" masla isse behtar hal hota hai.
-  if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
-    const assetFresh = fetch(new Request(event.request.url, {
-      cache: 'no-cache', credentials: 'same-origin', mode: 'same-origin'
-    })).then(response => {
-      if (response && response.status === 200) {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-      }
-      return response;
-    }).catch(() => null);
-    event.waitUntil(assetFresh);   // background update mukammal hone tak SW zinda
-    event.respondWith(
-      caches.match(event.request).then(cached => cached
-        || assetFresh.then(r => r || caches.match(event.request)))
-    );
+  // ── JS & CSS (اپنی) — سرور پہلے ──
+  //   (پہلے stale-while-revalidate تھا — یہی «سرور درست، براؤزر غلط» کی جڑ)
+  if (url.origin === self.location.origin &&
+      (url.pathname.endsWith('.js') || url.pathname.endsWith('.css'))) {
+    event.respondWith(_serverPehle(event, event.request, null));
     return;
   }
 
