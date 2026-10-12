@@ -543,3 +543,30 @@ body:has(#login-screen:not([style*="display: none"]):not([style*="display:none"]
   #login-screen .login-methods { margin-bottom: 14px !important; }
   #login-screen .dio-legal-band { padding: 10px 26px 8px; }
 }
+
+/* ── موبائل (v527b): "لاگ اِن / اپنے اکاؤنٹ میں داخل ہوں" ہٹا، پورا کارڈ
+      قانونی پٹی سمیت ایک اسکرین میں — کچھ کٹا یا چھپا نہیں ── */
+@media (max-width: 860px) {
+  #login-screen { padding: 8px !important; }
+  #login-screen .dio-lc-head { display: none !important; }
+  #login-screen .dio-ikhlas-band { padding: 8px 6px 10px; }
+  #login-screen .dio-land-hero { padding: 14px 14px 14px !important; gap: 6px !important; }
+  #login-screen .dio-land-emblem { width: 40px; height: 40px; margin-bottom: 2px; }
+  #login-screen .dio-land-emblem svg { width: 20px; height: 20px; }
+  #login-screen .dio-land-emblem.has-photo { width: 52px; height: 52px; }
+  #login-screen b.dio-land-title { font-size: 22pt; }
+  #login-screen strong.dio-land-sub { font-size: 12.5pt; margin-top: 0; line-height: 1.7; }
+  #login-screen p.dio-land-lead { display: none; }
+  #login-screen .dio-land .login-card { padding: 14px 14px 12px !important; }
+  #login-screen .login-methods { margin-bottom: 12px !important; gap: 6px !important; }
+  #login-screen .login-method { min-height: 40px !important; padding: 6px 4px !important; }
+  #login-screen .input-group { margin-bottom: 10px; }
+  #login-screen .login-input { min-height: 44px !important; padding-top: 8px !important; padding-bottom: 8px !important; }
+  #login-screen .dio-lc-row { margin: -2px 0 10px !important; }
+  #login-screen .login-btn, #login-screen button.dio-signup-btn { min-height: 46px !important; }
+  #login-screen .dio-legal-band { padding: 10px 12px 10px; }
+  #login-screen .dio-legal-band .dio-legal,
+  #login-screen .dio-legal-band .dio-legal * { font-size: 9.5pt !important; line-height: 1.75 !important; }
+  #login-screen .dio-legal-band .login-security-badge,
+  #login-screen .dio-legal-band .login-security-badge * { font-size: 7.5pt !important; margin-top: 4px !important; }
+}
