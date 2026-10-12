@@ -362,6 +362,14 @@ html:not([data-theme="light"]) #login-screen .dio-lc-hint { color: #f5b942; }
     border-inline-start-color: rgba(255, 255, 255, .25) !important;
     font-size: 11.5pt !important;
   }
+  /* ٹیگ لائن — Digital IO کے ساتھ، پیتل رنگ (v526) */
+  #main-app .dio-tb-tag {
+    font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+    font-size: 11.5pt; font-weight: 700; color: #e9cf73;
+    white-space: nowrap; line-height: 1.6;
+    padding-inline-start: 9px; border-inline-start: 1px solid rgba(255, 255, 255, .25);
+  }
+  #main-app .dio-tb-sub { color: #ffffff !important; }
   #main-app .topbar-btn, #main-app .topnav-btn { color: #dbe5f3 !important; }
   #main-app .topbar-btn:hover, #main-app .topnav-btn:hover,
   #main-app .topnav-btn.active { background: rgba(255, 255, 255, .10) !important; color: #ffffff !important; }
@@ -420,6 +428,8 @@ html:not([data-theme="light"]) #login-screen .dio-lc-hint { color: #f5b942; }
 }
 
 @media screen and (max-width: 760px) {
+  /* تنگ اسکرین: صرف صفحے کا نام (جگہ کم ہے) */
+  #main-app .dio-tb-tag { display: none; }
   #main-app .dio-tb-sub { color: #ffffff !important; font-size: 12.5pt !important; }
   #main-app .page-content > .page-header,
   #main-app .page-content > div > .page-header { padding: 8px 12px !important; }
