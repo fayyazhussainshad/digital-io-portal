@@ -119,7 +119,7 @@ async function renderSettings(container) {
         ${roField('رینک / عہدہ', o.designation)}
         ${roField('محکمانہ نمبر', o.badge_number)}
         ${roField('سیل نمبر', o.official_phone||o.phone)}
-        ${roField('شناختی کارڈ نمبر', o.cnic_number ? '<span dir="ltr" style="unicode-bidi:isolate;display:inline-block;">'+_esc(o.cnic_number).replace(/(\d{5})(\d{7})(\d)/, '$1-$2-$3')+'</span>' : '')}
+        ${roField('شناختی کارڈ نمبر', _cnicShow(o))}
         ${roField('ای میل ایڈریس', currentUser?.email ? '<span dir="ltr" style="unicode-bidi:isolate;display:inline-block;">'+_esc(currentUser.email)+'</span>' : '')}
         <div style="margin-top:8px;padding:8px 12px;background:var(--accent-glow);border-radius:6px;font-size:11px;color:var(--text-muted);direction:rtl;text-align:right;">
           یہ خانے ڈسٹرکٹ ایڈمن سیٹ کرتا ہے۔ تبدیلی کے لیے ایڈمن پینل سے رابطہ کریں۔
@@ -171,11 +171,27 @@ async function renderSettings(container) {
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 
 function _esc(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ── شناختی کارڈ نمبر — دو کالم کا مسئلہ ─────────────────────────────
+   ڈیٹابیس میں CNIC کے **دو** کالم موجود ہیں: `cnic` اور `cnic_number`۔
+   رجسٹریشن (auth.js) `cnic` میں لکھتی ہے — ڈیشوں کے ساتھ۔
+   یہ صفحہ پہلے صرف `cnic_number` پڑھتا تھا — یعنی جو لکھا گیا وہ کبھی
+   دکھایا ہی نہیں گیا، اور خانہ ہمیشہ "ایڈمن نے درج نہیں کیا" رہتا تھا۔
+   اب دونوں کالم دیکھے جاتے ہیں، اور دونوں شکلیں (13 ہندسے یا ڈیشوں
+   والی) درست دکھتی ہیں۔
+   ──────────────────────────────────────────────────────────────────── */
+function _cnicShow(o){
+  const raw = String((o && (o.cnic_number || o.cnic)) || '').trim();
+  if (!raw) return '';
+  const d = raw.replace(/\D/g, '');
+  const txt = (d.length === 13) ? d.replace(/(\d{5})(\d{7})(\d)/, '$1-$2-$3') : raw;
+  return '<span dir="ltr" style="unicode-bidi:isolate;display:inline-block;">' + _esc(txt) + '</span>';
+}
 function _fmtDate(iso){ if(!iso)return''; const p=iso.substring(0,10).split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:iso; }
 
 function _profilePct(o){
   const fields=[o.full_name,o.badge_number,o.designation,o.station,o.district,
-    o.official_phone||o.phone,o.cnic_number];
+    o.official_phone||o.phone,o.cnic_number||o.cnic];
   return Math.round(fields.filter(f=>f&&String(f).trim()).length/fields.length*100);
 }
 

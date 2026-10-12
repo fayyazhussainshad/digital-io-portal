@@ -1030,13 +1030,33 @@ async function _adminEditOfficer(officerId) {
       </div>
       <div>
         <label class="form-label">فون نمبر</label>
-        <input class="form-input" id="aeo-phone" dir="ltr" value="${(o.phone||'').replace(/"/g,'&quot;')}" placeholder="0XXX-XXXXXXX">
+        <input class="form-input" id="aeo-phone" dir="ltr" value="${(o.phone||'').replace(/"/g,'&quot;')}" placeholder="0000-0000000">
+      </div>
+      <div>
+        <label class="form-label">شناختی کارڈ نمبر</label>
+        <input class="form-input" id="aeo-cnic" dir="ltr" style="text-align:left;"
+               value="${_aeoCnic(o)}" placeholder="00000-0000000-0"
+               oninput="typeof autoFormatCNIC==='function'&&autoFormatCNIC(this)">
+        <div style="font-size:10px;color:var(--text-muted);margin-top:4px;direction:rtl;">
+          یہ خانہ پہلے کہیں موجود نہیں تھا — اِس لیے افسر کا شناختی کارڈ نمبر
+          کسی بھی صفحے سے بدلا نہیں جا سکتا تھا۔
+        </div>
       </div>
     </div>
   `, `
     <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
     <button class="btn btn-primary" onclick="_adminSaveOfficer('${officerId}')">محفوظ کریں</button>
   `);
+}
+
+/* شناختی کارڈ — ڈیٹابیس میں دو کالم ہیں (`cnic` ڈیشوں کے ساتھ،
+   `cnic_number` صرف ہندسے)۔ ترمیم کے خانے میں ڈیشوں والی شکل دکھائی
+   جاتی ہے، چاہے ریکارڈ میں کوئی بھی شکل محفوظ ہو۔ */
+function _aeoCnic(o) {
+  const raw = String((o && (o.cnic_number || o.cnic)) || '').trim();
+  const d = raw.replace(/\D/g, '');
+  const txt = (d.length === 13) ? d.replace(/(\d{5})(\d{7})(\d)/, '$1-$2-$3') : raw;
+  return txt.replace(/"/g, '&quot;');
 }
 
 async function _adminSaveOfficer(officerId) {
@@ -1048,9 +1068,35 @@ async function _adminSaveOfficer(officerId) {
     district:     document.getElementById('aeo-district')?.value.trim() || null,
     phone:        document.getElementById('aeo-phone')?.value.trim() || null,
   };
+
+  // ── شناختی کارڈ نمبر ────────────────────────────────────────────
+  // خالی چھوڑنا بھی جائز ہے۔ اگر کچھ لکھا ہو تو 13 ہندسے لازمی۔
+  // دونوں کالم ایک ساتھ بھرے جاتے ہیں تاکہ پروفائل اور ایڈمن دونوں
+  // صفحے وہی نمبر دکھائیں (ایک کالم `cnic` پڑھتا ہے، دوسرا `cnic_number`)۔
+  const cnicRaw = (document.getElementById('aeo-cnic')?.value || '').trim();
+  if (cnicRaw) {
+    const d = cnicRaw.replace(/\D/g, '');
+    if (d.length !== 13) {
+      showToast('شناختی کارڈ نمبر کا فارمیٹ درست نہیں (00000-0000000-0)', 'error', 5000);
+      return;
+    }
+    updates.cnic        = d.replace(/(\d{5})(\d{7})(\d)/, '$1-$2-$3');  // ڈیشوں کے ساتھ
+    updates.cnic_number = d;                                             // صرف ہندسے
+  } else {
+    updates.cnic = null;
+    updates.cnic_number = null;
+  }
+
   try {
-    const { error } = await supabaseClient.from('officers').update(updates).eq('id', officerId);
+    // .select() لگایا گیا ہے — اگر RLS خاموشی سے روک دے تو data خالی آئے گا
+    // اور ہمیں جھوٹی کامیابی کے بجائے اصل مسئلہ نظر آئے گا۔
+    const { data, error } = await supabaseClient.from('officers')
+      .update(updates).eq('id', officerId).select('id');
     if (error) throw error;
+    if (!data || !data.length) {
+      showToast('تبدیلی محفوظ نہیں ہوئی — ڈیٹابیس اجازت (RLS) کا مسئلہ ہے', 'error', 6000);
+      return;
+    }
     closeModal();
     showToast('افسر کی معلومات اپ ڈیٹ ہو گئیں', 'success');
     showPage('admin', document.querySelector('.nav-item.active'));
@@ -1112,23 +1158,100 @@ async function _doAddOfficer() {
   if (!name||!email||!pass) { showToast('نام، Email اور پاسورڈ ضروری ہے','error'); return; }
   if (pass.length < 8) { showToast('پاسورڈ کم از کم 8 حروف','error'); return; }
 
+  /* ═══════════════════════════════════════════════════════════════════
+     اِس فنکشن میں دو اصل خرابیاں تھیں — دونوں خاموش تھیں:
+
+     (1) اکاؤنٹ بن جاتا تھا، افسر کا ریکارڈ نہیں۔
+         `officers` میں insert کا نتیجہ کہیں نہیں دیکھا جاتا تھا
+         (`await ... .insert({...})` — نہ error، نہ data)۔ اگر RLS یا
+         trigger اُسے روک دے تو بھی پیغام "افسر شامل ہو گیا" آتا تھا۔
+         نتیجہ: Auth میں اکاؤنٹ موجود، مگر officers میں کوئی قطار نہیں۔
+         اگلی بار وہی email ڈالنے پر Auth کہتا ہے **"user already
+         exists"** — حالانکہ افسران کی فہرست خالی دکھتی ہے۔ یہی وجہ ہے
+         جو آپ کو پیش آئی۔
+
+     (2) افسر شامل کرتے ہی ایڈمن کا سیشن بدل جاتا تھا۔
+         `auth.signUp()` کامیابی پر نئے صارف کا سیشن بنا دیتا ہے — یعنی
+         آپ اپنے ہی سافٹ ویئر میں اُس نئے افسر بن جاتے تھے۔ پھر اگلا
+         insert بھی ایڈمن کے بجائے اُس نئے (غیر منظور شدہ) افسر کی طرف
+         سے چلتا تھا، جسے RLS/trigger روک دیتا — یعنی خرابی (1) کی
+         ایک بڑی وجہ یہی تھی۔
+
+     اب: پہلے ایڈمن کا سیشن محفوظ، signUp کے فوراً بعد بحال، پھر insert
+     ایڈمن کی حیثیت سے، اور ہر قدم کا نتیجہ جانچا جاتا ہے۔
+     ═══════════════════════════════════════════════════════════════════ */
+
+  let adminSession = null;
+  try {
+    const s = await supabaseClient.auth.getSession();
+    adminSession = s?.data?.session || null;
+  } catch(_) {}
+
+  const _bahaalKaro = async () => {
+    if (!adminSession?.access_token || !adminSession?.refresh_token) return false;
+    try {
+      const r = await supabaseClient.auth.setSession({
+        access_token:  adminSession.access_token,
+        refresh_token: adminSession.refresh_token
+      });
+      return !r?.error;
+    } catch(_) { return false; }
+  };
+
+  let newUserId = null;
   try {
     const { data, error } = await supabaseClient.auth.signUp({
       email, password: pass,
       options: { data: { full_name: name, badge_number: badge, station, district } }
     });
-    if (error) throw error;
-    if (data.user) {
-      await supabaseClient.from('officers').insert({
-        user_id: data.user.id, full_name: name, email,
-        badge_number: badge, designation: desig,
-        station, district, role, is_approved: true
-      });
+
+    // ایڈمن کا سیشن ہر صورت فوراً بحال — خواہ signUp کامیاب ہو یا نہ ہو
+    const bahaal = await _bahaalKaro();
+
+    if (error) {
+      const m = String(error.message || '').toLowerCase();
+      if (m.includes('already') || m.includes('exists') || m.includes('registered')) {
+        showToast('یہ email پہلے ہی Auth میں موجود ہے (چاہے افسران کی فہرست میں نظر نہ آئے)۔ ' +
+                  'یا دوسرا email استعمال کریں، یا sql/A1_orphan_auth_users.sql چلا کر ' +
+                  'بغیر ریکارڈ والے اکاؤنٹ دیکھیں۔', 'error', 10000);
+        return;
+      }
+      throw error;
     }
+    if (!data?.user?.id) throw new Error('Auth نے نیا اکاؤنٹ نہیں بنایا');
+    newUserId = data.user.id;
+
+    if (!bahaal) {
+      showToast('⚠ ایڈمن کا سیشن بحال نہیں ہو سکا۔ اکاؤنٹ بن گیا ہے — ' +
+                'براہِ کرم دوبارہ لاگ اِن کریں اور افسران کی فہرست دیکھیں۔', 'error', 10000);
+      return;
+    }
+
+    // اب insert — ایڈمن کی حیثیت سے، اور نتیجہ جانچ کر
+    const { data: ins, error: insErr } = await supabaseClient.from('officers').insert({
+      user_id: newUserId, full_name: name, email,
+      badge_number: badge, designation: desig,
+      station, district, role, is_approved: true
+    }).select('id');
+
+    if (insErr) throw insErr;
+    if (!ins || !ins.length) {
+      showToast('⚠ اکاؤنٹ بن گیا مگر افسر کا ریکارڈ محفوظ نہیں ہوا (RLS نے روکا)۔ ' +
+                'یہی email دوبارہ ڈالنے پر "user already exists" آئے گا۔ ' +
+                'sql/A1_orphan_auth_users.sql چلا کر تصدیق کریں۔', 'error', 12000);
+      return;
+    }
+
     closeModal();
     showToast('افسر شامل ہو گیا', 'success');
     _adminRefresh();
-  } catch(e) { showToast('' + e.message, 'error'); }
+  } catch(e) {
+    await _bahaalKaro();
+    const extra = newUserId
+      ? ' — اکاؤنٹ بن چکا ہے مگر افسر کا ریکارڈ نہیں۔ sql/A1_orphan_auth_users.sql چلائیں۔'
+      : '';
+    showToast('' + (e.message || e) + extra, 'error', 10000);
+  }
 }
 
 async function _adminRefresh() {
