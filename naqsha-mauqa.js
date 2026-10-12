@@ -485,6 +485,34 @@
      نیچے کا مواد ہلے نہیں۔                                                  */
   let _naqPeekT = null, _naqLastY = 0;
 
+  /* پورے صفحے والے منظر کی اوپر والی پٹی (واپس / مقدمہ نمبر / chips) بھی اب
+     کرسر اوپر لے جانے پر سامنے آتی ہے۔ اگر وہ اُس وقت نظر میں ہو تو نقشہ کی
+     اپنی پٹی اُس کے **نیچے** بیٹھے — ورنہ دونوں ایک دوسرے پر چڑھ جائیں۔ */
+  /* جب اوپر والی پٹی (واپس / مقدمہ نمبر) اپنی جگہ بدلے تو نقشہ کی پٹی بھی
+     فوراً اُس کے نیچے آ جائے — doc-viewer.js اِسی کو پکارتا ہے۔ */
+  window._naqSyncPeekTop = function () {
+    try {
+      const b = document.getElementById('naq-topwrap');
+      if (b && b.classList.contains('naq-peek')) b.style.top = _naqDvOffset() + 'px';
+    } catch (_) {}
+  };
+
+  function _naqDvOffset() {
+    try {
+      const b = document.getElementById('dio-dv-bar');
+      if (!b) return 0;
+      /* ⚠ یہاں getBoundingClientRect() استعمال نہ کریں: اُس پٹی پر top کی
+         نرم حرکت (transition .18s) لگی ہے، اِس لیے اُسی لمحے ناپنے پر وہ
+         ابھی راستے میں ہوتی ہے اور جواب 0 آتا ہے — نتیجتاً نقشہ کی پٹی
+         اُس کے اوپر چڑھ جاتی تھی۔ کلاس سے اُس کی **ارادی** حالت پڑھی جاتی
+         ہے، اور اونچائی offsetHeight سے (جس پر حرکت کا اثر نہیں)۔        */
+      const hati = b.classList.contains('dio-dv-off');
+      const peek = b.classList.contains('dio-dv-peek');
+      if (!hati || peek) return b.offsetHeight || 0;   // نظر میں (یا آ رہی ہے)
+      return 0;                                         // ہٹی ہوئی
+    } catch (_) { return 0; }
+  }
+
   function _naqPeekInit() {
     const bar  = document.getElementById('naq-topwrap');
     const slot = document.getElementById('naq-topslot');
@@ -502,11 +530,13 @@
       const h = bar.offsetHeight || 44;
       slot.dataset.h = h;
       slot.style.height = h + 'px';
+      bar.style.top = _naqDvOffset() + 'px';
       bar.classList.add('naq-peek');
     };
     const _hide = () => {
       if (!_peeking()) return;
       bar.classList.remove('naq-peek');
+      bar.style.top = '';
       slot.style.height = '0px';
     };
 
@@ -523,17 +553,20 @@
         if (!b || !s || !c) return;
         const h = (s.dataset.h ? +s.dataset.h : (b.offsetHeight || 44));
         if (c.scrollTop <= h - 4) return;             // پٹی ویسے ہی نظر میں ہے
-        if (e.clientY <= 16) {
+        const off = _naqDvOffset();
+        if (e.clientY <= off + 16) {
           clearTimeout(_naqPeekT);
+          b.style.top = off + 'px';
           if (!b.classList.contains('naq-peek')) {
             s.dataset.h = b.offsetHeight || 44;
             s.style.height = s.dataset.h + 'px';
             b.classList.add('naq-peek');
           }
-        } else if (b.classList.contains('naq-peek') && e.clientY > h + 24) {
+        } else if (b.classList.contains('naq-peek') && e.clientY > off + h + 24) {
           clearTimeout(_naqPeekT);
           _naqPeekT = setTimeout(() => {
             b.classList.remove('naq-peek');
+            b.style.top = '';
             s.style.height = '0px';
           }, 350);
         }

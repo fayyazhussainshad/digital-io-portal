@@ -60,7 +60,22 @@ function _dioEnterDocView() {
          leta tha (system samajhta tha kuch bahar hai hi nahi), magar kaghaz
          8.5in ka hone ki wajah se chapai mein matn KAT jata tha. Isi liye
          چالان akele theek chalta tha aur doosri tabs ke saath kharab. */
-      '#dio-dv-body #misal-editor{min-height:calc(100vh - 160px) !important;}';
+      '#dio-dv-body #misal-editor{min-height:calc(100vh - 160px) !important;}' +
+      /* ── اوپر والی پٹی (واپس / مقدمہ نمبر / دستاویزات کی chips) ─────────
+         پہلے یہ پٹی ہمیشہ اوپر چپکی رہتی تھی: وہ اِس پورے صفحے والے خانے کی
+         پہلی flex قطار ہے، اور نیچے والا حصہ اکیلا scroll ہوتا ہے — یعنی پٹی
+         کبھی ہٹتی ہی نہیں تھی اور کام کی جگہ کھاتی رہتی تھی۔
+         اب وہ چالان کے اندر کی پٹی کی طرح **چلتی** ہے:
+           • نیچے scroll کریں → اوپر سرک کر غائب
+           • کرسر صفحے کے اوپری کنارے پر لے جائیں → واپس سامنے (مواد پر، اُسے
+             ہلائے بغیر، کیونکہ اُس وقت وہ absolute ہوتی ہے)
+           • اوپر کی طرف scroll کریں → واپس سامنے (موبائل کے لیے)
+           • بالکل اوپر پہنچیں → دوبارہ اپنی اصل جگہ پر                      */
+      '#dio-dv-bar{transition:top .18s ease, box-shadow .18s ease;}' +
+      '#dio-dv-bar.dio-dv-off{position:absolute;left:0;right:0;z-index:20;}' +
+      '#dio-dv-bar.dio-dv-peek{position:absolute;left:0;right:0;top:0;z-index:20;' +
+      'box-shadow:0 6px 20px rgba(0,0,0,.18);}' +
+      '@media print{#dio-dv-bar{display:none !important;}}';
     document.head.appendChild(st);
   }
   ov.innerHTML = `
@@ -103,7 +118,110 @@ function _dioEnterDocView() {
 
   // Escape se band
   document.addEventListener('keydown', _dioDocViewEsc);
+
+  // اوپر والی پٹی کو «چلتی» بناؤ
+  try { _dioBarPeekInit(ov); } catch (_) {}
 }
+
+/* ══ اوپر والی پٹی کا چھپنا/سامنے آنا ═══════════════════════════════════
+   دستاویز کے اندر scroll کرنے والا خانہ ایک نہیں ہوتا — چالان اپنے خانے میں
+   scroll ہوتا ہے، نقشہ موقع اپنے `.naq-scroll` میں۔ اِس لیے scroll کو
+   capture کے ساتھ سنا جاتا ہے (scroll بلبلا کر اوپر نہیں آتا، مگر capture
+   میں پکڑا جاتا ہے)، اور فیصلہ اُسی خانے کی اپنی scroll پوزیشن سے ہوتا ہے
+   جو واقعی چل رہا ہو۔                                                     */
+let _dioBarLastY = null;
+/* پٹی چھپانے/دکھانے سے خود layout بدلتا ہے (نیچے کا خانہ اونچا ہو جاتا ہے)،
+   جس پر براؤزر scrollTop کو چند pixel گھٹا دیتا ہے اور ایک نیا scroll واقعہ
+   بھیجتا ہے۔ وہ «اوپر کی طرف scroll» لگتا ہے اور پٹی فوراً واپس آ جاتی ہے —
+   یعنی ایک چکر بن جاتا ہے۔ اِس لیے اپنی ہی تبدیلی کے فوراً بعد والے واقعات
+   نظرانداز کیے جاتے ہیں۔ */
+let _dioBarBusy = 0;
+
+function _dioBarPeekInit(ov) {
+  const bar = ov.querySelector('#dio-dv-bar');
+  if (!bar || ov._dioBarBound) return;
+  ov._dioBarBound = true;
+  _dioBarLastY = new WeakMap();
+
+  const H = () => bar.offsetHeight || 48;
+
+  const mark = () => {
+    _dioBarBusy = Date.now();
+    // نقشہ موقع کی اپنی پٹی کو نئی جگہ بتا دو (تاکہ اوپر نہ چڑھے)
+    try { requestAnimationFrame(() => { try { window._naqSyncPeekTop && window._naqSyncPeekTop(); } catch (_) {} }); } catch (_) {}
+  };
+  const rest = () => {
+    if (!bar.classList.contains('dio-dv-off') && !bar.classList.contains('dio-dv-peek')) return;
+    bar.classList.remove('dio-dv-off', 'dio-dv-peek'); bar.style.top = ''; mark();
+  };
+  const off  = () => {
+    if (bar.classList.contains('dio-dv-peek')) bar.classList.remove('dio-dv-peek');
+    if (!bar.classList.contains('dio-dv-off')) {
+      bar.dataset.h = H();
+      bar.classList.add('dio-dv-off');
+    }
+    bar.style.top = '-' + (bar.dataset.h || H()) + 'px';
+    mark();
+  };
+  const peek = () => {
+    if (!bar.classList.contains('dio-dv-off')) { bar.dataset.h = H(); bar.classList.add('dio-dv-off'); }
+    bar.classList.add('dio-dv-peek');
+    bar.style.top = '0px';
+    mark();
+  };
+  const chupi = () => bar.classList.contains('dio-dv-off');
+
+  ov.addEventListener('scroll', (e) => {
+    const sc = e.target;
+    if (!sc || sc.nodeType !== 1 || typeof sc.scrollTop !== 'number') return;
+    const h = +(bar.dataset.h || H());
+    const y = sc.scrollTop;
+    const pichla = _dioBarLastY.get(sc);
+    _dioBarLastY.set(sc, y);
+    if (y <= h - 4) { rest(); return; }                 // بالکل اوپر — اصل جگہ
+    if (pichla == null) { off(); return; }
+    const farq = y - pichla;
+    if (Math.abs(farq) < 6) return;                     // معمولی حرکت — حالت نہ بدلو
+    /* اپنی ہی تبدیلی کا ردِ عمل: پٹی ہٹتے ہی نیچے کا خانہ اونچا ہوتا ہے اور
+       براؤزر scrollTop کو تقریباً پٹی کی اونچائی جتنا گھٹا دیتا ہے۔ وہ
+       «اوپر کی طرف scroll» لگتا ہے اور پٹی واپس آ جاتی ہے — چکر بن جاتا ہے۔
+       اِس لیے صرف اُسی صورت نظرانداز کرو جب تبدیلی ابھی ابھی ہوئی ہو **اور**
+       حرکت پٹی کی اونچائی جتنی ہی ہو۔ اِس سے اصل تیز scroll نہیں رُکتا۔    */
+    if ((Date.now() - _dioBarBusy) < 260 && Math.abs(farq) <= h + 8) return;
+    if (farq < 0) peek(); else off();
+  }, true);
+
+  // ڈیسک ٹاپ: کرسر اوپری کنارے پر → پٹی واپس
+  if (!window._dioBarMoveBound) {
+    window._dioBarMoveBound = true;
+    document.addEventListener('mousemove', (e) => {
+      const o = document.getElementById('dio-docview');
+      if (!o) return;
+      const b = o.querySelector('#dio-dv-bar');
+      if (!b || !b.classList.contains('dio-dv-off')) return;
+      const h = +(b.dataset.h || b.offsetHeight || 48);
+      // نیچے والی پٹی (نقشہ) کو بھی نئی جگہ بتاؤ — ورنہ وہ اِس کے اوپر چڑھ جائے
+      const _sync = () => { try { requestAnimationFrame(() => {
+        try { window._naqSyncPeekTop && window._naqSyncPeekTop(); } catch (_) {}
+      }); } catch (_) {} };
+      if (e.clientY <= 16) {
+        clearTimeout(window._dioBarT);
+        b.classList.add('dio-dv-peek'); b.style.top = '0px';
+        _sync();
+      } else if (b.classList.contains('dio-dv-peek') && e.clientY > h + 24) {
+        clearTimeout(window._dioBarT);
+        window._dioBarT = setTimeout(() => {
+          b.classList.remove('dio-dv-peek');
+          b.style.top = '-' + h + 'px';
+          _sync();
+        }, 350);
+      }
+    }, { passive: true });
+  }
+
+  bar.addEventListener('mouseenter', () => clearTimeout(window._dioBarT));
+}
+window._dioBarPeekInit = _dioBarPeekInit;
 
 
 function _dioDocViewEsc(e) {
