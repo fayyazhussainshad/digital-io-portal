@@ -1706,3 +1706,15 @@ test('v530: mobile par login card hamesha poori screen — teeno tab barabar', (
   assert.ok(/#panel-biometric \{ margin-block: auto; \}|#panel-biometric[\s\S]{0,40}margin-block: auto/.test(m),
     'har tab ka mawad beech mein');
 });
+
+test('98_CHECK: safai se pehle ki jaanch — sirf parhti hai', () => {
+  const s = sqlAmli('sql/98_CHECK.sql');
+  const bina = s.replace(/'[^']*'/g, "''");
+  assert.ok(!/\b(insert|update|delete|truncate|drop|alter|create|grant|revoke|comment)\s/i.test(bina),
+    'jaanch kuch badle nahi — sirf select');
+  assert.strictEqual((bina.match(/;/g) || []).length, 1, 'aik hi statement');
+  assert.ok(/having count\(\*\) > 1/.test(s), 'hubahu doharavi policies');
+  assert.ok(/audit_log'\), \('audit_logs'/.test(s), 'dono audit tables');
+  assert.ok(/to_regclass/.test(s) && /case when tbl\.oid is null then null/.test(s),
+    'table na ho to bhi query rad na ho');
+});
