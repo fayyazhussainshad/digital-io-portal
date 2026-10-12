@@ -1673,3 +1673,36 @@ test('97: admin ka ikhtiyar sirf manzoor-shuda ko — aur NULL admin ho to ruk j
   const r = read('sql/97_ROLLBACK.sql');
   assert.ok(/coalesce\(o\.is_approved,true\)/.test(r), 'wapsi bilkul asal halat lautaye');
 });
+
+test('v530: log aut sirf IS aale ka — doosre aalon (phone) ka fingerprint/PIN zinda rahe', () => {
+  const a = read('auth.js');
+  const lo = a.slice(a.indexOf('async function doLogout'), a.indexOf('function showRegister'));
+  assert.ok(/signOut\(\{ scope: 'local' \}\)/.test(lo),
+    "supabase-js ka default 'global' afsar ke HAR aale ka session band kar deta hai");
+  assert.ok(!/signOut\(\)\s*;/.test(lo), 'bina scope ke signOut log aut mein na ho');
+  // quick login ke baad token ki khud-kar tajdeed dobara chalu
+  const lw = a.slice(a.indexOf('async function _dioLoginWithToken'), a.indexOf('window._dioSaveAuthToken'));
+  assert.ok(/startAutoRefresh\(\)/.test(lw), 'taala kholne ke baad auto-refresh chalu ho');
+});
+
+test('v530: fingerprint ki kaal se pehle koi await nahi (iPhone/Safari lams ki shart)', () => {
+  const a = read('auth.js');
+  for (const [fn, call] of [['async function doBiometric', 'navigator.credentials.get'],
+                            ['async function enableBiometric', 'navigator.credentials.create']]) {
+    // khud is kaal ka apna `await` (await navigator.credentials...) ginti mein nahi
+    const body = a.slice(a.indexOf(fn), a.indexOf(call, a.indexOf(fn))).replace(/(const \w+ = )?await\s*$/, '');
+    assert.ok(!/\bawait\b/.test(body), fn + ': ' + call + ' se pehle await — Safari lams ko radd kar deta hai');
+  }
+  assert.ok(/function _dioBioWhy/.test(a) && /isUserVerifyingPlatformAuthenticatorAvailable/.test(a),
+    'nakami ki asal wajah aale se pooch kar batayi jaye');
+  assert.ok(/m === 'biometric'[\s\S]{0,80}_dioBioPrecheck/.test(a), 'tab khulte hi aala jaancha jaye');
+});
+
+test('v530: mobile par login card hamesha poori screen — teeno tab barabar', () => {
+  const c = read('ui-home.css');
+  const m = c.slice(c.indexOf('موبائل (v530)'));
+  assert.ok(/min-height: calc\(100dvh - 16px\)/.test(m), 'card dikhne wali poori unchai le');
+  assert.ok(/grid-template-rows: auto auto 1fr auto/.test(m), 'safed hissa bachi jagah le');
+  assert.ok(/#panel-biometric \{ margin-block: auto; \}|#panel-biometric[\s\S]{0,40}margin-block: auto/.test(m),
+    'har tab ka mawad beech mein');
+});
