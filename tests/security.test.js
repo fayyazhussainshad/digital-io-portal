@@ -1718,3 +1718,16 @@ test('98_CHECK: safai se pehle ki jaanch — sirf parhti hai', () => {
   assert.ok(/to_regclass/.test(s) && /case when tbl\.oid is null then null/.test(s),
     'table na ho to bhi query rad na ho');
 });
+
+test('99: audit_log na mitaya ja sake na badla (RESTRICTIVE) — aur khatre par ruk jaye', () => {
+  const g = sqlAmli('sql/99_audit_log_immutable.sql');
+  assert.ok(/"Nobody can delete audit log" on public\.audit_log\s+as restrictive for delete to authenticated using \(false\)/.test(g),
+    'PERMISSIVE using(false) kuch nahi rokti — RESTRICTIVE chahiye');
+  assert.ok(/"Nobody can update audit log" on public\.audit_log\s+as restrictive for update to authenticated using \(false\)/.test(g));
+  assert.ok(!/for (insert|select)/.test(g), 'parhna aur likhna (DB triggers) na chhua jaye');
+  assert.ok(/v_cnt <> 2[\s\S]{0,40}raise exception 'RUKA/.test(g), 'halat tawaqqo se mukhtalif ho to ruk jaye');
+  assert.ok(/not p\.prosecdef[\s\S]{0,120}audit_log[\s\S]{0,200}raise exception 'RUKA/.test(g),
+    'afsar ke ikhtiyar se chalne wala koi function audit_log badalta ho to ruk jaye');
+  const r = sqlAmli('sql/99_ROLLBACK.sql');
+  assert.ok(/as permissive for delete/.test(r) && /as permissive for update/.test(r), 'wapsi asal halat lautaye');
+});
