@@ -72,6 +72,9 @@ async function _dioLoginWithToken(key) {
     if (error || !data || !data.session) { localStorage.removeItem(key); return false; }
     // نیا token انکرپٹڈ محفوظ (پرانا استعمال ہو چکا)
     if (data.session.refresh_token) localStorage.setItem(key, await _dioEnc(data.session.refresh_token));
+    // v530: log aut (taala) par stopAutoRefresh() hua tha — ab dobara chalu,
+    //   warna ghante baad access token expire ho kar sync/save ruk jata
+    try { supabaseClient.auth.startAutoRefresh(); } catch (_) {}
     currentUser = data.session.user;
     await _loadOfficerProfile();
     // GATE YAHIN — PIN/biometric/token ka HAR raasta isi se guzarta hai.
@@ -709,7 +712,11 @@ async function doLogout() {
   //    fingerprint/PIN "kaam nahi karta" tha (asal shikayat).
   let _quickKept = false;
   try { _quickKept = await _dioDetachForQuickLogin(); } catch(_) { _quickKept = false; }
-  if (!_quickKept) { try { await supabaseClient.auth.signOut(); } catch(_) {} }
+  // v530: scope 'local' — sirf IS aale ka session band. supabase-js ka default
+  //   'global' hai jo afsar ke HAR aale (phone samet) ka session mansookh kar
+  //   deta tha — desktop par log aut karte hi phone ka fingerprint/PIN mar jata
+  //   tha (maidan ki shikayat "mobile par biometric kaam nahi karta").
+  if (!_quickKept) { try { await supabaseClient.auth.signOut({ scope: 'local' }); } catch(_) {} }
 
   // 2. Camera / microphone / voice recognition stop
   try {
@@ -821,7 +828,7 @@ function hideForgotModal() {
   // Recovery ke dauran band kiya to adhoora session na rahe
   if (window.__dioRecoveryActive) {
     window.__dioRecoveryActive = false;
-    try { supabaseClient.auth.signOut(); } catch (_) {}
+    try { supabaseClient.auth.signOut({ scope: 'local' }); } catch (_) {}   // v530: doosre aale mehfooz
   }
 }
 
@@ -1099,7 +1106,34 @@ function setLoginMethod(m, btn) {
   });
   // Reset PIN dots when switching to PIN
   if (m === 'pin') { _pinValue = ''; _renderPinDots(); }
+  // v530: بایومیٹرک ٹیب کھلتے ہی آلہ جانچو (لمس سے پہلے — اس لیے iPhone پر بھی محفوظ)
+  if (m === 'biometric') { try { _dioBioPrecheck(); } catch (_) {} }
 }
+
+// v530: بایومیٹرک ٹیب پر فوراً بتاؤ کہ یہ فون تیار ہے یا نہیں — پہلے بغیر
+//   فنگرپرنٹ والے فون پر 60 سیکنڈ بعد جا کر پیغام آتا تھا۔
+async function _dioBioPrecheck() {
+  const lab = document.querySelector('#panel-biometric .biometric-label');
+  if (!lab) return;
+  const DEF = 'تصدیق کے لیے یہاں دبائیں';
+  let msg = '';
+  if (!window.PublicKeyCredential) {
+    msg = _dioInAppBrowser()
+      ? 'یہ صفحہ کسی ایپ (WhatsApp/Facebook) کے اندر کھلا ہے — Chrome (iPhone پر Safari) میں کھولیں'
+      : 'یہ براؤزر بایومیٹرک سپورٹ نہیں کرتا — Chrome (iPhone پر Safari) استعمال کریں';
+  } else if (!localStorage.getItem('dio_biometric_cred')) {
+    msg = 'اس فون پر بایومیٹرک ابھی فعال نہیں — پاس ورڈ سے لاگ اِن کر کے ترتیبات میں "بایومیٹرک فعال کریں" دبائیں';
+  } else {
+    try {
+      if (PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable &&
+          (await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()) === false)
+        msg = 'اس فون پر اسکرین لاک یا فنگرپرنٹ/چہرہ سیٹ نہیں — فون کی سیٹنگز میں لگائیں';
+    } catch (_) {}
+  }
+  lab.textContent = msg || DEF;
+  lab.classList.toggle('dio-bio-warn', !!msg);
+}
+window._dioBioPrecheck = _dioBioPrecheck;
 
 function togglePasswordVisibility(id) { const el=document.getElementById(id); if(el) el.type=el.type==='password'?'text':'password'; }
 
@@ -1161,10 +1195,47 @@ async function _savePin() {
 
 // ── SETUP PIN END ─────────────────────────────────────────────
 
+// ── v530: بایومیٹرک ناکام ہو تو اصل وجہ (اندازہ نہیں — آلے سے پوچھ کر) ──
+//   credentials.create/get سے پہلے کوئی await نہیں رکھا گیا (iPhone/Safari
+//   میں انگلی کے لمس اور اس کال کے بیچ انتظار ہو تو وہ رد کر دیتا ہے)،
+//   اس لیے آلے کی صلاحیت ناکامی کے بعد ہی جانچی جاتی ہے۔
+function _dioInAppBrowser() {
+  try { return /FBAN|FBAV|Instagram|WhatsApp|Line\/|; wv\)/i.test(navigator.userAgent || ''); }
+  catch (_) { return false; }
+}
+async function _dioBioWhy(e, phase) {
+  const n = (e && e.name) || 'Error';
+  if (_dioInAppBrowser())
+    return 'یہ صفحہ کسی ایپ (WhatsApp/Facebook وغیرہ) کے اندر کھلا ہے — بایومیٹرک کے لیے اسے Chrome (iPhone پر Safari) میں کھولیں (' + n + ')';
+  let platform = null;
+  try {
+    if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable)
+      platform = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+  } catch (_) {}
+  if (platform === false)
+    return 'اس فون پر اسکرین لاک یا فنگرپرنٹ/چہرہ سیٹ نہیں — فون کی سیٹنگز میں لگائیں، پھر دوبارہ کوشش کریں (' + n + ')';
+  if (n === 'NotAllowedError')
+    return phase === 'enable'
+      ? 'بایومیٹرک منسوخ ہوا یا وقت ختم ہو گیا — دوبارہ "بایومیٹرک فعال کریں" دبائیں (' + n + ')'
+      : 'بایومیٹرک منسوخ ہوا یا وقت ختم ہو گیا — دوبارہ کوشش کریں۔ بار بار یہی آئے تو پاس ورڈ سے لاگ اِن کر کے ترتیبات میں بایومیٹرک بند کر کے دوبارہ فعال کریں (' + n + ')';
+  if (n === 'InvalidStateError' || n === 'NotFoundError')
+    return phase === 'enable'
+      ? 'یہ فنگرپرنٹ اس فون پر پہلے سے رجسٹر ہے — ترتیبات میں بایومیٹرک بند کر کے دوبارہ فعال کریں (' + n + ')'
+      : 'اس فون پر بایومیٹرک رجسٹر نہیں — پاس ورڈ سے لاگ اِن کر کے ترتیبات میں دوبارہ فعال کریں (' + n + ')';
+  if (n === 'NotSupportedError')
+    return 'اس براؤزر میں فنگرپرنٹ/چہرے کی سہولت نہیں — Chrome (iPhone پر Safari) استعمال کریں (' + n + ')';
+  if (n === 'SecurityError')
+    return 'یہ سہولت صرف ایپ کے اصل پتے پر چلتی ہے: digital-io-portal.vercel.app (' + n + ')';
+  return 'بایومیٹرک ناکام: ' + ((e && e.message) || n);
+}
+window._dioBioWhy = _dioBioWhy;
+
 async function doBiometric() {
   const ring = document.getElementById('bio-ring');
   if (!window.PublicKeyCredential) {
-    showToast('یہ ڈیوائس بایومیٹرک سپورٹ نہیں کرتی', 'warn');
+    showToast(_dioInAppBrowser()
+      ? 'یہ صفحہ کسی ایپ (WhatsApp/Facebook وغیرہ) کے اندر کھلا ہے — بایومیٹرک کے لیے Chrome (iPhone پر Safari) میں کھولیں'
+      : 'یہ براؤزر بایومیٹرک سپورٹ نہیں کرتا — Chrome (iPhone پر Safari) استعمال کریں', 'warn', 7000);
     return;
   }
 
@@ -1215,17 +1286,14 @@ async function doBiometric() {
     const ok = await _dioLoginWithToken('dio_bio_rt');
     if (ok) { loginSuccess(); return; }
     setLoginLoading(false);
-    showToast('سیشن ختم ہو گیا — ایک بار پاس ورڈ سے لاگ اِن کریں، بایومیٹرک پھر خود چل پڑے گا', 'warn', 6000);
+    showToast('فنگرپرنٹ درست تھا، مگر اس فون کا محفوظ سیشن ختم ہو چکا (پاس ورڈ بدلا گیا یا اکاؤنٹ مکمل لاگ آؤٹ ہوا) — ایک بار پاس ورڈ سے لاگ اِن کریں، بایومیٹرک خود پھر چل پڑے گا', 'warn', 8000);
     const le = document.getElementById('login-email'); if (le) le.value = savedEmail;
     try { setLoginMethod('password', document.querySelectorAll('.login-method')[0]); } catch (_) {}
   } catch(e) {
     try { setLoginLoading(false); } catch (_) {}
-    const n = (e && e.name) || '';
-    showToast(n === 'NotAllowedError'
-      ? 'بایومیٹرک منسوخ ہوا یا وقت ختم ہو گیا — دوبارہ کوشش کریں'
-      : (n === 'InvalidStateError' || n === 'NotFoundError')
-        ? 'اس ڈیوائس پر بایومیٹرک رجسٹر نہیں — پاس ورڈ سے لاگ اِن کر کے ترتیبات میں دوبارہ فعال کریں'
-        : 'بایومیٹرک ناکام — دوبارہ کوشش کریں', 'error', 6000);
+    let msg = 'بایومیٹرک ناکام — دوبارہ کوشش کریں';
+    try { msg = await _dioBioWhy(e, 'login'); } catch (_) {}
+    showToast(msg, 'error', 9000);
   } finally {
     if (ring) ring.classList.remove('scanning');
   }
@@ -1235,7 +1303,9 @@ async function doBiometric() {
 
 async function enableBiometric() {
   if (!window.PublicKeyCredential) {
-    showToast('یہ ڈیوائس بایومیٹرک سپورٹ نہیں کرتی', 'warn');
+    showToast(_dioInAppBrowser()
+      ? 'یہ صفحہ کسی ایپ (WhatsApp/Facebook وغیرہ) کے اندر کھلا ہے — بایومیٹرک کے لیے Chrome (iPhone پر Safari) میں کھولیں'
+      : 'یہ براؤزر بایومیٹرک سپورٹ نہیں کرتا — Chrome (iPhone پر Safari) استعمال کریں', 'warn', 7000);
     return;
   }
   try {
@@ -1274,12 +1344,9 @@ async function enableBiometric() {
     }
     try { if (typeof showPage === 'function' && window._activePage === 'settings') showPage('settings', null); } catch (_) {}
   } catch(e) {
-    const n = (e && e.name) || '';
-    showToast(n === 'NotAllowedError'
-      ? 'بایومیٹرک منسوخ ہوا یا وقت ختم ہو گیا'
-      : n === 'NotSupportedError'
-        ? 'اس ڈیوائس/براؤزر میں فنگرپرنٹ یا چہرے کی سہولت دستیاب نہیں'
-        : 'بایومیٹرک فعال نہیں ہوا: ' + (e.message || ''), 'error', 6000);
+    let msg = 'بایومیٹرک فعال نہیں ہوا';
+    try { msg = await _dioBioWhy(e, 'enable'); } catch (_) {}
+    showToast(msg, 'error', 9000);
   }
 }
 

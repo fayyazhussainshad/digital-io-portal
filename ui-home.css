@@ -578,3 +578,48 @@ body:has(#login-screen:not([style*="display: none"]):not([style*="display:none"]
 @media (min-width: 861px) and (max-height: 960px) {
   #login-screen .dio-land-emblem.has-photo { width: 104px !important; height: 104px !important; }
 }
+
+/* ── موبائل (v530): لاگ اِن کارڈ ہمیشہ پوری اسکرین — PIN، پاس ورڈ اور
+      بایومیٹرک تینوں پر ایک جیسا۔ پہلے کارڈ درمیان میں رکھا جاتا تھا اور
+      پاس ورڈ/بایومیٹرک (کم اونچے) پر اوپر نیچے خالی پٹیاں بن جاتی تھیں۔
+      اب کارڈ اسکرین بھرتا ہے، سفید حصہ بچی جگہ لیتا ہے، اور ہر پینل کا
+      مواد اُس سفید حصے کے بیچ میں رہتا ہے۔ ── */
+@media (max-width: 860px) {
+  #login-screen { align-items: stretch !important; justify-content: flex-start !important; }
+  #login-screen .dio-land {
+    margin: 0 !important;
+    min-height: calc(100vh - 16px);          /* پرانے براؤزر */
+    min-height: calc(100dvh - 16px);         /* موبائل کی اصل نظر آنے والی اونچائی */
+    grid-template-rows: auto auto 1fr auto;  /* آیت، تعارف، سفید حصہ (بچی جگہ)، قانونی پٹی */
+    align-content: stretch;
+  }
+  #login-screen .dio-land .login-card { justify-content: flex-start !important; }
+  /* فعال پینل سفید حصے کی بچی جگہ کے بیچ میں */
+  #login-screen .dio-land .login-card > #panel-password,
+  #login-screen .dio-land .login-card > #panel-pin,
+  #login-screen .dio-land .login-card > #panel-biometric { margin-block: auto; }
+  /* بایومیٹرک: بڑا، صاف نشان — انگلی سے دبانے میں آسان */
+  #login-screen .biometric-wrap { padding: 8px 0 4px; }
+  #login-screen .biometric-ring { width: 124px; height: 124px; border-width: 3px; margin-bottom: 14px; }
+  #login-screen .biometric-icon svg { width: 56px; height: 56px; }
+  #login-screen .biometric-label { font-size: 12.5pt; text-align: center !important; }
+  #login-screen #panel-biometric .login-links { text-align: center !important; }
+}
+/* چھوٹی/کم اونچی موبائل اسکرین: PIN کا کی-پیڈ تھوڑا سمٹ جائے تاکہ کچھ نیچے نہ کٹے */
+@media (max-width: 860px) and (max-height: 740px) {
+  #login-screen .pin-pad { gap: 8px !important; margin-bottom: 10px !important; }
+  #login-screen .pin-key { padding: 8px !important; }
+  #login-screen .login-method { min-height: 36px !important; }
+  #login-screen .pin-display { margin-bottom: 12px !important; }
+  #login-screen .biometric-ring { width: 100px; height: 100px; margin-bottom: 10px; }
+  #login-screen .biometric-icon svg { width: 46px; height: 46px; }
+  #login-screen .login-methods { margin-bottom: 8px !important; }
+  #login-screen .dio-land-hero { padding: 10px 12px 10px !important; }
+  #login-screen .dio-ikhlas-band { padding: 6px 6px 8px; }
+}
+
+/* v530: بایومیٹرک ٹیب پر آلے کی تیاری کا پیغام (اگر فون تیار نہ ہو) */
+#login-screen .biometric-label.dio-bio-warn {
+  color: #9a6b00 !important; font-size: 11pt !important; line-height: 1.9 !important;
+  text-align: center !important; max-width: 320px; margin-inline: auto;
+}
