@@ -879,7 +879,6 @@ async function sendResetEmail() {
 }
 // purane naam — kisi purani jagah se bulaye jaayen to bhi sahi kaam ho
 async function sendOTP() { return sendResetEmail(); }
-async function verifyOTP() { return sendResetEmail(); }
 
 async function resetPassword() {
   const p1 = (document.getElementById('new-pass1') || {}).value || '';

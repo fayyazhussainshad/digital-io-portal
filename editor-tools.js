@@ -373,74 +373,9 @@ window.dioEditorToolbar = dioEditorToolbar;
 window.dioEditorToolbarCSS = dioEditorToolbarCSS;
 
 
-// ═══════════════════════════════════════════════════════════════════════
-//  FLOATING TOOLBAR — sirf wahan nazar aata hai jahan likhai/tarmeem ho
-//  rahi ho. Koi mustaqil (permanent) toolbar nahi.
-// ═══════════════════════════════════════════════════════════════════════
+// تیرتی پٹی کا پرانا کوڈ (دکھانا/چھپانا/skip-list) v529 میں ہٹا دیا گیا —
+// پٹی پورے سسٹم سے بند ہے۔ صرف یہ حوالہ باقی ہے تاکہ پرانی پٹی صاف ہو سکے۔
 let _dioFloatBar = null;
-let _dioFloatHideTimer = null;
-
-function _dioEnsureFloatBar() {
-  if (_dioFloatBar && document.body.contains(_dioFloatBar)) return _dioFloatBar;
-  dioEditorToolbarCSS();
-  const bar = document.createElement('div');
-  bar.id = 'dio-float-bar';
-  bar.className = 'no-print';
-  bar.style.cssText =
-    'position:fixed; z-index:100000; display:none; gap:3px; align-items:center;' +
-    'background:var(--bg-card,#fff); border:1px solid var(--border,#ccc); border-radius:10px;' +
-    'padding:5px 7px; box-shadow:0 6px 22px rgba(0,0,0,.18); direction:rtl; flex-wrap:wrap;' +
-    'max-width:min(96vw,620px);';
-  bar.innerHTML = dioEditorToolbar({ className: 'dio-etb-inner' });
-  // Toolbar par click karne se likhne wale khane ka focus na chhute
-  bar.addEventListener('mousedown', e => e.preventDefault());
-  document.body.appendChild(bar);
-  _dioFloatBar = bar;
-  return bar;
-}
-
-function _dioShowFloatBar(el) {
-  if (!el) return;
-  clearTimeout(_dioFloatHideTimer);
-  const bar = _dioEnsureFloatBar();
-  bar.style.display = 'flex';
-  // Khane ke ooper rakho; jagah na ho to neeche
-  const r  = el.getBoundingClientRect();
-  const bh = bar.offsetHeight || 44;
-  const bw = bar.offsetWidth  || 420;
-  let top = r.top - bh - 8;
-  if (top < 8) top = Math.min(r.bottom + 8, window.innerHeight - bh - 8);
-  let left = r.left + (r.width / 2) - (bw / 2);
-  if (left < 8) left = 8;
-  if (left + bw > window.innerWidth - 8) left = Math.max(8, window.innerWidth - bw - 8);
-  bar.style.top  = Math.max(8, top) + 'px';
-  bar.style.left = left + 'px';
-}
-
-function _dioHideFloatBar() {
-  _dioFloatHideTimer = setTimeout(() => {
-    if (_dioFloatBar) _dioFloatBar.style.display = 'none';
-  }, 200);
-}
-
-// Poore safhe par: jahan bhi likhne wale khane (contenteditable) mein jayen,
-// MS Word jaisa toolbar wahin aa jata hai — is tarah HAR jagah (mojooda aur
-// AAGE banne wale NAYE forms bhi) khud-ba-khud toolbar mil jata hai, kisi
-// alag file ko chhoo-e baghair.
-//
-// ── JAHAN TOOLBAR NAHI CHAHIYE (skip list) ───────────────────────────────
-// Neeche comma-separated selectors likhen. Jis khane ka ye selector se
-// closest match hoga wahan floating toolbar NAHI aayega.
-//   • #misal-editor  → is par pehle se OOPER mustaqil toolbar hai (double na ho).
-//   • .zf-editor     → ضمنی ایڈیٹر — floating toolbar کے تمام بٹن اب اوپر مستقل
-//                       toolbar میں شامل ہیں، اس لیے یہاں تیرتی پٹی نہ آئے (متن نہ ڈھکے)۔
-// User jab kahe "falan jagah se hatao" to us jagah ka selector yahan add kar dein.
-const _DIO_FLOAT_SKIP = '#misal-editor, .zf-editor, #dio-naqsha-doc';
-
-function _dioFloatSkip(el) {
-  try { return !!(el && el.closest && _DIO_FLOAT_SKIP && el.closest(_DIO_FLOAT_SKIP)); }
-  catch (_) { return false; }
-}
 
 /* ═══════════════════════════════════════════════════════════════════════
    ⛔ تیرتی پٹی (FLOATING TOOLBAR) — پورے سسٹم سے **بند**
