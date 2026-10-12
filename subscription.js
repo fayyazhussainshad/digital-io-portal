@@ -339,6 +339,12 @@ async function checkSubscription() {
 
 // ── SUBSCRIPTION BANNER ───────────────────────────────────────
 async function showSubscriptionBanner() {
+  /* v527: login ke 3 second baad yeh chalta hai. Agar afsar us se pehle
+     log aut kar chuka ho to currentUser khaali hota hai, halat 'none' aati
+     hai aur TALA login safhe ke OOPAR lag jata tha — koi bhi (offline bhi)
+     login nahi kar pata tha. Ab: koi andar hi nahi to kuch nahi. */
+  if (!(typeof currentUser !== 'undefined' && currentUser)) return;
+  try { var _ms = document.getElementById('main-app'); if (_ms && _ms.style.display === 'none') return; } catch (_) {}
   // Trial/active info now shows in the BOTTOM bar (footer-license), not below topbar.
   const existing = document.getElementById('sub-banner');
   if (existing) existing.remove();
@@ -480,6 +486,16 @@ function _dioHardLock(sub) {
   }, 1200);
 }
 window._dioHardLock = _dioHardLock;
+
+// v527: log aut par tala hatao — tala ACCOUNT ka hai, login safhe ka nahi.
+// Bypass nahi: agli bar login par showSubscriptionBanner() wahi tala dobara lagata hai.
+function _dioClearLockOnLogout() {
+  try { _dioLockState.off(); } catch (_) {}
+  try { if (_dioLockTimer) { clearInterval(_dioLockTimer); _dioLockTimer = null; } } catch (_) {}
+  try { var L = document.getElementById('dio-sub-lock'); if (L) L.remove(); } catch (_) {}
+  window._dioLocked = false;
+}
+window._dioClearLockOnLogout = _dioClearLockOnLogout;
 
 // Tajdeed ke baad tala khole — sirf ONLINE tasdeeq par
 async function _dioUnlockIfRenewed() {

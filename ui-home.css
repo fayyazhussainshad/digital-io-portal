@@ -434,3 +434,112 @@ html:not([data-theme="light"]) #login-screen .dio-lc-hint { color: #f5b942; }
   #main-app .page-content > .page-header,
   #main-app .page-content > div > .page-header { padding: 8px 12px !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   6. لاگ اِن کارڈ — v527 (افسر کی ہدایات)
+   ═══════════════════════════════════════════════════════════════ */
+/* کارڈ اسکرین سے لمبا ہو تو اوپر سے کٹے نہیں (center + overflow کا مسئلہ) */
+#login-screen { justify-content: flex-start !important; align-items: stretch !important; }
+/* AHEM: flex ka bacha kaarD sukaR kar screen jitna ho jata tha aur overflow:hidden
+   neeche ka hissa (disclaimer) kaat deta tha — yahi "disclaimer ghaib" ki asal wajah thi. */
+#login-screen .dio-land { margin: auto !important; flex-shrink: 0 !important; }
+
+/* تعارفی حصہ: اوپر سے شروع، بڑا خالی خلا ختم */
+#login-screen .dio-land-hero { justify-content: flex-start !important; padding-top: 30px; gap: 18px; }
+
+/* "لاگ اِن" اور "اپنے اکاؤنٹ میں داخل ہوں" — درمیان میں */
+#login-screen .dio-lc-head, #login-screen .dio-lc-head * { text-align: center !important; }
+#login-screen .dio-land .login-card { justify-content: flex-start; padding-top: 28px !important; }
+
+/* خانے کے اندر لکھا لفظ (ای میل / پاس ورڈ) — خالی ہو تو دائیں سے، لکھتے ہی غائب */
+#login-screen input.dio-ph-rtl:placeholder-shown {
+  direction: rtl !important; text-align: right !important;
+  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+}
+#login-screen input.dio-ph-rtl::placeholder { color: var(--dio-ink-3); opacity: 1; }
+
+/* "پاس ورڈ بھول گئے؟" — اسی سطر کے دوسرے سرے پر */
+#login-screen .dio-lc-row { justify-content: flex-end !important; margin: -4px 0 16px !important; }
+
+/* سائن اِن + سائن اَپ ایک ساتھ */
+#login-screen .dio-lc-actions {
+  display: grid; grid-template-columns: 1.7fr 1fr; gap: 10px; align-items: stretch;
+}
+#login-screen .dio-lc-actions .login-btn { width: 100% !important; margin: 0 !important; }
+#login-screen button.dio-signup-btn {
+  min-height: 50px; border-radius: 10px; cursor: pointer;
+  background: transparent; color: var(--dio-file);
+  border: 1.5px solid var(--dio-file);
+  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-size: 13pt; font-weight: 700;
+}
+#login-screen button.dio-signup-btn:hover { background: rgba(19, 41, 75, .06); }
+html:not([data-theme="light"]) #login-screen button.dio-signup-btn { color: var(--dio-ink); border-color: var(--dio-line); }
+
+/* قانونی اعلان — نیچے الگ پٹی (اوپر والی سورت کی پٹی کے جوڑ کی) */
+#login-screen .dio-legal-band {
+  grid-column: 1 / -1;
+  background: var(--dio-file-2);
+  border-top: 1px solid rgba(201, 162, 39, .35);
+  padding: 14px 26px 12px;
+  text-align: center;
+}
+#login-screen .dio-legal-band .dio-legal {
+  border: 0 !important; margin: 0 auto !important; padding: 0 !important;
+  max-width: 820px; text-align: center !important;
+}
+#login-screen .dio-legal-band .dio-legal,
+#login-screen .dio-legal-band .dio-legal * {
+  color: #c9d5e6 !important; font-size: 10.5pt !important; line-height: 2 !important;
+  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+}
+#login-screen .dio-legal-band .dio-legal span[style*="font-weight:800"] { color: #e9cf73 !important; font-family: Georgia, serif !important; }
+#login-screen .dio-legal-band .login-security-badge,
+#login-screen .dio-legal-band .login-security-badge * { color: #8ea3c4 !important; font-size: 8.5pt !important; margin-top: 6px !important; }
+
+@media (max-width: 860px) {
+  #login-screen .dio-land-hero { padding-top: 20px; }
+  #login-screen .dio-legal-band { padding: 12px 14px 12px; }
+  #login-screen .dio-lc-actions { grid-template-columns: 1fr 1fr; }
+}
+
+/* مائیک کا بٹن لاگ اِن صفحے پر نہیں (یہاں اس کا کام نہیں اور یہ خانے ڈھانپتا تھا) */
+body:has(#login-screen:not([style*="display: none"]):not([style*="display:none"])) #global-mic-btn,
+body:has(#login-screen:not([style*="display: none"]):not([style*="display:none"])) #global-mic-live {
+  display: none !important;
+}
+
+/* دائرے میں افسر کی تصویر (v527) — پیتل کا حلقہ برقرار */
+#login-screen .dio-land-emblem { position: relative; overflow: hidden; }
+#login-screen .dio-land-emblem img.dio-land-photo {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; border-radius: 50%;
+}
+#login-screen .dio-land-emblem.has-photo { width: 76px; height: 76px; border-width: 3px; box-shadow: 0 0 0 4px rgba(201, 162, 39, .18); }
+#login-screen .dio-land-emblem.has-photo svg { visibility: hidden; }
+@media (max-width: 860px) {
+  #login-screen .dio-land-emblem.has-photo { width: 60px; height: 60px; }
+}
+
+/* پاس ورڈ: آنکھ کا نشان بائیں کونے میں، لکھا لفظ دائیں — آپس میں نہ ٹکرائیں */
+#login-screen .dio-pw-group .input-eye { left: 6px !important; right: auto !important; }
+#login-screen .dio-pw-group .login-input { padding-left: 46px !important; padding-right: 14px !important; }
+
+/* کم اونچی اسکرین (لیپ ٹاپ/ونڈو): کارڈ ایک نظر میں — قانونی پٹی سمیت */
+@media (min-width: 861px) and (max-height: 820px) {
+  #login-screen { padding-top: 12px !important; padding-bottom: 12px !important; }
+  #login-screen .dio-ikhlas-band { padding: 10px 22px 12px; }
+  #login-screen .dio-land-hero { padding: 20px 32px 20px; gap: 12px; }
+  #login-screen .dio-land-emblem { width: 50px; height: 50px; margin-bottom: 4px; }
+  #login-screen .dio-land-emblem.has-photo { width: 64px; height: 64px; }
+  #login-screen b.dio-land-title { font-size: 28pt; }
+  #login-screen strong.dio-land-sub { font-size: 15pt; margin-top: 4px; }
+  #login-screen p.dio-land-lead { font-size: 11.5pt; line-height: 1.9; }
+  #login-screen ul.dio-land-feats li { padding: 8px 10px; grid-template-columns: 22px 1fr; }
+  #login-screen ul.dio-land-feats small { display: none; }
+  #login-screen ul.dio-land-feats svg { grid-row: auto; margin-top: 2px; }
+  #login-screen .dio-land .login-card { padding: 20px 30px 18px !important; }
+  #login-screen .dio-lc-head { margin-bottom: 12px; }
+  #login-screen .login-methods { margin-bottom: 14px !important; }
+  #login-screen .dio-legal-band { padding: 10px 26px 8px; }
+}
