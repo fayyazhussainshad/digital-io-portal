@@ -27,6 +27,8 @@
 | 95 | `95_subs_lockdown.sql` | `subscriptions` پر client کی لکھائی بند | **چل چکی** |
 | 96 | `96_CHECK.sql` | `client_errors` کی پالیسی اور `officers` کا trigger براہِ راست DB سے جانچتی ہے | صرف پڑھتی ہے |
 | 97 | `97_officers_approved_fail_closed.sql` | `dio_protect_officers()`: manzoori NULL والا admin اب اختیار نہیں پاتا (fail-closed)۔ ایسا admin موجود ہو تو فائل کچھ نہیں بدلتی۔ واپسی: `97_ROLLBACK.sql` | **چل چکی** (13 اکتوبر 2026 — 96_CHECK: دونوں THEEK) |
+| 98 | `98_CHECK.sql` | پالیسیوں کی صفائی سے **پہلے** کی تصویر: ہوبہو دوہری policies، `audit_log`/`audit_logs` کس کے کام کی ہیں، `case_accused` کی policies | صرف پڑھتی ہے |
+| 99 | `99_audit_log_immutable.sql` | `audit_log` کی "Nobody can delete/update" policies PERMISSIVE تھیں، یعنی بے اثر — افسر اپنا آڈٹ ریکارڈ مٹا/بدل سکتا تھا۔ اب RESTRICTIVE۔ پڑھنا/لکھنا ویسا ہی۔ واپسی: `99_ROLLBACK.sql` | **چل چکی** (13 اکتوبر 2026 — دونوں RESTRICTIVE کی تصدیق) |
 | 100 | `100_email_notify.sql` | رجسٹریشن / منظوری / سبسکرپشن پر خودکار ای میل (Edge Function `dio-notify` پہلے deploy کریں) | **نئی** |
 
 ہر قدم کے ساتھ `*_CHECK.sql` (ایک ہی statement — Supabase کا editor نتیجہ ضرور
@@ -82,13 +84,21 @@
 
 ## رہ گیا کام
 
-1. **Edge function deploy کریں:**
-   `supabase functions deploy dio-license --no-verify-jwt`
-   ریپو میں `index.ts` درست ہو چکا ہے (غلط کالم، معطل admin، زیرِ التواء افسر،
-   اور `?pubkey`)، مگر جب تک deploy نہ ہو، میدان میں پرانا ہی چل رہا ہے۔
-2. **پالیسیوں کی صفائی** (جلدی نہیں): `audit_log` پر دو تقریباً ایک جیسی
+1. ~~**Edge function deploy کریں** (`dio-license`)~~ — **مکمل (13 اکتوبر 2026 کو تصدیق)۔**
+   ایپ سے تازہ لائسنس ملا (`plan: owner`)۔ پرانا v2 غلط کالم (`is_suspended`)
+   کی وجہ سے ہر افسر پر ناکام ہوتا تھا اور کبھی لائسنس نہیں دیتا تھا — یعنی
+   درست ورژن چل رہا ہے۔ Gateway پر "Verify JWT" **آن** ہے، اور یہ ٹھیک ہے:
+   ایپ لائسنس مانگتے وقت لاگ اِن شدہ افسر کا JWT خود بھیجتی ہے۔ (اسی وجہ سے
+   براؤزر میں سیدھا `?pubkey` کھولنے پر `UNAUTHORIZED_NO_AUTH_HEADER` آتا
+   ہے — یہ خرابی نہیں۔)
+2. ~~**پالیسیوں کی صفائی**~~ — **مکمل (13 اکتوبر 2026)۔** `audit_log` پر دو تقریباً ایک جیسی
    "Nobody can delete" policies، `case_accused` پر دو ایک جیسی ownership
    policies، اور دو الگ audit tables (`audit_log` اور `audit_logs`)۔
-3. **`getIOSignLine`** کہیں define نہیں — اِس لیے ضمنی کی دستاویزات میں تفتیشی
-   افسر کے دستخط کی لائن خاموشی سے غائب رہتی ہے (`typeof` گارڈ کی وجہ سے خرابی
-   نہیں آتی)۔ `getSHOSignLine` موجود ہے (`sho-dsp.js`)۔ فیصلہ آپ کا۔
+   **نتیجہ (13 اکتوبر 2026، `98_CHECK`):** ہوبہو دوہری policy **کوئی نہیں** —
+   ہٹانے کو کچھ نہیں۔ دونوں audit tables **استعمال میں** ہیں اور الگ کام کی ہیں:
+   `audit_log` (335 قطاریں) میں DB کے triggers/functions لکھتے ہیں، `audit_logs`
+   (362) میں ایپ (`dio-audit.js`)۔ دونوں رہیں گی۔ البتہ ایک اصل خامی ملی:
+   `audit_log` کی "Nobody can…" policies PERMISSIVE (بے اثر) تھیں → `99` **چل چکی** — **یہ کام مکمل۔**
+3. ~~**`getIOSignLine`** کہیں define نہیں~~ — **حل ہو چکا:** `app-core.js`
+   میں بن چکا ہے (نام + عہدہ + تھانہ، `darkhwastain.js` کی `_dkIoLine()` جیسا)،
+   اس لیے ضمنی کی دستاویزات میں تفتیشی افسر کی لائن اب آتی ہے۔
