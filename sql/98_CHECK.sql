@@ -38,6 +38,7 @@ info as (
            where c.table_schema = 'public' and c.table_name = tbl.naam) as khane,
          (select c.relrowsecurity from pg_class c where c.oid = tbl.oid) as rls_on,
          (select jsonb_agg(jsonb_build_object('naam', p.policyname, 'hukm', p.cmd,
+                   'qism', p.permissive,
                    'roles', p.roles, 'using', p.qual, 'with_check', p.with_check)
                    order by p.policyname)
             from pg_policies p
