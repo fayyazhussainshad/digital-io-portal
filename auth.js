@@ -158,6 +158,49 @@ try {
 } catch (_) {}
 window._dioSyncQuickTokens = _dioSyncQuickTokens;
 
+/* ═══ انٹرنیٹ آتے ہی سیشن بحال، پھر sync (v527) ══════════════════════
+   Offline login ke baad Supabase ka session nahi hota. Internet aate hi:
+   1) offline me likha password (sirf yaaddasht me) se khamosh login, ya
+   2) PIN/biometric ka mehfooz token — phir offline andraaj sync.
+   Kuch na chale to afsar ko saaf paigham; andraaj is aale par mehfooz rehte hain. */
+let _dioPendingReauth = null;
+let _dioReauthBusy = false;
+async function _dioReauthIfNeeded() {
+  if (_dioReauthBusy || !navigator.onLine) return false;
+  if (!(typeof currentUser !== 'undefined' && currentUser)) return false;
+  _dioReauthBusy = true;
+  try {
+    try {
+      const { data } = await supabaseClient.auth.getSession();
+      if (data && data.session) return true;
+    } catch (_) {}
+    let ok = false;
+    if (_dioPendingReauth) {
+      try {
+        const r = await supabaseClient.auth.signInWithPassword({ email: _dioPendingReauth.email, password: _dioPendingReauth.pass });
+        ok = !r.error && !!(r.data && r.data.session);
+      } catch (_) { ok = false; }
+    }
+    if (!ok) {
+      for (const k of ['dio_bio_rt', 'dio_pin_rt']) {
+        try { if (localStorage.getItem(k) && await _dioLoginWithToken(k)) { ok = true; break; } } catch (_) {}
+      }
+    }
+    _dioPendingReauth = null;
+    if (ok) {
+      try { await _loadOfficerProfile(); } catch (_) {}
+      try { if (typeof window._syncOfflineQueue === 'function') window._syncOfflineQueue(); } catch (_) {}
+      try { if (typeof window.updateBadges === 'function') window.updateBadges(); } catch (_) {}
+      try { showToast('انٹرنیٹ بحال — sync شروع', 'success', 3000); } catch (_) {}
+    } else {
+      try { showToast('انٹرنیٹ بحال ہے، مگر sync کے لیے ایک بار پاس ورڈ سے لاگ اِن کریں — آپ کا کام اس آلے پر محفوظ ہے', 'warn', 8000); } catch (_) {}
+    }
+    return ok;
+  } finally { _dioReauthBusy = false; }
+}
+window._dioReauthIfNeeded = _dioReauthIfNeeded;
+window.addEventListener('online', function () { setTimeout(_dioReauthIfNeeded, 800); });
+
 // ══ PIN ہیشنگ (WebCrypto PBKDF2 + نمک) ══════════════════════════════
 //   پرانے سادہ (dio_pin) اور btoa (app-lock) PIN درست داخلے پر خودکار
 //   ہیش میں بدل جاتے ہیں (migration)۔ صرف ہیش محفوظ ہوتا ہے، خام PIN نہیں۔
@@ -219,7 +262,7 @@ function _dioIsOwner(o) {
 async function _dioPurgeOnSuspend() {
   try {
     ['dio_officer_cache','dio_pin_rt','dio_bio_rt','dio_license','dio_sub_cache',
-     'dio_biometric_email','dio_biometric_token','dio_err_log'].forEach(function (k) {
+     'dio_biometric_email','dio_biometric_token','dio_err_log','dio_pw_verifier'].forEach(function (k) {
       try { localStorage.removeItem(k); } catch (_) {}
     });
   } catch (_) {}
@@ -315,34 +358,59 @@ async function doLogin() {
      is aale par mehfooz afsar ke record mein nahi ghus sakta.
      ══════════════════════════════════════════════════════════════ */
   if (!navigator.onLine) {
+    /* v527 — OFFLINE FIRST, ASAL PASSWORD KI JAANCH KE SATH
+       Pehle: offline par likha hua password JAANCHA hi nahi jata tha (sirf
+       ای میل milaai jati thi) — ya PIN/biometric par bhej diya jata tha.
+       Ab: har kamyab ONLINE login par password ka PBKDF2 hash (namak ke
+       sath, khud password nahi) is aale par rakha jata hai; offline par
+       likha password usi se jaancha jata hai. Durust ho to foran andar,
+       aur internet aate hi session khud bahal ho kar sync hota hai. */
     const hasOffline = await _dioHasOfflineSession();
-    const hasPin = !!localStorage.getItem('dio_pin');
-    const hasBio = !!(localStorage.getItem('dio_biometric_cred') && localStorage.getItem('dio_biometric_email'));
-    if (hasOffline && (hasPin || hasBio)) {
-      showToast('آپ آفلائن ہیں — ' + (hasPin ? 'PIN' : 'بایومیٹرک') + ' سے لاگ اِن کریں', 'warn', 6000);
-      if (hasPin) { const b = document.querySelectorAll('.login-method')[1]; if (b) setLoginMethod('pin', b); }
-      else { const b = document.querySelectorAll('.login-method')[2]; if (b) setLoginMethod('biometric', b); }
+    if (!hasOffline) {
+      showToast('آفلائن لاگ اِن دستیاب نہیں — اس آلے پر پہلے ایک بار انٹرنیٹ کے ساتھ لاگ اِن کریں', 'warn', 7000);
       return;
     }
-    if (hasOffline) {
-      // Mehfooz session ka afsar koi aur to nahi?
-      let _savedEmail = '';
-      try {
-        const _o = JSON.parse(localStorage.getItem('dio_officer_cache') || 'null');
-        _savedEmail = (_o && _o.email) ? String(_o.email).trim().toLowerCase() : '';
-      } catch (_) {}
-      if (_savedEmail && _savedEmail !== String(email).trim().toLowerCase()) {
-        showToast('یہ آلہ کسی اور افسر کے نام پر محفوظ ہے — آف لائن صرف وہی داخل ہو سکتے ہیں', 'error', 7000);
+    let _savedEmail = '';
+    try {
+      const _o = JSON.parse(localStorage.getItem('dio_officer_cache') || 'null');
+      _savedEmail = (_o && _o.email) ? String(_o.email).trim().toLowerCase() : '';
+    } catch (_) {}
+    let ver = null;
+    try { ver = JSON.parse(localStorage.getItem('dio_pw_verifier') || 'null'); } catch (_) {}
+    if (!_savedEmail && ver && ver.email) _savedEmail = String(ver.email).toLowerCase();
+    if (_savedEmail && _savedEmail !== String(email).trim().toLowerCase()) {
+      showToast('یہ آلہ کسی اور افسر کے نام پر محفوظ ہے — آف لائن صرف وہی داخل ہو سکتے ہیں', 'error', 7000);
+      return;
+    }
+    setLoginLoading(true);
+    if (ver && ver.hash && _dioSameEmail(ver.email, email)) {
+      let ok = false;
+      try { ok = (await _dioPinMatches(pass, ver.hash)) === true; } catch (_) { ok = false; }
+      if (!ok) {
+        setLoginLoading(false);
+        showToast('پاس ورڈ غلط ہے', 'error', 5000);
         return;
       }
-      setLoginLoading(true);
-      const off = await _dioOfflineRestore();
-      setLoginLoading(false);
-      if (off) {
-        showToast('آفلائن موڈ — انٹرنیٹ آنے پر کام خودبخود sync ہو جائے گا', 'info', 4000);
-        loginSuccess();
+    } else {
+      // Is aale par abhi password ka hash nahi (purana login) — PIN/biometric ho to wahi
+      const hasPin = !!localStorage.getItem('dio_pin');
+      const hasBio = !!(localStorage.getItem('dio_biometric_cred') && localStorage.getItem('dio_biometric_email'));
+      if (hasPin || hasBio) {
+        setLoginLoading(false);
+        showToast('آپ آفلائن ہیں — ' + (hasPin ? 'PIN' : 'بایومیٹرک') + ' سے لاگ اِن کریں (پاس ورڈ آف لائن ایک بار آن لائن لاگ اِن کے بعد چلے گا)', 'warn', 7000);
+        if (hasPin) { const b = document.querySelectorAll('.login-method')[1]; if (b) setLoginMethod('pin', b); }
+        else { const b = document.querySelectorAll('.login-method')[2]; if (b) setLoginMethod('biometric', b); }
         return;
       }
+    }
+    const off = await _dioOfflineRestore();
+    setLoginLoading(false);
+    if (off) {
+      // Sirf YAADDASHT me (storage me nahi) — internet aate hi session bahal karne ke liye
+      _dioPendingReauth = { email: String(email).trim(), pass };
+      showToast('آفلائن موڈ — انٹرنیٹ آنے پر کام خودبخود sync ہو جائے گا', 'info', 4000);
+      loginSuccess();
+      return;
     }
     showToast('آفلائن لاگ اِن دستیاب نہیں — اس آلے پر پہلے ایک بار انٹرنیٹ کے ساتھ لاگ اِن کریں', 'warn', 7000);
     return;
@@ -370,6 +438,13 @@ async function doLogin() {
     currentUser = data.user;
     // Clear failed attempts on success
     localStorage.removeItem('dio_login_lock');
+    // v527: offline login ke liye password ka PBKDF2 hash (password khud nahi) — pas-e-manzar me
+    try {
+      const _em = String((data.user && data.user.email) || email).toLowerCase();
+      _dioHashPin(pass).then(function (h) {
+        if (h && h.indexOf('pbkdf2$') === 0) localStorage.setItem('dio_pw_verifier', JSON.stringify({ email: _em, hash: h }));
+      }).catch(function () {});
+    } catch (_) {}
     // Biometric/PIN is ای میل کے لیے فعال ہو تو تازہ token محفوظ (v526: chhote-baRe huroof ka farq khatam)
     try {
       if (_dioSameEmail(localStorage.getItem('dio_biometric_email'), (data.user && data.user.email) || email)) {
@@ -651,7 +726,8 @@ async function doLogout() {
   } catch(_) {}
 
   // 3. In-memory state saaf
-  currentUser=null; currentOfficer=null;
+  currentUser=null; currentOfficer=null; _dioPendingReauth = null;
+  try { if (typeof window._dioClearLockOnLogout === 'function') window._dioClearLockOnLogout(); } catch(_) {}
   try { window._workspaceCase = null; window._workspaceEv = null; } catch(_){}
   try { _misalDocs = {}; _misalCaseId = null; _misalCase = null; } catch(_){}
   try { _rfaList = []; _rfaCurrent = null; _rfaCaseId = null; } catch(_){}
@@ -687,6 +763,7 @@ async function doLogout() {
   const login = document.getElementById('login-screen');
   if (app) app.style.display='none';
   if (login) { login.style.display='flex'; login.style.opacity='1'; }
+  try { _dioLandingAvatar(); } catch(_) {}
   showToast('لاگ آؤٹ ہو گئے','info');
 }
 
@@ -972,6 +1049,35 @@ function _dioInitLoginScreen() {
   } catch (_) {}
 }
 window._dioInitLoginScreen = _dioInitLoginScreen;
+
+/* ═══ لاگ اِن صفحے کے دائرے میں افسر کی تصویر (v527) ══════════════════
+   لاگ اِن سے پہلے معلوم نہیں ہوتا کون آ رہا ہے، اس لیے اسی آلے پر
+   آخری بار داخل ہونے والے افسر کی محفوظ تصویر دکھائی جاتی ہے (یہی
+   تصویر ترتیبات/ڈیش بورڈ میں ہے)۔ تصویر نہ ہو تو ڈھال کا نشان ہی رہتا ہے۔
+   صرف data:image یا https کی تصویر — کوئی اور قسم قبول نہیں۔ */
+function _dioLandingAvatar() {
+  try {
+    const box = document.getElementById('dio-land-emblem');
+    if (!box) return;
+    let src = '';
+    try { src = localStorage.getItem('dio_profile_photo') || localStorage.getItem('officer_photo_url') || ''; } catch (_) {}
+    src = String(src || '').trim();
+    const ok = /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(src) || /^https:\/\/[^\s"'<>]+$/.test(src);
+    const old = box.querySelector('img.dio-land-photo');
+    if (!ok) { if (old) { old.remove(); box.classList.remove('has-photo'); } return; }
+    if (old && old.getAttribute('src') === src) return;
+    const img = old || document.createElement('img');
+    img.className = 'dio-land-photo';
+    img.alt = '';
+    img.decoding = 'async';
+    img.onerror = function () { img.remove(); box.classList.remove('has-photo'); };
+    img.src = src;
+    if (!old) box.appendChild(img);
+    box.classList.add('has-photo');
+  } catch (_) {}
+}
+window._dioLandingAvatar = _dioLandingAvatar;
+window.addEventListener('load', function () { setTimeout(_dioLandingAvatar, 50); });
 window.addEventListener('load', function () { setTimeout(_dioInitLoginScreen, 300); });
 window.addEventListener('offline', function () {
   try { const h = document.getElementById('offline-login-hint'); const ls = document.getElementById('login-screen');

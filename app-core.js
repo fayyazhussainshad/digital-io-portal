@@ -766,6 +766,16 @@ window.addEventListener('offline', ()=>updateConnectionStatus(false));
 // ── SYNC offline queue when back online ───────────────────────
 async function _syncOfflineQueue() {
   if (typeof offlineStore === 'undefined' || !navigator.onLine) return;
+  /* v527 — AHEM HIFAZAT: offline login ke baad Supabase ka session nahi
+     hota. Us halat me sync chalta to server "permission denied" deta aur
+     processQueue() us ko MUSTAQIL nakaami maan kar andraaj 'failed' kar
+     deta — offline me likhi zimniyan zaya. Ab session ke baghair sync
+     NAHI chalta; auth.js internet aate hi session bahal kar ke khud
+     dobara bulata hai. */
+  try {
+    const { data } = await supabaseClient.auth.getSession();
+    if (!data || !data.session) return;
+  } catch (_) { return; }
   try {
     const count = await offlineStore.pendingCount();
     if (!count) return;
@@ -986,7 +996,8 @@ async function initApp() {
   // Refresh avatar again after profile fully loads (photo persistence)
   setTimeout(() => { if (typeof updateSidebarProfile === 'function') updateSidebarProfile(); }, 600);
   updateConnectionStatus(navigator.onLine);
-  await updateBadges();
+  // v527 (tez login): badges ka network jawab dashboard ko na roke
+  try { updateBadges(); } catch(_) {}
   startClock();
   // ═══ DEFENSIVE (Phase 1 cleanup ke baad zarur) ═══
   // Pehle auth.js mein stub tha jo agar backup.js load na hui ho to bhi

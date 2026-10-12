@@ -1273,7 +1273,7 @@ window.addEventListener('unhandledrejection', function(e){
     </div>
     <section class="dio-land-hero" aria-labelledby="dio-land-title">
       <div class="dio-land-brand">
-        <span class="dio-land-emblem" aria-hidden="true">
+        <span class="dio-land-emblem" id="dio-land-emblem" aria-hidden="true">
           <svg viewBox="0 0 24 24"><path d="M12 2.6 20 5.4v6.1c0 4.7-3.2 8.2-8 9.9-4.8-1.7-8-5.2-8-9.9V5.4Z"/><path d="m8.6 12 2.4 2.4 4.4-4.8"/></svg>
         </span>
         <b class="dio-land-title" id="dio-land-title" dir="ltr">Digital IO</b>
@@ -1303,13 +1303,14 @@ window.addEventListener('unhandledrejection', function(e){
       <button class="login-method" onclick="window.setLoginMethod&&setLoginMethod('biometric',this)"><svg viewBox="0 0 24 24" aria-hidden="true" style="width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;"><path d="M12 3.5c-3 0-5.5 2.3-5.5 5.2v2.6"/><path d="M12 3.5c3 0 5.5 2.3 5.5 5.2v4.1"/><path d="M9.2 9.1a2.8 2.8 0 0 1 5.6 0v5.4"/><path d="M12 9.6v6.2"/><path d="M6.5 15.5v1.8"/><path d="M17.5 16.6v1.4"/></svg> بایومیٹرک</button>
     </div>
       <div id="panel-password">
-        <label class="dio-lc-label" for="login-email">ای میل</label>
-        <div class="input-group"><input type="email" id="login-email" class="login-input" dir="ltr" placeholder="name@example.com" autocomplete="email" inputmode="email"></div>
-        <label class="dio-lc-label" for="login-password">پاس ورڈ</label>
-        <div class="input-group dio-pw-group"><input type="password" id="login-password" class="login-input" dir="ltr" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter'&&window.doLogin)doLogin()"><button type="button" class="input-eye" aria-label="پاس ورڈ دکھائیں / چھپائیں" onclick="window.togglePasswordVisibility&&togglePasswordVisibility('login-password')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+        <div class="input-group"><input type="email" id="login-email" class="login-input dio-ph-rtl" dir="ltr" placeholder="ای میل" aria-label="ای میل" autocomplete="email" inputmode="email"></div>
+        <div class="input-group dio-pw-group"><input type="password" id="login-password" class="login-input dio-ph-rtl" dir="ltr" placeholder="پاس ورڈ" aria-label="پاس ورڈ" autocomplete="current-password" onkeydown="if(event.key==='Enter'&&window.doLogin)doLogin()"><button type="button" class="input-eye" aria-label="پاس ورڈ دکھائیں / چھپائیں" onclick="window.togglePasswordVisibility&&togglePasswordVisibility('login-password')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
         <div class="dio-lc-row"><a href="#" class="dio-lc-link" onclick="event.preventDefault();window.showForgotPassword&&showForgotPassword()">پاس ورڈ بھول گئے؟</a></div>
-        <button type="button" class="login-btn" onclick="window.doLogin&&doLogin()" id="login-submit-btn"><span id="login-btn-text">محفوظ لاگ اِن</span><span id="login-btn-loader" style="display:none;">تصدیق ہو رہی ہے…</span></button>
-        <div class="dio-lc-alt">نیا اکاؤنٹ؟ <a href="#" class="dio-lc-link" onclick="event.preventDefault();window.showRegister&&showRegister()">رسائی کی درخواست دیں</a></div>
+        <!-- سائن اِن اور سائن اَپ ایک ساتھ (v527) -->
+        <div class="dio-lc-actions">
+          <button type="button" class="login-btn" onclick="window.doLogin&&doLogin()" id="login-submit-btn"><span id="login-btn-text">محفوظ لاگ اِن</span><span id="login-btn-loader" style="display:none;">تصدیق ہو رہی ہے…</span></button>
+          <button type="button" class="dio-signup-btn" onclick="window.showRegister&&showRegister()">نیا اکاؤنٹ</button>
+        </div>
       </div>
       <div id="panel-pin" style="display:none;">
       <div class="pin-display"><div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div><div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div><div class="pin-dot" id="pd4"></div><div class="pin-dot" id="pd5"></div></div>
@@ -1325,7 +1326,9 @@ window.addEventListener('unhandledrejection', function(e){
         <div class="biometric-wrap"><div class="biometric-ring" id="bio-ring" role="button" tabindex="0" aria-label="بایومیٹرک سے داخل ہوں" onclick="window.doBiometric&&doBiometric()" onkeydown="if(event.key==='Enter'&&window.doBiometric)doBiometric()"><div class="biometric-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c-3 0-5.5 2.3-5.5 5.2v2.6"/><path d="M12 3.5c3 0 5.5 2.3 5.5 5.2v4.1"/><path d="M9.2 9.1a2.8 2.8 0 0 1 5.6 0v5.4"/><path d="M12 9.6v6.2"/><path d="M6.5 15.5v1.8"/><path d="M17.5 16.6v1.4"/></svg></div></div><div class="biometric-label">تصدیق کے لیے یہاں دبائیں</div></div>
         <div class="login-links"><a href="#" onclick="event.preventDefault();window.setLoginMethod&&setLoginMethod('password',document.querySelectorAll('.login-method')[0])">پاس ورڈ سے داخل ہوں</a></div>
       </div>
-      <!-- Disclaimer — قانونی اعلان -->
+    </section>
+    <!-- قانونی اعلان — پورے کارڈ کے نیچے الگ پٹی (v527) -->
+    <footer class="dio-legal-band">
       <div class="dio-legal">
         <span style="font-weight:800;" dir="ltr">"Digital IO"</span> ایک نجی اور غیر سرکاری مددگار سافٹ ویئر ہے۔ اس کا مقصد صرف اور صرف پولیس افسران کے کام کو آسان بنانا ہے۔ اس ایپ کے کسی بھی نوعیت کے غلط استعمال یا اس کے نتائج کی تمام تر ذمہ داری خود صارف (یوزر پولیس افسر) پر ہوگی۔
       </div>
@@ -1333,7 +1336,7 @@ window.addEventListener('unhandledrejection', function(e){
         <!-- BIDI: angrezi satar RTL khane me — LTR + isolate -->
         <span dir="ltr" style="unicode-bidi:isolate;display:inline-block;">256-bit AES Encrypted &middot; MFA Protected &middot; Audit Logged</span>
       </div>
-    </section>
+    </footer>
   </div>
 </div>
 
