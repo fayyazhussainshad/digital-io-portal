@@ -31,7 +31,7 @@
 | 99 | `99_audit_log_immutable.sql` | `audit_log` کی "Nobody can delete/update" policies PERMISSIVE تھیں، یعنی بے اثر — افسر اپنا آڈٹ ریکارڈ مٹا/بدل سکتا تھا۔ اب RESTRICTIVE۔ پڑھنا/لکھنا ویسا ہی۔ واپسی: `99_ROLLBACK.sql` | **چل چکی** (13 اکتوبر 2026 — دونوں RESTRICTIVE کی تصدیق) |
 | 100 | `100_email_notify.sql` | رجسٹریشن / منظوری / سبسکرپشن پر خودکار ای میل (Edge Function `dio-notify` پہلے deploy کریں) | **نئی** |
 | 101 | `101_naya_andraj.sql` | «نیا اندراج»: ملزم/گواہ کی کئی تصاویر، شناختی کارڈ کے دونوں رخ، سابقہ ریکارڈ — صرف نئے کالم جوڑتی ہے (کچھ نہیں بدلتی)۔ جانچ: `101_CHECK.sql`، واپسی: `101_ROLLBACK.sql` | **چل چکی** (13 اکتوبر 2026 — 101_CHECK: تمام 8 خانے THEEK) |
-| 102 | `102_5c_muqadma.sql` | 5-C درخواست کو مقدمے سے جوڑنا (اختیاری): `applications_5c` میں `case_id` اور `fir_number` — صرف نئے کالم۔ جانچ: `102_CHECK.sql`، واپسی: `102_ROLLBACK.sql` | **نئی — چلانی ہے** |
+| 102 | `102_5c_muqadma.sql` | 5-C درخواست کو مقدمے سے جوڑنا (اختیاری): `applications_5c` میں `case_id` اور `fir_number` — صرف نئے کالم۔ جانچ: `102_CHECK.sql`، واپسی: `102_ROLLBACK.sql` | **چل چکی** (13 اکتوبر 2026 — 102_CHECK: دونوں خانے THEEK) |
 
 ہر قدم کے ساتھ `*_CHECK.sql` (ایک ہی statement — Supabase کا editor نتیجہ ضرور
 دکھاتا ہے) اور جہاں خطرہ تھا وہاں `*_ROLLBACK.sql`۔
