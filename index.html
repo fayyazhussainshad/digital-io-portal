@@ -1902,6 +1902,7 @@ document.addEventListener('DOMContentLoaded', function () {
 (function () {
   // Tarteeb ke saath — pehla jo MOJOOD aur NAZAR aa raha ho wohi chhapega.
   var TARGETS = [
+    '#ir-doc',                    // واقعاتی رپورٹ (پورا صفحہ — v535)
     '#dio-docview #dio-dv-body',  // poore safhe wala doc-view (andar ka editor)
     '#ch173-doc',                 // چالان / ضمنی
     '#dk-doc',                    // درخواستیں
@@ -1970,21 +1971,69 @@ document.addEventListener('DOMContentLoaded', function () {
     else if (mq.addListener) mq.addListener(onChange);
   } catch (_) {}
 
-  // ═══ چالان: Ctrl+P کو ایپ کے اپنے صاف پرنٹ (_printR173) پر بھیجو ═══
-  // Pehle teeno tareeqe (Ctrl+P / button / saved) ALAG natija dete the — kyunke
-  // Ctrl+P live node ko chapta tha aur button _printR173 (saaf HTML) use karta.
-  // Ab چالان khula ho to Ctrl+P bhi WAHI _printR173 chalata hai → teeno YAKSAN.
+  /* ═══ SYSTEM RULE (ASI کا حکم، 13 اکتوبر 2026) ═══════════════════════════
+     Ctrl+P اور سکرین کا «پرنٹ» بٹن پورے سسٹم میں 100% ایک جیسا کام کریں۔
+     طریقہ: Ctrl+P دبانے پر وہی کام چلتا ہے جو اس وقت کھلی دستاویز کا اپنا
+     پرنٹ بٹن کرتا — یعنی دونوں کا راستہ ایک ہی (فرق ممکن ہی نہیں)۔
+     ترتیب:
+       1) چالان کھلا ہو → _printR173 (پہلے والا اصول، برقرار)
+       2) پورے صفحے والا دستاویزی منظر (#dio-docview) → _dioPrintCurrent
+          (وہی جو اوپر کی پٹی کا «پرنٹ» بٹن کرتا ہے)
+       3) نظر آنے والا [data-dio-print] بٹن (واضح نشان) → وہی بٹن
+       4) سب سے اوپر والی تہہ (کارڈ / پورا صفحہ / صفحہ) میں پرنٹ کا ایک ہی
+          بٹن ہو (پہلے [data-dio-print]، پھر .dio-modbtn) → وہی بٹن۔ کئی مختلف ہوں (مثلاً فہرست کی ہر سطر کا الگ) →
+          کوئی اندازہ نہیں؛ براؤزر کی اپنی چھپائی (اوپر والا isolation) چلے۔
+     براؤزر کے مینو والی چھپائی کو کوئی ویب ایپ روک نہیں سکتی — وہ اوپر والے
+     native isolation سے صرف کھلی دستاویز چھاپتی ہے۔ */
+  function _pVisible(el) {
+    if (!el || el.disabled) return false;
+    var r = el.getClientRects();
+    if (!r || !r.length) return false;
+    var cs = window.getComputedStyle(el);
+    return cs.visibility !== 'hidden' && cs.display !== 'none';
+  }
+  function _pIsPrintBtn(el) {
+    if (el.hasAttribute('data-dio-print')) return true;
+    var oc = el.getAttribute('onclick') || '';
+    if (!/print/i.test(oc)) return false;
+    var t = ((el.textContent || '') + ' ' + (el.getAttribute('title') || '') + ' ' + (el.getAttribute('aria-label') || '')).trim();
+    if (/محفوظ/.test(t)) return false;                    // «محفوظ و پرنٹ» جیسے دوہرے کام نہیں
+    return /پرنٹ|چھاپ|چھپائی|🖨|print/i.test(t);
+  }
+  function _pLayer(el) {
+    var bd = el.closest('#modal-backdrop');
+    if (bd) return 3;
+    for (var n = el.parentElement; n && n !== document.body; n = n.parentElement) {
+      if (window.getComputedStyle(n).position === 'fixed') return 2;
+    }
+    return 1;
+  }
+  function _pFindTarget() {
+    var challan = document.querySelector('#ch173-doc #ch173-table');
+    if (challan && _pVisible(challan) && typeof window._printR173 === 'function') return function () { window._printR173(); };
+    var dv = document.getElementById('dio-docview');
+    if (dv && _pVisible(dv) && typeof window._dioPrintCurrent === 'function') return function () { window._dioPrintCurrent(); };
+    var all = Array.prototype.slice.call(document.querySelectorAll('button,[role="button"],a.btn'))
+      .filter(function (b) { return _pVisible(b) && _pIsPrintBtn(b); });
+    if (!all.length) return null;
+    var top = Math.max.apply(null, all.map(_pLayer));
+    var layer = all.filter(function (b) { return _pLayer(b) === top; });
+    function one(list) {
+      var seen = {}, u = [];
+      list.forEach(function (b) { var k = b.getAttribute('onclick') || ''; if (!seen[k]) { seen[k] = 1; u.push(b); } });
+      return u.length === 1 ? u[0] : null;
+    }
+    var hit = one(layer.filter(function (b) { return b.hasAttribute('data-dio-print'); })) ||
+              one(layer.filter(function (b) { return b.classList.contains('dio-modbtn'); })) || one(layer);
+    return hit ? function () { hit.click(); } : null;
+  }
+  window._dioPrintTarget = _pFindTarget;     // جانچ (tests) کے لیے
   document.addEventListener('keydown', function (e) {
     var isP = (e.key === 'p' || e.key === 'P');
     if (!isP || !(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey) return;
     try {
-      // #ch173-table sirf چالان mein hota hai (zimni mein nahi) — is se pehchano
-      var challan = document.querySelector('#ch173-doc #ch173-table');
-      if (challan && typeof window._printR173 === 'function') {
-        e.preventDefault();
-        e.stopPropagation();
-        window._printR173();
-      }
+      var fn = _pFindTarget();
+      if (fn) { e.preventDefault(); e.stopPropagation(); fn(); }
     } catch (_) {}
   }, true);
 })();

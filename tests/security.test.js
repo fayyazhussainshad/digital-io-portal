@@ -1002,13 +1002,12 @@ test('mobile ke card-qaide ASAL jadwal ke qaidon se na takrayen', () => {
     'bina `:not(.dio-cards)` wala purana qaida na bache');
 });
 
-test('mobile: waqiati report ka form jadwal phone par sataron mein', () => {
-  assert.ok(/<table class="inc-table"/.test(read('incident.js')),
-    'form jadwal ko pehchanne ke liye class chahiye');
-  const m = read('mobile.css');
-  assert.ok(/table\.inc-table td \{[\s\S]*?display: block !important/.test(m) ||
-            /#page-content table\.inc-table td/.test(m),
-    'chaar khane wala form phone par har khana apni satar par');
+test('mobile: waqiati report A4 kaghaz — phone par zoom se poora (v535)', () => {
+  const j = read('incident.js');
+  assert.ok(/id="ir-doc"/.test(j) && /width:8\.27in/.test(j) && /min-height:11\.69in/.test(j), 'A4 kaghaz');
+  assert.ok(/function _irFit\(\)[\s\S]{0,500}z\.style\.zoom/.test(j), 'phone par kaghaz zoom se fit');
+  // purana jadwal tor-ne wala qaida ab nahi (kaghaz na bigRe)
+  assert.ok(!/table\.inc-table td/.test(read('mobile.css')));
 });
 
 test('mobile ke naye qaide SIRF phone par lagen (desktop na bigRe)', () => {

@@ -31,7 +31,7 @@ function renderSearch(container) {
     <div class="page-header">
       <div>
         <div class="page-title">تلاش</div>
-        <div class="page-subtitle">مقدمات، ملزمان، گواہان، ضمنی — سب ایک جگہ</div>
+        <div class="page-subtitle">مقدمات، ملزمان، گواہان، ضمنی، واقعاتی رپورٹس — سب ایک جگہ</div>
       </div>
     </div>
     <div id="sr-page-searchbar" style="position:relative;margin-bottom:14px;">
@@ -144,10 +144,13 @@ async function _runGlobalSearch(q) {
     S.from('hamrahi_mulazman').select('id,case_id,name,rank,service_number,cnic,mobile').or(`name.ilike.${w},rank.ilike.${w},service_number.ilike.${w},${cnicOr('cnic')},${cellOr('mobile')}`).limit(10),
     S.from('sarkari_gari').select('id,case_id,vehicle_number,driver_name').or(`vehicle_number.ilike.${w},driver_name.ilike.${w}`).limit(10),
     S.from('cdr_imei_requests').select('id,case_id,diary_number').ilike('diary_number', w).limit(10),
+    // واقعاتی رپورٹس (v535) — نوعیت، مقام، تفصیل، رپورٹ نمبر
+    S.from('incident_reports').select('*').eq('officer_id', oid).or(`report_number.ilike.${w},incident_type.ilike.${w},address.ilike.${w},narrative.ilike.${w}`).order('created_at', { ascending: false }).limit(10),
   ];
 
   const results = await Promise.allSettled(queries);
-  const [casesR, accusedR, witnessR, firR, zimniR, hamrahiR, gariR, cdrR] = results.map(r => r.status === 'fulfilled' ? (r.value.data || []) : []);
+  const [casesR, accusedR, witnessR, firR, zimniR, hamrahiR, gariR, cdrR, irR] = results.map(r => r.status === 'fulfilled' ? (r.value.data || []) : []);
+  const irErr = results[8] && (results[8].status !== 'fulfilled' || results[8].value.error);
 
   const mine = (arr) => caseIds.length ? arr.filter(x => caseIds.includes(x.case_id)) : arr;
   const acc = mine(accusedR);
@@ -160,14 +163,58 @@ async function _runGlobalSearch(q) {
   const gari = mine(gariR);
   const cdr = mine(cdrR);
 
-  _renderSearchResults(q, { cases: casesR, accused: acc, witnesses: wit, fir, zimni: zim, hamrahi: ham, gari, cdr });
+  const ir = _srIncidents(q, irErr ? [] : irR, !!irErr);
+
+  _renderSearchResults(q, { cases: casesR, accused: acc, witnesses: wit, fir, zimni: zim, hamrahi: ham, gari, cdr, ir });
+}
+
+/* واقعاتی رپورٹس — سرور کے نتائج + مقامی (آف لائن محفوظ / سرور کی تلاش نہ چلے تو پوری فہرست)
+   میں سے بھی، تاکہ کوئی رپورٹ تلاش سے باہر نہ رہے (جملہ خانے: نوعیت، تاریخ، مقام، تفصیل…) */
+function _srIrText(r) {
+  let d = r && r.data;
+  if (typeof d === 'string') { try { d = JSON.parse(d); } catch { d = {}; } }
+  d = d || {};
+  const f = d.f || {};
+  const strip = (h) => String(h || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ');
+  return [r.report_number, r.incident_type, r.incident_date, r.address, r.narrative, r.action_taken,
+    ...Object.keys(f).map(k => strip(f[k])), d.caller_name, d.person_name, d.datetime, d.place]
+    .map(x => String(x || '')).join(' ').replace(/\s+/g, ' ').toLowerCase();
+}
+function _srIncidents(q, server, serverFailed) {
+  const ql = String(q || '').toLowerCase().trim();
+  let local = [];
+  try {
+    const oid = (typeof currentOfficer !== 'undefined' && currentOfficer && currentOfficer.id) ||
+      (JSON.parse(localStorage.getItem('dio_officer_cache') || 'null') || {}).id || 'me';
+    local = JSON.parse(localStorage.getItem('dio_irlist_' + oid) || '[]') || [];
+  } catch { local = []; }
+  const out = (server || []).slice();
+  local.filter(r => (serverFailed || r._pending) && _srIrText(r).includes(ql))
+    .forEach(r => { if (!out.some(x => String(x.id) === String(r.id))) out.push(r); });
+  return out.slice(0, 15);
+}
+function _srIrCard(r) {
+  let d = r && r.data;
+  if (typeof d === 'string') { try { d = JSON.parse(d); } catch { d = {}; } }
+  d = d || {};
+  const f = d.f || {};
+  const strip = (h) => String(h || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+  const subj = strip(f.nature) || r.incident_type || 'واقعاتی رپورٹ';
+  const date = (d.occ_iso ? d.occ_iso.slice(0, 10).split('-').reverse().join('/') : '') || r.incident_date || '';
+  const place = strip(f.place) || r.address || '';
+  return { title: subj, sub: [date, place].filter(Boolean).join(' · ') };
+}
+window._srIncidents = _srIncidents;
+// incident.js بعد میں (lazy) لوڈ ہوتی ہے — تب تک یہی راستہ: صفحہ کھلے، پھر وہی رپورٹ
+if (typeof window.openIncidentReport !== 'function') {
+  window.openIncidentReport = function (id) { window._irOpenId = id; if (typeof showPage === 'function') showPage('incident', null); };
 }
 
 function _renderSearchResults(q, r) {
   const box = document.getElementById('sr-results');
   if (!box) return;
   const total = r.cases.length + r.accused.length + r.witnesses.length + r.fir.length + r.zimni.length
-              + (r.hamrahi?.length||0) + (r.gari?.length||0) + (r.cdr?.length||0);
+              + (r.hamrahi?.length||0) + (r.gari?.length||0) + (r.cdr?.length||0) + (r.ir?.length||0);
   if (!total) {
     box.innerHTML = (window.DIO && DIO.states)
       ? DIO.states.empty('search', `"${esc(q)}" کے لیے کچھ نہیں ملا`, 'لفظ بدل کر یا مقدمہ نمبر سے دیکھیں')
@@ -202,6 +249,7 @@ function _renderSearchResults(q, r) {
   (r.hamrahi||[]).forEach(h => html += card('ہمراہی ملازم','#14b8a6', h.name||'—', `${h.rank||''} ${h.service_number||''} ${h.cnic||''} ${h.mobile||''}`, h.case_id?`openCaseWorkspace('${h.case_id}')`:''));
   (r.gari||[]).forEach(g => html += card('سرکاری گاڑی','#64748b', g.vehicle_number||'—', `ڈرائیور: ${g.driver_name||''}`, g.case_id?`openCaseWorkspace('${g.case_id}')`:''));
   (r.cdr||[]).forEach(cd => html += card('CDR/IMEI','#8b5cf6', `ڈائری ${cd.diary_number||''}`, '', cd.case_id?`openCaseWorkspace('${cd.case_id}')`:''));
+  (r.ir||[]).forEach(x => { const c = _srIrCard(x); html += card('واقعاتی رپورٹ','#dc2626', c.title, c.sub, `openIncidentReport('${_dioJsHtml(String(x.id))}')`); });
   box.innerHTML = html;
   _keepFocus();
 }
