@@ -30,7 +30,7 @@
     '#modal-backdrop .modal-card.dio-entry{max-width:780px!important;width:100%!important;min-height:0!important;}',
     '.dio-entry #modal-body.modal-body{display:block!important;padding:2px 18px 12px!important;}',
     '.dio-entry #modal-title{font-size:var(--dio-h1,15pt)!important;}',
-    '.dio-row{display:flex;flex-wrap:wrap;gap:16px 10px;padding-top:15px;direction:rtl;}',
+    '.dio-row{display:flex;flex-wrap:wrap;gap:13px 10px;padding-top:13px;direction:rtl;}',
     '.dio-f{position:relative;flex:0 0 var(--w,8em);min-width:0;font-size:14pt;}',
     '.dio-f.grow{flex:1 1 var(--w,8em);}',
     '.dio-f.line{flex:1 1 100%;}',
@@ -57,6 +57,7 @@
     '.dio-ib svg{width:17px;height:17px;}',
     '.dio-ib input[type=date]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}',
     '.dio-hint{font-size:10.5pt;color:var(--text-muted,#64748b);line-height:1.9;padding-top:2px;}',
+    '.f5c-hide{display:none!important;}',
     '.dio-opt{margin-top:12px;border:1px dashed var(--border,#c8d8e8);border-radius:12px;padding:2px 10px 12px;}',
     /* Uploads */
     '.dio-up-row{display:flex;flex-wrap:wrap;gap:10px;padding-top:12px;}',
@@ -273,7 +274,7 @@
     var holder = (inp.closest && (inp.closest('.cf-field') || inp.closest('.dio-f'))) || inp.parentNode;
     var wrap = document.createElement('div');
     wrap.innerHTML = nameField(inputId + '__m', inp.value, (lead ? lead + ' — ' : '') + 'نام و پتہ', true);
-    holder.style.display = 'none';
+    holder.style.setProperty('display', 'none', 'important');   // کارڈ کا CSS display:block!important ہے
     holder.parentNode.insertBefore(wrap, holder.nextSibling);
     wrap.addEventListener('input', function () {
       inp.value = readName(inputId + '__m');

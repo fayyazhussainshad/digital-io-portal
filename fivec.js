@@ -11,7 +11,6 @@ function esc5C(s){if(s===null||s===undefined)return'';return String(s).replace(/
 // ── DATE HELPERS ──
 function toDisplayDate(iso){if(!iso)return'';const p=iso.split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:iso;}
 function toISODate(dmy){if(!dmy)return null;const p=dmy.split('/');return(p.length===3&&p[2].length===4)?p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0'):null;}
-function autoMaskDate5C(el){let v=el.value.replace(/\D/g,'');if(v.length>2)v=v.slice(0,2)+'/'+v.slice(2);if(v.length>5)v=v.slice(0,5)+'/'+v.slice(5,9);el.value=v;}
 
 // ── DB FUNCTIONS ──
 async function getApplications5C(query){
@@ -164,57 +163,49 @@ function render5CRow(a){
   </tr>`;
 }
 
-// ── NEW / EDIT FORM ──
+// ── NEW / EDIT — «نیا اندراج — 5-C درخواست» (مشترکہ DIO کارڈ، اکتوبر 2026) ──
 async function open5CForm(id){
   let app={complainant_name:'',complainant_cnic:'',complainant_cell:'',application_date:'',response_date:'',subject:'',status:'received',application_5c_numbers:[{}],application_5c_attachments:[]};
   if(id){const fetched=await getApplication5C(id);if(fetched)app=fetched;}
+  const D=window.DIOCard;
   const nums=(app.application_5c_numbers&&app.application_5c_numbers.length)?app.application_5c_numbers:[{}];
-  const inp='width:100%;padding:8px 10px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:13px;box-sizing:border-box;';
-  const lbl='display:block;font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:600;';
-  const body=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-    <div><label style="${lbl}">مدعی کا نام</label><input style="${inp}" id="f5c-name" value="${esc5C(app.complainant_name)}"></div>
-    <div><label style="${lbl}">مدعی کا شناختی کارڈ</label><input style="${inp}" id="f5c-cnic" placeholder="36302-1234567-1" value="${esc5C(app.complainant_cnic)}" oninput="autoFormatCNIC(this)"></div>
-    <div><label style="${lbl}">مدعی کا موبائل</label><input style="${inp}" id="f5c-cell" placeholder="0300-1234567" value="${esc5C(app.complainant_cell)}" oninput="autoFormatCell(this)"></div>
-    <div><label style="${lbl}">صورتحال</label><select style="${inp}" id="f5c-status">${Object.entries(FIVEC_STATUS).map(([k,v])=>`<option value="${k}" ${app.status===k?'selected':''}>${v}</option>`).join('')}</select></div>
-    <div><label style="${lbl}">Application Date (DD/MM/YYYY)</label><input style="${inp}" id="f5c-appdate" placeholder="DD/MM/YYYY" value="${toDisplayDate(app.application_date)}" oninput="autoMaskDate5C(this)"></div>
-    <div style="grid-column:1/-1;"><label style="${lbl}">Subject / Summary</label><textarea style="${inp};min-height:60px;font-family:inherit;" id="f5c-subject">${esc5C(app.subject)}</textarea></div>
-  </div>
-  <hr style="margin:18px 0;border:0;border-top:1px solid var(--border);">
-  <div style="font-weight:600;margin-bottom:10px;font-size:13px;">درخواست نمبر <span style="font-weight:400;color:var(--text-muted);font-size:11px;">(each forwarding senior officer assigns their own number)</span></div>
-  <div id="f5c-numbers">${nums.map(render5CNumberRow).join('')}</div>
-  <button class="btn btn-secondary btn-sm" type="button" onclick="add5CNumberRow()" style="margin-top:6px;">+ Add Another Number</button>
-  ${id?`<hr style="margin:18px 0;border:0;border-top:1px solid var(--border);">
-  <div style="font-weight:600;margin-bottom:8px;font-size:13px;">Attachments &amp; Scans</div>
-  <div id="f5c-attachments">${(app.application_5c_attachments||[]).map(render5CAttachmentRow).join('')||'<div style="color:var(--text-muted);font-size:12px;padding:8px;">No attachments yet.</div>'}</div>
-  <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+  const body=
+    D.nameField('f5c-name', app.complainant_name, 'درخواست دہندہ — نام و پتہ', false)+
+    D.row([
+      D.fld({id:'f5c-cnic',label:'شناختی کارڈ',type:'cnic',value:app.complainant_cnic}),
+      D.fld({id:'f5c-cell',label:'موبائل',type:'mob',value:app.complainant_cell}),
+      D.fld({id:'f5c-appdate',label:'تاریخ درخواست',type:'date',value:app.application_date}),
+      D.fld({id:'f5c-status',label:'صورتحال',type:'sel',w:'w-l',grow:true,value:app.status,opts:Object.entries(FIVEC_STATUS)})
+    ])+
+    D.row([D.fld({id:'f5c-subject',label:'مضمون / خلاصہ',type:'area',line:true,value:app.subject,ph:'درخواست کا مختصر خلاصہ…'})])+
+    `<div id="f5c-numbers">${nums.map(render5CNumberRow).join('')}</div>
+  <button class="btn btn-secondary btn-sm" type="button" onclick="add5CNumberRow()" style="margin-top:8px;">+ ایک اور درخواست نمبر</button>
+  ${id?`<div style="font-weight:700;margin:14px 0 6px;">منسلک فائلیں</div>
+  <div id="f5c-attachments">${(app.application_5c_attachments||[]).map(render5CAttachmentRow).join('')||'<div class="dio-hint">ابھی کوئی فائل منسلک نہیں۔</div>'}</div>
+  <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
     <label class="btn btn-secondary btn-sm" style="cursor:pointer;"><input type="file" style="display:none;" onchange="upload5CFile('${id}','application_scan',this.files[0])"> درخواست کی نقل لگائیں</label>
     <label class="btn btn-secondary btn-sm" style="cursor:pointer;"><input type="file" style="display:none;" onchange="upload5CFile('${id}','response_scan',this.files[0])"> جواب کی نقل لگائیں</label>
     <label class="btn btn-secondary btn-sm" style="cursor:pointer;"><input type="file" style="display:none;" onchange="upload5CFile('${id}','attachment',this.files[0])"> دیگر فائل لگائیں</label>
     <label class="btn btn-primary btn-sm" style="cursor:pointer;"><input type="file" accept="image/*" capture="environment" style="display:none;" onchange="upload5CFile('${id}','application_scan',this.files[0])"> کیمرے سے اسکین کریں</label>
-  </div>`:`<div style="color:var(--text-muted);font-size:12px;margin-top:14px;padding:10px;background:var(--bg-tertiary);border-radius:6px;">Save the application first, then you can attach files and write a response.</div>`}`;
-  const footer=`<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="save5CApp('${id||''}')">محفوظ کریں</button>`;
-  openModal(`${id?'Edit':'New'} 5-C Application${id?' #'+app.serial_number:''}`,body,footer);
-  setTimeout(()=>{const c=document.querySelector('.modal-card');if(c){c.style.maxWidth='880px';c.style.width='94vw';}},10);
+  </div>`:`<div class="dio-hint" style="margin-top:10px;">پہلے درخواست محفوظ کریں، پھر فائلیں منسلک کر کے جواب لکھ سکتے ہیں۔</div>`}`;
+  D.open('\u20665-C\u2069 درخواست'+(id&&app.serial_number?' #'+app.serial_number:''), !!id, body, `save5CApp('${id||''}')`);
 }
+// ہر افسر بالا کا اپنا درخواست نمبر — ایک سطر: نمبر · عہدہ · افسر کا نام · تاریخ
 function render5CNumberRow(n){
-  const inp='padding:7px 9px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:5px;color:var(--text-primary);font-size:12px;width:100%;box-sizing:border-box;';
-  const isOther=n.senior_officer_designation==='Other';
-  return `<div class="f5c-num-row" style="background:var(--bg-tertiary);border:1px solid var(--border-light);border-radius:8px;padding:10px;margin-bottom:8px;">
-    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;margin-bottom:8px;">
-      <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;font-weight:600;">درخواست نمبر</div><input style="${inp}" dir="ltr" placeholder="e.g. 1234/IGP/2026" data-field="application_number" value="${esc5C(n.application_number||'')}"></div>
-      <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;font-weight:600;">افسر بالا کا عہدہ</div>
-        <select style="${inp}" data-field="senior_officer_designation" onchange="handleDesig5C(this)"><option value="">— Select —</option>${FIVEC_DESIGNATIONS.map(d=>`<option value="${d}" ${n.senior_officer_designation===d?'selected':''}>${d}</option>`).join('')}</select>
-        <input class="desig-custom" style="${inp};margin-top:6px;display:${isOther?'block':'none'};" placeholder="عہدہ لکھیں…" data-field="senior_officer_designation_custom" value="${esc5C(isOther?n.senior_officer_name||'':'')}">
-      </div>
-      <button title="بند کریں" aria-label="بند کریں" class="btn btn-danger btn-sm" type="button" onclick="this.closest('.f5c-num-row').remove()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;font-weight:600;">Officer Name (optional)</div><input style="${inp}" placeholder="افسر کا پورا نام" data-field="senior_officer_name" value="${esc5C(!isOther?n.senior_officer_name||'':'')}"></div>
-      <div><div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;font-weight:600;">Forwarded Date (DD/MM/YYYY)</div><input style="${inp}" placeholder="DD/MM/YYYY" data-field="forwarded_date" value="${toDisplayDate(n.forwarded_date)}" oninput="autoMaskDate5C(this)"></div>
-    </div>
-  </div>`;
+  const D=window.DIOCard;
+  const isOther=n.senior_officer_designation==='Other'||(n.senior_officer_designation&&!FIVEC_DESIGNATIONS.includes(n.senior_officer_designation));
+  const k=Math.random().toString(36).slice(2,8);
+  const desigVal=isOther?'Other':(n.senior_officer_designation||'');
+  return `<div class="f5c-num-row">`+D.row([
+    D.fld({id:'f5n-no-'+k,label:'درخواست نمبر',ltr:true,w:'w-l',value:n.application_number,ph:'1234/IGP/2026',attrs:'data-field="application_number"'}),
+    D.fld({id:'f5n-de-'+k,label:'افسر بالا کا عہدہ',type:'sel',w:'w-l',value:desigVal,opts:[['','— منتخب کریں —']].concat(FIVEC_DESIGNATIONS.map(d=>[d,d==='Other'?'دیگر':d])),attrs:'data-field="senior_officer_designation" onchange="handleDesig5C(this)"'}),
+    D.fld({id:'f5n-dc-'+k,label:'عہدہ لکھیں',w:'w-m',value:isOther&&n.senior_officer_designation!=='Other'?n.senior_officer_designation:'',ph:'عہدہ',attrs:'data-field="senior_officer_designation_custom"'}).replace('class="dio-f ','class="dio-f f5c-dc'+(isOther?'':' f5c-hide')+' '),
+    D.fld({id:'f5n-nm-'+k,label:'افسر کا نام',w:'w-m',grow:true,value:isOther?'':n.senior_officer_name,ph:'اختیاری',attrs:'data-field="senior_officer_name"'}),
+    D.fld({id:'f5n-dt-'+k,label:'تاریخ ارسال',type:'date',value:n.forwarded_date,attrs:'data-field="forwarded_date"'}),
+    `<button title="یہ نمبر ہٹائیں" aria-label="یہ نمبر ہٹائیں" class="btn btn-danger btn-sm" type="button" style="align-self:center;" onclick="this.closest('.f5c-num-row').remove()">✕</button>`
+  ])+`</div>`;
 }
-function handleDesig5C(sel){const c=sel.closest('.f5c-num-row').querySelector('.desig-custom');if(c){c.style.display=sel.value==='Other'?'block':'none';if(sel.value!=='Other')c.value='';}}
+function handleDesig5C(sel){const row=sel.closest('.f5c-num-row');const box=row&&row.querySelector('.f5c-dc');if(box){box.classList.toggle('f5c-hide',sel.value!=='Other');if(sel.value!=='Other'){const c=box.querySelector('[data-field="senior_officer_designation_custom"]');if(c)c.value='';}}}
 function add5CNumberRow(){const c=document.getElementById('f5c-numbers');const tmp=document.createElement('div');tmp.innerHTML=render5CNumberRow({});c.appendChild(tmp.firstElementChild);}
 function render5CAttachmentRow(a){const ic=a.category==='application_scan'?'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/></svg>':a.category==='response_scan'?'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg>':'📎';const lb=a.category==='application_scan'?'Application Scan':a.category==='response_scan'?'Response Scan':'Other';const sz=a.file_size?` · ${(a.file_size/1024).toFixed(1)}KB`:'';return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg-tertiary);border-radius:6px;margin-bottom:6px;"><span style="font-size:18px;">${ic}</span><span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;">${esc5C(a.file_name)} <span style="color:var(--text-muted);font-size:10px;">(${lb}${sz})</span></span><button title="دیکھیں" aria-label="دیکھیں" class="btn btn-secondary btn-sm" onclick="view5CAttachment('${a.storage_path}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg></button><button title="حذف" aria-label="حذف" class="btn btn-danger btn-sm" onclick="delete5CAttachment('${a.id}','${a.storage_path}',this)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button></div>`;}
 async function upload5CFile(appId,category,file){if(!file)return;if(file.size>10*1024*1024){showToast('File too large (max 10 MB).','error');return;}showToast('Uploading...','info');try{await uploadAttachment5C(appId,file,category);showToast('Uploaded!','success');open5CForm(appId);}catch(e){showToast('Upload failed: '+e.message,'error',5000);}}
@@ -227,9 +218,9 @@ async function view5CAttachment(path){
 }
 async function delete5CAttachment(id,path,btn){if(!confirm('Delete this attachment?'))return;try{await deleteAttachment5C(id,path);if(btn&&btn.closest('div'))btn.closest('div').remove();showToast('Deleted','info');}catch(e){showToast(''+e.message,'error');}}
 async function save5CApp(id){
-  const main={complainant_name:document.getElementById('f5c-name').value.trim()||null,complainant_cnic:document.getElementById('f5c-cnic').value.trim()||null,complainant_cell:document.getElementById('f5c-cell').value.trim()||null,application_date:toISODate(document.getElementById('f5c-appdate').value)||null,subject:document.getElementById('f5c-subject').value.trim()||null,status:document.getElementById('f5c-status').value};
-  const numbers=Array.from(document.querySelectorAll('.f5c-num-row')).map(row=>{const r={};row.querySelectorAll('[data-field]').forEach(el=>{r[el.dataset.field]=el.value.trim()||null;});if(r.senior_officer_designation==='Other'){const c=row.querySelector('.desig-custom');r.senior_officer_designation=c&&c.value.trim()?c.value.trim():'Other';}if(r.forwarded_date)r.forwarded_date=toISODate(r.forwarded_date)||r.forwarded_date;delete r.senior_officer_designation_custom;return r;}).filter(n=>n.application_number);
-  try{if(id){await updateApplication5C(id,main,numbers);showToast('Updated','success');}else{await addApplication5C({...main,numbers});showToast('Application added','success');}closeModal();renderFiveC(document.getElementById('page-content'));}catch(e){showToast(''+e.message,'error',5000);}
+  const main={complainant_name:(window.DIOCard?DIOCard.readName('f5c-name'):document.getElementById('f5c-name').value.trim())||null,complainant_cnic:document.getElementById('f5c-cnic').value.trim()||null,complainant_cell:document.getElementById('f5c-cell').value.trim()||null,application_date:toISODate(document.getElementById('f5c-appdate').value)||null,subject:document.getElementById('f5c-subject').value.trim()||null,status:document.getElementById('f5c-status').value};
+  const numbers=Array.from(document.querySelectorAll('.f5c-num-row')).map(row=>{const r={};row.querySelectorAll('[data-field]').forEach(el=>{r[el.dataset.field]=el.value.trim()||null;});if(r.senior_officer_designation==='Other'){const c=row.querySelector('[data-field="senior_officer_designation_custom"]');r.senior_officer_designation=c&&c.value.trim()?c.value.trim():'Other';}if(r.forwarded_date)r.forwarded_date=toISODate(r.forwarded_date)||r.forwarded_date;delete r.senior_officer_designation_custom;return r;}).filter(n=>n.application_number);
+  try{if(id){await updateApplication5C(id,main,numbers);showToast('Updated','success');}else{await addApplication5C({...main,numbers});showToast('Application added','success');}closeModal();if(window._activePage==='fivec')renderFiveC(document.getElementById('page-content'));}catch(e){showToast(''+e.message,'error',5000);}
 }
 function confirmDelete5C(id,sn){if(!confirm(`Delete Application #${sn} and ALL its attachments?`))return;deleteApplication5C(id).then(()=>{showToast('Deleted','info');renderFiveC(document.getElementById('page-content'));}).catch(e=>showToast(''+e.message,'error'));}
 

@@ -22,6 +22,9 @@ function _cfInjectCSS() {
     + '.cf-row4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:2px 8px;align-items:center;width:100%;}'
     + '.cf-row4-rapat{display:grid;grid-template-columns:0.5fr 1fr 1fr 1.5fr;gap:2px 8px;align-items:center;width:100%;}'
     + '.cf-row-7030{display:grid;grid-template-columns:7fr 3fr;gap:2px 10px;align-items:center;width:100%;}'
+    + '.cf-row1{display:grid;grid-template-columns:1fr;gap:2px 10px;width:100%;}'
+    + '.cf-row4m{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:2px 8px;align-items:center;width:100%;}'
+    + '.cf-row3s{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px 10px;align-items:center;width:100%;}'
     + '.cf-row-sim{display:grid;grid-template-columns:repeat(4,1fr);gap:2px 8px;width:100%;}'
     + '.cf-row2 .cf-field,.cf-row3 .cf-field,.cf-row4 .cf-field,.cf-row4-rapat .cf-field,.cf-row-7030 .cf-field,.cf-row-sim .cf-field{margin-bottom:9px;}'
     + '.cf-box{padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:12px;}'
@@ -31,25 +34,35 @@ function _cfInjectCSS() {
     /* «نیا اندراج» کارڈ: نام خانے کے اوپری دائیں کنارے پر، 14pt، چھوٹی اونچائی، ڈیٹا جتنی چوڑائی */
     + '.dio-entry .cf-form{max-height:none!important;overflow:visible!important;padding:4px 0 0!important;}'
     + '.dio-entry .cf-box{background:none!important;padding:0!important;margin:0!important;}'
-    + '.dio-entry .cf-field{position:relative!important;display:block!important;margin:0 0 16px!important;padding-top:0!important;}'
+    + '.dio-entry .cf-field{position:relative!important;display:block!important;margin:0!important;padding-top:0!important;}'
     + '.dio-entry .cf-field > .cf-label{position:absolute!important;top:-0.8em!important;inset-inline-start:10px!important;z-index:2;padding:0 5px!important;margin:0!important;'
     +   'background:var(--bg-card,#fff)!important;color:var(--accent,#0369a1)!important;font-size:var(--dio-h3,11.25pt)!important;line-height:1.35!important;'
     +   'white-space:nowrap!important;pointer-events:none;max-width:calc(100% - 16px);overflow:hidden;text-overflow:ellipsis;}'
     + '.dio-entry .cf-field > .cf-label[style]{margin-top:0!important;}'
     + '.dio-entry .cf-form input.form-input,.dio-entry .cf-form select.form-input{height:40px!important;font-size:14pt!important;padding:0 10px!important;'
-    +   'border:1.5px solid var(--border,#c8d8e8)!important;border-radius:9px!important;width:100%;}'
+    +   'border:1.5px solid var(--border,#c8d8e8)!important;border-radius:9px!important;width:100%;background:var(--bg-card,#fff)!important;}'
+    + '.dio-entry #cross-version-fields .cf-field > .cf-label{background:var(--bg-card,#fff)!important;}'
     + '.dio-entry .cf-form input[dir=ltr].form-input{font-family:Aptos,"Segoe UI",system-ui,sans-serif!important;font-size:12pt!important;text-align:right!important;}'
     + '.dio-entry .cf-form .cf-field > div{width:100%;}'
-    + '.dio-entry .cf-row2,.dio-entry .cf-row3,.dio-entry .cf-row4,.dio-entry .cf-row4-rapat,.dio-entry .cf-row-7030,.dio-entry .cf-row-sim{gap:0 10px!important;padding-top:15px;}'
-    + '.dio-entry .cf-form > .cf-field:first-child,.dio-entry .cf-box > .cf-field:first-child{margin-top:15px!important;}'
+    /* سطروں کے درمیان کم فاصلہ (اکتوبر 2026) — صرف اتنا کہ کنارے والا نام آ جائے */
+    + '.dio-entry .cf-row1,.dio-entry .cf-row2,.dio-entry .cf-row3,.dio-entry .cf-row3s,.dio-entry .cf-row4,.dio-entry .cf-row4m,.dio-entry .cf-row4-rapat,.dio-entry .cf-row-7030,.dio-entry .cf-row-sim{gap:12px 10px!important;padding-top:13px;}'
+    + '.dio-entry .cf-form > .cf-field,.dio-entry .cf-box > .cf-field,.dio-entry #cross-version-fields > .cf-field,.dio-entry #cf-mobile-fields-wrap > .cf-field{margin-top:13px!important;}'
+    + '.dio-entry #selected-sections:empty{display:none;}.dio-entry #selected-sections{margin-top:4px!important;}'
+    + '.dio-entry #cf-mobile-box{margin:10px 0 0!important;padding:4px 10px 8px!important;}'
+
     + '@media(min-width:761px){'
-    +   '.dio-entry .cf-row4{grid-template-columns:7em 9em 9em 1fr!important;}'
+    +   '.dio-entry .cf-row4{grid-template-columns:8em 9em 9em 1fr!important;}'
     +   '.dio-entry .cf-row3{grid-template-columns:10.5em 8.8em 1fr!important;}'
-    +   '.dio-entry .cf-row4-rapat{grid-template-columns:5em 9em 1fr 9em!important;}'
+    +   '.dio-entry .cf-row4m{grid-template-columns:10.5em 8.8em 1fr 7em!important;}'
+    +   '.dio-entry .cf-row3s{grid-template-columns:1fr 1fr 11em!important;}'
+    +   '.dio-entry .cf-row4-rapat{grid-template-columns:5em 9em 1fr 13em!important;}'
     + '}'
-    + '@media(max-width:640px){.cf-row3{grid-template-columns:1fr 1fr;}.cf-row4,.cf-row4-rapat{grid-template-columns:1fr 1fr;}.cf-row-sim{grid-template-columns:repeat(2,1fr);}}'
+    + '@media(max-width:640px){.cf-row3,.cf-row3s,.cf-row4m{grid-template-columns:1fr 1fr;}.cf-row4,.cf-row4-rapat{grid-template-columns:1fr 1fr;}.cf-row-sim{grid-template-columns:repeat(2,1fr);}}'
     + '@media(max-width:480px){'
-    +   '.cf-row2,.cf-row3,.cf-row4,.cf-row4-rapat,.cf-row-7030,.cf-row-sim{grid-template-columns:1fr;}'
+    +   '.cf-row2,.cf-row3,.cf-row-7030,.cf-row-sim{grid-template-columns:1fr;}'
+    +   '.cf-row4,.cf-row4-rapat{grid-template-columns:1fr 1fr;}'
+    +   '.cf-row3s{grid-template-columns:1fr 1fr;}.cf-row3s > .cf-field:last-child{grid-column:1 / -1;}'
+    +   '.cf-row4m{grid-template-columns:1fr 1fr;}'
     +   '.cf-field{flex-wrap:wrap;}'
     +   '.cf-label{white-space:normal;}'
     + '}';
@@ -256,15 +269,12 @@ function caseFormHTML(c) {
   var position = c.position || 'pending';
   var isCross = c.is_cross_version || false;
 
-  var statusOpts = '<option value="under"'+(status==='under'?' selected':'')+'>&#x0632;&#x06CC;&#x0631; &#x062A;&#x0641;&#x062A;&#x06CC;&#x0634; (Under Investigation)</option>'
-    + '<option value="complete"'+(status==='complete'?' selected':'')+'>&#x0645;&#x06A9;&#x0645;&#x0644; &#x0686;&#x0627;&#x0644;&#x0627;&#x0646; (Complete)</option>'
-    + '<option value="incomplete"'+(status==='incomplete'?' selected':'')+'>&#x0646;&#x0627;&#x0645;&#x06A9;&#x0645;&#x0644; &#x0686;&#x0627;&#x0644;&#x0627;&#x0646; (Incomplete)</option>'
-    + '<option value="challan512"'+(status==='challan512'?' selected':'')+'>\u0686\u0627\u0644\u0627\u0646 512\u0636 \u0641 (512 CrPC)</option>'
-    + '<option value="untrace"'+(status==='untrace'?' selected':'')+'>&#x0639;&#x062F;&#x0645; &#x067E;&#x062A;&#x06C1; (Untraced)</option>'
-    + '<option value="cancel"'+(status==='cancel'?' selected':'')+'>&#x0627;&#x062E;&#x0631;&#x0627;&#x062C; (Cancelled)</option>';
-
-  var posOpts = '<option value="pending"'+(position==='pending'?' selected':'')+'>' + '&#x23F3; Pending</option>'
-    + '<option value="court"'+(position==='court'?' selected':'')+'>&#x2696;&#xFE0F; In Court</option>';
+  var statusOpts = '<option value="under"'+(status==='under'?' selected':'')+'>&#x0632;&#x06CC;&#x0631; &#x062A;&#x0641;&#x062A;&#x06CC;&#x0634;</option>'
+    + '<option value="complete"'+(status==='complete'?' selected':'')+'>&#x0645;&#x06A9;&#x0645;&#x0644; &#x0686;&#x0627;&#x0644;&#x0627;&#x0646;</option>'
+    + '<option value="incomplete"'+(status==='incomplete'?' selected':'')+'>&#x0646;&#x0627;&#x0645;&#x06A9;&#x0645;&#x0644; &#x0686;&#x0627;&#x0644;&#x0627;&#x0646;</option>'
+    + '<option value="challan512"'+(status==='challan512'?' selected':'')+'>\u0686\u0627\u0644\u0627\u0646 512\u0636 \u0641</option>'
+    + '<option value="untrace"'+(status==='untrace'?' selected':'')+'>&#x0639;&#x062F;&#x0645; &#x067E;&#x062A;&#x06C1;</option>'
+    + '<option value="cancel"'+(status==='cancel'?' selected':'')+'>&#x0627;&#x062E;&#x0631;&#x0627;&#x062C;</option>';
 
   var sectionTags = selectedSections.map(function(s) { return sectionTag(s); }).join('');
   var docList = renderDocChecklist(ALL_MISAL_DOCS, selectedDocuments);
@@ -277,7 +287,7 @@ function caseFormHTML(c) {
   var html = ''
     + '<div class="cf-form" style="max-height:70vh;overflow-y:auto;padding-right:4px;">'
 
-    // Row 1: مقدمہ نمبر + تاریخ اندراج + تاریخ وقوعہ + ملزمان (چاروں ایک ہی سطر)
+    // Row 1: مقدمہ نمبر + تاریخ اندراج + تاریخ وقوعہ + بحد (چاروں ایک ہی سطر — اکتوبر 2026)
     + '<div class="cf-row4">'
     + '<div class="cf-field"><label class="cf-label">مقدمہ نمبر *</label>'
     + '<input class="form-input" id="cf-fir" value="'+esc(fir)+'" placeholder="e.g. 245/2025" dir="ltr" style="text-align:left;" oninput="_cfLiveSyncCross()"></div>'
@@ -285,17 +295,14 @@ function caseFormHTML(c) {
     + '<input class="form-input" id="cf-date" value="'+esc(date)+'" placeholder="DD/MM/YYYY" inputmode="numeric" maxlength="10" oninput="autoFormatDate(this);_cfLiveSyncCross()" dir="ltr" style="text-align:left;"></div>'
     + '<div class="cf-field"><label class="cf-label">تاریخ وقوعہ</label>'
     + '<input class="form-input" id="cf-occurrence-date" value="'+esc(occ)+'" placeholder="DD/MM/YYYY" inputmode="numeric" maxlength="10" oninput="autoFormatDate(this)" dir="ltr" style="text-align:left;"></div>'
-    + '<div class="cf-field"><label class="cf-label">ملزمان</label>'
-    + '<select class="form-input" id="cf-mulzman-type">'
-    + '<option value="maloom" '+(c.mulzman_type==='maloom'?'selected':'')+'>معلوم</option>'
-    + '<option value="namaloom" '+(c.mulzman_type==='namaloom'||!c.mulzman_type?'selected':'')+'>نامعلوم</option>'
-    + '</select></div>'
+    + '<div class="cf-field"><label class="cf-label">بحد</label>'
+    + '<input class="form-input" id="cf-occurrence-place" value="'+esc(occPlace)+'" placeholder="جائے وقوعہ / بحد" dir="auto"></div>'
     + '</div>'
 
     // Row 2: دفعات قانون (70%) + بحد/جائے وقوعہ (30% — سطر کے آخر یعنی بائیں کنارے)
     //   بحد کی قدر پرانی occurrence_place کالم میں محفوظ ہوتی ہے اور ضمنی بیرونی میں
     //   ٹیبل کے اوپر آخری سطر (بحد۔) میں خودکار آ جاتی ہے۔
-    + '<div class="cf-row-7030" style="align-items:flex-start;">'
+    + '<div class="cf-row1" style="align-items:flex-start;">'
     + '<div class="cf-field" style="align-items:flex-start;">'
     + '<label class="cf-label" style="margin-top:8px;">دفعات قانون *</label>'
     + '<div style="flex:1;min-width:0;">'
@@ -307,9 +314,6 @@ function caseFormHTML(c) {
     + '<input type="hidden" id="cf-section" value="'+esc(section)+'">'
     + '</div>'
     + '</div>'
-    + '<div class="cf-field" style="align-items:flex-start;">'
-    + '<label class="cf-label" style="margin-top:8px;">بحد</label>'
-    + '<input class="form-input" id="cf-occurrence-place" value="'+esc(occPlace)+'" placeholder="جائے وقوعہ / بحد" dir="auto"></div>'
     + '</div>'
 
     // Mobile theft detail (shown only when section 379-402 PPC selected)
@@ -344,35 +348,36 @@ function caseFormHTML(c) {
     + '</div>'
     + '</div>'
 
-    // Row 2: شناختی کارڈ + موبائل نمبر + پیشہ (تینوں ایک ہی سطر)
-    + '<div class="cf-row3">'
+    // شناختی کارڈ + موبائل نمبر + پیشہ + ملزمان (چاروں ایک ہی سطر — اکتوبر 2026)
+    + '<div class="cf-row4m">'
     + '<div class="cf-field"><label class="cf-label">شناختی کارڈ</label>'
     + '<input class="form-input" id="cf-complainant-cnic" value="'+esc(cmpCnic)+'" placeholder="00000-0000000-0" inputmode="numeric" maxlength="15" dir="ltr" oninput="autoFormatCNIC(this)" style="text-align:left;"></div>'
     + '<div class="cf-field"><label class="cf-label">موبائل نمبر</label>'
     + '<input class="form-input" id="cf-complainant-cell" value="'+esc(cmpCell)+'" placeholder="0000-0000000" inputmode="numeric" maxlength="12" dir="ltr" oninput="autoFormatCell(this)" style="text-align:left;"></div>'
     + '<div class="cf-field"><label class="cf-label">پیشہ</label>'
     + '<input class="form-input" id="cf-complainant-profession" value="'+esc(cmpProf)+'" placeholder="پیشہ" dir="auto"></div>'
+    + '<div class="cf-field"><label class="cf-label">ملزمان</label>'
+    + '<select class="form-input" id="cf-mulzman-type">'
+    + '<option value="maloom" '+(c.mulzman_type==='maloom'?'selected':'')+'>معلوم</option>'
+    + '<option value="namaloom" '+(c.mulzman_type==='namaloom'||!c.mulzman_type?'selected':'')+'>نامعلوم</option>'
+    + '</select></div>'
     + '</div>'
 
     + '</div>'
 
     // FIR کی تفصیل (ہیڈنگ ہٹا دی گئی)
     + '<div class="cf-box">'
-    + '<div class="cf-row2">'
+    + '<div class="cf-row3s">'
     + '<div class="cf-field"><label class="cf-label">مرتبہ مرسلہ</label>'
     + '<div style="display:flex;gap:4px;direction:rtl;flex:1;min-width:0;"><input class="form-input" id="cf-complaint-sender" value="'+esc(compSender)+'" placeholder="مرتبہ مرسلہ" dir="auto" style="flex:1;"></div></div>'
     + '<div class="cf-field"><label class="cf-label">محرر</label>'
     + '<div style="display:flex;gap:4px;direction:rtl;flex:1;min-width:0;"><input class="form-input" id="cf-fir-writer" value="'+esc(firWriter)+'" placeholder="محرر کا نام" dir="auto" style="flex:1;"></div></div>'
-    + '</div>'
-    + '</div>'
-
-    // صورتحال + پوزیشن (آخر میں، ایک ہی سطر — ترجیح ہٹا دی گئی)
-    + '<div class="cf-row2">'
     + '<div class="cf-field"><label class="cf-label">صورتحال *</label>'
     + '<select class="form-input" id="cf-status">'+statusOpts+'</select></div>'
-    + '<div class="cf-field"><label class="cf-label">پوزیشن</label>'
-    + '<select class="form-input" id="cf-position">'+posOpts+'</select></div>'
     + '</div>'
+    + '</div>'
+    // پوزیشن کا خانہ ہٹا دیا گیا (اکتوبر 2026) — پرانی قدر چھپے خانے میں محفوظ رہتی ہے
+    + '<input type="hidden" id="cf-position" value="'+esc(position)+'">'
 
     // ── کراس ورژن ──────────────────────────────────────────────
     + '<div class="dio-full" style="margin-top:14px;padding:10px 12px;background:rgba(239,68,68,0.06);'
@@ -412,15 +417,12 @@ function buildCrossFields(c) {
   var crossStatus = c.cross_status || 'under';
   var crossPosition = c.cross_position || 'pending';
   var crossStatusOpts = ''
-    + '<option value="under"'+(crossStatus==='under'?' selected':'')+'>زیر تفتیش (Under Investigation)</option>'
-    + '<option value="complete"'+(crossStatus==='complete'?' selected':'')+'>مکمل چالان (Complete)</option>'
-    + '<option value="incomplete"'+(crossStatus==='incomplete'?' selected':'')+'>نامکمل چالان (Incomplete)</option>'
-    + '<option value="challan512"'+(crossStatus==='challan512'?' selected':'')+'>چالان 512ض ف (512 CrPC)</option>'
-    + '<option value="untrace"'+(crossStatus==='untrace'?' selected':'')+'>عدم پتہ (Untraced)</option>'
-    + '<option value="cancel"'+(crossStatus==='cancel'?' selected':'')+'>اخراج (Cancelled)</option>';
-  var crossPosOpts = ''
-    + '<option value="pending"'+(crossPosition==='pending'?' selected':'')+'>زیر التواء</option>'
-    + '<option value="court"'+(crossPosition==='court'?' selected':'')+'>In Court</option>';
+    + '<option value="under"'+(crossStatus==='under'?' selected':'')+'>زیر تفتیش</option>'
+    + '<option value="complete"'+(crossStatus==='complete'?' selected':'')+'>مکمل چالان</option>'
+    + '<option value="incomplete"'+(crossStatus==='incomplete'?' selected':'')+'>نامکمل چالان</option>'
+    + '<option value="challan512"'+(crossStatus==='challan512'?' selected':'')+'>چالان 512ض ف</option>'
+    + '<option value="untrace"'+(crossStatus==='untrace'?' selected':'')+'>عدم پتہ</option>'
+    + '<option value="cancel"'+(crossStatus==='cancel'?' selected':'')+'>اخراج</option>';
   return ''
     // رپٹ نمبر (آدھی چوڑائی) + رپٹ تاریخ + کراس ورژن مقدمہ نمبر + کراس ورژن مقدمہ کی تاریخ (چاروں ایک سطر)
     + '<div class="cf-row4-rapat">'
@@ -448,21 +450,17 @@ function buildCrossFields(c) {
     + '<input class="form-input" id="cf-cross-complainant-profession" value="'+esc(ccp)+'" placeholder="&#x067E;&#x06CC;&#x0634;&#x06C1;" dir="auto"></div>'
     + '</div>'
 
-    // کراس ورژن دفعات (70%) + کراس ورژن محرر (30%، سطر کے آخر میں)
-    + '<div class="cf-row-7030">'
+    // کراس ورژن دفعات + محرر + صورتحال (ایک سطر — اکتوبر 2026)
+    + '<div class="cf-row3s">'
     + '<div class="cf-field"><label class="cf-label">کراس ورژن دفعات</label>'
     + '<input class="form-input" id="cf-cross-section" value="'+esc(cs)+'" placeholder="e.g. 302 PPC + 34 PPC" dir="auto"></div>'
     + '<div class="cf-field"><label class="cf-label">کراس ورژن محرر</label>'
     + '<input class="form-input" id="cf-cross-fir-writer" value="'+esc(cfw)+'" placeholder="محرر کا نام" dir="auto"></div>'
-    + '</div>'
-
-    // کراس ورژن صورتحال + کراس ورژن پوزیشن (ایک ہی سطر، مرکزی فارم کی طرح)
-    + '<div class="cf-row2">'
     + '<div class="cf-field"><label class="cf-label">کراس ورژن صورتحال</label>'
     + '<select class="form-input" id="cf-cross-status">'+crossStatusOpts+'</select></div>'
-    + '<div class="cf-field"><label class="cf-label">کراس ورژن پوزیشن</label>'
-    + '<select class="form-input" id="cf-cross-position">'+crossPosOpts+'</select></div>'
     + '</div>'
+    // کراس ورژن پوزیشن کا خانہ ہٹا دیا گیا — پرانی قدر چھپے خانے میں محفوظ
+    + '<input type="hidden" id="cf-cross-position" value="'+esc(crossPosition)+'">'
 
     + '<div style="padding:8px 10px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);font-size:11px;color:var(--red);margin-top:4px;">'
     + '&#x26A0;&#xFE0F; Cross Version cases are linked to the original FIR. Both cases will appear in the case workspace under the same folder.'

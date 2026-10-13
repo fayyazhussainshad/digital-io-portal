@@ -32,10 +32,12 @@
    ═══════════════════════════════════════════════════════════ */
 
 /* ╔═══════════════════════════════════════════════════════════╗
-   ║  🔒 رپورٹ 173 — تمام اقسام طے شدہ (LOCKED) — v385         ║
-   ║  ASI Fayyaz Hussain Shad ki sareeh ijazat ke BAGHAIR      ║
-   ║  in mein se koi cheez tabdeel NA ki jaye. Naye kaam karte ║
-   ║  waqt sab se pehle yeh fehrist parh li jaye.              ║
+   ║  🔓 رپورٹ 173 — LOCK ہٹا دیا گیا (13 اکتوبر 2026)          ║
+   ║  ASI Fayyaz Hussain Shad ke hukm par: AGLE HUKM TAK nizam  ║
+   ║  ki koi file locked nahi — is file mein bhi tabdeeli ki    ║
+   ║  ijazat hai. Neeche ki fehrist ab "lock" nahi, balke       ║
+   ║  takneeki rehnumai hai: tabdeeli se pehle zaroor parh lein ║
+   ║  (pehle ki ghaltiyan dobara na hon).                       ║
    ╚═══════════════════════════════════════════════════════════╝
 
    ═══ SAB SE AHEM USOOL ═══

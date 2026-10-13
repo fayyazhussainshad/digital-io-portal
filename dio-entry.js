@@ -2,7 +2,7 @@
    DIGITAL IO — dio-entry.js  (Dashboard کا «نیا اندراج»)
    ────────────────────────────────────────────────────────────────
    • ایک ہی «نیا اندراج» بٹن: مقدمہ · ملزم · گواہ · ہمراہی ملازم ·
-     پیشی / یاددہانی · شہادت۔ ہر کارڈ کے اوپر «مقدمہ» — اندراج خود
+     پیشی / یاددہانی · شہادت · 5-C درخواست۔ ہر کارڈ کے اوپر «مقدمہ» — اندراج خود
      اسی مقدمے میں شامل ہوتا ہے (ہر مقدمے میں الگ جا کر کرنے کی ضرورت نہیں)۔
    • پیشی اور یاددہانی کا ایک ہی کارڈ (پیشی کی تمام تفصیل سمیت)۔
    • شہادت: نام کا خانہ نہیں؛ ترتیب — مقدمہ، قسم، تاریخ و وقت (خود،
@@ -43,7 +43,8 @@
     ['gawah', 'گواہ', SVG('<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/>')],
     ['hamrahi', 'ہمراہی ملازم', SVG('<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/>')],
     ['peshi', 'پیشی / یاددہانی', SVG('<path d="M4 6.5h16V20H4z"/><path d="M4 10.5h16"/><path d="M8 3.5v4"/><path d="M16 3.5v4"/>')],
-    ['shahadat', 'شہادت', SVG('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>')]
+    ['shahadat', 'شہادت', SVG('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>')],
+    ['fivec', '\u20665-C\u2069 درخواست', SVG('<path d="M4 5h16v14H4z"/><path d="M4 7l8 6 8-6"/>')]
   ];
 
   function hub() {
@@ -67,6 +68,7 @@
       if (kind === 'hamrahi') { await need(['staff-v2.js']); await _stForm(null, { hub: true }); return; }
       if (kind === 'peshi') { await peshi('peshi', null, { hub: true }); return; }
       if (kind === 'shahadat') { await evidence({ hub: true }); return; }
+      if (kind === 'fivec') { await need(['fivec.js']); await open5CForm(null); return; }
     } catch (err) { toast('' + (err && err.message || err), 'error'); }
   }
 
