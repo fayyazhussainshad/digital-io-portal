@@ -301,13 +301,14 @@
   }
   // async — HTML لوٹاتا ہے؛ selectedId ہو تو پہلے سے منتخب
   // extra: اسی سطر میں کوئی اور خانہ (مثلاً ملزم کی قسم)
-  async function caseField(selectedId, extra) {
+  // optional: مقدمہ لازمی نہیں (مثلاً 5-C درخواست جو کسی مقدمے سے متعلق بھی ہو سکتی ہے)
+  async function caseField(selectedId, extra, optional) {
     var cases = await loadCases();
-    var opts = [['', '— مقدمہ منتخب کریں —']].concat(cases.map(function (c) { return [c.id, _caseLabel(c)]; }));
+    var opts = [['', optional ? '— کوئی مقدمہ نہیں —' : '— مقدمہ منتخب کریں —']].concat(cases.map(function (c) { return [c.id, _caseLabel(c)]; }));
     if (selectedId && !cases.some(function (c) { return String(c.id) === String(selectedId); })) opts.push([selectedId, 'موجودہ مقدمہ']);
-    var cf = fld({ id: 'dio-case', label: 'مقدمہ', req: true, line: !extra, grow: !!extra, w: 'w-l', type: 'sel', opts: opts, value: selectedId || '' });
+    var cf = fld({ id: 'dio-case', label: optional ? 'متعلقہ مقدمہ (اختیاری)' : 'مقدمہ', req: !optional, line: !extra, grow: !!extra, w: 'w-l', type: 'sel', opts: opts, value: selectedId || '' });
     return row(extra ? [cf, extra] : [cf]) +
-      '<div class="dio-hint">یہ اندراج خود منتخب مقدمے میں شامل ہو جائے گا۔</div>';
+      '<div class="dio-hint">' + (optional ? 'اگر یہ کسی مقدمے سے متعلق ہے تو منتخب کریں — ساتھ مقدمہ نمبر محفوظ ہو جائے گا۔' : 'یہ اندراج خود منتخب مقدمے میں شامل ہو جائے گا۔') + '</div>';
   }
   function readCase() {
     var s = document.getElementById('dio-case');

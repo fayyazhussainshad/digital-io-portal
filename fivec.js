@@ -145,7 +145,7 @@ function render5CRow(a){
   const nums=(a.application_5c_numbers||[]).map(n=>`<div style="font-size:11px;line-height:1.5;"><b>${esc5C(n.application_number||'')}</b>${n.senior_officer_designation?` <span style="color:var(--text-muted);">— ${esc5C(n.senior_officer_designation)}</span>`:''}</div>`).join('')||'<span style="color:var(--text-muted);">—</span>';
   const att=(a.application_5c_attachments||[]).length;
   return `<tr>
-    <td><b>${a.serial_number}</b></td><td>${esc5C(a.complainant_name)||'—'}</td>
+    <td><b>${a.serial_number}</b></td><td>${esc5C(a.complainant_name)||'—'}${a.fir_number?`<div style="font-size:10.5pt;color:var(--accent);">مقدمہ <span dir="ltr" style="unicode-bidi:isolate;">${esc5C(a.fir_number)}</span></div>`:''}</td>
     <td style="font-family:var(--font-mono);font-size:11px;">${esc5C(formatCNIC(a.complainant_cnic))}</td>
     <td style="font-family:var(--font-mono);font-size:11px;">${esc5C(formatCell(a.complainant_cell))}</td>
     <td>${nums}</td>
@@ -170,6 +170,7 @@ async function open5CForm(id){
   const D=window.DIOCard;
   const nums=(app.application_5c_numbers&&app.application_5c_numbers.length)?app.application_5c_numbers:[{}];
   const body=
+    (await D.caseField(app.case_id||'', null, true))+
     D.nameField('f5c-name', app.complainant_name, 'درخواست دہندہ — نام و پتہ', false)+
     D.row([
       D.fld({id:'f5c-cnic',label:'شناختی کارڈ',type:'cnic',value:app.complainant_cnic}),
@@ -220,7 +221,18 @@ async function delete5CAttachment(id,path,btn){if(!confirm('Delete this attachme
 async function save5CApp(id){
   const main={complainant_name:(window.DIOCard?DIOCard.readName('f5c-name'):document.getElementById('f5c-name').value.trim())||null,complainant_cnic:document.getElementById('f5c-cnic').value.trim()||null,complainant_cell:document.getElementById('f5c-cell').value.trim()||null,application_date:toISODate(document.getElementById('f5c-appdate').value)||null,subject:document.getElementById('f5c-subject').value.trim()||null,status:document.getElementById('f5c-status').value};
   const numbers=Array.from(document.querySelectorAll('.f5c-num-row')).map(row=>{const r={};row.querySelectorAll('[data-field]').forEach(el=>{r[el.dataset.field]=el.value.trim()||null;});if(r.senior_officer_designation==='Other'){const c=row.querySelector('[data-field="senior_officer_designation_custom"]');r.senior_officer_designation=c&&c.value.trim()?c.value.trim():'Other';}if(r.forwarded_date)r.forwarded_date=toISODate(r.forwarded_date)||r.forwarded_date;delete r.senior_officer_designation_custom;return r;}).filter(n=>n.application_number);
-  try{if(id){await updateApplication5C(id,main,numbers);showToast('Updated','success');}else{await addApplication5C({...main,numbers});showToast('Application added','success');}closeModal();if(window._activePage==='fivec')renderFiveC(document.getElementById('page-content'));}catch(e){showToast(''+e.message,'error',5000);}
+  // متعلقہ مقدمہ (اختیاری) — sql/102 کے نئے خانے
+  const cs=window.DIOCard?DIOCard.readCase():null;
+  main.case_id=cs?cs.id:null; main.fir_number=cs?(cs.fir||null):null;
+  const run=async(m)=>{if(id){await updateApplication5C(id,m,numbers);showToast('محفوظ ہو گیا','success');}else{await addApplication5C({...m,numbers});showToast('درخواست محفوظ ہو گئی','success');}};
+  try{
+    try{await run(main);}
+    catch(e1){
+      // sql/102 ابھی نہ چلی ہو تو مقدمے کے بغیر محفوظ کرو اور بتاؤ
+      if(window.DIOCard&&DIOCard._missingCol(e1)){const m2={...main};delete m2.case_id;delete m2.fir_number;await run(m2);showToast('محفوظ ہو گیا، مگر مقدمے سے جوڑنے کے لیے ڈیٹابیس اپڈیٹ (sql/102) ابھی نہیں چلی','info',7000);}
+      else throw e1;
+    }
+    closeModal();if(window._activePage==='fivec')renderFiveC(document.getElementById('page-content'));}catch(e){showToast(''+e.message,'error',5000);}
 }
 function confirmDelete5C(id,sn){if(!confirm(`Delete Application #${sn} and ALL its attachments?`))return;deleteApplication5C(id).then(()=>{showToast('Deleted','info');renderFiveC(document.getElementById('page-content'));}).catch(e=>showToast(''+e.message,'error'));}
 
