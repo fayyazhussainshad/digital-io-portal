@@ -30,11 +30,54 @@ function load() {
 test('اصل کاغذ کی تمام سطریں، اسی ترتیب میں', () => {
   const { IR_ROWS } = load();
   assert.deepStrictEqual(JSON.parse(JSON.stringify(IR_ROWS.map(r => r.l))), [
-    'نوعیت جرم', 'تاریخ / وقت وقوعہ', 'تاریخ / وقت اطلاع کنٹرول روم', 'جائے وقوعہ',
-    'درخواست / اطلاع دہندہ', 'متاثرہ کا نام', 'وجہ عناد / حادثہ', 'ملزم / ملزمان کے نام / تعداد',
-    'حلیہ جات ملزمان', 'وہیکل / قسم / رنگ', 'ریسپانڈنگ آفیسر', 'تعداد گرفتار ملزمان']);
-  assert.ok(/<th scope="row">تفصیل<\/th>/.test(J), 'تفصیل کی سطر');
-  assert.ok(/'INCIDENT REPORT'/.test(J) && /واقعاتی رپورٹ مرتب ہو کر ارسال ہے۔/.test(J));
+    'نوعیت وقوعہ', 'تاریخ / وقت وقوعہ', 'تاریخ / وقت اطلاع کنٹرول روم', 'جائے وقوعہ',
+    'اطلاع دہندہ', 'متاثرہ کا نام', 'وجہ عناد / حادثہ', 'ملزم / ملزمان کے نام / تعداد',
+    'حلیہ جات ملزمان', 'وہیکل / قسم / رنگ', 'موقع وزٹ کرنے والے افسران', 'ریسپانڈنگ آفیسر', 'تعداد گرفتار ملزمان']);
+  // آخر میں ایک ملا ہوا خانہ «جناب عالیٰ! مختصر حالات اس طرح پر ہیں کہ»
+  assert.ok(/<tr class="ir-detail-row"><td colspan="2">/.test(J));
+  assert.ok(/<b>جناب عالیٰ!<\/b> مختصر حالات اس طرح پر ہیں کہ/.test(J));
+  assert.ok(/title: 'واقعاتی رپورٹ'/.test(J) && !/INCIDENT REPORT'/.test(J), 'عنوان اردو میں');
+  assert.ok(/واقعاتی رپورٹ مرتب ہو کر ارسال ہے۔/.test(J));
+  assert.ok(!/l: 'نوعیت جرم'/.test(J) && !/درخواست \/ اطلاع دہندہ/.test(J));
+});
+
+test('تھانہ/ضلع پہلی سطر میں (درخواستوں کا اصول)، SHO کی سطر میں نام نہیں', () => {
+  const i = J.indexOf('<div class="ir-title-row">'), h = J.indexOf('<div class="ir-head">'), t = J.indexOf('<table class="ir-table"');
+  assert.ok(i > 0 && i < h && h < t, 'سطر 1: تھانہ/ضلع، پھر عنوان، پھر جدول');
+  assert.ok(/\.ir-tt-left\{[^}]*margin-left:1cm/.test(J));
+  assert.ok(/sho_line: `<bdi dir="ltr">\$\{_irE\(shoRank\)\}<\/bdi> تھانہ \$\{_irE\(station\)\}`/.test(J), 'صرف عہدہ + تھانہ');
+  assert.ok(!/getSHOSignLine\(/.test(J), 'نام والی سطر استعمال نہیں');
+});
+
+test('فہرست ملزمان/گواہان کی ترتیب میں + «نیا اندراج»', () => {
+  assert.ok(/<div class="page-title">واقعاتی رپورٹس<\/div>/.test(J));
+  assert.ok(/class="btn btn-primary dio-add-btn" onclick="_irNew\(\)">\+ نیا اندراج</.test(J));
+  assert.ok(/class="form-input" id="ir-list-q"/.test(J) && /class="card ir-card"/.test(J));
+});
+
+test('«نیا اندراج» hub میں واقعاتی رپورٹ', () => {
+  const d = read('dio-entry.js');
+  assert.ok(/\['waqiati', 'واقعاتی رپورٹ'/.test(d));
+  assert.ok(/kind === 'waqiati'[\s\S]{0,300}need\(\['incident\.js'\]\)[\s\S]{0,300}openIncidentNew/.test(d));
+  assert.ok(/function openIncidentNew/.test(J));
+});
+
+test('SYSTEM RULE: Ctrl+P = سکرین کا پرنٹ بٹن (پورا سسٹم)', () => {
+  const h = read('index.html');
+  assert.ok(/function _pFindTarget\(\)/.test(h));
+  assert.ok(/_printR173[\s\S]{0,400}dio-docview[\s\S]{0,300}_dioPrintCurrent/.test(h), 'چالان، پھر پورا صفحہ');
+  assert.ok(/data-dio-print/.test(h) && /dio-modbtn/.test(h));
+  assert.ok(/if \(fn\) \{ e\.preventDefault\(\); e\.stopPropagation\(\); fn\(\); \}/.test(h));
+  // پٹی کا پرنٹ: دستاویز کا اپنا بٹن؛ نہ ہو تو خاموش نہیں بلکہ براؤزر کی چھپائی
+  const dv = read('doc-viewer.js');
+  assert.ok(/_dioModulePrintBtn\(document\.getElementById\('dio-dv-body'\)\)[\s\S]{0,400}window\.print\(\)/.test(dv));
+  // واقعاتی رپورٹ کا بٹن واضح نشان کے ساتھ، اور وہی window.print جو Ctrl+P
+  assert.ok(/data-dio-print onclick="_irPrint\(\)"/.test(J) && /function _irPrint[\s\S]{0,300}window\.print\(\)/.test(J));
+});
+
+test('موبائل منظر: پوری چوڑائی (خالی جگہ نہیں)، چھپائی پھر بھی A4', () => {
+  assert.ok(/@media screen and \(max-width:760px\)\{[\s\S]*#ir-view:not\(\.ir-a4\) #ir-doc\{ width:100%/.test(J));
+  assert.ok(/function _irBalance[\s\S]{0,700}classList\.add\('ir-a4'\)/.test(J), 'ناپ A4 پر');
 });
 
 test('تاریخ DD/MM/YYYY انگریزی ہندسوں میں، نمبر LTR', () => {
@@ -67,7 +110,7 @@ test('پرانی رپورٹس نئی ترتیب میں کھلیں — کچھ ض�
   assert.strictEqual(f.nature, 'چوری');
   assert.strictEqual(f.place, 'وقاص ٹاؤن');
   assert.strictEqual(f.caller, 'ملک زاہد');
-  assert.strictEqual(f.responder, 'ندیم، علی');
+  assert.strictEqual(f.visitors, 'ندیم، علی', 'پرانا «موقع وزٹ کرنے والے افسران» اپنی جگہ');
   assert.strictEqual(f.detail, 'سطر1<br>سطر2');
   assert.strictEqual(meta.person_type, 'مضروب');
   // نیا فارم ویسا ہی واپس

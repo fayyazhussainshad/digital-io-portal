@@ -518,9 +518,38 @@ function _dioPrintCurrent() {
   if (id === 'cdr_imei') {
     if (typeof _printCdr === 'function') { _printCdr(); return; }
   }
-  if (typeof printMisalDoc === 'function') { printMisalDoc(_dioDocName(id)); return; }
-  window.print();
+  // SYSTEM RULE (13 اکتوبر 2026): اوپر کی پٹی کا «پرنٹ» = دستاویز کا اپنا پرنٹ بٹن
+  // (درخواستیں، سزا سلپ، CRO، نقشہ موقع، بیانات 161 …) = Ctrl+P — تینوں ایک ہی راستہ۔
+  // پہلے یہاں سیدھا printMisalDoc تھا جو #misal-editor نہ ہو تو کچھ بھی نہیں کرتا تھا
+  // (ان دستاویزات پر پٹی کا پرنٹ بٹن خاموش رہتا تھا)۔
+  const mb = _dioModulePrintBtn(document.getElementById('dio-dv-body'));
+  if (mb) { mb.click(); return; }
+  if (document.getElementById('misal-editor') && typeof printMisalDoc === 'function') { printMisalDoc(_dioDocName(id)); return; }
+  window.print();   // اپنا پرنٹ نہ ہو → براؤزر کی چھپائی (صرف کھلی دستاویز — native isolation)
 }
+
+// دستاویز کا اپنا پرنٹ بٹن (چھپا ہوا .dio-modbtn بھی) — واضح نشان [data-dio-print] پہلے،
+// پھر .dio-modbtn، پھر جو اکیلا ہو۔ کئی مختلف ہوں (فہرست کی ہر سطر) تو null۔
+function _dioModulePrintBtn(root) {
+  if (!root) return null;
+  const words = /پرنٹ|چھاپ|چھپائی|🖨|print/i;
+  const btns = Array.from(root.querySelectorAll('button,[role="button"],a.btn')).filter(b => {
+    if (b.disabled) return false;
+    if (b.hasAttribute('data-dio-print')) return true;
+    const oc = b.getAttribute('onclick') || '';
+    if (!/print/i.test(oc)) return false;
+    const t = (b.textContent || '') + ' ' + (b.getAttribute('title') || '') + ' ' + (b.getAttribute('aria-label') || '');
+    return !/محفوظ/.test(t) && words.test(t);
+  });
+  const one = list => {
+    const seen = {}, u = [];
+    list.forEach(b => { const k = b.getAttribute('onclick') || ''; if (!seen[k]) { seen[k] = 1; u.push(b); } });
+    return u.length === 1 ? u[0] : null;
+  };
+  return one(btns.filter(b => b.hasAttribute('data-dio-print'))) ||
+         one(btns.filter(b => b.classList.contains('dio-modbtn'))) || one(btns);
+}
+window._dioModulePrintBtn = _dioModulePrintBtn;
 
 window._dioExitDocView  = _dioExitDocView;
 window._dioSwitchTab    = _dioSwitchTab;
