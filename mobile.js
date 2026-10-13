@@ -140,7 +140,7 @@
     upper.addEventListener('touchstart', function (e) {
       if (e.touches.length === 2) {
         startDist = dist(e.touches);
-        try { startZoom = (window._naqCanvas && _naqCanvas.getZoom()) || 1; } catch (_) { startZoom = 1; }
+        try { startZoom = (window._naqCanvas && window._naqCanvas.getZoom()) || 1; } catch (_) { startZoom = 1; }
         last = mid(e.touches);
         e.preventDefault();          // do ungli = zoom/pan, drawing nahi
       }

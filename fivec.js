@@ -31,6 +31,10 @@ async function getApplications5C(query){
   }
 }
 async function getApplication5C(id){const{data,error}=await supabaseClient.from('applications_5c').select('*, application_5c_numbers(*), application_5c_attachments(*)').eq('id',id).single();if(error){console.error(error);return null;}return data;}
+// v538: آف لائن محفوظ ہونے کی اطلاع۔ پہلے یہاں ایک غیر موجود فنکشن
+//   (_showSyncBar) تھا — ریکارڈ قطار میں محفوظ ہو جاتا، پھر غلطی آتی اور
+//   افسر کو لگتا کہ محفوظ نہیں ہوا (دوبارہ کوشش = دوہرا اندراج)۔
+function _fcOfflineNote(msg){try{if(typeof showToast==='function')showToast(msg,'info',4500);}catch(_){}}
 async function addApplication5C(d){
   const oid=await getOfficerId();if(!oid)throw new Error('Not authenticated');
   if(!navigator.onLine){
@@ -38,7 +42,7 @@ async function addApplication5C(d){
     const local={...d,id:tempId,officer_id:oid,created_at:new Date().toISOString(),_offline:true};
     await offlineStore.cache('fivec_cache',local);
     await offlineStore.enqueue('fivec','insert',{...d,officer_id:oid},tempId);
-    _showSyncBar('pending','5-C application saved offline — will sync when connected');
+    _fcOfflineNote('5-C درخواست آف لائن محفوظ — انٹرنیٹ آنے پر sync ہو جائے گی');
     return local;
   }
   const{numbers,...main}=d;
@@ -53,7 +57,7 @@ async function updateApplication5C(id,d,numbers){
   if(cached)await offlineStore.cache('fivec_cache',{...cached,...d,application_5c_numbers:numbers!==undefined?numbers:(cached.application_5c_numbers||[])});
   if(!navigator.onLine){
     await offlineStore.enqueue('fivec','update',{id,...d,numbers});
-    _showSyncBar('pending','5-C update saved offline — will sync when connected');
+    _fcOfflineNote('5-C درخواست کی تبدیلی آف لائن محفوظ — انٹرنیٹ آنے پر sync ہو جائے گی');
     return;
   }
   const{error}=await supabaseClient.from('applications_5c').update(d).eq('id',id);
@@ -64,7 +68,7 @@ async function deleteApplication5C(id){
   if(!navigator.onLine){
     await offlineStore.remove('fivec_cache',id);
     await offlineStore.enqueue('fivec','delete',{id});
-    _showSyncBar('pending','5-C deletion queued — will sync when connected');
+    _fcOfflineNote('5-C درخواست حذف کرنا قطار میں — انٹرنیٹ آنے پر sync ہو جائے گا');
     return;
   }
   const{data:atts}=await supabaseClient.from('application_5c_attachments').select('storage_path').eq('application_5c_id',id);

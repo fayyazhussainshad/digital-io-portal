@@ -18,7 +18,7 @@ async function _buildBin() {
   try {
     const oid = await getOfficerId();
     if (!oid) {
-      const c = document.getElementById('page-content') || container;
+      const c = document.getElementById('page-content') || root;   // v538: `container` yahan mojood nahi tha
       if (c) c.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);direction:rtl;">لاگ ان مکمل ہو رہا ہے...</div>';
       return;
     }

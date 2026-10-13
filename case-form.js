@@ -3,6 +3,10 @@
    (پہلے یہ cases.js میں تھا)
    ═══════════════════════════════════════════════════════════ */
 
+// v538: یہ دو فہرستیں پہلے کہیں declare نہیں تھیں (خاموش implicit global) —
+//   cases.js بھی انہیں پڑھتا ہے۔ صاف اعلان؛ رویہ وہی (window پر ہی رہتی ہیں)۔
+var selectedSections = [];
+var selectedDocuments = [];
 // ── FORM CSS (compact, single-line label+field, 14pt — injected once) ──
 function _cfInjectCSS() {
   if (document.getElementById('cf-form-css')) return;
