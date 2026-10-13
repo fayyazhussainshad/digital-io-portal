@@ -20,7 +20,35 @@ async function printSelectedEvidence(){const sel=[...document.querySelectorAll('
       });
     }
   } catch (_) {}
-  printContent(`<h1>شہادتوں کی رپورٹ</h1><p>${sel.length} اشیاء منتخب</p>`,'شہادتوں کی رپورٹ');}
+  // v538: پہلے یہاں ایک غیر موجود فنکشن (printContent) تھا — بٹن کچھ نہیں کرتا تھا۔
+  //   اب منتخب شہادتوں کا جدول، نظام کے اپنے dioPrint سے (Ctrl+P جیسا ہی)۔
+  let _all = [];
+  try { _all = (await getEvidence()) || []; } catch (_) {}
+  const _TYPE = { Photo:'تصویر', Video:'ویڈیو', Audio:'آواز', Document:'دستاویز' };
+  const _rows = sel.map((sid, i) => {
+    const e = _all.find(x => String(x.id) === String(sid)) || {};
+    const d = e.evidence_date || e.created_at;
+    return '<tr><td>' + (i + 1) + '</td><td>' + esc(e.name || '—') + '</td>'
+      + '<td dir="ltr" style="unicode-bidi:isolate;">' + esc(e.fir_number || '—') + '</td>'
+      + '<td>' + esc(_TYPE[e.type] || e.type || '—') + '</td>'
+      + '<td dir="ltr" style="unicode-bidi:isolate;">' + (d ? esc(formatDate(d)) : '—') + '</td>'
+      + '<td>' + esc(e.notes || '') + '</td></tr>';
+  }).join('');
+  const _o = (typeof currentOfficer !== 'undefined' && currentOfficer) || {};
+  const _html = '<!DOCTYPE html><html dir="rtl" lang="ur"><head><meta charset="UTF-8"><title>شہادتوں کی رپورٹ</title>'
+    + (typeof dioFontHead === 'function' ? dioFontHead() : '')
+    + '<style>@page{size:A4;margin:15mm;}body{font-family:"Jameel Noori Nastaleeq","Noto Nastaliq Urdu",serif;direction:rtl;font-size:13pt;color:#111;}'
+    + 'h2{text-align:center;font-size:20pt;margin:0 0 4px;}p.sub{text-align:center;margin:0 0 12px;font-size:11pt;}'
+    + 'table{width:100%;border-collapse:collapse;}th,td{border:1px solid #555;padding:6px 8px;text-align:right;vertical-align:top;}'
+    + 'th{background:#eee;font-weight:700;}</style></head><body>'
+    + '<h2>شہادتوں کی رپورٹ</h2>'
+    + '<p class="sub">' + esc(_o.full_name || '') + (_o.station ? ' · تھانہ ' + esc(_o.station) : '')
+    + ' · تاریخ: <span dir="ltr" style="unicode-bidi:isolate;">' + esc(formatDate(new Date())) + '</span> · کل ' + sel.length + '</p>'
+    + '<table><thead><tr><th>نمبر</th><th>نام</th><th>مقدمہ</th><th>قسم</th><th>تاریخ</th><th>تفصیل</th></tr></thead><tbody>'
+    + _rows + '</tbody></table></body></html>';
+  if (typeof dioPrint === 'function') dioPrint(_html);
+  else showToast('پرنٹ دستیاب نہیں — صفحہ ریفریش کریں', 'error');
+}
 let cameraStream=null;
 function openAddEvidenceModal(){if(window.DIOEntry&&window.DIOCard)return DIOEntry.evidence();window._evDataUrl=null;window._evFile=null;openModal('شہادت شامل کریں',`<div style="display:flex;gap:8px;margin-bottom:14px;"><button class="btn btn-secondary btn-sm" onclick="openCamera()">کیمرے سے</button><button class="btn btn-secondary btn-sm" onclick="openFileSelect()">فائل منتخب کریں</button></div><div id="camera-preview" style="display:none;margin-bottom:12px;"><video id="cam-video" style="width:100%;border-radius:8px;max-height:200px;" autoplay playsinline></video><div style="display:flex;gap:8px;margin-top:8px;"><button class="btn btn-primary btn-sm" onclick="snapPhoto()">تصویر لیں</button><button class="btn btn-secondary btn-sm" onclick="stopCamera()">بند کریں</button></div><canvas id="cam-canvas" style="display:none;"></canvas><img id="cam-snap" style="display:none;width:100%;border-radius:8px;margin-top:8px;border:2px solid var(--accent);" alt=""></div><div class="form-row"><div class="form-group"><label class="form-label">نام *</label><input class="form-input" id="ev-name" placeholder="شہادت کا نام"></div><div class="form-group"><label class="form-label">متعلقہ مقدمہ *</label><input class="form-input" id="ev-fir-link" placeholder="مثلاً 245/2025"></div></div><div class="form-row"><div class="form-group"><label class="form-label">قسم</label><select class="form-input" id="ev-type-input"><option value="Photo">تصویر</option><option value="Video">ویڈیو</option><option value="Audio">آواز</option><option value="Document">دستاویز</option></select></div><div class="form-group"><label class="form-label">تاریخ</label><input class="form-input" id="ev-date-input" placeholder="DD-MM-YYYY"></div></div><div class="form-group"><label class="form-label">تفصیل</label><textarea class="form-input" id="ev-notes-input" rows="2" placeholder="مختصر تفصیل…"></textarea></div>`,`<button class="btn btn-secondary" onclick="stopCamera();closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveEvidenceItem()">شامل کریں</button>`);}
 function openCamera(){document.getElementById('camera-preview').style.display='block';navigator.mediaDevices?.getUserMedia({video:{facingMode:'environment'}}).then(stream=>{cameraStream=stream;document.getElementById('cam-video').srcObject=stream;}).catch(()=>showToast('کیمرہ دستیاب نہیں۔','error'));}

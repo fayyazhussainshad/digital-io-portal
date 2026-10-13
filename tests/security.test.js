@@ -1730,3 +1730,26 @@ test('99: audit_log na mitaya ja sake na badla (RESTRICTIVE) — aur khatre par 
   const r = sqlAmli('sql/99_ROLLBACK.sql');
   assert.ok(/as permissive for delete/.test(r) && /as permissive for update/.test(r), 'wapsi asal halat lautaye');
 });
+
+test('v538: kahin na bane functions/variables ki 7 asli ghaltiyan wapas na aayen', () => {
+  const s = read('settings.js'), f = read('fivec.js'), e = read('evidence.js'),
+        o = read('offline-store.js'), r = read('reminders.js'), b = read('bin.js'), d = read('data-api.js'), c = read('cases.js');
+  assert.ok(!/_saveOfflineAuth\(/.test(s) && /_dioSavePwVerifier/.test(s), 'password badalne par ghalti ka jhoota paigham');
+  assert.ok(/async function _dioSavePwVerifier/.test(read('auth.js')), 'offline record ka helper');
+  assert.ok(!/_showSyncBar\(/.test(f) && /function _fcOfflineNote/.test(f), '5-C offline save ke baad ghalti');
+  assert.ok(!/printContent\(/.test(e) && /dioPrint\(_html\)/.test(e), 'shahadat ki report chhapai');
+  assert.ok(!/url\?\.publicUrl/.test(o), 'offline shahadat ka DB record');
+  assert.ok(!/r\?\.text/.test(r) && /getReminders\(\)/.test(r.slice(r.indexOf('async function _deleteRem'))), 'yaaddehani recycle bin');
+  assert.ok(!/\|\| container;/.test(b), 'bin.js');
+  // CSP: connect-src mein data: nahi — is liye fetch('data:…') mana
+  for (const [n, t] of [['data-api.js', d], ['offline-store.js', o], ['cases.js', c]])
+    assert.ok(!/fetch\((fileInfo\.dataUrl|fileRec\.fileData|window\._wevDataUrl)\)/.test(t), n + ': fetch(data:) CSP se rukta hai');
+  assert.ok(/function dioDataUrlToBlob/.test(o), 'data-URL → Blob bina fetch');
+  assert.ok(/^var selectedSections = \[\];$/m.test(read('case-form.js')), 'implicit global ka saaf elaan');
+});
+
+test('v538: ESLint ka "not defined" sirf asli ghalti dikhaye (doosri file ke naam maloom)', () => {
+  const cfg = read('eslint.config.mjs');
+  assert.ok(/function appGlobals\(\)/.test(cfg) && /\.\.\.appGlobals\(\)/.test(cfg),
+    '739 jhoote alarm asli ghaltiyon ko chhupa dete the');
+});

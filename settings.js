@@ -344,8 +344,10 @@ async function doChangePassword(){
   try{
     const{error}=await supabaseClient.auth.updateUser({password:np});
     if(error)throw error;
-    // Update offline hash for new password
-    await _saveOfflineAuth(currentUser.email, np);
+    // v538: آف لائن ریکارڈ نئے پاس ورڈ سے — پہلے یہاں ایک غیر موجود فنکشن
+    //   (_saveOfflineAuth) تھا: پاس ورڈ سرور پر بدل جاتا مگر افسر کو غلطی
+    //   کا پیغام ملتا اور آف لائن پرانا پاس ورڈ ہی چلتا رہتا۔
+    try { if (typeof window._dioSavePwVerifier === 'function') await window._dioSavePwVerifier(currentUser && currentUser.email, np); } catch (_) {}
     closeModal();
     showToast('پاسورڈ تبدیل ہو گیا۔','success');
   }catch(err){showToast(err.message,'error');}

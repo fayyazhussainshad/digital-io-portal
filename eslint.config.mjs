@@ -6,8 +6,43 @@
 //  Chalane ka tareeqa:  npm install  &&  npm run lint
 // ════════════════════════════════════════════════════════════════
 import globals from 'globals';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// ── v538: aik file ka naam doosri file mein — "not defined" ka jhoota alarm ──
+//  Classic <script> sab aik hi global scope mein chalti hain. ESLint har file
+//  alag dekhta hai, is liye 739 "not defined" aate the jin mein se 171 naam
+//  asal mein KISI AUR file mein bane hue the (jhoota alarm) aur sirf chand
+//  waqai kahin nahi bane the (asli ghalti — jaise getIOSignLine,
+//  _saveOfflineAuth, printContent). Ab app ki har file ke top-level naam
+//  (function/const/let/var/class aur window.X =) khud-ba-khud "maloom"
+//  maane jate hain — `no-undef` sirf ASLI ghaltiyan dikhata hai.
+const ROOT = path.dirname(fileURLToPath(import.meta.url));
+function appGlobals() {
+  const out = {};
+  const add = (n) => { if (n && !(n in out)) out[n] = 'writable'; };
+  const scan = (t) => {
+    for (const m of t.matchAll(/^\s*(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/gm)) add(m[1]);
+    for (const m of t.matchAll(/^(?:const|let|var|class)\s+([A-Za-z_$][\w$]*)/gm)) add(m[1]);
+    for (const m of t.matchAll(/window\.([A-Za-z_$][\w$]*)\s*=(?!=)/g)) add(m[1]);
+  };
+  try {
+    for (const f of fs.readdirSync(ROOT)) {
+      if (f.endsWith('.js') && f !== 'sw.js') scan(fs.readFileSync(path.join(ROOT, f), 'utf8'));
+    }
+    const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+    for (const m of html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)) scan(m[1]);
+  } catch (_) { /* scan na ho sake to purana rawaiya */ }
+  return out;
+}
 
 export default [
+  { ignores: ['node_modules/**', 'sw.js', 'supabase/**', 'backups/**'] },
+  {
+    files: ['tests/**/*.js'],
+    languageOptions: { globals: { ...globals.node } },
+  },
   {
     files: ['**/*.js'],
     ignores: ['node_modules/**', 'sw.js', 'supabase/**', 'backups/**'],
@@ -16,6 +51,11 @@ export default [
       sourceType: 'script',          // classic <script defer>, module nahi
       globals: {
         ...globals.browser,
+        ...appGlobals(),
+        // CDN se aane wali libraries
+        DOMPurify: 'readonly', mammoth: 'readonly', fabric: 'readonly',
+        // ikhtiyari hooks — har jagah `typeof X === 'function'` ke peeche (kabhi error nahi)
+        checkLicense: 'readonly', checkCaseLimit: 'readonly', currentCase: 'readonly', dioFormatDate: 'readonly',
         // App ke apne global helpers / modules
         supabaseClient: 'writable', currentOfficer: 'writable', currentUser: 'writable',
         esc: 'readonly', _dioJsHtml: 'readonly', DIO: 'readonly',
@@ -48,5 +88,17 @@ export default [
       // Khami 12 dobara na ho — aik hi naam do baar
       'no-redeclare': ['error', { builtinGlobals: false }],
     },
+  },
+  // ── jaan-boojh kar istisna (v538) — sirf yahi, aur wajah ke sath ──
+  {
+    // tests: app ki files ko alag sandbox mein chala kar jaanchte hain
+    files: ['tests/**/*.js'],
+    rules: { 'no-eval': 'off', 'no-new-func': 'off' },
+  },
+  {
+    // zimni.js: purana KHUDKAR numbering nizam afsar ke hukm par band (MANUAL
+    // mode) — `return` ke neeche purana code jaan-boojh kar mehfooz rakha gaya
+    files: ['zimni.js'],
+    rules: { 'no-unreachable': 'off' },
   },
 ];

@@ -202,6 +202,23 @@ async function _dioReauthIfNeeded() {
   } finally { _dioReauthBusy = false; }
 }
 window._dioReauthIfNeeded = _dioReauthIfNeeded;
+
+// v538: آف لائن لاگ اِن کا ریکارڈ (پاس ورڈ کا PBKDF2 ہیش، پاس ورڈ خود نہیں) —
+//   وہی شکل جو doLogin لکھتا ہے۔ پاس ورڈ بدلنے پر بھی یہی چلتا ہے، ورنہ
+//   آف لائن صرف پرانا پاس ورڈ چلتا رہتا تھا۔
+async function _dioSavePwVerifier(email, pass) {
+  try {
+    const em = String(email || '').trim().toLowerCase();
+    if (!em || !pass) return false;
+    const h = await _dioHashPin(pass);
+    if (h && h.indexOf('pbkdf2$') === 0) {
+      localStorage.setItem('dio_pw_verifier', JSON.stringify({ email: em, hash: h }));
+      return true;
+    }
+  } catch (_) {}
+  return false;
+}
+window._dioSavePwVerifier = _dioSavePwVerifier;
 window.addEventListener('online', function () { setTimeout(_dioReauthIfNeeded, 800); });
 
 // ══ PIN ہیشنگ (WebCrypto PBKDF2 + نمک) ══════════════════════════════

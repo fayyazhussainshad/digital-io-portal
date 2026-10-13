@@ -121,7 +121,16 @@ async function _toggleRem(id, done) {
 
 async function _deleteRem(id) {
   if (id.startsWith('court_')) return;
-  try { await softDelete("reminder", id, {id, text: r?.text, reminder_date: r?.reminder_date}); } catch(_) {}
+  // v538: yahan `r` kahin bana hi nahi tha — ReferenceError khamoshi se nigla
+  //   jata aur yaaddehani recycle bin mein jaye baghair hamesha ke liye mit jati.
+  //   Ab poora record (bahali ke liye har khana) bin mein jata hai.
+  try {
+    const r = ((await getReminders()) || []).find(x => String(x.id) === String(id));
+    if (r) {
+      const clean = Object.fromEntries(Object.entries(r).filter(([k]) => !k.startsWith('_')));
+      await softDelete('reminder', id, clean);
+    }
+  } catch(_) {}
   await deleteReminder(id);
   showToast('یاددہانی ہٹا دی گئی', 'info');
   await updateBadges();

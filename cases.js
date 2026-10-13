@@ -1055,7 +1055,7 @@ async function wevSave(caseId, firNumber) {
       let fileUrl = null, storagePath = null;
       if (window._wevFile || window._wevDataUrl) {
         let blob, ext;
-        if (window._wevDataUrl) { const res = await fetch(window._wevDataUrl); blob = await res.blob(); ext = 'jpg'; }
+        if (window._wevDataUrl) { blob = dioDataUrlToBlob(window._wevDataUrl); ext = 'jpg'; }   // v538: CSP
         else { blob = window._wevFile; ext = window._wevFile.name.split('.').pop(); }
         const path = `${currentUser?.id||'officer'}/${firNumber}/${Date.now()}_${name.replace(/\s+/g,'_')}.${ext}`;
         const { error: upErr } = await supabaseClient.storage.from('evidence').upload(path, blob, { upsert: true });

@@ -9,6 +9,26 @@
      SYNC  → On reconnect, replay queued ops to Supabase
    ═══════════════════════════════════════════════════════════ */
 
+// ── v538: data-URL → Blob، fetch کے بغیر ──────────────────────────────
+//   ایپ کی CSP (`connect-src`) میں `data:` شامل نہیں — اس لیے fetch('data:…')
+//   براؤزر روک دیتا ہے ("Failed to fetch")۔ اسی وجہ سے کیمرے کی تصویر والی
+//   شہادت محفوظ نہیں ہوتی تھی اور آف لائن لی گئی شہادت کبھی sync نہیں ہوتی
+//   تھی۔ CSP ڈھیلی کرنے کے بجائے یہاں سیدھا تبادلہ (dio-card.js جیسا)۔
+function dioDataUrlToBlob(u) {
+  const s = String(u || '');
+  const comma = s.indexOf(',');
+  const head = comma >= 0 ? s.slice(0, comma) : '';
+  const body = comma >= 0 ? s.slice(comma + 1) : '';
+  const mime = (/^data:([^;,]+)/.exec(head) || [])[1] || 'application/octet-stream';
+  let bin;
+  if (/;base64/i.test(head)) bin = atob(body);
+  else bin = decodeURIComponent(body);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i) & 0xff;
+  return new Blob([arr], { type: mime });
+}
+window.dioDataUrlToBlob = dioDataUrlToBlob;
+
 const _ODB_NAME    = 'digital-io-v2';
 const _ODB_VERSION = 2;          // bumped — adds session_cache store
 let   _odb         = null;
@@ -276,8 +296,7 @@ const offlineStore={
       let uploadData;
       if(typeof fileRec.fileData==='string'&&fileRec.fileData.startsWith('data:')){
         // data-URL from camera — convert to Blob
-        const res=await fetch(fileRec.fileData);
-        uploadData=await res.blob();
+        uploadData=dioDataUrlToBlob(fileRec.fileData);   // v538: fetch نہیں (CSP)
       } else {
         uploadData=new Blob([fileRec.fileData],{type:fileRec.mimeType||'application/octet-stream'});
       }
@@ -291,7 +310,10 @@ const offlineStore={
       const{error:dbErr}=await sb.from('evidence').insert({
         ...data.meta,
         officer_id: data.officerId,
-        file_url:   url?.publicUrl||null,
+        // v538: yahan `url` naam ka variable parha jata tha jo kahin bana hi nahi, is liye
+        //   ReferenceError: file upload ho jati magar shahadat ka DB record kabhi
+        //   na banta (offline li gayi har tasveer/file sync mein atak jati).
+        file_url:   null,
         storage_path: path,
       });
       if(dbErr) throw dbErr;

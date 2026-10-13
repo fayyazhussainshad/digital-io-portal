@@ -397,7 +397,7 @@ async function addEvidenceWithFile(meta, fileInfo) {
   // blob + fileName tay karo
   let blob = null, fileName = '';
   if (fileInfo && fileInfo.dataUrl) {
-    const r = await fetch(fileInfo.dataUrl); blob = await r.blob();
+    blob = dioDataUrlToBlob(fileInfo.dataUrl);   // v538: fetch('data:') کو CSP روکتی تھی
     fileName = ((meta.name || 'evidence').replace(/\s+/g, '_')) + '.jpg';
   } else if (fileInfo && fileInfo.file) {
     blob = fileInfo.file;
