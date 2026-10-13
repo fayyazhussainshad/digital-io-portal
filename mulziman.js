@@ -5,8 +5,6 @@
 
 let _accusedList   = [];
 let _accusedCaseId = null;
-let _accusedPhoto  = null;   // base64 of accused photo
-let _accusedCnicCopy = null; // base64 of CNIC copy
 let _accusedFormType = 'fir'; // 'fir' or 'tahqeeqati'
 
 // Physical description dropdown options
@@ -211,15 +209,15 @@ function _accDdAdd(el, key) {
   el.value = v;
 }
 // Select with default options + saved-custom options + "➕" add row
-function _accCustomSelect(opts, val, fid, key, dir) {
+function _accCustomSelect(opts, val, fid, key, dir, cls) {
   const custom = _accCustomOpts(key);
   const all = opts.slice();
   custom.forEach(c => { if (!all.includes(c)) all.push(c); });
   if (val && !all.includes(val)) all.unshift(val);
-  return `<select class="form-input" id="${fid}" ${dir?`dir="${dir}"`:''} onchange="_accDdAdd(this,'${key}')">
+  return `<select class="${cls||'form-input'}" id="${fid}" ${dir?`dir="${dir}"`:''} onchange="_accDdAdd(this,'${key}')">
     <option value="">—</option>
     ${all.map(o => `<option value="${_escA(o)}" ${val===o?'selected':''}>${_escA(o)}</option>`).join('')}
-    <option value="__add__">اپنی مرضی سے لکھیں</option>
+    <option value="__add__">+ نیا شامل کریں</option>
   </select>`;
 }
 
@@ -250,204 +248,90 @@ function _accKeyNav(e) {
   // Tab, Up/Down and cursor keys in text = native (stay within the field)
 }
 
-// ── ADD / EDIT MODAL ──────────────────────────────────────────
-function _openAccusedForm(id, type) {
+// ── ADD / EDIT — «نیا اندراج — ملزم» (مشترکہ DIO کارڈ، اکتوبر 2026) ──
+//  opts.caseId : Dashboard کے «نیا اندراج» سے — مقدمہ پہلے سے منتخب نہیں
+let _accEditId = null;
+async function _openAccusedForm(id, type, opts) {
   _accInjectCSS();
+  opts = opts || {};
+  const D = window.DIOCard;
   const a = id ? (_accusedList.find(x => x.id === id) || {}) : {};
   _accusedFormType = type || a.accused_type || 'fir';
-  _accusedPhoto = a.photo_url || null;
-  _accusedCnicCopy = a.cnic_copy_url || null;
+  _accEditId = id || null;
+  const photos = (Array.isArray(a.photos) && a.photos.length) ? a.photos : (a.photo_url ? [a.photo_url] : []);
+  D.setFiles('acc-photos', photos);
+  D.setFiles('acc-cnicF', a.cnic_copy_url ? [a.cnic_copy_url] : []);
+  D.setFiles('acc-cnicB', a.cnic_back_url ? [a.cnic_back_url] : []);
 
-  // dropdown WITH "اپنی مرضی" custom-add option, inside a grid cell
-  const dd = (label, opts, val, fid, key, dir) => `
-    <div class="acc-field">
-      <label class="acc-label">${label}</label>
-      ${_accCustomSelect(opts, val, fid, key, dir)}
-    </div>`;
+  const caseId = a.case_id || opts.caseId || (opts.hub ? '' : _accusedCaseId) || '';
+  const typeSel = D.fld({ id: 'acc-type', label: 'ملزم کی قسم', type: 'sel', w: 'w-l',
+    opts: [['fir', 'FIR ملزمان'], ['cross_version', 'کراس ورژن ملزمان']], value: _accusedFormType });
+  const sel = (label, opts2, val, fid, key, w, dir, extra) =>
+    D.fld({ id: fid, label, w, html: _accCustomSelect(opts2, val, fid, key, dir, 'dio-c' + (dir === 'ltr' ? ' ltr' : '')), grow: extra === 'grow', pair: extra === 'pair' });
 
   const body = `
-  <div class="acc-form" style="max-height:74vh;overflow-y:auto;padding:2px 4px;">
-
-    <!-- نام و پتہ | تعلیم | عمر (ایک لائن) -->
-    <div class="acc-gridN">
-      <div class="acc-field">
-        <label class="acc-label">نام و پتہ</label>
-        <input class="form-input" id="acc-name" value="${_escA(a.name)}" placeholder="نام، ولدیت، پتہ" style="text-align:right;">
-      </div>
-      <div class="acc-field">
-        <label class="acc-label">تعلیم</label>
-        ${_accCustomSelect(ACC_TALEEM, a.taleem, 'acc-taleem', 'taleem')}
-      </div>
-      <div class="acc-field">
-        <label class="acc-label">عمر</label>
-        ${_accCustomSelect(ACC_UMAR, a.umar, 'acc-umar', 'umar')}
-      </div>
-    </div>
-
-    <!-- شناختی کارڈ | موبائل | تاریخ گرفتاری | پیشہ (ایک لائن) -->
-    <div class="acc-grid4b" style="margin-top:7px;">
-      <div class="acc-field">
-        <label class="acc-label">شناختی کارڈ</label>
-        <input class="form-input" id="acc-cnic" dir="ltr" maxlength="15" value="${_escA(a.cnic)}" placeholder="00000-0000000-0" oninput="_fmtCnicInput(this)">
-      </div>
-      <div class="acc-field">
-        <label class="acc-label">موبائل</label>
-        <input class="form-input" id="acc-mobile" dir="ltr" maxlength="12" value="${_escA(a.mobile)}" placeholder="0000-0000000" oninput="_fmtMobileInput(this)">
-      </div>
-      <div class="acc-field">
-        <label class="acc-label">تاریخ گرفتاری</label>
-        <div style="display:flex;flex:1;min-width:0;gap:4px;align-items:center;">
-          <input class="form-input" id="acc-arrest-disp" dir="ltr" inputmode="numeric" maxlength="10" placeholder="DD/MM/YYYY" value="${esc(a.arrest_date?_fmtDateDMY(a.arrest_date):'')}" oninput="_accFmtDateInput(this)" style="flex:1;min-width:0;">
-          <div style="position:relative;flex:0 0 auto;">
-            <button title="تاریخ" aria-label="تاریخ" type="button" class="btn btn-secondary btn-sm" style="padding:5px 7px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 6.5h16V20H4z"/><path d="M4 10.5h16"/><path d="M8 3.5v4"/><path d="M16 3.5v4"/></svg></button>
-            <input type="date" id="acc-arrest" value="${_escA(a.arrest_date||'')}" onchange="_accSyncDateFromPicker()" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;">
-          </div>
-        </div>
-      </div>
-      <div class="acc-field">
-        <label class="acc-label">پیشہ</label>
-        <input class="form-input" id="acc-pesha" value="${_escA(a.pesha)}" placeholder="مثلاً: مزدور">
-      </div>
-    </div>
-
-    <!-- حلیہ (رنگ، چہرہ، جسم، قد، نشان — ایک لائن) -->
-    <div class="acc-section">حلیہ</div>
-    <div class="acc-grid5">
-      ${dd('رنگ',   ACC_RANG,   a.rang,   'acc-rang',   'rang')}
-      ${dd('چہرہ',  ACC_CHEHRA, a.chehra, 'acc-chehra', 'chehra')}
-      ${dd('جسم',   ACC_JISM,   a.jism,   'acc-jism',   'jism')}
-      ${dd('قد',    ACC_QAD,    a.qad,    'acc-qad',    'qad', 'ltr')}
-      <div class="acc-field">
-        <label class="acc-label">نشان</label>
-        ${_accCustomSelect(ACC_NISHAN, a.nishan, 'acc-nishan', 'nishan')}
-      </div>
-    </div>
-
-    <!-- Photo + CNIC copy uploads -->
-    <div class="acc-grid" style="margin-top:12px;">
-      <div style="display:flex;flex-direction:column;">
-        <input type="file" id="acc-photo-input" accept="image/*" capture="environment" style="display:none;" onchange="_accPhotoSelect(this)">
-        <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="document.getElementById('acc-photo-input').click()">تصویر ملزم</button>
-        <div id="acc-photo-preview" style="margin-top:6px;text-align:center;">${_accThumb('photo', _accusedPhoto)}</div>
-      </div>
-      <div style="display:flex;flex-direction:column;">
-        <input type="file" id="acc-cnic-input" accept="image/*,application/pdf" style="display:none;" onchange="_accCnicSelect(this)">
-        <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="document.getElementById('acc-cnic-input').click()">شناختی کارڈ کاپی</button>
-        <div id="acc-cnic-preview" style="margin-top:6px;text-align:center;">${_accThumb('cnic', _accusedCnicCopy)}</div>
-      </div>
-    </div>
+  <div class="acc-form">
+    ${await D.caseField(caseId, typeSel)}
+    ${D.nameField('acc-name', a.name, 'نام و پتہ', true)}
+    ${D.row([
+      sel('تعلیم', ACC_TALEEM, a.taleem, 'acc-taleem', 'taleem', 'w-s'),
+      sel('عمر', ACC_UMAR, a.umar, 'acc-umar', 'umar', 'w-m'),
+      D.fld({ id: 'acc-cnic', label: 'شناختی کارڈ', type: 'cnic', value: a.cnic }),
+      D.fld({ id: 'acc-mobile', label: 'موبائل', type: 'mob', value: a.mobile, grow: true })
+    ])}
+    ${D.row([
+      D.fld({ id: 'acc-pesha', label: 'پیشہ', w: 'w-l', grow: true, pair: true, value: a.pesha, ph: 'مثلاً: مزدور' }),
+      D.fld({ id: 'acc-arrest-disp', label: 'تاریخ گرفتاری', type: 'date', pair: true, value: a.arrest_date })
+    ])}
+    ${D.row([
+      sel('رنگ', ACC_RANG, a.rang, 'acc-rang', 'rang', 'w-s'),
+      sel('چہرہ', ACC_CHEHRA, a.chehra, 'acc-chehra', 'chehra', 'w-s'),
+      sel('جسم', ACC_JISM, a.jism, 'acc-jism', 'jism', 'w-m'),
+      sel('قد', ACC_QAD, a.qad, 'acc-qad', 'qad', 'w-xs', 'ltr'),
+      sel('نشان', ACC_NISHAN, a.nishan, 'acc-nishan', 'nishan', 'w-m', null, 'grow')
+    ])}
+    ${D.uploads([
+      ['acc-photos', 'تصاویر ملزم', 'ایک سے زیادہ', true, 6],
+      ['acc-cnicF', 'شناختی کارڈ — سامنے', '', false, 1],
+      ['acc-cnicB', 'شناختی کارڈ — پیچھے', '', false, 1]
+    ])}
+    ${window.DIOPrev ? DIOPrev.panel(a.prev_records) : ''}
   </div>`;
 
-  openModal(id ? 'ملزم میں ترمیم' : 'ملزم درج کریں', body, `
-    <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-    <button class="btn btn-primary" onclick="_saveAccused('${id||''}')">محفوظ کریں</button>
-  `);
-}
-
-// ── IMAGE HANDLING (base64 compressed — offline-safe) ─────────
-function _accPhotoSelect(input) {
-  const f = input.files[0]; if (!f) return;
-  _compressImg(f, 900, 0.78, (b64) => {
-    _accusedPhoto = b64;
-    const p = document.getElementById('acc-photo-preview');
-    if (p) p.innerHTML = _accThumb('photo', b64);
-  });
-}
-function _accCnicSelect(input) {
-  const f = input.files[0]; if (!f) return;
-  if (f.type === 'application/pdf') {
-    const r = new FileReader();
-    r.onload = e => { _accusedCnicCopy = e.target.result; const p=document.getElementById('acc-cnic-preview'); if(p)p.innerHTML=_accThumb('cnic', e.target.result); };
-    r.readAsDataURL(f);
-  } else {
-    _compressImg(f, 1400, 0.8, (b64) => {
-      _accusedCnicCopy = b64;
-      const p = document.getElementById('acc-cnic-preview');
-      if (p) p.innerHTML = _accThumb('cnic', b64);
-    });
+  D.open('ملزم', !!id, body, `_saveAccused('${id || ''}')`);
+  if (window.DIOPrev) {
+    const nameIds = document.getElementById('acc-name') ? ['acc-name'] : ['acc-name-n'];
+    DIOPrev.watch({ nameIds, cnicId: 'acc-cnic', selfTable: 'case_accused', selfId: id || null, caseId: caseId || null });
   }
 }
-// Clickable thumbnail for the form previews (opens viewer with print/download)
-function _accThumb(which, url) {
-  if (!url) return '';
-  const isPdf = /^data:application\/pdf/.test(url);
-  const inner = isPdf
-    ? `<div style="width:120px;height:120px;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:44px;background:var(--bg-card);"><svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>`
-    : `<img src="${esc(url)}" style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">`;
-  return `<div onclick="_accViewCurrent('${which}')" style="cursor:pointer;display:inline-block;">
-      ${inner}
-      <div style="font-size:11px;color:var(--green);margin-top:3px;">منسلک — کھولیں</div>
-    </div>`;
-}
-function _compressImg(file, maxW, quality, cb) {
-  const r = new FileReader();
-  r.onload = e => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const scale = Math.min(1, maxW / img.width);
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-      cb(canvas.toDataURL('image/jpeg', quality));
-    };
-    img.src = e.target.result;
-  };
-  r.readAsDataURL(file);
-}
 
-// ── CNIC / Mobile auto-format ─────────────────────────────────
-function _fmtCnicInput(el) {
-  let v = el.value.replace(/\D/g, '').slice(0, 13);
-  if (v.length > 5) v = v.slice(0,5) + '-' + v.slice(5);
-  if (v.length > 13) v = v.slice(0,13) + '-' + v.slice(13);
-  el.value = v;
-}
-function _fmtMobileInput(el) {
-  let v = el.value.replace(/\D/g, '').slice(0, 11);
-  if (v.length > 4) v = v.slice(0,4) + '-' + v.slice(4);
-  el.value = v;
-}
 
-// ── DATE (always shown DD/MM/YYYY; stored YYYY-MM-DD) ─────────
-function _accFmtDateInput(el) {
-  let v = el.value.replace(/\D/g, '').slice(0, 8); // ddmmyyyy
-  if (v.length >= 5) v = v.slice(0,2) + '/' + v.slice(2,4) + '/' + v.slice(4);
-  else if (v.length >= 3) v = v.slice(0,2) + '/' + v.slice(2);
-  el.value = v;
-  const hp = document.getElementById('acc-arrest');
-  if (hp) hp.value = _accDMYtoISO(v) || '';
-}
-function _accDMYtoISO(dmy) {
-  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec((dmy || '').trim());
-  if (!m) return '';
-  const d = +m[1], mo = +m[2], y = +m[3];
-  const dt = new Date(y, mo - 1, d);
-  if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return '';
-  return m[3] + '-' + m[2] + '-' + m[1];
-}
-function _accSyncDateFromPicker() {
-  const hp = document.getElementById('acc-arrest');
-  const disp = document.getElementById('acc-arrest-disp');
-  if (hp && disp) disp.value = hp.value ? _fmtDateDMY(hp.value) : '';
-}
+
+
 
 // ── SAVE ──────────────────────────────────────────────────────
 async function _saveAccused(id) {
-  const name = document.getElementById('acc-name')?.value.trim();
+  const D = window.DIOCard;
+  const name = D.readName('acc-name');
   if (!name) { showToast('ملزم کا نام لکھیں', 'error'); return; }
+  const cs = D.readCase();
+  const caseId = cs ? cs.id : (document.getElementById('dio-case') ? null : _accusedCaseId);   // کارڈ میں مقدمہ کا خانہ ہو تو وہی لازمی
+  if (!caseId) { showToast('مقدمہ منتخب کریں', 'error'); document.getElementById('dio-case')?.focus(); return; }
 
-  // value of a dropdown, ignoring the "➕" add sentinel
-  const gv = (id) => { const v = document.getElementById(id)?.value; return (v && v !== '__add__') ? v : null; };
-  // arrest date: read the DD/MM/YYYY display, store as YYYY-MM-DD
-  const arrestISO = _accDMYtoISO(document.getElementById('acc-arrest-disp')?.value)
-                 || (document.getElementById('acc-arrest')?.value || null);
+  // value of a dropdown, ignoring the "+" add sentinel
+  const gv = (fid) => { const v = document.getElementById(fid)?.value; return (v && v !== '__add__') ? v : null; };
+  const arrestDisp = document.getElementById('acc-arrest-disp')?.value.trim() || '';
+  const arrestISO = D.dmyToIso(arrestDisp);
+  if (arrestDisp && !arrestISO) { showToast('تاریخ گرفتاری درست لکھیں (DD/MM/YYYY)', 'error'); return; }
+  const cnic = document.getElementById('acc-cnic')?.value.trim() || '';
+  if (cnic && cnic.replace(/\D/g, '').length !== 13) { showToast('شناختی کارڈ کے 13 ہندسے لکھیں', 'error'); return; }
+  const photos = D.getFiles('acc-photos');
 
   const rec = {
-    case_id: _accusedCaseId,
+    case_id: caseId,
     name,
-    accused_type: _accusedFormType || 'fir',
-    cnic: document.getElementById('acc-cnic')?.value.trim() || null,
+    accused_type: document.getElementById('acc-type')?.value || _accusedFormType || 'fir',
+    cnic: cnic || null,
     mobile: document.getElementById('acc-mobile')?.value.trim() || null,
     arrest_date: arrestISO || null,
     pesha: document.getElementById('acc-pesha')?.value.trim() || null,
@@ -458,33 +342,27 @@ async function _saveAccused(id) {
     qad: gv('acc-qad'),
     umar: gv('acc-umar'),
     nishan: gv('acc-nishan'),
-    photo_url: _accusedPhoto || null,
-    cnic_copy_url: _accusedCnicCopy || null,
+    photo_url: photos[0] || null,
+    cnic_copy_url: D.getFiles('acc-cnicF')[0] || null,
+    // نئے کالم (sql/101) — نہ ہوں تو ان کے بغیر محفوظ ہوگا
+    photos: photos,
+    cnic_back_url: D.getFiles('acc-cnicB')[0] || null,
+    prev_records: window.DIOPrev ? DIOPrev.read() : [],
   };
   try {
     const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
     if (oid) rec.officer_id = oid;
-    let savedRec = null;
-    if (id) {
-      const { data } = await supabaseClient.from('case_accused').update(rec).eq('id', id).select().single();
-      savedRec = data || { ...rec, id };
-      // Update local list
-      const idx = _accusedList.findIndex(x => x.id === id);
-      if (idx >= 0) _accusedList[idx] = savedRec;
-    } else {
-      const { data, error } = await supabaseClient.from('case_accused').insert(rec).select().single();
-      if (error) throw error;
-      savedRec = data ? { ...data, accused_type: data.accused_type || rec.accused_type } : { ...rec, id: 'tmp_' + Date.now() };
-      _accusedList.push(savedRec);
-    }
-    // Update offline cache
-    try { localStorage.setItem('dio_accused_' + _accusedCaseId, JSON.stringify(_accusedList)); } catch(_) {}
-    _accusedPhoto = null; _accusedCnicCopy = null;
+    await D.safeWrite('case_accused', id ? 'update' : 'insert', rec, id, ['photos', 'cnic_back_url', 'prev_records']);
     closeModal();
-    await _loadAccused();    // reload from DB (gets ALL records, both types)
-    _renderAccusedArea();
-    showToast('ملزم محفوظ ہو گیا', 'success');
-  } catch(e) { showToast('' + e.message, 'error'); }
+    // اسی مقدمے کی ملزمان فہرست کھلی ہو تو تازہ کرو (Dashboard سے اندراج پر صفحہ نہ بدلے)
+    if (String(caseId) === String(_accusedCaseId) && document.getElementById('acc-list')) {
+      await _loadAccused();
+      _renderAccusedArea();
+    } else {
+      try { localStorage.removeItem('dio_accused_' + caseId); } catch (_) {}
+    }
+    showToast('ملزم محفوظ ہو گیا' + (cs && cs.fir && String(caseId) !== String(_accusedCaseId) ? ' — مقدمہ ' + cs.fir : ''), 'success');
+  } catch (e) { showToast('' + (e && e.message || e), 'error'); }
 }
 
 async function _deleteAccused(id) {
@@ -512,17 +390,15 @@ function _accViewDetail(id) {
     a.nishan && ('نشان: '  + a.nishan)
   ].filter(Boolean).join(' ، ');
 
-  const thumbs = (a.photo_url || a.cnic_copy_url) ? `
-    <div style="display:flex;gap:14px;justify-content:center;margin-top:12px;flex-wrap:wrap;">
-      ${a.photo_url ? `<div style="text-align:center;">
-        <img src="${esc(a.photo_url)}" onclick="_accViewDoc('${_dioJsHtml(a.id)}','photo')" style="width:120px;height:120px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--border);">
-        <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">تصویر (کھولیں)</div></div>` : ''}
-      ${a.cnic_copy_url ? `<div style="text-align:center;">
-        ${/^data:application\/pdf/.test(a.cnic_copy_url)
-          ? `<div onclick="_accViewDoc('${a.id}','cnic')" style="width:120px;height:120px;border-radius:8px;cursor:pointer;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:44px;background:var(--bg-card);"><svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>`
-          : `<img src="${esc(a.cnic_copy_url)}" onclick="_accViewDoc('${_dioJsHtml(a.id)}','cnic')" style="width:120px;height:120px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--border);">`}
-        <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">شناختی کاپی (کھولیں)</div></div>` : ''}
-    </div>` : '';
+  // تمام تصاویر + شناختی کارڈ (دونوں رخ) — دبانے پر دیکھیں / زوم / ڈاؤن لوڈ / پرنٹ / شیئر
+  window._accDocs = _accDocList(a);
+  const thumbs = window._accDocs.length
+    ? '<div style="display:flex;gap:12px;justify-content:center;margin-top:12px;flex-wrap:wrap;">' + window._accDocs.map(_accDocThumb).join('') + '</div>'
+    : '';
+  const prevs = (Array.isArray(a.prev_records) && a.prev_records.length && window.DIOPrev)
+    ? '<div style="margin-top:10px;"><div style="font-weight:700;">سابقہ ریکارڈ</div>' +
+      a.prev_records.map(r => '<div style="padding:4px 0;border-bottom:1px dashed var(--border);font-size:12pt;">' + _escA(DIOPrev.toText(r)) + '</div>').join('') + '</div>'
+    : '';
 
   const body = `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
     ${row('نام و پتہ', a.name)}
@@ -533,6 +409,7 @@ function _accViewDetail(id) {
     ${row('عمر', a.umar)}
     ${row('تاریخ گرفتاری', a.arrest_date ? _fmtDateDMY(a.arrest_date) : '')}
     ${row('حلیہ', haleeya)}
+    ${prevs}
     ${thumbs}
   </div>`;
 
@@ -542,27 +419,34 @@ function _accViewDetail(id) {
   `);
 }
 
+// ملزم کی تمام فائلیں (پرانا ڈیٹا: صرف photo_url / cnic_copy_url)
+function _accDocList(a) {
+  const out = [];
+  const photos = (Array.isArray(a.photos) && a.photos.length) ? a.photos : (a.photo_url ? [a.photo_url] : []);
+  photos.forEach((u, i) => { if (u) out.push({ url: u, label: 'تصویر ' + (i + 1), name: 'photo_' + (i + 1) }); });
+  if (a.cnic_copy_url) out.push({ url: a.cnic_copy_url, label: 'شناختی کارڈ — سامنے', name: 'cnic_front' });
+  if (a.cnic_back_url) out.push({ url: a.cnic_back_url, label: 'شناختی کارڈ — پیچھے', name: 'cnic_back' });
+  out.forEach(d => { d.name = ((window.DIOCard ? DIOCard.coreName(a.name) : a.name) || 'mulzim').replace(/\s+/g, '_') + '_' + d.name; });
+  return out;
+}
+function _accDocThumb(d, i) {
+  const pdf = /^data:application\/pdf/.test(d.url);
+  const inner = pdf
+    ? '<div onclick="_accOpenDoc(' + i + ')" style="width:96px;height:96px;border-radius:8px;cursor:pointer;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14pt;background:var(--bg-card);">PDF</div>'
+    : '<img src="' + esc(d.url) + '" alt="" onclick="_accOpenDoc(' + i + ')" style="width:96px;height:96px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--border);">';
+  return '<div style="text-align:center;">' + inner + '<div style="font-size:10.5pt;color:var(--text-muted);margin-top:3px;">' + _escA(d.label) + '</div></div>';
+}
+function _accOpenDoc(i) {
+  const d = (window._accDocs || [])[i];
+  if (!d) return;
+  if (window.DIOCard) DIOCard.viewer(d.url, d.name, d.label);
+  else _accOpenViewer(d.url, d.name, d.label);
+}
+
 // ── PHOTO / CNIC-COPY VIEWER (view • print • download) ─────────
 let _accViewUrl = null;
 let _accViewName = 'file';
 
-// From a saved record (detail view / list card)
-function _accViewDoc(id, which) {
-  const a = _accusedList.find(x => x.id === id);
-  if (!a) return;
-  const url = which === 'cnic' ? a.cnic_copy_url : a.photo_url;
-  if (!url) { showToast('کوئی فائل موجود نہیں', 'info'); return; }
-  _accOpenViewer(url,
-    ((a.name || 'mulzim').replace(/\s+/g,'_')) + '_' + which,
-    which === 'cnic' ? 'شناختی کارڈ کاپی' : 'تصویر ملزم');
-}
-// From the OPEN edit form (uses in-memory just-attached files, keeps form alive)
-function _accViewCurrent(which) {
-  const url = which === 'cnic' ? _accusedCnicCopy : _accusedPhoto;
-  if (!url) return;
-  _accOpenViewer(url, 'mulzim_' + which,
-    which === 'cnic' ? 'شناختی کارڈ کاپی' : 'تصویر ملزم');
-}
 // Independent overlay lightbox (does NOT replace whatever modal is behind it)
 function _accOpenViewer(url, name, title) {
   _accViewUrl = url;

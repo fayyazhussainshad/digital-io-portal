@@ -193,7 +193,7 @@ function _dashTile(t, big) {
 function _dashMainTiles(totalCases, pendingRem) {
   const isAdmin = (typeof canAccess === 'function') && canAccess('admin');
   const primary = [
-    { l:'نیا اندراج',          ic:'add',    go:"window.openAddCaseModal&&openAddCaseModal()", tone:'brand' },
+    { l:'نیا اندراج',          ic:'add',    go:"window.DIOEntry?DIOEntry.hub():(window.openAddCaseModal&&openAddCaseModal())", tone:'brand' },
     { l:'میرے مقدمات',         ic:'cases',  go:"dioOpenCases('')", badge: totalCases },
     { l:'یاددہانیاں',          ic:'rem',    go:"showPage('reminders',null)", badge: pendingRem },
     { l:'واقعاتی رپورٹ',       ic:'inc',    go:"showPage('incident',null)" },

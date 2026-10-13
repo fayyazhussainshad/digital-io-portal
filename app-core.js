@@ -156,6 +156,8 @@ function showPage(page, el) {
     return;
   }
   window._activePage = page;  // Track current page for background refresh
+  // صفحہ بدلنے پر آواز سے لکھنا بند (پہلے mic پچھلے صفحے پر بھی سنتا رہتا تھا)
+  if (typeof window._globalMicStop === 'function') { try { window._globalMicStop(); } catch (_) {} }
   window._inWorkspace = false;  // Left any workspace when navigating via menu
   document.body.classList.remove('workspace-mode');  // Restore topbar on navigation
 
@@ -292,6 +294,9 @@ if (typeof window.getIOSignLine !== 'function') {
 //   • لاگ آؤٹ پر سرور کی طرف سے بھی منسوخ ہو جاتا ہے
 // ═══════════════════════════════════════════════════════════════════
 function openModal(title, body, footer) {
+  // ہر بار کارڈ کا سائز پہلے DEFAULT پر — کسی پچھلے کارڈ (FIR متن / 5-C) کی
+  // چوڑائی یا اونچائی اگلے کارڈ میں منتقل نہ ہو (نیا اندراج rule، اکتوبر 2026)
+  _dioResetModalCard();
   const t = document.getElementById('modal-title');
   const b = document.getElementById('modal-body');
   const f = document.getElementById('modal-footer');
@@ -307,12 +312,22 @@ function openModal(title, body, footer) {
   // Auto text-direction for fields inside the modal
   if (b && typeof applyAutoDirection === 'function') setTimeout(() => applyAutoDirection(b), 40);
 }
+function _dioResetModalCard() {
+  const _mc = document.querySelector('#modal-backdrop .modal-card');
+  if (_mc) {
+    _mc.style.maxWidth = '980px'; _mc.style.width = '100%'; _mc.style.minHeight = '';
+    _mc.classList.remove('dio-entry');
+  }
+  const bd = document.getElementById('modal-backdrop');
+  if (bd) bd.style.padding = '16px';
+}
 function closeModal() {
   const bd = document.getElementById('modal-backdrop');
   if (bd) bd.style.display = 'none';
-  // مشترکہ modal card کی چوڑائی واپس default (کیس فارم اسے 760px کرتا ہے — باقی modals متاثر نہ ہوں)
-  const _mc = document.querySelector('#modal-backdrop .modal-card');
-  if (_mc) _mc.style.maxWidth = '980px';
+  // مشترکہ modal card کا سائز واپس default (کیس فارم/FIR/5-C اسے بدلتے ہیں — باقی modals متاثر نہ ہوں)
+  _dioResetModalCard();
+  // کارڈ بند ہو تو آواز سے لکھنا بھی بند
+  if (typeof window._globalMicStop === 'function') { try { window._globalMicStop(); } catch (_) {} }
 }
 
 // ── TOAST ─────────────────────────────────────────────────────
@@ -632,9 +647,10 @@ function autoFormatDate(input) {
   // مہینہ: 01–12 (12 سے آگے نہ جائے)
   if (mm.length === 2) { const n = +mm; if (n > 12) mm = '12'; else if (n === 0) mm = '01'; }
   // سال: زیادہ سے زیادہ 4 ہندسے (yy پہلے ہی 4 پر محدود)
+  // نظام کا اصول: تاریخ ہر جگہ DD/MM/YYYY (پرانی DD-MM-YYYY بھی ہر جگہ پڑھی جاتی ہے)
   let out = dd;
-  if (s.length > 2) out += '-' + mm;
-  if (s.length > 4) out += '-' + yy;
+  if (s.length > 2) out += '/' + mm;
+  if (s.length > 4) out += '/' + yy;
   input.value = out;
 }
 
@@ -642,7 +658,7 @@ function autoFormatDate(input) {
 function _dioValidDate(s) {
   s = (s || '').trim();
   if (!s) return true;
-  const m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(s);
+  const m = /^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/.exec(s);   // DD/MM/YYYY (نیا) یا DD-MM-YYYY (پرانا)
   if (!m) return false;                          // مکمل 4-ہندسی سال نہ ہو تو غلط (مثلاً سال "00")
   const d = +m[1], mo = +m[2];
   return d >= 1 && d <= 31 && mo >= 1 && mo <= 12;
@@ -859,24 +875,6 @@ document.addEventListener('click',function(e){
   if(btn&&!btn.closest('.nav-item')){const t=(btn.textContent||btn.title||'').trim().slice(0,30);if(t)_logUsage('btn:'+t);}
 },true);
 
-// ── VOICE INPUT ───────────────────────────────────────────────
-function voiceType(targetId, btnId) {
-  if (!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)) {
-    showToast('آواز کی سہولت دستیاب نہیں','warn'); return;
-  }
-  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
-  const rec = new SR();
-  rec.lang = 'ur-PK'; rec.continuous = false; rec.interimResults = false;
-  const btn = document.getElementById(btnId);
-  if (btn) { btn.innerHTML="<svg viewBox='0 0 24 24' width='15' height='15' aria-hidden='true'><circle cx='12' cy='12' r='6' fill='currentColor'/></svg>"; btn.disabled=true; }
-  rec.onresult = e => {
-    const inp = document.getElementById(targetId);
-    if (inp) { inp.value += (inp.value?' ':'')+e.results[0][0].transcript; inp.dispatchEvent(new Event('input')); }
-  };
-  rec.onerror = () => showToast('آواز سننے میں مشکل','warn');
-  rec.onend   = () => { if(btn){btn.textContent='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>';btn.disabled=false;} };
-  rec.start();
-}
 
 /* Theme chunne ka khana.
    PEHLE: sirf 5 theme dikhti thin (dark/light/forest/ocean/sunset)

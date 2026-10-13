@@ -623,3 +623,25 @@ body:has(#login-screen:not([style*="display: none"]):not([style*="display:none"]
   color: #9a6b00 !important; font-size: 11pt !important; line-height: 1.9 !important;
   text-align: center !important; max-width: 320px; margin-inline: auto;
 }
+
+/* ═══ SYSTEM RULE (اکتوبر 2026): سب سے اوپر «Digital IO» + «تفتیشی افسر کا چھوٹو»
+   — Mobile پر بھی، اور درمیان میں (پہلے mobile پر دائیں کونے میں صرف صفحے کا نام تھا)۔
+   صفحے کا نام (#topbar-title) DOM میں رہتا ہے (setupRealtimeSync اسی کو پڑھتا ہے)،
+   mobile پر صرف نظر سے ہٹایا گیا — ہر صفحے کا اپنا عنوان پہلے ہی صفحے پر ہے۔ ═══ */
+@media screen and (max-width: 760px) {
+  #main-app .topbar { position: relative; }
+  #main-app .topbar .dio-tb-brand {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 0; max-width: 48vw; pointer-events: none; line-height: 1.15;
+  }
+  #main-app .topbar .dio-tb-name {
+    display: inline !important; font-size: 12pt !important; line-height: 1.2 !important;
+  }
+  #main-app .topbar .dio-tb-tag {
+    display: inline !important; font-size: 9.5pt !important; line-height: 1.55 !important;
+    padding: 0 !important; border: 0 !important; max-width: 100%;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  #main-app .topbar .dio-tb-sub { display: none !important; }
+}

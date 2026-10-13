@@ -36,22 +36,63 @@
   var restarts = 0;            // pe-dar-pe dobara chalne ki ginti
   var lastStart = 0;
 
+  /* SYSTEM RULE (اکتوبر 2026):
+     • Mic صرف DESKTOP پر — mobile پر نہیں (وہاں keyboard کا اپنا mic ہے)
+     • صرف لکھنے والی جگہ پر: tairta button tab hi nazar aata hai jab
+       cursor kisi likhne wale khane mein ho. «نیا اندراج» کارڈ میں mic
+       کارڈ کے footer میں ہے، is liye wahan tairta button nahi.
+     • شناختی کارڈ / موبائل / تاریخ / نمبر والے خانوں میں آواز نہیں جاتی
+       (اردو آواز سے وہاں غلط اندراج ہوتا تھا)۔ */
+  var PHONE_Q = '(max-width: 760px)';
+  function isPhone() { try { return window.matchMedia(PHONE_Q).matches; } catch (_) { return false; } }
+
   // Kaun si cheez "likhne wali field" hai
   function isField(el) {
     if (!el || el.nodeType !== 1) return false;
     if (el.isContentEditable) return true;
     var t = (el.tagName || '').toLowerCase();
+    if (el.readOnly || el.disabled) return false;
+    if (el.getAttribute('data-fmt')) return false;              // CNIC / موبائل / تاریخ / وقت
     if (t === 'textarea') return true;
     if (t === 'input') {
       var ty = (el.type || 'text').toLowerCase();
-      return ['text', 'search', 'url', 'tel', 'email', 'number', ''].indexOf(ty) !== -1;
+      if (['text', 'search', ''].indexOf(ty) === -1) return false;
+      var im = (el.getAttribute('inputmode') || '').toLowerCase();
+      if (im === 'numeric' || im === 'tel' || im === 'decimal' || im === 'email') return false;
+      if ((el.getAttribute('dir') || '').toLowerCase() === 'ltr') return false;   // English/ہندسوں والے خانے
+      return true;
     }
     return false;
+  }
+  // جہاں لکھنے کا کام نہیں — وہاں tairta mic نہیں (کارڈ/modal کے اندر کی بات الگ)
+  var NO_MIC_PAGES = ['dashboard', 'search', 'settings', 'admin', 'backup', 'bin', 'performance', 'help'];
+  function noMicHere(el) {
+    if (el && el.closest && el.closest('#modal-backdrop')) return false;
+    if (el && (/search/i.test(el.id || '') || (el.type || '').toLowerCase() === 'search')) return true;
+    return NO_MIC_PAGES.indexOf(window._activePage) !== -1 && !window._inWorkspace;
+  }
+  function inEntryCard(el) {
+    return !!(el && el.closest && el.closest('#modal-backdrop .modal-card.dio-entry'));
+  }
+  // Tairta button: sirf desktop + likhne wala khana + kaarḍ ke bahar
+  function updateVisible() {
+    var b = document.getElementById('global-mic-btn');
+    if (!b) return;
+    // پورے صفحے والے editor کی پٹی میں اپنا mic (#voice-btn) ہو تو tairta button نہیں
+    var vb = document.getElementById('voice-btn');
+    var hasBarMic = !!(vb && vb.offsetParent !== null);
+    var ae = document.activeElement;
+    var show = !isPhone() && !hasBarMic && (wantOn || (isField(ae) && !inEntryCard(ae) && !noMicHere(ae)));
+    b.style.display = show ? '' : 'none';
   }
 
   // Cursor jis field mein gaya, usay yaad rakho
   document.addEventListener('focusin', function (e) {
     if (isField(e.target)) lastField = e.target;
+    updateVisible();
+  }, true);
+  document.addEventListener('focusout', function () {
+    setTimeout(updateVisible, 150);
   }, true);
   // contenteditable mein cursor ki theek jagah yaad rakho
   document.addEventListener('selectionchange', function () {
@@ -107,8 +148,19 @@
     '<rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor"/></svg>';
 
   function setBtn(on) {
+    var cb = document.getElementById('dio-card-mic');          // کارڈ کے footer والا mic
+    if (cb) {
+      cb.setAttribute('aria-pressed', on ? 'true' : 'false');
+      var lbl = on ? '\u0633\u0646 \u0631\u06c1\u0627 \u06c1\u06d2\u2026 \u0628\u0646\u062f \u06a9\u0631\u06cc\u06ba' : '\u0622\u0648\u0627\u0632 \u0633\u06d2 \u0644\u06a9\u06be\u06cc\u06ba';
+      var svg = cb.querySelector('svg');
+      cb.textContent = lbl;
+      if (svg) cb.insertBefore(svg, cb.firstChild);
+    }
+    var vb = document.getElementById('voice-btn');
+    if (vb) vb.classList.toggle('active', !!on);
     var b = document.getElementById('global-mic-btn');
-    if (!b) return;
+    if (!b) { return; }
+    updateVisible();
     b.classList.toggle('rec', !!on);
     b.innerHTML = on ? ICON_REC : ICON_MIC;
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -199,11 +251,18 @@
   }
 
   function start() {
+    if (isPhone()) return;                                      // mobile par mic nahi
     var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
       say('\u06cc\u06c1 \u0628\u0631\u0627\u0624\u0632\u0631 \u0622\u0648\u0627\u0632 \u0633\u06d2 \u0644\u06a9\u06be\u0646\u06d2 \u06a9\u06cc \u0633\u06c1\u0648\u0644\u062a \u0646\u06c1\u06cc\u06ba \u062f\u06cc\u062a\u0627', false);
       setTimeout(function () { say(''); }, 4500);
       return;
+    }
+    if ((!lastField || !document.body.contains(lastField) || !isField(lastField)) && document.querySelector('.modal-card.dio-entry')) {
+      // کارڈ میں ابھی کسی خانے پر cursor نہیں — پہلا لکھنے والا خانہ لو
+      var first = Array.prototype.slice.call(document.querySelectorAll('.modal-card.dio-entry input, .modal-card.dio-entry textarea'))
+        .filter(function (x) { return isField(x) && x.offsetParent !== null; })[0];
+      if (first) { lastField = first; try { first.focus(); } catch (_) {} }
     }
     if (!lastField || !document.body.contains(lastField)) {
       say('\u067e\u06c1\u0644\u06d2 \u0627\u0633 \u062e\u0627\u0646\u06d2 \u067e\u0631 \u06a9\u0644\u06a9 \u06a9\u0631\u06cc\u06ba \u062c\u06c1\u0627\u06ba \u0644\u06a9\u06be\u0646\u0627 \u06c1\u06d2\u060c \u067e\u06be\u0631 \u0645\u0627\u0626\u06cc\u06a9 \u062f\u0628\u0627\u0626\u06cc\u06ba', false);
@@ -232,6 +291,7 @@
     // mousedown par focus na chhine (warna cursor field se nikal jata hai)
     btn.addEventListener('mousedown', function (e) { e.preventDefault(); });
     btn.addEventListener('click', function (e) { e.preventDefault(); toggle(); });
+    btn.style.display = 'none';          // shuru mein chhupa — likhne wale khane par aata hai
     document.body.appendChild(btn);
 
     // Sunta hua matn dikhane wali patti
@@ -275,7 +335,8 @@
       'inset-block-end:calc(80px + env(safe-area-inset-bottom,0px));}' +
       'body.dio-hasthumb #global-mic-live{' +
       'inset-block-end:calc(136px + env(safe-area-inset-bottom,0px));}}' +
-      '@media print{#global-mic-btn,#global-mic-live{display:none !important;}}';
+      '@media print{#global-mic-btn,#global-mic-live{display:none !important;}}' +
+      '@media (max-width:760px){#global-mic-btn,#global-mic-live,.dio-voice-grp{display:none !important;}}';
     document.head.appendChild(css);
   }
 
@@ -284,5 +345,8 @@
   } else {
     mount();
   }
-  window._globalMicStop = stop;      // safhe badalne par band karne ke liye
+  window._globalMicStop = stop;      // safhe badalne / کارڈ بند ہونے par band karne ke liye
+  window._globalMicToggle = toggle;  // «نیا اندراج» کارڈ کے footer والا mic
+  window._globalMicIsField = isField;
+  try { window.matchMedia(PHONE_Q).addEventListener('change', function () { if (isPhone()) stop(); updateVisible(); }); } catch (_) {}
 })();

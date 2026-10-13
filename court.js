@@ -138,6 +138,8 @@ function _courtCard(d, isPast=false) {
 
 // ── ADD / EDIT ────────────────────────────────────────────────
 async function _openAddCourtDate(existing) {
+  // «نیا اندراج — پیشی» — پیشی اور یاددہانی کا مشترکہ کارڈ (dio-entry.js)
+  if (window.DIOEntry && window.DIOCard) return DIOEntry.peshi('peshi', existing || null);
   // Load cases for dropdown
   const cases = await getCases().catch(()=>[]);
   const e = existing || {};

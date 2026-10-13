@@ -176,9 +176,9 @@ function buildWordToolbar(editorId, opts) {
   '</div><div class="wb-div"></div>';
 
   // ── VOICE ─────────────────────────────────────────────────
-  html += '<div class="wb-grp">'+
+  html += '<div class="wb-grp dio-voice-grp">'+
     '<div class="wb-gbody">'+
-      '<button class="wb-big" id="voice-btn" onclick="toggleVoiceInput()" title="Urdu Voice Input"><span class="wb-ico">🎙️</span><span class="wb-blab">آواز</span></button>'+
+      '<button class="wb-big" id="voice-btn" onmousedown="event.preventDefault()" onclick="window._globalMicToggle?_globalMicToggle():toggleVoiceInput()" title="آواز سے لکھیں (صرف Desktop)"><span class="wb-ico">🎙️</span><span class="wb-blab">آواز</span></button>'+
     '</div>'+
     '<div class="wb-glab">Voice</div>'+
   '</div>';

@@ -46,7 +46,7 @@ function _stRender() {
   const area = _stArea();
   if (!area) return;
   area.innerHTML = `
-  <div style="display:flex;flex-direction:column;height:100%;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
+  <div id="st-area" style="display:flex;flex-direction:column;height:100%;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
     <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg-secondary);">
       <div class="dio-hs1" style="font-weight:700;">ہمراہی ملازمان</div>
       <button class="btn btn-primary btn-sm dio-add-btn" onclick="_stForm(null)">ملازم شامل کریں</button>
@@ -79,43 +79,43 @@ function _stCard(s) {
   </div>`;
 }
 
-function _stForm(id) {
+// «نیا اندراج — ہمراہی ملازم» — مشترکہ DIO کارڈ (اکتوبر 2026)
+//   نام اور عہدہ ایک سطر میں؛ opts.caseId: Dashboard کے «نیا اندراج» سے
+async function _stForm(id, opts) {
+  opts = opts || {};
+  const D = window.DIOCard;
   const s = id ? (_stList.find(x => x.id === id) || {}) : {};
-  const inp = 'width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:14px;';
-  openModal(id ? 'ملازم میں ترمیم' : 'ملازم شامل کریں', `
-    <div style="direction:rtl;display:flex;flex-direction:column;gap:10px;font-family:'Jameel Noori Nastaleeq',serif;">
-      <div><label style="font-size:13px;">نام</label>
-        <input id="st-name" type="text" value="${esc(s.name||'')}" placeholder="ملازم کا نام" style="${inp}direction:rtl;"></div>
-      <div><label style="font-size:13px;">عہدہ</label>
-        <select id="st-rank" style="${inp}">
-          <option value="">— منتخب کریں —</option>
-          ${ST_RANKS.map(r=>`<option value="${r.v}" ${s.rank===r.v?'selected':''}>${r.label}</option>`).join('')}
-        </select></div>
-      <div><label style="font-size:13px;">محکمانہ نمبر</label>
-        <input id="st-service" type="text" dir="ltr" value="${esc(s.service_number||'')}" placeholder="866/M" style="${inp}direction:ltr;text-align:left;"></div>
-      <div><label style="font-size:13px;">سیل نمبر</label>
-        <input id="st-mobile" type="text" dir="ltr" value="${esc(s.mobile||'')}" placeholder="0000-0000000" style="${inp}direction:ltr;text-align:left;"></div>
-      <div><label style="font-size:13px;">شناختی کارڈ</label>
-        <input id="st-cnic" type="text" dir="ltr" value="${esc(s.cnic||'')}" placeholder="00000-0000000-0" style="${inp}direction:ltr;text-align:left;"></div>
-    </div>
-  `, `
-    <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-    <button class="btn btn-primary" onclick="_stSave('${id||''}')">محفوظ کریں</button>
-  `);
+  const caseId = s.case_id || opts.caseId || (opts.hub ? '' : _stCaseId) || '';
+  const body = `
+    ${await D.caseField(caseId)}
+    ${D.row([
+      D.fld({ id: 'st-name', label: 'نام', req: true, w: 'w-l', grow: true, value: s.name, ph: 'ملازم کا نام' }),
+      D.fld({ id: 'st-rank', label: 'عہدہ', type: 'sel', w: 'w-l', value: s.rank || '',
+        opts: [['', '— منتخب کریں —']].concat(ST_RANKS.map(r => [r.v, r.label])) })
+    ])}
+    ${D.row([
+      D.fld({ id: 'st-service', label: 'محکمانہ نمبر', ltr: true, w: 'w-m', value: s.service_number, ph: '866/M' }),
+      D.fld({ id: 'st-mobile', label: 'سیل نمبر', type: 'mob', value: s.mobile }),
+      D.fld({ id: 'st-cnic', label: 'شناختی کارڈ', type: 'cnic', value: s.cnic, grow: true })
+    ])}`;
+  D.open('ہمراہی ملازم', !!id, body, `_stSave('${id || ''}')`);
 }
 window._stForm = _stForm;
 
 async function _stSave(id) {
   const g = (x) => (document.getElementById(x)||{}).value || '';
+  const cs = window.DIOCard ? DIOCard.readCase() : null;
+  const caseId = cs ? cs.id : (document.getElementById('dio-case') ? null : _stCaseId);   // کارڈ میں مقدمہ کا خانہ ہو تو وہی لازمی
   const rec = {
-    case_id: _stCaseId,
+    case_id: caseId,
     name: g('st-name').trim(),
     rank: g('st-rank'),
-    service_number: g('st-service'),
-    mobile: g('st-mobile'),
-    cnic: g('st-cnic'),
+    service_number: g('st-service').trim(),
+    mobile: g('st-mobile').trim(),
+    cnic: g('st-cnic').trim(),
   };
   if (!rec.name) { showToast('نام ضروری ہے','error'); return; }
+  if (!caseId) { showToast('مقدمہ منتخب کریں','error'); return; }
   try {
     const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
     if (oid) rec.officer_id = oid;
@@ -134,9 +134,14 @@ async function _stSave(id) {
     if (error) throw error;
 
     closeModal();
-    await _stLoad();
-    _stRender();
-    showToast('ملازم محفوظ ہو گیا', 'success');
+    // اسی مقدمے کی فہرست کھلی ہو تو تازہ کرو (Dashboard سے اندراج پر صفحہ نہ بدلے)
+    if (String(caseId) === String(_stCaseId) && document.getElementById('st-area')) {
+      await _stLoad();
+      _stRender();
+    } else {
+      try { localStorage.removeItem('dio_staff_' + caseId); } catch (_) {}
+    }
+    showToast('ملازم محفوظ ہو گیا' + (cs && cs.fir && String(caseId) !== String(_stCaseId) ? ' — مقدمہ ' + cs.fir : ''), 'success');
   } catch(e) {
     showToast('محفوظ نہیں ہوا: ' + (e.message||'') + ' — SQL ٹیبل چیک کریں', 'error', 6000);
   }

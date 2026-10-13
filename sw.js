@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v530
+   DIGITAL IO — SERVICE WORKER v532
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v530';
+const CACHE_NAME = 'digital-io-v532';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -51,6 +51,9 @@ const CORE_ASSETS = [
   '/saved-docs.js',
   '/darkhwastain.js',
   '/global-mic.js',
+  '/dio-card.js',
+  '/dio-prev.js',
+  '/dio-entry.js',
   '/cdr-imei.js',
   '/cro-card.js',
   '/rfa-form.js',

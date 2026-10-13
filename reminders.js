@@ -137,6 +137,8 @@ async function _remMarkCourtDone(courtId) {
 }
 
 function _openAddReminder() {
+  // «نیا اندراج — یاددہانی» — پیشی اور یاددہانی کا مشترکہ کارڈ (dio-entry.js)
+  if (window.DIOEntry && window.DIOCard) return DIOEntry.peshi('yad', null);
   openModal('+ نئی یاددہانی',
     `<div>
       <label class="form-label">یاددہانی کا متن *</label>

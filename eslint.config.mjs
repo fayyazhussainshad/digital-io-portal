@@ -19,6 +19,7 @@ export default [
         // App ke apne global helpers / modules
         supabaseClient: 'writable', currentOfficer: 'writable', currentUser: 'writable',
         esc: 'readonly', _dioJsHtml: 'readonly', DIO: 'readonly',
+        DIOCard: 'readonly', DIOPrev: 'readonly', DIOEntry: 'readonly',
         showToast: 'readonly', showPage: 'readonly', openModal: 'readonly', closeModal: 'readonly',
         formatDate: 'readonly', getOfficerId: 'readonly', sanitizeHtml: 'readonly',
         STATUS_LABELS: 'readonly', dioLicenseValid: 'readonly', dioRefreshLicense: 'readonly',

@@ -114,7 +114,20 @@ async function _runGlobalSearch(q) {
     _keepFocus();
     return;
   }
-  const w = `%${q}%`;
+  // PostgREST filter میں , ( ) خطرناک — ہٹا دو
+  const qs = String(q).replace(/[,()]/g, ' ').trim();
+  const w = `%${qs}%`;
+  /* SYSTEM RULE: شناختی کارڈ 00000-0000000-0 · موبائل 0000-0000000 — تلاش میں بھی۔
+     افسر ڈیش کے ساتھ لکھے یا بغیر، دونوں صورت ریکارڈ ملے (پرانا ڈیٹا بغیر ڈیش بھی ہو سکتا ہے)۔ */
+  const digits = /^[\d\s-]+$/.test(qs) ? qs.replace(/\D/g, '') : '';
+  const fmtC = (d) => d.length > 12 ? d.slice(0,5)+'-'+d.slice(5,12)+'-'+d.slice(12) : d.length > 5 ? d.slice(0,5)+'-'+d.slice(5) : d;
+  const fmtM = (d) => d.length > 4 ? d.slice(0,4)+'-'+d.slice(4) : d;
+  const cnicOr = (col) => digits.length >= 5
+    ? `${col}.ilike.%${fmtC(digits.slice(0,13))}%,${col}.ilike.%${digits}%`
+    : `${col}.ilike.${w}`;
+  const cellOr = (col) => digits.length >= 5
+    ? `${col}.ilike.%${fmtM(digits.slice(0,11))}%,${col}.ilike.%${digits}%`
+    : `${col}.ilike.${w}`;
   const S = supabaseClient;
   let caseIds = [];
   try {
@@ -123,12 +136,12 @@ async function _runGlobalSearch(q) {
   } catch(_) {}
 
   const queries = [
-    S.from('cases').select('id,fir_number,offence_type,section_of_law,complainant,occurrence_place').eq('officer_id', oid).or(`fir_number.ilike.${w},offence_type.ilike.${w},section_of_law.ilike.${w},complainant.ilike.${w},occurrence_place.ilike.${w}`).limit(10),
-    S.from('case_accused').select('id,case_id,name,cnic,mobile,pesha').or(`name.ilike.${w},cnic.ilike.${w},mobile.ilike.${w},pesha.ilike.${w}`).limit(10),
-    S.from('case_witnesses').select('id,case_id,full_name,cnic,cell,profession').or(`full_name.ilike.${w},cnic.ilike.${w},cell.ilike.${w},profession.ilike.${w}`).limit(10),
+    S.from('cases').select('id,fir_number,offence_type,section_of_law,complainant,complainant_cnic,complainant_cell,occurrence_place').eq('officer_id', oid).or(`fir_number.ilike.${w},offence_type.ilike.${w},section_of_law.ilike.${w},complainant.ilike.${w},occurrence_place.ilike.${w},${cnicOr('complainant_cnic')},${cellOr('complainant_cell')}`).limit(10),
+    S.from('case_accused').select('id,case_id,name,cnic,mobile,pesha').or(`name.ilike.${w},${cnicOr('cnic')},${cellOr('mobile')},pesha.ilike.${w}`).limit(10),
+    S.from('case_witnesses').select('id,case_id,full_name,cnic,cell,profession,status').or(`full_name.ilike.${w},${cnicOr('cnic')},${cellOr('cell')},profession.ilike.${w}`).limit(10),
     S.from('fir_matn').select('id,case_id,matn').ilike('matn', w).limit(10),
     S.from('zimni_reports').select('id,case_id,serial_no,content').limit(10),
-    S.from('hamrahi_mulazman').select('id,case_id,name,rank,service_number,cnic,mobile').or(`name.ilike.${w},rank.ilike.${w},service_number.ilike.${w},cnic.ilike.${w},mobile.ilike.${w}`).limit(10),
+    S.from('hamrahi_mulazman').select('id,case_id,name,rank,service_number,cnic,mobile').or(`name.ilike.${w},rank.ilike.${w},service_number.ilike.${w},${cnicOr('cnic')},${cellOr('mobile')}`).limit(10),
     S.from('sarkari_gari').select('id,case_id,vehicle_number,driver_name').or(`vehicle_number.ilike.${w},driver_name.ilike.${w}`).limit(10),
     S.from('cdr_imei_requests').select('id,case_id,diary_number').ilike('diary_number', w).limit(10),
   ];
@@ -172,8 +185,18 @@ function _renderSearchResults(q, r) {
     </div>`;
   let html = `<div style="font-size:13px;color:var(--text-muted);margin-bottom:10px;">${total} نتائج ملے</div>`;
   r.cases.forEach(c => html += card('مقدمہ','var(--accent)', `FIR ${c.fir_number||'—'}`, `${c.offence_type||''} ${c.section_of_law||''} · ${c.complainant||''}`, `openCaseWorkspace('${c.id}')`));
-  r.accused.forEach(a => html += card('ملزم','#f97316', a.name||'—', `${a.cnic||''} ${a.mobile||''} ${a.pesha||''}`, a.case_id?`openCaseWorkspace('${a.case_id}')`:''));
-  r.witnesses.forEach(wt => html += card('گواہ','#a78bfa', wt.full_name||'—', `${wt.cnic||''} ${wt.cell||''} ${wt.profession||''}`, wt.case_id?`openCaseWorkspace('${wt.case_id}')`:''));
+  // ملزم — ساتھ تصاویر / شناختی کارڈ دیکھنے کا بٹن
+  r.accused.forEach(a => html += card('ملزم','#f97316', a.name||'—', `${a.cnic||''} ${a.mobile||''} ${a.pesha||''}`, a.case_id?`openCaseWorkspace('${a.case_id}')`:'')
+    .replace(/<\/div>\s*$/, `<div style="margin-top:6px;"><button type="button" class="btn btn-secondary btn-sm" onclick="event.stopPropagation();_srShowDocs('case_accused','${a.id}')">تصاویر / شناختی کارڈ</button></div></div>`));
+  /* گواہ — مدعی بھی گواہ ہے: مدعی جن مقدمات میں ملے، گواہوں میں «مدعی» نشان کے ساتھ */
+  const badge = (t) => `<span style="display:inline-block;margin-inline-start:6px;border:1px solid #7c3aed;color:#7c3aed;background:rgba(124,58,237,.08);border-radius:999px;padding:0 9px 2px;font-size:11pt;font-weight:700;">${t}</span>`;
+  const witCard = (title, sub, onclick, isMudai) => card('گواہ','#a78bfa', title, sub, onclick)
+    .replace(/(<span style="font-weight:700;font-size:15px;[^>]*>[^<]*<\/span>)/, isMudai ? '$1' + badge('مدعی') : '$1');
+  r.witnesses.forEach(wt => html += witCard(wt.full_name||'—', `${wt.cnic||''} ${wt.cell||''} ${wt.profession||''}`, wt.case_id?`openCaseWorkspace('${wt.case_id}')`:'', wt.status === 'mudai'));
+  const _ql = String(q).toLowerCase().trim(), _qd = String(q).replace(/\D/g, '');
+  r.cases.filter(c => (c.complainant && c.complainant.toLowerCase().includes(_ql)) ||
+      (_qd.length >= 5 && ((c.complainant_cnic||'').replace(/\D/g,'').includes(_qd) || (c.complainant_cell||'').replace(/\D/g,'').includes(_qd))))
+    .forEach(c => html += witCard(c.complainant||'—', `مقدمہ ${c.fir_number||'—'} کا مدعی · ${c.complainant_cnic||''} ${c.complainant_cell||''}`, `openCaseWorkspace('${c.id}')`, true));
   r.fir.forEach(f => html += card('FIR متن','var(--green)', 'الف آئی آر متن', (f.matn||'').slice(0,80)+'...', f.case_id?`openCaseWorkspace('${f.case_id}')`:''));
   r.zimni.forEach(z => html += card('ضمنی','#0ea5e9', `ضمنی نمبر ${z.serial_no||''}`, '', z.case_id?`openCaseWorkspace('${z.case_id}')`:''));
   (r.hamrahi||[]).forEach(h => html += card('ہمراہی ملازم','#14b8a6', h.name||'—', `${h.rank||''} ${h.service_number||''} ${h.cnic||''} ${h.mobile||''}`, h.case_id?`openCaseWorkspace('${h.case_id}')`:''));
@@ -182,3 +205,27 @@ function _renderSearchResults(q, r) {
   box.innerHTML = html;
   _keepFocus();
 }
+
+// ── تلاش سے ملزم / گواہ کی تصاویر اور شناختی کارڈ (دونوں رخ) ──
+async function _srShowDocs(table, id) {
+  try {
+    const { data, error } = await supabaseClient.from(table).select('*').eq('id', id).maybeSingle();
+    if (error) throw error;
+    const a = data || {};
+    const docs = [];
+    const photos = (Array.isArray(a.photos) && a.photos.length) ? a.photos : (a.photo_url ? [a.photo_url] : []);
+    photos.forEach((u, i) => u && docs.push({ url: u, label: 'تصویر ' + (i + 1) }));
+    if (a.cnic_copy_url) docs.push({ url: a.cnic_copy_url, label: 'شناختی کارڈ — سامنے' });
+    if (a.cnic_back_url) docs.push({ url: a.cnic_back_url, label: 'شناختی کارڈ — پیچھے' });
+    if (!docs.length) { showToast('اس شخص کی کوئی تصویر یا شناختی کارڈ محفوظ نہیں', 'info'); return; }
+    window._srDocs = docs;
+    window._srDocName = (window.DIOCard ? DIOCard.coreName(a.name || a.full_name) : (a.name || a.full_name || 'file')) || 'file';
+    openModal((a.name || a.full_name || '') + ' — تصاویر', `<div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;direction:rtl;">${docs.map((d, i) => `
+      <div style="text-align:center;cursor:pointer;" onclick="DIOCard.viewer(window._srDocs[${i}].url, window._srDocName.replace(/\\s+/g,'_') + '_${i + 1}', window._srDocs[${i}].label)">
+        ${/^data:application\/pdf/.test(d.url) ? '<div style="width:110px;height:110px;border:1px solid var(--border);border-radius:8px;display:grid;place-items:center;">PDF</div>'
+          : `<img alt="" src="${esc(d.url)}" style="width:110px;height:110px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">`}
+        <div style="font-size:11pt;color:var(--text-muted);">${esc(d.label)}</div></div>`).join('')}</div>`,
+      '<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>');
+  } catch (e) { showToast('' + (e && e.message || e), 'error'); }
+}
+window._srShowDocs = _srShowDocs;

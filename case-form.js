@@ -28,6 +28,25 @@ function _cfInjectCSS() {
     + '.cf-box-title{font-size:14pt;font-weight:800;color:var(--accent);margin-bottom:9px;text-align:right;'
     +   'font-family:\'Jameel Noori Nastaleeq\',\'Noto Nastaliq Urdu\',serif;}'
     + '.cf-hint{font-size:11px;color:var(--text-muted);margin:-4px 0 9px;padding-right:2px;}'
+    /* «نیا اندراج» کارڈ: نام خانے کے اوپری دائیں کنارے پر، 14pt، چھوٹی اونچائی، ڈیٹا جتنی چوڑائی */
+    + '.dio-entry .cf-form{max-height:none!important;overflow:visible!important;padding:4px 0 0!important;}'
+    + '.dio-entry .cf-box{background:none!important;padding:0!important;margin:0!important;}'
+    + '.dio-entry .cf-field{position:relative!important;display:block!important;margin:0 0 16px!important;padding-top:0!important;}'
+    + '.dio-entry .cf-field > .cf-label{position:absolute!important;top:-0.8em!important;inset-inline-start:10px!important;z-index:2;padding:0 5px!important;margin:0!important;'
+    +   'background:var(--bg-card,#fff)!important;color:var(--accent,#0369a1)!important;font-size:var(--dio-h3,11.25pt)!important;line-height:1.35!important;'
+    +   'white-space:nowrap!important;pointer-events:none;max-width:calc(100% - 16px);overflow:hidden;text-overflow:ellipsis;}'
+    + '.dio-entry .cf-field > .cf-label[style]{margin-top:0!important;}'
+    + '.dio-entry .cf-form input.form-input,.dio-entry .cf-form select.form-input{height:40px!important;font-size:14pt!important;padding:0 10px!important;'
+    +   'border:1.5px solid var(--border,#c8d8e8)!important;border-radius:9px!important;width:100%;}'
+    + '.dio-entry .cf-form input[dir=ltr].form-input{font-family:Aptos,"Segoe UI",system-ui,sans-serif!important;font-size:12pt!important;text-align:right!important;}'
+    + '.dio-entry .cf-form .cf-field > div{width:100%;}'
+    + '.dio-entry .cf-row2,.dio-entry .cf-row3,.dio-entry .cf-row4,.dio-entry .cf-row4-rapat,.dio-entry .cf-row-7030,.dio-entry .cf-row-sim{gap:0 10px!important;padding-top:15px;}'
+    + '.dio-entry .cf-form > .cf-field:first-child,.dio-entry .cf-box > .cf-field:first-child{margin-top:15px!important;}'
+    + '@media(min-width:761px){'
+    +   '.dio-entry .cf-row4{grid-template-columns:7em 9em 9em 1fr!important;}'
+    +   '.dio-entry .cf-row3{grid-template-columns:10.5em 8.8em 1fr!important;}'
+    +   '.dio-entry .cf-row4-rapat{grid-template-columns:5em 9em 1fr 9em!important;}'
+    + '}'
     + '@media(max-width:640px){.cf-row3{grid-template-columns:1fr 1fr;}.cf-row4,.cf-row4-rapat{grid-template-columns:1fr 1fr;}.cf-row-sim{grid-template-columns:repeat(2,1fr);}}'
     + '@media(max-width:480px){'
     +   '.cf-row2,.cf-row3,.cf-row4,.cf-row4-rapat,.cf-row-7030,.cf-row-sim{grid-template-columns:1fr;}'
@@ -37,12 +56,6 @@ function _cfInjectCSS() {
   document.head.appendChild(s);
 }
 
-// ── نیا/ترمیمی مقدمہ کارڈ کو smart (چھوٹا) رکھو — مشترکہ modal card کی چوڑائی محدود ──
-//    (closeModal اسے واپس default 980px کر دیتی ہے تاکہ باقی modals متاثر نہ ہوں)
-function _cfSizeModal() {
-  var c = document.querySelector('#modal-backdrop .modal-card');
-  if (c) c.style.maxWidth = '760px';
-}
 
 // ── Keep کراس ورژن مقدمہ نمبر/تاریخ live-synced with the top مقدمہ نمبر/تاریخ اندراج ──
 // (runs on every keystroke in the top fields; stops touching a field once the officer types into it manually)
@@ -101,7 +114,7 @@ function _cfPhoneBlockHTML(i, p) {
 // ── Mobile-theft: one pooled SIM field (labeled with which phone it belongs to) ──
 function _cfSimFieldHTML(phoneIdx, simIdx, value) {
   return '<div class="cf-field"><label class="cf-label">موبائل '+phoneIdx+' - سم '+simIdx+'</label>'
-    + '<input class="form-input" dir="ltr" id="cf-mobile-sim-'+phoneIdx+'-'+simIdx+'" value="'+esc(value)+'" placeholder="0000-0000000" oninput="autoFormatCell(this)"></div>';
+    + '<input class="form-input" dir="ltr" id="cf-mobile-sim-'+phoneIdx+'-'+simIdx+'" value="'+esc(value)+'" placeholder="0000-0000000" inputmode="numeric" maxlength="12" dir="ltr" oninput="autoFormatCell(this)"></div>';
 }
 
 // ── Mobile-theft: read current values back out of the DOM ──
@@ -269,9 +282,9 @@ function caseFormHTML(c) {
     + '<div class="cf-field"><label class="cf-label">مقدمہ نمبر *</label>'
     + '<input class="form-input" id="cf-fir" value="'+esc(fir)+'" placeholder="e.g. 245/2025" dir="ltr" style="text-align:left;" oninput="_cfLiveSyncCross()"></div>'
     + '<div class="cf-field"><label class="cf-label">تاریخ اندراج *</label>'
-    + '<input class="form-input" id="cf-date" value="'+esc(date)+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this);_cfLiveSyncCross()" dir="ltr" style="text-align:left;"></div>'
+    + '<input class="form-input" id="cf-date" value="'+esc(date)+'" placeholder="DD/MM/YYYY" inputmode="numeric" maxlength="10" oninput="autoFormatDate(this);_cfLiveSyncCross()" dir="ltr" style="text-align:left;"></div>'
     + '<div class="cf-field"><label class="cf-label">تاریخ وقوعہ</label>'
-    + '<input class="form-input" id="cf-occurrence-date" value="'+esc(occ)+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)" dir="ltr" style="text-align:left;"></div>'
+    + '<input class="form-input" id="cf-occurrence-date" value="'+esc(occ)+'" placeholder="DD/MM/YYYY" inputmode="numeric" maxlength="10" oninput="autoFormatDate(this)" dir="ltr" style="text-align:left;"></div>'
     + '<div class="cf-field"><label class="cf-label">ملزمان</label>'
     + '<select class="form-input" id="cf-mulzman-type">'
     + '<option value="maloom" '+(c.mulzman_type==='maloom'?'selected':'')+'>معلوم</option>'
@@ -322,22 +335,21 @@ function caseFormHTML(c) {
 
     // Row 1: مدعی (full width with voice + live counter)
     + '<div class="cf-field">'
-    + '<label class="cf-label">مدعی *</label>'
+    + '<label class="cf-label">مدعی — نام و پتہ *</label>'
     + '<div style="display:flex;gap:6px;direction:rtl;align-items:center;flex:1;min-width:0;">'
     + '<div style="flex:1;position:relative;">'
-    + '<input class="form-input" id="cf-complainant" value="'+esc(complainant)+'" placeholder="مدعی کا نام" dir="auto" oninput="var _cc=document.getElementById(\'cf-comp-count\');if(_cc)_cc.textContent=this.value.length+\' حروف\';">'
-    + '<span id="cf-comp-count" style="position:absolute;bottom:4px;left:8px;font-size:9px;color:var(--text-faint);">'+(complainant?complainant.length+' حروف':'')+'</span>'
+    + '<input class="form-input" id="cf-complainant" value="'+esc(complainant)+'" placeholder="نام ولد ولدیت قوم … سکنہ موضع / محلہ، تحصیل، ضلع" dir="auto" data-dio-name="1" oninput="var _cc=document.getElementById(\'cf-comp-count\');if(_cc)_cc.textContent=this.value.length+\' حروف\';">'
     + '</div>'
-    + '<button title="آواز سے لکھیں" aria-label="آواز سے لکھیں" id="vmb-cf-complainant" type="button" onclick="voiceType(\'cf-complainant\',\'vmb-cf-complainant\')" style="width:36px;height:36px;flex-shrink:0;border:1px solid var(--border);border-radius:6px;background:var(--bg-tertiary);font-size:16px;cursor:pointer;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button>'
+    + ''
     + '</div>'
     + '</div>'
 
     // Row 2: شناختی کارڈ + موبائل نمبر + پیشہ (تینوں ایک ہی سطر)
     + '<div class="cf-row3">'
     + '<div class="cf-field"><label class="cf-label">شناختی کارڈ</label>'
-    + '<input class="form-input" id="cf-complainant-cnic" value="'+esc(cmpCnic)+'" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)" dir="ltr" style="text-align:left;"></div>'
+    + '<input class="form-input" id="cf-complainant-cnic" value="'+esc(cmpCnic)+'" placeholder="00000-0000000-0" inputmode="numeric" maxlength="15" dir="ltr" oninput="autoFormatCNIC(this)" style="text-align:left;"></div>'
     + '<div class="cf-field"><label class="cf-label">موبائل نمبر</label>'
-    + '<input class="form-input" id="cf-complainant-cell" value="'+esc(cmpCell)+'" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)" dir="ltr" style="text-align:left;"></div>'
+    + '<input class="form-input" id="cf-complainant-cell" value="'+esc(cmpCell)+'" placeholder="0000-0000000" inputmode="numeric" maxlength="12" dir="ltr" oninput="autoFormatCell(this)" style="text-align:left;"></div>'
     + '<div class="cf-field"><label class="cf-label">پیشہ</label>'
     + '<input class="form-input" id="cf-complainant-profession" value="'+esc(cmpProf)+'" placeholder="پیشہ" dir="auto"></div>'
     + '</div>'
@@ -348,9 +360,9 @@ function caseFormHTML(c) {
     + '<div class="cf-box">'
     + '<div class="cf-row2">'
     + '<div class="cf-field"><label class="cf-label">مرتبہ مرسلہ</label>'
-    + '<div style="display:flex;gap:4px;direction:rtl;flex:1;min-width:0;"><input class="form-input" id="cf-complaint-sender" value="'+esc(compSender)+'" placeholder="مرتبہ مرسلہ" dir="auto" style="flex:1;"><button title="آواز سے لکھیں" aria-label="آواز سے لکھیں" id="vmb-cs" type="button" onclick="voiceType(\'cf-complaint-sender\',\'vmb-cs\')" style="width:34px;height:34px;flex-shrink:0;border:1px solid var(--border);border-radius:5px;background:var(--bg-tertiary);font-size:14px;cursor:pointer;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button></div></div>'
+    + '<div style="display:flex;gap:4px;direction:rtl;flex:1;min-width:0;"><input class="form-input" id="cf-complaint-sender" value="'+esc(compSender)+'" placeholder="مرتبہ مرسلہ" dir="auto" style="flex:1;"></div></div>'
     + '<div class="cf-field"><label class="cf-label">محرر</label>'
-    + '<div style="display:flex;gap:4px;direction:rtl;flex:1;min-width:0;"><input class="form-input" id="cf-fir-writer" value="'+esc(firWriter)+'" placeholder="محرر کا نام" dir="auto" style="flex:1;"><button title="آواز سے لکھیں" aria-label="آواز سے لکھیں" id="vmb-fw" type="button" onclick="voiceType(\'cf-fir-writer\',\'vmb-fw\')" style="width:34px;height:34px;flex-shrink:0;border:1px solid var(--border);border-radius:5px;background:var(--bg-tertiary);font-size:14px;cursor:pointer;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button></div></div>'
+    + '<div style="display:flex;gap:4px;direction:rtl;flex:1;min-width:0;"><input class="form-input" id="cf-fir-writer" value="'+esc(firWriter)+'" placeholder="محرر کا نام" dir="auto" style="flex:1;"></div></div>'
     + '</div>'
     + '</div>'
 
@@ -415,23 +427,23 @@ function buildCrossFields(c) {
     + '<div class="cf-field"><label class="cf-label">&#x0631;&#x067E;&#x0679; &#x0646;&#x0645;&#x0628;&#x0631;</label>'
     + '<input class="form-input" id="cf-cross-rapat" value="'+esc(crn)+'" placeholder="e.g. 12" dir="auto"></div>'
     + '<div class="cf-field"><label class="cf-label">&#x0631;&#x067E;&#x0679; &#x062A;&#x0627;&#x0631;&#x06CC;&#x062E;</label>'
-    + '<input class="form-input" id="cf-cross-rapat-date" value="'+esc(crd)+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this)"></div>'
+    + '<input class="form-input" id="cf-cross-rapat-date" value="'+esc(crd)+'" placeholder="DD/MM/YYYY" inputmode="numeric" maxlength="10" oninput="autoFormatDate(this)"></div>'
     + '<div class="cf-field"><label class="cf-label">کراس ورژن مقدمہ نمبر</label>'
     + '<input class="form-input" id="cf-cross-fir" data-auto="'+(cfnAuto?'1':'0')+'" value="'+esc(cfn)+'" placeholder="e.g. 246/2025" dir="auto" oninput="this.dataset.auto=\'0\'"></div>'
     + '<div class="cf-field"><label class="cf-label">کراس ورژن مقدمہ کی تاریخ</label>'
-    + '<input class="form-input" id="cf-cross-fir-date" data-auto="'+(cfdAuto?'1':'0')+'" value="'+esc(cfd)+'" placeholder="DD-MM-YYYY" oninput="autoFormatDate(this);this.dataset.auto=\'0\'"></div>'
+    + '<input class="form-input" id="cf-cross-fir-date" data-auto="'+(cfdAuto?'1':'0')+'" value="'+esc(cfd)+'" placeholder="DD/MM/YYYY" inputmode="numeric" maxlength="10" oninput="autoFormatDate(this);this.dataset.auto=\'0\'"></div>'
     + '</div>'
 
     // کراس ورژن مدعی کا نام (پوری چوڑائی)
-    + '<div class="cf-field"><label class="cf-label">کراس ورژن مدعی کا نام</label>'
-    + '<input class="form-input" id="cf-cross-complainant" value="'+esc(cc)+'" placeholder="&#x0645;&#x062F;&#x0639;&#x06CC; &#x06A9;&#x0627; &#x0646;&#x0627;&#x0645;" dir="auto"></div>'
+    + '<div class="cf-field"><label class="cf-label">کراس ورژن مدعی — نام و پتہ</label>'
+    + '<input class="form-input" id="cf-cross-complainant" value="'+esc(cc)+'" placeholder="نام ولد ولدیت قوم … سکنہ موضع / محلہ، تحصیل، ضلع" dir="auto" data-dio-name="1"></div>'
 
     // شناختی کارڈ + موبائل نمبر + پیشہ (تینوں ایک سطر)
     + '<div class="cf-row3">'
     + '<div class="cf-field"><label class="cf-label">&#x0634;&#x0646;&#x0627;&#x062E;&#x062A;&#x06CC; &#x06A9;&#x0627;&#x0631;&#x0688;</label>'
-    + '<input class="form-input" id="cf-cross-complainant-cnic" value="'+esc(ccc)+'" placeholder="XXXXX-XXXXXXX-X" oninput="autoFormatCNIC(this)"></div>'
+    + '<input class="form-input" id="cf-cross-complainant-cnic" value="'+esc(ccc)+'" placeholder="00000-0000000-0" inputmode="numeric" maxlength="15" dir="ltr" oninput="autoFormatCNIC(this)"></div>'
     + '<div class="cf-field"><label class="cf-label">&#x0645;&#x0648;&#x0628;&#x0627;&#x0626;&#x0644; &#x0646;&#x0645;&#x0628;&#x0631;</label>'
-    + '<input class="form-input" id="cf-cross-complainant-cell" value="'+esc(ccl)+'" placeholder="0XXX-XXXXXXX" oninput="autoFormatCell(this)"></div>'
+    + '<input class="form-input" id="cf-cross-complainant-cell" value="'+esc(ccl)+'" placeholder="0000-0000000" inputmode="numeric" maxlength="12" dir="ltr" oninput="autoFormatCell(this)"></div>'
     + '<div class="cf-field"><label class="cf-label">&#x067E;&#x06CC;&#x0634;&#x06C1;</label>'
     + '<input class="form-input" id="cf-cross-complainant-profession" value="'+esc(ccp)+'" placeholder="&#x067E;&#x06CC;&#x0634;&#x06C1;" dir="auto"></div>'
     + '</div>'
@@ -466,7 +478,21 @@ function sectionTag(sectionStr) {
 }
 
 
-async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;openModal(`ترمیم — مقدمہ ${c.fir_number}`,caseFormHTML(c),`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-primary" onclick="saveEditCase('${id}')">تبدیلیاں محفوظ کریں</button>`);setTimeout(function(){_cfRenderMobilePhones();_cfSizeModal();},50);}
+async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;_cfOpenCard(true,caseFormHTML(c),"saveEditCase('"+id+"')",'تبدیلیاں محفوظ کریں');}
+// «نیا اندراج — مقدمہ» / «ترمیم — مقدمہ» — مشترکہ DIO کارڈ (اکتوبر 2026)
+function _cfOpenCard(isEdit, html, saveCall, saveLabel){
+  if (window.DIOCard) {
+    DIOCard.open('مقدمہ', isEdit, html, saveCall, saveLabel);
+  } else {
+    openModal(isEdit ? 'ترمیم — مقدمہ' : 'نیا اندراج — مقدمہ', html,
+      '<button class="btn btn-primary" onclick="'+saveCall+'">'+saveLabel+'</button><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>');
+  }
+  setTimeout(function(){
+    if (typeof _cfRenderMobilePhones === 'function') _cfRenderMobilePhones();
+    // Mobile: مدعی کا نام و پتہ الگ سطروں میں (محفوظ وہی ایک خانہ)
+    if (window.DIOCard && DIOCard.splitNameInput) { DIOCard.splitNameInput('cf-complainant', 'مدعی'); DIOCard.splitNameInput('cf-cross-complainant', 'کراس ورژن مدعی'); }
+  },50);
+}
 
 async function saveNewCase(){
   // VIEW-ONLY ENFORCEMENT [4E]: میعاد ختم پر نیا مقدمہ بند

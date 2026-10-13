@@ -110,7 +110,7 @@ function _renderWitnessesArea() {
   const heading = isCross ? 'گواہان کراس ورژن' : 'گواہان FIR';
   const color = isCross ? 'var(--amber)' : 'var(--accent)';
   area.innerHTML = `
-  <div style="padding:10px;direction:rtl;height:100%;overflow-y:auto;width:100%;box-sizing:border-box;">
+  <div id="wit-area" style="padding:10px;direction:rtl;height:100%;overflow-y:auto;width:100%;box-sizing:border-box;">
     <div style="border-bottom:2px solid ${color};margin-bottom:12px;padding-bottom:6px;">
       <div style="position:relative;min-height:34px;display:flex;align-items:center;justify-content:center;">
         <div class="dio-hs1" style="font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:${color};text-align:center;">${heading}</div>
@@ -159,69 +159,68 @@ function _renderWitnessList(list, type) {
   return head + rows;
 }
 
-// ── ADD / EDIT FORM — SAME SETTING AS MULZIMAN (opens in a modal) ──
-function _openWitnessForm(id, type) {
+// ── ADD / EDIT — «نیا اندراج — گواہ» (مشترکہ DIO کارڈ، اکتوبر 2026) ──
+function _witCustomStatuses() {
+  try { return JSON.parse(localStorage.getItem('dio_wit_status_custom') || '[]'); } catch (_) { return []; }
+}
+function _witStatusChange(sel) {
+  if (sel.value !== '__add__') return;
+  const v = (prompt('نئی حیثیت لکھیں:') || '').trim();
+  if (!v) { sel.value = ''; return; }
+  const l = _witCustomStatuses();
+  if (!l.includes(v)) { l.push(v); try { localStorage.setItem('dio_wit_status_custom', JSON.stringify(l)); } catch (_) {} }
+  const addOpt = sel.querySelector('option[value="__add__"]');
+  const opt = document.createElement('option');
+  opt.value = v; opt.textContent = v;
+  sel.insertBefore(opt, addOpt);
+  sel.value = v;
+}
+async function _openWitnessForm(id, type, opts) {
   _witInjectCSS();
-  if (typeof _accInjectCSS === 'function') _accInjectCSS(); // reuse mulziman's form CSS
+  opts = opts || {};
+  const D = window.DIOCard;
   _editingWitnessId = id || null;
-  _witnessFormType = type || (id ? (_witnessList.find(x=>x.id===id)||{}).witness_type : null) || 'fir';
   const w = id ? (_witnessList.find(x => x.id === id) || {}) : {};
+  _witnessFormType = type || w.witness_type || 'fir';
+  const photos = (Array.isArray(w.photos) && w.photos.length) ? w.photos : (w.photo_url ? [w.photo_url] : []);
+  D.setFiles('wit-photos', photos);
+  D.setFiles('wit-cnicF', w.cnic_copy_url ? [w.cnic_copy_url] : []);
+  D.setFiles('wit-cnicB', w.cnic_back_url ? [w.cnic_back_url] : []);
 
-  const statusOptions = WITNESS_STATUS.map(s => `<option value="${s.v}" ${w.status===s.v?'selected':''}>${s.label}</option>`).join('')
-    + (w.status && !WITNESS_STATUS.find(s=>s.v===w.status) ? `<option value="${w.status}" selected>${w.status}</option>` : '');
+  const known = WITNESS_STATUS.map(s => [s.v, s.label]);
+  _witCustomStatuses().forEach(c => { if (!known.some(k => k[0] === c)) known.push([c, c]); });
+  if (w.status && !known.some(k => k[0] === w.status)) known.push([w.status, w.status]);
+  const statusOpts = [['', '—']].concat(known, [['__add__', '+ نئی حیثیت شامل کریں']]);
+
+  const caseId = w.case_id || opts.caseId || (opts.hub ? '' : _witnessCaseId) || '';
+  const typeSel = D.fld({ id: 'w-type', label: 'گواہ کی قسم', type: 'sel', w: 'w-l',
+    opts: [['fir', 'FIR گواہان'], ['cross_version', 'کراس ورژن گواہان']], value: _witnessFormType });
 
   const body = `
-  <div class="acc-form" style="max-height:74vh;overflow-y:auto;padding:2px 4px;">
-
-    <!-- نام (اپنی لائن، پوری چوڑائی) -->
-    <div class="acc-field">
-      <label class="acc-label">نام</label>
-      <input class="form-input" id="w-name" value="${_escW(w.full_name)}" placeholder="پورا نام" style="text-align:right;" oninput="_checkPriorRecord(this.value)">
-    </div>
-    <div id="w-prior-record" style="margin-top:6px;"></div>
-
-    <!-- شناختی کارڈ | فون نمبر | پیشہ | حیثیت (ایک لائن) -->
-    <div class="acc-grid4b" style="margin-top:7px;grid-template-columns:1.3fr 1.2fr 0.8fr 1.7fr;">
-      <div class="acc-field">
-        <label class="acc-label">شناختی کارڈ</label>
-        <input class="form-input" id="w-cnic" dir="ltr" maxlength="15" value="${_escW(w.cnic)}" placeholder="00000-0000000-0" oninput="_witFmtCnic(this);_checkPriorByContact()">
-      </div>
-      <div class="acc-field">
-        <label class="acc-label">فون نمبر</label>
-        <input class="form-input" id="w-cell" dir="ltr" maxlength="12" value="${_escW(w.cell)}" placeholder="0000-0000000" oninput="_witFmtMobile(this);_checkPriorByContact()">
-      </div>
-      <div class="acc-field">
-        <label class="acc-label">پیشہ</label>
-        <input class="form-input" id="w-profession" value="${_escW(w.profession)}" placeholder="پیشہ">
-      </div>
-      <div class="acc-field">
-        <label class="acc-label">حیثیت</label>
-        <div style="display:flex;gap:4px;flex:1;min-width:0;align-items:stretch;">
-          <select class="form-input" id="w-status" style="flex:1;min-width:0;">${statusOptions}</select>
-          <button aria-label="نیا اسٹیٹس" class="btn btn-secondary btn-sm" style="flex:0 0 auto;padding:0 8px;" onclick="_addCustomStatus()" title="نیا اسٹیٹس"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button>
-        </div>
-      </div>
-    </div>
+  <div class="acc-form">
+    ${await D.caseField(caseId, typeSel)}
+    ${D.nameField('w-name', w.full_name, 'نام و پتہ', true)}
+    ${D.row([
+      D.fld({ id: 'w-cnic', label: 'شناختی کارڈ', type: 'cnic', value: w.cnic }),
+      D.fld({ id: 'w-cell', label: 'فون نمبر', type: 'mob', value: w.cell }),
+      D.fld({ id: 'w-status', label: 'حیثیت', type: 'sel', w: 'w-l', pair: true, opts: statusOpts, value: w.status || '', attrs: 'onchange="_witStatusChange(this)"' }),
+      D.fld({ id: 'w-profession', label: 'پیشہ', w: 'w-m', grow: true, pair: true, value: w.profession, ph: 'پیشہ' })
+    ])}
+    ${D.uploads([
+      ['wit-photos', 'تصاویر گواہ', 'ایک سے زیادہ', true, 6],
+      ['wit-cnicF', 'شناختی کارڈ — سامنے', '', false, 1],
+      ['wit-cnicB', 'شناختی کارڈ — پیچھے', '', false, 1]
+    ])}
+    ${window.DIOPrev ? DIOPrev.panel(w.prev_records) : ''}
   </div>`;
 
-  openModal(id ? 'گواہ میں ترمیم' : 'گواہ درج کریں', body, `
-    <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-    <button class="btn btn-primary" onclick="_saveWitness()">محفوظ کریں</button>
-  `);
+  D.open('گواہ', !!id, body, '_saveWitness()');
+  if (window.DIOPrev) {
+    const nameIds = document.getElementById('w-name') ? ['w-name'] : ['w-name-n'];
+    DIOPrev.watch({ nameIds, cnicId: 'w-cnic', selfTable: 'case_witnesses', selfId: id || null, caseId: caseId || null });
+  }
 }
 
-// ── CNIC / Phone auto-format (copied from mulziman settings) ───
-function _witFmtCnic(el) {
-  let v = el.value.replace(/\D/g, '').slice(0, 13);
-  if (v.length > 5) v = v.slice(0,5) + '-' + v.slice(5);
-  if (v.length > 13) v = v.slice(0,13) + '-' + v.slice(13);
-  el.value = v;
-}
-function _witFmtMobile(el) {
-  let v = el.value.replace(/\D/g, '').slice(0, 11);
-  if (v.length > 4) v = v.slice(0,4) + '-' + v.slice(4);
-  el.value = v;
-}
 
 // ── KEYBOARD BEHAVIOUR (identical to mulziman's _accKeyNav) ──
 //  • Tab / Shift+Tab  → next / previous field  (native)
@@ -251,115 +250,55 @@ if (typeof window !== 'undefined' && !window._witKeyNavBound) {
   window._witKeyNavBound = true;
 }
 
-// Add a custom status option to the dropdown
-function _addCustomStatus() {
-  const val = prompt('نیا اسٹیٹس درج کریں:');
-  if (!val || !val.trim()) return;
-  const sel = document.getElementById('w-status');
-  if (!sel) return;
-  const opt = document.createElement('option');
-  opt.value = val.trim(); opt.textContent = val.trim(); opt.selected = true;
-  sel.appendChild(opt);
-}
-
-// ── CROSS-REFERENCE ───────────────────────────────────────────
-let _priorCheckTimer = null;
-function _checkPriorRecord(name) {
-  clearTimeout(_priorCheckTimer);
-  _priorCheckTimer = setTimeout(() => _doPriorCheck(name, null, null), 500);
-}
-function _checkPriorByContact() {
-  const cnic = document.getElementById('w-cnic')?.value.trim();
-  const cell = document.getElementById('w-cell')?.value.trim();
-  clearTimeout(_priorCheckTimer);
-  _priorCheckTimer = setTimeout(() => _doPriorCheck(null, cnic, cell), 500);
-}
-
-async function _doPriorCheck(name, cnic, cell) {
-  const box = document.getElementById('w-prior-record');
-  if (!box) return;
-  name = (name || '').trim().toLowerCase();
-  cnic = (cnic || '').replace(/\D/g, '');
-  cell = (cell || '').replace(/\D/g, '');
-  if (!name && cnic.length < 10 && cell.length < 7) { box.innerHTML = ''; return; }
-  try {
-    const oid = await getOfficerId();
-    const { data: persons } = await supabaseClient.from('suspects').select('*').eq('officer_id', oid);
-    const matchP = (persons || []).filter(p => {
-      const pn=(p.full_name||'').toLowerCase(), pc=(p.cnic||'').replace(/\D/g,''), pe=(p.cell||'').replace(/\D/g,'');
-      return (name && pn===name) || (cnic.length>=10 && pc===cnic) || (cell.length>=7 && pe===cell);
-    });
-    const { data: cases } = await supabaseClient.from('cases').select('*').eq('officer_id', oid);
-    const matchC = (cases || []).filter(c => {
-      const cn=(c.complainant||'').toLowerCase(), cc=(c.complainant_cnic||'').replace(/\D/g,''), ce=(c.complainant_cell||'').replace(/\D/g,'');
-      return (name && cn===name) || (cnic.length>=10 && cc===cnic) || (cell.length>=7 && ce===cell);
-    });
-    if (!matchP.length && !matchC.length) {
-      box.innerHTML = `<div style="font-size:11px;color:var(--text-muted);">پہلے کا کوئی ریکارڈ نہیں</div>`;
-      return;
-    }
-    const SUS = (typeof SUSPECT_TYPES !== 'undefined') ? SUSPECT_TYPES : {};
-    let html = `<div style="background:rgba(245,158,11,0.1);border:1px solid var(--amber);border-radius:8px;padding:8px;font-size:11px;">
-      <div style="font-weight:700;color:var(--amber);margin-bottom:5px;">پہلے ریکارڈ موجود ہے:</div>`;
-    matchP.forEach(p => {
-      const role = (SUS[p.person_type]||{}).label || p.person_type;
-      const icon = (SUS[p.person_type]||{}).icon || '•';
-      html += `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:3px 0;">
-        <span>${icon} <b>${esc(p.full_name)}</b> — ${esc(role)}</span>
-        <button class="btn btn-secondary btn-sm" style="font-size:10px;padding:2px 8px;" onclick='_autoFillWitness(${esc(JSON.stringify(p))})'>بھریں</button>
-      </div>`;
-    });
-    matchC.forEach(c => {
-      html += `<div style="padding:3px 0;"><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M4 10v4h3l7 4V6l-7 4z'/><path d='M17.5 8.5a5 5 0 0 1 0 7'/></svg> <b>مدعی</b> FIR ${esc(c.fir_number||'—')} — ${esc(STATUS_LABELS[c.status]||c.status||'')}</div>`;
-    });
-    html += `</div>`;
-    box.innerHTML = html;
-  } catch(e) { box.innerHTML = ''; }
-}
-
-function _autoFillWitness(p) {
-  const set=(id,val)=>{const el=document.getElementById(id);if(el&&val)el.value=val;};
-  set('w-name',p.full_name); set('w-profession',p.profession);
-  set('w-cell',p.cell); set('w-cnic',p.cnic);
-  showToast('پچھلا ڈیٹا بھر دیا — ضرورت ہو تو ترمیم کریں','success');
-}
 
 async function _saveWitness() {
+  const D = window.DIOCard;
+  const cs = D.readCase();
+  const caseId = cs ? cs.id : (document.getElementById('dio-case') ? null : _witnessCaseId);   // کارڈ میں مقدمہ کا خانہ ہو تو وہی لازمی
+  const status = document.getElementById('w-status')?.value || null;
+  const photos = D.getFiles('wit-photos');
   const rec = {
-    case_id: _witnessCaseId,
-    full_name: document.getElementById('w-name')?.value.trim()||null,
-    profession: document.getElementById('w-profession')?.value.trim()||null,
-    cell: document.getElementById('w-cell')?.value.trim()||null,
-    cnic: document.getElementById('w-cnic')?.value.trim()||null,
-    status: document.getElementById('w-status')?.value||null,
-    witness_type: _witnessFormType || 'fir',
+    case_id: caseId,
+    full_name: D.readName('w-name') || null,
+    profession: document.getElementById('w-profession')?.value.trim() || null,
+    cell: document.getElementById('w-cell')?.value.trim() || null,
+    cnic: document.getElementById('w-cnic')?.value.trim() || null,
+    status: status === '__add__' ? null : status,
+    witness_type: document.getElementById('w-type')?.value || _witnessFormType || 'fir',
+    // نئے کالم (sql/101) — نہ ہوں تو ان کے بغیر محفوظ ہوگا
+    photo_url: photos[0] || null,
+    photos: photos,
+    cnic_copy_url: D.getFiles('wit-cnicF')[0] || null,
+    cnic_back_url: D.getFiles('wit-cnicB')[0] || null,
+    prev_records: window.DIOPrev ? DIOPrev.read() : [],
   };
-  if (!rec.full_name) { showToast('نام ضروری ہے','error'); return; }
+  if (!rec.full_name) { showToast('نام ضروری ہے', 'error'); return; }
+  if (!caseId) { showToast('مقدمہ منتخب کریں', 'error'); document.getElementById('dio-case')?.focus(); return; }
+  if (rec.cnic && rec.cnic.replace(/\D/g, '').length !== 13) { showToast('شناختی کارڈ کے 13 ہندسے لکھیں', 'error'); return; }
+  const OPTIONAL = ['photo_url', 'photos', 'cnic_copy_url', 'cnic_back_url', 'prev_records'];
   try {
     const oid = await getOfficerId();
     if (oid) rec.officer_id = oid;
-    if (_editingWitnessId) {
-      await supabaseClient.from('case_witnesses').update(rec).eq('id', _editingWitnessId);
-      const idx = _witnessList.findIndex(x => x.id === _editingWitnessId);
-      if (idx >= 0) _witnessList[idx] = { ..._witnessList[idx], ...rec };
-    } else {
-      const { data } = await supabaseClient.from('case_witnesses').insert(rec).select().single();
-      const newRec = data ? { ...data, witness_type: data.witness_type || rec.witness_type } : { ...rec, id: 'tmp_'+Date.now() };
-      _witnessList.push(newRec);
+    const isNew = !_editingWitnessId;
+    await D.safeWrite('case_witnesses', isNew ? 'insert' : 'update', rec, _editingWitnessId, OPTIONAL);
+    if (isNew) {
       try {
         await supabaseClient.from('suspects').insert({
-          officer_id: oid, person_type:'witness',
+          officer_id: oid, person_type: 'witness',
           full_name: rec.full_name, profession: rec.profession,
           cnic: rec.cnic, cell: rec.cell,
         });
-      } catch(_) {}
+      } catch (_) {}
     }
     if (typeof closeModal === 'function') closeModal();
     _witnessFormType = 'fir';  // reset
-    await _loadWitnesses();     // reload from DB (gets all records)
-    _renderWitnessesArea();
-    showToast('گواہ محفوظ ہو گیا','success');
-  } catch(e) { showToast(''+e.message,'error'); }
+    // اسی مقدمے کی گواہان فہرست کھلی ہو تو تازہ کرو (Dashboard سے اندراج پر صفحہ نہ بدلے)
+    if (String(caseId) === String(_witnessCaseId) && document.getElementById('wit-area')) {
+      await _loadWitnesses();
+      _renderWitnessesArea();
+    }
+    showToast('گواہ محفوظ ہو گیا' + (cs && cs.fir && String(caseId) !== String(_witnessCaseId) ? ' — مقدمہ ' + cs.fir : ''), 'success');
+  } catch (e) { showToast('' + (e && e.message || e), 'error'); }
 }
 
 async function _deleteWitness(id) {
@@ -372,6 +311,3 @@ async function _deleteWitness(id) {
   } catch(e) { showToast(''+e.message,'error'); }
 }
 
-function _escW(s) {
-  return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}

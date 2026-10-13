@@ -30,6 +30,7 @@
 | 98 | `98_CHECK.sql` | پالیسیوں کی صفائی سے **پہلے** کی تصویر: ہوبہو دوہری policies، `audit_log`/`audit_logs` کس کے کام کی ہیں، `case_accused` کی policies | صرف پڑھتی ہے |
 | 99 | `99_audit_log_immutable.sql` | `audit_log` کی "Nobody can delete/update" policies PERMISSIVE تھیں، یعنی بے اثر — افسر اپنا آڈٹ ریکارڈ مٹا/بدل سکتا تھا۔ اب RESTRICTIVE۔ پڑھنا/لکھنا ویسا ہی۔ واپسی: `99_ROLLBACK.sql` | **چل چکی** (13 اکتوبر 2026 — دونوں RESTRICTIVE کی تصدیق) |
 | 100 | `100_email_notify.sql` | رجسٹریشن / منظوری / سبسکرپشن پر خودکار ای میل (Edge Function `dio-notify` پہلے deploy کریں) | **نئی** |
+| 101 | `101_naya_andraj.sql` | «نیا اندراج»: ملزم/گواہ کی کئی تصاویر، شناختی کارڈ کے دونوں رخ، سابقہ ریکارڈ — صرف نئے کالم جوڑتی ہے (کچھ نہیں بدلتی)۔ جانچ: `101_CHECK.sql`، واپسی: `101_ROLLBACK.sql` | **نئی — چلانی ہے** |
 
 ہر قدم کے ساتھ `*_CHECK.sql` (ایک ہی statement — Supabase کا editor نتیجہ ضرور
 دکھاتا ہے) اور جہاں خطرہ تھا وہاں `*_ROLLBACK.sql`۔

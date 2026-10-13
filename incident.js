@@ -110,7 +110,6 @@ function renderIncident(container) {
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
                   <span style="font-weight:800;font-size:14px;color:var(--text-primary);">مختصر حالات:</span>
                   <div style="display:flex;gap:6px;">
-                    <button aria-label="وائس ٹائپنگ" onclick="_incVoice('inc-narrative','mic-narr')" id="mic-narr" style="width:32px;height:32px;border:1px solid #ccc;border-radius:6px;background:#f0f4f8;font-size:15px;cursor:pointer;" title="وائس ٹائپنگ"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button>
                     <button aria-label="ہینڈ رائٹنگ" onclick="_incHandwriting()" style="width:32px;height:32px;border:1px solid #ccc;border-radius:6px;background:#f0f4f8;font-size:15px;cursor:pointer;" title="ہینڈ رائٹنگ"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>
                   </div>
                 </div>
@@ -238,29 +237,6 @@ function _incHandwriting() {
   const ta = document.getElementById('inc-narrative');
   if (ta) ta.focus();
 }
-// ── VOICE INPUT ───────────────────────────────────────────────
-let _incVoiceRec = null, _incVoiceOn = false, _incVoiceTgt = null;
-function _incVoice(targetId, btnId) {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { showToast('Browser mein voice support nahi','error'); return; }
-  if (_incVoiceOn && _incVoiceTgt === targetId) {
-    _incVoiceRec?.stop(); _incVoiceOn=false; _incVoiceTgt=null;
-    const b=document.getElementById(btnId); if(b){b.style.background='#f0f4f8';b.textContent='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>';}
-    return;
-  }
-  if (_incVoiceOn) _incVoiceRec?.stop();
-  _incVoiceTgt=targetId; _incVoiceOn=true;
-  const b=document.getElementById(btnId); if(b){b.style.background='#ef4444';b.style.color='#fff';b.innerHTML="<svg viewBox='0 0 24 24' width='15' height='15' aria-hidden='true'><rect x='7' y='7' width='10' height='10' rx='2' fill='currentColor'/></svg>";}
-  _incVoiceRec=new SR(); _incVoiceRec.lang='ur-PK'; _incVoiceRec.continuous=false; _incVoiceRec.interimResults=false;
-  _incVoiceRec.onresult=e=>{
-    const inp=document.getElementById(targetId);
-    if(inp)inp.value+=(inp.value?' ':'')+e.results[0][0].transcript;
-  };
-  _incVoiceRec.onend=()=>{_incVoiceOn=false;_incVoiceTgt=null;const b=document.getElementById(btnId);if(b){b.style.background='#f0f4f8';b.style.color='';b.textContent='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>';}};
-  _incVoiceRec.onerror=()=>{_incVoiceOn=false;const b=document.getElementById(btnId);if(b){b.style.background='#f0f4f8';b.style.color='';b.textContent='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>';}};
-  _incVoiceRec.start();
-}
-
 // ── GPS ───────────────────────────────────────────────────────
 async function _incSaveAndPrint() {
   await _incSaveToDB();
