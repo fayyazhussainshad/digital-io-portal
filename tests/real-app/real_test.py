@@ -73,12 +73,14 @@ def check_print(g, tag):
     check(f'{tag}: column 2 fills to the left border', sum(g['cells']) >= g['tableW'] - 2, (g['cells'], g['tableW']))
     check(f'{tag}: column 1 = longest label (+padding)', g['c1'] - g['maxLbl'] <= 26 and not g['wrapped'], (g['c1'], g['maxLbl'], g['wrapped']))
     check(f'{tag}: closing line centred on table', abs(g['closingCenter'] - g['tableCenter']) <= 3, (g['closingCenter'], g['tableCenter']))
+    check(f'{tag}: right margin 0.5in, left 0.4in', g['contentR'] == 794 - 48 and g['contentL'] == 38, (g['contentL'], g['contentR']))
     check(f'{tag}: full 14pt, no shrink', g['fs'] == '18.6667px' and g['pz'] in ('1', ''), (g['fs'], g['pz']))
 
 with sync_playwright() as p:
     b = p.chromium.launch()
     # ══════════ DESKTOP (real app) ══════════
     ctx, pg, errs = open_app(b, viewport={'width': 1366, 'height': 768})
+    ctx.grant_permissions(['clipboard-read', 'clipboard-write', 'geolocation'], origin=BASE.rstrip('/'))
     pg.evaluate("showPage('incident', null)"); pg.wait_for_timeout(1000)
     pg.screenshot(path=OUT + '/d01_list_empty.png')
     pg.click('.page-header .dio-add-btn'); pg.wait_for_selector('#ir-doc'); pg.wait_for_timeout(1500)
@@ -102,31 +104,67 @@ print(ImageChops.difference(a,b).getbbox())"""], capture_output=True, text=True)
     check('saved', len(pg.evaluate("window.__db.incident_reports")) == 1)
     pg.evaluate("_irClose(true)"); pg.wait_for_timeout(500)
     acts = pg.locator('.ir-card .ir-act').all_inner_texts()
-    check('card actions: ترمیم / نام بدلیں / کاپی / شیئر / حذف', [a.strip() for a in acts] == ['ترمیم', 'نام بدلیں', 'کاپی', 'شیئر', 'حذف'], acts)
+    check('card actions: پرنٹ / ترمیم / شیئر / کاپی / نام بدلیں / حذف', [a.strip() for a in acts] == ['پرنٹ', 'ترمیم', 'شیئر', 'کاپی', 'نام بدلیں', 'حذف'], acts)
+    lay = pg.evaluate("""(() => { const b=document.querySelector('.ir-card-body').getBoundingClientRect(), a=document.querySelector('.ir-card .ir-acts').getBoundingClientRect();
+      return {beside: a.right <= b.left + 1, sameRow: a.top < b.bottom && a.bottom > b.top, acts:[Math.round(a.left),Math.round(a.right)], body:[Math.round(b.left),Math.round(b.right)]}; })()""")
+    check('actions sit beside the report (same row, left side)', lay['beside'] and lay['sameRow'], lay)
+    card = pg.inner_text('.ir-card')
+    check('card shows date+time, caller, victim, thana', all(w in card for w in ['08/10/2026', '05:15', 'اطلاع دہندہ:', 'ملک زاہد اقبال', 'متاثرہ:', 'تھانہ:', 'صدر ملتان']) and 'ولد' not in card.split('اطلاع دہندہ:')[1].split('\n')[0], card.replace('\n', ' | ')[:240])
+    pg.fill('#ir-list-q', 'صدر ملتان'); pg.wait_for_timeout(200)
+    check('list search by thana', pg.locator('.ir-card').count() == 1)
+    pg.fill('#ir-list-q', 'ملک زاہد'); pg.wait_for_timeout(200)
+    check('list search by caller/victim', pg.locator('.ir-card').count() == 1)
     pg.screenshot(path=OUT + '/d05_list_actions.png')
+    # ── direct print from the list (no opening) ──
+    n0 = pg.evaluate('window.__printCalls')
+    pg.click('.ir-card .ir-act:has-text("پرنٹ")'); pg.wait_for_timeout(300)
+    st = pg.evaluate("({calls: window.__printCalls, inHost: !!document.querySelector('#dio-nprint-host #ir-doc'), quick: !!document.querySelector('#ir-view.ir-quick'), op: getComputedStyle(document.getElementById('ir-view')).opacity})")
+    check('list print: prints straight away (no opening on screen)', st['calls'] == n0 + 1 and st['inHost'] and st['quick'] and st['op'] == '0', st)
+    pg.pdf(path=f'{OUT}/d06_list_print.pdf', prefer_css_page_size=True, print_background=True)
+    info = subprocess.run(['pdfinfo', f'{OUT}/d06_list_print.pdf'], capture_output=True, text=True).stdout
+    subprocess.run(['pdftoppm', '-png', '-r', '90', '-singlefile', f'{OUT}/d06_list_print.pdf', f'{OUT}/d06_list_print'])
+    d_same = subprocess.run(['python3', '-c', f"""
+from PIL import Image, ImageChops
+a=Image.open('{OUT}/d03_print_ctrlp.png').convert('RGB'); b=Image.open('{OUT}/d06_list_print.png').convert('RGB')
+bb=ImageChops.difference(a,b).getbbox(); print(bb)"""], capture_output=True, text=True).stdout.strip()
+    check('list print = 1 A4 page, same report', 'Pages:           1' in info and '(A4)' in info, d_same)
+    pg.evaluate("window.dispatchEvent(new Event('afterprint'))"); pg.wait_for_timeout(300)
+    check('after list print: back on list, search kept', pg.locator('#ir-view').count() == 0 and pg.input_value('#ir-list-q') == 'ملک زاہد' and pg.locator('.ir-card').count() == 1)
+    pg.fill('#ir-list-q', ''); pg.evaluate("_irListFilter('')"); pg.wait_for_timeout(200)
+    # ── rename ──
     pg.once('dialog', lambda d: d.accept('وقاص ٹاؤن چوری — 80 لاکھ'))
     pg.click('.ir-card .ir-act:has-text("نام بدلیں")'); pg.wait_for_timeout(500)
     check('rename shows new name', 'وقاص ٹاؤن چوری — 80 لاکھ' in pg.inner_text('.ir-card .ir-card-t'))
     check('rename saved to DB', pg.evaluate("window.__db.incident_reports[0].data.name") == 'وقاص ٹاؤن چوری — 80 لاکھ')
-    pg.click('.ir-card .ir-act:has-text("کاپی")'); pg.wait_for_timeout(600)
-    db = pg.evaluate("window.__db.incident_reports")
-    check('copy creates a new report (2 in DB, new number, signature not copied)',
-          len(db) == 2 and db[0]['report_number'] != db[1]['report_number'] and db[1]['data']['name'].endswith('(کاپی)') and not db[1]['data'].get('sho_sign'),
-          [x['data'].get('name') for x in db])
-    check('copy appears at top of list', '(کاپی)' in pg.inner_text('.ir-card >> nth=0'))
+    # ── copy = clipboard (no new report) ──
+    pg.click('.ir-card .ir-act:has-text("کاپی")'); pg.wait_for_timeout(500)
+    clip = pg.evaluate("""(async () => { const items = await navigator.clipboard.read(); const it = items[0];
+      return {types: it.types, html: await (await it.getType('text/html')).text(), text: await (await it.getType('text/plain')).text()}; })()""")
+    check('copy puts the formatted report (table) on the clipboard', 'text/html' in clip['types'] and '<table' in clip['html'] and 'نیو وقاص ٹاؤن ملتان' in clip['html'] and 'dir="rtl"' in clip['html'], clip['types'])
+    check('copy also gives full text (WhatsApp/SMS)', 'نوعیت وقوعہ: چوری' in clip['text'] and '0303-2333981' in clip['text'])
+    check('copy does NOT create a new report', len(pg.evaluate("window.__db.incident_reports")) == 1 and pg.locator('.ir-card').count() == 1)
+    # ── share ──
     pg.evaluate("window.__shared=null; navigator.share = (o) => { window.__shared = o.text; return Promise.resolve(); }; 0")
-    pg.click('.ir-card >> nth=1 >> .ir-act:has-text("شیئر")'); pg.wait_for_timeout(300)
+    pg.click('.ir-card .ir-act:has-text("شیئر")'); pg.wait_for_timeout(300)
     sh = pg.evaluate("window.__shared") or ''
     check('share sends the full report text', 'نوعیت وقوعہ: چوری' in sh and '0303-2333981' in sh and 'SI/SHO تھانہ صدر ملتان' in sh, sh[:120])
-    pg.click('.ir-card >> nth=1 >> .ir-act:has-text("ترمیم")'); pg.wait_for_selector('#ir-doc'); pg.wait_for_timeout(800)
+    # ── edit ──
+    pg.click('.ir-card .ir-act:has-text("ترمیم")'); pg.wait_for_selector('#ir-doc'); pg.wait_for_timeout(800)
     check('edit opens the saved report', 'نیو وقاص ٹاؤن ملتان' in pg.inner_text('#ir-doc [data-k=place]'))
     typ(pg, 'vehicle', 'موٹر سائیکل'); pg.click('.ir-strip .btn-primary'); pg.wait_for_timeout(600)
-    orig = [x for x in pg.evaluate("window.__db.incident_reports") if not x['data']['name'].endswith('(کاپی)')]
+    orig = pg.evaluate("window.__db.incident_reports")
     check('edit+save keeps the renamed name', orig and orig[0]['data']['name'] == 'وقاص ٹاؤن چوری — 80 لاکھ' and orig[0]['data']['f']['vehicle'] == 'موٹر سائیکل')
     pg.evaluate("_irClose(true)"); pg.wait_for_timeout(400)
+    # ── natures dropdown: ASI order, most frequent on top ──
+    pg.click('.page-header .dio-add-btn'); pg.wait_for_selector('#ir-doc'); pg.wait_for_timeout(600)
+    opts = pg.evaluate("[...document.querySelectorAll('#ir-doc .ir-cell:has([data-k=nature]) select option')].map(o=>o.textContent).slice(1)")
+    check('natures: most used (چوری) on top, then ASI order, «دیگر» last',
+          opts[:11] == ['چوری', 'جنسی زیادتی', 'قتل', 'نقب زنی', 'راہزنی', 'روڈ ایکسیڈنٹ', 'ڈکیتی', 'لاوارث نعش', 'خودکشی', 'آگ لگنا', 'ہوائی فائرنگ'] and opts[-1] == 'دیگر', opts[:12])
+    pg.evaluate("_irClose(true)"); pg.wait_for_timeout(300)
+    # ── delete ──
     pg.once('dialog', lambda d: d.accept())
-    pg.click('.ir-card >> nth=0 >> .ir-act:has-text("حذف")'); pg.wait_for_timeout(600)
-    check('delete removes copy (→ recycle bin)', len(pg.evaluate("window.__db.incident_reports")) == 1 and pg.evaluate("window.__db.recycle_bin.length") == 1)
+    pg.click('.ir-card .ir-act:has-text("حذف")'); pg.wait_for_timeout(600)
+    check('delete removes report (→ recycle bin)', len(pg.evaluate("window.__db.incident_reports")) == 0 and pg.evaluate("window.__db.recycle_bin.length") == 1)
     # regression: other tables on screen still responsive (screen-only rule kept)
     pg.set_viewport_size({'width': 820, 'height': 900}); pg.wait_for_timeout(200)
     disp = pg.evaluate("(() => { const t=document.createElement('table'); t.innerHTML='<tr><td>x</td></tr>'; document.getElementById('page-content').appendChild(t); const d=getComputedStyle(t).display; t.remove(); return d; })()")
@@ -160,9 +198,18 @@ print(ImageChops.difference(a,b).getbbox())"""], capture_output=True, text=True)
     mp.click('.ir-strip .btn-primary'); mp.wait_for_timeout(600)
     mp.evaluate("_irClose(true)"); mp.wait_for_timeout(500)
     mp.screenshot(path=OUT + '/m04_list.png')
-    ml = mp.evaluate("""(() => { const a=[...document.querySelectorAll('.ir-card .ir-act')]; const tops=new Set(a.map(x=>Math.round(x.getBoundingClientRect().top)));
-      return {n:a.length, rows:tops.size, overflow: document.documentElement.scrollWidth > innerWidth + 1, minH: Math.min(...a.map(x=>x.getBoundingClientRect().height))}; })()""")
-    check('mobile list: 5 actions in one tidy row, no overflow, touch-size', ml['n'] == 5 and ml['rows'] == 1 and not ml['overflow'] and ml['minH'] >= 44, ml)
+    ml = mp.evaluate("""(() => { const a=[...document.querySelectorAll('.ir-card .ir-act')]; const b=document.querySelector('.ir-card-body').getBoundingClientRect(), g=document.querySelector('.ir-card .ir-acts').getBoundingClientRect();
+      return {n:a.length, beside: g.right <= b.left + 1 && g.top < b.bottom, overflow: document.documentElement.scrollWidth > innerWidth + 1,
+        minH: Math.min(...a.map(x=>x.getBoundingClientRect().height)), minW: Math.min(...a.map(x=>x.getBoundingClientRect().width)), bodyW: Math.round(b.width)}; })()""")
+    check('mobile list: 6 actions beside the report, touch-size, no overflow', ml['n'] == 6 and ml['beside'] and not ml['overflow'] and ml['minH'] >= 44 and ml['minW'] >= 44 and ml['bodyW'] >= 200, ml)
+    n0 = mp.evaluate('window.__printCalls')
+    mp.click('.ir-card .ir-act[aria-label="پرنٹ"]'); mp.wait_for_timeout(300)
+    mp.pdf(path=f'{OUT}/m05_list_print.pdf', prefer_css_page_size=True, print_background=True)
+    mi2 = subprocess.run(['pdfinfo', f'{OUT}/m05_list_print.pdf'], capture_output=True, text=True).stdout
+    subprocess.run(['pdftoppm', '-png', '-r', '90', '-singlefile', f'{OUT}/m05_list_print.pdf', f'{OUT}/m05_list_print'])
+    check('mobile list print: 1 A4 page without opening', mp.evaluate('window.__printCalls') == n0 + 1 and 'Pages:           1' in mi2 and '(A4)' in mi2)
+    mp.evaluate("window.dispatchEvent(new Event('afterprint'))"); mp.wait_for_timeout(300)
+    check('mobile: back on list after print', mp.locator('#ir-view').count() == 0 and mp.locator('.ir-card').count() == 1)
     check('no JS errors (mobile real app)', not merrs, merrs[:4])
     b.close()
 
