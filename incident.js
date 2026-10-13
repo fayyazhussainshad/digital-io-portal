@@ -727,14 +727,15 @@ function _irCSS() {
     @media screen{ #ir-doc .ir-f:empty, #ir-doc .ir-fi:empty{ background:rgba(56,189,248,0.11); border-radius:3px; } }
     #ir-doc .ir-f:empty::before, #ir-doc .ir-fi:empty::before{ content:'\\200b'; }
 
-    /* سطر 1 — تھانہ (دائیں) · ضلع (بائیں، 1cm) — درخواستوں/CDR کا اصول، 14pt */
-    #ir-doc .ir-title-row{ display:flex; align-items:baseline; justify-content:space-between; width:100%; font-size:14pt; line-height:1.8; }
-    #ir-doc .ir-tt-right{ text-align:right; white-space:nowrap; }
-    #ir-doc .ir-tt-left{ text-align:left; white-space:nowrap; margin-left:1cm; }
-    #ir-doc .ir-fi{ display:inline-block; min-width:0.8in; outline:none; direction:rtl; unicode-bidi:isolate; font-weight:bold; margin:0 3pt; }
+    /* سطر 1 — درخواستیں / نقشہ موقع / سزا سلپ کا ہو بہو اصول: تھانہ دائیں کنارے پر،
+       ضلع بائیں سے 1cm اندر، 14pt، line-height 1.9، لیبل اور قیمت دونوں سادہ (bold نہیں) */
+    #ir-doc .ir-title-row{ display:flex; align-items:baseline; justify-content:space-between; width:100%; font-size:14pt; line-height:1.9; }
+    #ir-doc .ir-tt-right{ text-align:right; white-space:nowrap; font-weight:normal; }
+    #ir-doc .ir-tt-left{ text-align:left; white-space:nowrap; margin-left:1cm; font-weight:normal; }
+    #ir-doc .ir-fi{ display:inline-block; min-width:24px; outline:none; direction:rtl; unicode-bidi:isolate; font-weight:normal; }
 
     /* مرکزی عنوان — 20pt، درمیان میں، نیچے لکیر */
-    #ir-doc .ir-head{ text-align:center; margin:0.1in 0 0.14in; }
+    #ir-doc .ir-head{ text-align:center; margin:0.12in 0 0.14in; }
     #ir-doc .ir-title{ display:inline-block; min-width:2in; font-size:20pt !important; font-weight:bold;
       text-decoration:underline; text-underline-offset:7pt; line-height:1.7; text-align:center; }
 
@@ -794,7 +795,6 @@ function _irCSS() {
       #ir-view:not(.ir-a4) .ir-scroll{ background:#fff; }
       #ir-view:not(.ir-a4) .ir-zoom{ width:100%; zoom:1 !important; }
       #ir-view:not(.ir-a4) #ir-doc{ width:100%; min-height:100%; padding:12px 12px 28px; box-shadow:none; }
-      #ir-view:not(.ir-a4) #ir-doc .ir-tt-left{ margin-left:0; }
       #ir-view:not(.ir-a4) #ir-doc .ir-c1{ width:33%; }
       #ir-view:not(.ir-a4) #ir-doc .ir-table th, #ir-view:not(.ir-a4) #ir-doc .ir-table td{ padding:2pt 5pt 3pt; }
       #ir-view:not(.ir-a4) #ir-doc .ir-cell.has-pick{ padding-left:30px; }
