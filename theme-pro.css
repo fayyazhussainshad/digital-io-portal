@@ -324,7 +324,7 @@ small.dio-prio-sub {
 .dio-ayat #islamic-text { color: var(--dio-ink) !important; }
 
 /* ── Mobile ── */
-@media (max-width: 900px) {
+@media screen and (max-width: 900px) {
   .dio-stats { display: flex !important; overflow-x: auto; gap: 8px;
                scroll-snap-type: x mandatory; padding-bottom: 4px; }
   .dio-stat  { min-width: 116px; flex: 0 0 auto; scroll-snap-align: start; }

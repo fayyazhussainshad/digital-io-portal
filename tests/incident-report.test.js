@@ -154,3 +154,42 @@ test('محفوظ کرنا: سبسکرپشن guard، آف لائن قطار، sch
   assert.ok(/_pending: true/.test(J) && /function _irSyncPending/.test(J));
   assert.ok(!/alter table|create table/i.test(J));
 });
+
+test('SYSTEM RULE: موبائل/ٹیبلٹ کے قاعدے کاغذ پر نہیں (A4 = 794px، Legal = 816px)', () => {
+  // پرنٹ کے وقت براؤزر @media (max-width) کو کاغذ کی چوڑائی پر جانچتا ہے — 900px والا
+  // «table{display:block}» ہر جدول کو سکیڑ دیتا تھا (واقعاتی رپورٹ کا دوسرا کالم تنگ)۔
+  const bad = [];
+  for (const f of ['index.html', 'theme-pro.css', 'ui-home.css', 'mobile.css']) {
+    const re = /@media([^{]*max-width:\s*(\d+)px[^{]*)\{/g; let m;
+    const s = read(f);
+    while ((m = re.exec(s))) {
+      if (+m[2] >= 794 && !/screen/.test(m[1]) && !/print/.test(m[1])) bad.push(f + ': @media' + m[1].trim());
+    }
+  }
+  assert.deepStrictEqual(bad, [], 'چوڑے @media قاعدے صرف screen پر');
+});
+
+test('واقعاتی رپورٹ: پہلا کالم سب سے لمبے لیبل جتنا، دوسرا بائیں حاشیے تک', () => {
+  assert.ok(/#ir-doc \.ir-c1\{ width:var\(--ir-c1, 2\.6in\); \}/.test(J));
+  assert.ok(/function _irFitLabels[\s\S]{0,400}\.ir-table th \.ir-lbl[\s\S]{0,200}--ir-c1/.test(J));
+  assert.ok(/<th scope="row"><span class="ir-lbl">/.test(J));
+  assert.ok(/#ir-doc \.ir-table\{ width:100%;/.test(J), 'جدول پوری چوڑائی');
+  assert.ok(/function _irBalance[\s\S]{0,800}_irFitLabels\(doc\)/.test(J));
+  assert.ok(/const pz = h > availH \?/.test(J), 'صرف اصل overflow پر چھوٹا');
+});
+
+test('واقعاتی رپورٹ: جدول کے نیچے والی سطر جدول کے درمیان؛ SHO کا خانہ اپنی جگہ', () => {
+  assert.ok(/<div class="ir-closing-row">\$\{F\('closing', 'ir-closing'\)\}<\/div>/.test(J));
+  assert.ok(/#ir-doc \.ir-closing-row\{ margin-top:0\.2in; text-align:center; \}/.test(J));
+  const end = J.slice(J.indexOf('<div class="ir-end">'), J.indexOf('</div></div>', J.indexOf('<div class="ir-end">')));
+  assert.ok(!/data-k="closing"|F\('closing'/.test(end) && /F\('sho_line', 'ir-sholine'\)/.test(end));
+});
+
+test('محفوظ رپورٹس: ترمیم / نام بدلیں / کاپی / شیئر / حذف', () => {
+  for (const [fn, t] of [['_irOpen', 'ترمیم'], ['_irRename', 'نام بدلیں'], ['_irCopy', 'کاپی'], ['_irShareRow', 'شیئر'], ['_irDelete', 'حذف']]) {
+    assert.ok(new RegExp('class="ir-act[^"]*" onclick="' + fn + "\\('\\$\\{id\\}'\\)\"[^>]*>\\$\\{IR_ICON\\.[a-z]+\\}<span>" + t + '</span>').test(J), t);
+  }
+  assert.ok(/async function _irRename[\s\S]{0,300}DIO\.sub\.guard/.test(J) && /async function _irCopy[\s\S]{0,300}DIO\.sub\.guard/.test(J));
+  assert.ok(/rec\.data\.sho_sign = '';/.test(J), 'کاپی میں دستخط نقل نہیں');
+  assert.ok(/name: String\(_irMeta\.name \|\| ''\)\.trim\(\)/.test(J), 'ترمیم پر نام برقرار');
+});

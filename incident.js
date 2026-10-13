@@ -77,6 +77,9 @@ const IR_ICON = {
   cal: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5h16V20H4z"/><path d="M4 10.5h16"/><path d="M8 3.5v4"/><path d="M16 3.5v4"/></svg>',
   case: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16v12H4z"/><path d="M9 7V5h6v2"/><path d="M4 12h16"/></svg>',
   zoom: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/><path d="M8.5 11h5"/><path d="M11 8.5v5"/></svg>',
+  edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 8.5l2 2"/></svg>',
+  tag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>',
+  copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>',
   plus: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>',
 };
 
@@ -344,6 +347,7 @@ function _irListRows() {
   return `<div class="ir-cards">${rows.map(({ r, no }) => {
     const d = _irData(r);
     const subj = _irListSubject(r) || 'واقعاتی رپورٹ';
+    const name = String(d.name || '').trim();
     const date = _irListDate(r) || '—';
     const place = _irListPlace(r) || '—';
     const ll = _irLatLngText(d.lat, d.lng);
@@ -353,11 +357,18 @@ function _irListRows() {
       <div class="ir-card-row">
         <div class="ir-card-ico">${IR_LIST_ICON}</div>
         <div class="ir-card-body">
-          <div class="ir-card-t">${_irE(subj)}${r._pending ? ' <span class="ir-pend">سرور پر نہیں گئی — انٹرنیٹ آنے پر خود</span>' : ''}</div>
+          <div class="ir-card-t">${_irE(name || subj)}${name && subj && name !== subj ? ` <span class="ir-card-sub">${_irE(subj)}</span>` : ''}${r._pending ? ' <span class="ir-pend">سرور پر نہیں گئی — انٹرنیٹ آنے پر خود</span>' : ''}</div>
           <div class="ir-card-s"><bdi>${_irE(date)}</bdi> · <bdi>${_irE(place)}</bdi></div>
           <div class="ir-card-x">${ll ? `<bdi dir="ltr">${_irE(ll)}</bdi> · ` : ''}رپورٹ <bdi dir="ltr">#${no}</bdi> · <bdi dir="ltr">${_irE(r.report_number || '')}</bdi></div>
         </div>
         ${d.fir_number ? `<div class="ir-card-badge">مقدمہ <bdi dir="ltr">${_irE(d.fir_number)}</bdi></div>` : ''}
+      </div>
+      <div class="ir-acts" role="group" aria-label="رپورٹ کے اقدامات" onclick="event.stopPropagation()" onkeydown="event.stopPropagation()">
+        <button type="button" class="ir-act" onclick="_irOpen('${id}')" title="کھول کر ترمیم کریں">${IR_ICON.edit}<span>ترمیم</span></button>
+        <button type="button" class="ir-act" onclick="_irRename('${id}')" title="نام بدلیں">${IR_ICON.tag}<span>نام بدلیں</span></button>
+        <button type="button" class="ir-act" onclick="_irCopy('${id}')" title="اسی کی نقل سے نئی رپورٹ">${IR_ICON.copy}<span>کاپی</span></button>
+        <button type="button" class="ir-act" onclick="_irShareRow('${id}')" title="شیئر کریں">${IR_ICON.share}<span>شیئر</span></button>
+        <button type="button" class="ir-act ir-act-del" onclick="_irDelete('${id}')" title="حذف کریں">${IR_ICON.del}<span>حذف</span></button>
       </div>
     </div>`;
   }).join('')}</div>`;
@@ -394,12 +405,27 @@ function _irListCSS() {
     .ir-card bdi[dir="ltr"]{ font-family:Arial,sans-serif; font-size:9.5pt; white-space:nowrap; }
     .ir-card-badge{ background:var(--accent-glow); color:var(--accent); border-radius:12px; padding:3px 10px; font-size:10.5pt;
       font-weight:700; white-space:nowrap; }
+    .ir-card-sub{ font-size:11pt; font-weight:400; color:var(--text-muted); margin-right:6px; }
+    /* اقدامات — ایک قطار، یکساں، پیشہ ورانہ */
+    .ir-acts{ display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-start; margin-top:10px; padding-top:10px;
+      border-top:1px solid var(--border); cursor:default; }
+    .ir-act{ display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 12px 3px; border-radius:8px; cursor:pointer;
+      border:1px solid var(--border); background:var(--bg-secondary,transparent); color:var(--text-primary);
+      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; font-size:11.5pt; line-height:1; white-space:nowrap;
+      transition:border-color .15s, background .15s, color .15s; }
+    .ir-act svg{ width:16px; height:16px; flex:none; position:relative; top:1px; }
+    .ir-act:hover, .ir-act:focus-visible{ border-color:var(--accent); color:var(--accent); outline:none; }
+    .ir-act-del{ margin-inline-start:auto; color:var(--red,#dc2626); }
+    .ir-act-del:hover, .ir-act-del:focus-visible{ border-color:var(--red,#dc2626); color:#fff; background:var(--red,#dc2626); }
     .ir-pend{ font-size:10pt; color:#b45309; font-weight:700; margin-right:6px; }
     .ir-empty{ text-align:center; padding:40px 20px; color:var(--text-muted); line-height:2.4; font-size:14pt;
       font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
     .ir-empty-ico svg{ width:46px; height:46px; opacity:.45; }
     @media (max-width:760px){
       .ir-card{ padding:12px; }
+      .ir-acts{ display:grid; grid-template-columns:repeat(5, 1fr); gap:5px; }
+      .ir-act{ flex-direction:column; justify-content:center; gap:3px; height:auto; min-height:52px !important; padding:6px 2px 7px; font-size:10pt; }
+      .ir-act-del{ margin-inline-start:0; }
       .ir-card-row{ align-items:flex-start; }
       .ir-card-badge{ display:none; }
     }`;
@@ -572,7 +598,7 @@ function _irRenderDoc(override) {
       cell = F(r.k);
     }
     const tools = r.pick === 'nature' ? pickNature : r.pick === 'ptype' ? pickPtype : r.dt ? pickDt(r.dt) : r.loc ? pickLoc : '';
-    return `<tr><th scope="row">${label(r)}</th><td><div class="ir-cell${tools ? ' has-pick' : ''}">${cell}${tools}</div></td></tr>`;
+    return `<tr><th scope="row"><span class="ir-lbl">${label(r)}</span></th><td><div class="ir-cell${tools ? ' has-pick' : ''}">${cell}${tools}</div></td></tr>`;
   }).join('');
 
   const sign = _irMeta.sho_sign || '';
@@ -629,9 +655,11 @@ function _irRenderDoc(override) {
           </tbody>
         </table>
 
+        <!-- جدول کے نیچے والی سطر — جدول کے بالکل درمیان -->
+        <div class="ir-closing-row">${F('closing', 'ir-closing')}</div>
+
         <div class="ir-end">
           <div class="ir-endbox">
-            ${F('closing', 'ir-closing')}
             <div class="ir-signbox" id="ir-signbox">${sign ? `<img alt="SHO دستخط" src="${_irE(sign)}">` : ''}</div>
             <div class="ir-signbtns no-print">
               <button type="button" onclick="_irSignPad()">دستخط بنائیں</button>
@@ -741,7 +769,9 @@ function _irCSS() {
 
     /* جدول — دائیں عنوان، بائیں قیمت */
     #ir-doc .ir-table{ width:100%; border-collapse:collapse; table-layout:fixed; }
-    #ir-doc .ir-c1{ width:2.8in; }
+    /* پہلا کالم: سب سے لمبے لیبل جتنا (_irFitLabels ناپتا ہے) — فالتو جگہ نہیں؛ باقی سب دوسرے کالم کو */
+    #ir-doc .ir-c1{ width:var(--ir-c1, 2.6in); }
+    #ir-doc .ir-table th .ir-lbl{ white-space:nowrap; }
     #ir-doc .ir-table th, #ir-doc .ir-table td{ border:1px solid #000; padding:1pt 6pt 2pt; vertical-align:middle; font-size:14pt; }
     /* جدول کی سطریں سمٹی ہوئی (Nastaleeq کے لیے کافی 1.6) — عام رپورٹ پورے 14pt پر ایک صفحہ */
     #ir-doc .ir-table td, #ir-doc .ir-table th{ line-height:1.6; }
@@ -766,9 +796,10 @@ function _irCSS() {
     #ir-doc .ir-pick select, #ir-doc .ir-pick input{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:0; padding:0; }
 
     /* آخری حصہ — بائیں جانب */
-    #ir-doc .ir-end{ display:flex; justify-content:flex-end; margin-top:0.22in; }
+    #ir-doc .ir-closing-row{ margin-top:0.2in; text-align:center; }
+    #ir-doc .ir-closing{ display:inline-block; min-width:2in; text-align:center; }
+    #ir-doc .ir-end{ display:flex; justify-content:flex-end; margin-top:0.04in; }
     #ir-doc .ir-endbox{ width:3.6in; text-align:center; }
-    #ir-doc .ir-closing{ text-align:right; }
     #ir-doc .ir-signbox{ height:0.75in; display:flex; align-items:flex-end; justify-content:center; }
     #ir-doc .ir-signbox img{ max-height:0.75in; max-width:2.6in; object-fit:contain; }
     @media screen{ #ir-doc .ir-signbox:empty{ border:1px dashed #b6c2cf; border-radius:6px; } }
@@ -796,6 +827,7 @@ function _irCSS() {
       #ir-view:not(.ir-a4) .ir-zoom{ width:100%; zoom:1 !important; }
       #ir-view:not(.ir-a4) #ir-doc{ width:100%; min-height:100%; padding:12px 12px 28px; box-shadow:none; }
       #ir-view:not(.ir-a4) #ir-doc .ir-c1{ width:33%; }
+      #ir-view:not(.ir-a4) #ir-doc .ir-table th .ir-lbl{ white-space:normal; }
       #ir-view:not(.ir-a4) #ir-doc .ir-table th, #ir-view:not(.ir-a4) #ir-doc .ir-table td{ padding:2pt 5pt 3pt; }
       #ir-view:not(.ir-a4) #ir-doc .ir-cell.has-pick{ padding-left:30px; }
       #ir-view:not(.ir-a4) #ir-doc .ir-pick{ left:0; top:3px; width:26px; height:26px; }
@@ -863,6 +895,7 @@ function _irBalance() {
   const wasA4 = v ? v.classList.contains('ir-a4') : true;
   if (v && !wasA4) v.classList.add('ir-a4');
   if (z) z.style.zoom = '1';
+  _irFitLabels(doc);
   const base = 1.6 * IR_PX_IN;
   doc.style.setProperty('--ir-dmin', base + 'px');
   // سکرین کے بٹن (دستخط) چھپائی میں نہیں — ناپ سے نکالو
@@ -875,12 +908,22 @@ function _irBalance() {
   const det = inner.querySelector('.ir-detail');
   const detH = det ? det.getBoundingClientRect().height : base;
   if (spare > 0) doc.style.setProperty('--ir-dmin', Math.floor(Math.max(base, detH) + spare) + 'px');
-  const pz = h > availH * 0.99 ? Math.max(0.7, Math.floor((availH * 0.99 / h) * 1000) / 1000) : 1;
+  // صرف اصل overflow پر چھوٹا کرو (کاغذ سے زیادہ مواد)؛ موبائل کی سکرین والی touch ناپ (چند px) چھپائی میں نہیں ہوتی
+  const pz = h > availH ? Math.max(0.7, Math.floor((availH * 0.995 / h) * 1000) / 1000) : 1;
   doc.style.setProperty('--ir-pz', String(pz));
   if (v && !wasA4) v.classList.remove('ir-a4');
   if (z) z.style.zoom = prev;
 }
 window._irBalance = _irBalance;
+
+// پہلے کالم کی چوڑائی = سب سے لمبا لیبل + خانے کی اندرونی جگہ (6pt + 6pt) + لکیر
+function _irFitLabels(doc) {
+  doc = doc || document.getElementById('ir-doc');
+  if (!doc) return;
+  let mx = 0;
+  doc.querySelectorAll('.ir-table th .ir-lbl').forEach(s => { mx = Math.max(mx, s.offsetWidth); });
+  if (mx > 0) doc.style.setProperty('--ir-c1', Math.ceil(mx + 16 + 2 + 4) + 'px');
+}
 
 /* ═════════════ خانوں کے اوزار ═════════════ */
 function _irCell(k) { return document.querySelector('#ir-doc [data-k="' + k + '"]'); }
@@ -917,6 +960,7 @@ function _irPickPtype(sel) {
   _irMeta.person_type = v;
   const l = document.getElementById('ir-ptype-l');
   if (l) l.textContent = v;
+  _irBalanceSoon();
   _irMarkDirty(true); _irDraftSoon();
 }
 window._irPickPtype = _irPickPtype;
@@ -1151,6 +1195,7 @@ function _irBuildRecord(f) {
     person_type: _irMeta.person_type || 'متاثرہ',
     sho_sign: _irMeta.sho_sign || '',
     case_id: _irMeta.case_id || null, fir_number: _irMeta.fir_number || '',
+    name: String(_irMeta.name || '').trim(),   // «نام بدلیں» والا نام — ترمیم پر بھی برقرار
     saved_at: now,
     // پرانے فارم والے نام بھی (حذف شدہ مواد / بیک اپ / پرانا کوڈ پڑھ سکے)
     severity: p('nature'), caller_name: p('caller'), person_name: p('victim'),
@@ -1304,6 +1349,81 @@ function _irUpdateTitle() {
   _irMarkDirty(_irDirty);
 }
 
+/* ═════════════ محفوظ رپورٹ: نام بدلیں / کاپی / شیئر ═════════════ */
+function _irRowRecord(r) {
+  return { report_number: r.report_number, incident_type: r.incident_type, incident_date: r.incident_date,
+    address: r.address, narrative: r.narrative, action_taken: r.action_taken, data: { ..._irData(r) } };
+}
+// سرور پر لکھو؛ انٹرنیٹ نہ ہو تو مقامی (زیرِ التوا) — باقی ایپ کی طرح
+async function _irWriteRow(rec, cur) {
+  try {
+    const saved = await _irPush(rec, cur);
+    delete saved._pending;
+    if (cur && String(cur.id) !== String(saved.id)) _irList = _irList.filter(x => String(x.id) !== String(cur.id));
+    _irPutInList(saved);
+    return { row: saved, offline: false };
+  } catch (e) {
+    if (!_irIsNetErr(e)) throw e;
+    const now = new Date().toISOString();
+    const local = { ...(cur || {}), ...rec, id: (cur && cur.id) || ('tmp_' + Date.now()), created_at: (cur && cur.created_at) || now, _pending: true };
+    _irPutInList(local);
+    return { row: local, offline: true };
+  }
+}
+function _irRefreshListBody() {
+  const b = document.getElementById('ir-list-body');
+  if (b) b.innerHTML = _irListRows(); else if (window._activePage === 'incident') _irRenderList();
+}
+async function _irRename(id) {
+  const r = _irList.find(x => String(x.id) === String(id));
+  if (!r) return;
+  if (window.DIO && DIO.sub && typeof DIO.sub.guard === 'function' && !DIO.sub.guard('نام بدلنا')) return;
+  const d = _irData(r);
+  const cur = String(d.name || '').trim() || _irListSubject(r);
+  const v = prompt('رپورٹ کا نیا نام لکھیں (فہرست میں یہی نظر آئے گا):', cur);
+  if (v === null) return;
+  const name = v.replace(/\s+/g, ' ').trim().slice(0, 120);
+  const rec = _irRowRecord(r);
+  rec.data.name = name;
+  try {
+    const res = await _irWriteRow(rec, r);
+    _irRefreshListBody();
+    _irToast(res.offline ? 'نام آف لائن بدل گیا — انٹرنیٹ آنے پر خود سرور پر' : (name ? 'نام بدل گیا' : 'نام ہٹا دیا گیا — نوعیت دکھائی جائے گی'), res.offline ? 'info' : 'success');
+  } catch (e) { _irToast('نام نہیں بدل سکا: ' + ((e && e.message) || e), 'error', 5000); }
+}
+window._irRename = _irRename;
+async function _irCopy(id) {
+  const r = _irList.find(x => String(x.id) === String(id));
+  if (!r) return;
+  if (window.DIO && DIO.sub && typeof DIO.sub.guard === 'function' && !DIO.sub.guard('کاپی')) return;
+  const rec = _irRowRecord(r);
+  const base = String(rec.data.name || '').trim() || _irListSubject(r) || 'واقعاتی رپورٹ';
+  rec.report_number = 'IR-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-6);
+  rec.data.name = base + ' (کاپی)';
+  rec.data.saved_at = new Date().toISOString();
+  rec.data.sho_sign = '';     // دستخط نقل نہیں ہوتے — ہر رپورٹ پر الگ اجازت سے
+  try {
+    const res = await _irWriteRow(rec, null);
+    _irRefreshListBody();
+    _irToast(res.offline ? 'کاپی آف لائن بن گئی — انٹرنیٹ آنے پر خود سرور پر' : 'کاپی بن گئی — فہرست میں سب سے اوپر', res.offline ? 'info' : 'success');
+  } catch (e) { _irToast('کاپی نہیں بن سکی: ' + ((e && e.message) || e), 'error', 5000); }
+}
+window._irCopy = _irCopy;
+function _irShareRow(id) {
+  const r = _irList.find(x => String(x.id) === String(id));
+  if (!r) return;
+  const { f, meta } = _irFieldsOf(r);
+  _irShareText(_irTextReport(f, meta));
+}
+window._irShareRow = _irShareRow;
+function _irShareText(txt) {
+  if (navigator.share) { navigator.share({ title: 'واقعاتی رپورٹ', text: txt }).catch(() => { /* افسر نے بند کر دیا */ }); return; }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(() => _irToast('متن نقل ہو گیا — جہاں بھیجنا ہو وہاں چسپاں کریں', 'info'),
+      () => _irToast('نقل نہیں ہو سکا', 'error'));
+  } else _irToast('اس آلے پر شیئر کی سہولت نہیں — ڈاؤن لوڈ استعمال کریں', 'info');
+}
+
 /* ═════════════ حذف ═════════════ */
 async function _irDelete(id) {
   const r = _irList.find(x => String(x.id) === String(id));
@@ -1339,12 +1459,15 @@ function _irPrint() {
 }
 window._irPrint = _irPrint;
 
-function _irTextReport() {
-  const f = _irCollect();
+function _irTextReport(fIn, metaIn) {
+  const f = fIn || _irCollect();
+  const meta = metaIn || _irMeta;
   const p = k => _irPlain(f[k] || '');
-  const lines = [p('title') || 'واقعاتی رپورٹ', '='.repeat(40), `تھانہ: ${p('thana')}    ضلع: ${p('zila')}`];
+  const def = (typeof _irDefaults === 'function') ? _irDefaults() : {};
+  const pd = k => p(k) || _irPlain(def[k] || '');
+  const lines = [pd('title') || 'واقعاتی رپورٹ', '='.repeat(40), `تھانہ: ${pd('thana')}    ضلع: ${pd('zila')}`];
   IR_ROWS.forEach(r => {
-    const lbl = r.pick === 'ptype' ? `${_irMeta.person_type || 'متاثرہ'} کا نام` : r.l;
+    const lbl = r.pick === 'ptype' ? `${meta.person_type || 'متاثرہ'} کا نام` : r.l;
     lines.push(`${lbl}: ${p(r.k)}`);
     if (r.loc && p('latlng')) {
       lines.push(`Lat/Long: ${p('latlng')}`);
@@ -1352,17 +1475,12 @@ function _irTextReport() {
       if (ll) lines.push(`نقشہ: https://maps.google.com/?q=${ll.lat},${ll.lng}`);
     }
   });
-  lines.push('', p('detail'), '', p('closing'), p('sho_line'), p('sign_date'), '', 'Digital IO');
+  lines.push('', p('detail'), '', pd('closing'), pd('sho_line'), pd('sign_date'), '', 'Digital IO');
   return lines.join('\n');
 }
 function _irShare() {
   if (!document.getElementById('ir-doc')) return;
-  const txt = _irTextReport();
-  if (navigator.share) { navigator.share({ title: 'واقعاتی رپورٹ', text: txt }).catch(() => { /* افسر نے بند کر دیا */ }); return; }
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(txt).then(() => _irToast('متن نقل ہو گیا — جہاں بھیجنا ہو وہاں چسپاں کریں', 'info'),
-      () => _irToast('نقل نہیں ہو سکا', 'error'));
-  } else _irToast('اس آلے پر شیئر کی سہولت نہیں — ڈاؤن لوڈ استعمال کریں', 'info');
+  _irShareText(_irTextReport());
 }
 window._irShare = _irShare;
 function _irDownload() {

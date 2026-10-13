@@ -1,0 +1,80 @@
+// Test double for @supabase/supabase-js UMD — the REAL app runs on top of it.
+(function () {
+  const now = () => new Date().toISOString();
+  window.__opts = { noUpdatePolicy: false };
+  window.__db = window.__db || {
+    officers: [{ id: 'o1', user_id: 'u1', email: 'io@test.pk', full_name: 'فیاض حسین شاد', designation: 'ASI', badge_number: '1234',
+      station: 'صدر ملتان', district: 'ملتان', role: 'officer', is_approved: true, suspended: false, created_at: '2026-01-01T00:00:00Z' }],
+    subscriptions: [{ id: 's1', officer_id: 'o1', status: 'active', start_date: '2026-01-01', end_date: '2027-12-31', expires_at: '2027-12-31T00:00:00Z',
+      created_at: '2026-01-01T00:00:00Z', subscription_plans: { name: 'سالانہ', duration_days: 365 } }],
+    incident_reports: [], recycle_bin: [], cases: [{ id: 'c1', officer_id: 'o1', fir_number: '1234/26', offence_type: 'چوری',
+      section_of_law: '380 ت پ', occurrence_date: '2026-10-08', occurrence_place: 'وقاص ٹاؤن ملتان', status: 'under',
+      complainant: 'ملک زاہد اقبال ولد فیض احمد قوم کھوکھر سکنہ نیو وقاص ٹاؤن ملتان', created_at: '2026-10-08T00:00:00Z' }],
+    case_accused: [{ id: 'a1', case_id: 'c1', name: 'نامعلوم ملزم', accused_type: 'fir', created_at: '2026-10-08' }],
+  };
+  let seq = 0;
+  function mk(t) {
+    const st = { t, op: 'select', f: [], one: false, orS: null, ord: null, row: null, head: false };
+    const run = () => {
+      if (!navigator.onLine) throw new TypeError('Failed to fetch');
+      const tb = window.__db[st.t] || (window.__db[st.t] = []);
+      let rows = tb.filter(x => st.f.every(fn => fn(x)));
+      if (st.orS) {
+        const parts = st.orS.split(',').map(p => p.match(/^([a-z_]+)\.ilike\.%(.*)%$/)).filter(Boolean);
+        if (parts.length) rows = rows.filter(x => parts.some(m => String(x[m[1]] || '').toLowerCase().includes(m[2].toLowerCase())));
+      }
+      const out = d => ({ data: st.one ? (d[0] || null) : d, error: null, count: d.length });
+      if (st.op === 'select') {
+        if (st.ord) rows.sort((a, b) => String(b[st.ord]).localeCompare(String(a[st.ord])));
+        return st.head ? { data: null, error: null, count: rows.length } : out(JSON.parse(JSON.stringify(rows)));
+      }
+      if (st.op === 'insert' || st.op === 'upsert') {
+        const list = (Array.isArray(st.row) ? st.row : [st.row]).map(r => ({ id: 'r' + (++seq), created_at: new Date(Date.now() + seq).toISOString(), ...JSON.parse(JSON.stringify(r)) }));
+        list.forEach(r => tb.push(r));
+        return out(list);
+      }
+      if (st.op === 'update') {
+        if (st.t === 'incident_reports' && window.__opts.noUpdatePolicy) return out([]);
+        rows.forEach(r => Object.assign(r, JSON.parse(JSON.stringify(st.row))));
+        return out(rows);
+      }
+      if (st.op === 'delete') { window.__db[st.t] = tb.filter(x => !rows.includes(x)); return { data: null, error: null }; }
+      return out([]);
+    };
+    const p = new Proxy({}, {
+      get(_, k) {
+        if (k === 'then') return (res, rej) => Promise.resolve().then(run).then(res, rej);
+        if (k === 'select') return (_c, o) => { if (o && o.head) st.head = true; return p; };
+        if (k === 'insert' || k === 'upsert') return r => { st.op = k; st.row = r; return p; };
+        if (k === 'update') return r => { st.op = 'update'; st.row = r; return p; };
+        if (k === 'delete') return () => { st.op = 'delete'; return p; };
+        if (k === 'eq') return (c, v) => { st.f.push(x => String(x[c]) === String(v)); return p; };
+        if (k === 'in') return (c, v) => { st.f.push(x => (v || []).map(String).includes(String(x[c]))); return p; };
+        if (k === 'ilike') return (c, w) => { const q = String(w).replace(/%/g, '').toLowerCase(); st.f.push(x => String(x[c] || '').toLowerCase().includes(q)); return p; };
+        if (k === 'or') return s => { st.orS = s; return p; };
+        if (k === 'order') return c => { st.ord = c; return p; };
+        if (k === 'maybeSingle' || k === 'single') return () => { st.one = true; return p; };
+        return () => p;   // neq, gte, lte, is, not, range, limit, match …
+      }
+    });
+    return p;
+  }
+  const session = { user: { id: 'u1', email: 'io@test.pk', user_metadata: {} }, access_token: 'x', refresh_token: 'y' };
+  const anyChain = () => new Proxy(function () {}, { get: (_, k) => k === 'then' ? undefined : anyChain(), apply: () => anyChain() });
+  const client = {
+    from: mk,
+    rpc: async () => ({ data: null, error: null }),
+    auth: {
+      getSession: async () => ({ data: { session }, error: null }),
+      getUser: async () => ({ data: { user: session.user }, error: null }),
+      refreshSession: async () => ({ data: { session }, error: null }),
+      onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+      signOut: async () => ({ error: null }), startAutoRefresh() {}, stopAutoRefresh() {},
+      signInWithPassword: async () => ({ data: { session, user: session.user }, error: null }),
+    },
+    storage: { from: () => ({ upload: async () => ({ data: {}, error: null }), getPublicUrl: () => ({ data: { publicUrl: '' } }),
+      createSignedUrl: async () => ({ data: { signedUrl: '' }, error: null }), remove: async () => ({ data: null, error: null }) }) },
+    channel: () => anyChain(), removeChannel() {}, functions: { invoke: async () => ({ data: null, error: null }) },
+  };
+  window.supabase = { createClient: () => client };
+})();
