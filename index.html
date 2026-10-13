@@ -73,7 +73,7 @@
   #modal-body .dio-2col > .dio-span2 { grid-column: 1 / -1; }
   #modal-body .dio-2col > textarea { grid-column: 1 / -1; }
 }
-@media (max-width: 819px) {
+@media screen and (max-width: 819px) {
   #modal-body.modal-body { display: block; }
   #modal-body .dio-2col { display: block; }
 }
@@ -860,7 +860,7 @@ select.form-input { direction: rtl; text-align: right; }
 .bilingual-input { direction: auto; font-family: 'Noto Nastaliq Urdu', var(--font-main); }
 
 /* ── Mobile + Tablet (≤900px) ── */
-@media (max-width: 900px) {
+@media screen and (max-width: 900px) {
   .main-area { width:100% !important; overflow-x:hidden !important; }
   .page-content { overflow-y:auto !important; -webkit-overflow-scrolling:touch !important; padding:10px !important; height:calc(100vh - 52px) !important; }
   .topbar { padding:0 8px !important; }
@@ -983,7 +983,7 @@ input[id*="cnic"], input[id*="cell"] {
 #fab-toggle:active { transform: scale(0.95); }
   
 /* ── Mobile Touch Optimizations ── */
-@media (max-width: 900px) {
+@media screen and (max-width: 900px) {
   /* Larger touch targets */
   .btn { min-height: 38px; min-width: 38px; }
   .btn-sm { min-height: 32px; padding: 5px 10px; font-size: 11px; }

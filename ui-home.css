@@ -75,7 +75,7 @@
 @supports not (font-size: 1cqi) {
   #login-screen p.dio-ikhlas { font-size: clamp(8pt, 2.4vw, 22pt); }
 }
-@media (max-width: 860px) {
+@media screen and (max-width: 860px) {
   #login-screen .dio-ikhlas-band { padding: 12px 8px 14px; }
 }
 
@@ -207,7 +207,7 @@
 html:not([data-theme="light"]) #login-screen .dio-lc-hint { color: #f5b942; }
 
 /* Tablet + mobile: اوپر تعارف (مختصر)، نیچے لاگ اِن */
-@media (max-width: 860px) {
+@media screen and (max-width: 860px) {
   #login-screen { align-items: flex-start !important; padding: 12px !important; }
   #login-screen .dio-land { grid-template-columns: 1fr; border-radius: 16px; }
   #login-screen .dio-land-hero {
@@ -302,7 +302,7 @@ html:not([data-theme="light"]) #login-screen .dio-lc-hint { color: #f5b942; }
 .page-content button.dio-tile.tone-alert .dio-tile-ic { stroke: var(--dio-alert); }
 .page-content button.dio-tile.tone-alert b.dio-tile-lbl { color: var(--dio-alert); }
 
-@media (max-width: 900px) {
+@media screen and (max-width: 900px) {
   .page-content .dio-tiles-main { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 420px) {
@@ -497,7 +497,7 @@ html:not([data-theme="light"]) #login-screen button.dio-signup-btn { color: var(
 #login-screen .dio-legal-band .login-security-badge,
 #login-screen .dio-legal-band .login-security-badge * { color: #8ea3c4 !important; font-size: 8.5pt !important; margin-top: 6px !important; }
 
-@media (max-width: 860px) {
+@media screen and (max-width: 860px) {
   #login-screen .dio-land-hero { padding-top: 20px; }
   #login-screen .dio-legal-band { padding: 12px 14px 12px; }
   #login-screen .dio-lc-actions { grid-template-columns: 1fr 1fr; }
@@ -517,7 +517,7 @@ body:has(#login-screen:not([style*="display: none"]):not([style*="display:none"]
 }
 #login-screen .dio-land-emblem.has-photo { width: 76px; height: 76px; border-width: 3px; box-shadow: 0 0 0 4px rgba(201, 162, 39, .18); }
 #login-screen .dio-land-emblem.has-photo svg { visibility: hidden; }
-@media (max-width: 860px) {
+@media screen and (max-width: 860px) {
   #login-screen .dio-land-emblem.has-photo { width: 60px; height: 60px; }
 }
 
@@ -546,7 +546,7 @@ body:has(#login-screen:not([style*="display: none"]):not([style*="display:none"]
 
 /* ── موبائل (v527b): "لاگ اِن / اپنے اکاؤنٹ میں داخل ہوں" ہٹا، پورا کارڈ
       قانونی پٹی سمیت ایک اسکرین میں — کچھ کٹا یا چھپا نہیں ── */
-@media (max-width: 860px) {
+@media screen and (max-width: 860px) {
   #login-screen { padding: 8px !important; }
   #login-screen .dio-lc-head { display: none !important; }
   #login-screen .dio-ikhlas-band { padding: 8px 6px 10px; }
@@ -584,7 +584,7 @@ body:has(#login-screen:not([style*="display: none"]):not([style*="display:none"]
       پاس ورڈ/بایومیٹرک (کم اونچے) پر اوپر نیچے خالی پٹیاں بن جاتی تھیں۔
       اب کارڈ اسکرین بھرتا ہے، سفید حصہ بچی جگہ لیتا ہے، اور ہر پینل کا
       مواد اُس سفید حصے کے بیچ میں رہتا ہے۔ ── */
-@media (max-width: 860px) {
+@media screen and (max-width: 860px) {
   #login-screen { align-items: stretch !important; justify-content: flex-start !important; }
   #login-screen .dio-land {
     margin: 0 !important;
@@ -606,7 +606,7 @@ body:has(#login-screen:not([style*="display: none"]):not([style*="display:none"]
   #login-screen #panel-biometric .login-links { text-align: center !important; }
 }
 /* چھوٹی/کم اونچی موبائل اسکرین: PIN کا کی-پیڈ تھوڑا سمٹ جائے تاکہ کچھ نیچے نہ کٹے */
-@media (max-width: 860px) and (max-height: 740px) {
+@media screen and (max-width: 860px) and (max-height: 740px) {
   #login-screen .pin-pad { gap: 8px !important; margin-bottom: 10px !important; }
   #login-screen .pin-key { padding: 8px !important; }
   #login-screen .login-method { min-height: 36px !important; }
