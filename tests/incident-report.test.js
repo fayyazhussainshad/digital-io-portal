@@ -123,7 +123,7 @@ test('سسٹم کے اصول: 14pt، Jameel Noori، pt (px نہیں)، A4، عن
   const css = J.slice(J.indexOf('function _irCSS'), J.indexOf('function _irFit'));
   assert.ok(/#ir-doc\{[^}]*font-family:'Jameel Noori Nastaleeq'[^}]*font-size:14pt/.test(css));
   assert.ok(/size:A4 portrait/.test(css));
-  assert.ok(/padding:1cm 1in 1cm 0\.4in/.test(css), 'سسٹم کا طے شدہ مارجن');
+  assert.ok(/padding:1cm 0\.5in 1cm 0\.4in/.test(css), 'مارجن: دائیں 0.5in (ASI)، بائیں 0.4in، اوپر/نیچے 1cm');
   assert.ok(/\.ir-title\{[^}]*font-size:20pt/.test(css));
   // کاغذ کے اندر کوئی px والا font نہیں
   const docRules = css.split('\n').filter(l => /#ir-doc/.test(l));
@@ -185,11 +185,50 @@ test('واقعاتی رپورٹ: جدول کے نیچے والی سطر جدول
   assert.ok(!/data-k="closing"|F\('closing'/.test(end) && /F\('sho_line', 'ir-sholine'\)/.test(end));
 });
 
-test('محفوظ رپورٹس: ترمیم / نام بدلیں / کاپی / شیئر / حذف', () => {
-  for (const [fn, t] of [['_irOpen', 'ترمیم'], ['_irRename', 'نام بدلیں'], ['_irCopy', 'کاپی'], ['_irShareRow', 'شیئر'], ['_irDelete', 'حذف']]) {
-    assert.ok(new RegExp('class="ir-act[^"]*" onclick="' + fn + "\\('\\$\\{id\\}'\\)\"[^>]*>\\$\\{IR_ICON\\.[a-z]+\\}<span>" + t + '</span>').test(J), t);
+test('محفوظ رپورٹس: پرنٹ / ترمیم / شیئر / کاپی / نام بدلیں / حذف — رپورٹ کے سامنے', () => {
+  const order = [['_irPrintRow', 'print', 'پرنٹ'], ['_irOpen', 'edit', 'ترمیم'], ['_irShareRow', 'share', 'شیئر'],
+    ['_irCopyRow', 'copy', 'کاپی'], ['_irRename', 'tag', 'نام بدلیں'], ['_irDelete', 'del', 'حذف']];
+  const acts = J.slice(J.indexOf('<div class="ir-acts"'), J.indexOf('</div>', J.indexOf('<div class="ir-acts"')));
+  let last = -1;
+  for (const [fn, ico, t] of order) {
+    const i = acts.indexOf(`\${A('${fn}', '${ico}', '${t}'`);
+    assert.ok(i > last, 'ترتیب/بٹن: ' + t); last = i;
   }
-  assert.ok(/async function _irRename[\s\S]{0,300}DIO\.sub\.guard/.test(J) && /async function _irCopy[\s\S]{0,300}DIO\.sub\.guard/.test(J));
-  assert.ok(/rec\.data\.sho_sign = '';/.test(J), 'کاپی میں دستخط نقل نہیں');
+  assert.ok(/\.ir-card\{ display:grid; grid-template-columns:auto minmax\(0,1fr\) auto;/.test(J), 'بٹن تفصیل کے سامنے (ایک قطار)');
+  assert.ok(/async function _irRename[\s\S]{0,300}DIO\.sub\.guard/.test(J));
   assert.ok(/name: String\(_irMeta\.name \|\| ''\)\.trim\(\)/.test(J), 'ترمیم پر نام برقرار');
+});
+
+test('کاپی = رپورٹ clipboard پر (نئی رپورٹ نہیں بنتی)', () => {
+  const fn = J.slice(J.indexOf('async function _irCopyRow'), J.indexOf('window._irCopyRow'));
+  assert.ok(/_irCopyText\(_irReportHTML\(f, meta\), _irTextReport\(f, meta\)\)/.test(fn));
+  assert.ok(!/_irPush|_irWriteRow|insert/.test(fn), 'ڈیٹابیس میں کچھ نہیں لکھتا');
+  assert.ok(/'text\/html': new Blob/.test(J) && /'text\/plain': new Blob/.test(J));
+  assert.ok(!/function _irCopy\(/.test(J), 'پرانا «نقل بناؤ» ختم');
+});
+
+test('فہرست سے سیدھا پرنٹ — وہی _irPrint (Ctrl+P والا راستہ)، فہرست جوں کی توں', () => {
+  const fn = J.slice(J.indexOf('function _irPrintRow'), J.indexOf('window._irPrintRow'));
+  assert.ok(/classList\.add\('ir-quick'\)/.test(fn) && /_irPrint\(\);/.test(fn) && /'afterprint'/.test(fn));
+  assert.ok(!/_irClose\(|_irRenderList\(/.test(fn), 'فہرست دوبارہ نہیں بنتی');
+  assert.ok(/@media screen\{ #ir-view\.ir-quick\{ opacity:0; pointer-events:none; \} \}/.test(J));
+});
+
+test('فہرست فوراً (cache سے) — سرور کا انتظار نہیں', () => {
+  const fn = J.slice(J.indexOf('async function renderIncident'), J.indexOf('window.renderIncident'));
+  assert.ok(/const cached = _irLocal\(\);[\s\S]{0,200}_irRenderList\(container\);[\s\S]{0,40}_irLoadList\(\)\.then/.test(fn));
+});
+
+test('کارڈ پر: تاریخ/وقت، اطلاع دہندہ، متاثرہ، تھانہ — اور تلاش میں بھی', () => {
+  assert.ok(/<b>اطلاع دہندہ:<\/b>/.test(J) && /\$\{_irE\(d\.person_type \|\| 'متاثرہ'\)\}:<\/b>/.test(J) && /<b>تھانہ:<\/b>/.test(J));
+  assert.ok(/_irPlain\(f\.victim\), d\.person_name, _irListThana\(r\)/.test(J));
+});
+
+test('نوعیت: ASI کی ترتیب، پھر زیادہ وقوعہ والی اوپر؛ «دیگر» آخر', () => {
+  const m = J.match(/const IR_NATURES = \[([\s\S]*?)\];/);
+  const list = m[1].match(/'([^']+)'/g).map(x => x.slice(1, -1));
+  assert.deepStrictEqual(list.slice(0, 10), ['جنسی زیادتی', 'قتل', 'نقب زنی', 'راہزنی', 'روڈ ایکسیڈنٹ', 'ڈکیتی', 'لاوارث نعش', 'خودکشی', 'آگ لگنا', 'ہوائی فائرنگ']);
+  assert.strictEqual(list[list.length - 1], 'دیگر');
+  assert.ok(/\.sort\(\(a, b\) => \(\(cnt\[b\] \|\| 0\) - \(cnt\[a\] \|\| 0\)\) \|\| \(idx\(a\) - idx\(b\)\)/.test(J));
+  assert.ok(/_irNatureOptions\(\)\.map/.test(J));
 });
