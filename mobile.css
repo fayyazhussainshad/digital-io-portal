@@ -270,28 +270,8 @@
     .page-content [style*="1fr 132px"] { grid-template-columns: 1fr !important; }
   }
 
-  /* ── WAQIATI RIPORT (incident) ka form ──────────────────────
-     Ye form aik 4-khane wale JADWAL ki shakl mein bana hai
-     (unwan | qeemat | unwan | qeemat). Phone par khane itne tang
-     ho jate the ke matn bahar nikal jata tha. Ab har qatar apni
-     satar par — unwan ooper, khana neeche. */
-  #page-content .inc-form table,
-  #page-content table.inc-table {
-    display: block !important; width: 100% !important;
-  }
-  #page-content .inc-form table tbody,
-  #page-content table.inc-table tbody { display: block !important; width: 100% !important; }
-  #page-content .inc-form table tr,
-  #page-content table.inc-table tr {
-    display: block !important; width: 100% !important;
-    border-bottom: 1px solid var(--border-light, rgba(125,151,173,.16));
-    padding-bottom: 6px; margin-bottom: 6px;
-  }
-  #page-content .inc-form table td,
-  #page-content table.inc-table td {
-    display: block !important; width: 100% !important;
-    border: 0 !important; padding: 3px 0 !important;
-  }
+  /* WAQIATI RIPORT: v535 se A4 kaghaz (incident.js) — phone par kaghaz
+     zoom se poora nazar aata hai, jadwal ki sataren nahi tooTtin. */
 
   table.dio-cards tr {
     background: var(--bg-primary, #fff);
