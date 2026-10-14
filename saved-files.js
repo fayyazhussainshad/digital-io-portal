@@ -138,6 +138,18 @@ async function dioSavedShare(j) {
   const x = _dioSavedParse(j); if (!x) return;
   const d = x.saved_at ? (typeof formatDate === 'function' ? formatDate(x.saved_at) : x.saved_at.slice(0, 10)) : '';
   const txt = `${x.name}${d ? ' — ' + d : ''}`;
+  // پوری فائل (PDF + Word): فائل کھول کر اسی کا پرنٹ والا کاغذ (پہلے صرف نام جاتا تھا)
+  try {
+    if (typeof dioSharePrint === 'function') {
+      dioSavedOpen(j);
+      await new Promise(r => setTimeout(r, 1100));
+      const run = () => {
+        if (typeof _printR173 === 'function' && x.kind === 'report_173') return _printR173();
+        if (typeof _dioPrintCurrent === 'function') return _dioPrintCurrent();
+      };
+      if (await dioSharePrint(run, txt)) return;
+    }
+  } catch (_) { /* نیچے نام والا راستہ */ }
   try {
     if (navigator.share) { await navigator.share({ title: x.name, text: txt }); return; }
     await navigator.clipboard.writeText(txt);

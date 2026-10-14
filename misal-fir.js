@@ -200,12 +200,25 @@ function _shareFIREntry(entryId) {
   const entries = window._firEntries || [];
   const e = entries.find(x => x.id === entryId);
   if (!e) return;
+  // پوری فائل (PDF + Word) — وہی کاغذ جو پرنٹ میں آتا ہے؛ نہ بنے تو متن
+  const c = window._workspaceCase || {};
+  if (typeof dioSharePrint === 'function') {
+    dioSharePrint(() => _printFIREntry(entryId), 'ایف آئی آر — مقدمہ ' + (c.fir_number || ''))
+      .then(ok => { if (!ok) _doShareFIR(_stripTags(e.content?.html||'')); });
+    return;
+  }
   _doShareFIR(_stripTags(e.content?.html||''));
 }
 
 
 function _shareFIRAll() {
   const entries = window._firEntries || [];
+  const c0 = window._workspaceCase || {};
+  if (typeof dioSharePrint === 'function') {
+    dioSharePrint(() => _printFIRAll(), 'ایف آئی آر — مقدمہ ' + (c0.fir_number || ''))
+      .then(ok => { if (!ok) _doShareFIR(entries.map(e => _stripTags(e.content?.html||'')).join('\n\n---\n\n')); });
+    return;
+  }
   const txt = entries.map(e => _stripTags(e.content?.html||'')).join('\n\n---\n\n');
   _doShareFIR(txt);
 }

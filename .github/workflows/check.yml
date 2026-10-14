@@ -79,6 +79,14 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: python fir_test.py
+      - name: Landing Quran/Hadith + dashboard order (landing_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: python landing_test.py
+      - name: System forms, PDF/Word share, auto interim challan (v551_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: python v551_test.py
       - name: Screenshots and print PDFs
         if: always()
         uses: actions/upload-artifact@v4

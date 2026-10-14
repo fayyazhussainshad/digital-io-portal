@@ -144,10 +144,22 @@ bb=ImageChops.difference(a,b).getbbox(); print(bb)"""], capture_output=True, tex
     check('copy also gives full text (WhatsApp/SMS)', 'نوعیت وقوعہ: چوری' in clip['text'] and '0303-2333981' in clip['text'])
     check('copy does NOT create a new report', len(pg.evaluate("window.__db.incident_reports")) == 1 and pg.locator('.ir-card').count() == 1)
     # ── share ──
-    pg.evaluate("window.__shared=null; navigator.share = (o) => { window.__shared = o.text; return Promise.resolve(); }; 0")
-    pg.click('.ir-card .ir-act:has-text("شیئر")'); pg.wait_for_timeout(300)
-    sh = pg.evaluate("window.__shared") or ''
-    check('share sends the full report text', 'نوعیت وقوعہ: چوری' in sh and '0303-2333981' in sh and 'SI/SHO تھانہ صدر ملتان' in sh, sh[:120])
+    # v551 (افسر کی ہدایت): شیئر = پوری فائل PDF + Word (پہلے صرف متن جاتا تھا)
+    pg.evaluate("""window.__shared=null; navigator.canShare = () => true;
+      navigator.share = async (o) => { window.__shared = { names: (o.files||[]).map(f => f.name),
+        doc: o.files && o.files.find(f => /\\.doc$/.test(f.name)) ? await o.files.find(f => /\\.doc$/.test(f.name)).text() : '',
+        pdfHead: o.files && o.files.find(f => /\\.pdf$/.test(f.name)) ? (await o.files.find(f => /\\.pdf$/.test(f.name)).text()).slice(0, 8) : '' }; }; 0""")
+    pg.bring_to_front()   # اوپر کی PDF جانچ نے نیا ٹیب کھولا تھا — پس منظر کا ٹیب سست/منجمد رہتا ہے
+    pg.click('.ir-card .ir-act:has-text("شیئر")'); pg.wait_for_selector('#dio-share-box', timeout=15000)
+    pg.click('#dio-share-box button[data-k="both"]')
+    # page.pdf کے بعد headless صفحہ «پس منظر» کی طرح سست رہتا ہے — باہر سے بار بار جانچ اسے جگائے رکھتی ہے
+    for _ in range(240):
+        if pg.evaluate("!!window.__shared"): break
+        pg.wait_for_timeout(500)
+    sh = pg.evaluate("window.__shared") or {}
+    check('share sends the FULL file — PDF + Word', sorted(n.split('.')[-1] for n in sh.get('names', [])) == ['doc', 'pdf'] and sh.get('pdfHead', '').startswith('%PDF'), sh.get('names'))
+    check('Word file has the full report (table + all text)', '<table' in sh.get('doc', '') and 'نیو وقاص ٹاؤن ملتان' in sh.get('doc', '') and '0303-2333981' in sh.get('doc', '') and 'SI/SHO' in sh.get('doc', ''))
+    pg.evaluate("_irClose(true)"); pg.wait_for_timeout(900)   # فہرست سے شیئر رپورٹ کھول کر دکھاتا ہے — واپس فہرست
     # ── edit ──
     pg.click('.ir-card .ir-act:has-text("ترمیم")'); pg.wait_for_selector('#ir-doc'); pg.wait_for_timeout(800)
     check('edit opens the saved report', 'نیو وقاص ٹاؤن ملتان' in pg.inner_text('#ir-doc [data-k=place]'))

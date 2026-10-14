@@ -115,6 +115,10 @@ function _dioEnterDocView() {
           style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 16px;
                  font-size:13px;font-weight:700;cursor:pointer;
                  font-family:'Jameel Noori Nastaleeq',serif;">پرنٹ</button>
+        <button id="dio-dv-share" onclick="_dioShareCurrent()" title="شیئر — پوری فائل PDF / Word"
+          style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--accent);
+                 border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;
+                 font-family:'Jameel Noori Nastaleeq',serif;">شیئر</button>
         <button id="dio-dv-approve" onclick="_dioRequestApproval()" title="منظوری کے لیے بھیجیں"
           style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--amber,#f59e0b);
                  border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;
@@ -579,5 +583,16 @@ window._dioExitDocView  = _dioExitDocView;
 window._dioSwitchTab    = _dioSwitchTab;
 window._dioCloseTab     = _dioCloseTab;
 window._dioPrintCurrent = _dioPrintCurrent;
+
+// ── شیئر — کھلی دستاویز پوری فائل کی صورت (PDF + Word) ──
+//    پہلے دستاویز کا اپنا «پرنٹ» والا کاغذ؛ وہ نہ ہو تو اسکرین والا کاغذ۔
+function _dioShareCurrent() {
+  const id = _dioActiveTab;
+  if (!id || typeof dioSharePrint !== 'function') return;
+  let name = _dioDocName(id);
+  try { if (_misalCase && _misalCase.fir_number) name += ' — مقدمہ ' + _misalCase.fir_number; } catch (_) { /* ضمنی */ }
+  dioSharePrint(() => _dioPrintCurrent(), name, () => (window.DIO && DIO.forms) ? DIO.forms.findPaper() : null);
+}
+window._dioShareCurrent = _dioShareCurrent;
 window._dioOpenDocTab   = _dioOpenDocTab;
 

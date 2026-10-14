@@ -1032,8 +1032,6 @@ async function initApp() {
   setTimeout(_initNotifications, 2000);
   setTimeout(_checkDueReminders, 5000);
   setInterval(_checkDueReminders, 30*60*1000);
-  // Start Islamic messages
-  setTimeout(()=>{ if(typeof initIslamicMessages==='function') initIslamicMessages(); }, 1500);
   setTimeout(()=>{ if(typeof updateNotifBadge==='function') updateNotifBadge(); }, 2000);
   // Check subscription
   setTimeout(async()=>{
@@ -1088,6 +1086,32 @@ function dioPrint(htmlContent) {
   _dioDoPrint(htmlContent);
 }
 
+// ── پوری فائل شیئر (PDF + Word) — dio-share.js (اکتوبر 2026، افسر کی ہدایت) ──
+//    ہر «شیئر» بٹن یہی بلاتا ہے: دستاویز کا کاغذ (el) + نام۔ ماڈیول ضرورت پر آتا ہے۔
+window.dioShareDoc = async function (el, title) {
+  try {
+    if (typeof window.dioLoadScript === 'function') {
+      await window.dioLoadScript('dio-forms.js');
+      await window.dioLoadScript('dio-share.js');
+    }
+    if (window.DIO && DIO.share && el) { DIO.share.open(el, title); return true; }
+  } catch (_) { /* نیچے پیغام */ }
+  try { showToast('شیئر کا آلہ لوڈ نہیں ہو سکا — انٹرنیٹ/صفحہ دوبارہ کھولیں', 'error', 5000); } catch (_) { /* ضمنی */ }
+  return false;
+};
+// ماڈیول کا اپنا «پرنٹ» (run) چلا کر وہی کاغذ شیئر — جو پرنٹ میں نظر آتا ہے وہی فائل میں
+window.dioSharePrint = async function (run, title, fallbackEl) {
+  try {
+    if (typeof window.dioLoadScript === 'function') {
+      await window.dioLoadScript('dio-forms.js');
+      await window.dioLoadScript('dio-share.js');
+    }
+    if (window.DIO && DIO.share) return DIO.share.fromPrint(run, title, fallbackEl);
+  } catch (_) { /* نیچے پیغام */ }
+  try { showToast('شیئر کا آلہ لوڈ نہیں ہو سکا — انٹرنیٹ/صفحہ دوبارہ کھولیں', 'error', 5000); } catch (_) { /* ضمنی */ }
+  return false;
+};
+
 function _dioPrintPreview(htmlContent) {
   const old = document.getElementById('dio-preview-overlay');
   if (old) old.remove();
@@ -1127,7 +1151,7 @@ function _dioDoPrint(htmlContent) {
     st.textContent = `@media print {
       body:has(#dio-print-frame) > *:not(#dio-print-frame) { display: none !important; visibility: hidden !important; }
       #sidebar, .sidebar, #topbar, .topbar, .nav-item, nav, .workspace-tabs,
-      .case-tabs, .doc-toolbar, .editor-toolbar, .no-print, #islamic-bar { display: none !important; }
+      .case-tabs, .doc-toolbar, .editor-toolbar, .no-print { display: none !important; }
     }`;
     document.head.appendChild(st);
   }

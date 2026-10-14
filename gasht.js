@@ -1487,12 +1487,19 @@ function _glShareText(txt) {
 function _glShareRow(id) {
   const r = _glList.find(x => String(x.id) === String(id));
   if (!r) return;
+  // پوری فائل (PDF + Word): رپورٹ کھول کر اسی کا کاغذ
+  if (typeof dioShareDoc === 'function') {
+    _glOpen(id);
+    setTimeout(() => { const el = document.getElementById('gl-doc'); if (el) dioShareDoc(el, 'گشت رپورٹ'); }, 900);
+    return;
+  }
   const { f, entries } = _glFieldsWithDefaults(r);
   _glShareText(_glTextReport(f, entries));
 }
 window._glShareRow = _glShareRow;
 function _glShare() {
   if (!document.getElementById('gl-doc')) return;
+  if (typeof dioShareDoc === 'function') { dioShareDoc(document.getElementById('gl-doc'), 'گشت رپورٹ'); return; }
   _glShareText(_glTextReport(_glCollect(), _glReadEntries()));
 }
 window._glShare = _glShare;

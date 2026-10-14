@@ -81,15 +81,10 @@ async function _buildDash() {
   <!-- مرکزی تلاش — سائیڈ بار سے ہٹا کر یہاں (v524) -->
   ${_dashSearchBox()}
 
-  <!-- مرکزی بٹن — سائیڈ بار ختم، سب کچھ یہیں (v524) -->
-  ${_dashMainTiles(total, pendRem.length)}
-
-  <!-- Cases Stats — 7 سفید کارڈ (mockup اسٹائل — outline آئیکن) -->
-  <b class="dio-sec-h" role="heading" aria-level="2">مقدمات کی صورتحال</b>
-  ${_dashStatCards(total, statusCounts)}
-
-  <!-- اسلامی ٹِکر — اسٹیٹس کے نیچے (درود + قرآن/حدیث، ہر 6 سیکنڈ) -->
-  ${_islamicBarHTML()}
+  <!-- مرکزی بٹن — سائیڈ بار ختم، سب کچھ یہیں (v524)۔
+       ترتیب (افسر کی ہدایت، اکتوبر 2026): اہم سیکشن → مقدمات کی صورتحال → دیگر سہولیات۔
+       قرآن/حدیث کی پٹی یہاں سے ہٹا کر لاگ اِن (لینڈنگ) صفحے پر منتقل — islamic-landing.js -->
+  ${_dashMainTiles(total, pendRem.length, _dashStatusBlock(total, statusCounts))}
 
   <!-- Recently viewed -->
   <div style="direction:rtl;text-align:right;margin-bottom:14px;">
@@ -100,9 +95,13 @@ async function _buildDash() {
   ${_dashPriorityCards(nextRem, upcomingRem.length, overdueRem.length, thisMonthCount)}
 
   <!-- (سوالات اور مفید نکتہ افسر کی ہدایت پر ہٹا دیے گئے — ڈیش بورڈ صرف کام پر) -->`;
+}
 
-  // ٹِکر (6s) + سوالات خودکار (12s) — render ke baad
-  try { initIslamicMessages(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+// مقدمات کی صورتحال — عنوان + 7 کارڈ (دیگر سہولیات سے اوپر)
+function _dashStatusBlock(total, statusCounts) {
+  return `
+  <b class="dio-sec-h" role="heading" aria-level="2">مقدمات کی صورتحال</b>
+  ${_dashStatCards(total, statusCounts)}`;
 }
 
 // ── STAT CARDS — mockup اسٹائل (سفید کارڈ + outline آئیکن، theme-aware) ──
@@ -183,7 +182,7 @@ function _dashTile(t, big) {
     </button>`;
 }
 
-function _dashMainTiles(totalCases, pendingRem) {
+function _dashMainTiles(totalCases, pendingRem, statusBlock) {
   const isAdmin = (typeof canAccess === 'function') && canAccess('admin');
   const primary = [
     { l:'نیا اندراج',          ic:'add',    go:"window.DIOEntry?DIOEntry.hub():(window.openAddCaseModal&&openAddCaseModal())", tone:'brand' },
@@ -192,7 +191,8 @@ function _dashMainTiles(totalCases, pendingRem) {
     { l:'واقعاتی رپورٹ',       ic:'inc',    go:"showPage('incident',null)" },
     { l:'قانونی لائبریری',     ic:'law',    go:"showPage('law',null)" },
     { l:'مارک شدہ درخواستیں',  ic:'fivec',  go:"showPage('fivec',null)" },
-    { l:'ملزمان / گواہان',     ic:'people', go:"showPage('suspects',null)" },
+    // «ملزمان / گواہان» کا بٹن ہٹا دیا (افسر کی ہدایت، اکتوبر 2026): ملزم/گواہ کا اندراج
+    // «نیا اندراج» سے اور تلاش مرکزی تلاش سے ہوتی ہے — یہ بٹن دہرا تھا۔
     { l:'ٹمپلیٹس',             ic:'tpl',    go:"showPage('templates',null)" },
   ];
   const more = [
@@ -212,6 +212,7 @@ function _dashMainTiles(totalCases, pendingRem) {
   return `
   <b class="dio-sec-h" role="heading" aria-level="2">اہم سیکشن</b>
   <div class="dio-tiles dio-tiles-main">${primary.map(t => _dashTile(t, true)).join('')}</div>
+  ${statusBlock || ''}
   <b class="dio-sec-h" role="heading" aria-level="2">دیگر سہولیات</b>
   <div class="dio-tiles dio-tiles-more">${more.map(t => _dashTile(t, false)).join('')}</div>`;
 }
@@ -248,94 +249,7 @@ function _dashPriorityCards(nextRem, upCount, overdueCount, monthCount) {
 // ── SMART BRIEF — 6 ماہ کی کارکردگی (visual bar chart، real monthly data) ──
 // ── SMART BRIEF — آج کا نکتہ (روزانہ بدلتا پیشہ ورانہ مشورہ؛ curated، محفوظ) ──
 // ── مفید نکات (روزانہ + "اگلا" بٹن سے مزید) ──
-// ═══════════════════════════════════════════════════════════════
-//  اسلامی ٹِکر — درود + قرآن (~60%) + حدیث (~40%) + آثارِ صحابہؓ/سلف
-//  ہر ~1 منٹ بعد بدلتا ہے۔ درود کا نشان (ﷺ) ہمیشہ موجود = ہر منٹ درود کا ذکر۔
-//  ⚠ یہ مستند، معروف، حوالہ جاتی مواد کا CURATED مجموعہ ہے — گھڑا ہوا نہیں۔
-//     مزید مستند مواد نیچے arrays میں آسانی سے شامل کیا جا سکتا ہے (کسی معتبر
-//     تصدیق شدہ ماخذ سے)۔ استعمال سے پہلے کسی عالمِ دین سے تصدیق بہتر ہے۔
-// ═══════════════════════════════════════════════════════════════
-const _DIO_ISLAMIC = {
-  quran: [
-    { t:'اِنَّ مَعَ الْعُسْرِ يُسْرًا — بے شک ہر مشکل کے ساتھ آسانی ہے', r:'الشرح 94:6' },
-    { t:'وَقُلْ رَّبِّ زِدْنِيْ عِلْمًا — اے میرے رب! میرے علم میں اضافہ فرما', r:'طٰہٰ 20:114' },
-    { t:'اِنَّ اللّٰهَ مَعَ الصّٰبِرِيْنَ — بے شک اللہ صبر کرنے والوں کے ساتھ ہے', r:'البقرة 2:153' },
-    { t:'فَاذْكُرُوْنِيْۤ اَذْكُرْكُمْ — تم مجھے یاد کرو، میں تمہیں یاد کروں گا', r:'البقرة 2:152' },
-    { t:'اِنَّ اللّٰهَ يُحِبُّ الْمُحْسِنِيْنَ — بے شک اللہ نیکی کرنے والوں سے محبت کرتا ہے', r:'البقرة 2:195' },
-    { t:'وَتَعَاوَنُوْا عَلَى الْبِرِّ وَالتَّقْوٰى — نیکی اور تقویٰ پر ایک دوسرے کی مدد کرو', r:'المائدة 5:2' },
-    { t:'اِنَّ اللّٰهَ لَا يُضِيْعُ اَجْرَ الْمُحْسِنِيْنَ — اللہ نیکوکاروں کا اجر ضائع نہیں کرتا', r:'التوبة 9:120' },
-    { t:'حَسْبُنَا اللّٰهُ وَنِعْمَ الْوَكِيْلُ — ہمیں اللہ کافی ہے اور وہ بہترین کارساز ہے', r:'آل عمران 3:173' },
-    { t:'وَعَسٰۤى اَنْ تَكْرَهُوْا شَيْئًا وَّهُوَ خَيْرٌ لَّكُمْ — ہو سکتا ہے تم کسی چیز کو ناپسند کرو اور وہ تمہارے لیے بہتر ہو', r:'البقرة 2:216' },
-    { t:'رَبَّنَاۤ اٰتِنَا فِى الدُّنْيَا حَسَنَةً وَّفِى الْاٰخِرَةِ حَسَنَةً — اے رب! ہمیں دنیا و آخرت میں بھلائی دے', r:'البقرة 2:201' },
-    { t:'وَاللّٰهُ خَيْرُ الرّٰزِقِيْنَ — اور اللہ سب سے بہتر رزق دینے والا ہے', r:'الجمعة 62:11' },
-    { t:'وَبَشِّرِ الصّٰبِرِيْنَ — اور صبر کرنے والوں کو خوشخبری دے دو', r:'البقرة 2:155' },
-    { t:'اِنَّ اللّٰهَ يَاْمُرُ بِالْعَدْلِ وَالْاِحْسَانِ — بے شک اللہ عدل اور احسان کا حکم دیتا ہے', r:'النحل 16:90' },
-    { t:'وَقُوْلُوْا لِلنَّاسِ حُسْنًا — اور لوگوں سے اچھی بات کہو', r:'البقرة 2:83' },
-    { t:'وَمَنْ يَّتَّقِ اللّٰهَ يَجْعَلْ لَّهٗ مَخْرَجًا — جو اللہ سے ڈرے، اللہ اس کے لیے راہ نکال دیتا ہے', r:'الطلاق 65:2' },
-    { t:'وَلَا تَبْخَسُوا النَّاسَ اَشْيَآءَهُمْ — لوگوں کو ان کی چیزیں کم نہ دو', r:'الاعراف 7:85' },
-  ],
-  hadith: [
-    { t:'اِنَّمَا الْاَعْمَالُ بِالنِّيَّاتِ — اعمال کا دارومدار نیتوں پر ہے', r:'صحیح بخاری' },
-    { t:'اَلدِّيْنُ النَّصِيْحَةُ — دین خیرخواہی کا نام ہے', r:'صحیح مسلم' },
-    { t:'مَنْ لَّا يَرْحَمِ النَّاسَ لَا يَرْحَمْهُ اللّٰهُ — جو لوگوں پر رحم نہیں کرتا، اللہ اس پر رحم نہیں کرتا', r:'بخاری و مسلم' },
-    { t:'اَلْمُسْلِمُ مَنْ سَلِمَ الْمُسْلِمُوْنَ مِنْ لِّسَانِهٖ وَيَدِهٖ — مسلمان وہ ہے جس کی زبان و ہاتھ سے لوگ محفوظ رہیں', r:'صحیح بخاری' },
-    { t:'اَلظُّلْمُ ظُلُمَاتٌ يَّوْمَ الْقِيَامَةِ — ظلم قیامت کے دن اندھیرے ہوں گے', r:'بخاری و مسلم' },
-    { t:'اِتَّقِ اللّٰهَ حَيْثُمَا كُنْتَ — جہاں کہیں رہو اللہ سے ڈرو', r:'جامع ترمذی' },
-    { t:'اَلْحَيَاءُ مِنَ الْاِيْمَانِ — حیا ایمان کا حصہ ہے', r:'بخاری و مسلم' },
-    { t:'اَلصِّدْقُ يَهْدِيْۤ اِلَى الْبِرِّ — سچائی نیکی کی طرف لے جاتی ہے', r:'بخاری و مسلم' },
-    { t:'اَلْمُؤْمِنُ لِلْمُؤْمِنِ كَالْبُنْيَانِ يَشُدُّ بَعْضُهٗ بَعْضًا — مومن مومن کے لیے عمارت کی طرح ہے', r:'بخاری و مسلم' },
-    { t:'لَا يُؤْمِنُ اَحَدُكُمْ حَتّٰى يُحِبَّ لِاَخِيْهِ مَا يُحِبُّ لِنَفْسِهٖ — کوئی مومن نہیں جب تک اپنے بھائی کے لیے وہی نہ چاہے جو اپنے لیے', r:'بخاری و مسلم' },
-    { t:'اَلْكَلِمَةُ الطَّيِّبَةُ صَدَقَةٌ — اچھی بات (بھی) صدقہ ہے', r:'بخاری و مسلم' },
-  ],
-  athar: [
-    { t:'علم مال سے بہتر ہے؛ علم تمہاری حفاظت کرتا ہے اور مال کی تم حفاظت کرتے ہو', r:'منسوب: حضرت علیؓ' },
-    { t:'حساب لیے جانے سے پہلے اپنا محاسبہ خود کر لو', r:'منسوب: حضرت عمرؓ' },
-    { t:'انصاف کے ساتھ کیا گیا کام عبادت میں شمار ہوتا ہے', r:'اقوالِ سلف' },
-  ]
-};
-function _islamicBarHTML() {
-  return `
-  <div id="islamic-bar" onclick="_islamicNext&&_islamicNext()" title="اگلا پیغام"
-    class="dio-ayat" style="border-radius:10px;padding:8px 14px;margin-bottom:14px;direction:rtl;overflow:hidden;cursor:pointer;">
-    <span title="درود شریف — ﷺ" style="font-size:19px;flex-shrink:0;color:#0f766e;">ﷺ</span>
-    <span id="islamic-text" style="font-size:14px;font-weight:600;color:var(--text-primary);font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;transition:opacity .4s;">﷽</span>
-    <span id="islamic-ref" style="font-size:10px;color:var(--text-muted);flex-shrink:0;font-family:'Jameel Noori Nastaliq','Noto Nastaliq Urdu',serif;"></span>
-  </div>`;
-}
-function _islamicPick() {
-  const r = Math.random();
-  let pool;
-  if (r < 0.60) pool = _DIO_ISLAMIC.quran;        // ~60% قرآن
-  else if (r < 0.94) pool = _DIO_ISLAMIC.hadith;  // ~34% حدیث (قرآن:حدیث ≈ 60:40)
-  else pool = _DIO_ISLAMIC.athar;                 // ~6% آثار
-  return pool[Math.floor(Math.random()*pool.length)];
-}
-function _islamicRender() {
-  const tEl = document.getElementById('islamic-text');
-  const rEl = document.getElementById('islamic-ref');
-  if (!tEl) return;
-  const m = _islamicPick();
-  tEl.style.opacity = '0';
-  setTimeout(() => {
-    tEl.textContent = m.t;
-    if (rEl) rEl.textContent = m.r ? '— ' + m.r : '';
-    tEl.style.opacity = '1';
-  }, 160);
-}
-function _islamicNext() { _islamicRender(); }
-window._islamicNext = _islamicNext;
-function initIslamicMessages() {
-  try {
-    if (!document.getElementById('islamic-bar')) return;   // sirf dashboard par
-    _islamicRender();
-    if (window._dioIslamicTimer) clearInterval(window._dioIslamicTimer);
-    window._dioIslamicTimer = setInterval(() => {
-      if (!document.getElementById('islamic-bar')) { clearInterval(window._dioIslamicTimer); window._dioIslamicTimer = null; return; }
-      _islamicRender();
-    }, 6000);   // ہر 6 سیکنڈ (خودکار)
-  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
-}
-window.initIslamicMessages = initIslamicMessages;
+// (اسلامی ٹِکر یہاں سے ہٹا دیا گیا — اب صرف لاگ اِن/لینڈنگ صفحے پر: islamic-landing.js)
 
 // ── قانون و مسل — "کیا آپ جانتے ہیں؟" (تعلیمی سوال/جواب؛ ایپ کے document types
 //    اور معروف طریقہ کار سے۔ قانونی حوالوں کی تصدیق/توسیع خود کی جا سکتی ہے) ──

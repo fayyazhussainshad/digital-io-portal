@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v549
+   DIGITAL IO — SERVICE WORKER v551
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v549';
+const CACHE_NAME = 'digital-io-v551';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -62,12 +62,18 @@ const CORE_ASSETS = [
   '/ahkamat.js',
   '/help-guide.js',
   '/templates.js',
+  '/templates-forms.js',
+  '/system-forms.js',
+  '/dio-forms.js',
+  '/dio-share.js',
+  '/vendor/html2canvas.min.js',
   '/sho-dsp.js',
   '/editor-tools.js',
   '/saved-files.js',
   '/case-sharing.js',
   '/notifications.js',
   '/reminders.js',
+  '/auto-interim.js',
   '/performance.js',
   '/backup.js',
   '/settings.js',
@@ -79,6 +85,8 @@ const CORE_ASSETS = [
   '/theme-pro.css',
   '/ui-home.css',
   '/fonts/amiri-quran-arabic.woff2',
+  '/fonts/amiri-arabic.woff2',
+  '/islamic-landing.js',
   '/mobile.js',
   '/challan-form.js',
   '/secure-storage.js',
