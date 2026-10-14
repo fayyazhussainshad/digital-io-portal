@@ -55,7 +55,43 @@ def print_pdf(pg, name, how):
     subprocess.run(['pdftoppm', '-png', '-r', '80', f'{OUT}/{name}.pdf', f'{OUT}/{name}'])
     return st, pdf_info(f'{OUT}/{name}.pdf'), subprocess.run(['pdftotext', f'{OUT}/{name}.pdf', '-'], capture_output=True, text=True).stdout
 
+FIT = """(() => { const bad = [];
+  document.querySelectorAll('#gl-doc .gl-table th, #gl-doc .gl-table td, #gl-doc .gl-etable th, #gl-doc .gl-etable td').forEach(c => {
+    if (c.scrollWidth > c.clientWidth + 1) bad.push((c.innerText || '').trim().slice(0, 30)); });
+  const d = document.getElementById('gl-doc'), fin = d.querySelector('.gl-final');
+  const keep = !!fin && getComputedStyle(fin).breakInside === 'avoid' && !!fin.querySelector('.gl-h2') && !!fin.querySelector('[data-k=remarks]') && !!fin.querySelector('[data-k=sign_line]');
+  return { bad, docOver: d.scrollWidth > d.clientWidth + 1, keep }; })()"""
+def print_fit(pg):
+    """چھپائی کی ترتیب (A4: 8.27in − مارجن 0.9in = 707px) میں کوئی لیبل/خانہ اپنی حد سے باہر نہ ہو
+    (موبائل پر لیبل کا کالم تنگ بن کر لیبل ساتھ والے خانے پر چڑھ جاتا تھا)۔"""
+    vs = pg.viewport_size
+    pg.evaluate("window.dispatchEvent(new Event('beforeprint'))")
+    pg.set_viewport_size({'width': 707, 'height': 1000}); pg.emulate_media(media='print'); pg.wait_for_timeout(300)
+    r = pg.evaluate(FIT)
+    pg.emulate_media(media='null'); pg.set_viewport_size(vs)
+    pg.evaluate("window.dispatchEvent(new Event('afterprint'))"); pg.wait_for_timeout(300)
+    return r
+
 STRIP_WORDS = ['محفوظ کریں', 'گشت ختم کریں', 'فہرست', 'ڈاؤن لوڈ', 'A4 منظر']
+
+def page_text(path, n):
+    return subprocess.run(['pdftotext', '-f', str(n), '-l', str(n), path, '-'], capture_output=True, text=True).stdout
+def sign_with_body(path, info, date):
+    """دستخط والا (آخری) صفحہ اکیلا نہ ہو: مشاہدات + آخری سطر + دستخط ایک ہی (آخری) صفحے پر۔
+    اصل فونٹ (Jameel) کا اردو متن PDF سے درست نہیں نکلتا، اس لیے پہچان انگریزی نشانوں سے:
+    مشاہدات میں «SHO»، دستخط میں «ASI» + تاریخ۔"""
+    n = int((re.findall(r'Pages:\s+(\d+)', info) or ['0'])[0])
+    last = page_text(path, n)
+    before = ''.join(page_text(path, i) for i in range(1, n))
+    return n, ('SHO' in last and 'ASI' in last and date in last and 'SHO' not in before)
+def header_on_top(png):
+    """اگلے صفحے کے اوپر اندراجات کے جدول کی سرخی (ہلکا سرمئی خانہ) دوبارہ چھپی ہو"""
+    from PIL import Image
+    im = Image.open(png).convert('RGB'); w, h = im.size; px = im.load()
+    top = int(h / 29.7)                       # اوپر کا مارجن 1cm
+    n = sum(1 for y in range(top, top + int(h * 0.03)) for x in range(0, w, 2)
+            if all(abs(a - c) <= 4 for a, c in zip(px[x, y], (243, 245, 248))))
+    return n > 300
 
 with sync_playwright() as p:
     b = p.chromium.launch()
@@ -119,7 +155,7 @@ with sync_playwright() as p:
 
     # ── F) براہِ راست ترمیم (خانے) + Ctrl+S ──
     ecell(pg, '1:place', 'چوک کمہاراں والا (بوسن روڈ)')
-    cell(pg, 'remarks', 'علاقہ پُرامن رہا؛ رات کے وقت گشت مزید بڑھانے کی ضرورت ہے۔')
+    cell(pg, 'remarks', 'علاقہ پُرامن رہا؛ SHO کی ہدایت پر رات کے وقت گشت مزید بڑھایا جائے گا۔')
     pg.keyboard.press('Control+s'); pg.wait_for_timeout(700)
     rows = db(pg)
     check('inline edits + Ctrl+S saved (entry place, remarks)', rows[0]['data']['entries'][1]['place'] == 'چوک کمہاراں والا (بوسن روڈ)' and 'پُرامن' in json.dumps(rows[0]['data']['f'].get('remarks', ''), ensure_ascii=False), rows[0]['data']['entries'][1]['place'])
@@ -153,6 +189,9 @@ with sync_playwright() as p:
     # ── J) پرنٹ: Ctrl+P = پرنٹ بٹن ──
     tgt = pg.evaluate("(() => { const f = window._dioPrintTarget && window._dioPrintTarget(); return f ? f.toString() : null; })()")
     check('Ctrl+P resolves to the document\'s own print button', bool(tgt) and 'click' in tgt, tgt)
+    fit = print_fit(pg)
+    check('print layout: every label / cell fits its column (nothing spills into the next cell)', not fit['bad'] and not fit['docOver'], fit)
+    check('print rule: مشاہدات + آخری سطر + دستخط ایک گروہ (break-inside: avoid) — دستخط کبھی اکیلا اگلے صفحے پر نہیں', fit['keep'], fit)
     s1, i1, t1 = print_pdf(pg, 'g_d04_print_ctrlp', 'ctrlp')
     s2, i2, t2 = print_pdf(pg, 'g_d05_print_button', 'button')
     check('print: document isolated (only the paper)', s1['inHost'] and s2['inHost'], (s1, s2))
@@ -164,6 +203,8 @@ a=sorted(glob.glob('{OUT}/g_d04_print_ctrlp*.png')); b=sorted(glob.glob('{OUT}/g
 print(len(a)==len(b) and all(ImageChops.difference(Image.open(x).convert('RGB'),Image.open(y).convert('RGB')).getbbox() is None for x,y in zip(a,b)))"""], capture_output=True, text=True).stdout.strip()
     check('Ctrl+P page == print-button page (pixel identical)', same == 'True', same)
     check('printed paper has no buttons/toolbar', not any(w in t1 for w in STRIP_WORDS), [w for w in STRIP_WORDS if w in t1])
+    sw = sign_with_body(f'{OUT}/g_d04_print_ctrlp.pdf', i1, today)
+    check('signature never alone: last page carries مشاہدات + closing + signature together', sw[1], sw)
     check('printed paper carries the data (mobile no., coordinates, date)', '0303-2333981' in t1 and '30.157458' in t1 and today in t1, (('0303-2333981' in t1), ('30.157458' in t1), (today in t1)))
 
     # ── K) فہرست سے سیدھا پرنٹ ──
@@ -269,9 +310,15 @@ print(len(a)==len(b) and all(ImageChops.difference(Image.open(x).convert('RGB'),
     pg.evaluate("""(() => { for (let i = 0; i < 28; i++) _glMeta.entries.push({ id: 'x' + i, t: '1' + (i % 10) + ':' + String(10 + i).padStart(2, '0'),
       kind: i % 2 ? 'ناکہ بندی' : '15 کال', place: 'مقام نمبر ' + (i + 1), detail: 'تفصیل و کارروائی — اندراج نمبر ' + (i + 1) + '، جانچ کے لیے لمبا متن تاکہ رپورٹ اگلے صفحے تک جائے۔' });
       _glRedrawEntries(); return 0; })()""")
+    cell(pg, 'remarks', 'SHO کو رپورٹ پیش کی گئی۔')
     s3, i3, t3 = print_pdf(pg, 'g_d07_long', 'button')
     pages = int((re.findall(r'Pages:\s+(\d+)', i3) or ['0'])[0])
     check('long report: continues on next page(s), every page A4', pages >= 2 and '(A4)' in i3, re.findall(r'Pages:.*|Page size:.*', i3))
+    sw = sign_with_body(f'{OUT}/g_d07_long.pdf', i3, today)
+    check('long report: مشاہدات + signature kept together on the last page', sw[1], sw)
+    cont = [k for k in range(2, pages + 1) if re.search(r'\b\d{1,2}:\d{2}\b', page_text(f'{OUT}/g_d07_long.pdf', k))]
+    hdr = [k for k in cont if header_on_top(f'{OUT}/g_d07_long-{k}.png')]
+    check('long report: entries table header repeats on every continued page', cont and hdr == cont, (cont, hdr))
     pg.evaluate("_glClose(true)"); pg.wait_for_timeout(300)
 
     # ── T) میعاد ختم: نیا گشت نہیں کھلتا ──
@@ -298,8 +345,20 @@ print(len(a)==len(b) and all(ImageChops.difference(Image.open(x).convert('RGB'),
         rowDisplay: row ? getComputedStyle(row).display : null, fs: getComputedStyle(document.querySelector('#gl-doc [data-k=area]')).fontSize,
         addVis: vis('.gl-addbtn'), saveVis: vis('.gl-savebtn'), printVis: vis('.gl-strip [data-dio-print]'), gap: Math.round(d.top - st.bottom) }; })()""")
     check('mobile: full width, no sideways scroll, entries as cards, 14pt', g['docW'] == g['scrW'] and not g['hScroll'] and not g['pageScroll'] and g['rowDisplay'] == 'block' and g['fs'] == '18.6667px' and g['gap'] == 0, g)
+    col = mp.evaluate("""(() => { const bad = []; let n = 0;
+      document.querySelectorAll('#gl-doc .gl-erow td').forEach(td => {
+        const kids = [...td.children].filter(k => !k.classList.contains('no-print') && k.tagName !== 'BDI');
+        if (kids.length < 2) return;
+        const r0 = kids[0].getBoundingClientRect();
+        kids.slice(1).forEach(k => { n++; const r = k.getBoundingClientRect();
+          if (Math.abs(r.left - r0.left) > 2 || Math.abs(r.right - r0.right) > 2) bad.push(k.className + ' ' + Math.round(r.width) + 'px / ' + Math.round(r0.width) + 'px'); });
+      });
+      return { n, bad }; })()""")
+    check('mobile card: Lat/Long and «متعلقہ شخص» sit under their value (not squeezed into the label column)', col['n'] >= 2 and not col['bad'], col)
     check('mobile: اندراج / محفوظ / پرنٹ buttons visible first', g['addVis'] and g['saveVis'] and g['printVis'], g)
     mp.screenshot(path=OUT + '/g_m01_doc.png')
+    mfit = print_fit(mp)
+    check('mobile print layout: labels measured on one line — no label spills into the value cell', not mfit['bad'] and not mfit['docOver'], mfit)
     ms, mi, mt = print_pdf(mp, 'g_m02_print', 'button')
     check('mobile print: A4 paper (table, not cards), no buttons', ms['inHost'] and '(A4)' in mi and not any(w in mt for w in STRIP_WORDS) and '0300-1234567' in mt, re.findall(r'Page size:.*', mi))
     mp.evaluate("_glClose(true)"); mp.wait_for_timeout(500)

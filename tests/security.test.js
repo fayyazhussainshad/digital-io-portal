@@ -2010,6 +2010,24 @@ test('v548: گشت — وقت کا 12 گھنٹے سے 24 گھنٹے میں در�
   assert.equal(ctx._glParseDtText('14/10/2026', true), '2026-10-14');
 });
 
+test('v548: گشت کا کاغذ — انگریزی/ہندسے پورے ٹکڑے میں LTR، دستخط مشاہدات کے ساتھ، لیبل ایک سطر میں ناپے', () => {
+  const g = read('gasht.js');
+  const line = g.split('\n').find((l) => l.startsWith('const GL_LATIN_RE ='));
+  assert.ok(line, 'GL_LATIN_RE موجود');
+  const re = vm.runInNewContext(line.replace('const GL_LATIN_RE =', '').replace(/;\s*$/, ''));
+  const tok = (t) => t.match(re) || [];
+  // ٹکڑا کبھی بیچ سے نہ ٹوٹے — ورنہ RTL سطر میں «LEA-1234» → «1234-LEA» ہو جاتا
+  assert.deepEqual(tok('LEA-1234 — ڈرائیور'), ['LEA-1234']);
+  assert.deepEqual(tok('HC محمد اسلم 1122، کانسٹیبل 3344'), ['HC', '1122', '3344']);
+  assert.deepEqual(tok('متعلقہ شخص — 0303-2333981'), ['0303-2333981']);
+  assert.deepEqual(tok('14/10/2026 بوقت 08:30 بجے'), ['14/10/2026', '08:30']);
+  assert.deepEqual(tok('+92 300-1234567 · abc.def@x.pk · رپورٹ #12'), ['+92', '300-1234567', 'abc.def@x.pk', '#12']);
+  assert.deepEqual(tok('فیاض حسین شاد تھانہ صدر ملتان'), [], 'صرف اردو — کچھ نہیں');
+  assert.ok(/<div class="gl-final">[\s\S]{0,200}مشاہدات \/ ہدایات[\s\S]{0,200}'remarks'[\s\S]{0,300}'sign_line'/.test(g), 'مشاہدات + آخری سطر + دستخط ایک گروہ');
+  assert.ok(/#gl-doc \.gl-final, #gl-doc \.gl-tail\{ break-inside:avoid;/.test(g), 'گروہ صفحے پر نہ ٹوٹے');
+  assert.ok(/function _glFitLabels[\s\S]{0,900}white-space:nowrap[\s\S]{0,400}document\.body\.appendChild\(probe\)/.test(g), 'لیبل کا کالم: ایک سطر کی اصل چوڑائی، کاغذ سے باہر ناپ (zoom / موبائل منظر کا اثر نہیں)');
+});
+
 test('v548: sql/104 — گشت کی table: اپنا ریکارڈ، میعاد ختم = صرف پڑھنا، anon/TRUNCATE بند', () => {
   const s = read('sql/104_gasht_log.sql');
   assert.ok(/enable row level security/.test(s));

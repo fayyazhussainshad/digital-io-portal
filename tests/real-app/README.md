@@ -18,8 +18,9 @@ ASI کا اصول: کوئی تبدیلی live نہیں جاتی جب تک **اص
 ## چلانا
 ```bash
 cd tests/real-app
-mkdir -p .deps/fontpkg .deps/purify
+mkdir -p .deps/fontpkg .deps/jameel .deps/purify
 (cd .deps/fontpkg && npm pack @fontsource/noto-nastaliq-urdu && tar xzf *.tgz)
+(cd .deps/jameel && npm pack jameel-noori@1.1.2 && tar xzf *.tgz)   # ایپ کا اصل فونٹ
 (cd .deps/purify && npm pack dompurify@3.1.6 && tar xzf *.tgz)
 (cd ../.. && python3 -m http.server 8770 &)      # ریپو کی جڑ سے
 python3 real_test.py                               # Python Playwright درکار
@@ -37,6 +38,13 @@ python3 gasht_test.py
   «محفوظ / حذف ہو گیا» کا جھوٹا پیغام آتا تھا۔
 - `delete().select()` اصل PostgREST کی طرح حذف شدہ قطاریں لوٹاتا ہے۔
 - `window.__opts.noTable = ['gasht_logs']` — table ابھی بنی ہی نہیں (sql چلنے سے پہلے؛ PostgREST کا `PGRST205`)۔
+
+## فونٹ
+ایپ اردو کے لیے «Jameel Noori Nastaleeq» (npm: `jameel-noori`, jsdelivr سے) استعمال کرتی ہے — افسر کے آلے پر کاغذ
+اسی فونٹ میں بنتا اور چھپتا ہے، اس لیے جانچ بھی اسی میں ہوتی ہے (`.deps/jameel`)۔ یہ فائل نہ ہو تو جانچ اسی نام سے
+Noto Nastaliq چلاتی ہے (یعنی وہ صورت جب Jameel ابھی ڈاؤن لوڈ نہ ہوا ہو)؛ `DIO_JAMEEL=/nonexistent` دے کر یہ صورت
+جان بوجھ کر بھی جانچی جا سکتی ہے۔ نوٹ: Jameel کا اردو متن PDF سے (`pdftotext`) درست نہیں نکلتا — PDF کی جانچ
+انگریزی نشانوں (ASI، SHO، تاریخ، موبائل نمبر) یا تصویر سے کی جاتی ہے۔
 
 ## نوٹ
 - `page.emulate_media('screen')` کے بعد `page.pdf` سکرین چھاپتا ہے — اسی لیے

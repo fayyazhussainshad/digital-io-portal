@@ -194,25 +194,40 @@ function _glParseLatLng(t) {
   if (!isFinite(lat) || !isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
   return { lat, lng };
 }
-// اردو جملے میں «0303-2333981» جیسے نمبر RTL میں الٹ جاتے ہیں — LTR میں الگ کرو
-function _glIsolateNums(root) {
+// انگریزی حروف اور ہندسے (ASI، HC، LEA-1234، 1122، 0303-2333981، 14/10/2026) — ہر ٹکڑا اپنے LTR خانے (bdi) میں:
+//  • RTL سطر میں ترتیب کبھی نہ الٹے («LEA-1234» → «1234-LEA» / «0303-2333981» کے ٹکڑے آگے پیچھے نہ ہوں)
+//  • پورے کاغذ پر انگریزی کا ایک ہی فونٹ (Times) — ورنہ Jameel کے اپنے انگریزی حروف الگ شکل میں آتے تھے
+//  • انگریزی لفظ اردو سے نہ چپکے (gl-lw)
+//  جس خانے میں ابھی لکھا جا رہا ہو اسے نہیں چھیڑتے (کرسر نہ ہلے) — وہ خانہ چھوڑتے ہی (focusout، force) درست ہوتا ہے۔
+const GL_LATIN_RE = /[+#]?[A-Za-z0-9]+(?:[-–./:,+@_&][A-Za-z0-9]+)*/g;
+function _glIsolateNums(root, force) {
   if (!root || !document.createTreeWalker) return;
+  const act = force ? null : document.activeElement;
+  const typing = act && act !== document.body && act.isContentEditable ? act : null;
   const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const nodes = [];
   while (w.nextNode()) nodes.push(w.currentNode);
   nodes.forEach(n => {
     const par = n.parentElement;
-    if (!par || par.closest('bdi,[dir="ltr"]')) return;
+    if (!par || par.closest('bdi,[dir="ltr"],button,svg,style,script,input,select,textarea,.no-print')) return;
+    if (typing && typing.contains(n)) return;
     const t = n.nodeValue || '';
-    const re = /\d+(?:[-–]\d+)+/g;
-    if (!re.test(t)) return;
-    re.lastIndex = 0;
+    GL_LATIN_RE.lastIndex = 0;
+    if (!GL_LATIN_RE.test(t)) return;
+    GL_LATIN_RE.lastIndex = 0;
     const frag = document.createDocumentFragment();
     let last = 0, m;
-    while ((m = re.exec(t))) {
+    while ((m = GL_LATIN_RE.exec(t))) {
       if (m.index > last) frag.appendChild(document.createTextNode(t.slice(last, m.index)));
       const b = document.createElement('bdi');
       b.setAttribute('dir', 'ltr');
+      // دونوں طرف ہلکا فاصلہ (Jameel کا خالی حرف بہت تنگ ہے)؛ مگر «1122،» میں نمبر اور «،» کے بیچ نہیں
+      const prev = m.index > 0 ? t[m.index - 1] : ' ', next = t[m.index + m[0].length] || ' ';
+      const cls = [];
+      if (/[A-Za-z]/.test(m[0])) cls.push('gl-lw');
+      if (!/\s/.test(next)) cls.push('gl-nl');
+      if (!/\s/.test(prev)) cls.push('gl-nr');
+      if (cls.length) b.className = cls.join(' ');
       b.textContent = m[0];
       frag.appendChild(b);
       last = m.index + m[0].length;
@@ -704,17 +719,18 @@ function _glRenderDoc(override) {
         </table>
         <div class="gl-sum" id="gl-sum">${_glSummaryHtml()}</div>
 
-        <div class="gl-h2 dio-doc-h2">مشاہدات / ہدایات</div>
-        ${F('remarks', 'gl-remarks')}
-
-        <!-- آخری سطر اور دستخط اکٹھے (صفحہ بدلے تو دونوں ساتھ) -->
-        <div class="gl-tail">
-          <div class="gl-closing-row">${F('closing', 'gl-closing')}</div>
-          <div class="gl-end">
-            <div class="gl-endbox">
-              <div class="gl-signspace" aria-hidden="true"></div>
-              ${F('sign_line', 'gl-signline')}
-              ${F('sign_date', 'gl-signdate')}
+        <!-- مشاہدات + آخری سطر + دستخط ایک گروہ: صفحہ بدلے تو سب ساتھ — دستخط کبھی اکیلا اگلے صفحے پر نہیں -->
+        <div class="gl-final">
+          <div class="gl-h2 dio-doc-h2">مشاہدات / ہدایات</div>
+          ${F('remarks', 'gl-remarks')}
+          <div class="gl-tail">
+            <div class="gl-closing-row">${F('closing', 'gl-closing')}</div>
+            <div class="gl-end">
+              <div class="gl-endbox">
+                <div class="gl-signspace" aria-hidden="true"></div>
+                ${F('sign_line', 'gl-signline')}
+                ${F('sign_date', 'gl-signdate')}
+              </div>
             </div>
           </div>
         </div>
@@ -743,7 +759,7 @@ function _glRenderDoc(override) {
       if (t && t.closest && t.closest('#gl-ebody')) _glRefreshSummary();
       _glDraftSoon();
     });
-    doc.addEventListener('focusout', e => { if (e.target && e.target.dataset && (e.target.dataset.k || e.target.dataset.e)) _glIsolateNums(e.target); });
+    doc.addEventListener('focusout', e => { if (e.target && e.target.dataset && (e.target.dataset.k || e.target.dataset.e)) _glIsolateNums(e.target, true); });
     doc.addEventListener('paste', e => {
       const t = e.clipboardData && e.clipboardData.getData('text/plain');
       if (t == null) return;
@@ -751,7 +767,7 @@ function _glRenderDoc(override) {
       try { document.execCommand('insertText', false, t); } catch { /* پرانا براؤزر — عام چسپاں */ }
     });
   }
-  _glIsolateNums(doc);
+  _glIsolateNums(doc, true);
   if (typeof dioBindEditor === 'function') { try { dioBindEditor(v); } catch (e) { console.warn('gl bind:', e && e.message); } }
   _glMarkDirty(_glDirty);
   _glFit();
@@ -825,12 +841,12 @@ function _glSummaryHtml() {
   const k = _glKindCounts(ents).map(([n, c]) => `${_glE(n)}: <bdi dir="ltr">${c}</bdi>`).join(' · ');
   return `<b>خلاصہ:</b> کل اندراجات <bdi dir="ltr">${ents.length}</bdi>${k ? ' — ' + k : ''}`;
 }
-function _glRefreshSummary() { const s = document.getElementById('gl-sum'); if (s) { _glMeta.entries = _glReadEntries(); s.innerHTML = _glSummaryHtml(); } }
+function _glRefreshSummary() { const s = document.getElementById('gl-sum'); if (s) { _glMeta.entries = _glReadEntries(); s.innerHTML = _glSummaryHtml(); _glIsolateNums(s, true); } }
 function _glRedrawEntries() {
   const b = document.getElementById('gl-ebody');
-  if (b) { b.innerHTML = _glEntriesHtml(); _glIsolateNums(b); }
+  if (b) { b.innerHTML = _glEntriesHtml(); _glIsolateNums(b, true); }
   const s = document.getElementById('gl-sum');
-  if (s) s.innerHTML = _glSummaryHtml();
+  if (s) { s.innerHTML = _glSummaryHtml(); _glIsolateNums(s, true); }
 }
 // جدول میں براہِ راست کی گئی ترامیم اندراجات میں واپس
 function _glReadEntries() {
@@ -890,10 +906,10 @@ function _glCSS() {
     #gl-doc .gl-fi{ display:inline-block; min-width:24px; outline:none; direction:rtl; unicode-bidi:isolate; }
 
     /* عنوانات — پورے نظام کا اصول: مرکزی 20pt · ذیلی 16pt */
-    #gl-doc .gl-head{ text-align:center; margin:0.12in 0 0.14in; }
+    #gl-doc .gl-head{ text-align:center; margin:0.08in 0 0.1in; }
     #gl-doc .gl-title{ display:inline-block; min-width:2in; font-size:20pt !important; font-weight:bold;
       text-decoration:underline; text-underline-offset:7pt; line-height:1.7; text-align:center; }
-    #gl-doc .gl-h2{ font-size:16pt; font-weight:bold; line-height:1.7; margin:0.1in 0 0.03in; }
+    #gl-doc .gl-h2{ font-size:16pt; font-weight:bold; line-height:1.7; margin:0.15in 0 0.03in; }
 
     #gl-doc .gl-table, #gl-doc .gl-etable{ width:100%; border-collapse:collapse; table-layout:fixed; }
     #gl-doc .gl-c1{ width:var(--gl-c1, 2.3in); }
@@ -901,19 +917,23 @@ function _glCSS() {
     #gl-doc .gl-table th .gl-lbl, #gl-doc .gl-table th .gl-lbl2{ white-space:nowrap; }
     /* نمبر (موبائل، شناختی کارڈ، تاریخ) کبھی دو سطروں میں نہ ٹوٹیں؛ انگریزی لفظ (ASI…) کے دونوں طرف واضح وقفہ
        (Nastaleeq کا خالی حرف بہت تنگ ہے — اردو کے ساتھ چپک جاتا تھا) */
-    #gl-doc bdi[dir="ltr"]{ white-space:nowrap; }
+    #gl-doc bdi[dir="ltr"]{ white-space:nowrap; margin:0 0.15em; }
     #gl-doc .gl-lw{ margin:0 0.22em; }
+    #gl-doc bdi.gl-nl{ margin-left:0; } #gl-doc bdi.gl-nr{ margin-right:0; }
+    /* 4pt اوپر نیچے: متن خانے کے بیچ میں، اور Nastaleeq کے گ / ک کی لمبی لکیر اوپر والی لکیر کو نہ کاٹے */
     #gl-doc .gl-table th, #gl-doc .gl-table td, #gl-doc .gl-etable th, #gl-doc .gl-etable td{
-      border:1px solid #000; padding:1pt 6pt 2pt; vertical-align:middle; font-size:14pt; line-height:1.6; }
+      border:1px solid #000; padding:4pt 6pt 4pt; vertical-align:middle; font-size:14pt; line-height:1.6; }
     #gl-doc .gl-table th, #gl-doc .gl-etable th{ font-weight:bold; text-align:right; background:#f3f5f8; }
     #gl-doc .gl-etable th{ text-align:center; font-size:13pt; }
     #gl-doc .gl-cell{ position:relative; }
-    #gl-doc .gl-ec-no{ width:0.62in; } #gl-doc .gl-ec-t{ width:1.15in; } #gl-doc .gl-ec-k{ width:1.25in; } #gl-doc .gl-ec-p{ width:1.45in; }
-    #gl-doc .gl-etable td{ vertical-align:top; padding-bottom:4pt; }
+    /* «نمبر شمار» ایک سطر میں؛ وقت دو سطریں: «03:20» / «بجے سہ پہر» */
+    #gl-doc .gl-ec-no{ width:0.8in; } #gl-doc .gl-ec-t{ width:0.95in; } #gl-doc .gl-ec-k{ width:1.25in; } #gl-doc .gl-ec-p{ width:1.45in; }
+    /* کئی سطروں والا اردو متن: Nastaleeq کے لمبے حروف (گ، ک) اور نیچے کے (ے، ں) نہ کٹیں نہ اگلی سطر/لکیر پر چڑھیں —
+       واقعاتی رپورٹ کی تفصیل والا 1.85 */
+    #gl-doc .gl-etable td{ vertical-align:top; padding:4pt 6pt 6pt; line-height:1.85; }
     #gl-doc .gl-eno{ text-align:center; position:relative; }
-    #gl-doc .gl-et{ line-height:1.5; }
     #gl-doc .gl-ell{ font-size:9.5pt; line-height:1.5; color:#333; font-family:'Times New Roman',Times,serif; direction:ltr; text-align:left; }
-    #gl-doc .gl-ewho{ font-size:11pt; line-height:1.6; color:#222; border-top:1px dotted #9aa5b1; }
+    #gl-doc .gl-ewho{ font-size:11pt; line-height:1.85; color:#222; border-top:1px dotted #9aa5b1; margin-top:3pt; padding-top:1pt; }
     #gl-doc .gl-edetail{ text-align:justify; text-align-last:right; }
     #gl-doc .gl-erow-empty td{ text-align:center; color:#444; }
     #gl-doc .gl-eacts{ display:flex; gap:3px; justify-content:center; margin-top:2pt; }
@@ -923,7 +943,7 @@ function _glCSS() {
     #gl-doc .gl-eacts button:last-child{ border-color:#dc2626; color:#dc2626; }
     #gl-doc .gl-sum{ font-size:13pt; line-height:1.8; padding:3pt 2pt 0; }
     #gl-doc .gl-sum bdi[dir="ltr"]{ font-size:12pt; }
-    #gl-doc .gl-remarks{ border:1px solid #000; min-height:0.6in; padding:3pt 8pt 4pt; text-align:justify; text-align-last:right; line-height:1.85; }
+    #gl-doc .gl-remarks{ border:1px solid #000; min-height:0.5in; padding:6pt 8pt 4pt; text-align:justify; text-align-last:right; line-height:1.85; }
 
     /* 📅 / 🕒 — خانے کے بائیں کنارے پر (صرف سکرین؛ چھپائی میں نہیں) */
     @media screen{ #gl-doc .gl-cell.has-pick{ padding-left:28px; } }
@@ -931,7 +951,8 @@ function _glCSS() {
       cursor:pointer; overflow:hidden; border:0; padding:0; display:inline-grid; place-items:center; }
     #gl-doc .gl-pick select, #gl-doc .gl-pick input{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:0; padding:0; }
 
-    #gl-doc .gl-tail{ break-inside:avoid; page-break-inside:avoid; padding-top:0.1in; }
+    #gl-doc .gl-final, #gl-doc .gl-tail{ break-inside:avoid; page-break-inside:avoid; }
+    #gl-doc .gl-tail{ padding-top:0.12in; }
     #gl-doc .gl-closing-row{ text-align:center; }
     #gl-doc .gl-closing{ display:inline-block; min-width:2in; text-align:center; }
     #gl-doc .gl-end{ display:flex; justify-content:flex-end; margin-top:0.04in; }
@@ -967,6 +988,8 @@ function _glCSS() {
       #gl-view:not(.gl-a4) #gl-doc .gl-erow{ display:block; border:1px solid #000; margin-bottom:8px; }
       #gl-view:not(.gl-a4) #gl-doc .gl-erow td{ display:grid; grid-template-columns:5.2em minmax(0,1fr); gap:6px; border:0; border-bottom:1px dotted #b6c2cf; padding:2pt 6pt 3pt; }
       #gl-view:not(.gl-a4) #gl-doc .gl-erow td::before{ content:attr(data-l); font-weight:bold; font-size:12pt; color:#334155; }
+      /* خانے کا ہر حصہ (مقام + Lat/Long، تفصیل + متعلقہ شخص) قیمت والے کالم میں — لیبل والے تنگ کالم میں نہ گرے */
+      #gl-view:not(.gl-a4) #gl-doc .gl-erow td > *{ grid-column:2; }
       #gl-view:not(.gl-a4) #gl-doc .gl-erow td:last-child{ border-bottom:0; }
       #gl-view:not(.gl-a4) #gl-doc .gl-eno{ text-align:right; display:flex !important; align-items:center; justify-content:space-between; }
       #gl-view:not(.gl-a4) #gl-doc .gl-eno::before{ display:none; }
@@ -1018,13 +1041,24 @@ function _glToggleView() {
   _glFitLabels();
 }
 window._glToggleView = _glToggleView;
-// پہلے کالم کی چوڑائی = سب سے لمبا لیبل + خانے کی اندرونی جگہ
+// پہلے کالم کی چوڑائی = سب سے لمبا لیبل (ایک سطر میں) + خانے کی اندرونی جگہ۔
+// ناپ کاغذ سے باہر الگ پیمانے پر: موبائل منظر میں لیبل ٹوٹ کر دو سطریں بنتے ہیں اور A4 منظر میں zoom لگا ہوتا ہے —
+// وہاں ناپنے سے کالم تنگ بنتا تھا اور چھپائی میں لیبل ساتھ والے خانے پر چڑھ جاتا تھا۔
 function _glFitLabels(doc) {
   doc = doc || document.getElementById('gl-doc');
-  if (!doc) return;
-  let mx = 0, m2 = 0;
-  doc.querySelectorAll('.gl-table th .gl-lbl').forEach(s => { mx = Math.max(mx, s.offsetWidth); });
-  doc.querySelectorAll('.gl-table th .gl-lbl2').forEach(s => { m2 = Math.max(m2, s.offsetWidth); });
+  if (!doc || !document.body) return;
+  const probe = document.createElement('span');
+  probe.setAttribute('aria-hidden', 'true');
+  probe.style.cssText = 'position:absolute;left:-9999px;top:0;visibility:hidden;white-space:nowrap;font-weight:bold;font-size:14pt;letter-spacing:normal;';
+  probe.style.fontFamily = getComputedStyle(doc).fontFamily;
+  document.body.appendChild(probe);
+  const widest = sel => {
+    let mx = 0;
+    doc.querySelectorAll(sel).forEach(s => { probe.textContent = s.textContent; mx = Math.max(mx, probe.getBoundingClientRect().width); });
+    return mx;
+  };
+  const mx = widest('.gl-table th .gl-lbl'), m2 = widest('.gl-table th .gl-lbl2');
+  probe.remove();
   if (mx > 0) doc.style.setProperty('--gl-c1', Math.ceil(mx + 16 + 2 + 4) + 'px');
   if (m2 > 0) doc.style.setProperty('--gl-c3', Math.ceil(m2 + 16 + 2 + 4) + 'px');
 }
@@ -1035,7 +1069,7 @@ function _glSetCell(k, html) {
   const el = _glCell(k);
   if (!el) return;
   el.innerHTML = html;
-  _glIsolateNums(el);
+  _glIsolateNums(el, true);
   _glMarkDirty(true); _glDraftSoon();
 }
 function _glRefreshDuration() {
