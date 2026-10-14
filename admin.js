@@ -71,9 +71,7 @@ async function _buildAdmin(role) {
   });
 
   const active    = officers.filter(o => o.is_approved && !(o.is_suspended || o.suspended));
-  const suspended = officers.filter(o => (o.is_suspended || o.suspended));
   const total_cases = cases.length;
-  const active_cases = cases.filter(c => c.status === 'under').length;
 
   root.innerHTML = `
   <!-- Header -->
@@ -630,7 +628,6 @@ async function _hcDuplicateFir(cases) {
       (seen[key] = seen[key] || []).push(c);
     });
     const dups = Object.entries(seen).filter(([,arr]) => arr.length > 1);
-    const totalRows = dups.reduce((s,[,arr])=>s+arr.length,0);
     return {
       title: 'دہرے (duplicate) FIR نمبر',
       severity: dups.length ? 'warn' : 'ok',
