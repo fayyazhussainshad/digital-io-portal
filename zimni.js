@@ -1025,71 +1025,7 @@ function _zimniFitTable() {
 }
 window._zimniFitTable = _zimniFitTable;
 
-// ═══════════════════════════════════════════════════════════════
-//  کالم 2 — خودکار نمبر شمار
-//  حالاتِ تفتیش (کالم 3) میں جتنے پیراگراف ہوں، کالم 2 میں اُتنے ہی
-//  نمبر (1، 2، 3 …) — اور ہر نمبر ٹھیک اپنے پیراگراف کی پہلی سطر کے
-//  برابر۔ پہلا نمبر "جناب عالیٰ" والی سطر سے شروع ہوتا ہے۔
-//  خالی سطریں (صرف Enter) شمار نہیں ہوتیں۔
-// ═══════════════════════════════════════════════════════════════
-function _zimniParas() {
-  const doc = _zimniDoc();
-  if (!doc) return [];
-  const hasText = (el) => String(el.textContent || '').replace(/[\s\u00A0]/g, '').length > 0;
-  const marks = [];
-
-  // متن کے ایک ٹکڑے کی جگہ ناپنے کے لیے (Range سے — عنصر ہو یا سادہ متن)
-  const markOf = (nodes) => {
-    try {
-      const rg = document.createRange();
-      rg.setStartBefore(nodes[0]);
-      rg.setEndAfter(nodes[nodes.length - 1]);
-      const r = rg.getBoundingClientRect();
-      if (!r.height) return null;
-      return { getBoundingClientRect: () => rg.getBoundingClientRect() };
-    } catch (_) { return null; }
-  };
-
-  // ═══ ایک خانے کے اندر کے پیراگراف ═══
-  // AHEM: پیراگراف صرف الگ <div> نہیں ہوتے۔ Enter دبانے پر براؤزر کبھی
-  // نیا <div> بناتا ہے اور کبھی صرف <br> ڈالتا ہے — پہلے صرف <div>/<p>
-  // گِنے جاتے تھے، اسی لیے کنسول میں bodies:3 مگر paras:1 آ رہا تھا۔
-  // اب <br> سے ٹوٹے ہوئے پیراگراف بھی شمار ہوتے ہیں۔
-  const scan = (host) => {
-    const kids = [...host.children].filter(el =>
-      (el.tagName === 'DIV' || el.tagName === 'P') && hasText(el));
-    if (kids.length) { kids.forEach(k => marks.push(k)); return; }
-    // <br> سے الگ ہونے والے حصے
-    let run = [];
-    const flush = () => {
-      if (!run.length) return;
-      const txt = run.map(n => n.textContent || '').join('').replace(/[\s\u00A0]/g, '');
-      if (txt) { const m = markOf(run); if (m) marks.push(m); }
-      run = [];
-    };
-    [...host.childNodes].forEach(n => {
-      if (n.nodeType === 1 && n.tagName === 'BR') { flush(); return; }
-      run.push(n);
-    });
-    flush();
-  };
-
-  let bodies = [...doc.querySelectorAll('.zf-body')];
-  if (!bodies.length) {
-    // پرانی/مختلف ساخت — حالاتِ تفتیش کا خانہ (لیبل والی سطریں چھوڑ کر)
-    const cell = doc.querySelector('td.zf-c-body');
-    if (!cell) return [];
-    const SKIP = ['zf-bl', 'zf-close', 'zf-signblk', 'zf-gap', 'zf-sign', 'zf-signdate'];
-    const rest = [...cell.children].filter(el =>
-      (el.tagName === 'DIV' || el.tagName === 'P') &&
-      !SKIP.some(c => el.classList.contains(c)) && hasText(el));
-    if (rest.length) { rest.forEach(scan); return marks; }
-    scan(cell);
-    return marks;
-  }
-  bodies.forEach(scan);
-  return marks;
-}
+// v541: کالم 2 کا پرانا خودکار نمبر شمار (_zimniParas) ہٹا دیا — صرف ہٹائے گئے خودکار نظام میں استعمال ہوتا تھا۔
 
 // پرانی محفوظ شدہ ضمنیوں میں اختتامی سطر اور دستخط کا خانہ نہ ہو تو لگا دو
 function _zimniEnsureClosing() {
@@ -1159,85 +1095,8 @@ function _zimniStartNumbers() {
       }
     }
   } catch (_) {}
-  return;                       // ↓ نیچے پرانا خودکار نظام (اب غیر فعال)
-  const kick = () => {
-    clearTimeout(doc._zfNumT);
-    doc._zfNumT = setTimeout(() => {
-      try { _zimniNumberAll(); } catch (_) {}
-    }, 200);
-  };
-  // افسر خود نمبر بدلے تو وہ نمبر پکا (خودکار اُسے نہیں چھیڑے گا)
-  if (!doc._zfNumEdit) {
-    doc._zfNumEdit = true;
-    doc.addEventListener('input', (e) => {
-      try {
-        const n = e.target && e.target.closest ? e.target.closest('.zf-num') : null;
-        if (n) { n.dataset.manual = '1'; return; }      // نمبر کی اپنی ترمیم
-        const inNums = e.target && e.target.closest && e.target.closest('.zf-nums');
-        if (inNums) return;
-      } catch (_) {}
-      kick();
-    });
-    // ── نمبروں کے خانے میں ENTER — خالی سطر ڈالو (نمبر نیچے)، continuous serial ──
-    // AHEM: پورا صفحہ editable ہے، اس لیے keydown کا target ہمیشہ #ch173-doc
-    // ہوتا ہے — کرسر کہاں ہے یہ selection کے anchorNode سے پہچانا جاتا ہے۔
-    doc.addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter') return;
-      let nums = null, curNode = null;
-      try {
-        const sel = window.getSelection();
-        if (sel && sel.anchorNode) {
-          curNode = sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement;
-          if (curNode && curNode.closest) nums = curNode.closest('.zf-nums');
-        }
-      } catch (_) {}
-      if (!nums) return;
-      e.preventDefault(); e.stopPropagation();
-      nums.dataset.manualSpace = '1';                 // اب manual spacing موڈ
-      // موجودہ سطر کے بعد ایک خالی سطر ڈالو
-      let cur = null;
-      try { cur = curNode && curNode.closest ? curNode.closest('.zf-num') : null; } catch (_) {}
-      const blank = document.createElement('div');
-      blank.className = 'zf-num';
-      blank.dataset.blank = '1';
-      blank.innerHTML = '<br>';
-      if (cur && cur.parentElement === nums) cur.after(blank);
-      else nums.appendChild(blank);
-      // کرسر نئی خالی سطر میں
-      try {
-        const r = document.createRange(); r.setStart(blank, 0); r.collapse(true);
-        const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
-      } catch (_) {}
-      try { _zimniAutoNumbers(); } catch (_) {}
-      try { _r173Dirty = true; } catch (_) {}
-    }, true);
-  }
-  // DOM بدلے تو بھی (Enter سے نئے خانے بننا، paste، undo وغیرہ)
-  try {
-    if (!doc._zfNumObs && typeof MutationObserver !== 'undefined') {
-      doc._zfNumObs = new MutationObserver((muts) => {
-        // نمبروں کے اپنے خانے کی تبدیلی پر دوبارہ نہ چلو (ورنہ چکر بن جائے)
-        for (const m of muts) {
-          const t = m.target;
-          if (t && t.closest && t.closest('.zf-nums')) continue;
-          kick(); return;
-        }
-      });
-      doc._zfNumObs.observe(doc, { childList: true, subtree: true, characterData: true });
-    }
-  } catch (_) {}
-  // حفاظتی جال — ہر 2 سیکنڈ بعد جانچ (صرف تب چلتا ہے جب تعداد بدلی ہو)
-  try { if (doc._zfNumIv) clearInterval(doc._zfNumIv); } catch (_) {}
-  doc._zfNumIv = setInterval(() => {
-    const d = _zimniDoc();
-    if (!d) { try { clearInterval(doc._zfNumIv); } catch (_) {} return; }
-    try {
-      const chahiye = _zimniParas().length;
-      const mojood  = d.querySelectorAll('.zf-num').length;
-      if (chahiye !== mojood) { _zimniAutoNumbers(); _zimniAlignSerial(); }
-    } catch (_) {}
-  }, 2000);
-  kick();
+  // v541: پرانا خودکار نمبرنگ نظام (جو یہاں return کے بعد بند پڑا تھا) افسر کے
+  //   حکم پر ہٹا دیا گیا — کالم 2 مکمل دستی ہے۔ ضرورت ہو تو GitHub کی تاریخ میں موجود۔
 }
 window._zimniStartNumbers = _zimniStartNumbers;
 
@@ -1247,137 +1106,20 @@ window._zimniStartNumbers = _zimniStartNumbers;
 // berooni کے پیراگراف 1..N، پھر androoni کے N+1، N+2 … (نمبر جاری رہتا ہے)
 function _zimniNumberAll() {
   return null;   // ═══ خودکار نمبر بند (MANUAL موڈ) ═══
-  let r = null;
-  try { r = _zimniAutoNumbers(); } catch (_) {}
-  try { _zimniAlignSerial(); } catch (_) {}
-  const doc = _zimniDoc();
-  if (!doc) return r;
-  const wrap = doc.querySelector('.zf-androoni');
-  if (!wrap || typeof _zaAutoNumbers !== 'function') return r;
-  try { _zaAutoNumbers(); } catch (_) {}      // androoni کی سیدھ (margin) لگا دو
-  // berooni میں کتنے (غیر خالی) نمبر لگے؟
-  let base = 0;
-  doc.querySelectorAll('.zf-nums .zf-num').forEach(d => {
-    const blank = d.dataset.blank === '1' ||
-      !String(d.textContent || '').replace(/[\s\u00A0]/g, '').length;
-    if (!blank) base++;
-  });
-  // androoni کے نمبروں کو base سے آگے دوبارہ لکھ دو (سیدھ وہی رہے گی)
-  let run = base;
-  wrap.querySelectorAll('.zfa-nums .zfa-num').forEach(d => {
-    if (d.dataset.blank === '1') return;
-    run++;
-    const t = String(run);
-    if (d.textContent !== t) d.textContent = t;
-  });
-  return r;
+  // v541: پرانا خودکار حصہ ہٹا دیا (افسر کا حکم) — نام اور واپسی وہی، بلانے والے نہ ٹوٹیں
 }
 window._zimniNumberAll = _zimniNumberAll;
 
 function _zimniAutoNumbers() {
   return { ok: true, manual: true };   // ═══ خودکار نمبر بند (MANUAL موڈ) ═══
-  const doc = _zimniDoc();
-  if (!doc) return { ok: false, wajah: 'ضمنی کا صفحہ (#ch173-doc) نہیں ملا' };
-  const td = doc.querySelector('td.zf-c-serial');
-  if (!td) return { ok: false, wajah: 'کالم 2 کا خانہ (td.zf-c-serial) نہیں ملا' };
-  // ── پرانی محفوظ شدہ ضمنیوں کے لیے ── ان کے HTML میں نمبروں کا خانہ
-  // ہوتا ہی نہیں (وہ پرانے .zf-serno کے ساتھ محفوظ ہوئی تھیں)، اس لیے
-  // نمبر لگنے کی جگہ ہی نہیں ملتی تھی۔ نہ ہو تو یہیں بنا دو۔
-  let nums = doc.querySelector('.zf-nums');
-  if (nums && nums.getAttribute('contenteditable') !== 'true') {
-    nums.setAttribute('contenteditable', 'true');     // پرانی ضمنیوں کے لیے
-  }
-  if (!nums) {
-    try { td.querySelectorAll('.zf-serno').forEach(el => el.remove()); } catch (_) {}
-    nums = document.createElement('div');
-    nums.className = 'zf-nums';
-    nums.setAttribute('contenteditable', 'true');
-    td.appendChild(nums);
-  }
-  // ▾ بٹن بھی نہ ہو تو لگا دو (پرانی ضمنیوں میں وہ بنام کی سطر میں تھا)
-  if (!td.querySelector('.zf-pick')) {
-    try {
-      doc.querySelectorAll('.zf-bl-banam .zf-pick').forEach(el => el.remove());
-      const b = document.createElement('button');
-      b.className = 'zf-pick no-print';
-      b.setAttribute('contenteditable', 'false');
-      b.title = 'ملزمان منتخب کریں';
-      b.textContent = '\u25BE';
-      b.onclick = (e) => { try { _zimniAccPicker(e); } catch (_) {} };
-      td.insertBefore(b, td.firstChild);
-    } catch (_) {}
-  }
-  const paras = _zimniParas();
-
-  // ═══ MANUAL SPACING موڈ ═══
-  // افسر نے نمبروں کے خانے میں Enter دبا کر خالی سطریں ڈالی ہوں تو ہم
-  // خودکار ترتیب کو نہیں چھیڑتے: صرف غیر خالی سطروں کو 1،2،3… دیتے ہیں
-  // (خالی سطریں گیپ کے طور پر برقرار — نمبر نیچے چلے جاتے ہیں)۔
-  if (nums.dataset.manualSpace === '1') {
-    let n = 0;
-    [...nums.children].forEach((d) => {
-      d.style.marginTop = '0px';
-      const blank = !String(d.textContent || '').replace(/[\s\u00A0]/g, '').length;
-      if (d.dataset.blank === '1' || blank) { d.dataset.blank = '1'; return; }
-      n += 1;
-      if (d.dataset.manual !== '1') { const t = String(n); if (d.textContent !== t) d.textContent = t; }
-    });
-    return { ok: true, mode: 'manual', numbers: n, lines: nums.children.length };
-  }
-
-  // ═══ AUTO موڈ ═══ نمبروں کی تعداد پیراگرافوں کے برابر
-  while (nums.children.length > paras.length) nums.lastChild.remove();
-  while (nums.children.length < paras.length) {
-    const d = document.createElement('div');
-    d.className = 'zf-num';
-    nums.appendChild(d);
-  }
-  [...nums.children].forEach((d, i) => {
-    if (d.dataset.manual !== '1') {
-      const t = String(i + 1);
-      if (d.textContent !== t) d.textContent = t;
-    }
-    d.style.marginTop = '0px';
-  });
-  if (!paras.length) {
-    return { ok: false, wajah: 'کوئی پیراگراف نہیں ملا (حالاتِ تفتیش خالی ہے؟)',
-             bodies: doc.querySelectorAll('.zf-body').length };
-  }
-
-  // ہر نمبر کو اُس کے پیراگراف کی پہلی سطر کے برابر لاؤ
-  try {
-    const scale = (() => {
-      const r = td.getBoundingClientRect();
-      return (td.offsetHeight && r.height) ? (r.height / td.offsetHeight) : 1;
-    })() || 1;
-    for (let i = 0; i < paras.length; i++) {
-      const d = nums.children[i];
-      if (!d) continue;
-      const gap = Math.round((paras[i].getBoundingClientRect().top - d.getBoundingClientRect().top) / scale);
-      if (gap > 0 && gap < 5000) d.style.marginTop = gap + 'px';
-    }
-  } catch (_) {}
-  return { ok: true, mode: 'auto', paras: paras.length, numbers: nums.children.length,
-           bodies: doc.querySelectorAll('.zf-body').length };
+  // v541: پرانا خودکار حصہ ہٹا دیا (افسر کا حکم) — نام اور واپسی وہی، بلانے والے نہ ٹوٹیں
 }
 window._zimniAutoNumbers = _zimniAutoNumbers;
 
 // ▾ بٹن — بنام والی سطر کے برابر
 function _zimniAlignSerial() {
   return;   // ═══ خودکار سیدھ بند (MANUAL موڈ) ═══ افسر خود نمبر لکھتا ہے
-  const doc = _zimniDoc();
-  if (!doc) return;
-  const td    = doc.querySelector('td.zf-c-serial');
-  const banam = doc.querySelector('.zf-bl-banam');
-  const pick  = doc.querySelector('.zf-pick');
-  if (!td || !pick || !banam) return;
-  try {
-    pick.style.marginTop = '0px';
-    const r = td.getBoundingClientRect();
-    const k = (td.offsetHeight && r.height) ? (r.height / td.offsetHeight) : 1;
-    const gap = Math.round((banam.getBoundingClientRect().top - pick.getBoundingClientRect().top) / (k || 1));
-    if (gap > 0 && gap < 2000) pick.style.marginTop = gap + 'px';
-  } catch (_) {}
+  // v541: پرانا خودکار حصہ ہٹا دیا (افسر کا حکم) — نام وہی، بلانے والے نہ ٹوٹیں
 }
 window._zimniAlignSerial = _zimniAlignSerial;
 

@@ -101,7 +101,6 @@ async function _loadLaws() {
 
   if (!navigator.onLine) return;
   try {
-    const oid = await getOfficerId();
     const { data, error } = await supabaseClient.from('law_library')
       .select('*').order('created_at', { ascending:false });
     if (error) throw error;

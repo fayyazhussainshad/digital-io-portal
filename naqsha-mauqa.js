@@ -1224,14 +1224,13 @@
   window._naqPrint = function () {
     _snapshot(); _persistLocal();
     const doc = document.getElementById('dio-naqsha-doc'); if (!doc) return;
-    let png = '', cw = 0, ch = 0;
+    let png = '';
     if (_naqCanvas) {
       try {
         _naqCanvas.discardActiveObject();
         // زوم/پین کو نظر انداز کر کے اصل (1:1) viewport پر capture کرو
         const vpt = (_naqCanvas.viewportTransform || [1, 0, 0, 1, 0, 0]).slice();
         _naqCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]); _naqCanvas.renderAll();
-        cw = _naqCanvas.getWidth(); ch = _naqCanvas.getHeight();
         png = _naqCanvas.toDataURL({ format: 'png', multiplier: 2 });
         _naqCanvas.setViewportTransform(vpt); _naqCanvas.renderAll();
       } catch (_) {}

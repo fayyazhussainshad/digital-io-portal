@@ -386,7 +386,6 @@ function _renderR173() {
   // (رزلٹ نمبری waghera) aur `bs` (فارم ka jism) do alag records se aate the.
   const recKey = _r173Key(_r173Type, _r173Subtype, _ch173Version);
   const saved = _r173CurrentData(recKey);
-  const v = (k, def) => sanitizeHtml(saved[k] !== undefined ? saved[k] : (def || ''));
   // کالم 7 ki shuruati تحریر: تتمہ mein — agar officer ne khud kuch nahi likha
   // to boilerplate (aslha/chars waghera ka matn) lagao. Warna jo mehfooz hai.
   // تفصیل کاغذات: تتمہ mein — agar khali ho to default kaghaz KHUD bhar do
@@ -423,7 +422,6 @@ function _renderR173() {
   // اخراج/عدم پتہ ab CHALAN path par (izafi matn, تفصیل کاغذات, SHO, agla
   // safha, data fetch, alfaz — SAB چالان jaise). Farq SIRF table ka:
   // چالان ki 7-column vertical table ki jagah اخراج ki 3-column table.
-  const isClosing = false;
   const _isAkhraj = isIkhraj || isAdampata;    // sirf table + heading ke liye
   const _origClosing = _isAkhraj;   // heading اخراج/عدم پتہ ke liye
   // Boilerplate: tatima uses subtype boiler, others use type boiler

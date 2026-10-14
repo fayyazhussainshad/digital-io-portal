@@ -718,8 +718,6 @@ function _openPayment(planName, amount, days) {
         <option value="easypaisa">EasyPaisa</option>
         <option value="raast">Raast</option>
       </select>
-      <label class="form-label">نوٹ (اختیاری)</label>
-      <input class="form-input" id="pay-note" placeholder="کوئی اضافی معلومات...">
     </div>`,
     `<div style="display:flex;gap:8px;direction:rtl;">
       <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
@@ -731,7 +729,8 @@ function _openPayment(planName, amount, days) {
 async function _submitPayment(planName, amount, days) {
   const txnId  = document.getElementById('pay-txn')?.value.trim();
   const method = document.getElementById('pay-method')?.value;
-  const note   = document.getElementById('pay-note')?.value.trim();
+  // v541: «نوٹ (اختیاری)» کا خانہ ہٹا دیا — اس میں لکھا کہیں بھیجا نہیں جاتا
+  //   تھا (سرور کی درخواست میں اس کی جگہ نہیں)، یعنی افسر کا لکھا ضائع ہوتا تھا۔
 
   if (!txnId) { showToast('Transaction ID ضروری ہے','error'); return; }
 

@@ -1018,7 +1018,7 @@ test('mobile ke naye qaide SIRF phone par lagen (desktop na bigRe)', () => {
   const before = m.slice(0, idx);
   const opens = (before.match(/@media[^{]*\{/g) || []).length;
   // us se pehle jitne @media khule, utne hi band na huay hon
-  let depth = 0, media = 0;
+  let depth = 0;
   for (const ch of before) { if (ch === '{') depth++; else if (ch === '}') depth--; }
   assert.ok(opens > 0 && depth > 0,
     'ye qaide media query ke ANDAR hone chahiye, warna desktop ka jadwal bhi card ban jata');
@@ -1752,4 +1752,17 @@ test('v538: ESLint ka "not defined" sirf asli ghalti dikhaye (doosri file ke naa
   const cfg = read('eslint.config.mjs');
   assert.ok(/function appGlobals\(\)/.test(cfg) && /\.\.\.appGlobals\(\)/.test(cfg),
     '739 jhoote alarm asli ghaltiyon ko chhupa dete the');
+});
+
+test('v541: ادائیگی فارم میں بیکار «نوٹ» خانہ نہیں — اور ضمنی کا مردہ خودکار نمبرنگ کوڈ ہٹ چکا', () => {
+  const s = read('subscription.js');
+  assert.ok(!/id="pay-note"/.test(s), 'جو لکھا جائے وہ کہیں نہ جائے تو خانہ نہ ہو');
+  const z = read('zimni.js');
+  for (const fn of ['_zimniNumberAll', '_zimniAutoNumbers', '_zimniAlignSerial', '_zimniStartNumbers'])
+    assert.ok(new RegExp('function ' + fn + '\\(').test(z), fn + ' کا نام برقرار رہے (بلانے والے موجود ہیں)');
+  assert.ok(!/function _zimniParas\(/.test(z), 'خودکار نمبر شمار کا مردہ حصہ واپس نہ آئے');
+  assert.ok(!/_zfNumIv\s*=\s*setInterval/.test(z) && !/_zfNumObs\s*=\s*new MutationObserver/.test(z),
+    'کالم 2 مکمل دستی — کوئی خودکار ٹائمر/observer نہیں');
+  assert.ok(!/files: \['zimni\.js'\][\s\S]{0,40}no-unreachable/.test(read('eslint.config.mjs')),
+    'zimni.js کو no-unreachable کی چھوٹ کی اب ضرورت نہیں');
 });

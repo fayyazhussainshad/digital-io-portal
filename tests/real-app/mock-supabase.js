@@ -1,7 +1,6 @@
 // Test double for @supabase/supabase-js UMD — the REAL app runs on top of it.
 (function () {
-  const now = () => new Date().toISOString();
-  window.__opts = { noUpdatePolicy: false };
+    window.__opts = { noUpdatePolicy: false };
   window.__db = window.__db || {
     officers: [{ id: 'o1', user_id: 'u1', email: 'io@test.pk', full_name: 'فیاض حسین شاد', designation: 'ASI', badge_number: '1234',
       station: 'صدر ملتان', district: 'ملتان', role: 'officer', is_approved: true, suspended: false, created_at: '2026-01-01T00:00:00Z' }],

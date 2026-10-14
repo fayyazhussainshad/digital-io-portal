@@ -193,7 +193,6 @@ function _sazaRender() {
 
   const fir = c.fir_number || '';
   const firDate = (typeof formatDate === 'function') ? formatDate(c.fir_date) : (c.fir_date || '');
-  const offence = ((c.section_of_law || '') + (c.offence_type ? ' ' + c.offence_type : '')).trim();
 
   // Rows: saved ho to wahi, warna system ke ملزمان se, warna aik khali row.
   const rows = _sazaBuildRows(sv, c, o);
@@ -904,7 +903,6 @@ async function _sazaSave() {
   try {
     let exists = false;
     try { exists = !!(typeof _misalDocs !== 'undefined' && _misalDocs && _misalDocs['saza_slip'] && _misalDocs['saza_slip'].id); } catch (_) {}
-    let savedId = null;
     if (!exists) {
       const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
       const { data: ins, error } = await supabaseClient
@@ -912,7 +910,6 @@ async function _sazaSave() {
         .insert({ case_id: _sazaCaseId, officer_id: oid, document_type: 'saza_slip', status: 'complete', content: data })
         .select().single();
       if (error) throw error;
-      savedId = ins && ins.id;
       _sazaMarkMisalSaved(data, 'complete', ins);
     } else {
       const { error } = await supabaseClient
@@ -920,7 +917,6 @@ async function _sazaSave() {
         .update({ content: data, status: 'complete', updated_at: new Date().toISOString() })
         .eq('case_id', _sazaCaseId).eq('document_type', 'saza_slip');
       if (error) throw error;
-      savedId = _misalDocs['saza_slip'].id;
       _sazaMarkMisalSaved(data, 'complete');
     }
     _sazaSaved = data;
