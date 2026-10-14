@@ -1044,7 +1044,7 @@ input[id*="cnic"], input[id*="cell"] {
 @media print {
   /* App ka chrome native print par hamesha chhupao */
   #sidebar, .sidebar, #topbar, .topbar, #mob-overlay, #menu-toggle,
-  #dio-back-btn, #sync-bar, #islamic-bar, #dio-error-banner,
+  #dio-back-btn, #sync-bar, #dio-error-banner,
   #dio-update-banner, #dio-dv-bar, .no-print, .dio-etb, .doc-toolbar,
   .editor-toolbar, .workspace-tabs, .case-tabs, .dio-modbtn, .zf-pick,
   .zf-colgrip, .zf-rowgrip, .akh-grip, .akh-hgrip { display: none !important; }
@@ -1279,13 +1279,23 @@ window.addEventListener('unhandledrejection', function(e){
         <b class="dio-land-title" id="dio-land-title" dir="ltr">Digital IO</b>
         <strong class="dio-land-sub">تفتیشی افسر کا چھوٹو</strong>
       </div>
-      <p class="dio-land-lead">تفتیشی افسر کا روزمرہ دفتری کام — مقدمات، ضمنیاں، چالان اور یاددہانیاں — ایک محفوظ جگہ پر۔</p>
+      <!-- قرآن و حدیث (اکتوبر 2026، افسر کی ہدایت): سسٹم کے اندر سے ہٹا کر صرف یہاں۔
+           تسبیحات و درود شریف — ہر آیت/حدیث 30 سیکنڈ؛ عربی Amiri، اردو جمیل نوری نستعلیق۔
+           متن islamic-landing.js بھرتا ہے (مستند ماخذ سے لفظ بہ لفظ)۔ -->
+      <div class="dio-zikr" id="dio-zikr" role="region" aria-label="قرآن و حدیث" aria-live="polite" data-kind="q">
+        <span class="dio-zikr-kind" id="dio-zikr-kind">قرآنِ مجید</span>
+        <p class="dio-zikr-ar" id="dio-zikr-ar" lang="ar" dir="rtl"></p>
+        <p class="dio-zikr-ur" id="dio-zikr-ur" lang="ur" dir="rtl"></p>
+        <span class="dio-zikr-ref" id="dio-zikr-ref"></span>
+      </div>
       <ul class="dio-land-feats">
         <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7.5h6l2 2.5h9V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z"/></svg><b>مقدمات کا مکمل ریکارڈ</b><small>صورتحال کے مطابق ترتیب اور فوری تلاش</small></li>
         <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M8 13h8M8 17h5"/></svg><b>چالان، ضمنی اور دستاویزات</b><small>تیار سانچوں سے پرنٹ کے قابل کاغذات</small></li>
         <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 10a5.5 5.5 0 0 1 11 0c0 4 1.5 5.5 1.5 5.5H5S6.5 14 6.5 10z"/><path d="M10.2 19a2 2 0 0 0 3.6 0"/></svg><b>یاددہانیاں اور پیشیاں</b><small>کوئی تاریخ نظر انداز نہ ہو</small></li>
         <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 15a10.5 10.5 0 0 1 15 0"/><path d="M8 18.2a6 6 0 0 1 8 0"/><path d="M12 21h.01"/></svg><b>آف لائن بھی کام</b><small>انٹرنیٹ آنے پر خودکار ہم آہنگی</small></li>
       </ul>
+      <!-- تعارفی سطر — چار کارڈوں کے نیچے (افسر کی ہدایت، اکتوبر 2026) -->
+      <p class="dio-land-lead">تفتیشی افسر کا روزمرہ دفتری کام — مقدمات، ضمنیاں، چالان اور یاددہانیاں — ایک محفوظ جگہ پر۔</p>
     </section>
 
     <section class="login-card" aria-labelledby="dio-login-h">
@@ -1475,7 +1485,6 @@ window.addEventListener('unhandledrejection', function(e){
       </div>
     </div>
 
-    <!-- Islamic Messages Ticker -->
     <div class="page-content" id="page-content"><div class="loading-screen"><div class="loading-spinner"></div><div class="loading-text">Loading...</div></div></div>
     <div class="bottombar"><span id="footer-officer">Digital IO</span><span id="footer-time"></span><span id="footer-license"></span></div>
   </div>
@@ -1644,6 +1653,7 @@ window.addEventListener('beforeunload', function (e) {
   <script defer src="data-api.js"></script>
   <script defer src="auth.js"></script>
 <!-- backup.js EARLY (Phase 1 cleanup ke baad): initBackupSystem / triggerBackup canonical yahin hain — app-core ke callers se pehle available honi zaroori hain -->
+<script defer src="islamic-landing.js"></script>
 <script defer src="dashboard.js"></script>
       <script defer src="cases.js"></script>
     <script defer src="search.js"></script>

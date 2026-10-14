@@ -1032,8 +1032,6 @@ async function initApp() {
   setTimeout(_initNotifications, 2000);
   setTimeout(_checkDueReminders, 5000);
   setInterval(_checkDueReminders, 30*60*1000);
-  // Start Islamic messages
-  setTimeout(()=>{ if(typeof initIslamicMessages==='function') initIslamicMessages(); }, 1500);
   setTimeout(()=>{ if(typeof updateNotifBadge==='function') updateNotifBadge(); }, 2000);
   // Check subscription
   setTimeout(async()=>{
@@ -1127,7 +1125,7 @@ function _dioDoPrint(htmlContent) {
     st.textContent = `@media print {
       body:has(#dio-print-frame) > *:not(#dio-print-frame) { display: none !important; visibility: hidden !important; }
       #sidebar, .sidebar, #topbar, .topbar, .nav-item, nav, .workspace-tabs,
-      .case-tabs, .doc-toolbar, .editor-toolbar, .no-print, #islamic-bar { display: none !important; }
+      .case-tabs, .doc-toolbar, .editor-toolbar, .no-print { display: none !important; }
     }`;
     document.head.appendChild(st);
   }

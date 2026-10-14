@@ -590,12 +590,21 @@ test('login ke asal button me emoji nahi', () => {
   assert.ok(/محفوظ لاگ اِن/.test(seg), 'CTA Urdu me hona chahiye (app Urdu-first hai)');
 });
 
-test('dashboard se sawal aur nukta hat gaye, AYAT barqarar', () => {
+test('dashboard se sawal aur nukta hat gaye; Quran/Hadith SIRF landing par', () => {
   const d = read('dashboard.js');
   assert.ok(!/\$\{_dashKnowledgeCard\(\)\}/.test(d), 'sawal ka card hat jana chahiye');
   assert.ok(!/\$\{_dashTipOfDay\(\)\}/.test(d), 'nukta ka card hat jana chahiye');
   assert.ok(!/initQARotation\(\)/.test(d), 'uska timer bhi band hona chahiye');
-  assert.ok(/_islamicBarHTML\(\)/.test(d), 'Qurani ayat BARQARAR rehni chahiye (afsar ki hidayat)');
+  // Oct 2026 hidayat: islamic patti system ke andar se hata kar SIRF landing par
+  assert.ok(!/_islamicBarHTML|initIslamicMessages|islamic-bar/.test(d), 'dashboard par islamic patti nahi');
+  assert.ok(!/initIslamicMessages/.test(read('app-core.js')), 'app-core islamic timer nahi chalata');
+  const h = read('index.html');
+  const land = h.slice(h.indexOf('id="login-screen"'), h.indexOf('MAIN APP'));
+  assert.ok(/id="dio-zikr"/.test(land), 'landing par Quran/Hadith ki jagah');
+  const z = land.indexOf('id="dio-zikr"'), ul = land.indexOf('dio-land-feats'), lead = land.indexOf('dio-land-lead');
+  assert.ok(z < ul && ul < lead, 'tarteeb: zikr → 4 card → taarufi satar');
+  const js = read('islamic-landing.js');
+  assert.ok(/HOLD_MS = 30000/.test(js), 'har ayat/hadith kam az kam 30 second');
 });
 
 test('dashboard par koi gehra gradient card nahi bacha', () => {

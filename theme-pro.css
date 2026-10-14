@@ -312,17 +312,6 @@ small.dio-prio-sub {
 .dio-prio-card.tone-alert .dio-prio-num { color: var(--dio-alert); }
 .dio-prio-card.tone-calm  { border-inline-start-color: var(--dio-ink-3); }
 
-/* ── Ayat — barqarar, magar khamosh andaz me ── */
-.dio-ayat {
-  display: flex; align-items: center; gap: 10px;
-  background: var(--dio-surface) !important;
-  border: 1px solid var(--dio-line) !important;
-  border-inline-start: 3px solid var(--dio-ok) !important;
-  border-radius: var(--dio-r) !important;
-  box-shadow: var(--dio-shadow);
-}
-.dio-ayat #islamic-text { color: var(--dio-ink) !important; }
-
 /* ── Mobile ── */
 @media screen and (max-width: 900px) {
   .dio-stats { display: flex !important; overflow-x: auto; gap: 8px;
@@ -334,7 +323,7 @@ small.dio-prio-sub {
 
 /* ── Chhapai: dashboard ki sajawat kaghaz par nahi ── */
 @media print {
-  .dio-idcard, .dio-stats, .dio-prio, .dio-ayat { box-shadow: none !important; }
+  .dio-idcard, .dio-stats, .dio-prio { box-shadow: none !important; }
 }
 
 /* Pehli baar wala rehnumai card — sanjeeda, aik hi lehja (pehle gehra
