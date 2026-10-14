@@ -70,10 +70,10 @@ const ROLE_LEVELS = { officer:1, supervisor:2, admin:3, superadmin:4 };
 
 // Which pages each role can access
 const ROLE_PAGES = {
-  officer:    ['dashboard','cases','fivec','incident','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence','help'],
-  supervisor: ['dashboard','cases','fivec','incident','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence','help'],
-  admin:      ['dashboard','cases','fivec','incident','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence','help','admin'],
-  superadmin: ['dashboard','cases','fivec','incident','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence','help','admin'],
+  officer:    ['dashboard','cases','fivec','incident','gasht','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence','help'],
+  supervisor: ['dashboard','cases','fivec','incident','gasht','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence','help'],
+  admin:      ['dashboard','cases','fivec','incident','gasht','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence','help','admin'],
+  superadmin: ['dashboard','cases','fivec','incident','gasht','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence','help','admin'],
 };
 
 function getRole() {
@@ -173,7 +173,7 @@ function showPage(page, el) {
   // Update topbar title
   const titles = {
     dashboard:'ڈیش بورڈ', cases:'میرے مقدمات', templates:'ٹمپلیٹس',
-    fivec:'مارک شدہ درخواستیں', incident:'واقعاتی رپورٹ',
+    fivec:'مارک شدہ درخواستیں', incident:'واقعاتی رپورٹ', gasht:'گشت لاگ',
     law:'قانونی لائبریری', ahkamat:'احکامات و ضوابط', performance:'کارکردگی', backup:'بیک اپ',
     settings:'ترتیبات', admin:'ایڈمن', bin:'حذف شدہ مواد',
     reminders:'یاددہانیاں', search:'تلاش',

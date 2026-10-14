@@ -66,6 +66,10 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: python core_test.py
+      - name: Patrol log (gasht_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: python gasht_test.py
       - name: Screenshots and print PDFs
         if: always()
         uses: actions/upload-artifact@v4

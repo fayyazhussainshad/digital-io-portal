@@ -163,6 +163,7 @@ const _DT_IC = {
   orders: '<path d="M6 3.5h9l3 3V20.5H6z"/><path d="M9 10h6M9 14h6"/>',
   sho:    '<path d="M4 20h16M6 20V9l6-4 6 4v11M10 20v-5h4v5"/>',
   dsp:    '<circle cx="12" cy="9" r="5"/><path d="m9.5 13.5-1.5 7 4-2 4 2-1.5-7"/>',
+  gasht:  '<circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="5" r="2.2"/><path d="M8 19h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h7"/>',
   car:    '<path d="M5 16V11l2-4.5h10L19 11v5"/><path d="M3.5 16h17v2.5h-17z"/><circle cx="7.5" cy="18.5" r="1.4"/><circle cx="16.5" cy="18.5" r="1.4"/>',
   backup: '<path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 9.5a4 4 0 0 1-.5 8.5Z"/><path d="M12 11v6M9.5 13.5 12 11l2.5 2.5"/>',
   sub:    '<path d="M6 4h12l3 5-9 11L3 9z"/><path d="M3 9h18"/>',
@@ -195,6 +196,7 @@ function _dashMainTiles(totalCases, pendingRem) {
     { l:'ٹمپلیٹس',             ic:'tpl',    go:"showPage('templates',null)" },
   ];
   const more = [
+    { l:'گشت لاگ',          ic:'gasht',  go:"showPage('gasht',null)" },
     { l:'احکامات و ضوابط',  ic:'orders', go:"showPage('ahkamat',null)" },
     { l:'SHO کا نام',        ic:'sho',    go:"window.openShoDspModal&&openShoDspModal('sho')" },
     { l:'DSP/SDPO کا نام',   ic:'dsp',    go:"window.openShoDspModal&&openShoDspModal('dsp')" },

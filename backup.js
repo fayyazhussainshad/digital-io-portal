@@ -164,12 +164,13 @@ async function _exportAllData() {
   showToast('ڈیٹا جمع ہو رہا ہے...','info');
   try {
     const oid = await getOfficerId();
-    const [cases,reminders,incidents,court,fivec] = await Promise.all([
+    const [cases,reminders,incidents,court,fivec,gasht] = await Promise.all([
       supabaseClient.from('cases').select('*').eq('officer_id',oid),
       supabaseClient.from('reminders').select('*').eq('officer_id',oid),
       supabaseClient.from('incident_reports').select('*').eq('officer_id',oid),
       supabaseClient.from('court_dates').select('*').eq('officer_id',oid),
       supabaseClient.from('applications_5c').select('*').eq('officer_id',oid),
+      supabaseClient.from('gasht_logs').select('*').eq('officer_id',oid),   // v548 — گشت لاگ (sql/104 سے پہلے خالی)
     ]);
 
     const exportData = {
@@ -181,6 +182,7 @@ async function _exportAllData() {
         incident_reports: incidents.data||[],
         court_dates: court.data||[],
         applications_5c: fivec.data||[],
+        gasht_logs: gasht.data||[],
       },
       counts: {
         cases: (cases.data||[]).length,
@@ -188,6 +190,7 @@ async function _exportAllData() {
         incidents: (incidents.data||[]).length,
         court: (court.data||[]).length,
         fivec: (fivec.data||[]).length,
+        gasht: (gasht.data||[]).length,
       }
     };
 
