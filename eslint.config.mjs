@@ -69,7 +69,13 @@ export default [
     rules: {
       // ── XSS aur khamoshi ke liye ahem ────────────────────────
       'no-empty': ['warn', { allowEmptyCatch: false }],   // khali catch → warning
-      'no-unused-vars': ['warn', { args: 'none', varsIgnorePattern: '^_' }],
+      // v540: `vars: 'local'` — top-level naam (function/const) doosri files aur
+      //   HTML onclick se istemal hote hain, jo ESLint dekh nahi sakta (jhoota
+      //   alarm). Waqai murda top-level function ki jaanch tests/security.test.js
+      //   ("koi murda function ya khana na bacha ho") poore system par karta hai.
+      //   `caughtErrors: 'none'` — na-istemal `catch (e)` khami nahi (ESLint 8 tak
+      //   yahi default tha).
+      'no-unused-vars': ['warn', { vars: 'local', args: 'none', caughtErrors: 'none', varsIgnorePattern: '^_' }],
 
       // ── asli ghaltiyan — ye build rok dein ──────────────────
       'no-undef': 'error',
@@ -94,11 +100,5 @@ export default [
     // tests: app ki files ko alag sandbox mein chala kar jaanchte hain
     files: ['tests/**/*.js'],
     rules: { 'no-eval': 'off', 'no-new-func': 'off' },
-  },
-  {
-    // zimni.js: purana KHUDKAR numbering nizam afsar ke hukm par band (MANUAL
-    // mode) — `return` ke neeche purana code jaan-boojh kar mehfooz rakha gaya
-    files: ['zimni.js'],
-    rules: { 'no-unreachable': 'off' },
   },
 ];
