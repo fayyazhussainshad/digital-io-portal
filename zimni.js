@@ -1780,7 +1780,7 @@ function _zimniDefaultBody(o, c) {
   const serial   = E(z.serial_no || '');
   const ioE      = E(io);
   // جرم — دفعات اور "ت پ" الگ الگ (ت پ بائیں کنارے پر)
-  let jBody = ((c.section_of_law || '') + ' ' + (c.offence_type || '')).trim();
+  let jBody = (c.section_of_law || '').trim();   // صرف دفعات (v544)
   let jSuf  = 'ت پ';
   try {
     if (typeof _ch173JurmParts === 'function') {
@@ -3919,7 +3919,7 @@ function _zaDefaultBody(o, c) {
   // جرم — دفعات اور "ت پ" الگ الگ (ت پ ہمیشہ بائیں کنارے پر — bairooni ka wahi
   // rule, _ch173JurmParts se؛ AHEM: sadha concatenation kabhi na karein, warna
   // "ت پ" RTL matn ke andar seedhe dayen taraf aa kar ghalat jagah baith jata hai)
-  let jBody = ((c.section_of_law || '') + ' ' + (c.offence_type || '')).trim();
+  let jBody = (c.section_of_law || '').trim();   // صرف دفعات (v544)
   let jSuf  = 'ت پ';
   try {
     if (typeof _ch173JurmParts === 'function') {

@@ -378,7 +378,7 @@ async function renderCases(container,fStatus,fQuery,fStation){
 
 function renderCaseRow(c,sn){
   const station=c.case_station||(currentOfficer&&currentOfficer.station)||'—';
-  const offence=[c.section_of_law,c.offence_type].filter(Boolean).join(' / ')||'—';
+  const offence=c.section_of_law||'—';   // v544: صرف دفعات
   const cnic=formatCNIC(c.complainant_cnic)||'—';
   const cell=formatCell(c.complainant_cell)||'—';
   return `<tr>
@@ -440,7 +440,6 @@ async function _downloadCaseTxt(id) {
   txt += `تاریخ اندراج:      ${formatDate(c.fir_date)}\n`;
   txt += `تاریخ وقوعہ:       ${formatDate(c.occurrence_date)}\n`;
   txt += `دفعات:             ${c.section_of_law||'—'}\n`;
-  txt += `جرم:               ${c.offence_type||'—'}\n`;
   txt += `صورتحال:           ${STATUS_LABELS[c.status]||c.status}\n`;
   txt += `\n── مدعی ──────────────────────────\n`;
   txt += `نام:               ${c.complainant||'—'}\n`;
@@ -486,7 +485,6 @@ async function _downloadCaseHTML(id) {
   <div class="row"><span class="lbl">تاریخ اندراج:</span><span class="val">${formatDate(c.fir_date)}</span></div>
   <div class="row"><span class="lbl">تاریخ وقوعہ:</span><span class="val">${formatDate(c.occurrence_date)}</span></div>
   <div class="row"><span class="lbl">دفعات:</span><span class="val">${esc(c.section_of_law)||'—'}</span></div>
-  <div class="row"><span class="lbl">جرم:</span><span class="val">${esc(c.offence_type)||'—'}</span></div>
   <div class="row"><span class="lbl">صورتحال:</span><span class="val">${STATUS_LABELS[c.status]||c.status}</span></div>
   <div class="sec">مدعی کی تفصیل</div>
   <div class="row"><span class="lbl">نام:</span><span class="val">${esc(c.complainant)||'—'}</span></div>
@@ -518,7 +516,7 @@ async function openShareModal(id){
   if(!c){showToast('Case not found','error');return;}
   const o=currentOfficer||{};
   const station=c.case_station||o.station||'—';
-  const offence=[c.section_of_law,c.offence_type].filter(Boolean).join(' / ')||'—';
+  const offence=c.section_of_law||'—';   // v544: صرف دفعات
   const lines=[
     'CASE FILE — Digital IO Police Portal',
     '─────────────────────────────────',
@@ -615,12 +613,7 @@ function addSection(sectionStr, offence, bail) {
   // Update hidden input
   document.getElementById('cf-section').value = selectedSections.join(' + ');
 
-  // Update offence field
-  const offenceInp = document.getElementById('cf-offence');
-  if (offenceInp) {
-    const current = offenceInp.value;
-    offenceInp.value = current ? current + ' + ' + offence : offence;
-  }
+  // v544: «جرم» کا خانہ فارم سے ختم — پورے سسٹم میں صرف دفعات چھپتی ہیں۔
 
   // Render tags
   const container = document.getElementById('selected-sections');

@@ -163,7 +163,6 @@ function getMisalTemplate(docId, c) {
   const fir = c?.fir_number  || '________';
   const dt  = c?.fir_date    || '________';
   const sec = c?.section_of_law || '________';
-  const ofc = c?.offence_type   || '________';
   const sta = o.station || c?.case_station || '________';
   const dst = o.district|| c?.case_district|| '________';
   const cmp = c?.complainant   || '________';
@@ -208,7 +207,6 @@ function getMisalTemplate(docId, c) {
         row('مقدمہ نمبر', fir) +
         row('تاریخ و وقت', dt) +
         row('دفعات', sec) +
-        row('نوعیت جرم', ofc) +
         row('تھانہ', sta) +
         row('ضلع', dst) +
         row('مدعی / شکایت کنندہ', cmp) +

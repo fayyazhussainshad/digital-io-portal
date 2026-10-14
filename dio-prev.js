@@ -239,7 +239,7 @@
       var mk = function (c, name, role, more) {
         c = c || {};
         return { name: name, fir: c.fir_number || '', date: c.fir_date ? DIOCard.isoToDmy(c.fir_date) : '',
-          jurm: ((c.section_of_law || '') + ' ' + (c.offence_type || '')).trim(), thana: c.case_station || '', zila: c.case_district || '', haisiyat: role, faisla: st(c), more: more };
+          jurm: (c.section_of_law || '').trim(), thana: c.case_station || '', zila: c.case_district || '', haisiyat: role, faisla: st(c), more: more };
       };
       var out = [];
       A.forEach(function (r) { out.push(mk(caseMap[r.case_id], r.name, 'ملزم', [r.cnic, r.mobile].filter(Boolean).join(' · '))); });

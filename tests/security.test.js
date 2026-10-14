@@ -1776,6 +1776,27 @@ test('v542: مقدمہ کی ترمیم پر جرم کی قسم/SHO/SDPO/نوٹ �
   }
 });
 
+test('v544: نئے مقدمے کے کارڈ میں «جرم» کا خانہ نہیں؛ ترمیم پرانی قدریں نہیں مٹاتی', () => {
+  const f = read('case-form.js'), c = read('cases.js');
+  for (const id of ['cf-offence', 'cf-sho', 'cf-sdpo', 'cf-notes'])
+    assert.ok(!f.includes(id), id + ' فارم میں نہیں (افسر کا فیصلہ)');
+  const edit = f.slice(f.indexOf('async function saveEditCase('));
+  for (const k of ['offence_type', 'sho:', 'sdpo:', 'notes:'])
+    assert.ok(!edit.slice(0, edit.indexOf('updateCase(') + 400).includes(k), k + ' ترمیم میں نہ بھیجا جائے — DB کی قدر نہ مٹے');
+  const add = c.slice(c.indexOf('function addSection('), c.indexOf('function removeSection('));
+  assert.ok(!/cf-offence/.test(add), 'دفعہ چننے پر جرم میں کچھ نہ لکھا جائے');
+});
+
+test('v544: «بجرم»/جرم کی جگہ پورے سسٹم میں صرف دفعات — جرم کی تفصیل (offence_type) نہیں چھپتی', () => {
+  // ضمنی جیسا اصول: offence_type صرف تلاش کی query میں رہ سکتا ہے، کسی دستاویز/ڈسپلے میں نہیں
+  const files = ['naqsha-mauqa.js', 'zimni.js', 'report173.js', 'dio-prev.js', 'saza-slip.js',
+    'darkhwastain.js', 'misal-templates.js', 'incident.js', 'cases.js', 'search.js', 'cdr-imei.js'];
+  for (const fn of files) {
+    const lines = read(fn).split('\n').filter(l => /offence_type/.test(l) && !/\.select\(/.test(l));
+    assert.deepEqual(lines, [], fn + ' میں جرم کی تفصیل نہ چھپے');
+  }
+});
+
 test('103_CHECK: v542 کے اثر کی جانچ — صرف پڑھتی ہے', () => {
   const s = read('sql/103_CHECK.sql').split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
   const bina = s.replace(/'[^']*'/g, "''");

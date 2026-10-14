@@ -260,12 +260,8 @@ function caseFormHTML(c) {
   var cmpCell = c.complainant_cell || '';
   var cmpProf = c.complainant_profession || '';
   var section = c.section_of_law || '';
-  var offence = c.offence_type || '';
-  var sho = c.sho || '';
-  var sdpo = c.sdpo || '';
   var firWriter = c.fir_writer || '';
   var compSender = c.complaint_sender || '';
-  var notes = c.notes || '';
   var status = c.status || 'under';
   var position = c.position || 'pending';
   var isCross = c.is_cross_version || false;
@@ -294,9 +290,8 @@ function caseFormHTML(c) {
     + '<input class="form-input" id="cf-occurrence-place" value="'+esc(occPlace)+'" placeholder="جائے وقوعہ / بحد" dir="auto"></div>'
     + '</div>'
 
-    // Row 2: دفعات قانون (70%) + بحد/جائے وقوعہ (30% — سطر کے آخر یعنی بائیں کنارے)
-    //   بحد کی قدر پرانی occurrence_place کالم میں محفوظ ہوتی ہے اور ضمنی بیرونی میں
-    //   ٹیبل کے اوپر آخری سطر (بحد۔) میں خودکار آ جاتی ہے۔
+    // Row 2: دفعات قانون (پوری سطر)۔ v544: «جرم» کا خانہ ختم (افسر کا فیصلہ) — پورے
+    //   سسٹم میں «بجرم» کے آگے صرف دفعات چھپتی ہیں، جرم کی تفصیل (چوری، قتل…) نہیں۔
     + '<div class="cf-row1" style="align-items:flex-start;">'
     + '<div class="cf-field" style="align-items:flex-start;">'
     + '<label class="cf-label" style="margin-top:8px;">دفعات قانون *</label>'
@@ -373,13 +368,9 @@ function caseFormHTML(c) {
     + '</div>'
     // پوزیشن کا خانہ ہٹا دیا گیا (اکتوبر 2026) — پرانی قدر چھپے خانے میں محفوظ رہتی ہے
     + '<input type="hidden" id="cf-position" value="'+esc(position)+'">'
-    // v542: یہ چار خانے بھی فارم سے ہٹ چکے تھے، مگر ترمیم محفوظ کرنے پر ان کی جگہ
-    //   خالی قدر لکھی جاتی تھی — یعنی ہر ترمیم پر جرم کی قسم، SHO، SDPO اور نوٹ
-    //   مٹ جاتے تھے۔ اب پرانی قدر (پوزیشن کی طرح) چھپے خانے میں برقرار رہتی ہے۔
-    + '<input type="hidden" id="cf-offence" value="'+esc(offence)+'">'
-    + '<input type="hidden" id="cf-sho" value="'+esc(sho)+'">'
-    + '<input type="hidden" id="cf-sdpo" value="'+esc(sdpo)+'">'
-    + '<input type="hidden" id="cf-notes" value="'+esc(notes)+'">'
+    // v544: جرم، SHO، SDPO اور نوٹ — چاروں فارم سے ختم (افسر کا فیصلہ)۔ ترمیم
+    //   محفوظ کرنے پر یہ بھیجے ہی نہیں جاتے، اس لیے ڈیٹابیس کی پرانی قدریں جوں کی
+    //   توں رہتی ہیں (کچھ نہیں مٹتا)؛ نئے مقدمے پر پہلے کی طرح خالی قدر جاتی ہے۔
 
     // ── کراس ورژن ──────────────────────────────────────────────
     + '<div class="dio-full" style="margin-top:14px;padding:10px 12px;background:rgba(239,68,68,0.06);'
@@ -536,13 +527,11 @@ async function saveNewCase(){
       theft_imei:_cfMobile.theft_imei,
       theft_brand:_cfMobile.theft_brand,
       theft_cell:_cfMobile.theft_cell,
-      offence_type:document.getElementById('cf-offence')?.value?.trim()||'',
-      sho:document.getElementById('cf-sho')?.value.trim()||'',
-      sdpo:document.getElementById('cf-sdpo')?.value.trim()||'',
+      // v544: یہ چار خانے فارم میں نہیں — نئے مقدمے پر وہی خالی قدر جو ہمیشہ سے جاتی رہی
+      offence_type:'', sho:'', sdpo:'', notes:'',
       status:document.getElementById('cf-status').value,
       mulzman_type:document.getElementById('cf-mulzman-type')?.value||'namaloom',
       position:document.getElementById('cf-position').value,
-      notes:document.getElementById('cf-notes')?.value.trim()||'',
       documents_checklist:selectedDocuments?.length>0?selectedDocuments:[],
       is_cross_version:document.getElementById('cf-cross-version')?.checked||false,
       cross_fir_number:document.getElementById('cf-cross-fir')?.value.trim()||null,
@@ -623,13 +612,9 @@ async function saveEditCase(id){
       theft_imei:_cfMobile.theft_imei,
       theft_brand:_cfMobile.theft_brand,
       theft_cell:_cfMobile.theft_cell,
-      offence_type:document.getElementById('cf-offence')?.value?.trim()||'',
-      sho:document.getElementById('cf-sho')?.value.trim()||'',
-      sdpo:document.getElementById('cf-sdpo')?.value.trim()||'',
       status:document.getElementById('cf-status').value,
       mulzman_type:document.getElementById('cf-mulzman-type')?.value||'namaloom',
       position:document.getElementById('cf-position').value,
-      notes:document.getElementById('cf-notes')?.value.trim()||'',
       documents_checklist:selectedDocuments.length>0?selectedDocuments:[],
       is_cross_version:document.getElementById('cf-cross-version')?.checked||false,
       cross_fir_number:document.getElementById('cf-cross-fir')?.value.trim()||null,
@@ -648,7 +633,7 @@ async function saveEditCase(id){
     // AUDIT — case.updated (Phase 4B). Key fields ka before/after diff.
     try {
       if (window.DIO && DIO.audit) {
-        const _pickKeys = ['fir_number','fir_date','section_of_law','status','position','complainant','mulzman_type','sho','sdpo'];
+        const _pickKeys = ['fir_number','fir_date','section_of_law','status','position','complainant','mulzman_type'];
         const _pick = (o) => o ? _pickKeys.reduce((a,k)=>{ if(o[k]!==undefined) a[k]=o[k]; return a; }, {}) : null;
         DIO.audit.log('case.updated', 'case', id, {
           case_id: id,
@@ -660,9 +645,7 @@ async function saveEditCase(id){
             status: document.getElementById('cf-status').value,
             position: document.getElementById('cf-position').value,
             complainant: document.getElementById('cf-complainant').value.trim(),
-            mulzman_type: document.getElementById('cf-mulzman-type')?.value || 'namaloom',
-            sho: document.getElementById('cf-sho')?.value.trim() || '',
-            sdpo: document.getElementById('cf-sdpo')?.value.trim() || ''
+            mulzman_type: document.getElementById('cf-mulzman-type')?.value || 'namaloom'
           }
         });
       }

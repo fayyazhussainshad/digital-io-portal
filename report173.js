@@ -556,7 +556,7 @@ function _renderR173() {
                                             : (c.complainant || c.complainant_name)) || '').trim();
                 const addr0 = String((cross0 ? c.cross_complainant_address : c.complainant_address) || '').trim();
                 const autoMadai = nm0 ? (nm0 + (addr0 ? ' ساکن ' + addr0 : '')) : '';
-                const autoJurm  = ((c.section_of_law||'') + ' ' + (c.offence_type||'')).trim();
+                const autoJurm  = (c.section_of_law||'').trim();   // صرف دفعات (v544)
                 const DASH = '-----------';
                 const rows = [
                   ['madai_i','نام وپتہ مدعی و مستغیث', autoMadai],
