@@ -24,9 +24,9 @@ async function _fillIndexNaqlData() {
       if (elI && a.cnic) elI.textContent = ' ' + (_fcx(a.cnic) || a.cnic) + ' ';
     });
   } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
-  // ضمنیاں → انڈکس ضمنیات (نمبر کے مطابق مورخہ + تفتیشی افسر)
-  // FIX 3: har ضمنی entry ka apna date + apna تفتیشی افسر (officer_id lookup);
-  // value na ho to cell blank chhoro (koi placeholder nahi).
+  // ضمنیاں → انڈکس ضمنیات
+  // جیسے جیسے مقدمے کی ضمنی لکھی جاتی ہے، وہ اپنے نمبر، تاریخ اور تفتیشی افسر کے
+  // ساتھ اگلے خالی خانے میں آ جاتی ہے۔ جب تک ضمنی نہ لکھی جائے، نمبر شمار خالی رہتا ہے۔
   try {
     const { data: zs } = await supabaseClient.from('zimni_reports')
       .select('serial_no,report_date,officer_id').eq('case_id', _misalCaseId)
@@ -46,19 +46,82 @@ async function _fillIndexNaqlData() {
       } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
     }
     const _selfName = (currentOfficer && currentOfficer.full_name) || '';
-    (zs || []).forEach(z => {
-      const n = parseInt(z.serial_no);
-      if (!n || n < 1 || n > 18) return;
-      const d = document.getElementById('idxz-d-' + n);
-      if (d && z.report_date) d.textContent = (typeof formatDate==='function') ? formatDate(z.report_date) : z.report_date;
-      const oEl = document.getElementById('idxz-o-' + n);
-      if (oEl) {
-        const nm = (z.officer_id && _ofcMap[z.officer_id]) ? _ofcMap[z.officer_id] : (z.officer_id ? _selfName : '');
-        if (nm) oEl.textContent = nm;
-      }
-    });
+    const _fdz = (v) => v ? ((typeof formatDate === 'function') ? formatDate(v) : v) : '';
+    const list = (zs || [])
+      .slice()
+      .sort((a, b) => (parseInt(a.serial_no) || 1e9) - (parseInt(b.serial_no) || 1e9))
+      .map((z, i) => ({
+        n: parseInt(z.serial_no) || (i + 1),
+        d: _fdz(z.report_date),
+        o: (z.officer_id && _ofcMap[z.officer_id]) ? _ofcMap[z.officer_id] : (z.officer_id ? _selfName : ''),
+      }));
+    const old = document.getElementById('idxz-table');
+    if (old) old.outerHTML = _idxZimniTableHTML(list);
   } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
+  _idxFitCells(document.getElementById('misal-editor'));
 }
+
+// ═══ انڈکس ضمنیات کی جدول — 2 حصے (ہر حصے میں: ضمنی نمبر | مورخہ | تفتیشی افسر) ═══
+// • کم از کم 18 خانے (9 سطریں × 2)؛ ضمنیاں زیادہ ہوں تو سطریں خود بڑھ جاتی ہیں۔
+// • ترتیب کالم وار: پہلا حصہ (دائیں) 1–9، دوسرا حصہ 10–18۔
+// • ضمنی نمبر کی چوڑائی پہلے جتنی (7.8%)؛ باقی جگہ مورخہ اور تفتیشی افسر میں —
+//   تفتیشی افسر کو زیادہ۔ کوئی خانہ دوسری سطر میں نہیں ٹوٹتا (data-fit)۔
+function _idxZimniTableHTML(list) {
+  list = list || [];
+  const _e = (typeof esc === 'function') ? esc : (s => String(s ?? ''));
+  const W = { n: 7.8, d: 14.5, o: 27.7 };
+  const one = 'white-space:nowrap;overflow:hidden;';
+  const th = 'border:0.5pt solid #000;padding:1px 3px;font-weight:normal;text-align:center;font-size:14pt;line-height:1.5;height:8mm;vertical-align:middle;' + one;
+  const td = 'border:0.5pt solid #000;padding:1px 3px;text-align:center;font-size:15pt;line-height:1.5;height:9mm;vertical-align:middle;' + one;
+  const ltr = 'unicode-bidi:isolate;direction:ltr;';
+  const slots = Math.max(18, list.length + (list.length % 2));
+  const rows = slots / 2;
+  let cols = '', head = '<tr>';
+  for (let g = 0; g < 2; g++) {
+    cols += `<col style="width:${W.n}%;"><col style="width:${W.d}%;"><col style="width:${W.o}%;">`;
+    head += `<th data-fit style="${th}width:${W.n}%;">ضمنی نمبر</th><th data-fit style="${th}width:${W.d}%;">مورخہ</th><th data-fit style="${th}width:${W.o}%;">تفتیشی افسر</th>`;
+  }
+  head += '</tr>';
+  let body = '';
+  for (let r = 0; r < rows; r++) {
+    body += '<tr>';
+    for (let g = 0; g < 2; g++) {
+      const z = list[g * rows + r];
+      body += `<td class="idxz-n" data-fit style="${td}">${z ? _e(z.n) : ''}</td>`
+            + `<td class="idxz-d" data-fit style="${td}">${z && z.d ? `<span style="${ltr}">${_e(z.d)}</span>` : ''}</td>`
+            + `<td class="idxz-o" data-fit style="${td}">${z ? _e(z.o) : ''}</td>`;
+    }
+    body += '</tr>';
+  }
+  return `<table id="idxz-table" style="width:100%;border-collapse:collapse;table-layout:fixed;"><colgroup>${cols}</colgroup>${head}${body}</table>`;
+}
+
+// ═══ ایک سطر میں رکھو: [data-fit] خانے کا متن جگہ سے بڑا ہو تو فونٹ تھوڑا چھوٹا ═══
+// (کاغذ / سکرین دونوں پر — اسی کا متن پرنٹ میں بھی چلتا ہے، _IDX_FIT_SRC)
+function _idxFitCells(root) {
+  if (!root) return;
+  root.querySelectorAll('[data-fit]').forEach(el => {
+    // اصل ناپ (ٹیمپلیٹ والی، مثلاً 15pt) ایک بار یاد رکھو — دوبارہ چلے تو وہیں سے شروع
+    if (!el.getAttribute('data-fs0')) el.setAttribute('data-fs0', el.style.fontSize || getComputedStyle(el).fontSize);
+    const f0 = el.getAttribute('data-fs0');
+    const unit = /pt$/.test(f0) ? 'pt' : 'px';
+    let fs = parseFloat(f0) || 12;
+    const min = fs * 0.6;
+    el.style.fontSize = fs + unit;
+    let n = 0;
+    while (el.scrollWidth > el.clientWidth + 1 && fs > min && n < 60) {
+      fs -= 0.5; el.style.fontSize = fs + unit; n++;
+    }
+  });
+}
+// پرنٹ والے کاغذ میں یہی کام (فونٹ لوڈ ہونے کے بعد، چھپائی سے پہلے)
+const _IDX_FIT_SRC = '<script>(function(){' + _idxFitCells.toString() +
+  // پرنٹ کا iframe سکرین پر 0×0 ہوتا ہے — ناپ کاغذ کی اصل چوڑائی پر لو
+  // (8.5in − بائیں 8mm − دائیں 8.5mm)، پھر body پہلے جیسی۔
+  ';function go(){var b=document.body,w=b.style.width,m=b.style.margin;' +
+  'b.style.width="calc(8.5in - 16.5mm)";b.style.margin="0";' +
+  '_idxFitCells(b);b.style.width=w;b.style.margin=m;}go();' +
+  'if(document.fonts&&document.fonts.ready)document.fonts.ready.then(go);})();</scr' + 'ipt>';
 
 // Formatting helpers
 
@@ -77,86 +140,72 @@ function getMisalTemplate(docId, c) {
     const _fm   = (typeof formatCell==='function') ? formatCell : (s=>s||'');
 
     // ── Section 2 borders: NO outer left/right · top/bottom/header 1.5pt · internal 0.5pt ──
-    // Columns: <col> widths + per-cell width + break-word => long text wraps
-    // INSIDE the cell (row grows down), column proportions stay put.
+    // Columns: <col> widths + per-cell width. تاریخوں کے کالم اتنے چوڑے کہ تاریخ
+    // (DD/MM/YYYY) ایک ہی سطر میں رہے — یہ چوڑائی «حکم اخیر عدالت» سے لی گئی۔
     const _cellWrap = 'word-wrap:break-word;overflow-wrap:break-word;white-space:normal;';
+    const _noWrap   = 'white-space:nowrap;overflow:hidden;';
     const _thBase = 'border:none;border-top:1.5pt solid #000;border-bottom:1.5pt solid #000;padding:2px 3px;font-weight:normal;text-align:center;font-size:14pt;line-height:1.7;vertical-align:middle;'+_cellWrap;
     const _tdBase = 'border:none;border-bottom:1.5pt solid #000;padding:3px;text-align:center;font-size:17pt;line-height:1.7;vertical-align:top;'+_cellWrap;
+    const _tdDate = 'border:none;border-bottom:1.5pt solid #000;padding:3px;text-align:center;font-size:17pt;line-height:1.7;vertical-align:top;'+_noWrap;
     const _vline  = 'border-left:0.5pt solid #000;';
 
-    // ── Section 5 zimni: full 0.5pt grid (FIX 3: fixed layout too) ──
-    const _thZ = 'border:0.5pt solid #000;padding:1px 3px;font-weight:normal;text-align:center;font-size:14pt;line-height:1.6;height:6mm;vertical-align:middle;'+_cellWrap;
-    const _tdZ = 'border:0.5pt solid #000;padding:1px 3px;text-align:center;font-size:15pt;line-height:1.6;height:7mm;vertical-align:middle;'+_cellWrap;
+    // ── «ایک Enter» کی جگہ = فارم کی ایک سطر (8mm) — پورے انڈیکس میں یہی ایک ناپ ──
+    const _gap = '8mm';
 
-    // ── FIX 2: aligned dotted fill-line (fixed width, dotted bottom border) ──
-    const _fill = (id, w, extra) => `<span ${id?('id="'+id+'"'):''} class="fill-line" style="display:inline-block;width:${w};border-bottom:1.5px dotted #000;vertical-align:bottom;text-align:center;${extra||''}">&nbsp;</span>`;
+    // ── Dotted fill-line: ہر سطر میں لکیر باقی ساری جگہ لیتی ہے (flex) — اس لیے
+    //    تمام لکیریں ایک ہی کنارے پر ختم ہوتی ہیں، اور رابطہ نمبر / شناختی کارڈ
+    //    والی دونوں لکیریں برابر لمبی۔ ──
+    const _row  = 'display:flex;align-items:flex-end;gap:2mm;font-size:16pt;line-height:8mm;';
+    const _lbl  = 'flex:0 0 auto;white-space:nowrap;';
+    const _fill = (id, val, extra) => `<span ${id?('id="'+id+'"'):''} class="fill-line" style="flex:1 1 0;min-width:0;display:inline-block;border-bottom:1.5px dotted #000;text-align:center;line-height:8mm;${extra||''}">${val||'&nbsp;'}</span>`;
 
     const _cCnic = _fc(c?.complainant_cnic) || '';
     const _cCell = _fm(c?.complainant_cell) || '';
     const _ltrS  = 'unicode-bidi:isolate;direction:ltr;';
+    const _contact = (cellId, cellVal, cnicId, cnicVal) =>
+      `<div style="${_row}"><span style="${_lbl}">رابطہ نمبر</span>${_fill(cellId, cellVal, _ltrS)}<span style="${_lbl}">شناختی کارڈ نمبر</span>${_fill(cnicId, cnicVal, _ltrS)}</div>`;
 
-    // ── Section 3: four accused blocks (sab par sirf "بنام"); equal fixed-width lines ──
+    // ── Section 3: four accused blocks (sab par sirf "بنام") ──
     let _bnam = '';
     for (let i=1;i<=4;i++){
-      _bnam += `<div style="font-size:16pt;line-height:8mm;">بنام ${_fill('idxn-name-'+i,'82%','font-weight:bold;')}</div>
-<div style="font-size:16pt;line-height:8mm;">رابطہ نمبر ${_fill('idxn-cell-'+i,'28%',_ltrS)} شناختی کارڈ نمبر ${_fill('idxn-cnic-'+i,'34%',_ltrS)}</div>`;
-    }
-
-    // ── Section 5 rows: numbers column-wise 1–6 / 7–12 / 13–18 ──
-    let _zHead = '<tr>';
-    for (let g=0;g<3;g++){
-      _zHead += `<th style="${_thZ}width:7.8%;">ضمنی نمبر</th><th style="${_thZ}width:10.4%;">مورخہ</th><th style="${_thZ}width:14.3%;">تفتیشی افسر</th>`;
-    }
-    _zHead += '</tr>';
-    let _zRows = '';
-    for (let r=0;r<6;r++){
-      _zRows += '<tr>';
-      for (let g=0;g<3;g++){
-        const n = g*6 + r + 1;
-        _zRows += `<td style="${_tdZ}">${n}</td><td style="${_tdZ}" id="idxz-d-${n}">&nbsp;</td><td style="${_tdZ}" id="idxz-o-${n}">&nbsp;</td>`;
-      }
-      _zRows += '</tr>';
-    }
-    // FIX 3: <col> widths for zimni table (3 groups × 7.8/10.4/14.3)
-    let _zCols = '';
-    for (let g=0;g<3;g++){
-      _zCols += '<col style="width:7.8%;"><col style="width:10.4%;"><col style="width:14.3%;">';
+      _bnam += `<div style="${_row}"><span style="${_lbl}">بنام</span>${_fill('idxn-name-'+i, '', 'font-weight:bold;')}</div>
+${_contact('idxn-cell-'+i, '', 'idxn-cnic-'+i, '')}`;
     }
 
     return `
-<div style="display:flex;align-items:baseline;width:100%;margin:0 0 6px 0;">
-  <span style="flex:1 1 0;white-space:nowrap;text-align:right;padding-right:8%;font-size:14pt;">تھانہ ${_e(_sta)}</span>
-  <span style="flex:1 1 0;white-space:nowrap;text-align:center;font-size:20pt;font-weight:bold;text-decoration:underline;">انڈکس نقل مسل پولیس</span>
-  <span style="flex:1 1 0;white-space:nowrap;text-align:left;font-size:14pt;">ضلع ${_e(_dst)}</span>
+<div id="idxn-head" style="display:grid;grid-template-columns:1fr auto 1fr;align-items:baseline;width:100%;margin:${_gap} 0 ${_gap} 0;">
+  <span style="white-space:nowrap;text-align:right;padding-right:8%;font-size:14pt;">تھانہ ${_e(_sta)}</span>
+  <span style="white-space:nowrap;text-align:center;font-size:20pt;font-weight:bold;text-decoration:underline;">انڈکس نقل مسل پولیس</span>
+  <span style="text-align:left;padding-left:8%;"><span id="idxn-dst" style="white-space:nowrap;font-size:14pt;">ضلع ${_e(_dst)}</span></span>
 </div>
-<table style="width:100%;border-collapse:collapse;border:none;margin-bottom:6px;table-layout:fixed;">
+<table id="idxn-main" style="width:100%;border-collapse:collapse;border:none;margin-bottom:${_gap};table-layout:fixed;">
   <colgroup>
-    <col style="width:11.4%;"><col style="width:10.8%;"><col style="width:11.3%;"><col style="width:14.4%;"><col style="width:15.5%;"><col style="width:36.6%;">
+    <col style="width:11.4%;"><col style="width:16.5%;"><col style="width:16.5%;"><col style="width:14.4%;"><col style="width:15.5%;"><col style="width:25.7%;">
   </colgroup>
   <tr style="height:14mm;">
     <th style="${_thBase}${_vline}width:11.4%;">مقدمہ نمبر</th>
-    <th style="${_thBase}${_vline}width:10.8%;">تاریخ وقوعہ</th>
-    <th style="${_thBase}${_vline}width:11.3%;">تاریخ رجوعہ</th>
+    <th style="${_thBase}${_vline}width:16.5%;">تاریخ وقوعہ</th>
+    <th style="${_thBase}${_vline}width:16.5%;">تاریخ رجوعہ</th>
     <th style="${_thBase}${_vline}width:14.4%;">جرم</th>
     <th style="${_thBase}${_vline}width:15.5%;">تعداد اوراق</th>
-    <th style="${_thBase}width:36.6%;">حکم اخیر عدالت</th>
+    <th style="${_thBase}width:25.7%;">حکم اخیر عدالت</th>
   </tr>
-  <tr style="height:40mm;">
+  <tr style="height:65.4mm;">
     <td style="${_tdBase}${_vline}">${_e(c?.fir_number||'')}</td>
-    <td style="${_tdBase}${_vline}">${_fd(c?.occurrence_date)}</td>
-    <td style="${_tdBase}${_vline}">${_fd(c?.fir_date)}</td>
+    <td data-fit style="${_tdDate}${_vline}"><span style="${_ltrS}">${_fd(c?.occurrence_date)}</span></td>
+    <td data-fit style="${_tdDate}${_vline}"><span style="${_ltrS}">${_fd(c?.fir_date)}</span></td>
     <td style="${_tdBase}${_vline}">${_e(c?.section_of_law||'')}</td>
     <td style="${_tdBase}${_vline}"></td>
     <td style="${_tdBase}"></td>
   </tr>
 </table>
-<div style="padding:0 14px;">
-  <div style="font-size:16pt;line-height:8mm;">سرکار بذریعہ <span id="idxn-complainant" class="fill-line" style="display:inline-block;width:82%;border-bottom:1.5px dotted #000;vertical-align:bottom;text-align:center;font-weight:bold;">${_e(c?.complainant||'')||'&nbsp;'}</span></div>
-  <div style="font-size:16pt;line-height:8mm;">رابطہ نمبر <span id="idxn-mudai-cell" class="fill-line" style="display:inline-block;width:28%;border-bottom:1.5px dotted #000;vertical-align:bottom;text-align:center;${_ltrS}">${_e(_cCell)||'&nbsp;'}</span> شناختی کارڈ نمبر <span id="idxn-mudai-cnic" class="fill-line" style="display:inline-block;width:34%;border-bottom:1.5px dotted #000;vertical-align:bottom;text-align:center;${_ltrS}">${_e(_cCnic)||'&nbsp;'}</span></div>
+<div id="idxn-parties" style="padding:0 14px;">
+  <div style="${_row}"><span style="${_lbl}">سرکار بذریعہ</span>${_fill('idxn-complainant', _e(c?.complainant||''), 'font-weight:bold;')}</div>
+  ${_contact('idxn-mudai-cell', _e(_cCell), 'idxn-mudai-cnic', _e(_cCnic))}
   ${_bnam}
 </div>
-<div style="text-align:center;font-size:16pt;font-weight:bold;text-decoration:underline;margin:3px 0 2px;">انڈکس ضمنیات</div>
-<table style="width:100%;border-collapse:collapse;table-layout:fixed;"><colgroup>${_zCols}</colgroup>${_zHead}${_zRows}</table>`;
+<div id="idxz-head" style="text-align:center;font-size:16pt;font-weight:bold;text-decoration:underline;margin:${_gap} 0 2px;">انڈکس ضمنیات</div>
+${_idxZimniTableHTML([])}`;
   }
 
   const o   = currentOfficer || {};

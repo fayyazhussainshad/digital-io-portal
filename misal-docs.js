@@ -414,12 +414,15 @@ function _renderMisalEditor(docId, def) {
   const area = document.getElementById('workspace-editor-area');
   if (!area) return;
 
+  // انڈیکس نقل مسل: نہ محفوظ ہوتا ہے، نہ ترمیمی پٹی — ہر بار مقدمے کے تازہ ڈیٹا
+  // (ملزمان، ضمنیاں) سے نیا بنتا ہے، تاکہ ہر نئی ضمنی خود بخود انڈیکس میں آ جائے۔
+  const _isIdx  = (docId === 'index_naql');
   const saved   = _misalDocs[docId];
-  const content = saved?.content?.html ? sanitizeHtml(saved.content.html) : getMisalTemplate(docId, _misalCase);
-  const savedDate = saved?.content?.date || '';
+  const content = (!_isIdx && saved?.content?.html) ? sanitizeHtml(saved.content.html) : getMisalTemplate(docId, _misalCase);
+  const savedDate = _isIdx ? '' : (saved?.content?.date || '');
 
   // ═══ Version history availability (Phase 2A) — sirf saved docs ki nasKhen dikha ke ══
-  const _hasVersions = !!(saved && saved.id);
+  const _hasVersions = !_isIdx && !!(saved && saved.id);
   const _vBtn = _hasVersions
     ? `<button onclick="openMisalVersionsModal('${docId}','${saved.id}')" title="پرانی نسخے دیکھیں"
         style="position:absolute;top:8px;left:8px;z-index:10;padding:5px 10px;border:1px solid var(--border);
@@ -428,7 +431,7 @@ function _renderMisalEditor(docId, def) {
     : '';
 
   // MS Word jaisa toolbar (ooper mustaqil) — likhai ke liye
-  const _msWordBar = (typeof dioEditorToolbar === 'function')
+  const _msWordBar = (!_isIdx && typeof dioEditorToolbar === 'function')
     ? `<div class="editor-toolbar no-print" style="position:sticky;top:0;z-index:20;display:flex;
              align-items:center;gap:3px;flex-wrap:wrap;padding:7px 10px;direction:rtl;
              background:var(--bg-secondary,#f3f6f9);border-bottom:1px solid var(--border,#ddd);">
@@ -444,16 +447,26 @@ function _renderMisalEditor(docId, def) {
     <input type="hidden" id="misal-date" value="${esc(savedDate)}">
     ${_msWordBar}
     <div style="flex:1;overflow:auto;min-height:0;padding:14px;">
-      <div id="misal-editor" contenteditable="true" spellcheck="false" style="
+      ${_isIdx ? `<div id="idx-paper" style="width:8.5in;margin:0 auto;">` : ''}
+      <div id="misal-editor" contenteditable="true" spellcheck="false" style="${_isIdx ? `
+        width:8.5in;min-height:13in;
+        background:#fff;color:#111;
+        font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
+        font-size:15px;line-height:1.6;
+        direction:rtl;text-align:right;
+        border:1px solid var(--border);border-radius:2px;
+        padding:11mm 8.5mm 6.5mm 8mm;outline:none;box-sizing:border-box;
+        box-shadow:0 2px 14px rgba(0,0,0,.12);` : `
         width:100%;min-height:100%;
         background:#fff;color:#111;
         font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
         font-size:16px;line-height:2;
         direction:rtl;text-align:justify;
         border:1px solid var(--border);border-radius:8px;
-        padding:18px;outline:none;box-sizing:border-box;
-      " oninput="_misalDirty=true">${content}</div>
-      ${(typeof dioSavedBoxHTML === 'function')
+        padding:18px;outline:none;box-sizing:border-box;`}
+      " oninput="_misalDirty=${_isIdx ? 'false' : 'true'}">${content}</div>
+      ${_isIdx ? '</div>' : ''}
+      ${(!_isIdx && typeof dioSavedBoxHTML === 'function')
         ? dioSavedBoxHTML(_misalCaseId, docId, 'محفوظ شدہ — ' + ((MISAL_CASE_DOCS.find(d=>d.id===docId)||{}).name || ''))
         : ''}
     </div>
@@ -476,13 +489,26 @@ function _renderMisalEditor(docId, def) {
     // MS Word jaise auzaar: Tab, Ctrl+B/I/U waghera + toolbar CSS
     if (typeof dioEditorToolbarCSS === 'function') dioEditorToolbarCSS();
     if (typeof dioBindEditor === 'function') dioBindEditor(area);
-    // انڈکس نقل مسل — fresh doc: ملزمان + ضمنیاں database se auto-fill
-    if (docId === 'index_naql' && !(saved?.content?.html)) _fillIndexNaqlData();
+    // انڈکس نقل مسل — ہر بار: ملزمان + ضمنیاں database se auto-fill،
+    // اور کاغذ سکرین کی چوڑائی میں پورا (موبائل پر چھوٹا، ناپ وہی)
+    if (_isIdx) { _idxPaperZoom(); _idxFitCells(document.getElementById('misal-editor')); _fillIndexNaqlData(); }
   }, 80);
 }
 
-// ── انڈکس نقل مسل — AUTO-FILL (ملزمان + ضمنیاں) ─────────────────
+// ── انڈکس نقل مسل — کاغذ (8.5in) سکرین میں پورا: ناپ نہیں بدلتی، صرف zoom ──
+function _idxPaperZoom() {
+  const p = document.getElementById('idx-paper');
+  if (!p || !p.parentElement) return;
+  const cs = getComputedStyle(p.parentElement);
+  const avail = p.parentElement.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+  const k = Math.min(1, avail / 816);   // 8.5in = 816px
+  p.style.zoom = (k >= 0.999) ? '1' : String(Math.floor(k * 1000) / 1000);
+}
+window.addEventListener('resize', () => { try { _idxPaperZoom(); } catch (_) { /* ikhtiyari qadam */ } });
+
 async function saveMisalDoc(docId) {
+  // انڈیکس نقل مسل محفوظ نہیں ہوتا — ہمیشہ مقدمے کے تازہ ڈیٹا سے بنتا ہے
+  if (docId === 'index_naql') { _misalDirty = false; return; }
   const editor = document.getElementById('misal-editor');
   if (!editor) return;
   const html = editor.innerHTML;
@@ -535,10 +561,11 @@ function printMisalDoc(name) {
       table{width:100%;border-collapse:collapse;}
       td,th{border:1px solid #555;padding:6px 10px;}
       button,.no-print,.doc-toolbar,.editor-toolbar,select{display:none !important;}
+      ${_isIdx ? '[data-fit]{white-space:nowrap;overflow:hidden;}' : ''}
       /* Bottom-LEFT branding only — koi tareekh/waqt nahi */
       .dio-print-brand{position:fixed;bottom:3mm;left:4mm;font-size:9px;color:#999;direction:ltr;}
       @media print{body{margin:0}button,.no-print,.doc-toolbar,.editor-toolbar,select{display:none !important;}}
-    </style></head><body>${clone.innerHTML}<div class="dio-print-brand">Digital IO</div></body></html>`);
+    </style></head><body>${clone.innerHTML}<div class="dio-print-brand">Digital IO</div>${_isIdx && typeof _IDX_FIT_SRC === 'string' ? _IDX_FIT_SRC : ''}</body></html>`);
   dioPrint(_printHTML);
 }
 

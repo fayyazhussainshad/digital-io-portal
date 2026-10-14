@@ -107,7 +107,7 @@ function _dioEnterDocView() {
           style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--accent);
                  border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;
                  font-family:'Jameel Noori Nastaleeq',serif;">نئی دستاویز</button>
-        <button onclick="_dioSaveCurrent()" title="محفوظ کریں"
+        <button id="dio-dv-save" onclick="_dioSaveCurrent()" title="محفوظ کریں"
           style="background:var(--green,#16a34a);color:#fff;border:none;border-radius:8px;padding:8px 16px;
                  font-size:13px;font-weight:700;cursor:pointer;
                  font-family:'Jameel Noori Nastaleeq',serif;">محفوظ</button>
@@ -115,7 +115,7 @@ function _dioEnterDocView() {
           style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 16px;
                  font-size:13px;font-weight:700;cursor:pointer;
                  font-family:'Jameel Noori Nastaleeq',serif;">پرنٹ</button>
-        <button onclick="_dioRequestApproval()" title="منظوری کے لیے بھیجیں"
+        <button id="dio-dv-approve" onclick="_dioRequestApproval()" title="منظوری کے لیے بھیجیں"
           style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--amber,#f59e0b);
                  border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;
                  font-family:'Jameel Noori Nastaleeq',serif;">منظوری</button>
@@ -440,7 +440,18 @@ function _dioOpenDocTab(docId) {
 
 // ── Tab bar ──
 
+// انڈیکس نقل مسل پر «محفوظ» اور «منظوری» بٹن نہیں (وہ محفوظ نہیں ہوتا —
+// ہر بار مقدمے کے تازہ ڈیٹا سے بنتا ہے)۔ باقی دستاویزات پر پہلے کی طرح۔
+function _dioBarButtonsFor(docId) {
+  const hide = (docId === 'index_naql');
+  ['dio-dv-save', 'dio-dv-approve'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.style.display = hide ? 'none' : '';
+  });
+}
+
 function _dioRenderTabs() {
+  _dioBarButtonsFor(_dioActiveTab);
   const box = document.getElementById('dio-dv-tabs');
   if (!box) return;
   box.innerHTML = _dioTabs.map(t => {
@@ -500,6 +511,17 @@ function _dioRenderTabContent(docId) {
 }
 
 // ── Smart print — active dastawez ke hisab se ──
+
+// Ctrl+P = «پرنٹ» بٹن (انڈیکس نقل مسل): دونوں ایک ہی کاغذ چھاپیں
+document.addEventListener('keydown', function (e) {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
+  if (String(e.key || '').toLowerCase() !== 'p') return;
+  if (_dioActiveTab !== 'index_naql' || !document.getElementById('dio-docview') ||
+      !document.getElementById('misal-editor')) return;
+  e.preventDefault();
+  e.stopPropagation();
+  _dioPrintCurrent();
+}, true);
 
 function _dioPrintCurrent() {
   // VIEW-ONLY [4E]: میعاد ختم پر پرنٹ بند (window.print() fallback سمیت)
