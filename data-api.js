@@ -198,6 +198,68 @@ async function getCase(id) {
 }
 
 
+// ═══ v546: محفوظ کرو — نہ ہو سکے تو آف لائن قطار — ورنہ صاف غلطی ═══════════
+//  پہلے کئی جگہ سرور پر لکھنے کا نتیجہ دیکھا ہی نہیں جاتا تھا (Supabase غلطی
+//  پھینکتا نہیں، {error} لوٹاتا ہے) اور پھر بھی «محفوظ» دکھا دیا جاتا تھا۔
+//  نتیجہ (status):
+//    'ok'      — سرور پر محفوظ (data = محفوظ شدہ قطار)
+//    'queued'  — انٹرنیٹ نہیں/کنکشن ٹوٹا: آف لائن قطار میں، انٹرنیٹ آتے ہی خود sync
+//    'missing' — update/delete: سرور پر قطار نہیں ملی (یا اجازت نہیں)
+//    'error'   — سرور نے رد کیا (error = اصل وجہ)؛ dioLogError میں درج
+function _dioIsNetErr(e) {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return true;
+  const m = String((e && e.message) || e || '');
+  return !(e && e.code) && /failed to fetch|networkerror|load failed|network request failed|fetch failed/i.test(m);
+}
+async function dioSaveRow(table, op, rec) {
+  const queue = async () => {
+    if (typeof offlineStore === 'undefined' || !offlineStore.enqueue) throw new Error('آف لائن قطار دستیاب نہیں');
+    await offlineStore.enqueue(table, op, { ...rec });
+    return { status: 'queued' };
+  };
+  const fail = (e) => {
+    if (typeof dioLogError === 'function') dioLogError(table + ' ' + op + ' nakaam', e);
+    return { status: 'error', error: e };
+  };
+  try {
+    if (typeof supabaseClient === 'undefined' || !supabaseClient || navigator.onLine === false) return await queue();
+    const r = { ...rec };
+    let res;
+    for (let g = 0; g < 6; g++) {
+      if (op === 'insert') res = await supabaseClient.from(table).insert(r).select().single();
+      else if (op === 'update') { const { id, ...f } = r; res = await supabaseClient.from(table).update(f).eq('id', id).select(); }
+      else if (op === 'delete') res = await supabaseClient.from(table).delete().eq('id', r.id).select('id');
+      else return fail(new Error('نامعلوم عمل: ' + op));
+      // DB میں کوئی کالم نہ ہو (schema فرق) تو اسے نکال کر دوبارہ — addCase جیسا
+      const m = /Could not find the '([^']+)' column/i.exec((res && res.error && res.error.message) || '');
+      if (m && m[1] in r && m[1] !== 'id') { delete r[m[1]]; continue; }
+      break;
+    }
+    if (res.error) return _dioIsNetErr(res.error) ? await queue() : fail(res.error);
+    const data = res.data;
+    if (op !== 'insert' && Array.isArray(data) && !data.length) return { status: 'missing' };
+    return { status: 'ok', data: Array.isArray(data) ? data[0] : data };
+  } catch (e) {
+    if (_dioIsNetErr(e)) { try { return await queue(); } catch (q) { return fail(q); } }
+    return fail(e);
+  }
+}
+// نتیجے کے مطابق صاف پیغام — «محفوظ» صرف تب جب واقعی محفوظ ہوا ہو۔
+//  w = { ok: 'محفوظ ہو گئی', fail: 'محفوظ نہیں ہوئی', local: 'اس آلے پر محفوظ' }
+//  (نہ دیں تو مذکر «محفوظ ہو گیا / نہیں ہوا»)
+function dioSaveToast(res, label, w) {
+  if (typeof showToast !== 'function' || !res) return;
+  w = w || {};
+  const ok = w.ok || 'محفوظ ہو گیا', fail = w.fail || 'محفوظ نہیں ہوا', local = w.local || 'اس آلے پر محفوظ';
+  const why = (e) => (window.DIO && DIO.errors && DIO.errors.userMessage) ? DIO.errors.userMessage(e) : String((e && e.message) || e || '');
+  if (res.status === 'ok') showToast('✅ ' + label + ' ' + ok, 'success');
+  else if (res.status === 'queued') showToast('📴 انٹرنیٹ نہیں — ' + label + ' ' + local + '؛ انٹرنیٹ آتے ہی خود سرور پر چلا جائے گا', 'info', 6000);
+  else if (res.status === 'missing') showToast('❌ ' + label + ': سرور پر ' + fail + ' — ریکارڈ نہیں ملا یا اجازت نہیں', 'error', 7000);
+  else showToast('❌ ' + label + ': سرور پر ' + fail + ' — ' + why(res.error), 'error', 7000);
+}
+window.dioSaveRow = dioSaveRow;
+window.dioSaveToast = dioSaveToast;
+
 async function addCase(caseData) {
   const oid = await getOfficerId();
   const rec = {...caseData, officer_id:oid};

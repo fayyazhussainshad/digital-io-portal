@@ -48,8 +48,11 @@
       let s = document.getElementById('naq-fabric-lib');
       if (s) { s.addEventListener('load', () => resolve(window.fabric)); s.addEventListener('error', reject); return; }
       s = document.createElement('script'); s.id = 'naq-fabric-lib'; s.src = FABRIC_SRC;
-      s.onload = () => window.fabric ? resolve(window.fabric) : reject(new Error('fabric'));
-      s.onerror = () => reject(new Error('fabric net'));
+      // v546: لوڈ ناکام (مثلاً آف لائن) ہو تو ٹیگ ہٹا دو — پہلے ٹیگ رہ جاتا اور دوسری
+      //   بار نقشہ کھولنے پر وہ ایسے «load» کا انتظار کرتا جو کبھی نہیں آتا (صفحہ اٹک جاتا)
+      const drop = () => { try { s.remove(); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } };
+      s.onload = () => { if (window.fabric) resolve(window.fabric); else { drop(); reject(new Error('fabric')); } };
+      s.onerror = () => { drop(); reject(new Error('fabric net')); };
       document.head.appendChild(s);
     });
   }
@@ -94,19 +97,36 @@
   const _regDate = () => FDATE((_naqCase || {}).fir_date) || FDATE(new Date().toISOString().slice(0, 10));
 
   // ══ Persist (localStorage + cloud) ═════════════════════════════════
+  //  v546 — خرابیاں دور: (1) سرور کا نتیجہ دیکھا ہی نہیں جاتا تھا، پھر بھی «محفوظ»؛
+  //  (2) آف لائن تبدیلیاں کبھی سرور پر نہ جاتیں، اور اگلی بار آن لائن کھولنے پر سرور
+  //  کی پرانی کاپی انہیں دبا دیتی (ڈیٹا ضائع)؛ (3) ایک ساتھ دو save پر دوہری قطار۔
+  //  اب: جو سرور تک نہ پہنچے وہ «زیرِ التوا» نشان کے ساتھ اس آلے پر رہتا ہے، کھولنے
+  //  پر وہی ترجیح پاتا ہے، اور انٹرنیٹ آتے ہی خود سرور پر چلا جاتا ہے۔
+  const _pendKey = (cid) => 'dio_naqsha_' + (cid || 'nocase') + '::pending';
+  function _setPending(cid, on) {
+    try { if (on) localStorage.setItem(_pendKey(cid), '1'); else localStorage.removeItem(_pendKey(cid)); }
+    catch (_) { if (typeof dioLogError === 'function') dioLogError('naqsha: pending nishan nakaam', _); }
+  }
+  function _isPending(cid) { try { return localStorage.getItem(_pendKey(cid)) === '1'; } catch (_) { return false; } }
+
   async function _load() {
     _naqData = null; _naqRowId = null;
-    // cloud پہلے (آن لائن)
+    let cloud = null, local = null;
     if (_naqCaseId && typeof supabaseClient !== 'undefined' && supabaseClient && _online()) {
       try {
-        const { data } = await supabaseClient.from('case_documents')
-          .select('id,content').eq('case_id', _naqCaseId).eq('document_type', 'naqsha').maybeSingle();
-        if (data) { _naqRowId = data.id; if (data.content && data.content.sketches) _naqData = data.content; }
-      } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
+        const { data, error } = await supabaseClient.from('case_documents')
+          .select('id,content').eq('case_id', _naqCaseId).eq('document_type', 'naqsha')
+          .order('created_at', { ascending: true }).limit(1);
+        if (error) throw error;
+        const row = (data || [])[0];
+        if (row) { _naqRowId = row.id; if (row.content && row.content.sketches) cloud = row.content; }
+      } catch (_) { /* parhna na ho sake to is aale wali copy chalegi */ }
     }
-    if (!_naqData) {
-      try { _naqData = JSON.parse(localStorage.getItem(_key()) || 'null'); } catch (_) { _naqData = null; }
-    }
+    try { local = JSON.parse(localStorage.getItem(_key()) || 'null'); } catch (_) { local = null; }
+    const localOk = !!(local && Array.isArray(local.sketches));
+    // زیرِ التوا (سرور تک نہ پہنچی) مقامی کاپی سرور کی پرانی کاپی سے نئی ہے — وہی چلے
+    if (localOk && _isPending(_naqCaseId)) { _naqData = local; if (_online()) _persistCloud(); }
+    else _naqData = cloud || (localOk ? local : null);
     if (!_naqData || !Array.isArray(_naqData.sketches)) _naqData = { sketches: [], activeId: null };
     if (!_naqData.sketches.length) {
       const s = _newSketch('waqia'); _naqData.sketches.push(s); _naqData.activeId = s.id;
@@ -115,21 +135,74 @@
       _naqData.activeId = _naqData.sketches[0].id;
   }
   function _persistLocal() { try { localStorage.setItem(_key(), JSON.stringify(_naqData)); } catch (_) { if (typeof dioLogError === 'function') dioLogError('naqsha: local save nakaam', _); } }
-  async function _persistCloud() {
-    if (!_naqCaseId || typeof supabaseClient === 'undefined' || !supabaseClient || !_online()) return;
+
+  // ایک مقدمے کا نقشہ سرور پر (update، قطار نہ ملے تو insert) → { status, rowId, error }
+  async function _cloudOnce(cid, content, rowId) {
+    if (!cid) return { status: 'ok', rowId };
+    if (typeof supabaseClient === 'undefined' || !supabaseClient || !_online()) return { status: 'queued', rowId };
     try {
-      const content = _naqData;
-      if (_naqRowId) {
-        await supabaseClient.from('case_documents').update({ content, status: 'draft' }).eq('id', _naqRowId);
-      } else {
-        let oid = null; try { oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null; } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
-        const { data } = await supabaseClient.from('case_documents')
-          .insert({ case_id: _naqCaseId, officer_id: oid, document_type: 'naqsha', status: 'draft', content })
-          .select().single();
-        if (data) _naqRowId = data.id;
+      const T = () => supabaseClient.from('case_documents');
+      if (!rowId) {   // پہلے دیکھو سرور پر اس مقدمے کا نقشہ موجود تو نہیں (دوہری قطار سے بچاؤ)
+        const q = await T().select('id').eq('case_id', cid).eq('document_type', 'naqsha')
+          .order('created_at', { ascending: true }).limit(1);
+        if (q.error) throw q.error;
+        if (q.data && q.data.length) rowId = q.data[0].id;
       }
-    } catch (_) { if (typeof dioLogError === 'function') dioLogError('naqsha: server par save nakaam', _); }
+      let r = null;
+      if (rowId) {
+        r = await T().update({ content, status: 'draft' }).eq('id', rowId).select('id');
+        if (!r.error && Array.isArray(r.data) && !r.data.length) { rowId = null; r = null; }   // قطار نہیں رہی
+      }
+      if (!r) {
+        let oid = null; try { oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null; } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
+        r = await T().insert({ case_id: cid, officer_id: oid, document_type: 'naqsha', status: 'draft', content })
+          .select('id').single();
+        if (!r.error && r.data) rowId = r.data.id;
+      }
+      if (r.error) throw r.error;
+      return { status: 'ok', rowId };
+    } catch (e) {
+      const net = !_online() || (typeof _dioIsNetErr === 'function' && _dioIsNetErr(e));
+      if (!net && typeof dioLogError === 'function') dioLogError('naqsha: server par save nakaam', e);
+      return { status: net ? 'queued' : 'error', error: e, rowId };
+    }
   }
+  // ایک وقت میں ایک ہی save؛ بیچ میں نئی تبدیلی آئے تو ختم ہونے پر تازہ data دوبارہ
+  let _naqCloudP = null, _naqCloudAgain = false;
+  function _persistCloud() {
+    if (_naqCloudP) { _naqCloudAgain = true; return _naqCloudP; }
+    _naqCloudP = (async () => {
+      let res;
+      do {
+        _naqCloudAgain = false;
+        const cid = _naqCaseId;
+        res = await _cloudOnce(cid, _naqData, _naqRowId);
+        if (cid === _naqCaseId) _naqRowId = res.rowId || null;
+        _setPending(cid, res.status !== 'ok');
+      } while (_naqCloudAgain && res.status === 'ok');
+      _naqCloudP = null;
+      return res;
+    })();
+    return _naqCloudP;
+  }
+  // انٹرنیٹ آتے ہی: ہر مقدمے کا زیرِ التوا نقشہ سرور پر (کھلا ہو یا نہیں)
+  async function _syncPendingNaqshe() {
+    if (!_online() || typeof supabaseClient === 'undefined' || !supabaseClient) return;
+    let keys = [];
+    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (/^dio_naqsha_.+::pending$/.test(k)) keys.push(k); } }
+    catch (_) { return; }
+    for (const k of keys) {
+      const cid = k.slice('dio_naqsha_'.length, -'::pending'.length);
+      if (cid === _naqCaseId) { await _persistCloud(); continue; }
+      let data = null; try { data = JSON.parse(localStorage.getItem('dio_naqsha_' + cid) || 'null'); } catch (_) { data = null; }
+      if (!data || !Array.isArray(data.sketches)) { _setPending(cid, false); continue; }
+      const res = await _cloudOnce(cid, data, null);
+      if (res.status === 'ok') _setPending(cid, false);
+    }
+  }
+  window.addEventListener('online', () => { setTimeout(() => { _syncPendingNaqshe(); }, 1500); });
+  setTimeout(() => { _syncPendingNaqshe(); }, 5000);
+  window._naqSyncPending = _syncPendingNaqshe;
   function _newSketch(type) {
     const serials = (_naqData && _naqData.sketches) ? _naqData.sketches.map(s => parseInt(s.serial, 10) || 0) : [];
     const nextSerial = (serials.length ? Math.max.apply(null, serials) : 0) + 1;
@@ -174,13 +247,15 @@
   async function naqSaveNow() {
     _snapshot(); const a = _active();
     if (a) a.name = 'نقشہ موقع — ' + (a.type === 'baramad' ? 'جائے برامدگی' : 'جائے وقوعہ');
-    _persistLocal(); await _persistCloud();
+    _persistLocal(); const _res = await _persistCloud();
     try {
       if (typeof dioRegisterSaved === 'function' && a)
         dioRegisterSaved('naqsha', (a.name || 'نقشہ موقع') + ' — نمبر ' + (a.serial || ''),
           { case_id: _naqCaseId, doc_id: 'crime_scene', serial_no: a.serial, date: a.date });
     } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
-    TOAST('✅ نقشہ موقع محفوظ ہو گیا', 'success');
+    // v546: صرف واقعی محفوظ ہونے پر «محفوظ»؛ ورنہ صاف بتاؤ کہ کہاں ہے
+    if (typeof dioSaveToast === 'function') dioSaveToast(_res, 'نقشہ موقع', { fail: 'محفوظ نہیں ہوا (اس آلے پر محفوظ ہے؛ دوبارہ کوشش خود ہوگی)' });
+    else TOAST(_res.status === 'ok' ? '✅ نقشہ موقع محفوظ ہو گیا' : '⚠ نقشہ موقع اس آلے پر محفوظ — سرور پر بعد میں جائے گا', _res.status === 'ok' ? 'success' : 'info');
     _refreshChips();
   }
   window.naqSaveNow = naqSaveNow;
