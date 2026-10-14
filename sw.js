@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v548
+   DIGITAL IO — SERVICE WORKER v549
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
