@@ -20,7 +20,7 @@ async function renderSettings(container) {
         .order('transfer_date', { ascending: false });
       transfers = data || [];
     }
-  } catch(_) {}
+  } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
 
   const pct = _profilePct(o);
   const initials = (o.full_name||'IO').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -239,7 +239,7 @@ async function _updateOfflineAuthBadge(){
     el.innerHTML=creds
       ?'<span style="color:var(--green);">تیار</span>'
       :'<span style="color:var(--amber);">ایک بار آن لائن لاگ ان کریں</span>';
-  }catch(_){}
+  }catch(_){ /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 
 // ── SAVE FUNCTIONS ────────────────────────────────────────────────────────────
@@ -299,13 +299,13 @@ function changeProfilePhoto(){
         canvas.width=img.width*scale; canvas.height=img.height*scale;
         canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
         const src=canvas.toDataURL('image/jpeg',0.7);
-        try{localStorage.setItem('dio_profile_photo',src);localStorage.setItem('officer_photo_url',src);}catch(e){}
+        try{localStorage.setItem('dio_profile_photo',src);localStorage.setItem('officer_photo_url',src);}catch(e){ /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
         // Save to Supabase officer record (persists across devices/logins)
         try{
           const oid=await getOfficerId();
           await supabaseClient.from('officers').update({profile_photo:src}).eq('id',oid);
           if(currentOfficer) currentOfficer.profile_photo=src;
-        }catch(_){}
+        }catch(_){ if (typeof dioLogError === 'function') dioLogError('profile photo: server save nakaam', _); }
         if (typeof updateSidebarProfile === 'function') updateSidebarProfile();
         document.querySelectorAll('.officer-card-avatar,.sidebar-avatar,#settings-avatar,#profile-avatar-btn,#sidebar-avatar,#topbar-avatar,#dash-welcome-avatar')
           .forEach(el=>{el.innerHTML=`<img src="${src}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">`;});
@@ -321,7 +321,7 @@ function changeProfilePhoto(){
 function removeProfilePhoto(){
   if(!confirm('کیا پروفائل تصویر ہٹا دی جائے؟')) return;
   localStorage.removeItem('dio_profile_photo');
-  (async()=>{ try{ const oid=await getOfficerId(); await supabaseClient.from('officers').update({profile_photo:null}).eq('id',oid); if(currentOfficer)currentOfficer.profile_photo=null; }catch(_){} })();
+  (async()=>{ try{ const oid=await getOfficerId(); await supabaseClient.from('officers').update({profile_photo:null}).eq('id',oid); if(currentOfficer)currentOfficer.profile_photo=null; }catch(_){ if (typeof dioLogError === 'function') dioLogError('profile photo: server se hatana nakaam', _); } })();
   renderSettings(document.getElementById('page-content'));
   showToast('تصویر ہٹا دی گئی۔','info');
 }
@@ -347,7 +347,7 @@ async function doChangePassword(){
     // v538: آف لائن ریکارڈ نئے پاس ورڈ سے — پہلے یہاں ایک غیر موجود فنکشن
     //   (_saveOfflineAuth) تھا: پاس ورڈ سرور پر بدل جاتا مگر افسر کو غلطی
     //   کا پیغام ملتا اور آف لائن پرانا پاس ورڈ ہی چلتا رہتا۔
-    try { if (typeof window._dioSavePwVerifier === 'function') await window._dioSavePwVerifier(currentUser && currentUser.email, np); } catch (_) {}
+    try { if (typeof window._dioSavePwVerifier === 'function') await window._dioSavePwVerifier(currentUser && currentUser.email, np); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     closeModal();
     showToast('پاسورڈ تبدیل ہو گیا۔','success');
   }catch(err){showToast(err.message,'error');}

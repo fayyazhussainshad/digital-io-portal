@@ -31,9 +31,9 @@ async function _stLoad() {
       .eq('case_id', _stCaseId).order('created_at', { ascending: true });
     if (data) {
       _stList = data;
-      try { localStorage.setItem('dio_staff_'+_stCaseId, JSON.stringify(data)); } catch(_) {}
+      try { localStorage.setItem('dio_staff_'+_stCaseId, JSON.stringify(data)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('hamrahi: local save nakaam', _); }
     }
-  } catch(_) {}
+  } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 
 function _stArea() {
@@ -139,7 +139,7 @@ async function _stSave(id) {
       await _stLoad();
       _stRender();
     } else {
-      try { localStorage.removeItem('dio_staff_' + caseId); } catch (_) {}
+      try { localStorage.removeItem('dio_staff_' + caseId); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     }
     showToast('ملازم محفوظ ہو گیا' + (cs && cs.fir && String(caseId) !== String(_stCaseId) ? ' — مقدمہ ' + cs.fir : ''), 'success');
   } catch(e) {
@@ -161,7 +161,7 @@ async function _stDoDelete(id) {
   try {
     await supabaseClient.from('hamrahi_mulazman').delete().eq('id', id);
     _stList = _stList.filter(x => x.id !== id);
-    try { localStorage.setItem('dio_staff_'+_stCaseId, JSON.stringify(_stList)); } catch(_) {}
+    try { localStorage.setItem('dio_staff_'+_stCaseId, JSON.stringify(_stList)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('hamrahi: local save nakaam', _); }
     _stRender();
     showToast('ملازم حذف ہو گیا', 'info');
   } catch(e) { showToast('' + e.message, 'error'); }

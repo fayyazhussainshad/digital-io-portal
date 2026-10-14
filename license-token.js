@@ -85,8 +85,8 @@
       localStorage.setItem('dio_license_err', JSON.stringify({
         code: code, waqt: new Date().toISOString(), extra: extra || null,
       }));
-    } catch (_) {}
-    try { console.warn('[DIO] لائسنس نہیں ملا — ' + matn, extra || ''); } catch (_) {}
+    } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
+    try { console.warn('[DIO] لائسنس نہیں ملا — ' + matn, extra || ''); } catch (_) { /* console na ho to bhi na phatte */ }
     return false;
   }
 
@@ -112,13 +112,13 @@
       });
       if (!res.ok) {
         let j = null;
-        try { j = await res.json(); } catch (_) {}
+        try { j = await res.json(); } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
         return _licNote((j && j.error) || ('http_' + res.status), j || null);
       }
       const j = await res.json();
       if (j && j.token) {
         localStorage.setItem('dio_license', j.token);
-        try { localStorage.removeItem('dio_license_err'); } catch (_) {}
+        try { localStorage.removeItem('dio_license_err'); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
         return true;
       }
       return _licNote('no_token_in_reply', j || null);

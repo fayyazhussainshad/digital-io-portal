@@ -152,12 +152,12 @@ function showPage(page, el) {
           : '<div style="text-align:center;padding:40px 20px;direction:rtl;' +
             'color:var(--text-muted);">آپ کو اس صفحے تک رسائی نہیں ہے</div>';
       }
-    } catch (_) {}
+    } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
     return;
   }
   window._activePage = page;  // Track current page for background refresh
   // صفحہ بدلنے پر آواز سے لکھنا بند (پہلے mic پچھلے صفحے پر بھی سنتا رہتا تھا)
-  if (typeof window._globalMicStop === 'function') { try { window._globalMicStop(); } catch (_) {} }
+  if (typeof window._globalMicStop === 'function') { try { window._globalMicStop(); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ } }
   window._inWorkspace = false;  // Left any workspace when navigating via menu
   document.body.classList.remove('workspace-mode');  // Restore topbar on navigation
 
@@ -182,7 +182,7 @@ function showPage(page, el) {
   if (titleEl) titleEl.textContent = (titles[page]||page);
 
   // Update URL hash
-  try { history.replaceState(null,'','#'+page); } catch(_) {}
+  try { history.replaceState(null,'','#'+page); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 
   // Log usage
   _logUsage('page:'+page);
@@ -228,7 +228,7 @@ if (typeof window.getSHOSignLine !== 'function') {
       const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}');
       name = (sho.name || '').trim();
       rank = (sho.rank || '').trim();
-    } catch (_) {}
+    } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     const st = (station ||
       (typeof currentOfficer !== 'undefined' && currentOfficer ? currentOfficer.station : '') || '').trim();
     const parts = [];
@@ -263,14 +263,14 @@ if (typeof window.getIOSignLine !== 'function') {
       try {
         const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}');
         if ((sho.name || '').trim() === name || !name) rank = (sho.rank || '').trim();
-      } catch (_) {}
+      } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     }
     if (!name) {
       try {
         const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}');
         name = (sho.name || '').trim();
         if (!rank) rank = (sho.rank || '').trim();
-      } catch (_) {}
+      } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     }
     const st = (o.station || '').trim();
     const parts = [];
@@ -327,7 +327,7 @@ function closeModal() {
   // مشترکہ modal card کا سائز واپس default (کیس فارم/FIR/5-C اسے بدلتے ہیں — باقی modals متاثر نہ ہوں)
   _dioResetModalCard();
   // کارڈ بند ہو تو آواز سے لکھنا بھی بند
-  if (typeof window._globalMicStop === 'function') { try { window._globalMicStop(); } catch (_) {} }
+  if (typeof window._globalMicStop === 'function') { try { window._globalMicStop(); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ } }
 }
 
 // ── TOAST ─────────────────────────────────────────────────────
@@ -382,7 +382,7 @@ function sanitizeHtml(html) {
     if (window.DIO && window.DIO.html && typeof window.DIO.html.safe === 'function') {
       return window.DIO.html.safe(html);
     }
-  } catch (_) {}
+  } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
   // ── Legacy fallback (agar dio-html.js load nahi hui) ──────
   const t = document.createElement('template');
   t.innerHTML = String(html);
@@ -440,7 +440,7 @@ window.getComplainantName = async function(caseId) {
   try {
     const cached = JSON.parse(localStorage.getItem('case_data_'+caseId) || '{}');
     if (cached.complainant_name) return cached.complainant_name;
-  } catch(_) {}
+  } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   try {
     const { data } = await supabaseClient.from('cases')
       .select('complainant_name,complainant_address').eq('id',caseId).maybeSingle();
@@ -491,7 +491,7 @@ window.rememberValue = function(categoryKey, value) {
     arr.unshift(value);
     arr = arr.slice(0, 8);                 // keep last 8
     localStorage.setItem('suggest_'+categoryKey, JSON.stringify(arr));
-  } catch(_) {}
+  } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 };
 
 window.attachSuggestions = function(inputEl, categoryKey, opts) {
@@ -514,7 +514,7 @@ window.attachSuggestions = function(inputEl, categoryKey, opts) {
 
   const render = () => {
     let recent = [];
-    try { recent = JSON.parse(localStorage.getItem('suggest_'+categoryKey) || '[]'); } catch(_) {}
+    try { recent = JSON.parse(localStorage.getItem('suggest_'+categoryKey) || '[]'); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     const all = [...new Set([...recent, ...extra])].slice(0, 8);
     box.innerHTML = '';
     if (!all.length) return;
@@ -679,7 +679,7 @@ async function updateBadges() {
     if (b) { b.textContent = cases||0; b.style.display = cases>0?'inline':'none'; }
     const r = document.getElementById('badge-reminders');
     if (r) { r.textContent = rems||0; r.style.display = rems>0?'inline':'none'; }
-  } catch(_) {}
+  } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
 }
 
 // ── SIDEBAR PROFILE ───────────────────────────────────────────
@@ -692,7 +692,7 @@ function updateSidebarProfile() {
   if (rankEl) rankEl.textContent = `${o.designation||''} · ${o.station||''}`;
   // Resolve photo once (DB first, then localStorage fallback)
   let _photo = o.profile_photo;
-  if (!_photo) { try { _photo = localStorage.getItem('dio_profile_photo') || localStorage.getItem('officer_photo_url'); } catch(_) {} }
+  if (!_photo) { try { _photo = localStorage.getItem('dio_profile_photo') || localStorage.getItem('officer_photo_url'); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ } }
   const _initials = (o.full_name||'IO').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
   if (avEl) {
     if (_photo) avEl.innerHTML = `<img src="${_photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
@@ -736,7 +736,7 @@ function updateConnectionStatus(online) {
    AB: shuru me aik baar asal haalat se nishan lagaya jata hai.
    ═══════════════════════════════════════════════════════════════ */
 function _dioInitConnectionStatus() {
-  try { updateConnectionStatus(navigator.onLine); } catch (_) {}
+  try { updateConnectionStatus(navigator.onLine); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', _dioInitConnectionStatus);
@@ -749,14 +749,14 @@ setTimeout(_dioInitConnectionStatus, 2000);
 
 // ── SYNC STATUS (S4) ──────────────────────────────────────────
 function markSynced() {
-  try { localStorage.setItem('dio_last_sync', Date.now().toString()); } catch(_) {}
+  try { localStorage.setItem('dio_last_sync', Date.now().toString()); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   _updateSyncLabel();
 }
 function _updateSyncLabel() {
   const el = document.getElementById('sync-label');
   if (!el) return;
   let ts = 0;
-  try { ts = parseInt(localStorage.getItem('dio_last_sync')||'0'); } catch(_) {}
+  try { ts = parseInt(localStorage.getItem('dio_last_sync')||'0'); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   if (!ts) { el.textContent = ''; return; }
   const mins = Math.floor((Date.now() - ts) / 60000);
   let txt;
@@ -769,11 +769,11 @@ setInterval(_updateSyncLabel, 60000); // update label every minute
 
 // Internet toot-ne par foran cache mode — network par bekar koshishein band
 window.addEventListener('offline', () => {
-  try { _remindersFailedAt = Date.now(); } catch(_) {}
+  try { _remindersFailedAt = Date.now(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 });
 // Internet wapas aane par backoff hata do
 window.addEventListener('online', () => {
-  try { _remindersFailedAt = 0; } catch(_) {}
+  try { _remindersFailedAt = 0; } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 });
 
 window.addEventListener('online',  ()=>{ updateConnectionStatus(true); _syncOfflineQueue(); });
@@ -823,7 +823,7 @@ function startClock() {
 function setupRealtimeSync(cb) {
   try {
     supabaseClient.channel('realtime').on('postgres_changes',{event:'*',schema:'public'},e=>{ if(cb) cb(e.table); }).subscribe();
-  } catch(_) {}
+  } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 
 // ── PUSH NOTIFICATIONS ────────────────────────────────────────
@@ -841,7 +841,7 @@ function _showNotification(title, body, tag) {
     const n = new Notification(title,{body,tag:tag||'dio',icon:'/icon-192.png',dir:'rtl',lang:'ur',vibrate:[200,100,200]});
     n.onclick = ()=>{ window.focus(); n.close(); };
     setTimeout(()=>n.close(),8000);
-  } catch(_) {}
+  } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 
 async function _checkDueReminders() {
@@ -855,7 +855,7 @@ async function _checkDueReminders() {
       setTimeout(()=>_showNotification(`یاددہانی — ${r.reminder_date===today?'آج':'گزر گئی'}`,r.text.slice(0,100),'rem-'+r.id),i*1500);
     });
     if (due.length>3) setTimeout(()=>_showNotification('Digital IO',`${due.length} یاددہانیاں باقی`,'rem-count'),5000);
-  } catch(_) {}
+  } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
 }
 
 function _logUsage(label) {
@@ -863,7 +863,7 @@ function _logUsage(label) {
     const d = JSON.parse(localStorage.getItem(_usageKey)||'{}');
     d[label] = (d[label]||0)+1;
     localStorage.setItem(_usageKey, JSON.stringify(d));
-  } catch(_) {}
+  } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 }
 function getUsageStats() {
   try {
@@ -928,7 +928,7 @@ function setTheme(t) {
   } else {
     document.documentElement.setAttribute('data-theme', t);
   }
-  try { localStorage.setItem('dio_theme', t); } catch(_) {}
+  try { localStorage.setItem('dio_theme', t); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 }
 
 // Load saved theme — default to LIGHT if none chosen
@@ -937,7 +937,7 @@ function setTheme(t) {
   if (!t) {
     // No theme chosen — default to light
     t = 'light';
-    try { localStorage.setItem('dio_theme', 'light'); } catch(_) {}
+    try { localStorage.setItem('dio_theme', 'light'); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   }
   setTheme(t);
 })();
@@ -948,7 +948,7 @@ const DIO_FONT_SIZES = { small: '15px', medium: '16px', large: '18px', xlarge: '
 function setFontSize(key) {
   const px = DIO_FONT_SIZES[key] || DIO_FONT_SIZES.medium;
   document.documentElement.style.fontSize = px;
-  try { localStorage.setItem('dio_font_size', key); } catch(_) {}
+  try { localStorage.setItem('dio_font_size', key); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 }
 function getFontSize() {
   return localStorage.getItem('dio_font_size') || 'medium';
@@ -957,7 +957,7 @@ function getFontSize() {
 // معیاری size par (medium = 16px). Purana save-shuda choice (chhota/bara)
 // clear kar do taake koi us par "phansa" na rahe — sab standard par aa jayen.
 (function(){
-  try { localStorage.removeItem('dio_font_size'); } catch(_) {}
+  try { localStorage.removeItem('dio_font_size'); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   document.documentElement.style.fontSize = DIO_FONT_SIZES.medium;   // 16px
 })();
 window.setFontSize = setFontSize;   // (baqi code kahin call kare to mehfooz — no-op-ish)
@@ -986,16 +986,16 @@ window._dioEnsureAdminBundle = _dioEnsureAdminBundle;
 async function initApp() {
   // پرانا lock flag صاف کرو۔ نوٹ: digital_io_pin_hash کو NA ہٹائیں — یہ فعال ایپ
   // لاک PIN ہے (قدم 3)؛ پہلے یہاں یہ مٹ جاتا تھا جس سے لاک ہر init پر ختم ہو جاتا۔
-  try { localStorage.removeItem('digital_io_locked'); } catch(_) {}
+  try { localStorage.removeItem('digital_io_locked'); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   ['dio-pin-overlay'].forEach(id => { const e=document.getElementById(id); if(e) e.remove(); });
   // #11: admin بنڈل صرف ایڈمن/سپرایڈمن کو لوڈ کرو (غیر-ایڈمن کے آلے پر admin.js نہ چلے)
-  try { if (typeof _dioEnsureAdminBundle === 'function') _dioEnsureAdminBundle(); } catch(_) {}
+  try { if (typeof _dioEnsureAdminBundle === 'function') _dioEnsureAdminBundle(); } catch(_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
   updateSidebarProfile();
   // Refresh avatar again after profile fully loads (photo persistence)
   setTimeout(() => { if (typeof updateSidebarProfile === 'function') updateSidebarProfile(); }, 600);
   updateConnectionStatus(navigator.onLine);
   // v527 (tez login): badges ka network jawab dashboard ko na roke
-  try { updateBadges(); } catch(_) {}
+  try { updateBadges(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   startClock();
   // ═══ DEFENSIVE (Phase 1 cleanup ke baad zarur) ═══
   // Pehle auth.js mein stub tha jo agar backup.js load na hui ho to bhi
@@ -1026,7 +1026,7 @@ async function initApp() {
   // لاگ اِن کے بعد ہمیشہ ڈیش بورڈ کھلے (پہلے آخری صفحہ resume ہوتا تھا، جس سے
   // لاگ اِن پر "میرے مقدمات" کھل جاتا تھا — اب ہمیشہ dashboard)۔
   showPage('dashboard', document.querySelector('.nav-item'));
-  setTimeout(function(){ try { if (typeof triggerBackup === 'function') triggerBackup('app_init'); } catch(_) {} }, 3000);
+  setTimeout(function(){ try { if (typeof triggerBackup === 'function') triggerBackup('app_init'); } catch(_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ } }, 3000);
   setTimeout(_initNotifications, 2000);
   setTimeout(_checkDueReminders, 5000);
   setInterval(_checkDueReminders, 30*60*1000);
@@ -1195,7 +1195,7 @@ async function _installApp() {
 window.addEventListener('appinstalled', function() {
   const btn = document.getElementById('pwa-install-btn');
   if (btn) btn.remove();
-  try { showToast('Digital IO آپ کے آلے پر انسٹال ہو گئی', 'success'); } catch(_) {}
+  try { showToast('Digital IO آپ کے آلے پر انسٹال ہو گئی', 'success'); } catch(_) { /* paigham na dikh sake to koi baat nahi */ }
 });
 
 // ── Explicit global bindings (ensure inline onclick handlers work) ──
@@ -1295,7 +1295,7 @@ function _dioViewFile(url, name) {
       const fr = document.getElementById('dio-fv-frame');
       const fb = document.getElementById('dio-fv-fallback');
       if (fr && fb && fr.dataset.ok !== '1') { fr.style.display = 'none'; fb.style.display = 'block'; }
-    } catch (_) {}
+    } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   }, 1500);
 }
 window._dioViewFile = _dioViewFile;
@@ -1305,7 +1305,7 @@ function _dioFileViewEsc(e) { if (e.key === 'Escape') _dioCloseFileView(); }
 function _dioCloseFileView() {
   const ov = document.getElementById('dio-file-view');
   if (!ov) return;
-  try { if (ov._blob && ov._blob.startsWith('blob:')) URL.revokeObjectURL(ov._blob); } catch (_) {}
+  try { if (ov._blob && ov._blob.startsWith('blob:')) URL.revokeObjectURL(ov._blob); } catch (_) { /* blob pehle hi aazad ho to koi baat nahi */ }
   ov.remove();
   document.body.style.overflow = '';
   document.removeEventListener('keydown', _dioFileViewEsc);
@@ -1325,8 +1325,8 @@ function _dioPrintFileView() {
   }
   // PDF — usi iframe ko chhapo
   const f = document.getElementById('dio-fv-frame');
-  try { f.contentWindow.focus(); f.contentWindow.print(); return; } catch (_) {}
-  try { window.print(); } catch (_) {}
+  try { f.contentWindow.focus(); f.contentWindow.print(); return; } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { window.print(); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
 }
 window._dioPrintFileView = _dioPrintFileView;
 
@@ -1393,7 +1393,7 @@ window._dioDownloadFileView = _dioDownloadFileView;
       (window._printR173 || _printR173)();
     } catch (_) {
       // آخری سہارا — کم از کم براؤزر کی چھپائی چل جائے
-      try { window.print(); } catch (__) {}
+      try { window.print(); } catch (__) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
     }
   }, true);
 })();

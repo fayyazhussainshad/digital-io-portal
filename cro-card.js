@@ -40,7 +40,7 @@ async function _loadCroList() {
   try {
     const { data } = await supabaseClient.from('cro_cards').select('*').eq('case_id', _croCaseId);
     (data||[]).forEach(card => { if (card.accused_id) _croAllCards[card.accused_id] = card; });
-  } catch(_) {}
+  } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
 }
 
 function _renderCroList() {
@@ -296,7 +296,7 @@ async function _saveCro() {
       const { data } = await supabaseClient.from('cro_cards').insert(rec).select().single();
       _croSaved = data || { ...rec, id:'tmp_'+Date.now() };
     }
-    try { localStorage.setItem('dio_cro_'+_croCaseId, JSON.stringify(_croSaved)); } catch(_) {}
+    try { localStorage.setItem('dio_cro_'+_croCaseId, JSON.stringify(_croSaved)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('CRO card: local save nakaam', _); }
     if (_croAccused && _croAccused.id) _croAllCards[_croAccused.id] = _croSaved;
     _croDirty = false;
     showToast('CRO کارڈ محفوظ ہو گیا', 'success');

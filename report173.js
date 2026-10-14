@@ -312,8 +312,8 @@ async function _loadR173() {
       // Chaabi bilkul waisi jaisi SAVE aur RENDER banate hain — aik hi jagah se
       _r173Records[_r173Key(r.report_type, r.report_subtype, r.report_subtype)] = r.form_data || {};
     });
-    try { localStorage.setItem('dio_r173_'+_r173CaseId, JSON.stringify(_r173Records)); } catch(_) {}
-    try { localStorage.setItem('dio_r173docs_'+_r173CaseId, JSON.stringify(_r173Docs)); } catch(_) {}
+    try { localStorage.setItem('dio_r173_'+_r173CaseId, JSON.stringify(_r173Records)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('challan: local copy save nakaam', _); }
+    try { localStorage.setItem('dio_r173docs_'+_r173CaseId, JSON.stringify(_r173Docs)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('challan: local list save nakaam', _); }
   } catch(_) {
     try { _r173Records = JSON.parse(localStorage.getItem('dio_r173_'+_r173CaseId)||'{}'); } catch(_2) { _r173Records={}; }
   }
@@ -412,7 +412,7 @@ function _renderR173() {
       try {
         const ft = _ch173FirText();
         if (ft) return sanitizeHtml(R173_HALAAT_START + ft + R173_HALAAT_END);
-      } catch (_) {}
+      } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     }
     return sanitizeHtml(sv && sv.halaat !== undefined ? sv.halaat : (boil || ''));
   };
@@ -455,7 +455,7 @@ function _renderR173() {
           savedW.every((v, i) => Math.abs((parseFloat(v) || 0) - OLD_W[i]) < 0.51)) {
         savedW = null;
       }
-    } catch(_) {}
+    } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     // کالم 1 (مدعی) mein sirf aik shakhs ka naam + CNIC aata hai, is liye
     // woh tang rakha gaya hai; bachi hui jagah کالم 7 (حالات) ko di gayi hai.
     const W = savedW || [9, 13, 11, 12, 5, 21, 29];
@@ -699,7 +699,7 @@ function _renderR173() {
       _ch173BindOverflow();
       // گواہان — HAR render par. (LoadPeople sirf pehli dafa chalta hai, is
       // liye qism badalne par yeh wahan se nahi chalta tha.)
-      try { _ch173FillWitnessCell(); } catch(_) {}
+      try { _ch173FillWitnessCell(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       // Overflow kai martaba aazmao — khane ki asal naap CSS/font lagne ke
       // BAAD hi maloom hoti hai. Aik hi dafa chalane se matn chhupa reh
       // jata tha (khane ki naap us waqt tak 0 hoti thi).
@@ -708,24 +708,24 @@ function _renderR173() {
       // naap badal dete the — isi se pehli dafa matn chhupa milta tha aur
       // doosri dafa gap reh jata tha.
       [250, 900, 1800].forEach(ms => setTimeout(() => {
-        try { _ch173Layout(); } catch(_) {}
+        try { _ch173Layout(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       }, ms));
       // Nigrani chalu — koi matn chhupa reh jaye to khud neeche chala jaye
-      try { _ch173StartOverflowWatch(); } catch(_) {}
+      try { _ch173StartOverflowWatch(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       // تتمہ چالان mein boilerplate rehne do — FIR ka matn na uthao
       if (_r173Type !== 'tatima_challan') {
         if (_ch173FirMatn === null) _ch173LoadFirMatn(); else _ch173FillHalaat();
       }
       // Khanon ki naap SIRF AIK DAFA — matn poori tarah lag jane ke baad.
       // (Baar baar chalane se har dafa khana aur tang hota chala jata tha.)
-      setTimeout(() => { try { _ch173AutoSize(); } catch (_) {} }, 900);
+      setTimeout(() => { try { _ch173AutoSize(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }, 900);
       window.addEventListener('resize', _ch173SizeRotated);
       // Mehfooz shuda row height wapas lagao
       try {
         const rh = bs.row_height;
         if (rh) document.querySelectorAll('#ch173-table tbody td').forEach(td => td.style.height = rh);
         _ch173SizeRotated();
-      } catch(_) {}
+      } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
       // Mehfooz shuda فونٹ سائز wapas lagao.
       // AHEM: pehle yahan shart thi "agar df 14 ke ILAWA ho" — is liye 14 par
       // koi INLINE naap lagti hi nahi thi aur doc sirf CSS ke bharose rehta tha.
@@ -736,35 +736,35 @@ function _renderR173() {
         if (df) _ch173FontToDoc(df);
         const _fsel = document.getElementById('ch173-font-sel');
         if (_fsel && df) _fsel.value = String(df);
-      } catch(_) {}
+      } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
       // Cursor ke mutabiq dropdown khud badalta rahe (MS Word jaisa)
       try {
         if (!window._ch173FontSelBound) {
           window._ch173FontSelBound = true;
           document.addEventListener('selectionchange', _ch173SyncFontSel);
         }
-      } catch(_) {}
+      } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
       // Format painter — naye safhe par band halat se shuru
-      try { _ch173BrushOff(); _ch173BindBrush(); } catch(_) {}
+      try { _ch173BrushOff(); _ch173BindBrush(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       // چالان ko poora safha do
-      try { _ch173FocusMode(true); } catch(_) {}
-      try { document.body.classList.toggle('tatima-active', _r173Type === 'tatima_challan'); } catch(_) {}
+      try { _ch173FocusMode(true); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+      try { document.body.classList.toggle('tatima-active', _r173Type === 'tatima_challan'); } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
       // Officer ki apni naap yaad ho to khud-ba-khud chaurai band rahe
       try {
         if (bs.cols_manual === '1') {
           const t = document.querySelector('#ch173-table');
           if (t) t.dataset.colsManual = '1';
         }
-      } catch(_) {}
+      } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
       // Font kis khane par lage — us khane ko yaad rakhne wala nizam
-      try { _ch173BindCellPick(); } catch(_) {}
+      try { _ch173BindCellPick(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       // Har khane ka apna mehfooz shuda font wapas lagao
-      try { _ch173ApplyCellFonts(bs.cell_fonts); } catch(_) {}
+      try { _ch173ApplyCellFonts(bs.cell_fonts); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       // Tamam font lag jane ke BAAD hi naap ka poora kaam — warna khanon ki
       // chaurai/qatar ki unchai purane (chhote) font par naapi jati thi.
-      setTimeout(() => { try { _ch173Layout(); } catch(_) {} }, 120);
+      setTimeout(() => { try { _ch173Layout(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }, 120);
       // Safha poori tarah lag jane ke baad naap dobara theek karo
-      try { _ch173WatchFit(); } catch(_) {}
+      try { _ch173WatchFit(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     }, 60);
     if (typeof applyMicButtons === 'function') setTimeout(() => applyMicButtons(area), 80);
     return;
@@ -792,28 +792,28 @@ function _collectR173() {
   if (chDoc && typeof R173_BLANK_TYPES !== 'undefined' && R173_BLANK_TYPES.includes(_r173Type)) {
     // Mehfooz karne se pehle bhi overflow JAMNE TAK chalao — taake کالم 7 ka
     // izafi matn neeche wale khane mein darj ho kar SAATH mehfooz ho.
-    try { _ch173OverflowSettle(5); } catch (_) {}
+    try { _ch173OverflowSettle(5); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     // CNIC ke display-spans hata do — sirf saada matn mehfooz ho (markup nahi)
-    try { _ch173UnwrapCnics(chDoc); } catch(_) {}
+    try { _ch173UnwrapCnics(chDoc); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     const d = {};
     chDoc.querySelectorAll('[data-k]').forEach(el => {
       d[el.dataset.k] = (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') ? el.value : el.innerHTML;
     });
     // MS Word jaisi drag se badli hui column widths bhi mehfooz
-    try { const cw = _ch173ColWidths(); if (cw) d.col_widths = cw; } catch(_) {}
+    try { const cw = _ch173ColWidths(); if (cw) d.col_widths = cw; } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     // Officer ne khud chaurai kheenchi thi? — yaad rakho
     try {
       const t = document.querySelector('#ch173-table');
       if (t && t.dataset.colsManual === '1') d.cols_manual = '1';
-    } catch(_) {}
+    } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
     // Har khane ka apna font bhi mehfooz (warna reload par kho jata hai)
-    try { const cf = _ch173CellFonts(); if (cf) d.cell_fonts = cf; } catch(_) {}
+    try { const cf = _ch173CellFonts(); if (cf) d.cell_fonts = cf; } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     // Save ke liye lapet kholi thi — screen par seedh wapas laga do
-    try { _ch173WrapCnics(chDoc); } catch(_) {}
+    try { _ch173WrapCnics(chDoc); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     try {
       const br = document.querySelector('#ch173-table tbody tr td');
       if (br && br.style.height) d.row_height = br.style.height;
-    } catch(_) {}
+    } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
     return d;
   }
   // `#r173-doc` wala purana safha hata diya gaya (dekhen `_renderR173`) —
@@ -897,9 +897,9 @@ async function _saveR173Inner() {
         date: form_data.sho_date2 || form_data.sho_date || _ch173Today(),
         saved: form_data.saved_at };
       if (idx >= 0) _r173Docs[idx] = entry; else _r173Docs.push(entry);
-    } catch(_) {}
-    try { localStorage.setItem('dio_r173_'+_r173CaseId, JSON.stringify(_r173Records)); } catch(_) {}
-    try { localStorage.setItem('dio_r173docs_'+_r173CaseId, JSON.stringify(_r173Docs)); } catch(_) {}
+    } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+    try { localStorage.setItem('dio_r173_'+_r173CaseId, JSON.stringify(_r173Records)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('challan: local copy save nakaam', _); }
+    try { localStorage.setItem('dio_r173docs_'+_r173CaseId, JSON.stringify(_r173Docs)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('challan: local list save nakaam', _); }
     // محفوظ فائلوں کی فہرست میں درج — KAMYABI ke BAAD (pehle yeh likhne se
     // PEHLE hi darj ho jata tha, is liye nakaam save bhi «محفوظ فائلیں» mein
     // nazar aata tha). تتمہ ki ذیلی qism bhi sahi darj ho, ورژن nahi.
@@ -913,11 +913,11 @@ async function _saveR173Inner() {
           doc_id: _r173DocId || null
         });
       }
-    } catch(_) {}
+    } catch(_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
     // Save ke baad چالان ki FEHRIST kholo
     _r173Dirty = false;
     _r173ShowList = true;
-    setTimeout(() => { try { _renderR173List(); } catch(_) {} }, 250);
+    setTimeout(() => { try { _renderR173List(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }, 250);
 
     // P7: auto-update case status based on report type — Phase 2D canonical
     // registry (fallback local map agar dio-statuses.js load na ho)
@@ -941,10 +941,10 @@ async function _saveR173Inner() {
             .select('status').eq('id', _r173CaseId).maybeSingle();
           _prevStatus = (chk && chk.data && chk.data.status) || null;
         }
-      } catch (_) {}
+      } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
       try {
         await supabaseClient.from('cases').update({ status: newStatus }).eq('id', _r173CaseId);
-        try { localStorage.setItem('case_status_'+_r173CaseId, newStatus); } catch(_) {}
+        try { localStorage.setItem('case_status_'+_r173CaseId, newStatus); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
         // AUDIT — case.status_changed (Report 173 par transition)
         try {
           if (window.DIO && DIO.audit && _prevStatus !== newStatus) {
@@ -955,7 +955,7 @@ async function _saveR173Inner() {
               metadata: { source: 'report_173', report_type: _r173Type }
             });
           }
-        } catch (_) {}
+        } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
         showToast('رپورٹ محفوظ — مقدمہ کی حالت اپ ڈیٹ ہو گئی', 'success');
       } catch(_) { showToast('رپورٹ محفوظ ہو گئی', 'success'); }
     } else {
@@ -967,7 +967,7 @@ async function _saveR173Inner() {
     _r173Dirty = true;
     showToast('محفوظ نہیں ہوا — ' + ((e && e.message) || 'نامعلوم خرابی') +
               ' · دوبارہ کوشش کریں', 'error', 7000);
-    try { if (window.DIO && DIO.errors && DIO.errors.log) DIO.errors.log('report_173.save', e); } catch(_) {}
+    try { if (window.DIO && DIO.errors && DIO.errors.log) DIO.errors.log('report_173.save', e); } catch(_) { /* logging khud kabhi na phatte */ }
   }
 }
 
@@ -1002,7 +1002,7 @@ function _printR173() {
       // leti hai jo screen par mojood hai.
       // Wahi AIK tarteeb jo screen par chalti hai — is liye chapai bilkul
       // wohi shakl deti hai jo screen par nazar aa rahi hoti hai.
-      try { _ch173Layout(); } catch (__) {}
+      try { _ch173Layout(); } catch (__) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       void chDoc.offsetHeight;
       // ═══ Naap ko PAKKA (inline px) kar do — chapai ke liye ═══
       // Screen par khadi khanon ki unchai 'height:100%' ki zanjeer se banti
@@ -1014,25 +1014,24 @@ function _printR173() {
       // Hal: chapai ki naql lene se PEHLE asal px naap inline likh do (inline
       // naap innerHTML ke saath chali jati hai), naql ke baad hata do.
       let _baked = [];
-      try { _baked = _ch173BakeSizes(); } catch (__) {}
+      try { _baked = _ch173BakeSizes(); } catch (__) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       // Misal bandhne ki tikoni jagah (sirf chapai ke liye)
       let _tri = [];
-      try { _tri = _ch173AddBindMarks() || []; } catch (__) {}
+      try { _tri = _ch173AddBindMarks() || []; } catch (__) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       _inner = chDoc.innerHTML;                // kaghaz ki naap wala natija
       // Nishan foran hata do — screen par kuch badla hua nazar na aaye
-      try { _tri.forEach(t => t.remove()); chDoc.normalize(); } catch (__) {}
-      try { _ch173UnbakeSizes(_baked); } catch (__) {}
-    } catch (_) {
-    } finally {
+      try { _tri.forEach(t => t.remove()); chDoc.normalize(); } catch (__) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
+      try { _ch173UnbakeSizes(_baked); } catch (__) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+    } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } finally {
       // Screen wapas apni halat par
       try {
         _ch173PrintMeasuring = false;
         chDoc.style.width = _pw; chDoc.style.maxWidth = _pmw;
         chDoc.style.transform = _ptf; chDoc.style.marginBottom = _pmb;
         void chDoc.offsetHeight;
-        try { _ch173FitPaper(); } catch (__) {}  // dikhane wali naap wapas
+        try { _ch173FitPaper(); } catch (__) { /* ikhtiyari qadam — na ho sake to chhoR do */ }  // dikhane wali naap wapas
         _ch173OverflowSettle(4);               // screen ki halat bhi durust
-      } catch (__) {}
+      } catch (__) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
     }
     const chHtml = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
       <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
@@ -1111,7 +1110,7 @@ function _printR173() {
         .sho-cell-row:empty::before, .ch173-cont:empty::before{ content:'' !important; }
       </style></head><body><div id="ch173-doc">${_inner}</div></body></html>`;
     // Print se pehle rotated khanon ki naap inline kar do (print iframe mein JS nahi chalta)
-    try { if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated(); } catch(_) {}
+    try { if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated(); } catch(_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
     if (typeof dioPrint === 'function') dioPrint(chHtml);
     else { const w = window.open('','_blank'); w.document.write(chHtml); w.document.close(); setTimeout(()=>w.print(),300); }
     return;
@@ -1119,7 +1118,7 @@ function _printR173() {
   // `#ch173-doc` na mile to chhapne ko kuch hai hi nahi — afsar ko bata do
   // (pehle yahan `#r173-doc` wale purane safhe ki chhapai thi jo ab mojood
   //  nahi; woh khamoshi se kuch na karti thi).
-  try { showToast('پرنٹ کے لیے فارم کھلا نہیں', 'error'); } catch (_) {}
+  try { showToast('پرنٹ کے لیے فارم کھلا نہیں', 'error'); } catch (_) { /* paigham na dikh sake to koi baat nahi */ }
 }
 
 // Open report 173 with a specific type pre-selected (from dropdown)
@@ -1142,7 +1141,7 @@ async function openReport173WithType(type, _fromTab) {
   _r173Type = type || 'mukammal';
   // Is qism ka apna محفوظ چالان (ya nayi khali satar) — kisi doosri qism ki
   // satar par kaam jari na rahe
-  try { _r173SyncDocId(); } catch (_) {}
+  try { _r173SyncDocId(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   // Fehrist ka nishan saaf — warna فارم ki bajaye fehrist khul jati hai
   _r173ShowList = false;
   _renderR173();
@@ -1168,7 +1167,7 @@ function _ch173MakeResizable() {
     cell.appendChild(grip);
     // Grip ko POORE table ki unchai tak phailao — taake column ki lakeer
     // sirf header mein nahi, NEECHE data waale hissey mein bhi pakri ja sake.
-    try { cell.style.overflow = 'visible'; } catch (_) {}
+    try { cell.style.overflow = 'visible'; } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
     _colGrips.push(grip);
     /* ═══ لکیر کھینچ کر چوڑائی — دو خرابیاں تھیں ═══
        1) NAAP KI IKAI: `_ch173AutoSize` aur `_ch173AutoFitCols` chaurai
@@ -1208,8 +1207,8 @@ function _ch173MakeResizable() {
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup', onUp);
         document.body.style.cursor = '';
-        if (moved) { try { table.dataset.colsManual = '1'; _r173Dirty = true; } catch (_) {} }
-        try { table._syncColGripHeights && table._syncColGripHeights(); } catch (_) {}
+        if (moved) { try { table.dataset.colsManual = '1'; _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
+        try { table._syncColGripHeights && table._syncColGripHeights(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       };
       document.addEventListener('mousemove', onMove);
       document.addEventListener('mouseup', onUp);
@@ -1262,7 +1261,7 @@ function _ch173MakeResizable() {
           document.removeEventListener('mousemove', onMove);
           document.removeEventListener('mouseup', onUp);
           document.body.style.cursor = '';
-          try { _r173Dirty = true; } catch (_) {}
+          try { _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
         };
         document.addEventListener('mousemove', onMove);
         document.addEventListener('mouseup', onUp);
@@ -1297,7 +1296,7 @@ function _ch173MakeResizable() {
           document.removeEventListener('mousemove', onMove);
           document.removeEventListener('mouseup', onUp);
           document.body.style.cursor = '';
-          try { _r173Dirty = true; } catch (_) {}
+          try { _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
         };
         document.addEventListener('mousemove', onMove);
         document.addEventListener('mouseup', onUp);
@@ -1331,9 +1330,9 @@ function _ch173MakeResizable() {
           document.removeEventListener('mouseup', onUp);
           document.body.style.cursor = '';
           // Chhorne ke baad matn poori tarah jam jaye (aik dafa kaafi nahi)
-          try { _ch173OverflowSettle(4); } catch (_) {}
-          try { table._syncColGripHeights && table._syncColGripHeights(); } catch (_) {}
-          try { _r173Dirty = true; } catch (_) {}
+          try { _ch173OverflowSettle(4); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+          try { table._syncColGripHeights && table._syncColGripHeights(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+          try { _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
         };
         document.addEventListener('mousemove', onMove);
         document.addEventListener('mouseup', onUp);
@@ -1355,7 +1354,7 @@ function _ch173MakeResizable() {
      (rect se rect), is liye scale ka bhi koi asar nahi. */
   function _syncColGripHeights() {
     let tr = null;
-    try { tr = table.getBoundingClientRect(); } catch (_) {}
+    try { tr = table.getBoundingClientRect(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     if (!tr || !tr.height) return;
     const sc = (tr.width && table.offsetWidth) ? (tr.width / table.offsetWidth) : 1;
     _colGrips.forEach(g => {
@@ -1365,7 +1364,7 @@ function _ch173MakeResizable() {
         const cr = cell.getBoundingClientRect();
         const top = cr.top - tr.top;
         g.style.height = Math.round(Math.max(0, tr.height - top) / (sc || 1)) + 'px';
-      } catch (_) {}
+      } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
     });
   }
   table._syncColGripHeights = _syncColGripHeights;
@@ -1384,10 +1383,10 @@ function _ch173MakeResizable() {
         try {
           const t = document.getElementById('ch173-table');
           if (t && t._syncColGripHeights) t._syncColGripHeights();
-        } catch (_) {}
+        } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
       });
     }
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._ch173MakeResizable = _ch173MakeResizable;
 
@@ -1513,14 +1512,14 @@ function _r173AkhColOk(w) {
   return String(w || '').indexOf('%') > -1 && v >= 8 && v <= 80;
 }
 function _ch173AkhrajResetCol() {
-  try { localStorage.removeItem(_r173AkhColKey()); } catch (_) {}
+  try { localStorage.removeItem(_r173AkhColKey()); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   try {
     const t = document.getElementById('ch173-table');
     const cs = t ? t.querySelectorAll('colgroup col') : [];
     if (cs.length >= 3) { cs[1].style.width = ''; cs[2].style.width = ''; }
-  } catch (_) {}
-  try { _ch173AkhrajGrips(); _ch173OverflowSettle(3); } catch (_) {}
-  try { showToast('خانوں کی چوڑائی خودکار', 'info'); } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { _ch173AkhrajGrips(); _ch173OverflowSettle(3); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { showToast('خانوں کی چوڑائی خودکار', 'info'); } catch (_) { /* paigham na dikh sake to koi baat nahi */ }
 }
 window._ch173AkhrajResetCol = _ch173AkhrajResetCol;
 
@@ -1532,14 +1531,14 @@ function _ch173AkhrajSavedH() {
 }
 // Khud-kar naap par wapas
 function _ch173AkhrajResetH() {
-  try { localStorage.removeItem(_r173AkhHKey()); } catch (_) {}
+  try { localStorage.removeItem(_r173AkhHKey()); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   try {
     const g = document.querySelector('#ch173-doc .akh-hgrip');
     const td = g && g.closest('td.normcell');
     if (td) td.style.height = '';
-  } catch (_) {}
-  try { _ch173AkhrajRowH(); _ch173OverflowSettle(3); } catch (_) {}
-  try { showToast('مختصر حالات کی اونچائی خودکار', 'info'); } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { _ch173AkhrajRowH(); _ch173OverflowSettle(3); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { showToast('مختصر حالات کی اونچائی خودکار', 'info'); } catch (_) { /* paigham na dikh sake to koi baat nahi */ }
 }
 window._ch173AkhrajResetH = _ch173AkhrajResetH;
 
@@ -1567,7 +1566,7 @@ function _ch173AkhrajHGrip() {
       // Matn foran theek ho — jo na samaye woh neeche, jagah bane to wapas
       if (!wait) {
         wait = true;
-        requestAnimationFrame(() => { wait = false; try { _ch173OverflowSettle(1); } catch (_) {} });
+        requestAnimationFrame(() => { wait = false; try { _ch173OverflowSettle(1); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } });
       }
     };
     const up = () => {
@@ -1577,12 +1576,12 @@ function _ch173AkhrajHGrip() {
       if (moved) {
         const hh = Math.round(td.clientHeight);
         if (hh >= R173_AKH_H_MIN && hh <= R173_AKH_H_MAX) {
-          try { localStorage.setItem(_r173AkhHKey(), String(hh)); } catch (_) {}
+          try { localStorage.setItem(_r173AkhHKey(), String(hh)); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
         }
       }
-      try { _ch173OverflowSettle(4); } catch (_) {}
-      try { _ch173AlignSho(); } catch (_) {}
-      try { _r173Dirty = true; } catch (_) {}
+      try { _ch173OverflowSettle(4); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+      try { _ch173AlignSho(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+      try { _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     };
     document.addEventListener('mousemove', move);
     document.addEventListener('mouseup', up);
@@ -1632,7 +1631,7 @@ function _ch173AkhrajRowH() {
   // Qatar ki unchai: THEEK poori satrein, aur kam az kam unwaan jitni.
   // Koi faltu jagah nahi — na ooper, na neeche.
   let natural = 0;
-  try { natural = lbl ? lbl.offsetHeight : 0; } catch (_) {}
+  try { natural = lbl ? lbl.offsetHeight : 0; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   const target = Math.max(lh + wrapPad, natural);
   let h = td.clientHeight || target;
   td.style.height = Math.round(h) + 'px';
@@ -1665,14 +1664,14 @@ function _ch173StretchRow() {
   try {
     const cont = doc.querySelector('[data-k="cont_text"]');
     if (cont && cont.innerText.replace(/\s/g, '').length) return;
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   const cur = row.offsetHeight;
   if (!cur) return;                                   // abhi naapa nahi gaya
   let padY = 0;
   try {
     const cs = getComputedStyle(doc);
     padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
-  } catch (_) {}
+  } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   const pageH  = ((_ch173Paper === 'a4') ? 11.7 : 13) * 96;
   const avail  = pageH - padY;                        // safhe mein kaam ki unchai
   const content = doc.scrollHeight - padY;            // is waqt ka poora matn
@@ -1680,7 +1679,7 @@ function _ch173StretchRow() {
   const target = Math.round(avail - rest);
   if (target > cur + 24) {                            // SIRF barhao (chhoti tabdeeli par nahi)
     row.querySelectorAll('td').forEach(c => { c.style.height = target + 'px'; });
-    try { _ch173OverflowSettle(3); } catch (_) {}
+    try { _ch173OverflowSettle(3); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   }
 }
 window._ch173StretchRow = _ch173StretchRow;
@@ -1709,7 +1708,7 @@ function _ch173TrimRowGap() {
     const cr = cell.getBoundingClientRect();
     if (!rr.height) return;                                 // khana khali hai
     let padB = 0;
-    try { padB = parseFloat(getComputedStyle(cell).paddingBottom) || 0; } catch (_) {}
+    try { padB = parseFloat(getComputedStyle(cell).paddingBottom) || 0; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     // Safha scale hua ho to naap ko wapas asal paimane par lao
     const scale = (cell.offsetHeight && cr.height) ? (cr.height / cell.offsetHeight) : 1;
     bacha = Math.round(((cr.bottom - rr.bottom) / (scale || 1)) - padB);
@@ -1722,7 +1721,7 @@ function _ch173TrimRowGap() {
   const naya = Math.max(farsh, cur - bacha);
   if (naya >= cur) return;
   row.querySelectorAll('td').forEach(c => { c.style.height = naya + 'px'; });
-  try { _ch173OverflowSettle(2); } catch (_) {}
+  try { _ch173OverflowSettle(2); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._ch173TrimRowGap = _ch173TrimRowGap;
 
@@ -1829,7 +1828,7 @@ function _ch173AutoSize() {
     cols.forEach((c, i) => { c.style.width = puraniW[i] || ''; });
     row.querySelectorAll('td').forEach(c => { c.style.height = puraniH || ''; });
   }
-  try { _ch173OverflowSettle(3); } catch (_) {}
+  try { _ch173OverflowSettle(3); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._ch173AutoSize = _ch173AutoSize;
 
@@ -1846,24 +1845,24 @@ window._ch173AutoSize = _ch173AutoSize;
 //    5. CNIC ki seedh
 // ═══════════════════════════════════════════════════════════════════
 function _ch173Layout() {
-  try { _ch173FitPaper(); } catch (_) {}
+  try { _ch173FitPaper(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   // اخراج/عدم پتہ ki simple 3-column table hai (khadi likhayi nahi) — us par
   // چالان wali column auto-sizing na chalao. Baqi sab (SHO, کاغذات) chalti hai.
   const _akhrajTbl = !!document.querySelector('.ch173-akhraj-table');
   if (_akhrajTbl) {
-    try { _ch173AkhrajGrips(); } catch (_) {}     // khanon ki chaurai
-    try { _ch173AkhrajRowH(); } catch (_) {}      // row 8 ki unchai
-    try { _ch173AkhrajHGrip(); } catch (_) {}     // neeche wali lakeer kheenchne wala
+    try { _ch173AkhrajGrips(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }     // khanon ki chaurai
+    try { _ch173AkhrajRowH(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }      // row 8 ki unchai
+    try { _ch173AkhrajHGrip(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }     // neeche wali lakeer kheenchne wala
   }
   if (!_akhrajTbl) {
-    try { _ch173AutoFitCols(); } catch (_) {}     // khanon ki chaurai (file ka apna)
-    try { _ch173AutoSize(); } catch (_) {}        // chaurai + lambai (matn ke mutabiq)
-    try { _ch173RoundRow(); } catch (_) {}
+    try { _ch173AutoFitCols(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }     // khanon ki chaurai (file ka apna)
+    try { _ch173AutoSize(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }        // chaurai + lambai (matn ke mutabiq)
+    try { _ch173RoundRow(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   }
-  try { _ch173StretchRow(); } catch (_) {}      // sirf tab jab neeche kuch na ho
-  try { _ch173OverflowSettle(4); } catch (_) {}
-  try { _ch173WrapCnics(); } catch (_) {}
-  try { _ch173AlignSho(); } catch (_) {}        // SHO ki doosri line کاغذات ke neeche
+  try { _ch173StretchRow(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }      // sirf tab jab neeche kuch na ho
+  try { _ch173OverflowSettle(4); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { _ch173WrapCnics(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { _ch173AlignSho(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }        // SHO ki doosri line کاغذات ke neeche
   // Mehfooz result number کاغذات mein "اصل رزلٹ نمبری" ke neeche lagao
   try {
     const doc = _ch173Doc();
@@ -1881,7 +1880,7 @@ function _ch173Layout() {
         if (rn.textContent !== want) rn.textContent = want;
       });
     }
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._ch173Layout = _ch173Layout;
 
@@ -1902,7 +1901,7 @@ function _ch173AkhrajGrips() {
      Ab: har qism ki apni chaabi, naap ki hadd, sirf sach much kheenchne par
      mehfooz, aur grip par DOUBLE-CLICK se dobara khud-kar. */
   let saved = null;
-  try { saved = JSON.parse(localStorage.getItem(_r173AkhColKey()) || 'null'); } catch (_) {}
+  try { saved = JSON.parse(localStorage.getItem(_r173AkhColKey()) || 'null'); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   if (saved && _r173AkhColOk(saved.c2) && _r173AkhColOk(saved.c3)) {
     cols[1].style.width = saved.c2; cols[2].style.width = saved.c3;
   } else {
@@ -1945,7 +1944,7 @@ function _ch173AkhrajGrips() {
         cols[1].style.width = (px / tW * 100).toFixed(2) + '%';
         cols[2].style.width = ((tW - c1 - px) / tW * 100).toFixed(2) + '%';
       }
-    } catch (_) {}
+    } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   }
   table.querySelectorAll('.akh-grip').forEach(g => {
     if (g.dataset.bound) return;
@@ -1978,7 +1977,7 @@ function _ch173AkhrajGrips() {
           moveWait = true;
           requestAnimationFrame(() => {
             moveWait = false;
-            try { _ch173OverflowSettle(1); } catch (_) {}
+            try { _ch173OverflowSettle(1); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
           });
         }
       };
@@ -1988,13 +1987,13 @@ function _ch173AkhrajGrips() {
         if (moved) {
           const c2w = cols[1].style.width, c3w = cols[2].style.width;
           if (_r173AkhColOk(c2w) && _r173AkhColOk(c3w)) {
-            try { localStorage.setItem(_r173AkhColKey(), JSON.stringify({ c2: c2w, c3: c3w })); } catch (_) {}
+            try { localStorage.setItem(_r173AkhColKey(), JSON.stringify({ c2: c2w, c3: c3w })); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
           }
         }
         // Chhorne par matn poori tarah jam jaye (ooper/neeche theek ho)
-        try { _ch173OverflowSettle(4); } catch (_) {}
-        try { _ch173AlignSho(); } catch (_) {}
-        try { _r173Dirty = true; } catch (_) {}
+        try { _ch173OverflowSettle(4); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+        try { _ch173AlignSho(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+        try { _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       };
       document.addEventListener('mousemove', move);
       document.addEventListener('mouseup', up);
@@ -2021,7 +2020,7 @@ function _ch173RoundRow() {
     const cs = getComputedStyle(cell);
     lh = parseFloat(cs.lineHeight) || 0;
     padT = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
-  } catch (_) {}
+  } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   if (!lh || lh < 4) return;
   const chahiye = Math.max(row.offsetHeight, window._ch173MinRowH || 0);
   const andar   = Math.max(lh, chahiye - padT);
@@ -2087,7 +2086,7 @@ function _ch173AddBindMarks() {
   try {
     const cs = getComputedStyle(doc);
     hashiya = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
-  } catch (_) {}
+  } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   const kaam = safhaH - hashiya;                // aik safhe ki kaam ki unchai
   if (kaam < 100) return daale;
 
@@ -2153,7 +2152,7 @@ function _ch173AddBindMarks() {
           tri.className = 'ch173-bind';
           t.node.parentNode.insertBefore(tri, baad);
           daale.push(tri);
-        } catch (_) {}
+        } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
         break;
       }
     }
@@ -2191,7 +2190,7 @@ function _ch173AutoFitCols() {
     try {
       inner.style.maxWidth = 'none';                 // hadd hata kar asal naap lo
       w = inner.scrollWidth;
-    } catch (_) {}
+    } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
     inner.style.maxWidth = purani;
     need.push(Math.ceil(w) + 6);                     // thori si saans
   }
@@ -2267,7 +2266,7 @@ function _ch173Overflow() {
       }
       break;
     }
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 
   guard = 0;
   while (!full() && cont.firstChild && guard++ < 8000) {
@@ -2338,13 +2337,13 @@ function _ch173Overflow() {
       }
       break;
     }
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 
   // (c) TUKRE WAPAS JORO — matn lafz-ba-lafz hilta hai, is liye har lafz ka
   // apna alag tukra ban jata hai. Yeh tukre khud-ba-khud aik nahi hote, aur
   // itne saare tukron ki wajah se likhayi mein khali jagah (gap) nazar aane
   // lagti hai. normalize() saath saath ke tukron ko dobara aik kar deta hai.
-  try { cell.normalize(); cont.normalize(); } catch (_) {}
+  try { cell.normalize(); cont.normalize(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   // Aik se zyada khali jagah aik hi rakho (bar bar torne-jorne se banti hai)
   try {
     [cell, cont].forEach(host => {
@@ -2355,7 +2354,7 @@ function _ch173Overflow() {
         if (fixed !== n.nodeValue) n.nodeValue = fixed;
       }
     });
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._ch173Overflow = _ch173Overflow;
 
@@ -2373,7 +2372,7 @@ function _ch173CaretEnd(el) {
     const s = window.getSelection();
     s.removeAllRanges();
     s.addRange(r);
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._ch173CaretEnd = _ch173CaretEnd;
 
@@ -2382,7 +2381,7 @@ window._ch173CaretEnd = _ch173CaretEnd;
 //  ke baad khane ki naap badal jati hai, is liye dobara jaanchna zaroori hai.)
 function _ch173OverflowSettle(times) {
   const n = times || 4;
-  for (let i = 0; i < n; i++) { try { _ch173Overflow(); } catch (_) {} }
+  for (let i = 0; i < n; i++) { try { _ch173Overflow(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
 }
 window._ch173OverflowSettle = _ch173OverflowSettle;
 
@@ -2390,10 +2389,10 @@ window._ch173OverflowSettle = _ch173OverflowSettle;
 // Sirf tab chalta hai jab (a) matn waqai chhupa hua ho, aur (b) user us
 // khane mein likh NA raha ho — is liye cursor kabhi nahi hilta.
 function _ch173StartOverflowWatch() {
-  try { if (window._ch173OvWatch) clearInterval(window._ch173OvWatch); } catch (_) {}
+  try { if (window._ch173OvWatch) clearInterval(window._ch173OvWatch); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   window._ch173OvWatch = setInterval(function () {
     const cell = (_ch173Cells() || {}).cell;
-    if (!cell) { try { clearInterval(window._ch173OvWatch); } catch (_) {} window._ch173OvWatch = null; return; }
+    if (!cell) { try { clearInterval(window._ch173OvWatch); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } window._ch173OvWatch = null; return; }
     if (document.activeElement === cell) return;          // likhte waqt haath na lagao
     if (!cell.clientHeight) return;                        // abhi naapa nahi gaya
     if (cell.scrollHeight > cell.clientHeight + 1) _ch173OverflowSettle(2);
@@ -2444,7 +2443,7 @@ function _ch173BindOverflow() {
       rg.collapse(true);
       const sel = window.getSelection();
       sel.removeAllRanges(); sel.addRange(rg);
-    } catch (_) {}
+    } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   };
 
   const run = () => {
@@ -2523,9 +2522,9 @@ async function _ch173LoadPeople() {
   try {
     const wcell = document.querySelector('#ch173-table [data-k="shahadat"]');
     if (wcell) _ch173FillWitnessCell();
-    try { _ch173WrapCnics(); } catch(_) {}
+    try { _ch173WrapCnics(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
-  } catch(_) {}
+  } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 
 // Tamam گواہان aik line mein
@@ -2603,7 +2602,7 @@ function _ch173MedGet() {
     if (o && String(o.name || '').trim()) {
       return { name: String(o.name).trim(), cnic: _ch173CnicFmt(o.cnic) };
     }
-  } catch (_) {}
+  } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   return null;
 }
 function _ch173MedSet(name, cnic) {
@@ -2611,7 +2610,7 @@ function _ch173MedSet(name, cnic) {
     localStorage.setItem(R173_MED_KEY, JSON.stringify({
       name: String(name || '').trim(), cnic: String(cnic || '').trim()
     }));
-  } catch (_) {}
+  } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 }
 window._ch173MedSet = _ch173MedSet;
 
@@ -2662,16 +2661,16 @@ function _ch173FillWitnessCell() {
   const el = _ch173WitCell();
   if (!el) return;
   // 1) چالان مکمل ki fehrist — نامکمل / تتمہ / 512 mein bhi wohi
-  try { _ch173InheritWitnesses(); } catch (_) {}
+  try { _ch173InheritWitnesses(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   // 2) مقدمے ke apne گواہان — HAMESHA milao, sirf "khali ho to" NAHI.
   //    AHEM: گواہان Supabase se aate hain (der lagti hai). Pehli dafa yeh
   //    khana un se PEHLE hi مدعی/محرر/تفتیشی افسر se bhar jata tha, aur jab
   //    گواہان aate the to "khana khali nahi hai" keh kar chhor diya jata tha.
   //    Isi liye PEHLI dafa چالان مکمل adhoora aata tha, aur dobara kholne par
   //    (jab list pehle se mehfooz thi) poora nazar aata tha.
-  try { _ch173MergeCaseWitnesses(); } catch (_) {}
+  try { _ch173MergeCaseWitnesses(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   // 3) مدعی pehla, محرر aur تفتیشی افسر apni jagah par
-  try { _ch173AddDefaultOfficials(); } catch (_) {}
+  try { _ch173AddDefaultOfficials(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   // 4) کاغذات mein ایم ایل سی / پوسٹ مارٹم ho to میڈیکل آفیسر bhi
   try {
     const pb = document.querySelector('#ch173-doc [data-k="papers_body"]');
@@ -2679,8 +2678,8 @@ function _ch173FillWitnessCell() {
       const nms = _ch173PapersRead(pb).map(it => it.name);
       if (nms.length) _ch173EnsureMedicalWitness(nms);
     }
-  } catch (_) {}
-  try { _ch173WrapCnics(); } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { _ch173WrapCnics(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._ch173FillWitnessCell = _ch173FillWitnessCell;
 
@@ -2711,7 +2710,7 @@ function _ch173MergeCaseWitnesses() {
   if (!el) return false;
   const L = (typeof _ch173WitList === 'function') ? _ch173WitList() : (_ch173Witnesses || []);
   if (!L || !L.length) return false;
-  try { _ch173UnwrapCnics(el); } catch (_) {}
+  try { _ch173UnwrapCnics(el); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   const list = _ch173WitParse(el);
   let naya = false;
   L.forEach(w => {
@@ -2832,7 +2831,7 @@ function _ch173MukammalWitnesses() {
       const s = d && d.shahadat;
       if (s && String(s).replace(/<[^>]*>/g, '').trim()) return String(s);
     }
-  } catch (_) {}
+  } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   return '';
 }
 
@@ -2851,7 +2850,7 @@ function _ch173InheritWitnesses() {
   const txt = (tmp.innerText || '').trim();
   if (!txt) return false;
   el.innerText = txt;
-  try { _r173Dirty = true; } catch (_) {}
+  try { _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   return true;
 }
 window._ch173InheritWitnesses = _ch173InheritWitnesses;
@@ -2902,7 +2901,7 @@ function _ch173WitWrite(el, list) {
     }
   }
   el.innerText = _out.join('\n');
-  try { _r173Dirty = true; } catch (_) {}
+  try { _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 
 const _ch173SameName = (a, b) =>
@@ -2918,7 +2917,7 @@ function _ch173AddWitness(name, cnic) {
   // kholne par CNIC '.ln/.cn' mein lipta hota hai — us soorat mein satar ki
   // shakl badal jati hai aur purana naam pehchana nahi jata. Nateeja: har
   // dafa kholne par naam DOBARA lag jata.
-  try { _ch173UnwrapCnics(el); } catch (_) {}
+  try { _ch173UnwrapCnics(el); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   const list = _ch173WitParse(el);
   if (list.some(w => _ch173SameName(w.name, name))) return false;
   // تفتیشی افسر hamesha AAKHRI گواہ — naya naam us se PEHLE aata hai
@@ -2941,7 +2940,7 @@ window._ch173AddWitness = _ch173AddWitness;
 function _ch173AddDefaultOfficials() {
   const el = _ch173WitCell();
   if (!el) return false;                       // اخراج/عدم پتہ mein yeh khana hai hi nahi
-  try { _ch173UnwrapCnics(el); } catch (_) {}
+  try { _ch173UnwrapCnics(el); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   const pehle = el.innerText;
   let list = _ch173WitParse(el);
 
@@ -2968,7 +2967,7 @@ function _ch173AddDefaultOfficials() {
   // Muqarrara darja bandi par jamao (مدعی pehla … تفتیشی افسر aakhri)
   _ch173WitWrite(el, _ch173WitSort(fin));
   if (el.innerText === pehle) return false;    // kuch badla hi nahi
-  try { _ch173Layout(); } catch (_) {}
+  try { _ch173Layout(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   return true;
 }
 window._ch173AddDefaultOfficials = _ch173AddDefaultOfficials;
@@ -2987,7 +2986,7 @@ function _ch173EnsureMedicalWitness(names) {
   const saved = _ch173MedGet();
   if (saved) {
     if (_ch173AddWitness(saved.name, saved.cnic)) {
-      try { _ch173Layout(); } catch (_) {}
+      try { _ch173Layout(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       if (typeof showToast === 'function') {
         showToast('میڈیکل آفیسر بطور گواہ شامل — ' + saved.name, 'success');
       }
@@ -3044,7 +3043,7 @@ function _ch173AskMedical() {
     _ch173MedSet(n, c);                       // agli dafa nahi poochega
     shut();
     if (_ch173AddWitness(n, c)) {
-      try { _ch173Layout(); } catch (_) {}
+      try { _ch173Layout(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       if (typeof showToast === 'function') {
         showToast('میڈیکل آفیسر بطور گواہ شامل — ' + n, 'success');
       }
@@ -3183,9 +3182,9 @@ function _ch173AccPicker(ev, key) {
       }).join('\n');
     }
     box.remove();
-    try { _ch173WrapCnics(); } catch(_) {}
+    try { _ch173WrapCnics(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
-    try { _r173Dirty = true; } catch(_) {}
+    try { _r173Dirty = true; } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   };
 }
 window._ch173AccPicker   = _ch173AccPicker;
@@ -3277,13 +3276,13 @@ function _ch173PapersList() {
                    a.every(x => PURANI.includes(String(x).trim()));
       if (!wahi) return a.map(String);        // officer ki apni fehrist — mehfooz
     }
-  } catch (_) {}
+  } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   // Purani (mushtarka) fehrist sirf چالان walon ko milegi
   if (g === 'challan') {
     try {
       const old = JSON.parse(localStorage.getItem('dio_ch173_papers') || 'null');
       if (Array.isArray(old) && old.length) return old.map(String);
-    } catch (_) {}
+    } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     return CH173_PAPERS_DEFAULT.slice();
   }
   // تتمہ چالان ki apni default fehrist (چالان walon se alag)
@@ -3292,7 +3291,7 @@ function _ch173PapersList() {
   return [];
 }
 function _ch173PapersSave(arr) {
-  try { localStorage.setItem(_ch173PapersKey(), JSON.stringify(arr)); } catch (_) {}
+  try { localStorage.setItem(_ch173PapersKey(), JSON.stringify(arr)); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 }
 window._ch173PapersList = _ch173PapersList;
 
@@ -3505,7 +3504,7 @@ function _ch173PapersPicker(ev) {
   setTimeout(() => {
     const off = (e) => {
       if (!box.contains(e.target)) {
-        try { readDom(); _ch173PapersSave(list); } catch (_) {}   // tabdeeli zaya na ho
+        try { readDom(); _ch173PapersSave(list); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }   // tabdeeli zaya na ho
         box.remove(); document.removeEventListener('mousedown', off);
       }
     };
@@ -3525,10 +3524,10 @@ function _ch173PapersPicker(ev) {
                       .map(p => ({ name: p, qty: oldQty[p] || '' }));
     _ch173PapersRender(body, items);
     box.remove();
-    try { _r173Dirty = true; } catch (_) {}
+    try { _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     // ایم ایل سی / میڈیکل سرٹیفکیٹ / پوسٹ مارٹم chuna gaya ho to میڈیکل آفیسر
     // bhi گواہ hain — un ka naam کالم 6 mein. Naam mehfooz na ho to poochta hai.
-    try { _ch173EnsureMedicalWitness(items.map(it => it.name)); } catch (_) {}
+    try { _ch173EnsureMedicalWitness(items.map(it => it.name)); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   };
 }
 window._ch173PapersPicker = _ch173PapersPicker;
@@ -3551,7 +3550,7 @@ function _ch173SetResultNo(val) {
       }
       h.value = val;
     }
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   // (1) کالم 7 ki تحریر mein — jahan "رزلٹ نمبری" ke baad khali/____ hai
   try {
     const cell = (_ch173Cells() || {}).cell;
@@ -3566,10 +3565,10 @@ function _ch173SetResultNo(val) {
       const cur = cell.innerText || '';
       if (re.test(cur)) {
         cell.innerText = cur.replace(re, '$1 ' + (val || '____________') + ' ');
-        try { _ch173Layout(); } catch (_) {}
+        try { _ch173Layout(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       }
     }
-  } catch (_) {}
+  } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   // (2) تفصیل کاغذات — "اصل رزلٹ نمبری" wale kaghaz ke NEECHE result number
   // (baqi tamam kaghazon ki tadaad 1 jyun ki tyun rahegi — sirf isi kaghaz
   //  ke neeche number aata hai).
@@ -3591,8 +3590,8 @@ function _ch173SetResultNo(val) {
         rn.textContent = val ? (' ' + val) : '';
       });
     }
-  } catch (_) {}
-  try { _r173Dirty = true; } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._ch173SetResultNo = _ch173SetResultNo;
 
@@ -3634,11 +3633,11 @@ function _ch173BlockFloatBar() {
           if (el && (el.id === 'ch173-doc' ||
                     (el.closest && el.closest('#ch173-doc')) ||
                     (el.querySelector && el.querySelector('#ch173-doc')))) return;
-        } catch(_) {}
+        } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
         return _orig.apply(this, arguments);
       };
     }
-  } catch(_) {}
+  } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._ch173BlockFloatBar = _ch173BlockFloatBar;
 
@@ -3682,10 +3681,10 @@ function _ch173FullPage(area) {
       _ch173FitPaper();
       if (!window._ch173FitBound) {
         window._ch173FitBound = true;
-        window.addEventListener('resize', () => { try { _ch173FitPaper(); } catch (_) {} });
+        window.addEventListener('resize', () => { try { _ch173FitPaper(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } });
       }
     }
-  } catch(_) {}
+  } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._ch173FullPage = _ch173FullPage;
 
@@ -3740,7 +3739,7 @@ function _ch173FitPaper() {
     }
     host.style.overflow = 'auto';
     host.style.flexShrink = '0';
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 
   const IN = 96;                                        // 1 inch = 96px
   const wPx = ((_ch173Paper === 'a4') ? 8.27 : 8.5) * IN;
@@ -3749,7 +3748,7 @@ function _ch173FitPaper() {
   doc.style.minHeight = ((_ch173Paper === 'a4') ? 11.7 : 13) * IN + 'px';
   // Side margin bhi kaghaz ke hisab se — warna A4 chunne par purani (tang)
   // margin lagi reh jati hai aur kinare ke alfaz kat jate hain.
-  try { doc.style.padding = '1cm ' + _ch173SideMargin(); } catch (_) {}
+  try { doc.style.padding = '1cm ' + _ch173SideMargin(); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   doc.style.transformOrigin = 'top center';
 
   // Jitni jagah WAQAI nazar aa rahi hai — container ki chaudai aur khirki
@@ -3794,13 +3793,13 @@ function _ch173FitPaper() {
       if (!w || w <= limit) break;
       k = setK(Math.max(0.3, k * (limit / w)));
     }
-  } catch (_) {}
+  } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 
   // scale se asli unchai nahi badalti — neeche ki khali jagah barabar karo
   try {
     if (_ch173PrintMeasuring) { doc.style.marginBottom = '0'; }
     else { const h = doc.offsetHeight; doc.style.marginBottom = Math.round(h * (k - 1)) + 'px'; }
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._ch173FitPaper = _ch173FitPaper;
 
@@ -3814,20 +3813,20 @@ function _ch173WatchFit() {
   if (!doc) return;
   const host = doc.parentElement;
   if (!host) return;
-  try { _ch173FitPaper(); } catch (_) {}
+  try { _ch173FitPaper(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   // Safha lagne ke foran baad naap abhi tay nahi hoti — chand dafa dohrao
   [60, 200, 500, 1000].forEach(ms => setTimeout(() => {
-    try { _ch173FitPaper(); } catch (_) {}
+    try { _ch173FitPaper(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   }, ms));
   if (host._fitObs) return;                      // aik hi dafa lagani hai
   if (typeof ResizeObserver === 'undefined') return;
   try {
     host._fitObs = new ResizeObserver(() => {
       clearTimeout(host._fitT);
-      host._fitT = setTimeout(() => { try { _ch173FitPaper(); } catch (_) {} }, 80);
+      host._fitT = setTimeout(() => { try { _ch173FitPaper(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }, 80);
     });
     host._fitObs.observe(host);
-  } catch (_) {}
+  } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._ch173WatchFit = _ch173WatchFit;
 
@@ -3844,14 +3843,14 @@ function _ch173FocusMode(on) {
     b.classList.remove('ch173-focus');
     b.classList.remove('tatima-active');            // CNIC doosre challan mein wapas
     // تتمہ mein CNIC hata ya lapet — cnSig reset taake dobara sahi lage
-    try { _ch173Doc()?.querySelectorAll('.rotinner').forEach(c => { delete c.dataset.cnSig; }); } catch (_) {}
+    try { _ch173Doc()?.querySelectorAll('.rotinner').forEach(c => { delete c.dataset.cnSig; }); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
     const bar = document.getElementById('misal-doc-bar');
     if (bar) {
       bar.classList.remove('peek');
       // Us ke khane ki jo tabdeeli ki thi woh wapas
-      try { if (bar.parentElement) bar.parentElement.style.position = ''; } catch (_) {}
+      try { if (bar.parentElement) bar.parentElement.style.position = ''; } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
     }
-    try { clearTimeout(window._ch173PeekT); } catch (_) {}
+    try { clearTimeout(window._ch173PeekT); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     return;
   }
   b.classList.add('ch173-focus');
@@ -3861,7 +3860,7 @@ function _ch173FocusMode(on) {
     const bar0 = document.getElementById('misal-doc-bar');
     const par  = bar0 && bar0.parentElement;
     if (par && getComputedStyle(par).position === 'static') par.style.position = 'relative';
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   if (window._ch173PeekBound) return;
   window._ch173PeekBound = true;
   document.addEventListener('mousemove', (e) => {
@@ -3875,7 +3874,7 @@ function _ch173FocusMode(on) {
         // Patti par (ya us ke bilkul qareeb) cursor ho to khuli rahe
         near = e.clientY >= r.top - 10 && e.clientY <= r.bottom + 10 &&
                e.clientX >= r.left  && e.clientX <= r.right;
-      } catch (_) {}
+      } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     }
     if (near) {
       clearTimeout(window._ch173PeekT);
@@ -3892,14 +3891,14 @@ function _ch173FocusMode(on) {
           const rt = tbar.getBoundingClientRect();
           bar.style.top = Math.max(0, Math.round(rt.bottom - rp.top)) + 'px';
         }
-      } catch (_) {}
+      } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
       bar.classList.add('peek');
     } else if (bar.classList.contains('peek')) {
       // Foran gayab na ho — thora waqt do, warna button tak pohanchte hi
       // patti band ho jati hai
       clearTimeout(window._ch173PeekT);
       window._ch173PeekT = setTimeout(() => {
-        try { bar.classList.remove('peek'); } catch (_) {}
+        try { bar.classList.remove('peek'); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
       }, 400);
     }
   }, { passive: true });
@@ -3950,9 +3949,9 @@ function _ch173WrapSelection() {
   const sel = window.getSelection();
   if (!sel || sel.isCollapsed || !sel.rangeCount) return [];
   if (!doc.contains(sel.anchorNode) || !doc.contains(sel.focusNode)) return [];
-  try { document.execCommand('styleWithCSS', false, false); } catch(_) {}
+  try { document.execCommand('styleWithCSS', false, false); } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   let ok = false;
-  try { ok = document.execCommand('fontSize', false, '7'); } catch(_) {}
+  try { ok = document.execCommand('fontSize', false, '7'); } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   if (!ok) return [];
   const spans = [];
   doc.querySelectorAll('font[size="7"]').forEach(f => {
@@ -3986,7 +3985,7 @@ function _ch173FontToDoc(pt) {
   // AHEM: yeh kaam nayi naap lagane se PEHLE hona chahiye, warna yeh khud usi
   // nayi naap ko mita deta hai. Chune hue matn ki apni naap alag raaste
   // (_ch173FontToSelection) se lagti hai, wahan yeh nahi chalta.
-  try { _ch173ClearInnerFontSizes(doc); } catch (_) {}
+  try { _ch173ClearInnerFontSizes(doc); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   // Har woh hissa jis ki apni naap CSS mein likhi hai — usay seedha naap do.
   // AHEM: '.ch173-caseline' (مقدمہ نمبر / مورخہ / جرم wali satar) aur کالم 7
   // (.normwrap = row 3 ka حالات khana, aur .ch173-cont = table ke neeche wala
@@ -4045,7 +4044,7 @@ function _ch173SetFont(val) {
   // 1) Matn WAQAI chuna hua ho → sirf usi par
   if (_ch173FontToSelection(pt)) {
     _ch173SaveRange();
-    try { _r173Dirty = true; } catch(_) {}
+    try { _r173Dirty = true; } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     return;
   }
   // 2) Warna POORA safha.
@@ -4057,7 +4056,7 @@ function _ch173SetFont(val) {
   //    hai). Kisi aik khane ka alag font chahiye to us khane ka matn chun kar
   //    naap badlein.
   _ch173FontToDoc(pt);
-  try { _r173Dirty = true; } catch(_) {}
+  try { _r173Dirty = true; } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._ch173SetFont = _ch173SetFont;
 
@@ -4088,7 +4087,7 @@ function _ch173BindCellPick() {
         '.ch173-table thead th, .ch173-table tbody td, .ch173-cont, ' +
         '.sho-cell-row, .sho-papers-head, .sho-papers-body');
       if (c) window._ch173LastCell = c;
-    } catch (_) {}
+    } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   }, true);
 }
 window._ch173BindCellPick = _ch173BindCellPick;
@@ -4158,7 +4157,7 @@ function _ch173SyncFontSel() {
     if (!px) return;
     const pt = Math.round(px * 0.75 * 2) / 2;          // px → pt
     if ([...selEl.options].some(op => parseFloat(op.value) === pt)) selEl.value = String(pt);
-  } catch(_) {}
+  } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._ch173SyncFontSel = _ch173SyncFontSel;
 
@@ -4203,7 +4202,7 @@ function _ch173BrushPaint() {
       if (_ch173Brush[k]) s.style[k] = _ch173Brush[k];
     });
   });
-  try { _r173Dirty = true; } catch(_) {}
+  try { _r173Dirty = true; } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   return true;
 }
 
@@ -4269,13 +4268,13 @@ window._ch173BindBrush = _ch173BindBrush;
 // 🧹 فارمیٹ ختم — بولڈ/ترچھا/انڈر لائن/رنگ/سائز سب ہٹا کر سادہ متن
 function _ch173ClearFmt() {
   _ch173RestoreRange();
-  try { document.execCommand('removeFormat', false, null); } catch(_) {}
+  try { document.execCommand('removeFormat', false, null); } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   // Humare apne <span style="font-size:..."> bhi saaf karo
   try {
     _ch173WrapSelection().forEach(sp => sp.removeAttribute('style'));
-  } catch(_) {}
+  } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   _ch173SaveRange();
-  try { _r173Dirty = true; } catch(_) {}
+  try { _r173Dirty = true; } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._ch173ClearFmt = _ch173ClearFmt;
 
@@ -4289,10 +4288,10 @@ function _ch173Fmt(cmd) {
   const live = doc && sel && sel.rangeCount &&
                doc.contains(sel.getRangeAt(0).commonAncestorContainer);
   if (!live) _ch173RestoreRange();
-  try { document.execCommand('styleWithCSS', false, false); } catch(_) {}
-  try { document.execCommand(cmd, false, null); } catch(_) {}
+  try { document.execCommand('styleWithCSS', false, false); } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { document.execCommand(cmd, false, null); } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   _ch173SaveRange();
-  try { _r173Dirty = true; } catch(_) {}
+  try { _r173Dirty = true; } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 // Purana naam bhi chalta rahe (kahin aur se pukara ja raha ho to)
 function _ch173FontStep(dir) {
@@ -4328,7 +4327,7 @@ function _ch173ShoLine(o) {
     let l = parts.join(' ');
     if (st) l += (l ? ' ' : '') + 'تھانہ ' + st;
     if (l.trim()) return l;
-  } catch(_) {}
+  } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   // Ab bhi kuch na mile → officer ko batao ke اوزار mein SHO set karein
   return st ? ('تھانہ ' + st) : '';
 }
@@ -4362,7 +4361,7 @@ function _ch173Today() {
     try {
       const f = formatDate(d);
       if (f && /^\d{2}\/\d{2}\/\d{4}$/.test(String(f).trim())) return String(f).trim();
-    } catch(_) {}
+    } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   }
   return manual;
 }
@@ -4377,7 +4376,7 @@ function _ch173PickDate(el) {
   const t = inp.trim();
   if (!t) { el.innerText = ''; return; }
   el.innerText = (typeof formatDate === 'function') ? formatDate(t) : t;
-  try { _r173Dirty = true; } catch(_) {}
+  try { _r173Dirty = true; } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._ch173PickDate = _ch173PickDate;
 
@@ -4396,7 +4395,7 @@ window._ch173HasCross = _ch173HasCross;
 //  (ضمنیات جیسی table: # | چالان | ہیڈ | تاریخ | مضمون | ایکشن)
 // ═══════════════════════════════════════════════════════════════════
 function _renderR173List() {
-  try { _ch173FocusMode(false); } catch (_) {}     // chips wapas
+  try { _ch173FocusMode(false); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }     // chips wapas
   const area = document.getElementById('workspace-editor-area')
             || document.getElementById('workspace-tab-content')
             || document.getElementById('page-content');
@@ -4501,7 +4500,7 @@ function _r173NewDoc(isIkhraj) {
     let k = t;
     if (R173_BLANK_TYPES.includes(t)) k = t + '::' + _ch173Version;
     delete _r173Records[k];
-  } catch(_) {}
+  } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   if (typeof openReport173WithType === 'function') openReport173WithType(t);
 }
 window._r173NewDoc = _r173NewDoc;
@@ -4579,7 +4578,7 @@ async function _r173EmailDoc(id) {
     window.location.href = 'mailto:?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(txt);
   } catch (_) {
     try { await navigator.clipboard.writeText(subj + '\n\n' + txt);
-      if (typeof showToast === 'function') showToast('نقل ہو گیا', 'success'); } catch (__) {}
+      if (typeof showToast === 'function') showToast('نقل ہو گیا', 'success'); } catch (__) { /* share/clipboard na mile to koi baat nahi */ }
   }
 }
 window._r173EmailDoc = _r173EmailDoc;
@@ -4600,7 +4599,7 @@ window._printAllR173 = _printAllR173;
 // ہیڈ/عنوان بدلیں (فہرست میں یہی نظر آتا ہے)
 function _r173SetHead(h) {
   _r173Head = h || '';
-  try { _r173Dirty = true; } catch (_) {}
+  try { _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._r173SetHead = _r173SetHead;
 
@@ -4716,7 +4715,7 @@ function _ch173RescaleManualCols(puraniChaurai) {
   }
 
   cols.forEach((c, i) => { if (naya[i]) c.style.width = naya[i] + 'px'; });
-  try { _r173Dirty = true; } catch (_) {}
+  try { _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._ch173RescaleManualCols = _ch173RescaleManualCols;
 
@@ -4734,7 +4733,7 @@ function _ch173RememberCols(kaghaz) {
     const w = cols.map(c => c.style.width || '');
     if (!w.some(Boolean)) return;
     table.dataset['colsFor' + (kaghaz === 'a4' ? 'A4' : 'Legal')] = JSON.stringify(w);
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 
 function _ch173RestoreCols(kaghaz) {
@@ -4786,9 +4785,9 @@ function _ch173ClampCols() {
     cols.forEach((c, i) => { if (naya[i]) c.style.width = naya[i] + 'px'; });
 
     // صرف وہ آخری کام جو چوڑائی نہیں بدلتے
-    try { _ch173OverflowSettle(4); } catch (_) {}
-    try { _ch173WrapCnics(); } catch (_) {}
-    try { _ch173AlignSho(); } catch (_) {}
+    try { _ch173OverflowSettle(4); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+    try { _ch173WrapCnics(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+    try { _ch173AlignSho(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     return true;
   } catch (_) { return false; }
 }
@@ -4798,9 +4797,9 @@ function _ch173SetPaper(v) {
   // کاغذ بدلنے سے پہلے: کام کی چوڑائی (نسبت کے لیے) + پرانے کاغذ کی ناپ یاد
   const _puraniKaamChaurai = _ch173KaamChaurai();
   const _puranaKaghaz = _ch173Paper;
-  try { _ch173RememberCols(_puranaKaghaz); } catch (_) {}
+  try { _ch173RememberCols(_puranaKaghaz); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   _ch173Paper = (v === 'a4') ? 'a4' : 'legal';
-  try { localStorage.setItem('dio_ch173_paper', _ch173Paper); } catch (_) {}
+  try { localStorage.setItem('dio_ch173_paper', _ch173Paper); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   /* صفحہ نئے سائز پر دوبارہ بنائیں — پوری ناپ کی ترتیب سے۔
      ───────────────────────────────────────────────────────────────────
      پہلے یہاں صرف دو کام الگ الگ چلتے تھے:
@@ -4830,13 +4829,13 @@ function _ch173SetPaper(v) {
      نسبت برقرار رہتی ہے، اِس لیے شکل وہی رہتی ہے — اور واپس لیگل چُننے پر
      ناپ واپس اپنی جگہ آ جاتی ہے۔ باقی ہر موقع پر (فونٹ، خِرکی، دوبارہ
      ناپ) افسر کی چوڑائی پہلے کی طرح محفوظ ہے۔                           */
-  try { _ch173FitPaper(); } catch (_) {}                      // نیا کاغذ لگ جائے
+  try { _ch173FitPaper(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }                      // نیا کاغذ لگ جائے
   // اِس کاغذ کی ناپ پہلے یاد ہو تو بالکل وہی واپس؛ ورنہ نسبت سے سکیڑو
   let _bahaal = false;
-  try { _bahaal = _ch173RestoreCols(_ch173Paper); } catch (_) {}
-  if (!_bahaal) { try { _ch173RescaleManualCols(_puraniKaamChaurai); } catch (_) {} }
-  try { _ch173Layout(); } catch (_) {}
-  try { _ch173ClampCols(); } catch (_) {}                     // باہر نکلنے کی صورت باقی نہ رہے
+  try { _bahaal = _ch173RestoreCols(_ch173Paper); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  if (!_bahaal) { try { _ch173RescaleManualCols(_puraniKaamChaurai); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
+  try { _ch173Layout(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { _ch173ClampCols(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }                     // باہر نکلنے کی صورت باقی نہ رہے
   if (typeof showToast === 'function')
     showToast(_ch173Paper === 'a4' ? '📄 A4 منتخب' : '📄 لیگل (8.5×13) منتخب', 'info');
 }
@@ -4895,7 +4894,7 @@ function _ch173FillHalaat() {
     if (cell.innerText.replace(/\s/g, '').length) return;   // پہلے سے کچھ لکھا ہے
     cell.innerText = _ch173HalaatText();
     if (typeof _ch173Overflow === 'function') _ch173Overflow();
-  } catch (_) {}
+  } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._ch173FillHalaat = _ch173FillHalaat;
 
@@ -5499,8 +5498,8 @@ function _ch173Insert(txt) {
     r.collapse(true);
     sel.removeAllRanges();
     sel.addRange(r);
-    try { _r173Dirty = true; } catch (_) {}
-  } catch (_) {}
+    try { _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._ch173Insert = _ch173Insert;
 
@@ -5627,7 +5626,7 @@ function _ch173BakeSizes() {
     try {
       const cs = getComputedStyle(inner);
       padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
-    } catch (_) {}
+    } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     const lnH = Math.max(0, ih - padY);
     if (lnH > 0) {
       inner.querySelectorAll('.ln').forEach(ln => {
@@ -5652,7 +5651,7 @@ window._ch173BakeSizes = _ch173BakeSizes;
 
 function _ch173UnbakeSizes(undo) {
   (undo || []).forEach(([el, prop, val]) => {
-    try { el.style[prop] = val || ''; } catch (_) {}
+    try { el.style[prop] = val || ''; } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   });
 }
 window._ch173UnbakeSizes = _ch173UnbakeSizes;
@@ -5688,7 +5687,7 @@ function _ch173WrapCnics(root) {
     }).join('');
     if (!found) return;                               // koi CNIC hi nahi
     cell.innerHTML = html;
-    try { cell.dataset.cnSig = cell.innerText; } catch (_) {}
+    try { cell.dataset.cnSig = cell.innerText; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   });
 }
 window._ch173WrapCnics = _ch173WrapCnics;
@@ -5708,7 +5707,7 @@ function _ch173UnwrapCnics(root) {
       return (d.textContent || '').trim();
     });
     cell.innerText = lines.join('\n');
-    try { delete cell.dataset.cnSig; } catch (_) {}   // nishani mitao
+    try { delete cell.dataset.cnSig; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }   // nishani mitao
   });
   // baqi kahin koi akela .cn reh gaya ho
   root.querySelectorAll('span.cn').forEach(sp => {

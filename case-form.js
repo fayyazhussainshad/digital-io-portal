@@ -563,7 +563,7 @@ async function saveNewCase(){
           }
         });
       }
-    } catch (_) {}
+    } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
     // Auto reminders
     const firDate = document.getElementById('cf-date').value.trim();
     const mulzmanType = document.getElementById('cf-mulzman-type')?.value||'namaloom';
@@ -593,7 +593,7 @@ async function saveEditCase(id){
     if (window.DIO && DIO.audit && typeof getCase === 'function') {
       _beforeCase = await getCase(id);
     }
-  } catch (_) {}
+  } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
   try{
     var _cfMobile = _cfMobileFieldsPayload();
     await updateCase(id,{
@@ -649,7 +649,7 @@ async function saveEditCase(id){
           }
         });
       }
-    } catch (_) {}
+    } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
     closeModal();
     showToast('Case updated!','success');
     // Wait briefly so DB write propagates through cases_decrypted view before re-fetching

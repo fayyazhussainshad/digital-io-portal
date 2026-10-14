@@ -96,7 +96,7 @@ function _witForce14() {
     document.querySelectorAll(sel).forEach(el => {
       el.style.setProperty('font-size', '14pt', 'important');
     });
-  } catch(_) {}
+  } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 
 function _renderWitnessesArea() {
@@ -168,7 +168,7 @@ function _witStatusChange(sel) {
   const v = (prompt('نئی حیثیت لکھیں:') || '').trim();
   if (!v) { sel.value = ''; return; }
   const l = _witCustomStatuses();
-  if (!l.includes(v)) { l.push(v); try { localStorage.setItem('dio_wit_status_custom', JSON.stringify(l)); } catch (_) {} }
+  if (!l.includes(v)) { l.push(v); try { localStorage.setItem('dio_wit_status_custom', JSON.stringify(l)); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ } }
   const addOpt = sel.querySelector('option[value="__add__"]');
   const opt = document.createElement('option');
   opt.value = v; opt.textContent = v;
@@ -241,7 +241,7 @@ function _witKeyNav(e) {
 
   // Space opens the focused dropdown
   if ((k === ' ' || k === 'Spacebar' || k === 'Space') && t.tagName === 'SELECT') {
-    if (typeof t.showPicker === 'function') { e.preventDefault(); try { t.showPicker(); } catch(_) {} }
+    if (typeof t.showPicker === 'function') { e.preventDefault(); try { t.showPicker(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
   }
   // Tab, Up/Down and cursor keys in text = native (stay within the field)
 }
@@ -288,7 +288,7 @@ async function _saveWitness() {
           full_name: rec.full_name, profession: rec.profession,
           cnic: rec.cnic, cell: rec.cell,
         });
-      } catch (_) {}
+      } catch (_) { if (typeof dioLogError === 'function') dioLogError('gawah: suspects copy nakaam', _); }
     }
     if (typeof closeModal === 'function') closeModal();
     _witnessFormType = 'fir';  // reset

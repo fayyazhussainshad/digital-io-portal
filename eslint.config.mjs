@@ -1,8 +1,9 @@
 // ════════════════════════════════════════════════════════════════
 //  DIGITAL IO — ESLint (Khami 13)
-//  Maqsad: NAYI khamoshi rokna. Mojooda ~800 khali catch ko aik saath
-//  badalna khatarnak hai, is liye wo abhi WARNING hain (build nahi
-//  torte) — magar koi NAYA khali catch ya ghalti foran nazar aa jaye.
+//  Maqsad: NAYI khamoshi rokna. v545: tamam 965 khali catch nipat gaye —
+//  jahan ghalti chhupne se data zaya ho sakta tha wahan dioLogError (47),
+//  baqi har jagah wajah ka comment. Ab khali catch ERROR hai (build rokta
+//  hai): har naye catch mein ya ghalti darj karein ya wajah likhein.
 //  Chalane ka tareeqa:  npm install  &&  npm run lint
 // ════════════════════════════════════════════════════════════════
 import globals from 'globals';
@@ -68,7 +69,7 @@ export default [
     },
     rules: {
       // ── XSS aur khamoshi ke liye ahem ────────────────────────
-      'no-empty': ['warn', { allowEmptyCatch: false }],   // khali catch → warning
+      'no-empty': ['error', { allowEmptyCatch: false }],  // khali catch → error (v545: 0 baqi)
       // v540: `vars: 'local'` — top-level naam (function/const) doosri files aur
       //   HTML onclick se istemal hote hain, jo ESLint dekh nahi sakta (jhoota
       //   alarm). Waqai murda top-level function ki jaanch tests/security.test.js

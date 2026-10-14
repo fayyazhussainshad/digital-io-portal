@@ -36,7 +36,7 @@
     var id = o.id || null;
     try {
       if (typeof getOfficerId === 'function') id = (await getOfficerId()) || id;
-    } catch (_) {}
+    } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
     return {
       id: id,
       name: o.full_name || '',

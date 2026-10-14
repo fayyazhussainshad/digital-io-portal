@@ -18,7 +18,7 @@ function _keepFocus() {
       const p = el.value.length;
       el.focus(); el.setSelectionRange(p, p);
     }
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 
 // Dashboard par talaash ka khana hai (v524) — wahan khaali khane par
@@ -79,10 +79,10 @@ function _addSearchHistory(q) {
   if (!q) return;
   let h = _getSearchHistory().filter(x => x !== q);
   h.unshift(q); h = h.slice(0, 10);
-  try { localStorage.setItem(_SEARCH_HISTORY_KEY, JSON.stringify(h)); } catch(_) {}
+  try { localStorage.setItem(_SEARCH_HISTORY_KEY, JSON.stringify(h)); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 }
 function _clearSearchHistory() {
-  try { localStorage.removeItem(_SEARCH_HISTORY_KEY); } catch(_) {}
+  try { localStorage.removeItem(_SEARCH_HISTORY_KEY); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   _renderSearchHistory();
 }
 function _renderSearchHistory() {
@@ -133,7 +133,7 @@ async function _runGlobalSearch(q) {
   try {
     const { data: cs } = await S.from('cases').select('id').eq('officer_id', oid);
     caseIds = (cs || []).map(c => c.id);
-  } catch(_) {}
+  } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
 
   const queries = [
     S.from('cases').select('id,fir_number,offence_type,section_of_law,complainant,complainant_cnic,complainant_cell,occurrence_place').eq('officer_id', oid).or(`fir_number.ilike.${w},offence_type.ilike.${w},section_of_law.ilike.${w},complainant.ilike.${w},occurrence_place.ilike.${w},${cnicOr('complainant_cnic')},${cellOr('complainant_cell')}`).limit(10),

@@ -25,7 +25,7 @@
     try { return localStorage.getItem(KEY_MODE) || 'form'; } catch (_) { return 'form'; }
   }
   function setMode(m) {
-    try { localStorage.setItem(KEY_MODE, m); } catch (_) {}
+    try { localStorage.setItem(KEY_MODE, m); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     apply();
   }
   function apply() {
@@ -78,7 +78,7 @@
               if (body) { body.focus(); body.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
             }, 60);
           }
-        } catch (_) {}
+        } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
       });
       document.body.appendChild(add);
     }
@@ -163,7 +163,7 @@
           }
           last = m;
         }
-      } catch (_) {}
+      } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     }, { passive: false });
 
     upper.addEventListener('touchend', function () { last = null; startDist = 0; }, { passive: true });
@@ -198,7 +198,7 @@
         // "مقدمات" = ہمیشہ تمام مقدمات (ڈیش بورڈ کا پچھلا فلٹر نہ چپکا رہے)
         if (_p === 'cases' && typeof window.dioOpenCases === 'function') window.dioOpenCases('');
         else if (typeof showPage === 'function') showPage(_p, null);
-      } catch (_) {}
+      } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
       markThumb(b.getAttribute('data-p'));
     });
     document.body.appendChild(bar);
@@ -214,11 +214,11 @@
 
   // ── 5) Safhe badalne par dobara lagao ────────────────────────
   function refresh() {
-    try { buildThumbBar(); } catch (_) {}
-    try { buildBar(); } catch (_) {}
-    try { apply(); } catch (_) {}
-    try { if (isMobile()) labelTables(document.getElementById('page-content') || document); } catch (_) {}
-    try { wireNaqshaTouch(); } catch (_) {}
+    try { buildThumbBar(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+    try { buildBar(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+    try { apply(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+    try { if (isMobile()) labelTables(document.getElementById('page-content') || document); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
+    try { wireNaqshaTouch(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   }
 
   var _t = null;
@@ -231,7 +231,7 @@
     try {
       var host = document.getElementById('page-content') || document.body;
       obs.observe(host, { childList: true, subtree: true });
-    } catch (_) {}
+    } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
     try {
       window.matchMedia(MOBILE_Q).addEventListener('change', refresh);
     } catch (_) { window.addEventListener('resize', function () { clearTimeout(_t); _t = setTimeout(refresh, 250); }); }

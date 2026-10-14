@@ -47,7 +47,7 @@ async function _gatherNotifications() {
         action: `showPage('reminders',null)`,
       });
     });
-  } catch(_) {}
+  } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
 
   try {
     // 2. Upcoming court dates
@@ -67,7 +67,7 @@ async function _gatherNotifications() {
         action: `showPage('court',null)`,
       });
     });
-  } catch(_) {}
+  } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
 
   try {
     // 3. Cases pending 173 / 15-day reminders
@@ -83,13 +83,13 @@ async function _gatherNotifications() {
         action: `openCaseWorkspace('${c.id}')`,
       });
     });
-  } catch(_) {}
+  } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
 
   // Sort: overdue/urgent first, then by date
   const priority = { overdue: 0, court: 1, reminder: 2, case: 3 };
   notifs.sort((a, b) => (priority[a.type] - priority[b.type]) || ((a.date||'') < (b.date||'') ? -1 : 1));
 
-  try { localStorage.setItem('dio_notifs_cache', JSON.stringify(notifs)); } catch (_) {}
+  try { localStorage.setItem('dio_notifs_cache', JSON.stringify(notifs)); } catch (_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
   return notifs;
 }
 
@@ -108,7 +108,7 @@ async function updateNotifBadge() {
     } else {
       badge.style.display = 'none';
     }
-  } catch(_) {}
+  } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 
 // Auto-update badge every 2 minutes

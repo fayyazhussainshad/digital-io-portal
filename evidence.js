@@ -19,11 +19,11 @@ async function printSelectedEvidence(){const sel=[...document.querySelectorAll('
           { fir_number: e && e.fir_number, evidence_name: e && e.name, details: { batch: sel.length } });
       });
     }
-  } catch (_) {}
+  } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
   // v538: پہلے یہاں ایک غیر موجود فنکشن (printContent) تھا — بٹن کچھ نہیں کرتا تھا۔
   //   اب منتخب شہادتوں کا جدول، نظام کے اپنے dioPrint سے (Ctrl+P جیسا ہی)۔
   let _all = [];
-  try { _all = (await getEvidence()) || []; } catch (_) {}
+  try { _all = (await getEvidence()) || []; } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
   const _TYPE = { Photo:'تصویر', Video:'ویڈیو', Audio:'آواز', Document:'دستاویز' };
   const _rows = sel.map((sid, i) => {
     const e = _all.find(x => String(x.id) === String(sid)) || {};
@@ -80,12 +80,12 @@ async function saveEvidenceItem(){
         after: { name, fir_number: fir, type: evType, evidence_date: evDate },
         metadata: { has_notes: !!(evNotes && evNotes.length) }
       });
-    } catch (_) {}
+    } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
     // CHAIN OF CUSTODY — created (Phase 4C)
     try {
       if (window.DIO && DIO.custody) DIO.custody.record('created', (_row && _row.id) || null,
         { fir_number: fir, evidence_name: name, details: { type: evType } });
-    } catch (_) {}
+    } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
     stopCamera();closeModal();showToast('Evidence attached: '+name,'success');renderEvidence(document.getElementById('page-content'));
   }catch(err){showToast('Error: '+err.message,'error');}
 }
@@ -96,7 +96,7 @@ async function viewEvidenceDetail(id){
   try {
     if (window.DIO && DIO.custody) await DIO.custody.record('viewed', id,
       { fir_number: e.fir_number, evidence_name: e.name });
-  } catch (_) {}
+  } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
   openModal('Evidence Details',
     `<div>${[['Name',e.name],['FIR',e.fir_number||'—'],['Type',e.type],['Date',e.evidence_date||'—'],['Notes',e.notes||'—']].map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${esc(v)}</span></div>`).join('')}</div>`+
     `<div style="text-align:center;padding:16px;font-size:48px;">${e.type==='Photo'?'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M3.5 8h3.2l1.6-2.4h7.4L17.3 8h3.2v11.5h-17z"/><circle cx="12" cy="13.5" r="3.6"/></svg>':e.type==='Video'?'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M3.5 6.5h11v11h-11z"/><path d="M14.5 10.5l6-3v9l-6-3z"/></svg>':e.type==='Audio'?'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>':'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/></svg>'}</div>`+
@@ -113,7 +113,7 @@ async function viewEvidenceDetail(id){
       const box = document.getElementById('ev-custody-chain');
       if (box) box.innerHTML = DIO.custody.renderChain(events);
     }
-  } catch (_) {}
+  } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
 }
 async function doDeleteEvidence(id){
   try{
@@ -125,21 +125,21 @@ async function doDeleteEvidence(id){
         const e = (all||[]).find(x=>x.id===id);
         if (e) _before = { name: e.name, fir_number: e.fir_number, type: e.type, evidence_date: e.evidence_date };
       }
-    } catch (_) {}
+    } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
     // CHAIN OF CUSTODY — record deletion BEFORE it happens. The custody
     // table has no FK to evidence, so this proof survives the delete.
     try {
       if (window.DIO && DIO.custody) await DIO.custody.record('deleted', id,
         { fir_number: _before && _before.fir_number, evidence_name: _before && _before.name,
           details: { type: _before && _before.type } });
-    } catch (_) {}
+    } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
     await deleteEvidence(id);
     // AUDIT — evidence.deleted (critical — evidence tampering track)
     try {
       if (window.DIO && DIO.audit) DIO.audit.log('evidence.deleted', 'evidence', id, {
         before: _before
       });
-    } catch (_) {}
+    } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
     showToast('Evidence deleted.');
     renderEvidence(document.getElementById('page-content'));
   }catch(err){showToast('Error: '+err.message,'error');}

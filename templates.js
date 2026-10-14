@@ -78,7 +78,7 @@ async function _loadTemplates() {
   try {
     const cached = JSON.parse(localStorage.getItem(TPL_CACHE_KEY) || '[]');
     if (cached.length) { _tplList = cached; _renderTplTable(); }
-  } catch(_) {}
+  } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 
   if (!navigator.onLine) return;
   try {
@@ -86,7 +86,7 @@ async function _loadTemplates() {
       .select('*').order('category', { ascending:true }).order('title', { ascending:true });
     if (error) throw error;
     _tplList = data || [];
-    try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) {}
+    try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   } catch(e) {
     console.warn('Templates load failed, using cache:', e.message);
   }
@@ -231,7 +231,7 @@ async function _saveTpl() {
     const { data, error } = await supabaseClient.from('templates').insert(rec).select().single();
     if (error) throw error;
     _tplList.unshift(data);
-    try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) {}
+    try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     closeModal();
     showToast('ٹمپلیٹ شامل ہو گیا','success');
     _renderTplTable();
@@ -261,7 +261,7 @@ async function _doRenameTpl(id) {
   try {
     await supabaseClient.from('templates').update({ title:newName, updated_at:new Date().toISOString() }).eq('id', id);
     const t = _tplList.find(x=>x.id===id); if (t) t.title = newName;
-    try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) {}
+    try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     // Update open viewer title if present
     const vt = document.getElementById('tpl-viewer-title'); if (vt) vt.textContent = newName;
     closeModal();
@@ -278,7 +278,7 @@ function _ensurePdfJsTpl() {
   window._pdfJsLoading = new Promise((res, rej) => {
     const s = document.createElement('script');
     s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-    s.onload = () => { try { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; } catch(_) {} res(window.pdfjsLib); };
+    s.onload = () => { try { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } res(window.pdfjsLib); };
     s.onerror = () => rej(new Error('pdfjs load failed'));
     document.head.appendChild(s);
   });
@@ -447,7 +447,7 @@ function _tplColDel(){
 function _closeTplViewer() {
   const ov = document.getElementById('tpl-editor-overlay');
   if (ov) {
-    if (ov._blobUrl) { try { URL.revokeObjectURL(ov._blobUrl); } catch(_) {} }
+    if (ov._blobUrl) { try { URL.revokeObjectURL(ov._blobUrl); } catch(_) { /* blob pehle hi aazad ho to koi baat nahi */ } }
     ov.remove();
   }
 }
@@ -482,7 +482,7 @@ async function _tplSaveDoc(id) {
   try {
     await supabaseClient.from('templates').update({ content, updated_at:new Date().toISOString() }).eq('id', id);
     const t = _tplList.find(x=>x.id===id); if (t) t.content = content;
-    try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) {}
+    try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     showToast('ترمیم محفوظ ہو گئی','success');
   } catch(e) { showToast(''+e.message,'error'); }
 }
@@ -612,7 +612,7 @@ async function _saveTplEditor(id) {
   try {
     await supabaseClient.from('templates').update({ title, content, updated_at:new Date().toISOString() }).eq('id', id);
     const t = _tplList.find(x=>x.id===id); if (t) { t.content = content; t.title = title; }
-    try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) {}
+    try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     showToast('محفوظ ہو گیا','success');
     _renderTplTable();
   } catch(e) { showToast(''+e.message,'error'); }
@@ -630,7 +630,7 @@ async function _copyTpl(id) {
     const { data, error } = await supabaseClient.from('templates').insert(rec).select().single();
     if (error) throw error;
     _tplList.unshift(data);
-    try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) {}
+    try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     showToast('نقل بن گئی','success');
     _renderTplTable();
   } catch(e) { showToast(''+e.message,'error'); }
@@ -658,7 +658,7 @@ async function _doMoveTpl(id) {
   try {
     await supabaseClient.from('templates').update({ category:cat, updated_at:new Date().toISOString() }).eq('id', id);
     const t = _tplList.find(x=>x.id===id); if (t) t.category = cat;
-    try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) {}
+    try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     closeModal();
     showToast('منتقل ہو گیا','success');
     _renderTplTable();
@@ -693,7 +693,7 @@ function _deleteTpl(id) {
       }
       await supabaseClient.from('templates').delete().eq('id', id);
       _tplList = _tplList.filter(x => x.id !== id);
-      try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) {}
+      try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
       showToast('حذف ہو گیا','info');
       _renderTplTable();
     } catch(e) { showToast(''+e.message,'error'); }

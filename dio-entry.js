@@ -164,7 +164,7 @@
         toast('یاددہانی محفوظ', 'success');
         if (window._activePage === 'reminders' && typeof _buildReminders === 'function') _buildReminders();
       }
-      if (typeof updateBadges === 'function') { try { await updateBadges(); } catch (_) {} }
+      if (typeof updateBadges === 'function') { try { await updateBadges(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
     } catch (err) { toast('' + (err && err.message || err), 'error'); }
   }
 
@@ -248,8 +248,8 @@
           : await addEvidence(meta);
         saved++;
         if (row && row._pendingUpload) pending++;
-        try { if (window.DIO && DIO.audit) DIO.audit.log('evidence.uploaded', 'evidence', (row && row.id) || null, { after: { name: name, fir_number: cs.fir, type: type, evidence_date: date }, metadata: { has_notes: !!notes, has_location: !!loc } }); } catch (_) {}
-        try { if (window.DIO && DIO.custody) DIO.custody.record('created', (row && row.id) || null, { fir_number: cs.fir, evidence_name: name, details: { type: type } }); } catch (_) {}
+        try { if (window.DIO && DIO.audit) DIO.audit.log('evidence.uploaded', 'evidence', (row && row.id) || null, { after: { name: name, fir_number: cs.fir, type: type, evidence_date: date }, metadata: { has_notes: !!notes, has_location: !!loc } }); } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
+        try { if (window.DIO && DIO.custody) DIO.custody.record('created', (row && row.id) || null, { fir_number: cs.fir, evidence_name: name, details: { type: type } }); } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
       }
       _evFiles.forEach(function (f) { URL.revokeObjectURL(f.url); });
       _evFiles = [];

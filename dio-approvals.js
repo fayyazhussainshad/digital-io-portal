@@ -37,7 +37,7 @@
   async function _me() {
     var o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
     var id = o.id || null;
-    try { if (typeof getOfficerId === 'function') id = (await getOfficerId()) || id; } catch (_) {}
+    try { if (typeof getOfficerId === 'function') id = (await getOfficerId()) || id; } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
     return { id: id, name: o.full_name || '', role: o.role || '', station: o.station || '' };
   }
 
@@ -64,7 +64,7 @@
       try {
         if (DIO.audit) DIO.audit.log('document.approval_requested', 'document', String(docKey),
           { case_id: opts.case_id || null, metadata: { label: opts.label || null } });
-      } catch (_) {}
+      } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
       return (res && res.data) || null;
     } catch (e) { _log('approvals.request', e); return null; }
   }
@@ -89,7 +89,7 @@
       try {
         if (DIO.audit) DIO.audit.log('document.approval_' + status, 'document',
           (res.data[0].document_key) || id, { metadata: { note: note || null } });
-      } catch (_) {}
+      } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
       return true;
     } catch (e) { _log('approvals.decide', e); return false; }
   }

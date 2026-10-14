@@ -22,7 +22,7 @@ async function dioRegisterSaved(kind, name, meta) {
     // Pehle localStorage mein (foran nazar aaye, offline bhi chale)
     const key = 'dio_saved_files';
     let list = [];
-    try { list = JSON.parse(localStorage.getItem(key) || '[]'); } catch (_) {}
+    try { list = JSON.parse(localStorage.getItem(key) || '[]'); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     // Wahi dastawez dobara save ho to purani entry hata kar nayi upar
     list = list.filter(x => !(x.kind === rec.kind && x.name === rec.name &&
                               x.case_id === rec.case_id &&
@@ -32,7 +32,7 @@ async function dioRegisterSaved(kind, name, meta) {
     localStorage.setItem(key, JSON.stringify(list));
     _dioSavedList = list;
     if (document.getElementById('dio-saved-box')) dioRenderSavedBox();
-  } catch (_) {}
+  } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 }
 window.dioRegisterSaved = dioRegisterSaved;
 
@@ -40,7 +40,7 @@ window.dioRegisterSaved = dioRegisterSaved;
 // caseId ke saath — aur agar docKey diya jaye to SIRF usi button ki files
 function dioSavedForCase(caseId, docKey) {
   let list = [];
-  try { list = JSON.parse(localStorage.getItem('dio_saved_files') || '[]'); } catch (_) {}
+  try { list = JSON.parse(localStorage.getItem('dio_saved_files') || '[]'); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   if (caseId) list = list.filter(x => x.case_id === caseId);
   if (docKey) {
     list = list.filter(x => (x.meta && (x.meta.doc_id === docKey || x.meta.report_type === docKey))
@@ -142,7 +142,7 @@ async function dioSavedShare(j) {
     if (navigator.share) { await navigator.share({ title: x.name, text: txt }); return; }
     await navigator.clipboard.writeText(txt);
     if (typeof showToast === 'function') showToast('📋 نقل ہو گیا', 'success');
-  } catch (_) {}
+  } catch (_) { /* share/clipboard na mile to koi baat nahi */ }
 }
 window.dioSavedShare = dioSavedShare;
 
@@ -155,6 +155,6 @@ function dioSavedDelete(j) {
     localStorage.setItem('dio_saved_files', JSON.stringify(list));
     dioRenderSavedBox(x.case_id);
     if (typeof showToast === 'function') showToast('🗑️ فہرست سے ہٹا دیا', 'info');
-  } catch (_) {}
+  } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 }
 window.dioSavedDelete = dioSavedDelete;

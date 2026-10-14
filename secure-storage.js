@@ -30,7 +30,7 @@
     return new Promise(function (res, rej) {
       var r = indexedDB.open(DB, 1);
       r.onupgradeneeded = function () {
-        try { if (!r.result.objectStoreNames.contains(STORE)) r.result.createObjectStore(STORE); } catch (_) {}
+        try { if (!r.result.objectStoreNames.contains(STORE)) r.result.createObjectStore(STORE); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       };
       r.onsuccess = function () { res(r.result); };
       r.onerror = function () { rej(r.error); };
@@ -117,7 +117,7 @@
         if (v === null || v === undefined) return null;
         if (String(v).indexOf(PFX) !== 0) return v;      // purani sada value — migrate
         var out = await _dec(v);
-        if (out === null) { try { localStorage.removeItem(k); } catch (_) {} }  // kharab blob na chhoro
+        if (out === null) { try { localStorage.removeItem(k); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ } }  // kharab blob na chhoro
         return out;
       } catch (_) { return null; }
     },
@@ -125,12 +125,12 @@
       try { localStorage.setItem(k, await _enc(String(v))); }
       catch (e) {
         // Encryption nakaam — sada rakh lo (login na tootay) MAGAR chup na raho
-        try { if (window.dioLogError) dioLogError('secure-storage: encryption band, sada storage par', e); } catch (_) {}
-        try { localStorage.setItem(k, String(v)); } catch (_e) {}
+        try { if (window.dioLogError) dioLogError('secure-storage: encryption band, sada storage par', e); } catch (_) { /* logging khud kabhi na phatte */ }
+        try { localStorage.setItem(k, String(v)); } catch (_e) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
       }
     },
     removeItem: async function (k) {
-      try { localStorage.removeItem(k); } catch (_) {}
+      try { localStorage.removeItem(k); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     }
   };
 })();

@@ -17,7 +17,7 @@
 
   const E   = (v) => (typeof esc === 'function') ? esc(v) : String(v == null ? '' : v)
                        .replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const TOAST = (m, t) => { try { if (typeof showToast === 'function') showToast(m, t || 'info'); } catch (_) {} };
+  const TOAST = (m, t) => { try { if (typeof showToast === 'function') showToast(m, t || 'info'); } catch (_) { /* paigham na dikh sake to koi baat nahi */ } };
   const FDATE = (d) => { try { return (typeof formatDate === 'function') ? formatDate(d) : (d || ''); } catch (_) { return d || ''; } };
   const PT2PX = 96 / 72;
   const pt2px = (pt) => pt * PT2PX;
@@ -102,7 +102,7 @@
         const { data } = await supabaseClient.from('case_documents')
           .select('id,content').eq('case_id', _naqCaseId).eq('document_type', 'naqsha').maybeSingle();
         if (data) { _naqRowId = data.id; if (data.content && data.content.sketches) _naqData = data.content; }
-      } catch (_) {}
+      } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
     }
     if (!_naqData) {
       try { _naqData = JSON.parse(localStorage.getItem(_key()) || 'null'); } catch (_) { _naqData = null; }
@@ -114,7 +114,7 @@
     if (!_naqData.activeId || !_naqData.sketches.some(s => s.id === _naqData.activeId))
       _naqData.activeId = _naqData.sketches[0].id;
   }
-  function _persistLocal() { try { localStorage.setItem(_key(), JSON.stringify(_naqData)); } catch (_) {} }
+  function _persistLocal() { try { localStorage.setItem(_key(), JSON.stringify(_naqData)); } catch (_) { if (typeof dioLogError === 'function') dioLogError('naqsha: local save nakaam', _); } }
   async function _persistCloud() {
     if (!_naqCaseId || typeof supabaseClient === 'undefined' || !supabaseClient || !_online()) return;
     try {
@@ -122,13 +122,13 @@
       if (_naqRowId) {
         await supabaseClient.from('case_documents').update({ content, status: 'draft' }).eq('id', _naqRowId);
       } else {
-        let oid = null; try { oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null; } catch (_) {}
+        let oid = null; try { oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null; } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
         const { data } = await supabaseClient.from('case_documents')
           .insert({ case_id: _naqCaseId, officer_id: oid, document_type: 'naqsha', status: 'draft', content })
           .select().single();
         if (data) _naqRowId = data.id;
       }
-    } catch (_) {}
+    } catch (_) { if (typeof dioLogError === 'function') dioLogError('naqsha: server par save nakaam', _); }
   }
   function _newSketch(type) {
     const serials = (_naqData && _naqData.sketches) ? _naqData.sketches.map(s => parseInt(s.serial, 10) || 0) : [];
@@ -164,7 +164,7 @@
     // فاصلہ جات (تخمیناً)
     const drows = document.querySelectorAll('#naq-dist .naq-dtext');
     if (drows.length) a.dists = Array.from(drows).map(r => r.innerText.replace(/ /g, ' ').trim());
-    if (_naqCanvas) { try { a.canvas = _naqCanvas.toJSON(['naqLabel', 'naqSym', 'naqMark', 'naqMarkId', 'naqMarkSeq']); } catch (_) {} }
+    if (_naqCanvas) { try { a.canvas = _naqCanvas.toJSON(['naqLabel', 'naqSym', 'naqMark', 'naqMarkId', 'naqMarkSeq']); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
   }
   function _saveSoon() {
     clearTimeout(_naqSaveT);
@@ -179,7 +179,7 @@
       if (typeof dioRegisterSaved === 'function' && a)
         dioRegisterSaved('naqsha', (a.name || 'نقشہ موقع') + ' — نمبر ' + (a.serial || ''),
           { case_id: _naqCaseId, doc_id: 'crime_scene', serial_no: a.serial, date: a.date });
-    } catch (_) {}
+    } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
     TOAST('✅ نقشہ موقع محفوظ ہو گیا', 'success');
     _refreshChips();
   }
@@ -191,7 +191,7 @@
       || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
     // چالان/زمنی/درخواست کی طرح — پورے صفحے کی doc-view کھولو تاکہ مقدمہ کی
     // دستاویزات کی chips patti ڈھک جائے (نہ کہ نقشہ اس کے نیچے inline کھلے)
-    if (typeof _dioOpenDocTab === 'function') { try { _dioOpenDocTab('crime_scene'); } catch (_) {} }
+    if (typeof _dioOpenDocTab === 'function') { try { _dioOpenDocTab('crime_scene'); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
     const area = document.getElementById('workspace-editor-area')
       || document.getElementById('workspace-tab-content') || document.getElementById('page-content');
     if (!area) { setTimeout(() => openNaqsha(cid), 80); return; }
@@ -280,7 +280,7 @@
         row.remove(); _renumberMarks();
         if (prev) { const p = prev.querySelector('.naq-mtext'); if (p) { p.focus();
           try { const rng = document.createRange(); rng.selectNodeContents(p); rng.collapse(false);
-            const sel = getSelection(); sel.removeAllRanges(); sel.addRange(rng); } catch (_) {} } }
+            const sel = getSelection(); sel.removeAllRanges(); sel.addRange(rng); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } } }
         _saveSoon();
       }
     }
@@ -312,7 +312,7 @@
         row.remove();
         if (prev) { const p = prev.querySelector('.naq-dtext'); if (p) { p.focus();
           try { const rng = document.createRange(); rng.selectNodeContents(p); rng.collapse(false);
-            const sel = getSelection(); sel.removeAllRanges(); sel.addRange(rng); } catch (_) {} } }
+            const sel = getSelection(); sel.removeAllRanges(); sel.addRange(rng); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } } }
         _saveSoon();
       }
     }
@@ -328,7 +328,7 @@
     await _loadCase(forceId);
     await _load();
     let fabricOk = true; try { await _ensureFabric(); } catch (_) { fabricOk = false; }
-    try { document.body.classList.add('workspace-mode'); window._inWorkspace = true; } catch (_) {}
+    try { document.body.classList.add('workspace-mode'); window._inWorkspace = true; } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 
     const a = _active();
     const paper = a.paper || 'legal';
@@ -463,7 +463,7 @@
       const el = document.getElementById('naq-h-' + k); if (el) el.addEventListener('input', _saveSoon);
     });
     if (fabricOk) _initCanvas(a);
-    try { _naqWsOn(); } catch (_) {}
+    try { _naqWsOn(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   }
 
   /* ══ کیس صفحے پر نقشہ موقع: ترتیب + خالی پٹی ═══════════════════════════
@@ -535,7 +535,7 @@
     b.classList.remove('naq-ws', 'naq-chips-on');
     const tc = document.getElementById('workspace-tab-content');
     if (tc && tc.dataset.naqH !== undefined) { tc.style.height = tc.dataset.naqH; delete tc.dataset.naqH; }
-    if (_naqWsObs) { try { _naqWsObs.disconnect(); } catch (_) {} _naqWsObs = null; }
+    if (_naqWsObs) { try { _naqWsObs.disconnect(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } _naqWsObs = null; }
   }
 
   function _naqWsOn() {
@@ -548,7 +548,7 @@
     requestAnimationFrame(() => { _naqWsFit(); requestAnimationFrame(_naqWsFit); });
 
     // نقشہ بند ہوا (دوسری دستاویز / دوسرا صفحہ) → سب بحال
-    if (_naqWsObs) { try { _naqWsObs.disconnect(); } catch (_) {} }
+    if (_naqWsObs) { try { _naqWsObs.disconnect(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
     _naqWsObs = new MutationObserver(() => { if (!document.querySelector('.naq-wrap')) _naqWsOff(); });
     ['page-content', 'workspace-tab-content'].forEach(id => {
       const el = document.getElementById(id);
@@ -641,7 +641,7 @@
       const y = (e.touches ? e.touches[0].clientY : e.clientY);
       const h = Math.max(140, Math.min(1400, startH + (y - startY)));
       map.style.height = h + 'px';
-      if (_naqCanvas) { try { _naqCanvas.setHeight(h); _naqCanvas.renderAll(); } catch (_) {} }
+      if (_naqCanvas) { try { _naqCanvas.setHeight(h); _naqCanvas.renderAll(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
     };
     const up = () => {
       document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up);
@@ -691,7 +691,7 @@
     window.addEventListener('resize', _sizeCanvas);
     const _afterLoad = () => {
       // محفوظ نشانوں کا max seq بحال کرو، پھر فہرست ہم آہنگ
-      try { _markGroups().forEach(m => { if ((m.naqMarkSeq || 0) > _naqMarkSeq) _naqMarkSeq = m.naqMarkSeq; }); } catch (_) {}
+      try { _markGroups().forEach(m => { if ((m.naqMarkSeq || 0) > _naqMarkSeq) _naqMarkSeq = m.naqMarkSeq; }); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       _naqCanvas.renderAll(); _naqSyncMarks(); _histInit();
     };
     if (a && a.canvas) { try { _naqCanvas.loadFromJSON(a.canvas, _afterLoad); } catch (_) { _histInit(); } }
@@ -732,7 +732,7 @@
     _naqPanning = false;
     _naqCanvas.isDrawingMode = pen;
     if (pen) {
-      try { _naqCanvas.freeDrawingBrush = new fabric.PencilBrush(_naqCanvas); } catch (_) {}
+      try { _naqCanvas.freeDrawingBrush = new fabric.PencilBrush(_naqCanvas); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       if (_naqCanvas.freeDrawingBrush) { _naqCanvas.freeDrawingBrush.color = _naqStroke; _naqCanvas.freeDrawingBrush.width = _naqStrokeW; }
     }
     _naqCanvas.selection = (t === 'select');
@@ -924,7 +924,7 @@
     try {
       const t = g.getObjects && g.getObjects().find(o => o.type === 'text' || o.type === 'i-text');
       if (t && t.text !== String(n)) { t.set('text', String(n)); g.dirty = true; g.addWithUpdate && g.addWithUpdate(); }
-    } catch (_) {}
+    } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   }
   function _makeMarkRow(id) {
     const row = document.createElement('div'); row.className = 'naq-mrow'; row.setAttribute('data-markid', id);
@@ -968,7 +968,7 @@
     _naqCanvas.add(g); _naqCanvas.setActiveObject(g);
     _naqSyncMarks();
     // نئی سطر پر focus تاکہ افسر فوراً تفصیل لکھ سکے
-    try { const r = document.querySelector(`#naq-marks .naq-mrow[data-markid="${g.naqMarkId}"] .naq-mtext`); if (r) r.focus(); } catch (_) {}
+    try { const r = document.querySelector(`#naq-marks .naq-mrow[data-markid="${g.naqMarkId}"] .naq-mtext`); if (r) r.focus(); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
     _saveSoon(); _histPush(true);
   };
 
@@ -1020,7 +1020,7 @@
     if (!_naqCanvas || json == null) return;
     _naqRestoring = true;
     _naqCanvas.loadFromJSON(json, () => {
-      try { _markGroups().forEach(m => { if ((m.naqMarkSeq || 0) > _naqMarkSeq) _naqMarkSeq = m.naqMarkSeq; }); } catch (_) {}
+      try { _markGroups().forEach(m => { if ((m.naqMarkSeq || 0) > _naqMarkSeq) _naqMarkSeq = m.naqMarkSeq; }); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       _naqCanvas.renderAll(); _naqRestoring = false; _naqSyncMarks(); _updUndoBtns(); _saveSoon();
     });
   }
@@ -1038,7 +1038,7 @@
     // Ctrl/Cmd+P — پورا صفحہ نہیں، صرف نقشہ چھپے (editing کے دوران بھی)
     if ((e.ctrlKey || e.metaKey) && (e.key || '').toLowerCase() === 'p') {
       e.preventDefault(); e.stopPropagation();
-      try { window._naqPrint && _naqPrint(); } catch (_) {}
+      try { window._naqPrint && _naqPrint(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       return;
     }
     const ae = document.activeElement;
@@ -1068,12 +1068,12 @@
     let kuch = false;
     if (_naqCrop) { _naqCropCancel(true); kuch = true; }
     if (_naqDrawing) {
-      try { _naqCanvas && _naqCanvas.remove(_naqDrawing); } catch (_) {}
+      try { _naqCanvas && _naqCanvas.remove(_naqDrawing); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
       _naqDrawing = null; _naqDrawStart = null; kuch = true;
     }
     if (_naqPanning) { _naqPanning = false; kuch = true; }
     if (_naqTool !== 'select') { window._naqSetTool('select'); kuch = true; }
-    if (_naqCanvas) { try { _naqCanvas.discardActiveObject(); _naqCanvas.requestRenderAll(); } catch (_) {} }
+    if (_naqCanvas) { try { _naqCanvas.discardActiveObject(); _naqCanvas.requestRenderAll(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
     if (kuch) TOAST('ٹول چھوڑ دیا — اب «منتخب / حرکت» حالت میں ہیں', 'info');
   }
   window._naqEscape = _naqEscape;
@@ -1085,12 +1085,12 @@
      اصل میں تصویر کٹ جاتی تھی۔ اب ٹول بدلنے یا Esc دبانے سے کراپ منسوخ۔ */
   function _naqCropCancel(chup) {
     if (!_naqCrop) return;
-    try { if (_naqCrop.rect && _naqCanvas) _naqCanvas.remove(_naqCrop.rect); } catch (_) {}
+    try { if (_naqCrop.rect && _naqCanvas) _naqCanvas.remove(_naqCrop.rect); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
     _naqCrop = null;
     if (_naqCanvas) {
       _naqCanvas.selection = (_naqTool === 'select');
       _naqCanvas.defaultCursor = 'default';
-      try { _naqCanvas.requestRenderAll(); } catch (_) {}
+      try { _naqCanvas.requestRenderAll(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     }
     if (!chup) TOAST('کراپ منسوخ', 'info');
   }
@@ -1157,7 +1157,7 @@
       textAlign: 'right', direction: 'rtl', naqLabel: true, editable: true,
     });
     _naqCanvas.add(t); _naqCanvas.setActiveObject(t); t.enterEditing();
-    if (t.hiddenTextarea) { try { t.hiddenTextarea.focus(); } catch (_) {} }
+    if (t.hiddenTextarea) { try { t.hiddenTextarea.focus(); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } }
     _naqCanvas.renderAll(); _saveSoon();
   };
   window._naqSetFont = function (pt) {
@@ -1234,7 +1234,7 @@
         _naqCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]); _naqCanvas.renderAll();
         png = _naqCanvas.toDataURL({ format: 'png', multiplier: 2 });
         _naqCanvas.setViewportTransform(vpt); _naqCanvas.renderAll();
-      } catch (_) {}
+      } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     }
     const clone = doc.cloneNode(true);
     // canvas → img

@@ -197,10 +197,10 @@
   // (idempotent).
   if (typeof window.STATUS_LABELS === 'undefined') {
     var LBLS = {}; for (var k1 in REGISTRY) LBLS[k1] = REGISTRY[k1].label;
-    try { window.STATUS_LABELS = LBLS; } catch (_) {}
+    try { window.STATUS_LABELS = LBLS; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   }
   if (typeof window.STATUS_CLASSES === 'undefined') {
     var CLS = {}; for (var k2 in REGISTRY) CLS[k2] = REGISTRY[k2].pillClass;
-    try { window.STATUS_CLASSES = CLS; } catch (_) {}
+    try { window.STATUS_CLASSES = CLS; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   }
 })();

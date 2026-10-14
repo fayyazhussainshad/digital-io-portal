@@ -415,7 +415,7 @@ async function _doApproveReg(regId) {
         after: { is_approved: true },
         metadata: { source: 'pending_registration' }
       });
-    } catch (_) {}
+    } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
     showToast('درخواست منظور ہو گئی — افسر اب لاگ ان کر سکتا ہے', 'success');
     _adminRefresh();
   } catch(e) { showToast('' + e.message, 'error'); }
@@ -435,7 +435,7 @@ async function _doRejectReg(regId) {
     if (window.DIO && DIO.audit) DIO.audit.log('officer.rejected', 'officer', regId, {
       metadata: { source: 'pending_registration' }
     });
-  } catch (_) {}
+  } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
   // NOTE: audit trail is intentionally IMMUTABLE (Phase 4B) — we do NOT
   // delete audit records when rejecting an officer. The officer.rejected
   // event logged above must survive. (Removed a stale delete on a
@@ -483,7 +483,7 @@ async function _doSuspend(officerId) {
     if (window.DIO && DIO.audit) DIO.audit.log('officer.suspended', 'officer', officerId, {
       after: { is_suspended: true, suspension_reason: reason }
     });
-  } catch (_) {}
+  } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
   showToast('افسر معطل کر دیا گیا', 'info');
   _adminRefresh();
 }
@@ -506,7 +506,7 @@ async function _doUnsuspend(officerId) {
     if (window.DIO && DIO.audit) DIO.audit.log('officer.unsuspended', 'officer', officerId, {
       after: { is_suspended: false }
     });
-  } catch (_) {}
+  } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
   showToast('افسر بحال', 'success');
   _adminRefresh();
 }
@@ -518,7 +518,7 @@ async function _adminChangeRole(officerId, newRole) {
     try {
       const chk = await supabaseClient.from('officers').select('role').eq('id', officerId).maybeSingle();
       _prevRole = (chk && chk.data && chk.data.role) || null;
-    } catch (_) {}
+    } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
     const { error } = await supabaseClient.rpc('admin_set_officer_role', {
       p_officer_id: officerId, p_new_role: newRole
     });
@@ -531,7 +531,7 @@ async function _adminChangeRole(officerId, newRole) {
           after: { role: newRole }
         });
       }
-    } catch (_) {}
+    } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
     showToast(`Role تبدیل: ${newRole}`, 'success');
     _adminRefresh();
   } catch(e) { showToast('' + e.message, 'error'); }
@@ -759,7 +759,7 @@ function _adminRefreshErrors() {
   if (el) _renderErrorsTab(el);
 }
 function _adminClearErrors() {
-  try { if (window.DIO && DIO.errors && DIO.errors.clear) DIO.errors.clear(); } catch(_) {}
+  try { if (window.DIO && DIO.errors && DIO.errors.clear) DIO.errors.clear(); } catch(_) { /* logging khud kabhi na phatte */ }
   _adminRefreshErrors();
 }
 
@@ -1182,7 +1182,7 @@ async function _doAddOfficer() {
   try {
     const s = await supabaseClient.auth.getSession();
     adminSession = s?.data?.session || null;
-  } catch(_) {}
+  } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
 
   const _bahaalKaro = async () => {
     if (!adminSession?.access_token || !adminSession?.refresh_token) return false;

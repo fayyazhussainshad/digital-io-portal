@@ -233,7 +233,7 @@ async function _markCourtDone(id) {
 }
 
 async function _deleteCourtDate(id) {
-  try { const {data:cd}=await supabaseClient.from("court_dates").select("*").eq("id",id).single(); if(cd) await softDelete("court",id,cd); } catch(_) {}
+  try { const {data:cd}=await supabaseClient.from("court_dates").select("*").eq("id",id).single(); if(cd) await softDelete("court",id,cd); } catch(_) { if (typeof dioLogError === 'function') dioLogError('peshi: recycle bin copy nakaam', _); }
   await supabaseClient.from("court_dates").delete().eq("id",id);
   showToast("پیشی حذف شدہ مواد میں منتقل ہو گئی۔","info");
   const c=document.getElementById('page-content'); if(c)renderCourt(c);

@@ -629,7 +629,7 @@ function _irRenderDoc(override) {
   const pickPtype = `<span class="ir-pick no-print" title="حیثیت بدلیں">▾<select aria-label="حیثیت منتخب کریں" onchange="_irPickPtype(this)">
       ${IR_PTYPES.map(n => `<option ${n === pType ? 'selected' : ''}>${_irE(n)}</option>`).join('')}<option value="__new">+ نئی حیثیت</option></select></span>`;
   const pickDt = k => `<span class="ir-pick ir-cal no-print" title="تاریخ و وقت چنیں">${IR_ICON.cal}<input type="datetime-local" aria-label="تاریخ و وقت چنیں"
-      value="${_irE(_irMeta[k + '_iso'] || '')}" onclick="try{this.showPicker()}catch(_){}" onchange="_irSetDt('${k}', this.value)"></span>`;
+      value="${_irE(_irMeta[k + '_iso'] || '')}" onclick="try{this.showPicker()}catch(_){ /* picker na ho to koi baat nahi */ }" onchange="_irSetDt('${k}', this.value)"></span>`;
   const pickLoc = `<button type="button" class="ir-pick ir-locbtn no-print" title="موجودہ مقام (Lat/Long) دوبارہ لیں" aria-label="مقام لیں" onclick="_irGetLocation(false)">${IR_ICON.pin}</button>`;
 
   const rowsHtml = IR_ROWS.map(r => {

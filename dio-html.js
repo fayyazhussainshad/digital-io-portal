@@ -62,7 +62,7 @@
         try {
           return DOMPurify.sanitize(str, DOMPURIFY_CONFIG);
         } catch (e) {
-          try { console.warn('[DIO.html] DOMPurify failed, fallback:', e); } catch (_) {}
+          try { console.warn('[DIO.html] DOMPurify failed, fallback:', e); } catch (_) { /* console na ho to bhi na phatte */ }
         }
       }
       // Fallback — mazboot native strip
@@ -86,7 +86,7 @@
       var t = document.createElement('template');
       t.innerHTML = String(dirty);
       var kills = t.content.querySelectorAll('script,iframe,object,embed,style,link,meta,base');
-      kills.forEach(function (n) { try { n.remove(); } catch (_) {} });
+      kills.forEach(function (n) { try { n.remove(); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } });
       var all = t.content.querySelectorAll('*');
       all.forEach(function (el) {
         // event handlers strip
@@ -122,7 +122,7 @@
       t.innerHTML = str;
       // 1) Remove kill-tags
       var kill = t.content.querySelectorAll('script,iframe,object,embed,link,style,meta,base,form,input,button,select,textarea,svg,math');
-      kill.forEach(function (n) { try { n.remove(); } catch (_) {} });
+      kill.forEach(function (n) { try { n.remove(); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } });
       // 2) Strip dangerous attrs from every element
       var all = t.content.querySelectorAll('*');
       all.forEach(function (el) {
@@ -178,7 +178,7 @@
           window.sanitizeHtml !== DIO_HTML.safe) {
         window.sanitizeHtml = function (x) { return DIO_HTML.safe(x); };
       }
-    } catch (_) {}
+    } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
   }
   if (typeof document !== 'undefined') {
     // Multiple hooks — dono baar chalne se koi masla nahi (idempotent)

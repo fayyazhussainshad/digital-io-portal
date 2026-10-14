@@ -27,7 +27,7 @@ async function _buildBackup() {
       supabaseClient.from('court_dates').select('id',{count:'exact',head:true}).eq('officer_id',oid),
     ]);
     counts = { cases:c.count||0, reminders:r.count||0, incidents:i.count||0, court:ct.count||0 };
-  } catch(_) {}
+  } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
 
   const totalRecords = Object.values(counts).reduce((a,b)=>a+b,0);
   const lastBackup = localStorage.getItem('dio_last_backup')||'کبھی نہیں';

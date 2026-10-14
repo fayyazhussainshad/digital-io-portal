@@ -102,14 +102,14 @@
           lastField.contains(s.anchorNode)) {
         savedRange = s.getRangeAt(0).cloneRange();
       }
-    } catch (_) {}
+    } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   });
 
   // Bola hua matn cursor ki theek jagah par daalo
   function insertText(txt) {
     var el = lastField;
     if (!el || !document.body.contains(el)) return;
-    try { el.focus(); } catch (_) {}
+    try { el.focus(); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 
     if (el.isContentEditable) {
       var sel = window.getSelection();
@@ -133,7 +133,7 @@
       var end   = (typeof el.selectionEnd   === 'number') ? el.selectionEnd   : el.value.length;
       el.value = el.value.slice(0, start) + txt + el.value.slice(end);
       var pos = start + txt.length;
-      try { el.setSelectionRange(pos, pos); } catch (_) {}
+      try { el.setSelectionRange(pos, pos); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
       el.dispatchEvent(new Event('input', { bubbles: true }));
     }
   }
@@ -185,7 +185,7 @@
   function stop() {
     wantOn = false;
     if (recog) {
-      try { recog.onend = null; recog.onerror = null; recog.stop(); } catch (_) {}
+      try { recog.onend = null; recog.onerror = null; recog.stop(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       recog = null;
     }
     setBtn(false);
@@ -200,7 +200,7 @@
     recog.lang = 'ur-PK';
     recog.continuous = true;
     recog.interimResults = true;   // FORAN dikhao — yahi raftaar ka ehsas deta hai
-    try { recog.maxAlternatives = 1; } catch (_) {}
+    try { recog.maxAlternatives = 1; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     lastStart = Date.now();
 
     recog.onresult = function (e) {
@@ -262,7 +262,7 @@
       // کارڈ میں ابھی کسی خانے پر cursor نہیں — پہلا لکھنے والا خانہ لو
       var first = Array.prototype.slice.call(document.querySelectorAll('.modal-card.dio-entry input, .modal-card.dio-entry textarea'))
         .filter(function (x) { return isField(x) && x.offsetParent !== null; })[0];
-      if (first) { lastField = first; try { first.focus(); } catch (_) {} }
+      if (first) { lastField = first; try { first.focus(); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } }
     }
     if (!lastField || !document.body.contains(lastField)) {
       say('\u067e\u06c1\u0644\u06d2 \u0627\u0633 \u062e\u0627\u0646\u06d2 \u067e\u0631 \u06a9\u0644\u06a9 \u06a9\u0631\u06cc\u06ba \u062c\u06c1\u0627\u06ba \u0644\u06a9\u06be\u0646\u0627 \u06c1\u06d2\u060c \u067e\u06be\u0631 \u0645\u0627\u0626\u06cc\u06a9 \u062f\u0628\u0627\u0626\u06cc\u06ba', false);
@@ -348,5 +348,5 @@
   window._globalMicStop = stop;      // safhe badalne / کارڈ بند ہونے par band karne ke liye
   window._globalMicToggle = toggle;  // «نیا اندراج» کارڈ کے footer والا mic
   window._globalMicIsField = isField;
-  try { window.matchMedia(PHONE_Q).addEventListener('change', function () { if (isPhone()) stop(); updateVisible(); }); } catch (_) {}
+  try { window.matchMedia(PHONE_Q).addEventListener('change', function () { if (isPhone()) stop(); updateVisible(); }); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
 })();

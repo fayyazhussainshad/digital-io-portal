@@ -130,7 +130,7 @@ async function _deleteRem(id) {
       const clean = Object.fromEntries(Object.entries(r).filter(([k]) => !k.startsWith('_')));
       await softDelete('reminder', id, clean);
     }
-  } catch(_) {}
+  } catch(_) { if (typeof dioLogError === 'function') dioLogError('reminder: recycle bin copy nakaam', _); }
   await deleteReminder(id);
   showToast('یاددہانی ہٹا دی گئی', 'info');
   await updateBadges();

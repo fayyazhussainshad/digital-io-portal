@@ -127,14 +127,14 @@ function _dioEnterDocView() {
   try {
     const f = document.getElementById('dio-dv-fir');
     if (f && _misalCase) f.textContent = 'مقدمہ ' + (_misalCase.fir_number || '—');
-  } catch(_) {}
+  } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   document.body.style.overflow = 'hidden';
 
   // Escape se band
   document.addEventListener('keydown', _dioDocViewEsc);
 
   // اوپر والی پٹی کو «چلتی» بناؤ
-  try { _dioBarPeekInit(ov); } catch (_) {}
+  try { _dioBarPeekInit(ov); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 
 /* ══ chip پٹی: کرسر اوپر → سامنے، کرسر نیچے → غائب ════════════════════
@@ -259,7 +259,7 @@ function _dioExitDocView() {
   if (!ov) return;
   const area = document.getElementById('workspace-editor-area');
   // Ghair-mehfooz tabdeeli mehfooz kar lo
-  try { if (_misalDirty && _openDocId && typeof saveMisalDoc === 'function') saveMisalDoc(_openDocId); } catch(_) {}
+  try { if (_misalDirty && _openDocId && typeof saveMisalDoc === 'function') saveMisalDoc(_openDocId); } catch(_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
   if (area && _dioAreaHome) {
     _dioAreaHome.appendChild(area);
     // Form/dastawez ko yahan chhod kar na jao — warna woh bina chune bhi
@@ -385,7 +385,7 @@ async function _dioRequestApproval() {
 
   // Pehle maujooda status dikhayen (agar koi request pehle se ho)
   let existing = null;
-  try { existing = await DIO.approvals.latestFor(id); } catch (_) {}
+  try { existing = await DIO.approvals.latestFor(id); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   const existingLine = existing
     ? `<div style="margin-bottom:10px;font-size:12px;direction:rtl;">موجودہ حالت: ${DIO.approvals.badge(existing.status)}${existing.decision_note ? ` — <span style="color:var(--text-muted);">${_dioEsc(existing.decision_note)}</span>` : ''}</div>`
     : '';
@@ -463,7 +463,7 @@ function _dioRenderTabs() {
 
 function _dioSwitchTab(docId) {
   if (docId === _dioActiveTab) return;
-  try { if (_misalDirty && _openDocId && typeof saveMisalDoc === 'function') saveMisalDoc(_openDocId); } catch(_) {}
+  try { if (_misalDirty && _openDocId && typeof saveMisalDoc === 'function') saveMisalDoc(_openDocId); } catch(_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
   _dioActiveTab = docId;
   _dioRenderTabs();
   _dioRenderTabContent(docId);

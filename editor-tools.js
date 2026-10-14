@@ -91,7 +91,7 @@ function dioEditorToolbarCSS() {
 
 // ── Commands ──────────────────────────────────────────────────────────
 function dioExec(cmd) {
-  try { document.execCommand(cmd, false, null); } catch (_) {}
+  try { document.execCommand(cmd, false, null); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window.dioExec = dioExec;
 
@@ -113,7 +113,7 @@ function dioSetFontSize(pt) {
     }
     const el = _dioActiveEditable();
     if (el) el.style.fontSize = pt + 'pt';
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window.dioSetFontSize = dioSetFontSize;
 
@@ -153,12 +153,12 @@ function dioSetDir(dir) {
   if (!el) { if (typeof showToast === 'function') showToast('پہلے کسی خانے میں کلک کریں', 'info'); return; }
   // Cursor jis block (paragraph/div/li) mein hai wohi dhoondo; na mile to poora khana
   let node = null;
-  try { const s = window.getSelection(); node = s && s.anchorNode; } catch (_) {}
+  try { const s = window.getSelection(); node = s && s.anchorNode; } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   let n = (node && node.nodeType === 1) ? node : (node && node.parentNode);
   let block = null;
   while (n && n !== el && n !== document.body) {
     let disp = '';
-    try { disp = getComputedStyle(n).display; } catch (_) {}
+    try { disp = getComputedStyle(n).display; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     const tag = n.tagName;
     if (disp === 'block' || disp === 'list-item' || tag === 'P' || tag === 'DIV' || tag === 'LI') { block = n; break; }
     n = n.parentNode;
@@ -166,7 +166,7 @@ function dioSetDir(dir) {
   const target = block || el;
   target.setAttribute('dir', dir);
   target.style.textAlign = (dir === 'rtl') ? 'right' : 'left';
-  try { el.focus(); } catch (_) {}
+  try { el.focus(); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window.dioSetDir = dioSetDir;
 
@@ -293,7 +293,7 @@ function dioFRReplaceOne() {
       r.insertNode(tn);
       // cursor match ke baad
       _dioFRPos = Math.max(0, _dioFRPos - q.length + rep.length);
-      try { _dioFRTarget && (_dioFRTarget._dioDirtyPing = true); } catch (_) {}
+      try { _dioFRTarget && (_dioFRTarget._dioDirtyPing = true); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       _markDirtyMaybe();
       _dioFRNote('بدل دیا ✓');
     } catch (e) { _dioFRNote('نہ بدل سکا'); }
@@ -326,13 +326,13 @@ window.dioFRReplaceAll = dioFRReplaceAll;
 
 // Editor ko "dirty" mark karo (taake wapsi/محفوظ warning theek chale)
 function _markDirtyMaybe() {
-  try { if (typeof _misalDirty !== 'undefined') window._misalDirty = true; } catch (_) {}
-  try { if (typeof _r173Dirty !== 'undefined') window._r173Dirty = true; } catch (_) {}
-  try { if (typeof _zimniDirty !== 'undefined') window._zimniDirty = true; } catch (_) {}
+  try { if (typeof _misalDirty !== 'undefined') window._misalDirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { if (typeof _r173Dirty !== 'undefined') window._r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { if (typeof _zimniDirty !== 'undefined') window._zimniDirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   // input event fire karo taake har module ka apna oninput=dirty chal jaye
   try {
     if (_dioFRTarget) _dioFRTarget.dispatchEvent(new Event('input', { bubbles: true }));
-  } catch (_) {}
+  } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 
 // ── Tab / Shift+Tab / keyboard shortcuts ──────────────────────────────
@@ -355,7 +355,7 @@ function dioBindEditor(root) {
       if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
         e.preventDefault();
         try { document.execCommand('insertLineBreak'); }
-        catch(_) { try { document.execCommand('insertHTML', false, '<br>'); } catch(__) {} }
+        catch(_) { try { document.execCommand('insertHTML', false, '<br>'); } catch(__) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } }
         return;
       }
       // Ctrl shortcuts (MS Word jaise)
@@ -405,7 +405,7 @@ function dioEnableFloatingToolbar() {
     const old = document.getElementById('dio-float-bar');
     if (old && old.parentNode) old.parentNode.removeChild(old);
     _dioFloatBar = null;
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   return false;
 }
 window.dioEnableFloatingToolbar = dioEnableFloatingToolbar;
@@ -413,7 +413,7 @@ window.dioFloatingToolbarDisabled = true;
 
 // پرانی پٹی کی صفائی — اگر کسی پرانے cache سے DOM میں رہ گئی ہو
 (function () {
-  function _saaf() { try { dioEnableFloatingToolbar(); } catch (_) {} }
+  function _saaf() { try { dioEnableFloatingToolbar(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _saaf);
   else _saaf();
 })();
@@ -430,7 +430,7 @@ window.dioFloatingToolbarDisabled = true;
     if (k !== 'h' && k !== 'f') return;
     // Sirf tab chalao jab koi editable khana zer-e-istemal ho
     var tgt = null;
-    try { tgt = (typeof _dioFRPickTarget === 'function') ? _dioFRPickTarget() : null; } catch (_) {}
+    try { tgt = (typeof _dioFRPickTarget === 'function') ? _dioFRPickTarget() : null; } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
     if (!tgt) {
       var ae = document.activeElement;
       var ok = ae && (ae.isContentEditable || /^(input|textarea)$/i.test(ae.tagName || ''));
@@ -438,6 +438,6 @@ window.dioFloatingToolbarDisabled = true;
     }
     e.preventDefault();
     e.stopPropagation();
-    try { if (typeof dioFindReplace === 'function') dioFindReplace(); } catch (_) {}
+    try { if (typeof dioFindReplace === 'function') dioFindReplace(); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
   }, true);
 })();

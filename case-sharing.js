@@ -106,7 +106,7 @@ function _searchOfficersForShare(q) {
       }
       if (error) {
         box.innerHTML = '<div style="font-size:12px;color:var(--red);padding:8px;">افسران کی فہرست نہیں مل سکی</div>';
-        try { console.warn('[DIO] officers search:', error); } catch (_) {}
+        try { console.warn('[DIO] officers search:', error); } catch (_) { /* console na ho to bhi na phatte */ }
         return;
       }
 
@@ -169,7 +169,7 @@ async function _shareWith(officerId, permission) {
           case_id: _shareCaseId,
           after: { permission, expires_at, shared_with: officerId }
         });
-      } catch (_) {}
+      } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
     } else {
       // Naya share
       const ins = await supabaseClient.from('case_shares').insert({
@@ -187,7 +187,7 @@ async function _shareWith(officerId, permission) {
           case_id: _shareCaseId,
           after: { permission, expires_at, shared_with: officerId }
         });
-      } catch (_) {}
+      } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
     }
 
     const durTxt = (days && days > 0) ? (days + ' دن کے لیے') : 'مستقل';
@@ -273,7 +273,7 @@ async function _unshare(shareId) {
         case_id: _shareCaseId,
         metadata: { revoked_by: myId }
       });
-    } catch (_) {}
+    } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
     showToast('شیئر منسوخ کر دیا گیا — تاریخ محفوظ ہے', 'info');
     _loadCurrentShares();
   } catch(e) { showToast('' + e.message, 'error'); }

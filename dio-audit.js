@@ -76,7 +76,7 @@
         if (window.DIO && DIO.errors && typeof console !== 'undefined') {
           console.debug('[DIO.audit]', entry.action, entry);
         }
-      } catch (_) {}
+      } catch (_) { /* logging khud kabhi na phatte */ }
       // Overflow — foran flush
       if (this._queue.length >= BATCH_MAX) this._flush();
       return entry;
@@ -97,7 +97,7 @@
       // supabaseClient available?
       if (typeof supabaseClient === 'undefined' || !supabaseClient) {
         // Sync — no client, drop silently but stash in DIO.errors for debug
-        try { if (window.DIO && DIO.errors) DIO.errors.log(new Error('no supabaseClient'), 'audit.flush', { extra: { dropped: batch.length } }); } catch (_) {}
+        try { if (window.DIO && DIO.errors) DIO.errors.log(new Error('no supabaseClient'), 'audit.flush', { extra: { dropped: batch.length } }); } catch (_) { /* logging khud kabhi na phatte */ }
         return;
       }
       // actor_id resolve — currentOfficer se
@@ -107,11 +107,11 @@
           actor_id = currentOfficer.id || null;
           actor_role = currentOfficer.role || currentOfficer.designation || null;
         }
-      } catch (_) {}
+      } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       if (!actor_id) {
         try {
           if (typeof getOfficerId === 'function') actor_id = await getOfficerId();
-        } catch (_) {}
+        } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
       }
       // Prepare rows
       var rows = batch.map(function (e) {
@@ -136,7 +136,7 @@
         // Table na ho ya RLS block ho — quiet log for dev only
         try {
           if (window.DIO && DIO.errors) DIO.errors.log(e, 'audit.write', { extra: { rows: rows.length } });
-        } catch (_) {}
+        } catch (_) { /* logging khud kabhi na phatte */ }
         // Ek dafa fail ho to yaad rakhें ke shayad table ready nahi
         if (e && /audit_logs|does not exist|relation/i.test(e.message || '')) {
           this._available = false;
@@ -174,7 +174,7 @@
   // Page unload par pending audit flush
   if (typeof window !== 'undefined') {
     window.addEventListener('beforeunload', function () {
-      try { DIO_AUDIT.flush(); } catch (_) {}
+      try { DIO_AUDIT.flush(); } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
     });
   }
 
