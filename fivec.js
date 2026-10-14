@@ -277,9 +277,6 @@ async function open5CResponse(id){
   </div>
 </div>`;
 
-  // Toolbar button style — note: onmousedown="event.preventDefault()" keeps selection alive
-  const B=(label,fn,tip)=>`<button class="r5b" onmousedown="event.preventDefault()" onclick="${fn}" title="${tip}">${label}</button>`;
-  const sep=`<div class="r5s"></div>`;
 
   const overlay=document.createElement('div');
   overlay.id='response5c-overlay';

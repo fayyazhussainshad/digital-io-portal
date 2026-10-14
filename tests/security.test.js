@@ -1018,7 +1018,7 @@ test('mobile ke naye qaide SIRF phone par lagen (desktop na bigRe)', () => {
   const before = m.slice(0, idx);
   const opens = (before.match(/@media[^{]*\{/g) || []).length;
   // us se pehle jitne @media khule, utne hi band na huay hon
-  let depth = 0, media = 0;
+  let depth = 0;
   for (const ch of before) { if (ch === '{') depth++; else if (ch === '}') depth--; }
   assert.ok(opens > 0 && depth > 0,
     'ye qaide media query ke ANDAR hone chahiye, warna desktop ka jadwal bhi card ban jata');

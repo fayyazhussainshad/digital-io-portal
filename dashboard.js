@@ -19,13 +19,14 @@ async function _buildDash() {
   if (!root) return;
   const o = currentOfficer || {};
 
-  const [cases, reminders, fivecApps] = await Promise.all([
+  // v540: 5-C فہرست یہاں منگوائی جاتی تھی مگر کہیں استعمال نہیں ہوتی تھی —
+  //   ہر بار Dashboard کھلنے پر سرور کی ایک فالتو درخواست۔ ہٹا دی۔
+  const [cases, reminders] = await Promise.all([
     getCases().catch(()=>[]),
     // FIX: pehle _dFetchRem() offline par [] deta tha (dashboard khali) — getReminders()
     // mein offline cache fallback hai, is liye field afsar ko offline bhi apni yaddashtیں
     // nazar aati hain. Dashboard neeche khud !is_done filter karta hai (line ~51).
     getReminders().catch(()=>[]),
-    _dFetchFivec().catch(()=>0),
   ]);
 
   const today = new Date().toISOString().split('T')[0];
@@ -44,16 +45,7 @@ async function _buildDash() {
       statusCounts[code] = cases.filter(c => c.status === code).length;
     });
   }
-  // Backward-compat locals (existing code inhें use kar sakta hai)
-  const complete   = statusCounts.complete   || 0;
-  const incomplete = statusCounts.incomplete || 0;
-  const cancel     = statusCounts.cancel     || 0;
-  const challan512 = statusCounts.challan512 || 0;
-  const untrace    = statusCounts.untrace    || 0;
-  const under      = statusCounts.under      || 0;
   const pendRem     = reminders.filter(r=>!r.is_done);
-  const todayCases  = cases.filter(c=>{ const d=_pd(c.fir_date); return d&&d.startsWith(today); });
-  const monthly = _monthlyTrend(cases);
 
   // ── SMART BRIEF data (سب حقیقی ڈیٹا — reminders + cases; کوئی فرضی چیز نہیں) ──
   const overdueRem  = pendRem.filter(r => r.reminder_date && r.reminder_date < today);
@@ -367,14 +359,6 @@ function _recentlyViewedBar() {
   </div>`;
 }
 
-function _monthlyTrend(cases) {
-  const now = new Date();
-  return Array.from({length:6},(_,i)=>{
-    const d=new Date(now.getFullYear(),now.getMonth()-5+i,1);
-    const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    return { label:d.toLocaleString('default',{month:'short'}), count:cases.filter(c=>{ const p=_pd(c.fir_date); return p&&p.startsWith(key); }).length };
-  });
-}
 function _pd(d) {
   if(!d)return null;
   if(/^\d{4}-\d{2}-\d{2}/.test(d))return d;
@@ -383,12 +367,6 @@ function _pd(d) {
 }
 // NOTE: _dFetchRem() hataa diya — ab dashboard getReminders() istemal karta hai
 // (offline cache fallback ke sath). Neeche filter(!is_done) pending nikaal leta hai.
-async function _dFetchFivec() {
-  const oid=await getOfficerId();
-  if(!oid || !navigator.onLine) return 0;
-  try { const{count}=await supabaseClient.from('applications_5c').select('*',{count:'exact',head:true}).eq('officer_id',oid); return count||0; }
-  catch(_){ return 0; }
-}
 
 // ── FIRST-RUN ONBOARDING CARD (Phase 4H) ──────────────────────
 // Naye afsar ko sirf PEHLI baar dashboard par nazar aata hai.

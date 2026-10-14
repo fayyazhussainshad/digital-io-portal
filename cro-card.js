@@ -98,7 +98,6 @@ function _renderCro() {
             || document.getElementById('page-content');
   if (!area) return;
   const o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
-  const c = _croCase || {};
   const a = _croAccused || {};
   const s = (_croSaved && _croSaved.form_data) ? _croSaved.form_data : {};
   const v = (k, def) => sanitizeHtml((s[k] !== undefined && s[k] !== null && s[k] !== '') ? s[k] : (def || ''));

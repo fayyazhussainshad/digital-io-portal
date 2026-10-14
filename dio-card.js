@@ -212,7 +212,6 @@
   function row(cells) { return '<div class="dio-row">' + cells.join('') + '</div>'; }
 
   /* ── نام و پتہ ─────────────────────────────────────────────── */
-  var SEP = [[' ولد ', 'w'], [' قوم ', 'q'], [' سکنہ ', 'p']];
   function splitName(str) {
     var s = ' ' + String(str || '').replace(/\s+/g, ' ').trim() + ' ';
     var out = { n: '', w: '', q: '', p: '' };

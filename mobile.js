@@ -122,7 +122,6 @@
   function wireNaqshaTouch() {
     if (_naqTouchOn) return;
     var cv = document.getElementById('naq-canvas');
-    var f = window._naqCanvas || window.naqCanvas;         // fabric instance (agar mila)
     if (!cv) return;
     _naqTouchOn = true;
 

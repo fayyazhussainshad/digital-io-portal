@@ -474,8 +474,6 @@ async function doLogin() {
     await _loadOfficerProfile();
 
     // Check if officer is approved (skip for admins/superadmins)
-    const role = currentOfficer?.role || 'officer';
-    const isPrivileged = ['admin','superadmin'].includes(role);
     if (!_dioIsOwner(currentOfficer) && _dioNotApproved(currentOfficer)) {
       await supabaseClient.auth.signOut();
       currentUser = null; currentOfficer = null;
@@ -991,7 +989,6 @@ function pinBackspace() {
 async function _verifyPin() {
   const savedPin = localStorage.getItem('dio_pin');
   const savedEmail = localStorage.getItem('dio_pin_email');
-  const savedToken = localStorage.getItem('dio_pin_token');
 
   // PIN bilkul set hi nahi hua
   if (!savedPin) {

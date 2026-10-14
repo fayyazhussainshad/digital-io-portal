@@ -56,7 +56,6 @@ async function openAccusedCard(caseId, type) {
 }
 
 async function _loadAccused() {
-  const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
   // Offline — use cache
   if (!navigator.onLine) {
     try {

@@ -15,9 +15,9 @@ async function _buildPerf() {
   const root = document.getElementById('perf-root');
   if (!root) return;
 
-  const [cases, reminders, courtDates] = await Promise.all([
+  // v540: یاددہانیاں یہاں منگوائی جاتی تھیں مگر کارکردگی میں کہیں استعمال نہیں — فالتو درخواست ہٹا دی
+  const [cases, courtDates] = await Promise.all([
     getCases().catch(()=>[]),
-    getReminders().catch(()=>[]),
     _perfCourtDates().catch(()=>[]),
   ]);
 
@@ -29,8 +29,6 @@ async function _buildPerf() {
   const untrace    = cases.filter(c=>c.status==='untrace').length;
   const cancel     = cases.filter(c=>c.status==='cancel').length;
   const c512       = cases.filter(c=>c.status==='challan512').length;
-  const pendRem    = reminders.filter(r=>!r.is_done).length;
-  const overdueRem = reminders.filter(r=>!r.is_done&&r.reminder_date&&r.reminder_date<today).length;
   const overdueC   = courtDates.filter(d=>d.status==='pending'&&d.hearing_date<today).length;
   const complRate  = total ? Math.round(complete/total*100) : 0;
 
