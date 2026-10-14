@@ -263,7 +263,7 @@ function _dkRender() {
 
   const fir = c.fir_number || '';
   const firDate = (typeof formatDate === 'function') ? formatDate(c.fir_date) : (c.fir_date || '');
-  const dafat = ((c.section_of_law || '') || (c.offence_type || ''));
+  const dafat = (c.section_of_law || '');   // صرف دفعات (v544)
 
   // Body — saved (isi qism ka) warna template
   const savedBodyKey = 'body_' + _dkType;

@@ -231,7 +231,7 @@ function _renderSearchResults(q, r) {
       ${sub?`<div style="font-size:13px;color:var(--text-muted);margin-top:4px;direction:rtl;text-align:right;unicode-bidi:plaintext;">${esc(sub)}</div>`:''}
     </div>`;
   let html = `<div style="font-size:13px;color:var(--text-muted);margin-bottom:10px;">${total} نتائج ملے</div>`;
-  r.cases.forEach(c => html += card('مقدمہ','var(--accent)', `FIR ${c.fir_number||'—'}`, `${c.offence_type||''} ${c.section_of_law||''} · ${c.complainant||''}`, `openCaseWorkspace('${c.id}')`));
+  r.cases.forEach(c => html += card('مقدمہ','var(--accent)', `FIR ${c.fir_number||'—'}`, `${c.section_of_law||''} · ${c.complainant||''}`, `openCaseWorkspace('${c.id}')`));
   // ملزم — ساتھ تصاویر / شناختی کارڈ دیکھنے کا بٹن
   r.accused.forEach(a => html += card('ملزم','#f97316', a.name||'—', `${a.cnic||''} ${a.mobile||''} ${a.pesha||''}`, a.case_id?`openCaseWorkspace('${a.case_id}')`:'')
     .replace(/<\/div>\s*$/, `<div style="margin-top:6px;"><button type="button" class="btn btn-secondary btn-sm" onclick="event.stopPropagation();_srShowDocs('case_accused','${a.id}')">تصاویر / شناختی کارڈ</button></div></div>`));

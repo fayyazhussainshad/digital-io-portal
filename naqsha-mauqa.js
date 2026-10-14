@@ -77,7 +77,8 @@
 
   function _auto() {
     const c = _naqCase || {}, o = _naqOff || {};
-    const jurm = [c.section_of_law, c.offence_type].map(x => (x || '').trim()).filter(Boolean).join(' ');
+    // بجرم = صرف دفعات (v544 — پورے سسٹم کا اصول؛ جرم کی تفصیل نہیں)
+    const jurm = (c.section_of_law || '').trim();
     return {
       thana: (o.station || c.case_station || '').trim(),
       zila:  (o.district || c.district || 'ملتان').trim(),

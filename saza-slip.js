@@ -255,7 +255,7 @@ function _sazaRender() {
         <div class="saza-caseline">
           <span>مقدمہ نمبر <span class="fl" contenteditable="true" data-k="cl_fir">${v('cl_fir', esc(fir))}</span></span>
           <span>مورخہ <span class="fl" contenteditable="true" data-k="cl_date">${v('cl_date', esc(firDate))}</span></span>
-          <span>جرم <span class="fl fl-lg" contenteditable="true" data-k="cl_jurm">${v('cl_jurm', _sazaJurmBidi(_sazaJurmParts(c.section_of_law || c.offence_type).body))}</span> <span class="fl fl-suf" contenteditable="true" data-k="cl_jurm_suf">${v('cl_jurm_suf', esc(_sazaJurmParts(c.section_of_law || c.offence_type).suffix))}</span>${_sazaJurmParts(c.section_of_law || c.offence_type).suffix ? '' : ''}<span class="saza-jurm-dot">۔</span></span>
+          <span>جرم <span class="fl fl-lg" contenteditable="true" data-k="cl_jurm">${v('cl_jurm', _sazaJurmBidi(_sazaJurmParts(c.section_of_law || '').body))}</span> <span class="fl fl-suf" contenteditable="true" data-k="cl_jurm_suf">${v('cl_jurm_suf', esc(_sazaJurmParts(c.section_of_law || '').suffix))}</span>${_sazaJurmParts(c.section_of_law || '').suffix ? '' : ''}<span class="saza-jurm-dot">۔</span></span>
         </div>
 
         <!-- ── TABLE: 4 columns · headings row + AIK data row ── -->

@@ -1071,7 +1071,7 @@ async function _irPickCase() {
   try { cases = (typeof getCases === 'function') ? (await getCases()) || [] : []; } catch (e) { console.warn('ir cases:', e && e.message); }
   if (!cases.length) { _irToast('کوئی مقدمہ نہیں ملا', 'info'); return; }
   window._irCaseRows = cases;
-  const opts = cases.map((c, i) => `<option value="${i}">${_irE(`${c.fir_number || '—'} — ${c.offence_type || ''} ${c.section_of_law || ''} — ${c.complainant || ''}`.replace(/\s+/g, ' ').trim().slice(0, 120))}</option>`).join('');
+  const opts = cases.map((c, i) => `<option value="${i}">${_irE(`${c.fir_number || '—'} — ${c.section_of_law || ''} — ${c.complainant || ''}`.replace(/\s+/g, ' ').trim().slice(0, 120))}</option>`).join('');
   openModal('مقدمہ سے ڈیٹا',
     `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:14pt;line-height:2;">
       <select id="ir-case-sel" class="form-input" style="width:100%;font-family:inherit;font-size:13pt;">${opts}</select>
@@ -1102,7 +1102,7 @@ async function _irApplyCase() {
   }
   if (!names.length && c.accused_name) names = [String(c.accused_name).trim()];
 
-  const nature = [c.offence_type, c.section_of_law].map(x => String(x || '').trim()).filter(Boolean).join(' — ');
+  const nature = String(c.section_of_law || '').trim();   // صرف دفعات (v544)
   if (nature) _irSetCell('nature', _irE(nature));
   const occ = _irIsoDate(c.occurrence_date) || '';
   if (occ) { _irMeta.occ_iso = occ; _irSetCell('occ', _irDtHtml(occ)); }
