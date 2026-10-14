@@ -89,7 +89,7 @@ async function openRfaForm(caseId) {
   }
   await _loadRfaList();
   // Full-page view (chip bar ڈھک جائے) — jaise saza/challan
-  if (typeof _dioOpenDocTab === 'function') { try { _dioOpenDocTab('rfa_form'); } catch(_) {} }
+  if (typeof _dioOpenDocTab === 'function') { try { _dioOpenDocTab('rfa_form'); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
   _renderRfaList();
 }
 window.openRfaForm = openRfaForm;
@@ -100,7 +100,7 @@ async function _loadRfaList() {
     const { data } = await supabaseClient.from('rfa_forms').select('*')
       .eq('case_id', _rfaCaseId).order('created_at', { ascending: true });
     _rfaList = data || [];
-    try { localStorage.setItem('dio_rfalist_' + _rfaCaseId, JSON.stringify(_rfaList)); } catch(_) {}
+    try { localStorage.setItem('dio_rfalist_' + _rfaCaseId, JSON.stringify(_rfaList)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('RFA: local save nakaam', _); }
   } catch(_) {
     try { _rfaList = JSON.parse(localStorage.getItem('dio_rfalist_' + _rfaCaseId) || '[]'); }
     catch(_2) { _rfaList = []; }
@@ -163,7 +163,7 @@ function _rfaBtn() {
          'color:var(--text-primary);border-radius:6px;cursor:pointer;font-size:14px;';
 }
 function _rfaFmt(cmd) {
-  try { document.execCommand(cmd, false, null); } catch(_) {}
+  try { document.execCommand(cmd, false, null); } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._rfaFmt = _rfaFmt;
 
@@ -347,11 +347,11 @@ async function _saveRfa() {
     _rfaCurrent = saved;
     const idx = _rfaList.findIndex(r => String(r.id) === String(saved.id));
     if (idx >= 0) _rfaList[idx] = saved; else _rfaList.push(saved);
-    try { localStorage.setItem('dio_rfalist_' + _rfaCaseId, JSON.stringify(_rfaList)); } catch(_) {}
+    try { localStorage.setItem('dio_rfalist_' + _rfaCaseId, JSON.stringify(_rfaList)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('RFA: local save nakaam', _); }
     // chip ko GREEN karne ke liye _misalDocs mein bithao (RFA alag table use karti hai)
-    try { if (typeof _misalDocs !== 'undefined' && _misalDocs) _misalDocs['rfa_form'] = { document_type:'rfa_form', status:'complete', content:{ count:_rfaList.length } }; } catch(_) {}
-    try { if (typeof _refreshMisalBar === 'function') _refreshMisalBar(); } catch(_) {}
-    try { if (typeof dioRegisterSaved === 'function') dioRegisterSaved('rfa', 'RFA فارم', { case_id: _rfaCaseId, rfa_id: saved.id }); } catch(_) {}
+    try { if (typeof _misalDocs !== 'undefined' && _misalDocs) _misalDocs['rfa_form'] = { document_type:'rfa_form', status:'complete', content:{ count:_rfaList.length } }; } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+    try { if (typeof _refreshMisalBar === 'function') _refreshMisalBar(); } catch(_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
+    try { if (typeof dioRegisterSaved === 'function') dioRegisterSaved('rfa', 'RFA فارم', { case_id: _rfaCaseId, rfa_id: saved.id }); } catch(_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
     _rfaDirty = false;
     showToast('RFA فارم محفوظ ہو گیا', 'success');
   } catch(e) {
@@ -373,9 +373,9 @@ async function _rfaDelete(id) {
   try { if (String(id).indexOf('tmp_') !== 0) await supabaseClient.from('rfa_forms').delete().eq('id', id); }
   catch(e) { showToast('' + e.message, 'error'); return; }
   _rfaList = _rfaList.filter(r => String(r.id) !== String(id));
-  try { localStorage.setItem('dio_rfalist_' + _rfaCaseId, JSON.stringify(_rfaList)); } catch(_) {}
-  try { if (typeof _misalDocs !== 'undefined' && _misalDocs) { if (_rfaList.length) _misalDocs['rfa_form'] = { document_type:'rfa_form', status:'complete', content:{ count:_rfaList.length } }; else delete _misalDocs['rfa_form']; } } catch(_) {}
-  try { if (typeof _refreshMisalBar === 'function') _refreshMisalBar(); } catch(_) {}
+  try { localStorage.setItem('dio_rfalist_' + _rfaCaseId, JSON.stringify(_rfaList)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('RFA: local save nakaam', _); }
+  try { if (typeof _misalDocs !== 'undefined' && _misalDocs) { if (_rfaList.length) _misalDocs['rfa_form'] = { document_type:'rfa_form', status:'complete', content:{ count:_rfaList.length } }; else delete _misalDocs['rfa_form']; } } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { if (typeof _refreshMisalBar === 'function') _refreshMisalBar(); } catch(_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
   showToast('حذف ہو گیا', 'success');
   _renderRfaList();
 }

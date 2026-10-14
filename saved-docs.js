@@ -86,7 +86,7 @@ async function dioSaveDocEntry(docType, title, content, opts) {
     }
     if (i >= 0) localList[i] = lite; else localList.push(lite);
     localStorage.setItem(lsKey, JSON.stringify(localList));
-  } catch (_) {}
+  } catch (_) { if (typeof dioLogError === 'function') dioLogError('saved doc: local backup save nakaam', _); }
 
   // Misal chip "مکمل" mark (chip green ho jaye)
   try {
@@ -96,10 +96,10 @@ async function dioSaveDocEntry(docType, title, content, opts) {
       _misalDocs[docType].content = payload;
     }
     if (typeof _refreshMisalBar === 'function') _refreshMisalBar();
-  } catch (_) {}
+  } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
 
   // Saved-files list mein bhi (jahan baqi mehfooz dastawezat aati hain)
-  try { if (typeof dioRegisterSaved === 'function') dioRegisterSaved('misal', title || docType, { case_id: caseId, doc_id: docType, entry_id: entry.id }); } catch (_) {}
+  try { if (typeof dioRegisterSaved === 'function') dioRegisterSaved('misal', title || docType, { case_id: caseId, doc_id: docType, entry_id: entry.id }); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
 
   return entry;
 }
@@ -120,12 +120,12 @@ async function dioLoadDocEntries(docType, explicitCaseId) {
     // dastawezat nazar aayen. "sync ke muntazir" (pending/local-) entries mehfooz.
     try {
       const key = _sdKey(caseId, docType);
-      let prev = []; try { prev = JSON.parse(localStorage.getItem(key) || '[]') || []; } catch (_2) {}
+      let prev = []; try { prev = JSON.parse(localStorage.getItem(key) || '[]') || []; } catch (_2) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
       const pending = prev.filter(x => x && (x._pendingSync || String(x.id).startsWith('local-')));
       const fresh = rows.map(r => ({ id: r.id, content: r.content, created_at: r.created_at, updated_at: r.updated_at }));
       const merged = fresh.concat(pending.filter(p => !fresh.some(f => String(f.id) === String(p.id))));
       localStorage.setItem(key, JSON.stringify(merged));
-    } catch (_3) {}
+    } catch (_3) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   } catch (_) {
     // DB fail — localStorage se
     try {
@@ -141,7 +141,7 @@ async function dioLoadDocEntries(docType, explicitCaseId) {
         rows.push({ id: x.id, case_id: caseId, document_type: docType, content: x.content, created_at: x.created_at, updated_at: x.updated_at, _local: true });
       }
     });
-  } catch (_) {}
+  } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   rows.sort((a, b) => String(a.created_at || '').localeCompare(String(b.created_at || '')));
   return rows;
 }
@@ -154,14 +154,14 @@ async function dioDeleteDocEntry(docType, id, explicitCaseId) {
     if (id && !String(id).startsWith('local-')) {
       await supabaseClient.from('case_documents').delete().eq('id', id);
     }
-  } catch (_) {}
+  } catch (_) { if (typeof dioLogError === 'function') dioLogError('saved doc: server se delete nakaam', _); }
   // localStorage se bhi
   try {
     const k = _sdKey(caseId, docType);
     let list = JSON.parse(localStorage.getItem(k) || '[]') || [];
     list = list.filter(x => String(x.id) !== String(id));
     localStorage.setItem(k, JSON.stringify(list));
-  } catch (_) {}
+  } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 }
 window.dioDeleteDocEntry = dioDeleteDocEntry;
 
@@ -181,7 +181,7 @@ async function _dioSyncDocs() {
   let synced = 0;
   try {
     let oid = null;
-    try { oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null; } catch (_) {}
+    try { oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null; } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
 
     // Tamam 'dio_sd_<docType>_<caseId>' keys jama karo
     const keys = [];
@@ -229,9 +229,9 @@ async function _dioSyncDocs() {
           // Abhi bhi nakaam (offline/server) — pending chhod do, agli dafa retry
         }
       }
-      if (changed) { try { localStorage.setItem(k, JSON.stringify(list)); } catch (_) {} }
+      if (changed) { try { localStorage.setItem(k, JSON.stringify(list)); } catch (_) { if (typeof dioLogError === 'function') dioLogError('saved doc: sync ke baad local list save nakaam', _); } }
     }
-  } catch (_) {}
+  } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
   _dioDocsSyncing = false;
   if (synced > 0 && typeof showToast === 'function') showToast('' + synced + ' دستاویزات sync ہو گئیں', 'success');
   return synced;
@@ -240,9 +240,9 @@ window._dioSyncDocs = _dioSyncDocs;
 
 // Internet wapas aane par + app-start par sync (baqi sync ke saath)
 try {
-  window.addEventListener('online', function () { setTimeout(function () { try { _dioSyncDocs(); } catch (_) {} }, 1800); });
-  setTimeout(function () { if (navigator.onLine) { try { _dioSyncDocs(); } catch (_) {} } }, 4500);
-} catch (_) {}
+  window.addEventListener('online', function () { setTimeout(function () { try { _dioSyncDocs(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }, 1800); });
+  setTimeout(function () { if (navigator.onLine) { try { _dioSyncDocs(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } } }, 4500);
+} catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
 
 // ── تاریخ/وقت — DD/MM/YYYY، ہر ماحول میں ──
 function _sdDateTime(iso) {
@@ -314,8 +314,8 @@ async function dioRenderDocList(docType, cfg) {
       </div>`}
     </div>
   </div>`;
-  try { if (typeof _dkFocusMode === 'function') _dkFocusMode(false); } catch (_) {}
-  try { if (typeof _sazaFocusMode === 'function') _sazaFocusMode(false); } catch (_) {}
+  try { if (typeof _dkFocusMode === 'function') _dkFocusMode(false); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
+  try { if (typeof _sazaFocusMode === 'function') _sazaFocusMode(false); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
 }
 window.dioRenderDocList = dioRenderDocList;
 
@@ -338,7 +338,7 @@ async function _sdDelete(docType, id) {
   if (!confirm('کیا آپ یہ دستاویز مستقل حذف کرنا چاہتے ہیں؟')) return;
   await dioDeleteDocEntry(docType, id);
   const cfg = window._sdCurrentCfg || {};
-  try { dioRenderDocList(docType, cfg); } catch (_) {}
+  try { dioRenderDocList(docType, cfg); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   if (typeof showToast === 'function') showToast('حذف ہو گئی', 'info');
 }
 window._sdDelete = _sdDelete;

@@ -71,7 +71,7 @@ async function _loadAccused() {
       .order('created_at', { ascending: true });
     _accusedList = data || [];
     // Cache for offline
-    try { localStorage.setItem('dio_accused_' + _accusedCaseId, JSON.stringify(_accusedList)); } catch(_) {}
+    try { localStorage.setItem('dio_accused_' + _accusedCaseId, JSON.stringify(_accusedList)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('mulziman: local save nakaam', _); }
   } catch(_) {
     try { _accusedList = JSON.parse(localStorage.getItem('dio_accused_' + _accusedCaseId) || '[]'); }
     catch(_2) { _accusedList = []; }
@@ -194,7 +194,7 @@ function _accCustomOpts(key) {
 }
 function _accSaveCustomOpt(key, val) {
   const l = _accCustomOpts(key);
-  if (!l.includes(val)) { l.push(val); try { localStorage.setItem('dio_acc_opts_' + key, JSON.stringify(l)); } catch(_) {} }
+  if (!l.includes(val)) { l.push(val); try { localStorage.setItem('dio_acc_opts_' + key, JSON.stringify(l)); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ } }
 }
 function _accDdAdd(el, key) {
   if (el.value !== '__add__') return;
@@ -242,7 +242,7 @@ function _accKeyNav(e) {
 
   // Space opens the focused dropdown
   if ((k === ' ' || k === 'Spacebar' || k === 'Space') && t.tagName === 'SELECT') {
-    if (typeof t.showPicker === 'function') { e.preventDefault(); try { t.showPicker(); } catch(_) {} }
+    if (typeof t.showPicker === 'function') { e.preventDefault(); try { t.showPicker(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
   }
   // Tab, Up/Down and cursor keys in text = native (stay within the field)
 }
@@ -358,7 +358,7 @@ async function _saveAccused(id) {
       await _loadAccused();
       _renderAccusedArea();
     } else {
-      try { localStorage.removeItem('dio_accused_' + caseId); } catch (_) {}
+      try { localStorage.removeItem('dio_accused_' + caseId); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     }
     showToast('ملزم محفوظ ہو گیا' + (cs && cs.fir && String(caseId) !== String(_accusedCaseId) ? ' — مقدمہ ' + cs.fir : ''), 'success');
   } catch (e) { showToast('' + (e && e.message || e), 'error'); }
@@ -548,7 +548,7 @@ async function _accPrevRecord(id) {
       try {
         const { data: cases } = await supabaseClient.from('cases').select('*').in('id', ids);
         (cases || []).forEach(c => { caseMap[c.id] = c; });
-      } catch(_) {}
+      } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
     }
     const rows = list.map(r => {
       const label = _accCaseLabel(caseMap[r.case_id], r.case_id);

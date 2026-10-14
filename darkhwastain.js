@@ -60,7 +60,7 @@ async function openDarkhwast(caseId) {
   _dkCaseId = caseId
     || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
     || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
-  if (typeof _dioOpenDocTab === 'function') { try { _dioOpenDocTab('darkhwastain'); } catch (_) {} }
+  if (typeof _dioOpenDocTab === 'function') { try { _dioOpenDocTab('darkhwastain'); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
   // Fehrist dekho
   let entries = [];
   try { entries = (typeof dioLoadDocEntries === 'function') ? await dioLoadDocEntries('darkhwastain', _dkCaseId) : []; } catch (_) { entries = []; }
@@ -140,7 +140,7 @@ async function _dkLoadFirText() {
       const t = rows.map(m => String(m.matn || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()).filter(Boolean).join(' ');
       if (t) { _dkFirText = t; return; }
     }
-  } catch (_) {}
+  } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   // Warna seedha fir_matn table se (bilkul _ch173LoadFirMatn jaisa)
   try {
     const { data } = await supabaseClient.from('fir_matn')
@@ -148,14 +148,14 @@ async function _dkLoadFirText() {
     const rows = (data || []).filter(m => (m.type || 'fir') === 'fir');
     _dkFirText = rows.map(m => String(m.matn || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()).filter(Boolean).join(' ');
     if (_dkFirText) return;
-  } catch (_) {}
+  } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
   // Aakhri fallback — case_documents (agar kisi jagah FIR wahan ho)
   try {
     if (typeof _misalDocs !== 'undefined' && _misalDocs && _misalDocs['fir'] && _misalDocs['fir'].content) {
       const h = _misalDocs['fir'].content.html || _misalDocs['fir'].content.text || '';
       _dkFirText = String(h).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
     }
-  } catch (_) {}
+  } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 // FIR matn (already plain) — درخواست ke andar copy ke liye
 function _dkFirPlain() { return _dkFirText || ''; }
@@ -188,7 +188,7 @@ let _dkChosen = null;   // null = abhi decide nahi (default sab)
 function _dkSideMargin() { return (_dkPaper === 'a4') ? '0.5cm' : '0.2cm'; }
 function _dkSetPaper(v) {
   _dkPaper = v;
-  try { localStorage.setItem('dio_dk_paper', v); } catch (_) {}
+  try { localStorage.setItem('dio_dk_paper', v); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   _dkRender();
 }
 window._dkSetPaper = _dkSetPaper;
@@ -199,7 +199,7 @@ function _dkToday() {
   const dd = String(d.getDate()).padStart(2, '0');
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   if (typeof formatDate === 'function') {
-    try { const f = formatDate(d); if (f && /^\d{2}\/\d{2}\/\d{4}$/.test(String(f).trim())) return String(f).trim(); } catch (_) {}
+    try { const f = formatDate(d); if (f && /^\d{2}\/\d{2}\/\d{4}$/.test(String(f).trim())) return String(f).trim(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   }
   return dd + '/' + mm + '/' + d.getFullYear();
 }
@@ -214,11 +214,11 @@ function _dkIoLine(o) {
   // Agar currentOfficer mein rank khali ho to digital_io_sho se sirf rank le lo
   // (naam nahi — naam hamesha logged-in officer ka)
   if (!rank) {
-    try { const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}'); if ((sho.name||'').trim() === name || !name) rank = (sho.rank || '').trim(); } catch (_) {}
+    try { const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}'); if ((sho.name||'').trim() === name || !name) rank = (sho.rank || '').trim(); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   }
   if (!name) {
     // Aakhri fallback — SHO-saved naam
-    try { const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}'); name = (sho.name || '').trim(); if (!rank) rank = (sho.rank || '').trim(); } catch (_) {}
+    try { const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}'); name = (sho.name || '').trim(); if (!rank) rank = (sho.rank || '').trim(); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   }
   const st = (o.station || '').trim();
   const parts = [];
@@ -382,9 +382,9 @@ function _dkRender() {
     _dkFullPage(area);
     _dkBindKeys();
     _dkFocusMode(true);
-    try { const df = _dkDocFont(sv); if (df) _dkFontToDoc(df); } catch (_) {}
+    try { const df = _dkDocFont(sv); if (df) _dkFontToDoc(df); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     window.addEventListener('resize', _dkFitPaper);
-    if (typeof applyAutoDirection === 'function') { try { applyAutoDirection(area); } catch (_) {} }
+    if (typeof applyAutoDirection === 'function') { try { applyAutoDirection(area); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
   }, 60);
 }
 window._dkRender = _dkRender;
@@ -505,8 +505,8 @@ function _dkFmt(cmd) {
   const sel = window.getSelection();
   const live = doc && sel && sel.rangeCount && doc.contains(sel.getRangeAt(0).commonAncestorContainer);
   if (!live) _dkRestoreRange();
-  try { document.execCommand('styleWithCSS', false, false); } catch (_) {}
-  try { document.execCommand(cmd, false, null); } catch (_) {}
+  try { document.execCommand('styleWithCSS', false, false); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { document.execCommand(cmd, false, null); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   _dkSaveRange();
   _dkDirty = true;
 }
@@ -516,7 +516,7 @@ window._dkFmt = _dkFmt;
 // cheez hai jis ke baghair toolbar buttons "kaam nahi karte" the (button dabate
 // hi editor ka selection/focus khatam ho jata tha).
 function _dkKeep(ev) {
-  try { _dkSaveRange(); } catch (_) {}
+  try { _dkSaveRange(); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   if (ev && ev.preventDefault) ev.preventDefault();
 }
 window._dkKeep = _dkKeep;
@@ -536,7 +536,7 @@ function _dkFontStep(dir) {
       const cs = n && getComputedStyle ? parseFloat(getComputedStyle(n).fontSize) : 0;
       if (cs) cur = Math.round(cs * 0.75);
     }
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   const next = Math.min(48, Math.max(8, cur + (dir > 0 ? 1 : -1)));
   _dkSetFont(next);
 }
@@ -575,13 +575,13 @@ function _dkFormatPainter() {
   if (_dkPaintFmt && hasSel) {
     _dkRestoreRange();
     const f = _dkPaintFmt;
-    try { document.execCommand('styleWithCSS', false, false); } catch (_) {}
+    try { document.execCommand('styleWithCSS', false, false); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
     // pehle saaf karo phir source jaisa lagao
-    try { document.execCommand('removeFormat', false, null); } catch (_) {}
-    if (f.bold) { try { document.execCommand('bold', false, null); } catch (_) {} }
-    if (f.italic) { try { document.execCommand('italic', false, null); } catch (_) {} }
-    if (f.underline) { try { document.execCommand('underline', false, null); } catch (_) {} }
-    if (f.size) { try { _dkFontToSelection(f.size); } catch (_) {} }
+    try { document.execCommand('removeFormat', false, null); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
+    if (f.bold) { try { document.execCommand('bold', false, null); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } }
+    if (f.italic) { try { document.execCommand('italic', false, null); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } }
+    if (f.underline) { try { document.execCommand('underline', false, null); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } }
+    if (f.size) { try { _dkFontToSelection(f.size); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
     _dkSaveRange(); _dkDirty = true;
     _dkPaintFmt = null; if (btn) btn.style.background = '';
     return;
@@ -608,9 +608,9 @@ function _dkFontToSelection(pt) {
   const sel = window.getSelection();
   if (!sel || sel.isCollapsed || !sel.rangeCount) return false;
   if (!doc.contains(sel.anchorNode) || !doc.contains(sel.focusNode)) return false;
-  try { document.execCommand('styleWithCSS', false, false); } catch (_) {}
+  try { document.execCommand('styleWithCSS', false, false); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   let ok = false;
-  try { ok = document.execCommand('fontSize', false, '7'); } catch (_) {}
+  try { ok = document.execCommand('fontSize', false, '7'); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   if (!ok) return false;
   doc.querySelectorAll('font[size="7"]').forEach(f => {
     const span = document.createElement('span');
@@ -660,11 +660,11 @@ function _dkBlockFloatBar() {
       window.dioBindEditor = function (el) {
         try {
           if (el && (el.id === 'dk-doc' || (el.closest && el.closest('#dk-doc')) || (el.querySelector && el.querySelector('#dk-doc')))) return;
-        } catch (_) {}
+        } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
         return _orig.apply(this, arguments);
       };
     }
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 
 // ═══ Full-page + focus (saza jaisa) ═══
@@ -683,8 +683,8 @@ function _dkFullPage(area) {
     document.querySelectorAll('.workspace-layout, .misal-layout').forEach(w => { w.style.display = 'block'; w.style.gridTemplateColumns = '1fr'; });
     const doc = _dkDoc();
     if (doc) { doc.style.maxWidth = 'none'; doc.style.margin = '0 auto'; _dkFitPaper();
-      if (!window._dkFitBound) { window._dkFitBound = true; window.addEventListener('resize', () => { try { _dkFitPaper(); } catch (_) {} }); } }
-  } catch (_) {}
+      if (!window._dkFitBound) { window._dkFitBound = true; window.addEventListener('resize', () => { try { _dkFitPaper(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }); } }
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 function _dkFitPaper() {
   const doc = _dkDoc(); if (!doc) return;
@@ -698,11 +698,11 @@ function _dkFitPaper() {
       el = el.parentElement;
     }
     host.style.overflow = 'auto'; host.style.flexShrink = '0';
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   const IN = 96;
   doc.style.width = ((_dkPaper === 'a4') ? 8.27 : 8.5) * IN + 'px';
   doc.style.minHeight = ((_dkPaper === 'a4') ? 11.7 : 13) * IN + 'px';
-  try { doc.style.padding = '1cm ' + _dkSideMargin(); } catch (_) {}
+  try { doc.style.padding = '1cm ' + _dkSideMargin(); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._dkFitPaper = _dkFitPaper;
 
@@ -714,25 +714,25 @@ function _dkFocusMode(on) {
     const bar0 = document.getElementById('misal-doc-bar');
     const par = bar0 && bar0.parentElement;
     if (par && getComputedStyle(par).position === 'static') par.style.position = 'relative';
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   if (window._dkPeekBound) return;
   window._dkPeekBound = true;
   document.addEventListener('mousemove', (e) => {
     if (!document.body.classList.contains('dk-focus')) return;
     const bar = document.getElementById('misal-doc-bar'); if (!bar) return;
     let near = e.clientY <= 70;
-    if (!near) { try { const r = bar.getBoundingClientRect(); near = e.clientY >= r.top - 10 && e.clientY <= r.bottom + 10 && e.clientX >= r.left && e.clientX <= r.right; } catch (_) {} }
+    if (!near) { try { const r = bar.getBoundingClientRect(); near = e.clientY >= r.top - 10 && e.clientY <= r.bottom + 10 && e.clientX >= r.left && e.clientX <= r.right; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
     if (near) {
       clearTimeout(window._dkPeekT);
       try {
         const d0 = _dkDoc(); const host = d0 && d0.parentElement; const wrap = host && host.parentElement;
         const tbar = wrap && wrap.querySelector('.no-print'); const par = bar.offsetParent || bar.parentElement;
         if (tbar && par) { const rp = par.getBoundingClientRect(); const rt = tbar.getBoundingClientRect(); bar.style.top = Math.max(0, Math.round(rt.bottom - rp.top)) + 'px'; }
-      } catch (_) {}
+      } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
       bar.classList.add('peek');
     } else if (bar.classList.contains('peek')) {
       clearTimeout(window._dkPeekT);
-      window._dkPeekT = setTimeout(() => { try { bar.classList.remove('peek'); } catch (_) {} }, 400);
+      window._dkPeekT = setTimeout(() => { try { bar.classList.remove('peek'); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } }, 400);
     }
   }, { passive: true });
 }
@@ -768,7 +768,7 @@ async function _dkSave() {
     _dkSaved = data; _dkDirty = false;
     if (typeof showToast === 'function') showToast('درخواست محفوظ — فہرست میں تاریخ/سیریل کے ساتھ آ گئی', 'success', 3500);
     // Save ke baad FEHRIST kholo (chalan jaisa)
-    setTimeout(() => { try { _dkShowList(); } catch (_) {} }, 300);
+    setTimeout(() => { try { _dkShowList(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }, 300);
   } catch (e) {
     if (typeof showToast === 'function') showToast('محفوظ کرنے میں مسئلہ: ' + ((e && e.message) || e), 'warn', 4500);
   }
@@ -781,7 +781,7 @@ function _dkMarkMisalSaved(content, status) {
     if (!_misalDocs['darkhwastain']) _misalDocs['darkhwastain'] = { document_type: 'darkhwastain' };
     _misalDocs['darkhwastain'].content = content;
     _misalDocs['darkhwastain'].status = status || 'complete';
-  } catch (_) {}
+  } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._dkMarkMisalSaved = _dkMarkMisalSaved;
 
@@ -909,12 +909,12 @@ window._dkCSS = _dkCSS;
       _misalDocs['darkhwastain'].content = content;
       _misalDocs['darkhwastain'].status = 'complete';
       if (typeof _refreshMisalBar === 'function') _refreshMisalBar();
-    } catch (_) {}
+    } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   }
   function init() {
     const target = document.getElementById('page-content');
     if (!target) { setTimeout(init, 800); return; }
-    try { const obs = new MutationObserver(() => { try { heal(); } catch (_) {} }); obs.observe(target, { childList: true, subtree: true }); heal(); } catch (_) {}
+    try { const obs = new MutationObserver(() => { try { heal(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }); obs.observe(target, { childList: true, subtree: true }); heal(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   }
   if (document.readyState !== 'loading') init();
   else document.addEventListener('DOMContentLoaded', init);

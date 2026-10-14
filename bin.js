@@ -233,14 +233,14 @@ async function _binDoEmpty() {
     const chk = await supabaseClient.from('recycle_bin')
       .select('id', { count: 'exact', head: true }).eq('officer_id', oid);
     _binCount = (chk && typeof chk.count === 'number') ? chk.count : null;
-  } catch (_) {}
+  } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
   await supabaseClient.from('recycle_bin').delete().eq('officer_id', oid);
   // AUDIT — bin.emptied
   try {
     if (window.DIO && DIO.audit) DIO.audit.log('bin.emptied', 'recycle_bin', null, {
       metadata: { items_purged: _binCount, officer_id: oid }
     });
-  } catch (_) {}
+  } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
   showToast('بن خالی ہو گئی', 'info');
   _buildBin();
 }

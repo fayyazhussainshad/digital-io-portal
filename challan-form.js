@@ -136,11 +136,11 @@
       var node = doc.querySelector('[data-k="' + el.getAttribute('data-bind') + '"]');
       if (!node) return;
       node.innerHTML = el.innerHTML;
-      try { window._r173Dirty = true; } catch (_) {}
+      try { window._r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       // Challan ka apna layout chalne do (matn column 7 me neeche jata hai)
       clearTimeout(p._t);
       p._t = setTimeout(function () {
-        try { if (typeof _ch173OverflowSettle === 'function') _ch173OverflowSettle(2); } catch (_) {}
+        try { if (typeof _ch173OverflowSettle === 'function') _ch173OverflowSettle(2); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
       }, 600);
     });
 
@@ -179,7 +179,7 @@
     var wrap = _wrapEl || doc.parentElement; if (!wrap) return;
     var p = panel(); if (!p) return;
     _open = !!formOn;
-    try { localStorage.setItem(KEY, _open ? 'form' : 'paper'); } catch (_) {}
+    try { localStorage.setItem(KEY, _open ? 'form' : 'paper'); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     if (formOn) {
       if (!wrap.hasAttribute('data-dio-h')) {
         wrap.setAttribute('data-dio-h', wrap.style.height || '');
@@ -217,7 +217,7 @@
   window.addEventListener('afterprint', function () {
     _printing = false;
     // Afsar ka intikhab wapas laao
-    try { if (isMobile() && panel()) show(wantForm()); } catch (_) {}
+    try { if (isMobile() && panel()) show(wantForm()); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   });
 
   function refresh() {
@@ -237,8 +237,8 @@
     new MutationObserver(function () { clearTimeout(_t); _t = setTimeout(refresh, 250); })
       .observe(document.getElementById('page-content') || document.body,
                { childList: true, subtree: true });
-  } catch (_) {}
-  try { window.matchMedia(MOBILE_Q).addEventListener('change', refresh); } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { window.matchMedia(MOBILE_Q).addEventListener('change', refresh); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', refresh);
   else refresh();

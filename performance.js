@@ -173,7 +173,7 @@ async function _perfCourtDates() {
 }
 
 function _clearUsageStats() {
-  try { localStorage.removeItem('dio_btn_usage'); showToast('گنتی صاف ہو گئی۔','info'); _buildPerf(); } catch(_) {}
+  try { localStorage.removeItem('dio_btn_usage'); showToast('گنتی صاف ہو گئی۔','info'); _buildPerf(); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 }
 
 function _printPerfReport() {

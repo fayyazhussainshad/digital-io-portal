@@ -134,7 +134,7 @@
       try {
         if (window.DIO && DIO.errors && DIO.errors.userMessage) msg = DIO.errors.userMessage(err);
         else if (err && err.message) msg = String(err.message);
-      } catch (_) {}
+      } catch (_) { /* logging khud kabhi na phatte */ }
       var retry = '';
       if (retryFnName) {
         retry = '<button type="button" onclick="' + _esc(retryFnName) + '()" style="' + STYLE.btn + URDU_FONT + '">دوبارہ کوشش کریں</button>';
@@ -184,7 +184,7 @@
     savedBadge: function (whenIso) {
       var t = '';
       if (whenIso) {
-        try { t = (window.DIO && DIO.date) ? (' · ' + DIO.date.time(whenIso)) : ''; } catch (_) {}
+        try { t = (window.DIO && DIO.date) ? (' · ' + DIO.date.time(whenIso)) : ''; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       }
       return '<span class="dio-badge" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--green);' + URDU_FONT + '">' +
              _icon('check', 13) + ' محفوظ' + _esc(t) + '</span>';
@@ -209,7 +209,7 @@
     var s = document.createElement('style');
     s.id = 'dio-states-css';
     s.textContent = '@keyframes dio-rot { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }';
-    try { document.head.appendChild(s); } catch (_) {}
+    try { document.head.appendChild(s); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
     return '';
   }
 

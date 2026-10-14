@@ -31,7 +31,7 @@ function openShoDspModal(type) {
   const key = isSho ? 'digital_io_sho' : 'digital_io_dsp';
   const title = isSho ? 'SHO کا نام درج کریں' : 'DSP/SDPO کا نام درج کریں';
   let cur = {};
-  try { cur = JSON.parse(localStorage.getItem(key) || '{}'); } catch(_) {}
+  try { cur = JSON.parse(localStorage.getItem(key) || '{}'); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 
   openModal(title, `
     <div style="direction:rtl;display:flex;flex-direction:column;gap:12px;">
@@ -59,7 +59,7 @@ function _saveShoDsp(type) {
   const key = isSho ? 'digital_io_sho' : 'digital_io_dsp';
   const rank = (document.getElementById('shodsp-rank')||{}).value || '';
   const name = (document.getElementById('shodsp-name')||{}).value || '';
-  try { localStorage.setItem(key, JSON.stringify({ rank, name })); } catch(_) {}
+  try { localStorage.setItem(key, JSON.stringify({ rank, name })); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   closeModal();
   _updateShoDspButtons();
   if (typeof showToast === 'function') showToast(''+(isSho?'SHO':'DSP/SDPO')+' کا نام محفوظ', 'success');
@@ -111,7 +111,7 @@ window.openSarkariGari = openSarkariGari;
 async function _saveSarkariGari() {
   const vehicle_number = (document.getElementById('gari-number')||{}).value || '';
   const driver_name = (document.getElementById('gari-driver')||{}).value || '';
-  try { localStorage.setItem('digital_io_sarkari_gari', JSON.stringify({ vehicle_number, driver_name })); } catch(_) {}
+  try { localStorage.setItem('digital_io_sarkari_gari', JSON.stringify({ vehicle_number, driver_name })); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   // Best-effort Supabase save
   try {
     const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
@@ -119,7 +119,7 @@ async function _saveSarkariGari() {
     if (oid) rec.officer_id = oid;
     if (typeof _misalCaseId !== 'undefined' && _misalCaseId) rec.case_id = _misalCaseId;
     await supabaseClient.from('sarkari_gari').insert(rec);
-  } catch(_) {}
+  } catch(_) { if (typeof dioLogError === 'function') dioLogError('sarkari gari: server save nakaam', _); }
   closeModal();
   if (typeof showToast === 'function') showToast('سرکاری گاڑی محفوظ', 'success');
 }
@@ -136,7 +136,7 @@ function getSHOSignLine(station) {
     const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}');
     name = (sho.name || '').trim();
     rank = (sho.rank || '').trim();
-  } catch (_) {}
+  } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   const st = (station || (typeof currentOfficer !== 'undefined' && currentOfficer ? currentOfficer.station : '') || '').trim();
   const parts = [];
   if (name) parts.push(name);

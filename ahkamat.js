@@ -111,7 +111,7 @@ async function _ahkLoad(){
   try {
     const cached = JSON.parse(localStorage.getItem(AHK_CACHE_KEY) || '[]');
     if (cached.length) { _ahkList = cached; _ahkRender(); }
-  } catch(_){}
+  } catch(_){ /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 
   if (!navigator.onLine) return;
   try {
@@ -119,7 +119,7 @@ async function _ahkLoad(){
       .select('*').order('created_at', { ascending:false });
     if (error) throw error;
     _ahkList = data || [];
-    try { localStorage.setItem(AHK_CACHE_KEY, JSON.stringify(_ahkList)); } catch(_){}
+    try { localStorage.setItem(AHK_CACHE_KEY, JSON.stringify(_ahkList)); } catch(_){ /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   } catch(e){
     console.warn('Ahkamat load failed, using cache:', e.message);
   }
@@ -325,14 +325,14 @@ async function _ahkSave(id){
       const idx = _ahkList.findIndex(x=>x.id===id);
       if (idx !== -1) _ahkList[idx] = saved;
     } else {
-      try { rec.created_by = (typeof currentUser!=='undefined' && currentUser) ? currentUser.id : null; } catch(_){}
+      try { rec.created_by = (typeof currentUser!=='undefined' && currentUser) ? currentUser.id : null; } catch(_){ /* ikhtiyari qadam — na ho sake to chhoR do */ }
       const { data, error } = await supabaseClient.from('ahkamat').insert(rec).select().single();
       if (error) throw error;
       saved = data;
       _ahkList.unshift(saved);
     }
 
-    try { localStorage.setItem(AHK_CACHE_KEY, JSON.stringify(_ahkList)); } catch(_){}
+    try { localStorage.setItem(AHK_CACHE_KEY, JSON.stringify(_ahkList)); } catch(_){ /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     closeModal();
     showToast(id?'ترمیم محفوظ ہو گئی':'حکم شامل ہو گیا','success');
     _ahkRender();
@@ -348,7 +348,7 @@ async function _ahkFileUrl(a){
     try {
       const { data, error } = await supabaseClient.storage.from(AHK_BUCKET).createSignedUrl(a.storage_path, 3600);
       if (!error && data && data.signedUrl) return data.signedUrl;
-    } catch(_){}
+    } catch(_){ /* ikhtiyari qadam — na ho sake to chhoR do */ }
   }
   return (a && a.file_url) || null;
 }
@@ -473,7 +473,7 @@ async function _ahkFileReader(a, url, isPdf, autoPrint){
         <div id="ahk-html-content">${result.value ? (window.DIO&&DIO.html&&DIO.html.safe?DIO.html.safe(result.value):esc(result.value)) : 'مواد دستیاب نہیں'}</div>`;
       if (autoPrint) setTimeout(()=>window.print(), 400);
       return;
-    } catch(_){}
+    } catch(_){ /* ikhtiyari qadam — na ho sake to chhoR do */ }
   }
 
   // Fallback: reliable open options
@@ -615,11 +615,11 @@ function _ahkDelete(id){
   const doDelete = async () => {
     if (!navigator.onLine) { showToast('حذف کرنے کے لیے انٹرنیٹ ضروری ہے','error'); return; }
     try {
-      if (a.storage_path) { try { await supabaseClient.storage.from(AHK_BUCKET).remove([a.storage_path]); } catch(_){} }
+      if (a.storage_path) { try { await supabaseClient.storage.from(AHK_BUCKET).remove([a.storage_path]); } catch(_){ if (typeof dioLogError === 'function') dioLogError('ahkamat: storage file delete nakaam', _); } }
       const { error } = await supabaseClient.from('ahkamat').delete().eq('id', id);
       if (error) throw error;
       _ahkList = _ahkList.filter(x=>x.id!==id);
-      try { localStorage.setItem(AHK_CACHE_KEY, JSON.stringify(_ahkList)); } catch(_){}
+      try { localStorage.setItem(AHK_CACHE_KEY, JSON.stringify(_ahkList)); } catch(_){ /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
       _ahkRender();
       showToast('حذف ہو گیا','info');
     } catch(e){ showToast(''+(e.message||'حذف ناکام'),'error'); }
@@ -635,7 +635,7 @@ function _ahkFmtDate(d){
     if (typeof dioFormatDate === 'function') return dioFormatDate(d);
     const dt = new Date(d);
     if (!isNaN(dt)) return dt.toLocaleDateString('en-GB'); // dd/mm/yyyy
-  } catch(_){}
+  } catch(_){ /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
   return String(d);
 }
 function _ahkFooterText(){
@@ -644,7 +644,7 @@ function _ahkFooterText(){
     const o = JSON.parse(localStorage.getItem('officer_profile')||localStorage.getItem('dio_officer_cache')||'{}');
     rank = o.rank || o.designation || '';
     name = o.name || o.full_name || '';
-  } catch(_){}
+  } catch(_){ /* sirf local cache — na ho sake to bhi aage chalo */ }
   const who = [rank, name].filter(Boolean).join(' ');
   return who ? `Digital IO — احکامات · ${who}` : 'Digital IO — احکامات';
 }

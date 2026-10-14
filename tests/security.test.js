@@ -1804,3 +1804,25 @@ test('103_CHECK: v542 کے اثر کی جانچ — صرف پڑھتی ہے', () 
   assert.strictEqual((bina.match(/;/g) || []).length, 1, 'aik hi statement');
   assert.ok(/action = 'case\.updated'/.test(s) && /in \('sho', 'sdpo'\)/.test(s), 'sirf wahi jo audit mein darj hai');
 });
+
+test('v545: کوئی خالی catch باقی نہیں — اور نیا خالی catch build روکتا ہے', () => {
+  const fs = require('fs'), path = require('path');
+  const root = path.join(__dirname, '..');
+  const files = fs.readdirSync(root).filter(f => f.endsWith('.js') && f !== 'sw.js');
+  const bad = [];
+  for (const f of files) {
+    const t = fs.readFileSync(path.join(root, f), 'utf8');
+    // اندر کی HTML/print اسکرپٹ بھی جانچی جاتی ہے؛ تبصرہ «C» بن جاتا ہے (یعنی وجہ لکھی ہے)،
+    // اور promise کا .catch() الگ چیز ہے
+    const m = t.replace(/\/\*[\s\S]*?\*\//g, 'C').replace(/\/\/[^\n]*/g, 'C')
+      .replace(/\.catch\(/g, '.CATCH(').match(/catch\s*(\([^)]*\))?\s*\{\s*\}/g);
+    if (m) bad.push(f + ': ' + m.length);
+  }
+  assert.deepEqual(bad, [], 'har catch میں یا غلطی درج ہو یا وجہ لکھی ہو');
+  assert.ok(/'no-empty': \['error'/.test(read('eslint.config.mjs')), 'خالی catch اب error ہے، warning نہیں');
+  // جہاں غلطی چھپنے سے ڈیٹا ضائع ہو سکتا تھا وہاں غلطی درج ہو
+  for (const [f, label] of [['naqsha-mauqa.js', 'naqsha: server par save nakaam'], ['naqsha-mauqa.js', 'naqsha: local save nakaam'],
+      ['zimni.js', 'zimni: offline queue nakaam'], ['saza-slip.js', 'saza slip: local save nakaam'],
+      ['offline-store.js', 'sync queue: item failed mark nakaam'], ['data-api.js', 'offline evidence: file local store nakaam']])
+    assert.ok(read(f).includes("dioLogError('" + label + "'"), f + ' — ' + label);
+});

@@ -34,7 +34,7 @@ async function getApplication5C(id){const{data,error}=await supabaseClient.from(
 // v538: آف لائن محفوظ ہونے کی اطلاع۔ پہلے یہاں ایک غیر موجود فنکشن
 //   (_showSyncBar) تھا — ریکارڈ قطار میں محفوظ ہو جاتا، پھر غلطی آتی اور
 //   افسر کو لگتا کہ محفوظ نہیں ہوا (دوبارہ کوشش = دوہرا اندراج)۔
-function _fcOfflineNote(msg){try{if(typeof showToast==='function')showToast(msg,'info',4500);}catch(_){}}
+function _fcOfflineNote(msg){try{if(typeof showToast==='function')showToast(msg,'info',4500);}catch(_){ /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }}
 async function addApplication5C(d){
   const oid=await getOfficerId();if(!oid)throw new Error('Not authenticated');
   if(!navigator.onLine){
@@ -388,7 +388,7 @@ async function open5CResponse(id){
         const nr=document.createRange();
         nr.setStart(curNode,Math.min(curOff,curNode.textContent?curNode.textContent.length:0));
         nr.collapse(true);sel.removeAllRanges();sel.addRange(nr);
-      }catch(_){}
+      }catch(_){ /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
     });
   },80);
 }

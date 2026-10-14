@@ -293,7 +293,7 @@ async function _startVoice() {
 
   _voiceRecognition.onend = () => {
     if (_voiceActive) {
-      try { _voiceRecognition.start(); } catch(_) {}
+      try { _voiceRecognition.start(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     }
   };
 

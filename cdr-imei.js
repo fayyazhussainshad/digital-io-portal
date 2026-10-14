@@ -379,9 +379,9 @@ function _renderCdr() {
         <button type="button" class="btn btn-secondary btn-sm" onclick="_cdrBackToList()" title="اس مقدمے کی تمام CDR درخواستیں">← فہرست</button>
         <span class="cdr-strip-t">${esc(title)}</span>
         <span class="cdr-tb-lbl">CDR مورخہ
-          <span class="cdr-cal" title="کس تاریخ سے — تاریخ چنیں">📅<input type="date" class="cdr-date-in" data-for="date_from" value="${_cdrIso(val('date_from'))}" onclick="try{this.showPicker()}catch{}" onchange="_cdrSetDate('date_from', this.value)" aria-label="CDR کس تاریخ سے"></span>
+          <span class="cdr-cal" title="کس تاریخ سے — تاریخ چنیں">📅<input type="date" class="cdr-date-in" data-for="date_from" value="${_cdrIso(val('date_from'))}" onclick="try{this.showPicker()}catch(_){ /* picker na ho to koi baat nahi */ }" onchange="_cdrSetDate('date_from', this.value)" aria-label="CDR کس تاریخ سے"></span>
           تک
-          <span class="cdr-cal" title="کس تاریخ تک — تاریخ چنیں">📅<input type="date" class="cdr-date-in" data-for="date_to" value="${_cdrIso(val('date_to'))}" onclick="try{this.showPicker()}catch{}" onchange="_cdrSetDate('date_to', this.value)" aria-label="CDR کس تاریخ تک"></span>
+          <span class="cdr-cal" title="کس تاریخ تک — تاریخ چنیں">📅<input type="date" class="cdr-date-in" data-for="date_to" value="${_cdrIso(val('date_to'))}" onclick="try{this.showPicker()}catch(_){ /* picker na ho to koi baat nahi */ }" onchange="_cdrSetDate('date_to', this.value)" aria-label="CDR کس تاریخ تک"></span>
         </span>
         <button type="button" class="btn btn-primary btn-sm dio-modbtn" onclick="_saveCdr()">محفوظ کریں</button>
       </div>

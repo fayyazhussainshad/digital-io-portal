@@ -80,7 +80,7 @@
   }
   function _fallbackCopy(txt) {
     var ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (_) {} ta.remove();
+    document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } ta.remove();
   }
   function download(list, who) {
     var txt = list.map(function (r, i) { return (i + 1) + '۔ ' + toText(r); }).join('\n');

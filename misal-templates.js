@@ -23,7 +23,7 @@ async function _fillIndexNaqlData() {
       const elI = document.getElementById('idxn-cnic-' + n);
       if (elI && a.cnic) elI.textContent = ' ' + (_fcx(a.cnic) || a.cnic) + ' ';
     });
-  } catch(_) {}
+  } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
   // ضمنیاں → انڈکس ضمنیات (نمبر کے مطابق مورخہ + تفتیشی افسر)
   // FIX 3: har ضمنی entry ka apna date + apna تفتیشی افسر (officer_id lookup);
   // value na ho to cell blank chhoro (koi placeholder nahi).
@@ -43,7 +43,7 @@ async function _fillIndexNaqlData() {
         (ofs || []).forEach(o => {
           _ofcMap[o.id] = (o.full_name || '') + (o.designation ? ' (' + o.designation + ')' : '');
         });
-      } catch(_) {}
+      } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
     }
     const _selfName = (currentOfficer && currentOfficer.full_name) || '';
     (zs || []).forEach(z => {
@@ -57,7 +57,7 @@ async function _fillIndexNaqlData() {
         if (nm) oEl.textContent = nm;
       }
     });
-  } catch(_) {}
+  } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
 }
 
 // Formatting helpers

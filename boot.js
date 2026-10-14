@@ -91,7 +91,7 @@
               c.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted,#7d97ad);' +
                 'font-size:13px;direction:rtl;">کھل رہا ہے…</div>';
             }
-          } catch (_) {}
+          } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
           ensurePage(page).then(function () {
             orig.call(window, page, el);
             /* MEHFOOZ JAAL: agar safha kisi wajah se khula hi nahi
@@ -110,12 +110,12 @@
                     'direction:rtl;color:var(--text-muted);font-size:13px;">' +
                     'یہ صفحہ ابھی نہیں کھل سکا۔ دوبارہ کوشش کریں یا مینو سے دوسرا صفحہ چنیں۔</div>';
                 }
-              } catch (_) {}
+              } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
             }, 400);
           });
           return;
         }
-      } catch (_) {}
+      } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       return orig.call(window, page, el);
     };
     wrapped._dioWrapped = true;

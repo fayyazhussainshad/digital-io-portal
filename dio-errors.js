@@ -72,14 +72,14 @@
       // Console — visible for debugging
       try {
         console.error('[DIO.err]', entry.ctx, '·', entry.msg, err);
-      } catch (_) {}
+      } catch (_) { /* logging khud kabhi na phatte */ }
       // User toast (opt-in)
       if (opts.toast && typeof showToast === 'function') {
-        try { showToast('❌ ' + this.userMessage(err), 'error'); } catch (_) {}
+        try { showToast('❌ ' + this.userMessage(err), 'error'); } catch (_) { /* logging khud kabhi na phatte */ }
       }
       // Telemetry hook (later Phase 4B — audit_logs)
       if (typeof window._dioTelemetry === 'function') {
-        try { window._dioTelemetry(entry); } catch (_) {}
+        try { window._dioTelemetry(entry); } catch (_) { /* logging khud kabhi na phatte */ }
       }
       return entry;
     },

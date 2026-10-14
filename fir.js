@@ -26,8 +26,8 @@ async function _loadFir() {
     ]);
     _firMatn = m.data || [];
     _firCopies = c.data || [];
-    try { localStorage.setItem('dio_firmatn_'+_firCaseId, JSON.stringify(_firMatn)); } catch(_) {}
-    try { localStorage.setItem('dio_fircopies_'+_firCaseId, JSON.stringify(_firCopies)); } catch(_) {}
+    try { localStorage.setItem('dio_firmatn_'+_firCaseId, JSON.stringify(_firMatn)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('FIR matn: local save nakaam', _); }
+    try { localStorage.setItem('dio_fircopies_'+_firCaseId, JSON.stringify(_firCopies)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('FIR copies: local save nakaam', _); }
   } catch(_) {
     try { _firMatn = JSON.parse(localStorage.getItem('dio_firmatn_'+_firCaseId)||'[]'); } catch(_2) { _firMatn=[]; }
     try { _firCopies = JSON.parse(localStorage.getItem('dio_fircopies_'+_firCaseId)||'[]'); } catch(_2) { _firCopies=[]; }
@@ -146,7 +146,7 @@ async function _saveMatn(type, id) {
       if (error) throw error;
       _firMatn.push(data ? { ...data, type: data.type || rec.type } : { ...rec, id:'tmp_'+Date.now() });
     }
-    try { localStorage.setItem('dio_firmatn_'+_firCaseId, JSON.stringify(_firMatn)); } catch(_) {}
+    try { localStorage.setItem('dio_firmatn_'+_firCaseId, JSON.stringify(_firMatn)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('FIR matn: local save nakaam', _); }
     closeModal();
     _renderFir(type || 'fir');
     showToast('متن محفوظ ہو گیا', 'success');
@@ -160,7 +160,7 @@ async function _deleteMatn(id) {
   try {
     await supabaseClient.from('fir_matn').delete().eq('id', id);
     _firMatn = _firMatn.filter(m => m.id !== id);
-    try { localStorage.setItem('dio_firmatn_'+_firCaseId, JSON.stringify(_firMatn)); } catch(_) {}
+    try { localStorage.setItem('dio_firmatn_'+_firCaseId, JSON.stringify(_firMatn)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('FIR matn: local save nakaam', _); }
     _renderFir(type);
     showToast('حذف ہو گیا', 'info');
   } catch(e) { showToast('' + e.message, 'error'); }
@@ -186,7 +186,7 @@ function _uploadFirCopy(input, type) {
       const { data, error } = await supabaseClient.from('fir_copies').insert(rec).select().single();
       if (error) throw error;
       _firCopies.push(data ? { ...data, type: data.type || rec.type } : { ...rec, id:'tmp_'+Date.now() });
-      try { localStorage.setItem('dio_fircopies_'+_firCaseId, JSON.stringify(_firCopies)); } catch(_) {}
+      try { localStorage.setItem('dio_fircopies_'+_firCaseId, JSON.stringify(_firCopies)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('FIR copies: local save nakaam', _); }
       _renderFir(type || 'fir');
       showToast('فوٹو کاپی اپلوڈ ہو گئی', 'success');
     } catch(err) { showToast('' + err.message, 'error'); }
@@ -217,7 +217,7 @@ async function _deleteFirCopy(id) {
   try {
     await supabaseClient.from('fir_copies').delete().eq('id', id);
     _firCopies = _firCopies.filter(c => c.id !== id);
-    try { localStorage.setItem('dio_fircopies_'+_firCaseId, JSON.stringify(_firCopies)); } catch(_) {}
+    try { localStorage.setItem('dio_fircopies_'+_firCaseId, JSON.stringify(_firCopies)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('FIR copies: local save nakaam', _); }
     _renderFir(type);
     showToast('حذف ہو گیا', 'info');
   } catch(e) { showToast('' + e.message, 'error'); }
@@ -275,8 +275,8 @@ function _printMatn(id) {
   const doc = ifr.contentWindow.document;
   doc.open(); doc.write(html); doc.close();
   const done = () => {
-    try { ifr.contentWindow.focus(); ifr.contentWindow.print(); } catch(_) {}
-    setTimeout(() => { try { ifr.remove(); } catch(_) {} }, 1000);
+    try { ifr.contentWindow.focus(); ifr.contentWindow.print(); } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
+    setTimeout(() => { try { ifr.remove(); } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } }, 1000);
   };
   if (ifr.contentWindow.document.readyState === 'complete') setTimeout(done, 300);
   else ifr.onload = () => setTimeout(done, 300);

@@ -142,7 +142,7 @@ function _misalHasData(key) {
       const cid = _misalCaseId || (_misalCase && _misalCase.id);
       if (cid) {
         const r = localStorage.getItem('dio_r173docs_' + cid);
-        if (r) { try { const a = JSON.parse(r); if (a && a.length) return true; } catch(_){} }
+        if (r) { try { const a = JSON.parse(r); if (a && a.length) return true; } catch(_){ /* kharab/khali JSON — pehle se tay qadr rahe */ } }
         const r2 = localStorage.getItem('dio_r173_' + cid);
         if (r2 && r2.length > 5) return true;
       }
@@ -152,16 +152,16 @@ function _misalHasData(key) {
       const cid = _misalCaseId || (_misalCase && _misalCase.id);
       if (cid) {
         const r = localStorage.getItem('dio_rfalist_' + cid);
-        if (r) { try { const a = JSON.parse(r); if (a && a.length) return true; } catch(_){} }
+        if (r) { try { const a = JSON.parse(r); if (a && a.length) return true; } catch(_){ /* kharab/khali JSON — pehle se tay qadr rahe */ } }
       }
     }
     // saved-docs (shared) — localStorage list
     const cid2 = _misalCaseId || (_misalCase && _misalCase.id);
     if (cid2) {
       const sd = localStorage.getItem('dio_sd_' + key + '_' + cid2);
-      if (sd) { try { const a = JSON.parse(sd); if (a && a.length) return true; } catch(_){} }
+      if (sd) { try { const a = JSON.parse(sd); if (a && a.length) return true; } catch(_){ /* kharab/khali JSON — pehle se tay qadr rahe */ } }
     }
-  } catch (_) {}
+  } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   return false;
 }
 window._misalHasData = _misalHasData;
@@ -502,7 +502,7 @@ async function saveMisalDoc(docId) {
         const dName = (MISAL_CASE_DOCS.find(d => d.id === docId) || {}).name || docId;
         dioRegisterSaved('misal', dName, { case_id: _misalCaseId, doc_id: docId });
       }
-    } catch(_) {}
+    } catch(_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
     showToast('دستاویز محفوظ ہو گئی', 'success');
   } catch(e) { showToast('' + e.message, 'error'); }
 }
@@ -589,7 +589,7 @@ async function openMisalVersionsModal(docId, documentDbId) {
         (ofs || []).forEach(o => {
           officerMap[o.id] = (o.full_name || '') + (o.designation ? ' (' + o.designation + ')' : '');
         });
-      } catch (_) {}
+      } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
     }
 
     const body = document.getElementById('mv-body');

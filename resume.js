@@ -21,7 +21,7 @@
     try {
       who = (typeof currentOfficer !== 'undefined' && currentOfficer &&
              (currentOfficer.id || currentOfficer.cnic || currentOfficer.username)) || '';
-    } catch (_) {}
+    } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     return KEY + (who ? ('_' + who) : '');
   }
 
@@ -29,7 +29,7 @@
     try { return JSON.parse(localStorage.getItem(key()) || 'null'); } catch (_) { return null; }
   }
   function writeState(st) {
-    try { localStorage.setItem(key(), JSON.stringify(st)); } catch (_) {}
+    try { localStorage.setItem(key(), JSON.stringify(st)); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   }
 
   // ── عام صفحہ محفوظ ──
@@ -51,7 +51,7 @@
       cid = (typeof _misalCaseId !== 'undefined' && _misalCaseId) ||
             (typeof currentCaseId !== 'undefined' && currentCaseId) ||
             (typeof _currentWorkspaceCaseId !== 'undefined' && _currentWorkspaceCaseId) || '';
-    } catch (_) {}
+    } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     if (!cid || !docId) return;
     writeState({ t: 'case', caseId: String(cid), docId: String(docId) });
   }
@@ -59,16 +59,16 @@
   // شروع میں app-core کے showPage کے لیے — کون سا "صفحہ"
   window._dioResumePage = function () {
     var h = '';
-    try { h = (window.location.hash || '').replace('#', '').toLowerCase().trim(); } catch (_) {}
+    try { h = (window.location.hash || '').replace('#', '').toLowerCase().trim(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     if (h) { if (SKIP.indexOf(h) !== -1) return 'dashboard';
-             try { if (typeof canAccess === 'function' && !canAccess(h)) return 'dashboard'; } catch (_) {}
+             try { if (typeof canAccess === 'function' && !canAccess(h)) return 'dashboard'; } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
              return h; }
     var st = readState();
     if (!st) return 'dashboard';
     if (st.t === 'case') return 'cases';
     if (st.t === 'page') {
       if (SKIP.indexOf(st.page) !== -1) return 'dashboard';
-      try { if (typeof canAccess === 'function' && !canAccess(st.page)) return 'dashboard'; } catch (_) {}
+      try { if (typeof canAccess === 'function' && !canAccess(st.page)) return 'dashboard'; } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
       return st.page;
     }
     return 'dashboard';
@@ -79,19 +79,19 @@
     var ok = true;
     if (typeof window.showPage === 'function' && !window.showPage.__dioW) {
       var oP = window.showPage;
-      window.showPage = function (page, el) { try { savePage(page); } catch (_) {} return oP.apply(this, arguments); };
+      window.showPage = function (page, el) { try { savePage(page); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } return oP.apply(this, arguments); };
       window.showPage.__dioW = true;
     } else if (typeof window.showPage !== 'function') ok = false;
 
     if (typeof window.openCaseWorkspace === 'function' && !window.openCaseWorkspace.__dioW) {
       var oC = window.openCaseWorkspace;
-      window.openCaseWorkspace = function (id) { try { saveCase(id); } catch (_) {} return oC.apply(this, arguments); };
+      window.openCaseWorkspace = function (id) { try { saveCase(id); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } return oC.apply(this, arguments); };
       window.openCaseWorkspace.__dioW = true;
     } else if (typeof window.openCaseWorkspace !== 'function') ok = false;
 
     if (typeof window._openMisalEditor === 'function' && !window._openMisalEditor.__dioW) {
       var oM = window._openMisalEditor;
-      window._openMisalEditor = function (docId, fromTab) { try { saveTab(docId); } catch (_) {} return oM.apply(this, arguments); };
+      window._openMisalEditor = function (docId, fromTab) { try { saveTab(docId); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } return oM.apply(this, arguments); };
       window._openMisalEditor.__dioW = true;
     } else if (typeof window._openMisalEditor !== 'function') ok = false;
 
@@ -137,7 +137,7 @@
                     document.getElementById('workspace-tab-content');
         if (ready && typeof window._openMisalEditor === 'function') {
           clearInterval(iv2);
-          try { window._openMisalEditor(st.docId); } catch (_) {}
+          try { window._openMisalEditor(st.docId); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
         }
       }, 200);
     }
@@ -148,7 +148,7 @@
     try {
       if (window._inWorkspace) return;
       if (window._activePage) savePage(window._activePage);
-    } catch (_) {}
+    } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   }
   window.addEventListener('beforeunload', saveNow);
   document.addEventListener('visibilitychange', function () { if (document.hidden) saveNow(); });

@@ -28,14 +28,14 @@ DIO.sub = {
      hai. Do me se koi aik bhi sach ho to sab likhai band. */
   blocked: function () {
     var hardLocked = false;
-    try { hardLocked = (typeof _dioLockActive === 'function') && _dioLockActive(); } catch (_) {}
+    try { hardLocked = (typeof _dioLockActive === 'function') && _dioLockActive(); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
     return this._blocked === true || hardLocked;
   },
   // guard(label) → true = آگے بڑھو، false = بند (renew prompt دکھایا)۔
   guard: function (label) {
     if (this._blocked !== true) return true;          // allow (default + fail-open)
-    try { showToast('سبسکرپشن ختم — ' + (label || 'یہ عمل') + ' بند ہے۔ تجدید کریں۔', 'error', 4000); } catch (_) {}
-    try { if (typeof _showPlans === 'function') _showPlans(); } catch (_) {}
+    try { showToast('سبسکرپشن ختم — ' + (label || 'یہ عمل') + ' بند ہے۔ تجدید کریں۔', 'error', 4000); } catch (_) { /* paigham na dikh sake to koi baat nahi */ }
+    try { if (typeof _showPlans === 'function') _showPlans(); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
     return false;
   }
 };
@@ -59,8 +59,8 @@ function _dioSubWritePrompt() {
   var now = Date.now();
   if (now - _dioSubPromptTs < 1500) return;           // throttle — ایک عمل کے کئی writes پر spam نہ ہو
   _dioSubPromptTs = now;
-  try { showToast('سبسکرپشن ختم — صرف دیکھ سکتے ہیں۔ تجدید کریں۔', 'error', 3500); } catch (_) {}
-  try { if (typeof _showPlans === 'function') _showPlans(); } catch (_) {}
+  try { showToast('سبسکرپشن ختم — صرف دیکھ سکتے ہیں۔ تجدید کریں۔', 'error', 3500); } catch (_) { /* paigham na dikh sake to koi baat nahi */ }
+  try { if (typeof _showPlans === 'function') _showPlans(); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
 }
 // blocked "query builder" — chain (.select().single().eq()… ) سب چلے، await پر {data:null,error}
 function _dioBlockedBuilder() {
@@ -123,7 +123,7 @@ function _installDioWriteGuard() {
           return sb;
         };
       }
-    } catch (_) {}
+    } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 
     // ── rpc: sirf tajdeed/jaanch ki darkhwast khuli ────────────
     try {
@@ -135,13 +135,13 @@ function _installDioWriteGuard() {
           return origRpc.apply(supabaseClient, arguments);
         };
       }
-    } catch (_) {}
+    } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   } catch (_) { /* fail-open */ }
 }
 // Guard FAURAN lagao — pehle 3 second ka window tha jis me har write bina
 // rok guzar jati thi. setTimeout ab sirf fallback hai (client abhi na bana ho to).
-try { _installDioWriteGuard(); } catch (_) {}
-try { setTimeout(_installDioWriteGuard, 1200); } catch (_) {}
+try { _installDioWriteGuard(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+try { setTimeout(_installDioWriteGuard, 1200); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 
 
 // ── #9 FAIL-CLOSED OFFLINE IJAZAT ─────────────────────────────
@@ -164,7 +164,7 @@ function _dioCacheSub(res, oid) {
       s: res.status, d: closed ? 0 : (res.daysLeft || 0),
       p: res.plan || '', o: oid || null, t: Date.now()
     }));
-  } catch (_) {}
+  } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 }
 
 function _dioReadSubCache(oid) {
@@ -186,7 +186,7 @@ function _dioReadSubCache(oid) {
     try {
       var hw = +(localStorage.getItem('dio_hw_clock') || 0);
       if (hw > _now) _now = hw; else localStorage.setItem('dio_hw_clock', String(_now));
-    } catch (_) {}
+    } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     var elapsed = Math.max(0, Math.floor((_now - c.t) / 86400000));
     var left = (c.d || 0) - elapsed;
     if (left <= 0)
@@ -215,7 +215,7 @@ async function _dioOfflineStatus(oid) {
       if (lic && lic.expired)
         return { status: 'expired', daysLeft: 0, plan: 'میعاد ختم — آن لائن تجدید کریں' };
     }
-  } catch (_) {}
+  } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   var cached = _dioReadSubCache(oid);
   if (cached) return cached;
 
@@ -232,7 +232,7 @@ async function _dioOfflineStatus(oid) {
       return { status: 'trial', daysLeft: left,
                plan: 'عارضی اجازت — آن لائن تصدیق درکار' };
     }
-  } catch (_) {}
+  } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   return { status: 'expired', daysLeft: 0,
            plan: 'آن لائن تصدیق درکار — تجدید کریں' };
 }
@@ -261,8 +261,8 @@ async function checkSubscription() {
     if (currentOfficer && currentOfficer.role === 'superadmin') {
       if (navigator.onLine) {
         var _ownerOut = { status:'active', daysLeft:36500, plan:'مالک — لائف ٹائم' };
-        try { _dioCacheSub(_ownerOut, oid); } catch (_) {}
-        try { if (typeof dioRefreshLicense === 'function') dioRefreshLicense(); } catch (_) {}
+        try { _dioCacheSub(_ownerOut, oid); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+        try { if (typeof dioRefreshLicense === 'function') dioRefreshLicense(); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
         return _ownerOut;
       }
       return await _dioOfflineStatus(oid);
@@ -317,11 +317,11 @@ async function checkSubscription() {
     }
     // #9: kamyab ONLINE natije ko cache karo + dastkhat-shuda license taza karo
     _dioCacheSub(out, oid);
-    try { localStorage.removeItem('dio_grace_start'); } catch (_) {}
+    try { localStorage.removeItem('dio_grace_start'); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     try {
       if (typeof dioRefreshLicense === 'function' &&
           (out.status === 'active' || out.status === 'trial')) dioRefreshLicense();
-    } catch(_) {}
+    } catch(_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
     return out;
   } catch(_) {
     // #9 fail-closed: ghair-mutawaqqa khrabi par bhi naya trial NAHI
@@ -344,7 +344,7 @@ async function showSubscriptionBanner() {
      hai aur TALA login safhe ke OOPAR lag jata tha — koi bhi (offline bhi)
      login nahi kar pata tha. Ab: koi andar hi nahi to kuch nahi. */
   if (!(typeof currentUser !== 'undefined' && currentUser)) return;
-  try { var _ms = document.getElementById('main-app'); if (_ms && _ms.style.display === 'none') return; } catch (_) {}
+  try { var _ms = document.getElementById('main-app'); if (_ms && _ms.style.display === 'none') return; } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   // Trial/active info now shows in the BOTTOM bar (footer-license), not below topbar.
   const existing = document.getElementById('sub-banner');
   if (existing) existing.remove();
@@ -385,13 +385,13 @@ async function showSubscriptionBanner() {
     // halat se set hota hai), to mo'attal afsar print bhi kar leta aur
     // showPage() se UI wapas bhi le aata. Ab: flag zabardasti TRUE, guard
     // install, safha dikhao, aur session KHATAM karo.
-    try { if (window.DIO && DIO.sub) DIO.sub._blocked = true; } catch (_) {}
+    try { if (window.DIO && DIO.sub) DIO.sub._blocked = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     _installDioWriteGuard();
-    try { _dioHardLock(sub); } catch (_) { try { showSubscriptionRequired(sub); } catch (_e) {} }
+    try { _dioHardLock(sub); } catch (_) { try { showSubscriptionRequired(sub); } catch (_e) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
     if (_suspOfficer) {
       // Idara-jati mo'attali → device se raasta band + logout
-      try { if (typeof _dioPurgeOnSuspend === 'function') await _dioPurgeOnSuspend(); } catch (_) {}
-      try { await supabaseClient.auth.signOut(); } catch (_) {}
+      try { if (typeof _dioPurgeOnSuspend === 'function') await _dioPurgeOnSuspend(); } catch (_) { /* best-effort — na ho sake to bhi aage chalo */ }
+      try { await supabaseClient.auth.signOut(); } catch (_) { /* best-effort — na ho sake to bhi aage chalo */ }
       currentUser = null; currentOfficer = null;
     }
     return;
@@ -454,7 +454,7 @@ function _dioLockActive() { return _dioLockState.is(); }
 
 function _dioHardLock(sub) {
   _dioLockState.on();
-  try { if (window.DIO && DIO.sub) DIO.sub._blocked = true; } catch (_) {}
+  try { if (window.DIO && DIO.sub) DIO.sub._blocked = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 
   // showPage ko lapeto — lock ke doran koi safha na khule
   try {
@@ -468,12 +468,12 @@ function _dioHardLock(sub) {
       wrapped._dioOrig = _origShow;
       window.showPage = wrapped;
     }
-  } catch (_) {}
+  } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
 
   _dioPaintLock(sub);
 
   // Har 1.2 second — agar lock mita diya gaya ho to dobara laga do
-  try { if (_dioLockTimer) clearInterval(_dioLockTimer); } catch (_) {}
+  try { if (_dioLockTimer) clearInterval(_dioLockTimer); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   _dioLockTimer = setInterval(function () {
     // Pehra SIRF tab rukta hai jab tala waqai khul chuka ho (tajdeed ke
     // baad). Console se koi nishan ulta de to pehra chalta rehta hai.
@@ -482,7 +482,7 @@ function _dioHardLock(sub) {
       if (window.DIO && DIO.sub) DIO.sub._blocked = true;   // koi false kar de to wapas
       window._dioLocked = true;                              // sirf dikhane ke liye
       if (!document.getElementById('dio-sub-lock')) _dioPaintLock(sub);
-    } catch (_) {}
+    } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   }, 1200);
 }
 window._dioHardLock = _dioHardLock;
@@ -490,9 +490,9 @@ window._dioHardLock = _dioHardLock;
 // v527: log aut par tala hatao — tala ACCOUNT ka hai, login safhe ka nahi.
 // Bypass nahi: agli bar login par showSubscriptionBanner() wahi tala dobara lagata hai.
 function _dioClearLockOnLogout() {
-  try { _dioLockState.off(); } catch (_) {}
-  try { if (_dioLockTimer) { clearInterval(_dioLockTimer); _dioLockTimer = null; } } catch (_) {}
-  try { var L = document.getElementById('dio-sub-lock'); if (L) L.remove(); } catch (_) {}
+  try { _dioLockState.off(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { if (_dioLockTimer) { clearInterval(_dioLockTimer); _dioLockTimer = null; } } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { var L = document.getElementById('dio-sub-lock'); if (L) L.remove(); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   window._dioLocked = false;
 }
 window._dioClearLockOnLogout = _dioClearLockOnLogout;
@@ -503,23 +503,22 @@ async function _dioUnlockIfRenewed() {
   if (btn) { btn.disabled = true; btn.textContent = '\u062c\u0627\u0646\u0686\u0627 \u062c\u0627 \u0631\u06c1\u0627 \u06c1\u06d2\u2026'; }
   try {
     if (!navigator.onLine) {
-      try { showToast('\u062a\u062c\u062f\u06cc\u062f \u06a9\u06cc \u062a\u0635\u062f\u06cc\u0642 \u06a9\u06d2 \u0644\u06cc\u06d2 \u0627\u0646\u0679\u0631\u0646\u06cc\u0679 \u062f\u0631\u06a9\u0627\u0631 \u06c1\u06d2\u06d4','error'); } catch (_) {}
+      try { showToast('\u062a\u062c\u062f\u06cc\u062f \u06a9\u06cc \u062a\u0635\u062f\u06cc\u0642 \u06a9\u06d2 \u0644\u06cc\u06d2 \u0627\u0646\u0679\u0631\u0646\u06cc\u0679 \u062f\u0631\u06a9\u0627\u0631 \u06c1\u06d2\u06d4','error'); } catch (_) { /* paigham na dikh sake to koi baat nahi */ }
       return;
     }
     var fresh = await checkSubscription();
     if (fresh && (fresh.status === 'active' || fresh.status === 'trial')) {
       _dioLockState.off();
       window._dioLocked = false;
-      try { if (window.DIO && DIO.sub) DIO.sub.setFromStatus(fresh.status); } catch (_) {}
-      try { if (_dioLockTimer) { clearInterval(_dioLockTimer); _dioLockTimer = null; } } catch (_) {}
-      try { var L = document.getElementById('dio-sub-lock'); if (L) L.remove(); } catch (_) {}
-      try { showToast('\u062a\u062c\u062f\u06cc\u062f \u062a\u0633\u0644\u06cc\u0645 \u2014 \u062e\u0648\u0634 \u0622\u0645\u062f\u06cc\u062f\u06d4','success'); } catch (_) {}
-      try { location.reload(); } catch (_) {}
+      try { if (window.DIO && DIO.sub) DIO.sub.setFromStatus(fresh.status); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+      try { if (_dioLockTimer) { clearInterval(_dioLockTimer); _dioLockTimer = null; } } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+      try { var L = document.getElementById('dio-sub-lock'); if (L) L.remove(); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
+      try { showToast('\u062a\u062c\u062f\u06cc\u062f \u062a\u0633\u0644\u06cc\u0645 \u2014 \u062e\u0648\u0634 \u0622\u0645\u062f\u06cc\u062f\u06d4','success'); } catch (_) { /* paigham na dikh sake to koi baat nahi */ }
+      try { location.reload(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       return;
     }
-    try { showToast('\u062a\u062c\u062f\u06cc\u062f \u0627\u0628\u06be\u06cc \u062a\u0633\u0644\u06cc\u0645 \u0646\u06c1\u06cc\u06ba \u06c1\u0648\u0626\u06cc\u06d4 \u0627\u06cc\u0688\u0645\u0646 \u06a9\u06cc \u0645\u0646\u0638\u0648\u0631\u06cc کا \u0627\u0646\u062a\u0638\u0627\u0631 \u06a9\u0631\u06cc\u06ba\u06d4','error',4000); } catch (_) {}
-  } catch (_) {
-  } finally {
+    try { showToast('\u062a\u062c\u062f\u06cc\u062f \u0627\u0628\u06be\u06cc \u062a\u0633\u0644\u06cc\u0645 \u0646\u06c1\u06cc\u06ba \u06c1\u0648\u0626\u06cc\u06d4 \u0627\u06cc\u0688\u0645\u0646 \u06a9\u06cc \u0645\u0646\u0638\u0648\u0631\u06cc کا \u0627\u0646\u062a\u0638\u0627\u0631 \u06a9\u0631\u06cc\u06ba\u06d4','error',4000); } catch (_) { /* paigham na dikh sake to koi baat nahi */ }
+  } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } finally {
     if (btn) { btn.disabled = false; btn.textContent = '\u0645\u06cc\u06ba \u0646\u06d2 \u062a\u062c\u062f\u06cc\u062f \u06a9\u0631 \u0644\u06cc \u2014 \u062f\u0648\u0628\u0627\u0631\u06c1 \u062c\u0627\u0646\u0686\u06cc\u06ba'; }
   }
 }
@@ -786,12 +785,12 @@ async function updateSubBadge() {
       el.textContent = 'معطل · صرف دیکھیں — ایڈمن سے رابطہ';
       el.style.color = 'var(--red)';
       el.style.cursor = 'pointer';
-      el.onclick = function(){ try{ _showPlans(); }catch(_){} };
+      el.onclick = function(){ try{ _showPlans(); }catch(_){ /* ikhtiyari qadam — na ho sake to chhoR do */ } };
     } else {
       el.textContent = 'میعاد ختم · صرف دیکھیں — تجدید کریں';
       el.style.color = 'var(--red)';
       el.style.cursor = 'pointer';
-      el.onclick = function(){ try{ _showPlans(); }catch(_){} };
+      el.onclick = function(){ try{ _showPlans(); }catch(_){ /* ikhtiyari qadam — na ho sake to chhoR do */ } };
     }
-  } catch(_) {}
+  } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }

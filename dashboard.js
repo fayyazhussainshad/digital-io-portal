@@ -70,7 +70,7 @@ async function _buildDash() {
       <div id="dash-welcome-avatar" style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0;overflow:hidden;cursor:pointer;" onclick="showPage('settings',null)">
         ${(() => {
           let p = o.profile_photo;
-          if (!p) { try { p = localStorage.getItem('dio_profile_photo') || localStorage.getItem('officer_photo_url'); } catch(_) {} }
+          if (!p) { try { p = localStorage.getItem('dio_profile_photo') || localStorage.getItem('officer_photo_url'); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ } }
           if (p) return `<img src="${esc(p)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
           return (o.full_name||'IO').split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
         })()}
@@ -102,7 +102,7 @@ async function _buildDash() {
   <!-- (سوالات اور مفید نکتہ افسر کی ہدایت پر ہٹا دیے گئے — ڈیش بورڈ صرف کام پر) -->`;
 
   // ٹِکر (6s) + سوالات خودکار (12s) — render ke baad
-  try { initIslamicMessages(); } catch(_) {}
+  try { initIslamicMessages(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 
 // ── STAT CARDS — mockup اسٹائل (سفید کارڈ + outline آئیکن، theme-aware) ──
@@ -331,7 +331,7 @@ function initIslamicMessages() {
       if (!document.getElementById('islamic-bar')) { clearInterval(window._dioIslamicTimer); window._dioIslamicTimer = null; return; }
       _islamicRender();
     }, 6000);   // ہر 6 سیکنڈ (خودکار)
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window.initIslamicMessages = initIslamicMessages;
 
@@ -342,7 +342,7 @@ window.initIslamicMessages = initIslamicMessages;
 // ── HELPERS ───────────────────────────────────────────────────
 function _recentlyViewedBar() {
   let recent = [];
-  try { recent = JSON.parse(localStorage.getItem('dio_recent_cases')||'[]'); } catch(_) {}
+  try { recent = JSON.parse(localStorage.getItem('dio_recent_cases')||'[]'); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   if (!recent.length) return '';
   return `
   <div style="margin-bottom:14px;direction:rtl;">
@@ -374,7 +374,7 @@ function _pd(d) {
 // mein — storage na ho to card har baar dikhega (koi kharabi nahi).
 function _dioOnboardCard() {
   let seen = false;
-  try { seen = localStorage.getItem('dio_seen_welcome_v1') === '1'; } catch (_) {}
+  try { seen = localStorage.getItem('dio_seen_welcome_v1') === '1'; } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   if (seen) return '';
   return `
   <div id="dio-onboard-card" class="dio-onboard">
@@ -395,7 +395,7 @@ function _dioOnboardCard() {
 }
 
 function _dioOnboardDismiss() {
-  try { localStorage.setItem('dio_seen_welcome_v1', '1'); } catch (_) {}
+  try { localStorage.setItem('dio_seen_welcome_v1', '1'); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   const el = document.getElementById('dio-onboard-card');
   if (el) el.remove();
 }

@@ -724,7 +724,7 @@ let currentDocIndex = null;
 async function _dioNeed(files) {
   if (typeof window.dioLoadScript !== 'function') return false;
   for (var i = 0; i < files.length; i++) {
-    try { await window.dioLoadScript(files[i]); } catch (_) {}
+    try { await window.dioLoadScript(files[i]); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   }
   return true;
 }
@@ -742,7 +742,7 @@ window._dioNeed = _dioNeed;
       _dioNeed([SHIMS[fn]]).then(function () {
         var real = window[fn];
         if (typeof real === 'function' && !real._dioShim) { real.apply(null, args); return; }
-        try { if (typeof showToast === 'function') showToast('فائل لوڈ نہیں ہو سکی — ایک لمحے بعد دوبارہ کوشش کریں', 'error'); } catch (_) {}
+        try { if (typeof showToast === 'function') showToast('فائل لوڈ نہیں ہو سکی — ایک لمحے بعد دوبارہ کوشش کریں', 'error'); } catch (_) { /* paigham na dikh sake to koi baat nahi */ }
       });
     };
     shim._dioShim = true;
@@ -776,7 +776,7 @@ async function openCaseWorkspace(id) {
       recent.unshift({ id, fir: c.fir_number||'—', name: c.complainant||'', at: Date.now() });
       recent = recent.slice(0, 8);
       localStorage.setItem('dio_recent_cases', JSON.stringify(recent));
-    } catch(_) {}
+    } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     // Parallel fetch (was sequential — Bug 8 speed fix)
     let docs = [];
     try { docs = c.documents_checklist ? (typeof c.documents_checklist==='string'?JSON.parse(c.documents_checklist):c.documents_checklist) : []; } catch(_) { docs = []; }

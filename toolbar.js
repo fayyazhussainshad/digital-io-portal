@@ -500,7 +500,7 @@ function _wbUpdateStates(editorId) {
       var btn = document.getElementById(prefix + '-' + editorId);
       if (btn) btn.classList.toggle('active', document.queryCommandState(map[prefix]));
     });
-  } catch(e) {}
+  } catch(e) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 
 function setupWordToolbar(editorId) {

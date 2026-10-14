@@ -30,7 +30,7 @@
            .replace(/\b[\w.%+-]+@[\w.-]+\.[a-z]{2,}\b/gi, '[EMAIL]')
            .replace(/(eyJ[\w-]+\.[\w-]+\.)[\w-]+/g, '$1[JWT]')  // JWT
            .replace(/((?:password|passwd|pin|token|apikey|api_key|secret|authorization)\s*[:=]\s*)\S+/gi, '$1[HIDDEN]');
-    } catch (_) {}
+    } catch (_) { /* logging khud kabhi na phatte */ }
     return x.slice(0, 500);                                        // lambai ki hadd
   }
 
@@ -39,7 +39,7 @@
       var arr = JSON.parse(localStorage.getItem(KEY) || '[]');
       arr.push(rec); while (arr.length > MAX) arr.shift();
       localStorage.setItem(KEY, JSON.stringify(arr));
-    } catch (_) {}
+    } catch (_) { /* logging khud kabhi na phatte */ }
   }
 
   function _remote(rec) {
@@ -47,13 +47,13 @@
       if (!navigator.onLine) return;
       if (typeof supabaseClient === 'undefined' || !supabaseClient) return;
       var oid = null;
-      try { oid = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer.id : null; } catch (_) {}
+      try { oid = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer.id : null; } catch (_) { /* logging khud kabhi na phatte */ }
       // best-effort — table na ho to error khamoshi se nazar-andaaz
       supabaseClient.from('client_errors').insert({
         officer_id: oid, message: rec.m, source: rec.s, line: rec.l,
         col: rec.c, stack: rec.st, url: rec.u, ua: rec.ua, at: rec.t
       }).then(function () {}, function () {});
-    } catch (_) {}
+    } catch (_) { /* logging khud kabhi na phatte */ }
   }
 
   function _handle(kind, message, source, line, col, err) {
@@ -69,7 +69,7 @@
 
       var rec = { k: kind, m: _redact(msg), s: source || '', l: line || 0, c: col || 0,
         st: _redact(stack), u: String(location.hash || '').replace(/(access_token|refresh_token|provider_token|token_hash|code)=[^&]*/g, '$1=***'), ua: navigator.userAgent, t: new Date().toISOString() };
-      try { console.error('[DIO error]', kind, msg, source ? ('@' + source + ':' + line) : '', err || ''); } catch (_) {}
+      try { console.error('[DIO error]', kind, msg, source ? ('@' + source + ':' + line) : '', err || ''); } catch (_) { /* logging khud kabhi na phatte */ }
       _store(rec);
       _remote(rec);
     } catch (_) { /* handler khud kabhi na phatte */ }
@@ -85,7 +85,7 @@
 
   // Afsar/support ke liye: recent errors parho ya saaf karo
   window.dioGetErrors = function () { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (_) { return []; } };
-  window.dioClearErrors = function () { try { localStorage.removeItem(KEY); } catch (_) {} };
+  window.dioClearErrors = function () { try { localStorage.removeItem(KEY); } catch (_) { /* logging khud kabhi na phatte */ } };
   // Manual log (app kahin bhi ahem khrabi report kar sakti hai)
   window.dioLogError = function (message, err) { _handle('manual', message, '', 0, 0, err || null); };
 })();

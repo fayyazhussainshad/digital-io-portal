@@ -14,11 +14,11 @@ async function getOfficerId() {
       if (!currentOfficer) currentOfficer = cached;
       return cached.id;
     }
-  } catch(_) {}
+  } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
   // Resolve user id safely
   let uid = currentUser?.id;
   if (!uid) {
-    try { const r = await supabaseClient.auth.getUser(); uid = r.data?.user?.id; } catch(_) {}
+    try { const r = await supabaseClient.auth.getUser(); uid = r.data?.user?.id; } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
   }
   if (!uid) return null;  // Don't query with undefined — prevents 400 errors
   if (!navigator.onLine) return null;  // Can't look up offline without cache
@@ -26,7 +26,7 @@ async function getOfficerId() {
     const { data } = await supabaseClient.from('officers').select('*').eq('user_id', uid).single();
     if (data?.id) {
       if (!currentOfficer || !currentOfficer.id) currentOfficer = data;
-      try { localStorage.setItem('dio_officer_cache', JSON.stringify(data)); } catch(_) {}
+      try { localStorage.setItem('dio_officer_cache', JSON.stringify(data)); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
       return data.id;
     }
     return null;
@@ -54,7 +54,7 @@ async function getCases(status, query) {
     if (!oid) {
       if (typeof offlineStore !== 'undefined') {
         // FIX v524: yahan bhi status/talaash lagao (pehle sab lauta deta tha)
-        try { return filterCached(await offlineStore.getAll('cases_cache') || []); } catch(_) {}
+        try { return filterCached(await offlineStore.getAll('cases_cache') || []); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
       }
       return [];
     }
@@ -62,7 +62,7 @@ async function getCases(status, query) {
     // CACHE-FIRST: try to return cached instantly
     let cached = null;
     if (typeof offlineStore !== 'undefined') {
-      try { cached = await offlineStore.getAll('cases_cache', oid); } catch(_) {}
+      try { cached = await offlineStore.getAll('cases_cache', oid); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
     }
 
     // If offline — return cache only (instant)
@@ -92,10 +92,10 @@ async function getCases(status, query) {
         const ownIds = new Set(all.map(c => c.id));
         shared.forEach(sc => { if (!ownIds.has(sc.id)) all.push(sc); });
       }
-    } catch(_) {}
+    } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     if (typeof markSynced === 'function') markSynced();
     if (typeof offlineStore !== 'undefined' && all && !status && !query) {
-      try { await offlineStore.cache('cases_cache', all); } catch(_) {}
+      try { await offlineStore.cache('cases_cache', all); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
     }
     // FIX v524: shared maqdmaat upar BINA status/talaash ke jor diye jate thay —
     // "چالان مکمل" chunne par bhi dusre status ke shared maqdmaat aa jate thay.
@@ -136,9 +136,9 @@ async function _refreshCasesInBackground(oid) {
         const ownIds = new Set(all.map(c => c.id));
         shared.forEach(sc => { if (!ownIds.has(sc.id)) all.push(sc); });
       }
-    } catch(_) {}
+    } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     if (all && typeof offlineStore !== 'undefined') {
-      try { await offlineStore.cache('cases_cache', all); } catch(_) {}
+      try { await offlineStore.cache('cases_cache', all); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
       if (typeof markSynced === 'function') markSynced();
       // If cases page currently open AND not in a workspace, silently refresh the list
       //
@@ -166,7 +166,7 @@ async function _refreshCasesInBackground(oid) {
         }
       }
     }
-  } catch(_) {}
+  } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
 }
 
 
@@ -179,19 +179,19 @@ async function getCase(id) {
         // Refresh in background if online
         if (navigator.onLine) {
           supabaseClient.from('cases').select('*').eq('id',id).single()
-            .then(({data}) => { if (data) { try { offlineStore.cache('cases_cache', data); } catch(_){} } })
+            .then(({data}) => { if (data) { try { offlineStore.cache('cases_cache', data); } catch(_){ /* sirf local cache — na ho sake to bhi aage chalo */ } } })
             .catch(()=>{});
         }
         return cached;
       }
-    } catch(_) {}
+    } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
   }
   // Not cached — fetch now
   if (!navigator.onLine) return null;
   try {
     const { data } = await supabaseClient.from('cases').select('*').eq('id',id).single();
     if (data && typeof offlineStore !== 'undefined') {
-      try { await offlineStore.cache('cases_cache', data); } catch(_) {}
+      try { await offlineStore.cache('cases_cache', data); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
     }
     return data;
   } catch(_) { return null; }
@@ -221,7 +221,7 @@ async function addCase(caseData) {
     ({ data, error } = await supabaseClient.from('cases').insert(rec).select().single());
   }
   if (error) throw error;
-  if (typeof offlineStore !== 'undefined') { try { await offlineStore.cache('cases_cache', data); } catch(_) {} }
+  if (typeof offlineStore !== 'undefined') { try { await offlineStore.cache('cases_cache', data); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ } }
   return data;
 }
 
@@ -245,7 +245,7 @@ async function updateCase(id, updates) {
     ({ data, error } = await supabaseClient.from('cases').update(updates).eq('id',id).select().single());
   }
   if (error) throw error;
-  if (typeof offlineStore !== 'undefined') { try { await offlineStore.cache('cases_cache', data); } catch(_) {} }
+  if (typeof offlineStore !== 'undefined') { try { await offlineStore.cache('cases_cache', data); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ } }
   return data;
 }
 
@@ -258,7 +258,7 @@ async function deleteCase(id) {
   }
   const { error } = await supabaseClient.from('cases').delete().eq('id',id);
   if (error) throw error;
-  if (typeof offlineStore !== 'undefined') { try { await offlineStore.remove('cases_cache', id); } catch(_) {} }
+  if (typeof offlineStore !== 'undefined') { try { await offlineStore.remove('cases_cache', id); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ } }
 }
 
 let _remindersFailedAt = 0;  // timestamp of last network failure (backoff)
@@ -273,7 +273,7 @@ async function getReminders() {
   // Offline — use cache, never hit network
   if (!navigator.onLine) {
     if (typeof offlineStore !== 'undefined') {
-      try { return await offlineStore.getAll('reminders_cache', oid); } catch(_) {}
+      try { return await offlineStore.getAll('reminders_cache', oid); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
     }
     return _fromLS();
   }
@@ -286,15 +286,15 @@ async function getReminders() {
     if (error) throw error;
     _remindersFailedAt = 0;
     if (data) {
-      try { localStorage.setItem(lsKey, JSON.stringify(data)); } catch(_) {}
-      if (typeof offlineStore !== 'undefined') { try { await offlineStore.cache('reminders_cache', data); } catch(_) {} }
+      try { localStorage.setItem(lsKey, JSON.stringify(data)); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
+      if (typeof offlineStore !== 'undefined') { try { await offlineStore.cache('reminders_cache', data); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ } }
     }
     return data||[];
   } catch(_) {
     // Network failed — mark backoff, fall back to cache
     _remindersFailedAt = Date.now();
     if (typeof offlineStore !== 'undefined') {
-      try { return await offlineStore.getAll('reminders_cache', oid); } catch(_) {}
+      try { return await offlineStore.getAll('reminders_cache', oid); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
     }
     return _fromLS();
   }
@@ -348,7 +348,7 @@ async function getEvidence(firNumber) {
       if (firNumber) q = q.eq('fir_number', firNumber);
       const { data } = await q;
       rows = data || [];
-      try { if (typeof offlineStore !== 'undefined' && rows.length) await offlineStore.cache('evidence_cache', rows); } catch(_) {}
+      try { if (typeof offlineStore !== 'undefined' && rows.length) await offlineStore.cache('evidence_cache', rows); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
     } catch(_) { rows = []; }
   }
   // ── offline cache se local/pending rows merge (ya offline par poori list) ──
@@ -366,7 +366,7 @@ async function getEvidence(firNumber) {
       }
       if (firNumber) rows = rows.filter(r => !r.fir_number || String(r.fir_number) === String(firNumber));
     }
-  } catch(_) {}
+  } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
   return await _attachEvidenceViewUrls(rows);             // signed view URL (_viewUrl) attach karo
 }
 
@@ -417,7 +417,7 @@ async function addEvidenceWithFile(meta, fileInfo) {
     const { data, error } = await supabaseClient.from('evidence')
       .insert({ ...meta, officer_id: oid, file_url, storage_path }).select().single();
     if (error) throw error;
-    try { if (typeof offlineStore !== 'undefined') await offlineStore.cache('evidence_cache', data); } catch(_) {}
+    try { if (typeof offlineStore !== 'undefined') await offlineStore.cache('evidence_cache', data); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
     return data;
   }
 
@@ -428,11 +428,11 @@ async function addEvidenceWithFile(meta, fileInfo) {
   if (blob) {
     fid = 'fid-' + Date.now() + '-' + Math.floor(Math.random() * 1e6);
     previewUrl = (fileInfo && fileInfo.dataUrl) || await _blobToDataUrl(blob);
-    try { await offlineStore.storeFile(fid, previewUrl, { mimeType: blob.type || 'image/jpeg', fileName }); } catch(_) {}
+    try { await offlineStore.storeFile(fid, previewUrl, { mimeType: blob.type || 'image/jpeg', fileName }); } catch(_) { if (typeof dioLogError === 'function') dioLogError('offline evidence: file local store nakaam', _); }
   }
   const localRow = { id: localId, ...meta, officer_id: oid, _local: true, _pendingUpload: true,
     _viewUrl: previewUrl || null, file_url: null, storage_path: null, created_at: new Date().toISOString() };
-  try { await offlineStore.cache('evidence_cache', localRow); } catch(_) {}
+  try { await offlineStore.cache('evidence_cache', localRow); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
   // sync op: file ho to upload_evidence, warna sada insert
   if (fid) {
     await offlineStore.enqueue('evidence', 'upload_evidence', {
@@ -449,7 +449,7 @@ window.addEvidenceWithFile = addEvidenceWithFile;
 async function deleteEvidence(id) {
   const { error } = await supabaseClient.from('evidence').delete().eq('id',id);
   if (error) throw error;
-  try { if (typeof offlineStore !== 'undefined') await offlineStore.remove('evidence_cache', id); } catch(_) {}
+  try { if (typeof offlineStore !== 'undefined') await offlineStore.remove('evidence_cache', id); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
 }
 
 

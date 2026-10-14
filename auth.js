@@ -14,7 +14,7 @@ let _dioKeyP = null;
 function _dioIDB() {
   return new Promise((res, rej) => {
     const r = indexedDB.open('dio_sec', 1);
-    r.onupgradeneeded = () => { try { r.result.createObjectStore('keys'); } catch (_) {} };
+    r.onupgradeneeded = () => { try { r.result.createObjectStore('keys'); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } };
     r.onsuccess = () => res(r.result);
     r.onerror = () => rej(r.error);
   });
@@ -58,7 +58,7 @@ async function _dioSaveAuthToken(key) {
     const { data } = await supabaseClient.auth.getSession();
     const rt = data && data.session && data.session.refresh_token;
     if (rt) { localStorage.setItem(key, await _dioEnc(rt)); return true; }
-  } catch (_) {}
+  } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   return false;
 }
 
@@ -74,7 +74,7 @@ async function _dioLoginWithToken(key) {
     if (data.session.refresh_token) localStorage.setItem(key, await _dioEnc(data.session.refresh_token));
     // v530: log aut (taala) par stopAutoRefresh() hua tha — ab dobara chalu,
     //   warna ghante baad access token expire ho kar sync/save ruk jata
-    try { supabaseClient.auth.startAutoRefresh(); } catch (_) {}
+    try { supabaseClient.auth.startAutoRefresh(); } catch (_) { /* best-effort — na ho sake to bhi aage chalo */ }
     currentUser = data.session.user;
     await _loadOfficerProfile();
     // GATE YAHIN — PIN/biometric/token ka HAR raasta isi se guzarta hai.
@@ -82,14 +82,14 @@ async function _dioLoginWithToken(key) {
     // seedha andar aa jata tha (PIN default panel bhi hai).
     if (!_dioIsOwner(currentOfficer) &&
         (_dioIsSuspended(currentOfficer) || _dioNotApproved(currentOfficer))) {
-      try { await supabaseClient.auth.signOut(); } catch (_) {}
-      try { await _dioPurgeOnSuspend(); } catch (_) {}
+      try { await supabaseClient.auth.signOut(); } catch (_) { /* best-effort — na ho sake to bhi aage chalo */ }
+      try { await _dioPurgeOnSuspend(); } catch (_) { /* best-effort — na ho sake to bhi aage chalo */ }
       // paigham PEHLE tay karo — neeche currentOfficer null ho jata hai
       var _msg = _dioIsSuspended(currentOfficer)
         ? 'آپ کا اکاؤنٹ معطل ہے۔ ایڈمن سے رابطہ کریں۔'
         : 'آپ کا اکاؤنٹ منظوری کے انتظار میں ہے۔';
       currentUser = null; currentOfficer = null;
-      try { showToast(_msg, 'error', 7000); } catch (_) {}
+      try { showToast(_msg, 'error', 7000); } catch (_) { /* paigham na dikh sake to koi baat nahi */ }
       return false;
     }
     return true;
@@ -123,7 +123,7 @@ async function _dioSyncQuickTokens(session) {
   if (!session || !session.refresh_token || !session.user) return;
   const keys = _dioQuickKeysFor(session.user.email);
   for (const k of keys) {
-    try { localStorage.setItem(k, await _dioEnc(session.refresh_token)); } catch (_) {}
+    try { localStorage.setItem(k, await _dioEnc(session.refresh_token)); } catch (_) { if (typeof dioLogError === 'function') dioLogError('quick login: token save nakaam', _); }
   }
 }
 // Supabase ke session ki storage key (app-core.js ka SUPABASE_URL)
@@ -141,11 +141,11 @@ async function _dioDetachForQuickLogin() {
   const s = data && data.session;
   if (!s || !s.refresh_token) return false;
   await _dioSyncQuickTokens(s);
-  try { supabaseClient.auth.stopAutoRefresh(); } catch (_) {}
+  try { supabaseClient.auth.stopAutoRefresh(); } catch (_) { /* best-effort — na ho sake to bhi aage chalo */ }
   const key = _dioAuthStorageKey();
   if (key) {
-    try { if (window.dioSecureStorage && window.dioSecureStorage.removeItem) await window.dioSecureStorage.removeItem(key); } catch (_) {}
-    try { localStorage.removeItem(key); } catch (_) {}
+    try { if (window.dioSecureStorage && window.dioSecureStorage.removeItem) await window.dioSecureStorage.removeItem(key); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+    try { localStorage.removeItem(key); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   }
   return true;
 }
@@ -158,7 +158,7 @@ try {
       }
     });
   }
-} catch (_) {}
+} catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 window._dioSyncQuickTokens = _dioSyncQuickTokens;
 
 /* ═══ انٹرنیٹ آتے ہی سیشن بحال، پھر sync (v527) ══════════════════════
@@ -176,7 +176,7 @@ async function _dioReauthIfNeeded() {
     try {
       const { data } = await supabaseClient.auth.getSession();
       if (data && data.session) return true;
-    } catch (_) {}
+    } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
     let ok = false;
     if (_dioPendingReauth) {
       try {
@@ -186,17 +186,17 @@ async function _dioReauthIfNeeded() {
     }
     if (!ok) {
       for (const k of ['dio_bio_rt', 'dio_pin_rt']) {
-        try { if (localStorage.getItem(k) && await _dioLoginWithToken(k)) { ok = true; break; } } catch (_) {}
+        try { if (localStorage.getItem(k) && await _dioLoginWithToken(k)) { ok = true; break; } } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       }
     }
     _dioPendingReauth = null;
     if (ok) {
-      try { await _loadOfficerProfile(); } catch (_) {}
-      try { if (typeof window._syncOfflineQueue === 'function') window._syncOfflineQueue(); } catch (_) {}
-      try { if (typeof window.updateBadges === 'function') window.updateBadges(); } catch (_) {}
-      try { showToast('انٹرنیٹ بحال — sync شروع', 'success', 3000); } catch (_) {}
+      try { await _loadOfficerProfile(); } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
+      try { if (typeof window._syncOfflineQueue === 'function') window._syncOfflineQueue(); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
+      try { if (typeof window.updateBadges === 'function') window.updateBadges(); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
+      try { showToast('انٹرنیٹ بحال — sync شروع', 'success', 3000); } catch (_) { /* paigham na dikh sake to koi baat nahi */ }
     } else {
-      try { showToast('انٹرنیٹ بحال ہے، مگر sync کے لیے ایک بار پاس ورڈ سے لاگ اِن کریں — آپ کا کام اس آلے پر محفوظ ہے', 'warn', 8000); } catch (_) {}
+      try { showToast('انٹرنیٹ بحال ہے، مگر sync کے لیے ایک بار پاس ورڈ سے لاگ اِن کریں — آپ کا کام اس آلے پر محفوظ ہے', 'warn', 8000); } catch (_) { /* paigham na dikh sake to koi baat nahi */ }
     }
     return ok;
   } finally { _dioReauthBusy = false; }
@@ -215,7 +215,7 @@ async function _dioSavePwVerifier(email, pass) {
       localStorage.setItem('dio_pw_verifier', JSON.stringify({ email: em, hash: h }));
       return true;
     }
-  } catch (_) {}
+  } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   return false;
 }
 window._dioSavePwVerifier = _dioSavePwVerifier;
@@ -283,12 +283,12 @@ async function _dioPurgeOnSuspend() {
   try {
     ['dio_officer_cache','dio_pin_rt','dio_bio_rt','dio_license','dio_sub_cache',
      'dio_biometric_email','dio_biometric_token','dio_err_log','dio_pw_verifier'].forEach(function (k) {
-      try { localStorage.removeItem(k); } catch (_) {}
+      try { localStorage.removeItem(k); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     });
-  } catch (_) {}
+  } catch (_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
   try {
     if (typeof offlineStore !== 'undefined' && offlineStore.clearSession) await offlineStore.clearSession();
-  } catch (_) {}
+  } catch (_) { /* best-effort — na ho sake to bhi aage chalo */ }
 }
 window._dioIsSuspended = _dioIsSuspended;
 window._dioIsOwner = _dioIsOwner;
@@ -297,12 +297,12 @@ async function _dioOfflineRestore() {
   try {
     let sess = null;
     if (typeof offlineStore !== 'undefined' && offlineStore.loadSession) {
-      try { sess = await offlineStore.loadSession(); } catch (_) {}
+      try { sess = await offlineStore.loadSession(); } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
     }
     let officer = null, uid = null, email = null;
     if (sess && sess.userId) { uid = sess.userId; email = sess.email; officer = sess.officer || null; }
     if (!officer) {
-      try { officer = JSON.parse(localStorage.getItem('dio_officer_cache') || 'null'); } catch (_) {}
+      try { officer = JSON.parse(localStorage.getItem('dio_officer_cache') || 'null'); } catch (_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
     }
     if (!uid && officer) uid = officer.user_id;
     if (!email && officer) email = officer.email || null;
@@ -311,7 +311,7 @@ async function _dioOfflineRestore() {
     // band kar ke cached session se andar aa jata (gate ka bypass).
     // Fail-CLOSED: officer snapshot hi na ho to offline daakhla mat do —
     // warna mo'attal afsar cache mita kar saaf record bana leta tha.
-    if (!officer) { try { await _dioPurgeOnSuspend(); } catch (_) {} return false; }
+    if (!officer) { try { await _dioPurgeOnSuspend(); } catch (_) { /* best-effort — na ho sake to bhi aage chalo */ } return false; }
     /* ═══ KHAMI BAND KI GAYI — "malik" ki chhoot sirf ONLINE ═══
        Yeh snapshot `offlineStore` ya `dio_officer_cache` se aata hai, yaani
        AFSAR KE APNE AALE se — usay koi bhi DevTools se badal sakta hai.
@@ -324,13 +324,13 @@ async function _dioOfflineRestore() {
        ONLINE raaste (line ~80) par chhoot barqarar hai, kyunke wahan record
        SEEDHA server se aaya hota hai aur us par bharosa kiya ja sakta hai. */
     if (_dioIsSuspended(officer) || _dioNotApproved(officer)) {
-      try { await _dioPurgeOnSuspend(); } catch (_) {}
-      try { showToast('آپ کا اکاؤنٹ معطل ہے۔ ایڈمن سے رابطہ کریں۔', 'error', 7000); } catch (_) {}
+      try { await _dioPurgeOnSuspend(); } catch (_) { /* best-effort — na ho sake to bhi aage chalo */ }
+      try { showToast('آپ کا اکاؤنٹ معطل ہے۔ ایڈمن سے رابطہ کریں۔', 'error', 7000); } catch (_) { /* paigham na dikh sake to koi baat nahi */ }
       return false;
     }
     currentUser = { id: uid, email: email || '' };
     currentOfficer = officer;
-    try { localStorage.setItem('dio_officer_cache', JSON.stringify(currentOfficer)); } catch (_) {}
+    try { localStorage.setItem('dio_officer_cache', JSON.stringify(currentOfficer)); } catch (_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
     return true;
   } catch (_) { return false; }
 }
@@ -343,7 +343,7 @@ async function _dioHasOfflineSession() {
       const s = await offlineStore.loadSession();
       if (s && s.userId) return true;
     }
-  } catch (_) {}
+  } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
   try { return !!JSON.parse(localStorage.getItem('dio_officer_cache') || 'null'); } catch (_) { return false; }
 }
 window._dioHasOfflineSession = _dioHasOfflineSession;
@@ -394,9 +394,9 @@ async function doLogin() {
     try {
       const _o = JSON.parse(localStorage.getItem('dio_officer_cache') || 'null');
       _savedEmail = (_o && _o.email) ? String(_o.email).trim().toLowerCase() : '';
-    } catch (_) {}
+    } catch (_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
     let ver = null;
-    try { ver = JSON.parse(localStorage.getItem('dio_pw_verifier') || 'null'); } catch (_) {}
+    try { ver = JSON.parse(localStorage.getItem('dio_pw_verifier') || 'null'); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     if (!_savedEmail && ver && ver.email) _savedEmail = String(ver.email).toLowerCase();
     if (_savedEmail && _savedEmail !== String(email).trim().toLowerCase()) {
       showToast('یہ آلہ کسی اور افسر کے نام پر محفوظ ہے — آف لائن صرف وہی داخل ہو سکتے ہیں', 'error', 7000);
@@ -464,13 +464,13 @@ async function doLogin() {
       _dioHashPin(pass).then(function (h) {
         if (h && h.indexOf('pbkdf2$') === 0) localStorage.setItem('dio_pw_verifier', JSON.stringify({ email: _em, hash: h }));
       }).catch(function () {});
-    } catch (_) {}
+    } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     // Biometric/PIN is ای میل کے لیے فعال ہو تو تازہ token محفوظ (v526: chhote-baRe huroof ka farq khatam)
     try {
       if (_dioSameEmail(localStorage.getItem('dio_biometric_email'), (data.user && data.user.email) || email)) {
         await _dioSaveAuthToken('dio_bio_rt'); localStorage.removeItem('dio_biometric_token');
       }
-    } catch(_) {}
+    } catch(_) { if (typeof dioLogError === 'function') dioLogError('biometric: token save nakaam', _); }
     await _loadOfficerProfile();
 
     // Check if officer is approved (skip for admins/superadmins)
@@ -488,8 +488,8 @@ async function doLogin() {
     // istemaal kar leta tha. Ab dono naam dekhte hain.
     // Sirf SUPERADMIN (maalik) mustasna — use system kabhi band na kare.
     if (!_dioIsOwner(currentOfficer) && _dioIsSuspended(currentOfficer)) {
-      try { await supabaseClient.auth.signOut(); } catch (_) {}
-      try { await _dioPurgeOnSuspend(); } catch (_) {}
+      try { await supabaseClient.auth.signOut(); } catch (_) { /* best-effort — na ho sake to bhi aage chalo */ }
+      try { await _dioPurgeOnSuspend(); } catch (_) { /* best-effort — na ho sake to bhi aage chalo */ }
       currentUser = null; currentOfficer = null;
       setLoginLoading(false);
       showToast('آپ کا اکاؤنٹ معطل ہے۔ ایڈمن سے رابطہ کریں۔', 'error', 7000);
@@ -566,22 +566,22 @@ async function _loadOfficerProfile() {
       currentOfficer = null;
       try {
         _dioShowNoProfile(currentUser.email || '', currentUser.id);
-      } catch(_) {}
+      } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       return;
     }
     if (data) {
       currentOfficer = data;
       // Cache for offline use
-      try { localStorage.setItem('dio_officer_cache', JSON.stringify(data)); } catch(_) {}
+      try { localStorage.setItem('dio_officer_cache', JSON.stringify(data)); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
       // Save session to IndexedDB so app opens offline next time
-      try { if (currentUser && currentUser.id && typeof offlineStore !== 'undefined' && offlineStore.saveSession) offlineStore.saveSession(currentUser, data); } catch(_) {}
+      try { if (currentUser && currentUser.id && typeof offlineStore !== 'undefined' && offlineStore.saveSession) offlineStore.saveSession(currentUser, data); } catch(_) { if (typeof dioLogError === 'function') dioLogError('offline login: session save nakaam', _); }
     }
   } catch(_) {
     // Offline or error — restore from cache
     try {
       const cached = localStorage.getItem('dio_officer_cache');
       if (cached) currentOfficer = JSON.parse(cached);
-    } catch(_) {}
+    } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
   }
   if (!currentOfficer) {
     currentOfficer = { user_id:currentUser.id, email:currentUser.email, full_name:currentUser.user_metadata?.full_name||'', station:'', district:'', designation:'', role:'officer' };
@@ -591,13 +591,13 @@ async function _loadOfficerProfile() {
     try {
       localStorage.setItem('dio_profile_photo', currentOfficer.profile_photo);
       localStorage.setItem('officer_photo_url', currentOfficer.profile_photo);
-    } catch(_) {}
+    } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   } else {
     // DB has no photo — try localStorage fallback
     try {
       const saved = localStorage.getItem('officer_photo_url') || localStorage.getItem('dio_profile_photo');
       if (saved) currentOfficer.profile_photo = saved;
-    } catch(_) {}
+    } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   }
 }
 
@@ -611,10 +611,10 @@ function setLoginLoading(v) {
 async function loginSuccess() {
   // SECURITY: is browser session ka nishan. sessionStorage browser band hote hi
   // khud mit jata hai — is liye app dobara kholne par password lazmi hoga.
-  try { sessionStorage.setItem('dio_sess_active', '1'); } catch(_) {}
+  try { sessionStorage.setItem('dio_sess_active', '1'); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   // v526: taala (quick-login logout) par token ka khud-taaza-karna rok diya jata hai —
   // naye login par dobara chalao, warna ghante baad session expire ho jata.
-  try { if (supabaseClient && supabaseClient.auth && supabaseClient.auth.startAutoRefresh) supabaseClient.auth.startAutoRefresh(); } catch(_) {}
+  try { if (supabaseClient && supabaseClient.auth && supabaseClient.auth.startAutoRefresh) supabaseClient.auth.startAutoRefresh(); } catch(_) { /* best-effort — na ho sake to bhi aage chalo */ }
   // AUDIT — login success (Phase 4B). Ye chalega tab jab currentOfficer set ho jaye.
   // Isliye chhota delay — initApp() mein officer profile fetch ho jata hai.
   try {
@@ -626,9 +626,9 @@ async function loginSuccess() {
             ts: new Date().toISOString()
           }
         });
-      } catch (_) {}
+      } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
     }, 1500);
-  } catch (_) {}
+  } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
   const ls=document.getElementById('login-screen'), app=document.getElementById('main-app');
   ls.style.transition='opacity 0.4s'; ls.style.opacity='0';
   setTimeout(()=>{ ls.style.display='none'; app.style.display='flex'; setLoginLoading(false); initApp(); },400);
@@ -692,7 +692,7 @@ function _onboardNext() { if (_onboardIdx < _ONBOARD_STEPS.length-1) { _onboardI
 function _onboardPrev() { if (_onboardIdx > 0) { _onboardIdx--; _renderOnboardStep(); } }
 
 function _skipOnboarding() {
-  try { localStorage.setItem('dio_onboarded', 'yes'); } catch(_) {}
+  try { localStorage.setItem('dio_onboarded', 'yes'); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   closeModal();
 }
 // Allow re-showing from settings
@@ -716,9 +716,9 @@ async function doLogout() {
         metadata: { ts: new Date().toISOString() }
       });
       // Sync flush — sab pending audit rows DB mein bhejें
-      try { await DIO.audit.flush(); } catch (_) {}
+      try { await DIO.audit.flush(); } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
     }
-  } catch (_) {}
+  } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
 
   // 1. Server sign-out (offline par fail ho to bhi jari raho)
   //    v526: agar is aale par PIN ya biometric fa'al hai to sign-out ki jagah
@@ -731,28 +731,28 @@ async function doLogout() {
   //   'global' hai jo afsar ke HAR aale (phone samet) ka session mansookh kar
   //   deta tha — desktop par log aut karte hi phone ka fingerprint/PIN mar jata
   //   tha (maidan ki shikayat "mobile par biometric kaam nahi karta").
-  if (!_quickKept) { try { await supabaseClient.auth.signOut({ scope: 'local' }); } catch(_) {} }
+  if (!_quickKept) { try { await supabaseClient.auth.signOut({ scope: 'local' }); } catch(_) { /* best-effort — na ho sake to bhi aage chalo */ } }
 
   // 2. Camera / microphone / voice recognition stop
   try {
     if (window._voiceRecognition && typeof window._voiceRecognition.stop === 'function')
       window._voiceRecognition.stop();
     window._voiceRecognition = null; window._voiceActive = false;
-  } catch(_) {}
+  } catch(_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
   try {
     // koi bhi live MediaStream (evidence camera, mic) band karo
     if (window._dioMediaStreams && Array.isArray(window._dioMediaStreams)) {
-      window._dioMediaStreams.forEach(s => { try { s.getTracks().forEach(t=>t.stop()); } catch(_){} });
+      window._dioMediaStreams.forEach(s => { try { s.getTracks().forEach(t=>t.stop()); } catch(_){ /* ikhtiyari qadam — na ho sake to chhoR do */ } });
       window._dioMediaStreams = [];
     }
-  } catch(_) {}
+  } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 
   // 3. In-memory state saaf
   currentUser=null; currentOfficer=null; _dioPendingReauth = null;
-  try { if (typeof window._dioClearLockOnLogout === 'function') window._dioClearLockOnLogout(); } catch(_) {}
-  try { window._workspaceCase = null; window._workspaceEv = null; } catch(_){}
-  try { _misalDocs = {}; _misalCaseId = null; _misalCase = null; } catch(_){}
-  try { _rfaList = []; _rfaCurrent = null; _rfaCaseId = null; } catch(_){}
+  try { if (typeof window._dioClearLockOnLogout === 'function') window._dioClearLockOnLogout(); } catch(_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
+  try { window._workspaceCase = null; window._workspaceEv = null; } catch(_){ /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { _misalDocs = {}; _misalCaseId = null; _misalCase = null; } catch(_){ /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { _rfaList = []; _rfaCurrent = null; _rfaCaseId = null; } catch(_){ /* ikhtiyari qadam — na ho sake to chhoR do */ }
 
   // 4. Sensitive local caches — audit list ke mutabiq
   //    (case-specific ڈیٹا, dashboards, tokens, cases, docs, evidence)
@@ -772,20 +772,20 @@ async function doLogout() {
       const k = localStorage.key(i);
       if (!k) continue;
       if (_sensitivePrefixes.some(p => k === p || k.startsWith(p))) {
-        try { localStorage.removeItem(k); } catch(_) {}
+        try { localStorage.removeItem(k); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
       }
     }
-  } catch(_) {}
-  try { sessionStorage.clear(); } catch(_) {}
+  } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
+  try { sessionStorage.clear(); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   try {
     if ('caches' in window) caches.keys().then(ks => ks.forEach(k => caches.delete(k))).catch(()=>{});
-  } catch(_) {}
+  } catch(_) { /* best-effort — na ho sake to bhi aage chalo */ }
   const ov = document.getElementById('dio-pin-overlay'); if (ov) ov.remove();
   const app = document.getElementById('main-app');
   const login = document.getElementById('login-screen');
   if (app) app.style.display='none';
   if (login) { login.style.display='flex'; login.style.opacity='1'; }
-  try { _dioLandingAvatar(); } catch(_) {}
+  try { _dioLandingAvatar(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   showToast('لاگ آؤٹ ہو گئے','info');
 }
 
@@ -843,7 +843,7 @@ function hideForgotModal() {
   // Recovery ke dauran band kiya to adhoora session na rahe
   if (window.__dioRecoveryActive) {
     window.__dioRecoveryActive = false;
-    try { supabaseClient.auth.signOut({ scope: 'local' }); } catch (_) {}   // v530: doosre aale mehfooz
+    try { supabaseClient.auth.signOut({ scope: 'local' }); } catch (_) { /* best-effort — na ho sake to bhi aage chalo */ }   // v530: doosre aale mehfooz
   }
 }
 
@@ -918,13 +918,13 @@ async function resetPassword() {
     if (error) { _fpMsg(_fpErrText(error), 'err'); return; }
     // Naye pass word se khud login karwayen — is liye recovery session band
     window.__dioRecoveryActive = false;
-    try { await supabaseClient.auth.signOut(); } catch (_) {}
+    try { await supabaseClient.auth.signOut(); } catch (_) { /* best-effort — na ho sake to bhi aage chalo */ }
     // Purana mehfooz token (PIN/biometric) ab bekaar — wo dobara password login par banega
     hideForgotModal();
     const le = document.getElementById('login-email');
     if (le && email) le.value = email;
     const lp = document.getElementById('login-password'); if (lp) lp.value = '';
-    try { setLoginMethod('password', document.querySelectorAll('.login-method')[0]); } catch (_) {}
+    try { setLoginMethod('password', document.querySelectorAll('.login-method')[0]); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
     showToast('پاس ورڈ تبدیل ہو گیا — اب نئے پاس ورڈ سے لاگ اِن کریں', 'success', 6000);
   } catch (e) {
     _fpMsg(_fpErrText(e), 'err');
@@ -954,7 +954,7 @@ function _fpInitRecovery() {
         }
       });
     }
-  } catch (_) {}
+  } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 _fpInitRecovery();
 window.sendResetEmail = sendResetEmail;
@@ -1002,7 +1002,7 @@ async function _verifyPin() {
   let _pinOk = await _dioPinMatches(_pinValue, savedPin);
   if (_pinOk === null) {                      // legacy — خام محفوظ تھا
     _pinOk = (_pinValue === savedPin);
-    if (_pinOk) { try { localStorage.setItem('dio_pin', await _dioHashPin(_pinValue)); } catch (_) {} }
+    if (_pinOk) { try { localStorage.setItem('dio_pin', await _dioHashPin(_pinValue)); } catch (_) { if (typeof dioLogError === 'function') dioLogError('PIN: naye hash mein badalna nakaam', _); } }
   }
   if (!_pinOk) {
     showToast('غلط PIN', 'error');
@@ -1053,7 +1053,7 @@ function _dioDefaultLoginPanel() {
       const bioBtn = document.querySelectorAll('.login-method')[2];
       if (bioBtn && typeof setLoginMethod === 'function') setLoginMethod('biometric', bioBtn);
     }
-  } catch(_) {}
+  } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 }
 window._dioDefaultLoginPanel = _dioDefaultLoginPanel;
 
@@ -1066,7 +1066,7 @@ function _dioInitLoginScreen() {
     _dioDefaultLoginPanel();
     const hint = document.getElementById('offline-login-hint');
     if (hint) hint.style.display = navigator.onLine ? 'none' : 'block';
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._dioInitLoginScreen = _dioInitLoginScreen;
 
@@ -1080,7 +1080,7 @@ function _dioLandingAvatar() {
     const box = document.getElementById('dio-land-emblem');
     if (!box) return;
     let src = '';
-    try { src = localStorage.getItem('dio_profile_photo') || localStorage.getItem('officer_photo_url') || ''; } catch (_) {}
+    try { src = localStorage.getItem('dio_profile_photo') || localStorage.getItem('officer_photo_url') || ''; } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     src = String(src || '').trim();
     const ok = /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(src) || /^https:\/\/[^\s"'<>]+$/.test(src);
     const old = box.querySelector('img.dio-land-photo');
@@ -1094,17 +1094,17 @@ function _dioLandingAvatar() {
     img.src = src;
     if (!old) box.appendChild(img);
     box.classList.add('has-photo');
-  } catch (_) {}
+  } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 }
 window._dioLandingAvatar = _dioLandingAvatar;
 window.addEventListener('load', function () { setTimeout(_dioLandingAvatar, 50); });
 window.addEventListener('load', function () { setTimeout(_dioInitLoginScreen, 300); });
 window.addEventListener('offline', function () {
   try { const h = document.getElementById('offline-login-hint'); const ls = document.getElementById('login-screen');
-    if (h && ls && ls.style.display !== 'none') h.style.display = 'block'; } catch (_) {}
+    if (h && ls && ls.style.display !== 'none') h.style.display = 'block'; } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 });
 window.addEventListener('online', function () {
-  try { const h = document.getElementById('offline-login-hint'); if (h) h.style.display = 'none'; } catch (_) {}
+  try { const h = document.getElementById('offline-login-hint'); if (h) h.style.display = 'none'; } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 });
 
 
@@ -1121,7 +1121,7 @@ function setLoginMethod(m, btn) {
   // Reset PIN dots when switching to PIN
   if (m === 'pin') { _pinValue = ''; _renderPinDots(); }
   // v530: بایومیٹرک ٹیب کھلتے ہی آلہ جانچو (لمس سے پہلے — اس لیے iPhone پر بھی محفوظ)
-  if (m === 'biometric') { try { _dioBioPrecheck(); } catch (_) {} }
+  if (m === 'biometric') { try { _dioBioPrecheck(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
 }
 
 // v530: بایومیٹرک ٹیب پر فوراً بتاؤ کہ یہ فون تیار ہے یا نہیں — پہلے بغیر
@@ -1142,7 +1142,7 @@ async function _dioBioPrecheck() {
       if (PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable &&
           (await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()) === false)
         msg = 'اس فون پر اسکرین لاک یا فنگرپرنٹ/چہرہ سیٹ نہیں — فون کی سیٹنگز میں لگائیں';
-    } catch (_) {}
+    } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   }
   lab.textContent = msg || DEF;
   lab.classList.toggle('dio-bio-warn', !!msg);
@@ -1192,14 +1192,14 @@ async function _savePin() {
   try {
     const { error: vErr } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
     if (vErr) { showToast('موجودہ پاسورڈ غلط ہے', 'error'); return; }
-  } catch(_) {}
+  } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 
   try {
     localStorage.setItem('dio_pin', await _dioHashPin(pin));   // خام نہیں — PBKDF2 ہیش
     localStorage.setItem('dio_pin_email', email);
     // پاسورڈ نہیں — صرف refresh-token (محدود مدت، پاسورڈ ظاہر نہیں کرتا)
     await _dioSaveAuthToken('dio_pin_rt');
-    try { localStorage.removeItem('dio_pin_token'); } catch(_) {}
+    try { localStorage.removeItem('dio_pin_token'); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     closeModal();
     showToast('PIN سیٹ ہو گیا — اب لاگ ان اسکرین پر PIN استعمال کریں', 'success', 5000);
   } catch(e) {
@@ -1225,7 +1225,7 @@ async function _dioBioWhy(e, phase) {
   try {
     if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable)
       platform = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-  } catch (_) {}
+  } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   if (platform === false)
     return 'اس فون پر اسکرین لاک یا فنگرپرنٹ/چہرہ سیٹ نہیں — فون کی سیٹنگز میں لگائیں، پھر دوبارہ کوشش کریں (' + n + ')';
   if (n === 'NotAllowedError')
@@ -1302,11 +1302,11 @@ async function doBiometric() {
     setLoginLoading(false);
     showToast('فنگرپرنٹ درست تھا، مگر اس فون کا محفوظ سیشن ختم ہو چکا (پاس ورڈ بدلا گیا یا اکاؤنٹ مکمل لاگ آؤٹ ہوا) — ایک بار پاس ورڈ سے لاگ اِن کریں، بایومیٹرک خود پھر چل پڑے گا', 'warn', 8000);
     const le = document.getElementById('login-email'); if (le) le.value = savedEmail;
-    try { setLoginMethod('password', document.querySelectorAll('.login-method')[0]); } catch (_) {}
+    try { setLoginMethod('password', document.querySelectorAll('.login-method')[0]); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   } catch(e) {
-    try { setLoginLoading(false); } catch (_) {}
+    try { setLoginLoading(false); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     let msg = 'بایومیٹرک ناکام — دوبارہ کوشش کریں';
-    try { msg = await _dioBioWhy(e, 'login'); } catch (_) {}
+    try { msg = await _dioBioWhy(e, 'login'); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     showToast(msg, 'error', 9000);
   } finally {
     if (ring) ring.classList.remove('scanning');
@@ -1356,10 +1356,10 @@ async function enableBiometric() {
     } else {
       showToast('بایومیٹرک فعال ہو گیا — اگلی بار فنگرپرنٹ/چہرے سے لاگ اِن کریں', 'success', 5000);
     }
-    try { if (typeof showPage === 'function' && window._activePage === 'settings') showPage('settings', null); } catch (_) {}
+    try { if (typeof showPage === 'function' && window._activePage === 'settings') showPage('settings', null); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
   } catch(e) {
     let msg = 'بایومیٹرک فعال نہیں ہوا';
-    try { msg = await _dioBioWhy(e, 'enable'); } catch (_) {}
+    try { msg = await _dioBioWhy(e, 'enable'); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     showToast(msg, 'error', 9000);
   }
 }
@@ -1367,10 +1367,10 @@ async function enableBiometric() {
 // v526: بایومیٹرک بند کریں — credential اور محفوظ token دونوں ہٹاؤ
 function disableBiometric() {
   ['dio_biometric_cred', 'dio_biometric_email', 'dio_bio_rt', 'dio_biometric_token'].forEach(k => {
-    try { localStorage.removeItem(k); } catch (_) {}
+    try { localStorage.removeItem(k); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   });
   showToast('اس ڈیوائس پر بایومیٹرک بند کر دیا گیا', 'info', 4000);
-  try { if (typeof showPage === 'function' && window._activePage === 'settings') showPage('settings', null); } catch (_) {}
+  try { if (typeof showPage === 'function' && window._activePage === 'settings') showPage('settings', null); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
 }
 function isBiometricEnabled() {
   try {
@@ -1456,7 +1456,7 @@ function resetSessionTimer() {
     if (!localStorage.getItem('digital_io_pin_hash')) return;
     if (!(typeof currentUser !== 'undefined' && currentUser)) return;
     _sessionTimer = setTimeout(lockApp, SESSION_TIMEOUT);
-  } catch (_) {}
+  } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 }
 // ── PIN LOCK SCREEN (Priority 1B) ─────────────────────────────
 let _pinFailedAttempts = 0;
@@ -1473,7 +1473,7 @@ function _authWarmDriveToken() {
   try {
     const t = localStorage.getItem('dio_gdrive_token');
     if (t) googleDriveToken = t;
-  } catch (_) {}
+  } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 }
 _authWarmDriveToken();
 
@@ -1482,7 +1482,7 @@ document.addEventListener('click', resetSessionTimer);
 document.addEventListener('keypress', resetSessionTimer);
 document.addEventListener('touchstart', resetSessionTimer);
 // پس منظر میں جاتے ہی فوری لاک (اسکرین بند / دوسری ایپ)
-document.addEventListener('visibilitychange', () => { try { if (document.hidden) lockApp(); } catch (_) {} });
+document.addEventListener('visibilitychange', () => { try { if (document.hidden) lockApp(); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } });
 
 
 function lockApp() {
@@ -1494,7 +1494,7 @@ function lockApp() {
     const app = document.getElementById('main-app');
     if (!app || app.style.display === 'none') return;           // لاگ اِن اسکرین پر لاک نہیں
     _showPinScreen('unlock');
-  } catch (_) {}
+  } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 }
 window.lockApp = lockApp;
 
@@ -1533,7 +1533,7 @@ function _showPinScreen(mode) {
       let ok = await _dioPinMatches(pin, stored);
       if (ok === null) {                          // legacy btoa — درست ہونے پر migrate
         ok = (btoa('dio_' + pin + '_lock') === stored);
-        if (ok) { try { localStorage.setItem('digital_io_pin_hash', await _dioHashPin(pin)); } catch (_) {} }
+        if (ok) { try { localStorage.setItem('digital_io_pin_hash', await _dioHashPin(pin)); } catch (_) { if (typeof dioLogError === 'function') dioLogError('PIN lock: naye hash mein badalna nakaam', _); } }
       }
       if (ok) {
         _pinFailedAttempts = 0;
@@ -1566,7 +1566,7 @@ window.maybeSetupPin = function() {
         <button class="btn btn-secondary" onclick="closeModal()">ابھی نہیں</button>
         <button class="btn btn-primary" onclick="closeModal();_showPinScreen('set')">PIN مقرر کریں</button>
       </div>`);
-  } catch (_) {}
+  } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 };
 
 // سیٹنگز سے ایپ لاک PIN مقرر/تبدیل/ہٹائیں
@@ -1581,5 +1581,5 @@ window.dioLockPinSettings = function() {
         ${has ? `<button class="btn btn-danger" onclick="localStorage.removeItem('digital_io_pin_hash');resetSessionTimer();closeModal();showToast('ایپ لاک ہٹا دیا گیا','info')">لاک ہٹائیں</button>` : ''}
         <button class="btn btn-primary" onclick="closeModal();_showPinScreen('set')">${has ? 'نیا PIN' : 'PIN مقرر کریں'}</button>
       </div>`);
-  } catch (_) {}
+  } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 };

@@ -59,7 +59,7 @@ async function openSazaSlip(caseId) {
   await _sazaLoadSaved();
   await _sazaLoadAccused();
   // Full-page tab kholo (misal-docs ka tab nizam) — jaise چالان karta hai
-  if (typeof _dioOpenDocTab === 'function') { try { _dioOpenDocTab('saza_slip'); } catch (_) {} }
+  if (typeof _dioOpenDocTab === 'function') { try { _dioOpenDocTab('saza_slip'); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
   _sazaRender();
 }
 window.openSazaSlip = openSazaSlip;
@@ -75,14 +75,14 @@ async function _sazaLoadSaved() {
       _sazaSaved = _misalDocs['saza_slip'].content || {};
       return;
     }
-  } catch (_) {}
+  } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   // Fallback — localStorage backup (offline ya DB-miss ki soorat mein)
   try {
     const raw = localStorage.getItem('dio_saza_' + _sazaCaseId);
     if (raw) {
       _sazaSaved = JSON.parse(raw) || {};
       // _misalDocs mein bhi bithao taake chip "مکمل" dikhe
-      try { _sazaMarkMisalSaved(_sazaSaved, 'complete'); } catch (_) {}
+      try { _sazaMarkMisalSaved(_sazaSaved, 'complete'); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     }
   } catch (_) { _sazaSaved = {}; }
 }
@@ -166,7 +166,7 @@ function _sazaSideMargin() { return (_sazaPaper === 'a4') ? '0.5cm' : '0.2cm'; }
 
 function _sazaSetPaper(v) {
   _sazaPaper = v;
-  try { localStorage.setItem('dio_saza_paper', v); } catch (_) {}
+  try { localStorage.setItem('dio_saza_paper', v); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   _sazaRender();
 }
 window._sazaSetPaper = _sazaSetPaper;
@@ -263,7 +263,7 @@ function _sazaRender() {
           <colgroup>
             ${(function(){
               let w = [45,10,10,35];
-              try { const s = JSON.parse(sv.col_w || 'null'); if (Array.isArray(s) && s.length===4) w = s; } catch(_){}
+              try { const s = JSON.parse(sv.col_w || 'null'); if (Array.isArray(s) && s.length===4) w = s; } catch(_){ /* kharab/khali JSON — pehle se tay qadr rahe */ }
               return w.map(x => `<col style="width:${Number(x)||0}%">`).join('');
             })()}
           </colgroup>
@@ -292,14 +292,14 @@ function _sazaRender() {
     _sazaBindKeys();
     _sazaFocusMode(true);
     // Saved doc font wapas lagao
-    try { const df = _sazaDocFont(sv); if (df) _sazaFontToDoc(df); } catch (_) {}
+    try { const df = _sazaDocFont(sv); if (df) _sazaFontToDoc(df); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     // کالم ki lakeerein khiska kar chaurai badalne wale handle
-    try { _sazaMakeResizable(); } catch (_) {}
+    try { _sazaMakeResizable(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     // Table ki lakeerein safhe ke NEECHE tak (default) — data row ko phailao
-    try { _sazaStretchTable(); } catch (_) {}
-    [250, 800].forEach(ms => setTimeout(() => { try { _sazaStretchTable(); } catch (_) {} }, ms));
-    window.addEventListener('resize', () => { try { _sazaFitPaper(); _sazaStretchTable(); } catch (_) {} });
-    if (typeof applyAutoDirection === 'function') { try { applyAutoDirection(area); } catch (_) {} }
+    try { _sazaStretchTable(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+    [250, 800].forEach(ms => setTimeout(() => { try { _sazaStretchTable(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }, ms));
+    window.addEventListener('resize', () => { try { _sazaFitPaper(); _sazaStretchTable(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } });
+    if (typeof applyAutoDirection === 'function') { try { applyAutoDirection(area); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
   }, 60);
 }
 window._sazaRender = _sazaRender;
@@ -371,8 +371,8 @@ function _sazaColDragEnd() {
   document.removeEventListener('mousemove', _sazaColDragMove);
   document.removeEventListener('mouseup', _sazaColDragEnd);
   _sazaDrag = null;
-  try { _sazaStretchTable(); } catch (_) {}
-  try { _sazaDirty = true; } catch (_) {}
+  try { _sazaStretchTable(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { _sazaDirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 
 //    allocated khana charon کالم mein:
@@ -556,7 +556,7 @@ function _sazaAccPicker(ev) {
     const picked = [...box.querySelectorAll('input:checked')].map(i => i.value);
     box.remove();
     _sazaSetAccused(picked);
-    try { _sazaDirty = true; } catch (_) {}
+    try { _sazaDirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   };
 }
 window._sazaAccPicker = _sazaAccPicker;
@@ -580,8 +580,8 @@ function _sazaSetAccused(names) {
   const svLike = { acc: JSON.stringify(names), sho: shoHtml };
   if (shoDate) svLike.sho_date = shoDate.innerHTML;
   tbody.innerHTML = _sazaBuildRows(svLike, c, o);
-  try { _sazaBindKeys(); } catch (_) {}
-  try { _sazaStretchTable(); } catch (_) {}
+  try { _sazaBindKeys(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { _sazaStretchTable(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 
 // ═══ Aaj ki تاریخ — DD/MM/YYYY (report173 _ch173Today jaisa) ═══
@@ -594,7 +594,7 @@ function _sazaToday() {
     try {
       const f = formatDate(d);
       if (f && /^\d{2}\/\d{2}\/\d{4}$/.test(String(f).trim())) return String(f).trim();
-    } catch (_) {}
+    } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   }
   return manual;
 }
@@ -615,7 +615,7 @@ function _sazaShoLine(o) {
     let l = parts.join(' ');
     if (st) l += (l ? ' ' : '') + 'تھانہ ' + st;
     if (l.trim()) return l;
-  } catch (_) {}
+  } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   return st ? ('تھانہ ' + st) : '';
 }
 
@@ -627,7 +627,7 @@ function _sazaPickDate(el) {
   const t = inp.trim();
   if (!t) { el.innerText = ''; return; }
   el.innerText = (typeof formatDate === 'function') ? formatDate(t) : t;
-  try { _sazaDirty = true; } catch (_) {}
+  try { _sazaDirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._sazaPickDate = _sazaPickDate;
 
@@ -682,10 +682,10 @@ function _sazaFmt(cmd) {
   const sel = window.getSelection();
   const live = doc && sel && sel.rangeCount && doc.contains(sel.getRangeAt(0).commonAncestorContainer);
   if (!live) _sazaRestoreRange();
-  try { document.execCommand('styleWithCSS', false, false); } catch (_) {}
-  try { document.execCommand(cmd, false, null); } catch (_) {}
+  try { document.execCommand('styleWithCSS', false, false); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { document.execCommand(cmd, false, null); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   _sazaSaveRange();
-  try { _sazaDirty = true; } catch (_) {}
+  try { _sazaDirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._sazaFmt = _sazaFmt;
 
@@ -701,7 +701,7 @@ function _sazaSetFont(val) {
   if (hasSel && _sazaFontToSelection(pt)) { _sazaSaveRange(); _sazaDirty = true; return; }
   _sazaFontToDoc(pt);
   const hid = doc.querySelector('[data-k="doc_font"]'); if (hid) hid.value = String(pt);
-  try { _sazaDirty = true; } catch (_) {}
+  try { _sazaDirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._sazaSetFont = _sazaSetFont;
 
@@ -710,9 +710,9 @@ function _sazaFontToSelection(pt) {
   const sel = window.getSelection();
   if (!sel || sel.isCollapsed || !sel.rangeCount) return false;
   if (!doc.contains(sel.anchorNode) || !doc.contains(sel.focusNode)) return false;
-  try { document.execCommand('styleWithCSS', false, false); } catch (_) {}
+  try { document.execCommand('styleWithCSS', false, false); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   let ok = false;
-  try { ok = document.execCommand('fontSize', false, '7'); } catch (_) {}
+  try { ok = document.execCommand('fontSize', false, '7'); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   if (!ok) return false;
   doc.querySelectorAll('font[size="7"]').forEach(f => {
     const span = document.createElement('span');
@@ -756,11 +756,11 @@ function _sazaBlockFloatBar() {
           if (el && (el.id === 'saza-doc' ||
                     (el.closest && el.closest('#saza-doc')) ||
                     (el.querySelector && el.querySelector('#saza-doc')))) return;
-        } catch (_) {}
+        } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
         return _orig.apply(this, arguments);
       };
     }
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 
 // ═══ Poore safhe par (report173 _ch173FullPage jaisa) ═══
@@ -786,10 +786,10 @@ function _sazaFullPage(area) {
       _sazaFitPaper();
       if (!window._sazaFitBound) {
         window._sazaFitBound = true;
-        window.addEventListener('resize', () => { try { _sazaFitPaper(); } catch (_) {} });
+        window.addEventListener('resize', () => { try { _sazaFitPaper(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } });
       }
     }
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 
 function _sazaFitPaper() {
@@ -804,12 +804,12 @@ function _sazaFitPaper() {
       el = el.parentElement;
     }
     host.style.overflow = 'auto'; host.style.flexShrink = '0';
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   const IN = 96;
   const wPx = ((_sazaPaper === 'a4') ? 8.27 : 8.5) * IN;
   doc.style.width = wPx + 'px'; doc.style.maxWidth = 'none';
   doc.style.minHeight = ((_sazaPaper === 'a4') ? 11.7 : 13) * IN + 'px';
-  try { doc.style.padding = '1cm ' + _sazaSideMargin(); } catch (_) {}
+  try { doc.style.padding = '1cm ' + _sazaSideMargin(); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._sazaFitPaper = _sazaFitPaper;
 
@@ -819,8 +819,8 @@ function _sazaFocusMode(on) {
   if (!on) {
     b.classList.remove('saza-focus');
     const bar = document.getElementById('misal-doc-bar');
-    if (bar) { bar.classList.remove('peek'); try { if (bar.parentElement) bar.parentElement.style.position = ''; } catch (_) {} }
-    try { clearTimeout(window._sazaPeekT); } catch (_) {}
+    if (bar) { bar.classList.remove('peek'); try { if (bar.parentElement) bar.parentElement.style.position = ''; } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } }
+    try { clearTimeout(window._sazaPeekT); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     return;
   }
   b.classList.add('saza-focus');
@@ -828,7 +828,7 @@ function _sazaFocusMode(on) {
     const bar0 = document.getElementById('misal-doc-bar');
     const par = bar0 && bar0.parentElement;
     if (par && getComputedStyle(par).position === 'static') par.style.position = 'relative';
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   if (window._sazaPeekBound) return;
   window._sazaPeekBound = true;
   document.addEventListener('mousemove', (e) => {
@@ -839,7 +839,7 @@ function _sazaFocusMode(on) {
       try {
         const r = bar.getBoundingClientRect();
         near = e.clientY >= r.top - 10 && e.clientY <= r.bottom + 10 && e.clientX >= r.left && e.clientX <= r.right;
-      } catch (_) {}
+      } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     }
     if (near) {
       clearTimeout(window._sazaPeekT);
@@ -854,11 +854,11 @@ function _sazaFocusMode(on) {
           const rt = tbar.getBoundingClientRect();
           bar.style.top = Math.max(0, Math.round(rt.bottom - rp.top)) + 'px';
         }
-      } catch (_) {}
+      } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
       bar.classList.add('peek');
     } else if (bar.classList.contains('peek')) {
       clearTimeout(window._sazaPeekT);
-      window._sazaPeekT = setTimeout(() => { try { bar.classList.remove('peek'); } catch (_) {} }, 400);
+      window._sazaPeekT = setTimeout(() => { try { bar.classList.remove('peek'); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } }, 400);
     }
   }, { passive: true });
 }
@@ -885,11 +885,11 @@ async function _sazaSave() {
       data.col_w = JSON.stringify([...cols].map(c =>
         Math.round((c.getBoundingClientRect().width / tw) * 1000) / 10));
     }
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   data.saved_at = new Date().toISOString();
 
   // Local backup pehle (kabhi zaya na ho)
-  try { localStorage.setItem('dio_saza_' + _sazaCaseId, JSON.stringify(data)); } catch (_) {}
+  try { localStorage.setItem('dio_saza_' + _sazaCaseId, JSON.stringify(data)); } catch (_) { if (typeof dioLogError === 'function') dioLogError('saza slip: local save nakaam', _); }
 
   // Offline → sirf localStorage; chip bhi "added" dikhao
   if (typeof navigator !== 'undefined' && navigator && navigator.onLine === false) {
@@ -902,7 +902,7 @@ async function _sazaSave() {
 
   try {
     let exists = false;
-    try { exists = !!(typeof _misalDocs !== 'undefined' && _misalDocs && _misalDocs['saza_slip'] && _misalDocs['saza_slip'].id); } catch (_) {}
+    try { exists = !!(typeof _misalDocs !== 'undefined' && _misalDocs && _misalDocs['saza_slip'] && _misalDocs['saza_slip'].id); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     if (!exists) {
       const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
       const { data: ins, error } = await supabaseClient
@@ -933,7 +933,7 @@ async function _sazaSave() {
     try {
       if (typeof dioRegisterSaved === 'function')
         dioRegisterSaved('misal', 'سزا سلپ', { case_id: _sazaCaseId, doc_id: 'saza_slip' });
-    } catch (_) {}
+    } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
 
     if (typeof showToast === 'function') {
       if (ok) showToast('سزا سلپ محفوظ ہو گئی — چپ پر "سزا سلپ" اب مکمل ہے، دوبارہ کھولنے پر یہی واپس آئے گی', 'success', 5000);
@@ -957,8 +957,8 @@ function _sazaMarkMisalSaved(content, status, insRec) {
     if (!_misalDocs['saza_slip']) _misalDocs['saza_slip'] = { document_type: 'saza_slip' };
     _misalDocs['saza_slip'].content = content;
     _misalDocs['saza_slip'].status = status || 'complete';
-  } catch (_) {}
-  try { if (typeof _refreshMisalBar === 'function') _refreshMisalBar(); } catch (_) {}
+  } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { if (typeof _refreshMisalBar === 'function') _refreshMisalBar(); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
 }
 window._sazaMarkMisalSaved = _sazaMarkMisalSaved;
 
@@ -1057,7 +1057,7 @@ function _sazaBreakRows(doc) {
       }
       prevPage = Math.max(prevPage, pg);
     });
-  } catch (_) {}
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   return out;
 }
 window._sazaBreakRows = _sazaBreakRows;
@@ -1217,16 +1217,16 @@ window._sazaCSS = _sazaCSS;
       _misalDocs['saza_slip'].content = content;
       _misalDocs['saza_slip'].status = 'complete';
       if (typeof _refreshMisalBar === 'function') _refreshMisalBar();
-    } catch (_) {}
+    } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   }
   function init() {
     const target = document.getElementById('page-content');
     if (!target) { setTimeout(init, 800); return; }
     try {
-      const obs = new MutationObserver(() => { try { heal(); } catch (_) {} });
+      const obs = new MutationObserver(() => { try { heal(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } });
       obs.observe(target, { childList: true, subtree: true });
       heal();
-    } catch (_) {}
+    } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   }
   if (document.readyState !== 'loading') init();
   else document.addEventListener('DOMContentLoaded', init);

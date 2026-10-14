@@ -38,7 +38,7 @@ let _odbClosing = false;
 function _openDB(){
   // Band hota hua connection dobara istemal na karo — naya kholo
   if(_odb && !_odbClosing) return Promise.resolve(_odb);
-  if(_odbClosing){ try{ _odb && _odb.close(); }catch(_){} _odb=null; _odbClosing=false; }
+  if(_odbClosing){ try{ _odb && _odb.close(); }catch(_){ /* ikhtiyari qadam — na ho sake to chhoR do */ } _odb=null; _odbClosing=false; }
   return new Promise((resolve,reject)=>{
     const req=indexedDB.open(_ODB_NAME,_ODB_VERSION);
     req.onupgradeneeded=e=>{
@@ -61,7 +61,7 @@ function _openDB(){
       _odbClosing=false;
       // Connection band ho jaye to nishan laga do (agli dafa naya khulega)
       _odb.onclose = ()=>{ _odbClosing=true; _odb=null; };
-      _odb.onversionchange = ()=>{ _odbClosing=true; try{_odb.close();}catch(_){} _odb=null; };
+      _odb.onversionchange = ()=>{ _odbClosing=true; try{_odb.close();}catch(_){ /* ikhtiyari qadam — na ho sake to chhoR do */ } _odb=null; };
       resolve(_odb);
     };
     req.onerror   =e=>reject(e.target.error);
@@ -207,10 +207,10 @@ const offlineStore={
           try {
             await this._markQueueItem(item.qid, 'failed',
               { attempts, last_error: msg.slice(0, 300), failed_at: new Date().toISOString() });
-          } catch (_) {}
+          } catch (_) { if (typeof dioLogError === 'function') dioLogError('sync queue: item failed mark nakaam', _); }
           failed++;
         } else {
-          try { await this._markQueueItem(item.qid, 'pending', { attempts, last_error: msg.slice(0, 300) }); } catch (_) {}
+          try { await this._markQueueItem(item.qid, 'pending', { attempts, last_error: msg.slice(0, 300) }); } catch (_) { if (typeof dioLogError === 'function') dioLogError('sync queue: item retry mark nakaam', _); }
         }
         console.warn('[OfflineStore] Sync failed:', item.op, msg, permanent ? '(mustaqil)' : '(attempt ' + attempts + ')');
       }
@@ -221,8 +221,8 @@ const offlineStore={
       try {
         if (typeof showToast === 'function')
           showToast('' + failed + ' اندراجات سرور نے مسترد کیے — dioFailedSyncs() سے تفصیل دیکھیں', 'error', 8000);
-      } catch (_) {}
-      try { if (window.dioLogError) dioLogError('offline sync: ' + failed + ' mustaqil nakaam'); } catch (_) {}
+      } catch (_) { /* paigham na dikh sake to koi baat nahi */ }
+      try { if (window.dioLogError) dioLogError('offline sync: ' + failed + ' mustaqil nakaam'); } catch (_) { /* logging khud kabhi na phatte */ }
     }
     return synced;
   },
@@ -263,7 +263,7 @@ const offlineStore={
         if(error) throw error;
         if(tempId){ await this.remove(table+'_cache',tempId); await this.cache(table+'_cache',rec); }
       }
-      if(_localId && _cacheStore){ try{ await this.remove(_cacheStore, _localId); }catch(_){} }
+      if(_localId && _cacheStore){ try{ await this.remove(_cacheStore, _localId); }catch(_){ /* ikhtiyari qadam — na ho sake to chhoR do */ } }
 
     // ── UPDATE ──────────────────────────────────────────────
     } else if(op==='update'){
@@ -320,7 +320,7 @@ const offlineStore={
       await this.removeFile(data.fid);
       // Offline par jo "local-" evidence row dikhane ke liye cache mein rakhi thi,
       // sync hone ke baad hata do — warna asal DB row ke saath DO nazar aati.
-      if(data.localId){ try{ await this.remove('evidence_cache', data.localId); }catch(_){} }
+      if(data.localId){ try{ await this.remove('evidence_cache', data.localId); }catch(_){ /* sirf local cache — na ho sake to bhi aage chalo */ } }
 
     // ── REMINDER TOGGLE ──────────────────────────────────────
     } else if(op==='toggle_reminder'){
@@ -337,7 +337,7 @@ const offlineStore={
       if(!synced||!synced.length) return;
       const tx=_odb.transaction('sync_queue','readwrite');
       synced.forEach(r=>tx.objectStore('sync_queue').delete(r.qid));
-    }catch(_){}
+    }catch(_){ /* ikhtiyari qadam — na ho sake to chhoR do */ }
   },
 
   async isAvailable(){
