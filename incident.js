@@ -1549,6 +1549,12 @@ window._irPrintRow = _irPrintRow;
 function _irShareRow(id) {
   const r = _irList.find(x => String(x.id) === String(id));
   if (!r) return;
+  // پوری فائل (PDF + Word): رپورٹ کھول کر اسی کا کاغذ
+  if (typeof dioShareDoc === 'function') {
+    _irOpen(id);
+    setTimeout(() => { const el = document.getElementById('ir-doc'); if (el) dioShareDoc(el, 'واقعاتی رپورٹ'); }, 900);
+    return;
+  }
   const { f, meta } = _irFieldsOf(r);
   _irShareText(_irTextReport(f, meta));
 }
@@ -1622,6 +1628,7 @@ function _irTextReport(fIn, metaIn) {
 }
 function _irShare() {
   if (!document.getElementById('ir-doc')) return;
+  if (typeof dioShareDoc === 'function') { dioShareDoc(document.getElementById('ir-doc'), 'واقعاتی رپورٹ'); return; }
   _irShareText(_irTextReport());
 }
 window._irShare = _irShare;

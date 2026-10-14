@@ -2785,6 +2785,8 @@ async function _emailZimni(id) {
   const dt   = z.report_date ? (typeof formatDate === 'function' ? formatDate(z.report_date) : z.report_date) : '';
   const text = (c.bodyHtml || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').replace(/\n{3,}/g, '\n\n').trim();
   const subj = `ضمنی نمبر ${z.serial_no || ''}${dt ? ' — ' + dt : ''}`;
+  // پوری فائل (PDF + Word) — وہی کاغذ جو پرنٹ میں آتا ہے (افسر کی ہدایت، اکتوبر 2026)
+  try { if (typeof dioSharePrint === 'function' && await dioSharePrint(() => _printZimniById(id), subj)) return; } catch (_) { /* نیچے متن والا راستہ */ }
   try {
     if (navigator.share) { await navigator.share({ title: subj, text: subj + '\n\n' + text }); return; }
   } catch (_) { /* share/clipboard na mile to koi baat nahi */ }
@@ -4283,6 +4285,8 @@ async function _emailZimniA(id) {
   const dt   = z.report_date ? (typeof formatDate === 'function' ? formatDate(z.report_date) : z.report_date) : '';
   const text = (c.bodyHtml || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').replace(/\n{3,}/g, '\n\n').trim();
   const subj = `اندرونی ضمنی نمبر ${z.serial_no || ''}${dt ? ' — ' + dt : ''}`;
+  // پوری فائل (PDF + Word) — وہی کاغذ جو پرنٹ میں آتا ہے
+  try { if (typeof dioSharePrint === 'function' && await dioSharePrint(() => _printZimniAById(id), subj)) return; } catch (_) { /* نیچے متن والا راستہ */ }
   try {
     if (navigator.share) { await navigator.share({ title: subj, text: subj + '\n\n' + text }); return; }
   } catch (_) { /* share/clipboard na mile to koi baat nahi */ }

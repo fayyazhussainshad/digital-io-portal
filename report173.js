@@ -4578,6 +4578,15 @@ async function _r173EmailDoc(id) {
   const f = d.form_data || {};
   const txt = String(f.halaat || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
   const subj = (d.head || '') + (d.date ? ' — ' + d.date : '');
+  // پوری فائل (PDF + Word): چالان کھول کر اسی کا پرنٹ والا کاغذ (جدول، کالم، تمام حروف)
+  try {
+    if (typeof dioSharePrint === 'function') {
+      await _r173OpenDoc(id);
+      await new Promise(r => setTimeout(r, 900));
+      const tName = (R173_TYPES.find(t => t.id === d.type) || {}).name || 'چالان';
+      if (await dioSharePrint(() => _printR173(), subj || tName, () => _ch173Doc())) return;
+    }
+  } catch (_) { /* نیچے متن والا راستہ */ }
   try {
     if (navigator.share) { await navigator.share({ title: subj, text: subj + '\n\n' + txt }); return; }
     window.location.href = 'mailto:?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(txt);

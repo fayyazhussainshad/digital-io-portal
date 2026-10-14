@@ -141,6 +141,8 @@
     // Dastavezat aur aalaat
     'toolbar.js', 'editor-tools.js', 'doc-viewer.js', 'saved-docs.js',
     'misal-docs.js', 'misal-fir.js', 'misal-templates.js',
+    // سسٹم کے فارم (خودکار شامل) + پوری فائل شیئر (PDF/Word)
+    'dio-forms.js', 'dio-share.js',
     // Mukhtalif forms
     'naqsha-mauqa.js', 'saza-slip.js', 'darkhwastain.js', 'rfa-form.js',
     'cro-card.js', 'cdr-imei.js',

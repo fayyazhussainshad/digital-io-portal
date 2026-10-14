@@ -43,19 +43,38 @@ async function renderTemplates(container) {
         <div class="page-subtitle">محفوظ شدہ مسودے — ایک دبائیں اور بھر لیں</div>
       </div>
       <div style="flex:1;min-width:180px;display:flex;gap:8px;margin-inline-start:auto;">
-        <input id="tpl-main-search" type="text" dir="rtl" placeholder="ٹمپلیٹ کا نام تلاش کریں…"
+        <input id="tpl-main-search" type="text" dir="rtl" placeholder="فارم یا ٹمپلیٹ کا نام تلاش کریں…"
           oninput="_tplFilter(this.value)" style="flex:1;min-width:180px;padding:10px 16px;border:1px solid var(--border);border-radius:24px;font-size:15px;outline:none;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;">
       </div>
     </div>
 
+    <!-- سسٹم کے فارم (اکتوبر 2026): سسٹم کے تمام فارم، خالی سانچے — templates-forms.js -->
+    <div id="tpl-forms-wrap">${(window.DIO && DIO.states) ? DIO.states.loading('فارم لوڈ ہو رہے ہیں') : ''}</div>
+    <b class="dio-sec-h" role="heading" aria-level="2" style="display:block;text-align:right;">میرے ٹمپلیٹس</b>
     <div id="tpl-table-wrap" style="overflow-x:auto;margin:0 -20px;">
       ${(window.DIO && DIO.states) ? DIO.states.loading('ٹمپلیٹس لوڈ ہو رہے ہیں') : '<div style="text-align:center;padding:40px;color:var(--text-muted);">لوڈ ہو رہا ہے...</div>'}
     </div>
   </div>`;
 
   _tplActiveCat = ''; _tplQuery = '';   // naya safha, nayi chhaan-been
+  const _formsReady = _tplLoadForms();
   await _loadTemplates();
   _renderTplTable();
+  await _formsReady;
+  try { if (window.DIOFormsUI) DIOFormsUI.render(); } catch (_) { /* فارم کا حصہ ضمنی — ٹمپلیٹس چلتے رہیں */ }
+}
+
+// سسٹم کے فارم: فہرست (system-forms.js) + خودکار (dio-forms.js) + صفحے کا حصہ (templates-forms.js)
+async function _tplLoadForms() {
+  if (typeof window.dioLoadScript !== 'function') return;
+  try {
+    await Promise.all([dioLoadScript('dio-forms.js'), dioLoadScript('system-forms.js')]);
+    await dioLoadScript('templates-forms.js');
+    if (window.DIOFormsUI) DIOFormsUI.render();
+  } catch (_) {
+    const w = document.getElementById('tpl-forms-wrap');
+    if (w) w.innerHTML = '<div style="padding:14px;color:var(--text-muted);text-align:center;">سسٹم کے فارم ابھی لوڈ نہیں ہو سکے — صفحہ دوبارہ کھولیں</div>';
+  }
 }
 
 function _tplChip(cat, label) {
@@ -95,7 +114,8 @@ async function _loadTemplates() {
 // ── TABLE ────────────────────────────────────────────────────
 // Dono shartein SATH — chip aur talaash kabhi aik doosri ko nahi mitatin
 function _tplVisible() {
-  let list = _tplList.slice();
+  // سسٹم فارم کی ترمیم شدہ نقلیں (<!--dio-form:ID-->) «سسٹم کے فارم» میں دکھتی ہیں، یہاں نہیں
+  let list = _tplList.slice().filter(t => !/^<!--dio-form:/.test(t.content || ''));
   if (_tplActiveCat) list = list.filter(t => t.category === _tplActiveCat);
   const q = _tplQuery;
   if (q) {
@@ -182,6 +202,7 @@ function _tplFilter(val) {
   _tplSearchTmr = setTimeout(() => {
     _tplQuery = v;
     _renderTplTable();
+    try { if (window.DIOFormsUI) DIOFormsUI.filter(v); } catch (_) { /* ضمنی */ }
   }, 260);
 }
 
