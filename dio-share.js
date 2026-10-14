@@ -31,6 +31,10 @@
     });
   }
 
+  // کوئی قدم اٹک جائے تو ہمیشہ کا انتظار نہیں — مقررہ وقت کے بعد آگے (یا غلطی)
+  function within(p, ms, label) {
+    return Promise.race([p, new Promise(function (_, rej) { setTimeout(function () { rej(new Error((label || 'step') + ' timeout')); }, ms); })]);
+  }
   function safeName(t) {
     return String(t || 'Digital IO').replace(/[\\/:*?"<>|\n\r\t]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'Digital IO';
   }
@@ -115,24 +119,73 @@
     var f = document.createElement('iframe');
     f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1;
     f.style.cssText = 'position:fixed;left:-30000px;top:0;border:0;background:#fff;width:' + cw + 'px;height:' + Math.round(pg.h * 96) + 'px;';
-    document.body.appendChild(f);
+    f.style.setProperty('display', 'block', 'important');
+    f.style.setProperty('visibility', 'visible', 'important');
+    // <body> کے باہر (html کے اندر): چھپائی کے وقت والے «body > * چھپاؤ» قاعدے اس پر نہ لگیں
+    document.documentElement.appendChild(f);
     var d = f.contentWindow.document;
+    // موبائل براؤزر کا «متن خود بڑا کرنا» (text autosizing) کاغذ پر نہیں
+    html = String(html).replace(/<head([^>]*)>/i, '<head$1><meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<style>html{-webkit-text-size-adjust:100% !important;text-size-adjust:100% !important;}</style>');
     // کاغذ «پرنٹ» کی شکل میں: @media print والے قاعدے لاگو، screen والے نہیں
     html = String(html).replace(/@media\s+print/gi, '@media all').replace(/@media\s+screen/gi, '@media not all');
     d.open(); d.write(html); d.close();
     await new Promise(function (r) { setTimeout(r, 150); });
-    try { if (d.fonts && d.fonts.ready) await d.fonts.ready; } catch (_) { /* فونٹ کا انتظار ضمنی */ }
+    // فونٹ لوڈ ہونے کا انتظار — زیادہ سے زیادہ 5 سیکنڈ (کوئی فونٹ اٹک جائے تو بھی آگے)
+    for (var w8 = 0; w8 < 50; w8++) {
+      var stt = 'loaded';
+      try { stt = d.fonts ? d.fonts.status : 'loaded'; } catch (_) { stt = 'loaded'; }
+      if (stt === 'loaded') break;
+      await new Promise(function (r) { setTimeout(r, 100); });
+    }
     await new Promise(function (r) { setTimeout(r, 250); });
     f.style.height = Math.max(d.documentElement.scrollHeight, 50) + 'px';
     return { frame: f, doc: d, page: pg, margin: mg, cw: cw };
   }
 
-  // کاغذ کا عنصر → اپنا مکمل HTML (ہر عنصر کا انداز inline، ڈیٹا سمیت)
+  // کاغذ کا عنصر → اپنا مکمل HTML: صفحے کے تمام انداز (CSS) + یہی عنصر — پھر iframe میں
+  // «پرنٹ» کے قاعدے لاگو ہوتے ہیں، یعنی موبائل پر بھی وہی کاغذ جو چھپتا ہے (A4/Legal)۔
+  function pageCss() {
+    var out = [];
+    [].forEach.call(document.styleSheets, function (sh) {
+      try { [].forEach.call(sh.cssRules || [], function (r) { out.push(r.cssText); }); } catch (_) { /* دوسری جگہ کی شیٹ (Google Fonts) — چھوڑ دو */ }
+    });
+    return out.join('\n');
+  }
   function elementToHtml(el) {
-    var cap = (window.DIO.forms && DIO.forms.capture) ? DIO.forms.capture(el, { keepData: true }) : { html: el.outerHTML };
-    var pg = paperOf(el);
-    return '<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><style>@page{size:' + pg.w + 'in ' + pg.h + 'in;margin:0;}' +
-      'html,body{margin:0;padding:0;background:#fff;}</style></head><body>' + cap.html + '</body></html>';
+    var c = el.cloneNode(true);
+    // خانوں کی موجودہ قدر (value) HTML میں
+    var srcF = el.querySelectorAll('input,textarea,select'), dstF = c.querySelectorAll('input,textarea,select');
+    for (var i = 0; i < srcF.length && i < dstF.length; i++) {
+      try {
+        if (srcF[i].tagName === 'TEXTAREA') dstF[i].textContent = srcF[i].value;
+        else if (srcF[i].tagName === 'SELECT') { var o = dstF[i].options[srcF[i].selectedIndex]; if (o) o.setAttribute('selected', 'selected'); }
+        else if (srcF[i].type === 'checkbox' || srcF[i].type === 'radio') { if (srcF[i].checked) dstF[i].setAttribute('checked', 'checked'); }
+        else dstF[i].setAttribute('value', srcF[i].value);
+      } catch (_) { /* ضمنی */ }
+    }
+    c.querySelectorAll('script,button,.no-print,[data-noprint],.colgrip,.rowgrip,.dio-etb,.editor-toolbar').forEach(function (n) { n.remove(); });
+    c.style.transform = 'none'; c.style.margin = '0 auto';
+    var mk = el.id ? '' : ' data-dio-paper="1"';
+    var html = c.outerHTML.replace(/^<([a-z0-9]+)/i, '<$1' + mk);
+    // والدین کی شناختیں (#ir-view وغیرہ) — انداز انہی پر لکھے ہوتے ہیں؛ خالی خول میں لپیٹو
+    var wrapOpen = '', wrapClose = '';
+    for (var n = el.parentElement; n && n !== document.body; n = n.parentElement) {
+      var attrs = (n.id ? ' id="' + n.id + '"' : '') + (n.className && typeof n.className === 'string' ? ' class="' + n.className.replace(/"/g, '') + '"' : '');
+      wrapOpen = '<div' + attrs + ' style="all:unset;display:block;">' + wrapOpen;
+      wrapClose += '</div>';
+    }
+    // اس دستاویز کا اپنا @page (اس کے ماڈیول کی <style> میں) سب سے پہلے — کاغذ کا سائز وہی
+    var ownPage = '';
+    for (var a = el; a && a !== document && !ownPage; a = a.parentElement) {
+      a.querySelectorAll && [].forEach.call(a.querySelectorAll('style'), function (st) {
+        if (ownPage) return;
+        var m = /@page\s*\{[^}]*\}/i.exec(st.textContent || ''); if (m) ownPage = m[0];
+      });
+    }
+    return '<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><style>' + ownPage + '</style><style>' + pageCss() + '</style>' +
+      '<style>html,body{margin:0 !important;padding:0 !important;background:#fff !important;color:#000;overflow:visible !important;height:auto !important;}' +
+      'body *{animation:none !important;transition:none !important;}</style></head><body>' + wrapOpen + html + wrapClose + '</body></html>';
   }
 
   // ── فونٹ (SVG تصویر کے اندر باہر سے فونٹ نہیں آتا — اس لیے ساتھ شامل) ──
@@ -148,9 +201,9 @@
       if (usedText.indexOf(fam) < 0) continue;
       try {
         if (!_fontCache[fam]) {
-          var res = await fetch(FONT_URLS[fam]);
+          var res = await within(fetch(FONT_URLS[fam]), 20000, 'font fetch');
           if (!res.ok) throw new Error('font ' + res.status);
-          var u = new Uint8Array(await res.arrayBuffer()), bin = '';
+          var u = new Uint8Array(await within(res.arrayBuffer(), 30000, 'font read')), bin = '';
           for (var i = 0; i < u.length; i += 0x8000) bin += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
           _fontCache[fam] = btoa(bin);
         }
@@ -161,13 +214,26 @@
   }
 
   // براؤزر کی اپنی رینڈرنگ (SVG foreignObject) — کھڑے کالم، نستعلیق، جدول بالکل پرنٹ جیسے
-  async function nativeCanvas(fr, scale) {
+  async function nativeCanvas(fr, scale, inline) {
     var d = fr.doc, W = fr.cw, H = d.documentElement.scrollHeight;
-    var styles = [].map.call(d.querySelectorAll('style'), function (x) { return x.textContent; }).join('\n')
-      .replace(/@page[^{]*\{[^}]*\}/g, '');
-    var bodyClone = d.body.cloneNode(true);
-    bodyClone.querySelectorAll('script,button,.no-print').forEach(function (n) { n.remove(); });
-    var xml = new XMLSerializer().serializeToString(bodyClone).replace(/^<body/, '<div').replace(/<\/body>$/, '</div>');
+    // کاغذ (پرنٹ کے قاعدوں کے ساتھ) کی نقل — ہر عنصر کا حتمی انداز inline، تاکہ تصویر کسی
+    // CSS selector پر منحصر نہ رہے (body/html/:root وغیرہ) اور بالکل iframe والی شکل بنے
+    // ماڈیول کا اپنا پرنٹ HTML: اس کی اپنی CSS ہی کافی (پہلے سے پرنٹ کے لیے بنی)؛
+    // اسکرین کا عنصر: صفحے کی پوری CSS پر منحصر — اس لیے inline
+    var cap = (inline && window.DIO.forms && DIO.forms.capture) ? DIO.forms.capture(d.body, { keepData: true }) : null;
+    var xml, styles = '';
+    if (cap) {
+      var holder = document.createElement('div'); holder.innerHTML = cap.html;
+      var root = holder.firstElementChild;
+      var div = document.createElement('div');
+      if (root) { div.setAttribute('style', (root.getAttribute('style') || '') + ';margin:0;'); while (root.firstChild) div.appendChild(root.firstChild); }
+      xml = new XMLSerializer().serializeToString(div);
+    } else {
+      styles = [].map.call(d.querySelectorAll('style'), function (x) { return x.textContent; }).join('\n').replace(/@page[^{]*\{[^}]*\}/g, '');
+      var bodyClone = d.body.cloneNode(true);
+      bodyClone.querySelectorAll('script,button,.no-print').forEach(function (n) { n.remove(); });
+      xml = new XMLSerializer().serializeToString(bodyClone).replace(/^<body/, '<div').replace(/<\/body>$/, '</div>');
+    }
     var ff = await fontFaceCss(styles + xml);
     var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + Math.round(W * scale) + '" height="' + Math.round(H * scale) +
       '" viewBox="0 0 ' + W + ' ' + H + '"><foreignObject x="0" y="0" width="' + W + '" height="' + H + '">' +
@@ -175,17 +241,33 @@
       '<style><![CDATA[' + ff + styles.replace(/\]\]>/g, '') + ']]></style>' + xml + '</div></foreignObject></svg>';
     var img = new Image();
     img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-    await img.decode();
+    await within(img.decode(), 20000, 'image decode');
     // پہلی بار بنانے پر فونٹ لوڈ ہوتے ہیں — تھوڑا انتظار، پھر اصل تصویر
     var warm = document.createElement('canvas'); warm.width = 8; warm.height = 8;
     try { warm.getContext('2d').drawImage(img, 0, 0); } catch (_) { /* ضمنی */ }
-    await new Promise(function (r) { setTimeout(r, ff ? 1500 : 400); });
-    var c = document.createElement('canvas');
-    c.width = Math.round(W * scale); c.height = Math.round(H * scale);
-    var g = c.getContext('2d');
-    g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
-    g.drawImage(img, 0, 0, c.width, c.height);
-    c.toDataURL('image/png').length;          // tainted ہو تو یہیں پکڑا جائے (پھر متبادل راستہ)
+    await new Promise(function (r) { setTimeout(r, ff ? 2200 : 400); });
+    // فونٹ مکمل لگنے تک: دو بار بنا کر موازنہ — ایک جیسی ہوں تو تیار (زیادہ سے زیادہ 4 بار)
+    function draw() {
+      var c = document.createElement('canvas');
+      c.width = Math.round(W * scale); c.height = Math.round(H * scale);
+      var g = c.getContext('2d');
+      g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+      g.drawImage(img, 0, 0, c.width, c.height);
+      return c;
+    }
+    function sig(c) {
+      var t = document.createElement('canvas'); t.width = 96; t.height = Math.max(1, Math.round(96 * c.height / c.width));
+      t.getContext('2d').drawImage(c, 0, 0, t.width, t.height);
+      return t.toDataURL('image/png');        // tainted ہو تو یہیں پکڑا جائے (پھر متبادل راستہ)
+    }
+    var c = draw(), prev = sig(c);
+    for (var k = 0; k < 3 && ff; k++) {
+      await new Promise(function (r) { setTimeout(r, 900); });
+      var c2 = draw(), s2 = sig(c2);
+      c = c2;
+      if (s2 === prev) break;
+      prev = s2;
+    }
     return c;
   }
 
@@ -221,14 +303,17 @@
     return cuts;
   }
 
-  async function pdfFromHtml(html) {
+  async function pdfFromHtml(html, inline) {
     var fr = await frameFor(html);
     try {
       var H = fr.doc.documentElement.scrollHeight;
       var scale = Math.min(2, Math.max(1.25, 14000 / Math.max(H, 1)));
       var canvas;
-      try { canvas = await nativeCanvas(fr, scale); }
-      catch (_) { return await pdfOf(fr.doc.body, fr.page); }        // متبادل: html2canvas
+      try { canvas = await nativeCanvas(fr, scale, inline); }
+      catch (e) {                                                    // متبادل: html2canvas
+        window.__dioShareLastErr = String((e && e.stack) || e);
+        return await pdfOf(fr.doc.body, fr.page);
+      }
       var pg = fr.page, mg = fr.margin, ppi = 96 * scale;
       var cuts = paginate(canvas, Math.round((pg.h - mg.t - mg.b) * ppi), forcedBreaks(fr, scale));
       // بالکل خالی حصہ (کاغذ کی نچلی خالی جگہ) الگ صفحہ نہ بنے — پہلا صفحہ ہمیشہ
@@ -253,8 +338,8 @@
 
   async function pdf(el, title) {
     if (!el) throw new Error('دستاویز نہیں ملی');
-    var html = (typeof el === 'object' && el.html && !el.nodeType) ? el.html : elementToHtml(el);
-    return pdfFromHtml(html);
+    var isHtml = (typeof el === 'object' && el.html && !el.nodeType);
+    return pdfFromHtml(isHtml ? el.html : elementToHtml(el), !isHtml);
   }
   async function pdfOf(el, pageHint) {
     if (!el) throw new Error('دستاویز نہیں ملی');
@@ -398,11 +483,8 @@
         fr.doc.querySelectorAll('td,th').forEach(function (td) {
           var v = td.querySelector('*') ? [td].concat([].slice.call(td.querySelectorAll('*'))) : [td];
           for (var i = 0; i < v.length; i++) {
-            var cs = win.getComputedStyle(v[i]);
-            if (/^vertical/.test(cs.writingMode) || /matrix\(0, 1, -1, 0|matrix\(0, -1, 1, 0/.test(cs.transform)) {
-              td.setAttribute('data-mso-rot', /matrix\(0, 1, -1, 0/.test(cs.transform) || (/^vertical/.test(cs.writingMode) && !/matrix\(-1/.test(cs.transform)) ? '-90' : '90');
-              break;
-            }
+            var dg = rotationOf(v[i], win);
+            if (dg === 90 || dg === 270) { td.setAttribute('data-mso-rot', dg === 90 ? '90' : '-90'); break; }
           }
         });
         var cap = DIO.forms.capture(fr.doc.body, { keepData: true });
@@ -561,5 +643,6 @@
   })();
 
   window.DIO.share = { open: open, pdf: pdf, word: word, wordHtml: wordHtml, make: make, deliver: deliver, paperOf: paperOf,
-    capturePrint: capturePrint, fromPrint: fromPrint, pageFromHtml: pageFromHtml };
+    capturePrint: capturePrint, fromPrint: fromPrint, pageFromHtml: pageFromHtml,
+    _elementToHtml: elementToHtml, _frameFor: frameFor };
 })();

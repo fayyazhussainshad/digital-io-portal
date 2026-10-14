@@ -207,7 +207,7 @@
         try { out.src = src.toDataURL('image/png'); } catch (_) { return null; }
       } else {
         out = document.createElement(tag === 'FONT' ? 'span' : tag);
-        ['colspan', 'rowspan', 'dir', 'lang', 'src', 'alt', 'width', 'height', 'span'].forEach(function (a) {
+        ['colspan', 'rowspan', 'dir', 'lang', 'src', 'alt', 'width', 'height', 'span', 'data-mso-rot'].forEach(function (a) {
           if (src.hasAttribute(a)) out.setAttribute(a, src.getAttribute(a));
         });
       }
@@ -229,6 +229,9 @@
         if (tag === 'COL' || tag === 'COLGROUP') {
           if (cs.width && cs.width !== 'auto') decl.push('width:' + cs.width);
         } else if (r.width) {
+          // ناپ بیرونی (border-box) ہے — اسی حساب سے، ورنہ padding دوبارہ جڑ کر کاغذ چوڑا ہو جاتا ہے
+          decl = decl.filter(function (x) { return x.indexOf('box-sizing:') !== 0; });
+          decl.push('box-sizing:border-box');
           decl.push('width:' + (r.width / scale).toFixed(1) + 'px');
           if (!isRoot && tag !== 'TABLE' && tag !== 'TR') decl.push('height:' + (r.height / scale).toFixed(1) + 'px');
         }

@@ -674,11 +674,13 @@ async function _createAutoReminders(firNum, firDateStr, mulzmanType, complainant
 
     const addDays = (d,n) => { const r=new Date(d); r.setDate(r.getDate()+n); return r.toISOString().split('T')[0]; };
 
-    // 10-day: 173 CrPC interim report
+    // 10-day: انٹیرم چالان (دفعہ 173 ض ف) — 10ویں دن سسٹم خود انٹیرم چالان بنا کر
+    // محفوظ چالانوں میں شامل کرتا ہے (auto-interim.js، اکتوبر 2026) اور یہی یاددہانی
+    // «تیار» میں بدل دیتا ہے — یعنی ایک ہی یاددہانی، پہلے دن سے نظر آتی ہوئی۔
     // v547: نتیجہ دیکھ کر — پہلے یاددہانی نہ بنتی تب بھی «بن گئیں» دکھایا جاتا
     dioWriteOk(await supabaseClient.from('reminders').insert({
       officer_id: oid,
-      text: `رپورٹ 173 ض ف — مقدمہ FIR ${firNum} (${complainant}) — ابتدائی رپورٹ مرتب کریں`,
+      text: `انٹیرم چالان — مقدمہ FIR ${firNum} (${complainant}) — 10 دن مکمل: سسٹم خودکار انٹیرم چالان بنائے گا، جائزہ لے کر پیش کریں`,
       reminder_date: addDays(firDate, 10),
       is_done: false,
     }), 'auto reminder 173');

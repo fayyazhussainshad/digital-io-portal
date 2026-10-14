@@ -137,7 +137,7 @@
       '<div class="dio-fv-bar no-print">' +
       '<div class="dio-fv-btns">' +
       '<button type="button" onclick="DIOFormsUI.save()">محفوظ</button>' +
-      '<button type="button" onclick="DIOFormsUI.printOpen()">پرنٹ</button>' +
+      '<button type="button" data-dio-print onclick="DIOFormsUI.printOpen()">پرنٹ</button>' +
       '<button type="button" onclick="DIOFormsUI.shareOpen()">شیئر — PDF / Word</button>' +
       (f.auto ? '' : '<button type="button" onclick="DIOFormsUI.reset(\'' + J(id) + '\', true)">اصل فارم</button>') +
       '</div>' +
@@ -172,6 +172,8 @@
   function onKey(e) {
     if (!document.getElementById('dio-form-view')) return;
     if ((e.ctrlKey || e.metaKey) && !e.altKey && String(e.key || '').toLowerCase() === 'p') {
+      // پورے سسٹم کا Ctrl+P (index.html) پہلے ہی یہی «پرنٹ» بٹن دبا چکا ہو تو دوبارہ نہیں
+      if (e.defaultPrevented) return;
       e.preventDefault(); e.stopPropagation(); printOpen();       // Ctrl+P = «پرنٹ» بٹن
     } else if (e.key === 'Escape') { close(); }
   }

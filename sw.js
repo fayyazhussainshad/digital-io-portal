@@ -73,6 +73,7 @@ const CORE_ASSETS = [
   '/case-sharing.js',
   '/notifications.js',
   '/reminders.js',
+  '/auto-interim.js',
   '/performance.js',
   '/backup.js',
   '/settings.js',
