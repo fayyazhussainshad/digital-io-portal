@@ -120,18 +120,19 @@ async function _stSave(id) {
     const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
     if (oid) rec.officer_id = oid;
 
+    // v547: .select('id') — update میں 0 قطار (RLS/میعاد ختم) بھی ناکامی گنی جائے
     const run = async (payload) => id
-      ? supabaseClient.from('hamrahi_mulazman').update(payload).eq('id', id)
-      : supabaseClient.from('hamrahi_mulazman').insert(payload);
+      ? supabaseClient.from('hamrahi_mulazman').update(payload).eq('id', id).select('id')
+      : supabaseClient.from('hamrahi_mulazman').insert(payload).select('id');
 
-    let { error } = await run(rec);
+    let res = await run(rec);
     // Retry without optional columns if schema is missing them
-    if (error && error.message && /column|schema cache|does not exist/i.test(error.message)) {
+    if (res.error && res.error.message && /column|schema cache|does not exist/i.test(res.error.message)) {
       const minimal = { case_id: rec.case_id, name: rec.name, rank: rec.rank, mobile: rec.mobile };
       if (oid) minimal.officer_id = oid;
-      error = (await run(minimal)).error;
+      res = await run(minimal);
     }
-    if (error) throw error;
+    dioWriteOk(res, 'hamrahi save', true);
 
     closeModal();
     // اسی مقدمے کی فہرست کھلی ہو تو تازہ کرو (Dashboard سے اندراج پر صفحہ نہ بدلے)
@@ -143,7 +144,7 @@ async function _stSave(id) {
     }
     showToast('ملازم محفوظ ہو گیا' + (cs && cs.fir && String(caseId) !== String(_stCaseId) ? ' — مقدمہ ' + cs.fir : ''), 'success');
   } catch(e) {
-    showToast('محفوظ نہیں ہوا: ' + (e.message||'') + ' — SQL ٹیبل چیک کریں', 'error', 6000);
+    dioWriteFail('ملازم', e, 'محفوظ نہیں ہوا');
   }
 }
 window._stSave = _stSave;
@@ -159,10 +160,11 @@ window._stDelete = _stDelete;
 
 async function _stDoDelete(id) {
   try {
-    await supabaseClient.from('hamrahi_mulazman').delete().eq('id', id);
+    // v547: نتیجہ دیکھ کر — پہلے سرور رد کرتا تب بھی «حذف ہو گیا»
+    dioWriteOk(await supabaseClient.from('hamrahi_mulazman').delete().eq('id', id).select('id'), 'hamrahi delete', true);
     _stList = _stList.filter(x => x.id !== id);
     try { localStorage.setItem('dio_staff_'+_stCaseId, JSON.stringify(_stList)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('hamrahi: local save nakaam', _); }
     _stRender();
     showToast('ملازم حذف ہو گیا', 'info');
-  } catch(e) { showToast('' + e.message, 'error'); }
+  } catch(e) { dioWriteFail('ملازم', e, 'حذف نہیں ہوا'); }
 }

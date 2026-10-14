@@ -141,15 +141,26 @@ const offlineStore={
 
   // ── SYNC QUEUE ─────────────────────────────────────────────
 
-  async enqueue(table,op,data,tempId){
+  // v547: key (اختیاری) — اسی key کا زیرِ التوا اندراج پہلے سے قطار میں ہو تو نیا
+  //   نہیں بنتا، اسی کا ڈیٹا بدل جاتا ہے۔ (سرکاری گاڑی: انٹرنیٹ کے بغیر دو بار
+  //   «محفوظ» پر پہلے قطار میں دو insert بنتے، انٹرنیٹ آنے پر سرور پر دو قطاریں۔)
+  async enqueue(table,op,data,tempId,key){
     await _openDB();
     if(!_odb) await _openDB();
     const tx=_odb.transaction('sync_queue','readwrite');
-    tx.objectStore('sync_queue').add({
+    const store=tx.objectStore('sync_queue');
+    const rec={
       table, op, data, tempId,
       status:    'pending',
       queued_at: new Date().toISOString(),
-    });
+    };
+    if(key){
+      rec.key=key;
+      const pending=(await _p(store.index('by_status').getAll(IDBKeyRange.only('pending'))))||[];
+      const same=pending.find(p=>p.key===key && p.table===table && p.op===op);
+      if(same){ store.put({...same, data, tempId, queued_at: rec.queued_at}); return _txComplete(tx); }
+    }
+    store.add(rec);
     return _txComplete(tx);
   },
 
@@ -200,7 +211,7 @@ const offlineStore={
         const msg  = String((err && err.message) || err || '');
         const code = String((err && err.code) || '');
         const permanent =
-          code === '42501' || code === 'PGRST301' || code === 'DIO_SUB' ||
+          code === '42501' || code === 'PGRST301' || code === 'DIO_SUB' || code === 'DIO_NOROW' ||
           /row-level security|violates row-level|permission denied|not authorized|سبسکرپشن/i.test(msg);
         const attempts = (item.attempts || 0) + 1;
         if (permanent || attempts >= 5) {
@@ -250,12 +261,27 @@ const offlineStore={
 
       // Cases: use trigger-based station auto-fill; numbers handled below
       if(table==='fivec'){
-        const{numbers,...main}=payload;
-        const{data:rec,error}=await sb.from('applications_5c').insert(main).select().single();
-        if(error) throw error;
+        const{numbers,_mainId,...main}=payload;
+        // v547: درخواست بن چکی (پچھلی کوشش میں) تو دوبارہ نہ بناؤ — صرف نمبر باقی
+        let rec;
+        if(_mainId){ rec={...main,id:_mainId}; }
+        else {
+          const r=await sb.from('applications_5c').insert(main).select().single();
+          if(r.error) throw r.error;
+          rec=r.data;
+        }
         if(numbers&&numbers.length){
           const rows=numbers.filter(n=>n.application_number).map(n=>({...n,application_5c_id:rec.id}));
-          if(rows.length) await sb.from('application_5c_numbers').insert(rows);
+          if(rows.length){
+            // v547: نمبر محفوظ نہ ہوں تو اندراج «synced» نہ گنو (پہلے نمبر خاموشی سے ضائع)۔
+            //   درخواست کا id قطار میں رکھ دو تاکہ اگلی کوشش دوہری درخواست نہ بنائے۔
+            const{error:nErr}=await sb.from('application_5c_numbers').insert(rows);
+            if(nErr){
+              try{ await this._markQueueItem(item.qid,'pending',{data:{...data,_mainId:rec.id}}); }
+              catch(_){ if(typeof dioLogError==='function') dioLogError('sync queue: 5-C id yaad nakaam',_); }
+              throw nErr;
+            }
+          }
         }
         if(tempId){ await this.remove('fivec_cache',tempId); await this.cache('fivec_cache',rec); }
       } else {
@@ -273,13 +299,19 @@ const offlineStore={
         const{error}=await sb.from('applications_5c').update(main).eq('id',id);
         if(error) throw error;
         if(numbers!==undefined){
-          await sb.from('application_5c_numbers').delete().eq('application_5c_id',id);
+          // v547: دونوں کا نتیجہ دیکھو — ناکامی پر throw، تاکہ اندراج قطار میں رہے اور
+          //   دوبارہ چلے (دوبارہ چلانا محفوظ ہے: پرانے نمبر ہٹا کر وہی نئے نمبر)۔
+          const{error:dErr}=await sb.from('application_5c_numbers').delete().eq('application_5c_id',id);
+          if(dErr) throw dErr;
           const rows=numbers.filter(n=>n.application_number).map(n=>({...n,application_5c_id:id}));
-          if(rows.length) await sb.from('application_5c_numbers').insert(rows);
+          if(rows.length){ const{error:nErr}=await sb.from('application_5c_numbers').insert(rows); if(nErr) throw nErr; }
         }
       } else {
-        const{error}=await sb.from(table).update(fields).eq('id',id);
+        // v547: RLS (مثلاً میعاد ختم) update کو بغیر غلطی 0 قطاروں پر روک دیتا ہے —
+        //   پہلے یہ بھی «synced» گنا جاتا اور ترمیم خاموشی سے ضائع۔ اب مستقل ناکامی۔
+        const{data:upd,error}=await sb.from(table).update(fields).eq('id',id).select('id');
         if(error) throw error;
+        if(Array.isArray(upd) && !upd.length){ const e=new Error('سرور پر ریکارڈ نہیں ملا یا اجازت نہیں'); e.code='DIO_NOROW'; throw e; }
       }
 
     // ── DELETE ──────────────────────────────────────────────

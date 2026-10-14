@@ -1,6 +1,10 @@
 // Test double for @supabase/supabase-js UMD — the REAL app runs on top of it.
 (function () {
-    window.__opts = { noUpdatePolicy: false };
+    window.__opts = { noUpdatePolicy: false, fail: [], silent: [], failCode: '42501' };
+  // v547: ناکامی کی نقل — اصل Supabase کی طرح غلطی پھینکی نہیں جاتی، {error} لوٹتا ہے۔
+  //   __opts.fail   = ['recycle_bin:insert', …]  → سرور کا رد (RLS 42501)
+  //   __opts.silent = ['reminders:delete', …]   → RLS کی خاموش روک: کوئی غلطی نہیں، 0 قطار
+  const _hit = (list, t, op) => (list || []).some(k => k === t + ':' + op || k === t + ':*');
   window.__db = window.__db || {
     officers: [{ id: 'o1', user_id: 'u1', email: 'io@test.pk', full_name: 'فیاض حسین شاد', designation: 'ASI', badge_number: '1234',
       station: 'صدر ملتان', district: 'ملتان', role: 'officer', is_approved: true, suspended: false, created_at: '2026-01-01T00:00:00Z' }],
@@ -16,6 +20,10 @@
     const st = { t, op: 'select', f: [], one: false, orS: null, ord: null, row: null, head: false };
     const run = () => {
       if (!navigator.onLine) throw new TypeError('Failed to fetch');
+      if (st.op !== 'select' && _hit(window.__opts.fail, st.t, st.op))
+        return { data: null, error: window.__opts.failCode === '42501'
+          ? { message: 'new row violates row-level security policy for table "' + st.t + '"', code: '42501' }
+          : { message: 'canceling statement due to statement timeout', code: String(window.__opts.failCode) } };
       const tb = window.__db[st.t] || (window.__db[st.t] = []);
       let rows = tb.filter(x => st.f.every(fn => fn(x)));
       if (st.orS) {
@@ -32,12 +40,14 @@
         list.forEach(r => tb.push(r));
         return out(list);
       }
+      if ((st.op === 'update' || st.op === 'delete') && _hit(window.__opts.silent, st.t, st.op)) return out([]);
       if (st.op === 'update') {
         if (st.t === 'incident_reports' && window.__opts.noUpdatePolicy) return out([]);
         rows.forEach(r => Object.assign(r, JSON.parse(JSON.stringify(st.row))));
         return out(rows);
       }
-      if (st.op === 'delete') { window.__db[st.t] = tb.filter(x => !rows.includes(x)); return { data: null, error: null }; }
+      // اصل PostgREST: delete(...).select() حذف شدہ قطاریں لوٹاتا ہے
+      if (st.op === 'delete') { window.__db[st.t] = tb.filter(x => !rows.includes(x)); return out(JSON.parse(JSON.stringify(rows))); }
       return out([]);
     };
     const p = new Proxy({}, {
@@ -50,6 +60,8 @@
         if (k === 'eq') return (c, v) => { st.f.push(x => String(x[c]) === String(v)); return p; };
         if (k === 'in') return (c, v) => { st.f.push(x => (v || []).map(String).includes(String(x[c]))); return p; };
         if (k === 'ilike') return (c, w) => { const q = String(w).replace(/%/g, '').toLowerCase(); st.f.push(x => String(x[c] || '').toLowerCase().includes(q)); return p; };
+        if (k === 'neq') return (c, v) => { st.f.push(x => String(x[c]) !== String(v)); return p; };
+        if (k === 'is') return (c, v) => { st.f.push(x => (v === null ? x[c] == null : x[c] === v)); return p; };
         if (k === 'or') return s => { st.orS = s; return p; };
         if (k === 'order') return c => { st.ord = c; return p; };
         if (k === 'maybeSingle' || k === 'single') return () => { st.one = true; return p; };

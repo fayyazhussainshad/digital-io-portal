@@ -138,7 +138,9 @@ async function _saveMatn(type, id) {
     const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
     if (oid) rec.officer_id = oid;
     if (id) {
-      const { data } = await supabaseClient.from('fir_matn').update(rec).eq('id', id).select().single();
+      // v547: نتیجہ دیکھ کر — پہلے سرور رد کرتا تب بھی «محفوظ ہو گیا»
+      const { data, error } = await supabaseClient.from('fir_matn').update(rec).eq('id', id).select().single();
+      if (error) throw error;
       const idx = _firMatn.findIndex(m => m.id === id);
       if (idx >= 0) _firMatn[idx] = data || { ..._firMatn[idx], ...rec };
     } else {
@@ -150,7 +152,7 @@ async function _saveMatn(type, id) {
     closeModal();
     _renderFir(type || 'fir');
     showToast('متن محفوظ ہو گیا', 'success');
-  } catch(e) { showToast('' + e.message, 'error'); }
+  } catch(e) { dioWriteFail('متن', e, 'محفوظ نہیں ہوا'); }
 }
 
 async function _deleteMatn(id) {
@@ -158,12 +160,13 @@ async function _deleteMatn(id) {
   const row = _firMatn.find(m => m.id === id);
   const type = row?.type || 'fir';
   try {
-    await supabaseClient.from('fir_matn').delete().eq('id', id);
+    // v547: سرور کا نتیجہ دیکھ کر (عارضی id صرف اس آلے پر تھی)
+    if (String(id).indexOf('tmp_') !== 0) dioWriteOk(await supabaseClient.from('fir_matn').delete().eq('id', id).select('id'), 'fir matn delete', true);
     _firMatn = _firMatn.filter(m => m.id !== id);
     try { localStorage.setItem('dio_firmatn_'+_firCaseId, JSON.stringify(_firMatn)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('FIR matn: local save nakaam', _); }
     _renderFir(type);
     showToast('حذف ہو گیا', 'info');
-  } catch(e) { showToast('' + e.message, 'error'); }
+  } catch(e) { dioWriteFail('متن', e, 'حذف نہیں ہوا'); }
 }
 
 // ── PHOTOCOPY UPLOAD (base64 — offline-safe) ──────────────────
@@ -215,12 +218,12 @@ async function _deleteFirCopy(id) {
   const row = _firCopies.find(c => c.id === id);
   const type = row?.type || 'fir';
   try {
-    await supabaseClient.from('fir_copies').delete().eq('id', id);
+    if (String(id).indexOf('tmp_') !== 0) dioWriteOk(await supabaseClient.from('fir_copies').delete().eq('id', id).select('id'), 'fir copy delete', true);
     _firCopies = _firCopies.filter(c => c.id !== id);
     try { localStorage.setItem('dio_fircopies_'+_firCaseId, JSON.stringify(_firCopies)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('FIR copies: local save nakaam', _); }
     _renderFir(type);
     showToast('حذف ہو گیا', 'info');
-  } catch(e) { showToast('' + e.message, 'error'); }
+  } catch(e) { dioWriteFail('فوٹو کاپی', e, 'حذف نہیں ہوئی'); }
 }
 
 // ── VIEW MATN (read-only modal) ───────────────────────────────

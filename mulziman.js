@@ -367,11 +367,12 @@ async function _saveAccused(id) {
 async function _deleteAccused(id) {
   if (!confirm('کیا آپ یہ ملزم حذف کرنا چاہتے ہیں؟')) return;
   try {
-    await supabaseClient.from('case_accused').delete().eq('id', id);
+    // v547: نتیجہ دیکھ کر — پہلے سرور رد کرتا تب بھی «حذف ہو گیا»
+    dioWriteOk(await supabaseClient.from('case_accused').delete().eq('id', id).select('id'), 'accused delete', true);
     await _loadAccused();
     _renderAccusedArea();
     showToast('حذف ہو گیا', 'info');
-  } catch(e) { showToast('' + e.message, 'error'); }
+  } catch(e) { dioWriteFail('ملزم', e, 'حذف نہیں ہوا'); }
 }
 
 // ── READ-ONLY DETAIL VIEW (name click) — edit ONLY via ترمیم btn ──
@@ -566,16 +567,20 @@ async function _accPrevRecord(id) {
       `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`);
   } catch(e) { showToast('' + e.message, 'error'); }
 }
-// Build a readable case label from whatever columns exist
+// مقدمے کا لیبل — FIR نمبر · بجرم (صرف دفعات) · تھانہ
+//  v547: پہلے یہ دفعات اور تھانہ ایسے کالموں سے پڑھتا تھا جو `cases` میں ہیں ہی نہیں
+//  (u_s/section/dafaat/offence، thana/police_station/ps) — اس لیے لیبل میں صرف FIR
+//  نمبر آتا۔ اصل کالم: section_of_law (دفعات) اور case_station (تھانہ) — وہی جو
+//  مقدمہ فارم لکھتا ہے اور dio-prev.js پڑھتا ہے۔ اصول: «بجرم» کے آگے صرف دفعات۔
 function _accCaseLabel(c, fallbackId) {
   if (!c || !Object.keys(c).length) return 'مقدمہ #' + (fallbackId || '');
-  const fir   = c.fir_no || c.fir_number || c.firno || c.muqadma_no || c.case_no || c.number || '';
-  const thana = c.thana || c.police_station || c.ps || c.thana_name || '';
-  const secs  = c.u_s || c.section || c.dafaat || c.offence || '';
+  const fir   = String(c.fir_number || '').trim();
+  const secs  = String(c.section_of_law || '').trim();
+  const thana = String(c.case_station || '').trim();
   const parts = [];
   if (fir)   parts.push('ایف آئی آر ' + fir);
-  if (thana) parts.push(thana);
-  if (secs)  parts.push(secs);
+  if (secs)  parts.push('بجرم ' + secs);
+  if (thana) parts.push(/^تھانہ/.test(thana) ? thana : 'تھانہ ' + thana);
   return parts.length ? parts.join(' — ') : ('مقدمہ #' + (c.id || fallbackId || ''));
 }
 

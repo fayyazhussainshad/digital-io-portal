@@ -208,17 +208,18 @@ async function _saveCourtDate(existingId) {
 
   try {
     const oid = await getOfficerId();
+    // v547: نتیجہ دیکھ کر — پہلے سرور رد کرتا تب بھی «محفوظ ہو گئی»
     if (existingId) {
-      await supabaseClient.from('court_dates').update(payload).eq('id',existingId);
+      dioWriteOk(await supabaseClient.from('court_dates').update(payload).eq('id',existingId).select('id'), 'peshi update', true);
     } else {
       payload.officer_id = oid;
-      await supabaseClient.from('court_dates').insert(payload);
+      dioWriteOk(await supabaseClient.from('court_dates').insert(payload).select('id'), 'peshi insert', true);
     }
     closeModal();
     showToast('پیشی محفوظ ہو گئی','success');
     const c = document.getElementById('page-content');
     if (c) renderCourt(c);
-  } catch(e) { showToast(''+e.message,'error'); }
+  } catch(e) { dioWriteFail('پیشی', e, 'محفوظ نہیں ہوئی'); }
 }
 
 async function _editCourtDate(id) {
@@ -227,14 +228,22 @@ async function _editCourtDate(id) {
 }
 
 async function _markCourtDone(id) {
-  await supabaseClient.from('court_dates').update({status:'done'}).eq('id',id);
+  try {
+    dioWriteOk(await supabaseClient.from('court_dates').update({status:'done'}).eq('id',id).select('id'), 'peshi mukammal', true);
+  } catch (e) { dioWriteFail('پیشی', e, 'مکمل نہیں ہوئی'); return; }
   showToast('پیشی مکمل','success');
   const c=document.getElementById('page-content'); if(c)renderCourt(c);
 }
 
 async function _deleteCourtDate(id) {
-  try { const {data:cd}=await supabaseClient.from("court_dates").select("*").eq("id",id).single(); if(cd) await softDelete("court",id,cd); } catch(_) { if (typeof dioLogError === 'function') dioLogError('peshi: recycle bin copy nakaam', _); }
-  await supabaseClient.from("court_dates").delete().eq("id",id);
+  // v547: نقل «حذف شدہ مواد» میں کامیاب ہو تب ہی اصل حذف — پہلے نقل ناکام ہوتی
+  //   تب بھی پیشی حذف ہو جاتی (ہمیشہ کے لیے ضائع)، اور حذف کا نتیجہ بھی نہیں دیکھا جاتا تھا۔
+  let binId = false;
+  try { const {data:cd}=await supabaseClient.from("court_dates").select("*").eq("id",id).single(); if(cd) binId = await dioBinCopy("court",id,cd); } catch(_) { if (typeof dioLogError === 'function') dioLogError('peshi: recycle bin copy nakaam', _); }
+  if (!binId) { dioWriteFail('پیشی', new Error('«حذف شدہ مواد» میں نقل نہیں ہو سکی — انٹرنیٹ دیکھ کر دوبارہ کوشش کریں'), 'حذف نہیں ہوئی'); return; }
+  try {
+    dioWriteOk(await supabaseClient.from("court_dates").delete().eq("id",id).select('id'), 'peshi delete', true);
+  } catch (e) { await softDeleteUndo(binId); dioWriteFail('پیشی', e, 'حذف نہیں ہوئی'); return; }
   showToast("پیشی حذف شدہ مواد میں منتقل ہو گئی۔","info");
   const c=document.getElementById('page-content'); if(c)renderCourt(c);
 }

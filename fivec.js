@@ -48,8 +48,12 @@ async function addApplication5C(d){
   const{numbers,...main}=d;
   const{data,error}=await supabaseClient.from('applications_5c').insert({...main,officer_id:oid}).select().single();
   if(error)throw error;
-  if(numbers&&numbers.length){const rows=numbers.filter(n=>n.application_number).map(n=>({...n,application_5c_id:data.id}));if(rows.length)await supabaseClient.from('application_5c_numbers').insert(rows);}
-  offlineStore.cache('fivec_cache',{...data,application_5c_numbers:numbers||[]}).catch(()=>{});
+  // v547: نمبروں کا نتیجہ بھی دیکھو — پہلے یہ خاموشی سے ضائع ہو جاتے۔ درخواست بن
+  //   چکی، اس لیے throw نہیں (دوبارہ کوشش = دوہری درخواست)؛ صاف بتاؤ کہ نمبر رہ گئے۔
+  let _nOk=true;
+  if(numbers&&numbers.length){const rows=numbers.filter(n=>n.application_number).map(n=>({...n,application_5c_id:data.id}));if(rows.length){const{error:nErr}=await supabaseClient.from('application_5c_numbers').insert(rows);if(nErr){_nOk=false;if(typeof dioLogError==='function')dioLogError('5-C numbers insert nakaam',nErr);}}}
+  offlineStore.cache('fivec_cache',{...data,application_5c_numbers:_nOk?(numbers||[]):[]}).catch(()=>{});
+  if(!_nOk){const e=new Error('درخواست محفوظ ہو گئی، مگر درخواست نمبر محفوظ نہیں ہوئے — درخواست کھول کر نمبر دوبارہ لکھ کر محفوظ کریں');e.code='DIO_5C_NUMBERS';throw e;}
   return data;
 }
 async function updateApplication5C(id,d,numbers){
@@ -60,9 +64,9 @@ async function updateApplication5C(id,d,numbers){
     _fcOfflineNote('5-C درخواست کی تبدیلی آف لائن محفوظ — انٹرنیٹ آنے پر sync ہو جائے گی');
     return;
   }
-  const{error}=await supabaseClient.from('applications_5c').update(d).eq('id',id);
-  if(error)throw error;
-  if(numbers!==undefined){await supabaseClient.from('application_5c_numbers').delete().eq('application_5c_id',id);const rows=numbers.filter(n=>n.application_number).map(n=>({...n,application_5c_id:id}));if(rows.length)await supabaseClient.from('application_5c_numbers').insert(rows);}
+  // v547: 0 قطار (RLS/میعاد ختم) بھی ناکامی؛ اور نمبروں کا حذف/اندراج بھی دیکھ کر
+  dioWriteOk(await supabaseClient.from('applications_5c').update(d).eq('id',id).select('id'),'5-C update',true);
+  if(numbers!==undefined){dioWriteOk(await supabaseClient.from('application_5c_numbers').delete().eq('application_5c_id',id),'5-C numbers delete');const rows=numbers.filter(n=>n.application_number).map(n=>({...n,application_5c_id:id}));if(rows.length)dioWriteOk(await supabaseClient.from('application_5c_numbers').insert(rows),'5-C numbers insert');}
 }
 async function deleteApplication5C(id){
   if(!navigator.onLine){
@@ -72,14 +76,17 @@ async function deleteApplication5C(id){
     return;
   }
   const{data:atts}=await supabaseClient.from('application_5c_attachments').select('storage_path').eq('application_5c_id',id);
-  if(atts&&atts.length)await supabaseClient.storage.from('5c-attachments').remove(atts.map(a=>a.storage_path));
-  const{error}=await supabaseClient.from('applications_5c').delete().eq('id',id);
-  if(error)throw error;
+  // v547: پہلے درخواست (نتیجہ دیکھ کر)، پھر فائلیں — پہلے فائلیں مٹتیں اور درخواست کا
+  //   حذف رد ہوتا (مثلاً میعاد ختم) تو درخواست رہ جاتی مگر اس کی منسلکہ فائلیں ضائع۔
+  dioWriteOk(await supabaseClient.from('applications_5c').delete().eq('id',id).select('id'),'5-C delete',true);
+  if(atts&&atts.length){const{error:sErr}=await supabaseClient.storage.from('5c-attachments').remove(atts.map(a=>a.storage_path));if(sErr&&typeof dioLogError==='function')dioLogError('5-C files hazf nakaam',sErr);}
   offlineStore.remove('fivec_cache',id).catch(()=>{});
 }
 async function uploadAttachment5C(appId,file,category){if(!currentUser)throw new Error('Not authenticated');const safeName=file.name.replace(/[^\w.\-]/g,'_');const path=`${currentUser.id}/${appId}/${Date.now()}_${safeName}`;const{error:upErr}=await supabaseClient.storage.from('5c-attachments').upload(path,file);if(upErr)throw upErr;const{data,error}=await supabaseClient.from('application_5c_attachments').insert({application_5c_id:appId,file_name:file.name,storage_path:path,file_size:file.size,mime_type:file.type,category}).select().single();if(error){await supabaseClient.storage.from('5c-attachments').remove([path]);throw error;}return data;}
 async function getAttachmentUrl5C(path){const{data,error}=await supabaseClient.storage.from('5c-attachments').createSignedUrl(path,3600);if(error){console.error(error);return null;}return data.signedUrl;}
-async function deleteAttachment5C(id,path){await supabaseClient.storage.from('5c-attachments').remove([path]);await supabaseClient.from('application_5c_attachments').delete().eq('id',id);}
+// v547: پہلے ریکارڈ (نتیجہ دیکھ کر)، پھر فائل — پہلے فائل مٹتی اور ریکارڈ کا حذف ناکام
+//   ہوتا تو فہرست میں ایسی منسلکہ رہ جاتی جس کی فائل ہی نہیں۔
+async function deleteAttachment5C(id,path){dioWriteOk(await supabaseClient.from('application_5c_attachments').delete().eq('id',id).select('id'),'5-C attachment delete',true);const{error:sErr}=await supabaseClient.storage.from('5c-attachments').remove([path]);if(sErr&&typeof dioLogError==='function')dioLogError('5-C attachment file hazf nakaam',sErr);}
 
 // ── PAGE RENDERER ──
 registerPage('fivec',renderFiveC);
@@ -221,7 +228,7 @@ async function view5CAttachment(path){
   if (typeof _dioViewFile === 'function') _dioViewFile(url, path.split('/').pop() || 'فائل');
   else window.open(url, '_blank');
 }
-async function delete5CAttachment(id,path,btn){if(!confirm('Delete this attachment?'))return;try{await deleteAttachment5C(id,path);if(btn&&btn.closest('div'))btn.closest('div').remove();showToast('Deleted','info');}catch(e){showToast(''+e.message,'error');}}
+async function delete5CAttachment(id,path,btn){if(!confirm('Delete this attachment?'))return;try{await deleteAttachment5C(id,path);if(btn&&btn.closest('div'))btn.closest('div').remove();showToast('Deleted','info');}catch(e){dioWriteFail('منسلکہ',e,'حذف نہیں ہوئی');}}
 async function save5CApp(id){
   const main={complainant_name:(window.DIOCard?DIOCard.readName('f5c-name'):document.getElementById('f5c-name').value.trim())||null,complainant_cnic:document.getElementById('f5c-cnic').value.trim()||null,complainant_cell:document.getElementById('f5c-cell').value.trim()||null,application_date:toISODate(document.getElementById('f5c-appdate').value)||null,subject:document.getElementById('f5c-subject').value.trim()||null,status:document.getElementById('f5c-status').value};
   const numbers=Array.from(document.querySelectorAll('.f5c-num-row')).map(row=>{const r={};row.querySelectorAll('[data-field]').forEach(el=>{r[el.dataset.field]=el.value.trim()||null;});if(r.senior_officer_designation==='Other'){const c=row.querySelector('[data-field="senior_officer_designation_custom"]');r.senior_officer_designation=c&&c.value.trim()?c.value.trim():'Other';}if(r.forwarded_date)r.forwarded_date=toISODate(r.forwarded_date)||r.forwarded_date;delete r.senior_officer_designation_custom;return r;}).filter(n=>n.application_number);
@@ -236,9 +243,12 @@ async function save5CApp(id){
       if(window.DIOCard&&DIOCard._missingCol(e1)){const m2={...main};delete m2.case_id;delete m2.fir_number;await run(m2);showToast('محفوظ ہو گیا، مگر مقدمے سے جوڑنے کے لیے ڈیٹابیس اپڈیٹ (sql/102) ابھی نہیں چلی','info',7000);}
       else throw e1;
     }
-    closeModal();if(window._activePage==='fivec')renderFiveC(document.getElementById('page-content'));}catch(e){showToast(''+e.message,'error',5000);}
+    closeModal();if(window._activePage==='fivec')renderFiveC(document.getElementById('page-content'));}catch(e){
+    // v547: درخواست بن گئی مگر نمبر رہ گئے — کارڈ بند کرو (دوبارہ «محفوظ» = دوہری درخواست) اور صاف بتاؤ
+    if(e&&e.code==='DIO_5C_NUMBERS'){closeModal();if(window._activePage==='fivec')renderFiveC(document.getElementById('page-content'));showToast('⚠ '+e.message,'error',10000);return;}
+    dioWriteFail('درخواست',e,'محفوظ نہیں ہوئی');}
 }
-function confirmDelete5C(id,sn){if(!confirm(`Delete Application #${sn} and ALL its attachments?`))return;deleteApplication5C(id).then(()=>{showToast('Deleted','info');renderFiveC(document.getElementById('page-content'));}).catch(e=>showToast(''+e.message,'error'));}
+function confirmDelete5C(id,sn){if(!confirm(`Delete Application #${sn} and ALL its attachments?`))return;deleteApplication5C(id).then(()=>{showToast('Deleted','info');renderFiveC(document.getElementById('page-content'));}).catch(e=>dioWriteFail('درخواست',e,'حذف نہیں ہوئی'));}
 
 // ── RESPONSE WRITER ──
 // Saved selection — restored after clicking toolbar selects so text stays highlighted
@@ -397,9 +407,9 @@ async function open5CResponse(id){
 async function save5CResponse(id){
   const html=document.getElementById('a4-paper').innerHTML;
   try{
-    await supabaseClient.from('applications_5c').update({response_text:((window.DIO&&DIO.html&&DIO.html.safe)?DIO.html.safe(html):html),response_date:new Date().toISOString().split('T')[0],status:'responded'}).eq('id',id);
+    dioWriteOk(await supabaseClient.from('applications_5c').update({response_text:((window.DIO&&DIO.html&&DIO.html.safe)?DIO.html.safe(html):html),response_date:new Date().toISOString().split('T')[0],status:'responded'}).eq('id',id).select('id'),'5-C response',true);
     showToast('Response saved online','success');
-  }catch(e){showToast('Save failed: '+e.message,'error',5000);}
+  }catch(e){dioWriteFail('جواب',e,'محفوظ نہیں ہوا');}
 }
 
 function downloadResponse5C(id,name){

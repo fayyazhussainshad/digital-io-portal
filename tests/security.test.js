@@ -1355,7 +1355,8 @@ test('r173: محفوظ کرنے کی ناکامی چھپائی نہ جائے', (
   assert.ok(/const \{ data: ins, error: insErr \}/.test(s),
     'supabase-js nakami par exception nahi phenkta — `error` khud dekhna zaroori hai');
   assert.ok(/if \(insErr\) throw insErr;/.test(s));
-  assert.ok(/const \{ error: upErr \}[\s\S]{0,120}if \(upErr\) throw upErr;/.test(s));
+  // v547: ترمیم کا نتیجہ dioWriteOk سے — غلطی اور 0 قطار (RLS/میعاد ختم) دونوں پر throw
+  assert.ok(/dioWriteOk\(await supabaseClient\.from\('report_173'\)\.update\(rec\)\.eq\('id', _r173DocId\)\.select\('id'\), 'r173 update', true\)/.test(s));
   assert.ok(/let _r173Saving = false/.test(s), 'do dafa dabane par do satren na banen');
   assert.ok(/محفوظ نہیں ہوا/.test(s), 'nakami par saaf paigham');
   // "محفوظ فائلیں" mein darj — kamyabi ke BAAD
@@ -1838,4 +1839,118 @@ test('v546: سرور کا نتیجہ دیکھے بغیر «محفوظ» نہیں
   assert.ok(!/TOAST\('✅ نقشہ موقع محفوظ ہو گیا', 'success'\);\n/.test(nq) && /_isPending\(_naqCaseId\)/.test(nq), 'نقشہ: زیرِ التوا مقامی کاپی ترجیح پائے');
   assert.ok(/objectStoreNames\.contains\(table\+'_cache'\)/.test(read('offline-store.js')), 'قطار کا delete: cache store نہ ہو تو جھوٹی ناکامی نہیں');
   assert.ok(/drop\(\); reject\(new Error\('fabric net'\)\)/.test(nq), 'fabric لوڈ ناکام ہو تو دوسری بار نقشہ اٹکے نہیں');
+});
+
+// ═══ v547 ═══════════════════════════════════════════════════════════
+// Supabase کا ہر write (insert/update/upsert/delete) — نتیجہ دیکھے بغیر کبھی نہیں۔
+// AST سے پورے سسٹم کی جانچ: نتیجہ پھینک دیا گیا ہو (صرف `await …;`) یا {error}
+// نکالے بغیر destructure کیا گیا ہو تو ناکام۔ مستثنیٰ صرف وہ جہاں ناکامی کا
+// بتانا ممکن/مطلوب نہیں: error-handler (غلطی کا اپنا اندراج — خود پر لوٹ نہ آئے)۔
+// `.then(r => … r.error …)` والی لکھائی بھی قبول (نتیجہ دیکھا جا رہا ہے)۔
+test('v547: کوئی سرور لکھائی ایسی نہیں جس کا نتیجہ نہ دیکھا جائے', () => {
+  const espree = require(path.join(ROOT, 'node_modules', 'espree'));
+  const WRITE = new Set(['insert', 'update', 'upsert', 'delete']);
+  const ALLOW = new Set(['error-handler.js:client_errors']);
+  const bad = [];
+  const files = fs.readdirSync(ROOT).filter((f) => f.endsWith('.js') && f !== 'sw.js');
+  for (const f of files) {
+    const src = read(f);
+    const ast = espree.parse(src, { ecmaVersion: 2022, loc: true, range: true });
+    const walk = (n, parent) => {
+      if (!n || typeof n.type !== 'string') return;
+      n._p = parent;
+      for (const k of Object.keys(n)) {
+        if (k === '_p') continue;
+        const v = n[k];
+        if (Array.isArray(v)) v.forEach((c) => walk(c, n)); else if (v && typeof v.type === 'string') walk(v, n);
+      }
+      if (n.type !== 'CallExpression' || n.callee.type !== 'MemberExpression') return;
+      const p = n._p;
+      if (p && p.type === 'MemberExpression' && p.object === n) return;        // زنجیر کا اندرونی حصہ
+      const ops = []; let table = null; let c = n;
+      while (c && c.type === 'CallExpression' && c.callee.type === 'MemberExpression') {
+        const name = c.callee.property.name; ops.unshift(name);
+        if (name === 'from' && c.arguments[0]) table = c.arguments[0].type === 'Literal' ? c.arguments[0].value : '(expr)';
+        c = c.callee.object;
+      }
+      const fi = ops.indexOf('from');
+      if (fi < 0 || !ops.slice(fi + 1).some((o) => WRITE.has(o)) || (c && c.type === 'MemberExpression' && c.property.name === 'storage')) return;
+      if (ALLOW.has(f + ':' + table)) return;
+      const text = src.slice(n.range[0], n.range[1]);
+      if (ops.includes('then')) { if (!/\.error\b/.test(text.slice(text.lastIndexOf('.then')))) bad.push(f + ':' + n.loc.start.line + ' then بغیر error'); return; }
+      let u = p; if (u && u.type === 'AwaitExpression') u = u._p;
+      if (!u || u.type === 'ExpressionStatement') bad.push(f + ':' + n.loc.start.line + ' نتیجہ پھینکا');
+      else if (u.type === 'VariableDeclarator' && u.id.type === 'ObjectPattern' && !u.id.properties.some((q) => q.key && q.key.name === 'error'))
+        bad.push(f + ':' + n.loc.start.line + ' error نہیں نکالا');
+    };
+    walk(ast, null);
+  }
+  assert.deepEqual(bad, [], 'نتیجہ دیکھے بغیر لکھائی: ' + bad.join(' · '));
+});
+
+test('v547: dioWriteOk — غلطی اور RLS کی خاموش روک (0 قطار) دونوں پر throw', () => {
+  const ctx = makeSandbox();
+  const logs = [];
+  ctx.dioLogError = (m) => logs.push(m);
+  const d = read('data-api.js');
+  const grab = (name) => { const i = d.indexOf('function ' + name + '('); let j = d.indexOf('\n}\n', i); return d.slice(i, j + 2); };
+  vm.runInContext(grab('dioWriteOk'), ctx);
+  assert.deepEqual(ctx.dioWriteOk({ data: [{ id: 1 }], error: null }, 'x', true), [{ id: 1 }]);
+  assert.deepEqual(ctx.dioWriteOk({ data: { id: 2 }, error: null }, 'x', true), { id: 2 }, 'single() والا نتیجہ');
+  assert.throws(() => ctx.dioWriteOk({ data: null, error: { message: 'rls', code: '42501' } }, 'x'), (e) => e.code === '42501', 'سرور کی اصل غلطی آگے جائے');
+  assert.throws(() => ctx.dioWriteOk({ data: [], error: null }, 'x', true), (e) => e.code === 'DIO_NOROW');
+  assert.throws(() => ctx.dioWriteOk({ data: null, error: null }, 'x', true), (e) => e.code === 'DIO_NOROW');
+  assert.doesNotThrow(() => ctx.dioWriteOk({ data: null, error: null }, 'x'), 'needRow کے بغیر خالی نتیجہ ٹھیک');
+  assert.equal(logs.length, 3, 'ہر ناکامی درج ہو');
+});
+
+test('v547: «حذف شدہ مواد» میں نقل کامیاب ہو تب ہی اصل حذف (یاددہانی، پیشی، مقدمہ، واقعاتی رپورٹ)', () => {
+  const b = read('bin.js');
+  assert.ok(/\.select\('id'\)\.single\(\);\s*\n\s*if \(error \|\| !data \|\| !data\.id\)/.test(b) && /return data\.id;/.test(b), 'softDelete: سرور کا رد → false');
+  assert.ok(!/return true;\s*\n\s*\} catch\(_\) \{ return false; \}/.test(b), 'پرانا «ہمیشہ true» ختم');
+  assert.ok(/async function softDeleteUndo\(binId\)/.test(b), 'اصل حذف ناکام → بن کی نقل واپس');
+  assert.ok(/async function dioBinCopy\(/.test(read('data-api.js')) && /dioLoadScript\('bin\.js'\)/.test(read('data-api.js')), 'bin.js ابھی نہ آئی ہو تو پہلے لاؤ');
+  const order = (f, copy, del) => { const s = read(f); const i = s.indexOf(copy), j = s.indexOf(del, i); return i > 0 && j > i && /if \(!binId\)/.test(s.slice(i, j)); };
+  assert.ok(order('reminders.js', "dioBinCopy('reminder'", 'await deleteReminder(id)'), 'یاددہانی');
+  assert.ok(order('court.js', 'dioBinCopy("court"', 'from("court_dates").delete()'), 'پیشی');
+  assert.ok(order('cases.js', "dioBinCopy('case'", 'await deleteCase(id)'), 'مقدمہ');
+  const ir = read('incident.js'); assert.ok(/if \(!binId\) throw new Error/.test(ir) && ir.indexOf("dioBinCopy('incident'") < ir.indexOf("from('incident_reports').delete().eq('id', id)"), 'واقعاتی رپورٹ');
+  for (const f of ['reminders.js', 'court.js', 'cases.js', 'incident.js']) assert.ok(/softDeleteUndo\(binId\)/.test(read(f)), f + ': حذف ناکام → نقل واپس');
+  assert.ok(!/_binRestore[\s\S]{0,900}await supabaseClient\.from\(table\)\.insert\(\{ \.\.\.restoreData, officer_id: oid \}\);/.test(b), 'بحالی ناکام → بن سے نہ ہٹے');
+});
+
+test('v547: سرکاری گاڑی — آف لائن دو بار محفوظ = قطار میں ایک ہی اندراج', () => {
+  const o = read('offline-store.js'), g = read('sho-dsp.js'), d = read('data-api.js');
+  assert.ok(/async enqueue\(table,op,data,tempId,key\)/.test(o) && /p\.key===key && p\.table===table && p\.op===op/.test(o), 'قطار: اسی چابی کا اندراج بدلے');
+  assert.ok(/async function dioSaveRow\(table, op, rec, opts\)/.test(d) && /opts && opts\.queueKey/.test(d));
+  assert.ok(/queueKey: 'sarkari_gari:' \+ cid/.test(g) && /from\('sarkari_gari'\)\.select\('id'\)\.eq\('officer_id', oid\)/.test(g), 'گاڑی: چابی + سرور پر پرانی قطار کی تلاش');
+});
+
+test('v547: ملزم کا سابقہ ریکارڈ — لیبل میں FIR، بجرم دفعات اور تھانہ (اصل کالموں سے)', () => {
+  const s = read('mulziman.js');
+  const i = s.indexOf('function _accCaseLabel('), j = s.indexOf('\n}\n', i);
+  const ctx = makeSandbox();
+  vm.runInContext(s.slice(i, j + 2), ctx);
+  assert.equal(ctx._accCaseLabel({ id: 'c2', fir_number: '77/25', section_of_law: '302/34 ت پ', case_station: 'کینٹ ملتان', offence_type: 'قتل' }),
+    'ایف آئی آر 77/25 — بجرم 302/34 ت پ — تھانہ کینٹ ملتان');
+  assert.equal(ctx._accCaseLabel({ id: 'c3', fir_number: '9/26', case_station: 'تھانہ صدر' }), 'ایف آئی آر 9/26 — تھانہ صدر', 'تھانہ دوبارہ نہ لگے');
+  assert.equal(ctx._accCaseLabel(null, 'c9'), 'مقدمہ #c9');
+  assert.ok(!/c\.u_s|c\.dafaat|c\.police_station/.test(s.slice(i, j)), 'غیر موجود کالم نہیں');
+});
+
+test('v547: 5-C — نمبر اور فائلیں: نتیجہ دیکھ کر؛ پہلے درخواست، پھر فائل', () => {
+  const o = read('offline-store.js'), f = read('fivec.js');
+  assert.ok(/_markQueueItem\(item\.qid,'pending',\{data:\{\.\.\.data,_mainId:rec\.id\}\}\)/.test(o) && /if\(_mainId\)\{ rec=\{\.\.\.main,id:_mainId\}; \}/.test(o), 'قطار: نمبر رہ جائیں تو دوبارہ کوشش دوہری درخواست نہ بنائے');
+  assert.ok(f.indexOf("from('applications_5c').delete().eq('id',id).select('id')") < f.indexOf("storage.from('5c-attachments').remove(atts.map"), 'درخواست کا حذف پہلے، فائلیں بعد میں');
+  assert.ok(/e\.code='DIO_5C_NUMBERS'/.test(f) && /e\.code==='DIO_5C_NUMBERS'\)\{closeModal\(\)/.test(f), 'نمبر رہ گئے: کارڈ بند (دوبارہ محفوظ = دوہری درخواست نہیں) اور صاف پیغام');
+});
+
+test('v547: تلاش اور سابقہ ریکارڈ پرانے «جرم کی قسم» کالم کو نہیں چھیڑتے', () => {
+  for (const f of ['search.js', 'dio-prev.js']) assert.ok(!/offence_type/.test(read(f)), f);
+});
+
+test('v547: ریپو کی صفائی — پرانی zip اور backup فائلیں (ویب سائٹ پر کھلی) ہٹ چکیں', () => {
+  for (const f of ['digital-io-v503.zip', 'dio-challan-form-v493.zip', 'backups/report173_BEFORE_A4FIX.js'])
+    assert.ok(!fs.existsSync(path.join(ROOT, f)), f);
+  assert.ok(!fs.readdirSync(ROOT).some((f) => /\.(zip|bak|tgz)$/i.test(f)), 'جڑ میں کوئی zip/backup نہیں');
 });

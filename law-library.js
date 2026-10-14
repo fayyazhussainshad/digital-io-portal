@@ -741,8 +741,8 @@ async function _saveEditedLaw(id) {
       upd.file_type = (ext === 'pdf') ? 'pdf' : 'word';
     }
 
-    const { error } = await supabaseClient.from('law_library').update(upd).eq('id', id);
-    if (error) throw error;
+    // v547: 0 قطار (RLS/کسی اور کا ریکارڈ) بھی ناکامی — ورنہ «محفوظ» کا جھوٹا پیغام
+    dioWriteOk(await supabaseClient.from('law_library').update(upd).eq('id', id).select('id'), 'law update', true);
 
     // Update local list
     Object.assign(l, upd);
@@ -767,16 +767,19 @@ function _deleteLaw(id) {
   if (!l) return;
   const doDelete = async () => {
     try {
+      // v547: پہلے ریکارڈ (نتیجہ دیکھ کر)، پھر فائل — پہلے فائل مٹتی اور ریکارڈ کا
+      //   حذف رد ہوتا تو قانون فہرست میں رہ جاتا مگر اس کی فائل ضائع۔
+      dioWriteOk(await supabaseClient.from('law_library').delete().eq('id', id).select('id'), 'law delete', true);
       // Remove file from storage if present
       if (l.file_url) {
         const marker = '/' + LAW_BUCKET + '/';
         const idx = l.file_url.indexOf(marker);
         if (idx !== -1) {
           const path = decodeURIComponent(l.file_url.substring(idx + marker.length).split('?')[0]);
-          await supabaseClient.storage.from(LAW_BUCKET).remove([path]);
+          const { error: sErr } = await supabaseClient.storage.from(LAW_BUCKET).remove([path]);
+          if (sErr && typeof dioLogError === 'function') dioLogError('law file hazf nakaam', sErr);
         }
       }
-      await supabaseClient.from('law_library').delete().eq('id', id);
       _lawList = _lawList.filter(x => x.id !== id);
       try { localStorage.setItem(LAW_CACHE_KEY, JSON.stringify(_lawList)); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
       // KHARABI THI: yahan `law-card-<id>` dhoonda jata tha jo kabhi bana hi
@@ -785,7 +788,7 @@ function _deleteLaw(id) {
       // khulta. Ab poori fehrist nayi shakl mein — numbering bhi theek.
       _lawRender();
       showToast('حذف ہو گیا','info');
-    } catch(e) { showToast(''+e.message,'error'); }
+    } catch(e) { dioWriteFail('قانون', e, 'حذف نہیں ہوا'); }
   };
   if (typeof confirmDelete === 'function') confirmDelete(l.title||l.name, doDelete);
   else if (confirm('حذف کریں؟')) doDelete();

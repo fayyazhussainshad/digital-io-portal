@@ -440,7 +440,10 @@ async function _doRejectReg(regId) {
   // delete audit records when rejecting an officer. The officer.rejected
   // event logged above must survive. (Removed a stale delete on a
   // non-existent 'audit_log' table that would have contradicted this.)
-  await supabaseClient.from('officers').delete().eq('id', regId);
+  // v547: نتیجہ دیکھ کر — پہلے رد نہ ہوتی (اجازت/کنکشن) تب بھی «رد کر دی گئی»
+  try {
+    dioWriteOk(await supabaseClient.from('officers').delete().eq('id', regId).select('id'), 'admin reject', true);
+  } catch (e) { dioWriteFail('درخواست', e, 'رد نہیں ہوئی'); return; }
   // Remove card from DOM immediately
   const card = document.getElementById('pending-card-'+regId);
   if (card) card.remove();

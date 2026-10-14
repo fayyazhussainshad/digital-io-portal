@@ -216,3 +216,4 @@ bb=ImageChops.difference(a,b).getbbox(); print(bb)"""], capture_output=True, tex
 fails = [r for r in R if r[0] == 'FAIL']
 print(f'\n{len(R) - len(fails)}/{len(R)} passed')
 json.dump(R, open(OUT + '/real_results.json', 'w'), ensure_ascii=False, indent=1)
+sys.exit(1 if fails else 0)   # v547: CI میں ناکامی پر build رکے

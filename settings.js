@@ -277,7 +277,8 @@ async function savePostingSettings(){
         to_district:  newDistrict||null,
         transfer_date:new Date().toISOString().split('T')[0],
         notes:'ترتیبات سے درج کیا گیا',
-      }).then(()=>{}).catch(err=>console.warn('Transfer record failed (non-critical):',err.message));
+      }).then(r=>{ if(r&&r.error){ console.warn('Transfer record failed (non-critical):',r.error.message); if(typeof dioLogError==='function') dioLogError('officer_transfers insert nakaam',r.error); } })
+        .catch(err=>console.warn('Transfer record failed (non-critical):',err.message));
     }
 
     showToast(stationChanged?`تعیناتی اپ ڈیٹ ہو گئی — ${newStation}`:'تعیناتی محفوظ ہو گئی۔','success');

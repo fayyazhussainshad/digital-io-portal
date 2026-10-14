@@ -279,6 +279,11 @@ function _collectCro() {
   return data;
 }
 
+function _croKeepLocal() {
+  try { localStorage.setItem('dio_cro_'+_croCaseId, JSON.stringify(_croSaved)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('CRO card: local save nakaam', _); }
+  if (_croAccused && _croAccused.id) _croAllCards[_croAccused.id] = _croSaved;
+}
+
 async function _saveCro() {
   const form_data = _collectCro();
   const rec = {
@@ -290,17 +295,24 @@ async function _saveCro() {
   try {
     const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
     if (oid) rec.officer_id = oid;
-    if (_croSaved && _croSaved.id) {
-      await supabaseClient.from('cro_cards').update(rec).eq('id', _croSaved.id);
+    // v547: سرور کا نتیجہ دیکھ کر — پہلے insert ناکام ہوتا تب بھی عارضی id بنا کر
+    //   «محفوظ ہو گیا» دکھایا جاتا، اور update کے بعد پرانا ڈیٹا ہی یاد رکھا جاتا
+    //   (کارڈ دوبارہ کھولنے پر پرانی معلومات)۔
+    if (_croSaved && _croSaved.id && String(_croSaved.id).indexOf('tmp_') !== 0) {
+      dioWriteOk(await supabaseClient.from('cro_cards').update(rec).eq('id', _croSaved.id).select('id'), 'cro update', true);
+      _croSaved = { ..._croSaved, ...rec };
     } else {
-      const { data } = await supabaseClient.from('cro_cards').insert(rec).select().single();
-      _croSaved = data || { ...rec, id:'tmp_'+Date.now() };
+      _croSaved = dioWriteOk(await supabaseClient.from('cro_cards').insert(rec).select().single(), 'cro insert');
     }
-    try { localStorage.setItem('dio_cro_'+_croCaseId, JSON.stringify(_croSaved)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('CRO card: local save nakaam', _); }
-    if (_croAccused && _croAccused.id) _croAllCards[_croAccused.id] = _croSaved;
+    _croKeepLocal();
     _croDirty = false;
     showToast('CRO کارڈ محفوظ ہو گیا', 'success');
-  } catch(e) { showToast('' + e.message, 'error'); }
+  } catch(e) {
+    // سرور پر نہیں ہوا — مگر کام اس آلے پر رکھ لو (ضائع نہ ہو)، اور صاف بتاؤ
+    _croSaved = { ...(_croSaved || {}), ...rec, id: (_croSaved && _croSaved.id) || ('tmp_' + Date.now()) };
+    _croKeepLocal();
+    dioWriteFail('CRO کارڈ', e, 'سرور پر محفوظ نہیں ہوا (اس آلے پر محفوظ ہے)');
+  }
 }
 
 function _printCro() {

@@ -126,9 +126,22 @@ async function _saveSarkariGari() {
   const rec = { vehicle_number, driver_name };
   if (oid) rec.officer_id = oid;
   if (cid !== '_') rec.case_id = cid;
+  // v547: انٹرنیٹ کے بغیر دو بار «محفوظ» پر قطار میں دو insert بنتے تھے — اب اسی
+  //   مقدمے کا زیرِ التوا اندراج بدل جاتا ہے (queueKey)۔ اور جو اندراج آف لائن سے
+  //   سرور پر پہنچا اس کا id اس آلے کو معلوم نہیں ہوتا — اس لیے id نہ ہو تو پہلے سرور
+  //   پر اسی مقدمے کی قطار ڈھونڈو، ملے تو وہی بدلو (نئی قطار نہیں)۔
+  const qk = { queueKey: 'sarkari_gari:' + cid };
+  if (!ids[cid] && oid && navigator.onLine !== false && typeof supabaseClient !== 'undefined' && supabaseClient) {
+    try {
+      let q = supabaseClient.from('sarkari_gari').select('id').eq('officer_id', oid);
+      q = (cid !== '_') ? q.eq('case_id', cid) : q.is('case_id', null);
+      const { data: found, error: fErr } = await q.limit(1);
+      if (!fErr && found && found[0] && found[0].id) ids[cid] = found[0].id;
+    } catch (_) { if (typeof dioLogError === 'function') dioLogError('sarkari gari: purani qataar talash nakaam', _); }
+  }
   let res = null;
-  if (ids[cid]) res = await dioSaveRow('sarkari_gari', 'update', { id: ids[cid], ...rec });
-  if (!res || res.status === 'missing') res = await dioSaveRow('sarkari_gari', 'insert', rec);
+  if (ids[cid]) res = await dioSaveRow('sarkari_gari', 'update', { id: ids[cid], ...rec }, qk);
+  if (!res || res.status === 'missing') res = await dioSaveRow('sarkari_gari', 'insert', rec, qk);
   if (res.status === 'ok' && res.data && res.data.id) { ids[cid] = res.data.id; keep(); }
   closeModal();
   dioSaveToast(res, 'سرکاری گاڑی', { ok: 'محفوظ ہو گئی', fail: 'محفوظ نہیں ہوئی' });

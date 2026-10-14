@@ -333,9 +333,8 @@ async function _moveZimni(id) {
   if (!n || n < 1) { showToast('درست نمبر درج کریں', 'warn'); return; }
   try {
     if (navigator.onLine && !String(z.id).startsWith('local-')) {
-      const { error } = await supabaseClient.from('zimni_reports')
-        .update({ serial_no: n }).eq('id', z.id);
-      if (error) throw error;
+      dioWriteOk(await supabaseClient.from('zimni_reports')
+        .update({ serial_no: n }).eq('id', z.id).select('id'), 'zimni serial', true);
     }
     z.serial_no = n;
     try { localStorage.setItem('dio_zimni_' + _zimniCaseId, JSON.stringify(_zimniList)); } catch (_) { if (typeof dioLogError === 'function') dioLogError('zimni: local list save nakaam', _); }
@@ -2194,12 +2193,13 @@ window._saveZimni = _saveZimni;
 async function _deleteZimni(id, skipConfirm) {
   if (!skipConfirm && !confirm('کیا آپ یہ ضمنی حذف کرنا چاہتے ہیں؟')) return;
   try {
-    await supabaseClient.from('zimni_reports').delete().eq('id', id);
+    // v547: نتیجہ دیکھ کر — پہلے سرور رد کرتا تب بھی فہرست سے ہٹ جاتی (دوبارہ کھولنے پر واپس)
+    dioWriteOk(await supabaseClient.from('zimni_reports').delete().eq('id', id).select('id'), 'zimni delete', true);
     _zimniList = _zimniList.filter(z => z.id !== id);
     try { localStorage.setItem('dio_zimni_' + _zimniCaseId, JSON.stringify(_zimniList)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('zimni: local list save nakaam', _); }
     _renderZimniList();
     showToast('حذف ہو گئی', 'info');
-  } catch(e) { showToast('' + e.message, 'error'); }
+  } catch(e) { dioWriteFail('ضمنی', e, 'حذف نہیں ہوئی'); }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -4082,12 +4082,12 @@ window._saveZimniA = _saveZimniA;
 async function _deleteZimniA(id, skipConfirm) {
   if (!skipConfirm && !confirm('کیا آپ یہ اندرونی ضمنی حذف کرنا چاہتے ہیں؟')) return;
   try {
-    await supabaseClient.from('zimni_androoni_reports').delete().eq('id', id);
+    dioWriteOk(await supabaseClient.from('zimni_androoni_reports').delete().eq('id', id).select('id'), 'zimni androoni delete', true);
     _zaList = _zaList.filter(z => z.id !== id);
     try { localStorage.setItem('dio_za_' + _zaCaseId, JSON.stringify(_zaList)); } catch (_) { if (typeof dioLogError === 'function') dioLogError('zimni androoni: local list save nakaam', _); }
     _renderZimniAList();
     showToast('حذف ہو گئی', 'info');
-  } catch (e) { showToast('' + e.message, 'error'); }
+  } catch (e) { dioWriteFail('اندرونی ضمنی', e, 'حذف نہیں ہوئی'); }
 }
 window._deleteZimniA = _deleteZimniA;
 

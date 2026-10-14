@@ -488,12 +488,21 @@ async function saveMisalDoc(docId) {
   const html = editor.innerHTML;
   const date = document.getElementById('misal-date')?.value || '';
   try {
-    const { error } = await supabaseClient
+    // v547: پہلے 0 قطار بدلنے پر بھی «محفوظ» دکھایا جاتا — یعنی سرور پر اس مقدمے
+    //   میں یہ دستاویز موجود ہی نہ ہو تو لکھا ہوا خاموشی سے ضائع۔ اب: نہ ملے تو نیا
+    //   ریکارڈ بناؤ؛ وہ بھی رد ہو (مثلاً میعاد ختم) تو صاف ناکامی۔
+    const upd = dioWriteOk(await supabaseClient
       .from('case_documents')
       .update({ content: { html, date }, updated_at: new Date().toISOString() })
       .eq('case_id', _misalCaseId)
-      .eq('document_type', docId);
-    if (error) throw error;
+      .eq('document_type', docId).select('id'), 'misal doc update');
+    if (!upd || !upd.length) {
+      const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
+      _misalDocs[docId] = dioWriteOk(await supabaseClient.from('case_documents')
+        .insert({ case_id: _misalCaseId, officer_id: oid, document_type: docId, status: 'draft', content: { html, date } })
+        .select().single(), 'misal doc insert');
+      try { if (typeof _refreshMisalBar === 'function') _refreshMisalBar(); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
+    }
     if (_misalDocs[docId]) _misalDocs[docId].content = { html, date };
     _misalDirty = false;
     // محفوظ فائلوں کی فہرست میں درج (نمبر شمار + تاریخ)
@@ -504,7 +513,7 @@ async function saveMisalDoc(docId) {
       }
     } catch(_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
     showToast('دستاویز محفوظ ہو گئی', 'success');
-  } catch(e) { showToast('' + e.message, 'error'); }
+  } catch(e) { dioWriteFail('دستاویز', e, 'محفوظ نہیں ہوئی'); }
 }
 
 function printMisalDoc(name) {

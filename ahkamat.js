@@ -615,9 +615,10 @@ function _ahkDelete(id){
   const doDelete = async () => {
     if (!navigator.onLine) { showToast('حذف کرنے کے لیے انٹرنیٹ ضروری ہے','error'); return; }
     try {
-      if (a.storage_path) { try { await supabaseClient.storage.from(AHK_BUCKET).remove([a.storage_path]); } catch(_){ if (typeof dioLogError === 'function') dioLogError('ahkamat: storage file delete nakaam', _); } }
-      const { error } = await supabaseClient.from('ahkamat').delete().eq('id', id);
-      if (error) throw error;
+      // v547: پہلے ریکارڈ (نتیجہ دیکھ کر)، پھر فائل — پہلے فائل مٹتی اور ریکارڈ کا حذف
+      //   رد ہوتا تو حکم فہرست میں رہ جاتا مگر اس کی فائل ضائع۔
+      dioWriteOk(await supabaseClient.from('ahkamat').delete().eq('id', id).select('id'), 'ahkamat delete', true);
+      if (a.storage_path) { try { const { error: sErr } = await supabaseClient.storage.from(AHK_BUCKET).remove([a.storage_path]); if (sErr) throw sErr; } catch(_){ if (typeof dioLogError === 'function') dioLogError('ahkamat: storage file delete nakaam', _); } }
       _ahkList = _ahkList.filter(x=>x.id!==id);
       try { localStorage.setItem(AHK_CACHE_KEY, JSON.stringify(_ahkList)); } catch(_){ /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
       _ahkRender();
