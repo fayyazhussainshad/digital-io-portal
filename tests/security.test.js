@@ -1766,3 +1766,12 @@ test('v541: ادائیگی فارم میں بیکار «نوٹ» خانہ نہی
   assert.ok(!/files: \['zimni\.js'\][\s\S]{0,40}no-unreachable/.test(read('eslint.config.mjs')),
     'zimni.js کو no-unreachable کی چھوٹ کی اب ضرورت نہیں');
 });
+
+test('v542: مقدمہ کی ترمیم پر جرم کی قسم/SHO/SDPO/نوٹ نہ مٹیں', () => {
+  const f = read('case-form.js');
+  // محفوظ کرنے والا کوڈ ان خانوں کو پڑھتا ہے — خانہ نہ ہو تو '' لکھا جاتا تھا (ہر ترمیم پر ڈیٹا ضائع)
+  for (const id of ['cf-offence', 'cf-sho', 'cf-sdpo', 'cf-notes', 'cf-position']) {
+    if (new RegExp("getElementById\\('" + id + "'\\)").test(f))
+      assert.ok(new RegExp("id=\"" + id + "\"").test(f), id + ' فارم میں موجود ہو (چھپا ہی سہی) — ورنہ ترمیم پر قدر مٹ جاتی ہے');
+  }
+});

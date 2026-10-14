@@ -255,9 +255,6 @@ function caseFormHTML(c) {
   var date = c.fir_date || '';
   var occ = c.occurrence_date || '';
   var occPlace = c.occurrence_place || '';   // بحد / جائے وقوعہ (پرانی occurrence_place کالم — کوئی نیا کالم نہیں)
-  var accused = c.accused_name || '';
-  var cnic = c.accused_cnic || '';
-  var cell = c.accused_cell || '';
   var complainant = c.complainant || '';
   var cmpCnic = c.complainant_cnic || '';
   var cmpCell = c.complainant_cell || '';
@@ -281,12 +278,6 @@ function caseFormHTML(c) {
     + '<option value="cancel"'+(status==='cancel'?' selected':'')+'>&#x0627;&#x062E;&#x0631;&#x0627;&#x062C;</option>';
 
   var sectionTags = selectedSections.map(function(s) { return sectionTag(s); }).join('');
-  var docList = renderDocChecklist(ALL_MISAL_DOCS, selectedDocuments);
-
-  var crossFields = '';
-  if (isCross) {
-    crossFields = buildCrossFields(c);
-  }
 
   var html = ''
     + '<div class="cf-form" style="max-height:70vh;overflow-y:auto;padding-right:4px;">'
@@ -382,6 +373,13 @@ function caseFormHTML(c) {
     + '</div>'
     // پوزیشن کا خانہ ہٹا دیا گیا (اکتوبر 2026) — پرانی قدر چھپے خانے میں محفوظ رہتی ہے
     + '<input type="hidden" id="cf-position" value="'+esc(position)+'">'
+    // v542: یہ چار خانے بھی فارم سے ہٹ چکے تھے، مگر ترمیم محفوظ کرنے پر ان کی جگہ
+    //   خالی قدر لکھی جاتی تھی — یعنی ہر ترمیم پر جرم کی قسم، SHO، SDPO اور نوٹ
+    //   مٹ جاتے تھے۔ اب پرانی قدر (پوزیشن کی طرح) چھپے خانے میں برقرار رہتی ہے۔
+    + '<input type="hidden" id="cf-offence" value="'+esc(offence)+'">'
+    + '<input type="hidden" id="cf-sho" value="'+esc(sho)+'">'
+    + '<input type="hidden" id="cf-sdpo" value="'+esc(sdpo)+'">'
+    + '<input type="hidden" id="cf-notes" value="'+esc(notes)+'">'
 
     // ── کراس ورژن ──────────────────────────────────────────────
     + '<div class="dio-full" style="margin-top:14px;padding:10px 12px;background:rgba(239,68,68,0.06);'

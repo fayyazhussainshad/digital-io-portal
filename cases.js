@@ -310,8 +310,6 @@ async function renderCases(container,fStatus,fQuery,fStation){
   _casesCache=allCases;
   const o=currentOfficer||{};
 
-  // Get unique stations from cases (for folder view)
-  const stations=[...new Set(allCases.map(c=>c.case_station||o.station||'—').filter(Boolean))].sort();
   const cases = _csApplyLocal(allCases, window._csFilter);
   const _fLbl = _csFilterLabel(window._csFilter);
   const currentStation = o.station||'—';
@@ -570,8 +568,7 @@ function toggleDoc(doc, row) {
     if (cb) cb.checked = true;
     if (span) span.style.color = 'var(--accent)';
   }
-  // Update count
-  const countEl = document.querySelector('#doc-checklist').previousElementSibling?.previousElementSibling?.previousElementSibling?.querySelector('span:last-child');
+  // Update count  (v542: یہاں ایک نا استعمال شدہ سطر تھی جو #doc-checklist نہ ہونے پر خرابی دیتی)
   const parent = document.getElementById('doc-checklist')?.closest('div[style*="border-radius"]');
   if (parent) { const cnt = parent.querySelector('span[style*="text-faint"]'); if (cnt) cnt.textContent = selectedDocuments.length + ' selected'; }
 }
@@ -810,8 +807,6 @@ async function openCaseWorkspace(id) {
 
 // P4: Case progress tracker — FIR -> arrest -> challan -> faisla
 function renderWorkspace(c, docs, ev, container) {
-  const statusColor = {under:'var(--accent)',complete:'var(--green)',incomplete:'var(--amber)',untrace:'var(--purple)',cancel:'var(--red)',challan512:'#f97316'}[c.status]||'var(--accent)';
-  const o = currentOfficer||{};
   container.style.padding = '0';
   container.style.overflow = 'hidden';
   container.innerHTML = `
