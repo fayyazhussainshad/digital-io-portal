@@ -1775,3 +1775,11 @@ test('v542: مقدمہ کی ترمیم پر جرم کی قسم/SHO/SDPO/نوٹ �
       assert.ok(new RegExp("id=\"" + id + "\"").test(f), id + ' فارم میں موجود ہو (چھپا ہی سہی) — ورنہ ترمیم پر قدر مٹ جاتی ہے');
   }
 });
+
+test('103_CHECK: v542 کے اثر کی جانچ — صرف پڑھتی ہے', () => {
+  const s = read('sql/103_CHECK.sql').split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
+  const bina = s.replace(/'[^']*'/g, "''");
+  assert.ok(!/\b(insert|update|delete|truncate|drop|alter|create|grant|revoke)\s/i.test(bina), 'sirf select');
+  assert.strictEqual((bina.match(/;/g) || []).length, 1, 'aik hi statement');
+  assert.ok(/action = 'case\.updated'/.test(s) && /in \('sho', 'sdpo'\)/.test(s), 'sirf wahi jo audit mein darj hai');
+});
