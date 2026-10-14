@@ -532,6 +532,8 @@ function _dioPrintCurrent() {
     if (typeof _printR173 === 'function') { _printR173(); return; }
   }
   if (id === 'fir' || id === 'cross_version') {
+    // متن والا صفحہ (fir.js) — وہی کاغذ جو سطر کا «پرنٹ» اور Ctrl+P دیتے ہیں
+    if (document.getElementById('fir-page') && typeof _firPrintPage === 'function') { _firPrintPage(); return; }
     if (typeof _printFIRAll === 'function') { _printFIRAll(); return; }
   }
   if (id === 'rfa_form') {

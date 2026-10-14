@@ -296,42 +296,57 @@ function _viewMatn(id) {
   }, 20);
 }
 
-// ── PRINT MATN (only the document, no app UI) ─────────────────
-function _printMatn(id) {
-  const row = _firMatn.find(m => m.id === id);
-  if (!row) { showToast('متن نہیں ملا', 'error'); return; }
-  const heading = (row.type === 'cross_version') ? 'متن کراس ورژن' : 'متن ایف آئی آر';
-  const body = esc(row.matn) || '';
-  const html = `<!DOCTYPE html><html dir="rtl" lang="ur"><head><meta charset="utf-8">
+// ── PRINT MATN (صرف کاغذ — ایپ کا کوئی حصہ نہیں) ──────────────────
+// ایک ہی کاغذ بنانے والا: سطر کا «پرنٹ»، اوپر کی پٹی کا «پرنٹ» اور Ctrl+P —
+// تینوں یہی استعمال کرتے ہیں (نتیجہ بالکل ایک جیسا)۔ سرخی 20pt، متن 14pt۔
+// پورا صفحہ: پہلے متن ایف آئی آر، پھر (ہو تو) نئے صفحے پر متن کراس ورژن۔
+function _firPaperHtml(rows) {
+  const groups = ['fir', 'cross_version'].map(t => ({
+    t, heading: t === 'cross_version' ? 'متن کراس ورژن' : 'متن ایف آئی آر',
+    items: rows.filter(r => (r.type || 'fir') === t && String(r.matn || '').trim()),
+  })).filter(g => g.items.length);
+  if (!groups.length) return '';
+  const title = groups.map(g => g.heading).join(' — ');
+  const body = groups.map(g => `
+      <section class="fir-sec">
+        <h1>${g.heading}</h1>
+        ${g.items.map(r => `<div class="matn">${esc(r.matn)}</div>`).join('')}
+      </section>`).join('');
+  return `<!DOCTYPE html><html dir="rtl" lang="ur"><head><meta charset="utf-8">
     ${typeof dioFontHead==='function'?dioFontHead():''}
-    <title>${heading}</title>
+    <title>${title}</title>
     <style>
       @page { size: A4; margin: 20mm; }
       * { box-sizing: border-box; }
-      html, body { margin:0; padding:0; }
+      html, body { margin:0; padding:0; background:#fff; }
       body { font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl; color:#000; }
-      h2 { text-align:center; font-size:22px; margin:0 0 18px; font-weight:700; }
-      .matn { font-size:18px; line-height:2.1; text-align:justify; white-space:pre-wrap; }
+      h1 { text-align:center; font-size:20pt; margin:0 0 14pt; font-weight:700; line-height:1.9; }
+      .matn { font-size:14pt; line-height:2.1; text-align:justify; white-space:pre-wrap; }
+      .matn + .matn { margin-top:14pt; }
+      .fir-sec + .fir-sec { break-before:page; page-break-before:always; }
     </style></head>
-    <body>
-      <h2>${heading}</h2>
-      <div class="matn">${body}</div>
+    <body>${body}
     </body></html>`;
-
-  const ifr = document.createElement('iframe');
-  ifr.style.position = 'fixed';
-  ifr.style.right = '-9999px';
-  ifr.style.bottom = '0';
-  ifr.style.width = '0';
-  ifr.style.height = '0';
-  ifr.style.border = '0';
-  document.body.appendChild(ifr);
-  const doc = ifr.contentWindow.document;
-  doc.open(); doc.write(html); doc.close();
-  const done = () => {
-    try { ifr.contentWindow.focus(); ifr.contentWindow.print(); } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
-    setTimeout(() => { try { ifr.remove(); } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } }, 1000);
-  };
-  if (ifr.contentWindow.document.readyState === 'complete') setTimeout(done, 300);
-  else ifr.onload = () => setTimeout(done, 300);
 }
+
+function _firPrintRows(rows) {
+  const html = _firPaperHtml(rows);
+  if (!html) { showToast('ابھی کوئی متن درج نہیں', 'info'); return; }
+  dioPrint(html);
+}
+
+// ایک متن (سطر کا «پرنٹ» بٹن)
+function _printMatn(id) {
+  const row = _firMatn.find(m => m.id === id);
+  if (!row) { showToast('متن نہیں ملا', 'error'); return; }
+  _firPrintRows([row]);
+}
+
+// پورا صفحہ (اوپر کی پٹی کا «پرنٹ» اور Ctrl+P) — صرف وہی حصے جو صفحے پر نظر آ رہے ہیں
+function _firPrintPage() {
+  const shown = new Set([...document.querySelectorAll('#fir-page section.fir-part')].map(s => s.dataset.type));
+  _firPrintRows(_firMatn.filter(m => shown.has(m.type || 'fir')));
+}
+window._firPrintPage = _firPrintPage;
+// Ctrl+P: index.html کا عمومی راستہ پورے صفحے والے منظر میں _dioPrintCurrent چلاتا ہے،
+// اور وہ یہاں _firPrintPage پر آتا ہے — یعنی Ctrl+P اور اوپر کا «پرنٹ» ایک ہی راستہ۔

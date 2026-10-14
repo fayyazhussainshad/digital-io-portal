@@ -8,7 +8,7 @@
 
 چلانا: README.md (اسی فولڈر میں) — `python3 fir_test.py`
 """
-import sys, json
+import sys, json, subprocess
 sys.path.insert(0, '.')
 from real import *
 
@@ -59,12 +59,32 @@ MEASURE = """(() => {
 
 PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
 
+
+PRINT_SPY = """(() => { if (window.__firSpy) return 0; window.__firSpy = 1; window.__printed = [];
+  const o = window.dioPrint; window.dioPrint = function (h) { window.__printed.push(String(h)); return o.apply(this, arguments); }; return 0; })()"""
+
+def printed(pg):
+    return pg.evaluate("window.__printed.splice(0)")
+
+def paper(ctx, html, name):
+    """کاغذ کو اصل A4 پر چھاپ کر ناپو (صفحات، سرخی/متن کا pt سائز)۔"""
+    q = ctx.new_page(); q.set_content(html); q.wait_for_timeout(600); q.evaluate("document.fonts.ready"); q.wait_for_timeout(200)
+    info = q.evaluate("""(() => ({ h1: [...document.querySelectorAll('h1')].map(h => [h.textContent.trim(), getComputedStyle(h).fontSize]),
+      matn: [...document.querySelectorAll('.matn')].map(m => getComputedStyle(m).fontSize),
+      buttons: document.querySelectorAll('button,input,select').length, dir: document.documentElement.dir }))()""")
+    q.pdf(path=f'{OUT}/{name}.pdf', prefer_css_page_size=True, print_background=True)
+    pi = subprocess.run(['pdfinfo', f'{OUT}/{name}.pdf'], capture_output=True, text=True).stdout
+    info['pages'] = int([l for l in pi.splitlines() if l.startswith('Pages:')][0].split()[-1])
+    subprocess.run(['pdftoppm', '-png', '-r', '60', f'{OUT}/{name}.pdf', f'{OUT}/{name}'])
+    q.close()
+    return info
+
 def open_fir(pg, case_id, doc):
     pg.evaluate(f"openCaseWorkspace('{case_id}')"); pg.wait_for_timeout(1500)
     pg.evaluate(f"_ddPick('fir-dd', '{doc}')"); pg.wait_for_selector('#fir-page'); pg.wait_for_timeout(800)
     pg.evaluate("document.fonts.ready"); pg.wait_for_timeout(200)
 
-def run(pg, tag, errs):
+def run(pg, tag, errs, ctx):
     pg.evaluate(SEED)
 
     # ── 1) «الف آئی آر» کہیں نہیں ──
@@ -131,10 +151,39 @@ def run(pg, tag, errs):
     pg.evaluate("document.getElementById('fir-page').scrollTop = 0"); pg.wait_for_timeout(100)
     pg.screenshot(path=f'{OUT}/fir_{tag}_4_top.png')
 
-    # ── 7) کراس ورژن کے بغیر مقدمہ → صرف ایف آئی آر حصہ ──
+    # ── 7) پرنٹ: Ctrl+P = اوپر کی پٹی کا «پرنٹ» — ایک ہی کاغذ؛ سطر کا «پرنٹ» صرف وہی متن ──
+    pg.evaluate(PRINT_SPY)
+    pg.evaluate("document.activeElement && document.activeElement.blur()")
+    pg.keyboard.press('Control+p'); pg.wait_for_timeout(400)
+    a = printed(pg)
+    pg.evaluate("_dioPrintCurrent()"); pg.wait_for_timeout(400)   # اوپر کی پٹی کے «پرنٹ» بٹن کا onclick
+    b2 = printed(pg)
+    check(f'{tag}: Ctrl+P سے ایک بار چھپائی', len(a) == 1, len(a))
+    check(f'{tag}: Ctrl+P = اوپر کی پٹی کا «پرنٹ» (بالکل ایک ہی کاغذ)', len(b2) == 1 and a and a[0] == b2[0])
+    check(f'{tag}: براؤزر کی پوری سکرین والی چھپائی نہیں چلی', pg.evaluate("window.__printCalls") == 0, pg.evaluate("window.__printCalls"))
+    info = paper(ctx, a[0], f'fir_{tag}_5_print')
+    check(f'{tag}: کاغذ پر دونوں حصوں کا متن، ترتیب سے', [h[0] for h in info['h1']] == ['متن ایف آئی آر', 'متن کراس ورژن'], info['h1'])
+    check(f'{tag}: کاغذ پر صرف متن — کوئی بٹن نہیں، RTL', info['buttons'] == 0 and info['dir'] == 'rtl')
+    check(f'{tag}: سرخی 20pt، متن 14pt', all(h[1] == '26.6667px' for h in info['h1']) and set(info['matn']) == {'18.6667px'},
+          [info['h1'], sorted(set(info['matn']))])
+    check(f'{tag}: کراس ورژن نئے صفحے پر (A4، 2 صفحات)', info['pages'] == 2, info['pages'])
+    check(f'{tag}: کاغذ پر سارا متن', all(w in a[0] for w in ['ملک زاہد اقبال', 'محمد اکرم', 'نیا کراس متن جانچ']))
+    pg.click('#fir-part-cross_version table:first-of-type button[title="پرنٹ"] >> nth=0'); pg.wait_for_timeout(400)
+    one = printed(pg)
+    check(f'{tag}: سطر کا «پرنٹ» — صرف وہی ایک متن، اسی شکل میں',
+          len(one) == 1 and 'متن کراس ورژن' in one[0] and 'متن ایف آئی آر' not in one[0] and 'کراس ورژن کا بیان' in one[0]
+          and 'font-size:20pt' in one[0] and 'font-size:14pt' in one[0])
+
+    # ── 8) کراس ورژن کے بغیر مقدمہ → صرف ایف آئی آر حصہ ──
     open_fir(pg, 'c3', 'fir')
     m4 = pg.evaluate(MEASURE)
     check(f'{tag}: کراس ورژن کے بغیر مقدمہ میں صرف ایف آئی آر کا حصہ', [p['id'] for p in m4['parts']] == ['fir-part-fir'], [p['id'] for p in m4['parts']])
+    # بغیر متن کے: Ctrl+P پر کچھ نہ چھپے، صاف پیغام
+    pg.evaluate("window.__toasts = []; const _o = window.showToast; window.showToast = function (m, t) { window.__toasts.push([t || 'info', String(m)]); return _o.apply(this, arguments); }; 0")
+    pg.keyboard.press('Control+p'); pg.wait_for_timeout(400)
+    empty = printed(pg); ts = pg.evaluate("window.__toasts")
+    check(f'{tag}: متن نہ ہو تو Ctrl+P پر خالی کاغذ نہیں، پیغام آتا ہے', not empty and pg.evaluate("window.__printCalls") == 0
+          and any('کوئی متن درج نہیں' in t[1] for t in ts), ts)
 
     check(f'{tag}: کوئی JS غلطی نہیں', not errs, errs[:3])
 
@@ -145,7 +194,7 @@ with sync_playwright() as p:
                       ('mobile', dict(viewport={'width': 390, 'height': 844}, device_scale_factor=2, is_mobile=True, has_touch=True)),
                       ('mobile360', dict(viewport={'width': 360, 'height': 740}, device_scale_factor=2, is_mobile=True, has_touch=True))]:
         ctx, pg, errs = open_app(b, **args)
-        run(pg, tag, errs)
+        run(pg, tag, errs, ctx)
         ctx.close()
     b.close()
 
