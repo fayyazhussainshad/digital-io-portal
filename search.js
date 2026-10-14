@@ -293,7 +293,7 @@ function _renderSearchResults(q, r) {
   r.cases.filter(c => (c.complainant && c.complainant.toLowerCase().includes(_ql)) ||
       (_qd.length >= 5 && ((c.complainant_cnic||'').replace(/\D/g,'').includes(_qd) || (c.complainant_cell||'').replace(/\D/g,'').includes(_qd))))
     .forEach(c => html += witCard(c.complainant||'—', `مقدمہ ${c.fir_number||'—'} کا مدعی · ${c.complainant_cnic||''} ${c.complainant_cell||''}`, `openCaseWorkspace('${c.id}')`, true));
-  r.fir.forEach(f => html += card('FIR متن','var(--green)', 'الف آئی آر متن', (f.matn||'').slice(0,80)+'...', f.case_id?`openCaseWorkspace('${f.case_id}')`:''));
+  r.fir.forEach(f => html += card('FIR متن','var(--green)', 'ایف آئی آر متن', (f.matn||'').slice(0,80)+'...', f.case_id?`openCaseWorkspace('${f.case_id}')`:''));
   r.zimni.forEach(z => html += card('ضمنی','#0ea5e9', `ضمنی نمبر ${z.serial_no||''}`, '', z.case_id?`openCaseWorkspace('${z.case_id}')`:''));
   (r.hamrahi||[]).forEach(h => html += card('ہمراہی ملازم','#14b8a6', h.name||'—', `${h.rank||''} ${h.service_number||''} ${h.cnic||''} ${h.mobile||''}`, h.case_id?`openCaseWorkspace('${h.case_id}')`:''));
   (r.gari||[]).forEach(g => html += card('سرکاری گاڑی','#64748b', g.vehicle_number||'—', `ڈرائیور: ${g.driver_name||''}`, g.case_id?`openCaseWorkspace('${g.case_id}')`:''));

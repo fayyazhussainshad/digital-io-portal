@@ -11,7 +11,7 @@ function _dioDocName(docId) {
     named_accused:   'ملزمان FIR',
     accused_cross:   'ملزمان کراس ورژن',
     shahadatain:     'شہادتیں',
-    fir:             'الف آئی آر',
+    fir:             'ایف آئی آر',
     cross_version:   'کراس ورژن',
     'r173:list':           'رپورٹ 173 ض ف',
     'r173:mukammal':       'رپورٹ 173 — چالان مکمل',
@@ -290,7 +290,7 @@ function _dioAddDocPicker() {
 
   const groups = [
     { title:'انڈیکس / FIR', items:[
-      ['index_naql','انڈیکس نقل مسل'], ['fir','الف آئی آر'], ['cross_version','کراس ورژن'],
+      ['index_naql','انڈیکس نقل مسل'], ['fir','ایف آئی آر'], ['cross_version','کراس ورژن'],
     ]},
     { title:'ملزمان / گواہان', items:[
       ['named_accused','ملزمان FIR'], ['accused_cross','ملزمان کراس ورژن'],
