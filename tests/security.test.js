@@ -1954,3 +1954,90 @@ test('v547: ریپو کی صفائی — پرانی zip اور backup فائلی
     assert.ok(!fs.existsSync(path.join(ROOT, f)), f);
   assert.ok(!fs.readdirSync(ROOT).some((f) => /\.(zip|bak|tgz)$/i.test(f)), 'جڑ میں کوئی zip/backup نہیں');
 });
+
+// ═══ v548 — گشت لاگ ══════════════════════════════════════════════════
+test('v548: گشت لاگ پورے سسٹم میں جڑا ہے (صفحہ، Dashboard، نیا اندراج، تلاش، حذف شدہ مواد، پرنٹ)', () => {
+  const g = read('gasht.js');
+  assert.ok(/registerPage\('gasht', renderGasht\)/.test(g), 'صفحہ');
+  assert.ok(/gasht:\s+'gasht\.js'/.test(read('boot.js')) && /'incident\.js', 'gasht\.js'/.test(read('boot.js')), 'boot: مانگ پر + فرصت میں');
+  const ac = read('app-core.js');
+  assert.equal((ac.match(/'incident','gasht','reminders'/g) || []).length, 4, 'چاروں عہدوں کو رسائی');
+  assert.ok(/gasht:'گشت لاگ'/.test(ac), 'عنوان');
+  const ix = read('index.html');
+  assert.ok(/'#gasht':\s+'gasht'/.test(ix), 'route');
+  assert.ok(/'#gl-doc',\s+\/\/ گشت رپورٹ/.test(ix), 'Ctrl+P: صرف کھلی دستاویز چھپے');
+  assert.ok(/\{ l:'گشت لاگ',\s+ic:'gasht',\s+go:"showPage\('gasht',null\)" \}/.test(read('dashboard.js')), 'Dashboard tile');
+  const de = read('dio-entry.js');
+  assert.ok(/\['gasht', 'گشت', SVG\(/.test(de) && /kind === 'gasht'[\s\S]{0,200}openGashtEntry\(\)/.test(de), 'نیا اندراج hub');
+  const sr = read('search.js');
+  assert.ok(/from\('gasht_logs'\)\.select\('\*'\)\.eq\('officer_id', oid\)/.test(sr) && /card\('گشت'/.test(sr), 'مرکزی تلاش');
+  assert.ok(/gasht:\s+'gasht_logs'/.test(read('bin.js')) && /case 'gasht':/.test(read('bin.js')), 'حذف شدہ مواد: بحالی');
+  assert.ok(/'\/gasht\.js'/.test(read('sw.js')), 'آف لائن (SW precache)');
+  assert.ok(/from\('gasht_logs'\)/.test(read('backup.js')), 'بیک اپ');
+});
+
+test('v548: گشت لاگ — نظام کے اصول (pt، DD/MM/YYYY، کوئی محکمہ سرخی نہیں، Ctrl+P = بٹن، v547 لکھائی)', () => {
+  const g = read('gasht.js');
+  assert.ok(!/font-size\s*:\s*[\d.]+px/.test(g), 'font ہمیشہ pt');
+  assert.ok(!/toLocaleDateString|toLocaleString\(/.test(g), 'تاریخ کبھی locale سے نہیں');
+  assert.ok(!/پنجاب|Punjab/.test(g), 'کوئی «پنجاب پولیس» سرخی نہیں');
+  assert.ok(/data-dio-print onclick="_glPrint\(\)"/.test(g) && /function _glPrint\(\)[\s\S]{0,200}window\.print\(\)/.test(g), 'پرنٹ بٹن = native چھپائی (Ctrl+P کا راستہ)');
+  assert.ok(/dio-doc-h1/.test(g) && /dio-doc-h2/.test(g) && /font-size:20pt !important/.test(g) && /\.gl-h2\{ font-size:16pt/.test(g), 'عنوان 20pt / ذیلی 16pt');
+  assert.ok(/@page\{ size:A4 portrait; margin:1cm 0\.5in 1cm 0\.4in; \}/.test(g), 'A4 + سرکاری مارجن ہر صفحے پر');
+  assert.ok(/dioBinCopy\('gasht'/.test(g) && /softDeleteUndo\(binId\)/.test(g), 'حذف: پہلے نقل');
+  assert.equal((g.match(/dioWriteOk\(await supabaseClient\.from\(GL_TABLE\)/g) || []).length, 3, 'insert/update/delete — نتیجہ دیکھ کر');
+  assert.ok((g.match(/_glGuard\('/g) || []).length >= 6, 'میعاد ختم: لکھنا بند');
+  assert.ok(!/_glGuard\('پرنٹ'/.test(g), 'پڑھنا/چھاپنا بند نہیں');
+  assert.ok(/D\.open\('گشت اندراج'/.test(g) && /type: 'mob'/.test(g) && /type: 'time'/.test(g), 'مشترکہ «نیا اندراج» کارڈ، موبائل/وقت کا فارمیٹ');
+});
+
+test('v548: گشت — وقت کا 12 گھنٹے سے 24 گھنٹے میں درست الٹ (صبح/دوپہر/سہ پہر/شام/رات)', () => {
+  const g = read('gasht.js');
+  const grab = (name) => { const i = g.indexOf('function ' + name + '('); const j = g.indexOf('\n}\n', i); return g.slice(i, j + 2); };
+  const ctx = makeSandbox();
+  vm.runInContext(['_glPad', '_glPeriod', '_glTimeHtml', '_glFrom12', '_glIsoDate', '_glAddDays', '_glParseDtText'].map(grab).join('\n') +
+    '\nvar _glMeta = { date_iso: "2026-10-14", start_iso: "2026-10-14T22:30" };', ctx);
+  const plain = (h) => h.replace(/<[^>]+>/g, '').replace(/ /g, ' ');
+  for (let h = 0; h < 24; h++) {
+    const hm = String(h).padStart(2, '0') + ':07';
+    const shown = plain(ctx._glTimeHtml(hm));
+    const m = shown.match(/(\d{2}):(\d{2})/);
+    assert.equal(String(ctx._glFrom12(+m[1], shown)).padStart(2, '0') + ':' + m[2], hm, hm + ' → «' + shown + '» → واپس');
+  }
+  assert.equal(ctx._glParseDtText('15/10/2026 بوقت 08:30 بجے صبح', false, 'start'), '2026-10-15T08:30');
+  assert.equal(ctx._glParseDtText('01:15 بجے رات', false, 'end'), '2026-10-15T01:15', 'واپسی آدھی رات کے بعد = اگلا دن');
+  assert.equal(ctx._glParseDtText('11:45 بجے رات', false, 'end'), '2026-10-14T23:45');
+  assert.equal(ctx._glParseDtText('14/10/2026', true), '2026-10-14');
+});
+
+test('v548: گشت کا کاغذ — انگریزی/ہندسے پورے ٹکڑے میں LTR، دستخط مشاہدات کے ساتھ، لیبل ایک سطر میں ناپے', () => {
+  const g = read('gasht.js');
+  const line = g.split('\n').find((l) => l.startsWith('const GL_LATIN_RE ='));
+  assert.ok(line, 'GL_LATIN_RE موجود');
+  const re = vm.runInNewContext(line.replace('const GL_LATIN_RE =', '').replace(/;\s*$/, ''));
+  const tok = (t) => t.match(re) || [];
+  // ٹکڑا کبھی بیچ سے نہ ٹوٹے — ورنہ RTL سطر میں «LEA-1234» → «1234-LEA» ہو جاتا
+  assert.deepEqual(tok('LEA-1234 — ڈرائیور'), ['LEA-1234']);
+  assert.deepEqual(tok('HC محمد اسلم 1122، کانسٹیبل 3344'), ['HC', '1122', '3344']);
+  assert.deepEqual(tok('متعلقہ شخص — 0303-2333981'), ['0303-2333981']);
+  assert.deepEqual(tok('14/10/2026 بوقت 08:30 بجے'), ['14/10/2026', '08:30']);
+  assert.deepEqual(tok('+92 300-1234567 · abc.def@x.pk · رپورٹ #12'), ['+92', '300-1234567', 'abc.def@x.pk', '#12']);
+  assert.deepEqual(tok('فیاض حسین شاد تھانہ صدر ملتان'), [], 'صرف اردو — کچھ نہیں');
+  assert.ok(/<div class="gl-final">[\s\S]{0,200}مشاہدات \/ ہدایات[\s\S]{0,200}'remarks'[\s\S]{0,300}'sign_line'/.test(g), 'مشاہدات + آخری سطر + دستخط ایک گروہ');
+  assert.ok(/#gl-doc \.gl-final, #gl-doc \.gl-tail\{ break-inside:avoid;/.test(g), 'گروہ صفحے پر نہ ٹوٹے');
+  assert.ok(/function _glFitLabels[\s\S]{0,900}white-space:nowrap[\s\S]{0,400}document\.body\.appendChild\(probe\)/.test(g), 'لیبل کا کالم: ایک سطر کی اصل چوڑائی، کاغذ سے باہر ناپ (zoom / موبائل منظر کا اثر نہیں)');
+});
+
+test('v548: sql/104 — گشت کی table: اپنا ریکارڈ، میعاد ختم = صرف پڑھنا، anon/TRUNCATE بند', () => {
+  const s = read('sql/104_gasht_log.sql');
+  assert.ok(/enable row level security/.test(s));
+  for (const p of ['dio_gasht_sel', 'dio_gasht_ins', 'dio_gasht_upd', 'dio_gasht_del'])
+    assert.ok(new RegExp('create policy ' + p + ' on public\\.gasht_logs[\\s\\S]{0,200}dio_my_officer_id\\(\\)').test(s), p);
+  assert.ok(/dio_gasht_ins[\s\S]{0,140}with check \(officer_id = public\.dio_my_officer_id\(\)\)/.test(s), 'کسی اور کے نام پر اندراج نہیں');
+  assert.equal((s.match(/as restrictive/g) || []).length, 3, 'لکھنے کی تین روکیں');
+  assert.ok(/revoke all on public\.gasht_logs from anon;/.test(s) && /grant select, insert, update, delete on public\.gasht_logs to authenticated;/.test(s), 'anon بند؛ TRUNCATE نہیں');
+  assert.ok(!/patrol_logs|patrol_shifts/.test(s.replace(/^\s*--.*$/gm, '')), 'پرانی patrol tables کو نہیں چھیڑا');
+  const chk = read('sql/104_CHECK.sql').split('\n').filter(l => !l.trim().startsWith('--')).join('\n').replace(/'[^']*'/g, "''");
+  assert.ok(!/\b(insert|update|delete|drop|alter|create|grant|revoke|truncate)\b/i.test(chk), '104_CHECK صرف پڑھتی ہے');
+  assert.ok(/if n > 0 then\s+raise exception/.test(read('sql/104_ROLLBACK.sql')), 'واپسی: ریکارڈ ہوں تو کچھ نہیں مٹاتی');
+});

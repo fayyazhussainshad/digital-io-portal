@@ -5,11 +5,12 @@ ASI کا اصول: کوئی تبدیلی live نہیں جاتی جب تک **اص
 سے، جانچ نہ لی جائے۔ یہاں صرف Supabase کی جگہ آزمائشی ڈیٹا (`mock-supabase.js`) ہے؛
 باقی سب کچھ بالکل وہی جو افسر کے آلے پر چلتا ہے۔
 
-## دو جانچیں
+## اصل ایپ کی جانچیں
 
 | فائل | کیا جانچتی ہے |
 |---|---|
 | `real_test.py` | واقعاتی رپورٹ: A4 پرنٹ (Ctrl+P = پرنٹ بٹن، pixel تک)، فہرست سے پرنٹ، نام بدلنا، کاپی، شیئر، ترمیم، حذف — Desktop + Mobile |
+| `gasht_test.py` | (v548) گشت لاگ: Dashboard، «نیا اندراج» hub، نیا گشت (نظام سے ڈیٹا، عنوانات 20/16/14pt)، اندراج کارڈ (وقت/GPS خود، موبائل 0000-0000000)، خود محفوظ، ترمیم، گشت ختم، Ctrl+P = پرنٹ بٹن (pixel)، لمبی رپورٹ اگلے صفحے پر، تلاش، کاپی، سرور کی روک، حذف/بحالی، sql/104 سے پہلے، آف لائن، میعاد ختم — Desktop + Mobile |
 | `core_test.py` | (v547) مقدمہ: نیا اندراج، ترمیم، خودکار یاددہانیاں · مقدمہ / یاددہانی / پیشی کا حذف صرف «حذف شدہ مواد» میں نقل کے بعد · بحالی · مثل کی دستاویز: محفوظ، سرور پر ریکارڈ نہ ہو تو نیا، رد ہو تو صاف ناکامی، پرنٹ · ملزم کے سابقہ ریکارڈ کا لیبل · سرکاری گاڑی آف لائن (دو بار محفوظ = ایک قطار) · 5-C آف لائن قطار · مشتبہ / ٹیمپلیٹ / 5-C / شیئر میں سرور کی روک پر جھوٹی کامیابی نہیں — Desktop + Mobile |
 
 ہر جانچ ناکامی پر exit code 1 دیتی ہے (GitHub Actions میں PR رک جاتا ہے)۔
@@ -17,12 +18,14 @@ ASI کا اصول: کوئی تبدیلی live نہیں جاتی جب تک **اص
 ## چلانا
 ```bash
 cd tests/real-app
-mkdir -p .deps/fontpkg .deps/purify
+mkdir -p .deps/fontpkg .deps/jameel .deps/purify
 (cd .deps/fontpkg && npm pack @fontsource/noto-nastaliq-urdu && tar xzf *.tgz)
+(cd .deps/jameel && npm pack jameel-noori@1.1.2 && tar xzf *.tgz)   # ایپ کا اصل فونٹ
 (cd .deps/purify && npm pack dompurify@3.1.6 && tar xzf *.tgz)
 (cd ../.. && python3 -m http.server 8770 &)      # ریپو کی جڑ سے
 python3 real_test.py                               # Python Playwright درکار
 python3 core_test.py
+python3 gasht_test.py
 ```
 نتیجہ: ہر جانچ PASS/FAIL، اور `out/` میں سکرین اور A4 پرنٹ کی تصاویر/PDF۔
 
@@ -34,6 +37,14 @@ python3 core_test.py
   نہیں، مگر 0 قطار بدلی (مثلاً میعاد ختم ہونے پر)۔ یہی وہ صورت تھی جس میں پہلے
   «محفوظ / حذف ہو گیا» کا جھوٹا پیغام آتا تھا۔
 - `delete().select()` اصل PostgREST کی طرح حذف شدہ قطاریں لوٹاتا ہے۔
+- `window.__opts.noTable = ['gasht_logs']` — table ابھی بنی ہی نہیں (sql چلنے سے پہلے؛ PostgREST کا `PGRST205`)۔
+
+## فونٹ
+ایپ اردو کے لیے «Jameel Noori Nastaleeq» (npm: `jameel-noori`, jsdelivr سے) استعمال کرتی ہے — افسر کے آلے پر کاغذ
+اسی فونٹ میں بنتا اور چھپتا ہے، اس لیے جانچ بھی اسی میں ہوتی ہے (`.deps/jameel`)۔ یہ فائل نہ ہو تو جانچ اسی نام سے
+Noto Nastaliq چلاتی ہے (یعنی وہ صورت جب Jameel ابھی ڈاؤن لوڈ نہ ہوا ہو)؛ `DIO_JAMEEL=/nonexistent` دے کر یہ صورت
+جان بوجھ کر بھی جانچی جا سکتی ہے۔ نوٹ: Jameel کا اردو متن PDF سے (`pdftotext`) درست نہیں نکلتا — PDF کی جانچ
+انگریزی نشانوں (ASI، SHO، تاریخ، موبائل نمبر) یا تصویر سے کی جاتی ہے۔
 
 ## نوٹ
 - `page.emulate_media('screen')` کے بعد `page.pdf` سکرین چھاپتا ہے — اسی لیے

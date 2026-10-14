@@ -57,6 +57,7 @@
     fivec:       'fivec.js',
     help:        'help-guide.js',
     incident:    'incident.js',
+    gasht:       'gasht.js',
     law:         'law-library.js',
     performance: 'performance.js',
     settings:    'settings.js',
@@ -144,7 +145,7 @@
     'naqsha-mauqa.js', 'saza-slip.js', 'darkhwastain.js', 'rfa-form.js',
     'cro-card.js', 'cdr-imei.js',
     // Safhe (agar afsar in tak pahunche to pehli tah pehle hi le aayegi)
-    'templates.js', 'law-library.js', 'fivec.js', 'ahkamat.js', 'incident.js',
+    'templates.js', 'law-library.js', 'fivec.js', 'ahkamat.js', 'incident.js', 'gasht.js',
     'settings.js', 'suspects.js', 'evidence.js', 'court.js',
     'performance.js', 'backup.js', 'bin.js', 'help-guide.js'
   ];

@@ -44,6 +44,7 @@ async function _buildBin() {
       evidence: { icon:"<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><path d=\"M3.5 8h3.2l1.6-2.4h7.4L17.3 8h3.2v11.5h-17z\"/><circle cx=\"12\" cy=\"13.5\" r=\"3.6\"/></svg>", label:'شہادتیں' },
       court:    { icon:"<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><path d=\"M12 4v16\"/><path d=\"M6 20h12\"/><path d=\"M4 9l3-4 3 4\"/><path d=\"M14 9l3-4 3 4\"/></svg>", label:'عدالتی پیشیاں' },
       incident: { icon:"<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><path d=\"M12 4L3 19.5h18z\"/><path d=\"M12 10v4.5\"/><path d=\"M12 17.2h.01\"/></svg>", label:'واقعاتی رپورٹس' },
+      gasht:    { icon:"<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><circle cx=\"6\" cy=\"19\" r=\"2.2\"/><circle cx=\"18\" cy=\"5\" r=\"2.2\"/><path d=\"M8 19h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h7\"/></svg>", label:'گشت لاگ' },
       other:    { icon:"<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><path d=\"M8 4h8v3H8z\"/><path d=\"M9 4H6v17h12V4h-3\"/><path d=\"M9 11h6\"/><path d=\"M9 15h6\"/></svg>", label:'دیگر' },
     };
 
@@ -136,6 +137,7 @@ function _binTitle(type, d) {
     case 'evidence': return d.name || '—';
     case 'court':    return `FIR ${esc(d.fir_number)||'—'} — ${esc(d.court_name)||'—'}`;
     case 'incident': return `${esc(d.report_number)||'—'} — ${esc(d.incident_type)||'—'}`;
+    case 'gasht':    return `گشت — ${esc(d.area)||'—'}`;
     default:         return d.title || d.name || d.text || '—';
   }
 }
@@ -147,6 +149,7 @@ function _binDetail(type, d) {
     case 'evidence': return `${esc(d.type)||'—'} · ${formatDate(d.created_at)}`;
     case 'court':    return `${esc(d.hearing_date)||'—'} · ${esc(d.purpose)||'—'}`;
     case 'incident': return `${esc(d.incident_date)||'—'} · ${esc(d.address)||'—'}`;
+    case 'gasht':    return `${formatDate(d.gasht_date)} · اندراجات ${((d.data && Array.isArray(d.data.entries)) ? d.data.entries.length : 0)}`;
     default:         return formatDate(d.created_at||d.deleted_at);
   }
 }
@@ -167,6 +170,7 @@ async function _binRestore(binId, type, quiet) {
       evidence: 'evidence',
       court:    'court_dates',
       incident: 'incident_reports',
+      gasht:    'gasht_logs',
     };
     const table = tableMap[type];
     if (table) {

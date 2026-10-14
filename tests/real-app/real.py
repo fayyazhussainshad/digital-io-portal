@@ -7,11 +7,17 @@ OUT = os.environ.get('DIO_OUT', HERE + '/out'); os.makedirs(OUT, exist_ok=True)
 # fonts: npm pack @fontsource/noto-nastaliq-urdu → files/ ; DOMPurify: npm pack dompurify@3.1.6 → dist/
 FONTS = os.environ.get('DIO_FONTS', HERE + '/.deps/fontpkg/package/files/')
 PURIFY = os.environ.get('DIO_PURIFY', HERE + '/.deps/purify/package/dist/purify.min.js')
+# اصل ایپ کا اردو فونٹ: index.html «Jameel Noori Nastaleeq» jsdelivr (npm: jameel-noori) سے لیتی ہے —
+# افسر کے آلے پر کاغذ اسی فونٹ میں بنتا ہے، اس لیے جانچ بھی اسی میں (npm pack jameel-noori → package/fonts/)۔
+JAMEEL = os.environ.get('DIO_JAMEEL', HERE + '/.deps/jameel/package/fonts/jameel-noori-nastaleeq4.woff2')
+HAS_JAMEEL = os.path.exists(JAMEEL)
 BASE = 'http://localhost:8770/'
-FONT_CSS = """@font-face{font-family:'Jameel Noori Nastaleeq';src:url(https://fonts.gstatic.com/n400.woff2) format('woff2');font-weight:400}
-@font-face{font-family:'Jameel Noori Nastaleeq';src:url(https://fonts.gstatic.com/n700.woff2) format('woff2');font-weight:700}
-@font-face{font-family:'Noto Nastaliq Urdu';src:url(https://fonts.gstatic.com/n400.woff2) format('woff2');font-weight:400}
+FONT_CSS = """@font-face{font-family:'Noto Nastaliq Urdu';src:url(https://fonts.gstatic.com/n400.woff2) format('woff2');font-weight:400}
 @font-face{font-family:'Noto Nastaliq Urdu';src:url(https://fonts.gstatic.com/n700.woff2) format('woff2');font-weight:700}"""
+if not HAS_JAMEEL:   # Jameel نہ ہو تو پرانا طریقہ: اسی نام سے Noto
+    FONT_CSS += """
+@font-face{font-family:'Jameel Noori Nastaleeq';src:url(https://fonts.gstatic.com/n400.woff2) format('woff2');font-weight:400}
+@font-face{font-family:'Jameel Noori Nastaleeq';src:url(https://fonts.gstatic.com/n700.woff2) format('woff2');font-weight:700}"""
 PRINT_HOOK = """window.__printCalls = 0;
 window.print = function () { window.__printCalls++; window.dispatchEvent(new Event('beforeprint')); };"""
 
@@ -21,6 +27,8 @@ def route(r):
         return r.fulfill(path=HERE + '/mock-supabase.js', content_type='application/javascript')
     if 'purify' in u: return r.fulfill(path=PURIFY, content_type='application/javascript')
     if 'mammoth' in u: return r.fulfill(body='window.mammoth={};', content_type='application/javascript')
+    if 'jameel-noori' in u and u.endswith('.woff2'):
+        return r.fulfill(path=JAMEEL, content_type='font/woff2') if HAS_JAMEEL else r.abort()
     if 'fonts.googleapis.com' in u: return r.fulfill(body=FONT_CSS, content_type='text/css')
     if 'fonts.gstatic.com/n400' in u: return r.fulfill(path=FONTS + 'noto-nastaliq-urdu-arabic-400-normal.woff2', content_type='font/woff2')
     if 'fonts.gstatic.com/n700' in u: return r.fulfill(path=FONTS + 'noto-nastaliq-urdu-arabic-700-normal.woff2', content_type='font/woff2')

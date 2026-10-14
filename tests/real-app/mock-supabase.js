@@ -1,6 +1,6 @@
 // Test double for @supabase/supabase-js UMD — the REAL app runs on top of it.
 (function () {
-    window.__opts = { noUpdatePolicy: false, fail: [], silent: [], failCode: '42501' };
+    window.__opts = { noUpdatePolicy: false, fail: [], silent: [], failCode: '42501', noTable: [] };
   // v547: ناکامی کی نقل — اصل Supabase کی طرح غلطی پھینکی نہیں جاتی، {error} لوٹتا ہے۔
   //   __opts.fail   = ['recycle_bin:insert', …]  → سرور کا رد (RLS 42501)
   //   __opts.silent = ['reminders:delete', …]   → RLS کی خاموش روک: کوئی غلطی نہیں، 0 قطار
@@ -20,6 +20,9 @@
     const st = { t, op: 'select', f: [], one: false, orS: null, ord: null, row: null, head: false };
     const run = () => {
       if (!navigator.onLine) throw new TypeError('Failed to fetch');
+      // sql چلنے سے پہلے: table ہی نہیں (اصل PostgREST کا جواب)
+      if ((window.__opts.noTable || []).includes(st.t))
+        return { data: null, error: { message: "Could not find the table 'public." + st.t + "' in the schema cache", code: 'PGRST205' } };
       if (st.op !== 'select' && _hit(window.__opts.fail, st.t, st.op))
         return { data: null, error: window.__opts.failCode === '42501'
           ? { message: 'new row violates row-level security policy for table "' + st.t + '"', code: '42501' }

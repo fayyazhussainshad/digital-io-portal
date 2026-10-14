@@ -942,6 +942,7 @@ async function _trustCount(table) {
 const _PAGE_NAMES = {
   dashboard:'ڈیش بورڈ', cases:'میرے مقدمات', templates:'ٹمپلیٹس', fivec:'5-C درخواستیں',
   incident:'واقعاتی رپورٹ',
+  gasht:'گشت لاگ',
   reminders:'یاددہانیاں', search:'تلاش', suspects:'ملزمان/گواہان', performance:'کارکردگی',
   backup:'بیک اپ', settings:'ترتیبات', bin:'حذف شدہ', subscription:'سبسکرپشن',
   court:'عدالتی پیشیاں', evidence:'شہادتیں', admin:'ایڈمن',

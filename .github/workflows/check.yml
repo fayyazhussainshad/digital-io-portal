@@ -49,11 +49,12 @@ jobs:
           sudo apt-get update -q && sudo apt-get install -y -q poppler-utils
           pip install playwright==1.56.0 pillow
           python -m playwright install --with-deps chromium
-      - name: Test fonts and DOMPurify
+      - name: Test fonts (Jameel Noori = the app's real font, Noto = fallback) and DOMPurify
         working-directory: tests/real-app
         run: |
-          mkdir -p .deps/fontpkg .deps/purify
+          mkdir -p .deps/fontpkg .deps/jameel .deps/purify
           (cd .deps/fontpkg && npm pack @fontsource/noto-nastaliq-urdu --silent && tar xzf *.tgz)
+          (cd .deps/jameel && npm pack jameel-noori@1.1.2 --silent && tar xzf *.tgz)
           (cd .deps/purify && npm pack dompurify@3.1.6 --silent && tar xzf *.tgz)
       - name: Serve the app
         run: |
@@ -66,6 +67,10 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: python core_test.py
+      - name: Patrol log (gasht_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: python gasht_test.py
       - name: Screenshots and print PDFs
         if: always()
         uses: actions/upload-artifact@v4
