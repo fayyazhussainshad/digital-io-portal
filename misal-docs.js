@@ -88,8 +88,8 @@ function renderMisalBar(c) {
         مقدمہ<bdi style="direction:ltr;font-family:var(--font-mono,monospace);font-weight:700;">${(typeof esc==='function'?esc(c&&c.fir_number||'—'):(c&&c.fir_number||'—'))}</bdi>
       </span>
       ${indexChip}
-      ${_misalDropdown('fir-dd', 'الف آئی آر', [
-        {label:'الف آئی آر', act:`_ddPick('fir-dd','fir')`},
+      ${_misalDropdown('fir-dd', 'ایف آئی آر', [
+        {label:'ایف آئی آر', act:`_ddPick('fir-dd','fir')`},
         ...(typeof caseHasCross==='function' && caseHasCross(c) ? [{label:'کراس ورژن', act:`_ddPick('fir-dd','cross_version')`}] : [])
       ], _misalHasData('fir'))}
       ${_misalDropdown('acc-dd', 'ملزمان', [

@@ -34,38 +34,89 @@ async function _loadFir() {
   }
 }
 
-// Render ONE section (fir or cross_version)
-function _renderFir(type) {
+// کیا اس مقدمہ میں کراس ورژن ہے؟ (نیا مقدمہ کارڈ میں کراس ورژن ✓ — یا پہلے سے کراس کا ڈیٹا موجود ہو)
+function _firCaseHasCross() {
+  const pool = [
+    (typeof _misalCase !== 'undefined') ? _misalCase : null,
+    window._workspaceCase || null,
+    (typeof currentCase !== 'undefined') ? currentCase : null,
+  ];
+  const c = pool.find(x => x && x.id === _firCaseId) || null;
+  if (c && typeof caseHasCross === 'function' && caseHasCross(c)) return true;
+  return _firMatn.some(m => m.type === 'cross_version') || _firCopies.some(c2 => c2.type === 'cross_version');
+}
+
+// ایک حصے کی سرخی: بٹن دائیں کنارے کے ساتھ، سرخی صفحے کے بالکل درمیان
+// (3 خانوں کا grid — دونوں طرف برابر چوڑائی، اس لیے سرخی ہمیشہ مرکز میں رہتی ہے)
+function _firHeadRow(title, btnHtml, color, border, weight) {
+  return `
+    <div class="fir-headrow" style="border-bottom:${border};">
+      <div class="fir-headrow-btn">${btnHtml}</div>
+      <div class="dio-hs2 fir-headrow-title" style="font-weight:${weight};color:${color};">${title}</div>
+      <div aria-hidden="true"></div>
+    </div>`;
+}
+
+// ایک حصہ: متن + فوٹو کاپی (fir یا cross_version)
+function _renderFirPart(type) {
+  const isCross = type === 'cross_version';
+  const heading = isCross ? 'کراس ورژن' : 'ایف آئی آر';
+  const color = isCross ? 'var(--amber)' : 'var(--accent)';
+  const matn = _firMatn.filter(m => (m.type||'fir') === type);
+  const copies = _firCopies.filter(c => (c.type||'fir') === type);
+  const inputId = 'fir-copy-input-' + type;
+  return `
+  <section class="fir-part" id="fir-part-${type}" data-type="${type}">
+    <!-- متن -->
+    ${_firHeadRow('متن ' + heading,
+      `<button class="btn btn-primary btn-sm" onclick="_openMatnModal('${type}')">متن درج کریں</button>`,
+      color, '2px solid ' + color, 800)}
+    ${_renderMatnTable(matn)}
+
+    <!-- فوٹو کاپی -->
+    ${_firHeadRow('فوٹو کاپی ' + heading,
+      `<button class="btn btn-secondary btn-sm" onclick="document.getElementById('${inputId}').click()">فوٹو کاپی اپلوڈ کریں</button>
+       <input type="file" id="${inputId}" accept="image/*,application/pdf" style="display:none;" onchange="_uploadFirCopy(this,'${type}')">`,
+      'var(--text-primary)', '1px solid var(--border)', 700)}
+    ${_renderCopyTable(copies)}
+  </section>`;
+}
+
+// متن والا صفحہ — دو حصے: (1) متن ایف آئی آر + فوٹو کاپی ایف آئی آر
+//                        (2) متن کراس ورژن + فوٹو کاپی کراس ورژن
+// focus: 'fir' یا 'cross_version' — صفحہ کھلنے پر وہی حصہ سامنے آئے
+function _renderFir(focus) {
   const area = document.getElementById('workspace-editor-area')
             || document.getElementById('workspace-tab-content')
             || document.getElementById('page-content');
   if (!area) return;
-  const isCross = type === 'cross_version';
-  const heading = isCross ? 'کراس ورژن' : 'الف آئی آر';
-  const color = isCross ? 'var(--amber)' : 'var(--accent)';
-
-  const matn = _firMatn.filter(m => (m.type||'fir') === type);
-  const copies = _firCopies.filter(c => (c.type||'fir') === type);
+  const oldWrap = document.getElementById('fir-page');
+  const keepScroll = (oldWrap && area.contains(oldWrap)) ? oldWrap.scrollTop : null;
+  const showCross = _firCaseHasCross();
 
   area.innerHTML = `
-  <div style="direction:rtl;height:100%;overflow-y:auto;padding:10px;width:100%;box-sizing:border-box;">
-
-    <!-- متن -->
-    <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid ${color};padding-bottom:6px;margin-bottom:10px;">
-      <div class="dio-hs2" style="font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:${color};">متن ${heading}</div>
-      <button class="btn btn-primary btn-sm" onclick="_openMatnModal('${type}')">متن درج کریں</button>
-    </div>
-    ${_renderMatnTable(matn)}
-
-    <!-- فوٹو کاپی -->
-    <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:6px;margin:18px 0 10px;">
-      <div class="dio-hs2" style="font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">فوٹو کاپی ${heading}</div>
-      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('fir-copy-input').click()">فوٹو کاپی اپلوڈ کریں</button>
-      <input type="file" id="fir-copy-input" accept="image/*,application/pdf" style="display:none;" onchange="_uploadFirCopy(this,'${type}')">
-    </div>
-    ${_renderCopyTable(copies)}
-
+  <style>
+    #fir-page { direction:rtl; height:100%; overflow-y:auto; padding:10px; width:100%; box-sizing:border-box; }
+    #fir-page .fir-part { border:1px solid var(--border); border-radius:10px; padding:10px; background:var(--bg-card); }
+    #fir-page .fir-part + .fir-part { margin-top:22px; }
+    #fir-page .fir-headrow { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; column-gap:8px;
+      padding-bottom:6px; margin:0 0 10px; }
+    #fir-page .fir-part > .fir-headrow ~ .fir-headrow { margin-top:18px; }
+    #fir-page .fir-headrow-btn { justify-self:start; display:flex; }
+    #fir-page .fir-headrow-btn .btn { white-space:nowrap; }
+    #fir-page .fir-headrow-title { text-align:center; white-space:nowrap; font-family:'Jameel Noori Nastaleeq',serif; }
+  </style>
+  <div id="fir-page">
+    ${_renderFirPart('fir')}
+    ${showCross ? _renderFirPart('cross_version') : ''}
   </div>`;
+
+  const wrap = document.getElementById('fir-page');
+  if (keepScroll !== null) { wrap.scrollTop = keepScroll; return; }
+  if (focus === 'cross_version') {
+    const sec = document.getElementById('fir-part-cross_version');
+    if (sec) wrap.scrollTop += sec.getBoundingClientRect().top - wrap.getBoundingClientRect().top - 4;
+  }
 }
 
 function _renderMatnTable(rows) {
@@ -230,7 +281,7 @@ async function _deleteFirCopy(id) {
 function _viewMatn(id) {
   const row = _firMatn.find(m => m.id === id);
   if (!row) { showToast('متن نہیں ملا', 'error'); return; }
-  const heading = (row.type === 'cross_version') ? 'کراس ورژن' : 'الف آئی آر';
+  const heading = (row.type === 'cross_version') ? 'کراس ورژن' : 'ایف آئی آر';
   openModal('متن ' + heading, `
     <div style="direction:rtl;width:80vw;max-width:90vw;">
       <div style="width:100%;box-sizing:border-box;padding:20px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:18px;line-height:2;text-align:justify;direction:rtl;max-height:70vh;overflow-y:auto;white-space:pre-wrap;">${esc(row.matn)||''}</div>
@@ -245,42 +296,57 @@ function _viewMatn(id) {
   }, 20);
 }
 
-// ── PRINT MATN (only the document, no app UI) ─────────────────
-function _printMatn(id) {
-  const row = _firMatn.find(m => m.id === id);
-  if (!row) { showToast('متن نہیں ملا', 'error'); return; }
-  const heading = (row.type === 'cross_version') ? 'متن کراس ورژن' : 'متن الف آئی آر';
-  const body = esc(row.matn) || '';
-  const html = `<!DOCTYPE html><html dir="rtl" lang="ur"><head><meta charset="utf-8">
+// ── PRINT MATN (صرف کاغذ — ایپ کا کوئی حصہ نہیں) ──────────────────
+// ایک ہی کاغذ بنانے والا: سطر کا «پرنٹ»، اوپر کی پٹی کا «پرنٹ» اور Ctrl+P —
+// تینوں یہی استعمال کرتے ہیں (نتیجہ بالکل ایک جیسا)۔ سرخی 20pt، متن 14pt۔
+// پورا صفحہ: پہلے متن ایف آئی آر، پھر (ہو تو) نئے صفحے پر متن کراس ورژن۔
+function _firPaperHtml(rows) {
+  const groups = ['fir', 'cross_version'].map(t => ({
+    t, heading: t === 'cross_version' ? 'متن کراس ورژن' : 'متن ایف آئی آر',
+    items: rows.filter(r => (r.type || 'fir') === t && String(r.matn || '').trim()),
+  })).filter(g => g.items.length);
+  if (!groups.length) return '';
+  const title = groups.map(g => g.heading).join(' — ');
+  const body = groups.map(g => `
+      <section class="fir-sec">
+        <h1>${g.heading}</h1>
+        ${g.items.map(r => `<div class="matn">${esc(r.matn)}</div>`).join('')}
+      </section>`).join('');
+  return `<!DOCTYPE html><html dir="rtl" lang="ur"><head><meta charset="utf-8">
     ${typeof dioFontHead==='function'?dioFontHead():''}
-    <title>${heading}</title>
+    <title>${title}</title>
     <style>
       @page { size: A4; margin: 20mm; }
       * { box-sizing: border-box; }
-      html, body { margin:0; padding:0; }
+      html, body { margin:0; padding:0; background:#fff; }
       body { font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl; color:#000; }
-      h2 { text-align:center; font-size:22px; margin:0 0 18px; font-weight:700; }
-      .matn { font-size:18px; line-height:2.1; text-align:justify; white-space:pre-wrap; }
+      h1 { text-align:center; font-size:20pt; margin:0 0 14pt; font-weight:700; line-height:1.9; }
+      .matn { font-size:14pt; line-height:2.1; text-align:justify; white-space:pre-wrap; }
+      .matn + .matn { margin-top:14pt; }
+      .fir-sec + .fir-sec { break-before:page; page-break-before:always; }
     </style></head>
-    <body>
-      <h2>${heading}</h2>
-      <div class="matn">${body}</div>
+    <body>${body}
     </body></html>`;
-
-  const ifr = document.createElement('iframe');
-  ifr.style.position = 'fixed';
-  ifr.style.right = '-9999px';
-  ifr.style.bottom = '0';
-  ifr.style.width = '0';
-  ifr.style.height = '0';
-  ifr.style.border = '0';
-  document.body.appendChild(ifr);
-  const doc = ifr.contentWindow.document;
-  doc.open(); doc.write(html); doc.close();
-  const done = () => {
-    try { ifr.contentWindow.focus(); ifr.contentWindow.print(); } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
-    setTimeout(() => { try { ifr.remove(); } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } }, 1000);
-  };
-  if (ifr.contentWindow.document.readyState === 'complete') setTimeout(done, 300);
-  else ifr.onload = () => setTimeout(done, 300);
 }
+
+function _firPrintRows(rows) {
+  const html = _firPaperHtml(rows);
+  if (!html) { showToast('ابھی کوئی متن درج نہیں', 'info'); return; }
+  dioPrint(html);
+}
+
+// ایک متن (سطر کا «پرنٹ» بٹن)
+function _printMatn(id) {
+  const row = _firMatn.find(m => m.id === id);
+  if (!row) { showToast('متن نہیں ملا', 'error'); return; }
+  _firPrintRows([row]);
+}
+
+// پورا صفحہ (اوپر کی پٹی کا «پرنٹ» اور Ctrl+P) — صرف وہی حصے جو صفحے پر نظر آ رہے ہیں
+function _firPrintPage() {
+  const shown = new Set([...document.querySelectorAll('#fir-page section.fir-part')].map(s => s.dataset.type));
+  _firPrintRows(_firMatn.filter(m => shown.has(m.type || 'fir')));
+}
+window._firPrintPage = _firPrintPage;
+// Ctrl+P: index.html کا عمومی راستہ پورے صفحے والے منظر میں _dioPrintCurrent چلاتا ہے،
+// اور وہ یہاں _firPrintPage پر آتا ہے — یعنی Ctrl+P اور اوپر کا «پرنٹ» ایک ہی راستہ۔
