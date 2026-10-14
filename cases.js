@@ -615,12 +615,8 @@ function addSection(sectionStr, offence, bail) {
   // Update hidden input
   document.getElementById('cf-section').value = selectedSections.join(' + ');
 
-  // Update offence field
-  const offenceInp = document.getElementById('cf-offence');
-  if (offenceInp) {
-    const current = offenceInp.value;
-    offenceInp.value = current ? current + ' + ' + offence : offence;
-  }
+  // v543: «جرم» میں انگریزی نام (Theft, Murder…) خود نہیں ڈالا جاتا — یہ اردو
+  //   دستاویزات میں «دفعہ + جرم» کی صورت چھپتا ہے؛ افسر خود اردو میں لکھتا ہے۔
 
   // Render tags
   const container = document.getElementById('selected-sections');

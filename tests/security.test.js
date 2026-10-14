@@ -1775,3 +1775,13 @@ test('v542: مقدمہ کی ترمیم پر جرم کی قسم/SHO/SDPO/نوٹ �
       assert.ok(new RegExp("id=\"" + id + "\"").test(f), id + ' فارم میں موجود ہو (چھپا ہی سہی) — ورنہ ترمیم پر قدر مٹ جاتی ہے');
   }
 });
+
+test('v543: «جرم» فارم میں نظر آنے والا خانہ؛ SHO/SDPO/نوٹ ہٹے؛ انگریزی جرم خود نہ بھرے', () => {
+  const f = read('case-form.js'), c = read('cases.js');
+  assert.ok(/<input class="form-input" id="cf-offence"/.test(f), 'جرم دستاویزات میں چھپتا ہے — فارم میں بھرا جا سکے');
+  assert.ok(!/type="hidden" id="cf-offence"/.test(f), 'جرم چھپا ہوا نہ ہو');
+  for (const id of ['cf-sho', 'cf-sdpo', 'cf-notes'])
+    assert.ok(!f.includes(id), id + ' کہیں استعمال نہیں — نہ فارم، نہ محفوظ کرنا (ڈیٹابیس کی قدر نہ مٹے)');
+  const add = c.slice(c.indexOf('function addSection('), c.indexOf('function removeSection('));
+  assert.ok(!/cf-offence/.test(add), 'دفعہ چننے پر انگریزی نام (Theft…) جرم میں نہ جائے');
+});
