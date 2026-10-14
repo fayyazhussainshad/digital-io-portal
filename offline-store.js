@@ -286,7 +286,9 @@ const offlineStore={
     } else if(op==='delete'){
       const{error}=await sb.from(table).delete().eq('id',data.id);
       if(error) throw error;
-      await this.remove(table+'_cache',data.id);
+      // v546: ہر table کا local cache store نہیں ہوتا (مثلاً case_documents) —
+      //   پہلے یہاں غلطی آتی اور سرور سے حذف ہو چکا اندراج بھی «ناکام» گنا جاتا
+      if(_odb && _odb.objectStoreNames.contains(table+'_cache')) await this.remove(table+'_cache',data.id);
 
     // ── EVIDENCE FILE UPLOAD ─────────────────────────────────
     } else if(op==='upload_evidence'){

@@ -1826,3 +1826,16 @@ test('v545: کوئی خالی catch باقی نہیں — اور نیا خالی
       ['offline-store.js', 'sync queue: item failed mark nakaam'], ['data-api.js', 'offline evidence: file local store nakaam']])
     assert.ok(read(f).includes("dioLogError('" + label + "'"), f + ' — ' + label);
 });
+
+test('v546: سرور کا نتیجہ دیکھے بغیر «محفوظ» نہیں — ناکامی پر صاف پیغام، آف لائن پر قطار', () => {
+  const d = read('data-api.js');
+  assert.ok(/async function dioSaveRow\(/.test(d) && /function dioSaveToast\(/.test(d), 'مرکزی helper موجود');
+  assert.ok(/offlineStore\.enqueue\(table, op/.test(d), 'انٹرنیٹ نہ ہو تو قطار');
+  const g = read('sho-dsp.js'), st = read('settings.js'), sd = read('saved-docs.js'), nq = read('naqsha-mauqa.js');
+  assert.ok(!/showToast\('سرکاری گاڑی محفوظ'/.test(g) && /dioSaveRow\('sarkari_gari'/.test(g), 'گاڑی: نتیجہ دیکھ کر');
+  assert.ok(!/تصویر اپ ڈیٹ ہو گئی/.test(st) && (st.match(/dioSaveRow\('officers'/g) || []).length === 2, 'تصویر: لگانا اور ہٹانا دونوں');
+  assert.ok(/dioSaveRow\('case_documents', 'delete'/.test(sd) && !/showToast\('حذف ہو گئی'/.test(sd), 'دستاویز حذف: نتیجہ دیکھ کر');
+  assert.ok(!/TOAST\('✅ نقشہ موقع محفوظ ہو گیا', 'success'\);\n/.test(nq) && /_isPending\(_naqCaseId\)/.test(nq), 'نقشہ: زیرِ التوا مقامی کاپی ترجیح پائے');
+  assert.ok(/objectStoreNames\.contains\(table\+'_cache'\)/.test(read('offline-store.js')), 'قطار کا delete: cache store نہ ہو تو جھوٹی ناکامی نہیں');
+  assert.ok(/drop\(\); reject\(new Error\('fabric net'\)\)/.test(nq), 'fabric لوڈ ناکام ہو تو دوسری بار نقشہ اٹکے نہیں');
+});

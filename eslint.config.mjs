@@ -39,7 +39,7 @@ function appGlobals() {
 }
 
 export default [
-  { ignores: ['node_modules/**', 'sw.js', 'supabase/**', 'backups/**'] },
+  { ignores: ['node_modules/**', 'sw.js', 'supabase/**', 'backups/**', 'tests/real-app/.deps/**', 'tests/real-app/out/**'] },   // .deps = real_test کی باہر کی لائبریریاں
   {
     files: ['tests/**/*.js'],
     languageOptions: { globals: { ...globals.node } },

@@ -17,7 +17,7 @@
      dioLoadDocEntries(docType) → Promise<Array>  (سیریل/تاریخ ترتیب)
      dioRenderDocList(docType, cfg) → fehrist صفحہ (workspace-editor-area)
         cfg = { caseId, heading, onNew(), onOpen(entry), onDelete?(entry) }
-     dioDeleteDocEntry(docType, id) → Promise
+     dioDeleteDocEntry(docType, id) → Promise<{status}>  (v546: ok/queued/error — dioSaveRow)
    ═══════════════════════════════════════════════════════════ */
 
 // ── localStorage keys (offline backup) ──
@@ -150,11 +150,14 @@ window.dioLoadDocEntries = dioLoadDocEntries;
 // ── DELETE ──
 async function dioDeleteDocEntry(docType, id, explicitCaseId) {
   const caseId = _sdCaseId(explicitCaseId);
-  try {
-    if (id && !String(id).startsWith('local-')) {
-      await supabaseClient.from('case_documents').delete().eq('id', id);
-    }
-  } catch (_) { if (typeof dioLogError === 'function') dioLogError('saved doc: server se delete nakaam', _); }
+  // v546: سرور کا نتیجہ دیکھا جاتا ہے۔ سرور نے رد کیا تو اس آلے سے بھی نہیں ہٹتی
+  //   (ورنہ اگلی بار سرور سے واپس آ جاتی)؛ انٹرنیٹ نہ ہو تو حذف قطار میں۔
+  let res = { status: 'ok' };
+  if (id && !String(id).startsWith('local-')) {
+    res = await dioSaveRow('case_documents', 'delete', { id });
+    if (res.status === 'missing') res = { status: 'ok' };   // سرور پر پہلے ہی نہیں
+    if (res.status === 'error') return res;
+  }
   // localStorage se bhi
   try {
     const k = _sdKey(caseId, docType);
@@ -162,6 +165,7 @@ async function dioDeleteDocEntry(docType, id, explicitCaseId) {
     list = list.filter(x => String(x.id) !== String(id));
     localStorage.setItem(k, JSON.stringify(list));
   } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
+  return res;
 }
 window.dioDeleteDocEntry = dioDeleteDocEntry;
 
@@ -336,9 +340,9 @@ window._sdOpen = _sdOpen;
 
 async function _sdDelete(docType, id) {
   if (!confirm('کیا آپ یہ دستاویز مستقل حذف کرنا چاہتے ہیں؟')) return;
-  await dioDeleteDocEntry(docType, id);
+  const res = await dioDeleteDocEntry(docType, id);
   const cfg = window._sdCurrentCfg || {};
   try { dioRenderDocList(docType, cfg); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
-  if (typeof showToast === 'function') showToast('حذف ہو گئی', 'info');
+  dioSaveToast(res, 'دستاویز', { ok: 'حذف ہو گئی', fail: 'حذف نہیں ہوئی', local: 'اس آلے سے حذف ہو گئی' });
 }
 window._sdDelete = _sdDelete;

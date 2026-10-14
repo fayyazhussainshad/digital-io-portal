@@ -111,17 +111,27 @@ window.openSarkariGari = openSarkariGari;
 async function _saveSarkariGari() {
   const vehicle_number = (document.getElementById('gari-number')||{}).value || '';
   const driver_name = (document.getElementById('gari-driver')||{}).value || '';
-  try { localStorage.setItem('digital_io_sarkari_gari', JSON.stringify({ vehicle_number, driver_name })); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
-  // Best-effort Supabase save
-  try {
-    const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
-    const rec = { vehicle_number, driver_name };
-    if (oid) rec.officer_id = oid;
-    if (typeof _misalCaseId !== 'undefined' && _misalCaseId) rec.case_id = _misalCaseId;
-    await supabaseClient.from('sarkari_gari').insert(rec);
-  } catch(_) { if (typeof dioLogError === 'function') dioLogError('sarkari gari: server save nakaam', _); }
+  // v546: پہلے ہر بار نئی قطار insert ہوتی (دوہرے اندراج) اور نتیجہ دیکھے بغیر
+  //   «محفوظ» دکھایا جاتا۔ اب ہر مقدمے کی ایک قطار: پہلی بار insert، پھر update۔
+  const cur = getSarkariGari();
+  const ids = (cur && typeof cur.ids === 'object' && cur.ids) ? cur.ids : {};
+  const cid = (typeof _misalCaseId !== 'undefined' && _misalCaseId) ? String(_misalCaseId) : '_';
+  const keep = () => {
+    try { localStorage.setItem('digital_io_sarkari_gari', JSON.stringify({ vehicle_number, driver_name, ids })); }
+    catch (_) { if (typeof dioLogError === 'function') dioLogError('sarkari gari: local save nakaam', _); }
+  };
+  keep();   // اس آلے پر پہلے (کبھی ضائع نہ ہو)
+  let oid = null;
+  try { oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null; } catch (_) { /* افسر کی شناخت نہ ملے تو RLS خود فیصلہ کرے گا */ }
+  const rec = { vehicle_number, driver_name };
+  if (oid) rec.officer_id = oid;
+  if (cid !== '_') rec.case_id = cid;
+  let res = null;
+  if (ids[cid]) res = await dioSaveRow('sarkari_gari', 'update', { id: ids[cid], ...rec });
+  if (!res || res.status === 'missing') res = await dioSaveRow('sarkari_gari', 'insert', rec);
+  if (res.status === 'ok' && res.data && res.data.id) { ids[cid] = res.data.id; keep(); }
   closeModal();
-  if (typeof showToast === 'function') showToast('سرکاری گاڑی محفوظ', 'success');
+  dioSaveToast(res, 'سرکاری گاڑی', { ok: 'محفوظ ہو گئی', fail: 'محفوظ نہیں ہوئی' });
 }
 window._saveSarkariGari = _saveSarkariGari;
 

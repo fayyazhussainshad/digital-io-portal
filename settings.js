@@ -301,15 +301,17 @@ function changeProfilePhoto(){
         const src=canvas.toDataURL('image/jpeg',0.7);
         try{localStorage.setItem('dio_profile_photo',src);localStorage.setItem('officer_photo_url',src);}catch(e){ /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
         // Save to Supabase officer record (persists across devices/logins)
+        // v546: نتیجہ دیکھ کر صاف پیغام؛ انٹرنیٹ نہ ہو تو قطار میں (خود sync)
+        let _phRes = null;
         try{
           const oid=await getOfficerId();
-          await supabaseClient.from('officers').update({profile_photo:src}).eq('id',oid);
+          _phRes = await dioSaveRow('officers','update',{id:oid,profile_photo:src});
           if(currentOfficer) currentOfficer.profile_photo=src;
-        }catch(_){ if (typeof dioLogError === 'function') dioLogError('profile photo: server save nakaam', _); }
+        }catch(_){ _phRes = { status:'error', error:_ }; if (typeof dioLogError === 'function') dioLogError('profile photo: server save nakaam', _); }
         if (typeof updateSidebarProfile === 'function') updateSidebarProfile();
         document.querySelectorAll('.officer-card-avatar,.sidebar-avatar,#settings-avatar,#profile-avatar-btn,#sidebar-avatar,#topbar-avatar,#dash-welcome-avatar')
           .forEach(el=>{el.innerHTML=`<img src="${src}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">`;});
-        showToast('تصویر اپ ڈیٹ ہو گئی۔','success');
+        dioSaveToast(_phRes, 'پروفائل تصویر', { ok: 'محفوظ ہو گئی', fail: 'محفوظ نہیں ہوئی' });
       };
       img.src=ev.target.result;
     };
@@ -321,9 +323,15 @@ function changeProfilePhoto(){
 function removeProfilePhoto(){
   if(!confirm('کیا پروفائل تصویر ہٹا دی جائے؟')) return;
   localStorage.removeItem('dio_profile_photo');
-  (async()=>{ try{ const oid=await getOfficerId(); await supabaseClient.from('officers').update({profile_photo:null}).eq('id',oid); if(currentOfficer)currentOfficer.profile_photo=null; }catch(_){ if (typeof dioLogError === 'function') dioLogError('profile photo: server se hatana nakaam', _); } })();
+  // v546: نتیجہ آنے کے بعد پیغام — پہلے سرور ناکام ہونے پر بھی «ہٹا دی گئی» آتا تھا
+  if(currentOfficer) currentOfficer.profile_photo=null;
   renderSettings(document.getElementById('page-content'));
-  showToast('تصویر ہٹا دی گئی۔','info');
+  (async()=>{
+    let res;
+    try{ const oid=await getOfficerId(); res = await dioSaveRow('officers','update',{id:oid,profile_photo:null}); }
+    catch(_){ res = { status:'error', error:_ }; if (typeof dioLogError === 'function') dioLogError('profile photo: server se hatana nakaam', _); }
+    dioSaveToast(res, 'پروفائل تصویر', { ok: 'ہٹا دی گئی', fail: 'ہٹائی نہیں جا سکی', local: 'اس آلے سے ہٹا دی گئی' });
+  })();
 }
 
 function openChangePasswordModal(){
