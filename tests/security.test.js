@@ -1796,3 +1796,11 @@ test('v544: «بجرم»/جرم کی جگہ پورے سسٹم میں صرف دف
     assert.deepEqual(lines, [], fn + ' میں جرم کی تفصیل نہ چھپے');
   }
 });
+
+test('103_CHECK: v542 کے اثر کی جانچ — صرف پڑھتی ہے', () => {
+  const s = read('sql/103_CHECK.sql').split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
+  const bina = s.replace(/'[^']*'/g, "''");
+  assert.ok(!/\b(insert|update|delete|truncate|drop|alter|create|grant|revoke)\s/i.test(bina), 'sirf select');
+  assert.strictEqual((bina.match(/;/g) || []).length, 1, 'aik hi statement');
+  assert.ok(/action = 'case\.updated'/.test(s) && /in \('sho', 'sdpo'\)/.test(s), 'sirf wahi jo audit mein darj hai');
+});
