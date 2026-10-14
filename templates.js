@@ -259,7 +259,8 @@ async function _doRenameTpl(id) {
   const newName = document.getElementById('tpl-rename-inp')?.value.trim();
   if (!newName) { showToast('نام ضروری ہے','error'); return; }
   try {
-    await supabaseClient.from('templates').update({ title:newName, updated_at:new Date().toISOString() }).eq('id', id);
+    // v547: نتیجہ دیکھ کر — پہلے سرور رد کرتا (مثلاً کسی اور کا ٹیمپلیٹ) تب بھی «ہو گیا»
+    dioWriteOk(await supabaseClient.from('templates').update({ title:newName, updated_at:new Date().toISOString() }).eq('id', id).select('id'), 'tpl rename', true);
     const t = _tplList.find(x=>x.id===id); if (t) t.title = newName;
     try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     // Update open viewer title if present
@@ -267,7 +268,7 @@ async function _doRenameTpl(id) {
     closeModal();
     showToast('نام تبدیل ہو گیا','success');
     _renderTplTable();
-  } catch(e) { showToast(''+e.message,'error'); }
+  } catch(e) { dioWriteFail('ٹیمپلیٹ کا نام', e, 'تبدیل نہیں ہوا'); }
 }
 
 // Render template PDF via blob (avoids "content blocked" in PWA)
@@ -480,11 +481,11 @@ async function _tplSaveDoc(id) {
   if (!doc) return;
   const content = doc.innerText || '';
   try {
-    await supabaseClient.from('templates').update({ content, updated_at:new Date().toISOString() }).eq('id', id);
+    dioWriteOk(await supabaseClient.from('templates').update({ content, updated_at:new Date().toISOString() }).eq('id', id).select('id'), 'tpl doc save', true);
     const t = _tplList.find(x=>x.id===id); if (t) t.content = content;
     try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     showToast('ترمیم محفوظ ہو گئی','success');
-  } catch(e) { showToast(''+e.message,'error'); }
+  } catch(e) { dioWriteFail('ترمیم', e, 'محفوظ نہیں ہوئی'); }
 }
 
 // ── EDITABLE VIEWER (key feature) ────────────────────────────
@@ -610,12 +611,12 @@ async function _saveTplEditor(id) {
   const title = (titleInp?.value || '').trim();
   if (!title) { showToast('ٹمپلیٹ کا نام ضروری ہے','error'); return; }
   try {
-    await supabaseClient.from('templates').update({ title, content, updated_at:new Date().toISOString() }).eq('id', id);
+    dioWriteOk(await supabaseClient.from('templates').update({ title, content, updated_at:new Date().toISOString() }).eq('id', id).select('id'), 'tpl editor save', true);
     const t = _tplList.find(x=>x.id===id); if (t) { t.content = content; t.title = title; }
     try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     showToast('محفوظ ہو گیا','success');
     _renderTplTable();
-  } catch(e) { showToast(''+e.message,'error'); }
+  } catch(e) { dioWriteFail('ٹیمپلیٹ', e, 'محفوظ نہیں ہوا'); }
 }
 
 // ── COPY (duplicate) ─────────────────────────────────────────
@@ -656,13 +657,13 @@ async function _doMoveTpl(id) {
   const cat = document.getElementById('tpl-move-cat')?.value;
   if (!cat) return;
   try {
-    await supabaseClient.from('templates').update({ category:cat, updated_at:new Date().toISOString() }).eq('id', id);
+    dioWriteOk(await supabaseClient.from('templates').update({ category:cat, updated_at:new Date().toISOString() }).eq('id', id).select('id'), 'tpl move', true);
     const t = _tplList.find(x=>x.id===id); if (t) t.category = cat;
     try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
     closeModal();
     showToast('منتقل ہو گیا','success');
     _renderTplTable();
-  } catch(e) { showToast(''+e.message,'error'); }
+  } catch(e) { dioWriteFail('ٹیمپلیٹ', e, 'منتقل نہیں ہوا'); }
 }
 
 // ── DOWNLOAD ─────────────────────────────────────────────────
@@ -683,20 +684,23 @@ function _deleteTpl(id) {
   if (!t) return;
   const doDelete = async () => {
     try {
+      // v547: پہلے ریکارڈ (نتیجہ دیکھ کر)، پھر فائل — پہلے فائل مٹتی اور ریکارڈ کا حذف
+      //   رد ہوتا تو ٹیمپلیٹ فہرست میں رہ جاتا مگر اس کی فائل ضائع۔
+      dioWriteOk(await supabaseClient.from('templates').delete().eq('id', id).select('id'), 'tpl delete', true);
       if (t.file_url) {
         const marker = '/' + TPL_BUCKET + '/';
         const idx = t.file_url.indexOf(marker);
         if (idx !== -1) {
           const path = decodeURIComponent(t.file_url.substring(idx+marker.length).split('?')[0]);
-          await supabaseClient.storage.from(TPL_BUCKET).remove([path]);
+          const { error: sErr } = await supabaseClient.storage.from(TPL_BUCKET).remove([path]);
+          if (sErr && typeof dioLogError === 'function') dioLogError('tpl file hazf nakaam', sErr);
         }
       }
-      await supabaseClient.from('templates').delete().eq('id', id);
       _tplList = _tplList.filter(x => x.id !== id);
       try { localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(_tplList)); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
       showToast('حذف ہو گیا','info');
       _renderTplTable();
-    } catch(e) { showToast(''+e.message,'error'); }
+    } catch(e) { dioWriteFail('ٹیمپلیٹ', e, 'حذف نہیں ہوا'); }
   };
   if (typeof confirmDelete === 'function') confirmDelete(t.title, doDelete);
   else if (confirm('حذف کریں؟')) doDelete();

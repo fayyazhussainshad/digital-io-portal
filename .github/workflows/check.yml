@@ -1,0 +1,75 @@
+# Digital IO — ہر تبدیلی پر خودکار جانچ (v547)
+# ہر PR اور main پر ہر push: lint + unit tests + اصل ایپ کی جانچ (Desktop/Mobile/پرنٹ)۔
+# کوئی بھی جانچ ناکام ہو تو PR پر سرخ نشان — غلط کوڈ live جانے سے پہلے رک جائے۔
+name: check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-unit:
+    name: Lint + unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+
+  real-app:
+    name: Real app (desktop + mobile + print)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: lint-and-unit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Playwright, Pillow, poppler
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q poppler-utils
+          pip install playwright==1.56.0 pillow
+          python -m playwright install --with-deps chromium
+      - name: Test fonts and DOMPurify
+        working-directory: tests/real-app
+        run: |
+          mkdir -p .deps/fontpkg .deps/purify
+          (cd .deps/fontpkg && npm pack @fontsource/noto-nastaliq-urdu --silent && tar xzf *.tgz)
+          (cd .deps/purify && npm pack dompurify@3.1.6 --silent && tar xzf *.tgz)
+      - name: Serve the app
+        run: |
+          python -m http.server 8770 > /tmp/http.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:8770/index.html > /dev/null && break; sleep 1; done
+      - name: Incident report (real_test.py)
+        working-directory: tests/real-app
+        run: python real_test.py
+      - name: Core flows (core_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: python core_test.py
+      - name: Screenshots and print PDFs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-app-out
+          path: tests/real-app/out/
+          retention-days: 14

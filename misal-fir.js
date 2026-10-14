@@ -147,12 +147,13 @@ async function _deleteFIREntry(entryId) {
 
 async function _doDeleteFIR(entryId) {
   try {
-    await supabaseClient.from('case_documents').delete().eq('id', entryId);
+    // v547: نتیجہ دیکھ کر — پہلے سرور رد کرتا تب بھی «حذف ہو گئی»
+    dioWriteOk(await supabaseClient.from('case_documents').delete().eq('id', entryId).select('id'), 'fir doc delete', true);
     delete _misalDocs['fir'];
     showToast('FIR حذف ہو گئی','info');
     _refreshMisalBar();
     _renderFIRView();
-  } catch(e) { showToast(''+e.message,'error'); }
+  } catch(e) { dioWriteFail('FIR', e, 'حذف نہیں ہوئی'); }
 }
 
 

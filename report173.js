@@ -874,8 +874,8 @@ async function _saveR173Inner() {
         queued ? 'info' : 'warn', queued ? 3000 : 6000);
     } else if (_r173DocId && !String(_r173DocId).startsWith('local-')) {
       // موجودہ چالان میں ترمیم
-      const { error: upErr } = await supabaseClient.from('report_173').update(rec).eq('id', _r173DocId);
-      if (upErr) throw upErr;
+      // v547: 0 قطار (RLS/میعاد ختم/حذف شدہ) بھی ناکامی — ورنہ «محفوظ» کا جھوٹا پیغام
+      dioWriteOk(await supabaseClient.from('report_173').update(rec).eq('id', _r173DocId).select('id'), 'r173 update', true);
     } else {
       // نیا چالان — الگ ریکارڈ
       // AHEM: supabase-js NAKAMI par exception nahi phenkta — woh
@@ -943,7 +943,8 @@ async function _saveR173Inner() {
         }
       } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
       try {
-        await supabaseClient.from('cases').update({ status: newStatus }).eq('id', _r173CaseId);
+        // v547: نتیجہ دیکھ کر — پہلے حالت نہ بدلتی تب بھی «اپ ڈیٹ ہو گئی»
+        dioWriteOk(await supabaseClient.from('cases').update({ status: newStatus }).eq('id', _r173CaseId).select('id'), 'r173 case status', true);
         try { localStorage.setItem('case_status_'+_r173CaseId, newStatus); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
         // AUDIT — case.status_changed (Report 173 par transition)
         try {
@@ -957,7 +958,10 @@ async function _saveR173Inner() {
           }
         } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
         showToast('رپورٹ محفوظ — مقدمہ کی حالت اپ ڈیٹ ہو گئی', 'success');
-      } catch(_) { showToast('رپورٹ محفوظ ہو گئی', 'success'); }
+      } catch(_) {
+        const why = (window.DIO && DIO.errors) ? DIO.errors.userMessage(_) : ((_ && _.message) || '');
+        showToast('رپورٹ محفوظ ہو گئی — مگر مقدمے کی حالت تبدیل نہیں ہوئی (' + why + ')؛ مقدمے میں خود تبدیل کریں', 'info', 8000);
+      }
     } else {
       showToast('رپورٹ محفوظ ہو گئی', 'success');
     }
@@ -4549,11 +4553,12 @@ async function _r173DeleteDoc(id) {
   if (!d) return;
   if (!confirm('کیا یہ اندراج حذف کر دیں؟')) return;
   try {
-    await supabaseClient.from('report_173').delete().eq('id', d.id);
+    // v547: نتیجہ دیکھ کر — پہلے سرور رد کرتا تب بھی «حذف ہو گیا»
+    dioWriteOk(await supabaseClient.from('report_173').delete().eq('id', d.id).select('id'), 'r173 delete', true);
     _r173Docs = _r173Docs.filter(x => String(x.id) !== String(id));
     if (typeof showToast === 'function') showToast('حذف ہو گیا', 'info');
   } catch (e) {
-    if (typeof showToast === 'function') showToast('' + e.message, 'error');
+    dioWriteFail('اندراج', e, 'حذف نہیں ہوا');
   }
   _renderR173List();
 }

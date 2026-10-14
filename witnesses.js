@@ -282,13 +282,14 @@ async function _saveWitness() {
     const isNew = !_editingWitnessId;
     await D.safeWrite('case_witnesses', isNew ? 'insert' : 'update', rec, _editingWitnessId, OPTIONAL);
     if (isNew) {
+      // ضمنی نقل (تلاش کے لیے) — گواہ خود محفوظ ہو چکا؛ ناکامی صرف درج ہو (v547: پہلے رد بھی خاموش)
       try {
-        await supabaseClient.from('suspects').insert({
+        dioWriteOk(await supabaseClient.from('suspects').insert({
           officer_id: oid, person_type: 'witness',
           full_name: rec.full_name, profession: rec.profession,
           cnic: rec.cnic, cell: rec.cell,
-        });
-      } catch (_) { if (typeof dioLogError === 'function') dioLogError('gawah: suspects copy nakaam', _); }
+        }), 'gawah: suspects copy');
+      } catch (_) { /* dioWriteOk نے درج کر دیا — گواہ کا اندراج نہ رکے */ }
     }
     if (typeof closeModal === 'function') closeModal();
     _witnessFormType = 'fir';  // reset
@@ -298,16 +299,17 @@ async function _saveWitness() {
       _renderWitnessesArea();
     }
     showToast('گواہ محفوظ ہو گیا' + (cs && cs.fir && String(caseId) !== String(_witnessCaseId) ? ' — مقدمہ ' + cs.fir : ''), 'success');
-  } catch (e) { showToast('' + (e && e.message || e), 'error'); }
+  } catch (e) { dioWriteFail('گواہ', e, 'محفوظ نہیں ہوا'); }
 }
 
 async function _deleteWitness(id) {
   if (!confirm('کیا آپ یہ گواہ حذف کرنا چاہتے ہیں؟')) return;
   try {
-    await supabaseClient.from('case_witnesses').delete().eq('id', id);
+    // v547: نتیجہ دیکھ کر — پہلے سرور رد کرتا تب بھی «حذف ہو گیا»
+    dioWriteOk(await supabaseClient.from('case_witnesses').delete().eq('id', id).select('id'), 'witness delete', true);
     await _loadWitnesses();
     _renderWitnessesArea();
     showToast('حذف ہو گیا','info');
-  } catch(e) { showToast(''+e.message,'error'); }
+  } catch(e) { dioWriteFail('گواہ', e, 'حذف نہیں ہوا'); }
 }
 

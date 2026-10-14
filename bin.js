@@ -152,7 +152,7 @@ function _binDetail(type, d) {
 }
 
 // ── RESTORE ───────────────────────────────────────────────────
-async function _binRestore(binId, type) {
+async function _binRestore(binId, type, quiet) {
   try {
     const oid = await getOfficerId();
     const { data: binItem } = await supabaseClient
@@ -172,13 +172,21 @@ async function _binRestore(binId, type) {
     if (table) {
       // Remove bin-specific fields before restoring
       const { id: _id, ...restoreData } = d;
-      await supabaseClient.from(table).insert({ ...restoreData, officer_id: oid });
+      // v547: بحالی ناکام ہو تو بن سے مت ہٹاؤ (پہلے دونوں کا نتیجہ دیکھا ہی نہیں
+      //   جاتا تھا — بحالی رد ہوتی پھر بھی بن سے حذف: ریکارڈ ہمیشہ کے لیے ضائع)
+      dioWriteOk(await supabaseClient.from(table).insert({ ...restoreData, officer_id: oid }).select('id'), 'bin restore ' + table, true);
     }
     // Remove from bin
-    await supabaseClient.from('recycle_bin').delete().eq('id', binId);
-    showToast('آئٹم بحال ہو گیا!', 'success');
-    _buildBin();
-  } catch(e) { showToast('' + e.message, 'error'); }
+    try {
+      dioWriteOk(await supabaseClient.from('recycle_bin').delete().eq('id', binId).select('id'), 'bin: restored item hatana', true);
+    } catch (e2) {
+      if (!quiet) showToast('آئٹم بحال ہو گیا، مگر «حذف شدہ مواد» سے ہٹ نہیں سکا — دوبارہ بحال نہ کریں، یہاں سے «مستقل حذف» کر دیں', 'info', 8000);
+      if (!quiet) _buildBin();
+      return true;
+    }
+    if (!quiet) { showToast('آئٹم بحال ہو گیا!', 'success'); _buildBin(); }
+    return true;
+  } catch(e) { if (!quiet) dioWriteFail('آئٹم', e, 'بحال نہیں ہوا'); return false; }
 }
 
 // ── RESTORE ALL ───────────────────────────────────────────────
@@ -193,12 +201,17 @@ async function _binRestoreAll() {
 async function _binDoRestoreAll() {
   try {
     const oid = await getOfficerId();
-    const { data } = await supabaseClient.from('recycle_bin').select('*').eq('officer_id', oid);
+    const { data, error } = await supabaseClient.from('recycle_bin').select('*').eq('officer_id', oid);
+    if (error) throw error;
+    // v547: ہر آئٹم کا اصل نتیجہ گنو — «تمام بحال» صرف تب جب واقعی سب بحال ہوں
+    let ok = 0, bad = 0;
     for (const item of (data||[])) {
-      await _binRestore(item.id, item.item_type);
+      if (await _binRestore(item.id, item.item_type, true)) ok++; else bad++;
     }
-    showToast('تمام آئٹم بحال ہو گئے!', 'success');
-  } catch(e) { showToast('' + e.message, 'error'); }
+    if (bad) showToast(bad + ' آئٹم بحال نہیں ہوئے' + (ok ? '؛ ' + ok + ' بحال ہو گئے' : '') + ' — دوبارہ کوشش کریں', 'error', 8000);
+    else showToast('تمام آئٹم بحال ہو گئے (' + ok + ')', 'success');
+    _buildBin();
+  } catch(e) { dioWriteFail('آئٹم', e, 'بحال نہیں ہوئے'); }
 }
 
 // ── PERMANENT DELETE ──────────────────────────────────────────
@@ -211,7 +224,9 @@ async function _binDeletePerm(binId) {
 }
 
 async function _binDoPerm(binId) {
-  await supabaseClient.from('recycle_bin').delete().eq('id', binId);
+  try {
+    dioWriteOk(await supabaseClient.from('recycle_bin').delete().eq('id', binId).select('id'), 'bin: mustaqil hazf', true);
+  } catch (e) { dioWriteFail('آئٹم', e, 'حذف نہیں ہوا'); return; }
   showToast('مستقل حذف ہو گیا', 'info');
   _buildBin();
 }
@@ -234,7 +249,9 @@ async function _binDoEmpty() {
       .select('id', { count: 'exact', head: true }).eq('officer_id', oid);
     _binCount = (chk && typeof chk.count === 'number') ? chk.count : null;
   } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
-  await supabaseClient.from('recycle_bin').delete().eq('officer_id', oid);
+  try {
+    dioWriteOk(await supabaseClient.from('recycle_bin').delete().eq('officer_id', oid), 'bin: khali karna');
+  } catch (e) { dioWriteFail('حذف شدہ مواد', e, 'خالی نہیں ہوا'); return; }
   // AUDIT — bin.emptied
   try {
     if (window.DIO && DIO.audit) DIO.audit.log('bin.emptied', 'recycle_bin', null, {
@@ -247,15 +264,36 @@ async function _binDoEmpty() {
 
 // ── SOFT DELETE HELPER (call this instead of direct delete) ───
 // Usage: await softDelete('case', caseId, caseData)
+//  v547: نتیجہ — بن کی نئی قطار کا id (کامیاب) یا false (ناکام)۔ پہلے سرور کا رد
+//   دیکھا ہی نہیں جاتا تھا اور ہمیشہ true لوٹتا — اصل ریکارڈ حذف ہو جاتا جبکہ اس کی
+//   نقل بن میں پہنچی ہی نہ ہوتی (ہمیشہ کے لیے ضائع)۔ حذف کرنے والا ہر کوڈ پہلے یہ
+//   دیکھے؛ false ہو تو اصل ریکارڈ حذف نہ کرے۔
 async function softDelete(type, itemId, itemData) {
   try {
     const oid = await getOfficerId();
-    await supabaseClient.from('recycle_bin').insert({
+    if (!oid) return false;
+    const { data, error } = await supabaseClient.from('recycle_bin').insert({
       officer_id: oid,
       item_type:  type,
       item_id:    itemId,
       item_data:  itemData,
-    });
-    return true;
-  } catch(_) { return false; }
+    }).select('id').single();
+    if (error || !data || !data.id) {
+      if (typeof dioLogError === 'function') dioLogError('recycle bin: ' + type + ' naql nakaam', error || new Error('no row'));
+      return false;
+    }
+    return data.id;
+  } catch(e) {
+    if (typeof dioLogError === 'function') dioLogError('recycle bin: ' + type + ' naql nakaam', e);
+    return false;
+  }
 }
+// v547: اصل ریکارڈ حذف نہ ہو سکا تو بن میں بنی نقل واپس ہٹاؤ — ورنہ «بحال» کرنے پر دوہرا ریکارڈ
+async function softDeleteUndo(binId) {
+  if (!binId) return;
+  try {
+    const { error } = await supabaseClient.from('recycle_bin').delete().eq('id', binId);
+    if (error && typeof dioLogError === 'function') dioLogError('recycle bin: naql wapas nakaam', error);
+  } catch (e) { if (typeof dioLogError === 'function') dioLogError('recycle bin: naql wapas nakaam', e); }
+}
+window.softDeleteUndo = softDeleteUndo;

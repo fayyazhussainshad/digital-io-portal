@@ -675,24 +675,29 @@ async function _createAutoReminders(firNum, firDateStr, mulzmanType, complainant
     const addDays = (d,n) => { const r=new Date(d); r.setDate(r.getDate()+n); return r.toISOString().split('T')[0]; };
 
     // 10-day: 173 CrPC interim report
-    await supabaseClient.from('reminders').insert({
+    // v547: نتیجہ دیکھ کر — پہلے یاددہانی نہ بنتی تب بھی «بن گئیں» دکھایا جاتا
+    dioWriteOk(await supabaseClient.from('reminders').insert({
       officer_id: oid,
       text: `رپورٹ 173 ض ف — مقدمہ FIR ${firNum} (${complainant}) — ابتدائی رپورٹ مرتب کریں`,
       reminder_date: addDays(firDate, 10),
       is_done: false,
-    });
+    }), 'auto reminder 173');
 
     // 15-day: untrace warning (only namaloom)
     if (mulzmanType === 'namaloom') {
-      await supabaseClient.from('reminders').insert({
+      dioWriteOk(await supabaseClient.from('reminders').insert({
         officer_id: oid,
         text: `عدم پتہ ہونے والا مقدمہ — FIR ${firNum} (${complainant}) — ملزمان نامعلوم، 15 دن مکمل`,
         reminder_date: addDays(firDate, 15),
         is_done: false,
-      });
+      }), 'auto reminder adam pata');
     }
     showToast('خودکار یاددہانیاں بن گئیں','info');
-  } catch(e) { console.warn('auto reminder:', e.message); }
+  } catch(e) {
+    // مقدمہ محفوظ ہو چکا؛ صرف یاددہانی رہ گئی — افسر کو بتاؤ تاکہ خود لگا لے
+    if (typeof showToast === 'function') showToast('خودکار یاددہانی نہیں بن سکی — «یاددہانیاں» میں خود شامل کر لیں', 'info', 7000);
+    console.warn('auto reminder:', e.message);
+  }
 }
 function viewCase(id) { openCaseWorkspace(id); }
 
@@ -900,14 +905,14 @@ async function saveEvidenceRename(id, firNumber) {
   const newName = document.getElementById('ev-rename-input')?.value.trim();
   if (!newName) { showToast('Name cannot be empty.', 'error'); return; }
   try {
-    await supabaseClient.from('evidence').update({ name: newName }).eq('id', id);
+    dioWriteOk(await supabaseClient.from('evidence').update({ name: newName }).eq('id', id).select('id'), 'evidence rename', true);
     closeModal();
     showToast('Evidence renamed.', 'success');
     // Refresh evidence tab
     const c = await getCase(_currentWorkspaceCaseId);
     const ev = await getEvidence(firNumber);
     document.getElementById('workspace-tab-content').innerHTML = renderEvidenceTab(c, ev);
-  } catch(err) { showToast('' + err.message, 'error'); }
+  } catch(err) { dioWriteFail('شہادت کا نام', err, 'نہیں بدلا'); }
 }
 
 // ── DELETE EVIDENCE ────────────────────────────────────────────
@@ -1084,11 +1089,17 @@ function goBackToCases() {
 function confirmDeleteCase(id,fir){openModal('Confirm Delete',`<p style="color:var(--text-secondary);font-size:13px;">مقدمہ حذف کریں <b style="color:var(--accent);">FIR ${fir}</b>?<br><br><span style="color:var(--red);font-size:11px;">This cannot be undone.</span></p>`,`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-danger" onclick="closeModal();doDeleteCase('${id}')">حذف کریں</button>`);}
 async function doDeleteCase(id){
   try {
+    // v547: نقل «حذف شدہ مواد» میں کامیاب ہو تب ہی مقدمہ حذف — پہلے نقل ناکام ہوتی
+    //   (یا bin.js ابھی آئی ہی نہ ہوتی) تب بھی مقدمہ حذف ہو جاتا: ہمیشہ کے لیے ضائع۔
+    //   انٹرنیٹ کے بغیر نقل ممکن نہیں، اس لیے حذف بھی نہیں (واقعاتی رپورٹ جیسا)۔
+    if (!navigator.onLine) { showToast('حذف کے لیے انٹرنیٹ درکار ہے', 'error'); return; }
     const c = await getCase(id);
-    if (c) await softDelete('case', id, c);
-    await deleteCase(id);
+    const binId = c ? await dioBinCopy('case', id, c) : false;
+    if (!binId) { dioWriteFail('مقدمہ', new Error('«حذف شدہ مواد» میں نقل نہیں ہو سکی — انٹرنیٹ دیکھ کر دوبارہ کوشش کریں'), 'حذف نہیں ہوا'); return; }
+    try { await deleteCase(id); }
+    catch (e) { await softDeleteUndo(binId); throw e; }
     showToast('مقدمہ حذف شدہ مواد میں منتقل ہو گیا۔','info');
     await updateBadges();
     renderCases(document.getElementById('page-content'));
-  } catch(err) { showToast('Error: '+err.message,'error'); }
+  } catch(err) { dioWriteFail('مقدمہ', err, 'حذف نہیں ہوا'); }
 }

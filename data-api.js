@@ -211,10 +211,12 @@ function _dioIsNetErr(e) {
   const m = String((e && e.message) || e || '');
   return !(e && e.code) && /failed to fetch|networkerror|load failed|network request failed|fetch failed/i.test(m);
 }
-async function dioSaveRow(table, op, rec) {
+//  opts.queueKey (v547): آف لائن قطار میں اسی چابی کا زیرِ التوا اندراج پہلے سے ہو تو
+//    نیا اندراج نہیں بنتا، وہی بدل جاتا ہے (دو بار محفوظ = سرور پر ایک ہی قطار)۔
+async function dioSaveRow(table, op, rec, opts) {
   const queue = async () => {
     if (typeof offlineStore === 'undefined' || !offlineStore.enqueue) throw new Error('آف لائن قطار دستیاب نہیں');
-    await offlineStore.enqueue(table, op, { ...rec });
+    await offlineStore.enqueue(table, op, { ...rec }, undefined, opts && opts.queueKey);
     return { status: 'queued' };
   };
   const fail = (e) => {
@@ -259,6 +261,51 @@ function dioSaveToast(res, label, w) {
 }
 window.dioSaveRow = dioSaveRow;
 window.dioSaveToast = dioSaveToast;
+
+// ═══ v547: ہر سرور لکھائی کا نتیجہ — دیکھے بغیر کامیابی کا پیغام نہیں ═══════════
+//  Supabase غلطی پھینکتا نہیں، {error} لوٹاتا ہے۔ اور RLS (مثلاً میعاد ختم یا کسی
+//  اور کا ریکارڈ) update/delete کو بغیر غلطی کے 0 قطاروں پر روک دیتا ہے۔
+//  dioWriteOk(res, what, needRow) دونوں صورتیں پکڑ کر throw کرتا ہے، تاکہ
+//  «محفوظ / حذف» کا پیغام صرف اصل کامیابی پر آئے۔ needRow=true کے لیے query کے
+//  آخر میں .select('id') لگائیں (ورنہ بدلی ہوئی قطاریں واپس نہیں آتیں)۔
+function dioWriteOk(res, what, needRow) {
+  const err = res && res.error;
+  if (err) {
+    if (typeof dioLogError === 'function') dioLogError((what || 'server write') + ' nakaam', err);
+    throw err;
+  }
+  if (needRow) {
+    const d = res ? res.data : null;
+    if (!(Array.isArray(d) ? d.length : d)) {
+      const e = new Error('سرور پر ریکارڈ نہیں ملا یا اجازت نہیں');
+      e.code = 'DIO_NOROW';
+      if (typeof dioLogError === 'function') dioLogError((what || 'server write') + ' — 0 qataar', e);
+      throw e;
+    }
+  }
+  return res ? res.data : null;
+}
+// ناکامی کا صاف پیغام — catch میں: dioWriteFail('پیشی', e, 'محفوظ نہیں ہوئی')
+function dioWriteFail(label, e, failWord) {
+  const offline = (typeof _dioIsNetErr === 'function') && _dioIsNetErr(e);
+  const why = offline ? 'انٹرنیٹ نہیں — دوبارہ کوشش کریں'
+    : ((window.DIO && DIO.errors && DIO.errors.userMessage) ? DIO.errors.userMessage(e) : String((e && e.message) || e || ''));
+  if (typeof showToast === 'function') showToast('❌ ' + label + ' ' + (failWord || 'محفوظ نہیں ہوا') + ' — ' + why, 'error', 7000);
+}
+window.dioWriteOk = dioWriteOk;
+window.dioWriteFail = dioWriteFail;
+
+// v547: «حذف شدہ مواد» میں نقل — اصل ریکارڈ حذف کرنے سے پہلے لازمی۔
+//  bin.js فرصت میں آتی ہے؛ ابھی نہ آئی ہو تو پہلے لے آؤ (ورنہ softDelete موجود ہی
+//  نہ ہوتا اور نقل کے بغیر حذف)۔ نتیجہ: بن کی قطار کا id، یا false۔
+async function dioBinCopy(type, itemId, itemData) {
+  try {
+    if (typeof softDelete !== 'function' && typeof dioLoadScript === 'function') await dioLoadScript('bin.js');
+  } catch (e) { if (typeof dioLogError === 'function') dioLogError('bin.js load nakaam', e); }
+  if (typeof softDelete !== 'function') return false;
+  return softDelete(type, itemId, itemData);
+}
+window.dioBinCopy = dioBinCopy;
 
 async function addCase(caseData) {
   const oid = await getOfficerId();
@@ -318,8 +365,8 @@ async function deleteCase(id) {
     await offlineStore.enqueue('cases', 'delete', { id });
     return;
   }
-  const { error } = await supabaseClient.from('cases').delete().eq('id',id);
-  if (error) throw error;
+  // v547: 0 قطار (RLS/میعاد ختم) بھی ناکامی — ورنہ «حذف ہو گیا» کا جھوٹا پیغام
+  dioWriteOk(await supabaseClient.from('cases').delete().eq('id',id).select('id'), 'case delete', true);
   if (typeof offlineStore !== 'undefined') { try { await offlineStore.remove('cases_cache', id); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ } }
 }
 
@@ -532,8 +579,8 @@ async function updateReminder(id,updates) {
 
 
 async function deleteReminder(id) {
-  const { error } = await supabaseClient.from('reminders').delete().eq('id',id);
-  if (error) throw error;
+  // v547: 0 قطار (RLS/پہلے سے حذف) بھی ناکامی — ورنہ «حذف» کا جھوٹا پیغام
+  dioWriteOk(await supabaseClient.from('reminders').delete().eq('id',id).select('id'), 'reminder delete', true);
 }
 
 

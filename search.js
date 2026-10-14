@@ -136,7 +136,9 @@ async function _runGlobalSearch(q) {
   } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
 
   const queries = [
-    S.from('cases').select('id,fir_number,offence_type,section_of_law,complainant,complainant_cnic,complainant_cell,occurrence_place').eq('officer_id', oid).or(`fir_number.ilike.${w},offence_type.ilike.${w},section_of_law.ilike.${w},complainant.ilike.${w},occurrence_place.ilike.${w},${cnicOr('complainant_cnic')},${cellOr('complainant_cell')}`).limit(10),
+    // v547: پرانا «جرم کی قسم» کالم تلاش سے ہٹایا — فارم میں یہ خانہ نہیں رہا اور
+    //   sql/103_CHECK کے مطابق تمام مقدمات میں خالی ہے؛ جرم = صرف دفعات (section_of_law)۔
+    S.from('cases').select('id,fir_number,section_of_law,complainant,complainant_cnic,complainant_cell,occurrence_place').eq('officer_id', oid).or(`fir_number.ilike.${w},section_of_law.ilike.${w},complainant.ilike.${w},occurrence_place.ilike.${w},${cnicOr('complainant_cnic')},${cellOr('complainant_cell')}`).limit(10),
     S.from('case_accused').select('id,case_id,name,cnic,mobile,pesha').or(`name.ilike.${w},${cnicOr('cnic')},${cellOr('mobile')},pesha.ilike.${w}`).limit(10),
     S.from('case_witnesses').select('id,case_id,full_name,cnic,cell,profession,status').or(`full_name.ilike.${w},${cnicOr('cnic')},${cellOr('cell')},profession.ilike.${w}`).limit(10),
     S.from('fir_matn').select('id,case_id,matn').ilike('matn', w).limit(10),

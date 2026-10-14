@@ -768,7 +768,8 @@ function _cdrMarkChipDone() {
   try {
     supabaseClient.from('case_documents').update({ status: 'complete' })
       .eq('case_id', _cdrICaseId).eq('document_type', 'cdr_imei')
-      .then(() => {}, e => console.warn('cdr doc status:', e && e.message));
+      .then((r) => { if (r && r.error && typeof dioLogError === 'function') dioLogError('cdr doc status nakaam', r.error); },
+        e => console.warn('cdr doc status:', e && e.message));
   } catch (e) { console.warn('cdr doc status:', e && e.message); }
 }
 

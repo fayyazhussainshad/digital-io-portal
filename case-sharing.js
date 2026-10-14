@@ -159,10 +159,11 @@ async function _shareWith(officerId, permission) {
     let shareRow = null;
     if (existing) {
       // Active share exists — permission + expiry update
+      // v547: نتیجہ دیکھ کر — پہلے رد ہونے پر بھی «شیئر ہو گیا» اور آڈٹ میں درج
       const upd = await supabaseClient.from('case_shares')
         .update({ permission, expires_at, revoked_at: null, revoked_by: null })
         .eq('id', existing.id).select().maybeSingle();
-      shareRow = (upd && upd.data) || { id: existing.id };
+      shareRow = dioWriteOk(upd, 'case share update', true);
       // AUDIT — share.updated
       try {
         if (window.DIO && DIO.audit) DIO.audit.log('share.updated', 'case_share', shareRow.id, {
@@ -179,7 +180,7 @@ async function _shareWith(officerId, permission) {
         permission,
         expires_at
       }).select().maybeSingle();
-      shareRow = (ins && ins.data) || null;
+      shareRow = dioWriteOk(ins, 'case share insert', true);
       // AUDIT — share.granted
       try {
         if (window.DIO && DIO.audit) DIO.audit.log('share.granted', 'case_share',
@@ -197,7 +198,7 @@ async function _shareWith(officerId, permission) {
     const sr = document.getElementById('share-officer-search'); if (sr) sr.value = '';
     const rb = document.getElementById('share-officer-results'); if (rb) rb.innerHTML = '';
     _loadCurrentShares();
-  } catch(e) { showToast('' + e.message, 'error'); }
+  } catch(e) { dioWriteFail('شیئر', e, 'نہیں ہوا'); }
 }
 window._shareWith = _shareWith;
 
@@ -263,10 +264,11 @@ async function _unshare(shareId) {
   try {
     // AUDIT: soft delete — revoked_at set karo, record chhod do
     const myId = (typeof getOfficerId==='function') ? await getOfficerId() : null;
-    const { error } = await supabaseClient.from('case_shares')
+    // v547: 0 قطار بھی ناکامی — منسوخی خاموشی سے نہ ہو تو ساتھی کی رسائی باقی رہتی
+    //   جبکہ افسر سمجھتا کہ ختم ہو گئی
+    dioWriteOk(await supabaseClient.from('case_shares')
       .update({ revoked_at: new Date().toISOString(), revoked_by: myId })
-      .eq('id', shareId);
-    if (error) throw error;
+      .eq('id', shareId).select('id'), 'case share revoke', true);
     // AUDIT — share.revoked (Phase 4B)
     try {
       if (window.DIO && DIO.audit) DIO.audit.log('share.revoked', 'case_share', shareId, {
@@ -276,6 +278,6 @@ async function _unshare(shareId) {
     } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
     showToast('شیئر منسوخ کر دیا گیا — تاریخ محفوظ ہے', 'info');
     _loadCurrentShares();
-  } catch(e) { showToast('' + e.message, 'error'); }
+  } catch(e) { dioWriteFail('شیئر', e, 'منسوخ نہیں ہوا'); }
 }
 window._unshare = _unshare;

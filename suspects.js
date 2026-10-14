@@ -225,15 +225,16 @@ async function _saveSuspect(id) {
 
   try {
     const oid = await getOfficerId();
+    // v547: نتیجہ دیکھ کر — پہلے سرور رد کرتا تب بھی «محفوظ ہو گیا»
     if (id) {
-      await supabaseClient.from('suspects').update(rec).eq('id', id);
+      dioWriteOk(await supabaseClient.from('suspects').update(rec).eq('id', id).select('id'), 'suspect update', true);
     } else {
-      await supabaseClient.from('suspects').insert({ ...rec, officer_id: oid });
+      dioWriteOk(await supabaseClient.from('suspects').insert({ ...rec, officer_id: oid }).select('id'), 'suspect insert', true);
     }
     closeModal();
     showToast('محفوظ ہو گیا', 'success');
     showPage('suspects', document.querySelector('.nav-item.active'));
-  } catch(e) { showToast('' + e.message, 'error'); }
+  } catch(e) { dioWriteFail('مشتبہ', e, 'محفوظ نہیں ہوا'); }
 }
 
 // ── VIEW DETAIL + CROSS-REFERENCE ─────────────────────────────
@@ -331,11 +332,11 @@ async function _findCasesForPerson(p) {
 async function _deleteSuspect(id) {
   if (!confirm('کیا آپ واقعی حذف کرنا چاہتے ہیں؟')) return;
   try {
-    await supabaseClient.from('suspects').delete().eq('id', id);
+    dioWriteOk(await supabaseClient.from('suspects').delete().eq('id', id).select('id'), 'suspect delete', true);
     closeModal();
     showToast('حذف ہو گیا', 'success');
     showPage('suspects', document.querySelector('.nav-item.active'));
-  } catch(e) { showToast('' + e.message, 'error'); }
+  } catch(e) { dioWriteFail('مشتبہ', e, 'حذف نہیں ہوا'); }
 }
 
 function _escSp(s) {

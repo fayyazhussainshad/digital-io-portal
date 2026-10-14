@@ -119,9 +119,11 @@ async function _flushUsage() {
       // If the table is not accessible (RLS/401), disable tracking entirely
       if (selErr) { _usageDisabled = true; return; }
       if (existing) {
-        await supabaseClient.from('usage_stats')
+        // v547: insert جیسا — رد ہو تو گنتی بند (پہلے update کا نتیجہ دیکھا ہی نہیں جاتا تھا)
+        const { error: updErr } = await supabaseClient.from('usage_stats')
           .update({ count: (existing.count||0) + count, last_used: new Date().toISOString() })
           .eq('id', existing.id);
+        if (updErr) { _usageDisabled = true; return; }
       } else {
         const { error: insErr } = await supabaseClient.from('usage_stats')
           .insert({ officer_id: oid, page, count, last_used: new Date().toISOString() });

@@ -28,7 +28,7 @@
      اور حذف شدہ مواد کے لیے
    ═══════════════════════════════════════════════════════════════ */
 
-/* global registerPage, dioBindEditor, softDelete, getCases, getSHOSignLine */
+/* global registerPage, dioBindEditor, getCases, getSHOSignLine */
 
 registerPage('incident', renderIncident);
 
@@ -1323,8 +1323,9 @@ async function _irPush(rec, cur) {
     if (up) return up;
     // update پر روک (پرانی policy) — نئی بنا کر پرانی ہٹا دو؛ نمبر وہی رہے
     const ins = await _irDb('insert', full);
-    try { await supabaseClient.from('incident_reports').delete().eq('id', cur.id); }
-    catch (e) { console.warn('ir old delete:', e && e.message); }
+    // v547: پرانی کا حذف نہ ہو سکے تو فہرست میں دو رپورٹیں — خاموش نہ رہو
+    try { dioWriteOk(await supabaseClient.from('incident_reports').delete().eq('id', cur.id).select('id'), 'ir purani hazf', true); }
+    catch (e) { console.warn('ir old delete:', e && e.message); _irToast('⚠ نئی رپورٹ محفوظ؛ پرانی نقل حذف نہیں ہو سکی — فہرست میں دو ہوں تو پرانی خود حذف کر دیں', 'info', 8000); }
     return ins || { ...full, id: cur.id };
   }
   const ins = await _irDb('insert', full);
@@ -1569,12 +1570,17 @@ async function _irDelete(id) {
   if (!isTmp) {
     if (window.DIO && DIO.sub && typeof DIO.sub.guard === 'function' && !DIO.sub.guard('حذف')) return;
     if (!navigator.onLine) { _irToast('حذف کے لیے انٹرنیٹ درکار ہے', 'error'); return; }
+    // v547: نقل «حذف شدہ مواد» میں کامیاب ہو تب ہی اصل حذف (پہلے نتیجہ دیکھا ہی نہیں جاتا تھا)
+    let binId = false;
     try {
       const clean = { ...r }; delete clean._pending;
-      if (typeof softDelete === 'function') await softDelete('incident', id, clean);
-      const { error } = await supabaseClient.from('incident_reports').delete().eq('id', id);
-      if (error) throw error;
-    } catch (e) { _irToast('حذف نہیں ہو سکی: ' + ((e && e.message) || e), 'error', 5000); return; }
+      binId = await dioBinCopy('incident', id, clean);
+      if (!binId) throw new Error('«حذف شدہ مواد» میں نقل نہیں ہو سکی — دوبارہ کوشش کریں');
+      dioWriteOk(await supabaseClient.from('incident_reports').delete().eq('id', id).select('id'), 'ir delete', true);
+    } catch (e) {
+      if (binId) await softDeleteUndo(binId);
+      _irToast('حذف نہیں ہو سکی: ' + ((window.DIO && DIO.errors) ? DIO.errors.userMessage(e) : ((e && e.message) || e)), 'error', 5000); return;
+    }
   }
   _irList = _irList.filter(x => String(x.id) !== String(id));
   _irStoreLocal();

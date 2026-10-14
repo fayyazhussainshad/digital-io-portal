@@ -114,7 +114,8 @@ function _remCard(r, isOverdue, isDone=false) {
 // ── ACTIONS ───────────────────────────────────────────────────
 async function _toggleRem(id, done) {
   if (id.startsWith('court_')) return;
-  await updateReminder(id, {is_done: done});
+  try { await updateReminder(id, {is_done: done}); }
+  catch (e) { dioWriteFail('یاددہانی', e, 'تبدیل نہیں ہوئی'); _buildReminders(); return; }
   await updateBadges();
   _buildReminders();
 }
@@ -124,15 +125,28 @@ async function _deleteRem(id) {
   // v538: yahan `r` kahin bana hi nahi tha — ReferenceError khamoshi se nigla
   //   jata aur yaaddehani recycle bin mein jaye baghair hamesha ke liye mit jati.
   //   Ab poora record (bahali ke liye har khana) bin mein jata hai.
+  // v547: نقل «حذف شدہ مواد» میں کامیاب ہو تب ہی اصل حذف — پہلے نقل ناکام ہوتی
+  //   (یا ریکارڈ پڑھا ہی نہ جا سکتا) تب بھی یاددہانی حذف ہو جاتی اور ہمیشہ کے لیے ضائع۔
+  let binId = false;
   try {
     const r = ((await getReminders()) || []).find(x => String(x.id) === String(id));
     if (r) {
       const clean = Object.fromEntries(Object.entries(r).filter(([k]) => !k.startsWith('_')));
-      await softDelete('reminder', id, clean);
+      binId = await dioBinCopy('reminder', id, clean);
     }
   } catch(_) { if (typeof dioLogError === 'function') dioLogError('reminder: recycle bin copy nakaam', _); }
-  await deleteReminder(id);
-  showToast('یاددہانی ہٹا دی گئی', 'info');
+  if (!binId) {
+    dioWriteFail('یاددہانی', new Error('«حذف شدہ مواد» میں نقل نہیں ہو سکی — انٹرنیٹ دیکھ کر دوبارہ کوشش کریں'), 'حذف نہیں ہوئی');
+    return;
+  }
+  try {
+    await deleteReminder(id);
+  } catch (e) {
+    await softDeleteUndo(binId);
+    dioWriteFail('یاددہانی', e, 'حذف نہیں ہوئی');
+    return;
+  }
+  showToast('یاددہانی «حذف شدہ مواد» میں منتقل ہو گئی', 'info');
   await updateBadges();
   _buildReminders();
 }
@@ -140,7 +154,9 @@ async function _deleteRem(id) {
 // پہلے یہ نام court.js کے _markCourtDone سے ٹکراتا تھا (court بعد میں لوڈ ہو کر اسے دبا دیتا،
 // جس سے یاددہانی سے مکمل کرنے پر غلطی سے عدالت کا صفحہ رینڈر ہوتا)۔ اب منفرد نام۔
 async function _remMarkCourtDone(courtId) {
-  await supabaseClient.from('court_dates').update({status:'done'}).eq('id', courtId);
+  try {
+    dioWriteOk(await supabaseClient.from('court_dates').update({status:'done'}).eq('id', courtId).select('id'), 'peshi mukammal', true);
+  } catch (e) { dioWriteFail('پیشی', e, 'مکمل نہیں ہوئی'); return; }
   showToast('پیشی مکمل', 'success');
   _buildReminders();
 }

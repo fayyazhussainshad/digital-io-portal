@@ -141,8 +141,8 @@
           notes: text
         };
         if (_pExisting && _pExisting.id) {
-          var u = await supabaseClient.from('court_dates').update(payload).eq('id', _pExisting.id);
-          if (u.error) throw u.error;
+          // v547: 0 قطار (RLS/میعاد ختم) بھی ناکامی — ورنہ «محفوظ» کا جھوٹا پیغام
+          dioWriteOk(await supabaseClient.from('court_dates').update(payload).eq('id', _pExisting.id).select('id'), 'peshi update', true);
         } else {
           payload.status = 'pending';
           payload.officer_id = await getOfficerId();

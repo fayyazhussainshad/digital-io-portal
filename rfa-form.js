@@ -370,8 +370,9 @@ window._saveRfa = _saveRfa;
 
 async function _rfaDelete(id) {
   if (!confirm('یہ RFA فارم حذف کر دیا جائے؟')) return;
-  try { if (String(id).indexOf('tmp_') !== 0) await supabaseClient.from('rfa_forms').delete().eq('id', id); }
-  catch(e) { showToast('' + e.message, 'error'); return; }
+  // v547: نتیجہ دیکھ کر — پہلے سرور رد کرتا تب بھی فہرست سے ہٹ جاتا (اور دوبارہ کھولنے پر واپس)
+  try { if (String(id).indexOf('tmp_') !== 0) dioWriteOk(await supabaseClient.from('rfa_forms').delete().eq('id', id).select('id'), 'rfa delete', true); }
+  catch(e) { dioWriteFail('RFA فارم', e, 'حذف نہیں ہوا'); return; }
   _rfaList = _rfaList.filter(r => String(r.id) !== String(id));
   try { localStorage.setItem('dio_rfalist_' + _rfaCaseId, JSON.stringify(_rfaList)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('RFA: local save nakaam', _); }
   try { if (typeof _misalDocs !== 'undefined' && _misalDocs) { if (_rfaList.length) _misalDocs['rfa_form'] = { document_type:'rfa_form', status:'complete', content:{ count:_rfaList.length } }; else delete _misalDocs['rfa_form']; } } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
