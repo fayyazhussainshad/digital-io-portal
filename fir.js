@@ -173,6 +173,8 @@ function _openMatnModal(type, id) {
     <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
     <button class="btn btn-primary" onclick="_saveMatn('${type}','${id||''}')">محفوظ کریں</button>
   `);
+  // v552: «متن میں ترمیم» / «متن درج کریں» کی سرخی درمیان میں (افسر کی ہدایت)
+  try { const mt = document.getElementById('modal-title'); if (mt) mt.classList.add('dio-mt-center'); } catch (_) { /* ikhtiyari */ }
   // Enlarge the shared modal box
   setTimeout(() => {
     const box = document.querySelector('#modal-backdrop > div, .modal-box, #modal-box');

@@ -979,6 +979,8 @@ async function _saveR173Inner() {
 function _printR173() {
   // Challan types (فارم 25.56(1)) — apna doc + apni styles
   const chDoc = _ch173Doc();          // hamesha NAZAR AANE wala چالان
+  // v552: اسی #ch173-doc میں ضمنی ہو تو چالان کی CSS سے نہ چھاپو (شکل بگڑ جاتی تھی)
+  if (chDoc && chDoc.querySelector('.zf-tbl') && typeof window._printZimniCurrent === 'function') { window._printZimniCurrent(); return; }
   if (chDoc) {
     // ═══ AHEM — کالم 7 ka matn chhup jane ki ASAL wajah ═══
     // Overflow ka hisaab us chaudai par lagta hai jo us waqt SCREEN par hai.
@@ -1184,8 +1186,11 @@ function _ch173MakeResizable() {
           mouse ke px aur layout ke px barabar nahi hote.
        Saath: kul chaurai barqarar, kam az kam 24px, aur `colsManual` SIRF
        tab jab lakeer sach much HILI ho (pehle khali click se bhi lag jata). */
-    grip.addEventListener('mousedown', (e) => {
+    // v552: pointer events — ماؤس کے ساتھ ٹچ (موبائل/ٹیبلٹ) پر بھی لکیر کھینچی جا سکے
+    grip.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
       e.preventDefault(); e.stopPropagation();
+      try { grip.setPointerCapture(e.pointerId); } catch (_) { /* purana browser */ }
       const tRect = table.getBoundingClientRect();
       const scale = (tRect.width && table.offsetWidth) ? (tRect.width / table.offsetWidth) : 1;
       const startX = e.clientX;
@@ -1208,14 +1213,17 @@ function _ch173MakeResizable() {
         if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
       };
       const onUp = () => {
-        document.removeEventListener('mousemove', onMove);
-        document.removeEventListener('mouseup', onUp);
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.removeEventListener('pointercancel', onUp);
         document.body.style.cursor = '';
         if (moved) { try { table.dataset.colsManual = '1'; _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
         try { table._syncColGripHeights && table._syncColGripHeights(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+        if (moved) { try { _ch173Layout(); } catch (_) { /* unchai matn ke mutabiq */ } }
       };
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+      document.addEventListener('pointercancel', onUp);
     });
   };
 
@@ -1797,6 +1805,8 @@ function _ch173AutoSize() {
       }
     }
     w = Math.max(30, w + 12);                          // saans ki jagah
+    // v552 (افسر کی ہدایت): کالم 2، 3، 4 (ملزمان) موجودہ چوڑائی سے 50% زیادہ
+    if (i >= 1 && i <= 3) w = Math.round(w * R173_MULZIMAN_BOOST);
     darkar.push(w); jama += w;
   }
 
@@ -2172,6 +2182,8 @@ window._ch173AddBindMarks = _ch173AddBindMarks;
 // aur bachi hui saari jagah کالم 7 (حالات) ko mil jati hai.
 // AHEM: CNIC ki seedh yahan se BILKUL nahi chhirti — woh khane ki UNCHAI
 // par mabni hai (.ln / space-between), chaurai par nahi.
+// v552: کالم 2 (ملزمان جو گرفتار نہ ہوئے)، 3 (زیر حراست)، 4 (برضمانت) — 50% زیادہ چوڑے
+const R173_MULZIMAN_BOOST = 1.5;
 function _ch173AutoFitCols() {
   const doc = _ch173Doc();
   if (!doc) return;
@@ -2196,7 +2208,7 @@ function _ch173AutoFitCols() {
       w = inner.scrollWidth;
     } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
     inner.style.maxWidth = purani;
-    need.push(Math.ceil(w) + 6);                     // thori si saans
+    need.push(Math.round((Math.ceil(w) + 6) * ((i >= 1 && i <= 3) ? R173_MULZIMAN_BOOST : 1)));   // saans + v552: کالم 2–4 پر 50%
   }
 
   // Kam az kam itni jagah کالم 7 ke liye chhoro
@@ -2587,15 +2599,30 @@ function _ch173Muharrir() {
 }
 
 // تفتیشی افسر — yehi subscriber (abhi logged-in) afsar hai. SAB SE AAKHRI گواہ.
+// v552: نام کے ساتھ عہدہ (ASI / SI / IP / DSP …) — «فیاض حسین شاد ASI تھانہ صدر ملتان»
+//   (ضمنی کی «مرتبہ» سطر جیسا)۔ `legacy` = پرانا بغیر عہدہ والا نام — پہلے سے محفوظ
+//   چالان میں وہی لکھا ہے، اسے بھی تفتیشی افسر ہی پہچانا جائے (دوہرا نہ لگے)۔
+function _ch173IORank(o) {
+  return String((o && (o.designation || o.rank)) || '').replace(/\s+/g, ' ').trim();
+}
 function _ch173IO() {
   const o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
   const c = _r173Case || {};
   const nm = String(o.full_name || '').trim();
   if (!nm) return null;
+  const st = o.station || c.case_station;
+  const rank = _ch173IORank(o);
+  const withRank = (rank && nm.indexOf(rank) === -1) ? (nm + ' ' + rank) : nm;
   return {
-    name: _ch173WithThana(nm, o.station || c.case_station),
+    name: _ch173WithThana(withRank, st),
+    legacy: _ch173WithThana(nm, st),
     cnic: _ch173CnicFmt(o.cnic)
   };
+}
+// یہ نام تفتیشی افسر (subscriber) کا ہے؟ — نیا (عہدہ سمیت) یا پرانا
+function _ch173IsIOName(n, io) {
+  io = io || _ch173IO();
+  return !!io && (_ch173SameName(n, io.name) || _ch173SameName(n, io.legacy));
 }
 
 // میڈیکل آفیسر — aik dafa poochne ke baad mehfooz (thane ke hisab se)
@@ -2748,7 +2775,7 @@ function _ch173WitRank(name, hint) {
   const n = String(name || '');
   // Khaas kirdaar pehle — inka darja pakka hai
   const io = _ch173IO();
-  if (io && _ch173SameName(n, io.name)) return 15;    // subscriber hamesha AAKHRI
+  if (io && _ch173IsIOName(n, io)) return 15;         // subscriber hamesha AAKHRI
   const md = _ch173Madai();
   if (md && _ch173SameName(n, md.name)) return 1;
   const mh = _ch173Muharrir();
@@ -2928,7 +2955,7 @@ function _ch173AddWitness(name, cnic) {
   const io = _ch173IO();
   let at = list.length;
   if (io) {
-    const idx = list.findIndex(w => _ch173SameName(w.name, io.name));
+    const idx = list.findIndex(w => _ch173IsIOName(w.name, io));
     if (idx !== -1) at = idx;
   }
   list.splice(at, 0, { name: name, cnic: _ch173CnicFmt(cnic) });
@@ -2953,8 +2980,10 @@ function _ch173AddDefaultOfficials() {
   // officer ka likha hua CNIC zaya na ho (system ke paas na ho to wohi rahe)
   khaas.forEach(o => {
     if (!o) return;
-    const idx = list.findIndex(w => _ch173SameName(w.name, o.name));
-    if (idx !== -1) {
+    // v552: تفتیشی افسر کا پرانا (بغیر عہدہ) نام بھی — ورنہ پرانے چالان میں دو بار
+    for (let idx = list.findIndex(w => _ch173SameName(w.name, o.name) || (o.legacy && _ch173SameName(w.name, o.legacy)));
+         idx !== -1;
+         idx = list.findIndex(w => _ch173SameName(w.name, o.name) || (o.legacy && _ch173SameName(w.name, o.legacy)))) {
       if (!o.cnic && list[idx].cnic) o.cnic = list[idx].cnic;
       list.splice(idx, 1);
     }
@@ -5479,8 +5508,9 @@ function _ch173CSS() {
       /* MS Word jaisi column resize — header par drag handle */
       #ch173-doc .colgrip{
         position:absolute; top:0; left:-3px; width:7px; height:100%;
-        cursor:col-resize; user-select:none; z-index:5;
+        cursor:col-resize; user-select:none; z-index:5; touch-action:none;
       }
+      @media (pointer:coarse){ #ch173-doc .colgrip{ left:-8px; width:16px; } }
       /* Neeche se unchai badalne wali grip (row height) */
       /* Neeche se unchai badalne wali grip — khane ke ANDAR (kabhi kat na jaye) */
       #ch173-doc .rowgrip{

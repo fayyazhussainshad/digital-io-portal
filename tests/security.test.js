@@ -460,19 +460,23 @@ test('form mode kaghaz ki paki chauRai khatam karta hai', () => {
 
 test('CHHAPAI par mobile ka koi asar na ho (kaghaz A4/Legal rahe)', () => {
   const c = read('mobile.css');
-  // Ab file me AIK se ZYADA @media print block hain (zimni + challan form).
-  // `lastIndexOf` aakhri wala pakaR leta tha — is liye SAB print blocks jorte hain.
-  const printBlock = c.split('@media print').slice(1).join('\n@media print');
-  for (const [sel, val] of [['table\\.zf-tbl', 'display: table'],
-                            ['tbody', 'display: table-row-group'],
-                            ['tr', 'display: table-row'],
-                            ['td', 'display: table-cell']])
-    assert.ok(new RegExp(sel + '[\\s\\S]{0,160}' + val).test(printBlock),
-      'print me ' + sel + ' wapas ' + val + ' hona chahiye');
-  assert.ok(/td::before\s*\{\s*content:\s*none/.test(printBlock),
-    'mobile ke unwan kaghaz par nahi chhapne chahiyen');
+  // v552: form mode ke tamam qaide SIRF screen par — chhapai par lagte hi nahi. Pehle print
+  //   block `border: revert` se ضمنی ki کالم lakeeren mita deta tha (chhapai ke waqt safha
+  //   ~816px hota hai, is liye `dio-mform` lag jata). `revert` mamnoo (v397).
+  const printBlocks = c.split('@media print').slice(1).map(b => b.slice(0, b.indexOf('\n}') + 2));
+  assert.ok(printBlocks.length >= 1, 'print block mojood');
+  for (const b of printBlocks) {
+    assert.ok(!/revert/.test(b), 'print me `revert` mamnoo');
+    assert.ok(!/dio-mform/.test(b), 'print me form mode ka koi qaida nahi (kaghaz ki shakl ضمنی/چالان ki apni CSS)');
+  }
+  const printBlock = printBlocks.join('\n');
   assert.ok(/\.dio-mbar,\s*\.dio-addblk,\s*\.dio-thumbbar\s*\{\s*display:\s*none/.test(printBlock),
     'mobile ke button kaghaz par nahi aane chahiyen');
+  // har `html.dio-mform` qaida kisi `@media screen` ke andar
+  const noComments = c.replace(/\/\*[\s\S]*?\*\//g, '');
+  const screenStart = noComments.indexOf('@media screen and (max-width: 900px) {');
+  const firstMform = noComments.indexOf('html.dio-mform');
+  assert.ok(screenStart !== -1 && firstMform > screenStart, 'form mode screen-only');
 });
 
 test('form mode me koi DOM node hilayi nahi jati (save/print mehfooz)', () => {
@@ -1833,7 +1837,7 @@ test('v545: کوئی خالی catch باقی نہیں — اور نیا خالی
   assert.ok(/'no-empty': \['error'/.test(read('eslint.config.mjs')), 'خالی catch اب error ہے، warning نہیں');
   // جہاں غلطی چھپنے سے ڈیٹا ضائع ہو سکتا تھا وہاں غلطی درج ہو
   for (const [f, label] of [['naqsha-mauqa.js', 'naqsha: server par save nakaam'], ['naqsha-mauqa.js', 'naqsha: local save nakaam'],
-      ['zimni.js', 'zimni: offline queue nakaam'], ['saza-slip.js', 'saza slip: local save nakaam'],
+      ['zimni.js', 'zimni: local list save nakaam'], ['saza-slip.js', 'saza slip: local save nakaam'],
       ['offline-store.js', 'sync queue: item failed mark nakaam'], ['data-api.js', 'offline evidence: file local store nakaam']])
     assert.ok(read(f).includes("dioLogError('" + label + "'"), f + ' — ' + label);
 });

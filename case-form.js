@@ -30,7 +30,10 @@ function _cfInjectCSS() {
     + '.cf-row4m{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:2px 8px;align-items:center;width:100%;}'
     + '.cf-row3s{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px 10px;align-items:center;width:100%;}'
     + '.cf-row-sim{display:grid;grid-template-columns:repeat(4,1fr);gap:2px 8px;width:100%;}'
-    + '.cf-row2 .cf-field,.cf-row3 .cf-field,.cf-row4 .cf-field,.cf-row4-rapat .cf-field,.cf-row-7030 .cf-field,.cf-row-sim .cf-field{margin-bottom:9px;}'
+    /* v552: IMEI (15 ہندسے) کے خانے بڑے، ماڈل/کمپنی کا خانہ چھوٹا */
+    + '.cf-row-imei{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1.3fr) minmax(0,0.75fr);gap:2px 10px;align-items:center;width:100%;}'
+    + '.cf-row-imei input[dir=ltr]{letter-spacing:.02em;}'
+    + '.cf-row2 .cf-field,.cf-row3 .cf-field,.cf-row4 .cf-field,.cf-row4-rapat .cf-field,.cf-row-7030 .cf-field,.cf-row-sim .cf-field,.cf-row-imei .cf-field{margin-bottom:9px;}'
     + '.cf-box{padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:12px;}'
     + '.cf-box-title{font-size:14pt;font-weight:800;color:var(--accent);margin-bottom:9px;text-align:right;'
     +   'font-family:\'Jameel Noori Nastaleeq\',\'Noto Nastaliq Urdu\',serif;}'
@@ -49,7 +52,7 @@ function _cfInjectCSS() {
     + '.dio-entry .cf-form input[dir=ltr].form-input{font-family:Aptos,"Segoe UI",system-ui,sans-serif!important;font-size:12pt!important;text-align:right!important;}'
     + '.dio-entry .cf-form .cf-field > div{width:100%;}'
     /* سطروں کے درمیان کم فاصلہ (اکتوبر 2026) — صرف اتنا کہ کنارے والا نام آ جائے */
-    + '.dio-entry .cf-row1,.dio-entry .cf-row2,.dio-entry .cf-row3,.dio-entry .cf-row3s,.dio-entry .cf-row4,.dio-entry .cf-row4m,.dio-entry .cf-row4-rapat,.dio-entry .cf-row-7030,.dio-entry .cf-row-sim{gap:12px 10px!important;padding-top:13px;}'
+    + '.dio-entry .cf-row1,.dio-entry .cf-row2,.dio-entry .cf-row3,.dio-entry .cf-row3s,.dio-entry .cf-row4,.dio-entry .cf-row4m,.dio-entry .cf-row4-rapat,.dio-entry .cf-row-7030,.dio-entry .cf-row-sim,.dio-entry .cf-row-imei{gap:12px 10px!important;padding-top:13px;}'
     + '.dio-entry .cf-form > .cf-field,.dio-entry .cf-box > .cf-field,.dio-entry #cross-version-fields > .cf-field,.dio-entry #cf-mobile-fields-wrap > .cf-field{margin-top:13px!important;}'
     + '.dio-entry #selected-sections:empty{display:none;}.dio-entry #selected-sections{margin-top:4px!important;}'
     + '.dio-entry #cf-mobile-box{margin:10px 0 0!important;padding:4px 10px 8px!important;}'
@@ -61,7 +64,7 @@ function _cfInjectCSS() {
     +   '.dio-entry .cf-row3s{grid-template-columns:1fr 1fr 11em!important;}'
     +   '.dio-entry .cf-row4-rapat{grid-template-columns:5em 9em 1fr 13em!important;}'
     + '}'
-    + '@media(max-width:640px){.cf-row3,.cf-row3s,.cf-row4m{grid-template-columns:1fr 1fr;}.cf-row4,.cf-row4-rapat{grid-template-columns:1fr 1fr;}.cf-row-sim{grid-template-columns:repeat(2,1fr);}}'
+    + '@media(max-width:640px){.cf-row-imei{grid-template-columns:1fr 1fr;}.cf-row-imei > .cf-field:last-child{grid-column:1 / -1;}.cf-row3,.cf-row3s,.cf-row4m{grid-template-columns:1fr 1fr;}.cf-row4,.cf-row4-rapat{grid-template-columns:1fr 1fr;}.cf-row-sim{grid-template-columns:repeat(2,1fr);}}'
     + '@media(max-width:480px){'
     +   '.cf-row2,.cf-row3,.cf-row-7030,.cf-row-sim{grid-template-columns:1fr;}'
     +   '.cf-row4,.cf-row4-rapat{grid-template-columns:1fr 1fr;}'
@@ -117,13 +120,13 @@ function _cfPhoneBlockHTML(i, p) {
   p = p || {};
   return '<div class="cf-mobile-phone-block" style="border-top:1px dashed var(--border);padding-top:6px;margin-top:6px;">'
     + '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px;">موبائل نمبر '+i+'</div>'
-    + '<div class="cf-row3">'
+    + '<div class="cf-row-imei">'
     +   '<div class="cf-field"><label class="cf-label">IMEI 1</label>'
     +     '<input class="form-input" dir="ltr" inputmode="numeric" maxlength="15" id="cf-mobile-imei-'+i+'-1" value="'+esc(p.imei1)+'" placeholder="000000000000000" oninput="_imeiLookupIdx(this,'+i+')"></div>'
     +   '<div class="cf-field"><label class="cf-label">IMEI 2</label>'
     +     '<input class="form-input" dir="ltr" inputmode="numeric" maxlength="15" id="cf-mobile-imei-'+i+'-2" value="'+esc(p.imei2)+'" placeholder="000000000000000" oninput="_imeiLookupIdx(this,'+i+')"></div>'
     +   '<div class="cf-field"><label class="cf-label">ماڈل / کمپنی</label>'
-    +     '<input class="form-input" id="cf-mobile-brand-'+i+'" value="'+esc(p.brand)+'" placeholder="IMEI سے خودکار، یا خود لکھیں"></div>'
+    +     '<input class="form-input" id="cf-mobile-brand-'+i+'" value="'+esc(p.brand)+'" data-auto="'+(p.brand?'0':'1')+'" placeholder="خودکار، یا خود لکھیں" oninput="this.dataset.auto=\'0\'" title="IMEI سے خودکار (سابقہ اندراجات سے بھی) — آپ خود بھی لکھ / بدل سکتے ہیں"></div>'
     + '</div>'
     + '</div>';
 }
@@ -181,12 +184,45 @@ function _cfRenderMobilePhones() {
   simContainer.innerHTML = simHtml;
 }
 
+// ── v552: سابقہ اندراجات سے سیکھا ہوا IMEI → ماڈل (اسی افسر کے پچھلے مقدمات) ──
+//  پورا IMEI پہلے کسی مقدمے میں ماڈل کے ساتھ درج ہو → وہی ماڈل؛ ورنہ پہلے 8 ہندسے
+//  (TAC — ایک ماڈل کی پہچان) کسی سابقہ IMEI سے ملیں → اسی کا ماڈل؛ ورنہ عام فہرست۔
+var _cfImeiHist = null;
+function _cfLoadImeiHistory() {
+  if (_cfImeiHist) return Promise.resolve(_cfImeiHist);
+  var h = { full: {}, tac: {} };
+  var p = (typeof getCases === 'function') ? getCases() : Promise.resolve([]);
+  return Promise.resolve(p).then(function (list) {
+    (list || []).forEach(function (c) {
+      var phones = _cfParseMobilePhones(c);
+      phones.forEach(function (ph) {
+        var br = String(ph.brand || '').trim();
+        if (!br) return;
+        [ph.imei1, ph.imei2].forEach(function (im) {
+          im = String(im || '').replace(/\D/g, '');
+          if (im.length >= 14) { h.full[im] = br; h.tac[im.slice(0, 8)] = br; }
+        });
+      });
+    });
+    _cfImeiHist = h; return h;
+  }).catch(function () { _cfImeiHist = h; return h; });
+}
+window._cfLoadImeiHistory = _cfLoadImeiHistory;
+
 // ── Mobile-theft: indexed IMEI → brand auto-detect (editable, doesn't overwrite manual entry) ──
 function _imeiLookupIdx(input, idx) {
   var v = (input.value || '').replace(/\D/g, '').slice(0, 15);
   input.value = v;
   var brandField = document.getElementById('cf-mobile-brand-'+idx);
   if (!brandField || v.length < 8) return;
+  // سابقہ اندراجات (پہلے) — افسر کا اپنا لکھا ہوا ماڈل کبھی نہیں بدلتا
+  var hist = _cfImeiHist;
+  var known = hist ? (hist.full[v] || hist.tac[v.slice(0, 8)] || '') : '';
+  if (known) {
+    if (!brandField.value || brandField.dataset.auto !== '0') { brandField.value = known; brandField.dataset.auto = '1'; }
+    return;
+  }
+  if (!hist) { _cfLoadImeiHistory().then(function () { try { _imeiLookupIdx(input, idx); } catch (_) { /* ikhtiyari */ } }); }
   var TAC_BRANDS = {
     '35':'(عام GSM)','01':'Apple iPhone','35332':'Apple','35326':'Apple',
     '86':'Xiaomi / Redmi','86891':'Xiaomi','86553':'Oppo','86742':'Vivo',
@@ -199,11 +235,10 @@ function _imeiLookupIdx(input, idx) {
     var pre = v.slice(0, len);
     if (TAC_BRANDS[pre]) { brand = TAC_BRANDS[pre]; break; }
   }
-  if (brand && (!brandField.value || brandField.dataset.auto === '1')) {
+  if (brand && (!brandField.value || brandField.dataset.auto !== '0')) {
     brandField.value = brand;
     brandField.dataset.auto = '1';
   }
-  brandField.oninput = function() { brandField.dataset.auto = '0'; };
 }
 
 // ── Mobile-theft: reveal/hide the phone+SIM fields based on the "was a mobile stolen?" checkbox ──
@@ -281,7 +316,7 @@ function caseFormHTML(c) {
     // Row 1: مقدمہ نمبر + تاریخ اندراج + تاریخ وقوعہ + بحد (چاروں ایک ہی سطر — اکتوبر 2026)
     + '<div class="cf-row4">'
     + '<div class="cf-field"><label class="cf-label">مقدمہ نمبر *</label>'
-    + '<input class="form-input" id="cf-fir" value="'+esc(fir)+'" placeholder="e.g. 245/2025" dir="ltr" style="text-align:left;" oninput="_cfLiveSyncCross()"></div>'
+    + '<input class="form-input" id="cf-fir" value="'+esc(fir)+'" placeholder="e.g. 245/2025" dir="ltr" style="text-align:left;" oninput="_cfLiveSyncCross()" onblur="_cfCheckFirLive('+(c.id?'\''+esc(String(c.id))+'\'':'null')+')"></div>'
     + '<div class="cf-field"><label class="cf-label">تاریخ اندراج *</label>'
     + '<input class="form-input" id="cf-date" value="'+esc(date)+'" placeholder="DD/MM/YYYY" inputmode="numeric" maxlength="10" oninput="autoFormatDate(this);_cfLiveSyncCross()" dir="ltr" style="text-align:left;"></div>'
     + '<div class="cf-field"><label class="cf-label">تاریخ وقوعہ</label>'
@@ -289,6 +324,7 @@ function caseFormHTML(c) {
     + '<div class="cf-field"><label class="cf-label">بحد</label>'
     + '<input class="form-input" id="cf-occurrence-place" value="'+esc(occPlace)+'" placeholder="جائے وقوعہ / بحد" dir="auto"></div>'
     + '</div>'
+    + '<div id="cf-fir-dup" role="alert" style="display:none;margin:6px 0 2px;padding:6px 10px;border-radius:8px;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.35);color:#b91c1c;font-size:12pt;font-family:\'Jameel Noori Nastaleeq\',\'Noto Nastaliq Urdu\',serif;"></div>'
 
     // Row 2: دفعات قانون (پوری سطر)۔ v544: «جرم» کا خانہ ختم (افسر کا فیصلہ) — پورے
     //   سسٹم میں «بجرم» کے آگے صرف دفعات چھپتی ہیں، جرم کی تفصیل (چوری، قتل…) نہیں۔
@@ -479,11 +515,97 @@ function _cfOpenCard(isEdit, html, saveCall, saveLabel){
       '<button class="btn btn-primary" onclick="'+saveCall+'">'+saveLabel+'</button><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>');
   }
   setTimeout(function(){
+    // v552: سابقہ اندراجات سے IMEI → ماڈل (تازہ)
+    try { _cfImeiHist = null; _cfLoadImeiHistory(); } catch (_) { /* ikhtiyari */ }
     if (typeof _cfRenderMobilePhones === 'function') _cfRenderMobilePhones();
     // Mobile: مدعی کا نام و پتہ الگ سطروں میں (محفوظ وہی ایک خانہ)
     if (window.DIOCard && DIOCard.splitNameInput) { DIOCard.splitNameInput('cf-complainant', 'مدعی'); DIOCard.splitNameInput('cf-cross-complainant', 'کراس ورژن مدعی'); }
   },50);
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  v552 — دوہرا مقدمہ نہیں: پہچان مقدمہ نمبر (+ سال + تھانہ) سے، صرف مدعی کے نام سے نہیں
+//  «651/26» = «651/2026» = «651 / 26» = «۶۵۱/۲۶»۔ سال نہ لکھا ہو تو تاریخ اندراج کا سال۔
+// ═══════════════════════════════════════════════════════════════
+function _cfAscii(t) {
+  return String(t == null ? '' : t)
+    .replace(/[\u06F0-\u06F9]/g, function (d) { return String(d.charCodeAt(0) - 0x06F0); })
+    .replace(/[\u0660-\u0669]/g, function (d) { return String(d.charCodeAt(0) - 0x0660); });
+}
+function _cfFirKey(fir, firDate) {
+  var t = _cfAscii(fir).trim();
+  if (!t) return '';
+  var m = t.match(/(\d+)\s*[\/\-\\]\s*(\d{2,4})/);
+  if (m) { var y = m[2]; if (y.length === 2) y = '20' + y; return parseInt(m[1], 10) + '/' + y; }
+  var n = t.match(/\d+/);
+  if (!n) return t.toLowerCase();
+  var yy = (_cfAscii(firDate).match(/(\d{4})/) || [])[1] || '';
+  return parseInt(n[0], 10) + '/' + yy;
+}
+window._cfFirKey = _cfFirKey;
+function _cfNameCore(n) { return String(n || '').split(/\s+(?:ولد|بنت|زوجہ|قوم|سکنہ)\s+/)[0].replace(/\s+/g, ''); }
+function _cfSameStation(c) {
+  var st = (typeof currentOfficer !== 'undefined' && currentOfficer && currentOfficer.station) || '';
+  return !c.case_station || !st || String(c.case_station).trim() === String(st).trim();
+}
+async function _cfFindDuplicate(fir, firDate, excludeId) {
+  var key = _cfFirKey(fir, firDate);
+  if (!key) return null;
+  var list = [];
+  try { list = (typeof getCases === 'function') ? (await getCases()) : []; } catch (_) { list = []; }
+  // انٹرنیٹ ہو تو سرور سے بھی تصدیق (cache پرانا ہو سکتا ہے)
+  try {
+    if (navigator.onLine && typeof supabaseClient !== 'undefined' && typeof getOfficerId === 'function') {
+      var oid = await getOfficerId();
+      var num = (_cfAscii(fir).match(/\d+/) || [])[0];
+      if (oid && num) {
+        var r = await supabaseClient.from('cases').select('id,fir_number,fir_date,complainant,section_of_law,occurrence_date,case_station,status')
+          .eq('officer_id', oid).ilike('fir_number', '%' + num + '%');
+        if (r && r.data) r.data.forEach(function (c) { if (!list.some(function (x) { return String(x.id) === String(c.id); })) list.push(c); });
+      }
+    }
+  } catch (_) { /* sirf cache se */ }
+  return (list || []).find(function (c) {
+    return c && String(c.id) !== String(excludeId || '') &&
+      _cfFirKey(c.fir_number, c.fir_date) === key && _cfSameStation(c);
+  }) || null;
+}
+window._cfFindDuplicate = _cfFindDuplicate;
+// نمبر الگ مگر مدعی + تاریخ وقوعہ + دفعہ ایک — ممکنہ دوہرا (صرف خبردار)
+async function _cfFindSimilar(complainant, occDate, section, excludeId) {
+  var core = _cfNameCore(complainant), od = _cfAscii(occDate).replace(/\s/g, '');
+  if (!core || !od) return null;
+  var nums = (_cfAscii(section).match(/(?<!\d)\d{3}(?!\d)/g) || []);
+  var list = [];
+  try { list = (typeof getCases === 'function') ? (await getCases()) : []; } catch (_) { list = []; }
+  return list.find(function (c) {
+    if (!c || String(c.id) === String(excludeId || '')) return false;
+    if (_cfNameCore(c.complainant) !== core) return false;
+    if (_cfAscii(c.occurrence_date).replace(/\s/g, '') !== od) return false;
+    var cn = (_cfAscii(c.section_of_law).match(/(?<!\d)\d{3}(?!\d)/g) || []);
+    return !nums.length || nums.some(function (n) { return cn.indexOf(n) !== -1; });
+  }) || null;
+}
+function _cfCaseLine(c) {
+  var parts = ['مقدمہ نمبر ' + (c.fir_number || '—')];
+  if (c.fir_date) parts.push('مورخہ ' + (typeof formatDate === 'function' ? formatDate(c.fir_date) : c.fir_date));
+  if (c.section_of_law) parts.push('بجرم ' + c.section_of_law);
+  if (c.case_station) parts.push('تھانہ ' + c.case_station);
+  if (c.complainant) parts.push('مدعی: ' + String(c.complainant).split(/\s+(?:ولد|بنت|زوجہ)\s+/)[0]);
+  return parts.join(' · ');
+}
+// «مقدمہ نمبر» کا خانہ چھوڑتے ہی خبردار (محفوظ کرتے وقت بھی روک)
+async function _cfCheckFirLive(excludeId) {
+  var el = document.getElementById('cf-fir'); var hint = document.getElementById('cf-fir-dup');
+  if (!el || !hint) return null;
+  var d = await _cfFindDuplicate(el.value, (document.getElementById('cf-date') || {}).value, excludeId);
+  if (d) {
+    hint.innerHTML = '⚠ یہ مقدمہ پہلے سے درج ہے: ' + esc(_cfCaseLine(d));
+    hint.style.display = 'block';
+  } else { hint.textContent = ''; hint.style.display = 'none'; }
+  return d;
+}
+window._cfCheckFirLive = _cfCheckFirLive;
 
 async function saveNewCase(){
   // VIEW-ONLY ENFORCEMENT [4E]: میعاد ختم پر نیا مقدمہ بند
@@ -509,6 +631,20 @@ async function saveNewCase(){
     if(!_dioValidDate(document.getElementById('cf-date')?.value)){showToast('تاریخ اندراج درست درج کریں — دن ۱–۳۱، مہینہ ۱–۱۲، سال مکمل ۴ ہندسے','error');document.getElementById('cf-date')?.focus();return;}
     if(!_dioValidDate(document.getElementById('cf-occurrence-date')?.value)){showToast('تاریخ وقوعہ درست درج کریں — دن ۱–۳۱، مہینہ ۱–۱۲، سال مکمل ۴ ہندسے','error');document.getElementById('cf-occurrence-date')?.focus();return;}
   }
+  // v552: دوہرا مقدمہ نمبر — درج نہیں ہوگا
+  try {
+    var _dup = await _cfFindDuplicate(fir, document.getElementById('cf-date')?.value, null);
+    if (_dup) {
+      try { await _cfCheckFirLive(null); } catch (_) { /* ikhtiyari */ }
+      if (confirm('یہ مقدمہ پہلے سے درج ہے، دوبارہ درج نہیں ہو سکتا:\n\n' + _cfCaseLine(_dup) + '\n\nکیا پہلے سے درج مقدمہ کھولیں؟ («Cancel» = اسی فارم پر رہیں اور نمبر درست کریں)')) {
+        closeModal();
+        if (typeof openCaseWorkspace === 'function') openCaseWorkspace(_dup.id);
+      } else { document.getElementById('cf-fir')?.focus(); }
+      return;
+    }
+    var _sim = await _cfFindSimilar(complainant, document.getElementById('cf-occurrence-date')?.value, section, null);
+    if (_sim && !confirm('ممکنہ دوہرا اندراج — اسی مدعی، اسی تاریخ وقوعہ اور اسی دفعہ کا ایک مقدمہ پہلے سے درج ہے:\n\n' + _cfCaseLine(_sim) + '\n\nکیا یہ واقعی الگ مقدمہ ہے اور درج کرنا ہے؟')) return;
+  } catch (_) { /* jaanch na ho saki — server/cache na ho; andraj na rukay */ }
   try{
     var _cfMobile = _cfMobileFieldsPayload();
     const _newCaseRow = await addCase({
@@ -587,6 +723,16 @@ async function saveEditCase(id){
     var _typed=document.getElementById('cf-section-search')?.value.trim()||'';
     if(_typed) _editSection=_typed;
   }
+  // v552: ترمیم میں مقدمہ نمبر کسی دوسرے درج شدہ مقدمے جیسا نہ ہو
+  try {
+    var _dupE = await _cfFindDuplicate(document.getElementById('cf-fir')?.value, document.getElementById('cf-date')?.value, id);
+    if (_dupE) {
+      showToast('یہ مقدمہ نمبر کسی دوسرے درج شدہ مقدمے کا ہے: ' + _cfCaseLine(_dupE), 'error', 9000);
+      try { await _cfCheckFirLive(id); } catch (_) { /* ikhtiyari */ }
+      document.getElementById('cf-fir')?.focus();
+      return;
+    }
+  } catch (_) { /* jaanch na ho saki */ }
   // AUDIT — "before" snapshot (Phase 4B). Silent fail agar fetch na ho.
   var _beforeCase = null;
   try {

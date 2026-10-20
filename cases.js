@@ -95,6 +95,7 @@ const PENAL_CODES = [
   {s:'342',law:'PPC',title:'Wrongful Confinement',offence:'Wrongful Confinement',bail:'Bailable',punishment:'1 year or fine'},
   {s:'354',law:'PPC',title:'Assault / Criminal Force to Woman',offence:'Assault on Woman',bail:'Non-Bailable',punishment:'Up to 10 years'},
   {s:'354-A',law:'PPC',title:'Assault on Woman with Intent to Strip',offence:'Stripping/Assault on Woman',bail:'Non-Bailable',punishment:'Up to 7 years'},
+  {s:'356',law:'PPC',title:'Assault or Criminal Force in Attempt to Commit Theft of Property Carried by a Person',offence:'Snatching (Assault in Attempt of Theft)',bail:'Bailable',punishment:'Up to 2 years, or fine, or both'},
   {s:'363',law:'PPC',title:'Kidnapping',offence:'Kidnapping',bail:'Non-Bailable',punishment:'Up to 7 years'},
   {s:'364',law:'PPC',title:'Kidnapping for Murder',offence:'Kidnapping for Murder',bail:'Non-Bailable',punishment:'Life imprisonment'},
   {s:'364-A',law:'PPC',title:'Kidnapping for Ransom',offence:'Kidnapping for Ransom',bail:'Non-Bailable',punishment:'Death or Life'},
@@ -578,6 +579,7 @@ function removeCustomDoc(doc) {
 }
 
 function searchPenalCodes(query) {
+  try { _updateMobileBox(); } catch (_) { /* ikhtiyari */ }
   const dd = document.getElementById('section-dropdown');
   if (!query || query.length < 1) { dd.style.display = 'none'; return; }
   const q = query.toLowerCase().trim();
@@ -629,13 +631,20 @@ function addSection(sectionStr, offence, bail) {
 }
 
 // Show/hide mobile theft box based on selected sections (379-402 PPC)
+// v552: 356 ت پ بھی (چھینا جھپٹی) — اور دفعہ نمبر پورا ملے (مثلاً «3560» یا «1379» پر نہیں)
+const _DIO_MOBILE_THEFT_SECTIONS = ['356','379','380','381','382','392','393','394','395','396','397','398','399','400','401','402','411'];
 function _hasMobileSection(sections) {
-  const theftSections = ['379','380','381','382','392','393','394','395','396','397','398','399','400','401','402','356','411'];
-  return (sections||[]).some(s => theftSections.some(t => String(s).includes(t)));
+  return (sections||[]).some(s => {
+    const nums = String(s || '').match(/(?<!\d)\d{3}(?!\d)/g) || [];
+    return nums.some(n => _DIO_MOBILE_THEFT_SECTIONS.indexOf(n) !== -1);
+  });
 }
 function _updateMobileBox() {
   const box = document.getElementById('cf-mobile-box');
-  if (box) box.style.display = _hasMobileSection(selectedSections) ? 'block' : 'none';
+  if (!box) return;
+  // چنی ہوئی دفعات + خانے میں لکھی ہوئی (فہرست سے چنے بغیر) — دونوں
+  const typed = (document.getElementById('cf-section-search') || {}).value || '';
+  box.style.display = _hasMobileSection(selectedSections.concat(typed ? [typed] : [])) ? 'block' : 'none';
 }
 // IMEI brand/model lookup from TAC (first 8 digits = Type Allocation Code)
 function removeSection(sectionStr) {

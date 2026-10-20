@@ -117,15 +117,46 @@
     var ls = el('login-screen');
     if (!ls || typeof MutationObserver !== 'function') return;
     new MutationObserver(function () {
-      if (loginVisible()) { if (!timer) start(); } else stop();
-    }).observe(ls, { attributes: true, attributeFilter: ['style', 'class'] });
+      if (loginVisible()) { if (!timer) start(); fitLandSoon(); } else stop();
+    }).observe(ls, { attributes: true, attributeFilter: ['style'] });
   }
 
-  // فونٹ دیر سے لوڈ ہو یا اسکرین گھومے/بدلے تو دوبارہ ناپ
-  try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit); } catch (_) { /* ikhtiyari */ }
-  window.addEventListener('resize', function () { if (timer) fit(); });
+  // ═══ v552: لینڈنگ صفحہ ڈیسک ٹاپ کی سکرین میں پورا — بغیر scroll ═══
+  //  لیپ ٹاپ پر براؤزر کی پٹیوں کے بعد اونچائی اکثر 600–730px رہ جاتی ہے، جبکہ
+  //  کارڈ ~736px کا تھا — نیچے کا قانونی اعلان چھپ جاتا اور scroll کرنا پڑتا۔
+  //  اب کارڈ کی اصل اونچائی ناپ کر، ضرورت ہو تو پورا کارڈ اسی تناسب سے چھوٹا
+  //  (CSS zoom) — ترتیب، فونٹ کا تناسب اور شکل وہی۔ موبائل پر نہیں (وہاں scroll قدرتی)۔
+  function fitLand() {
+    var ls = el('login-screen');
+    if (!ls || !loginVisible()) return;
+    var land = ls.querySelector('.dio-land');
+    if (!land) return;
+    land.style.zoom = '';
+    if (window.innerWidth < 861) { ls.classList.remove('dio-land-fit'); return; }
+    var cs = getComputedStyle(ls);
+    var pad = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+    var avail = window.innerHeight - pad - 2;
+    var r = land.getBoundingClientRect();
+    var need = r.height;
+    if (need > avail && need > 0) {
+      var z = Math.max(0.6, Math.floor((avail / need) * 1000) / 1000);
+      land.style.zoom = String(z);
+    } else if (need > 0 && r.width > 0) {
+      // بڑی سکرین (مثلاً 1920×1080): کارڈ چھوٹا سا بیچ میں نہ رہے — تھوڑا بڑا (زیادہ سے زیادہ 1.15)
+      var up = Math.min(1.15, avail / need, (window.innerWidth - 64) / r.width);
+      if (up > 1.03) land.style.zoom = String(Math.floor(up * 1000) / 1000);
+    }
+    ls.classList.add('dio-land-fit');
+  }
+  var _fitT = null;
+  function fitLandSoon() { clearTimeout(_fitT); _fitT = setTimeout(fitLand, 60); }
 
-  window.DIOZikr = { items: ITEMS, holdMs: HOLD_MS, start: start, stop: stop, next: next, fit: fit };
+  // فونٹ دیر سے لوڈ ہو یا اسکرین گھومے/بدلے تو دوبارہ ناپ
+  try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { fit(); fitLand(); }); } catch (_) { /* ikhtiyari */ }
+  window.addEventListener('resize', function () { if (timer) fit(); fitLandSoon(); });
+  window.addEventListener('load', function () { setTimeout(fitLand, 50); setTimeout(fitLand, 800); });
+
+  window.DIOZikr = { items: ITEMS, holdMs: HOLD_MS, start: start, stop: stop, next: next, fit: fit, fitLand: fitLand };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () { start(); watchLogin(); });

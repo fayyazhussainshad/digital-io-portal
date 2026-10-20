@@ -1,0 +1,14 @@
+-- ============================================================================
+-- Digital IO — 105_zimni_content.sql   (v552 — صرف ضرورت پر)   AIK statement.
+-- ----------------------------------------------------------------------------
+-- KAB CHALAYEIN: SIRF tab jab 105_CHECK.sql mein 'mawad_ka_khana' = false aaye,
+-- ya app ضمنی محفوظ karte waqt yeh paigham de:
+--   «سرور کی جدول zimni_reports میں ضمنی کا متن رکھنے والا کوئی کالم نہیں ملا»
+--
+-- KYA KARTI HAI: `zimni_reports` mein `content` (jsonb) ka khana — jis mein
+-- ضمنی ka poora mawad (bodyHtml, ہیڈ، ضمنی نمبر، قسم، محفوظ کرنے کا وقت) jata hai.
+-- Pehle se ho to KUCH NAHI badalta (IF NOT EXISTS). Koi qataar, policy ya
+-- doosra khana nahi chhua jata. RLS policies (90) jaisi ki taisi.
+-- JAANCH: 105_CHECK.sql   ·   WAPSI: 105_ROLLBACK.sql
+-- ============================================================================
+alter table public.zimni_reports add column if not exists content jsonb;

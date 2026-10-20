@@ -1107,6 +1107,9 @@ input[id*="cnic"], input[id*="cell"] {
 #dio-nprint-host { position: fixed; left: -99999px; top: 0; width: 0; height: 0; overflow: hidden; }
 @media print { #dio-nprint-host { position: static; width: auto; height: auto; overflow: visible; } }
 
+/* v552: درمیانی سرخی والا کارڈ (مثلاً «متن میں ترمیم») — ✕ کی جگہ برابر کر کے عین درمیان */
+#modal-title.dio-mt-center { flex: 1 1 auto; text-align: center !important; padding-inline-start: 28px; }
+
 /* ── لاگ اِن کارڈ کا فونٹ 14pt ── */
 .login-card,
 .login-card input,
@@ -1656,6 +1659,7 @@ window.addEventListener('beforeunload', function (e) {
 <script defer src="islamic-landing.js"></script>
 <script defer src="dashboard.js"></script>
       <script defer src="cases.js"></script>
+      <script defer src="case-context.js"></script>
     <script defer src="search.js"></script>
 <script defer src="global-mic.js"></script>
 <script defer src="staff-v2.js"></script>
@@ -2023,6 +2027,9 @@ document.addEventListener('DOMContentLoaded', function () {
     return 1;
   }
   function _pFindTarget() {
+    // v552: ضمنی (اسی #ch173-doc میں، مگر .zf-tbl) — اپنا پرنٹ؛ چالان والا نہیں
+    var zimni = document.querySelector('#ch173-doc .zf-tbl');
+    if (zimni && _pVisible(zimni) && typeof window._printZimniCurrent === 'function') return function () { window._printZimniCurrent(); };
     var challan = document.querySelector('#ch173-doc #ch173-table');
     if (challan && _pVisible(challan) && typeof window._printR173 === 'function') return function () { window._printR173(); };
     var dv = document.getElementById('dio-docview');
@@ -2047,14 +2054,20 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!isP || !(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey) return;
     try {
       var fn = _pFindTarget();
-      if (fn) { e.preventDefault(); e.stopPropagation(); fn(); }
+      // v552: stopImmediatePropagation — اسی document پر لگے دوسرے Ctrl+P سننے والے
+      //   (app-core / doc-viewer) دوبارہ نہ چلیں؛ پہلے ایک ہی دباؤ پر دو پرنٹ کھلتے تھے
+      if (fn) { e.preventDefault(); e.stopImmediatePropagation(); fn(); }
     } catch (_) {}
   }, true);
 })();
 </script>
 
 <!-- Generic Modal (used by openModal/closeModal) -->
-<div id="modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)closeModal()">
+<!-- v552: باہر کلک سے کارڈ صرف تب بند ہو جب ماؤس دبانا بھی باہر ہی سے شروع ہوا ہو۔ پہلے
+     کسی خانے (مثلاً موبائل کا ماڈل) کا متن ماؤس سے منتخب کرتے ہوئے ماؤس کارڈ سے باہر چھوٹتا
+     تو «نیا اندراج» کا فارم بند ہو کر سارا لکھا ضائع ہو جاتا تھا۔ اندراج کے کارڈ (dio-entry)
+     باہر کلک سے کبھی بند نہیں ہوتے — صرف ✕ یا «منسوخ» سے۔ -->
+<div id="modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000;align-items:center;justify-content:center;padding:16px;" onmousedown="this._dioDownSelf=(event.target===this)" ontouchstart="this._dioDownSelf=(event.target===this)" onclick="if(event.target===this&amp;&amp;this._dioDownSelf&amp;&amp;!this.querySelector('.modal-card.dio-entry'))closeModal();this._dioDownSelf=false">
   <div class="modal-card" style="background:var(--bg-card,#0b1826);border:1px solid var(--border,#1e3a52);border-radius:14px;max-width:980px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,0.6);direction:rtl;">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border,#1e3a52);">
       <div id="modal-title" style="font-size:16px;font-weight:700;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;color:var(--text-primary,#e5eef5);"></div>

@@ -67,8 +67,12 @@ async function _dioLoginWithToken(key) {
   if (!stored) return false;
   const rt = await _dioDec(stored);
   if (!rt) { localStorage.removeItem(key); return false; }   // خراب/ناقابلِ decrypt
+  window._dioTokenNetFail = false;
   try {
-    const { data, error } = await supabaseClient.auth.refreshSession({ refresh_token: rt });
+    const { data, error } = await _dioWithTimeout(supabaseClient.auth.refreshSession({ refresh_token: rt }), 15000);
+    // v552: سرور تک رسائی نہ ہو (نیٹ آتا جاتا) تو محفوظ token مت مٹاؤ — پہلے یہیں PIN/
+    //   بایومیٹرک کا token مٹ جاتا اور اگلی بار «سیشن ختم — پاس ورڈ سے لاگ اِن» آتا
+    if (error && _dioAuthNetErr(error)) { window._dioTokenNetFail = true; return false; }
     if (error || !data || !data.session) { localStorage.removeItem(key); return false; }
     // نیا token انکرپٹڈ محفوظ (پرانا استعمال ہو چکا)
     if (data.session.refresh_token) localStorage.setItem(key, await _dioEnc(data.session.refresh_token));
@@ -93,7 +97,10 @@ async function _dioLoginWithToken(key) {
       return false;
     }
     return true;
-  } catch (_) { localStorage.removeItem(key); return false; }
+  } catch (e) {
+    if (_dioAuthNetErr(e)) { window._dioTokenNetFail = true; return false; }   // token برقرار
+    localStorage.removeItem(key); return false;
+  }
 }
 window._dioSaveAuthToken  = _dioSaveAuthToken;
 window._dioLoginWithToken = _dioLoginWithToken;
@@ -177,18 +184,28 @@ async function _dioReauthIfNeeded() {
       const { data } = await supabaseClient.auth.getSession();
       if (data && data.session) return true;
     } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
-    let ok = false;
+    let ok = false, netFail = false;
     if (_dioPendingReauth) {
       try {
-        const r = await supabaseClient.auth.signInWithPassword({ email: _dioPendingReauth.email, password: _dioPendingReauth.pass });
+        const r = await _dioWithTimeout(supabaseClient.auth.signInWithPassword({ email: _dioPendingReauth.email, password: _dioPendingReauth.pass }), 15000);
         ok = !r.error && !!(r.data && r.data.session);
-      } catch (_) { ok = false; }
+        if (r.error && _dioAuthNetErr(r.error)) netFail = true;
+      } catch (e) { ok = false; if (_dioAuthNetErr(e)) netFail = true; }
     }
-    if (!ok) {
+    if (!ok && !netFail) {
       for (const k of ['dio_bio_rt', 'dio_pin_rt']) {
         try { if (localStorage.getItem(k) && await _dioLoginWithToken(k)) { ok = true; break; } } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+        if (window._dioTokenNetFail) { netFail = true; break; }
       }
     }
+    // v552: سرور ابھی بھی نہیں ملا (نیٹ آتا جاتا) — پاس ورڈ یاد رکھو اور تھوڑی دیر بعد پھر؛
+    //   «دوبارہ لاگ اِن کریں» کا گمراہ کن پیغام نہیں
+    if (!ok && netFail) {
+      window._dioReauthTries = (window._dioReauthTries || 0) + 1;
+      if (window._dioReauthTries <= 20) setTimeout(function () { try { _dioReauthIfNeeded(); } catch (_) { /* agli dafa */ } }, 30000);
+      return false;
+    }
+    window._dioReauthTries = 0;
     _dioPendingReauth = null;
     if (ok) {
       try { await _loadOfficerProfile(); } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
@@ -349,101 +366,115 @@ async function _dioHasOfflineSession() {
 window._dioHasOfflineSession = _dioHasOfflineSession;
 
 
+// ═══ v552: لاگ اِن — انٹرنیٹ کی خرابی کو «غلط پاس ورڈ» نہ بنایا جائے ═══
+//  پہلے: (1) نیٹ آتا جاتا ہو (navigator.onLine پلٹتا رہے) تو آف لائن راستہ چلتا اور
+//  پاس ورڈ اس آلے کے پرانے ریکارڈ سے نہ ملے تو سیدھا «پاس ورڈ غلط ہے»؛ (2) سرور تک
+//  درخواست نہ پہنچے تب بھی غلطی «غلط کوشش» گنی جاتی اور 5 بار پر 5 منٹ کا تالا۔
+//  اب: سرور نہ ملے تو اسی آلے پر محفوظ (آف لائن) لاگ اِن؛ تالا صرف اصل غلط پاس ورڈ پر۔
+function _dioAuthNetErr(e) {
+  if (!e) return false;
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return true;
+  const nm = String(e.name || ''), msg = String(e.message || e || ''), st = Number(e.status || 0);
+  if (nm === 'AuthRetryableFetchError' || nm === 'DIO_TIMEOUT') return true;
+  if (st === 0 && /fetch|network|timeout|Load failed/i.test(msg)) return true;
+  if (st >= 500) return true;
+  return /Failed to fetch|NetworkError|Load failed|ERR_|timed? ?out/i.test(msg);
+}
+function _dioWithTimeout(promise, ms) {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => { const e = new Error('timeout'); e.name = 'DIO_TIMEOUT'; reject(e); }, ms);
+    Promise.resolve(promise).then(v => { clearTimeout(t); resolve(v); }, er => { clearTimeout(t); reject(er); });
+  });
+}
+function _dioAuthErrText(e) {
+  const msg = String((e && e.message) || e || ''), code = String((e && e.code) || '');
+  if (code === 'invalid_credentials' || /Invalid login credentials/i.test(msg)) return 'ای میل یا پاس ورڈ درست نہیں';
+  if (code === 'email_not_confirmed' || /Email not confirmed/i.test(msg)) return 'ای میل کی تصدیق ابھی نہیں ہوئی — ای میل میں آیا ہوا لنک کھولیں';
+  if (/rate limit|too many/i.test(msg)) return 'بہت زیادہ کوششیں — چند منٹ بعد دوبارہ کوشش کریں';
+  return msg || 'لاگ اِن نہیں ہو سکا';
+}
+
+// آف لائن (اسی آلے پر محفوظ) لاگ اِن — کامیاب ہو تو true
+//   opts.net = true  → انٹرنیٹ ہے مگر سرور نہیں مل رہا (اسی لیے یہ راستہ)
+async function _dioTryOfflineLogin(email, pass, opts) {
+  opts = opts || {};
+  const hasOffline = await _dioHasOfflineSession();
+  if (!hasOffline) {
+    showToast(opts.net
+      ? 'سرور سے رابطہ نہیں ہو سکا (پاس ورڈ کی وجہ سے نہیں) — انٹرنیٹ چیک کر کے دوبارہ کوشش کریں'
+      : 'آفلائن لاگ اِن دستیاب نہیں — اس آلے پر پہلے ایک بار انٹرنیٹ کے ساتھ لاگ اِن کریں', 'warn', 7000);
+    return false;
+  }
+  let _savedEmail = '';
+  try {
+    const _o = JSON.parse(localStorage.getItem('dio_officer_cache') || 'null');
+    _savedEmail = (_o && _o.email) ? String(_o.email).trim().toLowerCase() : '';
+  } catch (_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
+  let ver = null;
+  try { ver = JSON.parse(localStorage.getItem('dio_pw_verifier') || 'null'); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
+  if (!_savedEmail && ver && ver.email) _savedEmail = String(ver.email).toLowerCase();
+  if (_savedEmail && _savedEmail !== String(email).trim().toLowerCase()) {
+    showToast('یہ آلہ کسی اور افسر کے نام پر محفوظ ہے — آف لائن صرف وہی داخل ہو سکتے ہیں', 'error', 7000);
+    return false;
+  }
+  setLoginLoading(true);
+  if (ver && ver.hash && _dioSameEmail(ver.email, email)) {
+    let ok = false;
+    try { ok = (await _dioPinMatches(pass, ver.hash)) === true; } catch (_) { ok = false; }
+    if (!ok) {
+      setLoginLoading(false);
+      // پاس ورڈ حال ہی میں (کسی اور آلے سے) بدلا ہو تو اس آلے کا ریکارڈ پرانا ہوتا ہے —
+      // صرف «غلط» کہنا گمراہ کن تھا۔
+      showToast(opts.net
+        ? 'سرور سے رابطہ نہیں ہو سکا، اور یہ پاس ورڈ اس آلے پر آخری کامیاب لاگ اِن والے پاس ورڈ سے نہیں ملتا۔ اگر پاس ورڈ حال ہی میں بدلا ہے تو انٹرنیٹ بحال ہونے پر لاگ اِن کریں۔'
+        : 'آف لائن: یہ پاس ورڈ اس آلے پر آخری کامیاب لاگ اِن والے پاس ورڈ سے نہیں ملتا۔ اگر پاس ورڈ حال ہی میں بدلا ہے تو انٹرنیٹ کے ساتھ لاگ اِن کریں۔', 'error', 9000);
+      return false;
+    }
+  } else {
+    // Is aale par abhi password ka hash nahi (purana login) — PIN/biometric ho to wahi
+    const hasPin = !!localStorage.getItem('dio_pin');
+    const hasBio = !!(localStorage.getItem('dio_biometric_cred') && localStorage.getItem('dio_biometric_email'));
+    if (hasPin || hasBio) {
+      setLoginLoading(false);
+      showToast('آپ آفلائن ہیں — ' + (hasPin ? 'PIN' : 'بایومیٹرک') + ' سے لاگ اِن کریں (پاس ورڈ آف لائن ایک بار آن لائن لاگ اِن کے بعد چلے گا)', 'warn', 7000);
+      if (hasPin) { const b = document.querySelectorAll('.login-method')[1]; if (b) setLoginMethod('pin', b); }
+      else { const b = document.querySelectorAll('.login-method')[2]; if (b) setLoginMethod('biometric', b); }
+      return false;
+    }
+  }
+  const off = await _dioOfflineRestore();
+  setLoginLoading(false);
+  if (off) {
+    // Sirf YAADDASHT me (storage me nahi) — internet aate hi session bahal karne ke liye
+    _dioPendingReauth = { email: String(email).trim(), pass };
+    showToast(opts.net
+      ? 'سرور سے رابطہ نہیں — آف لائن موڈ میں داخل؛ رابطہ بحال ہوتے ہی کام خودبخود sync ہو جائے گا'
+      : 'آفلائن موڈ — انٹرنیٹ آنے پر کام خودبخود sync ہو جائے گا', 'info', 5000);
+    loginSuccess();
+    // سرور واپس ملے تو خود سیشن بحال (online event نہ بھی آئے — نیٹ پہلے سے «آن» تھا)
+    if (opts.net) { try { setTimeout(function () { if (typeof _dioReauthIfNeeded === 'function') _dioReauthIfNeeded(); }, 20000); } catch (_) { /* baad mein */ } }
+    return true;
+  }
+  showToast('آفلائن لاگ اِن دستیاب نہیں — اس آلے پر پہلے ایک بار انٹرنیٹ کے ساتھ لاگ اِن کریں', 'warn', 7000);
+  return false;
+}
+
 async function doLogin() {
   const email = document.getElementById('login-email')?.value.trim();
   const pass  = document.getElementById('login-password')?.value;
   if (!email||!pass) { showToast('ای میل اور پاسورڈ ضروری ہے','error'); return; }
 
   /* ══════════════════════════════════════════════════════════════
-     OFFLINE LOGIN — "offline first" ka asal taqaza
-
-     MASLA JO THA: offline daakhle ka SIRF do raaste the — PIN ya
-     biometric. Jis afsar ne yeh set na kiye hon (aur app sirf AIK BAAR
-     poochti hai — `dio_pin_offered`), us ke liye maidan mein koi raasta
-     hi nahi bachta tha: paigham aata tha "pehle internet ke sath login
-     kar ke PIN set karein" — jo us waqt mumkin hi nahi hota.
-
-     Ghaur talab baat: ONLINE par yehi afsar BINA kuch type kiye andar
-     aa jata hai, kyunke Supabase ka session pehle se mehfooz hota hai.
-     Yaani PIN ki shart sirf OFFLINE par lagti thi — wohi aala, wohi
-     session, magar net band hote hi daakhla band. Yeh tanasub ghalat tha.
-
-     AB: agar is aale par pehle se session mehfooz hai to offline bhi
-     daakhla milta hai — bilkul utna hi jitna ONLINE par milta. PIN ya
-     biometric mojood hon to unhi ko tarjeeh (wo aik mazeed taala hain).
-     Hifazat ka darja ONLINE se neeche nahi gaya.
-
-     Saath AIK NAYI jaanch: likhi hui ای میل mehfooz session wale afsar
-     ki hi honi chahiye — warna koi doosra shakhs apni ای میل daal kar
-     is aale par mehfooz afsar ke record mein nahi ghus sakta.
+     OFFLINE LOGIN — "offline first" ka asal taqaza (v527, v552)
+     Is aale par pehle se session mehfooz ho to offline bhi daakhla —
+     likha hua password usi PBKDF2 hash se jaancha jata hai jo har kamyab
+     ONLINE login par is aale par rakha jata hai (khud password nahi).
      ══════════════════════════════════════════════════════════════ */
-  if (!navigator.onLine) {
-    /* v527 — OFFLINE FIRST, ASAL PASSWORD KI JAANCH KE SATH
-       Pehle: offline par likha hua password JAANCHA hi nahi jata tha (sirf
-       ای میل milaai jati thi) — ya PIN/biometric par bhej diya jata tha.
-       Ab: har kamyab ONLINE login par password ka PBKDF2 hash (namak ke
-       sath, khud password nahi) is aale par rakha jata hai; offline par
-       likha password usi se jaancha jata hai. Durust ho to foran andar,
-       aur internet aate hi session khud bahal ho kar sync hota hai. */
-    const hasOffline = await _dioHasOfflineSession();
-    if (!hasOffline) {
-      showToast('آفلائن لاگ اِن دستیاب نہیں — اس آلے پر پہلے ایک بار انٹرنیٹ کے ساتھ لاگ اِن کریں', 'warn', 7000);
-      return;
-    }
-    let _savedEmail = '';
-    try {
-      const _o = JSON.parse(localStorage.getItem('dio_officer_cache') || 'null');
-      _savedEmail = (_o && _o.email) ? String(_o.email).trim().toLowerCase() : '';
-    } catch (_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
-    let ver = null;
-    try { ver = JSON.parse(localStorage.getItem('dio_pw_verifier') || 'null'); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
-    if (!_savedEmail && ver && ver.email) _savedEmail = String(ver.email).toLowerCase();
-    if (_savedEmail && _savedEmail !== String(email).trim().toLowerCase()) {
-      showToast('یہ آلہ کسی اور افسر کے نام پر محفوظ ہے — آف لائن صرف وہی داخل ہو سکتے ہیں', 'error', 7000);
-      return;
-    }
-    setLoginLoading(true);
-    if (ver && ver.hash && _dioSameEmail(ver.email, email)) {
-      let ok = false;
-      try { ok = (await _dioPinMatches(pass, ver.hash)) === true; } catch (_) { ok = false; }
-      if (!ok) {
-        setLoginLoading(false);
-        showToast('پاس ورڈ غلط ہے', 'error', 5000);
-        return;
-      }
-    } else {
-      // Is aale par abhi password ka hash nahi (purana login) — PIN/biometric ho to wahi
-      const hasPin = !!localStorage.getItem('dio_pin');
-      const hasBio = !!(localStorage.getItem('dio_biometric_cred') && localStorage.getItem('dio_biometric_email'));
-      if (hasPin || hasBio) {
-        setLoginLoading(false);
-        showToast('آپ آفلائن ہیں — ' + (hasPin ? 'PIN' : 'بایومیٹرک') + ' سے لاگ اِن کریں (پاس ورڈ آف لائن ایک بار آن لائن لاگ اِن کے بعد چلے گا)', 'warn', 7000);
-        if (hasPin) { const b = document.querySelectorAll('.login-method')[1]; if (b) setLoginMethod('pin', b); }
-        else { const b = document.querySelectorAll('.login-method')[2]; if (b) setLoginMethod('biometric', b); }
-        return;
-      }
-    }
-    const off = await _dioOfflineRestore();
-    setLoginLoading(false);
-    if (off) {
-      // Sirf YAADDASHT me (storage me nahi) — internet aate hi session bahal karne ke liye
-      _dioPendingReauth = { email: String(email).trim(), pass };
-      showToast('آفلائن موڈ — انٹرنیٹ آنے پر کام خودبخود sync ہو جائے گا', 'info', 4000);
-      loginSuccess();
-      return;
-    }
-    showToast('آفلائن لاگ اِن دستیاب نہیں — اس آلے پر پہلے ایک بار انٹرنیٹ کے ساتھ لاگ اِن کریں', 'warn', 7000);
-    return;
-  }
+  if (!navigator.onLine) { await _dioTryOfflineLogin(email, pass, { net: false }); return; }
 
   // ── Failed-login lockout (UX ONLY — NOT a security control) ──────────────
-  // SECURITY NOTE (Fix 3): Yeh localStorage-based lockout sirf user-experience
-  // ke liye hai (barishtakna galat koshishon par saaf feedback). Ise bypass
-  // karna aasan hai (localStorage clear karke), is liye YEH SECURITY NAHI hai.
-  // Asal brute-force protection Supabase Auth server-side rate-limiting deti
-  // hai (signInWithPassword par per-IP / per-account throttling) — wahi asal
-  // control hai jis par bharosa kiya jata hai. Client lockout sirf uska
-  // dostana front-end hai.
+  // Asal brute-force tahaffuz Supabase Auth ka server-side rate-limit hai.
+  // v552: sirf ASAL ghalat password par ginti — internet ki kharabi par nahi.
   const lockData = JSON.parse(localStorage.getItem('dio_login_lock')||'{}');
   if (lockData.until && Date.now() < lockData.until) {
     const mins = Math.ceil((lockData.until - Date.now())/60000);
@@ -452,8 +483,21 @@ async function doLogin() {
   }
 
   setLoginLoading(true);
+  let data = null, error = null;
   try {
-    const { data, error } = await supabaseClient.auth.signInWithPassword({email,password:pass});
+    const r = await _dioWithTimeout(supabaseClient.auth.signInWithPassword({email,password:pass}), 15000);
+    data = r && r.data; error = r && r.error;
+  } catch (e) { error = e; }
+
+  // سرور تک پہنچ ہی نہیں ہوئی — یہ «غلط پاس ورڈ» نہیں؛ اسی آلے پر محفوظ لاگ اِن آزماؤ
+  if (error && _dioAuthNetErr(error)) {
+    setLoginLoading(false);
+    try { if (typeof dioLogError === 'function') dioLogError('login: server tak rasai nahi', error); } catch (_) { /* logging */ }
+    await _dioTryOfflineLogin(email, pass, { net: true });
+    return;
+  }
+
+  try {
     if (error) throw error;
     currentUser = data.user;
     // Clear failed attempts on success
@@ -498,18 +542,23 @@ async function doLogin() {
 
     loginSuccess();
   } catch(e) {
-    // Track failed attempts (UX-only — see SECURITY NOTE above; real throttling
-    // is Supabase Auth server-side). This just gives friendly local feedback.
-    const lock = JSON.parse(localStorage.getItem('dio_login_lock')||'{"count":0}');
-    lock.count = (lock.count||0) + 1;
-    if (lock.count >= 5) {
-      lock.until = Date.now() + 5*60*1000; // lock for 5 minutes
-      lock.count = 0;
-      localStorage.setItem('dio_login_lock', JSON.stringify(lock));
-      showToast('5 غلط کوششیں — اکاؤنٹ 5 منٹ کے لیے بند', 'error', 5000);
+    // Track failed attempts (UX-only — see note above; real throttling is
+    // Supabase Auth server-side). Sirf asal ghalat ای میل/پاس ورڈ par.
+    const credErr = /Invalid login credentials/i.test(String((e && e.message) || '')) || String((e && e.code) || '') === 'invalid_credentials';
+    if (credErr) {
+      const lock = JSON.parse(localStorage.getItem('dio_login_lock')||'{"count":0}');
+      lock.count = (lock.count||0) + 1;
+      if (lock.count >= 5) {
+        lock.until = Date.now() + 5*60*1000; // lock for 5 minutes
+        lock.count = 0;
+        localStorage.setItem('dio_login_lock', JSON.stringify(lock));
+        showToast('5 غلط کوششیں — اکاؤنٹ 5 منٹ کے لیے بند', 'error', 5000);
+      } else {
+        localStorage.setItem('dio_login_lock', JSON.stringify(lock));
+        showToast(`${_dioAuthErrText(e)} (${5-lock.count} کوششیں باقی)`, 'error', 6000);
+      }
     } else {
-      localStorage.setItem('dio_login_lock', JSON.stringify(lock));
-      showToast(`${e.message} (${5-lock.count} کوششیں باقی)`, 'error');
+      showToast(_dioAuthErrText(e), 'error', 7000);
     }
     setLoginLoading(false);
   }
@@ -1030,6 +1079,19 @@ async function _verifyPin() {
   // ── ONLINE: refresh-token se poora login (session taza; password kahin mehfooz nahi) ──
   const ok = await _dioLoginWithToken('dio_pin_rt');
   if (ok) { loginSuccess(); return; }
+  // v552: سرور تک رسائی نہیں (نیٹ آتا جاتا) — PIN درست ہے، اسی آلے کے محفوظ سیشن سے اندر
+  if (window._dioTokenNetFail) {
+    const off2 = await _dioOfflineRestore();
+    setLoginLoading(false);
+    if (off2) {
+      showToast('سرور سے رابطہ نہیں — آف لائن موڈ میں داخل؛ رابطہ بحال ہوتے ہی sync', 'info', 5000);
+      loginSuccess();
+      try { setTimeout(function () { if (typeof _dioReauthIfNeeded === 'function') _dioReauthIfNeeded(); }, 20000); } catch (_) { /* baad mein */ }
+      return;
+    }
+    showToast('سرور سے رابطہ نہیں ہو سکا — انٹرنیٹ چیک کر کے دوبارہ کوشش کریں (PIN درست ہے)', 'warn', 6000);
+    return;
+  }
 
   // Token khatam ho gaya ya mojood nahi → aik dafa password se login
   setLoginLoading(false);
@@ -1300,6 +1362,13 @@ async function doBiometric() {
     const ok = await _dioLoginWithToken('dio_bio_rt');
     if (ok) { loginSuccess(); return; }
     setLoginLoading(false);
+    // v552: سرور تک رسائی نہیں — فنگرپرنٹ درست ہے، اسی آلے کے محفوظ سیشن سے اندر (token برقرار)
+    if (window._dioTokenNetFail) {
+      const offB = await _dioOfflineRestore();
+      if (offB) { showToast('سرور سے رابطہ نہیں — آف لائن موڈ میں داخل؛ رابطہ بحال ہوتے ہی sync', 'info', 5000); loginSuccess(); return; }
+      showToast('سرور سے رابطہ نہیں ہو سکا — انٹرنیٹ چیک کر کے دوبارہ کوشش کریں', 'warn', 6000);
+      return;
+    }
     showToast('فنگرپرنٹ درست تھا، مگر اس فون کا محفوظ سیشن ختم ہو چکا (پاس ورڈ بدلا گیا یا اکاؤنٹ مکمل لاگ آؤٹ ہوا) — ایک بار پاس ورڈ سے لاگ اِن کریں، بایومیٹرک خود پھر چل پڑے گا', 'warn', 8000);
     const le = document.getElementById('login-email'); if (le) le.value = savedEmail;
     try { setLoginMethod('password', document.querySelectorAll('.login-method')[0]); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }

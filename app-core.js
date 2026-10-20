@@ -322,6 +322,9 @@ function _dioResetModalCard() {
   }
   const bd = document.getElementById('modal-backdrop');
   if (bd) bd.style.padding = '16px';
+  // v552: کسی ایک کارڈ کی درمیانی سرخی اگلے کارڈ میں نہ جائے
+  const mt = document.getElementById('modal-title');
+  if (mt) mt.classList.remove('dio-mt-center');
 }
 function closeModal() {
   const bd = document.getElementById('modal-backdrop');
@@ -778,8 +781,15 @@ window.addEventListener('online', () => {
   try { _remindersFailedAt = 0; } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 });
 
-window.addEventListener('online',  ()=>{ updateConnectionStatus(true); _syncOfflineQueue(); });
-window.addEventListener('offline', ()=>updateConnectionStatus(false));
+// v552: نیٹ چند لمحوں کے لیے آئے جائے (Wi-Fi/موبائل سگنل) تو پٹی بار بار «آف لائن/آن لائن»
+//   نہ پلٹے — «آف لائن» صرف تب دکھاؤ جب 3 سیکنڈ بعد بھی آف لائن ہو۔ (کام پر کوئی اثر نہیں:
+//   ہر اندراج پہلے آلے پر محفوظ ہوتا ہے اور نیٹ آتے ہی خود sync۔)
+let _dioOfflineT = null;
+window.addEventListener('online',  ()=>{ clearTimeout(_dioOfflineT); updateConnectionStatus(true); _syncOfflineQueue(); });
+window.addEventListener('offline', ()=>{
+  clearTimeout(_dioOfflineT);
+  _dioOfflineT = setTimeout(()=>{ if (!navigator.onLine) updateConnectionStatus(false); }, 3000);
+});
 
 // ── SYNC offline queue when back online ───────────────────────
 async function _syncOfflineQueue() {
@@ -794,6 +804,8 @@ async function _syncOfflineQueue() {
     const { data } = await supabaseClient.auth.getSession();
     if (!data || !data.session) return;
   } catch (_) { return; }
+  // v552: ضمنیاں اپنے مقامی ذخیرے سے (zimni.js) — لاگ اِن/انٹرنیٹ بحال ہوتے ہی
+  try { if (typeof window._zimniSyncPending === 'function') window._zimniSyncPending(); } catch (_) { /* ikhtiyari hook */ }
   try {
     const count = await offlineStore.pendingCount();
     if (!count) return;
@@ -1404,6 +1416,7 @@ window._dioDownloadFileView = _dioDownloadFileView;
   document.addEventListener('keydown', function (e) {
     if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
     if (String(e.key || '').toLowerCase() !== 'p') return;
+    if (e.defaultPrevented) return;          // v552: پہلے سننے والے نے پرنٹ چلا دیا — دوبارہ نہیں
 
     // نقشہ موقع کا اپنا handler ہے — یہاں کچھ نہ کریں
     if (_nazarMein(document.getElementById('dio-naqsha-doc'))) return;
@@ -1411,6 +1424,10 @@ window._dioDownloadFileView = _dioDownloadFileView;
     // چالان کھلا ہے؟
     const ch = document.getElementById('ch173-doc');
     if (!_nazarMein(ch)) return;
+    // v552: یہ ضمنی ہے (چالان نہیں) — ضمنی کا اپنا پرنٹ
+    if (ch.querySelector('.zf-tbl') && typeof window._printZimniCurrent === 'function') {
+      e.preventDefault(); e.stopPropagation(); window._printZimniCurrent(); return;
+    }
     if (typeof window._printR173 !== 'function' && typeof _printR173 !== 'function') return;
 
     e.preventDefault();

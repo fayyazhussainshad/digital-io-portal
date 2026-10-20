@@ -67,7 +67,10 @@ test('SYSTEM RULE: Ctrl+P = سکرین کا پرنٹ بٹن (پورا سسٹم)'
   assert.ok(/function _pFindTarget\(\)/.test(h));
   assert.ok(/_printR173[\s\S]{0,400}dio-docview[\s\S]{0,300}_dioPrintCurrent/.test(h), 'چالان، پھر پورا صفحہ');
   assert.ok(/data-dio-print/.test(h) && /dio-modbtn/.test(h));
-  assert.ok(/if \(fn\) \{ e\.preventDefault\(\); e\.stopPropagation\(\); fn\(\); \}/.test(h));
+  // v552: stopImmediatePropagation — اسی document کے دوسرے Ctrl+P سننے والے دوبارہ نہ چلیں (دوہرا پرنٹ نہیں)
+  assert.ok(/if \(fn\) \{ e\.preventDefault\(\); e\.stopImmediatePropagation\(\); fn\(\); \}/.test(h));
+  // v552: ضمنی (#ch173-doc .zf-tbl) کا اپنا پرنٹ — چالان والے سے پہلے
+  assert.ok(/#ch173-doc \.zf-tbl[\s\S]{0,200}_printZimniCurrent[\s\S]{0,300}#ch173-doc #ch173-table/.test(h), 'ضمنی پہلے، پھر چالان');
   // پٹی کا پرنٹ: دستاویز کا اپنا بٹن؛ نہ ہو تو خاموش نہیں بلکہ براؤزر کی چھپائی
   const dv = read('doc-viewer.js');
   assert.ok(/_dioModulePrintBtn\(document\.getElementById\('dio-dv-body'\)\)[\s\S]{0,400}window\.print\(\)/.test(dv));

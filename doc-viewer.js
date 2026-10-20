@@ -520,6 +520,7 @@ function _dioRenderTabContent(docId) {
 document.addEventListener('keydown', function (e) {
   if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
   if (String(e.key || '').toLowerCase() !== 'p') return;
+  if (e.defaultPrevented) return;          // v552: پہلے ہی چھپ رہا ہے — دوہرا پرنٹ نہیں
   if (_dioActiveTab !== 'index_naql' || !document.getElementById('dio-docview') ||
       !document.getElementById('misal-editor')) return;
   e.preventDefault();

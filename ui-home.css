@@ -374,12 +374,15 @@ html:not([data-theme="light"]) #login-screen .dio-lc-hint { color: #f5b942; }
   #main-app .topbar-btn:hover, #main-app .topnav-btn:hover,
   #main-app .topnav-btn.active { background: rgba(255, 255, 255, .10) !important; color: #ffffff !important; }
   #main-app .dio-tb-logout:hover { color: #fca5a5 !important; background: rgba(239, 68, 68, .16) !important; }
-  #main-app .dio-backbtn {
+  /* v552: سفید رنگ صرف اوپر کی گہری نیلی پٹی والے «واپس» کے لیے۔ پہلے یہ قاعدہ
+     ہر .dio-backbtn پر لگتا تھا — مقدمے کی چِپ پٹی (ہلکا پس منظر) میں «واپس»
+     سفید پر سفید ہو کر غائب ہو جاتا (جگہ خالی دکھتی، کلک پھر بھی چلتا تھا)۔ */
+  #main-app .topbar .dio-backbtn, #main-app #dio-back-btn {
     background: rgba(255, 255, 255, .06) !important;
     border-color: rgba(255, 255, 255, .28) !important;
     color: #ffffff !important;
   }
-  #main-app .dio-backbtn:hover { background: rgba(255, 255, 255, .14) !important; color: #ffffff !important; }
+  #main-app .topbar .dio-backbtn:hover, #main-app #dio-back-btn:hover { background: rgba(255, 255, 255, .14) !important; color: #ffffff !important; }
   #main-app .dio-tb-status #status-text { color: #c9d5e6 !important; }
   #main-app :focus-visible { outline: 2px solid var(--dio-brass); outline-offset: 2px; }
 
@@ -717,4 +720,31 @@ body:has(#login-screen:not([style*="display: none"]):not([style*="display:none"]
 }
 @media (prefers-reduced-motion: reduce) {
   #login-screen .dio-zikr { transition: none; }
+}
+
+/* ═══ v552: ڈیسک ٹاپ — لینڈنگ پوری سکرین میں (بغیر scroll) ═══
+   لیپ ٹاپ پر (براؤزر کی پٹیوں کے بعد) اونچائی 600–820px: خالی جگہیں سمٹیں،
+   باقی کمی islamic-landing.js کا fitLand() پورے کارڈ کو اسی تناسب سے چھوٹا کر کے پوری کرتا ہے۔ */
+@media screen and (min-width: 861px) and (max-height: 820px) {
+  #login-screen { padding: 10px 16px !important; }
+  #login-screen .dio-ikhlas-band { padding: 10px 20px 12px; }
+  #login-screen p.dio-ikhlas { padding-bottom: 9px; }
+  #login-screen .dio-land-hero { padding: 18px 30px 18px !important; gap: 10px !important; }
+  #login-screen .dio-land-emblem { width: 46px; height: 46px; margin-bottom: 4px; }
+  #login-screen .dio-land-emblem svg { width: 24px; height: 24px; }
+  #login-screen b.dio-land-title { font-size: 28pt; }
+  #login-screen strong.dio-land-sub { font-size: 14pt; margin-top: 4px; line-height: 1.7; }
+  #login-screen .dio-zikr { height: 168px; padding: 6px 12px 4px; }
+  #login-screen ul.dio-land-feats { gap: 8px; }
+  #login-screen ul.dio-land-feats li { padding: 8px 10px; }
+  #login-screen p.dio-land-lead { line-height: 1.9; font-size: 12pt; }
+  #login-screen .dio-land .login-card { padding: 18px 30px 14px !important; }
+  #login-screen .dio-lc-head { margin-bottom: 10px; }
+  #login-screen .login-methods { margin-bottom: 12px !important; }
+  #login-screen .input-group { margin-bottom: 10px; }
+  #login-screen .login-input { padding: 9px 12px !important; }
+  #login-screen .dio-lc-row { margin: -2px 0 10px !important; }
+  #login-screen .login-btn, #login-screen button.dio-signup-btn { min-height: 44px; }
+  #login-screen .dio-legal-band { padding: 8px 22px 8px; }
+  #login-screen .dio-legal-band .dio-legal, #login-screen .dio-legal-band .dio-legal * { line-height: 1.8 !important; }
 }

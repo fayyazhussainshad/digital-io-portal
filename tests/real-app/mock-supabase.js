@@ -1,6 +1,12 @@
 // Test double for @supabase/supabase-js UMD — the REAL app runs on top of it.
 (function () {
-    window.__opts = { noUpdatePolicy: false, fail: [], silent: [], failCode: '42501', noTable: [] };
+    window.__opts = { noUpdatePolicy: false, fail: [], silent: [], failCode: '42501', noTable: [],
+      // v552: اصل Postgres کی طرح تاریخ کا کالم — 'YYYY-MM-DD' مانتا ہے؛ '14/10/2026' (DD/MM) رد
+      //   (DateStyle MDY: پہلا حصہ مہینہ ہوتا ہے، 12 سے اوپر → 22008)
+      dateCols: { zimni_reports: ['report_date'] },
+      // v552: اصل PostgREST کی طرح نامعلوم کالم پر PGRST204 (صرف ان جدولوں پر جن کا ڈھانچہ یہاں درج ہے)
+      schema: { zimni_reports: ['id', 'case_id', 'serial_no', 'report_date', 'officer_id', 'content', 'created_at', 'updated_at'] },
+      authFail: '' };   // 'net' = سرور تک رسائی نہیں · 'cred' = غلط ای میل/پاس ورڈ
   // v547: ناکامی کی نقل — اصل Supabase کی طرح غلطی پھینکی نہیں جاتی، {error} لوٹتا ہے۔
   //   __opts.fail   = ['recycle_bin:insert', …]  → سرور کا رد (RLS 42501)
   //   __opts.silent = ['reminders:delete', …]   → RLS کی خاموش روک: کوئی غلطی نہیں، 0 قطار
@@ -23,6 +29,24 @@
       // sql چلنے سے پہلے: table ہی نہیں (اصل PostgREST کا جواب)
       if ((window.__opts.noTable || []).includes(st.t))
         return { data: null, error: { message: "Could not find the table 'public." + st.t + "' in the schema cache", code: 'PGRST205' } };
+      if ((st.op === 'insert' || st.op === 'update' || st.op === 'upsert') && st.row && (window.__opts.schema || {})[st.t]) {
+        const cols = window.__opts.schema[st.t];
+        for (const r of (Array.isArray(st.row) ? st.row : [st.row])) {
+          const bad = Object.keys(r).find(k => cols.indexOf(k) === -1);
+          if (bad) return { data: null, error: { message: "Could not find the '" + bad + "' column of '" + st.t + "' in the schema cache", code: 'PGRST204' } };
+        }
+      }
+      if ((st.op === 'insert' || st.op === 'update' || st.op === 'upsert') && st.row && (window.__opts.dateCols || {})[st.t]) {
+        for (const r of (Array.isArray(st.row) ? st.row : [st.row])) {
+          for (const c of window.__opts.dateCols[st.t]) {
+            const v = r[c];
+            if (v == null || /^\d{4}-\d{2}-\d{2}/.test(String(v))) continue;
+            const m = String(v).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            if (!m) return { data: null, error: { message: 'invalid input syntax for type date: "' + v + '"', code: '22007' } };
+            if (+m[1] > 12) return { data: null, error: { message: 'date/time field value out of range: "' + v + '"', code: '22008', hint: 'Perhaps you need a different "datestyle" setting.' } };
+          }
+        }
+      }
       if (st.op !== 'select' && _hit(window.__opts.fail, st.t, st.op))
         return { data: null, error: window.__opts.failCode === '42501'
           ? { message: 'new row violates row-level security policy for table "' + st.t + '"', code: '42501' }
@@ -81,10 +105,16 @@
     auth: {
       getSession: async () => ({ data: { session }, error: null }),
       getUser: async () => ({ data: { user: session.user }, error: null }),
-      refreshSession: async () => ({ data: { session }, error: null }),
+      refreshSession: async () => (window.__opts.authFail === 'net'
+        ? { data: { session: null, user: null }, error: { name: 'AuthRetryableFetchError', message: 'Failed to fetch', status: 0 } }
+        : { data: { session }, error: null }),
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
       signOut: async () => ({ error: null }), startAutoRefresh() {}, stopAutoRefresh() {},
-      signInWithPassword: async () => ({ data: { session, user: session.user }, error: null }),
+      signInWithPassword: async () => {
+        if (window.__opts.authFail === 'net') return { data: { user: null, session: null }, error: { name: 'AuthRetryableFetchError', message: 'Failed to fetch', status: 0 } };
+        if (window.__opts.authFail === 'cred') return { data: { user: null, session: null }, error: { name: 'AuthApiError', message: 'Invalid login credentials', status: 400, code: 'invalid_credentials' } };
+        return { data: { session, user: session.user }, error: null };
+      },
     },
     storage: { from: () => ({ upload: async () => ({ data: {}, error: null }), getPublicUrl: () => ({ data: { publicUrl: '' } }),
       createSignedUrl: async () => ({ data: { signedUrl: '' }, error: null }), remove: async () => ({ data: null, error: null }) }) },

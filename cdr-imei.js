@@ -153,10 +153,24 @@ function _cdrOfficer() {
 }
 
 // آج کی تاریخ DD/MM/YYYY (انگریزی ہندسے — مقامی ترتیب نہیں)
-function _cdrToday() {
-  const d = new Date();
-  return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
+
+const CDR_TAHAL = 'تاحال';
+// «تاحال» کے بعد «تک» نہیں لکھا جاتا («… سے تاحال فراہم کی جائے»)؛ تاریخ ہو تو «… سے … تک»
+function _cdrIsTahal(t) { return String(t || '').replace(/<[^>]*>|&nbsp;/g, '').trim() === CDR_TAHAL; }
+function _cdrTakSync() {
+  const to = document.querySelector('#cdr-doc [data-k="date_to"]');
+  const tak = document.getElementById('cdr-tak');
+  if (to && tak) tak.style.display = _cdrIsTahal(to.textContent) ? 'none' : '';
 }
+window._cdrTakSync = _cdrTakSync;
+function _cdrSetTahal() {
+  const el = document.querySelector('#cdr-doc [data-k="date_to"]');
+  if (!el) return;
+  el.textContent = CDR_TAHAL;
+  _cdrOnInput(el);
+  _cdrBalance();
+}
+window._cdrSetTahal = _cdrSetTahal;
 
 function _cdrFmtDate(d) {
   if (!d) return '';
@@ -198,8 +212,9 @@ function _cdrDefaults() {
     // بجرم = صرف دفعہ (مثلاً 379 ت پ) — جرم کی تفصیل نہیں
     jurm: String(c.section_of_law || '').trim(),
     fir_thana: c.case_station || of.station || '',
-    // CDR کی مدت — پہلے سے: تاریخِ وقوعہ سے آج تک (وقوعہ درج نہ ہو تو FIR کی تاریخ)
-    date_from: _cdrFmtDate(c.occurrence_date) || _cdrFmtDate(c.fir_date), date_to: _cdrToday(),
+    // CDR کی مدت — پہلے سے: تاریخِ وقوعہ سے «تاحال» (وقوعہ درج نہ ہو تو FIR کی تاریخ)۔
+    // v552 (افسر کی ہدایت): دوسری تاریخ فارم بننے کا دن نہیں — «تاحال»؛ افسر چاہے تو تاریخ چن سکتا ہے۔
+    date_from: _cdrFmtDate(c.occurrence_date) || _cdrFmtDate(c.fir_date), date_to: CDR_TAHAL,
     applicant: of.line, applicant_phone: of.phone,
     io_sign: '', dispatch_no: '', dispatch_date: '',
     sho_note1: '', sho_note2: '', sdpo_note1: '', sdpo_note2: '', sp_note1: '', sp_note2: '',
@@ -239,7 +254,7 @@ function _cdrRenderList() {
     const meta = _cdrMeta(r);
     const f = (meta && meta.f) || {};
     const nums = (r.rows || []).filter(x => x && !x._form && String(x.req || '').trim()).length;
-    const range = (strip(f.date_from) || strip(f.date_to)) ? `${strip(f.date_from) || '—'} سے ${strip(f.date_to) || '—'} تک` : '';
+    const range = (strip(f.date_from) || strip(f.date_to)) ? (_cdrIsTahal(f.date_to) ? `${strip(f.date_from) || '—'} سے تاحال` : `${strip(f.date_from) || '—'} سے ${strip(f.date_to) || '—'} تک`) : '';
     const no = total - i;   // پہلی بنی = 1
     return `
     <div class="cdr-li" onclick="_cdrOpen('${esc(String(r.id))}')">
@@ -250,7 +265,10 @@ function _cdrRenderList() {
           ${meta && meta.saved_at && _cdrFmtStamp(meta.saved_at) !== _cdrFmtStamp(r.created_at) ? ` · آخری محفوظ: <bdi dir="ltr">${esc(_cdrFmtStamp(meta.saved_at))}</bdi>` : ''}</div>
         <div class="cdr-li-s">نمبرز: <bdi dir="ltr">${nums}</bdi>${range ? ' · مدت: <bdi>' + esc(range) + '</bdi>' : ''}</div>
       </div>
-      <button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation();_cdrOpen('${esc(String(r.id))}')">کھولیں</button>
+      <div class="cdr-li-act">
+        <button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation();_cdrOpen('${esc(String(r.id))}')">کھولیں</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="event.stopPropagation();_cdrPrintById('${esc(String(r.id))}')" title="یہ CDR درخواست پرنٹ کریں">🖨️ پرنٹ</button>
+      </div>
     </div>`;
   }).join('');
 
@@ -278,6 +296,7 @@ function _cdrRenderList() {
     .cdr-li-s{ font-size:10.5pt; color:var(--text-muted); }
     .cdr-li-s bdi{ font-family:Arial,sans-serif; font-size:9.5pt; margin:0 5px; white-space:pre; }
     .cdr-li-pend{ font-size:9.5pt; color:#b45309; font-weight:700; margin-right:6px; }
+    .cdr-li-act{ display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
   </style>`;
 }
 window._cdrRenderList = _cdrRenderList;
@@ -382,6 +401,7 @@ function _renderCdr() {
           <span class="cdr-cal" title="کس تاریخ سے — تاریخ چنیں">📅<input type="date" class="cdr-date-in" data-for="date_from" value="${_cdrIso(val('date_from'))}" onclick="try{this.showPicker()}catch(_){ /* picker na ho to koi baat nahi */ }" onchange="_cdrSetDate('date_from', this.value)" aria-label="CDR کس تاریخ سے"></span>
           تک
           <span class="cdr-cal" title="کس تاریخ تک — تاریخ چنیں">📅<input type="date" class="cdr-date-in" data-for="date_to" value="${_cdrIso(val('date_to'))}" onclick="try{this.showPicker()}catch(_){ /* picker na ho to koi baat nahi */ }" onchange="_cdrSetDate('date_to', this.value)" aria-label="CDR کس تاریخ تک"></span>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="_cdrSetTahal()" title="دوسری تاریخ کی جگہ «تاحال»" style="padding:2px 8px;">تاحال</button>
         </span>
         <button type="button" class="btn btn-primary btn-sm dio-modbtn" onclick="_saveCdr()">محفوظ کریں</button>
       </div>
@@ -409,7 +429,7 @@ function _renderCdr() {
         <div class="cdr-body">
           <b>جناب عالی!</b>&nbsp; گزارش ہے کہ مقدمہ عنوان بالا کی تفتیش کے لیے مندرجہ ذیل موبائل نمبروں/${EN('IMEI')} نمبروں کی ${EN('CDR')}<br>
           مورخہ ${F('date_from', 0, '')} سے ${F('date_to', 0, '')}
-          تک فراہم کی جائے تاکہ اصل حقائق کی روشنی میں مقدمہ عنوان بالا کو یکسو کیا جا سکے۔
+          <span id="cdr-tak"${_cdrIsTahal(val('date_to')) ? ' style="display:none"' : ''}>تک</span> فراہم کی جائے تاکہ اصل حقائق کی روشنی میں مقدمہ عنوان بالا کو یکسو کیا جا سکے۔
         </div>
 
         <div class="cdr-numhead">موبائل نمبر/${EN('IMEI')} نمبر:۔</div>
@@ -639,6 +659,7 @@ function _cdrOnInput(el) {
   if (k === 'date_from' || k === 'date_to') {
     const inp = document.querySelector('.cdr-date-in[data-for="' + k + '"]');
     if (inp) inp.value = _cdrIso(t);
+    if (k === 'date_to') _cdrTakSync();
   }
 }
 window._cdrOnInput = _cdrOnInput;
@@ -775,6 +796,21 @@ function _cdrMarkChipDone() {
 
 // ── چھپائی — صرف براؤزر کی اپنی چھپائی (بالکل Ctrl+P جیسی)۔ پرانا iframe
 //    والا طریقہ ہٹا دیا گیا (اس میں صفحہ کھسک کر کٹ جاتا تھا)۔ ──
+// v552: فہرست سے سیدھا پرنٹ — درخواست کھول کر وہی کاغذ چھپتا ہے جو «کھولیں» پر نظر آتا
+//   ہے (اسی _printCdr سے، ایک ہی راستہ)؛ پرنٹ کے بعد فہرست واپس۔
+function _cdrPrintById(id) {
+  const r = _cdrList.find(x => String(x.id) === String(id));
+  if (!r) { if (typeof showToast === 'function') showToast('درخواست نہیں ملی', 'error'); return; }
+  if (window.DIO && DIO.sub && !DIO.sub.guard('پرنٹ')) return;
+  _cdrISaved = r; _cdrDirty = false;
+  _renderCdr();
+  const back = () => { window.removeEventListener('afterprint', back); setTimeout(() => { try { if (!_cdrDirty) _cdrRenderList(); } catch (_) { /* fehrist */ } }, 150); };
+  const go = () => { try { _cdrBalance(); } catch (_) { /* naap */ } window.addEventListener('afterprint', back); _printCdr(); };
+  try { if (document.fonts && document.fonts.ready) { document.fonts.ready.then(() => setTimeout(go, 150)); return; } } catch (_) { /* purana browser */ }
+  setTimeout(go, 400);
+}
+window._cdrPrintById = _cdrPrintById;
+
 function _printCdr() {
   if (!document.getElementById('cdr-doc')) { if (typeof showToast === 'function') showToast('پہلے کوئی CDR درخواست کھولیں', 'info'); return; }
   if (window.DIO && DIO.sub && !DIO.sub.guard('پرنٹ')) return;

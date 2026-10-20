@@ -250,6 +250,17 @@ const offlineStore={
   async _runOp(sb,item){
     const {table,op,data,tempId}=item;
 
+    // v552: ضمنی کا اپنا مقامی ذخیرہ اور اپنا sync ہے (zimni.js → _zimniSyncPending)۔
+    //   پرانی قطار کے ضمنی اندراج یہاں سے نہیں بھیجے جاتے — ورنہ ایک ہی ضمنی دو بار
+    //   جا سکتی تھی، اور پرانی قطار میں تاریخ DD/MM شکل میں تھی جو سرور رد کرتا ہے۔
+    //   مواد اسی آلے پر پہلے سے محفوظ ہے؛ ترمیم والے اندراج کو «sync باقی» نشان۔
+    if(table==='zimni_reports'){
+      try{ if(op==='update' && data && data.id && typeof window._zimniMarkPending==='function') window._zimniMarkPending(data.case_id, data.id); }
+      catch(_){ /* nishan na lag sake to bhi qatar saaf */ }
+      try{ if(typeof window._zimniSyncPending==='function') setTimeout(function(){ window._zimniSyncPending(); }, 1500); }catch(_){ /* baad mein */ }
+      return;
+    }
+
     // ── INSERT ──────────────────────────────────────────────
     if(op==='insert'){
       const payload={...data};

@@ -396,31 +396,17 @@
 
 /* ────────────────────────────────────────────────────────────────
    5. CHHAPAI — mobile ka koi asar NA ho (kaghaz bilkul A4/Legal)
+   v552: Upar ke tamam mobile qaide `@media screen` ke andar hain — chhapai
+   par woh lagte hi nahi. Pehle yahan `border: revert` / `padding: revert`
+   wapas lagaye jate the. Masla: chhapai ke waqt safha kaghaz ki chaurai
+   (~816px) par hota hai, jo 900px se kam hai — is liye mobile.js `dio-mform`
+   laga deta, aur `border: revert` ضمنی ke khanon ki lakeeren MITA deta
+   (browser ki apni default = koi lakeer nahi)। Isi se Ctrl+P / menu ki
+   chhapai mein کالم کی لکیریں غائب ہو جاتی تھیں۔ `revert` ka tareeqa
+   pehle hi mamnoo hai (v397)। Ab chhapai mein SIRF mobile ke zaid button
+   chhupte hain — kaghaz ki shakl ضمنی/چالان ki apni CSS tay karti hai.
    ──────────────────────────────────────────────────────────────── */
 @media print {
-  html.dio-mform #ch173-doc.zf-editor,
-  html.dio-mform #r173-doc { width: auto !important; max-width: none !important;
-    padding: revert !important; box-shadow: none !important; background: #fff !important;
-    font-size: revert !important; line-height: 1.4 !important; }
-  html.dio-mform #ch173-doc.zf-editor table.zf-tbl { display: table !important; }
-  html.dio-mform #ch173-doc.zf-editor table.zf-tbl thead { display: table-header-group !important; }
-  html.dio-mform #ch173-doc.zf-editor table.zf-tbl tbody { display: table-row-group !important; }
-  html.dio-mform #ch173-doc.zf-editor table.zf-tbl tr { display: table-row !important;
-    background: none !important; border: 0 !important; border-radius: 0 !important;
-    margin: 0 !important; padding: 0 !important; box-shadow: none !important; }
-  html.dio-mform #ch173-doc.zf-editor table.zf-tbl td { display: table-cell !important;
-    border: revert !important; padding: revert !important; }
-  html.dio-mform #ch173-doc.zf-editor tr.zf-blk td.zf-c-serial { position: static !important; }
-  html.dio-mform #ch173-doc.zf-editor tr.zf-blk .zf-num { background: none !important; color: #000 !important;
-    border-radius: 0 !important; height: auto !important; line-height: revert !important;
-    min-width: 0 !important; font-weight: revert !important; }
-  html.dio-mform #ch173-doc.zf-editor td::before { content: none !important; }   /* mobile lebal na chhapein */
-  html.dio-mform #ch173-doc.zf-editor .zf-body,
-  html.dio-mform #ch173-doc.zf-editor .zf-actbody,
-  html.dio-mform #ch173-doc.zf-editor .zf-bdyln { border: 0 !important; background: none !important;
-    padding: revert !important; min-height: 0 !important; font-size: revert !important;
-    line-height: revert !important; }
-  html.dio-mform #ch173-doc.zf-editor .zf-gap { display: block !important; }
   .dio-mbar, .dio-addblk, .dio-thumbbar { display: none !important; }
 }
 

@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_VER = 'zimni v34 — main+sub ضمنی dropdowns, global Ctrl+H, ضمنی spelling';
+const ZIMNI_VER = 'zimni v35 (v552) — offline-first save + autosave + sync, own print path, title = ذیلی ضمنی';
 window.ZIMNI_VER = ZIMNI_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -22,6 +22,8 @@ async function openZimniEditor(caseId) {
   }
   await _loadZimni();
   _renderZimniList();
+  // v552: اس مقدمے کی جو ضمنیاں ابھی صرف آلے پر ہیں — سرور پر بھیجو
+  try { if (navigator.onLine && _zimniList.some(_zimniIsPending)) setTimeout(() => { _zimniSyncPending([_zimniCaseId]); }, 300); } catch (_) { /* baad mein */ }
 }
 
 // دوبارہ کوشش — DB ٹوٹنے کے بعد error کارڈ کا "🔄 دوبارہ کوشش" بٹن اسے پکارتا ہے
@@ -89,17 +91,76 @@ function _zimniMissingCol(e) {
   } catch (_) { return ''; }
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  v552 — تاریخ، غلطی کی پہچان (محفوظ نہ ہونے کی اصل وجہ)
+//  اصل خرابی: کالم 1 کی تاریخ (مثلاً 14/10/2026) سیدھی report_date میں جاتی تھی۔
+//  ڈیٹابیس کا تاریخ والا کالم یہ شکل (DD/MM) نہیں مانتا — جس دن تاریخ 12 سے
+//  اوپر ہو وہ رد کرتا۔ پرانا کوڈ اصل غلطی چھپا کر آخری آزمائے گئے کالم کا نام
+//  دکھاتا تھا: «Could not find the 'zimni_content' column … PGRST204»۔
+//  اب report_date ہمیشہ YYYY-MM-DD، اور پیغام میں اصل وجہ۔
+// ═══════════════════════════════════════════════════════════════
+function _zimniDigits(s) {
+  // اردو/عربی ہندسے → انگریزی (افسر ۱۴/۱۰/۲۰۲۶ بھی لکھ سکتا ہے)
+  return String(s == null ? '' : s)
+    .replace(/[۰-۹]/g, d => String(d.charCodeAt(0) - 0x06F0))
+    .replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 0x0660));
+}
+// متن میں پہلی DD/MM/YYYY تاریخ → { iso:'YYYY-MM-DD', dmy:'DD/MM/YYYY' } یا null
+function _zimniFindDate(txt) {
+  const m = _zimniDigits(txt).match(/(\d{1,2})\s*[/\-.]\s*(\d{1,2})\s*[/\-.]\s*(\d{4})/);
+  if (!m) return null;
+  const d = parseInt(m[1], 10), mo = parseInt(m[2], 10), y = parseInt(m[3], 10);
+  if (!(d >= 1 && d <= 31 && mo >= 1 && mo <= 12 && y >= 1900 && y <= 2200)) return null;
+  const dd = String(d).padStart(2, '0'), mm = String(mo).padStart(2, '0');
+  return { iso: y + '-' + mm + '-' + dd, dmy: dd + '/' + mm + '/' + y };
+}
+window._zimniFindDate = _zimniFindDate;
+// آج کی مقامی تاریخ YYYY-MM-DD (UTC نہیں — رات 7 بجے کے بعد UTC اگلا/پچھلا دن دیتا)
+function _zimniTodayIso() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+// انٹرنیٹ/سرور تک نہ پہنچنا (رد نہیں)
+function _zimniIsNetErr(e) {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return true;
+  const m = String((e && (e.message || e)) || '');
+  return /Failed to fetch|NetworkError|Load failed|network|timeout|ERR_|fetch/i.test(m) && !(e && e.code && /^\d{5}$|^PGRST/.test(String(e.code)));
+}
+// ڈیٹابیس کی غلطی → افسر کے لیے صاف اردو وجہ
+function _zimniErrText(e) {
+  if (!e) return 'نامعلوم وجہ';
+  const code = String(e.code || ''), msg = String(e.message || e || '');
+  if (_zimniIsNetErr(e)) return 'انٹرنیٹ یا سرور سے رابطہ نہیں ہو سکا';
+  if (code === '42501' || /row-level security|permission denied/i.test(msg)) return 'سرور نے اجازت نہیں دی (سبسکرپشن/مقدمہ کی اجازت چیک کریں)';
+  if (code === '22007' || code === '22008' || /date\/time|invalid input syntax for type date/i.test(msg)) return 'تاریخ کی شکل سرور نے قبول نہیں کی';
+  if (code === '23505') return 'اسی نمبر کی ضمنی سرور پر پہلے سے موجود ہے';
+  if (code === '23502') return 'سرور کا کوئی لازمی خانہ خالی ہے (' + msg.replace(/^.*column "([^"]+)".*$/, '$1') + ')';
+  if (code === 'PGRST204' || code === '42703') return 'سرور کے ڈیٹابیس میں ضمنی کا خانہ نہیں ملا (' + (_zimniMissingCol(e) || msg) + ')';
+  if (code === 'PGRST205' || code === '42P01') return 'سرور پر ضمنیات کی جدول نہیں ملی';
+  if (code === 'DIO_NOCOL' || code === 'DIO_NOROW') return msg;
+  return msg + (code ? ' — code ' + code : '');
+}
+window._zimniErrText = _zimniErrText;
+
 // محفوظ کرو — کالم کا نام خود ڈھونڈتے ہوئے
+//  v552: (1) report_date ہمیشہ YYYY-MM-DD؛ تاریخ کی غلطی پر بغیر تاریخ ایک بار اور۔
+//        (2) «اصل» غلطی یاد رہے — کالم کے نام کی تلاش والی PGRST204 غلطیاں اسے چھپا نہ دیں۔
 async function _zimniWrite(base, contentObj, id) {
   const tried = new Set();
   const cands = [_zimniColPref(), ...ZIMNI_CONTENT_COLS].filter(c => c && !tried.has(c) && (tried.add(c) || true));
   const payloadBase = Object.assign({}, base);
+  if (payloadBase.report_date) {
+    const fd = _zimniFindDate(payloadBase.report_date);
+    if (fd) payloadBase.report_date = fd.iso;
+    else if (!/^\d{4}-\d{2}-\d{2}$/.test(String(payloadBase.report_date))) payloadBase.report_date = _zimniTodayIso();
+  }
   let lastErr = null;
+  const isColErr = (e, col) => e && e.code === 'PGRST204' && _zimniMissingCol(e) === col;
 
   for (let ci = 0; ci < cands.length; ci++) {
     const col = cands[ci];
     // ایک ہی کالم کے ساتھ چند بار — دوسرے غائب کالم ہٹاتے ہوئے
-    for (let g = 0; g < 6; g++) {
+    for (let g = 0; g < 8; g++) {
       const rec = Object.assign({}, payloadBase);
       rec[col] = contentObj;
       try {
@@ -107,14 +168,25 @@ async function _zimniWrite(base, contentObj, id) {
         if (id) res = await supabaseClient.from('zimni_reports').update(rec).eq('id', id).select();
         else    res = await supabaseClient.from('zimni_reports').insert(rec).select();
         if (res.error) throw res.error;
+        // update پر 0 قطار = سرور پر ریکارڈ نہیں / اجازت نہیں (خاموش RLS)
+        if (id && Array.isArray(res.data) && !res.data.length) {
+          const er = new Error('سرور پر یہ ضمنی نہیں ملی یا ترمیم کی اجازت نہیں'); er.code = 'DIO_NOROW'; throw er;
+        }
         _zimniColSet(col);
         return (res.data && res.data[0]) || Object.assign({ id: id || ('tmp_' + Date.now()) }, rec);
       } catch (e) {
         lastErr = e;
+        if (_zimniIsNetErr(e)) throw e;                    // انٹرنیٹ نہیں — باقی نام آزمانا بے کار
+        if (e && e.code === 'DIO_NOROW') throw e;
+        if (isColErr(e, col)) break;                       // یہ کالم نہیں — اگلا نام آزماؤ
         if (e && e.code === 'PGRST204') {
           const miss = _zimniMissingCol(e);
-          if (miss && miss === col) break;                 // یہ کالم نہیں — اگلا نام آزماؤ
           if (miss && miss in payloadBase) { delete payloadBase[miss]; continue; }  // فالتو کالم ہٹا کر دوبارہ
+        }
+        // تاریخ کی شکل رد — بغیر تاریخ دوبارہ (مواد میں تاریخ پھر بھی محفوظ رہتی ہے)
+        if (e && (e.code === '22007' || e.code === '22008' || /date\/time|type date/i.test(String(e.message || '')))
+              && 'report_date' in payloadBase) {
+          delete payloadBase.report_date; continue;
         }
         // JSON کالم نہ ہو تو سادہ HTML متن کے طور پر ایک بار آزماؤ
         if (e && (e.code === '22P02' || /invalid input syntax|json/i.test(String(e.message || '')))
@@ -129,46 +201,60 @@ async function _zimniWrite(base, contentObj, id) {
             lastErr = r2.error;
           } catch (e2) { lastErr = e2; }
         }
-        break;
+        // غلطی کالم کے نام کی نہیں — دوسرے نام آزمانا بے کار، اصل وجہ فوراً دکھاؤ
+        throw lastErr;
       }
     }
+  }
+  if (lastErr && lastErr.code === 'PGRST204') {
+    const er = new Error('سرور کی جدول zimni_reports میں ضمنی کا متن رکھنے والا کوئی کالم نہیں ملا'); er.code = 'DIO_NOCOL'; throw er;
   }
   throw lastErr || new Error('محفوظ نہ ہو سکی');
 }
 window._zimniWrite = _zimniWrite;
 
+// v552: مقامی ریکارڈ جو ابھی سرور تک نہیں گیا (نیا آف لائن، یا سرور کے ریکارڈ میں آف لائن ترمیم)
+function _zimniIsPending(z) {
+  return !!(z && (z._pending || String(z.id || '').startsWith('local-') || String(z.id || '').startsWith('tmp_')));
+}
+window._zimniIsPending = _zimniIsPending;
+function _zimniLocalGet(caseId) {
+  try { const a = JSON.parse(localStorage.getItem('dio_zimni_' + caseId) || '[]'); return Array.isArray(a) ? a : []; }
+  catch (_) { return []; }
+}
+function _zimniLocalPut(caseId, list) {
+  try { localStorage.setItem('dio_zimni_' + caseId, JSON.stringify(list || [])); return true; }
+  catch (e) { if (typeof dioLogError === 'function') dioLogError('zimni: local list save nakaam', e); return false; }
+}
+
 async function _loadZimni() {
   // مقامی نقل ہمیشہ ہاتھ میں رکھو (آف لائن یا ناکام محفوظ والی ضمنیاں ضائع نہ ہوں)
-  let local = [];
-  try { local = JSON.parse(localStorage.getItem('dio_zimni_' + _zimniCaseId) || '[]'); } catch (_) { local = []; }
+  const local = _zimniLocalGet(_zimniCaseId);
 
   if (!navigator.onLine) { _zimniList = local; return; }
 
   // ═══ ڈیٹابیس کا ڈھانچہ ہی نہ ملے تو بار بار کوشش نہ کرو ═══
-  // (کنسول میں درجنوں 400 آ رہے تھے۔ ایک بار ناکامی کے بعد مقامی نقل پر
-  //  چلو اور افسر کو ایک بار صاف پیغام دو۔)
+  // v552: صرف ڈھانچے کی غلطی پر (کالم/جدول نہیں) — عارضی انٹرنیٹ خرابی پر
+  //   پورے سیشن کے لیے «ٹوٹا» نشان نہیں لگتا (پہلے ایک بار نیٹ ٹوٹتے ہی ہر ضمنی
+  //   صرف کمپیوٹر پر رہ جاتی اور سرور پر جاتی ہی نہیں تھی)۔
   if (window._zimniDbBroken) { _zimniList = local; return; }
 
   let rows = null;
   try {
-    // 'serial_no' یا 'case_id' کالم نہ ہو تو query خود 400 دیتی ہے —
-    // اسی لیے پہلے ترتیب کے ساتھ، پھر بغیر ترتیب، پھر بغیر چھانٹی۔
-    // ═══ SECURITY: unscoped fallback (.limit(50) without case_id) REMOVED ═══
-    // Pehle agar 'serial_no' order query fail hoti to code bina case_id ke
-    // 50 rows le aata tha — jo doosre مقدمات ka data leak kar sakta tha.
-    // Ab sirf case-scoped queries — error par safai se local cache par jao.
+    // ═══ SECURITY: صرف اس مقدمے کی ضمنیاں (case_id) — کبھی بغیر چھانٹی نہیں ═══
     let r = await supabaseClient.from('zimni_reports').select('*')
       .eq('case_id', _zimniCaseId).order('serial_no', { ascending: true });
-    if (r.error) r = await supabaseClient.from('zimni_reports').select('*').eq('case_id', _zimniCaseId);
+    if (r.error && !_zimniIsNetErr(r.error)) r = await supabaseClient.from('zimni_reports').select('*').eq('case_id', _zimniCaseId);
     if (r.error) throw r.error;
     rows = r.data || [];
   } catch (e) {
-    window._zimniDbBroken = true;
-    try { console.error('[zimni load] zimni_reports کا ڈھانچہ درست نہیں:', e); } catch (_) { /* console na ho to bhi na phatte */ }
-    if (!window._zimniDbWarned) {
+    const schema = e && /^(PGRST204|PGRST205|42703|42P01)$/.test(String(e.code || ''));
+    if (schema) window._zimniDbBroken = true;
+    try { console.error('[zimni load]', e); } catch (_) { /* console na ho to bhi na phatte */ }
+    if (schema && !window._zimniDbWarned) {
       window._zimniDbWarned = true;
       try {
-        showToast('ڈیٹابیس میں zimni_reports کے کالم درست نہیں — ضمنیاں فی الحال اسی کمپیوٹر پر محفوظ ہو رہی ہیں', 'warn', 9000);
+        showToast('سرور پر ضمنیات کا ڈھانچہ نہیں ملا (' + _zimniErrText(e) + ') — ضمنیاں فی الحال اسی آلے پر محفوظ ہو رہی ہیں', 'warn', 9000);
       } catch (_) { /* paigham na dikh sake to koi baat nahi */ }
     }
     _zimniList = local;
@@ -176,13 +262,256 @@ async function _loadZimni() {
   }
 
   const fromDb = rows.map(r => Object.assign({}, r, { content: _zimniContentOf(r) }));
+  // v552: مقامی ترمیم جو ابھی سرور تک نہیں گئی (اسی id کی) — سرور کی پرانی نقل
+  //   اسے مٹا نہ دے؛ مقامی (تازہ) ہی رہے اور sync ہو۔
+  const pendById = {};
+  local.forEach(z => { if (z && z._pending && z.id != null) pendById[String(z.id)] = z; });
+  const merged = fromDb.map(r => {
+    const p = pendById[String(r.id)];
+    if (!p) return r;
+    const ls = String((p.content || {}).saved_at || ''), ss = String((r.content || {}).saved_at || '');
+    return (ls && ls >= ss) ? p : r;
+  });
   // ڈیٹابیس میں نہ پہنچنے والے مقامی اندراج بھی ساتھ رکھو
   const ids = new Set(fromDb.map(r => String(r.id)));
-  const onlyLocal = local.filter(z => String(z.id).startsWith('local-') && !ids.has(String(z.id)));
-  _zimniList = fromDb.concat(onlyLocal)
+  const onlyLocal = local.filter(z => z && _zimniIsPending(z) && !ids.has(String(z.id)));
+  _zimniList = merged.concat(onlyLocal)
     .sort((a, b) => (parseInt(b.serial_no, 10) || 0) - (parseInt(a.serial_no, 10) || 0));
-  try { localStorage.setItem('dio_zimni_' + _zimniCaseId, JSON.stringify(_zimniList)); } catch (_) { if (typeof dioLogError === 'function') dioLogError('zimni: local list save nakaam', _); }
+  _zimniLocalPut(_zimniCaseId, _zimniList);
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  v552 — SYNC: آلے پر محفوظ (sync باقی) ضمنیاں سرور پر بھیجو
+//  آف لائن پہلے، پھر انٹرنیٹ آتے ہی خود — کسی بھی مقدمے کی، کسی بھی صفحے سے۔
+//  دوہرا اندراج نہیں: نئی ضمنی بھیجنے سے پہلے دیکھا جاتا ہے کہ سرور پر اسی مقدمے
+//  کی اسی نمبر والی ضمنی اسی «محفوظ کرنے کے وقت» کے ساتھ پہلے سے تو نہیں۔
+// ═══════════════════════════════════════════════════════════════
+let _zimniSyncBusy = false;
+function _zimniPendingCaseIds() {
+  const out = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i) || '';
+      const m = /^dio_zimni_(.+)$/.exec(k);
+      if (!m || /^(col|types_|draft_)/.test(m[1])) continue;
+      const list = _zimniLocalGet(m[1]);
+      if (list.some(_zimniIsPending)) out.push(m[1]);
+    }
+  } catch (_) { /* storage na ho to kuch nahi */ }
+  return out;
+}
+async function _zimniSyncOne(caseId, z) {
+  const c = z.content || {};
+  const base = { case_id: caseId, serial_no: z.serial_no, report_date: z.report_date || _zimniTodayIso() };
+  try {
+    const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
+    if (oid) base.officer_id = oid;
+  } catch (_) { /* officer id na mile to bhi aage */ }
+  let serverId = (!String(z.id).startsWith('local-') && !String(z.id).startsWith('tmp_')) ? z.id : null;
+  if (!serverId) {
+    // پہلے بھیجی جا چکی؟ (جواب راستے میں ٹوٹ گیا ہو) — اسی نمبر + اسی وقت والی ڈھونڈو
+    try {
+      const r = await supabaseClient.from('zimni_reports').select('*').eq('case_id', caseId).eq('serial_no', z.serial_no);
+      const hit = (r && r.data || []).find(x => String((_zimniContentOf(x) || {}).saved_at || '') === String(c.saved_at || ''));
+      if (hit) serverId = hit.id;
+    } catch (_) { /* talaash na ho saki — naya bana do */ }
+  }
+  const saved = await _zimniWrite(base, c, serverId);
+  return Object.assign({}, saved, { content: c, _pending: false, _sync_err: '' });
+}
+// ایک ہی ضمنی دو راستوں (Ctrl+S اور خودکار sync) سے ایک ساتھ نہ جائے
+const _zimniInFlight = new Set();
+// sync کے بعد تازہ مقامی فہرست میں صرف وہی ضمنی بدلو (اس دوران افسر نے ترمیم کی ہو تو وہ نہ مٹے)
+function _zimniRekeyDraft(caseId, oldId, newId) {
+  if (String(oldId) === String(newId)) return;
+  try {
+    const o = _zimniDrafts(caseId);
+    if (o['id:' + oldId]) { o['id:' + newId] = Object.assign({}, o['id:' + oldId], { key: 'id:' + newId, zimni_id: newId }); delete o['id:' + oldId]; _zimniDraftsPut(caseId, o); }
+  } catch (_) { /* draft na ho to kuch nahi */ }
+}
+function _zimniMergeSynced(list, oldId, sentSavedAt, nz) {
+  const j = list.findIndex(x => String(x.id) === String(oldId));
+  if (j < 0) return false;
+  const cur = list[j];
+  if (String((cur.content || {}).saved_at || '') === String(sentSavedAt || '')) list[j] = nz;
+  else list[j] = Object.assign({}, cur, { id: nz.id, _pending: true });   // نئی ترمیم باقی — اگلی بار update
+  return true;
+}
+async function _zimniSyncPending(caseIds) {
+  if (_zimniSyncBusy) return 0;
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return 0;
+  if (typeof supabaseClient === 'undefined' || !supabaseClient) return 0;
+  // بغیر سیشن (آف لائن لاگ اِن) سرور «اجازت نہیں» کہے گا — انتظار کرو
+  try { const s = await supabaseClient.auth.getSession(); if (!s || !s.data || !s.data.session) return 0; } catch (_) { return 0; }
+  _zimniSyncBusy = true;
+  let done = 0, failed = 0, lastWhy = '', again = false;
+  try {
+    for (const cid of (caseIds || _zimniPendingCaseIds())) {
+      const snapshot = _zimniLocalGet(cid).filter(_zimniIsPending);
+      for (const z of snapshot) {
+        if (_zimniInFlight.has(String(z.id))) continue;
+        _zimniInFlight.add(String(z.id));
+        const sentAt = (z.content || {}).saved_at || '';
+        try {
+          const nz = await _zimniSyncOne(cid, z);
+          _zimniRekeyDraft(cid, z.id, nz.id);
+          const fresh = _zimniLocalGet(cid);
+          _zimniMergeSynced(fresh, z.id, sentAt, nz);
+          _zimniLocalPut(cid, fresh);
+          if (String(cid) === String(_zimniCaseId)) {
+            _zimniMergeSynced(_zimniList, z.id, sentAt, nz);
+            if (_zimniActive && String(_zimniActive.id) === String(z.id)) {
+              _zimniActive = Object.assign({}, _zimniActive, { id: nz.id });
+              if (String((_zimniActive.content || {}).saved_at || '') === String(sentAt)) _zimniActive._pending = false;
+            }
+          }
+          if (fresh.some(x => String(x.id) === String(nz.id) && x._pending)) again = true;
+          done++;
+        } catch (e) {
+          if (_zimniIsNetErr(e)) return done;   // نیٹ پھر ٹوٹ گیا — بعد میں (مقامی نقل جوں کی توں)
+          failed++; lastWhy = _zimniErrText(e);
+          const fresh = _zimniLocalGet(cid);
+          const j = fresh.findIndex(x => String(x.id) === String(z.id));
+          if (j >= 0) { fresh[j] = Object.assign({}, fresh[j], { _pending: true, _sync_err: lastWhy }); _zimniLocalPut(cid, fresh); }
+          if (String(cid) === String(_zimniCaseId)) {
+            const k = _zimniList.findIndex(x => String(x.id) === String(z.id));
+            if (k >= 0) _zimniList[k] = Object.assign({}, _zimniList[k], { _sync_err: lastWhy });
+          }
+        } finally { _zimniInFlight.delete(String(z.id)); }
+      }
+    }
+  } finally { _zimniSyncBusy = false; }
+  try {
+    if (done) showToast(done + ' ضمنی سرور پر محفوظ (sync) ہو گئیں', 'success', 4000);
+    if (failed) showToast(failed + ' ضمنی سرور پر نہیں گئیں — وجہ: ' + lastWhy + ' (اس آلے پر محفوظ ہیں)', 'error', 9000);
+  } catch (_) { /* paigham na dikh sake to koi baat nahi */ }
+  try { if ((done || failed) && document.querySelector('.zt-wrap')) _renderZimniList(); } catch (_) { /* list khuli na ho to kuch nahi */ }
+  if (again) setTimeout(() => { _zimniSyncPending(); }, 1500);
+  return done;
+}
+window._zimniSyncPending = _zimniSyncPending;
+// پرانی آف لائن قطار (offline-store) سے: اس ضمنی کی مقامی نقل «sync باقی»
+function _zimniMarkPending(caseId, id) {
+  const ids = caseId ? [String(caseId)] : _zimniPendingCaseIds().concat(Object.keys(localStorage).map(k => (/^dio_zimni_(.+)$/.exec(k) || [])[1]).filter(Boolean));
+  for (const cid of ids) {
+    if (/^(col|types_|draft_)/.test(cid)) continue;
+    const list = _zimniLocalGet(cid);
+    const j = list.findIndex(x => String(x.id) === String(id));
+    if (j >= 0 && !list[j]._pending) { list[j]._pending = true; _zimniLocalPut(cid, list); return true; }
+  }
+  return false;
+}
+window._zimniMarkPending = _zimniMarkPending;
+window.addEventListener('online', () => { window._zimniDbBroken = false; setTimeout(() => { _zimniSyncPending(); }, 2500); });
+setTimeout(() => { try { if (navigator.onLine) _zimniSyncPending(); } catch (_) { /* boot par na ho sake to baad mein */ } }, 6000);
+
+// ═══════════════════════════════════════════════════════════════
+//  v552 — خودکار مسودہ (Autosave): لکھتے ہی ہر چند سیکنڈ بعد اسی آلے پر محفوظ۔
+//  لیپ ٹاپ/موبائل اچانک بند ہو، بجلی جائے یا ٹیب بند ہو — لکھا ہوا ضائع نہیں۔
+//  مسودہ سرور پر نہیں جاتا (عدالتی ریکارڈ میں آدھی لکھی ضمنی نہ جائے) — افسر
+//  «محفوظ» / Ctrl+S دبائے تو ضمنی بنتی ہے اور مسودہ ختم۔
+// ═══════════════════════════════════════════════════════════════
+function _zimniDraftKey(caseId) { return 'dio_zimni_draft_' + caseId; }
+function _zimniDrafts(caseId) {
+  try { const o = JSON.parse(localStorage.getItem(_zimniDraftKey(caseId || _zimniCaseId)) || '{}'); return (o && typeof o === 'object') ? o : {}; }
+  catch (_) { return {}; }
+}
+function _zimniDraftsPut(caseId, o) {
+  try {
+    const k = _zimniDraftKey(caseId || _zimniCaseId);
+    if (o && Object.keys(o).length) localStorage.setItem(k, JSON.stringify(o)); else localStorage.removeItem(k);
+    return true;
+  } catch (_) { return false; }
+}
+// کھلی ضمنی کا مسودہ کس چابی پر
+function _zimniActiveDraftKey() {
+  const z = _zimniActive || {};
+  if (z.id) return 'id:' + z.id;
+  if (!z._draftKey) z._draftKey = 'new:' + Date.now();
+  return z._draftKey;
+}
+function _zimniWriteDraft() {
+  const ed = _zimniDoc();
+  if (!ed || !ed.querySelector('.zf-tbl') || !_zimniActive) return false;
+  try { _zimniSyncSignDate(); } catch (_) { /* ikhtiyari */ }
+  const o = _zimniDrafts();
+  const key = _zimniActiveDraftKey();
+  o[key] = {
+    key, zimni_id: _zimniActive.id || null,
+    serial_no: _zimniActive.serial_no || null,
+    bodyHtml: _zimniCleanHTML(ed.innerHTML),
+    main_type: String((document.getElementById('zf-main-type') || {}).value || '').replace('__add__', ''),
+    sub_type: String((document.getElementById('zf-sub-type') || {}).value || '').replace('__add__', ''),
+    saved_at: new Date().toISOString(),
+  };
+  const ok = _zimniDraftsPut(_zimniCaseId, o);
+  if (ok) {
+    const el = document.getElementById('zf-autosave');
+    if (el) el.textContent = 'خودکار محفوظ (اس آلے پر): ' + _zimniFmtStamp(o[key].saved_at);
+  }
+  return ok;
+}
+window._zimniWriteDraft = _zimniWriteDraft;
+function _zimniClearDraft(key) {
+  const o = _zimniDrafts();
+  if (key && o[key]) { delete o[key]; _zimniDraftsPut(_zimniCaseId, o); }
+}
+// لکھائی پر نظر: 1.5 سیکنڈ رکنے پر مسودہ؛ صفحہ چھپنے/بند ہونے پر فوراً
+let _zimniDirty = false;
+function _zimniWatchEdits() {
+  const ed = _zimniDoc();
+  if (!ed || ed._zfDraftBound) return;
+  ed._zfDraftBound = true;
+  const mark = () => {
+    _zimniDirty = true;
+    clearTimeout(ed._zfDraftT);
+    ed._zfDraftT = setTimeout(() => { try { if (_zimniDirty) _zimniWriteDraft(); } catch (_) { /* agli dafa */ } }, 1500);
+  };
+  ed.addEventListener('input', mark);
+  ed.addEventListener('paste', () => setTimeout(mark, 0));
+  ed.addEventListener('cut', () => setTimeout(mark, 0));
+}
+if (!window._zfUnloadBound) {
+  window._zfUnloadBound = true;
+  const flush = () => { try { if (_zimniDirty) _zimniWriteDraft(); } catch (_) { /* band hote waqt — jo ho sake */ } };
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
+  window.addEventListener('pagehide', flush);
+  window.addEventListener('beforeunload', flush);
+  setInterval(() => { try { if (_zimniDirty && document.querySelector('#ch173-doc .zf-tbl')) _zimniWriteDraft(); } catch (_) { /* agli dafa */ } }, 20000);
+}
+
+// ═══ کالم 1 (سیریل 1 کے سامنے) کی تاریخ = تفتیشی افسر کے نام کے نیچے کی تاریخ (قاعدہ) ═══
+function _zimniSyncSignDate() {
+  const doc = _zimniDoc();
+  if (!doc || !doc.querySelector('.zf-tbl')) return '';
+  const b1 = doc.querySelector('tr.zf-blk td.zf-c-action .zf-actbody') || doc.querySelector('tr.zf-blk td.zf-c-action')
+          || doc.querySelector('.zf-actbody');
+  const fd = b1 ? _zimniFindDate(b1.innerText || b1.textContent || '') : null;
+  if (!fd) return '';
+  let sd = doc.querySelector('[data-k="io_date"]');
+  if (!sd) {
+    const sign = doc.querySelector('[data-k="io_sign"]');
+    if (!sign || !sign.parentNode) return fd.dmy;
+    sd = document.createElement('div');
+    sd.className = 'zf-signdate'; sd.setAttribute('data-k', 'io_date');
+    sd.setAttribute('style', 'text-align:left !important;display:block;');
+    sign.parentNode.insertBefore(sd, sign.nextSibling);
+  }
+  if (String(sd.textContent || '').trim() !== fd.dmy) sd.textContent = fd.dmy;
+  return fd.dmy;
+}
+window._zimniSyncSignDate = _zimniSyncSignDate;
+
+// ═══ ضمنی کی سرخی = منتخب ذیلی ضمنی کا نام (افسر کی ہدایت، اکتوبر 2026) ═══
+const ZIMNI_DEFAULT_TITLE = 'رپورٹ ضمنی بیرونی';
+function _zimniApplyTitle(name) {
+  const doc = _zimniDoc();
+  const t = doc && doc.querySelector('.zf-title');
+  if (!t) return;
+  const want = String(name || '').trim() || ZIMNI_DEFAULT_TITLE;
+  if (t.textContent !== want) t.textContent = want;
+}
+window._zimniApplyTitle = _zimniApplyTitle;
 
 // ── LIST VIEW (all zimni entries for this case) ───────────────
 function _renderZimniList() {
@@ -192,10 +521,15 @@ function _renderZimniList() {
             || document.getElementById('page-content');
   if (!area) return;
   try { if (typeof _ch173FullPage === 'function') _ch173FullPage(area); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
+  _zimniActive = null; _zimniDirty = false;
+
+  const drafts = _zimniDrafts();
+  const newDrafts = Object.keys(drafts).filter(k => k.indexOf('new:') === 0).map(k => drafts[k])
+    .sort((a, b) => String(b.saved_at).localeCompare(String(a.saved_at)));
 
   // ── DB ٹوٹ گیا اور کوئی مقامی نقل بھی نہیں: صاف error کارڈ + دوبارہ کوشش ──
   //    (اگر cache موجود ہو تو نیچے نارمل فہرست — field افسر آف لائن نہ پھنسے)
-  if ((!_zimniList || _zimniList.length === 0) && window._zimniDbBroken
+  if ((!_zimniList || _zimniList.length === 0) && !newDrafts.length && window._zimniDbBroken
       && typeof DIO !== 'undefined' && DIO.states && DIO.states.error) {
     try {
       area.innerHTML = DIO.states.error(
@@ -212,17 +546,18 @@ function _renderZimniList() {
     || parseInt((z.content || {}).serial_no, 10) || 0;
   const list = _zimniList.slice().sort((a, b) => sno(b) - sno(a));
 
-  // تاریخ — block 1 کالم 1 کی لکھی تاریخ کو ترجیح؛ اگر پہلے سے dd/mm/yyyy شکل میں
-  //  ہو تو جوں کی توں دکھاؤ (formatDate اُسے خراب نہ کرے)
+  // تاریخ — block 1 کالم 1 کی لکھی تاریخ؛ ہمیشہ DD/MM/YYYY
   const dt = (z) => {
-    const raw = ((z.content || {}).col1_date || z.report_date || '').toString().trim();
+    const fd = _zimniFindDate((z.content || {}).col1_date || '');
+    if (fd) return fd.dmy;
+    const raw = String(z.report_date || '').trim();
     if (!raw) return '—';
-    if (/[\/]/.test(raw)) return raw;   // پہلے سے تاریخ کی شکل → جوں کی توں
+    const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) return iso[3] + '/' + iso[2] + '/' + iso[1];
     return (typeof formatDate === 'function' ? formatDate(raw) : raw);
   };
-  const wq = (z) => {
+  const wq = (iso) => {
     try {
-      const iso = (z.content || {}).saved_at || '';
       if (!iso) return '';
       const x = new Date(iso); if (isNaN(x)) return '';
       let h = x.getHours(); const m = String(x.getMinutes()).padStart(2, '0');
@@ -231,64 +566,107 @@ function _renderZimniList() {
     } catch (_) { return ''; }
   };
   const head = (z) => ((z.content || {}).head || 'رپورٹ ضمنی');
+  const J = (v) => _dioJsHtml(v);
+  const status = (z) => {
+    if (drafts['id:' + z.id]) return '<span class="zst zst-d">غیر محفوظ ترمیم (مسودہ)</span>';
+    if (_zimniIsPending(z)) {
+      return '<span class="zst zst-p" title="' + esc(z._sync_err || '') + '">اس آلے پر محفوظ — سرور پر بھیجنا باقی</span>'
+        + (z._sync_err ? '<div class="zst-why">' + esc(z._sync_err) + '</div>' : '');
+    }
+    return '<span class="zst zst-ok">سرور پر محفوظ</span>';
+  };
+  const btn = (fn, id, icon, label, cls) =>
+    `<button type="button" class="zab${cls ? ' ' + cls : ''}" onclick="event.stopPropagation();${fn}('${J(id)}')" title="${label}"><span aria-hidden="true">${icon}</span><span class="zab-t">${label}</span></button>`;
+  const pendingCount = list.filter(_zimniIsPending).length;
 
   area.innerHTML = `
   <style>
-    .zt{ width:100%; border-collapse:collapse; font-size:13px; direction:rtl;
-         font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+    .zt-wrap{ padding:14px; direction:rtl; height:100%; overflow-y:auto; box-sizing:border-box;
+      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+    .zt-bar{ display:flex; align-items:center; gap:10px; margin:0 0 10px; flex-wrap:wrap; }
+    .zt-bar .zt-h{ flex:1; text-align:center; font-size:16pt; font-weight:700; color:var(--accent); min-width:8em; }
+    .zt{ width:100%; border-collapse:collapse; font-size:13pt; direction:rtl; }
     .zt th{ background:var(--bg-tertiary); border:1px solid var(--border); padding:7px 6px;
-            font-weight:700; white-space:nowrap; text-align:center; }
+            font-weight:700; white-space:nowrap; text-align:center; font-size:12pt; }
     .zt td{ border:1px solid var(--border); padding:6px; vertical-align:middle; }
     .zt tbody tr:nth-child(odd){ background:var(--bg-secondary); }
     .zt tbody tr:hover{ background:var(--hover-bg); }
-    .zt .num{ text-align:center; font-weight:700; width:60px; }
-    .zt .dtc{ text-align:center; white-space:nowrap; width:140px;
-      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
-      font-size:13px; direction:ltr; unicode-bidi:isolate; }
-    .zt .wq{ font-size:12px; color:var(--text-muted); margin-top:2px;
-      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
-      direction:ltr; unicode-bidi:isolate; }
-    .zt .act{ white-space:nowrap; text-align:center; width:220px; }
-    .zab{ border:1px solid var(--border); background:var(--bg-card); border-radius:6px;
-          padding:3px 6px; margin:0 1px; cursor:pointer; font-size:13px; line-height:1; }
-    .zab:hover{ background:var(--hover-bg); }
+    .zt .num{ text-align:center; font-weight:700; width:70px; }
+    .zt .dtc{ text-align:center; white-space:nowrap; width:130px; direction:ltr; unicode-bidi:isolate; font-size:12pt; }
+    .zt .wq{ font-size:10.5pt; color:var(--text-muted); margin-top:2px; direction:ltr; unicode-bidi:isolate; }
+    .zt .act{ text-align:center; width:1%; white-space:nowrap; }
+    .zt .act-in{ display:flex; flex-wrap:nowrap; gap:4px; justify-content:center; }
+    .zab{ display:inline-flex; align-items:center; gap:4px; border:1px solid var(--border); background:var(--bg-card);
+          color:var(--text-primary); border-radius:7px; padding:4px 8px; cursor:pointer; font-size:11.5pt; line-height:1.3;
+          font-family:inherit; white-space:nowrap; }
+    .zab:hover{ background:var(--hover-bg); border-color:var(--accent); }
+    .zab.zab-del{ color:#b91c1c; }
+    .zst{ display:inline-block; font-size:10.5pt; padding:1px 8px; border-radius:999px; white-space:nowrap; }
+    .zst-ok{ background:rgba(22,163,74,.12); color:#15803d; }
+    .zst-p{ background:rgba(217,119,6,.14); color:#b45309; }
+    .zst-d{ background:rgba(37,99,235,.12); color:#1d4ed8; }
+    .zst-why{ font-size:9.5pt; color:#b91c1c; margin-top:2px; }
+    .zt tr.zt-draft td{ background:rgba(37,99,235,.06); }
+    @media (max-width:760px){
+      .zt thead{ display:none; }
+      .zt, .zt tbody, .zt tr, .zt td{ display:block; width:auto !important; }
+      .zt tr{ border:1px solid var(--border); border-radius:10px; margin-bottom:10px; padding:6px 8px; background:var(--bg-card) !important; }
+      .zt td{ border:0; padding:3px 0; text-align:right !important; }
+      .zt td.num::before{ content:'ضمنی نمبر: '; font-weight:400; color:var(--text-muted); }
+      .zt td.dtc{ direction:rtl; }
+      .zt .act-in{ justify-content:flex-start; flex-wrap:wrap; }
+      .zt .act{ white-space:normal; }
+    }
   </style>
-  <div style="padding:14px;direction:rtl;height:100%;overflow-y:auto;">
-    <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap;">
-      <button class="btn btn-primary btn-sm" onclick="_newZimni()">➕ ضمنی درج کریں</button>
+  <div class="zt-wrap">
+    <div class="zt-bar">
+      <button class="btn btn-primary btn-sm dio-add-btn" onclick="_newZimni()">➕ ضمنی درج کریں</button>
+      <div class="zt-h">ضمنیات (${list.length})</div>
+      ${pendingCount && navigator.onLine ? `<button class="btn btn-secondary btn-sm" onclick="_zimniSyncPending()">⟳ سرور پر بھیجیں (${pendingCount})</button>` : ''}
       <button class="btn btn-secondary btn-sm" onclick="_printAllZimni()">🖨️ تمام ضمنیاں</button>
-      <div style="flex:1;"></div>
-      <span style="font-size:11px;color:var(--text-muted);">ترتیب: ضمنی نمبر — بڑے سے چھوٹا</span>
     </div>
-    ${list.length ? `
+    ${(list.length || newDrafts.length) ? `
     <table class="zt">
       <thead><tr>
-        <th class="num">نمبر شمار</th>
+        <th class="num">ضمنی نمبر</th>
         <th class="dtc">تاریخ و وقت</th>
         <th>ہیڈ (قسم)</th>
+        <th>حالت</th>
         <th class="act">ایکشن</th>
       </tr></thead>
       <tbody>
+        ${newDrafts.map(d => `
+          <tr class="zt-draft" ondblclick="_openZimniDraft('${J(d.key)}')" style="cursor:pointer;">
+            <td class="num">${esc(String(d.serial_no || ''))}</td>
+            <td class="dtc">${esc(_zimniFmtStamp(d.saved_at).split(' — ')[0] || '—')}<div class="wq">${esc(wq(d.saved_at))}</div></td>
+            <td>${esc(d.sub_type || 'نئی ضمنی')}</td>
+            <td><span class="zst zst-d">مسودہ — ابھی محفوظ نہیں کی گئی</span></td>
+            <td class="act"><div class="act-in">
+              ${btn('_openZimniDraft', d.key, '✏️', 'جاری رکھیں')}
+              ${btn('_deleteZimniDraft', d.key, '🗑️', 'حذف', 'zab-del')}
+            </div></td>
+          </tr>`).join('')}
         ${list.map(z => `
-          <tr ondblclick="_openZimni('${_dioJsHtml(z.id)}')" style="cursor:pointer;">
+          <tr ondblclick="_openZimni('${J(z.id)}')" style="cursor:pointer;" data-zid="${esc(String(z.id))}">
             <td class="num">${esc(String(sno(z) || ''))}</td>
-            <td class="dtc">${esc(dt(z))}${wq(z) ? `<div class="wq">${esc(wq(z))}</div>` : ''}</td>
+            <td class="dtc">${esc(dt(z))}${wq((z.content || {}).saved_at) ? `<div class="wq">${esc(wq((z.content || {}).saved_at))}</div>` : ''}</td>
             <td>${esc(head(z))}</td>
-            <td class="act">
-              <button class="zab" onclick="event.stopPropagation();_openZimni('${_dioJsHtml(z.id)}')" title="ترمیم">✏️</button>
-              <button class="zab" onclick="event.stopPropagation();_copyZimni('${_dioJsHtml(z.id)}')" title="نقل (Copy)">📋</button>
-              <button class="zab" onclick="event.stopPropagation();_printZimniById('${_dioJsHtml(z.id)}')" title="پرنٹ">🖨️</button>
-              <button class="zab" onclick="event.stopPropagation();_emailZimni('${_dioJsHtml(z.id)}')" title="شیئر">📤</button>
-              <button class="zab" onclick="event.stopPropagation();_pdfZimni('${_dioJsHtml(z.id)}')" title="PDF" style="font-size:10px;font-weight:800;color:#b91c1c;">PDF</button>
-              <button class="zab" onclick="event.stopPropagation();_deleteZimni('${_dioJsHtml(z.id)}')" title="حذف">🗑️</button>
-            </td>
+            <td>${status(z)}</td>
+            <td class="act"><div class="act-in">
+              ${btn('_openZimni', z.id, '✏️', 'ترمیم')}
+              ${btn('_printZimniById', z.id, '🖨️', 'پرنٹ')}
+              ${btn('_emailZimni', z.id, '📤', 'شیئر')}
+              ${btn('_pdfZimni', z.id, '📄', 'PDF')}
+              ${btn('_copyZimni', z.id, '📋', 'نقل')}
+              ${btn('_deleteZimni', z.id, '🗑️', 'حذف', 'zab-del')}
+            </div></td>
           </tr>`).join('')}
       </tbody>
     </table>` : `
     <div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
       <div style="font-size:40px;margin-bottom:10px;">📋</div>
-      <div style="font-size:14px;">ابھی کوئی ضمنی رپورٹ نہیں</div>
-      <div style="font-size:11px;margin-top:6px;">اوپر "ضمنی درج کریں" پر کلک کریں</div>
+      <div style="font-size:14pt;">ابھی کوئی ضمنی رپورٹ نہیں</div>
+      <div style="font-size:11pt;margin-top:6px;">اوپر «ضمنی درج کریں» پر کلک کریں</div>
     </div>`}
   </div>`;
 }
@@ -344,18 +722,71 @@ async function _moveZimni(id) {
 }
 window._moveZimni = _moveZimni;
 
+function _zimniNextSerial() {
+  let m = 0;
+  (_zimniList || []).forEach(z => { m = Math.max(m, parseInt(z.serial_no, 10) || parseInt((z.content || {}).serial_no, 10) || 0); });
+  const d = _zimniDrafts();
+  Object.keys(d).forEach(k => { if (k.indexOf('new:') === 0) m = Math.max(m, parseInt(d[k].serial_no, 10) || 0); });
+  return m + 1;
+}
 function _newZimni() {
-  const nextSerial = (_zimniList.reduce((m,z)=>Math.max(m,
-    parseInt(z.serial_no,10) || parseInt((z.content||{}).serial_no,10) || 0), 0)) + 1;
-  _zimniActive = { id: null, serial_no: nextSerial, content: null };
+  _zimniActive = { id: null, serial_no: _zimniNextSerial(), content: null, _draftKey: 'new:' + Date.now() };
+  _zimniDirty = false;
   _renderZimniEditor();
 }
 
 function _openZimni(id) {
-  _zimniActive = _zimniList.find(z => z.id === id) || null;
-  if (!_zimniActive) return;
+  const z = _zimniList.find(x => String(x.id) === String(id)) || null;
+  if (!z) return;
+  _zimniActive = Object.assign({}, z);
+  _zimniDirty = false;
+  // اسی ضمنی کا خودکار مسودہ (غیر محفوظ ترمیم) — تازہ ہو تو وہی کھولو
+  const d = _zimniDrafts()['id:' + z.id];
+  const zs = String((z.content || {}).saved_at || '');
+  if (d && d.bodyHtml && String(d.saved_at) > zs) {
+    _zimniActive.content = Object.assign({}, z.content || {}, { bodyHtml: d.bodyHtml, main_type: d.main_type, sub_type: d.sub_type });
+    _zimniActive._restored = true;
+  }
+  _renderZimniEditor();
+  if (_zimniActive && _zimniActive._restored) {
+    _zimniDirty = true;
+    try { showToast('غیر محفوظ ترمیم (خودکار مسودہ) بحال کر دی گئی — محفوظ کرنے کے لیے Ctrl+S / «اپ ڈیٹ»', 'info', 6000); } catch (_) { /* paigham */ }
+  }
+}
+
+// مسودہ (نئی ضمنی جو ابھی محفوظ نہیں ہوئی) دوبارہ کھولو
+function _openZimniDraft(key) {
+  const d = _zimniDrafts()[key];
+  if (!d) { _renderZimniList(); return; }
+  _zimniActive = { id: null, serial_no: d.serial_no || _zimniNextSerial(), _draftKey: key,
+    content: { bodyHtml: d.bodyHtml, main_type: d.main_type, sub_type: d.sub_type } };
+  _zimniDirty = true;
   _renderZimniEditor();
 }
+window._openZimniDraft = _openZimniDraft;
+function _deleteZimniDraft(key) {
+  if (!confirm('یہ غیر محفوظ مسودہ حذف کر دیں؟ (واپس نہیں آئے گا)')) return;
+  _zimniClearDraft(key);
+  _renderZimniList();
+}
+window._deleteZimniDraft = _deleteZimniDraft;
+window._newZimni = _newZimni;
+window._openZimni = _openZimni;
+
+// ← فہرست — غیر محفوظ تبدیلی ہو تو پوچھو (مسودہ ویسے بھی آلے پر محفوظ ہے)
+async function _zimniBackToList() {
+  if (_zimniDirty) {
+    try { _zimniWriteDraft(); } catch (_) { /* agli dafa */ }
+    if (confirm('تبدیلیاں ابھی محفوظ نہیں ہوئیں۔ محفوظ کر کے فہرست پر جائیں؟\n(«Cancel» = بغیر محفوظ کیے جائیں — مسودہ اس آلے پر رہے گا)')) {
+      const ok = await _saveZimni(false, true);
+      if (!ok) return;
+    }
+  }
+  _zimniDirty = false;
+  await _loadZimni();
+  _renderZimniList();
+}
+window._zimniBackToList = _zimniBackToList;
 
 // ── EDITOR (Police Form 25-54(1)) ──────────────
 // ═══════════════════════════════════════════════════════════════
@@ -438,6 +869,7 @@ function _zimniRebuildSub(main, selSub) {
   const wrap = document.getElementById('zf-sub-wrap'); if (!wrap) return;
   wrap.innerHTML = _zimniSubSelectHTML(main, selSub || '');
   if (selSub) _zimniSetHead(selSub);
+  _zimniApplyTitle(selSub || '');       // v552: ذیلی نہ ہو تو اصل سرخی
 }
 function _zimniOnMainChange(sel) {
   if (sel.value === _ZIMNI_TYPE_ADD) {
@@ -464,6 +896,8 @@ function _zimniOnSubChange(sel) {
     return;
   }
   _zimniSetHead(sel.value);
+  _zimniApplyTitle(sel.value);          // v552: سرخی = منتخب ذیلی ضمنی
+  _zimniDirty = true; try { _zimniWriteDraft(); } catch (_) { /* agli dafa */ }
   try { _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._zimniMainSelectHTML = _zimniMainSelectHTML;
@@ -501,6 +935,7 @@ function _renderZimniEditor() {
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
     <!-- Topbar — report173 jaisa (chips patti cursor upar jane par nazar aati hai) -->
     <div class="no-print" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="_zimniBackToList()" title="اس مقدمے کی تمام ضمنیات">← فہرست</button>
       <select id="ch173-paper-sel" onchange="_ch173SetPaper(this.value)" title="کاغذ کا سائز" style="${selCss}font-family:'Jameel Noori Nastaleeq',serif;">
         <option value="legal" ${paper==='legal'?'selected':''}>لیگل (8.5×13)</option>
         <option value="a4"    ${paper==='a4'   ?'selected':''}>A4 (8.27×11.7)</option>
@@ -538,8 +973,13 @@ function _renderZimniEditor() {
         <button onmousedown="event.preventDefault()" onclick="dioSetDir('rtl')" title="اردو — دائیں سے بائیں (RTL)" style="${btn}font-weight:800;">؈</button>
         <button onmousedown="event.preventDefault()" onclick="dioSetDir('ltr')" title="English — Left to Right (LTR)" style="${btn}font-weight:800;direction:ltr;">EN</button>
         ${sep}
-        <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveZimni(false,true)" title="محفوظ کریں — سب کچھ محفوظ ہو جائے گا (ضمنی کھلی رہے گی)">💾 محفوظ</button>
-        <span id="zf-updated" style="font-size:11px;color:var(--text-muted);white-space:nowrap;align-self:center;"></span>
+        <button id="zf-save-btn" class="btn btn-primary btn-sm dio-modbtn" onclick="_saveZimni(false,true)" title="${z.id ? 'اپ ڈیٹ' : 'محفوظ کریں'} (Ctrl+S) — ضمنی کھلی رہے گی">💾 ${z.id ? 'اپ ڈیٹ' : 'محفوظ'}</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-dio-print onclick="_printZimniCurrent()" title="پرنٹ (Ctrl+P)">🖨️ پرنٹ</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="_shareZimniCurrent()" title="شیئر — PDF / Word">📤 شیئر</button>
+        <span style="display:flex;flex-direction:column;line-height:1.35;align-self:center;">
+          <span id="zf-updated" style="font-size:8.5pt;color:var(--text-muted);white-space:nowrap;"></span>
+          <span id="zf-autosave" style="font-size:8pt;color:var(--text-muted);white-space:nowrap;"></span>
+        </span>
       </div>
       <!-- ذیلی ضمنی — بائیں کونے میں (منتخب مرکزی کے مطابق) -->
       <span id="zf-sub-wrap">${_zimniSubSelectHTML(savedMain, savedSub)}</span>
@@ -574,6 +1014,21 @@ function _renderZimniEditor() {
     try { _zimniBindFindReplace(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }                                          // Ctrl+F / Ctrl+H
     try { _zimniColResize(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     try { if (saved && saved.saved_at) _zimniStampUpdated(saved.saved_at); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+    // v552: خودکار مسودہ · سرخی = ذیلی ضمنی · نیچے کی تاریخ = کالم 1 کی تاریخ
+    try { _zimniWatchEdits(); } catch (_) { /* ikhtiyari qadam */ }
+    try { if (savedSub) _zimniApplyTitle(savedSub); } catch (_) { /* ikhtiyari qadam */ }
+    try { _zimniSyncSignDate(); } catch (_) { /* ikhtiyari qadam */ }
+    try {
+      const d1 = _zimniDoc();
+      if (d1 && !d1._zfDateBound) {
+        d1._zfDateBound = true;
+        d1.addEventListener('input', (ev) => {
+          if (ev.target && ev.target.closest && ev.target.closest('td.zf-c-action')) {
+            clearTimeout(d1._zfDateT); d1._zfDateT = setTimeout(() => { try { _zimniSyncSignDate(); } catch (_) { /* agli dafa */ } }, 300);
+          }
+        });
+      }
+    } catch (_) { /* ikhtiyari qadam */ }
     // خانے کی ناپ + اضافی متن نیچے (چالان کا اصل نظام)
     try { _zimniLayout(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     try { _zimniEnsureClosing(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }   // اختتامی سطر (پرانی ضمنیوں کے لیے)
@@ -2051,21 +2506,23 @@ async function _saveZimni(silent, keepOpen) {
   if (window.DIO && DIO.sub && DIO.sub.blocked()) { if (!silent) DIO.sub.guard('ضمنی محفوظ'); return false; }
   const ed = _zimniDoc();
   if (!ed) return false;
+  if (window._zimniSaving) { window._zimniSaveAgain = true; return true; }   // دوہرا Ctrl+S — ایک ہی کام
+  window._zimniSaving = true;
+  try {
+  // قاعدہ: کالم 1 کی تاریخ = نیچے تفتیشی افسر کی تاریخ (محفوظ سے پہلے)
+  try { _zimniSyncSignDate(); } catch (_) { /* ikhtiyari qadam */ }
   const bodyHtml = _zimniCleanHTML(ed.innerHTML);   // grips محفوظ نہ ہوں
   const z = _zimniActive || {};
+  const draftKey = (() => { try { return _zimniActiveDraftKey(); } catch (_) { return ''; } })();
 
   // ضمنی نمبر — EDITABLE خانے سے
   let serialNo = parseInt(z.serial_no, 10) || 0;
   try {
     const sf = ed.querySelector('[data-k="zno"]') || ed.querySelector('[data-k="serial"]');
-    const sv = sf ? parseInt(String(sf.innerText || sf.textContent).replace(/[^\d]/g, ''), 10) : NaN;
+    const sv = sf ? parseInt(_zimniDigits(String(sf.innerText || sf.textContent)).replace(/[^\d]/g, ''), 10) : NaN;
     if (!isNaN(sv) && sv > 0) serialNo = sv;
   } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
-  if (!serialNo) {   // نیا — سب سے بڑے نمبر سے ایک آگے
-    try { serialNo = Math.max(0, ..._zimniList.map(x =>
-      parseInt(x.serial_no, 10) || parseInt((x.content||{}).serial_no, 10) || 0)) + 1; }
-    catch (_) { serialNo = 1; }
-  }
+  if (!serialNo) serialNo = _zimniNextSerial();   // نیا — سب سے بڑے نمبر سے ایک آگے
   // ہیڈ (قسم) — toolbar کے خانے سے
   let head = '';
   try {
@@ -2089,11 +2546,12 @@ async function _saveZimni(silent, keepOpen) {
   if (subType) head = subType;   // فہرست کا عنوان = ذیلی قسم
 
   const savedAt = new Date().toISOString();
+  const fd = _zimniFindDate(col1Date);
   const rec = {
     case_id: _zimniCaseId,
     serial_no: serialNo,
-    // block 1 کالم 1 کی تاریخ کو ترجیح؛ نہ ہو تو پرانی/آج کی
-    report_date: (col1Date || z.report_date || savedAt.slice(0, 10)),
+    // v552: ڈیٹابیس کو ہمیشہ YYYY-MM-DD (DD/MM والی شکل سرور رد کرتا تھا)
+    report_date: fd ? fd.iso : _zimniTodayIso(),
     content: { bodyHtml, head, serial_no: serialNo, saved_at: savedAt, col1_date: col1Date,
                main_type: mainType, sub_type: subType },
   };
@@ -2104,99 +2562,105 @@ async function _saveZimni(silent, keepOpen) {
         { case_id: _zimniCaseId, serial_no: serialNo });
   } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
 
-  // مقامی فہرست ہمیشہ تازہ (آن لائن ہو یا نہ ہو — ضمنی کبھی ضائع نہ ہو)
-  const localSave = (obj) => {
-    try {
-      const i = _zimniList.findIndex(x => String(x.id) === String(obj.id));
-      if (i >= 0) _zimniList[i] = obj; else _zimniList.push(obj);
-      _zimniList.sort((a, b) => (parseInt(b.serial_no, 10) || 0) - (parseInt(a.serial_no, 10) || 0));
-      localStorage.setItem('dio_zimni_' + _zimniCaseId, JSON.stringify(_zimniList));
-    } catch (_) { if (typeof dioLogError === 'function') dioLogError('zimni: local save nakaam', _); }
+  // ── 1) پہلے اسی آلے پر (آف لائن پہلے) — یہ کبھی ضائع نہیں ہوتا ──
+  const localId = z.id || ('local-' + Date.now());
+  const localObj = Object.assign({ id: localId }, rec, { _pending: true, _sync_err: '' });
+  const localSave = (obj, replaceId) => {
+    const i = _zimniList.findIndex(x => String(x.id) === String(replaceId != null ? replaceId : obj.id));
+    if (i >= 0) _zimniList[i] = obj; else _zimniList.push(obj);
+    _zimniList.sort((a, b) => (parseInt(b.serial_no, 10) || 0) - (parseInt(a.serial_no, 10) || 0));
+    return _zimniLocalPut(_zimniCaseId, _zimniList);
   };
+  const okLocal = localSave(localObj);
+  _zimniActive = localObj;
+  try { clearTimeout(ed._zfDraftT); } catch (_) { /* ikhtiyari */ }   // پرانا انتظار شدہ مسودہ محفوظ کے بعد نہ لکھا جائے
+  if (draftKey) { try { _zimniClearDraft(draftKey); } catch (_) { /* ikhtiyari */ } }
+  _zimniDirty = false;
+  try { _zimniStampUpdated(savedAt); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { const sb = document.getElementById('zf-save-btn'); if (sb) sb.innerHTML = '💾 اپ ڈیٹ'; } catch (_) { /* ikhtiyari */ }
+  try { const as = document.getElementById('zf-autosave'); if (as) as.textContent = ''; } catch (_) { /* ikhtiyari */ }
+  if (!okLocal && !silent) showToast('آلے کی جگہ (storage) بھری ہوئی ہے — مقامی نقل نہ بن سکی، سرور پر بھیجی جا رہی ہے', 'warn', 6000);
 
-  // ── آف لائن یا ڈیٹابیس کا ڈھانچہ ناقص — مقامی محفوظ ──
+  const backToList = () => { if (!keepOpen && !silent) setTimeout(() => { try { _renderZimniList(); } catch (_) { /* ikhtiyari */ } }, 200); };
+
+  // ── 2) انٹرنیٹ نہیں / سرور کا ڈھانچہ ناقص — بس آلے پر؛ انٹرنیٹ آتے ہی خود sync ──
   if (!navigator.onLine || window._zimniDbBroken) {
-    const id = z.id || ('local-' + Date.now());
-    const obj = Object.assign({ id }, rec);
-    _zimniActive = obj; localSave(obj);
-    try {
-      if (typeof offlineStore !== 'undefined' && offlineStore.enqueue) {
-        await offlineStore.enqueue('zimni_reports',
-          String(id).startsWith('local-') ? 'insert' : 'update',
-          String(id).startsWith('local-') ? rec : Object.assign({ id }, rec));
-      }
-    } catch (_) { if (typeof dioLogError === 'function') dioLogError('zimni: offline queue nakaam', _); }
-    if (!silent) showToast('آف لائن محفوظ — انٹرنیٹ آنے پر sync ہوگا', 'info');
-    try { _zimniStampUpdated(savedAt); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
-    if (!keepOpen && !silent) setTimeout(() => { try { _renderZimniList(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }, 200);
+    if (!silent) showToast('ضمنی نمبر ' + serialNo + ' اس آلے پر محفوظ — انٹرنیٹ آنے پر خود سرور پر چلی جائے گی', 'info', 5000);
+    backToList();
     return true;
   }
 
+  // ── 3) سرور پر ──
   try {
     try {
       const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
       if (oid) rec.officer_id = oid;
     } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
-
-    // کالم کا نام خود ڈھونڈتے ہوئے محفوظ کرو ('content' ہر ڈیٹابیس میں نہیں ہوتا)
     const base = {};
     Object.keys(rec).forEach(k => { if (k !== 'content') base[k] = rec[k]; });
-    const editing = z.id && !String(z.id).startsWith('local-') && !String(z.id).startsWith('tmp_');
-    let savedRec = await _zimniWrite(base, rec.content, editing ? z.id : null);
-    savedRec = Object.assign({}, savedRec, { content: rec.content });   // مواد ہمیشہ ہاتھ میں
-    _zimniActive = savedRec;
-    localSave(savedRec);
-
-    // ═══ تصدیق — واقعی ڈیٹابیس میں پہنچی یا نہیں؟ ═══
-    // (صرف "کامیاب" کا پیغام کافی نہیں تھا — کبھی سطر جاتی ہی نہیں تھی
-    //  اور ضمنیات کی فہرست خالی رہتی تھی۔)
-    let ok = true;
-    try {
-      const chk = await supabaseClient.from('zimni_reports')
-        .select('id').eq('case_id', _zimniCaseId).eq('id', savedRec.id);
-      if (chk.error || !chk.data || !chk.data.length) ok = false;
-    } catch (_) { ok = false; }
-
-    if (!silent) {
-      if (ok) showToast('ضمنی نمبر ' + serialNo + ' محفوظ ہو گئی', 'success');
-      else showToast('ضمنی نمبر ' + serialNo + ' مقامی طور پر محفوظ ہے، مگر ڈیٹابیس میں تصدیق نہ ہو سکی', 'warn', 7000);
+    const editing = !_zimniIsPending({ id: z.id }) && !!z.id;
+    if (_zimniInFlight.has(String(localId))) {
+      // یہی ضمنی ابھی خودکار sync میں جا رہی ہے — وہ مکمل ہوتے ہی یہ تازہ نقل بھی جائے گی
+      setTimeout(() => { _zimniSyncPending([_zimniCaseId]); }, 2000);
+      if (!silent) showToast('ضمنی نمبر ' + serialNo + ' اس آلے پر محفوظ — سرور پر بھیجی جا رہی ہے', 'info', 4000);
+      backToList();
+      return true;
     }
-
-    // فہرست تازہ کرو۔ AHEM: 'keepOpen' ہو تو ضمنی کھلی ہی رہے —
-    // Ctrl+S اور اوپر والے "اپ ڈیٹ" بٹن پر ضمنی بند نہیں ہونی چاہیے۔
+    _zimniInFlight.add(String(localId));
+    let savedRec;
     try {
-      await _loadZimni();
-      if (!silent && !keepOpen) setTimeout(() => { try { _renderZimniList(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }, 200);
-    } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
-    if (keepOpen) { try { _zimniStampUpdated(savedAt); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
+      if (editing) savedRec = await _zimniWrite(base, rec.content, z.id);
+      else savedRec = await _zimniSyncOne(_zimniCaseId, localObj);   // دوہرا اندراج نہیں (اسی وقت والی پہلے سے ہو تو وہی)
+    } finally { _zimniInFlight.delete(String(localId)); }
+    savedRec = Object.assign({}, savedRec, { content: rec.content, _pending: false, _sync_err: '' });
+    _zimniRekeyDraft(_zimniCaseId, localId, savedRec.id);
+    // اس دوران افسر نے مزید لکھا ہو تو وہ نہ مٹے (اسی طریقے سے جو sync کرتا ہے)
+    _zimniMergeSynced(_zimniList, localId, savedAt, savedRec);
+    _zimniLocalPut(_zimniCaseId, _zimniList);
+    if (_zimniActive && String(_zimniActive.id) === String(localId)) {
+      _zimniActive = (String((_zimniActive.content || {}).saved_at || '') === savedAt) ? savedRec : Object.assign({}, _zimniActive, { id: savedRec.id });
+    }
+    if (!silent) showToast('ضمنی نمبر ' + serialNo + ' سرور پر محفوظ ہو گئی', 'success');
+    backToList();
     return true;
   } catch (e) {
-    // مقامی نقل پھر بھی محفوظ — کام ضائع نہ ہو
-    const id = z.id || ('local-' + Date.now());
-    const obj = Object.assign({ id }, rec);
-    _zimniActive = obj; localSave(obj);
-    // ═══ پورا پیغام دکھاؤ — صرف e.message اکثر خالی ہوتا ہے ═══
-    let msg = '';
-    try {
-      msg = [e && e.message, e && e.details, e && e.hint,
-             (e && e.code) ? ('code ' + e.code) : '']
-            .filter(Boolean).join(' — ');
-    } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
-    if (!msg) { try { msg = JSON.stringify(e); } catch (_) { msg = String(e); } }
     try { console.error('[zimni save]', e); } catch (_) { /* console na ho to bhi na phatte */ }
-    showToast('محفوظ نہ ہو سکی: ' + msg + ' (مقامی نقل محفوظ ہے)', 'error', 8000);
-    return false;
+    const why = _zimniErrText(e);
+    if (_zimniIsNetErr(e)) {
+      if (!silent) showToast('انٹرنیٹ/سرور سے رابطہ نہیں — ضمنی نمبر ' + serialNo + ' اس آلے پر محفوظ ہے، رابطہ بحال ہوتے ہی خود سرور پر چلی جائے گی', 'info', 7000);
+    } else {
+      localSave(Object.assign({}, localObj, { _sync_err: why }));
+      if (!silent) showToast('سرور نے ضمنی قبول نہیں کی — وجہ: ' + why + '۔ ضمنی اس آلے پر محفوظ ہے، کچھ ضائع نہیں ہوا۔', 'error', 10000);
+      try { if (typeof dioLogError === 'function') dioLogError('zimni save: ' + why, e); } catch (_) { /* logging */ }
+    }
+    backToList();
+    return true;   // آلے پر محفوظ ہو چکی — کام ضائع نہیں
+  }
+  } finally {
+    window._zimniSaving = false;
+    if (window._zimniSaveAgain) { window._zimniSaveAgain = false; setTimeout(() => { try { _saveZimni(true, true); } catch (_) { /* agli dafa */ } }, 50); }
   }
 }
 window._saveZimni = _saveZimni;
 
 async function _deleteZimni(id, skipConfirm) {
-  if (!skipConfirm && !confirm('کیا آپ یہ ضمنی حذف کرنا چاہتے ہیں؟')) return;
+  const z = _zimniRec(id);
+  if (!skipConfirm && !confirm('کیا آپ ضمنی نمبر ' + ((z && z.serial_no) || '') + ' حذف کرنا چاہتے ہیں؟')) return;
+  const dropLocal = () => {
+    _zimniList = _zimniList.filter(x => String(x.id) !== String(id));
+    _zimniLocalPut(_zimniCaseId, _zimniList);
+    _zimniClearDraft('id:' + id);
+  };
+  // v552: جو ضمنی ابھی صرف اس آلے پر ہے (سرور پر گئی ہی نہیں) — سرور کو پوچھنے کی ضرورت نہیں
+  //   (پہلے یہاں بھی سرور سے حذف مانگا جاتا، «نہیں ملی» آتا اور ضمنی فہرست سے ہٹتی ہی نہیں تھی)
+  if (String(id).startsWith('local-') || String(id).startsWith('tmp_')) {
+    dropLocal(); _renderZimniList(); showToast('حذف ہو گئی', 'info'); return;
+  }
+  if (!navigator.onLine) { showToast('سرور پر محفوظ ضمنی حذف کرنے کے لیے انٹرنیٹ درکار ہے', 'warn', 5000); return; }
   try {
     // v547: نتیجہ دیکھ کر — پہلے سرور رد کرتا تب بھی فہرست سے ہٹ جاتی (دوبارہ کھولنے پر واپس)
     dioWriteOk(await supabaseClient.from('zimni_reports').delete().eq('id', id).select('id'), 'zimni delete', true);
-    _zimniList = _zimniList.filter(z => z.id !== id);
-    try { localStorage.setItem('dio_zimni_' + _zimniCaseId, JSON.stringify(_zimniList)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('zimni: local list save nakaam', _); }
+    dropLocal();
     _renderZimniList();
     showToast('حذف ہو گئی', 'info');
   } catch(e) { dioWriteFail('ضمنی', e, 'حذف نہیں ہوئی'); }
@@ -2737,12 +3201,63 @@ window._zimniPrintHTML = _zimniPrintHTML;
 //  ضمنیات — fehrist ke ایکشن buttons (پرنٹ / بھیجیں / PDF)
 // ═══════════════════════════════════════════════════════════════
 
+// v552: چھاپنے سے پہلے قاعدہ لاگو — نیچے کی تاریخ = کالم 1 (سیریل 1) کی تاریخ؛
+//   سرخی = ذیلی ضمنی (محفوظ شدہ پرانی ضمنیوں پر بھی)
+function _zimniPrepBody(html, subType) {
+  try {
+    const box = document.createElement('div');
+    box.innerHTML = String(html || '');
+    const b1 = box.querySelector('tr.zf-blk td.zf-c-action .zf-actbody') || box.querySelector('tr.zf-blk td.zf-c-action') || box.querySelector('.zf-actbody');
+    const fd = b1 ? _zimniFindDate(b1.textContent || '') : null;
+    if (fd) {
+      let sd = box.querySelector('[data-k="io_date"]');
+      const sign = box.querySelector('[data-k="io_sign"]');
+      if (!sd && sign && sign.parentNode) {
+        sd = document.createElement('div'); sd.className = 'zf-signdate'; sd.setAttribute('data-k', 'io_date');
+        sd.setAttribute('style', 'text-align:left !important;display:block;');
+        sign.parentNode.insertBefore(sd, sign.nextSibling);
+      }
+      if (sd) sd.textContent = fd.dmy;
+    }
+    if (subType) { const t = box.querySelector('.zf-title'); if (t) t.textContent = subType; }
+    return box.innerHTML;
+  } catch (_) { return String(html || ''); }
+}
+window._zimniPrepBody = _zimniPrepBody;
+
 // Aik ضمنی ka poora chhapne wala safha — sirf working document
 function _zimniDocHTML(z) {
   const c = z.content || {};
   // XSS: print/PDF raasta sanitize nahi karta tha (editor karta hai)
-  return _zimniPrintHTML(_zimniSafePrint(c.bodyHtml));
+  return _zimniPrintHTML(_zimniSafePrint(_zimniPrepBody(c.bodyHtml, c.sub_type)));
 }
+
+// v552: کھلی ضمنی کا پرنٹ — اوپر کا «پرنٹ» بٹن اور Ctrl+P دونوں یہی (ایک ہی راستہ،
+//   ایک ہی کاغذ)۔ پہلے Ctrl+P چالان کا پرنٹ چلاتا تھا جس میں ضمنی کی CSS نہیں تھی —
+//   اسی سے بالکل مختلف شکل کا کاغذ کھلتا تھا۔
+function _zimniCurrentPrintHTML() {
+  const ed = _zimniDoc();
+  if (!ed || !ed.querySelector('.zf-tbl')) return '';
+  try { _zimniSyncSignDate(); } catch (_) { /* ikhtiyari */ }
+  const sub = String((document.getElementById('zf-sub-type') || {}).value || '').replace('__add__', '');
+  return _zimniPrintHTML(_zimniSafePrint(_zimniPrepBody(_zimniCleanHTML(ed.innerHTML), sub)));
+}
+function _printZimniCurrent() {
+  const html = _zimniCurrentPrintHTML();
+  if (!html) { if (typeof showToast === 'function') showToast('پرنٹ کے لیے ضمنی کھلی نہیں', 'error'); return; }
+  try { if (_zimniDirty) _zimniWriteDraft(); } catch (_) { /* ikhtiyari */ }
+  if (typeof dioPrint === 'function') dioPrint(html);
+  else { const w = window.open('', '_blank'); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 300); }
+}
+window._printZimniCurrent = _printZimniCurrent;
+async function _shareZimniCurrent() {
+  const z = _zimniActive || {};
+  const ed = _zimniDoc();
+  const subj = 'ضمنی نمبر ' + (z.serial_no || '');
+  try { if (typeof dioSharePrint === 'function' && await dioSharePrint(() => _printZimniCurrent(), subj, ed)) return; } catch (_) { /* نیچے */ }
+  try { if (typeof showToast === 'function') showToast('شیئر نہ ہو سکا', 'error'); } catch (_) { /* paigham */ }
+}
+window._shareZimniCurrent = _shareZimniCurrent;
 
 function _zimniById(id) { return (_zimniList || []).find(z => String(z.id) === String(id)); }
 
@@ -2763,7 +3278,7 @@ function _printAllZimni() {
   const body = _zimniList.map((z, i) => {
     const c = z.content || {};
     const brk = (i < _zimniList.length - 1) ? 'style="page-break-after:always;"' : '';
-    return `<div ${brk}>${_zimniSafePrint(c.bodyHtml)}</div>`;
+    return `<div ${brk}>${_zimniSafePrint(_zimniPrepBody(c.bodyHtml, c.sub_type))}</div>`;
   }).join('');
   const html = _zimniPrintHTML(body);
   if (typeof dioPrint === 'function') dioPrint(html);
@@ -2989,6 +3504,8 @@ async function _zaWrite(base, contentObj, id) {
             lastErr = r2.error;
           } catch (e2) { lastErr = e2; }
         }
+        // v552: غلطی کالم کے نام کی نہیں (مثلاً اجازت/انٹرنیٹ) — اصل وجہ فوراً، دوسرے نام آزما کر چھپاؤ نہیں
+        if (!(lastErr && lastErr.code === 'PGRST204' && _zaMissingCol(lastErr) === col)) throw lastErr;
         break;
       }
     }
@@ -3995,7 +4512,7 @@ async function _saveZimniA(silent, keepOpen) {
   const rec = {
     case_id: _zaCaseId,
     serial_no: serialNo,
-    report_date: (z.report_date || savedAt.slice(0, 10)),
+    report_date: (z.report_date || _zimniTodayIso()),   // v552: مقامی دن (UTC کا پچھلا دن نہیں)
     content: { bodyHtml, head, serial_no: serialNo, saved_at: savedAt, witnesses: witnessNames },
   };
 
