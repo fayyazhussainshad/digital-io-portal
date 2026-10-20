@@ -13,7 +13,10 @@
 -- ============================================================================
 with z as (
   select id, report_date,
-         regexp_match(coalesce(content::jsonb ->> 'col1_date', ''), '(\d{1,2})\s*/\s*(\d{1,2})\s*/\s*(\d{4})') as m
+         -- ضمنی کا مواد `content` (jsonb) میں ہو یا پرانی ضمنیوں میں `body` (متن) میں — دونوں دیکھو
+         regexp_match(coalesce(content::jsonb ->> 'col1_date',
+                               substring(coalesce(body, '') from '"col1_date"\s*:\s*"([^"]*)"'), ''),
+                      '(\d{1,2})\s*/\s*(\d{1,2})\s*/\s*(\d{4})') as m
   from public.zimni_reports
 ), p as (
   select id, report_date,

@@ -4,10 +4,13 @@
 -- 14/10/2026 → رد (یہی «zimni_content» والی خرابی تھی)۔ یہ جانچ گنتی ہے کہ کتنی محفوظ
 -- ضمنیوں میں report_date اسی ضمنی کے کالم 1 (col1_date) کی تاریخ سے مختلف ہے۔
 -- 'ghalat_tareekh' > 0 ہو تو 106_zimni_report_date_fix.sql چلائیں۔
--- (`content` کا خانہ نہ ہو تو یہ خرابی دے گی — تب پہلے 105_CHECK.sql)
+-- v552b: مواد `content` (jsonb) یا پرانی ضمنیوں کے `body` (متن) — دونوں میں col1_date دیکھی جاتی ہے۔
 with z as (
   select id, report_date,
-         regexp_match(coalesce(content::jsonb ->> 'col1_date', ''), '(\d{1,2})\s*/\s*(\d{1,2})\s*/\s*(\d{4})') as m
+         -- ضمنی کا مواد `content` (jsonb) میں ہو یا پرانی ضمنیوں میں `body` (متن) میں — دونوں دیکھو
+         regexp_match(coalesce(content::jsonb ->> 'col1_date',
+                               substring(coalesce(body, '') from '"col1_date"\s*:\s*"([^"]*)"'), ''),
+                      '(\d{1,2})\s*/\s*(\d{1,2})\s*/\s*(\d{4})') as m
   from public.zimni_reports
 ), p as (
   select id, report_date, m,
@@ -19,6 +22,8 @@ with z as (
 select jsonb_pretty(jsonb_build_object(
   'kul_zimniyan',      (select count(*) from p),
   'col1_tareekh_wali', (select count(*) from p where sahi is not null),
+  'mawad_content_mein', (select count(*) from public.zimni_reports where content is not null),
+  'mawad_body_mein',    (select count(*) from public.zimni_reports where coalesce(body, '') <> ''),
   'ghalat_tareekh',    (select count(*) from p where sahi is not null and report_date is distinct from sahi),
   'misaal',            (select coalesce(jsonb_agg(jsonb_build_object('id', id, 'mehfooz', report_date, 'sahi', sahi)), '[]'::jsonb)
                           from (select * from p where sahi is not null and report_date is distinct from sahi limit 5) s)
