@@ -58,6 +58,14 @@ def type_body(pg, txt):
 def zrows(pg):
     return pg.evaluate("(window.__db.zimni_reports||[]).map(r => ({id:r.id, sn:r.serial_no, d:r.report_date, at:(r.content||{}).saved_at, head:(r.content||{}).head, body:(r.content||{}).bodyHtml||''}))")
 
+def wait_dp(pg, n=1, ms=15000):
+    """v555: ضمنی کا پرنٹ پہلے کاغذ «تیار» کرتا ہے (صفحات / مثل کی جگہ کا حساب اصل کاغذ پر) — چھپائی
+       کا خانہ ایک لمحہ بعد کھلتا ہے؛ اُس کا انتظار، پھر تھوڑا اور (کوئی دوسرا پرنٹ نہ کھلے)"""
+    for _ in range(ms // 200):
+        if pg.evaluate('window.__dp.length') >= n: break
+        pg.wait_for_timeout(200)
+    pg.wait_for_timeout(800)
+
 def run(b, tag, vp, mobile=False):
     args = dict(viewport=vp)
     if mobile: args.update(is_mobile=True, has_touch=True, device_scale_factor=2)
@@ -95,12 +103,12 @@ def run(b, tag, vp, mobile=False):
     check(f'{tag}: ترمیم پر Ctrl+S — وہی ضمنی اپ ڈیٹ (ایک ہی قطار)', len(rows2) == 1 and rows2[0]['id'] == rows[0]['id'] and 'مزید کارروائی' in rows2[0]['body'], len(rows2))
     # ── 3) Ctrl+P = «پرنٹ» بٹن: ایک ہی پرنٹ، ضمنی کی CSS ──
     pg.evaluate(PRINTS)
-    pg.keyboard.press('Control+p'); pg.wait_for_timeout(400)
+    pg.keyboard.press('Control+p'); wait_dp(pg)
     dp = pg.evaluate('window.__dp'); nat = pg.evaluate('window.__printCalls')
     check(f'{tag}: Ctrl+P — ایک ہی پرنٹ (دوسرا نہیں کھلتا)', len(dp) == 1 and nat == 0, f'{len(dp)} iframe / {nat} native')
     check(f'{tag}: Ctrl+P کے کاغذ میں ضمنی کی CSS (چالان والی شکل نہیں)', bool(dp) and '#ch173-doc table.zf-tbl td' in dp[0])
     pg.evaluate("window.__dp = []; 0")
-    pg.click('button[data-dio-print]'); pg.wait_for_timeout(300)
+    pg.click('button[data-dio-print]'); wait_dp(pg)
     dp2 = pg.evaluate('window.__dp')
     same = bool(dp) and bool(dp2) and re.sub(r'\s+', ' ', dp[0]) == re.sub(r'\s+', ' ', dp2[0])
     check(f'{tag}: «پرنٹ» بٹن = Ctrl+P (بالکل وہی کاغذ)', same)
