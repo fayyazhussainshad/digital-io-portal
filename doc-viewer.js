@@ -13,6 +13,7 @@ function _dioDocName(docId) {
     shahadatain:     'شہادتیں',
     fir:             'ایف آئی آر',
     cross_version:   'کراس ورژن',
+    fivec_case:      '5-C درخواستیں',
     'r173:list':           'رپورٹ 173 ض ف',
     'r173:mukammal':       'رپورٹ 173 — چالان مکمل',
     'r173:namukammal':     'رپورٹ 173 — چالان نامکمل',
@@ -456,6 +457,11 @@ function _dioRenderTabContent(docId) {
   if (docId.startsWith('r173:')) {
     const type = docId.slice(5);
     if (typeof openReport173WithType === 'function') openReport173WithType(type, true);
+    return;
+  }
+  // v557: اس مقدمے کی 5-C درخواستیں
+  if (docId === 'fivec_case') {
+    if (typeof _f5cRenderCaseList === 'function' && typeof _f5cCaseId === 'function') _f5cRenderCaseList(_f5cCaseId());
     return;
   }
   // FIR / کراس ورژن — inka apna opener hai

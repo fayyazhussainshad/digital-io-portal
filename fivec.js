@@ -176,13 +176,14 @@ function render5CRow(a){
 }
 
 // ── NEW / EDIT — «نیا اندراج — 5-C درخواست» (مشترکہ DIO کارڈ، اکتوبر 2026) ──
-async function open5CForm(id){
+async function open5CForm(id,opts){
+  opts=opts||{};
   let app={complainant_name:'',complainant_cnic:'',complainant_cell:'',application_date:'',response_date:'',subject:'',status:'received',application_5c_numbers:[{}],application_5c_attachments:[]};
   if(id){const fetched=await getApplication5C(id);if(fetched)app=fetched;}
   const D=window.DIOCard;
   const nums=(app.application_5c_numbers&&app.application_5c_numbers.length)?app.application_5c_numbers:[{}];
   const body=
-    (await D.caseField(app.case_id||'', null, true))+
+    (await D.caseField(app.case_id||opts.caseId||'', null, true))+
     D.nameField('f5c-name', app.complainant_name, 'درخواست دہندہ — نام و پتہ', false)+
     D.row([
       D.fld({id:'f5c-cnic',label:'شناختی کارڈ',type:'cnic',value:app.complainant_cnic}),
@@ -190,7 +191,6 @@ async function open5CForm(id){
       D.fld({id:'f5c-appdate',label:'تاریخ درخواست',type:'date',value:app.application_date}),
       D.fld({id:'f5c-status',label:'صورتحال',type:'sel',w:'w-l',grow:true,value:app.status,opts:Object.entries(FIVEC_STATUS)})
     ])+
-    D.row([D.fld({id:'f5c-subject',label:'مضمون / خلاصہ',type:'area',line:true,value:app.subject,ph:'درخواست کا مختصر خلاصہ…'})])+
     `<div id="f5c-numbers">${nums.map(render5CNumberRow).join('')}</div>
   <button class="btn btn-secondary btn-sm" type="button" onclick="add5CNumberRow()" style="margin-top:8px;">+ ایک اور درخواست نمبر</button>
   ${id?`<div style="font-weight:700;margin:14px 0 6px;">منسلک فائلیں</div>
@@ -231,7 +231,7 @@ async function view5CAttachment(path){
 }
 async function delete5CAttachment(id,path,btn){if(!confirm('Delete this attachment?'))return;try{await deleteAttachment5C(id,path);if(btn&&btn.closest('div'))btn.closest('div').remove();showToast('Deleted','info');}catch(e){dioWriteFail('منسلکہ',e,'حذف نہیں ہوئی');}}
 async function save5CApp(id){
-  const main={complainant_name:(window.DIOCard?DIOCard.readName('f5c-name'):document.getElementById('f5c-name').value.trim())||null,complainant_cnic:document.getElementById('f5c-cnic').value.trim()||null,complainant_cell:document.getElementById('f5c-cell').value.trim()||null,application_date:toISODate(document.getElementById('f5c-appdate').value)||null,subject:document.getElementById('f5c-subject').value.trim()||null,status:document.getElementById('f5c-status').value};
+  const main={complainant_name:(window.DIOCard?DIOCard.readName('f5c-name'):document.getElementById('f5c-name').value.trim())||null,complainant_cnic:document.getElementById('f5c-cnic').value.trim()||null,complainant_cell:document.getElementById('f5c-cell').value.trim()||null,application_date:toISODate(document.getElementById('f5c-appdate').value)||null,status:document.getElementById('f5c-status').value};
   const numbers=Array.from(document.querySelectorAll('.f5c-num-row')).map(row=>{const r={};row.querySelectorAll('[data-field]').forEach(el=>{r[el.dataset.field]=el.value.trim()||null;});if(r.senior_officer_designation==='Other'){const c=row.querySelector('[data-field="senior_officer_designation_custom"]');r.senior_officer_designation=c&&c.value.trim()?c.value.trim():'Other';}if(r.forwarded_date)r.forwarded_date=toISODate(r.forwarded_date)||r.forwarded_date;delete r.senior_officer_designation_custom;return r;}).filter(n=>n.application_number);
   // متعلقہ مقدمہ (اختیاری) — sql/102 کے نئے خانے
   const cs=window.DIOCard?DIOCard.readCase():null;
@@ -244,12 +244,12 @@ async function save5CApp(id){
       if(window.DIOCard&&DIOCard._missingCol(e1)){const m2={...main};delete m2.case_id;delete m2.fir_number;await run(m2);showToast('محفوظ ہو گیا، مگر مقدمے سے جوڑنے کے لیے ڈیٹابیس اپڈیٹ (sql/102) ابھی نہیں چلی','info',7000);}
       else throw e1;
     }
-    closeModal();if(window._activePage==='fivec')renderFiveC(document.getElementById('page-content'));}catch(e){
+    closeModal();if(_f5cOnListPage())renderFiveC(document.getElementById('page-content'));_f5cAfterChange();}catch(e){
     // v547: درخواست بن گئی مگر نمبر رہ گئے — کارڈ بند کرو (دوبارہ «محفوظ» = دوہری درخواست) اور صاف بتاؤ
-    if(e&&e.code==='DIO_5C_NUMBERS'){closeModal();if(window._activePage==='fivec')renderFiveC(document.getElementById('page-content'));showToast('⚠ '+e.message,'error',10000);return;}
+    if(e&&e.code==='DIO_5C_NUMBERS'){closeModal();if(_f5cOnListPage())renderFiveC(document.getElementById('page-content'));_f5cAfterChange();showToast('⚠ '+e.message,'error',10000);return;}
     dioWriteFail('درخواست',e,'محفوظ نہیں ہوئی');}
 }
-function confirmDelete5C(id,sn){if(!confirm(`Delete Application #${sn} and ALL its attachments?`))return;deleteApplication5C(id).then(()=>{showToast('Deleted','info');renderFiveC(document.getElementById('page-content'));}).catch(e=>dioWriteFail('درخواست',e,'حذف نہیں ہوئی'));}
+function confirmDelete5C(id,sn){if(!confirm(`Delete Application #${sn} and ALL its attachments?`))return;deleteApplication5C(id).then(()=>{showToast('حذف ہو گئی','info');if(_f5cOnListPage())renderFiveC(document.getElementById('page-content'));_f5cAfterChange();}).catch(e=>dioWriteFail('درخواست',e,'حذف نہیں ہوئی'));}
 
 // ── RESPONSE WRITER ──
 // Saved selection — restored after clicking toolbar selects so text stays highlighted
@@ -497,7 +497,7 @@ async function _print5C(id) {
     <table>
       <tr><th>مدعی / درخواست گزار</th><td><b>${esc5C(a.complainant_name)||'—'}</b></td></tr>
       <tr><th>درخواست نمبر</th><td><span dir="ltr" style="direction:ltr;unicode-bidi:isolate;display:inline-block;">${esc5C(nums.map(n=>(n.application_number||'').replace(/،/g,'/')).filter(Boolean).join('، '))||'—'}</span></td></tr>
-      <tr><th>موضوع</th><td>${esc5C(a.subject)||'—'}</td></tr>
+      ${a.subject?`<tr><th>موضوع</th><td>${esc5C(a.subject)}</td></tr>`:''}
     </table>
     <div style="font-weight:700;margin-top:10px;">جواب / رپورٹ:</div>
     <div class="resp">${((window.DIO&&DIO.html&&DIO.html.safe)?DIO.html.safe(String(a.response_text||'').replace(/\n/g,'<br>')):esc5C(a.response_text||'')) || '&nbsp;'}</div>
@@ -515,3 +515,81 @@ async function _print5C(id) {
     dioPrint(_printHTML);
   } catch(e) { showToast(''+e.message,'error'); }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   5-C درخواست ↔ مقدمہ (v557)
+   • 5-C درخواست میں «متعلقہ مقدمہ» چنا جائے تو وہ مقدمے کے اندر بھی
+     نظر آتی ہے: مقدمے کی chip پٹی میں «5-C درخواستیں (n)» — صرف اُس
+     مقدمے میں جس سے کوئی درخواست جڑی ہو (کراس ورژن والا اصول)۔
+   • chip دبانے پر پورے صفحے میں اسی مقدمے کی درخواستوں کی فہرست —
+     وہی بٹن جو 5-C صفحے پر ہیں (ترمیم، فائل، جواب، پرنٹ، PDF، شیئر، حذف)
+     اور «+ 5-C درخواست درج کریں» (یہ مقدمہ پہلے سے منتخب)۔
+   • جوڑ صرف case_id سے (sql/102)؛ ڈیٹا وہی ایک — 5-C صفحے اور مقدمے
+     میں دو نقلیں نہیں۔ آف لائن بھی (fivec_cache میں case_id ہوتا ہے)۔
+   ═══════════════════════════════════════════════════════════ */
+// 5-C کا اپنا صفحہ کھلا ہے (مقدمے کے اندر نہیں)
+function _f5cOnListPage(){ return window._activePage==='fivec' && !window._inWorkspace; }
+
+async function _f5cForCase(caseId){
+  if(!caseId) return [];
+  const all=await getApplications5C('');
+  return (all||[]).filter(a=>a&&a.case_id!=null&&String(a.case_id)===String(caseId));
+}
+
+// مقدمے کی chip پٹی میں جگہ (#f5c-case-chip) بھرو — درخواست نہ ہو تو خالی
+async function _f5cFillChip(caseId){
+  const slot=document.getElementById('f5c-case-chip');
+  if(!slot) return;
+  let list=[];
+  try{ list=await _f5cForCase(caseId); }catch(_){ list=[]; }
+  const now=document.getElementById('f5c-case-chip');
+  if(!now || String(now.dataset.case)!==String(caseId)) return;   // اتنے میں مقدمہ بدل گیا
+  now.innerHTML=list.length
+    ? `<span class="mdoc-chip mdoc-done" onclick="open5CCaseList()" title="اس مقدمے سے متعلق 5-C درخواستیں">`+
+      `<bdi dir="ltr">5-C</bdi> درخواستیں (${list.length})</span>`
+    : '';
+}
+window._f5cFillChip=_f5cFillChip;
+
+function _f5cCaseId(){
+  return (typeof _misalCaseId!=='undefined'&&_misalCaseId) || (typeof currentCaseId!=='undefined'?currentCaseId:null);
+}
+
+// مقدمے کے اندر: اسی مقدمے کی 5-C درخواستیں (پورا صفحہ)
+async function open5CCaseList(){
+  const caseId=_f5cCaseId();
+  if(!caseId) return;
+  if(typeof _dioOpenDocTab==='function') _dioOpenDocTab('fivec_case');
+  await _f5cRenderCaseList(caseId);
+}
+window.open5CCaseList=open5CCaseList;
+
+async function _f5cRenderCaseList(caseId){
+  const area=document.getElementById('workspace-editor-area')||document.getElementById('workspace-tab-content');
+  if(!area) return;
+  const list=await _f5cForCase(caseId);
+  const c=(typeof _misalCase!=='undefined'&&_misalCase)||window._workspaceCase||{};
+  const fir=esc5C(c.fir_number||'');
+  area.innerHTML=`
+  <div id="f5c-case-view" style="direction:rtl;height:100%;overflow-y:auto;padding:10px;box-sizing:border-box;">
+    <div style="position:relative;min-height:38px;display:flex;align-items:center;justify-content:center;border-bottom:2px solid var(--accent);padding-bottom:6px;margin-bottom:12px;">
+      <div class="dio-hs1" style="font-weight:800;color:var(--accent);text-align:center;"><bdi dir="ltr">5-C</bdi> درخواستیں — مقدمہ <bdi dir="ltr">${fir||'—'}</bdi></div>
+      <button class="btn btn-primary btn-sm dio-add-btn" style="position:absolute;right:0;top:50%;transform:translateY(-50%);" onclick="open5CForm(null,{caseId:'${esc5C(String(caseId))}'})">+ <bdi dir="ltr">5-C</bdi> درخواست درج کریں</button>
+    </div>
+    ${list.length?`<div style="overflow-x:auto;"><table class="data-table fivec-center-table" style="width:100%;">
+      <thead><tr><th>#</th><th>درخواست دہندہ</th><th>شناختی کارڈ</th><th>موبائل</th><th>درخواست نمبر</th><th>تاریخ</th><th>صورتحال</th><th>فائلیں</th><th></th></tr></thead>
+      <tbody id="f5c-case-rows">${list.map(render5CRow).join('')}</tbody></table></div>`
+    :`<div id="f5c-case-rows" style="text-align:center;padding:36px 12px;color:var(--text-muted);">اس مقدمے سے کوئی <bdi dir="ltr">5-C</bdi> درخواست متعلق نہیں۔</div>`}
+  </div>`;
+  // موبائل: 5-C صفحے کی طرح جدول کی جگہ کارڈ (ہر خانے پر اُس کا عنوان)
+  try{ if(window.dioMobile&&dioMobile.isMobile()) dioMobile.labelTables(area); }catch(_){ /* صرف شکل — نہ ہو سکے تو جدول ہی */ }
+}
+
+// درخواست محفوظ / حذف ہونے کے بعد: کھلے مقدمے کی chip اور فہرست تازہ
+function _f5cAfterChange(){
+  const caseId=_f5cCaseId();
+  if(!window._inWorkspace||!caseId) return;
+  try{ _f5cFillChip(caseId); }catch(_){ /* chip نہ ہو تو کچھ نہیں */ }
+  if(document.getElementById('f5c-case-view')) _f5cRenderCaseList(caseId);
+}
+window._f5cAfterChange=_f5cAfterChange;

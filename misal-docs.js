@@ -56,6 +56,12 @@ function renderMisalBar(c) {
   // Naya/doosra case khula → purane case ke full-page tabs saaf karo
   if (_misalCase && c && _misalCase.id !== c.id && typeof _dioResetTabs === 'function') _dioResetTabs();
   _misalCase = c;
+  // v557: اس مقدمے سے جڑی 5-C درخواستیں ہوں تو chip (پٹی بن جانے کے بعد)
+  if (c && c.id) setTimeout(function () {
+    const fill = function () { if (typeof window._f5cFillChip === 'function') window._f5cFillChip(c.id); };
+    if (typeof window._dioNeed === 'function') window._dioNeed(['fivec.js']).then(fill, function () { /* فائل نہ آئی تو chip نہیں */ });
+    else fill();
+  }, 0);
   const items = MISAL_CASE_DOCS.filter(d => d.id !== 'index_naql').map(d => {
     const saved = _misalDocs[d.id];
     const done  = saved?.status === 'complete';
@@ -101,6 +107,8 @@ function renderMisalBar(c) {
         ...(typeof caseHasCross==='function' && caseHasCross(c) ? [{label:'گواہان کراس ورژن', act:`_ddPick('wit-dd','witnesses_cross')`}] : [])
       ], _misalHasData('witnesses_fir'))}
       <span class="mdoc-chip ${_misalHasData('report_173') ? 'mdoc-done' : 'mdoc-empty'}" onclick="openR173List()" title="رپورٹ 173 ض ف">رپورٹ 173 ض ف</span>
+      <!-- 5-C درخواستیں — صرف اُس مقدمے میں جس سے کوئی درخواست جڑی ہو (fivec.js بھرتا ہے) -->
+      <span id="f5c-case-chip" data-case="${(typeof esc==='function'?esc(String(c&&c.id||'')):String(c&&c.id||''))}" style="display:contents;"></span>
       ${items}
     </div>
   </div>
