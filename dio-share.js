@@ -133,6 +133,9 @@
     html = String(html).replace(/@media\s+print/gi, '@media all').replace(/@media\s+screen/gi, '@media not all');
     d.open(); d.write(html); d.close();
     await new Promise(function (r) { setTimeout(r, 150); });
+    // v555: فونٹ کی CSS اور اردو فونٹ آنے کا انتظار (پرنٹ کی تیاری والا وہی قاعدہ) — ورنہ یہاں ناپ
+    //   دوسرے فونٹ پر ہوتی اور فائل کے صفحات پرنٹ سے مختلف نکلتے
+    try { if (typeof window._dioWaitAssets === 'function') await window._dioWaitAssets(d, 6000); } catch (_) { /* ضمنی */ }
     // فونٹ لوڈ ہونے کا انتظار — زیادہ سے زیادہ 5 سیکنڈ (کوئی فونٹ اٹک جائے تو بھی آگے)
     for (var w8 = 0; w8 < 50; w8++) {
       var stt = 'loaded';
@@ -285,7 +288,19 @@
         // (line-height نہیں: اُس کی حتمی قدر px میں آتی ہے اور نیچے ہر عنصر پر وہی px لگ جاتا — چالان کے کھڑے خانے بگڑتے تھے)
         var keep = ['font-family', 'font-size', 'font-weight', 'font-style', 'color', 'direction', 'text-align',
           'margin-top', 'margin-right', 'margin-bottom', 'margin-left', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left'];
-        bodyClone.setAttribute('style', keep.map(function (k) { return k + ':' + bcs.getPropertyValue(k); }).join(';') + ';' + (d.body.getAttribute('style') || ''));
+        // v555: سطری فاصلہ (line-height) بھی — مگر حتمی px نہیں بلکہ دستاویز کے «body» قاعدے میں لکھی قدر
+        //   (مثلاً 1.4)، تاکہ ہر عنصر اپنے فونٹ کے حساب سے وہی فاصلہ لے جو پرنٹ میں۔ اس کے بغیر تصویر میں
+        //   «normal» فاصلہ لگتا اور کاغذ پرنٹ سے لمبا بنتا (سزا سلپ / ضمنی کا آخری صفحہ اگلے صفحے پر پھسلتا)
+        var lh = '';
+        [].forEach.call(d.styleSheets, function (sh) {
+          try {
+            [].forEach.call(sh.cssRules || [], function (r) {
+              if (r.selectorText && /(^|,)\s*body\s*(,|$)/.test(r.selectorText) && r.style && r.style.lineHeight) lh = r.style.lineHeight;
+            });
+          } catch (_) { /* دوسری جگہ کی شیٹ */ }
+        });
+        var lhCss = /^[\d.]+$|%$|em$/.test(lh) ? ';line-height:' + lh : '';
+        bodyClone.setAttribute('style', keep.map(function (k) { return k + ':' + bcs.getPropertyValue(k); }).join(';') + lhCss + ';' + (d.body.getAttribute('style') || ''));
       } catch (_) { /* انداز نہ ملے تو جوں کا توں */ }
       xml = new XMLSerializer().serializeToString(bodyClone).replace(/^<body/, '<div').replace(/<\/body>$/, '</div>');
     }
@@ -401,6 +416,16 @@
         for (var y = c[0]; y < c[1]; y += 6) { if (!whiteRow(gg, canvas.width, y)) return true; }
         return false;
       });
+      // v555: آخری حصہ صرف چند px کا ہو اور اس میں کوئی متن نہیں (صرف کھڑی لکیروں کے سرے — لکیریں
+      //   صفحے کے نیچے تک ہیں) تو الگ صفحہ نہیں
+      if (cuts.length > 1) {
+        var lc = cuts[cuts.length - 1], lhPx = Math.round(20 * scale);
+        if (lc[1] - lc[0] <= lhPx) {
+          var dk = gg.getImageData(0, lc[0], canvas.width, Math.max(1, lc[1] - lc[0])).data, dark = 0;
+          for (var q = 0; q < dk.length; q += 4) { if (dk[q] < 200) dark++; }
+          if (dark / (dk.length / 4) < 0.01) cuts.pop();
+        }
+      }
       var pages = cuts.map(function (c) {
         var pc = document.createElement('canvas');
         pc.width = Math.round(pg.w * ppi); pc.height = Math.round(pg.h * ppi);

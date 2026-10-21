@@ -271,6 +271,53 @@ def run(b, tag, ctxargs, mobile):
     except Exception as e:
         check(f'{tag}: zimni list/share crashed', False, repr(e)[:300])
 
+    # ═══ 4b) اندرونی ضمنی (بیانات 161) — 2pt لکیر صفحہ 2، 4 … پر، لکیریں نیچے تک، نمبر اپنے پیراگراف کی سیدھ میں ═══
+    for mode, n_par, paper in [('auto', 14, 'legal'), ('auto', 14, 'a4'), ('auto', 30, 'legal'), ('auto', 30, 'a4'), ('wit', 3, 'legal'), ('wit', 4, 'a4')]:
+        try:
+            pg.evaluate(SEED + "(1)"); ws(pg)
+            pg.evaluate("_openMisalEditor('statements_161')"); pg.wait_for_timeout(1800)
+            pg.evaluate("_newZimniA()"); pg.wait_for_timeout(1500)
+            if mode == 'auto':   # پیراگراف + (پرانا) خودکار نمبر شمار
+                pg.evaluate("""([n, para]) => { const b = document.querySelector('#ch173-doc .zfa-body');
+                  b.innerHTML = Array.from({length: n}, (_, i) => '<div>' + (i+1) + '۔ ' + para.repeat(1 + (i % 3)) + '</div>').join('');
+                  _zaAutoNumbers(); return 0; }""", [n_par, PARA])
+            else:                # گواہان کے بیانات (اصل ایپ کا «بیان» بٹن) — لمبے بیان، نمبر شمار خالی
+                pg.evaluate("""async ([n, para]) => { for (let i = 0; i < n; i++) {
+                    await _zaInsertWitnessStatement({ id: 'w' + i, full_name: 'گواہ نمبر ' + (i + 1) + ' ولد فلاں سکنہ ملتان', status: 'fir_eye' }); }
+                  document.querySelectorAll('#ch173-doc .zfa-wit-stmt').forEach(st => { st.textContent = 'بیان کیا کہ ' + para.repeat(14); });
+                  return 0; }""", [n_par, PARA])
+            pg.wait_for_timeout(400)
+            pg.evaluate("_saveZimniA(true, true)"); pg.wait_for_timeout(1500)
+            for how, js in [('ایڈیٹر', "_printZimniA()"), ('فہرست', "_printZimniAById(String(_zaActive.id))")]:
+                h = printed(pg, js, paper)
+                bi = h.find('class="zfa-c-body"')
+                brk = len(re.findall(r'class="dio-pgbrk"', h[bi:])) if bi > 0 else -1
+                what = (f'{n_par} پیراگراف' if mode == 'auto' else f'{n_par} گواہان کے بیان')
+                name = f'{tag}_za_{mode}{n_par}_{paper}_{"ed" if how == "ایڈیٹر" else "list"}'
+                pdf = to_pdf(b, h, name)
+                n, res = page_checks(tag, f'اندرونی ضمنی {what} ({paper}، {how} سے پرنٹ)', pdf, 1.0, 2, expect_pages=brk + 1)
+                if mode != 'auto':
+                    check(f'{tag}: اندرونی ضمنی {what} ({paper}) — کئی صفحات (جانچ کی شرط)', n >= 2, n)
+                    continue
+                # نمبر شمار (دائیں کالم) اور پیراگراف کا نمبر (حالات کے کالم میں) — ہر صفحے پر ایک ہی اونچائی
+                bb = subprocess.run(['pdftotext', '-bbox', pdf, '-'], capture_output=True, text=True).stdout
+                bad, seen = [], 0
+                for pi, page in enumerate(bb.split('<page')[1:]):
+                    W = float(re.search(r'width="([\d.]+)"', page).group(1))
+                    ser, par = {}, {}
+                    for x0, y0, txt in re.findall(r'xMin="([\d.]+)" yMin="([\d.]+)" xMax="[\d.]+" yMax="[\d.]+">([^<]*)<', page):
+                        dg = re.sub(r'\D', '', txt)
+                        if not dg: continue
+                        if float(x0) > 0.92 * W: ser[dg] = float(y0)
+                        elif 0.70 * W < float(x0) < 0.86 * W and dg not in par: par[dg] = float(y0)
+                    for k, y in ser.items():
+                        seen += 1
+                        if k not in par or abs(par[k] - y) > 3: bad.append((pi + 1, k, y, par.get(k)))
+                check(f'{tag}: اندرونی ضمنی {what} ({paper}، {how} سے پرنٹ) — ہر نمبر اپنے پیراگراف کی سیدھ میں (ہر صفحے پر، ±3pt)',
+                      seen >= n_par and not bad, (seen, bad[:4]))
+        except Exception as e:
+            check(f'{tag}: androoni {mode} {n_par} {paper} crashed', False, repr(e)[:300])
+
     # ═══ 5) ضمنی نمبر اور تاریخ — ایک تاریخ/ایک نمبر کی ایک ضمنی ═══
     try:
         pg.evaluate(SEED + "(1)"); ws(pg)

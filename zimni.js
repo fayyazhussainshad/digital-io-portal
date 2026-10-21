@@ -3162,8 +3162,20 @@ function _zimniPrintHTML(inner) {
                   var node=cut(sp);
                   var brk=document.createElement('span'); brk.className='dio-pgbrk';
                   node.parentNode.insertBefore(brk, node);
+                  // توڑ سے پہلے کا حاشیہ (پچھلے پیراگراف کا margin) صفحے کی حد پار کرے تو اسے صفر کرو —
+                  //   چھپائی میں صفحے کے توڑ پر یہ حاشیہ ویسے بھی کٹ جاتا ہے؛ یوں حساب اور چھپائی ایک
+                  if(brk.getBoundingClientRect().top-dTop > pTop+contentH-EPS){
+                    for(var E=brk; E && E!==bodyC.parentNode; E=E.parentNode){
+                      var pv=E.previousElementSibling, fst=E.parentNode && [].filter.call(E.parentNode.childNodes, function(c){ return c.nodeType===1 || (c.nodeType===3 && c.nodeValue.trim()); })[0];
+                      if(pv) pv.style.marginBottom='0px';
+                      if(E!==brk && E.style) E.style.marginTop='0px';
+                      if(fst!==E) break;
+                    }
+                  }
                   if(pNo%2===0) insB(node.parentNode, node);
-                  pTop=brk.getBoundingClientRect().top-dTop;
+                  // توڑ سے پہلے کا حاشیہ (پیراگراف کا نچلا margin) صفحے کی حد سے آگے ہو تو اگلا صفحہ حد ہی سے
+                  //   شروع ہوتا ہے (بچا ہوا حاشیہ اگلے صفحے کے اوپر) — اسی کے مطابق حساب
+                  pTop=Math.min(brk.getBoundingClientRect().top-dTop, pTop+contentH);
                   ri--;                                               // یہی قطار اگلے صفحے سے بھی آگے جا سکتی ہے
                 }
                 // آخری صفحہ — ٹیبل کے بعد خالی قطار، کھڑی لکیریں صفحے کے نیچے (حاشیے) تک
@@ -4680,6 +4692,8 @@ function _zaFormCSS() {
   #ch173-doc .zfa-wit-io{ font-weight:bold; white-space:nowrap; }
   #ch173-doc .zfa-wit-date{ margin-top:2px; unicode-bidi:isolate; }
 
+  /* v555: آخری صفحے کی خالی قطار (کاغذ کی تیاری لگاتی ہے) — کھڑی لکیریں صفحے کے نیچے تک */
+  #ch173-doc table.zfa-tbl tbody tr.zfa-fill td{ padding:0 !important; border-top:none !important; border-bottom:none !important; }
   /* مثل باندھنے کی جگہ — صرف چھپائی میں */
   #ch173-doc .zfa-bindmark{ display:none; }
   @media print{
@@ -4898,91 +4912,209 @@ async function _deleteZimniA(id, skipConfirm) {
 window._deleteZimniA = _deleteZimniA;
 
 // ═══════════════════════════════════════════════════════════════
-//  مثل باندھنے کی جگہ — دوسرے صفحے سے، اوپر بائیں کونے میں مثلث
-//  (بیرونی ضمنی جیسا اصول۔ صرف چھپائی کے لیے۔)
+//  مثل باندھنے کی جگہ — صفحہ 2، 4، 6 … کے اوپر بائیں کونے میں مثلث (2pt وتر)
+//  v555 (افسر کا قاعدہ، 21 اکتوبر 2026): «2pt والی لکیر اندرونی ضمنی پر بھی» —
+//  بیرونی ضمنی والا طریقہ: حساب چھپائی سے پہلے منتخب کاغذ (A4 / لیگل) کی اصل چوڑائی اور
+//  «پرنٹ» کی شکل پر، اردو فونٹ آنے کے بعد (dioBindHtml)۔ پہلے یہ اسکرین کے ایڈیٹر پر
+//  ناپا جاتا تھا (موبائل پر چھوٹا کیا ہوا صفحہ، دوسرا فونٹ) اور فہرست کے پرنٹ میں لگتا ہی
+//  نہیں تھا۔ ہر صفحے کا توڑ پکا (.dio-pgbrk) — حالات کی اُس سطر سے پہلے جو صفحے میں نہ
+//  سمائے؛ نمبر شمار کے کالم میں بھی اسی جگہ (نمبر اپنے پیراگراف کی سیدھ میں رہیں)۔
+//  آخری صفحے پر خالی قطار — کھڑی لکیریں صفحے کے نیچے (حاشیے) تک۔
 // ═══════════════════════════════════════════════════════════════
-function _zaAddBindMarks() {
-  const daale = [];
-  const doc = _zimniDoc();
-  if (!doc) return daale;
-  const host = doc.querySelector('.zfa-body');
-  if (!host || !host.firstChild) return daale;
-
-  const IN = 96;
-  const paper = (typeof _ch173Paper !== 'undefined') ? _ch173Paper : 'legal';
-  const safhaH = ((paper === 'a4') ? 11.7 : 13) * IN;
-  let hashiya = 0;
-  try {
-    const cs = getComputedStyle(doc);
-    hashiya = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
-  } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
-  const kaam = safhaH - hashiya;
-  if (kaam < 100) return daale;
-
-  const docTop = doc.getBoundingClientRect().top;
-  const tukre = [];
-  let kul = 0;
-  const w = document.createTreeWalker(host, NodeFilter.SHOW_TEXT, null);
-  let n;
-  while ((n = w.nextNode())) {
-    if (!n.nodeValue.length) continue;
-    tukre.push({ node: n, shuru: kul });
-    kul += n.nodeValue.length;
-  }
-  if (!kul) return daale;
-
-  const jagah = (i) => {
-    for (let k = 0; k < tukre.length; k++) {
-      const t = tukre[k];
-      if (i >= t.shuru && i < t.shuru + t.node.nodeValue.length) {
-        try {
-          const rg = document.createRange();
-          rg.setStart(t.node, i - t.shuru);
-          rg.setEnd(t.node, i - t.shuru + 1);
-          const r = rg.getBoundingClientRect();
-          return r.height ? (r.top - docTop) : null;
-        } catch (_) { return null; }
-      }
+function _zaBinder(d, geo) {
+  const doc = d.getElementById('ch173-doc'); if (!doc || !geo || geo.ch < 200) return 0;
+  const ch = geo.ch, EPS = 2, FSAFE = 6;
+  let made = 0;
+  // پرانے نشان اور ایڈیٹر کی چپکی اونچائیاں (اسکرین کا صفحہ 1) ہٹاؤ
+  doc.querySelectorAll('.zfa-bindmark,.zf-bind,.dio-bindgap,.dio-pgbrk,.dio-colpad,tr.zfa-fill').forEach(e => e.remove());
+  doc.querySelectorAll('table.zfa-tbl td, table.zfa-tbl tr').forEach(el => { if (el.style.height) { el.style.height = 'auto'; made++; } });
+  // پرانی (خودکار) نمبر شمار — margin سے پیراگراف کی سیدھ، جو ایڈیٹر کے کاغذ کی چوڑائی پر ناپی گئی
+  //   تھی؛ دوسرے کاغذ (A4 / لیگل) پر سطریں بدلتی ہیں — اسی کاغذ کی چوڑائی پر دوبارہ (_zaAutoNumbers کا اصول)
+  doc.querySelectorAll('table.zfa-tbl').forEach(tbl => {
+    const nb = tbl.querySelector('.zfa-nums'), bd = tbl.querySelector('.zfa-body');
+    if (!nb || !bd) return;
+    const ks = [].filter.call(nb.children, e => e.classList && e.classList.contains('zfa-num'));
+    if (!ks.length || !ks.some(k => k.style.marginTop)) return;
+    const ps = [].filter.call(bd.children, el => (el.tagName === 'DIV' || el.tagName === 'P') && String(el.textContent || '').replace(/[\s\u00A0]/g, '').length);
+    if (!ps.length) return;
+    ks.forEach(k => { k.style.marginTop = '0px'; });
+    ks.forEach((k, i) => {
+      if (!ps[i]) return;
+      const g = Math.round(ps[i].getBoundingClientRect().top - k.getBoundingClientRect().top);
+      if (g > 0 && g < 5000) k.style.marginTop = g + 'px';
+    });
+    made++;
+  });
+  // حالات کے کالم کے آخری پیراگراف کا نچلا حاشیہ — چھپائی میں آخری صفحے پر شمار نہیں ہوتا (ٹیبل اتنا
+  //   چھوٹا نکلتا تھا اور لکیریں نیچے سے ذرا پہلے رک جاتیں)؛ کاغذ پر یہ جگہ ویسے بھی خالی قطار بھرتی ہے
+  doc.querySelectorAll('table.zfa-tbl .zfa-body').forEach(bd => { const lc = bd.lastElementChild; if (lc && lc.tagName !== 'BR') lc.style.marginBottom = '0px'; });
+  const dTop = doc.getBoundingClientRect().top;
+  const texts = (cell) => { const out = [], tw = d.createTreeWalker(cell, NodeFilter.SHOW_TEXT, null); let n; while ((n = tw.nextNode())) { if (n.nodeValue && n.nodeValue.trim()) out.push(n); } return out; };
+  const rects = (n) => { const r = d.createRange(); r.selectNodeContents(n); return [].filter.call(r.getClientRects(), x => x.height > 2); };
+  // پہلی سطر جس کا نچلا کنارہ limitY سے نیچے ہو → {n, off, top}
+  const lineFind = (cell, limitY) => {
+    for (const n of texts(cell)) {
+      const hit = rects(n).find(x => x.bottom - dTop > limitY + 0.5); if (!hit) continue;
+      const rg = d.createRange(); let lo = 0, hi = n.nodeValue.length - 1, off = -1;
+      while (lo <= hi) { const mid = (lo + hi) >> 1; rg.setStart(n, mid); rg.setEnd(n, mid + 1); const bb = rg.getBoundingClientRect();
+        if (bb.height && bb.top >= hit.top - 1) { off = mid; hi = mid - 1; } else lo = mid + 1; }
+      return off < 0 ? null : { n, off, top: hit.top - dTop };
     }
     return null;
   };
-
-  const aakhri = jagah(kul - 1);
-  if (aakhri == null) return daale;
-  const safhe = Math.floor(aakhri / kaam);
-  for (let p = 1; p <= safhe; p++) {
-    const hadd = p * kaam;
-    let lo = 0, hi = kul - 1, mila = -1;
-    for (let g = 0; g < 24 && lo <= hi; g++) {
-      const mid = (lo + hi) >> 1;
-      const y = jagah(mid);
-      if (y == null) { lo = mid + 1; continue; }
-      if (y >= hadd) { mila = mid; hi = mid - 1; } else { lo = mid + 1; }
-    }
-    if (mila < 0) continue;
-    for (const t of tukre) {
-      const off = mila - t.shuru;
-      if (off >= 0 && off < t.node.nodeValue.length) {
-        try {
-          // v553: صرف پچھلی طرف (جفت صفحہ) — اوپر ایک سطر + مثلث (2pt وتر)
-          if ((p + 1) % 2 !== 0) break;
-          const baad = t.node.splitText(off);
-          const gap = document.createElement('span');
-          gap.className = 'dio-bindgap';
-          t.node.parentNode.insertBefore(gap, baad);
-          daale.push(gap);
-          const tri = document.createElement('span');
-          tri.className = 'zfa-bindmark';
-          t.node.parentNode.insertBefore(tri, baad);
-          daale.push(tri);
-        } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
-        break;
+  const lastBottom = (cell) => { let v = null; texts(cell).forEach(n => rects(n).forEach(x => { v = (v === null) ? x.bottom - dTop : Math.max(v, x.bottom - dTop); })); return v; };
+  const cut = (sp) => (sp.off > 0 ? sp.n.splitText(sp.off) : sp.n);
+  const mk = (cls) => { const e = d.createElement('span'); e.className = cls; return e; };
+  // نمبر شمار کے کالم میں بھی اسی جگہ توڑ: پہلی چیز (نمبر یا خالی سطر) جو حالات کے توڑ (y) کے بعد
+  //   شروع ہو، اگلے صفحے پر — اور صفحے کے اوپر سے اُتنا ہی فاصلہ جتنا اُس کے پیراگراف کا (نمبر
+  //   پیراگراف کی سیدھ میں رہے)۔ colShift = اس کالم اور حالات کے کالم کی اونچائی کا فرق
+  let colShift = 0;
+  const splitCol = (cell, y, even) => {
+    if (!cell) return;
+    const yC = y + colShift;
+    const tw = d.createTreeWalker(cell, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, null); let n, at = null, atTop = 0;
+    while ((n = tw.nextNode())) {
+      if (n.nodeType === 3) {
+        if (!n.nodeValue.trim()) continue;
+        // سطر کا اوپری کنارہ (line box) — نستعلیق فونٹ کا حرف سطر سے اوپر تک جاتا ہے، اس لیے حرف کا نہیں
+        let lh = 0; try { lh = parseFloat(d.defaultView.getComputedStyle(n.parentNode).lineHeight) || 0; } catch (_) { lh = 0; }
+        const lt = (x) => (lh ? (x.top + x.bottom) / 2 - lh / 2 : x.top) - dTop;
+        const hit = rects(n).find(x => lt(x) >= yC - 2); if (!hit) continue;   // اس متن کی پہلی سطر جو توڑ کے بعد شروع ہو
+        const rg = d.createRange(); let lo = 0, hi = n.nodeValue.length - 1, off = -1;
+        while (lo <= hi) { const mid = (lo + hi) >> 1; rg.setStart(n, mid); rg.setEnd(n, mid + 1); const bb = rg.getBoundingClientRect();
+          if (bb.height && bb.top >= hit.top - 1) { off = mid; hi = mid - 1; } else lo = mid + 1; }
+        if (off >= 0) { at = off > 0 ? n.splitText(off) : n; atTop = lt(hit); break; }
+      } else if (n.tagName === 'BR') {
+        const r = d.createRange(); r.selectNode(n); const bb = r.getBoundingClientRect();
+        if (bb.height && bb.top - dTop >= yC - 2) { at = n; atTop = bb.top - dTop; break; }
       }
     }
-  }
-  return daale;
+    if (!at || !at.parentNode) return;
+    // نمبر اپنے خانے (div) کا پہلا حصہ ہو تو توڑ اُس خانے سے پہلے، اور اُس کا اوپری حاشیہ صفر —
+    //   ورنہ چھپائی میں وہ حاشیہ اگلے صفحے کے اوپر دوبارہ لگ کر نمبر کو پیراگراف سے نیچے کر دیتا
+    const firstOf = (p) => [].find.call(p.childNodes, c => c.nodeType === 1 || (c.nodeType === 3 && c.nodeValue.trim()));
+    let E = at;
+    while (E.parentNode && E.parentNode !== cell && firstOf(E.parentNode) === E) E = E.parentNode;
+    const pad = Math.round(atTop - yC);
+    const brk = mk('dio-pgbrk'); E.parentNode.insertBefore(brk, E);
+    if (pad > 1) { const g = mk('dio-colpad'); g.style.cssText = 'display:block;height:' + pad + 'px;margin:0;padding:0;'; E.parentNode.insertBefore(g, E); }
+    if (even) E.parentNode.insertBefore(mk('dio-bindgap'), E);
+    if (E.nodeType === 1) { try { if (parseFloat(d.defaultView.getComputedStyle(E).marginTop) > 0) E.style.marginTop = '0px'; } catch (_) { /* ضمنی */ } }
+    colShift = brk.getBoundingClientRect().top - dTop - y;
+    return brk;
+  };
+  // مثلث کے گرد متن مڑنے سے حالات کی سطریں نیچے کھسکتی ہیں — توڑ کے بعد کے نمبر بھی اتنا ہی نیچے
+  const firstOfP = (p) => [].find.call(p.childNodes, c => c.nodeType === 1 || (c.nodeType === 3 && c.nodeValue.trim()));
+  const colItems = (cell, after) => {
+    const out = [], seen = new Set();
+    texts(cell).forEach(n => {
+      if (!(after.compareDocumentPosition(n) & 4)) return;            // صرف توڑ کے بعد والے
+      let E = n; while (E.parentNode && E.parentNode !== cell && firstOfP(E.parentNode) === E) E = E.parentNode;
+      if (seen.has(E)) return; seen.add(E);
+      const r = rects(n)[0]; if (r) out.push({ E, s: r.top - dTop });
+    });
+    return out;
+  };
+  const anchorAt = (cell, Y) => {
+    for (const n of texts(cell)) {
+      const hit = rects(n).find(x => x.top - dTop >= Y - 2); if (!hit) continue;
+      const rg = d.createRange(); let lo = 0, hi = n.nodeValue.length - 1, off = -1;
+      while (lo <= hi) { const mid = (lo + hi) >> 1; rg.setStart(n, mid); rg.setEnd(n, mid + 1); const bb = rg.getBoundingClientRect();
+        if (bb.height && bb.top >= hit.top - 1) { off = mid; hi = mid - 1; } else lo = mid + 1; }
+      return off < 0 ? null : { n, off };
+    }
+    return null;
+  };
+  const topOf = (a) => { const r = d.createRange(); r.setStart(a.n, a.off); r.setEnd(a.n, a.off + 1); return r.getBoundingClientRect().top - dTop; };
+  const tables = [].slice.call(doc.querySelectorAll('table.zfa-tbl'));
+  tables.forEach(tbl => {
+    // اس ضمنی کا صفحہ 1 (سب اکٹھی چھپیں تو ہر ایک اپنے خانے میں، نئے صفحے سے)
+    let unit = tbl; while (unit.parentNode && unit.parentNode !== doc) unit = unit.parentNode;
+    let pTop = tables.length > 1 ? unit.getBoundingClientRect().top - dTop : 0, pNo = 1, guard = 0;
+    colShift = 0;
+    const body = tbl.querySelector('td.zfa-c-body'), nums = tbl.querySelector('td.zfa-c-serial');
+    // اس صفحے پر ٹیبل کتنا اونچا چھپے گا — حالات کا کالم، اور نمبر شمار کا کالم اپنے صفحے کے آغاز (sStart) سے
+    let sStart = pTop;
+    const used = () => {
+      let u = tbl.getBoundingClientRect().bottom - dTop - pTop;
+      const nd = nums && nums.querySelector('.zfa-nums');
+      if (nd && lastBottom(nd) !== null) {
+        let pb = 0; try { pb = parseFloat(d.defaultView.getComputedStyle(nums).paddingBottom) || 0; } catch (_) { pb = 0; }
+        u = Math.max(u, nd.getBoundingClientRect().bottom - dTop - sStart + pb);
+      }
+      return u;
+    };
+    while (body && guard++ < 80) {
+      if (used() <= ch - EPS) break;      // باقی سب اسی صفحے پر
+      let sp = lineFind(body, pTop + ch - EPS);
+      if (!sp) { const lb = lastBottom(body); if (lb !== null) sp = lineFind(body, lb - 1); }   // متن سما گیا — آخری سطر اگلے صفحے پر
+      if (!sp || sp.top <= pTop + 1) break;                                             // آگے نہیں بڑھ سکتے
+      pNo++;
+      const even = pNo % 2 === 0;
+      // سطر کسی تیرتے خانے (float — گواہ کے بیان کا حوالہ / تفتیشی افسر کا دستخط) میں ہو تو اُس خانے کو
+      //   نہ توڑو — پورا خانہ اگلے صفحے پر
+      let fl = null;
+      for (let e = sp.n.parentNode; e && e !== body; e = e.parentNode) {
+        try { if (d.defaultView.getComputedStyle(e).cssFloat !== 'none') fl = e; } catch (_) { /* ضمنی */ }
+      }
+      const node = fl || cut(sp);
+      const brk = mk('dio-pgbrk'); node.parentNode.insertBefore(brk, node);
+      if (brk.getBoundingClientRect().top - dTop <= pTop + 1) { brk.remove(); break; }   // آگے نہیں بڑھ سکتے
+      // توڑ سے پہلے کا حاشیہ (پچھلے پیراگراف کا margin) صفحے کی حد پار کرے تو اسے صفر کرو — چھپائی میں
+      //   صفحے کے توڑ پر یہ حاشیہ ویسے بھی کٹ جاتا ہے؛ یوں حساب اور چھپائی ایک
+      const yOrig = brk.getBoundingClientRect().top - dTop;      // نمبر شمار کی سیدھ اسی (اصل) جگہ کے حساب سے
+      if (yOrig > pTop + ch - EPS) {
+        for (let E = brk; E && E !== body; E = E.parentNode) {
+          const pv = E.previousElementSibling, fst = E.parentNode && firstOfP(E.parentNode);
+          if (pv) pv.style.marginBottom = '0px';
+          if (E !== brk && E.style) E.style.marginTop = '0px';
+          if (fst !== E) break;
+        }
+      }
+      const y = brk.getBoundingClientRect().top - dTop;
+      if (even) node.parentNode.insertBefore(mk('dio-bindgap'), node);
+      const sBrk = splitCol(nums, yOrig, even);
+      sStart = sBrk ? sBrk.getBoundingClientRect().top - dTop : yOrig + colShift;
+      colShift = sStart - y;                                      // حالات کے کالم کی نئی جگہ کے حساب سے
+      if (even) {
+        // مثلث سے پہلے: ہر نمبر کے سامنے حالات کی کون سی سطر ہے؛ مثلث کے بعد وہ سطر کتنی کھسکی
+        const its = sBrk ? colItems(nums, sBrk).map(it => ({ it, a: anchorAt(body, it.s - colShift) })) : [];
+        const was = its.map(x => (x.a ? topOf(x.a) : null));
+        node.parentNode.insertBefore(mk('zfa-bindmark'), node);
+        let applied = 0;
+        its.forEach((x, k) => {
+          if (!x.a) return;
+          const dl = Math.round(topOf(x.a) - was[k]) - applied;
+          if (dl > 1) { const g = mk('dio-colpad'); g.style.cssText = 'display:block;height:' + dl + 'px;margin:0;padding:0;'; x.it.E.parentNode.insertBefore(g, x.it.E); applied += dl; }
+        });
+      }
+      // توڑ سے پہلے کا حاشیہ (پیراگراف کا نچلا margin) صفحے کی حد سے آگے ہو تو چھپائی میں اگلے صفحے کی
+      //   اونچائی اسی حد سے گنی جاتی ہے — صفحہ بھرنے کا حساب اسی کے مطابق (محتاط)
+      pTop = Math.min(y, pTop + ch);
+      made++;
+    }
+    // آخری صفحہ — ٹیبل کے بعد خالی قطار، کھڑی لکیریں صفحے کے نیچے (حاشیے) تک
+    const last = tbl.querySelector('tbody > tr:last-child');
+    const room = Math.floor(ch - used() - FSAFE);
+    if (last && room > 8) {
+      const tr = d.createElement('tr'); tr.className = 'zfa-fill';
+      [].slice.call(last.children).forEach(c => {
+        const td = d.createElement('td'); td.className = c.className || '';
+        td.style.cssText = 'height:' + room + 'px !important;padding:0 !important;border-top:none !important;border-bottom:none !important;';
+        tr.appendChild(td);
+      });
+      last.parentNode.appendChild(tr); made++;
+    }
+  });
+  return made;
 }
-window._zaAddBindMarks = _zaAddBindMarks;
+window._zaBinder = _zaBinder;
+// کاغذ چھپائی سے پہلے «تیار» (بیرونی ضمنی کے _zimniFinalize جیسا)
+async function _zaFinalize(html) {
+  if (typeof dioBindHtml !== 'function' || !html) return html;
+  try { return await dioBindHtml(html, { binder: _zaBinder }); } catch (_) { return html; }
+}
+window._zaFinalize = _zaFinalize;
 
 // چالان/بیرونی ضمنی jaisa print: kaghaz + margins report173 se، CSS bhi
 // report173 (_ch173CSS) + androoni form CSS ملا کر — screen aur print aik jaisa
@@ -4992,7 +5124,7 @@ function _zaPrintHTML(inner) {
   const size  = (paper === 'a4') ? 'A4 portrait' : '8.5in 13in';
   const css173 = (typeof _ch173CSS === 'function') ? _ch173CSS() : '';
   return `<!DOCTYPE html><html dir="rtl" lang="ur"><head><meta charset="UTF-8"><title> </title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
+    ${(typeof dioFontHead === 'function') ? dioFontHead() : '<link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">'}
     <style>
       @page{ size:${size}; margin:1cm ${side}; }
       *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; box-sizing:border-box; }
@@ -5006,7 +5138,7 @@ function _zaPrintHTML(inner) {
       #ch173-doc table.zfa-tbl, #ch173-doc table.zfa-tbl tbody,
       #ch173-doc table.zfa-tbl tbody tr, #ch173-doc table.zfa-tbl tbody td{
         page-break-inside:auto !important; break-inside:auto !important; }
-      /* AHEM: bug tha — JS (_zaAddBindMarks) '.zfa-bindmark' class banata hai,
+      /* AHEM: bug tha — JS (اب _zaBinder) '.zfa-bindmark' class banata hai,
          lekin CSS pehle sirf '.zfa-bind' ko style karti thi (naam mismatch),
          isi liye 2nd page wali مثلث kabhi nazar hi nahi aati thi. bairooni ke
          _zimniPrintHTML jaisa — yahan seedha (unconditional) sahi class: */
@@ -5031,23 +5163,19 @@ function _zaPrintHTML(inner) {
 }
 window._zaPrintHTML = _zaPrintHTML;
 
-function _zaPrintDoc(inner) {
-  const html = _zaPrintHTML(inner);
+async function _zaPrintDoc(inner) {
+  const html = await _zaFinalize(_zaPrintHTML(inner));
   if (typeof dioPrint === 'function') dioPrint(html);
   else { const w = window.open('', '_blank'); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 300); }
 }
 
 // ── PRINT (صرف دستاویز — MS-Word اصول) ──────────────────────────
-function _printZimniANow() {
+// v555: مثل کی جگہ اب کاغذ کی تیاری (_zaFinalize) میں — ایڈیٹر کو نہیں چھیڑا جاتا
+async function _printZimniANow() {
   const ed = _zimniDoc();
   if (!ed) return;
   try { _zaLayout(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
-  let marks = [];
-  try { marks = _zaAddBindMarks() || []; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
-  let inner = _zimniCleanHTML(ed.innerHTML);
-  try { marks.forEach(m => m.remove()); ed.normalize(); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
-  try { _zaLayout(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
-  _zaPrintDoc(inner);
+  await _zaPrintDoc(_zimniCleanHTML(ed.innerHTML));
 }
 window._printZimniA = _printZimniA;
 
@@ -5061,15 +5189,15 @@ function _zaDocHTML(z) {
 }
 function _zaById(id) { return (_zaList || []).find(z => String(z.id) === String(id)); }
 
-function _printZimniAByIdNow(id) {
+async function _printZimniAByIdNow(id) {
   const z = _zaById(id);
   if (!z) { if (typeof showToast === 'function') showToast('اندرونی ضمنی نہیں ملی', 'error'); return; }
-  const html = _zaDocHTML(z);
+  const html = await _zaFinalize(_zaDocHTML(z));
   if (typeof dioPrint === 'function') dioPrint(html);
   else { const w = window.open('', '_blank'); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 300); }
 }
 
-function _printAllZimniANow() {
+async function _printAllZimniANow() {
   if (!_zaList || !_zaList.length) {
     if (typeof showToast === 'function') showToast('کوئی اندرونی ضمنی موجود نہیں', 'info'); return;
   }
@@ -5078,7 +5206,7 @@ function _printAllZimniANow() {
     const brk = (i < _zaList.length - 1) ? 'style="page-break-after:always;"' : '';
     return `<div ${brk}>${_zimniSafePrint(c.bodyHtml)}</div>`;
   }).join('');
-  const html = _zaPrintHTML(body);
+  const html = await _zaFinalize(_zaPrintHTML(body));
   if (typeof dioPrint === 'function') dioPrint(html);
   else { const w = window.open('', '_blank'); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 300); }
 }
