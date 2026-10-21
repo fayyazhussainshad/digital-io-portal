@@ -68,8 +68,11 @@ def leave(pg):
     pg.evaluate("try{_dioResetTabs&&_dioResetTabs()}catch(e){} try{_dioExitDocView()}catch(e){} try{closeModal()}catch(e){} 0")
     pg.evaluate("showPage('cases', null)"); pg.wait_for_timeout(1300)
 
-def type_zimni(pg, txt):
+def type_zimni(pg, txt, date=None):
     pg.evaluate("_newZimni()"); pg.wait_for_timeout(1500)
+    if date:   # v555: ایک تاریخ کی ایک ہی ضمنی — ہر ضمنی اپنی تاریخ پر
+        pg.evaluate("""(d) => { const a = document.querySelector('#ch173-doc tr.zf-blk .zf-actbody'); a.textContent = d; a.dispatchEvent(new Event('input',{bubbles:true})); return 0; }""", date)
+        pg.wait_for_timeout(300)
     pg.evaluate("""(t) => { const b = document.querySelector('#ch173-doc .zf-body'); b.focus(); const r = document.createRange(); r.selectNodeContents(b); r.collapse(false);
         const s = getSelection(); s.removeAllRanges(); s.addRange(r); document.execCommand('insertText', false, t); return 0; }""", txt)
     pg.wait_for_timeout(300); pg.keyboard.press('Control+s'); pg.wait_for_timeout(1800)
@@ -79,9 +82,9 @@ def make_docs(pg):
        CRO کارڈ، RFA، 2 CDR درخواستیں، بیان 161"""
     pg.evaluate("window.__dioPaperAuto = 'keep'; 0")
     ws(pg); pg.evaluate("openZimniEditor('c1')"); pg.wait_for_timeout(1200)
-    type_zimni(pg, ' پہلی ضمنی — مقدمہ کی تفتیش جاری ہے۔')
+    type_zimni(pg, ' پہلی ضمنی — مقدمہ کی تفتیش جاری ہے۔', '19/10/2026')
     pg.evaluate("_zimniBackToList()"); pg.wait_for_timeout(900)
-    type_zimni(pg, ' دوسری ضمنی — گواہان کے بیانات قلمبند کیے گئے۔')
+    type_zimni(pg, ' دوسری ضمنی — گواہان کے بیانات قلمبند کیے گئے۔', '20/10/2026')
     ws(pg); pg.evaluate("_openMisalEditor('saza_slip')"); pg.wait_for_timeout(3000); pg.evaluate("_sazaSave()"); pg.wait_for_timeout(1500)
     for i in range(2):
         ws(pg); pg.evaluate("_openMisalEditor('darkhwastain')"); pg.wait_for_timeout(2200)

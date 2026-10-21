@@ -47,6 +47,11 @@ def zimni_open(pg):
     pg.evaluate("openCaseWorkspace('c1')"); pg.wait_for_timeout(1400)
     pg.evaluate("openZimniEditor('c1')"); pg.wait_for_timeout(900)
 
+def set_date(pg, d):
+    """v555: ایک تاریخ کی ایک ہی ضمنی — ہر نئی ضمنی اپنی تاریخ پر (کالم 1)"""
+    pg.evaluate("""(d) => { const a = document.querySelector('#ch173-doc tr.zf-blk .zf-actbody'); a.textContent = d; a.dispatchEvent(new Event('input',{bubbles:true})); return 0; }""", d)
+    pg.wait_for_timeout(300)
+
 def type_body(pg, txt):
     pg.click('#ch173-doc .zf-body'); pg.keyboard.press('End'); pg.keyboard.type(txt); pg.wait_for_timeout(200)
 
@@ -132,6 +137,7 @@ def run(b, tag, vp, mobile=False):
     # ── 6) آف لائن: آلے پر، پھر انٹرنیٹ آتے ہی خود sync (دوہرا نہیں) ──
     ctx.set_offline(True); pg.wait_for_timeout(200)
     pg.evaluate("_newZimni()"); pg.wait_for_timeout(1300)
+    set_date(pg, '16/10/2026')
     type_body(pg, ' آف لائن لکھی گئی ضمنی۔')
     pg.keyboard.press('Control+s'); pg.wait_for_timeout(900)
     loc = pg.evaluate("JSON.parse(localStorage.getItem('dio_zimni_c1')||'[]').filter(z => z._pending).length")
@@ -145,6 +151,7 @@ def run(b, tag, vp, mobile=False):
     # ── 7) سرور کا رد: اصل وجہ، مقامی نقل محفوظ ──
     pg.evaluate("window.__opts.fail = ['zimni_reports:insert']; window.__toasts = []; 0")
     pg.evaluate("_newZimni()"); pg.wait_for_timeout(1300)
+    set_date(pg, '17/10/2026')
     type_body(pg, ' رد ہونے والی۔')
     pg.keyboard.press('Control+s'); pg.wait_for_timeout(1300)
     t = ' | '.join(pg.evaluate('window.__toasts'))
@@ -155,6 +162,7 @@ def run(b, tag, vp, mobile=False):
     # ── 7b) سرور کی جدول میں متن کا کالم ہی نہ ہو — صاف وجہ، کام آلے پر محفوظ ──
     pg.evaluate("window.__opts.schema = { zimni_reports: ['id','case_id','serial_no','report_date','officer_id','created_at'] }; window.__toasts = []; 0")
     pg.evaluate("_newZimni()"); pg.wait_for_timeout(1300)
+    set_date(pg, '18/10/2026')
     type_body(pg, ' کالم کے بغیر۔')
     pg.keyboard.press('Control+s'); pg.wait_for_timeout(2500)
     t = ' | '.join(pg.evaluate('window.__toasts'))
