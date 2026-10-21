@@ -49,9 +49,9 @@ test('تھانہ/ضلع پہلی سطر میں (درخواستوں کا اصول
   assert.ok(!/getSHOSignLine\(/.test(J), 'نام والی سطر استعمال نہیں');
 });
 
-test('فہرست ملزمان/گواہان کی ترتیب میں + «نیا اندراج»', () => {
+test('فہرست ملزمان/گواہان کی ترتیب میں + «… درج کریں» (v553: پورے سسٹم کا ایک نمونہ)', () => {
   assert.ok(/<div class="page-title">واقعاتی رپورٹس<\/div>/.test(J));
-  assert.ok(/class="btn btn-primary dio-add-btn" onclick="_irNew\(\)">\+ نیا اندراج</.test(J));
+  assert.ok(/class="btn btn-primary dio-add-btn" onclick="_irNew\(\)">\+ واقعاتی رپورٹ درج کریں</.test(J));
   assert.ok(/class="form-input" id="ir-list-q"/.test(J) && /class="card ir-card"/.test(J));
 });
 

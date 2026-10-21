@@ -52,6 +52,8 @@ MEASURE = """(() => {
     savedBox: !!document.querySelector('#workspace-editor-area #dio-saved-box'),
     barButtons: [...document.querySelectorAll('#dio-dv-bar button')].filter(b => b.offsetParent !== null || getComputedStyle(b).display !== 'none').map(b => b.textContent.trim()),
     hiddenBar: [...document.querySelectorAll('#dio-dv-bar button')].filter(b => getComputedStyle(b).display === 'none').map(b => b.textContent.trim()),
+    // v553: «منظوری» کا بٹن پورے سسٹم سے ہٹا دیا گیا — پٹی میں موجود ہی نہیں
+    approvalBtn: [...document.querySelectorAll('button')].some(b => /منظوری/.test(b.textContent || '')),
     edTop: Math.round(r(ed).top), headTop: Math.round(r(heading).top), headBottom: Math.round(r(heading).bottom),
     tableTop: Math.round(r(tbl).top), tableBottom: Math.round(r(tbl).bottom), tableH: Math.round(r(tbl).height),
     nextAfterTable: Math.round(r(ed.querySelector('#idxn-parties')).top),
@@ -98,7 +100,7 @@ def run(pg, tag):
     pg.screenshot(path=f'{OUT}/{tag}_i01_index_empty.png', full_page=False)
     check(f'{tag} no editing toolbar on index', m and not m['toolbar'], m and m['toolbar'])
     check(f'{tag} no saved-files box on index', not m['savedBox'])
-    check(f'{tag} «محفوظ» and «منظوری» buttons hidden for index', 'محفوظ' in m['hiddenBar'] and 'منظوری' in m['hiddenBar'] and 'پرنٹ' not in m['hiddenBar'], m['hiddenBar'])
+    check(f'{tag} «محفوظ» hidden for index, no «منظوری» button anywhere (v553)', 'محفوظ' in m['hiddenBar'] and not m['approvalBtn'] and 'پرنٹ' not in m['hiddenBar'], [m['hiddenBar'], m['approvalBtn']])
     check(f'{tag} no zimni yet → serial column empty', all(s == '' for s in m['zSerials']) and len(m['zSerials']) == 18, m['zSerials'][:4])
     check(f'{tag} zimni table: 2 groups × 3 columns', m['zCols'] == 6, m['zCols'])
     check(f'{tag} zimni: IO-name column wider than date column', m['zW'][2] > m['zW'][1], m['zW'])
@@ -183,15 +185,15 @@ def run(pg, tag):
     m19 = pg.evaluate(MEASURE)
     check(f'{tag} 19th zimni → table grows by a row (nothing dropped)', '19' in m19['zSerials'] and len(m19['zSerials']) == 20, m19['zSerials'][-4:])
 
-    # دوسری دستاویز پر «محفوظ» / «منظوری» واپس نظر آئیں
+    # دوسری دستاویز پر «محفوظ» واپس نظر آئے («منظوری» v553 سے کہیں نہیں)
     pg.evaluate("_doAddMisalDoc('brief')"); pg.wait_for_timeout(400)
     pg.evaluate("_openMisalEditor('brief')"); pg.wait_for_timeout(700)
     hb = pg.evaluate("[...document.querySelectorAll('#dio-dv-bar button')].filter(b => getComputedStyle(b).display === 'none').map(b => b.textContent.trim())")
     tb = pg.evaluate("!!document.querySelector('#workspace-editor-area .editor-toolbar')")
-    check(f'{tag} other documents keep محفوظ/منظوری + toolbar', 'محفوظ' not in hb and 'منظوری' not in hb and tb, (hb, tb))
+    check(f'{tag} other documents keep محفوظ + toolbar', 'محفوظ' not in hb and tb, (hb, tb))
     pg.evaluate("_dioSwitchTab('index_naql')"); pg.wait_for_timeout(900)
     hb2 = pg.evaluate("[...document.querySelectorAll('#dio-dv-bar button')].filter(b => getComputedStyle(b).display === 'none').map(b => b.textContent.trim())")
-    check(f'{tag} back on index tab → buttons hidden again', 'محفوظ' in hb2 and 'منظوری' in hb2, hb2)
+    check(f'{tag} back on index tab → «محفوظ» hidden again', 'محفوظ' in hb2, hb2)
     pg.evaluate("_dioExitDocView()"); pg.wait_for_timeout(300)
 
 

@@ -297,7 +297,7 @@ async function dioRenderDocList(docType, cfg) {
   area.innerHTML = `
   <div style="direction:rtl;height:100%;display:flex;flex-direction:column;font-family:'Jameel Noori Nastaleeq',serif;">
     <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg-secondary);flex-wrap:wrap;">
-      <button class="btn btn-primary" onclick="_sdNew('${docType}')">نیا</button>
+      <button class="btn btn-primary dio-add-btn" onclick="_sdNew('${docType}')">+ ${(typeof esc==='function'?esc(cfg.itemName || heading):(cfg.itemName || heading))} درج کریں</button>
       <span style="font-size:16px;font-weight:700;color:var(--accent);margin-right:auto;">${(typeof esc==='function'?esc(heading):heading)} — محفوظ فہرست</span>
     </div>
     <div style="flex:1;overflow:auto;padding:16px;">

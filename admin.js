@@ -110,7 +110,6 @@ async function _buildAdmin(role) {
       ['officers','افسران', officers.length],
       ['cases','تمام مقدمات', total_cases],
       ['activity','سرگرمی لاگ', ''],
-      ['approvals','منظوریاں', ''],
       ['health','ڈیٹا صحت', ''],
       ['errors','خرابیاں', ''],
       ['trust','حفاظتی مرکز', ''],
@@ -206,7 +205,7 @@ function _renderOfficersTab(officers, role) {
   return `<div class="card" style="padding:0;overflow:hidden;">
     <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
       <div style="font-size:13px;font-weight:700;color:var(--accent);">افسران (${officers.length})</div>
-      ${role==='superadmin'?`<button class="btn btn-primary btn-sm dio-add-btn" onclick="_adminAddOfficer()">+ افسر شامل کریں</button>`:''}
+      ${role==='superadmin'?`<button class="btn btn-primary btn-sm dio-add-btn" onclick="_adminAddOfficer()">+ افسر درج کریں</button>`:''}
     </div>
     <div style="overflow-x:auto;">
     <table class="data-table" style="width:100%;">
@@ -361,6 +360,7 @@ function _renderReportsTab(officers, cases) {
   <!-- Print report -->
   <div style="text-align:left;margin-top:12px;">
     <button class="btn btn-primary" onclick="_adminPrintReport()">رپورٹ پرنٹ کریں</button>
+    <button class="btn btn-secondary" onclick="dioSharePrint(()=>_adminPrintReport(),'انتظامی رپورٹ')" title="شیئر — PDF / Word">شیئر</button>
   </div>`;
 }
 
@@ -1124,7 +1124,7 @@ async function _adminViewOfficer(officerId) {
 }
 
 function _adminAddOfficer() {
-  openModal('+ نیا افسر شامل کریں',
+  openModal('نیا اندراج — افسر',
     `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;direction:rtl;">
       <div><label class="form-label">مکمل نام *</label><input class="form-input" id="ao-name" placeholder="نام"></div>
       <div><label class="form-label">Email *</label><input class="form-input" id="ao-email" placeholder="email@police.gov.pk" type="email"></div>

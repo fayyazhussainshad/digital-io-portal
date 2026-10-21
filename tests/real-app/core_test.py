@@ -189,8 +189,11 @@ def run_core(pg, tag):
         need(pg, 'mulziman.js')
         pg.evaluate("openAccusedCard('c1')"); pg.wait_for_timeout(700)
         pg.evaluate("_accPrevRecord('a1')"); pg.wait_for_timeout(700)
-        mt = pg.evaluate("(document.querySelector('.modal-overlay.active .modal, #modal-overlay, .modal') || document.body).innerText")
-        check(f'{tag} previous record: label shows FIR + بجرم دفعات + تھانہ', 'ایف آئی آر 77/25 — بجرم 302/34 ت پ — تھانہ کینٹ ملتان' in mt, [l for l in mt.split('\n') if '77/25' in l][:1])
+        # v553: سابقہ ریکارڈ = dio-prev.js کی یکجا فہرست (سسٹم + درج کیا ہوا، بغیر دہرائے) —
+        #   ہر ریکارڈ ایک کارڈ: FIR · تاریخ · جرم (صرف دفعات) · تھانہ · ضلع · حیثیت · فیصلہ
+        cards = pg.evaluate("[...document.querySelectorAll('.dio-rec')].filter(c => c.getClientRects().length).map(c => c.innerText.replace(/\\s+/g, ' '))")
+        hit = [c for c in cards if '77/25' in c]
+        check(f'{tag} previous record: label shows FIR + بجرم دفعات + تھانہ', len(hit) == 1 and '302/34 ت پ' in hit[0] and 'کینٹ ملتان' in hit[0] and 'قتل' not in hit[0], hit[:1] or cards[:2])
         pg.screenshot(path=f'{OUT}/{tag}_c04_prev_record.png')
         pg.evaluate("try{closeModal()}catch(e){}; 0")
 

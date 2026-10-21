@@ -31,7 +31,7 @@ async function _buildCourt() {
       <div class="page-title">عدالتی پیشیاں</div>
       <div class="page-subtitle">آنے والی · گزری ہوئی · کیلنڈر</div>
     </div>
-    <button class="btn btn-primary dio-add-btn" onclick="_openAddCourtDate()">+ پیشی شامل کریں</button>
+    <button class="btn btn-primary dio-add-btn" onclick="_openAddCourtDate()">+ پیشی درج کریں</button>
   </div>
 
   <!-- Alert: overdue -->

@@ -331,7 +331,7 @@ function _glRenderList(container) {
   area.innerHTML = `
   <div class="gl-page" style="direction:rtl;">
     <div class="page-header">
-      <button class="btn btn-primary dio-add-btn" onclick="_glNew()">+ نیا اندراج</button>
+      <button class="btn btn-primary dio-add-btn" onclick="_glNew()">+ گشت درج کریں</button>
       <div>
         <div class="page-title">گشت لاگ</div>
         <div class="page-subtitle"><span id="gl-count">${_glVisible().length}</span> گشت — تاریخ، علاقہ اور کارروائی کے ساتھ</div>
@@ -383,7 +383,7 @@ function _glListRows() {
     return `<div class="gl-empty">
       <div class="gl-empty-ico">${GL_ICON.route}</div>
       <div>ابھی کوئی گشت محفوظ نہیں</div>
-      <button type="button" class="btn btn-primary" onclick="_glNew()">+ نیا اندراج — گشت</button></div>`;
+      <button type="button" class="btn btn-primary" onclick="_glNew()">+ گشت درج کریں</button></div>`;
   }
   const rows = _glVisible();
   const n = document.getElementById('gl-count');

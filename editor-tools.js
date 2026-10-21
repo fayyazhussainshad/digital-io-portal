@@ -106,13 +106,14 @@ function dioSetFontSize(pt) {
       document.querySelectorAll('font[size="7"]').forEach(f => {
         const s = document.createElement('span');
         s.style.fontSize = pt + 'pt';
+        s.setAttribute('data-dio-fs', '1');     // v553: افسر کا خود لگایا ہوا سائز — معیار سے نہ بدلے
         s.innerHTML = f.innerHTML;
         f.replaceWith(s);
       });
       return;
     }
     const el = _dioActiveEditable();
-    if (el) el.style.fontSize = pt + 'pt';
+    if (el) { el.style.fontSize = pt + 'pt'; el.setAttribute('data-dio-fs', '1'); }
   } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window.dioSetFontSize = dioSetFontSize;
@@ -122,14 +123,18 @@ function dioFontStep(dir) {
   const el = _dioActiveEditable();
   const sel = window.getSelection();
   if (sel && !sel.isCollapsed) {
-    const cur = parseFloat((el && getComputedStyle(el).fontSize) || '14');
-    dioSetFontSize(Math.min(48, Math.max(8, Math.round(cur * 0.75) + (dir > 0 ? 1 : -1))));
+    // v553: منتخب متن کا اپنا موجودہ سائز (پورے خانے کا نہیں) — MS Word کی طرح ایک درجہ اوپر/نیچے
+    let px = 0;
+    try { const a = sel.anchorNode; const ae = a && (a.nodeType === 1 ? a : a.parentElement); if (ae) px = parseFloat(getComputedStyle(ae).fontSize); } catch (_) { /* نیچے */ }
+    if (!px) px = parseFloat((el && getComputedStyle(el).fontSize) || '18.67');
+    dioSetFontSize(Math.min(48, Math.max(8, Math.round(px * 0.75) + (dir > 0 ? 1 : -1))));
     return;
   }
   if (!el) return;
   const cur = parseFloat(getComputedStyle(el).fontSize) || 18.67;
   const pt = Math.round(cur * 0.75);
   el.style.fontSize = Math.min(48, Math.max(8, pt + (dir > 0 ? 1 : -1))) + 'pt';
+  el.setAttribute('data-dio-fs', '1');
 }
 window.dioFontStep = dioFontStep;
 
@@ -221,6 +226,8 @@ function dioFindReplace() {
   document.body.appendChild(p);
   const fi = document.getElementById('dio-fr-find');
   fi.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); dioFRFindNext(); } });
+  // Esc = صرف یہ خانہ بند (پیچھے کی دستاویز / پورا صفحہ نہیں)
+  p.addEventListener('keydown', function (e) { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); dioFRClose(); } });
   fi.focus();
 }
 window.dioFindReplace = dioFindReplace;
@@ -228,6 +235,8 @@ window.dioFindReplace = dioFindReplace;
 function dioFRClose() {
   const p = document.getElementById('dio-fr-panel');
   if (p) p.style.display = 'none';
+  // کرسر واپس اُسی دستاویز میں (جہاں سے ڈھونڈنا شروع کیا تھا)
+  try { if (_dioFRTarget && _dioFRTarget.isConnected) _dioFRTarget.focus(); } catch (_) { /* ضمنی */ }
 }
 window.dioFRClose = dioFRClose;
 
@@ -344,6 +353,9 @@ function dioBindEditor(root) {
     if (el._dioKeysBound) return;
     el._dioKeysBound = true;
     el.addEventListener('keydown', function (e) {
+      // v553: دستاویز کا اپنا سننے والا یہی کلید پہلے سنبھال چکا ہو (مثلاً مسل کے
+      //   ایڈیٹر کا onkeydown) تو دوبارہ نہیں — ورنہ Ctrl+B دو بار لگ کر الٹ جاتا (کچھ نہ بدلتا)
+      if (e.defaultPrevented) return;
       // TAB → khali jagah (focus na badle)
       if (e.key === 'Tab') {
         e.preventDefault();

@@ -69,13 +69,13 @@ function _renderFirPart(type) {
   <section class="fir-part" id="fir-part-${type}" data-type="${type}">
     <!-- متن -->
     ${_firHeadRow('متن ' + heading,
-      `<button class="btn btn-primary btn-sm" onclick="_openMatnModal('${type}')">متن درج کریں</button>`,
+      `<button class="btn btn-primary btn-sm" onclick="_openMatnModal('${type}')">+ متن درج کریں</button>`,
       color, '2px solid ' + color, 800)}
     ${_renderMatnTable(matn)}
 
     <!-- فوٹو کاپی -->
     ${_firHeadRow('فوٹو کاپی ' + heading,
-      `<button class="btn btn-secondary btn-sm" onclick="document.getElementById('${inputId}').click()">فوٹو کاپی اپلوڈ کریں</button>
+      `<button class="btn btn-secondary btn-sm" onclick="document.getElementById('${inputId}').click()">+ فوٹو کاپی اپلوڈ کریں</button>
        <input type="file" id="${inputId}" accept="image/*,application/pdf" style="display:none;" onchange="_uploadFirCopy(this,'${type}')">`,
       'var(--text-primary)', '1px solid var(--border)', 700)}
     ${_renderCopyTable(copies)}
@@ -132,6 +132,7 @@ function _renderMatnTable(rows) {
         <button title="ترمیم" aria-label="ترمیم" class="btn btn-secondary btn-sm" style="padding:2px 7px;" onclick="_openMatnModal('${m.type||'fir'}','${m.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>
         <button title="دیکھیں" aria-label="دیکھیں" class="btn btn-secondary btn-sm" style="padding:2px 7px;margin-top:3px;" onclick="_viewMatn('${m.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg></button>
         <button title="پرنٹ" aria-label="پرنٹ" class="btn btn-secondary btn-sm" style="padding:2px 7px;margin-top:3px;" onclick="_printMatn('${m.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M7 9.5V3.5h10v6"/><path d="M4.5 9.5h15v7h-15z"/><path d="M7 13.5h10V21H7z"/></svg></button>
+        <button title="شیئر — PDF / Word" aria-label="شیئر" class="btn btn-secondary btn-sm" style="padding:2px 7px;margin-top:3px;" onclick="dioSharePrint(()=>_printMatn('${m.id}'),'متن ایف آئی آر')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></svg></button>
         <button title="حذف" aria-label="حذف" class="btn btn-danger btn-sm" style="padding:2px 7px;margin-top:3px;" onclick="_deleteMatn('${m.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
       </td></tr>`).join('')}
     </tbody></table>`;
@@ -286,11 +287,12 @@ function _viewMatn(id) {
   const heading = (row.type === 'cross_version') ? 'کراس ورژن' : 'ایف آئی آر';
   openModal('متن ' + heading, `
     <div style="direction:rtl;width:80vw;max-width:90vw;">
-      <div style="width:100%;box-sizing:border-box;padding:20px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:18px;line-height:2;text-align:justify;direction:rtl;max-height:70vh;overflow-y:auto;white-space:pre-wrap;">${esc(row.matn)||''}</div>
+      <div style="width:100%;box-sizing:border-box;padding:20px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14pt;line-height:1.9;text-align:justify;direction:rtl;max-height:70vh;overflow-y:auto;white-space:pre-wrap;">${esc(row.matn)||''}</div>
     </div>
   `, `
     <button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>
     <button class="btn btn-primary" onclick="_printMatn('${id}')">پرنٹ</button>
+    <button class="btn btn-secondary" onclick="dioSharePrint(()=>_printMatn('${id}'),'متن ایف آئی آر')" title="شیئر — PDF / Word">شیئر</button>
   `);
   setTimeout(() => {
     const box = document.querySelector('#modal-backdrop > div, .modal-box, #modal-box');
@@ -323,7 +325,7 @@ function _firPaperHtml(rows) {
       html, body { margin:0; padding:0; background:#fff; }
       body { font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl; color:#000; }
       h1 { text-align:center; font-size:20pt; margin:0 0 14pt; font-weight:700; line-height:1.9; }
-      .matn { font-size:14pt; line-height:2.1; text-align:justify; white-space:pre-wrap; }
+      .matn { font-size:14pt; line-height:1.9; text-align:justify; white-space:pre-wrap; }   /* v553: تمام تحریری دستاویزات — یکساں سطری فاصلہ 1.9 */
       .matn + .matn { margin-top:14pt; }
       .fir-sec + .fir-sec { break-before:page; page-break-before:always; }
     </style></head>

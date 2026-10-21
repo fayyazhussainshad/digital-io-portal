@@ -18,7 +18,8 @@
   const E   = (v) => (typeof esc === 'function') ? esc(v) : String(v == null ? '' : v)
                        .replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const TOAST = (m, t) => { try { if (typeof showToast === 'function') showToast(m, t || 'info'); } catch (_) { /* paigham na dikh sake to koi baat nahi */ } };
-  const FDATE = (d) => { try { return (typeof formatDate === 'function') ? formatDate(d) : (d || ''); } catch (_) { return d || ''; } };
+  // formatDate خالی پر «—» دیتا ہے — یہاں خالی ہی رہے (ورنہ «||» کا متبادل کبھی نہ چلتا)
+  const FDATE = (d) => { try { const v = (typeof formatDate === 'function') ? formatDate(d) : (d || ''); return (v === '—') ? '' : v; } catch (_) { return d || ''; } };
   const PT2PX = 96 / 72;
   const pt2px = (pt) => pt * PT2PX;
 
@@ -35,6 +36,10 @@
   let _naqPanning = false, _naqPanLast = null, _naqZoom = 1;
   // ── Undo/Redo history ──
   let _naqHist = [], _naqHistI = -1, _naqRestoring = false, _naqHistT = null;
+  // v553: کینوس پوری طرح لوڈ (محفوظ JSON سمیت) — پرنٹ/پیمائش اس کا انتظار کرتی ہے
+  let _naqReady = Promise.resolve(), _naqReadyR = null;
+  // v553: سیدھی لکیر (Ctrl/Shift دبا کر، یا 📏 بٹن) — 0°/45°/90°
+  let _naqStraightLock = false, _naqKeyStraight = false, _naqDrawTool = null;
   const FABRIC_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js';
 
   const _key = () => 'dio_naqsha_' + (_naqCaseId || 'nocase');
@@ -128,10 +133,9 @@
     if (localOk && _isPending(_naqCaseId)) { _naqData = local; if (_online()) _persistCloud(); }
     else _naqData = cloud || (localOk ? local : null);
     if (!_naqData || !Array.isArray(_naqData.sketches)) _naqData = { sketches: [], activeId: null };
-    if (!_naqData.sketches.length) {
-      const s = _newSketch('waqia'); _naqData.sketches.push(s); _naqData.activeId = s.id;
-    }
-    if (!_naqData.activeId || !_naqData.sketches.some(s => s.id === _naqData.activeId))
+    // v553: خالی فہرست ممکن (chip پر پہلے محفوظ نقشوں کی فہرست کھلتی ہے)؛
+    //   نیا نقشہ صرف «+ نقشہ موقع درج کریں» سے بنتا ہے
+    if (_naqData.sketches.length && (!_naqData.activeId || !_naqData.sketches.some(s => s.id === _naqData.activeId)))
       _naqData.activeId = _naqData.sketches[0].id;
   }
   function _persistLocal() { try { localStorage.setItem(_key(), JSON.stringify(_naqData)); } catch (_) { if (typeof dioLogError === 'function') dioLogError('naqsha: local save nakaam', _); } }
@@ -226,6 +230,8 @@
     const ionm = document.getElementById('naq-io-nm'); if (ionm) a.io = ionm.innerText.replace(/ /g, ' ').trim();
     const iodt = document.getElementById('naq-io-dt'); if (iodt) a.date = iodt.innerText.replace(/ /g, ' ').trim();
     const mh = document.getElementById('naq-map'); if (mh) a.mapH = mh.clientHeight;
+    if (_naqCanvas) { try { a.mapW = _naqCanvas.getWidth(); } catch (_) { /* ضمنی */ } }
+    a.savedAt = new Date().toISOString();       // فہرست میں «وقت»
     // امتیازی نشانات
     const mrows = document.querySelectorAll('#naq-marks .naq-mrow');
     if (mrows.length) a.marks = Array.from(mrows).map(r => {
@@ -270,9 +276,20 @@
     const area = document.getElementById('workspace-editor-area')
       || document.getElementById('workspace-tab-content') || document.getElementById('page-content');
     if (!area) { setTimeout(() => openNaqsha(cid), 80); return; }
-    await _renderNaqsha(area, cid);
+    // v553: chip پر پہلے اس مقدمے کے محفوظ نقشوں کی فہرست (تاریخ/وقت/ملزم/قسم)
+    await _renderList(area, cid);
   }
   window.openNaqsha = openNaqsha;
+  // براہِ راست ایڈیٹر (فہرست کے بغیر) — id نہ ہو تو فعال، وہ بھی نہ ہو تو نیا
+  async function openNaqshaEditor(caseId, id) {
+    const cid = caseId || (typeof _misalCaseId !== 'undefined' ? _misalCaseId : null)
+      || (typeof currentCaseId !== 'undefined' ? currentCaseId : null);
+    if (typeof _dioOpenDocTab === 'function') { try { _dioOpenDocTab('crime_scene'); } catch (_) { /* ضمنی */ } }
+    await _loadCase(cid); await _load();
+    if (id && _naqData.sketches.some(x => x.id === id)) _naqData.activeId = id;
+    await _renderNaqsha(null, null, true);
+  }
+  window.openNaqshaEditor = openNaqshaEditor;
   window._naqGetCanvas = () => _naqCanvas;
 
   // ══ بنام (ملزمان) ══════════════════════════════════════════════════
@@ -393,15 +410,95 @@
     }
   };
 
+
+  // v553: دستاویز کا اندرونی خاکہ — ایڈیٹر اور فہرست سے براہِ راست پرنٹ دونوں یہی
+  //   (ایک ہی ماخذ: جو ایڈیٹر میں نظر آتا ہے وہی فہرست کا پرنٹ دیتا ہے)
+  function _docInner(a, hv, io, fabricOk) {
+    return `
+
+          <div class="naq-hrow naq-edge naq-row1">
+            <span><span class="naq-lbl">تھانہ</span> <span id="naq-h-thana" class="naq-f" contenteditable="true">${E(hv.thana)}</span></span>
+            <span class="naq-zila"><span class="naq-lbl">ضلع</span> <span id="naq-h-zila" class="naq-f" contenteditable="true">${E(hv.zila)}</span></span>
+          </div>
+          <div class="naq-hrow naq-l2">
+            <span class="naq-lbl">سرکار بذریعہ</span>
+            <span id="naq-h-sarkar" class="naq-f naq-f-grow" contenteditable="true">${E(hv.sarkar)}</span>
+          </div>
+          <div class="naq-hrow naq-firrow naq-l3">
+            <span class="naq-seg"><span class="naq-lbl">مقدمہ نمبر</span> <span id="naq-h-muqadma" class="naq-f" contenteditable="true">${E(hv.muqadma)}</span></span>
+            <span class="naq-seg"><span class="naq-lbl">مورخہ</span> <span id="naq-h-morkha" class="naq-f" contenteditable="true">${E(hv.morkha)}</span></span>
+            <span class="naq-seg"><span class="naq-lbl">بجرم</span> <span id="naq-h-bajurm" class="naq-f" contenteditable="true">${E(hv.bajurm)}</span></span>
+            <span class="naq-seg"><span class="naq-lbl">تھانہ</span> <span id="naq-h-thana2" class="naq-f" contenteditable="true">${E(hv.thana2 || hv.thana)}</span></span>
+          </div>
+          <div class="naq-banam">
+            <span class="naq-banam-lbl"><button class="naq-caret no-print" title="ملزمان منتخب کریں" onclick="window._naqAccPicker&&_naqAccPicker(event)">▾</button> بنام</span>
+            <span id="naq-banam-list" class="naq-banam-list">${_banamHTMLFor(a)}</span>
+          </div>
+
+          <div class="naq-title">
+            ${_compassSVG()}
+            <span class="naq-title-t">نقشہ موقع نظری بلاسکیل</span>
+            <select id="naq-type" class="naq-type" onchange="window._naqType&&_naqType(this.value)">
+              <option value="waqia" ${a.type === 'waqia' ? 'selected' : ''}>جائے وقوعہ</option>
+              <option value="baramad" ${a.type === 'baramad' ? 'selected' : ''}>جائے برامدگی</option>
+            </select>
+          </div>
+          <div class="naq-bahad"><span class="naq-lbl">بحد۔</span> <span class="naq-paren">(</span><span id="naq-h-bahad" class="naq-f naq-f-grow" contenteditable="true">${E(hv.bahad)}</span><span class="naq-paren">)</span></div>
+
+          <div class="naq-map" id="naq-map" style="${a.mapH ? 'height:' + a.mapH + 'px;' : ''}">
+            ${fabricOk ? `<canvas id="naq-canvas"></canvas><div class="naq-map-resize no-print" title="کھینچ کر بڑا/چھوٹا کریں" onmousedown="window._naqResizeStart&&_naqResizeStart(event)" ontouchstart="window._naqResizeStart&&_naqResizeStart(event)"></div>` : `<div class="naq-nofab">ڈرائنگ لائبریری لوڈ نہیں ہو سکی — ایک بار انٹرنیٹ سے جوڑ کر دوبارہ کھولیں۔</div>`}
+          </div>
+
+          <div class="naq-marks-l naq-sp">امتیازی نشانات:</div>
+          <div id="naq-marks" class="naq-sp-sm" onkeydown="window._naqMarksKey&&_naqMarksKey(event)" oninput="window._naqDirty&&_naqDirty()">${_marksHTML(a.marks)}</div>
+
+          <!-- «فاصلہ جات (تخمیناً)» کا حصہ صارف کی ہدایت پر ہٹا دیا گیا
+               (12 اکتوبر 2026)۔ متعلقہ معاون کوڈ (_distHTML / _naqDistKey /
+               چھپائی کی صفائی) جان بوجھ کر چھوڑا گیا ہے تاکہ پرانے محفوظ
+               نقشوں کا ڈیٹا ضائع نہ ہو — وہ صرف دکھایا نہیں جاتا۔ واپس لانا
+               ہو تو یہی دو سطریں بحال کر دیں۔ -->
+
+          <div class="naq-io">
+            <div id="naq-io-nm" class="naq-io-nm" contenteditable="true">${E(io)}</div>
+            <div id="naq-io-dt" class="naq-io-dt" contenteditable="true">${E(a.date || _regDate())}</div>
+          </div>
+
+`;
+  }
+  function _hvFor(a) { return Object.assign({}, _auto(), (a && a.header) || {}); }
+  function _ioFor(a) {
+    let io = (a && a.io) || ((typeof getIOSignLine === 'function') ? (getIOSignLine() || '') : '');
+    if (!io) {
+      const o = _naqOff || {};
+      io = [o.full_name || o.name, o.rank || o.designation, (o.station ? 'تھانہ ' + o.station : '')].map(x => (x || '').trim()).filter(Boolean).join(' ');
+    }
+    return io;
+  }
+  function _banamFor(a) {
+    const h = (a && a.header) || {};
+    return (Array.isArray(h.banam) ? h.banam : _naqAccList.map(x => x.name)).filter(Boolean);
+  }
+  function _banamHTMLFor(a) {
+    const names = _banamFor(a);
+    if (!names.length) return '<div class="naq-acc" style="color:#999;">—</div>';
+    if (names.length === 1) return `<div class="naq-acc">${E(names[0])}</div>`;
+    return names.map((n, i) => `<div class="naq-acc"><span class="naq-accno">${i + 1}.</span> ${E(n)}</div>`).join('');
+  }
+
   // ══ Render ═════════════════════════════════════════════════════════
-  async function _renderNaqsha(container, forceId) {
+  async function _renderNaqsha(container, forceId, skipLoad) {
     container = container || document.getElementById('workspace-editor-area')
       || document.getElementById('workspace-tab-content') || document.getElementById('page-content');
     if (!container) return;
     container.innerHTML = `<div style="padding:40px;text-align:center;direction:rtl;color:var(--text-muted);"><div style="font-size:40px;">🗺️</div><div style="font-size:14pt;margin-top:8px;">نقشہ موقع کھل رہا ہے…</div></div>`;
 
-    await _loadCase(forceId);
-    await _load();
+    // v553: فہرست سے آئیں تو data پہلے سے موجود — دوبارہ سرور سے نہ پڑھو
+    //   (پرانی سرور کاپی تازہ مقامی ترمیم کو دبا سکتی تھی)
+    if (!skipLoad || !_naqData || !Array.isArray(_naqData.sketches)) { await _loadCase(forceId); await _load(); }
+    if (!_naqData.sketches.length) {
+      const s0 = _newSketch('waqia'); _naqData.sketches.push(s0); _naqData.activeId = s0.id; _persistLocal();
+    }
+    _naqReady = new Promise(r => { _naqReadyR = r; });
     let fabricOk = true; try { await _ensureFabric(); } catch (_) { fabricOk = false; }
     try { document.body.classList.add('workspace-mode'); window._inWorkspace = true; } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 
@@ -421,12 +518,8 @@
       <div class="naq-topwrap no-print" id="naq-topwrap">
        <div class="naq-toolbar">
         <div class="naq-tools">
-          <button class="naq-tb naq-chiptog" id="naq-chiptog" title="محفوظ نقشے دکھائیں / چھپائیں" onclick="window._naqToggleChips&&_naqToggleChips()">🗂️ نقشے ▾</button>
-          <span class="naq-sep"></span>
-          <select id="naq-paper" class="naq-sel" onchange="window._naqSetPaper&&_naqSetPaper(this.value)" title="کاغذ">
-            <option value="legal" ${paper === 'legal' ? 'selected' : ''}>لیگل</option>
-            <option value="a4" ${paper === 'a4' ? 'selected' : ''}>A4</option>
-          </select>
+          <button class="naq-tb naq-chiptog" id="naq-tolist" title="اس مقدمے کے تمام محفوظ نقشے" onclick="window._naqBackToList&&_naqBackToList()">← فہرست</button>
+          <!-- v553: لیگل/A4 کا انتخاب یہاں سے ہٹا — پرنٹ کے وقت پوچھا جاتا ہے -->
           ${fabricOk ? `
           <span class="naq-sep"></span>
           <button class="naq-tb naq-tool on" data-tool="select" title="منتخب / حرکت" onclick="window._naqPickTool&&_naqPickTool('select')">↖</button>
@@ -435,6 +528,7 @@
           <button class="naq-tb naq-tool" data-tool="arrow" title="تیر" onclick="window._naqPickTool&&_naqPickTool('arrow')">➜</button>
           <button class="naq-tb naq-tool" data-tool="rect" title="مستطیل" onclick="window._naqPickTool&&_naqPickTool('rect')">▭</button>
           <button class="naq-tb naq-tool" data-tool="ellipse" title="دائرہ / بیضوی" onclick="window._naqPickTool&&_naqPickTool('ellipse')">◯</button>
+          <button class="naq-tb" id="naq-straight" title="سیدھی لکیر — MS Word کی طرح Ctrl (یا Shift) دبا کر کھینچیں تو لکیر سیدھی (0°/45°/90°) رہتی ہے؛ موبائل پر یہ بٹن دبائیں" onclick="window._naqToggleStraight&&_naqToggleStraight()">📏</button>
           <button class="naq-tb" title="پولیس علامات (لاش، اسلحہ، گاڑی…)" onclick="window._naqToggleSyms&&_naqToggleSyms(event)">🚔</button>
           <button class="naq-tb" title="امتیازی نشان لگائیں (①②③ — نیچے فہرست خود بنے)" onclick="window._naqAddMark&&_naqAddMark()">①</button>
           <input type="color" class="naq-color" value="#111111" title="لکیر کا رنگ" onchange="window._naqSetColor&&_naqSetColor(this.value)">
@@ -471,74 +565,33 @@
           <input type="file" id="naq-file" accept="image/*" style="display:none" onchange="window._naqFilePicked&&_naqFilePicked(event)">
           ` : ''}
           <span class="naq-sep"></span>
+          <label class="naq-hctl" title="نقشے کی جگہ (عنوان اور امتیازی نشانات کے درمیان) — انچ میں">📐 <input id="naq-maph" type="number" step="0.1" min="1.5" max="14" inputmode="decimal" onchange="window._naqSetMapH&&_naqSetMapH(this.value)"> انچ</label>
+          <span class="naq-remain" id="naq-remain" title="صفحہ 1 میں باقی جگہ"></span>
+          <button class="naq-tb" title="نقشے کی جگہ کو صفحے کے مطابق کریں (باقی جگہ پوری)" onclick="window._naqFitPage&&_naqFitPage()">⤓ صفحہ</button>
+          <span class="naq-sep"></span>
           <button class="naq-tb naq-save" title="محفوظ" onclick="window.naqSaveNow&&naqSaveNow()">💾 محفوظ</button>
           <button class="naq-tb naq-print" title="چھپائی (Ctrl+P)" onclick="window._naqPrint&&_naqPrint()">🖨️</button>
         </div>
        </div>
-       <div class="naq-chipstrip" id="naq-chipstrip">
-         <div class="naq-chips" id="naq-chips">${_chipsHTML()}</div>
-       </div>
       </div>
 
       <div class="naq-scroll">
+       <div class="naq-paperwrap" id="naq-paperwrap">
+        <div class="naq-ruler no-print" id="naq-ruler" aria-hidden="true"></div>
+        <div class="naq-pgline no-print" id="naq-pgline" aria-hidden="true"><span>صفحہ 1 کا اختتام</span></div>
         <div id="dio-naqsha-doc" class="naq-doc naq-${paper}">
-
-          <div class="naq-hrow naq-edge naq-row1">
-            <span><span class="naq-lbl">تھانہ</span> <span id="naq-h-thana" class="naq-f" contenteditable="true">${E(hv.thana)}</span></span>
-            <span class="naq-zila"><span class="naq-lbl">ضلع</span> <span id="naq-h-zila" class="naq-f" contenteditable="true">${E(hv.zila)}</span></span>
-          </div>
-          <div class="naq-hrow naq-l2">
-            <span class="naq-lbl">سرکار بذریعہ</span>
-            <span id="naq-h-sarkar" class="naq-f naq-f-grow" contenteditable="true">${E(hv.sarkar)}</span>
-          </div>
-          <div class="naq-hrow naq-firrow naq-l3">
-            <span class="naq-seg"><span class="naq-lbl">مقدمہ نمبر</span> <span id="naq-h-muqadma" class="naq-f" contenteditable="true">${E(hv.muqadma)}</span></span>
-            <span class="naq-seg"><span class="naq-lbl">مورخہ</span> <span id="naq-h-morkha" class="naq-f" contenteditable="true">${E(hv.morkha)}</span></span>
-            <span class="naq-seg"><span class="naq-lbl">بجرم</span> <span id="naq-h-bajurm" class="naq-f" contenteditable="true">${E(hv.bajurm)}</span></span>
-            <span class="naq-seg"><span class="naq-lbl">تھانہ</span> <span id="naq-h-thana2" class="naq-f" contenteditable="true">${E(hv.thana2 || hv.thana)}</span></span>
-          </div>
-          <div class="naq-banam">
-            <span class="naq-banam-lbl"><button class="naq-caret no-print" title="ملزمان منتخب کریں" onclick="window._naqAccPicker&&_naqAccPicker(event)">▾</button> بنام</span>
-            <span id="naq-banam-list" class="naq-banam-list">${_banamHTML()}</span>
-          </div>
-
-          <div class="naq-title">
-            ${_compassSVG()}
-            <span class="naq-title-t">نقشہ موقع نظری بلاسکیل</span>
-            <select id="naq-type" class="naq-type" onchange="window._naqType&&_naqType(this.value)">
-              <option value="waqia" ${a.type === 'waqia' ? 'selected' : ''}>جائے وقوعہ</option>
-              <option value="baramad" ${a.type === 'baramad' ? 'selected' : ''}>جائے برامدگی</option>
-            </select>
-          </div>
-          <div class="naq-bahad"><span class="naq-lbl">بحد۔</span> <span class="naq-paren">(</span><span id="naq-h-bahad" class="naq-f naq-f-grow" contenteditable="true">${E(hv.bahad)}</span><span class="naq-paren">)</span></div>
-
-          <div class="naq-map" id="naq-map" style="${a.mapH ? 'height:' + a.mapH + 'px;' : ''}">
-            ${fabricOk ? `<canvas id="naq-canvas"></canvas><div class="naq-map-resize no-print" title="کھینچ کر بڑا/چھوٹا کریں" onmousedown="window._naqResizeStart&&_naqResizeStart(event)" ontouchstart="window._naqResizeStart&&_naqResizeStart(event)"></div>` : `<div class="naq-nofab">ڈرائنگ لائبریری لوڈ نہیں ہو سکی — ایک بار انٹرنیٹ سے جوڑ کر دوبارہ کھولیں۔</div>`}
-          </div>
-
-          <div class="naq-marks-l naq-sp">امتیازی نشانات:</div>
-          <div id="naq-marks" class="naq-sp-sm" onkeydown="window._naqMarksKey&&_naqMarksKey(event)" oninput="window._naqDirty&&_naqDirty()">${_marksHTML(a.marks)}</div>
-
-          <!-- «فاصلہ جات (تخمیناً)» کا حصہ صارف کی ہدایت پر ہٹا دیا گیا
-               (12 اکتوبر 2026)۔ متعلقہ معاون کوڈ (_distHTML / _naqDistKey /
-               چھپائی کی صفائی) جان بوجھ کر چھوڑا گیا ہے تاکہ پرانے محفوظ
-               نقشوں کا ڈیٹا ضائع نہ ہو — وہ صرف دکھایا نہیں جاتا۔ واپس لانا
-               ہو تو یہی دو سطریں بحال کر دیں۔ -->
-
-          <div class="naq-io">
-            <div id="naq-io-nm" class="naq-io-nm" contenteditable="true">${E(io)}</div>
-            <div id="naq-io-dt" class="naq-io-dt" contenteditable="true">${E(a.date || _regDate())}</div>
-          </div>
-
+${_docInner(a, hv, io, fabricOk)}
         </div>
+       </div>
       </div>
     </div>`;
 
     ['thana', 'zila', 'sarkar', 'muqadma', 'morkha', 'bajurm', 'thana2', 'bahad'].forEach(k => {
       const el = document.getElementById('naq-h-' + k); if (el) el.addEventListener('input', _saveSoon);
     });
-    if (fabricOk) _initCanvas(a);
+    if (fabricOk) _initCanvas(a); else if (_naqReadyR) _naqReadyR();
     try { _naqWsOn(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+    try { _naqRulerInit(); } catch (_) { /* ضمنی */ }
   }
 
   /* ══ کیس صفحے پر نقشہ موقع: ترتیب + خالی پٹی ═══════════════════════════
@@ -717,6 +770,7 @@
       const h = Math.max(140, Math.min(1400, startH + (y - startY)));
       map.style.height = h + 'px';
       if (_naqCanvas) { try { _naqCanvas.setHeight(h); _naqCanvas.renderAll(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
+      _naqRulerUpdate();
     };
     const up = () => {
       document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up);
@@ -725,6 +779,78 @@
     };
     document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
     document.addEventListener('touchmove', move, { passive: false }); document.addEventListener('touchend', up);
+  };
+
+  /* ══ v553: نقشے کی جگہ + پیمانہ (ruler) ══════════════════════════════════
+     افسر کا قاعدہ: «نقشہ موقع کی سرخی اور امتیازی نشانات کی سرخی کے درمیان والی
+     جگہ قابلِ ترمیم ہو، اور ساتھ پیمانہ ہو جو دکھائے کہ کتنا فارم باقی ہے، تاکہ
+     ضرورت کے مطابق نقشہ ایڈجسٹ کیا جا سکے۔»
+       • 📐 خانہ: نقشے کی جگہ انچ میں لکھ کر (یا نیچے کا کنارہ کھینچ کر) بدلیں
+       • «صفحہ 1 میں باقی» — ہر تبدیلی پر خود حساب
+       • ⤓ صفحہ: باقی جگہ نقشے کو دے دو (صفحہ بالکل بھر جائے، دوسرا نہ بنے)
+       • کاغذ کے ساتھ عمودی پیمانہ (انچ) + صفحہ 1 کے اختتام کی لکیر (چھپائی میں نہیں) */
+  const _PAGE_IN = { legal: 13, a4: 11.69 };      // سسٹم کا لیگل = 8.5×13
+  function _naqPaperOf(a) { return (a && a.paper === 'a4') ? 'a4' : 'legal'; }
+  function _naqPageH(a) { return _PAGE_IN[_naqPaperOf(a)] * 96; }
+  function _naqRulerInit() {
+    const doc = document.getElementById('dio-naqsha-doc'); if (!doc) return;
+    if (window.ResizeObserver) {
+      try { if (window._naqRO) window._naqRO.disconnect(); } catch (_) { /* ضمنی */ }
+      window._naqRO = new ResizeObserver(() => _naqRulerUpdate());
+      window._naqRO.observe(doc);
+    }
+    _naqRulerUpdate();
+  }
+  function _naqRulerUpdate() {
+    const doc = document.getElementById('dio-naqsha-doc'); if (!doc) return;
+    const a = _active();
+    const pageH = _naqPageH(a), docH = doc.offsetHeight || 0;
+    const ruler = document.getElementById('naq-ruler');
+    if (ruler) {
+      const n = Math.max(Math.ceil(pageH / 96), Math.ceil(docH / 96)) + 1;
+      if (ruler.getAttribute('data-n') !== String(n)) {
+        let h = '';
+        for (let i = 1; i <= n; i++) h += '<b style="top:' + (i * 96) + 'px">' + i + '</b>';
+        ruler.innerHTML = h; ruler.setAttribute('data-n', String(n));
+      }
+      ruler.style.height = Math.max(docH, pageH) + 'px';
+    }
+    const pl = document.getElementById('naq-pgline');
+    if (pl) { pl.style.top = pageH + 'px'; pl.style.display = ''; }
+    const rem = (pageH - docH) / 96;
+    const el = document.getElementById('naq-remain');
+    if (el) {
+      el.classList.toggle('over', rem < -0.005);
+      el.textContent = rem >= -0.005 ? ('صفحہ 1 میں باقی: ' + Math.max(0, rem).toFixed(2) + ' انچ')
+        : ('⚠ صفحے سے ' + (-rem).toFixed(2) + ' انچ زیادہ');
+    }
+    const inp = document.getElementById('naq-maph');
+    const map = document.getElementById('naq-map');
+    if (inp && map && document.activeElement !== inp) inp.value = (map.clientHeight / 96).toFixed(2);
+  }
+  window._naqRulerUpdate = _naqRulerUpdate;
+  function _naqApplyMapH(hpx) {
+    const map = document.getElementById('naq-map'); if (!map) return;
+    const h = Math.max(140, Math.min(1400, Math.round(hpx)));
+    map.style.height = h + 'px';
+    if (_naqCanvas) { try { _naqCanvas.setHeight(h); _naqCanvas.renderAll(); } catch (_) { /* ضمنی */ } }
+    const a = _active(); if (a) a.mapH = h;
+    _naqRulerUpdate(); _saveSoon();
+  }
+  window._naqSetMapH = function (v) {
+    const inch = parseFloat(String(v || '').replace(',', '.'));
+    if (!(inch > 0)) { _naqRulerUpdate(); return; }
+    _naqApplyMapH(inch * 96);
+  };
+  window._naqFitPage = function () {
+    const doc = document.getElementById('dio-naqsha-doc'), map = document.getElementById('naq-map');
+    if (!doc || !map) return;
+    const rem = _naqPageH(_active()) - doc.offsetHeight;
+    // 4px کی گنجائش: پرنٹ کا گول کرنا دوسرا خالی صفحہ نہ بنائے
+    _naqApplyMapH(map.clientHeight + rem - 4);
+    // 📐 خانہ بھی نئی ناپ دکھائے (کرسر اسی خانے میں ہو تب بھی)
+    const inp = document.getElementById('naq-maph'); if (inp) inp.value = (map.clientHeight / 96).toFixed(2);
+    TOAST('نقشے کی جگہ صفحہ 1 کے مطابق کر دی گئی', 'success');
   };
 
   // ══ Chips (محفوظ نقشے) ═════════════════════════════════════════════
@@ -768,9 +894,12 @@
       // محفوظ نشانوں کا max seq بحال کرو، پھر فہرست ہم آہنگ
       try { _markGroups().forEach(m => { if ((m.naqMarkSeq || 0) > _naqMarkSeq) _naqMarkSeq = m.naqMarkSeq; }); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       _naqCanvas.renderAll(); _naqSyncMarks(); _histInit();
+      if (_naqReadyR) { _naqReadyR(); _naqReadyR = null; }
+      try { _naqRulerUpdate(); } catch (_) { /* ضمنی */ }
     };
-    if (a && a.canvas) { try { _naqCanvas.loadFromJSON(a.canvas, _afterLoad); } catch (_) { _histInit(); } }
-    else _histInit();
+    const _readyNow = () => { if (_naqReadyR) { _naqReadyR(); _naqReadyR = null; } };
+    if (a && a.canvas) { try { _naqCanvas.loadFromJSON(a.canvas, _afterLoad); } catch (_) { _histInit(); _readyNow(); } }
+    else { _histInit(); _readyNow(); }
     ['object:modified', 'object:added', 'object:removed', 'text:changed', 'path:created'].forEach(ev => _naqCanvas.on(ev, _saveSoon));
     ['object:modified', 'object:added', 'object:removed', 'text:changed', 'path:created'].forEach(ev => _naqCanvas.on(ev, _histPush));
     // نشان مٹنے پر فہرست خودکار ہم آہنگ (undo/redo restore کے دوران نہیں)
@@ -785,6 +914,8 @@
     _naqCanvas.on('path:created', () => _histPush(true));   // قلم سٹروک الگ undo step
     if (!window._naqKeyBound) { document.addEventListener('keydown', _naqKey); window._naqKeyBound = true; }
     _updUndoBtns();
+    // موبائل: انگلی سے ڈرائنگ + دو انگلی زوم/پین — ہر نئے کینوس پر
+    try { if (window.dioMobile && dioMobile.wireNaqshaTouch) setTimeout(dioMobile.wireNaqshaTouch, 0); } catch (_) { /* ضمنی */ }
   }
 
   // ══ ڈرائنگ ٹولز — لکیر/تیر/مستطیل/دائرہ/قلم + رنگ/موٹائی ═══════════════
@@ -805,7 +936,7 @@
     _naqTool = t; if (!_naqCanvas) return;
     const pen = (t === 'pen');
     _naqPanning = false;
-    _naqCanvas.isDrawingMode = pen;
+    _naqCanvas.isDrawingMode = pen && !(_naqStraightLock || _naqKeyStraight);
     if (pen) {
       try { _naqCanvas.freeDrawingBrush = new fabric.PencilBrush(_naqCanvas); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       if (_naqCanvas.freeDrawingBrush) { _naqCanvas.freeDrawingBrush.color = _naqStroke; _naqCanvas.freeDrawingBrush.width = _naqStrokeW; }
@@ -852,13 +983,53 @@
       const e = opt.e; _naqPanning = true; _naqPanLast = { x: e.clientX, y: e.clientY };
       _naqCanvas.setCursor('grabbing'); return;
     }
-    if (_naqTool === 'select' || _naqTool === 'pen') return;
+    // قلم + Ctrl/Shift (یا 📏) = سیدھی لکیر (MS Word کی طرح)
+    const tool = (_naqTool === 'pen' && _naqStraightNow(opt.e)) ? 'line' : _naqTool;
+    if (tool === 'select' || tool === 'pen') return;
+    _naqDrawTool = tool;
     const p = _naqCanvas.getPointer(opt.e); _naqDrawStart = { x: p.x, y: p.y };
     const s = { stroke: _naqStroke, strokeWidth: _naqStrokeW, fill: 'transparent', selectable: false, evented: false };
-    if (_naqTool === 'line' || _naqTool === 'arrow') _naqDrawing = new fabric.Line([p.x, p.y, p.x, p.y], { stroke: _naqStroke, strokeWidth: _naqStrokeW, selectable: false, evented: false, strokeLineCap: 'round' });
-    else if (_naqTool === 'rect') _naqDrawing = new fabric.Rect(Object.assign({ left: p.x, top: p.y, width: 1, height: 1 }, s));
-    else if (_naqTool === 'ellipse') _naqDrawing = new fabric.Ellipse(Object.assign({ left: p.x, top: p.y, rx: 1, ry: 1, originX: 'left', originY: 'top' }, s));
+    if (tool === 'line' || tool === 'arrow') _naqDrawing = new fabric.Line([p.x, p.y, p.x, p.y], { stroke: _naqStroke, strokeWidth: _naqStrokeW, selectable: false, evented: false, strokeLineCap: 'round' });
+    else if (tool === 'rect') _naqDrawing = new fabric.Rect(Object.assign({ left: p.x, top: p.y, width: 1, height: 1 }, s));
+    else if (tool === 'ellipse') _naqDrawing = new fabric.Ellipse(Object.assign({ left: p.x, top: p.y, rx: 1, ry: 1, originX: 'left', originY: 'top' }, s));
     if (_naqDrawing) { _naqCanvas.add(_naqDrawing); _naqCanvas.renderAll(); }
+  }
+  // Ctrl / Shift دبا ہوا، یا 📏 بٹن چالو → سیدھا
+  function _naqStraightNow(e) { return !!(_naqStraightLock || (e && (e.ctrlKey || e.shiftKey || e.metaKey))); }
+  // لکیر کا دوسرا سرا قریب ترین 45° زاویے پر (لمبائی وہی)
+  function _naqSnap45(x1, y1, x2, y2) {
+    const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy);
+    if (!len) return { x: x2, y: y2 };
+    const st = Math.PI / 4, ang = Math.round(Math.atan2(dy, dx) / st) * st;
+    const r = (v) => Math.round(v * 1000) / 1000;
+    return { x: r(x1 + len * Math.cos(ang)), y: r(y1 + len * Math.sin(ang)) };
+  }
+  window._naqSnap45 = _naqSnap45;
+  window._naqToggleStraight = function () {
+    _naqStraightLock = !_naqStraightLock;
+    const b = document.getElementById('naq-straight'); if (b) b.classList.toggle('on', _naqStraightLock);
+    _naqPenMode();
+    TOAST(_naqStraightLock ? '📏 سیدھی لکیر چالو — لکیر/تیر/قلم سیدھے (0°/45°/90°)' : 'سیدھی لکیر بند', 'info');
+  };
+  // قلم منتخب ہو اور سیدھا حکم (Ctrl/Shift یا 📏) ہو تو آزاد ڈرائنگ عارضی بند
+  function _naqPenMode() {
+    if (!_naqCanvas || _naqTool !== 'pen') return;
+    const straight = _naqStraightLock || _naqKeyStraight;
+    if (_naqDrawing) return;                                       // کھینچنے کے دوران حالت نہ بدلے
+    _naqCanvas.isDrawingMode = !straight;
+    _naqCanvas.defaultCursor = 'crosshair';
+  }
+  function _naqStraightKeys(e) {
+    if (!document.getElementById('dio-naqsha-doc')) return;
+    const on = !!(e.ctrlKey || e.shiftKey || e.metaKey);
+    if (on === _naqKeyStraight) return;
+    _naqKeyStraight = on; _naqPenMode();
+  }
+  if (!window._naqStraightBound) {
+    window._naqStraightBound = true;
+    document.addEventListener('keydown', _naqStraightKeys, true);
+    document.addEventListener('keyup', _naqStraightKeys, true);
+    window.addEventListener('blur', () => { _naqKeyStraight = false; _naqPenMode(); });
   }
   function _drawMove(opt) {
     if (_naqPanning) {
@@ -867,10 +1038,19 @@
       _naqPanLast = { x: e.clientX, y: e.clientY }; _naqCanvas.requestRenderAll(); return;
     }
     if (!_naqDrawing || !_naqDrawStart) return;
-    const p = _naqCanvas.getPointer(opt.e), s = _naqDrawStart;
-    if (_naqTool === 'line' || _naqTool === 'arrow') _naqDrawing.set({ x2: p.x, y2: p.y });
-    else if (_naqTool === 'rect') _naqDrawing.set({ left: Math.min(p.x, s.x), top: Math.min(p.y, s.y), width: Math.abs(p.x - s.x), height: Math.abs(p.y - s.y) });
-    else if (_naqTool === 'ellipse') _naqDrawing.set({ left: Math.min(p.x, s.x), top: Math.min(p.y, s.y), rx: Math.abs(p.x - s.x) / 2, ry: Math.abs(p.y - s.y) / 2 });
+    const p = _naqCanvas.getPointer(opt.e), s = _naqDrawStart, tool = _naqDrawTool || _naqTool;
+    const straight = _naqStraightNow(opt.e);
+    if (tool === 'line' || tool === 'arrow') {
+      const q = straight ? _naqSnap45(s.x, s.y, p.x, p.y) : p;
+      _naqDrawing.set({ x2: q.x, y2: q.y });
+    } else if (tool === 'rect' || tool === 'ellipse') {
+      // Ctrl/Shift → مربع / گول دائرہ (MS Word کی طرح)
+      let w = Math.abs(p.x - s.x), h = Math.abs(p.y - s.y);
+      if (straight) { const m = Math.max(w, h); w = m; h = m; }
+      const L = (p.x < s.x) ? s.x - w : s.x, T = (p.y < s.y) ? s.y - h : s.y;
+      if (tool === 'rect') _naqDrawing.set({ left: L, top: T, width: w, height: h });
+      else _naqDrawing.set({ left: L, top: T, rx: w / 2, ry: h / 2 });
+    }
     /* کارکردگی: پہلے یہاں renderAll() تھا — یہ ماؤس کی ہر حرکت پر پورا کینوس
        فوراً (synchronously) دوبارہ بناتا ہے۔ شکل کھینچتے وقت ماؤس سیکنڈ میں
        سینکڑوں بار ہلتا ہے، یعنی سینکڑوں مکمل redraw — اِسی سے لکیر/مستطیل
@@ -881,7 +1061,8 @@
   function _drawUp() {
     if (_naqPanning) { _naqPanning = false; _naqCanvas.setCursor('grab'); return; }
     if (!_naqDrawing) return;
-    const d = _naqDrawing, tool = _naqTool; _naqDrawing = null; _naqDrawStart = null;
+    const d = _naqDrawing, tool = _naqDrawTool || _naqTool; _naqDrawing = null; _naqDrawStart = null; _naqDrawTool = null;
+    setTimeout(_naqPenMode, 0);
     let tiny = false;
     if (tool === 'line' || tool === 'arrow') tiny = Math.hypot((d.x2 - d.x1), (d.y2 - d.y1)) < 8;
     else if (tool === 'rect') tiny = (d.width < 6 && d.height < 6);
@@ -1297,58 +1478,325 @@
   }
 
   // ══ Print — editor کی ہو بہو نقل (WYSIWYG) ══════════════════════════
-  window._naqPrint = function () {
-    _snapshot(); _persistLocal();
-    const doc = document.getElementById('dio-naqsha-doc'); if (!doc) return;
-    let png = '';
-    if (_naqCanvas) {
-      try {
-        _naqCanvas.discardActiveObject();
-        // زوم/پین کو نظر انداز کر کے اصل (1:1) viewport پر capture کرو
-        const vpt = (_naqCanvas.viewportTransform || [1, 0, 0, 1, 0, 0]).slice();
-        _naqCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]); _naqCanvas.renderAll();
-        png = _naqCanvas.toDataURL({ format: 'png', multiplier: 2 });
-        _naqCanvas.setViewportTransform(vpt); _naqCanvas.renderAll();
-      } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
-    }
+  //  v553: (1) کاغذ کا سائز پرنٹ کے وقت پوچھا جاتا ہے (اوپر کی پٹی سے ہٹا)؛
+  //        کاغذ بدلے تو نقشہ اسی نسبت سے نئی چوڑائی پر آ جاتا ہے — کچھ نہیں کٹتا۔
+  //        (2) سسٹم کا «لیگل» ہر جگہ 8.5×13 انچ — نقشہ بھی وہی (پہلے CSS کا 8.5×14 تھا)۔
+  //        (3) فہرست سے براہِ راست پرنٹ/ڈاؤن لوڈ — اسی خاکے (_docInner) سے۔
+  function _naqCurPNG() {
+    if (!_naqCanvas) return '';
+    try {
+      _naqCanvas.discardActiveObject();
+      // زوم/پین کو نظر انداز کر کے اصل (1:1) viewport پر capture کرو
+      const vpt = (_naqCanvas.viewportTransform || [1, 0, 0, 1, 0, 0]).slice();
+      _naqCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]); _naqCanvas.renderAll();
+      const png = _naqCanvas.toDataURL({ format: 'png', multiplier: 2 });
+      _naqCanvas.setViewportTransform(vpt); _naqCanvas.renderAll();
+      return png;
+    } catch (_) { return ''; }
+  }
+  // کاغذ (DOM) + نقشے کی تصویر → چھپائی والا مکمل HTML
+  function _naqPrintHTML(doc, png, paper) {
     const clone = doc.cloneNode(true);
+    clone.removeAttribute('style');
+    clone.classList.remove('naq-legal', 'naq-a4'); clone.classList.add('naq-' + paper);
     // canvas → img
     const cwrap = clone.querySelector('#naq-map');
     if (cwrap) {
       const cc = cwrap.querySelector('.canvas-container, #naq-canvas'); if (cc) cc.remove();
-      if (png) { const img = document.createElement('img'); img.src = png; img.style.cssText = 'width:100%;height:auto;display:block;'; cwrap.appendChild(img); }
+      if (png) { const img = document.createElement('img'); img.src = png; img.style.cssText = 'width:100%;height:auto;display:block;'; cwrap.appendChild(img); cwrap.style.height = 'auto'; }
     }
     // inputs → text
-    clone.querySelectorAll('input').forEach(inp => { const s = document.createElement('span'); s.textContent = inp.value || ''; s.className = inp.className; inp.replaceWith(s); });
+    clone.querySelectorAll('input').forEach(inp => { const sp = document.createElement('span'); sp.textContent = inp.value || ''; sp.className = inp.className; inp.replaceWith(sp); });
     // select (قسم) → منتخب قدر کا متن
-    clone.querySelectorAll('select').forEach(sel => { const s = document.createElement('span'); const opt = sel.options[sel.selectedIndex]; s.textContent = opt ? opt.textContent : ''; s.className = sel.className; sel.replaceWith(s); });
+    clone.querySelectorAll('select').forEach(sel => { const sp = document.createElement('span'); const opt = sel.options[sel.selectedIndex]; sp.textContent = opt ? opt.textContent : ''; sp.className = sel.className; sel.replaceWith(sp); });
     // no-print controls (▾ picker وغیرہ) ہٹاؤ
     clone.querySelectorAll('.no-print, .naq-caret').forEach(n => n.remove());
     // فاصلہ جات خالی ہوں تو عنوان + خانہ چھپائی سے ہٹا دو
     const dwrap = clone.querySelector('#naq-dist');
     if (dwrap) {
-      // خالی سطریں ہٹاؤ، پھر پورا خانہ بھی خالی ہو تو عنوان سمیت نکال دو
       Array.from(dwrap.querySelectorAll('.naq-drow')).forEach(r => {
-        const tx = r.querySelector('.naq-dtext'); if (!tx || !(tx.innerText || '').trim()) r.remove();
+        const tx = r.querySelector('.naq-dtext'); if (!tx || !(tx.textContent || '').trim()) r.remove();
       });
       if (!dwrap.querySelector('.naq-drow')) { const lbl = clone.querySelector('#naq-dist-l'); if (lbl) lbl.remove(); dwrap.remove(); }
     }
     clone.querySelectorAll('[contenteditable]').forEach(n => n.removeAttribute('contenteditable'));
-
-    const a = _active(); const paper = (a && a.paper) || 'legal';
-    const html = `<!DOCTYPE html><html dir="rtl" lang="ur"><head><meta charset="UTF-8">
+    const size = (paper === 'a4') ? 'A4 portrait' : '8.5in 13in';
+    return `<!DOCTYPE html><html dir="rtl" lang="ur"><head><meta charset="UTF-8"><title> </title>
       ${typeof dioFontHead==='function'?dioFontHead():''}
       <style>
-        @page{ size:${paper === 'a4' ? 'A4' : 'legal'}; margin:0; }
+        @page{ size:${size}; margin:0; }
         *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; box-sizing:border-box; }
         html,body{ margin:0; }
         body{ direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; color:#000; }
         ${_docCSS(true)}
         .naq-doc{ box-shadow:none !important; border-radius:0 !important; }
       </style></head><body>${clone.outerHTML}</body></html>`;
+  }
+  function _naqDoPrint(html) {
     if (typeof dioPrint === 'function') dioPrint(html);
     else { const w = window.open('', '_blank'); if (w) { w.document.write(html); w.document.close(); w.print(); } }
+  }
+  // کاغذ بدلنا (ایڈیٹر کھلا ہو): صفحہ دوبارہ نہیں بنتا — کاغذ کی چوڑائی بدلتی ہے اور
+  //   نقشے کی ہر چیز اسی نسبت سے چھوٹی/بڑی (کوئی چیز کنارے سے نہ کٹے)
+  function _naqPaperSoft(v) {
+    const a = _active(); if (!a) return;
+    const p = (v === 'a4') ? 'a4' : 'legal';
+    a.paper = p;
+    const doc = document.getElementById('dio-naqsha-doc');
+    if (doc) { doc.classList.remove('naq-legal', 'naq-a4'); doc.classList.add('naq-' + p); }
+    const map = document.getElementById('naq-map');
+    if (_naqCanvas && map) {
+      try {
+        const oldW = _naqCanvas.getWidth(), newW = Math.max(280, map.clientWidth - 2);
+        if (oldW && newW && Math.abs(newW - oldW) > 0.5) {
+          const f = newW / oldW;
+          _naqCanvas.getObjects().forEach(o => {
+            o.set({ left: (o.left || 0) * f, top: (o.top || 0) * f, scaleX: (o.scaleX || 1) * f, scaleY: (o.scaleY || 1) * f });
+            o.setCoords();
+          });
+          const h = Math.max(140, Math.round(_naqCanvas.getHeight() * f));
+          _naqCanvas.setWidth(newW); _naqCanvas.setHeight(h); map.style.height = h + 'px'; a.mapH = h;
+          _naqCanvas.renderAll();
+        }
+      } catch (_) { /* ضمنی */ }
+    }
+    _snapshot(); _persistLocal(); _saveSoon();
+    try { _naqRulerUpdate(); } catch (_) { /* ضمنی */ }
+  }
+  window._naqSetPaper = _naqPaperSoft;
+  function _naqPrintNow() {
+    _snapshot(); _persistLocal();
+    const doc = document.getElementById('dio-naqsha-doc'); if (!doc) return;
+    const a = _active();
+    _naqDoPrint(_naqPrintHTML(doc, _naqCurPNG(), _naqPaperOf(a)));
+  }
+  window._naqPrint = function () {
+    const a = _active();
+    if (typeof dioWithPaper !== 'function') return _naqPrintNow();
+    return dioWithPaper({ get: () => _naqPaperOf(_active() || a), set: _naqPaperSoft, run: () => _naqPrintNow() });
   };
+
+  // ── فہرست سے (ایڈیٹر کھولے بغیر): محفوظ JSON → نقشے کی تصویر ──
+  function _naqMapW(sk) {
+    if (sk && sk.mapW) return sk.mapW;
+    // کاغذ کی چوڑائی − (دائیں 1in + بائیں 0.4in) − 2
+    return Math.round((_naqPaperOf(sk) === 'a4' ? 8.27 : 8.5) * 96 - 1.4 * 96) - 2;
+  }
+  function _naqSketchPNG(sk) {
+    return new Promise(resolve => {
+      if (!sk || !sk.canvas || !window.fabric) return resolve('');
+      let done = false; const fin = (v) => { if (!done) { done = true; resolve(v); } };
+      setTimeout(() => fin(''), 8000);
+      try {
+        const w = _naqMapW(sk), h = Math.max(140, sk.mapH || Math.round(w * 0.6));
+        const el = document.createElement('canvas'); el.width = w; el.height = h;
+        const sc = new fabric.StaticCanvas(el, { width: w, height: h, backgroundColor: 'transparent' });
+        sc.loadFromJSON(sk.canvas, () => {
+          try { sc.renderAll(); const png = sc.toDataURL({ format: 'png', multiplier: 2 }); sc.dispose(); fin(png); }
+          catch (_) { fin(''); }
+        });
+      } catch (_) { fin(''); }
+    });
+  }
+  // کسی بھی محفوظ نقشے کا مکمل چھپائی HTML (فہرست کا پرنٹ / ڈاؤن لوڈ / «ایک ساتھ کئی»)
+  async function _naqSketchHTML(sk, paper) {
+    try { await _ensureFabric(); } catch (_) { /* نقشے کی تصویر کے بغیر */ }
+    const png = await _naqSketchPNG(sk);
+    const box = document.createElement('div');
+    box.id = 'dio-naqsha-doc'; box.className = 'naq-doc naq-' + (paper || _naqPaperOf(sk));
+    box.innerHTML = _docInner(sk, _hvFor(sk), _ioFor(sk), !!png);
+    // ایڈیٹر کی طرح «قسم» کا انتخاب اور نشانات کی سطریں
+    const ty = box.querySelector('#naq-type'); if (ty) ty.value = sk.type === 'baramad' ? 'baramad' : 'waqia';
+    const map = box.querySelector('#naq-map');
+    if (map) { map.innerHTML = ''; if (sk.mapH) map.style.height = sk.mapH + 'px'; }
+    return _naqPrintHTML(box, png, paper || _naqPaperOf(sk));
+  }
+  window._naqSketchHTML = (id, paper) => { const sk = _naqData.sketches.find(x => x.id === id); return sk ? _naqSketchHTML(sk, paper) : Promise.resolve(''); };
+
+  // ══ v553: محفوظ نقشوں کی فہرست ═════════════════════════════════════
+  //  افسر کا قاعدہ: «نقشہ موقع chip پر کلک کریں تو پہلے سے تاریخ، وقت اور ملزم کے
+  //  حساب سے جائے وقوعہ اور جائے برامدگی کے محفوظ نقشے نظر آئیں تاکہ ضرورت کے مطابق
+  //  پرنٹ لیا جا سکے؛ اوپر دائیں کونے میں نیا نقشہ بنانے کا بٹن۔ ہر محفوظ نقشے کے
+  //  عمل کے بٹن ایک ہی سطر میں: ترمیم، پرنٹ، ڈاؤن لوڈ، کاپی، حذف — پرنٹ سیدھا۔»
+  const _typeLbl = (sk) => sk.type === 'baramad' ? 'جائے برامدگی' : 'جائے وقوعہ';
+  function _savedTime(sk) {
+    if (!sk.savedAt) return '';
+    try { return new Date(sk.savedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); } catch (_) { return ''; }
+  }
+  // تاریخ: نقشے کی اپنی (IO کی سطر) — درست نہ ہو تو محفوظ ہونے کی تاریخ
+  function _rowDate(sk) {
+    if (/\d{1,2}[\/\-.]\d{1,2}[\/\-.]\d{4}/.test(String(sk.date || ''))) return sk.date;
+    return sk.savedAt ? FDATE(String(sk.savedAt).slice(0, 10)) : '';
+  }
+  function _dmyKey(d) {   // DD/MM/YYYY → YYYYMMDD (ترتیب کے لیے)
+    const m = /(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/.exec(String(d || ''));
+    return m ? (m[3] + m[2].padStart(2, '0') + m[1].padStart(2, '0')) : '';
+  }
+  let _naqLF = { type: '', acc: '' };          // فہرست کی چھان
+  function _listRows() {
+    let L = _naqData.sketches.slice();
+    if (_naqLF.type) L = L.filter(x => (x.type === 'baramad' ? 'baramad' : 'waqia') === _naqLF.type);
+    if (_naqLF.acc) L = L.filter(x => _banamFor(x).indexOf(_naqLF.acc) !== -1);
+    // تاریخ + وقت کے حساب سے — نیا اوپر
+    L.sort((p, q) => {
+      const a = _dmyKey(_rowDate(p)) + (p.savedAt || ''), b = _dmyKey(_rowDate(q)) + (q.savedAt || '');
+      return a < b ? 1 : a > b ? -1 : (q.serial || 0) - (p.serial || 0);
+    });
+    return L;
+  }
+  function _listHTML() {
+    const rows = _listRows();
+    const accs = [];
+    _naqData.sketches.forEach(x => _banamFor(x).forEach(n => { if (accs.indexOf(n) === -1) accs.push(n); }));
+    _naqAccList.forEach(x => { if (accs.indexOf(x.name) === -1) accs.push(x.name); });
+    const btn = (fn, id, ic, t, cls) => `<button type="button" class="btn btn-sm ${cls || 'btn-secondary'}" onclick="window.${fn}&&${fn}('${id}')" title="${t}" aria-label="${t}">${ic} <span>${t}</span></button>`;
+    const body = rows.length ? rows.map((sk, i) => `<tr data-naq="${E(sk.id)}">
+        <td class="dio-col-num" style="text-align:center;">${i + 1}</td>
+        <td><b>${E(_typeLbl(sk))}</b> <small dir="ltr" style="color:var(--text-muted);">#${E(sk.serial || '')}</small></td>
+        <td>${E(_banamFor(sk).join('، ') || '—')}</td>
+        <td dir="ltr" style="white-space:nowrap;">${E(_rowDate(sk) || '—')}</td>
+        <td dir="ltr" style="white-space:nowrap;">${E(_savedTime(sk) || '—')}</td>
+        <td><div class="naq-lacts">
+          ${btn('_naqEdit', sk.id, '✏️', 'ترمیم')}
+          ${btn('_naqListPrint', sk.id, '🖨️', 'پرنٹ', 'btn-primary')}
+          ${btn('_naqListDownload', sk.id, '⬇️', 'ڈاؤن لوڈ')}
+          ${btn('_naqCopyRow', sk.id, '⧉', 'کاپی')}
+          ${btn('_naqDelRow', sk.id, '🗑️', 'حذف', 'btn-danger')}
+        </div></td></tr>`).join('')
+      : `<tr><td colspan="6" style="padding:26px;text-align:center;color:var(--text-muted);">${
+          _naqData.sketches.length ? 'اس چھان سے کوئی نقشہ نہیں ملا' : 'ابھی کوئی نقشہ محفوظ نہیں — نیا نقشہ بنانے کے لیے «+ نقشہ موقع درج کریں» دبائیں'}</td></tr>`;
+    const tsel = (v, t) => `<option value="${v}" ${_naqLF.type === v ? 'selected' : ''}>${t}</option>`;
+    return `
+    <div class="naq-list" dir="rtl">
+      <div class="page-header naq-lhead">
+        <button type="button" class="btn btn-primary dio-add-btn" onclick="window._naqNew&&_naqNew()">+ نقشہ موقع درج کریں</button>
+        <div class="naq-lttl">
+          <div class="dio-h1 naq-lh1">نقشہ موقع — محفوظ نقشے</div>
+          <div class="naq-lsub">مقدمہ <bdi dir="ltr">${E((_naqCase || {}).fir_number || '—')}</bdi> · <span id="naq-lcount">${_naqData.sketches.length}</span> نقشے</div>
+        </div>
+      </div>
+      <div class="naq-lfilter">
+        <select class="filter-select" onchange="window._naqListFilter&&_naqListFilter('type',this.value)" aria-label="قسم">
+          ${tsel('', 'تمام اقسام')}${tsel('waqia', 'جائے وقوعہ')}${tsel('baramad', 'جائے برامدگی')}
+        </select>
+        <select class="filter-select" onchange="window._naqListFilter&&_naqListFilter('acc',this.value)" aria-label="ملزم">
+          <option value="">تمام ملزمان</option>
+          ${accs.map(n => `<option value="${E(n)}" ${_naqLF.acc === n ? 'selected' : ''}>${E(n)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div style="overflow-x:auto;">
+          <table class="data-table naq-ltable" style="width:100%;">
+            <thead><tr>
+              <th class="dio-col-num" style="width:44px;text-align:center;">#</th>
+              <th>قسم</th><th>ملزم (بنام)</th><th>تاریخ</th><th>وقت</th>
+              <th style="text-align:center;">اقدامات</th>
+            </tr></thead>
+            <tbody id="naq-lrows">${body}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+  }
+  function _listCSS() {
+    return `
+    .naq-list{ padding:14px 16px 24px; direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+    .naq-lhead{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+    .naq-lh1{ font-size:15pt; font-weight:800; line-height:1.9; color:var(--text-primary,#111); }
+    .naq-lsub{ font-size:11pt; color:var(--text-muted,#667); line-height:1.7; }
+    .naq-list .data-table td{ font-size:14pt; line-height:1.6; }
+    .naq-lfilter{ display:flex; gap:8px; flex-wrap:wrap; margin:0 0 12px; }
+    .naq-lacts{ display:flex; gap:4px; flex-wrap:nowrap; justify-content:center; white-space:nowrap; }
+    .naq-lacts .btn{ display:inline-flex; align-items:center; gap:4px; white-space:nowrap; }
+    @media (max-width:760px){ .naq-lacts{ justify-content:flex-start; overflow-x:auto; }
+      .naq-lacts .btn span{ display:none; } .naq-lacts .btn{ min-width:40px; min-height:38px; justify-content:center; } }`;
+  }
+  async function _renderList(container, cid, skipLoad) {
+    container = container || document.getElementById('workspace-editor-area')
+      || document.getElementById('workspace-tab-content') || document.getElementById('page-content');
+    if (!container) return;
+    try { _naqWsOff(); } catch (_) { /* ضمنی */ }
+    if (!skipLoad || !_naqData || !Array.isArray(_naqData.sketches)) {
+      container.innerHTML = `<div style="padding:40px;text-align:center;direction:rtl;color:var(--text-muted);"><div style="font-size:40px;">🗺️</div><div style="font-size:14pt;margin-top:8px;">نقشہ موقع کھل رہا ہے…</div></div>`;
+      await _loadCase(cid); await _load();
+    }
+    _naqCanvas = null;
+    container.innerHTML = `<style>${_listCSS()}</style><div id="naq-listbox">${_listHTML()}</div>`;
+    _naqLabel(container);
+  }
+  // موبائل: فہرست کا جدول کارڈ کی شکل (پورے صفحے والا منظر page-content سے باہر ہے)
+  function _naqLabel(root) {
+    try { if (window.dioMobile && dioMobile.isMobile && dioMobile.isMobile()) dioMobile.labelTables(root); } catch (_) { /* ضمنی */ }
+  }
+  function _refreshList() {
+    const b = document.getElementById('naq-listbox'); if (!b) return;
+    b.innerHTML = _listHTML();
+    _naqLabel(b);
+  }
+  window._naqListFilter = function (k, v) { _naqLF[k] = v || ''; _refreshList(); };
+  window._naqBackToList = function () {
+    if (document.getElementById('dio-naqsha-doc')) { _snapshot(); _persistLocal(); _setPending(_naqCaseId, true); _persistCloud(); }
+    _renderList(null, _naqCaseId, true);
+  };
+  window._naqEdit = function (id) {
+    if (!_naqData.sketches.some(x => x.id === id)) return;
+    _naqData.activeId = id; _persistLocal();
+    _renderNaqsha(null, null, true);
+  };
+  window._naqNew = function () {
+    if (document.getElementById('dio-naqsha-doc')) _snapshot();
+    const sk = _newSketch(_naqData.sketches.some(x => x.type === 'waqia') ? 'baramad' : 'waqia');
+    _naqData.sketches.push(sk); _naqData.activeId = sk.id;
+    _persistLocal(); _persistCloud();
+    _renderNaqsha(null, null, true);
+  };
+  window._naqListPrint = async function (id) {
+    const sk = _naqData.sketches.find(x => x.id === id); if (!sk) return;
+    const run = async (p) => { const html = await _naqSketchHTML(sk, p); if (html) _naqDoPrint(html); };
+    if (typeof dioWithPaper !== 'function') return run(_naqPaperOf(sk));
+    return dioWithPaper({
+      get: () => _naqPaperOf(sk),
+      set: (v) => { sk.paper = (v === 'a4') ? 'a4' : 'legal'; _persistLocal(); _persistCloud(); },
+      run: (p) => run(p)
+    });
+  };
+  window._naqListDownload = async function (id) {
+    const sk = _naqData.sketches.find(x => x.id === id); if (!sk) return;
+    const name = 'نقشہ موقع — ' + _typeLbl(sk) + ' نمبر ' + (sk.serial || '') + ' — مقدمہ ' + ((_naqCase || {}).fir_number || '');
+    try {
+      TOAST('PDF تیار ہو رہی ہے…', 'info');
+      if (typeof dioLoadScript === 'function') { await dioLoadScript('dio-forms.js'); await dioLoadScript('dio-share.js'); }
+      if (!(window.DIO && DIO.share && DIO.share.pdf)) throw new Error('شیئر کا آلہ لوڈ نہیں ہوا');
+      const html = await _naqSketchHTML(sk, _naqPaperOf(sk));
+      const blob = await DIO.share.pdf({ html }, name);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = name.replace(/[\\/:*?"<>|]+/g, ' ').trim() + '.pdf';
+      document.body.appendChild(a); a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+      TOAST('✅ نقشہ موقع PDF ڈاؤن لوڈ ہو گیا', 'success');
+    } catch (e) { TOAST('ڈاؤن لوڈ نہیں ہو سکا — ' + ((e && e.message) || ''), 'error'); }
+  };
+  window._naqCopyRow = function (id) {
+    const sk = _naqData.sketches.find(x => x.id === id); if (!sk) return;
+    const cp = JSON.parse(JSON.stringify(sk));
+    const serials = _naqData.sketches.map(x => parseInt(x.serial, 10) || 0);
+    cp.id = _uid(); cp.serial = Math.max.apply(null, serials.concat([0])) + 1;
+    cp.savedAt = new Date().toISOString();
+    _naqData.sketches.push(cp);
+    _persistLocal(); _persistCloud(); _refreshList();
+    TOAST('⧉ نقشے کی نقل بن گئی — نمبر ' + cp.serial, 'success');
+  };
+  window._naqDelRow = function (id) {
+    const sk = _naqData.sketches.find(x => x.id === id); if (!sk) return;
+    if (typeof confirm === 'function' && !confirm('یہ نقشہ (' + _typeLbl(sk) + ' نمبر ' + (sk.serial || '') + ') حذف کریں؟')) return;
+    _naqData.sketches = _naqData.sketches.filter(x => x.id !== id);
+    if (_naqData.activeId === id) _naqData.activeId = _naqData.sketches.length ? _naqData.sketches[0].id : null;
+    _persistLocal(); _persistCloud(); _refreshList();
+    TOAST('نقشہ حذف ہو گیا', 'success');
+  };
+  // «ایک ساتھ کئی دستاویزات» (case-print.js): اس مقدمے کے تمام محفوظ نقشے
+  window._naqSketchIds = () => (_naqData && Array.isArray(_naqData.sketches)) ? _naqData.sketches.map(x => x.id) : [];
 
   // ══ CSS ════════════════════════════════════════════════════════════
   // دستاویز کی CSS — screen اور print دونوں ایک ہی (WYSIWYG)
@@ -1488,6 +1936,24 @@
         box-shadow:-6px 0 8px -4px rgba(0,0,0,.18); }
     }
     .naq-scroll{ flex:1; overflow:auto; min-height:0; padding:16px; background:var(--bg-tertiary,#eef1f4); }
+    /* v553: پیمانہ (انچ) + صفحہ 1 کا اختتام — صرف اسکرین پر */
+    .naq-paperwrap{ position:relative; width:fit-content; margin:0 auto; padding-left:30px; }
+    .naq-paperwrap > .naq-doc{ margin:0; }
+    .naq-ruler{ position:absolute; left:0; top:0; width:22px; background-color:#f8fafc; border:1px solid #cbd5e1; border-radius:3px;
+      background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 23px, #94a3b8 23px, #94a3b8 24px);
+      background-size:9px 100%; background-repeat:repeat-y; background-position:right top; }
+    .naq-ruler b{ position:absolute; left:0; right:0; height:0; border-top:1.5px solid #334155; }
+    .naq-ruler b{ font:700 9px/1 var(--font-mono,monospace); color:#334155; text-align:center; }
+    .naq-ruler b{ padding-top:2px; }
+    .naq-pgline{ position:absolute; left:0; right:0; height:0; border-top:2px dashed #dc2626; z-index:7; pointer-events:none; }
+    .naq-pgline span{ position:absolute; left:28px; top:-1.6em; font-size:10pt; color:#dc2626; background:rgba(255,255,255,.9); padding:0 6px; border-radius:4px; white-space:nowrap; }
+    .naq-hctl{ display:inline-flex; align-items:center; gap:4px; font-size:11pt; white-space:nowrap; }
+    .naq-hctl input{ width:64px; height:30px; border:1px solid var(--border,#cbd5e1); border-radius:7px; padding:0 4px;
+      font-family:var(--font-mono,monospace); direction:ltr; background:#fff; color:#111; }
+    .naq-remain{ font-size:10.5pt; color:#166534; background:#ecfdf5; border:1px solid #86efac; border-radius:6px; padding:2px 8px; white-space:nowrap; }
+    .naq-remain.over{ color:#991b1b; background:#fef2f2; border-color:#fca5a5; }
+    #naq-straight.on{ background:var(--nav-active,#e0edff); border-color:var(--accent,#2563eb); color:var(--accent,#2563eb); font-weight:700; }
+    @media print{ .naq-ruler,.naq-pgline{ display:none !important; } }
     /* دستاویز اصل کاغذ کی چوڑائی پر (screen=print)؛ تنگ اسکرین پر افقی scroll — squish نہیں */
     .naq-doc{ margin:0 auto; box-shadow:0 4px 22px rgba(0,0,0,0.15); border-radius:4px; }
     ${_docCSS(false)}

@@ -17,7 +17,7 @@ async function _renderFIRView() {
         متن ایف آئی آر — مقدمہ ${esc(c.fir_number||'')}
       </div>
       <div style="display:flex;gap:6px;direction:rtl;flex-wrap:wrap;">
-        <button class="btn btn-primary" onclick="_openFIREditor()">متن درج کریں</button>
+        <button class="btn btn-primary" onclick="_openFIREditor()">+ متن درج کریں</button>
         <button class="btn btn-secondary dio-modbtn" onclick="_printFIRAll()">پرنٹ</button>
         <button class="btn btn-secondary" onclick="_shareFIRAll()">شیئر</button>
       </div>
@@ -52,7 +52,7 @@ async function _loadFIREntries() {
         <div style="text-align:center;padding:48px;color:var(--text-muted);">
           <div style="font-size:48px;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
           <div style="font-size:14px;font-weight:600;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">ابھی کوئی FIR متن نہیں</div>
-          <div style="font-size:12px;margin-top:6px;">اوپر "متن درج کریں" بٹن دبائیں</div>
+          <div style="font-size:12px;margin-top:6px;">اوپر «+ متن درج کریں» بٹن دبائیں</div>
         </div>`;
       return;
     }

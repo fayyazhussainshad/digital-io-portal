@@ -121,31 +121,55 @@ function _accInjectCSS() {
   document.head.appendChild(s);
 }
 
-// ── LIST VIEW ─────────────────────────────────────────────────
-// ── LIST VIEW (two columns: FIR ملزم | تفتیشی ملزمان) ─────────
+// ── LIST VIEW — ایک صفحہ، دو حصے (v553، افسر کا قاعدہ — متن FIR / کراس ورژن کی طرح) ──
+//   پہلا حصہ «ملزمان FIR»، دوسرا «ملزمان کراس ورژن» (صرف جب مقدمے میں کراس ورژن ہو)۔
+//   ہر حصے میں «+ ملزم درج کریں» دائیں کنارے کے ساتھ، سرخی بالکل درمیان۔
+function _accCaseHasCross() {
+  const pool = [
+    (typeof _misalCase !== 'undefined') ? _misalCase : null,
+    window._workspaceCase || null,
+  ];
+  const c = pool.find(x => x && String(x.id) === String(_accusedCaseId)) || null;
+  if (c && typeof caseHasCross === 'function' && caseHasCross(c)) return true;
+  return _accusedList.some(a => a.accused_type === 'cross_version');
+}
+function _accPart(type) {
+  const isCross = type === 'cross_version';
+  const heading = isCross ? 'ملزمان کراس ورژن' : 'ملزمان FIR';
+  const color = isCross ? 'var(--amber)' : 'var(--accent)';
+  const list = _accusedList.filter(a => (a.accused_type || 'fir') === type);
+  return `
+  <section class="dio-2p-part" id="acc-part-${type}" data-type="${type}">
+    <div class="dio-2p-head" style="border-bottom:2px solid ${color};">
+      <div class="dio-2p-btn"><button class="btn btn-primary btn-sm" onclick="_openAccusedForm(null,'${type}')">+ ملزم درج کریں</button></div>
+      <div class="dio-hs1 dio-2p-title" style="color:${color};">${heading}</div>
+      <div aria-hidden="true"></div>
+    </div>
+    <div class="acc-list" id="acc-list-${type}" style="width:100%;">${_renderAccCards(list)}</div>
+  </section>`;
+}
 function _renderAccusedArea() {
   _accInjectCSS();
   const area = document.getElementById('workspace-editor-area')
             || document.getElementById('workspace-tab-content')
             || document.getElementById('page-content');
   if (!area) return;
-
-  const isCross = _accusedViewType === 'cross_version';
-  const list = _accusedList.filter(a => (a.accused_type || 'fir') === _accusedViewType);
-  const heading = isCross ? 'ملزمان کراس ورژن' : 'ملزمان FIR';
-  const color = isCross ? 'var(--amber)' : 'var(--accent)';
-
-  area.innerHTML = `
-  <div style="direction:rtl;height:100%;overflow-y:auto;padding:10px;width:100%;box-sizing:border-box;">
-    <div style="display:flex;align-items:center;gap:8px;border-bottom:2px solid ${color};padding-bottom:6px;margin-bottom:12px;width:100%;box-sizing:border-box;">
-      <button class="btn btn-primary btn-sm" style="flex:0 0 auto;" onclick="_openAccusedForm(null,'${_accusedViewType}')">ملزم</button>
-      <div class="dio-hs1" style="flex:1;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:${color};text-align:center;">${heading}</div>
-    </div>
-    <div id="acc-list" style="width:100%;">${_renderAccCards(list)}</div>
+  const old = document.getElementById('acc-page');
+  const keepScroll = (old && area.contains(old)) ? old.scrollTop : null;
+  const showCross = _accCaseHasCross() || _accusedViewType === 'cross_version';
+  area.innerHTML = `<style>${(typeof window._dio2pCSS === 'function') ? window._dio2pCSS() : ''}</style>
+  <div id="acc-page" class="dio-2p">
+    ${_accPart('fir')}
+    ${showCross ? _accPart('cross_version') : ''}
   </div>`;
-
-  // Background: blink the سابقہ ریکارڈ button for anyone with a record in other cases
-  _accCheckPrevRecords(list);
+  const wrap = document.getElementById('acc-page');
+  if (keepScroll !== null) wrap.scrollTop = keepScroll;
+  else if (_accusedViewType === 'cross_version') {
+    const sec = document.getElementById('acc-part-cross_version');
+    if (sec) wrap.scrollTop += sec.getBoundingClientRect().top - wrap.getBoundingClientRect().top - 4;
+  }
+  // Background: blink the سابقہ ریکارڈ button for anyone with a record (سسٹم یا درج شدہ)
+  _accCheckPrevRecords(_accusedList);
 }
 
 function _renderAccCards(list) {
@@ -354,7 +378,7 @@ async function _saveAccused(id) {
     await D.safeWrite('case_accused', id ? 'update' : 'insert', rec, id, ['photos', 'cnic_back_url', 'prev_records']);
     closeModal();
     // اسی مقدمے کی ملزمان فہرست کھلی ہو تو تازہ کرو (Dashboard سے اندراج پر صفحہ نہ بدلے)
-    if (String(caseId) === String(_accusedCaseId) && document.getElementById('acc-list')) {
+    if (String(caseId) === String(_accusedCaseId) && document.getElementById('acc-page')) {
       await _loadAccused();
       _renderAccusedArea();
     } else {
@@ -501,7 +525,15 @@ function _accPrintDoc() {
 // ── سابقہ ریکارڈ (record of this accused in OTHER cases) ───────
 // Batch check: blink the button for anyone who has a record elsewhere
 async function _accCheckPrevRecords(list) {
-  if (!navigator.onLine || !list || !list.length) return;
+  if (!list || !list.length) return;
+  // درج شدہ (فارم کا «سابقہ ریکارڈ») — انٹرنیٹ کے بغیر بھی نشان
+  list.forEach(a => {
+    if (Array.isArray(a.prev_records) && a.prev_records.length) {
+      const btn = document.getElementById('acc-prev-btn-' + a.id);
+      if (btn) { btn.classList.add('acc-blink'); btn.title = 'سابقہ ریکارڈ موجود ہے — چیک کریں'; }
+    }
+  });
+  if (!navigator.onLine) return;
   const cnics = [...new Set(list.map(a => a.cnic).filter(Boolean))];
   const names = [...new Set(list.filter(a => !a.cnic && a.name).map(a => a.name))];
   const matchedCnic = new Set(), matchedName = new Set();
@@ -518,7 +550,8 @@ async function _accCheckPrevRecords(list) {
     }
   } catch(_) { return; }
   list.forEach(a => {
-    const has = (a.cnic && matchedCnic.has(a.cnic)) || (!a.cnic && a.name && matchedName.has(a.name));
+    const has = (a.cnic && matchedCnic.has(a.cnic)) || (!a.cnic && a.name && matchedName.has(a.name))
+             || (Array.isArray(a.prev_records) && a.prev_records.length > 0);
     if (has) {
       const btn = document.getElementById('acc-prev-btn-' + a.id);
       if (btn) { btn.classList.add('acc-blink'); btn.title = 'سابقہ ریکارڈ موجود ہے — چیک کریں'; }
@@ -526,63 +559,22 @@ async function _accCheckPrevRecords(list) {
   });
 }
 
+// v553: سسٹم کا ریکارڈ (دوسرے مقدمات میں یہی شخص — ملزم/گواہ/مدعی) خودکار + اندراج کے
+//   وقت خود درج کیا گیا سابقہ ریکارڈ — دونوں یکجا، کوئی دہراؤ نہیں (DIOPrev.forPerson)
 async function _accPrevRecord(id) {
   const a = _accusedList.find(x => x.id === id);
   if (!a) return;
-  if (!a.cnic && !a.name) { showToast('شناخت دستیاب نہیں', 'info'); return; }
-  if (!navigator.onLine) { showToast('سابقہ ریکارڈ کے لیے انٹرنیٹ درکار ہے', 'info'); return; }
-  showToast('تلاش جاری...', 'info');
+  if (!a.cnic && !a.name && !(a.prev_records || []).length) { showToast('شناخت دستیاب نہیں', 'info'); return; }
+  if (!window.DIOPrev || !DIOPrev.forPerson) { showToast('سابقہ ریکارڈ کا آلہ لوڈ نہیں ہوا', 'error'); return; }
+  showToast('سابقہ ریکارڈ تلاش ہو رہا ہے…', 'info');
   try {
-    let q = supabaseClient.from('case_accused').select('*').neq('case_id', _accusedCaseId);
-    if (a.cnic) q = q.eq('cnic', a.cnic); else q = q.ilike('name', a.name);
-    const { data: recs } = await q;
-    const list = recs || [];
-    if (!list.length) {
-      openModal('سابقہ ریکارڈ', `<div style="direction:rtl;text-align:center;padding:24px;color:var(--text-muted);">اس ملزم کا کسی دیگر مقدمہ میں کوئی ریکارڈ نہیں ملا۔</div>`,
-        `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`);
-      return;
-    }
-    // Fetch case labels for the matched records
-    const ids = [...new Set(list.map(r => r.case_id).filter(Boolean))];
-    const caseMap = {};
-    if (ids.length) {
-      try {
-        const { data: cases } = await supabaseClient.from('cases').select('*').in('id', ids);
-        (cases || []).forEach(c => { caseMap[c.id] = c; });
-      } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
-    }
-    const rows = list.map(r => {
-      const label = _accCaseLabel(caseMap[r.case_id], r.case_id);
-      return `<div style="border:1px solid var(--border);border-radius:8px;padding:9px 11px;margin-bottom:6px;direction:rtl;">
-        <div style="font-weight:700;font-size:14px;">${_escA(label)}</div>
-        <div style="font-size:12px;color:var(--text-muted);display:flex;gap:10px;flex-wrap:wrap;margin-top:3px;">
-          ${r.name?`<span>${_escA(r.name)}</span>`:''}
-          ${r.cnic?`<span dir="ltr">${_escA(r.cnic)}</span>`:''}
-          ${r.pesha?`<span>${_escA(r.pesha)}</span>`:''}
-          ${r.arrest_date?`<span dir="ltr">${_fmtDateDMY(r.arrest_date)}</span>`:''}
-        </div>
-      </div>`;
-    }).join('');
-    openModal('سابقہ ریکارڈ (' + list.length + ')', `<div style="direction:rtl;">${rows}</div>`,
-      `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`);
-  } catch(e) { showToast('' + e.message, 'error'); }
+    const r = await DIOPrev.forPerson({ name: a.name, cnic: a.cnic, manual: a.prev_records,
+      selfTable: 'case_accused', selfId: a.id, caseId: _accusedCaseId });
+    DIOPrev.show('سابقہ ریکارڈ — ' + (a.name || ''), r.list, a.name, r.note);
+  } catch (e) { showToast('' + ((e && e.message) || e), 'error'); }
 }
-// مقدمے کا لیبل — FIR نمبر · بجرم (صرف دفعات) · تھانہ
-//  v547: پہلے یہ دفعات اور تھانہ ایسے کالموں سے پڑھتا تھا جو `cases` میں ہیں ہی نہیں
-//  (u_s/section/dafaat/offence، thana/police_station/ps) — اس لیے لیبل میں صرف FIR
-//  نمبر آتا۔ اصل کالم: section_of_law (دفعات) اور case_station (تھانہ) — وہی جو
-//  مقدمہ فارم لکھتا ہے اور dio-prev.js پڑھتا ہے۔ اصول: «بجرم» کے آگے صرف دفعات۔
-function _accCaseLabel(c, fallbackId) {
-  if (!c || !Object.keys(c).length) return 'مقدمہ #' + (fallbackId || '');
-  const fir   = String(c.fir_number || '').trim();
-  const secs  = String(c.section_of_law || '').trim();
-  const thana = String(c.case_station || '').trim();
-  const parts = [];
-  if (fir)   parts.push('ایف آئی آر ' + fir);
-  if (secs)  parts.push('بجرم ' + secs);
-  if (thana) parts.push(/^تھانہ/.test(thana) ? thana : 'تھانہ ' + thana);
-  return parts.length ? parts.join(' — ') : ('مقدمہ #' + (c.id || fallbackId || ''));
-}
+// v553: سابقہ ریکارڈ اب dio-prev.js کی یکجا فہرست میں (FIR نمبر، تاریخ، بجرم = section_of_law،
+//   تھانہ = case_station، ضلع، حیثیت، فیصلہ) — پرانا _accCaseLabel ہٹا دیا گیا۔
 
 // ── HELPERS ───────────────────────────────────────────────────
 function _escA(s) { return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }

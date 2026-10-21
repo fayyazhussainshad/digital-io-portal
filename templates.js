@@ -37,7 +37,7 @@ async function renderTemplates(container) {
   container.innerHTML = `
   <div style="max-width:100%;margin:0;direction:rtl;">
     <div class="page-header">
-      <button onclick="_openAddTpl()" class="btn btn-primary dio-add-btn">+ نیا ٹمپلیٹ</button>
+      <button onclick="_openAddTpl()" class="btn btn-primary dio-add-btn">+ ٹمپلیٹ درج کریں</button>
       <div>
         <div class="page-title">ٹمپلیٹس</div>
         <div class="page-subtitle">محفوظ شدہ مسودے — ایک دبائیں اور بھر لیں</div>
@@ -138,8 +138,8 @@ function _renderTplTable() {
       <div style="text-align:center;padding:50px 20px;color:var(--text-muted);">
         <div style="font-size:56px;margin-bottom:14px;"><svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
         <div style="font-size:17px;font-weight:800;margin-bottom:6px;">کوئی ٹمپلیٹ موجود نہیں</div>
-        <div style="font-size:13px;margin-bottom:20px;">+ نیا ٹمپلیٹ شامل کریں بٹن دبائیں</div>
-        <button onclick="_openAddTpl()" class="btn btn-primary">+ نیا ٹمپلیٹ</button>
+        <div style="font-size:13px;margin-bottom:20px;">«+ ٹمپلیٹ درج کریں» کا بٹن دبائیں</div>
+        <button onclick="_openAddTpl()" class="btn btn-primary">+ ٹمپلیٹ درج کریں</button>
       </div>`;
     return;
   }
@@ -208,7 +208,7 @@ function _tplFilter(val) {
 
 // ── ADD NEW TEMPLATE ─────────────────────────────────────────
 function _openAddTpl() {
-  openModal('+ نیا ٹمپلیٹ شامل کریں', `
+  openModal('نیا اندراج — ٹمپلیٹ', `
     <div style="direction:rtl;">
       <label class="form-label">ٹمپلیٹ کا نام *</label>
       <input class="form-input" id="tpl-f-title" dir="rtl" placeholder="مثلاً: DSP صاحب کو درخواست" style="margin-bottom:14px;">
@@ -430,6 +430,7 @@ function _tplBuildFormatToolbar() {
       ${sep}
       <button aria-label="محفوظ" class="tpl-fmt-btn" style="font-size:12px;" onclick="_tplSaveDoc(_tplDocId)" title="محفوظ"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4.5 4h11.5L19.5 7.5V20h-15z"/><path d="M8 4v6h7.5V4"/><path d="M8 20v-5.5h8V20"/></svg></button>
       <button aria-label="پرنٹ" class="tpl-fmt-btn" style="font-size:12px;" onclick="_tplPrintDoc()" title="پرنٹ"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M7 9.5V3.5h10v6"/><path d="M4.5 9.5h15v7h-15z"/><path d="M7 13.5h10V21H7z"/></svg></button>
+      <button aria-label="شیئر" class="tpl-fmt-btn" style="font-size:12px;" onclick="dioSharePrint(()=>_tplPrintDoc(),'سانچہ')" title="شیئر — PDF / Word"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></svg></button>
     </div>`;
 }
 
@@ -438,7 +439,7 @@ function _tplColor(c){ document.execCommand('foreColor',false,c); document.getEl
 function _tplFontSize(size){
   document.execCommand('fontSize',false,'7');
   const doc = document.getElementById('word-doc-editable');
-  doc?.querySelectorAll('font[size="7"]').forEach(el => { el.removeAttribute('size'); el.style.fontSize = size+'pt'; });
+  doc?.querySelectorAll('font[size="7"]').forEach(el => { el.removeAttribute('size'); el.style.fontSize = size+'pt'; el.setAttribute('data-dio-fs','1'); });
   doc?.focus();
 }
 let _tplBorderW = 1;
@@ -546,6 +547,7 @@ function _editTpl(id, autoPrint) {
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--amber);color:#fff;flex-shrink:0;flex-wrap:wrap;gap:8px;">
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button onclick="_printTplEditor()" style="${_tplTbBtn()}">پرنٹ</button>
+        <button onclick="dioSharePrint(()=>_printTplEditor(),'سانچہ')" style="${_tplTbBtn()}" title="شیئر — PDF / Word">شیئر</button>
         <button onclick="_copyTplEditor()" style="${_tplTbBtn()}">کاپی</button>
         <button onclick="_saveTplEditor('${t.id}')" style="${_tplTbBtn()}">محفوظ</button>
       </div>

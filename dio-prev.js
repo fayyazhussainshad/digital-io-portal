@@ -34,6 +34,8 @@
     '.dio-rec .more{grid-column:1/-1;font-size:11pt;color:var(--text-muted,#64748b);}',
     '.dio-rec .role{display:inline-block;border:1px solid currentColor;border-radius:999px;padding:0 9px 2px;font-size:10pt;line-height:1.8;}',
     '.dio-rec .role.r-mudai{color:#7c3aed;}.dio-rec .role.r-mulzim{color:#ea580c;}.dio-rec .role.r-gawah{color:#0369a1;}',
+    '.dio-src{display:inline-block;border-radius:6px;padding:0 8px 2px;font-size:10pt;line-height:1.8;background:#ede9fe;color:#5b21b6;}',
+    '.dio-src.s{background:#e0f2fe;color:#075985;}.dio-src.m{background:#fef3c7;color:#92400e;}',
     '.dio-paste{width:100%;margin-top:10px;min-height:52px;box-sizing:border-box;font-size:12pt;border:1.5px dashed #7c3aed;border-radius:9px;',
     "  background:var(--bg-card,#fff);color:var(--text-primary,#111);padding:6px 10px;resize:vertical;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;}"
   ].join('\n');
@@ -148,7 +150,7 @@
     return '<div class="dio-prev" id="dio-prev">' +
       '<div id="dio-prev-auto"></div>' +
       '<div class="dio-prev-h">سابقہ ریکارڈ <span id="dio-prev-mcount"></span><span class="sp">' +
-      '<button type="button" class="dio-mini v" onclick="DIOPrev._toggleAdd(true)">+ سابقہ ریکارڈ شامل کریں</button></span></div>' +
+      '<button type="button" class="dio-mini v" onclick="DIOPrev._toggleAdd(true)">+ سابقہ ریکارڈ درج کریں</button></span></div>' +
       '<div id="dio-prev-list">' + _manual.map(function (r, i) { return recHtml(r, 'm', i); }).join('') + '</div>' +
       '<div id="dio-prev-add" hidden>' + addForm + '</div></div>';
   }
@@ -172,8 +174,9 @@
   }
   function _remove(i) { _manual.splice(i, 1); _drawManual(); }
   function _toggleMore(k) { var el = document.getElementById('dio-prev-more-' + k); if (el) el.hidden = !el.hidden; }
-  function _copy(kind, i) { var r = (kind === 'a' ? _auto : _manual)[i]; if (r) copy(r); }
-  function _dl(kind, i) { var r = (kind === 'a' ? _auto : _manual)[i]; if (r) download([r], r.name); }
+  function _pick(kind, i) { return (kind === 'a' ? _auto : kind === 's' ? _shown : _manual)[i]; }
+  function _copy(kind, i) { var r = _pick(kind, i); if (r) copy(r); }
+  function _dl(kind, i) { var r = _pick(kind, i); if (r) download([r], r.name); }
   function _dlAll() { download(_auto.concat(_manual), _ctx && _ctx.who); }
   function read() { return _manual.slice(); }
 
@@ -201,15 +204,27 @@
     _ctx.who = core;
     if (core.length < 3 && digits.length !== 13) { _auto = []; _drawAuto(''); return; }
     if (!navigator.onLine || typeof supabaseClient === 'undefined' || !supabaseClient) { _auto = []; _drawAuto('offline'); return; }
+    var stamp = core + '|' + digits;
+    _ctx._stamp = stamp;
+    try {
+      var out = await query(core, digits, _ctx);
+      if (_ctx._stamp !== stamp) return;   // پرانا جواب
+      _auto = out;
+      _drawAuto(_auto.length ? 'found' : 'none');
+    } catch (_) { _auto = []; _drawAuto(''); }
+  }
+
+  /* ── تلاش (فارم کے بغیر بھی) — دوسرے مقدمات میں یہی شخص ───────────
+     ctx: {selfTable, selfId, caseId} → [{name, fir, date, jurm, thana, zila, haisiyat, faisla, more}] */
+  async function query(core, digits, ctx) {
+    ctx = ctx || {};
     var cn = digits.length === 13 ? [DIOCard.fmtCnic(digits), digits] : null;
     var esc = function (s) { return String(s).replace(/[%_,()]/g, ' ').trim(); };
     var like = core.length >= 3 ? esc(core) + '%' : null;
     var orA = [], orW = [], orC = [];
     if (cn) { orA.push('cnic.in.(' + cn.join(',') + ')'); orW.push('cnic.in.(' + cn.join(',') + ')'); orC.push('complainant_cnic.in.(' + cn.join(',') + ')'); }
     if (like) { orA.push('name.ilike.' + like); orW.push('full_name.ilike.' + like); orC.push('complainant.ilike.' + like); }
-    var stamp = core + '|' + digits;
-    _ctx._stamp = stamp;
-    try {
+    {
       var oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
       var qA = supabaseClient.from('case_accused').select('id,case_id,name,cnic,mobile').or(orA.join(',')).limit(20);
       var qW = supabaseClient.from('case_witnesses').select('id,case_id,full_name,cnic,cell,status').or(orW.join(',')).limit(20);
@@ -217,12 +232,11 @@
       if (oid) qC = qC.eq('officer_id', oid);
       qC = qC.or(orC.join(',')).limit(20);
       var res = await Promise.all([qA, qW, qC]);
-      if (_ctx._stamp !== stamp) return;   // پرانا جواب
       var A = (res[0] && res[0].data) || [], W = (res[1] && res[1].data) || [], C = (res[2] && res[2].data) || [];
-      var skip = function (r, table) { return (_ctx.selfTable === table && String(r.id) === String(_ctx.selfId)) || (_ctx.caseId && String(r.case_id) === String(_ctx.caseId)); };
+      var skip = function (r, table) { return (ctx.selfTable === table && String(r.id) === String(ctx.selfId)) || (ctx.caseId && String(r.case_id) === String(ctx.caseId)); };
       A = A.filter(function (r) { return !skip(r, 'case_accused'); });
       W = W.filter(function (r) { return !skip(r, 'case_witnesses'); });
-      C = C.filter(function (c) { return !(_ctx.caseId && String(c.id) === String(_ctx.caseId)); });
+      C = C.filter(function (c) { return !(ctx.caseId && String(c.id) === String(ctx.caseId)); });
       var ids = {};
       A.concat(W).forEach(function (r) { if (r.case_id) ids[r.case_id] = 1; });
       var caseMap = {};
@@ -247,13 +261,83 @@
       C.forEach(function (c) { out.push(mk(c, c.complainant, 'مدعی', c.complainant_cnic || '')); });
       // ایک ہی مقدمے میں ایک شخص دو بار نہ آئے
       var seen = {};
-      _auto = out.filter(function (r) { var k = r.fir + '|' + r.haisiyat + '|' + DIOCard.coreName(r.name); if (seen[k]) return false; seen[k] = 1; return true; });
-      _drawAuto(_auto.length ? 'found' : 'none');
-    } catch (_) { _auto = []; _drawAuto(''); }
+      return out.filter(function (r) { var k = r.fir + '|' + r.haisiyat + '|' + DIOCard.coreName(r.name); if (seen[k]) return false; seen[k] = 1; return true; });
+    }
+  }
+
+  /* ── v553: «سابقہ ریکارڈ» بٹن — سسٹم کا ریکارڈ خودکار + خود درج کیا ہوا، یکجا ──
+     افسر کا قاعدہ: «یہ بٹن سسٹم کے ریکارڈ کو خودکار fetch کرے اور شامل کیے گئے دونوں
+     ریکارڈ کو یکجا کر کے دکھائے، کوئی دہراؤ نہ ہو۔» */
+  function _normFir(f) {
+    var t = String(f || '').replace(/[\s\u200e\u200f]/g, '').replace(/[\u06F0-\u06F9]/g, function (d) { return String(d.charCodeAt(0) - 0x06F0); });
+    var m = /^0*(\d+)\/(\d{2}|\d{4})$/.exec(t);
+    if (m) return m[1] + '/' + m[2].slice(-2);
+    return t.toLowerCase();
+  }
+  function _normTxt(x) { return String(x || '').replace(/^تھانہ\s*/, '').replace(/\s+/g, ' ').trim(); }
+  // ایک ہی مقدمہ (FIR + تھانہ اگر دونوں میں ہو) اور ایک ہی حیثیت (اگر دونوں میں ہو) = دہراؤ
+  function same(a, b) {
+    var fa = _normFir(a.fir), fb = _normFir(b.fir);
+    if (!fa || !fb || fa !== fb) return false;
+    var ta = _normTxt(a.thana), tb = _normTxt(b.thana);
+    if (ta && tb && ta !== tb) return false;
+    var ha = _normTxt(a.haisiyat), hb = _normTxt(b.haisiyat);
+    if (ha && hb && ha !== hb) return false;
+    return true;
+  }
+  function merge(auto, manual) {
+    var out = [];
+    (auto || []).forEach(function (r) { var x = Object.assign({ src: 'system' }, r); if (!out.some(function (y) { return same(x, y); })) out.push(x); });
+    (manual || []).forEach(function (r) {
+      var x = Object.assign({ src: 'manual' }, r);
+      var hit = out.find(function (y) { return same(x, y); });
+      if (hit) {   // دونوں میں — ایک ہی ریکارڈ، خالی خانے ایک دوسرے سے پُر
+        ['date', 'jurm', 'thana', 'zila', 'haisiyat', 'faisla'].forEach(function (k) { if (!hit[k] && x[k]) hit[k] = x[k]; });
+        hit.src = 'both';
+      } else out.push(x);
+    });
+    return out;
+  }
+  async function search(o) {
+    o = o || {};
+    var core = window.DIOCard ? DIOCard.coreName(o.name || '') : String(o.name || '').trim();
+    var digits = String(o.cnic || '').replace(/\D/g, '');
+    if (core.length < 3 && digits.length !== 13) return [];
+    if (!navigator.onLine || typeof supabaseClient === 'undefined' || !supabaseClient) throw new Error('offline');
+    return query(core, digits, o);
+  }
+  var _shown = [];
+  function show(title, list, who, note) {
+    css();
+    _shown = list || [];
+    var src = function (r) {
+      return r.src === 'both' ? '<span class="dio-src">سسٹم + درج شدہ</span>' : r.src === 'manual' ? '<span class="dio-src m">درج شدہ</span>' : '<span class="dio-src s">سسٹم</span>';
+    };
+    var body = '<div class="dio-prev" style="margin-top:0;">' +
+      (note ? '<div class="dio-hint">' + e(note) + '</div>' : '') +
+      (_shown.length
+        ? _shown.map(function (r, i) { return recHtml(r, 's', i).replace('<div class="dio-rec">', '<div class="dio-rec"><div style="grid-column:1/-1;">' + src(r) + '</div>'); }).join('')
+        : '<div class="dio-hint" style="text-align:center;padding:16px 0;">اس شخص کا کسی دوسرے مقدمے میں کوئی سابقہ ریکارڈ نہیں ملا۔</div>') +
+      '</div>';
+    var foot = (_shown.length ? '<button class="btn btn-secondary" onclick="DIOPrev._dlShown()">سب ڈاؤن لوڈ</button>' : '') +
+      '<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>';
+    _shownWho = who || '';
+    if (typeof openModal === 'function') openModal(title + (_shown.length ? ' (' + _shown.length + ')' : ''), body, foot);
+  }
+  var _shownWho = '';
+  // یکجا فہرست — ایک شخص کے لیے: سسٹم کی تلاش + اس کے اپنے درج شدہ ریکارڈ
+  async function forPerson(o) {
+    var manual = Array.isArray(o.manual) ? o.manual : [];
+    var auto = [], note = '';
+    try { auto = await search(o); }
+    catch (_) { note = 'سسٹم کے ریکارڈ کی خودکار تلاش کے لیے انٹرنیٹ درکار ہے — صرف درج شدہ ریکارڈ دکھایا جا رہا ہے۔'; }
+    return { list: merge(auto, manual), note: note };
   }
 
   window.DIOPrev = {
     panel: panel, watch: watch, read: read, run: run, parse: parse, toText: toText,
+    search: search, merge: merge, same: same, show: show, forPerson: forPerson,
+    _dlShown: function () { download(_shown, _shownWho); },
     _toggleAdd: _toggleAdd, _add: _add, _onPaste: _onPaste, _remove: _remove, _toggleMore: _toggleMore,
     _copy: _copy, _dl: _dl, _dlAll: _dlAll
   };

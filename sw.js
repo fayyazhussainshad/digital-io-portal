@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v552
+   DIGITAL IO — SERVICE WORKER v553
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v552';
+const CACHE_NAME = 'digital-io-v553';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -54,6 +54,7 @@ const CORE_ASSETS = [
   '/global-mic.js',
   '/dio-card.js',
   '/dio-prev.js',
+  '/dio-keys.js',
   '/dio-entry.js',
   '/cdr-imei.js',
   '/cro-card.js',
@@ -67,6 +68,7 @@ const CORE_ASSETS = [
   '/system-forms.js',
   '/dio-forms.js',
   '/dio-share.js',
+  '/case-print.js',
   '/vendor/html2canvas.min.js',
   '/sho-dsp.js',
   '/editor-tools.js',

@@ -1080,6 +1080,396 @@ function dioFontHead() {
 }
 window.dioFontHead = dioFontHead;
 
+// ═══ v553: مثل باندھنے کی جگہ (back side) — پورے سسٹم کا ایک ہی قاعدہ ═══
+//  افسر کا قاعدہ: «جہاں بھی کاغذ کا دوسرا صفحہ آئے گا تو back side پر اوپر ایک سطر کی
+//  جگہ ہوگی اور اوپر بائیں کونے پر ایک مثلث جو پرنٹ میں نظر نہیں آئے گی لیکن اُس کی
+//  تحریر والی طرف کی لکیر پرنٹ ہوگی (2pt)؛ کاغذ A4/لیگل کے حساب سے پرنٹ کے وقت خود۔»
+//   • صرف جفت صفحات (2، 4، 6 …) — کاغذ کی پچھلی طرف
+//   • .dio-bindgap = اوپر ایک سطر (اسی متن کی ایک سطر کی اونچائی، 1lh) — مثلث اس کے فوراً نیچے
+//   • مثلث خود سفید/غائب؛ صرف وتر (متن کی طرف) 2pt کی سیاہ لکیر
+//   • صفحے کی اونچائی ہر ماڈیول پرنٹ کے وقت منتخب کاغذ (لیگل 13in / A4 11.69in) سے لیتا ہے
+function dioBindCSS(scope) {
+  const S = scope ? scope + ' ' : '';
+  const tri = ['.ch173-bind', '.zf-bind', '.zf-bindmark', '.zfa-bindmark', '.saza-bind', '.dio-bind'].map(c => S + c).join(',');
+  return `
+    ${S}.dio-bind{ display:block !important; float:left; width:2in; height:2in;
+      shape-outside:polygon(0 0, 2in 0, 0 2in); -webkit-shape-outside:polygon(0 0, 2in 0, 0 2in);
+      shape-margin:3mm; -webkit-shape-margin:3mm;
+      clip-path:polygon(0 0, 2in 0, 0 2in); -webkit-clip-path:polygon(0 0, 2in 0, 0 2in); }
+    ${tri}{ margin-top:0 !important; opacity:1 !important;
+      background:linear-gradient(to top left, transparent 50%, #000 50%, #000 calc(50% + 2pt), transparent calc(50% + 2pt)) !important;
+      -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+    ${S}.dio-bindgap{ display:block !important; height:1.5em !important; height:1lh !important; margin:0 !important; padding:0 !important; float:none !important; }
+    ${S}.dio-pgbrk{ display:block !important; height:0 !important; margin:0 !important; padding:0 !important;
+      break-before:page !important; page-break-before:always !important; }`;
+}
+window.dioBindCSS = dioBindCSS;
+// مثلث + اوپر کی ایک سطر — کسی بھی جگہ (node سے پہلے) ڈالو؛ دونوں عنصر واپس
+function dioBindInsert(parent, before, triClass) {
+  const gap = document.createElement('span'); gap.className = 'dio-bindgap';
+  const tri = document.createElement('span'); tri.className = triClass || 'dio-bind';
+  parent.insertBefore(gap, before || null);
+  parent.insertBefore(tri, before || null);
+  return [gap, tri];
+}
+window.dioBindInsert = dioBindInsert;
+
+// ── باقی تمام دستاویزات (FIR متن، درخواستیں، مسل کی دستاویزات، ٹمپلیٹ …) ──
+//  چالان/ضمنی/سزا سلپ اپنا حساب خود کرتے ہیں (#ch173-doc / #saza-doc)؛ باقی ہر پرنٹ
+//  (iframe) میں یہ: صفحات کا حساب (منتخب کاغذ کا @page سائز اور حاشیے)، ہر جفت صفحے
+//  کی پہلی سطر سے پہلے: صفحے کا توڑ + اوپر ایک سطر + مثلث۔ کئی کالم والا جدول صفحے کی
+//  حد پر ہو (سطریں ترتیب میں نہ ہوں) تو کچھ نہیں بدلتا — ترتیب کبھی نہیں بگڑتی۔
+function _dioPageGeo(html) {
+  const IN = 96;
+  let w = 8.5, h = 13, mt = 0, mr = 0, mb = 0, ml = 0;
+  const m = /@page\s*\x7b([^\x7d]*)\x7d/i.exec(html || '');   // \x7b/\x7d = { } (سادہ قوسین کی گنتی والی جانچ نہ بگڑے)
+  const body = m ? m[1] : '';
+  const sz = /size\s*:\s*([^;]+)/i.exec(body);
+  if (sz) {
+    const v = sz[1].trim().toLowerCase();
+    if (/a4/.test(v)) { w = 8.27; h = 11.69; }
+    else if (/legal/.test(v)) { w = 8.5; h = 14; }
+    else if (/letter/.test(v)) { w = 8.5; h = 11; }
+    else {
+      const n = /([\d.]+)\s*(in|mm|cm)\s+([\d.]+)\s*(in|mm|cm)/.exec(v);
+      const k = (x, u) => { x = +x; return u === 'mm' ? x / 25.4 : (u === 'cm' ? x / 2.54 : x); };
+      if (n) { w = k(n[1], n[2]); h = k(n[3], n[4]); }
+    }
+    if (/landscape/.test(v)) { const t = w; w = h; h = t; }
+  }
+  const mg = /margin\s*:\s*([^;]+)/i.exec(body);
+  if (mg) {
+    const u = (x) => {
+      const n = /(-?[\d.]+)\s*(in|mm|cm|pt|px)?/.exec(x || '0'); if (!n) return 0;
+      const vv = +n[1], kk = n[2] || 'px';
+      return kk === 'in' ? vv : kk === 'mm' ? vv / 25.4 : kk === 'cm' ? vv / 2.54 : kk === 'pt' ? vv / 72 : vv / 96;
+    };
+    let p = mg[1].trim().split(/\s+/).map(u);
+    if (p.length === 1) p = [p[0], p[0], p[0], p[0]];
+    else if (p.length === 2) p = [p[0], p[1], p[0], p[1]];
+    else if (p.length === 3) p = [p[0], p[1], p[2], p[1]];
+    [mt, mr, mb, ml] = p;
+  }
+  return { cw: Math.round((w - ml - mr) * IN), ch: (h - mt - mb) * IN };
+}
+// opts: {root (صرف اس حصے کا متن — مثلاً چالان کا جاری متن), allPages (طاق صفحوں پر بھی
+//   صفحے کا توڑ — نستعلیق کے حروف کنارے پر نہ کٹیں), triClass, brkClass}
+function dioAutoBind(d, html, opts) {
+  opts = opts || {};
+  try {
+    if (!d || !d.body) return 0;
+    if (!opts.root && d.querySelector('#ch173-doc, #saza-doc, .ch173-bind, .zf-bind, .zf-bindmark, .zfa-bindmark, .saza-bind, .dio-bind, [data-dio-nobind]')) return 0;
+    const root = opts.root || d.body;
+    const triClass = opts.triClass || 'dio-bind', brkClass = opts.brkClass || 'dio-pgbrk';
+    const win = d.defaultView;
+    const geo = _dioPageGeo(html || (d.documentElement ? d.documentElement.outerHTML.slice(0, 60000) : ''));
+    if (geo.ch < 200) return 0;
+    const docH = Math.max(d.documentElement.scrollHeight, d.body.scrollHeight);
+    if (docH <= geo.ch + 2) return 0;                      // ایک ہی صفحہ
+    if (!d.getElementById('dio-bind-css')) {
+      const st = d.createElement('style'); st.id = 'dio-bind-css';
+      st.textContent = dioBindCSS('') + '.dio-pgbrk{display:block !important;height:0 !important;margin:0 !important;padding:0 !important;' +
+        'break-before:page !important;page-break-before:always !important;}';
+      (d.head || d.documentElement).appendChild(st);
+    }
+    const skipEl = (el) => {
+      for (let n = el; n && n !== root && n !== d.body; n = n.parentElement) {
+        const cs = win.getComputedStyle(n);
+        if (cs.display === 'none' || cs.position === 'fixed' || cs.position === 'absolute' || cs.visibility === 'hidden') return true;
+      }
+      return false;
+    };
+    const texts = () => {
+      const out = [], tw = d.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+      let n;
+      while ((n = tw.nextNode())) {
+        if (!/\S/.test(n.nodeValue)) continue;
+        const pe = n.parentElement;
+        if (!pe || /^(SCRIPT|STYLE)$/.test(pe.tagName) || skipEl(pe)) continue;
+        out.push(n);
+      }
+      return out;
+    };
+    const lines = (n) => {
+      const r = d.createRange(); r.selectNodeContents(n);
+      return [].filter.call(r.getClientRects(), x => x.height > 2 && x.width > 0);
+    };
+    // پہلے جانچ: سطریں اوپر سے نیچے ترتیب میں ہوں (ایک کالم کا بہاؤ)؛ ورنہ کچھ نہ بدلو
+    let lastTop = -1e9;
+    for (const n of texts()) {
+      for (const ln of lines(n)) {
+        if (ln.top < lastTop - 4) return 0;
+        lastTop = Math.max(lastTop, ln.top);
+      }
+    }
+    const sy = () => (win.scrollY || 0);
+    const forced = (el) => {
+      const cs = win.getComputedStyle(el);
+      return /page|always/.test((cs.breakBefore || '') + ' ' + (cs.pageBreakBefore || ''));
+    };
+    let pageStart = 0, pageNo = 1, made = 0, guard = 0;
+    let list = texts(), i = 0;
+    const seenForced = new Set();
+    while (i < list.length && guard++ < 400) {
+      const n = list[i];
+      // اس متن سے پہلے کوئی زبردستی صفحہ توڑ (دستاویز کا اپنا) — نیا صفحہ وہاں سے
+      for (let el = n.parentElement; el && el !== d.body; el = el.parentElement) {
+        if (!seenForced.has(el) && forced(el) && el.getBoundingClientRect().top + sy() > pageStart + 5) {
+          seenForced.add(el);
+          pageStart = el.getBoundingClientRect().top + sy(); pageNo++;
+          if (pageNo % 2 === 0) {
+            const first = el.firstChild;
+            const gap = d.createElement('span'); gap.className = 'dio-bindgap';
+            const tri = d.createElement('span'); tri.className = triClass;
+            el.insertBefore(tri, first); el.insertBefore(gap, tri); made++;
+          }
+        }
+      }
+      const ls = lines(n);
+      let hit = null;
+      for (const ln of ls) { if (ln.bottom + sy() > pageStart + geo.ch + 0.5 && ln.top + sy() > pageStart + 1) { hit = ln; break; } }
+      if (!hit) { i++; continue; }
+      pageNo++;
+      const even = (pageNo % 2 === 0);
+      if (!even && !opts.allPages) { pageStart = hit.top + sy(); continue; }   // طاق صفحہ — صرف حساب
+      // اس سطر کا پہلا حرف (ایک ہی text node میں — ترتیب یقینی)
+      let lo = 0, hiI = n.nodeValue.length - 1, off = -1;
+      const rr = d.createRange();
+      while (lo <= hiI) {
+        const mid = (lo + hiI) >> 1;
+        rr.setStart(n, mid); rr.setEnd(n, mid + 1);
+        const b = rr.getBoundingClientRect();
+        if (b.height && b.top >= hit.top - 1) { off = mid; hiI = mid - 1; } else lo = mid + 1;
+      }
+      if (off < 0) { pageStart = hit.top + sy(); continue; }
+      const baad = off > 0 ? n.splitText(off) : n;
+      const brk = d.createElement('span'); brk.className = brkClass;
+      baad.parentNode.insertBefore(brk, baad);
+      if (even) {
+        const gap = d.createElement('span'); gap.className = 'dio-bindgap';
+        const tri = d.createElement('span'); tri.className = triClass;
+        baad.parentNode.insertBefore(gap, baad); baad.parentNode.insertBefore(tri, baad);
+      }
+      made++;
+      pageStart = brk.getBoundingClientRect().top + sy();
+      list = texts(); i = list.indexOf(baad); if (i < 0) break;
+    }
+    return made;
+  } catch (e) { try { console.warn('dioAutoBind:', e && e.message); } catch (_) { /* ضمنی */ } return 0; }
+}
+window.dioAutoBind = dioAutoBind;
+window._dioPageGeo = _dioPageGeo;
+// پرنٹ HTML → (ضرورت ہو تو) جفت صفحات پر مثلث والا HTML۔ ناپ ایک چھپے iframe میں
+//   «پرنٹ» کی شکل پر (@media print لاگو)، پھر اصل HTML کا head + نیا body۔
+//   اسکرپٹ والی یا اپنا حساب رکھنے والی دستاویزات (چالان/ضمنی/سزا) جوں کی توں۔
+function dioBindNeeded(html) {
+  const h = String(html || '');
+  return /@page/i.test(h) && !/<script/i.test(h) && !/id=["'](ch173-doc|saza-doc)["']/.test(h) && !/data-dio-nobind/.test(h);
+}
+// opts.binder(doc, geo) → ماڈیول کا اپنا حساب (مثلاً سزا سلپ کی قطاریں) — اسی «پرنٹ» شکل میں
+async function dioBindHtml(html, opts) {
+  opts = opts || {};
+  if (!opts.binder && !dioBindNeeded(html)) return html;
+  const geo = _dioPageGeo(html);
+  const f = document.createElement('iframe');
+  f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1;
+  f.style.cssText = 'position:fixed;left:-30000px;top:0;border:0;background:#fff;width:' + geo.cw + 'px;height:' + Math.round(geo.ch) + 'px;';
+  document.documentElement.appendChild(f);
+  try {
+    const d = f.contentWindow.document;
+    d.open(); d.write(String(html)); d.close();
+    await new Promise(r => setTimeout(r, 120));
+    // «پرنٹ» کی شکل: @media print → سب پر، screen → کسی پر نہیں (صرف CSSOM میں —
+    //   <style> کا متن نہیں بدلتا، اس لیے نقل جوں کی توں رہتی ہے)
+    const flip = (rules) => {
+      [].forEach.call(rules || [], (r) => {
+        try {
+          if (r.type === 4) {
+            const t = r.media.mediaText;
+            if (/\bprint\b/i.test(t) && !/not\s+print/i.test(t)) r.media.mediaText = 'all';
+            else if (/^\s*screen\b/i.test(t)) r.media.mediaText = 'not all';
+            flip(r.cssRules);
+          }
+        } catch (_) { /* ایک قاعدہ نہ بدلے تو باقی */ }
+      });
+    };
+    [].forEach.call(d.styleSheets, (sh) => {
+      try { if (sh.media && /\bprint\b/i.test(sh.media.mediaText)) sh.media.mediaText = 'all'; } catch (_) { /* ضمنی */ }
+      try { flip(sh.cssRules); } catch (_) { /* دوسری جگہ کی شیٹ */ }
+    });
+    for (let i = 0; i < 30; i++) {
+      let st = 'loaded'; try { st = d.fonts ? d.fonts.status : 'loaded'; } catch (_) { st = 'loaded'; }
+      if (st === 'loaded') break;
+      await new Promise(r => setTimeout(r, 100));
+    }
+    let made = 0;
+    try { made = opts.binder ? (opts.binder(d, geo) || 0) : dioAutoBind(d, html); }
+    catch (e) { try { console.warn('bind:', e && e.message); } catch (_) { /* ضمنی */ } made = 0; }
+    if (!made) return html;
+    const css = '<style id="dio-bind-css">' + dioBindCSS('') + '.dio-pgbrk{display:block !important;height:0 !important;margin:0 !important;' +
+      'padding:0 !important;break-before:page !important;page-break-before:always !important;}</style>';
+    let out = String(html).replace(/<body([^>]*)>[\s\S]*<\/body>/i, (all, attrs) => '<body' + attrs + '>' + d.body.innerHTML + '</body>');
+    out = /<\/head>/i.test(out) ? out.replace(/<\/head>/i, css + '</head>') : css + out;
+    return out;
+  } catch (e) { try { console.warn('dioBindHtml:', e && e.message); } catch (_) { /* ضمنی */ } return html; }
+  finally { f.remove(); }
+}
+window.dioBindNeeded = dioBindNeeded;
+window.dioBindHtml = dioBindHtml;
+
+// ═══ v553: فونٹ کا معیار — دستاویز کا متن 14pt (پرانا مواد بھی) ═══
+//  افسر کا قاعدہ: «کسی بھی کارڈ میں یا پورے سسٹم میں default فونٹ 14pt ہے؛ پہلے سے
+//  شامل مواد کا فونٹ کم یا زیادہ ہو تو اسے معیاری سائز پر کر دیا جائے — لیکن سرخیوں،
+//  ذیلی سرخیوں اور تیسرے درجے کی سرخیوں کے جو قواعد پہلے سے طے ہیں انہیں نہ چھیڑا جائے۔»
+//   • لکھنے والے خانے کے اندر جس عنصر پر اپنا فونٹ سائز لکھا ہو (پرانی محفوظ دستاویز،
+//     کہیں سے چسپاں متن، پرانے سانچے کی 12px/15px سطریں) → وہ سائز ہٹا کر معیاری 14pt
+//   • سرخیاں (h1–h6، عنوان/سرخی والی کلاسیں، موٹی + درمیانی/خط کشیدہ سطر) نہیں چھیڑی جاتیں
+//   • v553 کے بعد افسر جو سائز خود لگائے (Ctrl + / −، فونٹ کی فہرست) وہ data-dio-fs سے
+//     پہچانا جاتا ہے اور برقرار رہتا ہے
+const _DIO_HEAD_SEL = 'h1,h2,h3,h4,h5,h6,[data-heading],[class*="title"],[class*="head"],[class*="formno"],' +
+  '[class*="-h1"],[class*="-h2"],[class*="-h3"],.dio-doc-h1,.dio-doc-h2,.dio-doc-h3,.dio-hs1,.dio-hs2,.dio-hs3';
+function _dioIsHeadingEl(el, root) {
+  for (let n = el; n && n !== root; n = n.parentElement) {
+    try { if (n.matches && n.matches(_DIO_HEAD_SEL)) return true; } catch (_) { /* ضمنی */ }
+    const st = n.style || {};
+    const bold = /bold|[6-9]00/.test(String(st.fontWeight || ''));
+    if (bold && (/center/.test(String(st.textAlign || '')) || /underline/.test(String(st.textDecoration || '') + String(st.textDecorationLine || '')))) return true;
+  }
+  return false;
+}
+function dioNormFonts(root) {
+  if (!root || !root.querySelectorAll) return 0;
+  let n = 0;
+  root.querySelectorAll('[style*="font-size"], font[size]').forEach(el => {
+    if (el === root) return;
+    if (el.closest('[data-dio-fs]')) return;               // افسر کا خود لگایا ہوا (v553 کے بعد)
+    if (_dioIsHeadingEl(el, root)) return;                  // سرخی — اپنا قاعدہ
+    if (/^(TABLE|THEAD|TBODY|TR|TD|TH|IMG|SVG|CANVAS)$/.test(el.tagName)) return;   // ڈھانچہ — صرف متن
+    if (el.tagName === 'FONT') { el.removeAttribute('size'); n++; return; }
+    el.style.removeProperty('font-size');
+    if (!el.getAttribute('style')) el.removeAttribute('style');
+    n++;
+  });
+  return n;
+}
+// HTML (محفوظ متن) → وہی HTML، پرانے فونٹ سائز معیاری
+function dioNormFontsHTML(html) {
+  const h = String(html == null ? '' : html);
+  if (!/font-size|<font/i.test(h)) return h;
+  try {
+    const t = document.createElement('template'); t.innerHTML = h;
+    const wrap = document.createElement('div'); wrap.appendChild(t.content);
+    return dioNormFonts(wrap) ? wrap.innerHTML : h;
+  } catch (_) { return h; }
+}
+window.dioNormFonts = dioNormFonts;
+window.dioNormFontsHTML = dioNormFontsHTML;
+
+// ═══ v553: «دو حصوں والا صفحہ» (ملزمان / گواہان — متن FIR کی طرح) کا مشترکہ انداز ═══
+//   بٹن دائیں کنارے کے ساتھ، سرخی بالکل درمیان (3 خانوں کا grid)
+function _dio2pCSS() {
+  return `
+    .dio-2p{ direction:rtl; height:100%; overflow-y:auto; padding:10px; width:100%; box-sizing:border-box; }
+    .dio-2p .dio-2p-part{ border:1px solid var(--border); border-radius:10px; padding:10px; background:var(--bg-card); }
+    .dio-2p .dio-2p-part + .dio-2p-part{ margin-top:22px; }
+    .dio-2p .dio-2p-head{ display:grid; grid-template-columns:1fr auto 1fr; align-items:center; column-gap:8px; padding-bottom:6px; margin:0 0 10px; }
+    .dio-2p .dio-2p-btn{ justify-self:start; display:flex; }
+    .dio-2p .dio-2p-btn .btn{ white-space:nowrap; }
+    .dio-2p .dio-2p-title{ text-align:center; white-space:nowrap; font-weight:800; font-family:'Jameel Noori Nastaleeq',serif; }`;
+}
+window._dio2pCSS = _dio2pCSS;
+
+// ═══════════════════════════════════════════════════════════
+//  کاغذ کا سائز — پرنٹ کے وقت (v553، افسر کا قاعدہ)
+//  «اوپر کی پٹی سے لیگل/A4 کا انتخاب ہٹائیں — یہ پرنٹ کے وقت طے ہو گا اور
+//   سسٹم پرنٹ کے وقت صفحے کے سائز کے لحاظ سے تحریر کو ایڈجسٹ کرے۔»
+//  dioAskPaper({current})  → 'legal' | 'a4' | null (منسوخ)
+//    Enter = پچھلا انتخاب، Esc = منسوخ۔
+//  window.__dioPaperAuto: 'legal'|'a4' → بغیر پوچھے یہی؛ 'keep' → موجودہ ہی
+//    (شیئر کی نقل اور «ایک ساتھ کئی دستاویزات» میں ایک بار پوچھا جاتا ہے)۔
+//  dioWithPaper({get,set,run}) → پوچھ کر کاغذ لگاتا، ترتیب بیٹھنے دیتا، پھر پرنٹ۔
+// ═══════════════════════════════════════════════════════════
+window.dioAskPaper = function (opts) {
+  opts = opts || {};
+  const cur = (opts.current === 'a4') ? 'a4' : 'legal';
+  const auto = window.__dioPaperAuto;
+  if (auto === 'keep') return Promise.resolve(cur);
+  if (auto === 'a4' || auto === 'legal') return Promise.resolve(auto);
+  return new Promise(resolve => {
+    const old = document.getElementById('dio-paper-ask'); if (old) old.remove();
+    const box = document.createElement('div');
+    box.id = 'dio-paper-ask'; box.className = 'no-print';
+    box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', 'کاغذ کا سائز');
+    const opt = (v, t, sub) => `<button type="button" data-v="${v}" class="${v === cur ? 'is-cur' : ''}">` +
+      `<b>${t}</b><small dir="ltr">${sub}</small></button>`;
+    box.innerHTML = '<div class="dpa-card" dir="rtl">' +
+      '<b class="dpa-h">پرنٹ — کاغذ کا سائز منتخب کریں</b>' +
+      '<small class="dpa-sub">تحریر اسی کاغذ کے مطابق خود بخود ترتیب پائے گی</small>' +
+      '<div class="dpa-btns">' + opt('legal', 'لیگل', '8.5 × 13 in') + opt('a4', 'A4', '8.27 × 11.69 in') + '</div>' +
+      '<button type="button" class="dpa-x" data-v="">منسوخ</button></div>';
+    if (!document.getElementById('dio-paper-ask-css')) {
+      const st = document.createElement('style'); st.id = 'dio-paper-ask-css';
+      st.textContent =
+        '#dio-paper-ask{position:fixed;inset:0;z-index:100001;background:rgba(9,20,40,.55);display:flex;align-items:center;justify-content:center;padding:16px;}' +
+        '#dio-paper-ask .dpa-card{background:var(--bg-card,#fff);color:var(--text-primary,#111);border:1px solid var(--border,#ccd);border-radius:14px;' +
+        'padding:18px 18px 10px;width:min(380px,100%);box-shadow:0 18px 50px rgba(0,0,0,.35);text-align:center;font-family:"Jameel Noori Nastaleeq","Noto Nastaliq Urdu",serif;}' +
+        '#dio-paper-ask .dpa-h{display:block;font-size:15pt;line-height:1.9;}' +
+        '#dio-paper-ask .dpa-sub{display:block;font-size:10.5pt;color:var(--text-muted,#667);line-height:1.8;margin-bottom:10px;}' +
+        '#dio-paper-ask .dpa-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;}' +
+        '#dio-paper-ask .dpa-btns button{min-height:64px;border-radius:12px;border:1.5px solid var(--accent,#13294b);background:transparent;' +
+        'color:var(--text-primary,#13294b);cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}' +
+        '#dio-paper-ask .dpa-btns button b{font-size:14pt;line-height:1.5;}' +
+        '#dio-paper-ask .dpa-btns button small{font-size:9.5pt;font-family:var(--font-mono,monospace);opacity:.8;}' +
+        '#dio-paper-ask .dpa-btns button.is-cur{background:var(--accent,#13294b);color:#fff;}' +
+        '#dio-paper-ask .dpa-btns button:focus-visible{outline:3px solid var(--amber,#f59e0b);outline-offset:2px;}' +
+        '#dio-paper-ask .dpa-x{margin-top:8px;background:none;border:0;color:var(--text-muted,#667);font-size:11pt;cursor:pointer;font-family:inherit;min-height:36px;}' +
+        '@media print{#dio-paper-ask{display:none !important;}}';
+      document.head.appendChild(st);
+    }
+    document.body.appendChild(box);
+    let done = false;
+    const finish = v => {
+      if (done) return; done = true;
+      document.removeEventListener('keydown', onKey, true);
+      box.remove();
+      resolve(v === 'a4' || v === 'legal' ? v : null);
+    };
+    const onKey = e => {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); finish(null); }
+      else if (e.key === 'Enter') {
+        e.preventDefault(); e.stopImmediatePropagation();
+        const f = document.activeElement && box.contains(document.activeElement) ? document.activeElement.getAttribute('data-v') : cur;
+        finish(f || cur);
+      }
+    };
+    document.addEventListener('keydown', onKey, true);
+    box.addEventListener('click', e => {
+      const b = e.target.closest('button');
+      if (!b) { if (e.target === box) finish(null); return; }
+      finish(b.getAttribute('data-v'));
+    });
+    try { const f = box.querySelector('.is-cur'); if (f) f.focus(); } catch (_) { /* ضمنی */ }
+  });
+};
+
+// پوچھو → کاغذ لگاؤ → ترتیب بیٹھنے دو → پرنٹ (اندر کوئی دوبارہ نہ پوچھے)
+window.dioWithPaper = async function (o) {
+  let cur = 'legal';
+  try { cur = (o.get() === 'a4') ? 'a4' : 'legal'; } catch (_) { /* پہلے سے طے */ }
+  const p = await window.dioAskPaper({ current: cur });
+  if (!p) return false;
+  if (p !== cur && typeof o.set === 'function') {
+    try { o.set(p); } catch (e) { try { console.warn('paper set:', e && e.message); } catch (_) { /* ضمنی */ } }
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    await new Promise(r => setTimeout(r, 350));
+  }
+  // صرف سب سے باہر والا بلانے والا نشان لگاتا/ہٹاتا ہے — اندر والے (مثلاً چالان
+  // کے اندر ضمنی کا پرنٹ، یا «کئی دستاویزات ایک ساتھ») اسے نہیں چھیڑتے۔
+  const outer = !window.__dioPaperAuto;
+  if (outer) window.__dioPaperAuto = p;
+  try { return await o.run(p); } finally { if (outer) window.__dioPaperAuto = undefined; }
+};
+
 // ═══════════════════════════════════════════════════════════
 //  GLOBAL PRINT HELPER — iframe-based, no double-close, no full-screen stuck
 // ═══════════════════════════════════════════════════════════
@@ -1093,6 +1483,11 @@ function dioPrint(htmlContent) {
   // 'dio_print_preview' = 'on' set karein.)
   if (localStorage.getItem('dio_print_preview') === 'on') {
     _dioPrintPreview(htmlContent);
+    return;
+  }
+  // v553: کئی صفحوں والی دستاویز — جفت صفحات (پچھلی طرف) پر مثل باندھنے کی جگہ
+  if (typeof dioBindNeeded === 'function' && dioBindNeeded(htmlContent)) {
+    dioBindHtml(htmlContent).then(h => _dioDoPrint(h), () => _dioDoPrint(htmlContent));
     return;
   }
   _dioDoPrint(htmlContent);
@@ -1284,6 +1679,82 @@ function _dioIsImage(url, name) {
          /-(jpg|jpeg|png|webp|gif)$/i.test(name || '');
 }
 
+function _dioIsPdf(url, name) {
+  return /^data:application\/pdf/i.test(url || '') || /\.pdf(\?|#|$)/i.test(url || '') || /\.pdf$/i.test(name || '') || /-pdf$/i.test(name || '');
+}
+// اپنا PDF ناظر نہیں (موبائل/ٹچ، یا navigator.pdfViewerEnabled = false)
+function _dioNeedPdfJs() {
+  try { if (navigator.pdfViewerEnabled === false) return true; } catch (_) { /* ضمنی */ }
+  try { if (window.dioMobile && dioMobile.isMobile && dioMobile.isMobile()) return true; } catch (_) { /* ضمنی */ }
+  try { if (window.matchMedia && matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 900) return true; } catch (_) { /* ضمنی */ }
+  return false;
+}
+function _dioPdfJs() {
+  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if (window._pdfJsLoading) return window._pdfJsLoading;
+  window._pdfJsLoading = new Promise((res, rej) => {
+    const sc = document.createElement('script');
+    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    sc.onload = () => {
+      try { window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; } catch (_) { /* ضمنی */ }
+      res(window.pdfjsLib);
+    };
+    sc.onerror = () => { window._pdfJsLoading = null; sc.remove(); rej(new Error('pdfjs')); };
+    document.head.appendChild(sc);
+  });
+  return window._pdfJsLoading;
+}
+// فائل کے بائٹ: data: سیدھا (fetch کے بغیر)، ورنہ fetch / XHR
+async function _dioFileBytes(url) {
+  if (/^data:/i.test(url)) {
+    const b64 = url.slice(url.indexOf(',') + 1);
+    const bin = atob(b64), out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  try { return new Uint8Array(await (await fetch(url)).arrayBuffer()); }
+  catch (e) {
+    return await new Promise((res, rej) => {
+      const x = new XMLHttpRequest(); x.open('GET', url); x.responseType = 'arraybuffer';
+      x.onload = () => res(new Uint8Array(x.response)); x.onerror = () => rej(e); x.send();
+    });
+  }
+}
+async function _dioRenderPdfInto(ov, srcUrl) {
+  const box = ov.querySelector('#dio-fv-frame') ? ov.querySelector('#dio-fv-frame').parentElement : null;
+  if (!box) return;
+  // کالم کی صورت میں اوپر سے شروع (درمیان سے نہیں — ورنہ پہلا صفحہ اوپر سے کٹ جاتا)
+  box.style.flexDirection = 'column'; box.style.alignItems = 'center'; box.style.justifyContent = 'flex-start'; box.style.gap = '10px';
+  box.innerHTML = '<div id="dio-fv-pdfmsg" style="color:#fff;padding:30px 16px;text-align:center;font-family:\'Jameel Noori Nastaleeq\',serif;font-size:14pt;">فائل کھل رہی ہے…</div>';
+  try {
+    const lib = await _dioPdfJs();
+    const buf = await _dioFileBytes(srcUrl);
+    const pdf = await lib.getDocument({ data: buf }).promise;
+    const msg = document.getElementById('dio-fv-pdfmsg'); if (msg) msg.remove();
+    const W = Math.max(280, Math.min(box.clientWidth - 20, 1100));
+    ov._pdfPages = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const pg = await pdf.getPage(i);
+      const v1 = pg.getViewport({ scale: 1 });
+      const scale = (W / v1.width) * Math.min(2, window.devicePixelRatio || 1.5);
+      const vp = pg.getViewport({ scale });
+      const c = document.createElement('canvas');
+      c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+      c.style.cssText = 'width:' + W + 'px;max-width:100%;height:auto;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,.4);';
+      await pg.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+      box.appendChild(c);
+      ov._pdfPages.push(c);
+    }
+  } catch (e) {
+    try { console.warn('PDF view:', e); } catch (_) { /* ضمنی */ }
+    box.innerHTML = '<div style="color:#fff;text-align:center;padding:40px 20px;font-family:\'Jameel Noori Nastaleeq\',serif;">' +
+      '<div style="font-size:14pt;margin-bottom:6px;">یہ فائل یہاں نہیں دکھائی جا سکی</div>' +
+      '<div style="font-size:11pt;color:#cbd5e1;margin-bottom:16px;">پہلی بار کھولنے کے لیے انٹرنیٹ درکار ہے — یا نیچے سے محفوظ کر کے کھول لیں</div>' +
+      '<button class="btn btn-primary" onclick="_dioDownloadFileView()">فائل محفوظ کریں</button></div>';
+  }
+}
+window._dioRenderPdfInto = _dioRenderPdfInto;
+
 // فائل ایپ کے اندر کھولیں
 function _dioViewFile(url, name) {
   if (!url) { if (typeof showToast === 'function') showToast('فائل نہیں ملی', 'error'); return; }
@@ -1306,6 +1777,7 @@ function _dioViewFile(url, name) {
       <span style="font-weight:700;font-size:14px;">${esc(name || 'فائل')}</span>
       <div style="margin-right:auto;display:flex;gap:6px;">
         <button class="btn btn-secondary btn-sm" onclick="_dioPrintFileView()">پرنٹ</button>
+        <button class="btn btn-secondary btn-sm" onclick="_dioShareFileView()" title="شیئر — اصل فائل (تصویر ہو تو PDF / Word بھی)">شیئر</button>
         <button class="btn btn-secondary btn-sm" onclick="_dioDownloadFileView()">محفوظ</button>
       </div>
     </div>
@@ -1324,9 +1796,13 @@ function _dioViewFile(url, name) {
            </div>`}
     </div>`;
   document.body.appendChild(ov);
-  ov._blob = blob; ov._name = name || 'file'; ov._isImg = isImg;
+  ov._blob = blob; ov._src = url; ov._name = name || 'file'; ov._isImg = isImg;
   document.body.style.overflow = 'hidden';
   document.addEventListener('keydown', _dioFileViewEsc);
+  // v553: موبائل پر (اور جس براؤزر میں اپنا PDF ناظر نہ ہو) PDF صفحہ بہ صفحہ تصویر کی
+  //   صورت میں (pdf.js) — پہلے موبائل پر مقدمے کے ساتھ لگی FIR نہ نظر آتی تھی نہ کھلتی تھی
+  const isPdf = !isImg && _dioIsPdf(url, name);
+  if (isPdf && _dioNeedPdfJs()) { _dioRenderPdfInto(ov, url); return; }
   // Agar iframe (PDF) na chale — jaise browser rok de — to backup dikhao
   if (!isImg) setTimeout(() => {
     try {
@@ -1361,6 +1837,13 @@ function _dioPrintFileView() {
       <body><img src="${ov._blob}"></body></html>`;
     if (typeof dioPrint === 'function') { dioPrint(html); return; }
   }
+  // v553: pdf.js سے بنے صفحات (موبائل) — ہر صفحہ ایک تصویر، اپنے پرنٹ سے
+  if (ov._pdfPages && ov._pdfPages.length) {
+    const imgs = ov._pdfPages.map(c => '<img src="' + c.toDataURL('image/jpeg', 0.92) + '">').join('');
+    const html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title> </title><style>@page{size:A4;margin:6mm}html,body{margin:0;padding:0;}' +
+      'img{width:100%;height:auto;display:block;break-after:page;page-break-after:always;}img:last-child{break-after:auto;page-break-after:auto;}</style></head><body>' + imgs + '</body></html>';
+    if (typeof dioPrint === 'function') { dioPrint(html); return; }
+  }
   // PDF — usi iframe ko chhapo
   const f = document.getElementById('dio-fv-frame');
   try { f.contentWindow.focus(); f.contentWindow.print(); return; } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
@@ -1376,6 +1859,55 @@ function _dioDownloadFileView() {
   document.body.appendChild(a); a.click(); a.remove();
 }
 window._dioDownloadFileView = _dioDownloadFileView;
+
+// ── v553: کوئی بھی لگی ہوئی / محفوظ فائل شیئر (افسر کا قاعدہ: «کسی بھی فائل یا ڈیٹا کو
+//    Word یا PDF میں export یا share کیا جا سکے») ──
+//    • تصویر → پورے صفحے پر رکھ کر PDF / Word (انتخاب کا خانہ)
+//    • PDF / Word / دیگر → اصل فائل جوں کی توں (موبائل: شیئر شیٹ، ورنہ ڈاؤن لوڈ)
+async function _dioFileBlob(url) {
+  const m = /^data:([^;,]+)/i.exec(url || '');
+  if (m) return new Blob([await _dioFileBytes(url)], { type: m[1] });   // fetch کے بغیر (CSP)
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('فائل نہیں ملی (' + r.status + ')');
+  return await r.blob();
+}
+window.dioShareFileUrl = async function (url, name, mime) {
+  if (!url) { try { showToast('فائل نہیں ملی', 'error'); } catch (_) { /* ضمنی */ } return false; }
+  try {
+    if (typeof window.dioLoadScript === 'function') { await window.dioLoadScript('dio-forms.js'); await window.dioLoadScript('dio-share.js'); }
+    const title = String(name || 'فائل');
+    if (_dioIsImage(url, name) && window.DIO && DIO.share && DIO.share.open) {
+      const base = title.replace(/\.(png|jpe?g|gif|webp|bmp|heic)$/i, '') || 'تصویر';
+      const src = /^(data:|blob:)/i.test(url) ? url : URL.createObjectURL(await _dioFileBlob(url));
+      DIO.share.open({ html: '<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title><style>@page{size:A4;margin:8mm}' +
+        'html,body{margin:0;padding:0;}img{max-width:100%;max-height:275mm;display:block;margin:0 auto;}</style></head><body><img src="' + src + '"></body></html>' }, base);
+      return true;
+    }
+    const blob = await _dioFileBlob(url);
+    const type = mime || blob.type || (_dioIsPdf(url, name) ? 'application/pdf' : 'application/octet-stream');
+    let fname = title.replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'file';
+    if (!/\.[a-z0-9]{2,5}$/i.test(fname)) {
+      const ext = { 'application/pdf': '.pdf', 'application/msword': '.doc',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx' }[type];
+      if (ext) fname += ext;
+    }
+    const file = new File([blob], fname, { type: type });
+    if (!(window.DIO && DIO.share && DIO.share.deliver)) throw new Error('شیئر کا آلہ لوڈ نہیں ہوا');
+    const r = await DIO.share.deliver([file], title);
+    if (r !== 'cancel') showToast(r === 'shared' ? 'فائل شیئر کے لیے بھیج دی گئی' : 'فائل تیار — ڈاؤن لوڈ ہو گئی', 'success');
+    return true;
+  } catch (e) {
+    try { showToast('فائل شیئر نہیں ہو سکی — ' + ((e && e.message) || 'انٹرنیٹ دیکھیں'), 'error', 5000); } catch (_) { /* ضمنی */ }
+    return false;
+  }
+};
+function _dioShareFileView() {
+  const ov = document.getElementById('dio-file-view');
+  if (!ov) return;
+  // اصل پتہ (data: / https) — blob: کو CSP کا connect-src پڑھنے نہیں دیتا
+  return window.dioShareFileUrl(ov._src || ov._blob, ov._name);
+}
+window._dioShareFileView = _dioShareFileView;
 
 
 /* ═══════════════════════════════════════════════════════════════════════

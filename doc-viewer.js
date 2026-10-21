@@ -119,10 +119,6 @@ function _dioEnterDocView() {
           style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--accent);
                  border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;
                  font-family:'Jameel Noori Nastaleeq',serif;">شیئر</button>
-        <button id="dio-dv-approve" onclick="_dioRequestApproval()" title="منظوری کے لیے بھیجیں"
-          style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--amber,#f59e0b);
-                 border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;
-                 font-family:'Jameel Noori Nastaleeq',serif;">منظوری</button>
       </div>
     </div>
     <div id="dio-dv-body" style="flex:1;min-height:0;overflow:auto;"></div>`;
@@ -251,7 +247,18 @@ window._dioBarPeekInit = _dioBarPeekInit;
 
 
 function _dioDocViewEsc(e) {
-  if (e.key === 'Escape') _dioExitDocView();
+  if (e.key !== 'Escape' || e.defaultPrevented) return;
+  // v553: پہلے Esc ہمیشہ پوری دستاویز بند کر دیتا تھا — «ڈھونڈیں اور بدلیں» یا کوئی اور
+  //   چھوٹا خانہ کھلا ہو تو Esc صرف وہی خانہ بند کرے (MS Word کی طرح)، دستاویز کھلی رہے۔
+  const shown = (el) => !!(el && el.getClientRects().length && getComputedStyle(el).display !== 'none' && getComputedStyle(el).visibility !== 'hidden');
+  const fr = document.getElementById('dio-fr-panel');
+  if (shown(fr)) { e.preventDefault(); if (typeof dioFRClose === 'function') dioFRClose(); return; }
+  const sb = document.getElementById('dio-share-box');
+  if (sb) { e.preventDefault(); sb.remove(); return; }
+  const menu = document.querySelector('#naq-acc-menu, #saza-acc-menu, #dk-acc-menu, #dio-dv-picker');
+  if (menu) { e.preventDefault(); menu.remove(); return; }
+  if (shown(document.getElementById('modal-backdrop'))) return;      // کارڈ اپنا Esc خود سنبھالتا ہے
+  _dioExitDocView();
 }
 
 // ── Band karo — editor-area apni asal jagah wapas ──
@@ -375,61 +382,8 @@ window._dioAddDocPicker = _dioAddDocPicker;
 window._dioPickDoc      = _dioPickDoc;
 window._dioSaveCurrent  = _dioSaveCurrent;
 
-// ── DOCUMENT APPROVAL (Phase 4H) — additive; save/print ko nahi chhoota ──
-async function _dioRequestApproval() {
-  if (!(window.DIO && DIO.approvals)) {
-    if (typeof showToast === 'function') showToast('ℹ️ منظوری کی سہولت دستیاب نہیں', 'info');
-    return;
-  }
-  const id = _dioActiveTab;
-  if (!id) { if (typeof showToast === 'function') showToast('ℹ️ پہلے کوئی دستاویز کھولیں', 'info'); return; }
-  const label = (typeof _dioDocName === 'function') ? _dioDocName(id) : id;
-  const caseId = (typeof _misalCase !== 'undefined' && _misalCase) ? _misalCase.id : null;
-  const fir = (typeof _misalCase !== 'undefined' && _misalCase) ? _misalCase.fir_number : null;
+// منظوری کا بٹن پورے سسٹم سے ہٹا دیا گیا ہے (v553 قاعدہ) — دستاویز صرف محفوظ/پرنٹ/شیئر ہوتی ہے۔
 
-  // Pehle maujooda status dikhayen (agar koi request pehle se ho)
-  let existing = null;
-  try { existing = await DIO.approvals.latestFor(id); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
-  const existingLine = existing
-    ? `<div style="margin-bottom:10px;font-size:12px;direction:rtl;">موجودہ حالت: ${DIO.approvals.badge(existing.status)}${existing.decision_note ? ` — <span style="color:var(--text-muted);">${_dioEsc(existing.decision_note)}</span>` : ''}</div>`
-    : '';
-
-  if (typeof openModal !== 'function') {
-    // Fallback: seedha request bhej den
-    const r = await DIO.approvals.request(id, { label, case_id: caseId, fir_number: fir });
-    if (typeof showToast === 'function') showToast(r ? 'منظوری کے لیے بھیج دیا گیا' : 'نہیں بھیجا جا سکا', r ? 'success' : 'error');
-    return;
-  }
-
-  openModal('منظوری کے لیے بھیجیں',
-    `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
-       ${existingLine}
-       <div style="font-size:13px;color:var(--text-secondary);line-height:1.9;">
-         یہ دستاویز (<b>${_dioEsc(label)}</b>) SHO / سینئر افسر کو منظوری کے لیے بھیجی جائے گی۔
-         منظوری کے بعد آپ کو اطلاع مل جائے گی۔
-       </div>
-     </div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-     <button class="btn btn-primary" onclick="_dioDoRequestApproval()">بھیجیں</button>`);
-  // Context stash for the confirm handler
-  window._dioApprovalCtx = { id, label, caseId, fir };
-}
-
-async function _dioDoRequestApproval() {
-  const ctx = window._dioApprovalCtx || {};
-  if (typeof closeModal === 'function') closeModal();
-  if (!(window.DIO && DIO.approvals) || !ctx.id) return;
-  const r = await DIO.approvals.request(ctx.id, { label: ctx.label, case_id: ctx.caseId, fir_number: ctx.fir });
-  if (typeof showToast === 'function') showToast(r ? 'منظوری کے لیے بھیج دیا گیا' : 'نہیں بھیجا جا سکا', r ? 'success' : 'error');
-}
-
-function _dioEsc(s) {
-  s = (s == null) ? '' : String(s);
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-window._dioRequestApproval   = _dioRequestApproval;
-window._dioDoRequestApproval = _dioDoRequestApproval;
 
 // ── Tab kholo (ya pehle se khuli ho to us par jao) ──
 
@@ -444,11 +398,11 @@ function _dioOpenDocTab(docId) {
 
 // ── Tab bar ──
 
-// انڈیکس نقل مسل پر «محفوظ» اور «منظوری» بٹن نہیں (وہ محفوظ نہیں ہوتا —
+// انڈیکس نقل مسل پر «محفوظ» بٹن نہیں (وہ محفوظ نہیں ہوتا —
 // ہر بار مقدمے کے تازہ ڈیٹا سے بنتا ہے)۔ باقی دستاویزات پر پہلے کی طرح۔
 function _dioBarButtonsFor(docId) {
   const hide = (docId === 'index_naql');
-  ['dio-dv-save', 'dio-dv-approve'].forEach(id => {
+  ['dio-dv-save'].forEach(id => {
     const b = document.getElementById(id);
     if (b) b.style.display = hide ? 'none' : '';
   });
@@ -534,18 +488,18 @@ function _dioPrintCurrent() {
   const id = _dioActiveTab;
   if (!id) return;
   if (id.startsWith('r173:')) {
-    if (typeof _printR173 === 'function') { _printR173(); return; }
+    if (typeof _printR173 === 'function') { return _printR173(); }
   }
   if (id === 'fir' || id === 'cross_version') {
     // متن والا صفحہ (fir.js) — وہی کاغذ جو سطر کا «پرنٹ» اور Ctrl+P دیتے ہیں
-    if (document.getElementById('fir-page') && typeof _firPrintPage === 'function') { _firPrintPage(); return; }
-    if (typeof _printFIRAll === 'function') { _printFIRAll(); return; }
+    if (document.getElementById('fir-page') && typeof _firPrintPage === 'function') { return _firPrintPage(); }
+    if (typeof _printFIRAll === 'function') { return _printFIRAll(); }
   }
   if (id === 'rfa_form') {
-    if (typeof _printRfa === 'function') { _printRfa(); return; }
+    if (typeof _printRfa === 'function') { return _printRfa(); }
   }
   if (id === 'cdr_imei') {
-    if (typeof _printCdr === 'function') { _printCdr(); return; }
+    if (typeof _printCdr === 'function') { return _printCdr(); }
   }
   // SYSTEM RULE (13 اکتوبر 2026): اوپر کی پٹی کا «پرنٹ» = دستاویز کا اپنا پرنٹ بٹن
   // (درخواستیں، سزا سلپ، CRO، نقشہ موقع، بیانات 161 …) = Ctrl+P — تینوں ایک ہی راستہ۔
@@ -592,7 +546,7 @@ function _dioShareCurrent() {
   if (!id || typeof dioSharePrint !== 'function') return;
   let name = _dioDocName(id);
   try { if (_misalCase && _misalCase.fir_number) name += ' — مقدمہ ' + _misalCase.fir_number; } catch (_) { /* ضمنی */ }
-  dioSharePrint(() => _dioPrintCurrent(), name, () => (window.DIO && DIO.forms) ? DIO.forms.findPaper() : null);
+  return dioSharePrint(() => _dioPrintCurrent(), name, () => (window.DIO && DIO.forms) ? DIO.forms.findPaper() : null);
 }
 window._dioShareCurrent = _dioShareCurrent;
 window._dioOpenDocTab   = _dioOpenDocTab;

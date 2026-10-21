@@ -139,9 +139,9 @@ function _renderRfaList() {
   <div style="padding:16px;direction:rtl;height:100%;overflow-y:auto;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;">
     <!-- عنوان درمیان میں · "نیا" بٹن دائیں (SYSTEM RULE: add-new button ہمیشہ دائیں) -->
     <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:14px;">
-      <button class="btn btn-primary btn-sm dio-add-btn" onclick="_newRfa()">+ نیا RFA فارم</button>
+      <button class="btn btn-primary btn-sm dio-add-btn" onclick="_newRfa()">+ RFA فارم درج کریں</button>
       <div class="dio-hs1" style="flex:1;text-align:center;font-weight:800;color:var(--accent);">RFA فارم — فہرست</div>
-      <span class="btn btn-primary btn-sm" style="visibility:hidden;pointer-events:none;">+ نیا RFA فارم</span>
+      <span class="btn btn-primary btn-sm" style="visibility:hidden;pointer-events:none;">+ RFA فارم درج کریں</span>
     </div>
     ${_rfaList.length ? rows : `
       <div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
