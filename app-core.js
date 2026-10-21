@@ -1999,6 +1999,10 @@ window._dioShareFileView = _dioShareFileView;
     if (ch.querySelector('.zf-tbl') && typeof window._printZimniCurrent === 'function') {
       e.preventDefault(); e.stopPropagation(); window._printZimniCurrent(); return;
     }
+    // v558: اندرونی ضمنی (بیانات 161) — اپنا پرنٹ، چالان والا نہیں
+    if (ch.querySelector('.zfa-tbl') && typeof window._printZimniA === 'function') {
+      e.preventDefault(); e.stopPropagation(); window._printZimniA(); return;
+    }
     if (typeof window._printR173 !== 'function' && typeof _printR173 !== 'function') return;
 
     e.preventDefault();

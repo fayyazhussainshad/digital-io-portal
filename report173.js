@@ -830,6 +830,13 @@ let _r173Saving = false;   // aik waqt mein aik hi save
 async function _saveR173() {
   // VIEW-ONLY ENFORCEMENT [4E]: میعاد ختم پر چالان محفوظ/ترمیم بند
   if (window.DIO && DIO.sub && !DIO.sub.guard('چالان محفوظ')) return;
+  // v558: اسی #ch173-doc میں ضمنی / اندرونی ضمنی (بیانات 161) کھلی ہو تو یہ چالان نہیں —
+  //   اپنا محفوظ کرنے والا (پہلے غلط راستے سے بیان «چالان» کی جدول میں جا سکتا تھا)
+  try {
+    const d0 = _ch173Doc();
+    if (d0 && d0.querySelector('.zfa-tbl') && typeof window._saveZimniA === 'function') return window._saveZimniA(false, true);
+    if (d0 && d0.querySelector('.zf-tbl') && typeof window._saveZimni === 'function') return window._saveZimni(false, true);
+  } catch (_) { /* چالان ہی */ }
   // Do dafa dabane par DO satren ban jati thin (dono ko `_r173DocId` khali
   // milta tha). Ab pehla kaam mukammal hone tak doosra nahi chalta.
   if (_r173Saving) return;
@@ -991,6 +998,7 @@ function _printR173() {
     set: v => {
       _ch173SetPaper(v);
       try { const d = _ch173Doc(); if (d && d.querySelector('.zf-tbl') && typeof _zimniLayout === 'function') _zimniLayout(); } catch (_) { /* ضمنی */ }
+      try { const d = _ch173Doc(); if (d && d.querySelector('.zfa-tbl') && typeof window._zaLayout === 'function') window._zaLayout(); } catch (_) { /* اندرونی ضمنی */ }
     },
     run: () => _printR173Now.apply(null, a)
   });
@@ -1000,6 +1008,8 @@ function _printR173Now() {
   const chDoc = _ch173Doc();          // hamesha NAZAR AANE wala چالان
   // v552: اسی #ch173-doc میں ضمنی ہو تو چالان کی CSS سے نہ چھاپو (شکل بگڑ جاتی تھی)
   if (chDoc && chDoc.querySelector('.zf-tbl') && typeof window._printZimniCurrent === 'function') { return window._printZimniCurrent(); }
+  // v558: اندرونی ضمنی (بیانات 161) — اپنا پرنٹ (پہلے چالان کی شکل میں چھپتی تھی)
+  if (chDoc && chDoc.querySelector('.zfa-tbl') && typeof window._printZimniANow === 'function') { return window._printZimniANow(); }
   if (chDoc) {
     // ═══ AHEM — کالم 7 ka matn chhup jane ki ASAL wajah ═══
     // Overflow ka hisaab us chaudai par lagta hai jo us waqt SCREEN par hai.
@@ -3871,6 +3881,24 @@ function _ch173FitPaper() {
       k = setK(Math.max(0.3, k * (limit / w)));
     }
   } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+
+  // v558: chhota kiya hua safha khirki ke BEECH mein — pehle tang screen (mobile) par
+  //   kaghaz (8.5in) dabbe se chaura hota, RTL mein bahar ka hissa BAEN taraf nikalta
+  //   (margin-left −446px) aur scale ke baad safha aadha screen se bahar nazar aata tha.
+  //   Ab dono taraf barabar manfi hashiya: kaghaz ka markaz = dabbe ka markaz (RTL/LTR dono).
+  try {
+    const kk = (doc.style.transform && doc.style.transform !== 'none') ? k : 1;
+    if (kk < 1 && !_ch173PrintMeasuring) {
+      const cs = getComputedStyle(host);
+      const inner = host.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+      const m = Math.round((inner - wPx) / 2);
+      doc.style.marginLeft = m + 'px'; doc.style.marginRight = m + 'px';
+      host.style.overflowX = 'hidden';
+    } else {
+      doc.style.marginLeft = 'auto'; doc.style.marginRight = 'auto';
+      host.style.overflowX = '';
+    }
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 
   // scale se asli unchai nahi badalti — neeche ki khali jagah barabar karo
   try {

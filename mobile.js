@@ -39,6 +39,8 @@
     }
     var add = document.querySelector('.dio-addblk');
     if (add) add.style.display = (on && hasBlocks()) ? '' : 'none';
+    // v558: «کاغذ» منظر میں ضمنی کی کھڑی لکیریں کاغذ کے نیچے تک (دوبارہ ناپ)
+    if (typeof window._zimniFillScreen === 'function') setTimeout(function () { try { window._zimniFillScreen(); } catch (_) { /* ضمنی */ } }, 80);
   }
   function hasBlocks() {
     var d = docEl(); return !!(d && d.querySelector('tr.zf-blk'));

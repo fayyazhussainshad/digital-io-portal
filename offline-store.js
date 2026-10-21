@@ -260,6 +260,13 @@ const offlineStore={
       try{ if(typeof window._zimniSyncPending==='function') setTimeout(function(){ window._zimniSyncPending(); }, 1500); }catch(_){ /* baad mein */ }
       return;
     }
+    // v558: اندرونی ضمنی (بیانات 161) کا بھی یہی — اپنا مقامی ذخیرہ اور اپنا sync (zimni.js → _zaSyncPending)
+    if(table==='zimni_androoni_reports'){
+      try{ if(op==='update' && data && data.id && typeof window._zaMarkPending==='function') window._zaMarkPending(data.case_id, data.id); }
+      catch(_){ /* nishan na lag sake to bhi qatar saaf */ }
+      try{ if(typeof window._zaSyncPending==='function') setTimeout(function(){ window._zaSyncPending(); }, 1500); }catch(_){ /* baad mein */ }
+      return;
+    }
 
     // ── INSERT ──────────────────────────────────────────────
     if(op==='insert'){

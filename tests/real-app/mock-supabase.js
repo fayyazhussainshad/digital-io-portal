@@ -47,6 +47,9 @@
           }
         }
       }
+      // v558: پڑھنے میں عارضی خرابی (سرور کا وقت ختم) — «ڈھانچہ ٹوٹا» نہیں مانا جانا چاہیے
+      if (st.op === 'select' && _hit(window.__opts.failSel, st.t, 'select'))
+        return { data: null, error: { message: 'canceling statement due to statement timeout', code: '57014' } };
       if (st.op !== 'select' && _hit(window.__opts.fail, st.t, st.op))
         return { data: null, error: window.__opts.failCode === '42501'
           ? { message: 'new row violates row-level security policy for table "' + st.t + '"', code: '42501' }

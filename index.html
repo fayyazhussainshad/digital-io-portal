@@ -2031,6 +2031,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // v552: ضمنی (اسی #ch173-doc میں، مگر .zf-tbl) — اپنا پرنٹ؛ چالان والا نہیں
     var zimni = document.querySelector('#ch173-doc .zf-tbl');
     if (zimni && _pVisible(zimni) && typeof window._printZimniCurrent === 'function') return function () { window._printZimniCurrent(); };
+    var zimniA = document.querySelector('#ch173-doc .zfa-tbl');   // v558: اندرونی ضمنی کا اپنا کاغذ
+    if (zimniA && _pVisible(zimniA) && typeof window._printZimniA === 'function') return function () { window._printZimniA(); };
     var challan = document.querySelector('#ch173-doc #ch173-table');
     if (challan && _pVisible(challan) && typeof window._printR173 === 'function') return function () { window._printR173(); };
     var dv = document.getElementById('dio-docview');
