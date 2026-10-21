@@ -34,7 +34,7 @@ jobs:
   real-app:
     name: Real app (desktop + mobile + print)
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 60
     needs: lint-and-unit
     steps:
       - uses: actions/checkout@v4
@@ -44,9 +44,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install Playwright, Pillow, poppler
+      - name: Install Playwright, Pillow, poppler, LibreOffice (v554: Word .docx کھول کر جانچ)
         run: |
           sudo apt-get update -q && sudo apt-get install -y -q poppler-utils
+          sudo apt-get install -y -q --no-install-recommends libreoffice-writer
           pip install playwright==1.56.0 pillow
           python -m playwright install --with-deps chromium
       - name: Test fonts (Jameel Noori = the app's real font, Noto = fallback) and DOMPurify
@@ -97,6 +98,10 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: python v553_test.py
+      - name: v554 — cross version only when added, case print card / list, print·download·share separate, whole case = each document's own print (print / PDF / Word page by page), centred headings (v554_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: python v554_test.py
       - name: Screenshots and print PDFs
         if: always()
         uses: actions/upload-artifact@v4

@@ -88,6 +88,30 @@ function _cfLiveSyncCross() {
   if (cfirDateEl && mDate && cfirDateEl.dataset.auto !== '0') cfirDateEl.value = mDate.value;
 }
 
+// ── v554: کراس ورژن کے خانے محفوظ کرتے وقت ──
+//   ✓ لگا ہو → جو لکھا ہے وہی؛ ✓ نہ ہو → تمام کراس خانے خالی (null)۔
+//   (پہلے ✓ کے بغیر بھی اوپر والا مقدمہ نمبر/تاریخ چھپے خانوں میں نقل ہو کر محفوظ
+//    ہو جاتا تھا — اسی سے ہر مقدمہ «کراس ورژن والا» لگتا تھا۔)
+function _cfCrossFields() {
+  var on = !!(document.getElementById('cf-cross-version') && document.getElementById('cf-cross-version').checked);
+  var v = function (id) { var e = document.getElementById(id); return (on && e) ? (String(e.value || '').trim() || null) : null; };
+  return {
+    is_cross_version: on,
+    cross_fir_number: v('cf-cross-fir'),
+    cross_fir_date: v('cf-cross-fir-date'),
+    cross_complainant: v('cf-cross-complainant'),
+    cross_complainant_cnic: v('cf-cross-complainant-cnic'),
+    cross_complainant_cell: v('cf-cross-complainant-cell'),
+    cross_complainant_profession: v('cf-cross-complainant-profession'),
+    cross_section_of_law: v('cf-cross-section'),
+    cross_rapat_number: v('cf-cross-rapat'),
+    cross_rapat_date: v('cf-cross-rapat-date'),
+    cross_fir_writer: v('cf-cross-fir-writer'),
+    cross_status: v('cf-cross-status'),
+    cross_position: v('cf-cross-position'),
+  };
+}
+
 // ── Toggle cross-version box + do an immediate sync when it's switched on ──
 function _cfToggleCross(el) {
   var box = document.getElementById('cross-version-fields');
@@ -299,7 +323,9 @@ function caseFormHTML(c) {
   var compSender = c.complaint_sender || '';
   var status = c.status || 'under';
   var position = c.position || 'pending';
-  var isCross = c.is_cross_version || false;
+  // v554: ✓ وہی جو مقدمے کی اصل حالت ہے (caseHasCross) — پرانے ریکارڈ میں جہاں ✓ نہیں
+  //   مگر اصل کراس ڈیٹا موجود ہے، وہ ✓ کے ساتھ کھلے (محفوظ کرنے پر ضائع نہ ہو)
+  var isCross = (typeof caseHasCross === 'function') ? caseHasCross(c) : !!c.is_cross_version;
 
   var statusOpts = '<option value="under"'+(status==='under'?' selected':'')+'>&#x0632;&#x06CC;&#x0631; &#x062A;&#x0641;&#x062A;&#x06CC;&#x0634;</option>'
     + '<option value="complete"'+(status==='complete'?' selected':'')+'>&#x0645;&#x06A9;&#x0645;&#x0644; &#x0686;&#x0627;&#x0644;&#x0627;&#x0646;</option>'
@@ -647,6 +673,7 @@ async function saveNewCase(){
   } catch (_) { /* jaanch na ho saki — server/cache na ho; andraj na rukay */ }
   try{
     var _cfMobile = _cfMobileFieldsPayload();
+    const _crossF = _cfCrossFields();   // v554: ✓ نہ ہو تو کراس خانے خالی
     const _newCaseRow = await addCase({
       fir_number:fir,
       fir_date:document.getElementById('cf-date').value.trim(),
@@ -669,19 +696,7 @@ async function saveNewCase(){
       mulzman_type:document.getElementById('cf-mulzman-type')?.value||'namaloom',
       position:document.getElementById('cf-position').value,
       documents_checklist:selectedDocuments?.length>0?selectedDocuments:[],
-      is_cross_version:document.getElementById('cf-cross-version')?.checked||false,
-      cross_fir_number:document.getElementById('cf-cross-fir')?.value.trim()||null,
-      cross_fir_date:document.getElementById('cf-cross-fir-date')?.value.trim()||null,
-      cross_complainant:document.getElementById('cf-cross-complainant')?.value.trim()||null,
-      cross_complainant_cnic:document.getElementById('cf-cross-complainant-cnic')?.value.trim()||null,
-      cross_complainant_cell:document.getElementById('cf-cross-complainant-cell')?.value.trim()||null,
-      cross_complainant_profession:document.getElementById('cf-cross-complainant-profession')?.value.trim()||null,
-      cross_section_of_law:document.getElementById('cf-cross-section')?.value.trim()||null,
-      cross_rapat_number:document.getElementById('cf-cross-rapat')?.value.trim()||null,
-      cross_rapat_date:document.getElementById('cf-cross-rapat-date')?.value.trim()||null,
-      cross_fir_writer:document.getElementById('cf-cross-fir-writer')?.value.trim()||null,
-      cross_status:document.getElementById('cf-cross-status')?.value||null,
-      cross_position:document.getElementById('cf-cross-position')?.value||null,
+      ..._crossF,
       case_station:  currentOfficer?.station  || null,
       case_district: currentOfficer?.district || null,
     });
@@ -742,6 +757,7 @@ async function saveEditCase(id){
   } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
   try{
     var _cfMobile = _cfMobileFieldsPayload();
+    const _crossF = _cfCrossFields();   // v554: ✓ نہ ہو تو کراس خانے خالی
     await updateCase(id,{
       fir_number:document.getElementById('cf-fir').value.trim(),
       fir_date:document.getElementById('cf-date').value.trim(),
@@ -762,19 +778,7 @@ async function saveEditCase(id){
       mulzman_type:document.getElementById('cf-mulzman-type')?.value||'namaloom',
       position:document.getElementById('cf-position').value,
       documents_checklist:selectedDocuments.length>0?selectedDocuments:[],
-      is_cross_version:document.getElementById('cf-cross-version')?.checked||false,
-      cross_fir_number:document.getElementById('cf-cross-fir')?.value.trim()||null,
-      cross_fir_date:document.getElementById('cf-cross-fir-date')?.value.trim()||null,
-      cross_complainant:document.getElementById('cf-cross-complainant')?.value.trim()||null,
-      cross_complainant_cnic:document.getElementById('cf-cross-complainant-cnic')?.value.trim()||null,
-      cross_complainant_cell:document.getElementById('cf-cross-complainant-cell')?.value.trim()||null,
-      cross_complainant_profession:document.getElementById('cf-cross-complainant-profession')?.value.trim()||null,
-      cross_section_of_law:document.getElementById('cf-cross-section')?.value.trim()||null,
-      cross_rapat_number:document.getElementById('cf-cross-rapat')?.value.trim()||null,
-      cross_rapat_date:document.getElementById('cf-cross-rapat-date')?.value.trim()||null,
-      cross_fir_writer:document.getElementById('cf-cross-fir-writer')?.value.trim()||null,
-      cross_status:document.getElementById('cf-cross-status')?.value||null,
-      cross_position:document.getElementById('cf-cross-position')?.value||null,
+      ..._crossF,
     });
     // AUDIT — case.updated (Phase 4B). Key fields ka before/after diff.
     try {

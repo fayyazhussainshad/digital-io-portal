@@ -1644,11 +1644,21 @@ if (typeof togglePasswordVisibility === 'function') window.togglePasswordVisibil
 //  والے کارڈ میں کراس ورژن پر ✓ لگایا گیا ہو — ورنہ ہر مقدمہ میں
 //  فضول اختیارات نظر آتے ہیں۔
 // ═══════════════════════════════════════════════════════════════════
+//  v554 (افسر کا قاعدہ): «جس مقدمہ میں کراس ورژن درج نہیں کیا گیا اُس میں ہر بار
+//   FIR / کراس ورژن کا انتخاب کیوں؟» — وجہ: نئے مقدمے کا فارم اوپر والا مقدمہ نمبر
+//   اور تاریخ خود بخود (چھپے) کراس ورژن کے خانوں میں نقل کرتا تھا، اور یہی نقل
+//   «کراس ورژن موجود ہے» سمجھی جاتی تھی — یعنی ہر مقدمہ۔ اب:
+//     • کارڈ میں کراس ورژن پر ✓ (is_cross_version) = کراس ورژن
+//     • پرانا ریکارڈ: صرف اصل کراس ڈیٹا (کراس مدعی، شناختی کارڈ، رپٹ، دفعات، یا
+//       اوپر والے سے مختلف کراس مقدمہ نمبر) — خودکار نقل شمار نہیں
 function caseHasCross(c) {
   c = c || (typeof currentCase !== 'undefined' ? currentCase : null)
         || (typeof _misalCase !== 'undefined' ? _misalCase : null) || {};
-  return !!(c.cross_complainant || c.cross_fir_number || c.cross_rapat_number ||
-            c.cross_complainant_cnic || c.cross_section_of_law);
+  if (c.is_cross_version === true) return true;
+  const T = (v) => String(v == null ? '' : v).trim();
+  const ownNo = T(c.cross_fir_number) && T(c.cross_fir_number).replace(/\s/g, '') !== T(c.fir_number).replace(/\s/g, '');
+  return !!(T(c.cross_complainant) || T(c.cross_complainant_cnic) || T(c.cross_rapat_number) ||
+            T(c.cross_section_of_law) || ownNo);
 }
 window.caseHasCross = caseHasCross;
 

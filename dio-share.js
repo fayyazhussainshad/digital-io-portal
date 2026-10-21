@@ -53,8 +53,9 @@
     for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
     return out;
   }
-  function buildPdf(pages, wPt, hPt) {
-    // pages: [{ jpg: Uint8Array, w: px, h: px }]
+  function buildPdf(pages, wPt0, hPt0) {
+    // pages: [{ jpg: Uint8Array, w: px, h: px, wPt?, hPt? }] — v554: ہر صفحے کا اپنا سائز
+    //   (پورے مقدمے کی فائل میں ہر دستاویز اپنے کاغذ پر — مثلاً FIR کا متن A4، چالان لیگل)
     var enc = new TextEncoder(), parts = [], offs = [], len = 0;
     function add(x) { var b = (typeof x === 'string') ? enc.encode(x) : x; parts.push(b); len += b.length; }
     function obj(n, body) { offs[n] = len; add(n + ' 0 obj\n'); body(); add('\nendobj\n'); }
@@ -65,6 +66,7 @@
     obj(2, function () { add('<< /Type /Pages /Count ' + n + ' /Kids [' + kids.join(' ') + '] >>'); });
     pages.forEach(function (p, i) {
       var pn = 3 + i * 3, cn = pn + 1, im = pn + 2;
+      var wPt = p.wPt || wPt0, hPt = p.hPt || hPt0;
       obj(pn, function () {
         add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + wPt + ' ' + hPt + '] /Resources << /XObject << /I' + i + ' ' + im +
           ' 0 R >> >> /Contents ' + cn + ' 0 R >>');
@@ -215,6 +217,46 @@
     return css;
   }
 
+  // v554: کھڑی تحریر (writing-mode: vertical) جو خود سطریں توڑتی ہے (white-space: normal) — تصویر
+  //   (SVG) کے اندر براؤزر اُسے الگ طرح توڑتا ہے: چالان کی سرخی «مال قبضہ پولیس» PDF میں لیٹی ہوئی،
+  //   ساتھ والے خانے پر چڑھی ہوئی آتی تھی (پرنٹ میں ٹھیک)۔ اب سطریں وہیں سے ٹوٹتی ہیں جہاں پرنٹ
+  //   والے کاغذ (iframe) میں ٹوٹیں — ہر نئی سطر سے پہلے <br>، اور خود ٹوٹنا بند (nowrap)۔
+  function pinVerticalLines(d) {
+    try {
+      var win = d.defaultView;
+      [].forEach.call(d.body.querySelectorAll('*'), function (el) {
+        var cs = win.getComputedStyle(el);
+        if (!/^vertical/.test(cs.writingMode) || !/^(normal|pre-wrap|pre-line|break-spaces)$/.test(cs.whiteSpace)) return;
+        if (el.parentElement && /^vertical/.test(win.getComputedStyle(el.parentElement).writingMode) &&
+            /^(normal|pre-wrap|pre-line|break-spaces)$/.test(win.getComputedStyle(el.parentElement).whiteSpace)) return;   // سب سے باہر والا ہی
+        var tw = d.createTreeWalker(el, NodeFilter.SHOW_TEXT, null), nodes = [], n;
+        while ((n = tw.nextNode())) { if (/\S/.test(n.nodeValue)) nodes.push(n); }
+        if (!nodes.length) return;
+        var r = d.createRange(), lastX = null, cuts = [];
+        nodes.forEach(function (t) {
+          var s = t.nodeValue;
+          for (var i = 0; i < s.length; i++) {
+            if (/\s/.test(s[i])) continue;
+            r.setStart(t, i); r.setEnd(t, i + 1);
+            var b = r.getBoundingClientRect();
+            if (!b.width && !b.height) continue;
+            var x = (b.left + b.right) / 2;
+            // کھڑی سطریں = کالم؛ نیا کالم = x میں ایک سطر جتنا فرق
+            if (lastX !== null && Math.abs(x - lastX) > Math.max(4, b.width * 0.6)) cuts.push([t, i]);
+            lastX = x;
+          }
+        });
+        for (var k = cuts.length - 1; k >= 0; k--) {
+          var t = cuts[k][0], at = cuts[k][1];
+          var rest = t.splitText(at);
+          t.nodeValue = t.nodeValue.replace(/\s+$/, '');
+          rest.parentNode.insertBefore(d.createElement('br'), rest);
+        }
+        el.style.setProperty('white-space', 'nowrap', 'important');
+      });
+    } catch (_) { /* جوں کا توں */ }
+  }
+
   // براؤزر کی اپنی رینڈرنگ (SVG foreignObject) — کھڑے کالم، نستعلیق، جدول بالکل پرنٹ جیسے
   async function nativeCanvas(fr, scale, inline) {
     var d = fr.doc, W = fr.cw, H = d.documentElement.scrollHeight;
@@ -232,8 +274,19 @@
       xml = new XMLSerializer().serializeToString(div);
     } else {
       styles = [].map.call(d.querySelectorAll('style'), function (x) { return x.textContent; }).join('\n').replace(/@page[^{]*\{[^}]*\}/g, '');
+      pinVerticalLines(d);
       var bodyClone = d.body.cloneNode(true);
       bodyClone.querySelectorAll('script,button,.no-print').forEach(function (n) { n.remove(); });
+      // v554: تصویر میں <body> ایک <div> بن جاتا ہے — دستاویز کے «body {…}» قاعدے (فونٹ، رنگ، سمت،
+      //   حاشیے) اُس پر نہیں لگتے تھے (FIR کا متن / بریف نستعلیق کے بجائے دوسرے فونٹ میں)۔
+      //   body کا حتمی انداز اسی div پر
+      try {
+        var bcs = d.defaultView.getComputedStyle(d.body);
+        // (line-height نہیں: اُس کی حتمی قدر px میں آتی ہے اور نیچے ہر عنصر پر وہی px لگ جاتا — چالان کے کھڑے خانے بگڑتے تھے)
+        var keep = ['font-family', 'font-size', 'font-weight', 'font-style', 'color', 'direction', 'text-align',
+          'margin-top', 'margin-right', 'margin-bottom', 'margin-left', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left'];
+        bodyClone.setAttribute('style', keep.map(function (k) { return k + ':' + bcs.getPropertyValue(k); }).join(';') + ';' + (d.body.getAttribute('style') || ''));
+      } catch (_) { /* انداز نہ ملے تو جوں کا توں */ }
       xml = new XMLSerializer().serializeToString(bodyClone).replace(/^<body/, '<div').replace(/<\/body>$/, '</div>');
     }
     var ff = await fontFaceCss(styles + xml);
@@ -306,15 +359,38 @@
   }
 
   async function pdfFromHtml(html, inline) {
+    var pages = await pdfPagesFromHtml(html, inline);
+    return buildPdf(pages);
+  }
+  // ایک دستاویز → PDF کے صفحات (ہر صفحہ اپنے کاغذ کے سائز کے ساتھ)
+  async function pdfPagesFromHtml(html, inline) {
     var fr = await frameFor(html);
     try {
+      // v554: پرنٹ میں fixed سادہ متن (مثلاً نیچے بائیں «Digital IO») ہر صفحے پر اُسی جگہ آتا ہے۔
+      //   تصویر میں وہ صرف آخر میں ایک بار (اور ایک فالتو صفحہ بنا دیتا تھا) — اس لیے اسے الگ
+      //   کر کے ہر صفحے پر اُسی جگہ لکھا جاتا ہے، بالکل پرنٹ کی طرح
+      var fixed = [];
+      try {
+        var fw = fr.doc.defaultView, vh = fw.innerHeight;
+        [].forEach.call(fr.doc.body.querySelectorAll('*'), function (el) {
+          var cs = fw.getComputedStyle(el);
+          if (cs.position !== 'fixed' || cs.display === 'none' || cs.visibility === 'hidden') return;
+          var t = String(el.textContent || '').trim();
+          if (el.children.length || !t) return;                 // صرف سادہ متن
+          var r = el.getBoundingClientRect(), fromBottom = (vh - r.bottom) < r.top;
+          fixed.push({ text: t, size: parseFloat(cs.fontSize) || 12, font: cs.fontStyle + ' ' + cs.fontWeight + ' ', fam: cs.fontFamily,
+            color: cs.color, rtl: cs.direction === 'rtl', l: r.left, r: r.right, h: r.height,
+            off: fromBottom ? (vh - r.bottom) : r.top, fromBottom: fromBottom });
+          el.style.setProperty('display', 'none', 'important');
+        });
+      } catch (_) { fixed = []; }
       var H = fr.doc.documentElement.scrollHeight;
       var scale = Math.min(2, Math.max(1.25, 14000 / Math.max(H, 1)));
       var canvas;
       try { canvas = await nativeCanvas(fr, scale, inline); }
       catch (e) {                                                    // متبادل: html2canvas
         window.__dioShareLastErr = String((e && e.stack) || e);
-        return await pdfOf(fr.doc.body, fr.page);
+        return await pagesOf(fr.doc.body, fr.page);
       }
       var pg = fr.page, mg = fr.margin, ppi = 96 * scale;
       var cuts = paginate(canvas, Math.round((pg.h - mg.t - mg.b) * ppi), forcedBreaks(fr, scale));
@@ -331,11 +407,37 @@
         var g = pc.getContext('2d');
         g.fillStyle = '#fff'; g.fillRect(0, 0, pc.width, pc.height);
         g.drawImage(canvas, 0, c[0], canvas.width, c[1] - c[0], Math.round(mg.l * ppi), Math.round(mg.t * ppi), canvas.width, c[1] - c[0]);
-        return { jpg: b64ToBytes(pc.toDataURL('image/jpeg', 0.92).split(',')[1]), w: pc.width, h: pc.height };
+        fixed.forEach(function (fx) {
+          try {
+            var areaH = (pg.h - mg.t - mg.b) * 96;
+            var top = fx.fromBottom ? (areaH - fx.off - fx.h) : fx.off;
+            g.save();
+            g.font = fx.font + (fx.size * scale) + 'px ' + fx.fam;
+            g.fillStyle = fx.color; g.textBaseline = 'middle';
+            g.direction = fx.rtl ? 'rtl' : 'ltr'; g.textAlign = fx.rtl ? 'right' : 'left';
+            g.fillText(fx.text, (mg.l * 96 + (fx.rtl ? fx.r : fx.l)) * scale, (mg.t * 96 + top + fx.h / 2) * scale);
+            g.restore();
+          } catch (_) { /* یہ سطر رہ گئی — باقی صفحہ ٹھیک */ }
+        });
+        return { jpg: b64ToBytes(pc.toDataURL('image/jpeg', 0.92).split(',')[1]), w: pc.width, h: pc.height,
+          wPt: Math.round(pg.w * 72), hPt: Math.round(pg.h * 72) };
       });
       if (!pages.length) throw new Error('دستاویز خالی ہے');
-      return buildPdf(pages, Math.round(pg.w * 72), Math.round(pg.h * 72));
+      return pages;
     } finally { fr.frame.remove(); }
+  }
+
+  // ── v554: کئی دستاویزات → ایک PDF — ہر دستاویز اپنے صفحات پر، اپنے کاغذ کے سائز میں ──
+  //    (پہلے سب کو ایک لمبی تصویر بنا کر کاٹا جاتا تھا: صفحے غائب، کاغذ ایک ہی)
+  async function pdfMany(htmls, onStep) {
+    var all = [];
+    for (var i = 0; i < htmls.length; i++) {
+      if (typeof onStep === 'function') { try { onStep(i, htmls.length); } catch (_) { /* پیغام */ } }
+      var pgs = await pdfPagesFromHtml(htmls[i], false);
+      all = all.concat(pgs);
+    }
+    if (!all.length) throw new Error('دستاویز خالی ہے');
+    return buildPdf(all);
   }
 
   async function pdf(el, title) {
@@ -343,7 +445,7 @@
     var isHtml = (typeof el === 'object' && el.html && !el.nodeType);
     return pdfFromHtml(isHtml ? el.html : elementToHtml(el), !isHtml);
   }
-  async function pdfOf(el, pageHint) {
+  async function pagesOf(el, pageHint) {
     if (!el) throw new Error('دستاویز نہیں ملی');
     var ok = await need(H2C_SRC);
     if (!ok || typeof window.html2canvas !== 'function') throw new Error('PDF بنانے کا آلہ لوڈ نہیں ہو سکا');
@@ -385,10 +487,10 @@
       g.fillStyle = '#ffffff'; g.fillRect(0, 0, c.width, c.height);
       g.drawImage(canvas, 0, y, canvas.width, h, 0, 0, canvas.width, h);
       var data = c.toDataURL('image/jpeg', 0.92).split(',')[1];
-      pages.push({ jpg: b64ToBytes(data), w: c.width, h: c.height });
+      pages.push({ jpg: b64ToBytes(data), w: c.width, h: c.height, wPt: Math.round(paper.w * 72), hPt: Math.round(paper.h * 72) });
     }
     if (!pages.length) throw new Error('دستاویز خالی ہے');
-    return buildPdf(pages, Math.round(paper.w * 72), Math.round(paper.h * 72));
+    return pages;
   }
 
   // ── کھڑے خانے (writing-mode: vertical یا rotate) ─────────────────
@@ -521,6 +623,96 @@
     }
     return new Blob(['\ufeff', body], { type: 'application/msword' });
   }
+  // ── v554: پورے مقدمے کی Word فائل (.docx) — ہر صفحہ بالکل پرنٹ جیسا ──────────
+  //   افسر کا قاعدہ: «فائل بالکل ویسی ہو جیسی مقدمے کے اندر چِپ کھولنے پر — جو فارم،
+  //   ضمنی، چالان یا سزا سلپ الگ ایک یا زیادہ صفحات پر ہے، یہاں بھی ویسا ہی۔»
+  //   Word (خصوصاً پرانا Word 2007) اردو فارم کا HTML اپنے طریقے سے بچھاتا ہے — کالم
+  //   سکڑ جاتے، کاغذ کا سائز ایک ہی رہتا۔ اس لیے یہاں ہر چھپا ہوا صفحہ (وہی جو PDF میں)
+  //   Word کے اپنے صفحے پر، اُسی کاغذ کے سائز کے ساتھ (ہر صفحہ الگ سیکشن)۔
+  var CRC_T = null;
+  function crc32(u8) {
+    if (!CRC_T) {
+      CRC_T = new Uint32Array(256);
+      for (var n = 0; n < 256; n++) { var c = n; for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); CRC_T[n] = c >>> 0; }
+    }
+    var x = 0xFFFFFFFF;
+    for (var i = 0; i < u8.length; i++) x = CRC_T[(x ^ u8[i]) & 0xFF] ^ (x >>> 8);
+    return (x ^ 0xFFFFFFFF) >>> 0;
+  }
+  // ZIP (بغیر دباؤ — STORE): [{ name, data: Uint8Array }] → Blob
+  function zipStore(files, type) {
+    var enc = new TextEncoder(), out = [], cen = [], off = 0, cenLen = 0;
+    function u16(v) { return [v & 0xFF, (v >>> 8) & 0xFF]; }
+    function u32(v) { return [v & 0xFF, (v >>> 8) & 0xFF, (v >>> 16) & 0xFF, (v >>> 24) & 0xFF]; }
+    files.forEach(function (f) {
+      var nm = enc.encode(f.name), crc = crc32(f.data), sz = f.data.length;
+      var lh = new Uint8Array([].concat([0x50, 0x4B, 0x03, 0x04], u16(20), u16(0x0800), u16(0), u16(0), u16(0x21), u32(crc), u32(sz), u32(sz), u16(nm.length), u16(0)));
+      out.push(lh, nm, f.data);
+      var ch = new Uint8Array([].concat([0x50, 0x4B, 0x01, 0x02], u16(20), u16(20), u16(0x0800), u16(0), u16(0), u16(0x21), u32(crc), u32(sz), u32(sz),
+        u16(nm.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(off)));
+      cen.push(ch, nm); cenLen += ch.length + nm.length;
+      off += lh.length + nm.length + sz;
+    });
+    var end = new Uint8Array([].concat([0x50, 0x4B, 0x05, 0x06], u16(0), u16(0), u16(files.length), u16(files.length), u32(cenLen), u32(off), u16(0)));
+    return new Blob(out.concat(cen, [end]), { type: type || 'application/zip' });
+  }
+  function docxFromPages(pages, title) {
+    var enc = new TextEncoder(), EMU = 12700, TW = 20;
+    var NS = 'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" ' +
+      'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" ' +
+      'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" ' +
+      'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" ' +
+      'xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"';
+    var sect = function (p) {
+      // صفحہ بالکل کاغذ کے سائز پر؛ حاشیے عام (تصویر صفحے سے جڑی ہے، حاشیوں سے نہیں — پرنٹ پر Word کی تنبیہ نہ آئے)
+      return '<w:sectPr><w:type w:val="nextPage"/><w:pgSz w:w="' + Math.round(p.wPt * TW) + '" w:h="' + Math.round(p.hPt * TW) + '"' +
+        (p.wPt > p.hPt ? ' w:orient="landscape"' : '') + '/>' +
+        '<w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="360" w:footer="360" w:gutter="0"/></w:sectPr>';
+    };
+    var body = '', rels = '';
+    pages.forEach(function (p, i) {
+      var n = i + 1, cx = Math.round(p.wPt * EMU), cy = Math.round(p.hPt * EMU), last = (i === pages.length - 1);
+      rels += '<Relationship Id="rId' + n + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/page' + n + '.jpeg"/>';
+      body += '<w:p><w:pPr><w:spacing w:before="0" w:after="0"/>' + (last ? '' : sect(p)) + '</w:pPr><w:r><w:drawing>' +
+        '<wp:anchor distT="0" distB="0" distL="0" distR="0" simplePos="0" relativeHeight="' + n + '" behindDoc="1" locked="1" layoutInCell="1" allowOverlap="1">' +
+        '<wp:simplePos x="0" y="0"/><wp:positionH relativeFrom="page"><wp:posOffset>0</wp:posOffset></wp:positionH>' +
+        '<wp:positionV relativeFrom="page"><wp:posOffset>0</wp:posOffset></wp:positionV>' +
+        '<wp:extent cx="' + cx + '" cy="' + cy + '"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:wrapNone/>' +
+        '<wp:docPr id="' + n + '" name="Page ' + n + '"/><wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr>' +
+        '<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic>' +
+        '<pic:nvPicPr><pic:cNvPr id="' + n + '" name="page' + n + '.jpeg"/><pic:cNvPicPr/></pic:nvPicPr>' +
+        '<pic:blipFill><a:blip r:embed="rId' + n + '"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>' +
+        '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + cx + '" cy="' + cy + '"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>' +
+        '</pic:pic></a:graphicData></a:graphic></wp:anchor></w:drawing></w:r></w:p>';
+    });
+    var esc = function (t) { return String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
+    var X = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+    var files = [
+      { name: '[Content_Types].xml', data: enc.encode(X + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+        '<Default Extension="xml" ContentType="application/xml"/><Default Extension="jpeg" ContentType="image/jpeg"/>' +
+        '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+        '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>') },
+      { name: '_rels/.rels', data: enc.encode(X + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
+        '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>') },
+      { name: 'docProps/core.xml', data: enc.encode(X + '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" ' +
+        'xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>' + esc(safeName(title)) + '</dc:title><dc:creator>Digital IO</dc:creator></cp:coreProperties>') },
+      { name: 'word/_rels/document.xml.rels', data: enc.encode(X + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + rels + '</Relationships>') },
+      { name: 'word/document.xml', data: enc.encode(X + '<w:document ' + NS + '><w:body>' + body + sect(pages[pages.length - 1]) + '</w:body></w:document>') },
+    ];
+    pages.forEach(function (p, i) { files.push({ name: 'word/media/page' + (i + 1) + '.jpeg', data: p.jpg }); });
+    return zipStore(files, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+  }
+  async function docxMany(htmls, title, onStep) {
+    var all = [];
+    for (var i = 0; i < htmls.length; i++) {
+      if (typeof onStep === 'function') { try { onStep(i, htmls.length); } catch (_) { /* پیغام */ } }
+      all = all.concat(await pdfPagesFromHtml(htmls[i], false));
+    }
+    if (!all.length) throw new Error('دستاویز خالی ہے');
+    return docxFromPages(all, title);
+  }
 
   // ── ماڈیول کا اپنا «پرنٹ» چلا کر اس کا HTML پکڑنا (پرنٹ ہوتا نہیں) ──
   //    یہی وہ کاغذ ہے جو پرنٹ میں نظر آتا ہے — شیئر بھی بالکل یہی۔
@@ -538,9 +730,28 @@
     // v553: پرنٹ اب کاغذ کا سائز پوچھتا ہے — نقل لیتے وقت نہ پوچھے (موجودہ کاغذ ہی)
     var ownAuto = !window.__dioPaperAuto;
     if (ownAuto) window.__dioPaperAuto = 'keep';
-    try { await run(); await new Promise(function (r) { setTimeout(r, 60); }); }
+    // v554: کئی دستاویزات کا پرنٹ دیر سے آتا ہے (سزا سلپ، ضمنی: کاغذ لگانا → مثل کی
+    //   جگہ کا حساب → پھر dioPrint)، اور بٹن دبانے والا راستہ (onclick) اس کا انتظار
+    //   نہیں کرتا۔ پہلے نقل اُس سے پہلے ختم ہو جاتی تھی — نتیجہ: فائل میں اسکرین کی
+    //   شکل، اور بعد میں اصل پرنٹ کا ایک اضافی (بِن مانگا) ڈبہ۔ اب یہ دیر والا کام بھی
+    //   گنا جاتا ہے اور اُس کے مکمل ہونے تک نقل جاری رہتی ہے۔
+    var pend = [], wp = window.dioWithPaper, bh = window.dioBindHtml;
+    if (typeof wp === 'function') window.dioWithPaper = function () { var p = wp.apply(this, arguments); pend.push(p); return p; };
+    if (typeof bh === 'function') window.dioBindHtml = function () { var p = bh.apply(this, arguments); pend.push(p); return p; };
+    try {
+      await run();
+      await new Promise(function (r) { setTimeout(r, 60); });
+      for (var k = 0; k < 4 && html === null && !native && pend.length; k++) {
+        var ps = pend.splice(0);
+        try { await within(Promise.all(ps.map(function (p) { return Promise.resolve(p).catch(function () { return null; }); })), 30000, 'print'); }
+        catch (_) { break; }
+        await new Promise(function (r) { setTimeout(r, 60); });
+      }
+    }
     finally {
       window.dioPrint = o.dp; window._dioDoPrint = o.dd; window.print = o.pr; window.open = o.op;
+      if (typeof wp === 'function') window.dioWithPaper = wp;
+      if (typeof bh === 'function') window.dioBindHtml = bh;
       if (ownAuto) window.__dioPaperAuto = undefined;
     }
     return { html: html, native: native };
@@ -654,5 +865,6 @@
 
   window.DIO.share = { open: open, pdf: pdf, word: word, wordHtml: wordHtml, make: make, deliver: deliver, paperOf: paperOf,
     capturePrint: capturePrint, fromPrint: fromPrint, pageFromHtml: pageFromHtml,
-    _elementToHtml: elementToHtml, _frameFor: frameFor };
+    pdfMany: pdfMany, docxMany: docxMany, download: download, safeName: safeName,
+    _elementToHtml: elementToHtml, _frameFor: frameFor, _docxFromPages: docxFromPages };
 })();
