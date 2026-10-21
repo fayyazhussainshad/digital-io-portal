@@ -608,7 +608,9 @@ test('dashboard se sawal aur nukta hat gaye; Quran/Hadith SIRF landing par', () 
   const z = land.indexOf('id="dio-zikr"'), ul = land.indexOf('dio-land-feats'), lead = land.indexOf('dio-land-lead');
   assert.ok(z < ul && ul < lead, 'tarteeb: zikr → 4 card → taarufi satar');
   const js = read('islamic-landing.js');
-  assert.ok(/HOLD_MS = 30000/.test(js), 'har ayat/hadith kam az kam 30 second');
+  assert.ok(/HOLD_MS = 15000/.test(js), '22 Oct 2026: har ayat/hadith 15 second (pehle 30)');
+  assert.ok(!/getFullYear\(\) \* 372/.test(js), 'tareekh se shuru nahi — warna sara din aik hi hadith');
+  assert.ok(/localStorage\.setItem\(DECK_KEY/.test(js), 'har bar khulne par agli (deck mehfooz)');
 });
 
 test('dashboard par koi gehra gradient card nahi bacha', () => {
