@@ -7,6 +7,10 @@ OUT = os.environ.get('DIO_OUT', HERE + '/out'); os.makedirs(OUT, exist_ok=True)
 # fonts: npm pack @fontsource/noto-nastaliq-urdu → files/ ; DOMPurify: npm pack dompurify@3.1.6 → dist/
 FONTS = os.environ.get('DIO_FONTS', HERE + '/.deps/fontpkg/package/files/')
 PURIFY = os.environ.get('DIO_PURIFY', HERE + '/.deps/purify/package/dist/purify.min.js')
+# نقشہ موقع کی ڈرائنگ لائبریری (ایپ cdnjs سے fabric 5.3.0 لیتی ہے): npm pack fabric@5.3.0 → package/dist/
+FABRIC = os.environ.get('DIO_FABRIC', HERE + '/.deps/fabric/package/dist/fabric.min.js')
+# موبائل پر PDF (FIR کی نقل) دکھانے والی لائبریری — npm pack pdfjs-dist@3.11.174 → package/build/
+PDFJS = os.environ.get('DIO_PDFJS', HERE + '/.deps/pdfjs/package/build/')
 # اصل ایپ کا اردو فونٹ: index.html «Jameel Noori Nastaleeq» jsdelivr (npm: jameel-noori) سے لیتی ہے —
 # افسر کے آلے پر کاغذ اسی فونٹ میں بنتا ہے، اس لیے جانچ بھی اسی میں (npm pack jameel-noori → package/fonts/)۔
 JAMEEL = os.environ.get('DIO_JAMEEL', HERE + '/.deps/jameel/package/fonts/jameel-noori-nastaleeq4.woff2')
@@ -26,6 +30,11 @@ def route(r):
     if 'supabase' in u and u.endswith('.js'):
         return r.fulfill(path=HERE + '/mock-supabase.js', content_type='application/javascript')
     if 'purify' in u: return r.fulfill(path=PURIFY, content_type='application/javascript')
+    if 'pdf.js/3.11.174/' in u and (u.endswith('pdf.min.js') or u.endswith('pdf.worker.min.js')):
+        f = PDFJS + ('pdf.worker.min.js' if u.endswith('pdf.worker.min.js') else 'pdf.min.js')
+        return r.fulfill(path=f, content_type='application/javascript') if os.path.exists(f) else r.abort()
+    if 'fabric' in u and u.endswith('.js'):
+        return r.fulfill(path=FABRIC, content_type='application/javascript') if os.path.exists(FABRIC) else r.abort()
     if 'mammoth' in u: return r.fulfill(body='window.mammoth={};', content_type='application/javascript')
     if 'jameel-noori' in u and u.endswith('.woff2'):
         return r.fulfill(path=JAMEEL, content_type='font/woff2') if HAS_JAMEEL else r.abort()

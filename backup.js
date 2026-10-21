@@ -85,7 +85,8 @@ async function _buildBackup() {
       <div class="dio-hs2" style="font-size:13px;font-weight:700;margin-bottom:6px;direction:rtl;">برآمد کریں</div>
       <button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px;" onclick="_exportCases()">مقدمات (CSV)</button>
       <button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px;" onclick="_exportReminders()">یاددہانیاں (CSV)</button>
-      <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="_printDataReport()">رپورٹ پرنٹ</button>
+      <button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px;" onclick="_printDataReport()">رپورٹ پرنٹ</button>
+      <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="dioSharePrint(()=>_printDataReport(),'ڈیٹا رپورٹ')" title="شیئر — PDF / Word">رپورٹ شیئر (PDF / Word)</button>
     </div>
   </div>
 

@@ -71,7 +71,7 @@ function _witInjectCSS() {
   @media(max-width:640px){.wit-form .wit-grid5{grid-template-columns:1fr 1fr;}}
 
   /* Saved witnesses list — aligned columns, RTL names, 14pt */
-  .wit-list-grid{display:grid;grid-template-columns:2.2em 4fr 1.4fr 1.2fr 0.9fr 1.1fr 92px;gap:6px 8px;align-items:center;direction:rtl;min-width:640px;box-sizing:border-box;}
+  .wit-list-grid{display:grid;grid-template-columns:2.2em 4fr 1.4fr 1.2fr 0.9fr 1.1fr 196px;gap:6px 8px;align-items:center;direction:rtl;min-width:760px;box-sizing:border-box;}
   .wit-list-grid > div{font-size:14pt !important;text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .wit-list-grid > div:nth-child(2){text-align:right;direction:rtl;}
   .wit-list-head{padding:4px 12px;border:1px solid transparent;border-right:3px solid transparent;}
@@ -80,8 +80,23 @@ function _witInjectCSS() {
   .wit-list-row{background:var(--bg-card);border:1px solid var(--border);border-right:3px solid var(--accent);border-radius:8px;padding:8px 12px;margin-bottom:7px;}
   .wit-list-row .wit-idx{font-weight:800;color:var(--accent);font-size:14pt !important;}
   .wit-list-row .wit-name{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-weight:700;}
-  .wit-list-row .wit-actions{display:flex;gap:5px;overflow:visible;}
+  .wit-list-row .wit-actions{display:flex;gap:5px;overflow:visible;justify-content:flex-end;}
+  .wit-list-row .wit-actions .btn{font-size:11pt !important;}
+  @keyframes accBlink{0%,100%{opacity:1;}50%{opacity:0.4;}}
+  .acc-blink{animation:accBlink 0.9s steps(1,end) infinite;background:#f59e0b!important;color:#fff!important;border-color:#f59e0b!important;font-weight:700;}
   @media(max-width:560px){.wit-form .wit-grid3{grid-template-columns:1fr 1fr;}}
+  /* v553 — موبائل: ہر گواہ ایک کارڈ (بغیر افقی scroll)؛ عمل کے بٹن پوری سطر میں */
+  @media(max-width:760px){
+    .wit-list-grid{display:flex !important;flex-wrap:wrap;min-width:0 !important;gap:4px 10px;}
+    .wit-list-head{display:none !important;}
+    .wit-list-row > div{text-align:right !important;white-space:normal !important;overflow:visible !important;}
+    .wit-list-row > div:nth-child(1){flex:0 0 auto;}
+    .wit-list-row > div:nth-child(2){flex:1 1 70%;}
+    .wit-list-row > div[data-l]{flex:1 1 44%;white-space:nowrap !important;}
+    .wit-list-row > div[data-l]::before{content:attr(data-l) ': ';color:var(--text-muted);font-size:10.5pt;}
+    .wit-list-row .wit-actions{flex:1 1 100%;justify-content:flex-start !important;flex-wrap:wrap;}
+    .wit-list-row .wit-actions .btn{min-height:38px;}
+  }
   `;
   document.head.appendChild(s);
 }
@@ -99,28 +114,81 @@ function _witForce14() {
   } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 
+// v553: ایک صفحہ، دو حصے (متن FIR / کراس ورژن کی طرح) — «گواہان FIR» اور «گواہان کراس ورژن»
+//   (دوسرا صرف جب مقدمے میں کراس ورژن ہو)؛ «+ گواہ درج کریں» دائیں کنارے، سرخی درمیان۔
+function _witCaseHasCross() {
+  const pool = [ (typeof _misalCase !== 'undefined') ? _misalCase : null, window._workspaceCase || null ];
+  const c = pool.find(x => x && String(x.id) === String(_witnessCaseId)) || null;
+  if (c && typeof caseHasCross === 'function' && caseHasCross(c)) return true;
+  return _witnessList.some(w => w.witness_type === 'cross_version');
+}
+function _witPart(type) {
+  const isCross = type === 'cross_version';
+  const heading = isCross ? 'گواہان کراس ورژن' : 'گواہان FIR';
+  const color = isCross ? 'var(--amber)' : 'var(--accent)';
+  const list = _witnessList.filter(w => (w.witness_type || 'fir') === type);
+  return `
+  <section class="dio-2p-part" id="wit-part-${type}" data-type="${type}">
+    <div class="dio-2p-head" style="border-bottom:2px solid ${color};">
+      <div class="dio-2p-btn"><button class="btn btn-primary btn-sm" onclick="_openWitnessForm(null,'${type}')">+ گواہ درج کریں</button></div>
+      <div class="dio-hs1 dio-2p-title" style="color:${color};">${heading}</div>
+      <div aria-hidden="true"></div>
+    </div>
+    <div style="width:100%;overflow-x:auto;">${_renderWitnessList(list, type)}</div>
+  </section>`;
+}
 function _renderWitnessesArea() {
   _witInjectCSS();
   const area = document.getElementById('workspace-editor-area')
             || document.getElementById('workspace-tab-content')
             || document.getElementById('page-content');
   if (!area) return;
-  const isCross = _witnessViewType === 'cross_version';
-  const list = _witnessList.filter(w => (w.witness_type || 'fir') === _witnessViewType);
-  const heading = isCross ? 'گواہان کراس ورژن' : 'گواہان FIR';
-  const color = isCross ? 'var(--amber)' : 'var(--accent)';
-  area.innerHTML = `
-  <div id="wit-area" style="padding:10px;direction:rtl;height:100%;overflow-y:auto;width:100%;box-sizing:border-box;">
-    <div style="border-bottom:2px solid ${color};margin-bottom:12px;padding-bottom:6px;">
-      <div style="position:relative;min-height:34px;display:flex;align-items:center;justify-content:center;">
-        <div class="dio-hs1" style="font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;color:${color};text-align:center;">${heading}</div>
-        <button class="btn btn-primary btn-sm" style="position:absolute;right:0;top:50%;transform:translateY(-50%);" onclick="_openWitnessForm(null,'${_witnessViewType}')">گواہ</button>
-      </div>
-    </div>
-    <div style="width:100%;overflow-x:auto;">${_renderWitnessList(list, _witnessViewType)}</div>
+  const old = document.getElementById('wit-area');
+  const keepScroll = (old && area.contains(old)) ? old.scrollTop : null;
+  const showCross = _witCaseHasCross() || _witnessViewType === 'cross_version';
+  const css2p = (typeof window._dio2pCSS === 'function') ? window._dio2pCSS() : '';
+  area.innerHTML = `<style>${css2p}</style>
+  <div id="wit-area" class="dio-2p">
+    ${_witPart('fir')}
+    ${showCross ? _witPart('cross_version') : ''}
   </div>`;
+  const wrap = document.getElementById('wit-area');
+  if (keepScroll !== null) wrap.scrollTop = keepScroll;
+  else if (_witnessViewType === 'cross_version') {
+    const sec = document.getElementById('wit-part-cross_version');
+    if (sec) wrap.scrollTop += sec.getBoundingClientRect().top - wrap.getBoundingClientRect().top - 4;
+  }
   _witForce14();
+  _witCheckPrev(_witnessList);
 }
+
+// سابقہ ریکارڈ کا نشان (درج شدہ ہو، یا سسٹم میں دوسرے مقدمے میں یہی شخص)
+async function _witCheckPrev(list) {
+  const mark = (w) => { const b = document.getElementById('wit-prev-btn-' + w.id); if (b) { b.classList.add('acc-blink'); b.title = 'سابقہ ریکارڈ موجود ہے — چیک کریں'; } };
+  (list || []).forEach(w => { if (Array.isArray(w.prev_records) && w.prev_records.length) mark(w); });
+  if (!navigator.onLine || !list || !list.length || typeof supabaseClient === 'undefined') return;
+  const cnics = [...new Set(list.map(w => w.cnic).filter(Boolean))];
+  if (!cnics.length) return;
+  try {
+    const [A, W] = await Promise.all([
+      supabaseClient.from('case_accused').select('cnic,case_id').neq('case_id', _witnessCaseId).in('cnic', cnics),
+      supabaseClient.from('case_witnesses').select('cnic,case_id').neq('case_id', _witnessCaseId).in('cnic', cnics)]);
+    const hit = new Set([].concat((A && A.data) || [], (W && W.data) || []).map(r => r.cnic));
+    list.forEach(w => { if (w.cnic && hit.has(w.cnic)) mark(w); });
+  } catch (_) { /* نشان ضمنی ہے — فہرست پر اثر نہیں */ }
+}
+async function _witPrevRecord(id) {
+  const w = _witnessList.find(x => x.id === id);
+  if (!w) return;
+  if (!window.DIOPrev || !DIOPrev.forPerson) { showToast('سابقہ ریکارڈ کا آلہ لوڈ نہیں ہوا', 'error'); return; }
+  showToast('سابقہ ریکارڈ تلاش ہو رہا ہے…', 'info');
+  try {
+    const r = await DIOPrev.forPerson({ name: w.full_name, cnic: w.cnic, manual: w.prev_records,
+      selfTable: 'case_witnesses', selfId: w.id, caseId: _witnessCaseId });
+    DIOPrev.show('سابقہ ریکارڈ — ' + (w.full_name || ''), r.list, w.full_name, r.note);
+  } catch (e) { showToast('' + ((e && e.message) || e), 'error'); }
+}
+window._witPrevRecord = _witPrevRecord;
 
 // Built-in case persons who are automatically considered witnesses:
 // مدعی (complainant), محرر/FIR writer, مضروب/مغوی/victim if recorded on the case
@@ -128,7 +196,7 @@ function _renderWitnessesArea() {
 function _renderWitnessList(list, type) {
   list = list || _witnessList;
   if (!list.length) {
-    return `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:14px;">کوئی گواہ شامل نہیں</div>`;
+    return `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:14px;">کوئی گواہ درج نہیں</div>`;
   }
   const head = `
     <div class="wit-list-grid wit-list-head">
@@ -146,12 +214,13 @@ function _renderWitnessList(list, type) {
     <div class="wit-list-grid wit-list-row">
       <div class="wit-idx">${i+1}</div>
       <div class="wit-name">${esc(w.full_name)||'—'}</div>
-      <div dir="ltr">${w.cnic?esc(w.cnic):'—'}</div>
-      <div dir="ltr">${w.cell?esc(w.cell):'—'}</div>
-      <div>${w.profession?esc(w.profession):'—'}</div>
-      <div>${esc(statusLabel)}</div>
+      <div data-l="شناختی کارڈ"><bdi dir="ltr">${w.cnic?esc(w.cnic):'—'}</bdi></div>
+      <div data-l="فون نمبر"><bdi dir="ltr">${w.cell?esc(w.cell):'—'}</bdi></div>
+      <div data-l="پیشہ">${w.profession?esc(w.profession):'—'}</div>
+      <div data-l="حیثیت">${esc(statusLabel)}</div>
       <div class="wit-actions">
         <button title="ترمیم" aria-label="ترمیم" class="btn btn-secondary btn-sm" style="padding:2px 8px;" onclick="_openWitnessForm('${w.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>
+        <button id="wit-prev-btn-${w.id}" title="سابقہ ریکارڈ" class="btn btn-secondary btn-sm" style="padding:2px 8px;white-space:nowrap;" onclick="_witPrevRecord('${w.id}')">سابقہ ریکارڈ</button>
         <button title="حذف" aria-label="حذف" class="btn btn-danger btn-sm" style="padding:2px 8px;" onclick="_deleteWitness('${w.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
       </div>
     </div>`;

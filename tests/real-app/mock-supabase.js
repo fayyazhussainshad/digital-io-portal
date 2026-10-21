@@ -54,8 +54,23 @@
       const tb = window.__db[st.t] || (window.__db[st.t] = []);
       let rows = tb.filter(x => st.f.every(fn => fn(x)));
       if (st.orS) {
-        const parts = st.orS.split(',').map(p => p.match(/^([a-z_]+)\.ilike\.%(.*)%$/)).filter(Boolean);
-        if (parts.length) rows = rows.filter(x => parts.some(m => String(x[m[1]] || '').toLowerCase().includes(m[2].toLowerCase())));
+        // PostgREST «or»: col.ilike.%x% · col.ilike.x% · col.in.(a,b) · col.eq.v
+        const toks = []; let depth = 0, cur = '';
+        for (const ch of st.orS) { if (ch === '(') depth++; if (ch === ')') depth--; if (ch === ',' && !depth) { toks.push(cur); cur = ''; } else cur += ch; }
+        if (cur) toks.push(cur);
+        const tests = toks.map(t => {
+          let m = t.match(/^([a-z_]+)\.ilike\.(%?)(.*?)(%?)$/);
+          if (m) { const q = m[3].toLowerCase(), pre = !m[2], suf = !!m[4];
+            return x => { const v = String(x[m[1]] || '').toLowerCase(); return pre && suf ? v.startsWith(q) : (!pre && suf) ? v.includes(q) : v === q; }; }
+          m = t.match(/^([a-z_]+)\.in\.\((.*)\)$/);
+          if (m) { const vs = m[2].split(','); return x => vs.includes(String(x[m[1]] == null ? '' : x[m[1]])); }
+          m = t.match(/^([a-z_]+)\.eq\.(.*)$/);
+          if (m) return x => String(x[m[1]]) === m[2];
+          m = t.match(/^([a-z_]+)\.is\.null$/);
+          if (m) return x => x[m[1]] == null;
+          return null;
+        }).filter(Boolean);
+        if (tests.length) rows = rows.filter(x => tests.some(fn => fn(x)));
       }
       const out = d => ({ data: st.one ? (d[0] || null) : d, error: null, count: d.length });
       if (st.op === 'select') {

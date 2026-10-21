@@ -69,7 +69,7 @@ async function renderLawLibrary(container) {
   <div style="max-width:100%;margin:0;direction:rtl;">
     <!-- Header: search + add -->
     <div class="page-header">
-      <button onclick="_openAddLaw()" class="btn btn-primary dio-add-btn">+ نیا قانون</button>
+      <button onclick="_openAddLaw()" class="btn btn-primary dio-add-btn">+ قانون درج کریں</button>
       <div>
         <div class="page-title">قانونی لائبریری</div>
         <div class="page-subtitle">قوانین، ضوابط اور حوالہ جاتی مواد</div>
@@ -78,6 +78,7 @@ async function renderLawLibrary(container) {
         oninput="_lawFilter(this.value)"
         style="flex:1;min-width:180px;padding:10px 16px;border:1px solid var(--border);border-radius:24px;font-size:15px;outline:none;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;">
       <button onclick="_printAllLaws()" class="btn btn-secondary btn-sm" title="پوری فہرست پرنٹ کریں">فہرست</button>
+      <button onclick="dioSharePrint(()=>_printAllLaws(),'قوانین کی فہرست')" class="btn btn-secondary btn-sm" title="فہرست شیئر — PDF / Word">شیئر</button>
     </div>
 
     ${_lawChipsHtml()}
@@ -132,7 +133,7 @@ function _renderLawCards(list) {
         <div style="font-size:14px;margin-bottom:24px;">${filtered ? 'کوئی دوسری قسم چنیں یا تلاش خالی کریں' : 'پہلا قانون شامل کرنے کے لیے اوپر والا بٹن دبائیں'}</div>
         ${filtered
           ? `<button onclick="_lawClearFilter()" class="btn btn-secondary">چھان بین ہٹائیں</button>`
-          : `<button onclick="_openAddLaw()" class="btn btn-primary">+ پہلا قانون شامل کریں</button>`}
+          : `<button onclick="_openAddLaw()" class="btn btn-primary">+ قانون درج کریں</button>`}
       </div>`;
     return;
   }
@@ -204,7 +205,7 @@ function _lawOpenLink(id) {
 
 // ── ADD NEW LAW MODAL ────────────────────────────────────────
 function _openAddLaw() {
-  openModal('+ نیا قانون شامل کریں', `
+  openModal('نیا اندراج — قانون', `
     <div style="direction:rtl;">
       <label class="form-label">قانون کا نام *</label>
       <input class="form-input" id="law-f-name" placeholder="مثلاً: تعزیرات پاکستان (PPC)" dir="rtl" style="margin-bottom:10px;">
@@ -350,6 +351,7 @@ function _viewLaw(id, autoPrint) {
       <span id="law-search-count" style="font-size:12px;color:#6c757d;"></span>` : ''}
       <button onclick="_lawOptions('${l.id}')" title="اختیارات" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:13px;">⋯ اختیارات</button>
       <button onclick="_printLawReader()" style="background:var(--accent);color:#fff;border:1px solid var(--accent);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;">پرنٹ</button>
+      <button onclick="_shareLawReader('${l.id}')" title="شیئر — PDF / Word" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;">شیئر</button>
       <button onclick="_closeLawReader()" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;font-weight:700;">بند</button>
     </div>
     <!-- Body -->
@@ -523,6 +525,17 @@ function _lawNavMatch(dir) {
    Ab: PDF ka apna blob nayi window mein — uska font PDF ke ANDAR hai, is liye
    woh kisi aale par nahi tootta. Word wale qanoon ke liye poora Urdu font
    chhapai ke safhe mein saath bhejte hain (dekhen `dioFontHead`). */
+// v553: شیئر — PDF قانون ہو تو اصل PDF فائل؛ Word قانون ہو تو وہی کاغذ جو پرنٹ میں (PDF / Word)
+function _shareLawReader(id) {
+  const l = (typeof _lawList !== 'undefined' ? _lawList : []).find(x => x.id === id) || {};
+  const title = l.title || l.name || 'قانون';
+  const isPdf = !!l.file_url && ((l.file_type === 'pdf') || String(l.file_url).toLowerCase().includes('.pdf') || /^data:application\/pdf/i.test(l.file_url));
+  // PDF: اصل فائل (file_url — blob: کو CSP پڑھنے نہیں دیتا)، چاہے صفحات یہاں نہ کھل سکے ہوں
+  if (isPdf && typeof dioShareFileUrl === 'function') return dioShareFileUrl(l.file_url, title + '.pdf', 'application/pdf');
+  if (typeof dioSharePrint === 'function') return dioSharePrint(() => _printLawReader(), title);
+}
+window._shareLawReader = _shareLawReader;
+
 function _printLawReader() {
   const ov = document.getElementById('law-reader-overlay');
   const pages = document.getElementById('law-pdf-pages');

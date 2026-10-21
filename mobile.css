@@ -389,7 +389,12 @@
    ──────────────────────────────────────────────────────────────── */
 @media screen and (max-width: 768px) {
   /* iOS 16px se chhote input par safha zoom kar deta hai */
-  input, select, textarea, [contenteditable="true"] { font-size: 16px !important; }
+  input, select, textarea { font-size: 16px !important; }
+  /* v553: دستاویز کے کاغذ (معیاری 14pt = 18.67px، افسر کے لگائے سائز سمیت) کو یہ قاعدہ نہ
+     چھیڑے — پہلے موبائل پر مسل کی ہر دستاویز 16px (12pt) پر آ جاتی تھی، Desktop پر 14pt۔
+     باقی لکھنے والے خانے (فارم، تلاش وغیرہ) پہلے کی طرح کم از کم 16px۔ */
+  /* :where() — اس قاعدے کی اہمیت (specificity) پہلے جتنی ہی رہے؛ دوسری دستاویزات کے اپنے قاعدے (مثلاً #ir-doc) غالب رہیں */
+  [contenteditable="true"]:where(:not(#misal-editor, #dk-doc *, #saza-doc *, #dio-naqsha-doc *)) { font-size: 16px !important; }
   .btn, .btn-sm, button, .nav-item, a.btn { min-height: 44px; }
   .zf-pick, .cab, .zab { min-width: 38px; min-height: 38px; }
 }

@@ -460,7 +460,7 @@ function _renderMisalEditor(docId, def) {
         width:100%;min-height:100%;
         background:#fff;color:#111;
         font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
-        font-size:16px;line-height:2;
+        font-size:14pt;line-height:1.9;
         direction:rtl;text-align:justify;
         border:1px solid var(--border);border-radius:8px;
         padding:18px;outline:none;box-sizing:border-box;`}
@@ -492,6 +492,8 @@ function _renderMisalEditor(docId, def) {
     // انڈکس نقل مسل — ہر بار: ملزمان + ضمنیاں database se auto-fill،
     // اور کاغذ سکرین کی چوڑائی میں پورا (موبائل پر چھوٹا، ناپ وہی)
     if (_isIdx) { _idxPaperZoom(); _idxFitCells(document.getElementById('misal-editor')); _fillIndexNaqlData(); }
+    // v553: پرانے مواد کا فونٹ معیاری 14pt (سرخیاں جوں کی توں) — انڈیکس کا اپنا ناپ ہے
+    else if (ed && typeof dioNormFonts === 'function') dioNormFonts(ed);
   }, 80);
 }
 
@@ -557,7 +559,7 @@ function printMisalDoc(name) {
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
     <style>
       @page{${_pageRule}}
-      body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:15px;line-height:${_isIdx?'1.6':'2'};direction:rtl;text-align:right;color:#111;}
+      body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:${_isIdx?'15px':'14pt'};line-height:${_isIdx?'1.6':'1.9'};direction:rtl;text-align:right;color:#111;}
       table{width:100%;border-collapse:collapse;}
       td,th{border:1px solid #555;padding:6px 10px;}
       button,.no-print,.doc-toolbar,.editor-toolbar,select{display:none !important;}

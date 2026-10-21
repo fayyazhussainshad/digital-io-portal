@@ -118,14 +118,16 @@
   // ── 3) NAQSHA MAUQA — ungli se drawing, do ungli se zoom/pan ──
   //  Fabric.js mouse ke liye bana hai; yahan touch ko us tak pahunchate
   //  hain aur do-ungli ke ishare ko zoom/pan bana dete hain.
-  var _naqTouchOn = false;
+  // v553: ہر نئے کینوس پر (پہلے صرف ایک بار لگتا تھا — نقشہ دوبارہ کھلنے پر
+  //   ٹچ کا زوم/پین کام نہیں کرتا تھا)؛ کینوس naqsha-mauqa.js کے اندر بند ہے —
+  //   window._naqGetCanvas() سے ملتا ہے۔
+  function _naqC() { try { return (window._naqGetCanvas && window._naqGetCanvas()) || null; } catch (_) { return null; } }
   function wireNaqshaTouch() {
-    if (_naqTouchOn) return;
     var cv = document.getElementById('naq-canvas');
     if (!cv) return;
-    _naqTouchOn = true;
-
     var upper = cv.parentElement ? cv.parentElement.querySelector('.upper-canvas') || cv : cv;
+    if (upper._dioTouch) return;
+    upper._dioTouch = true;
     var last = null, startDist = 0, startZoom = 1;
 
     function dist(t) {
@@ -139,7 +141,7 @@
     upper.addEventListener('touchstart', function (e) {
       if (e.touches.length === 2) {
         startDist = dist(e.touches);
-        try { startZoom = (window._naqCanvas && window._naqCanvas.getZoom()) || 1; } catch (_) { startZoom = 1; }
+        try { var c0 = _naqC(); startZoom = (c0 && c0.getZoom()) || 1; } catch (_) { startZoom = 1; }
         last = mid(e.touches);
         e.preventDefault();          // do ungli = zoom/pan, drawing nahi
       }
@@ -148,7 +150,7 @@
     upper.addEventListener('touchmove', function (e) {
       if (e.touches.length !== 2) return;
       e.preventDefault();
-      var c = window._naqCanvas; if (!c) return;
+      var c = _naqC(); if (!c) return;
       try {
         var d = dist(e.touches);
         if (startDist > 0) {
@@ -242,5 +244,5 @@
   else start();
 
   // Bahar se bhi bulaya ja sake
-  window.dioMobile = { refresh: refresh, setMode: setMode, labelTables: labelTables, isMobile: isMobile };
+  window.dioMobile = { refresh: refresh, setMode: setMode, labelTables: labelTables, isMobile: isMobile, wireNaqshaTouch: wireNaqshaTouch };
 })();

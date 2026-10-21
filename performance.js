@@ -132,6 +132,7 @@ async function _buildPerf() {
   <!-- Print Report -->
   <div style="text-align:left;margin-top:4px;">
     <button class="btn btn-primary" onclick="_printPerfReport()">کارکردگی رپورٹ پرنٹ کریں</button>
+    <button class="btn btn-secondary" onclick="dioSharePrint(()=>_printPerfReport(),'کارکردگی رپورٹ')" title="شیئر — PDF / Word">شیئر</button>
   </div>`;
 }
 

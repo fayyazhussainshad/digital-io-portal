@@ -57,6 +57,9 @@ def run(b, tag, vp, mobile=False):
     args = dict(viewport=vp)
     if mobile: args.update(is_mobile=True, has_touch=True, device_scale_factor=2)
     ctx, pg, errs = open_app(b, **args)
+    # v553: پرنٹ کے وقت کاغذ (A4 / Legal) پوچھا جاتا ہے — یہاں «موجودہ کاغذ» چنا ہوا مانیں
+    #   (کاغذ پوچھنے والا خانہ خود v553_test.py جانچتی ہے)
+    pg.evaluate("window.__dioPaperAuto = 'keep'; 0")
     pg.evaluate("window.__db.zimni_reports = []; 0")
     pg.evaluate(TOASTS)
     zimni_open(pg)
@@ -180,6 +183,7 @@ def back_button(b, tag, vp, mobile=False):
     args = dict(viewport=vp)
     if mobile: args.update(is_mobile=True, has_touch=True)
     ctx, pg, errs = open_app(b, **args)
+    pg.evaluate("window.__dioPaperAuto = 'keep'; 0")   # v553: کاغذ پرنٹ کے وقت — یہاں موجودہ
     pg.evaluate("openCaseWorkspace('c1')"); pg.wait_for_timeout(1500)
     r = pg.evaluate("""(() => { const b = document.querySelector('#misal-doc-bar .dio-backbtn'); const cs = getComputedStyle(b);
       const bar = getComputedStyle(document.getElementById('misal-doc-bar'));
@@ -288,6 +292,7 @@ def case_form(b, tag, vp, mobile=False):
     args = dict(viewport=vp)
     if mobile: args.update(is_mobile=True, has_touch=True)
     ctx, pg, errs = open_app(b, **args)
+    pg.evaluate("window.__dioPaperAuto = 'keep'; 0")   # v553: کاغذ پرنٹ کے وقت — یہاں موجودہ
     pg.evaluate(TOASTS)
     pg.evaluate("openAddCaseModal()"); pg.wait_for_timeout(1500)
     pg.fill('#cf-section-search', '356'); pg.wait_for_timeout(400)
@@ -330,6 +335,7 @@ def case_form(b, tag, vp, mobile=False):
 
 def cdr_fir_challan(b, tag, vp):
     ctx, pg, errs = open_app(b, viewport=vp)
+    pg.evaluate("window.__dioPaperAuto = 'keep'; 0")   # v553: کاغذ پرنٹ کے وقت — یہاں موجودہ
     pg.evaluate("window.__db.cases[0].officer_id = 'o1'; 0")
     pg.evaluate("openCaseWorkspace('c1')"); pg.wait_for_timeout(1500)
     pg.evaluate("openCdrImei('c1')"); pg.wait_for_timeout(1200)

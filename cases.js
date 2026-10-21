@@ -252,11 +252,11 @@ async function _csRefreshRows(){
   const rows = _csApplyLocal(all, f);
   tb.innerHTML = rows.length
     ? rows.map((c,i)=>renderCaseRow(c,i+1)).join('')
-    : `<tr><td colspan="10" style="padding:0;">${
+    : `<tr><td colspan="11" style="padding:0;">${
         (window.DIO && DIO.states)
           ? DIO.states.empty('folder', 'کوئی مقدمہ نہیں', (f.query||f.status||f.month)
               ? 'اس چھان سے کوئی مقدمہ نہیں ملا — لفظ یا صورتحال بدل کر دیکھیں'
-              : 'نیا مقدمہ درج کرنے کے لیے "+ نیا اندراج" پر دبائیں')
+              : 'نیا مقدمہ درج کرنے کے لیے «+ مقدمہ درج کریں» پر دبائیں')
           : '<div style="text-align:center;padding:30px;color:var(--text-muted);">کوئی مقدمہ نہیں</div>'
       }</td></tr>`;
   const cnt = document.getElementById('cs-count');
@@ -318,7 +318,7 @@ async function renderCases(container,fStatus,fQuery,fStation){
 
   container.innerHTML=`
   <div class="page-header">
-    <button class="btn btn-primary dio-add-btn" onclick="openAddCaseModal()">+ نیا اندراج</button>
+    <button class="btn btn-primary dio-add-btn" onclick="openAddCaseModal()">+ مقدمہ درج کریں</button>
     <div>
       <div class="page-title">میرے مقدمات</div>
       <div class="page-subtitle"><span id="cs-count">${cases.length}</span> مقدمات${isArchiveView?' · '+fStation+' آرکائیو':''}</div>
@@ -358,17 +358,18 @@ async function renderCases(container,fStatus,fQuery,fStation){
           <th>دفعہ قانون</th>
           <th>تھانہ</th>
           <th>مدعی</th>
-          <th>شناختی کارڈ / موبائل</th>
+          <th>شناختی کارڈ</th>
+          <th>موبائل</th>
           <th>صورتحال</th>
           <th style="text-align:center;">اقدامات</th>
         </tr></thead>
         <tbody id="cs-rows">
           ${cases.length ? cases.map((c,i)=>renderCaseRow(c,i+1)).join('')
-            : `<tr><td colspan="10" style="padding:0;">${
+            : `<tr><td colspan="11" style="padding:0;">${
                 (window.DIO && DIO.states)
                   ? DIO.states.empty('folder', 'کوئی مقدمہ نہیں', (fQuery||_fLbl)
                       ? 'اس فلٹر/تلاش سے کوئی مقدمہ نہیں ملا'
-                      : 'نیا مقدمہ درج کرنے کے لیے اوپر "+ نیا اندراج" پر دبائیں')
+                      : 'نیا مقدمہ درج کرنے کے لیے اوپر «+ مقدمہ درج کریں» پر دبائیں')
                   : `<div style="text-align:center;padding:30px;color:var(--text-muted);">کوئی مقدمہ نہیں</div>`
               }</td></tr>`}
         </tbody>
@@ -395,163 +396,34 @@ function renderCaseRow(c,sn){
     <td style="font-size:11px;max-width:150px;">${esc(offence)}</td>
     <td style="font-size:11px;">${esc(station)}</td>
     <td style="font-size:12px;font-weight:500;">${esc(c.complainant)||'—'}</td>
-    <td style="font-family:var(--font-mono);font-size:11px;white-space:nowrap;" dir="ltr"><span>${cnic}</span> <span style="color:var(--text-muted);">·</span> <span>${cell}</span></td>
+    <td class="cs-cnic" style="font-family:var(--font-mono);font-size:11px;white-space:nowrap;" dir="ltr">${esc(cnic)}</td>
+    <td class="cs-cell" style="font-family:var(--font-mono);font-size:11px;white-space:nowrap;" dir="ltr">${esc(cell)}</td>
     <td><span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span></td>
     <td>
       <div style="display:flex;gap:2px;direction:rtl;justify-content:center;flex-direction:row-reverse;">
         <button aria-label="مقدمہ کھولیں" class="btn btn-secondary btn-sm" onclick="openCaseWorkspace('${c.id}')" title="مقدمہ کھولیں"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M6.5 3.5h7l4.5 4.5V20.5h-11.5z"/><path d="M13.5 3.5V8H18"/></svg></button>
         <button aria-label="ترمیم" class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')" title="ترمیم"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>
-        <button aria-label="ڈاؤنلوڈ" class="btn btn-secondary btn-sm" onclick="downloadCaseFile('${c.id}')" title="ڈاؤنلوڈ"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M12 3.5v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M4.5 20h15"/></svg></button>
-        <button aria-label="شیئر" class="btn btn-primary   btn-sm" onclick="openShareModal('${c.id}')"    title="شیئر"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M12 15V3.5"/><path d="M7.5 8L12 3.5 16.5 8"/><path d="M4.5 13.5V20h15v-6.5"/></svg></button>
+        <button aria-label="پرنٹ" class="btn btn-secondary btn-sm" onclick="openCasePrint('${c.id}')" title="پرنٹ — اس مقدمے کی دستاویزات منتخب کر کے"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M7 8V3.5h10V8"/><path d="M6 17.5H4.5V10a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v7.5H18"/><path d="M7 14h10v6.5H7z"/></svg></button>
+        <button aria-label="ڈاؤنلوڈ" class="btn btn-secondary btn-sm" onclick="openCasePrint('${c.id}','download')" title="ڈاؤنلوڈ — PDF / Word"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M12 3.5v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M4.5 20h15"/></svg></button>
+        <button aria-label="شیئر" class="btn btn-primary   btn-sm" onclick="openCasePrint('${c.id}','share')"    title="شیئر — پوری فائل PDF / Word"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M12 15V3.5"/><path d="M7.5 8L12 3.5 16.5 8"/><path d="M4.5 13.5V20h15v-6.5"/></svg></button>
         <button aria-label="حذف" class="btn btn-danger    btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number||'?'}')" title="حذف"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
       </div>
     </td>
   </tr>`;
 }
 
-// ── DIRECT FIR PRINT ─────────────────────────────────────────
-async function downloadCaseFile(id) {
-  const c = _casesCache.find(x=>x.id===id) || await getCase(id);
-  if (!c) { showToast('Case not found','error'); return; }
-
-  openModal('Case File Download — FIR ' + (c.fir_number||''),
-    `<div style="display:flex;flex-direction:column;gap:12px;padding:10px 0;">
-      <div style="font-size:13px;color:var(--text-secondary);text-align:center;margin-bottom:4px;">FIR ${esc(c.fir_number)||'—'} · ${esc(c.complainant)||'—'}</div>
-      <button class="btn btn-primary" style="padding:14px;font-size:14px;" onclick="closeModal();_downloadCaseTxt('${id}')">
-        Text File Download کریں (.txt)
-      </button>
-      <button class="btn btn-secondary" style="padding:14px;font-size:14px;" onclick="closeModal();_downloadCaseHTML('${id}')">
-        HTML File Download کریں (Print → PDF)
-      </button>
-      <div style="font-size:10px;color:var(--text-faint);text-align:center;">PDF کے لیے: HTML کھولیں → Ctrl+P → Save as PDF</div>
-    </div>`,
-    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>`
-  );
+// ── v553: مقدمے کی دستاویزات — انتخاب کر کے پرنٹ / شیئر / ڈاؤن لوڈ (case-print.js) ──
+//    پرنٹ: chips جیسی فہرست سے جو جو منتخب ہو؛ شیئر/ڈاؤن لوڈ: پوری فائل PDF / Word
+//    (جدول اور تمام حروف سمیت — صرف متن نہیں)۔
+async function openCasePrint(id, mode) {
+  await _dioNeed(['case-print.js']);
+  if (typeof window.dioCasePrint === 'function') return window.dioCasePrint(id, mode || 'print');
+  showToast('پرنٹ کا آلہ لوڈ نہیں ہو سکا — صفحہ دوبارہ کھولیں', 'error');
 }
+window.openCasePrint = openCasePrint;
 
-async function _downloadCaseTxt(id) {
-  const c = _casesCache.find(x=>x.id===id) || await getCase(id);
-  if (!c) return;
-  const o = currentOfficer || {};
-  let txt = '══════════════════════════════════\n';
-  txt += '      \n';
-  txt += `      تھانہ ${o.station||'—'} ضلع ${o.district||'—'}\n`;
-  txt += '══════════════════════════════════\n\n';
-  txt += `مقدمہ نمبر:        ${c.fir_number||'—'}\n`;
-  txt += `تاریخ اندراج:      ${formatDate(c.fir_date)}\n`;
-  txt += `تاریخ وقوعہ:       ${formatDate(c.occurrence_date)}\n`;
-  txt += `دفعات:             ${c.section_of_law||'—'}\n`;
-  txt += `صورتحال:           ${STATUS_LABELS[c.status]||c.status}\n`;
-  txt += `\n── مدعی ──────────────────────────\n`;
-  txt += `نام:               ${c.complainant||'—'}\n`;
-  txt += `شناختی کارڈ:       ${c.complainant_cnic||'—'}\n`;
-  txt += `موبائل:            ${c.complainant_cell||'—'}\n`;
-  txt += `پیشہ:              ${c.complainant_profession||'—'}\n`;
-  txt += `\n── رپورٹنگ افسر ──────────────────\n`;
-  txt += `نام:               ${o.full_name||'—'}\n`;
-  txt += `عہدہ:              ${o.designation||'—'}\n`;
-  txt += `تھانہ:             ${o.station||'—'}\n`;
-  txt += `\nتاریخ پرنٹ: ${formatDate(new Date())}\n`;
-  txt += '══════════════════════════════════\n';
-  txt += '         Digital IO\n';
-  txt += '══════════════════════════════════\n';
-
-  const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `Case-FIR-${c.fir_number||'file'}-${new Date().toISOString().slice(0,10)}.txt`;
-  a.click();
-  showToast('File Download ہو رہی ہے','success');
-}
-
-async function _downloadCaseHTML(id) {
-  const c = _casesCache.find(x=>x.id===id) || await getCase(id);
-  if (!c) return;
-  const o = currentOfficer || {};
-  const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
-    ${typeof dioFontHead==='function'?dioFontHead():''}
-  <title>FIR ${c.fir_number||''}</title>
-  <style>
-    body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',Arial,sans-serif;direction:rtl;margin:30px;color:#111;font-size:14px;}
-    h2,h3{text-align:center;} .row{display:flex;gap:20px;margin-bottom:8px;}
-    .lbl{color:#555;min-width:140px;font-weight:600;} .val{flex:1;}
-    .sec{border-top:1px solid #ccc;margin:16px 0 8px;padding-top:8px;font-weight:700;color:var(--text-primary);}
-    .footer{text-align:left;font-size:11px;color:#888;margin-top:40px;border-top:1px solid #ccc;padding-top:10px;direction:ltr;}
-    @media print{body{margin:15mm;}}
-  </style></head><body>
-  <h2></h2>
-  <h3>تھانہ ${o.station||'—'} ضلع ${o.district||'—'}</h3>
-  <hr>
-  <div class="row"><span class="lbl">مقدمہ نمبر:</span><span class="val"><b>${c.fir_number||'—'}</b></span></div>
-  <div class="row"><span class="lbl">تاریخ اندراج:</span><span class="val">${formatDate(c.fir_date)}</span></div>
-  <div class="row"><span class="lbl">تاریخ وقوعہ:</span><span class="val">${formatDate(c.occurrence_date)}</span></div>
-  <div class="row"><span class="lbl">دفعات:</span><span class="val">${esc(c.section_of_law)||'—'}</span></div>
-  <div class="row"><span class="lbl">صورتحال:</span><span class="val">${STATUS_LABELS[c.status]||c.status}</span></div>
-  <div class="sec">مدعی کی تفصیل</div>
-  <div class="row"><span class="lbl">نام:</span><span class="val">${esc(c.complainant)||'—'}</span></div>
-  <div class="row"><span class="lbl">شناختی کارڈ:</span><span class="val">${esc(c.complainant_cnic)||'—'}</span></div>
-  <div class="row"><span class="lbl">موبائل:</span><span class="val">${esc(c.complainant_cell)||'—'}</span></div>
-  <div class="row"><span class="lbl">پیشہ:</span><span class="val">${esc(c.complainant_profession)||'—'}</span></div>
-  <div class="sec">رپورٹنگ افسر</div>
-  <div class="row"><span class="lbl">نام:</span><span class="val">${esc(o.full_name||'—')}</span></div>
-  <div class="row"><span class="lbl">عہدہ:</span><span class="val">${esc(o.designation||'—')}</span></div>
-  <div class="row"><span class="lbl">تھانہ:</span><span class="val">${o.station||'—'}</span></div>
-  <div style="margin-top:50px;display:flex;justify-content:space-between;">
-    <div style="text-align:center;"><div style="border-top:1px solid #333;width:200px;padding-top:6px;">دستخط رپورٹنگ افسر</div></div>
-    <div style="text-align:center;"><div style="border-top:1px solid #333;width:220px;padding-top:6px;">${esc((typeof getSHOSignLine==='function') ? getSHOSignLine(o.station||'') : '')}<div style="font-size:11pt;margin-top:0;">${esc(formatDate(new Date()))}</div></div></div>
-  </div>
-  <div class="footer">Digital IO</div>
-  </body></html>`;
-
-  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `Case-FIR-${c.fir_number||'file'}-${new Date().toISOString().slice(0,10)}.html`;
-  a.click();
-  showToast('HTML file download ہوئی — browser میں کھولیں، Ctrl+P سے PDF بنائیں','success');
-}
-
-// ── SHARE CASE ──
-async function openShareModal(id){
-  const c=_casesCache.find(x=>x.id===id)||await getCase(id);
-  if(!c){showToast('Case not found','error');return;}
-  const o=currentOfficer||{};
-  const station=c.case_station||o.station||'—';
-  const offence=c.section_of_law||'—';   // v544: صرف دفعات
-  const lines=[
-    'CASE FILE — Digital IO Police Portal',
-    '─────────────────────────────────',
-    `تھانہ (Station):      ${station}`,
-    `مقدمہ نمبر (FIR No):  ${c.fir_number||'—'}`,
-    `تاریخ FIR (Date):     ${formatDate(c.fir_date)}`,
-    `تاریخ وقوعہ (Occ.):  ${formatDate(c.occurrence_date)}`,
-    `جرم (Offence):        ${offence}`,
-    `مدعی (Complainant):   ${c.complainant||'—'}`,
-    `CNIC:                 ${c.complainant_cnic||'—'}`,
-    `رابطہ (Cell):         ${c.complainant_cell||'—'}`,
-    `حالت (Status):        ${STATUS_LABELS[c.status]||c.status}`,
-    '─────────────────────────────────',
-    `تفتیشی آفیسر (IO):   ${o.full_name||''}`,
-    `عہدہ (Rank):          ${o.designation||''} — ${station}`,
-  ];
-  const text=lines.join('\n');
-  const enc=encodeURIComponent(text);
-  const sub=encodeURIComponent(`Case File — FIR ${c.fir_number}`);
-  openModal(`Share Case — FIR ${c.fir_number||''}`,
-    `<div style="margin-bottom:14px;background:var(--bg-tertiary);border-radius:8px;padding:12px;font-size:10.5px;color:var(--text-secondary);font-family:var(--font-mono);white-space:pre;line-height:1.7;max-height:180px;overflow-y:auto;">${text}</div>
-     <div style="display:flex;gap:10px;direction:rtl;justify-content:center;flex-wrap:wrap;">
-       <a href="https://wa.me/?text=${enc}" target="_blank" rel="noopener"
-          style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;background:#25D366;color:#fff;font-weight:700;font-size:13px;text-decoration:none;">
-         وٹس ایپ پر بھیجیں
-       </a>
-       <a href="mailto:?subject=${sub}&body=${enc}"
-          style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;background:var(--accent-dark);color:#fff;font-weight:700;font-size:13px;text-decoration:none;">
-         ای میل سے بھیجیں
-       </a>
-     </div>
-     <div style="margin-top:10px;font-size:10px;color:var(--text-muted);text-align:center;">WhatsApp opens in a new tab · Email opens your default email app</div>`,
-    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`);
-}
+// v553: پرانا «ڈاؤن لوڈ» (txt / html) اور «شیئر» (صرف الفاظ — WhatsApp / ای میل) ہٹا دیے گئے:
+//   اب «پرنٹ / ڈاؤن لوڈ / شیئر» تینوں openCasePrint سے — منتخب دستاویزات کی پوری فائل PDF / Word میں۔
 
 
 // ── CASE FORM (add/edit) ──
@@ -888,7 +760,7 @@ function renderEvidenceTab(c, ev) {
         <div class="dio-hs1" style="font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">شہادتیں — FIR ${c.fir_number}</div>
         <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${ev.length} فائل منسلک</div>
       </div>
-      <button class="btn btn-primary" onclick="openWorkspaceEvidenceModal('${c.id}','${c.fir_number}')">+ شہادت شامل کریں</button>
+      <button class="btn btn-primary" onclick="openWorkspaceEvidenceModal('${c.id}','${c.fir_number}')">+ شہادت درج کریں</button>
     </div>
     <div class="evidence-grid">${cards}</div>
   </div>`;

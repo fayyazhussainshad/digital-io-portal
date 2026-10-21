@@ -1940,16 +1940,11 @@ test('v547: سرکاری گاڑی — آف لائن دو بار محفوظ = ق�
   assert.ok(/queueKey: 'sarkari_gari:' \+ cid/.test(g) && /from\('sarkari_gari'\)\.select\('id'\)\.eq\('officer_id', oid\)/.test(g), 'گاڑی: چابی + سرور پر پرانی قطار کی تلاش');
 });
 
-test('v547: ملزم کا سابقہ ریکارڈ — لیبل میں FIR، بجرم دفعات اور تھانہ (اصل کالموں سے)', () => {
-  const s = read('mulziman.js');
-  const i = s.indexOf('function _accCaseLabel('), j = s.indexOf('\n}\n', i);
-  const ctx = makeSandbox();
-  vm.runInContext(s.slice(i, j + 2), ctx);
-  assert.equal(ctx._accCaseLabel({ id: 'c2', fir_number: '77/25', section_of_law: '302/34 ت پ', case_station: 'کینٹ ملتان', offence_type: 'قتل' }),
-    'ایف آئی آر 77/25 — بجرم 302/34 ت پ — تھانہ کینٹ ملتان');
-  assert.equal(ctx._accCaseLabel({ id: 'c3', fir_number: '9/26', case_station: 'تھانہ صدر' }), 'ایف آئی آر 9/26 — تھانہ صدر', 'تھانہ دوبارہ نہ لگے');
-  assert.equal(ctx._accCaseLabel(null, 'c9'), 'مقدمہ #c9');
-  assert.ok(!/c\.u_s|c\.dafaat|c\.police_station/.test(s.slice(i, j)), 'غیر موجود کالم نہیں');
+test('v547/v553: ملزم کا سابقہ ریکارڈ — FIR، بجرم دفعات اور تھانہ (اصل کالموں سے، dio-prev.js کی یکجا فہرست)', () => {
+  const p = read('dio-prev.js'), m = read('mulziman.js');
+  assert.ok(/select\('id,fir_number,fir_date,section_of_law,complainant,complainant_cnic,status,case_station,case_district'\)/.test(p), 'مقدمات: اصل کالم');
+  assert.ok(/jurm: \(c\.section_of_law \|\| ''\)\.trim\(\), thana: c\.case_station \|\| ''/.test(p), 'بجرم = صرف دفعات، تھانہ = case_station');
+  assert.ok(!/c\.u_s|c\.dafaat|c\.police_station/.test(p + m), 'غیر موجود کالم نہیں');
 });
 
 test('v547: 5-C — نمبر اور فائلیں: نتیجہ دیکھ کر؛ پہلے درخواست، پھر فائل', () => {

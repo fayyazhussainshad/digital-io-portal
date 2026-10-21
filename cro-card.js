@@ -120,6 +120,7 @@ function _renderCro() {
       <div style="margin-right:auto;display:flex;gap:6px;">
         <button class="btn btn-primary btn-sm" onclick="_saveCro()">محفوظ کریں</button>
         <button class="btn btn-secondary btn-sm" onclick="_printCro()">پرنٹ کریں (دونوں طرف)</button>
+        <button class="btn btn-secondary btn-sm" onclick="dioSharePrint(()=>_printCro(),'سی آر او کارڈ')" title="شیئر — PDF / Word">شیئر</button>
       </div>
     </div>
 

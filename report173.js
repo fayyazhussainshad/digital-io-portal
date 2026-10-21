@@ -487,12 +487,7 @@ function _renderR173() {
           ${(typeof caseHasCross==='function' && caseHasCross(c))
             ? `<option value="cross_version" ${_ch173Version==='cross_version'?'selected':''}>کراس ورژن</option>` : ''}
         </select>
-        <select id="ch173-paper-sel" onchange="_ch173SetPaper(this.value)" title="کاغذ کا سائز"
-          style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);
-                 color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
-          <option value="legal" ${_ch173Paper==='legal'?'selected':''}>لیگل (8.5×13)</option>
-          <option value="a4"    ${_ch173Paper==='a4'   ?'selected':''}>A4 (8.27×11.7)</option>
-        </select>
+        <!-- v553: لیگل/A4 کا انتخاب یہاں سے ہٹا — پرنٹ کے وقت پوچھا جاتا ہے (dioWithPaper) -->
         <span style="font-size:11px;color:var(--text-muted);">↔ کالم کی لکیر کو پکڑ کر چوڑائی بدلیں</span>
         <div style="margin-right:auto;display:flex;gap:6px;">
           <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('bold')" title="بولڈ" style="${_chBtn()}font-weight:900;">B</button>
@@ -759,7 +754,15 @@ function _renderR173() {
       // Font kis khane par lage — us khane ko yaad rakhne wala nizam
       try { _ch173BindCellPick(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       // Har khane ka apna mehfooz shuda font wapas lagao
-      try { _ch173ApplyCellFonts(bs.cell_fonts); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+      // v553: پرانے (fnorm کے بغیر) چالان کے خانوں کے الگ الگ فونٹ نہیں — سب معیاری 14pt
+      try { if (String(bs.fnorm || '') === '553') _ch173ApplyCellFonts(bs.cell_fonts); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+      // پرانے محفوظ متن (حالات / جاری متن / کاغذات) کے اندر کے فونٹ سائز بھی معیاری
+      try {
+        if (String(bs.fnorm || '') !== '553' && typeof dioNormFonts === 'function') {
+          const _d = _ch173Doc();
+          if (_d) _d.querySelectorAll('[data-k="halaat"], [data-k="cont_text"], [data-k="papers_body"]').forEach(x => dioNormFonts(x));
+        }
+      } catch(_) { /* ضمنی */ }
       // Tamam font lag jane ke BAAD hi naap ka poora kaam — warna khanon ki
       // chaurai/qatar ki unchai purane (chhote) font par naapi jati thi.
       setTimeout(() => { try { _ch173Layout(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }, 120);
@@ -808,6 +811,7 @@ function _collectR173() {
     } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
     // Har khane ka apna font bhi mehfooz (warna reload par kho jata hai)
     try { const cf = _ch173CellFonts(); if (cf) d.cell_fonts = cf; } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+    d.fnorm = '553';   // v553: یہ فونٹ افسر نے خود رکھے/چنے — آئندہ معیار سے نہ بدلیں
     // Save ke liye lapet kholi thi — screen par seedh wapas laga do
     try { _ch173WrapCnics(chDoc); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     try {
@@ -976,11 +980,26 @@ async function _saveR173Inner() {
 }
 
 // ── PRINT (only the form) ─────────────────────────────────────
+// v553: کاغذ کا سائز پرنٹ کے وقت — اوپر کی پٹی سے لیگل/A4 ہٹا دیا گیا۔
+//  پرنٹ پر پوچھا جاتا ہے؛ کاغذ بدلے تو چالان پہلے نئے کاغذ پر پوری ترتیب
+//  (_ch173SetPaper → _ch173Layout) لیتا ہے، پھر وہی کاغذ چھپتا ہے۔
 function _printR173() {
+  const a = arguments;
+  if (typeof dioWithPaper !== 'function') return _printR173Now.apply(null, a);
+  return dioWithPaper({
+    get: () => _ch173Paper,
+    set: v => {
+      _ch173SetPaper(v);
+      try { const d = _ch173Doc(); if (d && d.querySelector('.zf-tbl') && typeof _zimniLayout === 'function') _zimniLayout(); } catch (_) { /* ضمنی */ }
+    },
+    run: () => _printR173Now.apply(null, a)
+  });
+}
+function _printR173Now() {
   // Challan types (فارم 25.56(1)) — apna doc + apni styles
   const chDoc = _ch173Doc();          // hamesha NAZAR AANE wala چالان
   // v552: اسی #ch173-doc میں ضمنی ہو تو چالان کی CSS سے نہ چھاپو (شکل بگڑ جاتی تھی)
-  if (chDoc && chDoc.querySelector('.zf-tbl') && typeof window._printZimniCurrent === 'function') { window._printZimniCurrent(); return; }
+  if (chDoc && chDoc.querySelector('.zf-tbl') && typeof window._printZimniCurrent === 'function') { return window._printZimniCurrent(); }
   if (chDoc) {
     // ═══ AHEM — کالم 7 ka matn chhup jane ki ASAL wajah ═══
     // Overflow ka hisaab us chaudai par lagta hai jo us waqt SCREEN par hai.
@@ -1023,7 +1042,10 @@ function _printR173() {
       try { _baked = _ch173BakeSizes(); } catch (__) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       // Misal bandhne ki tikoni jagah (sirf chapai ke liye)
       let _tri = [];
-      try { _tri = _ch173AddBindMarks() || []; } catch (__) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+      // v553: صفحے کا توڑ اور مثل باندھنے کی جگہ اب پرنٹ کی اصل شکل (چھپا iframe، @page کے
+      //   حاشیے) پر ناپ کر لگتے ہیں — نیچے dioBindHtml۔ اسکرین کی ناپ سے لگانے پر پرنٹ
+      //   میں صفحہ 2 پر چند سطریں رہ کر مثلث صفحہ 3 پر جا پڑتی تھی (ناپا گیا)۔
+      if (typeof dioBindHtml !== 'function') { try { _tri = _ch173AddBindMarks() || []; } catch (__) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
       _inner = chDoc.innerHTML;                // kaghaz ki naap wala natija
       // Nishan foran hata do — screen par kuch badla hua nazar na aaye
       try { _tri.forEach(t => t.remove()); chDoc.normalize(); } catch (__) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
@@ -1090,6 +1112,7 @@ function _printR173() {
         #ch173-doc .rotinner{ display:inline-block !important; }
         /* Misal bandhne wali tikoni jagah — chapai mein zaroori */
         #ch173-doc .ch173-bind{ display:block !important; }
+        ${typeof dioBindCSS === 'function' ? dioBindCSS('#ch173-doc') : ''}
         /* Safhe ka tor theek apni jagah par */
         #ch173-doc .ch173-pgbrk{ display:block !important; height:0 !important;
           break-before:page !important; page-break-before:always !important; }
@@ -1117,8 +1140,19 @@ function _printR173() {
       </style></head><body><div id="ch173-doc">${_inner}</div></body></html>`;
     // Print se pehle rotated khanon ki naap inline kar do (print iframe mein JS nahi chalta)
     try { if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated(); } catch(_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
-    if (typeof dioPrint === 'function') dioPrint(chHtml);
-    else { const w = window.open('','_blank'); w.document.write(chHtml); w.document.close(); setTimeout(()=>w.print(),300); }
+    const _send = (h) => {
+      if (typeof dioPrint === 'function') dioPrint(h);
+      else { const w = window.open('','_blank'); w.document.write(h); w.document.close(); setTimeout(()=>w.print(),300); }
+    };
+    if (typeof dioBindHtml === 'function' && typeof dioAutoBind === 'function') {
+      // جاری متن (کالم 7 کے نیچے) — ہر صفحے کی حد پر توڑ (نستعلیق نہ کٹے)، جفت صفحے پر
+      //   اوپر ایک سطر + مثلث (2pt وتر)
+      return dioBindHtml(chHtml, { binder: (d, geo) => {
+        const cont = d.querySelector('#ch173-doc [data-k="cont_text"]');
+        return cont ? dioAutoBind(d, chHtml, { root: cont, allPages: true, triClass: 'ch173-bind', brkClass: 'ch173-pgbrk' }) : 0;
+      } }).then(_send, () => _send(chHtml));
+    }
+    _send(chHtml);
     return;
   }
   // `#ch173-doc` na mile to chhapne ko kuch hai hi nahi — afsar ko bata do
@@ -2162,10 +2196,17 @@ function _ch173AddBindMarks() {
           brk.className = 'ch173-pgbrk';
           t.node.parentNode.insertBefore(brk, baad);
           daale.push(brk);
-          const tri = document.createElement('span');
-          tri.className = 'ch173-bind';
-          t.node.parentNode.insertBefore(tri, baad);
-          daale.push(tri);
+          // v553: مثلث + اوپر ایک سطر — صرف پچھلی طرف (جفت صفحہ: 2، 4 …)
+          if ((p + 1) % 2 === 0) {
+            const gap = document.createElement('span');
+            gap.className = 'dio-bindgap';
+            t.node.parentNode.insertBefore(gap, baad);
+            daale.push(gap);
+            const tri = document.createElement('span');
+            tri.className = 'ch173-bind';
+            t.node.parentNode.insertBefore(tri, baad);
+            daale.push(tri);
+          }
         } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
         break;
       }
@@ -3646,7 +3687,10 @@ const R173_FONT_DEFAULT = 14;
 // 14 par le aate hain — naye AUR purane dono چالان 14 par. Officer ki apni
 // chuni hui doosri naapein (16, 18, 20 ...) jyun ki tyun rehti hain.
 const R173_FONT_LEGACY = [10.5, 12];
+// v553 قاعدہ: v553 سے پہلے محفوظ (fnorm کے بغیر) چالان کا فونٹ معیاری 14pt — بعد میں
+//   افسر جو سائز چنے (fnorm='553' کے ساتھ محفوظ) وہ برقرار
 function _ch173DocFont(bs) {
+  if (bs && Object.keys(bs).length && String(bs.fnorm || '') !== '553') return R173_FONT_DEFAULT;
   const n = parseFloat((bs && bs.doc_font) || '');
   if (R173_FONT_LEGACY.indexOf(n) !== -1) return R173_FONT_DEFAULT;
   return (n && !isNaN(n)) ? n : R173_FONT_DEFAULT;
@@ -4000,7 +4044,8 @@ function _ch173WrapSelection() {
 function _ch173FontToSelection(pt) {
   const spans = _ch173WrapSelection();
   if (!spans.length) return false;
-  spans.forEach(s => { s.style.fontSize = pt + 'pt'; });
+  // v553: data-dio-fs = افسر کا خود لگایا ہوا سائز — «پرانے مواد کو 14pt» والا قاعدہ اسے نہ بدلے
+  spans.forEach(s => { s.style.fontSize = pt + 'pt'; s.setAttribute('data-dio-fs', '1'); });
   return true;
 }
 
@@ -4497,7 +4542,7 @@ function _renderR173List() {
   </style>
   <div style="padding:14px;direction:rtl;height:100%;overflow-y:auto;">
     <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap;">
-      <button class="btn btn-primary btn-sm" onclick="_r173NewDoc(false)">چالان درج کریں</button>
+      <button class="btn btn-primary btn-sm" onclick="_r173NewDoc(false)">+ چالان درج کریں</button>
       <div style="flex:1;"></div>
       <span style="font-size:11px;color:var(--text-muted);">پرنٹ کے لیے ہر سطر کا 🖨️ دبائیں</span>
     </div>
@@ -5406,8 +5451,8 @@ function _ch173CSS() {
         }
       }
       /* Screen par yeh nishan nazar nahi aata — sirf chapai ke liye hai */
-      #ch173-doc .ch173-bind{ display:none; }
-      @media print{ #ch173-doc .ch173-bind{ display:block; } }
+      #ch173-doc .ch173-bind, #ch173-doc .dio-bindgap{ display:none; }
+      @media print{ #ch173-doc .ch173-bind, #ch173-doc .dio-bindgap{ display:block; } }
       /* CNIC ka APNA khana — naam se alag.
          • Naam  : NEECHE se OOPER (direction:rtl ke saath vertical-rl)
          • CNIC  : OOPER se NEECHE (direction:ltr)

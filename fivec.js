@@ -130,7 +130,7 @@ async function renderFiveC(container, query) {
   _f5cQuery = query || '';
   const apps = await getApplications5C(_f5cQuery);
   container.innerHTML = `<div class="page-header">
-    <button class="btn btn-primary dio-add-btn" onclick="open5CForm()">+ \u0646\u0626\u06cc \u062f\u0631\u062e\u0648\u0627\u0633\u062a</button>
+    <button class="btn btn-primary dio-add-btn" onclick="open5CForm()">+ درخواست درج کریں</button>
     <div>
       <div class="page-title">\u0645\u0627\u0631\u06a9 \u0634\u062f\u06c1 \u062f\u0631\u062e\u0648\u0627\u0633\u062a\u06cc\u06ba</div>
       <div class="page-subtitle"><span id="f5c-count">${apps.length}</span> \u062f\u0631\u062e\u0648\u0627\u0633\u062a\u06cc\u06ba</div>
@@ -169,6 +169,7 @@ function render5CRow(a){
       <button aria-label="جواب" class="btn btn-primary btn-sm" onclick="open5CResponse('${a.id}')" title="جواب"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4.5 4h15v12H8l-3.5 3.5z"/><path d="M8 9h8"/><path d="M8 12.5h5"/></svg></button>
       <button aria-label="پرنٹ" class="btn btn-secondary btn-sm" onclick="_print5C('${a.id}')" title="پرنٹ"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M7 9.5V3.5h10v6"/><path d="M4.5 9.5h15v7h-15z"/><path d="M7 13.5h10V21H7z"/></svg></button>
       <button class="btn btn-secondary btn-sm" onclick="_export5CPdf('${a.id}')" title="PDF عدالت کے لیے">PDF</button>
+      <button aria-label="شیئر" class="btn btn-secondary btn-sm" onclick="dioSharePrint(()=>_print5C('${a.id}'),'درخواست 5C')" title="شیئر — PDF / Word"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></svg></button>
       <button aria-label="حذف" class="btn btn-danger btn-sm" onclick="confirmDelete5C('${a.id}',${a.serial_number})" title="حذف"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
     </td>
   </tr>`;
@@ -322,6 +323,7 @@ async function open5CResponse(id){
     <button class="btn btn-primary btn-sm" onmousedown="event.preventDefault()" onclick="save5CResponse('${id}')">محفوظ کریں</button>
     <button class="btn btn-secondary btn-sm" onmousedown="event.preventDefault()" onclick="downloadResponse5C('${id}','${esc5C((app.complainant_name||'response').replace(/[^\w]/g,'_'))}')">ڈاؤن لوڈ</button>
     <button class="btn btn-secondary btn-sm" onmousedown="event.preventDefault()" onclick="print5CResponse()">پرنٹ</button>
+    <button class="btn btn-secondary btn-sm" onmousedown="event.preventDefault()" onclick="dioSharePrint(()=>print5CResponse(),'جواب 5C')" title="شیئر — PDF / Word">شیئر</button>
     <button class="btn btn-danger btn-sm" onclick="document.body.classList.remove('r5c-open');document.getElementById('response5c-overlay').remove()">بند کریں</button>
   </div>
   ${buildWordToolbar('a4-paper', { preserveSel: true })}

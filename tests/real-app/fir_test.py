@@ -113,7 +113,8 @@ def run(pg, tag, errs, ctx):
     check(f'{tag}: بٹن دائیں کنارے کے ساتھ (فاصلہ ≤1px)', all(0 <= r['btnRightGap'] <= 1 for r in rows), [r['btnRightGap'] for r in rows])
     check(f'{tag}: بٹن اور سرخی ایک دوسرے پر نہیں چڑھتے، سرخی نہیں کٹتی', all(not r['overlap'] and not r['titleClipped'] for r in rows))
     check(f'{tag}: بٹن اور سرخی ایک ہی سطر میں', all(r['sameLine'] for r in rows), [r['sameLine'] for r in rows])
-    check(f'{tag}: بٹنوں کے نام', [r['btnText'] for r in rows] == ['متن درج کریں', 'فوٹو کاپی اپلوڈ کریں'] * 2)
+    # v553: نئے اندراج کا پورے سسٹم میں ایک نمونہ — «+ … درج کریں»
+    check(f'{tag}: بٹنوں کے نام', [r['btnText'] for r in rows] == ['+ متن درج کریں', '+ فوٹو کاپی اپلوڈ کریں'] * 2, [r['btnText'] for r in rows])
     check(f'{tag}: سب سرخیاں ایک ہی سائز (pt)', len({r['fontPt'] for r in rows}) == 1, sorted({r['fontPt'] for r in rows}))
     check(f'{tag}: کوئی افقی scroll نہیں', not m['hOverflow'])
     pg.screenshot(path=f'{OUT}/fir_{tag}_1_page.png')

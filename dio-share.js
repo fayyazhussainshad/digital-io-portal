@@ -139,6 +139,8 @@
       await new Promise(function (r) { setTimeout(r, 100); });
     }
     await new Promise(function (r) { setTimeout(r, 250); });
+    // v553: فائل بھی پرنٹ جیسی — جفت صفحات پر مثل باندھنے کی جگہ (اپنا حساب نہ رکھنے والی دستاویزات)
+    try { if (typeof window.dioBindNeeded === 'function' && window.dioBindNeeded(html)) window.dioAutoBind(d, html); } catch (_) { /* ضمنی */ }
     f.style.height = Math.max(d.documentElement.scrollHeight, 50) + 'px';
     return { frame: f, doc: d, page: pg, margin: mg, cw: cw };
   }
@@ -533,8 +535,14 @@
       return { document: { write: function (x) { buf += x; html = buf; }, close: function () { /* - */ }, open: function () { /* - */ } },
         print: function () { /* - */ }, focus: function () { /* - */ }, close: function () { /* - */ } };
     };
+    // v553: پرنٹ اب کاغذ کا سائز پوچھتا ہے — نقل لیتے وقت نہ پوچھے (موجودہ کاغذ ہی)
+    var ownAuto = !window.__dioPaperAuto;
+    if (ownAuto) window.__dioPaperAuto = 'keep';
     try { await run(); await new Promise(function (r) { setTimeout(r, 60); }); }
-    finally { window.dioPrint = o.dp; window._dioDoPrint = o.dd; window.print = o.pr; window.open = o.op; }
+    finally {
+      window.dioPrint = o.dp; window._dioDoPrint = o.dd; window.print = o.pr; window.open = o.op;
+      if (ownAuto) window.__dioPaperAuto = undefined;
+    }
     return { html: html, native: native };
   }
 
@@ -558,7 +566,8 @@
   }
 
   // فائلیں: شیئر (موبائل) ورنہ ڈاؤن لوڈ
-  async function deliver(files, title) {
+  async function deliver(files, title, onlyDownload) {
+    if (onlyDownload) { files.forEach(function (f) { download(f, f.name); }); return 'downloaded'; }
     var shareable = files.filter(function (f) {
       try { return navigator.canShare && navigator.canShare({ files: [f] }); } catch (_) { return false; }
     });
@@ -582,7 +591,8 @@
   function toast(m, t, d) { try { if (typeof showToast === 'function') showToast(m, t || 'info', d || 3500); } catch (_) { /* ضمنی */ } }
 
   // ── انتخاب کا چھوٹا خانہ ───────────────────────────────────────
-  function open(el, title) {
+  function open(el, title, opts) {
+    opts = opts || {};
     if (!el) { toast('شیئر کے لیے دستاویز نہیں ملی', 'error'); return; }
     var old = document.getElementById('dio-share-box'); if (old) old.remove();
     var box = document.createElement('div');
@@ -590,7 +600,7 @@
     box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', 'فائل شیئر کریں');
     box.innerHTML =
       '<div class="dio-shr-card" dir="rtl">' +
-      '<b class="dio-shr-h">فائل شیئر کریں</b>' +
+      '<b class="dio-shr-h">' + (opts.download ? 'فائل ڈاؤن لوڈ کریں' : 'فائل شیئر کریں') + '</b>' +
       '<small class="dio-shr-sub">پوری دستاویز — جدول، سرخیاں اور تمام حروف بالکل پرنٹ جیسے</small>' +
       '<div class="dio-shr-btns">' +
       '<button type="button" data-k="pdf">PDF</button>' +
@@ -608,7 +618,7 @@
       msg.textContent = 'فائل تیار ہو رہی ہے…';
       try {
         var files = await make(el, title, k);
-        var r = await deliver(files, title);
+        var r = await deliver(files, title, !!opts.download);
         if (r === 'cancel') { msg.textContent = ''; }
         else {
           box.remove();

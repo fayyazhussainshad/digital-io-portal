@@ -57,7 +57,7 @@ async function renderAhkamat(container){
   <div style="max-width:100%;margin:0;direction:rtl;">
     <!-- سرخی + تلاش + (ایڈمن) شامل -->
     <div class="page-header">
-      ${canMng ? `<button onclick="_ahkOpenAdd()" class="btn btn-primary dio-add-btn">+ نیا حکم</button>` : ''}
+      ${canMng ? `<button onclick="_ahkOpenAdd()" class="btn btn-primary dio-add-btn">+ حکم درج کریں</button>` : ''}
       <div>
         <div class="page-title">احکامات و ضوابط</div>
         <div class="page-subtitle">سرکلر، احکامات اور طریقہ کار</div>
@@ -66,6 +66,7 @@ async function renderAhkamat(container){
         oninput="_ahkFilter(this.value)"
         style="flex:1;min-width:180px;padding:10px 16px;border:1px solid var(--border);border-radius:24px;font-size:15px;outline:none;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;">
       <button onclick="_ahkPrintList()" class="btn btn-secondary btn-sm" title="موجودہ فہرست پرنٹ کریں">فہرست</button>
+      <button onclick="dioSharePrint(()=>_ahkPrintList(),'احکامات کی فہرست')" class="btn btn-secondary btn-sm" title="فہرست شیئر — PDF / Word">شیئر</button>
     </div>
 
     <!-- درجہ بندی chips -->
@@ -155,7 +156,7 @@ function _ahkRender(){
         <div style="font-size:60px;margin-bottom:14px;"><svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M8 4h8v3H8z"/><path d="M9 4H6v17h12V4h-3"/><path d="M9 11h6"/><path d="M9 15h6"/></svg></div>
         <div style="font-size:18px;font-weight:800;margin-bottom:8px;">${empty?'ابھی کوئی حکم شامل نہیں':'اس تلاش/درجہ بندی میں کچھ نہیں ملا'}</div>
         <div style="font-size:14px;margin-bottom:${canMng&&empty?'22px':'0'};">${empty?'احکامات، سرکلر اور SOPs یہاں محفوظ ہوں گے':'دوسری درجہ بندی یا تلاش آزمائیں'}</div>
-        ${canMng&&empty?`<button onclick="_ahkOpenAdd()" class="btn btn-primary">+ پہلا حکم شامل کریں</button>`:''}
+        ${canMng&&empty?`<button onclick="_ahkOpenAdd()" class="btn btn-primary">+ حکم درج کریں</button>`:''}
       </div>`;
     return;
   }
@@ -214,7 +215,7 @@ function _ahkFilter(){
 // ── ADD MODAL (admin) ──────────────────────────────────────────
 function _ahkOpenAdd(){
   if (!_ahkCanManage()) { showToast('صرف ایڈمن/ایس ایچ او نیا حکم شامل کر سکتا ہے','error'); return; }
-  openModal('+ نیا حکم / SOP شامل کریں', _ahkFormHtml(null),
+  openModal('نیا اندراج — حکم', _ahkFormHtml(null),
     `<div style="display:flex;gap:8px;direction:rtl;">
       <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
       <button class="btn btn-primary" id="ahk-save-btn" onclick="_ahkSave()">محفوظ کریں</button>
@@ -388,6 +389,7 @@ function _ahkTextReader(a, autoPrint){
       <button onclick="_ahkNavMatch(1)" title="اگلا" aria-label="اگلا" style="border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);border-radius:8px;padding:6px 9px;cursor:pointer;display:inline-flex;align-items:center;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
       <span id="ahk-search-count" style="font-size:12px;color:#6c757d;"></span>
       <button onclick="_ahkPrintOne('${a.id}')" style="background:var(--accent);color:#fff;border:1px solid var(--accent);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;">پرنٹ</button>
+      <button onclick="_ahkShareOne('${a.id}')" title="شیئر — PDF / Word" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;">شیئر</button>
       <button onclick="_ahkCloseReader()" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:13px;font-weight:700;">بند</button>
     </div>
     <div id="ahk-reader-body" style="flex:1;overflow:auto;background:#fff;">
@@ -538,6 +540,18 @@ function _ahkNavMatch(dir){
   cur.scrollIntoView({behavior:'smooth',block:'center'});
   if (countEl) countEl.textContent = `${_ahkCurMatch+1}/${marks.length}`;
 }
+
+// v553: شیئر — متن ہو تو وہی کاغذ جو پرنٹ میں (PDF / Word)؛ صرف فائل ہو تو اصل فائل
+async function _ahkShareOne(id){
+  const a = _ahkList.find(x=>x.id===id);
+  if (!a) { showToast('حکم نہیں ملا','error'); return; }
+  const title = a.title || a.order_number || 'حکم';
+  if (a.body_text && a.body_text.trim()) { if (typeof dioSharePrint === 'function') return dioSharePrint(() => _ahkPrintOne(id), title); return; }
+  const url = await _ahkFileUrl(a);
+  if (!url) { showToast('فائل دستیاب نہیں','error'); return; }
+  if (typeof dioShareFileUrl === 'function') return dioShareFileUrl(url, title);
+}
+window._ahkShareOne = _ahkShareOne;
 
 // ── PRINT one order (text) ─────────────────────────────────────
 function _ahkPrintOne(id){

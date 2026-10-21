@@ -268,6 +268,7 @@ function _cdrRenderList() {
       <div class="cdr-li-act">
         <button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation();_cdrOpen('${esc(String(r.id))}')">کھولیں</button>
         <button type="button" class="btn btn-secondary btn-sm" onclick="event.stopPropagation();_cdrPrintById('${esc(String(r.id))}')" title="یہ CDR درخواست پرنٹ کریں">🖨️ پرنٹ</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="event.stopPropagation();_cdrShareById('${esc(String(r.id))}')" title="یہ CDR درخواست شیئر کریں — PDF / Word">📤 شیئر</button>
       </div>
     </div>`;
   }).join('');
@@ -276,9 +277,9 @@ function _cdrRenderList() {
   <div class="cdr-listwrap">
     <!-- عنوان درمیان میں · «نیا» بٹن دائیں (SYSTEM RULE: add-new button ہمیشہ دائیں) -->
     <div class="cdr-list-head">
-      <button type="button" class="btn btn-primary btn-sm dio-add-btn" onclick="_newCdr()">+ نئی CDR درخواست</button>
+      <button type="button" class="btn btn-primary btn-sm dio-add-btn" onclick="_newCdr()">+ CDR درخواست درج کریں</button>
       <div class="cdr-list-title">CDR/IMEI درخواستیں — فہرست (${total})</div>
-      <span class="btn btn-primary btn-sm" style="visibility:hidden;pointer-events:none;">+ نئی CDR درخواست</span>
+      <span class="btn btn-primary btn-sm" style="visibility:hidden;pointer-events:none;">+ CDR درخواست درج کریں</span>
     </div>
     ${rows}
   </div>
@@ -810,6 +811,21 @@ function _cdrPrintById(id) {
   setTimeout(go, 400);
 }
 window._cdrPrintById = _cdrPrintById;
+// v553: فہرست سے سیدھا شیئر — وہی کاغذ جو «کھولیں» / پرنٹ میں نظر آتا ہے، PDF / Word میں
+function _cdrShareById(id) {
+  const r = _cdrList.find(x => String(x.id) === String(id));
+  if (!r) { if (typeof showToast === 'function') showToast('درخواست نہیں ملی', 'error'); return; }
+  _cdrISaved = r; _cdrDirty = false;
+  _renderCdr();
+  const go = () => {
+    try { _cdrBalance(); } catch (_) { /* naap */ }
+    const el = document.getElementById('cdr-doc');
+    if (el && typeof dioShareDoc === 'function') { const n = _cdrList.length - _cdrList.indexOf(r); dioShareDoc(el, 'CDR درخواست نمبر ' + n); }
+  };
+  try { if (document.fonts && document.fonts.ready) { document.fonts.ready.then(() => setTimeout(go, 150)); return; } } catch (_) { /* purana browser */ }
+  setTimeout(go, 400);
+}
+window._cdrShareById = _cdrShareById;
 
 function _printCdr() {
   if (!document.getElementById('cdr-doc')) { if (typeof showToast === 'function') showToast('پہلے کوئی CDR درخواست کھولیں', 'info'); return; }

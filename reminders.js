@@ -54,7 +54,7 @@ async function _buildReminders() {
       <div class="page-title">یاددہانیاں</div>
       <div class="page-subtitle">خودکار · عدالتی پیشیاں · دستی</div>
     </div>
-    <button class="btn btn-primary dio-add-btn" onclick="_openAddReminder()">+ نئی یاددہانی</button>
+    <button class="btn btn-primary dio-add-btn" onclick="_openAddReminder()">+ یاددہانی درج کریں</button>
   </div>
 
   <!-- Overdue Alert -->
@@ -164,7 +164,7 @@ async function _remMarkCourtDone(courtId) {
 function _openAddReminder() {
   // «نیا اندراج — یاددہانی» — پیشی اور یاددہانی کا مشترکہ کارڈ (dio-entry.js)
   if (window.DIOEntry && window.DIOCard) return DIOEntry.peshi('yad', null);
-  openModal('+ نئی یاددہانی',
+  openModal('نیا اندراج — یاددہانی',
     `<div>
       <label class="form-label">یاددہانی کا متن *</label>
       <input class="form-input" id="rem-text" placeholder="مثلاً چالان جمع کرائیں FIR 245/26">

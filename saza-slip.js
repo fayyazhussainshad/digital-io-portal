@@ -205,11 +205,7 @@ function _sazaRender() {
     <!-- ── FIXED TOOLBAR (report173 jaisa) ── -->
     <div class="no-print" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
       <span style="font-family:'Jameel Noori Nastaleeq',serif;font-size:15px;font-weight:700;color:var(--accent);">📜 سزا سلپ</span>
-      <select id="saza-paper-sel" onchange="_sazaSetPaper(this.value)" title="کاغذ کا سائز"
-        style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
-        <option value="legal" ${_sazaPaper==='legal'?'selected':''}>لیگل (8.5×13)</option>
-        <option value="a4" ${_sazaPaper==='a4'?'selected':''}>A4 (8.27×11.7)</option>
-      </select>
+      <!-- v553: لیگل/A4 کا انتخاب یہاں سے ہٹا — پرنٹ کے وقت پوچھا جاتا ہے -->
       <span style="font-size:11px;color:var(--text-muted);">↔ ملزم شامل کرنے کے لیے کالم 1 میں ▾ دبائیں</span>
       <div style="margin-right:auto;display:flex;gap:6px;align-items:center;">
         <button onmousedown="event.preventDefault()" onclick="_sazaFmt('bold')" title="بولڈ" style="${_sazaBtn()}font-weight:900;">B</button>
@@ -640,6 +636,8 @@ function _sazaBtn() {
 const SAZA_FONT_SIZES = [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72];
 const SAZA_FONT_DEFAULT = 14;
 function _sazaDocFont(sv) {
+  // v553: پہلے کی محفوظ (fnorm کے بغیر) سزا سلپ — معیاری 14pt
+  if (sv && Object.keys(sv).length && String(sv.fnorm || '') !== '553') return SAZA_FONT_DEFAULT;
   const n = parseFloat((sv && sv.doc_font) || '');
   return (n && !isNaN(n)) ? n : SAZA_FONT_DEFAULT;
 }
@@ -718,6 +716,7 @@ function _sazaFontToSelection(pt) {
     const span = document.createElement('span');
     while (f.firstChild) span.appendChild(f.firstChild);
     span.style.fontSize = pt + 'pt';
+    span.setAttribute('data-dio-fs', '1');      // v553: افسر کا خود لگایا ہوا سائز — معیار سے نہ بدلے
     f.parentNode.replaceChild(span, f);
   });
   return true;
@@ -877,6 +876,7 @@ async function _sazaSave() {
     else data[k] = el.innerHTML;
   });
   data.doc_font = doc.dataset.fs || String(SAZA_FONT_DEFAULT);
+  data.fnorm = '553';
   data.acc = JSON.stringify(_sazaChosen || []);   // chune hue ملزمان (naam)
   try {
     const cols = doc.querySelectorAll('#saza-table colgroup col');
@@ -971,30 +971,28 @@ window._sazaMarkMisalSaved = _sazaMarkMisalSaved;
 //   • Koi forced cell-height NAHI (warna qataron mein gap aur zabardasti
 //     page 2 ka masla banta tha).
 // ═══
+// v553: کاغذ کا سائز پرنٹ کے وقت (اوپر کی پٹی سے ہٹا دیا گیا)۔ کاغذ بدلنے پر
+//  پورا صفحہ دوبارہ نہیں بنتا (ورنہ نہ محفوظ ترمیم ضائع) — صرف ناپ بدلتی ہے۔
+function _sazaPaperSoft(v) {
+  _sazaPaper = (v === 'a4') ? 'a4' : 'legal';
+  try { localStorage.setItem('dio_saza_paper', _sazaPaper); } catch (_) { /* ضمنی */ }
+  try { _sazaFitPaper(); } catch (_) { /* ضمنی */ }
+}
 function _sazaPrint() {
+  if (typeof dioWithPaper !== 'function') return _sazaPrintNow();
+  return dioWithPaper({ get: () => _sazaPaper, set: _sazaPaperSoft, run: () => _sazaPrintNow() });
+}
+async function _sazaPrintNow() {
   const doc = _sazaDoc(); if (!doc) return;
 
   // LIVE doc se koi bhi inline height (screen ki purani stretch) HATA do.
   doc.querySelectorAll('[style*="height"]').forEach(el => { el.style.height = ''; el.style.minHeight = ''; });
 
-  // Konsi ملزم-qatar WAQAI naye safhe par shuru hoti hai (مثلث ke liye)
-  const breakRows = _sazaBreakRows(doc);
+  // v553: مثلث اب «پرنٹ» کی اصل ناپ پر (چھپے iframe میں) — نیچے _sazaBinder
 
   const clone = doc.cloneNode(true);
   clone.querySelectorAll('.no-print, .saza-acc-pick, .saza-colgrip').forEach(el => el.remove());
   clone.querySelectorAll('[style*="height"]').forEach(el => { el.style.height = ''; el.style.minHeight = ''; });
-
-  // مثلث — SIRF break wali qataron ke کالم 4 (bayen = safhe ka top-left kona)
-  breakRows.forEach(rk => {
-    const tr = clone.querySelector('#saza-tbody tr[data-row="' + rk + '"]');
-    if (!tr) return;
-    const cell = tr.querySelector('.saza-c4') || tr.querySelector('td:last-child');
-    if (!cell) return;
-    const host = cell.querySelector('.saza-c4-body') || cell;
-    const tri = document.createElement('span');
-    tri.className = 'saza-bind';
-    host.insertBefore(tri, host.firstChild);
-  });
 
   const inner = clone.innerHTML;
   const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
@@ -1030,11 +1028,41 @@ function _sazaPrint() {
         background:#000; opacity:0.13;
       }
       #saza-doc, #saza-doc *{ orphans:2; widows:2; }
+      ${typeof dioBindCSS === 'function' ? dioBindCSS('#saza-doc') : ''}
+      #saza-doc .saza-bind-abs{ position:absolute !important; top:0; left:0; float:none !important; shape-outside:none !important; }
     </style></head><body><div id="saza-doc">${inner}</div></body></html>`;
-  if (typeof dioPrint === 'function') dioPrint(html);
-  else { const w = window.open('', '_blank'); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 300); }
+  // جفت صفحات (پچھلی طرف) — جس ملزم-قطار سے وہ صفحہ شروع ہو، اُس کے کالم 4 میں
+  //   اوپر ایک سطر + مثلث (2pt وتر)؛ ناپ پرنٹ کی اصل شکل پر
+  let out = html;
+  try { if (typeof dioBindHtml === 'function') out = await dioBindHtml(html, { binder: _sazaBinder }); } catch (_) { out = html; }
+  if (typeof dioPrint === 'function') dioPrint(out);
+  else { const w = window.open('', '_blank'); w.document.write(out); w.document.close(); setTimeout(() => w.print(), 300); }
 }
 window._sazaPrint = _sazaPrint;
+function _sazaBinder(d, geo) {
+  const doc = d.getElementById('saza-doc'); if (!doc) return 0;
+  const dTop = doc.getBoundingClientRect().top;
+  const rows = [].slice.call(d.querySelectorAll('#saza-tbody tr.saza-acc-row, #saza-tbody tr[data-row="sho"]'));
+  let pTop = 0, pNo = 1, made = 0;
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i].getBoundingClientRect(), rt = r.top - dTop, rb = r.bottom - dTop;
+    if (rb - pTop <= geo.ch + 0.5 || rt <= pTop + 1) continue;
+    pTop = rt; pNo++;
+    if (pNo % 2) continue;
+    // مثلث کالم 4 (صفحے کا بایاں اوپری کونا) میں — قطار کی اونچائی پر اثر نہیں (absolute)؛
+    //   اوپر ایک سطر کی جگہ کالم 1 (ملزم کا متن) میں
+    const cell = rows[i].querySelector('.saza-c4') || rows[i].lastElementChild;
+    if (!cell) continue;
+    cell.style.position = 'relative';
+    const tri = d.createElement('span'); tri.className = 'saza-bind saza-bind-abs';
+    cell.insertBefore(tri, cell.firstChild);
+    const c1 = rows[i].querySelector('.saza-c1-body') || rows[i].querySelector('.saza-c1') || rows[i].firstElementChild;
+    if (c1) { const gap = d.createElement('span'); gap.className = 'dio-bindgap'; c1.insertBefore(gap, c1.firstChild); }
+    made++;
+  }
+  return made;
+}
+window._sazaBinder = _sazaBinder;
 
 // Konsi ملزم-qatar WAQAI naye safhe par shuru hoti hai — LIVE naap (stretch
 // hataye jane ke baad). Page 1 ki qataron ke liye khali Set (koi مثلث nahi).
@@ -1051,7 +1079,8 @@ function _sazaBreakRows(doc) {
     rows.forEach((tr, idx) => {
       const top = tr.getBoundingClientRect().top - docTop;
       const pg = Math.floor((top + 2) / usable);
-      if (idx > 0 && pg > prevPage) {
+      // v553: صرف پچھلی طرف (جفت صفحہ: pg = 1، 3 … یعنی صفحہ 2، 4 …)
+      if (idx > 0 && pg > prevPage && pg % 2 === 1) {
         const rk = tr.getAttribute('data-row');
         if (rk) out.add(rk);
       }

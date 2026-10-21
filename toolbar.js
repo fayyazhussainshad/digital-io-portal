@@ -303,6 +303,7 @@ function _wbFontSize(editorId, val) {
     ed.querySelectorAll('font[size="7"]').forEach(function(el) {
       el.removeAttribute('size');
       el.style.fontSize = val + 'pt';
+      el.setAttribute('data-dio-fs', '1');   // v553: افسر کا خود لگایا ہوا سائز
     });
   } else { ed.style.fontSize = val + 'pt'; }
 }

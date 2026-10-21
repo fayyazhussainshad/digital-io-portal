@@ -329,7 +329,7 @@ function _irRenderList(container) {
   area.innerHTML = `
   <div class="ir-page" style="direction:rtl;">
     <div class="page-header">
-      <button class="btn btn-primary dio-add-btn" onclick="_irNew()">+ نیا اندراج</button>
+      <button class="btn btn-primary dio-add-btn" onclick="_irNew()">+ واقعاتی رپورٹ درج کریں</button>
       <div>
         <div class="page-title">واقعاتی رپورٹس</div>
         <div class="page-subtitle"><span id="ir-count">${_irVisible().length}</span> رپورٹس — تاریخ، نوعیت اور مقام کے ساتھ</div>
@@ -366,7 +366,7 @@ function _irListRows() {
     return `<div class="ir-empty">
       <div class="ir-empty-ico">${IR_LIST_ICON}</div>
       <div>ابھی کوئی واقعاتی رپورٹ محفوظ نہیں</div>
-      <button type="button" class="btn btn-primary" onclick="_irNew()">+ نیا اندراج — واقعاتی رپورٹ</button></div>`;
+      <button type="button" class="btn btn-primary" onclick="_irNew()">+ واقعاتی رپورٹ درج کریں</button></div>`;
   }
   const rows = _irVisible();
   const n = document.getElementById('ir-count');

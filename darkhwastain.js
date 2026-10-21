@@ -75,6 +75,7 @@ function _dkShowList() {
   dioRenderDocList('darkhwastain', {
     caseId: _dkCaseId,
     heading: 'درخواستیں',
+    itemName: 'درخواست',
     titleOf: (r) => (r.content && (r.content.__title || (DK_TYPES.find(t => t.id === r.content.dk_type) || {}).name)) || 'درخواست',
     onNew: () => { _dkNewEntry(); },
     onOpen: (entry) => { _dkOpenEntry(entry); },
@@ -285,11 +286,7 @@ function _dkRender() {
         style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;max-width:220px;">
         ${DK_TYPES.map(t => `<option value="${t.id}" ${t.id === _dkType ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}
       </select>
-      <select id="dk-paper-sel" onchange="_dkSetPaper(this.value)" title="کاغذ کا سائز"
-        style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
-        <option value="legal" ${_dkPaper==='legal'?'selected':''}>لیگل (8.5×13)</option>
-        <option value="a4" ${_dkPaper==='a4'?'selected':''}>A4</option>
-      </select>
+      <!-- v553: لیگل/A4 کا انتخاب یہاں سے ہٹا — پرنٹ کے وقت پوچھا جاتا ہے -->
       <button type="button" class="btn btn-secondary btn-sm" onclick="_dkResetBody()" title="اس قسم کا نیا خاکہ لائیں">↺ خاکہ</button>
       <button type="button" class="btn btn-secondary btn-sm" onclick="_dkShowList()" title="محفوظ درخواستوں کی فہرست">فہرست</button>
       <div style="margin-right:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
@@ -383,6 +380,8 @@ function _dkRender() {
     _dkBindKeys();
     _dkFocusMode(true);
     try { const df = _dkDocFont(sv); if (df) _dkFontToDoc(df); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+    // v553: پرانے محفوظ متن کے اندر کے فونٹ سائز معیاری (سرخیاں جوں کی توں)
+    try { if (String((sv || {}).fnorm || '') !== '553' && typeof dioNormFonts === 'function') { const b = (_dkDoc() || document).querySelector('.dk-body'); if (b) dioNormFonts(b); } } catch (_) { /* ضمنی */ }
     window.addEventListener('resize', _dkFitPaper);
     if (typeof applyAutoDirection === 'function') { try { applyAutoDirection(area); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
   }, 60);
@@ -467,7 +466,11 @@ function _dkBtn() {
 }
 const DK_FONT_SIZES = [10, 11, 12, 13, 14, 16, 18, 20, 22, 24, 28];
 const DK_FONT_DEFAULT = 14;
-function _dkDocFont(sv) { const n = parseFloat((sv && sv.doc_font) || ''); return (n && !isNaN(n)) ? n : DK_FONT_DEFAULT; }
+// v553: پہلے کی محفوظ (fnorm کے بغیر) درخواست — معیاری 14pt؛ بعد کی چنی ہوئی برقرار
+function _dkDocFont(sv) {
+  if (sv && Object.keys(sv).length && String(sv.fnorm || '') !== '553') return DK_FONT_DEFAULT;
+  const n = parseFloat((sv && sv.doc_font) || ''); return (n && !isNaN(n)) ? n : DK_FONT_DEFAULT;
+}
 
 function _dkDoc() {
   const all = document.querySelectorAll('#dk-doc');
@@ -616,6 +619,7 @@ function _dkFontToSelection(pt) {
     const span = document.createElement('span');
     while (f.firstChild) span.appendChild(f.firstChild);
     span.style.fontSize = pt + 'pt';
+    span.setAttribute('data-dio-fs', '1');      // v553: افسر کا خود لگایا ہوا سائز — معیار سے نہ بدلے
     f.parentNode.replaceChild(span, f);
   });
   return true;
@@ -746,6 +750,7 @@ function _dkCollectInto(store) {
     store[k] = (el.tagName === 'INPUT') ? el.value : el.innerHTML;
   });
   store.doc_font = doc.dataset.fs || String(DK_FONT_DEFAULT);
+  store.fnorm = '553';
   store.dk_type = _dkType;
   return store;
 }
@@ -786,7 +791,18 @@ function _dkMarkMisalSaved(content, status) {
 window._dkMarkMisalSaved = _dkMarkMisalSaved;
 
 // ═══ PRINT — zimni ka saaf asool (koi height/stretch zabardasti nahi) ═══
+// v553: کاغذ کا سائز پرنٹ کے وقت (اوپر کی پٹی سے ہٹا دیا گیا)۔ کاغذ بدلنے پر
+//  صفحہ دوبارہ نہیں بنتا (نہ محفوظ ترمیم محفوظ رہے) — صرف ناپ بدلتی ہے۔
+function _dkPaperSoft(v) {
+  _dkPaper = (v === 'a4') ? 'a4' : 'legal';
+  try { localStorage.setItem('dio_dk_paper', _dkPaper); } catch (_) { /* ضمنی */ }
+  try { _dkFitPaper(); } catch (_) { /* ضمنی */ }
+}
 function _dkPrint() {
+  if (typeof dioWithPaper !== 'function') return _dkPrintNow();
+  return dioWithPaper({ get: () => _dkPaper, set: _dkPaperSoft, run: () => _dkPrintNow() });
+}
+function _dkPrintNow() {
   const doc = _dkDoc(); if (!doc) return;
   const clone = doc.cloneNode(true);
   clone.querySelectorAll('.no-print, button, select').forEach(el => el.remove());
@@ -869,7 +885,7 @@ function _dkCSS() {
     #dk-doc .dk-unwan{ text-align:center; font-size:20pt; font-weight:bold; text-decoration:underline; margin:14pt 0 10pt; }
 
     /* Body — justified, 14pt */
-    #dk-doc .dk-body{ text-align:justify; text-align-last:right; font-size:14pt; line-height:2; min-height:2in; }
+    #dk-doc .dk-body{ text-align:justify; text-align-last:right; font-size:14pt; line-height:1.9; min-height:2in; }   /* v553: یکساں سطری فاصلہ 1.9 */
 
     /* IO / تفتیشی افسر block — bayen sidh. OOPER dastkhat ki (barhi hui) jagah →
        naam+rank+تھانہ (bold+underline) → neeche تاریخ (naam ke NEECHE CENTER,

@@ -24,7 +24,7 @@ async function renderSuspects(container) {
   <div style="direction:rtl;">
     <!-- Header -->
     <div class="page-header">
-      <button class="btn btn-primary dio-add-btn" onclick="_openSuspectForm()">+ نیا اندراج</button>
+      <button class="btn btn-primary dio-add-btn" onclick="_openSuspectForm()">+ فرد درج کریں</button>
       <div>
         <div class="page-title">ملزمان / گواہان</div>
         <div class="page-subtitle"><span id="susp-count">${people.length}</span> افراد — مقدمات کے ساتھ منسلک</div>
