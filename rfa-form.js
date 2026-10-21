@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════
    DIGITAL IO — RFA فارم  (Request for Assistance)  — FULL ENGLISH
-   Annex-A (RFA details) · Annex-B (assistance requested) · Annex-C (feedback)
-   • A4 fixed · exactly 2 pages on print (page1: Annex-A+B, page2: Annex-C)
+   Annex-A (RFA details) · Annex-B (assistance requested)  (v555: Annex-C feedback صفحہ ہٹا دیا)
+   • A4 fixed · ایک ہی صفحہ (Annex-A + Annex-B)
    • Poora form English · data system سے fetch (district/PS/FIR/officer)
      Urdu ڈیٹا خودکار English میں (transliteration) — ہر خانہ editable + محفوظ
    • Full-page view (chip bar ڈھک جاتی ہے) + formatting toolbar (challan/zimni جیسا)
@@ -229,14 +229,6 @@ function _renderRfaForm() {
     ['3','Vehicles','b_vehicles'], ['4','Elite Teams','b_elite'],
     ['5','Locator','b_locator'], ['6','Other','b_other'],
   ];
-  const cRows = [
-    ['1','Has the request been completed? Yes / No','c_completed'],
-    ['2','Date of completion','c_date'],
-    ['3','Was the assistance provided? Yes / No','c_provided'],
-    ['4','Check the items requested for assistance','c_items'],
-    ['5','Was the purpose of mission achieved?','c_purpose'],
-    ['6','If No, what was the reason?','c_reason'],
-  ];
 
   area.innerHTML = `
   <div style="display:flex;flex-direction:column;height:100%;direction:ltr;">
@@ -293,15 +285,7 @@ function _renderRfaForm() {
           </div>
         </div>
 
-        <!-- ═══ PAGE 2 — Annex-C ═══ -->
-        <div class="rfa-page" style="${pageStyle}">
-          ${headBlock('Annex-C')}
-          <div style="text-align:center;font-size:20pt;font-weight:bold;text-decoration:underline;margin:8px 0 14px;">Feedback Form</div>
-          <table style="width:100%;border-collapse:collapse;">
-            <tr><th style="${rThC}width:8%;">Sr.</th><th style="${rTh}width:56%;">Question</th><th style="${rTh}">Feedback</th></tr>
-            ${cRows.map(r=>`<tr><td style="${rTdC}">${r[0]}</td><td style="${rTd}">${r[1]}</td>${ec(r[2],'')}</tr>`).join('')}
-          </table>
-        </div>
+        <!-- v555 (افسر کا قاعدہ، 21 اکتوبر 2026): دوسرا صفحہ ہٹا دیا گیا؛ RFA اب ایک ہی صفحہ -->
 
       </div>
     </div>
@@ -382,7 +366,7 @@ async function _rfaDelete(id) {
 }
 window._rfaDelete = _rfaDelete;
 
-// Print — A4, exactly 2 pages (tight so page 1 fits Annex-A+B, page 2 Annex-C)
+// Print — A4, ایک صفحہ (Annex-A + Annex-B)
 function _printRfa() {
   const doc = document.getElementById('rfa-doc');
   if (!doc) return;

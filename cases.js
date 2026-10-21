@@ -357,9 +357,9 @@ async function renderCases(container,fStatus,fQuery,fStation){
           <th>تاریخ وقوعہ</th>
           <th>دفعہ قانون</th>
           <th>تھانہ</th>
-          <th>مدعی</th>
-          <th>شناختی کارڈ</th>
-          <th>موبائل</th>
+          <th class="cs-th-c" style="text-align:center;">مدعی</th>
+          <th class="cs-th-c" style="text-align:center;">شناختی کارڈ</th>
+          <th class="cs-th-c" style="text-align:center;">موبائل</th>
           <th>صورتحال</th>
           <th style="text-align:center;">اقدامات</th>
         </tr></thead>
@@ -388,7 +388,7 @@ function renderCaseRow(c,sn){
     <td>
       ${(() => { const fn=c.fir_number||'—'; const p=String(fn).split('/'); return p.length===2 ? `<span style="cursor:pointer;" onclick="openCaseWorkspace('${c.id}')" title="Open Case Workspace"><span dir="ltr" style="unicode-bidi:isolate;font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:15px;display:block;line-height:1.1;text-decoration:underline;text-decoration-color:rgba(56,189,248,0.4);">${p[0]}</span><span dir="ltr" style="unicode-bidi:isolate;font-family:var(--font-mono);font-size:10px;color:var(--text-muted);display:block;line-height:1;">/${p[1]}</span></span>` : `<span dir="ltr" style="unicode-bidi:isolate;font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:12px;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(56,189,248,0.4);" onclick="openCaseWorkspace('${c.id}')" title="Open Case Workspace">${fn}</span>`; })()}
       ${c.priority ? `<br><span style="font-size:9px;font-weight:700;color:${c.priority==='high'?'var(--red)':c.priority==='medium'?'var(--amber)':'var(--green)'};">${c.priority==='high'?'اہم':c.priority==='medium'?'درمیانہ':'کم'}</span>` : ''}
-      ${c.is_cross_version?'<br><span style="font-size:9px;color:var(--red);font-weight:600;">کراس ورژن</span>':''}
+      ${((typeof caseHasCross==='function') ? caseHasCross(c) : c.is_cross_version)?'<br><span style="font-size:9px;color:var(--red);font-weight:600;">کراس ورژن</span>':''}
       ${c._shared?`<br><span style="font-size:9px;color:var(--accent);font-weight:600;" title="آپ کے ساتھ شیئر کیا گیا (${c._sharePermission==='write'?'ترمیم':'دیکھیں'})">شیئرڈ</span>`:''}
     </td>
     <td style="font-size:11px;white-space:nowrap;">${formatDate(c.fir_date)}</td>
@@ -422,8 +422,9 @@ async function openCasePrint(id, mode) {
 }
 window.openCasePrint = openCasePrint;
 
-// v553: پرانا «ڈاؤن لوڈ» (txt / html) اور «شیئر» (صرف الفاظ — WhatsApp / ای میل) ہٹا دیے گئے:
-//   اب «پرنٹ / ڈاؤن لوڈ / شیئر» تینوں openCasePrint سے — منتخب دستاویزات کی پوری فائل PDF / Word میں۔
+// v553: پرانا «ڈاؤن لوڈ» (txt / html) اور «شیئر» (صرف الفاظ — WhatsApp / ای میل) ہٹا دیے گئے۔
+// v554: تینوں کا اپنا اپنا کام — «پرنٹ» = سیدھا پرنٹ · «ڈاؤن لوڈ» = اسی آلے پر فائل (PDF یا Word) ·
+//   «شیئر» = فائل (PDF یا Word) آلے کے شیئر (WhatsApp / ای میل) سے۔ ہر کارڈ میں صرف اپنا بٹن۔
 
 
 // ── CASE FORM (add/edit) ──

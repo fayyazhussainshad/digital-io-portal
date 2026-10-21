@@ -1259,6 +1259,29 @@ function dioAutoBind(d, html, opts) {
 }
 window.dioAutoBind = dioAutoBind;
 window._dioPageGeo = _dioPageGeo;
+// v555: کاغذ کی چیزیں (فونٹ کی CSS اور اردو فونٹ) آ جانے کا انتظار — زیادہ سے زیادہ maxMs۔
+//   ناپ (مثل کی جگہ / صفحات کا حساب) اور اصل چھپائی دونوں اسی کے بعد، تاکہ دونوں ایک ہی
+//   فونٹ پر ہوں۔ انٹرنیٹ نہ ہو تو مقررہ وقت کے بعد جو فونٹ ہے اسی پر۔
+async function _dioWaitAssets(d, maxMs) {
+  const t0 = Date.now();
+  const left = (cap) => Math.max(0, Math.min(cap || 1e9, (maxMs || 5000) - (Date.now() - t0)));
+  const within = (p, cap) => Promise.race([p, new Promise(r => setTimeout(r, left(cap)))]);
+  try {
+    const links = [].slice.call(d.querySelectorAll('link[rel~="stylesheet"]'));
+    await within(Promise.all(links.map(l => (l.sheet ? 0 : new Promise(r => {
+      l.addEventListener('load', r, { once: true }); l.addEventListener('error', r, { once: true });
+    })))), 2500);
+  } catch (_) { /* ضمنی */ }
+  try { void (d.body && d.body.offsetHeight); } catch (_) { /* ضمنی */ }
+  try {
+    if (d.fonts && d.fonts.load) {
+      await within(Promise.all(['Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu'].map(fm =>
+        d.fonts.load('14pt "' + fm + '"', 'ابج abc 123').catch(() => 0))));
+    }
+  } catch (_) { /* ضمنی */ }
+  try { if (d.fonts && d.fonts.ready) await within(d.fonts.ready); } catch (_) { /* ضمنی */ }
+}
+window._dioWaitAssets = _dioWaitAssets;
 // پرنٹ HTML → (ضرورت ہو تو) جفت صفحات پر مثلث والا HTML۔ ناپ ایک چھپے iframe میں
 //   «پرنٹ» کی شکل پر (@media print لاگو)، پھر اصل HTML کا head + نیا body۔
 //   اسکرپٹ والی یا اپنا حساب رکھنے والی دستاویزات (چالان/ضمنی/سزا) جوں کی توں۔
@@ -1279,6 +1302,9 @@ async function dioBindHtml(html, opts) {
     const d = f.contentWindow.document;
     d.open(); d.write(String(html)); d.close();
     await new Promise(r => setTimeout(r, 120));
+    // v555: ناپ صرف اصل فونٹ آ جانے کے بعد (پہلے کبھی فونٹ کی CSS ابھی راستے میں ہوتی اور
+    //   ناپ دوسرے فونٹ پر ہو جاتی — چھپائی میں سطریں بدل کر صفحے کا حساب غلط ہو جاتا)
+    await _dioWaitAssets(d, 6000);
     // «پرنٹ» کی شکل: @media print → سب پر، screen → کسی پر نہیں (صرف CSSOM میں —
     //   <style> کا متن نہیں بدلتا، اس لیے نقل جوں کی توں رہتی ہے)
     const flip = (rules) => {
@@ -1297,6 +1323,7 @@ async function dioBindHtml(html, opts) {
       try { if (sh.media && /\bprint\b/i.test(sh.media.mediaText)) sh.media.mediaText = 'all'; } catch (_) { /* ضمنی */ }
       try { flip(sh.cssRules); } catch (_) { /* دوسری جگہ کی شیٹ */ }
     });
+    try { void d.body.offsetHeight; } catch (_) { /* ضمنی */ }
     for (let i = 0; i < 30; i++) {
       let st = 'loaded'; try { st = d.fonts ? d.fonts.status : 'loaded'; } catch (_) { st = 'loaded'; }
       if (st === 'loaded') break;
@@ -1585,8 +1612,10 @@ function _dioDoPrint(htmlContent) {
   };
 
   // Wait for fonts if available, else timeout
+  // v555: پہلے فونٹ کی CSS آنے سے پہلے ہی fonts.ready پورا ہو جاتا اور کاغذ کبھی دوسرے فونٹ میں
+  //   چھپتا (سطریں بدل کر صفحے کا حساب غلط)۔ اب CSS + اردو فونٹ آنے کا انتظار (حد: 6 سیکنڈ)۔
   if (iframe.contentWindow.document.fonts && iframe.contentWindow.document.fonts.ready) {
-    iframe.contentWindow.document.fonts.ready.then(() => setTimeout(triggerPrint, 300));
+    _dioWaitAssets(doc, 6000).then(() => setTimeout(triggerPrint, 200), () => setTimeout(triggerPrint, 200));
   } else {
     setTimeout(triggerPrint, 600);
   }
@@ -1644,11 +1673,21 @@ if (typeof togglePasswordVisibility === 'function') window.togglePasswordVisibil
 //  والے کارڈ میں کراس ورژن پر ✓ لگایا گیا ہو — ورنہ ہر مقدمہ میں
 //  فضول اختیارات نظر آتے ہیں۔
 // ═══════════════════════════════════════════════════════════════════
+//  v554 (افسر کا قاعدہ): «جس مقدمہ میں کراس ورژن درج نہیں کیا گیا اُس میں ہر بار
+//   FIR / کراس ورژن کا انتخاب کیوں؟» — وجہ: نئے مقدمے کا فارم اوپر والا مقدمہ نمبر
+//   اور تاریخ خود بخود (چھپے) کراس ورژن کے خانوں میں نقل کرتا تھا، اور یہی نقل
+//   «کراس ورژن موجود ہے» سمجھی جاتی تھی — یعنی ہر مقدمہ۔ اب:
+//     • کارڈ میں کراس ورژن پر ✓ (is_cross_version) = کراس ورژن
+//     • پرانا ریکارڈ: صرف اصل کراس ڈیٹا (کراس مدعی، شناختی کارڈ، رپٹ، دفعات، یا
+//       اوپر والے سے مختلف کراس مقدمہ نمبر) — خودکار نقل شمار نہیں
 function caseHasCross(c) {
   c = c || (typeof currentCase !== 'undefined' ? currentCase : null)
         || (typeof _misalCase !== 'undefined' ? _misalCase : null) || {};
-  return !!(c.cross_complainant || c.cross_fir_number || c.cross_rapat_number ||
-            c.cross_complainant_cnic || c.cross_section_of_law);
+  if (c.is_cross_version === true) return true;
+  const T = (v) => String(v == null ? '' : v).trim();
+  const ownNo = T(c.cross_fir_number) && T(c.cross_fir_number).replace(/\s/g, '') !== T(c.fir_number).replace(/\s/g, '');
+  return !!(T(c.cross_complainant) || T(c.cross_complainant_cnic) || T(c.cross_rapat_number) ||
+            T(c.cross_section_of_law) || ownNo);
 }
 window.caseHasCross = caseHasCross;
 

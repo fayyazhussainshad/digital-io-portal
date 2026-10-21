@@ -996,7 +996,7 @@ async function _sazaPrintNow() {
 
   const inner = clone.innerHTML;
   const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
+    ${(typeof dioFontHead === 'function') ? dioFontHead() : '<link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">'}
     <style>
       @page{ size:${_sazaPaper === 'a4' ? 'A4 portrait' : '8.5in 13in'}; margin:6mm ${_sazaSideMargin()}; }
       *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; box-sizing:border-box; }
@@ -1039,14 +1039,39 @@ async function _sazaPrintNow() {
   else { const w = window.open('', '_blank'); w.document.write(out); w.document.close(); setTimeout(() => w.print(), 300); }
 }
 window._sazaPrint = _sazaPrint;
+// v555 (افسر کا قاعدہ، 21 اکتوبر 2026): «سزا سلپ میں ٹیبل کی لکیریں (کالم) آخری اندراج تک
+//   ہیں — حاشیے کے اصول کے مطابق صفحے کے نیچے تک ہوں۔» اسی «پرنٹ» کی ناپ پر:
+//   • جو ملزم-قطار اس صفحے میں پوری نہ آئے (اور اگلے صفحے پر جائے) اُس سے پہلے خالی قطار
+//     جو صفحہ نیچے تک بھرے (تاریخ/جرم کے کھڑے خانے — rowspan — اُس قطار کو بھی گھیر لیں)
+//   • آخری صفحے پر SHO قطار کے بعد خالی قطار — لکیریں صفحے کے نیچے (حاشیے) تک
+//   • جفت صفحات پر مثل باندھنے کی جگہ (v553) — پہلے کی طرح
 function _sazaBinder(d, geo) {
   const doc = d.getElementById('saza-doc'); if (!doc) return 0;
+  const tb = d.getElementById('saza-tbody'); if (!tb) return 0;
+  const tbl = tb.closest('table') || tb;
   const dTop = doc.getBoundingClientRect().top;
-  const rows = [].slice.call(d.querySelectorAll('#saza-tbody tr.saza-acc-row, #saza-tbody tr[data-row="sho"]'));
+  const SAFE = 6;
+  const rows = [].slice.call(tb.querySelectorAll('tr.saza-acc-row, tr[data-row="sho"]'));
+  const firstAcc = tb.querySelector('tr.saza-acc-row');
+  const spans = [].slice.call(tb.querySelectorAll('td[rowspan]'));
+  // خالی قطار — تاریخ/جرم کے rowspan کے اندر ہو تو صرف کالم 1 اور 4 (اور rowspan ایک بڑھا)
+  const filler = (before, h) => {
+    const inside = before && before.classList.contains('saza-acc-row') && before !== firstAcc && spans.length;
+    const tr = d.createElement('tr'); tr.className = 'saza-fill';
+    (inside ? ['saza-c1', 'saza-c4'] : ['saza-c1', 'saza-c2', 'saza-c3', 'saza-c4']).forEach(c => {
+      const td = d.createElement('td'); td.className = c;
+      td.style.cssText = 'height:' + Math.floor(h) + 'px !important;padding:0 !important;border-top:none !important;border-bottom:none !important;';
+      tr.appendChild(td);
+    });
+    if (inside) spans.forEach(td => { td.rowSpan = (td.rowSpan || 1) + 1; });
+    if (before) tb.insertBefore(tr, before); else tb.appendChild(tr);
+  };
   let pTop = 0, pNo = 1, made = 0;
   for (let i = 0; i < rows.length; i++) {
-    const r = rows[i].getBoundingClientRect(), rt = r.top - dTop, rb = r.bottom - dTop;
+    const r = rows[i].getBoundingClientRect(); let rt = r.top - dTop; const rb = r.bottom - dTop;
     if (rb - pTop <= geo.ch + 0.5 || rt <= pTop + 1) continue;
+    const room = pTop + geo.ch - rt - SAFE;
+    if (room > 2 && (rb - rt) <= geo.ch) { filler(rows[i], room); made++; rt = rows[i].getBoundingClientRect().top - dTop; }
     pTop = rt; pNo++;
     if (pNo % 2) continue;
     // مثلث کالم 4 (صفحے کا بایاں اوپری کونا) میں — قطار کی اونچائی پر اثر نہیں (absolute)؛
@@ -1060,6 +1085,9 @@ function _sazaBinder(d, geo) {
     if (c1) { const gap = d.createElement('span'); gap.className = 'dio-bindgap'; c1.insertBefore(gap, c1.firstChild); }
     made++;
   }
+  // آخری صفحہ — SHO قطار کے بعد خالی قطار، کھڑی لکیریں صفحے کے نیچے (حاشیے) تک
+  const roomL = pTop + geo.ch - (tbl.getBoundingClientRect().bottom - dTop) - SAFE;
+  if (roomL > 8) { filler(null, roomL); made++; }
   return made;
 }
 window._sazaBinder = _sazaBinder;

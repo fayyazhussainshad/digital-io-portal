@@ -47,11 +47,24 @@ def zimni_open(pg):
     pg.evaluate("openCaseWorkspace('c1')"); pg.wait_for_timeout(1400)
     pg.evaluate("openZimniEditor('c1')"); pg.wait_for_timeout(900)
 
+def set_date(pg, d):
+    """v555: ایک تاریخ کی ایک ہی ضمنی — ہر نئی ضمنی اپنی تاریخ پر (کالم 1)"""
+    pg.evaluate("""(d) => { const a = document.querySelector('#ch173-doc tr.zf-blk .zf-actbody'); a.textContent = d; a.dispatchEvent(new Event('input',{bubbles:true})); return 0; }""", d)
+    pg.wait_for_timeout(300)
+
 def type_body(pg, txt):
     pg.click('#ch173-doc .zf-body'); pg.keyboard.press('End'); pg.keyboard.type(txt); pg.wait_for_timeout(200)
 
 def zrows(pg):
     return pg.evaluate("(window.__db.zimni_reports||[]).map(r => ({id:r.id, sn:r.serial_no, d:r.report_date, at:(r.content||{}).saved_at, head:(r.content||{}).head, body:(r.content||{}).bodyHtml||''}))")
+
+def wait_dp(pg, n=1, ms=15000):
+    """v555: ضمنی کا پرنٹ پہلے کاغذ «تیار» کرتا ہے (صفحات / مثل کی جگہ کا حساب اصل کاغذ پر) — چھپائی
+       کا خانہ ایک لمحہ بعد کھلتا ہے؛ اُس کا انتظار، پھر تھوڑا اور (کوئی دوسرا پرنٹ نہ کھلے)"""
+    for _ in range(ms // 200):
+        if pg.evaluate('window.__dp.length') >= n: break
+        pg.wait_for_timeout(200)
+    pg.wait_for_timeout(800)
 
 def run(b, tag, vp, mobile=False):
     args = dict(viewport=vp)
@@ -90,12 +103,12 @@ def run(b, tag, vp, mobile=False):
     check(f'{tag}: ترمیم پر Ctrl+S — وہی ضمنی اپ ڈیٹ (ایک ہی قطار)', len(rows2) == 1 and rows2[0]['id'] == rows[0]['id'] and 'مزید کارروائی' in rows2[0]['body'], len(rows2))
     # ── 3) Ctrl+P = «پرنٹ» بٹن: ایک ہی پرنٹ، ضمنی کی CSS ──
     pg.evaluate(PRINTS)
-    pg.keyboard.press('Control+p'); pg.wait_for_timeout(400)
+    pg.keyboard.press('Control+p'); wait_dp(pg)
     dp = pg.evaluate('window.__dp'); nat = pg.evaluate('window.__printCalls')
     check(f'{tag}: Ctrl+P — ایک ہی پرنٹ (دوسرا نہیں کھلتا)', len(dp) == 1 and nat == 0, f'{len(dp)} iframe / {nat} native')
     check(f'{tag}: Ctrl+P کے کاغذ میں ضمنی کی CSS (چالان والی شکل نہیں)', bool(dp) and '#ch173-doc table.zf-tbl td' in dp[0])
     pg.evaluate("window.__dp = []; 0")
-    pg.click('button[data-dio-print]'); pg.wait_for_timeout(300)
+    pg.click('button[data-dio-print]'); wait_dp(pg)
     dp2 = pg.evaluate('window.__dp')
     same = bool(dp) and bool(dp2) and re.sub(r'\s+', ' ', dp[0]) == re.sub(r'\s+', ' ', dp2[0])
     check(f'{tag}: «پرنٹ» بٹن = Ctrl+P (بالکل وہی کاغذ)', same)
@@ -132,6 +145,7 @@ def run(b, tag, vp, mobile=False):
     # ── 6) آف لائن: آلے پر، پھر انٹرنیٹ آتے ہی خود sync (دوہرا نہیں) ──
     ctx.set_offline(True); pg.wait_for_timeout(200)
     pg.evaluate("_newZimni()"); pg.wait_for_timeout(1300)
+    set_date(pg, '16/10/2026')
     type_body(pg, ' آف لائن لکھی گئی ضمنی۔')
     pg.keyboard.press('Control+s'); pg.wait_for_timeout(900)
     loc = pg.evaluate("JSON.parse(localStorage.getItem('dio_zimni_c1')||'[]').filter(z => z._pending).length")
@@ -145,6 +159,7 @@ def run(b, tag, vp, mobile=False):
     # ── 7) سرور کا رد: اصل وجہ، مقامی نقل محفوظ ──
     pg.evaluate("window.__opts.fail = ['zimni_reports:insert']; window.__toasts = []; 0")
     pg.evaluate("_newZimni()"); pg.wait_for_timeout(1300)
+    set_date(pg, '17/10/2026')
     type_body(pg, ' رد ہونے والی۔')
     pg.keyboard.press('Control+s'); pg.wait_for_timeout(1300)
     t = ' | '.join(pg.evaluate('window.__toasts'))
@@ -155,6 +170,7 @@ def run(b, tag, vp, mobile=False):
     # ── 7b) سرور کی جدول میں متن کا کالم ہی نہ ہو — صاف وجہ، کام آلے پر محفوظ ──
     pg.evaluate("window.__opts.schema = { zimni_reports: ['id','case_id','serial_no','report_date','officer_id','created_at'] }; window.__toasts = []; 0")
     pg.evaluate("_newZimni()"); pg.wait_for_timeout(1300)
+    set_date(pg, '18/10/2026')
     type_body(pg, ' کالم کے بغیر۔')
     pg.keyboard.press('Control+s'); pg.wait_for_timeout(2500)
     t = ' | '.join(pg.evaluate('window.__toasts'))
