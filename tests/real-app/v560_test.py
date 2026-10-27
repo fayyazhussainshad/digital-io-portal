@@ -80,6 +80,25 @@ def html_pdf(b, html, name):
     subprocess.run(['pdftoppm', '-png', '-r', '60', '-singlefile', V + name + '.pdf', V + name])
     return subprocess.run(['pdffonts', V + name + '.pdf'], capture_output=True, text=True).stdout.splitlines()[2:]
 
+# ── اسکرین پر ہر نظر آنے والا اردو متن (اور ::before/::after) Jameel میں ہو — کوئی متبادل فونٹ نہیں ──
+URDU_SCAN = r"""() => {
+  const out = [], ok = ff => /Jameel Noori Nastaleeq|Amiri/.test(ff);   // Amiri: قرآن/عربی (لینڈنگ)
+  const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n;
+  while ((n = w.nextNode())) {
+    if (!/[؀-ۿ]/.test(n.nodeValue)) continue;
+    const el = n.parentElement; if (!el) continue;
+    const r = el.getBoundingClientRect(); if (!r.width || !r.height) continue;
+    const cs = getComputedStyle(el); if (cs.visibility === 'hidden') continue;
+    if (!ok(cs.fontFamily)) out.push(el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + ' «' + n.nodeValue.trim().slice(0, 20) + '» ' + cs.fontFamily.slice(0, 40));
+  }
+  document.querySelectorAll('*').forEach(el => ['::before', '::after'].forEach(ps => {
+    const c = getComputedStyle(el, ps), t = c.content || '';
+    const txt = t.startsWith('attr(') ? (el.getAttribute(t.slice(5, -1)) || '') : t;
+    if (/[؀-ۿ]/.test(txt) && !ok(c.fontFamily)) out.push(el.tagName.toLowerCase() + ps + ' «' + txt.slice(0, 20) + '» ' + c.fontFamily.slice(0, 40));
+  }));
+  return out.slice(0, 10);
+}"""
+
 def seed_case(pg):
     pg.evaluate("""(() => { const c = window.__db.cases.find(c => c.id === 'c1');
       Object.assign(c, { fir_number:'663/26', fir_date:'15/10/2026', section_of_law:'379 ت پ', case_station:'صدر ملتان',
@@ -96,17 +115,22 @@ def font_and_pt(b, tag, vp, mobile=False):
     check(f'{tag}: پورے نظام کا فونٹ صرف Jameel — کوئی متبادل نہیں', st['body'].replace('"', "'") == "'Jameel Noori Nastaleeq'", st['body'])
     # ── ہر صفحہ: px والا کوئی فونٹ سائز نہیں ──
     pages = ['dashboard', 'cases', 'reminders', 'incident', 'suspects', 'templates', 'search', 'law', 'fivec', 'bin', 'backup', 'ahkamat', 'court', 'settings', 'help']
-    bad = {}
+    bad, ubad = {}, {}
     for p in pages:
         pg.evaluate("try{_dioResetTabs();_dioExitDocView()}catch(e){}; try{closeModal()}catch(e){}")
         pg.evaluate(f"showPage('{p}', null)"); pg.wait_for_timeout(900)
         x = pg.evaluate(PX_SCAN)
         if x: bad[p] = x
+        u = pg.evaluate(URDU_SCAN)
+        if u: ubad[p] = u
     check(f'{tag}: {len(pages)} صفحات — کسی stylesheet یا inline انداز میں px فونٹ سائز نہیں', not bad, bad)
+    check(f'{tag}: {len(pages)} صفحات — ہر اردو متن (سرخیاں، کارڈ کے عنوان سمیت) صرف Jameel میں', not ubad, ubad)
     pg.evaluate("showPage('cases', null)"); pg.wait_for_timeout(700)
     pg.evaluate("openAddCaseModal()"); pg.wait_for_selector('#cf-fir'); pg.wait_for_timeout(600)
     x = pg.evaluate(PX_SCAN)
     check(f'{tag}: نیا اندراج کارڈ — px فونٹ سائز نہیں', not x, x)
+    u = pg.evaluate(URDU_SCAN)
+    check(f'{tag}: نیا اندراج کارڈ — اردو صرف Jameel میں', not u, u)
     pg.screenshot(path=f'{V}{tag}_new_case_card.png')
     pg.evaluate("closeModal()"); pg.wait_for_timeout(300)
     # ── دستاویزات: اسکرین پر px نہیں؛ پرنٹ (Ctrl+P) کی PDF میں فونٹ صرف Jameel، embedded ──
@@ -123,6 +147,8 @@ def font_and_pt(b, tag, vp, mobile=False):
         pg.evaluate("document.fonts.ready"); pg.wait_for_timeout(300)
         x = pg.evaluate(PX_SCAN)
         check(f'{tag} {name}: اسکرین پر px فونٹ سائز نہیں', not x, x)
+        u = pg.evaluate(URDU_SCAN)
+        check(f'{tag} {name}: اسکرین (کاغذ + اوپر کی پٹی) پر اردو صرف Jameel میں', not u, u)
         ff = pg.evaluate("(() => { const d = DIO.forms && DIO.forms.findPaper(); return d ? getComputedStyle(d).fontFamily : null; })()")
         okff = ff is not None and 'Noto' not in ff and (ff.replace('"', "'") == "'Jameel Noori Nastaleeq'" or (name == 'rfa' and ff.startswith('Arial')))
         check(f'{tag} {name}: کاغذ کا فونٹ صرف Jameel (RFA انگریزی فارم: Arial، اردو Jameel) — کوئی متبادل نہیں', okff, ff)

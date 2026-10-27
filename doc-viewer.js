@@ -101,7 +101,7 @@ function _dioEnterDocView() {
            (daain taraf, teer + "واپس") taake afsar ko farq mehsoos na ho. -->
       <button onclick="dioGoBack()" class="dio-backbtn" title="واپس" aria-label="واپس"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6l6 6-6 6"/><path d="M20 12H4"/></svg><span>واپس</span></button>
       <span id="dio-dv-fir" style="font-size:10.5pt;font-weight:900;color:var(--accent);
-            font-family:var(--font-mono);flex-shrink:0;white-space:nowrap;"></span>
+            font-family:'Jameel Noori Nastaleeq';flex-shrink:0;white-space:nowrap;"></span>
       <div id="dio-dv-tabs" style="display:flex;gap:6px;flex:1;flex-wrap:wrap;min-width:0;"></div>
       <div style="display:flex;gap:8px;flex-shrink:0;">
         <button onclick="_dioAddDocPicker()" title="نئی دستاویز کھولیں (موجودہ بند نہیں ہوگی)"
@@ -127,7 +127,10 @@ function _dioEnterDocView() {
   document.getElementById('dio-dv-body').appendChild(area);
   try {
     const f = document.getElementById('dio-dv-fir');
-    if (f && _misalCase) f.textContent = 'مقدمہ ' + (_misalCase.fir_number || '—');
+    if (f && _misalCase) {   // v560: اردو Jameel میں، نمبر <bdi> میں (رُخ نہ الٹے)
+      f.textContent = 'مقدمہ ';
+      const n = document.createElement('bdi'); n.textContent = _misalCase.fir_number || '—'; f.appendChild(n);
+    }
   } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   document.body.style.overflow = 'hidden';
 

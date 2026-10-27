@@ -312,6 +312,8 @@
   table.dio-cards td::before {
     content: attr(data-label);
     flex: 0 0 100%; max-width: 100%;
+    /* v560: عنوان ہمیشہ اردو — Jameel اور RTL (شناختی کارڈ/موبائل کے LTR mono خانے سے نہ لے) */
+    font-family: 'Jameel Noori Nastaleeq'; direction: rtl; text-align: right; letter-spacing: 0;
     font-size: 8.625pt; font-weight: 700; line-height: 1.7;
     color: var(--text-muted, #7d97ad);
     overflow-wrap: anywhere;
