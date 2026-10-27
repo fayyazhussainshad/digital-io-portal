@@ -1430,7 +1430,7 @@ function _glTextReport(f, ents) {
   lines.push('', 'دورانِ گشت کارروائی:');
   if (!ents.length) lines.push('کوئی اندراج نہیں');
   ents.forEach((e, i) => {
-    lines.push(`${i + 1}. ${e.t || ''} — ${e.kind || ''}${e.place ? ' — ' + e.place : ''}`);
+    lines.push(`${ents.length > 1 ? (i + 1) + '. ' : ''}${e.t || ''} — ${e.kind || ''}${e.place ? ' — ' + e.place : ''}`);   // v558: اکیلا ہو تو «1» نہیں
     if (e.detail) lines.push('   ' + e.detail);
     if (e.person || e.mobile) lines.push('   متعلقہ شخص: ' + [e.person, e.mobile].filter(Boolean).join(' — '));
     const ll = _glLatLngText(e.lat, e.lng);

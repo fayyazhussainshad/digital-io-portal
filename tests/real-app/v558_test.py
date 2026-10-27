@@ -312,7 +312,7 @@ def run(b, tag, ctxargs, mobile):
         pg.evaluate("_openMisalEditor('statements_161')"); pg.wait_for_timeout(1800)
         dl = pg.evaluate("[...document.querySelectorAll('.zat-wrap tr.zt-draft')].map(r => r.textContent.replace(/\\s+/g, ' '))")
         check(f'{tag}: فہرست میں «مسودہ — ابھی محفوظ نہیں کیا گیا» (گواہ کے نام کے ساتھ)', len(dl) == 1 and 'مسودہ' in dl[0] and 'احمد علی' in dl[0], dl)
-        pg.click(".zat-wrap tr.zt-draft button:has-text('جاری رکھیں')"); pg.wait_for_timeout(1600)
+        pg.click(".zat-wrap tr.zt-draft button[title='جاری رکھیں']"); pg.wait_for_timeout(1600)
         back = pg.evaluate("document.querySelector('#ch173-doc .zfa-body').textContent")
         check(f'{tag}: «جاری رکھیں» — لکھا ہوا جوں کا توں واپس', 'مسودے والا جملہ' in back and 'فوری جملہ' in back)
         pg.click('#zfa-save-btn'); pg.wait_for_timeout(1500)
@@ -362,12 +362,18 @@ def run(b, tag, ctxargs, mobile):
         new_za(pg); pick(pg, 'احمد علی'); pg.click('#zfa-save-btn'); pg.wait_for_timeout(1500)
         t = ' | '.join(pg.evaluate('window.__toasts'))
         check(f'{tag}: سرور کا رد — اصل وجہ صاف لفظوں میں، «اس آلے پر محفوظ ہے، کچھ ضائع نہیں»', 'اجازت نہیں' in t and 'ضائع نہیں' in t and len(za_rows(pg)) == 2, t[-200:])
-        pg.evaluate("window.__opts.fail = []; 0")
-        pg.click("button:has-text('← واپس')"); pg.wait_for_timeout(1200)
+        pg.click("button:has-text('← واپس')"); pg.wait_for_timeout(2500)   # سرور ابھی بھی رد کر رہا ہے
         why = pg.evaluate("[...document.querySelectorAll('.zat-wrap .zst-why')].map(x => x.textContent)")
         check(f'{tag}: فہرست میں وجہ بھی', bool(why) and 'اجازت' in why[0], why)
+        pg.evaluate("window.__opts.fail = []; window.__toasts = []; 0")
         pg.click("button:has-text('سرور پر بھیجیں')"); pg.wait_for_timeout(2000)
         check(f'{tag}: «⟳ سرور پر بھیجیں» — اب سرور پر', len(za_rows(pg)) == 3, za_rows(pg))
+        # v558 (افسر: «لیپ ٹاپ کی ضمنیاں موبائل پر نہیں») — انٹرنیٹ مسلسل چلتا رہے تب بھی باقی بیان
+        #   خود سرور پر (پہلے صرف انٹرنیٹ ٹوٹ کر واپس آنے پر)؛ یہاں ہر منٹ والی کوشش سیدھی بلائی گئی
+        pg.evaluate("window.__opts.fail = ['zimni_androoni_reports:insert']; 0")
+        new_za(pg); pick(pg, 'احمد علی'); pg.click('#zfa-save-btn'); pg.wait_for_timeout(1500)
+        pg.evaluate("window.__opts.fail = []; window._zaLastTry = 0; _zaSyncSoon(); 0"); pg.wait_for_timeout(2500)
+        check(f'{tag}: انٹرنیٹ چلتا رہے — باقی بیان خود (ہر منٹ والی کوشش) سرور پر', len(za_rows(pg)) == 4, za_rows(pg))
     except Exception as e:
         check(f'{tag}: offline section crashed', False, repr(e)[:300])
         try: ctx.set_offline(False)
@@ -381,7 +387,7 @@ def run(b, tag, ctxargs, mobile):
         open_za(pg)
         L = pg.evaluate("[...document.querySelectorAll('.zat-wrap tbody tr')].map(r => r.textContent.replace(/\\s+/g, ' '))")
         check(f'{tag}: پرانا بیان فہرست میں (10/10/2026، احمد علی، سرور پر محفوظ)', len(L) == 1 and '10/10/2026' in L[0] and 'احمد علی' in L[0] and 'سرور پر محفوظ' in L[0], L)
-        pg.click(".zat-wrap button:has-text('ترمیم')"); pg.wait_for_timeout(1500)
+        pg.click(".zat-wrap button[title='ترمیم']"); pg.wait_for_timeout(1500)
         o = pg.evaluate("""(() => { const io = document.querySelector('#ch173-doc .zfa-wit-io'), b = document.querySelector('#ch173-doc .zfa-body');
             const r = document.createRange(); r.selectNodeContents(io); const x = [...r.getClientRects()][0];
             return { ref: !!document.querySelector('#ch173-doc .zfa-wit-ref'), left: Math.round(x.left - b.getBoundingClientRect().left) }; })()""")
@@ -421,6 +427,105 @@ def run(b, tag, ctxargs, mobile):
         check(f'{tag}: بیرونی ضمنی پرنٹ — لکیریں (کالم 2 سمیت) صفحے کے نیچے تک', all(len(gp) >= 2 and all(x <= 8 for x in gp) for gp in gaps), gaps)
     except Exception as e:
         check(f'{tag}: bairooni fill section crashed', False, repr(e)[:300])
+
+    # ═══ 10) (27 اکتوبر 2026 کے نکات) اردو کی بورڈ پر Ctrl+S / Ctrl+P، اختتامی سطر، «از۔»، فہرست کے بٹن،
+    #        اکیلے ملزم پر نمبر نہیں، ضمنی خود سرور پر، صفحہ 2 پر لکیر کے سامنے تحریر ═══
+    URDU = """(k) => { const t = document.querySelector('#ch173-doc') || document.body;
+        const e = new KeyboardEvent('keydown', { key: k === 's' ? 'س' : 'پ', code: k === 's' ? 'KeyS' : 'KeyP', ctrlKey: true, bubbles: true, cancelable: true });
+        t.dispatchEvent(e); return e.defaultPrevented; }"""
+    zr = lambda: pg.evaluate("(window.__db.zimni_reports||[]).filter(r => r.case_id === 'c1').map(r => ({id:r.id, sn:r.serial_no, b:(r.content||{}).bodyHtml||''}))")
+    try:
+        pg.evaluate(SEED); ws(pg)
+        pg.evaluate("openZimniEditor('c1')"); pg.wait_for_timeout(1200)
+        pg.evaluate("_newZimni()"); pg.wait_for_timeout(2000)
+        prev = pg.evaluate(URDU, 's'); pg.wait_for_timeout(1800)
+        check(f'{tag}: کی بورڈ اردو پر Ctrl+S («س») — ضمنی محفوظ، براؤزر کی HTML فائل نہیں', prev and len(zr()) == 1, (prev, len(zr())))
+        h = printed(pg, lambda: pg.evaluate(URDU, 'p'), 'legal')
+        check(f'{tag}: کی بورڈ اردو پر Ctrl+P («پ») — سسٹم کا اپنا ضمنی کا کاغذ (براؤزر کی سادہ چھپائی نہیں)', 'zf-tbl' in h and pg.evaluate('window.__printCalls') == 0, (len(h), pg.evaluate('window.__printCalls')))
+        g = pg.evaluate("""(() => { const d = _zimniDoc(); const tl = (el, last) => { const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let n, v = null;
+              while ((n = tw.nextNode())) { if (!n.nodeValue.trim()) continue; const r = document.createRange(); r.selectNodeContents(n);
+                for (const x of r.getClientRects()) { if (x.height < 2) continue; if (!last) return x; v = x; } } return v; };
+            const k = d.getBoundingClientRect().height / d.offsetHeight;
+            const b = tl(d.querySelector('tr.zf-blk .zf-body'), true), c = tl(d.querySelector('.zf-close'), false);
+            const t = d.querySelector('table.zf-tbl'), c4 = d.querySelector('th.zf-c-from');
+            return { close: d.querySelector('.zf-close').textContent.trim(), gap: Math.round((c.top - b.bottom) / k), c4: +(c4.getBoundingClientRect().width / t.getBoundingClientRect().width).toFixed(3),
+                     banam: d.querySelector('[data-k="banam"]').innerText.trim() }; })()""")
+        check(f'{tag}: اختتامی سطر «رپورٹ ضمنی مرتب ہو کرارسال خدمت ہے۔» (۔ کے ساتھ)', g['close'] == 'رپورٹ ضمنی مرتب ہو کرارسال خدمت ہے۔', g['close'])
+        check(f'{tag}: اختتامی سطر کے اوپر کی جگہ پہلے (34px) کی آدھی یا کم', 0 < g['gap'] <= 17, g['gap'])
+        check(f'{tag}: «از۔» کا کالم پہلے (6%) سے دُگنا (12%)', 0.11 <= g['c4'] <= 0.13, g['c4'])
+        check(f'{tag}: «بنام» میں صرف ایک ملزم — نمبر «1۔» نہیں', g['banam'] and not re.match(r'^\s*1\s*۔', g['banam']), g['banam'])
+        # دو ملزم — نمبر 1، 2
+        pg.evaluate("window.__db.case_accused.push({ id:'a2', case_id:'c1', name:'دوسرا ملزم', accused_type:'fir', created_at:'2026-10-09' }); 0")
+        pg.evaluate("_zimniLoadAccused().then(() => _zimniFillBanam(true))"); pg.wait_for_timeout(800)
+        b2 = pg.evaluate("document.querySelector('#ch173-doc [data-k=\"banam\"]').innerText.trim()")
+        check(f'{tag}: «بنام» میں دو ملزم — نمبر 1۔ 2۔', re.search(r'1\s*۔', b2) and re.search(r'2\s*۔', b2), b2)
+        # پرانی محفوظ ضمنی («1۔ نامعلوم ملزم»، اختتامی سطر بغیر ۔) — کھولنے اور چھاپنے پر نیا اصول
+        pg.evaluate("_saveZimni(true, true)"); pg.wait_for_timeout(1200)
+        old = pg.evaluate("""(() => { const r = window.__db.zimni_reports[0]; let b = r.content.bodyHtml;
+            b = b.replace(/<span class="nm">[^<]*<[/]span><[/]div><div class="zf-acc"><span class="nm">[^<]*<[/]span>/, '<span class="nm">1۔ نامعلوم ملزم</span>').replace('ارسال خدمت ہے۔', 'ارسال خدمت ہے');
+            r.content = Object.assign({}, r.content, { bodyHtml: b, saved_at: '2026-10-01T00:00:00Z' }); localStorage.removeItem('dio_zimni_c1'); localStorage.removeItem('dio_zimni_draft_c1'); return b.includes('1۔ نامعلوم'); })()""")
+        pg.evaluate("_loadZimni().then(() => _renderZimniList())"); pg.wait_for_timeout(1200)
+        h = printed(pg, lambda: pg.evaluate("_printZimniById(String(_zimniList[0].id))"), 'legal')
+        check(f'{tag}: پرانی محفوظ ضمنی کا پرنٹ — اکیلے ملزم پر «1۔» نہیں، اختتامی سطر «۔» کے ساتھ', old and '1۔ نامعلوم' not in h and 'ارسال خدمت ہے۔' in h, (old, '1۔ نامعلوم' in h))
+        # فہرست کے بٹن — مقدمہ کی فہرست والے، PDF / نقل نہیں؛ پرنٹ کھولے بغیر
+        L = pg.evaluate("""(() => { const tr = document.querySelector('.zt tbody tr[data-zid]');
+            return { t: [...tr.querySelectorAll('button')].map(b => b.title.split(' — ')[0]), cls: [...tr.querySelectorAll('button')].every(b => b.classList.contains('dio-act') && b.classList.contains('btn-sm')),
+                     same: (() => { const c = document.createElement('div'); c.innerHTML = dioActBtn('print', 'x()', 'پرنٹ'); return c.firstChild.className; })() }; })()""")
+        check(f'{tag}: محفوظ ضمنیوں کے ایکشن بٹن: ترمیم / پرنٹ / شیئر / حذف — PDF اور نقل نہیں؛ مقدمہ کی فہرست والی شکل', L['t'] == ['ترمیم', 'پرنٹ', 'شیئر', 'حذف'] and L['cls'], L)
+        h = printed(pg, lambda: pg.click(".zt tbody tr[data-zid] button[title^='پرنٹ']"), 'legal')
+        check(f'{tag}: فہرست کا «پرنٹ» — ضمنی کھولے بغیر سیدھا کاغذ', 'zf-tbl' in h and pg.evaluate("!document.querySelector('#ch173-doc')"), len(h))
+        # دوسری ضمنی + «تمام ضمنیاں» — ترتیب 1، 2
+        pg.evaluate("_newZimni()"); pg.wait_for_timeout(1600)
+        pg.evaluate("""(() => { const a = document.querySelector('#ch173-doc tr.zf-blk .zf-actbody'); a.textContent = '20/10/2026'; return 0; })()""")
+        pg.evaluate("_saveZimni(true, true)"); pg.wait_for_timeout(1300); pg.evaluate("_zimniBackToList()"); pg.wait_for_timeout(1200)
+        h = printed(pg, lambda: pg.click("button:has-text('تمام ضمنیاں')"), 'legal')
+        zn = re.findall(r'data-k="zno"[^>]*>\s*(\d+)', h)
+        check(f'{tag}: «🖨️ تمام ضمنیاں» — دونوں ضمنیاں، ترتیب 1 پھر 2', zn[:2] == ['1', '2'], zn)
+        # ضمنی خود سرور پر — انٹرنیٹ مسلسل چلتا رہے (پہلے صرف انٹرنیٹ ٹوٹ کر واپس آنے پر)
+        pg.evaluate("window.__opts.fail = ['zimni_reports:insert']; 0")
+        pg.evaluate("_newZimni()"); pg.wait_for_timeout(1600)
+        pg.evaluate("""(() => { const a = document.querySelector('#ch173-doc tr.zf-blk .zf-actbody'); a.textContent = '21/10/2026'; return 0; })()""")
+        pg.evaluate("_saveZimni(true, true)"); pg.wait_for_timeout(1300)
+        n0 = len(zr())
+        pg.evaluate("window.__opts.fail = []; window._zimniLastTry = 0; _zimniSyncSoon(); 0"); pg.wait_for_timeout(2500)
+        check(f'{tag}: لیپ ٹاپ پر «سرور پر بھیجنا باقی» ضمنی — انٹرنیٹ چلتا رہے تب بھی خود سرور پر (دوسرے آلے پر نظر آئے)', n0 == 2 and len(zr()) == 3, (n0, len(zr())))
+        # کسی صفحے پر محفوظ کرنے کو کچھ نہ ہو — تب بھی Ctrl+S پر براؤزر کی HTML فائل نہیں
+        pg.evaluate("showPage('dashboard', null)"); pg.wait_for_timeout(1200)
+        check(f'{tag}: ڈیش بورڈ پر Ctrl+S («س») — براؤزر کا «صفحہ محفوظ کریں» نہیں', pg.evaluate(URDU, 's'))
+    except Exception as e:
+        check(f'{tag}: 27-Oct items section crashed', False, repr(e)[:300])
+
+    # ═══ 11) صفحہ 2 پر مثل کی 2pt لکیر کے سامنے بھی تحریر (اندرونی ضمنی کے لمبے بیانات) ═══
+    try:
+        pg.evaluate(SEED); open_za(pg); new_za(pg)
+        pg.evaluate("""async (para) => { for (let i = 0; i < 3; i++) await _zaInsertWitnessStatement({ id: 'w' + i, full_name: 'گواہ نمبر ' + (i + 1) + ' ولد فلاں سکنہ ملتان', status: 'fir_eye' });
+            document.querySelectorAll('#ch173-doc .zfa-wit-stmt').forEach(st => { st.textContent = 'بیان کیا کہ ' + para.repeat(14); }); return 0; }""",
+            'دوران تفتیش موقع پر پہنچ کر گواہان کے بیانات قلمبند کیے گئے اور نقشہ موقع مرتب کیا گیا۔ ملزمان کی تلاش جاری ہے۔ ')
+        pg.wait_for_timeout(400)
+        h = printed(pg, lambda: pg.evaluate("_printZimniA()"), 'legal')
+        c2 = b.new_context(viewport={'width': 816, 'height': 1248}); c2.route('**/*', route); q = c2.new_page()
+        fn = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '_v558_bind.html'); open(fn, 'w', encoding='utf-8').write('<!DOCTYPE html>' + h)
+        q.goto(BASE + '_v558_bind.html'); q.emulate_media(media='print'); q.wait_for_timeout(1300); q.evaluate('document.fonts.ready')
+        r = q.evaluate("""(() => { const m = document.querySelector('.zfa-bindmark'); if (!m) return null; const mr = m.getBoundingClientRect();
+            let inside = 0; const tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT); let n;
+            while ((n = tw.nextNode())) { if (!n.nodeValue.trim()) continue; const rg = document.createRange(); rg.selectNodeContents(n);
+              for (const x of rg.getClientRects()) { if (x.height < 4) continue; const mid = (x.top + x.bottom) / 2;
+                if (mid > mr.top + 0.25 * mr.height && mid < mr.bottom - 4 && x.left < mr.right - 24) inside++; } }
+            return { inside, w: Math.round(mr.width) }; })()""")
+        c2.close(); os.remove(fn)
+        check(f'{tag}: صفحہ 2 پر مثل کی 2pt لکیر کے سامنے بھی تحریر (مربع خالی نہیں — تحریر لکیر کے ساتھ ساتھ)', bool(r) and r['inside'] >= 3, r)
+        pdf = to_pdf(b, h, f'{tag}_za_bind')
+        check(f'{tag}: (اسی پرنٹ میں) کئی صفحات', pdf_pages(pdf) >= 2, pdf_pages(pdf))
+    except Exception as e:
+        check(f'{tag}: binding text section crashed', False, repr(e)[:300])
+
+    if mobile:
+        try:
+            pg.evaluate(SEED); open_za(pg); new_za(pg); pg.wait_for_timeout(1200)
+            r = pg.evaluate("(() => { const d = _zimniDoc().getBoundingClientRect(); return [Math.round(d.left), Math.round(d.right), innerWidth]; })()")
+            check(f'{tag}: موبائل — کاغذ اسکرین کے بیچ میں (پہلے آدھا بائیں باہر نکل جاتا تھا)', r[0] >= 0 and r[1] <= r[2] and abs(r[0] - (r[2] - r[1])) <= 4, r)
+        except Exception as e:
+            check(f'{tag}: mobile paper section crashed', False, repr(e)[:300])
 
     check(f'{tag}: کوئی JS غلطی نہیں', not errs, errs[:3])
     ctx.close()

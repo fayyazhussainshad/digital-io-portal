@@ -2890,7 +2890,7 @@ function _ch173AkhrajWitnessText() {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return _ch173WitSort(list).map((w, i) =>
     '<div class="gw-ln"><span class="gw-nm">' +
-      E((i + 1) + '\u06D4 ' + w.name) +
+      E((list.length > 1 ? (i + 1) + '\u06D4 ' : '') + w.name) +   // v558: اکیلا ہو تو «1» نہیں
     '</span><span class="gw-cn">' + E(w.cnic || '') + '</span></div>'
   ).join('');
 }
@@ -2978,7 +2978,7 @@ function _ch173WitWrite(el, list) {
       _out.push(s1 + '\u06D4 ' + a + '\u2003' + s2 + '\u06D4 ' + nb);
       _i += 2;
     } else {
-      _out.push((++_sr) + '\u06D4 ' + a);
+      _out.push(list.length > 1 ? (++_sr) + '\u06D4 ' + a : a);   // v558: اکیلا ہو تو «1» نہیں
       _i += 1;
     }
   }
@@ -3159,7 +3159,7 @@ function _ch173WitnessText() {
       _out.push(s1 + '\u06D4 ' + a + '\u2003' + s2 + '\u06D4 ' + b);
       _i += 2;
     } else {
-      _out.push((++_sr) + '\u06D4 ' + a);
+      _out.push(_names.length > 1 ? (++_sr) + '\u06D4 ' + a : a);   // v558: اکیلا ہو تو «1» نہیں
       _i += 1;
     }
   }
@@ -3262,7 +3262,7 @@ function _ch173AccPicker(ev, key) {
       cell.innerText = picked.map((nm, i) => {
         const a = (_ch173Accused || []).find(x => (x.name || '').trim() === nm);
         const c = (a && a.cnic && String(a.cnic).trim()) ? String(a.cnic).trim() : '00000-0000000-0';
-        return (i + 1) + '\u06D4 ' + nm + ' ' + c;
+        return (picked.length > 1 ? (i + 1) + '\u06D4 ' : '') + nm + ' ' + c;   // v558: اکیلا ہو تو «1» نہیں
       }).join('\n');
     }
     box.remove();
@@ -3888,10 +3888,11 @@ function _ch173FitPaper() {
   //   Ab dono taraf barabar manfi hashiya: kaghaz ka markaz = dabbe ka markaz (RTL/LTR dono).
   try {
     const kk = (doc.style.transform && doc.style.transform !== 'none') ? k : 1;
-    if (kk < 1 && !_ch173PrintMeasuring) {
-      const cs = getComputedStyle(host);
-      const inner = host.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
-      const m = Math.round((inner - wPx) / 2);
+    const cs = getComputedStyle(host);
+    const inner = host.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+    // اصل چوڑائی (موبائل «فارم» منظر میں CSS اسے 100% کر دیتی ہے — تب کچھ نہیں)
+    const m = Math.round((inner - doc.offsetWidth) / 2);
+    if (kk < 1 && m < 0 && !_ch173PrintMeasuring) {
       doc.style.marginLeft = m + 'px'; doc.style.marginRight = m + 'px';
       host.style.overflowX = 'hidden';
     } else {
@@ -4540,10 +4541,10 @@ function _renderR173List() {
         ${esc(dt(d))}${wq(d) ? `<div class="wq">${esc(wq(d))}</div>` : ''}</td>
       <td class="mz">${esc(mazmoon(d))}</td>
       <td class="act">
-        <button class="cab" onclick="event.stopPropagation();_r173OpenDoc('${_dioJsHtml(d.id)}')" title="ترمیم">✏️</button>
-        <button class="cab" onclick="event.stopPropagation();_r173DeleteDoc('${_dioJsHtml(d.id)}')" title="حذف">🗑️</button>
-        <button class="cab" onclick="event.stopPropagation();_r173PrintDoc('${_dioJsHtml(d.id)}')" title="پرنٹ">🖨️</button>
-        <button class="cab" onclick="event.stopPropagation();_r173EmailDoc('${_dioJsHtml(d.id)}')" title="بھیجیں">✉️</button>
+        ${dioActRow(dioActBtn('edit', `_r173OpenDoc('${_dioJsHtml(d.id)}')`, 'ترمیم')
+          + dioActBtn('print', `_r173PrintDoc('${_dioJsHtml(d.id)}')`, 'پرنٹ')
+          + dioActBtn('share', `_r173EmailDoc('${_dioJsHtml(d.id)}')`, 'شیئر')
+          + dioActBtn('delete', `_r173DeleteDoc('${_dioJsHtml(d.id)}')`, 'حذف'))}
       </td>
     </tr>`).join('');
 
@@ -5632,7 +5633,7 @@ function _ch173MudaiLine(c) {
   if (!nm) return '';
   const cn = String((cross ? c.cross_complainant_cnic : c.complainant_cnic) || '').trim()
              || '00000-0000000-0';
-  return '1\u06D4 ' + nm + ' ' + cn;
+  return nm + ' ' + cn;   // v558: مدعی ایک ہی — نمبر «1» نہیں
 }
 window._ch173MudaiLine = _ch173MudaiLine;
 

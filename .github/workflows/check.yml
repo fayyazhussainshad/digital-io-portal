@@ -106,7 +106,7 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: python v555_test.py
-      - name: v558 — statements 161 (androoni zimni) save local-first + server + autosave draft + sync, witness dropdown, (زیردفعہ 161ض ف) at left border, IO name/date SOP, Ctrl+S/Ctrl+P/top-bar never the challan route, zimni column lines to page bottom in editor (v558_test.py)
+      - name: v558 — statements 161 (androoni zimni) save local-first + server + autosave draft + sync, witness dropdown, (زیردفعہ 161ض ف) at left border, IO name/date SOP, Ctrl+S/Ctrl+P/top-bar never the challan route, zimni column lines to page bottom in editor; Urdu-keyboard Ctrl+S/Ctrl+P, closing line, wider col 4, no lone serial 1, unified list buttons, auto-sync while online, text beside binding line (v558_test.py)
         if: always()
         working-directory: tests/real-app
         run: python v558_test.py

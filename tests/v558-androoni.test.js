@@ -30,7 +30,7 @@ test('محفوظ: پہلے آلے پر، پھر سرور؛ «ٹوٹا» صرف �
   const save = Z.slice(Z.indexOf('async function _saveZimniA('), Z.indexOf('window._saveZimniA = _saveZimniA;'));
   assert.ok(save.indexOf('const okLocal = localSave(localObj)') < save.indexOf('_zaWrite(base'), 'آلے پر پہلے');
   const load = Z.slice(Z.indexOf('async function _loadZimniA()'), Z.indexOf('// ── SYNC: آلے پر محفوظ'));
-  assert.ok(/PGRST204\|PGRST205\|42703\|42P01/.test(load) && /if \(schema\) window\._zaDbBroken = true;/.test(load));
+  assert.ok(/PGRST204\|PGRST205\|42703\|42P01/.test(load) && /if \(schema\) \{ window\._zaDbBroken = true;/.test(load));
   assert.ok(!/window\._zaDbBroken = true;\s*try \{ console\.error\('\[zimni androoni load\] zimni_androoni_reports کا ڈھانچہ/.test(Z), 'پرانا «ہر غلطی پر ٹوٹا» نہیں');
   assert.ok(/function _zaWriteDraft\(\)/.test(Z) && /'dio_za_draft_' \+ caseId/.test(Z) && /window\.addEventListener\('pagehide', flush\)/.test(Z));
   assert.ok(/window\.addEventListener\('online', \(\) => \{ window\._zaDbBroken = false; setTimeout\(\(\) => \{ _zaSyncPending\(\); \}/.test(Z));
@@ -52,4 +52,26 @@ test('Ctrl+S / Ctrl+P / پٹی کے بٹن — اندرونی ضمنی کبھی 
 test('بیرونی ضمنی: ایڈیٹر میں کھڑی لکیریں کاغذ کے نیچے تک، محفوظ مواد میں عارضی اونچائی نہیں', () => {
   assert.ok(/function _zimniFillScreen\(\)/.test(Z) && /tr\.zf-blk'\)\) \{ _zimniFillScreen\(\); return; \}/.test(Z));
   assert.ok(/tr\.zf-endrow > td'\)\.forEach\(td => \{ td\.style\.height = ''/.test(Z));
+});
+
+test('27 اکتوبر: اردو کی بورڈ پر بھی Ctrl+S / Ctrl+P (اصل کلید e.code سے) — سب سے پہلے، ایک ہی جگہ', () => {
+  const h = read('index.html');
+  const i = h.indexOf("Object.defineProperty(e, 'key'");
+  assert.ok(i > 0 && i < h.indexOf('<script src='), 'سب سے پہلے والے اسکرپٹ میں');
+  assert.ok(/\/\^Key\(\[A-Z\]\)\$\/\.exec\(String\(e\.code/.test(h));
+});
+
+test('27 اکتوبر: اختتامی سطر «۔» کے ساتھ، اوپر کی جگہ آدھی، «از۔» دُگنا، اکیلے نام پر «1» نہیں', () => {
+  assert.ok(/>رپورٹ ضمنی مرتب ہو کرارسال خدمت ہے۔<\/div>/.test(Z) && !/>رپورٹ ضمنی مرتب ہو کرارسال خدمت ہے<\/div>/.test(Z));
+  assert.ok(/\.zf-close\{ margin-top:0\.5em;/.test(Z) && /tr\.zf-endrow td\{ padding-top:0; \}/.test(Z));
+  assert.ok(/<col style="width:67%"><col style="width:12%">/.test(Z));
+  assert.ok(/\(\(n === 1\) \? '' : \(i \+ 1\) \+ '\\u06D4 '\)/.test(Z));
+  const R = read('report173.js');
+  assert.ok(!/return '1\\u06D4 ' \+ nm/.test(R), 'مدعی پر «1۔» نہیں');
+});
+
+test('27 اکتوبر: فہرست کے ایکشن بٹن ایک جیسے (dioActBtn)، ضمنی فہرست میں PDF / نقل نہیں', () => {
+  assert.ok(/function dioActBtn\(kind, js, title\)/.test(read('app-core.js')));
+  for (const f of ['_pdfZimni', '_copyZimni', '_pdfZimniA', '_copyZimniA']) assert.ok(!new RegExp('function ' + f + '\\(').test(Z), f);
+  assert.ok(/dioActBtn\('print', `_printZimniById/.test(Z));
 });

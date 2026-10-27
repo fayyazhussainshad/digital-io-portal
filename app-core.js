@@ -1114,6 +1114,31 @@ function dioBindInsert(parent, before, triClass) {
 }
 window.dioBindInsert = dioBindInsert;
 
+// ═══ v558 SYSTEM RULE (افسر کی ہدایت، 27 اکتوبر 2026): «سسٹم کا ہر بٹن پورے سسٹم میں ایک جیسا —
+//   جیسے مقدمہ کی فہرست کے ایکشن بٹن» — فہرستوں کے ایکشن بٹن اسی ایک جگہ سے (وہی شکل، سائز، نشان) ═══
+const DIO_ACT_ICONS = {
+  open:     '<path d="M6.5 3.5h7l4.5 4.5V20.5h-11.5z"/><path d="M13.5 3.5V8H18"/>',
+  edit:     '<path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/>',
+  print:    '<path d="M7 8V3.5h10V8"/><path d="M6 17.5H4.5V10a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v7.5H18"/><path d="M7 14h10v6.5H7z"/>',
+  download: '<path d="M12 3.5v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M4.5 20h15"/>',
+  share:    '<path d="M12 15V3.5"/><path d="M7.5 8L12 3.5 16.5 8"/><path d="M4.5 13.5V20h15v-6.5"/>',
+  delete:   '<path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/>',
+  copy:     '<path d="M8.5 8.5h11v11h-11z"/><path d="M15.5 8.5V4.5h-11v11h4"/>',
+};
+// kind: open | edit | print | download | share | delete | copy ؛ js: onclick کا کوڈ (پہلے سے محفوظ/escape شدہ)
+function dioActBtn(kind, js, title) {
+  const cls = kind === 'share' ? 'btn-primary' : kind === 'delete' ? 'btn-danger' : 'btn-secondary';
+  const t = String(title || '').replace(/"/g, '&quot;');
+  return `<button type="button" aria-label="${t}" class="btn ${cls} btn-sm dio-act" onclick="event.stopPropagation();${js}" title="${t}">`
+    + `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px">${DIO_ACT_ICONS[kind] || DIO_ACT_ICONS.open}</svg></button>`;
+}
+// بٹنوں کی قطار — مقدمہ کی فہرست والی ترتیب (دائیں سے، 2px فاصلہ، درمیان میں)
+function dioActRow(html) {
+  return `<div class="dio-act-row" style="display:flex;gap:2px;direction:rtl;justify-content:center;flex-direction:row-reverse;flex-wrap:nowrap;">${html}</div>`;
+}
+window.dioActBtn = dioActBtn;
+window.dioActRow = dioActRow;
+
 // ── باقی تمام دستاویزات (FIR متن، درخواستیں، مسل کی دستاویزات، ٹمپلیٹ …) ──
 //  چالان/ضمنی/سزا سلپ اپنا حساب خود کرتے ہیں (#ch173-doc / #saza-doc)؛ باقی ہر پرنٹ
 //  (iframe) میں یہ: صفحات کا حساب (منتخب کاغذ کا @page سائز اور حاشیے)، ہر جفت صفحے

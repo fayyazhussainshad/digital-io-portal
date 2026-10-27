@@ -1649,7 +1649,8 @@ ${_docInner(a, hv, io, fabricOk)}
     const accs = [];
     _naqData.sketches.forEach(x => _banamFor(x).forEach(n => { if (accs.indexOf(n) === -1) accs.push(n); }));
     _naqAccList.forEach(x => { if (accs.indexOf(x.name) === -1) accs.push(x.name); });
-    const btn = (fn, id, ic, t, cls) => `<button type="button" class="btn btn-sm ${cls || 'btn-secondary'}" onclick="window.${fn}&&${fn}('${id}')" title="${t}" aria-label="${t}">${ic} <span>${t}</span></button>`;
+    // v558: پورے سسٹم کے ایکشن بٹن ایک جیسے (مقدمہ کی فہرست والے) — dioActBtn
+    const btn = (fn, id, kind, t) => dioActBtn(kind, `window.${fn}&&${fn}('${id}')`, t);
     const body = rows.length ? rows.map((sk, i) => `<tr data-naq="${E(sk.id)}">
         <td class="dio-col-num" style="text-align:center;">${i + 1}</td>
         <td><b>${E(_typeLbl(sk))}</b> <small dir="ltr" style="color:var(--text-muted);">#${E(sk.serial || '')}</small></td>
@@ -1657,11 +1658,11 @@ ${_docInner(a, hv, io, fabricOk)}
         <td dir="ltr" style="white-space:nowrap;">${E(_rowDate(sk) || '—')}</td>
         <td dir="ltr" style="white-space:nowrap;">${E(_savedTime(sk) || '—')}</td>
         <td><div class="naq-lacts">
-          ${btn('_naqEdit', sk.id, '✏️', 'ترمیم')}
-          ${btn('_naqListPrint', sk.id, '🖨️', 'پرنٹ', 'btn-primary')}
-          ${btn('_naqListDownload', sk.id, '⬇️', 'ڈاؤن لوڈ')}
-          ${btn('_naqCopyRow', sk.id, '⧉', 'کاپی')}
-          ${btn('_naqDelRow', sk.id, '🗑️', 'حذف', 'btn-danger')}
+          ${btn('_naqEdit', sk.id, 'edit', 'ترمیم')}
+          ${btn('_naqListPrint', sk.id, 'print', 'پرنٹ')}
+          ${btn('_naqListDownload', sk.id, 'download', 'ڈاؤن لوڈ')}
+          ${btn('_naqCopyRow', sk.id, 'copy', 'کاپی')}
+          ${btn('_naqDelRow', sk.id, 'delete', 'حذف')}
         </div></td></tr>`).join('')
       : `<tr><td colspan="6" style="padding:26px;text-align:center;color:var(--text-muted);">${
           _naqData.sketches.length ? 'اس چھان سے کوئی نقشہ نہیں ملا' : 'ابھی کوئی نقشہ محفوظ نہیں — نیا نقشہ بنانے کے لیے «+ نقشہ موقع درج کریں» دبائیں'}</td></tr>`;
@@ -1706,7 +1707,7 @@ ${_docInner(a, hv, io, fabricOk)}
     .naq-lsub{ font-size:11pt; color:var(--text-muted,#667); line-height:1.7; }
     .naq-list .data-table td{ font-size:14pt; line-height:1.6; }
     .naq-lfilter{ display:flex; gap:8px; flex-wrap:wrap; margin:0 0 12px; }
-    .naq-lacts{ display:flex; gap:4px; flex-wrap:nowrap; justify-content:center; white-space:nowrap; }
+    .naq-lacts{ display:flex; gap:2px; flex-wrap:nowrap; justify-content:center; white-space:nowrap; }
     .naq-lacts .btn{ display:inline-flex; align-items:center; gap:4px; white-space:nowrap; }
     @media (max-width:760px){ .naq-lacts{ justify-content:flex-start; overflow-x:auto; }
       .naq-lacts .btn span{ display:none; } .naq-lacts .btn{ min-width:40px; min-height:38px; justify-content:center; } }`;

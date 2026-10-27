@@ -139,7 +139,7 @@
     // Ctrl+S
     if (ctrl && !e.altKey && !e.shiftKey && kl === 's') {
       e.preventDefault();
-      if (!saveNow()) toast('ℹ️ یہاں محفوظ کرنے کو کچھ نہیں — یہ صفحہ خودکار محفوظ ہوتا ہے');
+      if (!saveNow()) toast('ℹ️ اس صفحے پر محفوظ کرنے کو کچھ نہیں — اندراج کھول کر Ctrl+S دبائیں');
       return;
     }
     // Ctrl+H / Ctrl+F (editor-tools.js لوڈ ہو تو وہی پہلے سنبھال لیتی ہے)

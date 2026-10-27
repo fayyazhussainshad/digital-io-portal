@@ -179,7 +179,8 @@ function _dkChosenNamesHtml() {
     const cnic = a.cnic ? esc(a.cnic) : '';
     // Naam se koi غیر ضروری leading control/lone char hatao (bidi marks waghera)
     const cleanN = String(n).replace(/^[\u200e\u200f\u061c\u202a-\u202e\s]+/, '').trim();
-    return '<div class="dk-acc-line"><span class="dk-acc-nm"><bdi>' + (i+1) + '۔</bdi> ' + esc(cleanN) + '</span>' +
+    // v558 قاعدہ: صرف ایک نام ہو تو نمبر «1» نہیں
+    return '<div class="dk-acc-line"><span class="dk-acc-nm">' + (names.length > 1 ? '<bdi>' + (i+1) + '۔</bdi> ' : '') + esc(cleanN) + '</span>' +
            '<span class="dk-acc-cnic">' + cnic + '</span></div>';
   }).join('');
 }

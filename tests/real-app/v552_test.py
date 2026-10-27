@@ -132,10 +132,10 @@ def run(b, tag, vp, mobile=False):
     # ── 5) فہرست ──
     pg.evaluate("_zimniBackToList()"); pg.wait_for_timeout(900)
     lst = pg.evaluate("""(() => { const tr = document.querySelector('.zt tbody tr[data-zid]'); if (!tr) return null;
-      return { cells: [...tr.children].map(td => td.innerText.trim()), btns: [...tr.querySelectorAll('button.zab')].map(b => b.title),
+      return { cells: [...tr.children].map(td => td.innerText.trim()), btns: [...tr.querySelectorAll('button.dio-act')].map(b => b.title.split(' — ')[0]),
                hOverflow: document.querySelector('.zt-wrap').scrollWidth > document.querySelector('.zt-wrap').clientWidth + 1 }; })()""")
     check(f'{tag}: فہرست میں ضمنی — نمبر، تاریخ، حالت', bool(lst) and lst['cells'][0].endswith('1') and '14/10/2026' in lst['cells'][1] and 'سرور پر محفوظ' in lst['cells'][3], lst and lst['cells'][:4])
-    check(f'{tag}: ہر سطر میں ترمیم/پرنٹ/شیئر/PDF/نقل/حذف', bool(lst) and lst['btns'] == ['ترمیم', 'پرنٹ', 'شیئر', 'PDF', 'نقل', 'حذف'], lst and lst['btns'])
+    check(f'{tag}: ہر سطر میں ترمیم/پرنٹ/شیئر/حذف (v558: PDF اور نقل ہٹا دیے — مقدمہ کی فہرست والے ایک جیسے بٹن)', bool(lst) and lst['btns'] == ['ترمیم', 'پرنٹ', 'شیئر', 'حذف'], lst and lst['btns'])
     check(f'{tag}: فہرست میں افقی scroll نہیں', bool(lst) and not lst['hOverflow'])
     pg.screenshot(path=f'{OUT}/v552_{tag}_list.png')
     pg.evaluate(PRINTS)
