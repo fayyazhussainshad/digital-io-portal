@@ -16,7 +16,7 @@ function _cfInjectCSS() {
     + '.cf-form{direction:rtl;text-align:right;width:100%;box-sizing:border-box;}'
     + '.cf-form *{box-sizing:border-box;}'
     + '.cf-label{font-size:14pt;font-weight:700;text-align:right;white-space:nowrap;'
-    +   'font-family:\'Jameel Noori Nastaleeq\',\'Noto Nastaliq Urdu\',serif;'
+    +   'font-family:\'Jameel Noori Nastaleeq\';'
     +   'margin:0;color:var(--text-primary);line-height:1.3;flex:0 0 auto;}'
     + '.cf-field{display:flex;flex-direction:row;align-items:center;gap:6px;min-width:0;margin-bottom:9px;}'
     + '.cf-field > .form-input,.cf-field > select.form-input,.cf-field > div{flex:1;min-width:0;}'
@@ -36,8 +36,8 @@ function _cfInjectCSS() {
     + '.cf-row2 .cf-field,.cf-row3 .cf-field,.cf-row4 .cf-field,.cf-row4-rapat .cf-field,.cf-row-7030 .cf-field,.cf-row-sim .cf-field,.cf-row-imei .cf-field{margin-bottom:9px;}'
     + '.cf-box{padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:12px;}'
     + '.cf-box-title{font-size:14pt;font-weight:800;color:var(--accent);margin-bottom:9px;text-align:right;'
-    +   'font-family:\'Jameel Noori Nastaleeq\',\'Noto Nastaliq Urdu\',serif;}'
-    + '.cf-hint{font-size:11px;color:var(--text-muted);margin:-4px 0 9px;padding-right:2px;}'
+    +   'font-family:\'Jameel Noori Nastaleeq\';}'
+    + '.cf-hint{font-size:8.25pt;color:var(--text-muted);margin:-4px 0 9px;padding-right:2px;}'
     /* «نیا اندراج» کارڈ: نام خانے کے اوپری دائیں کنارے پر، 14pt، چھوٹی اونچائی، ڈیٹا جتنی چوڑائی */
     + '.dio-entry .cf-form{max-height:none!important;overflow:visible!important;padding:4px 0 0!important;}'
     + '.dio-entry .cf-box{background:none!important;padding:0!important;margin:0!important;}'
@@ -143,7 +143,7 @@ function _cfParseMobilePhones(c) {
 function _cfPhoneBlockHTML(i, p) {
   p = p || {};
   return '<div class="cf-mobile-phone-block" style="border-top:1px dashed var(--border);padding-top:6px;margin-top:6px;">'
-    + '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px;">موبائل نمبر '+i+'</div>'
+    + '<div style="font-size:9pt;font-weight:700;color:var(--text-muted);margin-bottom:4px;">موبائل نمبر '+i+'</div>'
     + '<div class="cf-row-imei">'
     +   '<div class="cf-field"><label class="cf-label">IMEI 1</label>'
     +     '<input class="form-input" dir="ltr" inputmode="numeric" maxlength="15" id="cf-mobile-imei-'+i+'-1" value="'+esc(p.imei1)+'" placeholder="000000000000000" oninput="_imeiLookupIdx(this,'+i+')"></div>'
@@ -350,7 +350,7 @@ function caseFormHTML(c) {
     + '<div class="cf-field"><label class="cf-label">بحد</label>'
     + '<input class="form-input" id="cf-occurrence-place" value="'+esc(occPlace)+'" placeholder="جائے وقوعہ / بحد" dir="auto"></div>'
     + '</div>'
-    + '<div id="cf-fir-dup" role="alert" style="display:none;margin:6px 0 2px;padding:6px 10px;border-radius:8px;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.35);color:#b91c1c;font-size:12pt;font-family:\'Jameel Noori Nastaleeq\',\'Noto Nastaliq Urdu\',serif;"></div>'
+    + '<div id="cf-fir-dup" role="alert" style="display:none;margin:6px 0 2px;padding:6px 10px;border-radius:8px;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.35);color:#b91c1c;font-size:12pt;font-family:\'Jameel Noori Nastaleeq\';"></div>'
 
     // Row 2: دفعات قانون (پوری سطر)۔ v544: «جرم» کا خانہ ختم (افسر کا فیصلہ) — پورے
     //   سسٹم میں «بجرم» کے آگے صرف دفعات چھپتی ہیں، جرم کی تفصیل (چوری، قتل…) نہیں۔
@@ -371,7 +371,7 @@ function caseFormHTML(c) {
     // Mobile theft detail (shown only when section 379-402 PPC selected)
     + '<div id="cf-mobile-box" style="display:'+(_hasMobileSection(selectedSections)?'block':'none')+';background:var(--bg-secondary);border:1px solid var(--amber);border-radius:8px;padding:12px;margin-bottom:12px;">'
     +   '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14pt;font-weight:700;color:var(--amber);'
-    +     'font-family:\'Jameel Noori Nastaleeq\',\'Noto Nastaliq Urdu\',serif;">'
+    +     'font-family:\'Jameel Noori Nastaleeq\';">'
     +     '<input type="checkbox" id="cf-mobile-theft-check" '+(_mobileTheftChecked?'checked':'')+' onchange="_cfToggleMobileTheft(this)" style="width:18px;height:18px;cursor:pointer;">'
     +     'کیا موبائل فون چوری ہوا؟'
     +   '</label>'
@@ -380,7 +380,7 @@ function caseFormHTML(c) {
     +       '<input class="form-input" type="number" id="cf-mobile-count" min="1" max="20" value="'+_mobilePhonesSeed.length+'" oninput="_cfRenderMobilePhones()"></div>'
     +     '<input type="hidden" id="cf-mobile-seed" value="'+esc(JSON.stringify(_mobilePhonesSeed))+'">'
     +     '<div id="cf-mobile-phones-container"></div>'
-    +     '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin:10px 0 6px;border-top:1px dashed var(--border);padding-top:8px;">سم نمبرز</div>'
+    +     '<div style="font-size:9pt;font-weight:700;color:var(--text-muted);margin:10px 0 6px;border-top:1px dashed var(--border);padding-top:8px;">سم نمبرز</div>'
     +     '<div id="cf-mobile-sims-container" class="cf-row-sim"></div>'
     +   '</div>'
     + '</div>'
@@ -437,7 +437,7 @@ function caseFormHTML(c) {
     // ── کراس ورژن ──────────────────────────────────────────────
     + '<div class="dio-full" style="margin-top:14px;padding:10px 12px;background:rgba(239,68,68,0.06);'
     + 'border:1px solid rgba(239,68,68,0.25);border-radius:var(--radius-sm);">'
-    + '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;font-size:14pt;font-family:\'Jameel Noori Nastaleeq\',\'Noto Nastaliq Urdu\',serif;">'
+    + '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;font-size:14pt;font-family:\'Jameel Noori Nastaleeq\';">'
     + '<input type="checkbox" id="cf-cross-version" ' + (isCross ? 'checked' : '')
     + ' onchange="_cfToggleCross(this)"'
     + ' style="width:18px;height:18px;cursor:pointer;">'
@@ -517,16 +517,16 @@ function buildCrossFields(c) {
     // کراس ورژن پوزیشن کا خانہ ہٹا دیا گیا — پرانی قدر چھپے خانے میں محفوظ
     + '<input type="hidden" id="cf-cross-position" value="'+esc(crossPosition)+'">'
 
-    + '<div style="padding:8px 10px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);font-size:11px;color:var(--red);margin-top:4px;">'
+    + '<div style="padding:8px 10px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);font-size:8.25pt;color:var(--red);margin-top:4px;">'
     + '&#x26A0;&#xFE0F; Cross Version cases are linked to the original FIR. Both cases will appear in the case workspace under the same folder.'
     + '</div>';
 }
 
 
 function sectionTag(sectionStr) {
-  return `<div style="display:inline-flex;align-items:center;gap:6px;background:var(--nav-active);border:1px solid var(--accent);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--accent);">
+  return `<div style="display:inline-flex;align-items:center;gap:6px;background:var(--nav-active);border:1px solid var(--accent);border-radius:20px;padding:4px 10px;font-size:8.25pt;color:var(--accent);">
     <b>${esc(sectionStr)}</b>
-    <span onclick="removeSection('${_dioJsHtml(sectionStr)}')" style="cursor:pointer;color:var(--text-muted);font-size:14px;line-height:1;" title="Remove">×</span>
+    <span onclick="removeSection('${_dioJsHtml(sectionStr)}')" style="cursor:pointer;color:var(--text-muted);font-size:10.5pt;line-height:1;" title="Remove">×</span>
   </div>`;
 }
 

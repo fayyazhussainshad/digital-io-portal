@@ -282,9 +282,9 @@ function _dkRender() {
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
     <!-- ── FIXED TOOLBAR ── -->
     <div class="no-print" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
-      <span style="font-family:'Jameel Noori Nastaleeq',serif;font-size:15px;font-weight:700;color:var(--accent);">درخواست</span>
+      <span style="font-family:'Jameel Noori Nastaleeq';font-size:11.25pt;font-weight:700;color:var(--accent);">درخواست</span>
       <select id="dk-type-sel" onchange="_dkSetType(this.value)" title="درخواست کی قسم"
-        style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;max-width:220px;">
+        style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq';font-size:10.5pt;max-width:220px;">
         ${DK_TYPES.map(t => `<option value="${t.id}" ${t.id === _dkType ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}
       </select>
       <!-- v553: لیگل/A4 کا انتخاب یہاں سے ہٹا — پرنٹ کے وقت پوچھا جاتا ہے -->
@@ -304,11 +304,11 @@ function _dkRender() {
         <button onmousedown="_dkKeep(event)" onclick="_dkFmt('insertOrderedList')" title="نمبر والی فہرست" style="${_dkBtn()}">1.</button>
         <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
         <select id="dk-font-sel" onmousedown="event.stopPropagation()" onchange="_dkSetFont(this.value)" title="فونٹ سائز"
-          style="height:28px;border:1px solid var(--border,#ccc);border-radius:6px;background:var(--bg-card,#fff);color:var(--text-primary,#111);font-size:13px;padding:0 6px;">
+          style="height:28px;border:1px solid var(--border,#ccc);border-radius:6px;background:var(--bg-card,#fff);color:var(--text-primary,#111);font-size:9.75pt;padding:0 6px;">
           ${DK_FONT_SIZES.map(s => `<option value="${s}" ${String(s)===String(docFont)?'selected':''}>${s} pt</option>`).join('')}
         </select>
         <button onmousedown="_dkKeep(event)" onclick="_dkFontStep(1)" title="فونٹ بڑا" style="${_dkBtn()}">A+</button>
-        <button onmousedown="_dkKeep(event)" onclick="_dkFontStep(-1)" title="فونٹ چھوٹا" style="${_dkBtn()}font-size:11px;">A−</button>
+        <button onmousedown="_dkKeep(event)" onclick="_dkFontStep(-1)" title="فونٹ چھوٹا" style="${_dkBtn()}font-size:8.25pt;">A−</button>
         <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
         <button id="dk-fmtpaint-btn" onmousedown="_dkKeep(event)" onclick="_dkFormatPainter()" title="فارمیٹ پینٹر (پہلے متن منتخب کریں، پھر یہ دبائیں، پھر جہاں لگانا ہے وہاں منتخب کریں)" style="${_dkBtn()}">🖌️</button>
         <button aria-label="فارمیٹنگ ہٹائیں" onmousedown="_dkKeep(event)" onclick="_dkFmt('removeFormat')" title="فارمیٹنگ ہٹائیں" style="${_dkBtn()}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button>
@@ -409,14 +409,14 @@ function _dkAccPicker(ev) {
   box.style.cssText = 'position:fixed;z-index:99999;background:#fff;border:1px solid #0369a1;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.28);direction:rtl;width:280px;max-width:92vw;display:flex;flex-direction:column;max-height:min(60vh,360px);overflow:hidden;';
   const rows = list.map(a => {
     const on = mine.has(a.name);
-    return `<label style="display:flex;align-items:center;gap:8px;padding:7px 6px;cursor:pointer;font-size:13px;border-bottom:1px solid #f1f5f9;font-family:'Jameel Noori Nastaleeq',serif;"><input type="checkbox" ${on?'checked':''} value="${esc(a.name)}"> <span>${esc(a.name)}</span></label>`;
+    return `<label style="display:flex;align-items:center;gap:8px;padding:7px 6px;cursor:pointer;font-size:9.75pt;border-bottom:1px solid #f1f5f9;font-family:'Jameel Noori Nastaleeq';"><input type="checkbox" ${on?'checked':''} value="${esc(a.name)}"> <span>${esc(a.name)}</span></label>`;
   }).join('');
   box.innerHTML = `
-    <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:700;color:#0369a1;font-family:'Jameel Noori Nastaleeq',serif;background:#f8fafc;">ملزمان منتخب کریں</div>
+    <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:9pt;font-weight:700;color:#0369a1;font-family:'Jameel Noori Nastaleeq';background:#f8fafc;">ملزمان منتخب کریں</div>
     <div style="flex:1;overflow-y:auto;padding:4px 8px;min-height:0;">${rows}</div>
     <div style="display:flex;gap:6px;padding:8px;border-top:1px solid #e5e7eb;background:#f8fafc;flex-shrink:0;">
-      <button id="dk-acc-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;color:#fff;cursor:pointer;font-size:13px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">شامل کریں</button>
-      <button id="dk-acc-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;cursor:pointer;font-size:13px;font-family:'Jameel Noori Nastaleeq',serif;">بند</button>
+      <button id="dk-acc-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;color:#fff;cursor:pointer;font-size:9.75pt;font-weight:700;font-family:'Jameel Noori Nastaleeq';">شامل کریں</button>
+      <button id="dk-acc-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;cursor:pointer;font-size:9.75pt;font-family:'Jameel Noori Nastaleeq';">بند</button>
     </div>`;
   document.body.appendChild(box);
   const r = ev.currentTarget.getBoundingClientRect();
@@ -463,7 +463,7 @@ window._dkResetBody = _dkResetBody;
 // ═══ TOOLBAR helpers ═══
 function _dkBtn() {
   return 'min-width:30px;height:28px;border:1px solid var(--border,#ccc);border-radius:6px;' +
-         'background:var(--bg-card,#fff);color:var(--text-primary,#111);cursor:pointer;font-size:13px;padding:0 7px;';
+         'background:var(--bg-card,#fff);color:var(--text-primary,#111);cursor:pointer;font-size:9.75pt;padding:0 7px;';
 }
 const DK_FONT_SIZES = [10, 11, 12, 13, 14, 16, 18, 20, 22, 24, 28];
 const DK_FONT_DEFAULT = 14;
@@ -809,12 +809,12 @@ function _dkPrintNow() {
   clone.querySelectorAll('.no-print, button, select').forEach(el => el.remove());
   const inner = clone.innerHTML;
   const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
+    ${typeof dioFontHead==='function'?dioFontHead():''}
     <style>
       @page{ size:${_dkPaper === 'a4' ? 'A4 portrait' : '8.5in 13in'}; margin:1cm ${_dkSideMargin()}; }
       *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; box-sizing:border-box; }
       html, body{ margin:0 !important; padding:0 !important;
-        font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
+        font-family:'Jameel Noori Nastaleeq';
         direction:rtl; line-height:1.9; color:#000; font-size:${_dkDocFont(_dkSaved)}pt; }
       ${_dkCSS()}
       #dk-doc{ width:100% !important; max-width:none !important; height:auto !important;
@@ -848,7 +848,7 @@ function _dkCSS() {
     /* Root — RTL, 14pt (default). Dayen 1 inch hashiya. Bayen bhi thoda hashiya
        taake legal/folio print par IO naam (bayen sidh) kinare se na kate.
        --dk-indent = satar 2/3 aur ملزمان list ka right-indent (بنام ke barabar). */
-    #dk-doc{ direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; color:#000; font-size:14pt; text-align:justify; padding-right:1in !important; padding-left:0.4in !important; --dk-indent:0.9in; }
+    #dk-doc{ direction:rtl; font-family:'Jameel Noori Nastaleeq'; color:#000; font-size:14pt; text-align:justify; padding-right:1in !important; padding-left:0.4in !important; --dk-indent:0.9in; }
     #dk-doc [contenteditable]{ outline:none; }
     #dk-doc .dk-fl{ unicode-bidi:isolate; direction:rtl; outline:none; min-width:24px; display:inline-block; }
 
@@ -876,7 +876,7 @@ function _dkCSS() {
       font-variant-numeric:tabular-nums; min-width:2in; }
     #dk-doc .dk-acc-pick{
       position:absolute; right:-30px; top:0; width:24px; height:24px; line-height:22px; padding:0; border:1px solid #0369a1;
-      border-radius:5px; background:#0369a1; color:#fff; cursor:pointer; font-size:13px; font-weight:700; text-align:center;
+      border-radius:5px; background:#0369a1; color:#fff; cursor:pointer; font-size:9.75pt; font-weight:700; text-align:center;
     }
     #dk-doc .dk-acc-pick:hover{ background:#025687; }
 

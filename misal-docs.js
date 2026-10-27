@@ -90,7 +90,7 @@ function renderMisalBar(c) {
       <span title="مقدمہ نمبر" style="flex-shrink:0;display:inline-flex;align-items:center;gap:6px;
             padding:5px 12px;border-radius:8px;background:var(--accent-glow,rgba(56,189,248,0.14));
             border:1px solid var(--accent,#38bdf8);color:var(--accent,#38bdf8);font-weight:800;
-            font-size:13px;font-family:'Jameel Noori Nastaleeq',serif;white-space:nowrap;">
+            font-size:9.75pt;font-family:'Jameel Noori Nastaleeq';white-space:nowrap;">
         مقدمہ<bdi style="direction:ltr;font-family:var(--font-mono,monospace);font-weight:700;">${(typeof esc==='function'?esc(c&&c.fir_number||'—'):(c&&c.fir_number||'—'))}</bdi>
       </span>
       ${indexChip}
@@ -117,9 +117,9 @@ function renderMisalBar(c) {
       display:inline-block;
       padding:6px 14px;
       border-radius:20px;
-      font-size:16px;
+      font-size:12pt;
       cursor:pointer;
-      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
+      font-family:'Jameel Noori Nastaleeq';
       direction:rtl;
       border:1px solid transparent;
       transition:all 0.15s;
@@ -190,7 +190,7 @@ function _misalDropdown(ddId, label, options, hasData) {
     </span>
     <div id="${ddId}" style="display:none;position:fixed;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:5000;min-width:180px;padding:6px;direction:rtl;">
       ${options.map(o => `
-        <a onclick="_closeAllDD();${o.act}" style="display:block;padding:9px 12px;font-size:15px;font-family:'Jameel Noori Nastaleeq',serif;color:var(--text-primary);cursor:pointer;border-radius:6px;text-align:right;"
+        <a onclick="_closeAllDD();${o.act}" style="display:block;padding:9px 12px;font-size:11.25pt;font-family:'Jameel Noori Nastaleeq';color:var(--text-primary);cursor:pointer;border-radius:6px;text-align:right;"
            onmouseover="this.style.background='var(--bg-secondary)'" onmouseout="this.style.background='transparent'">${o.label}</a>`).join('')}
     </div>
   </span>`;
@@ -435,7 +435,7 @@ function _renderMisalEditor(docId, def) {
     ? `<button onclick="openMisalVersionsModal('${docId}','${saved.id}')" title="پرانی نسخے دیکھیں"
         style="position:absolute;top:8px;left:8px;z-index:10;padding:5px 10px;border:1px solid var(--border);
                background:var(--bg-card);color:var(--text-primary);border-radius:8px;cursor:pointer;
-               font-size:12px;font-family:'Jameel Noori Nastaleeq',serif;">نسخے</button>`
+               font-size:9pt;font-family:'Jameel Noori Nastaleeq';">نسخے</button>`
     : '';
 
   // MS Word jaisa toolbar (ooper mustaqil) — likhai ke liye
@@ -459,15 +459,15 @@ function _renderMisalEditor(docId, def) {
       <div id="misal-editor" contenteditable="true" spellcheck="false" style="${_isIdx ? `
         width:8.5in;min-height:13in;
         background:#fff;color:#111;
-        font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
-        font-size:15px;line-height:1.6;
+        font-family:'Jameel Noori Nastaleeq';
+        font-size:11.25pt;line-height:1.6;
         direction:rtl;text-align:right;
         border:1px solid var(--border);border-radius:2px;
         padding:11mm 8.5mm 6.5mm 8mm;outline:none;box-sizing:border-box;
         box-shadow:0 2px 14px rgba(0,0,0,.12);` : `
         width:100%;min-height:100%;
         background:#fff;color:#111;
-        font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
+        font-family:'Jameel Noori Nastaleeq';
         font-size:14pt;line-height:1.9;
         direction:rtl;text-align:justify;
         border:1px solid var(--border);border-radius:8px;
@@ -564,16 +564,16 @@ function printMisalDoc(name) {
   const _pageRule = _isIdx ? 'size:8.5in 13in;margin:11mm 8.5mm 6.5mm 8mm;' : 'size:A4;margin:15mm;';
   _printHTML += (`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
     <title> </title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
+    ${typeof dioFontHead==='function'?dioFontHead():''}
     <style>
       @page{${_pageRule}}
-      body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:${_isIdx?'15px':'14pt'};line-height:${_isIdx?'1.6':'1.9'};direction:rtl;text-align:right;color:#111;}
+      body{font-family:'Jameel Noori Nastaleeq';font-size:${_isIdx?'11.25pt':'14pt'};line-height:${_isIdx?'1.6':'1.9'};direction:rtl;text-align:right;color:#111;}
       table{width:100%;border-collapse:collapse;}
       td,th{border:1px solid #555;padding:6px 10px;}
       button,.no-print,.doc-toolbar,.editor-toolbar,select{display:none !important;}
       ${_isIdx ? '[data-fit]{white-space:nowrap;overflow:hidden;}' : ''}
       /* Bottom-LEFT branding only — koi tareekh/waqt nahi */
-      .dio-print-brand{position:fixed;bottom:3mm;left:4mm;font-size:9px;color:#999;direction:ltr;}
+      .dio-print-brand{position:fixed;bottom:3mm;left:4mm;font-size:6.75pt;color:#999;direction:ltr;}
       @media print{body{margin:0}button,.no-print,.doc-toolbar,.editor-toolbar,select{display:none !important;}}
     </style></head><body>${clone.innerHTML}<div class="dio-print-brand">Digital IO</div>${_isIdx && typeof _IDX_FIT_SRC === 'string' ? _IDX_FIT_SRC : ''}</body></html>`);
   dioPrint(_printHTML);
@@ -644,14 +644,14 @@ async function openMisalVersionsModal(docId, documentDbId) {
     if (!versions || !versions.length) {
       body.innerHTML = `
         <div style="text-align:center;padding:32px 20px;color:var(--text-muted);">
-          <div style="font-size:36px;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
-          <div style="font-size:14px;">ابھی کوئی پرانا نسخہ نہیں — پہلی ترمیم کے بعد یہاں تاریخ نظر آنے لگے گی</div>
+          <div style="font-size:27pt;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
+          <div style="font-size:10.5pt;">ابھی کوئی پرانا نسخہ نہیں — پہلی ترمیم کے بعد یہاں تاریخ نظر آنے لگے گی</div>
         </div>`;
       return;
     }
 
     body.innerHTML = `
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">
+      <div style="font-size:9pt;color:var(--text-muted);margin-bottom:10px;">
         کل ${versions.length} پرانا نسخہ · موجودہ نسخہ ایڈیٹر میں ہے
       </div>
       ${versions.map(v => {
@@ -663,12 +663,12 @@ async function openMisalVersionsModal(docId, documentDbId) {
         return `
         <div style="display:flex;gap:10px;align-items:center;padding:10px 12px;background:var(--bg-card);
                     border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
-          <div style="min-width:60px;text-align:center;font-weight:800;color:var(--accent);font-size:16px;">
+          <div style="min-width:60px;text-align:center;font-weight:800;color:var(--accent);font-size:12pt;">
             v${v.version_no}
           </div>
           <div style="flex:1;min-width:0;">
-            <div style="font-size:13px;font-weight:700;">${esc(ofc)}</div>
-            <div style="font-size:11px;color:var(--text-muted);direction:ltr;text-align:right;">${esc(dt)}</div>
+            <div style="font-size:9.75pt;font-weight:700;">${esc(ofc)}</div>
+            <div style="font-size:8.25pt;color:var(--text-muted);direction:ltr;text-align:right;">${esc(dt)}</div>
           </div>
           <button class="btn btn-secondary btn-sm" onclick="_previewMisalVersion('${v.id}')">دیکھیں</button>
         </div>`;
@@ -677,11 +677,11 @@ async function openMisalVersionsModal(docId, documentDbId) {
     const body = document.getElementById('mv-body');
     if (body) body.innerHTML = `
       <div style="padding:16px;color:var(--red);text-align:center;">
-        <div style="font-size:14px;font-weight:700;">نسخے نہیں مل سکے</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">
+        <div style="font-size:10.5pt;font-weight:700;">نسخے نہیں مل سکے</div>
+        <div style="font-size:9pt;color:var(--text-muted);margin-top:6px;">
           ممکن ہے <code>case_document_versions</code> ٹیبل ابھی نہ بنی ہو — Supabase SQL چلائیں
         </div>
-        <div style="font-size:11px;color:var(--text-faint);margin-top:6px;font-family:monospace;direction:ltr;">${esc(e.message||e)}</div>
+        <div style="font-size:8.25pt;color:var(--text-faint);margin-top:6px;font-family:monospace;direction:ltr;">${esc(e.message||e)}</div>
       </div>`;
   }
 }
@@ -704,10 +704,10 @@ async function _previewMisalVersion(versionId) {
       `نسخہ v${v.version_no} — ${esc(dt)}`,
       `<div style="direction:rtl;max-height:60vh;overflow:auto;padding:14px;background:#fff;color:#111;
                    border:1px solid var(--border);border-radius:8px;
-                   font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;line-height:2;">
+                   font-family:'Jameel Noori Nastaleeq';line-height:2;">
          ${html}
        </div>
-       <div style="font-size:11px;color:var(--text-muted);margin-top:8px;text-align:center;">
+       <div style="font-size:8.25pt;color:var(--text-muted);margin-top:8px;text-align:center;">
          یہ صرف مطالعہ کے لیے ہے — دستاویز کا موجودہ نسخہ تبدیل نہیں ہوا
        </div>`,
       `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`

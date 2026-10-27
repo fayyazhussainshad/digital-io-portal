@@ -29,7 +29,7 @@
 
   function badge(s) {
     var c = statusColor(s);
-    return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;' +
+    return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:8.25pt;font-weight:700;' +
            'color:' + c + ';background:rgba(0,0,0,0.04);border:1px solid ' + c + ';border-radius:10px;padding:1px 9px;">' +
            statusIcon(s) + ' ' + statusLabel(s) + '</span>';
   }

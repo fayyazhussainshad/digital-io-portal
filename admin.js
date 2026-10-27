@@ -28,9 +28,9 @@ async function renderAdmin(container) {
   if (!['admin','superadmin'].includes(role)) {
     container.innerHTML = `
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;text-align:center;color:var(--text-muted);">
-        <div style="font-size:64px;margin-bottom:16px;"><svg viewBox='0 0 24 24' width='64' height='64' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><path d='M5.5 11h13v9.5h-13z'/><path d='M8.5 11V8a3.5 3.5 0 0 1 7 0v3'/></svg></div>
-        <div style="font-size:18px;font-weight:700;color:var(--text-primary);">رسائی نہیں</div>
-        <div style="font-size:13px;margin-top:8px;">یہ صفحہ صرف Admin اور SHO کے لیے ہے</div>
+        <div style="font-size:48pt;margin-bottom:16px;"><svg viewBox='0 0 24 24' width='64' height='64' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><path d='M5.5 11h13v9.5h-13z'/><path d='M8.5 11V8a3.5 3.5 0 0 1 7 0v3'/></svg></div>
+        <div style="font-size:13.5pt;font-weight:700;color:var(--text-primary);">رسائی نہیں</div>
+        <div style="font-size:9.75pt;margin-top:8px;">یہ صفحہ صرف Admin اور SHO کے لیے ہے</div>
       </div>`;
     return;
   }
@@ -76,10 +76,10 @@ async function _buildAdmin(role) {
   root.innerHTML = `
   <!-- Header -->
   <div style="background:linear-gradient(135deg,#1a3a5c,#0d2a45);border-radius:12px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:14px;">
-    <div style="font-size:40px;"><svg viewBox='0 0 24 24' width='40' height='40' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><circle cx='12' cy='9' r='3.4'/><path d='M4.5 20.5a7.5 7.5 0 0 1 15 0'/><path d='M7 6.5h10'/></svg></div>
+    <div style="font-size:30pt;"><svg viewBox='0 0 24 24' width='40' height='40' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><circle cx='12' cy='9' r='3.4'/><path d='M4.5 20.5a7.5 7.5 0 0 1 15 0'/><path d='M7 6.5h10'/></svg></div>
     <div>
-      <div style="font-size:18px;font-weight:800;color:#fff;">Admin Panel</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.6);">
+      <div style="font-size:13.5pt;font-weight:800;color:#fff;">Admin Panel</div>
+      <div style="font-size:9pt;color:rgba(255,255,255,0.6);">
         ${role === 'superadmin' ? 'Super Admin' : 'SHO / Station Admin'} — ${currentOfficer?.station || ''} · ${currentOfficer?.district || ''}
       </div>
     </div>
@@ -97,9 +97,9 @@ async function _buildAdmin(role) {
       ['کل مقدمات', total_cases, '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M3.5 7.5h6l2 2.5h9V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z"/></svg>', '#a78bfa'],
     ].map(([l,v,i,c]) => `
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
-        <div style="font-size:24px;">${i}</div>
-        <div style="font-size:26px;font-weight:900;color:${c};">${v}</div>
-        <div style="font-size:11px;color:var(--text-muted);">${l}</div>
+        <div style="font-size:18pt;">${i}</div>
+        <div style="font-size:19.5pt;font-weight:900;color:${c};">${v}</div>
+        <div style="font-size:8.25pt;color:var(--text-muted);">${l}</div>
       </div>`).join('')}
   </div>
 
@@ -119,8 +119,8 @@ async function _buildAdmin(role) {
     ].map(([k,l,b],i) => `
       <button id="atab-${k}" onclick="_adminTab('${k}')"
         class="btn ${i===0?'btn-primary':'btn-secondary'}"
-        style="font-size:12px;">
-        ${l}${b!==''?` <span style="background:rgba(255,255,255,0.2);border-radius:10px;padding:1px 6px;font-size:10px;margin-right:4px;">${b}</span>`:''}
+        style="font-size:9pt;">
+        ${l}${b!==''?` <span style="background:rgba(255,255,255,0.2);border-radius:10px;padding:1px 6px;font-size:7.5pt;margin-right:4px;">${b}</span>`:''}
       </button>`).join('')}
   </div>
 
@@ -138,10 +138,10 @@ async function _buildAdmin(role) {
 function _adminTab(tab) {
   document.querySelectorAll('[id^="atab-"]').forEach(b => {
     b.className = 'btn btn-secondary';
-    b.style.fontSize = '12px';
+    b.style.fontSize = '9pt';
   });
   const active = document.getElementById('atab-' + tab);
-  if (active) { active.className = 'btn btn-primary'; active.style.fontSize = '12px'; }
+  if (active) { active.className = 'btn btn-primary'; active.style.fontSize = '9pt'; }
 
   const { officers, pending, cases, activity, role } = window._adminData || {};
   const el = document.getElementById('admin-tab-content');
@@ -166,28 +166,28 @@ function _adminTab(tab) {
 function _renderPendingTab(pending) {
   if (!pending.length) return `
     <div class="card" style="text-align:center;padding:40px;color:var(--text-muted);">
-      <div style="font-size:48px;margin-bottom:12px;"><svg viewBox='0 0 24 24' width='48' height='48' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><path d='M4.5 12.5l5 5 10-11'/></svg></div>
+      <div style="font-size:36pt;margin-bottom:12px;"><svg viewBox='0 0 24 24' width='48' height='48' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><path d='M4.5 12.5l5 5 10-11'/></svg></div>
       <div style="font-weight:600;">کوئی زیر التواء درخواست نہیں</div>
     </div>`;
 
   return `<div class="card">
-    <div class="dio-hs2" style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;">نئے افسران کی درخواستیں (${pending.length})</div>
+    <div class="dio-hs2" style="font-size:9.75pt;font-weight:700;color:var(--accent);margin-bottom:12px;">نئے افسران کی درخواستیں (${pending.length})</div>
     ${pending.map(p => `
     <div id="pending-card-${p.id}" style="background:var(--bg-secondary);border:1px solid var(--amber);border-radius:10px;padding:14px;margin-bottom:10px;">
       <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
-        <div style="width:44px;height:44px;border-radius:50%;background:var(--amber);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;flex-shrink:0;">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--amber);display:flex;align-items:center;justify-content:center;font-size:15pt;font-weight:800;color:#fff;flex-shrink:0;">
           ${(p.full_name||'?')[0].toUpperCase()}
         </div>
         <div style="flex:1;">
-          <div style="font-size:14px;font-weight:700;">${esc(p.full_name)||'—'}</div>
-          <div style="font-size:12px;color:var(--text-muted);">
+          <div style="font-size:10.5pt;font-weight:700;">${esc(p.full_name)||'—'}</div>
+          <div style="font-size:9pt;color:var(--text-muted);">
             ${esc(p.email)||'—'} &nbsp;·&nbsp; <svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M3.5 11V4.5H10L20.5 15 14 21.5 3.5 11z'/><circle cx='7.5' cy='8' r='1.3'/></svg> ${esc(p.badge_number)||'—'}
           </div>
-          <div style="font-size:12px;color:var(--text-secondary);">
+          <div style="font-size:9pt;color:var(--text-secondary);">
             ${esc(p.station)||'—'} · ${esc(p.district)||'—'} &nbsp;·&nbsp; <svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><circle cx='12' cy='9' r='3.4'/><path d='M4.5 20.5a7.5 7.5 0 0 1 15 0'/><path d='M7 6.5h10'/></svg> ${esc(p.designation)||'—'}
           </div>
-          ${p.cnic ? `<div style="font-size:12px;color:var(--text-secondary);" dir="ltr">${esc(p.cnic)}</div>` : ''}
-          <div style="font-size:10px;color:var(--text-faint);margin-top:4px;">
+          ${p.cnic ? `<div style="font-size:9pt;color:var(--text-secondary);" dir="ltr">${esc(p.cnic)}</div>` : ''}
+          <div style="font-size:7.5pt;color:var(--text-faint);margin-top:4px;">
             درخواست: ${formatDate(p.created_at)}
           </div>
         </div>
@@ -204,7 +204,7 @@ function _renderPendingTab(pending) {
 function _renderOfficersTab(officers, role) {
   return `<div class="card" style="padding:0;overflow:hidden;">
     <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
-      <div style="font-size:13px;font-weight:700;color:var(--accent);">افسران (${officers.length})</div>
+      <div style="font-size:9.75pt;font-weight:700;color:var(--accent);">افسران (${officers.length})</div>
       ${role==='superadmin'?`<button class="btn btn-primary btn-sm dio-add-btn" onclick="_adminAddOfficer()">+ افسر درج کریں</button>`:''}
     </div>
     <div style="overflow-x:auto;">
@@ -219,14 +219,14 @@ function _renderOfficersTab(officers, role) {
           return `<tr style="${(o.is_suspended || o.suspended)?'opacity:0.6;':''}">
             <td>
               <div style="font-weight:700;">${esc(o.full_name)||'—'}</div>
-              <div style="font-size:10px;color:var(--text-muted);">${o.email||''}</div>
+              <div style="font-size:7.5pt;color:var(--text-muted);">${o.email||''}</div>
             </td>
-            <td style="font-family:monospace;font-size:11px;">${esc(o.badge_number)||'—'}</td>
-            <td style="font-size:12px;">${esc(o.designation)||'—'}</td>
-            <td style="font-size:12px;">${esc(o.station)||'—'}</td>
+            <td style="font-family:monospace;font-size:8.25pt;">${esc(o.badge_number)||'—'}</td>
+            <td style="font-size:9pt;">${esc(o.designation)||'—'}</td>
+            <td style="font-size:9pt;">${esc(o.station)||'—'}</td>
             <td>
               <select onchange="_adminChangeRole('${o.id}',this.value)"
-                style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:4px;padding:3px 6px;color:var(--text-primary);font-size:11px;">
+                style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:4px;padding:3px 6px;color:var(--text-primary);font-size:8.25pt;">
                 ${['officer','admin','superadmin'].map(r=>
                   `<option value="${r}" ${o.role===r?'selected':''}>${r}</option>`
                 ).join('')}
@@ -261,7 +261,7 @@ function _renderOfficersTab(officers, role) {
 function _renderAllCasesTab(cases) {
   return `<div class="card" style="padding:0;overflow:hidden;">
     <div style="padding:14px 16px;border-bottom:1px solid var(--border);">
-      <div style="font-size:13px;font-weight:700;color:var(--accent);">تمام مقدمات (${cases.length})</div>
+      <div style="font-size:9.75pt;font-weight:700;color:var(--accent);">تمام مقدمات (${cases.length})</div>
     </div>
     <div style="overflow-x:auto;">
     <table class="data-table" style="width:100%;min-width:700px;">
@@ -273,12 +273,12 @@ function _renderAllCasesTab(cases) {
           const officer = (window._adminData?.officers||[]).find(o=>o.id===c.officer_id);
           return `<tr>
             <td style="font-weight:800;color:var(--accent);">${c.fir_number||'—'}</td>
-            <td style="font-size:12px;">${esc(c.complainant)||'—'}</td>
-            <td style="font-size:11px;">${c.section_of_law||'—'}</td>
-            <td style="font-size:12px;">${officer?.full_name||'—'}</td>
-            <td style="font-size:11px;">${officer?.station||'—'}</td>
+            <td style="font-size:9pt;">${esc(c.complainant)||'—'}</td>
+            <td style="font-size:8.25pt;">${c.section_of_law||'—'}</td>
+            <td style="font-size:9pt;">${officer?.full_name||'—'}</td>
+            <td style="font-size:8.25pt;">${officer?.station||'—'}</td>
             <td><span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span></td>
-            <td style="font-size:11px;">${formatDate(c.fir_date)}</td>
+            <td style="font-size:8.25pt;">${formatDate(c.fir_date)}</td>
           </tr>`;
         }).join('') : `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-muted);">کوئی مقدمہ نہیں</td></tr>`}
       </tbody>
@@ -290,16 +290,16 @@ function _renderAllCasesTab(cases) {
 // ── ACTIVITY LOG ──────────────────────────────────────────────
 function _renderActivityTab(activity) {
   return `<div class="card">
-    <div class="dio-hs2" style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;">حالیہ سرگرمی</div>
+    <div class="dio-hs2" style="font-size:9.75pt;font-weight:700;color:var(--accent);margin-bottom:12px;">حالیہ سرگرمی</div>
     ${activity.length ? activity.map(a => {
       const officer = (window._adminData?.officers||[]).find(o=>o.id===a.officer_id);
       return `<div style="display:flex;gap:10px;direction:rtl;padding:8px 0;border-bottom:1px solid var(--border);align-items:flex-start;">
-        <span style="font-size:16px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M8 4h8v3H8z"/><path d="M9 4H6v17h12V4h-3"/><path d="M9 11h6"/><path d="M9 15h6"/></svg></span>
+        <span style="font-size:12pt;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M8 4h8v3H8z"/><path d="M9 4H6v17h12V4h-3"/><path d="M9 11h6"/><path d="M9 15h6"/></svg></span>
         <div style="flex:1;">
-          <div style="font-size:12px;font-weight:600;">${officer?.full_name||'—'}</div>
-          <div style="font-size:12px;">${a.action||'—'}</div>
+          <div style="font-size:9pt;font-weight:600;">${officer?.full_name||'—'}</div>
+          <div style="font-size:9pt;">${a.action||'—'}</div>
         </div>
-        <span style="font-size:10px;color:var(--text-faint);">${formatDate(a.created_at)}</span>
+        <span style="font-size:7.5pt;color:var(--text-faint);">${formatDate(a.created_at)}</span>
       </div>`;
     }).join('') : `<div style="text-align:center;padding:20px;color:var(--text-muted);">کوئی سرگرمی نہیں</div>`}
   </div>`;
@@ -323,17 +323,17 @@ function _renderReportsTab(officers, cases) {
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;direction:rtl;margin-bottom:14px;">
     ${Object.entries(STATUS_LABELS).map(([k,l])=>`
       <div class="card" style="text-align:center;padding:12px;">
-        <div style="font-size:22px;font-weight:900;color:${
+        <div style="font-size:16.5pt;font-weight:900;color:${
           k==='under'?'var(--accent)':k==='complete'?'var(--green)':k==='cancel'?'var(--red)':'var(--amber)'
         };">${statusCounts[k]||0}</div>
-        <div style="font-size:11px;color:var(--text-muted);">${l}</div>
+        <div style="font-size:8.25pt;color:var(--text-muted);">${l}</div>
       </div>`).join('')}
   </div>
 
   <!-- Per officer table -->
   <div class="card" style="padding:0;overflow:hidden;">
     <div style="padding:12px 16px;border-bottom:1px solid var(--border);">
-      <div style="font-size:13px;font-weight:700;color:var(--accent);">افسر وار کارکردگی</div>
+      <div style="font-size:9.75pt;font-weight:700;color:var(--accent);">افسر وار کارکردگی</div>
     </div>
     <div style="overflow-x:auto;">
     <table class="data-table" style="width:100%;">
@@ -341,7 +341,7 @@ function _renderReportsTab(officers, cases) {
       <tbody>
         ${officerStats.map(o=>`<tr>
           <td style="font-weight:700;">${esc(o.full_name)||'—'}</td>
-          <td style="font-size:12px;">${esc(o.station)||'—'}</td>
+          <td style="font-size:9pt;">${esc(o.station)||'—'}</td>
           <td style="font-weight:700;color:var(--accent);">${o.total}</td>
           <td>${o.active}</td>
           <td style="color:var(--green);">${o.complete}</td>
@@ -349,7 +349,7 @@ function _renderReportsTab(officers, cases) {
             <div style="background:var(--bg-tertiary);border-radius:4px;overflow:hidden;width:60px;height:10px;display:inline-block;vertical-align:middle;">
               <div style="background:var(--green);height:100%;width:${o.total?Math.round(o.complete/o.total*100):0}%;"></div>
             </div>
-            <span style="font-size:10px;margin-right:4px;">${o.total?Math.round(o.complete/o.total*100):0}%</span>
+            <span style="font-size:7.5pt;margin-right:4px;">${o.total?Math.round(o.complete/o.total*100):0}%</span>
           </td>
         </tr>`).join('')}
       </tbody>
@@ -569,9 +569,9 @@ async function _renderHealthTab(el) {
 
   el.innerHTML = `
   <div class="card" style="direction:rtl;border-right:4px solid ${headColor};">
-    <div style="font-size:14px;font-weight:800;color:${headColor};">ڈیٹا صحت کی جانچ</div>
-    <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">${headMsg}</div>
-    <div style="font-size:10px;color:var(--text-faint);margin-top:6px;">صرف پڑھنے کے لیے — یہ صفحہ کوئی ڈیٹا تبدیل یا حذف نہیں کرتا</div>
+    <div style="font-size:10.5pt;font-weight:800;color:${headColor};">ڈیٹا صحت کی جانچ</div>
+    <div style="font-size:9pt;color:var(--text-muted);margin-top:4px;">${headMsg}</div>
+    <div style="font-size:7.5pt;color:var(--text-faint);margin-top:6px;">صرف پڑھنے کے لیے — یہ صفحہ کوئی ڈیٹا تبدیل یا حذف نہیں کرتا</div>
   </div>
 
   <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px;">
@@ -587,18 +587,18 @@ function _hcCard(c) {
   const icon = c.severity==='error' ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg>' : c.severity==='warn' ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M12 4L3 19.5h18z"/><path d="M12 10v4.5"/><path d="M12 17.2h.01"/></svg>' : c.severity==='fail' ? '⚙️' : '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M4.5 12.5l5 5 10-11"/></svg>';
   const items = (c.items && c.items.length)
     ? `<div style="margin-top:10px;display:flex;flex-direction:column;gap:5px;">
-        ${c.items.slice(0,15).map(t=>`<div style="font-size:11px;background:var(--bg-secondary);border-radius:6px;padding:6px 9px;color:var(--text-secondary);">${esc(t)}</div>`).join('')}
-        ${c.items.length>15?`<div style="font-size:10px;color:var(--text-faint);">…اور ${c.items.length-15} مزید</div>`:''}
+        ${c.items.slice(0,15).map(t=>`<div style="font-size:8.25pt;background:var(--bg-secondary);border-radius:6px;padding:6px 9px;color:var(--text-secondary);">${esc(t)}</div>`).join('')}
+        ${c.items.length>15?`<div style="font-size:7.5pt;color:var(--text-faint);">…اور ${c.items.length-15} مزید</div>`:''}
        </div>`
     : '';
   return `
   <div class="card" style="direction:rtl;border-right:3px solid ${clr};">
     <div style="display:flex;align-items:center;gap:8px;">
-      <span style="font-size:16px;">${icon}</span>
-      <span style="font-size:13px;font-weight:700;">${c.title}</span>
-      ${c.severity!=='ok' && c.severity!=='fail' ? `<span style="margin-inline-start:auto;background:${clr};color:#fff;border-radius:10px;padding:1px 9px;font-size:11px;font-weight:700;">${c.count}</span>` : `<span style="margin-inline-start:auto;font-size:11px;color:${clr};">${c.severity==='fail'?'جانچ ناکام':'ٹھیک'}</span>`}
+      <span style="font-size:12pt;">${icon}</span>
+      <span style="font-size:9.75pt;font-weight:700;">${c.title}</span>
+      ${c.severity!=='ok' && c.severity!=='fail' ? `<span style="margin-inline-start:auto;background:${clr};color:#fff;border-radius:10px;padding:1px 9px;font-size:8.25pt;font-weight:700;">${c.count}</span>` : `<span style="margin-inline-start:auto;font-size:8.25pt;color:${clr};">${c.severity==='fail'?'جانچ ناکام':'ٹھیک'}</span>`}
     </div>
-    <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${c.detail||''}</div>
+    <div style="font-size:8.25pt;color:var(--text-muted);margin-top:4px;">${c.detail||''}</div>
     ${items}
   </div>`;
 }
@@ -722,7 +722,7 @@ function _renderErrorsTab(el) {
   const head = `
   <div class="card" style="direction:rtl;">
     <div style="display:flex;align-items:center;gap:8px;">
-      <span style="font-size:15px;font-weight:800;color:${rows.length ? 'var(--amber,#f59e0b)' : 'var(--green)'};">
+      <span style="font-size:11.25pt;font-weight:800;color:${rows.length ? 'var(--amber,#f59e0b)' : 'var(--green)'};">
         خرابی لاگ (${rows.length})
       </span>
       <span style="margin-inline-start:auto;display:flex;gap:6px;">
@@ -730,14 +730,14 @@ function _renderErrorsTab(el) {
         ${rows.length ? `<button class="btn btn-secondary btn-sm" onclick="_adminClearErrors()">صاف</button>` : ''}
       </span>
     </div>
-    <div style="font-size:10px;color:var(--text-faint);margin-top:6px;">
+    <div style="font-size:7.5pt;color:var(--text-faint);margin-top:6px;">
       یہ صرف اسی براؤزر/سیشن کی خرابیاں ہیں (سرور پر محفوظ نہیں) — مسئلہ سمجھنے میں مدد کے لیے۔
     </div>
   </div>`;
 
   if (!rows.length) {
     el.innerHTML = head + `<div class="card" style="text-align:center;padding:36px;color:var(--text-muted);direction:rtl;margin-top:10px;">
-      <div style="font-size:40px;margin-bottom:8px;"><svg viewBox='0 0 24 24' width='40' height='40' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><path d='M4.5 12.5l5 5 10-11'/></svg></div>
+      <div style="font-size:30pt;margin-bottom:8px;"><svg viewBox='0 0 24 24' width='40' height='40' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><path d='M4.5 12.5l5 5 10-11'/></svg></div>
       <div style="font-weight:600;">اس سیشن میں کوئی خرابی ریکارڈ نہیں</div>
     </div>`;
     return;
@@ -748,11 +748,11 @@ function _renderErrorsTab(el) {
     ${rows.map(e => `
       <div class="card" style="direction:ltr;text-align:left;border-right:3px solid var(--red,#dc2626);padding:10px 12px;">
         <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;">
-          <span style="font-size:11px;font-weight:800;color:var(--accent);font-family:var(--font-mono,monospace);">${_hgAdminEsc(e.ctx||'—')}</span>
-          ${e.code ? `<span style="font-size:10px;color:var(--text-muted);">[${_hgAdminEsc(String(e.code))}]</span>` : ''}
-          <span style="margin-left:auto;font-size:10px;color:var(--text-faint);direction:rtl;">${fmt(e.ts)}</span>
+          <span style="font-size:8.25pt;font-weight:800;color:var(--accent);font-family:var(--font-mono,monospace);">${_hgAdminEsc(e.ctx||'—')}</span>
+          ${e.code ? `<span style="font-size:7.5pt;color:var(--text-muted);">[${_hgAdminEsc(String(e.code))}]</span>` : ''}
+          <span style="margin-left:auto;font-size:7.5pt;color:var(--text-faint);direction:rtl;">${fmt(e.ts)}</span>
         </div>
-        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;font-family:var(--font-mono,monospace);word-break:break-word;">${_hgAdminEsc(e.msg||'')}</div>
+        <div style="font-size:8.25pt;color:var(--text-secondary);margin-top:4px;font-family:var(--font-mono,monospace);word-break:break-word;">${_hgAdminEsc(e.msg||'')}</div>
       </div>`).join('')}
   </div>`;
 }
@@ -785,32 +785,32 @@ async function _renderApprovalsTab(el) {
 
   if (!rows.length) {
     el.innerHTML = `<div class="card" style="text-align:center;padding:40px;color:var(--text-muted);direction:rtl;">
-      <div style="font-size:44px;margin-bottom:10px;"><svg viewBox='0 0 24 24' width='44' height='44' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><path d='M4.5 12.5l5 5 10-11'/></svg></div>
+      <div style="font-size:33pt;margin-bottom:10px;"><svg viewBox='0 0 24 24' width='44' height='44' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><path d='M4.5 12.5l5 5 10-11'/></svg></div>
       <div style="font-weight:600;">کوئی زیرِ منظوری دستاویز نہیں</div>
-      <div style="font-size:11px;margin-top:6px;">جب کوئی افسر دستاویز بھیجے گا تو یہاں نظر آئے گی</div>
+      <div style="font-size:8.25pt;margin-top:6px;">جب کوئی افسر دستاویز بھیجے گا تو یہاں نظر آئے گی</div>
     </div>`;
     return;
   }
 
   el.innerHTML = `
   <div class="card" style="direction:rtl;">
-    <div class="dio-hs2" style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:12px;">
+    <div class="dio-hs2" style="font-size:9.75pt;font-weight:700;color:var(--accent);margin-bottom:12px;">
       زیرِ منظوری دستاویزات (${rows.length})
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;">
       ${rows.map(r => `
         <div class="card" style="direction:rtl;border-right:3px solid var(--amber,#f59e0b);">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <span style="font-size:13px;font-weight:800;">${_hgAdminEsc(r.document_label || r.document_key)}</span>
-            ${r.fir_number ? `<span style="font-size:11px;color:var(--accent);font-family:var(--font-mono,monospace);">FIR ${_hgAdminEsc(r.fir_number)}</span>` : ''}
-            <span style="margin-inline-start:auto;font-size:10px;color:var(--text-faint);">${fmt(r.requested_at)}</span>
+            <span style="font-size:9.75pt;font-weight:800;">${_hgAdminEsc(r.document_label || r.document_key)}</span>
+            ${r.fir_number ? `<span style="font-size:8.25pt;color:var(--accent);font-family:var(--font-mono,monospace);">FIR ${_hgAdminEsc(r.fir_number)}</span>` : ''}
+            <span style="margin-inline-start:auto;font-size:7.5pt;color:var(--text-faint);">${fmt(r.requested_at)}</span>
           </div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">
+          <div style="font-size:8.25pt;color:var(--text-muted);margin-top:4px;">
             بھیجنے والا: ${_hgAdminEsc(r.requested_by_name || '—')}
           </div>
           <div style="display:flex;gap:8px;margin-top:10px;">
-            <button class="btn btn-primary btn-sm" onclick="_adminDecideDoc('${r.id}','approved')" style="font-family:'Jameel Noori Nastaleeq',serif;">منظور</button>
-            <button class="btn btn-secondary btn-sm" onclick="_adminDecideDoc('${r.id}','rejected')" style="font-family:'Jameel Noori Nastaleeq',serif;">مسترد</button>
+            <button class="btn btn-primary btn-sm" onclick="_adminDecideDoc('${r.id}','approved')" style="font-family:'Jameel Noori Nastaleeq';">منظور</button>
+            <button class="btn btn-secondary btn-sm" onclick="_adminDecideDoc('${r.id}','rejected')" style="font-family:'Jameel Noori Nastaleeq';">مسترد</button>
           </div>
         </div>`).join('')}
     </div>
@@ -882,10 +882,10 @@ async function _renderTrustTab(el) {
   el.innerHTML = `
   <div class="card" style="direction:rtl;border-right:4px solid var(--green);">
     <div style="display:flex;align-items:center;gap:10px;">
-      <span style="font-size:26px;"><svg viewBox='0 0 24 24' width='26' height='26' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><path d='M5.5 11h13v9.5h-13z'/><path d='M8.5 11V8a3.5 3.5 0 0 1 7 0v3'/></svg></span>
+      <span style="font-size:19.5pt;"><svg viewBox='0 0 24 24' width='26' height='26' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><path d='M5.5 11h13v9.5h-13z'/><path d='M8.5 11V8a3.5 3.5 0 0 1 7 0v3'/></svg></span>
       <div>
-        <div style="font-size:15px;font-weight:800;color:var(--green);">آپ کا ڈیٹا محفوظ ہے</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Digital IO تفتیشی افسر کے حساس ریکارڈ کی حفاظت کو اولین ترجیح دیتا ہے۔</div>
+        <div style="font-size:11.25pt;font-weight:800;color:var(--green);">آپ کا ڈیٹا محفوظ ہے</div>
+        <div style="font-size:9pt;color:var(--text-muted);margin-top:2px;">Digital IO تفتیشی افسر کے حساس ریکارڈ کی حفاظت کو اولین ترجیح دیتا ہے۔</div>
       </div>
     </div>
   </div>
@@ -899,9 +899,9 @@ async function _renderTrustTab(el) {
       ['بحال شدنی', fmt(binCount), '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg>', 'var(--amber)'],
     ].map(([l,v,i,c]) => `
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
-        <div style="font-size:20px;">${i}</div>
-        <div style="font-size:22px;font-weight:900;color:${c};">${v}</div>
-        <div style="font-size:10px;color:var(--text-muted);">${l}</div>
+        <div style="font-size:15pt;">${i}</div>
+        <div style="font-size:16.5pt;font-weight:900;color:${c};">${v}</div>
+        <div style="font-size:7.5pt;color:var(--text-muted);">${l}</div>
       </div>`).join('')}
   </div>
 
@@ -910,17 +910,17 @@ async function _renderTrustTab(el) {
     ${protections.map(p => `
       <div class="card" style="direction:rtl;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-          <span style="font-size:18px;">${p.icon}</span>
-          <span style="font-size:13px;font-weight:700;flex:1;">${p.title}</span>
-          <span style="font-size:10px;background:rgba(34,197,94,0.15);color:var(--green);border-radius:10px;padding:2px 8px;font-weight:700;white-space:nowrap;">${p.tag}</span>
+          <span style="font-size:13.5pt;">${p.icon}</span>
+          <span style="font-size:9.75pt;font-weight:700;flex:1;">${p.title}</span>
+          <span style="font-size:7.5pt;background:rgba(34,197,94,0.15);color:var(--green);border-radius:10px;padding:2px 8px;font-weight:700;white-space:nowrap;">${p.tag}</span>
         </div>
-        <div style="font-size:11px;color:var(--text-secondary);line-height:1.7;">${p.body}</div>
+        <div style="font-size:8.25pt;color:var(--text-secondary);line-height:1.7;">${p.body}</div>
       </div>`).join('')}
   </div>
 
   <!-- Audit footnote -->
   <div class="card" style="direction:rtl;margin-top:12px;background:var(--bg-secondary);">
-    <div style="font-size:11px;color:var(--text-muted);line-height:1.8;">
+    <div style="font-size:8.25pt;color:var(--text-muted);line-height:1.8;">
       <svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><circle cx='11' cy='11' r='6.5'/><path d='M16 16l4.5 4.5'/></svg> <b>آخری حفاظتی آڈٹ:</b> تمام ڈیٹابیس ٹیبل پر رسائی کنٹرول (RLS) کی تصدیق ہو چکی ہے —
       ہر ٹیبل محفوظ، کوئی کھلا راستہ نہیں۔ شکایت یا سوال کی صورت میں اپنے سسٹم ایڈمن سے رابطہ کریں۔
     </div>
@@ -961,17 +961,17 @@ async function _renderUsageTab(el) {
 
     if (!sorted.length) {
       el.innerHTML = `<div class="card" style="text-align:center;padding:40px;color:var(--text-muted);">
-        <div style="font-size:40px;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M4 20h16"/><path d="M7 20V11"/><path d="M12 20V5"/><path d="M17 20v-6"/></svg></div>
+        <div style="font-size:30pt;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M4 20h16"/><path d="M7 20V11"/><path d="M12 20V5"/><path d="M17 20v-6"/></svg></div>
         <div>ابھی استعمال کا ڈیٹا جمع نہیں ہوا</div>
-        <div style="font-size:11px;margin-top:6px;">جیسے جیسے افسران ایپ استعمال کریں گے، یہاں ظاہر ہوگا</div>
+        <div style="font-size:8.25pt;margin-top:6px;">جیسے جیسے افسران ایپ استعمال کریں گے، یہاں ظاہر ہوگا</div>
       </div>`;
       return;
     }
 
     el.innerHTML = `
     <div class="card" style="direction:rtl;">
-      <div class="dio-hs2" style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:4px;">سب سے زیادہ استعمال ہونے والے صفحات</div>
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:16px;">کل ${grandTotal} مرتبہ · سب سے اوپر والے کو نمایاں کریں تاکہ افسران کو آسانی ہو</div>
+      <div class="dio-hs2" style="font-size:10.5pt;font-weight:700;color:var(--accent);margin-bottom:4px;">سب سے زیادہ استعمال ہونے والے صفحات</div>
+      <div style="font-size:8.25pt;color:var(--text-muted);margin-bottom:16px;">کل ${grandTotal} مرتبہ · سب سے اوپر والے کو نمایاں کریں تاکہ افسران کو آسانی ہو</div>
       <div style="display:flex;flex-direction:column;gap:10px;">
         ${sorted.map(([page,count],i)=>{
           const pct = Math.round(count/max*100);
@@ -980,11 +980,11 @@ async function _renderUsageTab(el) {
           const rank = `${i+1}`;   // tamghe ki jagah sada ginti — har aale par aik jaisi
           return `
           <div style="display:flex;align-items:center;gap:10px;">
-            <div style="width:28px;text-align:center;font-size:${i<3?'16px':'12px'};font-weight:700;color:${i<3?'var(--accent)':'var(--text-muted)'};">${rank}</div>
+            <div style="width:28px;text-align:center;font-size:${i<3?'12pt':'9pt'};font-weight:700;color:${i<3?'var(--accent)':'var(--text-muted)'};">${rank}</div>
             <div style="flex:1;">
               <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
-                <span style="font-size:13px;font-weight:${i<3?'700':'500'};font-family:'Jameel Noori Nastaleeq',serif;">${name}</span>
-                <span style="font-size:11px;color:var(--text-muted);">${count} (${share}%)</span>
+                <span style="font-size:9.75pt;font-weight:${i<3?'700':'500'};font-family:'Jameel Noori Nastaleeq';">${name}</span>
+                <span style="font-size:8.25pt;color:var(--text-muted);">${count} (${share}%)</span>
               </div>
               <div style="background:var(--bg-tertiary);border-radius:6px;overflow:hidden;height:14px;">
                 <div style="background:${i===0?'var(--accent)':i<3?'rgba(56,189,248,0.6)':'rgba(56,189,248,0.3)'};height:100%;width:${pct}%;transition:width 0.4s;"></div>
@@ -993,7 +993,7 @@ async function _renderUsageTab(el) {
           </div>`;
         }).join('')}
       </div>
-      <div style="margin-top:16px;padding:10px;background:var(--bg-secondary);border-radius:8px;font-size:11px;color:var(--text-muted);">
+      <div style="margin-top:16px;padding:10px;background:var(--bg-secondary);border-radius:8px;font-size:8.25pt;color:var(--text-muted);">
         تجویز: سب سے اوپر والے 3 صفحات کو ڈیش بورڈ یا Quick Actions میں نمایاں رکھیں تاکہ افسران کو آسانی ہو۔
       </div>
     </div>`;
@@ -1038,7 +1038,7 @@ async function _adminEditOfficer(officerId) {
         <input class="form-input" id="aeo-cnic" dir="ltr" style="text-align:left;"
                value="${_aeoCnic(o)}" placeholder="00000-0000000-0"
                oninput="typeof autoFormatCNIC==='function'&&autoFormatCNIC(this)">
-        <div style="font-size:10px;color:var(--text-muted);margin-top:4px;direction:rtl;">
+        <div style="font-size:7.5pt;color:var(--text-muted);margin-top:4px;direction:rtl;">
           یہ خانہ پہلے کہیں موجود نہیں تھا — اِس لیے افسر کا شناختی کارڈ نمبر
           کسی بھی صفحے سے بدلا نہیں جا سکتا تھا۔
         </div>
@@ -1109,7 +1109,7 @@ async function _adminViewOfficer(officerId) {
   if (!o) return;
   const cases = (window._adminData?.cases||[]).filter(c=>c.officer_id===officerId);
   openModal(`${esc(o.full_name)||'—'}`,
-    `<div style="font-size:13px;line-height:2.2;">
+    `<div style="font-size:9.75pt;line-height:2.2;">
       <div><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M3.5 5.5h17v13h-17z'/><path d='M3.5 6.5l8.5 6 8.5-6'/></svg> <b>Email:</b> ${o.email||'—'}</div>
       <div><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M3.5 11V4.5H10L20.5 15 14 21.5 3.5 11z'/><circle cx='7.5' cy='8' r='1.3'/></svg> <b>Badge:</b> ${esc(o.badge_number)||'—'}</div>
       <div><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><circle cx='12' cy='9' r='3.4'/><path d='M4.5 20.5a7.5 7.5 0 0 1 15 0'/><path d='M7 6.5h10'/></svg> <b>عہدہ:</b> ${esc(o.designation)||'—'}</div>
@@ -1311,23 +1311,23 @@ async function _renderSubsTab() {
         ['ختم', expired.length, 'var(--red)'],
       ].map(([l,v,c])=>`
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">
-        <div style="font-size:9px;color:var(--text-muted);">${l}</div>
-        <div style="font-size:24px;font-weight:900;color:${c};">${v}</div>
+        <div style="font-size:6.75pt;color:var(--text-muted);">${l}</div>
+        <div style="font-size:18pt;font-weight:900;color:${c};">${v}</div>
       </div>`).join('')}
     </div>
 
     <!-- Pending approvals -->
     ${pending.length ? `
     <div class="card" style="margin-bottom:12px;border:1px solid var(--amber);">
-      <div style="font-size:12px;font-weight:700;color:var(--amber);margin-bottom:10px;">زیر التواء تصدیق (${pending.length})</div>
+      <div style="font-size:9pt;font-weight:700;color:var(--amber);margin-bottom:10px;">زیر التواء تصدیق (${pending.length})</div>
       ${pending.map(s=>`
       <div style="background:var(--bg-secondary);border-radius:8px;padding:12px;margin-bottom:8px;direction:rtl;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
           <div>
             <div style="font-weight:700;">${esc(s.officers?.full_name)||'—'}</div>
-            <div style="font-size:11px;color:var(--text-muted);">${esc(s.officers?.station)||'—'} · ${esc(s.officers?.designation)||'—'}</div>
-            <div style="font-size:11px;color:var(--accent);">پلان: ${esc(s.subscription_plans?.name)||'—'} · Rs. ${s.amount||0}</div>
-            <div style="font-size:11px;color:var(--text-muted);">TXN: <b>${s.payment_ref||'—'}</b> · ${s.payment_method||'—'}</div>
+            <div style="font-size:8.25pt;color:var(--text-muted);">${esc(s.officers?.station)||'—'} · ${esc(s.officers?.designation)||'—'}</div>
+            <div style="font-size:8.25pt;color:var(--accent);">پلان: ${esc(s.subscription_plans?.name)||'—'} · Rs. ${s.amount||0}</div>
+            <div style="font-size:8.25pt;color:var(--text-muted);">TXN: <b>${s.payment_ref||'—'}</b> · ${s.payment_method||'—'}</div>
           </div>
           <div style="display:flex;gap:6px;">
             <button class="btn btn-primary btn-sm" onclick="_approveSub('${s.id}','${s.officer_id}')">منظور</button>
@@ -1339,7 +1339,7 @@ async function _renderSubsTab() {
 
     <!-- All subscriptions table -->
     <div class="card" style="padding:0;overflow:hidden;">
-      <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;color:var(--accent);">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-size:9pt;font-weight:700;color:var(--accent);">
         تمام سبسکرپشن (${subs.length})
       </div>
       <div style="overflow-x:auto;">
@@ -1356,13 +1356,13 @@ async function _renderSubsTab() {
             return `<tr>
               <td style="direction:rtl;">
                 <div style="font-weight:700;">${esc(s.officers?.full_name)||'—'}</div>
-                <div style="font-size:10px;color:var(--text-muted);">${esc(s.officers?.station)||'—'}</div>
+                <div style="font-size:7.5pt;color:var(--text-muted);">${esc(s.officers?.station)||'—'}</div>
               </td>
-              <td style="font-size:12px;">${esc(s.subscription_plans?.name)||'—'}</td>
+              <td style="font-size:9pt;">${esc(s.subscription_plans?.name)||'—'}</td>
               <td style="font-weight:700;">Rs. ${s.amount||0}</td>
-              <td><span class="pill" style="background:${statusColors[s.status]||'var(--accent)'};color:#fff;font-size:10px;">${s.status}</span></td>
-              <td style="font-size:11px;color:${diff<7?'var(--red)':'var(--text-secondary)'};">${formatDate(s.expires_at)} ${diff>0?'('+diff+'d)':''}</td>
-              <td style="font-size:10px;font-family:monospace;">${s.payment_ref||'—'}</td>
+              <td><span class="pill" style="background:${statusColors[s.status]||'var(--accent)'};color:#fff;font-size:7.5pt;">${s.status}</span></td>
+              <td style="font-size:8.25pt;color:${diff<7?'var(--red)':'var(--text-secondary)'};">${formatDate(s.expires_at)} ${diff>0?'('+diff+'d)':''}</td>
+              <td style="font-size:7.5pt;font-family:monospace;">${s.payment_ref||'—'}</td>
               <td>
                 ${s.status==='pending'?`<button title="منظور" aria-label="منظور" class="btn btn-primary btn-sm" onclick="_approveSub('${s.id}','${s.officer_id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4.5 12.5l5 5 10-11"/></svg></button>`:''}
                 ${s.status==='active'?`<button title="بند کریں" aria-label="بند کریں" class="btn btn-danger btn-sm" onclick="_suspendSub('${s.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M5.5 11h13v9.5h-13z"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></svg></button>`:''}

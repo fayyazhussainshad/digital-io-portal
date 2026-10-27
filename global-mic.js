@@ -323,8 +323,8 @@
       'inset-block-end:calc(24px + env(safe-area-inset-bottom,0px));' +
       'z-index:2147482999;max-width:min(62vw,540px);' +
       'padding:9px 14px;border-radius:11px;direction:rtl;text-align:right;' +
-      'background:#0f1b2a;color:#fff;font-size:13.5px;line-height:1.9;' +
-      'font-family:"Jameel Noori Nastaleeq","Noto Nastaliq Urdu",serif;' +
+      'background:#0f1b2a;color:#fff;font-size:10.125pt;line-height:1.9;' +
+      'font-family:"Jameel Noori Nastaleeq";' +
       'box-shadow:0 8px 24px rgba(15,27,42,.3);' +
       'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
       '#global-mic-live.live{opacity:.92;}' +

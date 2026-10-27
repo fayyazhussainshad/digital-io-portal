@@ -35,11 +35,11 @@ function renderSearch(container) {
       </div>
     </div>
     <div id="sr-page-searchbar" style="position:relative;margin-bottom:14px;">
-      <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none;"><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><circle cx='11' cy='11' r='6.5'/><path d='M16 16l4.5 4.5'/></svg></span>
+      <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:13.5pt;pointer-events:none;"><svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><circle cx='11' cy='11' r='6.5'/><path d='M16 16l4.5 4.5'/></svg></span>
       <input id="sr-query" type="text" autocomplete="off"
         placeholder="سب کچھ تلاش کریں — FIR، نام، CNIC، واقعہ، ضمنی، پیشہ..." dir="rtl"
         oninput="_srDebounced()"
-        style="width:100%;box-sizing:border-box;padding:14px 46px 14px 14px;background:var(--bg-card);border:2px solid var(--border);border-radius:12px;color:var(--text-primary);font-size:16px;outline:none;font-family:'Jameel Noori Nastaleeq',serif;"
+        style="width:100%;box-sizing:border-box;padding:14px 46px 14px 14px;background:var(--bg-card);border:2px solid var(--border);border-radius:12px;color:var(--text-primary);font-size:12pt;outline:none;font-family:'Jameel Noori Nastaleeq';"
         onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
     </div>
     <div id="sr-results"></div>
@@ -64,11 +64,11 @@ function _srDebounced() {
   if (q.length < 3) {
     const b0 = document.getElementById('sr-results');
     if (b0) b0.innerHTML = '<div style="text-align:center;padding:26px;color:var(--text-muted);' +
-      'font-size:13px;">\u06a9\u0645 \u0627\u0632 \u06a9\u0645 \u062a\u06cc\u0646 \u062d\u0631\u0648\u0641 \u0644\u06a9\u06be\u06cc\u06ba</div>';
+      'font-size:9.75pt;">\u06a9\u0645 \u0627\u0632 \u06a9\u0645 \u062a\u06cc\u0646 \u062d\u0631\u0648\u0641 \u0644\u06a9\u06be\u06cc\u06ba</div>';
     return;
   }
   const box = document.getElementById('sr-results');
-  if (box) box.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-muted);"><div style="font-size:28px;"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5.2l3.2 2"/></svg></div><div style="font-size:14px;margin-top:8px;">تلاش ہو رہی ہے...</div></div>`;
+  if (box) box.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-muted);"><div style="font-size:21pt;"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5.2l3.2 2"/></svg></div><div style="font-size:10.5pt;margin-top:8px;">تلاش ہو رہی ہے...</div></div>`;
   _searchDebounce = setTimeout(() => _runGlobalSearch(q), 300);
 }
 
@@ -90,15 +90,15 @@ function _renderSearchHistory() {
   if (!box) return;
   const h = _getSearchHistory();
   if (!h.length) {
-    box.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text-muted);"><div style="font-size:40px;margin-bottom:10px;"><svg viewBox='0 0 24 24' width='40' height='40' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><circle cx='11' cy='11' r='6.5'/><path d='M16 16l4.5 4.5'/></svg></div><div style="font-size:15px;">تلاش کرنے کے لیے اوپر لکھیں</div><div style="font-size:12px;margin-top:6px;">مقدمات، ملزمان، گواہان، ضمنی، سب کچھ</div></div>`;
+    box.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--text-muted);"><div style="font-size:30pt;margin-bottom:10px;"><svg viewBox='0 0 24 24' width='40' height='40' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><circle cx='11' cy='11' r='6.5'/><path d='M16 16l4.5 4.5'/></svg></div><div style="font-size:11.25pt;">تلاش کرنے کے لیے اوپر لکھیں</div><div style="font-size:9pt;margin-top:6px;">مقدمات، ملزمان، گواہان، ضمنی، سب کچھ</div></div>`;
     return;
   }
   box.innerHTML = `
-    <div style="font-size:13px;color:var(--text-muted);margin-bottom:10px;">پچھلی تلاش:</div>
+    <div style="font-size:9.75pt;color:var(--text-muted);margin-bottom:10px;">پچھلی تلاش:</div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
-      ${h.map(q => `<span onclick="_srFromHistory('${_dioJsHtml(q)}')" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:6px 14px;font-size:14px;cursor:pointer;color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">${q}</span>`).join('')}
+      ${h.map(q => `<span onclick="_srFromHistory('${_dioJsHtml(q)}')" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:6px 14px;font-size:10.5pt;cursor:pointer;color:var(--text-primary);font-family:'Jameel Noori Nastaleeq';" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">${q}</span>`).join('')}
     </div>
-    <button onclick="_clearSearchHistory()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:13px;color:var(--text-muted);cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">تاریخ صاف کریں</button>`;
+    <button onclick="_clearSearchHistory()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;font-size:9.75pt;color:var(--text-muted);cursor:pointer;font-family:'Jameel Noori Nastaleeq';">تاریخ صاف کریں</button>`;
 }
 function _srFromHistory(q) {
   const inp = document.getElementById('sr-query');
@@ -274,12 +274,12 @@ function _renderSearchResults(q, r) {
   const card = (label, color, title, sub, onclick) => `
     <div onclick="${onclick}" style="background:var(--bg-card);border:1px solid var(--border);border-right:3px solid ${color};border-radius:8px;padding:11px 13px;margin-bottom:7px;cursor:pointer;direction:rtl;text-align:right;">
       <div style="display:flex;align-items:center;gap:8px;justify-content:flex-start;">
-        <span style="background:${color};color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;white-space:nowrap;">${label}</span>
-        <span style="font-weight:700;font-size:15px;font-family:'Jameel Noori Nastaleeq',serif;">${esc(title)}</span>
+        <span style="background:${color};color:#fff;border-radius:6px;padding:2px 8px;font-size:9pt;white-space:nowrap;">${label}</span>
+        <span style="font-weight:700;font-size:11.25pt;font-family:'Jameel Noori Nastaleeq';">${esc(title)}</span>
       </div>
-      ${sub?`<div style="font-size:13px;color:var(--text-muted);margin-top:4px;direction:rtl;text-align:right;unicode-bidi:plaintext;">${esc(sub)}</div>`:''}
+      ${sub?`<div style="font-size:9.75pt;color:var(--text-muted);margin-top:4px;direction:rtl;text-align:right;unicode-bidi:plaintext;">${esc(sub)}</div>`:''}
     </div>`;
-  let html = `<div style="font-size:13px;color:var(--text-muted);margin-bottom:10px;">${total} نتائج ملے</div>`;
+  let html = `<div style="font-size:9.75pt;color:var(--text-muted);margin-bottom:10px;">${total} نتائج ملے</div>`;
   r.cases.forEach(c => html += card('مقدمہ','var(--accent)', `FIR ${c.fir_number||'—'}`, `${c.section_of_law||''} · ${c.complainant||''}`, `openCaseWorkspace('${c.id}')`));
   // ملزم — ساتھ تصاویر / شناختی کارڈ دیکھنے کا بٹن
   r.accused.forEach(a => html += card('ملزم','#f97316', a.name||'—', `${a.cnic||''} ${a.mobile||''} ${a.pesha||''}`, a.case_id?`openCaseWorkspace('${a.case_id}')`:'')
@@ -287,7 +287,7 @@ function _renderSearchResults(q, r) {
   /* گواہ — مدعی بھی گواہ ہے: مدعی جن مقدمات میں ملے، گواہوں میں «مدعی» نشان کے ساتھ */
   const badge = (t) => `<span style="display:inline-block;margin-inline-start:6px;border:1px solid #7c3aed;color:#7c3aed;background:rgba(124,58,237,.08);border-radius:999px;padding:0 9px 2px;font-size:11pt;font-weight:700;">${t}</span>`;
   const witCard = (title, sub, onclick, isMudai) => card('گواہ','#a78bfa', title, sub, onclick)
-    .replace(/(<span style="font-weight:700;font-size:15px;[^>]*>[^<]*<\/span>)/, isMudai ? '$1' + badge('مدعی') : '$1');
+    .replace(/(<span style="font-weight:700;font-size:11.25pt;[^>]*>[^<]*<\/span>)/, isMudai ? '$1' + badge('مدعی') : '$1');
   r.witnesses.forEach(wt => html += witCard(wt.full_name||'—', `${wt.cnic||''} ${wt.cell||''} ${wt.profession||''}`, wt.case_id?`openCaseWorkspace('${wt.case_id}')`:'', wt.status === 'mudai'));
   const _ql = String(q).toLowerCase().trim(), _qd = String(q).replace(/\D/g, '');
   r.cases.filter(c => (c.complainant && c.complainant.toLowerCase().includes(_ql)) ||

@@ -629,7 +629,7 @@ test('adad HERO hain — un ke element blanket font-size qaide se BAHAR', () => 
   assert.ok(/<b class="dio-sec-h"[^>]*role="heading"/.test(d),
     'unwan <h2> par `font-size: revert` lag jata hai — <b role=heading> chahiye');
   const c = read('theme-pro.css');
-  assert.ok(/b\.dio-stat-num\s*\{[^}]*font-size:\s*30px/.test(c), 'adad numayan (30px) hona chahiye');
+  assert.ok(/b\.dio-stat-num\s*\{[^}]*font-size:\s*22\.5pt/.test(c), 'adad numayan (22.5pt = 30px) hona chahiye');
 });
 
 test('theme-pro.css jur gayi (html + sw)', () => {
@@ -668,7 +668,7 @@ test('.card-title Urdu ke liye parha ja sakta hai', () => {
   assert.ok(/text-transform:\s*none/.test(m[0]),
     'uppercase ne "OFFICER INFORMATION CONTACT ADMIN TO UPDATE" bana diya tha');
   assert.ok(/letter-spacing:\s*0/.test(m[0]), 'letter-spacing Urdu ke jurey huroof toRta hai');
-  assert.ok(/font-size:\s*13px/.test(m[0]), '10px par Nastaleeq parhi nahi jati');
+  assert.ok(/font-size:\s*9\.75pt/.test(m[0]), '7.5pt (10px) par Nastaleeq parhi nahi jati — 9.75pt (13px)');
 });
 
 test('settings ka "تعیناتی محفوظ کریں" button toota hua nahi', () => {
@@ -1301,7 +1301,8 @@ test('`dioFontHead()` aik hi jagah, aur block par', () => {
   const a = read('app-core.js');
   assert.ok(/function dioFontHead\(\)/.test(a) && /window\.dioFontHead = dioFontHead;/.test(a));
   assert.ok(/font-display:block/.test(a), 'chhapai se pehle font aa jaye (swap nahi)');
-  assert.ok(/jameel-noori-nastaleeq4\.woff2/.test(a) && /Noto\+Nastaliq\+Urdu/.test(a));
+  // v560: isi site ka Jameel (fonts/), koi doosra (Noto) ya CDN font nahi
+  assert.ok(/fonts\/jameel-noori-nastaleeq\.woff2/.test(a) && !/Noto\+Nastaliq\+Urdu/.test(a) && !/cdn\.jsdelivr\.net\/npm\/jameel/.test(a));
 });
 
 test('service worker: qanoon ki failen aur Urdu font offline bhi', () => {

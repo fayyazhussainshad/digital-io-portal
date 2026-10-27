@@ -104,13 +104,15 @@ function _idxFitCells(root) {
     // اصل ناپ (ٹیمپلیٹ والی، مثلاً 15pt) ایک بار یاد رکھو — دوبارہ چلے تو وہیں سے شروع
     if (!el.getAttribute('data-fs0')) el.setAttribute('data-fs0', el.style.fontSize || getComputedStyle(el).fontSize);
     const f0 = el.getAttribute('data-fs0');
-    const unit = /pt$/.test(f0) ? 'pt' : 'px';
-    let fs = parseFloat(f0) || 12;
+    // v560: ناپ ہمیشہ pt میں — پرانی px قدر (محفوظ دستاویز / computed) اسی ناپ کے pt میں، قدم بھی وہی (0.5px = 0.375pt)
+    const isPt = /pt$/.test(f0);
+    let fs = isPt ? (parseFloat(f0) || 12) : (parseFloat(f0) || 12) * 0.75;
+    const step = isPt ? 0.5 : 0.375;
     const min = fs * 0.6;
-    el.style.fontSize = fs + unit;
+    el.style.fontSize = fs + 'pt';
     let n = 0;
     while (el.scrollWidth > el.clientWidth + 1 && fs > min && n < 60) {
-      fs -= 0.5; el.style.fontSize = fs + unit; n++;
+      fs -= step; el.style.fontSize = fs + 'pt'; n++;
     }
   });
 }
@@ -223,9 +225,9 @@ ${_idxZimniTableHTML([])}`;
 
   const header = (title) => `
     <div style="text-align:center;border-bottom:2px solid #333;padding-bottom:10px;margin-bottom:16px;">
-      <div style="font-size:14px;">تھانہ ${sta} &nbsp;—&nbsp; ضلع ${dst}</div>
-      <div style="font-size:16px;font-weight:bold;margin-top:6px;">${title}</div>
-      <div style="font-size:12px;margin-top:4px;">مقدمہ نمبر: ${fir} &nbsp;|&nbsp; تاریخ: ${dt}</div>
+      <div style="font-size:10.5pt;">تھانہ ${sta} &nbsp;—&nbsp; ضلع ${dst}</div>
+      <div style="font-size:12pt;font-weight:bold;margin-top:6px;">${title}</div>
+      <div style="font-size:9pt;margin-top:4px;">مقدمہ نمبر: ${fir} &nbsp;|&nbsp; تاریخ: ${dt}</div>
     </div>`;
 
   const row = (label, val='') => `
@@ -240,12 +242,12 @@ ${_idxZimniTableHTML([])}`;
     <div style="margin-top:40px;display:flex;justify-content:space-between;">
       <div style="text-align:center;">
         <div>_______________________</div>
-        <div style="font-size:12px;">دستخط مدعی</div>
+        <div style="font-size:9pt;">دستخط مدعی</div>
       </div>
       <div style="text-align:center;">
         <div>_______________________</div>
-        <div style="font-size:12px;">${rnk} ${ion} (${bdg})</div>
-        <div style="font-size:12px;">تفتیشی افسر</div>
+        <div style="font-size:9pt;">${rnk} ${ion} (${bdg})</div>
+        <div style="font-size:9pt;">تفتیشی افسر</div>
       </div>
     </div>`;
 
@@ -286,7 +288,7 @@ ${_idxZimniTableHTML([])}`;
       ${sig}`,
 
     named_accused: `${header('نامزد ملزمان')}
-      <div style="font-size:12px;margin-bottom:12px;">مقدمہ نمبر: ${fir} &nbsp;|&nbsp; دفعات: ${sec}</div>
+      <div style="font-size:9pt;margin-bottom:12px;">مقدمہ نمبر: ${fir} &nbsp;|&nbsp; دفعات: ${sec}</div>
       <table style="width:100%;border-collapse:collapse;margin-bottom:12px;">
         <thead><tr style="background:#333;color:#fff;">
           <th style="padding:6px;border:1px solid #555;">نمبر</th>
@@ -312,7 +314,7 @@ ${_idxZimniTableHTML([])}`;
       ${sig}`,
 
     unknown_accused: `${header('نامعلوم ملزمان')}
-      <div style="font-size:12px;margin-bottom:12px;">مقدمہ نمبر: ${fir}</div>
+      <div style="font-size:9pt;margin-bottom:12px;">مقدمہ نمبر: ${fir}</div>
       <table style="width:100%;border-collapse:collapse;margin-bottom:12px;">
         <thead><tr style="background:#333;color:#fff;">
           <th style="padding:6px;border:1px solid #555;">نمبر</th>
@@ -336,7 +338,7 @@ ${_idxZimniTableHTML([])}`;
       ${sig}`,
 
     witnesses: `${header('گواہان')}
-      <div style="font-size:12px;margin-bottom:12px;">مقدمہ نمبر: ${fir}</div>
+      <div style="font-size:9pt;margin-bottom:12px;">مقدمہ نمبر: ${fir}</div>
       <table style="width:100%;border-collapse:collapse;margin-bottom:12px;">
         <thead><tr style="background:#333;color:#fff;">
           <th style="padding:6px;border:1px solid #555;">نمبر</th>

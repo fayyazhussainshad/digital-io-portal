@@ -381,7 +381,7 @@
     const body = `
       <style>
         /* #modal-body دو کالم کا grid ہے (اندراج کارڈ) — یہ فہرست پوری چوڑائی میں */
-        .dcp-wrap{direction:rtl;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;width:100%;grid-column:1/-1;}
+        .dcp-wrap{direction:rtl;font-family:'Jameel Noori Nastaleeq';width:100%;grid-column:1/-1;}
         .dcp-tools{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
         .dcp-list{display:flex;flex-direction:column;gap:6px;max-height:55vh;overflow:auto;padding:2px;width:100%;box-sizing:border-box;}
         .dcp-row{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--border,#ccd);border-radius:9px;cursor:pointer;background:var(--bg-secondary,#f8fafc);min-height:44px;box-sizing:border-box;}
@@ -427,7 +427,7 @@
       o = document.createElement('div'); o.id = 'dcp-busy'; o.className = 'no-print';
       o.setAttribute('role', 'status'); o.setAttribute('aria-live', 'polite');
       o.style.cssText = 'position:fixed;inset:0;z-index:100002;background:rgba(9,20,40,.62);display:flex;align-items:center;justify-content:center;padding:16px;';
-      o.innerHTML = '<div style="background:var(--bg-card,#fff);color:var(--text-primary,#111);border-radius:14px;padding:18px 22px;min-width:min(360px,100%);text-align:center;direction:rtl;font-family:\'Jameel Noori Nastaleeq\',serif;box-shadow:0 18px 50px rgba(0,0,0,.35);">' +
+      o.innerHTML = '<div style="background:var(--bg-card,#fff);color:var(--text-primary,#111);border-radius:14px;padding:18px 22px;min-width:min(360px,100%);text-align:center;direction:rtl;font-family:\'Jameel Noori Nastaleeq\';box-shadow:0 18px 50px rgba(0,0,0,.35);">' +
         '<div style="font-size:15pt;line-height:1.9;">دستاویزات تیار ہو رہی ہیں…</div><div id="dcp-busy-m" style="font-size:12pt;line-height:1.9;color:var(--text-secondary,#445);"></div>' +
         '<button type="button" class="btn btn-secondary btn-sm" style="margin-top:8px;" onclick="window._dcpCancel=true">روکیں</button></div>';
       document.body.appendChild(o);
@@ -510,7 +510,7 @@
     box.id = 'dcp-ready'; box.className = 'no-print';
     box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', 'فائل تیار');
     box.style.cssText = 'position:fixed;inset:0;z-index:100003;background:rgba(9,20,40,.55);display:flex;align-items:center;justify-content:center;padding:16px;';
-    box.innerHTML = '<div dir="rtl" style="background:var(--bg-card,#fff);color:var(--text-primary,#111);border:1px solid var(--border,#ccd);border-radius:14px;padding:18px 18px 12px;width:min(380px,100%);box-shadow:0 18px 50px rgba(0,0,0,.35);text-align:center;font-family:\'Jameel Noori Nastaleeq\',\'Noto Nastaliq Urdu\',serif;">' +
+    box.innerHTML = '<div dir="rtl" style="background:var(--bg-card,#fff);color:var(--text-primary,#111);border:1px solid var(--border,#ccd);border-radius:14px;padding:18px 18px 12px;width:min(380px,100%);box-shadow:0 18px 50px rgba(0,0,0,.35);text-align:center;font-family:\'Jameel Noori Nastaleeq\';">' +
       '<b style="display:block;font-size:15pt;line-height:1.9;">فائل تیار ہے</b>' +
       '<small style="display:block;font-size:10.5pt;color:var(--text-muted,#667);line-height:1.8;margin-bottom:10px;" dir="auto">' + E(file.name) + '</small>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +

@@ -35,6 +35,16 @@
   function within(p, ms, label) {
     return Promise.race([p, new Promise(function (_, rej) { setTimeout(function () { rej(new Error((label || 'step') + ' timeout')); }, ms); })]);
   }
+  // v560: اردو کا کوئی متبادل فونٹ نہیں — دستاویز Jameel مانگے اور وہ لوڈ نہ ہو تو فائل نہیں، صاف غلطی
+  async function needJameel(d, html) {
+    if (!/Jameel Noori Nastaleeq/.test(String(html || '')) && !(d && d.body && /Jameel/.test(getComputedStyle(d.body).fontFamily))) return;
+    var ok = false;
+    try {
+      if (d.fonts && d.fonts.load) await within(d.fonts.load('14pt "Jameel Noori Nastaleeq"', 'ابج'), 30000, 'font');
+      ok = Array.from(d.fonts || []).some(function (f) { return /Jameel Noori Nastaleeq/.test(f.family) && f.status === 'loaded'; });
+    } catch (_) { ok = false; }
+    if (!ok) throw new Error('اردو فونٹ (Jameel Noori Nastaleeq) لوڈ نہیں ہو سکا — دوبارہ کوشش کریں');
+  }
   function safeName(t) {
     return String(t || 'Digital IO').replace(/[\\/:*?"<>|\n\r\t]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'Digital IO';
   }
@@ -197,7 +207,7 @@
 
   // ── فونٹ (SVG تصویر کے اندر باہر سے فونٹ نہیں آتا — اس لیے ساتھ شامل) ──
   var FONT_URLS = {
-    'Jameel Noori Nastaleeq': 'https://cdn.jsdelivr.net/npm/jameel-noori/fonts/jameel-noori-nastaleeq4.woff2',
+    'Jameel Noori Nastaleeq': 'fonts/jameel-noori-nastaleeq.woff2',   // v560: isi site ka (sw.js mein cache)
     'Amiri Quran DIO': 'fonts/amiri-quran-arabic.woff2',
     'Amiri DIO': 'fonts/amiri-arabic.woff2'
   };
@@ -215,7 +225,10 @@
           _fontCache[fam] = btoa(bin);
         }
         css += "@font-face{font-family:'" + fam + "';src:url(data:font/woff2;base64," + _fontCache[fam] + ") format('woff2');}";
-      } catch (_) { /* فونٹ نہ ملا — آلے کا اپنا (مثلاً Noto Nastaliq) استعمال ہو گا */ }
+      } catch (e) {
+        // v560: اردو کا کوئی متبادل فونٹ نہیں — Jameel نہ ملے تو غلط فونٹ والی فائل کے بجائے صاف غلطی
+        if (fam === 'Jameel Noori Nastaleeq') throw new Error('اردو فونٹ (Jameel Noori Nastaleeq) لوڈ نہیں ہو سکا — دوبارہ کوشش کریں');
+      }
     }
     return css;
   }
@@ -300,7 +313,11 @@
           } catch (_) { /* دوسری جگہ کی شیٹ */ }
         });
         var lhCss = /^[\d.]+$|%$|em$/.test(lh) ? ';line-height:' + lh : '';
-        bodyClone.setAttribute('style', keep.map(function (k) { return k + ':' + bcs.getPropertyValue(k); }).join(';') + lhCss + ';' + (d.body.getAttribute('style') || ''));
+        bodyClone.setAttribute('style', keep.map(function (k) {
+          var v = bcs.getPropertyValue(k);
+          if (k === 'font-size' && /px$/.test(v)) v = (Math.round(parseFloat(v) * 0.75 * 10000) / 10000) + 'pt';   // v560: pt
+          return k + ':' + v;
+        }).join(';') + lhCss + ';' + (d.body.getAttribute('style') || ''));
       } catch (_) { /* انداز نہ ملے تو جوں کا توں */ }
       xml = new XMLSerializer().serializeToString(bodyClone).replace(/^<body/, '<div').replace(/<\/body>$/, '</div>');
     }
@@ -381,6 +398,7 @@
   async function pdfPagesFromHtml(html, inline) {
     var fr = await frameFor(html);
     try {
+      await needJameel(fr.doc, html);   // v560
       // v554: پرنٹ میں fixed سادہ متن (مثلاً نیچے بائیں «Digital IO») ہر صفحے پر اُسی جگہ آتا ہے۔
       //   تصویر میں وہ صرف آخر میں ایک بار (اور ایک فالتو صفحہ بنا دیتا تھا) — اس لیے اسے الگ
       //   کر کے ہر صفحے پر اُسی جگہ لکھا جاتا ہے، بالکل پرنٹ کی طرح
@@ -476,6 +494,7 @@
     if (!ok || typeof window.html2canvas !== 'function') throw new Error('PDF بنانے کا آلہ لوڈ نہیں ہو سکا');
     var paper = pageHint || paperOf(el);
     try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (_) { /* فونٹ کا انتظار ضمنی */ }
+    await needJameel(el.ownerDocument || document, '');   // v560: متبادل فونٹ میں نہیں
     var saved = { t: el.style.transform, m: el.style.marginBottom, o: el.style.transformOrigin };
     el.style.transform = 'none'; el.style.marginBottom = '0';
     var canvas, rots = [];
@@ -558,7 +577,7 @@
       var cs = win.getComputedStyle(n);
       var tmp = doc.createElement('div');
       tmp.style.cssText = 'position:absolute;left:-30000px;top:0;background:transparent;writing-mode:horizontal-tb;transform:none;' +
-        'direction:' + cs.direction + ';text-align:' + (cs.textAlign || 'center') + ';font-family:' + cs.fontFamily + ';font-size:' + cs.fontSize +
+        'direction:' + cs.direction + ';text-align:' + (cs.textAlign || 'center') + ';font-family:' + cs.fontFamily + ';font-size:' + (parseFloat(cs.fontSize) * 0.75) + 'pt' +
         ';font-weight:' + cs.fontWeight + ';line-height:' + cs.lineHeight + ';color:' + cs.color + ';width:' + b.height + 'px;white-space:normal;';
       tmp.innerHTML = n.innerHTML;
       tmp.querySelectorAll('*').forEach(function (c) { c.style.writingMode = 'horizontal-tb'; c.style.transform = 'none'; c.style.position = 'static'; });
@@ -582,7 +601,7 @@
       'xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>' + safeName(title) + '</title>' +
       '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom><w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]-->' +
       '<style>@page Section1{size:' + paper.w + 'in ' + paper.h + 'in;margin:0.4in 0.4in 0.4in 0.4in;}' +
-      'div.Section1{page:Section1;} body{direction:rtl;font-family:"Jameel Noori Nastaleeq","Noto Nastaliq Urdu","Times New Roman",serif;}' +
+      'div.Section1{page:Section1;} body{direction:rtl;font-family:"Jameel Noori Nastaleeq";}' +
       'table{border-collapse:collapse;} td,th{mso-line-height-rule:at-least;}</style></head>' +
       '<body dir="rtl" lang="ur"><div class="Section1" dir="rtl">' + cap.html + '</div></body></html>';
   }
@@ -875,7 +894,7 @@
     st.textContent =
       '#dio-share-box{position:fixed;inset:0;z-index:100000;background:rgba(9,20,40,.55);display:flex;align-items:center;justify-content:center;padding:16px;}' +
       '#dio-share-box .dio-shr-card{background:var(--bg-card,#fff);color:var(--text-primary,#111);border:1px solid var(--border,#ccd);border-radius:14px;' +
-      'padding:18px 18px 12px;width:min(380px,100%);box-shadow:0 18px 50px rgba(0,0,0,.35);text-align:center;font-family:"Jameel Noori Nastaleeq","Noto Nastaliq Urdu",serif;}' +
+      'padding:18px 18px 12px;width:min(380px,100%);box-shadow:0 18px 50px rgba(0,0,0,.35);text-align:center;font-family:"Jameel Noori Nastaleeq";}' +
       '#dio-share-box .dio-shr-h{display:block;font-size:15pt;line-height:1.9;}' +
       '#dio-share-box .dio-shr-sub{display:block;font-size:10.5pt;color:var(--text-muted,#667);line-height:1.8;margin-bottom:10px;}' +
       '#dio-share-box .dio-shr-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;}' +

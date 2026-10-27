@@ -53,6 +53,13 @@
     '.dio-etb,.editor-toolbar,.doc-toolbar,.dio-modbtn,.zf-pick,input[type="file"],input[type="hidden"],' +
     '.dio-saved-box,#dio-saved-box,[id$="-chips"],.naq-chips,.dk-pick,.ch173-dd,[role="toolbar"]';
 
+  // v560: فونٹ کا ناپ ہمیشہ pt میں (computed قدر px میں آتی ہے — وہی ناپ pt میں)
+  function ptOf(v) {
+    var m = /^(-?[\d.]+)px$/.exec(String(v || '').trim());
+    if (!m) return v;
+    return (Math.round(parseFloat(m[1]) * 0.75 * 10000) / 10000) + 'pt';
+  }
+
   var _defaults = {};
   function defaultsFor(tag, sandbox) {
     if (_defaults[tag]) return _defaults[tag];
@@ -215,7 +222,7 @@
       var decl = [];
       INH.forEach(function (p) {
         var v = cs.getPropertyValue(p);
-        if (isRoot || !parentCs || parentCs.getPropertyValue(p) !== v) decl.push(p + ':' + v);
+        if (isRoot || !parentCs || parentCs.getPropertyValue(p) !== v) decl.push(p + ':' + (p === 'font-size' ? ptOf(v) : v));
       });
       var d = defaultsFor(tag, sandbox);
       NON.forEach(function (p) {

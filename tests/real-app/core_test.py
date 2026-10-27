@@ -173,7 +173,12 @@ def run_core(pg, tag):
         check(f'{tag} document: server blocks → clear failure, no «محفوظ»', has(t, 'error', 'دستاویز', 'محفوظ نہیں ہوئی') and no_success(t) and 'تیسرا' not in json.dumps(db(pg, 'case_documents'), ensure_ascii=False), t)
         server(pg)
         # پرنٹ: صرف دستاویز چھپتی ہے (کوئی بٹن/پٹی نہیں)، A4
-        pg.evaluate("printMisalDoc('بریف مقدمہ')"); pg.wait_for_timeout(800)
+        pg.evaluate("printMisalDoc('بریف مقدمہ')")
+        # v560: کاغذ اب اصل Jameel فونٹ کے ساتھ (پہلے Noto میں) — فونٹ لوڈ ہونے میں ~1–3 سیکنڈ، اس لیے انتظار
+        for _ in range(50):
+            if pg.evaluate("!!document.getElementById('dio-print-frame')"): break
+            pg.wait_for_timeout(200)
+        pg.wait_for_timeout(300)
         pf = pg.evaluate("""(() => { const f = document.getElementById('dio-print-frame'); if (!f) return null; const d = f.contentDocument;
           return { text: d.body.innerText, buttons: d.querySelectorAll('button,select,.doc-toolbar,.editor-toolbar').length,
             a4: [...d.querySelectorAll('style')].some(s => /size:A4/.test(s.textContent)), dir: d.documentElement.getAttribute('dir') }; })()""")

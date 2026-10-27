@@ -50,22 +50,18 @@
   })();
   </script>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🛡️%3C/text%3E%3C/svg%3E">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="preload" href="fonts/jameel-noori-nastaleeq.woff2" as="font" type="font/woff2" crossorigin>
   <style>
-    /* Jameel Noori Nastaleeq — official legal Urdu font.
-       local() pehle (laptop par installed to best quality), phir CSP-allowed
-       CDNs (jsdelivr + unpkg) se woff2. Yeh npm package (jameel-noori) mojood
-       aur dono CDNs par serve hota hai. */
+    /* v560 — Jameel Noori Nastaleeq: system ka WAHID Urdu font, isi site par (fonts/)
+       rakha hua aur sw.js mein pehle se cache — har aale par, offline bhi, wohi font.
+       Koi doosra (fallback) Urdu font nahi; local() bhi nahi (har PC ka apna version
+       mukhtalif ho sakta tha). `block` — font aane tak matn khali, doosre font mein nahi. */
     @font-face {
       font-family: 'Jameel Noori Nastaleeq';
-      src: local('Jameel Noori Nastaleeq'),
-           local('JameelNooriNastaleeq'),
-           local('Jameel Noori Nastaleeq Regular'),
-           url('https://cdn.jsdelivr.net/npm/jameel-noori/fonts/jameel-noori-nastaleeq4.woff2') format('woff2'),
-           url('https://unpkg.com/jameel-noori/fonts/jameel-noori-nastaleeq4.woff2') format('woff2');
+      src: url('fonts/jameel-noori-nastaleeq.woff2') format('woff2');
       font-weight: normal;
       font-style: normal;
-      font-display: swap;
+      font-display: block;
     }
   
 /* ── CARDS LANDSCAPE ── */
@@ -134,7 +130,7 @@
   --sidebar-width: 240px;
   --topbar-height: 48px;
   --bottombar-height: 32px;
-  --font-main: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu','Aptos','Segoe UI',system-ui,sans-serif;
+  --font-main: 'Jameel Noori Nastaleeq';
   --font-display: 'Aptos Display', 'Aptos', 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'Aptos Mono', 'Consolas', monospace;
 }
@@ -260,7 +256,7 @@ html[data-theme="lavender"] .login-bg { background: radial-gradient(ellipse at 2
 .theme-swatch { display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 5px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:all 0.15s; }
 .theme-swatch:hover { border-color: var(--accent); background: var(--hover-bg); }
 .theme-swatch.active { border-color: var(--accent); background: var(--accent-glow); }
-.theme-swatch-circle { width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;border:2px solid;overflow:hidden;background-size:cover;background-position:center; }
+.theme-swatch-circle { width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11.25pt;border:2px solid;overflow:hidden;background-size:cover;background-position:center; }
 
 /* ═══════════════════════════════════════════════
    PHOTO THEMES — glassmorphism frosted-glass panels
@@ -399,7 +395,7 @@ html[data-theme="aurora"] .login-bg {
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 16px; }
+html { font-size: 12pt; }
 body { font-family: var(--font-main); background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; overflow: hidden; -webkit-font-smoothing: antialiased; direction: rtl; text-align: right; }
 
 /* ═══ GLOBAL RTL — Urdu software, everything flows right-to-left ═══ */
@@ -454,59 +450,59 @@ input, textarea, select { font-family: var(--font-main); }
   /* On mobile the page's own search bar is shown (topbar search is hidden) */
   #sr-page-searchbar { display: block !important; }
   .mdoc-chip, .btn { min-height: 40px; }
-  input:not([type="checkbox"]):not([type="radio"]), select, textarea { font-size: 16px; }
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea { font-size: 12pt; }
   .modal-box, #modal-box { max-width: 96vw !important; }
   #login-screen { padding: 16px; justify-content: flex-start; }
   .login-card { padding: 18px 16px; }
-  .login-card .disclaimer-box, .login-card [class*="disclaimer"] { font-size: 13px !important; padding: 12px !important; }
+  .login-card .disclaimer-box, .login-card [class*="disclaimer"] { font-size: 9.75pt !important; padding: 12px !important; }
   .auth-method-btn, .login-method-btn { min-height: 60px !important; }
 }
 @keyframes cardSlideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
 .login-logo-wrap { text-align: center !important; margin-bottom: 24px; direction: ltr; }
-.login-logo-icon { font-size: 36px; margin-bottom: 8px; text-align: center; }
-.login-logo-text { font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; text-align: center; direction: ltr; }
-.login-logo-sub { font-size: 9px; color: var(--text-faint); letter-spacing: 3px; text-transform: uppercase; margin-top: 4px; text-align: center; }
+.login-logo-icon { font-size: 27pt; margin-bottom: 8px; text-align: center; }
+.login-logo-text { font-family: var(--font-display); font-size: 21pt; font-weight: 800; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; text-align: center; direction: ltr; }
+.login-logo-sub { font-size: 6.75pt; color: var(--text-faint); letter-spacing: 3px; text-transform: uppercase; margin-top: 4px; text-align: center; }
 .login-avatar-wrap { position: relative; width: 80px; height: 80px; margin: 0 auto 14px; }
-.login-avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-dark), var(--accent)); border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: #fff; overflow: hidden; font-family: var(--font-display); }
+.login-avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-dark), var(--accent)); border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 21pt; font-weight: 800; color: #fff; overflow: hidden; font-family: var(--font-display); }
 .login-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .login-avatar-ring { position: absolute; inset: -4px; border-radius: 50%; border: 1px solid rgba(56,189,248,0.3); animation: ringPulse 2s ease-in-out infinite; }
 @keyframes ringPulse { 0%,100%{transform:scale(1);opacity:.3} 50%{transform:scale(1.05);opacity:.8} }
-.login-officer-name { text-align: center; font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; font-family: var(--font-display); }
-.login-officer-role { text-align: center; font-size: 10px; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 20px; }
-.login-error { background: var(--red-bg); border: 1px solid rgba(239,68,68,0.3); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 12px; color: var(--red); margin-bottom: 14px; text-align: center; display: none; }
+.login-officer-name { text-align: center; font-size: 12pt; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; font-family: var(--font-display); }
+.login-officer-role { text-align: center; font-size: 7.5pt; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 20px; }
+.login-error { background: var(--red-bg); border: 1px solid rgba(239,68,68,0.3); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 9pt; color: var(--red); margin-bottom: 14px; text-align: center; display: none; }
 .login-methods { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 20px; }
-.login-method { background: rgba(10,25,40,0.8); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 6px; font-size: 11px; color: var(--text-muted); transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.login-method span { font-size: 18px; }
+.login-method { background: rgba(10,25,40,0.8); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 6px; font-size: 8.25pt; color: var(--text-muted); transition: all 0.15s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.login-method span { font-size: 13.5pt; }
 .login-method:hover, .login-method.active { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
 .input-group { position: relative; margin-bottom: 12px; }
-.login-input { width: 100%; background: rgba(20,32,44,0.95); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; color: #ffffff; font-size: 14px; outline: none; transition: border 0.15s; }
+.login-input { width: 100%; background: rgba(20,32,44,0.95); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; color: #ffffff; font-size: 10.5pt; outline: none; transition: border 0.15s; }
 .login-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); background: rgba(25,40,55,1); }
 .login-input::placeholder { color: #8a9bb0; }
-.input-eye { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 18px; color: var(--text-secondary); cursor: pointer; padding: 4px; z-index: 5; }
+.input-eye { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 13.5pt; color: var(--text-secondary); cursor: pointer; padding: 4px; z-index: 5; }
 .input-eye:hover { color: var(--accent); }
-.login-btn { width: 100%; background: linear-gradient(135deg, var(--accent-dark), var(--accent-darker)); border: none; border-radius: var(--radius-sm); padding: 13px; color: #fff; font-size: 14px; font-weight: 600; transition: all 0.15s; font-family: var(--font-display); letter-spacing: 0.5px; }
+.login-btn { width: 100%; background: linear-gradient(135deg, var(--accent-dark), var(--accent-darker)); border: none; border-radius: var(--radius-sm); padding: 13px; color: #fff; font-size: 10.5pt; font-weight: 600; transition: all 0.15s; font-family: var(--font-display); letter-spacing: 0.5px; }
 .login-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(2,132,199,0.4); }
-.login-links { display: flex; justify-content: space-between; margin-top: 12px; font-size: 14px; color: var(--accent); }
-.login-links a { font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; font-size: 14px; }
+.login-links { display: flex; justify-content: space-between; margin-top: 12px; font-size: 10.5pt; color: var(--accent); }
+.login-links a { font-family: 'Jameel Noori Nastaleeq'; font-size: 10.5pt; }
 .pin-display { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
 .pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border); background: transparent; transition: all 0.15s; }
 .pin-dot.filled { background: var(--accent); border-color: var(--accent); }
 .pin-pad { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; direction: ltr; }
-.pin-key { background: rgba(20,32,44,0.95); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; font-size: 22px; font-weight: 700; color: #ffffff; font-family: var(--font-mono); transition: all 0.1s; cursor: pointer; }
+.pin-key { background: rgba(20,32,44,0.95); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; font-size: 16.5pt; font-weight: 700; color: #ffffff; font-family: var(--font-mono); transition: all 0.1s; cursor: pointer; }
 .pin-key:hover { background: var(--hover-bg); color: var(--accent); }
 .pin-key:active { transform: scale(0.92); }
 .pin-key-empty { visibility: hidden; }
-.pin-key-del { font-size: 16px; }
+.pin-key-del { font-size: 12pt; }
 .biometric-wrap { text-align: center; padding: 20px 0; }
 .biometric-ring { width: 90px; height: 90px; border-radius: 50%; border: 2px solid var(--border); margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; animation: bioPulse 2.5s ease-in-out infinite; }
 @keyframes bioPulse { 0%,100%{box-shadow:0 0 0 0 rgba(56,189,248,0.3)} 50%{box-shadow:0 0 0 16px rgba(56,189,248,0)} }
 .biometric-ring:hover { border-color: var(--accent); }
 .biometric-ring.scanning { border-color: var(--accent); background: var(--accent-glow); }
-.biometric-icon { font-size: 40px; }
-.biometric-label { font-size: 11px; color: var(--text-muted); }
-.login-security-badge { margin-top: 20px; text-align: center; font-size: 9px; color: var(--text-faint); letter-spacing: 0.5px; }
+.biometric-icon { font-size: 30pt; }
+.biometric-label { font-size: 8.25pt; color: var(--text-muted); }
+.login-security-badge { margin-top: 20px; text-align: center; font-size: 6.75pt; color: var(--text-faint); letter-spacing: 0.5px; }
 .otp-inputs { display: flex; gap: 8px; justify-content: center; margin: 16px 0; }
-.otp-box { width: 44px; height: 52px; background: rgba(7,16,24,0.8); border: 1px solid var(--border); border-radius: var(--radius-sm); text-align: center; font-size: 22px; font-weight: 700; color: var(--text-primary); outline: none; font-family: var(--font-mono); transition: border 0.15s; }
+.otp-box { width: 44px; height: 52px; background: rgba(7,16,24,0.8); border: 1px solid var(--border); border-radius: var(--radius-sm); text-align: center; font-size: 16.5pt; font-weight: 700; color: var(--text-primary); outline: none; font-family: var(--font-mono); transition: border 0.15s; }
 .otp-box:focus { border-color: var(--accent); }
 
 /* ── MODALS ── */
@@ -515,11 +511,11 @@ input, textarea, select { font-family: var(--font-main); }
 .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
 /* مکالمہ (modal) کا عنوان = اُس کھڑکی کا مرکزی عنوان */
 .modal-title, #modal-title { font-size: var(--dio-h1, 15pt) !important; font-weight: 700; font-family: var(--font-display); }
-.modal-close { background: none; border: none; color: var(--text-muted); font-size: 18px; transition: color 0.15s; cursor: pointer; }
+.modal-close { background: none; border: none; color: var(--text-muted); font-size: 13.5pt; transition: color 0.15s; cursor: pointer; }
 .modal-close:hover { color: var(--red); }
 .modal-body { padding: 20px; }
 .modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-start; }
-.modal-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.6; }
+.modal-desc { font-size: 9pt; color: var(--text-muted); margin-bottom: 14px; line-height: 1.6; }
 
 /* ── APP LAYOUT ── */
 #main-app { height: 100vh; overflow: hidden; position: relative; }
@@ -545,34 +541,34 @@ input, textarea, select { font-family: var(--font-main); }
 }
 .sidebar.mobile-open, .sidebar.open { transform: translateX(0) !important; }
 .sidebar-logo { padding: 18px 16px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
-.sidebar-logo-icon { font-size: 24px; }
-.sidebar-logo-text { font-family: var(--font-display); font-size: 18px; font-weight: 800; letter-spacing: 2px; color: var(--accent); }
-.sidebar-logo-sub { font-size: 8px; color: var(--text-faint); letter-spacing: 2px; }
+.sidebar-logo-icon { font-size: 18pt; }
+.sidebar-logo-text { font-family: var(--font-display); font-size: 13.5pt; font-weight: 800; letter-spacing: 2px; color: var(--accent); }
+.sidebar-logo-sub { font-size: 6pt; color: var(--text-faint); letter-spacing: 2px; }
 .sidebar-profile { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
-.sidebar-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-dark), var(--accent)); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0; overflow: hidden; font-family: var(--font-display); }
+.sidebar-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-dark), var(--accent)); display: flex; align-items: center; justify-content: center; font-size: 10.5pt; font-weight: 700; color: #fff; flex-shrink: 0; overflow: hidden; font-family: var(--font-display); }
 .sidebar-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-.sidebar-profile-name { font-size: 12px; font-weight: 600; color: var(--text-primary); }
-.sidebar-profile-role { font-size: 10px; color: var(--text-muted); }
+.sidebar-profile-name { font-size: 9pt; font-weight: 600; color: var(--text-primary); }
+.sidebar-profile-role { font-size: 7.5pt; color: var(--text-muted); }
 .sidebar-nav { flex: 1; padding: 10px 8px; overflow-y: auto; }
-.nav-section-label { font-size: 9px; color: var(--text-faint); letter-spacing: 2px; text-transform: uppercase; padding: 8px 10px 4px; }
-.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius-sm); font-size: 15px; color: var(--text-secondary); margin: 2px 0; transition: all 0.15s; cursor: pointer; }
+.nav-section-label { font-size: 6.75pt; color: var(--text-faint); letter-spacing: 2px; text-transform: uppercase; padding: 8px 10px 4px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius-sm); font-size: 11.25pt; color: var(--text-secondary); margin: 2px 0; transition: all 0.15s; cursor: pointer; }
 .nav-item:hover { background: var(--hover-bg); color: var(--text-primary); }
 .nav-item.active { background: var(--nav-active); color: var(--accent); font-weight: 600; box-shadow: inset -2px 0 0 var(--accent); }
-.nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
-.nav-badge { margin-right: auto; margin-left: 0; background: var(--red); color: #fff; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 10px; }
+.nav-icon { font-size: 12pt; width: 20px; text-align: center; flex-shrink: 0; }
+.nav-badge { margin-right: auto; margin-left: 0; background: var(--red); color: #fff; font-size: 6.75pt; font-weight: 700; padding: 2px 6px; border-radius: 10px; }
 .sidebar-footer { padding: 12px 10px; border-top: 1px solid var(--border); }
-.logout-btn { width: 100%; background: var(--red-bg); border: 1px solid rgba(239,68,68,0.2); border-radius: var(--radius-sm); padding: 9px; color: var(--red); font-size: 12px; font-weight: 600; transition: all 0.15s; }
+.logout-btn { width: 100%; background: var(--red-bg); border: 1px solid rgba(239,68,68,0.2); border-radius: var(--radius-sm); padding: 9px; color: var(--red); font-size: 9pt; font-weight: 600; transition: all 0.15s; }
 .logout-btn:hover { background: rgba(239,68,68,0.15); }
-.sidebar-version { font-size: 9px; color: var(--text-faint); text-align: center; margin-top: 6px; }
+.sidebar-version { font-size: 6.75pt; color: var(--text-faint); text-align: center; margin-top: 6px; }
 /* ── سائیڈبار — نیوی (mockup) + بڑی سینٹرڈ پروفائل تصویر ── */
 .sidebar { background: linear-gradient(180deg,#1b2c4d,#16233c) !important; color:#cdd8ea; }
 .sidebar-logo, .sidebar-profile, .sidebar-footer { border-color: rgba(255,255,255,0.08) !important; }
 .sidebar-logo-text { color:#7dd3fc; }
 .sidebar-logo-sub { color:#8ea3c4 !important; }
 .sidebar-profile { flex-direction:column; text-align:center; gap:8px; padding:20px 16px 16px; }
-.sidebar-avatar { width:84px; height:84px; font-size:26px; border:3px solid rgba(255,255,255,0.18); }
-.sidebar-profile-name { color:#fff; font-size:16px; font-weight:800; }
-.sidebar-profile-role { color:#93a7c4; font-size:12px; }
+.sidebar-avatar { width:84px; height:84px; font-size:19.5pt; border:3px solid rgba(255,255,255,0.18); }
+.sidebar-profile-name { color:#fff; font-size:12pt; font-weight:800; }
+.sidebar-profile-role { color:#93a7c4; font-size:9pt; }
 .sidebar .nav-item { color:#cdd8ea; }
 .sidebar .nav-item:hover { background:rgba(255,255,255,0.07); color:#fff; }
 .sidebar .nav-item.active { background:#2a3f63; color:#fff; box-shadow:inset -3px 0 0 var(--accent); }
@@ -582,21 +578,21 @@ body.workspace-mode .topbar { display: none !important; }
 body.workspace-mode .page-content { height: 100vh !important; }
 .topbar-left { display: flex; align-items: center; gap: 12px; }
 .topbar-right { display: flex; align-items: center; gap: 8px; }
-.topbar-title { font-size: 14px; font-weight: 700; color: var(--text-secondary); font-family: var(--font-display); }
-.db-badge { font-size: 10px; padding: 3px 8px; border-radius: 6px; background: var(--green-bg); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
-.topbar-btn { background: none; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 10px; color: var(--text-muted); font-size: 14px; transition: all 0.15s; }
+.topbar-title { font-size: 10.5pt; font-weight: 700; color: var(--text-secondary); font-family: var(--font-display); }
+.db-badge { font-size: 7.5pt; padding: 3px 8px; border-radius: 6px; background: var(--green-bg); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+.topbar-btn { background: none; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 10px; color: var(--text-muted); font-size: 10.5pt; transition: all 0.15s; }
 .topbar-btn:hover { border-color: var(--accent); color: var(--accent); }
-.topbar-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); background: var(--bg-tertiary); padding: 5px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+.topbar-status { display: flex; align-items: center; gap: 6px; font-size: 8.25pt; color: var(--text-muted); background: var(--bg-tertiary); padding: 5px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); }
 
 /* ═══ TOP NAVIGATION BUTTONS (replace sidebar) ═══ */
-.topnav-btn { display: inline-flex; align-items: center; gap: 7px; background: none; border: 1px solid transparent; border-radius: 9px; padding: 7px 13px; height: 38px; box-sizing: border-box; color: var(--text-secondary); font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s, border-color .15s; font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; flex-shrink: 0; }
+.topnav-btn { display: inline-flex; align-items: center; gap: 7px; background: none; border: 1px solid transparent; border-radius: 9px; padding: 7px 13px; height: 38px; box-sizing: border-box; color: var(--text-secondary); font-size: 10.5pt; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s, border-color .15s; font-family: 'Jameel Noori Nastaleeq'; flex-shrink: 0; }
 .topnav-btn:hover { background: var(--hover-bg); color: var(--text-primary); }
 .topnav-btn.active { background: var(--nav-active); color: var(--accent); border-color: rgba(56,189,248,0.28); font-weight: 700; }
-.topnav-label { font-size: 14px; }
+.topnav-label { font-size: 10.5pt; }
 /* Professional monochrome line icons — currentColor se theme + active state khud match */
 .tn-svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; display: block; }
-.topnav-btn .tn-caret { font-size: 10px; opacity: .7; margin-inline-start: 1px; }
-.topmore-item { display: block; padding: 9px 12px; border-radius: 6px; font-size: 15px; color: var(--text-secondary); cursor: pointer; font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; transition: all 0.12s; }
+.topnav-btn .tn-caret { font-size: 7.5pt; opacity: .7; margin-inline-start: 1px; }
+.topmore-item { display: block; padding: 9px 12px; border-radius: 6px; font-size: 11.25pt; color: var(--text-secondary); cursor: pointer; font-family: 'Jameel Noori Nastaleeq'; transition: all 0.12s; }
 .topdd-menu { position: fixed; top: 48px; left: 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 9999; min-width: 180px; max-height: 80vh; overflow-y: auto; padding: 6px; direction: rtl; }
 .topmore-item:hover { background: var(--hover-bg); color: var(--accent); }
 
@@ -614,14 +610,14 @@ body.workspace-mode .page-content { height: 100vh !important; }
 /* MOBILE: top nav scrolls horizontally, labels hidden to save space */
 @media (max-width: 768px) {
   .topnav-label { display: none; }
-  .topnav-btn { padding: 0; width: 36px; height: 36px; font-size: 18px; display: inline-flex; align-items: center; justify-content: center; }
+  .topnav-btn { padding: 0; width: 36px; height: 36px; font-size: 13.5pt; display: inline-flex; align-items: center; justify-content: center; }
   #status-text { display: none; }
 }
 
 /* ═══ COMPACT TOP NAV (replaces sidebar) ═══ */
 .tb-logo { display: flex; align-items: center; gap: 6px; }
-.tb-logo-icon { font-size: 18px; }
-.tb-logo-text { font-size: 14px; font-weight: 800; color: var(--accent); font-family: var(--font-display); letter-spacing: 0.3px; }
+.tb-logo-icon { font-size: 13.5pt; }
+.tb-logo-text { font-size: 10.5pt; font-weight: 800; color: var(--accent); font-family: var(--font-display); letter-spacing: 0.3px; }
 
 .topnav {
   display: flex; align-items: stretch; gap: 4px;
@@ -645,7 +641,7 @@ body.workspace-mode .page-content { height: 100vh !important; }
   border: 1px solid transparent;
   border-radius: 10px;
   padding: 8px 14px;
-  font-size: 13px;
+  font-size: 9.75pt;
   font-weight: 600;
   color: var(--text-secondary);
   font-family: var(--font-main);
@@ -661,10 +657,10 @@ body.workspace-mode .page-content { height: 100vh !important; }
   border-color: rgba(56,189,248,0.3);
   font-weight: 700;
 }
-.tn-ic { font-size: 16px; }
-.tn-tx { font-size: 13px; }
+.tn-ic { font-size: 12pt; }
+.tn-tx { font-size: 9.75pt; }
 .topnav-item .nav-badge {
-  background: var(--red); color: #fff; font-size: 9px; font-weight: 700;
+  background: var(--red); color: #fff; font-size: 6.75pt; font-weight: 700;
   padding: 1px 6px; border-radius: 10px; margin: 0;
 }
 
@@ -694,7 +690,7 @@ body.workspace-mode .page-content { height: 100vh !important; }
   border: none;
   border-radius: 8px;
   padding: 10px 12px;
-  font-size: 13px;
+  font-size: 9.75pt;
   color: var(--text-secondary);
   font-family: var(--font-main);
   cursor: pointer;
@@ -702,7 +698,7 @@ body.workspace-mode .page-content { height: 100vh !important; }
   transition: all 0.12s;
 }
 .more-item:hover { background: var(--hover-bg); color: var(--accent); }
-.more-item span { font-size: 16px; width: 22px; text-align: center; }
+.more-item span { font-size: 12pt; width: 22px; text-align: center; }
 .more-divider { height: 1px; background: var(--border); margin: 5px 8px; }
 .more-logout { color: var(--red); }
 .more-logout:hover { background: var(--red-bg); color: var(--red); }
@@ -710,21 +706,21 @@ body.workspace-mode .page-content { height: 100vh !important; }
 /* Mobile: smaller nav items, hide text on very small if needed */
 @media (max-width: 600px) {
   .topnav { padding: 5px 8px; gap: 3px; }
-  .topnav-item { padding: 7px 11px; font-size: 12px; }
+  .topnav-item { padding: 7px 11px; font-size: 9pt; }
   .tb-logo-text { display: none; }
-  .topbar-title { font-size: 13px; }
+  .topbar-title { font-size: 9.75pt; }
 }
 .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: statusPulse 2s infinite; }
 @keyframes statusPulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-.mobile-menu-btn { display: flex; background: none; border: none; color: var(--text-secondary); font-size: 20px; }
+.mobile-menu-btn { display: flex; background: none; border: none; color: var(--text-secondary); font-size: 15pt; }
 .page-content { flex: 1; overflow-y: scroll; -webkit-overflow-scrolling: touch; padding: 20px; overscroll-behavior: contain; }
-.bottombar { height: var(--bottombar-height); background: var(--bg-tertiary); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font-size: 10px; color: var(--text-faint); flex-shrink: 0; }
+.bottombar { height: var(--bottombar-height); background: var(--bg-tertiary); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; font-size: 7.5pt; color: var(--text-faint); flex-shrink: 0; }
 
 /* ── COMMON COMPONENTS ── */
 .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-.page-title { font-size: 20px; font-weight: 800; font-family: var(--font-display); color: var(--text-primary); }
-.page-subtitle { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-.btn { padding: 8px 16px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; border: none; transition: all 0.15s; cursor: pointer; font-family: var(--font-main); }
+.page-title { font-size: 15pt; font-weight: 800; font-family: 'Jameel Noori Nastaleeq'; color: var(--text-primary); }   /* v560: اردو سرخی Jameel میں (پہلے Aptos Display → سسٹم کا نسخ) */
+.page-subtitle { font-size: 8.25pt; color: var(--text-muted); margin-top: 2px; }
+.btn { padding: 8px 16px; border-radius: var(--radius-sm); font-size: 9pt; font-weight: 600; border: none; transition: all 0.15s; cursor: pointer; font-family: var(--font-main); }
 .btn-primary { background: var(--accent-dark); color: #fff; }
 .btn-primary:hover { background: var(--accent-darker); transform: translateY(-1px); }
 .btn-secondary { background: var(--hover-bg); color: var(--text-secondary); border: 1px solid var(--border); }
@@ -732,22 +728,22 @@ body.workspace-mode .page-content { height: 100vh !important; }
 .btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
 .btn-danger:hover { background: rgba(239,68,68,0.15); }
 .btn-success { background: var(--green-bg); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
-.btn-sm { padding: 5px 10px; font-size: 11px; }
+.btn-sm { padding: 5px 10px; font-size: 8.25pt; }
 .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; transition: border-color 0.15s; }
-.card-title { font-size: 10px; color: var(--text-faint); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+.card-title { font-size: 7.5pt; color: var(--text-faint); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
 .stats-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; margin-bottom: 16px; }
 .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 12px; text-align: center; cursor: pointer; transition: all 0.15s; }
 .stat-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-.stat-num { font-size: 28px; font-weight: 900; font-family: var(--font-display); line-height: 1; }
-.stat-label { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+.stat-num { font-size: 21pt; font-weight: 900; font-family: var(--font-display); line-height: 1; }
+.stat-label { font-size: 7.5pt; color: var(--text-muted); margin-top: 4px; }
 .stat-blue .stat-num { color: var(--accent); }
 .stat-green .stat-num { color: var(--green); }
 .stat-amber .stat-num { color: var(--amber); }
 .stat-red .stat-num { color: var(--red); }
 .stat-purple .stat-num { color: var(--purple); }
 .form-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
-.form-label { font-size: 11px; color: var(--text-muted); letter-spacing: 0.5px; font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; display:block; width:100%; text-align:right; direction:rtl; }
-.form-input { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 12px; color: var(--text-primary); font-size: 14px; outline: none; transition: border 0.15s; font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',var(--font-main); width: 100%; unicode-bidi: plaintext; text-align: start; }
+.form-label { font-size: 8.25pt; color: var(--text-muted); letter-spacing: 0.5px; font-family: 'Jameel Noori Nastaleeq'; display:block; width:100%; text-align:right; direction:rtl; }
+.form-input { background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 12px; color: var(--text-primary); font-size: 10.5pt; outline: none; transition: border 0.15s; font-family: 'Jameel Noori Nastaleeq'; width: 100%; unicode-bidi: plaintext; text-align: start; }
 .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
 .form-input::placeholder { color: var(--text-faint); }
 .form-input[type="date"], .form-input[type="time"], .form-input[type="number"], .form-input[type="email"], .form-input[dir="ltr"] { direction: ltr; text-align: left; }
@@ -778,56 +774,56 @@ input[placeholder*="XXXXX-XXXXXXX"], input[placeholder*="36302"] {
 textarea.form-input { direction: rtl; text-align: right; }
 select.form-input { direction: rtl; text-align: right; }
 .data-table { width: 100%; border-collapse: collapse; }
-.data-table th { text-align: right; font-size: 14px; font-weight: bold; color: var(--text-primary); letter-spacing: 0; text-transform: none; padding: 10px 12px; border-bottom: 2px solid var(--border); font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; white-space: nowrap; vertical-align: middle; }
-.data-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-light); font-size: 13px; vertical-align: middle; font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+.data-table th { text-align: right; font-size: 10.5pt; font-weight: bold; color: var(--text-primary); letter-spacing: 0; text-transform: none; padding: 10px 12px; border-bottom: 2px solid var(--border); font-family: 'Jameel Noori Nastaleeq'; white-space: nowrap; vertical-align: middle; }
+.data-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-light); font-size: 9.75pt; vertical-align: middle; font-family: 'Jameel Noori Nastaleeq'; }
 .data-table tr:hover td { background: var(--hover-bg); }
 .data-table tr:last-child td { border-bottom: none; }
-.pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+.pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 7.5pt; font-weight: 600; }
 .pill-blue { background: rgba(56,189,248,0.1); color: var(--accent); }
 .pill-green { background: var(--green-bg); color: var(--green); }
 .pill-amber { background: var(--amber-bg); color: var(--amber); }
 .pill-red { background: var(--red-bg); color: var(--red); }
 .pill-purple { background: rgba(167,139,250,0.1); color: var(--purple); }
 .pill-teal { background: rgba(6,182,212,0.12); color: #06b6d4; }
-.fir-num { color: var(--accent); font-weight: 700; font-size: 13px; cursor: pointer; font-family: var(--font-mono); }
+.fir-num { color: var(--accent); font-weight: 700; font-size: 9.75pt; cursor: pointer; font-family: var(--font-mono); }
 .fir-num:hover { text-decoration: underline; }
 .search-bar { display: flex; gap: 8px; margin-bottom: 16px; }
-.search-input { flex: 1; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 14px; color: var(--text-primary); font-size: 13px; outline: none; transition: border 0.15s; }
+.search-input { flex: 1; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 9px 14px; color: var(--text-primary); font-size: 9.75pt; outline: none; transition: border 0.15s; }
 .search-input:focus { border-color: var(--accent); }
 .search-input::placeholder { color: var(--text-faint); }
-.filter-select { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; color: var(--text-secondary); font-size: 12px; outline: none; cursor: pointer; }
-.detail-row { padding: 9px 0; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; font-size: 12px; align-items: center; }
+.filter-select { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; color: var(--text-secondary); font-size: 9pt; outline: none; cursor: pointer; }
+.detail-row { padding: 9px 0; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; font-size: 9pt; align-items: center; }
 .detail-row:last-child { border-bottom: none; }
 .detail-key { color: var(--text-muted); }
 .detail-val { color: var(--text-primary); font-weight: 600; text-align: right; max-width: 60%; }
 @keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-100%)} }
 .officer-card { background: linear-gradient(135deg, var(--bg-tertiary), var(--nav-active)); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
-.officer-card-avatar { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-dark), var(--accent)); border: 3px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; color: #fff; flex-shrink: 0; overflow: hidden; font-family: var(--font-display); }
+.officer-card-avatar { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-dark), var(--accent)); border: 3px solid var(--accent); display: flex; align-items: center; justify-content: center; font-size: 18pt; font-weight: 800; color: #fff; flex-shrink: 0; overflow: hidden; font-family: var(--font-display); }
 .officer-card-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-.officer-card-name { font-size: 18px; font-weight: 700; font-family: var(--font-display); }
+.officer-card-name { font-size: 13.5pt; font-weight: 700; font-family: var(--font-display); }
 .officer-card-meta { display: flex; gap: 16px; margin-top: 6px; flex-wrap: wrap; }
-.officer-card-meta span { font-size: 11px; color: var(--text-muted); }
+.officer-card-meta span { font-size: 8.25pt; color: var(--text-muted); }
 .officer-card-meta b { color: var(--accent); }
-.reminder-item { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border-light); font-size: 12px; }
+.reminder-item { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border-light); font-size: 9pt; }
 .reminder-item:last-child { border-bottom: none; }
 .reminder-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .reminder-text { flex: 1; color: var(--text-secondary); }
-.reminder-date { color: var(--text-faint); font-size: 10px; }
+.reminder-date { color: var(--text-faint); font-size: 7.5pt; }
 .loading-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; gap: 12px; }
 .loading-spinner { width: 32px; height: 32px; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }
 @keyframes spin { to{transform:rotate(360deg)} }
-.loading-text { font-size: 12px; color: var(--text-muted); }
+.loading-text { font-size: 9pt; color: var(--text-muted); }
 #toast-container { position: fixed; bottom: 50px; right: 20px; z-index: 5000; display: flex; flex-direction: column; gap: 8px; }
-.toast { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 18px; font-size: 12px; color: var(--text-primary); box-shadow: var(--shadow); animation: cardSlideUp 0.3s ease; max-width: 320px; }
+.toast { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 18px; font-size: 9pt; color: var(--text-primary); box-shadow: var(--shadow); animation: cardSlideUp 0.3s ease; max-width: 320px; }
 .toast-success { border-color: rgba(34,197,94,0.3); }
 .toast-error { border-color: rgba(239,68,68,0.3); }
 .evidence-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
 .evidence-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: all 0.15s; }
 .evidence-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-.evidence-thumb { height: 100px; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; font-size: 36px; position: relative; }
+.evidence-thumb { height: 100px; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; font-size: 27pt; position: relative; }
 .evidence-info { padding: 10px; }
-.evidence-name { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
-.evidence-tag { font-size: 10px; color: var(--accent); font-family: var(--font-mono); }
+.evidence-name { font-size: 8.25pt; color: var(--text-secondary); margin-bottom: 4px; }
+.evidence-tag { font-size: 7.5pt; color: var(--accent); font-family: var(--font-mono); }
 .law-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
 .law-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; cursor: pointer; transition: all 0.15s; }
 .law-card:hover { border-color: var(--accent); transform: translateY(-1px); }
@@ -852,30 +848,30 @@ select.form-input { direction: rtl; text-align: right; }
 .doc-card { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border-light); cursor: pointer; transition: background 0.15s; }
 .doc-card:hover { background: var(--hover-bg); }
 .doc-card.active { background: var(--nav-active); border-left: 3px solid var(--accent); }
-.doc-card-icon { font-size: 20px; flex-shrink: 0; }
-.doc-card-name { flex: 1; font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+.doc-card-icon { font-size: 15pt; flex-shrink: 0; }
+.doc-card-name { flex: 1; font-size: 9pt; color: var(--text-secondary); line-height: 1.4; }
 .doc-card.active .doc-card-name { color: var(--accent); font-weight: 600; }
-.doc-card-status { font-size: 9px; padding: 2px 6px; border-radius: 8px; flex-shrink: 0; }
+.doc-card-status { font-size: 6.75pt; padding: 2px 6px; border-radius: 8px; flex-shrink: 0; }
 .doc-status-draft { background: var(--amber-bg); color: var(--amber); }
 .doc-status-done { background: var(--green-bg); color: var(--green); }
 .doc-status-empty { background: var(--hover-bg); color: var(--text-faint); }
 .case-header { padding: 16px 20px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .case-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); background: var(--bg-secondary); padding: 0 16px; }
-.case-tab { padding: 10px 16px; font-size: 12px; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
+.case-tab { padding: 10px 16px; font-size: 9pt; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
 .case-tab:hover { color: var(--text-primary); }
 .case-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
 .case-tab-content { padding: 20px; }
 
 /* Template Editor */
-.template-editor { background: #fff; color: #1a1a1a; min-height: 600px; padding: 40px; font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', 'Times New Roman', serif; font-size: 14px; line-height: 2; border-radius: var(--radius); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+.template-editor { background: #fff; color: #1a1a1a; min-height: 600px; padding: 40px; font-family: 'Jameel Noori Nastaleeq'; font-size: 10.5pt; line-height: 2; border-radius: var(--radius); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
 .template-field { outline: none; border-bottom: 2px dashed #aaa; background: rgba(56,189,248,0.05); padding: 2px 6px; min-width: 80px; display: inline-block; cursor: text; border-radius: 3px 3px 0 0; transition: all 0.15s; }
 .template-field:focus { border-bottom-color: #0284c7; background: rgba(56,189,248,0.1); }
 .template-field[dir="auto"] { text-align: right; }
 .template-toolbar { padding: 10px 16px; background: var(--bg-card); border-bottom: 1px solid var(--border); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
 /* Urdu/bilingual text inputs */
-.urdu-input { direction: auto; text-align: right; font-family: 'Noto Nastaliq Urdu', var(--font-main); font-size: 14px; line-height: 1.8; }
-.bilingual-input { direction: auto; font-family: 'Noto Nastaliq Urdu', var(--font-main); }
+.urdu-input { direction: auto; text-align: right; font-family: 'Jameel Noori Nastaleeq'; font-size: 10.5pt; line-height: 1.8; }
+.bilingual-input { direction: auto; font-family: 'Jameel Noori Nastaleeq'; }
 
 /* ── Mobile + Tablet (≤900px) ── */
 @media screen and (max-width: 900px) {
@@ -885,7 +881,7 @@ select.form-input { direction: rtl; text-align: right; }
   .stats-grid,.form-row { grid-template-columns:repeat(2,1fr) !important; }
   .law-grid,.misal-layout,.backup-dest-grid,.perf-grid { grid-template-columns:1fr !important; }
   table { display:block !important; overflow-x:auto !important; -webkit-overflow-scrolling:touch !important; }
-  .data-table { font-size:11px !important; }
+  .data-table { font-size:8.25pt !important; }
   .modal-card { max-width:95vw !important; margin:10px !important; }
   .wb-ribbon { overflow-x:auto !important; flex-wrap:nowrap !important; -webkit-overflow-scrolling:touch !important; }
   .wb-grp { flex-shrink:0 !important; }
@@ -925,7 +921,7 @@ img { content-visibility: auto; }
   }
 
   /* Tables — smaller font */
-  .data-table th, .data-table td { font-size: 11px; padding: 5px 6px; }
+  .data-table th, .data-table td { font-size: 8.25pt; padding: 5px 6px; }
 
   /* Modals — full screen on mobile */
   .modal-card { max-width: 100vw !important; max-height: 95vh; margin: 0 !important; border-radius: 12px 12px 0 0 !important; position: fixed; bottom: 0; left: 0; right: 0; }
@@ -942,12 +938,12 @@ img { content-visibility: auto; }
 
 /* ── Form labels RIGHT aligned (Urdu RTL) ── */
 .form-label {
-  font-size: 11px;
+  font-size: 8.25pt;
   color: var(--text-muted);
   letter-spacing: 0.5px;
   text-align: right;
   direction: rtl;
-  font-family: 'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
+  font-family: 'Jameel Noori Nastaleeq';
   display: block;
   width: 100%;
 }
@@ -988,7 +984,7 @@ input[id*="cnic"], input[id*="cell"] {
   background: var(--accent);
   color: #fff;
   border: none;
-  font-size: 20px;
+  font-size: 15pt;
   cursor: pointer;
   z-index: 800;
   box-shadow: 0 4px 14px rgba(56,189,248,0.4);
@@ -1004,12 +1000,12 @@ input[id*="cnic"], input[id*="cell"] {
 @media screen and (max-width: 900px) {
   /* Larger touch targets */
   .btn { min-height: 38px; min-width: 38px; }
-  .btn-sm { min-height: 32px; padding: 5px 10px; font-size: 11px; }
+  .btn-sm { min-height: 32px; padding: 5px 10px; font-size: 8.25pt; }
   .nav-item { min-height: 44px; padding: 10px 14px; }
   
   /* Better font for mobile */
-  .page-content { font-size: 13px; }
-  .data-table th, .data-table td { font-size: 11px; padding: 6px 8px; }
+  .page-content { font-size: 9.75pt; }
+  .data-table th, .data-table td { font-size: 8.25pt; padding: 6px 8px; }
   
   /* Tables scroll */
   table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -1021,7 +1017,7 @@ input[id*="cnic"], input[id*="cell"] {
   #sidebar-mini-strip { display: none !important; }
   
   /* Form inputs larger for touch */
-  .form-input { padding: 10px 12px; font-size: 14px; min-height: 44px; }
+  .form-input { padding: 10px 12px; font-size: 10.5pt; min-height: 44px; }
 }
 
 /* ── Laptop/Desktop ── */
@@ -1139,7 +1135,7 @@ input[id*="cnic"], input[id*="cell"] {
 .login-card select,
 .login-card label,
 .login-card .form-input,
-.login-card .login-method { font-size: 14px !important; }
+.login-card .login-method { font-size: 10.5pt !important; }
 .login-card .disclaimer-box,
 .login-card [class*="disclaimer"] { font-size: 12pt !important; }
 
@@ -1176,7 +1172,7 @@ input[id*="cnic"], input[id*="cell"] {
    ══════════════════════════════════════════════════════════════ */
 .page-content:not(#ch173-doc):not(#dio-dv-body):not(#saza-doc):not(#dk-doc):not(#dio-naqsha-doc),
 .page-content :is(div, span, p, td, th, li, label, a):not(#ch173-doc):not(#ch173-doc *):not(#dio-dv-body):not(#dio-dv-body *):not(#saza-doc):not(#saza-doc *):not(#dk-doc):not(#dk-doc *):not(#dio-naqsha-doc):not(#dio-naqsha-doc *) {
-  font-size: 14px !important;
+  font-size: 10.5pt !important;
 }
 /* MEHFOOZ — inpar 14pt lagu NA ho (apni set-shuda naap rahe).
    چالان (#ch173-doc), doc-viewer aur سزا سلپ (#saza-doc) yahan se BHI bahar
@@ -1206,7 +1202,7 @@ input[id*="cnic"], input[id*="cell"] {
    "is safhe ki TAMAM apni naapein bhool jao aur browser ki bunyadi halat
    par chale jao". Browser ke paas `div` (yani .page-title, .card-title)
    ki koi apni naap hoti hi nahi, is liye woh apne WALID se naap leta tha
-   — aur walid par ooper wale qaide ka `font-size:14px !important` laga
+   — aur walid par ooper wale qaide ka `font-size:10.5pt !important` laga
    hua tha. Natija: har safhe ka unwan 14px, bilkul aam matn jitna:
        .page-title → 14px   (jabke us ki apni CSS 20px kehti hai)
        h2          → 21px   (browser ki bunyadi naap, nizam se koi taluq nahi)
@@ -1264,7 +1260,7 @@ if (!window.supabase || !window.supabase.createClient) {
 <body>
 <!-- Diagnostic error banner — shows JS errors on screen (helps debug mobile) -->
 
-<div id="dio-error-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:999999;background:#b91c1c;color:#fff;padding:10px 14px;font-size:12px;font-family:monospace;direction:ltr;text-align:left;max-height:40vh;overflow:auto;"></div>
+<div id="dio-error-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:999999;background:#b91c1c;color:#fff;padding:10px 14px;font-size:9pt;font-family:monospace;direction:ltr;text-align:left;max-height:40vh;overflow:auto;"></div>
 <script>
 window.addEventListener('error', function(e){
   var b = document.getElementById('dio-error-banner');
@@ -1432,7 +1428,7 @@ window.addEventListener('unhandledrejection', function(e){
 
   <!-- SIDEBAR -->
   <div class="sidebar" id="sidebar">
-    <div class="sidebar-logo"><div class="sidebar-logo-icon">🛡️</div><div><div class="sidebar-logo-text">Digital IO</div><div class="sidebar-logo-sub" style="font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">تفتیشی افسر کا چھوٹو</div></div></div>
+    <div class="sidebar-logo"><div class="sidebar-logo-icon">🛡️</div><div><div class="sidebar-logo-text">Digital IO</div><div class="sidebar-logo-sub" style="font-family:'Jameel Noori Nastaleeq';direction:rtl;">تفتیشی افسر کا چھوٹو</div></div></div>
     <div class="sidebar-profile"><div class="sidebar-avatar" id="sidebar-avatar">IO</div><div><div class="sidebar-profile-name" id="sidebar-name">Loading...</div><div class="sidebar-profile-role" id="sidebar-role">Officer</div></div></div>
     <nav class="sidebar-nav">
       <div class="nav-item active" onclick="closeMobileSidebar();showPage('dashboard',this)"><span class="nav-icon">🏠</span> ڈیش بورڈ</div>
@@ -1445,7 +1441,7 @@ window.addEventListener('unhandledrejection', function(e){
 
       <!-- More (collapsible) -->
       <div class="nav-item" id="nav-more-toggle" onclick="window._toggleMoreNav&&_toggleMoreNav(this)" style="cursor:pointer;">
-        <span class="nav-icon">⋯</span> مزید <span id="more-arrow" style="margin-right:auto;font-size:11px;">▼</span>
+        <span class="nav-icon">⋯</span> مزید <span id="more-arrow" style="margin-right:auto;font-size:8.25pt;">▼</span>
       </div>
       <div id="nav-more-section" style="display:none;">
         <div class="nav-item" style="padding-right:28px;" onclick="closeMobileSidebar();showPage('fivec',this)"><span class="nav-icon">📋</span> C-5 / مارک شدہ درخواستیں</div>
@@ -1792,7 +1788,7 @@ function _sidebarClose() { closeMobileSidebar(); }
 .topbar { padding-right: 10px !important; }
 @media (max-width: 768px) {
   .topbar { padding-right: 10px !important; }
-  .topbar-left > div { font-size: 15px !important; }
+  .topbar-left > div { font-size: 11.25pt !important; }
   .sidebar {
     transform: translateX(100%);
     transition: transform 0.28s ease;
@@ -1862,11 +1858,11 @@ if('serviceWorker' in navigator){
     bar.id = 'dio-update-banner';
     bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:2147483647;background:#1a3a5c;color:#fff;'
       + 'display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;padding:12px 16px;'
-      + "font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:15px;direction:rtl;"
+      + "font-family:'Jameel Noori Nastaleeq';font-size:11.25pt;direction:rtl;"
       + 'box-shadow:0 -4px 20px rgba(0,0,0,0.35);animation:dioUpSlide .3s ease;';
     bar.innerHTML = '<span style="display:flex;align-items:center;gap:8px;">🔄 نیا اپڈیٹ دستیاب ہے</span>'
-      + '<button id="dio-update-btn" style="background:#fff;color:#1a3a5c;border:none;border-radius:8px;padding:8px 20px;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit;">ابھی اپڈیٹ کریں</button>'
-      + '<button id="dio-update-later" style="background:transparent;color:#cbd5e1;border:1px solid #475569;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit;">بعد میں</button>';
+      + '<button id="dio-update-btn" style="background:#fff;color:#1a3a5c;border:none;border-radius:8px;padding:8px 20px;font-weight:800;font-size:11.25pt;cursor:pointer;font-family:inherit;">ابھی اپڈیٹ کریں</button>'
+      + '<button id="dio-update-later" style="background:transparent;color:#cbd5e1;border:1px solid #475569;border-radius:8px;padding:8px 14px;font-size:9.75pt;cursor:pointer;font-family:inherit;">بعد میں</button>';
     document.body.appendChild(bar);
 
     const style = document.createElement('style');
@@ -2095,8 +2091,8 @@ document.addEventListener('DOMContentLoaded', function () {
 <div id="modal-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000;align-items:center;justify-content:center;padding:16px;" onmousedown="this._dioDownSelf=(event.target===this)" ontouchstart="this._dioDownSelf=(event.target===this)" onclick="if(event.target===this&amp;&amp;this._dioDownSelf&amp;&amp;!this.querySelector('.modal-card.dio-entry'))closeModal();this._dioDownSelf=false">
   <div class="modal-card" style="background:var(--bg-card,#0b1826);border:1px solid var(--border,#1e3a52);border-radius:14px;max-width:980px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,0.6);direction:rtl;">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border,#1e3a52);">
-      <div id="modal-title" style="font-size:16px;font-weight:700;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;color:var(--text-primary,#e5eef5);"></div>
-      <button onclick="closeModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted,#7d97ad);line-height:1;">✕</button>
+      <div id="modal-title" style="font-size:12pt;font-weight:700;font-family:'Jameel Noori Nastaleeq';color:var(--text-primary,#e5eef5);"></div>
+      <button onclick="closeModal()" style="background:none;border:none;font-size:15pt;cursor:pointer;color:var(--text-muted,#7d97ad);line-height:1;">✕</button>
     </div>
     <div id="modal-body" class="modal-body" style="padding:18px;"></div>
     <div id="modal-footer" style="padding:12px 18px;border-top:1px solid var(--border,#1e3a52);display:flex;gap:8px;justify-content:flex-start;flex-wrap:wrap;"></div>

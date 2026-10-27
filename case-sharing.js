@@ -27,22 +27,22 @@ async function openCaseShareModal(caseId) {
   _shareCaseId = caseId;
   openModal('مقدمہ شیئر کریں', `
     <div style="direction:rtl;display:flex;flex-direction:column;gap:12px;">
-      <div style="font-size:13px;color:var(--text-secondary);">
+      <div style="font-size:9.75pt;color:var(--text-secondary);">
         دوسرے افسر کو یہ مقدمہ دیکھنے یا ترمیم کی اجازت دیں۔ صرف اپنے تھانے کے فعال افسران دکھائے جاتے ہیں۔
       </div>
 
       <div>
-        <label style="font-size:13px;font-weight:600;">افسر تلاش کریں (نام یا محکمانہ نمبر):</label>
+        <label style="font-size:9.75pt;font-weight:600;">افسر تلاش کریں (نام یا محکمانہ نمبر):</label>
         <input id="share-officer-search" type="text" placeholder="نام یا بیج نمبر لکھیں"
           maxlength="60"
           oninput="_searchOfficersForShare(this.value)"
-          style="width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:14px;margin-top:4px;font-family:'Jameel Noori Nastaleeq',serif;">
+          style="width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:10.5pt;margin-top:4px;font-family:'Jameel Noori Nastaleeq';">
       </div>
 
       <div>
-        <label style="font-size:13px;font-weight:600;">مدت (کب تک):</label>
+        <label style="font-size:9.75pt;font-weight:600;">مدت (کب تک):</label>
         <select id="share-duration"
-          style="width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:14px;margin-top:4px;font-family:'Jameel Noori Nastaleeq',serif;">
+          style="width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:10.5pt;margin-top:4px;font-family:'Jameel Noori Nastaleeq';">
           <option value="1">1 دن</option>
           <option value="7" selected>7 دن</option>
           <option value="30">30 دن</option>
@@ -66,7 +66,7 @@ function _searchOfficersForShare(q) {
     if (!box) return;
     const clean = _shareSanitize(q);
     if (clean.length < 2) { box.innerHTML = ''; return; }
-    box.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:8px;">تلاش جاری...</div>';
+    box.innerHTML = '<div style="font-size:9pt;color:var(--text-muted);padding:8px;">تلاش جاری...</div>';
     try {
       const myId = (typeof getOfficerId==='function') ? await getOfficerId() : null;
       const myStation = (typeof currentOfficer !== 'undefined' && currentOfficer)
@@ -105,7 +105,7 @@ function _searchOfficersForShare(q) {
         ({ data, error } = await _ofcQuery('is_suspended'));
       }
       if (error) {
-        box.innerHTML = '<div style="font-size:12px;color:var(--red);padding:8px;">افسران کی فہرست نہیں مل سکی</div>';
+        box.innerHTML = '<div style="font-size:9pt;color:var(--red);padding:8px;">افسران کی فہرست نہیں مل سکی</div>';
         try { console.warn('[DIO] officers search:', error); } catch (_) { /* console na ho to bhi na phatte */ }
         return;
       }
@@ -118,14 +118,14 @@ function _searchOfficersForShare(q) {
         o.is_suspended !== true
       );
       if (!list.length) {
-        box.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:8px;">اپنے تھانے میں کوئی فعال افسر نہیں ملا</div>';
+        box.innerHTML = '<div style="font-size:9pt;color:var(--text-muted);padding:8px;">اپنے تھانے میں کوئی فعال افسر نہیں ملا</div>';
         return;
       }
       box.innerHTML = list.map(o => `
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;direction:rtl;">
           <div>
-            <div style="font-weight:700;font-size:14px;">${esc(o.full_name)||'—'}</div>
-            <div style="font-size:11px;color:var(--text-muted);">${esc(o.designation)||''} · <span dir="ltr">${esc(o.badge_number)||''}</span> · ${esc(o.station)||''}</div>
+            <div style="font-weight:700;font-size:10.5pt;">${esc(o.full_name)||'—'}</div>
+            <div style="font-size:8.25pt;color:var(--text-muted);">${esc(o.designation)||''} · <span dir="ltr">${esc(o.badge_number)||''}</span> · ${esc(o.station)||''}</div>
           </div>
           <div style="display:flex;gap:4px;">
             <button class="btn btn-secondary btn-sm" onclick="_shareWith('${o.id}','read')" title="صرف پڑھ سکے گا">دیکھیں</button>
@@ -133,7 +133,7 @@ function _searchOfficersForShare(q) {
           </div>
         </div>`).join('');
     } catch(e) {
-      box.innerHTML = `<div style="font-size:12px;color:var(--red);padding:8px;">${esc(e.message)}</div>`;
+      box.innerHTML = `<div style="font-size:9pt;color:var(--red);padding:8px;">${esc(e.message)}</div>`;
     }
   }, 350);
 }
@@ -213,7 +213,7 @@ async function _loadCurrentShares() {
       .order('created_at', { ascending: false });
 
     if (!data || !data.length) {
-      box.innerHTML = '<div style="font-size:12px;color:var(--text-muted);">ابھی کسی کے ساتھ شیئر نہیں</div>';
+      box.innerHTML = '<div style="font-size:9pt;color:var(--text-muted);">ابھی کسی کے ساتھ شیئر نہیں</div>';
       return;
     }
 
@@ -231,18 +231,18 @@ async function _loadCurrentShares() {
         ? ('ختم: ' + fmtDate(s.expires_at))
         : 'مستقل';
       const badge = s.revoked_at
-        ? '<span style="color:var(--red);font-size:11px;">منسوخ</span>'
+        ? '<span style="color:var(--red);font-size:8.25pt;">منسوخ</span>'
         : (s.expires_at && new Date(s.expires_at) <= new Date())
-          ? '<span style="color:var(--text-muted);font-size:11px;">مدت ختم</span>'
-          : '<span style="color:var(--green);font-size:11px;">● فعال</span>';
+          ? '<span style="color:var(--text-muted);font-size:8.25pt;">مدت ختم</span>'
+          : '<span style="color:var(--green);font-size:8.25pt;">● فعال</span>';
       return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px;direction:rtl;
                           border:1px solid var(--border);border-radius:8px;margin-bottom:6px;
                           ${isPast?'opacity:0.55;':''}">
         <div>
-          <div style="font-size:13px;font-weight:700;">${esc(off.full_name)||'—'}
-            <span style="color:var(--text-muted);font-size:11px;font-weight:400;">(${permTxt})</span>
+          <div style="font-size:9.75pt;font-weight:700;">${esc(off.full_name)||'—'}
+            <span style="color:var(--text-muted);font-size:8.25pt;font-weight:400;">(${permTxt})</span>
           </div>
-          <div style="font-size:11px;color:var(--text-muted);">${badge} · ${exp}</div>
+          <div style="font-size:8.25pt;color:var(--text-muted);">${badge} · ${exp}</div>
         </div>
         ${!isPast ? `<button aria-label="منسوخ کریں" class="btn btn-danger btn-sm" onclick="_unshare('${s.id}')" title="منسوخ کریں"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button>` : ''}
       </div>`;
@@ -250,13 +250,13 @@ async function _loadCurrentShares() {
 
     box.innerHTML =
       (active.length
-        ? `<div class="dio-hs2" style="font-size:13px;font-weight:700;margin-bottom:6px;">فعال شیئرز (${active.length}):</div>` + active.map(s => rowHtml(s, false)).join('')
+        ? `<div class="dio-hs2" style="font-size:9.75pt;font-weight:700;margin-bottom:6px;">فعال شیئرز (${active.length}):</div>` + active.map(s => rowHtml(s, false)).join('')
         : '') +
       (revoked.length
-        ? `<div style="font-size:12px;color:var(--text-muted);margin:10px 0 6px;">گزشتہ / منسوخ (${revoked.length}):</div>` + revoked.map(s => rowHtml(s, true)).join('')
+        ? `<div style="font-size:9pt;color:var(--text-muted);margin:10px 0 6px;">گزشتہ / منسوخ (${revoked.length}):</div>` + revoked.map(s => rowHtml(s, true)).join('')
         : '');
   } catch(e) {
-    box.innerHTML = `<div style="font-size:12px;color:var(--text-muted);">شیئر لسٹ دستیاب نہیں: ${esc(e.message||e)}</div>`;
+    box.innerHTML = `<div style="font-size:9pt;color:var(--text-muted);">شیئر لسٹ دستیاب نہیں: ${esc(e.message||e)}</div>`;
   }
 }
 

@@ -544,18 +544,18 @@ function _dioPaintLock(sub) {
         'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ' +
         'style="opacity:.45;margin-bottom:14px;">' +
         '<path d="M5.5 11h13v9.5h-13z"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></svg>' +
-      '<div style="font-size:19px;font-weight:800;color:var(--text-primary,#0f1b2a);' +
+      '<div style="font-size:14.25pt;font-weight:800;color:var(--text-primary,#0f1b2a);' +
         'margin-bottom:8px;line-height:1.9;">' +
         (susp ? '\u0627\u06a9\u0627\u0624\u0646\u0679 \u0645\u0639\u0637\u0644 \u06c1\u06d2'
               : '\u0633\u0628\u0633\u06a9\u0631\u067e\u0634\u0646 \u06a9\u06cc \u0645\u06cc\u0639\u0627\u062f \u062e\u062a\u0645 \u06c1\u0648 \u06af\u0626\u06cc') +
       '</div>' +
-      '<div style="font-size:13.5px;color:var(--text-secondary,#475569);line-height:2;' +
+      '<div style="font-size:10.125pt;color:var(--text-secondary,#475569);line-height:2;' +
         'margin-bottom:22px;">' +
         (susp ? '\u0622\u067e \u06a9\u0627 \u0627\u06a9\u0627\u0624\u0646\u0679 \u0627\u06cc\u0688\u0645\u0646 \u0646\u06d2 \u0645\u0639\u0637\u0644 \u06a9\u06cc\u0627 \u06c1\u06d2\u06d4 \u0631\u0627\u0628\u0637\u06c1 \u06a9\u0631\u06cc\u06ba\u06d4'
               : '\u062a\u062c\u062f\u06cc\u062f \u06a9\u06d2 \u0628\u063a\u06cc\u0631 \u0633\u06cc\u0633\u0679\u0645 \u0645\u06cc\u06ba \u062f\u0627\u062e\u0644\u06c1 \u0646\u06c1\u06cc\u06ba\u06d4 \u0622\u067e \u06a9\u0627 \u062a\u0645\u0627\u0645 \u0631\u06cc\u06a9\u0627\u0631\u0688 \u0645\u062d\u0641\u0648\u0638 \u06c1\u06d2 \u2014 \u062a\u062c\u062f\u06cc\u062f \u06a9\u0631\u062a\u06d2 \u06c1\u06cc \u0648\u0627\u067e\u0633 \u0645\u0644 \u062c\u0627\u0626\u06d2 \u06af\u0627\u06d4') +
       '</div>' +
       (susp ? '' :
-        '<button class="btn btn-primary" style="width:100%;padding:13px;font-size:15px;' +
+        '<button class="btn btn-primary" style="width:100%;padding:13px;font-size:11.25pt;' +
           'margin-bottom:9px;" onclick="_showPlans()">\u062a\u062c\u062f\u06cc\u062f \u06a9\u0631\u06cc\u06ba</button>' +
         '<button class="btn btn-secondary" id="dio-lock-recheck" style="width:100%;' +
           'margin-bottom:9px;" onclick="_dioUnlockIfRenewed()">' +
@@ -572,14 +572,14 @@ function showSubscriptionRequired(sub) {
   app.innerHTML = `
   <div style="display:flex;align-items:center;justify-content:center;height:100vh;width:100%;background:var(--bg-primary);direction:rtl;">
     <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:40px;max-width:480px;width:90%;text-align:center;box-shadow:var(--shadow);">
-      <div style="font-size:64px;margin-bottom:16px;"><svg viewBox='0 0 24 24' width='64' height='64' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><path d='M5.5 11h13v9.5h-13z'/><path d='M8.5 11V8a3.5 3.5 0 0 1 7 0v3'/></svg></div>
-      <div style="font-size:20px;font-weight:800;color:var(--text-primary);margin-bottom:8px;font-family:'Jameel Noori Nastaleeq',serif;">
+      <div style="font-size:48pt;margin-bottom:16px;"><svg viewBox='0 0 24 24' width='64' height='64' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><path d='M5.5 11h13v9.5h-13z'/><path d='M8.5 11V8a3.5 3.5 0 0 1 7 0v3'/></svg></div>
+      <div style="font-size:15pt;font-weight:800;color:var(--text-primary);margin-bottom:8px;font-family:'Jameel Noori Nastaleeq';">
         ${sub.status==='expired'?'سبسکرپشن ختم ہو گئی':'اکاؤنٹ معطل'}
       </div>
-      <div style="font-size:13px;color:var(--text-secondary);margin-bottom:24px;">
+      <div style="font-size:9.75pt;color:var(--text-secondary);margin-bottom:24px;">
         ${sub.status==='expired'?'آپ کی سبسکرپشن کی میعاد ختم ہو گئی ہے۔ جاری رکھنے کے لیے تجدید کریں۔':'آپ کا اکاؤنٹ معطل ہے۔ ایڈمن سے رابطہ کریں۔'}
       </div>
-      <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px;margin-bottom:10px;" onclick="_showPlans()">
+      <button class="btn btn-primary" style="width:100%;padding:14px;font-size:11.25pt;margin-bottom:10px;" onclick="_showPlans()">
         پلان خریدیں
       </button>
       <button class="btn btn-secondary" style="width:100%;" onclick="doLogout()">← لاگ آؤٹ</button>
@@ -605,11 +605,11 @@ function _plansHTML() {
 
       <!-- Trial -->
       <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
-        <div style="font-size:24px;"><svg viewBox='0 0 24 24' width='24' height='24' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><path d='M3.5 8.5h17V12h-17z'/><path d='M4.5 12v8.5h15V12'/><path d='M12 8.5v12'/></svg></div>
-        <div style="font-weight:800;font-size:14px;margin:6px 0;">آزمائشی</div>
-        <div style="font-size:22px;font-weight:900;color:var(--green);">مفت</div>
-        <div style="font-size:10px;color:var(--text-muted);">30 دن</div>
-        <ul style="font-size:11px;color:var(--text-secondary);text-align:right;margin:10px 0;list-style:none;padding:0;">
+        <div style="font-size:18pt;"><svg viewBox='0 0 24 24' width='24' height='24' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><path d='M3.5 8.5h17V12h-17z'/><path d='M4.5 12v8.5h15V12'/><path d='M12 8.5v12'/></svg></div>
+        <div style="font-weight:800;font-size:10.5pt;margin:6px 0;">آزمائشی</div>
+        <div style="font-size:16.5pt;font-weight:900;color:var(--green);">مفت</div>
+        <div style="font-size:7.5pt;color:var(--text-muted);">30 دن</div>
+        <ul style="font-size:8.25pt;color:var(--text-secondary);text-align:right;margin:10px 0;list-style:none;padding:0;">
           <li>تمام فیچرز آزمائیں</li>
           <li>مقدمات</li>
           <li>30 دن بعد ادائیگی</li>
@@ -618,11 +618,11 @@ function _plansHTML() {
 
       <!-- 1 Month -->
       <div style="background:var(--bg-secondary);border:1px solid var(--accent);border-radius:10px;padding:16px;text-align:center;">
-        <div style="font-size:24px;"><svg viewBox='0 0 24 24' width='24' height='24' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><path d='M12 3.8l2.5 5.1 5.6.8-4 4 .9 5.6-5-2.6-5 2.6.9-5.6-4-4 5.6-.8z'/></svg></div>
-        <div style="font-weight:800;font-size:14px;margin:6px 0;">ماہانہ</div>
-        <div style="font-size:22px;font-weight:900;color:var(--accent);">300 روپے</div>
-        <div style="font-size:10px;color:var(--text-muted);">1 ماہ</div>
-        <ul style="font-size:11px;color:var(--text-secondary);text-align:right;margin:10px 0;list-style:none;padding:0;">
+        <div style="font-size:18pt;"><svg viewBox='0 0 24 24' width='24' height='24' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><path d='M12 3.8l2.5 5.1 5.6.8-4 4 .9 5.6-5-2.6-5 2.6.9-5.6-4-4 5.6-.8z'/></svg></div>
+        <div style="font-weight:800;font-size:10.5pt;margin:6px 0;">ماہانہ</div>
+        <div style="font-size:16.5pt;font-weight:900;color:var(--accent);">300 روپے</div>
+        <div style="font-size:7.5pt;color:var(--text-muted);">1 ماہ</div>
+        <ul style="font-size:8.25pt;color:var(--text-secondary);text-align:right;margin:10px 0;list-style:none;padding:0;">
           <li>تمام فیچرز</li>
           <li>لامحدود مقدمات</li>
           <li>تمام دستاویزات</li>
@@ -632,12 +632,12 @@ function _plansHTML() {
 
       <!-- 6 Months -->
       <div style="background:linear-gradient(135deg,rgba(56,189,248,0.1),rgba(14,165,233,0.05));border:2px solid var(--accent);border-radius:10px;padding:16px;text-align:center;position:relative;">
-        <div style="position:absolute;top:-10px;right:50%;transform:translateX(50%);background:var(--accent);color:#fff;font-size:10px;padding:2px 10px;border-radius:10px;font-weight:700;">مقبول</div>
-        <div style="font-size:24px;"><svg viewBox='0 0 24 24' width='24' height='24' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><path d='M12 3.5l8.5 4.5h-17z'/><path d='M5.5 10v8M10 10v8M14 10v8M18.5 10v8'/><path d='M3.5 20.5h17'/></svg></div>
-        <div style="font-weight:800;font-size:14px;margin:6px 0;">شش ماہی</div>
-        <div style="font-size:22px;font-weight:900;color:var(--accent);">1500 روپے</div>
-        <div style="font-size:10px;color:var(--text-muted);">6 ماہ (17% بچت)</div>
-        <ul style="font-size:11px;color:var(--text-secondary);text-align:right;margin:10px 0;list-style:none;padding:0;">
+        <div style="position:absolute;top:-10px;right:50%;transform:translateX(50%);background:var(--accent);color:#fff;font-size:7.5pt;padding:2px 10px;border-radius:10px;font-weight:700;">مقبول</div>
+        <div style="font-size:18pt;"><svg viewBox='0 0 24 24' width='24' height='24' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><path d='M12 3.5l8.5 4.5h-17z'/><path d='M5.5 10v8M10 10v8M14 10v8M18.5 10v8'/><path d='M3.5 20.5h17'/></svg></div>
+        <div style="font-weight:800;font-size:10.5pt;margin:6px 0;">شش ماہی</div>
+        <div style="font-size:16.5pt;font-weight:900;color:var(--accent);">1500 روپے</div>
+        <div style="font-size:7.5pt;color:var(--text-muted);">6 ماہ (17% بچت)</div>
+        <ul style="font-size:8.25pt;color:var(--text-secondary);text-align:right;margin:10px 0;list-style:none;padding:0;">
           <li>تمام فیچرز</li>
           <li>لامحدود مقدمات</li>
           <li>6 ماہ بے فکری</li>
@@ -647,11 +647,11 @@ function _plansHTML() {
 
       <!-- 1 Year -->
       <div style="background:linear-gradient(135deg,rgba(167,139,250,0.1),rgba(139,92,246,0.05));border:1px solid #a78bfa;border-radius:10px;padding:16px;text-align:center;">
-        <div style="font-size:24px;"><svg viewBox='0 0 24 24' width='24' height='24' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><path d='M3.5 8l4 4 4.5-6.5L16.5 12l4-4-1.5 10h-14z'/></svg></div>
-        <div style="font-weight:800;font-size:14px;margin:6px 0;">سالانہ</div>
-        <div style="font-size:22px;font-weight:900;color:#a78bfa;">2500 روپے</div>
-        <div style="font-size:10px;color:var(--text-muted);">1 سال (31% بچت)</div>
-        <ul style="font-size:11px;color:var(--text-secondary);text-align:right;margin:10px 0;list-style:none;padding:0;">
+        <div style="font-size:18pt;"><svg viewBox='0 0 24 24' width='24' height='24' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><path d='M3.5 8l4 4 4.5-6.5L16.5 12l4-4-1.5 10h-14z'/></svg></div>
+        <div style="font-weight:800;font-size:10.5pt;margin:6px 0;">سالانہ</div>
+        <div style="font-size:16.5pt;font-weight:900;color:#a78bfa;">2500 روپے</div>
+        <div style="font-size:7.5pt;color:var(--text-muted);">1 سال (31% بچت)</div>
+        <ul style="font-size:8.25pt;color:var(--text-secondary);text-align:right;margin:10px 0;list-style:none;padding:0;">
           <li>تمام فیچرز</li>
           <li>پریمیم سپورٹ</li>
           <li>نئی فیچرز پہلے</li>
@@ -660,7 +660,7 @@ function _plansHTML() {
         <button class="btn btn-secondary btn-sm" style="width:100%;border-color:#a78bfa;color:#a78bfa;" onclick="closeModal();_openPayment('سالانہ',2500,365)">خریدیں</button>
       </div>
     </div>
-    <div style="text-align:center;font-size:11px;color:var(--text-muted);">
+    <div style="text-align:center;font-size:8.25pt;color:var(--text-muted);">
       مدد کے لیے: <b>DigitalIO Support</b>
     </div>
   </div>`;
@@ -673,34 +673,34 @@ function _openPayment(planName, amount, days) {
       <!-- Payment Methods -->
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
         <div style="background:rgba(34,197,94,0.1);border:1px solid var(--green);border-radius:8px;padding:12px;text-align:center;">
-          <div style="font-size:20px;margin-bottom:4px;"><svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><path d='M7 3h10v18H7z'/><path d='M10.5 18.2h3'/></svg></div>
-          <div style="font-weight:700;font-size:12px;color:var(--green);">JazzCash</div>
-          <div style="font-size:13px;font-weight:900;color:var(--text-primary);" id="jc-number">0300-7339260</div>
-          <button onclick="navigator.clipboard.writeText('03007339260').then(()=>showToast('نمبر کاپی ہو گیا','success'))" style="font-size:10px;background:none;border:none;color:var(--accent);cursor:pointer;">کاپی کریں</button>
+          <div style="font-size:15pt;margin-bottom:4px;"><svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><path d='M7 3h10v18H7z'/><path d='M10.5 18.2h3'/></svg></div>
+          <div style="font-weight:700;font-size:9pt;color:var(--green);">JazzCash</div>
+          <div style="font-size:9.75pt;font-weight:900;color:var(--text-primary);" id="jc-number">0300-7339260</div>
+          <button onclick="navigator.clipboard.writeText('03007339260').then(()=>showToast('نمبر کاپی ہو گیا','success'))" style="font-size:7.5pt;background:none;border:none;color:var(--accent);cursor:pointer;">کاپی کریں</button>
         </div>
         <div style="background:rgba(139,92,246,0.1);border:1px solid #a78bfa;border-radius:8px;padding:12px;text-align:center;">
-          <div style="font-size:20px;margin-bottom:4px;"><svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><path d='M7 3h10v18H7z'/><path d='M10.5 18.2h3'/></svg></div>
-          <div style="font-weight:700;font-size:12px;color:#a78bfa;">EasyPaisa</div>
-          <div style="font-size:13px;font-weight:900;color:var(--text-primary);">0300-7339260</div>
-          <button onclick="navigator.clipboard.writeText('03007339260').then(()=>showToast('نمبر کاپی ہو گیا','success'))" style="font-size:10px;background:none;border:none;color:var(--accent);cursor:pointer;">کاپی کریں</button>
+          <div style="font-size:15pt;margin-bottom:4px;"><svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><path d='M7 3h10v18H7z'/><path d='M10.5 18.2h3'/></svg></div>
+          <div style="font-weight:700;font-size:9pt;color:#a78bfa;">EasyPaisa</div>
+          <div style="font-size:9.75pt;font-weight:900;color:var(--text-primary);">0300-7339260</div>
+          <button onclick="navigator.clipboard.writeText('03007339260').then(()=>showToast('نمبر کاپی ہو گیا','success'))" style="font-size:7.5pt;background:none;border:none;color:var(--accent);cursor:pointer;">کاپی کریں</button>
         </div>
         <div style="background:rgba(56,189,248,0.1);border:1px solid var(--accent);border-radius:8px;padding:12px;text-align:center;">
-          <div style="font-size:20px;margin-bottom:4px;"><svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><path d='M12 3.5l8.5 4.5h-17z'/><path d='M5.5 10v8M10 10v8M14 10v8M18.5 10v8'/><path d='M3.5 20.5h17'/></svg></div>
-          <div style="font-weight:700;font-size:12px;color:var(--accent);">Raast</div>
-          <div style="font-size:13px;font-weight:900;color:var(--text-primary);">0300-7339260</div>
-          <button onclick="navigator.clipboard.writeText('03007339260').then(()=>showToast('نمبر کاپی ہو گیا','success'))" style="font-size:10px;background:none;border:none;color:var(--accent);cursor:pointer;">کاپی کریں</button>
+          <div style="font-size:15pt;margin-bottom:4px;"><svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><path d='M12 3.5l8.5 4.5h-17z'/><path d='M5.5 10v8M10 10v8M14 10v8M18.5 10v8'/><path d='M3.5 20.5h17'/></svg></div>
+          <div style="font-weight:700;font-size:9pt;color:var(--accent);">Raast</div>
+          <div style="font-size:9.75pt;font-weight:900;color:var(--text-primary);">0300-7339260</div>
+          <button onclick="navigator.clipboard.writeText('03007339260').then(()=>showToast('نمبر کاپی ہو گیا','success'))" style="font-size:7.5pt;background:none;border:none;color:var(--accent);cursor:pointer;">کاپی کریں</button>
         </div>
       </div>
 
       <!-- Amount -->
       <div style="background:var(--bg-secondary);border-radius:8px;padding:12px;text-align:center;margin-bottom:14px;">
-        <div style="font-size:11px;color:var(--text-muted);">رقم</div>
-        <div style="font-size:28px;font-weight:900;color:var(--accent);">Rs. ${amount.toLocaleString()}</div>
-        <div style="font-size:11px;color:var(--text-muted);">${planName} — ${days} دن</div>
+        <div style="font-size:8.25pt;color:var(--text-muted);">رقم</div>
+        <div style="font-size:21pt;font-weight:900;color:var(--accent);">Rs. ${amount.toLocaleString()}</div>
+        <div style="font-size:8.25pt;color:var(--text-muted);">${planName} — ${days} دن</div>
       </div>
 
       <!-- Steps -->
-      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">
+      <div style="font-size:9pt;color:var(--text-secondary);margin-bottom:14px;">
         <div style="font-weight:700;margin-bottom:6px;">ادائیگی کے مراحل:</div>
         <div>1️⃣ JazzCash / EasyPaisa / Raast سے اوپر نمبر پر <b>Rs. ${amount}</b> بھیجیں</div>
         <div>2️⃣ Transaction ID نوٹ کریں</div>

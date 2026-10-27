@@ -436,7 +436,7 @@ function _irListCSS() {
     .ir-card:hover, .ir-card:focus-visible{ border-color:var(--accent); border-right-color:var(--red,#dc2626); outline:none; }
     .ir-card-ico{ width:42px; height:42px; border-radius:50%; background:var(--red,#dc2626); color:#fff;
       display:flex; align-items:center; justify-content:center; align-self:start; }
-    .ir-card-body{ min-width:0; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+    .ir-card-body{ min-width:0; font-family:'Jameel Noori Nastaleeq'; }
     .ir-card-t{ font-size:14pt; font-weight:700; line-height:1.8; }
     .ir-card-sub{ font-size:11pt; font-weight:400; color:var(--text-muted); margin-right:6px; }
     .ir-card-s, .ir-card-m{ font-size:12pt; line-height:1.9; color:var(--text-primary); overflow-wrap:anywhere; }
@@ -450,7 +450,7 @@ function _irListCSS() {
     .ir-acts{ display:grid; grid-template-columns:repeat(3, auto); gap:6px; cursor:default; align-self:center; }
     .ir-act{ display:inline-flex; align-items:center; justify-content:flex-start; gap:6px; height:34px; min-width:98px; padding:0 11px 3px;
       border-radius:8px; cursor:pointer; border:1px solid var(--border); background:var(--bg-secondary,transparent); color:var(--text-primary);
-      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; font-size:11.5pt; line-height:1; white-space:nowrap;
+      font-family:'Jameel Noori Nastaleeq'; font-size:11.5pt; line-height:1; white-space:nowrap;
       transition:border-color .15s, background .15s, color .15s; }
     .ir-act svg{ width:16px; height:16px; flex:none; position:relative; top:1px; }
     .ir-act:hover, .ir-act:focus-visible{ border-color:var(--accent); color:var(--accent); outline:none; }
@@ -459,7 +459,7 @@ function _irListCSS() {
     .ir-act-del{ color:var(--red,#dc2626); }
     .ir-act-del:hover, .ir-act-del:focus-visible{ border-color:var(--red,#dc2626); color:#fff; background:var(--red,#dc2626); }
     .ir-empty{ text-align:center; padding:40px 20px; color:var(--text-muted); line-height:2.4; font-size:14pt;
-      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+      font-family:'Jameel Noori Nastaleeq'; }
     .ir-empty-ico svg{ width:46px; height:46px; opacity:.45; }
     @media screen and (max-width:900px){
       .ir-act{ min-width:0; }
@@ -776,7 +776,7 @@ function _irCSS() {
       background:var(--bg-tertiary,#e9eef3); }
     .ir-strip{ flex:none; display:flex; align-items:center; justify-content:space-between; gap:10px;
       padding:8px 14px; background:var(--bg-card,#fff); border-bottom:1px solid var(--border,#ddd);
-      box-shadow:0 2px 10px rgba(0,0,0,.08); font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+      box-shadow:0 2px 10px rgba(0,0,0,.08); font-family:'Jameel Noori Nastaleeq'; }
     .ir-strip-r, .ir-strip-l{ display:flex; align-items:center; gap:8px; min-width:0; }
     .ir-strip .btn{ display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
     .ir-strip-tt{ display:flex; flex-direction:column; line-height:1.5; min-width:0; }
@@ -792,7 +792,7 @@ function _irCSS() {
     /* مارجن: اوپر/نیچے 1cm · دائیں 0.5in (ASI: دائیں کم، جگہ دوسرے کالم کو) · بائیں 0.4in */
     #ir-doc{ width:8.27in; min-height:11.69in; box-sizing:border-box; padding:1cm 0.5in 1cm 0.4in; margin:0 auto;
       background:#fff; color:#000; direction:rtl; text-align:right; position:relative;
-      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; font-size:14pt; line-height:1.75;
+      font-family:'Jameel Noori Nastaleeq'; font-size:14pt; line-height:1.75;
       box-shadow:0 1px 3px rgba(0,0,0,.12), 0 8px 28px rgba(0,0,0,.14); }
     #ir-doc *{ box-sizing:border-box; }
     /* موبائل کا عام قاعدہ (mobile.css: ہر contenteditable 16px — iOS zoom سے بچاؤ) کاغذ پر نہیں:
@@ -840,7 +840,7 @@ function _irCSS() {
 
     /* ▾ انتخاب / 📅 / 📍 — صرف سکرین پر، کاغذ کے بائیں حاشیے میں */
     #ir-doc .ir-pick{ position:absolute; left:-0.36in; top:2pt; width:24px; height:24px; line-height:22px; border-radius:5px;
-      background:#0369a1; color:#fff; font-size:13px; font-weight:700; text-align:center; cursor:pointer; overflow:hidden;
+      background:#0369a1; color:#fff; font-size:9.75pt; font-weight:700; text-align:center; cursor:pointer; overflow:hidden;
       border:0; padding:0; display:inline-grid; place-items:center; font-family:Arial,sans-serif; }
     #ir-doc .ir-pick select, #ir-doc .ir-pick input{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:0; padding:0; }
 
@@ -1073,7 +1073,7 @@ async function _irPickCase() {
   window._irCaseRows = cases;
   const opts = cases.map((c, i) => `<option value="${i}">${_irE(`${c.fir_number || '—'} — ${c.section_of_law || ''} — ${c.complainant || ''}`.replace(/\s+/g, ' ').trim().slice(0, 120))}</option>`).join('');
   openModal('مقدمہ سے ڈیٹا',
-    `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:14pt;line-height:2;">
+    `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq';font-size:14pt;line-height:2;">
       <select id="ir-case-sel" class="form-input" style="width:100%;font-family:inherit;font-size:13pt;">${opts}</select>
       <div style="font-size:11pt;color:var(--text-muted);margin-top:6px;">نوعیت وقوعہ، تاریخ وقوعہ، جائے وقوعہ، اطلاع دہندہ (مدعی) اور ملزمان اس مقدمے سے بھرے جائیں گے — بعد میں ہر خانہ قابلِ ترمیم۔</div>
     </div>`,
@@ -1184,7 +1184,7 @@ window._irSignFile = _irSignFile;
 let _irPadCtx = null, _irPadInk = false;
 function _irSignPad() {
   openModal('SHO دستخط',
-    `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:12pt;line-height:2;">
+    `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq';font-size:12pt;line-height:2;">
       <div style="color:#b45309;font-weight:700;">صرف متعلقہ SHO کی اجازت سے — کسی دوسرے کے دستخط بغیر اجازت لگانا جعلسازی کے زمرے میں آ سکتا ہے (تعزیراتِ پاکستان دفعات 463 تا 471)۔</div>
       <div style="color:var(--text-muted);font-size:11pt;">نیچے خانے میں انگلی یا ماؤس سے دستخط کریں۔</div>
       <canvas id="ir-pad" width="600" height="200" style="width:100%;height:auto;aspect-ratio:3/1;background:#fff;border:1.5px dashed #94a3b8;border-radius:8px;touch-action:none;cursor:crosshair;display:block;"></canvas>
@@ -1472,7 +1472,7 @@ function _irReportHTML(f, meta) {
     if (r.loc && _irPlain(f.latlng || '')) val += `<br><span style="font-size:11pt;">لوکیشن <span dir="ltr">Lat/Long: ${_irSan(f.latlng)}</span></span>`;
     return `<tr><th style="${td}background:#f3f5f8;text-align:right;white-space:nowrap;">${lbl}</th><td style="${td}">${val}</td></tr>`;
   }).join('');
-  return `<div dir="rtl" lang="ur" style="font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:14pt;line-height:1.75;color:#000;">
+  return `<div dir="rtl" lang="ur" style="font-family:'Jameel Noori Nastaleeq';font-size:14pt;line-height:1.75;color:#000;">
 <table style="width:100%;border:0;font-size:14pt;"><tr><td style="text-align:right;">تھانہ ${v('thana')}</td><td style="text-align:left;">ضلع ${v('zila')}</td></tr></table>
 <p style="text-align:center;font-size:20pt;font-weight:bold;text-decoration:underline;margin:6pt 0;">${v('title')}</p>
 <table dir="rtl" style="width:100%;border-collapse:collapse;font-size:14pt;">${rows}
@@ -1603,7 +1603,7 @@ function _irPrint() {
   if (!document.getElementById('ir-doc')) return;
   if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   _irBalance();
-  window.print();
+  dioAfterFonts(() => window.print());   // v560: فونٹ لوڈ ہو رہا ہو تو پہلے فونٹ (app-core.js)
 }
 window._irPrint = _irPrint;
 

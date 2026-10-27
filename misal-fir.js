@@ -13,7 +13,7 @@ async function _renderFIRView() {
   <div style="display:flex;flex-direction:column;height:100%;">
     <!-- FIR Header bar -->
     <div style="background:var(--bg-secondary);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-      <div style="font-family:'Jameel Noori Nastaleeq',serif;font-size:16px;font-weight:700;color:var(--accent);direction:rtl;">
+      <div style="font-family:'Jameel Noori Nastaleeq';font-size:12pt;font-weight:700;color:var(--accent);direction:rtl;">
         متن ایف آئی آر — مقدمہ ${esc(c.fir_number||'')}
       </div>
       <div style="display:flex;gap:6px;direction:rtl;flex-wrap:wrap;">
@@ -50,9 +50,9 @@ async function _loadFIREntries() {
     if (!entries.length) {
       area.innerHTML = `
         <div style="text-align:center;padding:48px;color:var(--text-muted);">
-          <div style="font-size:48px;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
-          <div style="font-size:14px;font-weight:600;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">ابھی کوئی FIR متن نہیں</div>
-          <div style="font-size:12px;margin-top:6px;">اوپر «+ متن درج کریں» بٹن دبائیں</div>
+          <div style="font-size:36pt;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
+          <div style="font-size:10.5pt;font-weight:600;font-family:'Jameel Noori Nastaleeq';direction:rtl;">ابھی کوئی FIR متن نہیں</div>
+          <div style="font-size:9pt;margin-top:6px;">اوپر «+ متن درج کریں» بٹن دبائیں</div>
         </div>`;
       return;
     }
@@ -61,15 +61,15 @@ async function _loadFIREntries() {
     <table style="width:100%;border-collapse:collapse;">
       <thead>
         <tr style="background:var(--bg-secondary);">
-          <th style="padding:10px 12px;text-align:right;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;font-size:13px;border-bottom:2px solid var(--accent);">مضمون</th>
-          <th style="padding:10px 12px;text-align:center;font-size:11px;border-bottom:2px solid var(--accent);width:120px;">ایکشن</th>
+          <th style="padding:10px 12px;text-align:right;font-family:'Jameel Noori Nastaleeq';direction:rtl;font-size:9.75pt;border-bottom:2px solid var(--accent);">مضمون</th>
+          <th style="padding:10px 12px;text-align:center;font-size:8.25pt;border-bottom:2px solid var(--accent);width:120px;">ایکشن</th>
         </tr>
       </thead>
       <tbody>
         ${entries.map((e,i) => `
           <tr style="border-bottom:1px solid var(--border);${i%2===0?'background:var(--bg-secondary);':''}">
-            <td style="padding:12px;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;line-height:2;vertical-align:top;">
-              <span style="font-size:11px;color:var(--text-faint);display:block;margin-bottom:4px;">${e.status==='complete'?'مکمل':'مسودہ'} · ${formatDate(e.updated_at||e.created_at)}</span>
+            <td style="padding:12px;direction:rtl;font-family:'Jameel Noori Nastaleeq';font-size:10.5pt;line-height:2;vertical-align:top;">
+              <span style="font-size:8.25pt;color:var(--text-faint);display:block;margin-bottom:4px;">${e.status==='complete'?'مکمل':'مسودہ'} · ${formatDate(e.updated_at||e.created_at)}</span>
               <div id="fir-preview-${e.id}" style="max-height:120px;overflow:hidden;">
                 ${e.content?.html ? esc(_stripTags(e.content.html).slice(0,300)+'...') : '—'}
               </div>
@@ -138,7 +138,7 @@ function _openMisalEditorDirect(docId) {
 
 async function _deleteFIREntry(entryId) {
   openModal('FIR حذف کریں',
-    `<p style="color:var(--text-secondary);font-size:13px;">کیا آپ یہ FIR متن مستقل حذف کرنا چاہتے ہیں؟</p>`,
+    `<p style="color:var(--text-secondary);font-size:9.75pt;">کیا آپ یہ FIR متن مستقل حذف کرنا چاہتے ہیں؟</p>`,
     `<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
      <button class="btn btn-danger" onclick="closeModal();_doDeleteFIR('${entryId}')">حذف کریں</button>`
   );
@@ -177,9 +177,9 @@ function _doPrintFIR(html) {
   const o = currentOfficer || {};
   let _printHTML = '';
   _printHTML += (`<!DOCTYPE html><html><head><meta charset="UTF-8">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
+    ${typeof dioFontHead==='function'?dioFontHead():''}
     <style>
-      @page{margin:15mm;} body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;font-size:14pt;line-height:2;color:#000;}
+      @page{margin:15mm;} body{font-family:'Jameel Noori Nastaleeq';direction:rtl;font-size:14pt;line-height:2;color:#000;}
       h2{text-align:center;font-size:16pt;} .header{text-align:center;border-bottom:2px solid #333;padding-bottom:10px;margin-bottom:16px;}
       /* FIR ka matn CENTER, headings 16pt, matn 14pt (user ki hidayat) */
       .fir-body{ text-align:center; font-size:14pt; line-height:2; }
@@ -332,7 +332,7 @@ async function _startVoice() {
   if (!badge) {
     badge = document.createElement('div');
     badge.id = 'voice-status';
-    badge.style.cssText = 'padding:6px 16px;background:#1a1a2e;border-bottom:2px solid #ef4444;font-size:13px;color:#ef4444;direction:rtl;text-align:right;font-family:\'Jameel Noori Nastaleeq\',serif;';
+    badge.style.cssText = 'padding:6px 16px;background:#1a1a2e;border-bottom:2px solid #ef4444;font-size:9.75pt;color:#ef4444;direction:rtl;text-align:right;font-family:\'Jameel Noori Nastaleeq\';';
     badge.textContent = 'سن رہا ہے... اردو میں بولیں';
     const editorArea = document.getElementById('workspace-editor-area');
     if (editorArea) editorArea.insertAdjacentElement('afterbegin', badge);
