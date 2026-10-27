@@ -5670,8 +5670,8 @@ window._ch173StripSpan = _ch173StripSpan;
 // wapas saada matn bana dete hain, taake data-base mein koi markup na jaye
 // (pehle span ka code khud matn ban kar mehfooz ho jata tha — woh bug na aaye).
 // CNIC ki pehchan — DONO shaklon mein:
-//   • dashes ke saath : 36302-2931394-5
-//   • baghair dashes  : 36302293139455
+//   • dashes ke saath : 00000-0000000-0
+//   • baghair dashes  : 0000000000000
 // (Kuch گواہان/ملزمان ka CNIC baghair dashes mehfooz hota hai, isi liye un
 //  par seedh nahi lag rahi thi.) Satar ke AAKHIR wala number hi CNIC hai.
 const _CH173_CNIC_LINE_RE = /^([\s\S]*?)[\s]*(\d[\d\u2010-\u2015-]{8,}\d)[\s]*$/;
