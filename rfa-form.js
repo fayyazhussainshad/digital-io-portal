@@ -125,10 +125,10 @@ function _renderRfaList() {
     return `
     <div onclick="_openRfaDoc('${r.id}')" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;direction:rtl;"
       onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-      <span style="font-size:20px;">${done ? '✅' : '📝'}</span>
+      <span style="font-size:15pt;">${done ? '✅' : '📝'}</span>
       <div style="flex:1;min-width:0;">
-        <div style="font-weight:700;font-size:15px;direction:ltr;text-align:left;font-family:Arial,sans-serif;">${esc(no)}</div>
-        <div style="font-size:13px;color:var(--text-muted);direction:ltr;text-align:left;font-family:Arial,sans-serif;">Purpose: ${esc(purpose)}${dt ? '  ·  ' + dt : ''}</div>
+        <div style="font-weight:700;font-size:11.25pt;direction:ltr;text-align:left;font-family:Arial,sans-serif;">${esc(no)}</div>
+        <div style="font-size:9.75pt;color:var(--text-muted);direction:ltr;text-align:left;font-family:Arial,sans-serif;">Purpose: ${esc(purpose)}${dt ? '  ·  ' + dt : ''}</div>
       </div>
       <button aria-label="حذف کریں" class="btn btn-secondary btn-sm" onclick="event.stopPropagation();_rfaDelete('${r.id}')" title="حذف کریں"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
       <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();_openRfaDoc('${r.id}')">کھولیں</button>
@@ -136,7 +136,7 @@ function _renderRfaList() {
   }).join('');
 
   area.innerHTML = `
-  <div style="padding:16px;direction:rtl;height:100%;overflow-y:auto;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;">
+  <div style="padding:16px;direction:rtl;height:100%;overflow-y:auto;font-family:'Jameel Noori Nastaleeq';">
     <!-- عنوان درمیان میں · "نیا" بٹن دائیں (SYSTEM RULE: add-new button ہمیشہ دائیں) -->
     <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:14px;">
       <button class="btn btn-primary btn-sm dio-add-btn" onclick="_newRfa()">+ RFA فارم درج کریں</button>
@@ -145,8 +145,8 @@ function _renderRfaList() {
     </div>
     ${_rfaList.length ? rows : `
       <div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
-        <div style="font-size:40px;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
-        <div style="font-size:16px;">ابھی کوئی RFA محفوظ نہیں — "نیا RFA فارم" دبائیں</div>
+        <div style="font-size:30pt;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
+        <div style="font-size:12pt;">ابھی کوئی RFA محفوظ نہیں — "نیا RFA فارم" دبائیں</div>
       </div>`}
   </div>`;
 }
@@ -160,7 +160,7 @@ window._newRfa = _newRfa; window._openRfaDoc = _openRfaDoc; window._rfaBackToLis
 // ── formatting toolbar button (challan/zimni جیسا) ────────────
 function _rfaBtn() {
   return 'min-width:30px;height:30px;border:1px solid var(--border);background:var(--bg-card);' +
-         'color:var(--text-primary);border-radius:6px;cursor:pointer;font-size:14px;';
+         'color:var(--text-primary);border-radius:6px;cursor:pointer;font-size:10.5pt;';
 }
 function _rfaFmt(cmd) {
   try { document.execCommand(cmd, false, null); } catch(_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
@@ -188,24 +188,24 @@ function _renderRfaForm() {
   const rnk   = _rfaEn(o.designation || o.rank || '');
   const phone = o.official_phone || o.phone || '';
 
-  const editFont = "font-family:Arial,'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',sans-serif;";
-  const rTh  = "border:1px solid #333;padding:6px 9px;background:#ececec;font-weight:700;text-align:left;font-size:12.5px;font-family:Arial,sans-serif;";
+  const editFont = "font-family:Arial,'Jameel Noori Nastaleeq';";
+  const rTh  = "border:1px solid #333;padding:6px 9px;background:#ececec;font-weight:700;text-align:left;font-size:9.375pt;font-family:Arial,sans-serif;";
   const rThC = rTh.replace('text-align:left', 'text-align:center');
-  const rTd  = "border:1px solid #333;padding:6px 9px;font-size:12.5px;text-align:left;font-family:Arial,sans-serif;vertical-align:middle;";
+  const rTd  = "border:1px solid #333;padding:6px 9px;font-size:9.375pt;text-align:left;font-family:Arial,sans-serif;vertical-align:middle;";
   const rTdC = rTd.replace('text-align:left', 'text-align:center');
-  const ec = (k, def) => `<td contenteditable="true" data-k="${k}" oninput="_rfaBold(this)" style="border:1px solid #333;padding:6px 9px;font-size:12.5px;text-align:left;${editFont}unicode-bidi:plaintext;${v(k,def)?'font-weight:bold;':''}">${v(k, def)}</td>`;
+  const ec = (k, def) => `<td contenteditable="true" data-k="${k}" oninput="_rfaBold(this)" style="border:1px solid #333;padding:6px 9px;font-size:9.375pt;text-align:left;${editFont}unicode-bidi:plaintext;${v(k,def)?'font-weight:bold;':''}">${v(k, def)}</td>`;
   // inline editable span (for header / signature)
   const es = (k, def, extra) => `<span contenteditable="true" data-k="${k}" oninput="_rfaBold(this)" style="${editFont}unicode-bidi:plaintext;${extra||''}${v(k,def)?'font-weight:bold;':''}">${v(k, def)}</span>`;
 
   // Screen: A4 چوڑائی · اونچائی مواد کے مطابق (min-height نہیں — ورنہ آدھا صفحہ خالی نظر آتا تھا)
-  const pageStyle = "width:210mm;box-sizing:border-box;margin:0 auto 18px;padding:14mm 15mm;background:#fff;color:#111;direction:ltr;text-align:left;font-family:Arial,'Times New Roman',sans-serif;font-size:13px;line-height:1.6;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:3px;";
+  const pageStyle = "width:210mm;box-sizing:border-box;margin:0 auto 18px;padding:14mm 15mm;background:#fff;color:#111;direction:ltr;text-align:left;font-family:Arial,'Times New Roman',sans-serif;font-size:9.75pt;line-height:1.6;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:3px;";
 
   const headBlock = (annex) => `
     <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #333;padding-bottom:6px;margin-bottom:2px;">
       <span style="font-weight:bold;font-size:14pt;">Police Department</span>
       <span style="font-weight:bold;font-size:14pt;">District ${es('h_district', dstEn)}</span>
     </div>
-    <div style="text-align:right;font-size:12px;font-style:italic;margin:2px 0;">${annex}</div>`;
+    <div style="text-align:right;font-size:9pt;font-style:italic;margin:2px 0;">${annex}</div>`;
 
   const aRows = [
     ['1','RFA Number','a_rfa_no',''],
@@ -234,7 +234,7 @@ function _renderRfaForm() {
   <div style="display:flex;flex-direction:column;height:100%;direction:ltr;">
     <!-- Toolbar (LTR): محفوظ/پرنٹ بائیں طرف · formatting · واپس فہرست دائیں -->
     <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
-      <div style="display:flex;gap:6px;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
+      <div style="display:flex;gap:6px;direction:rtl;font-family:'Jameel Noori Nastaleeq';">
         <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveRfa()">محفوظ کریں</button>
         <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printRfa()">پرنٹ کریں</button>
       </div>
@@ -249,7 +249,7 @@ function _renderRfaForm() {
       <span style="width:1px;height:22px;background:var(--border);margin:0 4px;"></span>
       <button onmousedown="event.preventDefault()" onclick="_rfaFmt('undo')" title="Undo" style="${_rfaBtn()}">↶</button>
       <button onmousedown="event.preventDefault()" onclick="_rfaFmt('redo')" title="Redo" style="${_rfaBtn()}">↷</button>
-      <button class="btn btn-secondary btn-sm" onclick="_rfaBackToList()" style="margin-left:auto;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">← واپس فہرست</button>
+      <button class="btn btn-secondary btn-sm" onclick="_rfaBackToList()" style="margin-left:auto;direction:rtl;font-family:'Jameel Noori Nastaleeq';">← واپس فہرست</button>
     </div>
 
     <div style="flex:1;overflow-y:auto;padding:16px;background:var(--bg-tertiary);">
@@ -371,18 +371,18 @@ function _printRfa() {
   const doc = document.getElementById('rfa-doc');
   if (!doc) return;
   const html = `<!DOCTYPE html><html dir="ltr"><head><meta charset="UTF-8"><title> </title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&display=swap" rel="stylesheet">
+    ${typeof dioFontHead==='function'?dioFontHead():''}
     <style>
       @page{ size:A4; margin:14mm; }
       *{ box-sizing:border-box; }
-      body{ font-family:Arial,'Jameel Noori Nastaleeq','Noto Nastaliq Urdu','Times New Roman',sans-serif;
-            direction:ltr; text-align:left; font-size:12px !important; line-height:1.5 !important; color:#111; margin:0; }
+      body{ font-family:Arial,'Jameel Noori Nastaleeq';
+            direction:ltr; text-align:left; font-size:9pt !important; line-height:1.5 !important; color:#111; margin:0; }
       table{ border-collapse:collapse; width:100%; margin-bottom:12px !important; }
       /* Page 1 اچھی طرح بھرے مگر ایک ہی صفحہ — rows کشادہ · inline cell styles override */
-      td,th{ border:1px solid #333 !important; padding:5px 9px !important; font-size:11.5px !important; }
+      td,th{ border:1px solid #333 !important; padding:5px 9px !important; font-size:8.625pt !important; }
       .rfa-page{ page-break-after:always; box-shadow:none !important; border-radius:0 !important;
                  width:auto !important; min-height:auto !important; padding:0 !important; margin:0 !important;
-                 font-size:11.5px !important; line-height:1.42 !important; }
+                 font-size:8.625pt !important; line-height:1.42 !important; }
       .rfa-page:last-child{ page-break-after:auto; }
       .rfa-page tr{ page-break-inside:avoid; }
       .rfa-page > div{ margin-top:6px !important; margin-bottom:6px !important; }

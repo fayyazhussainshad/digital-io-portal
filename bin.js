@@ -66,33 +66,33 @@ async function _buildBin() {
     <!-- Stats -->
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;">
       <div style="background:var(--bg-card);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border);">
-        <div style="font-size:22px;font-weight:800;color:var(--accent);">${items.length}</div>
-        <div style="font-size:11px;color:var(--text-muted);">کل حذف شدہ</div>
+        <div style="font-size:16.5pt;font-weight:800;color:var(--accent);">${items.length}</div>
+        <div style="font-size:8.25pt;color:var(--text-muted);">کل حذف شدہ</div>
       </div>
       <div style="background:var(--bg-card);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border);">
-        <div style="font-size:22px;font-weight:800;color:var(--amber);">
+        <div style="font-size:16.5pt;font-weight:800;color:var(--amber);">
           ${items.filter(i=>{ const d=new Date(i.expires_at); return (d-now)/(1000*60*60*24) <= 7; }).length}
         </div>
-        <div style="font-size:11px;color:var(--text-muted);">7 دن میں ختم</div>
+        <div style="font-size:8.25pt;color:var(--text-muted);">7 دن میں ختم</div>
       </div>
       <div style="background:var(--bg-card);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--border);">
-        <div style="font-size:22px;font-weight:800;color:var(--green);">
+        <div style="font-size:16.5pt;font-weight:800;color:var(--green);">
           ${Object.keys(groups).length}
         </div>
-        <div style="font-size:11px;color:var(--text-muted);">اقسام</div>
+        <div style="font-size:8.25pt;color:var(--text-muted);">اقسام</div>
       </div>
     </div>
 
     ${items.length === 0 ? `
     <div style="text-align:center;padding:60px;color:var(--text-muted);">
-      <div style="font-size:64px;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></div>
-      <div style="font-size:16px;font-weight:700;margin-bottom:6px;">بن خالی ہے</div>
-      <div style="font-size:12px;">حذف کی گئی اشیاء یہاں دکھائی دیں گی</div>
+      <div style="font-size:48pt;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></div>
+      <div style="font-size:12pt;font-weight:700;margin-bottom:6px;">بن خالی ہے</div>
+      <div style="font-size:9pt;">حذف کی گئی اشیاء یہاں دکھائی دیں گی</div>
     </div>` : Object.entries(groups).map(([type, groupItems]) => {
       const cfg = typeLabels[type] || typeLabels.other;
       return `
       <div class="card" style="margin-bottom:12px;">
-        <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;">
+        <div style="font-size:9pt;font-weight:700;color:var(--accent);margin-bottom:10px;">
           ${cfg.icon} ${cfg.label} (${groupItems.length})
         </div>
         ${groupItems.map(item => {
@@ -103,13 +103,13 @@ async function _buildBin() {
           <div style="display:flex;gap:10px;direction:rtl;padding:9px 0;border-bottom:1px solid var(--border);align-items:flex-start;">
             <span>${cfg.icon}</span>
             <div style="flex:1;">
-              <div style="font-size:13px;font-weight:600;color:var(--text-primary);">
+              <div style="font-size:9.75pt;font-weight:600;color:var(--text-primary);">
                 ${esc(_binTitle(type, d))}
               </div>
-              <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
+              <div style="font-size:8.25pt;color:var(--text-muted);margin-top:2px;">
                 ${esc(_binDetail(type, d))}
               </div>
-              <div style="font-size:10px;color:${urgent?'var(--red)':'var(--text-faint)'};margin-top:3px;">
+              <div style="font-size:7.5pt;color:${urgent?'var(--red)':'var(--text-faint)'};margin-top:3px;">
                 حذف: ${formatDate(item.deleted_at)} &nbsp;·&nbsp;
                 ${urgent ? `صرف ${daysLeft} دن باقی` : `${daysLeft} دن باقی`}
               </div>
@@ -196,7 +196,7 @@ async function _binRestore(binId, type, quiet) {
 // ── RESTORE ALL ───────────────────────────────────────────────
 async function _binRestoreAll() {
   openModal('سب بحال کریں',
-    `<p style="color:var(--text-secondary);font-size:13px;">کیا آپ بن کی تمام اشیاء بحال کرنا چاہتے ہیں؟</p>`,
+    `<p style="color:var(--text-secondary);font-size:9.75pt;">کیا آپ بن کی تمام اشیاء بحال کرنا چاہتے ہیں؟</p>`,
     `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
      <button class="btn btn-primary" onclick="closeModal();_binDoRestoreAll()">ہاں، سب بحال کریں</button>`
   );
@@ -221,7 +221,7 @@ async function _binDoRestoreAll() {
 // ── PERMANENT DELETE ──────────────────────────────────────────
 async function _binDeletePerm(binId) {
   openModal('مستقل حذف',
-    `<p style="color:var(--red);font-size:13px;">یہ آئٹم ہمیشہ کے لیے حذف ہو جائے گا — واپس نہیں آ سکتا!</p>`,
+    `<p style="color:var(--red);font-size:9.75pt;">یہ آئٹم ہمیشہ کے لیے حذف ہو جائے گا — واپس نہیں آ سکتا!</p>`,
     `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
      <button class="btn btn-danger" onclick="closeModal();_binDoPerm('${binId}')">مستقل حذف</button>`
   );
@@ -238,7 +238,7 @@ async function _binDoPerm(binId) {
 // ── EMPTY ALL ─────────────────────────────────────────────────
 function _binEmptyAll() {
   openModal('بن خالی کریں',
-    `<p style="color:var(--red);font-size:13px;">تمام اشیاء ہمیشہ کے لیے حذف ہو جائیں گی — واپس نہیں آ سکتیں!</p>`,
+    `<p style="color:var(--red);font-size:9.75pt;">تمام اشیاء ہمیشہ کے لیے حذف ہو جائیں گی — واپس نہیں آ سکتیں!</p>`,
     `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
      <button class="btn btn-danger" onclick="closeModal();_binDoEmpty()">ہاں، بن خالی کریں</button>`
   );

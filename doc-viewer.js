@@ -100,26 +100,26 @@ function _dioEnterDocView() {
            yahan apna button chahiye. Shakl aur jagah topbar jaisi hi hai
            (daain taraf, teer + "واپس") taake afsar ko farq mehsoos na ho. -->
       <button onclick="dioGoBack()" class="dio-backbtn" title="واپس" aria-label="واپس"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6l6 6-6 6"/><path d="M20 12H4"/></svg><span>واپس</span></button>
-      <span id="dio-dv-fir" style="font-size:14px;font-weight:900;color:var(--accent);
+      <span id="dio-dv-fir" style="font-size:10.5pt;font-weight:900;color:var(--accent);
             font-family:var(--font-mono);flex-shrink:0;white-space:nowrap;"></span>
       <div id="dio-dv-tabs" style="display:flex;gap:6px;flex:1;flex-wrap:wrap;min-width:0;"></div>
       <div style="display:flex;gap:8px;flex-shrink:0;">
         <button onclick="_dioAddDocPicker()" title="نئی دستاویز کھولیں (موجودہ بند نہیں ہوگی)"
           style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--accent);
-                 border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;
-                 font-family:'Jameel Noori Nastaleeq',serif;">نئی دستاویز</button>
+                 border-radius:8px;padding:8px 14px;font-size:9.75pt;font-weight:700;cursor:pointer;
+                 font-family:'Jameel Noori Nastaleeq';">نئی دستاویز</button>
         <button id="dio-dv-save" onclick="_dioSaveCurrent()" title="محفوظ کریں"
           style="background:var(--green,#16a34a);color:#fff;border:none;border-radius:8px;padding:8px 16px;
-                 font-size:13px;font-weight:700;cursor:pointer;
-                 font-family:'Jameel Noori Nastaleeq',serif;">محفوظ</button>
+                 font-size:9.75pt;font-weight:700;cursor:pointer;
+                 font-family:'Jameel Noori Nastaleeq';">محفوظ</button>
         <button onclick="_dioPrintCurrent()" title="پرنٹ"
           style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 16px;
-                 font-size:13px;font-weight:700;cursor:pointer;
-                 font-family:'Jameel Noori Nastaleeq',serif;">پرنٹ</button>
+                 font-size:9.75pt;font-weight:700;cursor:pointer;
+                 font-family:'Jameel Noori Nastaleeq';">پرنٹ</button>
         <button id="dio-dv-share" onclick="_dioShareCurrent()" title="شیئر — پوری فائل PDF / Word"
           style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--accent);
-                 border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;
-                 font-family:'Jameel Noori Nastaleeq',serif;">شیئر</button>
+                 border-radius:8px;padding:8px 14px;font-size:9.75pt;font-weight:700;cursor:pointer;
+                 font-family:'Jameel Noori Nastaleeq';">شیئر</button>
       </div>
     </div>
     <div id="dio-dv-body" style="flex:1;min-height:0;overflow:auto;"></div>`;
@@ -279,8 +279,8 @@ function _dioExitDocView() {
     area.innerHTML = `
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
            height:100%;min-height:260px;color:var(--text-muted);direction:rtl;">
-        <div style="font-size:40px;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
-        <div style="font-size:14px;">اوپر سے کوئی دستاویز منتخب کریں</div>
+        <div style="font-size:30pt;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
+        <div style="font-size:10.5pt;">اوپر سے کوئی دستاویز منتخب کریں</div>
       </div>`;
   }
   ov.remove();
@@ -326,14 +326,14 @@ function _dioAddDocPicker() {
     'padding:12px;box-shadow:0 12px 40px rgba(0,0,0,0.45);direction:rtl;min-width:280px;max-width:92vw;';
   box.innerHTML = groups.map(g => `
     <div style="margin-bottom:10px;">
-      <div style="font-size:11px;color:var(--text-muted);font-weight:700;margin-bottom:6px;
-                  font-family:'Jameel Noori Nastaleeq',serif;">${g.title}</div>
+      <div style="font-size:8.25pt;color:var(--text-muted);font-weight:700;margin-bottom:6px;
+                  font-family:'Jameel Noori Nastaleeq';">${g.title}</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
         ${g.items.map(([id,label]) => {
           const open = _dioTabs.some(t => t.id === id);
           return `<span onclick="_dioPickDoc('${id}')"
-            style="padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;
-                   font-family:'Jameel Noori Nastaleeq',serif;
+            style="padding:6px 12px;border-radius:8px;cursor:pointer;font-size:9pt;font-weight:600;
+                   font-family:'Jameel Noori Nastaleeq';
                    border:1px solid ${open?'var(--accent)':'var(--border)'};
                    background:${open?'var(--accent)':'var(--bg-tertiary)'};
                    color:${open?'#fff':'var(--text-primary)'};">${esc(label)}${open?' ✓':''}</span>`;
@@ -342,8 +342,8 @@ function _dioAddDocPicker() {
     </div>`).join('') +
     `<div style="text-align:center;padding-top:6px;border-top:1px solid var(--border);">
        <span onclick="document.getElementById('dio-dv-picker')?.remove()"
-         style="font-size:12px;color:var(--text-muted);cursor:pointer;
-                font-family:'Jameel Noori Nastaleeq',serif;">بند کریں</span>
+         style="font-size:9pt;color:var(--text-muted);cursor:pointer;
+                font-family:'Jameel Noori Nastaleeq';">بند کریں</span>
      </div>`;
   document.getElementById('dio-docview')?.appendChild(box);
 }
@@ -450,8 +450,8 @@ function _dioRenderTabs() {
   box.innerHTML = _dioTabs.map(t => {
     const on = t.id === _dioActiveTab;
     return `<span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;
-      cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;
-      font-family:'Jameel Noori Nastaleeq',serif;transition:all .15s;
+      cursor:pointer;font-size:9pt;font-weight:700;white-space:nowrap;
+      font-family:'Jameel Noori Nastaleeq';transition:all .15s;
       border:1px solid ${on ? 'var(--accent)' : 'var(--border)'};
       background:${on ? 'var(--accent)' : 'var(--bg-tertiary)'};
       color:${on ? '#fff' : 'var(--text-secondary)'};"

@@ -466,29 +466,29 @@ function _renderR173() {
     <style>${_ch173CSS()}</style>
     <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
       <div class="no-print" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
-        <select id="r173-type-sel" onchange="_r173Pick(this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
+        <select id="r173-type-sel" onchange="_r173Pick(this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq';font-size:10.5pt;">
           ${R173_TYPES.map(t => `<option value="${t.id}" ${t.id===_r173Type?'selected':''}>${t.name}</option>`).join('')}
         </select>
         ${_r173Type === 'tatima_challan' ? `
-        <select id="r173-sub-sel" onchange="_r173PickSub(this.value)" style="padding:6px 10px;border:1px solid var(--amber,#d97706);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
+        <select id="r173-sub-sel" onchange="_r173PickSub(this.value)" style="padding:6px 10px;border:1px solid var(--amber,#d97706);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq';font-size:10.5pt;">
           ${R173_TATIMA_SUBS.map(sb => `<option value="${sb.id}" ${sb.id===_r173Subtype?'selected':''}>${sb.name}</option>`).join('')}
         </select>
         <input id="r173-result-no" type="text" value="${esc(saved.result_no || '')}"
           oninput="_ch173SetResultNo(this.value)"
           placeholder="رزلٹ نمبری"
-          style="padding:6px 10px;border:1px solid var(--amber,#d97706);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;width:140px;"
+          style="padding:6px 10px;border:1px solid var(--amber,#d97706);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq';font-size:10.5pt;width:140px;"
           title="رزلٹ نمبری — تحریر اور تفصیل کاغذات دونوں جگہ خودبخود لگ جائے گا">` : ''}
         <!-- "ہیڈ منتخب کریں" wali fehrist filhaal hata di gayi hai (zaroorat nahi).
              Zaroorat par wapas lagane ke liye: yahan select dobara daal dein —
              _r173SetHead() aur R173_HEADS / R173_IKHRAJ_HEADS mojood hain. -->
         <select id="ch173-ver-sel" onchange="_ch173SetVersion(this.value)" title="ورژن"
-          style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14px;">
+          style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq';font-size:10.5pt;">
           <option value="fir" ${_ch173Version==='fir'?'selected':''}>FIR</option>
           ${(typeof caseHasCross==='function' && caseHasCross(c))
             ? `<option value="cross_version" ${_ch173Version==='cross_version'?'selected':''}>کراس ورژن</option>` : ''}
         </select>
         <!-- v553: لیگل/A4 کا انتخاب یہاں سے ہٹا — پرنٹ کے وقت پوچھا جاتا ہے (dioWithPaper) -->
-        <span style="font-size:11px;color:var(--text-muted);">↔ کالم کی لکیر کو پکڑ کر چوڑائی بدلیں</span>
+        <span style="font-size:8.25pt;color:var(--text-muted);">↔ کالم کی لکیر کو پکڑ کر چوڑائی بدلیں</span>
         <div style="margin-right:auto;display:flex;gap:6px;">
           <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('bold')" title="بولڈ" style="${_chBtn()}font-weight:900;">B</button>
           <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('italic')" title="ترچھا" style="${_chBtn()}font-style:italic;">I</button>
@@ -500,14 +500,14 @@ function _renderR173() {
           <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('justifyFull')" title="دونوں طرف برابر (Justify)" style="${_chBtn()}">☰</button>
           <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
           <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('insertUnorderedList')" title="نقطہ دار فہرست" style="${_chBtn()}">•</button>
-          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('insertOrderedList')" title="نمبر والی فہرست" style="${_chBtn()}font-size:11px;">1.</button>
+          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('insertOrderedList')" title="نمبر والی فہرست" style="${_chBtn()}font-size:8.25pt;">1.</button>
           <button onmousedown="event.preventDefault()" onclick="_ch173ClearFmt()" title="فارمیٹ ختم کریں" style="${_chBtn()}">🧹</button>
           <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
           <button id="ch173-brush-btn" onmousedown="event.preventDefault()"
             onclick="_ch173BrushClick(false)" ondblclick="_ch173BrushClick(true)"
             title="فارمیٹ پینٹر — ایک کلک: ایک بار، ڈبل کلک: بار بار" style="${_chBtn()}">🖌</button>
           <select id="ch173-font-sel" onchange="_ch173SetFont(this.value)" title="فونٹ سائز"
-            style="height:28px;border:1px solid var(--border,#ccc);border-radius:6px;background:var(--bg-card,#fff);color:var(--text-primary,#111);font-size:13px;padding:0 6px;margin:0 1px;cursor:pointer;">
+            style="height:28px;border:1px solid var(--border,#ccc);border-radius:6px;background:var(--bg-card,#fff);color:var(--text-primary,#111);font-size:9.75pt;padding:0 6px;margin:0 1px;cursor:pointer;">
             ${R173_FONT_SIZES.map(s => `<option value="${s}" ${String(s)===String(_ch173DocFont(bs))?'selected':''}>${s}</option>`).join('')}
           </select>
           <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('undo')" title="واپس (Undo)" style="${_chBtn()}">↶</button>
@@ -1072,24 +1072,15 @@ function _printR173Now() {
       } catch (__) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
     }
     const chHtml = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
-      <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
+      ${typeof dioFontHead==='function'?dioFontHead():''}
       <style>
-        /* Print iframe apna font KHUD load kare — warna woh officer ke PC par
-           installed font par ya serif par gir jata tha (isi wajah se teeno print
-           alag lagte the aur الفاظ جُڑتے تھے). Yeh wahi @font-face hai jo
-           index.html mein hai — screen jaisa hi font, har PC par yaksan. */
-        @font-face{
-          font-family:'Jameel Noori Nastaleeq';
-          src: local('Jameel Noori Nastaleeq'), local('Jameel Noori Nastaleeq Regular'),
-               url('https://cdn.jsdelivr.net/npm/jameel-noori/fonts/jameel-noori-nastaleeq4.woff2') format('woff2'),
-               url('https://unpkg.com/jameel-noori/fonts/jameel-noori-nastaleeq4.woff2') format('woff2');
-          font-display: swap;
-        }
+        /* Print iframe apna font KHUD load kare (upar dioFontHead() — v560 se isi
+           site ka self-hosted Jameel Noori, wahi jo index.html mein hai). */
         /* Charon taraf BARABAR margin — kaghaz chune hue naap ka */
         /* Sides tang aur barabar — table poori qabil-e-tabaat chaudai le */
         @page{ size:${_ch173Paper === 'a4' ? 'A4 portrait' : '8.5in 13in'}; margin:1cm ${_ch173SideMargin()}; }
         html, body{ margin:0 !important; padding:0 !important;
-          font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
+          font-family:'Jameel Noori Nastaleeq';
           direction:rtl; line-height:1.4; color:#000; }
 
         /* ═══ WAHI CSS jo screen par hai — koi alag nakal nahi ═══ */
@@ -1982,7 +1973,7 @@ function _ch173AkhrajGrips() {
         try { cs = getComputedStyle(td); } catch (_) { return; }
         probe.style.font       = cs.font;
         probe.style.fontFamily = cs.fontFamily;
-        probe.style.fontSize   = cs.fontSize;
+        probe.style.fontSize   = (parseFloat(cs.fontSize) * 0.75) + 'pt';   // v560: pt (computed px → pt، وہی ناپ)
         probe.style.fontWeight = cs.fontWeight;
         probe.style.letterSpacing = cs.letterSpacing;
         probe.textContent = (td.textContent || '').trim();
@@ -3093,10 +3084,10 @@ function _ch173AskMedical() {
   ov.innerHTML = `
     <div style="background:#fff;border-radius:12px;width:340px;max-width:94vw;padding:16px;
                 direction:rtl;box-shadow:0 18px 50px rgba(0,0,0,.3);">
-      <div style="font-family:'Jameel Noori Nastaleeq',serif;font-weight:700;color:#0369a1;
+      <div style="font-family:'Jameel Noori Nastaleeq';font-weight:700;color:#0369a1;
                   font-size:15pt;margin-bottom:4px;">میڈیکل آفیسر کا نام</div>
       <div style="font-size:11pt;color:#64748b;margin-bottom:12px;
-                  font-family:'Jameel Noori Nastaleeq',serif;">
+                  font-family:'Jameel Noori Nastaleeq';">
         کاغذات میں ایم ایل سی / پوسٹ مارٹم شامل ہے — میڈیکل آفیسر بھی گواہ ہیں۔
       </div>
       <input id="ch173-med-nm" placeholder="نام" dir="auto" value="${esc(cur.name)}"
@@ -3108,10 +3099,10 @@ function _ch173AskMedical() {
       <div style="display:flex;gap:8px;">
         <button id="ch173-med-ok" style="flex:1;padding:9px;border:none;border-radius:7px;
                 background:#0369a1;color:#fff;cursor:pointer;font-size:12pt;
-                font-family:'Jameel Noori Nastaleeq',serif;">شامل کریں</button>
+                font-family:'Jameel Noori Nastaleeq';">شامل کریں</button>
         <button id="ch173-med-x" style="padding:9px 14px;border:1px solid #cbd5e1;border-radius:7px;
                 background:#fff;cursor:pointer;font-size:12pt;
-                font-family:'Jameel Noori Nastaleeq',serif;">رہنے دیں</button>
+                font-family:'Jameel Noori Nastaleeq';">رہنے دیں</button>
       </div>
     </div>`;
   document.body.appendChild(ov);
@@ -3213,23 +3204,23 @@ function _ch173AccPicker(ev, key) {
   const rows = list.filter(a => !used.has((a.name||'').trim())).map(a => {
     const nm = (a.name||'').trim();
     const on = mine.has(nm);
-    return `<label style="display:flex;align-items:center;gap:8px;padding:7px 6px;cursor:pointer;font-size:13px;
-              border-bottom:1px solid #f1f5f9;font-family:'Jameel Noori Nastaleeq',serif;">
+    return `<label style="display:flex;align-items:center;gap:8px;padding:7px 6px;cursor:pointer;font-size:9.75pt;
+              border-bottom:1px solid #f1f5f9;font-family:'Jameel Noori Nastaleeq';">
               <input type="checkbox" ${on?'checked':''} value="${esc(nm)}"> <span>${esc(nm)}</span></label>`;
   }).join('');
   box.innerHTML = `
-    <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:700;color:#0369a1;
-                font-family:'Jameel Noori Nastaleeq',serif;background:#f8fafc;">
+    <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:9pt;font-weight:700;color:#0369a1;
+                font-family:'Jameel Noori Nastaleeq';background:#f8fafc;">
       ملزمان منتخب کریں (${_ch173Version==='cross_version'?'کراس ورژن':'FIR'})
     </div>
     <div style="flex:1;overflow-y:auto;padding:4px 8px;min-height:0;">
-      ${rows || '<div style="font-size:12px;color:#777;padding:10px;">باقی کوئی ملزم نہیں</div>'}
+      ${rows || '<div style="font-size:9pt;color:#777;padding:10px;">باقی کوئی ملزم نہیں</div>'}
     </div>
     <div style="display:flex;gap:6px;padding:8px;border-top:1px solid #e5e7eb;background:#f8fafc;flex-shrink:0;">
       <button id="ch173-acc-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;
-        color:#fff;cursor:pointer;font-size:13px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">✔ شامل کریں</button>
+        color:#fff;cursor:pointer;font-size:9.75pt;font-weight:700;font-family:'Jameel Noori Nastaleeq';">✔ شامل کریں</button>
       <button id="ch173-acc-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;
-        cursor:pointer;font-size:13px;font-family:'Jameel Noori Nastaleeq',serif;">بند</button>
+        cursor:pointer;font-size:9.75pt;font-family:'Jameel Noori Nastaleeq';">بند</button>
     </div>`;
   document.body.appendChild(box);
 
@@ -3432,27 +3423,27 @@ function _ch173PapersPicker(ev) {
     'box-shadow:0 10px 30px rgba(0,0,0,.28);direction:rtl;width:300px;max-width:94vw;' +
     'display:flex;flex-direction:column;max-height:min(72vh,440px);overflow:hidden;';
   box.innerHTML = `
-    <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:700;color:#0369a1;
-                font-family:'Jameel Noori Nastaleeq',serif;background:#f8fafc;">
+    <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:9pt;font-weight:700;color:#0369a1;
+                font-family:'Jameel Noori Nastaleeq';background:#f8fafc;">
       کاغذات منتخب کریں <span style="font-weight:400;color:#64748b;">— نام بدلا جا سکتا ہے، ▲▼ سے ترتیب</span>
     </div>
     <div id="pp-list" style="flex:1;overflow-y:auto;padding:4px 6px;min-height:0;"></div>
     <div style="padding:6px;border-top:1px solid #e5e7eb;background:#f8fafc;flex-shrink:0;">
       <button id="pp-add" style="width:100%;padding:7px;border:1px dashed #0369a1;border-radius:6px;background:#fff;
-        color:#0369a1;cursor:pointer;font-size:13px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">
+        color:#0369a1;cursor:pointer;font-size:9.75pt;font-weight:700;font-family:'Jameel Noori Nastaleeq';">
         ＋ نیا کاغذ شامل کریں</button>
       <div style="display:flex;gap:6px;margin-top:6px;">
         <button id="ch173-pp-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;
-          color:#fff;cursor:pointer;font-size:13px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">✔ شامل کریں</button>
+          color:#fff;cursor:pointer;font-size:9.75pt;font-weight:700;font-family:'Jameel Noori Nastaleeq';">✔ شامل کریں</button>
         <button id="ch173-pp-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;
-          cursor:pointer;font-size:13px;font-family:'Jameel Noori Nastaleeq',serif;">بند</button>
+          cursor:pointer;font-size:9.75pt;font-family:'Jameel Noori Nastaleeq';">بند</button>
       </div>
     </div>`;
   document.body.appendChild(box);
 
   const wrap = box.querySelector('#pp-list');
   const mini = 'width:22px;height:22px;padding:0;line-height:1;border:1px solid #cbd5e1;border-radius:5px;' +
-               'background:#fff;cursor:pointer;font-size:11px;flex-shrink:0;';
+               'background:#fff;cursor:pointer;font-size:8.25pt;flex-shrink:0;';
 
   // Screen par jo halat hai usay fehrist mein utaar lo (naam ki tabdeeli + ✔)
   const readDom = () => {
@@ -3473,7 +3464,7 @@ function _ch173PapersPicker(ev) {
            border-bottom:1px solid #f1f5f9;">
         <input type="checkbox" class="pp-ck" ${checked.has(p) ? 'checked' : ''} style="flex-shrink:0;">
         <input type="text" class="pp-txt" value="${esc(p)}" style="flex:1;min-width:0;border:1px solid transparent;
-          border-radius:5px;padding:4px 6px;font-size:13px;font-family:'Jameel Noori Nastaleeq',serif;
+          border-radius:5px;padding:4px 6px;font-size:9.75pt;font-family:'Jameel Noori Nastaleeq';
           direction:rtl;text-align:right;background:#fff;outline:none;"
           onfocus="this.style.borderColor='#93c5fd';this.style.background='#f8fbff';"
           onblur="this.style.borderColor='transparent';this.style.background='#fff';">
@@ -3481,7 +3472,7 @@ function _ch173PapersPicker(ev) {
         <button class="pp-down" title="نیچے"  style="${mini}" ${i === list.length - 1 ? 'disabled' : ''}>▼</button>
         <button class="pp-del"  title="حذف"   style="${mini}color:#b91c1c;">✕</button>
       </div>`).join('') ||
-      '<div style="font-size:12px;color:#777;padding:10px;">فہرست خالی ہے — ＋ سے شامل کریں</div>';
+      '<div style="font-size:9pt;color:#777;padding:10px;">فہرست خالی ہے — ＋ سے شامل کریں</div>';
     if (typeof focusIdx === 'number') {
       const el = wrap.querySelectorAll('.pp-txt')[focusIdx];
       if (el) { el.focus(); el.select(); }
@@ -3686,7 +3677,7 @@ window._ch173WitnessText = _ch173WitnessText;
 function _chBtn() {
   return 'min-width:30px;height:28px;border:1px solid var(--border,#ccc);border-radius:6px;' +
          'background:var(--bg-card,#fff);color:var(--text-primary,#111);cursor:pointer;' +
-         'font-size:13px;padding:0 7px;margin:0 1px;';
+         'font-size:9.75pt;padding:0 7px;margin:0 1px;';
 }
 // ═══ فونٹ سائز — MS Word جیسی فہرست (پوائنٹ میں) ═══
 const R173_FONT_SIZES = [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72];
@@ -4550,8 +4541,8 @@ function _renderR173List() {
 
   area.innerHTML = `
   <style>
-    .ct{ width:100%; border-collapse:collapse; font-size:13px; direction:rtl;
-         font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+    .ct{ width:100%; border-collapse:collapse; font-size:9.75pt; direction:rtl;
+         font-family:'Jameel Noori Nastaleeq'; }
     .ct th{ background:var(--bg-tertiary); border:1px solid var(--border); padding:7px 6px;
             font-weight:700; white-space:nowrap; text-align:center; }
     .ct td{ border:1px solid var(--border); padding:6px; vertical-align:middle; }
@@ -4560,20 +4551,20 @@ function _renderR173List() {
     .ct .num{ text-align:center; font-weight:700; width:44px; }
     .ct .act{ white-space:nowrap; text-align:center; width:160px; }
     /* مضمون — satar POORI bharta hai; jo na samaye woh kinare par '…' ban jata hai */
-    .ct .mz{ font-size:12px; color:var(--text-secondary);
+    .ct .mz{ font-size:9pt; color:var(--text-secondary);
              width:100%; max-width:0; white-space:nowrap;
              overflow:hidden; text-overflow:ellipsis; text-align:right; }
     /* mehfooz karne ka waqt — تاریخ ke neeche, chhota */
-    .ct .wq{ font-size:11px; color:var(--text-muted); margin-top:2px; }
+    .ct .wq{ font-size:8.25pt; color:var(--text-muted); margin-top:2px; }
     .cab{ border:1px solid var(--border); background:var(--bg-card); border-radius:6px;
-          padding:3px 7px; margin:0 1px; cursor:pointer; font-size:14px; line-height:1; }
+          padding:3px 7px; margin:0 1px; cursor:pointer; font-size:10.5pt; line-height:1; }
     .cab:hover{ background:var(--hover-bg); }
   </style>
   <div style="padding:14px;direction:rtl;height:100%;overflow-y:auto;">
     <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap;">
       <button class="btn btn-primary btn-sm" onclick="_r173NewDoc(false)">+ چالان درج کریں</button>
       <div style="flex:1;"></div>
-      <span style="font-size:11px;color:var(--text-muted);">پرنٹ کے لیے ہر سطر کا 🖨️ دبائیں</span>
+      <span style="font-size:8.25pt;color:var(--text-muted);">پرنٹ کے لیے ہر سطر کا 🖨️ دبائیں</span>
     </div>
     <table class="ct">
       <thead><tr>
@@ -5102,7 +5093,7 @@ function _ch173CSS() {
          wale ('.page-content' wale) 14 PIXEL ko wirasat mein le leta tha aur
          har khana chhota chhap jata tha. Yahan se har woh khana theek rehta
          hai jis par apni koi alag naap nahi lagi. */
-      #ch173-doc{ direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; color:#000; font-size:14pt; }
+      #ch173-doc{ direction:rtl; font-family:'Jameel Noori Nastaleeq'; color:#000; font-size:14pt; }
       /* Unwan: FORM No. aur Urdu heading — dono AIK hi flex dhanche mein,
          is liye dono ka center bilkul aik (linked) */
       /* Unwan: beech wala hissa HAMESHA sacche page-center par (absolute 50%),
@@ -5244,7 +5235,7 @@ function _ch173CSS() {
       #ch173-doc .papers-pick{
         margin-right:6px; width:20px; height:20px; line-height:1; padding:0;
         border:1px solid var(--border,#999); border-radius:4px; vertical-align:middle;
-        background:#eef6ff; color:#0369a1; cursor:pointer; font-size:12px;
+        background:#eef6ff; color:#0369a1; cursor:pointer; font-size:9pt;
         text-decoration:none; font-weight:400;
       }
       /* کرسر یہاں بلنک کرتا ہے — ڈیٹا عنوان کے نیچے سے شروع ہوتا ہے */
@@ -5338,7 +5329,7 @@ function _ch173CSS() {
         position:absolute; top:2px; left:2px; z-index:7;
         width:20px; height:20px; line-height:1; padding:0;
         border:1px solid var(--border,#999); border-radius:4px;
-        background:#eef6ff; color:#0369a1; cursor:pointer; font-size:12px;
+        background:#eef6ff; color:#0369a1; cursor:pointer; font-size:9pt;
       }
       /* Column 7 — normal RTL (khadi nahi) */
       /* USOOL: column 7 table ki lambai NAHI barhata — jo matn na samaye
@@ -5350,7 +5341,7 @@ function _ch173CSS() {
       #ch173-doc .normwrap{
         position:absolute; inset:0;    /* khane ke barabar — table lamba nahi hota */
         padding:5px 5px 0 5px; box-sizing:border-box;   /* neeche ki padding 0 */
-        font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
+        font-family:'Jameel Noori Nastaleeq';
         direction:rtl; text-align:justify; text-align-last:right;
         outline:none; line-height:1.5; font-size:14pt;   /* satron ka fasla — 1.5 */
         overflow-wrap:break-word; word-wrap:break-word;
@@ -5360,7 +5351,7 @@ function _ch173CSS() {
       #ch173-doc .normwrap p, #ch173-doc .normwrap div{ text-align:justify; text-align-last:right; }
       /* Paste kiya hua matn apna font saath na laye */
       #ch173-doc .normwrap *, #ch173-doc .ch173-cont *{
-        font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif !important;
+        font-family:'Jameel Noori Nastaleeq' !important;
       }
       #ch173-doc .ch173-cont:empty::before{
         content:'تسلسل — جو تحریر اوپر خانوں میں نہ سما سکے وہ یہاں لکھیں';

@@ -16,7 +16,7 @@ const SUSPECT_TYPES = {
 };
 
 async function renderSuspects(container) {
-  container.innerHTML = (window.DIO && DIO.states) ? DIO.states.loading('ملزمان / گواہان لوڈ ہو رہے ہیں') : `<div style="text-align:center;padding:32px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq',serif;">لوڈ ہو رہا ہے...</div>`;
+  container.innerHTML = (window.DIO && DIO.states) ? DIO.states.loading('ملزمان / گواہان لوڈ ہو رہے ہیں') : `<div style="text-align:center;padding:32px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq';">لوڈ ہو رہا ہے...</div>`;
 
   const people = await _getSuspects();
 
@@ -58,8 +58,8 @@ async function renderSuspects(container) {
 function _renderSuspectList(people) {
   if (!people.length) {
     return `<div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
-      <div style="font-size:48px;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg></div>
-      <div style="font-size:14px;">کوئی اندراج نہیں</div>
+      <div style="font-size:36pt;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg></div>
+      <div style="font-size:10.5pt;">کوئی اندراج نہیں</div>
     </div>`;
   }
 
@@ -70,14 +70,14 @@ function _renderSuspectList(people) {
       return `
       <div class="card" style="padding:14px;cursor:pointer;border-right:3px solid ${t.color};" onclick="_viewSuspect('${p.id}')">
         <div style="display:flex;align-items:center;gap:12px;">
-          <div style="width:42px;height:42px;border-radius:50%;background:${t.color};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${t.icon}</div>
+          <div style="width:42px;height:42px;border-radius:50%;background:${t.color};display:flex;align-items:center;justify-content:center;font-size:13.5pt;flex-shrink:0;">${t.icon}</div>
           <div style="flex:1;min-width:0;">
-            <div style="font-size:15px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">${esc(p.full_name) || '—'}</div>
-            <div style="font-size:11px;color:var(--text-muted);">
+            <div style="font-size:11.25pt;font-weight:700;font-family:'Jameel Noori Nastaleeq';">${esc(p.full_name) || '—'}</div>
+            <div style="font-size:8.25pt;color:var(--text-muted);">
               ${t.label}${p.cnic ? ` · <span dir="ltr">${esc(p.cnic)}</span>` : ''}${p.cell ? ` · <span dir="ltr">${esc(p.cell)}</span>` : ''}
             </div>
           </div>
-          ${caseCount ? `<div style="background:var(--accent-glow);color:var(--accent);border-radius:12px;padding:3px 10px;font-size:11px;font-weight:700;white-space:nowrap;">${caseCount} مقدمات</div>` : ''}
+          ${caseCount ? `<div style="background:var(--accent-glow);color:var(--accent);border-radius:12px;padding:3px 10px;font-size:8.25pt;font-weight:700;white-space:nowrap;">${caseCount} مقدمات</div>` : ''}
         </div>
       </div>`;
     }).join('')}
@@ -248,7 +248,7 @@ async function _viewSuspect(id) {
 
   openModal(`${esc(p.full_name)} — ${t.label}`, `
     <div style="direction:rtl;">
-      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;font-size:13px;">
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;font-size:9.75pt;">
         <div><b>قسم:</b> ${t.label}</div>
         ${p.father_name ? `<div><b>ولدیت:</b> ${esc(p.father_name)}</div>` : ''}
         ${p.caste ? `<div><b>ذات:</b> ${esc(p.caste)}</div>` : ''}
@@ -261,13 +261,13 @@ async function _viewSuspect(id) {
 
       <!-- Cross-referenced cases -->
       <div style="border-top:1px solid var(--border);padding-top:12px;">
-        <div class="dio-hs2" style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px;">متعلقہ مقدمات (${matchedCases.length})</div>
+        <div class="dio-hs2" style="font-size:9.75pt;font-weight:700;color:var(--accent);margin-bottom:8px;">متعلقہ مقدمات (${matchedCases.length})</div>
         ${matchedCases.length ? matchedCases.map(c => `
           <div style="background:var(--bg-secondary);border-radius:8px;padding:10px;margin-bottom:6px;cursor:pointer;" onclick="closeModal();openCaseWorkspace('${c.id}')">
-            <div style="font-size:13px;font-weight:700;color:var(--accent);">FIR ${c.fir_number || '—'}</div>
-            <div style="font-size:11px;color:var(--text-muted);">${c.section_of_law || '—'} · ${STATUS_LABELS[c.status] || c.status || ''}</div>
+            <div style="font-size:9.75pt;font-weight:700;color:var(--accent);">FIR ${c.fir_number || '—'}</div>
+            <div style="font-size:8.25pt;color:var(--text-muted);">${c.section_of_law || '—'} · ${STATUS_LABELS[c.status] || c.status || ''}</div>
           </div>
-        `).join('') : '<div style="font-size:12px;color:var(--text-muted);">کوئی متعلقہ مقدمہ نہیں ملا</div>'}
+        `).join('') : '<div style="font-size:9pt;color:var(--text-muted);">کوئی متعلقہ مقدمہ نہیں ملا</div>'}
       </div>
     </div>
   `, `

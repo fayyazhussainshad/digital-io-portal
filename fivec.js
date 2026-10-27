@@ -153,14 +153,14 @@ async function renderFiveC(container, query) {
   </div>`;
 }
 function render5CRow(a){
-  const nums=(a.application_5c_numbers||[]).map(n=>`<div style="font-size:11px;line-height:1.5;"><b>${esc5C(n.application_number||'')}</b>${n.senior_officer_designation?` <span style="color:var(--text-muted);">— ${esc5C(n.senior_officer_designation)}</span>`:''}</div>`).join('')||'<span style="color:var(--text-muted);">—</span>';
+  const nums=(a.application_5c_numbers||[]).map(n=>`<div style="font-size:8.25pt;line-height:1.5;"><b>${esc5C(n.application_number||'')}</b>${n.senior_officer_designation?` <span style="color:var(--text-muted);">— ${esc5C(n.senior_officer_designation)}</span>`:''}</div>`).join('')||'<span style="color:var(--text-muted);">—</span>';
   const att=(a.application_5c_attachments||[]).length;
   return `<tr>
     <td><b>${a.serial_number}</b></td><td>${esc5C(a.complainant_name)||'—'}${a.fir_number?`<div style="font-size:10.5pt;color:var(--accent);">مقدمہ <span dir="ltr" style="unicode-bidi:isolate;">${esc5C(a.fir_number)}</span></div>`:''}</td>
-    <td style="font-family:var(--font-mono);font-size:11px;">${esc5C(formatCNIC(a.complainant_cnic))}</td>
-    <td style="font-family:var(--font-mono);font-size:11px;">${esc5C(formatCell(a.complainant_cell))}</td>
+    <td style="font-family:var(--font-mono);font-size:8.25pt;">${esc5C(formatCNIC(a.complainant_cnic))}</td>
+    <td style="font-family:var(--font-mono);font-size:8.25pt;">${esc5C(formatCell(a.complainant_cell))}</td>
     <td>${nums}</td>
-    <td style="font-size:11px;">${toDisplayDate(a.application_date)||'—'}</td>
+    <td style="font-size:8.25pt;">${toDisplayDate(a.application_date)||'—'}</td>
     <td><span class="pill ${FIVEC_STATUS_CLS[a.status]||'pill-blue'}">${esc5C(FIVEC_STATUS[a.status]||a.status)}</span></td>
     <td style="text-align:center;">${att}</td>
     <td style="white-space:nowrap;direction:rtl;">
@@ -220,7 +220,7 @@ function render5CNumberRow(n){
 }
 function handleDesig5C(sel){const row=sel.closest('.f5c-num-row');const box=row&&row.querySelector('.f5c-dc');if(box){box.classList.toggle('f5c-hide',sel.value!=='Other');if(sel.value!=='Other'){const c=box.querySelector('[data-field="senior_officer_designation_custom"]');if(c)c.value='';}}}
 function add5CNumberRow(){const c=document.getElementById('f5c-numbers');const tmp=document.createElement('div');tmp.innerHTML=render5CNumberRow({});c.appendChild(tmp.firstElementChild);}
-function render5CAttachmentRow(a){const ic=a.category==='application_scan'?'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/></svg>':a.category==='response_scan'?'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg>':'📎';const lb=a.category==='application_scan'?'Application Scan':a.category==='response_scan'?'Response Scan':'Other';const sz=a.file_size?` · ${(a.file_size/1024).toFixed(1)}KB`:'';return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg-tertiary);border-radius:6px;margin-bottom:6px;"><span style="font-size:18px;">${ic}</span><span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;">${esc5C(a.file_name)} <span style="color:var(--text-muted);font-size:10px;">(${lb}${sz})</span></span><button title="دیکھیں" aria-label="دیکھیں" class="btn btn-secondary btn-sm" onclick="view5CAttachment('${a.storage_path}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg></button><button title="حذف" aria-label="حذف" class="btn btn-danger btn-sm" onclick="delete5CAttachment('${a.id}','${a.storage_path}',this)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button></div>`;}
+function render5CAttachmentRow(a){const ic=a.category==='application_scan'?'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/></svg>':a.category==='response_scan'?'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg>':'📎';const lb=a.category==='application_scan'?'Application Scan':a.category==='response_scan'?'Response Scan':'Other';const sz=a.file_size?` · ${(a.file_size/1024).toFixed(1)}KB`:'';return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg-tertiary);border-radius:6px;margin-bottom:6px;"><span style="font-size:13.5pt;">${ic}</span><span style="flex:1;font-size:9pt;overflow:hidden;text-overflow:ellipsis;">${esc5C(a.file_name)} <span style="color:var(--text-muted);font-size:7.5pt;">(${lb}${sz})</span></span><button title="دیکھیں" aria-label="دیکھیں" class="btn btn-secondary btn-sm" onclick="view5CAttachment('${a.storage_path}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg></button><button title="حذف" aria-label="حذف" class="btn btn-danger btn-sm" onclick="delete5CAttachment('${a.id}','${a.storage_path}',this)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button></div>`;}
 async function upload5CFile(appId,category,file){if(!file)return;if(file.size>10*1024*1024){showToast('File too large (max 10 MB).','error');return;}showToast('Uploading...','info');try{await uploadAttachment5C(appId,file,category);showToast('Uploaded!','success');open5CForm(appId);}catch(e){showToast('Upload failed: '+e.message,'error',5000);}}
 async function view5CAttachment(path){
   const url = await getAttachmentUrl5C(path);
@@ -281,10 +281,10 @@ async function open5CResponse(id){
 <br><br><br><br><br>
 <div style="display:flex;justify-content:flex-start;direction:ltr;">
   <div style="text-align:center;min-width:200px;">
-    <div style="border-top:1px solid #333;padding-top:6px;margin-top:50px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;font-weight:bold;text-align:center;">
+    <div style="border-top:1px solid #333;padding-top:6px;margin-top:50px;font-family:'Jameel Noori Nastaleeq';direction:rtl;font-weight:bold;text-align:center;">
       ${esc5C((typeof getSHOSignLine==='function') ? getSHOSignLine(o.station||'صدر ملتان') : '')}
     </div>
-    <div style="font-size:11px;color:#555;margin:0;text-align:center;direction:ltr;">${today}</div>
+    <div style="font-size:8.25pt;color:#555;margin:0;text-align:center;direction:ltr;">${today}</div>
   </div>
 </div>`;
 
@@ -295,11 +295,11 @@ async function open5CResponse(id){
   overlay.innerHTML=`
   <style>
     /* Ribbon button (light Word-like theme) */
-    .r5b{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:26px;padding:2px 6px;background:transparent;border:1px solid transparent;border-radius:3px;cursor:pointer;font-size:13px;color:#2c2c2c;white-space:nowrap;}
+    .r5b{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:26px;padding:2px 6px;background:transparent;border:1px solid transparent;border-radius:3px;cursor:pointer;font-size:9.75pt;color:#2c2c2c;white-space:nowrap;}
     .r5b:hover{background:#dde4ec;border-color:#a8b8cc;}
     .r5b:active{background:#bccadc;}
     .r5s{width:1px;height:22px;background:#c0c8d0;margin:0 4px;flex-shrink:0;}
-    .r5sel{padding:2px 5px;background:white;border:1px solid #bbb;border-radius:3px;font-size:12px;color:#222;height:26px;}
+    .r5sel{padding:2px 5px;background:white;border:1px solid #bbb;border-radius:3px;font-size:9pt;color:#222;height:26px;}
     .r5sel:hover{border-color:#666;}
     /* Fix 1: zero out margins inside A4 so Enter doesn't jump 4 lines */
     #a4-paper div, #a4-paper p, #a4-paper li{margin:0!important;padding:0!important;}
@@ -319,7 +319,7 @@ async function open5CResponse(id){
   </style>
   <!-- Title bar -->
   <div id="r5c-titlebar" style="background:#0f1923;padding:8px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #1a3148;flex-wrap:wrap;">
-    <span style="font-weight:700;color:#e8f0fe;flex:1;font-size:13px;">Response — App #${app.serial_number} · ${esc5C(app.complainant_name||'')}</span>
+    <span style="font-weight:700;color:#e8f0fe;flex:1;font-size:9.75pt;">Response — App #${app.serial_number} · ${esc5C(app.complainant_name||'')}</span>
     <button class="btn btn-primary btn-sm" onmousedown="event.preventDefault()" onclick="save5CResponse('${id}')">محفوظ کریں</button>
     <button class="btn btn-secondary btn-sm" onmousedown="event.preventDefault()" onclick="downloadResponse5C('${id}','${esc5C((app.complainant_name||'response').replace(/[^\w]/g,'_'))}')">ڈاؤن لوڈ</button>
     <button class="btn btn-secondary btn-sm" onmousedown="event.preventDefault()" onclick="print5CResponse()">پرنٹ</button>
@@ -333,7 +333,7 @@ async function open5CResponse(id){
       style="background:white;color:#111;width:210mm;min-height:297mm;max-width:100%;margin:0 auto;
              padding:20mm 18mm 20mm 15mm;
              box-shadow:0 4px 24px rgba(0,0,0,0.6);
-             font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu','Aptos','Segoe UI',serif;
+             font-family:'Jameel Noori Nastaleeq';
              font-size:14pt;
              line-height:1.5;
              word-spacing:3px;
@@ -417,7 +417,7 @@ async function save5CResponse(id){
 function downloadResponse5C(id,name){
   const html=document.getElementById('a4-paper').innerHTML;
   const lh=document.getElementById('a4-paper')?.style.lineHeight||'1.5';
-  const full=`<!DOCTYPE html><html lang="ur"><head><meta charset="utf-8"><title>5-C Response</title><link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet"><style>@page{size:A4;margin:20mm 18mm 20mm 15mm}body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',Aptos,serif;font-size:14pt;line-height:${lh};word-spacing:3px;direction:rtl;margin:0;padding:0;color:#000;}div,p,li{margin:0;padding:0;}</style></head><body>${html}</body></html>`;
+  const full=`<!DOCTYPE html><html lang="ur"><head><meta charset="utf-8"><title>5-C Response</title>${typeof dioFontHead==='function'?dioFontHead():''}<style>@page{size:A4;margin:20mm 18mm 20mm 15mm}body{font-family:'Jameel Noori Nastaleeq';font-size:14pt;line-height:${lh};word-spacing:3px;direction:rtl;margin:0;padding:0;color:#000;}div,p,li{margin:0;padding:0;}</style></head><body>${html}</body></html>`;
   const blob=new Blob([full],{type:'text/html;charset=utf-8'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`5C_${name}_${id.slice(0,8)}.html`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
   showToast('Offline copy downloaded','success');
@@ -433,14 +433,14 @@ function print5CResponse(){
 <head>
 <meta charset="utf-8">
 <title>\u0631\u0633\u0645\u06CC \u062C\u0648\u0627\u0628</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
+${typeof dioFontHead==='function'?dioFontHead():''}
 <style>
   /* @page margin:0 removes Chrome's auto timestamp + URL headers/footers */
   @page { size:A4; margin:0; }
   *   { box-sizing:border-box; }
   html{ background:white; }
   body{
-    font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',Aptos,serif;
+    font-family:'Jameel Noori Nastaleeq';
     font-size:14pt; line-height:${lh}; word-spacing:3px;
     direction:rtl; color:#000;
     margin:0;
@@ -476,16 +476,16 @@ async function _print5C(id) {
     const nums = (a.application_5c_numbers||[]);
     let _printHTML = '';
     _printHTML += (`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
+    ${typeof dioFontHead==='function'?dioFontHead():''}
     <style>
       @page{margin:15mm;size:A4;}
-      body{font-family:'Noto Nastaliq Urdu','Jameel Noori Nastaleeq',Arial,sans-serif;direction:rtl;color:#111;font-size:13px;}
+      body{font-family:'Jameel Noori Nastaleeq';direction:rtl;color:#111;font-size:9.75pt;}
       .hdr{text-align:center;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:12px;}
       table{width:100%;border-collapse:collapse;margin-bottom:10px;}
-      td,th{border:1px solid #333;padding:6px 10px;font-size:13px;}
+      td,th{border:1px solid #333;padding:6px 10px;font-size:9.75pt;}
       th{background:#f0f0f0;width:35%;}
       .resp{border:1px solid #ccc;padding:12px;min-height:80px;margin-top:8px;line-height:2;}
-      .footer{font-size:10px;color:#666;text-align:left;margin-top:20px;border-top:1px solid #ccc;padding-top:6px;direction:ltr;}
+      .footer{font-size:7.5pt;color:#666;text-align:left;margin-top:20px;border-top:1px solid #ccc;padding-top:6px;direction:ltr;}
       .sig{display:flex;justify-content:space-between;margin-top:30px;}
       .sig-box{text-align:center;min-width:180px;}
       .sig-line{border-top:1px solid #000;padding-top:5px;margin-top:25px;}
@@ -506,7 +506,7 @@ async function _print5C(id) {
         <div style="border-top:1px solid #000;padding-top:6px;margin-top:35px;font-weight:700;direction:rtl;text-align:center;">
           ${esc5C((typeof getSHOSignLine==='function') ? getSHOSignLine(o.station||'') : '')}
         </div>
-        <div style="font-size:11px;margin:0;text-align:center;direction:ltr;">${formatDate(new Date())}</div>
+        <div style="font-size:8.25pt;margin:0;text-align:center;direction:ltr;">${formatDate(new Date())}</div>
       </div>
     </div>
     <div class="footer">Digital IO</div>

@@ -433,10 +433,10 @@ window._glListFilter = _glListFilter;
 function _glListCSS() {
   return `
     .gl-note{ font-size:11pt; line-height:1.9; color:#92400e; background:#fffbeb; border:1px solid #fcd34d; border-radius:8px;
-      padding:6px 12px 8px; margin-bottom:12px; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+      padding:6px 12px 8px; margin-bottom:12px; font-family:'Jameel Noori Nastaleeq'; }
     .gl-active{ display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:12px; margin-bottom:14px;
       padding:10px 14px; border-radius:12px; border:1.5px solid var(--green,#16a34a); background:rgba(22,163,74,.07);
-      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+      font-family:'Jameel Noori Nastaleeq'; }
     .gl-active-dot{ width:12px; height:12px; border-radius:50%; background:var(--green,#16a34a); box-shadow:0 0 0 4px rgba(22,163,74,.2); }
     .gl-active-t{ font-size:14pt; font-weight:700; line-height:1.8; color:var(--green,#16a34a); }
     .gl-active-s{ font-size:12pt; line-height:1.9; color:var(--text-primary); }
@@ -451,7 +451,7 @@ function _glListCSS() {
     .gl-card-ico{ width:42px; height:42px; border-radius:50%; background:var(--accent,#0369a1); color:#fff;
       display:flex; align-items:center; justify-content:center; align-self:start; }
     .gl-card-on .gl-card-ico{ background:var(--green,#16a34a); }
-    .gl-card-body{ min-width:0; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+    .gl-card-body{ min-width:0; font-family:'Jameel Noori Nastaleeq'; }
     .gl-card-t{ font-size:14pt; font-weight:700; line-height:1.8; }
     .gl-card-sub{ font-size:11pt; font-weight:400; color:var(--text-muted); margin-right:6px; }
     .gl-badge{ display:inline-block; font-size:10pt; font-weight:700; line-height:1.6; padding:0 8px 2px; margin-right:6px; border-radius:999px;
@@ -467,7 +467,7 @@ function _glListCSS() {
     .gl-acts{ display:grid; grid-template-columns:repeat(3, auto); gap:6px; cursor:default; align-self:center; }
     .gl-act{ display:inline-flex; align-items:center; justify-content:flex-start; gap:6px; height:34px; min-width:98px; padding:0 11px 3px;
       border-radius:8px; cursor:pointer; border:1px solid var(--border); background:var(--bg-secondary,transparent); color:var(--text-primary);
-      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; font-size:11.5pt; line-height:1; white-space:nowrap;
+      font-family:'Jameel Noori Nastaleeq'; font-size:11.5pt; line-height:1; white-space:nowrap;
       transition:border-color .15s, background .15s, color .15s; }
     .gl-act svg{ width:16px; height:16px; flex:none; position:relative; top:1px; }
     .gl-act:hover, .gl-act:focus-visible{ border-color:var(--accent); color:var(--accent); outline:none; }
@@ -476,7 +476,7 @@ function _glListCSS() {
     .gl-act-del{ color:var(--red,#dc2626); }
     .gl-act-del:hover, .gl-act-del:focus-visible{ border-color:var(--red,#dc2626); color:#fff; background:var(--red,#dc2626); }
     .gl-empty{ text-align:center; padding:40px 20px; color:var(--text-muted); line-height:2.4; font-size:14pt;
-      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+      font-family:'Jameel Noori Nastaleeq'; }
     .gl-empty-ico svg{ width:46px; height:46px; opacity:.45; }
     @media screen and (max-width:900px){ .gl-act{ min-width:0; } }
     @media screen and (max-width:760px){
@@ -872,7 +872,7 @@ function _glCSS() {
     #gl-view{ position:fixed; inset:0; z-index:9500; display:flex; flex-direction:column; direction:rtl; background:var(--bg-tertiary,#e9eef3); }
     .gl-strip{ flex:none; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 14px;
       background:var(--bg-card,#fff); border-bottom:1px solid var(--border,#ddd); box-shadow:0 2px 10px rgba(0,0,0,.08);
-      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+      font-family:'Jameel Noori Nastaleeq'; }
     .gl-strip-r, .gl-strip-l{ display:flex; align-items:center; gap:8px; min-width:0; }
     .gl-strip .btn{ display:inline-flex; align-items:center; gap:5px; white-space:nowrap; }
     .gl-strip-tt{ display:flex; flex-direction:column; line-height:1.3; min-width:0; }
@@ -890,7 +890,7 @@ function _glCSS() {
     /* سرکاری مارجن: اوپر/نیچے 1cm · دائیں 0.5in · بائیں 0.4in (واقعاتی رپورٹ جیسا) */
     #gl-doc{ width:8.27in; min-height:11.69in; box-sizing:border-box; padding:1cm 0.5in 1cm 0.4in; margin:0 auto;
       background:#fff; color:#000; direction:rtl; text-align:right; position:relative;
-      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; font-size:14pt; line-height:1.75;
+      font-family:'Jameel Noori Nastaleeq'; font-size:14pt; line-height:1.75;
       box-shadow:0 1px 3px rgba(0,0,0,.12), 0 8px 28px rgba(0,0,0,.14); }
     #gl-doc *{ box-sizing:border-box; }
     #gl-doc [contenteditable="true"]{ font-size:inherit !important; }
@@ -1449,7 +1449,7 @@ function _glReportHTML(f, ents) {
   const erows = ents.length ? ents.map((e, i) => `<tr><td style="${td}text-align:center;">${i + 1}</td><td style="${td}white-space:nowrap;">${e.t ? _glTimeHtml(e.t) : ''}</td><td style="${td}">${_glE(e.kind || '')}</td><td style="${td}">${_glE(e.place || '')}</td><td style="${td}">${_glE(e.detail || '')}${(e.person || e.mobile) ? '<br><span style="font-size:11pt;">متعلقہ شخص: ' + _glE([e.person, e.mobile].filter(Boolean).join(' — ')) + '</span>' : ''}</td></tr>`).join('')
     : `<tr><td colspan="5" style="${td}text-align:center;">دورانِ گشت کوئی کارروائی درج نہیں</td></tr>`;
   const th = s => `<th style="${td}background:#f3f5f8;text-align:center;">${s}</th>`;
-  return `<div dir="rtl" lang="ur" style="font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:14pt;line-height:1.75;color:#000;">
+  return `<div dir="rtl" lang="ur" style="font-family:'Jameel Noori Nastaleeq';font-size:14pt;line-height:1.75;color:#000;">
 <table style="width:100%;border:0;font-size:14pt;"><tr><td style="text-align:right;">تھانہ ${v('thana')}</td><td style="text-align:left;">ضلع ${v('zila')}</td></tr></table>
 <p style="text-align:center;font-size:20pt;font-weight:bold;text-decoration:underline;margin:6pt 0;">${v('title')}</p>
 <table dir="rtl" style="width:100%;border-collapse:collapse;font-size:14pt;">${rows}</table>
@@ -1521,7 +1521,7 @@ function _glPrint() {
   if (!document.getElementById('gl-doc')) return;
   if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   _glFitLabels();
-  window.print();
+  dioAfterFonts(() => window.print());   // v560: فونٹ لوڈ ہو رہا ہو تو پہلے فونٹ (app-core.js)
 }
 window._glPrint = _glPrint;
 // فہرست سے، کھولے بغیر — وہی چھپائی جو کھلا گشت کرتا ہے (ایک ہی راستہ)

@@ -1,0 +1,12 @@
+Jameel Noori Nastaleeq — Version 4.00 (September 1, 2021)
+File: jameel-noori-nastaleeq.woff2
+Source: npm package jameel-noori@1.1.2 (fonts/jameel-noori-nastaleeq4.woff2), unmodified.
+SHA-256: 25baf71098bd6f026261aea17fa799a928798126565060927c90dde390287024
+
+Notices embedded in the font file itself:
+  Copyright (c) 2016 by Jameel Nastaleeq Team. All rights reserved.
+  "This Font Is Free Of Charge For Urdu Lovers"
+  OS/2 embedding permission (fsType = 8): editable embedding allowed.
+
+Self-hosted (v560) so the Urdu font is the same on every device, offline,
+in print and in PDF, with no fallback font.

@@ -267,7 +267,7 @@
   var CSS = [
     '#dio-cctx{position:fixed;z-index:100001;min-width:250px;max-width:min(420px,94vw);max-height:72vh;overflow:auto;direction:rtl;',
     '  background:var(--bg-card,#fff);color:var(--text-primary,#0f1923);border:1px solid var(--border,#c8d8e8);border-radius:12px;',
-    '  box-shadow:0 18px 44px rgba(9,20,40,.28);font-family:"Jameel Noori Nastaleeq","Noto Nastaliq Urdu",serif;padding:6px;}',
+    '  box-shadow:0 18px 44px rgba(9,20,40,.28);font-family:"Jameel Noori Nastaleeq";padding:6px;}',
     '#dio-cctx .cc-h{display:flex;align-items:center;gap:8px;padding:6px 8px 8px;border-bottom:1px solid var(--border,#e2e8f0);margin-bottom:4px;}',
     '#dio-cctx .cc-h b{flex:1;font-size:12.5pt;color:var(--accent,#0b3d64);}',
     '#dio-cctx .cc-h button{border:1px solid var(--border,#c8d8e8);background:var(--bg-secondary,#f4f6f9);color:inherit;border-radius:8px;padding:2px 10px;cursor:pointer;font:inherit;font-size:11pt;}',
@@ -284,7 +284,7 @@
     '#dio-cctx .cc-empty{padding:10px;color:var(--text-muted,#64748b);font-size:11pt;}',
     '@media (max-width:760px){#dio-cctx{left:8px !important;right:8px !important;top:auto !important;bottom:8px !important;max-width:none;max-height:62vh;}}',
     '#dio-cctx-btn{position:fixed;z-index:9990;inset-inline-start:14px;bottom:calc(84px + env(safe-area-inset-bottom,0px));',
-    '  border:0;border-radius:22px;padding:8px 14px;background:var(--dio-file,#13294b);color:#fff;font-family:"Jameel Noori Nastaleeq","Noto Nastaliq Urdu",serif;',
+    '  border:0;border-radius:22px;padding:8px 14px;background:var(--dio-file,#13294b);color:#fff;font-family:"Jameel Noori Nastaleeq";',
     '  font-size:12pt;box-shadow:0 6px 18px rgba(0,0,0,.25);display:none;}',
     '@media (pointer:coarse){body.workspace-mode #dio-cctx-btn{display:block;}}',
     '@media print{#dio-cctx,#dio-cctx-btn{display:none !important;}}',

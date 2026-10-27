@@ -107,12 +107,12 @@
 }
 #login-screen strong.dio-land-sub {
   display: block; margin-top: 10px; text-align: center;
-  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-family: 'Jameel Noori Nastaleeq';
   font-size: 17pt; font-weight: 700; color: var(--dio-brass); line-height: 1.9;
 }
 #login-screen p.dio-land-lead {
   margin: 0; text-align: center;
-  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-family: 'Jameel Noori Nastaleeq';
   font-size: 13pt; line-height: 2.1; color: #c9d5e6;
   max-width: 34em; margin-inline: auto;
 }
@@ -131,11 +131,11 @@
   fill: none; stroke: var(--dio-brass); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
 }
 #login-screen ul.dio-land-feats b {
-  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-family: 'Jameel Noori Nastaleeq';
   font-size: 12pt; color: #ffffff; line-height: 1.8;
 }
 #login-screen ul.dio-land-feats small {
-  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-family: 'Jameel Noori Nastaleeq';
   font-size: 10.5pt; color: #a9b8cd; line-height: 1.8;
 }
 
@@ -150,11 +150,11 @@
 }
 #login-screen .dio-lc-head { text-align: right; margin-bottom: 18px; }
 #login-screen b.dio-lc-title {
-  display: block; font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  display: block; font-family: 'Jameel Noori Nastaleeq';
   font-size: 20pt; font-weight: 700; color: var(--dio-ink); line-height: 1.6;
 }
 #login-screen small.dio-lc-sub {
-  display: block; font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  display: block; font-family: 'Jameel Noori Nastaleeq';
   font-size: 11.5pt; color: var(--dio-ink-3);
 }
 #login-screen .dio-lc-hint {
@@ -165,7 +165,7 @@
 #login-screen .login-methods { margin-bottom: 18px !important; }
 #login-screen label.dio-lc-label {
   display: block; margin: 0 0 6px; text-align: right;
-  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-family: 'Jameel Noori Nastaleeq';
   font-size: 12pt !important; font-weight: 700; color: var(--dio-ink-2);
 }
 #login-screen .input-group { margin-bottom: 14px; position: relative; }
@@ -181,19 +181,19 @@
 #login-screen .dio-lc-row { display: flex; justify-content: flex-start; margin: -4px 0 14px; }
 #login-screen a.dio-lc-link {
   color: var(--dio-brand) !important; font-weight: 700; text-decoration: none; cursor: pointer;
-  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif; font-size: 12pt !important;
+  font-family: 'Jameel Noori Nastaleeq'; font-size: 12pt !important;
 }
 #login-screen a.dio-lc-link:hover, #login-screen a.dio-lc-link:focus-visible { text-decoration: underline; }
 #login-screen .login-btn {
   background: var(--dio-file) !important; color: #fff !important;
   border-radius: 10px !important; min-height: 50px;
-  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif !important;
+  font-family: 'Jameel Noori Nastaleeq' !important;
   font-size: 14pt !important; font-weight: 700 !important;
 }
 #login-screen .login-btn:hover { background: var(--dio-file-2) !important; box-shadow: 0 6px 18px rgba(19,41,75,.32) !important; }
 #login-screen .dio-lc-alt {
   margin-top: 14px; text-align: center; color: var(--dio-ink-3);
-  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif; font-size: 11.5pt;
+  font-family: 'Jameel Noori Nastaleeq'; font-size: 11.5pt;
 }
 #login-screen .login-method.active { background: var(--dio-file) !important; border-color: var(--dio-file) !important; }
 #login-screen .login-links { justify-content: center !important; gap: 16px; }
@@ -240,7 +240,7 @@ html:not([data-theme="light"]) #login-screen .dio-lc-hint { color: #f5b942; }
   padding: 14px 48px 14px 16px;
   background: var(--dio-surface); color: var(--dio-ink);
   border: 1.5px solid var(--dio-line); border-radius: 12px;
-  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-family: 'Jameel Noori Nastaleeq';
   font-size: 13pt; outline: none; box-shadow: var(--dio-shadow);
   -webkit-appearance: none; appearance: none;
 }
@@ -283,7 +283,7 @@ html:not([data-theme="light"]) #login-screen .dio-lc-hint { color: #f5b942; }
 }
 .page-content .dio-tile-big .dio-tile-ic { width: 28px; height: 28px; }
 .page-content b.dio-tile-lbl {
-  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-family: 'Jameel Noori Nastaleeq';
   font-size: 12pt; font-weight: 700; line-height: 1.7; color: var(--dio-ink);
 }
 .page-content .dio-tile-big b.dio-tile-lbl { font-size: 13pt; }
@@ -320,10 +320,10 @@ html:not([data-theme="light"]) #login-screen .dio-lc-hint { color: #f5b942; }
 .page-content b.cs-fb-lbl { font-size: 12.5pt; color: var(--dio-ink); }
 
 #forgot-modal .fp-card { max-width: 440px; width: calc(100% - 24px); }
-#forgot-modal .modal-title { font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif; font-size: 15pt; }
+#forgot-modal .modal-title { font-family: 'Jameel Noori Nastaleeq'; font-size: 15pt; }
 #forgot-modal .modal-desc { font-size: 11.5pt; line-height: 2; text-align: right; }
 #forgot-modal .login-input { width: 100%; box-sizing: border-box; font-size: 12.5pt; }
-#forgot-modal .login-btn { font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif; font-size: 13pt; }
+#forgot-modal .login-btn { font-family: 'Jameel Noori Nastaleeq'; font-size: 13pt; }
 #forgot-modal .login-btn[disabled] { opacity: .65; cursor: wait; }
 #forgot-modal .fp-email { font-weight: 700; text-align: center !important; margin: 4px 0 10px; font-size: 12pt; word-break: break-all; }
 #forgot-modal .fp-msg {
@@ -364,7 +364,7 @@ html:not([data-theme="light"]) #login-screen .dio-lc-hint { color: #f5b942; }
   }
   /* ٹیگ لائن — Digital IO کے ساتھ، پیتل رنگ (v526) */
   #main-app .dio-tb-tag {
-    font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+    font-family: 'Jameel Noori Nastaleeq';
     font-size: 11.5pt; font-weight: 700; color: #e9cf73;
     white-space: nowrap; line-height: 1.6;
     padding-inline-start: 9px; border-inline-start: 1px solid rgba(255, 255, 255, .25);
@@ -457,7 +457,7 @@ html:not([data-theme="light"]) #login-screen .dio-lc-hint { color: #f5b942; }
 /* خانے کے اندر لکھا لفظ (ای میل / پاس ورڈ) — خالی ہو تو دائیں سے، لکھتے ہی غائب */
 #login-screen input.dio-ph-rtl:placeholder-shown {
   direction: rtl !important; text-align: right !important;
-  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-family: 'Jameel Noori Nastaleeq';
 }
 #login-screen input.dio-ph-rtl::placeholder { color: var(--dio-ink-3); opacity: 1; }
 
@@ -473,7 +473,7 @@ html:not([data-theme="light"]) #login-screen .dio-lc-hint { color: #f5b942; }
   min-height: 50px; border-radius: 10px; cursor: pointer;
   background: transparent; color: var(--dio-file);
   border: 1.5px solid var(--dio-file);
-  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-family: 'Jameel Noori Nastaleeq';
   font-size: 13pt; font-weight: 700;
 }
 #login-screen button.dio-signup-btn:hover { background: rgba(19, 41, 75, .06); }
@@ -494,7 +494,7 @@ html:not([data-theme="light"]) #login-screen button.dio-signup-btn { color: var(
 #login-screen .dio-legal-band .dio-legal,
 #login-screen .dio-legal-band .dio-legal * {
   color: #c9d5e6 !important; font-size: 10.5pt !important; line-height: 2 !important;
-  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-family: 'Jameel Noori Nastaleeq';
 }
 #login-screen .dio-legal-band .dio-legal span[style*="font-weight:800"] { color: #e9cf73 !important; font-family: Georgia, serif !important; }
 #login-screen .dio-legal-band .login-security-badge,
@@ -676,7 +676,7 @@ body:has(#login-screen:not([style*="display: none"]):not([style*="display:none"]
 #login-screen .dio-zikr.is-fading { opacity: 0; }
 #login-screen .dio-zikr-kind {
   display: inline-block; padding: 0 10px; border-radius: 999px; flex-shrink: 0;
-  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-family: 'Jameel Noori Nastaleeq';
   font-size: 9.5pt; line-height: 2; color: #13294b; background: var(--dio-brass);
 }
 #login-screen p.dio-zikr-ar {
@@ -691,12 +691,12 @@ body:has(#login-screen:not([style*="display: none"]):not([style*="display:none"]
 }
 #login-screen p.dio-zikr-ur {
   margin: 0; direction: rtl; text-align: center !important;
-  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-family: 'Jameel Noori Nastaleeq';
   font-size: calc(12.5pt * var(--zk)); line-height: 2; color: #dbe4f0;
 }
 #login-screen .dio-zikr-ref {
   flex-shrink: 0;
-  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-family: 'Jameel Noori Nastaleeq';
   font-size: 9.5pt; line-height: 1.7; color: #a9b8cd;
 }
 #login-screen .dio-zikr-ref::before { content: "— "; }

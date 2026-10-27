@@ -88,12 +88,12 @@ function _accInjectCSS() {
   .acc-form *{box-sizing:border-box;}
   .acc-form .acc-label{
     font-size:14pt;font-weight:700;text-align:right;white-space:nowrap;
-    font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
+    font-family:'Jameel Noori Nastaleeq';
     margin:0;color:var(--text,#111);line-height:1.4;flex:0 0 auto;
   }
   .acc-form .acc-section{
     display:block;font-size:14pt;font-weight:800;text-align:right;
-    font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
+    font-family:'Jameel Noori Nastaleeq';
     margin:10px 0 5px;color:var(--text,#111);
     border-bottom:1px dashed var(--border);padding-bottom:2px;
   }
@@ -174,18 +174,18 @@ function _renderAccusedArea() {
 
 function _renderAccCards(list) {
   if (!list.length) {
-    return `<div style="text-align:center;padding:24px 12px;color:var(--text-muted);font-size:12px;">
-      <div style="font-size:30px;margin-bottom:6px;"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg></div>
+    return `<div style="text-align:center;padding:24px 12px;color:var(--text-muted);font-size:9pt;">
+      <div style="font-size:22.5pt;margin-bottom:6px;"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg></div>
       کوئی ملزم نہیں
     </div>`;
   }
   return list.map(a => `
     <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:8px;">
       <div onclick="_accViewDetail('${a.id}')" style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;cursor:pointer;">
-        ${a.photo_url ? `<img src="${esc(a.photo_url)}" style="width:38px;height:38px;border-radius:6px;object-fit:cover;flex-shrink:0;">` : '<span style="font-size:22px;flex-shrink:0;"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg></span>'}
+        ${a.photo_url ? `<img src="${esc(a.photo_url)}" style="width:38px;height:38px;border-radius:6px;object-fit:cover;flex-shrink:0;">` : '<span style="font-size:16.5pt;flex-shrink:0;"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg></span>'}
         <div style="flex:1;min-width:0;">
-          <div style="font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_escA(a.name)}</div>
-          <div style="font-size:12px;color:var(--text-muted);display:flex;gap:8px;flex-wrap:wrap;">
+          <div style="font-weight:700;font-size:11.25pt;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_escA(a.name)}</div>
+          <div style="font-size:9pt;color:var(--text-muted);display:flex;gap:8px;flex-wrap:wrap;">
             ${a.cnic?`<span dir="ltr">${_escA(a.cnic)}</span>`:''}
             ${a.pesha?`<span>${_escA(a.pesha)}</span>`:''}
             ${a.taleem?`<span>${_escA(a.taleem)}</span>`:''}
@@ -424,7 +424,7 @@ function _accViewDetail(id) {
       a.prev_records.map(r => '<div style="padding:4px 0;border-bottom:1px dashed var(--border);font-size:12pt;">' + _escA(DIOPrev.toText(r)) + '</div>').join('') + '</div>'
     : '';
 
-  const body = `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
+  const body = `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq';">
     ${row('نام و پتہ', a.name)}
     ${row('شناختی کارڈ', a.cnic)}
     ${row('موبائل', a.mobile)}
@@ -486,7 +486,7 @@ function _accOpenViewer(url, name, title) {
   ov.innerHTML = `
     <div style="background:var(--bg,#fff);border-radius:10px;padding:12px;max-width:96vw;max-height:92vh;overflow:auto;direction:rtl;">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">
-        <strong style="font-family:'Jameel Noori Nastaleeq',serif;font-size:16px;">${title}</strong>
+        <strong style="font-family:'Jameel Noori Nastaleeq';font-size:12pt;">${title}</strong>
         <div style="display:flex;gap:6px;">
           <button class="btn btn-secondary btn-sm" onclick="_accDownloadDoc()">ڈاؤن لوڈ</button>
           <button class="btn btn-primary btn-sm" onclick="_accPrintDoc()">پرنٹ</button>

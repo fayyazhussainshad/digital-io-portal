@@ -44,7 +44,7 @@ async function renderTemplates(container) {
       </div>
       <div style="flex:1;min-width:180px;display:flex;gap:8px;margin-inline-start:auto;">
         <input id="tpl-main-search" type="text" dir="rtl" placeholder="فارم یا ٹمپلیٹ کا نام تلاش کریں…"
-          oninput="_tplFilter(this.value)" style="flex:1;min-width:180px;padding:10px 16px;border:1px solid var(--border);border-radius:24px;font-size:15px;outline:none;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;">
+          oninput="_tplFilter(this.value)" style="flex:1;min-width:180px;padding:10px 16px;border:1px solid var(--border);border-radius:24px;font-size:11.25pt;outline:none;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq';">
       </div>
     </div>
 
@@ -136,9 +136,9 @@ function _renderTplTable() {
   if (!list.length) {
     wrap.innerHTML = `
       <div style="text-align:center;padding:50px 20px;color:var(--text-muted);">
-        <div style="font-size:56px;margin-bottom:14px;"><svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
-        <div style="font-size:17px;font-weight:800;margin-bottom:6px;">کوئی ٹمپلیٹ موجود نہیں</div>
-        <div style="font-size:13px;margin-bottom:20px;">«+ ٹمپلیٹ درج کریں» کا بٹن دبائیں</div>
+        <div style="font-size:42pt;margin-bottom:14px;"><svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
+        <div style="font-size:12.75pt;font-weight:800;margin-bottom:6px;">کوئی ٹمپلیٹ موجود نہیں</div>
+        <div style="font-size:9.75pt;margin-bottom:20px;">«+ ٹمپلیٹ درج کریں» کا بٹن دبائیں</div>
         <button onclick="_openAddTpl()" class="btn btn-primary">+ ٹمپلیٹ درج کریں</button>
       </div>`;
     return;
@@ -152,11 +152,11 @@ function _renderTplTable() {
     const hasContent = !!t.content;
     return `
     <tr style="border-bottom:1px solid var(--border);">
-      <td style="padding:10px 8px;text-align:center;color:var(--text-muted);font-size:13px;">${i+1}</td>
+      <td style="padding:10px 8px;text-align:center;color:var(--text-muted);font-size:9.75pt;">${i+1}</td>
       <td style="padding:10px 8px;text-align:right;font-weight:700;word-break:break-word;">${title}
-        ${t.is_default?'<span style="font-size:10px;color:var(--text-faint);font-weight:400;"> · پہلے سے موجود</span>':''}</td>
+        ${t.is_default?'<span style="font-size:7.5pt;color:var(--text-faint);font-weight:400;"> · پہلے سے موجود</span>':''}</td>
       <td style="padding:10px 8px;text-align:right;">
-        <span style="background:${color}22;color:${color};padding:3px 10px;border-radius:12px;font-size:12px;white-space:nowrap;">${cat}</span>
+        <span style="background:${color}22;color:${color};padding:3px 10px;border-radius:12px;font-size:9pt;white-space:nowrap;">${cat}</span>
       </td>
       <td style="padding:10px 8px;text-align:center;">
         <div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap;">
@@ -175,16 +175,16 @@ function _renderTplTable() {
     <table style="width:100%;border-collapse:collapse;direction:rtl;background:var(--bg-card);border-radius:10px;overflow:hidden;">
       <thead>
         <tr style="background:var(--bg-secondary);border-bottom:2px solid var(--border);">
-          <th style="padding:11px 8px;text-align:center;width:5%;font-size:13px;">#</th>
-          <th style="padding:11px 8px;text-align:right;width:42%;font-size:13px;">ٹمپلیٹ کا نام</th>
-          <th style="padding:11px 8px;text-align:right;width:18%;font-size:13px;">قسم</th>
-          <th style="padding:11px 8px;text-align:center;width:35%;font-size:13px;">اقدامات</th>
+          <th style="padding:11px 8px;text-align:center;width:5%;font-size:9.75pt;">#</th>
+          <th style="padding:11px 8px;text-align:right;width:42%;font-size:9.75pt;">ٹمپلیٹ کا نام</th>
+          <th style="padding:11px 8px;text-align:right;width:18%;font-size:9.75pt;">قسم</th>
+          <th style="padding:11px 8px;text-align:center;width:35%;font-size:9.75pt;">اقدامات</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>`;
 }
-function _tplBtn(bg){ return `padding:5px 9px;background:${bg};color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;`; }
+function _tplBtn(bg){ return `padding:5px 9px;background:${bg};color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:9.75pt;`; }
 
 /* ── TALAASH ──────────────────────────────────────────────────
    PURANA TAREEQA KHATARNAK THA:
@@ -214,8 +214,8 @@ function _openAddTpl() {
       <input class="form-input" id="tpl-f-title" dir="rtl" placeholder="مثلاً: DSP صاحب کو درخواست" style="margin-bottom:14px;">
       <label class="form-label">ٹمپلیٹ اپلوڈ کریں (PDF / Word)</label>
       <input class="form-input" id="tpl-f-file" type="file" accept=".pdf,.doc,.docx" style="margin-bottom:6px;">
-      <div id="tpl-f-fileinfo" style="font-size:12px;color:var(--text-muted);"></div>
-      <div id="tpl-f-progress" style="font-size:12px;color:var(--accent);margin-top:8px;"></div>
+      <div id="tpl-f-fileinfo" style="font-size:9pt;color:var(--text-muted);"></div>
+      <div id="tpl-f-progress" style="font-size:9pt;color:var(--accent);margin-top:8px;"></div>
     </div>`,
     `<div style="display:flex;gap:8px;direction:rtl;">
       <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
@@ -333,8 +333,8 @@ async function _tplRenderPdf(url, body, autoPrint) {
   } catch(e) {
     body.innerHTML = `
       <div style="text-align:center;padding:50px 20px;direction:rtl;">
-        <div style="font-size:44px;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
-        <div style="font-size:15px;color:#444;margin-bottom:20px;">فائل ان لائن کھولیں:</div>
+        <div style="font-size:33pt;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
+        <div style="font-size:11.25pt;color:#444;margin-bottom:20px;">فائل ان لائن کھولیں:</div>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
           <a href="${url}" target="_blank" style="padding:11px 20px;background:var(--accent);color:#fff;border-radius:8px;text-decoration:none;">براؤزر میں کھولیں</a>
           <a href="https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true" target="_blank" style="padding:11px 20px;background:#ea4335;color:#fff;border-radius:8px;text-decoration:none;">Google Docs</a>
@@ -371,7 +371,7 @@ async function _tplRenderWord(url, body, autoPrint) {
     });
     body.innerHTML = `
       <style>
-        #word-doc-editable{width:210mm;min-height:297mm;margin:16px auto;padding:15mm;background:#fff;box-shadow:0 0 30px rgba(0,0,0,0.2);box-sizing:border-box;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu','Traditional Arabic',serif;font-size:16pt;line-height:1.8;color:#000;direction:rtl;text-align:right;outline:none;cursor:text;}
+        #word-doc-editable{width:210mm;min-height:297mm;margin:16px auto;padding:15mm;background:#fff;box-shadow:0 0 30px rgba(0,0,0,0.2);box-sizing:border-box;font-family:'Jameel Noori Nastaleeq';font-size:16pt;line-height:1.8;color:#000;direction:rtl;text-align:right;outline:none;cursor:text;}
         #word-doc-editable p{margin:0 0 8pt 0;direction:rtl;text-align:right;unicode-bidi:plaintext;min-height:1em;font-size:16pt;}
         #word-doc-editable h1{font-size:22pt;font-weight:bold;margin:12pt 0 6pt;direction:rtl;text-align:right;}
         #word-doc-editable h2{font-size:19pt;font-weight:bold;margin:10pt 0 4pt;direction:rtl;text-align:right;}
@@ -387,7 +387,7 @@ async function _tplRenderWord(url, body, autoPrint) {
         #word-doc-editable hr{border:none;border-top:1pt solid #000;margin:8pt 0;}
         #word-doc-editable:focus{box-shadow:0 0 30px rgba(0,0,0,0.2),0 0 0 2px rgba(26,115,232,0.3);}
         @media (max-width:768px){#word-doc-editable{width:100% !important;min-height:auto;padding:10px;margin:0;box-shadow:none;font-size:14pt;}}
-        .tpl-fmt-btn{padding:4px 10px;border:1px solid #dee2e6;border-radius:4px;background:#fff;cursor:pointer;font-size:14px;}
+        .tpl-fmt-btn{padding:4px 10px;border:1px solid #dee2e6;border-radius:4px;background:#fff;cursor:pointer;font-size:10.5pt;}
         .tpl-fmt-btn:hover{background:var(--bg-secondary);}
       </style>
       <div id="word-doc-editable" contenteditable="true" spellcheck="false" dir="rtl">${result.value ? (window.DIO&&DIO.html&&DIO.html.safe?DIO.html.safe(result.value):esc(result.value)) : 'مواد دستیاب نہیں'}</div>`;
@@ -395,7 +395,7 @@ async function _tplRenderWord(url, body, autoPrint) {
     if (autoPrint) setTimeout(_tplPrintDoc, 500);
   } catch(e) {
     body.innerHTML = `<div style="text-align:center;padding:40px;color:#6c757d;">
-      <div style="font-size:40px;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
+      <div style="font-size:30pt;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
       <div style="margin-bottom:16px;">فائل اس براؤزر میں نہیں کھل سکی</div>
       <button onclick="window.open('${url}','_blank')" style="background:var(--accent);color:#fff;border:1px solid var(--accent);border-radius:8px;padding:10px 20px;cursor:pointer;">نئے ٹیب میں کھولیں</button>
     </div>`;
@@ -410,7 +410,7 @@ function _tplBuildFormatToolbar() {
   const sep = '<div style="width:1px;height:22px;background:#dee2e6;margin:0 3px;"></div>';
   host.innerHTML = `
     <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:6px 12px;background:#fff;border-bottom:1px solid #dee2e6;direction:ltr;">
-      <select onchange="_tplFontSize(this.value)" title="سائز" style="padding:4px 6px;border:1px solid #dee2e6;border-radius:4px;font-size:13px;cursor:pointer;">
+      <select onchange="_tplFontSize(this.value)" title="سائز" style="padding:4px 6px;border:1px solid #dee2e6;border-radius:4px;font-size:9.75pt;cursor:pointer;">
         ${sizes.map(s=>`<option value="${s}" ${s===16?'selected':''}>${s}</option>`).join('')}
       </select>
       ${sep}
@@ -420,17 +420,17 @@ function _tplBuildFormatToolbar() {
       ${sep}
       <input type="color" value="#000000" onchange="_tplColor(this.value)" title="رنگ" style="width:30px;height:30px;border:1px solid #dee2e6;border-radius:4px;cursor:pointer;padding:2px;">
       ${sep}
-      <span style="font-size:12px;color:#6c757d;">جدول:</span>
-      <button class="tpl-fmt-btn" style="font-size:12px;" onclick="_tplBorder(1)" title="بارڈر موٹا">▦+</button>
-      <button class="tpl-fmt-btn" style="font-size:12px;" onclick="_tplBorder(-1)" title="بارڈر پتلا">▦−</button>
-      <button class="tpl-fmt-btn" style="font-size:12px;" onclick="_tplRowAdd()" title="قطار شامل">+قطار</button>
-      <button class="tpl-fmt-btn" style="font-size:12px;" onclick="_tplColAdd()" title="کالم شامل">+کالم</button>
-      <button class="tpl-fmt-btn" style="font-size:12px;color:#dc3545;" onclick="_tplRowDel()" title="قطار حذف">−قطار</button>
-      <button class="tpl-fmt-btn" style="font-size:12px;color:#dc3545;" onclick="_tplColDel()" title="کالم حذف">−کالم</button>
+      <span style="font-size:9pt;color:#6c757d;">جدول:</span>
+      <button class="tpl-fmt-btn" style="font-size:9pt;" onclick="_tplBorder(1)" title="بارڈر موٹا">▦+</button>
+      <button class="tpl-fmt-btn" style="font-size:9pt;" onclick="_tplBorder(-1)" title="بارڈر پتلا">▦−</button>
+      <button class="tpl-fmt-btn" style="font-size:9pt;" onclick="_tplRowAdd()" title="قطار شامل">+قطار</button>
+      <button class="tpl-fmt-btn" style="font-size:9pt;" onclick="_tplColAdd()" title="کالم شامل">+کالم</button>
+      <button class="tpl-fmt-btn" style="font-size:9pt;color:#dc3545;" onclick="_tplRowDel()" title="قطار حذف">−قطار</button>
+      <button class="tpl-fmt-btn" style="font-size:9pt;color:#dc3545;" onclick="_tplColDel()" title="کالم حذف">−کالم</button>
       ${sep}
-      <button aria-label="محفوظ" class="tpl-fmt-btn" style="font-size:12px;" onclick="_tplSaveDoc(_tplDocId)" title="محفوظ"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4.5 4h11.5L19.5 7.5V20h-15z"/><path d="M8 4v6h7.5V4"/><path d="M8 20v-5.5h8V20"/></svg></button>
-      <button aria-label="پرنٹ" class="tpl-fmt-btn" style="font-size:12px;" onclick="_tplPrintDoc()" title="پرنٹ"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M7 9.5V3.5h10v6"/><path d="M4.5 9.5h15v7h-15z"/><path d="M7 13.5h10V21H7z"/></svg></button>
-      <button aria-label="شیئر" class="tpl-fmt-btn" style="font-size:12px;" onclick="dioSharePrint(()=>_tplPrintDoc(),'سانچہ')" title="شیئر — PDF / Word"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></svg></button>
+      <button aria-label="محفوظ" class="tpl-fmt-btn" style="font-size:9pt;" onclick="_tplSaveDoc(_tplDocId)" title="محفوظ"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4.5 4h11.5L19.5 7.5V20h-15z"/><path d="M8 4v6h7.5V4"/><path d="M8 20v-5.5h8V20"/></svg></button>
+      <button aria-label="پرنٹ" class="tpl-fmt-btn" style="font-size:9pt;" onclick="_tplPrintDoc()" title="پرنٹ"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M7 9.5V3.5h10v6"/><path d="M4.5 9.5h15v7h-15z"/><path d="M7 13.5h10V21H7z"/></svg></button>
+      <button aria-label="شیئر" class="tpl-fmt-btn" style="font-size:9pt;" onclick="dioSharePrint(()=>_tplPrintDoc(),'سانچہ')" title="شیئر — PDF / Word"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></svg></button>
     </div>`;
 }
 
@@ -482,7 +482,7 @@ function _tplPrintDoc() {
   const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
     ${typeof dioFontHead==='function'?dioFontHead():''}
     <style>@page{size:A4;margin:25.4mm;}*{box-sizing:border-box;}
-    body{margin:0;font-family:'Jameel Noori Nastaleeq','Traditional Arabic',serif;font-size:12pt;line-height:1.6;direction:rtl;text-align:right;color:#000;}
+    body{margin:0;font-family:'Jameel Noori Nastaleeq';font-size:12pt;line-height:1.6;direction:rtl;text-align:right;color:#000;}
     table{width:100%;border-collapse:collapse;direction:rtl;}td,th{border:1pt solid #000;padding:4pt 6pt;text-align:right;direction:rtl;}
     p{margin:0 0 8pt 0;direction:rtl;text-align:right;}h1{font-size:16pt;}h2{font-size:14pt;}h3{font-size:13pt;}img{max-width:100%;}b,strong{font-weight:bold;}u{text-decoration:underline;}i,em{font-style:italic;}</style>
     </head><body>${doc.innerHTML}</body></html>`;
@@ -528,7 +528,7 @@ function _editTpl(id, autoPrint) {
         <button onclick="_renameTpl('${t.id}')" style="${_tplTbBtn()}">نام</button>
       </div>
       ${!isPdf?`<div id="tpl-format-toolbar" style="flex-shrink:0;"></div>
-      <div style="background:#fff3cd;padding:6px 16px;font-size:12px;direction:rtl;text-align:right;border-bottom:1px solid #ffc107;color:#664d03;flex-shrink:0;">متن سلیکٹ کر کے فارمیٹ کریں — یا کہیں بھی لکھیں</div>`:''}
+      <div style="background:#fff3cd;padding:6px 16px;font-size:9pt;direction:rtl;text-align:right;border-bottom:1px solid #ffc107;color:#664d03;flex-shrink:0;">متن سلیکٹ کر کے فارمیٹ کریں — یا کہیں بھی لکھیں</div>`:''}
       <div id="tpl-viewer-body" style="flex:1;overflow:auto;background:#f5f5f5;">
         <div style="text-align:center;padding:40px;color:#6c757d;">کھل رہی ہے...</div>
       </div>`;
@@ -551,18 +551,18 @@ function _editTpl(id, autoPrint) {
         <button onclick="_copyTplEditor()" style="${_tplTbBtn()}">کاپی</button>
         <button onclick="_saveTplEditor('${t.id}')" style="${_tplTbBtn()}">محفوظ</button>
       </div>
-      <div style="font-size:15px;font-weight:800;">${_tplEsc(t.title)}</div>
+      <div style="font-size:11.25pt;font-weight:800;">${_tplEsc(t.title)}</div>
       <button onclick="document.getElementById('tpl-editor-overlay').remove()" style="${_tplTbBtn()}">بند</button>
     </div>
 
     <!-- Editable template name -->
     <div style="padding:10px 16px;background:var(--bg-secondary);border-bottom:1px solid var(--border);direction:rtl;">
-      <label style="font-size:12px;color:var(--text-muted);">ٹمپلیٹ کا نام:</label>
-      <input id="tpl-edit-title" dir="rtl" value="${_tplEsc(t.title||'')}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:15px;font-weight:700;direction:rtl;text-align:right;font-family:'Jameel Noori Nastaleeq',serif;background:var(--bg-card);color:var(--text-primary);margin-top:3px;">
+      <label style="font-size:9pt;color:var(--text-muted);">ٹمپلیٹ کا نام:</label>
+      <input id="tpl-edit-title" dir="rtl" value="${_tplEsc(t.title||'')}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:11.25pt;font-weight:700;direction:rtl;text-align:right;font-family:'Jameel Noori Nastaleeq';background:var(--bg-card);color:var(--text-primary);margin-top:3px;">
     </div>
 
     <!-- Quick fill bar -->
-    <div style="padding:8px 16px;background:#fff3cd;border-bottom:1px solid #ffc107;font-size:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;direction:rtl;">
+    <div style="padding:8px 16px;background:#fff3cd;border-bottom:1px solid #ffc107;font-size:9pt;display:flex;gap:10px;align-items:center;flex-wrap:wrap;direction:rtl;">
       <strong style="color:#664d03;">فوری بھریں:</strong>
       <input placeholder="[نام ملزم]" dir="rtl" oninput="_tplFill('[نام ملزم]',this.value)" style="${_tplFillInp()}">
       <input placeholder="[تاریخ]" dir="ltr" oninput="_tplFill('[تاریخ]',this.value)" style="${_tplFillInp()}width:110px;">
@@ -572,7 +572,7 @@ function _editTpl(id, autoPrint) {
     </div>
 
     <div id="tpl-editable-area" contenteditable="true" dir="rtl"
-      style="flex:1;overflow-y:auto;padding:36px 48px;font-size:16px;line-height:2.2;outline:none;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;text-align:right;max-width:820px;margin:0 auto;width:100%;box-sizing:border-box;color:#111;">${_tplContentHtml(t.content||'')}</div>`;
+      style="flex:1;overflow-y:auto;padding:36px 48px;font-size:12pt;line-height:2.2;outline:none;font-family:'Jameel Noori Nastaleeq';text-align:right;max-width:820px;margin:0 auto;width:100%;box-sizing:border-box;color:#111;">${_tplContentHtml(t.content||'')}</div>`;
   document.body.appendChild(ov);
   _tplHighlightPlaceholders();
   if (autoPrint) setTimeout(_printTplEditor, 400);
@@ -611,7 +611,7 @@ function _printTplEditor() {
   if (!area) return;
   const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
     ${typeof dioFontHead==='function'?dioFontHead():''}
-    <style>@page{size:A4;margin:15mm}body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;text-align:right;font-size:14pt;line-height:2.2;color:#000;}
+    <style>@page{size:A4;margin:15mm}body{font-family:'Jameel Noori Nastaleeq';direction:rtl;text-align:right;font-size:14pt;line-height:2.2;color:#000;}
     mark{background:none!important;border:none!important;}</style></head><body>${area.innerHTML}
     <div style="position:fixed;bottom:4mm;left:4mm;font-size:8pt;color:#999;font-style:italic;">Generated by Digital IO</div></body></html>`;
   if (typeof dioPrint === 'function') dioPrint(html);
@@ -730,8 +730,8 @@ function _deleteTpl(id) {
 }
 
 // ── helpers ──────────────────────────────────────────────────
-function _tplTbBtn(){ return 'padding:6px 14px;background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:6px;cursor:pointer;font-size:13px;'; }
-function _tplFillInp(){ return 'padding:4px 8px;border:1px solid #dee2e6;border-radius:4px;width:140px;font-size:13px;font-family:\'Jameel Noori Nastaleeq\',serif;'; }
+function _tplTbBtn(){ return 'padding:6px 14px;background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:6px;cursor:pointer;font-size:9.75pt;'; }
+function _tplFillInp(){ return 'padding:4px 8px;border:1px solid #dee2e6;border-radius:4px;width:140px;font-size:9.75pt;font-family:\'Jameel Noori Nastaleeq\';'; }
 function _tplEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // expose

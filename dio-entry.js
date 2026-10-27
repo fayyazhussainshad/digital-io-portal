@@ -23,12 +23,12 @@
     '@media (max-width:760px){.dio-hub{grid-template-columns:repeat(2,1fr);}}',
     '.dio-hub button{border:1.5px solid var(--border,#c8d8e8);border-radius:12px;background:var(--bg-secondary,rgba(0,0,0,.02));',
     '  padding:10px 8px 12px;display:grid;justify-items:center;gap:2px;cursor:pointer;color:var(--text-primary,#111);',
-    "  font-size:13pt;line-height:2;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;}",
+    "  font-size:13pt;line-height:2;font-family:'Jameel Noori Nastaleeq';}",
     '.dio-hub button:hover,.dio-hub button:focus-visible{border-color:var(--accent,#0369a1);background:var(--accent-glow,rgba(3,105,161,.08));outline:none;}',
     '.dio-hub svg{width:28px;height:28px;color:var(--accent,#0369a1);}',
     '.dio-kind{display:flex;gap:8px;padding-top:12px;}',
     '.dio-kind button{flex:1;border:1.5px solid var(--border,#c8d8e8);background:var(--bg-card,#fff);color:var(--text-primary,#111);border-radius:9px;',
-    "  padding:2px 10px 7px;font-size:13pt;line-height:2;cursor:pointer;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;}",
+    "  padding:2px 10px 7px;font-size:13pt;line-height:2;cursor:pointer;font-family:'Jameel Noori Nastaleeq';}",
     '.dio-kind button[aria-pressed="true"]{border-color:var(--accent,#0369a1);background:var(--accent-glow,rgba(3,105,161,.1));color:var(--accent,#0369a1);font-weight:700;}'
   ].join('\n');
   function css() {

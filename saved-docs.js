@@ -270,7 +270,7 @@ async function dioRenderDocList(docType, cfg) {
   if (!area) return;
   const caseId = _sdCaseId(cfg.caseId);
   const heading = cfg.heading || cfg.chipName || 'محفوظ دستاویزات';
-  area.innerHTML = `<div style="direction:rtl;padding:16px;font-family:'Jameel Noori Nastaleeq',serif;">
+  area.innerHTML = `<div style="direction:rtl;padding:16px;font-family:'Jameel Noori Nastaleeq';">
     ${(window.DIO && DIO.states) ? DIO.states.loading('فہرست لوڈ ہو رہی ہے') : '<div style="text-align:center;color:var(--text-muted);padding:24px;">فہرست لوڈ ہو رہی ہے…</div>'}</div>`;
 
   const rows = await dioLoadDocEntries(docType, caseId);
@@ -281,8 +281,8 @@ async function dioRenderDocList(docType, cfg) {
     const esc2 = (typeof esc === 'function') ? esc : (s => String(s == null ? '' : s));
     return `<tr style="border-bottom:1px solid var(--border);">
       <td style="padding:10px 8px;text-align:center;font-weight:700;width:54px;">${i + 1}</td>
-      <td style="padding:10px 8px;text-align:center;font-size:14px;">${esc2(title)}</td>
-      <td style="padding:10px 8px;text-align:center;font-size:12px;color:var(--text-muted);white-space:nowrap;"><bdi class="dio-ltr">${esc2(dt.date)}</bdi><br><bdi class="dio-ltr">${esc2(dt.time)}</bdi></td>
+      <td style="padding:10px 8px;text-align:center;font-size:10.5pt;">${esc2(title)}</td>
+      <td style="padding:10px 8px;text-align:center;font-size:9pt;color:var(--text-muted);white-space:nowrap;"><bdi class="dio-ltr">${esc2(dt.date)}</bdi><br><bdi class="dio-ltr">${esc2(dt.time)}</bdi></td>
       <td style="padding:8px;text-align:center;white-space:nowrap;">
         <button class="btn btn-primary btn-sm" onclick="_sdOpen('${docType}','${r.id}')" title="کھولیں">کھولیں</button>
         <button aria-label="حذف" class="btn btn-danger btn-sm" onclick="_sdDelete('${docType}','${r.id}')" title="حذف"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
@@ -295,26 +295,26 @@ async function dioRenderDocList(docType, cfg) {
   window._sdCurrentType = docType;
 
   area.innerHTML = `
-  <div style="direction:rtl;height:100%;display:flex;flex-direction:column;font-family:'Jameel Noori Nastaleeq',serif;">
+  <div style="direction:rtl;height:100%;display:flex;flex-direction:column;font-family:'Jameel Noori Nastaleeq';">
     <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg-secondary);flex-wrap:wrap;">
       <button class="btn btn-primary dio-add-btn" onclick="_sdNew('${docType}')">+ ${(typeof esc==='function'?esc(cfg.itemName || heading):(cfg.itemName || heading))} درج کریں</button>
-      <span style="font-size:16px;font-weight:700;color:var(--accent);margin-right:auto;">${(typeof esc==='function'?esc(heading):heading)} — محفوظ فہرست</span>
+      <span style="font-size:12pt;font-weight:700;color:var(--accent);margin-right:auto;">${(typeof esc==='function'?esc(heading):heading)} — محفوظ فہرست</span>
     </div>
     <div style="flex:1;overflow:auto;padding:16px;">
       ${rows.length ? `
       <table style="width:100%;border-collapse:collapse;background:var(--bg-card,#fff);border-radius:8px;overflow:hidden;">
         <thead><tr style="background:var(--bg-secondary);">
-          <th style="padding:10px 8px;font-size:12px;">نمبر شمار</th>
-          <th style="padding:10px 8px;font-size:12px;text-align:center;">عنوان / قسم</th>
-          <th style="padding:10px 8px;font-size:12px;">تاریخ / وقت</th>
-          <th style="padding:10px 8px;font-size:12px;">عمل</th>
+          <th style="padding:10px 8px;font-size:9pt;">نمبر شمار</th>
+          <th style="padding:10px 8px;font-size:9pt;text-align:center;">عنوان / قسم</th>
+          <th style="padding:10px 8px;font-size:9pt;">تاریخ / وقت</th>
+          <th style="padding:10px 8px;font-size:9pt;">عمل</th>
         </tr></thead>
         <tbody>${items}</tbody>
       </table>` : `
       <div style="text-align:center;padding:48px;color:var(--text-muted);">
-        <div style="font-size:44px;"><svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
-        <div style="margin-top:10px;font-size:15px;">ابھی کوئی محفوظ ${(typeof esc==='function'?esc(heading):heading)} نہیں</div>
-        <div style="font-size:12px;margin-top:4px;">"نیا" دبا کر نئی بنائیں</div>
+        <div style="font-size:33pt;"><svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
+        <div style="margin-top:10px;font-size:11.25pt;">ابھی کوئی محفوظ ${(typeof esc==='function'?esc(heading):heading)} نہیں</div>
+        <div style="font-size:9pt;margin-top:4px;">"نیا" دبا کر نئی بنائیں</div>
       </div>`}
     </div>
   </div>`;

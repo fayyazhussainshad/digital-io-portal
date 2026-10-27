@@ -90,7 +90,7 @@
             if (c) {
               c.setAttribute('data-dio-loading', page);   // nishan — baad mein pehchan sakein
               c.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted,#7d97ad);' +
-                'font-size:13px;direction:rtl;">کھل رہا ہے…</div>';
+                'font-size:9.75pt;direction:rtl;">کھل رہا ہے…</div>';
             }
           } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
           ensurePage(page).then(function () {
@@ -108,7 +108,7 @@
                 c.removeAttribute('data-dio-loading');
                 if (c.textContent.trim().indexOf('کھل رہا ہے') === 0) {
                   c.innerHTML = '<div style="text-align:center;padding:40px 20px;' +
-                    'direction:rtl;color:var(--text-muted);font-size:13px;">' +
+                    'direction:rtl;color:var(--text-muted);font-size:9.75pt;">' +
                     'یہ صفحہ ابھی نہیں کھل سکا۔ دوبارہ کوشش کریں یا مینو سے دوسرا صفحہ چنیں۔</div>';
                 }
               } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }

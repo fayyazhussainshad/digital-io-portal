@@ -9,7 +9,7 @@ async function renderDashboard(container) {
   // Phase 3C — DIO.states.loading() with fallback
   const _loadingHtml = (window.DIO && DIO.states)
     ? DIO.states.loading('ڈیش بورڈ لوڈ ہو رہا ہے')
-    : `<div style="text-align:center;padding:32px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq',serif;">لوڈ ہو رہا ہے...</div>`;
+    : `<div style="text-align:center;padding:32px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq';">لوڈ ہو رہا ہے...</div>`;
   container.innerHTML = `<div id="dash-root">${_loadingHtml}</div>`;
   await _buildDash();
 }
@@ -67,7 +67,7 @@ async function _buildDash() {
         <div class="dio-id-sub">${esc(o.designation||'')}${o.station?' · تھانہ '+esc(o.station):''}${o.district?' · ضلع '+esc(o.district):''}</div>
         <small class="dio-id-date">${formatDate(new Date())}</small>
       </div>
-      <div id="dash-welcome-avatar" style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0;overflow:hidden;cursor:pointer;" onclick="showPage('settings',null)">
+      <div id="dash-welcome-avatar" style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:13.5pt;font-weight:900;color:#fff;flex-shrink:0;overflow:hidden;cursor:pointer;" onclick="showPage('settings',null)">
         ${(() => {
           let p = o.profile_photo;
           if (!p) { try { p = localStorage.getItem('dio_profile_photo') || localStorage.getItem('officer_photo_url'); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ } }
@@ -262,14 +262,14 @@ function _recentlyViewedBar() {
   if (!recent.length) return '';
   return `
   <div style="margin-bottom:14px;direction:rtl;">
-    <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;font-weight:700;">حال ہی میں دیکھے گئے</div>
+    <div style="font-size:8.25pt;color:var(--text-muted);margin-bottom:6px;font-weight:700;">حال ہی میں دیکھے گئے</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;">
       ${recent.map(r=>`
         <button onclick="openCaseWorkspace('${r.id}')"
-          style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:11px;cursor:pointer;color:var(--text-secondary);display:flex;align-items:center;gap:6px;"
+          style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:8.25pt;cursor:pointer;color:var(--text-secondary);display:flex;align-items:center;gap:6px;"
           onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
           <span style="color:var(--accent);font-weight:700;">FIR ${esc(r.fir)}</span>
-          ${r.name?`<span style="font-size:10px;color:var(--text-muted);">${esc(r.name.slice(0,15))}</span>`:''}
+          ${r.name?`<span style="font-size:7.5pt;color:var(--text-muted);">${esc(r.name.slice(0,15))}</span>`:''}
         </button>`).join('')}
     </div>
   </div>`;
@@ -296,14 +296,14 @@ function _dioOnboardCard() {
   <div id="dio-onboard-card" class="dio-onboard">
     <div style="display:flex;align-items:flex-start;gap:12px;">
       <div style="flex:1;">
-        <div class="dio-hs2" style="font-size:15px;font-weight:800;color:#fff;">Digital IO میں خوش آمدید!</div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.8);margin-top:5px;line-height:1.9;">
+        <div class="dio-hs2" style="font-size:11.25pt;font-weight:800;color:#fff;">Digital IO میں خوش آمدید!</div>
+        <div style="font-size:9pt;color:rgba(255,255,255,0.8);margin-top:5px;line-height:1.9;">
           یہ آپ کا دفتری کام آسان بنانے کے لیے ہے — کاغذی بوجھ کم، اطمینان زیادہ۔
           پہلی بار استعمال کر رہے ہیں؟ ایک نظر رہنمائی پر ڈال لیں۔
         </div>
         <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-          <button class="btn btn-primary btn-sm" style="font-family:'Jameel Noori Nastaleeq',serif;" onclick="_dioOnboardOpenHelp()">رہنمائی کھولیں</button>
-          <button class="btn btn-secondary btn-sm" style="font-family:'Jameel Noori Nastaleeq',serif;" onclick="_dioOnboardDismiss()">سمجھ گیا</button>
+          <button class="btn btn-primary btn-sm" style="font-family:'Jameel Noori Nastaleeq';" onclick="_dioOnboardOpenHelp()">رہنمائی کھولیں</button>
+          <button class="btn btn-secondary btn-sm" style="font-family:'Jameel Noori Nastaleeq';" onclick="_dioOnboardDismiss()">سمجھ گیا</button>
         </div>
       </div>
     </div>

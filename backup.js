@@ -51,12 +51,12 @@ async function _buildBackup() {
       'پیشیاں': counts.court,
     }).map(([l,v])=>`
     <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
-      <div style="font-size:11px;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq',serif;">${l}</div>
-      <div style="font-size:22px;font-weight:900;color:var(--accent);">${v}</div>
+      <div style="font-size:8.25pt;color:var(--text-muted);font-family:'Jameel Noori Nastaleeq';">${l}</div>
+      <div style="font-size:16.5pt;font-weight:900;color:var(--accent);">${v}</div>
     </div>`).join('')}
   </div>
-  <div style="text-align:center;margin-bottom:14px;font-size:13px;color:var(--text-secondary);direction:rtl;">
-    مجموعی ریکارڈ: <b style="color:var(--accent);font-size:18px;">${totalRecords}</b>
+  <div style="text-align:center;margin-bottom:14px;font-size:9.75pt;color:var(--text-secondary);direction:rtl;">
+    مجموعی ریکارڈ: <b style="color:var(--accent);font-size:13.5pt;">${totalRecords}</b>
   </div>
 
   <!-- Backup Options -->
@@ -64,25 +64,25 @@ async function _buildBackup() {
 
     <!-- Supabase Cloud -->
     <div class="card" style="text-align:center;">
-      <div style="font-size:36px;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7.5 19a4.5 4.5 0 0 1 0-9 6 6 0 0 1 11.3 1.6A3.7 3.7 0 0 1 18 19z"/></svg></div>
-      <div class="dio-hs2" style="font-size:13px;font-weight:700;margin-bottom:6px;direction:rtl;">سرکاری کلاؤڈ <span style="font-size:10px;font-weight:600;color:var(--text-muted);" dir="ltr">Supabase</span></div>
-      <div style="font-size:11px;color:var(--green);margin-bottom:10px;direction:rtl;">ہمیشہ فعال · AES-256</div>
-      <div style="font-size:10px;color:var(--text-muted);direction:rtl;">تمام ڈیٹا خودکار محفوظ ہے</div>
+      <div style="font-size:27pt;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7.5 19a4.5 4.5 0 0 1 0-9 6 6 0 0 1 11.3 1.6A3.7 3.7 0 0 1 18 19z"/></svg></div>
+      <div class="dio-hs2" style="font-size:9.75pt;font-weight:700;margin-bottom:6px;direction:rtl;">سرکاری کلاؤڈ <span style="font-size:7.5pt;font-weight:600;color:var(--text-muted);" dir="ltr">Supabase</span></div>
+      <div style="font-size:8.25pt;color:var(--green);margin-bottom:10px;direction:rtl;">ہمیشہ فعال · AES-256</div>
+      <div style="font-size:7.5pt;color:var(--text-muted);direction:rtl;">تمام ڈیٹا خودکار محفوظ ہے</div>
     </div>
 
     <!-- Local Backup -->
     <div class="card" style="text-align:center;">
-      <div style="font-size:36px;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v6h7V4"/><path d="M8 20v-6h8v6"/></svg></div>
-      <div class="dio-hs2" style="font-size:13px;font-weight:700;margin-bottom:6px;direction:rtl;">ڈیوائس بیک اپ</div>
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;direction:rtl;">JSON فائل ڈاؤنلوڈ کریں</div>
+      <div style="font-size:27pt;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v6h7V4"/><path d="M8 20v-6h8v6"/></svg></div>
+      <div class="dio-hs2" style="font-size:9.75pt;font-weight:700;margin-bottom:6px;direction:rtl;">ڈیوائس بیک اپ</div>
+      <div style="font-size:8.25pt;color:var(--text-muted);margin-bottom:10px;direction:rtl;">JSON فائل ڈاؤنلوڈ کریں</div>
       <button class="btn btn-primary btn-sm" style="width:100%;" onclick="_exportAllData()">مکمل ڈیٹا ڈاؤنلوڈ</button>
       <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:6px;" onclick="_importData()">ڈیٹا درآمد کریں</button>
     </div>
 
     <!-- Export Options -->
     <div class="card" style="text-align:center;">
-      <div style="font-size:36px;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M4 20h16"/><path d="M7 20V11"/><path d="M12 20V5"/><path d="M17 20v-6"/></svg></div>
-      <div class="dio-hs2" style="font-size:13px;font-weight:700;margin-bottom:6px;direction:rtl;">برآمد کریں</div>
+      <div style="font-size:27pt;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M4 20h16"/><path d="M7 20V11"/><path d="M12 20V5"/><path d="M17 20v-6"/></svg></div>
+      <div class="dio-hs2" style="font-size:9.75pt;font-weight:700;margin-bottom:6px;direction:rtl;">برآمد کریں</div>
       <button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px;" onclick="_exportCases()">مقدمات (CSV)</button>
       <button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px;" onclick="_exportReminders()">یاددہانیاں (CSV)</button>
       <button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px;" onclick="_printDataReport()">رپورٹ پرنٹ</button>
@@ -92,8 +92,8 @@ async function _buildBackup() {
 
   <!-- Storage Info -->
   <div class="card">
-    <div class="dio-hs2" style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;direction:rtl;">سٹوریج کی معلومات</div>
-    <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;direction:rtl;">
+    <div class="dio-hs2" style="font-size:9pt;font-weight:700;color:var(--accent);margin-bottom:10px;direction:rtl;">سٹوریج کی معلومات</div>
+    <div style="display:flex;flex-direction:column;gap:6px;font-size:9pt;direction:rtl;">
       <div style="display:flex;justify-content:space-between;"><span>سرکاری کلاؤڈ (Supabase)</span><span style="color:var(--green);">محفوظ</span></div>
       <div style="display:flex;justify-content:space-between;"><span>آف لائن ذخیرہ</span><span style="color:var(--green);">دستیاب</span></div>
       <div style="display:flex;justify-content:space-between;"><span>اس آلہ پر محفوظ</span><span id="ls-size" dir="ltr" style="color:var(--accent);">حساب ہو رہا ہے…</span></div>
@@ -102,26 +102,26 @@ async function _buildBackup() {
 
   <!-- Google Drive / Cloud Backup -->
   <div class="card" style="direction:rtl;">
-    <div class="dio-hs2" style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:4px;">Google Drive / کلاؤڈ بیک اپ</div>
-    <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;">اپنا ڈیٹا Google Drive یا OneDrive میں محفوظ رکھیں — 3 آسان قدم</div>
+    <div class="dio-hs2" style="font-size:9.75pt;font-weight:700;color:var(--accent);margin-bottom:4px;">Google Drive / کلاؤڈ بیک اپ</div>
+    <div style="font-size:8.25pt;color:var(--text-muted);margin-bottom:12px;">اپنا ڈیٹا Google Drive یا OneDrive میں محفوظ رکھیں — 3 آسان قدم</div>
     <div style="display:flex;flex-direction:column;gap:10px;">
       <div style="display:flex;gap:10px;align-items:center;background:var(--bg-secondary);border-radius:8px;padding:10px;">
-        <div style="width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;">1</div>
-        <div style="flex:1;font-size:13px;">نیچے بٹن سے مکمل ڈیٹا (JSON) ڈاؤنلوڈ کریں</div>
+        <div style="width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:9.75pt;flex-shrink:0;">1</div>
+        <div style="flex:1;font-size:9.75pt;">نیچے بٹن سے مکمل ڈیٹا (JSON) ڈاؤنلوڈ کریں</div>
         <button class="btn btn-primary btn-sm" onclick="_exportAllData()">ڈاؤنلوڈ</button>
       </div>
       <div style="display:flex;gap:10px;align-items:center;background:var(--bg-secondary);border-radius:8px;padding:10px;">
-        <div style="width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;">2</div>
-        <div style="flex:1;font-size:13px;">Google Drive کھولیں اور فائل اپ لوڈ کریں</div>
+        <div style="width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:9.75pt;flex-shrink:0;">2</div>
+        <div style="flex:1;font-size:9.75pt;">Google Drive کھولیں اور فائل اپ لوڈ کریں</div>
         <button class="btn btn-secondary btn-sm" onclick="window.open('https://drive.google.com','_blank')">Drive</button>
       </div>
       <div style="display:flex;gap:10px;align-items:center;background:var(--bg-secondary);border-radius:8px;padding:10px;">
-        <div style="width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;">3</div>
-        <div style="flex:1;font-size:13px;">OneDrive استعمال کرتے ہیں؟ یہاں اپ لوڈ کریں</div>
+        <div style="width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:9.75pt;flex-shrink:0;">3</div>
+        <div style="flex:1;font-size:9.75pt;">OneDrive استعمال کرتے ہیں؟ یہاں اپ لوڈ کریں</div>
         <button class="btn btn-secondary btn-sm" onclick="window.open('https://onedrive.live.com','_blank')">OneDrive</button>
       </div>
     </div>
-    <div style="margin-top:10px;padding:8px 10px;background:rgba(34,197,94,0.08);border-radius:6px;font-size:11px;color:var(--green);">
+    <div style="margin-top:10px;padding:8px 10px;background:rgba(34,197,94,0.08);border-radius:6px;font-size:8.25pt;color:var(--green);">
       آپ کا ڈیٹا پہلے ہی Supabase کلاؤڈ پر محفوظ ہے۔ یہ صرف اضافی حفاظت کے لیے ہے۔
     </div>
   </div>`;
@@ -238,9 +238,9 @@ async function _exportReminders() {
 function _importData() {
   openModal('ڈیٹا درآمد',
     `<div style="direction:rtl;">
-      <p style="color:var(--amber);font-size:12px;">یہ صرف بیک اپ JSON فائل درآمد کرتا ہے</p>
+      <p style="color:var(--amber);font-size:9pt;">یہ صرف بیک اپ JSON فائل درآمد کرتا ہے</p>
       <input type="file" id="import-file" accept=".json" style="width:100%;padding:8px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);">
-      <div id="import-status" style="margin-top:8px;font-size:11px;color:var(--text-muted);"></div>
+      <div id="import-status" style="margin-top:8px;font-size:8.25pt;color:var(--text-muted);"></div>
     </div>`,
     `<div style="display:flex;gap:8px;direction:rtl;">
       <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
@@ -267,8 +267,8 @@ function _printDataReport() {
   const o = currentOfficer||{};
   let _printHTML = '';
   _printHTML += (`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>body{font-family:'Noto Nastaliq Urdu',serif;direction:rtl;padding:20mm;}.hdr{text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:14px;}</style></head><body>
+    ${typeof dioFontHead==='function'?dioFontHead():''}
+    <style>body{font-family:'Jameel Noori Nastaleeq';direction:rtl;padding:20mm;}.hdr{text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:14px;}</style></head><body>
     <div class="hdr"><h2>ڈیٹا رپورٹ</h2>
     <div>${esc(o.full_name)||'—'} · تھانہ ${esc(o.station)||'—'} · ${formatDate(new Date())}</div></div>
     <p>یہ رپورٹ Digital IO سے خودکار بنائی گئی ہے۔ تمام ڈیٹا Supabase Cloud میں محفوظ ہے۔</p>

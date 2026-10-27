@@ -331,7 +331,7 @@ async function renderCases(container,fStatus,fQuery,fStation){
     : ''}</div>
 
   <!-- Station filter buttons removed (FIX6) — all cases shown by default for more space -->
-  ${isArchiveView?`<div style="background:rgba(167,139,250,0.1);border:1px solid #a78bfa;border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:12px;color:#a78bfa;direction:rtl;">آرکائیو — تھانہ ${fStation} کے پرانے مقدمات (صرف دیکھنے کے لیے)</div>`:''}
+  ${isArchiveView?`<div style="background:rgba(167,139,250,0.1);border:1px solid #a78bfa;border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:9pt;color:#a78bfa;direction:rtl;">آرکائیو — تھانہ ${fStation} کے پرانے مقدمات (صرف دیکھنے کے لیے)</div>`:''}
 
   <div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;margin-bottom:14px;">
     <input class="search-input" id="case-search" style="flex:1;min-width:180px;" placeholder="مقدمہ نمبر، مدعی، شناختی کارڈ، دفعہ…" value="${fQuery}" oninput="_csOnSearch(this.value)" dir="rtl">
@@ -384,20 +384,20 @@ function renderCaseRow(c,sn){
   const cnic=formatCNIC(c.complainant_cnic)||'—';
   const cell=formatCell(c.complainant_cell)||'—';
   return `<tr>
-    <td style="text-align:center;font-size:11px;color:var(--text-muted);font-weight:700;">${sn}</td>
+    <td style="text-align:center;font-size:8.25pt;color:var(--text-muted);font-weight:700;">${sn}</td>
     <td>
-      ${(() => { const fn=c.fir_number||'—'; const p=String(fn).split('/'); return p.length===2 ? `<span style="cursor:pointer;" onclick="openCaseWorkspace('${c.id}')" title="Open Case Workspace"><span dir="ltr" style="unicode-bidi:isolate;font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:15px;display:block;line-height:1.1;text-decoration:underline;text-decoration-color:rgba(56,189,248,0.4);">${p[0]}</span><span dir="ltr" style="unicode-bidi:isolate;font-family:var(--font-mono);font-size:10px;color:var(--text-muted);display:block;line-height:1;">/${p[1]}</span></span>` : `<span dir="ltr" style="unicode-bidi:isolate;font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:12px;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(56,189,248,0.4);" onclick="openCaseWorkspace('${c.id}')" title="Open Case Workspace">${fn}</span>`; })()}
-      ${c.priority ? `<br><span style="font-size:9px;font-weight:700;color:${c.priority==='high'?'var(--red)':c.priority==='medium'?'var(--amber)':'var(--green)'};">${c.priority==='high'?'اہم':c.priority==='medium'?'درمیانہ':'کم'}</span>` : ''}
-      ${((typeof caseHasCross==='function') ? caseHasCross(c) : c.is_cross_version)?'<br><span style="font-size:9px;color:var(--red);font-weight:600;">کراس ورژن</span>':''}
-      ${c._shared?`<br><span style="font-size:9px;color:var(--accent);font-weight:600;" title="آپ کے ساتھ شیئر کیا گیا (${c._sharePermission==='write'?'ترمیم':'دیکھیں'})">شیئرڈ</span>`:''}
+      ${(() => { const fn=c.fir_number||'—'; const p=String(fn).split('/'); return p.length===2 ? `<span style="cursor:pointer;" onclick="openCaseWorkspace('${c.id}')" title="Open Case Workspace"><span dir="ltr" style="unicode-bidi:isolate;font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:11.25pt;display:block;line-height:1.1;text-decoration:underline;text-decoration-color:rgba(56,189,248,0.4);">${p[0]}</span><span dir="ltr" style="unicode-bidi:isolate;font-family:var(--font-mono);font-size:7.5pt;color:var(--text-muted);display:block;line-height:1;">/${p[1]}</span></span>` : `<span dir="ltr" style="unicode-bidi:isolate;font-family:var(--font-mono);font-weight:800;color:var(--accent);font-size:9pt;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(56,189,248,0.4);" onclick="openCaseWorkspace('${c.id}')" title="Open Case Workspace">${fn}</span>`; })()}
+      ${c.priority ? `<br><span style="font-size:6.75pt;font-weight:700;color:${c.priority==='high'?'var(--red)':c.priority==='medium'?'var(--amber)':'var(--green)'};">${c.priority==='high'?'اہم':c.priority==='medium'?'درمیانہ':'کم'}</span>` : ''}
+      ${((typeof caseHasCross==='function') ? caseHasCross(c) : c.is_cross_version)?'<br><span style="font-size:6.75pt;color:var(--red);font-weight:600;">کراس ورژن</span>':''}
+      ${c._shared?`<br><span style="font-size:6.75pt;color:var(--accent);font-weight:600;" title="آپ کے ساتھ شیئر کیا گیا (${c._sharePermission==='write'?'ترمیم':'دیکھیں'})">شیئرڈ</span>`:''}
     </td>
-    <td style="font-size:11px;white-space:nowrap;">${formatDate(c.fir_date)}</td>
-    <td style="font-size:11px;white-space:nowrap;">${formatDate(c.occurrence_date)}</td>
-    <td style="font-size:11px;max-width:150px;">${esc(offence)}</td>
-    <td style="font-size:11px;">${esc(station)}</td>
-    <td style="font-size:12px;font-weight:500;">${esc(c.complainant)||'—'}</td>
-    <td class="cs-cnic" style="font-family:var(--font-mono);font-size:11px;white-space:nowrap;" dir="ltr">${esc(cnic)}</td>
-    <td class="cs-cell" style="font-family:var(--font-mono);font-size:11px;white-space:nowrap;" dir="ltr">${esc(cell)}</td>
+    <td style="font-size:8.25pt;white-space:nowrap;">${formatDate(c.fir_date)}</td>
+    <td style="font-size:8.25pt;white-space:nowrap;">${formatDate(c.occurrence_date)}</td>
+    <td style="font-size:8.25pt;max-width:150px;">${esc(offence)}</td>
+    <td style="font-size:8.25pt;">${esc(station)}</td>
+    <td style="font-size:9pt;font-weight:500;">${esc(c.complainant)||'—'}</td>
+    <td class="cs-cnic" style="font-family:var(--font-mono);font-size:8.25pt;white-space:nowrap;" dir="ltr">${esc(cnic)}</td>
+    <td class="cs-cell" style="font-family:var(--font-mono);font-size:8.25pt;white-space:nowrap;" dir="ltr">${esc(cell)}</td>
     <td><span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span></td>
     <td>
       <div style="display:flex;gap:2px;direction:rtl;justify-content:center;flex-direction:row-reverse;">
@@ -470,12 +470,12 @@ function searchPenalCodes(query) {
     <div onclick="addSection('${p.s} ${p.law}','${p.offence}','${p.bail}')" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border-light);transition:background 0.1s;" onmouseenter="this.style.background='var(--hover-bg)'" onmouseleave="this.style.background=''">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div>
-          <span style="font-size:13px;font-weight:700;color:var(--accent);">§ ${p.s} ${p.law}</span>
-          <span style="font-size:11px;color:var(--text-secondary);margin-left:8px;">${p.title}</span>
+          <span style="font-size:9.75pt;font-weight:700;color:var(--accent);">§ ${p.s} ${p.law}</span>
+          <span style="font-size:8.25pt;color:var(--text-secondary);margin-left:8px;">${p.title}</span>
         </div>
-        <span style="font-size:9px;padding:2px 7px;border-radius:10px;background:${p.bail==='Non-Bailable'?'var(--red-bg)':'var(--green-bg)'};color:${p.bail==='Non-Bailable'?'var(--red)':'var(--green)'};">${p.bail}</span>
+        <span style="font-size:6.75pt;padding:2px 7px;border-radius:10px;background:${p.bail==='Non-Bailable'?'var(--red-bg)':'var(--green-bg)'};color:${p.bail==='Non-Bailable'?'var(--red)':'var(--green)'};">${p.bail}</span>
       </div>
-      <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Offence: ${p.offence} · ${p.punishment}</div>
+      <div style="font-size:7.5pt;color:var(--text-muted);margin-top:2px;">Offence: ${p.offence} · ${p.punishment}</div>
     </div>`).join('');
 }
 
@@ -655,7 +655,7 @@ async function openCaseWorkspace(id) {
   try {
     const c = await getCase(id);
     if (!c) { 
-      container.innerHTML = `<div style="padding:30px;text-align:center;direction:rtl;"><div style="font-size:40px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M12 4L3 19.5h18z"/><path d="M12 10v4.5"/><path d="M12 17.2h.01"/></svg></div><div style="margin-top:10px;">مقدمہ نہیں ملا</div><button class="btn btn-secondary btn-sm" style="margin-top:14px;" onclick="showPage('cases',null)">← واپس مقدمات</button></div>`;
+      container.innerHTML = `<div style="padding:30px;text-align:center;direction:rtl;"><div style="font-size:30pt;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M12 4L3 19.5h18z"/><path d="M12 10v4.5"/><path d="M12 17.2h.01"/></svg></div><div style="margin-top:10px;">مقدمہ نہیں ملا</div><button class="btn btn-secondary btn-sm" style="margin-top:14px;" onclick="showPage('cases',null)">← واپس مقدمات</button></div>`;
       return; 
     }
     // Track recently viewed
@@ -679,9 +679,9 @@ async function openCaseWorkspace(id) {
   } catch(err) {
     console.error('openCaseWorkspace error:', err);
     container.innerHTML = `<div style="padding:30px;text-align:center;direction:rtl;">
-      <div style="font-size:40px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M12 4L3 19.5h18z"/><path d="M12 10v4.5"/><path d="M12 17.2h.01"/></svg></div>
+      <div style="font-size:30pt;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M12 4L3 19.5h18z"/><path d="M12 10v4.5"/><path d="M12 17.2h.01"/></svg></div>
       <div style="margin-top:10px;color:var(--text-secondary);">مقدمہ کھولنے میں مسئلہ</div>
-      <div style="font-size:11px;color:var(--text-muted);direction:ltr;font-family:monospace;margin-top:8px;">${(err&&err.message)||err}</div>
+      <div style="font-size:8.25pt;color:var(--text-muted);direction:ltr;font-family:monospace;margin-top:8px;">${(err&&err.message)||err}</div>
       <button class="btn btn-secondary btn-sm" style="margin-top:14px;" onclick="showPage('cases',null)">← واپس مقدمات</button>
     </div>`;
   }
@@ -702,9 +702,9 @@ function renderWorkspace(c, docs, ev, container) {
     <!-- TAB CONTENT -->
     <div id="workspace-tab-content" style="height:calc(100vh - 220px);overflow:hidden;">
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">
-        <div style="font-size:48px;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M3.5 7.5h6l2 2.5h9V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z"/></svg></div>
-        <div style="font-size:14px;font-weight:600;margin-bottom:6px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">دستاویز منتخب کریں</div>
-        <div style="font-size:12px;">اوپر دستاویز کے نام پر کلک کریں</div>
+        <div style="font-size:36pt;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M3.5 7.5h6l2 2.5h9V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z"/></svg></div>
+        <div style="font-size:10.5pt;font-weight:600;margin-bottom:6px;font-family:'Jameel Noori Nastaleeq';direction:rtl;">دستاویز منتخب کریں</div>
+        <div style="font-size:9pt;">اوپر دستاویز کے نام پر کلک کریں</div>
       </div>
     </div>`;
 
@@ -719,9 +719,9 @@ function renderDocsTab(c, docs) {
     <!-- Document Editor (full width — no side document list) -->
     <div class="workspace-main" id="workspace-editor-area" style="width:100%;">
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-muted);">
-        <div style="font-size:48px;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M3.5 7.5h6l2 2.5h9V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z"/></svg></div>
-        <div style="font-size:14px;font-weight:600;margin-bottom:6px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">دستاویز منتخب کریں</div>
-        <div style="font-size:12px;direction:rtl;">اوپر دستاویز کے نام پر کلک کریں</div>
+        <div style="font-size:36pt;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M3.5 7.5h6l2 2.5h9V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z"/></svg></div>
+        <div style="font-size:10.5pt;font-weight:600;margin-bottom:6px;font-family:'Jameel Noori Nastaleeq';direction:rtl;">دستاویز منتخب کریں</div>
+        <div style="font-size:9pt;direction:rtl;">اوپر دستاویز کے نام پر کلک کریں</div>
       </div>
     </div>
   </div>`;
@@ -731,22 +731,22 @@ function renderEvidenceTab(c, ev) {
   const icon = t => t==='Photo'?"<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><path d=\"M3.5 8h3.2l1.6-2.4h7.4L17.3 8h3.2v11.5h-17z\"/><circle cx=\"12\" cy=\"13.5\" r=\"3.6\"/></svg>":t==='Video'?"<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><path d=\"M3.5 6.5h11v11h-11z\"/><path d=\"M14.5 10.5l6-3v9l-6-3z\"/></svg>":t==='Audio'?"<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><rect x=\"9\" y=\"3\" width=\"6\" height=\"11\" rx=\"3\"/><path d=\"M5 11a7 7 0 0 0 14 0\"/><path d=\"M12 18v3\"/></svg>":"<svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><path d=\"M7 3h7l4 4v14H7z\"/><path d=\"M14 3v5h5\"/></svg>";
   const cards = ev.length === 0
     ? `<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--text-muted);">
-        <div style="font-size:40px;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M8 4h8v3H8z"/><path d="M9 4H6v17h12V4h-3"/><path d="M9 11h6"/><path d="M9 15h6"/></svg></div>
-        <div style="font-weight:600;margin-bottom:4px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">ابھی کوئی شہادت نہیں</div>
-        <div style="font-size:12px;">+ شہادت شامل کریں بٹن دبائیں</div>
+        <div style="font-size:30pt;margin-bottom:12px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M8 4h8v3H8z"/><path d="M9 4H6v17h12V4h-3"/><path d="M9 11h6"/><path d="M9 15h6"/></svg></div>
+        <div style="font-weight:600;margin-bottom:4px;font-family:'Jameel Noori Nastaleeq';direction:rtl;">ابھی کوئی شہادت نہیں</div>
+        <div style="font-size:9pt;">+ شہادت شامل کریں بٹن دبائیں</div>
        </div>`
     : ev.map(e => { const hf = (e.storage_path || e.file_url); const vu = (e._viewUrl || e.file_url); return `
       <div class="evidence-card" id="ev-${e.id}">
         <div class="evidence-thumb" onclick="openEvidenceFile('${e.id}','${_dioJsHtml(vu||'')}','${_dioJsHtml(e.name)}','${_dioJsHtml(e.type)}')" style="cursor:${hf?'pointer':'default'};" title="${hf?'Click to open file':'No file attached'}">
           ${hf && e.type==='Photo'
-            ? `<img src="${esc(vu||'')}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;" alt="${esc(e.name)}" onerror="this.style.display='none';this.parentElement.querySelector('.ev-fallback').style.display='flex'"><div class="ev-fallback" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:36px;"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M3.5 8h3.2l1.6-2.4h7.4L17.3 8h3.2v11.5h-17z"/><circle cx="12" cy="13.5" r="3.6"/></svg></div>`
-            : `<span style="font-size:36px;">${icon(e.type)}</span>`}
-          ${hf ? `<div style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,0.6);border-radius:4px;padding:2px 5px;font-size:9px;color:#fff;">کھولیں</div>` : ''}
+            ? `<img src="${esc(vu||'')}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;" alt="${esc(e.name)}" onerror="this.style.display='none';this.parentElement.querySelector('.ev-fallback').style.display='flex'"><div class="ev-fallback" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:27pt;"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M3.5 8h3.2l1.6-2.4h7.4L17.3 8h3.2v11.5h-17z"/><circle cx="12" cy="13.5" r="3.6"/></svg></div>`
+            : `<span style="font-size:27pt;">${icon(e.type)}</span>`}
+          ${hf ? `<div style="position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,0.6);border-radius:4px;padding:2px 5px;font-size:6.75pt;color:#fff;">کھولیں</div>` : ''}
         </div>
         <div class="evidence-info">
           <div class="evidence-name" id="ev-name-${e.id}">${esc(e.name)}</div>
-          <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${esc(e.type)} · ${e.evidence_date||formatDate(e.created_at)}</div>
-          ${e.notes ? `<div style="font-size:10px;color:var(--text-faint);margin-top:3px;font-style:italic;">${esc(e.notes)}</div>` : ''}
+          <div style="font-size:7.5pt;color:var(--text-muted);margin-top:2px;">${esc(e.type)} · ${e.evidence_date||formatDate(e.created_at)}</div>
+          ${e.notes ? `<div style="font-size:7.5pt;color:var(--text-faint);margin-top:3px;font-style:italic;">${esc(e.notes)}</div>` : ''}
           <div style="display:flex;gap:6px;direction:rtl;margin-top:8px;">
             ${hf ? `<button class="btn btn-secondary btn-sm" onclick="openEvidenceFile('${e.id}','${_dioJsHtml(vu||'')}','${_dioJsHtml(e.name)}','${_dioJsHtml(e.type)}')" title="Open File">کھولیں</button>` : ''}
             <button class="btn btn-secondary btn-sm" onclick="renameEvidence('${e.id}','${_dioJsHtml(e.name)}','${_dioJsHtml(c.fir_number)}')" title="Rename">نام بدلیں</button>
@@ -758,8 +758,8 @@ function renderEvidenceTab(c, ev) {
   return `<div class="case-tab-content">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;direction:rtl;">
       <div>
-        <div class="dio-hs1" style="font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;">شہادتیں — FIR ${c.fir_number}</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${ev.length} فائل منسلک</div>
+        <div class="dio-hs1" style="font-weight:700;font-family:'Jameel Noori Nastaleeq';direction:rtl;">شہادتیں — FIR ${c.fir_number}</div>
+        <div style="font-size:8.25pt;color:var(--text-muted);margin-top:2px;">${ev.length} فائل منسلک</div>
       </div>
       <button class="btn btn-primary" onclick="openWorkspaceEvidenceModal('${c.id}','${c.fir_number}')">+ شہادت درج کریں</button>
     </div>
@@ -777,7 +777,7 @@ function openEvidenceFile(id, url, name, type) {
 // ── RENAME EVIDENCE ────────────────────────────────────────────
 function renameEvidence(id, currentName, firNumber) {
   openModal('Rename Evidence',
-    `<div style="margin-bottom:8px;font-size:12px;color:var(--text-muted);">Enter a new name for this evidence item.</div>
+    `<div style="margin-bottom:8px;font-size:9pt;color:var(--text-muted);">Enter a new name for this evidence item.</div>
      <input class="form-input" id="ev-rename-input" value="${esc(currentName)}" style="width:100%;box-sizing:border-box;" placeholder="شہادت کا نام">`,
     `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
      <button class="btn btn-primary" onclick="saveEvidenceRename('${id}','${firNumber}')">نام بدلیں</button>`
@@ -802,7 +802,7 @@ async function saveEvidenceRename(id, firNumber) {
 // ── DELETE EVIDENCE ────────────────────────────────────────────
 function deleteWorkspaceEvidence(id, firNumber) {
   openModal('Delete Evidence',
-    `<p style="color:var(--text-secondary);font-size:13px;">Are you sure you want to delete this evidence item?<br><span style="color:var(--red);font-size:11px;margin-top:8px;display:block;">This cannot be undone.</span></p>`,
+    `<p style="color:var(--text-secondary);font-size:9.75pt;">Are you sure you want to delete this evidence item?<br><span style="color:var(--red);font-size:8.25pt;margin-top:8px;display:block;">This cannot be undone.</span></p>`,
     `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
      <button class="btn btn-danger" onclick="closeModal();doDeleteWorkspaceEvidence('${id}','${firNumber}')">حذف کریں</button>`
   );
@@ -838,7 +838,7 @@ function openWorkspaceEvidenceModal(caseId, firNumber) {
        <!-- File / photo preview -->
        <div id="wev-preview" style="display:none;margin-bottom:12px;text-align:center;">
          <img id="wev-img-preview" style="max-height:120px;border-radius:6px;border:2px solid var(--accent);display:none;" alt="">
-         <div id="wev-file-name" style="font-size:12px;color:var(--accent);margin-top:4px;"></div>
+         <div id="wev-file-name" style="font-size:9pt;color:var(--accent);margin-top:4px;"></div>
        </div>
      </div>
      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;direction:rtl;margin-bottom:10px;">
@@ -970,7 +970,7 @@ function goBackToCases() {
   if (titleEl) titleEl.textContent = 'My Cases';
   if (container) renderCases(container);
 }
-function confirmDeleteCase(id,fir){openModal('Confirm Delete',`<p style="color:var(--text-secondary);font-size:13px;">مقدمہ حذف کریں <b style="color:var(--accent);">FIR ${fir}</b>?<br><br><span style="color:var(--red);font-size:11px;">This cannot be undone.</span></p>`,`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-danger" onclick="closeModal();doDeleteCase('${id}')">حذف کریں</button>`);}
+function confirmDeleteCase(id,fir){openModal('Confirm Delete',`<p style="color:var(--text-secondary);font-size:9.75pt;">مقدمہ حذف کریں <b style="color:var(--accent);">FIR ${fir}</b>?<br><br><span style="color:var(--red);font-size:8.25pt;">This cannot be undone.</span></p>`,`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-danger" onclick="closeModal();doDeleteCase('${id}')">حذف کریں</button>`);}
 async function doDeleteCase(id){
   try {
     // v547: نقل «حذف شدہ مواد» میں کامیاب ہو تب ہی مقدمہ حذف — پہلے نقل ناکام ہوتی

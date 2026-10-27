@@ -48,7 +48,7 @@ function dioEditorToolbar(opts) {
     <button type="button" class="dio-etb-btn" onmousedown="event.preventDefault()"
       onclick="dioFontStep(1)" title="فونٹ بڑا">A+</button>
     <button type="button" class="dio-etb-btn" onmousedown="event.preventDefault()"
-      onclick="dioFontStep(-1)" title="فونٹ چھوٹا" style="font-size:11px;">A−</button>
+      onclick="dioFontStep(-1)" title="فونٹ چھوٹا" style="font-size:8.25pt;">A−</button>
     <span class="dio-etb-sep"></span>
     ${AL(AL_RIGHT,  'justifyRight',  'دائیں (Right)')}
     ${AL(AL_CENTER, 'justifyCenter', 'درمیان (Center)')}
@@ -78,11 +78,11 @@ function dioEditorToolbarCSS() {
   st.textContent = `
     .dio-etb-btn{ min-width:30px; height:28px; padding:0 7px; cursor:pointer;
       border:1px solid var(--border,#ccc); border-radius:6px;
-      background:var(--bg-card,#fff); color:var(--text-primary,#111); font-size:13px; }
+      background:var(--bg-card,#fff); color:var(--text-primary,#111); font-size:9.75pt; }
     .dio-etb-btn:hover{ background:var(--hover-bg,#eef6ff); }
     .dio-etb-btn:active{ transform:translateY(1px); }
     .dio-etb-sel{ height:28px; padding:0 6px; border:1px solid var(--border,#ccc);
-      border-radius:6px; background:var(--bg-card,#fff); color:var(--text-primary,#111); font-size:12px; }
+      border-radius:6px; background:var(--bg-card,#fff); color:var(--text-primary,#111); font-size:9pt; }
     .dio-etb-sep{ width:1px; height:20px; background:var(--border,#ddd); margin:0 3px; }
     @media print{ .dio-etb, .dio-etb-btn, .dio-etb-sel, .dio-etb-sep{ display:none !important; } }
   `;
@@ -207,22 +207,22 @@ function dioFindReplace() {
     'position:fixed;z-index:2147483000;top:64px;left:50%;transform:translateX(-50%);' +
     'background:var(--bg-card,#fff);color:var(--text-primary,#111);border:1px solid var(--border,#ccc);' +
     'border-radius:12px;box-shadow:0 10px 34px rgba(0,0,0,.28);padding:12px 14px;direction:rtl;' +
-    "font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;max-width:94vw;width:360px;";
+    "font-family:'Jameel Noori Nastaleeq';max-width:94vw;width:360px;";
   p.innerHTML =
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
-      '<span style="font-weight:800;font-size:15px;">🔎 ڈھونڈیں اور بدلیں</span>' +
-      '<button type="button" onclick="dioFRClose()" title="بند کریں" style="border:none;background:none;font-size:18px;cursor:pointer;color:var(--text-muted,#777);line-height:1;">✕</button>' +
+      '<span style="font-weight:800;font-size:11.25pt;">🔎 ڈھونڈیں اور بدلیں</span>' +
+      '<button type="button" onclick="dioFRClose()" title="بند کریں" style="border:none;background:none;font-size:13.5pt;cursor:pointer;color:var(--text-muted,#777);line-height:1;">✕</button>' +
     '</div>' +
     '<input id="dio-fr-find" type="text" placeholder="کیا ڈھونڈنا ہے؟" ' +
-      'style="width:100%;box-sizing:border-box;padding:8px 10px;margin-bottom:7px;border:1px solid var(--border,#ccc);border-radius:8px;background:var(--bg-tertiary,#f6f8fa);color:inherit;font-size:14px;">' +
+      'style="width:100%;box-sizing:border-box;padding:8px 10px;margin-bottom:7px;border:1px solid var(--border,#ccc);border-radius:8px;background:var(--bg-tertiary,#f6f8fa);color:inherit;font-size:10.5pt;">' +
     '<input id="dio-fr-repl" type="text" placeholder="کس سے بدلنا ہے؟" ' +
-      'style="width:100%;box-sizing:border-box;padding:8px 10px;margin-bottom:9px;border:1px solid var(--border,#ccc);border-radius:8px;background:var(--bg-tertiary,#f6f8fa);color:inherit;font-size:14px;">' +
+      'style="width:100%;box-sizing:border-box;padding:8px 10px;margin-bottom:9px;border:1px solid var(--border,#ccc);border-radius:8px;background:var(--bg-tertiary,#f6f8fa);color:inherit;font-size:10.5pt;">' +
     '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
       '<button type="button" onclick="dioFRFindNext()" style="flex:1;min-width:80px;padding:8px;border:1px solid var(--accent,#2563eb);background:var(--bg-tertiary,#eef);color:var(--text-primary,#111);border-radius:8px;cursor:pointer;font-weight:700;font-family:inherit;">ڈھونڈیں ▸</button>' +
       '<button type="button" onclick="dioFRReplaceOne()" style="flex:1;min-width:80px;padding:8px;border:1px solid var(--border,#ccc);background:var(--bg-card,#fff);color:var(--text-primary,#111);border-radius:8px;cursor:pointer;font-weight:700;font-family:inherit;">بدلیں</button>' +
       '<button type="button" onclick="dioFRReplaceAll()" style="flex:1;min-width:96px;padding:8px;border:none;background:var(--accent,#2563eb);color:#fff;border-radius:8px;cursor:pointer;font-weight:800;font-family:inherit;">سب بدلیں</button>' +
     '</div>' +
-    '<div id="dio-fr-note" style="margin-top:8px;font-size:12px;color:var(--text-muted,#777);min-height:16px;"></div>';
+    '<div id="dio-fr-note" style="margin-top:8px;font-size:9pt;color:var(--text-muted,#777);min-height:16px;"></div>';
   document.body.appendChild(p);
   const fi = document.getElementById('dio-fr-find');
   fi.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); dioFRFindNext(); } });

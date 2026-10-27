@@ -30,7 +30,7 @@
     border-radius: 0 !important;
     background: var(--bg-secondary, #fff) !important;
   }
-  html.dio-mform #ch173-doc.zf-editor { font-size: 16px !important; line-height: 1.75 !important; }
+  html.dio-mform #ch173-doc.zf-editor { font-size: 12pt !important; line-height: 1.75 !important; }
 
   /* Table ka dhancha → seedhi (stacked) shakl */
   html.dio-mform #ch173-doc.zf-editor table.zf-tbl,
@@ -61,11 +61,11 @@
   html.dio-mform #ch173-doc.zf-editor tr.zf-blk td.zf-c-action { padding: 0 0 6px !important; }
   html.dio-mform #ch173-doc.zf-editor tr.zf-blk td.zf-c-action::before {
     content: 'تاریخ / وقت';
-    display: block; font-size: 11px; font-weight: 700;
+    display: block; font-size: 8.25pt; font-weight: 700;
     color: var(--text-muted, #7d97ad); letter-spacing: .2px; margin-bottom: 2px;
   }
   html.dio-mform #ch173-doc.zf-editor .zf-actbody {
-    font-size: 15px !important; min-height: 26px;
+    font-size: 11.25pt !important; min-height: 26px;
     padding: 6px 8px; border-radius: 8px;
     background: var(--bg-tertiary, #f2f5f8);
   }
@@ -77,7 +77,7 @@
   }
   html.dio-mform #ch173-doc.zf-editor tr.zf-blk .zf-num {
     min-width: 30px; height: 30px; line-height: 30px;
-    text-align: center; font-weight: 800; font-size: 14px;
+    text-align: center; font-weight: 800; font-size: 10.5pt;
     border-radius: 50%; background: var(--accent, #38bdf8); color: #fff;
     padding: 0 6px;
   }
@@ -86,11 +86,11 @@
   html.dio-mform #ch173-doc.zf-editor tr.zf-blk td.zf-c-body { padding: 0 !important; }
   html.dio-mform #ch173-doc.zf-editor tr.zf-blk td.zf-c-body::before {
     content: 'حالاتِ تفتیش';
-    display: block; font-size: 11px; font-weight: 700;
+    display: block; font-size: 8.25pt; font-weight: 700;
     color: var(--text-muted, #7d97ad); margin: 4px 0 3px;
   }
   html.dio-mform #ch173-doc.zf-editor .zf-body {
-    font-size: 16px !important; line-height: 1.85 !important;
+    font-size: 12pt !important; line-height: 1.85 !important;
     min-height: 120px; padding: 10px 12px;
     border: 1px solid var(--border, #d7dee6); border-radius: 10px;
     background: var(--bg-secondary, #fff);
@@ -113,16 +113,16 @@
   }
   html.dio-mform #ch173-doc.zf-editor tr.zf-prerow .zf-bl:last-child { border-bottom: 0; }
   html.dio-mform #ch173-doc.zf-editor tr.zf-prerow .zf-lbl {
-    font-size: 12px; font-weight: 700; color: var(--text-muted, #7d97ad);
+    font-size: 9pt; font-weight: 700; color: var(--text-muted, #7d97ad);
     min-width: 88px;
   }
   html.dio-mform #ch173-doc.zf-editor tr.zf-prerow .zf-bdyln {
-    flex: 1 1 60%; font-size: 15px; min-height: 24px;
+    flex: 1 1 60%; font-size: 11.25pt; min-height: 24px;
     padding: 4px 8px; border-radius: 8px; background: var(--bg-tertiary, #f2f5f8);
   }
   /* Mulziman picker — asli tap-able button */
   html.dio-mform #ch173-doc.zf-editor .zf-pick {
-    width: 38px; height: 38px; border-radius: 10px; font-size: 18px;
+    width: 38px; height: 38px; border-radius: 10px; font-size: 13.5pt;
     background: var(--accent, #38bdf8); color: #fff; border: 0;
   }
 
@@ -133,7 +133,7 @@
     border-radius: 12px; margin: 0 0 14px; padding: 10px 12px;
   }
   html.dio-mform #ch173-doc.zf-editor tr.zf-endrow td { padding: 0 !important; }
-  html.dio-mform #ch173-doc.zf-editor .zf-close { font-size: 15px; }
+  html.dio-mform #ch173-doc.zf-editor .zf-close { font-size: 11.25pt; }
   html.dio-mform #ch173-doc.zf-editor .zf-gap { display: none !important; }  /* khali lines fon par bekaar */
 
   /* Column-resize grips mobile par bemani (ungli se nahi chalte) */
@@ -152,7 +152,7 @@
     flex: 0 0 auto; min-height: 42px; padding: 0 14px;
     border-radius: 10px; border: 1px solid var(--border, #d7dee6);
     background: var(--bg-tertiary, #f2f5f8); color: var(--text-primary, #0f1923);
-    font-size: 14px; font-weight: 700;
+    font-size: 10.5pt; font-weight: 700;
   }
   .dio-mbar button.on { background: var(--accent, #38bdf8); color: #fff; border-color: transparent; }
   .dio-mbar .sp { flex: 1 1 auto; }
@@ -161,7 +161,7 @@
   .dio-addblk {
     position: fixed; inset-inline-end: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     z-index: 60; min-height: 52px; padding: 0 20px; border: 0; border-radius: 26px;
-    background: var(--accent, #38bdf8); color: #fff; font-size: 15px; font-weight: 800;
+    background: var(--accent, #38bdf8); color: #fff; font-size: 11.25pt; font-weight: 800;
     box-shadow: 0 6px 18px rgba(0,0,0,.22);
   }
   .dio-addblk:active { transform: scale(.97); }
@@ -281,7 +281,7 @@
   table.dio-cards td {
     border: 0 !important; padding: 5px 0 !important;
     display: flex !important; gap: 10px; align-items: baseline;
-    font-size: 14px;
+    font-size: 10.5pt;
     /* Lamba matn (shanakhti card + mobile aik sath, ya lamba pata)
        card se bahar nikal jata tha aur baain taraf kat jata tha.
        Ab wo apni nayi satar le leta hai. */
@@ -312,7 +312,7 @@
   table.dio-cards td::before {
     content: attr(data-label);
     flex: 0 0 100%; max-width: 100%;
-    font-size: 11.5px; font-weight: 700; line-height: 1.7;
+    font-size: 8.625pt; font-weight: 700; line-height: 1.7;
     color: var(--text-muted, #7d97ad);
     overflow-wrap: anywhere;
   }
@@ -372,10 +372,10 @@
   .dio-thumbbar button {
     flex: 1 1 0; min-height: 56px; border: 0; background: transparent;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 2px; font-size: 11px; font-weight: 700;
+    gap: 2px; font-size: 8.25pt; font-weight: 700;
     color: var(--text-muted, #7d97ad);
   }
-  .dio-thumbbar button .ic { font-size: 20px; line-height: 1; }
+  .dio-thumbbar button .ic { font-size: 15pt; line-height: 1; }
   .dio-thumbbar button.on { color: var(--accent, #38bdf8); }
   /* Patti ke niche content na chhupe */
   body.dio-hasthumb .page-content,
@@ -389,12 +389,12 @@
    ──────────────────────────────────────────────────────────────── */
 @media screen and (max-width: 768px) {
   /* iOS 16px se chhote input par safha zoom kar deta hai */
-  input, select, textarea { font-size: 16px !important; }
+  input, select, textarea { font-size: 12pt !important; }
   /* v553: دستاویز کے کاغذ (معیاری 14pt = 18.67px، افسر کے لگائے سائز سمیت) کو یہ قاعدہ نہ
      چھیڑے — پہلے موبائل پر مسل کی ہر دستاویز 16px (12pt) پر آ جاتی تھی، Desktop پر 14pt۔
      باقی لکھنے والے خانے (فارم، تلاش وغیرہ) پہلے کی طرح کم از کم 16px۔ */
   /* :where() — اس قاعدے کی اہمیت (specificity) پہلے جتنی ہی رہے؛ دوسری دستاویزات کے اپنے قاعدے (مثلاً #ir-doc) غالب رہیں */
-  [contenteditable="true"]:where(:not(#misal-editor, #dk-doc *, #saza-doc *, #dio-naqsha-doc *)) { font-size: 16px !important; }
+  [contenteditable="true"]:where(:not(#misal-editor, #dk-doc *, #saza-doc *, #dio-naqsha-doc *)) { font-size: 12pt !important; }
   .btn, .btn-sm, button, .nav-item, a.btn { min-height: 44px; }
   .zf-pick, .cab, .zab { min-width: 38px; min-height: 38px; }
 }
@@ -435,11 +435,11 @@
     min-height: 42px; padding: 0 14px; border-radius: 10px;
     border: 1px solid var(--border, #d7dee6);
     background: var(--bg-tertiary, #f2f5f8);
-    color: var(--text-primary, #0f1923); font-size: 14px; font-weight: 700;
+    color: var(--text-primary, #0f1923); font-size: 10.5pt; font-weight: 700;
   }
   .dio-chform-head button.on { background: var(--accent, #38bdf8); color: #fff; border-color: transparent; }
   .dio-chform-head .sp { flex: 1 1 auto; }
-  .dio-chform-head .hint { font-size: 11px; color: var(--text-muted, #7d97ad); }
+  .dio-chform-head .hint { font-size: 8.25pt; color: var(--text-muted, #7d97ad); }
 
   .dio-chf-row {
     /* Chipakne wala header khane ko na dhampe jab khana nazar me laya jaye */
@@ -450,18 +450,18 @@
   }
   .dio-chf-lbl {
     display: flex; align-items: center; gap: 8px;
-    font-size: 12px; font-weight: 800; margin-bottom: 6px;
+    font-size: 9pt; font-weight: 800; margin-bottom: 6px;
     color: var(--text-muted, #7d97ad);
   }
   .dio-chf-pick {
     margin-inline-start: auto; min-height: 34px; padding: 0 12px;
-    border: 0; border-radius: 8px; font-size: 12px; font-weight: 700;
+    border: 0; border-radius: 8px; font-size: 9pt; font-weight: 700;
     background: var(--accent, #38bdf8); color: #fff;
   }
   /* AMOODI likhayi yahan NAHI — form me matn hamesha seedha */
   .dio-chf-in {
     writing-mode: horizontal-tb; direction: rtl; text-align: right;
-    font-size: 16px; line-height: 1.8; padding: 8px 10px;
+    font-size: 12pt; line-height: 1.8; padding: 8px 10px;
     border: 1px solid var(--border, #d7dee6); border-radius: 10px;
     background: var(--bg-secondary, #fff);
     white-space: pre-wrap; overflow-wrap: break-word; word-break: normal;

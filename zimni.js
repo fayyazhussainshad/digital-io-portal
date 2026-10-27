@@ -602,7 +602,7 @@ function _renderZimniList() {
   area.innerHTML = `
   <style>
     .zt-wrap{ padding:14px; direction:rtl; height:100%; overflow-y:auto; box-sizing:border-box;
-      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+      font-family:'Jameel Noori Nastaleeq'; }
     .zt-bar{ display:flex; align-items:center; gap:10px; margin:0 0 10px; flex-wrap:wrap; }
     .zt-bar .zt-h{ flex:1; text-align:center; font-size:16pt; font-weight:700; color:var(--accent); min-width:8em; }
     .zt{ width:100%; border-collapse:collapse; font-size:13pt; direction:rtl; }
@@ -682,7 +682,7 @@ function _renderZimniList() {
       </tbody>
     </table>` : `
     <div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
-      <div style="font-size:40px;margin-bottom:10px;">📋</div>
+      <div style="font-size:30pt;margin-bottom:10px;">📋</div>
       <div style="font-size:14pt;">ابھی کوئی ضمنی رپورٹ نہیں</div>
       <div style="font-size:11pt;margin-top:6px;">اوپر «ضمنی درج کریں» پر کلک کریں</div>
     </div>`}
@@ -839,7 +839,7 @@ const _ZIMNI_TYPES = {
 };
 const _ZIMNI_TYPE_ADD = '__add__';
 function _zimniTypeSelCss() {
-  return "height:28px;border:1px solid var(--border,#ccc);border-radius:6px;background:var(--bg-card,#fff);color:var(--text-primary,#111);font-size:13px;padding:0 6px;margin:0 2px;cursor:pointer;max-width:190px;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;";
+  return "height:28px;border:1px solid var(--border,#ccc);border-radius:6px;background:var(--bg-card,#fff);color:var(--text-primary,#111);font-size:9.75pt;padding:0 6px;margin:0 2px;cursor:pointer;max-width:190px;font-family:'Jameel Noori Nastaleeq';";
 }
 function _zimniTypeOfficerId() {
   try { return String((typeof currentOfficer !== 'undefined' && currentOfficer && (currentOfficer.id || currentOfficer.user_id)) || 'x'); } catch (_) { return 'x'; }
@@ -935,9 +935,9 @@ function _renderZimniEditor() {
   const sizes = (typeof R173_FONT_SIZES !== 'undefined')
     ? R173_FONT_SIZES : [8,9,10,10.5,11,12,14,16,18,20,22,24,26,28,36,48,72];
   const btn = (typeof _chBtn === 'function') ? _chBtn()
-    : 'min-width:30px;height:28px;border:1px solid #ccc;border-radius:6px;background:#fff;color:#111;cursor:pointer;font-size:13px;padding:0 7px;margin:0 1px;';
+    : 'min-width:30px;height:28px;border:1px solid #ccc;border-radius:6px;background:#fff;color:#111;cursor:pointer;font-size:9.75pt;padding:0 7px;margin:0 1px;';
   const sep = '<span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>';
-  const selCss = 'height:28px;border:1px solid var(--border,#ccc);border-radius:6px;background:var(--bg-card,#fff);color:var(--text-primary,#111);font-size:13px;padding:0 6px;margin:0 1px;cursor:pointer;';
+  const selCss = 'height:28px;border:1px solid var(--border,#ccc);border-radius:6px;background:var(--bg-card,#fff);color:var(--text-primary,#111);font-size:9.75pt;padding:0 6px;margin:0 1px;cursor:pointer;';
 
   area.innerHTML = `
   <style>${(typeof _ch173CSS === 'function') ? _ch173CSS() : ''}${_zimniFormCSS()}${(typeof _zaFormCSS === 'function') ? _zaFormCSS() : ''}</style>
@@ -961,7 +961,7 @@ function _renderZimniEditor() {
         <button onmousedown="event.preventDefault()" onclick="_zimniFmt('justifyFull')" title="دونوں طرف برابر" style="${btn}">☰</button>
         ${sep}
         <button onmousedown="event.preventDefault()" onclick="_zimniFmt('insertUnorderedList')" title="نقطہ دار فہرست" style="${btn}">•</button>
-        <button onmousedown="event.preventDefault()" onclick="_zimniFmt('insertOrderedList')" title="نمبر والی فہرست" style="${btn}font-size:11px;">1.</button>
+        <button onmousedown="event.preventDefault()" onclick="_zimniFmt('insertOrderedList')" title="نمبر والی فہرست" style="${btn}font-size:8.25pt;">1.</button>
         <button onmousedown="event.preventDefault()" onclick="_ch173ClearFmt()" title="فارمیٹ ختم کریں" style="${btn}">🧹</button>
         ${sep}
         <button id="ch173-brush-btn" onmousedown="event.preventDefault()"
@@ -975,7 +975,7 @@ function _renderZimniEditor() {
         ${sep}
         <!-- ── نیچے والا تیرتا (floating) toolbar اب مکمل یہیں (اوپر) شامل ── -->
         <button onmousedown="event.preventDefault()" onclick="dioFontStep(1)" title="فونٹ بڑا" style="${btn}">A+</button>
-        <button onmousedown="event.preventDefault()" onclick="dioFontStep(-1)" title="فونٹ چھوٹا" style="${btn}font-size:11px;">A−</button>
+        <button onmousedown="event.preventDefault()" onclick="dioFontStep(-1)" title="فونٹ چھوٹا" style="${btn}font-size:8.25pt;">A−</button>
         <button onmousedown="event.preventDefault()" onclick="dioSetDir('rtl')" title="اردو — دائیں سے بائیں (RTL)" style="${btn}font-weight:800;">؈</button>
         <button onmousedown="event.preventDefault()" onclick="dioSetDir('ltr')" title="English — Left to Right (LTR)" style="${btn}font-weight:800;direction:ltr;">EN</button>
         ${sep}
@@ -1179,13 +1179,13 @@ function _zimniFindReplaceUI(withReplace) {
   box.id = 'zfr-box';
   box.style.cssText = 'position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:100000;' +
     'background:var(--bg-card,#fff);border:1px solid #0369a1;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.28);' +
-    "direction:rtl;padding:8px;display:flex;flex-direction:column;gap:6px;font-family:'Jameel Noori Nastaleeq',serif;min-width:300px;";
-  const inp = "flex:1;min-width:0;border:1px solid var(--border,#cbd5e1);border-radius:6px;padding:5px 8px;font-size:14px;font-family:'Jameel Noori Nastaleeq',serif;direction:rtl;outline:none;";
-  const b = "border:1px solid var(--border,#cbd5e1);border-radius:6px;background:var(--bg-secondary,#f8fafc);cursor:pointer;padding:5px 9px;font-size:13px;font-family:'Jameel Noori Nastaleeq',serif;";
+    "direction:rtl;padding:8px;display:flex;flex-direction:column;gap:6px;font-family:'Jameel Noori Nastaleeq';min-width:300px;";
+  const inp = "flex:1;min-width:0;border:1px solid var(--border,#cbd5e1);border-radius:6px;padding:5px 8px;font-size:10.5pt;font-family:'Jameel Noori Nastaleeq';direction:rtl;outline:none;";
+  const b = "border:1px solid var(--border,#cbd5e1);border-radius:6px;background:var(--bg-secondary,#f8fafc);cursor:pointer;padding:5px 9px;font-size:9.75pt;font-family:'Jameel Noori Nastaleeq';";
   box.innerHTML = `
     <div style="display:flex;gap:6px;align-items:center;">
       <input id="zfr-find" placeholder="تلاش کریں…" style="${inp}">
-      <span id="zfr-count" style="font-size:11px;color:var(--text-muted);min-width:38px;text-align:center;">0/0</span>
+      <span id="zfr-count" style="font-size:8.25pt;color:var(--text-muted);min-width:38px;text-align:center;">0/0</span>
       <button id="zfr-prev" title="پچھلا" style="${b}">▲</button>
       <button id="zfr-next" title="اگلا" style="${b}">▼</button>
       <button id="zfr-x" title="بند" style="${b}">✕</button>
@@ -1195,7 +1195,7 @@ function _zimniFindReplaceUI(withReplace) {
       <button id="zfr-rep1" style="${b}">بدلیں</button>
       <button id="zfr-repall" style="${b}">سب بدلیں</button>
     </div>
-    <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-secondary);">
+    <label style="display:flex;align-items:center;gap:5px;font-size:9pt;color:var(--text-secondary);">
       <input type="checkbox" id="zfr-mc"> حروف کا فرق (Case)
     </label>`;
   document.body.appendChild(box);
@@ -2035,19 +2035,19 @@ async function _zimniAccPicker(ev) {
     'display:flex;flex-direction:column;max-height:min(60vh,340px);overflow:hidden;';
   const rows = list.map(a => {
     const nm = (a.name || '').trim();
-    return `<label style="display:flex;align-items:center;gap:8px;padding:7px 6px;cursor:pointer;font-size:13px;
-              border-bottom:1px solid #f1f5f9;font-family:'Jameel Noori Nastaleeq',serif;">
+    return `<label style="display:flex;align-items:center;gap:8px;padding:7px 6px;cursor:pointer;font-size:9.75pt;
+              border-bottom:1px solid #f1f5f9;font-family:'Jameel Noori Nastaleeq';">
               <input type="checkbox" ${mine.has(nm) ? 'checked' : ''} value="${E(nm)}"> <span>${E(nm)}</span></label>`;
   }).join('');
   box.innerHTML = `
-    <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:700;color:#0369a1;
-                font-family:'Jameel Noori Nastaleeq',serif;background:#f8fafc;">ملزمان منتخب کریں</div>
+    <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:9pt;font-weight:700;color:#0369a1;
+                font-family:'Jameel Noori Nastaleeq';background:#f8fafc;">ملزمان منتخب کریں</div>
     <div style="flex:1;overflow-y:auto;padding:4px 8px;min-height:0;">${rows}</div>
     <div style="display:flex;gap:6px;padding:8px;border-top:1px solid #e5e7eb;background:#f8fafc;flex-shrink:0;">
       <button id="zf-acc-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;color:#fff;
-        cursor:pointer;font-size:13px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">✔ شامل کریں</button>
+        cursor:pointer;font-size:9.75pt;font-weight:700;font-family:'Jameel Noori Nastaleeq';">✔ شامل کریں</button>
       <button id="zf-acc-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;
-        cursor:pointer;font-size:13px;font-family:'Jameel Noori Nastaleeq',serif;">بند</button>
+        cursor:pointer;font-size:9.75pt;font-family:'Jameel Noori Nastaleeq';">بند</button>
     </div>`;
   document.body.appendChild(box);
 
@@ -2264,7 +2264,7 @@ function _zimniFormCSS() {
      (JS اسے بنام والی سطر کے برابر رکھتا ہے) */
   #ch173-doc .zf-pick{ display:block; margin:0 auto; width:20px; height:20px;
     line-height:1; padding:0; border:1px solid var(--border,#999); border-radius:4px;
-    background:#eef6ff; color:#0369a1; cursor:pointer; font-size:12px; font-weight:400; }
+    background:#eef6ff; color:#0369a1; cursor:pointer; font-size:9pt; font-weight:400; }
   @media print{ #ch173-doc .zf-pick{ display:none !important; } }
 
   /* ── Table کی لکیریں MOVEABLE ── */
@@ -2278,7 +2278,7 @@ function _zimniFormCSS() {
 
   /* Paste کیا ہوا متن ہمیشہ Nastaliq (bold/italic/underline برقرار) */
   #ch173-doc .zf-body *, #ch173-doc .zf-tbl td *, #ch173-doc .zf-meta *{
-    font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif !important;
+    font-family:'Jameel Noori Nastaleeq' !important;
   }
   #ch173-doc b, #ch173-doc strong{ font-weight:bold; }
   #ch173-doc i, #ch173-doc em{ font-style:italic; }
@@ -2876,7 +2876,7 @@ function _zimniPrintHTML(inner) {
   const zaSkel = (typeof _zaDefaultBody === 'function')
     ? ('<div class="zf-androoni">' + _zaDefaultBody(_o, _c) + '</div>') : '';
   return `<!DOCTYPE html><html dir="rtl" lang="ur"><head><meta charset="UTF-8"><title> </title>
-    ${(typeof dioFontHead === 'function') ? dioFontHead() : '<link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">'}
+    ${(typeof dioFontHead === 'function') ? dioFontHead() : ''}
     <style>
       /* AHEM: سائیڈ مارجن صفحے پر نہیں، دستاویز کی padding سے — تاکہ دستاویز کی
          چوڑائی بالکل وہی رہے جو اسکرین پر تھی۔ اسی سے کالم 2 کے نمبروں کی سیدھ
@@ -2884,7 +2884,7 @@ function _zimniPrintHTML(inner) {
          تھی اور اسکرین پر ناپا ہوا marginTop غلط ہو جاتا تھا)۔ */
       @page{ size:${size}; margin:1cm 0; }
       *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; box-sizing:border-box; }
-      html,body{ margin:0; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu','Tahoma',sans-serif;
+      html,body{ margin:0; font-family:'Jameel Noori Nastaleeq';
             direction:rtl; text-align:justify; color:#000; line-height:1.4; }
       ${css173}
       ${_zimniFormCSS()}
@@ -4220,7 +4220,7 @@ function _renderZimniAList() {
   area.innerHTML = `
   <style>
     .zat-wrap{ padding:14px; direction:rtl; height:100%; overflow-y:auto; box-sizing:border-box;
-      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+      font-family:'Jameel Noori Nastaleeq'; }
     .zat-wrap .zt-bar{ display:flex; align-items:center; gap:10px; margin:0 0 10px; flex-wrap:wrap; }
     .zat-wrap .zt-h{ flex:1; text-align:center; font-size:16pt; font-weight:700; color:var(--accent); min-width:8em; }
     .zat-wrap .zt{ width:100%; border-collapse:collapse; font-size:13pt; direction:rtl; }
@@ -4305,7 +4305,7 @@ function _renderZimniAList() {
       </tbody>
     </table>` : `
     <div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
-      <div style="font-size:40px;margin-bottom:10px;">📋</div>
+      <div style="font-size:30pt;margin-bottom:10px;">📋</div>
       <div style="font-size:14pt;">ابھی کوئی بیان درج نہیں</div>
       <div style="font-size:11pt;margin-top:6px;">اوپر «بیان درج کریں» پر کلک کریں</div>
     </div>`}
@@ -4407,7 +4407,7 @@ function _zaBarCSS() {
   return `
   .zfa-bar{ display:flex; align-items:center; gap:8px; padding:6px 10px; border-bottom:1px solid var(--border);
     flex-wrap:wrap; background:var(--bg-secondary); direction:rtl;
-    font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+    font-family:'Jameel Noori Nastaleeq'; }
   .zfa-bar .zfa-pick{ display:flex; align-items:center; gap:6px; min-width:0; flex:0 1 auto; }
   .zfa-bar .zfa-pick-lbl{ font-size:12pt; font-weight:700; color:var(--accent); white-space:nowrap; }
   .zfa-bar #zfa-wit-sel{ height:32px; min-width:12em; max-width:min(26em, 62vw); border:1px solid var(--accent);
@@ -5099,7 +5099,7 @@ function _zaFormCSS() {
 
   /* Paste کیا ہوا متن ہمیشہ Nastaliq */
   #ch173-doc .zfa-body *, #ch173-doc .zfa-tbl td *, #ch173-doc .zfa-meta *{
-    font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif !important;
+    font-family:'Jameel Noori Nastaleeq' !important;
   }`;
 }
 
@@ -5502,11 +5502,11 @@ function _zaPrintHTML(inner) {
   const size  = (paper === 'a4') ? 'A4 portrait' : '8.5in 13in';
   const css173 = (typeof _ch173CSS === 'function') ? _ch173CSS() : '';
   return `<!DOCTYPE html><html dir="rtl" lang="ur"><head><meta charset="UTF-8"><title> </title>
-    ${(typeof dioFontHead === 'function') ? dioFontHead() : '<link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">'}
+    ${(typeof dioFontHead === 'function') ? dioFontHead() : ''}
     <style>
       @page{ size:${size}; margin:1cm ${side}; }
       *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; box-sizing:border-box; }
-      html,body{ margin:0; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu','Tahoma',sans-serif;
+      html,body{ margin:0; font-family:'Jameel Noori Nastaleeq';
             direction:rtl; text-align:justify; color:#000; line-height:1.4; }
       ${css173}
       ${_zaFormCSS()}

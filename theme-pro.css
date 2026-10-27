@@ -118,14 +118,14 @@ html:not([data-theme="light"]) {
   padding: 12px 2px 0 !important;
   margin-top: 6px !important;
   color: var(--dio-ink-3) !important;
-  font-size: 11.5px !important;
+  font-size: 8.625pt !important;
   line-height: 1.85 !important;
   box-shadow: none !important;
 }
 #login-screen .dio-legal *,
 #login-screen .disclaimer-box * {
   color: var(--dio-ink-3) !important;
-  font-size: 11.5px !important; line-height: 1.9 !important;
+  font-size: 8.625pt !important; line-height: 1.9 !important;
 }
 /* "Digital IO" ka naam ailamie me — halka numayan, bhaRkeela nahi */
 #login-screen .dio-legal span[style*="font-weight:800"] { color: var(--dio-ink-2) !important; }
@@ -143,7 +143,7 @@ html:not([data-theme="light"]) {
   box-shadow: none !important;
   display: flex !important; flex-direction: column !important;
   align-items: center !important; justify-content: center !important; gap: 5px !important;
-  font-size: 13px !important; padding: 10px 6px !important;
+  font-size: 9.75pt !important; padding: 10px 6px !important;
 }
 #login-screen .login-method svg { opacity: .75; }
 #login-screen .login-method.active svg { opacity: 1; }
@@ -185,7 +185,7 @@ html:not([data-theme="light"]) {
    NOTE: "256-bit" ka tootna aik BIDI masla tha (RTL me adad alag ho kar
    aakhir me chala jata tha) — index.html me LTR ke andar band kiya gaya. */
 #login-screen .sec-note, #login-screen [class*="security-line"] {
-  color: var(--dio-ink-3) !important; font-size: 10.5px !important;
+  color: var(--dio-ink-3) !important; font-size: 7.875pt !important;
 }
 
 /* ────────────────────────────────────────────────────────────────
@@ -198,7 +198,7 @@ html:not([data-theme="light"]) {
    AHEM — dashboard ke adad ke liye <b>, unwan ke liye <h2>:
    index.html me aik AAM qaida hai —
      .page-content :is(div, span, p, td, th, li, label, a):not(#…)×10
-       { font-size: 14px !important; }
+       { font-size: 10.5pt !important; }
    Us me 10 `:not(#id)` hain, is liye us ki specificity itni oonchi hai ke
    `!important` laga kar bhi usay haraya nahi ja sakta (adad 30px ke bajaye
    14px reh jate the — rang/wazan lag rahe the, sirf NAAP haar rahi thi).
@@ -229,12 +229,12 @@ b.dio-sec-h, .dio-sec-h {
 .dio-idcard .dio-id-row { display: flex; align-items: center; gap: 12px; }
 .dio-idcard .dio-id-main { flex: 1; text-align: right; min-width: 0; }
 b.dio-id-name {
-  display: block; font-size: 17px; font-weight: 800; color: var(--dio-ink);
-  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  display: block; font-size: 12.75pt; font-weight: 800; color: var(--dio-ink);
+  font-family: 'Jameel Noori Nastaleeq';
   line-height: 1.6;
 }
-.dio-id-sub  { font-size: 12px; color: var(--dio-ink-2); margin-top: 1px; }
-small.dio-id-date { display: block; font-size: 11px; color: var(--dio-ink-3); margin-top: 3px; }
+.dio-id-sub  { font-size: 9pt; color: var(--dio-ink-2); margin-top: 1px; }
+small.dio-id-date { display: block; font-size: 8.25pt; color: var(--dio-ink-3); margin-top: 3px; }
 #dash-welcome-avatar {
   background: var(--dio-brand) !important;
   border: 0 !important; color: #fff !important; font-weight: 800 !important;
@@ -263,13 +263,13 @@ small.dio-id-date { display: block; font-size: 11px; color: var(--dio-ink-3); ma
 .dio-stat:focus-visible { outline: 2px solid var(--dio-brand); outline-offset: 2px; }
 /* Adad — HERO */
 b.dio-stat-num {
-  font-size: 30px; font-weight: 800; line-height: 1;
+  font-size: 22.5pt; font-weight: 800; line-height: 1;
   color: var(--st, var(--dio-brand));
   font-variant-numeric: tabular-nums;
 }
 .dio-stat-lbl {
-  font-size: 12px; color: var(--dio-ink-2); line-height: 1.45;
-  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-size: 9pt; color: var(--dio-ink-2); line-height: 1.45;
+  font-family: 'Jameel Noori Nastaleeq';
 }
 /* Icon — sirf ishara, hawi nahi (pehle ye sab se bara tha) */
 .dio-stat-ic {
@@ -295,16 +295,16 @@ b.dio-stat-num {
 }
 .dio-prio-card:hover { box-shadow: var(--dio-shadow-2); transform: translateY(-1px); }
 b.dio-prio-num {
-  font-size: 28px; font-weight: 800; line-height: 1.1;
+  font-size: 21pt; font-weight: 800; line-height: 1.1;
   color: var(--dio-ink); font-variant-numeric: tabular-nums;
 }
 .dio-prio-lbl {
-  font-size: 13px; font-weight: 700; color: var(--dio-ink);
-  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-size: 9.75pt; font-weight: 700; color: var(--dio-ink);
+  font-family: 'Jameel Noori Nastaleeq';
 }
 small.dio-prio-sub {
-  font-size: 11px; color: var(--dio-ink-3);
-  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-size: 8.25pt; color: var(--dio-ink-3);
+  font-family: 'Jameel Noori Nastaleeq';
 }
 .dio-prio-card.tone-info  { border-inline-start-color: var(--dio-brand); }
 .dio-prio-card.tone-ok    { border-inline-start-color: var(--dio-ok); }
@@ -318,7 +318,7 @@ small.dio-prio-sub {
                scroll-snap-type: x mandatory; padding-bottom: 4px; }
   .dio-stat  { min-width: 116px; flex: 0 0 auto; scroll-snap-align: start; }
   .dio-prio  { grid-template-columns: 1fr; }
-  .dio-id-name { font-size: 16px; }
+  .dio-id-name { font-size: 12pt; }
 }
 
 /* ── Chhapai: dashboard ki sajawat kaghaz par nahi ── */
@@ -376,12 +376,12 @@ b.dio-stat-num { margin-bottom: 2px; }
   gap: 9px; min-width: 0; overflow: hidden; white-space: nowrap;
 }
 .dio-tb-name {
-  font-size: 15px; font-weight: 800; letter-spacing: .18em;
+  font-size: 11.25pt; font-weight: 800; letter-spacing: .18em;
   color: var(--dio-brand); white-space: nowrap;
 }
 .dio-tb-sub {
-  font-size: 12.5px; color: var(--dio-ink-3); white-space: nowrap;
-  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-size: 9.375pt; color: var(--dio-ink-3); white-space: nowrap;
+  font-family: 'Jameel Noori Nastaleeq';
   padding-inline-start: 9px; border-inline-start: 1px solid var(--dio-line);
 }
 /* Tang sakreen par sirf naam — zer-unwan login safhe par pehle se hai */
@@ -391,7 +391,7 @@ b.dio-stat-num { margin-bottom: 2px; }
 @media (max-width: 760px) {
   .dio-tb-name { display: none; }
   .dio-tb-sub  {
-    font-size: 14px; font-weight: 800; color: var(--dio-ink);
+    font-size: 10.5pt; font-weight: 800; color: var(--dio-ink);
     padding-inline-start: 0; border-inline-start: 0;
     overflow: hidden; text-overflow: ellipsis;
   }
@@ -414,8 +414,8 @@ b.dio-stat-num { margin-bottom: 2px; }
   padding: 0 6px !important; box-shadow: none !important;
 }
 .dio-tb-status #status-text {
-  font-size: 11px !important; color: var(--dio-ink-3) !important;
-  font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', serif;
+  font-size: 8.25pt !important; color: var(--dio-ink-3) !important;
+  font-family: 'Jameel Noori Nastaleeq';
 }
 .dio-tb-status .status-dot { width: 7px; height: 7px; border-radius: 50%; }
 
@@ -617,7 +617,7 @@ b.dio-stat-num { margin-bottom: 2px; }
 
 /* ── 3.11 CARD ka unwan ────────────────────────────────────────
    MASLA: asal styles.css me
-       .card-title { font-size:10px; color:var(--text-faint);
+       .card-title { font-size:7.5pt; color:var(--text-faint);
                      letter-spacing:2px; text-transform:uppercase; }
    ye angrezi ke chhote label ke liye banaya gaya tha. Urdu par is ka
    asar bura hai — 10px par Nastaleeq parhi nahi jati, `letter-spacing`
@@ -627,7 +627,7 @@ b.dio-stat-num { margin-bottom: 2px; }
    Dastavez (#ch173-doc, #saza-doc, #dk-doc, #dio-naqsha-doc) is se
    mutasir nahi — wahan `.card-title` istemal hi nahi hota. */
 .card-title, .section-title {
-  font-size: 13px !important;
+  font-size: 9.75pt !important;
   font-weight: 800 !important;
   color: var(--dio-ink) !important;
   letter-spacing: 0 !important;
@@ -655,7 +655,7 @@ b.dio-stat-num { margin-bottom: 2px; }
   border: 1px solid var(--dio-line) !important;
   background: var(--dio-surface) !important;
   color: var(--dio-ink-2) !important;
-  font-family: inherit; font-size: 13px; font-weight: 700;
+  font-family: inherit; font-size: 9.75pt; font-weight: 700;
   line-height: 1.9; cursor: pointer;
   white-space: nowrap;
 }
@@ -706,7 +706,7 @@ b.dio-stat-num { margin-bottom: 2px; }
    Is liye unwan chhupa rehta hai, zaili unwan wapas nazar aata hai. */
 .page-header .page-subtitle {
   display: block !important;
-  font-size: 12.5px; color: var(--dio-ink-3); line-height: 1.9;
+  font-size: 9.375pt; color: var(--dio-ink-3); line-height: 1.9;
 }
 
 /* ── 3.14 JADWAL — qatarein aur khanay (rows / columns) ───────
@@ -726,7 +726,7 @@ b.dio-stat-num { margin-bottom: 2px; }
 .page-content .data-table:not(.dio-cards) thead th {
   position: sticky; top: 0; z-index: 3;
   white-space: nowrap;
-  font-size: 12.5px !important;
+  font-size: 9.375pt !important;
   letter-spacing: 0 !important;
   text-transform: none !important;
 }
@@ -801,7 +801,7 @@ b.dio-stat-num { margin-bottom: 2px; }
   display: inline-block;
   border-radius: 999px;
   padding: 2px 10px;
-  font-size: 12px;
+  font-size: 9pt;
   font-weight: 700;
   line-height: 1.9;
   border: 1px solid var(--dio-line);

@@ -37,14 +37,14 @@ function openShoDspModal(type) {
     <div style="direction:rtl;display:flex;flex-direction:column;gap:12px;">
       <div style="display:flex;gap:10px;align-items:center;">
         <label style="min-width:60px;">رینک:</label>
-        <select id="shodsp-rank" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:14px;">
+        <select id="shodsp-rank" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:10.5pt;">
           ${(isSho ? SHO_RANKS : DSP_RANKS).map(r => `<option value="${r}" ${cur.rank===r?'selected':''}>${r}</option>`).join('')}
         </select>
       </div>
       <div style="display:flex;gap:10px;align-items:center;">
         <label style="min-width:60px;">نام:</label>
         <input id="shodsp-name" type="text" value="${esc(cur.name||'')}" placeholder="نام لکھیں"
-          style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:14px;font-family:'Jameel Noori Nastaleeq',serif;">
+          style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:10.5pt;font-family:'Jameel Noori Nastaleeq';">
       </div>
     </div>
   `, `
@@ -93,12 +93,12 @@ function openSarkariGari() {
       <div style="display:flex;gap:10px;align-items:center;">
         <label style="min-width:90px;">گاڑی نمبر:</label>
         <input id="gari-number" type="text" dir="ltr" value="${esc(cur.vehicle_number||'')}" placeholder="ABC-123"
-          style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:14px;direction:ltr;text-align:left;">
+          style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:10.5pt;direction:ltr;text-align:left;">
       </div>
       <div style="display:flex;gap:10px;align-items:center;">
         <label style="min-width:90px;">ڈرائیور کا نام:</label>
         <input id="gari-driver" type="text" value="${esc(cur.driver_name||'')}" placeholder="نام لکھیں"
-          style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:14px;font-family:'Jameel Noori Nastaleeq',serif;">
+          style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:10.5pt;font-family:'Jameel Noori Nastaleeq';">
       </div>
     </div>
   `, `

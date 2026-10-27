@@ -204,9 +204,9 @@ function _sazaRender() {
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
     <!-- ── FIXED TOOLBAR (report173 jaisa) ── -->
     <div class="no-print" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
-      <span style="font-family:'Jameel Noori Nastaleeq',serif;font-size:15px;font-weight:700;color:var(--accent);">📜 سزا سلپ</span>
+      <span style="font-family:'Jameel Noori Nastaleeq';font-size:11.25pt;font-weight:700;color:var(--accent);">📜 سزا سلپ</span>
       <!-- v553: لیگل/A4 کا انتخاب یہاں سے ہٹا — پرنٹ کے وقت پوچھا جاتا ہے -->
-      <span style="font-size:11px;color:var(--text-muted);">↔ ملزم شامل کرنے کے لیے کالم 1 میں ▾ دبائیں</span>
+      <span style="font-size:8.25pt;color:var(--text-muted);">↔ ملزم شامل کرنے کے لیے کالم 1 میں ▾ دبائیں</span>
       <div style="margin-right:auto;display:flex;gap:6px;align-items:center;">
         <button onmousedown="event.preventDefault()" onclick="_sazaFmt('bold')" title="بولڈ" style="${_sazaBtn()}font-weight:900;">B</button>
         <button onmousedown="event.preventDefault()" onclick="_sazaFmt('italic')" title="ترچھا" style="${_sazaBtn()}font-style:italic;">I</button>
@@ -218,7 +218,7 @@ function _sazaRender() {
         <button onmousedown="event.preventDefault()" onclick="_sazaFmt('justifyFull')" title="دونوں طرف برابر" style="${_sazaBtn()}">☰</button>
         <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
         <select id="saza-font-sel" onchange="_sazaSetFont(this.value)" title="فونٹ سائز"
-          style="height:28px;border:1px solid var(--border,#ccc);border-radius:6px;background:var(--bg-card,#fff);color:var(--text-primary,#111);font-size:13px;padding:0 6px;margin:0 1px;cursor:pointer;">
+          style="height:28px;border:1px solid var(--border,#ccc);border-radius:6px;background:var(--bg-card,#fff);color:var(--text-primary,#111);font-size:9.75pt;padding:0 6px;margin:0 1px;cursor:pointer;">
           ${SAZA_FONT_SIZES.map(s => `<option value="${s}" ${String(s)===String(docFont)?'selected':''}>${s}</option>`).join('')}
         </select>
         <button onmousedown="event.preventDefault()" onclick="_sazaFmt('undo')" title="واپس" style="${_sazaBtn()}">↶</button>
@@ -514,21 +514,21 @@ function _sazaAccPicker(ev) {
   const rows = list.map(a => {
     const nm = a.name;
     const on = mine.has(nm);
-    return `<label style="display:flex;align-items:center;gap:8px;padding:7px 6px;cursor:pointer;font-size:13px;
-              border-bottom:1px solid #f1f5f9;font-family:'Jameel Noori Nastaleeq',serif;">
+    return `<label style="display:flex;align-items:center;gap:8px;padding:7px 6px;cursor:pointer;font-size:9.75pt;
+              border-bottom:1px solid #f1f5f9;font-family:'Jameel Noori Nastaleeq';">
               <input type="checkbox" ${on?'checked':''} value="${esc(nm)}"> <span>${esc(nm)}</span></label>`;
   }).join('');
   box.innerHTML = `
-    <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:700;color:#0369a1;
-                font-family:'Jameel Noori Nastaleeq',serif;background:#f8fafc;">ملزمان منتخب کریں</div>
+    <div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:9pt;font-weight:700;color:#0369a1;
+                font-family:'Jameel Noori Nastaleeq';background:#f8fafc;">ملزمان منتخب کریں</div>
     <div style="flex:1;overflow-y:auto;padding:4px 8px;min-height:0;">
-      ${rows || '<div style="font-size:12px;color:#777;padding:10px;">کوئی ملزم نہیں</div>'}
+      ${rows || '<div style="font-size:9pt;color:#777;padding:10px;">کوئی ملزم نہیں</div>'}
     </div>
     <div style="display:flex;gap:6px;padding:8px;border-top:1px solid #e5e7eb;background:#f8fafc;flex-shrink:0;">
       <button id="saza-acc-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;
-        color:#fff;cursor:pointer;font-size:13px;font-weight:700;font-family:'Jameel Noori Nastaleeq',serif;">✔ شامل کریں</button>
+        color:#fff;cursor:pointer;font-size:9.75pt;font-weight:700;font-family:'Jameel Noori Nastaleeq';">✔ شامل کریں</button>
       <button id="saza-acc-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;
-        cursor:pointer;font-size:13px;font-family:'Jameel Noori Nastaleeq',serif;">بند</button>
+        cursor:pointer;font-size:9.75pt;font-family:'Jameel Noori Nastaleeq';">بند</button>
     </div>`;
   document.body.appendChild(box);
 
@@ -631,7 +631,7 @@ window._sazaPickDate = _sazaPickDate;
 function _sazaBtn() {
   return 'min-width:30px;height:28px;border:1px solid var(--border,#ccc);border-radius:6px;' +
          'background:var(--bg-card,#fff);color:var(--text-primary,#111);cursor:pointer;' +
-         'font-size:13px;padding:0 7px;margin:0 1px;';
+         'font-size:9.75pt;padding:0 7px;margin:0 1px;';
 }
 const SAZA_FONT_SIZES = [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72];
 const SAZA_FONT_DEFAULT = 14;
@@ -996,12 +996,12 @@ async function _sazaPrintNow() {
 
   const inner = clone.innerHTML;
   const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
-    ${(typeof dioFontHead === 'function') ? dioFontHead() : '<link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">'}
+    ${(typeof dioFontHead === 'function') ? dioFontHead() : ''}
     <style>
       @page{ size:${_sazaPaper === 'a4' ? 'A4 portrait' : '8.5in 13in'}; margin:6mm ${_sazaSideMargin()}; }
       *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; box-sizing:border-box; }
       html, body{ margin:0 !important; padding:0 !important;
-        font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
+        font-family:'Jameel Noori Nastaleeq';
         direction:rtl; line-height:1.4; color:#000; font-size:${_sazaDocFont(_sazaSaved)}pt; }
       ${_sazaCSS()}
       #saza-doc{ width:100% !important; max-width:none !important; height:auto !important;
@@ -1137,7 +1137,7 @@ function _sazaCSS() {
     body.saza-focus .bottombar{ display:none !important; }
 
     /* Root doc — 14pt, RTL, Jameel Noori */
-    #saza-doc{ direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; color:#000; font-size:14pt; }
+    #saza-doc{ direction:rtl; font-family:'Jameel Noori Nastaleeq'; color:#000; font-size:14pt; }
     #saza-doc .fl{ outline:none; unicode-bidi:isolate; direction:rtl; min-width:30px; display:inline-block; }
 
     /* Line 1 — فارم نمبر (center, 12pt) */
@@ -1205,7 +1205,7 @@ function _sazaCSS() {
       display:inline-block; vertical-align:middle; margin-right:6px;
       width:26px; height:24px; line-height:22px; padding:0;
       border:1px solid #0369a1; border-radius:5px; background:#0369a1; color:#fff;
-      cursor:pointer; font-size:13px; font-weight:700; text-align:center;
+      cursor:pointer; font-size:9.75pt; font-weight:700; text-align:center;
     }
     #saza-doc .saza-acc-pick:hover{ background:#025687; }
 

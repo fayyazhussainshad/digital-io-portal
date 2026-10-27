@@ -18,10 +18,10 @@ if (!window.supabase || !window.supabase.createClient) {
     setTimeout(function(){
       if (!window.supabase || !window.supabase.createClient) {
         document.body.innerHTML = '<div style="font-family:sans-serif;direction:rtl;text-align:center;padding:40px 20px;max-width:400px;margin:60px auto;background:#0f1923;color:#e5eef5;border-radius:16px;border:1px solid #1e3a52;">'
-          + '<div style="font-size:48px;margin-bottom:16px;"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M4.5 15a10.5 10.5 0 0 1 15 0"/><path d="M8 18.2a6 6 0 0 1 8 0"/><path d="M12 21h.01"/><path d="M2 11.5a14.5 14.5 0 0 1 20 0"/></svg></div>'
-          + '<div style="font-size:18px;font-weight:700;margin-bottom:10px;">کنکشن کا مسئلہ</div>'
-          + '<div style="font-size:14px;color:#7d97ad;line-height:1.8;margin-bottom:20px;">انٹرنیٹ سے لائبریری لوڈ نہیں ہو سکی۔ براہِ کرم انٹرنیٹ چیک کریں اور دوبارہ کوشش کریں۔</div>'
-          + '<button onclick="location.reload(true)" style="background:#38bdf8;color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:15px;font-weight:700;cursor:pointer;">دوبارہ کوشش کریں</button>'
+          + '<div style="font-size:36pt;margin-bottom:16px;"><svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M4.5 15a10.5 10.5 0 0 1 15 0"/><path d="M8 18.2a6 6 0 0 1 8 0"/><path d="M12 21h.01"/><path d="M2 11.5a14.5 14.5 0 0 1 20 0"/></svg></div>'
+          + '<div style="font-size:13.5pt;font-weight:700;margin-bottom:10px;">کنکشن کا مسئلہ</div>'
+          + '<div style="font-size:10.5pt;color:#7d97ad;line-height:1.8;margin-bottom:20px;">انٹرنیٹ سے لائبریری لوڈ نہیں ہو سکی۔ براہِ کرم انٹرنیٹ چیک کریں اور دوبارہ کوشش کریں۔</div>'
+          + '<button onclick="location.reload(true)" style="background:#38bdf8;color:#fff;border:none;border-radius:10px;padding:12px 28px;font-size:11.25pt;font-weight:700;cursor:pointer;">دوبارہ کوشش کریں</button>'
           + '</div>';
       }
     }, 2500);
@@ -203,16 +203,16 @@ function showPage(page, el) {
     } catch(err) {
       console.error('Page render error ['+page+']:', err);
       container.innerHTML = `<div style="padding:30px;direction:rtl;text-align:center;">
-        <div style="font-size:40px;"><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M12 4L3 19.5h18z'/><path d='M12 10v4.5'/><path d='M12 17.2h.01'/></svg></div>
-        <div style="font-size:15px;margin-top:10px;color:var(--text-secondary);">صفحہ کھولنے میں مسئلہ</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:8px;font-family:monospace;direction:ltr;">${(err&&err.message)||err}</div>
+        <div style="font-size:30pt;"><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M12 4L3 19.5h18z'/><path d='M12 10v4.5'/><path d='M12 17.2h.01'/></svg></div>
+        <div style="font-size:11.25pt;margin-top:10px;color:var(--text-secondary);">صفحہ کھولنے میں مسئلہ</div>
+        <div style="font-size:8.25pt;color:var(--text-muted);margin-top:8px;font-family:monospace;direction:ltr;">${(err&&err.message)||err}</div>
         <button class="btn btn-secondary btn-sm" style="margin-top:14px;" onclick="showPage('${page}',null)">دوبارہ کوشش</button>
       </div>`;
     }
   } else {
     container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted);">
-      <div style="font-size:48px;"><svg viewBox='0 0 24 24' width='48' height='48' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><path d='M12 4L3 19.5h18z'/><path d='M12 10v4.5'/><path d='M12 17.2h.01'/></svg></div>
-      <div style="font-size:16px;margin-top:12px;">${page} — جلد آ رہا ہے</div>
+      <div style="font-size:36pt;"><svg viewBox='0 0 24 24' width='48' height='48' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><path d='M12 4L3 19.5h18z'/><path d='M12 10v4.5'/><path d='M12 17.2h.01'/></svg></div>
+      <div style="font-size:12pt;margin-top:12px;">${page} — جلد آ رہا ہے</div>
     </div>`;
   }
 }
@@ -341,7 +341,7 @@ function showToast(msg, type='info', duration=3000) {
   if (!t) {
     t = document.createElement('div');
     t.id = 'toast-msg';
-    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:8px;font-size:13px;z-index:99999;box-shadow:0 4px 14px rgba(0,0,0,0.3);font-family:"Jameel Noori Nastaleeq","Noto Nastaliq Urdu",serif;direction:rtl;max-width:90vw;text-align:center;';
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:8px;font-size:9.75pt;z-index:99999;box-shadow:0 4px 14px rgba(0,0,0,0.3);font-family:"Jameel Noori Nastaleeq";direction:rtl;max-width:90vw;text-align:center;';
     document.body.appendChild(t);
   }
   const colors = { success:'#22c55e', error:'#ef4444', info:'#38bdf8', warn:'#f59e0b' };
@@ -458,13 +458,13 @@ window.confirmDelete = function(itemName, onConfirm) {
   const dialog = document.createElement('div');
   dialog.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:99999;display:flex;align-items:center;justify-content:center;';
   dialog.innerHTML = `
-    <div style="background:var(--bg-card,#fff);padding:24px;border-radius:14px;max-width:340px;width:90%;text-align:center;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
-      <div style="font-size:34px;margin-bottom:10px;"><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M12 4L3 19.5h18z'/><path d='M12 10v4.5'/><path d='M12 17.2h.01'/></svg></div>
-      <div style="font-size:17px;font-weight:bold;margin-bottom:6px;color:var(--text-primary,#111);">کیا آپ واقعی حذف کرنا چاہتے ہیں؟</div>
-      <div style="font-size:14px;color:var(--text-secondary,#777);margin-bottom:20px;">${itemName||''}</div>
+    <div style="background:var(--bg-card,#fff);padding:24px;border-radius:14px;max-width:340px;width:90%;text-align:center;direction:rtl;font-family:'Jameel Noori Nastaleeq';">
+      <div style="font-size:25.5pt;margin-bottom:10px;"><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M12 4L3 19.5h18z'/><path d='M12 10v4.5'/><path d='M12 17.2h.01'/></svg></div>
+      <div style="font-size:12.75pt;font-weight:bold;margin-bottom:6px;color:var(--text-primary,#111);">کیا آپ واقعی حذف کرنا چاہتے ہیں؟</div>
+      <div style="font-size:10.5pt;color:var(--text-secondary,#777);margin-bottom:20px;">${itemName||''}</div>
       <div style="display:flex;gap:12px;justify-content:center;">
-        <button id="_cd-cancel" style="padding:10px 22px;border:1px solid var(--border,#ccc);border-radius:8px;background:transparent;color:var(--text-primary,#111);cursor:pointer;font-size:15px;">منسوخ</button>
-        <button id="_cd-ok" style="padding:10px 22px;border:none;border-radius:8px;background:var(--red);color:#fff;cursor:pointer;font-size:15px;">حذف کریں</button>
+        <button id="_cd-cancel" style="padding:10px 22px;border:1px solid var(--border,#ccc);border-radius:8px;background:transparent;color:var(--text-primary,#111);cursor:pointer;font-size:11.25pt;">منسوخ</button>
+        <button id="_cd-ok" style="padding:10px 22px;border:none;border-radius:8px;background:var(--red);color:#fff;cursor:pointer;font-size:11.25pt;">حذف کریں</button>
       </div>
     </div>`;
   document.body.appendChild(dialog);
@@ -477,10 +477,10 @@ window.confirmDelete = function(itemName, onConfirm) {
 window.showEmptyState = function(container, message, actionHint) {
   if (!container) return;
   container.innerHTML = `
-    <div style="text-align:center;padding:40px 20px;color:var(--text-muted,#888);direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
-      <div style="font-size:46px;margin-bottom:14px;"><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M3.5 7.5h6l2 2.5h9V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z'/></svg></div>
-      <div style="font-size:16px;margin-bottom:8px;color:var(--text-secondary,#aaa);">${message||''}</div>
-      ${actionHint ? `<div style="font-size:13px;color:var(--text-faint,#999);">${actionHint}</div>` : ''}
+    <div style="text-align:center;padding:40px 20px;color:var(--text-muted,#888);direction:rtl;font-family:'Jameel Noori Nastaleeq';">
+      <div style="font-size:34.5pt;margin-bottom:14px;"><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M3.5 7.5h6l2 2.5h9V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z'/></svg></div>
+      <div style="font-size:12pt;margin-bottom:8px;color:var(--text-secondary,#aaa);">${message||''}</div>
+      ${actionHint ? `<div style="font-size:9.75pt;color:var(--text-faint,#999);">${actionHint}</div>` : ''}
     </div>`;
 };
 
@@ -526,7 +526,7 @@ window.attachSuggestions = function(inputEl, categoryKey, opts) {
     const cur = (inputEl.isContentEditable ? inputEl.innerText : inputEl.value || '').trim();
     all.filter(s => s && s !== cur).forEach(s => {
       const chip = document.createElement('span');
-      chip.style.cssText = 'display:inline-flex;align-items:center;gap:4px;font-style:italic;color:#888;font-size:12px;border:1px dashed #bbb;border-radius:12px;padding:2px 8px;cursor:pointer;';
+      chip.style.cssText = 'display:inline-flex;align-items:center;gap:4px;font-style:italic;color:#888;font-size:9pt;border:1px dashed #bbb;border-radius:12px;padding:2px 8px;cursor:pointer;';
       chip.innerHTML = `${s} <b style="color:var(--accent,#2563eb);font-style:normal;"><svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><path d='M4.5 12.5l5 5 10-11'/></svg></b>`;
       chip.title = 'قبول کریں';
       chip.onclick = () => { setVal(s); render(); };
@@ -921,7 +921,7 @@ function openThemePicker() {
         <button type="button" onclick="setTheme('${t.k}');closeModal();"
           aria-pressed="${t.k === cur ? 'true' : 'false'}"
           style="display:flex;flex-direction:column;align-items:center;gap:7px;padding:11px 8px;
-                 border-radius:11px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;
+                 border-radius:11px;cursor:pointer;font-family:inherit;font-size:9.75pt;font-weight:700;
                  border:2px solid ${t.k === cur ? 'var(--accent)' : 'var(--border)'};
                  background:var(--bg-secondary);color:var(--text-primary);">
           <span style="width:42px;height:28px;border-radius:7px;flex:none;
@@ -958,10 +958,10 @@ function setTheme(t) {
 
 // ── FONT SIZE (accessibility — har officer apni pasand rakh sake) ──────────
 // Base html font-size badalne se poori app proportionally choti/bari hoti hai.
-const DIO_FONT_SIZES = { small: '15px', medium: '16px', large: '18px', xlarge: '20px' };
+const DIO_FONT_SIZES = { small: '11.25pt', medium: '12pt', large: '13.5pt', xlarge: '15pt' };   // v560: pt (= 15/16/18/20px)
 function setFontSize(key) {
-  const px = DIO_FONT_SIZES[key] || DIO_FONT_SIZES.medium;
-  document.documentElement.style.fontSize = px;
+  const fs = DIO_FONT_SIZES[key] || DIO_FONT_SIZES.medium;
+  document.documentElement.style.fontSize = fs;
   try { localStorage.setItem('dio_font_size', key); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
 }
 function getFontSize() {
@@ -972,7 +972,7 @@ function getFontSize() {
 // clear kar do taake koi us par "phansa" na rahe — sab standard par aa jayen.
 (function(){
   try { localStorage.removeItem('dio_font_size'); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
-  document.documentElement.style.fontSize = DIO_FONT_SIZES.medium;   // 16px
+  document.documentElement.style.fontSize = DIO_FONT_SIZES.medium;   // 12pt (= 16px)
 })();
 window.setFontSize = setFontSize;   // (baqi code kahin call kare to mehfooz — no-op-ish)
 window.getFontSize = getFontSize;
@@ -1065,20 +1065,49 @@ async function initApp() {
    laga hi nahi.)
 
    Ab har chhapai isi aik jagah se font leti hai. `font-display:block` —
-   taake chhapai se pehle font aa jaye, adha-adha na chhape. Aakhir mein
-   system ke Urdu font bhi rakhe hain (aale par jo mil jaye).
+   taake chhapai se pehle font aa jaye, adha-adha na chhape.
+   v560: font isi site ka (fonts/jameel-noori-nastaleeq.woff2, sw.js mein
+   pehle se cache) — poora pata (absolute URL), taake iframe / naya window /
+   download ki gayi HTML file bhi wohi font le. Koi doosra (fallback) font nahi.
    ═══════════════════════════════════════════════════════════ */
+function dioFontUrl() {
+  try { return new URL('fonts/jameel-noori-nastaleeq.woff2', document.baseURI).href; }
+  catch (_) { return '/fonts/jameel-noori-nastaleeq.woff2'; }
+}
 function dioFontHead() {
-  return '<link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=block" rel="stylesheet">'
-    + '<style>'
+  return '<style>'
     + "@font-face{font-family:'Jameel Noori Nastaleeq';"
-    + "src:local('Jameel Noori Nastaleeq'),local('JameelNooriNastaleeq'),local('Jameel Noori Nastaleeq Regular'),"
-    + "url('https://cdn.jsdelivr.net/npm/jameel-noori/fonts/jameel-noori-nastaleeq4.woff2') format('woff2'),"
-    + "url('https://unpkg.com/jameel-noori/fonts/jameel-noori-nastaleeq4.woff2') format('woff2');"
+    + "src:url('" + dioFontUrl() + "') format('woff2');"
     + 'font-weight:normal;font-style:normal;font-display:block;}'
     + '</style>';
 }
+window.dioFontUrl = dioFontUrl;
 window.dioFontHead = dioFontHead;
+// v560: چھپائی/برآمد سے پہلے فونٹ — اگر ابھی لوڈ ہو رہا ہو تو انتظار، ورنہ فوراً (پہلے جیسا)
+//   v560: اردو کا کوئی متبادل فونٹ نہیں — Jameel لوڈ نہ ہو سکے تو غلط فونٹ میں نہیں چھپتا، صاف پیغام
+function dioJameelLoaded(d) {
+  try { return Array.from(d.fonts || []).some(f => /Jameel Noori Nastaleeq/.test(f.family) && f.status === 'loaded'); }   // FontFaceSet: array نہیں — Array.from
+  catch (_) { return true; }   // پرانا براؤزر — جانچ ممکن نہیں
+}
+async function dioEnsureJameel(d, maxMs) {
+  if (dioJameelLoaded(d)) return true;
+  try {
+    if (d.fonts && d.fonts.load) {
+      await Promise.race([d.fonts.load('14pt "Jameel Noori Nastaleeq"', 'ابج'), new Promise(r => setTimeout(r, maxMs || 30000))]);
+    }
+  } catch (_) { /* نیچے جانچ */ }
+  return dioJameelLoaded(d);
+}
+function dioFontMissingToast() {
+  try { showToast('اردو فونٹ (Jameel Noori Nastaleeq) لوڈ نہیں ہو سکا — دوسرے فونٹ میں نہیں چھاپا گیا۔ انٹرنیٹ کے ساتھ ایپ ایک بار کھولیں، پھر دوبارہ پرنٹ کریں', 'error', 7000); }
+  catch (_) { /* ضمنی */ }
+}
+function dioAfterFonts(fn) {
+  dioEnsureJameel(document, 30000).then(ok => { if (ok) fn(); else dioFontMissingToast(); }, () => fn());
+}
+window.dioJameelLoaded = dioJameelLoaded;
+window.dioEnsureJameel = dioEnsureJameel;
+window.dioAfterFonts = dioAfterFonts;
 
 // ═══ v553: مثل باندھنے کی جگہ (back side) — پورے سسٹم کا ایک ہی قاعدہ ═══
 //  افسر کا قاعدہ: «جہاں بھی کاغذ کا دوسرا صفحہ آئے گا تو back side پر اوپر ایک سطر کی
@@ -1300,7 +1329,7 @@ async function _dioWaitAssets(d, maxMs) {
   try { void (d.body && d.body.offsetHeight); } catch (_) { /* ضمنی */ }
   try {
     if (d.fonts && d.fonts.load) {
-      await within(Promise.all(['Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu'].map(fm =>
+      await within(Promise.all(['Jameel Noori Nastaleeq'].map(fm =>
         d.fonts.load('14pt "' + fm + '"', 'ابج abc 123').catch(() => 0))));
     }
   } catch (_) { /* ضمنی */ }
@@ -1427,7 +1456,7 @@ function _dio2pCSS() {
     .dio-2p .dio-2p-head{ display:grid; grid-template-columns:1fr auto 1fr; align-items:center; column-gap:8px; padding-bottom:6px; margin:0 0 10px; }
     .dio-2p .dio-2p-btn{ justify-self:start; display:flex; }
     .dio-2p .dio-2p-btn .btn{ white-space:nowrap; }
-    .dio-2p .dio-2p-title{ text-align:center; white-space:nowrap; font-weight:800; font-family:'Jameel Noori Nastaleeq',serif; }`;
+    .dio-2p .dio-2p-title{ text-align:center; white-space:nowrap; font-weight:800; font-family:'Jameel Noori Nastaleeq'; }`;
 }
 window._dio2pCSS = _dio2pCSS;
 
@@ -1464,7 +1493,7 @@ window.dioAskPaper = function (opts) {
       st.textContent =
         '#dio-paper-ask{position:fixed;inset:0;z-index:100001;background:rgba(9,20,40,.55);display:flex;align-items:center;justify-content:center;padding:16px;}' +
         '#dio-paper-ask .dpa-card{background:var(--bg-card,#fff);color:var(--text-primary,#111);border:1px solid var(--border,#ccd);border-radius:14px;' +
-        'padding:18px 18px 10px;width:min(380px,100%);box-shadow:0 18px 50px rgba(0,0,0,.35);text-align:center;font-family:"Jameel Noori Nastaleeq","Noto Nastaliq Urdu",serif;}' +
+        'padding:18px 18px 10px;width:min(380px,100%);box-shadow:0 18px 50px rgba(0,0,0,.35);text-align:center;font-family:"Jameel Noori Nastaleeq";}' +
         '#dio-paper-ask .dpa-h{display:block;font-size:15pt;line-height:1.9;}' +
         '#dio-paper-ask .dpa-sub{display:block;font-size:10.5pt;color:var(--text-muted,#667);line-height:1.8;margin-bottom:10px;}' +
         '#dio-paper-ask .dpa-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;}' +
@@ -1580,8 +1609,8 @@ function _dioPrintPreview(htmlContent) {
   ov.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:99998;background:rgba(0,0,0,0.8);display:flex;flex-direction:column;align-items:center;padding:12px 0;overflow:auto;';
   ov.innerHTML = `
     <div style="display:flex;gap:12px;margin-bottom:10px;direction:rtl;">
-      <button id="dio-prev-print" style="background:var(--accent);color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:16px;cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">پرنٹ کریں</button>
-      <button id="dio-prev-close" style="background:var(--red);color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:16px;cursor:pointer;font-family:'Jameel Noori Nastaleeq',serif;">بند کریں</button>
+      <button id="dio-prev-print" style="background:var(--accent);color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:12pt;cursor:pointer;font-family:'Jameel Noori Nastaleeq';">پرنٹ کریں</button>
+      <button id="dio-prev-close" style="background:var(--red);color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:12pt;cursor:pointer;font-family:'Jameel Noori Nastaleeq';">بند کریں</button>
     </div>
     <iframe id="dio-preview-frame" style="width:210mm;max-width:96vw;height:80vh;background:#fff;border:none;border-radius:4px;box-shadow:0 8px 40px rgba(0,0,0,0.5);"></iframe>`;
   document.body.appendChild(ov);
@@ -1622,12 +1651,19 @@ function _dioDoPrint(htmlContent) {
   document.body.appendChild(iframe);
 
   const doc = iframe.contentWindow.document;
+  // v560: کاغذ Jameel مانگتا ہو مگر اپنے <head> میں فونٹ کا اعلان نہ ہو تو یہاں شامل (اسی سائٹ کا فائل)
+  const needJ = /Jameel Noori Nastaleeq/.test(String(htmlContent || ''));
+  if (needJ && !/@font-face\s*\{[^}]*Jameel Noori Nastaleeq/.test(String(htmlContent))) {
+    htmlContent = /<head[^>]*>/i.test(htmlContent) ? String(htmlContent).replace(/<head([^>]*)>/i, '<head$1>' + dioFontHead()) : dioFontHead() + htmlContent;
+  }
   doc.open();
   doc.write(htmlContent);
   doc.close();
 
   // Wait for content + fonts to load, then print once
-  const triggerPrint = () => {
+  const triggerPrint = async () => {
+    // v560: Jameel واقعی لوڈ ہو — ورنہ دوسرے فونٹ میں کاغذ نہیں، صاف پیغام
+    if (needJ && !(await dioEnsureJameel(doc, 30000))) { dioFontMissingToast(); iframe.remove(); return; }
     try {
       iframe.contentWindow.focus();
       iframe.contentWindow.print();
@@ -1661,7 +1697,7 @@ function _showInstallButton() {
   const btn = document.createElement('button');
   btn.id = 'pwa-install-btn';
   btn.innerHTML = 'ایپ انسٹال کریں';
-  btn.style.cssText = 'position:fixed;bottom:20px;left:20px;z-index:9999;background:var(--accent,#38bdf8);color:#fff;border:none;border-radius:24px;padding:12px 20px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.3);font-family:"Jameel Noori Nastaleeq",sans-serif;';
+  btn.style.cssText = 'position:fixed;bottom:20px;left:20px;z-index:9999;background:var(--accent,#38bdf8);color:#fff;border:none;border-radius:24px;padding:12px 20px;font-size:10.5pt;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.3);font-family:"Jameel Noori Nastaleeq";';
   btn.onclick = _installApp;
   document.body.appendChild(btn);
 }
@@ -1789,7 +1825,7 @@ async function _dioRenderPdfInto(ov, srcUrl) {
   if (!box) return;
   // کالم کی صورت میں اوپر سے شروع (درمیان سے نہیں — ورنہ پہلا صفحہ اوپر سے کٹ جاتا)
   box.style.flexDirection = 'column'; box.style.alignItems = 'center'; box.style.justifyContent = 'flex-start'; box.style.gap = '10px';
-  box.innerHTML = '<div id="dio-fv-pdfmsg" style="color:#fff;padding:30px 16px;text-align:center;font-family:\'Jameel Noori Nastaleeq\',serif;font-size:14pt;">فائل کھل رہی ہے…</div>';
+  box.innerHTML = '<div id="dio-fv-pdfmsg" style="color:#fff;padding:30px 16px;text-align:center;font-family:\'Jameel Noori Nastaleeq\';font-size:14pt;">فائل کھل رہی ہے…</div>';
   try {
     const lib = await _dioPdfJs();
     const buf = await _dioFileBytes(srcUrl);
@@ -1811,7 +1847,7 @@ async function _dioRenderPdfInto(ov, srcUrl) {
     }
   } catch (e) {
     try { console.warn('PDF view:', e); } catch (_) { /* ضمنی */ }
-    box.innerHTML = '<div style="color:#fff;text-align:center;padding:40px 20px;font-family:\'Jameel Noori Nastaleeq\',serif;">' +
+    box.innerHTML = '<div style="color:#fff;text-align:center;padding:40px 20px;font-family:\'Jameel Noori Nastaleeq\';">' +
       '<div style="font-size:14pt;margin-bottom:6px;">یہ فائل یہاں نہیں دکھائی جا سکی</div>' +
       '<div style="font-size:11pt;color:#cbd5e1;margin-bottom:16px;">پہلی بار کھولنے کے لیے انٹرنیٹ درکار ہے — یا نیچے سے محفوظ کر کے کھول لیں</div>' +
       '<button class="btn btn-primary" onclick="_dioDownloadFileView()">فائل محفوظ کریں</button></div>';
@@ -1836,9 +1872,9 @@ function _dioViewFile(url, name) {
          background:var(--bg-secondary);border-bottom:1px solid var(--border);">
       <button onclick="_dioCloseFileView()" title="واپس"
         style="width:34px;height:34px;border-radius:50%;cursor:pointer;border:1px solid var(--border);
-               background:var(--bg-card);color:var(--text-primary);font-size:18px;font-weight:900;
+               background:var(--bg-card);color:var(--text-primary);font-size:13.5pt;font-weight:900;
                line-height:1;direction:ltr;">←</button>
-      <span style="font-weight:700;font-size:14px;">${esc(name || 'فائل')}</span>
+      <span style="font-weight:700;font-size:10.5pt;">${esc(name || 'فائل')}</span>
       <div style="margin-right:auto;display:flex;gap:6px;">
         <button class="btn btn-secondary btn-sm" onclick="_dioPrintFileView()">پرنٹ</button>
         <button class="btn btn-secondary btn-sm" onclick="_dioShareFileView()" title="شیئر — اصل فائل (تصویر ہو تو PDF / Word بھی)">شیئر</button>
@@ -1852,10 +1888,10 @@ function _dioViewFile(url, name) {
         : `<iframe id="dio-fv-frame" src="${blob}" style="width:100%;height:100%;border:none;background:#fff;"
              onload="this.dataset.ok='1'"></iframe>
            <div id="dio-fv-fallback" style="display:none;color:#fff;text-align:center;padding:40px 20px;
-                font-family:'Jameel Noori Nastaleeq',serif;">
-             <div style="font-size:40px;margin-bottom:12px;"><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M7 3h7l4 4v14H7z'/><path d='M14 3v5h5'/></svg></div>
-             <div style="font-size:15px;margin-bottom:6px;">یہ فائل یہاں نہیں دکھائی جا سکی</div>
-             <div style="font-size:12px;color:#cbd5e1;margin-bottom:16px;">نیچے سے محفوظ کر کے کھول لیں</div>
+                font-family:'Jameel Noori Nastaleeq';">
+             <div style="font-size:30pt;margin-bottom:12px;"><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M7 3h7l4 4v14H7z'/><path d='M14 3v5h5'/></svg></div>
+             <div style="font-size:11.25pt;margin-bottom:6px;">یہ فائل یہاں نہیں دکھائی جا سکی</div>
+             <div style="font-size:9pt;color:#cbd5e1;margin-bottom:16px;">نیچے سے محفوظ کر کے کھول لیں</div>
              <button class="btn btn-primary" onclick="_dioDownloadFileView()">فائل محفوظ کریں</button>
            </div>`}
     </div>`;

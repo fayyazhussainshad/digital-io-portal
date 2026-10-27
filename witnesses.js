@@ -60,7 +60,7 @@ function _witInjectCSS() {
   .wit-form{direction:rtl;text-align:right;}
   .wit-form .wit-label{
     display:block;font-size:14pt !important;font-weight:700;text-align:center;
-    font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;
+    font-family:'Jameel Noori Nastaleeq';
     margin:8px 0 4px;color:var(--text,#111);line-height:1.6;
   }
   .wit-form .wit-field{display:flex;flex-direction:column;}
@@ -75,11 +75,11 @@ function _witInjectCSS() {
   .wit-list-grid > div{font-size:14pt !important;text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .wit-list-grid > div:nth-child(2){text-align:right;direction:rtl;}
   .wit-list-head{padding:4px 12px;border:1px solid transparent;border-right:3px solid transparent;}
-  .wit-list-head > div{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-weight:700;color:var(--text-muted);font-size:14pt !important;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.25;}
+  .wit-list-head > div{font-family:'Jameel Noori Nastaleeq';font-weight:700;color:var(--text-muted);font-size:14pt !important;white-space:normal;overflow:visible;text-overflow:clip;line-height:1.25;}
   .wit-list-head > div:nth-child(2){text-align:right;}
   .wit-list-row{background:var(--bg-card);border:1px solid var(--border);border-right:3px solid var(--accent);border-radius:8px;padding:8px 12px;margin-bottom:7px;}
   .wit-list-row .wit-idx{font-weight:800;color:var(--accent);font-size:14pt !important;}
-  .wit-list-row .wit-name{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-weight:700;}
+  .wit-list-row .wit-name{font-family:'Jameel Noori Nastaleeq';font-weight:700;}
   .wit-list-row .wit-actions{display:flex;gap:5px;overflow:visible;justify-content:flex-end;}
   .wit-list-row .wit-actions .btn{font-size:11pt !important;}
   @keyframes accBlink{0%,100%{opacity:1;}50%{opacity:0.4;}}
@@ -196,7 +196,7 @@ window._witPrevRecord = _witPrevRecord;
 function _renderWitnessList(list, type) {
   list = list || _witnessList;
   if (!list.length) {
-    return `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:14px;">کوئی گواہ درج نہیں</div>`;
+    return `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:10.5pt;">کوئی گواہ درج نہیں</div>`;
   }
   const head = `
     <div class="wit-list-grid wit-list-head">
