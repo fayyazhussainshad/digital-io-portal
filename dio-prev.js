@@ -85,7 +85,7 @@
     document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } ta.remove();
   }
   function download(list, who) {
-    var txt = list.map(function (r, i) { return (i + 1) + '۔ ' + toText(r); }).join('\n');
+    var txt = list.map(function (r, i) { return (list.length > 1 ? (i + 1) + '۔ ' : '') + toText(r); }).join('\n');
     if (!txt) return;
     var blob = new Blob(['﻿' + 'سابقہ ریکارڈ' + (who ? ' — ' + who : '') + '\n\n' + txt + '\n'], { type: 'text/plain;charset=utf-8' });
     var a = document.createElement('a'), u = URL.createObjectURL(blob);

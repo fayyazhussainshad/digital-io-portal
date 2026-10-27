@@ -238,7 +238,7 @@ def run(b, tag, ctxargs, mobile):
                    act: Math.round(mid(act) - mid(body)), num: Math.round(mid(num) - mid(body)) }; })()""")
         bi2 = q.evaluate(BIDI)
         c2.close(); os.remove(fn)
-        check(f'{tag}: قطار 1 کا کالم 4 («از۔») صرف ضرورت جتنا (≤ 7%)، کالم 3 کھلا (≥ 70%)', m['c4'] <= 0.07 and m['c3'] >= 0.70, m)
+        check(f'{tag}: قطار 1 کا کالم 4 («از۔») — v558: پہلے سے دُگنا (12%)، کالم 3 کھلا (≥ 64%)', 0.11 <= m['c4'] <= 0.13 and m['c3'] >= 0.64, m)
         check(f'{tag}: «مرتبہ» (IO) کی سطر کے نیچے معمولی جگہ (≤ 12px، پہلے ~30px)', 0 <= m['gap'] <= 12, m['gap'])
         check(f'{tag}: کالم 1 (تاریخ) اور کالم 2 (نمبر) «جناب عالیٰ» کی پہلی سطر کی سیدھ میں (±4px)', abs(m['act']) <= 4 and abs(m['num']) <= 4, m)
         check(f'{tag}: انگریزی عہدے والا پیراگراف — پرنٹ میں بھی عہدہ دائیں، اردو بائیں (RTL)', bool(bi2) and bi2['same'] and bi2['asi'] > bi2['ur'], bi2)

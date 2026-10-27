@@ -191,7 +191,7 @@
     G.push({ title: 'ملزمان', items: (d.acc || []).map(function (a, i) {
       var nm = T(a.name);
       if (!nm) return null;
-      return { label: (i + 1) + '۔ ' + nm, value: nm, sub: person(nm, a.cnic, a.cell || a.mobile),
+      return { label: ((d.acc || []).length > 1 ? (i + 1) + '۔ ' : '') + nm, value: nm, sub: person(nm, a.cnic, a.cell || a.mobile),   // v558: اکیلا ہو تو «1» نہیں
         badge: a.accused_type === 'cross_version' ? 'کراس ورژن' : '' };
     }).filter(Boolean) });
 
@@ -203,13 +203,13 @@
       if (!nm || (T(c.complainant) && nm.replace(/\s/g, '') === T(c.complainant).replace(/\s/g, ''))) return;
       wit.push({ label: nm, value: nm, sub: person(nm, w.cnic, w.cell, [it('پیشہ', w.profession)]) });
     });
-    wit.forEach(function (w, i) { w.label = (i + 1) + '۔ ' + w.label; });
+    if (wit.length > 1) wit.forEach(function (w, i) { w.label = (i + 1) + '۔ ' + w.label; });   // v558: اکیلا ہو تو «1» نہیں
     G.push({ title: 'گواہان', items: wit });
 
     G.push({ title: 'ہمراہی ملازمان', items: (d.staff || []).map(function (s, i) {
       var ln = staffLine(s);
       if (!ln) return null;
-      return { label: (i + 1) + '۔ ' + ln, value: ln, sub: clean([it('نام مع عہدہ', ln), it('شناختی کارڈ', s.cnic, { ltr: true }), it('موبائل نمبر', s.mobile, { ltr: true })]) };
+      return { label: ((d.staff || []).length > 1 ? (i + 1) + '۔ ' : '') + ln, value: ln, sub: clean([it('نام مع عہدہ', ln), it('شناختی کارڈ', s.cnic, { ltr: true }), it('موبائل نمبر', s.mobile, { ltr: true })]) };
     }).filter(Boolean) });
 
     var firItems = clean([it('مقدمہ نمبر مع تاریخ و جرم', fir ? firLine : '')]);
