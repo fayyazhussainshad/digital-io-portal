@@ -33,7 +33,7 @@ jobs:
 
   real-app:
     name: Real app (desktop + mobile + print)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04   # v558: «latest» کی نئی تصویر پر تنصیب ناکام — جانچ والی تصویر پکی
     timeout-minutes: 60
     needs: lint-and-unit
     steps:
