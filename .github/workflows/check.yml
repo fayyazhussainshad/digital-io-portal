@@ -33,7 +33,7 @@ jobs:
 
   real-app:
     name: Real app (desktop + mobile + print)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04   # v558: «latest» کی نئی تصویر پر تنصیب ناکام — جانچ والی تصویر پکی
     timeout-minutes: 60
     needs: lint-and-unit
     steps:
@@ -106,6 +106,10 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: python v555_test.py
+      - name: v558 — statements 161 (androoni zimni) save local-first + server + autosave draft + sync, witness dropdown, (زیردفعہ 161ض ف) at left border, IO name/date SOP, Ctrl+S/Ctrl+P/top-bar never the challan route, zimni column lines to page bottom in editor; Urdu-keyboard Ctrl+S/Ctrl+P, closing line, wider col 4, no lone serial 1, unified list buttons, auto-sync while online, text beside binding line (v558_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: python v558_test.py
       - name: Screenshots and print PDFs
         if: always()
         uses: actions/upload-artifact@v4

@@ -63,10 +63,10 @@ function dioSavedBoxHTML(caseId, docKey, title) {
       <td>${(typeof esc === 'function' ? esc(x.name) : x.name)}</td>
       <td style="text-align:center;font-family:var(--font-mono);white-space:nowrap;">${d}${t ? ' <span style="color:var(--text-muted);font-size:11px;">' + t + '</span>' : ''}</td>
       <td style="text-align:center;white-space:nowrap;">
-        <button class="btn btn-sm btn-secondary" onclick="dioSavedOpen('${j}')"  title="کھولیں / ترمیم">✏️</button>
-        <button class="btn btn-sm btn-secondary" onclick="dioSavedPrint('${j}')" title="پرنٹ">🖨️</button>
-        <button class="btn btn-sm btn-secondary" onclick="dioSavedShare('${j}')" title="بھیجیں">📤</button>
-        <button class="btn btn-sm btn-secondary" onclick="dioSavedDelete('${j}')" title="فہرست سے ہٹائیں">🗑️</button>
+        ${dioActRow(dioActBtn('edit', `dioSavedOpen('${j}')`, 'کھولیں / ترمیم')
+          + dioActBtn('print', `dioSavedPrint('${j}')`, 'پرنٹ')
+          + dioActBtn('share', `dioSavedShare('${j}')`, 'شیئر')
+          + dioActBtn('delete', `dioSavedDelete('${j}')`, 'فہرست سے ہٹائیں'))}
       </td>
     </tr>`;
   }).join('');

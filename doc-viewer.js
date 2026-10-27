@@ -364,6 +364,17 @@ function _dioPickDoc(docId) {
 function _dioSaveCurrent() {
   const id = _dioActiveTab;
   if (!id) return;
+  // v558 (افسر کی شکایت، 22 اکتوبر 2026 — «محفوظ کرنے کے باوجود بیان کہیں محفوظ نہیں»):
+  //   اسی پٹی کا «محفوظ» بیانات 161 (اندرونی ضمنی) اور ضمنیات پر کچھ محفوظ نہیں کرتا تھا —
+  //   الٹا «یہ صفحہ خودکار محفوظ ہوتا ہے» کہہ دیتا تھا۔ اب کھلی دستاویز کا اپنا محفوظ
+  //   (وہی جو اس کا اپنا بٹن اور Ctrl+S کرتے ہیں)۔
+  try {
+    const d0 = document.getElementById('ch173-doc');
+    if (d0 && d0.querySelector('.zfa-tbl') && typeof window._saveZimniA === 'function') { window._saveZimniA(false, true); return; }
+    if (d0 && d0.querySelector('.zf-tbl') && typeof window._saveZimni === 'function') { window._saveZimni(false, true); return; }
+  } catch (_) { /* agla raasta */ }
+  // نقشہ موقع — اپنا محفوظ (وہی جو Ctrl+S کرتا ہے)
+  if (document.getElementById('dio-naqsha-doc') && typeof window.naqSaveNow === 'function') { window.naqSaveNow(); return; }
   if (id.startsWith('r173:')) {
     if (typeof _saveR173 === 'function') { _saveR173(); return; }
   }
@@ -376,8 +387,31 @@ function _dioSaveCurrent() {
   if (document.getElementById('misal-editor') && typeof saveMisalDoc === 'function') {
     saveMisalDoc(_openDocId || id); return;
   }
-  if (typeof showToast === 'function') showToast('ℹ️ یہ صفحہ خودکار محفوظ ہوتا ہے', 'info');
+  // v558: دستاویز کا اپنا «محفوظ / اپ ڈیٹ» بٹن (ایک ہی ہو) — وہی دباؤ (پرنٹ والا اصول)
+  const sb = _dioModuleSaveBtn(document.getElementById('dio-dv-body'));
+  if (sb) { sb.click(); return; }
+  if (typeof showToast === 'function') showToast('ℹ️ اس صفحے پر محفوظ کرنے کو کچھ نہیں — اندراج کھول کر اُس کا «محفوظ» دبائیں', 'info');
 }
+// کھلی دستاویز کا اپنا محفوظ بٹن — واضح نشان [data-dio-save] پہلے، پھر .btn-primary؛
+//   کئی مختلف ہوں (فہرست کی ہر سطر) تو null (اندازہ نہیں)
+function _dioModuleSaveBtn(root) {
+  if (!root) return null;
+  const btns = Array.from(root.querySelectorAll('button,[role="button"],a.btn')).filter(b => {
+    if (b.disabled || b.id === 'dio-dv-save') return false;
+    if (b.hasAttribute('data-dio-save')) return true;
+    const t = (b.textContent || '') + ' ' + (b.getAttribute('title') || '');
+    // چھپا ہوا .dio-modbtn بھی (پٹی کے لیے رکھا گیا دستاویز کا اپنا بٹن — پرنٹ والا اصول)
+    return /محفوظ|اپ ڈیٹ/.test(t) && !/غیر محفوظ|محفوظ شدہ|فہرست|پرنٹ|print/i.test(t)
+      && (b.getClientRects().length > 0 || b.classList.contains('dio-modbtn'));
+  });
+  const one = list => {
+    const seen = {}, u = [];
+    list.forEach(b => { const k = b.getAttribute('onclick') || b.id || ''; if (!seen[k]) { seen[k] = 1; u.push(b); } });
+    return u.length === 1 ? u[0] : null;
+  };
+  return one(btns.filter(b => b.hasAttribute('data-dio-save'))) || one(btns.filter(b => b.classList.contains('btn-primary'))) || one(btns);
+}
+window._dioModuleSaveBtn = _dioModuleSaveBtn;
 
 window._dioAddDocPicker = _dioAddDocPicker;
 window._dioPickDoc      = _dioPickDoc;
@@ -507,6 +541,12 @@ function _dioPrintCurrent() {
   if (id === 'cdr_imei') {
     if (typeof _printCdr === 'function') { return _printCdr(); }
   }
+  // v558: کھلی اندرونی ضمنی (بیانات 161) / ضمنی — اپنا کاغذ (اندرونی ضمنی کی پٹی میں اب پرنٹ بٹن نہیں)
+  try {
+    const d0 = document.getElementById('ch173-doc');
+    if (d0 && d0.querySelector('.zfa-tbl') && typeof window._printZimniA === 'function') { return window._printZimniA(); }
+    if (d0 && d0.querySelector('.zf-tbl') && typeof window._printZimniCurrent === 'function') { return window._printZimniCurrent(); }
+  } catch (_) { /* agla raasta */ }
   // SYSTEM RULE (13 اکتوبر 2026): اوپر کی پٹی کا «پرنٹ» = دستاویز کا اپنا پرنٹ بٹن
   // (درخواستیں، سزا سلپ، CRO، نقشہ موقع، بیانات 161 …) = Ctrl+P — تینوں ایک ہی راستہ۔
   // پہلے یہاں سیدھا printMisalDoc تھا جو #misal-editor نہ ہو تو کچھ بھی نہیں کرتا تھا

@@ -39,6 +39,12 @@
     }
     var add = document.querySelector('.dio-addblk');
     if (add) add.style.display = (on && hasBlocks()) ? '' : 'none';
+    // v558: «کاغذ» منظر میں ضمنی کی کھڑی لکیریں کاغذ کے نیچے تک (دوبارہ ناپ)
+    //   (اور کاغذ کا ناپ/مرکز دوبارہ — «فارم» سے «کاغذ» پر آتے ہی کاغذ اسکرین کے بیچ میں)
+    setTimeout(function () {
+      try { if (docEl() && typeof window._ch173FitPaper === 'function') window._ch173FitPaper(); } catch (_) { /* کاغذ */ }
+      try { if (typeof window._zimniFillScreen === 'function') window._zimniFillScreen(); } catch (_) { /* ضمنی */ }
+    }, 80);
   }
   function hasBlocks() {
     var d = docEl(); return !!(d && d.querySelector('tr.zf-blk'));

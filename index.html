@@ -16,6 +16,24 @@
   <link rel="apple-touch-icon" href="icon-192.png">
   <title>Digital IO</title>
   <script>
+  /* v558 (افسر کی شکایت، 27 اکتوبر 2026): «Ctrl+S دبانے پر سسٹم HTML کی فائل محفوظ کرنے لگتا ہے؛
+     Ctrl+P پر صفحہ نیچے سے کٹا ہوا چھپتا ہے — MS Word کے تمام شارٹ کٹ کام کریں»
+     وجہ: کی بورڈ اردو پر ہو تو Ctrl+S پر براؤزر «س» (Ctrl+P پر «پ») بتاتا ہے، «s» / «p» نہیں —
+     سسٹم کے سننے والے پہچان ہی نہیں پاتے اور براؤزر اپنا کام کر دیتا ہے۔
+     حل (ایک ہی جگہ، سب سے پہلے): Ctrl/⌘ کے ساتھ دبایا گیا حرف کی بورڈ کی اصل کلید (e.code) سے —
+     اردو ہو یا انگریزی، ہر شارٹ کٹ ایک جیسا۔ */
+  (function(){
+    try {
+      window.addEventListener('keydown', function (e) {
+        try {
+          if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+          var m = /^Key([A-Z])$/.exec(String(e.code || '')), k = String(e.key || '');
+          if (m && k.length === 1 && !/[A-Za-z]/.test(k))
+            Object.defineProperty(e, 'key', { value: e.shiftKey ? m[1] : m[1].toLowerCase(), configurable: true });
+        } catch (_) {}
+      }, true);
+    } catch (_) {}
+  })();
   /* پاس ورڈ ری سیٹ — ای میل لنک سے واپسی کی پہچان (v524).
      Supabase yeh hash listener lagne se PEHLE parh kar mita deta hai,
      is liye yahan sab se pehle note kar liya jata hai. */
@@ -1064,6 +1082,10 @@ input[id*="cnic"], input[id*="cell"] {
     box-shadow: none !important; border-radius: 0 !important; margin: 0 auto !important;
     width: auto !important; max-width: 100% !important; display: block !important;
   }
+  /* v558: براؤزر کے مینو والی چھپائی میں بھی کاغذ اسکرین کے پیمانے (scale) پر نہیں، اوپر اضافی خالی جگہ
+     اور 13 انچ کی کم از کم اونچائی نہیں (اسی سے نیچے کا حصہ کٹتا اور اوپر حاشیہ بڑا آتا تھا) */
+  #dio-nprint-host #ch173-doc { transform: none !important; min-height: 0 !important;
+    padding-top: 0 !important; padding-bottom: 0 !important; margin-bottom: 0 !important; }
   #dio-nprint-host #workspace-editor-area > *,
   #dio-nprint-host #dio-dv-body > * {
     flex: none !important; min-height: 0 !important; height: auto !important;
@@ -2031,6 +2053,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // v552: ضمنی (اسی #ch173-doc میں، مگر .zf-tbl) — اپنا پرنٹ؛ چالان والا نہیں
     var zimni = document.querySelector('#ch173-doc .zf-tbl');
     if (zimni && _pVisible(zimni) && typeof window._printZimniCurrent === 'function') return function () { window._printZimniCurrent(); };
+    var zimniA = document.querySelector('#ch173-doc .zfa-tbl');   // v558: اندرونی ضمنی کا اپنا کاغذ
+    if (zimniA && _pVisible(zimniA) && typeof window._printZimniA === 'function') return function () { window._printZimniA(); };
     var challan = document.querySelector('#ch173-doc #ch173-table');
     if (challan && _pVisible(challan) && typeof window._printR173 === 'function') return function () { window._printR173(); };
     var dv = document.getElementById('dio-docview');

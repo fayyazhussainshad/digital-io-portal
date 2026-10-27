@@ -446,7 +446,7 @@ function _sazaBuildRows(sv, c, o) {
   const rowsHtml = people.map((a, i) => {
     const c1 = (sv['c1_' + i] !== undefined)
       ? (typeof sanitizeHtml === 'function' ? sanitizeHtml(sv['c1_' + i]) : sv['c1_' + i])
-      : _sazaAccusedBlock(a, i + 1);   // (i+1) = serial number 1,2,3…
+      : _sazaAccusedBlock(a, people.length > 1 ? i + 1 : null);   // (i+1) = 1,2,3… — v558: اکیلا ملزم ہو تو «1» نہیں
     const cv = (sv['c4_' + i] !== undefined)
       ? (typeof sanitizeHtml === 'function' ? sanitizeHtml(sv['c4_' + i]) : sv['c4_' + i]) : '';
     // کالم 2 (تاریخ) aur کالم 3 (جرم) SIRF pehli qatar par — rowspan = tamam
