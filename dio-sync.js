@@ -98,7 +98,10 @@
         }
       }
     } catch (_) { /* storage نہ ہو تو صفر */ }
-    out.drafts = Object.keys(jget('dio_ud_outbox', {}) || {}).length;
+    // مسودے / ترتیبات جو ابھی سرور پر جانی ہیں — صرف اسی افسر کی (آلے پر کسی اور افسر کی پرانی قطار «سنک» نہیں دکھاتی)
+    var obx = jget('dio_ud_outbox', {}) || {}, meo = '';
+    try { meo = (typeof currentOfficer !== 'undefined' && currentOfficer && currentOfficer.id) ? String(currentOfficer.id) : ''; } catch (_) { meo = ''; }
+    out.drafts = Object.keys(obx).filter(function (k) { var it = obx[k] || {}; return !(it.oid && meo && String(it.oid) !== meo); }).length;
     return out;
   }
   DS.pending = function () { return pendingFromLocal(); };
@@ -296,6 +299,15 @@
   //  باہر جانے والی قطار localStorage میں (dio_ud_outbox) — آلہ بند ہو تب بھی باقی
   var UD_KIND = { zimni_draft: 'dio_zimni_draft_', za_draft: 'dio_za_draft_' };
   var ud = DS.ud = {};
+  // اس وقت لاگ اِن افسر (فوراً، بغیر انتظار) — ایک آلے پر دو افسر ہوں تو ایک کا کام دوسرے کے کھاتے میں نہ جائے
+  function curOid() { try { return (typeof currentOfficer !== 'undefined' && currentOfficer && currentOfficer.id) ? String(currentOfficer.id) : ''; } catch (_) { return ''; } }
+  // اسی افسر کی تبدیلی ابھی سرور پر جانی باقی ہے؟ (کسی اور افسر کی پرانی قطار اِس افسر کو نہیں روکتی)
+  function myPending(dk) {
+    var it = (jget('dio_ud_outbox', {}) || {})[dk];
+    if (!it) return false;
+    var me = curOid();
+    return !(it.oid && me && String(it.oid) !== me);
+  }
   function udKnown() { return jget('dio_ud_known', {}) || {}; }
   function udKnownSet(docKey, on) { var k = udKnown(); if (on) k[docKey] = 1; else delete k[docKey]; jput('dio_ud_known', k); }
   var _udTimer = null;
@@ -304,7 +316,7 @@
     var docKey = String(caseId) + '|' + key;
     var ob = jget('dio_ud_outbox', {}) || {};
     if (data == null && !udKnown()[docKey] && !ob[docKey]) return;     // کبھی سرور پر گیا ہی نہیں — حذف بھیجنے کی ضرورت نہیں
-    ob[docKey] = { kind: kind, case_id: caseId, data: data == null ? null : data, at: now() };
+    ob[docKey] = { kind: kind, case_id: caseId, data: data == null ? null : data, at: now(), oid: curOid() };
     jput('dio_ud_outbox', ob);
     clearTimeout(_udTimer);
     _udTimer = setTimeout(function () { ud.flush(); }, 2000);
@@ -335,6 +347,7 @@
       for (var i = 0; i < keys.length; i++) {
         var dk = keys[i], it = ob[dk];
         if (it.next && Date.now() < it.next) continue;          // پچھلی بار سرور نے رد کیا — وقفے کے بعد
+        if (it.oid && String(it.oid) !== String(oid)) continue;  // کسی اور افسر کا کام — اسی کے لاگ اِن پر جائے گا
         try {
           var res;
           if (it.data != null) {
@@ -364,33 +377,108 @@
     } finally { _udFlushing = false; DS.busy(false); }
     return sent;
   };
-  // ═══ 3b) ترتیبات — SHO اور DSP/SDPO کا نام (افسر کا حکم v561: «SHO setting بھی sync») ═══
+  // ═══ 3b) ترتیبات — سب آلات پر ایک (v561: SHO/DSP؛ v562 افسر کا حکم «settings بھی sync ہوں») ═══
   //  doc_key = setting|<localStorage چابی>   · ہر آلے پر «کب بدلی» (dio_setting_at) — جو بعد میں بدلی وہی سب پر
-  var SET_KEYS = ['digital_io_sho', 'digital_io_dsp'];
+  //  شامل: SHO / DSP کا نام، SHO کے دستخط، سرکاری گاڑی، تفصیل کاغذات (ہر قسم)، میڈیکل افسر، اخراج / عدم پتہ
+  //        کی سرخیاں، اپنی بنائی اقسام (گواہ کی حیثیت، ملزم کے خانے، ضمنی کی اقسام)، لکھتے وقت کی تجاویز،
+  //        کاغذ کا سائز (چالان، سزا سلپ، دیگر)۔
+  //  شامل نہیں (ہر آلے کی اپنی): رنگ (theme)، حروف کا سائز، «فارم / کاغذ» والا منظر — اور کوئی خفیہ چیز کبھی نہیں
+  //        (PIN، پاس ورڈ، token، بایومیٹرک، لائسنس)۔
+  var SET_EXACT = ['digital_io_sho', 'digital_io_dsp', 'digital_io_sho_sign', 'digital_io_sarkari_gari',
+    'dio_ch173_medical_officer', 'dio_wit_status_custom', 'dio_ch173_papers', 'dio_ch173_paper', 'dio_saza_paper', 'dio_dk_paper'];
+  var SET_PREFIX = ['dio_ch173_papers_', 'dio_akhraj_', 'dio_acc_opts_', 'dio_zimni_types_', 'suggest_'];
+  function isSettingKey(k) {
+    k = String(k == null ? '' : k);
+    if (SET_EXACT.indexOf(k) >= 0) return true;
+    for (var i = 0; i < SET_PREFIX.length; i++) if (k.indexOf(SET_PREFIX[i]) === 0 && k.length > SET_PREFIX[i].length) return true;
+    return false;
+  }
+  DS.isSettingKey = isSettingKey;
+  DS.settingKeys = SET_EXACT.slice();
   var SET_AT = 'dio_setting_at';
-  DS.settingKeys = SET_KEYS.slice();
+  var _applying = false;          // سرور سے آئی ترتیب لکھتے وقت — اسے دوبارہ سرور پر نہ بھیجو
+  // «کب بدلی» کا نقشہ اسی افسر کا۔ آلے پر پہلے کوئی اور افسر تھا تو نیا نقشہ، اور اُس کی بچی ہوئی ترتیبات
+  // «اپنی نہیں» ('0') — اِس افسر کی سرور والی ترتیب آتے ہی وہی لگے، اور وہ بچی ہوئی کبھی اِس کے کھاتے میں نہ جائیں
+  function setAt() {
+    var m = jget(SET_AT, {}) || {}, me = curOid();
+    if (me && m._oid && String(m._oid) !== me) {
+      m = { _oid: me };
+      try { for (var i = 0; i < LS.length; i++) { var k = LS.key(i); if (k && isSettingKey(k)) m[k] = '0'; } } catch (_) { /* storage بند */ }
+      jput(SET_AT, m);
+    } else if (me && !m._oid) { m._oid = me; jput(SET_AT, m); }
+    return m;
+  }
   DS.settingChanged = function (key) {
-    if (SET_KEYS.indexOf(key) < 0) return;
-    var at = now(), m = jget(SET_AT, {}) || {};
+    if (_applying || !isSettingKey(key)) return;
+    var at = now(), m = setAt();
     m[key] = at; jput(SET_AT, m);
     var v = null; try { v = LS.getItem(key); } catch (_) { /* storage بند */ }
+    if (v == null) return;                                  // ہٹانا (مثلاً لاگ آؤٹ کی صفائی) کبھی دوسرے آلات تک نہیں
     ud.queue('setting', 'setting', key, { value: v, saved_at: at });
   };
+  // ہر ماڈیول خود بتائے یا نہ بتائے — اس آلے پر کوئی ترتیب لکھی جائے تو خود سرور پر (آئندہ کی ترتیبات بھی)
+  (function hookStorage() {
+    try {
+      var proto = Object.getPrototypeOf(LS);
+      var orig = proto && proto.setItem;
+      if (!orig || orig._dioSettingHook) return;
+      var wrapped = function (k, v) {
+        orig.call(this, k, v);                              // پہلے اصل لکھائی (ناکام ہو تو یہیں رک جائے)
+        if (this === LS && !_applying && isSettingKey(k)) { try { DS.settingChanged(String(k)); } catch (_) { /* اگلی بار */ } }
+      };
+      wrapped._dioSettingHook = true;
+      proto.setItem = wrapped;
+    } catch (_) { /* پرانا براؤزر — ماڈیول خود settingChanged بلاتے ہیں */ }
+  })();
+  // پہلی بار ملاپ: دونوں آلات کی اپنی فہرستیں / اقسام ملا دو (کچھ نہ کھوئے)؛ سادہ قدر میں سرور والی
+  function mergeVal(a, b) {
+    if (Array.isArray(a) && Array.isArray(b)) {
+      var out = b.slice(), seen = {};
+      out.forEach(function (x) { seen[JSON.stringify(x)] = 1; });
+      a.forEach(function (x) { var k = JSON.stringify(x); if (!seen[k]) { seen[k] = 1; out.push(x); } });
+      return out;
+    }
+    if (a && b && typeof a === 'object' && typeof b === 'object' && !Array.isArray(a) && !Array.isArray(b)) {
+      var o = Object.assign({}, b);
+      Object.keys(a).forEach(function (k) { o[k] = (k in b) ? mergeVal(a[k], b[k]) : a[k]; });
+      return o;
+    }
+    return b;
+  }
+  function mergeSetting(localStr, serverStr) {
+    var a, b;
+    try { a = JSON.parse(localStr); b = JSON.parse(serverStr); } catch (_) { return serverStr; }
+    if (a == null || b == null || typeof a !== 'object' || typeof b !== 'object') return serverStr;
+    return JSON.stringify(mergeVal(a, b));
+  }
+  DS.mergeSetting = mergeSetting;
+  function writeLocal(key, val) {
+    _applying = true;
+    try { LS.setItem(key, val); return true; } catch (_) { return false; } finally { _applying = false; }
+  }
   function applySetting(row) {
-    var key = String(row.doc_key || '').split('|')[1];
-    if (SET_KEYS.indexOf(key) < 0) return false;
-    var ob = jget('dio_ud_outbox', {}) || {};
-    if (ob[row.doc_key]) return false;                      // اسی آلے کی نئی تبدیلی جانے والی ہے
-    udKnownSet(row.doc_key, !row.deleted_at);
+    var dk = String(row.doc_key || ''), key = dk.slice(dk.indexOf('|') + 1);
+    if (dk.indexOf('setting|') !== 0 || !isSettingKey(key)) return false;
+    if (myPending(dk)) return false;                        // اسی آلے کی نئی تبدیلی جانے والی ہے
+    udKnownSet(dk, !row.deleted_at);
     var d = row.data || {};
     if (row.deleted_at || d.value == null) return false;
-    var m = jget(SET_AT, {}) || {};
-    if (m[key] && String(m[key]) >= String(d.saved_at || '')) return false;   // یہاں بعد میں بدلی گئی
-    m[key] = d.saved_at || now(); jput(SET_AT, m);
+    var m = setAt();
     var cur = null; try { cur = LS.getItem(key); } catch (_) { /* storage بند */ }
+    // یہاں بعد میں بدلی گئی (اور ابھی اس آلے پر موجود ہے) — یہی رہے، یہی سرور پر جائے گی
+    if (cur != null && m[key] && String(m[key]) >= String(d.saved_at || '')) return false;
+    if (cur != null && cur !== d.value && !m[key]) {
+      // اس آلے نے یہ ترتیب کبھی سرور سے نہیں ملائی — فہرستیں / اقسام ملا کر سب آلات پر
+      var merged = mergeSetting(cur, d.value);
+      if (merged !== d.value) {
+        if (!writeLocal(key, merged)) return false;
+        DS.settingChanged(key);
+        return true;
+      }
+    }
+    m[key] = d.saved_at || now(); jput(SET_AT, m);
     if (cur === d.value) return false;
-    try { LS.setItem(key, d.value); } catch (_) { return false; }
-    return true;
+    return writeLocal(key, d.value);
   }
   ud.pullSettings = async function () {
     var c = sb();
@@ -399,14 +487,22 @@
       var r = await c.from('dio_user_data').select('*').eq('kind', 'setting');
       if (r.error) throw r.error;
       var changed = false, seen = {};
-      (r.data || []).forEach(function (row) { seen[String(row.doc_key || '').split('|')[1]] = 1; if (applySetting(row)) changed = true; });
-      // پہلی بار: اس آلے پر نام لکھا ہے مگر سرور پر کچھ نہیں اور یہاں سے کبھی بھیجا نہیں — یہی بنیاد بنے
-      var m = jget(SET_AT, {}) || {};
-      SET_KEYS.forEach(function (k) {
-        if (seen[k] || m[k]) return;
-        var v = null; try { v = LS.getItem(k); } catch (_) { /* storage بند */ }
-        if (v != null && v !== '' && v !== '{}') DS.settingChanged(k);
+      (r.data || []).forEach(function (row) {
+        var dk = String(row.doc_key || ''); seen[dk.slice(dk.indexOf('|') + 1)] = 1;
+        if (applySetting(row)) changed = true;
       });
+      // پہلی بار: اس آلے پر ترتیب لکھی ہے مگر سرور پر نہیں اور یہاں سے کبھی بھیجی نہیں — یہی بنیاد بنے
+      // (کسی اور افسر کی بچی ہوئی ترتیب پر '0' کا نشان ہے — وہ نہیں جاتی)
+      var m = setAt();
+      if (!subBlocked()) {
+        var keys = [];
+        try { for (var i = 0; i < LS.length; i++) keys.push(LS.key(i)); } catch (_) { /* storage بند */ }
+        keys.forEach(function (k) {
+          if (!k || !isSettingKey(k) || seen[k] || m[k]) return;
+          var v = null; try { v = LS.getItem(k); } catch (_) { /* storage بند */ }
+          if (v != null && v !== '' && v !== '{}' && v !== '[]' && v !== 'null') DS.settingChanged(k);
+        });
+      }
       if (changed) emit('setting', null, 'replace');
       return changed;
     } catch (e) { if (typeof dioLogError === 'function') dioLogError('dio-sync: settings parhna nakaam', e); return false; }
@@ -420,8 +516,7 @@
     var bar = String(row.doc_key).indexOf('|');
     if (bar < 0) return false;
     var cid = row.doc_key.slice(0, bar), key = row.doc_key.slice(bar + 1);
-    var ob = jget('dio_ud_outbox', {}) || {};
-    if (ob[row.doc_key]) return false;                      // اسی آلے کی نئی تبدیلی جانے والی ہے — وہی تازہ
+    if (myPending(row.doc_key)) return false;               // اسی آلے کی نئی تبدیلی جانے والی ہے — وہی تازہ
     var store = pfx + cid, drafts = jget(store, {}) || {};
     var local = drafts[key];
     udKnownSet(row.doc_key, !row.deleted_at);

@@ -1987,7 +1987,7 @@ test('v547: ریپو کی صفائی — پرانی zip اور backup فائلی
 });
 
 // ═══ v561 — گشت نظام سے باہر (افسر کا حکم، 27/28 اکتوبر 2026) ═══════════════
-test('v561: گشت کا کوئی راستہ باقی نہیں (صفحہ، Dashboard، نیا اندراج، تلاش، route، SW، ٹمپلیٹ) — ریکارڈ ڈیٹابیس میں محفوظ', () => {
+test('v561/v562: گشت کا کوئی راستہ باقی نہیں (صفحہ، Dashboard، نیا اندراج، تلاش، route، SW، ٹمپلیٹ، بیک اپ، حذف شدہ مواد)', () => {
   assert.ok(!fs.existsSync(path.join(ROOT, 'gasht.js')), 'gasht.js ہٹ چکی');
   assert.ok(!/gasht/.test(read('boot.js')), 'boot: نہ مانگ پر نہ فرصت میں');
   const ac = read('app-core.js');
@@ -2002,9 +2002,17 @@ test('v561: گشت کا کوئی راستہ باقی نہیں (صفحہ، Dashbo
   assert.ok(!/gasht/.test(read('sw.js')), 'SW precache میں نہیں');
   const sf = read('system-forms.js');
   assert.ok(!JSON.parse(sf.slice(sf.indexOf('= [') + 2, sf.lastIndexOf(';'))).some(f => f.id === 'gasht'), 'ٹمپلیٹس میں «گشت رپورٹ» نہیں');
-  // ریکارڈ کبھی خاموشی سے نہ مٹے: بیک اپ میں گشت کا ڈیٹا جاری، «حذف شدہ مواد» کی پرانی اشیا بحال ہو سکیں
-  assert.ok(/from\('gasht_logs'\)/.test(read('backup.js')), 'بیک اپ میں گشت کا پرانا ریکارڈ');
-  assert.ok(/gasht:\s+'gasht_logs'/.test(read('bin.js')), 'حذف شدہ مواد: پرانی گشت اشیا');
+  // v562 (افسر کا حکم: «gasht ko complete remove kren»): بیک اپ اور «حذف شدہ مواد» سے بھی باہر۔
+  //   ریکارڈ پھر بھی خاموشی سے نہیں مٹتا: sql/111 پہلے بیک اپ بناتی ہے، اور ایک بھی قطار ہو تو رک جاتی ہے۔
+  assert.ok(!/gasht/.test(read('backup.js')), 'بیک اپ میں گشت نہیں');
+  const bn = read('bin.js');
+  assert.ok(!/gasht/.test(bn), 'حذف شدہ مواد میں گشت نہیں');
+  assert.ok(/if \(!table\) \{ const er = new Error\('یہ قسم اب نظام میں نہیں — بحال نہیں ہو سکتی'\)/.test(bn),
+    'جس قسم کا جدول نہیں اس کی «بحالی» جھوٹی کامیابی نہ دکھائے اور بن سے نہ ہٹے');
+  const g = read('sql/111_remove_gasht.sql');
+  assert.ok(g.indexOf("create table public.dio_bak_111_gasht_logs as table public.gasht_logs") < g.indexOf("execute 'drop table public.gasht_logs'"), 'پہلے بیک اپ، پھر ہٹانا');
+  assert.ok(/if n > 0 or nb > 0 then\s+raise exception '111 رک گئی/.test(g), 'ایک بھی قطار ہو تو رک جائے');
+  assert.ok(!/cascade/i.test(g.replace(/--.*$/gm, '')), 'cascade نہیں — کوئی اور چیز ٹکی ہو تو رک جائے');
 });
 
 test('v548: sql/104 — گشت کی table: اپنا ریکارڈ، میعاد ختم = صرف پڑھنا، anon/TRUNCATE بند', () => {

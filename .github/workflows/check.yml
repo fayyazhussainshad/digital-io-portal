@@ -1,6 +1,8 @@
 # Digital IO — ہر تبدیلی پر خودکار جانچ (v547)
-# ہر PR اور main پر ہر push: lint + unit tests + اصل ایپ کی جانچ (Desktop/Mobile/پرنٹ)۔
+# ہر PR: lint + unit tests + اصل ایپ کی جانچ (Desktop/Mobile/پرنٹ)۔ main پر push: lint + unit tests۔
 # کوئی بھی جانچ ناکام ہو تو PR پر سرخ نشان — غلط کوڈ live جانے سے پہلے رک جائے۔
+# v562: ریپو private ہے (27 اکتوبر کا اتفاق) — GitHub کے مفت منٹ محدود؛ اصل ایپ کی لمبی جانچ (~50 منٹ)
+#   PR پر چلتی ہے (وہی merge والا کوڈ جانچتی ہے)، main پر دوبارہ نہیں۔ ضرورت ہو تو Actions سے ہاتھ سے بھی۔
 name: check
 
 on:
@@ -33,6 +35,7 @@ jobs:
 
   real-app:
     name: Real app (desktop + mobile + print)
+    if: github.event_name != 'push'
     runs-on: ubuntu-24.04   # v558: «latest» کی نئی تصویر پر تنصیب ناکام — جانچ والی تصویر پکی
     timeout-minutes: 60
     needs: lint-and-unit
@@ -118,7 +121,7 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh v560_inventory_test.py
-      - name: v561 — expiry = view only (no print / write / edit, search open, renew unlocks; suspended = full lock), SHO / DSP name on both devices, case sharing removed, patrol (gasht) removed (v561_test.py)
+      - name: v561/v562 — expiry = view only (no print / write / edit, search open, renew unlocks; suspended = full lock), all officer settings on both devices (SHO / DSP, signature, vehicle, own lists, suggestions, papers; never theme / secrets; first-sync merge; shared device safe), case sharing removed, patrol (gasht) removed (v561_test.py)
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh v561_test.py

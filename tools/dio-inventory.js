@@ -55,8 +55,8 @@
   for (var i = 0; i < LS.length; i++) keys.push(LS.key(i));
   keys.forEach(function (k) { var m = /^dio_naqsha_(.+)::pending$/.exec(k); if (m && LS.getItem(k) === '1') NAQ_PEND[m[1]] = 1; });
 
-  var SETTINGS = /^(digital_io_sho|digital_io_dsp|digital_io_sho_sign|digital_io_sarkari_gari|dio_ch173_papers.*|dio_ch173_paper|dio_ch173_medical_officer|dio_akhraj_.*|dio_wit_status_custom|dio_acc_opts_.*|dio_zimni_types_.*|suggest_.*|dio_saza_paper|dio_dk_paper|dio_challan_view|dio_doc_view)$/;
-  var DEVICE = /^(dio_theme|dio_font_size|dio_officer_cache|dio_profile_photo|officer_photo_url|officer_profile|dio_onboarded|dio_seen_welcome_v1|dio_recent_cases|digital_io_search_history|dio_btn_usage|dio_hw_clock|dio_grace_start|dio_sub_cache|dio_last_sync|dio_last_backup.*|dio_err_log|dio_zikr_deck_v2|cache_law_library|cache_ahkamat|dio_auto_interim_done_v1|dio_last_loc.*|case_status_.*|case_data_.*|dio_print_preview|dio_notifs_cache|dio_zimni_col|dio_zimni_a_col|digital_io_locked|dio_resume.*|dio_last_page.*)$/;
+  var SETTINGS = /^(digital_io_sho|digital_io_dsp|digital_io_sho_sign|digital_io_sarkari_gari|dio_ch173_papers.*|dio_ch173_paper|dio_ch173_medical_officer|dio_akhraj_.*|dio_wit_status_custom|dio_acc_opts_.*|dio_zimni_types_.*|suggest_.*|dio_saza_paper|dio_dk_paper)$/;
+  var DEVICE = /^(dio_theme|dio_font_size|dio_challan_view|dio_doc_view|dio_officer_cache|dio_profile_photo|officer_photo_url|officer_profile|dio_onboarded|dio_seen_welcome_v1|dio_recent_cases|digital_io_search_history|dio_btn_usage|dio_hw_clock|dio_grace_start|dio_sub_cache|dio_last_sync|dio_last_backup.*|dio_err_log|dio_zikr_deck_v2|cache_law_library|cache_ahkamat|dio_auto_interim_done_v1|dio_last_loc.*|case_status_.*|case_data_.*|dio_print_preview|dio_notifs_cache|dio_zimni_col|dio_zimni_a_col|digital_io_locked|dio_resume.*|dio_last_page.*)$/;
   var DOC_NAMES = { darkhwastain: 'درخواستیں', saza_slip: 'سزا سلپ', rfa_form: 'RFA', cdr_imei: 'CDR / IMEI', naqsha: 'نقشہ موقع' };
 
   keys.forEach(function (k) {
@@ -69,7 +69,7 @@
     if ((m = /^dio_za_draft_(.+)$/.exec(k))) {
       v = J(k) || {}; var r2 = row('بیان 161 ض ف / اندرونی ضمنی — خودکار مسودے', 'localStorage', 'صرف یہی آلہ'); r2.items += Object.keys(v).length; addCase(r2, m[1]); return;
     }
-    if (SETTINGS.test(k)) { row('ترتیبات (SHO/DSP، تفصیل کاغذات، کاغذ، اپنی اقسام، دستخط…)', 'localStorage', 'صرف یہی آلہ').items++; return; }
+    if (SETTINGS.test(k)) { row('ترتیبات (SHO/DSP، تفصیل کاغذات، کاغذ، اپنی اقسام، دستخط…)', 'localStorage + dio_user_data', 'ہاں (v562)').items++; return; }
     if (DEVICE.test(k)) { row('آلے کی اپنی (تھیم، حالیہ، cache…)', 'localStorage', 'صرف یہی آلہ', 'sync کی ضرورت نہیں').items++; return; }
     if ((m = /^dio_zimni_(.+)$/.exec(k))) {
       caseList('ضمنی (بیرونی)', m[1], arr(J(k)), function (x) { return !!(x && (x._pending || idPend(x))); }, function (x) { return x._sync_err || ''; }); return;

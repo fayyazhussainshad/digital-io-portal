@@ -16,7 +16,7 @@ def fill(pg):
     pg.select_option('#ir-doc .ir-cell:has([data-k="nature"]) select', 'چوری')
     pg.evaluate("_irSetDt('occ','2026-10-08T05:15'); _irSetDt('info','2026-10-08T05:20')")
     typ(pg, 'place', 'نیو وقاص ٹاؤن ملتان')
-    typ(pg, 'caller', 'ملک زاہد اقبال ولد فیض احمد قوم کھوکھر سکنہ نیو وقاص ٹاؤن ملتان موبائل نمبر 0303-2333981')
+    typ(pg, 'caller', 'ملک زاہد اقبال ولد فیض احمد قوم کھوکھر سکنہ نیو وقاص ٹاؤن ملتان موبائل نمبر 0300-1234567')
     typ(pg, 'victim', 'ملک زاہد اقبال')
     typ(pg, 'motive', '-')
     typ(pg, 'accused', 'نامعلوم — تعداد 1')
@@ -24,7 +24,7 @@ def fill(pg):
     typ(pg, 'vehicle', '-')
     typ(pg, 'visitors', 'SDPO صدر سرکل، PFSA ٹیم، CRO ٹیم')
     typ(pg, 'arrested', '-')
-    typ(pg, 'detail', 'مسمی ملک زاہد اقبال ولد فیض احمد قوم کھوکھر سکنہ نیو وقاص ٹاؤن ملتان موبائل نمبر 0303-2333981 نے بذریعہ 15 اطلاع دی کہ بوقت 5:15 بجے صبح نماز کے لیے اٹھے تو کمرہ چیک کیا تو تالا کھلا تھا، کسی نامعلوم ملزم نے تقریباً 80 لاکھ روپے نقدی اور تقریباً 100 تولہ طلائی زیورات چوری کر لیے ہیں۔ من SI/SHO معہ PFSA اور CRO ٹیم موقع پر موجود ہوں، مزید تفتیش جاری ہے۔', append=True)
+    typ(pg, 'detail', 'مسمی ملک زاہد اقبال ولد فیض احمد قوم کھوکھر سکنہ نیو وقاص ٹاؤن ملتان موبائل نمبر 0300-1234567 نے بذریعہ 15 اطلاع دی کہ بوقت 5:15 بجے صبح نماز کے لیے اٹھے تو کمرہ چیک کیا تو تالا کھلا تھا، کسی نامعلوم ملزم نے تقریباً 80 لاکھ روپے نقدی اور تقریباً 100 تولہ طلائی زیورات چوری کر لیے ہیں۔ من SI/SHO معہ PFSA اور CRO ٹیم موقع پر موجود ہوں، مزید تفتیش جاری ہے۔', append=True)
     pg.evaluate("document.activeElement && document.activeElement.blur()"); pg.wait_for_timeout(500)
 
 GEO = """(() => { const d=document.getElementById('ir-doc'), t=d.querySelector('.ir-table'), r=t.querySelector('tr');
@@ -141,7 +141,7 @@ bb=ImageChops.difference(a,b).getbbox(); print(bb)"""], capture_output=True, tex
     clip = pg.evaluate("""(async () => { const items = await navigator.clipboard.read(); const it = items[0];
       return {types: it.types, html: await (await it.getType('text/html')).text(), text: await (await it.getType('text/plain')).text()}; })()""")
     check('copy puts the formatted report (table) on the clipboard', 'text/html' in clip['types'] and '<table' in clip['html'] and 'نیو وقاص ٹاؤن ملتان' in clip['html'] and 'dir="rtl"' in clip['html'], clip['types'])
-    check('copy also gives full text (WhatsApp/SMS)', 'نوعیت وقوعہ: چوری' in clip['text'] and '0303-2333981' in clip['text'])
+    check('copy also gives full text (WhatsApp/SMS)', 'نوعیت وقوعہ: چوری' in clip['text'] and '0300-1234567' in clip['text'])
     check('copy does NOT create a new report', len(pg.evaluate("window.__db.incident_reports")) == 1 and pg.locator('.ir-card').count() == 1)
     # ── share ──
     # v551 (افسر کی ہدایت): شیئر = پوری فائل PDF + Word (پہلے صرف متن جاتا تھا)
@@ -158,7 +158,7 @@ bb=ImageChops.difference(a,b).getbbox(); print(bb)"""], capture_output=True, tex
         pg.wait_for_timeout(500)
     sh = pg.evaluate("window.__shared") or {}
     check('share sends the FULL file — PDF + Word', sorted(n.split('.')[-1] for n in sh.get('names', [])) == ['doc', 'pdf'] and sh.get('pdfHead', '').startswith('%PDF'), sh.get('names'))
-    check('Word file has the full report (table + all text)', '<table' in sh.get('doc', '') and 'نیو وقاص ٹاؤن ملتان' in sh.get('doc', '') and '0303-2333981' in sh.get('doc', '') and 'SI/SHO' in sh.get('doc', ''))
+    check('Word file has the full report (table + all text)', '<table' in sh.get('doc', '') and 'نیو وقاص ٹاؤن ملتان' in sh.get('doc', '') and '0300-1234567' in sh.get('doc', '') and 'SI/SHO' in sh.get('doc', ''))
     pg.evaluate("_irClose(true)"); pg.wait_for_timeout(900)   # فہرست سے شیئر رپورٹ کھول کر دکھاتا ہے — واپس فہرست
     # ── edit ──
     pg.click('.ir-card .ir-act:has-text("ترمیم")'); pg.wait_for_selector('#ir-doc'); pg.wait_for_timeout(800)

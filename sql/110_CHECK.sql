@@ -5,7 +5,9 @@
 -- ═══════════════════════════════════════════════════════════════════════
 select jsonb_pretty(jsonb_build_object(
   'case_shares_qataarein', (select count(*) from public.case_shares),
-  'gasht_logs_qataarein',  (select count(*) from public.gasht_logs),
+  -- گشت کا جدول sql/111 سے ہٹ سکتا ہے — سیدھا نام نہیں، موجود ہو تب ہی گنتی (ورنہ null)
+  'gasht_logs_qataarein',  (case when to_regclass('public.gasht_logs') is null then null
+                             else (xpath('/row/c/text()', query_to_xml('select count(*) as c from public.gasht_logs', false, true, '')))[1]::text::bigint end),
   'likhne_ka_haq_band_ok', not (has_table_privilege('authenticated', 'public.case_shares', 'INSERT')
                              or has_table_privilege('authenticated', 'public.case_shares', 'UPDATE')
                              or has_table_privilege('anon', 'public.case_shares', 'INSERT')),

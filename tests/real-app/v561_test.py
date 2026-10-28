@@ -3,6 +3,9 @@
      لکھنا (سرور پر کچھ نہیں)، ترمیم (ٹائپ، paste، انتخاب) سب بند؛ تلاش کھلی؛ console سے نہیں کھلتا؛
      تجدید کے بعد سب کھلا۔ معطل سبسکرپشن = پہلے جیسا پورا تالا۔
   B) SHO / DSP-SDPO کا نام سب آلات پر ایک (ایک پر بدلا → دوسرے پر 10 سیکنڈ میں، بغیر refresh)
+  B2) (v562) باقی ترتیبات بھی: سرکاری گاڑی، SHO کے دستخط، گواہ کی اپنی حیثیت، تجاویز، ضمنی کی اپنی اقسام،
+     تفصیل کاغذات — آلے کی اپنی (رنگ، حروف) اور خفیہ چیزیں نہیں؛ پہلی بار ملاپ میں دونوں فہرستیں ملیں؛
+     ایک آلے پر دو افسر: ایک کی بچی ہوئی ترتیب / قطار دوسرے کے کھاتے میں نہیں
   C) مقدمہ شیئر مکمل ختم — دوسرے افسر کا مقدمہ نہ فہرست میں، نہ realtime سے آلے پر؛ case_shares سے کچھ نہیں منگوایا جاتا
   D) گشت نظام سے باہر — Dashboard، نیا اندراج، تلاش، ٹمپلیٹ، صفحہ: کہیں نہیں
 چلانا: README.md — `python3 v561_test.py`
@@ -95,12 +98,13 @@ with sync_playwright() as p:
         idle(pg, 600)
         pg.evaluate("try{closeModal()}catch(e){}")
 
-    def device(label, S, **ctxargs):
+    def device(label, S, init='', **ctxargs):
         ctx = b.new_context(service_workers='block', timezone_id='Asia/Karachi', **ctxargs)
         ctx.route('**/*', route)
         ctx.expose_binding('__srv', lambda source, st: S.exec(st))
         ctx.add_init_script(PRINT_HOOK + "\nwindow.confirm = () => true;" +
-            "\nif (!localStorage.getItem('digital_io_sho')) localStorage.setItem('digital_io_sho', JSON.stringify({name:'ندیم عباس شاد', rank:'SI/SHO'}));")
+            "\nif (!localStorage.getItem('digital_io_sho')) localStorage.setItem('digital_io_sho', JSON.stringify({name:'ندیم عباس شاد', rank:'SI/SHO'}));" +
+            ("\nif (!localStorage.getItem('__seeded')) { localStorage.setItem('__seeded', '1'); " + init + " }" if init else ''))
         pg = ctx.new_page()
         errs = []
         pg.on('pageerror', lambda e: errs.append(str(e)))
@@ -262,6 +266,69 @@ with sync_playwright() as p:
     check('SHO: نیا آلہ — کھلتے ہی وہی نام (اپنا پرانا نام سرور پر نہیں چڑھاتا)', N['pg'].evaluate("getSHOName()") == 'I/SHO محمد اکرم بھٹی' and 'محمد اکرم بھٹی' in [x for x in S.t['dio_user_data'] if x['doc_key'] == 'setting|digital_io_sho'][0]['data']['value'],
           N['pg'].evaluate("getSHOName()"))
     N['ctx'].close(); devices.remove(N)
+
+    # B2) باقی ترتیبات (v562) — لیپ ٹاپ پر اصل ماڈیولز سے بدلیں
+    def setting_rows(key):
+        return [x for x in S.t['dio_user_data'] if x['kind'] == 'setting' and x['doc_key'] == 'setting|' + key and not x.get('deleted_at')]
+    dp.evaluate("async () => { for (const f of ['sho-dsp.js', 'witnesses.js', 'zimni.js']) { try { await dioLoadScript(f); } catch (e) {} } return 0; }"); idle(dp, 400)
+    dp.evaluate("openSarkariGari()"); idle(dp, 400)
+    dp.fill('#gari-number', 'MNA-1234'); dp.fill('#gari-driver', 'محمد اسلم ڈرائیور')
+    dp.evaluate("async () => { await _saveSarkariGari(); return 0; }"); idle(dp, 400)
+    dp.evaluate("try{closeModal()}catch(e){}")
+    dp.evaluate("""() => { window.prompt = () => 'مفرور گواہ'; const s = document.createElement('select');
+      s.innerHTML = '<option value="">—</option><option value="__add__">+</option>'; s.value = '__add__'; document.body.appendChild(s);
+      _witStatusChange(s); s.remove(); return 0; }""")
+    dp.evaluate("rememberValue('v562_thana', 'تھانہ صدر ملتان')")
+    dp.evaluate("_zimniSaveCustomTypes({ main: ['میری اپنی ضمنی'], sub: {} })")
+    dp.evaluate("localStorage.setItem('dio_ch173_papers_challan', JSON.stringify(['فرد مقبوضگی', 'نقشہ موقع']))")      # (چالان ماڈیول یہی چابی لکھتا ہے)
+    dp.evaluate("localStorage.setItem('digital_io_sho_sign', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==')")
+    # آلے کی اپنی چیزیں اور خفیہ — کبھی نہیں
+    dp.evaluate("localStorage.setItem('dio_theme', 'dark'); localStorage.setItem('dio_font_size', 'large'); localStorage.setItem('dio_pin', 'x'); 0")
+    idle(dp, 2800)
+    ztk = dp.evaluate("'dio_zimni_types_' + _zimniTypeOfficerId()")
+    KEYS = ['digital_io_sarkari_gari', 'dio_wit_status_custom', 'suggest_v562_thana', ztk, 'dio_ch173_papers_challan', 'digital_io_sho_sign']
+    got = {k: len(setting_rows(k)) for k in KEYS}
+    check('ترتیبات: لیپ ٹاپ پر بدلی ہر ترتیب سرور پر (ہر ایک کی ایک قطار)', all(v == 1 for v in got.values()), got)
+    check('ترتیبات: رنگ، حروف کا سائز اور PIN سرور پر نہیں گئے', not setting_rows('dio_theme') and not setting_rows('dio_font_size') and not setting_rows('dio_pin'),
+          [x['doc_key'] for x in S.t['dio_user_data'] if x['kind'] == 'setting'])
+    LSV = "(ks) => ks.map(k => localStorage.getItem(k))"
+    want = dp.evaluate(LSV, KEYS)
+    t = wait_until(mp, "([ks, w]) => ks.every((k, i) => localStorage.getItem(k) === w[i])", [KEYS, want], timeout=10)
+    check('ترتیبات: موبائل پر سب 10 سیکنڈ میں، بغیر refresh', t is not None, [k for k, a, b2 in zip(KEYS, mp.evaluate(LSV, KEYS), want) if a != b2])
+    check('ترتیبات: موبائل پر سرکاری گاڑی (getSarkariGari)', mp.evaluate("async () => { try { await dioLoadScript('sho-dsp.js'); } catch (e) {} return getSarkariGari().vehicle_number; }") == 'MNA-1234')
+    check('ترتیبات: موبائل کا اپنا رنگ نہیں بدلا', mp.evaluate("localStorage.getItem('dio_theme')") != 'dark')
+    # موبائل → لیپ ٹاپ
+    mp.evaluate("rememberValue('v562_thana', 'تھانہ کینٹ')"); idle(mp, 2800)
+    t = wait_until(dp, "() => JSON.parse(localStorage.getItem('suggest_v562_thana') || '[]')[0] === 'تھانہ کینٹ'", timeout=10)
+    check('ترتیبات: موبائل پر نئی تجویز → لیپ ٹاپ پر 10 سیکنڈ میں', t is not None, dp.evaluate("localStorage.getItem('suggest_v562_thana')"))
+
+    # پہلی بار ملاپ: نئے آلے کی اپنی فہرست کھوئے نہیں — دونوں ملیں
+    N2 = device('mobile-own-list', S, init="localStorage.setItem('dio_wit_status_custom', JSON.stringify(['مقامی حیثیت']));",
+                viewport={'width': 390, 'height': 844}, is_mobile=True, has_touch=True, user_agent=MOBILE_UA)
+    N2['pg'].evaluate("async () => { await DIOSync.kick(true); return 0; }"); idle(N2['pg'], 2800)
+    n2l = N2['pg'].evaluate("JSON.parse(localStorage.getItem('dio_wit_status_custom') || '[]')")
+    srv = json.loads((setting_rows('dio_wit_status_custom') or [{'data': {'value': '[]'}}])[0]['data']['value'])
+    check('پہلی بار ملاپ: نئے آلے پر دونوں حیثیتیں (اپنی + سرور والی)', 'مقامی حیثیت' in n2l and 'مفرور گواہ' in n2l, n2l)
+    check('پہلی بار ملاپ: سرور پر بھی دونوں', 'مقامی حیثیت' in srv and 'مفرور گواہ' in srv, srv)
+    t = wait_until(dp, "() => JSON.parse(localStorage.getItem('dio_wit_status_custom') || '[]').includes('مقامی حیثیت')", timeout=10)
+    check('پہلی بار ملاپ: لیپ ٹاپ تک بھی پہنچا', t is not None)
+    N2['ctx'].close(); devices.remove(N2)
+
+    # ایک آلے پر پہلے کوئی اور افسر تھا: اُس کی بچی ہوئی تجویز اور نہ بھیجی گئی ترتیب اِس افسر کے کھاتے میں نہیں
+    other_ob = json.dumps({'setting|digital_io_dsp': {'kind': 'setting', 'case_id': 'setting', 'at': '2026-10-27T00:00:00Z', 'oid': 'o2',
+                          'data': {'value': json.dumps({'name': 'دوسرے افسر کا DSP', 'rank': 'DSP'}, ensure_ascii=False), 'saved_at': '2026-10-27T00:00:00Z'}}}, ensure_ascii=False)
+    N3 = device('shared-device', S, init=("localStorage.setItem('dio_setting_at', JSON.stringify({ _oid: 'o2', suggest_other: '2026-10-01T00:00:00Z' }));"
+                                          "localStorage.setItem('suggest_other', JSON.stringify(['دوسرے افسر کی تجویز']));"
+                                          "localStorage.setItem('dio_ud_outbox', " + json.dumps(other_ob) + ");"),
+                viewport={'width': 1366, 'height': 768})
+    N3['pg'].evaluate("async () => { await DIOSync.kick(true); return 0; }"); idle(N3['pg'], 2800)
+    dsp_srv = setting_rows('digital_io_dsp')
+    check('ایک آلہ دو افسر: دوسرے افسر کی تجویز اِس افسر کے سرور پر نہیں گئی', not setting_rows('suggest_other'))
+    check('ایک آلہ دو افسر: دوسرے افسر کی نہ بھیجی گئی ترتیب اِس افسر کے نام سے نہیں گئی', len(dsp_srv) == 1 and 'رانا عمران' in dsp_srv[0]['data']['value'], [r['data'] for r in dsp_srv])
+    check('ایک آلہ دو افسر: اِس افسر کا اپنا DSP نام آلے پر آ گیا', N3['pg'].evaluate("async () => { try { await dioLoadScript('sho-dsp.js'); } catch (e) {} return getDSPName(); }") == 'SDPO رانا عمران')
+    t = wait_until(N3['pg'], "() => document.getElementById('status-text').textContent === 'محفوظ'", timeout=10)
+    check('ایک آلہ دو افسر: پٹی «محفوظ» (دوسرے افسر کی قطار سے «سنک» پر نہیں اٹکی)', t is not None, N3['pg'].evaluate(STATUS))
+    N3['ctx'].close(); devices.remove(N3)
 
     # C) مقدمہ شیئر ختم
     n0 = len(S.log)
