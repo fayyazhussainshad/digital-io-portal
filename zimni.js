@@ -393,6 +393,7 @@ function _zimniMarkConflict(cid, id, server) {
 }
 async function _zimniSyncPending(caseIds, quiet) {
   if (_zimniSyncBusy) return 0;
+  if (window.DIO && DIO.sub && typeof DIO.sub.blocked === 'function' && DIO.sub.blocked()) return 0;   // v561: صرف دیکھنا — تجدید تک یہیں
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return 0;
   if (typeof supabaseClient === 'undefined' || !supabaseClient) return 0;
   // بغیر سیشن (آف لائن لاگ اِن) سرور «اجازت نہیں» کہے گا — انتظار کرو
@@ -4208,6 +4209,7 @@ function _zaRekeyDraft(caseId, oldId, newId) {
 }
 async function _zaSyncPending(caseIds, quiet) {
   if (_zaSyncBusy) return 0;
+  if (window.DIO && DIO.sub && typeof DIO.sub.blocked === 'function' && DIO.sub.blocked()) return 0;   // v561: صرف دیکھنا — تجدید تک یہیں
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return 0;
   if (typeof supabaseClient === 'undefined' || !supabaseClient) return 0;
   try { const s = await supabaseClient.auth.getSession(); if (!s || !s.data || !s.data.session) return 0; } catch (_) { return 0; }

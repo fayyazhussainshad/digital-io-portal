@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v560
+   DIGITAL IO — SERVICE WORKER v561
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v560';
+const CACHE_NAME = 'digital-io-v561';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -74,7 +74,6 @@ const CORE_ASSETS = [
   '/sho-dsp.js',
   '/editor-tools.js',
   '/saved-files.js',
-  '/case-sharing.js',
   '/notifications.js',
   '/reminders.js',
   '/auto-interim.js',
@@ -96,7 +95,6 @@ const CORE_ASSETS = [
   '/secure-storage.js',
   '/license-token.js',
   '/incident.js',
-  '/gasht.js',
   '/court.js',
   '/bin.js',
   '/admin.js',

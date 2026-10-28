@@ -27,18 +27,209 @@ DIO.sub = {
      wo alag nishan hai jo har 1.2 second baad khud ko dobara laga leta
      hai. Do me se koi aik bhi sach ho to sab likhai band. */
   blocked: function () {
-    var hardLocked = false;
+    var hardLocked = false, viewOnly = false;
     try { hardLocked = (typeof _dioLockActive === 'function') && _dioLockActive(); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
-    return this._blocked === true || hardLocked;
+    // v561: «صرف دیکھنا» کی حالت بھی closure میں — console سے `_blocked = false` کرنے سے نہیں کھلتی
+    try { viewOnly = (typeof _dioViewOnlyActive === 'function') && _dioViewOnlyActive(); } catch (_) { /* ikhtiyari hook */ }
+    return this._blocked === true || hardLocked || viewOnly;
   },
   // guard(label) → true = آگے بڑھو، false = بند (renew prompt دکھایا)۔
   guard: function (label) {
-    if (this._blocked !== true) return true;          // allow (default + fail-open)
+    if (!this.blocked()) return true;                 // allow (default + fail-open)
     try { showToast('سبسکرپشن ختم — ' + (label || 'یہ عمل') + ' بند ہے۔ تجدید کریں۔', 'error', 4000); } catch (_) { /* paigham na dikh sake to koi baat nahi */ }
     try { if (typeof _showPlans === 'function') _showPlans(); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
     return false;
   }
 };
+
+// ═══════════════════════════════════════════════════════════════
+//  v561: میعاد ختم = صرف دیکھنا — نہ پرنٹ، نہ لکھنا، نہ ترمیم
+//  (افسر / مالک کا حکم، 28 اکتوبر 2026: «Subscription khatam honay par sirf
+//   view — no print, no write, no editing»)
+//  • پڑھنا کھلا: ہر صفحہ، مقدمہ، ضمنی، چالان کھلتا اور نظر آتا ہے (سرور پر بھی
+//    پڑھنا کبھی بند نہیں — sql/92a)۔
+//  • لکھنا بند: ہر DB write (نیچے والا مرکزی گارڈ) + سرور کا اپنا گیٹ (sql/92b)۔
+//  • ترمیم بند: ہر لکھنے کا خانہ / دستاویز صرف پڑھنے کے لیے (تلاش اور تجدید
+//    کے خانے کھلے)؛ ٹائپ، paste، drop سب رد۔
+//  • پرنٹ بند: dioPrint، window.print، Ctrl+P، اور PDF/Word شیئر / ڈاؤن لوڈ۔
+//  • معطل (suspended) / کوئی سبسکرپشن نہیں (none): پہلے جیسا پورا تالا۔
+//  حالت closure میں — console سے `DIO.sub._blocked = false` لکھنے سے نہیں کھلتی۔
+// ═══════════════════════════════════════════════════════════════
+var _dioViewOnlyState = (function () {
+  var on = false;
+  return { on: function () { on = true; }, off: function () { on = false; }, is: function () { return on === true; } };
+})();
+function _dioViewOnlyActive() { return _dioViewOnlyState.is(); }
+window._dioViewOnlyActive = _dioViewOnlyActive;
+
+// تلاش / چھانٹی / تجدید / PIN کے خانے — صرف دیکھنے میں بھی کھلے
+var _DIO_RO_OK = /(search|srch|find|filter|query|-q$|^sr-|pin|^pay-|pass|login|otp)/i;
+function _dioRoOk(el) {
+  try {
+    if (!el || el.nodeType !== 1) return true;
+    if (el.closest && el.closest('[data-dio-ro-ok], #dio-sub-lock, #login-screen, #dio-viewonly-bar')) return true;
+    if (el.tagName === 'INPUT' && /^(search|checkbox|radio|button|submit|reset|hidden|range|color|image)$/i.test(el.type || '')) return true;
+    if (_DIO_RO_OK.test(el.id || '') || _DIO_RO_OK.test(el.getAttribute('name') || '')) return true;
+    if (/\b(search|srch|filter|login-input)\b/i.test(typeof el.className === 'string' ? el.className : '')) return true;
+    if (/تلاش/.test(el.getAttribute('placeholder') || '')) return true;
+  } catch (_) { return false; }
+  return false;
+}
+function _dioRoApply(root) {
+  if (!root || root.nodeType !== 1) return;
+  var list = [];
+  try {
+    if (root.matches && root.matches('input,textarea,select,[contenteditable]')) list.push(root);
+    if (root.querySelectorAll) list = list.concat([].slice.call(root.querySelectorAll('input,textarea,select,[contenteditable]')));
+  } catch (_) { return; }
+  list.forEach(function (el) {
+    if (el.hasAttribute('data-dio-ro') || _dioRoOk(el)) return;
+    if (el.hasAttribute('contenteditable')) {
+      var v = String(el.getAttribute('contenteditable')).toLowerCase();
+      if (v === 'false') return;
+      el.setAttribute('data-dio-ro', 'ce:' + v);
+      el.setAttribute('contenteditable', 'false');
+    } else if (el.tagName === 'SELECT' || (el.tagName === 'INPUT' && String(el.type).toLowerCase() === 'file')) {
+      // انتخاب (مثلاً ذیلی ضمنی کا سانچہ) بھی دستاویز بدل دیتا ہے — بند؛ چھانٹی والے اوپر _dioRoOk میں کھلے
+      if (el.disabled) return;
+      el.setAttribute('data-dio-ro', 'dis'); el.disabled = true;
+    } else {
+      if (el.readOnly) return;
+      el.setAttribute('data-dio-ro', 'ro'); el.readOnly = true;
+    }
+  });
+}
+function _dioRoRestore() {
+  try {
+    document.querySelectorAll('[data-dio-ro]').forEach(function (el) {
+      var t = el.getAttribute('data-dio-ro') || '';
+      el.removeAttribute('data-dio-ro');
+      if (t.indexOf('ce:') === 0) el.setAttribute('contenteditable', t.slice(3) || 'true');
+      else if (t === 'dis') el.disabled = false;
+      else if (t === 'ro') el.readOnly = false;
+    });
+  } catch (_) { /* ikhtiyari */ }
+}
+var _dioVoNoticeTs = 0;
+var _dioVoNoticeWhat = '';
+function _dioVoNotice(what) {
+  var n = Date.now();
+  if (n - _dioVoNoticeTs < 3000 && _dioVoNoticeWhat === what) return;   // وہی پیغام بار بار نہیں
+  _dioVoNoticeTs = n; _dioVoNoticeWhat = what;
+  try { showToast('سبسکرپشن ختم — صرف دیکھ سکتے ہیں: ' + (what || 'ترمیم') + ' بند ہے۔ تجدید کریں۔', 'error', 3500); } catch (_) { /* paigham */ }
+}
+var _dioVo = { obs: null, print: null, on: false };
+function _dioVoEditEvent(e) {
+  if (!_dioViewOnlyActive()) return;
+  if (_dioRoOk(e.target)) return;
+  e.preventDefault(); e.stopPropagation();
+  _dioVoNotice('ترمیم');
+}
+function _dioVoKey(e) {
+  if (!_dioViewOnlyActive()) return;
+  var k = String(e.key || '').toLowerCase();
+  if ((e.ctrlKey || e.metaKey) && (k === 'p' || e.code === 'KeyP')) {        // Ctrl+P (اردو کی بورڈ پر بھی)
+    e.preventDefault(); e.stopImmediatePropagation(); _dioVoNotice('پرنٹ'); return;
+  }
+  if ((e.ctrlKey || e.metaKey) && (k === 's' || e.code === 'KeyS')) {        // Ctrl+S — لکھنا بند
+    e.preventDefault(); e.stopImmediatePropagation(); _dioVoNotice('محفوظ کرنا'); return;
+  }
+  var t = e.target;
+  if (t && t.closest && t.closest('[data-dio-ro]') && (k.length === 1 || k === 'backspace' || k === 'delete' || k === 'enter')) _dioVoNotice('ترمیم');
+}
+function _dioVoClick(e) {
+  if (!_dioViewOnlyActive()) return;
+  var t = e.target;
+  if (t && t.closest && t.closest('[data-dio-ro]')) _dioVoNotice('ترمیم');
+}
+function _dioVoBar() {
+  try {
+    if (document.getElementById('dio-viewonly-bar')) return;
+    var area = document.querySelector('.main-area'), pc = document.getElementById('page-content');
+    if (!area || !pc) return;
+    var b = document.createElement('div');
+    b.id = 'dio-viewonly-bar';
+    b.className = 'no-print';
+    b.setAttribute('role', 'status');
+    b.innerHTML = '<span class="dio-vo-t">سبسکرپشن کی میعاد ختم — صرف دیکھ سکتے ہیں۔ پرنٹ، نیا اندراج اور ترمیم بند ہیں۔</span>' +
+      '<span class="dio-vo-b"><button type="button" class="btn btn-primary btn-sm" onclick="_showPlans()">تجدید کریں</button>' +
+      '<button type="button" class="btn btn-secondary btn-sm" id="dio-lock-recheck" onclick="_dioUnlockIfRenewed()">میں نے تجدید کر لی — دوبارہ جانچیں</button></span>';
+    area.insertBefore(b, pc);
+  } catch (_) { /* ikhtiyari */ }
+}
+function _dioEnterViewOnly() {
+  _dioViewOnlyState.on();
+  try { if (window.DIO && DIO.sub) DIO.sub._blocked = true; } catch (_) { /* ikhtiyari */ }
+  if (_dioVo.on) { _dioVoBar(); return; }
+  _dioVo.on = true;
+  try { document.documentElement.classList.add('dio-viewonly'); document.body.classList.add('dio-viewonly'); } catch (_) { /* ikhtiyari */ }
+  try {
+    if (!document.getElementById('dio-viewonly-style')) {
+      var st = document.createElement('style'); st.id = 'dio-viewonly-style';
+      st.textContent =
+        '#dio-viewonly-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 10px;direction:rtl;' +
+        'padding:6pt 10pt;background:#fef2f2;border-bottom:1px solid #fecaca;color:#991b1b;font-size:11pt;line-height:1.9;flex-shrink:0}' +
+        '#dio-viewonly-bar .dio-vo-b{display:flex;gap:6px;flex-wrap:wrap}' +
+        '#dio-viewonly-bar .btn{font-size:10.5pt}' +
+        'html.dio-viewonly [data-dio-ro]{cursor:not-allowed}' +
+        // براؤزر کے اپنے مینو سے پرنٹ: کاغذ پر کچھ نہیں، صرف پیغام
+        '@media print{html.dio-viewonly body *{display:none !important}' +
+        'html.dio-viewonly body::before{content:"سبسکرپشن ختم — پرنٹ بند ہے";display:block;text-align:center;font-size:20pt;margin-top:2in;direction:rtl}}';
+      document.head.appendChild(st);
+    }
+  } catch (_) { /* ikhtiyari */ }
+  _dioVoBar();
+  // موجودہ اور آنے والے ہر خانے / دستاویز پر «صرف پڑھنا»
+  try { _dioRoApply(document.body); } catch (_) { /* ikhtiyari */ }
+  try {
+    _dioVo.obs = new MutationObserver(function (muts) {
+      if (!_dioViewOnlyActive()) return;
+      muts.forEach(function (m) {
+        if (m.type === 'childList') m.addedNodes.forEach(function (n) { if (n.nodeType === 1) _dioRoApply(n); });
+        else if (m.type === 'attributes' && m.target && m.target.nodeType === 1) {
+          var el = m.target;
+          if (m.attributeName === 'contenteditable') {
+            var v = String(el.getAttribute('contenteditable') || '').toLowerCase();
+            if (v !== 'false' && el.hasAttribute('contenteditable') && !_dioRoOk(el)) {
+              if (!el.hasAttribute('data-dio-ro')) el.setAttribute('data-dio-ro', 'ce:' + (v || 'true'));
+              el.setAttribute('contenteditable', 'false');
+            }
+          } else if (m.attributeName === 'readonly' && el.getAttribute('data-dio-ro') === 'ro' && !el.readOnly) el.readOnly = true;
+          else if (m.attributeName === 'disabled' && el.getAttribute('data-dio-ro') === 'dis' && !el.disabled) el.disabled = true;
+        }
+      });
+    });
+    _dioVo.obs.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['contenteditable', 'readonly', 'disabled'] });
+  } catch (_) { /* ikhtiyari */ }
+  ['beforeinput', 'paste', 'drop', 'cut'].forEach(function (t) { document.addEventListener(t, _dioVoEditEvent, true); });
+  document.addEventListener('keydown', _dioVoKey, true);
+  document.addEventListener('click', _dioVoClick, true);
+  // window.print (ہر ماڈیول کا اپنا راستہ) — بند
+  try {
+    if (!_dioVo.print) {
+      _dioVo.print = window.print;
+      window.print = function () {
+        if (window.DIO && DIO.sub && DIO.sub.blocked()) { _dioVoNotice('پرنٹ'); return; }
+        return _dioVo.print.apply(window, arguments);
+      };
+    }
+  } catch (_) { /* ikhtiyari */ }
+}
+function _dioExitViewOnly() {
+  _dioViewOnlyState.off();
+  if (!_dioVo.on) return;
+  _dioVo.on = false;
+  try { if (_dioVo.obs) _dioVo.obs.disconnect(); } catch (_) { /* ikhtiyari */ }
+  _dioVo.obs = null;
+  ['beforeinput', 'paste', 'drop', 'cut'].forEach(function (t) { document.removeEventListener(t, _dioVoEditEvent, true); });
+  document.removeEventListener('keydown', _dioVoKey, true);
+  document.removeEventListener('click', _dioVoClick, true);
+  try { if (_dioVo.print) { window.print = _dioVo.print; _dioVo.print = null; } } catch (_) { /* ikhtiyari */ }
+  _dioRoRestore();
+  try { document.documentElement.classList.remove('dio-viewonly'); document.body.classList.remove('dio-viewonly'); } catch (_) { /* ikhtiyari */ }
+  try { var b = document.getElementById('dio-viewonly-bar'); if (b) b.remove(); } catch (_) { /* ikhtiyari */ }
+}
+window._dioEnterViewOnly = _dioEnterViewOnly;
 
 // ═══════════════════════════════════════════════════════════════
 //  CENTRAL WRITE-GUARD [4E.2] — "بالکل کوئی کام نہیں، صرف view"
@@ -53,13 +244,16 @@ DIO.sub = {
 // gate KA FAISLA isi table se hota hai, to afsar khud ko 'active' likh kar
 // poora nafaz band kar sakta tha. Ab sirf PARHNA khula; tajdeed
 // dio_request_subscription() RPC se hoti hai (sirf 'pending' banati hai).
-var _DIO_WRITE_WL = { subscription_plans: 1 };
+// client_errors: سرور کا گیٹ (sql/92b) بھی اسے کھلا رکھتا ہے — خرابی کی رپورٹ افسر کا لکھا ہوا ڈیٹا نہیں
+var _DIO_WRITE_WL = { subscription_plans: 1, client_errors: 1 };
 var _dioSubPromptTs = 0;
 function _dioSubWritePrompt() {
   var now = Date.now();
   if (now - _dioSubPromptTs < 1500) return;           // throttle — ایک عمل کے کئی writes پر spam نہ ہو
   _dioSubPromptTs = now;
   try { showToast('سبسکرپشن ختم — صرف دیکھ سکتے ہیں۔ تجدید کریں۔', 'error', 3500); } catch (_) { /* paigham na dikh sake to koi baat nahi */ }
+  // v561: «صرف دیکھنا» میں پس منظر کی کسی لکھائی پر پلان کا کارڈ اچانک نہ کھلے — تجدید کا بٹن اوپر کی پٹی میں ہے
+  if (typeof _dioViewOnlyActive === 'function' && _dioViewOnlyActive()) return;
   try { if (typeof _showPlans === 'function') _showPlans(); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
 }
 // blocked "query builder" — chain (.select().single().eq()… ) سب چلے، await پر {data:null,error}
@@ -356,6 +550,12 @@ async function showSubscriptionBanner() {
   if (window.DIO && DIO.sub) DIO.sub.setFromStatus(sub.status);
 
   // ══════════════════════════════════════════════════════════════
+  //  v561 (28 اکتوبر 2026، مالک کا تازہ حکم): میعاد ختم (expired) = صرف
+  //  دیکھنا — اندر آ سکتے ہیں، پڑھ سکتے ہیں؛ پرنٹ / لکھنا / ترمیم بند
+  //  (_dioEnterViewOnly)۔ نیچے والا پورا تالا اب صرف: معطل سبسکرپشن،
+  //  کوئی سبسکرپشن نہیں (none / unknown)، اور معطل افسر۔
+  //  ──────────────────────────────────────────────────────────────
+  //  (پرانا متن، تاریخ کے لیے)
   //  MIYAAD KHATAM = DAAKHLA MUKAMMAL BAND   (maalik ki nayi hidayat)
   //  ──────────────────────────────────────────────────────────────
   //  PEHLE: sirf `suspended` par daakhla band tha; `expired` par
@@ -377,8 +577,9 @@ async function showSubscriptionBanner() {
                 currentOfficer.role === 'superadmin');
   var _suspOfficer = (typeof _dioIsSuspended === 'function') &&
                      _dioIsSuspended(typeof currentOfficer !== 'undefined' ? currentOfficer : null);
-  var _noEntry = (sub.status === 'expired'  || sub.status === 'suspended' ||
+  var _noEntry = (sub.status === 'suspended' ||
                   sub.status === 'none'     || sub.status === 'unknown');
+  var _viewOnly = (sub.status === 'expired');
   if (!_owner && (_noEntry || _suspOfficer)) {
     // AHEM: sirf #main-app ka innerHTML badalna KAAFI NAHI tha — session
     // zinda rehta, write-guard ka flag false rehta (wo sirf subscription ki
@@ -398,6 +599,9 @@ async function showSubscriptionBanner() {
   }
 
   _installDioWriteGuard();   // central write-guard yaqeeni tor par lagao (supabaseClient ab mojood hai)
+  if (!_owner && _viewOnly) { _dioEnterViewOnly(); return; }
+  // تجدید ہو چکی (active / trial) — «صرف دیکھنا» ختم
+  if (_dioViewOnlyActive()) _dioExitViewOnly();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -491,6 +695,7 @@ window._dioHardLock = _dioHardLock;
 // Bypass nahi: agli bar login par showSubscriptionBanner() wahi tala dobara lagata hai.
 function _dioClearLockOnLogout() {
   try { _dioLockState.off(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  try { _dioExitViewOnly(); } catch (_) { /* ikhtiyari qadam */ }
   try { if (_dioLockTimer) { clearInterval(_dioLockTimer); _dioLockTimer = null; } } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   try { var L = document.getElementById('dio-sub-lock'); if (L) L.remove(); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   window._dioLocked = false;
@@ -509,6 +714,7 @@ async function _dioUnlockIfRenewed() {
     var fresh = await checkSubscription();
     if (fresh && (fresh.status === 'active' || fresh.status === 'trial')) {
       _dioLockState.off();
+      try { _dioExitViewOnly(); } catch (_) { /* ikhtiyari qadam */ }
       window._dioLocked = false;
       try { if (window.DIO && DIO.sub) DIO.sub.setFromStatus(fresh.status); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       try { if (_dioLockTimer) { clearInterval(_dioLockTimer); _dioLockTimer = null; } } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }

@@ -1438,7 +1438,6 @@ window.addEventListener('unhandledrejection', function(e){
       <div class="nav-item active" onclick="closeMobileSidebar();showPage('dashboard',this)"><span class="nav-icon">🏠</span> ڈیش بورڈ</div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('cases',this)"><span class="nav-icon">📁</span> میرے مقدمات <span class="nav-badge" id="badge-cases">0</span></div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('incident',this)"><span class="nav-icon">🚨</span> واقعاتی رپورٹ</div>
-      <div class="nav-item" onclick="closeMobileSidebar();showPage('gasht',this)"><span class="nav-icon">🚓</span> گشت لاگ</div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('reminders',this)"><span class="nav-icon">🔔</span> یاددہانیاں <span class="nav-badge" id="badge-reminders">0</span></div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('law',this)"><span class="nav-icon">⚖️</span> قانونی لائبریری</div>
       <div class="nav-item" onclick="closeMobileSidebar();showPage('search',this)"><span class="nav-icon">🔍</span> تلاش</div>
@@ -1899,7 +1898,6 @@ const _HASH_PAGES = {
   '#cdr':      'cdr',
   '#fivec':    'fivec',
   '#incident': 'incident',
-  '#gasht':    'gasht',
   '#performance':'performance',
   '#backup':   'backup',
   '#bin':      'bin',
@@ -1944,7 +1942,6 @@ document.addEventListener('DOMContentLoaded', function () {
   // Tarteeb ke saath — pehla jo MOJOOD aur NAZAR aa raha ho wohi chhapega.
   var TARGETS = [
     '#ir-doc',                    // واقعاتی رپورٹ (پورا صفحہ — v535)
-    '#gl-doc',                    // گشت رپورٹ (پورا صفحہ — v548)
     '#dio-docview #dio-dv-body',  // poore safhe wala doc-view (andar ka editor)
     '#ch173-doc',                 // چالان / ضمنی
     '#dk-doc',                    // درخواستیں

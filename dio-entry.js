@@ -2,7 +2,7 @@
    DIGITAL IO — dio-entry.js  (Dashboard کا «نیا اندراج»)
    ────────────────────────────────────────────────────────────────
    • ایک ہی «نیا اندراج» بٹن: مقدمہ · ملزم · گواہ · ہمراہی ملازم ·
-     پیشی / یاددہانی · شہادت · 5-C درخواست · واقعاتی رپورٹ (v535) · گشت (v548)۔ ہر کارڈ کے اوپر «مقدمہ» — اندراج خود
+     پیشی / یاددہانی · شہادت · 5-C درخواست · واقعاتی رپورٹ (v535)۔ (گشت v561 میں نظام سے باہر)۔ ہر کارڈ کے اوپر «مقدمہ» — اندراج خود
      اسی مقدمے میں شامل ہوتا ہے (ہر مقدمے میں الگ جا کر کرنے کی ضرورت نہیں)۔
    • پیشی اور یاددہانی کا ایک ہی کارڈ (پیشی کی تمام تفصیل سمیت)۔
    • شہادت: نام کا خانہ نہیں؛ ترتیب — مقدمہ، قسم، تاریخ و وقت (خود،
@@ -45,8 +45,8 @@
     ['peshi', 'پیشی / یاددہانی', SVG('<path d="M4 6.5h16V20H4z"/><path d="M4 10.5h16"/><path d="M8 3.5v4"/><path d="M16 3.5v4"/>')],
     ['shahadat', 'شہادت', SVG('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>')],
     ['fivec', '\u20665-C\u2069 درخواست', SVG('<path d="M4 5h16v14H4z"/><path d="M4 7l8 6 8-6"/>')],
-    ['waqiati', 'واقعاتی رپورٹ', SVG('<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M12 10.5v4"/><path d="M12 17.3h.01"/>')],
-    ['gasht', 'گشت', SVG('<circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="5" r="2.2"/><path d="M8 19h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h7"/>')]
+    ['waqiati', 'واقعاتی رپورٹ', SVG('<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M12 10.5v4"/><path d="M12 17.3h.01"/>')]
+    // v561: گشت نظام سے باہر (افسر کا حکم، 27/28 اکتوبر 2026) — اس کا ریکارڈ ڈیٹابیس میں جوں کا توں
   ];
 
   function hub() {
@@ -76,13 +76,6 @@
         await need(['incident.js']);
         if (typeof closeModal === 'function') closeModal();
         if (typeof window.openIncidentNew === 'function') window.openIncidentNew();
-        return;
-      }
-      // گشت (v548) — جاری گشت ہو تو سیدھا اسی کا اندراج، ورنہ نیا گشت
-      if (kind === 'gasht') {
-        await need(['gasht.js']);
-        if (typeof closeModal === 'function') closeModal();
-        if (typeof window.openGashtEntry === 'function') window.openGashtEntry();
         return;
       }
     } catch (err) { toast('' + (err && err.message || err), 'error'); }

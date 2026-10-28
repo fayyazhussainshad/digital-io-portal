@@ -1109,7 +1109,7 @@ test('safha-sazi ka matn Urdu mein (barand ke naam mustasna)', () => {
     'cdr-imei.js','admin.js','staff-v2.js','sho-dsp.js','error-handler.js','license-token.js',
     'dio-html.js','dio-states.js','secure-storage.js','offline-store.js','boot.js','dio-custody.js',
     'subscription.js','auth.js','app-core.js','data-api.js','misal-docs.js','misal-fir.js',
-    'case-sharing.js','saved-docs.js','cro-card.js','incident.js','help-guide.js','witnesses.js',
+    'saved-docs.js','cro-card.js','incident.js','help-guide.js','witnesses.js',
     'mulziman.js','fir.js','search.js','dashboard.js','case-form.js',
     'system-forms.js' /* خودکار بنی فائل — RFA جیسے سرکاری انگریزی فارم */]);
   // Barand / tikniki naam — inhen angrezi mein hi rehna chahiye
@@ -1145,14 +1145,30 @@ test('backup ka size hisaab NaN na de', () => {
    ROUND 9 — Miyaad khatam par DAAKHLA BAND · aaf-line · chip/button
    ═══════════════════════════════════════════════════════════════ */
 
-test('miyaad khatam par daakhla BAND (sirf view-only nahi)', () => {
+test('v561: میعاد ختم = صرف دیکھنا (پرنٹ / لکھنا / ترمیم بند)؛ معطل / سبسکرپشن نہیں = پورا تالا', () => {
   const s = read('subscription.js');
-  assert.ok(/var _noEntry = \(sub\.status === 'expired'/.test(s),
-    'maalik ki hidayat: miyaad khatam hote hi afsar ander na aa sake');
-  // shak ka faida ROKNE ko jaye, daakhle ko nahi
-  for (const st of ["'expired'", "'suspended'", "'none'", "'unknown'"])
-    assert.ok(new RegExp("sub\\.status === " + st).test(s), st + ' par bhi rukna chahiye');
-  assert.ok(/_dioHardLock\(sub\)/.test(s), 'poora tala lagna chahiye');
+  // مالک کا حکم (28 اکتوبر 2026): «Subscription khatam honay par sirf view — no print, no write, no editing»
+  assert.ok(/var _viewOnly = \(sub\.status === 'expired'\);/.test(s), 'expired = صرف دیکھنا');
+  assert.ok(/if \(!_owner && _viewOnly\) \{ _dioEnterViewOnly\(\); return; \}/.test(s), 'صرف دیکھنے کی حالت لگے');
+  // شک کا فائدہ روکنے کو: معطل / کوئی سبسکرپشن نہیں / نامعلوم پر پورا تالا جاری
+  const ne = s.slice(s.indexOf('var _noEntry'), s.indexOf('var _viewOnly'));
+  for (const st of ["'suspended'", "'none'", "'unknown'"]) assert.ok(new RegExp("sub\\.status === " + st).test(ne), st + ' پر پورا تالا');
+  assert.ok(!/'expired'/.test(ne), 'expired اب پورے تالے میں نہیں');
+  assert.ok(/_dioHardLock\(sub\)/.test(s), 'پورا تالا (معطل وغیرہ) باقی');
+  // حالت closure میں — console سے نہیں کھلتی؛ DIO.sub.blocked() اسے دیکھے
+  assert.ok(/var _dioViewOnlyState = \(function \(\) \{/.test(s), 'closure');
+  assert.ok(/viewOnly = \(typeof _dioViewOnlyActive === 'function'\) && _dioViewOnlyActive\(\)/.test(s) && /return this\._blocked === true \|\| hardLocked \|\| viewOnly;/.test(s), 'blocked() میں شامل');
+  assert.ok(/if \(!this\.blocked\(\)\) return true;/.test(s), 'guard بھی اسی سے');
+  // ترمیم بند: ہر خانہ / دستاویز صرف پڑھنے کے لیے + ٹائپ / paste / drop رد؛ پرنٹ: window.print + Ctrl+P + کاغذ خالی
+  assert.ok(/el\.setAttribute\('contenteditable', 'false'\)/.test(s) && /el\.readOnly = true/.test(s), 'خانے صرف پڑھنے کے');
+  assert.ok(/\['beforeinput', 'paste', 'drop', 'cut'\]\.forEach\(function \(t\) \{ document\.addEventListener\(t, _dioVoEditEvent, true\); \}\)/.test(s), 'ٹائپ / paste رد');
+  assert.ok(/k === 'p' \|\| e\.code === 'KeyP'/.test(s) && /window\.print = function \(\) \{/.test(s), 'Ctrl+P اور window.print بند');
+  assert.ok(/@media print\{html\.dio-viewonly body \*\{display:none !important\}/.test(s), 'براؤزر مینو کا پرنٹ: کاغذ خالی');
+  // PDF / Word شیئر اور ڈاؤن لوڈ بھی بند
+  assert.ok(/download: gate\(download, true\)/.test(read('dio-share.js')) && /fromPrint: gate\(fromPrint\)/.test(read('dio-share.js')), 'شیئر / ڈاؤن لوڈ بند');
+  assert.ok(/DIO\.sub\.guard\('شیئر \/ ڈاؤن لوڈ'\)\) return true;/.test(read('app-core.js')), 'dioShareDoc / dioSharePrint بند');
+  // قطار اور sync: تجدید تک کچھ «ناکام» نہ ہو
+  assert.ok(/DIO\.sub\.blocked\(\)\) return;/.test(read('app-core.js').slice(read('app-core.js').indexOf('async function _syncOfflineQueue')).slice(0, 600)), 'آف لائن قطار کو ہاتھ نہیں');
 });
 
 test('tale ki halat bahar se (console se) nahi badli ja sakti', () => {
@@ -1626,13 +1642,14 @@ test('تشخیصی SQL کسی کالم پر بھروسہ نہ کرے', () => {
     'sirf parhne wali file');
 });
 
-test('افسر تلاش: غلط کالم کی وجہ سے خانہ خالی نہ رہے', () => {
-  const s = read('case-sharing.js');
-  assert.ok(!/select\('id,full_name,badge_number,designation,station,is_approved,is_suspended'\)/.test(s),
-    'yahi query 42703 se rad hoti thi — fehrist hamesha khali');
-  assert.ok(/42703/.test(s), 'dusre naam par dobara koshish');
-  assert.ok(/o\.suspended !== true/.test(s) && /o\.is_suspended !== true/.test(s),
-    'donon naam par chhantai');
+test('v561: مقدمہ شیئر مکمل ختم — نہ ماڈیول، نہ شیئرڈ مقدمات کی آمد، نہ دوسرے افسر کا مقدمہ آلے پر', () => {
+  assert.ok(!fs.existsSync(path.join(ROOT, 'case-sharing.js')), 'case-sharing.js ہٹ چکی');
+  assert.ok(!/case-sharing/.test(read('boot.js')) && !/case-sharing/.test(read('sw.js')), 'نہ لوڈ نہ precache');
+  const da = read('data-api.js');
+  assert.ok(!/case_shares/.test(da) && !/_getSharedCases/.test(da), 'شیئرڈ مقدمات کبھی نہیں منگوائے جاتے');
+  assert.ok(/c\.officer_id && c\.officer_id !== oid/.test(da), 'پہلے کبھی آیا دوسرے افسر کا مقدمہ cache سے ہٹے');
+  assert.ok(!/شیئرڈ/.test(read('cases.js')), 'فہرست میں «شیئرڈ» نشان نہیں');
+  assert.ok(/String\(row\.officer_id\) !== String\(me\)\) return ''/.test(read('dio-sync.js')), 'realtime: دوسرے افسر کا مقدمہ آلے پر نہ آئے');
 });
 
 test('ایج فنکشن: ?pubkey صرف عوامی حصہ دے، نجی کلید کبھی نہیں', () => {
@@ -1969,77 +1986,25 @@ test('v547: ریپو کی صفائی — پرانی zip اور backup فائلی
   assert.ok(!fs.readdirSync(ROOT).some((f) => /\.(zip|bak|tgz)$/i.test(f)), 'جڑ میں کوئی zip/backup نہیں');
 });
 
-// ═══ v548 — گشت لاگ ══════════════════════════════════════════════════
-test('v548: گشت لاگ پورے سسٹم میں جڑا ہے (صفحہ، Dashboard، نیا اندراج، تلاش، حذف شدہ مواد، پرنٹ)', () => {
-  const g = read('gasht.js');
-  assert.ok(/registerPage\('gasht', renderGasht\)/.test(g), 'صفحہ');
-  assert.ok(/gasht:\s+'gasht\.js'/.test(read('boot.js')) && /'incident\.js', 'gasht\.js'/.test(read('boot.js')), 'boot: مانگ پر + فرصت میں');
+// ═══ v561 — گشت نظام سے باہر (افسر کا حکم، 27/28 اکتوبر 2026) ═══════════════
+test('v561: گشت کا کوئی راستہ باقی نہیں (صفحہ، Dashboard، نیا اندراج، تلاش، route، SW، ٹمپلیٹ) — ریکارڈ ڈیٹابیس میں محفوظ', () => {
+  assert.ok(!fs.existsSync(path.join(ROOT, 'gasht.js')), 'gasht.js ہٹ چکی');
+  assert.ok(!/gasht/.test(read('boot.js')), 'boot: نہ مانگ پر نہ فرصت میں');
   const ac = read('app-core.js');
-  assert.equal((ac.match(/'incident','gasht','reminders'/g) || []).length, 4, 'چاروں عہدوں کو رسائی');
-  assert.ok(/gasht:'گشت لاگ'/.test(ac), 'عنوان');
+  assert.ok(!/'gasht'/.test(ac) && !/gasht:'گشت لاگ'/.test(ac), 'کسی عہدے کی رسائی / عنوان میں نہیں');
   const ix = read('index.html');
-  assert.ok(/'#gasht':\s+'gasht'/.test(ix), 'route');
-  assert.ok(/'#gl-doc',\s+\/\/ گشت رپورٹ/.test(ix), 'Ctrl+P: صرف کھلی دستاویز چھپے');
-  assert.ok(/\{ l:'گشت لاگ',\s+ic:'gasht',\s+go:"showPage\('gasht',null\)" \}/.test(read('dashboard.js')), 'Dashboard tile');
+  assert.ok(!/gasht/.test(ix) && !/#gl-doc/.test(ix), 'sidebar، route، Ctrl+P ہدف — کہیں نہیں');
+  assert.ok(!/gasht/.test(read('dashboard.js')), 'Dashboard tile نہیں');
   const de = read('dio-entry.js');
-  assert.ok(/\['gasht', 'گشت', SVG\(/.test(de) && /kind === 'gasht'[\s\S]{0,200}openGashtEntry\(\)/.test(de), 'نیا اندراج hub');
+  assert.ok(!/\['gasht'/.test(de) && !/kind === 'gasht'/.test(de), 'نیا اندراج hub میں نہیں');
   const sr = read('search.js');
-  assert.ok(/from\('gasht_logs'\)\.select\('\*'\)\.eq\('officer_id', oid\)/.test(sr) && /card\('گشت'/.test(sr), 'مرکزی تلاش');
-  assert.ok(/gasht:\s+'gasht_logs'/.test(read('bin.js')) && /case 'gasht':/.test(read('bin.js')), 'حذف شدہ مواد: بحالی');
-  assert.ok(/'\/gasht\.js'/.test(read('sw.js')), 'آف لائن (SW precache)');
-  assert.ok(/from\('gasht_logs'\)/.test(read('backup.js')), 'بیک اپ');
-});
-
-test('v548: گشت لاگ — نظام کے اصول (pt، DD/MM/YYYY، کوئی محکمہ سرخی نہیں، Ctrl+P = بٹن، v547 لکھائی)', () => {
-  const g = read('gasht.js');
-  assert.ok(!/font-size\s*:\s*[\d.]+px/.test(g), 'font ہمیشہ pt');
-  assert.ok(!/toLocaleDateString|toLocaleString\(/.test(g), 'تاریخ کبھی locale سے نہیں');
-  assert.ok(!/پنجاب|Punjab/.test(g), 'کوئی «پنجاب پولیس» سرخی نہیں');
-  assert.ok(/data-dio-print onclick="_glPrint\(\)"/.test(g) && /function _glPrint\(\)[\s\S]{0,200}window\.print\(\)/.test(g), 'پرنٹ بٹن = native چھپائی (Ctrl+P کا راستہ)');
-  assert.ok(/dio-doc-h1/.test(g) && /dio-doc-h2/.test(g) && /font-size:20pt !important/.test(g) && /\.gl-h2\{ font-size:16pt/.test(g), 'عنوان 20pt / ذیلی 16pt');
-  assert.ok(/@page\{ size:A4 portrait; margin:1cm 0\.5in 1cm 0\.4in; \}/.test(g), 'A4 + سرکاری مارجن ہر صفحے پر');
-  assert.ok(/dioBinCopy\('gasht'/.test(g) && /softDeleteUndo\(binId\)/.test(g), 'حذف: پہلے نقل');
-  assert.equal((g.match(/dioWriteOk\(await supabaseClient\.from\(GL_TABLE\)/g) || []).length, 3, 'insert/update/delete — نتیجہ دیکھ کر');
-  assert.ok((g.match(/_glGuard\('/g) || []).length >= 6, 'میعاد ختم: لکھنا بند');
-  assert.ok(!/_glGuard\('پرنٹ'/.test(g), 'پڑھنا/چھاپنا بند نہیں');
-  assert.ok(/D\.open\('گشت اندراج'/.test(g) && /type: 'mob'/.test(g) && /type: 'time'/.test(g), 'مشترکہ «نیا اندراج» کارڈ، موبائل/وقت کا فارمیٹ');
-});
-
-test('v548: گشت — وقت کا 12 گھنٹے سے 24 گھنٹے میں درست الٹ (صبح/دوپہر/سہ پہر/شام/رات)', () => {
-  const g = read('gasht.js');
-  const grab = (name) => { const i = g.indexOf('function ' + name + '('); const j = g.indexOf('\n}\n', i); return g.slice(i, j + 2); };
-  const ctx = makeSandbox();
-  vm.runInContext(['_glPad', '_glPeriod', '_glTimeHtml', '_glFrom12', '_glIsoDate', '_glAddDays', '_glParseDtText'].map(grab).join('\n') +
-    '\nvar _glMeta = { date_iso: "2026-10-14", start_iso: "2026-10-14T22:30" };', ctx);
-  const plain = (h) => h.replace(/<[^>]+>/g, '').replace(/ /g, ' ');
-  for (let h = 0; h < 24; h++) {
-    const hm = String(h).padStart(2, '0') + ':07';
-    const shown = plain(ctx._glTimeHtml(hm));
-    const m = shown.match(/(\d{2}):(\d{2})/);
-    assert.equal(String(ctx._glFrom12(+m[1], shown)).padStart(2, '0') + ':' + m[2], hm, hm + ' → «' + shown + '» → واپس');
-  }
-  assert.equal(ctx._glParseDtText('15/10/2026 بوقت 08:30 بجے صبح', false, 'start'), '2026-10-15T08:30');
-  assert.equal(ctx._glParseDtText('01:15 بجے رات', false, 'end'), '2026-10-15T01:15', 'واپسی آدھی رات کے بعد = اگلا دن');
-  assert.equal(ctx._glParseDtText('11:45 بجے رات', false, 'end'), '2026-10-14T23:45');
-  assert.equal(ctx._glParseDtText('14/10/2026', true), '2026-10-14');
-});
-
-test('v548: گشت کا کاغذ — انگریزی/ہندسے پورے ٹکڑے میں LTR، دستخط مشاہدات کے ساتھ، لیبل ایک سطر میں ناپے', () => {
-  const g = read('gasht.js');
-  const line = g.split('\n').find((l) => l.startsWith('const GL_LATIN_RE ='));
-  assert.ok(line, 'GL_LATIN_RE موجود');
-  const re = vm.runInNewContext(line.replace('const GL_LATIN_RE =', '').replace(/;\s*$/, ''));
-  const tok = (t) => t.match(re) || [];
-  // ٹکڑا کبھی بیچ سے نہ ٹوٹے — ورنہ RTL سطر میں «LEA-1234» → «1234-LEA» ہو جاتا
-  assert.deepEqual(tok('LEA-1234 — ڈرائیور'), ['LEA-1234']);
-  assert.deepEqual(tok('HC محمد اسلم 1122، کانسٹیبل 3344'), ['HC', '1122', '3344']);
-  assert.deepEqual(tok('متعلقہ شخص — 0303-2333981'), ['0303-2333981']);
-  assert.deepEqual(tok('14/10/2026 بوقت 08:30 بجے'), ['14/10/2026', '08:30']);
-  assert.deepEqual(tok('+92 300-1234567 · abc.def@x.pk · رپورٹ #12'), ['+92', '300-1234567', 'abc.def@x.pk', '#12']);
-  assert.deepEqual(tok('فیاض حسین شاد تھانہ صدر ملتان'), [], 'صرف اردو — کچھ نہیں');
-  assert.ok(/<div class="gl-final">[\s\S]{0,200}مشاہدات \/ ہدایات[\s\S]{0,200}'remarks'[\s\S]{0,300}'sign_line'/.test(g), 'مشاہدات + آخری سطر + دستخط ایک گروہ');
-  assert.ok(/#gl-doc \.gl-final, #gl-doc \.gl-tail\{ break-inside:avoid;/.test(g), 'گروہ صفحے پر نہ ٹوٹے');
-  assert.ok(/function _glFitLabels[\s\S]{0,900}white-space:nowrap[\s\S]{0,400}document\.body\.appendChild\(probe\)/.test(g), 'لیبل کا کالم: ایک سطر کی اصل چوڑائی، کاغذ سے باہر ناپ (zoom / موبائل منظر کا اثر نہیں)');
+  assert.ok(!/gasht_logs/.test(sr) && !/card\('گشت'/.test(sr), 'مرکزی تلاش میں نہیں');
+  assert.ok(!/gasht/.test(read('sw.js')), 'SW precache میں نہیں');
+  const sf = read('system-forms.js');
+  assert.ok(!JSON.parse(sf.slice(sf.indexOf('= [') + 2, sf.lastIndexOf(';'))).some(f => f.id === 'gasht'), 'ٹمپلیٹس میں «گشت رپورٹ» نہیں');
+  // ریکارڈ کبھی خاموشی سے نہ مٹے: بیک اپ میں گشت کا ڈیٹا جاری، «حذف شدہ مواد» کی پرانی اشیا بحال ہو سکیں
+  assert.ok(/from\('gasht_logs'\)/.test(read('backup.js')), 'بیک اپ میں گشت کا پرانا ریکارڈ');
+  assert.ok(/gasht:\s+'gasht_logs'/.test(read('bin.js')), 'حذف شدہ مواد: پرانی گشت اشیا');
 });
 
 test('v548: sql/104 — گشت کی table: اپنا ریکارڈ، میعاد ختم = صرف پڑھنا، anon/TRUNCATE بند', () => {
@@ -2070,7 +2035,7 @@ test('v551: ہر چالان / تتمہ / درخواست کا فارم system-for
     else if (!ids.has('r173:' + t)) missing.push('r173:' + t);
   });
   idsIn(block(d, 'DK_TYPES')).forEach(t => { if (!ids.has('dk:' + t)) missing.push('dk:' + t); });
-  ['index_naql', 'zamniyat', 'statements_161', 'saza_slip', 'crime_scene', 'cdr_imei', 'rfa_form', 'cro_card', 'incident', 'gasht']
+  ['index_naql', 'zamniyat', 'statements_161', 'saza_slip', 'crime_scene', 'cdr_imei', 'rfa_form', 'cro_card', 'incident']
     .forEach(x => { if (!ids.has(x)) missing.push(x); });
   assert.deepStrictEqual(missing, [], 'یہ فارم ٹمپلیٹس میں نہیں — tests/real-app/forms_build.py دوبارہ چلائیں: ' + missing.join(', '));
   forms.forEach(f => {
@@ -2081,10 +2046,22 @@ test('v551: ہر چالان / تتمہ / درخواست کا فارم system-for
 });
 
 test('v551: شیئر صرف متن نہیں — پوری فائل (PDF + Word)', () => {
-  ['zimni.js', 'report173.js', 'misal-fir.js', 'gasht.js', 'saved-files.js', 'incident.js'].forEach(f => {
+  ['zimni.js', 'report173.js', 'misal-fir.js', 'saved-files.js', 'incident.js'].forEach(f => {
     const s = read(f);
     assert.ok(/dioShare(Doc|Print)\(/.test(s), f + ': شیئر بٹن پوری فائل (dioShareDoc / dioSharePrint) بھیجے');
   });
   const sh = read('dio-share.js');
   assert.ok(/application\/pdf/.test(sh) && /application\/msword/.test(sh), 'PDF اور Word دونوں');
 });
+
+test('v561: sql/110 — شیئر بند، کچھ حذف نہیں، قطار ہو تو رکے؛ CHECK صرف پڑھے', () => {
+  const s = read('sql/110_no_case_sharing.sql');
+  const amli = s.split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
+  assert.ok(/if n > 0 then\s+raise exception/.test(amli), 'قطار ہو تو رک جائے');
+  assert.ok(/revoke insert, update, delete on public\.case_shares from anon, authenticated;/.test(amli), 'لکھنے کا حق واپس');
+  assert.ok(/as restrictive for insert to authenticated with check \(false\)/.test(amli) && /as restrictive for update to authenticated using \(false\) with check \(false\)/.test(amli), 'RLS کی روک');
+  assert.ok(!/\b(drop table|truncate|delete from)\b/i.test(amli), 'کچھ حذف نہیں');
+  const chk = read('sql/110_CHECK.sql').split('\n').filter(l => !l.trim().startsWith('--')).join('\n');
+  assert.ok(!/^\s*(insert|update|delete|drop|alter|create|grant|revoke|truncate|comment)\b/im.test(chk), '110_CHECK صرف پڑھتی ہے');
+});
+

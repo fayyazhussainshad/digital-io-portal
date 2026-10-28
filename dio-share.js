@@ -888,8 +888,23 @@
     document.head.appendChild(st);
   })();
 
-  window.DIO.share = { open: open, pdf: pdf, word: word, wordHtml: wordHtml, make: make, deliver: deliver, paperOf: paperOf,
-    capturePrint: capturePrint, fromPrint: fromPrint, pageFromHtml: pageFromHtml,
-    pdfMany: pdfMany, docxMany: docxMany, download: download, safeName: safeName,
+  // v561: میعاد ختم = صرف دیکھنا — PDF / Word بنانا، شیئر اور ڈاؤن لوڈ بھی بند (پرنٹ کی طرح)
+  function subBlocked() {
+    try { return !!(window.DIO && DIO.sub && typeof DIO.sub.blocked === 'function' && DIO.sub.blocked()); } catch (_) { return false; }
+  }
+  function gate(fn, ui) {
+    return function () {
+      if (subBlocked()) {
+        try { DIO.sub.guard('شیئر / ڈاؤن لوڈ'); } catch (_) { /* پیغام */ }
+        if (ui) return false;
+        var er = new Error('سبسکرپشن ختم — PDF / Word بند'); er.code = 'DIO_SUB';
+        return Promise.reject(er);
+      }
+      return fn.apply(this, arguments);
+    };
+  }
+  window.DIO.share = { open: gate(open, true), pdf: gate(pdf), word: gate(word), wordHtml: wordHtml, make: gate(make), deliver: gate(deliver), paperOf: paperOf,
+    capturePrint: capturePrint, fromPrint: gate(fromPrint), pageFromHtml: pageFromHtml,
+    pdfMany: gate(pdfMany), docxMany: gate(docxMany), download: gate(download, true), safeName: safeName,
     _elementToHtml: elementToHtml, _frameFor: frameFor, _docxFromPages: docxFromPages };
 })();

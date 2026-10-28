@@ -206,7 +206,7 @@ async function _binRestore(binId, type, quiet) {
           row = { id: binItem.item_id, case_id: d.case_id, report_type: d.report_type || d.type, report_subtype: d.report_subtype || d.subtype || null,
                   form_data: d.form_data || {}, officer_id: oid };
         } else if (table === 'cases') {
-          ['_conflict_copy', '_shared', '_sharePermission', '_pending', '_new', '_conflict', 'rev', 'deleted_at'].forEach(k => { delete row[k]; });
+          ['_conflict_copy', '_shared', '_sharePermission', '_pending', '_new', '_conflict', 'rev', 'deleted_at']   /* _shared: پرانی نقلوں میں (شیئر v561 میں ختم) */.forEach(k => { delete row[k]; });
           if (d._conflict_copy && binItem.item_id) row.id = binItem.item_id;
         }
         // v547: بحالی ناکام ہو تو بن سے مت ہٹاؤ (پہلے دونوں کا نتیجہ دیکھا ہی نہیں

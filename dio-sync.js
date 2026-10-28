@@ -115,12 +115,18 @@
     var mode;
     if (!online) mode = 'offline';
     else if (loggedIn() && _sess.ok === false) mode = 'nosession';
+    else if (subBlocked()) mode = 'viewonly';          // v561: میعاد ختم — کچھ سرور پر نہیں جاتا
     else if (_busy || n) mode = 'syncing';
     else mode = 'ok';
     return { mode: mode, pending: n, detail: p, queue: _queueCount, conflicts: p.conflicts, realtime: _rtStatus };
   };
 
-  var LABEL = { ok: 'محفوظ', syncing: 'سنک ہو رہا ہے', offline: 'آف لائن', nosession: 'آف لائن' };
+  var LABEL = { ok: 'محفوظ', syncing: 'سنک ہو رہا ہے', offline: 'آف لائن', nosession: 'آف لائن', viewonly: 'صرف دیکھنا' };
+  // v561: میعاد ختم = صرف دیکھنا — اس آلے سے سرور پر کچھ نہیں بھیجا جاتا (پڑھنا / تازہ ہونا جاری)
+  function subBlocked() {
+    try { return !!(window.DIO && DIO.sub && typeof DIO.sub.blocked === 'function' && DIO.sub.blocked()); } catch (_) { return false; }
+  }
+  DS.subBlocked = subBlocked;
   DS.render = function () {
     var t = document.getElementById('status-text'), d = document.getElementById('status-dot');
     if (!t) return;
@@ -136,6 +142,7 @@
       wrap.title = s.mode === 'nosession'
         ? 'انٹرنیٹ ہے مگر سرور سے رابطہ (لاگ اِن) نہیں — کام اسی آلے پر محفوظ ہے۔ تفصیل کے لیے کلک کریں'
         : s.mode === 'offline' ? 'انٹرنیٹ نہیں — کام اسی آلے پر محفوظ ہے، انٹرنیٹ آتے ہی خود سرور پر جائے گا'
+        : s.mode === 'viewonly' ? 'سبسکرپشن ختم — صرف دیکھ سکتے ہیں؛ اس آلے کا باقی کام تجدید کے بعد سرور پر جائے گا'
         : s.mode === 'syncing' ? 'کچھ کام ابھی سرور پر جا رہا ہے' : 'تمام کام سرور پر محفوظ';
       if (!wrap._dioSyncBound) {
         wrap._dioSyncBound = true;
@@ -143,7 +150,7 @@
         wrap.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); DS.showDetails(); } });
       }
     }
-    if (d) d.className = 'status-dot ' + (s.mode === 'ok' ? 'status-online' : s.mode === 'syncing' ? 'status-syncing' : 'status-offline');
+    if (d) d.className = 'status-dot ' + (s.mode === 'ok' ? 'status-online' : (s.mode === 'syncing' || s.mode === 'viewonly') ? 'status-syncing' : 'status-offline');
   };
   (function css() {
     var st = document.createElement('style');
@@ -311,7 +318,7 @@
   };
   var _udFlushing = false;
   ud.flush = async function () {
-    if (_udFlushing) return 0;
+    if (_udFlushing || subBlocked()) return 0;
     var c = sb();
     if (!c || !navigator.onLine || !(await DS.hasSession())) return 0;
     var ob = jget('dio_ud_outbox', {}) || {};
@@ -354,8 +361,57 @@
     } finally { _udFlushing = false; DS.busy(false); }
     return sent;
   };
+  // ═══ 3b) ترتیبات — SHO اور DSP/SDPO کا نام (افسر کا حکم v561: «SHO setting بھی sync») ═══
+  //  doc_key = setting|<localStorage چابی>   · ہر آلے پر «کب بدلی» (dio_setting_at) — جو بعد میں بدلی وہی سب پر
+  var SET_KEYS = ['digital_io_sho', 'digital_io_dsp'];
+  var SET_AT = 'dio_setting_at';
+  DS.settingKeys = SET_KEYS.slice();
+  DS.settingChanged = function (key) {
+    if (SET_KEYS.indexOf(key) < 0) return;
+    var at = now(), m = jget(SET_AT, {}) || {};
+    m[key] = at; jput(SET_AT, m);
+    var v = null; try { v = LS.getItem(key); } catch (_) { /* storage بند */ }
+    ud.queue('setting', 'setting', key, { value: v, saved_at: at });
+  };
+  function applySetting(row) {
+    var key = String(row.doc_key || '').split('|')[1];
+    if (SET_KEYS.indexOf(key) < 0) return false;
+    var ob = jget('dio_ud_outbox', {}) || {};
+    if (ob[row.doc_key]) return false;                      // اسی آلے کی نئی تبدیلی جانے والی ہے
+    udKnownSet(row.doc_key, !row.deleted_at);
+    var d = row.data || {};
+    if (row.deleted_at || d.value == null) return false;
+    var m = jget(SET_AT, {}) || {};
+    if (m[key] && String(m[key]) >= String(d.saved_at || '')) return false;   // یہاں بعد میں بدلی گئی
+    m[key] = d.saved_at || now(); jput(SET_AT, m);
+    var cur = null; try { cur = LS.getItem(key); } catch (_) { /* storage بند */ }
+    if (cur === d.value) return false;
+    try { LS.setItem(key, d.value); } catch (_) { return false; }
+    return true;
+  }
+  ud.pullSettings = async function () {
+    var c = sb();
+    if (!c || !navigator.onLine || !(await DS.hasSession())) return false;
+    try {
+      var r = await c.from('dio_user_data').select('*').eq('kind', 'setting');
+      if (r.error) throw r.error;
+      var changed = false, seen = {};
+      (r.data || []).forEach(function (row) { seen[String(row.doc_key || '').split('|')[1]] = 1; if (applySetting(row)) changed = true; });
+      // پہلی بار: اس آلے پر نام لکھا ہے مگر سرور پر کچھ نہیں اور یہاں سے کبھی بھیجا نہیں — یہی بنیاد بنے
+      var m = jget(SET_AT, {}) || {};
+      SET_KEYS.forEach(function (k) {
+        if (seen[k] || m[k]) return;
+        var v = null; try { v = LS.getItem(k); } catch (_) { /* storage بند */ }
+        if (v != null && v !== '' && v !== '{}') DS.settingChanged(k);
+      });
+      if (changed) emit('setting', null, 'replace');
+      return changed;
+    } catch (e) { if (typeof dioLogError === 'function') dioLogError('dio-sync: settings parhna nakaam', e); return false; }
+  };
+
   // ایک مسودہ قطار (سرور سے) اس آلے کے مسودوں میں — نتیجہ: بدلا یا نہیں
   ud.applyRow = function (row) {
+    if (row && row.kind === 'setting') { var ch = applySetting(row); if (ch) emit('setting', row, 'replace'); return ch; }
     var pfx = UD_KIND[row && row.kind];
     if (!pfx || !row.doc_key) return false;
     var bar = String(row.doc_key).indexOf('|');
@@ -412,11 +468,14 @@
     else if (table === 'report_173' && row.case_id) r = applyToList('dio_r173docs_' + row.case_id, r173Item(row));
     else if (table === 'cases') {
       try {
+        // v561: مقدمہ شیئر ختم — صرف اپنے مقدمات (کسی اور افسر کا مقدمہ اس آلے پر کبھی نہ آئے)
+        var me = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
+        if (me && row.officer_id && String(row.officer_id) !== String(me)) return '';
         if (typeof offlineStore !== 'undefined') {
           var cur = await offlineStore.getOne('cases_cache', row.id);
           if (row.deleted_at) { if (cur) { await offlineStore.remove('cases_cache', row.id); r = 'remove'; } }
           else if (!cur || !(cur.rev != null && Number(cur.rev) === Number(row.rev))) {
-            await offlineStore.cache('cases_cache', cur && cur._shared ? Object.assign({}, row, { _shared: true, _sharePermission: cur._sharePermission }) : row);
+            await offlineStore.cache('cases_cache', row);
             r = cur ? 'replace' : 'add';
           }
         }
@@ -468,6 +527,12 @@
     DS.render();
     if (!_sess.ok) return;
     if (!had || !_channel) DS.startRealtime();
+    if (subBlocked()) {                                  // صرف دیکھنا: بھیجنا نہیں، صرف تازہ پڑھنا
+      try { await ud.pullSettings(); } catch (_) { /* اگلی بار */ }
+      try { await DS.refreshOpenView(); } catch (_) { /* اگلی بار */ }
+      DS.render();
+      return;
+    }
     DS.busy(true);
     try {
       try { if (typeof window._zimniSyncPending === 'function') await window._zimniSyncPending(null, true); } catch (_) { /* اگلی بار */ }
@@ -475,6 +540,7 @@
       try { if (typeof window._r173SyncPending === 'function') await window._r173SyncPending(); } catch (_) { /* اگلی بار */ }
       try { if (typeof window._syncOfflineQueue === 'function') await window._syncOfflineQueue(); } catch (_) { /* اگلی بار */ }
       try { await ud.flush(); } catch (_) { /* اگلی بار */ }
+      try { await ud.pullSettings(); } catch (_) { /* اگلی بار */ }
       await DS.refreshOpenView();
     } finally { DS.busy(false); await refreshQueueCount(); DS.render(); }
   };

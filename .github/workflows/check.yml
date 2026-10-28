@@ -70,10 +70,6 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh core_test.py
-      - name: Patrol log (gasht_test.py)
-        if: always()
-        working-directory: tests/real-app
-        run: bash ci_run.sh gasht_test.py
       - name: Case-file index (index_test.py)
         if: always()
         working-directory: tests/real-app
@@ -122,6 +118,10 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh v560_inventory_test.py
+      - name: v561 — expiry = view only (no print / write / edit, search open, renew unlocks; suspended = full lock), SHO / DSP name on both devices, case sharing removed, patrol (gasht) removed (v561_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: bash ci_run.sh v561_test.py
       - name: Screenshots and print PDFs
         if: always()
         uses: actions/upload-artifact@v4

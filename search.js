@@ -148,14 +148,12 @@ async function _runGlobalSearch(q) {
     S.from('cdr_imei_requests').select('id,case_id,diary_number').ilike('diary_number', w).limit(10),
     // واقعاتی رپورٹس (v535) — نوعیت، مقام، تفصیل، رپورٹ نمبر
     S.from('incident_reports').select('*').eq('officer_id', oid).or(`report_number.ilike.${w},incident_type.ilike.${w},address.ilike.${w},narrative.ilike.${w}`).order('created_at', { ascending: false }).limit(10),
-    // گشت لاگ (v548) — اندراجات jsonb میں ہیں، اس لیے تازہ ترین 200 لا کر یہیں چھانٹی
-    S.from('gasht_logs').select('*').eq('officer_id', oid).order('created_at', { ascending: false }).limit(200),
+    // v561: گشت نظام سے باہر — تلاش میں بھی نہیں
   ];
 
   const results = await Promise.allSettled(queries);
-  const [casesR, accusedR, witnessR, firR, zimniR, hamrahiR, gariR, cdrR, irR, glR] = results.map(r => r.status === 'fulfilled' ? (r.value.data || []) : []);
+  const [casesR, accusedR, witnessR, firR, zimniR, hamrahiR, gariR, cdrR, irR] = results.map(r => r.status === 'fulfilled' ? (r.value.data || []) : []);
   const irErr = results[8] && (results[8].status !== 'fulfilled' || results[8].value.error);
-  const glErr = results[9] && (results[9].status !== 'fulfilled' || results[9].value.error);
 
   const mine = (arr) => caseIds.length ? arr.filter(x => caseIds.includes(x.case_id)) : arr;
   const acc = mine(accusedR);
@@ -169,9 +167,8 @@ async function _runGlobalSearch(q) {
   const cdr = mine(cdrR);
 
   const ir = _srIncidents(q, irErr ? [] : irR, !!irErr);
-  const gl = _srGasht(q, glErr ? [] : glR);
 
-  _renderSearchResults(q, { cases: casesR, accused: acc, witnesses: wit, fir, zimni: zim, hamrahi: ham, gari, cdr, ir, gl });
+  _renderSearchResults(q, { cases: casesR, accused: acc, witnesses: wit, fir, zimni: zim, hamrahi: ham, gari, cdr, ir });
 }
 
 /* واقعاتی رپورٹس — سرور کے نتائج + مقامی (آف لائن محفوظ / سرور کی تلاش نہ چلے تو پوری فہرست)
@@ -212,48 +209,6 @@ function _srIrCard(r) {
 }
 window._srIncidents = _srIncidents;
 
-/* گشت لاگ (v548) — سرور + اس آلے پر محفوظ (آف لائن / sql/104 سے پہلے) گشت؛ تاریخ، علاقہ، گاڑی،
-   ملازمین اور ہر اندراج (نوعیت، مقام، متعلقہ شخص، موبائل، تفصیل) میں تلاش */
-function _srGlText(r) {
-  let d = r && r.data;
-  if (typeof d === 'string') { try { d = JSON.parse(d); } catch { d = {}; } }
-  d = d || {};
-  const f = d.f || {};
-  const strip = (h) => String(h || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ');
-  const dmy = (iso) => { const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + '/' + m[2] + '/' + m[1] : ''; };
-  return [r.area, dmy(r.gasht_date || d.date_iso), d.name, ...Object.keys(f).map(k => strip(f[k])),
-    ...(Array.isArray(d.entries) ? d.entries : []).map(e => [e.t, e.kind, e.place, e.person, e.mobile, e.detail].join(' '))]
-    .map(x => String(x || '')).join(' ').replace(/\s+/g, ' ').toLowerCase();
-}
-function _srGasht(q, server) {
-  const ql = String(q || '').toLowerCase().trim();
-  const digits = /^[\d\s-]+$/.test(ql) ? ql.replace(/\D/g, '') : '';
-  // موبائل/شناختی کارڈ: ڈیش کے ساتھ یا بغیر — ہر نمبر الگ (دو نمبر جڑ کر غلط نتیجہ نہ دیں)
-  const hit = (r) => { const t = _srGlText(r); return t.includes(ql) || (digits.length >= 4 && (t.match(/\d[\d-]*/g) || []).some(n => n.replace(/-/g, '').includes(digits))); };
-  let local = [];
-  try {
-    const oid = (typeof currentOfficer !== 'undefined' && currentOfficer && currentOfficer.id) ||
-      (JSON.parse(localStorage.getItem('dio_officer_cache') || 'null') || {}).id || 'me';
-    local = JSON.parse(localStorage.getItem('dio_gllist_' + oid) || '[]') || [];
-  } catch { local = []; }
-  const out = (server || []).filter(hit);
-  local.filter(r => hit(r)).forEach(r => { if (!out.some(x => String(x.id) === String(r.id))) out.push(r); });
-  return out.slice(0, 15);
-}
-function _srGlCard(r) {
-  let d = r && r.data;
-  if (typeof d === 'string') { try { d = JSON.parse(d); } catch { d = {}; } }
-  d = d || {};
-  const strip = (h) => String(h || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
-  const iso = r.gasht_date || d.date_iso || '';
-  const date = /^\d{4}-\d{2}-\d{2}/.test(iso) ? iso.slice(0, 10).split('-').reverse().join('/') : '';
-  const n = Array.isArray(d.entries) ? d.entries.length : 0;
-  return { title: String(d.name || '').trim() || strip(d.f && d.f.area) || r.area || 'گشت', sub: [date, 'اندراجات ' + n].filter(Boolean).join(' · ') };
-}
-window._srGasht = _srGasht;
-if (typeof window.openGashtLog !== 'function') {
-  window.openGashtLog = function (id) { window._glOpenId = id; if (typeof showPage === 'function') showPage('gasht', null); };
-}
 // incident.js بعد میں (lazy) لوڈ ہوتی ہے — تب تک یہی راستہ: صفحہ کھلے، پھر وہی رپورٹ
 if (typeof window.openIncidentReport !== 'function') {
   window.openIncidentReport = function (id) { window._irOpenId = id; if (typeof showPage === 'function') showPage('incident', null); };
@@ -263,7 +218,7 @@ function _renderSearchResults(q, r) {
   const box = document.getElementById('sr-results');
   if (!box) return;
   const total = r.cases.length + r.accused.length + r.witnesses.length + r.fir.length + r.zimni.length
-              + (r.hamrahi?.length||0) + (r.gari?.length||0) + (r.cdr?.length||0) + (r.ir?.length||0) + (r.gl?.length||0);
+              + (r.hamrahi?.length||0) + (r.gari?.length||0) + (r.cdr?.length||0) + (r.ir?.length||0);
   if (!total) {
     box.innerHTML = (window.DIO && DIO.states)
       ? DIO.states.empty('search', `"${esc(q)}" کے لیے کچھ نہیں ملا`, 'لفظ بدل کر یا مقدمہ نمبر سے دیکھیں')
@@ -299,7 +254,6 @@ function _renderSearchResults(q, r) {
   (r.gari||[]).forEach(g => html += card('سرکاری گاڑی','#64748b', g.vehicle_number||'—', `ڈرائیور: ${g.driver_name||''}`, g.case_id?`openCaseWorkspace('${g.case_id}')`:''));
   (r.cdr||[]).forEach(cd => html += card('CDR/IMEI','#8b5cf6', `ڈائری ${cd.diary_number||''}`, '', cd.case_id?`openCaseWorkspace('${cd.case_id}')`:''));
   (r.ir||[]).forEach(x => { const c = _srIrCard(x); html += card('واقعاتی رپورٹ','#dc2626', c.title, c.sub, `openIncidentReport('${_dioJsHtml(String(x.id))}')`); });
-  (r.gl||[]).forEach(x => { const c = _srGlCard(x); html += card('گشت','#16a34a', c.title, c.sub, `openGashtLog('${_dioJsHtml(String(x.id))}')`); });
   box.innerHTML = html;
   _keepFocus();
 }

@@ -14,6 +14,8 @@
     };
     const p = new Proxy({}, {
       get(_, k) {
+        // اصل supabase-js کی طرح: کسی نے builder کا طریقہ بدل دیا (مثلاً subscription.js کا لکھنے کا گارڈ) تو وہی چلے
+        if (Object.prototype.hasOwnProperty.call(_, k)) return _[k];
         if (k === 'then') return (res, rej) => run().then(res, rej);
         if (k === 'select') return (_c, o) => { if (o && o.head) st.head = true; return p; };
         if (k === 'insert') return r => { st.op = 'insert'; st.row = r; return p; };

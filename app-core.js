@@ -70,10 +70,10 @@ const ROLE_LEVELS = { officer:1, supervisor:2, admin:3, superadmin:4 };
 
 // Which pages each role can access
 const ROLE_PAGES = {
-  officer:    ['dashboard','cases','fivec','incident','gasht','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence','help'],
-  supervisor: ['dashboard','cases','fivec','incident','gasht','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence','help'],
-  admin:      ['dashboard','cases','fivec','incident','gasht','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence','help','admin'],
-  superadmin: ['dashboard','cases','fivec','incident','gasht','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence','help','admin'],
+  officer:    ['dashboard','cases','fivec','incident','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence','help'],
+  supervisor: ['dashboard','cases','fivec','incident','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence','help'],
+  admin:      ['dashboard','cases','fivec','incident','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence','help','admin'],
+  superadmin: ['dashboard','cases','fivec','incident','reminders','law','ahkamat','templates','search','suspects','performance','backup','settings','bin','subscription','court','evidence','help','admin'],
 };
 
 function getRole() {
@@ -104,6 +104,8 @@ async function _flushUsage() {
   // Login ke baghair koi query nahi — warna 401 error console mein aata hai
   // (logout/naye session ke baad cache mein officer bacha rehta tha).
   if (typeof currentUser === 'undefined' || !currentUser) return;
+  // v561: صرف دیکھنا (میعاد ختم) — گنتی سرور پر نہیں (لکھنا بند)
+  if (window.DIO && DIO.sub && typeof DIO.sub.blocked === 'function' && DIO.sub.blocked()) { _usageBuffer = {}; return; }
   const buffer = { ..._usageBuffer };
   _usageBuffer = {};
   if (!Object.keys(buffer).length) return;
@@ -173,7 +175,7 @@ function showPage(page, el) {
   // Update topbar title
   const titles = {
     dashboard:'ڈیش بورڈ', cases:'میرے مقدمات', templates:'ٹمپلیٹس',
-    fivec:'مارک شدہ درخواستیں', incident:'واقعاتی رپورٹ', gasht:'گشت لاگ',
+    fivec:'مارک شدہ درخواستیں', incident:'واقعاتی رپورٹ',
     law:'قانونی لائبریری', ahkamat:'احکامات و ضوابط', performance:'کارکردگی', backup:'بیک اپ',
     settings:'ترتیبات', admin:'ایڈمن', bin:'حذف شدہ مواد',
     reminders:'یاددہانیاں', search:'تلاش',
@@ -564,7 +566,7 @@ function formatCell(v) {
 //  اردو + انگریزی ایک ساتھ — ہر حصے کا اپنا رُخ
 //  اصول: اردو RTL، انگریزی/ہندسے LTR۔ applyAutoDirection پورے خانے
 //  کا رُخ طے کرتا ہے، مگر جب ایک ہی خانے میں دونوں ہوں (جیسے
-//  "نام  36302-4459712-5") تو ہر حصے کو الگ رُخ چاہیے — یہ CSS
+//  "نام  00000-0000000-0") تو ہر حصے کو الگ رُخ چاہیے — یہ CSS
 //  وہی کرتی ہے (unicode-bidi:plaintext)۔ پورے سسٹم پر لاگو۔
 // ═══════════════════════════════════════════════════════════════════
 
@@ -797,6 +799,9 @@ window.addEventListener('offline', ()=>{
 // ── SYNC offline queue when back online ───────────────────────
 async function _syncOfflineQueue() {
   if (typeof offlineStore === 'undefined' || !navigator.onLine) return;
+  // v561: صرف دیکھنا (میعاد ختم) — قطار کو ہاتھ نہ لگاؤ؛ لکھنے کا گارڈ رد کرتا اور اندراج
+  //   «ناکام» ہو کر رہ جاتے۔ تجدید کے بعد خود چلے گی۔
+  if (window.DIO && DIO.sub && typeof DIO.sub.blocked === 'function' && DIO.sub.blocked()) return;
   /* v527 — AHEM HIFAZAT: offline login ke baad Supabase ka session nahi
      hota. Us halat me sync chalta to server "permission denied" deta aur
      processQueue() us ko MUSTAQIL nakaami maan kar andraaj 'failed' kar
@@ -1551,6 +1556,8 @@ function dioPrint(htmlContent) {
 // ── پوری فائل شیئر (PDF + Word) — dio-share.js (اکتوبر 2026، افسر کی ہدایت) ──
 //    ہر «شیئر» بٹن یہی بلاتا ہے: دستاویز کا کاغذ (el) + نام۔ ماڈیول ضرورت پر آتا ہے۔
 window.dioShareDoc = async function (el, title) {
+  // v561: میعاد ختم = صرف دیکھنا — فائل (PDF / Word) بھی نہیں
+  if (window.DIO && DIO.sub && !DIO.sub.guard('شیئر / ڈاؤن لوڈ')) return true;
   try {
     if (typeof window.dioLoadScript === 'function') {
       await window.dioLoadScript('dio-forms.js');
@@ -1563,6 +1570,7 @@ window.dioShareDoc = async function (el, title) {
 };
 // ماڈیول کا اپنا «پرنٹ» (run) چلا کر وہی کاغذ شیئر — جو پرنٹ میں نظر آتا ہے وہی فائل میں
 window.dioSharePrint = async function (run, title, fallbackEl) {
+  if (window.DIO && DIO.sub && !DIO.sub.guard('شیئر / ڈاؤن لوڈ')) return true;
   try {
     if (typeof window.dioLoadScript === 'function') {
       await window.dioLoadScript('dio-forms.js');
