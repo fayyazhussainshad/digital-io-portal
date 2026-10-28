@@ -558,20 +558,22 @@ def editor_suite(b, e):
                 check(f'{tag}: خانے میں Ctrl+U / Ctrl+]', st and 'underline' in st['td'] and abs(float(st['fs'][:-2]) * 0.75 - float(pg.evaluate("(r) => getComputedStyle(__find('CELLX', r).t.parentElement.parentElement).fontSize", root)[:-2]) * 0.75 - 1) < 0.3, st)
                 for i in range(4): press(pg, 'Control+z', 80)
                 check(f'{tag}: خانے میں Ctrl+Z', 'CELLX' not in text_of(pg, root))
-                # کم از کم 20 قدم: 22 الگ لفظ (ہر لفظ ایک قدم) — 22 بار Ctrl+Z سب واپس، 22 بار Ctrl+Y سب دوبارہ
+                # کم از کم 20 قدم: پہلا خالی وقفہ + 22 الگ لفظ = 23 قدم (MS Word کی طرح ہر نیا لفظ ایک قدم) —
+                # 23 بار Ctrl+Z سب واپس، 23 بار Ctrl+Y سب دوبارہ
                 caret_end(pg, e['cell'])
                 h_before = pg.evaluate("(r) => document.querySelector(r).innerHTML", root)
                 pg.keyboard.type(' ' + ' '.join('W%d' % i for i in range(1, 23))); pg.wait_for_timeout(200)
                 h_typed = pg.evaluate("(r) => document.querySelector(r).innerHTML", root)
                 steps = []
-                for i in range(22):
+                for i in range(23):
                     press(pg, 'Control+z', 60); tx_ = text_of(pg, root); steps.append(sum(1 for k in range(1, 23) if re.search(r'\bW%d\b' % k, tx_)))
                 h_undone = pg.evaluate("(r) => document.querySelector(r).innerHTML", root)
-                for i in range(22): press(pg, 'Control+y', 60)
+                for i in range(23): press(pg, 'Control+y', 60)
                 h_redone = pg.evaluate("(r) => document.querySelector(r).innerHTML", root)
                 nrm = lambda h: re.sub(r'\s+', ' ', h)
-                check(f'{tag}: خانے میں 22 قدم Ctrl+Z (ہر قدم ایک لفظ) اور 22 قدم Ctrl+Y — بالکل پہلے جیسا',
-                      steps == list(range(21, -1, -1)) and nrm(h_undone) == nrm(h_before) and nrm(h_redone) == nrm(h_typed), steps)
+                check(f'{tag}: خانے میں 23 قدم Ctrl+Z (ہر قدم ایک لفظ) اور 23 قدم Ctrl+Y — بالکل پہلے جیسا',
+                      steps == list(range(21, -1, -1)) + [0] and nrm(h_undone) == nrm(h_before) and nrm(h_redone) == nrm(h_typed),
+                      (steps, nrm(h_undone) == nrm(h_before), nrm(h_redone) == nrm(h_typed)))
 
         # ── 13) Ctrl+P = «پرنٹ» بٹن ──
         if e['print']:
