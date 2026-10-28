@@ -45,6 +45,9 @@ async function _buildBin() {
       court:    { icon:"<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><path d=\"M12 4v16\"/><path d=\"M6 20h12\"/><path d=\"M4 9l3-4 3 4\"/><path d=\"M14 9l3-4 3 4\"/></svg>", label:'عدالتی پیشیاں' },
       incident: { icon:"<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><path d=\"M12 4L3 19.5h18z\"/><path d=\"M12 10v4.5\"/><path d=\"M12 17.2h.01\"/></svg>", label:'واقعاتی رپورٹس' },
       gasht:    { icon:"<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><circle cx=\"6\" cy=\"19\" r=\"2.2\"/><circle cx=\"18\" cy=\"5\" r=\"2.2\"/><path d=\"M8 19h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h7\"/></svg>", label:'گشت لاگ' },
+      zimni:    { icon:"<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><path d=\"M7 3.5h7l4 4V20.5H7z\"/><path d=\"M14 3.5v4h4\"/><path d=\"M9.5 12h6\"/><path d=\"M9.5 15.5h6\"/></svg>", label:'ضمنیات' },
+      za:       { icon:"<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><path d=\"M7 3.5h7l4 4V20.5H7z\"/><path d=\"M14 3.5v4h4\"/><path d=\"M9.5 12h6\"/><path d=\"M9.5 15.5h6\"/></svg>", label:'بیانات 161 (اندرونی ضمنی)' },
+      r173:     { icon:"<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><path d=\"M7 3.5h7l4 4V20.5H7z\"/><path d=\"M14 3.5v4h4\"/><path d=\"M9.5 12h6\"/><path d=\"M9.5 15.5h6\"/></svg>", label:'چالان / رپورٹ 173' },
       other:    { icon:"<svg viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" style=\"vertical-align:-3px;opacity:.9\"><path d=\"M8 4h8v3H8z\"/><path d=\"M9 4H6v17h12V4h-3\"/><path d=\"M9 11h6\"/><path d=\"M9 15h6\"/></svg>", label:'دیگر' },
     };
 
@@ -138,6 +141,9 @@ function _binTitle(type, d) {
     case 'court':    return `FIR ${esc(d.fir_number)||'—'} — ${esc(d.court_name)||'—'}`;
     case 'incident': return `${esc(d.report_number)||'—'} — ${esc(d.incident_type)||'—'}`;
     case 'gasht':    return `گشت — ${esc(d.area)||'—'}`;
+    case 'zimni':    return 'ضمنی نمبر ' + (d.serial_no || (d.content && d.content.serial_no) || '—') + (d.content && d.content.head ? ' — ' + d.content.head : '') + (d._conflict_copy ? ' (دوسرا نسخہ)' : '');
+    case 'za':       return 'بیان نمبر ' + (d.serial_no || (d.content && d.content.serial_no) || '—') + (d._conflict_copy ? ' (دوسرا نسخہ)' : '');
+    case 'r173':     return (d.head || (d.form_data && d.form_data.head) || 'چالان') + (d._conflict_copy ? ' (دوسرا نسخہ)' : '');
     default:         return d.title || d.name || d.text || '—';
   }
 }
@@ -150,6 +156,9 @@ function _binDetail(type, d) {
     case 'court':    return `${esc(d.hearing_date)||'—'} · ${esc(d.purpose)||'—'}`;
     case 'incident': return `${esc(d.incident_date)||'—'} · ${esc(d.address)||'—'}`;
     case 'gasht':    return `${formatDate(d.gasht_date)} · اندراجات ${((d.data && Array.isArray(d.data.entries)) ? d.data.entries.length : 0)}`;
+    case 'zimni':
+    case 'za':       return formatDate(d.report_date || d.created_at) + (d.last_device ? ' · ' + d.last_device : '');
+    case 'r173':     return formatDate(d.date || (d.form_data && d.form_data.saved_at) || d.created_at) + (d.last_device ? ' · ' + d.last_device : '');
     default:         return formatDate(d.created_at||d.deleted_at);
   }
 }
@@ -171,14 +180,39 @@ async function _binRestore(binId, type, quiet) {
       court:    'court_dates',
       incident: 'incident_reports',
       gasht:    'gasht_logs',
+      zimni:    'zimni_reports',
+      za:       'zimni_androoni_reports',
+      r173:     'report_173',
     };
     const table = tableMap[type];
     if (table) {
-      // Remove bin-specific fields before restoring
-      const { id: _id, ...restoreData } = d;
-      // v547: بحالی ناکام ہو تو بن سے مت ہٹاؤ (پہلے دونوں کا نتیجہ دیکھا ہی نہیں
-      //   جاتا تھا — بحالی رد ہوتی پھر بھی بن سے حذف: ریکارڈ ہمیشہ کے لیے ضائع)
-      dioWriteOk(await supabaseClient.from(table).insert({ ...restoreData, officer_id: oid }).select('id'), 'bin restore ' + table, true);
+      // v560: ان جدولوں میں «حذف» = نشان — اصل قطار موجود ہے، بس نشان ہٹاؤ (شناخت وہی، مقدمے
+      //   کی ضمنیاں/چالان جڑے رہتے ہیں)۔ پہلے نئی قطار بنتی اور مقدمہ نئی شناخت پا کر ضمنیوں سے کٹ جاتا۔
+      const SOFT = { cases: 1, zimni_reports: 1, zimni_androoni_reports: 1, report_173: 1 };
+      let restored = false;
+      if (SOFT[table] && binItem.item_id) {
+        const r = await supabaseClient.from(table).update({ deleted_at: null }).eq('id', binItem.item_id).select('id');
+        if (r.error) throw r.error;
+        restored = !!(r.data && r.data.length);
+      }
+      if (!restored) {
+        // Remove bin-specific fields before restoring
+        const { id: _id, ...restoreData } = d;
+        let row = { ...restoreData, officer_id: oid };
+        if (table === 'zimni_reports' || table === 'zimni_androoni_reports') {
+          // دوسرا نسخہ (دو آلات) — الگ ضمنی/بیان کے طور پر، اسی کی شناخت سے
+          row = { id: binItem.item_id, case_id: d.case_id, serial_no: d.serial_no, report_date: d.report_date, content: d.content || {}, officer_id: oid };
+        } else if (table === 'report_173') {
+          row = { id: binItem.item_id, case_id: d.case_id, report_type: d.report_type || d.type, report_subtype: d.report_subtype || d.subtype || null,
+                  form_data: d.form_data || {}, officer_id: oid };
+        } else if (table === 'cases') {
+          ['_conflict_copy', '_shared', '_sharePermission', '_pending', '_new', '_conflict', 'rev', 'deleted_at'].forEach(k => { delete row[k]; });
+          if (d._conflict_copy && binItem.item_id) row.id = binItem.item_id;
+        }
+        // v547: بحالی ناکام ہو تو بن سے مت ہٹاؤ (پہلے دونوں کا نتیجہ دیکھا ہی نہیں
+        //   جاتا تھا — بحالی رد ہوتی پھر بھی بن سے حذف: ریکارڈ ہمیشہ کے لیے ضائع)
+        dioWriteOk(await supabaseClient.from(table).insert(row).select('id'), 'bin restore ' + table, true);
+      }
     }
     // Remove from bin
     try {

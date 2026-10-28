@@ -39,6 +39,7 @@ async function getCases(status, query) {
     const oid = await getOfficerId();
     // Helper: filter cached list by status/query
     const filterCached = (all) => {
+      all = (all || []).filter(c => c && !c.deleted_at);   // v560: «حذف» نشان والے مقدمات نہیں
       if (status) all = all.filter(c => c.status === status);
       if (query) {
         const w = query.toLowerCase();
@@ -77,7 +78,7 @@ async function getCases(status, query) {
     }
 
     // No cache yet — fetch from server now (first ever load)
-    let q = supabaseClient.from('cases').select('*').eq('officer_id',oid).order('fir_number',{ascending:false});
+    let q = supabaseClient.from('cases').select('*').eq('officer_id',oid).is('deleted_at', null).order('fir_number',{ascending:false});
     if (status) q = q.eq('status',status);
     if (query) {
       const w = `%${query}%`;
@@ -116,7 +117,7 @@ async function _getSharedCases(oid) {
     if (!shares || !shares.length) return [];
     const ids = shares.map(s => s.case_id);
     const permMap = {}; shares.forEach(s => { permMap[s.case_id] = s.permission; });
-    const { data: cases } = await supabaseClient.from('cases').select('*').in('id', ids);
+    const { data: cases } = await supabaseClient.from('cases').select('*').in('id', ids).is('deleted_at', null);
     return (cases||[]).map(c => ({ ...c, _shared: true, _sharePermission: permMap[c.id] || 'read' }));
   } catch(_) { return []; }
 }
@@ -128,7 +129,8 @@ async function _refreshCasesInBackground(oid) {
   if (_bgRefreshTimer) return; // throttle
   _bgRefreshTimer = setTimeout(()=>{ _bgRefreshTimer = null; }, 2000);
   try {
-    const { data } = await supabaseClient.from('cases').select('*').eq('officer_id',oid).order('fir_number',{ascending:false});
+    const { data, error } = await supabaseClient.from('cases').select('*').eq('officer_id',oid).is('deleted_at', null).order('fir_number',{ascending:false});
+    if (error) throw error;
     let all = data || [];
     try {
       const shared = await _getSharedCases(oid);
@@ -139,6 +141,16 @@ async function _refreshCasesInBackground(oid) {
     } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     if (all && typeof offlineStore !== 'undefined') {
       try { await offlineStore.cache('cases_cache', all); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
+      // v560: دوسرے آلے پر حذف ہونے والا مقدمہ اس آلے کے cache سے بھی ہٹے (پہلے ہمیشہ باقی رہتا)
+      //   — مگر وہ نہیں جو اسی آلے پر بنا اور ابھی سرور پر نہیں گیا (_pending)
+      try {
+        const live = new Set(all.map(c => String(c.id)));
+        const cached = await offlineStore.getAll('cases_cache') || [];
+        for (const c of cached) {
+          if (!c || live.has(String(c.id)) || c._pending || String(c.id).startsWith('local-')) continue;
+          if (c.officer_id === oid || c._shared) await offlineStore.remove('cases_cache', c.id);
+        }
+      } catch(_) { /* sirf local cache — agli dafa */ }
       if (typeof markSynced === 'function') markSynced();
       // If cases page currently open AND not in a workspace, silently refresh the list
       //
@@ -179,7 +191,7 @@ async function getCase(id) {
         // Refresh in background if online
         if (navigator.onLine) {
           supabaseClient.from('cases').select('*').eq('id',id).single()
-            .then(({data}) => { if (data) { try { offlineStore.cache('cases_cache', data); } catch(_){ /* sirf local cache — na ho sake to bhi aage chalo */ } } })
+            .then(({data}) => { if (data) { try { if (data.deleted_at) offlineStore.remove('cases_cache', id); else offlineStore.cache('cases_cache', data); } catch(_){ /* sirf local cache — na ho sake to bhi aage chalo */ } } })
             .catch(()=>{});
         }
         return cached;
@@ -190,6 +202,7 @@ async function getCase(id) {
   if (!navigator.onLine) return null;
   try {
     const { data } = await supabaseClient.from('cases').select('*').eq('id',id).single();
+    if (data && data.deleted_at) return null;   // v560: حذف شدہ
     if (data && typeof offlineStore !== 'undefined') {
       try { await offlineStore.cache('cases_cache', data); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
     }
@@ -312,13 +325,18 @@ async function addCase(caseData) {
   const rec = {...caseData, officer_id:oid};
   // OFFLINE: save locally + queue for sync
   if (!navigator.onLine && typeof offlineStore !== 'undefined') {
-    const tempId = 'local-' + Date.now();
+    // v560: مستقل شناخت ابھی (آف لائن بھی) — پہلے «local-…» ملتی اور سرور نئی دیتا، جس سے
+    //   اس مقدمے کی ضمنیاں/چالان کبھی سرور پر نہ جا سکتے اور مقدمہ دو بار نظر آتا
+    const tempId = (window.DIOSync && DIOSync.uuid) ? DIOSync.uuid() : ('local-' + Date.now());
+    if (window.DIOSync && DIOSync.isUuid(tempId)) rec.id = tempId;
+    if (window.DIOSync) rec.last_device = DIOSync.device();
     const localRec = { ...rec, id: tempId, created_at: new Date().toISOString(), _pending: true };
     await offlineStore.cache('cases_cache', localRec);
-    await offlineStore.enqueue('cases', 'insert', rec);
+    await offlineStore.enqueue('cases', 'insert', rec, tempId);
     showToast('آف لائن محفوظ — انٹرنیٹ آنے پر sync ہوگا', 'info');
     return localRec;
   }
+  if (window.DIOSync) rec.last_device = DIOSync.device();
   let { data, error } = await supabaseClient.from('cases').insert(rec).select().single();
   // SELF-HEAL: اگر کوئی کالم DB میں موجود نہ ہو (schema mismatch، مثلاً بحد/occurrence_place)
   // تو اسے نکال کر دوبارہ کوشش — مقدمہ محفوظ ہونا کبھی نہ رکے۔
@@ -335,38 +353,106 @@ async function addCase(caseData) {
 }
 
 
-async function updateCase(id, updates) {
+async function updateCase(id, updates, base) {
+  if (window.DIOSync) updates = { ...updates, last_device: DIOSync.device() };
   if (!navigator.onLine && typeof offlineStore !== 'undefined') {
     const existing = await offlineStore.getOne('cases_cache', id) || {};
     const merged = { ...existing, ...updates, id };
     await offlineStore.cache('cases_cache', merged);
-    await offlineStore.enqueue('cases', 'update', { id, ...updates });
+    // v560: فارم کھلتے وقت کا نسخہ (base) ساتھ — سرور پر جاتے وقت دوسرے آلے کی ترمیم نہ مٹے
+    await offlineStore.enqueue('cases', 'update', { id, ...updates, _base: base || existing || null });
     showToast('آف لائن محفوظ — sync باقی', 'info');
     return merged;
   }
-  let { data, error } = await supabaseClient.from('cases').update(updates).eq('id',id).select().single();
-  // SELF-HEAL: missing column (schema mismatch) نکال کر دوبارہ — ترمیم کبھی نہ رکے۔
-  let _g = 0;
-  while (error && _g++ < 8) {
-    const m = /Could not find the '([^']+)' column/i.exec((error && error.message) || '');
-    if (!m || !(m[1] in updates)) break;
-    delete updates[m[1]];
-    ({ data, error } = await supabaseClient.from('cases').update(updates).eq('id',id).select().single());
-  }
-  if (error) throw error;
+  const data = await dioCaseWrite(id, updates, base, true);
   if (typeof offlineStore !== 'undefined') { try { await offlineStore.cache('cases_cache', data); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ } }
   return data;
 }
 
+// ═══ v560: مقدمے کی ترمیم — دو آلات پر ایک ساتھ بدلا جائے تو کچھ نہ مٹے ═══════════
+//  base = فارم کھلتے وقت کا نسخہ۔ ہر خانہ تین طرح دیکھا جاتا ہے:
+//   • افسر نے نہیں بدلا  → سرور والا (دوسرے آلے کی ترمیم) ہی رہے
+//   • صرف افسر نے بدلا   → افسر کا
+//   • دونوں نے الگ الگ بدلا → interactive=true پر دونوں دکھا کر پوچھو؛ قطار (آف لائن) سے
+//     آئے تو سرور والا رہے اور افسر کا نسخہ «حذف شدہ مواد» میں (کچھ ضائع نہیں)
+const _CASE_FIELD_UR = { fir_number:'مقدمہ نمبر', fir_date:'تاریخ اندراج', occurrence_date:'تاریخ وقوعہ', occurrence_place:'بحد / جائے وقوعہ',
+  complainant:'مدعی', complainant_cnic:'شناختی کارڈ مدعی', complainant_cell:'موبائل مدعی', complainant_profession:'پیشہ مدعی',
+  fir_writer:'محرر', complaint_sender:'مرتبہ / مرسلہ', section_of_law:'دفعات', status:'صورتحال', mulzman_type:'ملزمان', position:'پوزیشن',
+  theft_item:'مسروقہ چیز', theft_imei:'IMEI', theft_brand:'برانڈ', theft_cell:'موبائل نمبر', documents_checklist:'کاغذات' };
+function _dioSameVal(a, b) {
+  const n = (v) => (v == null || v === '') ? '' : (typeof v === 'object' ? JSON.stringify(v) : String(v));
+  return n(a) === n(b);
+}
+async function dioCaseWrite(id, updates, base, interactive) {
+  const f = { ...updates }; delete f._base; delete f.id;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    let server = null;
+    try {
+      const r = await supabaseClient.from('cases').select('*').eq('id', id).maybeSingle();
+      if (r.error) throw r.error;
+      server = r.data;
+    } catch (e) { if (_dioIsNetErr(e)) throw e; server = null; }
+    if (!server) { const e = new Error('سرور پر یہ مقدمہ نہیں ملا یا اجازت نہیں'); e.code = 'DIO_NOROW'; throw e; }
+    let write = f, kept = null;
+    const changedElsewhere = base && base.rev != null && server.rev != null && Number(server.rev) !== Number(base.rev);
+    if (changedElsewhere) {
+      write = {}; const clash = [];
+      Object.keys(f).forEach(k => {
+        if (k === 'last_device') { write[k] = f[k]; return; }
+        const b = base[k], t = server[k], m = f[k];
+        if (_dioSameVal(m, b)) return;                         // افسر نے نہیں بدلا
+        if (_dioSameVal(t, b) || _dioSameVal(m, t)) { write[k] = m; return; }
+        clash.push(k);
+      });
+      if (clash.length) {
+        let pick = 'theirs';
+        if (interactive && window.DIOSync) {
+          const line = (o) => clash.map(k => (_CASE_FIELD_UR[k] || k) + ': ' + (o[k] == null || o[k] === '' ? '—' : (typeof o[k] === 'object' ? JSON.stringify(o[k]) : o[k]))).join('\n');
+          pick = await DIOSync.conflictDialog({ title: 'مقدمہ ' + (server.fir_number || '') + ' — دو آلات پر بدلا گیا', noLater: true,
+            mine: { text: line(f), at: new Date().toISOString(), device: DIOSync.device() },
+            theirs: { text: line(server), at: server.updated_at, device: server.last_device } });
+        }
+        if (pick === 'mine') clash.forEach(k => { write[k] = f[k]; });
+        else kept = { ...server, ...f };                       // افسر کا نسخہ — «حذف شدہ مواد» میں
+      }
+    }
+    let q = supabaseClient.from('cases').update(write).eq('id', id);
+    if (server.rev != null) q = q.eq('rev', server.rev);
+    let { data, error } = await q.select();
+    let _g = 0;
+    while (error && _g++ < 8) {   // SELF-HEAL: missing column (schema mismatch) نکال کر دوبارہ — ترمیم کبھی نہ رکے۔
+      const m = /Could not find the '([^']+)' column/i.exec((error && error.message) || '');
+      if (!m || !(m[1] in write)) break;
+      delete write[m[1]];
+      q = supabaseClient.from('cases').update(write).eq('id', id);
+      if (server.rev != null) q = q.eq('rev', server.rev);
+      ({ data, error } = await q.select());
+    }
+    if (error) throw error;
+    if (Array.isArray(data) && !data.length) continue;         // اسی لمحے دوسرے آلے نے بدلا — تازہ نسخے پر دوبارہ
+    if (kept && window.DIOSync) {
+      await DIOSync.keepLoser('case', kept);
+      try { showToast('مقدمہ ' + (server.fir_number || '') + ' دوسرے آلے پر بھی بدلا گیا تھا — سرور والا نسخہ رکھا گیا، آپ کا نسخہ «حذف شدہ مواد» میں محفوظ ہے', 'warn', 9000); } catch (_) { /* paigham */ }
+    }
+    return Array.isArray(data) ? data[0] : data;
+  }
+  const e = new Error('مقدمہ بار بار دوسرے آلے پر بدل رہا ہے — دوبارہ محفوظ کریں'); e.code = 'DIO_BUSY'; throw e;
+}
+window.dioCaseWrite = dioCaseWrite;
+
 
 async function deleteCase(id) {
+  // v560: «حذف» = نشان (deleted_at) — اصل قطار اور اس کی ضمنیاں/چالان محفوظ؛ «حذف شدہ مواد» سے بحال
+  //   (پہلے قطار مٹ جاتی؛ بحالی نئی شناخت سے ہوتی اور مقدمے کی ضمنیاں اس سے کٹ جاتیں)
+  const mark = { deleted_at: new Date().toISOString() };
+  if (window.DIOSync) mark.last_device = DIOSync.device();
   if (!navigator.onLine && typeof offlineStore !== 'undefined') {
     await offlineStore.remove('cases_cache', id);
-    await offlineStore.enqueue('cases', 'delete', { id });
+    await offlineStore.enqueue('cases', 'update', { id, ...mark });
     return;
   }
   // v547: 0 قطار (RLS/میعاد ختم) بھی ناکامی — ورنہ «حذف ہو گیا» کا جھوٹا پیغام
-  dioWriteOk(await supabaseClient.from('cases').delete().eq('id',id).select('id'), 'case delete', true);
+  dioWriteOk(await supabaseClient.from('cases').update(mark).eq('id',id).select('id'), 'case delete', true);
   if (typeof offlineStore !== 'undefined') { try { await offlineStore.remove('cases_cache', id); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ } }
 }
 

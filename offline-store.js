@@ -268,6 +268,12 @@ const offlineStore={
       return;
     }
 
+    // v560: چالان کا اپنا مقامی ذخیرہ اور اپنا sync ہے (ضمنی جیسا) — وہی چالان مقامی فہرست میں ہو تو قطار سے نہیں
+    if(table==='report_173' && window.DIOSync && DIOSync.r173QueueCovered && DIOSync.r173QueueCovered(data)){
+      try{ if(typeof window._r173SyncPending==='function') setTimeout(function(){ window._r173SyncPending(); }, 1500); }catch(_){ /* baad mein */ }
+      return;
+    }
+
     // ── INSERT ──────────────────────────────────────────────
     if(op==='insert'){
       const payload={...data};
@@ -303,7 +309,13 @@ const offlineStore={
         }
         if(tempId){ await this.remove('fivec_cache',tempId); await this.cache('fivec_cache',rec); }
       } else {
-        const{data:rec,error}=await sb.from(table).insert(payload).select().single();
+        let{data:rec,error}=await sb.from(table).insert(payload).select().single();
+        // v560: آلے پر دی گئی مستقل شناخت (UUID) — پچھلی کوشش میں قطار بن چکی (جواب راستے میں
+        //   ٹوٹا) تو «دوہری شناخت» کو کامیابی مانو، وہی قطار پڑھ لو (پہلے 5 کوششوں کے بعد «ناکام»)
+        if(error && String(error.code)==='23505' && payload.id){
+          const again=await sb.from(table).select('*').eq('id',payload.id).maybeSingle();
+          if(!again.error && again.data){ rec=again.data; error=null; }
+        }
         if(error) throw error;
         if(tempId){ await this.remove(table+'_cache',tempId); await this.cache(table+'_cache',rec); }
       }
@@ -324,6 +336,12 @@ const offlineStore={
           const rows=numbers.filter(n=>n.application_number).map(n=>({...n,application_5c_id:id}));
           if(rows.length){ const{error:nErr}=await sb.from('application_5c_numbers').insert(rows); if(nErr) throw nErr; }
         }
+      } else if(table==='cases' && typeof dioCaseWrite==='function'){
+        // v560: آف لائن ترمیم — دوسرے آلے کی ترمیم نہ مٹے (خانہ بہ خانہ؛ ٹکراؤ پر سرور والا رہے،
+        //   اس آلے کا نسخہ «حذف شدہ مواد» میں)
+        const base=fields._base||null; delete fields._base;
+        const rec=await dioCaseWrite(id,fields,base,false);
+        if(rec){ try{ if(rec.deleted_at) await this.remove('cases_cache',id); else await this.cache('cases_cache',rec); }catch(_){ /* sirf local cache */ } }
       } else {
         // v547: RLS (مثلاً میعاد ختم) update کو بغیر غلطی 0 قطاروں پر روک دیتا ہے —
         //   پہلے یہ بھی «synced» گنا جاتا اور ترمیم خاموشی سے ضائع۔ اب مستقل ناکامی۔
@@ -334,7 +352,11 @@ const offlineStore={
 
     // ── DELETE ──────────────────────────────────────────────
     } else if(op==='delete'){
-      const{error}=await sb.from(table).delete().eq('id',data.id);
+      // v560: ان جدولوں میں «حذف» = نشان (sql/109) — پرانی قطار کا delete بھی نشان ہی بنے
+      const soft=['cases','report_173','zimni_reports','zimni_androoni_reports'].indexOf(table)>=0;
+      const{error}=soft
+        ? await sb.from(table).update({deleted_at:new Date().toISOString()}).eq('id',data.id)
+        : await sb.from(table).delete().eq('id',data.id);
       if(error) throw error;
       // v546: ہر table کا local cache store نہیں ہوتا (مثلاً case_documents) —
       //   پہلے یہاں غلطی آتی اور سرور سے حذف ہو چکا اندراج بھی «ناکام» گنا جاتا

@@ -1368,17 +1368,20 @@ test('r173: chaabi AIK hi jagah se banti hai', () => {
 
 test('r173: محفوظ کرنے کی ناکامی چھپائی نہ جائے', () => {
   const s = read('report173.js');
-  assert.ok(/const \{ data: ins, error: insErr \}/.test(s),
-    'supabase-js nakami par exception nahi phenkta — `error` khud dekhna zaroori hai');
-  assert.ok(/if \(insErr\) throw insErr;/.test(s));
-  // v547: ترمیم کا نتیجہ dioWriteOk سے — غلطی اور 0 قطار (RLS/میعاد ختم) دونوں پر throw
-  assert.ok(/dioWriteOk\(await supabaseClient\.from\('report_173'\)\.update\(rec\)\.eq\('id', _r173DocId\)\.select\('id'\), 'r173 update', true\)/.test(s));
+  // v560: چالان پہلے اسی آلے پر (کبھی ضائع نہیں)، پھر سرور — _r173Push سرور کا نتیجہ خود دیکھتا ہے
+  //   (supabase-js نقص پر exception نہیں پھینکتا)، اور 0 قطار (RLS/میعاد ختم/دوسرا آلہ) بھی ناکامی ہے
+  const push = s.slice(s.indexOf('async function _r173Push('), s.indexOf('let _r173SyncBusy'));
+  assert.ok(push.length > 100, '_r173Push mojood hona chahiye');
+  assert.ok((push.match(/if \(res\.error\) throw res\.error;/g) || []).length >= 2, 'insert aur update dono ka error dekha jaye');
+  assert.ok(/if \(!res\.data \|\| !res\.data\.length\)/.test(push), '0 qataar = nakami (ya DIO_CONFLICT)');
+  assert.ok(/DIO_NOROW/.test(push) && /conflictError/.test(push), 'saaf wajah: record nahi / dusre aale ne badla');
   assert.ok(/let _r173Saving = false/.test(s), 'do dafa dabane par do satren na banen');
   assert.ok(/محفوظ نہیں ہوا/.test(s), 'nakami par saaf paigham');
-  // "محفوظ فائلیں" mein darj — kamyabi ke BAAD
-  const regIdx = s.indexOf('dioRegisterSaved');
-  const insIdx = s.indexOf('const { data: ins, error: insErr }');
-  assert.ok(regIdx > insIdx, 'nakaam save «محفوظ فائلیں» mein darj na ho');
+  assert.ok(/سرور نے چالان قبول نہیں کیا — وجہ:/.test(s), 'server ka rad saaf lafzon mein');
+  // «محفوظ فائلیں» میں درج — آلے پر محفوظ ہونے کے BAAD
+  const inner = s.slice(s.indexOf('async function _saveR173Inner()'));
+  assert.ok(inner.indexOf('_r173LocalPut(_r173CaseId);') > 0 && inner.indexOf('_r173LocalPut(_r173CaseId);') < inner.indexOf('dioRegisterSaved'),
+    'chalan pehle aale par mehfooz ho, phir «محفوظ فائلیں» mein darj');
 });
 
 test('r173: اخراج / عدم پتہ کا درست عنوان', () => {

@@ -202,11 +202,11 @@
   // ═══ 2) مقدمے کی دستاویزات کی فہرست (chips کی ترتیب) ═══════════════════
   async function loadChallans(caseId) {
     try {
-      const { data, error } = await supabaseClient.from('report_173').select('id,report_type,report_subtype,form_data,created_at').eq('case_id', caseId);
+      const { data, error } = await supabaseClient.from('report_173').select('id,report_type,report_subtype,form_data,created_at').eq('case_id', caseId).is('deleted_at', null);
       if (error) throw error;
       return data || [];
     } catch (_) {
-      try { return JSON.parse(localStorage.getItem('dio_r173docs_' + caseId) || '[]').map(d => ({ id: d.id, report_type: d.type, report_subtype: d.subtype, form_data: d.form_data })); }
+      try { return JSON.parse(localStorage.getItem('dio_r173docs_' + caseId) || '[]').filter(d => d && !d.deleted_at).map(d => ({ id: d.id, report_type: d.type, report_subtype: d.subtype, form_data: d.form_data })); }
       catch (__) { return []; }
     }
   }
@@ -223,9 +223,13 @@
   }
 
   // سرور پر اس مقدمے کی قطاریں (محفوظ ڈیٹا کا سبز نشان) — نہ ملے تو خالی
+  // v560: ان جدولوں میں «حذف» = نشان (sql/109) — حذف شدہ نہ گنی جائیں
+  const SOFT_DEL = { zimni_reports: 1, zimni_androoni_reports: 1, report_173: 1 };
   async function rowsOf(table, cols, caseId) {
     try {
-      const { data, error } = await supabaseClient.from(table).select(cols).eq('case_id', caseId);
+      let q = supabaseClient.from(table).select(cols).eq('case_id', caseId);
+      if (SOFT_DEL[table]) q = q.is('deleted_at', null);
+      const { data, error } = await q;
       if (error) throw error;
       return data || [];
     } catch (_) { return []; }

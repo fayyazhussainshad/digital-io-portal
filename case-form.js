@@ -531,7 +531,10 @@ function sectionTag(sectionStr) {
 }
 
 
-async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;_cfOpenCard(true,caseFormHTML(c),"saveEditCase('"+id+"')",'تبدیلیاں محفوظ کریں');}
+async function openEditCaseModal(id){const c=await getCase(id);if(!c)return;
+  // v560: فارم کھلتے وقت کا نسخہ — محفوظ کرتے وقت دوسرے آلے کی ترمیم نہ مٹے (data-api: dioCaseWrite)
+  window._cfEditBase={id:id,c:JSON.parse(JSON.stringify(c))};
+  _cfOpenCard(true,caseFormHTML(c),"saveEditCase('"+id+"')",'تبدیلیاں محفوظ کریں');}
 // «نیا اندراج — مقدمہ» / «ترمیم — مقدمہ» — مشترکہ DIO کارڈ (اکتوبر 2026)
 function _cfOpenCard(isEdit, html, saveCall, saveLabel){
   if (window.DIOCard) {
@@ -586,7 +589,7 @@ async function _cfFindDuplicate(fir, firDate, excludeId) {
       var num = (_cfAscii(fir).match(/\d+/) || [])[0];
       if (oid && num) {
         var r = await supabaseClient.from('cases').select('id,fir_number,fir_date,complainant,section_of_law,occurrence_date,case_station,status')
-          .eq('officer_id', oid).ilike('fir_number', '%' + num + '%');
+          .eq('officer_id', oid).is('deleted_at', null).ilike('fir_number', '%' + num + '%');
         if (r && r.data) r.data.forEach(function (c) { if (!list.some(function (x) { return String(x.id) === String(c.id); })) list.push(c); });
       }
     }
@@ -779,7 +782,7 @@ async function saveEditCase(id){
       position:document.getElementById('cf-position').value,
       documents_checklist:selectedDocuments.length>0?selectedDocuments:[],
       ..._crossF,
-    });
+    }, (window._cfEditBase && String(window._cfEditBase.id)===String(id)) ? window._cfEditBase.c : null);
     // AUDIT — case.updated (Phase 4B). Key fields ka before/after diff.
     try {
       if (window.DIO && DIO.audit) {

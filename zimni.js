@@ -22,6 +22,12 @@ async function openZimniEditor(caseId) {
   }
   await _loadZimni();
   _renderZimniList();
+  // v560: اس مقدمے کے مسودے جو دوسرے آلے پر لکھے گئے — یہاں بھی (فہرست میں «مسودہ»)
+  try {
+    if (window.DIOSync && DIOSync.ud) DIOSync.ud.pull('zimni_draft', _zimniCaseId).then(ch => {
+      if (ch && document.querySelector('.zt-wrap') && !_zimniTyping()) _renderZimniList();
+    });
+  } catch (_) { /* اگلی بار */ }
   // v552: اس مقدمے کی جو ضمنیاں ابھی صرف آلے پر ہیں — سرور پر بھیجو
   try { if (navigator.onLine && _zimniList.some(_zimniIsPending)) setTimeout(() => { _zimniSyncPending([_zimniCaseId]); }, 300); } catch (_) { /* baad mein */ }
 }
@@ -145,10 +151,18 @@ window._zimniErrText = _zimniErrText;
 // محفوظ کرو — کالم کا نام خود ڈھونڈتے ہوئے
 //  v552: (1) report_date ہمیشہ YYYY-MM-DD؛ تاریخ کی غلطی پر بغیر تاریخ ایک بار اور۔
 //        (2) «اصل» غلطی یاد رہے — کالم کے نام کی تلاش والی PGRST204 غلطیاں اسے چھپا نہ دیں۔
-async function _zimniWrite(base, contentObj, id) {
+//  v560 (opts): baseRev — ترمیم صرف تب جب سرور پر وہی نسخہ ہو جس پر افسر نے کام شروع کیا
+//     (دوسرے آلے نے بیچ میں بدلا ہو تو DIO_CONFLICT — دونوں نسخے محفوظ، افسر چنے)؛
+//     newId — نئی ضمنی کی مستقل شناخت (آلے پر بنی، آف لائن بھی) — دوبارہ بھیجنے پر دوہری نہیں
+async function _zimniWrite(base, contentObj, id, opts) {
+  opts = opts || {};
   const tried = new Set();
   const cands = [_zimniColPref(), ...ZIMNI_CONTENT_COLS].filter(c => c && !tried.has(c) && (tried.add(c) || true));
   const payloadBase = Object.assign({}, base);
+  if (window.DIOSync) payloadBase.last_device = DIOSync.device();
+  if (!id && opts.newId) payloadBase.id = opts.newId;
+  const useRev = !!id && opts.baseRev != null && !isNaN(Number(opts.baseRev));
+  const upd = (rec) => { let q = supabaseClient.from('zimni_reports').update(rec).eq('id', id); if (useRev) q = q.eq('rev', Number(opts.baseRev)); return q.select(); };
   if (payloadBase.report_date) {
     const fd = _zimniFindDate(payloadBase.report_date);
     if (fd) payloadBase.report_date = fd.iso;
@@ -165,11 +179,25 @@ async function _zimniWrite(base, contentObj, id) {
       rec[col] = contentObj;
       try {
         let res;
-        if (id) res = await supabaseClient.from('zimni_reports').update(rec).eq('id', id).select();
+        if (id) res = await upd(rec);
         else    res = await supabaseClient.from('zimni_reports').insert(rec).select();
+        // v560: یہی شناخت سرور پر پہلے سے (پچھلی کوشش کا جواب راستے میں ٹوٹا) — اسی کو تازہ کرو
+        if (!id && res.error && String(res.error.code) === '23505' && opts.newId) {
+          const r2 = Object.assign({}, rec); delete r2.id;
+          res = await supabaseClient.from('zimni_reports').update(r2).eq('id', opts.newId).select();
+        }
         if (res.error) throw res.error;
-        // update پر 0 قطار = سرور پر ریکارڈ نہیں / اجازت نہیں (خاموش RLS)
+        // update پر 0 قطار = سرور پر ریکارڈ نہیں / اجازت نہیں (خاموش RLS) — یا (v560) دوسرے آلے نے بدل دی
         if (id && Array.isArray(res.data) && !res.data.length) {
+          if (useRev && window.DIOSync) {
+            const w = await DIOSync.whyNoRow('zimni_reports', id);
+            if (w.exists) {
+              const srv = DIOSync.zimniItem(w.row);
+              // یہی تحریر پہلے ہی سرور پر (جواب راستے میں ٹوٹا تھا) — دوبارہ بھیجنا، ٹکراؤ نہیں
+              if (!w.row.deleted_at && contentObj && contentObj.saved_at && String((srv.content || {}).saved_at || '') === String(contentObj.saved_at)) return w.row;
+              throw DIOSync.conflictError(srv, 'ضمنی');
+            }
+          }
           const er = new Error('سرور پر یہ ضمنی نہیں ملی یا ترمیم کی اجازت نہیں'); er.code = 'DIO_NOROW'; throw er;
         }
         _zimniColSet(col);
@@ -177,7 +205,7 @@ async function _zimniWrite(base, contentObj, id) {
       } catch (e) {
         lastErr = e;
         if (_zimniIsNetErr(e)) throw e;                    // انٹرنیٹ نہیں — باقی نام آزمانا بے کار
-        if (e && e.code === 'DIO_NOROW') throw e;
+        if (e && (e.code === 'DIO_NOROW' || e.code === 'DIO_CONFLICT')) throw e;
         if (isColErr(e, col)) break;                       // یہ کالم نہیں — اگلا نام آزماؤ
         if (e && e.code === 'PGRST204') {
           const miss = _zimniMissingCol(e);
@@ -195,7 +223,7 @@ async function _zimniWrite(base, contentObj, id) {
             const rec2 = Object.assign({}, payloadBase);
             rec2[col] = JSON.stringify(contentObj);
             let r2;
-            if (id) r2 = await supabaseClient.from('zimni_reports').update(rec2).eq('id', id).select();
+            if (id) r2 = await upd(rec2);
             else    r2 = await supabaseClient.from('zimni_reports').insert(rec2).select();
             if (!r2.error) { _zimniColSet(col); return (r2.data && r2.data[0]) || Object.assign({ id: id || ('tmp_' + Date.now()) }, rec2); }
             lastErr = r2.error;
@@ -226,6 +254,20 @@ function _zimniLocalPut(caseId, list) {
   try { localStorage.setItem('dio_zimni_' + caseId, JSON.stringify(list || [])); return true; }
   catch (e) { if (typeof dioLogError === 'function') dioLogError('zimni: local list save nakaam', e); return false; }
 }
+// v560: اسی آلے کی زیرِ التوا ترمیم (p) بمقابلہ سرور (r) — کون سا رہے؟
+//   • وہی saved_at → ہماری اپنی تحریر سرور پر پہنچ چکی → سرور والا
+//   • سرور کا rev وہی جس پر افسر نے کام شروع کیا → بیچ میں کسی نے نہیں بدلا → اس آلے والا (sync ہوگا)
+//   • سرور کا rev آگے → دوسرے آلے نے بھی بدلا → دونوں نسخے (_conflict) — افسر چنے
+//   (پہلے: جس کا saved_at بڑا وہی — دوسرا خاموشی سے ضائع)
+function _zimniPickVersion(p, r) {
+  if (!p) return r;
+  const ls = String((p.content || {}).saved_at || ''), ss = String((r.content || {}).saved_at || '');
+  if (ls && ls === ss && !p._conflict) return r;
+  if (p._conflict) return Object.assign({}, p, { _conflict: r });
+  if (p.rev != null && r.rev != null) return Number(r.rev) > Number(p.rev) ? Object.assign({}, p, { _conflict: r }) : p;
+  return (ls && ls >= ss) ? p : r;
+}
+window._zimniPickVersion = _zimniPickVersion;
 
 async function _loadZimni() {
   // مقامی نقل ہمیشہ ہاتھ میں رکھو (آف لائن یا ناکام محفوظ والی ضمنیاں ضائع نہ ہوں)
@@ -242,9 +284,10 @@ async function _loadZimni() {
   let rows = null;
   try {
     // ═══ SECURITY: صرف اس مقدمے کی ضمنیاں (case_id) — کبھی بغیر چھانٹی نہیں ═══
+    // v560: «حذف» = نشان (deleted_at) — حذف شدہ ضمنیاں فہرست میں نہیں
     let r = await supabaseClient.from('zimni_reports').select('*')
-      .eq('case_id', _zimniCaseId).order('serial_no', { ascending: true });
-    if (r.error && !_zimniIsNetErr(r.error)) r = await supabaseClient.from('zimni_reports').select('*').eq('case_id', _zimniCaseId);
+      .eq('case_id', _zimniCaseId).is('deleted_at', null).order('serial_no', { ascending: true });
+    if (r.error && !_zimniIsNetErr(r.error)) r = await supabaseClient.from('zimni_reports').select('*').eq('case_id', _zimniCaseId).is('deleted_at', null);
     if (r.error) throw r.error;
     rows = r.data || [];
   } catch (e) {
@@ -265,16 +308,11 @@ async function _loadZimni() {
   // v552: مقامی ترمیم جو ابھی سرور تک نہیں گئی (اسی id کی) — سرور کی پرانی نقل
   //   اسے مٹا نہ دے؛ مقامی (تازہ) ہی رہے اور sync ہو۔
   const pendById = {};
-  local.forEach(z => { if (z && z._pending && z.id != null) pendById[String(z.id)] = z; });
-  const merged = fromDb.map(r => {
-    const p = pendById[String(r.id)];
-    if (!p) return r;
-    const ls = String((p.content || {}).saved_at || ''), ss = String((r.content || {}).saved_at || '');
-    return (ls && ls >= ss) ? p : r;
-  });
-  // ڈیٹابیس میں نہ پہنچنے والے مقامی اندراج بھی ساتھ رکھو
+  local.forEach(z => { if (z && (z._pending || z._conflict) && z.id != null) pendById[String(z.id)] = z; });
+  const merged = fromDb.map(r => _zimniPickVersion(pendById[String(r.id)], r));
+  // ڈیٹابیس میں نہ پہنچنے والے مقامی اندراج بھی ساتھ رکھو (اور وہ بھی جن پر دو نسخوں کا فیصلہ باقی)
   const ids = new Set(fromDb.map(r => String(r.id)));
-  const onlyLocal = local.filter(z => z && _zimniIsPending(z) && !ids.has(String(z.id)));
+  const onlyLocal = local.filter(z => z && (_zimniIsPending(z) || z._conflict) && !ids.has(String(z.id)));
   _zimniList = merged.concat(onlyLocal)
     .sort((a, b) => (parseInt(b.serial_no, 10) || 0) - (parseInt(a.serial_no, 10) || 0));
   _zimniLocalPut(_zimniCaseId, _zimniList);
@@ -307,17 +345,23 @@ async function _zimniSyncOne(caseId, z) {
     const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
     if (oid) base.officer_id = oid;
   } catch (_) { /* officer id na mile to bhi aage */ }
-  let serverId = (!String(z.id).startsWith('local-') && !String(z.id).startsWith('tmp_')) ? z.id : null;
-  if (!serverId) {
+  const legacy = /^(local-|tmp_)/.test(String(z.id));
+  let serverId = (!legacy && !z._new) ? z.id : null;
+  let baseRev = serverId ? z.rev : null, newId = null;
+  if (!serverId && legacy) {
     // پہلے بھیجی جا چکی؟ (جواب راستے میں ٹوٹ گیا ہو) — اسی نمبر + اسی وقت والی ڈھونڈو
     try {
       const r = await supabaseClient.from('zimni_reports').select('*').eq('case_id', caseId).eq('serial_no', z.serial_no);
       const hit = (r && r.data || []).find(x => String((_zimniContentOf(x) || {}).saved_at || '') === String(c.saved_at || ''));
-      if (hit) serverId = hit.id;
+      if (hit) { serverId = hit.id; baseRev = hit.rev; }
     } catch (_) { /* talaash na ho saki — naya bana do */ }
   }
-  const saved = await _zimniWrite(base, c, serverId);
-  return Object.assign({}, saved, { content: c, _pending: false, _sync_err: '' });
+  // v560: نئی ضمنی اپنی مستقل شناخت کے ساتھ (پرانی local- والی کو نئی شناخت)
+  if (!serverId) newId = (!legacy && window.DIOSync && DIOSync.isUuid(z.id)) ? z.id : (window.DIOSync ? DIOSync.uuid() : null);
+  const saved = await _zimniWrite(base, c, serverId, { baseRev, newId });
+  const out = Object.assign({}, saved, { content: c, _pending: false, _sync_err: '' });
+  delete out._new; delete out._conflict;
+  return out;
 }
 // ایک ہی ضمنی دو راستوں (Ctrl+S اور خودکار sync) سے ایک ساتھ نہ جائے
 const _zimniInFlight = new Set();
@@ -334,8 +378,18 @@ function _zimniMergeSynced(list, oldId, sentSavedAt, nz) {
   if (j < 0) return false;
   const cur = list[j];
   if (String((cur.content || {}).saved_at || '') === String(sentSavedAt || '')) list[j] = nz;
-  else list[j] = Object.assign({}, cur, { id: nz.id, _pending: true });   // نئی ترمیم باقی — اگلی بار update
+  else list[j] = Object.assign({}, cur, { id: nz.id, _pending: true, _new: false, rev: nz.rev });   // نئی ترمیم باقی — اگلی بار update
   return true;
+}
+// v560: دو آلات — اس ضمنی پر «دونوں نسخے» کا نشان (مقامی فہرست + کھلی فہرست)
+function _zimniMarkConflict(cid, id, server) {
+  const fresh = _zimniLocalGet(cid);
+  const j = fresh.findIndex(x => String(x.id) === String(id));
+  if (j >= 0) { fresh[j] = Object.assign({}, fresh[j], { _conflict: server, _sync_err: '' }); _zimniLocalPut(cid, fresh); }
+  if (String(cid) === String(_zimniCaseId)) {
+    const k = _zimniList.findIndex(x => String(x.id) === String(id));
+    if (k >= 0) _zimniList[k] = Object.assign({}, _zimniList[k], { _conflict: server, _sync_err: '' });
+  }
 }
 async function _zimniSyncPending(caseIds, quiet) {
   if (_zimniSyncBusy) return 0;
@@ -344,10 +398,10 @@ async function _zimniSyncPending(caseIds, quiet) {
   // بغیر سیشن (آف لائن لاگ اِن) سرور «اجازت نہیں» کہے گا — انتظار کرو
   try { const s = await supabaseClient.auth.getSession(); if (!s || !s.data || !s.data.session) return 0; } catch (_) { return 0; }
   _zimniSyncBusy = true;
-  let done = 0, failed = 0, lastWhy = '', again = false;
+  let done = 0, failed = 0, lastWhy = '', again = false, clashes = 0;
   try {
     for (const cid of (caseIds || _zimniPendingCaseIds())) {
-      const snapshot = _zimniLocalGet(cid).filter(_zimniIsPending);
+      const snapshot = _zimniLocalGet(cid).filter(z => _zimniIsPending(z) && !z._conflict);   // دو نسخوں والی: افسر کے فیصلے تک نہیں
       for (const z of snapshot) {
         if (_zimniInFlight.has(String(z.id))) continue;
         _zimniInFlight.add(String(z.id));
@@ -369,6 +423,7 @@ async function _zimniSyncPending(caseIds, quiet) {
           done++;
         } catch (e) {
           if (_zimniIsNetErr(e)) return done;   // نیٹ پھر ٹوٹ گیا — بعد میں (مقامی نقل جوں کی توں)
+          if (e && e.code === 'DIO_CONFLICT') { clashes++; _zimniMarkConflict(cid, z.id, e.server); continue; }
           failed++; lastWhy = _zimniErrText(e);
           const fresh = _zimniLocalGet(cid);
           const j = fresh.findIndex(x => String(x.id) === String(z.id));
@@ -383,11 +438,12 @@ async function _zimniSyncPending(caseIds, quiet) {
   } finally { _zimniSyncBusy = false; }
   try {
     if (done) showToast(done + ' ضمنی سرور پر محفوظ (sync) ہو گئیں', 'success', 4000);
+    if (clashes) showToast(clashes + ' ضمنی دو آلات پر الگ الگ بدلی گئی — دونوں نسخے محفوظ ہیں؛ فہرست میں «دو نسخے» پر کلک کر کے چنیں', 'warn', 9000);
     // خودکار (ہر منٹ) کوشش میں وہی ناکامی بار بار نہ دکھاؤ — وجہ فہرست میں درج رہتی ہے
     if (failed && !(quiet && lastWhy === window._zimniLastFailWhy)) showToast(failed + ' ضمنی سرور پر نہیں گئیں — وجہ: ' + lastWhy + ' (اس آلے پر محفوظ ہیں)', 'error', 9000);
     window._zimniLastFailWhy = failed ? lastWhy : '';
   } catch (_) { /* paigham na dikh sake to koi baat nahi */ }
-  try { if ((done || (failed && !quiet)) && document.querySelector('.zt-wrap')) _renderZimniList(); } catch (_) { /* list khuli na ho to kuch nahi */ }
+  try { if ((done || clashes || (failed && !quiet)) && document.querySelector('.zt-wrap')) _renderZimniList(); } catch (_) { /* list khuli na ho to kuch nahi */ }
   if (again) setTimeout(() => { _zimniSyncPending(); }, 1500);
   return done;
 }
@@ -439,8 +495,12 @@ function _zimniDrafts(caseId) {
 }
 function _zimniDraftsPut(caseId, o) {
   try {
-    const k = _zimniDraftKey(caseId || _zimniCaseId);
+    const cid = caseId || _zimniCaseId;
+    const k = _zimniDraftKey(cid);
+    const before = _zimniDrafts(cid);
     if (o && Object.keys(o).length) localStorage.setItem(k, JSON.stringify(o)); else localStorage.removeItem(k);
+    // v560: بدلا ہوا مسودہ سرور پر بھی (dio_user_data) — دوسرے آلے پر وہیں سے جاری رکھیں
+    try { if (window.DIOSync && DIOSync.ud) DIOSync.ud.diff('zimni_draft', cid, before, o || {}); } catch (_) { /* اگلی بار */ }
     return true;
   } catch (_) { return false; }
 }
@@ -589,6 +649,7 @@ function _renderZimniList() {
   const head = (z) => ((z.content || {}).head || 'رپورٹ ضمنی');
   const J = (v) => _dioJsHtml(v);
   const status = (z) => {
+    if (z._conflict) return '<button type="button" class="zst zst-c" onclick="event.stopPropagation();_zimniResolve(\'' + J(z.id) + '\')" title="دو آلات پر الگ الگ بدلی گئی — دونوں نسخے دیکھ کر چنیں">دو نسخے — فیصلہ کریں</button>';
     if (drafts['id:' + z.id]) return '<span class="zst zst-d">غیر محفوظ ترمیم (مسودہ)</span>';
     if (_zimniIsPending(z)) {
       return '<span class="zst zst-p" title="' + esc(z._sync_err || '') + '">اس آلے پر محفوظ — سرور پر بھیجنا باقی</span>'
@@ -596,7 +657,7 @@ function _renderZimniList() {
     }
     return '<span class="zst zst-ok">سرور پر محفوظ</span>';
   };
-  const pendingCount = list.filter(_zimniIsPending).length;
+  const pendingCount = list.filter(z => _zimniIsPending(z) && !z._conflict).length;
   if (pendingCount) setTimeout(_zimniSyncSoon, 800);   // v558: فہرست کھلتے ہی باقی ضمنیاں سرور پر
 
   area.innerHTML = `
@@ -625,6 +686,7 @@ function _renderZimniList() {
     .zst-ok{ background:rgba(22,163,74,.12); color:#15803d; }
     .zst-p{ background:rgba(217,119,6,.14); color:#b45309; }
     .zst-d{ background:rgba(37,99,235,.12); color:#1d4ed8; }
+    .zst-c{ background:rgba(185,28,28,.12); color:#b91c1c; border:1px solid rgba(185,28,28,.35); cursor:pointer; font-family:inherit; }
     .zst-why{ font-size:9.5pt; color:#b91c1c; margin-top:2px; }
     .zt tr.zt-draft td{ background:rgba(37,99,235,.06); }
     @media (max-width:760px){
@@ -719,9 +781,10 @@ async function _moveZimni(id) {
   } catch (_) { /* سرخی نہ ملے تو صرف نمبر */ }
   c.serial_no = n;
   try {
-    if (navigator.onLine && !String(z.id).startsWith('local-')) {
-      await _zimniWrite({ serial_no: n }, c, z.id);
-    }
+    if (navigator.onLine && !/^(local-|tmp_)/.test(String(z.id)) && !z._new && !z._conflict) {
+      const sv = await _zimniWrite({ serial_no: n }, c, z.id, { baseRev: z.rev });
+      if (sv && sv.rev != null) z.rev = sv.rev;
+    } else z._pending = true;   // v560: سرور پر نہیں گیا — «بھیجنا باقی» (پہلے آف لائن نمبر بدلنا کبھی سرور پر نہ جاتا)
     z.serial_no = n; z.content = c;
     try { localStorage.setItem('dio_zimni_' + _zimniCaseId, JSON.stringify(_zimniList)); } catch (_) { if (typeof dioLogError === 'function') dioLogError('zimni: local list save nakaam', _); }
     showToast('ضمنی نمبر ' + n + ' ہو گیا', 'success');
@@ -2710,8 +2773,11 @@ async function _saveZimni(silent, keepOpen) {
   } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
 
   // ── 1) پہلے اسی آلے پر (آف لائن پہلے) — یہ کبھی ضائع نہیں ہوتا ──
-  const localId = z.id || ('local-' + Date.now());
-  const localObj = Object.assign({ id: localId }, rec, { _pending: true, _sync_err: '' });
+  //   v560: نئی ضمنی کی مستقل شناخت ابھی (UUID) — آف لائن بھی؛ سرور پر یہی رہتی ہے
+  const isNew = !z.id || !!z._new;
+  const localId = z.id || (window.DIOSync ? DIOSync.uuid() : ('local-' + Date.now()));
+  const localObj = Object.assign({ id: localId }, rec, { _pending: true, _sync_err: '' },
+    isNew ? { _new: true } : { rev: z.rev }, z._conflict ? { _conflict: z._conflict } : {});
   const localSave = (obj, replaceId) => {
     const i = _zimniList.findIndex(x => String(x.id) === String(replaceId != null ? replaceId : obj.id));
     if (i >= 0) _zimniList[i] = obj; else _zimniList.push(obj);
@@ -2745,7 +2811,13 @@ async function _saveZimni(silent, keepOpen) {
     } catch (_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
     const base = {};
     Object.keys(rec).forEach(k => { if (k !== 'content') base[k] = rec[k]; });
-    const editing = !_zimniIsPending({ id: z.id }) && !!z.id;
+    const editing = !!z.id && !isNew && !/^(local-|tmp_)/.test(String(z.id));
+    if (z._conflict) {
+      // اس ضمنی پر دو نسخوں کا فیصلہ باقی — نیا متن اسی آلے پر محفوظ، فیصلہ افسر کرے
+      if (!silent) setTimeout(() => { try { _zimniResolve(localId); } catch (_) { /* fehrist se */ } }, 300);
+      backToList();
+      return true;
+    }
     if (_zimniInFlight.has(String(localId))) {
       // یہی ضمنی ابھی خودکار sync میں جا رہی ہے — وہ مکمل ہوتے ہی یہ تازہ نقل بھی جائے گی
       setTimeout(() => { _zimniSyncPending([_zimniCaseId]); }, 2000);
@@ -2756,10 +2828,11 @@ async function _saveZimni(silent, keepOpen) {
     _zimniInFlight.add(String(localId));
     let savedRec;
     try {
-      if (editing) savedRec = await _zimniWrite(base, rec.content, z.id);
+      if (editing) savedRec = await _zimniWrite(base, rec.content, z.id, { baseRev: z.rev });
       else savedRec = await _zimniSyncOne(_zimniCaseId, localObj);   // دوہرا اندراج نہیں (اسی وقت والی پہلے سے ہو تو وہی)
     } finally { _zimniInFlight.delete(String(localId)); }
     savedRec = Object.assign({}, savedRec, { content: rec.content, _pending: false, _sync_err: '' });
+    delete savedRec._new; delete savedRec._conflict;
     _zimniRekeyDraft(_zimniCaseId, localId, savedRec.id);
     // اس دوران افسر نے مزید لکھا ہو تو وہ نہ مٹے (اسی طریقے سے جو sync کرتا ہے)
     _zimniMergeSynced(_zimniList, localId, savedAt, savedRec);
@@ -2772,6 +2845,14 @@ async function _saveZimni(silent, keepOpen) {
     return true;
   } catch (e) {
     try { console.error('[zimni save]', e); } catch (_) { /* console na ho to bhi na phatte */ }
+    if (e && e.code === 'DIO_CONFLICT') {
+      // v560: دوسرے آلے نے بیچ میں یہی ضمنی بدل دی — دونوں نسخے محفوظ، افسر چنے
+      localSave(Object.assign({}, localObj, { _conflict: e.server }));
+      if (!silent) setTimeout(() => { try { _zimniResolve(localId); } catch (_) { /* fehrist se */ } }, 300);
+      else showToast('ضمنی نمبر ' + serialNo + ' دوسرے آلے پر بھی بدلی گئی — فہرست میں «دو نسخے» پر کلک کر کے چنیں', 'warn', 8000);
+      backToList();
+      return true;
+    }
     const why = _zimniErrText(e);
     if (_zimniIsNetErr(e)) {
       if (!silent) showToast('انٹرنیٹ/سرور سے رابطہ نہیں — ضمنی نمبر ' + serialNo + ' اس آلے پر محفوظ ہے، رابطہ بحال ہوتے ہی خود سرور پر چلی جائے گی', 'info', 7000);
@@ -2800,17 +2881,104 @@ async function _deleteZimni(id, skipConfirm) {
   };
   // v552: جو ضمنی ابھی صرف اس آلے پر ہے (سرور پر گئی ہی نہیں) — سرور کو پوچھنے کی ضرورت نہیں
   //   (پہلے یہاں بھی سرور سے حذف مانگا جاتا، «نہیں ملی» آتا اور ضمنی فہرست سے ہٹتی ہی نہیں تھی)
-  if (String(id).startsWith('local-') || String(id).startsWith('tmp_')) {
+  if (String(id).startsWith('local-') || String(id).startsWith('tmp_') || (z && z._new)) {
     dropLocal(); _renderZimniList(); showToast('حذف ہو گئی', 'info'); return;
   }
   if (!navigator.onLine) { showToast('سرور پر محفوظ ضمنی حذف کرنے کے لیے انٹرنیٹ درکار ہے', 'warn', 5000); return; }
   try {
+    // v560: «حذف» = نشان + «حذف شدہ مواد» میں نقل (پہلے ضمنی ہمیشہ کے لیے مٹ جاتی)؛ دوسرے آلے سے بھی ہٹ جاتی ہے
+    if (window.DIOSync) await DIOSync.softDelete('zimni_reports', 'zimni', Object.assign({ case_id: _zimniCaseId }, z || { id }));
     // v547: نتیجہ دیکھ کر — پہلے سرور رد کرتا تب بھی فہرست سے ہٹ جاتی (دوبارہ کھولنے پر واپس)
-    dioWriteOk(await supabaseClient.from('zimni_reports').delete().eq('id', id).select('id'), 'zimni delete', true);
+    else dioWriteOk(await supabaseClient.from('zimni_reports').delete().eq('id', id).select('id'), 'zimni delete', true);
     dropLocal();
     _renderZimniList();
     showToast('حذف ہو گئی', 'info');
   } catch(e) { dioWriteFail('ضمنی', e, 'حذف نہیں ہوئی'); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  v560 — دو آلات پر ایک ہی ضمنی بدلی گئی: دونوں نسخے سامنے، افسر چنے
+//  چنا گیا نسخہ سرور پر؛ دوسرا «حذف شدہ مواد» میں (بحالی = الگ ضمنی) — کچھ ضائع نہیں
+// ═══════════════════════════════════════════════════════════════
+async function _zimniResolve(id) {
+  const z = _zimniRec(id);
+  if (!z || !z._conflict || !window.DIOSync) return;
+  const t = z._conflict;
+  const pick = await DIOSync.conflictDialog({
+    title: 'ضمنی نمبر ' + (_zimniRecNo(z) || '') + ' — دو آلات پر بدلی گئی',
+    mine: { text: DIOSync.plain((z.content || {}).bodyHtml), at: (z.content || {}).saved_at, device: DIOSync.device() },
+    theirs: { text: DIOSync.plain((t.content || {}).bodyHtml), at: (t.content || {}).saved_at || t.updated_at, device: t.last_device, deleted: !!t.deleted_at }
+  });
+  if (pick === 'later') { _renderZimniList(); return; }
+  if (!navigator.onLine) { showToast('فیصلہ محفوظ کرنے کے لیے انٹرنیٹ درکار ہے — دونوں نسخے محفوظ ہیں', 'warn', 6000); return; }
+  try {
+    let next = null;
+    if (pick === 'mine') {
+      const base = { case_id: _zimniCaseId, serial_no: z.serial_no, report_date: z.report_date || _zimniTodayIso() };
+      if (t.deleted_at) base.deleted_at = null;                 // دوسرے آلے پر حذف تھی — بحال کر کے اپنا نسخہ
+      try { const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null; if (oid) base.officer_id = oid; } catch (_) { /* officer id */ }
+      const saved = await _zimniWrite(base, z.content || {}, z.id, { baseRev: t.rev });
+      if (!t.deleted_at) await DIOSync.keepLoser('zimni', t);
+      next = Object.assign({}, saved, { content: z.content || {} });
+    } else {
+      const kept = await DIOSync.keepLoser('zimni', z);
+      if (!kept) { showToast('اس آلے کا نسخہ «حذف شدہ مواد» میں نہیں جا سکا — اسے نہیں ہٹایا گیا، دوبارہ کوشش کریں', 'error', 8000); return; }
+      next = t.deleted_at ? null : Object.assign({}, t);
+      _zimniClearDraft('id:' + z.id);
+    }
+    if (next) { delete next._conflict; delete next._pending; delete next._new; }
+    const apply = (list) => {
+      const i = list.findIndex(x => String(x.id) === String(z.id));
+      if (i < 0) return list;
+      if (next) list[i] = next; else list.splice(i, 1);
+      return list;
+    };
+    apply(_zimniList);
+    _zimniLocalPut(_zimniCaseId, _zimniList);
+    showToast(pick === 'mine' ? 'اس آلے کا نسخہ سرور پر محفوظ؛ دوسرا «حذف شدہ مواد» میں' : 'سرور والا نسخہ رکھا گیا؛ اس آلے کا «حذف شدہ مواد» میں', 'success', 6000);
+  } catch (e) {
+    if (e && e.code === 'DIO_CONFLICT') { _zimniMarkConflict(_zimniCaseId, z.id, e.server); showToast('اسی دوران دوسرے آلے نے پھر بدلا — تازہ نسخوں سے دوبارہ چنیں', 'warn', 7000); }
+    else dioWriteFail('ضمنی', e, 'محفوظ نہیں ہوئی');
+  }
+  _renderZimniList();
+}
+window._zimniResolve = _zimniResolve;
+
+// ═══ v560 — دوسرے آلے کی تبدیلی (realtime) / ایپ پر واپسی: کھلی فہرست بغیر refresh تازہ ═══
+//  مقامی ذخیرہ dio-sync.js خود تازہ کرتا ہے؛ یہاں صرف کھلی فہرست (حافظے میں _zimniList)
+function _zimniViewOpen() { return !!document.querySelector('.zt-wrap'); }
+function _zimniEditorOpen() { try { const d = _zimniDoc(); return !!(d && d.querySelector('.zf-tbl')); } catch (_) { return false; } }
+function _zimniTyping() { const a = document.activeElement; return !!(a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))); }
+if (window.DIOSync && !window._zimniSyncHooked) {
+  window._zimniSyncHooked = true;
+  DIOSync.on('zimni_reports', function (row) {
+    if (!row || String(row.case_id) !== String(_zimniCaseId)) return;
+    const item = DIOSync.zimniItem(row);
+    const r = DIOSync.mergeInto(_zimniList, item);
+    if (_zimniEditorOpen() && _zimniActive && String(_zimniActive.id) === String(row.id) && _zimniActive.rev != null
+        && row.rev != null && Number(row.rev) > Number(_zimniActive.rev) && (r === 'replace' || r === 'remove')) {
+      showToast('یہ ضمنی دوسرے آلے پر بھی بدلی گئی ہے — محفوظ کرنے پر دونوں نسخے دکھائے جائیں گے', 'warn', 8000);
+    }
+    if (_zimniViewOpen() && !_zimniTyping()) _renderZimniList();
+  });
+  DIOSync.on('dio_user_data', function (row) {
+    if (!row || row.kind !== 'zimni_draft' || String(row.case_id) !== String(_zimniCaseId)) return;
+    if (_zimniViewOpen() && !_zimniTyping()) _renderZimniList();
+  });
+  // یہی مسودہ اسی آلے پر کھلا ہو تو دوسرے آلے کا متن اس پر نہیں لکھا جاتا (الگ مسودہ بنتا ہے)
+  const prevOpen = DIOSync.isOpenDraft;
+  DIOSync.isOpenDraft = function (kind, cid, key) {
+    if (kind === 'zimni_draft') return String(cid) === String(_zimniCaseId) && _zimniEditorOpen() && !!_zimniActive && _zimniActiveDraftKey() === key;
+    return typeof prevOpen === 'function' ? prevOpen(kind, cid, key) : false;
+  };
+  DIOSync.onRefresh(async function () {
+    if (!_zimniCaseId || !_zimniViewOpen() || _zimniTyping()) return;
+    const before = JSON.stringify(_zimniList) + localStorage.getItem(_zimniDraftKey(_zimniCaseId));
+    await _loadZimni();
+    try { await DIOSync.ud.pull('zimni_draft', _zimniCaseId); } catch (_) { /* اگلی بار */ }
+    if (!_zimniViewOpen() || _zimniTyping()) return;
+    if (JSON.stringify(_zimniList) + localStorage.getItem(_zimniDraftKey(_zimniCaseId)) !== before) _renderZimniList();
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -3770,6 +3938,12 @@ async function openZimniAndrooniEditor(caseId) {
   }
   await _loadZimniA();
   _renderZimniAList();
+  // v560: دوسرے آلے پر لکھے گئے مسودے بھی
+  try {
+    if (window.DIOSync && DIOSync.ud) DIOSync.ud.pull('za_draft', _zaCaseId).then(ch => {
+      if (ch && document.querySelector('.zat-wrap') && !_zimniTyping()) _renderZimniAList();
+    });
+  } catch (_) { /* اگلی بار */ }
 }
 window.openZimniAndrooniEditor = openZimniAndrooniEditor;
 
@@ -3821,10 +3995,15 @@ function _zaMissingCol(e) {
   } catch (_) { return ''; }
 }
 
-async function _zaWrite(base, contentObj, id) {
+async function _zaWrite(base, contentObj, id, opts) {
+  opts = opts || {};   // v560: baseRev / newId — بیرونی ضمنی (_zimniWrite) والا اصول
   const tried = new Set();
   const cands = [_zaColPref(), ...ZIMNI_A_CONTENT_COLS].filter(c => c && !tried.has(c) && (tried.add(c) || true));
   const payloadBase = Object.assign({}, base);
+  if (window.DIOSync) payloadBase.last_device = DIOSync.device();
+  if (!id && opts.newId) payloadBase.id = opts.newId;
+  const useRev = !!id && opts.baseRev != null && !isNaN(Number(opts.baseRev));
+  const upd = (rec) => { let q = supabaseClient.from('zimni_androoni_reports').update(rec).eq('id', id); if (useRev) q = q.eq('rev', Number(opts.baseRev)); return q.select(); };
   let lastErr = null;
 
   for (let ci = 0; ci < cands.length; ci++) {
@@ -3834,11 +4013,23 @@ async function _zaWrite(base, contentObj, id) {
       rec[col] = contentObj;
       try {
         let res;
-        if (id) res = await supabaseClient.from('zimni_androoni_reports').update(rec).eq('id', id).select();
+        if (id) res = await upd(rec);
         else    res = await supabaseClient.from('zimni_androoni_reports').insert(rec).select();
+        if (!id && res.error && String(res.error.code) === '23505' && opts.newId) {
+          const r2 = Object.assign({}, rec); delete r2.id;
+          res = await supabaseClient.from('zimni_androoni_reports').update(r2).eq('id', opts.newId).select();
+        }
         if (res.error) throw res.error;
         // v558: update پر 0 قطار = سرور پر ریکارڈ نہیں / اجازت نہیں (خاموش RLS) — «محفوظ» نہ مانو
         if (id && Array.isArray(res.data) && !res.data.length) {
+          if (useRev && window.DIOSync) {
+            const w = await DIOSync.whyNoRow('zimni_androoni_reports', id);
+            if (w.exists) {
+              const srv = DIOSync.zimniItem(w.row);
+              if (!w.row.deleted_at && contentObj && contentObj.saved_at && String((srv.content || {}).saved_at || '') === String(contentObj.saved_at)) return w.row;
+              throw DIOSync.conflictError(srv, 'بیان');
+            }
+          }
           const er = new Error('سرور پر یہ بیان (اندرونی ضمنی) نہیں ملا یا ترمیم کی اجازت نہیں'); er.code = 'DIO_NOROW'; throw er;
         }
         _zaColSet(col);
@@ -3846,7 +4037,7 @@ async function _zaWrite(base, contentObj, id) {
       } catch (e) {
         lastErr = e;
         if (_zimniIsNetErr(e)) throw e;                    // v558: انٹرنیٹ نہیں — باقی نام آزمانا بے کار
-        if (e && e.code === 'DIO_NOROW') throw e;
+        if (e && (e.code === 'DIO_NOROW' || e.code === 'DIO_CONFLICT')) throw e;
         if (e && e.code === 'PGRST204') {
           const miss = _zaMissingCol(e);
           if (miss && miss === col) break;
@@ -3863,7 +4054,7 @@ async function _zaWrite(base, contentObj, id) {
             const rec2 = Object.assign({}, payloadBase);
             rec2[col] = JSON.stringify(contentObj);
             let r2;
-            if (id) r2 = await supabaseClient.from('zimni_androoni_reports').update(rec2).eq('id', id).select();
+            if (id) r2 = await upd(rec2);
             else    r2 = await supabaseClient.from('zimni_androoni_reports').insert(rec2).select();
             if (!r2.error) { _zaColSet(col); return (r2.data && r2.data[0]) || Object.assign({ id: id || ('tmp_' + Date.now()) }, rec2); }
             lastErr = r2.error;
@@ -3925,8 +4116,8 @@ async function _loadZimniA() {
   try {
     // ═══ SECURITY: صرف اس مقدمے کے بیانات (case_id) — کبھی بغیر چھانٹی نہیں ═══
     let r = await supabaseClient.from('zimni_androoni_reports').select('*')
-      .eq('case_id', _zaCaseId).order('serial_no', { ascending: true });
-    if (r.error && !_zimniIsNetErr(r.error)) r = await supabaseClient.from('zimni_androoni_reports').select('*').eq('case_id', _zaCaseId);
+      .eq('case_id', _zaCaseId).is('deleted_at', null).order('serial_no', { ascending: true });
+    if (r.error && !_zimniIsNetErr(r.error)) r = await supabaseClient.from('zimni_androoni_reports').select('*').eq('case_id', _zaCaseId).is('deleted_at', null);
     if (r.error) throw r.error;
     rows = r.data || [];
   } catch (e) {
@@ -3945,15 +4136,10 @@ async function _loadZimniA() {
   const fromDb = rows.map(r => Object.assign({}, r, { content: _zaContentOf(r) }));
   // اسی آلے پر کی گئی ترمیم جو ابھی سرور تک نہیں گئی — سرور کی پرانی نقل اسے نہ مٹائے
   const pendById = {};
-  local.forEach(z => { if (z && z._pending && z.id != null) pendById[String(z.id)] = z; });
-  const merged = fromDb.map(r => {
-    const p = pendById[String(r.id)];
-    if (!p) return r;
-    const ls = String((p.content || {}).saved_at || ''), ss = String((r.content || {}).saved_at || '');
-    return (ls && ls >= ss) ? p : r;
-  });
+  local.forEach(z => { if (z && (z._pending || z._conflict) && z.id != null) pendById[String(z.id)] = z; });
+  const merged = fromDb.map(r => _zimniPickVersion(pendById[String(r.id)], r));   // v560: دو نسخے ہوں تو دونوں
   const ids = new Set(fromDb.map(r => String(r.id)));
-  const onlyLocal = local.filter(z => z && _zimniIsPending(z) && !ids.has(String(z.id)));
+  const onlyLocal = local.filter(z => z && (_zimniIsPending(z) || z._conflict) && !ids.has(String(z.id)));
   _zaList = _zaSort(merged.concat(onlyLocal));
   _zaLocalPut(_zaCaseId, _zaList);
 }
@@ -3979,25 +4165,39 @@ async function _zaSyncOne(caseId, z) {
     const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
     if (oid) base.officer_id = oid;
   } catch (_) { /* officer id na mile to bhi aage */ }
-  let serverId = _zimniIsPending({ id: z.id }) ? null : z.id;
-  if (!serverId) {
+  const legacy = /^(local-|tmp_)/.test(String(z.id));
+  let serverId = (!legacy && !z._new) ? z.id : null;
+  let baseRev = serverId ? z.rev : null, newId = null;
+  if (!serverId && legacy) {
     // پہلے بھیجا جا چکا؟ (جواب راستے میں ٹوٹ گیا ہو) — اسی نمبر + اسی «محفوظ کرنے کے وقت» والا
     try {
       const r = await supabaseClient.from('zimni_androoni_reports').select('*').eq('case_id', caseId).eq('serial_no', base.serial_no);
       const hit = ((r && r.data) || []).find(x => String((_zaContentOf(x) || {}).saved_at || '') === String(c.saved_at || ''));
-      if (hit) serverId = hit.id;
+      if (hit) { serverId = hit.id; baseRev = hit.rev; }
     } catch (_) { /* talaash na ho saki — naya bana do */ }
   }
-  const saved = await _zaWrite(base, c, serverId);
-  return Object.assign({}, saved, { content: c, _pending: false, _sync_err: '' });
+  if (!serverId) newId = (!legacy && window.DIOSync && DIOSync.isUuid(z.id)) ? z.id : (window.DIOSync ? DIOSync.uuid() : null);
+  const saved = await _zaWrite(base, c, serverId, { baseRev, newId });
+  const out = Object.assign({}, saved, { content: c, _pending: false, _sync_err: '' });
+  delete out._new; delete out._conflict;
+  return out;
 }
 function _zaMergeSynced(list, oldId, sentSavedAt, nz) {
   const j = list.findIndex(x => String(x.id) === String(oldId));
   if (j < 0) return false;
   const cur = list[j];
   if (String((cur.content || {}).saved_at || '') === String(sentSavedAt || '')) list[j] = nz;
-  else list[j] = Object.assign({}, cur, { id: nz.id, _pending: true });   // نئی ترمیم باقی — اگلی بار update
+  else list[j] = Object.assign({}, cur, { id: nz.id, _pending: true, _new: false, rev: nz.rev });   // نئی ترمیم باقی — اگلی بار update
   return true;
+}
+function _zaMarkConflict(cid, id, server) {
+  const fresh = _zaLocalGet(cid);
+  const j = fresh.findIndex(x => String(x.id) === String(id));
+  if (j >= 0) { fresh[j] = Object.assign({}, fresh[j], { _conflict: server, _sync_err: '' }); _zaLocalPut(cid, fresh); }
+  if (String(cid) === String(_zaCaseId)) {
+    const k = _zaList.findIndex(x => String(x.id) === String(id));
+    if (k >= 0) _zaList[k] = Object.assign({}, _zaList[k], { _conflict: server, _sync_err: '' });
+  }
 }
 function _zaRekeyDraft(caseId, oldId, newId) {
   if (String(oldId) === String(newId)) return;
@@ -4012,10 +4212,10 @@ async function _zaSyncPending(caseIds, quiet) {
   if (typeof supabaseClient === 'undefined' || !supabaseClient) return 0;
   try { const s = await supabaseClient.auth.getSession(); if (!s || !s.data || !s.data.session) return 0; } catch (_) { return 0; }
   _zaSyncBusy = true;
-  let done = 0, failed = 0, lastWhy = '', again = false;
+  let done = 0, failed = 0, lastWhy = '', again = false, clashes = 0;
   try {
     for (const cid of (caseIds || _zaPendingCaseIds())) {
-      const snapshot = _zaLocalGet(cid).filter(_zimniIsPending);
+      const snapshot = _zaLocalGet(cid).filter(z => _zimniIsPending(z) && !z._conflict);
       for (const z of snapshot) {
         if (_zaInFlight.has(String(z.id))) continue;
         _zaInFlight.add(String(z.id));
@@ -4037,6 +4237,7 @@ async function _zaSyncPending(caseIds, quiet) {
           done++;
         } catch (e) {
           if (_zimniIsNetErr(e)) return done;   // نیٹ پھر ٹوٹ گیا — بعد میں (مقامی نقل جوں کی توں)
+          if (e && e.code === 'DIO_CONFLICT') { clashes++; _zaMarkConflict(cid, z.id, e.server); continue; }
           failed++; lastWhy = _zimniErrText(e);
           const fresh = _zaLocalGet(cid);
           const j = fresh.findIndex(x => String(x.id) === String(z.id));
@@ -4051,10 +4252,11 @@ async function _zaSyncPending(caseIds, quiet) {
   } finally { _zaSyncBusy = false; }
   try {
     if (done) showToast(done + ' بیان (اندرونی ضمنی) سرور پر محفوظ (sync) ہو گئے', 'success', 4000);
+    if (clashes) showToast(clashes + ' بیان دو آلات پر الگ الگ بدلے گئے — دونوں نسخے محفوظ؛ فہرست میں «دو نسخے» پر کلک کر کے چنیں', 'warn', 9000);
     if (failed && !(quiet && lastWhy === window._zaLastFailWhy)) showToast(failed + ' بیان سرور پر نہیں گئے — وجہ: ' + lastWhy + ' (اس آلے پر محفوظ ہیں)', 'error', 9000);
     window._zaLastFailWhy = failed ? lastWhy : '';
   } catch (_) { /* paigham na dikh sake to koi baat nahi */ }
-  try { if ((done || (failed && !quiet)) && document.querySelector('.zat-wrap')) _renderZimniAList(); } catch (_) { /* list khuli na ho to kuch nahi */ }
+  try { if ((done || clashes || (failed && !quiet)) && document.querySelector('.zat-wrap')) _renderZimniAList(); } catch (_) { /* list khuli na ho to kuch nahi */ }
   if (again) setTimeout(() => { _zaSyncPending(); }, 1500);
   return done;
 }
@@ -4093,8 +4295,11 @@ function _zaDrafts(caseId) {
 }
 function _zaDraftsPut(caseId, o) {
   try {
-    const k = _zaDraftKey(caseId || _zaCaseId);
+    const cid = caseId || _zaCaseId;
+    const k = _zaDraftKey(cid);
+    const before = _zaDrafts(cid);
     if (o && Object.keys(o).length) localStorage.setItem(k, JSON.stringify(o)); else localStorage.removeItem(k);
+    try { if (window.DIOSync && DIOSync.ud) DIOSync.ud.diff('za_draft', cid, before, o || {}); } catch (_) { /* اگلی بار */ }   // v560: سرور پر بھی
     return true;
   } catch (_) { return false; }
 }
@@ -4207,6 +4412,7 @@ function _renderZimniAList() {
     ? arr.map(n => `<span class="zat-wn" title="${esc(n)}">${esc(_zaShortName(n))}</span>`).join('<span class="zat-sep">، </span>')
     : '<span style="color:var(--text-muted);">—</span>';
   const status = (z) => {
+    if (z._conflict) return '<button type="button" class="zst zst-c" onclick="event.stopPropagation();_zaResolve(\'' + J(z.id) + '\')" title="دو آلات پر الگ الگ بدلا گیا — دونوں نسخے دیکھ کر چنیں">دو نسخے — فیصلہ کریں</button>';
     if (drafts['id:' + z.id]) return '<span class="zst zst-d">غیر محفوظ ترمیم (مسودہ)</span>';
     if (_zimniIsPending(z)) {
       return '<span class="zst zst-p" title="' + esc(z._sync_err || '') + '">اس آلے پر محفوظ — سرور پر بھیجنا باقی</span>'
@@ -4214,7 +4420,7 @@ function _renderZimniAList() {
     }
     return '<span class="zst zst-ok">سرور پر محفوظ</span>';
   };
-  const pendingCount = list.filter(_zimniIsPending).length;
+  const pendingCount = list.filter(z => _zimniIsPending(z) && !z._conflict).length;
   if (pendingCount) setTimeout(_zaSyncSoon, 800);   // v558: فہرست کھلتے ہی باقی بیانات سرور پر
 
   area.innerHTML = `
@@ -4245,6 +4451,7 @@ function _renderZimniAList() {
     .zat-wrap .zst-ok{ background:rgba(22,163,74,.12); color:#15803d; }
     .zat-wrap .zst-p{ background:rgba(217,119,6,.14); color:#b45309; }
     .zat-wrap .zst-d{ background:rgba(37,99,235,.12); color:#1d4ed8; }
+    .zat-wrap .zst-c{ background:rgba(185,28,28,.12); color:#b91c1c; border:1px solid rgba(185,28,28,.35); cursor:pointer; font-family:inherit; }
     .zat-wrap .zst-why{ font-size:9.5pt; color:#b91c1c; margin-top:2px; }
     .zat-wrap .zt tr.zt-draft td{ background:rgba(37,99,235,.06); }
     @media (max-width:760px){
@@ -5188,8 +5395,10 @@ async function _saveZimniA(silent, keepOpen) {
   } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
 
   // ── 1) پہلے اسی آلے پر — یہ کبھی ضائع نہیں ہوتا ──
-  const localId = z.id || ('local-' + Date.now());
-  const localObj = Object.assign({ id: localId }, rec, { _pending: true, _sync_err: '' });
+  const isNew = !z.id || !!z._new;   // v560: مستقل شناخت (UUID) ابھی، آف لائن بھی
+  const localId = z.id || (window.DIOSync ? DIOSync.uuid() : ('local-' + Date.now()));
+  const localObj = Object.assign({ id: localId }, rec, { _pending: true, _sync_err: '' },
+    isNew ? { _new: true } : { rev: z.rev }, z._conflict ? { _conflict: z._conflict } : {});
   const localSave = (obj) => {
     const i = _zaList.findIndex(x => String(x.id) === String(obj.id));
     if (i >= 0) _zaList[i] = obj; else _zaList.push(obj);
@@ -5217,7 +5426,12 @@ async function _saveZimniA(silent, keepOpen) {
 
   // ── 3) سرور پر ──
   try {
-    const editing = !_zimniIsPending({ id: z.id }) && !!z.id;
+    const editing = !!z.id && !isNew && !/^(local-|tmp_)/.test(String(z.id));
+    if (z._conflict) {
+      if (!silent) setTimeout(() => { try { _zaResolve(localId); } catch (_) { /* fehrist se */ } }, 300);
+      backToList();
+      return true;
+    }
     if (_zaInFlight.has(String(localId))) {
       // یہی بیان ابھی خودکار sync میں جا رہا ہے — وہ مکمل ہوتے ہی یہ تازہ نقل بھی جائے گی
       setTimeout(() => { _zaSyncPending([_zaCaseId]); }, 2000);
@@ -5231,12 +5445,13 @@ async function _saveZimniA(silent, keepOpen) {
       if (editing) {
         const base = { case_id: _zaCaseId, serial_no: serialNo, report_date: rec.report_date };
         try { const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null; if (oid) base.officer_id = oid; } catch (_) { /* officer id */ }
-        savedRec = await _zaWrite(base, rec.content, z.id);
+        savedRec = await _zaWrite(base, rec.content, z.id, { baseRev: z.rev });
       } else {
         savedRec = await _zaSyncOne(_zaCaseId, localObj);   // دوہرا اندراج نہیں
       }
     } finally { _zaInFlight.delete(String(localId)); }
     savedRec = Object.assign({}, savedRec, { content: rec.content, _pending: false, _sync_err: '' });
+    delete savedRec._new; delete savedRec._conflict;
     _zaRekeyDraft(_zaCaseId, localId, savedRec.id);
     _zaMergeSynced(_zaList, localId, savedAt, savedRec);
     _zaLocalPut(_zaCaseId, _zaList);
@@ -5248,6 +5463,13 @@ async function _saveZimniA(silent, keepOpen) {
     return true;
   } catch (e) {
     try { console.error('[zimni androoni save]', e); } catch (_) { /* console na ho to bhi na phatte */ }
+    if (e && e.code === 'DIO_CONFLICT') {
+      localSave(Object.assign({}, localObj, { _conflict: e.server }));
+      if (!silent) setTimeout(() => { try { _zaResolve(localId); } catch (_) { /* fehrist se */ } }, 300);
+      else showToast('بیان نمبر ' + serialNo + ' دوسرے آلے پر بھی بدلا گیا — فہرست میں «دو نسخے» پر کلک کر کے چنیں', 'warn', 8000);
+      backToList();
+      return true;
+    }
     const why = _zimniErrText(e);
     if (_zimniIsNetErr(e)) {
       if (!silent) showToast('انٹرنیٹ/سرور سے رابطہ نہیں — بیان (نمبر ' + serialNo + ') اس آلے پر محفوظ ہے، رابطہ بحال ہوتے ہی خود سرور پر چلا جائے گا', 'info', 7000);
@@ -5275,16 +5497,91 @@ async function _deleteZimniA(id, skipConfirm) {
     _zaClearDraft('id:' + id);
   };
   // جو بیان ابھی صرف اس آلے پر ہے (سرور پر گیا ہی نہیں) — سرور سے پوچھنے کی ضرورت نہیں
-  if (_zimniIsPending({ id })) { dropLocal(); _renderZimniAList(); showToast('حذف ہو گیا', 'info'); return; }
+  if (_zimniIsPending({ id }) || (z && z._new)) { dropLocal(); _renderZimniAList(); showToast('حذف ہو گیا', 'info'); return; }
   if (!navigator.onLine) { showToast('سرور پر محفوظ بیان حذف کرنے کے لیے انٹرنیٹ درکار ہے', 'warn', 5000); return; }
   try {
-    dioWriteOk(await supabaseClient.from('zimni_androoni_reports').delete().eq('id', id).select('id'), 'zimni androoni delete', true);
+    // v560: «حذف» = نشان + «حذف شدہ مواد» میں نقل؛ دوسرے آلے سے بھی ہٹ جاتا ہے
+    if (window.DIOSync) await DIOSync.softDelete('zimni_androoni_reports', 'za', Object.assign({ case_id: _zaCaseId }, z || { id }));
+    else dioWriteOk(await supabaseClient.from('zimni_androoni_reports').delete().eq('id', id).select('id'), 'zimni androoni delete', true);
     dropLocal();
     _renderZimniAList();
     showToast('حذف ہو گیا', 'info');
   } catch (e) { dioWriteFail('اندرونی ضمنی', e, 'حذف نہیں ہوئی'); }
 }
 window._deleteZimniA = _deleteZimniA;
+
+// v560 — بیان دو آلات پر بدلا گیا: دونوں نسخے سامنے (بیرونی ضمنی _zimniResolve جیسا)
+async function _zaResolve(id) {
+  const z = _zaRec(id);
+  if (!z || !z._conflict || !window.DIOSync) return;
+  const t = z._conflict;
+  const pick = await DIOSync.conflictDialog({
+    title: 'بیان (اندرونی ضمنی) نمبر ' + (_zaSno(z) || '') + ' — دو آلات پر بدلا گیا',
+    mine: { text: DIOSync.plain((z.content || {}).bodyHtml), at: (z.content || {}).saved_at, device: DIOSync.device() },
+    theirs: { text: DIOSync.plain((t.content || {}).bodyHtml), at: (t.content || {}).saved_at || t.updated_at, device: t.last_device, deleted: !!t.deleted_at }
+  });
+  if (pick === 'later') { _renderZimniAList(); return; }
+  if (!navigator.onLine) { showToast('فیصلہ محفوظ کرنے کے لیے انٹرنیٹ درکار ہے — دونوں نسخے محفوظ ہیں', 'warn', 6000); return; }
+  try {
+    let next = null;
+    if (pick === 'mine') {
+      const base = { case_id: _zaCaseId, serial_no: _zaSno(z) || 1, report_date: z.report_date || _zimniTodayIso() };
+      if (t.deleted_at) base.deleted_at = null;
+      try { const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null; if (oid) base.officer_id = oid; } catch (_) { /* officer id */ }
+      const saved = await _zaWrite(base, z.content || {}, z.id, { baseRev: t.rev });
+      if (!t.deleted_at) await DIOSync.keepLoser('za', t);
+      next = Object.assign({}, saved, { content: z.content || {} });
+    } else {
+      const kept = await DIOSync.keepLoser('za', z);
+      if (!kept) { showToast('اس آلے کا نسخہ «حذف شدہ مواد» میں نہیں جا سکا — اسے نہیں ہٹایا گیا، دوبارہ کوشش کریں', 'error', 8000); return; }
+      next = t.deleted_at ? null : Object.assign({}, t);
+      _zaClearDraft('id:' + z.id);
+    }
+    if (next) { delete next._conflict; delete next._pending; delete next._new; }
+    const i = _zaList.findIndex(x => String(x.id) === String(z.id));
+    if (i >= 0) { if (next) _zaList[i] = next; else _zaList.splice(i, 1); }
+    _zaLocalPut(_zaCaseId, _zaList);
+    showToast(pick === 'mine' ? 'اس آلے کا نسخہ سرور پر محفوظ؛ دوسرا «حذف شدہ مواد» میں' : 'سرور والا نسخہ رکھا گیا؛ اس آلے کا «حذف شدہ مواد» میں', 'success', 6000);
+  } catch (e) {
+    if (e && e.code === 'DIO_CONFLICT') { _zaMarkConflict(_zaCaseId, z.id, e.server); showToast('اسی دوران دوسرے آلے نے پھر بدلا — تازہ نسخوں سے دوبارہ چنیں', 'warn', 7000); }
+    else dioWriteFail('بیان', e, 'محفوظ نہیں ہوا');
+  }
+  _renderZimniAList();
+}
+window._zaResolve = _zaResolve;
+
+function _zaViewOpen() { return !!document.querySelector('.zat-wrap'); }
+function _zaEditorOpen() { try { const d = _zimniDoc(); return !!(d && d.querySelector('.zfa-tbl')); } catch (_) { return false; } }
+if (window.DIOSync && !window._zaSyncHooked) {
+  window._zaSyncHooked = true;
+  DIOSync.on('zimni_androoni_reports', function (row) {
+    if (!row || String(row.case_id) !== String(_zaCaseId)) return;
+    const r = DIOSync.mergeInto(_zaList, DIOSync.zimniItem(row));
+    _zaSort(_zaList);
+    if (_zaEditorOpen() && _zaActive && String(_zaActive.id) === String(row.id) && _zaActive.rev != null
+        && row.rev != null && Number(row.rev) > Number(_zaActive.rev) && (r === 'replace' || r === 'remove')) {
+      showToast('یہ بیان دوسرے آلے پر بھی بدلا گیا ہے — محفوظ کرنے پر دونوں نسخے دکھائے جائیں گے', 'warn', 8000);
+    }
+    if (_zaViewOpen() && !_zimniTyping()) _renderZimniAList();
+  });
+  DIOSync.on('dio_user_data', function (row) {
+    if (!row || row.kind !== 'za_draft' || String(row.case_id) !== String(_zaCaseId)) return;
+    if (_zaViewOpen() && !_zimniTyping()) _renderZimniAList();
+  });
+  const prevOpenA = DIOSync.isOpenDraft;
+  DIOSync.isOpenDraft = function (kind, cid, key) {
+    if (kind === 'za_draft') return String(cid) === String(_zaCaseId) && _zaEditorOpen() && !!_zaActive && _zaActiveDraftKey() === key;
+    return typeof prevOpenA === 'function' ? prevOpenA(kind, cid, key) : false;
+  };
+  DIOSync.onRefresh(async function () {
+    if (!_zaCaseId || !_zaViewOpen() || _zimniTyping()) return;
+    const before = JSON.stringify(_zaList) + localStorage.getItem(_zaDraftKey(_zaCaseId));
+    await _loadZimniA();
+    try { await DIOSync.ud.pull('za_draft', _zaCaseId); } catch (_) { /* اگلی بار */ }
+    if (!_zaViewOpen() || _zimniTyping()) return;
+    if (JSON.stringify(_zaList) + localStorage.getItem(_zaDraftKey(_zaCaseId)) !== before) _renderZimniAList();
+  });
+}
 
 // ═══════════════════════════════════════════════════════════════
 //  مثل باندھنے کی جگہ — صفحہ 2، 4، 6 … کے اوپر بائیں کونے میں مثلث (2pt وتر)
