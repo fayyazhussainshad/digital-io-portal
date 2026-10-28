@@ -29,7 +29,7 @@ async function _fillIndexNaqlData() {
   // ساتھ اگلے خالی خانے میں آ جاتی ہے۔ جب تک ضمنی نہ لکھی جائے، نمبر شمار خالی رہتا ہے۔
   try {
     const { data: zs } = await supabaseClient.from('zimni_reports')
-      .select('serial_no,report_date,officer_id').eq('case_id', _misalCaseId)
+      .select('serial_no,report_date,officer_id').eq('case_id', _misalCaseId).is('deleted_at', null)
       .order('serial_no', { ascending: true });
     // Officer names ek dafa fetch (id → naam) taake har entry ka apna افسر lag sake
     const _ofcIds = [...new Set((zs || []).map(z => z.officer_id).filter(Boolean))];

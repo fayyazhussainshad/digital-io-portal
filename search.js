@@ -131,18 +131,18 @@ async function _runGlobalSearch(q) {
   const S = supabaseClient;
   let caseIds = [];
   try {
-    const { data: cs } = await S.from('cases').select('id').eq('officer_id', oid);
+    const { data: cs } = await S.from('cases').select('id').eq('officer_id', oid).is('deleted_at', null);
     caseIds = (cs || []).map(c => c.id);
   } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
 
   const queries = [
     // v547: پرانا «جرم کی قسم» کالم تلاش سے ہٹایا — فارم میں یہ خانہ نہیں رہا اور
     //   sql/103_CHECK کے مطابق تمام مقدمات میں خالی ہے؛ جرم = صرف دفعات (section_of_law)۔
-    S.from('cases').select('id,fir_number,section_of_law,complainant,complainant_cnic,complainant_cell,occurrence_place').eq('officer_id', oid).or(`fir_number.ilike.${w},section_of_law.ilike.${w},complainant.ilike.${w},occurrence_place.ilike.${w},${cnicOr('complainant_cnic')},${cellOr('complainant_cell')}`).limit(10),
+    S.from('cases').select('id,fir_number,section_of_law,complainant,complainant_cnic,complainant_cell,occurrence_place').eq('officer_id', oid).is('deleted_at', null).or(`fir_number.ilike.${w},section_of_law.ilike.${w},complainant.ilike.${w},occurrence_place.ilike.${w},${cnicOr('complainant_cnic')},${cellOr('complainant_cell')}`).limit(10),
     S.from('case_accused').select('id,case_id,name,cnic,mobile,pesha').or(`name.ilike.${w},${cnicOr('cnic')},${cellOr('mobile')},pesha.ilike.${w}`).limit(10),
     S.from('case_witnesses').select('id,case_id,full_name,cnic,cell,profession,status').or(`full_name.ilike.${w},${cnicOr('cnic')},${cellOr('cell')},profession.ilike.${w}`).limit(10),
     S.from('fir_matn').select('id,case_id,matn').ilike('matn', w).limit(10),
-    S.from('zimni_reports').select('id,case_id,serial_no,content').limit(10),
+    S.from('zimni_reports').select('id,case_id,serial_no,content').is('deleted_at', null).limit(10),
     S.from('hamrahi_mulazman').select('id,case_id,name,rank,service_number,cnic,mobile').or(`name.ilike.${w},rank.ilike.${w},service_number.ilike.${w},${cnicOr('cnic')},${cellOr('mobile')}`).limit(10),
     S.from('sarkari_gari').select('id,case_id,vehicle_number,driver_name').or(`vehicle_number.ilike.${w},driver_name.ilike.${w}`).limit(10),
     S.from('cdr_imei_requests').select('id,case_id,diary_number').ilike('diary_number', w).limit(10),

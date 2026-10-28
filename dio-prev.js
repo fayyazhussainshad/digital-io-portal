@@ -228,7 +228,7 @@
       var oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null;
       var qA = supabaseClient.from('case_accused').select('id,case_id,name,cnic,mobile').or(orA.join(',')).limit(20);
       var qW = supabaseClient.from('case_witnesses').select('id,case_id,full_name,cnic,cell,status').or(orW.join(',')).limit(20);
-      var qC = supabaseClient.from('cases').select('id,fir_number,fir_date,section_of_law,complainant,complainant_cnic,status,case_station,case_district');
+      var qC = supabaseClient.from('cases').select('id,fir_number,fir_date,section_of_law,complainant,complainant_cnic,status,case_station,case_district').is('deleted_at', null);
       if (oid) qC = qC.eq('officer_id', oid);
       qC = qC.or(orC.join(',')).limit(20);
       var res = await Promise.all([qA, qW, qC]);
@@ -243,7 +243,7 @@
       C.forEach(function (c) { caseMap[c.id] = c; });
       var need = Object.keys(ids).filter(function (k) { return !caseMap[k]; });
       if (need.length) {
-        var cr = await supabaseClient.from('cases').select('id,fir_number,fir_date,section_of_law,complainant,status,case_station,case_district').in('id', need);
+        var cr = await supabaseClient.from('cases').select('id,fir_number,fir_date,section_of_law,complainant,status,case_station,case_district').in('id', need).is('deleted_at', null);
         ((cr && cr.data) || []).forEach(function (c) { caseMap[c.id] = c; });
       }
       var st = function (c) {

@@ -89,29 +89,33 @@ def run_core(pg, tag):
     _sec = '══ 2) مقدمہ حذف — «حذف شدہ مواد» میں نقل کے بغیر کبھی نہیں (نمبر 2) ══'
     try:
         need(pg, 'bin.js')
+        # v560: «حذف» = نشان (deleted_at) — قطار سرور پر رہتی ہے (اس کی ضمنیاں/چالان بھی)؛ بحالی اسی شناخت سے
+        live = lambda: [x for x in db(pg, 'cases') if x['id'] == cid and not x.get('deleted_at')]
         server(pg, fail=['recycle_bin:insert']); toasts(pg)
         pg.evaluate(f"doDeleteCase('{cid}')"); pg.wait_for_timeout(700)
         t = toasts(pg)
-        check(f'{tag} case delete: bin copy refused → case NOT deleted', any(x['id'] == cid for x in db(pg, 'cases')) and not db(pg, 'recycle_bin'), t)
+        check(f'{tag} case delete: bin copy refused → case NOT deleted', len(live()) == 1 and not db(pg, 'recycle_bin'), t)
         check(f'{tag} case delete: clear failure message, no success', has(t, 'error', 'مقدمہ', 'حذف نہیں ہوا') and no_success(t) and not has(t, 'info', 'منتقل'), t)
-        server(pg, silent=['cases:delete']); toasts(pg)
+        server(pg, silent=['cases:update']); toasts(pg)
         pg.evaluate(f"doDeleteCase('{cid}')"); pg.wait_for_timeout(700)
         t = toasts(pg)
         check(f'{tag} case delete: server silently blocks delete (RLS) → case kept, bin copy undone, error shown',
-              any(x['id'] == cid for x in db(pg, 'cases')) and not db(pg, 'recycle_bin') and has(t, 'error', 'حذف نہیں ہوا'), (t, len(db(pg, 'recycle_bin'))))
+              len(live()) == 1 and not db(pg, 'recycle_bin') and has(t, 'error', 'حذف نہیں ہوا'), (t, len(db(pg, 'recycle_bin'))))
         server(pg); toasts(pg)
         pg.evaluate(f"doDeleteCase('{cid}')"); pg.wait_for_timeout(700)
         t = toasts(pg); bin_ = db(pg, 'recycle_bin')
-        check(f'{tag} case delete: normal → case gone, full copy in bin', not any(x['id'] == cid for x in db(pg, 'cases')) and len(bin_) == 1 and bin_[0]['item_type'] == 'case' and bin_[0]['item_data']['fir_number'] == '555/26', t)
+        row = [x for x in db(pg, 'cases') if x['id'] == cid]
+        check(f'{tag} case delete: normal → case gone (marked, row kept), full copy in bin',
+              not live() and len(row) == 1 and bool(row[0].get('deleted_at')) and len(bin_) == 1 and bin_[0]['item_type'] == 'case' and bin_[0]['item_data']['fir_number'] == '555/26', t)
         # بحالی: سرور رد کرے تو بن سے نہ ہٹے
-        server(pg, fail=['cases:insert']); toasts(pg)
+        server(pg, fail=['cases:update']); toasts(pg)
         pg.evaluate(f"_binRestore('{bin_[0]['id']}', 'case')"); pg.wait_for_timeout(600)
         t = toasts(pg)
-        check(f'{tag} bin restore: server refuses → item stays in bin, error shown', len(db(pg, 'recycle_bin')) == 1 and has(t, 'error', 'بحال نہیں ہوا') and no_success(t), t)
+        check(f'{tag} bin restore: server refuses → item stays in bin, error shown', len(db(pg, 'recycle_bin')) == 1 and not live() and has(t, 'error', 'بحال نہیں ہوا') and no_success(t), t)
         server(pg); toasts(pg)
         pg.evaluate(f"_binRestore('{bin_[0]['id']}', 'case')"); pg.wait_for_timeout(600)
         t = toasts(pg)
-        check(f'{tag} bin restore: normal → case back, bin empty', any(x.get('fir_number') == '555/26' for x in db(pg, 'cases')) and not db(pg, 'recycle_bin') and has(t, 'success', 'بحال'), t)
+        check(f'{tag} bin restore: normal → same case back (same id), bin empty', len(live()) == 1 and live()[0].get('fir_number') == '555/26' and not db(pg, 'recycle_bin') and has(t, 'success', 'بحال'), t)
 
     except Exception as e:
         check(f'{tag} section crashed: ' + _sec, False, repr(e)[:200])

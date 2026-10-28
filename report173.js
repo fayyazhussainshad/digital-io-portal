@@ -288,34 +288,151 @@ async function openReport173(caseId) {
   // Render ka faisla bulane wala karta hai (openR173List ya openReport173WithType).
 }
 
+// v560: اسی آلے کا زیرِ التوا چالان (p) بمقابلہ سرور (r) — ضمنی (_zimniPickVersion) والا اصول
+function _r173PickVersion(p, r) {
+  if (!p) return r;
+  const ls = String(p.saved || ''), ss = String(r.saved || '');
+  if (ls && ls === ss && !p._conflict) return r;
+  if (p._conflict) return Object.assign({}, p, { _conflict: r });
+  if (p.rev != null && r.rev != null) return Number(r.rev) > Number(p.rev) ? Object.assign({}, p, { _conflict: r }) : p;
+  return (ls && ls >= ss) ? p : r;
+}
+function _r173LocalPut(caseId) {
+  try { localStorage.setItem('dio_r173_'+caseId, JSON.stringify(_r173Records)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('challan: local copy save nakaam', _); }
+  try { localStorage.setItem('dio_r173docs_'+caseId, JSON.stringify(_r173Docs)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('challan: local list save nakaam', _); }
+}
+// ایک چالان سرور پر — نیا (اپنی مستقل شناخت سے؛ دوبارہ بھیجنے پر دوہرا نہیں) یا ترمیم (rev کے ساتھ)
+async function _r173Push(caseId, d) {
+  const rec = { case_id: caseId, report_type: d.type, form_data: d.form_data || {} };
+  if (d.subtype) rec.report_subtype = d.subtype;
+  try { const oid = (typeof getOfficerId === 'function') ? await getOfficerId() : null; if (oid) rec.officer_id = oid; } catch (_) { /* officer id */ }
+  if (window.DIOSync) rec.last_device = DIOSync.device();
+  const legacy = /^(local-|tmp_)/.test(String(d.id));
+  let res;
+  if (d._new || legacy) {
+    rec.id = legacy ? (window.DIOSync ? DIOSync.uuid() : undefined) : d.id;
+    if (!rec.id) delete rec.id;
+    res = await supabaseClient.from('report_173').insert(rec).select().single();
+    if (res.error && String(res.error.code) === '23505' && rec.id) {
+      const r2 = Object.assign({}, rec); delete r2.id;
+      res = await supabaseClient.from('report_173').update(r2).eq('id', rec.id).select().single();
+    }
+    if (res.error) throw res.error;
+  } else {
+    let q = supabaseClient.from('report_173').update(rec).eq('id', d.id);
+    const useRev = d.rev != null && !isNaN(Number(d.rev));
+    if (useRev) q = q.eq('rev', Number(d.rev));
+    res = await q.select();
+    if (res.error) throw res.error;
+    if (!res.data || !res.data.length) {
+      if (useRev && window.DIOSync) {
+        const w = await DIOSync.whyNoRow('report_173', d.id);
+        if (w.exists) {
+          const srv = DIOSync.r173Item(w.row);
+          // یہی تحریر (اسی «محفوظ کرنے کے وقت» کی) پہلے ہی سرور پر — دوبارہ بھیجنا، ٹکراؤ نہیں
+          if (!w.row.deleted_at && d.saved && String(srv.saved) === String(d.saved)) { delete srv.deleted_at; return srv; }
+          throw DIOSync.conflictError(srv, 'چالان');
+        }
+      }
+      const e = new Error('سرور پر یہ چالان نہیں ملا یا ترمیم کی اجازت نہیں'); e.code = 'DIO_NOROW'; throw e;
+    }
+    res = { data: res.data[0] };
+  }
+  const out = window.DIOSync ? DIOSync.r173Item(res.data) : Object.assign({}, d, { id: res.data.id });
+  delete out.deleted_at;
+  return out;
+}
+// زیرِ التوا چالان (کسی بھی مقدمے کے) سرور پر — ایپ پر واپسی / انٹرنیٹ آتے ہی / ہر منٹ
+let _r173SyncBusy = false;
+async function _r173SyncPending() {
+  if (_r173SyncBusy || !navigator.onLine || typeof supabaseClient === 'undefined' || !supabaseClient) return 0;
+  try { const s0 = await supabaseClient.auth.getSession(); if (!s0 || !s0.data || !s0.data.session) return 0; } catch (_) { return 0; }
+  _r173SyncBusy = true;
+  let done = 0, clashes = 0, failed = 0, why = '';
+  try {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i) || ''; if (/^dio_r173docs_/.test(k)) keys.push(k); }
+    for (const k of keys) {
+      const cid = k.slice('dio_r173docs_'.length);
+      let list = [];
+      try { list = JSON.parse(localStorage.getItem(k) || '[]') || []; } catch (_) { continue; }
+      for (const d of list.filter(x => x && !x._conflict && (x._pending || /^(local-|tmp_)/.test(String(x.id))))) {
+        try {
+          const nd = await _r173Push(cid, d);
+          const fresh = JSON.parse(localStorage.getItem(k) || '[]') || [];
+          const j = fresh.findIndex(x => String(x.id) === String(d.id));
+          if (j >= 0) fresh[j] = (String(fresh[j].saved || '') === String(d.saved || '')) ? nd : Object.assign({}, fresh[j], { id: nd.id, rev: nd.rev, _new: false, _pending: true });
+          localStorage.setItem(k, JSON.stringify(fresh));
+          if (String(cid) === String(_r173CaseId)) {
+            const m = _r173Docs.findIndex(x => String(x.id) === String(d.id));
+            if (m >= 0) _r173Docs[m] = fresh[j] || nd;
+            if (String(_r173DocId) === String(d.id)) _r173DocId = nd.id;
+          }
+          done++;
+        } catch (e) {
+          if (typeof _dioIsNetErr === 'function' && _dioIsNetErr(e)) return done;
+          if (e && e.code === 'DIO_CONFLICT') {
+            clashes++;
+            const fresh = JSON.parse(localStorage.getItem(k) || '[]') || [];
+            const j = fresh.findIndex(x => String(x.id) === String(d.id));
+            if (j >= 0) { fresh[j] = Object.assign({}, fresh[j], { _conflict: e.server }); localStorage.setItem(k, JSON.stringify(fresh)); }
+            if (String(cid) === String(_r173CaseId)) { const m = _r173Docs.findIndex(x => String(x.id) === String(d.id)); if (m >= 0) _r173Docs[m] = Object.assign({}, _r173Docs[m], { _conflict: e.server }); }
+            continue;
+          }
+          failed++; why = (window.DIO && DIO.errors && DIO.errors.userMessage) ? DIO.errors.userMessage(e) : String((e && e.message) || e);
+        }
+      }
+    }
+  } finally { _r173SyncBusy = false; }
+  try {
+    if (done) showToast(done + ' چالان سرور پر محفوظ (sync) ہو گئے', 'success', 4000);
+    if (clashes) showToast(clashes + ' چالان دو آلات پر الگ الگ بدلے گئے — دونوں نسخے محفوظ؛ فہرست میں «دو نسخے» پر کلک کر کے چنیں', 'warn', 9000);
+    if (failed && why !== window._r173LastWhy) showToast(failed + ' چالان سرور پر نہیں گئے — وجہ: ' + why + ' (اس آلے پر محفوظ ہیں)', 'error', 9000);
+    window._r173LastWhy = failed ? why : '';
+    if ((done || clashes) && document.querySelector('.r173-list-wrap')) _renderR173List();
+  } catch (_) { /* paigham */ }
+  return done;
+}
+window._r173SyncPending = _r173SyncPending;
+setInterval(() => { try { if (navigator.onLine) _r173SyncPending(); } catch (_) { /* agli dafa */ } }, 60000);
+
 async function _loadR173() {
   if (!navigator.onLine) {
     try { _r173Records = JSON.parse(localStorage.getItem('dio_r173_'+_r173CaseId)||'{}'); } catch(_) { _r173Records={}; }
     // Fehrist bhi cache se — warna offline par "کوئی اندراج نہیں" dikhta tha
-    try { _r173Docs = JSON.parse(localStorage.getItem('dio_r173docs_'+_r173CaseId)||'[]'); } catch(_) { _r173Docs = []; }
+    try { _r173Docs = JSON.parse(localStorage.getItem('dio_r173docs_'+_r173CaseId)||'[]').filter(d => d && !d.deleted_at); } catch(_) { _r173Docs = []; }
     return;
   }
   try {
-    const { data } = await supabaseClient.from('report_173').select('*').eq('case_id', _r173CaseId);
+    // v560: «حذف» = نشان — حذف شدہ نہیں؛ اسی آلے کے زیرِ التوا چالان (سرور پر جانا باقی / دو نسخے) ساتھ رہیں
+    const { data, error } = await supabaseClient.from('report_173').select('*').eq('case_id', _r173CaseId).is('deleted_at', null);
+    if (error) throw error;
+    let localDocs = [];
+    try { localDocs = JSON.parse(localStorage.getItem('dio_r173docs_'+_r173CaseId)||'[]') || []; } catch(_) { localDocs = []; }
+    const pend = {};
+    localDocs.forEach(d => { if (d && (d._pending || d._conflict || /^(local-|tmp_)/.test(String(d.id)))) pend[String(d.id)] = d; });
     _r173Records = {};
-    _r173Docs = (data || []).map(r => ({
-      id: r.id, type: r.report_type, subtype: r.report_subtype || '',
-      head: (r.form_data && r.form_data.head) || '',
-      form_data: r.form_data || {},
+    _r173Docs = (data || []).map(r => {
       // چالان ki apni تاریخ (SHO wali). Pehle yahan FIR ki مورخہ aa rahi thi,
       // is liye har satar par aik hi تاریخ dikhti thi.
-      date: (r.form_data && (r.form_data.sho_date2 || r.form_data.sho_date))
-            || (r.created_at ? String(r.created_at).slice(0,10) : ''),
-      saved: (r.form_data && r.form_data.saved_at) || r.updated_at || r.created_at || '',
-    }));
+      const srv = (window.DIOSync && DIOSync.r173Item) ? DIOSync.r173Item(r) : {
+        id: r.id, type: r.report_type, subtype: r.report_subtype || '', head: (r.form_data && r.form_data.head) || '',
+        form_data: r.form_data || {}, date: (r.form_data && (r.form_data.sho_date2 || r.form_data.sho_date)) || (r.created_at ? String(r.created_at).slice(0,10) : ''),
+        saved: (r.form_data && r.form_data.saved_at) || r.updated_at || r.created_at || '' };
+      delete srv.deleted_at;
+      const p = pend[String(r.id)];
+      if (p) { delete pend[String(r.id)]; return _r173PickVersion(p, srv); }
+      return srv;
+    });
+    Object.keys(pend).forEach(k => _r173Docs.push(pend[k]));
     (data||[]).forEach(r => {
       // Chaabi bilkul waisi jaisi SAVE aur RENDER banate hain — aik hi jagah se
       _r173Records[_r173Key(r.report_type, r.report_subtype, r.report_subtype)] = r.form_data || {};
     });
-    try { localStorage.setItem('dio_r173_'+_r173CaseId, JSON.stringify(_r173Records)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('challan: local copy save nakaam', _); }
-    try { localStorage.setItem('dio_r173docs_'+_r173CaseId, JSON.stringify(_r173Docs)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('challan: local list save nakaam', _); }
+    _r173LocalPut(_r173CaseId);
   } catch(_) {
     try { _r173Records = JSON.parse(localStorage.getItem('dio_r173_'+_r173CaseId)||'{}'); } catch(_2) { _r173Records={}; }
+    try { _r173Docs = JSON.parse(localStorage.getItem('dio_r173docs_'+_r173CaseId)||'[]').filter(d => d && !d.deleted_at); } catch(_2) { _r173Docs = []; }
   }
 }
 
@@ -865,52 +982,60 @@ async function _saveR173Inner() {
     form_data.head = _r173Head || form_data.head || '';
     form_data.saved_at = new Date().toISOString();     // mehfooz karne ka waqt
     rec.form_data = form_data;
-    if (!navigator.onLine) {
-      // OFFLINE — mahfooz maqami tor par + qatar mein daal do (data zaya na ho)
-      if (!_r173DocId) _r173DocId = 'local-' + Date.now();
-      // Qatar mein DALNA kamyab hua ya nahi — yeh afsar ko sach sach batana
-      // zaroori hai. Pehle nakami chupa kar bhi "sync ہوگا" likh diya jata
-      // tha, halankeh woh چالان kabhi server tak pohnchta hi nahi tha.
-      let queued = false;
-      try {
-        if (typeof offlineStore !== 'undefined' && offlineStore.enqueue) {
-          await offlineStore.enqueue('report_173', String(_r173DocId).startsWith('local-') ? 'insert' : 'update',
-            String(_r173DocId).startsWith('local-') ? rec : { id: _r173DocId, ...rec });
-          queued = true;
-        }
-      } catch(_) { queued = false; }
-      showToast(queued
-        ? 'آف لائن محفوظ — انٹرنیٹ آنے پر خود بھیج دیا جائے گا'
-        : 'صرف اس آلے پر محفوظ — قطار نہیں بنی، انٹرنیٹ آنے پر دوبارہ محفوظ کریں',
-        queued ? 'info' : 'warn', queued ? 3000 : 6000);
-    } else if (_r173DocId && !String(_r173DocId).startsWith('local-')) {
-      // موجودہ چالان میں ترمیم
-      // v547: 0 قطار (RLS/میعاد ختم/حذف شدہ) بھی ناکامی — ورنہ «محفوظ» کا جھوٹا پیغام
-      dioWriteOk(await supabaseClient.from('report_173').update(rec).eq('id', _r173DocId).select('id'), 'r173 update', true);
-    } else {
-      // نیا چالان — الگ ریکارڈ
-      // AHEM: supabase-js NAKAMI par exception nahi phenkta — woh
-      // `{ data:null, error }` deta hai. Pehle `error` pakra hi nahi jata tha,
-      // is liye RLS ya server ki nakami par bhi afsar ko «رپورٹ محفوظ ہو گئی»
-      // likh kar dikha diya jata tha aur چالان kahin mojood hi nahi hota tha.
-      const { data: ins, error: insErr } = await supabaseClient
-        .from('report_173').insert(rec).select('id').single();
-      if (insErr) throw insErr;
-      if (!ins || !ins.id) throw new Error('ڈیٹا بیس نے کوئی شناخت واپس نہیں کی');
-      _r173DocId = ins.id;
+    // ── v560: 1) پہلے اسی آلے پر (کبھی ضائع نہیں) — نئے چالان کی مستقل شناخت ابھی (آف لائن بھی) ──
+    //   پہلے سرور ناکام ہوتا تو چالان کہیں محفوظ نہ ہوتا (صرف اسکرین پر)، اور آف لائن چالان
+    //   «local-…» شناخت سے پرانی قطار میں جاتا — اب ضمنی والا ایک ہی اصول۔
+    const curDoc = _r173DocId ? _r173Docs.find(d => String(d.id) === String(_r173DocId)) : null;
+    const legacyId = _r173DocId && /^(local-|tmp_)/.test(String(_r173DocId));
+    const isNewDoc = !_r173DocId || legacyId || !!(curDoc && curDoc._new);
+    if (!_r173DocId || legacyId) {
+      const nid = (window.DIOSync && DIOSync.uuid) ? DIOSync.uuid() : ('local-' + Date.now());
+      if (legacyId) _r173Docs = _r173Docs.filter(d => String(d.id) !== String(_r173DocId));
+      _r173DocId = nid;
     }
-    // مقامی فہرست تازہ کرو
-    try {
-      const idx = _r173Docs.findIndex(d => d.id === _r173DocId);
-      const entry = { id: _r173DocId, type: _r173Type,
-        subtype: isTatima ? _r173Subtype : (R173_BLANK_TYPES.includes(_r173Type) ? _ch173Version : ''),
-        head: form_data.head, form_data,
-        date: form_data.sho_date2 || form_data.sho_date || _ch173Today(),
-        saved: form_data.saved_at };
+    const entry = { id: _r173DocId, type: _r173Type,
+      subtype: isTatima ? _r173Subtype : (R173_BLANK_TYPES.includes(_r173Type) ? _ch173Version : ''),
+      head: form_data.head, form_data,
+      date: form_data.sho_date2 || form_data.sho_date || _ch173Today(),
+      saved: form_data.saved_at, _pending: true };
+    if (isNewDoc) entry._new = true; else if (curDoc && curDoc.rev != null) entry.rev = curDoc.rev;
+    if (curDoc && curDoc._conflict) entry._conflict = curDoc._conflict;
+    {
+      const idx = _r173Docs.findIndex(d => String(d.id) === String(_r173DocId));
       if (idx >= 0) _r173Docs[idx] = entry; else _r173Docs.push(entry);
-    } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
-    try { localStorage.setItem('dio_r173_'+_r173CaseId, JSON.stringify(_r173Records)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('challan: local copy save nakaam', _); }
-    try { localStorage.setItem('dio_r173docs_'+_r173CaseId, JSON.stringify(_r173Docs)); } catch(_) { if (typeof dioLogError === 'function') dioLogError('challan: local list save nakaam', _); }
+    }
+    _r173LocalPut(_r173CaseId);
+    let onServer = false;
+    if (!navigator.onLine || typeof supabaseClient === 'undefined' || !supabaseClient) {
+      showToast('اس آلے پر محفوظ — انٹرنیٹ آنے پر خود سرور پر چلا جائے گا', 'info', 4000);
+    } else if (entry._conflict) {
+      setTimeout(() => { try { _r173Resolve(entry.id); } catch (_) { /* fehrist se */ } }, 300);
+    } else {
+      try {
+        const nd = await _r173Push(_r173CaseId, entry);
+        const idx = _r173Docs.findIndex(d => String(d.id) === String(entry.id));
+        if (idx >= 0 && String(_r173Docs[idx].saved || '') === String(entry.saved || '')) _r173Docs[idx] = nd;
+        _r173DocId = nd.id;
+        _r173LocalPut(_r173CaseId);
+        onServer = true;
+      } catch (e) {
+        if (e && e.code === 'DIO_CONFLICT') {
+          const idx = _r173Docs.findIndex(d => String(d.id) === String(entry.id));
+          if (idx >= 0) _r173Docs[idx] = Object.assign({}, _r173Docs[idx], { _conflict: e.server });
+          _r173LocalPut(_r173CaseId);
+          setTimeout(() => { try { _r173Resolve(entry.id); } catch (_) { /* fehrist se */ } }, 300);
+        } else if (typeof _dioIsNetErr === 'function' && _dioIsNetErr(e)) {
+          showToast('انٹرنیٹ/سرور سے رابطہ نہیں — چالان اس آلے پر محفوظ ہے، رابطہ بحال ہوتے ہی خود سرور پر چلا جائے گا', 'info', 7000);
+        } else {
+          const why = (window.DIO && DIO.errors && DIO.errors.userMessage) ? DIO.errors.userMessage(e) : String((e && e.message) || e);
+          const idx = _r173Docs.findIndex(d => String(d.id) === String(entry.id));
+          if (idx >= 0) _r173Docs[idx] = Object.assign({}, _r173Docs[idx], { _sync_err: why });
+          _r173LocalPut(_r173CaseId);
+          showToast('سرور نے چالان قبول نہیں کیا — وجہ: ' + why + '۔ چالان اس آلے پر محفوظ ہے، کچھ ضائع نہیں ہوا۔', 'error', 10000);
+          try { if (window.DIO && DIO.errors && DIO.errors.log) DIO.errors.log('report_173.save', e); } catch(_) { /* logging */ }
+        }
+      }
+    }
     // محفوظ فائلوں کی فہرست میں درج — KAMYABI ke BAAD (pehle yeh likhne se
     // PEHLE hi darj ho jata tha, is liye nakaam save bhi «محفوظ فائلیں» mein
     // nazar aata tha). تتمہ ki ذیلی qism bhi sahi darj ho, ورژن nahi.
@@ -943,7 +1068,9 @@ async function _saveR173Inner() {
     };
     const newStatus = (window.DIO && DIO.caseStatuses && DIO.caseStatuses.fromR173Type(_r173Type))
                       || statusMap[_r173Type];
-    if (newStatus) {
+    if (!onServer) {
+      // v560: چالان اسی آلے پر محفوظ (اوپر پیغام دیا جا چکا) — مقدمے کی حالت سرور پر جانے کے بعد
+    } else if (newStatus) {
       // AUDIT — "before" status pehle capture karें (Phase 4B)
       let _prevStatus = null;
       try {
@@ -4535,7 +4662,9 @@ function _renderR173List() {
   const rows = (list) => list.map((d, i) => `
     <tr ondblclick="_r173OpenDoc('${_dioJsHtml(d.id)}')" style="cursor:pointer;">
       <td class="num">${i + 1}</td>
-      <td>${esc(d.head || typeName(d.type))}</td>
+      <td>${esc(d.head || typeName(d.type))}${d._conflict
+        ? ` <button type="button" class="r173-st r173-st-c" onclick="event.stopPropagation();_r173Resolve('${_dioJsHtml(d.id)}')">دو نسخے — فیصلہ کریں</button>`
+        : ((d._pending || /^(local-|tmp_)/.test(String(d.id))) ? ` <span class="r173-st r173-st-p" title="${esc(d._sync_err || '')}">اس آلے پر — سرور پر بھیجنا باقی</span>` : '')}</td>
       <td style="text-align:center;">${esc(typeName(d.type))}</td>
       <td style="text-align:center;white-space:nowrap;font-family:var(--font-mono);">
         ${esc(dt(d))}${wq(d) ? `<div class="wq">${esc(wq(d))}</div>` : ''}</td>
@@ -4568,8 +4697,11 @@ function _renderR173List() {
     .cab{ border:1px solid var(--border); background:var(--bg-card); border-radius:6px;
           padding:3px 7px; margin:0 1px; cursor:pointer; font-size:14px; line-height:1; }
     .cab:hover{ background:var(--hover-bg); }
+    .r173-st{ display:inline-block; font-size:9pt; padding:1px 7px; border-radius:999px; white-space:nowrap; font-family:inherit; }
+    .r173-st-p{ background:rgba(217,119,6,.14); color:#b45309; }
+    .r173-st-c{ background:rgba(185,28,28,.12); color:#b91c1c; border:1px solid rgba(185,28,28,.35); cursor:pointer; }
   </style>
-  <div style="padding:14px;direction:rtl;height:100%;overflow-y:auto;">
+  <div class="r173-list-wrap" style="padding:14px;direction:rtl;height:100%;overflow-y:auto;">
     <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap;">
       <button class="btn btn-primary btn-sm" onclick="_r173NewDoc(false)">+ چالان درج کریں</button>
       <div style="flex:1;"></div>
@@ -4656,9 +4788,14 @@ async function _r173DeleteDoc(id) {
   if (!d) return;
   if (!confirm('کیا یہ اندراج حذف کر دیں؟')) return;
   try {
+    // v560: ابھی صرف اسی آلے پر (سرور پر گیا ہی نہیں) — مقامی ہٹاؤ؛ ورنہ «حذف» = نشان + «حذف شدہ مواد» میں نقل
+    if (d._new || /^(local-|tmp_)/.test(String(d.id))) { /* صرف مقامی */ }
+    else if (!navigator.onLine) { showToast('سرور پر محفوظ چالان حذف کرنے کے لیے انٹرنیٹ درکار ہے', 'warn', 5000); return; }
+    else if (window.DIOSync) await DIOSync.softDelete('report_173', 'r173', Object.assign({ case_id: _r173CaseId, report_type: d.type, report_subtype: d.subtype || null }, d));
     // v547: نتیجہ دیکھ کر — پہلے سرور رد کرتا تب بھی «حذف ہو گیا»
-    dioWriteOk(await supabaseClient.from('report_173').delete().eq('id', d.id).select('id'), 'r173 delete', true);
+    else dioWriteOk(await supabaseClient.from('report_173').delete().eq('id', d.id).select('id'), 'r173 delete', true);
     _r173Docs = _r173Docs.filter(x => String(x.id) !== String(id));
+    _r173LocalPut(_r173CaseId);
     if (typeof showToast === 'function') showToast('حذف ہو گیا', 'info');
   } catch (e) {
     dioWriteFail('اندراج', e, 'حذف نہیں ہوا');
@@ -4666,6 +4803,84 @@ async function _r173DeleteDoc(id) {
   _renderR173List();
 }
 window._r173DeleteDoc = _r173DeleteDoc;
+
+// v560 — چالان دو آلات پر بدلا گیا: دونوں نسخے سامنے (ضمنی والا اصول)
+function _r173PlainText(fd) {
+  const out = [];
+  try {
+    Object.keys(fd || {}).forEach(k => {
+      const v = fd[k];
+      if (typeof v !== 'string' || !v.trim() || /^(saved_at|head|fnorm|doc_font|col_w)$/.test(k)) return;
+      const t = (window.DIOSync ? DIOSync.plain(v) : v.replace(/<[^>]*>/g, ' ')).trim();
+      if (t) out.push(t);
+    });
+  } catch (_) { /* خالی */ }
+  return out.join('\n');
+}
+async function _r173Resolve(id) {
+  const d = _r173Doc(id);
+  if (!d || !d._conflict || !window.DIOSync) return;
+  const t = d._conflict;
+  const pick = await DIOSync.conflictDialog({
+    title: 'چالان «' + (d.head || '') + '» — دو آلات پر بدلا گیا',
+    mine: { text: _r173PlainText(d.form_data), at: d.saved, device: DIOSync.device() },
+    theirs: { text: _r173PlainText(t.form_data), at: t.saved, device: t.last_device, deleted: !!t.deleted_at }
+  });
+  if (pick === 'later') { _renderR173List(); return; }
+  if (!navigator.onLine) { showToast('فیصلہ محفوظ کرنے کے لیے انٹرنیٹ درکار ہے — دونوں نسخے محفوظ ہیں', 'warn', 6000); return; }
+  try {
+    let next = null;
+    if (pick === 'mine') {
+      const mine = Object.assign({}, d, { rev: t.rev });
+      delete mine._conflict; delete mine._new;
+      if (t.deleted_at) { const r0 = await supabaseClient.from('report_173').update({ deleted_at: null }).eq('id', d.id).select('rev'); if (r0.error) throw r0.error; mine.rev = r0.data && r0.data[0] && r0.data[0].rev; }
+      next = await _r173Push(_r173CaseId, mine);
+      if (!t.deleted_at) await DIOSync.keepLoser('r173', Object.assign({ case_id: _r173CaseId, report_type: t.type, report_subtype: t.subtype || null }, t));
+    } else {
+      const kept = await DIOSync.keepLoser('r173', Object.assign({ case_id: _r173CaseId, report_type: d.type, report_subtype: d.subtype || null }, d));
+      if (!kept) { showToast('اس آلے کا نسخہ «حذف شدہ مواد» میں نہیں جا سکا — اسے نہیں ہٹایا گیا، دوبارہ کوشش کریں', 'error', 8000); return; }
+      next = t.deleted_at ? null : Object.assign({}, t);
+    }
+    if (next) { delete next._conflict; delete next._pending; delete next._new; delete next.deleted_at; }
+    const i = _r173Docs.findIndex(x => String(x.id) === String(d.id));
+    if (i >= 0) { if (next) _r173Docs[i] = next; else _r173Docs.splice(i, 1); }
+    _r173LocalPut(_r173CaseId);
+    showToast(pick === 'mine' ? 'اس آلے کا نسخہ سرور پر محفوظ؛ دوسرا «حذف شدہ مواد» میں' : 'سرور والا نسخہ رکھا گیا؛ اس آلے کا «حذف شدہ مواد» میں', 'success', 6000);
+  } catch (e) {
+    if (e && e.code === 'DIO_CONFLICT') {
+      const i = _r173Docs.findIndex(x => String(x.id) === String(d.id));
+      if (i >= 0) _r173Docs[i] = Object.assign({}, _r173Docs[i], { _conflict: e.server });
+      _r173LocalPut(_r173CaseId);
+      showToast('اسی دوران دوسرے آلے نے پھر بدلا — تازہ نسخوں سے دوبارہ چنیں', 'warn', 7000);
+    } else dioWriteFail('چالان', e, 'محفوظ نہیں ہوا');
+  }
+  _renderR173List();
+}
+window._r173Resolve = _r173Resolve;
+
+// v560 — دوسرے آلے کی تبدیلی (realtime) / ایپ پر واپسی: کھلی چالان فہرست بغیر refresh
+function _r173ListOpen() { return !!document.querySelector('.r173-list-wrap'); }
+function _r173Typing() { const a = document.activeElement; return !!(a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))); }
+if (window.DIOSync && !window._r173SyncHooked) {
+  window._r173SyncHooked = true;
+  DIOSync.on('report_173', function (row) {
+    if (!row || String(row.case_id) !== String(_r173CaseId)) return;
+    const item = DIOSync.r173Item(row);
+    const r = DIOSync.mergeInto(_r173Docs, item);
+    if (r && r !== 'remove' && !row.deleted_at && row.form_data) {
+      try { _r173Records[_r173Key(row.report_type, row.report_subtype, row.report_subtype)] = row.form_data; } catch (_) { /* فہرست کافی */ }
+    }
+    if (_r173ListOpen() && !_r173Typing()) _renderR173List();
+    else if (_ch173Doc && _ch173Doc() && String(_r173DocId) === String(row.id) && (r === 'replace' || r === 'remove'))
+      showToast('یہ چالان دوسرے آلے پر بھی بدلا گیا ہے — محفوظ کرنے پر دونوں نسخے دکھائے جائیں گے', 'warn', 8000);
+  });
+  DIOSync.onRefresh(async function () {
+    if (!_r173CaseId || !_r173ListOpen() || _r173Typing()) return;
+    const before = JSON.stringify(_r173Docs);
+    await _loadR173();
+    if (_r173ListOpen() && !_r173Typing() && JSON.stringify(_r173Docs) !== before) _renderR173List();
+  });
+}
 
 // 🖨️ پرنٹ
 async function _r173PrintDoc(id) {

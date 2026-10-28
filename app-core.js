@@ -677,7 +677,7 @@ async function updateBadges() {
     if (!oid) return;
     if (!navigator.onLine) return;  // Skip network call when offline
     const [{ count:cases },{ count:rems }] = await Promise.all([
-      supabaseClient.from('cases').select('id',{count:'exact',head:true}).eq('officer_id',oid),
+      supabaseClient.from('cases').select('id',{count:'exact',head:true}).eq('officer_id',oid).is('deleted_at', null),
       supabaseClient.from('reminders').select('id',{count:'exact',head:true}).eq('officer_id',oid).eq('is_done',false),
     ]);
     const b = document.getElementById('badge-cases');
@@ -723,9 +723,12 @@ function updateConnectionStatus(online) {
   const dot  = document.getElementById('status-dot');
   const text = document.getElementById('status-text');
   const badge= document.getElementById('db-badge');
+  if (badge) badge.textContent = online ? 'متصل' : 'آف لائن';
+  // v560: پٹی کی حالت اب dio-sync.js کی — «محفوظ / سنک ہو رہا ہے / آف لائن» (session سمیت)۔
+  //   پہلے صرف انٹرنیٹ دیکھ کر «آن لائن» لکھا جاتا تھا، چاہے سرور سے رابطہ (session) نہ ہو۔
+  if (window.DIOSync && typeof DIOSync.render === 'function') { DIOSync.render(); return; }
   if (dot)  dot.className  = 'status-dot' + (online?' status-online':' status-offline');
   if (text) text.textContent = online ? 'آن لائن' : 'آف لائن';
-  if (badge) badge.textContent = online ? 'متصل' : 'آف لائن';
 }
 
 /* ═══════════════════════════════════════════════════════════════
