@@ -574,9 +574,46 @@
     }
   }
 
+  // ── v563: Tab (Ctrl کی کلیدوں والا 1.27 سینٹی میٹر) Word میں بھی Tab ──
+  //   Word اپنی HTML میں Tab کو `mso-tab-count:1` سے لکھتا اور پڑھتا ہے (پہلے سے طے Tab stop = 0.5 انچ)۔
+  //   انداز کی نقل (capture) میں یہ خاصیت اور class دونوں گر جاتے ہیں — اس لیے پہلے نشان، پھر Word کی شکل۔
+  var TAB_TOKEN = '⁣DIOTAB⁣';
+  var WORD_TAB = "<span style='mso-tab-count:1;white-space:pre'>\t</span>";
+  // پیراگراف کے شروع کا Tab اسکرین پر پہلی سطر کا حاشیہ (text-indent: N × 1.27cm) ہے — Word میں
+  // وہی N Tab (Word کا اپنا Tab stop = 0.5 انچ)، حاشیہ ہٹا کر، تاکہ دوہرا نہ ہو
+  var IND_UNIT = { cm: 1.27, mm: 12.7, 'in': 0.5, pt: 36, px: 48 };
+  function markTabs(root) {
+    try {
+      [].forEach.call(root.querySelectorAll('.dio-tab'), function (t) { t.parentNode.replaceChild(t.ownerDocument.createTextNode(TAB_TOKEN), t); });
+      [].forEach.call(root.querySelectorAll('[style*="text-indent"]'), function (el) {
+        var m = /^(\d*\.?\d+)(cm|mm|in|pt|px)$/.exec(String(el.style.textIndent || '').trim()); if (!m) return;
+        var u = IND_UNIT[m[2]], v = parseFloat(m[1]), n = Math.round(v / u);
+        if (n < 1 || n > 20 || Math.abs(v - n * u) > u * 0.03) return;
+        el.style.textIndent = '0px';
+        var doc = el.ownerDocument, w = doc.createTreeWalker(el, 4), t, first = null;
+        while ((t = w.nextNode())) { if (/[^\s\u200B]/.test(t.nodeValue)) { first = t; break; } }
+        var tok = doc.createTextNode(new Array(n + 1).join(TAB_TOKEN));
+        if (first) first.parentNode.insertBefore(tok, first); else el.insertBefore(tok, el.firstChild);
+      });
+    } catch (_) { /* ضمنی */ }
+  }
+  // تیار HTML (متن) پر وہی: پڑھ کر نشان لگاؤ — پورا صفحہ ہو تو پورا، ورنہ صرف حصہ
+  function markTabsHtml(h, whole) {
+    try {
+      var d = new DOMParser().parseFromString(String(h), 'text/html');
+      markTabs(d.body);
+      return whole ? (/^\s*<!doctype[^>]*>/i.exec(String(h)) || [''])[0] + d.documentElement.outerHTML : d.body.innerHTML;   // اصل doctype جوں کا توں
+    } catch (_) { return h; }
+  }
+  function wordTabs(h) {
+    return String(h)
+      .replace(/<span[^>]*class="dio-tab"[^>]*>\t?<\/span>/g, WORD_TAB)
+      .split(TAB_TOKEN).join(WORD_TAB);
+  }
   // ── Word (.doc — Word اسے سیدھا کھولتا ہے؛ جدول اور اردو متن برقرار) ──
   function wordHtml(el, title) {
     var cap = (window.DIO.forms && DIO.forms.capture) ? DIO.forms.capture(el, { keepData: true }) : { html: el.outerHTML };
+    cap = { html: wordTabs(markTabsHtml(cap.html, false)) };
     var paper = paperOf(el);
     return '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" ' +
       'xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>' + safeName(title) + '</title>' +
@@ -592,7 +629,7 @@
     var head = '<meta charset="utf-8"><!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom>' +
       '<w:DoNotOptimizeForBrowser/></w:WordDocument></xml><![endif]--><style>@page WordSection1{size:' + pg.w + 'in ' + pg.h + 'in;margin:0.4in;}' +
       'div.WordSection1{page:WordSection1;}</style>';
-    var h = String(html).replace(/<script[\s\S]*?<\/script>/gi, '');
+    var h = wordTabs(markTabsHtml(String(html).replace(/<script[\s\S]*?<\/script>/gi, ''), true));
     h = h.replace(/<html([^>]*)>/i, '<html$1 xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">');
     h = /<head[^>]*>/i.test(h) ? h.replace(/<head([^>]*)>/i, '<head$1>' + head) : head + h;
     h = h.replace(/<body([^>]*)>/i, '<body$1><div class="WordSection1" dir="rtl">').replace(/<\/body>/i, '</div></body>');
@@ -616,8 +653,9 @@
             if (dg === 90 || dg === 270) { td.setAttribute('data-mso-rot', dg === 90 ? '90' : '-90'); break; }
           }
         });
+        markTabs(fr.doc.body);
         var cap = DIO.forms.capture(fr.doc.body, { keepData: true });
-        var h = cap.html.replace(/data-mso-rot="(-?\d+)"([^>]*?)style="/g, 'data-mso-rot="$1"$2style="mso-rotate:$1;');
+        var h = wordTabs(cap.html).replace(/data-mso-rot="(-?\d+)"([^>]*?)style="/g, 'data-mso-rot="$1"$2style="mso-rotate:$1;');
         // Word/LibreOffice لکیروں کی الگ الگ خصوصیات کم سمجھتے ہیں — مختصر شکل (border-top:1px solid #000)
         h = h.replace(/style="([^"]*)"/g, function (m, st) {
           var map = {}, rest = [];

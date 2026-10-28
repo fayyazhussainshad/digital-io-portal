@@ -120,6 +120,11 @@ function _dioEnterDocView() {
           style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--accent);
                  border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;
                  font-family:'Jameel Noori Nastaleeq',serif;">شیئر</button>
+        <!-- v563: MS Word کی کلیدوں کی فہرست — اوپر کی پٹی دستاویز کے نیچے چھپی ہوتی ہے، اس لیے یہاں بھی -->
+        <button id="dio-dv-keys" type="button" onclick="window.dioShortcutsHelp&&dioShortcutsHelp()" title="شارٹ کٹس" aria-label="شارٹ کٹس"
+          style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);
+                 border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer;
+                 font-family:'Jameel Noori Nastaleeq',serif;">شارٹ کٹس</button>
       </div>
     </div>
     <div id="dio-dv-body" style="flex:1;min-height:0;overflow:auto;"></div>`;
@@ -567,6 +572,10 @@ function _dioModulePrintBtn(root) {
     if (b.hasAttribute('data-dio-print')) return true;
     const oc = b.getAttribute('onclick') || '';
     if (!/print/i.test(oc)) return false;
+    // v563: «محفوظ شدہ» فہرست کی سطر کا «پرنٹ» (dioSavedPrint) کھلی دستاویز کا اپنا بٹن نہیں — وہ اندراج
+    //   دوبارہ کھول کر پھر یہی راستہ بلاتا ہے: بریف / مسل دستاویز پر ایک محفوظ اندراج ہوتے ہی پٹی کا
+    //   «پرنٹ»، Ctrl+P اور شیئر ہر 0.9 سیکنڈ دستاویز دوبارہ کھولتے رہتے اور کبھی نہ چھاپتے
+    if (/dioSavedPrint/.test(oc)) return false;
     const t = (b.textContent || '') + ' ' + (b.getAttribute('title') || '') + ' ' + (b.getAttribute('aria-label') || '');
     return !/محفوظ/.test(t) && words.test(t);
   });

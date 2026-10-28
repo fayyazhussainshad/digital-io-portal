@@ -28,7 +28,8 @@
         try {
           if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
           var m = /^Key([A-Z])$/.exec(String(e.code || '')), k = String(e.key || '');
-          if (m && k.length === 1 && !/[A-Za-z]/.test(k))
+          // v563: «Process» / «Unidentified» (اردو فونیٹک / IME) بھی — ہر غیر لاطینی کلید اصل حرف سے
+          if (m && !/^[A-Za-z]$/.test(k))
             Object.defineProperty(e, 'key', { value: e.shiftKey ? m[1] : m[1].toLowerCase(), configurable: true });
         } catch (_) {}
       }, true);
@@ -1499,6 +1500,10 @@ window.addEventListener('unhandledrejection', function(e){
         </div>
       </div>
       <div class="topbar-right">
+        <!-- v563: MS Word کی کلیدوں کی فہرست (صرف کمپیوٹر — موبائل پر کی بورڈ نہیں) -->
+        <button class="topbar-btn dio-tb-icon dio-tb-keys" id="dio-keys-btn" type="button" onclick="window.dioShortcutsHelp&&dioShortcutsHelp()" title="شارٹ کٹس" aria-label="شارٹ کٹس">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 9.5h.01M9 9.5h.01M12 9.5h.01M15 9.5h.01M18 9.5h.01M6 12.5h.01M18 12.5h.01M8.5 15h7"/><path d="M9 12.5h6"/></svg>
+        </button>
         <button class="topbar-btn dio-tb-icon" id="theme-picker-btn" onclick="openThemePicker()" title="تھیم" aria-label="تھیم">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="9.5" r="1.1"/><circle cx="14.5" cy="9" r="1.1"/><circle cx="16" cy="14" r="1.1"/><path d="M12 21a3 3 0 0 0 3-3 2 2 0 0 1 2-2h1"/></svg>
         </button>

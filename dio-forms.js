@@ -29,7 +29,9 @@
   // وراثتی (inherited) — صرف تب لکھیں جب والد سے مختلف ہوں
   var INH = ['font-family', 'font-size', 'font-weight', 'font-style', 'color', 'direction',
     'text-align', 'line-height', 'white-space', 'writing-mode', 'letter-spacing', 'word-spacing',
-    'text-indent', 'border-collapse', 'border-spacing', 'text-orientation'];
+    'text-indent', 'border-collapse', 'border-spacing', 'text-orientation',
+    // v563: Tab (1.27 سینٹی میٹر) اور آخری سطر کی سیدھ — نقل (PDF / Word) میں بھی پرنٹ جیسی
+    'tab-size', 'text-align-last'];
   // غیر وراثتی — صرف تب جب اس tag کی عام قدر سے مختلف ہوں
   var NON = ['display', 'position', 'top', 'right', 'bottom', 'left', 'float', 'clear',
     'min-width', 'min-height', 'max-width', 'max-height',

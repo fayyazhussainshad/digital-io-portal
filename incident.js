@@ -561,10 +561,7 @@ function _irClose(force) {
 }
 window._irClose = _irClose;
 function _irKeys(e) {
-  // Ctrl+S → محفوظ (براؤزر کا «صفحہ محفوظ کریں» نہیں)
-  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && (e.key === 's' || e.key === 'S')) {
-    e.preventDefault(); _irSave(); return;
-  }
+  // v563: Ctrl+S → _irSave پورے سسٹم کا ایک ہی سننے والا (dio-keys.js) چلاتا ہے
   if (e.key !== 'Escape') return;
   const bd = document.getElementById('modal-backdrop');
   if (bd && bd.style.display !== 'none') return;     // پہلے کارڈ بند ہو

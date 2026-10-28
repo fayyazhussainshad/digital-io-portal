@@ -357,25 +357,7 @@ async function open5CResponse(id){
     // handles cursor position correctly when Enter is native, not intercepted.
     document.execCommand('defaultParagraphSeparator',false,'br');
 
-    // Tab + Enter keydown handler
-    paper.addEventListener('keydown',function(e){
-      // Tab → 0.5 inch tab stop
-      if(e.key==='Tab'){
-        e.preventDefault();
-        const sel=window.getSelection();
-        if(!sel.rangeCount)return;
-        const range=sel.getRangeAt(0);
-        range.deleteContents();
-        const span=document.createElement('span');
-        span.style.cssText='display:inline-block;width:0.5in;';
-        span.textContent='\u00A0';
-        range.insertNode(span);
-        range.setStartAfter(span);
-        range.collapse(true);
-        sel.removeAllRanges();
-        sel.addRange(range);
-      }
-    });
+    // v563: Tab (1.27 سینٹی میٹر) اور باقی MS Word کلیدیں — پورے سسٹم کا ایک ہی سننے والا (dio-keys.js)
     // Uses a RegExp on text nodes after every keystroke so it's IME-safe
     const arabicRe=/[٠-٩]/g;
     const arabicMap={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'};

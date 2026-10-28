@@ -229,6 +229,8 @@ html:not([data-theme="light"]) #login-screen .dio-lc-hint { color: #f5b942; }
 .dio-homebtn .topnav-label { font-size: 12pt; }
 .dio-tb-logout svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; display: block; }
 .dio-tb-logout:hover { color: var(--dio-alert) !important; border-color: var(--dio-alert) !important; }
+/* v563: «شارٹ کٹس» — صرف کمپیوٹر پر (موبائل پر کی بورڈ نہیں؛ مائیک والا ہی پیمانہ 760px) */
+@media screen and (max-width: 760px) { .dio-tb-keys, #dio-dv-keys { display: none !important; } }
 
 /* ───────────────── 3. DASHBOARD ───────────────── */
 /* مرکزی تلاش */

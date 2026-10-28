@@ -1962,10 +1962,12 @@ function _zimniCleanHTML(html) {
 window._zimniCleanHTML = _zimniCleanHTML;
 
 // ═══════════════════════════════════════════════════════════════
-//  MS Word جیسی keys — Tab / Ctrl+B,I,U ؛ ENTER براؤزر کے حوالے
+//  ENTER براؤزر کے حوالے + سادہ چسپاں
 //  (report173 کا _ch173BindKeys Enter پر '\n' ڈالتا ہے جو صرف
 //   white-space:pre-wrap والے خانوں میں چلتا ہے — اسی لیے ضمنی میں
 //   Enter کچھ نہیں کرتا تھا۔ یہاں Enter قدرتی (MS Word جیسا) ہے۔)
+//  v563: Tab، Ctrl+B/I/U اور باقی MS Word کلیدیں پورے سسٹم کا ایک ہی سننے والا
+//   (dio-keys.js) سنبھالتا ہے — Tab = 1.27 سینٹی میٹر، «حالات تفتیش» کا خانہ لکھنے والا خانہ۔
 // ═══════════════════════════════════════════════════════════════
 function _zimniBindKeys() {
   const doc = _zimniDoc();
@@ -1974,30 +1976,8 @@ function _zimniBindKeys() {
   doc.addEventListener('keydown', function (e) {
     const el = e.target;
     if (!el || !doc.contains(el)) return;
-
-    // TAB → MS Word جیسی خالی جگہ (Shift+Tab پیچھے)
-    if (e.key === 'Tab') {
-      e.preventDefault();
-      if (!e.shiftKey) {
-        const TAB = '\u00A0'.repeat(8);              // ایک Tab = 8 خالی جگہیں
-        let ok = false;
-        try { ok = document.execCommand('insertText', false, TAB); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
-        if (!ok && typeof _ch173Insert === 'function') _ch173Insert(TAB);
-        try { _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
-      }
-      return;
-    }
-
     // ENTER → براؤزر خود نئی سطر بنائے (کوئی preventDefault نہیں)
-    if (e.key === 'Enter') { try { _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } return; }
-
-    if (e.ctrlKey || e.metaKey) {
-      const k = String(e.key || '').toLowerCase();
-      if (k === 'b') { e.preventDefault(); _zimniFmt('bold'); }
-      else if (k === 'i') { e.preventDefault(); _zimniFmt('italic'); }
-      else if (k === 'u') { e.preventDefault(); _zimniFmt('underline'); }
-      return;                                   // باقی سب (C/V/X/A/Z/Y/F/H) براؤزر کے حوالے
-    }
+    if (e.key === 'Enter') { try { _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
   });
   // Paste — سادہ متن (font/سائز ساتھ نہ آئے)
   doc.addEventListener('paste', function (e) {
