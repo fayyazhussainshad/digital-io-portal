@@ -1598,6 +1598,8 @@ function _dioPrintPreview(htmlContent) {
   document.body.appendChild(ov);
   const f = document.getElementById('dio-preview-frame');
   const d = f.contentWindow.document; d.open(); d.write(htmlContent); d.close();
+  // v563: اس فریم میں کرسر ہو تب بھی Ctrl+S / Ctrl+P سسٹم کے (براؤزر کی HTML فائل نہیں)
+  try { if (typeof window.dioGuardFrameKeys === 'function') window.dioGuardFrameKeys(f.contentWindow, null); } catch (_) { /* ضمنی */ }
   document.getElementById('dio-prev-close').onclick = () => ov.remove();
   document.getElementById('dio-prev-print').onclick = () => { ov.remove(); _dioDoPrint(htmlContent); };
 }
@@ -1636,6 +1638,21 @@ function _dioDoPrint(htmlContent) {
   doc.open();
   doc.write(htmlContent);
   doc.close();
+  // v563: پرنٹ کے بعد کرسر اسی چھپے فریم میں رہ جاتا تھا — اگلا Ctrl+S براؤزر اسی فریم کو
+  //   «HTML فائل» بنا کر محفوظ کرتا۔ اب: فریم میں دبی کلید سسٹم کو، اور پرنٹ کے بعد کرسر
+  //   واپس اُسی جگہ جہاں افسر لکھ رہا تھا۔
+  const back = document.activeElement;
+  let backRange = null;
+  try { const s0 = window.getSelection(); if (s0 && s0.rangeCount) backRange = s0.getRangeAt(0).cloneRange(); } catch (_) { /* ضمنی */ }
+  try { if (typeof window.dioGuardFrameKeys === 'function') window.dioGuardFrameKeys(iframe.contentWindow, back); } catch (_) { /* ضمنی */ }
+  const comeBack = () => {
+    // افسر خود کہیں اور کلک کر چکا ہو تو اُس کی جگہ نہ چھینو
+    const ae = document.activeElement;
+    if (ae && ae !== iframe && ae !== document.body && ae !== document.documentElement) return;
+    try { window.focus(); } catch (_) { /* ضمنی */ }
+    try { if (back && back.isConnected && back !== document.body && back.focus) back.focus({ preventScroll: true }); } catch (_) { /* ضمنی */ }
+    try { if (backRange && backRange.startContainer.isConnected) { const s1 = window.getSelection(); s1.removeAllRanges(); s1.addRange(backRange); } } catch (_) { /* ضمنی */ }
+  };
 
   // Wait for content + fonts to load, then print once
   const triggerPrint = () => {
@@ -1643,8 +1660,9 @@ function _dioDoPrint(htmlContent) {
       iframe.contentWindow.focus();
       iframe.contentWindow.print();
     } catch(e) { console.warn('print error', e); }
+    comeBack();
     // Clean up after printing
-    setTimeout(() => { iframe.remove(); }, 1000);
+    setTimeout(() => { iframe.remove(); comeBack(); }, 1000);
   };
 
   // Wait for fonts if available, else timeout

@@ -180,6 +180,8 @@ let _dioFRTarget = null;   // jis editable par kaam ho raha hai
 let _dioFRPos = 0;         // agli talash yahan se
 
 function _dioFRPickTarget() {
+  // v563: پوری کھلی دستاویز (MS Word کی طرح) — صرف وہ ایک خانہ نہیں جس میں کرسر ہے
+  try { if (typeof window.dioDocRoot === 'function') { const r = window.dioDocRoot(); if (r) return r; } } catch (_) { /* پرانا راستہ */ }
   // Pehle active editable; warna khula bara editor
   let t = _dioActiveEditable();
   if (t) return t;
@@ -193,13 +195,14 @@ function _dioFRPickTarget() {
   return null;
 }
 
-function dioFindReplace() {
+function dioFindReplace(prefill) {
   // Target ko ABHI pakad lo (panel ke input par focus jaate hi active editable badal jata hai)
   _dioFRTarget = _dioFRPickTarget();
   if (!_dioFRTarget) { if (typeof showToast === 'function') showToast('پہلے کسی دستاویز کے خانے میں لکھنے کے لیے کلک کریں', 'info'); return; }
   _dioFRPos = 0;
+  const _fill = () => { const f = document.getElementById('dio-fr-find'); if (!f) return; if (prefill) f.value = String(prefill); f.focus(); try { f.select(); } catch (_) { /* ضمنی */ } };
   let p = document.getElementById('dio-fr-panel');
-  if (p) { p.style.display = 'block'; document.getElementById('dio-fr-find').focus(); return; }
+  if (p) { p.style.display = 'block'; _dioFRNote(''); _fill(); return; }
   p = document.createElement('div');
   p.id = 'dio-fr-panel';
   p.className = 'no-print';
@@ -228,7 +231,7 @@ function dioFindReplace() {
   fi.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); dioFRFindNext(); } });
   // Esc = صرف یہ خانہ بند (پیچھے کی دستاویز / پورا صفحہ نہیں)
   p.addEventListener('keydown', function (e) { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); dioFRClose(); } });
-  fi.focus();
+  _fill();
 }
 window.dioFindReplace = dioFindReplace;
 
@@ -247,9 +250,29 @@ function _dioFRNote(msg) {
 function _dioFRTextNodes(root) {
   const out = [];
   if (!root) return out;
-  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+  // v563: پوری دستاویز میں — مگر صرف لکھنے والے خانوں کا متن (سسٹم کے لیبل / بٹن / Tab نہیں)
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: function (t) {
+      const p = t.parentElement;
+      if (!p || !p.isContentEditable || p.closest('.dio-tab,.no-print,button,select')) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
   let t; while ((t = w.nextNode())) out.push(t);
   return out;
+}
+// v563: ڈھونڈیں-بدلیں بھی Ctrl+Z سے واپس (ہر دستاویز کی اپنی تاریخ — dio-keys.js)
+function _dioFRHost(n) {
+  try { if (window.dioHistory) return window.dioHistory.hostOf(n); } catch (_) { /* ضمنی */ }
+  return null;
+}
+function _dioFRBefore(hosts) {
+  try { if (window.dioHistory && hosts.length) { window.dioHistory.before(window.dioHistory.rootOf(hosts[0]), hosts); return true; } } catch (_) { /* ضمنی */ }
+  return false;
+}
+function _dioFRAfter(hosts) {
+  try { if (window.dioHistory && hosts.length) { window.dioHistory.after(hosts, 'insertReplacementText'); _markDirtyMaybe(true); return; } } catch (_) { /* ضمنی */ }
+  _markDirtyMaybe();
 }
 
 // Agli match dhoondo aur select karo (case-insensitive)
@@ -297,13 +320,16 @@ function dioFRReplaceOne() {
   if (selText && selText === q.toLowerCase() && sel.rangeCount) {
     try {
       const r = sel.getRangeAt(0);
+      const h = _dioFRHost(r.startContainer);
+      const hs = h ? [h] : [];
+      _dioFRBefore(hs);
       r.deleteContents();
       const tn = document.createTextNode(rep);
       r.insertNode(tn);
       // cursor match ke baad
       _dioFRPos = Math.max(0, _dioFRPos - q.length + rep.length);
       try { _dioFRTarget && (_dioFRTarget._dioDirtyPing = true); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
-      _markDirtyMaybe();
+      _dioFRAfter(hs);
       _dioFRNote('بدل دیا ✓');
     } catch (e) { _dioFRNote('نہ بدل سکا'); }
   }
@@ -322,30 +348,37 @@ function dioFRReplaceAll() {
   const esc = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const re = new RegExp(esc, 'gi');
   let count = 0;
+  // v563: جن خانوں میں بدلنا ہے اُن کی پچھلی حالت پہلے (Ctrl+Z سے ایک ہی قدم میں واپس)
+  const hosts = [];
+  nodes.forEach(nd => { re.lastIndex = 0; if (re.test(nd.nodeValue || '')) { const h = _dioFRHost(nd); if (h && hosts.indexOf(h) < 0) hosts.push(h); } });
+  _dioFRBefore(hosts);
   nodes.forEach(nd => {
     const before = nd.nodeValue || '';
     if (!before) return;
+    re.lastIndex = 0;
     const after = before.replace(re, function (m) { count++; return rep; });
     if (after !== before) nd.nodeValue = after;
   });
-  if (count > 0) { _markDirtyMaybe(); _dioFRNote(count + ' جگہ بدل دیں ✓'); }
+  if (count > 0) { _dioFRAfter(hosts); _dioFRNote(count + ' جگہ بدل دیں ✓'); }
   else _dioFRNote('کوئی نتیجہ نہیں');
 }
 window.dioFRReplaceAll = dioFRReplaceAll;
 
 // Editor ko "dirty" mark karo (taake wapsi/محفوظ warning theek chale)
-function _markDirtyMaybe() {
+function _markDirtyMaybe(flagsOnly) {
   try { if (typeof _misalDirty !== 'undefined') window._misalDirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   try { if (typeof _r173Dirty !== 'undefined') window._r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   try { if (typeof _zimniDirty !== 'undefined') window._zimniDirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  if (flagsOnly) return;                 // v563: input ہر بدلے خانے پر dioHistory.after دے چکا
   // input event fire karo taake har module ka apna oninput=dirty chal jaye
   try {
     if (_dioFRTarget) _dioFRTarget.dispatchEvent(new Event('input', { bubbles: true }));
   } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 
-// ── Tab / Shift+Tab / keyboard shortcuts ──────────────────────────────
-// Tab: editable ke andar asal TAB ki jagah (browser default focus badalta hai)
+// ── Enter (خانے کے اندر نئی سطر) ───────────────────────────────────────
+// v563: Tab، Ctrl+B/I/U اور باقی تمام MS Word کلیدیں اب پورے سسٹم کا ایک ہی سننے والا
+//   (dio-keys.js) سنبھالتا ہے — یہاں صرف Enter۔
 function dioBindEditor(root) {
   root = root || document;
   dioEditorToolbarCSS();
@@ -353,29 +386,13 @@ function dioBindEditor(root) {
     if (el._dioKeysBound) return;
     el._dioKeysBound = true;
     el.addEventListener('keydown', function (e) {
-      // v553: دستاویز کا اپنا سننے والا یہی کلید پہلے سنبھال چکا ہو (مثلاً مسل کے
-      //   ایڈیٹر کا onkeydown) تو دوبارہ نہیں — ورنہ Ctrl+B دو بار لگ کر الٹ جاتا (کچھ نہ بدلتا)
       if (e.defaultPrevented) return;
-      // TAB → khali jagah (focus na badle)
-      if (e.key === 'Tab') {
-        e.preventDefault();
-        if (e.shiftKey) { document.execCommand('outdent'); return; }
-        document.execCommand('insertHTML', false, '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
-        return;
-      }
       // ENTER → nayi satar (khane ke andar hi)
       if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
         e.preventDefault();
         try { document.execCommand('insertLineBreak'); }
         catch(_) { try { document.execCommand('insertHTML', false, '<br>'); } catch(__) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } }
         return;
-      }
-      // Ctrl shortcuts (MS Word jaise)
-      if (e.ctrlKey || e.metaKey) {
-        const k = e.key.toLowerCase();
-        if (k === 'b') { e.preventDefault(); dioExec('bold'); }
-        else if (k === 'i') { e.preventDefault(); dioExec('italic'); }
-        else if (k === 'u') { e.preventDefault(); dioExec('underline'); }
       }
     });
   });
@@ -430,26 +447,5 @@ window.dioFloatingToolbarDisabled = true;
   else _saaf();
 })();
 
-// ── GLOBAL Ctrl+H / Ctrl+F — MS Word ki tarah "ڈھونڈیں اور بدلیں" (poore system me) ──
-//   Jahan bhi koi likhne wala khana active ho (contenteditable / input / textarea),
-//   Ctrl+H (ya Ctrl+F) dabate hi replace-with wala panel khul jata hai.
-(function () {
-  if (window._dioFRKeys) return;
-  window._dioFRKeys = true;
-  document.addEventListener('keydown', function (e) {
-    if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
-    var k = String(e.key || '').toLowerCase();
-    if (k !== 'h' && k !== 'f') return;
-    // Sirf tab chalao jab koi editable khana zer-e-istemal ho
-    var tgt = null;
-    try { tgt = (typeof _dioFRPickTarget === 'function') ? _dioFRPickTarget() : null; } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
-    if (!tgt) {
-      var ae = document.activeElement;
-      var ok = ae && (ae.isContentEditable || /^(input|textarea)$/i.test(ae.tagName || ''));
-      if (!ok) return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-    try { if (typeof dioFindReplace === 'function') dioFindReplace(); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
-  }, true);
-})();
+// ── Ctrl+H (ڈھونڈیں اور بدلیں) اور Ctrl+F (مرکزی تلاش) ──────────────────
+//   v563: پورے سسٹم کا ایک ہی کلیدی سننے والا (dio-keys.js) — یہاں پرانا الگ سننے والا ختم۔

@@ -125,6 +125,10 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh v561_test.py
+      - name: v563 — MS Word shortcuts everywhere (one global handler, Urdu layout too) — Ctrl+S saves (never the browser's Save-As), X/C/V, drag-move, Ctrl+F main search, Ctrl+H find/replace, B/I/U, own undo/redo ≥ 20 steps, J/R/L/E per paragraph, Ctrl+[ / ] 1pt, Ctrl+A this document only, Ctrl+P = print button; Tab = 1.27 cm (first-line indent at paragraph start, exact in justify), Shift+Tab / Backspace back, table cell Tab = next cell; formatting through save → reload → print → PDF → Word; shortcuts list (desktop only) (v563_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: bash ci_run.sh v563_test.py
       - name: Screenshots and print PDFs
         if: always()
         uses: actions/upload-artifact@v4

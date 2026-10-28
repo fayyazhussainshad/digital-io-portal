@@ -644,13 +644,7 @@ function _dkFontToDoc(pt) {
 }
 function _dkBindKeys() {
   const doc = _dkDoc(); if (!doc) return;
-  doc.addEventListener('keydown', (e) => {
-    if (e.ctrlKey || e.metaKey) {
-      if (e.key === 'b') { e.preventDefault(); _dkFmt('bold'); }
-      if (e.key === 'u') { e.preventDefault(); _dkFmt('underline'); }
-      if (e.key === 'i') { e.preventDefault(); _dkFmt('italic'); }
-    }
-  });
+  // v563: Ctrl+B/I/U، Tab اور باقی MS Word کلیدیں — پورے سسٹم کا ایک ہی سننے والا (dio-keys.js)
   doc.addEventListener('input', () => { _dkDirty = true; });
   doc.addEventListener('mouseup', _dkSaveRange);
   doc.addEventListener('keyup', _dkSaveRange);

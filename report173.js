@@ -4263,7 +4263,9 @@ function _ch173ClearInnerFontSizes(doc) {
     host.querySelectorAll('*').forEach(el => {
       // کاغذات ki tadaad (.pp-qty) aur naam (.pp-name) ki apni shakl hai —
       // un ki naap CSS se aati hai, chhirne ki zaroorat nahi
-      if (el.style && el.style.fontSize) el.style.fontSize = '';
+      // v563: افسر کا خود لگایا ہوا سائز (data-dio-fs — Ctrl+[ / Ctrl+] یا چنے متن کا سائز) نہیں مٹتا؛
+      //   پہلے یہ چالان کھلتے ہی صاف ہو جاتا تھا (دوبارہ کھولنے پر فارمیٹنگ غائب)
+      if (el.style && el.style.fontSize && !el.hasAttribute('data-dio-fs')) el.style.fontSize = '';
     });
   });
 }
@@ -4958,29 +4960,11 @@ function _ch173BindKeys() {
     const el = e.target;
     if (!el || !el.isContentEditable) return;
 
-    // TAB → خالی جگہ۔ execCommand ناقابلِ اعتبار ہے، اس لیے سیدھا
-    // متن ڈالتے ہیں — یہ ہر براؤزر میں چلتا ہے۔
-    if (e.key === 'Tab') {
-      e.preventDefault();
-      _ch173Insert(e.shiftKey ? '' : '\u00A0\u00A0\u00A0\u00A0\u00A0');
-      return;
-    }
-
     // ENTER → نئی سطر (خانے کے اندر ہی)
+    // v563: Tab، Ctrl+B/I/U اور باقی MS Word کلیدیں پورے سسٹم کا ایک ہی سننے والا (dio-keys.js)
     if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
       e.preventDefault();
       _ch173Insert('\n');
-      return;
-    }
-
-    // Ctrl+B / I / U — SIRF yeh teen. Baqi (C/V/X/A/Z/Y) browser khud
-    // sambhale, warna copy/cut/paste kaam karna band kar dete hain.
-    if (e.ctrlKey || e.metaKey) {
-      const k = String(e.key || '').toLowerCase();
-      if (k === 'b') { e.preventDefault(); _ch173Fmt('bold'); }
-      else if (k === 'i') { e.preventDefault(); _ch173Fmt('italic'); }
-      else if (k === 'u') { e.preventDefault(); _ch173Fmt('underline'); }
-      return;   // baqi sab browser ke hawale
     }
   });
 }

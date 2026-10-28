@@ -281,3 +281,118 @@ async function _srShowDocs(table, id) {
   } catch (e) { showToast('' + (e && e.message || e), 'error'); }
 }
 window._srShowDocs = _srShowDocs;
+
+/* ═══════════════════════════════════════════════════════════════════
+   Ctrl+F — مرکزی تلاش، سسٹم میں ہر جگہ (v563، افسر کا فیصلہ 28 اکتوبر 2026)
+   «Ctrl+F پورے سسٹم کی مرکزی تلاش کھولے، منتخب متن پہلے سے لکھا ہو۔» کھلی دستاویز کے اوپر
+   ایک پٹی میں — دستاویز کھلی رہتی ہے، لکھا ہوا محفوظ۔ تلاش وہی (_runGlobalSearch)، نتیجے وہی۔
+   ڈیش بورڈ پر ہوں تو ڈیش بورڈ کا اپنا خانہ ہی۔ (Task 13 کی نئی تلاش بھی اسی دروازے سے کھلے۔)
+   ═══════════════════════════════════════════════════════════════════ */
+const _MS_DOCS = ['dio-docview', 'ir-view', 'dio-form-view', 'response5c-overlay', 'tpl-editor-overlay'];
+function _msVis(el) { return !!(el && el.isConnected && el.getClientRects().length); }
+function _msDocOpen() {
+  const mb = document.getElementById('modal-backdrop');
+  return _MS_DOCS.some(id => _msVis(document.getElementById(id))) || !!(mb && mb.style.display !== 'none' && _msVis(mb));
+}
+function _msPark(on) {
+  ['sr-query', 'sr-results'].forEach(id => {
+    if (on) {
+      const el = document.getElementById(id);
+      if (el && !el.closest('#dio-msearch')) { el.id = id + '--parked'; el.setAttribute('data-dio-parked', id); }
+    } else {
+      document.querySelectorAll('[data-dio-parked="' + id + '"]').forEach(el => { el.id = id; el.removeAttribute('data-dio-parked'); });
+    }
+  });
+}
+function _msClose() {
+  const o = document.getElementById('dio-msearch');
+  if (!o) return;
+  const back = o._back;
+  o.remove();
+  _msPark(false);
+  window.removeEventListener('keydown', _msEsc, true);
+  try { if (back && back.isConnected) back.focus({ preventScroll: true }); } catch (_) { /* کرسر واپس نہ جا سکے تو کوئی بات نہیں */ }
+}
+window._msClose = _msClose;
+function _msEsc(e) { if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); _msClose(); } }
+// نتیجہ کھولنے سے پہلے کھلی دستاویز بند (ہر ماڈیول کا اپنا «بند» — غیر محفوظ ہو تو وہ خود پوچھتا ہے)
+function _msCloseDocs() {
+  if (_msVis(document.getElementById('dio-docview')) &&
+      !confirm('کھلی دستاویز بند ہو کر یہ نتیجہ کھلے گا۔ جو تبدیلی ابھی محفوظ نہیں کی وہ ضائع ہو سکتی ہے — پہلے Ctrl+S سے محفوظ کر لیں۔\nجاری رکھیں؟')) return false;
+  try { if (document.getElementById('dio-form-view') && window.DIOFormsUI) window.DIOFormsUI.close(); } catch (_) { /* اگلی دستاویز */ }
+  try { if (document.getElementById('ir-view') && typeof window._irClose === 'function') window._irClose(); } catch (_) { /* اگلی دستاویز */ }
+  try { const o = document.getElementById('response5c-overlay'); if (o && confirm('5-C کا جواب بند کریں؟ غیر محفوظ تبدیلی ضائع ہو جائے گی۔')) { document.body.classList.remove('r5c-open'); o.remove(); } } catch (_) { /* اگلی دستاویز */ }
+  try { const o = document.getElementById('tpl-editor-overlay'); if (o && confirm('ٹیمپلیٹ بند کریں؟ غیر محفوظ تبدیلی ضائع ہو جائے گی۔')) o.remove(); } catch (_) { /* اگلی دستاویز */ }
+  try {
+    if (document.getElementById('dio-docview')) {
+      if (typeof window._dioResetTabs === 'function') window._dioResetTabs();
+      if (typeof window._dioExitDocView === 'function') window._dioExitDocView();
+    }
+  } catch (_) { /* اگلی دستاویز */ }
+  try { const mb = document.getElementById('modal-backdrop'); if (mb && mb.style.display !== 'none' && typeof closeModal === 'function') closeModal(); } catch (_) { /* کارڈ */ }
+  return !_msDocOpen();
+}
+function dioOpenMainSearch(q) {
+  q = String(q || '').replace(/\s+/g, ' ').trim();
+  const dash = document.getElementById('dash-search');
+  if (dash && _msVis(dash) && !_msDocOpen() && !document.getElementById('dio-msearch')) {
+    const inp = document.getElementById('sr-query');
+    if (inp) { if (q) inp.value = q; inp.focus(); try { inp.select(); } catch (_) { /* ضمنی */ } _srDebounced(); }
+    return;
+  }
+  let o = document.getElementById('dio-msearch');
+  if (!o) {
+    if (!document.getElementById('dio-msearch-css')) {
+      const st = document.createElement('style'); st.id = 'dio-msearch-css';
+      st.textContent =
+        '#dio-msearch{position:fixed;inset:0;z-index:2147483050;background:rgba(9,20,40,.45);display:flex;align-items:flex-start;justify-content:center;padding:48px 12px 12px;}' +
+        '#dio-msearch .ms-card{background:var(--bg-primary,#f4f6f9);color:var(--text-primary,#111);border:1px solid var(--border,#ccd);border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.35);' +
+        'width:min(780px,100%);max-height:calc(100vh - 64px);display:flex;flex-direction:column;direction:rtl;font-family:"Jameel Noori Nastaleeq","Noto Nastaliq Urdu",serif;}' +
+        '#dio-msearch .ms-top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8pt 12pt 4pt;}' +
+        '#dio-msearch h2{font-size:16pt;line-height:1.9;margin:0;font-weight:700;}' +
+        '#dio-msearch .ms-x{border:1px solid var(--border,#ccd);background:transparent;color:inherit;border-radius:8px;min-width:36px;min-height:32px;cursor:pointer;font-size:12pt;font-family:inherit;}' +
+        '#dio-msearch .ms-box{position:relative;padding:0 12pt 8pt;}' +
+        '#dio-msearch #sr-query{width:100%;box-sizing:border-box;padding:10px 44px 10px 14px;background:var(--bg-card,#fff);color:var(--text-primary,#111);' +
+        'border:1.5px solid var(--border,#ccd);border-radius:12px;font-family:inherit;font-size:13pt;outline:none;}' +
+        '#dio-msearch #sr-query:focus{border-color:var(--accent,#0b3d64);box-shadow:0 0 0 3px rgba(11,61,100,.14);}' +
+        '#dio-msearch .ms-ic{position:absolute;right:26px;top:50%;transform:translateY(-60%);width:20px;height:20px;fill:none;stroke:currentColor;opacity:.6;stroke-width:2;stroke-linecap:round;pointer-events:none;}' +
+        '#dio-msearch #sr-results{overflow:auto;padding:0 12pt 12pt;min-height:0;}' +
+        '@media print{#dio-msearch{display:none !important;}}';
+      document.head.appendChild(st);
+    }
+    const back = document.activeElement;
+    _msPark(true);
+    o = document.createElement('div');
+    o.id = 'dio-msearch'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true'); o.setAttribute('aria-label', 'مرکزی تلاش');
+    o._back = back;
+    o.innerHTML = '<div class="ms-card"><div class="ms-top"><h2>مرکزی تلاش</h2>' +
+      '<button type="button" class="ms-x" aria-label="بند کریں" title="بند کریں (Esc)">✕</button></div>' +
+      '<div class="ms-box" role="search"><svg class="ms-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>' +
+      '<input id="sr-query" type="search" autocomplete="off" dir="auto" data-dio-ro-ok aria-label="پورے سسٹم میں تلاش"' +
+      ' placeholder="تلاش — مقدمہ نمبر، مدعی، ملزم، گواہ، شناختی کارڈ، موبائل، متن…"></div>' +
+      '<div id="sr-results" aria-live="polite"></div></div>';
+    o.addEventListener('click', (e) => {
+      if (e.target === o || (e.target.closest && e.target.closest('.ms-x'))) { _msClose(); return; }
+      const act = e.target.closest && e.target.closest('#sr-results [onclick]');
+      if (!act) return;
+      const oc = act.getAttribute('onclick') || '';
+      // نتیجہ کھولنا (مقدمہ / رپورٹ) — پہلے کھلی دستاویز بند؛ تصاویر کا بٹن صرف کارڈ کھولتا ہے
+      if (/openCaseWorkspace|openIncidentReport/.test(oc) && !/_srShowDocs/.test(oc) && _msDocOpen()) {
+        if (!_msCloseDocs()) { e.preventDefault(); e.stopImmediatePropagation(); return; }
+      }
+      _msClose();                                   // کارڈ کا اپنا onclick اس کے بعد چلتا ہے
+    }, true);
+    document.body.appendChild(o);
+    // window پر (document سے پہلے): کھلی دستاویز کا اپنا Esc (مثلاً ٹیمپلیٹ کا فارم «بند») تلاش کے اوپر ہوتے نہ چلے
+    window.addEventListener('keydown', _msEsc, true);
+    const inp0 = o.querySelector('#sr-query');
+    inp0.addEventListener('input', () => _srDebounced());
+  }
+  const inp = document.getElementById('sr-query');
+  if (inp) {
+    if (q) inp.value = q;
+    inp.focus(); try { inp.select(); } catch (_) { /* ضمنی */ }
+    if (inp.value.trim()) _srDebounced(); else { const b = document.getElementById('sr-results'); if (b) b.innerHTML = ''; }
+  }
+}
+window.dioOpenMainSearch = dioOpenMainSearch;

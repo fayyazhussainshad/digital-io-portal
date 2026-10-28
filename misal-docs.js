@@ -480,18 +480,9 @@ function _renderMisalEditor(docId, def) {
     </div>
   </div>`;
 
-  // Keyboard shortcuts: Ctrl+B, Ctrl+U, Ctrl+I
+  // v563: Ctrl+B/I/U، Tab اور باقی MS Word کلیدیں — پورے سسٹم کا ایک ہی سننے والا (dio-keys.js)
   setTimeout(() => {
     const ed = document.getElementById('misal-editor');
-    if (ed) {
-      ed.onkeydown = (e) => {
-        if (e.ctrlKey || e.metaKey) {
-          if (e.key === 'b') { e.preventDefault(); document.execCommand('bold'); }
-          if (e.key === 'u') { e.preventDefault(); document.execCommand('underline'); }
-          if (e.key === 'i') { e.preventDefault(); document.execCommand('italic'); }
-        }
-      };
-    }
     // Auto text-direction for fields in this document editor
     if (typeof applyAutoDirection === 'function') applyAutoDirection(area);
     // MS Word jaise auzaar: Tab, Ctrl+B/I/U waghera + toolbar CSS
