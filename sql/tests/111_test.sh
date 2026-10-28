@@ -32,7 +32,9 @@ create function public.dio_my_officer_id() returns uuid language sql stable secu
   as \$\$ select id from public.officers where user_id = auth.uid() \$\$;
 create function public.dio_has_active_sub() returns boolean language sql stable as \$\$ select true \$\$;
 grant execute on function public.dio_my_officer_id(), public.dio_has_active_sub() to authenticated;
-create table public.recycle_bin (id uuid primary key default gen_random_uuid(), officer_id uuid, item_type text, item_id uuid, item_data jsonb);
+create table public.recycle_bin (id uuid primary key default gen_random_uuid(), officer_id uuid, item_type text, item_id uuid, item_data jsonb,
+  deleted_at timestamptz default now(), expires_at timestamptz default now() + interval '30 days');
+alter table public.recycle_bin enable row level security;
 create table public.case_shares (id uuid primary key default gen_random_uuid(), case_id uuid);
 alter table public.case_shares enable row level security;
 insert into public.officers values ('$A', '$UA', 'فیاض حسین شاد');
@@ -48,12 +50,40 @@ eq "رکنے پر جدول جوں کا توں" "$(sql "select count(*) from gash
 eq "رکنے پر کوئی بیک اپ نہیں بنا" "$(sql "select to_regclass('public.dio_bak_111_gasht_logs') is null")" "t"
 sql "delete from gasht_logs" >/dev/null
 
-# ── 2) «حذف شدہ مواد» میں گشت ہو تب بھی رکے ──
-sql "insert into recycle_bin (officer_id, item_type, item_data) values ('$A', 'gasht', '{}')" >/dev/null
+# ── 2) «حذف شدہ مواد» میں گشت ہو تب بھی رکے (جیسا آپ کے live ڈیٹابیس میں: 1 اندراج) ──
+G1=eeeeeeee-0000-4000-8000-0000000000e1
+sql "insert into recycle_bin (officer_id, item_type, item_id, item_data) values ('$A', 'gasht', '$G1', '{\"area\":\"چوک کمہاراں\",\"gasht_date\":\"2026-10-20\",\"status\":\"mukammal\",\"data\":{\"entries\":[{\"t\":\"1\"},{\"t\":\"2\"}]}}')" >/dev/null
+sql "insert into recycle_bin (officer_id, item_type, item_data) values ('$A', 'case', '{\"fir_number\":\"681/26\"}')" >/dev/null
 R0b=$($P -d $DB -f sql/111_remove_gasht.sql 2>&1)
-has "«حذف شدہ مواد» میں گشت: 111 رک گئی" "$R0b" "111 رک گئی"
+has "«حذف شدہ مواد» میں گشت: 111 رک گئی" "$R0b" "«حذف شدہ مواد» میں 1"
 eq "رکنے پر جدول باقی" "$(sql "select to_regclass('public.gasht_logs') is not null")" "t"
-sql "delete from recycle_bin where item_type='gasht'" >/dev/null
+# 111a — صرف دکھاتی ہے
+V=$($P -d $DB -At -F '|' -f sql/111a_gasht_bin_dekhein.sql 2>&1)
+has "111a: اندراج دکھایا (علاقہ)" "$V" "چوک کمہاراں"
+has "111a: اندراجات کی گنتی 2" "$V" "|mukammal|2|"
+has "111a فائل صرف پڑھتی ہے" "$(grep -viE '^\s*--' sql/111a_gasht_bin_dekhein.sql | grep -ciE '^\s*(insert|update|delete|drop|alter|create|grant|revoke|truncate|comment)\b' || true)" "^0$"
+# 111b — دو اندراج ہوں تو رکے
+sql "insert into recycle_bin (officer_id, item_type, item_data) values ('$A', 'gasht', '{}')" >/dev/null
+RB2=$($P -d $DB -f sql/111b_gasht_bin_hatayein.sql 2>&1)
+has "111b: 2 اندراج → رک گئی" "$RB2" "111b رک گئی"
+eq "111b رکی: کچھ نہیں بدلا" "$(sql "select count(*) from recycle_bin where item_type='gasht'")|$(sql "select to_regclass('public.dio_bak_111_recycle_bin_gasht') is null")" "2|t"
+sql "delete from recycle_bin where item_type='gasht' and item_id is null" >/dev/null
+# 111b — 1 اندراج: بیک اپ پھر ہٹانا
+RB1=$($P -d $DB -f sql/111b_gasht_bin_hatayein.sql 2>&1)
+has "111b چلی" "$RB1" "111b — mukammal"
+eq "111b: گشت «حذف شدہ مواد» سے ہٹ گیا" "$(sql "select count(*) from recycle_bin where item_type='gasht'")" "0"
+eq "111b: بیک اپ میں وہی اندراج (پورا)" "$(sql "select item_id||'|'||(item_data->>'area') from dio_bak_111_recycle_bin_gasht")" "$G1|چوک کمہاراں"
+eq "111b: باقی «حذف شدہ مواد» (مقدمہ) جوں کا توں" "$(sql "select count(*) from recycle_bin where item_type='case'")" "1"
+eq "111b: بیک اپ پر RLS" "$(sql "select relrowsecurity from pg_class where oid='public.dio_bak_111_recycle_bin_gasht'::regclass")" "t"
+has "111b: بیک اپ افسر نہیں پڑھ سکتا" "$(as $UA "select count(*) from dio_bak_111_recycle_bin_gasht;")" "permission denied"
+RB1b=$($P -d $DB -f sql/111b_gasht_bin_hatayein.sql 2>&1)
+has "111b دوبارہ چلانا محفوظ" "$RB1b" "گشت کا کوئی اندراج نہیں"
+RBR=$($P -d $DB -f sql/111b_ROLLBACK.sql 2>&1)
+has "111b_ROLLBACK چلا" "$RBR" "111b_ROLLBACK"
+eq "111b_ROLLBACK: اندراج واپس" "$(sql "select count(*) from recycle_bin where item_type='gasht' and item_id='$G1'")" "1"
+RB3=$($P -d $DB -f sql/111b_gasht_bin_hatayein.sql 2>&1)
+has "واپسی کے بعد 111b دوبارہ" "$RB3" "111b — mukammal"
+eq "دوبارہ: بیک اپ میں دوہرا نہیں" "$(sql "select count(*) from dio_bak_111_recycle_bin_gasht")" "1"
 
 # ── 3) چلانا (جیسا آپ کے 108_CHECK میں: 0 قطاریں) ──
 PRE=$($P -d $DB -At -f sql/111_CHECK.sql 2>&1)
