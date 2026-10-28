@@ -134,7 +134,7 @@ with sync_playwright() as p:
         bar = pg.evaluate("(document.getElementById('dio-viewonly-bar')||{innerText:''}).innerText")
         check(f'{tag}: اوپر «صرف دیکھ سکتے ہیں — پرنٹ، نیا اندراج اور ترمیم بند» + تجدید کا بٹن', 'صرف دیکھ سکتے ہیں' in bar and 'پرنٹ' in bar and 'تجدید کریں' in bar, bar[:120])
         t = wait_until(pg, "() => document.getElementById('status-text').textContent === 'صرف دیکھنا'", timeout=8)
-        check(f'{tag}: اوپر کی پٹی «صرف دیکھنا»', t is not None, pg.evaluate(STATUS))
+        check(f'{tag}: اوپر کی پٹی «صرف دیکھنا» (نظر آتا ہے)', t is not None and pg.evaluate("document.getElementById('status-text').getBoundingClientRect().width") > 10, pg.evaluate(STATUS))
         pg.screenshot(path=f'{OUT}/v561_{label}_01_viewonly_dashboard.png')
         n0 = len(SE.log)
         # پڑھنا: مقدمات، ضمنی کھلتی ہے
@@ -231,6 +231,13 @@ with sync_playwright() as p:
     dp, mp = D['pg'], M['pg']
     for d in (D, M):
         wait_until(d['pg'], "() => DIOSync.state().realtime === 'SUBSCRIBED'", timeout=10)
+    # اوپر کی پٹی کا لفظ موبائل پر بھی نظر آئے (پہلے صرف رنگین نقطہ)
+    for d in (D, M):
+        t = wait_until(d['pg'], "() => document.getElementById('status-text').textContent === 'محفوظ'", timeout=10)
+        vis = d['pg'].evaluate("""() => { const t = document.getElementById('status-text'), r = t.getBoundingClientRect(), h = document.querySelector('.topbar').getBoundingClientRect();
+          return { w: Math.round(r.width), inBar: r.top >= h.top && r.bottom <= h.bottom + 1 && r.left >= 0 && r.right <= innerWidth, disp: getComputedStyle(t).display }; }""")
+        check(f"[{d['label']}] اوپر کی پٹی پر لفظ «محفوظ» نظر آتا ہے (پٹی کے اندر)", t is not None and vis['w'] > 10 and vis['inBar'] and vis['disp'] != 'none', vis)
+    mp.screenshot(path=f'{OUT}/v561_mobile_00_status_word.png', clip={'x': 0, 'y': 0, 'width': 390, 'height': 60})
 
     # B) SHO / DSP کا نام
     dp.evaluate("async () => { await DIOSync.kick(true); return 0; }"); idle(dp, 800)

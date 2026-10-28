@@ -158,6 +158,9 @@
     st.textContent =
       '.dio-tb-status{cursor:pointer}' +
       '.dio-tb-status #status-text{font-size:9pt !important}' +
+      // v561: موبائل پر بھی لفظ نظر آئیں (پہلے صرف رنگین نقطہ — «محفوظ / سنک ہو رہا ہے / آف لائن» افسر کو دکھنا چاہیے)
+      '@media (max-width:768px){#main-app .dio-tb-status #status-text{display:inline !important;font-size:8pt !important;white-space:nowrap}' +
+      '#main-app .dio-tb-status{padding:0 2px !important;gap:4px}}' +
       '.status-dot.status-syncing{background:#d97706 !important;animation:statusPulse 1s infinite}' +
       '.status-dot.status-offline{background:#b91c1c !important;animation:none}' +
       '.dio-tb-status[data-sync="nosession"] #status-text,.dio-tb-status[data-sync="offline"] #status-text{color:#b91c1c !important}' +
