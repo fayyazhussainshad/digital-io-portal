@@ -1154,7 +1154,7 @@
     ['بولڈ / ترچھا / انڈر لائن', 'Ctrl+B / Ctrl+I / Ctrl+U'],
     ['واپس / دوبارہ (ہر دستاویز کی اپنی تاریخ)', 'Ctrl+Z / Ctrl+Y'],
     ['دونوں طرف برابر / دائیں / بائیں / درمیان', 'Ctrl+J / Ctrl+R / Ctrl+L / Ctrl+E'],
-    ['فونٹ 1 پوائنٹ چھوٹا / بڑا', 'Ctrl+[ / Ctrl+]'],
+    ['فونٹ 1 پوائنٹ چھوٹا / بڑا', 'Ctrl+[ / Ctrl+]  ·  Ctrl+− / Ctrl+='],
     ['پوری دستاویز منتخب (صرف کھلی دستاویز)', 'Ctrl+A'],
     ['پرنٹ — وہی جو «پرنٹ» بٹن', 'Ctrl+P'],
     ['0.5 انچ (1.27 سینٹی میٹر) آگے / واپس (پیراگراف کے شروع میں: پہلی سطر کا حاشیہ، Backspace سے بھی واپس)', 'Tab / Shift+Tab'],
@@ -1224,11 +1224,15 @@
     if (m) return m[1].toLowerCase();                                       // اردو / IME / کوئی بھی: اصل کلید
     if (c === 'BracketLeft' || k === '[' || k === '{') return '[';
     if (c === 'BracketRight' || k === ']' || k === '}') return ']';
+    // v553 سے موجود: Ctrl + = / Ctrl + + بھی فونٹ +1pt، Ctrl + − بھی −1pt (صرف دستاویز کے اندر؛ باہر براؤزر کا zoom)
+    if (c === 'Equal' || c === 'NumpadAdd' || k === '=' || k === '+') return ']';
+    if (c === 'Minus' || c === 'NumpadSubtract' || k === '-' || k === '_') return '[';
     if (k === 'Tab' || c === 'Tab') return 'tab';
     const kc = e.keyCode | 0;
     if (kc >= 65 && kc <= 90) return String.fromCharCode(kc).toLowerCase();
     if (kc === 219) return '[';
-    if (kc === 221) return ']';
+    if (kc === 221 || kc === 187 || kc === 107) return ']';
+    if (kc === 189 || kc === 109) return '[';
     return '';
   }
   // باقی سننے والوں (پرنٹ کا راستہ، میعاد کا پہرا) کو بھی لاطینی حرف ہی دکھے
