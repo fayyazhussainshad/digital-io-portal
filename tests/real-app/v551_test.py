@@ -2,7 +2,7 @@
   A) ٹمپلیٹس: «سسٹم کے فارم» کی فہرست (تمام فارم، نام کے ساتھ)، خالی (ڈیٹا نہیں)، کھول کر ترمیم،
      محفوظ (آلہ + سرور)، اصل بحال، پرنٹ (Ctrl+P = پرنٹ بٹن، ایک ہی کاغذ)، شیئر PDF/Word
   B) خودکار: فہرست سے باہر کی دستاویز کھلے تو خالی فارم «خودکار شامل» ہو جائے
-  C) شیئر: چالان / ضمنی / واقعاتی رپورٹ / گشت — پوری فائل PDF (پرنٹ جیسی) + Word (جدول + متن)
+  C) شیئر: چالان / ضمنی / واقعاتی رپورٹ — پوری فائل PDF (پرنٹ جیسی) + Word (جدول + متن)
   D) خودکار انٹیرم چالان: 10 دن بعد، صرف نئے زیر تفتیش مقدمات، دوہرا نہیں، یاددہانی ایک ہی
 """
 import sys, json, subprocess, os
@@ -40,8 +40,8 @@ def run(b, tag, vp, mobile=False):
     n_rows = pg.evaluate("document.querySelectorAll('.dio-tplf tbody tr').length")
     n_sys = pg.evaluate("DIO_SYSTEM_FORMS.length")
     names = pg.evaluate("[...document.querySelectorAll('.dio-tplf td.nm')].map(e=>e.textContent)")
-    check(f'{tag} ٹمپلیٹس: سسٹم کے تمام فارم فہرست میں ({n_rows}/{n_sys})', n_rows == n_sys and n_sys >= 35)
-    must = ['انڈیکس نقل مسل', 'چالان مکمل', 'انٹیرم چالان', 'سزا سلپ', 'نقشہ موقع', 'RFA فارم', 'CRO کارڈ', 'واقعاتی رپورٹ', 'گشت رپورٹ']
+    check(f'{tag} ٹمپلیٹس: سسٹم کے تمام فارم فہرست میں ({n_rows}/{n_sys})', n_rows == n_sys and n_sys >= 34)   # v561: گشت رپورٹ نظام سے باہر (35 → 34)
+    must = ['انڈیکس نقل مسل', 'چالان مکمل', 'انٹیرم چالان', 'سزا سلپ', 'نقشہ موقع', 'RFA فارم', 'CRO کارڈ', 'واقعاتی رپورٹ']
     check(f'{tag} ٹمپلیٹس: اہم فارم نام کے ساتھ', all(any(m in n for n in names) for m in must), [m for m in must if not any(m in n for n in names)])
     check(f'{tag} ٹمپلیٹس: افقی scroll نہیں', pg.evaluate("document.documentElement.scrollWidth <= innerWidth + 1"))
     pg.screenshot(path=f'{OUT}/v551_{tag}_tpl_list.png', full_page=False)

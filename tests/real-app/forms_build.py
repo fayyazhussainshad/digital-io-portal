@@ -42,7 +42,6 @@ def forms(pg):
     L.append(('rfa_form', 'RFA فارم', 'مسل', "_openMisalEditor('rfa_form')", ['_newRfa()']))
     L.append(('cro_card', 'CRO کارڈ', 'مسل', "@cro", []))
     L.append(('incident', 'واقعاتی رپورٹ', 'دیگر', "@incident", [], '#ir-doc'))
-    L.append(('gasht', 'گشت رپورٹ', 'دیگر', "@gasht", [], '#gl-doc'))
     return L
 
 # ضمنی کا اگلا نمبر (1) ڈیٹا ہے، فارم کا حصہ نہیں — خالی
@@ -67,10 +66,6 @@ with sync_playwright() as p:
             elif opener == '@incident':
                 pg.evaluate("try{_dioResetTabs();_dioExitDocView()}catch(e){}")
                 pg.evaluate("showPage('incident', null)"); pg.wait_for_timeout(1500); pg.evaluate("_irNew()")
-            elif opener == '@gasht':
-                pg.evaluate("try{_dioResetTabs();_dioExitDocView()}catch(e){}")
-                pg.evaluate("document.getElementById('ir-view')&&document.getElementById('ir-view').remove()")
-                pg.evaluate("showPage('gasht', null)"); pg.wait_for_timeout(1500); pg.evaluate("_glNew()")
             else:
                 open_case(pg); pg.evaluate(opener)
             pg.wait_for_timeout(1800)

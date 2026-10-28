@@ -57,7 +57,6 @@
     fivec:       'fivec.js',
     help:        'help-guide.js',
     incident:    'incident.js',
-    gasht:       'gasht.js',
     law:         'law-library.js',
     performance: 'performance.js',
     settings:    'settings.js',
@@ -137,7 +136,7 @@
   var IDLE = [
     // Mocaddme ke andar ka asal kaam
     'zimni.js', 'report173.js', 'case-form.js', 'case-docs.js',
-    'witnesses.js', 'mulziman.js', 'fir.js', 'case-sharing.js',
+    'witnesses.js', 'mulziman.js', 'fir.js',
     // Dastavezat aur aalaat
     'toolbar.js', 'editor-tools.js', 'doc-viewer.js', 'saved-docs.js',
     'misal-docs.js', 'misal-fir.js', 'misal-templates.js',
@@ -147,7 +146,7 @@
     'naqsha-mauqa.js', 'saza-slip.js', 'darkhwastain.js', 'rfa-form.js',
     'cro-card.js', 'cdr-imei.js',
     // Safhe (agar afsar in tak pahunche to pehli tah pehle hi le aayegi)
-    'templates.js', 'law-library.js', 'fivec.js', 'ahkamat.js', 'incident.js', 'gasht.js',
+    'templates.js', 'law-library.js', 'fivec.js', 'ahkamat.js', 'incident.js',
     'settings.js', 'suspects.js', 'evidence.js', 'court.js',
     'performance.js', 'backup.js', 'bin.js', 'help-guide.js'
   ];

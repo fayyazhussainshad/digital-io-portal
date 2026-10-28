@@ -86,40 +86,17 @@ async function getCases(status, query) {
     }
     const { data } = await q;
     let all = data || [];
-    // P9: merge in cases shared with this officer
-    try {
-      const shared = await _getSharedCases(oid);
-      if (shared && shared.length) {
-        const ownIds = new Set(all.map(c => c.id));
-        shared.forEach(sc => { if (!ownIds.has(sc.id)) all.push(sc); });
-      }
-    } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+    // v561: مقدمہ شیئر مکمل ختم (افسر کا حکم، 28 اکتوبر 2026) — صرف اپنے مقدمات
     if (typeof markSynced === 'function') markSynced();
     if (typeof offlineStore !== 'undefined' && all && !status && !query) {
       try { await offlineStore.cache('cases_cache', all); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
     }
-    // FIX v524: shared maqdmaat upar BINA status/talaash ke jor diye jate thay —
-    // "چالان مکمل" chunne par bhi dusre status ke shared maqdmaat aa jate thay.
     if (status || query) return filterCached(all);
     return all;
   } catch(e) {
     console.error('getCases error:', e);
     return [];
   }
-}
-
-// P9: fetch cases shared with this officer (marked with _shared flag + permission)
-
-async function _getSharedCases(oid) {
-  try {
-    const { data: shares } = await supabaseClient.from('case_shares')
-      .select('case_id,permission').eq('shared_with', oid);
-    if (!shares || !shares.length) return [];
-    const ids = shares.map(s => s.case_id);
-    const permMap = {}; shares.forEach(s => { permMap[s.case_id] = s.permission; });
-    const { data: cases } = await supabaseClient.from('cases').select('*').in('id', ids).is('deleted_at', null);
-    return (cases||[]).map(c => ({ ...c, _shared: true, _sharePermission: permMap[c.id] || 'read' }));
-  } catch(_) { return []; }
 }
 
 // Background refresh — updates cache silently, refreshes UI if cases page open
@@ -132,13 +109,6 @@ async function _refreshCasesInBackground(oid) {
     const { data, error } = await supabaseClient.from('cases').select('*').eq('officer_id',oid).is('deleted_at', null).order('fir_number',{ascending:false});
     if (error) throw error;
     let all = data || [];
-    try {
-      const shared = await _getSharedCases(oid);
-      if (shared && shared.length) {
-        const ownIds = new Set(all.map(c => c.id));
-        shared.forEach(sc => { if (!ownIds.has(sc.id)) all.push(sc); });
-      }
-    } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     if (all && typeof offlineStore !== 'undefined') {
       try { await offlineStore.cache('cases_cache', all); } catch(_) { /* sirf local cache — na ho sake to bhi aage chalo */ }
       // v560: دوسرے آلے پر حذف ہونے والا مقدمہ اس آلے کے cache سے بھی ہٹے (پہلے ہمیشہ باقی رہتا)
@@ -148,7 +118,8 @@ async function _refreshCasesInBackground(oid) {
         const cached = await offlineStore.getAll('cases_cache') || [];
         for (const c of cached) {
           if (!c || live.has(String(c.id)) || c._pending || String(c.id).startsWith('local-')) continue;
-          if (c.officer_id === oid || c._shared) await offlineStore.remove('cases_cache', c.id);
+          // v561: شیئر ختم — پہلے کبھی شیئر ہو کر آیا دوسرے افسر کا مقدمہ بھی اس آلے سے ہٹے
+          if (c.officer_id === oid || c._shared || (c.officer_id && c.officer_id !== oid)) await offlineStore.remove('cases_cache', c.id);
         }
       } catch(_) { /* sirf local cache — agli dafa */ }
       if (typeof markSynced === 'function') markSynced();

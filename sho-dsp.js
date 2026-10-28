@@ -55,11 +55,15 @@ function openShoDspModal(type) {
 window.openShoDspModal = openShoDspModal;
 
 function _saveShoDsp(type) {
+  // v561: میعاد ختم = صرف دیکھنا — ترتیب بھی نہیں بدلتی
+  if (window.DIO && DIO.sub && typeof DIO.sub.guard === 'function' && !DIO.sub.guard('ترتیب محفوظ')) return;
   const isSho = type === 'sho';
   const key = isSho ? 'digital_io_sho' : 'digital_io_dsp';
   const rank = (document.getElementById('shodsp-rank')||{}).value || '';
   const name = (document.getElementById('shodsp-name')||{}).value || '';
   try { localStorage.setItem(key, JSON.stringify({ rank, name })); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
+  // v561: سب آلات پر ایک ہی SHO / DSP-SDPO (موبائل پر بدلا تو لیپ ٹاپ پر بھی)
+  try { if (window.DIOSync && typeof DIOSync.settingChanged === 'function') DIOSync.settingChanged(key); } catch(_) { /* اگلی بار */ }
   closeModal();
   _updateShoDspButtons();
   if (typeof showToast === 'function') showToast(''+(isSho?'SHO':'DSP/SDPO')+' کا نام محفوظ', 'success');

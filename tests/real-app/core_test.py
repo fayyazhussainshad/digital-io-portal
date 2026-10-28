@@ -49,7 +49,6 @@ SEED = """(() => {
   d.applications_5c = [{ id: 'ap1', officer_id: 'o1', complainant_name: 'درخواست گزار', status: 'pending', created_at: '2026-10-10T00:00:00Z' }];
   d.application_5c_numbers = [{ id: 'n1', application_5c_id: 'ap1', application_number: '5C-11' }];
   d.application_5c_attachments = [];
-  d.case_shares = [{ id: 'sh1', case_id: 'c1', shared_by: 'o1', shared_with: 'o2', permission: 'read', revoked_at: null, created_at: '2026-10-10T00:00:00Z' }];
   return 0; })()"""
 
 
@@ -265,17 +264,6 @@ def run_desktop_only(pg):
         server(pg)
     except Exception as e:
         check('section crashed: ' + '5-C — حذف: درخواست نہ مٹے تو اس کے نمبر/فائلیں بھی نہ مٹیں', False, repr(e)[:200])
-    # شیئر کی منسوخی — خاموش روک پر «منسوخ» کا جھوٹا پیغام نہیں (ساتھی کی رسائی باقی رہتی)
-    try:
-        need(pg, 'case-sharing.js')
-        pg.evaluate("_shareCaseId = 'c1'; 0"); server(pg, silent=['case_shares:update']); toasts(pg)
-        pg.evaluate("_unshare('sh1')"); pg.wait_for_timeout(500)
-        t = toasts(pg)
-        check('case share revoke: silently blocked → still active, clear failure', db(pg, 'case_shares')[0]['revoked_at'] is None and has(t, 'error', 'منسوخ نہیں ہوا') and not has(t, 'info', 'منسوخ کر دیا'), t)
-        server(pg); pg.evaluate("_unshare('sh1')"); pg.wait_for_timeout(500)
-        check('case share revoke: normal → revoked', db(pg, 'case_shares')[0]['revoked_at'] is not None, toasts(pg))
-    except Exception as e:
-        check('section crashed: ' + 'شیئر کی منسوخی — خاموش روک پر «منسوخ» کا جھوٹا پیغام نہیں (ساتھی کی رسائی باقی رہتی)', False, repr(e)[:200])
     # 5-C آف لائن: نمبر sync نہ ہوں تو اندراج «synced» نہیں، اور دوبارہ کوشش دوہری درخواست نہیں بناتی
     try:
         pg.context.set_offline(True); pg.wait_for_timeout(200)

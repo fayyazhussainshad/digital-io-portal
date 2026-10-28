@@ -1,6 +1,8 @@
 # Digital IO — ہر تبدیلی پر خودکار جانچ (v547)
-# ہر PR اور main پر ہر push: lint + unit tests + اصل ایپ کی جانچ (Desktop/Mobile/پرنٹ)۔
+# ہر PR: lint + unit tests + اصل ایپ کی جانچ (Desktop/Mobile/پرنٹ)۔ main پر push: lint + unit tests۔
 # کوئی بھی جانچ ناکام ہو تو PR پر سرخ نشان — غلط کوڈ live جانے سے پہلے رک جائے۔
+# v562: ریپو private ہے (27 اکتوبر کا اتفاق) — GitHub کے مفت منٹ محدود؛ اصل ایپ کی لمبی جانچ (~50 منٹ)
+#   PR پر چلتی ہے (وہی merge والا کوڈ جانچتی ہے)، main پر دوبارہ نہیں۔ ضرورت ہو تو Actions سے ہاتھ سے بھی۔
 name: check
 
 on:
@@ -33,6 +35,7 @@ jobs:
 
   real-app:
     name: Real app (desktop + mobile + print)
+    if: github.event_name != 'push'
     runs-on: ubuntu-24.04   # v558: «latest» کی نئی تصویر پر تنصیب ناکام — جانچ والی تصویر پکی
     timeout-minutes: 60
     needs: lint-and-unit
@@ -65,63 +68,63 @@ jobs:
           for i in $(seq 1 30); do curl -sf http://localhost:8770/index.html > /dev/null && break; sleep 1; done
       - name: Incident report (real_test.py)
         working-directory: tests/real-app
-        run: python real_test.py
+        run: bash ci_run.sh real_test.py
       - name: Core flows (core_test.py)
         if: always()
         working-directory: tests/real-app
-        run: python core_test.py
-      - name: Patrol log (gasht_test.py)
-        if: always()
-        working-directory: tests/real-app
-        run: python gasht_test.py
+        run: bash ci_run.sh core_test.py
       - name: Case-file index (index_test.py)
         if: always()
         working-directory: tests/real-app
-        run: python index_test.py
+        run: bash ci_run.sh index_test.py
       - name: FIR text page (fir_test.py)
         if: always()
         working-directory: tests/real-app
-        run: python fir_test.py
+        run: bash ci_run.sh fir_test.py
       - name: Landing Quran/Hadith + dashboard order (landing_test.py)
         if: always()
         working-directory: tests/real-app
-        run: python landing_test.py
+        run: bash ci_run.sh landing_test.py
       - name: System forms, PDF/Word share, auto interim challan (v551_test.py)
         if: always()
         working-directory: tests/real-app
-        run: python v551_test.py
+        run: bash ci_run.sh v551_test.py
       - name: Zimni save/sync/print, landing, login, case form, CDR, challan, right-click (v552_test.py)
         if: always()
         working-directory: tests/real-app
-        run: python v552_test.py
+        run: bash ci_run.sh v552_test.py
       - name: v553 list — no approval, case print/share, two-part accused/witness, naqsha list/straight lines, paper at print, back-side binding mark, Word keys, 14pt, mobile FIR PDF, PDF/Word share, toolbar guide (v553_test.py)
         if: always()
         working-directory: tests/real-app
-        run: python v553_test.py
+        run: bash ci_run.sh v553_test.py
       - name: v554 — cross version only when added, case print card / list, print·download·share separate, whole case = each document's own print (print / PDF / Word page by page), centred headings (v554_test.py)
         if: always()
         working-directory: tests/real-app
-        run: python v554_test.py
+        run: bash ci_run.sh v554_test.py
       - name: v555 — RFA one page, saza/zimni column lines to page bottom, zimni binding mark only on pages 2/4/6 (A4 + Legal), IO line spacing and alignment, narrow col 4, zimni number and one-per-date warnings, English rank stays RTL (v555_test.py)
         if: always()
         working-directory: tests/real-app
-        run: python v555_test.py
+        run: bash ci_run.sh v555_test.py
       - name: v558 — statements 161 (androoni zimni) save local-first + server + autosave draft + sync, witness dropdown, (زیردفعہ 161ض ف) at left border, IO name/date SOP, Ctrl+S/Ctrl+P/top-bar never the challan route, zimni column lines to page bottom in editor; Urdu-keyboard Ctrl+S/Ctrl+P, closing line, wider col 4, no lone serial 1, unified list buttons, auto-sync while online, text beside binding line (v558_test.py)
         if: always()
         working-directory: tests/real-app
-        run: python v558_test.py
+        run: bash ci_run.sh v558_test.py
       - name: v557 — 5-C entry without subject, case-linked 5-C applications chip and list (v557_test.py)
         if: always()
         working-directory: tests/real-app
-        run: python v557_test.py
+        run: bash ci_run.sh v557_test.py
       - name: v560 — cross-device sync, two devices at once (desktop + mobile, one server) — new/edit/delete/restore within 10 s without refresh, offline → online no duplicate, autosave draft across devices, two-version conflict choice, statements 161, challan, cases, top-bar status, no-session, write-block keeps reading, lost reply → retry without duplicate or false conflict (v560_sync_test.py)
         if: always()
         working-directory: tests/real-app
-        run: python v560_sync_test.py
+        run: bash ci_run.sh v560_sync_test.py
       - name: v560 — read-only device inventory + backup tool (v560_inventory_test.py)
         if: always()
         working-directory: tests/real-app
-        run: python v560_inventory_test.py
+        run: bash ci_run.sh v560_inventory_test.py
+      - name: v561/v562 — expiry = view only (no print / write / edit, search open, renew unlocks; suspended = full lock), all officer settings on both devices (SHO / DSP, signature, vehicle, own lists, suggestions, papers; never theme / secrets; first-sync merge; shared device safe), case sharing removed, patrol (gasht) removed (v561_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: bash ci_run.sh v561_test.py
       - name: Screenshots and print PDFs
         if: always()
         uses: actions/upload-artifact@v4

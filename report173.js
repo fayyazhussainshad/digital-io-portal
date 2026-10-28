@@ -345,6 +345,7 @@ async function _r173Push(caseId, d) {
 // زیرِ التوا چالان (کسی بھی مقدمے کے) سرور پر — ایپ پر واپسی / انٹرنیٹ آتے ہی / ہر منٹ
 let _r173SyncBusy = false;
 async function _r173SyncPending() {
+  if (window.DIO && DIO.sub && typeof DIO.sub.blocked === 'function' && DIO.sub.blocked()) return 0;   // v561: صرف دیکھنا — تجدید تک یہیں
   if (_r173SyncBusy || !navigator.onLine || typeof supabaseClient === 'undefined' || !supabaseClient) return 0;
   try { const s0 = await supabaseClient.auth.getSession(); if (!s0 || !s0.data || !s0.data.session) return 0; } catch (_) { return 0; }
   _r173SyncBusy = true;
@@ -5885,7 +5886,7 @@ window._ch173StripSpan = _ch173StripSpan;
 // wapas saada matn bana dete hain, taake data-base mein koi markup na jaye
 // (pehle span ka code khud matn ban kar mehfooz ho jata tha — woh bug na aaye).
 // CNIC ki pehchan — DONO shaklon mein:
-//   • dashes ke saath : 36302-2931394-5
+//   • dashes ke saath : 00000-0000000-0
 //   • baghair dashes  : 36302293139455
 // (Kuch گواہان/ملزمان ka CNIC baghair dashes mehfooz hota hai, isi liye un
 //  par seedh nahi lag rahi thi.) Satar ke AAKHIR wala number hi CNIC hai.

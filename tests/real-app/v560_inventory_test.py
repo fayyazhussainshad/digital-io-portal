@@ -13,6 +13,10 @@ U1 = '11111111-1111-4111-8111-111111111111'   # سرور پر موجود مقد�
 U2 = '22222222-2222-4222-8222-222222222222'   # سرور پر نہیں (حذف/کبھی نہیں گیا)
 
 SEED = """async ([U1, U2]) => {
+  // ایپ کا اپنا پس منظر sync (v560 سے: لاگ اِن کے چند سیکنڈ بعد اور ہر واپسی پر) بیج میں رکھا «باقی» کام
+  // جانچ کے بیچ نہ بھیجے — ورنہ گنتی اس پر منحصر کہ sync پہلے چلا یا یہ آلہ (وقت کی دوڑ)۔ آلہ ویسا جیسا افسر کا لیپ ٹاپ تھا۔
+  for (const f of ['_zimniSyncPending', '_zaSyncPending', '_r173SyncPending', '_syncOfflineQueue']) window[f] = async () => 0;
+  if (window.DIOSync) DIOSync.kick = async () => 0;
   __db.cases.push({ id: U1, officer_id: 'o1', fir_number: '700/26', status: 'under', created_at: '2026-10-20T00:00:00Z' });
   __db.case_documents = [{ id: 'd1', case_id: U1, document_type: 'saza_slip', content: {} }];
   // ایپ کا اپنا نقشہ-sync (5 سیکنڈ والا) سرور پر نہ لکھ سکے — ورنہ «زیرِ التوا» نشان جانچ سے پہلے ہی ہٹ جاتا ہے

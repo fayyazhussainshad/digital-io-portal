@@ -148,7 +148,7 @@ def run(b, tag, args, mobile):
         check(f'{tag}: پٹی میں واپس / نئی دستاویز / محفوظ / پرنٹ / شیئر', all(any(x in t for t in dv_bar_btns(pg)) for x in ['واپس', 'نئی دستاویز', 'محفوظ', 'پرنٹ', 'شیئر']), dv_bar_btns(pg))
         exit_dv(pg)
         bad = []
-        for page in ['cases', 'incident', 'gasht', 'reminders', 'court', 'evidence', 'templates', 'ahkamat', 'law']:
+        for page in ['cases', 'incident', 'reminders', 'court', 'evidence', 'templates', 'ahkamat', 'law']:
             pg.evaluate(f"showPage('{page}', null)"); pg.wait_for_timeout(1300)
             t = pg.evaluate("[...document.querySelectorAll('#page-content .dio-add-btn')].filter(b => b.getClientRects().length).map(b => b.textContent.trim().replace(/\\s+/g, ' '))")
             # احکامات: «+ حکم درج کریں» صرف انتظامی اختیار والے افسر کو (یہاں عام افسر)
