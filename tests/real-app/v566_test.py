@@ -319,6 +319,7 @@ def run(desktop):
         check(f'{tag} A: انڈیکس نقل مسل — نمبر جیسے لکھے، ترتیب 2-الف، 3، 3-الف، 3-ب، 4', idx and [r[0] for r in idx] == want_n, idx)
         check(f'{tag} B: انڈیکس — تاریخ کالم 1 کی (29/10، 30/10 …)', idx and [r[1] for r in idx] == ['29/10/2026', '30/10/2026', '30/10/2026', '30/10/2026', '31/10/2026'], idx)
         check(f'{tag} C (2a): انڈیکس — سینئر افسر کی ضمنی پر اُسی کا نام', idx and idx[2][2].startswith('ندیم عباس شاد') and idx[3][2].startswith('سید اظہر عباس'), idx)
+        pg.evaluate("(() => { const t = document.getElementById('idxz-table'); if (t) t.scrollIntoView({ block: 'center' }); try { closeToast && closeToast(); } catch (e) {} return 0; })()"); pg.wait_for_timeout(500)
         pg.screenshot(path=V + f'{tag}_06_index.png')
 
         # ═══ تلاش — «ضمنی نمبر 2-الف» ═══
