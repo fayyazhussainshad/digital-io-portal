@@ -124,7 +124,9 @@
   html.dio-mform #ch173-doc.zf-editor .zf-pick {
     width: 38px; height: 38px; border-radius: 10px; font-size: 13.5pt;
     background: var(--accent, #38bdf8); color: #fff; border: 0;
+    left: 0; transform: none;            /* v566: کارڈ میں «بنام» سطر کے بائیں کنارے پر */
   }
+  html.dio-mform #ch173-doc.zf-editor tr.zf-prerow .zf-bl-banam { padding-left: 46px; }
 
   /* Ikhtitam + dastkhat — aakhri card */
   html.dio-mform #ch173-doc.zf-editor tr.zf-endrow {

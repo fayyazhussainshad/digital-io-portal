@@ -105,6 +105,17 @@ function _srFromHistory(q) {
   if (inp) { inp.value = q; _runGlobalSearch(q); }
 }
 
+// v566: ضمنی — نمبر جیسا لکھا (2-الف)، تاریخ کالم 1 کی (zimni.js کے وہی اصول؛ وہ ابھی نہ آئی ہو تو محفوظ قدر)
+function _srZimni(z) {
+  let c = z.content || {};
+  try { if (typeof c === 'string') c = JSON.parse(c); } catch (_) { c = {}; }
+  const x = Object.assign({}, z, { content: c });
+  const label = (typeof window._zimniLabel === 'function' ? window._zimniLabel(x) : '') || c.zno || String(z.serial_no || '');
+  const fd = (typeof window._zimniRecDate === 'function') ? window._zimniRecDate(x) : null;
+  const date = fd ? fd.dmy : '';
+  return Object.assign(x, { _label: label, _date: date, _head: c.sub_type || c.head || '',
+    _hay: 'ضمنی نمبر ' + label + ' ' + date + ' ' + (c.head || '') });
+}
 async function _runGlobalSearch(q) {
   _addSearchHistory(q);
   const box = document.getElementById('sr-results');
@@ -142,7 +153,8 @@ async function _runGlobalSearch(q) {
     S.from('case_accused').select('id,case_id,name,cnic,mobile,pesha').or(`name.ilike.${w},${cnicOr('cnic')},${cellOr('mobile')},pesha.ilike.${w}`).limit(10),
     S.from('case_witnesses').select('id,case_id,full_name,cnic,cell,profession,status').or(`full_name.ilike.${w},${cnicOr('cnic')},${cellOr('cell')},profession.ilike.${w}`).limit(10),
     S.from('fir_matn').select('id,case_id,matn').ilike('matn', w).limit(10),
-    S.from('zimni_reports').select('id,case_id,serial_no,content').is('deleted_at', null).limit(10),
+    // v566: سب ضمنیاں (پہلے صرف پہلی 10 میں تلاش ہوتی) — نتیجے 10 تک
+    S.from('zimni_reports').select('id,case_id,serial_no,report_date,content').is('deleted_at', null).limit(1000),
     S.from('hamrahi_mulazman').select('id,case_id,name,rank,service_number,cnic,mobile').or(`name.ilike.${w},rank.ilike.${w},service_number.ilike.${w},${cnicOr('cnic')},${cellOr('mobile')}`).limit(10),
     S.from('sarkari_gari').select('id,case_id,vehicle_number,driver_name').or(`vehicle_number.ilike.${w},driver_name.ilike.${w}`).limit(10),
     S.from('cdr_imei_requests').select('id,case_id,diary_number').ilike('diary_number', w).limit(10),
@@ -159,7 +171,8 @@ async function _runGlobalSearch(q) {
   const acc = mine(accusedR);
   const wit = mine(witnessR);
   const fir = mine(firR);
-  const zim = mine(zimniR).filter(z => JSON.stringify(z.content||'').toLowerCase().includes(q.toLowerCase()));
+  // v566 (TASK 6): «ضمنی نمبر 2-الف» اور کالم 1 کی تاریخ سے بھی ملے
+  const zim = mine(zimniR).map(_srZimni).filter(z => (z._hay + ' ' + JSON.stringify(z.content||'')).toLowerCase().includes(q.toLowerCase())).slice(0, 10);
   // SECURITY FIX (Add 7): hamrahi + gari bhi sirf APNE muqadmaat tak mehdood —
   // baaqi categories ki tarah `mine()` se scope karo (dusre afsar ke record na dikhein).
   const ham = mine(hamrahiR);
@@ -249,7 +262,7 @@ function _renderSearchResults(q, r) {
       (_qd.length >= 5 && ((c.complainant_cnic||'').replace(/\D/g,'').includes(_qd) || (c.complainant_cell||'').replace(/\D/g,'').includes(_qd))))
     .forEach(c => html += witCard(c.complainant||'—', `مقدمہ ${c.fir_number||'—'} کا مدعی · ${c.complainant_cnic||''} ${c.complainant_cell||''}`, `openCaseWorkspace('${c.id}')`, true));
   r.fir.forEach(f => html += card('FIR متن','var(--green)', 'ایف آئی آر متن', (f.matn||'').slice(0,80)+'...', f.case_id?`openCaseWorkspace('${f.case_id}')`:''));
-  r.zimni.forEach(z => html += card('ضمنی','#0ea5e9', `ضمنی نمبر ${z.serial_no||''}`, '', z.case_id?`openCaseWorkspace('${z.case_id}')`:''));
+  r.zimni.forEach(z => html += card('ضمنی','#0ea5e9', `ضمنی نمبر \u2068${z._label}\u2069`, [z._date ? '\u2068' + z._date + '\u2069' : '', z._head].filter(Boolean).join(' · '), z.case_id?`openCaseWorkspace('${z.case_id}')`:''));
   (r.hamrahi||[]).forEach(h => html += card('ہمراہی ملازم','#14b8a6', h.name||'—', `${h.rank||''} ${h.service_number||''} ${h.cnic||''} ${h.mobile||''}`, h.case_id?`openCaseWorkspace('${h.case_id}')`:''));
   (r.gari||[]).forEach(g => html += card('سرکاری گاڑی','#64748b', g.vehicle_number||'—', `ڈرائیور: ${g.driver_name||''}`, g.case_id?`openCaseWorkspace('${g.case_id}')`:''));
   (r.cdr||[]).forEach(cd => html += card('CDR/IMEI','#8b5cf6', `ڈائری ${cd.diary_number||''}`, '', cd.case_id?`openCaseWorkspace('${cd.case_id}')`:''));

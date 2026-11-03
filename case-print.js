@@ -245,6 +245,10 @@
     croCards: () => { try { return (typeof _croAllCards !== 'undefined' && _croAllCards) ? _croAllCards : {}; } catch (_) { return {}; } },
   };
   const sno = (z) => parseInt(z && z.serial_no, 10) || parseInt(((z && z.content) || {}).serial_no, 10) || 0;
+  // v566: ضمنی کی ترتیب 1، 2، 2-الف، 2-ب، 3 … (zimni.js کا _zimniOrdKey)؛ برابر ہوں تو کالم 1 کی تاریخ
+  const ord = (z) => (typeof window._zimniOrdKey === 'function' && z && z.content && 'bodyHtml' in z.content) ? window._zimniOrdKey(z) : sno(z) * 100;
+  const dIso = (z) => (typeof window._zimniRecDate === 'function' && z && z.content && 'bodyHtml' in z.content) ? ((window._zimniRecDate(z) || {}).iso || '') : String(z.report_date || z.created_at || '');
+  const byZimni = (a, b) => (ord(a) - ord(b)) || dIso(a).localeCompare(dIso(b));
   const byOrder = (a, b) => (sno(a) - sno(b)) || String(a.report_date || a.created_at || '').localeCompare(String(b.report_date || b.created_at || ''));
 
   // ہر ریکارڈ اپنے «پرنٹ» سے — ایک ایک کر کے (فہرست والی دستاویزات)
@@ -283,7 +287,7 @@
       try { return typeof _misalHasData === 'function' && _misalHasData(k); } catch (_) { return false; }
     };
     const firRows = (t) => G.matn().filter(m => (m.type || 'fir') === t && String(m.matn || '').trim());
-    const zimniAll = async () => eachPrint(G.zimni().slice().sort(byOrder), async () => {}, (z) => _printZimniById(z.id));
+    const zimniAll = async () => eachPrint(G.zimni().slice().sort(byZimni), async () => {}, (z) => _printZimniById(z.id));
     const L = [];
     L.push({ id: 'index_naql', name: 'انڈیکس نقل مسل', saved: true, open: () => _openMisalEditor('index_naql') });
     // FIR اور کراس ورژن الگ الگ — ہر ایک کا صرف اپنا متن (ایک ہی چیز دو بار نہ آئے)
