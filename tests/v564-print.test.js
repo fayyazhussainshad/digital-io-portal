@@ -109,6 +109,10 @@ test('v564: الفاظ نہ جُڑیں — فونٹ کی kerning بند، ایک
   assert.ok(/st\.id = 'dio-text-screen';\s*st\.textContent = dioTextCSS\(DIO_DOC_ROOTS\);/.test(A));
   // شیئر کی PDF بھی پرنٹ جیسی
   assert.ok(/if \(typeof window\.dioTextInject === 'function'\) html = window\.dioTextInject\(html\);/.test(read('dio-share.js')));
+  // تصویر (html2canvas) بھی kerning کے بغیر — دونوں جگہ
+  assert.strictEqual((read('dio-share.js').match(/await noKern\(function \(\) \{ return window\.html2canvas\(/g) || []).length, 2);
+  // فائل کی اصل تصویر (SVG foreignObject) — body وہاں div بنتا ہے، اس لیے قاعدہ لپیٹنے والے div پر
+  assert.ok(/style="width:' \+ W \+ 'px;background:#fff;font-kerning:none;">/.test(read('dio-share.js')));
   assert.ok(!/word-spacing:0\.12em/.test(R) && !/word-spacing: 0\.12em/.test(H) && !/DIO_WORD_GAP/.test(A + R + H + Z), 'پرانے اضافی فاصلے نہیں');
   // انجیکشن: ایک بار، head میں
   const f = A.slice(A.indexOf('function dioTextCSS('), A.indexOf('window.dioTextCSS = dioTextCSS;'));
