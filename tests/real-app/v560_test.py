@@ -8,7 +8,7 @@
 
 چلانا: README.md — `python3 v560_test.py` (poppler درکار: pdffonts / pdfinfo)
 """
-import sys, os, json, subprocess, threading, http.server, functools
+import sys, os, re, json, subprocess, threading, http.server, functools
 sys.path.insert(0, '.')
 from real import *
 
@@ -240,6 +240,8 @@ def save_reload(b, tag, vp, mobile=False):
 
 def offline_font(b):
     """service worker کے ساتھ: فونٹ پہلے سے cache، پھر بغیر انٹرنیٹ صفحہ کھولنے پر بھی Jameel"""
+    # ہر deploy پر CACHE_NAME بدلتا ہے (قاعدہ 6) — نام sw.js سے، پکا لکھا ہوا نہیں
+    CACHE = re.search(r"const CACHE_NAME = '([^']+)'", open(os.path.join(ROOT, 'sw.js'), encoding='utf-8').read()).group(1)
     port = 8790
     class Q(http.server.SimpleHTTPRequestHandler):
         def __init__(self, *a, **k): super().__init__(*a, directory=ROOT, **k)
@@ -258,7 +260,7 @@ def offline_font(b):
     pg.evaluate("navigator.serviceWorker.ready.then(() => 1)")
     have = 0
     for _ in range(40):
-        have = pg.evaluate(f"""async () => {{ const c = await caches.open('digital-io-v560'); const r = await c.match('/{FONT_URL}');
+        have = pg.evaluate(f"""async () => {{ const c = await caches.open('{CACHE}'); const r = await c.match('/{FONT_URL}');
                                               return r ? (await r.arrayBuffer()).byteLength : 0; }}""")
         if have: break
         pg.wait_for_timeout(500)
