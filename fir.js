@@ -104,7 +104,7 @@ function _renderFir(focus) {
     #fir-page .fir-part > .fir-headrow ~ .fir-headrow { margin-top:18px; }
     #fir-page .fir-headrow-btn { justify-self:start; display:flex; }
     #fir-page .fir-headrow-btn .btn { white-space:nowrap; }
-    #fir-page .fir-headrow-title { text-align:center; white-space:nowrap; font-family:'Jameel Noori Nastaleeq',serif; }
+    #fir-page .fir-headrow-title { text-align:center; white-space:nowrap; font-family:'Jameel Noori Nastaleeq'; }
   </style>
   <div id="fir-page">
     ${_renderFirPart('fir')}
@@ -120,14 +120,14 @@ function _renderFir(focus) {
 }
 
 function _renderMatnTable(rows) {
-  if (!rows.length) return `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:14px;">ابھی کوئی متن درج نہیں</div>`;
-  return `<table style="width:100%;border-collapse:collapse;font-size:14px;direction:rtl;margin-bottom:6px;">
+  if (!rows.length) return `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:10.5pt;">ابھی کوئی متن درج نہیں</div>`;
+  return `<table style="width:100%;border-collapse:collapse;font-size:10.5pt;direction:rtl;margin-bottom:6px;">
     <thead><tr style="background:var(--bg-secondary);">
       <th style="padding:8px;text-align:right;border:1px solid var(--border);">مضمون</th>
       <th style="padding:8px;text-align:center;border:1px solid var(--border);width:100px;">ایکشن</th>
     </tr></thead><tbody>
     ${rows.map(m => `<tr style="background:rgba(245,158,11,0.08);">
-      <td style="padding:10px;border:1px solid var(--border);text-align:justify;font-family:'Jameel Noori Nastaleeq',serif;line-height:1.8;font-size:14pt;min-height:200px;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:12;-webkit-box-orient:vertical;">${esc(m.matn)||''}</td>
+      <td style="padding:10px;border:1px solid var(--border);text-align:justify;font-family:'Jameel Noori Nastaleeq';line-height:1.8;font-size:14pt;min-height:200px;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:12;-webkit-box-orient:vertical;">${esc(m.matn)||''}</td>
       <td style="padding:6px;border:1px solid var(--border);text-align:center;white-space:nowrap;vertical-align:top;">
         <button title="ترمیم" aria-label="ترمیم" class="btn btn-secondary btn-sm" style="padding:2px 7px;" onclick="_openMatnModal('${m.type||'fir'}','${m.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>
         <button title="دیکھیں" aria-label="دیکھیں" class="btn btn-secondary btn-sm" style="padding:2px 7px;margin-top:3px;" onclick="_viewMatn('${m.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg></button>
@@ -139,8 +139,8 @@ function _renderMatnTable(rows) {
 }
 
 function _renderCopyTable(rows) {
-  if (!rows.length) return `<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:13px;">ابھی کوئی فوٹو کاپی نہیں</div>`;
-  return `<table style="width:100%;border-collapse:collapse;font-size:14px;direction:rtl;">
+  if (!rows.length) return `<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:9.75pt;">ابھی کوئی فوٹو کاپی نہیں</div>`;
+  return `<table style="width:100%;border-collapse:collapse;font-size:10.5pt;direction:rtl;">
     <thead><tr style="background:var(--bg-secondary);">
       <th style="padding:8px;text-align:right;border:1px solid var(--border);">فوٹو کاپی</th>
       <th style="padding:8px;text-align:center;border:1px solid var(--border);width:120px;">ایکشن</th>
@@ -168,7 +168,7 @@ function _openMatnModal(type, id) {
   const existing = id ? (_firMatn.find(m => m.id === id) || {}) : {};
   openModal(id ? 'متن میں ترمیم' : 'متن درج کریں', `
     <div style="direction:rtl;width:80vw;max-width:90vw;">
-      <textarea id="fir-matn-text" data-mic="true" placeholder="یہاں مکمل متن لکھیں یا پیسٹ کریں..." style="width:100%;min-height:50vh;box-sizing:border-box;padding:16px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:16px;line-height:1.8;direction:rtl;text-align:right;outline:none;">${esc(existing.matn)||''}</textarea>
+      <textarea id="fir-matn-text" data-mic="true" placeholder="یہاں مکمل متن لکھیں یا پیسٹ کریں..." style="width:100%;min-height:50vh;box-sizing:border-box;padding:16px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq';font-size:12pt;line-height:1.8;direction:rtl;text-align:right;outline:none;">${esc(existing.matn)||''}</textarea>
     </div>
   `, `
     <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
@@ -287,7 +287,7 @@ function _viewMatn(id) {
   const heading = (row.type === 'cross_version') ? 'کراس ورژن' : 'ایف آئی آر';
   openModal('متن ' + heading, `
     <div style="direction:rtl;width:80vw;max-width:90vw;">
-      <div style="width:100%;box-sizing:border-box;padding:20px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;font-size:14pt;line-height:1.9;text-align:justify;direction:rtl;max-height:70vh;overflow-y:auto;white-space:pre-wrap;">${esc(row.matn)||''}</div>
+      <div style="width:100%;box-sizing:border-box;padding:20px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq';font-size:14pt;line-height:1.9;text-align:justify;direction:rtl;max-height:70vh;overflow-y:auto;white-space:pre-wrap;">${esc(row.matn)||''}</div>
     </div>
   `, `
     <button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>
@@ -323,7 +323,7 @@ function _firPaperHtml(rows) {
       @page { size: A4; margin: 20mm; }
       * { box-sizing: border-box; }
       html, body { margin:0; padding:0; background:#fff; }
-      body { font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; direction:rtl; color:#000; }
+      body { font-family:'Jameel Noori Nastaleeq'; direction:rtl; color:#000; }
       h1 { text-align:center; font-size:20pt; margin:0 0 14pt; font-weight:700; line-height:1.9; }
       .matn { font-size:14pt; line-height:1.9; text-align:justify; white-space:pre-wrap; }   /* v553: تمام تحریری دستاویزات — یکساں سطری فاصلہ 1.9 */
       .matn + .matn { margin-top:14pt; }

@@ -167,7 +167,7 @@
       '.status-dot.status-syncing{background:#d97706 !important;animation:statusPulse 1s infinite}' +
       '.status-dot.status-offline{background:#b91c1c !important;animation:none}' +
       '.dio-tb-status[data-sync="nosession"] #status-text,.dio-tb-status[data-sync="offline"] #status-text{color:#b91c1c !important}' +
-      '.dio-cf{direction:rtl;font-family:"Jameel Noori Nastaleeq",serif;font-size:12pt}' +
+      '.dio-cf{direction:rtl;font-family:"Jameel Noori Nastaleeq";font-size:12pt}' +
       '.dio-cf-cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}' +
       '.dio-cf-box{border:1px solid var(--border);border-radius:8px;padding:8px;background:var(--bg-card)}' +
       '.dio-cf-h{font-weight:700;font-size:14pt;margin-bottom:4px}' +

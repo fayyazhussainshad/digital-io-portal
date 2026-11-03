@@ -114,7 +114,7 @@ function _hgPrintTools() {
   const html = `<!DOCTYPE html><html dir="rtl" lang="ur"><head><meta charset="UTF-8"><title> </title>
     ${typeof dioFontHead === 'function' ? dioFontHead() : ''}
     <style>@page{size:A4;margin:14mm 12mm;}*{box-sizing:border-box;}
-      body{margin:0;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;color:#000;font-size:14pt;line-height:1.9;}
+      body{margin:0;font-family:'Jameel Noori Nastaleeq';direction:rtl;color:#000;font-size:14pt;line-height:1.9;}
       h1{text-align:center;font-size:20pt;margin:0 0 6pt;line-height:1.9;}
       h2{font-size:16pt;margin:12pt 0 4pt;line-height:1.9;break-after:avoid;}
       .hg-note{font-size:12pt;color:#333;margin:0 0 6pt;}
@@ -175,12 +175,12 @@ function renderHelpGuide(container) {
   ];
 
   container.innerHTML = `
-  <div style="max-width:820px;margin:0 auto;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
+  <div style="max-width:820px;margin:0 auto;direction:rtl;font-family:'Jameel Noori Nastaleeq';">
 
     <!-- Welcome -->
     <div style="background:linear-gradient(135deg,#0d2a45,#1a3a5c);border-radius:14px;padding:20px;margin-bottom:16px;">
-      <div style="font-size:20px;font-weight:800;color:#fff;">خوش آمدید، ${_hgEsc(name)}</div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:6px;line-height:1.9;">
+      <div style="font-size:15pt;font-weight:800;color:#fff;">خوش آمدید، ${_hgEsc(name)}</div>
+      <div style="font-size:9.75pt;color:rgba(255,255,255,0.75);margin-top:6px;line-height:1.9;">
         Digital IO آپ کے دفتری کام کو آسان بنانے کے لیے ہے — تاکہ آپ کاغذی بوجھ سے آزاد ہو کر
         اطمینان سے تفتیش پر توجہ دے سکیں۔ نیچے ہر اہم کام کی سادہ رہنمائی موجود ہے۔ کسی خانے پر
         دبائیں تو تفصیل کھل جائے گی۔
@@ -189,16 +189,16 @@ function renderHelpGuide(container) {
 
     <!-- Quick start -->
     <div class="card" style="margin-bottom:16px;">
-      <div class="dio-hs2" style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px;">جلدی شروع کریں</div>
+      <div class="dio-hs2" style="font-size:9.75pt;font-weight:700;color:var(--accent);margin-bottom:10px;">جلدی شروع کریں</div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
         ${[
           ["<svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M3.5 7.5h6l2 2.5h9V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z'/></svg>",'نیا مقدمہ','cases'],
           ["<svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><path d='M6.5 10a5.5 5.5 0 0 1 11 0c0 4 1.5 5.5 1.5 5.5H5S6.5 14 6.5 10z'/><path d='M10.2 19a2 2 0 0 0 3.6 0'/></svg>",'یاددہانی','reminders'],
           ["<svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><circle cx='11' cy='11' r='6.5'/><path d='M16 16l4.5 4.5'/></svg>",'تلاش','search'],
         ].map(([i,l,p])=>`
-          <button class="btn btn-secondary" style="flex-direction:column;padding:14px 8px;font-family:'Jameel Noori Nastaleeq',serif;" onclick="showPage('${p}',null)">
-            <div style="font-size:22px;">${i}</div>
-            <div style="font-size:12px;margin-top:4px;">${l}</div>
+          <button class="btn btn-secondary" style="flex-direction:column;padding:14px 8px;font-family:'Jameel Noori Nastaleeq';" onclick="showPage('${p}',null)">
+            <div style="font-size:16.5pt;">${i}</div>
+            <div style="font-size:9pt;margin-top:4px;">${l}</div>
           </button>`).join('')}
       </div>
     </div>
@@ -206,7 +206,7 @@ function renderHelpGuide(container) {
     <!-- v553: ٹول بار کے تمام بٹن -->
     <div class="card hg-tools" style="margin-bottom:16px;">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-        <div class="dio-hs2" style="font-size:14px;font-weight:700;color:var(--accent);flex:1;min-width:180px;">ٹول بار کے بٹن — کون سا بٹن کیا کرتا ہے اور کیسے</div>
+        <div class="dio-hs2" style="font-size:10.5pt;font-weight:700;color:var(--accent);flex:1;min-width:180px;">ٹول بار کے بٹن — کون سا بٹن کیا کرتا ہے اور کیسے</div>
         <button class="btn btn-secondary btn-sm" onclick="_hgPrintTools()" title="یہ فہرست پرنٹ کریں">پرنٹ</button>
         <button class="btn btn-secondary btn-sm" onclick="dioSharePrint(()=>_hgPrintTools(),'ٹول بار کے بٹن')" title="یہ فہرست شیئر کریں — PDF / Word">شیئر</button>
       </div>
@@ -236,11 +236,11 @@ function renderHelpGuide(container) {
       ${sections.map((s,i)=>`
         <div class="card" style="padding:0;overflow:hidden;">
           <div onclick="_hgToggle(${i})" style="display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;">
-            <span style="font-size:18px;">${s.icon}</span>
-            <span style="font-size:14px;font-weight:700;flex:1;">${s.title}</span>
-            <span id="hg-arrow-${i}" style="font-size:12px;color:var(--text-muted);transition:transform 0.2s;">▼</span>
+            <span style="font-size:13.5pt;">${s.icon}</span>
+            <span style="font-size:10.5pt;font-weight:700;flex:1;">${s.title}</span>
+            <span id="hg-arrow-${i}" style="font-size:9pt;color:var(--text-muted);transition:transform 0.2s;">▼</span>
           </div>
-          <div id="hg-body-${i}" style="display:none;padding:0 16px 16px 16px;font-size:12.5px;color:var(--text-secondary);line-height:2;">
+          <div id="hg-body-${i}" style="display:none;padding:0 16px 16px 16px;font-size:9.375pt;color:var(--text-secondary);line-height:2;">
             ${s.body}
           </div>
         </div>`).join('')}
@@ -248,7 +248,7 @@ function renderHelpGuide(container) {
 
     <!-- Reassurance footer -->
     <div class="card" style="margin-top:16px;background:var(--bg-secondary);text-align:center;">
-      <div style="font-size:13px;line-height:2;color:var(--text-secondary);">
+      <div style="font-size:9.75pt;line-height:2;color:var(--text-secondary);">
         یاد رکھیں: آپ کا کام خودکار محفوظ ہوتا ہے، اور غلطی سے حذف شدہ چیزیں بحال ہو سکتی ہیں۔
         اطمینان سے کام کریں۔ مزید مدد کے لیے اپنے سسٹم ایڈمن سے رابطہ کریں۔
       </div>

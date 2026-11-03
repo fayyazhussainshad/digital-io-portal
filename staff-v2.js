@@ -46,7 +46,7 @@ function _stRender() {
   const area = _stArea();
   if (!area) return;
   area.innerHTML = `
-  <div id="st-area" style="display:flex;flex-direction:column;height:100%;direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;">
+  <div id="st-area" style="display:flex;flex-direction:column;height:100%;direction:rtl;font-family:'Jameel Noori Nastaleeq';">
     <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg-secondary);">
       <div class="dio-hs1" style="font-weight:700;">ہمراہی ملازمان</div>
       <button class="btn btn-primary btn-sm dio-add-btn" onclick="_stForm(null)">+ ملازم درج کریں</button>
@@ -54,9 +54,9 @@ function _stRender() {
     <div style="flex:1;overflow-y:auto;padding:14px;">
       ${_stList.length ? _stList.map(_stCard).join('') : `
         <div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
-          <div style="font-size:42px;margin-bottom:12px;"><svg viewBox='0 0 24 24' width='42' height='42' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><circle cx='12' cy='9' r='3.4'/><path d='M4.5 20.5a7.5 7.5 0 0 1 15 0'/><path d='M7 6.5h10'/></svg></div>
-          <div style="font-size:15px;">کوئی ملازم درج نہیں</div>
-          <div style="font-size:13px;color:var(--text-faint);">شروع کرنے کے لیے اوپر <svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M12 5v14'/><path d='M5 12h14'/></svg> بٹن دبائیں</div>
+          <div style="font-size:31.5pt;margin-bottom:12px;"><svg viewBox='0 0 24 24' width='42' height='42' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><circle cx='12' cy='9' r='3.4'/><path d='M4.5 20.5a7.5 7.5 0 0 1 15 0'/><path d='M7 6.5h10'/></svg></div>
+          <div style="font-size:11.25pt;">کوئی ملازم درج نہیں</div>
+          <div style="font-size:9.75pt;color:var(--text-faint);">شروع کرنے کے لیے اوپر <svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M12 5v14'/><path d='M5 12h14'/></svg> بٹن دبائیں</div>
         </div>`}
     </div>
   </div>`;
@@ -67,11 +67,11 @@ function _stCard(s) {
   const rankLabel = (ST_RANKS.find(r=>r.v===s.rank)||{}).label || s.rank || '';
   return `
   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;direction:rtl;">
-    <span style="background:var(--accent);color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;">${rankLabel||'—'}</span>
-    <span style="font-size:15px;font-weight:700;">${esc(s.name)||'—'}</span>
-    <span style="color:var(--text-muted);font-size:13px;" dir="ltr">${b(s.service_number)}</span>
-    <span style="color:var(--text-muted);font-size:13px;" dir="ltr">${b(s.mobile)}</span>
-    <span style="color:var(--text-muted);font-size:12px;" dir="ltr">${esc(s.cnic||'')}</span>
+    <span style="background:var(--accent);color:#fff;border-radius:6px;padding:2px 8px;font-size:9pt;font-weight:700;">${rankLabel||'—'}</span>
+    <span style="font-size:11.25pt;font-weight:700;">${esc(s.name)||'—'}</span>
+    <span style="color:var(--text-muted);font-size:9.75pt;" dir="ltr">${b(s.service_number)}</span>
+    <span style="color:var(--text-muted);font-size:9.75pt;" dir="ltr">${b(s.mobile)}</span>
+    <span style="color:var(--text-muted);font-size:9pt;" dir="ltr">${esc(s.cnic||'')}</span>
     <span style="margin-right:auto;display:flex;gap:4px;">
       <button title="ترمیم" aria-label="ترمیم" class="btn btn-secondary btn-sm" onclick="_stForm('${s.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>
       <button title="حذف" aria-label="حذف" class="btn btn-danger btn-sm" onclick="_stDelete('${s.id}','${(s.name||'').replace(/'/g,'')}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>

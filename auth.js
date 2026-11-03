@@ -574,28 +574,28 @@ function _dioShowNoProfile(email, uid) {
   d.style.cssText =
     'position:fixed;inset:0;z-index:2147483647;background:rgba(8,15,26,0.96);color:#fff;' +
     "display:flex;align-items:center;justify-content:center;padding:20px;direction:rtl;" +
-    "font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;";
+    "font-family:'Jameel Noori Nastaleeq';";
   d.innerHTML = `
     <div style="max-width:560px;background:#0f2136;border:1px solid #2a4a6b;border-radius:14px;padding:22px;">
-      <div style="font-size:19px;font-weight:800;margin-bottom:10px;">افسر کا ریکارڈ نہیں ملا</div>
-      <div style="font-size:15px;line-height:1.9;color:#cfe0f0;">
+      <div style="font-size:14.25pt;font-weight:800;margin-bottom:10px;">افسر کا ریکارڈ نہیں ملا</div>
+      <div style="font-size:11.25pt;line-height:1.9;color:#cfe0f0;">
         آپ کا لاگ اِن تو کامیاب ہے، مگر اس اکاؤنٹ کے ساتھ کوئی <b>افسر پروفائل</b> منسلک نہیں۔
         اسی وجہ سے مقدمات، دستاویزات وغیرہ محفوظ نہیں ہو رہے۔
       </div>
       <div style="margin:14px 0;padding:10px 12px;background:#08182a;border-radius:8px;
-                  font-family:monospace;font-size:12px;direction:ltr;text-align:left;color:#9fc6e8;">
+                  font-family:monospace;font-size:9pt;direction:ltr;text-align:left;color:#9fc6e8;">
         ${email || ''}<br>${uid || ''}
       </div>
-      <div style="font-size:14px;line-height:1.9;color:#cfe0f0;">
+      <div style="font-size:10.5pt;line-height:1.9;color:#cfe0f0;">
         اگر یہ آپ کا اصل اکاؤنٹ نہیں تو <b>لاگ آؤٹ</b> کر کے درست ای میل سے لاگ اِن کریں۔
       </div>
       <div style="display:flex;gap:8px;margin-top:16px;">
         <button onclick="doLogout()" style="flex:1;padding:10px;border:none;border-radius:8px;
-                background:#2563eb;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;font-size:15px;">
+                background:#2563eb;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;font-size:11.25pt;">
           لاگ آؤٹ</button>
         <button onclick="document.getElementById('dio-noprofile').remove()"
                 style="padding:10px 16px;border:1px solid #2a4a6b;border-radius:8px;background:transparent;
-                       color:#cfe0f0;cursor:pointer;font-family:inherit;font-size:15px;">بند کریں</button>
+                       color:#cfe0f0;cursor:pointer;font-family:inherit;font-size:11.25pt;">بند کریں</button>
       </div>
     </div>`;
   document.body.appendChild(d);
@@ -719,9 +719,9 @@ function _renderOnboardStep() {
 
   openModal('', `
     <div style="text-align:center;direction:rtl;padding:10px;">
-      <div style="font-size:56px;margin-bottom:14px;">${s.icon}</div>
-      <div style="font-size:18px;font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;margin-bottom:10px;color:var(--accent);">${s.title}</div>
-      <div style="font-size:14px;line-height:1.9;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq',serif;">${s.text}</div>
+      <div style="font-size:42pt;margin-bottom:14px;">${s.icon}</div>
+      <div style="font-size:13.5pt;font-weight:800;font-family:'Jameel Noori Nastaleeq';margin-bottom:10px;color:var(--accent);">${s.title}</div>
+      <div style="font-size:10.5pt;line-height:1.9;color:var(--text-secondary);font-family:'Jameel Noori Nastaleeq';">${s.text}</div>
       <div style="display:flex;gap:5px;justify-content:center;margin-top:18px;">
         ${_ONBOARD_STEPS.map((_,i)=>`<span style="width:8px;height:8px;border-radius:50%;background:${i===_onboardIdx?'var(--accent)':'var(--border)'};"></span>`).join('')}
       </div>
@@ -1216,10 +1216,10 @@ function togglePasswordVisibility(id) { const el=document.getElementById(id); if
 function _setupPin() {
   openModal('PIN سیٹ کریں', `
     <div style="direction:rtl;">
-      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">6 ہندسوں کا PIN منتخب کریں۔ اس سے آپ تیزی سے لاگ ان کر سکیں گے۔</p>
-      <input class="form-input" type="password" id="setup-pin" inputmode="numeric" maxlength="6" placeholder="6 ہندسے" dir="ltr" style="text-align:center;font-size:24px;letter-spacing:8px;margin-bottom:10px;">
-      <input class="form-input" type="password" id="setup-pin2" inputmode="numeric" maxlength="6" placeholder="دوبارہ PIN" dir="ltr" style="text-align:center;font-size:24px;letter-spacing:8px;">
-      <p style="font-size:11px;color:var(--text-muted);margin-top:10px;">موجودہ پاسورڈ بھی درکار ہوگا تاکہ PIN لاگ ان کام کرے</p>
+      <p style="font-size:9.75pt;color:var(--text-secondary);margin-bottom:12px;">6 ہندسوں کا PIN منتخب کریں۔ اس سے آپ تیزی سے لاگ ان کر سکیں گے۔</p>
+      <input class="form-input" type="password" id="setup-pin" inputmode="numeric" maxlength="6" placeholder="6 ہندسے" dir="ltr" style="text-align:center;font-size:18pt;letter-spacing:8px;margin-bottom:10px;">
+      <input class="form-input" type="password" id="setup-pin2" inputmode="numeric" maxlength="6" placeholder="دوبارہ PIN" dir="ltr" style="text-align:center;font-size:18pt;letter-spacing:8px;">
+      <p style="font-size:8.25pt;color:var(--text-muted);margin-top:10px;">موجودہ پاسورڈ بھی درکار ہوگا تاکہ PIN لاگ ان کام کرے</p>
       <input class="form-input" type="password" id="setup-pin-pass" placeholder="موجودہ پاسورڈ" style="margin-top:8px;">
     </div>
   `, `
@@ -1575,14 +1575,14 @@ function _showPinScreen(mode) {
   ov.id = 'pin-lock-overlay';
   ov.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:99999;background:var(--bg-primary,#0f1420);display:flex;flex-direction:column;align-items:center;justify-content:center;direction:rtl;';
   ov.innerHTML = `
-    <div style="font-size:40px;margin-bottom:8px;"><svg viewBox='0 0 24 24' width='40' height='40' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><path d='M12 3.5l7 2.6v5.4c0 4.2-2.9 7.3-7 8.9-4.1-1.6-7-4.7-7-8.9V6.1z'/></svg></div>
-    <div style="font-size:22px;font-weight:800;color:var(--text-primary,#fff);margin-bottom:4px;">Digital IO</div>
-    <div id="pin-prompt" style="font-size:15px;color:var(--text-secondary,#aaa);margin-bottom:20px;font-family:'Jameel Noori Nastaleeq',serif;">${isSet?'نیا PIN مقرر کریں (4 ہندسے)':'PIN درج کریں'}</div>
+    <div style="font-size:30pt;margin-bottom:8px;"><svg viewBox='0 0 24 24' width='40' height='40' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.42;display:inline-block;vertical-align:middle'><path d='M12 3.5l7 2.6v5.4c0 4.2-2.9 7.3-7 8.9-4.1-1.6-7-4.7-7-8.9V6.1z'/></svg></div>
+    <div style="font-size:16.5pt;font-weight:800;color:var(--text-primary,#fff);margin-bottom:4px;">Digital IO</div>
+    <div id="pin-prompt" style="font-size:11.25pt;color:var(--text-secondary,#aaa);margin-bottom:20px;font-family:'Jameel Noori Nastaleeq';">${isSet?'نیا PIN مقرر کریں (4 ہندسے)':'PIN درج کریں'}</div>
     <input id="pin-input" type="password" inputmode="numeric" maxlength="4" autocomplete="off"
-      style="width:160px;font-size:28px;text-align:center;letter-spacing:12px;padding:10px;border:2px solid var(--accent,#2563eb);border-radius:12px;background:var(--bg-card,#1a2030);color:var(--text-primary,#fff);outline:none;">
-    <div id="pin-msg" style="font-size:13px;color:#e0524d;min-height:18px;margin-top:10px;font-family:'Jameel Noori Nastaleeq',serif;"></div>
+      style="width:160px;font-size:21pt;text-align:center;letter-spacing:12px;padding:10px;border:2px solid var(--accent,#2563eb);border-radius:12px;background:var(--bg-card,#1a2030);color:var(--text-primary,#fff);outline:none;">
+    <div id="pin-msg" style="font-size:9.75pt;color:#e0524d;min-height:18px;margin-top:10px;font-family:'Jameel Noori Nastaleeq';"></div>
     <button id="pin-submit" class="btn btn-primary" style="margin-top:8px;padding:10px 28px;">${isSet?'محفوظ کریں':'کھولیں'}</button>
-    ${!isSet?'<button id="pin-logout" style="margin-top:14px;background:none;border:none;color:var(--text-muted,#888);font-size:13px;cursor:pointer;font-family:\'Jameel Noori Nastaleeq\',serif;">لاگ آؤٹ کریں</button>':''}
+    ${!isSet?'<button id="pin-logout" style="margin-top:14px;background:none;border:none;color:var(--text-muted,#888);font-size:9.75pt;cursor:pointer;font-family:\'Jameel Noori Nastaleeq\';">لاگ آؤٹ کریں</button>':''}
   `;
   document.body.appendChild(ov);
   const input = ov.querySelector('#pin-input');
@@ -1630,7 +1630,7 @@ window.maybeSetupPin = function() {
     localStorage.setItem('dio_pin_offered', '1');
     if (typeof openModal !== 'function') return;
     openModal('ایپ لاک',
-      `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;line-height:1.9;">کیا آپ ایپ کو 4 ہندسی PIN سے محفوظ کرنا چاہتے ہیں؟ بے عملی (5 منٹ) یا پس منظر میں جانے پر ایپ خود لاک ہو جائے گی۔ بعد میں سیٹنگز سے بھی مقرر/تبدیل کیا جا سکتا ہے۔</div>`,
+      `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq';line-height:1.9;">کیا آپ ایپ کو 4 ہندسی PIN سے محفوظ کرنا چاہتے ہیں؟ بے عملی (5 منٹ) یا پس منظر میں جانے پر ایپ خود لاک ہو جائے گی۔ بعد میں سیٹنگز سے بھی مقرر/تبدیل کیا جا سکتا ہے۔</div>`,
       `<div style="display:flex;gap:8px;direction:rtl;">
         <button class="btn btn-secondary" onclick="closeModal()">ابھی نہیں</button>
         <button class="btn btn-primary" onclick="closeModal();_showPinScreen('set')">PIN مقرر کریں</button>
@@ -1644,7 +1644,7 @@ window.dioLockPinSettings = function() {
     const has = !!localStorage.getItem('digital_io_pin_hash');
     if (typeof openModal !== 'function') { _showPinScreen('set'); return; }
     openModal('ایپ لاک PIN',
-      `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq',serif;line-height:1.9;">${has ? 'PIN پہلے سے مقرر ہے۔ آپ نیا PIN مقرر کر سکتے ہیں یا لاک ہٹا سکتے ہیں۔' : 'ابھی کوئی لاک PIN مقرر نہیں۔ بے عملی یا پس منظر میں جانے پر خودکار لاک کے لیے PIN مقرر کریں۔'}</div>`,
+      `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq';line-height:1.9;">${has ? 'PIN پہلے سے مقرر ہے۔ آپ نیا PIN مقرر کر سکتے ہیں یا لاک ہٹا سکتے ہیں۔' : 'ابھی کوئی لاک PIN مقرر نہیں۔ بے عملی یا پس منظر میں جانے پر خودکار لاک کے لیے PIN مقرر کریں۔'}</div>`,
       `<div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;">
         <button class="btn btn-secondary" onclick="closeModal()">بند</button>
         ${has ? `<button class="btn btn-danger" onclick="localStorage.removeItem('digital_io_pin_hash');resetSessionTimer();closeModal();showToast('ایپ لاک ہٹا دیا گیا','info')">لاک ہٹائیں</button>` : ''}

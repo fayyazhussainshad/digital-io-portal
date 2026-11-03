@@ -37,27 +37,27 @@ async function _buildCourt() {
   <!-- Alert: overdue -->
   ${overdue.length ? `
   <div style="background:rgba(239,68,68,0.1);border:1px solid var(--red);border-radius:10px;padding:12px 16px;margin-bottom:14px;">
-    <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:6px;">${overdue.length} پیشیاں گزر گئیں</div>
-    ${overdue.map(d=>`<div style="font-size:12px;color:var(--red);">مقدمہ <span dir="ltr" style="unicode-bidi:isolate;">${esc(d.fir_number)||'—'}</span> — <span dir="ltr" style="unicode-bidi:isolate;">${esc(d.hearing_date)}</span> — ${esc(d.court_name)||'—'}</div>`).join('')}
+    <div style="font-size:9.75pt;font-weight:700;color:var(--red);margin-bottom:6px;">${overdue.length} پیشیاں گزر گئیں</div>
+    ${overdue.map(d=>`<div style="font-size:9pt;color:var(--red);">مقدمہ <span dir="ltr" style="unicode-bidi:isolate;">${esc(d.fir_number)||'—'}</span> — <span dir="ltr" style="unicode-bidi:isolate;">${esc(d.hearing_date)}</span> — ${esc(d.court_name)||'—'}</div>`).join('')}
   </div>` : ''}
 
   <!-- Calendar -->
   <div class="card" style="margin-bottom:14px;">
-    <div class="dio-hs2" style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;">اس ماہ کی پیشیاں</div>
+    <div class="dio-hs2" style="font-size:9pt;font-weight:700;color:var(--accent);margin-bottom:12px;">اس ماہ کی پیشیاں</div>
     ${_renderCalendar(dates)}
   </div>
 
   <!-- Upcoming -->
   <div class="card" style="margin-bottom:14px;">
-    <div class="dio-hs2" style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:12px;">آنے والی پیشیاں (${upcoming.length})</div>
+    <div class="dio-hs2" style="font-size:9pt;font-weight:700;color:var(--accent);margin-bottom:12px;">آنے والی پیشیاں (${upcoming.length})</div>
     ${upcoming.length ? upcoming.map(d=>_courtCard(d)).join('')
-    : `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">کوئی آنے والی پیشی نہیں</div>`}
+    : `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:9pt;">کوئی آنے والی پیشی نہیں</div>`}
   </div>
 
   <!-- Past -->
   ${past.length ? `
   <div class="card">
-    <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:12px;">گزشتہ پیشیاں (${past.length})</div>
+    <div style="font-size:9pt;font-weight:700;color:var(--text-muted);margin-bottom:12px;">گزشتہ پیشیاں (${past.length})</div>
     ${past.slice(0,10).map(d=>_courtCard(d,true)).join('')}
   </div>` : ''}`;
 }
@@ -84,10 +84,10 @@ function _renderCalendar(dates) {
     }
   });
 
-  let html = `<div style="text-align:center;font-size:13px;font-weight:700;margin-bottom:10px;">${monthName}</div>`;
+  let html = `<div style="text-align:center;font-size:9.75pt;font-weight:700;margin-bottom:10px;">${monthName}</div>`;
   html += `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;direction:rtl;text-align:center;">`;
   ['اتوار','پیر','منگل','بدھ','جمعرات','جمعہ','ہفتہ'].forEach(d=>{
-    html+=`<div style="font-size:10px;color:var(--text-faint);padding:3px;">${d}</div>`;
+    html+=`<div style="font-size:7.5pt;color:var(--text-faint);padding:3px;">${d}</div>`;
   });
   // Empty cells
   for(let i=0;i<first;i++) html+=`<div></div>`;
@@ -98,8 +98,8 @@ function _renderCalendar(dates) {
     html+=`<div style="padding:4px 2px;border-radius:6px;min-height:32px;
       background:${isToday?'var(--accent)':hasDates?'rgba(56,189,248,0.1)':'transparent'};
       border:1px solid ${isToday?'var(--accent)':hasDates?'var(--accent)':'transparent'};">
-      <div style="font-size:12px;font-weight:${isToday?'800':'400'};color:${isToday?'#fff':hasDates?'var(--accent)':'var(--text-secondary)'};">${d}</div>
-      ${hasDates?`<div style="font-size:8px;color:${isToday?'#fff':'var(--accent)'};">${hasDates.length} پیشی</div>`:''}
+      <div style="font-size:9pt;font-weight:${isToday?'800':'400'};color:${isToday?'#fff':hasDates?'var(--accent)':'var(--text-secondary)'};">${d}</div>
+      ${hasDates?`<div style="font-size:6pt;color:${isToday?'#fff':'var(--accent)'};">${hasDates.length} پیشی</div>`:''}
     </div>`;
   }
   html+=`</div>`;
@@ -114,19 +114,19 @@ function _courtCard(d, isPast=false) {
   return `
   <div style="display:flex;gap:10px;direction:rtl;padding:10px;background:${isPast?'var(--bg-tertiary)':'var(--bg-secondary)'};border-radius:8px;margin-bottom:8px;border:1px solid ${isPast?'var(--border)':urgency};opacity:${isPast?'0.7':'1'};">
     <div style="background:${urgency};color:#fff;border-radius:8px;padding:6px 10px;text-align:center;flex-shrink:0;min-width:44px;">
-      <div style="font-size:18px;font-weight:900;line-height:1;">${dt.getDate()}</div>
-      <div style="font-size:9px;">${['جنوری','فروری','مارچ','اپریل','مئی','جون','جولائی','اگست','ستمبر','اکتوبر','نومبر','دسمبر'][dt.getMonth()]}</div>
+      <div style="font-size:13.5pt;font-weight:900;line-height:1;">${dt.getDate()}</div>
+      <div style="font-size:6.75pt;">${['جنوری','فروری','مارچ','اپریل','مئی','جون','جولائی','اگست','ستمبر','اکتوبر','نومبر','دسمبر'][dt.getMonth()]}</div>
     </div>
     <div style="flex:1;">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <span style="font-size:13px;font-weight:700;color:var(--accent);">مقدمہ <span dir="ltr" style="unicode-bidi:isolate;display:inline-block;">${esc(d.fir_number)||'—'}</span></span>
-        ${!isPast&&diff<=3?`<span style="font-size:10px;background:var(--red);color:#fff;padding:1px 6px;border-radius:8px;">${diff===0?'آج':diff<0?'گزر گئی':diff+'  دن باقی'}</span>`:''}
-        <span class="pill ${d.status==='done'?'pill-green':'pill-blue'}" style="font-size:10px;">${d.status==='done'?'مکمل':'زیر التواء'}</span>
+        <span style="font-size:9.75pt;font-weight:700;color:var(--accent);">مقدمہ <span dir="ltr" style="unicode-bidi:isolate;display:inline-block;">${esc(d.fir_number)||'—'}</span></span>
+        ${!isPast&&diff<=3?`<span style="font-size:7.5pt;background:var(--red);color:#fff;padding:1px 6px;border-radius:8px;">${diff===0?'آج':diff<0?'گزر گئی':diff+'  دن باقی'}</span>`:''}
+        <span class="pill ${d.status==='done'?'pill-green':'pill-blue'}" style="font-size:7.5pt;">${d.status==='done'?'مکمل':'زیر التواء'}</span>
       </div>
-      <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${esc(d.court_name)||'—'} &nbsp;·&nbsp; <span dir="ltr" style="unicode-bidi:isolate;">${esc(d.hearing_time)||'—'}</span></div>
-      ${d.judge_name?`<div style="font-size:11px;color:var(--text-muted);">جج: ${esc(d.judge_name)}</div>`:''}
-      ${d.purpose?`<div style="font-size:11px;color:var(--text-muted);">مقصد: ${esc(d.purpose)}</div>`:''}
-      ${d.notes?`<div style="font-size:11px;color:var(--text-faint);">${esc(d.notes)}</div>`:''}
+      <div style="font-size:9pt;color:var(--text-secondary);margin-top:2px;">${esc(d.court_name)||'—'} &nbsp;·&nbsp; <span dir="ltr" style="unicode-bidi:isolate;">${esc(d.hearing_time)||'—'}</span></div>
+      ${d.judge_name?`<div style="font-size:8.25pt;color:var(--text-muted);">جج: ${esc(d.judge_name)}</div>`:''}
+      ${d.purpose?`<div style="font-size:8.25pt;color:var(--text-muted);">مقصد: ${esc(d.purpose)}</div>`:''}
+      ${d.notes?`<div style="font-size:8.25pt;color:var(--text-faint);">${esc(d.notes)}</div>`:''}
     </div>
     <div style="display:flex;flex-direction:column;gap:4px;">
       <button class="btn btn-secondary btn-sm" onclick="_editCourtDate('${d.id}')" title="تبدیلی">تبدیلی</button>

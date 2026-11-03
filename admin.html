@@ -43,7 +43,7 @@
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { font-size: 14px; }
+    html { font-size: 10.5pt; }
     body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; overflow: hidden; -webkit-font-smoothing: antialiased; }
     a { cursor: pointer; color: var(--accent); text-decoration: none; }
     button { cursor: pointer; font-family: var(--font); }
@@ -81,28 +81,28 @@
     .login-badge {
       display: inline-flex; align-items: center; gap: 6px;
       background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
-      border-radius: 20px; padding: 4px 12px; font-size: 10px;
+      border-radius: 20px; padding: 4px 12px; font-size: 7.5pt;
       color: var(--red); letter-spacing: 2px; text-transform: uppercase;
       margin-bottom: 20px;
     }
-    .login-logo { font-size: 32px; font-weight: 900; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 4px; }
-    .login-sub { font-size: 10px; color: var(--text3); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 28px; }
-    .login-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; letter-spacing: 0.5px; }
+    .login-logo { font-size: 24pt; font-weight: 900; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 4px; }
+    .login-sub { font-size: 7.5pt; color: var(--text3); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 28px; }
+    .login-label { font-size: 8.25pt; color: var(--text2); margin-bottom: 6px; letter-spacing: 0.5px; }
     .login-input {
       width: 100%; background: rgba(7,13,24,0.9); border: 1px solid var(--border);
       border-radius: var(--r2); padding: 12px 16px; color: var(--text);
-      font-size: 13px; outline: none; transition: border 0.15s; margin-bottom: 12px;
+      font-size: 9.75pt; outline: none; transition: border 0.15s; margin-bottom: 12px;
     }
     .login-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
     .login-input::placeholder { color: var(--text4); }
-    .login-err { background: var(--red-bg); border: 1px solid rgba(239,68,68,0.3); border-radius: var(--r2); padding: 10px 14px; font-size: 12px; color: var(--red); margin-bottom: 12px; display: none; }
+    .login-err { background: var(--red-bg); border: 1px solid rgba(239,68,68,0.3); border-radius: var(--r2); padding: 10px 14px; font-size: 9pt; color: var(--red); margin-bottom: 12px; display: none; }
     .login-btn {
       width: 100%; background: linear-gradient(135deg, var(--accent2), var(--accent3));
       border: none; border-radius: var(--r2); padding: 13px; color: #fff;
-      font-size: 14px; font-weight: 700; letter-spacing: 0.5px; transition: all 0.15s;
+      font-size: 10.5pt; font-weight: 700; letter-spacing: 0.5px; transition: all 0.15s;
     }
     .login-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(2,132,199,0.4); }
-    .login-security { margin-top: 20px; text-align: center; font-size: 10px; color: var(--text4); letter-spacing: 0.5px; }
+    .login-security { margin-top: 20px; text-align: center; font-size: 7.5pt; color: var(--text4); letter-spacing: 0.5px; }
 
     /* ════════ APP LAYOUT ════════ */
     #admin-app { display: none; height: 100vh; overflow: hidden; }
@@ -114,11 +114,11 @@
       display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto;
     }
     .sidebar-top { padding: 16px 14px; border-bottom: 1px solid var(--border); }
-    .sidebar-logo { font-size: 16px; font-weight: 900; letter-spacing: 3px; color: var(--accent); text-transform: uppercase; }
-    .sidebar-sub { font-size: 8px; color: var(--text3); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+    .sidebar-logo { font-size: 12pt; font-weight: 900; letter-spacing: 3px; color: var(--accent); text-transform: uppercase; }
+    .sidebar-sub { font-size: 6pt; color: var(--text3); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
     .sidebar-admin-badge {
       display: inline-block; background: var(--red-bg); border: 1px solid rgba(239,68,68,0.2);
-      border-radius: 4px; padding: 2px 8px; font-size: 9px; color: var(--red);
+      border-radius: 4px; padding: 2px 8px; font-size: 6.75pt; color: var(--red);
       letter-spacing: 1px; text-transform: uppercase; margin-top: 8px;
     }
     .sidebar-profile { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
@@ -126,30 +126,30 @@
       width: 34px; height: 34px; border-radius: 50%;
       background: linear-gradient(135deg, var(--accent2), var(--accent));
       display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 800; color: #fff; flex-shrink: 0;
+      font-size: 9pt; font-weight: 800; color: #fff; flex-shrink: 0;
     }
-    .sidebar-name { font-size: 12px; font-weight: 600; }
-    .sidebar-role { font-size: 10px; color: var(--text3); }
+    .sidebar-name { font-size: 9pt; font-weight: 600; }
+    .sidebar-role { font-size: 7.5pt; color: var(--text3); }
 
     .sidebar-nav { flex: 1; padding: 8px 8px; }
-    .nav-section { font-size: 9px; color: var(--text4); letter-spacing: 2px; text-transform: uppercase; padding: 10px 8px 4px; }
+    .nav-section { font-size: 6.75pt; color: var(--text4); letter-spacing: 2px; text-transform: uppercase; padding: 10px 8px 4px; }
     .nav-item {
       display: flex; align-items: center; gap: 9px; padding: 9px 10px;
-      border-radius: var(--r2); font-size: 12px; color: var(--text2);
+      border-radius: var(--r2); font-size: 9pt; color: var(--text2);
       margin: 1px 0; transition: all 0.15s; cursor: pointer;
     }
     .nav-item:hover { background: var(--bg3); color: var(--text); }
     .nav-item.active { background: rgba(56,189,248,0.08); color: var(--accent); font-weight: 600; box-shadow: inset 2px 0 0 var(--accent); }
-    .nav-icon { font-size: 15px; width: 18px; text-align: center; flex-shrink: 0; }
-    .nav-count { margin-left: auto; background: var(--red); color: #fff; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 8px; }
+    .nav-icon { font-size: 11.25pt; width: 18px; text-align: center; flex-shrink: 0; }
+    .nav-count { margin-left: auto; background: var(--red); color: #fff; font-size: 6.75pt; font-weight: 700; padding: 1px 5px; border-radius: 8px; }
 
     .sidebar-footer { padding: 10px 8px; border-top: 1px solid var(--border); }
     .logout-btn {
       width: 100%; background: var(--red-bg); border: 1px solid rgba(239,68,68,0.2);
-      border-radius: var(--r2); padding: 8px; color: var(--red); font-size: 11px; font-weight: 600; transition: all 0.15s;
+      border-radius: var(--r2); padding: 8px; color: var(--red); font-size: 8.25pt; font-weight: 600; transition: all 0.15s;
     }
     .logout-btn:hover { background: rgba(239,68,68,0.15); }
-    .ver { font-size: 9px; color: var(--text4); text-align: center; margin-top: 6px; }
+    .ver { font-size: 6.75pt; color: var(--text4); text-align: center; margin-top: 6px; }
 
     /* ── MAIN ── */
     .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
@@ -158,9 +158,9 @@
       height: 50px; background: var(--bg2); border-bottom: 1px solid var(--border);
       display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0;
     }
-    .topbar-title { font-size: 14px; font-weight: 700; color: var(--text2); }
+    .topbar-title { font-size: 10.5pt; font-weight: 700; color: var(--text2); }
     .topbar-right { display: flex; align-items: center; gap: 10px; }
-    .topbar-time { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+    .topbar-time { font-size: 8.25pt; color: var(--text3); font-family: var(--mono); }
     .online-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
@@ -169,15 +169,15 @@
     .bottombar {
       height: 28px; background: var(--bg); border-top: 1px solid var(--border);
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 16px; font-size: 10px; color: var(--text4); flex-shrink: 0;
+      padding: 0 16px; font-size: 7.5pt; color: var(--text4); flex-shrink: 0;
     }
 
     /* ════════ COMMON COMPONENTS ════════ */
     .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-    .page-title { font-size: 20px; font-weight: 900; }
-    .page-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+    .page-title { font-size: 15pt; font-weight: 900; }
+    .page-sub { font-size: 8.25pt; color: var(--text2); margin-top: 2px; }
 
-    .btn { padding: 8px 16px; border-radius: var(--r2); font-size: 12px; font-weight: 600; border: none; transition: all 0.15s; cursor: pointer; }
+    .btn { padding: 8px 16px; border-radius: var(--r2); font-size: 9pt; font-weight: 600; border: none; transition: all 0.15s; cursor: pointer; }
     .btn-primary { background: var(--accent2); color: #fff; }
     .btn-primary:hover { background: var(--accent3); transform: translateY(-1px); }
     .btn-secondary { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
@@ -185,11 +185,11 @@
     .btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
     .btn-danger:hover { background: rgba(239,68,68,0.15); }
     .btn-success { background: var(--green-bg); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
-    .btn-sm { padding: 5px 10px; font-size: 11px; }
+    .btn-sm { padding: 5px 10px; font-size: 8.25pt; }
     .btn-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
     .card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; }
-    .card-title { font-size: 9px; color: var(--text4); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+    .card-title { font-size: 6.75pt; color: var(--text4); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
 
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
@@ -197,17 +197,17 @@
     .grid-5 { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; }
 
     .stat-card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; text-align: center; }
-    .stat-num { font-size: 32px; font-weight: 900; line-height: 1; margin-bottom: 4px; }
-    .stat-label { font-size: 10px; color: var(--text2); letter-spacing: 0.5px; }
-    .stat-change { font-size: 10px; margin-top: 4px; }
+    .stat-num { font-size: 24pt; font-weight: 900; line-height: 1; margin-bottom: 4px; }
+    .stat-label { font-size: 7.5pt; color: var(--text2); letter-spacing: 0.5px; }
+    .stat-change { font-size: 7.5pt; margin-top: 4px; }
 
     .table { width: 100%; border-collapse: collapse; }
-    .table th { text-align: left; font-size: 9px; color: var(--text4); letter-spacing: 1.5px; text-transform: uppercase; padding: 8px 12px; border-bottom: 1px solid var(--border); }
-    .table td { padding: 11px 12px; border-bottom: 1px solid var(--border2); font-size: 12px; vertical-align: middle; }
+    .table th { text-align: left; font-size: 6.75pt; color: var(--text4); letter-spacing: 1.5px; text-transform: uppercase; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+    .table td { padding: 11px 12px; border-bottom: 1px solid var(--border2); font-size: 9pt; vertical-align: middle; }
     .table tr:hover td { background: rgba(56,189,248,0.03); }
     .table tr:last-child td { border-bottom: none; }
 
-    .pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+    .pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 7.5pt; font-weight: 600; }
     .pill-green { background: var(--green-bg); color: var(--green); }
     .pill-red { background: var(--red-bg); color: var(--red); }
     .pill-amber { background: var(--amber-bg); color: var(--amber); }
@@ -215,36 +215,36 @@
     .pill-purple { background: rgba(167,139,250,0.1); color: var(--purple); }
 
     .form-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
-    .form-label { font-size: 11px; color: var(--text2); letter-spacing: 0.5px; }
-    .form-input { background: var(--bg); border: 1px solid var(--border); border-radius: var(--r2); padding: 9px 12px; color: var(--text); font-size: 12px; outline: none; transition: border 0.15s; width: 100%; }
+    .form-label { font-size: 8.25pt; color: var(--text2); letter-spacing: 0.5px; }
+    .form-input { background: var(--bg); border: 1px solid var(--border); border-radius: var(--r2); padding: 9px 12px; color: var(--text); font-size: 9pt; outline: none; transition: border 0.15s; width: 100%; }
     .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
     .form-input::placeholder { color: var(--text4); }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-    .detail-row { padding: 9px 0; border-bottom: 1px solid var(--border2); display: flex; justify-content: space-between; font-size: 12px; }
+    .detail-row { padding: 9px 0; border-bottom: 1px solid var(--border2); display: flex; justify-content: space-between; font-size: 9pt; }
     .detail-row:last-child { border-bottom: none; }
     .dk { color: var(--text2); }
     .dv { color: var(--text); font-weight: 600; text-align: right; }
 
     .search-bar { display: flex; gap: 8px; margin-bottom: 14px; }
-    .search-input { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r2); padding: 9px 14px; color: var(--text); font-size: 12px; outline: none; transition: border 0.15s; }
+    .search-input { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r2); padding: 9px 14px; color: var(--text); font-size: 9pt; outline: none; transition: border 0.15s; }
     .search-input:focus { border-color: var(--accent); }
     .search-input::placeholder { color: var(--text4); }
-    .filter-sel { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r2); padding: 8px 12px; color: var(--text2); font-size: 12px; outline: none; cursor: pointer; }
+    .filter-sel { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r2); padding: 8px 12px; color: var(--text2); font-size: 9pt; outline: none; cursor: pointer; }
 
     /* MODAL */
     .modal-overlay { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 20px; }
     .modal-card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r); width: 100%; max-width: 560px; max-height: 85vh; overflow-y: auto; box-shadow: var(--shadow); animation: slideUp 0.3s ease; }
     .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-    .modal-title { font-size: 15px; font-weight: 700; }
-    .modal-close { background: none; border: none; color: var(--text2); font-size: 18px; cursor: pointer; }
+    .modal-title { font-size: 11.25pt; font-weight: 700; }
+    .modal-close { background: none; border: none; color: var(--text2); font-size: 13.5pt; cursor: pointer; }
     .modal-close:hover { color: var(--red); }
     .modal-body { padding: 20px; }
     .modal-footer { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
 
     /* TOAST */
     #toast-root { position: fixed; bottom: 40px; right: 20px; z-index: 5000; display: flex; flex-direction: column; gap: 8px; }
-    .toast { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r2); padding: 12px 18px; font-size: 12px; box-shadow: var(--shadow); animation: slideUp 0.3s ease; max-width: 320px; }
+    .toast { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r2); padding: 12px 18px; font-size: 9pt; box-shadow: var(--shadow); animation: slideUp 0.3s ease; max-width: 320px; }
     .toast-success { border-color: rgba(34,197,94,0.3); }
     .toast-error { border-color: rgba(239,68,68,0.3); }
 
@@ -255,7 +255,7 @@
 
     /* CHARTS */
     .chart-bar-wrap { display: flex; flex-direction: column; gap: 8px; }
-    .chart-bar-row { display: flex; align-items: center; gap: 10px; font-size: 11px; }
+    .chart-bar-row { display: flex; align-items: center; gap: 10px; font-size: 8.25pt; }
     .chart-bar-label { width: 120px; color: var(--text2); flex-shrink: 0; }
     .chart-bar-track { flex: 1; height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; }
     .chart-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
@@ -265,31 +265,31 @@
     .rev-chart { display: flex; align-items: flex-end; gap: 6px; height: 120px; padding: 0 4px; }
     .rev-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
     .rev-bar { width: 100%; background: linear-gradient(180deg, var(--accent2), var(--accent3)); border-radius: 4px 4px 0 0; transition: height 0.8s ease; min-height: 4px; }
-    .rev-bar-label { font-size: 9px; color: var(--text4); }
+    .rev-bar-label { font-size: 6.75pt; color: var(--text4); }
 
     /* NOTIFICATION DOT */
     .notif-dot { width: 8px; height: 8px; background: var(--red); border-radius: 50%; display: inline-block; margin-left: 4px; animation: pulse 1.5s infinite; }
 
     /* TABS */
     .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
-    .tab { padding: 10px 16px; font-size: 12px; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; }
+    .tab { padding: 10px 16px; font-size: 9pt; color: var(--text2); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; }
     .tab:hover { color: var(--text); }
     .tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
 
     /* PROGRESS RING */
     .progress-wrap { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
     .progress-wrap svg { transform: rotate(-90deg); }
-    .progress-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; }
+    .progress-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 12pt; font-weight: 800; }
 
     /* TIMELINE */
     .timeline-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border2); }
     .timeline-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
     .timeline-content { flex: 1; }
-    .timeline-action { font-size: 12px; color: var(--text); font-weight: 500; }
-    .timeline-meta { font-size: 10px; color: var(--text3); margin-top: 2px; }
+    .timeline-action { font-size: 9pt; color: var(--text); font-weight: 500; }
+    .timeline-meta { font-size: 7.5pt; color: var(--text3); margin-top: 2px; }
 
     /* ALERT */
-    .alert { padding: 12px 16px; border-radius: var(--r2); font-size: 12px; margin-bottom: 12px; border: 1px solid; }
+    .alert { padding: 12px 16px; border-radius: var(--r2); font-size: 9pt; margin-bottom: 12px; border: 1px solid; }
     .alert-warning { background: var(--amber-bg); border-color: rgba(245,158,11,0.3); color: var(--amber); }
     .alert-success { background: var(--green-bg); border-color: rgba(34,197,94,0.3); color: var(--green); }
     .alert-info { background: var(--glow); border-color: rgba(56,189,248,0.3); color: var(--accent); }
@@ -297,19 +297,19 @@
     /* OFFICER CARD */
     .officer-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--r2); transition: background 0.15s; }
     .officer-row:hover { background: var(--bg4); }
-    .officer-av { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--accent2), var(--accent)); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: #fff; flex-shrink: 0; }
+    .officer-av { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--accent2), var(--accent)); display: flex; align-items: center; justify-content: center; font-size: 9.75pt; font-weight: 800; color: #fff; flex-shrink: 0; }
     .officer-info { flex: 1; }
-    .officer-name { font-size: 12px; font-weight: 600; }
-    .officer-meta { font-size: 10px; color: var(--text3); }
+    .officer-name { font-size: 9pt; font-weight: 600; }
+    .officer-meta { font-size: 7.5pt; color: var(--text3); }
 
     /* SUBSCRIPTION CARD */
     .sub-plan { background: var(--bg4); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; text-align: center; transition: all 0.15s; cursor: pointer; }
     .sub-plan:hover { border-color: var(--accent); }
     .sub-plan.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-    .sub-plan-name { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
-    .sub-plan-price { font-size: 28px; font-weight: 900; color: var(--accent); margin-bottom: 4px; }
-    .sub-plan-period { font-size: 10px; color: var(--text3); margin-bottom: 12px; }
-    .sub-plan-features { font-size: 11px; color: var(--text2); line-height: 1.8; text-align: left; }
+    .sub-plan-name { font-size: 9.75pt; font-weight: 700; margin-bottom: 8px; }
+    .sub-plan-price { font-size: 21pt; font-weight: 900; color: var(--accent); margin-bottom: 4px; }
+    .sub-plan-period { font-size: 7.5pt; color: var(--text3); margin-bottom: 12px; }
+    .sub-plan-features { font-size: 8.25pt; color: var(--text2); line-height: 1.8; text-align: left; }
   </style>
 </head>
 <body>
@@ -389,7 +389,7 @@
         <div class="topbar-right">
           <div class="online-dot"></div>
           <div class="topbar-time" id="adm-clock">--:--:--</div>
-          <div style="font-size:11px;color:var(--text3);">PKR</div>
+          <div style="font-size:8.25pt;color:var(--text3);">PKR</div>
         </div>
       </div>
 
@@ -533,7 +533,7 @@ function showPage(page, el) {
   else document.querySelectorAll('.nav-item').forEach(n => { if(n.getAttribute('onclick')?.includes(`'${page}'`)) n.classList.add('active'); });
   document.getElementById('page-title').textContent = PAGE_TITLES[page] || page;
   const c = document.getElementById('page-content');
-  c.innerHTML = `<div class="loader"><div class="spinner"></div><div style="font-size:11px;color:var(--text3);">Loading...</div></div>`;
+  c.innerHTML = `<div class="loader"><div class="spinner"></div><div style="font-size:8.25pt;color:var(--text3);">Loading...</div></div>`;
   const renderers = { dashboard: renderDashboard, revenue: renderRevenue, officers: renderOfficers, approvals: renderApprovals, blocked: renderBlocked, subscriptions: renderSubscriptions, audit: renderAudit, admins: renderAdmins, settings: renderSettings };
   if (renderers[page]) renderers[page](c);
 }
@@ -608,8 +608,8 @@ async function renderDashboard(c) {
     <div class="grid-3" style="margin-bottom:14px;">
       <div class="card" style="background:linear-gradient(135deg,rgba(56,189,248,0.06),var(--bg3));border-color:rgba(56,189,248,0.2);">
         <div class="card-title">💰 TOTAL REVENUE (CURRENT)</div>
-        <div style="font-size:36px;font-weight:900;color:var(--accent);">PKR ${rev.total.toLocaleString()}</div>
-        <div style="font-size:11px;color:var(--text2);margin-top:4px;">From all active subscriptions</div>
+        <div style="font-size:27pt;font-weight:900;color:var(--accent);">PKR ${rev.total.toLocaleString()}</div>
+        <div style="font-size:8.25pt;color:var(--text2);margin-top:4px;">From all active subscriptions</div>
       </div>
       <div class="card">
         <div class="card-title">📈 REVENUE BREAKDOWN</div>
@@ -631,7 +631,7 @@ async function renderDashboard(c) {
               <div class="rev-bar-label">${d.label}</div>
             </div>`).join('')}
         </div>
-        <div style="font-size:10px;color:var(--text4);margin-top:6px;text-align:center;">* Add billing system in Phase 7 for real data</div>
+        <div style="font-size:7.5pt;color:var(--text4);margin-top:6px;text-align:center;">* Add billing system in Phase 7 for real data</div>
       </div>
     </div>
 
@@ -663,7 +663,7 @@ async function renderDashboard(c) {
               <div class="timeline-action">${log.action||'System event'} on ${log.table_name||'—'}</div>
               <div class="timeline-meta">${timeAgo(log.created_at)}</div>
             </div>
-          </div>`).join('') || '<div style="color:var(--text3);font-size:12px;">No recent activity.</div>'}
+          </div>`).join('') || '<div style="color:var(--text3);font-size:9pt;">No recent activity.</div>'}
       </div>
     </div>`;
 }
@@ -694,11 +694,11 @@ async function renderRevenue(c) {
         const count = active.filter(o=>o.subscription_plan===key).length;
         const rev = count * plan.price;
         return `<div class="card" style="text-align:center;">
-          <div style="font-size:28px;font-weight:900;color:var(--accent);">${count}</div>
-          <div style="font-size:13px;font-weight:700;margin:4px 0;">${plan.name}</div>
-          <div style="font-size:11px;color:var(--text3);">${plan.label}</div>
-          <div style="margin-top:10px;font-size:16px;font-weight:800;color:var(--green);">PKR ${rev.toLocaleString()}</div>
-          <div style="font-size:10px;color:var(--text4);">Revenue</div>
+          <div style="font-size:21pt;font-weight:900;color:var(--accent);">${count}</div>
+          <div style="font-size:9.75pt;font-weight:700;margin:4px 0;">${plan.name}</div>
+          <div style="font-size:8.25pt;color:var(--text3);">${plan.label}</div>
+          <div style="margin-top:10px;font-size:12pt;font-weight:800;color:var(--green);">PKR ${rev.toLocaleString()}</div>
+          <div style="font-size:7.5pt;color:var(--text4);">Revenue</div>
         </div>`;
       }).join('')}
     </div>
@@ -711,10 +711,10 @@ async function renderRevenue(c) {
         <thead><tr><th>Officer</th><th>Station</th><th>District</th><th>Joined</th><th>Action</th></tr></thead>
         <tbody>
           ${unpaid.map(o=>`<tr>
-            <td><div class="officer-row" style="padding:0;"><div class="officer-av" style="width:28px;height:28px;font-size:10px;">${initials(o.full_name)}</div><div><div class="officer-name">${o.full_name||'—'}</div><div class="officer-meta">${o.badge_number||'—'}</div></div></div></td>
+            <td><div class="officer-row" style="padding:0;"><div class="officer-av" style="width:28px;height:28px;font-size:7.5pt;">${initials(o.full_name)}</div><div><div class="officer-name">${o.full_name||'—'}</div><div class="officer-meta">${o.badge_number||'—'}</div></div></div></td>
             <td style="color:var(--text2);">${o.station||'—'}</td>
             <td style="color:var(--text2);">${o.district||'—'}</td>
-            <td style="color:var(--text3);font-size:11px;">${formatDate(o.created_at)}</td>
+            <td style="color:var(--text3);font-size:8.25pt;">${formatDate(o.created_at)}</td>
             <td><div class="btn-group"><button class="btn btn-success btn-sm" onclick="markPaid('${o.id}')">✅ Mark Paid</button><button class="btn btn-danger btn-sm" onclick="sendPaymentReminder('${o.id}','${o.full_name}')">📧 Remind</button></div></td>
           </tr>`).join('')}
         </tbody>
@@ -730,10 +730,10 @@ async function renderRevenue(c) {
           ${active.length === 0
             ? '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px;">No active subscriptions yet.</td></tr>'
             : active.map(o=>`<tr>
-                <td><div style="font-weight:600;">${o.full_name||'—'}</div><div style="font-size:10px;color:var(--text3);">${o.station||'—'}</div></td>
+                <td><div style="font-weight:600;">${o.full_name||'—'}</div><div style="font-size:7.5pt;color:var(--text3);">${o.station||'—'}</div></td>
                 <td><span class="pill pill-blue">${PLANS[o.subscription_plan]?.name||o.subscription_plan||'Monthly'}</span></td>
                 <td style="color:var(--green);font-weight:700;">PKR ${(PLANS[o.subscription_plan]?.price||300).toLocaleString()}</td>
-                <td style="color:var(--text3);font-size:11px;">${o.subscription_expiry ? formatDate(o.subscription_expiry) : '—'}</td>
+                <td style="color:var(--text3);font-size:8.25pt;">${o.subscription_expiry ? formatDate(o.subscription_expiry) : '—'}</td>
                 <td><button class="btn btn-secondary btn-sm" onclick="viewOfficerDetail('${o.id}')">Details</button></td>
               </tr>`).join('')}
         </tbody>
@@ -781,15 +781,15 @@ function renderOfficerRows(list) {
     const statusLabel = { active: '✅ Active', pending: '⏳ Pending', blocked: '🚫 Blocked' }[status];
     return `<tr>
       <td><div style="display:flex;align-items:center;gap:8px;">
-        <div class="officer-av" style="width:30px;height:30px;font-size:11px;flex-shrink:0;">${initials(o.full_name)}</div>
-        <div><div style="font-weight:600;font-size:12px;">${o.full_name||'—'}</div><div style="font-size:10px;color:var(--text3);">${o.designation||'IO'}</div></div>
+        <div class="officer-av" style="width:30px;height:30px;font-size:8.25pt;flex-shrink:0;">${initials(o.full_name)}</div>
+        <div><div style="font-weight:600;font-size:9pt;">${o.full_name||'—'}</div><div style="font-size:7.5pt;color:var(--text3);">${o.designation||'IO'}</div></div>
       </div></td>
       <td style="color:var(--text2);">${o.station||'—'}</td>
       <td style="color:var(--text2);">${o.district||'—'}</td>
-      <td style="font-family:var(--mono);font-size:11px;color:var(--text3);">${o.badge_number||'—'}</td>
+      <td style="font-family:var(--mono);font-size:8.25pt;color:var(--text3);">${o.badge_number||'—'}</td>
       <td><span class="pill ${o.subscription_status==='active'?'pill-green':'pill-red'}">${o.subscription_status==='active'?PLANS[o.subscription_plan]?.name||'Active':'Unpaid'}</span></td>
       <td><span class="pill ${statusPill}">${statusLabel}</span></td>
-      <td style="font-size:11px;color:var(--text4);">${formatDate(o.created_at)}</td>
+      <td style="font-size:8.25pt;color:var(--text4);">${formatDate(o.created_at)}</td>
       <td><div class="btn-group">
         <button class="btn btn-secondary btn-sm" onclick="viewOfficerDetail('${o.id}')">View</button>
         ${status==='pending' ? `<button class="btn btn-success btn-sm" onclick="approveOfficer('${o.id}','${o.full_name}')">Approve</button>` : ''}
@@ -837,13 +837,13 @@ async function renderApprovals(c) {
         <div class="card" style="margin-bottom:12px;">
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
             <div style="display:flex;align-items:center;gap:12px;">
-              <div class="officer-av" style="width:48px;height:48px;font-size:16px;">${initials(o.full_name)}</div>
+              <div class="officer-av" style="width:48px;height:48px;font-size:12pt;">${initials(o.full_name)}</div>
               <div>
-                <div style="font-size:15px;font-weight:700;">${o.full_name||'—'}</div>
-                <div style="font-size:11px;color:var(--text3);margin-top:2px;">
+                <div style="font-size:11.25pt;font-weight:700;">${o.full_name||'—'}</div>
+                <div style="font-size:8.25pt;color:var(--text3);margin-top:2px;">
                   🏛️ ${o.station||'—'} · 📍 ${o.district||'—'} · 🆔 ${o.badge_number||'—'}
                 </div>
-                <div style="font-size:10px;color:var(--text4);margin-top:2px;">Registered: ${formatDate(o.created_at)}</div>
+                <div style="font-size:7.5pt;color:var(--text4);margin-top:2px;">Registered: ${formatDate(o.created_at)}</div>
               </div>
             </div>
             <div class="btn-group">
@@ -871,10 +871,10 @@ async function renderBlocked(c) {
           <table class="table">
             <thead><tr><th>Officer</th><th>Station</th><th>Reason</th><th>Blocked On</th><th>Action</th></tr></thead>
             <tbody>${data.map(o=>`<tr>
-              <td><div style="font-weight:600;">${o.full_name||'—'}</div><div style="font-size:10px;color:var(--text3);">${o.badge_number||'—'}</div></td>
+              <td><div style="font-weight:600;">${o.full_name||'—'}</div><div style="font-size:7.5pt;color:var(--text3);">${o.badge_number||'—'}</div></td>
               <td style="color:var(--text2);">${o.station||'—'}</td>
-              <td style="color:var(--red);font-size:11px;">${o.block_reason||'No reason provided'}</td>
-              <td style="color:var(--text3);font-size:11px;">${formatDate(o.updated_at)}</td>
+              <td style="color:var(--red);font-size:8.25pt;">${o.block_reason||'No reason provided'}</td>
+              <td style="color:var(--text3);font-size:8.25pt;">${formatDate(o.updated_at)}</td>
               <td><button class="btn btn-success btn-sm" onclick="unblockOfficer('${o.id}','${o.full_name}')">✅ Unblock</button></td>
             </tr>`).join('')}</tbody>
           </table>
@@ -917,12 +917,12 @@ async function renderSubscriptions(c) {
         <thead><tr><th>Officer</th><th>Current Plan</th><th>Status</th><th>Expiry</th><th>Change Plan</th></tr></thead>
         <tbody>
           ${(officers||[]).map(o=>`<tr>
-            <td><div style="font-weight:600;">${o.full_name||'—'}</div><div style="font-size:10px;color:var(--text3);">${o.station||'—'}</div></td>
+            <td><div style="font-weight:600;">${o.full_name||'—'}</div><div style="font-size:7.5pt;color:var(--text3);">${o.station||'—'}</div></td>
             <td><span class="pill pill-blue">${PLANS[o.subscription_plan]?.name||'Not Set'}</span></td>
             <td><span class="pill ${o.subscription_status==='active'?'pill-green':'pill-red'}">${o.subscription_status||'Unpaid'}</span></td>
-            <td style="font-size:11px;color:var(--text3);">${o.subscription_expiry?formatDate(o.subscription_expiry):'—'}</td>
+            <td style="font-size:8.25pt;color:var(--text3);">${o.subscription_expiry?formatDate(o.subscription_expiry):'—'}</td>
             <td>
-              <select class="filter-sel" style="font-size:11px;" onchange="updateOfficerPlan('${o.id}',this.value)">
+              <select class="filter-sel" style="font-size:8.25pt;" onchange="updateOfficerPlan('${o.id}',this.value)">
                 <option value="">— Set Plan —</option>
                 ${Object.entries(PLANS).map(([k,p])=>`<option value="${k}" ${o.subscription_plan===k?'selected':''}>${p.name} — PKR ${p.price}</option>`).join('')}
               </select>
@@ -967,11 +967,11 @@ async function renderAudit(c) {
 function renderAuditRows(list) {
   if (!list.length) return '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px;">No audit events found.</td></tr>';
   return list.map((log,i)=>`<tr>
-    <td style="color:var(--text4);font-family:var(--mono);font-size:10px;">${i+1}</td>
+    <td style="color:var(--text4);font-family:var(--mono);font-size:7.5pt;">${i+1}</td>
     <td><span class="pill ${log.action==='DELETE'?'pill-red':log.action==='INSERT'?'pill-green':'pill-amber'}">${log.action||'—'}</span></td>
-    <td style="font-family:var(--mono);font-size:11px;color:var(--accent);">${log.table_name||'—'}</td>
-    <td style="font-family:var(--mono);font-size:10px;color:var(--text4);">${log.record_id||'—'}</td>
-    <td style="font-size:11px;color:var(--text3);">${formatDate(log.created_at)} · ${timeAgo(log.created_at)}</td>
+    <td style="font-family:var(--mono);font-size:8.25pt;color:var(--accent);">${log.table_name||'—'}</td>
+    <td style="font-family:var(--mono);font-size:7.5pt;color:var(--text4);">${log.record_id||'—'}</td>
+    <td style="font-size:8.25pt;color:var(--text3);">${formatDate(log.created_at)} · ${timeAgo(log.created_at)}</td>
   </tr>`).join('');
 }
 
@@ -1020,11 +1020,11 @@ async function renderAdmins(c) {
                 <td><div style="font-weight:600;">${a.officer?.full_name||a.user_id||'—'}</div></td>
                 <td style="color:var(--text2);">${a.officer?.station||'—'}</td>
                 <td><span class="pill ${a.role==='superadmin'?'pill-purple':'pill-blue'}">${a.role==='superadmin'?'⭐ Superadmin':'👨‍💼 Admin'}</span></td>
-                <td style="font-size:11px;color:var(--text3);">${formatDate(a.created_at)}</td>
+                <td style="font-size:8.25pt;color:var(--text3);">${formatDate(a.created_at)}</td>
                 <td>
                   ${adminRole==='superadmin' && a.user_id !== currentAdmin?.id
                     ? `<button class="btn btn-danger btn-sm" onclick="removeAdmin('${a.user_id}','${a.officer?.full_name||'this admin'}')">Remove</button>`
-                    : '<span style="font-size:10px;color:var(--text4);">—</span>'}
+                    : '<span style="font-size:7.5pt;color:var(--text4);">—</span>'}
                 </td>
               </tr>`).join('')}
         </tbody>
@@ -1042,7 +1042,7 @@ async function renderSettings(c) {
       <div class="card">
         <div class="card-title">🏢 SYSTEM INFORMATION</div>
         ${[['System Name','Digital IO'],['Version','4.0.0'],['Database','Supabase (PostgreSQL)'],['Hosting','Vercel'],['Encryption','AES-256 Field Encryption'],['Auth','Supabase Auth + MFA'],['Backup','Real-time + Google Drive'],['Region','Supabase Default'],['Supabase URL', SUPABASE_URL.replace('https://','')]].map(([k,v])=>`
-          <div class="detail-row"><span class="dk">${k}</span><span class="dv" style="font-family:var(--mono);font-size:11px;">${v}</span></div>`).join('')}
+          <div class="detail-row"><span class="dk">${k}</span><span class="dv" style="font-family:var(--mono);font-size:8.25pt;">${v}</span></div>`).join('')}
       </div>
       <div class="card">
         <div class="card-title">💰 PRICING CONFIGURATION</div>
@@ -1051,7 +1051,7 @@ async function renderSettings(c) {
             <span class="dk">${plan.name}</span>
             <span class="dv" style="color:var(--green);">PKR ${plan.price.toLocaleString()}</span>
           </div>`).join('')}
-        <div style="margin-top:12px;padding:10px;background:var(--bg);border-radius:var(--r2);font-size:11px;color:var(--text3);">
+        <div style="margin-top:12px;padding:10px;background:var(--bg);border-radius:var(--r2);font-size:8.25pt;color:var(--text3);">
           To change pricing, update the PLANS object in the admin panel code and redeploy.
         </div>
       </div>
@@ -1082,7 +1082,7 @@ async function approveOfficer(id, name) {
 
 async function rejectOfficer(id, name) {
   openModal('❌ Reject Registration',
-    `<p style="color:var(--text2);font-size:13px;line-height:1.6;">Are you sure you want to reject <b style="color:var(--accent);">${name}</b>?</p>
+    `<p style="color:var(--text2);font-size:9.75pt;line-height:1.6;">Are you sure you want to reject <b style="color:var(--accent);">${name}</b>?</p>
      <div class="form-group" style="margin-top:12px;"><label class="form-label">Reason (optional)</label><textarea class="form-input" id="reject-reason" rows="2" placeholder="Reason for rejection..."></textarea></div>`,
     `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
      <button class="btn btn-danger" onclick="doRejectOfficer('${id}','${name}')">❌ Reject</button>`
@@ -1100,7 +1100,7 @@ async function doRejectOfficer(id, name) {
 
 async function blockOfficer(id, name) {
   openModal('🚫 Block Officer',
-    `<p style="color:var(--text2);font-size:13px;line-height:1.6;">Block <b style="color:var(--accent);">${name}</b>? They will immediately lose access to the system.</p>
+    `<p style="color:var(--text2);font-size:9.75pt;line-height:1.6;">Block <b style="color:var(--accent);">${name}</b>? They will immediately lose access to the system.</p>
      <div class="form-group" style="margin-top:12px;"><label class="form-label">Reason *</label><textarea class="form-input" id="block-reason" rows="2" placeholder="Reason for blocking..."></textarea></div>`,
     `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
      <button class="btn btn-danger" onclick="doBlockOfficer('${id}','${name}')">🚫 Block Officer</button>`
@@ -1161,7 +1161,7 @@ async function openAssignAdminModal() {
   const eligible = (officers||[]).filter(o => !existingIds.includes(o.user_id));
 
   openModal('👨‍💼 Assign Admin Role',
-    `<p style="color:var(--text2);font-size:12px;margin-bottom:14px;">Select an approved officer to grant admin access.</p>
+    `<p style="color:var(--text2);font-size:9pt;margin-bottom:14px;">Select an approved officer to grant admin access.</p>
      <div class="form-group"><label class="form-label">Officer</label>
        <select class="form-input" id="assign-officer-id">
          <option value="">— Select Officer —</option>
@@ -1191,7 +1191,7 @@ async function doAssignAdmin() {
 
 async function removeAdmin(userId, name) {
   openModal('Remove Admin',
-    `<p style="color:var(--text2);font-size:13px;">Remove admin privileges from <b style="color:var(--accent);">${name}</b>? They will revert to officer role.</p>`,
+    `<p style="color:var(--text2);font-size:9.75pt;">Remove admin privileges from <b style="color:var(--accent);">${name}</b>? They will revert to officer role.</p>`,
     `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
      <button class="btn btn-danger" onclick="doRemoveAdmin('${userId}')">Remove Admin</button>`
   );
@@ -1204,7 +1204,7 @@ async function doRemoveAdmin(userId) {
 
 function openAddAdminOfficerModal() {
   openModal('➕ Add New Officer',
-    `<p style="color:var(--text3);font-size:12px;margin-bottom:16px;">Create an officer account directly. A password reset email will be sent to them.</p>
+    `<p style="color:var(--text3);font-size:9pt;margin-bottom:16px;">Create an officer account directly. A password reset email will be sent to them.</p>
      <div class="form-row">
        <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" id="ao-name" placeholder="e.g. ASI Muhammad Asif"></div>
        <div class="form-group"><label class="form-label">Official Email *</label><input class="form-input" id="ao-email" placeholder="officer@punjabpolice.gov.pk" type="email"></div>
@@ -1221,7 +1221,7 @@ function openAddAdminOfficerModal() {
        <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="ao-phone" placeholder="e.g. 0300-1234567"></div>
        <div class="form-group"><label class="form-label">Temporary Password *</label><input class="form-input" id="ao-password" placeholder="Min 8 characters" type="password"></div>
      </div>
-     <div style="padding:10px;background:var(--bg);border-radius:var(--r2);font-size:11px;color:var(--text3);margin-top:4px;">
+     <div style="padding:10px;background:var(--bg);border-radius:var(--r2);font-size:8.25pt;color:var(--text3);margin-top:4px;">
        ℹ️ Officer will receive a verification email. They can change their password after first login.
      </div>`,
     `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
@@ -1384,17 +1384,17 @@ async function resetOfficerPassword(officerId, officerName) {
   const { data: userData } = await sb.from('officers').select('*, user_roles(role)').eq('id', officerId).single();
 
   openModal('🔐 Reset Officer Password',
-    `<p style="color:var(--text2);font-size:13px;line-height:1.6;margin-bottom:16px;">
+    `<p style="color:var(--text2);font-size:9.75pt;line-height:1.6;margin-bottom:16px;">
       Reset password for <b style="color:var(--accent);">${officerName}</b>.<br><br>
       Choose how to reset:
     </p>
     <div style="display:flex;flex-direction:column;gap:10px;">
       <div style="padding:14px;background:var(--bg4);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;" onclick="doSendResetEmail('${officerId}','${officerName}')">
-        <div style="font-size:13px;font-weight:600;margin-bottom:4px;">📧 Send Reset Email</div>
-        <div style="font-size:11px;color:var(--text3);">Officer receives an email link to set their own new password.</div>
+        <div style="font-size:9.75pt;font-weight:600;margin-bottom:4px;">📧 Send Reset Email</div>
+        <div style="font-size:8.25pt;color:var(--text3);">Officer receives an email link to set their own new password.</div>
       </div>
       <div style="padding:14px;background:var(--bg4);border:1px solid var(--border);border-radius:var(--r);">
-        <div style="font-size:13px;font-weight:600;margin-bottom:8px;">🔑 Set New Password Manually</div>
+        <div style="font-size:9.75pt;font-weight:600;margin-bottom:8px;">🔑 Set New Password Manually</div>
         <input type="password" class="form-input" id="new-officer-pass" placeholder="Enter new password (min 8 characters)" style="margin-bottom:8px;">
         <input type="password" class="form-input" id="new-officer-pass2" placeholder="Confirm new password">
         <button class="btn btn-primary" style="width:100%;margin-top:10px;" onclick="doSetOfficerPassword('${officer.user_id}','${officerName}')">🔒 Set Password</button>
@@ -1412,7 +1412,7 @@ async function doSendResetEmail(officerId, officerName) {
     // Fallback: ask admin to enter email manually
     closeModal();
     openModal('📧 Send Password Reset Email',
-      `<p style="color:var(--text2);font-size:13px;margin-bottom:12px;">Enter the email address of <b style="color:var(--accent);">${officerName}</b>:</p>
+      `<p style="color:var(--text2);font-size:9.75pt;margin-bottom:12px;">Enter the email address of <b style="color:var(--accent);">${officerName}</b>:</p>
        <input type="email" class="form-input" id="reset-email-input" placeholder="officer@example.com">`,
       `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
        <button class="btn btn-primary" onclick="sendResetByEmail('${officerName}')">📤 Send Reset Email</button>`

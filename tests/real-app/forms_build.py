@@ -37,7 +37,8 @@ def forms(pg):
         name = ' … '.join([x for x in t[1].split('  ') if x.strip()]).replace(' …  … ', ' … ').strip()
         L.append((f'dk:{t[0]}', name, 'درخواستیں', "_openMisalEditor('darkhwastain')", [f"_dkSetType('{t[0]}')"]))
     L.append(('saza_slip', 'سزا سلپ', 'مسل', "_openMisalEditor('saza_slip')", []))
-    L.append(('crime_scene', 'نقشہ موقع', 'مسل', "_openMisalEditor('crime_scene')", []))
+    # v553 سے نقشہ موقع پہلے محفوظ نقشوں کی فہرست کھولتا ہے — خالی سانچہ «+ نقشہ موقع درج کریں» سے
+    L.append(('crime_scene', 'نقشہ موقع', 'مسل', "_openMisalEditor('crime_scene')", ['_naqNew()']))
     L.append(('cdr_imei', 'CDR / IMEI درخواست', 'مسل', "_openMisalEditor('cdr_imei')", []))
     L.append(('rfa_form', 'RFA فارم', 'مسل', "_openMisalEditor('rfa_form')", ['_newRfa()']))
     L.append(('cro_card', 'CRO کارڈ', 'مسل', "@cro", []))

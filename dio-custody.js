@@ -94,7 +94,7 @@
   // Render the chain as a small vertical timeline (RTL). Returns HTML.
   function renderChain(events) {
     if (!events || !events.length) {
-      return '<div style="font-size:11px;color:var(--text-muted);padding:8px 0;">ابھی کوئی حفاظتی ریکارڈ نہیں</div>';
+      return '<div style="font-size:8.25pt;color:var(--text-muted);padding:8px 0;">ابھی کوئی حفاظتی ریکارڈ نہیں</div>';
     }
     var fmt = (window.DIO && DIO.date)
       ? function (d) { return DIO.date.datetime(d); }
@@ -107,13 +107,13 @@
         return '' +
           '<div style="display:flex;gap:8px;align-items:flex-start;">' +
             '<div style="display:flex;flex-direction:column;align-items:center;">' +
-              '<div style="font-size:13px;line-height:1;">' + icon(ev.event_type) + '</div>' +
+              '<div style="font-size:9.75pt;line-height:1;">' + icon(ev.event_type) + '</div>' +
               (last ? '' : '<div style="width:2px;flex:1;min-height:18px;background:var(--border);margin:2px 0;"></div>') +
             '</div>' +
             '<div style="padding-bottom:' + (last ? '0' : '10px') + ';">' +
-              '<div style="font-size:12px;font-weight:700;">' + label(ev.event_type) + '</div>' +
-              '<div style="font-size:11px;color:var(--text-secondary);">' + who + '</div>' +
-              '<div style="font-size:10px;color:var(--text-faint);">' + fmt(ev.created_at) +
+              '<div style="font-size:9pt;font-weight:700;">' + label(ev.event_type) + '</div>' +
+              '<div style="font-size:8.25pt;color:var(--text-secondary);">' + who + '</div>' +
+              '<div style="font-size:7.5pt;color:var(--text-faint);">' + fmt(ev.created_at) +
                 (ev.station ? ' · ' + _ce(ev.station) : '') + '</div>' +
             '</div>' +
           '</div>';

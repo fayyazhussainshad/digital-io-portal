@@ -51,8 +51,8 @@ function _renderCroList() {
 
   if (!_croAllAccused.length) {
     area.innerHTML = `<div style="padding:40px 20px;text-align:center;direction:rtl;color:var(--text-muted);">
-      <div style="font-size:40px;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg></div>
-      <div style="font-size:16px;font-family:'Jameel Noori Nastaleeq',serif;">ملزمان درج نہیں — پہلے ملزمان شامل کریں</div>
+      <div style="font-size:30pt;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg></div>
+      <div style="font-size:12pt;font-family:'Jameel Noori Nastaleeq';">ملزمان درج نہیں — پہلے ملزمان شامل کریں</div>
     </div>`;
     return;
   }
@@ -64,10 +64,10 @@ function _renderCroList() {
     return `
     <div onclick="_openCroForAccused('${a.id}')" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;direction:rtl;"
       onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-      <span style="font-size:20px;">${hasCard ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M4.5 12.5l5 5 10-11"/></svg>' : '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M12 5v14"/><path d="M5 12h14"/></svg>'}</span>
+      <span style="font-size:15pt;">${hasCard ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M4.5 12.5l5 5 10-11"/></svg>' : '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><path d="M12 5v14"/><path d="M5 12h14"/></svg>'}</span>
       <div style="flex:1;">
-        <div style="font-weight:700;font-size:16px;font-family:'Jameel Noori Nastaleeq',serif;">${esc(a.name)||'—'}</div>
-        <div style="font-size:13px;color:var(--text-muted);">${esc(a.cnic)||'بدون شناختی کارڈ'} · <span style="color:${typeColor};">${typeName}</span></div>
+        <div style="font-weight:700;font-size:12pt;font-family:'Jameel Noori Nastaleeq';">${esc(a.name)||'—'}</div>
+        <div style="font-size:9.75pt;color:var(--text-muted);">${esc(a.cnic)||'بدون شناختی کارڈ'} · <span style="color:${typeColor};">${typeName}</span></div>
       </div>
       <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();_openCroForAccused('${a.id}')">CRO کارڈ دیکھیں/بنائیں</button>
     </div>`;
@@ -75,7 +75,7 @@ function _renderCroList() {
 
   area.innerHTML = `
   <div style="padding:14px;direction:rtl;height:100%;overflow-y:auto;">
-    <div class="dio-hs1" style="font-weight:800;font-family:'Jameel Noori Nastaleeq',serif;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:14px;color:var(--accent);">CRO کارڈ — ملزمان کی فہرست</div>
+    <div class="dio-hs1" style="font-weight:800;font-family:'Jameel Noori Nastaleeq';border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:14px;color:var(--accent);">CRO کارڈ — ملزمان کی فہرست</div>
     ${rows}
   </div>`;
 }
@@ -116,7 +116,7 @@ function _renderCro() {
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
     <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
       <button class="btn btn-secondary btn-sm" onclick="_croBackToList()">← واپس فہرست</button>
-      <div style="font-weight:700;font-size:14px;font-family:'Jameel Noori Nastaleeq',serif;">CRO کارڈ — ${esc(a.name)||'ملزم'}</div>
+      <div style="font-weight:700;font-size:10.5pt;font-family:'Jameel Noori Nastaleeq';">CRO کارڈ — ${esc(a.name)||'ملزم'}</div>
       <div style="margin-right:auto;display:flex;gap:6px;">
         <button class="btn btn-primary btn-sm" onclick="_saveCro()">محفوظ کریں</button>
         <button class="btn btn-secondary btn-sm" onclick="_printCro()">پرنٹ کریں (دونوں طرف)</button>
@@ -125,15 +125,15 @@ function _renderCro() {
     </div>
 
     <div style="flex:1;overflow-y:auto;padding:16px;background:var(--bg-tertiary);">
-      <div id="cro-doc" oninput="_croDirty=true" style="font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;">
+      <div id="cro-doc" oninput="_croDirty=true" style="font-family:'Jameel Noori Nastaleeq';direction:rtl;">
 
       <!-- ═══ PAGE 1 — طرف الف ═══ -->
-      <div class="cro-page" style="max-width:210mm;margin:0 auto 20px;padding:10mm;background:#fff;color:#000;font-size:11px;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;">
-        <div style="text-align:left;font-size:10px;">طرف الف</div>
+      <div class="cro-page" style="max-width:210mm;margin:0 auto 20px;padding:10mm;background:#fff;color:#000;font-size:8.25pt;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;">
+        <div style="text-align:left;font-size:7.5pt;">طرف الف</div>
         <!-- عنوانات کا اصول: مرکزی عنوان 20pt (پورا نظام) -->
         <div style="text-align:center;font-size:20pt;font-weight:800;">سٹینڈرڈ کریمینل انڈکس کارڈ</div>
-        <div style="text-align:center;font-size:11px;">(برائے جیل)</div>
-        <div style="display:flex;justify-content:flex-start;gap:20px;margin-top:4px;font-size:11px;">
+        <div style="text-align:center;font-size:8.25pt;">(برائے جیل)</div>
+        <div style="display:flex;justify-content:flex-start;gap:20px;margin-top:4px;font-size:8.25pt;">
           <span>CRO نمبر: <span contenteditable="true" data-k="cro_number" oninput="_croBoldCell(this)" style="border-bottom:1px solid #999;min-width:80px;display:inline-block;${v('cro_number')?'font-weight:bold;':''}">${v('cro_number')}</span></span>
           <span>فوٹوگراف تاریخ: <span contenteditable="true" data-k="cro_date" oninput="_croBoldCell(this)" style="border-bottom:1px solid #999;min-width:80px;display:inline-block;${v('cro_date')?'font-weight:bold;':''}">${v('cro_date')}</span></span>
         </div>
@@ -141,7 +141,7 @@ function _renderCro() {
         <!-- 4 photo boxes -->
         <div style="display:flex;gap:6px;margin-top:8px;">
           ${['سامنے مل','سامنے چہرہ','بائیں رخ چہرہ','دائیں رخ چہرہ'].map((lbl,i)=>`
-          <div style="flex:1;border:1px solid #000;height:120px;display:flex;align-items:flex-end;justify-content:center;font-size:9px;text-align:center;overflow:hidden;position:relative;">
+          <div style="flex:1;border:1px solid #000;height:120px;display:flex;align-items:flex-end;justify-content:center;font-size:6.75pt;text-align:center;overflow:hidden;position:relative;">
             ${(i===3 && photo) ? `<img src="${esc(photo)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">` : ''}
             <span style="position:relative;background:rgba(255,255,255,0.7);padding:1px;">${lbl}<br>یہاں نہ چپاں کریں</span>
           </div>`).join('')}
@@ -150,7 +150,7 @@ function _renderCro() {
         <div style="margin-top:6px;">متعلقہ رپورٹی پولیس اسٹیشن: <span contenteditable="true" data-k="police_station" oninput="_croBoldCell(this)" style="border-bottom:1px solid #999;min-width:140px;display:inline-block;${v('police_station',o.station)?'font-weight:bold;':''}">${v('police_station', o.station||'')}</span></div>
 
         <!-- Name row -->
-        <table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:11px;">
+        <table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:8.25pt;">
           <tr>${lc('نام')}${ec('name', a.name||'')}${lc('عرف')}${ec('alias')}${lc('ذات')}${ec('caste')}${lc('قومیت')}${ec('nationality','پاکستانی')}${lc('تعلیم')}${ec('education')}</tr>
           <tr>${lc('والد/شوہر کا نام')}${ec('father_name')}${lc('عرف')}${ec('father_alias')}${lc('تاریخ پیدائش/عمر')}${ec('dob', a.umar||'')}${lc('مستقل پتہ')}${ec('perm_address')}${lc('عارضی پتہ')}${ec('temp_address')}</tr>
         </table>
@@ -158,7 +158,7 @@ function _renderCro() {
         <!-- Two columns: right physical / middle crime -->
         <div style="display:flex;gap:6px;margin-top:8px;">
           <!-- Middle crime column -->
-          <table style="width:55%;border-collapse:collapse;font-size:10px;">
+          <table style="width:55%;border-collapse:collapse;font-size:7.5pt;">
             <tr>${lc('کیفیت')}${ec('kaifiyat')}</tr>
             <tr>${lc('نوعیت واردات')}${ec('noiyat_wardat')}</tr>
             <tr>${lc('نوعیت مسروقہ')}${ec('noiyat_masruqa')}</tr>
@@ -178,7 +178,7 @@ function _renderCro() {
           </table>
 
           <!-- Right physical column -->
-          <table style="width:45%;border-collapse:collapse;font-size:10px;">
+          <table style="width:45%;border-collapse:collapse;font-size:7.5pt;">
             <tr>${lc('شناختی کارڈ نمبر')}${ec('cnic', a.cnic||'')}</tr>
             <tr>${lc('جنس')}${ec('gender')}</tr>
             <tr>${lc('جسمانی وضع')}${ec('build', a.jism||'')}</tr>
@@ -209,14 +209,14 @@ function _renderCro() {
           </table>
         </div>
 
-        <div style="margin-top:8px;font-size:11px;">
+        <div style="margin-top:8px;font-size:8.25pt;">
           تحقیقی افسر: نام وعہدہ <b>${esc(o.full_name)||''} ${esc(o.designation)||''}</b> | تھانہ <b>${esc(o.station)||''}</b> | موبائل نمبر <b>${esc(o.phone)||''}</b>
         </div>
       </div>
 
       <!-- ═══ PAGE 2 — طرف ب ═══ -->
-      <div class="cro-page" style="max-width:210mm;margin:0 auto;padding:10mm;background:#fff;color:#000;font-size:11px;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;">
-        <div style="text-align:left;font-size:10px;">طرف ب</div>
+      <div class="cro-page" style="max-width:210mm;margin:0 auto;padding:10mm;background:#fff;color:#000;font-size:8.25pt;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;">
+        <div style="text-align:left;font-size:7.5pt;">طرف ب</div>
 
         ${_croBackTable('ملزم کا موجودہ سابقہ ریکارڈ', ['نمبر شمار','مقدمہ نمبر','تھانہ','جرم','سزا','رہائی','تاریخ','نتیجہ'], 'prev_record', v)}
         ${_croBackTable('ملزم کے قانونی ریکارڈ', ['نمبر شمار','مقدمہ نمبر','تھانہ','جرم','سزا','رہائی','تاریخ','نتیجہ'], 'legal_record', v)}
@@ -224,7 +224,7 @@ function _renderCro() {
         ${_croBackTable('شریک جرم کے کوائف', ['نمبر شمار','نام وپتہ بمعہ سکونت','نوعیت (ملاقات/تاریخ/مقام)','CRO نمبر'], 'accomplices', v)}
 
         <div style="text-align:center;font-weight:600;margin-top:12px;">نشانات انگشت گھمائے ہوئے سادہ یک وقتی</div>
-        <table style="width:100%;border-collapse:collapse;font-size:9px;text-align:center;margin-top:4px;">
+        <table style="width:100%;border-collapse:collapse;font-size:6.75pt;text-align:center;margin-top:4px;">
           <tr>
             ${['دائیں چھوٹی','دائیں انگشتی','دائیں درمیانی','دائیں شہادت','دائیں انگوٹھا'].map(f=>`<td style="border:1px solid #000;height:90px;width:20%;vertical-align:bottom;">${f}</td>`).join('')}
           </tr>
@@ -232,7 +232,7 @@ function _renderCro() {
             ${['بائیں چھوٹی','بائیں انگشتی','بائیں درمیانی','بائیں شہادت','بائیں انگوٹھا'].map(f=>`<td style="border:1px solid #000;height:90px;width:20%;vertical-align:bottom;">${f}</td>`).join('')}
           </tr>
         </table>
-        <table style="width:100%;border-collapse:collapse;font-size:9px;text-align:center;margin-top:6px;">
+        <table style="width:100%;border-collapse:collapse;font-size:6.75pt;text-align:center;margin-top:6px;">
           <tr>
             <td style="border:1px solid #000;height:80px;width:25%;vertical-align:bottom;">دائیں چاراں انگلیاں یک وقتی</td>
             <td style="border:1px solid #000;height:80px;width:25%;vertical-align:bottom;">دایاں انگوٹھا</td>
@@ -241,7 +241,7 @@ function _renderCro() {
           </tr>
         </table>
 
-        <div style="margin-top:12px;font-size:11px;">تیار کنندہ کا نام/عہدہ: <span contenteditable="true" data-k="prepared_by" oninput="_croBoldCell(this)" style="border-bottom:1px solid #999;min-width:200px;display:inline-block;${v('prepared_by',(o.full_name||''))?'font-weight:bold;':''}">${v('prepared_by', (o.full_name||'')+' '+(o.designation||''))}</span></div>
+        <div style="margin-top:12px;font-size:8.25pt;">تیار کنندہ کا نام/عہدہ: <span contenteditable="true" data-k="prepared_by" oninput="_croBoldCell(this)" style="border-bottom:1px solid #999;min-width:200px;display:inline-block;${v('prepared_by',(o.full_name||''))?'font-weight:bold;':''}">${v('prepared_by', (o.full_name||'')+' '+(o.designation||''))}</span></div>
       </div>
 
       </div>
@@ -267,7 +267,7 @@ function _croBackTable(title, cols, key, v) {
   }
   return `
     <div style="margin-top:10px;font-weight:600;text-align:center;">${title}</div>
-    <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:4px;">
+    <table style="width:100%;border-collapse:collapse;font-size:7.5pt;margin-top:4px;">
       <tr style="background:#f0f0f0;">${cols.map(c=>`<th style="border:1px solid #000;padding:4px;">${c}</th>`).join('')}</tr>
       ${rows}
     </table>`;
@@ -322,7 +322,7 @@ function _printCro() {
   const html = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
     ${typeof dioFontHead==='function'?dioFontHead():''}
     <style>@page{size:A4;margin:8mm}
-      body{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;direction:rtl;font-size:10pt;color:#000;margin:0;}
+      body{font-family:'Jameel Noori Nastaleeq';direction:rtl;font-size:10pt;color:#000;margin:0;}
       table{border-collapse:collapse;width:100%;}td,th{border:1px solid #000;padding:2px 4px;}
       .cro-page{page-break-after:always;box-shadow:none !important;border-radius:0 !important;padding:0 !important;margin:0 !important;}
       .cro-page:last-child{page-break-after:auto;}

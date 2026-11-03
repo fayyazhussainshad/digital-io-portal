@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v564
+   DIGITAL IO — SERVICE WORKER v565
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v564';
+const CACHE_NAME = 'digital-io-v565';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -89,6 +89,7 @@ const CORE_ASSETS = [
   '/ui-home.css',
   '/fonts/amiri-quran-arabic.woff2',
   '/fonts/amiri-arabic.woff2',
+  '/fonts/jameel-noori-nastaleeq.woff2',   // v560: system ka wahid Urdu font — offline bhi
   '/islamic-landing.js',
   '/mobile.js',
   '/challan-form.js',

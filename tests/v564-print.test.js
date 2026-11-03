@@ -123,5 +123,7 @@ test('v564: الفاظ نہ جُڑیں — فونٹ کی kerning بند، ایک
 });
 
 test('v564: سروس ورکر کا نیا نسخہ', () => {
-  assert.ok(/const CACHE_NAME = 'digital-io-v564';/.test(read('sw.js')));
+  // ہر deploy پر نیا نسخہ (قاعدہ 6) — v564 یا اس کے بعد کا
+  const m = /const CACHE_NAME = 'digital-io-v(\d+)';/.exec(read('sw.js'));
+  assert.ok(m && Number(m[1]) >= 564);
 });

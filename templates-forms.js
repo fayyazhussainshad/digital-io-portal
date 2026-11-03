@@ -69,7 +69,7 @@
 
   function btn(color, label, on, svg) {
     return '<button type="button" aria-label="' + label + '" title="' + label + '" onclick="' + on + '" ' +
-      'style="padding:5px 9px;background:' + color + ';color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">' + svg + '</button>';
+      'style="padding:5px 9px;background:' + color + ';color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:9.75pt;">' + svg + '</button>';
   }
   var IC = {
     open: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg>',
@@ -257,7 +257,7 @@
     var pg = pageOf(f), base = location.href.replace(/[^/]*$/, '');
     var doc = '<!doctype html><html lang="ur" dir="rtl"><head><meta charset="utf-8"><title>' + E(f.name) + '</title>' +
       '<style>' +
-      "@font-face{font-family:'Jameel Noori Nastaleeq';src:local('Jameel Noori Nastaleeq'),url('https://cdn.jsdelivr.net/npm/jameel-noori/fonts/jameel-noori-nastaleeq4.woff2') format('woff2');}" +
+      "@font-face{font-family:'Jameel Noori Nastaleeq';src:url('" + base + "fonts/jameel-noori-nastaleeq.woff2') format('woff2');font-display:block;}" +
       "@font-face{font-family:'Amiri Quran DIO';src:url('" + base + "fonts/amiri-quran-arabic.woff2') format('woff2');}" +
       "@font-face{font-family:'Amiri DIO';src:url('" + base + "fonts/amiri-arabic.woff2') format('woff2');}" +
       '@page{size:' + pg.w + 'in ' + pg.h + 'in;margin:0;}' +
@@ -322,7 +322,7 @@
       '#dio-form-view .dio-fv-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--dio-file,#13294b);color:#fff;flex-wrap:wrap;}' +
       '#dio-form-view .dio-fv-btns{display:flex;gap:6px;flex-wrap:wrap;}' +
       '#dio-form-view .dio-fv-bar button{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:6px 12px;cursor:pointer;' +
-      "font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;font-size:11.5pt;}" +
+      "font-family:'Jameel Noori Nastaleeq';font-size:11.5pt;}" +
       '#dio-form-view .dio-fv-title{flex:1;text-align:center;font-size:13pt;min-width:140px;}' +
       '#dio-form-view .dio-fv-hint{background:#fff8e1;color:#664d03;border-bottom:1px solid #f0d27a;padding:5px 12px;font-size:10pt;text-align:right;}' +
       '#dio-form-view .dio-fv-scroll{flex:1;overflow:auto;padding:12px 8px 40px;}' +
