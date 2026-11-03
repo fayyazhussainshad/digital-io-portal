@@ -60,21 +60,21 @@ async function _buildReminders() {
   <!-- Overdue Alert -->
   ${overdue.length ? `
   <div style="background:rgba(239,68,68,0.1);border:1px solid var(--red);border-radius:10px;padding:12px 14px;margin-bottom:14px;">
-    <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:8px;">گزری ہوئی یاددہانیاں (${overdue.length})</div>
+    <div style="font-size:9.75pt;font-weight:700;color:var(--red);margin-bottom:8px;">گزری ہوئی یاددہانیاں (${overdue.length})</div>
     ${overdue.map(r => _remCard(r, true)).join('')}
   </div>` : ''}
 
   <!-- Upcoming -->
   <div class="card" style="margin-bottom:12px;">
-    <div class="dio-hs2" style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px;">آنے والی یاددہانیاں (${upcoming.length})</div>
+    <div class="dio-hs2" style="font-size:9pt;font-weight:700;color:var(--accent);margin-bottom:10px;">آنے والی یاددہانیاں (${upcoming.length})</div>
     ${upcoming.length ? upcoming.map(r => _remCard(r, false)).join('')
-    : `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px;">کوئی یاددہانی نہیں</div>`}
+    : `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:9pt;">کوئی یاددہانی نہیں</div>`}
   </div>
 
   <!-- Done -->
   ${done.length ? `
   <details>
-    <summary style="cursor:pointer;font-size:12px;color:var(--text-muted);padding:8px 0;">مکمل یاددہانیاں (${done.length})</summary>
+    <summary style="cursor:pointer;font-size:9pt;color:var(--text-muted);padding:8px 0;">مکمل یاددہانیاں (${done.length})</summary>
     <div class="card" style="margin-top:8px;opacity:0.7;">
       ${done.slice(0,10).map(r => _remCard(r, false, true)).join('')}
     </div>
@@ -95,18 +95,18 @@ function _remCard(r, isOverdue, isDone=false) {
   return `<div style="display:flex;gap:10px;direction:rtl;padding:9px 0;border-bottom:1px solid var(--border);align-items:flex-start;">
     ${!r._isCourtDate ? `<input type="checkbox" ${isDone?'checked':''} onchange="_toggleRem('${r.id}',this.checked)"
       style="accent-color:var(--accent);width:16px;height:16px;flex-shrink:0;margin-top:3px;">` :
-      `<span style="font-size:16px;flex-shrink:0;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M12 4v16"/><path d="M6 20h12"/><path d="M4 9l3-4 3 4"/><path d="M14 9l3-4 3 4"/><path d="M4 9a3 3 0 0 0 6 0"/><path d="M14 9a3 3 0 0 0 6 0"/></svg></span>`}
+      `<span style="font-size:12pt;flex-shrink:0;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M12 4v16"/><path d="M6 20h12"/><path d="M4 9l3-4 3 4"/><path d="M14 9l3-4 3 4"/><path d="M4 9a3 3 0 0 0 6 0"/><path d="M14 9a3 3 0 0 0 6 0"/></svg></span>`}
     <div style="flex:1;">
-      <div style="font-size:13px;${isDone?'text-decoration:line-through;color:var(--text-muted);':''}direction:rtl;">${esc(r.text)}</div>
-      <div style="font-size:10px;margin-top:3px;display:flex;gap:8px;align-items:center;direction:rtl;flex-wrap:wrap;">
+      <div style="font-size:9.75pt;${isDone?'text-decoration:line-through;color:var(--text-muted);':''}direction:rtl;">${esc(r.text)}</div>
+      <div style="font-size:7.5pt;margin-top:3px;display:flex;gap:8px;align-items:center;direction:rtl;flex-wrap:wrap;">
         ${r.reminder_date ? `<span style="color:${color};">${formatDate(r.reminder_date)}${diff!==null&&!isDone?` (${diff<0?Math.abs(diff)+'دن پہلے':diff===0?'آج':diff+'دن باقی'})`:''}` : ''}
-        ${r._isCourtDate ? `<span style="background:rgba(167,139,250,0.2);color:#a78bfa;padding:1px 6px;border-radius:8px;font-size:9px;">عدالتی پیشی</span>` : ''}
+        ${r._isCourtDate ? `<span style="background:rgba(167,139,250,0.2);color:#a78bfa;padding:1px 6px;border-radius:8px;font-size:6.75pt;">عدالتی پیشی</span>` : ''}
         ${r.linked_fir ? `<span style="color:var(--accent);">FIR ${r.linked_fir}</span>` : ''}
       </div>
     </div>
     <div style="display:flex;flex-direction:column;gap:3px;">
-      ${!r._isCourtDate ? `<button title="بند کریں" aria-label="بند کریں" class="btn btn-danger btn-sm" onclick="_deleteRem('${r.id}')" style="padding:3px 8px;font-size:11px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button>` :
-        `<button title="منظور" aria-label="منظور" class="btn btn-secondary btn-sm" onclick="_remMarkCourtDone('${r._courtId}')" style="padding:3px 8px;font-size:11px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4.5 12.5l5 5 10-11"/></svg></button>`}
+      ${!r._isCourtDate ? `<button title="بند کریں" aria-label="بند کریں" class="btn btn-danger btn-sm" onclick="_deleteRem('${r.id}')" style="padding:3px 8px;font-size:8.25pt;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button>` :
+        `<button title="منظور" aria-label="منظور" class="btn btn-secondary btn-sm" onclick="_remMarkCourtDone('${r._courtId}')" style="padding:3px 8px;font-size:8.25pt;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4.5 12.5l5 5 10-11"/></svg></button>`}
     </div>
   </div>`;
 }

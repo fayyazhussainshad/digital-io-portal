@@ -133,6 +133,10 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh v564_test.py
+      - name: v560 — self-hosted Jameel Noori only (no fallback, offline via service worker, embedded in print), every font size in pt, save → reload (v560_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: bash ci_run.sh v560_test.py
       - name: Screenshots and print PDFs
         if: always()
         uses: actions/upload-artifact@v4

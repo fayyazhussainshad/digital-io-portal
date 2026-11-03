@@ -61,7 +61,7 @@ function dioSavedBoxHTML(caseId, docKey, title) {
     <tr>
       <td style="text-align:center;font-weight:700;">${i + 1}</td>
       <td>${(typeof esc === 'function' ? esc(x.name) : x.name)}</td>
-      <td style="text-align:center;font-family:var(--font-mono);white-space:nowrap;">${d}${t ? ' <span style="color:var(--text-muted);font-size:11px;">' + t + '</span>' : ''}</td>
+      <td style="text-align:center;font-family:var(--font-mono);white-space:nowrap;">${d}${t ? ' <span style="color:var(--text-muted);font-size:8.25pt;">' + t + '</span>' : ''}</td>
       <td style="text-align:center;white-space:nowrap;">
         ${dioActRow(dioActBtn('edit', `dioSavedOpen('${j}')`, 'کھولیں / ترمیم')
           + dioActBtn('print', `dioSavedPrint('${j}')`, 'پرنٹ')
@@ -77,7 +77,7 @@ function dioSavedBoxHTML(caseId, docKey, title) {
     <div style="padding:8px 12px;background:var(--bg-secondary);border-bottom:1px solid var(--border);
          font-weight:700;" class="dio-hs2">📁 ${title || 'محفوظ شدہ فائلیں'}</div>
     ${list.length ? `
-    <table class="dio-saved-tbl" style="width:100%;border-collapse:collapse;font-size:13px;">
+    <table class="dio-saved-tbl" style="width:100%;border-collapse:collapse;font-size:9.75pt;">
       <thead>
         <tr style="background:var(--bg-tertiary);">
           <th style="padding:6px;width:56px;">نمبر شمار</th>
@@ -88,7 +88,7 @@ function dioSavedBoxHTML(caseId, docKey, title) {
       </thead>
       <tbody>${rows}</tbody>
     </table>`
-    : `<div style="padding:14px;color:var(--text-muted);font-size:13px;">ابھی کوئی فائل محفوظ نہیں</div>`}
+    : `<div style="padding:14px;color:var(--text-muted);font-size:9.75pt;">ابھی کوئی فائل محفوظ نہیں</div>`}
   </div>`;
 }
 window.dioSavedBoxHTML = dioSavedBoxHTML;

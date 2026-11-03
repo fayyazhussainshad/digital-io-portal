@@ -60,7 +60,7 @@
       '<button type="button" data-m="form"><svg viewBox=\'0 0 24 24\' width=\'15\' height=\'15\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.9\' stroke-linecap=\'round\' stroke-linejoin=\'round\' aria-hidden=\'true\' style=\'vertical-align:-2px\'><path d=\'M4.5 4h15v16h-15z\'/><path d=\'M8 9h8\'/><path d=\'M8 12.5h8\'/><path d=\'M8 16h5\'/></svg> فارم</button>' +
       '<button type="button" data-m="paper"><svg viewBox=\'0 0 24 24\' width=\'15\' height=\'15\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.9\' stroke-linecap=\'round\' stroke-linejoin=\'round\' aria-hidden=\'true\' style=\'vertical-align:-2px\'><path d=\'M7 3h7l4 4v14H7z\'/><path d=\'M14 3v5h5\'/></svg> کاغذ</button>' +
       '<span class="sp"></span>' +
-      '<span style="font-size:11px;color:var(--text-muted,#7d97ad)">چھپائی ہمیشہ A4</span>';
+      '<span style="font-size:8.25pt;color:var(--text-muted,#7d97ad)">چھپائی ہمیشہ A4</span>';
     bar.addEventListener('click', function (e) {
       var b = e.target.closest ? e.target.closest('[data-m]') : null;
       if (b) setMode(b.getAttribute('data-m'));

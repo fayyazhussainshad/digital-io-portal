@@ -24,17 +24,17 @@
   var STYLE = {
     box:     'text-align:center;padding:32px 20px;direction:rtl;color:var(--text-muted);width:100%;box-sizing:border-box;',
     boxSm:   'text-align:center;padding:20px 16px;direction:rtl;color:var(--text-muted);width:100%;box-sizing:border-box;',
-    icon:    'font-size:44px;margin-bottom:12px;line-height:1;',
-    iconSm:  'font-size:30px;margin-bottom:8px;line-height:1;',
-    title:   'font-size:15px;font-weight:700;margin-bottom:6px;color:var(--text-primary);',
-    titleSm: 'font-size:13px;font-weight:700;margin-bottom:4px;color:var(--text-primary);',
-    hint:    'font-size:12px;color:var(--text-muted);line-height:1.6;max-width:360px;margin:0 auto;',
-    btn:     'padding:8px 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;margin-top:14px;font-family:inherit;',
-    btnSec:  'padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);font-size:12px;font-weight:600;cursor:pointer;margin-top:12px;font-family:inherit;'
+    icon:    'font-size:33pt;margin-bottom:12px;line-height:1;',
+    iconSm:  'font-size:22.5pt;margin-bottom:8px;line-height:1;',
+    title:   'font-size:11.25pt;font-weight:700;margin-bottom:6px;color:var(--text-primary);',
+    titleSm: 'font-size:9.75pt;font-weight:700;margin-bottom:4px;color:var(--text-primary);',
+    hint:    'font-size:9pt;color:var(--text-muted);line-height:1.6;max-width:360px;margin:0 auto;',
+    btn:     'padding:8px 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:9.75pt;font-weight:700;cursor:pointer;margin-top:14px;font-family:inherit;',
+    btnSec:  'padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);font-size:9pt;font-weight:600;cursor:pointer;margin-top:12px;font-family:inherit;'
   };
 
   // Font wrap — Jameel Noori Nastaleeq for Urdu
-  var URDU_FONT = "font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;";
+  var URDU_FONT = "font-family:'Jameel Noori Nastaleeq';";
 
   // Escape helper (esc / DIO.html.text ka safe wrapper)
   function _esc(s) {
@@ -176,7 +176,7 @@
 
     // ── INLINE BADGES (small — top-corner ya toolbar) ───────
     savingBadge: function () {
-      return '<span class="dio-badge" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--amber);' + URDU_FONT + '">' +
+      return '<span class="dio-badge" style="display:inline-flex;align-items:center;gap:5px;font-size:8.25pt;color:var(--amber);' + URDU_FONT + '">' +
              '<span style="display:inline-block;animation:dio-rot 1.2s linear infinite;">' + _icon('refresh', 13) + '</span> محفوظ ہو رہا ہے…' +
              _spinnerCSS() + '</span>';
     },
@@ -186,18 +186,18 @@
       if (whenIso) {
         try { t = (window.DIO && DIO.date) ? (' · ' + DIO.date.time(whenIso)) : ''; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       }
-      return '<span class="dio-badge" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--green);' + URDU_FONT + '">' +
+      return '<span class="dio-badge" style="display:inline-flex;align-items:center;gap:5px;font-size:8.25pt;color:var(--green);' + URDU_FONT + '">' +
              _icon('check', 13) + ' محفوظ' + _esc(t) + '</span>';
     },
 
     pendingSyncBadge: function (count) {
       var n = (count && count > 0) ? count : '';
-      return '<span class="dio-badge" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--amber);' + URDU_FONT + '">' +
+      return '<span class="dio-badge" style="display:inline-flex;align-items:center;gap:5px;font-size:8.25pt;color:var(--amber);' + URDU_FONT + '">' +
              _icon('cloud', 13) + ' سنک باقی' + (n ? ' (' + n + ')' : '') + '</span>';
     },
 
     offlineBadge: function () {
-      return '<span class="dio-badge" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);' + URDU_FONT + '">' +
+      return '<span class="dio-badge" style="display:inline-flex;align-items:center;gap:5px;font-size:8.25pt;color:var(--text-muted);' + URDU_FONT + '">' +
              _icon('signal', 13) + ' آف لائن' + '</span>';
     }
   };

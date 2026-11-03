@@ -284,7 +284,7 @@ function _cdrRenderList() {
     ${rows}
   </div>
   <style>
-    .cdr-listwrap{ padding:16px; direction:rtl; height:100%; overflow-y:auto; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+    .cdr-listwrap{ padding:16px; direction:rtl; height:100%; overflow-y:auto; font-family:'Jameel Noori Nastaleeq'; }
     .cdr-list-head{ display:flex; align-items:center; gap:10px; border-bottom:2px solid var(--accent); padding-bottom:8px; margin-bottom:14px; }
     .cdr-list-title{ flex:1; text-align:center; font-size:14pt; font-weight:800; color:var(--accent); }
     .cdr-li{ display:flex; align-items:center; gap:12px; padding:10px 14px; background:var(--bg-card); border:1px solid var(--border);
@@ -486,13 +486,13 @@ function _cdrCSS() {
     /* سکرین کی پٹی — فہرست اور CDR کی تاریخیں (چھپائی میں نہیں) */
     .cdr-strip{ position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:10px; flex-wrap:nowrap;
       overflow-x:auto; scrollbar-width:none; padding:6px 10px; direction:rtl; background:var(--bg-secondary,#f3f6f9);
-      border-bottom:1px solid var(--border,#ddd); font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+      border-bottom:1px solid var(--border,#ddd); font-family:'Jameel Noori Nastaleeq'; }
     .cdr-strip::-webkit-scrollbar{ display:none; }
     .cdr-strip > *{ flex:0 0 auto; white-space:nowrap; }
     .cdr-strip-t{ font-weight:700; font-size:11pt; color:var(--accent,#0369a1); }
     .cdr-tb-lbl{ display:inline-flex; align-items:center; gap:6px; white-space:nowrap; font-size:11pt; color:var(--text-primary,#111); }
     .cdr-cal{ position:relative; display:inline-flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer;
-      width:34px; height:30px; border:1px solid var(--border,#ccc); border-radius:6px; background:var(--bg-card,#fff); font-size:15px; }
+      width:34px; height:30px; border:1px solid var(--border,#ccc); border-radius:6px; background:var(--bg-card,#fff); font-size:11.25pt; }
     .cdr-cal input{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:0; padding:0; }
     /* کاغذ کے گرد کوئی خالی جگہ نہیں — A4 سیدھا اوپر سے شروع */
     .cdr-scroll{ flex:1; min-height:0; overflow:auto; padding:0; background:var(--bg-tertiary,#e9eef3); }
@@ -500,7 +500,7 @@ function _cdrCSS() {
 
     #cdr-doc{ width:8.27in; min-height:11.69in; box-sizing:border-box; padding:1cm 1in 1cm 0.4in; margin:0 auto;
       background:#fff; color:#000; direction:rtl; text-align:right;
-      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; font-size:12pt; line-height:1.6;
+      font-family:'Jameel Noori Nastaleeq'; font-size:12pt; line-height:1.6;
       box-shadow:0 0 0 1px rgba(0,0,0,0.08); border-radius:0; }
     #cdr-doc *{ box-sizing:border-box; }
     #cdr-doc .cdr-en{ font-family:'Times New Roman',Times,'Liberation Serif',serif; unicode-bidi:isolate; }
@@ -513,7 +513,7 @@ function _cdrCSS() {
     #cdr-doc .cdr-fi.cdr-has{ font-weight:bold; }
     /* سطر 2 تا 4 — ہر لفظ ایک ہی فونٹ، ایک ہی ناپ، ایک ہی وزن */
     #cdr-doc .cdr-sarkar, #cdr-doc .cdr-sarkar *, #cdr-doc .cdr-caseline, #cdr-doc .cdr-caseline *,
-    #cdr-doc .cdr-banam-row, #cdr-doc .cdr-banam-row *{ font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif !important;
+    #cdr-doc .cdr-banam-row, #cdr-doc .cdr-banam-row *{ font-family:'Jameel Noori Nastaleeq' !important;
       font-size:14pt !important; font-weight:normal !important; }
     /* خالی خانہ — کوئی نقطہ دار لکیر نہیں؛ صرف سکرین پر ہلکا رنگ تاکہ نظر آئے کہاں لکھنا ہے */
     #cdr-doc .cdr-fi:empty{ display:inline-block; min-width:0.8in; vertical-align:baseline; }
@@ -531,7 +531,7 @@ function _cdrCSS() {
     #cdr-doc .cdr-acc-line{ margin:0; }
     /* ملزم کا انتخاب ▾ — درخواستیں کی طرح دائیں حاشیے میں (چھپائی میں نہیں) */
     #cdr-doc .cdr-acc-pick{ position:absolute; right:-30px; top:4px; width:24px; height:24px; line-height:22px; border-radius:5px;
-      background:#0369a1; color:#fff; font-size:13px !important; font-weight:700; text-align:center; cursor:pointer; overflow:hidden; }
+      background:#0369a1; color:#fff; font-size:9.75pt !important; font-weight:700; text-align:center; cursor:pointer; overflow:hidden; }
     #cdr-doc .cdr-acc-pick select{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
     #cdr-doc .cdr-center{ justify-content:center; }
     #cdr-doc .cdr-l{ white-space:nowrap; flex:0 0 auto; font-weight:bold; }
@@ -831,6 +831,6 @@ function _printCdr() {
   if (!document.getElementById('cdr-doc')) { if (typeof showToast === 'function') showToast('پہلے کوئی CDR درخواست کھولیں', 'info'); return; }
   if (window.DIO && DIO.sub && !DIO.sub.guard('پرنٹ')) return;
   _cdrBalance();
-  window.print();
+  dioAfterFonts(() => window.print());   // v560: فونٹ لوڈ ہو رہا ہو تو پہلے فونٹ (app-core.js)
 }
 window._printCdr = _printCdr;

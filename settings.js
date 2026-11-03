@@ -29,8 +29,8 @@ async function renderSettings(container) {
     ? `<img src="${photoSrc}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">`
     : `<span>${initials}</span>`;
 
-  const inp = 'width:100%;padding:9px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:13px;box-sizing:border-box;';
-  const lbl = 'display:block;font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:600;letter-spacing:0.5px;';
+  const inp = 'width:100%;padding:9px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:9.75pt;box-sizing:border-box;';
+  const lbl = 'display:block;font-size:8.25pt;color:var(--text-muted);margin-bottom:4px;font-weight:600;letter-spacing:0.5px;';
   const ro  = inp + 'opacity:0.65;cursor:not-allowed;';
   const fg  = 'margin-bottom:12px;';
 
@@ -38,7 +38,7 @@ async function renderSettings(container) {
   const roField = (label, val) => `
     <div style="${fg}">
       <label style="${lbl}">${label}</label>
-      <div style="${ro}padding:9px 12px;border-radius:6px;background:var(--bg-tertiary);border:1px solid var(--border);font-size:13px;color:var(--text-secondary);">
+      <div style="${ro}padding:9px 12px;border-radius:6px;background:var(--bg-tertiary);border:1px solid var(--border);font-size:9.75pt;color:var(--text-secondary);">
         ${val || '<span style="color:var(--text-faint);">ایڈمن نے درج نہیں کیا</span>'}
       </div>
     </div>`;
@@ -62,20 +62,20 @@ async function renderSettings(container) {
     <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;direction:rtl;">
       <!-- Name + role — RIGHT side (sidebar side) -->
       <div style="flex:1;text-align:right;">
-        <div style="font-size:22px;font-weight:800;color:var(--text-primary);font-family:'Jameel Noori Nastaleeq',serif;">${_esc(o.full_name||'افسر کا نام')}</div>
-        <div style="font-size:13px;color:var(--text-secondary);margin-top:2px;">${_esc(o.designation||'—')} &nbsp;·&nbsp; محکمانہ نمبر <span style="direction:ltr;unicode-bidi:embed;display:inline-block;">${_esc(o.badge_number||'—')}</span></div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">تھانہ ${_esc(o.station||'—')}, ضلع ${_esc(o.district||'—')}</div>
+        <div style="font-size:16.5pt;font-weight:800;color:var(--text-primary);font-family:'Jameel Noori Nastaleeq';">${_esc(o.full_name||'افسر کا نام')}</div>
+        <div style="font-size:9.75pt;color:var(--text-secondary);margin-top:2px;">${_esc(o.designation||'—')} &nbsp;·&nbsp; محکمانہ نمبر <span style="direction:ltr;unicode-bidi:embed;display:inline-block;">${_esc(o.badge_number||'—')}</span></div>
+        <div style="font-size:9pt;color:var(--text-muted);margin-top:2px;">تھانہ ${_esc(o.station||'—')}, ضلع ${_esc(o.district||'—')}</div>
       </div>
       <!-- Profile completeness -->
       <div style="text-align:center;min-width:90px;">
-        <div style="font-size:26px;font-weight:800;color:${pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)'};">${pct}%</div>
-        <div style="font-size:10px;color:var(--text-muted);">پروفائل مکمل</div>
+        <div style="font-size:19.5pt;font-weight:800;color:${pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)'};">${pct}%</div>
+        <div style="font-size:7.5pt;color:var(--text-muted);">پروفائل مکمل</div>
         <div style="height:6px;background:var(--bg-tertiary);border-radius:3px;margin-top:6px;overflow:hidden;">
           <div style="height:100%;width:${pct}%;background:${pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)'};border-radius:3px;"></div>
         </div>
       </div>
       <!-- Avatar — LEFT side (opposite to sidebar) -->
-      <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--accent-dark),var(--accent));flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;overflow:hidden;cursor:pointer;border:3px solid var(--accent);" id="profile-avatar-btn" onclick="changeProfilePhoto()" title="تصویر تبدیل کریں">
+      <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--accent-dark),var(--accent));flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:21pt;font-weight:800;color:#fff;overflow:hidden;cursor:pointer;border:3px solid var(--accent);" id="profile-avatar-btn" onclick="changeProfilePhoto()" title="تصویر تبدیل کریں">
         ${avatarHtml}
       </div>
     </div>
@@ -87,13 +87,13 @@ async function renderSettings(container) {
   <!-- ── SECURITY CARD (below name card) ─────────────────── -->
   <div class="card" style="margin-bottom:16px;">
     <div class="card-title" style="margin-bottom:12px;">سیکیورٹی</div>
-    <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;">
+    <div style="display:flex;flex-direction:column;gap:8px;font-size:9pt;">
       <div style="display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="#1d7a4c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M4 10.5l4 4 8-9"/></svg> MFA فعال ہے</div>
       <div style="display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="#1d7a4c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M4 10.5l4 4 8-9"/></svg> آڈٹ لاگنگ فعال ہے</div>
       <div style="display:flex;align-items:center;gap:8px;"><svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="#1d7a4c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none"><path d="M4 10.5l4 4 8-9"/></svg> ڈیٹا خفیہ کردہ ہے</div>
     </div>
     <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
-      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;"><span dir="ltr" style="unicode-bidi:isolate;display:inline-block;">${_esc(currentUser?.email||'—')}</span></div>
+      <div style="font-size:9pt;color:var(--text-secondary);margin-bottom:8px;"><span dir="ltr" style="unicode-bidi:isolate;display:inline-block;">${_esc(currentUser?.email||'—')}</span></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-secondary btn-sm" onclick="openChangePasswordModal()">پاسورڈ تبدیل کریں</button>
         ${(typeof window.isBiometricEnabled === 'function' && window.isBiometricEnabled())
@@ -103,7 +103,7 @@ async function renderSettings(container) {
         <button class="btn btn-secondary btn-sm" onclick="window.dioLockPinSettings&&dioLockPinSettings()">ایپ لاک <span dir="ltr">PIN</span></button>
         <button class="btn btn-secondary btn-sm" onclick="showOnboardingAgain()">گائیڈ دوبارہ دیکھیں</button>
       </div>
-      <div style="font-size:10px;color:var(--text-muted);margin-top:6px;">${(typeof window.isBiometricEnabled === 'function' && window.isBiometricEnabled())
+      <div style="font-size:7.5pt;color:var(--text-muted);margin-top:6px;">${(typeof window.isBiometricEnabled === 'function' && window.isBiometricEnabled())
         ? 'بایومیٹرک اس ڈیوائس پر فعال ہے۔ لاگ آؤٹ اس ڈیوائس پر "تالا" کی طرح کام کرے گا؛ مکمل لاگ آؤٹ کے لیے پہلے بایومیٹرک اور PIN بند کریں۔'
         : 'بایومیٹرک فعال کرنے سے آپ فنگرپرنٹ/فیس سے لاگ ان کر سکیں گے'}</div>
     </div>
@@ -117,7 +117,7 @@ async function renderSettings(container) {
       <!-- SECTION 1: Official Details (Urdu, correct order) -->
       <div class="card" style="margin-bottom:16px;">
         <div class="card-title" style="margin-bottom:16px;">افسر کی معلومات
-          <span style="font-size:11px;color:var(--text-faint);font-weight:400;margin-right:8px;">تبدیلی کے لیے ایڈمن سے رابطہ کریں</span>
+          <span style="font-size:8.25pt;color:var(--text-faint);font-weight:400;margin-right:8px;">تبدیلی کے لیے ایڈمن سے رابطہ کریں</span>
         </div>
         ${roField('پورا نام', o.full_name)}
         ${roField('رینک / عہدہ', o.designation)}
@@ -125,7 +125,7 @@ async function renderSettings(container) {
         ${roField('سیل نمبر', o.official_phone||o.phone)}
         ${roField('شناختی کارڈ نمبر', _cnicShow(o))}
         ${roField('ای میل ایڈریس', currentUser?.email ? '<span dir="ltr" style="unicode-bidi:isolate;display:inline-block;">'+_esc(currentUser.email)+'</span>' : '')}
-        <div style="margin-top:8px;padding:8px 12px;background:var(--accent-glow);border-radius:6px;font-size:11px;color:var(--text-muted);direction:rtl;text-align:right;">
+        <div style="margin-top:8px;padding:8px 12px;background:var(--accent-glow);border-radius:6px;font-size:8.25pt;color:var(--text-muted);direction:rtl;text-align:right;">
           یہ خانے ڈسٹرکٹ ایڈمن سیٹ کرتا ہے۔ تبدیلی کے لیے ایڈمن پینل سے رابطہ کریں۔
         </div>
       </div>
@@ -138,7 +138,7 @@ async function renderSettings(container) {
       <!-- Profile Photo -->
       <div class="card" style="margin-bottom:16px;text-align:center;padding:20px;">
         <div class="card-title" style="margin-bottom:16px;text-align:right;">پروفائل تصویر</div>
-        <div style="width:110px;height:110px;border-radius:50%;background:linear-gradient(135deg,var(--accent-dark),var(--accent));margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:800;color:#fff;overflow:hidden;border:3px solid var(--accent);" id="settings-avatar">
+        <div style="width:110px;height:110px;border-radius:50%;background:linear-gradient(135deg,var(--accent-dark),var(--accent));margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:27pt;font-weight:800;color:#fff;overflow:hidden;border:3px solid var(--accent);" id="settings-avatar">
           ${avatarHtml}
         </div>
         <button class="btn btn-secondary btn-sm" onclick="changeProfilePhoto()">تصویر تبدیل کریں</button>
@@ -148,7 +148,7 @@ async function renderSettings(container) {
       <!-- Current Posting (editable) — no cell number -->
       <div class="card" style="margin-bottom:16px;">
         <div class="card-title" style="margin-bottom:4px;">موجودہ تعیناتی</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:16px;direction:rtl;text-align:right;">تھانہ/ضلع تبدیل کرنے سے ٹرانسفر درج ہو گا</div>
+        <div style="font-size:8.25pt;color:var(--text-muted);margin-bottom:16px;direction:rtl;text-align:right;">تھانہ/ضلع تبدیل کرنے سے ٹرانسفر درج ہو گا</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;direction:rtl;margin-bottom:10px;">
           ${edField('تھانہ', 'set-station', o.station, 'مثلاً سیتل ماڑی')}
           ${edField('ضلع', 'set-district', o.district, 'مثلاً ملتان')}
@@ -161,7 +161,7 @@ async function renderSettings(container) {
         <div class="card-title" style="margin-bottom:4px;">ملازمت کی تاریخ
           
         </div>
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">تمام تھانوں کی مکمل تاریخ</div>
+        <div style="font-size:8.25pt;color:var(--text-muted);margin-bottom:14px;">تمام تھانوں کی مکمل تاریخ</div>
         ${_renderTransferTimeline(transfers, o)}
       </div>
 
@@ -205,9 +205,9 @@ function _renderTransferTimeline(transfers, o){
     return `<div style="display:flex;gap:12px;direction:rtl;align-items:flex-start;">
       <div style="width:10px;height:10px;border-radius:50%;background:var(--green);flex-shrink:0;margin-top:4px;"></div>
       <div>
-        <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${_esc(o.station||'—')}, ${_esc(o.district||'—')}</div>
-        <div style="font-size:11px;color:var(--green);">موجودہ تعیناتی</div>
-        ${!navigator.onLine?'<div style="font-size:10px;color:var(--text-faint);margin-top:2px;">مکمل تاریخ دیکھنے کے لیے انٹرنیٹ درکار ہے</div>':''}
+        <div style="font-size:9.75pt;font-weight:600;color:var(--text-primary);">${_esc(o.station||'—')}, ${_esc(o.district||'—')}</div>
+        <div style="font-size:8.25pt;color:var(--green);">موجودہ تعیناتی</div>
+        ${!navigator.onLine?'<div style="font-size:7.5pt;color:var(--text-faint);margin-top:2px;">مکمل تاریخ دیکھنے کے لیے انٹرنیٹ درکار ہے</div>':''}
       </div>
     </div>`;
   }
@@ -218,13 +218,13 @@ function _renderTransferTimeline(transfers, o){
         ${i<transfers.length-1?`<div style="width:2px;flex:1;min-height:20px;background:var(--border);margin-top:4px;"></div>`:''}
       </div>
       <div style="flex:1;">
-        <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${_esc(t.to_station||'—')}${t.to_district?', '+_esc(t.to_district):''}</div>
-        <div style="font-size:11px;color:${i===0?'var(--green)':'var(--text-muted)'};">${i===0?'موجودہ تعیناتی':'سابقہ: '+_esc(t.from_station||'—')}</div>
+        <div style="font-size:9.75pt;font-weight:600;color:var(--text-primary);">${_esc(t.to_station||'—')}${t.to_district?', '+_esc(t.to_district):''}</div>
+        <div style="font-size:8.25pt;color:${i===0?'var(--green)':'var(--text-muted)'};">${i===0?'موجودہ تعیناتی':'سابقہ: '+_esc(t.from_station||'—')}</div>
         <div style="display:flex;gap:10px;direction:rtl;flex-wrap:wrap;margin-top:3px;">
-          ${t.transfer_date?`<span style="font-size:10px;color:var(--text-faint);" dir="ltr">${_fmtDate(t.transfer_date)}</span>`:''}
-          ${t.order_number?`<span style="font-size:10px;color:var(--text-faint);">آرڈر نمبر <span dir="ltr" style="unicode-bidi:isolate;">${_esc(t.order_number)}</span></span>`:''}
+          ${t.transfer_date?`<span style="font-size:7.5pt;color:var(--text-faint);" dir="ltr">${_fmtDate(t.transfer_date)}</span>`:''}
+          ${t.order_number?`<span style="font-size:7.5pt;color:var(--text-faint);">آرڈر نمبر <span dir="ltr" style="unicode-bidi:isolate;">${_esc(t.order_number)}</span></span>`:''}
         </div>
-        ${t.notes?`<div style="font-size:11px;color:var(--text-muted);margin-top:3px;font-style:italic;">${_esc(t.notes)}</div>`:''}
+        ${t.notes?`<div style="font-size:8.25pt;color:var(--text-muted);margin-top:3px;font-style:italic;">${_esc(t.notes)}</div>`:''}
       </div>
     </div>`).join('');
   return `<div>${items}</div>`;
@@ -337,9 +337,9 @@ function removeProfilePhoto(){
 
 function openChangePasswordModal(){
   openModal('پاسورڈ تبدیل کریں',
-    `<div style="margin-bottom:12px;font-size:12px;color:var(--text-muted);">نیا پاسورڈ درج کریں۔ آپ لاگ ان ہی رہیں گے۔</div>
-     <div style="margin-bottom:10px;"><label style="display:block;font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:600;">نیا پاسورڈ</label><input type="password" id="cp-new" style="width:100%;padding:9px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:13px;box-sizing:border-box;" placeholder="کم از کم 8 حروف"></div>
-     <div><label style="display:block;font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:600;">نیا پاسورڈ دوبارہ</label><input type="password" id="cp-confirm" style="width:100%;padding:9px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:13px;box-sizing:border-box;" placeholder="دوبارہ درج کریں"></div>`,
+    `<div style="margin-bottom:12px;font-size:9pt;color:var(--text-muted);">نیا پاسورڈ درج کریں۔ آپ لاگ ان ہی رہیں گے۔</div>
+     <div style="margin-bottom:10px;"><label style="display:block;font-size:8.25pt;color:var(--text-muted);margin-bottom:4px;font-weight:600;">نیا پاسورڈ</label><input type="password" id="cp-new" style="width:100%;padding:9px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:9.75pt;box-sizing:border-box;" placeholder="کم از کم 8 حروف"></div>
+     <div><label style="display:block;font-size:8.25pt;color:var(--text-muted);margin-bottom:4px;font-weight:600;">نیا پاسورڈ دوبارہ</label><input type="password" id="cp-confirm" style="width:100%;padding:9px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:9.75pt;box-sizing:border-box;" placeholder="دوبارہ درج کریں"></div>`,
     `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
      <button class="btn btn-primary" onclick="doChangePassword()">پاسورڈ اپ ڈیٹ کریں</button>`
   );

@@ -181,6 +181,11 @@ def run(pg, tag, errs, ctx):
     check(f'{tag}: کراس ورژن کے بغیر مقدمہ میں صرف ایف آئی آر کا حصہ', [p['id'] for p in m4['parts']] == ['fir-part-fir'], [p['id'] for p in m4['parts']])
     # بغیر متن کے: Ctrl+P پر کچھ نہ چھپے، صاف پیغام
     pg.evaluate("window.__toasts = []; const _o = window.showToast; window.showToast = function (m, t) { window.__toasts.push([t || 'info', String(m)]); return _o.apply(this, arguments); }; 0")
+    # v560: پچھلا (سطر والا) پرنٹ Jameel لوڈ کر کے ~1–3 سیکنڈ میں مکمل ہوتا ہے — اس کے ختم ہونے تک انتظار
+    for _ in range(60):
+        if not pg.evaluate("!!document.getElementById('dio-print-frame')"): break
+        pg.wait_for_timeout(200)
+    printed(pg)
     pg.keyboard.press('Control+p'); pg.wait_for_timeout(400)
     empty = printed(pg); ts = pg.evaluate("window.__toasts")
     check(f'{tag}: متن نہ ہو تو Ctrl+P پر خالی کاغذ نہیں، پیغام آتا ہے', not empty and pg.evaluate("window.__printCalls") == 0

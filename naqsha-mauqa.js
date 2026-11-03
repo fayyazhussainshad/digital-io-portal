@@ -313,11 +313,11 @@
     if (!_naqAccList.length) { TOAST('اس مقدمہ میں کوئی ملزم درج نہیں (یا آف لائن)', 'info'); return; }
     const chosen = new Set(_chosenBanam());
     const box = document.createElement('div'); box.id = 'naq-acc-menu';
-    box.style.cssText = 'position:fixed;z-index:99999;background:#fff;border:1px solid #0369a1;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.28);direction:rtl;width:280px;max-width:92vw;max-height:min(60vh,360px);display:flex;flex-direction:column;overflow:hidden;font-family:\'Jameel Noori Nastaleeq\',serif;';
+    box.style.cssText = 'position:fixed;z-index:99999;background:#fff;border:1px solid #0369a1;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.28);direction:rtl;width:280px;max-width:92vw;max-height:min(60vh,360px);display:flex;flex-direction:column;overflow:hidden;font-family:\'Jameel Noori Nastaleeq\';';
     box.innerHTML =
-      '<div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-weight:700;color:#0369a1;background:#f8fafc;font-size:13px;">بنام — ملزمان منتخب کریں</div>' +
+      '<div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-weight:700;color:#0369a1;background:#f8fafc;font-size:9.75pt;">بنام — ملزمان منتخب کریں</div>' +
       '<div style="flex:1;overflow:auto;padding:4px 8px;">' +
-      _naqAccList.map(a => `<label style="display:flex;align-items:center;gap:8px;padding:7px 6px;cursor:pointer;font-size:13px;border-bottom:1px solid #f1f5f9;"><input type="checkbox" ${chosen.has(a.name) ? 'checked' : ''} value="${E(a.name)}"> <span>${E(a.name)}</span></label>`).join('') +
+      _naqAccList.map(a => `<label style="display:flex;align-items:center;gap:8px;padding:7px 6px;cursor:pointer;font-size:9.75pt;border-bottom:1px solid #f1f5f9;"><input type="checkbox" ${chosen.has(a.name) ? 'checked' : ''} value="${E(a.name)}"> <span>${E(a.name)}</span></label>`).join('') +
       '</div>' +
       '<div style="display:flex;gap:6px;padding:8px;border-top:1px solid #e5e7eb;background:#f8fafc;">' +
       '<button id="naq-acc-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;color:#fff;font-weight:700;cursor:pointer;">✔ شامل کریں</button>' +
@@ -490,7 +490,7 @@
     container = container || document.getElementById('workspace-editor-area')
       || document.getElementById('workspace-tab-content') || document.getElementById('page-content');
     if (!container) return;
-    container.innerHTML = `<div style="padding:40px;text-align:center;direction:rtl;color:var(--text-muted);"><div style="font-size:40px;">🗺️</div><div style="font-size:14pt;margin-top:8px;">نقشہ موقع کھل رہا ہے…</div></div>`;
+    container.innerHTML = `<div style="padding:40px;text-align:center;direction:rtl;color:var(--text-muted);"><div style="font-size:30pt;">🗺️</div><div style="font-size:14pt;margin-top:8px;">نقشہ موقع کھل رہا ہے…</div></div>`;
 
     // v553: فہرست سے آئیں تو data پہلے سے موجود — دوبارہ سرور سے نہ پڑھو
     //   (پرانی سرور کاپی تازہ مقامی ترمیم کو دبا سکتی تھی)
@@ -742,7 +742,7 @@ ${_docInner(a, hv, io, fabricOk)}
   // ══ Compass — E-W (افقی) عنوان کی سیدھ میں (y=48)، N-S لمبا اسی پر fixed؛
   //   الفاظ arrow heads سے فاصلے پر ════════════════════════════════════
   function _compassSVG() {
-    const F = "font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif";
+    const F = "font-family:'Jameel Noori Nastaleeq'";
     // E-W افقی lline y=62 (عنوان کی سیدھ)؛ N-S عمودی لمبا؛ الفاظ arrow heads سے صاف فاصلے پر (middle anchor)
     // N-S عمودی وہی؛ E-W افقی تھوڑا نیچے (y=78)
     return `<svg class="naq-compass" viewBox="0 0 150 190" aria-label="سمت نما">
@@ -752,10 +752,10 @@ ${_docInner(a, hv, io, fabricOk)}
       <line x1="47" y1="78" x2="103" y2="78" stroke="#111" stroke-width="1.8"/>
       <polygon points="110,78 98,72 98,84" fill="#111"/>
       <polygon points="40,78 52,72 52,84" fill="#111"/>
-      <text x="75"  y="30"  text-anchor="middle" font-size="13" style="${F}">شمال</text>
-      <text x="75"  y="190" text-anchor="middle" font-size="13" style="${F}">جنوب</text>
-      <text x="128" y="83"  text-anchor="middle" font-size="13" style="${F}">مشرق</text>
-      <text x="22"  y="83"  text-anchor="middle" font-size="13" style="${F}">مغرب</text>
+      <text x="75"  y="30"  text-anchor="middle" font-size="9.75pt" style="${F}">شمال</text>
+      <text x="75"  y="190" text-anchor="middle" font-size="9.75pt" style="${F}">جنوب</text>
+      <text x="128" y="83"  text-anchor="middle" font-size="9.75pt" style="${F}">مشرق</text>
+      <text x="22"  y="83"  text-anchor="middle" font-size="9.75pt" style="${F}">مغرب</text>
     </svg>`;
   }
 
@@ -1102,7 +1102,7 @@ ${_docInner(a, hv, io, fabricOk)}
     { key: 'table', label: 'میز', svg: _S(`<path d="M8 24H56M14 24V50M50 24V50" ${_ST}/>`) },
     { key: 'well', label: 'کنواں', svg: _S(`<circle cx="32" cy="34" r="16" ${_ST}/><circle cx="32" cy="34" r="9" fill="none" stroke="#111" stroke-width="1.6"/><path d="M14 20H50" ${_ST}/>`) },
     { key: 'pole', label: 'بجلی کھمبا', svg: _S(`<path d="M32 10V56M18 18H46M22 24H42" ${_ST}/>`) },
-    { key: 'north', label: 'شمال تیر', svg: _S(`<path d="M32 56V14" ${_ST}/><path d="M32 8L25 22H39Z" fill="#111"/><text x="32" y="54" text-anchor="middle" font-size="12" fill="#111" font-family="serif">N</text>`) },
+    { key: 'north', label: 'شمال تیر', svg: _S(`<path d="M32 56V14" ${_ST}/><path d="M32 8L25 22H39Z" fill="#111"/><text x="32" y="54" text-anchor="middle" font-size="9pt" fill="#111" font-family="serif">N</text>`) },
     { key: 'house', label: 'گھر', svg: _S(`<path d="M10 30L32 12L54 30" ${_ST}/><path d="M16 30V52H48V30" ${_ST}/><rect x="28" y="40" width="10" height="12" ${_ST}/>`) },
     { key: 'wall', label: 'دیوار', svg: _S(`<rect x="8" y="20" width="48" height="24" ${_ST}/><path d="M8 32H56M24 20V32M40 20V32M16 32V44M32 32V44M48 32V44" fill="none" stroke="#111" stroke-width="1.5"/>`) },
     { key: 'road', label: 'سڑک', svg: _S(`<path d="M14 8V56M50 8V56" ${_ST}/><path d="M32 10V22M32 30V40M32 48V58" fill="none" stroke="#111" stroke-width="2" stroke-dasharray="6 5"/>`) },
@@ -1409,7 +1409,7 @@ ${_docInner(a, hv, io, fabricOk)}
     if (!window.fabric || !_naqCanvas) return;
     const t = new fabric.IText('یہاں لکھیں', {
       left: _naqCanvas.getWidth() / 2, top: _naqCanvas.getHeight() / 2, originX: 'center', originY: 'center',
-      fontFamily: "'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif", fontSize: pt2px(16), fill: '#111',
+      fontFamily: "'Jameel Noori Nastaleeq'", fontSize: pt2px(16), fill: '#111',
       textAlign: 'right', direction: 'rtl', naqLabel: true, editable: true,
     });
     _naqCanvas.add(t); _naqCanvas.setActiveObject(t); t.enterEditing();
@@ -1527,7 +1527,7 @@ ${_docInner(a, hv, io, fabricOk)}
         @page{ size:${size}; margin:0; }
         *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; box-sizing:border-box; }
         html,body{ margin:0; }
-        body{ direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; color:#000; }
+        body{ direction:rtl; font-family:'Jameel Noori Nastaleeq'; color:#000; }
         ${_docCSS(true)}
         .naq-doc{ box-shadow:none !important; border-radius:0 !important; }
       </style></head><body>${clone.outerHTML}</body></html>`;
@@ -1701,7 +1701,7 @@ ${_docInner(a, hv, io, fabricOk)}
   }
   function _listCSS() {
     return `
-    .naq-list{ padding:14px 16px 24px; direction:rtl; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+    .naq-list{ padding:14px 16px 24px; direction:rtl; font-family:'Jameel Noori Nastaleeq'; }
     .naq-lhead{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
     .naq-lh1{ font-size:15pt; font-weight:800; line-height:1.9; color:var(--text-primary,#111); }
     .naq-lsub{ font-size:11pt; color:var(--text-muted,#667); line-height:1.7; }
@@ -1718,7 +1718,7 @@ ${_docInner(a, hv, io, fabricOk)}
     if (!container) return;
     try { _naqWsOff(); } catch (_) { /* ضمنی */ }
     if (!skipLoad || !_naqData || !Array.isArray(_naqData.sketches)) {
-      container.innerHTML = `<div style="padding:40px;text-align:center;direction:rtl;color:var(--text-muted);"><div style="font-size:40px;">🗺️</div><div style="font-size:14pt;margin-top:8px;">نقشہ موقع کھل رہا ہے…</div></div>`;
+      container.innerHTML = `<div style="padding:40px;text-align:center;direction:rtl;color:var(--text-muted);"><div style="font-size:30pt;">🗺️</div><div style="font-size:14pt;margin-top:8px;">نقشہ موقع کھل رہا ہے…</div></div>`;
       await _loadCase(cid); await _load();
     }
     _naqCanvas = null;
@@ -1807,7 +1807,7 @@ ${_docInner(a, hv, io, fabricOk)}
     /* درخواست (darkhwastain) کی ہو بہو top-4-line ترتیب: دائیں 1in، بائیں 0.4in،
        اوپر/نیچے 1cm؛ line-height 1.9؛ سطر 2/3/4 کا right-indent 0.9in۔ */
     .naq-doc{ background:#fff; color:#111; font-size:14pt; line-height:1.9;
-      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; padding:1cm 1in 1cm 0.4in; --naq-indent:0.9in; }
+      font-family:'Jameel Noori Nastaleeq'; padding:1cm 1in 1cm 0.4in; --naq-indent:0.9in; }
     .naq-doc.naq-legal{ width:8.5in; }
     .naq-doc.naq-a4{ width:8.27in; }
     ${forPrint ? `.naq-doc{ width:100% !important; }` : ''}
@@ -1832,7 +1832,7 @@ ${_docInner(a, hv, io, fabricOk)}
     /* سطر 4 بنام — «بنام» دائیں کنارے (تھانہ کی سیدھ) hanging؛ ملزمان 0.9in indent (سرکار کی سیدھ)؛ tight 1pt */
     .naq-banam{ position:relative; margin-top:1pt; padding-right:var(--naq-indent,0.9in); line-height:1.8; min-height:1.6em; }
     .naq-banam-lbl{ position:absolute; right:0; top:0; white-space:nowrap; }
-    .naq-caret{ width:20px; height:20px; border:1px solid #cbd5e1; border-radius:5px; background:#fff; font-size:11px; cursor:pointer; }
+    .naq-caret{ width:20px; height:20px; border:1px solid #cbd5e1; border-radius:5px; background:#fff; font-size:8.25pt; cursor:pointer; }
     .naq-banam-list{ display:block; }
     .naq-acc{ margin:0; }
     .naq-accno{ font-weight:400; }
@@ -1859,7 +1859,7 @@ ${_docInner(a, hv, io, fabricOk)}
       background:transparent; opacity:0; transition:opacity .15s ease; }
     .naq-map:hover .naq-map-resize, .naq-map-resize:hover{ opacity:1;
       background:linear-gradient(180deg,transparent,rgba(37,99,235,0.10)); }
-    .naq-map-resize::after{ content:'⋯'; position:absolute; left:50%; bottom:0; transform:translateX(-50%); color:#9aa; font-size:12px; }
+    .naq-map-resize::after{ content:'⋯'; position:absolute; left:50%; bottom:0; transform:translateX(-50%); color:#9aa; font-size:9pt; }
     /* سمت نما — دائیں بارڈر کی طرف؛ N-S لمبا وہی؛ E-W افقی تھوڑا نیچے */
     .naq-compass{ position:absolute; top:50%; right:-40px; width:116px; height:147px; transform:translateY(-48px); z-index:6; pointer-events:none; }
     .naq-nofab{ padding:36px 16px; text-align:center; color:#b91c1c; }
@@ -1883,7 +1883,7 @@ ${_docInner(a, hv, io, fabricOk)}
   function _css() {
     return `
     .naq-wrap{ display:flex; flex-direction:column; height:100%; direction:rtl;
-      font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+      font-family:'Jameel Noori Nastaleeq'; }
     /* ٹول بار — ہمیشہ اوپر، ہر وقت نظر میں (چالان کی طرح)۔
        پہلے میں نے اِسے صفحے کے ساتھ چلتا کر دیا تھا — وہ غلط تھا۔ صارف کی
        وضاحت: ترمیم کے اوزار (کاٹنا، چسپاں، واپس…) ہمیشہ اوپر رہیں، اور
@@ -1907,11 +1907,11 @@ ${_docInner(a, hv, io, fabricOk)}
     .naq-chip{ padding:4px 11px; border:1px solid var(--border,#cbd5e1); border-radius:16px; background:var(--bg-card,#fff);
       color:var(--text-primary,#111); cursor:pointer; font-size:12pt; }
     .naq-chip.on{ background:var(--nav-active,#e0edff); color:var(--accent,#2563eb); border-color:var(--accent,#2563eb); font-weight:700; }
-    .naq-chip .naq-x{ color:#b91c1c; font-size:11px; cursor:pointer; }
+    .naq-chip .naq-x{ color:#b91c1c; font-size:8.25pt; cursor:pointer; }
     .naq-chip.naq-add{ font-weight:800; }
     .naq-tools{ display:flex; gap:4px; flex-wrap:wrap; align-items:center; width:100%; }
     .naq-tb{ min-width:32px; height:30px; padding:0 8px; border:1px solid var(--border,#cbd5e1); border-radius:7px;
-      background:var(--bg-card,#fff); color:var(--text-primary,#111); cursor:pointer; font-size:14px; }
+      background:var(--bg-card,#fff); color:var(--text-primary,#111); cursor:pointer; font-size:10.5pt; }
     .naq-tb:hover{ background:var(--hover-bg,#eef6ff); }
     .naq-tool.on{ background:var(--nav-active,#e0edff); border-color:var(--accent,#2563eb); color:var(--accent,#2563eb); font-weight:700; }
     .naq-color{ width:32px; height:30px; padding:2px; border:1px solid var(--border,#cbd5e1); border-radius:7px; background:#fff; cursor:pointer; }
@@ -1944,7 +1944,7 @@ ${_docInner(a, hv, io, fabricOk)}
       background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 23px, #94a3b8 23px, #94a3b8 24px);
       background-size:9px 100%; background-repeat:repeat-y; background-position:right top; }
     .naq-ruler b{ position:absolute; left:0; right:0; height:0; border-top:1.5px solid #334155; }
-    .naq-ruler b{ font:700 9px/1 var(--font-mono,monospace); color:#334155; text-align:center; }
+    .naq-ruler b{ font:700 6.75pt/1 var(--font-mono,monospace); color:#334155; text-align:center; }
     .naq-ruler b{ padding-top:2px; }
     .naq-pgline{ position:absolute; left:0; right:0; height:0; border-top:2px dashed #dc2626; z-index:7; pointer-events:none; }
     .naq-pgline span{ position:absolute; left:28px; top:-1.6em; font-size:10pt; color:#dc2626; background:rgba(255,255,255,.9); padding:0 6px; border-radius:4px; white-space:nowrap; }
@@ -1961,16 +1961,16 @@ ${_docInner(a, hv, io, fabricOk)}
     /* پولیس علامات پینل */
     .naq-sympanel{ position:fixed; z-index:99998; background:#fff; border:1px solid #0369a1; border-radius:12px;
       box-shadow:0 12px 34px rgba(0,0,0,.28); direction:rtl; width:340px; max-width:94vw; max-height:min(66vh,460px);
-      display:flex; flex-direction:column; overflow:hidden; font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif; }
+      display:flex; flex-direction:column; overflow:hidden; font-family:'Jameel Noori Nastaleeq'; }
     .naq-sympanel-h{ padding:9px 12px; font-weight:700; color:#0369a1; background:#f8fafc; border-bottom:1px solid #e5e7eb;
-      display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:13px; }
-    .naq-sym-x{ color:#b91c1c; cursor:pointer; font-size:14px; padding:0 4px; }
+      display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:9.75pt; }
+    .naq-sym-x{ color:#b91c1c; cursor:pointer; font-size:10.5pt; padding:0 4px; }
     .naq-symgrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:7px; padding:11px; overflow:auto; }
     .naq-symcell{ display:flex; flex-direction:column; align-items:center; gap:4px; padding:7px 3px;
       border:1px solid #e5e7eb; border-radius:9px; background:#fff; cursor:pointer; }
     .naq-symcell:hover{ background:#eef6ff; border-color:#2563eb; }
     .naq-symcell svg{ width:34px; height:34px; }
-    .naq-symcell span{ font-size:11px; color:#334155; line-height:1.2; }
+    .naq-symcell span{ font-size:8.25pt; color:#334155; line-height:1.2; }
     @media print{ .naq-toolbar,.naq-chipstrip,.naq-topwrap,#global-mic-btn,.naq-sympanel{ display:none !important; } }
     `;
   }

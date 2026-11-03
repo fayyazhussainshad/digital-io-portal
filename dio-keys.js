@@ -1166,7 +1166,7 @@
     st.textContent =
       '#dio-keys-help{position:fixed;inset:0;z-index:2147483100;background:rgba(9,20,40,.5);display:flex;align-items:flex-start;justify-content:center;padding:56px 12px 12px;}' +
       '#dio-keys-help .dkh-card{background:var(--bg-card,#fff);color:var(--text-primary,#111);border:1px solid var(--border,#ccd);border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.35);' +
-      'width:min(720px,100%);max-height:calc(100vh - 80px);overflow:auto;direction:rtl;text-align:right;font-family:"Jameel Noori Nastaleeq","Noto Nastaliq Urdu",serif;padding:10pt 14pt 12pt;}' +
+      'width:min(720px,100%);max-height:calc(100vh - 80px);overflow:auto;direction:rtl;text-align:right;font-family:"Jameel Noori Nastaleeq";padding:10pt 14pt 12pt;}' +
       '#dio-keys-help .dkh-top{display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid var(--border,#dde);padding-bottom:4pt;margin-bottom:6pt;}' +
       '#dio-keys-help h2{font-size:16pt;line-height:1.9;margin:0;font-weight:700;}' +
       '#dio-keys-help .dkh-x{border:1px solid var(--border,#ccd);background:transparent;color:inherit;border-radius:8px;min-width:36px;min-height:32px;cursor:pointer;font-size:12pt;font-family:inherit;}' +

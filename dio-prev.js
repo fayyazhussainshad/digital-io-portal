@@ -25,7 +25,7 @@
     '.dio-prev-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:var(--dio-h3,11.25pt);font-weight:700;color:#7c3aed;line-height:2.2;}',
     '.dio-prev-h .sp{margin-inline-start:auto;display:flex;gap:6px;flex-wrap:wrap;}',
     '.dio-mini{border:1px solid var(--border,#c8d8e8);background:var(--bg-card,#fff);color:var(--text-primary,#111);border-radius:8px;',
-    "  padding:0 10px 4px;font-size:11pt;line-height:2;cursor:pointer;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;}",
+    "  padding:0 10px 4px;font-size:11pt;line-height:2;cursor:pointer;font-family:'Jameel Noori Nastaleeq';}",
     '.dio-mini.v{border-color:#7c3aed;color:#7c3aed;}',
     '.dio-rec{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:0 12px;background:var(--bg-card,#fff);',
     '  border:1px solid var(--border,#c8d8e8);border-radius:10px;padding:4px 10px 6px;margin-top:6px;font-size:12pt;line-height:2;}',
@@ -37,7 +37,7 @@
     '.dio-src{display:inline-block;border-radius:6px;padding:0 8px 2px;font-size:10pt;line-height:1.8;background:#ede9fe;color:#5b21b6;}',
     '.dio-src.s{background:#e0f2fe;color:#075985;}.dio-src.m{background:#fef3c7;color:#92400e;}',
     '.dio-paste{width:100%;margin-top:10px;min-height:52px;box-sizing:border-box;font-size:12pt;border:1.5px dashed #7c3aed;border-radius:9px;',
-    "  background:var(--bg-card,#fff);color:var(--text-primary,#111);padding:6px 10px;resize:vertical;font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif;}"
+    "  background:var(--bg-card,#fff);color:var(--text-primary,#111);padding:6px 10px;resize:vertical;font-family:'Jameel Noori Nastaleeq';}"
   ].join('\n');
   function css() {
     if (document.getElementById('dio-prev-css')) return;
