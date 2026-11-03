@@ -576,13 +576,437 @@ function _zimniSyncSignDate() {
     if (!sign || !sign.parentNode) return fd.dmy;
     sd = document.createElement('div');
     sd.className = 'zf-signdate'; sd.setAttribute('data-k', 'io_date');
-    sd.setAttribute('style', 'text-align:left !important;display:block;');
     sign.parentNode.insertBefore(sd, sign.nextSibling);
   }
   if (String(sd.textContent || '').trim() !== fd.dmy) sd.textContent = fd.dmy;
   return fd.dmy;
 }
 window._zimniSyncSignDate = _zimniSyncSignDate;
+
+// ═══════════════════════════════════════════════════════════════════════
+//  v564 — بندھے ہوئے خانے (افسر کی ہدایت، 28 اکتوبر 2026؛ ترمیم 3 نومبر 2026)
+//  «ضمنی کی تاریخ (کالم 1) اور دستخط کے نیچے کی تاریخ ایک ہی قدر — ایک بدلو تو دوسری خود (دونوں
+//   طرف)۔ SHO کا نام ایک جگہ بدلو تو اُسی ضمنی میں ہر جگہ خود بدل جائے۔»
+//  • تاریخ: پہلے اندراج کا کالم 1 ↔ [data-k="io_date"]
+//  • SHO کا نام (ترتیبات کا SHO): متن میں جہاں جہاں لکھا ہو (span[data-bind="sho_name"])
+//  • تفتیشی افسر کا نام — ربط نہیں (3 نومبر 2026 کی ہدایت): نام مقرر ہے، subscriber سے آتا ہے اور
+//    ضمنی میں کہیں قابلِ ترمیم نہیں — نیچے _zimniLockIO
+//  نام پہچاننے کا اصول وہی جو پورے نظام میں: کم از کم 2 الفاظ یا 6 حروف (چھوٹا ٹکڑا کبھی نہیں)۔
+//  تبدیلی اسی لمحے (لکھتے ہوئے) — undo / خودکار مسودہ کے ساتھ ایک ہی قدم۔
+// ═══════════════════════════════════════════════════════════════════════
+const _ZF_BIND = { sho: 'sho_name' };
+// نظام جہاں تفتیشی افسر کا نام لکھتا ہے: بیرونی — «مرتبہ» + دستخط؛ اندرونی (بیانات 161) — ہر بیان کا دستخط
+const _ZF_IO_LINES = '[data-k="murattib"],[data-k="io_sign"],.zfa-wit-io';
+// ربط والے span جو اس نظام نے خود بنائے/پہچانے — Enter سے بنی نقل یا چسپاں کیا گیا span ربط نہیں (سادہ متن بن جاتا ہے)
+let _zfKnown = new WeakSet();
+const _ZF_SPC = /[\s\u00A0]+/g;
+function _zimniNmOk(n) {
+  const t = String(n || '').replace(_ZF_SPC, ' ').trim();
+  return !!t && (t.split(' ').length >= 2 || t.length >= 6);
+}
+// «فیاض حسین شاد ASI تھانہ صدر ملتان» → «فیاض حسین شاد» (پہلا انگریزی عہدہ یا «تھانہ» سے پہلے)
+function _zimniLineName(line) {
+  const t = String(line || '').replace(_ZF_SPC, ' ').trim();
+  if (!t) return '';
+  const words = t.split(' ');
+  const out = [];
+  for (const w of words) {
+    if (/^[A-Za-z][A-Za-z./-]{0,9}$/.test(w) || /^تھانہ/.test(w)) break;
+    out.push(w);
+  }
+  return out.join(' ');
+}
+window._zimniLineName = _zimniLineName;
+function _zimniGroupValue(doc, g) {
+  const sp = doc.querySelector('[data-bind="' + g + '"]');
+  if (sp && _zimniNmOk(sp.textContent)) return sp.textContent.replace(_ZF_SPC, ' ').trim();
+  try { const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}'); if (_zimniNmOk(sho.name)) return String(sho.name).trim(); } catch (_) { /* ضمنی */ }
+  return '';
+}
+// متن میں نام کی ہر جگہ کو span[data-bind] میں لپیٹو (پورا لفظ؛ کرسر والا ٹکڑا چھوڑ کر — لکھائی نہ رکے)
+function _zimniWrapNames(doc) {
+  doc = doc || _zimniDoc();
+  if (!doc || !doc.querySelector('.zf-tbl')) return 0;
+  let made = 0;
+  const sel = window.getSelection();
+  const busy = new Set([sel && sel.anchorNode, sel && sel.focusNode].filter(Boolean));
+  const vals = [];
+  const sho = _zimniGroupValue(doc, _ZF_BIND.sho);
+  if (sho) vals.push([_ZF_BIND.sho, sho]);
+  const isL = (ch) => !!ch && /[\p{L}\p{M}\p{N}]/u.test(ch);
+  for (const [g, v] of vals) {
+    const re = new RegExp(v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '[\\s\\u00A0]+'), 'g');
+    const tw = document.createTreeWalker(doc, NodeFilter.SHOW_TEXT, {
+      acceptNode: (n) => {
+        const pe = n.parentElement;
+        if (!pe || busy.has(n) || pe.closest('[data-bind],.zf-ioname,' + _ZF_IO_LINES + ',button,.no-print')) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    const nodes = []; let n;
+    while ((n = tw.nextNode())) if (re.test(n.nodeValue || '')) nodes.push(n);
+    for (const t of nodes) {
+      re.lastIndex = 0;
+      let node = t, m;
+      while (node && (m = re.exec(node.nodeValue || ''))) {
+        const a = m.index, b = a + m[0].length, tx = node.nodeValue;
+        if (isL(tx.charAt(a - 1)) || isL(tx.charAt(b))) continue;     // کسی بڑے لفظ کا حصہ
+        const mid = a > 0 ? node.splitText(a) : node;
+        const rest = mid.splitText(b - a);
+        const sp = document.createElement('span'); sp.setAttribute('data-bind', g);
+        mid.parentNode.insertBefore(sp, mid); sp.appendChild(mid);
+        _zfKnown.add(sp);
+        made++; node = rest; re.lastIndex = 0;
+      }
+    }
+  }
+  return made;
+}
+window._zimniWrapNames = _zimniWrapNames;
+function _zimniSpread(doc, g, name, except) {
+  if (!_zimniNmOk(name)) return;
+  doc.querySelectorAll('[data-bind="' + g + '"]').forEach(sp => {
+    if (sp !== except && sp.textContent !== name) sp.textContent = name;
+  });
+}
+// کالم 1 (پہلا اندراج) کی تاریخ والا خانہ
+function _zimniC1(doc) {
+  return doc.querySelector('tr.zf-blk td.zf-c-action .zf-actbody') || doc.querySelector('tr.zf-blk td.zf-c-action')
+      || doc.querySelector('.zf-actbody');
+}
+// دستخط کی تاریخ → کالم 1 (کالم 1 میں تاریخ کے ساتھ لکھا باقی متن جوں کا توں)
+function _zimniDateToC1(doc, dmy) {
+  const c1 = _zimniC1(doc); if (!c1) return;
+  const RE = /([0-9۰-۹٠-٩]{1,2})\s*[/\-.]\s*([0-9۰-۹٠-٩]{1,2})\s*[/\-.]\s*([0-9۰-۹٠-٩]{4})/;
+  const cur = _zimniFindDate(c1.textContent || '');
+  if (cur && cur.dmy === dmy) return;
+  const tw = document.createTreeWalker(c1, NodeFilter.SHOW_TEXT); let n;
+  while ((n = tw.nextNode())) {
+    const m = RE.exec(n.nodeValue || '');
+    if (m) { n.nodeValue = n.nodeValue.slice(0, m.index) + dmy + n.nodeValue.slice(m.index + m[0].length); return; }
+  }
+  const t = String(c1.textContent || '').replace(_ZF_SPC, ' ').trim();
+  if (RE.test(t)) { c1.textContent = t.replace(RE, dmy); return; }
+  c1.textContent = t ? (dmy + ' ' + t) : dmy;
+  try { if (typeof _zimniPlaceholders === 'function') _zimniPlaceholders(); } catch (_) { /* ضمنی */ }
+}
+// ہر لکھائی کے ساتھ (window، capture — undo کی تصویر اور مسودہ تبدیلی کے بعد کی حالت لیں)
+function _zimniBindOnInput(e) {
+  const doc = _zimniDoc();
+  if (!doc || !doc.querySelector('.zf-tbl') || !e || !e.target || !(e.target === doc || doc.contains(e.target))) return;
+  // کس خانے میں تبدیلی ہوئی: افسر کی لکھائی میں واقعہ پوری دستاویز (میزبان) پر آتا ہے — تب کرسر کی جگہ؛
+  //   کوئی راستہ (مائیک، اندراج، پرانا کوڈ) کسی خاص خانے پر واقعہ بھیجے تو وہی خانہ
+  let el = (e.target !== doc && e.target.nodeType === 1) ? e.target : null;
+  if (!el) {
+    const s = window.getSelection();
+    const n = s && s.anchorNode; if (!n) return;
+    el = n.nodeType === 1 ? n : n.parentElement;
+  }
+  if (!el || !doc.contains(el)) return;
+  try {
+    // ربط کی صفائی: نامعلوم (نقل/چسپاں) span → سادہ متن؛ خالی span (جو اس وقت لکھا نہ جا رہا ہو) → ختم
+    doc.querySelectorAll('[data-bind]').forEach(x => {
+      const empty = !String(x.textContent || '').length;
+      if (_zfKnown.has(x) && !(empty && x !== _zfBindPend)) return;
+      if (empty && x === _zfBindPend) return;
+      const p = x.parentNode; if (!p) return;
+      while (x.firstChild) p.insertBefore(x.firstChild, x);
+      p.removeChild(x);
+    });
+    const c1 = _zimniC1(doc);
+    if (c1 && c1.contains(el)) { _zimniSyncSignDate(); return; }
+    const sd = el.closest('[data-k="io_date"]');
+    if (sd) { const fd = _zimniFindDate(sd.textContent || ''); if (fd) _zimniDateToC1(doc, fd.dmy); return; }
+    const sp = el.isConnected ? el.closest('[data-bind]') : null;
+    if (sp && _zfKnown.has(sp)) {
+      _zimniSpread(doc, sp.getAttribute('data-bind'), String(sp.textContent || '').replace(_ZF_SPC, ' ').trim(), sp);
+    }
+  } catch (err) { try { console.warn('zimni bind:', err && err.message); } catch (_) { /* ضمنی */ } }
+}
+// پورا نام چن کر دوبارہ لکھنا / مٹانا — براؤزر span ہی ختم کر دیتا ہے (ربط ٹوٹتا)؛ یہ کام یہاں خود
+let _zfBindPend = null;          // مٹایا گیا (خالی) span — اگلا حرف اسی میں
+let _zfBindEdit = null;          // جس نام کو افسر اس وقت دوبارہ لکھ رہا ہے — اس میں خالی جگہ نام ہی کا حصہ
+function _zimniBindBefore(e) {
+  const doc = _zimniDoc();
+  if (!doc || e.defaultPrevented || !doc.querySelector('.zf-tbl') || !doc.contains(e.target === doc ? doc : e.target)) return;
+  const t = String(e.inputType || '');
+  const s = window.getSelection(); if (!s || !s.rangeCount) return;
+  const r = s.getRangeAt(0);
+  const typing = (t === 'insertText' || t === 'insertReplacementText' || t === 'insertFromPaste' || t === 'insertCompositionText');
+  const data = typing ? (e.data != null ? String(e.data) : ((e.dataTransfer && e.dataTransfer.getData('text/plain')) || '')) : '';
+  // (1) پچھلا خالی span ابھی کرسر کے ساتھ ہے — نیا حرف اسی میں
+  if (_zfBindPend && typing && r.collapsed && data) {
+    const sp = _zfBindPend;
+    const near = sp.isConnected && ((r.startContainer === sp.parentNode && (sp.parentNode.childNodes[r.startOffset] === sp || sp.parentNode.childNodes[r.startOffset - 1] === sp)) ||
+      (r.startContainer.nodeType === 3 && ((r.startContainer === sp.previousSibling && r.startOffset === r.startContainer.length) || (r.startContainer === sp.nextSibling && r.startOffset === 0))) ||
+      r.startContainer === sp);
+    _zfBindPend = null;
+    if (near) {
+      e.preventDefault();
+      _zfBindEdit = sp;
+      sp.textContent = data;
+      const rr = document.createRange(); rr.setStart(sp.firstChild, data.length); rr.collapse(true);
+      s.removeAllRanges(); s.addRange(rr);
+      sp.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: t, data }));
+      return;
+    }
+  }
+  // (2) نام کے بالکل آخر میں خالی جگہ (یا شروع سے پہلے) — نیا لفظ نام سے باہر؛ حرف = نام ہی میں ترمیم
+  //   v564: کرسر متن کے ٹکڑے میں ہو یا خود span پر (End / کلک سے دونوں ممکن) — «آخر / شروع» متن سے پرکھو
+  if (r.collapsed && typing && data) {
+    const sc = r.startContainer, pe = sc.nodeType === 3 ? sc.parentElement : sc, bsp = pe && pe.closest && pe.closest('[data-bind]');
+    if (bsp && _zfKnown.has(bsp)) {
+      const side = (toEnd) => { const x = document.createRange(); x.selectNodeContents(bsp);
+        if (toEnd) x.setStart(r.startContainer, r.startOffset); else x.setEnd(r.startContainer, r.startOffset); return x.toString() === ''; };
+      const atEnd = side(true), atStart = !atEnd && side(false);
+      if (bsp !== _zfBindEdit && ((atEnd && /^\s/.test(data)) || (atStart && /\s$/.test(data)))) {
+        e.preventDefault();
+        let out = atEnd ? bsp.nextSibling : bsp.previousSibling;
+        if (!out || out.nodeType !== 3) { out = document.createTextNode(''); bsp.parentNode.insertBefore(out, atEnd ? bsp.nextSibling : bsp); }
+        const at = atEnd ? 0 : out.length;
+        out.insertData(at, data);
+        const rr = document.createRange(); rr.setStart(out, at + data.length); rr.collapse(true);
+        s.removeAllRanges(); s.addRange(rr);
+        out.parentNode.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: t, data }));
+        return;
+      }
+    }
+  }
+  if (r.collapsed) {
+    // آخری حرف مٹانا
+    if (t !== 'deleteContentBackward' && t !== 'deleteContentForward') return;
+    const sp = (r.startContainer.nodeType === 3 ? r.startContainer.parentElement : r.startContainer);
+    const bsp = sp && sp.closest && sp.closest('[data-bind]');
+    if (!bsp || String(bsp.textContent || '').length !== 1) return;
+    e.preventDefault();
+    bsp.textContent = '';
+    const rr = document.createRange(); rr.setStartBefore(bsp); rr.collapse(true);
+    s.removeAllRanges(); s.addRange(rr);
+    _zfBindPend = bsp; _zfBindEdit = bsp;
+    bsp.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: t }));
+    return;
+  }
+  // پورا نام (یا اس کا کوئی حصہ) چن کر — صرف ایک ہی span کے اندر کا انتخاب
+  const sc = r.startContainer.nodeType === 3 ? r.startContainer.parentElement : r.startContainer;
+  const ec = r.endContainer.nodeType === 3 ? r.endContainer.parentElement : r.endContainer;
+  const a = sc && sc.closest && sc.closest('[data-bind]'), b = ec && ec.closest && ec.closest('[data-bind]');
+  let sp = (a && a === b) ? a : null;
+  if (!sp) {   // انتخاب ٹھیک span کے گرد (span کے باہر سے شروع / ختم) — پورا span
+    const one = [].filter.call(doc.querySelectorAll('[data-bind]'), x => r.intersectsNode(x));
+    if (one.length === 1 && String(r.toString()).replace(_ZF_SPC, ' ').trim() === String(one[0].textContent).replace(_ZF_SPC, ' ').trim()) sp = one[0];
+  }
+  if (!sp) return;
+  if (!typing && t !== 'deleteContentBackward' && t !== 'deleteContentForward' && t !== 'deleteByCut') return;
+  const full = String(sp.textContent || '');
+  let st = 0, en = full.length;
+  if (sp.contains(r.startContainer) && r.startContainer.nodeType === 3) {
+    const pre = document.createRange(); pre.selectNodeContents(sp); pre.setEnd(r.startContainer, r.startOffset); st = pre.toString().length;
+  }
+  if (sp.contains(r.endContainer) && r.endContainer.nodeType === 3) {
+    const pre = document.createRange(); pre.selectNodeContents(sp); pre.setEnd(r.endContainer, r.endOffset); en = pre.toString().length;
+  }
+  const nv = full.slice(0, st) + data + full.slice(en);
+  e.preventDefault();
+  _zfBindEdit = sp;
+  if (t === 'deleteByCut') { try { if (e.dataTransfer) e.dataTransfer.setData('text/plain', full.slice(st, en)); } catch (_) { /* ضمنی */ } }
+  sp.textContent = nv;
+  const rr = document.createRange();
+  if (nv) { rr.setStart(sp.firstChild, st + data.length); } else { rr.setStartBefore(sp); _zfBindPend = sp; }
+  rr.collapse(true); s.removeAllRanges(); s.addRange(rr);
+  sp.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: t, data: data || null }));
+}
+function _zimniBindInit() {
+  const doc = _zimniDoc();
+  if (!doc || !doc.querySelector('.zf-tbl') || doc.querySelector('.zfa-tbl')) return;
+  _zfKnown = new WeakSet();
+  doc.querySelectorAll('[data-bind]').forEach(x => { if (String(x.textContent || '').trim()) _zfKnown.add(x); });   // محفوظ ضمنی کے ربط
+  try { _zimniWrapNames(doc); } catch (_) { /* ضمنی */ }
+  try { _zimniSyncSignDate(); } catch (_) { /* ضمنی */ }
+  if (!window._zfBindOn) {
+    window._zfBindOn = true;
+    window.addEventListener('input', _zimniBindOnInput, true);
+    document.addEventListener('beforeinput', _zimniBindBefore);
+    document.addEventListener('selectionchange', () => {
+      if (!_zfBindEdit && !_zfBindPend) return;
+      const g = window.getSelection(), a = g && g.anchorNode;
+      const inside = (x) => !!(x && a && (x === a || x.contains(a) || (a.nodeType === 3 && (a === x.previousSibling || a === x.nextSibling)) ||
+        (a === x.parentNode)));
+      if (_zfBindEdit && !inside(_zfBindEdit)) _zfBindEdit = null;
+      if (_zfBindPend && !inside(_zfBindPend)) _zfBindPend = null;
+    });
+    // نیا لکھا ہوا نام بھی ربط میں — لکھائی رکنے / کرسر دوسری جگہ جانے پر (کرسر والا ٹکڑا چھوڑ کر)
+    const later = () => {
+      clearTimeout(window._zfWrapT);
+      window._zfWrapT = setTimeout(() => { try { const d = _zimniDoc(); if (d && d.querySelector('.zf-tbl') && !d.querySelector('.zfa-tbl')) _zimniWrapNames(d); } catch (_) { /* ضمنی */ } }, 1200);
+    };
+    window.addEventListener('input', later);
+    document.addEventListener('selectionchange', () => { if (_zimniEditorOpen()) later(); });
+  }
+}
+window._zimniBindInit = _zimniBindInit;
+
+// ═══════════════════════════════════════════════════════════════════════
+//  v564 (افسر کی ہدایت، 3 نومبر 2026): تفتیشی افسر کا نام مقرر — ضمنی میں کہیں قابلِ ترمیم نہیں
+//  «نام subscriber سے آتا ہے (بعد میں Writer اکاؤنٹ میں ہر مقدمے کا IO مقفل)۔ نہ ترمیم، نہ دو طرفہ ربط۔»
+//  • جہاں نظام نام لکھتا ہے (_ZF_IO_LINES) اُس سطر کا نام والا حصہ span.zf-ioname[contenteditable=false]؛
+//    عہدہ / تھانہ پہلے کی طرح۔ نام = لاگ اِن افسر کا (getIOSignLine والا) — محفوظ پرانی ضمنی میں جو نام
+//    لکھا ہے وہی مقفل (محفوظ تحریر نہیں بدلی جاتی)۔
+//  • نام کو چھونے والی ہر تبدیلی رکتی ہے (پیغام کے ساتھ): اوپر لکھنا، ساتھ سے مٹانا (Backspace / Delete)،
+//    پوری دستاویز منتخب کر کے مٹانا یا لکھنا، چسپاں، کاٹنا، کھینچ کر لے جانا۔ ڈھونڈیں/بدلیں صرف لکھنے والے
+//    متن میں چلتا ہے (editor-tools.js) — نام ویسے ہی محفوظ۔ کسی اور راستے سے نام ہٹے تو اگلی لکھائی پر واپس۔
+// ═══════════════════════════════════════════════════════════════════════
+function _zimniIoName() {
+  try {
+    const o = (typeof currentOfficer !== 'undefined' && currentOfficer) || {};
+    let n = String(o.full_name || '').trim();
+    if (!n) { const sho = JSON.parse(localStorage.getItem('digital_io_sho') || '{}'); n = String(sho.name || '').trim(); }   // getIOSignLine کا اصول
+    return n.replace(_ZF_SPC, ' ');
+  } catch (_) { return ''; }
+}
+const _zfIoMem = new WeakMap();                  // سطر → اس کا مقفل نام (کسی راستے سے ہٹے تو واپس)
+function _zimniIoSpan(name) {
+  const sp = document.createElement('span');
+  sp.className = 'zf-ioname'; sp.setAttribute('contenteditable', 'false');
+  sp.textContent = name;
+  return sp;
+}
+function _zimniLockIO(root) {
+  root = root || _zimniDoc();
+  if (!root || !root.querySelectorAll) return 0;
+  const sub = _zimniIoName();
+  let n = 0;
+  root.querySelectorAll(_ZF_IO_LINES).forEach(line => {
+    const have = line.querySelector('.zf-ioname');
+    if (have) {
+      if (have.getAttribute('contenteditable') !== 'false') have.setAttribute('contenteditable', 'false');
+      const was = _zfIoMem.get(line);
+      if (was && have.textContent !== was) have.textContent = was;        // نام کسی راستے سے بدلا — واپس
+      else if (!was) _zfIoMem.set(line, have.textContent);
+      n++; return;
+    }
+    const txt = String(line.textContent || '').replace(_ZF_SPC, ' ').trim();
+    const was = _zfIoMem.get(line);
+    let nm = '';
+    if (was) nm = was;
+    else if (sub && (txt === sub || txt.indexOf(sub + ' ') === 0)) nm = sub;
+    else { const g = _zimniLineName(txt); if (_zimniNmOk(g)) nm = g; }
+    if (!nm) return;
+    const re = new RegExp('^[\\s\\u00A0]*(' + nm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '[\\s\\u00A0]+') + ')');
+    const tw = document.createTreeWalker(line, NodeFilter.SHOW_TEXT); let t;
+    while ((t = tw.nextNode()) && !String(t.nodeValue || '').trim()) { /* خالی ٹکڑے چھوڑو */ }
+    const m = t ? re.exec(t.nodeValue || '') : null;
+    const sp = _zimniIoSpan('');
+    if (m) {
+      const a = m.index + m[0].length - m[1].length;
+      const mid = a > 0 ? t.splitText(a) : t;
+      mid.splitText(m[1].length);
+      mid.parentNode.insertBefore(sp, mid); sp.appendChild(mid);
+    } else if (re.test(String(line.textContent || ''))) {
+      // نام کئی ٹکڑوں میں (پرانی فارمیٹنگ) — سطر سادہ متن: مقفل نام + باقی
+      const full = String(line.textContent || ''), m2 = re.exec(full);
+      const a = m2.index + m2[0].length - m2[1].length;
+      line.textContent = '';
+      if (a > 0) line.appendChild(document.createTextNode(full.slice(0, a)));
+      sp.textContent = m2[1]; line.appendChild(sp);
+      line.appendChild(document.createTextNode(full.slice(a + m2[1].length)));
+    } else if (was) {
+      // نام کسی راستے سے مٹ گیا — سطر کے شروع میں واپس
+      line.insertBefore(sp, line.firstChild); sp.textContent = was;
+      const nx = sp.nextSibling;
+      if (nx && nx.nodeType === 3 && nx.nodeValue && !/^[\s\u00A0]/.test(nx.nodeValue)) sp.after(document.createTextNode(' '));
+    } else return;
+    _zfIoMem.set(line, sp.textContent);
+    n++;
+  });
+  return n;
+}
+window._zimniLockIO = _zimniLockIO;
+window._zimniIoName = _zimniIoName;
+let _zfIoSaidAt = 0;
+function _zimniIoSay() {
+  const now = Date.now();
+  if (now - _zfIoSaidAt < 1500) return;
+  _zfIoSaidAt = now;
+  try { if (typeof showToast === 'function') showToast('تفتیشی افسر کا نام مقرر ہے (لاگ اِن افسر کے ریکارڈ سے) — ضمنی میں تبدیل نہیں ہو سکتا', 'warning'); } catch (_) { /* ضمنی */ }
+}
+function _zimniIoLocks(node) {
+  const doc = _zimniDoc();
+  const el = node && (node.nodeType === 1 ? node : node.parentElement);
+  if (!doc || !el || !(el === doc || doc.contains(el))) return null;
+  const L = doc.querySelectorAll('.zf-ioname');
+  return L.length ? L : null;
+}
+function _zimniHitsIO(r, L) {
+  for (const l of L) { try { if (r.intersectsNode(l)) return true; } catch (_) { /* ضمنی */ } }
+  return false;
+}
+// کرسر کے ساتھ والا (Backspace = پیچھے، Delete = آگے) — یہ مقفل نام ہے؟
+function _zimniIoBeside(r, back) {
+  const isL = (x) => !!(x && x.nodeType === 1 && x.classList && x.classList.contains('zf-ioname'));
+  const skipEmpty = (s) => { while (s && s.nodeType === 3 && !(s.nodeValue || '').length) s = back ? s.previousSibling : s.nextSibling; return s; };
+  // پڑوسی کا قریبی کنارہ (Backspace = اس کا آخر، Delete = اس کا شروع) — وہی سب سے پہلے مٹتا ہے
+  const near = (s) => {
+    s = skipEmpty(s);
+    while (s && s.nodeType === 1 && !isL(s) && (back ? s.lastChild : s.firstChild)) s = skipEmpty(back ? s.lastChild : s.firstChild);
+    return !!s && (isL(s) || !!(s.parentElement && s.parentElement.closest('.zf-ioname')));
+  };
+  const n = r.startContainer, o = r.startOffset;
+  if (n.nodeType === 3) {
+    if (back ? o > 0 : o < (n.nodeValue || '').length) return false;            // اسی ٹکڑے کا حرف مٹے گا
+  } else {
+    const k = back ? n.childNodes[o - 1] : n.childNodes[o];
+    if (k) return near(k);
+  }
+  for (let x = n; x && x.nodeType !== 9; x = x.parentNode) {
+    if (isL(x)) return true;
+    if (x.nodeType === 1 && x.isContentEditable && !(x.parentElement && x.parentElement.isContentEditable)) return false;   // لکھنے والے خانے کی حد
+    const s = skipEmpty(back ? x.previousSibling : x.nextSibling);
+    if (s) return near(s);
+  }
+  return false;
+}
+function _zimniIoGuard(e) {
+  const L = _zimniIoLocks(e.target);
+  if (!L) return;
+  const it = String(e.inputType || '');
+  if (/^(history|format)/.test(it)) return;                // واپس / فارمیٹ — نام کا متن نہیں بدلتا
+  const rs = [];
+  try {
+    (e.getTargetRanges ? e.getTargetRanges() : []).forEach(sr => {
+      const r = document.createRange(); r.setStart(sr.startContainer, sr.startOffset); r.setEnd(sr.endContainer, sr.endOffset); rs.push(r);
+    });
+  } catch (_) { /* ضمنی */ }
+  try { const s = window.getSelection(); if (s && s.rangeCount) rs.push(s.getRangeAt(0)); } catch (_) { /* ضمنی */ }
+  const del = /^delete/.test(it), back = /Backward/.test(it);
+  const hit = rs.some(r => r.collapsed ? (del && _zimniIoBeside(r, back)) : _zimniHitsIO(r, L));
+  if (!hit) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  _zimniIoSay();
+}
+// چسپاں / کاٹنا / کھینچنا — ایپ کے اپنے راستے (dio-keys.js) execCommand سے بدلتے ہیں، اس لیے یہاں پہلے
+function _zimniIoClipGuard(e) {
+  const s = window.getSelection();
+  if (!s || !s.rangeCount) return;
+  const r = s.getRangeAt(0);
+  if (r.collapsed) return;
+  const L = _zimniIoLocks(r.commonAncestorContainer);
+  if (!L || !_zimniHitsIO(r, L)) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  _zimniIoSay();
+}
+if (!window._zfIoGuardOn) {
+  window._zfIoGuardOn = true;
+  window.addEventListener('beforeinput', _zimniIoGuard, true);
+  ['paste', 'cut', 'dragstart'].forEach(t => window.addEventListener(t, _zimniIoClipGuard, true));
+  // آخری حفاظت: کسی اور راستے سے نام ہٹا یا بدلا ہو تو اگلی لکھائی پر واپس (صرف کھلی ضمنی میں)
+  window.addEventListener('input', (e) => {
+    try {
+      const doc = _zimniDoc();
+      const el = e && e.target && (e.target.nodeType === 1 ? e.target : e.target.parentElement);
+      if (doc && el && (el === doc || doc.contains(el)) && doc.querySelector(_ZF_IO_LINES)) _zimniLockIO(doc);
+    } catch (_) { /* ضمنی */ }
+  }, true);
+}
 
 // ═══ ضمنی کی سرخی = منتخب ذیلی ضمنی کا نام (افسر کی ہدایت، اکتوبر 2026) ═══
 const ZIMNI_DEFAULT_TITLE = 'رپورٹ ضمنی بیرونی';
@@ -1090,21 +1514,15 @@ function _renderZimniEditor() {
     try { _zimniWatchEdits(); } catch (_) { /* ikhtiyari qadam */ }
     try { if (savedSub) _zimniApplyTitle(savedSub); } catch (_) { /* ikhtiyari qadam */ }
     try { _zimniSyncSignDate(); } catch (_) { /* ikhtiyari qadam */ }
-    try {
-      const d1 = _zimniDoc();
-      if (d1 && !d1._zfDateBound) {
-        d1._zfDateBound = true;
-        d1.addEventListener('input', (ev) => {
-          if (ev.target && ev.target.closest && ev.target.closest('td.zf-c-action')) {
-            clearTimeout(d1._zfDateT); d1._zfDateT = setTimeout(() => { try { _zimniSyncSignDate(); } catch (_) { /* agli dafa */ } }, 300);
-          }
-        });
-      }
-    } catch (_) { /* ikhtiyari qadam */ }
+    // v564: بندھے خانے — کالم 1 کی تاریخ ↔ دستخط کی تاریخ، SHO کا نام (ایک جگہ بدلو، باقی خود)
+    //   (پہلے یہاں کالم 1 کا سننے والا ev.target دیکھتا تھا — براؤزر input پوری دستاویز پر بھیجتا ہے، اس لیے
+    //    لکھتے وقت یہ کبھی نہیں چلتا تھا)
+    try { _zimniBindInit(); } catch (_) { /* ikhtiyari qadam */ }
     // خانے کی ناپ + اضافی متن نیچے (چالان کا اصل نظام)
     try { _zimniLayout(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     try { _zimniEnsureClosing(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }   // اختتامی سطر (پرانی ضمنیوں کے لیے)
     try { _zimniFixClose(_zimniDoc()); } catch (_) { /* v558: «۔» */ }
+    try { _zimniLockIO(_zimniDoc()); } catch (_) { /* v564: تفتیشی افسر کا نام مقرر (3 نومبر 2026) */ }
     try { _zimniStartNumbers(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }          // خودکار نمبر — ہر حال میں چالو
     try { _zimniBindBlockKeys(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }          // BLOCK نظام — سیریل پر Enter = نیا block
     // ضمنی نمبر بدلتے ہی نیچے "نمبر شمار" بھی وہی ہو جائے
@@ -1568,12 +1986,7 @@ function _zimniEnsureClosing() {
   // ═══ BLOCK نظام ═══ اختتام + دستخط پہلے سے .zf-endrow میں ہیں — صرف بائیں سیدھ
   //  یقینی بناؤ اور واپس (تمہید کی قطار میں غلطی سے اختتام نہ لگے)۔
   if (doc.querySelector('tr.zf-blk')) {
-    try {
-      doc.querySelectorAll('.zf-signblk, .zf-sign, .zf-signdate, [data-k="io_sign"], [data-k="io_date"]').forEach(el => {
-        el.style.setProperty('text-align', 'left', 'important');
-        el.style.setProperty('text-align-last', 'left', 'important');
-      });
-    } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
+    try { _zimniUnLeftSign(doc); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
     return;
   }
   const cell = doc.querySelector('td.zf-c-body');
@@ -1582,27 +1995,33 @@ function _zimniEnsureClosing() {
   // Rule: signature hamesha LEFT border ke sath. Har render par force LEFT karo —
   // ye editor mein foran theek kar deta hai, aur save par HTML mein bhi persist ho
   // jata hai (phir print bhi LEFT). Purani inline right-align ko override karta hai.
-  try {
-    // کلاس اور data-k دونوں پکڑو — پرانی محفوظ ضمنیوں میں کلاس مختلف ہو سکتی ہے
-    cell.querySelectorAll('.zf-signblk, .zf-sign, .zf-signdate, [data-k="io_sign"], [data-k="io_date"]').forEach(el => {
-      el.style.setProperty('text-align', 'left', 'important');
-      el.style.setProperty('text-align-last', 'left', 'important');
-    });
-  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
+  // v564: دستخط کا خانہ بائیں کنارے پر اور نام/تاریخ اس کے درمیان — CSS سے؛ پرانی inline سیدھ ہٹاؤ
+  try { _zimniUnLeftSign(cell); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
   if (cell.querySelector('.zf-close')) return;   // closing pehle se maujood — sirf normalize kiya
   const E = (v) => (typeof esc === 'function') ? esc(v == null ? '' : String(v)) : String(v || '');
   const io = (typeof getIOSignLine === 'function') ? getIOSignLine() : '';
   const wrap = document.createElement('div');
   wrap.innerHTML =
     '<div class="zf-close" data-k="close">رپورٹ ضمنی مرتب ہو کرارسال خدمت ہے۔</div>' +
-    '<div class="zf-signblk" style="text-align:left !important;">' +
+    '<div class="zf-signblk">' +
       '<div class="zf-gap"><br></div><div class="zf-gap"><br></div>' +
-      '<div class="zf-sign" data-k="io_sign" style="text-align:left !important;display:block;text-decoration:none;">' + E(io) + '</div>' +
-      '<div class="zf-signdate" data-k="io_date" style="text-align:left !important;display:block;">' + E(_zimniToday()) + '</div>' +
+      '<div class="zf-sign" data-k="io_sign">' + E(io) + '</div>' +
+      '<div class="zf-signdate" data-k="io_date">' + E(_zimniToday()) + '</div>' +
     '</div>';
   while (wrap.firstChild) cell.appendChild(wrap.firstChild);
 }
 window._zimniEnsureClosing = _zimniEnsureClosing;
+// v564: بیرونی ضمنی کے دستخط کے خانے سے پرانی inline «بائیں» سیدھ ہٹاؤ (پرانی محفوظ ضمنیوں میں
+//   style="text-align:left !important" لکھا ہے جو CSS کی درمیانی سیدھ کو روک دیتا)۔ اندرونی کا دستخط نہیں چھیڑا جاتا۔
+function _zimniUnLeftSign(scope) {
+  (scope || document).querySelectorAll('.zf-signblk').forEach(sb => {
+    [sb, ...sb.querySelectorAll('*')].forEach(el => {
+      el.style.removeProperty('text-align'); el.style.removeProperty('text-align-last');
+      if (!el.getAttribute('style')) el.removeAttribute('style');
+    });
+  });
+}
+window._zimniUnLeftSign = _zimniUnLeftSign;
 
 // ═══════════════════════════════════════════════════════════════
 //  ضمنی 2 صفحوں سے آگے جائے تو تیسرے صفحے پر اندرونی ضمنی
@@ -2267,15 +2686,23 @@ function _zimniFormCSS() {
   }
   /* ── اختتامی سطر — درمیان میں ── */
   #ch173-doc table.zf-tbl tbody tr.zf-endrow td{ padding-top:0; }   /* v558: اختتامی سطر کے اوپر کی جگہ پہلے سے آدھی */
-  #ch173-doc .zf-close{ margin-top:0.5em; font-size:14pt; line-height:1.5;
+  /* v564 (افسر کی ہدایت، 28 اکتوبر 2026): اوپر کی جگہ پھر آدھی یا کم — 0.5em کا حاشیہ ختم
+     (ناپ: آخری تحریر سے اختتامی سطر تک 14px → 5px) */
+  #ch173-doc .zf-close{ margin-top:0; font-size:14pt; line-height:1.5;
     text-align:center; text-align-last:center; outline:none; }
   /* دستخط کا خانہ — دستاویز کے اختتام پر IO (تفتیشی افسر/subscriber) کا نام
      اور تاریخ۔ چالان کی طرح: بائیں سیدھ (LEFT)، bold، مگر انڈر لائن نہیں۔ */
-  #ch173-doc .zf-signblk{ font-size:14pt; line-height:1.5; text-align:left !important; }
+  /* v564 (افسر کی ہدایت، 28 اکتوبر 2026): «دستخط کے نیچے تاریخ خود بخود نام کے بالکل درمیان، نام
+     چھوٹا ہو یا لمبا» — خانہ اپنے نام جتنا چوڑا (display:table) اور بائیں کنارے پر؛ نام اور تاریخ
+     اُس کے درمیان۔ (اندرونی ضمنی کا دستخط اپنی جگہ — .zfa-wit-*) */
+  #ch173-doc .zf-signblk{ font-size:14pt; line-height:1.5; display:table; margin:0 auto 0 0;
+    text-align:center !important; text-align-last:center !important; }
   #ch173-doc .zf-gap{ min-height:1.5em; }
   #ch173-doc .zf-sign{ font-weight:bold; text-decoration:none !important;
-    outline:none; text-align:left !important; display:block; }
-  #ch173-doc .zf-signdate{ outline:none; text-align:left !important; display:block; }
+    outline:none; text-align:center !important; display:block; }
+  #ch173-doc .zf-signdate{ outline:none; text-align:center !important; display:block; }
+  #ch173-doc .zf-signblk [data-k="io_sign"], #ch173-doc .zf-signblk [data-k="io_date"]{
+    text-align:center !important; text-align-last:center !important; }
   /* پرانی محفوظ ضمنیوں کے لیے — کلاس کچھ بھی ہو، IO نام و تاریخ data-k سے بھی بائیں */
   #ch173-doc [data-k="io_sign"], #ch173-doc [data-k="io_date"]{
     text-align:left !important; text-align-last:left !important; display:block; }
@@ -2423,7 +2850,7 @@ function _zimniDefaultBody(o, c) {
 
   <table class="zf-tbl">
     <colgroup>
-      <col style="width:14%"><col style="width:7%"><col style="width:67%"><col style="width:12%">
+      <col style="width:14%"><col style="width:7%"><col style="width:55%"><col style="width:24%">
     </colgroup>
     <thead>
       <tr>
@@ -2459,11 +2886,11 @@ function _zimniDefaultBody(o, c) {
         <td class="zf-c-serial"></td>
         <td class="zf-c-body" colspan="2">
           <div class="zf-close" data-k="close">رپورٹ ضمنی مرتب ہو کرارسال خدمت ہے۔</div>
-          <div class="zf-signblk" style="text-align:left !important;">
+          <div class="zf-signblk">
             <div class="zf-gap"><br></div>
             <div class="zf-gap"><br></div>
-            <div class="zf-sign" data-k="io_sign" style="text-align:left !important;display:block;text-decoration:none;">${ioE}</div>
-            <div class="zf-signdate" data-k="io_date" style="text-align:left !important;display:block;">${E(_zimniToday())}</div>
+            <div class="zf-sign" data-k="io_sign">${ioE}</div>
+            <div class="zf-signdate" data-k="io_date">${E(_zimniToday())}</div>
           </div>
         </td>
       </tr>
@@ -2696,6 +3123,7 @@ async function _saveZimni(silent, keepOpen) {
   try {
   // قاعدہ: کالم 1 کی تاریخ = نیچے تفتیشی افسر کی تاریخ (محفوظ سے پہلے)
   try { _zimniSyncSignDate(); } catch (_) { /* ikhtiyari qadam */ }
+  try { _zimniWrapNames(ed); } catch (_) { /* v564: نئے لکھے نام بھی ربط میں محفوظ ہوں */ }
   const bodyHtml = _zimniCleanHTML(ed.innerHTML);   // grips محفوظ نہ ہوں
   const z = _zimniActive || {};
   const draftKey = (() => { try { return _zimniActiveDraftKey(); } catch (_) { return ''; } })();
@@ -3013,6 +3441,476 @@ function _zimniSafePrint(html) {
 }
 window._zimniSafePrint = _zimniSafePrint;
 
+// ═══ v564: ضمنی کے کاغذ کا حساب — صفحات، مثل باندھنے کی لکیر، کھڑی لکیریں صفحے کے نیچے تک ═══
+//  پہلے یہ کوڈ صرف پرنٹ HTML کے اندر متن (string) کی شکل میں تھا۔ اب اصل فنکشن ہے: پرنٹ HTML اسی کا
+//  متن ساتھ لے جاتا ہے («پرنٹ» بٹن / Ctrl+P)، اور براؤزر کی اپنی چھپائی (Chrome ⋮ › Print) اسی کو
+//  اسی لمحے چلاتی ہے — دونوں کا حساب ایک، کاغذ ایک۔
+//  R = document یا shadow root (جس میں #ch173-doc) · W = window · opt = { paper:'legal'|'a4', skel }
+//  واپسی: go() — idempotent (بار بار چلنا محفوظ)
+function _zimniPaginate(R, W, opt) {
+  opt = opt || {};
+  var DOC = (R && R.nodeType === 9) ? R : ((R && R.ownerDocument) || W.document);
+  var CM=37.795;
+  var isA4=(opt.paper==='a4');
+  var contentH=(isA4?11.69:13)*96 - 2*CM;   // ایک صفحے کی کام کی اونچائی (1cm hashiye)
+  var twoPage=2*contentH;
+  var SAFE=16;                 // صفحے کے کنارے سے تھوڑا پہلے روکو (spill نہ ہو)
+  var fitLimit=twoPage-SAFE;
+  function T(el){ return (el.textContent||'').replace(/[\s\u00A0]/g,''); }
+  // v564: بیرونی ضمنی کے دستخط کے خانے سے پرانی inline «بائیں» سیدھ ہٹاؤ — سیدھ CSS دیتی ہے
+  function unLeft(scope){
+    [].slice.call(scope.querySelectorAll('.zf-signblk')).forEach(function(sb){
+      [sb].concat([].slice.call(sb.querySelectorAll('*'))).forEach(function(el){
+        el.style.removeProperty('text-align'); el.style.removeProperty('text-align-last');
+        if(!el.getAttribute('style')) el.removeAttribute('style'); });
+    });
+  }
+
+  // ── ایک body کو الگ الگ <div> پیراگرافوں میں توڑو ──
+  //  (br، کئی .zf-body، اور — اہم — text node کے اندر نئی سطر سنبھالو)
+  //  ضمنی کا خانہ white-space:pre-wrap ہے: افسر Enter دبائے تو براؤزر
+  //  اکثر newline کو ایک ہی text node میں ڈال دیتا ہے (نیا div نہیں)۔
+  //  پہلے normalize صرف DIV/P/BR پر توڑتا تھا → newline نظرانداز → سارا متن
+  //  ایک پیراگراف بن جاتا اور سیریل نمبر بھی صرف ایک چھپتا۔ اب newline کو بھی
+  //  پیراگراف کی حد مانتے ہیں۔
+  //  مکمل RECURSIVE flatten — کسی بھی گہرائی پر br، newline، اور block
+  //  (div/p) کی حد کو پیراگراف کی حد مانو۔ محفوظ شدہ ضمنی کا HTML اکثر
+  //  پیراگراف ایک wrapper div کے اندر br سے جوڑ دیتا ہے
+  //  (<div>a<br>b<br>c</div>) — پرانا normalize صرف اوپری سطح دیکھتا تھا،
+  //  اس لیے وہ سب ایک پیراگراف بن جاتے (چھپائی میں ملے ہوئے)۔ اب ہر br/
+  //  newline پر ٹوٹتا ہے، اندرونی div/p پر بھی۔
+  function normalize(host){
+    var out=[], cur=null;
+    function ensure(){ if(!cur) cur=DOC.createElement('div'); return cur; }
+    function endPara(){ if(cur){ if(T(cur).length) out.push(cur); cur=null; } }
+    function addText(str){
+      var parts=String(str==null?'':str).split('\n');
+      for(var i=0;i<parts.length;i++){
+        if(i>0) endPara();                              // newline = نیا پیراگراف
+        if(parts[i].length) ensure().appendChild(DOC.createTextNode(parts[i]));
+      }
+    }
+    function walk(node){
+      for(var i=0;i<node.childNodes.length;i++){
+        var n=node.childNodes[i];
+        if(n.nodeType===3){ addText(n.nodeValue||''); }
+        else if(n.nodeType===1){
+          var tag=n.tagName;
+          if(tag==='BR'){ endPara(); }
+          else if(tag==='DIV'||tag==='P'){ endPara(); walk(n); endPara(); }   // بلاک — اندر جاؤ، حدیں توڑیں
+          else {
+            // inline (span/b/i/u/a...) — اگر اندر br/newline ہو تو اندر جاؤ، ورنہ جوں کا توں
+            var hasBrk=false;
+            try{ hasBrk = (n.querySelector && n.querySelector('br,div,p')) || /\n/.test(n.textContent||''); }catch(e){ /* print layout ka ikhtiyari qadam */ }
+            if(hasBrk) walk(n);
+            else ensure().appendChild(n.cloneNode(true));
+          }
+        }
+      }
+    }
+    walk(host);
+    endPara();
+    while(host.firstChild) host.removeChild(host.firstChild);
+    out.forEach(function(d){ host.appendChild(d); });
+    return out;
+  }
+
+  // ── berooni کے تمام .zf-body ایک میں جوڑ کر پیراگراف نکالو ──
+  function beroParas(doc){
+    var bodies=[].slice.call(doc.querySelectorAll('td.zf-c-body .zf-body'));
+    if(!bodies.length) return {body:null,paras:[]};
+    var first=bodies[0];
+    for(var i=1;i<bodies.length;i++){ while(bodies[i].firstChild) first.appendChild(bodies[i].firstChild); if(bodies[i].parentNode) bodies[i].parentNode.removeChild(bodies[i]); }
+    return {body:first, paras:normalize(first)};
+  }
+
+  function numDiv(n,cls){ var d=DOC.createElement('div'); d.className=cls||'zf-num'; d.textContent=String(n); return d; }
+
+  // ── کالم 1 (تاریخ) اور کالم 2 (سیریل) کو حالاتِ تفتیش (.zf-body) کی
+  //    پہلی سطر "جناب عالیٰ! …" کے سامنے لاؤ ──
+  //  کالم 3 میں پہلے "سرکار/بنام/مرتبہ" (.zf-bl) آتی ہیں، پھر اصل تحریر
+  //  (.zf-body)۔ افسر چاہتا ہے تاریخ اور سیریل "1" دونوں اُسی "جناب عالیٰ"
+  //  کے سامنے ہوں — اس لیے دونوں خانوں کو اتنا نیچے کرو کہ وہ .zf-body سے
+  //  شروع ہوں (idempotent — ہر بار پہلے reset)۔
+  function alignSerialToBody(){
+    try{
+      var doc=R.getElementById('ch173-doc'); if(!doc) return;
+      // پہلے دونوں خانوں کی اپنی padding reset (idempotent)
+      var aTd=doc.querySelector('td.zf-c-action');
+      var sTd=doc.querySelector('td.zf-c-serial');
+      if(aTd) aTd.style.paddingTop='';
+      if(sTd) sTd.style.paddingTop='';
+      var body=doc.querySelector('td.zf-c-body .zf-body'); if(!body) return;
+      var bodyTop=body.getBoundingClientRect().top;
+      // ═══ td پر MARGIN کام نہیں کرتا — اس لیے PADDING-TOP سے نیچے کرو ═══
+      //  (محفوظ ضمنی میں تاریخ سیدھی td میں ہو سکتی ہے، بغیر .zf-actbody کے —
+      //   padding ہر صورت میں چلتا ہے)۔ خانے کے اوپری کنارے سے .zf-body تک
+      //   کا فاصلہ = padding-top۔
+      [aTd, sTd].forEach(function(td){
+        if(!td) return;
+        var pad=Math.round(bodyTop - td.getBoundingClientRect().top);
+        if(pad>0 && pad<2000) td.style.paddingTop=pad+'px';
+      });
+    }catch(e){ /* print layout ka ikhtiyari qadam */ }
+  }
+
+  // ── ٹیبل کی لکیریں صفحے کے نیچے تک (اکلوتا صفحہ) — قطار 2 کے تمام خانوں
+  //    کی اونچائی بڑھا کر ٹیبل کا نیچے کنارہ صفحے کے ہاشیے تک لے جاؤ۔ ──
+  function stretchToBottom(){
+    try{
+      var doc=R.getElementById('ch173-doc'); if(!doc) return;
+      var tbl=doc.querySelector('table.zf-tbl'); if(!tbl) return;
+      var row=tbl.querySelector('tbody tr'); if(!row) return;
+      var tds=[].slice.call(row.querySelectorAll('td')); if(!tds.length) return;
+      // پہلے موجودہ اونچائیاں ہٹاؤ تاکہ اصل (قدرتی) ناپ ملے
+      tds.forEach(function(td){ td.style.height=''; });
+      // ═══ صفحہ ضائع نہ ہو ═══ پہلے پوری دستاویز کی موجودہ اونچائی ناپو۔
+      //  اگر وہ ایک صفحے سے کم ہے تو صرف اتنا کھینچو کہ ٹیبل صفحے کے نیچے
+      //  تک پہنچے مگر دستاویز ایک صفحے سے آگے نہ جائے۔ اگر مواد پہلے ہی ایک
+      //  صفحہ یا زیادہ ہے تو بالکل نہ کھینچو (ورنہ خالی دوسرا صفحہ بنتا تھا)۔
+      var r=doc.getBoundingClientRect();
+      var used=r.bottom - r.top;                       // دستاویز کی موجودہ اونچائی
+      var pageLimit=contentH - SAFE;                   // ایک صفحے کی کام کی حد
+      if(used >= pageLimit - 12) return;               // پہلے ہی بھر چکی — مت کھینچو
+      var gap=Math.floor(pageLimit - used);
+      if(gap<=10) return;
+      var tallest=tds[0];
+      tds.forEach(function(td){ if(td.offsetHeight>tallest.offsetHeight) tallest=td; });
+      tallest.style.height=(tallest.offsetHeight+gap)+'px';   // صرف سب سے لمبے خانے کو بڑھاؤ
+    }catch(e){ /* print layout ka ikhtiyari qadam */ }
+  }
+
+  // ── ایک صفحے پر کتنے پیراگراف سماتے ہیں (اوپر سے limit تک) ──
+  function fitCount(paras, startIdx, topY, limit){
+    var k=startIdx;
+    for(var i=startIdx;i<paras.length;i++){
+      var b=paras[i].getBoundingClientRect().bottom;
+      if((b-topY)<=limit) k=i; else break;
+    }
+    return k; // آخری index جو سما گیا (کم از کم ایک ضرور)
+  }
+
+  function fillHeight(cell, wantBottomFromTop, topY){
+    try{
+      var cur=cell.getBoundingClientRect().bottom - topY;
+      var extra=Math.floor(wantBottomFromTop - cur);
+      if(extra>4) cell.style.height=(cell.offsetHeight+extra)+'px';
+    }catch(e){ /* print layout ka ikhtiyari qadam */ }
+  }
+  // ── مثل باندھنے کی تکونی جگہ — ہر unit کے دوسرے صفحے کے اوپر بائیں ──
+  // (berooni کا صفحہ 2، ہر androoni sheet کا پچھلا صفحہ)
+  function addBind(body, topRef){
+    if(!body) return;
+    var kids=[].slice.call(body.children).filter(function(el){
+      return (el.textContent||'').replace(/[\s\u00A0]/g,'').length; });
+    var limit=topRef+contentH;               // پہلا صفحہ یہاں ختم
+    for(var i=0;i<kids.length;i++){
+      if(kids[i].getBoundingClientRect().top>=limit){
+        var tri=DOC.createElement('span'); tri.className='zf-bind';
+        kids[i].insertBefore(tri, kids[i].firstChild);
+        var gap=DOC.createElement('span'); gap.className='dio-bindgap';
+        kids[i].insertBefore(gap, tri);
+        return;
+      }
+    }
+  }
+
+  function chain(){
+    var doc=R.getElementById('ch173-doc'); if(!doc) return;
+    if(contentH<200) return;
+    // ═══ BLOCK نظام ═══ اگر ضمنی نئی block ساخت میں ہے (ہر اندراج ایک قطار)
+    //  تو پرانا پیچیدہ نظام (normalize/androoni/serial-align) بالکل نہ چلاؤ —
+    //  ٹیبل قدرتی طور پر صفحہ در صفحہ خود بٹ جاتا ہے، سیریل ہر قطار میں اپنے
+    //  حالات کے سامنے رہتا ہے۔ صرف دستخط بائیں یقینی بناؤ۔
+    if(doc.querySelector('tr.zf-blk')){
+      // v553: BLOCK ضمنی میں بھی مثل باندھنے کی جگہ — ہر جفت صفحے (پچھلی طرف) کے
+      //   شروع میں: اوپر ایک سطر + مثلث (2pt وتر)۔
+      // v555: ہر صفحے کا توڑ اب «پکا» (خود براؤزر پر نہیں چھوڑا) — پہلے حساب یہ مانتا تھا
+      //   کہ جو اندراج صفحے میں پورا نہ آئے وہ پورا اگلے صفحے پر جائے گا، مگر چھپائی میں
+      //   اندراج صفحے کے اندر سے ٹوٹ جاتا تھا — اسی سے مثلث (2pt لکیر) پہلے صفحے کے بیچ
+      //   میں آ جاتی تھی۔ اب:
+      //   (الف) اندراج کی پہلی سطر ہی صفحے میں نہ آئے (یا تمہید/اختتام کی قطار) → اس سے پہلے
+      //        خالی قطار (tr.zf-fill) جو صفحہ نیچے تک بھرے + قطار سے پہلے صفحے کا توڑ
+      //   (ب) ورنہ حالات کی اُس سطر سے پہلے صفحے کا توڑ (.dio-pgbrk) جو صفحے میں نہ سمائے —
+      //        باقی متن اگلے صفحے پر؛ کھڑی لکیریں اس صفحے کے نیچے تک
+      //   آخری صفحے پر ٹیبل کے بعد خالی قطار — لکیریں صفحے کے نیچے (حاشیے) تک۔
+      //   کئی ضمنیاں اکٹھی چھپیں تو ہر ضمنی اپنے صفحہ 1 سے گنی جاتی ہے۔
+      try{
+        doc.querySelectorAll('.zf-bind,.zf-bindsl,.dio-bindgap,.dio-pgbrk,tr.zf-fill').forEach(function(e){ if(e.parentNode)e.parentNode.removeChild(e); });
+        // پرانی layout سے چپکی inline اونچائیاں ناپ سے پہلے ہٹاؤ (ورنہ قطاریں 18cm رہتیں)
+        doc.querySelectorAll('table.zf-tbl td,table.zf-tbl tr').forEach(function(el){
+          el.style.height=''; if(el.tagName==='TR'){ el.style.breakBefore=''; el.style.pageBreakBefore=''; } });
+      }catch(e){ /* print layout ka ikhtiyari qadam */ }
+      try{
+        var dTop=doc.getBoundingClientRect().top;
+        var FSAFE=6;                       // صفحے کے نیچے کنارے سے ذرا پہلے (خالی قطار اگلے صفحے پر نہ چھلکے)
+        var mkFill=function(like, h){
+          var tr=DOC.createElement('tr'); tr.className='zf-fill';
+          [].slice.call(like.children).forEach(function(c){
+            var td=DOC.createElement('td'); td.className=c.className||'';
+            var cs=c.getAttribute('colspan'); if(cs) td.setAttribute('colspan', cs);
+            td.style.height=Math.floor(h)+'px'; tr.appendChild(td);
+          });
+          return tr;
+        };
+        // ═══ v564: مثل باندھنے کی 2pt لکیر — ایک قطار کی جگہ نہیں روکتی ═══
+        //  افسر کی شکایت (28 اکتوبر 2026): «لکیر کے سامنے کچھ نہیں لکھا جاتا — وہ جگہ خالی رہتی ہے؛
+        //  لکیر چلتے ہوئے کالم 2 میں نیا نمبر آئے تو لکیر خود ایڈجسٹ ہو۔»
+        //  وجہ: پہلے مثلث 2×2 انچ کا float ایک ہی خانے (td) میں تھا — خانہ اپنا الگ block ہے، اس لیے
+        //  وہ قطار کم از کم 2 انچ اونچی ہو جاتی اور اگلا اندراج (نیا نمبر) مثلث کے نیچے سے شروع ہوتا۔
+        //  اب: (1) لکیر = ایک overlay (.zf-bind[data-ov]) جو کسی جگہ کو نہیں گھیرتا؛ (2) مثلث کے دائرے
+        //  میں آنے والی ہر قطار کو اُس کا اپنا ٹکڑا (.zf-bindsl — float + shape-outside) ملتا ہے،
+        //  صرف اُس قطار کی تحریر جتنا اونچا — تحریر لکیر کے ساتھ ساتھ چلتی ہے، نیا نمبر اسی لکیر کے
+        //  ساتھ جاری رہتا ہے، کوئی خالی خانہ نہیں۔
+        var S=2*96;                                   // مثلث کی بازو: 2 انچ
+        var setSl=function(f, w, h){
+          w=Math.max(1, Math.round(w)); h=Math.max(1, Math.round(Math.min(h, w)));
+          f.style.width=w+'px'; f.style.height=h+'px';
+          var poly='polygon(0px 0px, '+w+'px 0px, '+Math.max(0, w-h)+'px '+h+'px, 0px '+h+'px)';
+          f.style.setProperty('shape-outside', poly); f.style.setProperty('-webkit-shape-outside', poly);
+        };
+        // (par, before) کی جگہ سے اس خانے (cell) کی تحریر جتنا مثلث کا ٹکڑا؛ z0 = مثلث کا اوپر
+        var slice=function(z0, par, before, cell){
+          var f=DOC.createElement('span'); f.className='zf-bindsl';
+          setSl(f, S, 1); par.insertBefore(f, before);
+          var y0=f.getBoundingClientRect().top-dTop-z0;
+          if(y0>=S-1){ f.parentNode.removeChild(f); return; }
+          y0=Math.max(0, y0);
+          setSl(f, S-y0, S-y0);
+          var fTop=f.getBoundingClientRect().top-dTop, tb=textEdge(cell, true);
+          if(tb===null || tb<=fTop+0.5){ f.parentNode.removeChild(f); return; }   // اس خانے میں آگے تحریر نہیں
+          if(tb-fTop < S-y0) setSl(f, S-y0, tb-fTop);                            // صرف تحریر جتنا — قطار لمبی نہ ہو
+        };
+        var insB=function(par, before, row){
+          var gap=DOC.createElement('span'); gap.className='dio-bindgap';
+          var tri=DOC.createElement('span'); tri.className='zf-bind'; tri.setAttribute('data-ov', '1');
+          par.insertBefore(gap, before); par.insertBefore(tri, before);
+          var z0=tri.getBoundingClientRect().top-dTop;
+          var cell0=(row && row.querySelector('td.zf-c-body')) || par;
+          slice(z0, par, before, cell0);
+          for(var r=row ? row.nextElementSibling : null; r; r=r.nextElementSibling){
+            if(r.classList.contains('zf-fill')) continue;
+            var td=r.querySelector('td.zf-c-body'); if(!td) continue;
+            var c=td.querySelector('.zf-body')||td;
+            if(c.getBoundingClientRect().top-dTop >= z0+S-1) break;
+            slice(z0, c, c.firstChild, td);
+          }
+        };
+        // پہلی سطر جس کا نچلا کنارہ limitY سے نیچے ہو — {n, off, top}؛ توڑنا بعد میں (cut)
+        var lineFind=function(cell, limitY){
+          var tw=DOC.createTreeWalker(cell, NodeFilter.SHOW_TEXT, null), n, rg=DOC.createRange();
+          while((n=tw.nextNode())){
+            if(!n.nodeValue || !n.nodeValue.trim()) continue;
+            rg.selectNodeContents(n); var rs=rg.getClientRects(), hitTop=null;
+            for(var k=0;k<rs.length;k++){ if(rs[k].height>2 && (rs[k].bottom-dTop)>limitY+0.5){ hitTop=rs[k].top; break; } }
+            if(hitTop===null) continue;
+            var lo=0, hi=n.nodeValue.length-1, off=-1;
+            while(lo<=hi){ var mid=(lo+hi)>>1; rg.setStart(n,mid); rg.setEnd(n,mid+1); var bb=rg.getBoundingClientRect();
+              if(bb.height && bb.top>=hitTop-1){ off=mid; hi=mid-1; } else lo=mid+1; }
+            if(off<0) return null;
+            return { n:n, off:off, top: hitTop-dTop };
+          }
+          return null;
+        };
+        var cut=function(sp){ return sp.off>0 ? sp.n.splitText(sp.off) : sp.n; };
+        // خانے کی پہلی سطر کا اوپر / آخری سطر کا نیچے
+        var textEdge=function(cell, last){
+          var tw=DOC.createTreeWalker(cell, NodeFilter.SHOW_TEXT, null), n, rg=DOC.createRange(), v=null;
+          while((n=tw.nextNode())){
+            if(!n.nodeValue || !n.nodeValue.trim()) continue;
+            rg.selectNodeContents(n); var rs=rg.getClientRects();
+            for(var k=0;k<rs.length;k++){ if(rs[k].height>2){
+              if(!last) return rs[k].top-dTop;
+              v=(v===null)?rs[k].bottom-dTop:Math.max(v, rs[k].bottom-dTop); } }
+          }
+          return v;
+        };
+        var tables=[].slice.call(doc.querySelectorAll('table.zf-tbl'));
+        tables.forEach(function(tbl){
+          // اس ضمنی کا صفحہ 1 کہاں سے (اکٹھی چھپائی میں ہر ضمنی اپنے خانے میں، نئے صفحے سے)
+          var unit=tbl; while(unit.parentNode && unit.parentNode!==doc) unit=unit.parentNode;
+          var pTop=(tables.length>1 ? unit.getBoundingClientRect().top-dTop : 0), pNo=1, guardB=0;
+          var rowsB=[].slice.call(tbl.querySelectorAll('tbody > tr'));
+          var EPS=2;
+          for(var ri=0; ri<rowsB.length && guardB<300; ri++){
+            guardB++;
+            var row=rowsB[ri];
+            var rr=row.getBoundingClientRect(), rt=rr.top-dTop, rb=rr.bottom-dTop;
+            if(rb-pTop <= contentH-EPS) continue;               // پوری قطار اسی صفحے پر
+            var isBlk=row.classList.contains('zf-blk');
+            var bodyC=row.querySelector('td.zf-c-body .zf-body')||row.querySelector('td.zf-c-body');
+            var sp=null, firstLine=false;
+            if(isBlk && bodyC){
+              sp=lineFind(bodyC, pTop+contentH-EPS);
+              if(!sp){ var lb=textEdge(bodyC, true); if(lb!==null) sp=lineFind(bodyC, lb-1); }   // متن سما گیا، نیچے کی جگہ نہیں — آخری سطر اگلے صفحے پر
+              var ft=textEdge(bodyC, false);
+              if(sp && ft!==null && sp.top<=ft+1) firstLine=true;
+            }
+            pNo++;
+            if((!isBlk || !sp || firstLine) && rt > pTop+1){       // (الف) پوری قطار اگلے صفحے پر
+              var room=pTop+contentH-rt-FSAFE;
+              if(room>2) row.parentNode.insertBefore(mkFill(row, room), row);
+              row.style.breakBefore='page'; row.style.pageBreakBefore='always';
+              pTop=row.getBoundingClientRect().top-dTop;
+              if(pNo%2===0 && bodyC){
+                insB(bodyC, bodyC.firstChild, row);
+                // کالم 1 (تاریخ) اور 2 (نمبر) بھی ایک سطر نیچے — «جناب عالیٰ» کی سیدھ برقرار
+                [].slice.call(row.children).forEach(function(td){
+                  if(td.contains(bodyC)) return;
+                  var g=DOC.createElement('span'); g.className='dio-bindgap'; td.insertBefore(g, td.firstChild);
+                });
+              }
+              ri--;                                               // اگلے صفحے پر بھی پوری نہ آئے تو دوبارہ جانچو
+              continue;
+            }
+            if(!sp){ pTop=pTop+contentH; continue; }              // (ناممکن صورت) — آگے بڑھو
+            // (ب) اس سطر سے پہلے صفحے کا پکا توڑ
+            var node=cut(sp);
+            var brk=DOC.createElement('span'); brk.className='dio-pgbrk';
+            node.parentNode.insertBefore(brk, node);
+            // توڑ سے پہلے کا حاشیہ (پچھلے پیراگراف کا margin) صفحے کی حد پار کرے تو اسے صفر کرو —
+            //   چھپائی میں صفحے کے توڑ پر یہ حاشیہ ویسے بھی کٹ جاتا ہے؛ یوں حساب اور چھپائی ایک
+            if(brk.getBoundingClientRect().top-dTop > pTop+contentH-EPS){
+              for(var E=brk; E && E!==bodyC.parentNode; E=E.parentNode){
+                var pv=E.previousElementSibling, fst=E.parentNode && [].filter.call(E.parentNode.childNodes, function(c){ return c.nodeType===1 || (c.nodeType===3 && c.nodeValue.trim()); })[0];
+                if(pv) pv.style.marginBottom='0px';
+                if(E!==brk && E.style) E.style.marginTop='0px';
+                if(fst!==E) break;
+              }
+            }
+            if(pNo%2===0) insB(node.parentNode, node, row);
+            // توڑ سے پہلے کا حاشیہ (پیراگراف کا نچلا margin) صفحے کی حد سے آگے ہو تو اگلا صفحہ حد ہی سے
+            //   شروع ہوتا ہے (بچا ہوا حاشیہ اگلے صفحے کے اوپر) — اسی کے مطابق حساب
+            pTop=Math.min(brk.getBoundingClientRect().top-dTop, pTop+contentH);
+            ri--;                                               // یہی قطار اگلے صفحے سے بھی آگے جا سکتی ہے
+          }
+          // آخری صفحہ — ٹیبل کے بعد خالی قطار، کھڑی لکیریں صفحے کے نیچے (حاشیے) تک
+          var lastRow=rowsB[rowsB.length-1];
+          if(lastRow){
+            var roomL=pTop+contentH-(tbl.getBoundingClientRect().bottom-dTop)-FSAFE;
+            if(roomL>1) lastRow.parentNode.appendChild(mkFill(lastRow, roomL));
+          }
+        });
+      }catch(e){ /* print layout ka ikhtiyari qadam */ }
+      // v564: دستخط کا خانہ بائیں کنارے پر (CSS)، نام اور تاریخ اس کے درمیان — پرانی محفوظ ضمنیوں کی
+      //   «بائیں» والی inline سیدھ ہٹاؤ (ورنہ CSS کا درمیان کام نہ کرے)
+      try{ unLeft(doc); }catch(e){ /* print layout ka ikhtiyari qadam */ }
+      return;
+    }
+    // اختتامی خانہ الگ رکھو (screن پر androoni میں ہو تو class بدل چکی: .zfa-wit-sign)
+    var closeNodes=[];
+    doc.querySelectorAll('.zf-close,.zf-signblk,.zfa-wit-sign').forEach(function(e){ closeNodes.push(e); if(e.parentNode)e.parentNode.removeChild(e); });
+    // ═══ IDEMPOTENT ═══ chain کئی بار چلتا ہے (load + fonts.ready + timeouts)۔
+    // دوبارہ چلنے پر پہلے androoni sheets کے تمام پیراگراف واپس berooni میں
+    // لاؤ، پھر sheets ہٹاؤ — ورنہ دوسری بار sheets (اور اُن کے پیراگراف)
+    // حذف ہو کر متن غائب ہو جاتا تھا۔
+    var beroBody0=doc.querySelector('td.zf-c-body .zf-body');
+    doc.querySelectorAll('.zf-androoni .zfa-body').forEach(function(ab){
+      if(beroBody0){ while(ab.firstChild) beroBody0.appendChild(ab.firstChild); }
+    });
+    doc.querySelectorAll('.zf-androoni').forEach(function(e){ if(e.parentNode)e.parentNode.removeChild(e); });
+    // پرانے مثل نشان ہٹاؤ (screen-width والے، اب print width پر لگائیں گے)
+    doc.querySelectorAll('.zf-bind,.zf-bindmark,.dio-bindgap').forEach(function(e){ if(e.parentNode)e.parentNode.removeChild(e); });
+    // berooni کی اندرونی اونچائیاں reset (screen کی ناپ ہٹاؤ)
+    doc.querySelectorAll('table.zf-tbl tbody td').forEach(function(td){ td.style.height=''; });
+
+    var bp=beroParas(doc); var P=bp.paras;
+    var beroNums=doc.querySelector('.zf-nums');
+    if(!P.length){ // کچھ نہیں — بس اختتام واپس
+      var cell0=doc.querySelector('td.zf-c-body'); closeNodes.forEach(function(e){cell0&&cell0.appendChild(e);}); return;
+    }
+    var docTop=doc.getBoundingClientRect().top;
+
+    // اوور فلو ہے یا نہیں؟ (2 صفحوں سے آگے)
+    var lastBottom=P[P.length-1].getBoundingClientRect().bottom - docTop;
+    var putClose=function(cell){
+      closeNodes.forEach(function(e){ cell.appendChild(e); });
+      // دستخط کا انداز منزل کے مطابق (androoni: بائیں bold؛ berooni: اپنا)
+      var inA=!!(cell.closest&&cell.closest('.zf-androoni'));
+      var sign=cell.querySelector('.zf-signblk,.zfa-wit-sign');
+      if(sign){
+        var io=sign.querySelector('[data-k="io_sign"]'); var dt=sign.querySelector('[data-k="io_date"]');
+        if(inA){ sign.className='zfa-wit-sign'; if(io)io.className='zfa-wit-io'; if(dt)dt.className='zfa-wit-date';
+          sign.querySelectorAll('.zf-gap').forEach(function(g){g.style.display='none';}); }
+        else { sign.className='zf-signblk'; if(io)io.className='zf-sign'; if(dt)dt.className='zf-signdate';
+          sign.querySelectorAll('.zf-gap').forEach(function(g){g.style.display='';}); }
+        // ── اندرونی: تفتیشی افسر کا نام + تاریخ بائیں (LEFT)؛ بیرونی (v564): خانہ بائیں، نام و تاریخ
+        //    اس کے درمیان (CSS) — پرانی محفوظ ضمنی کی inline سیدھ ہٹاؤ ──
+        if(inA){ [sign,io,dt].forEach(function(el){ if(el){ try{ el.style.setProperty('text-align','left','important'); }catch(_){ /* print layout ka ikhtiyari qadam */ }}}); }
+        else { try{ unLeft(cell); }catch(_){ /* print layout ka ikhtiyari qadam */ } }
+      }
+    };
+
+    var binds=[];
+    if(lastBottom<=twoPage){
+      // اوور فلو نہیں — سب berooni میں۔
+      // ═══ MANUAL سیریل ═══ اب خودکار نمبر نہیں لگتے۔ کالم 2 میں افسر نے
+      //  جو لکھا (شروع میں "1") وہی جوں کا توں چھپتا ہے — نہ دوبارہ بنتے،
+      //  نہ پیراگراف کے ساتھ خودکار سیدھ ہوتی۔ (پرانا کوڈ یہاں 1..N نمبر
+      //  دوبارہ بناتا تھا جو افسر کے لکھے کو مٹا دیتا تھا۔)
+      putClose(doc.querySelector('td.zf-c-body'));
+      alignSerialToBody();   // سیریل "1" کو "جناب عالیٰ!" (حالات کی پہلی سطر) کے سامنے لاؤ
+      // ── ٹیبل کی لکیریں صفحے کے نیچے تک (مگر ایک صفحے سے آگے نہیں) ──
+      stretchToBottom();
+      addBind(doc.querySelector('td.zf-c-body .zf-body'), docTop);   // صفحہ 2 کا مثلث (صرف اگر واقعی 2 صفحے ہوں)
+      return;
+    }
+
+    // ── اوور فلو: berooni کو 2 صفحوں پر روکو ──
+    var k0=fitCount(P,0,docTop,fitLimit);           // berooni میں آخری پیراگراف
+    var gnum=0;                                     // مسلسل نمبر
+    // ═══ ترتیب اہم ═══ پہلے اضافی پیراگراف berooni سے نکالو، پھر berooni
+    // کو 2 صفحے بھرو۔ ہر androoni sheet کے لیے: پیراگراف ڈال کر sTop ناپو
+    // (تب berooni + پچھلی sheets اپنی آخری اونچائی پر)، پھر 2 صفحے تک رکھو،
+    // پھر اُس sheet کو 2 صفحے بھرو۔ (پہلے sTop غلط جگہ ناپا جا رہا تھا۔)
+    var overflow=P.slice(k0+1);
+    overflow.forEach(function(p){ if(p.parentNode) p.parentNode.removeChild(p); });
+    if(beroNums){ beroNums.innerHTML=''; for(var i2=0;i2<=k0;i2++){ gnum++; beroNums.appendChild(numDiv(gnum)); } }
+    fillHeight(doc.querySelector('td.zf-c-body'), fitLimit, docTop);   // berooni = 2 صفحے
+    binds.push({body:doc.querySelector('td.zf-c-body .zf-body'), top:docTop});
+
+    var oi=0, guard=0, lastBody=null;
+    while(oi<overflow.length && guard<80){
+      guard++;
+      var wrap=DOC.createElement('div'); wrap.innerHTML=opt.skel;
+      var sheet=wrap.firstChild; if(!sheet) break;
+      doc.appendChild(sheet);
+      var sBody=sheet.querySelector('.zfa-body'); var sNums=sheet.querySelector('.zfa-nums');
+      if(sBody) sBody.innerHTML=''; if(sNums) sNums.innerHTML='';
+      var local=[];
+      for(var j=oi;j<overflow.length;j++){ sBody.appendChild(overflow[j]); local.push(overflow[j]); }
+      var sTop=sheet.getBoundingClientRect().top;   // اب درست (پیراگراف ڈالنے کے بعد)
+      var keep=fitCount(local,0,sTop,fitLimit);
+      for(var m=local.length-1;m>keep;m--){ if(local[m].parentNode) local[m].parentNode.removeChild(local[m]); }
+      for(var q=0;q<=keep;q++){ gnum++; if(sNums) sNums.appendChild(numDiv(gnum,'zfa-num')); }
+      var cellL=sheet.querySelector('.zfa-c-body')||sBody;
+      var isLast=((oi+keep+1)>=overflow.length);
+      if(isLast) putClose(cellL);            // اختتام آخری شیٹ میں — fill سے پہلے (spill نہ ہو)
+      fillHeight(cellL, fitLimit, sTop);      // یہ sheet = 2 صفحے
+      binds.push({body:sBody, top:sTop});     // اس sheet کے پچھلے صفحے کا مثلث
+      lastBody=cellL;
+      oi=oi+keep+1;
+    }
+    if(!doc.querySelector('.zf-close')) putClose(lastBody||doc.querySelector('td.zf-c-body'));
+    // تمام مثلث آخر میں (سب صفحہ بندی مکمل ہونے کے بعد)
+    binds.forEach(function(u){ addBind(u.body, u.top); });
+  }
+
+  function go(){
+    // پچھلی نقلیں ہٹاؤ + اصل نمبر دوبارہ ظاہر (idempotent)
+    try{ [].slice.call(R.querySelectorAll('.zf-pnum,.zfa-pnum')).forEach(function(e){ if(e.parentNode)e.parentNode.removeChild(e); }); }catch(e){ /* print layout ka ikhtiyari qadam */ }
+    try{ [].slice.call(R.querySelectorAll('.zf-num,.zfa-num')).forEach(function(e){ e.style.visibility=''; }); }catch(e){ /* print layout ka ikhtiyari qadam */ }
+    try{ chain(); }catch(e){ /* print layout ka ikhtiyari qadam */ }
+    // ═══ MANUAL سیریل ═══ خودکار سیدھ (alignByParent/alignAll) بند کر دی —
+    //  کالم 2 میں افسر کا لکھا نمبر جوں کا توں رہے (center align بذریعہ CSS)۔
+  }
+  return go;
+}
+window._zimniPaginate = _zimniPaginate;
+
+function _zimniZaSkel(o, c) {
+  return (typeof _zaDefaultBody === 'function') ? ('<div class="zf-androoni">' + _zaDefaultBody(o || {}, c || {}) + '</div>') : '';
+}
 function _zimniPrintHTML(inner) {
   const paper = (typeof _ch173Paper !== 'undefined') ? _ch173Paper : 'legal';
   const side  = (typeof _ch173SideMargin === 'function') ? _ch173SideMargin() : '0.2cm';
@@ -3022,9 +3920,9 @@ function _zimniPrintHTML(inner) {
   // ── #3: chained androoni sheets کے لیے — androoni کا خالی فارم + کاغذ ──
   const _o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
   const _c = (typeof _zimniCase !== 'undefined' && _zimniCase) ? _zimniCase : {};
-  const zaSkel = (typeof _zaDefaultBody === 'function')
-    ? ('<div class="zf-androoni">' + _zaDefaultBody(_o, _c) + '</div>') : '';
+  const zaSkel = _zimniZaSkel(_o, _c);
   return `<!DOCTYPE html><html dir="rtl" lang="ur"><head><meta charset="UTF-8"><title> </title>
+    ${(typeof dioTextCSS === 'function') ? '<style id="dio-text-css">' + dioTextCSS('body') + '</style>' : ''}
     ${(typeof dioFontHead === 'function') ? dioFontHead() : '<link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">'}
     <style>
       /* AHEM: سائیڈ مارجن صفحے پر نہیں، دستاویز کی padding سے — تاکہ دستاویز کی
@@ -3070,548 +3968,35 @@ function _zimniPrintHTML(inner) {
       /* #3: ہر androoni sheet نئے صفحے سے شروع (page 3، 5، 7 …) */
       #ch173-doc .zf-androoni{ break-before:page !important; page-break-before:always !important; }
       .no-print, button, select{ display:none !important; }
-      /* تفتیشی افسر کا نام و تاریخ — پرنٹ میں ہمیشہ بائیں (LEFT)، کلاس/ڈیٹا دونوں پر */
+      /* تفتیشی افسر کا نام و تاریخ — پرنٹ میں ہمیشہ بائیں (LEFT)، کلاس/ڈیٹا دونوں پر
+         (v564: بیرونی ضمنی میں دستخط کا خانہ بائیں، نام اور تاریخ اُس کے درمیان — _zimniFormCSS) */
       #ch173-doc [data-k="io_sign"], #ch173-doc [data-k="io_date"],
-      #ch173-doc .zf-signblk, #ch173-doc .zf-sign, #ch173-doc .zf-signdate,
       #ch173-doc .zfa-wit-sign, #ch173-doc .zfa-wit-io, #ch173-doc .zfa-wit-date{
         text-align:left !important; text-align-last:left !important; }
       /* کالم 1 کا "بوقت" اشارہ پرنٹ میں کبھی نہ چھپے (خالی ہو تو کچھ نہیں) */
       #ch173-doc .zf-actbody::before{ content:none !important; }
       #ch173-doc, #ch173-doc *{ orphans:2; widows:2; }
       ${typeof dioBindCSS === 'function' ? dioBindCSS('#ch173-doc') : ''}
+      /* v564: مثل باندھنے کی 2pt لکیر — overlay (کوئی جگہ نہیں گھیرتا) + ہر قطار کا اپنا ٹکڑا (_zimniPaginate) */
+      #ch173-doc .zf-bind[data-ov]{ display:block !important; float:none !important; position:relative !important;
+        width:auto !important; height:0 !important; margin:0 !important; padding:0 !important; border:0 !important;
+        background:none !important; overflow:visible !important;
+        shape-outside:none !important; -webkit-shape-outside:none !important;
+        clip-path:none !important; -webkit-clip-path:none !important; }
+      #ch173-doc .zf-bind[data-ov]::before{ content:''; position:absolute; left:0; top:0; width:2in; height:2in;
+        background:linear-gradient(to top left, transparent 50%, #000 50%, #000 calc(50% + 2pt), transparent calc(50% + 2pt));
+        -webkit-print-color-adjust:exact; print-color-adjust:exact; pointer-events:none; }
+      /* v564: دائیں 3mm حاشیہ — shape-margin ٹکڑے کے اپنے خانے سے باہر نہیں جاتا، اس لیے ہر ٹکڑے کی اوپری سطر لکیر سے
+         بالکل لگ جاتی تھی؛ اب پوری لکیر کے ساتھ ایک جیسا 3mm فاصلہ (کوئی سطر لکیر کو نہیں چھوتی) */
+      #ch173-doc .zf-bindsl{ display:block !important; float:left !important; margin:0 3mm 0 0 !important; padding:0 !important;
+        border:0 !important; background:none !important; shape-margin:3mm; -webkit-shape-margin:3mm; }
     </style></head><body>
     <script>window.__ZA_SKEL=${JSON.stringify(zaSkel)};window.__PAPER=${JSON.stringify(paper)};</script>
     <div id="ch173-doc">${inner}</div>
     <script>
       (function(){
-        var CM=37.795;
-        var isA4=(window.__PAPER==='a4');
-        var contentH=(isA4?11.69:13)*96 - 2*CM;   // ایک صفحے کی کام کی اونچائی (1cm hashiye)
-        var twoPage=2*contentH;
-        var SAFE=16;                 // صفحے کے کنارے سے تھوڑا پہلے روکو (spill نہ ہو)
-        var fitLimit=twoPage-SAFE;
-        function T(el){ return (el.textContent||'').replace(/[\\s\\u00A0]/g,''); }
-
-        // ── ایک body کو الگ الگ <div> پیراگرافوں میں توڑو ──
-        //  (br، کئی .zf-body، اور — اہم — text node کے اندر نئی سطر سنبھالو)
-        //  ضمنی کا خانہ white-space:pre-wrap ہے: افسر Enter دبائے تو براؤزر
-        //  اکثر newline کو ایک ہی text node میں ڈال دیتا ہے (نیا div نہیں)۔
-        //  پہلے normalize صرف DIV/P/BR پر توڑتا تھا → newline نظرانداز → سارا متن
-        //  ایک پیراگراف بن جاتا اور سیریل نمبر بھی صرف ایک چھپتا۔ اب newline کو بھی
-        //  پیراگراف کی حد مانتے ہیں۔
-        //  مکمل RECURSIVE flatten — کسی بھی گہرائی پر br، newline، اور block
-        //  (div/p) کی حد کو پیراگراف کی حد مانو۔ محفوظ شدہ ضمنی کا HTML اکثر
-        //  پیراگراف ایک wrapper div کے اندر br سے جوڑ دیتا ہے
-        //  (<div>a<br>b<br>c</div>) — پرانا normalize صرف اوپری سطح دیکھتا تھا،
-        //  اس لیے وہ سب ایک پیراگراف بن جاتے (چھپائی میں ملے ہوئے)۔ اب ہر br/
-        //  newline پر ٹوٹتا ہے، اندرونی div/p پر بھی۔
-        function normalize(host){
-          var out=[], cur=null;
-          function ensure(){ if(!cur) cur=document.createElement('div'); return cur; }
-          function endPara(){ if(cur){ if(T(cur).length) out.push(cur); cur=null; } }
-          function addText(str){
-            var parts=String(str==null?'':str).split('\\n');
-            for(var i=0;i<parts.length;i++){
-              if(i>0) endPara();                              // newline = نیا پیراگراف
-              if(parts[i].length) ensure().appendChild(document.createTextNode(parts[i]));
-            }
-          }
-          function walk(node){
-            for(var i=0;i<node.childNodes.length;i++){
-              var n=node.childNodes[i];
-              if(n.nodeType===3){ addText(n.nodeValue||''); }
-              else if(n.nodeType===1){
-                var tag=n.tagName;
-                if(tag==='BR'){ endPara(); }
-                else if(tag==='DIV'||tag==='P'){ endPara(); walk(n); endPara(); }   // بلاک — اندر جاؤ، حدیں توڑیں
-                else {
-                  // inline (span/b/i/u/a...) — اگر اندر br/newline ہو تو اندر جاؤ، ورنہ جوں کا توں
-                  var hasBrk=false;
-                  try{ hasBrk = (n.querySelector && n.querySelector('br,div,p')) || /\\n/.test(n.textContent||''); }catch(e){ /* print layout ka ikhtiyari qadam */ }
-                  if(hasBrk) walk(n);
-                  else ensure().appendChild(n.cloneNode(true));
-                }
-              }
-            }
-          }
-          walk(host);
-          endPara();
-          while(host.firstChild) host.removeChild(host.firstChild);
-          out.forEach(function(d){ host.appendChild(d); });
-          return out;
-        }
-
-        // ── berooni کے تمام .zf-body ایک میں جوڑ کر پیراگراف نکالو ──
-        function beroParas(doc){
-          var bodies=[].slice.call(doc.querySelectorAll('td.zf-c-body .zf-body'));
-          if(!bodies.length) return {body:null,paras:[]};
-          var first=bodies[0];
-          for(var i=1;i<bodies.length;i++){ while(bodies[i].firstChild) first.appendChild(bodies[i].firstChild); if(bodies[i].parentNode) bodies[i].parentNode.removeChild(bodies[i]); }
-          return {body:first, paras:normalize(first)};
-        }
-
-        function numDiv(n,cls){ var d=document.createElement('div'); d.className=cls||'zf-num'; d.textContent=String(n); return d; }
-
-        // ── کالم 1 (تاریخ) اور کالم 2 (سیریل) کو حالاتِ تفتیش (.zf-body) کی
-        //    پہلی سطر "جناب عالیٰ! …" کے سامنے لاؤ ──
-        //  کالم 3 میں پہلے "سرکار/بنام/مرتبہ" (.zf-bl) آتی ہیں، پھر اصل تحریر
-        //  (.zf-body)۔ افسر چاہتا ہے تاریخ اور سیریل "1" دونوں اُسی "جناب عالیٰ"
-        //  کے سامنے ہوں — اس لیے دونوں خانوں کو اتنا نیچے کرو کہ وہ .zf-body سے
-        //  شروع ہوں (idempotent — ہر بار پہلے reset)۔
-        function alignSerialToBody(){
-          try{
-            var doc=document.getElementById('ch173-doc'); if(!doc) return;
-            // پہلے دونوں خانوں کی اپنی padding reset (idempotent)
-            var aTd=doc.querySelector('td.zf-c-action');
-            var sTd=doc.querySelector('td.zf-c-serial');
-            if(aTd) aTd.style.paddingTop='';
-            if(sTd) sTd.style.paddingTop='';
-            var body=doc.querySelector('td.zf-c-body .zf-body'); if(!body) return;
-            var bodyTop=body.getBoundingClientRect().top;
-            // ═══ td پر MARGIN کام نہیں کرتا — اس لیے PADDING-TOP سے نیچے کرو ═══
-            //  (محفوظ ضمنی میں تاریخ سیدھی td میں ہو سکتی ہے، بغیر .zf-actbody کے —
-            //   padding ہر صورت میں چلتا ہے)۔ خانے کے اوپری کنارے سے .zf-body تک
-            //   کا فاصلہ = padding-top۔
-            [aTd, sTd].forEach(function(td){
-              if(!td) return;
-              var pad=Math.round(bodyTop - td.getBoundingClientRect().top);
-              if(pad>0 && pad<2000) td.style.paddingTop=pad+'px';
-            });
-          }catch(e){ /* print layout ka ikhtiyari qadam */ }
-        }
-
-        // ── ٹیبل کی لکیریں صفحے کے نیچے تک (اکلوتا صفحہ) — قطار 2 کے تمام خانوں
-        //    کی اونچائی بڑھا کر ٹیبل کا نیچے کنارہ صفحے کے ہاشیے تک لے جاؤ۔ ──
-        function stretchToBottom(){
-          try{
-            var doc=document.getElementById('ch173-doc'); if(!doc) return;
-            var tbl=doc.querySelector('table.zf-tbl'); if(!tbl) return;
-            var row=tbl.querySelector('tbody tr'); if(!row) return;
-            var tds=[].slice.call(row.querySelectorAll('td')); if(!tds.length) return;
-            // پہلے موجودہ اونچائیاں ہٹاؤ تاکہ اصل (قدرتی) ناپ ملے
-            tds.forEach(function(td){ td.style.height=''; });
-            // ═══ صفحہ ضائع نہ ہو ═══ پہلے پوری دستاویز کی موجودہ اونچائی ناپو۔
-            //  اگر وہ ایک صفحے سے کم ہے تو صرف اتنا کھینچو کہ ٹیبل صفحے کے نیچے
-            //  تک پہنچے مگر دستاویز ایک صفحے سے آگے نہ جائے۔ اگر مواد پہلے ہی ایک
-            //  صفحہ یا زیادہ ہے تو بالکل نہ کھینچو (ورنہ خالی دوسرا صفحہ بنتا تھا)۔
-            var r=doc.getBoundingClientRect();
-            var used=r.bottom - r.top;                       // دستاویز کی موجودہ اونچائی
-            var pageLimit=contentH - SAFE;                   // ایک صفحے کی کام کی حد
-            if(used >= pageLimit - 12) return;               // پہلے ہی بھر چکی — مت کھینچو
-            var gap=Math.floor(pageLimit - used);
-            if(gap<=10) return;
-            var tallest=tds[0];
-            tds.forEach(function(td){ if(td.offsetHeight>tallest.offsetHeight) tallest=td; });
-            tallest.style.height=(tallest.offsetHeight+gap)+'px';   // صرف سب سے لمبے خانے کو بڑھاؤ
-          }catch(e){ /* print layout ka ikhtiyari qadam */ }
-        }
-
-        // ── ایک صفحے پر کتنے پیراگراف سماتے ہیں (اوپر سے limit تک) ──
-        function fitCount(paras, startIdx, topY, limit){
-          var k=startIdx;
-          for(var i=startIdx;i<paras.length;i++){
-            var b=paras[i].getBoundingClientRect().bottom;
-            if((b-topY)<=limit) k=i; else break;
-          }
-          return k; // آخری index جو سما گیا (کم از کم ایک ضرور)
-        }
-
-        function fillHeight(cell, wantBottomFromTop, topY){
-          try{
-            var cur=cell.getBoundingClientRect().bottom - topY;
-            var extra=Math.floor(wantBottomFromTop - cur);
-            if(extra>4) cell.style.height=(cell.offsetHeight+extra)+'px';
-          }catch(e){ /* print layout ka ikhtiyari qadam */ }
-        }
-        // ── مثل باندھنے کی تکونی جگہ — ہر unit کے دوسرے صفحے کے اوپر بائیں ──
-        // (berooni کا صفحہ 2، ہر androoni sheet کا پچھلا صفحہ)
-        function addBind(body, topRef){
-          if(!body) return;
-          var kids=[].slice.call(body.children).filter(function(el){
-            return (el.textContent||'').replace(/[\\s\\u00A0]/g,'').length; });
-          var limit=topRef+contentH;               // پہلا صفحہ یہاں ختم
-          for(var i=0;i<kids.length;i++){
-            if(kids[i].getBoundingClientRect().top>=limit){
-              var tri=document.createElement('span'); tri.className='zf-bind';
-              kids[i].insertBefore(tri, kids[i].firstChild);
-              var gap=document.createElement('span'); gap.className='dio-bindgap';
-              kids[i].insertBefore(gap, tri);
-              return;
-            }
-          }
-        }
-
-        function chain(){
-          var doc=document.getElementById('ch173-doc'); if(!doc) return;
-          if(contentH<200) return;
-          // ═══ BLOCK نظام ═══ اگر ضمنی نئی block ساخت میں ہے (ہر اندراج ایک قطار)
-          //  تو پرانا پیچیدہ نظام (normalize/androoni/serial-align) بالکل نہ چلاؤ —
-          //  ٹیبل قدرتی طور پر صفحہ در صفحہ خود بٹ جاتا ہے، سیریل ہر قطار میں اپنے
-          //  حالات کے سامنے رہتا ہے۔ صرف دستخط بائیں یقینی بناؤ۔
-          if(doc.querySelector('tr.zf-blk')){
-            // v553: BLOCK ضمنی میں بھی مثل باندھنے کی جگہ — ہر جفت صفحے (پچھلی طرف) کے
-            //   شروع میں: اوپر ایک سطر + مثلث (2pt وتر)۔
-            // v555: ہر صفحے کا توڑ اب «پکا» (خود براؤزر پر نہیں چھوڑا) — پہلے حساب یہ مانتا تھا
-            //   کہ جو اندراج صفحے میں پورا نہ آئے وہ پورا اگلے صفحے پر جائے گا، مگر چھپائی میں
-            //   اندراج صفحے کے اندر سے ٹوٹ جاتا تھا — اسی سے مثلث (2pt لکیر) پہلے صفحے کے بیچ
-            //   میں آ جاتی تھی۔ اب:
-            //   (الف) اندراج کی پہلی سطر ہی صفحے میں نہ آئے (یا تمہید/اختتام کی قطار) → اس سے پہلے
-            //        خالی قطار (tr.zf-fill) جو صفحہ نیچے تک بھرے + قطار سے پہلے صفحے کا توڑ
-            //   (ب) ورنہ حالات کی اُس سطر سے پہلے صفحے کا توڑ (.dio-pgbrk) جو صفحے میں نہ سمائے —
-            //        باقی متن اگلے صفحے پر؛ کھڑی لکیریں اس صفحے کے نیچے تک
-            //   آخری صفحے پر ٹیبل کے بعد خالی قطار — لکیریں صفحے کے نیچے (حاشیے) تک۔
-            //   کئی ضمنیاں اکٹھی چھپیں تو ہر ضمنی اپنے صفحہ 1 سے گنی جاتی ہے۔
-            try{
-              doc.querySelectorAll('.zf-bind,.dio-bindgap,.dio-pgbrk,tr.zf-fill').forEach(function(e){ if(e.parentNode)e.parentNode.removeChild(e); });
-              // پرانی layout سے چپکی inline اونچائیاں ناپ سے پہلے ہٹاؤ (ورنہ قطاریں 18cm رہتیں)
-              doc.querySelectorAll('table.zf-tbl td,table.zf-tbl tr').forEach(function(el){
-                el.style.height=''; if(el.tagName==='TR'){ el.style.breakBefore=''; el.style.pageBreakBefore=''; } });
-            }catch(e){ /* print layout ka ikhtiyari qadam */ }
-            try{
-              var dTop=doc.getBoundingClientRect().top;
-              var FSAFE=6;                       // صفحے کے نیچے کنارے سے ذرا پہلے (خالی قطار اگلے صفحے پر نہ چھلکے)
-              var mkFill=function(like, h){
-                var tr=document.createElement('tr'); tr.className='zf-fill';
-                [].slice.call(like.children).forEach(function(c){
-                  var td=document.createElement('td'); td.className=c.className||'';
-                  var cs=c.getAttribute('colspan'); if(cs) td.setAttribute('colspan', cs);
-                  td.style.height=Math.floor(h)+'px'; tr.appendChild(td);
-                });
-                return tr;
-              };
-              var insB=function(par, before){
-                var gap=document.createElement('span'); gap.className='dio-bindgap';
-                var tri=document.createElement('span'); tri.className='zf-bind';
-                par.insertBefore(gap, before); par.insertBefore(tri, before);
-              };
-              // پہلی سطر جس کا نچلا کنارہ limitY سے نیچے ہو — {n, off, top}؛ توڑنا بعد میں (cut)
-              var lineFind=function(cell, limitY){
-                var tw=document.createTreeWalker(cell, NodeFilter.SHOW_TEXT, null), n, rg=document.createRange();
-                while((n=tw.nextNode())){
-                  if(!n.nodeValue || !n.nodeValue.trim()) continue;
-                  rg.selectNodeContents(n); var rs=rg.getClientRects(), hitTop=null;
-                  for(var k=0;k<rs.length;k++){ if(rs[k].height>2 && (rs[k].bottom-dTop)>limitY+0.5){ hitTop=rs[k].top; break; } }
-                  if(hitTop===null) continue;
-                  var lo=0, hi=n.nodeValue.length-1, off=-1;
-                  while(lo<=hi){ var mid=(lo+hi)>>1; rg.setStart(n,mid); rg.setEnd(n,mid+1); var bb=rg.getBoundingClientRect();
-                    if(bb.height && bb.top>=hitTop-1){ off=mid; hi=mid-1; } else lo=mid+1; }
-                  if(off<0) return null;
-                  return { n:n, off:off, top: hitTop-dTop };
-                }
-                return null;
-              };
-              var cut=function(sp){ return sp.off>0 ? sp.n.splitText(sp.off) : sp.n; };
-              // خانے کی پہلی سطر کا اوپر / آخری سطر کا نیچے
-              var textEdge=function(cell, last){
-                var tw=document.createTreeWalker(cell, NodeFilter.SHOW_TEXT, null), n, rg=document.createRange(), v=null;
-                while((n=tw.nextNode())){
-                  if(!n.nodeValue || !n.nodeValue.trim()) continue;
-                  rg.selectNodeContents(n); var rs=rg.getClientRects();
-                  for(var k=0;k<rs.length;k++){ if(rs[k].height>2){
-                    if(!last) return rs[k].top-dTop;
-                    v=(v===null)?rs[k].bottom-dTop:Math.max(v, rs[k].bottom-dTop); } }
-                }
-                return v;
-              };
-              var tables=[].slice.call(doc.querySelectorAll('table.zf-tbl'));
-              tables.forEach(function(tbl){
-                // اس ضمنی کا صفحہ 1 کہاں سے (اکٹھی چھپائی میں ہر ضمنی اپنے خانے میں، نئے صفحے سے)
-                var unit=tbl; while(unit.parentNode && unit.parentNode!==doc) unit=unit.parentNode;
-                var pTop=(tables.length>1 ? unit.getBoundingClientRect().top-dTop : 0), pNo=1, guardB=0;
-                var rowsB=[].slice.call(tbl.querySelectorAll('tbody > tr'));
-                var EPS=2;
-                for(var ri=0; ri<rowsB.length && guardB<300; ri++){
-                  guardB++;
-                  var row=rowsB[ri];
-                  var rr=row.getBoundingClientRect(), rt=rr.top-dTop, rb=rr.bottom-dTop;
-                  if(rb-pTop <= contentH-EPS) continue;               // پوری قطار اسی صفحے پر
-                  var isBlk=row.classList.contains('zf-blk');
-                  var bodyC=row.querySelector('td.zf-c-body .zf-body')||row.querySelector('td.zf-c-body');
-                  var sp=null, firstLine=false;
-                  if(isBlk && bodyC){
-                    sp=lineFind(bodyC, pTop+contentH-EPS);
-                    if(!sp){ var lb=textEdge(bodyC, true); if(lb!==null) sp=lineFind(bodyC, lb-1); }   // متن سما گیا، نیچے کی جگہ نہیں — آخری سطر اگلے صفحے پر
-                    var ft=textEdge(bodyC, false);
-                    if(sp && ft!==null && sp.top<=ft+1) firstLine=true;
-                  }
-                  pNo++;
-                  if((!isBlk || !sp || firstLine) && rt > pTop+1){       // (الف) پوری قطار اگلے صفحے پر
-                    var room=pTop+contentH-rt-FSAFE;
-                    if(room>2) row.parentNode.insertBefore(mkFill(row, room), row);
-                    row.style.breakBefore='page'; row.style.pageBreakBefore='always';
-                    pTop=row.getBoundingClientRect().top-dTop;
-                    if(pNo%2===0 && bodyC){
-                      insB(bodyC, bodyC.firstChild);
-                      // کالم 1 (تاریخ) اور 2 (نمبر) بھی ایک سطر نیچے — «جناب عالیٰ» کی سیدھ برقرار
-                      [].slice.call(row.children).forEach(function(td){
-                        if(td.contains(bodyC)) return;
-                        var g=document.createElement('span'); g.className='dio-bindgap'; td.insertBefore(g, td.firstChild);
-                      });
-                    }
-                    ri--;                                               // اگلے صفحے پر بھی پوری نہ آئے تو دوبارہ جانچو
-                    continue;
-                  }
-                  if(!sp){ pTop=pTop+contentH; continue; }              // (ناممکن صورت) — آگے بڑھو
-                  // (ب) اس سطر سے پہلے صفحے کا پکا توڑ
-                  var node=cut(sp);
-                  var brk=document.createElement('span'); brk.className='dio-pgbrk';
-                  node.parentNode.insertBefore(brk, node);
-                  // توڑ سے پہلے کا حاشیہ (پچھلے پیراگراف کا margin) صفحے کی حد پار کرے تو اسے صفر کرو —
-                  //   چھپائی میں صفحے کے توڑ پر یہ حاشیہ ویسے بھی کٹ جاتا ہے؛ یوں حساب اور چھپائی ایک
-                  if(brk.getBoundingClientRect().top-dTop > pTop+contentH-EPS){
-                    for(var E=brk; E && E!==bodyC.parentNode; E=E.parentNode){
-                      var pv=E.previousElementSibling, fst=E.parentNode && [].filter.call(E.parentNode.childNodes, function(c){ return c.nodeType===1 || (c.nodeType===3 && c.nodeValue.trim()); })[0];
-                      if(pv) pv.style.marginBottom='0px';
-                      if(E!==brk && E.style) E.style.marginTop='0px';
-                      if(fst!==E) break;
-                    }
-                  }
-                  if(pNo%2===0) insB(node.parentNode, node);
-                  // توڑ سے پہلے کا حاشیہ (پیراگراف کا نچلا margin) صفحے کی حد سے آگے ہو تو اگلا صفحہ حد ہی سے
-                  //   شروع ہوتا ہے (بچا ہوا حاشیہ اگلے صفحے کے اوپر) — اسی کے مطابق حساب
-                  pTop=Math.min(brk.getBoundingClientRect().top-dTop, pTop+contentH);
-                  ri--;                                               // یہی قطار اگلے صفحے سے بھی آگے جا سکتی ہے
-                }
-                // آخری صفحہ — ٹیبل کے بعد خالی قطار، کھڑی لکیریں صفحے کے نیچے (حاشیے) تک
-                var lastRow=rowsB[rowsB.length-1];
-                if(lastRow){
-                  var roomL=pTop+contentH-(tbl.getBoundingClientRect().bottom-dTop)-FSAFE;
-                  if(roomL>1) lastRow.parentNode.appendChild(mkFill(lastRow, roomL));
-                }
-              });
-            }catch(e){ /* print layout ka ikhtiyari qadam */ }
-            try{
-              doc.querySelectorAll('.zf-signblk,.zf-sign,.zf-signdate,[data-k="io_sign"],[data-k="io_date"]').forEach(function(el){
-                el.style.setProperty('text-align','left','important');
-                el.style.setProperty('text-align-last','left','important');
-              });
-            }catch(e){ /* print layout ka ikhtiyari qadam */ }
-            return;
-          }
-          // اختتامی خانہ الگ رکھو (screن پر androoni میں ہو تو class بدل چکی: .zfa-wit-sign)
-          var closeNodes=[];
-          doc.querySelectorAll('.zf-close,.zf-signblk,.zfa-wit-sign').forEach(function(e){ closeNodes.push(e); if(e.parentNode)e.parentNode.removeChild(e); });
-          // ═══ IDEMPOTENT ═══ chain کئی بار چلتا ہے (load + fonts.ready + timeouts)۔
-          // دوبارہ چلنے پر پہلے androoni sheets کے تمام پیراگراف واپس berooni میں
-          // لاؤ، پھر sheets ہٹاؤ — ورنہ دوسری بار sheets (اور اُن کے پیراگراف)
-          // حذف ہو کر متن غائب ہو جاتا تھا۔
-          var beroBody0=doc.querySelector('td.zf-c-body .zf-body');
-          doc.querySelectorAll('.zf-androoni .zfa-body').forEach(function(ab){
-            if(beroBody0){ while(ab.firstChild) beroBody0.appendChild(ab.firstChild); }
-          });
-          doc.querySelectorAll('.zf-androoni').forEach(function(e){ if(e.parentNode)e.parentNode.removeChild(e); });
-          // پرانے مثل نشان ہٹاؤ (screen-width والے، اب print width پر لگائیں گے)
-          doc.querySelectorAll('.zf-bind,.zf-bindmark,.dio-bindgap').forEach(function(e){ if(e.parentNode)e.parentNode.removeChild(e); });
-          // berooni کی اندرونی اونچائیاں reset (screen کی ناپ ہٹاؤ)
-          doc.querySelectorAll('table.zf-tbl tbody td').forEach(function(td){ td.style.height=''; });
-
-          var bp=beroParas(doc); var P=bp.paras;
-          var beroNums=doc.querySelector('.zf-nums');
-          if(!P.length){ // کچھ نہیں — بس اختتام واپس
-            var cell0=doc.querySelector('td.zf-c-body'); closeNodes.forEach(function(e){cell0&&cell0.appendChild(e);}); return;
-          }
-          var docTop=doc.getBoundingClientRect().top;
-
-          // اوور فلو ہے یا نہیں؟ (2 صفحوں سے آگے)
-          var lastBottom=P[P.length-1].getBoundingClientRect().bottom - docTop;
-          var putClose=function(cell){
-            closeNodes.forEach(function(e){ cell.appendChild(e); });
-            // دستخط کا انداز منزل کے مطابق (androoni: بائیں bold؛ berooni: اپنا)
-            var inA=!!(cell.closest&&cell.closest('.zf-androoni'));
-            var sign=cell.querySelector('.zf-signblk,.zfa-wit-sign');
-            if(sign){
-              var io=sign.querySelector('[data-k="io_sign"]'); var dt=sign.querySelector('[data-k="io_date"]');
-              if(inA){ sign.className='zfa-wit-sign'; if(io)io.className='zfa-wit-io'; if(dt)dt.className='zfa-wit-date';
-                sign.querySelectorAll('.zf-gap').forEach(function(g){g.style.display='none';}); }
-              else { sign.className='zf-signblk'; if(io)io.className='zf-sign'; if(dt)dt.className='zf-signdate';
-                sign.querySelectorAll('.zf-gap').forEach(function(g){g.style.display='';}); }
-              // ── تفتیشی افسر کا نام + تاریخ ہمیشہ بائیں (LEFT) — پرانی محفوظ ضمنی
-              //    میں inline text-align:right ہو سکتا ہے، اِسے یہاں زبردستی ہٹاؤ ──
-              [sign,io,dt].forEach(function(el){ if(el){ try{ el.style.setProperty('text-align','left','important'); }catch(_){ /* print layout ka ikhtiyari qadam */ }}});
-            }
-          };
-
-          var binds=[];
-          if(lastBottom<=twoPage){
-            // اوور فلو نہیں — سب berooni میں۔
-            // ═══ MANUAL سیریل ═══ اب خودکار نمبر نہیں لگتے۔ کالم 2 میں افسر نے
-            //  جو لکھا (شروع میں "1") وہی جوں کا توں چھپتا ہے — نہ دوبارہ بنتے،
-            //  نہ پیراگراف کے ساتھ خودکار سیدھ ہوتی۔ (پرانا کوڈ یہاں 1..N نمبر
-            //  دوبارہ بناتا تھا جو افسر کے لکھے کو مٹا دیتا تھا۔)
-            putClose(doc.querySelector('td.zf-c-body'));
-            alignSerialToBody();   // سیریل "1" کو "جناب عالیٰ!" (حالات کی پہلی سطر) کے سامنے لاؤ
-            // ── ٹیبل کی لکیریں صفحے کے نیچے تک (مگر ایک صفحے سے آگے نہیں) ──
-            stretchToBottom();
-            addBind(doc.querySelector('td.zf-c-body .zf-body'), docTop);   // صفحہ 2 کا مثلث (صرف اگر واقعی 2 صفحے ہوں)
-            return;
-          }
-
-          // ── اوور فلو: berooni کو 2 صفحوں پر روکو ──
-          var k0=fitCount(P,0,docTop,fitLimit);           // berooni میں آخری پیراگراف
-          var gnum=0;                                     // مسلسل نمبر
-          // ═══ ترتیب اہم ═══ پہلے اضافی پیراگراف berooni سے نکالو، پھر berooni
-          // کو 2 صفحے بھرو۔ ہر androoni sheet کے لیے: پیراگراف ڈال کر sTop ناپو
-          // (تب berooni + پچھلی sheets اپنی آخری اونچائی پر)، پھر 2 صفحے تک رکھو،
-          // پھر اُس sheet کو 2 صفحے بھرو۔ (پہلے sTop غلط جگہ ناپا جا رہا تھا۔)
-          var overflow=P.slice(k0+1);
-          overflow.forEach(function(p){ if(p.parentNode) p.parentNode.removeChild(p); });
-          if(beroNums){ beroNums.innerHTML=''; for(var i2=0;i2<=k0;i2++){ gnum++; beroNums.appendChild(numDiv(gnum)); } }
-          fillHeight(doc.querySelector('td.zf-c-body'), fitLimit, docTop);   // berooni = 2 صفحے
-          binds.push({body:doc.querySelector('td.zf-c-body .zf-body'), top:docTop});
-
-          var oi=0, guard=0, lastBody=null;
-          while(oi<overflow.length && guard<80){
-            guard++;
-            var wrap=document.createElement('div'); wrap.innerHTML=window.__ZA_SKEL;
-            var sheet=wrap.firstChild; if(!sheet) break;
-            doc.appendChild(sheet);
-            var sBody=sheet.querySelector('.zfa-body'); var sNums=sheet.querySelector('.zfa-nums');
-            if(sBody) sBody.innerHTML=''; if(sNums) sNums.innerHTML='';
-            var local=[];
-            for(var j=oi;j<overflow.length;j++){ sBody.appendChild(overflow[j]); local.push(overflow[j]); }
-            var sTop=sheet.getBoundingClientRect().top;   // اب درست (پیراگراف ڈالنے کے بعد)
-            var keep=fitCount(local,0,sTop,fitLimit);
-            for(var m=local.length-1;m>keep;m--){ if(local[m].parentNode) local[m].parentNode.removeChild(local[m]); }
-            for(var q=0;q<=keep;q++){ gnum++; if(sNums) sNums.appendChild(numDiv(gnum,'zfa-num')); }
-            var cellL=sheet.querySelector('.zfa-c-body')||sBody;
-            var isLast=((oi+keep+1)>=overflow.length);
-            if(isLast) putClose(cellL);            // اختتام آخری شیٹ میں — fill سے پہلے (spill نہ ہو)
-            fillHeight(cellL, fitLimit, sTop);      // یہ sheet = 2 صفحے
-            binds.push({body:sBody, top:sTop});     // اس sheet کے پچھلے صفحے کا مثلث
-            lastBody=cellL;
-            oi=oi+keep+1;
-          }
-          if(!doc.querySelector('.zf-close')) putClose(lastBody||doc.querySelector('td.zf-c-body'));
-          // تمام مثلث آخر میں (سب صفحہ بندی مکمل ہونے کے بعد)
-          binds.forEach(function(u){ addBind(u.body, u.top); });
-        }
-
-        // ── نمبروں کی سیدھ (ہر شیٹ میں، اُسی کی اصل ناپ سے) ──
-        function paraTops(body){
-          var kids=[].slice.call(body.children).filter(function(el){
-            return (el.tagName==='DIV'||el.tagName==='P') && (el.textContent||'').replace(/[\\s\\u00A0]/g,'').length;});
-          if(kids.length) return kids.map(function(k){return k.getBoundingClientRect().top;});
-          var tops=[],run=[];
-          function flush(){ if(!run.length)return;
-            var txt=run.map(function(n){return n.textContent||'';}).join('').replace(/[\\s\\u00A0]/g,'');
-            if(txt){try{var rg=document.createRange();rg.setStartBefore(run[0]);rg.setEndAfter(run[run.length-1]);
-              var r=rg.getBoundingClientRect(); if(r.height)tops.push(r.top);}catch(e){ /* print layout ka ikhtiyari qadam */ }} run=[]; }
-          [].slice.call(body.childNodes).forEach(function(n){
-            if(n.nodeType===1&&n.tagName==='BR'){flush();return;} run.push(n);});
-          flush();
-          if(tops.length) return tops;
-          var r=body.getBoundingClientRect(); return r.height?[r.top]:[];
-        }
-        function alignOne(nums){
-          if(nums.getAttribute('data-manual-space')==='1') return;
-          var row=nums.closest('tr'); if(!row) return;
-          var bodies=[].slice.call(row.querySelectorAll('.zf-body, .zfa-body'));
-          if(!bodies.length) return;
-          var tops=[]; bodies.forEach(function(b){ tops=tops.concat(paraTops(b)); });
-          var kids=[].slice.call(nums.children);
-          if(!kids.length||!tops.length) return;
-          // ═══ ABSOLUTE POSITIONING (bulletproof — clump NAHI ho sakta) ═══
-          //   Har number ko serial-khane ke andar us ke paragraph ki THEEK Y
-          //   جگہ par ABSOLUTE rakho. marginTop wala tareeqa baar baar clump
-          //   kar raha tha (aik number set karte hi baqi khisak jate the) —
-          //   is liye ab bilkul chhor diya. Har number apne paragraph ke
-          //   saamne, aik doosre se مکمل آزاد.
-          var td = nums.closest('td') || nums.parentNode;
-          try { if (getComputedStyle(td).position === 'static') td.style.position = 'relative'; } catch(e){ /* print layout ka ikhtiyari qadam */ }
-          nums.style.position = 'static';
-          var cellTop = td.getBoundingClientRect().top;
-          var padTop = 0;
-          try { padTop = parseFloat(getComputedStyle(td).paddingTop) || 0; } catch(e){ /* print layout ka ikhtiyari qadam */ }
-          for(var i=0;i<kids.length;i++){
-            kids[i].style.marginTop='0px';
-            if(i<tops.length){
-              kids[i].style.position='absolute';
-              kids[i].style.left='0'; kids[i].style.right='0';
-              kids[i].style.top = Math.max(0, Math.round(tops[i]-cellTop)) + 'px';
-              kids[i].style.textAlign='center';
-            } else {
-              kids[i].style.position='absolute';
-              kids[i].style.opacity='0';   // extra number (agar ho) chhupa do
-            }
-          }
-        }
-        function alignAll(){ [].slice.call(document.querySelectorAll('.zf-nums, .zfa-nums')).forEach(alignOne); }
-
-        // ═══ PER-PARAGRAPH numbering (page-break safe) ═══
-        // Masla: absolute number serial-khane mein td se relative tha — 2-page par
-        // paragraph page-break se neeche khiskta tha magar number wahin reh jata tha.
-        // Hal: har number ki NAQAL us ke PARAGRAPH ke ANDAR rakho (absolute, serial
-        // column ke x-range par runtime-measured). Number ab paragraph ka child hai,
-        // is liye page break par paragraph ke SAATH jata hai. Original serial-number
-        // ko chhupa dete hain (jagah reserve rehti hai). ALL-OR-NOTHING: koi unit
-        // mismatch ho to false return, aur purana alignAll() chal jata hai (safe).
-        function parasOf(body){
-          return [].slice.call(body.children).filter(function(el){
-            return (el.tagName==='DIV'||el.tagName==='P') &&
-              (el.textContent||'').replace(/[\\s\\u00A0]/g,'').length; });
-        }
-        function alignByParent(){
-          var doc=document.getElementById('ch173-doc'); if(!doc) return false;
-          var units=[];
-          var bB=doc.querySelector('td.zf-c-body .zf-body');
-          var bS=doc.querySelector('td.zf-c-serial');
-          if(bB&&bS){ var bN=bS.querySelector('.zf-nums'); if(bN) units.push({body:bB,serialTd:bS,nums:bN,cls:'zf-pnum'}); }
-          [].slice.call(doc.querySelectorAll('.zf-androoni')).forEach(function(sh){
-            var b=sh.querySelector('.zfa-body'); var st=sh.querySelector('td.zfa-c-serial');
-            var n=st?st.querySelector('.zfa-nums'):null;
-            if(b&&st&&n) units.push({body:b,serialTd:st,nums:n,cls:'zfa-pnum'});
-          });
-          if(!units.length) return false;
-          // ── validate: har unit mein paragraph 1..N number ke barabar/kam hon ──
-          // aur serial column ki measurement sahih ho (warna number ghayab ho sakta) ──
-          for(var u=0;u<units.length;u++){
-            // manual-space mode — افسر نے خود (خالی لائنوں سے) نمبر رکھے → چھوؤ مت (fallback)
-            if(units[u].nums.getAttribute('data-manual-space')==='1') return false;
-            units[u].paras=parasOf(units[u].body);
-            // صرف بھرے (non-empty) نمبر گنیں — خالی divs شمار نہ ہوں
-            units[u].numEls=[].slice.call(units[u].nums.children).filter(function(el){
-              return (el.textContent||'').replace(/[\\s\\u00A0]/g,'').length; });
-            // نیا: صرف کم از کم 1 نمبر اور 1 پیراگراف چاہیے۔ (پہلے paras>nums پر
-            // fallback ہو جاتا تھا — اسی لیے asli zimni (زیادہ پیراگراف) پر یہ
-            // page-break-safe طریقہ کبھی نہ چلتا اور نمبر دوسرے صفحے پر کھسک جاتے)۔
-            if(!units[u].numEls.length || !units[u].paras.length) return false;
-            var srW=units[u].serialTd.getBoundingClientRect().width;
-            if(!(srW>4 && srW<400)) return false;        // measurement mashkook — fallback
-          }
-          // ── apply: number[i] ↔ paragraph[i] (index-wise، جتنے کم ہوں اتنے) ──
-          //   number ki naqal us ke paragraph ke ANDAR → page-break par SAATH khiskti hai.
-          for(var v=0;v<units.length;v++){
-            var U=units[v];
-            var cnt=Math.min(U.numEls.length, U.paras.length);
-            for(var i=0;i<cnt;i++){
-              var src=U.numEls[i]; var p=U.paras[i];
-              if(!src||!p) continue;
-              src.style.visibility='hidden';               // original jagah reserve
-              try{ if(getComputedStyle(p).position==='static') p.style.position='relative'; }catch(e){ /* print layout ka ikhtiyari qadam */ }
-              var sr=U.serialTd.getBoundingClientRect();
-              var pr=p.getBoundingClientRect();
-              var cl=document.createElement('div');
-              cl.className=U.cls;
-              cl.textContent=src.textContent;
-              cl.setAttribute('contenteditable','false');
-              cl.style.cssText='position:absolute;top:0;left:'+Math.round(sr.left-pr.left)+
-                'px;width:'+Math.round(sr.width)+'px;text-align:center;pointer-events:none;';
-              p.appendChild(cl);
-            }
-          }
-          return true;
-        }
-        function go(){
-          // پچھلی نقلیں ہٹاؤ + اصل نمبر دوبارہ ظاہر (idempotent)
-          try{ [].slice.call(document.querySelectorAll('.zf-pnum,.zfa-pnum')).forEach(function(e){ if(e.parentNode)e.parentNode.removeChild(e); }); }catch(e){ /* print layout ka ikhtiyari qadam */ }
-          try{ [].slice.call(document.querySelectorAll('.zf-num,.zfa-num')).forEach(function(e){ e.style.visibility=''; }); }catch(e){ /* print layout ka ikhtiyari qadam */ }
-          try{ chain(); }catch(e){ /* print layout ka ikhtiyari qadam */ }
-          // ═══ MANUAL سیریل ═══ خودکار سیدھ (alignByParent/alignAll) بند کر دی —
-          //  کالم 2 میں افسر کا لکھا نمبر جوں کا توں رہے (center align بذریعہ CSS)۔
-        }
-        // AHEM: chain ہمیشہ فونٹ لوڈ ہونے کے بعد چلے — ورنہ ناپ چھوٹی آتی ہے اور
-        // زیادہ پیراگراف ایک شیٹ میں سما جاتے ہیں (split غلط)۔ idempotent ہے، اس
-        // لیے دوبارہ چلنا محفوظ ہے۔
+        var go=(${_zimniPaginate.toString()})(document, window, { paper: window.__PAPER, skel: window.__ZA_SKEL });
+        // AHEM: حساب ہمیشہ فونٹ لوڈ ہونے کے بعد بھی چلے — ورنہ ناپ چھوٹی آتی ہے (split غلط)۔ idempotent ہے۔
         function boot(){
           go();                                   // پہلی جھلک (فونٹ سے پہلے)
           setTimeout(go,120); setTimeout(go,400); setTimeout(go,900);
@@ -3635,11 +4020,13 @@ window._zimniPrintHTML = _zimniPrintHTML;
 //   ضمنیوں میں اگر کالم بالکل پرانے پہلے سے طے شدہ ناپ (14/7/55/24) پر ہوں تو انہیں بھی نئے
 //   ناپ پر — افسر نے خود لکیر کھینچ کر کالم بدلے ہوں تو اُن کا ناپ جوں کا توں۔
 // v558 (افسر کی ہدایت، 27 اکتوبر 2026): «از۔» کی جگہ کم ہے — موجودہ سے دُگنی (6% → 12%)؛ کالم 3 اسی قدر کم۔
-//   پہلے سے طے شدہ دونوں پرانے ناپ (14/7/55/24 اور v555 کا 14/7/73/6) نئے ناپ پر؛ افسر کا اپنا کھینچا ناپ جوں کا توں۔
-const _ZF_OLD_COLS = /<col\s+style="width:\s*14%;?"\s*\/?>\s*<col\s+style="width:\s*7%;?"\s*\/?>\s*<col\s+style="width:\s*(?:55%;?"\s*\/?>\s*<col\s+style="width:\s*24|73%;?"\s*\/?>\s*<col\s+style="width:\s*6)%;?"\s*\/?>/i;
+// v564 (افسر کی ہدایت، 28 اکتوبر 2026): «از» کا کالم پھر بالکل دُگنا (12% → 24%)، جگہ سب سے چوڑے کالم (کالم 3:
+//   67% → 55%) سے — جدول حاشیوں کے اندر ہی رہتا ہے۔ پہلے سے طے شدہ پرانے ناپ (v555 کا 14/7/73/6 اور v558 کا
+//   14/7/67/12) نئے ناپ پر؛ افسر کا اپنا کھینچا ناپ جوں کا توں۔
+const _ZF_OLD_COLS = /<col\s+style="width:\s*14%;?"\s*\/?>\s*<col\s+style="width:\s*7%;?"\s*\/?>\s*<col\s+style="width:\s*(?:67%;?"\s*\/?>\s*<col\s+style="width:\s*12|73%;?"\s*\/?>\s*<col\s+style="width:\s*6)%;?"\s*\/?>/i;
 function _zimniMigrateCols(html) {
   const s = String(html || '');
-  return _ZF_OLD_COLS.test(s) ? s.replace(_ZF_OLD_COLS, '<col style="width:14%"><col style="width:7%"><col style="width:67%"><col style="width:12%">') : s;
+  return _ZF_OLD_COLS.test(s) ? s.replace(_ZF_OLD_COLS, '<col style="width:14%"><col style="width:7%"><col style="width:55%"><col style="width:24%">') : s;
 }
 window._zimniMigrateCols = _zimniMigrateCols;
 
@@ -3656,13 +4043,13 @@ function _zimniPrepBody(html, subType) {
       const sign = box.querySelector('[data-k="io_sign"]');
       if (!sd && sign && sign.parentNode) {
         sd = document.createElement('div'); sd.className = 'zf-signdate'; sd.setAttribute('data-k', 'io_date');
-        sd.setAttribute('style', 'text-align:left !important;display:block;');
         sign.parentNode.insertBefore(sd, sign.nextSibling);
       }
       if (sd) sd.textContent = fd.dmy;
     }
     if (subType) { const t = box.querySelector('.zf-title'); if (t) t.textContent = subType; }
     _zimniFixClose(box);
+    _zimniUnLeftSign(box);           // v564: نام اور تاریخ دستخط کے خانے کے درمیان
     return box.innerHTML;
   } catch (_) { return _zimniMigrateCols(html); }
 }
@@ -3670,9 +4057,23 @@ window._zimniPrepBody = _zimniPrepBody;
 // v558: اختتامی سطر کے آخر میں «۔» (پرانی محفوظ ضمنیوں میں بھی — اسکرین اور چھپائی دونوں)
 function _zimniFixClose(root) {
   try {
+    // v564: پرانی ضمنیوں میں اختتامی سطر کے الفاظ کے درمیان no-break space، دوہری جگہ، «کر ارسال»
+    //   (جگہ کے ساتھ) یا آخر میں انگریزی نقطہ/ڈیش بھی ملا — پہلے صرف بالکل ہو بہو سطر پکڑی جاتی تھی۔
+    //   اب: الفاظ (جگہیں نظرانداز کر کے) وہی ہوں تو تحریر جوں کی توں رکھ کر آخر میں صرف «۔»؛ پہلے سے
+    //   «۔» ہو تو کچھ نہیں۔ کوئی دوسری اختتامی سطر (افسر کی اپنی) نہیں چھیڑی جاتی۔
+    const KEY = 'رپورٹضمنیمرتبہوکرارسالخدمتہے';
     (root || document).querySelectorAll('.zf-close').forEach(el => {
-      const t = String(el.textContent || '').replace(/\s+$/, '');
-      if (t === 'رپورٹ ضمنی مرتب ہو کرارسال خدمت ہے') el.textContent = t + '۔';
+      const raw = String(el.textContent || '');
+      const t = raw.replace(/[\s\u00A0\u200B-\u200F\u2060\uFEFF]+$/, '');
+      const core = t.replace(/[.\-\u06D4]+$/, '');
+      if (core.replace(/[\s\u00A0\u200B-\u200F\u2060\uFEFF]/g, '') !== KEY) return;
+      if (/\u06D4$/.test(t)) return;                                  // «۔» پہلے سے
+      const want = core.replace(/[\s\u00A0]+$/, '') + '۔';
+      if (el.childElementCount === 0) { el.textContent = want; return; }
+      // سطر کے اندر فارمیٹنگ (b/u) ہو تو آخری متن کے ٹکڑے کے آخر میں «۔» — فارمیٹنگ برقرار
+      const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let n, last = null;
+      while ((n = tw.nextNode())) { if (String(n.nodeValue || '').trim()) last = n; }
+      if (last) last.nodeValue = String(last.nodeValue).replace(/[\s\u00A0\u200B-\u200F\u2060\uFEFF]*[.\-]*[\s\u00A0]*$/, '') + '۔';
     });
     // v558 قاعدہ: «بنام» میں صرف ایک ملزم ہو تو نمبر «1۔» نہیں (پرانی محفوظ ضمنیاں بھی)
     const accs = (root || document).querySelectorAll('[data-k="banam"] .zf-acc .nm');
@@ -3695,9 +4096,29 @@ function _zimniCurrentPrintHTML() {
   const ed = _zimniDoc();
   if (!ed || !ed.querySelector('.zf-tbl')) return '';
   try { _zimniSyncSignDate(); } catch (_) { /* ikhtiyari */ }
+  try { _zimniWrapNames(ed); } catch (_) { /* v564: ربط */ }
   const sub = String((document.getElementById('zf-sub-type') || {}).value || '').replace('__add__', '');
   return _zimniPrintHTML(_zimniSafePrint(_zimniPrepBody(_zimniCleanHTML(ed.innerHTML), sub)));
 }
+// ═══ v564: براؤزر کی اپنی چھپائی (Chrome ⋮ › Print، یا وہ Ctrl+P جو ایپ تک نہ پہنچے) = «پرنٹ» بٹن ═══
+//  وہی HTML (_zimniCurrentPrintHTML)، وہی CSS اور @page، اور اسی لمحے وہی حساب (_zimniPaginate) —
+//  صفحات، مثل باندھنے کی لکیر، کھڑی لکیریں نیچے تک۔ کاغذ وہی جو آخری بار «پرنٹ» میں چنا گیا (پہلے سے لیگل)؛
+//  براؤزر کی اپنی چھپائی کاغذ کا سوال نہیں پوچھ سکتی (وہ اسی لمحے، بغیر انتظار کے چلتی ہے)۔
+try {
+  if (window.dioNativePrint) window.dioNativePrint.register({
+    match: () => {
+      const d = _zimniDoc();
+      return !!(d && d.querySelector('.zf-tbl') && d.getClientRects().length);
+    },
+    html: () => _zimniCurrentPrintHTML(),
+    after: (root, win) => {
+      const _o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
+      const _c = (typeof _zimniCase !== 'undefined' && _zimniCase) ? _zimniCase : {};
+      const paper = (typeof _ch173Paper !== 'undefined') ? _ch173Paper : 'legal';
+      _zimniPaginate(root, win, { paper: paper, skel: _zimniZaSkel(_o, _c) })();
+    }
+  });
+} catch (_) { /* براؤزر کی چھپائی پرانے طریقے سے */ }
 // ═══ v555: ضمنی کا کاغذ چھپائی سے پہلے «تیار» ═══
 //  افسر کی شکایت (21 اکتوبر 2026): «ضمنی ایک صفحے سے زیادہ ہو تو صفحہ 2، 4، 6 … والی 2pt
 //  لکیر پہلے صفحے کے درمیان میں آ جاتی ہے، اور صرف لیگل پر؛ A4 پر آتی ہی نہیں۔»
@@ -4673,6 +5094,7 @@ function _renderZimniAEditor() {
     try { _zaColResize(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     try { if (saved && saved.saved_at) _zaStampUpdated(saved.saved_at); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     try { _zaWatchEdits(); } catch (_) { /* ikhtiyari qadam */ }                                                // v558: خودکار مسودہ
+    try { _zimniLockIO(_zimniDoc()); } catch (_) { /* v564: ہر بیان کے دستخط میں تفتیشی افسر کا نام مقرر */ }
     try { _zaLayout(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     // AHEM: خودکار نمبر شمار جان بوجھ کر بند — کالم 1 خالی/manual ہے
     [250, 900, 1800].forEach(ms => setTimeout(() => { try { _zaLayout(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }, ms));
@@ -4806,6 +5228,7 @@ async function _zaInsertWitnessStatement(witness) {
       '<div class="zfa-wit-date">' + E(today) + '</div>' +
     '</div>';
   body.appendChild(block);
+  try { _zimniLockIO(block); } catch (_) { /* v564: تفتیشی افسر کا نام مقرر */ }
 
   try { _zaLayout(); } catch (_) { /* ikhtiyari qadam */ }
   try { _r173Dirty = true; } catch (_) { /* ikhtiyari qadam */ }

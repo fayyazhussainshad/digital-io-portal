@@ -37,7 +37,7 @@ jobs:
     name: Real app (desktop + mobile + print)
     if: github.event_name != 'push'
     runs-on: ubuntu-24.04   # v558: «latest» کی نئی تصویر پر تنصیب ناکام — جانچ والی تصویر پکی
-    timeout-minutes: 60
+    timeout-minutes: 90     # v564: اصل چھپائی کی جانچ (v564_test.py) کے بعد کل وقت 60 منٹ سے اوپر
     needs: lint-and-unit
     steps:
       - uses: actions/checkout@v4
@@ -129,6 +129,10 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh v563_test.py
+      - name: v564 — bairooni zimni print & layout — Ctrl+P = print button = browser-menu print (pixel-identical, Legal + A4, nothing cut), 2pt binding line with text beside it and a new serial inside its zone (no empty block), closing line «۔» + half space, «از» 12% → 24%, bound date + SHO name, IO name fixed (read-only, no binding), date centred under signature, words never join in print (font kerning off), one zimni per date, manual column 2 (v564_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: bash ci_run.sh v564_test.py
       - name: Screenshots and print PDFs
         if: always()
         uses: actions/upload-artifact@v4

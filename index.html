@@ -1093,7 +1093,7 @@ input[id*="cnic"], input[id*="cell"] {
   }
   /* ── چالان (report 173) کے لیے native Ctrl+P خاص اصول ──
      (الف) کوئی متن نہ کٹے: خانے اپنی اونچائی خود لیں، overflow نظر آئے۔
-     (ب) justify برقرار + الفاظ نہ جُڑیں (کم از کم word-spacing)۔
+     (ب) justify برقرار + الفاظ نہ جُڑیں (v564: فونٹ کی kerning بند — app-core.js dioTextCSS)۔
      (ج) گواہان / rotated کالم کا متن بھی مکمل نظر آئے۔ */
   #dio-nprint-host #ch173-doc .ch173-table tbody td,
   #dio-nprint-host #ch173-doc .normcell,
@@ -1119,8 +1119,10 @@ input[id*="cnic"], input[id*="cell"] {
   #dio-nprint-host #ch173-doc [data-k="cont_text"],
   #dio-nprint-host #ch173-doc [data-k="papers_body"] {
     text-align: justify !important; text-align-last: right !important;
-    text-justify: inter-word !important; word-spacing: 0.12em !important;
+    text-justify: inter-word !important; word-spacing: normal !important;
   }
+  /* v564: الفاظ نہ جُڑیں — فونٹ کی kerning بند (app-core.js dioTextCSS) — براؤزر کی اپنی چھپائی میں ہر دستاویز پر */
+  #dio-nprint-host { font-kerning: none; }
   /* @page margin NAHI diya — margins ab print dialog / system ki setting ke
      mutabiq rahenge (khud-ba-khud force nahi honge). */
 }
@@ -1972,8 +1974,11 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   function _setup() {
     // App ke apne saaf-print (iframe) ke waqt DAKHAL NA do
-    if (document.getElementById('dio-print-frame')) return;
+    if (document.querySelector('#dio-print-frame:not([data-done])')) return;   // v564: مکمل ہو چکا فریم (ہٹنے کا منتظر) نہیں روکتا
     if (_moved) return;                             // pehle se ho chuka
+    // v564: jis dastavez ka «پرنٹ» bataan apna tayyar kaghaz banata hai (ضمنی) — browser ki
+    //   apni chhapai bhi BILKUL wahi kaghaz (app-core.js: dioNativePrint)
+    try { if (window.dioNativePrint && window.dioNativePrint.setup()) return; } catch (_) {}
     var node = _findOpenDoc();
     if (!node) return;                              // koi doc nahi — sirf chrome chhupega
     var host = document.getElementById('dio-nprint-host');
@@ -1989,6 +1994,7 @@ document.addEventListener('DOMContentLoaded', function () {
     host.appendChild(node);
   }
   function _restore() {
+    try { if (window.dioNativePrint) window.dioNativePrint.restore(); } catch (_) {}
     document.body.classList.remove('dio-nprint');
     if (_moved) {
       var m = _moved; _moved = null;

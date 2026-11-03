@@ -63,8 +63,9 @@ test('27 اکتوبر: اردو کی بورڈ پر بھی Ctrl+S / Ctrl+P (اص�
 
 test('27 اکتوبر: اختتامی سطر «۔» کے ساتھ، اوپر کی جگہ آدھی، «از۔» دُگنا، اکیلے نام پر «1» نہیں', () => {
   assert.ok(/>رپورٹ ضمنی مرتب ہو کرارسال خدمت ہے۔<\/div>/.test(Z) && !/>رپورٹ ضمنی مرتب ہو کرارسال خدمت ہے<\/div>/.test(Z));
-  assert.ok(/\.zf-close\{ margin-top:0\.5em;/.test(Z) && /tr\.zf-endrow td\{ padding-top:0; \}/.test(Z));
-  assert.ok(/<col style="width:67%"><col style="width:12%">/.test(Z));
+  // v564 (افسر کی نئی ہدایت، 28 اکتوبر): اوپر کی جگہ پھر آدھی یا کم (0.5em کا حاشیہ ختم)، «از» پھر دُگنا (12% → 24%)
+  assert.ok(/\.zf-close\{ margin-top:0;/.test(Z) && /tr\.zf-endrow td\{ padding-top:0; \}/.test(Z));
+  assert.ok(/<col style="width:55%"><col style="width:24%">/.test(Z));
   assert.ok(/\(\(n === 1\) \? '' : \(i \+ 1\) \+ '\\u06D4 '\)/.test(Z));
   const R = read('report173.js');
   assert.ok(!/return '1\\u06D4 ' \+ nm/.test(R), 'مدعی پر «1۔» نہیں');

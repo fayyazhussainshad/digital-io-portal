@@ -116,6 +116,9 @@
     return { t: p[0], r: p[1], b: p[2], l: p[3] };
   }
   async function frameFor(html) {
+    // v564: پرنٹ والا قاعدہ (الفاظ نہ جُڑیں — فونٹ کی kerning بند) فائل میں بھی، تاکہ PDF کی سطریں اور صفحات
+    //   پرنٹ جیسے ہوں (یہ HTML dioPrint سے پہلے پکڑا جاتا ہے، جہاں یہ قاعدہ لگتا ہے)
+    try { if (typeof window.dioTextInject === 'function') html = window.dioTextInject(html); } catch (_) { /* ضمنی */ }
     var pg = pageFromHtml(html), mg = marginsFromHtml(html);
     var cw = Math.round((pg.w - mg.l - mg.r) * 96);       // پرنٹ میں مواد کی چوڑائی
     var f = document.createElement('iframe');
@@ -307,7 +310,9 @@
     var ff = await fontFaceCss(styles + xml);
     var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + Math.round(W * scale) + '" height="' + Math.round(H * scale) +
       '" viewBox="0 0 ' + W + ' ' + H + '"><foreignObject x="0" y="0" width="' + W + '" height="' + H + '">' +
-      '<div xmlns="http://www.w3.org/1999/xhtml" style="width:' + W + 'px;background:#fff;">' +
+      // v564: پرنٹ کا قاعدہ (الفاظ نہ جُڑیں — فونٹ کی kerning بند) تصویر میں بھی: پرنٹ میں یہ body پر ہوتا ہے، اور یہاں
+      //   body ایک div بن جاتا ہے — اس لیے یہیں، تاکہ ہر دستاویز کی فائل پرنٹ جیسی ہو
+      '<div xmlns="http://www.w3.org/1999/xhtml" style="width:' + W + 'px;background:#fff;font-kerning:none;">' +
       '<style><![CDATA[' + ff + styles.replace(/\]\]>/g, '') + ']]></style>' + xml + '</div></foreignObject></svg>';
     var img = new Image();
     img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
@@ -470,6 +475,18 @@
     var isHtml = (typeof el === 'object' && el.html && !el.nodeType);
     return pdfFromHtml(isHtml ? el.html : elementToHtml(el), !isHtml);
   }
+  // v564: کاغذ کا قاعدہ (فونٹ کی kerning بند) تصویر بنانے میں بھی — canvas کی اپنی kerning («auto») صفحے کی CSS
+  //   نہیں پڑھتی؛ ورنہ ہر لفظ اپنے خانے سے ذرا تنگ بنتا اور فائل کا صفحہ پرنٹ سے ہٹ جاتا۔ صرف اسی دوران۔
+  async function noKern(fn) {
+    var P = window.CanvasRenderingContext2D && window.CanvasRenderingContext2D.prototype;
+    if (!P || !('fontKerning' in P)) return fn();
+    var o = P.fillText;
+    P.fillText = function () {
+      try { if (this.fontKerning !== 'none') this.fontKerning = 'none'; } catch (_) { /* پرانا براؤزر */ }
+      return o.apply(this, arguments);
+    };
+    try { return await fn(); } finally { P.fillText = o; }
+  }
   async function pagesOf(el, pageHint) {
     if (!el) throw new Error('دستاویز نہیں ملی');
     var ok = await need(H2C_SRC);
@@ -482,7 +499,7 @@
     try {
       // کھڑے (گھمائے ہوئے) خانے — html2canvas انہیں درست نہیں بناتا؛ الگ بنا کر گھما کر لگائیں گے
       rots = findRotated(el);
-      canvas = await window.html2canvas(el, {
+      canvas = await noKern(function () { return window.html2canvas(el, {
         onclone: function (cd) {
           try { cd.querySelectorAll('[data-dio-rot]').forEach(function (n) { n.style.visibility = 'hidden'; }); } catch (_) { /* ضمنی */ }
         },
@@ -494,7 +511,7 @@
             return n.matches('.no-print,button,.colgrip,.rowgrip,[class*="grip"],.dio-etb,.editor-toolbar,[data-noprint],#dio-saved-box,.dio-saved-box');
           } catch (_) { return false; }
         }
-      });
+      }); });
       await paintRotated(el, canvas, rots);
     } finally {
       rots.forEach(function (r) { try { r.el.removeAttribute('data-dio-rot'); } catch (_) { /* ضمنی */ } });
@@ -564,7 +581,7 @@
       tmp.querySelectorAll('*').forEach(function (c) { c.style.writingMode = 'horizontal-tb'; c.style.transform = 'none'; c.style.position = 'static'; });
       doc.body.appendChild(tmp);
       try {
-        var t = await window.html2canvas(tmp, { scale: k, backgroundColor: null, logging: false });
+        var t = await noKern(function () { return window.html2canvas(tmp, { scale: k, backgroundColor: null, logging: false }); });
         var cx = (b.left - rr.left + b.width / 2) * k, cy = (b.top - rr.top + b.height / 2) * k;
         g.save(); g.translate(cx, cy); g.rotate(R.deg * Math.PI / 180);
         g.drawImage(t, -t.width / 2, -t.height / 2);

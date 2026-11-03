@@ -1257,11 +1257,11 @@ function _printR173Now() {
         /* Koi satar akeli na chhute (safhe ke kinare par) */
         #ch173-doc, #ch173-doc *{ orphans:2; widows:2; }
         /* ═══ پرنٹ میں الفاظ جُڑنے کا حل (justify برقرار) ═══
-           Chrome کی چھپائی میں Urdu/Nastaliq justified متن کی inter-word space
-           صفر ہو جاتی ہے → الفاظ جُڑ جاتے ہیں۔ حل: justify رہنے دو (لائن پوری
-           بھرے، خالی جگہ نہ ہو) مگر word-spacing کی کم از کم مقدار مقرر کر دو،
-           تاکہ چاہے justify صفر کرنے کی کوشش کرے، الفاظ کے بیچ گیپ باقی رہے۔
-           آخری سطر دائیں سیدھ (کھنچاؤ نہ ہو)۔ اسکرین ویسی کی ویسی۔ */
+           justify رہنے دو (لائن پوری بھرے)، آخری سطر دائیں سیدھ (کھنچاؤ نہ ہو)۔
+           v564: الفاظ جُڑنے کی اصل وجہ فونٹ کی اپنی kerning تھی جو خالی جگہ کو صفر/منفی کر دیتی
+           (پہلے کا 0.12em ناکافی تھا)۔ اب پورے نظام کا قاعدہ font-kerning:none (app-core.js
+           dioTextCSS) — اسکرین (_ch173CSS) اور کاغذ دونوں پر؛ word-spacing عام، تاکہ سطریں
+           اسکرین اور کاغذ پر ایک ہی جگہ ٹوٹیں۔ */
         #ch173-doc .hinner,
         #ch173-doc .akh-col2,
         #ch173-doc .normwrap,
@@ -1271,7 +1271,7 @@ function _printR173Now() {
         #ch173-doc [data-k="cont_text"],
         #ch173-doc [data-k="papers_body"]{
           text-align:justify !important; text-align-last:right !important;
-          text-justify:inter-word !important; word-spacing:0.12em !important; }
+          text-justify:inter-word !important; word-spacing:normal !important; font-kerning:none !important; }
         .sho-papers-body, .sho-cell-row, .ch173-cont{ outline:none !important; }
         .sho-papers-body:empty::before, .sho-cell-date:empty::before,
         .sho-cell-row:empty::before, .ch173-cont:empty::before{ content:'' !important; }
@@ -5241,6 +5241,9 @@ function _ch173CSS() {
         --doc-h3: 14pt;
         --doc-h4: 12pt;
       }
+      /* v564: الفاظ نہ جُڑیں — فونٹ کی kerning بند (پورے سسٹم کا قاعدہ: app-core.js dioTextCSS)؛
+         اسکرین اور کاغذ دونوں پر ایک، اس لیے سطریں دونوں جگہ ایک جیسی ٹوٹتی ہیں۔ */
+      ${typeof dioTextCSS === 'function' ? dioTextCSS('#ch173-doc') : '#ch173-doc{ font-kerning:none; }'}
       #ch173-doc .dio-doc-h1{ font-size:var(--doc-h1); font-weight:bold; text-decoration:underline; line-height:1.9; }
       #ch173-doc .dio-doc-h2{ font-size:var(--doc-h2); font-weight:bold; line-height:1.85; }
       #ch173-doc .dio-doc-h3{ font-size:var(--doc-h3); font-weight:bold; line-height:1.8; }

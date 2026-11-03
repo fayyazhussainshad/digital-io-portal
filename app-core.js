@@ -1088,6 +1088,49 @@ function dioFontHead() {
 }
 window.dioFontHead = dioFontHead;
 
+// ═══ v564: الفاظ آپس میں نہ جُڑیں — پورے سسٹم کا ایک قاعدہ (اسکرین + کاغذ + PDF) ═══
+//  افسر کی شکایت (28 اکتوبر 2026): «محفوظ کرنے کے بعد ضمنی یا چالان چھاپیں تو الفاظ آپس میں جُڑ جاتے ہیں۔»
+//  اصل وجہ (فونٹ کی فائل اور اصل ایپ دونوں میں ناپ کر): محفوظ کرنے میں کوئی حرف، خالی جگہ یا نظر نہ آنے
+//  والا نشان ضائع نہیں ہوتا۔ Jameel Noori Nastaleeq کی اپنی kerning (GPOS «kern») الفاظ کے درمیان کی خالی
+//  جگہ (space، اصل چوڑائی 400/2048 = 0.195em) کو 0 بلکہ −0.33em تک کھینچ دیتی ہے — چھپائی میں ضمنی کی ایک
+//  خالی جگہ 0.011em ناپی گئی؛ 219 جوڑوں میں سے 73 الفاظ ایک دوسرے پر چڑھے ہوئے («پرسوار»، «ہوکر»، «مقدمہعمل»)۔
+//  اضافی word-spacing ناکافی: +0.2em پر بھی 26 جوڑے جُڑے رہے، سب الگ کرنے کو +0.5em (بہت کھلا)۔
+//  حل: دستاویز کے متن پر font-kerning:none — فونٹ کی اپنی خالی جگہ بحال: ہر دو الفاظ کے بیچ 0.25em کا
+//  یکساں فاصلہ، کوئی جوڑا نہیں جُڑتا؛ لفظ کے اندر کی بناوٹ وہی (لفظ کے اندر سب سے بڑا فاصلہ دونوں صورتوں
+//  میں 0.119em)۔ ایک ہی جگہ سے: ضمنی/چالان کی اپنی CSS (اسکرین اور کاغذ ایک — سطریں وہیں ٹوٹیں) اور
+//  مشترکہ چھپائی کا راستہ (dioPrint / dioBindHtml / براؤزر کی اپنی چھپائی) ہر دوسری دستاویز میں خود لگاتا ہے۔
+function dioTextCSS(scope) {
+  const S = scope || 'body';
+  return `${S}{ font-kerning:none; }`;
+}
+// پرنٹ HTML میں یہ قاعدہ (ایک بار) — <head> کے شروع میں، تاکہ دستاویز کی اپنی CSS اسے بدل سکے
+function dioTextInject(html) {
+  const h = String(html == null ? '' : html);
+  if (!h || /id=["']dio-text-css["']/.test(h)) return h;
+  const st = '<style id="dio-text-css">' + dioTextCSS('body') + '</style>';
+  if (/<head[^>]*>/i.test(h)) return h.replace(/<head([^>]*)>/i, (m) => m + st);
+  if (/<html[^>]*>/i.test(h)) return h.replace(/<html([^>]*)>/i, (m) => m + '<head>' + st + '</head>');
+  return st + h;
+}
+window.dioTextCSS = dioTextCSS;
+window.dioTextInject = dioTextInject;
+// اسکرین پر بھی یہی قاعدہ ہر دستاویز کے کاغذ پر (ایپ کے بٹن / فہرستیں نہیں) — کئی دستاویزات چھپائی کی ناپ
+//   اسکرین سے لیتی ہیں (مثلاً واقعاتی رپورٹ کا پہلا کالم = سب سے لمبا لیبل)؛ اسکرین اور کاغذ کا متن ایک ہو تو
+//   ناپ بھی ایک۔ فہرست وہی جو dio-keys.js کی دستاویز کی جڑیں (ROOT_SEL) + مقدمے کا دستاویز منظر۔
+const DIO_DOC_ROOTS = '#ch173-doc,#dk-doc,#ir-doc,#saza-doc,#rfa-doc,#cro-doc,#cdr-doc,#dio-naqsha-doc,' +
+  '#misal-editor,#dio-fv-paper,#a4-paper,#tpl-editable-area,#word-doc-editable,[data-dio-doc],#dio-dv-body';
+window.DIO_DOC_ROOTS = DIO_DOC_ROOTS;
+(function dioTextScreen() {
+  const put = () => {
+    if (document.getElementById('dio-text-screen')) return;
+    const st = document.createElement('style');
+    st.id = 'dio-text-screen';
+    st.textContent = dioTextCSS(DIO_DOC_ROOTS);
+    (document.head || document.documentElement).appendChild(st);
+  };
+  if (document.head) put(); else document.addEventListener('DOMContentLoaded', put);
+})();
+
 // ═══ v553: مثل باندھنے کی جگہ (back side) — پورے سسٹم کا ایک ہی قاعدہ ═══
 //  افسر کا قاعدہ: «جہاں بھی کاغذ کا دوسرا صفحہ آئے گا تو back side پر اوپر ایک سطر کی
 //  جگہ ہوگی اور اوپر بائیں کونے پر ایک مثلث جو پرنٹ میں نظر نہیں آئے گی لیکن اُس کی
@@ -1325,6 +1368,8 @@ function dioBindNeeded(html) {
 // opts.binder(doc, geo) → ماڈیول کا اپنا حساب (مثلاً سزا سلپ کی قطاریں) — اسی «پرنٹ» شکل میں
 async function dioBindHtml(html, opts) {
   opts = opts || {};
+  // v564: الفاظ کا فاصلہ ناپ سے پہلے — ناپ اور اصل چھپائی ایک ہی متن پر
+  html = dioTextInject(html);
   if (!opts.binder && !dioBindNeeded(html)) return html;
   const geo = _dioPageGeo(html);
   const f = document.createElement('iframe');
@@ -1537,6 +1582,8 @@ function dioPrint(htmlContent) {
   // VIEW-ONLY ENFORCEMENT [4E]: میعاد ختم/معطل پر تمام پرنٹنگ بند (ہر دستاویز
   // یہیں سے پرنٹ ہوتی ہے)۔ fail-open: DIO.sub نہ ہو تو پرنٹ چلے۔
   if (window.DIO && DIO.sub && !DIO.sub.guard('پرنٹ')) return;
+  // v564: ہر چھپنے والی دستاویز میں الفاظ کا کم از کم فاصلہ (ضمنی/چالان میں پہلے سے — دوبارہ نہیں)
+  htmlContent = dioTextInject(htmlContent);
   // DIRECT PRINT: pehle aik extra in-app preview aata tha (بند کریں/پرنٹ کریں).
   // Woh fazool tha kyunki browser ka apna print dialog pehle se preview deta hai.
   // Ab seedha print par jate hain. (Purana preview chahiye to localStorage mein
@@ -1620,8 +1667,10 @@ function _dioDoPrint(htmlContent) {
     // shart tha → app-print ke baad iframe hat jata, magar rule reh jata, is liye
     // agli dafa NATIVE (Ctrl+P) print par sab kuch chhup kar KHALI safha chhapta.
     // Ab yeh rule sirf tab lagta hai jab print-iframe MOJOOD ho (app ka apna print).
+    // v564: صرف وہ فریم جس کی چھپائی ابھی جاری ہے (data-done نہیں) — چھپائی ختم ہوتے ہی فریم «مکمل»،
+    //   اس کے بعد (ہٹنے سے پہلے کے 1 سیکنڈ میں بھی) براؤزر کی اپنی چھپائی خالی صفحہ نہ دے
     st.textContent = `@media print {
-      body:has(#dio-print-frame) > *:not(#dio-print-frame) { display: none !important; visibility: hidden !important; }
+      body:has(#dio-print-frame:not([data-done])) > *:not(#dio-print-frame) { display: none !important; visibility: hidden !important; }
       #sidebar, .sidebar, #topbar, .topbar, .nav-item, nav, .workspace-tabs,
       .case-tabs, .doc-toolbar, .editor-toolbar, .no-print { display: none !important; }
     }`;
@@ -1660,6 +1709,7 @@ function _dioDoPrint(htmlContent) {
       iframe.contentWindow.focus();
       iframe.contentWindow.print();
     } catch(e) { console.warn('print error', e); }
+    try { iframe.setAttribute('data-done', '1'); } catch (_) { /* v564: چھپائی مکمل — اب یہ فریم کسی اور چھپائی کو نہ روکے */ }
     comeBack();
     // Clean up after printing
     setTimeout(() => { iframe.remove(); comeBack(); }, 1000);
@@ -1674,6 +1724,127 @@ function _dioDoPrint(htmlContent) {
     setTimeout(triggerPrint, 600);
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+//  v564: براؤزر کی اپنی چھپائی (Chrome ⋮ › Print، یا وہ Ctrl+P جو ایپ تک نہ پہنچے)
+//  = بالکل وہی کاغذ جو «پرنٹ» بٹن دیتا ہے
+//  ───────────────────────────────────────────────────────────────────────
+//  افسر کی شکایت (28 اکتوبر 2026): «Ctrl+P سے صفحے کا نیچے والا حصہ کٹ جاتا ہے اور اوپر کا
+//  حاشیہ بہت بڑا؛ سسٹم کے پرنٹ بٹن سے ٹھیک۔»
+//  وجہ (اصل ایپ میں ناپ کر): براؤزر کی اپنی چھپائی میں index.html زندہ ایڈیٹر کو #dio-nprint-host
+//  میں لے جاتا تھا — مقدمے کے دستاویز والے منظر میں scroll کا خانہ اپنی اسکرین والی اونچائی پر رہتا،
+//  اس لیے صرف ایک صفحہ چھپتا (باقی کٹ جاتا)، اوپر Chrome کا حاشیہ + اسکرین کا padding، نہ @page،
+//  نہ صفحات کا حساب، نہ مثل کی لکیر۔
+//  اب: جس دستاویز کا «پرنٹ» بٹن اپنا تیار کاغذ بناتا ہے (پہلے ضمنی) وہ یہاں اپنا provider درج کرتی
+//  ہے۔ beforeprint پر وہی HTML (وہی CSS، وہی @page) ایک الگ shadow خانے میں بنتا ہے — ایپ کی اپنی
+//  CSS اس میں داخل نہیں ہوتی — اور اسی لمحے (sync) وہی صفحات/مثل کی لکیر کا حساب چلتا ہے؛ ایپ کا باقی
+//  سب کچھ چھپائی سے باہر۔ afterprint پر سب ہٹ جاتا ہے۔
+//  provider: { match(): bool, html(): string, after(root, win): void }
+// ═══════════════════════════════════════════════════════════════════════
+window.dioNativePrint = (function () {
+  const providers = [];
+  let active = null;
+  // print CSS کو shadow کے لیے: html/body → اپنے خانے؛ @media print → سب پر (اسی لمحے ناپ بھی «پرنٹ» کی شکل
+  //   پر)، @media screen → کسی پر نہیں؛ @page اور @font-face صفحے (document) کے لیے الگ
+  function adapt(cssText) {
+    const pages = [];
+    let css = String(cssText || '').replace(/@page\s*\{[^}]*\}/gi, (m) => { pages.push(m); return ''; });
+    css = css.replace(/@font-face\s*\{[^}]*\}/gi, '');
+    let sheet = null;
+    try { sheet = new CSSStyleSheet(); sheet.replaceSync(css); } catch (_) { return { sheet: null, pages }; }
+    const sel = (s) => s.split(',').map(p => p.replace(/(^|[\s>+~(])html(?=$|[\s.#:[>+~,)])/g, '$1.dio-pp-html')
+      .replace(/(^|[\s>+~(])body(?=$|[\s.#:[>+~,)])/g, '$1.dio-pp-body')).join(',');
+    const walk = (rules) => {
+      [].forEach.call(rules || [], (r) => {
+        try {
+          if (r.type === 1) { const n = sel(r.selectorText); if (n !== r.selectorText) r.selectorText = n; }
+          else if (r.type === 4) {
+            const t = r.media.mediaText;
+            if (/\bprint\b/i.test(t) && !/not\s+print/i.test(t)) r.media.mediaText = 'all';
+            else if (/^\s*screen\b/i.test(t)) r.media.mediaText = 'not all';
+            walk(r.cssRules);
+          }
+        } catch (_) { /* ایک قاعدہ نہ بدلے تو باقی */ }
+      });
+    };
+    walk(sheet.cssRules);
+    return { sheet, pages };
+  }
+  function render(html) {
+    const dp = new DOMParser().parseFromString(String(html || ''), 'text/html');
+    const css = [].map.call(dp.querySelectorAll('style'), s => s.textContent || '').join('\n');
+    dp.querySelectorAll('script,style,link,meta,title').forEach(n => n.remove());
+    const A = adapt(css);
+    const host = document.createElement('div');
+    host.id = 'dio-pp-host';
+    host.setAttribute('aria-hidden', 'true');
+    const root = host.attachShadow({ mode: 'open' });
+    const base = new CSSStyleSheet();
+    base.replaceSync(':host{all:initial;display:block;}.dio-pp-html,.dio-pp-body{display:block;}');
+    root.adoptedStyleSheets = A.sheet ? [base, A.sheet] : [base];
+    const H = dp.documentElement, B = dp.body;
+    const wrapH = document.createElement('div'); wrapH.className = 'dio-pp-html';
+    ['dir', 'lang'].forEach(a => { if (H.getAttribute(a)) wrapH.setAttribute(a, H.getAttribute(a)); });
+    const wrapB = document.createElement('div'); wrapB.className = 'dio-pp-body';
+    ['dir', 'lang', 'class'].forEach(a => { if (B.getAttribute(a)) wrapB.setAttribute(a, B.getAttribute(a)); });
+    while (B.firstChild) wrapB.appendChild(document.adoptNode(B.firstChild));
+    wrapH.appendChild(wrapB); root.appendChild(wrapH);
+    const st = document.createElement('style');
+    st.id = 'dio-pp-style';
+    st.textContent = A.pages.join('\n') +
+      '@media print{html,body{margin:0 !important;padding:0 !important;border:0 !important;background:#fff !important;' +
+      'height:auto !important;min-height:0 !important;max-height:none !important;overflow:visible !important;display:block !important;transform:none !important;}' +
+      'body > *:not(#dio-pp-host){display:none !important;}' +
+      '#dio-pp-host{display:block !important;position:static !important;margin:0 !important;padding:0 !important;}' +
+      'html.dio-viewonly #dio-pp-host{display:none !important;}}' +
+      '@media screen{#dio-pp-host{position:fixed !important;left:-99999px !important;top:0 !important;}}';
+    document.head.appendChild(st);
+    document.body.appendChild(host);
+    return { host, root, style: st };
+  }
+  function restore() {
+    if (!active) return;
+    try { active.host.remove(); } catch (_) { /* ضمنی */ }
+    try { active.style.remove(); } catch (_) { /* ضمنی */ }
+    active = null;
+  }
+  function setup() {
+    if (active) return true;
+    if (document.querySelector('#dio-print-frame:not([data-done])')) return false;   // ایپ کا اپنا پرنٹ (iframe) ابھی جاری ہے
+    // میعاد ختم (صرف دیکھنا): پرنٹ بند — subscription.js کا پیغام والا کاغذ ہی رہے
+    try { if (typeof window._dioViewOnlyActive === 'function' && window._dioViewOnlyActive()) return false; } catch (_) { /* ضمنی */ }
+    for (const p of providers) {
+      let ok = false;
+      try { ok = !!p.match(); } catch (_) { ok = false; }
+      if (!ok) continue;
+      let html = '';
+      try { html = p.html() || ''; } catch (e) { try { console.warn('native print html:', e && e.message); } catch (_) { /* ضمنی */ } }
+      if (!html) continue;
+      try {
+        active = render(dioTextInject(html));
+        if (typeof p.after === 'function') p.after(active.root, window);
+        return true;
+      } catch (e) {
+        try { console.warn('native print:', e && e.message); } catch (_) { /* ضمنی */ }
+        restore();
+      }
+    }
+    return false;
+  }
+  return { register: (p) => { if (p && providers.indexOf(p) < 0) providers.push(p); }, setup, restore, render,
+    active: () => active };
+})();
+
+// v564: Ctrl+P → کھلی دستاویز کا وہی فنکشن جو اُس کا «پرنٹ» بٹن چلاتا ہے (dio-keys.js سب سے پہلے یہی پوچھتا ہے)
+window._dioPrintTarget = function () {
+  const shown = (el) => { try { return !!(el && el.isConnected && el.getClientRects().length); } catch (_) { return false; } };
+  if (shown(document.getElementById('dio-naqsha-doc'))) return null;     // نقشہ موقع کا اپنا پرنٹ
+  const ch = document.getElementById('ch173-doc');
+  if (!shown(ch)) return null;
+  if (ch.querySelector('.zf-tbl') && typeof window._printZimniCurrent === 'function') return () => window._printZimniCurrent();
+  if (ch.querySelector('.zfa-tbl') && typeof window._printZimniA === 'function') return () => window._printZimniA();
+  return null;                                                           // باقی دستاویزات — اُن کا اپنا راستہ (جوں کا توں)
+};
 
 // ── PWA INSTALL PROMPT ────────────────────────────────────────
 let _deferredInstallPrompt = null;

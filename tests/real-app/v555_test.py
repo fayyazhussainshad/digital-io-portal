@@ -195,7 +195,10 @@ def run(b, tag, ctxargs, mobile):
             fills = re.findall(r'<tr class="saza-fill">', h)
             mid = len(re.findall(r'<tr class="saza-fill">[\s\S]*?</tr>\s*<tr', h))       # بیچ کے (اگلے صفحے کی قطار سے پہلے)
             pdf = to_pdf(b, h, name)
-            n, res = page_checks(tag, f'سزا سلپ {n_acc} ملزم ({paper})', pdf, 0.6, 3, expect_pages=mid + 1)
+            # v564: حساب کے صفحے = 1 + ہر وہ قطار جس سے حساب نیا صفحہ شروع کرتا ہے (data-pgstart) — پہلے صرف بیچ کی خالی
+            #   قطاریں گنی جاتی تھیں، مگر جب پچھلی قطار صفحے کے بالکل آخر تک پہنچے تو خالی قطار کی ضرورت ہی نہیں ہوتی
+            planned = 1 + len(re.findall(r'data-pgstart="\d+"', h))
+            n, res = page_checks(tag, f'سزا سلپ {n_acc} ملزم ({paper})', pdf, 0.6, 3, expect_pages=planned)
             check(f'{tag}: سزا سلپ {n_acc} ملزم ({paper}) — آخری صفحے پر SHO کے بعد خالی قطار (لکیریں نیچے تک)', len(fills) >= 1, len(fills))
             if n_acc > 1:
                 rs = [int(x) for x in re.findall(r'rowspan="(\d+)"', h)]
@@ -238,7 +241,8 @@ def run(b, tag, ctxargs, mobile):
                    act: Math.round(mid(act) - mid(body)), num: Math.round(mid(num) - mid(body)) }; })()""")
         bi2 = q.evaluate(BIDI)
         c2.close(); os.remove(fn)
-        check(f'{tag}: قطار 1 کا کالم 4 («از۔») — v558: پہلے سے دُگنا (12%)، کالم 3 کھلا (≥ 64%)', 0.11 <= m['c4'] <= 0.13 and m['c3'] >= 0.64, m)
+        # v564 (افسر کی ہدایت، 28 اکتوبر 2026): «از۔» پھر بالکل دُگنا (12% → 24%)، جگہ کالم 3 سے (67% → 55%)
+        check(f'{tag}: قطار 1 کا کالم 4 («از۔») — v564: 12% کا دُگنا (24%)، کالم 3 = 55%', 0.234 <= m['c4'] <= 0.246 and 0.544 <= m['c3'] <= 0.556, m)
         check(f'{tag}: «مرتبہ» (IO) کی سطر کے نیچے معمولی جگہ (≤ 12px، پہلے ~30px)', 0 <= m['gap'] <= 12, m['gap'])
         check(f'{tag}: کالم 1 (تاریخ) اور کالم 2 (نمبر) «جناب عالیٰ» کی پہلی سطر کی سیدھ میں (±4px)', abs(m['act']) <= 4 and abs(m['num']) <= 4, m)
         check(f'{tag}: انگریزی عہدے والا پیراگراف — پرنٹ میں بھی عہدہ دائیں، اردو بائیں (RTL)', bool(bi2) and bi2['same'] and bi2['asi'] > bi2['ur'], bi2)

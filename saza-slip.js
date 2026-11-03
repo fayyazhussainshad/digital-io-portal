@@ -1067,6 +1067,7 @@ function _sazaBinder(d, geo) {
     const room = pTop + geo.ch - rt - SAFE;
     if (room > 2 && (rb - rt) <= geo.ch) { filler(rows[i], room); made++; rt = rows[i].getBoundingClientRect().top - dTop; }
     pTop = rt; pNo++;
+    rows[i].setAttribute('data-pgstart', String(pNo));      // v564: حساب کا صفحہ یہاں سے (نظر نہیں آتا — جانچ اسی سے صفحات گنتی ہے)
     if (pNo % 2) continue;
     // مثلث کالم 4 (صفحے کا بایاں اوپری کونا) میں — قطار کی اونچائی پر اثر نہیں (absolute)؛
     //   اوپر ایک سطر کی جگہ کالم 1 (ملزم کا متن) میں
