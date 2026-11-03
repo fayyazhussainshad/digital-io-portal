@@ -516,8 +516,9 @@ def run(b, tag, ctxargs, mobile):
         pg.click("button:has-text('ضمنی درج کریں')"); pg.wait_for_timeout(2000)
         pg.evaluate("window.__toasts = []; 0")
         pg.evaluate("_saveZimni(false, true)"); pg.wait_for_timeout(1500)
-        t = ' | '.join(pg.evaluate('window.__toasts'))
-        check(f'{tag}: ایک تاریخ کی ایک ہی ضمنی — دوسری پر خبردار، محفوظ نہیں', 'ایک تاریخ کی ایک ہی ضمنی' in t and pg.evaluate("window.__db.zimni_reports.length") == 1, t[:160])
+        t = re.sub('[\u2066-\u2069]', '', ' | '.join(pg.evaluate('window.__toasts')))   # v566: پیغام میں نمبر/تاریخ الگ تھلگ (FSI/PDI)
+        # v566 (TASK 6): قاعدہ اب «ایک افسر ایک تاریخ» — اسی تفتیشی افسر کی دوسری ضمنی پر وہی روک، نیا پیغام
+        check(f'{tag}: ایک تاریخ کی ایک ہی ضمنی (ایک افسر) — دوسری پر خبردار، محفوظ نہیں', 'ایک افسر ایک تاریخ' in t and pg.evaluate("window.__db.zimni_reports.length") == 1, t[:160])
         pg.evaluate("_zimniAddBlock()"); pg.wait_for_timeout(200)
         pg.evaluate("(() => { const n = [..._zimniDoc().querySelectorAll('tr.zf-blk .zf-num')]; n[1].textContent = '7'; n[0].textContent = '3'; return 0; })()")
         a, h = snap_print(pg, lambda: pg.evaluate("document.querySelector('[data-dio-print]').click()"), 'legal')
