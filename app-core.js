@@ -1114,6 +1114,22 @@ function dioTextInject(html) {
 }
 window.dioTextCSS = dioTextCSS;
 window.dioTextInject = dioTextInject;
+// اسکرین پر بھی یہی قاعدہ ہر دستاویز کے کاغذ پر (ایپ کے بٹن / فہرستیں نہیں) — کئی دستاویزات چھپائی کی ناپ
+//   اسکرین سے لیتی ہیں (مثلاً واقعاتی رپورٹ کا پہلا کالم = سب سے لمبا لیبل)؛ اسکرین اور کاغذ کا متن ایک ہو تو
+//   ناپ بھی ایک۔ فہرست وہی جو dio-keys.js کی دستاویز کی جڑیں (ROOT_SEL) + مقدمے کا دستاویز منظر۔
+const DIO_DOC_ROOTS = '#ch173-doc,#dk-doc,#ir-doc,#saza-doc,#rfa-doc,#cro-doc,#cdr-doc,#dio-naqsha-doc,' +
+  '#misal-editor,#dio-fv-paper,#a4-paper,#tpl-editable-area,#word-doc-editable,[data-dio-doc],#dio-dv-body';
+window.DIO_DOC_ROOTS = DIO_DOC_ROOTS;
+(function dioTextScreen() {
+  const put = () => {
+    if (document.getElementById('dio-text-screen')) return;
+    const st = document.createElement('style');
+    st.id = 'dio-text-screen';
+    st.textContent = dioTextCSS(DIO_DOC_ROOTS);
+    (document.head || document.documentElement).appendChild(st);
+  };
+  if (document.head) put(); else document.addEventListener('DOMContentLoaded', put);
+})();
 
 // ═══ v553: مثل باندھنے کی جگہ (back side) — پورے سسٹم کا ایک ہی قاعدہ ═══
 //  افسر کا قاعدہ: «جہاں بھی کاغذ کا دوسرا صفحہ آئے گا تو back side پر اوپر ایک سطر کی

@@ -100,6 +100,15 @@ test('v564: الفاظ نہ جُڑیں — فونٹ کی kerning بند، ایک
   assert.ok(/active = render\(dioTextInject\(html\)\);/.test(A), 'براؤزر کی اپنی چھپائی بھی');
   assert.ok(/dioTextCSS\('#ch173-doc'\)/.test(R), 'چالان / ضمنی کی اپنی CSS (اسکرین + کاغذ)');
   assert.ok(/#dio-nprint-host \{ font-kerning: none; \}/.test(H));
+  // اسکرین پر صرف دستاویزات (ایپ کے بٹن / فہرستیں نہیں) — dio-keys.js کی دستاویز کی جڑیں + دستاویز منظر
+  const K2 = read('dio-keys.js');
+  const roots = /const ROOT_SEL = '([^']+)' \+\s*'([^']+)';/.exec(K2);
+  assert.ok(roots, 'ROOT_SEL');
+  const docRoots = /const DIO_DOC_ROOTS = '([^']+)' \+\s*'([^']+)';/.exec(A);
+  assert.ok(docRoots && (docRoots[1] + docRoots[2]) === (roots[1] + roots[2]) + ',#dio-dv-body', 'وہی جڑیں + #dio-dv-body');
+  assert.ok(/st\.id = 'dio-text-screen';\s*st\.textContent = dioTextCSS\(DIO_DOC_ROOTS\);/.test(A));
+  // شیئر کی PDF بھی پرنٹ جیسی
+  assert.ok(/if \(typeof window\.dioTextInject === 'function'\) html = window\.dioTextInject\(html\);/.test(read('dio-share.js')));
   assert.ok(!/word-spacing:0\.12em/.test(R) && !/word-spacing: 0\.12em/.test(H) && !/DIO_WORD_GAP/.test(A + R + H + Z), 'پرانے اضافی فاصلے نہیں');
   // انجیکشن: ایک بار، head میں
   const f = A.slice(A.indexOf('function dioTextCSS('), A.indexOf('window.dioTextCSS = dioTextCSS;'));

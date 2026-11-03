@@ -195,7 +195,10 @@ def run(b, tag, ctxargs, mobile):
             fills = re.findall(r'<tr class="saza-fill">', h)
             mid = len(re.findall(r'<tr class="saza-fill">[\s\S]*?</tr>\s*<tr', h))       # بیچ کے (اگلے صفحے کی قطار سے پہلے)
             pdf = to_pdf(b, h, name)
-            n, res = page_checks(tag, f'سزا سلپ {n_acc} ملزم ({paper})', pdf, 0.6, 3, expect_pages=mid + 1)
+            # v564: حساب کے صفحے = 1 + ہر وہ قطار جس سے حساب نیا صفحہ شروع کرتا ہے (data-pgstart) — پہلے صرف بیچ کی خالی
+            #   قطاریں گنی جاتی تھیں، مگر جب پچھلی قطار صفحے کے بالکل آخر تک پہنچے تو خالی قطار کی ضرورت ہی نہیں ہوتی
+            planned = 1 + len(re.findall(r'data-pgstart="\d+"', h))
+            n, res = page_checks(tag, f'سزا سلپ {n_acc} ملزم ({paper})', pdf, 0.6, 3, expect_pages=planned)
             check(f'{tag}: سزا سلپ {n_acc} ملزم ({paper}) — آخری صفحے پر SHO کے بعد خالی قطار (لکیریں نیچے تک)', len(fills) >= 1, len(fills))
             if n_acc > 1:
                 rs = [int(x) for x in re.findall(r'rowspan="(\d+)"', h)]

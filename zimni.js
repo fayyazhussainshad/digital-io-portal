@@ -694,9 +694,15 @@ function _zimniDateToC1(doc, dmy) {
 function _zimniBindOnInput(e) {
   const doc = _zimniDoc();
   if (!doc || !doc.querySelector('.zf-tbl') || !e || !e.target || !(e.target === doc || doc.contains(e.target))) return;
-  const s = window.getSelection();
-  let n = s && s.anchorNode; if (!n) return;
-  const el = n.nodeType === 1 ? n : n.parentElement; if (!el || !doc.contains(el)) return;
+  // کس خانے میں تبدیلی ہوئی: افسر کی لکھائی میں واقعہ پوری دستاویز (میزبان) پر آتا ہے — تب کرسر کی جگہ؛
+  //   کوئی راستہ (مائیک، اندراج، پرانا کوڈ) کسی خاص خانے پر واقعہ بھیجے تو وہی خانہ
+  let el = (e.target !== doc && e.target.nodeType === 1) ? e.target : null;
+  if (!el) {
+    const s = window.getSelection();
+    const n = s && s.anchorNode; if (!n) return;
+    el = n.nodeType === 1 ? n : n.parentElement;
+  }
+  if (!el || !doc.contains(el)) return;
   try {
     // ربط کی صفائی: نامعلوم (نقل/چسپاں) span → سادہ متن؛ خالی span (جو اس وقت لکھا نہ جا رہا ہو) → ختم
     doc.querySelectorAll('[data-bind]').forEach(x => {

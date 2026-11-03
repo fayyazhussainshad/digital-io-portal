@@ -116,6 +116,9 @@
     return { t: p[0], r: p[1], b: p[2], l: p[3] };
   }
   async function frameFor(html) {
+    // v564: پرنٹ والا قاعدہ (الفاظ نہ جُڑیں — فونٹ کی kerning بند) فائل میں بھی، تاکہ PDF کی سطریں اور صفحات
+    //   پرنٹ جیسے ہوں (یہ HTML dioPrint سے پہلے پکڑا جاتا ہے، جہاں یہ قاعدہ لگتا ہے)
+    try { if (typeof window.dioTextInject === 'function') html = window.dioTextInject(html); } catch (_) { /* ضمنی */ }
     var pg = pageFromHtml(html), mg = marginsFromHtml(html);
     var cw = Math.round((pg.w - mg.l - mg.r) * 96);       // پرنٹ میں مواد کی چوڑائی
     var f = document.createElement('iframe');
