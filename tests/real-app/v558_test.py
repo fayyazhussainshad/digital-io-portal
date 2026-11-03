@@ -452,7 +452,8 @@ def run(b, tag, ctxargs, mobile):
                      banam: d.querySelector('[data-k="banam"]').innerText.trim() }; })()""")
         check(f'{tag}: اختتامی سطر «رپورٹ ضمنی مرتب ہو کرارسال خدمت ہے۔» (۔ کے ساتھ)', g['close'] == 'رپورٹ ضمنی مرتب ہو کرارسال خدمت ہے۔', g['close'])
         check(f'{tag}: اختتامی سطر کے اوپر کی جگہ پہلے (34px) کی آدھی یا کم', 0 < g['gap'] <= 17, g['gap'])
-        check(f'{tag}: «از۔» کا کالم پہلے (6%) سے دُگنا (12%)', 0.11 <= g['c4'] <= 0.13, g['c4'])
+        # v564 (افسر کی ہدایت، 28 اکتوبر 2026): پھر دُگنا — 12% → 24%
+        check(f'{tag}: «از۔» کا کالم پہلے (12%) سے دُگنا (24%)', 0.234 <= g['c4'] <= 0.246, g['c4'])
         check(f'{tag}: «بنام» میں صرف ایک ملزم — نمبر «1۔» نہیں', g['banam'] and not re.match(r'^\s*1\s*۔', g['banam']), g['banam'])
         # دو ملزم — نمبر 1، 2
         pg.evaluate("window.__db.case_accused.push({ id:'a2', case_id:'c1', name:'دوسرا ملزم', accused_type:'fir', created_at:'2026-10-09' }); 0")
