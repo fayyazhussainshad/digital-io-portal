@@ -245,7 +245,8 @@ def run(b, tag, ctxargs, mobile):
             return { space: c(/ /g), nbsp: c(/\\u00A0/g), zwnj: c(/\\u200C/g), zwj: c(/\\u200D/g), zwsp: c(/\\u200B/g), letters: c(/[^\\s\\u00A0\\u200B-\\u200D]/g) }; }""", BODY)
         check(f'{tag}: محفوظ کرنے میں کوئی خالی جگہ / نظر نہ آنے والا نشان / حرف ضائع نہیں (ایڈیٹر = محفوظ)', sv_chars == ed_chars and ed_chars['zwnj'] == 2, (ed_chars, sv_chars))
         ed_scr = pg.evaluate(SPACES, BODY)
-        check(f'{tag}: اسکرین پر بھی فونٹ کی kerning بند، الفاظ کے بیچ پوری خالی جگہ (≥ 0.19em)', ed_scr and ed_scr['kern'] == 'none' and (ed_scr['min'] or 0) >= 0.19, ed_scr)
+        # اسکرین (موبائل پر کاغذ ~0.44× چھوٹا) کی ناپ device pixel پر گول ہوتی ہے — ±0.01em؛ فونٹ کی اپنی جگہ 0.195em، پہلے 0.011em
+        check(f'{tag}: اسکرین پر بھی فونٹ کی kerning بند، الفاظ کے بیچ پوری خالی جگہ (≥ 0.18em؛ پہلے 0.011em)', ed_scr and ed_scr['kern'] == 'none' and (ed_scr['min'] or 0) >= 0.18, ed_scr)
         ed_words = pg.evaluate("[...document.querySelectorAll('#ch173-doc tr.zf-blk .zf-body')].map(x => x.textContent)")
         for paper in ('legal', 'a4'):
             w = three_ways(b, pg, tag, paper, desktop)

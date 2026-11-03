@@ -37,7 +37,7 @@ jobs:
     name: Real app (desktop + mobile + print)
     if: github.event_name != 'push'
     runs-on: ubuntu-24.04   # v558: «latest» کی نئی تصویر پر تنصیب ناکام — جانچ والی تصویر پکی
-    timeout-minutes: 60
+    timeout-minutes: 90     # v564: اصل چھپائی کی جانچ (v564_test.py) کے بعد کل وقت 60 منٹ سے اوپر
     needs: lint-and-unit
     steps:
       - uses: actions/checkout@v4
