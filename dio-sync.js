@@ -121,7 +121,7 @@
     else if (subBlocked()) mode = 'viewonly';          // v561: میعاد ختم — کچھ سرور پر نہیں جاتا
     else if (_busy || n) mode = 'syncing';
     else mode = 'ok';
-    return { mode: mode, pending: n, detail: p, queue: _queueCount, conflicts: p.conflicts, realtime: _rtStatus };
+    return { mode: mode, pending: n, detail: p, queue: _queueCount, conflicts: p.conflicts, realtime: DS.rtStatus() };
   };
 
   var LABEL = { ok: 'محفوظ', syncing: 'سنک ہو رہا ہے', offline: 'آف لائن', nosession: 'آف لائن', viewonly: 'صرف دیکھنا' };
@@ -199,7 +199,7 @@
     var body = '<div class="dio-cf"><p>' + head + '</p>' + (rows.length ? '<ul><li>' + rows.join('</li><li>') + '</li></ul>' : '') +
       (s.conflicts ? '<p style="color:#b45309">دو آلات پر بدلی گئی دستاویزات (فیصلہ باقی): <bdi>' + s.conflicts + '</bdi> — متعلقہ فہرست میں «دو نسخے» پر کلک کریں۔</p>' : '') +
       (_lastErr ? '<p style="color:#b91c1c">آخری ناکامی: ' + esc(_lastErr) + '</p>' : '') +
-      '<p style="color:var(--text-muted);font-size:10pt">یہ آلہ: <bdi>' + esc(DS.device()) + '</bdi> · زندہ رابطہ: <bdi>' + esc(_rtStatus || '—') + '</bdi></p></div>';
+      '<p style="color:var(--text-muted);font-size:10pt">یہ آلہ: <bdi>' + esc(DS.device()) + '</bdi> · زندہ رابطہ: <bdi>' + esc(DS.rtStatus() || '—') + '</bdi></p></div>';
     var foot = '<div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap">' +
       (s.mode === 'nosession' ? '<button class="btn btn-primary" onclick="closeModal();DIOSync.relogin()">سرور سے دوبارہ جوڑیں</button>' : '') +
       (s.mode !== 'offline' && s.mode !== 'nosession' ? '<button class="btn btn-primary" onclick="closeModal();DIOSync.kick(true)">ابھی سنک کریں</button>' : '') +
@@ -582,7 +582,15 @@
     if (r && r !== 'same') emit(table, row, r);
     return r;
   };
+  // TASK 22: ٹیب کے اندر الگ realtime نہیں — اوپر کی کھڑکی کی خبر (emitLocal) اسی صفحے کے سننے والوں تک
+  var CHILD = !!window.__dioTabChild;
+  DS.emitLocal = function (table, row, kind) { emit(table, row, kind); };
+  DS.rtStatus = function () {
+    if (CHILD) { try { return window.top.DIOSync ? window.top.DIOSync.rtStatus() : ''; } catch (_) { return ''; } }
+    return _rtStatus;
+  };
   DS.startRealtime = function () {
+    if (CHILD) return;
     var c = sb();
     if (!c || !c.channel || _channel) return;
     try {
@@ -624,6 +632,8 @@
     }
     DS.render();
     if (!_sess.ok) return;
+    // TASK 22: سرور پر بھیجنا (قطاریں، مسودے) صرف اوپر کی کھڑکی — ٹیب صرف کھلا صفحہ تازہ کرے
+    if (CHILD) { try { await DS.refreshOpenView(); } catch (_) { /* اگلی بار */ } DS.render(); return; }
     if (!had || !_channel) DS.startRealtime();
     if (subBlocked()) {                                  // صرف دیکھنا: بھیجنا نہیں، صرف تازہ پڑھنا
       try { await ud.pullSettings(); } catch (_) { /* اگلی بار */ }
@@ -786,12 +796,12 @@
     window.addEventListener('offline', function () { DS.render(); });
     // ہر چند سیکنڈ: حالت؛ ہر 15 سیکنڈ: مسودے؛ realtime نہ ہو تو کھلا صفحہ خود تازہ (10 سیکنڈ کا وعدہ)
     setInterval(function () { refreshQueueCount().then(DS.render); }, 4000);
-    setInterval(function () { if (loggedIn() && navigator.onLine) ud.flush(); }, 15000);
+    setInterval(function () { if (!CHILD && loggedIn() && navigator.onLine) ud.flush(); }, 15000);
     setInterval(function () {
       if (!loggedIn() || document.visibilityState !== 'visible' || !navigator.onLine) return;
-      if (_rtStatus !== 'SUBSCRIBED' && !typing()) DS.refreshOpenView();
+      if (DS.rtStatus() !== 'SUBSCRIBED' && !typing()) DS.refreshOpenView();
     }, 8000);
-    setInterval(function () { if (loggedIn()) DS.hasSession(true).then(function (ok) { DS.render(); if (ok && !_channel) DS.startRealtime(); }); }, 60000);
+    setInterval(function () { if (loggedIn()) DS.hasSession(true).then(function (ok) { DS.render(); if (ok && !_channel && !CHILD) DS.startRealtime(); }); }, 60000);
     // لاگ اِن مکمل ہوتے ہی (currentUser بنتے ہی) پہلی بار
     var tries = 0;
     var t = setInterval(function () {

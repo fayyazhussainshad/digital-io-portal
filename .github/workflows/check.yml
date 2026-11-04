@@ -37,7 +37,7 @@ jobs:
     name: Real app (desktop + mobile + print)
     if: github.event_name != 'push'
     runs-on: ubuntu-24.04   # v558: «latest» کی نئی تصویر پر تنصیب ناکام — جانچ والی تصویر پکی
-    timeout-minutes: 90     # v564: اصل چھپائی کی جانچ (v564_test.py) کے بعد کل وقت 60 منٹ سے اوپر
+    timeout-minutes: 120    # v564: اصل چھپائی کی جانچ کے بعد 60 منٹ سے اوپر؛ v570: ٹیبوں کی جانچ (t22_*) بھی
     needs: lint-and-unit
     steps:
       - uses: actions/checkout@v4
@@ -165,6 +165,22 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh v569_sync_test.py
+      - name: Task 22 — tabs, per-tab back/forward, pages stay open, exit question, reload restore (t22_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: bash ci_run.sh t22_test.py
+      - name: Task 22 — print inside a tab (button = Ctrl+P = browser menu = before tabs) (t22_print_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: bash ci_run.sh t22_print_test.py
+      - name: Task 22 — two devices + reload inside tabs (t22_sync_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: bash ci_run.sh t22_sync_test.py
+      - name: Task 22 — view-only, PIN lock, logout, officer separation inside tabs (t22_misc_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: bash ci_run.sh t22_misc_test.py
       - name: Screenshots and print PDFs
         if: always()
         uses: actions/upload-artifact@v4

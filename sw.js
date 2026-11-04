@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v569
+   DIGITAL IO — SERVICE WORKER v570
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v569';
+const CACHE_NAME = 'digital-io-v570';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -29,6 +29,7 @@ const CORE_ASSETS = [
   '/data-api.js',
   '/auth.js',
   '/dio-sync.js',
+  '/dio-tabs.js',
   '/dashboard.js',
   '/toolbar.js',
   '/misal-docs.js',
@@ -296,8 +297,10 @@ self.addEventListener('fetch', event => {
     // اپنی ہی origin — جواب اپنی کلید پر (پرانی cache-poisoning کی درستی برقرار)
     const navUrl = new URL(event.request.url);
     if (navUrl.origin !== self.location.origin) return;
+    // v570 (TASK 22): ٹیب کی نقل (index.html?dtab=…) — ایک ہی محفوظ نقل (/index.html)، ہر ٹیب کی الگ نہیں
+    const navKey = navUrl.searchParams.has('dtab') ? '/index.html' : event.request;
     event.respondWith(
-      _serverPehle(event, event.request, () =>
+      _serverPehle(event, navKey, () =>
         caches.match('/index.html')
           .then(r => r || caches.match('/offline.html'))
           .then(r => r || new Response('', { status: 503, statusText: 'offline' })))

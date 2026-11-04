@@ -34,9 +34,67 @@ const _dioAuthOpts = (window.dioSecureStorage)
   ? { auth: { storage: window.dioSecureStorage, persistSession: true,
               autoRefreshToken: true, detectSessionInUrl: true } }
   : undefined;
-const supabaseClient = (window.supabase && window.supabase.createClient)
+// TASK 22: ٹیب کے اندر کی نقل اوپر کی Digital IO کھڑکی کا وہی ایک رابطہ استعمال کرتی ہے —
+//   ایک ہی لاگ اِن، ایک ہی token، سرور سے ایک ہی realtime (ٹیبیں بڑھیں تو سرور کا بوجھ نہیں بڑھتا)
+//   اوپر کا رابطہ ایک «پردے» (Proxy) سے: اس ٹیب کی تبدیلیاں (میعاد کا پہرا وغیرہ) اسی ٹیب تک رہیں — اوپر کے
+//   رابطے پر تہہ در تہہ نہ چڑھیں؛ ٹیب کے فائل / تصویر اوپر کی کھڑکی کی قسم میں بدل کر (اپلوڈ درست قسم سے)؛
+//   لاگ اِن کی خبریں (onAuthStateChange) اور realtime اوپر کی کھڑکی سنبھالتی ہے۔
+function _dioChildClient(top) {
+  const TW = window.top;
+  const toTop = (x) => {
+    try {
+      if (!x || typeof x !== 'object') return x;
+      if (x instanceof TW.Blob || x instanceof TW.FormData) return x;
+      if (typeof File !== 'undefined' && x instanceof File) return new TW.File([x], x.name, { type: x.type, lastModified: x.lastModified });
+      if (x instanceof Blob) return new TW.Blob([x], { type: x.type });
+      if (x instanceof FormData) { const f = new TW.FormData(); x.forEach((v, k) => f.append(k, (v instanceof Blob) ? toTop(v) : v)); return f; }
+    } catch (_) { /* جیسا ہے ویسا */ }
+    return x;
+  };
+  const fwd = (t, local) => ({
+    get(o, p) { if (p in local) return local[p]; const v = o[p]; return typeof v === 'function' ? v.bind(o) : v; },
+    set(o, p, v) { local[p] = v; return true; },
+  });
+  const sLocal = {};
+  const storage = new Proxy(top.storage, Object.assign(fwd(top.storage, sLocal), {
+    get(o, p) {
+      if (p in sLocal) return sLocal[p];
+      if (p === 'from') return function (bucket) {
+        const api = o.from(bucket);
+        return new Proxy(api, { get(a, m) {
+          const v = a[m];
+          if (typeof v !== 'function') return v;
+          if (m === 'upload' || m === 'update' || m === 'uploadToSignedUrl') return function () { const g = [].slice.call(arguments); if (m === 'uploadToSignedUrl') g[2] = toTop(g[2]); else g[1] = toTop(g[1]); return v.apply(a, g); };
+          return v.bind(a);
+        }, set(a, m, v) { a[m] = v; return true; } });
+      };
+      const v = o[p]; return typeof v === 'function' ? v.bind(o) : v;
+    },
+  }));
+  const auth = new Proxy(top.auth, { get(o, p) {
+    if (p === 'onAuthStateChange') return function () { return { data: { subscription: { unsubscribe() {} } } }; };
+    const v = o[p]; return typeof v === 'function' ? v.bind(o) : v;
+  } });
+  const dummy = { on() { return dummy; }, subscribe() { return dummy; }, unsubscribe() { return Promise.resolve('ok'); } };
+  const local = {};
+  return new Proxy(top, Object.assign(fwd(top, local), {
+    get(o, p) {
+      if (p === '__dioTop') return o;
+      if (p in local) return local[p];
+      if (p === 'storage') return storage;
+      if (p === 'auth') return auth;
+      if (p === 'channel') return function () { return dummy; };
+      if (p === 'removeChannel' || p === 'removeAllChannels') return function () { return Promise.resolve('ok'); };
+      const v = o[p]; return typeof v === 'function' ? v.bind(o) : v;
+    },
+  }));
+}
+const _dioTopClient = (function () {
+  try { return (window.__dioTabChild && window.top.supabaseClient) ? _dioChildClient(window.top.supabaseClient) : null; } catch (_) { return null; }
+})();
+const supabaseClient = _dioTopClient || ((window.supabase && window.supabase.createClient)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, _dioAuthOpts)
-  : null;
+  : null);
 window.supabaseClient = supabaseClient;
 
 // ── GLOBAL STATE ──────────────────────────────────────────────
@@ -185,8 +243,10 @@ function showPage(page, el) {
   const titleEl = document.getElementById('topbar-title');
   if (titleEl) titleEl.textContent = (titles[page]||page);
 
-  // Update URL hash
-  try { history.replaceState(null,'','#'+page); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  // Update URL hash — TASK 22: ٹیبوں والی اوپر کی کھڑکی میں نہیں (وہاں تاریخ «واپس» کا محافظ رکھتی ہے)
+  if (!document.body.classList.contains('dio-tabs-on')) {
+    try { history.replaceState(window.__dioTabChild ? history.state : null,'','#'+page); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  }
 
   // Log usage
   _logUsage('page:'+page);
@@ -828,8 +888,8 @@ async function _syncOfflineQueue() {
     }
   } catch(e) { console.warn('sync error', e); }
 }
-// Try sync on app start too
-setTimeout(() => { if (navigator.onLine) _syncOfflineQueue(); }, 3000);
+// Try sync on app start too — TASK 22: صرف اوپر کی کھڑکی (ٹیبیں ایک ہی قطار دو بار نہ بھیجیں)
+setTimeout(() => { if (navigator.onLine && !window.__dioTabChild) _syncOfflineQueue(); }, 3000);
 
 // ── CLOCK ─────────────────────────────────────────────────────
 function startClock() {
@@ -843,8 +903,13 @@ function startClock() {
 
 // ── REAL-TIME SYNC ────────────────────────────────────────────
 function setupRealtimeSync(cb) {
+  // TASK 22: ٹیب کے اندر سرور سے الگ رابطہ نہیں — اوپر کی کھڑکی ہر تبدیلی ٹیبوں تک پہنچاتی ہے
+  if (window.__dioTabChild) { window.__dioOnTable = cb; return; }
   try {
-    supabaseClient.channel('realtime').on('postgres_changes',{event:'*',schema:'public'},e=>{ if(cb) cb(e.table); }).subscribe();
+    supabaseClient.channel('realtime').on('postgres_changes',{event:'*',schema:'public'},e=>{
+      if(cb) cb(e.table);
+      try { if (window.DIOTabs && typeof DIOTabs.relayTable === 'function') DIOTabs.relayTable(e.table); } catch (_) { /* ٹیبیں نہیں */ }
+    }).subscribe();
   } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 
@@ -1023,7 +1088,9 @@ async function initApp() {
   // Pehle auth.js mein stub tha jo agar backup.js load na hui ho to bhi
   // crash nahi hone deta tha. Ab stub hata diya — is liye yahan typeof
   // guard laga di taake stale/late load par bhi safe rahें.
-  try { if (typeof initBackupSystem === 'function') initBackupSystem(); }
+  // TASK 22: پس منظر کے کام (بیک اپ، یاددہانیوں کی اطلاع، sync) صرف اوپر کی کھڑکی میں — ٹیبوں میں دوہرا نہیں
+  const _dioChild = !!window.__dioTabChild;
+  try { if (!_dioChild && typeof initBackupSystem === 'function') initBackupSystem(); }
   catch(e) { console.warn('[app-core] initBackupSystem skipped:', e && e.message); }
   setupRealtimeSync(async(table)=>{
     await updateBadges();
@@ -1048,10 +1115,12 @@ async function initApp() {
   // لاگ اِن کے بعد ہمیشہ ڈیش بورڈ کھلے (پہلے آخری صفحہ resume ہوتا تھا، جس سے
   // لاگ اِن پر "میرے مقدمات" کھل جاتا تھا — اب ہمیشہ dashboard)۔
   showPage('dashboard', document.querySelector('.nav-item'));
-  setTimeout(function(){ try { if (typeof triggerBackup === 'function') triggerBackup('app_init'); } catch(_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ } }, 3000);
-  setTimeout(_initNotifications, 2000);
-  setTimeout(_checkDueReminders, 5000);
-  setInterval(_checkDueReminders, 30*60*1000);
+  if (!_dioChild) {
+    setTimeout(function(){ try { if (typeof triggerBackup === 'function') triggerBackup('app_init'); } catch(_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ } }, 3000);
+    setTimeout(_initNotifications, 2000);
+    setTimeout(_checkDueReminders, 5000);
+    setInterval(_checkDueReminders, 30*60*1000);
+  }
   setTimeout(()=>{ if(typeof updateNotifBadge==='function') updateNotifBadge(); }, 2000);
   // Check subscription
   setTimeout(async()=>{
@@ -1839,7 +1908,20 @@ window.dioNativePrint = (function () {
     }
     return false;
   }
-  return { register: (p) => { if (p && providers.indexOf(p) < 0) providers.push(p); }, setup, restore, render,
+  // TASK 22: اوپر کی کھڑکی کے مینو کی چھپائی — کھلی ٹیب کا وہی کاغذ (HTML + بعد کا حساب)، یہاں بنائے بغیر
+  function pick() {
+    try { if (typeof window._dioViewOnlyActive === 'function' && window._dioViewOnlyActive()) return null; } catch (_) { /* ضمنی */ }
+    for (const p of providers) {
+      let ok = false;
+      try { ok = !!p.match(); } catch (_) { ok = false; }
+      if (!ok) continue;
+      let html = '';
+      try { html = p.html() || ''; } catch (_) { html = ''; }
+      if (html) return { html, after: p.after };
+    }
+    return null;
+  }
+  return { register: (p) => { if (p && providers.indexOf(p) < 0) providers.push(p); }, setup, restore, render, pick,
     active: () => active };
 })();
 

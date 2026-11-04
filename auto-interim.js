@@ -118,6 +118,8 @@
   }
 
   window.DIO.autoInterim = { run: run, eligible: eligible, DAYS: DAYS, NEW_FROM: NEW_FROM, HEAD: HEAD };
+  // TASK 22: خودکار انٹیرم چالان صرف اوپر کی Digital IO کھڑکی بناتی ہے — ہر ٹیب الگ سے دوہرا نہ بنائے
+  if (window.__dioTabChild) return;
 
   // لاگ اِن کے بعد، اور ہر 6 گھنٹے (ایپ کھلی رہے تو) — انٹرنیٹ واپس آنے پر بھی
   function later() { setTimeout(function () { try { if (typeof currentOfficer !== 'undefined' && currentOfficer) run(); } catch (_) { /* ضمنی */ } }, 8000); }

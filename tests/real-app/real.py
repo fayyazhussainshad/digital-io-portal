@@ -1,5 +1,5 @@
 """Drive the REAL Digital IO app (index.html + every real script/CSS) — only Supabase is a test double."""
-import os, sys, json, subprocess, time
+import os, sys, json, subprocess, time, re
 from playwright.sync_api import sync_playwright
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -22,8 +22,19 @@ if not HAS_JAMEEL:   # Jameel نہ ہو تو پرانا طریقہ: اسی نا�
     FONT_CSS += """
 @font-face{font-family:'Jameel Noori Nastaleeq';src:url(https://fonts.gstatic.com/n400.woff2) format('woff2');font-weight:400}
 @font-face{font-family:'Jameel Noori Nastaleeq';src:url(https://fonts.gstatic.com/n700.woff2) format('woff2');font-weight:700}"""
-PRINT_HOOK = """window.__printCalls = 0;
+# TASK 22: پرانی جانچیں ایک کھڑکی والی ایپ چلاتی ہیں (ٹیبوں کے بغیر)؛ ٹیبوں کی جانچ (t22_*) `window.__dioTabsForce = true` دیتی ہے
+PRINT_HOOK = """if (!window.__dioTabsForce) window.__dioTabsOff = true;
+window.__printCalls = 0;
 window.print = function () { window.__printCalls++; window.dispatchEvent(new Event('beforeprint')); };"""
+TABS_FORCE = "window.__dioTabsForce = true;\n"
+TABS_CTX = set()          # ٹیبوں والی اصل ایپ چلانے والے سیاق (tabs_ctx)
+
+
+def tabs_ctx(ctx):
+    """TASK 22: یہ سیاق ٹیبوں والی اصل ایپ چلائے (باقی سب ایک کھڑکی والی)"""
+    TABS_CTX.add(id(ctx))
+    return ctx
+
 
 def route(r):
     u = r.request.url
@@ -41,14 +52,24 @@ def route(r):
     if 'fonts.googleapis.com' in u: return r.fulfill(body=FONT_CSS, content_type='text/css')
     if 'fonts.gstatic.com/n400' in u: return r.fulfill(path=FONTS + 'noto-nastaliq-urdu-arabic-400-normal.woff2', content_type='font/woff2')
     if 'fonts.gstatic.com/n700' in u: return r.fulfill(path=FONTS + 'noto-nastaliq-urdu-arabic-700-normal.woff2', content_type='font/woff2')
-    if u.startswith(BASE): return r.continue_()
+    if u.startswith(BASE):
+        # TASK 22: پرانی جانچیں (جن کا سیاق ٹیبوں کے لیے درج نہیں) ایک کھڑکی والی ایپ — index.html میں سب سے پہلے نشان
+        if re.match(re.escape(BASE) + r'(index\.html)?([?#].*)?$', u) and 'dtab=' not in u:
+            try: c = r.request.frame.page.context
+            except Exception: c = None
+            if c is None or id(c) not in TABS_CTX:
+                html = open(os.path.join(HERE, '..', '..', 'index.html'), encoding='utf-8').read()
+                html = html.replace('<head>', '<head><script>window.__dioTabsOff = true;</script>', 1)
+                return r.fulfill(body=html, content_type='text/html; charset=utf-8')
+        return r.continue_()
     return r.abort()
 
-def open_app(b, **ctxargs):
+def open_app(b, tabs=False, **ctxargs):
     ctx = b.new_context(service_workers='block', timezone_id='Asia/Karachi',
                         geolocation={'latitude': 30.157458, 'longitude': 71.524918}, permissions=['geolocation'], **ctxargs)
+    if tabs: tabs_ctx(ctx)
     ctx.route('**/*', route)
-    ctx.add_init_script(PRINT_HOOK + "\nlocalStorage.setItem('digital_io_sho', JSON.stringify({name:'ندیم عباس شاد', rank:'SI/SHO'}));")
+    ctx.add_init_script((TABS_FORCE if tabs else '') + PRINT_HOOK + "\nlocalStorage.setItem('digital_io_sho', JSON.stringify({name:'ندیم عباس شاد', rank:'SI/SHO'}));")
     pg = ctx.new_page()
     errs = []
     pg.on('pageerror', lambda e: errs.append(str(e)))

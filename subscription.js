@@ -720,7 +720,8 @@ async function _dioUnlockIfRenewed() {
       try { if (_dioLockTimer) { clearInterval(_dioLockTimer); _dioLockTimer = null; } } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       try { var L = document.getElementById('dio-sub-lock'); if (L) L.remove(); } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
       try { showToast('\u062a\u062c\u062f\u06cc\u062f \u062a\u0633\u0644\u06cc\u0645 \u2014 \u062e\u0648\u0634 \u0622\u0645\u062f\u06cc\u062f\u06d4','success'); } catch (_) { /* paigham na dikh sake to koi baat nahi */ }
-      try { location.reload(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+      // TASK 22: ٹیب کے اندر سے بھی پوری Digital IO کھڑکی تازہ (سب ٹیبیں کھلنے کے قابل)؛ غیر محفوظ کام ہو تو براؤزر پوچھے
+      try { var _tw = window.__dioTabChild ? window.top : window; _tw.__dioReloadQuiet = true; _tw.location.reload(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
       return;
     }
     try { showToast('\u062a\u062c\u062f\u06cc\u062f \u0627\u0628\u06be\u06cc \u062a\u0633\u0644\u06cc\u0645 \u0646\u06c1\u06cc\u06ba \u06c1\u0648\u0626\u06cc\u06d4 \u0627\u06cc\u0688\u0645\u0646 \u06a9\u06cc \u0645\u0646\u0638\u0648\u0631\u06cc کا \u0627\u0646\u062a\u0638\u0627\u0631 \u06a9\u0631\u06cc\u06ba\u06d4','error',4000); } catch (_) { /* paigham na dikh sake to koi baat nahi */ }
