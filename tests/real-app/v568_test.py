@@ -314,7 +314,8 @@ def run(desktop):
         check(f'{tag} C12: صفحہ بند ہو کر دوبارہ کھلا — مسودہ فہرست میں، کھولنے پر لکھا متن واپس', drow == 1 and back, (drow, back))
         pg.evaluate("_zaClose()"); pg.wait_for_timeout(1200)
 
-        # D14: منسلک اندرونی شیٹ والی پرانی بیرونی ضمنی — kerning بند (پہلے جیسا)؛ اکیلے بیان 161 کے فنکشن کبھی نہیں
+        # D14: منسلک اندرونی شیٹ والی پرانی بیرونی ضمنی — اپنی ضمنی کے ساتھ (v569: kerning خودکار، 3 نومبر سے پہلے جیسا)؛
+        #   اکیلے بیان 161 کے فنکشن کبھی نہیں
         pg.evaluate("""(() => { window.__zaCssCalls = 0; window.__zaBodyCalls = 0; const a = window._zaFormCSS, b = window._zaDefaultBody;
             window._zaFormCSS = _zaFormCSS = function () { window.__zaCssCalls++; return a.apply(this, arguments); };
             window._zaDefaultBody = _zaDefaultBody = function () { window.__zaBodyCalls++; return b.apply(this, arguments); }; return 0; })()""")
@@ -324,8 +325,8 @@ def run(desktop):
         kb = pg.evaluate("getComputedStyle(document.getElementById('ch173-doc')).fontKerning")
         hb = grab(pg, lambda: pg.click('[data-dio-print]'), paper)
         calls = pg.evaluate("[window.__zaCssCalls, window.__zaBodyCalls]")
-        check(f'{tag} D14: بیرونی ضمنی کی منسلک اندرونی شیٹ — ایڈیٹر اور پرنٹ اکیلے بیان 161 کی CSS / خاکہ نہیں لیتے (اپنی نقل)؛ kerning بند جوں کا توں',
-              att and calls == [0, 0] and kb == 'none' and 'font-kerning:auto' not in hb and 'zf-androoni' in hb, (att, calls, kb))
+        check(f'{tag} D14: بیرونی ضمنی کی منسلک اندرونی شیٹ — ایڈیٹر اور پرنٹ اکیلے بیان 161 کی CSS / خاکہ نہیں لیتے (اپنی نقل)؛ kerning اپنی ضمنی جیسی (v569: خودکار)',
+              att and calls == [0, 0] and kb == 'auto' and 'font-kerning' not in hb and 'zf-androoni' in hb, (att, calls, kb))
         # C (اصل وجہ 2): اسی ضمنی پر Ctrl+S / اوپر کی پٹی کا «محفوظ» = ضمنی (بیان 161 نہیں)
         pg.evaluate("(() => { const e = document.querySelector('#ch173-doc td.zf-c-body .zf-body'); e.scrollIntoView({ block: 'center' }); e.focus(); const r = document.createRange(); r.selectNodeContents(e); r.collapse(false); const s = getSelection(); s.removeAllRanges(); s.addRange(r); return 0; })()")
         pg.keyboard.type(' نئی سطر'); pg.wait_for_timeout(300)

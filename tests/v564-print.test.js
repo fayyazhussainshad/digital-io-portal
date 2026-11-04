@@ -94,32 +94,17 @@ test('v564 (3 نومبر): تفتیشی افسر کا نام مقرر — ہر I
   assert.ok(/if \(!p \|\| !p\.isContentEditable/.test(read('editor-tools.js')));
 });
 
-test('v564: الفاظ نہ جُڑیں — فونٹ کی kerning بند، ایک ہی قاعدہ: ہر پرنٹ میں اور ضمنی/چالان کی اسکرین پر بھی', () => {
-  assert.ok(/return `\$\{S\}\{ font-kerning:none; \}`;/.test(A));
-  assert.ok(/htmlContent = dioTextInject\(htmlContent\);/.test(A) && /html = dioTextInject\(html\);/.test(A), 'dioPrint اور dioBindHtml دونوں');
-  assert.ok(/active = render\(dioTextInject\(html\)\);/.test(A), 'براؤزر کی اپنی چھپائی بھی');
-  assert.ok(/dioTextCSS\('#ch173-doc'\)/.test(R), 'چالان / ضمنی کی اپنی CSS (اسکرین + کاغذ)');
-  assert.ok(/#dio-nprint-host \{ font-kerning: none; \}/.test(H));
-  // اسکرین پر صرف دستاویزات (ایپ کے بٹن / فہرستیں نہیں) — dio-keys.js کی دستاویز کی جڑیں + دستاویز منظر
-  const K2 = read('dio-keys.js');
-  const roots = /const ROOT_SEL = '([^']+)' \+\s*'([^']+)';/.exec(K2);
-  assert.ok(roots, 'ROOT_SEL');
-  const docRoots = /const DIO_DOC_ROOTS = '([^']+)' \+\s*'([^']+)';/.exec(A);
-  assert.ok(docRoots && (docRoots[1] + docRoots[2]) === (roots[1] + roots[2]) + ',#dio-dv-body', 'وہی جڑیں + #dio-dv-body');
-  assert.ok(/st\.id = 'dio-text-screen';\s*st\.textContent = dioTextCSS\(DIO_DOC_ROOTS\);/.test(A));
-  // شیئر کی PDF بھی پرنٹ جیسی
-  assert.ok(/if \(typeof window\.dioTextInject === 'function'\) html = window\.dioTextInject\(html\);/.test(read('dio-share.js')));
-  // تصویر (html2canvas) بھی kerning کے بغیر — دونوں جگہ
+// v569 (افسر کا حکم، 4 نومبر 2026 — «report 173 only»): v564 کا یہ قاعدہ اب صرف چالان پر — tests/v569-spacing.test.js
+test('v564 → v569: الفاظ نہ جُڑیں — فونٹ کی kerning بند صرف چالان (رپورٹ 173) کی اپنی CSS اور کاغذ میں', () => {
+  assert.ok(/return `\$\{S\}\{ font-kerning:none; \}`;/.test(A), 'قاعدے کا متن وہی');
+  assert.ok(!/dioTextInject/.test(A + read('dio-share.js')), 'ہر دستاویز میں خودکار شمولیت ختم (dioPrint / dioBindHtml / براؤزر کی چھپائی / شیئر)');
+  assert.ok(!/DIO_DOC_ROOTS|dio-text-screen/.test(A), 'اسکرین پر پورے سسٹم کا قاعدہ ختم');
+  assert.ok(/dioTextCSS\('#ch173-doc'\)/.test(R), 'چالان کی اپنی CSS (اسکرین + کاغذ)');
+  assert.ok(!/#dio-nprint-host \{ font-kerning: none; \}/.test(H), 'براؤزر کی اپنی چھپائی میں ہر دستاویز پر نہیں');
+  // تصویر (html2canvas) — دونوں جگہ، مگر صرف اُس دستاویز پر جس کی اپنی kerning بند ہو (چالان)
   assert.strictEqual((read('dio-share.js').match(/await noKern\(function \(\) \{ return window\.html2canvas\(/g) || []).length, 2);
-  // فائل کی اصل تصویر (SVG foreignObject) — body وہاں div بنتا ہے، اس لیے قاعدہ لپیٹنے والے div پر
-  assert.ok(/style="width:' \+ W \+ 'px;background:#fff;font-kerning:none;">/.test(read('dio-share.js')));
+  assert.ok(/style="width:' \+ W \+ 'px;background:#fff;' \+ \(kernOff \? 'font-kerning:none;' : ''\) \+ '">/.test(read('dio-share.js')));
   assert.ok(!/word-spacing:0\.12em/.test(R) && !/word-spacing: 0\.12em/.test(H) && !/DIO_WORD_GAP/.test(A + R + H + Z), 'پرانے اضافی فاصلے نہیں');
-  // انجیکشن: ایک بار، head میں
-  const f = A.slice(A.indexOf('function dioTextCSS('), A.indexOf('window.dioTextCSS = dioTextCSS;'));
-  const ctx = {}; vm.runInNewContext(f + '; this.I = dioTextInject;', ctx);
-  const h = ctx.I('<!DOCTYPE html><html><head><title>x</title></head><body>a</body></html>');
-  assert.ok(/<head><style id="dio-text-css">body\{ font-kerning:none; \}<\/style><title>/.test(h));
-  assert.strictEqual(ctx.I(h), h, 'دوبارہ نہیں');
 });
 
 test('v564: سروس ورکر کا نیا نسخہ', () => {

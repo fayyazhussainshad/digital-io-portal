@@ -1117,48 +1117,24 @@ window.dioJameelLoaded = dioJameelLoaded;
 window.dioEnsureJameel = dioEnsureJameel;
 window.dioAfterFonts = dioAfterFonts;
 
-// ═══ v564: الفاظ آپس میں نہ جُڑیں — پورے سسٹم کا ایک قاعدہ (اسکرین + کاغذ + PDF) ═══
-//  افسر کی شکایت (28 اکتوبر 2026): «محفوظ کرنے کے بعد ضمنی یا چالان چھاپیں تو الفاظ آپس میں جُڑ جاتے ہیں۔»
-//  اصل وجہ (فونٹ کی فائل اور اصل ایپ دونوں میں ناپ کر): محفوظ کرنے میں کوئی حرف، خالی جگہ یا نظر نہ آنے
-//  والا نشان ضائع نہیں ہوتا۔ Jameel Noori Nastaleeq کی اپنی kerning (GPOS «kern») الفاظ کے درمیان کی خالی
-//  جگہ (space، اصل چوڑائی 400/2048 = 0.195em) کو 0 بلکہ −0.33em تک کھینچ دیتی ہے — چھپائی میں ضمنی کی ایک
-//  خالی جگہ 0.011em ناپی گئی؛ 219 جوڑوں میں سے 73 الفاظ ایک دوسرے پر چڑھے ہوئے («پرسوار»، «ہوکر»، «مقدمہعمل»)۔
-//  اضافی word-spacing ناکافی: +0.2em پر بھی 26 جوڑے جُڑے رہے، سب الگ کرنے کو +0.5em (بہت کھلا)۔
-//  حل: دستاویز کے متن پر font-kerning:none — فونٹ کی اپنی خالی جگہ بحال: ہر دو الفاظ کے بیچ 0.25em کا
-//  یکساں فاصلہ، کوئی جوڑا نہیں جُڑتا؛ لفظ کے اندر کی بناوٹ وہی (لفظ کے اندر سب سے بڑا فاصلہ دونوں صورتوں
-//  میں 0.119em)۔ ایک ہی جگہ سے: ضمنی/چالان کی اپنی CSS (اسکرین اور کاغذ ایک — سطریں وہیں ٹوٹیں) اور
-//  مشترکہ چھپائی کا راستہ (dioPrint / dioBindHtml / براؤزر کی اپنی چھپائی) ہر دوسری دستاویز میں خود لگاتا ہے۔
+// ═══ v564 → v569: الفاظ کا فاصلہ — فونٹ کی kerning بند، صرف چالان (رپورٹ 173) پر ═══
+//  v564 (3 نومبر 2026): افسر کی شکایت «ضمنی یا چالان چھاپیں تو الفاظ آپس میں جُڑ جاتے ہیں» — وجہ Jameel Noori
+//  Nastaleeq کی اپنی kerning (GPOS «kern») جو الفاظ کے بیچ کی خالی جگہ (0.195em) کو صفر بلکہ منفی تک کھینچ دیتی
+//  ہے؛ حل font-kerning:none (ہر دو الفاظ کے بیچ فونٹ کی اپنی پوری خالی جگہ)۔ تب یہ پورے سسٹم پر لگا تھا۔
+//  v569 (افسر کا حکم، 4 نومبر 2026): «Fix Current line and word to word spacing for report 173 only and not for
+//  other documents, restore previous except reports 173» — افسر کا انتخاب: «Keep rule in 173 only» + «Restore
+//  ضمنی too» + منسلک اندرونی شیٹ «Follow its بیرونی ضمنی»۔ اب یہ قاعدہ صرف چالان کی اپنی CSS میں:
+//    • اسکرین: report173.js کا _ch173CSS(true) (صرف چالان کا ایڈیٹر یہ مانگتا ہے)
+//    • کاغذ: چالان کا اپنا پرنٹ HTML (report173.js، <head> کے شروع میں — وہی جگہ جہاں v564 لگاتا تھا)
+//  باقی ہر دستاویز (بیرونی ضمنی + منسلک اندرونی شیٹ، بیان 161، درخواستیں، سزا سلپ، FIR، واقعاتی رپورٹ،
+//  RFA، CRO، CDR، نقشہ، مثل کی دستاویزات، سانچے) پر 3 نومبر سے پہلے (v563) والا فاصلہ — براؤزر کا اپنا (auto)؛
+//  اس لیے پورے سسٹم کا اسکرین والا قاعدہ اور dioPrint / dioBindHtml / براؤزر کی اپنی چھپائی / شیئر کی خودکار
+//  شمولیت ختم۔ سطری فاصلہ (line-height) کہیں نہیں بدلا۔
 function dioTextCSS(scope) {
   const S = scope || 'body';
   return `${S}{ font-kerning:none; }`;
 }
-// پرنٹ HTML میں یہ قاعدہ (ایک بار) — <head> کے شروع میں، تاکہ دستاویز کی اپنی CSS اسے بدل سکے
-function dioTextInject(html) {
-  const h = String(html == null ? '' : html);
-  if (!h || /id=["']dio-text-css["']/.test(h)) return h;
-  const st = '<style id="dio-text-css">' + dioTextCSS('body') + '</style>';
-  if (/<head[^>]*>/i.test(h)) return h.replace(/<head([^>]*)>/i, (m) => m + st);
-  if (/<html[^>]*>/i.test(h)) return h.replace(/<html([^>]*)>/i, (m) => m + '<head>' + st + '</head>');
-  return st + h;
-}
 window.dioTextCSS = dioTextCSS;
-window.dioTextInject = dioTextInject;
-// اسکرین پر بھی یہی قاعدہ ہر دستاویز کے کاغذ پر (ایپ کے بٹن / فہرستیں نہیں) — کئی دستاویزات چھپائی کی ناپ
-//   اسکرین سے لیتی ہیں (مثلاً واقعاتی رپورٹ کا پہلا کالم = سب سے لمبا لیبل)؛ اسکرین اور کاغذ کا متن ایک ہو تو
-//   ناپ بھی ایک۔ فہرست وہی جو dio-keys.js کی دستاویز کی جڑیں (ROOT_SEL) + مقدمے کا دستاویز منظر۔
-const DIO_DOC_ROOTS = '#ch173-doc,#dk-doc,#ir-doc,#saza-doc,#rfa-doc,#cro-doc,#cdr-doc,#dio-naqsha-doc,' +
-  '#misal-editor,#dio-fv-paper,#a4-paper,#tpl-editable-area,#word-doc-editable,[data-dio-doc],#dio-dv-body';
-window.DIO_DOC_ROOTS = DIO_DOC_ROOTS;
-(function dioTextScreen() {
-  const put = () => {
-    if (document.getElementById('dio-text-screen')) return;
-    const st = document.createElement('style');
-    st.id = 'dio-text-screen';
-    st.textContent = dioTextCSS(DIO_DOC_ROOTS);
-    (document.head || document.documentElement).appendChild(st);
-  };
-  if (document.head) put(); else document.addEventListener('DOMContentLoaded', put);
-})();
 
 // ═══ v553: مثل باندھنے کی جگہ (back side) — پورے سسٹم کا ایک ہی قاعدہ ═══
 //  افسر کا قاعدہ: «جہاں بھی کاغذ کا دوسرا صفحہ آئے گا تو back side پر اوپر ایک سطر کی
@@ -1397,8 +1373,6 @@ function dioBindNeeded(html) {
 // opts.binder(doc, geo) → ماڈیول کا اپنا حساب (مثلاً سزا سلپ کی قطاریں) — اسی «پرنٹ» شکل میں
 async function dioBindHtml(html, opts) {
   opts = opts || {};
-  // v564: الفاظ کا فاصلہ ناپ سے پہلے — ناپ اور اصل چھپائی ایک ہی متن پر
-  html = dioTextInject(html);
   if (!opts.binder && !dioBindNeeded(html)) return html;
   const geo = _dioPageGeo(html);
   const f = document.createElement('iframe');
@@ -1611,8 +1585,6 @@ function dioPrint(htmlContent) {
   // VIEW-ONLY ENFORCEMENT [4E]: میعاد ختم/معطل پر تمام پرنٹنگ بند (ہر دستاویز
   // یہیں سے پرنٹ ہوتی ہے)۔ fail-open: DIO.sub نہ ہو تو پرنٹ چلے۔
   if (window.DIO && DIO.sub && !DIO.sub.guard('پرنٹ')) return;
-  // v564: ہر چھپنے والی دستاویز میں الفاظ کا کم از کم فاصلہ (ضمنی/چالان میں پہلے سے — دوبارہ نہیں)
-  htmlContent = dioTextInject(htmlContent);
   // DIRECT PRINT: pehle aik extra in-app preview aata tha (بند کریں/پرنٹ کریں).
   // Woh fazool tha kyunki browser ka apna print dialog pehle se preview deta hai.
   // Ab seedha print par jate hain. (Purana preview chahiye to localStorage mein
@@ -1857,7 +1829,7 @@ window.dioNativePrint = (function () {
       try { html = p.html() || ''; } catch (e) { try { console.warn('native print html:', e && e.message); } catch (_) { /* ضمنی */ } }
       if (!html) continue;
       try {
-        active = render(dioTextInject(html));
+        active = render(html);
         if (typeof p.after === 'function') p.after(active.root, window);
         return true;
       } catch (e) {
