@@ -390,7 +390,8 @@ function dioOpenMainSearch(q) {
       if (!act) return;
       const oc = act.getAttribute('onclick') || '';
       // نتیجہ کھولنا (مقدمہ / رپورٹ) — پہلے کھلی دستاویز بند؛ تصاویر کا بٹن صرف کارڈ کھولتا ہے
-      if (/openCaseWorkspace|openIncidentReport/.test(oc) && !/_srShowDocs/.test(oc) && _msDocOpen()) {
+      // TASK 22: ٹیب کے اندر کھلی دستاویز بند نہیں ہوتی — نتیجہ اسی ٹیب میں نئے صفحے پر کھلتا ہے، «واپس» سے دستاویز وہیں
+      if (/openCaseWorkspace|openIncidentReport/.test(oc) && !/_srShowDocs/.test(oc) && _msDocOpen() && !window.__dioTabChild) {
         if (!_msCloseDocs()) { e.preventDefault(); e.stopImmediatePropagation(); return; }
       }
       _msClose();                                   // کارڈ کا اپنا onclick اس کے بعد چلتا ہے

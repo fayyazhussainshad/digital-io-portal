@@ -267,6 +267,8 @@ function _dioDocViewEsc(e) {
   const menu = document.querySelector('#naq-acc-menu, #saza-acc-menu, #dk-acc-menu, #dio-dv-picker');
   if (menu) { e.preventDefault(); menu.remove(); return; }
   if (shown(document.getElementById('modal-backdrop'))) return;      // کارڈ اپنا Esc خود سنبھالتا ہے
+  // TASK 22: ٹیب کے اندر Esc = ایک قدم «واپس» (دستاویز اسی ٹیب کی تاریخ میں رہتی ہے، بند نہیں ہوتی)
+  if (window.__dioTabChild && typeof window.dioGoBack === 'function') { e.preventDefault(); window.dioGoBack(); return; }
   _dioExitDocView();
 }
 

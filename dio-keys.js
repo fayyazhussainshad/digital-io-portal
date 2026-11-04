@@ -1192,6 +1192,13 @@
     ['پرنٹ — وہی جو «پرنٹ» بٹن', 'Ctrl+P'],
     ['0.5 انچ (1.27 سینٹی میٹر) آگے / واپس (پیراگراف کے شروع میں: پہلی سطر کا حاشیہ، Backspace سے بھی واپس)', 'Tab / Shift+Tab'],
     ['جدول میں اگلا / پچھلا خانہ (ضمنی، بیان 161، مختصر حالات، سزا اور تفصیل کے لکھنے والے خانوں میں Tab = 1.27 سینٹی میٹر آگے)', 'Tab / Shift+Tab'],
+    // v570 (TASK 22): Digital IO کی اپنی ٹیبیں
+    ['ٹیب: ایک قدم واپس / آگے (اسی ٹیب کی اپنی تاریخ)', 'Alt+← / Alt+→'],
+    ['نئی ٹیب (ڈیش بورڈ، اسی افسر کے نام) — انسٹال شدہ ایپ میں Ctrl+T بھی', 'Alt+T'],
+    ['کھلی ٹیب بند — انسٹال شدہ ایپ میں Ctrl+W بھی', 'Alt+W'],
+    ['اگلی / پچھلی ٹیب — انسٹال شدہ ایپ میں Ctrl+Tab / Ctrl+Shift+Tab بھی', 'Alt+PageDown / Alt+PageUp'],
+    ['ٹیب نمبر 1 تا 8 / آخری ٹیب', 'Ctrl+1 … Ctrl+8 / Ctrl+9'],
+    ['منتخب چیز نئی ٹیب میں (لکھتے ہوئے نہیں) · اسی ٹیب میں', 'Ctrl+Enter · Ctrl+click · درمیانی بٹن  /  Enter'],
   ];
   function helpCss() {
     if (document.getElementById('dio-keys-help-css')) return;
@@ -1221,8 +1228,8 @@
     o.innerHTML = '<div class="dkh-card"><div class="dkh-top"><h2>شارٹ کٹس — MS Word کی طرح، پورے سسٹم میں</h2>' +
       '<button type="button" class="dkh-x" aria-label="بند کریں" title="بند کریں (Esc)">✕</button></div>' +
       '<table><tbody>' + HELP.map(r => '<tr><td>' + r[0] + '</td><td class="dkh-k">' + (r[1] ? KB(r[1]) : '') + '</td></tr>').join('') + '</tbody></table>' +
-      '<div class="dkh-note">یہ کلیدیں براؤزر کی اپنی ہیں — کوئی ویب سائٹ انہیں استعمال نہیں کر سکتی: ' +
-      KB('Ctrl+N / Ctrl+T / Ctrl+W / Ctrl+Shift+N / Ctrl+Shift+T / Ctrl+Tab / Ctrl+Shift+Tab') + '۔ ' +
+      '<div class="dkh-note">براؤزر کی ٹیب میں یہ کلیدیں براؤزر کی اپنی ہیں — کوئی ویب سائٹ انہیں استعمال نہیں کر سکتی: ' +
+      KB('Ctrl+N / Ctrl+T / Ctrl+W / Ctrl+Shift+N / Ctrl+Shift+T / Ctrl+Tab / Ctrl+Shift+Tab') + ' (انسٹال شدہ Digital IO میں Ctrl+T / Ctrl+W / Ctrl+Tab ہماری ٹیبوں کے لیے)۔ ' +
       'صفحہ تازہ کرنے کے لیے ' + KB('F5') + ' (' + KB('Ctrl+R') + ' اب دائیں سیدھ ہے)۔</div></div>';
     o.addEventListener('click', (e) => { if (e.target === o || (e.target.closest && e.target.closest('.dkh-x'))) helpClose(); });
     document.body.appendChild(o);

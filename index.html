@@ -16,6 +16,28 @@
   <link rel="apple-touch-icon" href="icon-192.png">
   <title>Digital IO</title>
   <script>
+  /* TASK 22 (4 نومبر 2026): Chrome جیسی ٹیبیں — یہ صفحہ ٹیب کے اندر کی نقل ہے یا اوپر کی کھڑکی؟
+     ٹیب = اسی ویب سائٹ کا index.html?dtab=… جو اوپر کی Digital IO کھڑکی (dio-tabs.js) نے بنایا۔ */
+  (function(){
+    try {
+      var m = /[?&]dtab=([\w-]+)/.exec(location.search), child = null;
+      if (m && window.top !== window) {
+        try { if (window.top.location.origin === location.origin && window.top.__dioTabsHost) child = m[1]; } catch (_) { child = null; }
+      }
+      window.__dioTabChild = child;
+      if (child) document.documentElement.classList.add('dio-child');
+      else if (window.top === window && !window.__dioTabsOff) window.__dioTabsHost = true;
+    } catch (_) {}
+  })();
+  </script>
+  <style>
+    /* ٹیب کے اندر: لاگ اِن صفحہ نہیں (اوپر کی کھڑکی میں ہو چکا)؛ «واپس» صرف ٹیبوں کی پٹی میں (ایک ہی بٹن) */
+    html.dio-child #login-screen, html.dio-child #pwa-install-btn,
+    html.dio-child #dio-back-btn, html.dio-child .dio-backbtn, html.dio-child #dio-dv-tabs { display: none !important; }
+    /* دستاویز کی پٹی کا «مقدمہ 663/26» — اسی ٹیب میں مقدمے کی مسل (دستاویز پیچھے کھلی رہتی ہے) */
+    html.dio-child #dio-dv-fir { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 4px; }
+  </style>
+  <script>
   /* v558 (افسر کی شکایت، 27 اکتوبر 2026): «Ctrl+S دبانے پر سسٹم HTML کی فائل محفوظ کرنے لگتا ہے؛
      Ctrl+P پر صفحہ نیچے سے کٹا ہوا چھپتا ہے — MS Word کے تمام شارٹ کٹ کام کریں»
      وجہ: کی بورڈ اردو پر ہو تو Ctrl+S پر براؤزر «س» (Ctrl+P پر «پ») بتاتا ہے، «s» / «p» نہیں —
@@ -1701,6 +1723,7 @@ window.addEventListener('beforeunload', function (e) {
 <script defer src="subscription.js"></script>
 <script defer src="mobile.js"></script>
 <script defer src="challan-form.js"></script>
+<script defer src="dio-tabs.js"></script>
 <!-- admin.js اب dynamically لوڈ ہوتا ہے (صرف ایڈمن) — _dioEnsureAdminBundle() -->
 
 <!-- ── Sidebar ── -->
@@ -1818,7 +1841,9 @@ if('serviceWorker' in navigator){
   // When the new SW takes control, reload once to get fresh content
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (_swRefreshing) return;
+    if (window.__dioTabChild) return;          // TASK 22: ٹیب خود reload نہیں ہوتی — اوپر کی کھڑکی سب کو تازہ کرتی ہے
     _swRefreshing = true;
+    window.__dioReloadQuiet = true;
     window.location.reload();
   });
 
@@ -1928,8 +1953,8 @@ document.addEventListener('DOMContentLoaded', function () {
   if (typeof window.showPage !== 'function') return;
   const _origShowPageHash = window.showPage;
   window.showPage = function(page, el) {
-    if (history && history.replaceState) {
-      try { history.replaceState(null, '', '#' + page); } catch(_) {}
+    if (history && history.replaceState && !document.body.classList.contains('dio-tabs-on')) {
+      try { history.replaceState(window.__dioTabChild ? history.state : null, '', '#' + page); } catch(_) {}
     }
     return _origShowPageHash(page, el);
   };
@@ -2005,6 +2030,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var h = document.getElementById('dio-nprint-host');
     if (h) h.remove();
   }
+  window._dioNPrintFind = _findOpenDoc;   // TASK 22: اوپر کی کھڑکی کے مینو کی چھپائی = کھلی ٹیب کا یہی کاغذ
   window.addEventListener('beforeprint', _setup);
   window.addEventListener('afterprint', _restore);
   // Dusra safety net — agar afterprint na chale to print-mode se nikalte hi restore

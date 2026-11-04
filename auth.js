@@ -680,13 +680,29 @@ async function loginSuccess() {
   } catch (_) { /* audit/custody ka masla asal kaam na roke */ }
   const ls=document.getElementById('login-screen'), app=document.getElementById('main-app');
   ls.style.transition='opacity 0.4s'; ls.style.opacity='0';
-  setTimeout(()=>{ ls.style.display='none'; app.style.display='flex'; setLoginLoading(false); initApp(); },400);
+  setTimeout(()=>{
+    // TASK 22: ٹیبیں — اوپر کی کھڑکی ٹیبوں کی پٹی دکھاتی ہے، ڈیش بورڈ پہلی ٹیب میں (پہلے سے تیار نقل)
+    try { if (window.DIOTabs && DIOTabs.isHost) DIOTabs.start(); } catch (e) { console.warn('dio-tabs start', e); }
+    ls.style.display='none'; app.style.display='flex'; setLoginLoading(false); initApp();
+  },400);
   resetSessionTimer();
   // Show onboarding for first-time users
   setTimeout(()=>{ if(typeof _maybeShowOnboarding==='function') _maybeShowOnboarding(); }, 1200);
   // Offer PIN setup (optional, once)
   if (typeof maybeSetupPin === 'function') maybeSetupPin();
 }
+
+// ── TASK 22: ٹیب کے اندر کی نقل — اوپر کی کھڑکی میں لاگ اِن ہو چکا، وہی افسر (دوبارہ نہیں پوچھنا) ──
+//   audit «login»، PIN کی پیشکش اور تعارف صرف اوپر کی کھڑکی میں (ہر ٹیب پر دوہرا نہیں)
+window._dioChildLogin = async function () {
+  if (!window.__dioTabChild) return;
+  try { sessionStorage.setItem('dio_sess_active', '1'); } catch (_) { /* storage band */ }
+  const ls = document.getElementById('login-screen'), app = document.getElementById('main-app');
+  if (ls) ls.style.display = 'none';
+  if (app) app.style.display = 'flex';
+  try { setLoginLoading(false); } catch (_) { /* ikhtiyari */ }
+  await initApp();
+};
 
 // ── ONBOARDING WALKTHROUGH (S6) ───────────────────────────────
 
@@ -750,6 +766,10 @@ function showOnboardingAgain() { _showOnboarding(); }
 
 
 async function doLogout() {
+  // TASK 22: ٹیب کے اندر سے لاگ آؤٹ = پورا Digital IO (اوپر کی کھڑکی)
+  if (window.__dioTabChild) { try { return await window.top.doLogout(); } catch (_) { return; } }
+  // ٹیبیں بند (خودکار مسودے پہلے) — کھلی ٹیبوں کی فہرست نیچے «حساس» صفائی میں مٹتی ہے
+  try { if (window.DIOTabs && DIOTabs.isHost) DIOTabs.stop(); } catch (_) { /* ٹیبیں نہیں */ }
   // ═══════════════════════════════════════════════════════════════════
   //  SECURE LOGOUT (per audit "Correct 8: Logout behavior")
   //  Sirf sign-out kaafi nahi — sensitive local data, cameras/microphones,
@@ -814,7 +834,9 @@ async function doLogout() {
     // saaf NAHI hote the — shared device par agla shakhs parh sakta tha. Ab clear hote hain.
     'dio_cdr_','dio_firmatn_','dio_fircopies_','dio_saza_','dio_staff_',
     'dio_acc_opts_','dio_notifs_cache','dio_recent_cases','case_status_',
-    'digital_io_sarkari_gari'
+    'digital_io_sarkari_gari',
+    // TASK 22: کھلی ٹیبوں کی فہرست (مقدمہ نمبر) — مشترکہ آلے پر اگلا شخص نہ دیکھے
+    'dio_tabs_v1_'
   ];
   try {
     for (let i = localStorage.length - 1; i >= 0; i--) {
@@ -1518,6 +1540,8 @@ let _sessionTimer, _sessionWarnTimer;
 const SESSION_TIMEOUT = 5 * 60 * 1000;        // 5 منٹ بے عملی پر خودکار لاک
 
 function resetSessionTimer() {
+  // TASK 22: ٹیب کے اندر کی سرگرمی اوپر کی کھڑکی کا ٹائمر چلاتی ہے (تالا ایک ہی، سب ٹیبوں پر)
+  if (window.__dioTabChild) { try { if (window.top.resetSessionTimer) window.top.resetSessionTimer(); } catch (_) { /* - */ } return; }
   clearTimeout(_sessionTimer);
   clearTimeout(_sessionWarnTimer);
   // لاک ٹائمر صرف تب لگاؤ جب لاک PIN مقرر ہو اور افسر لاگ اِن ہو
@@ -1556,6 +1580,7 @@ document.addEventListener('visibilitychange', () => { try { if (document.hidden)
 
 function lockApp() {
   // لاک صرف تب: لاک PIN مقرر ہو، افسر لاگ اِن ہو، پہلے سے لاک نہ ہو، اور مین ایپ کھلی ہو
+  if (window.__dioTabChild) return;   // TASK 22: تالا اوپر کی کھڑکی لگاتی ہے — پوری کھڑکی (سب ٹیبیں) ڈھک جاتی ہے
   try {
     if (!localStorage.getItem('digital_io_pin_hash')) return;   // PIN نہیں تو لاک نہیں (لاک آؤٹ سے بچاؤ)
     if (!(typeof currentUser !== 'undefined' && currentUser)) return;

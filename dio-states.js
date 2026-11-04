@@ -161,7 +161,7 @@
              '  <div style="' + STYLE.icon + '">' + _icon('clock', 44) + '</div>' +
              '  <div style="' + STYLE.title + URDU_FONT + '">سیشن ختم ہو چکا</div>' +
              '  <div style="' + STYLE.hint + URDU_FONT + '">حفاظت کے لیے دوبارہ لاگ ان کریں</div>' +
-             '  <button type="button" onclick="location.reload()" style="' + STYLE.btn + URDU_FONT + '">دوبارہ لاگ ان</button>' +
+             '  <button type="button" onclick="(window.__dioTabChild ? window.top : window).location.reload()" style="' + STYLE.btn + URDU_FONT + '">دوبارہ لاگ ان</button>' +
              '</div>';
     },
 
