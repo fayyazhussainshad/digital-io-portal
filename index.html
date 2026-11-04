@@ -1089,7 +1089,7 @@ input[id*="cnic"], input[id*="cell"] {
   }
   /* ── چالان (report 173) کے لیے native Ctrl+P خاص اصول ──
      (الف) کوئی متن نہ کٹے: خانے اپنی اونچائی خود لیں، overflow نظر آئے۔
-     (ب) justify برقرار + الفاظ نہ جُڑیں (v564: فونٹ کی kerning بند — app-core.js dioTextCSS)۔
+     (ب) justify برقرار + الفاظ نہ جُڑیں (فونٹ کی kerning بند — چالان کی اپنی CSS، report173.js _ch173CSS(true))۔
      (ج) گواہان / rotated کالم کا متن بھی مکمل نظر آئے۔ */
   #dio-nprint-host #ch173-doc .ch173-table tbody td,
   #dio-nprint-host #ch173-doc .normcell,
@@ -1117,8 +1117,9 @@ input[id*="cnic"], input[id*="cell"] {
     text-align: justify !important; text-align-last: right !important;
     text-justify: inter-word !important; word-spacing: normal !important;
   }
-  /* v564: الفاظ نہ جُڑیں — فونٹ کی kerning بند (app-core.js dioTextCSS) — براؤزر کی اپنی چھپائی میں ہر دستاویز پر */
-  #dio-nprint-host { font-kerning: none; }
+  /* v569 (افسر کا حکم «report 173 only»): v564 کا «ہر دستاویز پر kerning بند» یہاں سے ہٹا — صرف چالان پر، جو اپنی
+     اسکرین CSS (#ch173-doc) ساتھ لاتا ہے؛ باقی دستاویزات براؤزر کی اپنی چھپائی میں بھی 3 نومبر سے پہلے جیسی۔
+     word-spacing اوپر «normal» ہی — تاکہ Ctrl+P، پرنٹ بٹن اور براؤزر مینو کا کاغذ ایک ہو۔ */
   /* @page margin NAHI diya — margins ab print dialog / system ki setting ke
      mutabiq rahenge (khud-ba-khud force nahi honge). */
 }

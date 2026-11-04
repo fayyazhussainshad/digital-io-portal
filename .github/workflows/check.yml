@@ -129,7 +129,7 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh v563_test.py
-      - name: v564 — bairooni zimni print & layout — Ctrl+P = print button = browser-menu print (pixel-identical, Legal + A4, nothing cut), 2pt binding line with text beside it and a new serial inside its zone (no empty block), closing line «۔» + half space, «از» 12% → 24%, bound date + SHO name, IO name fixed (read-only, no binding), date centred under signature, words never join in print (font kerning off), one zimni per date, manual column 2 (v564_test.py)
+      - name: v564 — bairooni zimni print & layout — Ctrl+P = print button = browser-menu print (pixel-identical, Legal + A4, nothing cut), 2pt binding line with text beside it and a new serial inside its zone (no empty block), closing line «۔» + half space, «از» 12% → 24%, bound date + SHO name, IO name fixed (read-only, no binding), date centred under signature, nothing lost in print (v569 — font kerning off on the challan only — zimni back to its pre-3-Nov spacing), one zimni per date, manual column 2 (v564_test.py)
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh v564_test.py
@@ -157,6 +157,14 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh v568_sync_test.py
+      - name: v569 — word spacing — the 3 Nov «font kerning off» rule only on the challan (report 173) — challan screen / print button / Ctrl+P (byte-identical) / browser-menu print / share PDF kerning off, narrowest gap ≥ 0.19em; bairooni zimni, statement 161, darkhwast, saza slip, index, RFA, incident report back to the pre-3-Nov spacing (kerning auto); whole-case print — challan part off, others auto (v569_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: bash ci_run.sh v569_test.py
+      - name: v569 — two devices + reload (challan kerning off, zimni auto) (v569_sync_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: bash ci_run.sh v569_sync_test.py
       - name: Screenshots and print PDFs
         if: always()
         uses: actions/upload-artifact@v4

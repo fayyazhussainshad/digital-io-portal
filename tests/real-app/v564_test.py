@@ -7,7 +7,7 @@
   4) «از» کا کالم بالکل دُگنا (جگہ سب سے چوڑے کالم سے)
   5) کالم 1 کی تاریخ ↔ دستخط کی تاریخ؛ تفتیشی افسر / SHO کا نام — ایک جگہ بدلو، ہر جگہ بدلے
   6) دستخط کے نیچے تاریخ نام کے بالکل درمیان (چھوٹا اور لمبا نام)
-  7) محفوظ ضمنی اور محفوظ چالان کی چھپائی میں الفاظ نہ جُڑیں
+  7) محفوظ ضمنی اور محفوظ چالان کی چھپائی میں کچھ ضائع نہیں؛ kerning بند صرف چالان پر (v569 — ضمنی 3 نومبر سے پہلے جیسی)
   + پرانی شکایات برقرار: ایک تاریخ کی ایک ضمنی، کالم 2 دستی نمبر، مثل کی لکیر صرف جفت صفحات پر
 
 چلانا: README.md — `python3 v564_test.py` (poppler: pdftoppm / pdfinfo / pdftotext)؛ ایک ہی: DIO_ONLY=desktop|mobile
@@ -246,7 +246,8 @@ def run(b, tag, ctxargs, mobile):
         check(f'{tag}: محفوظ کرنے میں کوئی خالی جگہ / نظر نہ آنے والا نشان / حرف ضائع نہیں (ایڈیٹر = محفوظ)', sv_chars == ed_chars and ed_chars['zwnj'] == 2, (ed_chars, sv_chars))
         ed_scr = pg.evaluate(SPACES, BODY)
         # اسکرین (موبائل پر کاغذ ~0.44× چھوٹا) کی ناپ device pixel پر گول ہوتی ہے — ±0.01em؛ فونٹ کی اپنی جگہ 0.195em، پہلے 0.011em
-        check(f'{tag}: اسکرین پر بھی فونٹ کی kerning بند، الفاظ کے بیچ پوری خالی جگہ (≥ 0.18em؛ پہلے 0.011em)', ed_scr and ed_scr['kern'] == 'none' and (ed_scr['min'] or 0) >= 0.18, ed_scr)
+        # v569 (افسر کا حکم «report 173 only» + «Restore ضمنی too»): ضمنی پر 3 نومبر سے پہلے کا فاصلہ — kerning خودکار
+        check(f'{tag}: اسکرین پر فونٹ کی kerning خودکار (v569: ضمنی 3 نومبر سے پہلے جیسی؛ kerning بند صرف چالان پر)', ed_scr and ed_scr['kern'] == 'auto' and ed_scr['n'] > 100, ed_scr)
         ed_words = pg.evaluate("[...document.querySelectorAll('#ch173-doc tr.zf-blk .zf-body')].map(x => x.textContent)")
         for paper in ('legal', 'a4'):
             w = three_ways(b, pg, tag, paper, desktop)
@@ -280,8 +281,8 @@ def run(b, tag, ctxargs, mobile):
             pr_chars = q.evaluate(CHARS, BODY)
             pr_words = q.evaluate("[...document.querySelectorAll('#ch173-doc tr.zf-blk .zf-body')].map(x => x.textContent)")
             c2.close(); os.remove(fn)
-            check(f'{tag} {paper}: پرنٹ میں فونٹ کی kerning بند؛ دو اردو الفاظ کے بیچ سب سے تنگ خالی جگہ ≥ 0.19em (پہلے 0.011em — الفاظ جُڑتے تھے)',
-                  sp and sp['kern'] == 'none' and sp['n'] > 100 and (sp['min'] or 0) >= 0.19, sp)
+            check(f'{tag} {paper}: پرنٹ میں فونٹ کی kerning خودکار (v569: ضمنی 3 نومبر سے پہلے جیسی؛ kerning بند صرف چالان پر)',
+                  sp and sp['kern'] == 'auto' and sp['n'] > 100, sp)
             check(f'{tag} {paper}: پرنٹ میں حالات کا ہر لفظ، ہر خالی جگہ اور نظر نہ آنے والا نشان وہی جو لکھا گیا (کچھ ضائع نہیں)',
                   [words(x) for x in pr_words] == [words(x) for x in ed_words] and pr_chars['zwnj'] == ed_chars['zwnj'] and pr_chars['letters'] == ed_chars['letters'] and pr_chars['nbsp'] == ed_chars['nbsp'],
                   (pr_chars, ed_chars))

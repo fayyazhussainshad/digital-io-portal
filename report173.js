@@ -581,7 +581,7 @@ function _renderR173() {
     // badalti aur kheench kar bhi nahi badli ja sakti (neeche grip band hai).
 
     area.innerHTML = `
-    <style>${_ch173CSS()}</style>
+    <style>${_ch173CSS(true)}</style>
     <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
       <div class="no-print" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
         <select id="r173-type-sel" onchange="_r173Pick(this.value)" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq';font-size:10.5pt;">
@@ -1203,7 +1203,10 @@ function _printR173Now() {
         _ch173OverflowSettle(4);               // screen ki halat bhi durust
       } catch (__) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
     }
-    const chHtml = `<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title> </title>
+    // v569: الفاظ کے فاصلے کا قاعدہ (فونٹ کی kerning بند) اب صرف چالان کا اپنا — <head> کے شروع میں، بالکل اسی جگہ
+    //   جہاں v564 کا dioPrint اسے ہر دستاویز میں لگاتا تھا (چالان کا کاغذ حرف بحرف وہی)؛ یہی HTML شیئر (PDF/Word)
+    //   اور «پورا مقدمہ» بھی لیتے ہیں، اس لیے وہاں بھی صرف چالان کے حصے پر
+    const chHtml = `<!DOCTYPE html><html dir="rtl"><head>${typeof dioTextCSS === 'function' ? '<style id="dio-text-css">' + dioTextCSS('body') + '</style>' : ''}<meta charset="UTF-8"><title> </title>
       ${typeof dioFontHead==='function'?dioFontHead():''}
       <style>
         /* Print iframe apna font KHUD load kare (upar dioFontHead() — v560 se isi
@@ -1216,7 +1219,7 @@ function _printR173Now() {
           direction:rtl; line-height:1.4; color:#000; }
 
         /* ═══ WAHI CSS jo screen par hai — koi alag nakal nahi ═══ */
-        ${_ch173CSS()}
+        ${_ch173CSS(true)}
 
         /* Sirf print ke liye chand izafi baatein */
         #ch173-doc{ width:100% !important; max-width:none !important;
@@ -5215,8 +5218,12 @@ window._ch173FillHalaat = _ch173FillHalaat;
 //  پہلے دو الگ نقلیں تھیں (ایک اسکرین کی، ایک پرنٹ کی) جو بار بار
 //  ایک دوسرے سے مختلف ہو جاتی تھیں — اسی لیے فارم ہر جگہ الگ نظر
 //  آتا تھا (اسکرین، پرنٹ، PDF)۔ اب ایک ہی نقل ہے۔
+//  v569 (افسر کا حکم، 4 نومبر 2026 — «report 173 only»): یہی CSS بیرونی ضمنی اور بیان 161 کا ایڈیٹر/پرنٹ بھی
+//  لیتے ہیں (#ch173-doc مشترک)۔ الفاظ کے فاصلے کا قاعدہ (فونٹ کی kerning بند — app-core.js dioTextCSS) اب صرف
+//  چالان کو: textRule = true صرف چالان کا ایڈیٹر اور چالان کا پرنٹ دیتے ہیں؛ ضمنی / بیان 161 بغیر اس کے
+//  (3 نومبر سے پہلے کی طرح)۔ چالان کے لیے نکلنے والی CSS حرف بحرف وہی جو پہلے تھی۔
 // ═══════════════════════════════════════════════════════════════════
-function _ch173CSS() {
+function _ch173CSS(textRule) {
   return `
       /* ═══════════════════════════════════════════════════════════
          کاغذ کے عنوانات کا پیمانہ — تین درجے، ایک ہی جگہ
@@ -5236,9 +5243,9 @@ function _ch173CSS() {
         --doc-h3: 14pt;
         --doc-h4: 12pt;
       }
-      /* v564: الفاظ نہ جُڑیں — فونٹ کی kerning بند (پورے سسٹم کا قاعدہ: app-core.js dioTextCSS)؛
+      ${textRule ? `/* v564: الفاظ نہ جُڑیں — فونٹ کی kerning بند (پورے سسٹم کا قاعدہ: app-core.js dioTextCSS)؛
          اسکرین اور کاغذ دونوں پر ایک، اس لیے سطریں دونوں جگہ ایک جیسی ٹوٹتی ہیں۔ */
-      ${typeof dioTextCSS === 'function' ? dioTextCSS('#ch173-doc') : '#ch173-doc{ font-kerning:none; }'}
+      ${typeof dioTextCSS === 'function' ? dioTextCSS('#ch173-doc') : '#ch173-doc{ font-kerning:none; }'}` : ''}
       #ch173-doc .dio-doc-h1{ font-size:var(--doc-h1); font-weight:bold; text-decoration:underline; line-height:1.9; }
       #ch173-doc .dio-doc-h2{ font-size:var(--doc-h2); font-weight:bold; line-height:1.85; }
       #ch173-doc .dio-doc-h3{ font-size:var(--doc-h3); font-weight:bold; line-height:1.8; }

@@ -126,9 +126,8 @@
     return { t: p[0], r: p[1], b: p[2], l: p[3] };
   }
   async function frameFor(html) {
-    // v564: پرنٹ والا قاعدہ (الفاظ نہ جُڑیں — فونٹ کی kerning بند) فائل میں بھی، تاکہ PDF کی سطریں اور صفحات
-    //   پرنٹ جیسے ہوں (یہ HTML dioPrint سے پہلے پکڑا جاتا ہے، جہاں یہ قاعدہ لگتا ہے)
-    try { if (typeof window.dioTextInject === 'function') html = window.dioTextInject(html); } catch (_) { /* ضمنی */ }
+    // v569: الفاظ کے فاصلے کا قاعدہ (فونٹ کی kerning بند) اب صرف چالان کا — جو اسے اپنے پرنٹ HTML میں خود لاتا ہے؛
+    //   یہاں ہر دستاویز پر لگانا (v564) ختم، تاکہ فائل ہر دستاویز کے اپنے پرنٹ جیسی رہے
     var pg = pageFromHtml(html), mg = marginsFromHtml(html);
     var cw = Math.round((pg.w - mg.l - mg.r) * 96);       // پرنٹ میں مواد کی چوڑائی
     var f = document.createElement('iframe');
@@ -285,6 +284,9 @@
     // اسکرین کا عنصر: صفحے کی پوری CSS پر منحصر — اس لیے inline
     var cap = (inline && window.DIO.forms && DIO.forms.capture) ? DIO.forms.capture(d.body, { keepData: true }) : null;
     var xml, styles = '';
+    // v569: دستاویز کا اپنا الفاظ کا فاصلہ — چالان (body پر kerning بند) ہو تو تصویر کا خانہ بھی وہی، باقی سب خودکار
+    var kernOff = false;
+    try { kernOff = d.defaultView.getComputedStyle(d.body).fontKerning === 'none'; } catch (_) { kernOff = false; }
     if (cap) {
       var holder = document.createElement('div'); holder.innerHTML = cap.html;
       var root = holder.firstElementChild;
@@ -328,8 +330,8 @@
     var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + Math.round(W * scale) + '" height="' + Math.round(H * scale) +
       '" viewBox="0 0 ' + W + ' ' + H + '"><foreignObject x="0" y="0" width="' + W + '" height="' + H + '">' +
       // v564: پرنٹ کا قاعدہ (الفاظ نہ جُڑیں — فونٹ کی kerning بند) تصویر میں بھی: پرنٹ میں یہ body پر ہوتا ہے، اور یہاں
-      //   body ایک div بن جاتا ہے — اس لیے یہیں، تاکہ ہر دستاویز کی فائل پرنٹ جیسی ہو
-      '<div xmlns="http://www.w3.org/1999/xhtml" style="width:' + W + 'px;background:#fff;font-kerning:none;">' +
+      //   body ایک div بن جاتا ہے — اس لیے یہیں؛ v569: صرف جب دستاویز خود یہ مانگے (چالان)
+      '<div xmlns="http://www.w3.org/1999/xhtml" style="width:' + W + 'px;background:#fff;' + (kernOff ? 'font-kerning:none;' : '') + '">' +
       '<style><![CDATA[' + ff + styles.replace(/\]\]>/g, '') + ']]></style>' + xml + '</div></foreignObject></svg>';
     var img = new Image();
     img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
@@ -495,9 +497,13 @@
   }
   // v564: کاغذ کا قاعدہ (فونٹ کی kerning بند) تصویر بنانے میں بھی — canvas کی اپنی kerning («auto») صفحے کی CSS
   //   نہیں پڑھتی؛ ورنہ ہر لفظ اپنے خانے سے ذرا تنگ بنتا اور فائل کا صفحہ پرنٹ سے ہٹ جاتا۔ صرف اسی دوران۔
-  async function noKern(fn) {
+  //   v569: صرف اُس دستاویز پر جس کا اپنا قاعدہ یہی ہو (چالان) — el کی حتمی font-kerning «none»؛ باقی سب خودکار
+  async function noKern(fn, el) {
     var P = window.CanvasRenderingContext2D && window.CanvasRenderingContext2D.prototype;
     if (!P || !('fontKerning' in P)) return fn();
+    var off = false;
+    try { off = !!el && (el.ownerDocument.defaultView || window).getComputedStyle(el).fontKerning === 'none'; } catch (_) { off = false; }
+    if (!off) return fn();
     var o = P.fillText;
     P.fillText = function () {
       try { if (this.fontKerning !== 'none') this.fontKerning = 'none'; } catch (_) { /* پرانا براؤزر */ }
@@ -530,7 +536,7 @@
             return n.matches('.no-print,button,.colgrip,.rowgrip,[class*="grip"],.dio-etb,.editor-toolbar,[data-noprint],#dio-saved-box,.dio-saved-box');
           } catch (_) { return false; }
         }
-      }); });
+      }); }, el);
       await paintRotated(el, canvas, rots);
     } finally {
       rots.forEach(function (r) { try { r.el.removeAttribute('data-dio-rot'); } catch (_) { /* ضمنی */ } });
@@ -600,7 +606,7 @@
       tmp.querySelectorAll('*').forEach(function (c) { c.style.writingMode = 'horizontal-tb'; c.style.transform = 'none'; c.style.position = 'static'; });
       doc.body.appendChild(tmp);
       try {
-        var t = await noKern(function () { return window.html2canvas(tmp, { scale: k, backgroundColor: null, logging: false }); });
+        var t = await noKern(function () { return window.html2canvas(tmp, { scale: k, backgroundColor: null, logging: false }); }, n);
         var cx = (b.left - rr.left + b.width / 2) * k, cy = (b.top - rr.top + b.height / 2) * k;
         g.save(); g.translate(cx, cy); g.rotate(R.deg * Math.PI / 180);
         g.drawImage(t, -t.width / 2, -t.height / 2);

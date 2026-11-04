@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_VER = 'zimni v37 (v568) — print-all = each zimni\'s own print, duplicate zimni, save never claims success without a server row, attached androoni sheet separated';
+const ZIMNI_VER = 'zimni v38 (v569) — word spacing back to before 3 Nov (kerning auto; the kerning-off rule is report 173 only)';
 window.ZIMNI_VER = ZIMNI_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -4786,8 +4786,10 @@ function _zimniPrintHTML(inner) {
   const _c = (typeof _zimniCase !== 'undefined' && _zimniCase) ? _zimniCase : {};
   const zaSkel = _zimniZaSkel(_o, _c);
   // v568: منسلک اندرونی شیٹ کی CSS اپنی منجمد نقل (_zfAttFormCSS) — اکیلے بیان 161 کی (_zaFormCSS) نہیں
+  // v569 (افسر کا حکم «report 173 only» + «Restore ضمنی too»): 3 نومبر (v564) کا «فونٹ kerning بند» قاعدہ
+  //   ضمنی (اور اس کی منسلک اندرونی شیٹ) کے کاغذ پر نہیں — 3 نومبر سے پہلے کی طرح براؤزر کا اپنا فاصلہ؛
+  //   css173 (_ch173CSS بغیر textRule) میں بھی یہ قاعدہ نہیں
   return `<!DOCTYPE html><html dir="rtl" lang="ur"><head><meta charset="UTF-8"><title> </title>
-    ${(typeof dioTextCSS === 'function') ? '<style id="dio-text-css">' + dioTextCSS('body') + '</style>' : ''}
     ${(typeof dioFontHead === 'function') ? dioFontHead() : ''}
     <style>
       /* AHEM: سائیڈ مارجن صفحے پر نہیں، دستاویز کی padding سے — تاکہ دستاویز کی
