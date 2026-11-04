@@ -561,9 +561,9 @@
       f.title = 'Digital IO';
       f.setAttribute('allow', 'fullscreen; clipboard-read; clipboard-write; camera; microphone; geolocation; web-share');
       f.setAttribute('allowfullscreen', '');
-      f.src = new URL('index.html?dtab=' + fid, location.href).href;
-      return f;
+      return f;                                                         // src: loadRec() — انٹرنیٹ / service worker دیکھ کر
     }
+    function tabUrl(fid) { return new URL('index.html?dtab=' + fid, location.href).href; }
     function newRec() {
       var fid = 'f' + Date.now().toString(36) + (++S.seq);
       var rec = { fid: fid, el: null, win: null, tabId: null, last: Date.now(), busy: 0 };
@@ -571,8 +571,10 @@
       rec.el = frameEl(fid);
       rec.el.addEventListener('load', function () { frameLoaded(rec); });
       build();
-      STAGE.appendChild(rec.el);                                       // کبھی منتقل نہیں (منتقل ہو تو دوبارہ لوڈ ہوتی ہے)
       S.frames[fid] = rec;
+      loadRec(rec);                                                     // src جوڑنے سے پہلے (خالی about:blank کا لوڈ نہیں)
+      STAGE.appendChild(rec.el);                                       // کبھی منتقل نہیں (منتقل ہو تو دوبارہ لوڈ ہوتی ہے)
+      rec.wd = setInterval(function () { watch(rec); }, 5000);
       return rec;
     }
     // انٹرنیٹ نہ ہو اور service worker ابھی قابو میں نہ ہو تو نئی نقل لوڈ نہیں ہو سکتی (براؤزر کا خرابی والا صفحہ) —
@@ -580,21 +582,45 @@
     function canLoad() { return navigator.onLine !== false || !!(navigator.serviceWorker && navigator.serviceWorker.controller); }
     function whenOnline(fn) { if (canLoad()) { fn(); return; } (S._onl = S._onl || []).push(fn); }
     window.addEventListener('online', function () { var q = S._onl || []; S._onl = []; q.forEach(function (f) { try { f(); } catch (_) { /* - */ } }); });
-    function frameOk(rec) { try { var w = rec.el.contentWindow; return !!w && /[?&]dtab=/.test(w.location.search); } catch (_) { return false; } }
+    // نقل واقعی Digital IO ہے؟ (اس کا اپنا نشان — صرف پتہ نہیں: کچھ براؤزر خرابی والا صفحہ اسی پتے پر دکھاتے ہیں)
+    function frameOk(rec) { try { var w = rec.el.contentWindow; return !!w && w.__dioTabChild === rec.fid; } catch (_) { return false; } }
+    // لوڈ: انٹرنیٹ نہ ہو (اور service worker قابو میں نہ ہو) تو کوشش ہی نہیں — صاف پیغام، انٹرنیٹ آتے ہی خود
+    function loadRec(rec) {
+      if (S.frames[rec.fid] !== rec || rec.win) return;
+      if (!canLoad()) {
+        rec.loading = false;
+        if (!rec.failed) { rec.failed = 'offline'; if (S.on) layout(); }
+        if (!rec.queued) { rec.queued = true; whenOnline(function () { rec.queued = false; loadRec(rec); }); }
+        return;
+      }
+      rec.failed = false; rec.loading = true; rec.t0 = Date.now();
+      rec.el.src = tabUrl(rec.fid);
+      if (S.on) layout();
+    }
     function frameLoaded(rec) {
-      if (S.frames[rec.fid] !== rec) return;
+      if (S.frames[rec.fid] !== rec || !rec.loading) return;           // ابھی src ہی نہیں (خالی نقل) — کچھ نہیں
       if (frameOk(rec)) { rec.failed = false; return; }
-      rec.failed = true; rec.tries = (rec.tries || 0) + 1;
+      rec.loading = false; rec.tries = (rec.tries || 0) + 1;
       if (S.spare === rec) { destroy(rec, true); whenOnline(function () { spareArm(1500); }); return; }
+      rec.failed = canLoad() ? 'error' : 'offline';
       if (S.on) layout();
       if (rec.tries > 6) return;
-      var retry = function () {
-        if (S.frames[rec.fid] !== rec || rec.win) return;
-        rec.el.src = new URL('index.html?dtab=' + rec.fid, location.href).href;
-      };
-      if (canLoad()) setTimeout(retry, 4000); else whenOnline(retry);
+      if (canLoad()) setTimeout(function () { loadRec(rec); }, 4000); else loadRec(rec);
     }
-    D._childReady = function (fid, win) { var r = S.frames[fid]; if (!r) return; r.win = win; if (r._res) r._res(win); if (S.on) { layout(); render(); } };
+    // نگرانی: لوڈ کا واقعہ نہ آئے (کچھ براؤزر / نیٹ ورک پر) تب بھی ٹیب «کھل رہا ہے…» پر نہ اٹکے
+    function watch(rec) {
+      if (S.frames[rec.fid] !== rec || rec.win) { clearInterval(rec.wd); return; }
+      if (!rec.loading) return;
+      if (!canLoad()) {                                                 // لوڈ کے دوران انٹرنیٹ گیا
+        rec.loading = false;
+        if (S.spare === rec) { destroy(rec, true); whenOnline(function () { spareArm(1500); }); return; }
+        loadRec(rec); return;
+      }
+      if (Date.now() - (rec.t0 || 0) > 45000 && (rec.tries || 0) < 3) { // 45 سیکنڈ میں بھی تیار نہیں — ایک بار پھر
+        rec.tries = (rec.tries || 0) + 1; loadRec(rec);
+      }
+    }
+    D._childReady = function (fid, win) { var r = S.frames[fid]; if (!r) return; r.win = win; r.failed = false; r.loading = false; clearInterval(r.wd); if (r._res) r._res(win); if (S.on) { layout(); render(); } };
     function spareArm(ms) {
       clearTimeout(S._spareT);
       S._spareT = setTimeout(function () {
@@ -616,6 +642,7 @@
       if (!rec) return;
       var c = child(rec);
       if (c && !noFlush) { try { c.flush(); } catch (_) { /* - */ } }
+      clearInterval(rec.wd);
       try { rec.el.remove(); } catch (_) { /* - */ }
       delete S.frames[rec.fid];
       if (S.spare === rec) S.spare = null;
@@ -1289,12 +1316,13 @@
       var ld = STAGE.querySelector('.dio-tabs-load');
       var t = activeTab();
       if (t && !a) {
-        var ce = cur(t), cr = ce && ce.fid && S.frames[ce.fid], fail = !!(cr && cr.failed);
+        var ce = cur(t), cr = ce && ce.fid && S.frames[ce.fid], fail = (cr && cr.failed) || '';
         if (!ld) { ld = document.createElement('div'); ld.className = 'dio-tabs-load'; STAGE.appendChild(ld); }
         if (ld.getAttribute('data-f') !== String(fail)) {
           ld.setAttribute('data-f', String(fail));
-          ld.innerHTML = fail ? '<div>انٹرنیٹ نہیں — یہ ٹیب انٹرنیٹ آتے ہی خود کھل جائے گی</div><div>باقی ٹیبیں اور محفوظ کام اپنی جگہ موجود ہیں</div>'
-            : '<div class="loading-spinner"></div><div>Digital IO کھل رہا ہے…</div>';
+          ld.innerHTML = fail === 'offline' ? '<div>انٹرنیٹ نہیں — یہ ٹیب انٹرنیٹ آتے ہی خود کھل جائے گی</div><div>باقی ٹیبیں اور محفوظ کام اپنی جگہ موجود ہیں</div>'
+            : fail ? '<div class="loading-spinner"></div><div><bdi>Digital IO</bdi> نہیں کھل سکا — دوبارہ کوشش ہو رہی ہے…</div><div>باقی ٹیبیں اور محفوظ کام اپنی جگہ موجود ہیں</div>'
+            : '<div class="loading-spinner"></div><div><bdi>Digital IO</bdi> کھل رہا ہے…</div>';
         }
       } else if (ld) ld.remove();
     }

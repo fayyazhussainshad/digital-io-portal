@@ -47,6 +47,13 @@ with sync_playwright() as p:
         kw = {'viewport': {'width': 1366, 'height': 768}} if desktop else {'viewport': {'width': 390, 'height': 844}, 'is_mobile': True, 'has_touch': True, 'device_scale_factor': 2}
         ctx = tabs_ctx(b.new_context(service_workers='block', timezone_id='Asia/Karachi', **kw))
         ctx.route('**/*', lambda r: r.fulfill(path=SHARED, content_type='application/javascript') if ('supabase' in r.request.url and r.request.url.endswith('.js')) else real_route(r))
+        BRK = {'n': 0, 'hits': 0}
+        def brk(r):
+            if BRK['n'] > 0:
+                BRK['n'] -= 1; BRK['hits'] += 1
+                return r.fulfill(status=503, body='<html><body><h1>503 Service Unavailable</h1></body></html>', content_type='text/html')
+            return real_route(r)
+        ctx.route(lambda u: 'dtab=' in u, brk)
         ctx.expose_binding('__srv', lambda source, st: S.exec(st))
         ctx.add_init_script(TABS_FORCE + PRINT_HOOK + "\nwindow.confirm = () => true;")
         pg = ctx.new_page(); errs = []
@@ -146,6 +153,23 @@ with sync_playwright() as p:
         except Exception as e: ok_on = str(e)[:80]
         check(f'{tag} انٹرنیٹ آتے ہی وہی ٹیب خود کھل گئی (ڈیش بورڈ)', ok_on is True, ok_on)
         for _ in range(2): pg.evaluate("DIOTabs.close(); 0"); idle(600)
+        af()
+        # ═══ نقل کی جگہ کوئی اور صفحہ آئے (سرور کی خرابی وغیرہ، اسی پتے پر) → «کھل رہا ہے…» پر نہ اٹکے: پیغام، پھر خود دوبارہ ═══
+        BRK['n'] = 1
+        pg.click('#dio-tabs-strip [data-act="new"]'); idle(300)
+        if pg.evaluate("!!document.querySelector('#dio-tabs-stage iframe.on')"):   # تیار نقل استعمال ہوئی — اگلی نئی بنے گی
+            pg.click('#dio-tabs-strip [data-act="new"]'); idle(300)
+        idle(1500)
+        msg2 = pg.evaluate("(() => { const l = document.querySelector('#dio-tabs-stage .dio-tabs-load'); return l ? l.innerText : ''; })()")
+        pg.screenshot(path=V + tag + '_broken_copy_retry.png')
+        check(f'{tag} نقل کی جگہ خرابی والا صفحہ آیا: صاف پیغام «دوبارہ کوشش» (اٹکا نہیں)', 'دوبارہ کوشش' in msg2 and BRK['hits'] >= 1, [msg2, BRK['hits']])
+        idle(6000)
+        ok_rt = False
+        try: ok_rt = af().evaluate("window._activePage") == 'dashboard' and not pg.evaluate("!!document.querySelector('#dio-tabs-stage .dio-tabs-load')")
+        except Exception as e: ok_rt = str(e)[:80]
+        check(f'{tag} چند سیکنڈ بعد وہی ٹیب خود کھل گئی (ڈیش بورڈ)', ok_rt is True, ok_rt)
+        n_t = pg.evaluate("DIOTabs._state().tabs.length")
+        for _ in range(max(0, n_t - 1)): pg.evaluate("DIOTabs.close(); 0"); idle(600)
         af()
         # ═══ دو ٹیبیں → محفوظ فہرست؛ ٹیب کے اندر سے لاگ آؤٹ ═══
         pg.click('#dio-tabs-strip [data-act="new"]'); idle(800); af()
