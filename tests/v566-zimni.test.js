@@ -133,3 +133,11 @@ test('v566: سروس ورکر کا نیا نسخہ', () => {
   const m = /const CACHE_NAME = 'digital-io-v(\d+)';/.exec(read('sw.js'));
   assert.ok(m && Number(m[1]) >= 566);
 });
+
+test('v566: چسپاں کے بعد حرف کے خول پر Chrome کا اپنا انداز (سیدھ / حاشیہ / px) نہیں — CI کا Chromium 141', () => {
+  const K = read('dio-keys.js');
+  assert.ok(/const c = cleanHtml\(html, true\);/.test(K), 'چسپاں ہونے والے عناصر پر نشان');
+  assert.ok(/if \(document\.execCommand\('insertHTML', false, c\)\) \{ try \{ tidyPasted\(h\); remember\(h\); \}/.test(K), 'insertHTML کے فوراً بعد صفائی + undo کی تازہ حالت');
+  assert.ok(/const NO_INLINE_CSS = \/\^\(text-align\|text-align-last\|text-indent\)\$\/;/.test(K));
+  assert.ok(/if \(pasted && p === 'font-size' && !\(el\.hasAttribute\('data-dio-fs'\) && \/pt\$\/\.test\(v\)\)\)/.test(K), 'سائز صرف افسر کا اپنا pt');
+});
