@@ -12,6 +12,11 @@ let _usageTimer = null;
 // ── SUPABASE ──────────────────────────────────────────────────
 const SUPABASE_URL = 'https://bbrhtokynxmljumxyaeh.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJicmh0b2t5bnhtbGp1bXh5YWVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MzU5ODIsImV4cCI6MjA5NTUxMTk4Mn0.o4uKyqhIx9vWDX-CeJjwujWUYK6Cy0XzEZ5fw_efQMA';
+// TASK 22: ٹیب کی نقل اوپر کی کھڑکی کی لائبریری اور رابطہ استعمال کرتی ہے — اسے CDN کی ضرورت نہیں
+//   (انٹرنیٹ کے بغیر نئی ٹیب بھی کھلے؛ «کنکشن کا مسئلہ» صرف تب جب اوپر کی کھڑکی کے پاس بھی لائبریری نہ ہو)
+if (window.__dioTabChild && (!window.supabase || !window.supabase.createClient)) {
+  try { if (window.top.supabase && window.top.supabase.createClient) window.supabase = window.top.supabase; } catch (_) { /* - */ }
+}
 if (!window.supabase || !window.supabase.createClient) {
   document.addEventListener('DOMContentLoaded', function(){
     // Wait a moment in case CDN is still loading, then show a retry UI

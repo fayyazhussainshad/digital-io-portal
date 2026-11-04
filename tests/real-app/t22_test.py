@@ -13,6 +13,9 @@ V = OUT + '/t22/test/'
 os.makedirs(V, exist_ok=True)
 MA = 'غیر محفوظ متن الف — مقدمہ 663/26 کی ضمنی'
 MC = 'غیر محفوظ متن جیم — مقدمہ 701/26 کی ضمنی'
+CARET = """(() => { const s = getSelection(); if (!s.rangeCount) return null; const n = s.getRangeAt(0).startContainer; const el = n.nodeType === 1 ? n : n.parentElement;
+  const b = el && el.closest('.zf-body'); const a = document.activeElement; if (!b || !a || !a.contains(n)) return null;
+  const r = document.createRange(); r.setStart(b, 0); r.setEnd(n, s.getRangeAt(0).startOffset); return [[...document.querySelectorAll('.zf-body')].indexOf(b), r.toString().length]; })()"""
 TOASTS = """(() => { window.__toasts = []; const o = window.showToast;
   window.showToast = function (m, t) { window.__toasts.push(String(m)); try { return o.apply(this, arguments); } catch (_) { return 0; } }; return 0; })()"""
 
@@ -79,12 +82,25 @@ def run(desktop):
         bx = pg.evaluate("(() => { const r = document.querySelector('#dio-tabs-strip [data-act=back]').getBoundingClientRect(); return [r.left, r.right, innerWidth]; })()")
         check(f'{tag} 10) پیچھے / آگے دائیں کونے میں (RTL)', bx[1] > bx[2] - 140, bx)
         shot(pg, f'{tag}_01_dashboard_tab')
+        if not desktop:
+            # موبائل: نیچے کی پٹی (انگوٹھے کی پٹی) ٹیب کی اپنی — اوپر کی کھڑکی کی پٹی اس پر نہ چڑھے؛ «مقدمات» دبانے سے اسی ٹیب میں
+            xy = pg.evaluate("""(() => { const fr = document.querySelector('#dio-tabs-stage iframe.on'); const fb = fr.getBoundingClientRect();
+                const b = fr.contentDocument.querySelector('.dio-thumbbar [data-p="cases"]'); if (!b) return null; const r = b.getBoundingClientRect();
+                return [fb.left + r.left + r.width / 2, fb.top + r.top + r.height / 2]; })()""")
+            hit = pg.evaluate("([x, y]) => { const e = document.elementFromPoint(x, y); return e ? e.tagName : ''; }", xy) if xy else None
+            if xy: pg.touchscreen.tap(xy[0], xy[1])
+            pg.wait_for_timeout(1500); wait_active_ready(pg)
+            pgc = af(pg).evaluate("window._activePage")
+            check(f'{tag} نیچے کی پٹی ٹیب کی اپنی (اوپر کی کھڑکی کی پٹی چھپی)؛ «مقدمات» دبانے سے اسی ٹیب میں مقدمات', hit == 'IFRAME' and pgc == 'cases', [xy, hit, pgc])
+            back_btn(pg)
+            f0 = af(pg)
 
         # ═══ A) ضمنی لکھی (غیر محفوظ) → اسی ٹیب میں مقدمہ → ایف آئی آر → «واپس» → ضمنی وہیں ═══
         fz = open_new_zimni(pg, f0, 'c1')
         type_zimni(fz, MA); pg.wait_for_timeout(400)
         fz.evaluate("window.__alive = 'Z-A'; 0")
         fidZ = active_fid(pg)
+        car0 = fz.evaluate(CARET)
         sc0 = fz.evaluate("(() => { const sc = [...document.querySelectorAll('#dio-dv-body, #dio-dv-body *')].find(e => /(auto|scroll)/.test(getComputedStyle(e).overflowY) && e.scrollHeight > e.clientHeight + 10); if (!sc) return -1; sc.scrollTop = 150; return sc.scrollTop; })()")
         pg.wait_for_timeout(300)
         shot(pg, f'{tag}_02_zimni_typed')
@@ -105,8 +121,11 @@ def run(desktop):
         check(f'{tag} A2) «واپس» → وہی ضمنی، وہی صفحہ (دوبارہ نہیں بنی)، غیر محفوظ متن موجود', same and MA in txt, [same, txt[:60]])
         check(f'{tag} A2) scroll جہاں چھوڑا تھا', sc1 == sc0 and sc0 > 0, [sc0, sc1])
         pg.wait_for_timeout(300)
-        cur_ok = fz2.evaluate("(() => { const a = document.activeElement; const s = getSelection(); return !!(a && a.closest && a.closest('.zf-body') && s.rangeCount && a.contains(s.getRangeAt(0).startContainer)); })()")
-        check(f'{tag} A2) کرسر وہیں (ضمنی کے متن میں) — واپس آتے ہی لکھائی جاری', cur_ok)
+        car1 = fz2.evaluate(CARET)
+        pg.keyboard.type('ب'); pg.wait_for_timeout(300)
+        typed = (MA + 'ب') in (zimni_text(fz2) or '')
+        pg.keyboard.press('Backspace'); pg.wait_for_timeout(300)
+        check(f'{tag} A2) کرسر وہیں (ضمنی کے متن میں) — واپس آتے ہی لکھائی جاری', car0 is not None and car1 == car0 and typed and MA in (zimni_text(fz2) or ''), [car0, car1, typed])
         shot(pg, f'{tag}_04_back_to_zimni')
 
         # ═══ «نئی دستاویز» → نئی ٹیب؛ ضمنی کی ٹیب پر واپس → متن وہیں ═══

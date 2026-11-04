@@ -128,6 +128,25 @@ with sync_playwright() as p:
         T = pg.evaluate("DIOTabs._state().tabs.map(t => t.entries[t.idx].t)")
         af()
         check(f'{tag} 11) سب ٹیبیں بند → ایک ڈیش بورڈ ٹیب (Digital IO بند نہیں)', T == ['ڈیش بورڈ'] and af().evaluate("window._activePage") == 'dashboard', T)
+        # ═══ انٹرنیٹ بند (service worker ابھی قابو میں نہیں — پہلی بار جیسا): فالتو نقل نہیں؛ نئی ٹیب پر صاف پیغام؛ انٹرنیٹ آتے ہی خود کھلے ═══
+        idle(3500)
+        FR = "document.querySelectorAll('#dio-tabs-stage iframe').length"
+        ctx.set_offline(True); idle(300)
+        pg.click('#dio-tabs-strip [data-act="new"]'); idle(1200)
+        ok_sp = af().evaluate("window._activePage") == 'dashboard'          # پہلے سے تیار نقل سے — انٹرنیٹ کے بغیر بھی فوراً
+        n0 = pg.evaluate(FR); idle(4500); n1 = pg.evaluate(FR)
+        check(f'{tag} آف لائن: تیار نقل سے نئی ٹیب کھلی؛ انٹرنیٹ کے بغیر فالتو نقل نہیں بنی', ok_sp and n1 == n0, [ok_sp, n0, n1])
+        pg.click('#dio-tabs-strip [data-act="new"]'); idle(3000)
+        msg = pg.evaluate("(() => { const l = document.querySelector('#dio-tabs-stage .dio-tabs-load'); return l ? l.innerText : ''; })()")
+        pg.screenshot(path=V + tag + '_offline_new_tab.png')
+        check(f'{tag} آف لائن: نئی نقل لوڈ نہ ہو سکی تو صاف پیغام (براؤزر کا خرابی والا صفحہ نہیں)', 'انٹرنیٹ نہیں' in msg, msg)
+        ctx.set_offline(False); idle(6000)
+        ok_on = False
+        try: ok_on = af().evaluate("window._activePage") == 'dashboard' and not pg.evaluate("!!document.querySelector('#dio-tabs-stage .dio-tabs-load')")
+        except Exception as e: ok_on = str(e)[:80]
+        check(f'{tag} انٹرنیٹ آتے ہی وہی ٹیب خود کھل گئی (ڈیش بورڈ)', ok_on is True, ok_on)
+        for _ in range(2): pg.evaluate("DIOTabs.close(); 0"); idle(600)
+        af()
         # ═══ دو ٹیبیں → محفوظ فہرست؛ ٹیب کے اندر سے لاگ آؤٹ ═══
         pg.click('#dio-tabs-strip [data-act="new"]'); idle(800); af()
         key1 = pg.evaluate("Object.keys(localStorage).filter(k => k.startsWith('dio_tabs_v1_'))")

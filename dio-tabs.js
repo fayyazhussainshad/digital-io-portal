@@ -569,18 +569,39 @@
       var rec = { fid: fid, el: null, win: null, tabId: null, last: Date.now(), busy: 0 };
       rec.ready = new Promise(function (res) { rec._res = res; });
       rec.el = frameEl(fid);
+      rec.el.addEventListener('load', function () { frameLoaded(rec); });
       build();
       STAGE.appendChild(rec.el);                                       // کبھی منتقل نہیں (منتقل ہو تو دوبارہ لوڈ ہوتی ہے)
       S.frames[fid] = rec;
       return rec;
+    }
+    // انٹرنیٹ نہ ہو اور service worker ابھی قابو میں نہ ہو تو نئی نقل لوڈ نہیں ہو سکتی (براؤزر کا خرابی والا صفحہ) —
+    // فالتو نقل نہیں بنتی؛ ٹیب کی نقل انٹرنیٹ آتے ہی خود دوبارہ لوڈ ہوتی ہے
+    function canLoad() { return navigator.onLine !== false || !!(navigator.serviceWorker && navigator.serviceWorker.controller); }
+    function whenOnline(fn) { if (canLoad()) { fn(); return; } (S._onl = S._onl || []).push(fn); }
+    window.addEventListener('online', function () { var q = S._onl || []; S._onl = []; q.forEach(function (f) { try { f(); } catch (_) { /* - */ } }); });
+    function frameOk(rec) { try { var w = rec.el.contentWindow; return !!w && /[?&]dtab=/.test(w.location.search); } catch (_) { return false; } }
+    function frameLoaded(rec) {
+      if (S.frames[rec.fid] !== rec) return;
+      if (frameOk(rec)) { rec.failed = false; return; }
+      rec.failed = true; rec.tries = (rec.tries || 0) + 1;
+      if (S.spare === rec) { destroy(rec, true); whenOnline(function () { spareArm(1500); }); return; }
+      if (S.on) layout();
+      if (rec.tries > 6) return;
+      var retry = function () {
+        if (S.frames[rec.fid] !== rec || rec.win) return;
+        rec.el.src = new URL('index.html?dtab=' + rec.fid, location.href).href;
+      };
+      if (canLoad()) setTimeout(retry, 4000); else whenOnline(retry);
     }
     D._childReady = function (fid, win) { var r = S.frames[fid]; if (!r) return; r.win = win; if (r._res) r._res(win); if (S.on) { layout(); render(); } };
     function spareArm(ms) {
       clearTimeout(S._spareT);
       S._spareT = setTimeout(function () {
         if (S.spare || Object.keys(S.frames).length >= maxFrames() + 1) return;
+        if (!canLoad()) { whenOnline(function () { spareArm(1500); }); return; }
         S.spare = newRec();
-      }, ms == null ? 3000 : ms);
+      }, ms == null ? 1500 : ms);
     }
     function takeFrame(tabId) {
       sleepIfNeeded();
@@ -1074,6 +1095,8 @@
       '#dio-tabs-root.pre{visibility:hidden;z-index:-1;pointer-events:none;}' +
       'body.dio-tabs-on{overflow:hidden;}' +
       'body.dio-tabs-on #main-app,body.dio-tabs-on #login-screen,body.dio-tabs-on #pwa-install-btn{display:none !important;}' +
+      // اوپر کی کھڑکی کی اپنی موبائل نیچے والی پٹی (انگوٹھے کی پٹی) وغیرہ — ٹیب کی اپنی پٹی ہی نظر آئے، اوپر والی اس پر نہ چڑھے
+      'body.dio-tabs-on > .dio-thumbbar,body.dio-tabs-on > .dio-mbar,body.dio-tabs-on > .dio-addblk{display:none !important;}' +
       '#dio-tabs-strip{height:40px;flex-shrink:0;display:flex;align-items:flex-end;gap:4px;padding:0 8px;direction:rtl;' +
         'background:var(--dio-file-2,#0b1730);border-bottom:2px solid var(--dio-brass,#c9a227);font-family:"Jameel Noori Nastaleeq";}' +
       '#dio-tabs-strip .nav{display:flex;gap:2px;align-self:center;flex-shrink:0;}' +
@@ -1266,7 +1289,13 @@
       var ld = STAGE.querySelector('.dio-tabs-load');
       var t = activeTab();
       if (t && !a) {
-        if (!ld) { ld = document.createElement('div'); ld.className = 'dio-tabs-load'; ld.innerHTML = '<div class="loading-spinner"></div><div>Digital IO کھل رہا ہے…</div>'; STAGE.appendChild(ld); }
+        var ce = cur(t), cr = ce && ce.fid && S.frames[ce.fid], fail = !!(cr && cr.failed);
+        if (!ld) { ld = document.createElement('div'); ld.className = 'dio-tabs-load'; STAGE.appendChild(ld); }
+        if (ld.getAttribute('data-f') !== String(fail)) {
+          ld.setAttribute('data-f', String(fail));
+          ld.innerHTML = fail ? '<div>انٹرنیٹ نہیں — یہ ٹیب انٹرنیٹ آتے ہی خود کھل جائے گی</div><div>باقی ٹیبیں اور محفوظ کام اپنی جگہ موجود ہیں</div>'
+            : '<div class="loading-spinner"></div><div>Digital IO کھل رہا ہے…</div>';
+        }
       } else if (ld) ld.remove();
     }
     D.layout = layout;

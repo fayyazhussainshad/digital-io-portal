@@ -83,3 +83,17 @@ test('v570: کھڑکی کا X — براؤزر کی اپنی تصدیق (عبا�
   assert.ok(/flushAll\(\); saveNow\(\);/.test(bu) && /e\.preventDefault\(\); e\.returnValue = '';/.test(bu));
   assert.ok(/کیا آپ بند کرنا چاہتے ہیں؟/.test(T), 'ڈیش بورڈ پر «واپس» کا سوال');
 });
+
+test('v570: انٹرنیٹ کے بغیر — فالتو نقل نہیں، ناکام نقل پر صاف پیغام اور انٹرنیٹ آتے ہی دوبارہ؛ ٹیب کو CDN کی ضرورت نہیں', () => {
+  assert.ok(/function canLoad\(\) \{ return navigator\.onLine !== false \|\| !!\(navigator\.serviceWorker && navigator\.serviceWorker\.controller\); \}/.test(T));
+  assert.ok(/if \(!canLoad\(\)\) \{ whenOnline\(function \(\) \{ spareArm\(1500\); \}\); return; \}/.test(fnSrc('spareArm')), 'آف لائن فالتو نقل نہیں');
+  const fl = fnSrc('frameLoaded');
+  assert.ok(/if \(S\.spare === rec\) \{ destroy\(rec, true\);/.test(fl) && /whenOnline\(retry\)/.test(fl) && /rec\.tries > 6/.test(fl));
+  assert.ok(/انٹرنیٹ نہیں — یہ ٹیب انٹرنیٹ آتے ہی خود کھل جائے گی/.test(T));
+  assert.ok(/if \(window\.__dioTabChild && \(!window\.supabase \|\| !window\.supabase\.createClient\)\) \{\s*try \{ if \(window\.top\.supabase && window\.top\.supabase\.createClient\) window\.supabase = window\.top\.supabase;/.test(A),
+    'ٹیب اوپر کی کھڑکی کی لائبریری لے — «کنکشن کا مسئلہ» نہیں');
+});
+
+test('v570: موبائل — اوپر کی کھڑکی کی نیچے والی پٹی ٹیب پر نہیں چڑھتی (ٹیب کی اپنی پٹی دبتی ہے)', () => {
+  assert.ok(/body\.dio-tabs-on > \.dio-thumbbar,body\.dio-tabs-on > \.dio-mbar,body\.dio-tabs-on > \.dio-addblk\{display:none !important;\}/.test(T));
+});
