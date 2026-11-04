@@ -73,7 +73,8 @@ test('v570: لاگ اِن / تالا / لاگ آؤٹ — ایک ہی افسر، 
 });
 
 test('v570: سروس ورکر — نیا نسخہ، ٹیبوں کی فائل پہلے سے محفوظ، ہر ٹیب کی الگ نقل نہیں', () => {
-  assert.ok(/const CACHE_NAME = 'digital-io-v570';/.test(SW));
+  const m = /const CACHE_NAME = 'digital-io-v(\d+)';/.exec(SW);
+  assert.ok(m && +m[1] >= 570, 'CACHE_NAME v570 یا اس کے بعد');
   assert.ok(/'\/dio-tabs\.js',/.test(SW));
   assert.ok(/searchParams\.has\('dtab'\) \? '\/index\.html'/.test(SW));
 });
@@ -88,7 +89,7 @@ test('v570: انٹرنیٹ کے بغیر — فالتو نقل نہیں، ناک
   assert.ok(/function canLoad\(\) \{ return navigator\.onLine !== false \|\| !!\(navigator\.serviceWorker && navigator\.serviceWorker\.controller\); \}/.test(T));
   assert.ok(/if \(!canLoad\(\)\) \{ whenOnline\(function \(\) \{ spareArm\(1500\); \}\); return; \}/.test(fnSrc('spareArm')), 'آف لائن فالتو نقل نہیں');
   const fl = fnSrc('frameLoaded');
-  assert.ok(/if \(S\.spare === rec\) \{ destroy\(rec, true\);/.test(fl) && /whenOnline\(retry\)/.test(fl) && /rec\.tries > 6/.test(fl));
+  assert.ok(/if \(S\.spare === rec\) \{ destroy\(rec, true\);/.test(fl) && /rec\.tries > 6/.test(fl));
   assert.ok(/انٹرنیٹ نہیں — یہ ٹیب انٹرنیٹ آتے ہی خود کھل جائے گی/.test(T));
   assert.ok(/if \(window\.__dioTabChild && \(!window\.supabase \|\| !window\.supabase\.createClient\)\) \{\s*try \{ if \(window\.top\.supabase && window\.top\.supabase\.createClient\) window\.supabase = window\.top\.supabase;/.test(A),
     'ٹیب اوپر کی کھڑکی کی لائبریری لے — «کنکشن کا مسئلہ» نہیں');
@@ -96,4 +97,17 @@ test('v570: انٹرنیٹ کے بغیر — فالتو نقل نہیں، ناک
 
 test('v570: موبائل — اوپر کی کھڑکی کی نیچے والی پٹی ٹیب پر نہیں چڑھتی (ٹیب کی اپنی پٹی دبتی ہے)', () => {
   assert.ok(/body\.dio-tabs-on > \.dio-thumbbar,body\.dio-tabs-on > \.dio-mbar,body\.dio-tabs-on > \.dio-addblk\{display:none !important;\}/.test(T));
+});
+
+test('v571: نئی ٹیب «کھل رہا ہے…» پر کبھی نہ اٹکے — آف لائن کوشش نہیں، اصل نشان سے پہچان، نگرانی', () => {
+  const m = /const CACHE_NAME = 'digital-io-v(\d+)';/.exec(SW);
+  assert.ok(m && +m[1] >= 571);
+  assert.ok(/return !!w && w\.__dioTabChild === rec\.fid;/.test(fnSrc('frameOk')), 'پتہ نہیں، ایپ کا اپنا نشان (خرابی والا صفحہ اسی پتے پر ہو سکتا ہے)');
+  const lr = fnSrc('loadRec');
+  assert.ok(/if \(!canLoad\(\)\) \{/.test(lr) && /whenOnline\(function \(\) \{ rec\.queued = false; loadRec\(rec\); \}\)/.test(lr), 'انٹرنیٹ کے بغیر لوڈ کی کوشش نہیں، آتے ہی خود');
+  assert.ok(!/f\.src = /.test(fnSrc('frameEl')), 'src صرف loadRec دیتا ہے');
+  const w = fnSrc('watch');
+  assert.ok(/if \(!canLoad\(\)\) \{/.test(w) && /45000/.test(w) && /< 3/.test(w), 'لوڈ کا واقعہ نہ آئے تب بھی');
+  assert.ok(/Digital IO نہیں کھل سکا — دوبارہ کوشش ہو رہی ہے…/.test(T));
+  assert.ok(/clearInterval\(r\.wd\)/.test(T) && /clearInterval\(rec\.wd\);\s*try \{ rec\.el\.remove\(\);/.test(T));
 });
