@@ -1321,8 +1321,8 @@
         if (ld.getAttribute('data-f') !== String(fail)) {
           ld.setAttribute('data-f', String(fail));
           ld.innerHTML = fail === 'offline' ? '<div>انٹرنیٹ نہیں — یہ ٹیب انٹرنیٹ آتے ہی خود کھل جائے گی</div><div>باقی ٹیبیں اور محفوظ کام اپنی جگہ موجود ہیں</div>'
-            : fail ? '<div class="loading-spinner"></div><div>Digital IO نہیں کھل سکا — دوبارہ کوشش ہو رہی ہے…</div><div>باقی ٹیبیں اور محفوظ کام اپنی جگہ موجود ہیں</div>'
-            : '<div class="loading-spinner"></div><div>Digital IO کھل رہا ہے…</div>';
+            : fail ? '<div class="loading-spinner"></div><div><bdi>Digital IO</bdi> نہیں کھل سکا — دوبارہ کوشش ہو رہی ہے…</div><div>باقی ٹیبیں اور محفوظ کام اپنی جگہ موجود ہیں</div>'
+            : '<div class="loading-spinner"></div><div><bdi>Digital IO</bdi> کھل رہا ہے…</div>';
         }
       } else if (ld) ld.remove();
     }

@@ -108,6 +108,6 @@ test('v571: نئی ٹیب «کھل رہا ہے…» پر کبھی نہ اٹکے 
   assert.ok(!/f\.src = /.test(fnSrc('frameEl')), 'src صرف loadRec دیتا ہے');
   const w = fnSrc('watch');
   assert.ok(/if \(!canLoad\(\)\) \{/.test(w) && /45000/.test(w) && /< 3/.test(w), 'لوڈ کا واقعہ نہ آئے تب بھی');
-  assert.ok(/Digital IO نہیں کھل سکا — دوبارہ کوشش ہو رہی ہے…/.test(T));
+  assert.ok(/<bdi>Digital IO<\/bdi> نہیں کھل سکا — دوبارہ کوشش ہو رہی ہے…/.test(T) && /<bdi>Digital IO<\/bdi> کھل رہا ہے…/.test(T), 'انگریزی نام الگ (bdi)');
   assert.ok(/clearInterval\(r\.wd\)/.test(T) && /clearInterval\(rec\.wd\);\s*try \{ rec\.el\.remove\(\);/.test(T));
 });
