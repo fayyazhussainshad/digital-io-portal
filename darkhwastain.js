@@ -29,6 +29,11 @@ let _dkAccused = null;
 let _dkSaved = {};
 let _dkType = 'remand_jismani';        // default qism
 let _dkDirty = false;
+// T9: «بنام» کی فہرست زندہ — ملزم کی سطر ہٹائیں/لکھیں تو 1، 2 … خود درست، اکیلے پر نمبر نہیں
+if (window.DIOSerial) window.DIOSerial.auto('#dk-doc .dk-banam-list', {
+  mode: 'items', item: '.dk-acc-line', holder: '.dk-acc-nm', style: 'bdi',
+  after: (el, changed) => { if (changed) _dkDirty = true; }
+});
 let _dkPaper = (function () {
   try { return localStorage.getItem('dio_dk_paper') || 'legal'; } catch (_) { return 'legal'; }
 })();
@@ -179,8 +184,9 @@ function _dkChosenNamesHtml() {
     const cnic = a.cnic ? esc(a.cnic) : '';
     // Naam se koi غیر ضروری leading control/lone char hatao (bidi marks waghera)
     const cleanN = String(n).replace(/^[\u200e\u200f\u061c\u202a-\u202e\s]+/, '').trim();
-    // v558 قاعدہ: صرف ایک نام ہو تو نمبر «1» نہیں
-    return '<div class="dk-acc-line"><span class="dk-acc-nm">' + (names.length > 1 ? '<bdi>' + (i+1) + '۔</bdi> ' : '') + esc(cleanN) + '</span>' +
+    // T9: نمبر شمار کا ایک ہی قاعدہ (dio-serial.js) — صرف ایک نام ہو تو «1» نہیں
+    const sn = window.DIOSerial ? window.DIOSerial.prefix(i, names.length).trim() : (names.length > 1 ? (i+1) + '۔' : '');
+    return '<div class="dk-acc-line"><span class="dk-acc-nm">' + (sn ? '<bdi>' + sn + '</bdi> ' : '') + esc(cleanN) + '</span>' +
            '<span class="dk-acc-cnic">' + cnic + '</span></div>';
   }).join('');
 }

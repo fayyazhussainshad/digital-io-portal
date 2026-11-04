@@ -973,6 +973,11 @@ function _irFitLabels(doc) {
 
 /* ═════════════ خانوں کے اوزار ═════════════ */
 function _irCell(k) { return document.querySelector('#ir-doc [data-k="' + k + '"]'); }
+// T9: «ملزم / ملزمان» کا خانہ زندہ — سطر ہٹائیں/لکھیں تو 1، 2 … اور «تعداد» خود درست، اکیلے پر نمبر نہیں
+if (window.DIOSerial) window.DIOSerial.auto('#ir-doc [data-k="accused"]', {
+  mode: 'br', style: 'bdi', skip: /^تعداد/, count: /تعداد/,
+  after: (el, changed) => { if (changed) { try { _irMarkDirty(true); _irDraftSoon(); } catch (_) { /* ikhtiyari qadam */ } } }
+});
 function _irSetCell(k, html) {
   const el = _irCell(k);
   if (!el) return;
@@ -1106,7 +1111,9 @@ async function _irApplyCase() {
   if (c.occurrence_place) _irSetCell('place', _irE(String(c.occurrence_place).trim()));
   if (c.complainant) _irSetCell('caller', _irE(String(c.complainant).replace(/\s+/g, ' ').trim()));
   if (names.length) {
-    const list = names.length === 1 ? _irE(names[0]) : names.map((n, i) => `<bdi dir="ltr">${i + 1}</bdi>۔ ${_irE(n)}`).join('<br>');
+    // T9: نمبر شمار کا ایک ہی قاعدہ (dio-serial.js) — اکیلے نام پر «1» نہیں
+    const _sn = (i) => (window.DIOSerial ? window.DIOSerial.prefix(i, names.length) : (names.length > 1 ? '1' : '')) ? `<bdi dir="ltr">${i + 1}</bdi>۔ ` : '';
+    const list = names.map((n, i) => _sn(i) + _irE(n)).join('<br>');
     _irSetCell('accused', `${list}<br>تعداد: <bdi dir="ltr">${names.length}</bdi>`);
   }
   _irMeta.case_id = c.id;

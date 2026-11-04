@@ -196,8 +196,14 @@ function _cdrBanamHtml(names) {
   const n = (names || []).filter(Boolean);
   if (!n.length) return '';
   if (n.length === 1) return esc(n[0]);
-  return n.map((x, i) => `<div class="cdr-acc-line"><bdi>${i + 1}۔</bdi> ${esc(x)}</div>`).join('');
+  // T9: نمبر شمار کا ایک ہی قاعدہ (dio-serial.js)
+  return n.map((x, i) => `<div class="cdr-acc-line"><bdi>${window.DIOSerial ? window.DIOSerial.prefix(i, n.length).trim() : (i + 1) + '۔'}</bdi> ${esc(x)}</div>`).join('');
 }
+// T9: «بنام» زندہ — سطر ہٹائیں تو نمبر خود درست، ایک رہ جائے تو «1» ہٹ جائے
+if (window.DIOSerial) window.DIOSerial.auto('#cdr-doc [data-k="banam"]', {
+  mode: 'items', item: '.cdr-acc-line', style: 'bdi',
+  after: (el, changed) => { if (changed) { try { _cdrOnInput(el); } catch (_) { /* ikhtiyari qadam */ } } }
+});
 
 // پہلے سے طے شدہ ڈیٹا (سسٹم سے) — نیا فارم یا خالی خانہ
 function _cdrDefaults() {

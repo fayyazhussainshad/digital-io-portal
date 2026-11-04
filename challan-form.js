@@ -128,6 +128,18 @@
   function wire(p, doc) {
     // Kaghaz → form
     pull(p, doc);
+    // T9: فہرست والے خانے (مدعی، ملزمان، مال، گواہان) یہاں بھی زندہ — دوسرا نام لکھتے ہی 1، 2؛
+    //   ایک رہ جائے تو نمبر خود ہٹ جائے (dio-serial.js)۔ بدلا ہوا متن اوپر والے سننے والے سے کاغذ پر جاتا ہے۔
+    try {
+      var LK = window._ch173ListKeys || [];
+      if (window.DIOSerial) Array.prototype.forEach.call(p.querySelectorAll('[data-bind]'), function (el) {
+        if (LK.indexOf(el.getAttribute('data-bind')) === -1) return;
+        window.DIOSerial.bind(el, { mode: 'text', after: function (x, changed) {
+          if (!changed) return;
+          setTimeout(function () { try { if (typeof window._ch173Layout === 'function') window._ch173Layout(); } catch (_) { /* ikhtiyari qadam */ } }, 650);
+        } });
+      });
+    } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 
     // Form → kaghaz (WAHI node jise save/print parhte hain)
     p.addEventListener('input', function (e) {
@@ -164,7 +176,10 @@
     Array.prototype.forEach.call(p.querySelectorAll('[data-bind]'), function (el) {
       if (el === document.activeElement) return;      // likhte waqt na badlo
       var node = doc.querySelector('[data-k="' + el.getAttribute('data-bind') + '"]');
-      if (node && el.innerHTML !== node.innerHTML) el.innerHTML = node.innerHTML;
+      if (!node) return;
+      // T9/C: کاغذ پر ڈیش والے ہندسوں کے LTR خانے صرف دکھانے کے — فارم میں سادہ متن
+      var h = String(node.innerHTML).replace(/<span class="ch173-ltr" dir="ltr">([^<]*)<\/span>/g, '$1');
+      if (el.innerHTML !== h) el.innerHTML = h;
     });
   }
 
