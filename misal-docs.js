@@ -563,6 +563,7 @@ function printMisalDoc(name) {
       td,th{border:1px solid #555;padding:6px 10px;}
       button,.no-print,.doc-toolbar,.editor-toolbar,select{display:none !important;}
       ${_isIdx ? '[data-fit]{white-space:nowrap;overflow:hidden;}' : ''}
+      ${_isIdx ? '/* v567: کراس ورژن والے مقدمے کا انڈیکس لمبا — «انڈکس ضمنیات» اپنی جدول کے ساتھ ایک ٹکڑا (صفحہ 1 پر جگہ نہ ہو تو پوری جدول صفحہ 2 پر، بیچ میں نہیں ٹوٹتی) */ #idxz-head{break-after:avoid;page-break-after:avoid;} #idxz-table{break-inside:avoid;page-break-inside:avoid;} #idxz-table tr{break-inside:avoid;page-break-inside:avoid;}' : ''}
       /* Bottom-LEFT branding only — koi tareekh/waqt nahi */
       .dio-print-brand{position:fixed;bottom:3mm;left:4mm;font-size:6.75pt;color:#999;direction:ltr;}
       @media print{body{margin:0}button,.no-print,.doc-toolbar,.editor-toolbar,select{display:none !important;}}

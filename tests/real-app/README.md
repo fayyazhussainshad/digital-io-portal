@@ -69,6 +69,7 @@ python3 v564_test.py                               # ایک ہی: DIO_ONLY=deskt
 python3 v560_test.py                               # pdffonts (poppler) بھی
 python3 v566_test.py                               # ایک ہی: DIO_ONLY=desktop / DIO_ONLY=mobile
 python3 v566_sync_test.py                          # دو آلات، ایک سرور، reload
+python3 v567_test.py                               # انڈیکس: FIR / کراس ورژن کے «بنام» الگ
 ```
 نتیجہ: ہر جانچ PASS/FAIL، اور `out/` میں سکرین اور A4 پرنٹ کی تصاویر/PDF۔
 
