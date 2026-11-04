@@ -482,7 +482,7 @@ def run(b, tag, ctxargs, mobile):
         L = pg.evaluate("""(() => { const tr = document.querySelector('.zt tbody tr[data-zid]');
             return { t: [...tr.querySelectorAll('button')].map(b => b.title.split(' — ')[0]), cls: [...tr.querySelectorAll('button')].every(b => b.classList.contains('dio-act') && b.classList.contains('btn-sm')),
                      same: (() => { const c = document.createElement('div'); c.innerHTML = dioActBtn('print', 'x()', 'پرنٹ'); return c.firstChild.className; })() }; })()""")
-        check(f'{tag}: محفوظ ضمنیوں کے ایکشن بٹن: ترمیم / پرنٹ / شیئر / حذف — PDF اور نقل نہیں؛ مقدمہ کی فہرست والی شکل', L['t'] == ['ترمیم', 'پرنٹ', 'شیئر', 'حذف'] and L['cls'], L)
+        check(f'{tag}: محفوظ ضمنیوں کے ایکشن بٹن: ترمیم / پرنٹ / شیئر / ڈپلیکیٹ (v568) / حذف — PDF اور نقل نہیں؛ مقدمہ کی فہرست والی شکل', L['t'] == ['ترمیم', 'پرنٹ', 'شیئر', 'ڈپلیکیٹ', 'حذف'] and L['cls'], L)
         h = printed(pg, lambda: pg.click(".zt tbody tr[data-zid] button[title^='پرنٹ']"), 'legal')
         check(f'{tag}: فہرست کا «پرنٹ» — ضمنی کھولے بغیر سیدھا کاغذ', 'zf-tbl' in h and pg.evaluate("!document.querySelector('#ch173-doc')"), len(h))
         # دوسری ضمنی + «تمام ضمنیاں» — ترتیب 1، 2

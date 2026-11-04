@@ -378,8 +378,9 @@ function _dioSaveCurrent() {
   //   (وہی جو اس کا اپنا بٹن اور Ctrl+S کرتے ہیں)۔
   try {
     const d0 = document.getElementById('ch173-doc');
-    if (d0 && d0.querySelector('.zfa-tbl') && typeof window._saveZimniA === 'function') { window._saveZimniA(false, true); return; }
+    // v568: بیرونی ضمنی پہلے — منسلک اندرونی شیٹ (.zfa-tbl) والی ضمنی بھی ضمنی ہی ہے (پہلے یہ بیان 161 بن جاتی)
     if (d0 && d0.querySelector('.zf-tbl') && typeof window._saveZimni === 'function') { window._saveZimni(false, true); return; }
+    if (d0 && d0.querySelector('.zfa-tbl') && typeof window._saveZimniA === 'function') { window._saveZimniA(false, true); return; }
   } catch (_) { /* agla raasta */ }
   // نقشہ موقع — اپنا محفوظ (وہی جو Ctrl+S کرتا ہے)
   if (document.getElementById('dio-naqsha-doc') && typeof window.naqSaveNow === 'function') { window.naqSaveNow(); return; }
@@ -552,8 +553,9 @@ function _dioPrintCurrent() {
   // v558: کھلی اندرونی ضمنی (بیانات 161) / ضمنی — اپنا کاغذ (اندرونی ضمنی کی پٹی میں اب پرنٹ بٹن نہیں)
   try {
     const d0 = document.getElementById('ch173-doc');
-    if (d0 && d0.querySelector('.zfa-tbl') && typeof window._printZimniA === 'function') { return window._printZimniA(); }
+    // v568: بیرونی ضمنی پہلے (منسلک اندرونی شیٹ سمیت) — پھر اکیلا بیان 161
     if (d0 && d0.querySelector('.zf-tbl') && typeof window._printZimniCurrent === 'function') { return window._printZimniCurrent(); }
+    if (d0 && d0.querySelector('.zfa-tbl') && typeof window._printZimniA === 'function') { return window._printZimniA(); }
   } catch (_) { /* agla raasta */ }
   // SYSTEM RULE (13 اکتوبر 2026): اوپر کی پٹی کا «پرنٹ» = دستاویز کا اپنا پرنٹ بٹن
   // (درخواستیں، سزا سلپ، CRO، نقشہ موقع، بیانات 161 …) = Ctrl+P — تینوں ایک ہی راستہ۔

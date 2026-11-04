@@ -952,8 +952,9 @@ async function _saveR173() {
   //   اپنا محفوظ کرنے والا (پہلے غلط راستے سے بیان «چالان» کی جدول میں جا سکتا تھا)
   try {
     const d0 = _ch173Doc();
-    if (d0 && d0.querySelector('.zfa-tbl') && typeof window._saveZimniA === 'function') return window._saveZimniA(false, true);
+    // v568: بیرونی ضمنی پہلے — منسلک اندرونی شیٹ (.zfa-tbl) والی ضمنی بیان 161 نہیں
     if (d0 && d0.querySelector('.zf-tbl') && typeof window._saveZimni === 'function') return window._saveZimni(false, true);
+    if (d0 && d0.querySelector('.zfa-tbl') && typeof window._saveZimniA === 'function') return window._saveZimniA(false, true);
   } catch (_) { /* چالان ہی */ }
   // Do dafa dabane par DO satren ban jati thin (dono ko `_r173DocId` khali
   // milta tha). Ab pehla kaam mukammal hone tak doosra nahi chalta.
@@ -1126,7 +1127,10 @@ function _printR173() {
     set: v => {
       _ch173SetPaper(v);
       try { const d = _ch173Doc(); if (d && d.querySelector('.zf-tbl') && typeof _zimniLayout === 'function') _zimniLayout(); } catch (_) { /* ضمنی */ }
-      try { const d = _ch173Doc(); if (d && d.querySelector('.zfa-tbl') && typeof window._zaLayout === 'function') window._zaLayout(); } catch (_) { /* اندرونی ضمنی */ }
+      // v568: اکیلا بیان 161 → اُس کا اپنا ناپ؛ بیرونی ضمنی کی منسلک اندرونی شیٹ → اُس کی اپنی (منجمد) نقل
+      try { const d = _ch173Doc(); if (d && d.querySelector('.zfa-tbl')) {
+        if (d.querySelector('.zf-tbl')) { if (typeof window._zfAttFitTable === 'function') window._zfAttFitTable(); }
+        else if (typeof window._zaLayout === 'function') window._zaLayout(); } } catch (_) { /* اندرونی ضمنی */ }
     },
     run: () => _printR173Now.apply(null, a)
   });

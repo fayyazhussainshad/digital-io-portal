@@ -951,8 +951,9 @@
     try {
       const doc = (typeof window._ch173Doc === 'function') ? window._ch173Doc() : document.getElementById('ch173-doc');
       if (doc && vis(doc)) {
-        if (doc.querySelector('.zfa-tbl') && typeof window._saveZimniA === 'function') { window._saveZimniA(false, true); return true; }
+        // v568: بیرونی ضمنی پہلے — اس میں منسلک اندرونی شیٹ (.zfa-tbl) ہو تب بھی یہ ضمنی ہے، بیان 161 نہیں
         if (doc.querySelector('.zf-tbl') && typeof window._saveZimni === 'function') { window._saveZimni(false, true); return true; }
+        if (doc.querySelector('.zfa-tbl') && typeof window._saveZimniA === 'function') { window._saveZimniA(false, true); return true; }
         if (typeof window._saveR173 === 'function') { window._saveR173(); return true; }
       }
     } catch (_) { /* اگلا راستہ */ }
