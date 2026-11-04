@@ -15,7 +15,7 @@ PDFJS = os.environ.get('DIO_PDFJS', HERE + '/.deps/pdfjs/package/build/')
 # افسر کے آلے پر کاغذ اسی فونٹ میں بنتا ہے، اس لیے جانچ بھی اسی میں (npm pack jameel-noori → package/fonts/)۔
 JAMEEL = os.environ.get('DIO_JAMEEL', HERE + '/.deps/jameel/package/fonts/jameel-noori-nastaleeq4.woff2')
 HAS_JAMEEL = os.path.exists(JAMEEL)
-BASE = 'http://localhost:8770/'
+BASE = os.environ.get('DIO_BASE', 'http://localhost:8770/')   # v566: دوسرے پورٹ پر بھی (دو نسخے ساتھ ساتھ)
 FONT_CSS = """@font-face{font-family:'Noto Nastaliq Urdu';src:url(https://fonts.gstatic.com/n400.woff2) format('woff2');font-weight:400}
 @font-face{font-family:'Noto Nastaliq Urdu';src:url(https://fonts.gstatic.com/n700.woff2) format('woff2');font-weight:700}"""
 if not HAS_JAMEEL:   # Jameel نہ ہو تو پرانا طریقہ: اسی نام سے Noto

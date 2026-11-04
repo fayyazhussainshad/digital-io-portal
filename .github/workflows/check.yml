@@ -137,6 +137,14 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh v560_test.py
+      - name: v566 — bairooni zimni Task 6 — number as written (2-الف) in list / index / print / search, column-1 date only, one zimni per officer per date + senior officer (SHO / DSP) zimni 3-الف / 3-ب with fixed name, accused ▾ never auto-inserted (select / deselect live, reopen unchanged), 161 serial (fixed, printed), cross-version column 3 with separate ▾ (v566_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: bash ci_run.sh v566_test.py
+      - name: v566 — two devices + reload (number, date, senior officer, accused, 161) (v566_sync_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: bash ci_run.sh v566_sync_test.py
       - name: Screenshots and print PDFs
         if: always()
         uses: actions/upload-artifact@v4

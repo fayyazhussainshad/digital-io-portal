@@ -28,8 +28,9 @@ async function _fillIndexNaqlData() {
   // جیسے جیسے مقدمے کی ضمنی لکھی جاتی ہے، وہ اپنے نمبر، تاریخ اور تفتیشی افسر کے
   // ساتھ اگلے خالی خانے میں آ جاتی ہے۔ جب تک ضمنی نہ لکھی جائے، نمبر شمار خالی رہتا ہے۔
   try {
+    // v566 (TASK 6): content بھی — نمبر جیسا لکھا (2-الف)، تاریخ کالم 1 کی، سینئر افسر کی ضمنی پر اُسی کا نام
     const { data: zs } = await supabaseClient.from('zimni_reports')
-      .select('serial_no,report_date,officer_id').eq('case_id', _misalCaseId).is('deleted_at', null)
+      .select('id,serial_no,report_date,officer_id,content').eq('case_id', _misalCaseId).is('deleted_at', null)
       .order('serial_no', { ascending: true });
     // Officer names ek dafa fetch (id → naam) taake har entry ka apna افسر lag sake
     const _ofcIds = [...new Set((zs || []).map(z => z.officer_id).filter(Boolean))];
@@ -47,14 +48,23 @@ async function _fillIndexNaqlData() {
     }
     const _selfName = (currentOfficer && currentOfficer.full_name) || '';
     const _fdz = (v) => v ? ((typeof formatDate === 'function') ? formatDate(v) : v) : '';
+    // content کبھی متن (JSON) کی شکل میں بھی آتا ہے — ضمنی والا ہی پڑھنے والا
+    const _cz = (z) => Object.assign({}, z, { content: (typeof _zimniContentOf === 'function') ? _zimniContentOf(z) : (z.content || {}) });
+    const _ord = (z) => (typeof _zimniOrdKey === 'function') ? _zimniOrdKey(z) : (parseInt(z.serial_no) || 1e9) * 100;
     const list = (zs || [])
-      .slice()
-      .sort((a, b) => (parseInt(a.serial_no) || 1e9) - (parseInt(b.serial_no) || 1e9))
-      .map((z, i) => ({
-        n: parseInt(z.serial_no) || (i + 1),
-        d: _fdz(z.report_date),
-        o: (z.officer_id && _ofcMap[z.officer_id]) ? _ofcMap[z.officer_id] : (z.officer_id ? _selfName : ''),
-      }));
+      .map(_cz)
+      .sort((a, b) => (_ord(a) || 1e11) - (_ord(b) || 1e11))
+      .map((z, i) => {
+        const au = (z.content || {}).author;
+        const senior = au && au.role && au.role !== 'io' && au.name;
+        const fd = (typeof _zimniRecDate === 'function') ? _zimniRecDate(z) : null;
+        return {
+          n: ((typeof _zimniLabel === 'function') ? _zimniLabel(z) : '') || parseInt(z.serial_no) || (i + 1),
+          d: fd ? fd.dmy : _fdz(z.report_date),
+          o: senior ? (au.name + (au.rank ? ' (' + au.rank + ')' : ''))
+            : (z.officer_id && _ofcMap[z.officer_id]) ? _ofcMap[z.officer_id] : (z.officer_id ? _selfName : ''),
+        };
+      });
     const old = document.getElementById('idxz-table');
     if (old) old.outerHTML = _idxZimniTableHTML(list);
   } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
@@ -87,7 +97,7 @@ function _idxZimniTableHTML(list) {
     body += '<tr>';
     for (let g = 0; g < 2; g++) {
       const z = list[g * rows + r];
-      body += `<td class="idxz-n" data-fit style="${td}">${z ? _e(z.n) : ''}</td>`
+      body += `<td class="idxz-n" data-fit style="${td}">${z ? '<bdi style="unicode-bidi:isolate;">' + _e(z.n) + '</bdi>' : ''}</td>`
             + `<td class="idxz-d" data-fit style="${td}">${z && z.d ? `<span style="${ltr}">${_e(z.d)}</span>` : ''}</td>`
             + `<td class="idxz-o" data-fit style="${td}">${z ? _e(z.o) : ''}</td>`;
     }

@@ -454,16 +454,26 @@ def run(b, tag, ctxargs, mobile):
         check(f'{tag}: اختتامی سطر کے اوپر کی جگہ پہلے (34px) کی آدھی یا کم', 0 < g['gap'] <= 17, g['gap'])
         # v564 (افسر کی ہدایت، 28 اکتوبر 2026): پھر دُگنا — 12% → 24%
         check(f'{tag}: «از۔» کا کالم پہلے (12%) سے دُگنا (24%)', 0.234 <= g['c4'] <= 0.246, g['c4'])
-        check(f'{tag}: «بنام» میں صرف ایک ملزم — نمبر «1۔» نہیں', g['banam'] and not re.match(r'^\s*1\s*۔', g['banam']), g['banam'])
+        # v566 (TASK 6): ملزم کبھی خود نہیں لگتا — افسر ▾ سے چنتا ہے (اصل کلک)
+        check(f'{tag}: نئی ضمنی میں «بنام» خالی (کوئی ملزم خود نہیں لگا)', not g['banam'], g['banam'])
+        pg.click('#ch173-doc .zf-pick[data-which=fir]'); pg.wait_for_timeout(500)
+        pg.locator('#zf-acc-menu input[type=checkbox]').nth(0).click(); pg.wait_for_timeout(250)
+        pg.click('#zf-acc-x'); pg.wait_for_timeout(250)
+        b1 = pg.evaluate("document.querySelector('#ch173-doc [data-k=\"banam\"]').innerText.trim()")
+        check(f'{tag}: «بنام» میں صرف ایک ملزم — نمبر «1۔» نہیں', b1 and not re.match(r'^\s*1\s*۔', b1), b1)
         # دو ملزم — نمبر 1، 2
-        pg.evaluate("window.__db.case_accused.push({ id:'a2', case_id:'c1', name:'دوسرا ملزم', accused_type:'fir', created_at:'2026-10-09' }); 0")
-        pg.evaluate("_zimniLoadAccused().then(() => _zimniFillBanam(true))"); pg.wait_for_timeout(800)
+        pg.evaluate("window.__db.case_accused.push({ id:'a2', case_id:'c1', name:'دوسرا ملزم', accused_type:'fir', created_at:'2026-10-09' }); _zimniAccused = null; 0")
+        pg.click('#ch173-doc .zf-pick[data-which=fir]'); pg.wait_for_timeout(700)
+        bx = pg.locator('#zf-acc-menu input[type=checkbox]')
+        for i in range(bx.count()):
+            if not bx.nth(i).is_checked(): bx.nth(i).click(); pg.wait_for_timeout(200)
+        pg.click('#zf-acc-x'); pg.wait_for_timeout(250)
         b2 = pg.evaluate("document.querySelector('#ch173-doc [data-k=\"banam\"]').innerText.trim()")
         check(f'{tag}: «بنام» میں دو ملزم — نمبر 1۔ 2۔', re.search(r'1\s*۔', b2) and re.search(r'2\s*۔', b2), b2)
         # پرانی محفوظ ضمنی («1۔ نامعلوم ملزم»، اختتامی سطر بغیر ۔) — کھولنے اور چھاپنے پر نیا اصول
         pg.evaluate("_saveZimni(true, true)"); pg.wait_for_timeout(1200)
         old = pg.evaluate("""(() => { const r = window.__db.zimni_reports[0]; let b = r.content.bodyHtml;
-            b = b.replace(/<span class="nm">[^<]*<[/]span><[/]div><div class="zf-acc"><span class="nm">[^<]*<[/]span>/, '<span class="nm">1۔ نامعلوم ملزم</span>').replace('ارسال خدمت ہے۔', 'ارسال خدمت ہے');
+            b = b.replace(/<span class="nm">[^<]*<[/]span><[/]div><div class="zf-acc"[^>]*><span class="nm">[^<]*<[/]span>/, '<span class="nm">1۔ نامعلوم ملزم</span>').replace('ارسال خدمت ہے۔', 'ارسال خدمت ہے');
             r.content = Object.assign({}, r.content, { bodyHtml: b, saved_at: '2026-10-01T00:00:00Z' }); localStorage.removeItem('dio_zimni_c1'); localStorage.removeItem('dio_zimni_draft_c1'); return b.includes('1۔ نامعلوم'); })()""")
         pg.evaluate("_loadZimni().then(() => _renderZimniList())"); pg.wait_for_timeout(1200)
         h = printed(pg, lambda: pg.evaluate("_printZimniById(String(_zimniList[0].id))"), 'legal')

@@ -1043,7 +1043,7 @@
   const KEEP_CSS_INLINE = /^(font-weight|font-style|text-decoration|text-decoration-line|font-size)$/;
   const KEEP_CSS_BLOCK = /^(text-align|text-align-last|text-indent)$/;
   const TAB_STYLE = 'white-space:pre;tab-size:' + TAB_CM + 'cm;-moz-tab-size:' + TAB_CM + 'cm;mso-tab-count:1';
-  function cleanHtml(html) {
+  function cleanHtml(html, mark) {
     let h = String(html || '');
     const a = h.indexOf('<!--StartFragment-->'), b = h.indexOf('<!--EndFragment-->');
     if (a >= 0 && b > a) h = h.slice(a + 20, b);
@@ -1080,8 +1080,37 @@
     }
     // خالی رہ جانے والے span (انداز سب ہٹ گئے) — اتار دو
     [].slice.call(tpl.content.querySelectorAll('span:not([style]):not(.dio-tab)')).forEach(sp => { while (sp.firstChild) sp.parentNode.insertBefore(sp.firstChild, sp); sp.remove(); });
+    if (mark) [].forEach.call(tpl.content.querySelectorAll('*'), el => el.setAttribute('data-dio-paste', '1'));
     return tpl.innerHTML;
   }
+  // v566: چسپاں کے بعد — Chrome کا insertHTML (کچھ نسخوں میں، مثلاً 141) چسپاں ہونے والے حرف کے خول (B/I/U/SPAN) پر
+  //   «شکل بچانے» کے لیے اپنی طرف سے انداز لگا دیتا ہے: text-align، text-indent: 0px، font-size … (px بھی)۔ cleanHtml کا
+  //   اصول وہی رہے: حرف پر صرف بولڈ / ترچھا / لکیر اور افسر کا اپنا pt سائز؛ سیدھ / حاشیہ صرف پیراگراف پر۔
+  //   حرف کے خول پر سیدھ / حاشیہ کا کوئی اثر ہی نہیں ہوتا — ہٹانے سے شکل نہیں بدلتی۔
+  const INLINE_TAGS = /^(SPAN|B|STRONG|I|EM|U|FONT|SUB|SUP|A)$/;
+  const NO_INLINE_CSS = /^(text-align|text-align-last|text-indent)$/;
+  const PASTE_DROP_CSS = /^(font-family|color|background-color|background|line-height|letter-spacing|word-spacing)$/;
+  function tidyPasted(h) {
+    const root = rootOf(h) || h; if (!root || !root.querySelectorAll) return 0;
+    let n = 0;
+    const fix = (el, pasted) => {
+      if (!INLINE_TAGS.test(el.tagName) || (el.classList && el.classList.contains('dio-tab'))) return;
+      const keep = [];
+      String(el.getAttribute('style') || '').split(';').forEach(d => {
+        const k = d.indexOf(':'); if (k < 0) return;
+        const p = d.slice(0, k).trim().toLowerCase(), v = d.slice(k + 1).trim();
+        if (NO_INLINE_CSS.test(p)) { n++; return; }
+        if (pasted && PASTE_DROP_CSS.test(p)) { n++; return; }
+        if (pasted && p === 'font-size' && !(el.hasAttribute('data-dio-fs') && /pt$/.test(v))) { n++; return; }
+        keep.push(p + ':' + v);
+      });
+      if (keep.length) el.setAttribute('style', keep.join(';')); else el.removeAttribute('style');
+    };
+    [].forEach.call(root.querySelectorAll('[data-dio-paste]'), el => { fix(el, true); el.removeAttribute('data-dio-paste'); });
+    [].forEach.call(h.querySelectorAll ? h.querySelectorAll('[style*="text-indent"],[style*="text-align"]') : [], el => fix(el, false));
+    return n;
+  }
+  window._dioTidyPaste = tidyPasted;
   function onPaste(e) {
     if (viewOnly()) return;
     const h = hostOf(e.target); if (!h) return;                   // input / textarea: سادہ متن خود
@@ -1095,8 +1124,11 @@
     if (challan) return;
     e.preventDefault(); e.stopImmediatePropagation();
     if (internal && html) {
-      const c = cleanHtml(html);
-      if (c && c.replace(/<[^>]*>/g, '').trim()) { try { if (document.execCommand('insertHTML', false, c)) return; } catch (_) { /* سادہ متن پر */ } }
+      const c = cleanHtml(html, true);
+      if (c && c.replace(/<[^>]*>/g, '').trim()) {
+        try { if (document.execCommand('insertHTML', false, c)) { try { tidyPasted(h); remember(h); } catch (_) { /* ضمنی */ } return; } } catch (_) { /* سادہ متن پر */ }
+        try { tidyPasted(h); } catch (_) { /* نشان ہٹیں */ }
+      }
     }
     try { document.execCommand('insertText', false, text); } catch (_) { /* ضمنی */ }
   }
