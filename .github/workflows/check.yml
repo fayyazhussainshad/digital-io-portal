@@ -185,6 +185,14 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh t22_offline_test.py
+      - name: Task 9 — one serial-number rule everywhere (1 name → no «1», 2+ → 1۔ 2۔, live), report 173 column alignment (screen = print = mobile), long «مختصر حالات» text, no joined words after reopen/print (t9_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: bash ci_run.sh t9_test.py
+      - name: Task 9 — two devices + reload (serials, no joined words, same columns) (t9_sync_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: bash ci_run.sh t9_sync_test.py
       - name: Screenshots and print PDFs
         if: always()
         uses: actions/upload-artifact@v4

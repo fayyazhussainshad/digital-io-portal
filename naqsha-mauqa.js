@@ -298,12 +298,14 @@
     return Array.isArray(h.banam) ? h.banam : _naqAccList.map(x => x.name);
   }
   // اصول: ایک ملزم → کوئی نمبر نہیں؛ ایک سے زائد → تمام کو نمبر (1،2،3… انگریزی)
+  function _naqSn(i, n) { return window.DIOSerial ? window.DIOSerial.prefix(i, n).trim() : (n > 1 ? (i + 1) + '\u06D4' : ''); }
   function _banamHTML() {
     const names = _chosenBanam().filter(Boolean);
     if (!names.length) return '<div class="naq-acc" style="color:#999;">—</div>';
     if (names.length === 1) return `<div class="naq-acc">${E(names[0])}</div>`;
+    // T9: نمبر شمار کا ایک ہی قاعدہ اور شکل «1۔» (پہلے «1.») — dio-serial.js
     return names.map((n, i) =>
-      `<div class="naq-acc"><span class="naq-accno">${i + 1}.</span> ${E(n)}</div>`
+      `<div class="naq-acc"><span class="naq-accno"><bdi>${_naqSn(i, names.length)}</bdi></span> ${E(n)}</div>`
     ).join('');
   }
   function _naqRebuildBanam() { const w = document.getElementById('naq-banam-list'); if (w) w.innerHTML = _banamHTML(); }
@@ -482,7 +484,7 @@
     const names = _banamFor(a);
     if (!names.length) return '<div class="naq-acc" style="color:#999;">—</div>';
     if (names.length === 1) return `<div class="naq-acc">${E(names[0])}</div>`;
-    return names.map((n, i) => `<div class="naq-acc"><span class="naq-accno">${i + 1}.</span> ${E(n)}</div>`).join('');
+    return names.map((n, i) => `<div class="naq-acc"><span class="naq-accno"><bdi>${_naqSn(i, names.length)}</bdi></span> ${E(n)}</div>`).join('');
   }
 
   // ══ Render ═════════════════════════════════════════════════════════

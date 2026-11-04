@@ -182,6 +182,12 @@ let _r173ForceBlank = false;
 // Kahin tabdeeli hui hai? (mehfooz karne ki yaad dahani ke liye)
 let _r173Dirty = false;
 
+// T9/A: نمبر شمار ka AIK qaida (dio-serial.js) — aik naam par «1» nahi, do ya zyada par 1، 2 …
+function _ch173Sn(i, n) {
+  if (window.DIOSerial) return window.DIOSerial.prefix(i, n);
+  return n > 1 ? (i + 1) + '\u06D4 ' : '';
+}
+
 // Mojooda khule چالان ka apna record — chaabi ki takraar se bachne ke liye.
 // (Aik hi qism ke kai چالان ki chaabi aik jaisi banti hai, is liye SIRF
 //  chaabi par bharosa karne se aik چالان ka data doosre mein aa jata tha.)
@@ -635,7 +641,7 @@ function _renderR173() {
         </div>
       </div>
       <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
-        <div id="ch173-doc" style="width:${_ch173Paper==='a4'?'8.27in':'8.5in'};max-width:none;min-height:${_ch173Paper==='a4'?'11.7in':'13in'};margin:0 auto;
+        <div id="ch173-doc" class="ch173-challan" style="width:${_ch173Paper==='a4'?'8.27in':'8.5in'};max-width:none;min-height:${_ch173Paper==='a4'?'11.7in':'13in'};margin:0 auto;
              padding:1cm ${_ch173SideMargin()};
              background:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;
              line-height:1.4;box-sizing:border-box;">
@@ -810,6 +816,7 @@ function _renderR173() {
       _ch173SizeRotated();
       _ch173BindKeys();
       _ch173BindOverflow();
+      try { _ch173BindSerials(); } catch (_) { /* T9: نمبر شمار — ikhtiyari qadam */ }
       // گواہان — HAR render par. (LoadPeople sirf pehli dafa chalta hai, is
       // liye qism badalne par yeh wahan se nahi chalta tha.)
       try { _ch173FillWitnessCell(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
@@ -916,6 +923,9 @@ function _collectR173() {
     try { _ch173OverflowSettle(5); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     // CNIC ke display-spans hata do — sirf saada matn mehfooz ho (markup nahi)
     try { _ch173UnwrapCnics(chDoc); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+    // T9/C: ڈیش والے ہندسوں کے LTR خانے بھی صرف دکھانے کے — محفوظ متن سادہ
+    const _ltrEls = [...chDoc.querySelectorAll('[data-k="halaat"], [data-k="cont_text"]')];
+    _ltrEls.forEach(el => { try { _ch173LtrUnIso(el); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } });
     const d = {};
     chDoc.querySelectorAll('[data-k]').forEach(el => {
       d[el.dataset.k] = (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') ? el.value : el.innerHTML;
@@ -932,6 +942,7 @@ function _collectR173() {
     d.fnorm = '553';   // v553: یہ فونٹ افسر نے خود رکھے/چنے — آئندہ معیار سے نہ بدلیں
     // Save ke liye lapet kholi thi — screen par seedh wapas laga do
     try { _ch173WrapCnics(chDoc); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+    _ltrEls.forEach(el => { try { _ch173LtrIso(el); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } });
     try {
       const br = document.querySelector('#ch173-table tbody tr td');
       if (br && br.style.height) d.row_height = br.style.height;
@@ -1240,12 +1251,16 @@ function _printR173Now() {
         #ch173-doc .ch173-table tbody td,
         #ch173-doc .ch173-table tbody td.normcell,
         #ch173-doc .ch173-table td.rotcell,
-        #ch173-doc .cellbox, #ch173-doc .rotclip,
-        #ch173-doc .normwrap, #ch173-doc .rotinner, #ch173-doc .hinner{
+        #ch173-doc .ch173-table tbody .cellbox, #ch173-doc .ch173-table tbody .rotclip,
+        #ch173-doc .normwrap, #ch173-doc .hinner{
           position:static !important; inset:auto !important;
           height:auto !important; min-height:0 !important; max-height:none !important;
           overflow:visible !important; }
-        #ch173-doc .rotinner{ display:inline-block !important; }
+        /* T9/B ⑤: کھڑے خانوں (کالم 1–6) کا اندرونی ڈبہ اسکرین والی پکی اونچائی (_ch173BakeSizes) پر ہی رہے —
+           پہلے یہاں «inline-block + height:auto» تھا، اس لیے کالم 6 کا متن کاغذ پر اوپر سے شروع ہوتا
+           اور اسکرین پر نیچے سے۔ اب دونوں جگہ ایک: نیچے سے، دائیں کنارے کے ساتھ۔ متن پھر بھی نہیں کٹتا۔ */
+        #ch173-doc .ch173-table tbody .rotinner{ position:static !important; overflow:visible !important;
+          min-height:0 !important; max-height:none !important; }
         /* Misal bandhne wali tikoni jagah — chapai mein zaroori */
         #ch173-doc .ch173-bind{ display:block !important; }
         ${typeof dioBindCSS === 'function' ? dioBindCSS('#ch173-doc') : ''}
@@ -1960,7 +1975,7 @@ function _ch173AutoSize() {
     const inner = tds[i].querySelector('.rotinner');
     let w = 0;
     if (inner) {
-      w = Math.max(naapo(inner).w, inner.scrollWidth || 0);
+      w = Math.max(naapo(inner).w, inner.scrollWidth || 0, _ch173OneLineW(inner));   // T9/B ⑧: خالی خانہ ہر آلے پر ایک
       const lns = inner.querySelectorAll('.ln');
       if (lns.length) {
         lns.forEach(ln => {
@@ -1979,6 +1994,11 @@ function _ch173AutoSize() {
     if (i >= 1 && i <= 3) w = Math.round(w * R173_MULZIMAN_BOOST);
     darkar.push(w); jama += w;
   }
+  // T9/B ①: کالم اپنی سرخی کے سب سے لمبے لفظ سے تنگ نہ ہو (سرخی کبھی لکیر سے باہر نہیں)
+  try {
+    const hm = _ch173HeadMins(table);
+    for (let i = 0; i < 6; i++) if ((hm[i] || 0) > darkar[i]) { jama += hm[i] - darkar[i]; darkar[i] = hm[i]; }
+  } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 
   // ── 2) کالم 7 ke liye jagah mehfooz ──
   const col7Kam = Math.max(140, Math.round(kul * 0.22));
@@ -2361,6 +2381,59 @@ window._ch173AddBindMarks = _ch173AddBindMarks;
 // par mabni hai (.ln / space-between), chaurai par nahi.
 // v552: کالم 2 (ملزمان جو گرفتار نہ ہوئے)، 3 (زیر حراست)، 4 (برضمانت) — 50% زیادہ چوڑے
 const R173_MULZIMAN_BOOST = 1.5;
+// T9/B ⑧: کھڑے خانے کی کم از کم چوڑائی — ایک سطر + اندرونی جگہ (CSS سے، ہر آلے پر ایک جیسی)۔
+//   خالی خانے (مثلاً «مال قبضہ پولیس») کی scrollWidth موبائل پر 19px اور Desktop پر 30px آتی تھی —
+//   اسی سے دونوں کے کاغذ پر کالم 5 الگ (31 / 42px) چھپتا تھا۔
+function _ch173OneLineW(inner) {
+  try {
+    const cs = getComputedStyle(inner);
+    const lh = parseFloat(cs.lineHeight) || (parseFloat(cs.fontSize) || 18.67) * 1.2;
+    return Math.ceil(lh + (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0));
+  } catch (_) { return 30; }
+}
+
+/* ═══ T9/B ① — سرخی کا سب سے لمبا لفظ اپنے کالم میں پورا آئے ═══
+   کالم کی چوڑائی پہلے صرف نیچے والے متن سے بنتی تھی؛ کالم 1 کی سرخی «نام و پتہ مدعی ومستغیث»
+   1.1cm میں «و / ، / ستغیث» ہو کر ٹوٹتی اور لکیروں سے باہر نکلتی تھی۔ اب ہر کالم کم از کم اپنی سرخی
+   کے سب سے لمبے لفظ جتنا (افقی سرخی)، یا گھومی ہوئی سرخی کی اصل چوڑائی جتنا۔ سطر صرف الفاظ کے
+   بیچ ٹوٹتی ہے (CSS: word-break:keep-all)۔ واپسی: 7 کالموں کی کم از کم چوڑائی (px)۔ */
+function _ch173HeadMins(table) {
+  const out = [0, 0, 0, 0, 0, 0, 0];
+  if (!table) return out;
+  const sc = (typeof _ch173Scale === 'function') ? (_ch173Scale() || 1) : 1;
+  const r1 = table.querySelector('thead tr:first-child');
+  const r2 = table.querySelector('thead tr:nth-child(2)');
+  if (!r1) return out;
+  const wordMin = (th) => {
+    if (!th) return 0;
+    const probe = document.createElement('span');
+    probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;left:0;top:0;padding:0;margin:0;';
+    th.appendChild(probe);
+    let w = 0;
+    String(th.innerText || th.textContent || '').split(/\s+/).forEach(word => {
+      if (!word) return;
+      probe.textContent = word;
+      w = Math.max(w, probe.getBoundingClientRect().width / sc);
+    });
+    probe.remove();
+    let pad = 0;
+    try { const cs = getComputedStyle(th); pad = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0); } catch (_) { pad = 8; }
+    return w ? Math.ceil(w + pad + 2) : 0;
+  };
+  const h = [...r1.children];
+  // پہلی قطار: کالم 1، 2، (ملزمان = 3+4)، 5 (گھومی ہوئی)، 6، 7 · دوسری قطار: 3، 4
+  out[0] = wordMin(h[0]); out[1] = wordMin(h[1]);
+  out[5] = wordMin(h[4]); out[6] = wordMin(h[5]);
+  const rh = h[3] && h[3].querySelector('.rothead');
+  if (rh) {
+    let w5 = rh.scrollWidth || 0;
+    try { w5 = Math.max(w5, rh.getBoundingClientRect().width / sc); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+    out[4] = w5 ? Math.ceil(w5 + 2) : 0;
+  }
+  if (r2) { const s2 = [...r2.children]; out[2] = wordMin(s2[0]); out[3] = wordMin(s2[1]); }
+  return out;
+}
+
 function _ch173AutoFitCols() {
   const doc = _ch173Doc();
   if (!doc) return;
@@ -2382,11 +2455,13 @@ function _ch173AutoFitCols() {
     const purani = inner.style.maxWidth;
     try {
       inner.style.maxWidth = 'none';                 // hadd hata kar asal naap lo
-      w = inner.scrollWidth;
+      w = Math.max(inner.scrollWidth, _ch173OneLineW(inner));   // T9/B ⑧
     } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
     inner.style.maxWidth = purani;
     need.push(Math.round((Math.ceil(w) + 6) * ((i >= 1 && i <= 3) ? R173_MULZIMAN_BOOST : 1)));   // saans + v552: کالم 2–4 پر 50%
   }
+  // T9/B ①: کالم اپنی سرخی کے سب سے لمبے لفظ سے تنگ نہ ہو
+  try { const hm = _ch173HeadMins(table); for (let i = 0; i < 6; i++) need[i] = Math.max(need[i], hm[i] || 0); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 
   // Kam az kam itni jagah کالم 7 ke liye chhoro
   const kam7 = Math.max(140, Math.round(tW * 0.22));
@@ -2413,6 +2488,9 @@ function _ch173Overflow() {
   if (!cell.clientHeight) return;
   const full = () => cell.scrollHeight > cell.clientHeight + 1;
   let guard = 0;
+  // T9/D8: pehle se mehfooz چالان mein sarhad ka fasla gum ho chuka ho sakta
+  // hai (khana «…موصول» | تسلسل «ہوئی…») — kuch bhi hilane se PEHLE wapas.
+  try { _ch173KeepGap(cell, cont); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 
   // (a) Jo matn na samaye woh NEECHE bhejo — LAFZ-BA-LAFZ.
   // AHEM: agar aakhri cheez aik bara tukra ho to usay POORA na bhejo,
@@ -2429,9 +2507,14 @@ function _ch173Overflow() {
         const moved = t.slice(k);
         node.nodeValue = t.slice(0, k);
         cont.insertBefore(document.createTextNode(moved), cont.firstChild);
+        cont._ch173Glued = false;                  // T9/D8: lafz ki hadd par toota
         continue;
       }
     }
+    // T9/D8: poora tukra neeche ja raha hai — kya woh pichhle lafz se JURA
+    // hua tha (misal: aadha lafz bold)? Sirf usi soorat mein beech mein
+    // khali jagah NAHI aani chahiye; baqi har soorat mein yeh lafz ki hadd hai.
+    cont._ch173Glued = _ch173GluedBefore(cell, node);
     const par = node.parentNode;
     cont.insertBefore(node, cont.firstChild);
     if (par && par !== cell && !par.childNodes.length) par.remove();
@@ -2481,13 +2564,18 @@ function _ch173Overflow() {
       if (m && m[0].length < t.length) {
         const moved = m[0];
         node.nodeValue = t.slice(moved.length);
+        // T9/D8: khane ka aakhri lafz aur yeh lafz kabhi na judein
+        const gap = _ch173NeedGap(cell, moved, cont) ? document.createTextNode(' ') : null;
+        if (gap) cell.appendChild(gap);
         const tn = document.createTextNode(moved);
         cell.appendChild(tn);
         if (full()) {                              // jagah nahi bani — wapas
           tn.remove();
+          if (gap) gap.remove();
           node.nodeValue = moved + node.nodeValue;
           break;
         }
+        cont._ch173Glued = false;
         continue;
       }
     }
@@ -2496,14 +2584,20 @@ function _ch173Overflow() {
     const par = node.parentNode;
     const mark = document.createComment('');
     par.insertBefore(mark, node);                  // wapasi ke liye nishan
+    const gap2 = _ch173NeedGap(cell, node.textContent || '', cont) ? document.createTextNode(' ') : null;
+    if (gap2) cell.appendChild(gap2);
     cell.appendChild(node);
     if (full()) {                                  // jagah nahi bani — wapas
       par.insertBefore(node, mark);
+      if (gap2) gap2.remove();
       mark.remove();
       break;
     }
     mark.remove();
     if (par && par !== cont && !par.childNodes.length) par.remove();
+    // Agla tukra is se JURA hua tha (beech mein khali jagah nahi)?
+    cont._ch173Glued = !/[\s ]$/.test(node.textContent || ' ') &&
+                       !!cont.textContent && !/^[\s ]/.test(cont.textContent);
   }
 
   // (c0) KHANE ke AAKHIR ki KHALI SATREN hatao.
@@ -2531,6 +2625,14 @@ function _ch173Overflow() {
       break;
     }
   } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
+  // (c1) T9/D8 — khane aur «تسلسل» ki SARHAD par lafzon ka fasla barqarar.
+  //   (c0) khane ke aakhir ki khali jagah mita deta tha. Wohi jagah khane ke
+  //   aakhri lafz aur تسلسل ke pehle lafz ke darmiyan WAHID fasla thi — agle
+  //   qadam (dobara kholna / chhapna) par dono lafz jud jate the aur yeh silsila
+  //   barhta jata tha (napa gaya: 3 chhapaiyon mein 16 fasle gum). Ab woh aik
+  //   khali jagah khane ke aakhir mein rehti hai (white-space:normal mein satar
+  //   ke aakhir par nazar nahi aati), تسلسل ke shuru mein nahi.
+  try { _ch173KeepGap(cell, cont); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 
   // (c) TUKRE WAPAS JORO — matn lafz-ba-lafz hilta hai, is liye har lafz ka
   // apna alag tukra ban jata hai. Yeh tukre khud-ba-khud aik nahi hote, aur
@@ -2548,8 +2650,139 @@ function _ch173Overflow() {
       }
     });
   } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
+  // (d) T9/C: ڈیش والے ہندسے (موبائل نمبر، CNIC) LTR — sirf dikhane ke liye
+  try { _ch173LtrIso(cell); _ch173LtrIso(cont); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 window._ch173Overflow = _ch173Overflow;
+
+/* ═══ T9/D8 — کالم 7 اور «تسلسل» کی سرحد پر الفاظ کا فاصلہ ═══
+   Matn sirf lafzon ki hadd par neeche/ooper jata hai — is liye khane ka aakhri
+   lafz aur تسلسل ka pehla lafz HAMESHA do alag lafz hain. Wahid istisna: koi
+   aadha-formatted lafz (misal «<b>ab</b>cd») jo theek sarhad par toota ho —
+   us ka nishan `cont._ch173Glued` (sirf yaad-dasht mein, mehfooz nahi hota). */
+function _ch173LastCh(el) { const t = (el && el.textContent) || ''; return t.slice(-1); }
+const _ch173IsWs = (ch) => !ch || /[\s ​]/.test(ch);
+// `node` khane se neeche jane wala hai — kya woh pichhle matn se BINA fasle juda tha?
+function _ch173GluedBefore(cell, node) {
+  try {
+    if (!node || node.nodeName === 'BR') return false;
+    if (_ch173IsWs(String(node.textContent || '').slice(0, 1))) return false;
+    for (let p = node; p && p !== cell; p = p.parentNode) {
+      const s = p.previousSibling;
+      if (s) { if (s.nodeName === 'BR') return false; break; }
+    }
+    const r = document.createRange();
+    r.setStart(cell, 0); r.setEndBefore(node);
+    const before = r.toString();
+    return !!before && !_ch173IsWs(before.slice(-1));
+  } catch (_) { return false; }
+}
+// Khane mein `incoming` lagane se pehle beech mein khali jagah chahiye?
+function _ch173NeedGap(cell, incoming, cont) {
+  if (cont && cont._ch173Glued) return false;
+  const a = _ch173LastCh(cell), b = String(incoming || '').slice(0, 1);
+  return !!a && !!b && !_ch173IsWs(a) && !_ch173IsWs(b);
+}
+// Sarhad: تسلسل ke SHURU ki khali jagah hatao aur khane ke AAKHIR mein aik rakho
+function _ch173KeepGap(cell, cont) {
+  if (!cell || !cont) return;
+  if (!cont.textContent.replace(/[\s ​]/g, '')) return;     // neeche kuch nahi
+  let lead = false;
+  for (let g = 0; g < 60; g++) {
+    let f = cont.firstChild;
+    if (!f) break;
+    while (f.nodeType === 1 && f.firstChild && f.nodeName !== 'BR') f = f.firstChild;
+    if (f.nodeType !== 3) break;                                     // <br> = asal nayi satar
+    const t = f.nodeValue.replace(/^[\s ]+/, '');
+    if (t === f.nodeValue) break;
+    lead = true;
+    if (t) { f.nodeValue = t; break; }
+    const p = f.parentNode; f.remove();
+    if (p && p !== cont && !p.childNodes.length) p.remove();
+  }
+  if (!cell.textContent.replace(/[\s ​]/g, '')) return;
+  if (/[\s ]$/.test(cell.textContent)) return;                  // pehle se fasla
+  if (cont._ch173Glued && !lead) return;                              // aik hi lafz ke do hisse
+  let last = cell.lastChild;
+  while (last && last.nodeType === 1 && last.lastChild && last.nodeName !== 'BR') last = last.lastChild;
+  if (last && last.nodeType === 3) last.nodeValue += ' ';
+  else cell.appendChild(document.createTextNode(' '));
+}
+window._ch173KeepGap = _ch173KeepGap;
+
+/* ═══ T9/C — کالم 7 / تسلسل میں ڈیش والے ہندسے (0300-1234567، 36302-1234567-1) ═══
+   Urdu ke beech yeh hindse Unicode ke qaide se ULTE chhapte the (1234567-0300)
+   aur ڈیش par satar toot jati thi. Ab har aisa hindsa apne LTR khane mein
+   (unicode-bidi:isolate + nowrap) — bilkul واقعاتی رپورٹ (_irIsolateNums) jaisa.
+   SIRF dikhane ke liye: mehfooz karte waqt _ch173LtrUnIso se khul jata hai, aur
+   likhte waqt (khana focus mein) bhi khula rehta hai — matn kabhi nahi badalta. */
+const R173_LTR_RE = /\+?\d+(?:[-‐-―]\d+)+/g;
+function _ch173LtrIso(el) {
+  if (!el || !document.createTreeWalker) return;
+  const ae = document.activeElement;
+  if (ae && (ae === el || el.contains(ae))) return;                  // likhte waqt haath na lagao
+  const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while (w.nextNode()) nodes.push(w.currentNode);
+  nodes.forEach(n => {
+    const par = n.parentElement;
+    if (!par || par.closest('.ch173-ltr,bdi')) return;
+    const t = n.nodeValue || '';
+    R173_LTR_RE.lastIndex = 0;
+    if (!R173_LTR_RE.test(t)) return;
+    R173_LTR_RE.lastIndex = 0;
+    const frag = document.createDocumentFragment();
+    let last = 0, m;
+    while ((m = R173_LTR_RE.exec(t))) {
+      if (m.index > last) frag.appendChild(document.createTextNode(t.slice(last, m.index)));
+      const s = document.createElement('span');
+      s.className = 'ch173-ltr'; s.setAttribute('dir', 'ltr');
+      s.textContent = m[0];
+      frag.appendChild(s);
+      last = m.index + m[0].length;
+    }
+    if (last < t.length) frag.appendChild(document.createTextNode(t.slice(last)));
+    n.parentNode.replaceChild(frag, n);
+  });
+}
+function _ch173LtrUnIso(el) {
+  if (!el) return false;
+  const sp = el.querySelectorAll('span.ch173-ltr');
+  if (!sp.length) return false;
+  sp.forEach(s => s.replaceWith(document.createTextNode(s.textContent || '')));
+  try { el.normalize(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  return true;
+}
+// Khula karo magar cursor usi harf par rahe (matn wohi rehta hai, sirf khane khulte hain)
+function _ch173UnIsoKeepCaret(el) {
+  if (!el || !el.querySelector('span.ch173-ltr')) return;
+  let off = -1;
+  try {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount && el.contains(sel.anchorNode)) {
+      const rg = sel.getRangeAt(0), nap = document.createRange();
+      nap.selectNodeContents(el); nap.setEnd(rg.endContainer, rg.endOffset);
+      off = nap.toString().length;
+    }
+  } catch (_) { off = -1; }
+  _ch173LtrUnIso(el);
+  if (off < 0) return;
+  try {
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    let jama = 0, n, node = null, pos = 0;
+    while ((n = w.nextNode())) {
+      const L = n.nodeValue.length;
+      if (jama + L >= off) { node = n; pos = off - jama; break; }
+      jama += L; node = n; pos = L;
+    }
+    if (!node) return;
+    const r = document.createRange(); r.setStart(node, Math.min(pos, node.nodeValue.length)); r.collapse(true);
+    const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
+}
+window._ch173LtrIso = _ch173LtrIso;
+window._ch173LtrUnIso = _ch173LtrUnIso;
+window._ch173UnIsoKeepCaret = _ch173UnIsoKeepCaret;
 
 // ═══ Cursor ko khane ke AAKHIR par le jao ═══
 // Matn neeche bhejne ke baad likhayi wahin se jari rahe (warna cursor
@@ -2655,6 +2888,14 @@ function _ch173BindOverflow() {
     if (inCell) caretSet(off);
   };
   let _t = null;
+  // T9/C: likhne ke liye khana kholte hi LTR khane (sirf dikhane wale) khol do —
+  // warna naya Urdu matn un ke ANDAR likha jata. Cursor wahin rehta hai.
+  [cell, (_ch173Cells() || {}).cont].forEach(el => {
+    if (!el || el._ltrFocusBound) return;
+    el._ltrFocusBound = true;
+    el.addEventListener('focusin', () => { try { _ch173UnIsoKeepCaret(el); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } });
+    el.addEventListener('focusout', () => { setTimeout(() => { try { _ch173LtrIso(el); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }, 0); });
+  });
   cell.addEventListener('input', () => { clearTimeout(_t); _t = setTimeout(run, 350); });
   // PASTE: matn SAADA shakl mein daalo.
   // WAJAH: Word/browser se paste hone par sara matn AIK BARE TUKRE ki
@@ -3016,7 +3257,7 @@ function _ch173AkhrajWitnessText() {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return _ch173WitSort(list).map((w, i) =>
     '<div class="gw-ln"><span class="gw-nm">' +
-      E((list.length > 1 ? (i + 1) + '\u06D4 ' : '') + w.name) +   // v558: اکیلا ہو تو «1» نہیں
+      E(_ch173Sn(i, list.length) + w.name) +   // T9: اکیلا ہو تو «1» نہیں (DIOSerial)
     '</span><span class="gw-cn">' + E(w.cnic || '') + '</span></div>'
   ).join('');
 }
@@ -3104,7 +3345,7 @@ function _ch173WitWrite(el, list) {
       _out.push(s1 + '\u06D4 ' + a + '\u2003' + s2 + '\u06D4 ' + nb);
       _i += 2;
     } else {
-      _out.push(list.length > 1 ? (++_sr) + '\u06D4 ' + a : a);   // v558: اکیلا ہو تو «1» نہیں
+      _out.push(_ch173Sn(_sr++, list.length) + a);   // T9: اکیلا ہو تو «1» نہیں (DIOSerial)
       _i += 1;
     }
   }
@@ -3285,7 +3526,7 @@ function _ch173WitnessText() {
       _out.push(s1 + '\u06D4 ' + a + '\u2003' + s2 + '\u06D4 ' + b);
       _i += 2;
     } else {
-      _out.push(_names.length > 1 ? (++_sr) + '\u06D4 ' + a : a);   // v558: اکیلا ہو تو «1» نہیں
+      _out.push(_ch173Sn(_sr++, _names.length) + a);   // T9: اکیلا ہو تو «1» نہیں (DIOSerial)
       _i += 1;
     }
   }
@@ -3387,14 +3628,18 @@ function _ch173AccPicker(ev, key) {
       // AIK SHAKHS = AIK SATAR: نمبر + naam + uska CNIC (sab saath)
       cell.innerText = picked.map((nm, i) => {
         const a = (_ch173Accused || []).find(x => (x.name || '').trim() === nm);
-        const c = (a && a.cnic && String(a.cnic).trim()) ? String(a.cnic).trim() : '00000-0000000-0';
-        return (picked.length > 1 ? (i + 1) + '\u06D4 ' : '') + nm + ' ' + c;   // v558: اکیلا ہو تو «1» نہیں
+        // T9/B ③: CNIC hamesha 00000-0000000-0 shakl mein (pehle DB ka kacha 3630212345671)
+        const c = (a && _ch173CnicFmt(a.cnic)) || (a && a.cnic && String(a.cnic).trim()) || '00000-0000000-0';
+        return _ch173Sn(i, picked.length) + nm + ' ' + c;   // T9: اکیلا ہو تو «1» نہیں (DIOSerial)
       }).join('\n');
     }
     box.remove();
     try { _ch173WrapCnics(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     if (typeof _ch173SizeRotated === 'function') _ch173SizeRotated();
     try { _r173Dirty = true; } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+    // T9/B ⑦: khane bharte hi poori naap dobara — warna screen par purani chaurai
+    // rehti thi aur chhapai (jo naap dobara leti hai) alag nikalti thi.
+    try { _ch173Layout(); } catch(_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
   };
 }
 window._ch173AccPicker   = _ch173AccPicker;
@@ -4962,11 +5207,42 @@ function _ch173BindKeys() {
     // v563: Tab، Ctrl+B/I/U اور باقی MS Word کلیدیں پورے سسٹم کا ایک ہی سننے والا (dio-keys.js)
     if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
       e.preventDefault();
+      // T9/A: fehrist wale khanon (naam/cheezein) mein Enter = SACH MUCH nayi satar.
+      // Pehle '\n' daala jata tha; khane ke AAKHIR par cursor us ke peeche hi reh jata
+      // aur agla naam pehle naam se jud jata tha («…احمدزاہد…»).
+      const lc = el.closest && el.closest('[data-k]');
+      if (lc && _ch173IsListCell(lc)) { _ch173NewLine(lc); return; }
       _ch173Insert('\n');
     }
   });
 }
 window._ch173BindKeys = _ch173BindKeys;
+
+// Fehrist ke khane mein nayi satar: <br> (aakhir par ho to saath khali satar ka <br> bhi,
+// warna browser cursor ko nayi satar par nahi le jata)
+function _ch173NewLine(cell) {
+  try {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    const r = sel.getRangeAt(0);
+    r.deleteContents();
+    const br = document.createElement('br');
+    r.insertNode(br);
+    // br ke baad koi asal matn hai?
+    const after = document.createRange();
+    after.setStartAfter(br);
+    after.setEnd(cell, cell.childNodes.length);
+    const rest = after.cloneContents();
+    const hasText = !!(rest.textContent || '').replace(/[\s ]/g, '').length || !!(rest.querySelector && rest.querySelector('br'));
+    if (!hasText) br.parentNode.insertBefore(document.createElement('br'), br.nextSibling);
+    const c = document.createRange();
+    c.setStartAfter(br); c.collapse(true);
+    sel.removeAllRanges(); sel.addRange(c);
+    try { cell.dispatchEvent(new Event('input', { bubbles: true })); } catch (_) { /* purana browser */ }
+    try { _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ }
+}
+window._ch173NewLine = _ch173NewLine;
 
 // ═══ کاغذ کا سائز — لیگل (8.5×13) یا A4 ═══
 // سافٹ ویئر کا اصل اصول لیگل ہے، مگر بہت سے دفاتر A4 پر چھاپتے ہیں —
@@ -5371,6 +5647,11 @@ function _ch173CSS(textRule) {
          ہے — heading کبھی اُس سے زیادہ اونچی/زیادہ سطروں والی نہیں ہوتی۔ */
       #ch173-doc .ch173-table thead th{ font-size:11pt; vertical-align:middle; line-height:1.1;
         font-weight:normal; position:relative; padding:1px 4px; }
+      /* T9/B: تمام سرخیاں ایک جیسی — ہر طرف 4px، درمیان میں، اور کوئی لفظ بیچ سے نہ ٹوٹے
+         (پہلے «ومستغیث» تنگ کالم 1 میں «و / ، / ستغیث» ہو کر لکیروں سے باہر نکلتا تھا)۔
+         کالم کی چوڑائی _ch173AutoFitCols / _ch173AutoSize سرخی کے سب سے لمبے لفظ جتنی رکھتے ہیں۔ */
+      #ch173-doc table.ch173-table thead th{ padding:4px !important; text-align:center; vertical-align:middle;
+        overflow-wrap:normal; word-wrap:normal; word-break:keep-all; }
       /* Data khane: columns 1–6 → Ascending (neeche se ooper). AHEM: CSS transform
          seedha <td> par kaam nahi karta (browser nazar-andaz kar deta hai), is liye
          matn andar <div> wrapper mein rakh kar us par lagate hain. */
@@ -5406,7 +5687,7 @@ function _ch173CSS(textRule) {
       /* Naam aur CNIC do alag khane — saath saath.
          Naam NEECHE se shuru, CNIC OOPER se. */
       #ch173-doc .rotclip{ position:absolute; inset:0; overflow:hidden;
-        display:flex; flex-direction:row; justify-content:center; align-items:stretch; }
+        display:flex; flex-direction:row; justify-content:flex-start; align-items:stretch; }
       /* Column 7 — normal RTL (khadi nahi), khane ke andar hi mehdood */
       #ch173-doc .hcell-td{ padding:0; vertical-align:top; }
       #ch173-doc .hinner{
@@ -5554,13 +5835,15 @@ function _ch173CSS(textRule) {
         position:relative; overflow:hidden; }
       #ch173-doc .normwrap{
         position:absolute; inset:0;    /* khane ke barabar — table lamba nahi hota */
-        padding:5px 5px 0 5px; box-sizing:border-box;   /* neeche ki padding 0 */
+        padding:4px 4px 0 4px; box-sizing:border-box;   /* neeche ki padding 0 — T9/B ⑥: baqi khanon jaisi 4px */
         font-family:'Jameel Noori Nastaleeq';
         direction:rtl; text-align:justify; text-align-last:right;
         outline:none; line-height:1.5; font-size:14pt;   /* satron ka fasla — 1.5 */
         overflow-wrap:break-word; word-wrap:break-word;
         overflow:hidden;   /* jo na samaye woh neeche wale khane mein jayega */
       }
+      /* T9/C: ڈیش والے ہندسے (موبائل، CNIC) — اپنا LTR خانہ، ڈیش پر سطر نہ ٹوٹے */
+      #ch173-doc .ch173-ltr{ unicode-bidi:isolate; direction:ltr; white-space:nowrap; }
       /* Har paragraph ki aakhri line bhi dayen (beech mein nahi) */
       #ch173-doc .normwrap p, #ch173-doc .normwrap div{ text-align:justify; text-align-last:right; }
       /* Paste kiya hua matn apna font saath na laye */
@@ -5573,7 +5856,7 @@ function _ch173CSS(textRule) {
       }
       /* Table ke NEECHE tasalsul — table se BILKUL chipka hua (koi gap nahi) */
       #ch173-doc .ch173-cont{
-        margin:0 !important; border:none !important; padding:0 5px !important;
+        margin:0 !important; border:none !important; padding:0 4px !important;
         min-height:0; direction:rtl; text-align:justify; text-align-last:right;
         font-size:14pt; line-height:1.5; outline:none;   /* کالم 7 jaisa hi — 1.5 */
         overflow-wrap:break-word; word-wrap:break-word; white-space:pre-wrap;
@@ -5665,6 +5948,12 @@ function _ch173CSS(textRule) {
       #ch173-doc .ch173-akhraj-table tbody tr:last-child td.normcell .normwrap{
         line-height:1.5; padding:0 4px 0 4px;
       }
+      /* T9/C+B: قطار 8 بھی قطار 1–7 جیسی — ہر خانے میں 6px، اوپر سے سیدھ، سطری فاصلہ 1.5۔
+         پہلے اوپر کی جگہ 1px / 0 تھی اور نستعلیق کے اوپر والے حروف لکیر کو چھو کر کٹتے تھے۔ */
+      #ch173-doc .ch173-akhraj-table tbody tr:last-child td{
+        padding:6px !important; vertical-align:top; line-height:1.5; }
+      #ch173-doc .ch173-akhraj-table tbody tr:last-child td.normcell{ padding:0 !important; }
+      #ch173-doc .ch173-akhraj-table tbody tr:last-child td.normcell .normwrap{ padding:6px 6px 0 6px; }
       /* ── مثل باندھنے کی جگہ — دوسرے صفحے کے اوپر بائیں کونے میں مثلث ──
          Nok top-left kone par, dono lambe bazoo (top aur left margin ke saath)
          2-2 inch ke. Matn is se bach kar behta hai. Saath hi pehli satar ko
@@ -5701,7 +5990,7 @@ function _ch173CSS(textRule) {
         /* Khadi likhayi mein pehli qeemat OOPER/NEECHE ki jagah hai —
            isay kam rakha hai taake har record Row 2 ki lakeer se bilkul
            saath shuru ho (ooper-neeche fazool jagah na bane). */
-        padding:1px 4px;
+        padding:4px;   /* T9/B ⑥: tamam khanon mein barabar (pehle 1px 4px) */
         /* HAR SATAR ka aaghaz OOPER (Row 2 wali lakeer) se.
            AHEM: yahan 'flex' HARGIZ na lagayen — khadi likhayi (vertical
            writing-mode) mein flex ka rukh ghair-yaqeeni hai, isi wajah se
@@ -5768,6 +6057,10 @@ function _ch173CSS(textRule) {
       /* مال قبضہ پولیس — lakeeron se hat kar, khane ke beech mein */
       #ch173-doc .rothead{ text-align:center !important;
         white-space:normal; padding:2px 4px; font-size:12pt; line-height:1.2; }
+      /* T9/B: «مال قبضہ پولیس» بھی باقی سرخیوں جیسا — 14pt bold، ہر طرف 4px، دونوں رخ درمیان */
+      #ch173-doc .ch173-table th .rothead{ font-size:var(--doc-h3); font-weight:bold; padding:4px !important;
+        line-height:1.1; height:auto; overflow-wrap:normal; word-break:keep-all; }
+      #ch173-doc .ch173-table th.rotcell .rotclip{ justify-content:center; align-items:center; }
 
       #ch173-doc th.hcell{ vertical-align:middle; text-align:center; direction:rtl; white-space:normal; }
 
@@ -5933,7 +6226,9 @@ function _ch173BakeSizes() {
   //    AHEM: clientHeight (offsetHeight NAHI) — 'absolute' khane ki naap khane
   //    ke PADDING-BOX se banti hai, aur offsetHeight mein lakeer (border) bhi
   //    shamil hoti hai. Us se har khana 2px bara ho kar matn phir kat jata.
-  doc.querySelectorAll('.ch173-table .rotcell').forEach(td => {
+  // T9/B ②: صرف نیچے والے خانے — سرخی «مال قبضہ پولیس» اسکرین والی CSS ہی سے چھپے (پکی px اونچائی
+  //   گول ہو کر 2px کم رہ جاتی تھی اور سرخی کاغذ پر دو ٹوٹی سطروں میں چھپتی تھی)
+  doc.querySelectorAll('.ch173-table tbody .rotcell').forEach(td => {
     const h = td.clientHeight;
     if (!h) return;
     set(td.querySelector('.cellbox'), 'height', h + 'px');
@@ -6038,3 +6333,83 @@ function _ch173UnwrapCnics(root) {
   });
 }
 window._ch173UnwrapCnics = _ch173UnwrapCnics;
+
+// Sirf AIK khane ki lapet kholo (CNIC ke display-spans) — baqi khane jyun ke tyun
+function _ch173UnwrapCell(cell) {
+  if (!cell || !cell.querySelector('.ln')) return;
+  const lines = [...cell.querySelectorAll('.ln')].map(d => {
+    const nm = d.querySelector('.nm'), cn = d.querySelector('.cn');
+    if (nm || cn) return ((nm ? nm.textContent : '').trim() + ' ' + (cn ? cn.textContent : '').trim()).trim();
+    return (d.textContent || '').trim();
+  });
+  cell.innerText = lines.join('\n');
+  try { delete cell.dataset.cnSig; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+}
+window._ch173UnwrapCell = _ch173UnwrapCell;
+
+/* ═══ T9/A — نمبر شمار ZINDA (چالان کی تمام اقسام، تتمہ، اخراج، عدم پتہ) ═══
+   Fehrist wale khane: کالم 1 (مدعی)، 2–4 (ملزمان)، 5 (مال قبضہ پولیس)، 6 (گواہان)؛
+   اخراج/عدم پتہ ki قدر (مدعی، مال، ملزمان نامزد/گرفتار/رہا، مال برآمدہ) aur اخراج ki
+   «فہرست گواہان». Har satar = aik naam/cheez. Doosri satar likhte hi dono par 1، 2؛
+   mita kar aik reh jaye to نمبر khud hat jata hai. (Shakl wohi purani: «1۔ نام».)
+   CNIC wale khane (lapet ke saath) khana chhorte hi durust hote hain — likhte waqt
+   lapet nahi chhiri jati, taake cursor na hile. */
+const R173_LIST_KEYS = ['madai', 'ghair_giraftar', 'zer_hirasat', 'bar_zamanat', 'mal_qabza', 'shahadat',
+                        'madai_i', 'masruqa_i', 'namzad_i', 'giraftar_i', 'raha_i', 'baramad_i'];
+window._ch173ListKeys = R173_LIST_KEYS;
+function _ch173IsListCell(el) {
+  const k = el && el.dataset && el.dataset.k;
+  return !!k && R173_LIST_KEYS.indexOf(k) !== -1;
+}
+// Afsar ki apni formatting (bold waghera) ho to saada-matn wala tareeqa na chalao
+function _ch173ListPlain(el) {
+  const els = el.querySelectorAll('*');
+  for (let i = 0; i < els.length; i++) {
+    const e = els[i];
+    if (e.tagName === 'BR') continue;
+    if (e.tagName === 'DIV' && (!e.className || e.classList.contains('ln')) && !e.getAttribute('style')) continue;
+    if (e.tagName === 'SPAN' && (e.classList.contains('nm') || e.classList.contains('cn')) && !e.getAttribute('style')) continue;
+    return false;
+  }
+  return true;
+}
+let _ch173SerialLayoutT = null;
+function _ch173SerialAfter(el, changed, leaving) {
+  if (!changed && !leaving) return;
+  try { _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  clearTimeout(_ch173SerialLayoutT);
+  _ch173SerialLayoutT = setTimeout(() => {
+    try { _ch173WrapCnics(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+    try { _ch173Layout(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  }, leaving ? 30 : 250);
+}
+function _ch173BindSerials() {
+  const doc = _ch173Doc();
+  if (!doc || typeof window.DIOSerial === 'undefined') return;
+  doc.querySelectorAll('[data-k]').forEach(el => {
+    if (!_ch173IsListCell(el) || !el.isContentEditable) return;
+    const focused = () => { const a = document.activeElement; return !!a && (a === el || el.contains(a)); };
+    window.DIOSerial.bind(el, {
+      mode: 'text',
+      ready: (c) => {
+        if (!_ch173ListPlain(c)) return false;                 // apni formatting — haath na lagao
+        if (c.querySelector('.ln')) {
+          if (focused()) return false;                         // CNIC lapet — khana chhorte hi
+          _ch173UnwrapCell(c);
+        }
+        return true;
+      },
+      after: (c, changed) => _ch173SerialAfter(c, changed, !focused())
+    });
+  });
+  // اخراج — «فہرست گواہان»: har گواہ apni satar (div.gw-ln) mein
+  const gw = doc.querySelector('[data-k="gawah_body"]');
+  if (gw && gw.isContentEditable) {
+    window.DIOSerial.bind(gw, {
+      mode: 'items', item: ':scope > div', holder: '.gw-nm', style: 'text',
+      after: () => { try { _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }
+    });
+  }
+}
+window._ch173BindSerials = _ch173BindSerials;
+window._ch173IsListCell = _ch173IsListCell;

@@ -2826,7 +2826,9 @@ window._zimniLoadAccused = _zimniLoadAccused;
 // v558 قاعدہ (پورا سسٹم): ایک سے زیادہ نام ہوں تو نمبر 1، 2 …؛ صرف ایک ہو تو «1» نہیں
 function _zimniAccLine(nm, i, n) {
   const E = (v) => (typeof esc === 'function') ? esc(v == null ? '' : String(v)) : String(v || '');
-  return '<div class="zf-acc"><span class="nm">' + ((n === 1) ? '' : (i + 1) + '\u06D4 ') + E(nm) + '</span></div>';
+  // T9: نمبر شمار کا ایک ہی قاعدہ (dio-serial.js)
+  const sn = window.DIOSerial ? window.DIOSerial.prefix(i, n) : ((n === 1) ? '' : (i + 1) + '\u06D4 ');
+  return '<div class="zf-acc"><span class="nm">' + sn + E(nm) + '</span></div>';
 }
 window._zimniAccLine = _zimniAccLine;
 
@@ -2878,6 +2880,11 @@ function _zimniPickers() {
   const want = cells.map(c => c.getAttribute('data-k') === 'banam_x' ? 'cross' : 'fir');
   c2.querySelectorAll('.zf-pick').forEach(b => { if (want.indexOf(b.getAttribute('data-which') || '') < 0) b.remove(); });
   let n = 0;
+  // T9: «بنام» کی فہرست زندہ — ملزم کی سطر ہٹائیں/لکھیں تو 1، 2 … خود درست (اکیلے پر نمبر نہیں)
+  if (window.DIOSerial) cells.forEach(cell => window.DIOSerial.bind(cell, {
+    mode: 'items', item: '.zf-acc', holder: '.nm', style: 'text',
+    after: (el, changed) => { if (!changed) return; _zimniDirty = true; try { _r173Dirty = true; } catch (_) { /* ضمنی */ } }
+  }));
   cells.forEach((cell, i) => {
     const which = want[i];
     let b = c2.querySelector('.zf-pick[data-which="' + which + '"]');
@@ -2915,7 +2922,7 @@ function _zimniApplyBanam(cell, list, picked) {
   const sel = list.filter(a => picked.has(String(a.id)));
   const E = (v) => (typeof esc === 'function') ? esc(v == null ? '' : String(v)) : String(v || '');
   cell.innerHTML = sel.map((a, i) => '<div class="zf-acc" data-acc="' + E(a.id) + '"><span class="nm">'
-    + (sel.length === 1 ? '' : (i + 1) + '۔ ') + E(String(a.name).trim()) + '</span></div>').join('');
+    + (window.DIOSerial ? window.DIOSerial.prefix(i, sel.length) : (sel.length === 1 ? '' : (i + 1) + '۔ ')) + E(String(a.name).trim()) + '</span></div>').join('');
   const onlyBr = keep.every(n => (n.nodeType === 3 && !String(n.nodeValue || '').trim()) || (n.nodeType === 1 && n.tagName === 'BR'));
   if (!(sel.length && onlyBr)) keep.forEach(n => cell.appendChild(n));
   try { _r173Dirty = true; } catch (_) { /* ضمنی */ }
@@ -4943,11 +4950,8 @@ function _zimniFixClose(root) {
       while ((n = tw.nextNode())) { if (String(n.nodeValue || '').trim()) last = n; }
       if (last) last.nodeValue = String(last.nodeValue).replace(/[\s\u00A0\u200B-\u200F\u2060\uFEFF]*[.\-]*[\s\u00A0]*$/, '') + '۔';
     });
-    // v558 قاعدہ: «بنام» میں صرف ایک ملزم ہو تو نمبر «1۔» نہیں (پرانی محفوظ ضمنیاں بھی)
-    ['banam', 'banam_x'].forEach(k => {   // v566: کراس ورژن کا «بنام» بھی
-      const accs = (root || document).querySelectorAll('[data-k="' + k + '"] .zf-acc .nm');
-      if (accs.length === 1) accs[0].textContent = String(accs[0].textContent || '').replace(/^\s*1\s*\u06D4\s*/, '');
-    });
+    // T9 (5 نومبر، افسر کا فیصلہ): پرانی محفوظ ضمنی جوں کی توں کھلے (قاعدہ 15) — «بنام» کا اکیلا «1۔» اب
+    //   کھولنے/چھاپنے پر خود نہیں ہٹتا؛ افسر وہ فہرست بدلے تو dio-serial.js فوراً درست کرتا ہے۔
   } catch (_) { /* ضمنی */ }
 }
 window._zimniFixClose = _zimniFixClose;
