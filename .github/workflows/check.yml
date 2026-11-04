@@ -149,6 +149,14 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh v567_test.py
+      - name: v568 — Task 7 — zimni list (row print = inside print = Ctrl+P, no PDF / نقل, number 2-الف + column-1 date, buttons = case list), print-all = each zimni's own print (old Sep layout + attached androoni sheet too), duplicate zimni (mark, same date/officer/number refused, fixed → saved, mark gone, not in index / 161), statement 161 save (button + Ctrl+S, witness name + written date, server «duplicate» never shown as saved, next free serial after a deleted statement, autosave), standalone 161 = 27 Oct look (kerning auto), attached androoni sheet separated, Ctrl+S / top-bar save on a zimni with attached sheet = zimni (v568_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: bash ci_run.sh v568_test.py
+      - name: v568 — two devices + reload (statement 161 button / Ctrl+S, duplicate zimni) (v568_sync_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: bash ci_run.sh v568_sync_test.py
       - name: Screenshots and print PDFs
         if: always()
         uses: actions/upload-artifact@v4

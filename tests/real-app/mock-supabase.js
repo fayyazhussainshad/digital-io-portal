@@ -81,6 +81,20 @@
         return st.head ? { data: null, error: null, count: rows.length } : out(JSON.parse(JSON.stringify(rows)));
       }
       if (st.op === 'insert' || st.op === 'upsert') {
+        // v568: اصل Postgres کی طرح unique پابندی (opt-in) — __opts.unique = { جدول: [['case_id', 'serial_no'], …] }
+        //   (حذف شدہ قطار — deleted_at — بھی نمبر رکھتی ہے)؛ اسی جدول پر id بھی یکتا (pkey)۔ جواب PostgREST جیسا: code + details
+        const uq = st.op === 'insert' && (window.__opts.unique || {})[st.t];
+        if (uq) {
+          for (const r of (Array.isArray(st.row) ? st.row : [st.row])) {
+            if (r.id != null && tb.some(x => String(x.id) === String(r.id)))
+              return { data: null, error: { message: 'duplicate key value violates unique constraint "' + st.t + '_pkey"', details: 'Key (id)=(' + r.id + ') already exists.', code: '23505' } };
+            for (const cols of uq) {
+              if (tb.some(x => cols.every(c => String(x[c]) === String(r[c]))))
+                return { data: null, error: { message: 'duplicate key value violates unique constraint "' + st.t + '_' + cols.join('_') + '_key"',
+                  details: 'Key (' + cols.join(', ') + ')=(' + cols.map(c => r[c]).join(', ') + ') already exists.', code: '23505' } };
+            }
+          }
+        }
         const list = (Array.isArray(st.row) ? st.row : [st.row]).map(r => ({ id: 'r' + (++seq), created_at: new Date(Date.now() + seq).toISOString(), ...JSON.parse(JSON.stringify(r)) }));
         list.forEach(r => tb.push(r));
         return out(list);
