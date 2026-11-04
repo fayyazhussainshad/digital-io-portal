@@ -7,22 +7,36 @@
 async function _fillIndexNaqlData() {
   if (!_misalCaseId) return;
   // ملزمان → بنام blocks (max 4)
+  // v567 (افسر کا حکم، 4 نومبر 2026): FIR اور کراس ورژن کے ملزمان الگ — پہلے پہلے 4 ملزمان (کراس سمیت) FIR کے
+  //   «بنام» میں ملے جلے آتے تھے۔ اب FIR کے «بنام» میں صرف FIR کے ملزمان؛ کراس ورژن والے مقدمے میں نیچے
+  //   «کراس ورژن» — کراس کا مدعی اور اس کے ملزمان (ضمنی کے کالم 3 کی ترتیب)۔
   try {
     const { data: acc } = await supabaseClient.from('case_accused')
       .select('*').eq('case_id', _misalCaseId)
       .order('created_at', { ascending: true });
-    (acc || []).slice(0, 4).forEach((a, i) => {
+    const _fcx = (typeof formatCNIC==='function') ? formatCNIC : (s=>s||'');
+    const _fmx = (typeof formatCell==='function') ? formatCell : (s=>s||'');
+    const put = (pre, list) => list.slice(0, 4).forEach((a, i) => {
       const n = i + 1;
       const nm = a.name || a.full_name || '';
-      const _fcx = (typeof formatCNIC==='function') ? formatCNIC : (s=>s||'');
-      const _fmx = (typeof formatCell==='function') ? formatCell : (s=>s||'');
-      const elN = document.getElementById('idxn-name-' + n);
+      const elN = document.getElementById(pre + 'name-' + n);
       if (elN && nm) elN.textContent = ' ' + nm + ' ';
-      const elC = document.getElementById('idxn-cell-' + n);
+      const elC = document.getElementById(pre + 'cell-' + n);
       if (elC && a.cell) elC.textContent = ' ' + (_fmx(a.cell) || a.cell) + ' ';
-      const elI = document.getElementById('idxn-cnic-' + n);
+      const elI = document.getElementById(pre + 'cnic-' + n);
       if (elI && a.cnic) elI.textContent = ' ' + (_fcx(a.cnic) || a.cnic) + ' ';
     });
+    const all = acc || [];
+    const fir = all.filter(a => (a.accused_type || 'fir') !== 'cross_version');
+    const xv  = all.filter(a => a.accused_type === 'cross_version');
+    put('idxn-', fir);
+    // کراس ورژن کا حصہ: مقدمے میں کراس ورژن ہو (سانچے میں پہلے سے) یا کراس کے ملزمان درج ہوں
+    if (xv.length) {
+      const parties = document.getElementById('idxn-parties');
+      if (parties && !document.getElementById('idxn-xv')) parties.insertAdjacentHTML('beforeend', _idxCrossHTML(_misalCase, xv.length));
+      _idxCrossSlots(xv.length);
+      put('idxn-x-', xv);
+    }
   } catch(_) { /* parhna na ho sake to pehle wali/khali qadr rahe */ }
   // ضمنیاں → انڈکس ضمنیات
   // جیسے جیسے مقدمے کی ضمنی لکھی جاتی ہے، وہ اپنے نمبر، تاریخ اور تفتیشی افسر کے
@@ -137,6 +151,44 @@ const _IDX_FIT_SRC = '<script>(function(){' + _idxFitCells.toString() +
 
 // Formatting helpers
 
+// ═══ v567: انڈیکس — کراس ورژن کا حصہ (FIR والے حصے جیسی سطریں: سرکار بذریعہ + رابطہ، پھر «بنام» + رابطہ) ═══
+//  عنوان «کراس ورژن» تیسرے درجے کی سرخی (14pt)؛ «بنام» کی جگہیں = کراس کے ملزمان (کم از کم 1، زیادہ سے زیادہ 4)
+const _IDX_ROW  = 'display:flex;align-items:flex-end;gap:2mm;font-size:16pt;line-height:8mm;';
+const _IDX_LBL  = 'flex:0 0 auto;white-space:nowrap;';
+const _IDX_LTR  = 'unicode-bidi:isolate;direction:ltr;';
+function _idxFill(id, val, extra) {
+  return `<span ${id ? ('id="' + id + '"') : ''} class="fill-line" style="flex:1 1 0;min-width:0;display:inline-block;border-bottom:1.5px dotted #000;text-align:center;line-height:8mm;${extra || ''}">${val || '&nbsp;'}</span>`;
+}
+function _idxContact(cellId, cellVal, cnicId, cnicVal) {
+  return `<div style="${_IDX_ROW}"><span style="${_IDX_LBL}">رابطہ نمبر</span>${_idxFill(cellId, cellVal, _IDX_LTR)}<span style="${_IDX_LBL}">شناختی کارڈ نمبر</span>${_idxFill(cnicId, cnicVal, _IDX_LTR)}</div>`;
+}
+function _idxCrossSlot(i) {
+  return `<div class="idxn-x-slot" data-i="${i}"><div style="${_IDX_ROW}"><span style="${_IDX_LBL}">بنام</span>${_idxFill('idxn-x-name-' + i, '', 'font-weight:bold;')}</div>
+${_idxContact('idxn-x-cell-' + i, '', 'idxn-x-cnic-' + i, '')}</div>`;
+}
+function _idxCrossHTML(c, count) {
+  const _e  = (typeof esc === 'function') ? esc : (s => String(s ?? ''));
+  const _fc = (typeof formatCNIC === 'function') ? formatCNIC : (s => s || '');
+  const _fm = (typeof formatCell === 'function') ? formatCell : (s => s || '');
+  const n = Math.max(1, Math.min(4, count || 1));
+  let slots = '';
+  for (let i = 1; i <= n; i++) slots += _idxCrossSlot(i);
+  return `<div id="idxn-xv">
+  <div id="idxn-xv-head" style="text-align:center;font-size:14pt;font-weight:bold;text-decoration:underline;line-height:8mm;margin-top:4mm;">کراس ورژن</div>
+  <div style="${_IDX_ROW}"><span style="${_IDX_LBL}">سرکار بذریعہ</span>${_idxFill('idxn-x-complainant', _e((c && c.cross_complainant) || ''), 'font-weight:bold;')}</div>
+  ${_idxContact('idxn-x-mudai-cell', _e(_fm(c && c.cross_complainant_cell) || ''), 'idxn-x-mudai-cnic', _e(_fc(c && c.cross_complainant_cnic) || ''))}
+  <div id="idxn-xv-acc">${slots}</div>
+</div>`;
+}
+// کراس کے ملزمان کی تعداد کے مطابق «بنام» کی جگہیں (1–4)
+function _idxCrossSlots(count) {
+  const box = document.getElementById('idxn-xv-acc'); if (!box) return;
+  const want = Math.max(1, Math.min(4, count || 1));
+  let have = box.querySelectorAll('.idxn-x-slot').length;
+  while (have < want) { have++; box.insertAdjacentHTML('beforeend', _idxCrossSlot(have)); }
+  while (have > want) { const l = box.querySelector('.idxn-x-slot[data-i="' + have + '"]'); if (l) l.remove(); have--; }
+}
+
 function getMisalTemplate(docId, c) {
   // ═══ انڈکس نقل مسل پولیس — GENUINE FORMAT (user ke INDEX.docx ka hoo-ba-hoo) ═══
   // Auto-fill: مقدمہ data + مدعی (sync) · ملزمان + ضمنیاں (async _fillIndexNaqlData)
@@ -214,7 +266,8 @@ ${_contact('idxn-cell-'+i, '', 'idxn-cnic-'+i, '')}`;
 <div id="idxn-parties" style="padding:0 14px;">
   <div style="${_row}"><span style="${_lbl}">سرکار بذریعہ</span>${_fill('idxn-complainant', _e(c?.complainant||''), 'font-weight:bold;')}</div>
   ${_contact('idxn-mudai-cell', _e(_cCell), 'idxn-mudai-cnic', _e(_cCnic))}
-  ${_bnam}
+  ${_bnam}${((typeof caseHasCross === 'function') && caseHasCross(c)) ? `
+  ${_idxCrossHTML(c, 1)}` : ''}
 </div>
 <div id="idxz-head" style="text-align:center;font-size:16pt;font-weight:bold;text-decoration:underline;margin:${_gap} 0 2px;">انڈکس ضمنیات</div>
 ${_idxZimniTableHTML([])}`;
