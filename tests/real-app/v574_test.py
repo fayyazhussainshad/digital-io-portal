@@ -82,6 +82,9 @@ def new_zimni(pg, seed=True):
     if seed: pg.evaluate(SEED); pg.evaluate(SEED2)
     pg.evaluate("openCaseWorkspace('c1')"); pg.wait_for_timeout(1300)
     pg.evaluate("_openMisalEditor('zamniyat')"); pg.wait_for_timeout(1500)
+    # ماؤس کاغذ / فہرست کے بیچ میں (افسر کی طرح) — اوپر رکا ہوا ماؤس دستاویز کی پٹی کھول کر بٹن ڈھانپ دیتا ہے (پرانا رویہ، HEAD میں بھی)
+    vs = pg.viewport_size or {'width': 1366, 'height': 768}
+    pg.mouse.move(vs['width'] // 2, vs['height'] * 2 // 3); pg.wait_for_timeout(600)
     pg.click("button:has-text('ضمنی درج کریں')"); pg.wait_for_timeout(2500)
 
 
@@ -135,6 +138,15 @@ def run(b, name, kw):
           same_row and g['main']['l'] < g['sub']['l'] and g['main']['l'] <= g['corners']['l'] + 4 and g['sub']['r'] >= g['corners']['r'] - 4
           and g['corners']['b'] <= g['doc']['t'] + 1, {k: g[k] for k in ('main', 'sub', 'corners', 'doc')})
     check(f'{name}: کاغذ اوپر سے پوری جگہ پر (اوپر کی کل جگہ ≤ 50px)', g['docTopInBody'] is not None and g['docTopInBody'] <= 50, g['docTopInBody'])
+    # «خودکار محفوظ» / «آخری اپ ڈیٹ» کا نشان آئے تو قطار کی اونچائی نہ بدلے (پہلے بائیں «ضمنی» نیچے کی سطر میں جا کر
+    #   کاغذ 36px کھسک جاتا تھا — ٹیب سے واپسی پر scroll بھی 150 → 186)
+    POS = "(() => { const r = e => { const b = document.querySelector(e).getBoundingClientRect(); return [Math.round(b.left), Math.round(b.top)]; }; return [r('#ch173-doc'), r('#zf-main-type'), r('#zf-sub-type')]; })()"
+    p0 = pg.evaluate(POS)
+    pg.evaluate("""() => { const b = _zimniDoc().querySelector('tr.zf-blk .zf-body'); b.focus(); const r = document.createRange(); r.selectNodeContents(b); r.collapse(false);
+        const s = getSelection(); s.removeAllRanges(); s.addRange(r); document.execCommand('insertText', false, ' '); document.execCommand('delete'); _zimniWriteDraft(); _zimniStampUpdated(new Date().toISOString()); return 0; }""")
+    pg.wait_for_timeout(400)
+    p1 = pg.evaluate(POS); st = pg.evaluate("[document.getElementById('zf-autosave').textContent, document.getElementById('zf-autosave').title]")
+    check(f'{name}: محفوظ ہونے کا نشان آنے پر کاغذ اور دونوں کونے اپنی جگہ (کچھ نہیں کھسکا)', p0 == p1 and (desk is False or (st[0] and st[0] == st[1])), (p0, p1, st))
     EXP = ['پہلی ضمنی', 'گرفتاری', 'عدالت', 'درخواستیں', 'بیانات', 'متفرق', 'SHO کی ضمنی', 'DSP کی ضمنی']
     check(f'{name}: «ضمنی» کی فہرست — MW کی 8 اقسام ترتیب سے', g['mains'][:8] == EXP, g['mains'])
 

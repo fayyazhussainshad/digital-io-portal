@@ -544,7 +544,7 @@ function _zimniWriteDraft() {
   const ok = _zimniDraftsPut(_zimniCaseId, o);
   if (ok) {
     const el = document.getElementById('zf-autosave');
-    if (el) el.textContent = 'خودکار محفوظ (اس آلے پر): ' + _zimniFmtStamp(o[key].saved_at);
+    if (el) { el.textContent = 'خودکار محفوظ (اس آلے پر): ' + _zimniFmtStamp(o[key].saved_at); el.title = el.textContent; }
   }
   return ok;
 }
@@ -2250,7 +2250,7 @@ function _zimniStampUpdated(iso) {
   const el = document.getElementById('zf-updated');
   if (!el) return;
   const t = _zimniFmtStamp(iso || new Date().toISOString());
-  el.textContent = t ? ('آخری اپ ڈیٹ: ' + t) : '';
+  el.textContent = t ? ('آخری اپ ڈیٹ: ' + t) : ''; el.title = el.textContent;
 }
 window._zimniStampUpdated = _zimniStampUpdated;
 
@@ -3466,15 +3466,20 @@ function _zimniCornerCSS() {
   .zf-corners{ display:flex; align-items:center; justify-content:space-between; gap:6px; margin:0 auto 8px;
     direction:rtl; flex-wrap:wrap; }
   .zf-cr{ display:inline-flex; align-items:center; gap:6px; min-width:0; }
-  .zf-cr-m{ flex:1 1 auto; justify-content:center; flex-wrap:wrap; }
+  /* بیچ کا حصہ: بنیاد 0 — اس کی تحریر (مثلاً «خودکار محفوظ …») سطر کو کبھی نہیں توڑتی، بائیں کونے کی «ضمنی» اپنی جگہ رہتی ہے */
+  .zf-cr-m{ flex:1 1 0; justify-content:center; flex-wrap:wrap; }
   .zf-csel, .zf-kh, .zf-kwbtn, .zf-morebtn, #zf-author-wrap select, #zf-author-wrap input{
     height:30px; border:1px solid var(--border,#ccc); border-radius:6px; background:var(--bg-card,#fff);
     color:var(--text-primary,#111); font-size:12pt; font-family:'Jameel Noori Nastaleeq'; }
   .zf-csel{ max-width:260px; padding:0 6px; cursor:pointer; }
-  .zf-kh{ flex:1 1 14em; min-width:8em; max-width:26em; padding:0 8px; }
+  .zf-kh{ flex:1 1 10em; min-width:6em; max-width:26em; padding:0 8px; }
   .zf-kwbtn, .zf-morebtn{ padding:0 10px; cursor:pointer; }
   .zf-morebtn{ display:none; }
-  .zf-stamps{ display:inline-flex; flex-direction:column; line-height:1.3; font-size:8.5pt; color:var(--text-muted); white-space:nowrap; }
+  /* محفوظ ہونے کے نشان: مقررہ اونچائی (دو سطریں ≤ 30px) اور بنیاد 0 — نشان بدلنے سے قطار کی اونچائی نہیں بدلتی،
+     کاغذ اپنی جگہ رہتا ہے (پہلے نشان آتے ہی قطار دو منزلہ ہو کر کاغذ 36px نیچے کھسک جاتا تھا) */
+  .zf-stamps{ display:inline-flex; flex-direction:column; justify-content:center; flex:0 1 16em; min-width:0; max-width:16em;
+    height:30px; overflow:hidden; line-height:1.3; font-size:8.5pt; color:var(--text-muted); }
+  .zf-stamps > span{ display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   #zf-author-wrap{ display:inline-flex; gap:4px; align-items:center; flex-wrap:wrap; }
   .zf-kw-note{ font-size:11pt; color:var(--text-muted); padding:8px 2px 0; line-height:1.7; }
   @media (max-width:760px){

@@ -107,3 +107,9 @@ test('v574: قطار صفحے پر ٹوٹے تو خانے کی نچلی padding 
   assert.ok(/sp=lineFind\(bodyC, pTop\+contentH-EPS-padB\);/.test(f));
   assert.ok(!/\bdocument\./.test(f.replace(/\/\/.*$/gm, '')), 'document براہِ راست نہیں (DOC.defaultView)');
 });
+
+test('v574: کونوں کی قطار کی اونچائی مقرر — «خودکار محفوظ» کا نشان کاغذ کو نہیں کھسکاتا', () => {
+  assert.ok(/\.zf-cr-m\{ flex:1 1 0; justify-content:center; flex-wrap:wrap; \}/.test(Z), 'بیچ کا حصہ بنیاد 0');
+  assert.ok(/\.zf-stamps\{ display:inline-flex; flex-direction:column; justify-content:center; flex:0 1 16em; min-width:0; max-width:16em;\s*height:30px; overflow:hidden;/.test(Z), 'نشان مقررہ اونچائی');
+  assert.ok(/\.zf-stamps > span\{ display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; \}/.test(Z));
+});
