@@ -1261,6 +1261,11 @@ function _printR173Now() {
            اور اسکرین پر نیچے سے۔ اب دونوں جگہ ایک: نیچے سے، دائیں کنارے کے ساتھ۔ متن پھر بھی نہیں کٹتا۔ */
         #ch173-doc .ch173-table tbody .rotinner{ position:static !important; overflow:visible !important;
           min-height:0 !important; max-height:none !important; }
+        /* T9/B ⑨: چوڑائی میں کوئی چیز اپنے خانے (اور کاغذ کے کنارے) سے باہر نہیں — اسکرین کی طرح (.cellbox وہاں
+           overflow:hidden)؛ اونچائی میں کچھ نہیں کٹتا۔ وجہ: کالم 1 کا متن دائیں کنارے سے لگا ہے اور فونٹ کا اپنا
+           خانہ (ascent/descent) کاغذ سے 1px باہر نکلتا تھا — Chrome پھر پورا پرنٹ 800/801 چھوٹا کر دیتا، اور
+           «پورا مقدمہ» میں ساتھ چھپنے والی دوسری دستاویزوں (جیسے درخواست) کی سطریں بھی بدل جاتیں۔ */
+        #ch173-doc .ch173-table tbody .cellbox{ overflow-x:clip !important; overflow-y:visible !important; }
         /* Misal bandhne wali tikoni jagah — chapai mein zaroori */
         #ch173-doc .ch173-bind{ display:block !important; }
         ${typeof dioBindCSS === 'function' ? dioBindCSS('#ch173-doc') : ''}
