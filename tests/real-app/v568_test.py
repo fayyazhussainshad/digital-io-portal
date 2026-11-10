@@ -153,7 +153,7 @@ def run(desktop):
         opened = pg.evaluate("!!document.querySelector('#ch173-doc .zf-tbl')")
         P_row = pages(b, h_row, f'{tag}_A1_row')
         pg.evaluate(f"_openZimni('{zid2}'); 0"); pg.wait_for_timeout(2500)
-        h_in = grab(pg, lambda: pg.click('[data-dio-print]'), paper)
+        h_in = grab(pg, lambda: pg.evaluate("(document.querySelector('#dio-dv-bar button[onclick=\"_dioPrintCurrent()\"]') || document.querySelector('[data-dio-print]')).click()"), paper)
         P_in = pages(b, h_in, f'{tag}_A1_inside')
         def ctrlp():
             pg.click('#ch173-doc tr.zf-blk .zf-body'); pg.keyboard.press('End'); pg.keyboard.press('Control+p')
@@ -187,7 +187,7 @@ def run(desktop):
         pg.screenshot(path=V + f'{tag}_02_duplicate_editor.png')
         check(f'{tag} B7: «ڈپلیکیٹ» — نقل ترمیم کے لیے کھلی، پٹی میں «ڈپلیکیٹ» نشان، وہی نمبر (2) اور تاریخ (16/10/2026)',
               st['badge'] == 'ڈپلیکیٹ' and st['zno'] == '2' and st['c1'] == '16/10/2026' and st['id'] is None and st['body'] == 3, st)
-        hp = grab(pg, lambda: pg.click('[data-dio-print]'), paper)
+        hp = grab(pg, lambda: pg.evaluate("(document.querySelector('#dio-dv-bar button[onclick=\"_dioPrintCurrent()\"]') || document.querySelector('[data-dio-print]')).click()"), paper)
         check(f'{tag} B7: «ڈپلیکیٹ» نشان کاغذ پر نہیں', 'ڈپلیکیٹ' not in hp and 'zf-tbl' in hp)
         to_list(pg)
         dr = pg.evaluate("[...document.querySelectorAll('.zt tbody tr.zt-draft')].map(r => r.innerText.replace(/\\s+/g, ' '))")
@@ -323,7 +323,7 @@ def run(desktop):
         pg.evaluate("_openZimni('z1'); 0"); pg.wait_for_timeout(3500)
         att = pg.evaluate("!!document.querySelector('#ch173-doc .zf-androoni .zfa-tbl')")
         kb = pg.evaluate("getComputedStyle(document.getElementById('ch173-doc')).fontKerning")
-        hb = grab(pg, lambda: pg.click('[data-dio-print]'), paper)
+        hb = grab(pg, lambda: pg.evaluate("(document.querySelector('#dio-dv-bar button[onclick=\"_dioPrintCurrent()\"]') || document.querySelector('[data-dio-print]')).click()"), paper)
         calls = pg.evaluate("[window.__zaCssCalls, window.__zaBodyCalls]")
         check(f'{tag} D14: بیرونی ضمنی کی منسلک اندرونی شیٹ — ایڈیٹر اور پرنٹ اکیلے بیان 161 کی CSS / خاکہ نہیں لیتے (اپنی نقل)؛ kerning اپنی ضمنی جیسی (v569: خودکار)',
               att and calls == [0, 0] and kb == 'auto' and 'font-kerning' not in hb and 'zf-androoni' in hb, (att, calls, kb))

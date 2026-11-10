@@ -23,7 +23,7 @@ def frame_capture(pg, f, how, paper):
     """ٹیب کے اندر: «پرنٹ» بٹن یا Ctrl+P — اصل کاغذ (چھپائی کا iframe) کا HTML"""
     f.evaluate(SNAP); f.evaluate("window.__snaps = []; window.__dioPaperAuto = undefined; 0")
     if how == 'button':
-        f.click("[data-dio-print]")
+        f.evaluate("(document.querySelector('#dio-dv-bar button[onclick=\"_dioPrintCurrent()\"]') || document.querySelector('[data-dio-print]')).click()")
     else:
         f.click('#ch173-doc tr.zf-blk .zf-body'); pg.keyboard.press('End'); pg.keyboard.press('Control+p')
     asked = pick_paper(f, paper)

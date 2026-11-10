@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   DIGITAL IO — SERVICE WORKER v573
+   DIGITAL IO — SERVICE WORKER v574
    Offline-first · Cache all assets · Background sync
    ═══════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'digital-io-v573';
+const CACHE_NAME = 'digital-io-v574';
 const OFFLINE_URL = '/offline.html';
 
 const CORE_ASSETS = [
@@ -48,6 +48,7 @@ const CORE_ASSETS = [
   '/witnesses.js',
   '/mulziman.js',
   '/zimni.js',
+  '/zimni-templates.js',   // v574: بیرونی ضمنی کے MW نمونے (آف لائن بھی)
   '/naqsha-mauqa.js',
   '/fir.js',
   '/report173.js',

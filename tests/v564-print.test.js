@@ -22,13 +22,15 @@ test('v564: براؤزر کی اپنی چھپائی = وہی تیار کاغذ (
   const i = H.indexOf('function _setup()'), j = H.indexOf('var node = _findOpenDoc();');
   assert.ok(i > 0 && j > i && /dioNativePrint\.setup\(\)\) return;/.test(H.slice(i, j)), 'ضمنی کھلی ہو تو پرانا راستہ نہ چلے');
   assert.ok(/window\.dioNativePrint\.register\(\{/.test(Z) && /html: \(\) => _zimniCurrentPrintHTML\(\)/.test(Z));
-  assert.ok(/_zimniPaginate\(root, win, \{ paper: paper, skel: _zimniZaSkel\(_o, _c\) \}\)\(\);/.test(Z), 'اسی لمحے وہی حساب');
+  // v574: نیچے کا حاشیہ ایک ہی قدر (ZF_PAGE_BOT_CM) — @page، صفحات کا حساب اور مثل کی لکیر ایک
+  assert.ok(/_zimniPaginate\(root, win, \{ paper: paper, skel: _zimniZaSkel\(_o, _c\), botCm: ZF_PAGE_BOT_CM \}\)\(\);/.test(Z), 'اسی لمحے وہی حساب');
   assert.ok(/_dioViewOnlyActive\(\)\) return false;/.test(A) && /html\.dio-viewonly #dio-pp-host\{display:none !important;\}/.test(A), 'میعاد ختم = پرنٹ بند');
 });
 
 test('v564: صفحات / مثل کی لکیر کا حساب ایک ہی فنکشن — پرنٹ HTML اسی کا متن لے جاتا ہے', () => {
   assert.ok(/^function _zimniPaginate\(R, W, opt\) \{/m.test(Z));
-  assert.ok(/var go=\(\$\{_zimniPaginate\.toString\(\)\}\)\(document, window, \{ paper: window\.__PAPER, skel: window\.__ZA_SKEL \}\);/.test(Z));
+  assert.ok(/var go=\(\$\{_zimniPaginate\.toString\(\)\}\)\(document, window, \{ paper: window\.__PAPER, skel: window\.__ZA_SKEL, botCm: \$\{ZF_PAGE_BOT_CM\} \}\);/.test(Z));
+  assert.ok(/^const ZF_PAGE_BOT_CM = 0\.6;$/m.test(Z) && /@page\{ size:\$\{size\}; margin:1cm 0 \$\{ZF_PAGE_BOT_CM\}cm 0; \}/.test(Z), 'v574: نیچے 0.6cm، اوپر 1cm');
   const f = Z.slice(Z.indexOf('function _zimniPaginate('), Z.indexOf('window._zimniPaginate = _zimniPaginate;'));
   assert.ok(!/<\/script/i.test(f), 'فنکشن کے متن میں </script> نہیں (پرنٹ HTML نہ ٹوٹے)');
   assert.ok(!/\bdocument\./.test(f.replace(/\/\/.*$/gm, '')), 'document براہِ راست نہیں — R / DOC (shadow root میں بھی چلے)');

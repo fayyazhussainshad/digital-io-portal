@@ -297,7 +297,8 @@
   // ═══ 3) مسودے (dio_user_data) ══════════════════════════════════════════
   //  doc_key = <case_id>|<مسودے کی چابی>   (چابی: new:<وقت> یا id:<ضمنی>)
   //  باہر جانے والی قطار localStorage میں (dio_ud_outbox) — آلہ بند ہو تب بھی باقی
-  var UD_KIND = { zimni_draft: 'dio_zimni_draft_', za_draft: 'dio_za_draft_' };
+  // v574: case_kawaif = «کوائف موقع و مال» (MW کے خانے جو Digital IO میں نہیں تھے) — ہر مقدمے کا ایک ریکارڈ (چابی 'fields')
+  var UD_KIND = { zimni_draft: 'dio_zimni_draft_', za_draft: 'dio_za_draft_', case_kawaif: 'dio_case_kawaif_' };
   var ud = DS.ud = {};
   // اس وقت لاگ اِن افسر (فوراً، بغیر انتظار) — ایک آلے پر دو افسر ہوں تو ایک کا کام دوسرے کے کھاتے میں نہ جائے
   function curOid() { try { return (typeof currentOfficer !== 'undefined' && currentOfficer && currentOfficer.id) ? String(currentOfficer.id) : ''; } catch (_) { return ''; } }

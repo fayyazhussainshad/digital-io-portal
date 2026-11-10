@@ -84,7 +84,7 @@ def capture(pg, how, paper):
     """button / ctrlp — ایپ کا اپنا راستہ؛ اصل کاغذ (iframe) کا HTML واپس"""
     pg.evaluate(SNAP); pg.evaluate("window.__snaps = []; window.__dioPaperAuto = undefined; 0")
     if how == 'button':
-        pg.click("[data-dio-print]")
+        pg.evaluate("(document.querySelector('#dio-dv-bar button[onclick=\"_dioPrintCurrent()\"]') || document.querySelector('[data-dio-print]')).click()")
     elif how == 'ctrlp':
         pg.click('#ch173-doc tr.zf-blk .zf-body'); pg.keyboard.press('End')
         pg.keyboard.press('Control+p')

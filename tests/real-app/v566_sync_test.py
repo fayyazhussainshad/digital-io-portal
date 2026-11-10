@@ -158,7 +158,7 @@ with sync_playwright() as p:
     dp.evaluate("_newZimni()"); idle(dp, 2200)
     check('لیپ ٹاپ: نئی ضمنی میں کوئی ملزم خود نہیں لگا', dp.evaluate(BANAM) == [], dp.evaluate(BANAM))
     type_c1(dp, '29/10/2026 بیان 161 ض ف')
-    dp.select_option('#zf-author', 'sho'); idle(dp, 500)
+    dp.evaluate("(() => { const a = document.getElementById('zf-author'); if (a && !a.getClientRects().length) { const b = document.querySelector('#zf-corners .zf-morebtn'); if (b) b.click(); } return 0; })()"); dp.select_option('#zf-author', 'sho'); idle(dp, 500)
     dp.evaluate("""() => { const z = document.querySelector('#ch173-doc [data-k="zno"]'); z.textContent = '2-الف'; return 0; }""")
     dp.click('#ch173-doc .zf-pick[data-which=fir]'); idle(dp, 500)
     dp.locator('#zf-acc-menu input[type=checkbox]').nth(0).click(); idle(dp, 300)

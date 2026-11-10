@@ -108,7 +108,7 @@ def run(b, tag, vp, mobile=False):
     check(f'{tag}: Ctrl+P — ایک ہی پرنٹ (دوسرا نہیں کھلتا)', len(dp) == 1 and nat == 0, f'{len(dp)} iframe / {nat} native')
     check(f'{tag}: Ctrl+P کے کاغذ میں ضمنی کی CSS (چالان والی شکل نہیں)', bool(dp) and '#ch173-doc table.zf-tbl td' in dp[0])
     pg.evaluate("window.__dp = []; 0")
-    pg.click('button[data-dio-print]'); wait_dp(pg)
+    pg.evaluate("(document.querySelector('#dio-dv-bar button[onclick=\"_dioPrintCurrent()\"]') || document.querySelector('[data-dio-print]')).click()"); wait_dp(pg)
     dp2 = pg.evaluate('window.__dp')
     same = bool(dp) and bool(dp2) and re.sub(r'\s+', ' ', dp[0]) == re.sub(r'\s+', ' ', dp2[0])
     check(f'{tag}: «پرنٹ» بٹن = Ctrl+P (بالکل وہی کاغذ)', same)

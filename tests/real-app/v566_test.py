@@ -255,7 +255,7 @@ def run(desktop):
         # ═══ C) سینئر افسر — اسی تاریخ پر 3-الف، پھر 3-ب ═══
         to_list(pg); new_zimni(pg)
         type_c1(pg, '30/10/2026')
-        pg.select_option('#zf-author', 'sho'); pg.wait_for_timeout(600)
+        pg.evaluate("(() => { const a = document.getElementById('zf-author'); if (a && !a.getClientRects().length) { const b = document.querySelector('#zf-corners .zf-morebtn'); if (b) b.click(); } return 0; })()"); pg.select_option('#zf-author', 'sho'); pg.wait_for_timeout(600)
         zs = pg.evaluate("_zimniDoc().querySelector('[data-k=zno]').textContent")
         lines = pg.evaluate("[...(_zimniDoc().querySelectorAll('[data-k=murattib],[data-k=io_sign]'))].map(x => x.textContent.trim())")
         check(f'{tag} C: «لکھنے والا: SHO» — اسی تاریخ پر نمبر 3-الف خود', zs == '3-الف', zs)
@@ -272,7 +272,7 @@ def run(desktop):
         check(f'{tag} C: SHO کی ضمنی اسی تاریخ پر محفوظ (3-الف)', res is True and '3-الف' in msg, msg)
         to_list(pg); new_zimni(pg)
         type_c1(pg, '30/10/2026')
-        pg.select_option('#zf-author', 'dsp'); pg.wait_for_timeout(600)
+        pg.evaluate("(() => { const a = document.getElementById('zf-author'); if (a && !a.getClientRects().length) { const b = document.querySelector('#zf-corners .zf-morebtn'); if (b) b.click(); } return 0; })()"); pg.select_option('#zf-author', 'dsp'); pg.wait_for_timeout(600)
         pg.fill('#zf-author-name', 'سید اظہر عباس'); pg.dispatch_event('#zf-author-name', 'change'); pg.wait_for_timeout(400)
         zd = pg.evaluate("_zimniDoc().querySelector('[data-k=zno]').textContent")
         check(f'{tag} C: دوسرا سینئر (DSP) اسی تاریخ پر — 3-ب', zd == '3-ب', zd)
@@ -282,7 +282,7 @@ def run(desktop):
         check(f'{tag} C: DSP کی ضمنی محفوظ (3-ب)', res is True and '3-ب' in msg, msg)
         # وہی SHO دوبارہ اسی تاریخ → خبردار
         to_list(pg); new_zimni(pg)
-        type_c1(pg, '30/10/2026'); pg.select_option('#zf-author', 'sho'); pg.wait_for_timeout(500)
+        type_c1(pg, '30/10/2026'); pg.evaluate("(() => { const a = document.getElementById('zf-author'); if (a && !a.getClientRects().length) { const b = document.querySelector('#zf-corners .zf-morebtn'); if (b) b.click(); } return 0; })()"); pg.select_option('#zf-author', 'sho'); pg.wait_for_timeout(500)
         res, msg = save(pg)
         check(f'{tag} C: وہی SHO اسی تاریخ پر دوسری ضمنی — خبردار، محفوظ نہیں', res is False and 'ندیم عباس شاد' in msg and 'ایک افسر ایک تاریخ' in msg, msg)
         # 3a: سینئر افسر ایسی تاریخ پر جس پر تفتیشی افسر کی ضمنی نہیں — اگلا سادہ نمبر

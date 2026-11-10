@@ -193,6 +193,10 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh t9_sync_test.py
+      - name: v574 — bairooni zimni in MW format — old strip gone (full space on mobile), main type left corner / nature right corner, 151 MW templates filled from case data, new «کوائف موقع و مال» fields (saved + synced), yellow blanks (dotted in print), khulasa in list, bottom margin 0.6 cm, binding line pages 2/4/6, same font / line / word spacing, MS Word keys, one zimni per date, old zimni unchanged, offline without templates, logout clears (v574_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: bash ci_run.sh v574_test.py
       - name: Screenshots and print PDFs
         if: always()
         uses: actions/upload-artifact@v4
