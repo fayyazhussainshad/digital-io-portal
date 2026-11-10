@@ -477,7 +477,9 @@ def run(b, tag, ctxargs, mobile):
             r.content = Object.assign({}, r.content, { bodyHtml: b, saved_at: '2026-10-01T00:00:00Z' }); localStorage.removeItem('dio_zimni_c1'); localStorage.removeItem('dio_zimni_draft_c1'); return b.includes('1۔ نامعلوم'); })()""")
         pg.evaluate("_loadZimni().then(() => _renderZimniList())"); pg.wait_for_timeout(1200)
         h = printed(pg, lambda: pg.evaluate("_printZimniById(String(_zimniList[0].id))"), 'legal')
-        check(f'{tag}: پرانی محفوظ ضمنی کا پرنٹ — اکیلے ملزم پر «1۔» نہیں، اختتامی سطر «۔» کے ساتھ', old and '1۔ نامعلوم' not in h and 'ارسال خدمت ہے۔' in h, (old, '1۔ نامعلوم' in h))
+        # T9 (5 نومبر، افسر کا فیصلہ «Untouched until edited»): پرانی محفوظ ضمنی جوں کی توں — «بنام» کا اکیلا «1۔» کھولنے/چھاپنے
+        #   پر خود نہیں ہٹتا (قاعدہ 15)؛ افسر فہرست بدلے تو dio-serial.js ہٹاتا ہے (t9_test.py)۔ اختتامی «۔» والا v558 قاعدہ برقرار۔
+        check(f'{tag}: پرانی محفوظ ضمنی کا پرنٹ — «بنام» جوں کا توں (T9)، اختتامی سطر «۔» کے ساتھ', old and '1۔ نامعلوم' in h and 'ارسال خدمت ہے۔' in h, (old, '1۔ نامعلوم' in h))
         # فہرست کے بٹن — مقدمہ کی فہرست والے، PDF / نقل نہیں؛ پرنٹ کھولے بغیر
         L = pg.evaluate("""(() => { const tr = document.querySelector('.zt tbody tr[data-zid]');
             return { t: [...tr.querySelectorAll('button')].map(b => b.title.split(' — ')[0]), cls: [...tr.querySelectorAll('button')].every(b => b.classList.contains('dio-act') && b.classList.contains('btn-sm')),

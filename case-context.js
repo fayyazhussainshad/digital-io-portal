@@ -188,12 +188,17 @@
       it('پیشہ', c.complainant_profession),
     ]) });
 
-    G.push({ title: 'ملزمان', items: (d.acc || []).map(function (a, i) {
+    // T9: نمبر شمار کا ایک ہی قاعدہ (dio-serial.js) — خالی نام نکالنے کے بعد گنتی؛ اکیلا ہو تو «1» نہیں
+    var sn = function (arr) {
+      arr.forEach(function (x, i) { x.label = (window.DIOSerial ? window.DIOSerial.prefix(i, arr.length) : (arr.length > 1 ? (i + 1) + '۔ ' : '')) + x.label; });
+      return arr;
+    };
+    G.push({ title: 'ملزمان', items: sn((d.acc || []).map(function (a) {
       var nm = T(a.name);
       if (!nm) return null;
-      return { label: ((d.acc || []).length > 1 ? (i + 1) + '۔ ' : '') + nm, value: nm, sub: person(nm, a.cnic, a.cell || a.mobile),   // v558: اکیلا ہو تو «1» نہیں
+      return { label: nm, value: nm, sub: person(nm, a.cnic, a.cell || a.mobile),
         badge: a.accused_type === 'cross_version' ? 'کراس ورژن' : '' };
-    }).filter(Boolean) });
+    }).filter(Boolean)) });
 
     // مدعی بھی گواہ ہے (سسٹم کا اصول) — پہلے
     var wit = [];
@@ -203,14 +208,13 @@
       if (!nm || (T(c.complainant) && nm.replace(/\s/g, '') === T(c.complainant).replace(/\s/g, ''))) return;
       wit.push({ label: nm, value: nm, sub: person(nm, w.cnic, w.cell, [it('پیشہ', w.profession)]) });
     });
-    if (wit.length > 1) wit.forEach(function (w, i) { w.label = (i + 1) + '۔ ' + w.label; });   // v558: اکیلا ہو تو «1» نہیں
-    G.push({ title: 'گواہان', items: wit });
+    G.push({ title: 'گواہان', items: sn(wit) });
 
-    G.push({ title: 'ہمراہی ملازمان', items: (d.staff || []).map(function (s, i) {
+    G.push({ title: 'ہمراہی ملازمان', items: sn((d.staff || []).map(function (s) {
       var ln = staffLine(s);
       if (!ln) return null;
-      return { label: ((d.staff || []).length > 1 ? (i + 1) + '۔ ' : '') + ln, value: ln, sub: clean([it('نام مع عہدہ', ln), it('شناختی کارڈ', s.cnic, { ltr: true }), it('موبائل نمبر', s.mobile, { ltr: true })]) };
-    }).filter(Boolean) });
+      return { label: ln, value: ln, sub: clean([it('نام مع عہدہ', ln), it('شناختی کارڈ', s.cnic, { ltr: true }), it('موبائل نمبر', s.mobile, { ltr: true })]) };
+    }).filter(Boolean)) });
 
     var firItems = clean([it('مقدمہ نمبر مع تاریخ و جرم', fir ? firLine : '')]);
     var mt = (d.matn || []).filter(function (m) { return (m.type || 'fir') === 'fir' && T(m.matn); });
