@@ -90,7 +90,33 @@ function _dioEnterDocView() {
          ہے؛ دکھاتے وقت اُوپر والے اوزاروں کے ٹھیک نیچے آ کر رکتی ہے۔     */
       '#dio-dv-bar{position:absolute;left:0;right:0;z-index:60;' +
       'transition:top .18s ease;box-shadow:0 6px 18px rgba(0,0,0,.16);}' +
-      '@media print{#dio-dv-bar{display:none !important;}}';
+      /* v575 (افسر کی ہدایت، 11 نومبر 2026): اوپر سے گرنے والی پٹی پورے نظام سے ہٹا دی گئی —
+         دستاویز کو پوری جگہ۔ پٹی کا DOM چھپا ہوا رہتا ہے (Ctrl+S، ٹیب، «مقدمہ» وغیرہ اسی سے چلتے ہیں)؛
+         اس کے سب کام نیچے کونے کے گول «⋯» بٹن کی فہرست میں۔ */
+      '#dio-dv-bar{display:none !important;}' +
+      '#dio-dv-fab{position:absolute;left:14px;bottom:14px;z-index:70;width:44px;height:44px;min-height:44px;padding:0;' +
+      'border-radius:50%;border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:18pt;line-height:1;' +
+      'cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;opacity:.92;}' +
+      '#dio-dv-fab:hover,#dio-dv-fab[aria-expanded="true"]{opacity:1;}' +
+      '#dio-dv-menu{position:absolute;left:14px;bottom:66px;z-index:9700;width:270px;max-width:calc(100vw - 28px);' +
+      'max-height:min(72vh,560px);overflow:auto;background:var(--bg-card);border:1px solid var(--accent);border-radius:12px;' +
+      'box-shadow:0 12px 40px rgba(0,0,0,.4);direction:rtl;padding:6px;font-family:"Jameel Noori Nastaleeq";}' +
+      '#dio-dv-menu .dvm-h{font-size:10.5pt;font-weight:900;color:var(--accent);padding:6px 8px 4px;}' +
+      '#dio-dv-menu .dvm-st{font-size:8.25pt;color:var(--text-muted);padding:0 8px 4px;}' +
+      '#dio-dv-menu .dvm-sec{font-size:8.25pt;font-weight:700;color:var(--text-muted);padding:8px 8px 2px;border-top:1px solid var(--border);margin-top:4px;}' +
+      '#dio-dv-menu button.dvm-i{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:6px 10px;margin:0;' +
+      'border:none;border-radius:8px;background:transparent;color:var(--text-primary);font-size:10.5pt;font-weight:700;' +
+      'font-family:"Jameel Noori Nastaleeq";cursor:pointer;text-align:right;}' +
+      '#dio-dv-menu button.dvm-i:hover,#dio-dv-menu button.dvm-i:focus-visible{background:var(--bg-tertiary);}' +
+      '#dio-dv-menu .dvm-tab{display:flex;align-items:center;gap:4px;}' +
+      '#dio-dv-menu .dvm-tab button.dvm-i{flex:1;}' +
+      '#dio-dv-menu .dvm-tab.on button.dvm-i{color:var(--accent);}' +
+      '#dio-dv-menu button.dvm-x{flex:0 0 auto;width:36px;min-height:36px;border:none;border-radius:8px;background:transparent;' +
+      'color:var(--text-muted);font-weight:900;cursor:pointer;}' +
+      '#dio-dv-menu button.dvm-x:hover{background:var(--bg-tertiary);color:var(--red,#dc2626);}' +
+      /* «ایپ انسٹال کریں» کا بٹن بھی نیچے بائیں کونے میں ہے — دستاویز کھلی ہو تو «⋯» نہ ڈھکے */
+      'body:has(#dio-docview) #pwa-install-btn{display:none !important;}' +
+      '@media print{#dio-dv-bar,#dio-dv-fab,#dio-dv-menu{display:none !important;}}';
     document.head.appendChild(st);
   }
   ov.innerHTML = `
@@ -127,7 +153,10 @@ function _dioEnterDocView() {
                  font-family:'Jameel Noori Nastaleeq';">شارٹ کٹس</button>
       </div>
     </div>
-    <div id="dio-dv-body" style="flex:1;min-height:0;overflow:auto;"></div>`;
+    <div id="dio-dv-body" style="flex:1;min-height:0;overflow:auto;"></div>
+    <!-- v575: پٹی کی جگہ — نیچے کونے میں «⋯» (کوئی جگہ نہیں گھیرتا) -->
+    <button id="dio-dv-fab" class="no-print" type="button" onclick="_dioMenuToggle(event)" aria-haspopup="menu" aria-expanded="false"
+      title="محفوظ، پرنٹ، شیئر، نئی دستاویز، واپس" aria-label="محفوظ، پرنٹ، شیئر، نئی دستاویز، واپس">⋯</button>`;
   document.body.appendChild(ov);
   document.getElementById('dio-dv-body').appendChild(area);
   try {
@@ -142,8 +171,7 @@ function _dioEnterDocView() {
   // Escape se band
   document.addEventListener('keydown', _dioDocViewEsc);
 
-  // اوپر والی پٹی کو «چلتی» بناؤ
-  try { _dioBarPeekInit(ov); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  // v575: اوپر والی پٹی اب کبھی سامنے نہیں آتی (نہ scroll پر نہ ماؤس اوپر لے جانے پر) — «⋯» فہرست
 }
 
 /* ══ chip پٹی: کرسر اوپر → سامنے، کرسر نیچے → غائب ════════════════════
@@ -264,7 +292,7 @@ function _dioDocViewEsc(e) {
   if (shown(fr)) { e.preventDefault(); if (typeof dioFRClose === 'function') dioFRClose(); return; }
   const sb = document.getElementById('dio-share-box');
   if (sb) { e.preventDefault(); sb.remove(); return; }
-  const menu = document.querySelector('#naq-acc-menu, #saza-acc-menu, #dk-acc-menu, #dio-dv-picker');
+  const menu = document.querySelector('#dio-dv-menu, #naq-acc-menu, #saza-acc-menu, #dk-acc-menu, #dio-dv-picker');
   if (menu) { e.preventDefault(); menu.remove(); return; }
   if (shown(document.getElementById('modal-backdrop'))) return;      // کارڈ اپنا Esc خود سنبھالتا ہے
   // TASK 22: ٹیب کے اندر Esc = ایک قدم «واپس» (دستاویز اسی ٹیب کی تاریخ میں رہتی ہے، بند نہیں ہوتی)
@@ -302,6 +330,90 @@ function _dioExitDocView() {
 
 function _dioResetTabs() { _dioTabs = []; _dioActiveTab = null; }
 window._dioResetTabs = _dioResetTabs;
+
+// ══ v575: «⋯» — پٹی کے تمام کام ایک فہرست میں ════════════════════════════
+//   ہر سطر پٹی کے اسی (چھپے) بٹن کو دباتی ہے، اس لیے ٹیب والا رویہ، «محفوظ» کا اصول (انڈیکس پر نہیں)
+//   اور آنے والی ہر تبدیلی خود بخود یہاں بھی — دو الگ راستے نہیں۔
+function _dioMenuClose() {
+  const m = document.getElementById('dio-dv-menu');
+  if (m) m.remove();
+  const f = document.getElementById('dio-dv-fab');
+  if (f) f.setAttribute('aria-expanded', 'false');
+  document.removeEventListener('mousedown', _dioMenuOff, true);
+  document.removeEventListener('touchstart', _dioMenuOff, true);
+}
+function _dioMenuOff(e) {
+  const m = document.getElementById('dio-dv-menu');
+  if (!m) return;
+  const t = e.target;
+  if (m.contains(t) || (t && t.closest && t.closest('#dio-dv-fab'))) return;
+  _dioMenuClose();
+}
+function _dioMenuToggle(ev) {
+  if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+  if (document.getElementById('dio-dv-menu')) { _dioMenuClose(); return; }
+  const ov = document.getElementById('dio-docview');
+  if (!ov) return;
+  try { const p = document.getElementById('dio-dv-picker'); if (p) p.remove(); } catch (_) { /* - */ }
+  const E = (v) => (typeof esc === 'function') ? esc(v == null ? '' : String(v)) : String(v == null ? '' : v);
+  const shown = (el) => !!el && el.style.display !== 'none';
+  const box = document.createElement('div');
+  box.id = 'dio-dv-menu';
+  box.setAttribute('role', 'menu');
+  let h = '';
+  const fir = document.getElementById('dio-dv-fir');
+  if (fir && fir.textContent.trim()) {
+    // «مقدمہ 663/26» — ٹیبوں میں اسی ٹیب میں مقدمے کی مسل (پٹی والا ہی کام)
+    h += '<button type="button" class="dvm-i dvm-h" role="menuitem" data-act="fir">' + fir.innerHTML + '</button>';
+  }
+  // محفوظ ہونے کا نشان (مثلاً ضمنی کا «خودکار محفوظ …») — دستاویز [data-dio-status] سے بتاتی ہے
+  const st = [].map.call(ov.querySelectorAll('#dio-dv-body [data-dio-status]'), el => (el.textContent || '').trim()).filter(Boolean);
+  st.forEach(t => { h += '<div class="dvm-st">' + E(t) + '</div>'; });
+  const tabs = [].slice.call(ov.querySelectorAll('#dio-dv-tabs > span'));
+  if (tabs.length) {
+    h += '<div class="dvm-sec">کھلی دستاویزات</div>';
+    tabs.forEach((t, i) => {
+      const on = (typeof _dioTabs !== 'undefined' && _dioTabs[i] && _dioTabs[i].id === _dioActiveTab);
+      const nm = (t.firstChild && t.firstChild.nodeType === 3) ? t.firstChild.nodeValue.trim() : (t.textContent || '').replace('✕', '').trim();
+      h += '<div class="dvm-tab' + (on ? ' on' : '') + '"><button type="button" class="dvm-i" role="menuitem" data-tab="' + i + '">' + (on ? '✓ ' : '') + E(nm) + '</button>'
+        + '<button type="button" class="dvm-x" data-close="' + i + '" title="بند کریں" aria-label="بند کریں">✕</button></div>';
+    });
+  }
+  h += '<div class="dvm-sec">دستاویز</div>';
+  const acts = [
+    ['new', 'نئی دستاویز', '＋'],
+    ['save', 'محفوظ', '💾', shown(document.getElementById('dio-dv-save'))],
+    ['print', 'پرنٹ', '🖨'],
+    ['share', 'شیئر', '📤'],
+    ['keys', 'شارٹ کٹس', '⌨'],
+    ['back', 'واپس', '→'],
+  ];
+  acts.forEach(a => { if (a[3] === false) return; h += '<button type="button" class="dvm-i" role="menuitem" data-act="' + a[0] + '"><span aria-hidden="true">' + a[2] + '</span><span>' + a[1] + '</span></button>'; });
+  box.innerHTML = h;
+  ov.appendChild(box);
+  const f = document.getElementById('dio-dv-fab');
+  if (f) f.setAttribute('aria-expanded', 'true');
+  box.addEventListener('click', (e) => {
+    const b = e.target.closest && e.target.closest('button');
+    if (!b || !box.contains(b)) return;
+    e.preventDefault(); e.stopPropagation();
+    const ti = b.getAttribute('data-tab'), ci = b.getAttribute('data-close'), act = b.getAttribute('data-act');
+    const tabsNow = [].slice.call(ov.querySelectorAll('#dio-dv-tabs > span'));
+    _dioMenuClose();
+    if (ti != null) { const t = tabsNow[+ti]; if (t) t.click(); return; }
+    if (ci != null) { const t = tabsNow[+ci]; const x = t && t.querySelector('span'); if (x) x.click(); return; }
+    const bar = ov.querySelector('#dio-dv-bar');
+    const q = (sel) => bar && bar.querySelector(sel);
+    const map = { fir: '#dio-dv-fir', new: 'button[onclick^="_dioAddDocPicker"]', save: '#dio-dv-save', print: 'button[onclick^="_dioPrintCurrent"]',
+      share: '#dio-dv-share', keys: '#dio-dv-keys', back: '.dio-backbtn' };
+    const el = q(map[act]);
+    if (el) el.click();
+  });
+  setTimeout(() => { document.addEventListener('mousedown', _dioMenuOff, true); document.addEventListener('touchstart', _dioMenuOff, true); }, 0);
+  try { const first = box.querySelector('button'); if (first && !('ontouchstart' in window)) first.focus({ preventScroll: true }); } catch (_) { /* - */ }
+}
+window._dioMenuToggle = _dioMenuToggle;
+window._dioMenuClose = _dioMenuClose;
 
 // ── ➕ نئی دستاویز — fullscreen ke ANDAR se naya tab kholo ──
 // (Moujooda tab band nahi hota — sab khule rehte hain)

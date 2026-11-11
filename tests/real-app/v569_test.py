@@ -177,7 +177,7 @@ def run(b, tag, vp, extra):
         check(f'{tag} ضمنی: محفوظ → دوبارہ کھولی — ہر اندراج کا متن وہی', n == 1 and [words(x) for x in back] == [words(x) for x in ed] and len(ed) == 4, (n, len(back)))
         s = pg.evaluate(SCREEN, ZBODY)
         check(f'{tag} ضمنی: اسکرین پر kerning خودکار (3 نومبر سے پہلے جیسی)', s and s['kern'] == 'auto' and not s['sheet'], s)
-        hb = final_print(pg, lambda: pg.click('[data-dio-print]'))
+        hb = final_print(pg, lambda: pg.evaluate("(document.querySelector('#dio-dv-bar button[onclick=\"_dioPrintCurrent()\"]') || document.querySelector('[data-dio-print]')).click()"))
         open(V + f'{tag}_zimni_print.html', 'w', encoding='utf-8').write(hb)
         m = mq.evaluate(PAPER, [hb, ZBODY])
         check(f'{tag} ضمنی: «پرنٹ» بٹن کا کاغذ — kerning خودکار، کوئی kerning قاعدہ نہیں؛ فونٹ کی اپنی kerning واپس (سب سے تنگ جگہ < 0.1em، 3 نومبر سے پہلے جیسی)',

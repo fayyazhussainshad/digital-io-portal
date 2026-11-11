@@ -103,12 +103,14 @@
       return { s: offsetIn(host, r.startContainer, r.startOffset), e: offsetIn(host, r.endContainer, r.endOffset) };
     } catch (_) { return null; }
   }
-  function pointAt(host, n) {
+  // next: انتخاب کا شروع دو خانوں کی سرحد پر ہو تو اگلے خانے کے شروع میں (v575: ضمنی میں بلاک کے بالکل شروع سے
+  //   چنا متن Ctrl+R/L/E کے بعد پچھلے خانے — کالم 2 کے نمبر — تک نہ پھیلے)
+  function pointAt(host, n, next) {
     const w = document.createTreeWalker(host, NodeFilter.SHOW_TEXT);
     let t, acc = 0, last = null;
     while ((t = w.nextNode())) {
       const L = t.nodeValue.length;
-      if (acc + L >= n) return { node: t, offset: n - acc };
+      if (next ? acc + L > n : acc + L >= n) return { node: t, offset: n - acc };
       acc += L; last = t;
     }
     return last ? { node: last, offset: last.nodeValue.length } : { node: host, offset: host.childNodes.length };
@@ -123,7 +125,7 @@
       try { host.focus({ preventScroll: true }); } catch (_) { /* ضمنی */ }
       if (!c) return;
       const r = document.createRange();
-      setPoint(r, 's', pointAt(host, c.s));
+      setPoint(r, 's', pointAt(host, c.s, c.e !== c.s));
       if (c.e !== c.s) setPoint(r, 'e', pointAt(host, c.e)); else r.collapse(true);
       const s = sel(); s.removeAllRanges(); s.addRange(r);
     } catch (_) { /* کرسر نہ لگ سکے تو بھی متن بحال */ }
@@ -959,9 +961,10 @@
     } catch (_) { /* اگلا راستہ */ }
     // 4) نقشہ موقع
     if (document.getElementById('dio-naqsha-doc') && typeof window.naqSaveNow === 'function') { window.naqSaveNow(); return true; }
-    // 5) پورے صفحے والی دستاویز کی پٹی کا «محفوظ»
+    // 5) پورے صفحے والی دستاویز کا «محفوظ» — v575: پٹی اب چھپی رہتی ہے (کام نیچے کونے کے «⋯» میں)، اس لیے
+    //   نظر آنے کی شرط نہیں؛ صرف یہ کہ دستاویز کھلی ہو اور اس پر «محفوظ» بند نہ کیا گیا ہو (انڈیکس نقل مسل)
     const dv = document.getElementById('dio-dv-save');
-    if (dv && vis(dv) && typeof window._dioSaveCurrent === 'function') { window._dioSaveCurrent(); return true; }
+    if (dv && dv.style.display !== 'none' && vis(document.getElementById('dio-docview')) && typeof window._dioSaveCurrent === 'function') { window._dioSaveCurrent(); return true; }
     // 6) کھلی دستاویز کے اندر کا «محفوظ»، ورنہ صفحے کا
     const b = findSaveIn(document.getElementById('dio-dv-body')) || findSaveIn(document.getElementById('page-content'));
     if (b) { b.click(); return true; }

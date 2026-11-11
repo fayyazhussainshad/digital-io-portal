@@ -836,7 +836,9 @@ async function doLogout() {
     'dio_acc_opts_','dio_notifs_cache','dio_recent_cases','case_status_',
     'digital_io_sarkari_gari',
     // TASK 22: کھلی ٹیبوں کی فہرست (مقدمہ نمبر) — مشترکہ آلے پر اگلا شخص نہ دیکھے
-    'dio_tabs_v1_'
+    'dio_tabs_v1_',
+    // v574: «کوائف موقع و مال» (بیرونی ضمنی کے MW خانے) + مقدمے کی تفصیل کی آف لائن نقل (ملزمان/گواہان)
+    'dio_case_kawaif_', 'dio_cctx_'
   ];
   try {
     for (let i = localStorage.length - 1; i >= 0; i--) {

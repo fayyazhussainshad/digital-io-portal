@@ -43,9 +43,21 @@ function openShoDspModal(type) {
       </div>
       <div style="display:flex;gap:10px;align-items:center;">
         <label style="min-width:60px;">نام:</label>
-        <input id="shodsp-name" type="text" value="${esc(cur.name||'')}" placeholder="نام لکھیں"
+        <input id="shodsp-name" type="text" value="${esc(cur.name||'')}" placeholder="${isSho ? 'نام لکھیں' : 'صرف نام — عہدہ / سرکل الگ خانوں میں'}"
+          style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:10.5pt;font-family:'Jameel Noori Nastaleeq';">
+      </div>${isSho ? '' : `
+      <!-- v575 (افسر کی ہدایت، 11 نومبر 2026): ضمنی کے «مرتبہ» میں ترتیب — نام، رینک، پوسٹ، سرکل -->
+      <div style="display:flex;gap:10px;align-items:center;">
+        <label style="min-width:60px;">پوسٹ:</label>
+        <input id="shodsp-post" type="text" dir="ltr" value="${esc(cur.post == null ? 'SDPO' : cur.post)}" placeholder="SDPO"
+          style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:10.5pt;text-align:right;">
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <label style="min-width:60px;">سرکل:</label>
+        <input id="shodsp-circle" type="text" value="${esc(cur.circle||'')}" placeholder="مثلاً: سرکل صدر"
           style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);font-size:10.5pt;font-family:'Jameel Noori Nastaleeq';">
       </div>
+      <div style="font-size:9pt;color:var(--text-muted);line-height:1.8;">ضمنی کے «مرتبہ» میں: نام، رینک، پوسٹ، سرکل</div>`}
     </div>
   `, `
     <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
@@ -60,8 +72,13 @@ function _saveShoDsp(type) {
   const isSho = type === 'sho';
   const key = isSho ? 'digital_io_sho' : 'digital_io_dsp';
   const rank = (document.getElementById('shodsp-rank')||{}).value || '';
-  const name = (document.getElementById('shodsp-name')||{}).value || '';
-  try { localStorage.setItem(key, JSON.stringify({ rank, name })); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
+  const name = String((document.getElementById('shodsp-name')||{}).value || '').trim();
+  const rec = { rank, name };
+  if (!isSho) {   // v575: پوسٹ اور سرکل (پرانی ترتیب میں نہیں تھے — باقی سب جوں کا توں)
+    rec.post = String((document.getElementById('shodsp-post')||{}).value || '').trim();
+    rec.circle = String((document.getElementById('shodsp-circle')||{}).value || '').trim();
+  }
+  try { localStorage.setItem(key, JSON.stringify(rec)); } catch(_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ }
   // v561: سب آلات پر ایک ہی SHO / DSP-SDPO (موبائل پر بدلا تو لیپ ٹاپ پر بھی)
   try { if (window.DIOSync && typeof DIOSync.settingChanged === 'function') DIOSync.settingChanged(key); } catch(_) { /* اگلی بار */ }
   closeModal();

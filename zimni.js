@@ -536,6 +536,7 @@ function _zimniWriteDraft() {
     bodyHtml: _zimniCleanHTML(ed.innerHTML),
     main_type: String((document.getElementById('zf-main-type') || {}).value || '').replace('__add__', ''),
     sub_type: String((document.getElementById('zf-sub-type') || {}).value || '').replace('__add__', ''),
+    khulasa: _zimniKhulasaNow(),                                       // v574: خلاصہ
     saved_at: new Date().toISOString(),
   };
   // v568: ڈپلیکیٹ (غیر محفوظ نقل) کا نشان مسودے کے ساتھ رہے
@@ -543,7 +544,7 @@ function _zimniWriteDraft() {
   const ok = _zimniDraftsPut(_zimniCaseId, o);
   if (ok) {
     const el = document.getElementById('zf-autosave');
-    if (el) el.textContent = 'خودکار محفوظ (اس آلے پر): ' + _zimniFmtStamp(o[key].saved_at);
+    if (el) { el.textContent = 'خودکار محفوظ (اس آلے پر): ' + _zimniFmtStamp(o[key].saved_at); el.title = el.textContent; }
   }
   return ok;
 }
@@ -1022,14 +1023,12 @@ if (!window._zfIoGuardOn) {
   }, true);
 }
 
-// ═══ ضمنی کی سرخی = منتخب ذیلی ضمنی کا نام (افسر کی ہدایت، اکتوبر 2026) ═══
+// ═══ ضمنی کی سرخی — v575 (افسر کی ہدایت، 11 نومبر 2026): ہمیشہ «رپورٹ ضمنی بیرونی» ═══
+//   (اکتوبر کا اصول «سرخی = ذیلی ضمنی کا نام» ختم۔) نوعیت / نمونہ سرخی کبھی نہیں بدلتا؛ فونٹ / سائز بدلا جا سکتا ہے،
+//   سرخی ہٹائی نہیں جا سکتی (_zimniGuardTitle)۔ پرانی ضمنیوں میں بھی کھولنے / چھاپنے پر یہی (افسر کا جواب)۔
 const ZIMNI_DEFAULT_TITLE = 'رپورٹ ضمنی بیرونی';
-function _zimniApplyTitle(name) {
-  const doc = _zimniDoc();
-  const t = doc && doc.querySelector('.zf-title');
-  if (!t) return;
-  const want = String(name || '').trim() || ZIMNI_DEFAULT_TITLE;
-  if (t.textContent !== want) t.textContent = want;
+function _zimniApplyTitle() {
+  try { return _zimniGuardTitle(_zimniDoc()); } catch (_) { return false; }
 }
 window._zimniApplyTitle = _zimniApplyTitle;
 
@@ -1068,10 +1067,13 @@ function _renderZimniList() {
   // تاریخ — v566 (TASK 6-B): صرف ضمنی کے کالم 1 کی لکھی تاریخ (پرانی ضمنی: دستخط کی تاریخ) —
   //   آلے پر محفوظ کرنے کی تاریخ/وقت کبھی نہیں؛ ہمیشہ DD/MM/YYYY
   const dt = (z) => { const fd = _zimniRecDate(z); return fd ? fd.dmy : '—'; };
-  const head = (z) => ((z.content || {}).head || 'رپورٹ ضمنی');
+  // v575 (افسر کی ہدایت): نوعیت کا نام کہیں نہیں — فہرست میں ضمنی کی قسم، اور نیچے خلاصہ (نوعیت کی ذیلی سرخی)
+  const head = (z) => { const c = z.content || {}; return _zimniMainNorm(c.main_type || '', c.sub_type || '') || 'رپورٹ ضمنی'; };
   // v566: سینئر افسر کی ضمنی — قسم کے نیچے لکھنے والے افسر کا نام اور عہدہ
   const by = (a) => (a && a.role && a.role !== 'io' && a.name)
     ? '<div class="zt-by">' + esc(a.name) + (a.rank ? ' <bdi>' + esc(a.rank) + '</bdi>' : '') + '</div>' : '';
+  // v574: خلاصہ — قسم کے نیچے ایک سطر
+  const khu = (k) => { k = String(k || '').trim(); return k ? '<div class="zt-kh" title="' + esc(k) + '">' + esc(k) + '</div>' : ''; };
   const J = (v) => _dioJsHtml(v);
   const status = (z) => {
     if (z._conflict) return '<button type="button" class="zst zst-c" onclick="event.stopPropagation();_zimniResolve(\'' + J(z.id) + '\')" title="دو آلات پر الگ الگ بدلی گئی — دونوں نسخے دیکھ کر چنیں">دو نسخے — فیصلہ کریں</button>';
@@ -1100,6 +1102,7 @@ function _renderZimniList() {
     .zt .num{ text-align:center; font-weight:700; width:70px; }
     .zt .dtc{ text-align:center; white-space:nowrap; width:130px; direction:ltr; unicode-bidi:isolate; font-size:12pt; }
     .zt .zt-by{ font-size:10.5pt; color:var(--text-muted); margin-top:2px; }
+    .zt .zt-kh{ font-size:10.5pt; color:var(--text-muted); margin-top:2px; line-height:1.7; }
     .zt td.num bdi{ unicode-bidi:isolate; }
     .zt .act{ text-align:center; width:1%; white-space:nowrap; }
     .zt .act-in{ display:flex; flex-wrap:nowrap; gap:4px; justify-content:center; }
@@ -1149,7 +1152,7 @@ function _renderZimniList() {
           <tr class="zt-draft" ondblclick="_openZimniDraft('${J(d.key)}')" style="cursor:pointer;">
             <td class="num"><bdi>${esc(String(d.zno || d.serial_no || ''))}</bdi></td>
             <td class="dtc">${esc((_zimniFindDate(d.col1_date || '') || {}).dmy || '—')}</td>
-            <td>${esc(d.sub_type || 'نئی ضمنی')}${by(d.author)}</td>
+            <td>${esc(_zimniMainNorm(d.main_type || '', d.sub_type || '') || 'نئی ضمنی')}${by(d.author)}${khu(d.khulasa)}</td>
             <td>${d.dup_of ? `<span class="zst-dup">ڈپلیکیٹ</span> <span class="zst zst-d">ضمنی نمبر <bdi>${esc(String(d.dup_label || ''))}</bdi> کی نقل — ابھی محفوظ نہیں</span>` : '<span class="zst zst-d">مسودہ — ابھی محفوظ نہیں کی گئی</span>'}</td>
             <td class="act">${dioActRow(
               dioActBtn('edit', `_openZimniDraft('${J(d.key)}')`, 'جاری رکھیں')
@@ -1160,7 +1163,7 @@ function _renderZimniList() {
           <tr ondblclick="_openZimni('${J(z.id)}')" style="cursor:pointer;" data-zid="${esc(String(z.id))}">
             <td class="num"><bdi>${esc(_zimniLabel(z))}</bdi></td>
             <td class="dtc">${esc(dt(z))}</td>
-            <td>${esc(head(z))}${by((z.content || {}).author)}</td>
+            <td>${esc(head(z))}${by((z.content || {}).author)}${khu((z.content || {}).khulasa)}</td>
             <td>${status(z)}</td>
             <td class="act">${dioActRow(
               dioActBtn('edit', `_openZimni('${J(z.id)}')`, 'ترمیم')
@@ -1249,7 +1252,7 @@ function _openZimni(id) {
   const zs = String((z.content || {}).saved_at || '');
   if (d && d.bodyHtml && String(d.saved_at) > zs) {
     _zimniActive.content = Object.assign({}, z.content || {}, { bodyHtml: d.bodyHtml, main_type: d.main_type, sub_type: d.sub_type },
-      d.author ? { author: d.author } : {});
+      d.author ? { author: d.author } : {}, (d.khulasa != null) ? { khulasa: d.khulasa } : {});
     _zimniActive._restored = true;
   }
   _renderZimniEditor();
@@ -1264,7 +1267,7 @@ function _openZimniDraft(key) {
   const d = _zimniDrafts()[key];
   if (!d) { _renderZimniList(); return; }
   _zimniActive = { id: null, serial_no: d.serial_no || _zimniNextSerial(), _draftKey: key,
-    content: { bodyHtml: d.bodyHtml, main_type: d.main_type, sub_type: d.sub_type, author: d.author || null } };
+    content: { bodyHtml: d.bodyHtml, main_type: d.main_type, sub_type: d.sub_type, author: d.author || null, khulasa: d.khulasa || '' } };
   if (d.zno_auto && d.zno) _zimniActive._znoAuto = d.zno;    // v566: نمبر ابھی نظام کا تجویز کردہ
   if (d.dup_of) { _zimniActive._dupOf = d.dup_of; _zimniActive._dupLabel = d.dup_label || ''; }   // v568: ڈپلیکیٹ
   _zimniDirty = true;
@@ -1300,7 +1303,7 @@ function _dupZimni(id) {
   o[key] = {
     key, zimni_id: null, dup_of: String(z.id), dup_label: _zimniLabel(z),
     serial_no: _zimniRecNo(z) || null, zno: _zimniLabel(z), col1_date: fd ? fd.dmy : '', zno_auto: false,
-    author: c.author || null, bodyHtml: body, main_type: c.main_type || '', sub_type: c.sub_type || '',
+    author: c.author || null, bodyHtml: body, main_type: c.main_type || '', sub_type: c.sub_type || '', khulasa: c.khulasa || '',
     saved_at: new Date().toISOString(),
   };
   if (!_zimniDraftsPut(_zimniCaseId, o)) { try { showToast('آلے کی جگہ بھری ہوئی ہے — نقل نہیں بن سکی', 'error', 6000); } catch (_) { /* paigham */ } return false; }
@@ -1340,10 +1343,21 @@ window._zimniBackToList = _zimniBackToList;
 //  ہر فہرست کے آخر میں "➕ نئی قسم" — افسر اپنی مرضی کی قسم شامل کرے (صرف اپنے لیے،
 //  per-officer localStorage)۔
 // ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
+//  v574 (افسر کا حکم 27 اکتوبر + 10 نومبر 2026): MW کا فارمیٹ — پٹی ختم۔
+//   • بائیں کونے میں «ضمنی» (پہلی ضمنی، گرفتاری، عدالت، درخواستیں، بیانات، متفرق، SHO کی ضمنی، DSP کی ضمنی)
+//   • دائیں کونے میں «نوعیت» — اسی قسم کے MW نمونے (zimni-templates.js) + پرانی ذیلی اقسام + افسر کی اپنی
+//   • نوعیت چنتے ہی پورا نمونہ — مقدمے کے ڈیٹا سے خانے خود؛ جو نہ ملے وہ پیلا خالی خانہ
+//  پرانی محفوظ ضمنیاں جوں کی توں کھلتی ہیں — پرانی مرکزی قسم صرف فہرست میں نئی جگہ دکھتی ہے (_zimniMainNorm)۔
+// ═══════════════════════════════════════════════════════════════════════
 const _ZIMNI_TYPES = {
-  'اول ضمنی': ['اول ضمنی'],
+  'پہلی ضمنی': ['اول ضمنی'],
+  'گرفتاری': [],
+  'عدالت': ['ریمانڈ جسمانی', 'ریمانڈ عدالتی (judicial)', 'بیان بمطابق 164 ض ف'],
+  'درخواستیں': ['CDR / کال ریکارڈ', 'IMEI / موبائل ڈیٹا', 'اشتہاری / مفرور', 'درخواست تلفی', 'متفرق درخواست'],
+  'بیانات': ['اجازتِ میڈیکل / پوسٹ مارٹم'],
   'متفرق': ['متفرق ضمنی'],
-  'SHO ضمنی': [
+  'SHO کی ضمنی': [
     'رپورٹ 173 — مکمل چالان',
     'رپورٹ 173 — نامکمل/عبوری (512 ض ف)',
     'عدمِ سراغ (عدم پتہ)',
@@ -1356,23 +1370,64 @@ const _ZIMNI_TYPES = {
     'تتمہ چالان مکمل — افیون',
     'تتمہ چالان مکمل — ہیروئن',
   ],
-  'DSP / SDPO ضمنی': [
+  'DSP کی ضمنی': [
     'DSP نگرانی نوٹ و ہدایات',
     'تصدیق رپورٹ اخراج',
     'تصدیق رپورٹ عدم پتہ',
   ],
-  'عدالتی درخواستیں': [
-    'ریمانڈ جسمانی',
-    'ریمانڈ عدالتی (judicial)',
-    'بیان بمطابق 164 ض ف',
-    'اجازتِ میڈیکل / پوسٹ مارٹم',
-    'CDR / کال ریکارڈ',
-    'IMEI / موبائل ڈیٹا',
-    'اشتہاری / مفرور',
-    'درخواست تلفی',
-    'متفرق درخواست',
-  ],
 };
+// پرانی (v574 سے پہلے کی) مرکزی اقسام → MW کی قسم ('' = ذیلی قسم دیکھ کر)
+const _ZF_MAIN_OLD = { 'اول ضمنی': 'پہلی ضمنی', 'SHO ضمنی': 'SHO کی ضمنی', 'DSP / SDPO ضمنی': 'DSP کی ضمنی', 'عدالتی درخواستیں': '' };
+function _zimniMainNorm(main, sub) {
+  main = String(main || '');
+  if (!main || !Object.prototype.hasOwnProperty.call(_ZF_MAIN_OLD, main)) return main;
+  if (_ZF_MAIN_OLD[main]) return _ZF_MAIN_OLD[main];
+  const k = Object.keys(_ZIMNI_TYPES).find(m => _ZIMNI_TYPES[m].indexOf(String(sub || '')) >= 0);
+  return k || 'درخواستیں';
+}
+window._zimniMainNorm = _zimniMainNorm;
+// قسم → لکھنے والا افسر (SHO / DSP کی ضمنی)
+function _zimniRoleOfMain(main) {
+  main = _zimniMainNorm(main, '');
+  return main === 'SHO کی ضمنی' ? 'sho' : (main === 'DSP کی ضمنی' ? 'dsp' : '');
+}
+// MW کے نمونے (zimni-templates.js — پہلی بار ضرورت پر)
+function _zimniTpl() { return (window.DIO_ZIMNI_TPL && Array.isArray(window.DIO_ZIMNI_TPL.list)) ? window.DIO_ZIMNI_TPL : null; }
+function _zimniTplCatKey(main) {
+  const T = _zimniTpl(); if (!T) return '';
+  const c = T.cats.find(x => x.n === _zimniMainNorm(main, ''));
+  return c ? c.k : '';
+}
+function _zimniTplNames(main) {
+  const T = _zimniTpl(), k = _zimniTplCatKey(main);
+  return (T && k) ? T.list.filter(t => t.k === k).map(t => t.n) : [];
+}
+function _zimniTplFind(main, sub) {
+  const T = _zimniTpl(), k = _zimniTplCatKey(main);
+  if (!T || !k || !sub) return null;
+  return T.list.find(t => t.k === k && t.n === sub) || null;
+}
+window._zimniTplFind = _zimniTplFind;
+let _zfTplLoading = null;
+function _zimniNeedTpl() {
+  if (_zimniTpl()) return Promise.resolve(true);
+  if (_zfTplLoading) return _zfTplLoading;
+  _zfTplLoading = (async () => {
+    try { if (typeof window.dioLoadScript === 'function') await window.dioLoadScript('zimni-templates.js'); } catch (_) { /* نیچے دوبارہ کوشش */ }
+    if (!_zimniTpl()) {
+      await new Promise(res => {
+        try {
+          const s = document.createElement('script'); s.src = 'zimni-templates.js'; s.defer = true;
+          s.onload = s.onerror = () => res(); document.head.appendChild(s);
+        } catch (_) { res(); }
+      });
+    }
+    _zfTplLoading = null;
+    return !!_zimniTpl();
+  })();
+  return _zfTplLoading;
+}
+window._zimniNeedTpl = _zimniNeedTpl;
 const _ZIMNI_TYPE_ADD = '__add__';
 function _zimniTypeSelCss() {
   return "height:28px;border:1px solid var(--border,#ccc);border-radius:6px;background:var(--bg-card,#fff);color:var(--text-primary,#111);font-size:9.75pt;padding:0 6px;margin:0 2px;cursor:pointer;max-width:190px;font-family:'Jameel Noori Nastaleeq';";
@@ -1386,35 +1441,51 @@ function _zimniCustomTypes() {
 function _zimniSaveCustomTypes(o) { try { localStorage.setItem('dio_zimni_types_' + _zimniTypeOfficerId(), JSON.stringify(o)); } catch (_) { /* storage band/bhara ho (private mode/quota) — ye qadam chhoR do */ } }
 function _zimniAllMains() {
   const c = _zimniCustomTypes(); const base = Object.keys(_ZIMNI_TYPES);
-  (c.main || []).forEach(m => { if (base.indexOf(m) < 0) base.push(m); });
+  (c.main || []).forEach(m => { const n = _zimniMainNorm(m, ''); if (base.indexOf(n) < 0) base.push(n); });
   return base;
 }
 function _zimniSubsFor(main) {
-  const base = (_ZIMNI_TYPES[main] || []).slice(); const c = _zimniCustomTypes();
-  (((c.sub || {})[main]) || []).forEach(s => { if (base.indexOf(s) < 0) base.push(s); });
+  main = _zimniMainNorm(main, '');
+  // v574: پہلے MW کے نمونے، پھر پرانی ذیلی اقسام، پھر افسر کی اپنی (پرانی قسم کے نام سے رکھی ہوئی بھی)
+  const base = _zimniTplNames(main);
+  (_ZIMNI_TYPES[main] || []).forEach(s => { if (base.indexOf(s) < 0) base.push(s); });
+  const c = _zimniCustomTypes(), cs = c.sub || {};
+  Object.keys(cs).forEach(k => {
+    if (k !== main && _zimniMainNorm(k, (cs[k] || [])[0]) !== main) return;
+    (cs[k] || []).forEach(s => { if (base.indexOf(s) < 0) base.push(s); });
+  });
   return base;
 }
 function _zimniMainSelectHTML(sel) {
   const E = (v) => (typeof esc === 'function') ? esc(v) : String(v == null ? '' : v);
   const opts = _zimniAllMains().map(m => `<option value="${E(m)}" ${m === sel ? 'selected' : ''}>${E(m)}</option>`).join('');
-  return `<select id="zf-main-type" onchange="_zimniOnMainChange(this)" title="مرکزی ضمنی" style="${_zimniTypeSelCss()}">`
-    + `<option value="" ${!sel ? 'selected' : ''}>— مرکزی ضمنی —</option>${opts}`
+  return `<select id="zf-main-type" class="zf-csel" onchange="_zimniOnMainChange(this)" title="ضمنی" aria-label="ضمنی">`
+    + `<option value="" ${!sel ? 'selected' : ''}>— ضمنی —</option>${opts}`
     + `<option value="${_ZIMNI_TYPE_ADD}">➕ نئی قسم…</option></select>`;
 }
 function _zimniSubSelectHTML(main, sel) {
   const E = (v) => (typeof esc === 'function') ? esc(v) : String(v == null ? '' : v);
   const subs = main ? _zimniSubsFor(main) : [];
+  if (sel && subs.indexOf(sel) < 0) subs.unshift(sel);          // محفوظ ضمنی کی اپنی نوعیت (فہرست میں نہ ہو تب بھی)
   const opts = subs.map(s => `<option value="${E(s)}" ${s === sel ? 'selected' : ''}>${E(s)}</option>`).join('');
-  return `<select id="zf-sub-type" onchange="_zimniOnSubChange(this)" title="ذیلی ضمنی" style="${_zimniTypeSelCss()}">`
-    + `<option value="" ${!sel ? 'selected' : ''}>— ذیلی ضمنی —</option>${opts}`
+  return `<select id="zf-sub-type" class="zf-csel" onchange="_zimniOnSubChange(this)" onfocus="this._zfPrev=this.value" title="ضمنی کی نوعیت" aria-label="ضمنی کی نوعیت">`
+    + `<option value="" ${!sel ? 'selected' : ''}>— نوعیت —</option>${opts}`
     + `<option value="${_ZIMNI_TYPE_ADD}">➕ نئی قسم…</option></select>`;
 }
 function _zimniSetHead(v) { try { const hi = document.getElementById('zf-head-in'); if (hi) hi.value = v || 'رپورٹ ضمنی'; } catch (_) { /* UI ka ikhtiyari qadam — na ho sake to chhoR do */ } }
 function _zimniRebuildSub(main, selSub) {
   const wrap = document.getElementById('zf-sub-wrap'); if (!wrap) return;
   wrap.innerHTML = _zimniSubSelectHTML(main, selSub || '');
-  if (selSub) _zimniSetHead(selSub);
-  _zimniApplyTitle(selSub || '');       // v552: ذیلی نہ ہو تو اصل سرخی
+  if (selSub) _zimniSetHead(selSub);    // صرف محفوظ ریکارڈ کا اندرونی نام — کاغذ کی سرخی نہیں بدلتی (v575)
+  // v574: MW کے نمونے ابھی نہ آئے ہوں تو آتے ہی فہرست دوبارہ (چنا ہوا جوں کا توں)
+  if (!_zimniTpl()) {
+    try {
+      _zimniNeedTpl().then(ok => {
+        const ms = document.getElementById('zf-main-type'), ss = document.getElementById('zf-sub-type'), w = document.getElementById('zf-sub-wrap');
+        if (ok && ms && w && ms.value === main) w.innerHTML = _zimniSubSelectHTML(main, ss ? (ss.value === _ZIMNI_TYPE_ADD ? '' : ss.value) : '');
+      });
+    } catch (_) { /* نمونے بعد میں */ }
+  }
 }
 function _zimniOnMainChange(sel) {
   if (sel.value === _ZIMNI_TYPE_ADD) {
@@ -1428,25 +1499,30 @@ function _zimniOnMainChange(sel) {
     return;
   }
   _zimniRebuildSub(sel.value, '');
-  // v566 (TASK 6-C، افسر کا جواب 1a): «SHO ضمنی» / «DSP / SDPO ضمنی» چنتے ہی لکھنے والا افسر بھی وہی (بدلا جا سکتا ہے)
+  // v575 (افسر کی ہدایت): «لکھنے والا» کا خانہ ختم — لکھنے والا ہمیشہ تفتیشی افسر، جب تک ضمنی کی قسم میں
+  //   «SHO کی ضمنی» / «DSP کی ضمنی» نہ چنی جائے (نام اور عہدہ اوپر والے SHO / DSP-SDPO بٹن کی ترتیبات سے)
   try {
-    const role = sel.value === 'SHO ضمنی' ? 'sho' : (sel.value === 'DSP / SDPO ضمنی' ? 'dsp' : '');
-    if (role && (_zimniAuthorNow().role !== role)) _zimniSetAuthor(_zimniSeniorDefault(role));
+    const role = _zimniRoleOfMain(sel.value) || 'io';
+    if (_zimniAuthorNow().role !== role) _zimniSetAuthor(role === 'io' ? { role: 'io' } : _zimniSeniorDefault(role));
   } catch (_) { /* ضمنی */ }
   try { _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
 function _zimniOnSubChange(sel) {
   const main = (document.getElementById('zf-main-type') || {}).value || '';
+  const prev = (sel && sel._zfPrev != null) ? sel._zfPrev : '';
   if (sel.value === _ZIMNI_TYPE_ADD) {
-    const name = ((typeof prompt === 'function' ? prompt('نئی ذیلی ضمنی کا نام:') : '') || '').trim();
+    const name = ((typeof prompt === 'function' ? prompt('نئی نوعیت کا نام:') : '') || '').trim();
     if (name) {
       const c = _zimniCustomTypes(); c.sub = c.sub || {}; c.sub[main] = c.sub[main] || []; if (c.sub[main].indexOf(name) < 0) c.sub[main].push(name); _zimniSaveCustomTypes(c);
       _zimniRebuildSub(main, name);
-    } else { sel.value = ''; }
+    } else { sel.value = prev; }
     return;
   }
-  _zimniSetHead(sel.value);
-  _zimniApplyTitle(sel.value);          // v552: سرخی = منتخب ذیلی ضمنی
+  // v574: MW کا نمونہ ہو تو پورا نمونہ (افسر کی اجازت سے) — ورنہ صرف سرخی
+  const tpl = _zimniTplFind(main, sel.value);
+  if (tpl) { _zimniApplyTpl(tpl, sel, prev); return; }
+  sel._zfPrev = sel.value;
+  _zimniSetHead(sel.value);             // v575: کاغذ کی سرخی نہیں بدلتی (ہمیشہ «رپورٹ ضمنی بیرونی»)
   _zimniDirty = true; try { _zimniWriteDraft(); } catch (_) { /* agli dafa */ }
   try { _r173Dirty = true; } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 }
@@ -1454,6 +1530,664 @@ window._zimniMainSelectHTML = _zimniMainSelectHTML;
 window._zimniSubSelectHTML = _zimniSubSelectHTML;
 window._zimniOnMainChange = _zimniOnMainChange;
 window._zimniOnSubChange = _zimniOnSubChange;
+
+// ═══════════════════════════════════════════════════════════════════════
+//  v574: MW کا نمونہ → ضمنی کے blocks
+//   (name)   = MW کا خودکار خانہ — مقدمے کے ڈیٹا سے؛ نہ ملے تو پیلا خالی خانہ (span.zf-tv)
+//   [[نام]]  = نمونے کا اپنا خالی خانہ (پرانے مقدمے کا ڈیٹا جو خانے میں بدلا گیا)
+//   پیلا خانہ: دبانے پر پورا چُن لیا جاتا ہے (لکھتے ہی بدل جائے)؛ لکھ دیا تو عام متن۔
+//   کاغذ (پرنٹ / PDF / Word) پر خالی خانہ نقطے دار لکیر — پیلا رنگ یا خانے کا نام کبھی نہیں۔
+// ═══════════════════════════════════════════════════════════════════════
+// MW کے وہ خانے جو Digital IO میں نہیں تھے — «کوائف موقع و مال» (ہر مقدمے کے اپنے، سرور پر)
+const _ZF_KW = [
+  { k: 'north', l: 'جائے وقوعہ — شمال' }, { k: 'east', l: 'جائے وقوعہ — مشرق' },
+  { k: 'south', l: 'جائے وقوعہ — جنوب' }, { k: 'west', l: 'جائے وقوعہ — مغرب' },
+  { k: 'jaeBaramdgi', l: 'جائے برآمدگی', line: true },
+  { k: 'north1', l: 'جائے برآمدگی — شمال' }, { k: 'east1', l: 'جائے برآمدگی — مشرق' },
+  { k: 'south1', l: 'جائے برآمدگی — جنوب' }, { k: 'west1', l: 'جائے برآمدگی — مغرب' },
+  { k: 'property', l: 'مال مسروقہ / مال مقدمہ', line: true },
+  { k: 'baramdgi', l: 'برآمد شدہ مال', line: true },
+  { k: 'imei', l: 'IMEI نمبر', ltr: true }, { k: 'mobile', l: 'موبائل / سم نمبر', ltr: true },
+  { k: 'inkshaaf', l: 'انکشافات — ہر سطر ایک واردات', area: true },
+];
+const _ZF_TV_LBL = {
+  io: 'تفتیشی افسر', rank: 'عہدہ', date: 'تاریخ', applicant: 'مدعی', accused: 'ملزم', acc_cnic: 'شناختی کارڈ ملزم',
+  hulia: 'حلیہ ملزم', hamrahi: 'ہمراہی ملازمان', jaeWaqoa: 'جائے وقوعہ', body: 'متن ایف آئی آر', ps: 'تھانہ',
+  district: 'ضلع', districk: 'ضلع', sho: 'SHO', dsp: 'DSP', writer: 'محرر', murataba: 'مرتبہ مرسلہ',
+  fir: 'مقدمہ نمبر', dated: 'تاریخ ایف آئی آر', offence: 'دفعات', vehicle_no: 'سرکاری گاڑی نمبر', driver: 'ڈرائیور',
+  property: 'مال مسروقہ', baramdgi: 'برآمد شدہ مال', imei: 'IMEI', mobile: 'موبائل نمبر', jaeBaramdgi: 'جائے برآمدگی',
+  north: 'شمال', east: 'مشرق', south: 'جنوب', west: 'مغرب',
+  north1: 'شمال', east1: 'مشرق', south1: 'جنوب', west1: 'مغرب', inkshaaf: 'انکشاف',
+  naqshaMarks: 'امتیازی نشانات',
+};
+const _ZF_TV_RX = /\(([A-Za-z][A-Za-z0-9_]*)\)|\[\[([^\]\n]{1,40})\]\]/g;
+const _ZF_TV_LIT = { PSCA: 1 };                         // «(PSCA)» عام متن ہے، خانہ نہیں
+function _zimniTvKw(key) {                               // نمونے کا خانہ → کوائف کا خانہ (یا '')
+  if (/^inksha{1,2}f\d*$/.test(key)) return 'inkshaaf';
+  return _ZF_KW.some(f => f.k === key) ? key : '';
+}
+function _zimniTvLabel(key) {
+  let m;
+  if ((m = /^accused(\d+)$/.exec(key))) return 'ملزم ' + m[1];
+  if ((m = /^gawah(\d+)$/.exec(key))) return 'گواہ ' + m[1];
+  if ((m = /^hamrahi(\d+)$/.exec(key))) return 'ہمراہی ' + m[1];
+  if ((m = /^inksha{1,2}f(\d+)$/.exec(key))) return 'انکشاف ' + m[1];
+  if (/^inksha{1,2}f$/.test(key)) return 'انکشافات';
+  return _ZF_TV_LBL[key] || key;
+}
+function _zimniTvValue(key, x) {
+  let m;
+  if ((m = /^accused(\d+)$/.exec(key))) return x.accused[+m[1] - 1] || '';
+  if (key === 'accused') return x.accused[0] || '';
+  if ((m = /^gawah(\d+)$/.exec(key))) return x.gawah[+m[1] - 1] || '';
+  if ((m = /^hamrahi(\d+)$/.exec(key))) return x.hamrahi[+m[1] - 1] || '';
+  if (key === 'hamrahi') return x.hamrahi.join('، ');
+  if ((m = /^inksha{1,2}f(\d+)$/.exec(key))) return x.inkshaaf[+m[1] - 1] || '';
+  if (/^inksha{1,2}f$/.test(key)) return x.inkshaaf.join('، ');
+  if (key === 'districk') key = 'district';
+  const v = x[key];
+  return (v == null || typeof v === 'object') ? '' : String(v);
+}
+// نمونے کو کون سے «کوائف» چاہییں
+function _zimniTplKwNeed(tpl) {
+  const need = [];
+  (tpl && tpl.b || []).forEach(b => {
+    String(b[2] || '').replace(_ZF_TV_RX, (m0, key) => {
+      const k = key ? _zimniTvKw(key) : '';
+      if (k && need.indexOf(k) < 0) need.push(k);
+      return m0;
+    });
+  });
+  return _ZF_KW.map(f => f.k).filter(k => need.indexOf(k) >= 0);   // کارڈ میں وہی ترتیب
+}
+window._zimniTplKwNeed = _zimniTplKwNeed;
+// متن (HTML نہیں) → محفوظ HTML: انگریزی / ہندسے الگ <bdi> (اردو سطر نہ پلٹے)، سطر → <br>
+function _zimniTvEsc(s) {
+  const E = (v) => (typeof esc === 'function') ? esc(v) : String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return String(s == null ? '' : s).split(/([A-Za-z0-9][A-Za-z0-9\/\-\.:#]*(?:\s+[A-Za-z0-9][A-Za-z0-9\/\-\.:#]*)*)/)
+    .map((p, i) => (i % 2) ? '<bdi>' + E(p) + '</bdi>' : E(p)).join('').replace(/\r?\n/g, '<br>');
+}
+function _zimniTvBlank(label) {
+  const E = (v) => (typeof esc === 'function') ? esc(v) : String(v == null ? '' : v);
+  return '<span class="zf-tv" data-tv="' + E(label) + '">' + E(label) + '</span>';
+}
+// نمونے کا ایک متن → HTML (خانے بھرے ہوئے)
+function _zimniTplText(text, x) {
+  const s = String(text || '');
+  let out = '', last = 0, m;
+  _ZF_TV_RX.lastIndex = 0;
+  const isL = (ch) => !!ch && /[؀-ۿA-Za-z0-9]/.test(ch);
+  while ((m = _ZF_TV_RX.exec(s))) {
+    let lit = s.slice(last, m.index);
+    let piece;
+    if (m[1] && _ZF_TV_LIT[m[1]]) { piece = _zimniTvEsc(m[0]); }
+    else {
+      const val = m[1] ? String(_zimniTvValue(m[1], x) || '').trim() : '';
+      piece = val ? _zimniTvEsc(val) : _zimniTvBlank(m[1] ? _zimniTvLabel(m[1]) : String(m[2]).trim());
+      // MW میں اکثر خانہ لفظ سے جڑا لکھا تھا — قدر بھرنے پر الفاظ جڑ نہ جائیں
+      if (isL(lit.slice(-1))) lit += ' ';
+      const nx = s.charAt(m.index + m[0].length);
+      if (isL(nx)) piece += ' ';
+    }
+    out += _zimniTvEsc(lit) + piece;
+    last = m.index + m[0].length;
+  }
+  out += _zimniTvEsc(s.slice(last));
+  return out;
+}
+window._zimniTplText = _zimniTplText;
+// v575 (افسر کی ہدایت، 11 نومبر 2026): جائے وقوعہ کی چاروں سمتوں (شمال، مشرق، جنوب، مغرب) والے جملے کے بعد
+//   نقشہ موقع کے «امتیازی نشانات» خود — نقشے میں خالی ہوں تو پیلا خالی خانہ
+function _zimniTplWithMarks(text) {
+  const s = String(text || '');
+  const rx = /\((north|east|south|west)\)/g;
+  let m, last = -1;
+  while ((m = rx.exec(s))) last = m.index + m[0].length;
+  if (last < 0 || /\(naqshaMarks\)/.test(s)) return s;
+  const dot = s.indexOf('۔', last);
+  const at = dot >= 0 ? dot + 1 : s.length;
+  return s.slice(0, at) + ' (naqshaMarks)' + (at < s.length && !/^\s/.test(s.slice(at)) ? ' ' : '') + s.slice(at);
+}
+window._zimniTplWithMarks = _zimniTplWithMarks;
+// ایک نمونہ → block قطاریں (کالم 1: وقت/عنوان، کالم 2: نمبر، کالم 3: حالات)
+function _zimniTplRowsHTML(tpl, x, firstDate) {
+  const E = (v) => (typeof esc === 'function') ? esc(v == null ? '' : String(v)) : String(v == null ? '' : v);
+  return (tpl.b || []).map((b, i) => {
+    // کالم 1 — سادہ متن (اس میں MW کا کوئی خانہ نہیں؛ «161 ض ف» کی پہچان سادہ متن پر)
+    const cap = String(b[0] || '').replace(/^\s*تاریخ\s*و\s*وقت\s*$/, '').trim();
+    let c1 = cap ? E(cap).replace(/\r?\n/g, '<br>') : '';
+    if (i === 0) c1 = E(firstDate) + (c1 ? '<br>' + c1 : '');        // تاریخ صرف پہلے block پر (کالم 1 = دستخط کی تاریخ)
+    if (!c1) c1 = '<br>';
+    const body = _zimniTplText(_zimniTplWithMarks(b[2]), x) || '<br>';
+    return '<tr class="zf-blk"><td class="zf-c-action"><div class="zf-actbody" data-k="action" contenteditable="true">' + c1 + '</div></td>'
+      + '<td class="zf-c-serial"><div class="zf-num" data-k="serial" contenteditable="true">' + E(String(b[1] || '').trim()) + '</div></td>'
+      + '<td class="zf-c-body" colspan="2"><div class="zf-body" data-mic="true" data-k="halaat" contenteditable="true">' + body + '</div></td></tr>';
+  }).join('');
+}
+window._zimniTplRowsHTML = _zimniTplRowsHTML;
+
+// ── مقدمے کا ڈیٹا (آف لائن ہو تو اسی آلے کی نقل) ──
+async function _zfRows(table, cid, lsKey) {
+  let rows = null;
+  try {
+    if (cid && typeof supabaseClient !== 'undefined' && supabaseClient && navigator.onLine !== false) {
+      const r = await supabaseClient.from(table).select('*').eq('case_id', cid).order('created_at', { ascending: true });
+      if (r && !r.error) rows = r.data || [];
+    }
+  } catch (_) { rows = null; }
+  if (rows && lsKey) { try { localStorage.setItem(lsKey + cid, JSON.stringify(rows)); } catch (_) { /* جگہ */ } }
+  if (!rows && lsKey) { try { const a = JSON.parse(localStorage.getItem(lsKey + cid) || 'null'); if (Array.isArray(a)) rows = a; } catch (_) { /* نہیں */ } }
+  return rows || [];
+}
+function _zfPlain(html) {
+  let s = String(html || '').replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|li)>/gi, '\n').replace(/<[^>]*>/g, '');
+  try { const t = document.createElement('textarea'); t.innerHTML = s; s = t.value; } catch (_) { /* جوں کا توں */ }
+  return s.replace(/[ \t ]+/g, ' ').replace(/ *\n */g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+// نقشہ موقع (جائے وقوعہ) کے امتیازی نشانات → ایک جملہ؛ کچھ نہ ہو تو '' (پیلا خانہ)
+//   سرور کی نقل پہلے؛ اس آلے پر ایسی نقل ہو جو ابھی سرور تک نہیں پہنچی تو وہی (نقشہ موقع کا اپنا اصول)
+async function _zimniNaqshaMarks(cid) {
+  if (!cid) return '';
+  let cloud = null, local = null, pending = false;
+  try {
+    if (typeof supabaseClient !== 'undefined' && supabaseClient && navigator.onLine !== false) {
+      const r = await supabaseClient.from('case_documents').select('content').eq('case_id', cid).eq('document_type', 'naqsha')
+        .order('created_at', { ascending: true }).limit(1);
+      const row = r && !r.error && (r.data || [])[0];
+      if (row && row.content && Array.isArray(row.content.sketches)) cloud = row.content;
+    }
+  } catch (_) { cloud = null; }
+  try { local = JSON.parse(localStorage.getItem('dio_naqsha_' + cid) || 'null'); } catch (_) { local = null; }
+  try { pending = localStorage.getItem('dio_naqsha_' + cid + '::pending') === '1'; } catch (_) { pending = false; }
+  const okL = !!(local && Array.isArray(local.sketches));
+  const data = (okL && pending) ? local : (cloud || (okL ? local : null));
+  const sks = (data && data.sketches || []).filter(k => k && k.type !== 'baramad');   // جائے وقوعہ (برآمدگی کا نقشہ نہیں)
+  if (!sks.length) return '';
+  const sk = sks.find(k => k.id === data.activeId) || sks[0];
+  const T = (v) => String(v == null ? '' : v).replace(/[\s ]+/g, ' ').replace(/[۔.\s]+$/, '').trim();
+  const parts = [];
+  (sk.marks || []).forEach((it, i) => {
+    const t = T(it && typeof it === 'object' ? it.t : it);
+    if (t) parts.push('نمبر' + (i + 1) + ' سے مراد وہ مقام ' + t);
+  });
+  return parts.length ? 'امتیازی نشانات: ' + parts.join('، ') + '۔' : '';
+}
+window._zimniNaqshaMarks = _zimniNaqshaMarks;
+async function _zimniTplCtx(kw) {
+  const c = _zimniCase || {};
+  const o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
+  const cid = _zimniCaseId;
+  const T = (v) => String(v == null ? '' : v).replace(/[\s ]+/g, ' ').trim();
+  const res = await Promise.all([
+    _zfRows('case_accused', cid, 'dio_cctx_acc_'), _zfRows('case_witnesses', cid, 'dio_cctx_wit_'),
+    _zfRows('hamrahi_mulazman', cid, 'dio_staff_'), _zfRows('fir_matn', cid, 'dio_firmatn_'),
+    _zimniNaqshaMarks(cid).catch(() => '')]);
+  const acc = res[0].filter(a => a && T(a.name) && String(a.accused_type || '') !== 'cross_version');
+  const wit = res[1].filter(w => w && T(w.full_name) && String(w.witness_type || '') !== 'cross_version');
+  const RK = { C: 'کانسٹیبل', HC: 'ہیڈ کانسٹیبل', ASI: 'ASI', SI: 'SI', Inspector: 'انسپکٹر' };
+  const staff = res[2].map(s => T([s.name, RK[s.rank] || s.rank, s.service_number].filter(Boolean).join(' '))).filter(Boolean);
+  const firText = res[3].filter(m => (m.type || 'fir') === 'fir').map(m => _zfPlain(m.matn)).filter(Boolean).join('\n');
+  const a0 = acc[0] || {};
+  const hulia = [a0.rang && ('رنگ: ' + a0.rang), a0.chehra && ('چہرہ: ' + a0.chehra), a0.jism && ('جسم: ' + a0.jism),
+    a0.qad && ('قد: ' + a0.qad), a0.nishan && ('نشان: ' + a0.nishan)].filter(Boolean).join(' ، ');
+  const D = (v) => v ? ((typeof formatDate === 'function') ? formatDate(v) : String(v)) : '';
+  const au = (typeof _zimniAuthorNow === 'function') ? _zimniAuthorNow() : { role: 'io' };
+  const sho = _zimniSeniorDefault('sho'), dsp = _zimniSeniorDefault('dsp');
+  let gari = {};
+  try { gari = JSON.parse(localStorage.getItem('digital_io_sarkari_gari') || '{}') || {}; } catch (_) { gari = {}; }
+  const doc = _zimniDoc(), c1 = doc ? _zimniC1(doc) : null, fd = c1 ? _zimniFindDate(c1.textContent || '') : null;
+  kw = kw || {};
+  const ioName = _zimniIoName(), ioRank = T(o.designation);
+  return {
+    io: T([ioName, ioRank].join(' ')),
+    rank: au && au.role && au.role !== 'io' ? T(au.rank) : ioRank,
+    date: fd ? fd.dmy : _zimniToday(),
+    applicant: T(c.complainant_name || c.complainant),
+    accused: acc.map(a => T(a.name)), acc_cnic: T(a0.cnic), hulia: T(hulia),
+    gawah: wit.map(w => T(w.full_name)), hamrahi: staff,
+    jaeWaqoa: T(c.place_of_occurrence || c.jaye_waqoia), body: firText,
+    ps: T(c.case_station || o.station), district: T(c.case_district || o.district),
+    sho: T([sho.name, sho.name ? sho.rank : ''].join(' ')), dsp: T(dsp.name ? _zimniSeniorText(dsp) : ''),
+    writer: T(c.fir_writer), murataba: T(c.complaint_sender),
+    fir: T(c.fir_number), dated: T(D(c.fir_date)), offence: T(c.section_of_law),
+    vehicle_no: T(gari.vehicle_number), driver: T(gari.driver_name),
+    north: T(kw.north), east: T(kw.east), south: T(kw.south), west: T(kw.west), jaeBaramdgi: T(kw.jaeBaramdgi),
+    north1: T(kw.north1), east1: T(kw.east1), south1: T(kw.south1), west1: T(kw.west1),
+    property: T(kw.property || c.theft_item), baramdgi: T(kw.baramdgi),
+    imei: T(kw.imei || c.theft_imei), mobile: T(kw.mobile || c.theft_cell),
+    inkshaaf: String(kw.inkshaaf || '').split(/\r?\n/).map(T).filter(Boolean),
+    naqshaMarks: T(res[4]),
+  };
+}
+window._zimniTplCtx = _zimniTplCtx;
+
+// ── «کوائف موقع و مال» — ہر مقدمے کا اپنا (اسی آلے پر فوراً، سرور پر DIOSync کے ذریعے، ہر آلے پر خود) ──
+const _ZF_KW_LS = 'dio_case_kawaif_';
+function _zimniKwGet(cid) {
+  try { const o = JSON.parse(localStorage.getItem(_ZF_KW_LS + cid) || '{}') || {}; return (o.fields && typeof o.fields === 'object') ? o.fields : {}; } catch (_) { return {}; }
+}
+window._zimniKwGet = _zimniKwGet;
+function _zimniKwPut(cid, fields) {
+  const rec = Object.assign({}, fields, { saved_at: new Date().toISOString() });
+  let ok = false;
+  try { localStorage.setItem(_ZF_KW_LS + cid, JSON.stringify({ fields: rec })); ok = true; } catch (_) { ok = false; }
+  try { if (window.DIOSync && DIOSync.ud && typeof DIOSync.ud.queue === 'function') DIOSync.ud.queue('case_kawaif', cid, 'fields', rec); } catch (_) { /* اگلی بار */ }
+  return ok;
+}
+window._zimniKwPut = _zimniKwPut;
+async function _zimniKwPull(cid) {
+  try { if (window.DIOSync && DIOSync.ud && typeof DIOSync.ud.pull === 'function') await DIOSync.ud.pull('case_kawaif', cid); } catch (_) { /* آف لائن — اسی آلے کی نقل */ }
+  return _zimniKwGet(cid);
+}
+let _zfKwResolve = null;
+// keys: کون سے خانے (خالی = تمام)؛ forTpl: نمونہ لگانے سے پہلے («ضمنی میں لگائیں»)
+async function _zimniKwCard(keys, tplName, forTpl) {
+  const cid = _zimniCaseId;
+  if (!cid || typeof openModal !== 'function') return forTpl ? {} : null;
+  const cur = await _zimniKwPull(cid);
+  const c = _zimniCase || {};
+  const pre = Object.assign({}, cur);
+  if (!pre.imei && c.theft_imei) pre.imei = c.theft_imei;
+  if (!pre.mobile && c.theft_cell) pre.mobile = c.theft_cell;
+  if (!pre.property && c.theft_item) pre.property = c.theft_item;
+  const list = _ZF_KW.filter(f => !keys || !keys.length || keys.indexOf(f.k) >= 0);
+  const D = window.DIOCard;
+  const E = (v) => (typeof esc === 'function') ? esc(v == null ? '' : String(v)) : String(v == null ? '' : v);
+  let body = '';
+  if (forTpl) body += '<div class="zf-kw-note">نمونہ «' + E(tplName) + '» کے لیے یہ کوائف چاہییں۔ جو لکھیں گے وہ اسی مقدمے میں محفوظ ہوں گے اور اگلی ضمنیوں میں خود آئیں گے؛ خالی چھوڑا خانہ ضمنی میں پیلا رہے گا۔</div>';
+  const cells = list.map(f => D ? D.fld({ id: 'zf-kw-' + f.k, label: f.l, type: f.area ? 'area' : 'text', value: pre[f.k] || '', ltr: !!f.ltr, grow: !f.line && !f.area, line: !!(f.line || f.area), w: 'w-l' })
+    : '<label>' + E(f.l) + ' <input id="zf-kw-' + f.k + '" value="' + E(pre[f.k] || '') + '"></label>');
+  body += D ? D.row(cells) : cells.join('<br>');
+  const has = Object.keys(cur).some(k => k !== 'saved_at' && String(cur[k] || '').trim());
+  const save = forTpl ? 'ضمنی میں لگائیں' : 'محفوظ کریں';
+  const foot = '<button class="btn btn-primary" onclick="_zimniKwDone(true)">' + save + '</button>'
+    + '<button class="btn btn-secondary" onclick="_zimniKwDone(false)">منسوخ</button>';
+  if (D && D.injectCSS) D.injectCSS();
+  openModal((has ? 'ترمیم' : 'نیا اندراج') + ' — کوائف موقع و مال', body, foot);
+  const mc = document.querySelector('#modal-backdrop .modal-card');
+  if (mc) { mc.classList.add('dio-entry'); mc.scrollTop = 0; }
+  try { const f0 = document.getElementById('zf-kw-' + (list[0] || {}).k); if (f0) setTimeout(() => { try { f0.focus(); } catch (_) { /* UI */ } }, 60); } catch (_) { /* UI */ }
+  return new Promise(res => {
+    _zfKwResolve = (ok) => {
+      _zfKwResolve = null;
+      if (!ok) { res(null); return; }
+      const out = Object.assign({}, cur); delete out.saved_at;
+      list.forEach(f => { const el = document.getElementById('zf-kw-' + f.k); if (el) out[f.k] = String(el.value || '').replace(/ /g, ' ').trim(); });
+      _zimniKwPut(cid, out);
+      res(out);
+    };
+    // باہر دبانے / Esc سے بند ہو تو «منسوخ»
+    const iv = setInterval(() => {
+      const bd = document.getElementById('modal-backdrop');
+      if (!_zfKwResolve) { clearInterval(iv); return; }
+      if (!bd || bd.style.display === 'none') { clearInterval(iv); const r = _zfKwResolve; if (r) r(false); }
+    }, 300);
+  });
+}
+function _zimniKwDone(ok) {
+  const r = _zfKwResolve;
+  if (ok && r) { r(true); if (typeof closeModal === 'function') closeModal(); try { showToast('کوائف محفوظ ہو گئے', 'success', 2200); } catch (_) { /* paigham */ } return; }
+  if (typeof closeModal === 'function') closeModal();
+  if (r) r(false);
+}
+window._zimniKwDone = _zimniKwDone;
+// «کوائف» بٹن — تمام خانے (کبھی بھی بدلیں)
+async function _zimniKwOpen() { await _zimniKwCard(null, '', false); }
+window._zimniKwOpen = _zimniKwOpen;
+
+// ═══ v575 (افسر کی ہدایت، 11 نومبر 2026): کوائف مقدمے کی chip «وقوعہ جات» میں ═══
+//   وقوعہ جات کھولتے ہی تمام سمتیں اور کوائف یہیں درج؛ ضمنی اب یہ نہیں پوچھتی (نمونہ لگاتے وقت یہیں سے لیتی ہے،
+//   جو نہ ہو وہ پیلا خالی خانہ)۔ پورے صفحے کی دستاویز (واپس / ٹیب / «⋯» وہی)؛ ہر تبدیلی خود محفوظ
+//   (اسی آلے پر فوراً، سرور پر DIOSync — صرف اپنا افسر)۔ وقوعہ جات میں پہلے سے لکھی تحریر ہو تو نیچے جوں کی توں۔
+let _zfKwPageCid = null, _zfKwPageT = null;
+function _zimniKwPageVals() {
+  const out = {};
+  _ZF_KW.forEach(f => { const el = document.getElementById('zkw-' + f.k); if (el) out[f.k] = String(el.value || '').replace(/ /g, ' ').trim(); });
+  return out;
+}
+function _zimniKwPageSave(explicit) {
+  clearTimeout(_zfKwPageT);
+  const cid = _zfKwPageCid; if (!cid || !document.getElementById('zkw-page')) return false;
+  if (window.DIO && DIO.sub && typeof DIO.sub.blocked === 'function' && DIO.sub.blocked()) { try { DIO.sub.guard('کوائف محفوظ'); } catch (_) { /* صرف دیکھنا */ } return false; }
+  const cur = _zimniKwGet(cid);
+  const out = Object.assign({}, cur, _zimniKwPageVals()); delete out.saved_at;
+  const ok = _zimniKwPut(cid, out);
+  const st = document.getElementById('zkw-status');
+  if (st) st.textContent = ok ? ('محفوظ: ' + _zimniFmtStamp(new Date().toISOString())) : 'اس آلے پر محفوظ نہ ہو سکا — دوبارہ کوشش کریں';
+  if (explicit) { try { showToast(ok ? 'وقوعہ جات — کوائف محفوظ ہو گئے' : 'محفوظ نہ ہو سکا', ok ? 'success' : 'error', 2400); } catch (_) { /* paigham */ } }
+  try { if (typeof _refreshMisalBar === 'function') _refreshMisalBar(); } catch (_) { /* chip کا رنگ */ }
+  return ok;
+}
+window._zimniKwPageSave = _zimniKwPageSave;
+function _zimniKwPageInput() {
+  clearTimeout(_zfKwPageT);
+  const st = document.getElementById('zkw-status'); if (st) st.textContent = 'محفوظ ہو رہا ہے…';
+  _zfKwPageT = setTimeout(() => _zimniKwPageSave(false), 700);
+}
+window._zimniKwPageInput = _zimniKwPageInput;
+async function dioRenderKawaifPage(cid) {
+  const area = document.getElementById('workspace-editor-area') || document.getElementById('workspace-tab-content');
+  if (!area || !cid) return;
+  _zfKwPageCid = cid;
+  const E = (v) => (typeof esc === 'function') ? esc(v == null ? '' : String(v)) : String(v == null ? '' : v);
+  area.innerHTML = '<div style="padding:24px;text-align:center;font-family:\'Jameel Noori Nastaleeq\';">وقوعہ جات کھل رہے ہیں…</div>';
+  const cur = await _zimniKwPull(cid);
+  if (_zfKwPageCid !== cid) return;
+  let c = {};
+  try { c = (typeof _misalCase !== 'undefined' && _misalCase && String(_misalCase.id) === String(cid)) ? _misalCase : (window._workspaceCase || {}); } catch (_) { c = {}; }
+  const pre = Object.assign({}, cur);
+  if (!pre.imei && c.theft_imei) pre.imei = c.theft_imei;
+  if (!pre.mobile && c.theft_cell) pre.mobile = c.theft_cell;
+  if (!pre.property && c.theft_item) pre.property = c.theft_item;
+  const D = window.DIOCard;
+  if (D && D.injectCSS) D.injectCSS();
+  const F = (k) => _ZF_KW.find(f => f.k === k);
+  const fld = (k, o) => {
+    const f = F(k); o = o || {};
+    const at = 'oninput="_zimniKwPageInput()"';
+    return D ? D.fld({ id: 'zkw-' + k, label: o.l || f.l, type: f.area ? 'area' : 'text', value: pre[k] || '', ltr: !!f.ltr, grow: !o.line, line: !!o.line, w: 'w-l', attrs: at, ph: o.ph || '' })
+      : '<label>' + E(o.l || f.l) + ' <input id="zkw-' + k + '" value="' + E(pre[k] || '') + '" ' + at + '></label>';
+  };
+  const row = (cells) => D ? D.row(cells) : cells.join('<br>');
+  const sec = (t) => '<h2 class="zkw-h2">' + t + '</h2>';
+  let marks = '';
+  try { marks = await _zimniNaqshaMarks(cid); } catch (_) { marks = ''; }
+  let oldHtml = '';
+  try { const od = (typeof _misalDocs !== 'undefined' && _misalDocs) ? _misalDocs.incidents : null; oldHtml = (od && od.content && od.content.html) ? String(od.content.html) : ''; } catch (_) { oldHtml = ''; }
+  const oldText = oldHtml.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+  const fir = c.fir_number ? ' — مقدمہ <bdi>' + E(c.fir_number) + '</bdi>' : '';
+  area.innerHTML = `
+  <style>
+    #zkw-page{ height:100%; overflow:auto; box-sizing:border-box; padding:14px 16px 90px; direction:rtl; font-family:'Jameel Noori Nastaleeq'; }
+    #zkw-page .zkw-in{ max-width:780px; margin:0 auto; background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:14px 18px 18px; }
+    #zkw-page h1{ font-size:20pt; margin:0 0 4px; color:var(--accent); font-weight:700; }
+    #zkw-page .zkw-h2{ font-size:16pt; margin:16px 0 0; color:var(--text-primary); font-weight:700; border-top:1px solid var(--border); padding-top:10px; }
+    #zkw-page .zkw-note{ font-size:11pt; color:var(--text-muted); line-height:1.8; }
+    #zkw-page .zkw-marks{ font-size:12pt; line-height:1.9; background:var(--bg-tertiary); border-radius:8px; padding:8px 10px; margin-top:8px; }
+    #zkw-page .zkw-old{ font-size:12pt; line-height:1.9; border:1px dashed var(--border); border-radius:8px; padding:8px 10px; margin-top:8px; max-height:40vh; overflow:auto; }
+    #zkw-page .zkw-bar{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:16px; }
+    #zkw-page .zkw-bar .btn{ min-height:40px; font-size:11pt; }
+    #zkw-page #zkw-status{ font-size:10.5pt; color:var(--text-muted); }
+  </style>
+  <div id="zkw-page">
+    <div class="zkw-in">
+      <h1>وقوعہ جات — کوائف موقع و مال${fir}</h1>
+      <div class="zkw-note">یہاں لکھی ہر چیز اسی مقدمے میں خود محفوظ ہوتی ہے اور ضمنی کے نمونے میں خود آتی ہے؛ جو خانہ خالی ہو وہ ضمنی میں پیلا رہتا ہے۔</div>
+      ${sec('جائے وقوعہ کی سمتیں')}
+      ${row([fld('north', { l: 'شمال' }), fld('east', { l: 'مشرق' })])}
+      ${row([fld('south', { l: 'جنوب' }), fld('west', { l: 'مغرب' })])}
+      <div class="zkw-marks"><b>نقشہ موقع کے امتیازی نشانات</b> (ضمنی میں سمتوں کے بعد خود): ${marks ? _zimniTvEsc(marks) : '<span style="color:var(--text-muted)">نقشہ موقع میں ابھی کوئی امتیازی نشان نہیں — ضمنی میں پیلا خالی خانہ آئے گا</span>'}</div>
+      ${sec('جائے برآمدگی')}
+      ${row([fld('jaeBaramdgi', { l: 'جائے برآمدگی', line: true })])}
+      ${row([fld('north1', { l: 'شمال' }), fld('east1', { l: 'مشرق' })])}
+      ${row([fld('south1', { l: 'جنوب' }), fld('west1', { l: 'مغرب' })])}
+      ${sec('مال')}
+      ${row([fld('property', { line: true })])}
+      ${row([fld('baramdgi', { line: true })])}
+      ${row([fld('imei'), fld('mobile')])}
+      ${sec('انکشافات')}
+      ${row([fld('inkshaaf', { l: 'انکشافات — ہر سطر ایک واردات', line: true })])}
+      ${oldText ? sec('وقوعہ جات کی پرانی تحریر') + '<div class="zkw-old">' + ((typeof sanitizeHtml === 'function') ? sanitizeHtml(oldHtml) : E(oldText)) + '</div>'
+        + '<div class="zkw-bar"><button type="button" class="btn btn-secondary" onclick="_zimniKwOldEdit()">پرانی تحریر میں ترمیم</button></div>' : ''}
+      <div class="zkw-bar">
+        <button type="button" class="btn btn-primary" data-dio-save onclick="_zimniKwPageSave(true)">محفوظ کریں</button>
+        <span id="zkw-status" data-dio-status>${cur.saved_at ? 'محفوظ: ' + E(_zimniFmtStamp(cur.saved_at)) : ''}</span>
+      </div>
+    </div>
+  </div>`;
+}
+window.dioRenderKawaifPage = dioRenderKawaifPage;
+function _zimniKwOldEdit() {
+  try {
+    const def = (typeof MISAL_CASE_DOCS !== 'undefined') ? MISAL_CASE_DOCS.find(d => d.id === 'incidents') : null;
+    if (def && typeof _renderMisalEditor === 'function') _renderMisalEditor('incidents', def);
+  } catch (_) { /* پرانی تحریر */ }
+}
+window._zimniKwOldEdit = _zimniKwOldEdit;
+function _zimniKwHas(cid) {
+  const k = _zimniKwGet(cid);
+  return Object.keys(k).some(x => x !== 'saved_at' && String(k[x] || '').trim());
+}
+window._zimniKwHas = _zimniKwHas;
+
+// ضمنی میں افسر کا اپنا لکھا متن ہے؟ (خالی نمونہ «جناب عالیٰ! بحوالہ رپورٹ» نہیں گنا جاتا)
+function _zimniHasWriting(doc) {
+  doc = doc || _zimniDoc(); if (!doc) return false;
+  const rows = doc.querySelectorAll('tr.zf-blk');
+  const t = [].map.call(rows, r => { const b = r.querySelector('.zf-body'); return b ? (b.textContent || '') : ''; }).join('').replace(/[\s ]/g, '');
+  return rows.length > 1 || (t !== '' && t !== 'جناب عالیٰ!بحوالہ رپورٹ'.replace(/\s/g, '') && t !== 'جنابعالیٰ!بحوالہرپورٹ');
+}
+let _zfTplBusy = false;
+async function _zimniApplyTpl(tpl, sel, prev) {
+  const revert = () => { try { if (sel) { sel.value = prev || ''; sel._zfPrev = sel.value; } } catch (_) { /* UI */ } };
+  if (_zfTplBusy) { revert(); return false; }
+  const doc = _zimniDoc();
+  if (!doc || !doc.querySelector('table.zf-tbl tbody')) { revert(); return false; }
+  if (window.DIO && DIO.sub && typeof DIO.sub.blocked === 'function' && DIO.sub.blocked()) { try { DIO.sub.guard('ضمنی کا نمونہ'); } catch (_) { /* صرف دیکھنا */ } revert(); return false; }
+  _zfTplBusy = true;
+  try {
+    if (_zimniHasWriting(doc) && !confirm('«حالاتِ تفتیش» میں لکھا ہوا متن نئی نوعیت کے نمونے سے بدل جائے گا (سرخی، بنام اور دستخط جوں کے توں)۔\nجاری رکھیں؟')) { revert(); return false; }
+    // v575 (افسر کی ہدایت): کوائف یہاں نہیں پوچھے جاتے — مقدمے کے «وقوعہ جات» سے؛ جو نہ ہو وہ پیلا خالی خانہ
+    //   (کچھ نہیں رکتا)۔ سرور کی تازہ نقل پہلے، آف لائن ہو تو اسی آلے کی۔
+    let kw = {};
+    try { kw = _zimniTplKwNeed(tpl).length ? await _zimniKwPull(_zimniCaseId) : _zimniKwGet(_zimniCaseId); } catch (_) { kw = _zimniKwGet(_zimniCaseId); }
+    const x = await _zimniTplCtx(kw);
+    const tb = doc.querySelector('table.zf-tbl tbody');
+    const end = tb.querySelector('tr.zf-endrow');
+    tb.querySelectorAll('tr.zf-blk').forEach(r => r.parentNode.removeChild(r));
+    const tmp = document.createElement('tbody');
+    tmp.innerHTML = _zimniTplRowsHTML(tpl, x, x.date);
+    while (tmp.firstChild) { if (end) tb.insertBefore(tmp.firstChild, end); else tb.appendChild(tmp.firstChild); }
+    try { _zimniRenumberBlocks(); } catch (_) { /* نمبر */ }
+    // نوعیت کی ذیلی سرخی (خلاصہ) — کالم 4 کی سرخی میں «از» کی جگہ (افسر بدل سکتا ہے)؛ نوعیت کا نام کہیں نہیں
+    try { _zimniKhSet(tpl.kh || '', doc); } catch (_) { /* UI */ }
+    if (sel) sel._zfPrev = sel.value;
+    _zimniSetHead(tpl.n);                 // صرف محفوظ ریکارڈ کا اندرونی نام
+    try { _zimniGuardTitle(doc); } catch (_) { /* سرخی */ }
+    _zimniDirty = true;
+    try { _r173Dirty = true; } catch (_) { /* ikhtiyari */ }
+    try { _zimni161Mark(); } catch (_) { /* 161 کے نمبر */ }
+    try { _zimniSyncSignDate(); } catch (_) { /* تاریخ */ }
+    try { _zimniLayout(); } catch (_) { /* ناپ */ }
+    try { _zimniAlignCols(); } catch (_) { /* سیدھ */ }
+    try { _zimniPlaceholders(); } catch (_) { /* بوقت */ }
+    try { _zimniFillScreen(); } catch (_) { /* لکیریں */ }
+    try { _zimniPickers(); } catch (_) { /* ▾ */ }
+    try { _zimniWriteDraft(); } catch (_) { /* مسودہ */ }
+    const blanks = doc.querySelectorAll('.zf-tv').length;
+    try { showToast('نمونہ لگ گیا' + (blanks ? ' — ' + blanks + ' خالی خانے (پیلے) بھرنے ہیں' : ''), blanks ? 'info' : 'success', 4500); } catch (_) { /* paigham */ }
+    try { _zimniCornerPos(); } catch (_) { /* ▾ */ }
+    try { const f = doc.querySelector('.zf-tv'); if (f) { f.scrollIntoView({ block: 'center' }); } } catch (_) { /* UI */ }
+    return true;
+  } catch (e) {
+    try { if (typeof dioLogError === 'function') dioLogError('zimni: namoona', e); } catch (_) { /* log */ }
+    try { showToast('نمونہ نہیں لگ سکا — دوبارہ کوشش کریں', 'error'); } catch (_) { /* paigham */ }
+    revert(); return false;
+  } finally { _zfTplBusy = false; }
+}
+window._zimniApplyTpl = _zimniApplyTpl;
+// پیلا خانہ: دبانے پر پورا چنا جائے؛ لکھ دیا تو عام متن (class ہٹ جاتی ہے، کرسر وہیں)
+function _zimniBindTv(doc) {
+  doc = doc || _zimniDoc();
+  if (!doc || doc._zfTvBound) return;
+  doc._zfTvBound = true;
+  const pick = (ev) => {
+    const t = ev.target && ev.target.closest ? ev.target.closest('.zf-tv') : null;
+    if (!t || !doc.contains(t)) return;
+    if (String(t.textContent || '') !== String(t.getAttribute('data-tv') || '')) return;
+    try { const r = document.createRange(); r.selectNodeContents(t); const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); } catch (_) { /* UI */ }
+  };
+  doc.addEventListener('click', pick);
+  doc.addEventListener('input', () => {
+    doc.querySelectorAll('.zf-tv').forEach(t => {
+      if (String(t.textContent || '') !== String(t.getAttribute('data-tv') || '')) { t.classList.remove('zf-tv'); t.removeAttribute('data-tv'); }
+    });
+  });
+}
+window._zimniBindTv = _zimniBindTv;
+
+// ── خلاصہ — v575 (افسر کی ہدایت، 11 نومبر 2026): نوعیت کی ذیلی سرخی کالم 4 کی سرخی میں «از» کی جگہ ──
+//   اوپر کا خانہ ختم؛ کاغذ پر یہی سرخی (لکھی / بدلی جا سکتی ہے)؛ فہرست میں بھی یہی خلاصہ۔
+const _ZF_KH_SEL = 'table.zf-tbl th.zf-c-from';
+function _zimniKhCell(doc) {
+  doc = doc || _zimniDoc();
+  const th = doc && doc.querySelector(_ZF_KH_SEL);
+  if (!th) return null;
+  let c = th.querySelector('[data-k="khulasa"]');
+  if (!c) {
+    // پرانا «از۔» (یا کچھ بھی) — خلاصے کے خانے سے بدلو (کالم 4 کی سرخی ہی؛ نوعیت کا نام نہیں)
+    const old = String(th.textContent || '').replace(/[\s ]+/g, ' ').trim();
+    th.textContent = '';
+    c = document.createElement('div');
+    c.className = 'zf-kh-cell'; c.setAttribute('data-k', 'khulasa');
+    if (old && !/^از[۔.]?$/.test(old)) c.textContent = old;
+    th.appendChild(c);
+  }
+  return c;
+}
+window._zimniKhCell = _zimniKhCell;
+function _zimniKhSet(text, doc) {
+  const c = _zimniKhCell(doc); if (!c) return;
+  c.textContent = String(text || '').replace(/\s*\n\s*/g, ' ').replace(/۔(?=[^\s۔])/g, '۔ ').replace(/\s{2,}/g, ' ').trim();
+}
+window._zimniKhSet = _zimniKhSet;
+function _zimniKhulasaNow() {
+  const doc = _zimniDoc();
+  const c = doc && doc.querySelector(_ZF_KH_SEL + ' [data-k="khulasa"]');
+  return c ? String(c.textContent || '').replace(/[\s ]+/g, ' ').trim().slice(0, 600) : '';
+}
+window._zimniKhulasaNow = _zimniKhulasaNow;
+
+// ── سرخی «رپورٹ ضمنی بیرونی» — کبھی نہیں ہٹتی (فونٹ / سائز بدلا جا سکتا ہے؛ نوعیت سے نہیں بدلتی) ──
+function _zimniGuardTitle(doc) {
+  doc = doc || _zimniDoc();
+  if (!doc || !doc.querySelector('.zf-tbl')) return false;
+  let t = doc.querySelector('.zf-title');
+  if (!t) {
+    const row = doc.querySelector('.zf-titlerow') || doc.querySelector('.zf-head');
+    if (!row) return false;
+    t = document.createElement('span'); t.className = 'zf-title';
+    const z = row.querySelector('.zf-zila');
+    if (z && z.nextSibling) row.insertBefore(t, z.nextSibling); else row.appendChild(t);
+  }
+  const norm = (v) => String(v || '').replace(/[\s ]+/g, ' ').trim();
+  if (norm(t.textContent) === ZIMNI_DEFAULT_TITLE) return false;
+  // فونٹ / سائز کا انداز (span) ہو تو اسی میں، ورنہ سیدھا
+  const inner = t.querySelector('span[style], font, b, strong, u, i');
+  if (inner && inner.parentNode === t && t.children.length === 1) inner.textContent = ZIMNI_DEFAULT_TITLE;
+  else t.textContent = ZIMNI_DEFAULT_TITLE;
+  return true;
+}
+window._zimniGuardTitle = _zimniGuardTitle;
+
+// ── کاغذ کے کونوں کے «▾» — جگہ (کاغذ کے ساتھ؛ چھوٹا کاغذ ہو تب بھی بٹن پورے سائز کا) ──
+function _zimniCornerPos() {
+  const sc = document.getElementById('zf-scroll'), doc = _zimniDoc();
+  if (!sc || !doc) return;
+  const m = document.getElementById('zf-cp-main'), u = document.getElementById('zf-cp-sub'), d = document.getElementById('zf-dup-badge');
+  if (!m && !u && !d) return;
+  const sr = sc.getBoundingClientRect(), r = doc.getBoundingClientRect();
+  if (!r.width) return;
+  const top = r.top - sr.top + sc.scrollTop + 4;
+  const left = r.left - sr.left + sc.scrollLeft;
+  if (m) { m.style.top = top + 'px'; m.style.left = (left + r.width - 4 - m.offsetWidth) + 'px'; }   // دائیں کونا
+  if (u) { u.style.top = top + 'px'; u.style.left = (left + 4) + 'px'; }                              // بائیں کونا
+  if (d) { d.style.top = top + 'px'; d.style.left = (left + r.width / 2 - d.offsetWidth / 2) + 'px'; }
+  const ms = document.getElementById('zf-main-type'), ss = document.getElementById('zf-sub-type');
+  if (m) m.classList.toggle('zf-cp-on', !!(ms && ms.value && ms.value !== _ZIMNI_TYPE_ADD));
+  if (u) u.classList.toggle('zf-cp-on', !!(ss && ss.value && ss.value !== _ZIMNI_TYPE_ADD));
+}
+window._zimniCornerPos = _zimniCornerPos;
+function _zimniCornerBind() {
+  const sc = document.getElementById('zf-scroll');
+  if (!sc || sc._zfCpBound) return;
+  sc._zfCpBound = true;
+  let t = null;
+  const soon = () => { clearTimeout(t); t = setTimeout(() => { try { _zimniCornerPos(); } catch (_) { /* UI */ } }, 60); };
+  try { if (window.ResizeObserver) { const ro = new ResizeObserver(soon); ro.observe(sc); const d = _zimniDoc(); if (d) ro.observe(d); } } catch (_) { /* پرانا براؤزر */ }
+  window.addEventListener('resize', soon);
+  soon();
+}
+// «▾» کی فہرست — ملزمان والے ▾ جیسی؛ چنتے ہی وہی کام جو پہلے ڈراپ ڈاؤن کرتا تھا
+function _zimniCornerMenu(ev, which) {
+  if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+  const old = document.getElementById('zf-cp-menu');
+  const was = old && old.getAttribute('data-which');
+  if (old) { old.remove(); document.querySelectorAll('.zf-cpick[aria-expanded="true"]').forEach(b => b.setAttribute('aria-expanded', 'false')); }
+  if (was === which) return;
+  if (typeof DIO !== 'undefined' && DIO.sub && typeof DIO.sub.blocked === 'function' && DIO.sub.blocked()) { DIO.sub.guard('ترمیم'); return; }   // صرف دیکھنا
+  const ms = document.getElementById('zf-main-type'), ss = document.getElementById('zf-sub-type');
+  if (!ms || !ss) return;
+  const main = ms.value === _ZIMNI_TYPE_ADD ? '' : ms.value;
+  if (which === 'sub' && !main) {
+    try { showToast('پہلے دائیں کونے کے «▾» سے ضمنی کی قسم چنیں', 'info', 3200); } catch (_) { /* paigham */ }
+    _zimniCornerMenu(null, 'main');
+    return;
+  }
+  const cur = which === 'main' ? main : (ss.value === _ZIMNI_TYPE_ADD ? '' : ss.value);
+  let items = which === 'main' ? _zimniAllMains() : _zimniSubsFor(main);
+  if (cur && items.indexOf(cur) < 0) items = [cur].concat(items);
+  const E = (v) => (typeof esc === 'function') ? esc(v == null ? '' : String(v)) : String(v || '');
+  const F = "font-family:'Jameel Noori Nastaleeq';";
+  const box = document.createElement('div');
+  box.id = 'zf-cp-menu';
+  box.setAttribute('data-which', which);
+  box.setAttribute('role', 'menu');
+  box.style.cssText = 'position:fixed;z-index:99999;background:#fff;border:1px solid #0369a1;border-radius:10px;' +
+    'box-shadow:0 10px 30px rgba(0,0,0,.28);direction:rtl;width:300px;max-width:92vw;' +
+    'display:flex;flex-direction:column;max-height:min(70vh,520px);overflow:hidden;';
+  const row = (v, label, on) => '<button type="button" role="menuitemradio" aria-checked="' + (on ? 'true' : 'false') + '" data-v="' + E(v) + '" style="display:flex;align-items:center;gap:8px;width:100%;min-height:38px;'
+    + 'padding:6px 10px;border:0;border-bottom:1px solid #f1f5f9;background:' + (on ? '#e0f2fe' : '#fff') + ';color:#0f172a;cursor:pointer;text-align:right;font-size:11pt;' + F + '">'
+    + '<span style="width:1.2em;color:#0369a1;font-weight:900;">' + (on ? '✓' : '') + '</span><span style="flex:1;">' + label + '</span></button>';
+  box.innerHTML =
+    '<div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:9.75pt;font-weight:700;color:#0369a1;background:#f8fafc;' + F + '">'
+      + (which === 'main' ? 'ضمنی کی قسم' : 'ضمنی کی نوعیت') + '</div>'
+    + '<div style="flex:1;overflow-y:auto;min-height:0;">'
+    + items.map(v => row(v, E(v), v === cur)).join('')
+    + row(_ZIMNI_TYPE_ADD, '➕ ' + (which === 'main' ? 'نئی قسم…' : 'نئی نوعیت…'), false)
+    + '</div>';
+  document.body.appendChild(box);
+  const btn = document.getElementById(which === 'main' ? 'zf-cp-main' : 'zf-cp-sub');
+  if (btn) btn.setAttribute('aria-expanded', 'true');
+  const r = btn ? btn.getBoundingClientRect() : { top: 80, bottom: 100, left: 20, right: 40, width: 20 };
+  const bw = box.offsetWidth, bh = box.offsetHeight;
+  let top = r.bottom + 6;
+  if (top + bh > window.innerHeight - 8) top = Math.max(8, window.innerHeight - bh - 8);
+  // دائیں کونے کی فہرست دائیں کنارے سے، بائیں کی بائیں سے
+  let left = which === 'main' ? (r.right - bw) : r.left;
+  left = Math.max(8, Math.min(left, window.innerWidth - bw - 8));
+  box.style.top = top + 'px'; box.style.left = left + 'px';
+  const close = () => {
+    box.remove();
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+    document.removeEventListener('mousedown', off, true); document.removeEventListener('touchstart', off, true); document.removeEventListener('keydown', esc1, true);
+  };
+  const off = (e) => { if (!box.contains(e.target) && !(e.target.closest && e.target.closest('.zf-cpick'))) close(); };
+  const esc1 = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
+  setTimeout(() => { document.addEventListener('mousedown', off, true); document.addEventListener('touchstart', off, true); document.addEventListener('keydown', esc1, true); }, 0);
+  box.addEventListener('click', (e) => {
+    const b = e.target.closest && e.target.closest('button[data-v]');
+    if (!b) return;
+    e.preventDefault();
+    const v = b.getAttribute('data-v');
+    close();
+    if (which === 'main') {
+      const sel = document.getElementById('zf-main-type'); if (!sel) return;
+      if (v === sel.value) return;
+      sel.value = v;
+      _zimniOnMainChange(sel);
+    } else {
+      const sel = document.getElementById('zf-sub-type'); if (!sel) return;
+      if (v === sel.value) return;
+      sel._zfPrev = sel.value;
+      if (![].some.call(sel.options, o => o.value === v)) { const o = document.createElement('option'); o.value = v; o.textContent = v; sel.insertBefore(o, sel.lastElementChild); }
+      sel.value = v;
+      _zimniOnSubChange(sel);
+    }
+    setTimeout(() => { try { _zimniCornerPos(); } catch (_) { /* UI */ } }, 0);
+  });
+}
+window._zimniCornerMenu = _zimniCornerMenu;
 
 function _renderZimniEditor() {
   const area = document.getElementById('workspace-editor-area')
@@ -1484,21 +2218,22 @@ function _renderZimniEditor() {
   const sep = '<span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>';
   const selCss = 'height:28px;border:1px solid var(--border,#ccc);border-radius:6px;background:var(--bg-card,#fff);color:var(--text-primary,#111);font-size:9.75pt;padding:0 6px;margin:0 1px;cursor:pointer;';
 
+  // v574 (افسر کا حکم 10 نومبر 2026): ضمنی کے اوپر کی پٹی ختم — موبائل پر ضمنی کو پوری جگہ۔
+  //   MW کا فارمیٹ: کاغذ کے بائیں کونے میں «ضمنی»، دائیں کونے میں «نوعیت» (اور بیچ میں لکھنے والا افسر، خلاصہ، کوائف)۔
+  //   محفوظ / پرنٹ / شیئر — دستاویز کی پٹی (doc-viewer) کے بٹن؛ وہ انہی چھپے بٹنوں کو دباتے ہیں (Ctrl+S / Ctrl+P وہی)۔
+  //   B/I/U، سیدھ، فونٹ وغیرہ — MS Word کی شارٹ کٹس (dio-keys.js، پورا نظام) جوں کی توں۔
+  //   دستاویز کی پٹی نہ ہو (کسی اور راستے سے کھلی) تو یہ چھپے بٹن نظر آتے ہیں — کام کبھی نہ رکے۔
+  const inDocView = !!document.getElementById('dio-docview');
+  const mainShown = _zimniMainNorm(savedMain, savedSub);
   area.innerHTML = `
-  <style>${(typeof _ch173CSS === 'function') ? _ch173CSS() : ''}${_zimniFormCSS()}${_zfAttFormCSS()}</style>
+  <style>${(typeof _ch173CSS === 'function') ? _ch173CSS() : ''}${_zimniFormCSS()}${_zfAttFormCSS()}${_zimniCornerCSS()}</style>
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
-    <!-- Topbar — report173 jaisa (chips patti cursor upar jane par nazar aati hai) -->
-    <div class="no-print" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
+    <!-- پرانی پٹی کے اوزار — چھپے ہوئے (دستاویز کی پٹی انہی کو چلاتی ہے) -->
+    <div id="zf-tools" class="no-print zf-tools${inDocView ? '' : ' zf-tools-show'}">
       <button type="button" class="btn btn-secondary btn-sm" onclick="_zimniBackToList()" title="اس مقدمے کی تمام ضمنیات">← فہرست</button>
-      ${z._dupOf ? `<span id="zf-dup-badge" class="no-print" style="${_ZF_DUP_CSS}" title="ضمنی نمبر ${esc(String(z._dupLabel || ''))} کی نقل — ابھی محفوظ نہیں؛ محفوظ ہوتے ہی یہ نشان ہٹ جائے گا">ڈپلیکیٹ</span>` : ''}
-      <!-- v553: لیگل/A4 کا انتخاب یہاں سے ہٹا — پرنٹ کے وقت پوچھا جاتا ہے -->
-      <!-- مرکزی ضمنی — دائیں کونے میں (تھانہ کے اوپر) -->
-      ${_zimniMainSelectHTML(savedMain)}
-      <!-- v566: لکھنے والا افسر — تفتیشی افسر / SHO / DSP-SDPO (نام اور عہدہ ترتیبات سے) -->
-      <span id="zf-author-wrap" style="display:inline-flex;gap:4px;align-items:center;flex-wrap:wrap;">${_zimniAuthorHTML(z._author)}</span>
       <!-- "رپورٹ ضمنی" کا خانہ hidden — قدر save کے لیے (فہرست کا عنوان نہ ٹوٹے) -->
       <input id="zf-head-in" type="hidden" value="${esc(((saved && saved.head) || savedSub || 'رپورٹ ضمنی'))}">
-      <div style="margin-right:auto;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+      <div class="zf-tools-fmt" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
         <button id="zf-btn-b" onmousedown="event.preventDefault()" onclick="_zimniFmt('bold')" title="بولڈ" style="${btn}font-weight:900;">B</button>
         <button id="zf-btn-i" onmousedown="event.preventDefault()" onclick="_zimniFmt('italic')" title="ترچھا" style="${btn}font-style:italic;">I</button>
         <button id="zf-btn-u" onmousedown="event.preventDefault()" onclick="_zimniFmt('underline')" title="انڈر لائن" style="${btn}text-decoration:underline;">U</button>
@@ -1530,21 +2265,27 @@ function _renderZimniEditor() {
         <button id="zf-save-btn" class="btn btn-primary btn-sm dio-modbtn" onclick="_saveZimni(false,true)" title="${z.id ? 'اپ ڈیٹ' : 'محفوظ کریں'} (Ctrl+S) — ضمنی کھلی رہے گی">💾 ${z.id ? 'اپ ڈیٹ' : 'محفوظ'}</button>
         <button type="button" class="btn btn-secondary btn-sm" data-dio-print onclick="_printZimniCurrent()" title="پرنٹ (Ctrl+P)">🖨️ پرنٹ</button>
         <button type="button" class="btn btn-secondary btn-sm" onclick="_shareZimniCurrent()" title="شیئر — PDF / Word">📤 شیئر</button>
-        <span style="display:flex;flex-direction:column;line-height:1.35;align-self:center;">
-          <span id="zf-updated" style="font-size:8.5pt;color:var(--text-muted);white-space:nowrap;"></span>
-          <span id="zf-autosave" style="font-size:8pt;color:var(--text-muted);white-space:nowrap;"></span>
-        </span>
       </div>
-      <!-- ذیلی ضمنی — بائیں کونے میں (منتخب مرکزی کے مطابق) -->
-      <span id="zf-sub-wrap">${_zimniSubSelectHTML(savedMain, savedSub)}</span>
     </div>
 
     <!-- Document — poora editable (har jaga likha ja sake), kaghaz asal naap par -->
-    <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
+    <div id="zf-scroll" style="flex:1;overflow:auto;min-height:0;padding:10px 16px 16px;background:var(--bg-tertiary);position:relative;">
+      <!-- v575 (افسر کی ہدایت، 11 نومبر 2026): اوپر کی قطار ختم — کاغذ کے کونوں میں «▾» (ملزمان والے ▾ کی طرح)۔
+           دائیں کونا = ضمنی کی قسم (8 اقسام)، بائیں کونا = نوعیت۔ چنی ہوئی قدر انہی چھپے خانوں میں (محفوظ / مسودہ وہی)۔ -->
+      <div id="zf-typestate" hidden style="display:none;">
+        <span id="zf-main-wrap">${_zimniMainSelectHTML(mainShown)}</span>
+        <span id="zf-sub-wrap">${_zimniSubSelectHTML(mainShown, savedSub)}</span>
+        <span id="zf-updated" data-dio-status></span><span id="zf-autosave" data-dio-status></span>
+      </div>
+      <button type="button" id="zf-cp-main" class="zf-cpick no-print" onclick="_zimniCornerMenu(event,'main')" aria-haspopup="menu"
+        title="ضمنی کی قسم (SHO کی ضمنی، DSP کی ضمنی، پہلی ضمنی …)" aria-label="ضمنی کی قسم">▾</button>
+      <button type="button" id="zf-cp-sub" class="zf-cpick no-print" onclick="_zimniCornerMenu(event,'sub')" aria-haspopup="menu"
+        title="ضمنی کی نوعیت (گرفتاری ملزمان، برآمدگی …)" aria-label="ضمنی کی نوعیت">▾</button>
+      ${z._dupOf ? `<span id="zf-dup-badge" class="no-print zf-cdup" style="${_ZF_DUP_CSS}" title="ضمنی نمبر ${esc(String(z._dupLabel || ''))} کی نقل — ابھی محفوظ نہیں؛ محفوظ ہوتے ہی یہ نشان ہٹ جائے گا">ڈپلیکیٹ</span>` : ''}
       <div id="ch173-doc" class="zf-editor" contenteditable="true" spellcheck="false" style="
         width:${paper==='a4'?'8.27in':'8.5in'};max-width:none;
         min-height:${paper==='a4'?'11.7in':'13in'};margin:0 auto;
-        padding:1cm ${side};background:#fff;
+        padding:1cm ${side} ${ZF_PAGE_BOT_CM}cm ${side};background:#fff;
         box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:4px;
         line-height:1.4;box-sizing:border-box;">${savedBody}</div>
     </div>
@@ -1570,11 +2311,41 @@ function _renderZimniEditor() {
     try { if (typeof _ch173FocusMode === 'function') _ch173FocusMode(true); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ } // chips peek
     try { if (typeof _ch173WatchFit === 'function') _ch173WatchFit(); } catch (_) { /* ikhtiyari hook — mojood na ho ya phat jaye to asal kaam na ruke */ }
     try { _zimniBindFindReplace(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }                                          // Ctrl+F / Ctrl+H
+    // v574: پیلے خانے (دبانے پر چُنا جائے، لکھتے ہی عام متن) + MW کے نمونے «نوعیت» کی فہرست میں
+    try { _zimniBindTv(_zimniDoc()); } catch (_) { /* ضمنی */ }
+    try {
+      _zimniNeedTpl().then(ok => {
+        if (!ok) return;
+        const ms = document.getElementById('zf-main-type'), ss = document.getElementById('zf-sub-type');
+        if (ms && ss && ms.value && ms.value !== _ZIMNI_TYPE_ADD) {
+          const keep = ss.value === _ZIMNI_TYPE_ADD ? '' : ss.value;
+          const wrap = document.getElementById('zf-sub-wrap');
+          if (wrap) wrap.innerHTML = _zimniSubSelectHTML(ms.value, keep);     // سرخی نہیں چھیڑتے — صرف فہرست
+        }
+      });
+    } catch (_) { /* نمونے بعد میں */ }
     try { _zimniColResize(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     try { if (saved && saved.saved_at) _zimniStampUpdated(saved.saved_at); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
     // v552: خودکار مسودہ · سرخی = ذیلی ضمنی · نیچے کی تاریخ = کالم 1 کی تاریخ
     try { _zimniWatchEdits(); } catch (_) { /* ikhtiyari qadam */ }
-    try { if (savedSub) _zimniApplyTitle(savedSub); } catch (_) { /* ikhtiyari qadam */ }
+    // v575: سرخی ہمیشہ «رپورٹ ضمنی بیرونی» (پرانی ضمنی میں نوعیت کا نام ہو تو واپس)؛ کالم 4 میں «از» کی جگہ خلاصہ —
+    //   یہ دکھانے کی درستی ہے، افسر کی ترمیم نہیں (محفوظ تب ہی ہوگا جب افسر خود محفوظ کرے)
+    try {
+      const d0 = _zimniDoc();
+      if (d0) {
+        _zimniGuardTitle(d0);
+        const kc = _zimniKhCell(d0);
+        if (kc && !String(kc.textContent || '').trim() && saved && saved.khulasa) kc.textContent = String(saved.khulasa);
+        if (!d0._zfTitleBound) {
+          d0._zfTitleBound = true;
+          d0.addEventListener('input', () => {   // سرخی مٹائی گئی تو فوراً واپس
+            try { if (_zimniGuardTitle(d0) && typeof showToast === 'function') showToast('سرخی «رپورٹ ضمنی بیرونی» ہٹائی نہیں جا سکتی (فونٹ / سائز بدل سکتے ہیں)', 'info', 3000); } catch (_) { /* سرخی */ }
+            try { if (!d0.querySelector(_ZF_KH_SEL + ' [data-k="khulasa"]')) _zimniKhCell(d0); } catch (_) { /* خلاصہ */ }
+          });
+        }
+      }
+    } catch (_) { /* ikhtiyari qadam */ }
+    try { _zimniCornerBind(); } catch (_) { /* ▾ */ }
     try { _zimniSyncSignDate(); } catch (_) { /* ikhtiyari qadam */ }
     // v564: بندھے خانے — کالم 1 کی تاریخ ↔ دستخط کی تاریخ، SHO کا نام (ایک جگہ بدلو، باقی خود)
     //   (پہلے یہاں کالم 1 کا سننے والا ev.target دیکھتا تھا — براؤزر input پوری دستاویز پر بھیجتا ہے، اس لیے
@@ -1789,7 +2560,7 @@ function _zimniStampUpdated(iso) {
   const el = document.getElementById('zf-updated');
   if (!el) return;
   const t = _zimniFmtStamp(iso || new Date().toISOString());
-  el.textContent = t ? ('آخری اپ ڈیٹ: ' + t) : '';
+  el.textContent = t ? ('آخری اپ ڈیٹ: ' + t) : ''; el.title = el.textContent;
 }
 window._zimniStampUpdated = _zimniStampUpdated;
 
@@ -2996,8 +3767,31 @@ async function _zimniAccPicker(ev, which) {
 window._zimniAccPicker = _zimniAccPicker;
 
 // Berooni Zimni form ki CSS (editor + print) — sab #ch173-doc ke andar, naap pt mein.
+// v575: کاغذ کے کونوں میں «▾» — دائیں ضمنی کی قسم، بائیں نوعیت (کاغذ سے باہر، اس کے کونوں پر — کاغذ چھوٹا ہو تب بھی پورا بڑا)
+function _zimniCornerCSS() {
+  return `
+  .zf-tools{ display:none !important; }
+  .zf-tools.zf-tools-show{ display:flex !important; align-items:center; gap:8px; padding:8px 12px; flex-wrap:wrap;
+    border-bottom:1px solid var(--border); background:var(--bg-secondary); }
+  .zf-cpick{ position:absolute; z-index:5; top:0; width:26px; height:26px; min-height:26px; padding:0; margin:0;
+    border:1px solid #0369a1; border-radius:6px; background:#f0f9ff; color:#0369a1; font-size:12pt; line-height:1;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 3px rgba(0,0,0,.18); }
+  .zf-cpick:hover, .zf-cpick[aria-expanded="true"]{ background:#0369a1; color:#fff; }
+  .zf-cpick.zf-cp-on{ background:#e0f2fe; }
+  .zf-cdup{ position:absolute; z-index:5; top:0; }
+  @media (max-width:760px){ .zf-cpick{ width:32px; height:32px; min-height:32px; } }
+  .zf-kw-note{ font-size:11pt; color:var(--text-muted); padding:8px 2px 0; line-height:1.7; }
+  @media print{ .zf-cpick, .zf-cdup, .zf-tools{ display:none !important; } }
+  `;
+}
+window._zimniCornerCSS = _zimniCornerCSS;
 function _zimniFormCSS() {
   return `
+  /* v574: MW نمونے کا خالی خانہ — اسکرین پر پیلا (کاغذ / PDF / Word پر نقطے دار خالی لکیر — _zimniPrintHTML) */
+  #ch173-doc .zf-tv{ background:#fff1a8; border-bottom:1px dashed #b45309; border-radius:2px; padding:0 2px;
+    color:#7c4a03; cursor:pointer; unicode-bidi:isolate; }
+  @media print{ #ch173-doc .zf-tv{ background:none !important; color:transparent !important; border:0 !important;
+    border-bottom:1px dotted #000 !important; } }
 
   /* ── HEADER ── form no + رپورٹ ضمنی page ke CENTER; ضلع top-LEFT ── */
   #ch173-doc .zf-head{ direction:rtl; margin-bottom:6px; line-height:1.5; }
@@ -3651,8 +4445,19 @@ function _zimniSeniorDefault(role) {
   let s = {};
   try { s = JSON.parse(localStorage.getItem(role === 'sho' ? 'digital_io_sho' : 'digital_io_dsp') || '{}') || {}; } catch (_) { s = {}; }
   const ranks = _ZF_ROLE_RANKS[role] || [];
-  return { role, name: String(s.name || '').replace(/[\s ]+/g, ' ').trim(), rank: ranks.indexOf(s.rank) >= 0 ? s.rank : (ranks[0] || '') };
+  const T = (v) => String(v || '').replace(/[\s ]+/g, ' ').trim();
+  const o = { role, name: T(s.name), rank: ranks.indexOf(s.rank) >= 0 ? s.rank : (ranks[0] || '') };
+  if (role === 'dsp') { o.post = T(s.post); o.circle = T(s.circle); }   // v575: نام، رینک، پوسٹ، سرکل
+  return o;
 }
+// v575 (افسر کی ہدایت): DSP کی سطر = نام، رینک، پوسٹ، سرکل — آخر میں دوبارہ رینک نہیں
+function _zimniSeniorText(a) {
+  if (!a) return '';
+  const parts = [a.name, a.rank];
+  if (a.role === 'dsp') { if (a.post && a.post !== a.rank) parts.push(a.post); if (a.circle) parts.push(a.circle); }
+  return parts.map(v => String(v || '').trim()).filter(Boolean).join(' ');
+}
+window._zimniSeniorText = _zimniSeniorText;
 window._zimniSeniorDefault = _zimniSeniorDefault;
 function _zimniAuthorOf(x) {
   const a = ((x || {}).content || {}).author;
@@ -3671,7 +4476,9 @@ function _zimniAuthorNow() {
     try { nm = _zimniIoName(); rk = String(((typeof currentOfficer !== 'undefined' && currentOfficer) || {}).designation || '').trim(); } catch (_) { /* ضمنی */ }
     return { role: 'io', name: nm, rank: rk };
   }
-  return { role: a.role, name: String(a.name || '').trim(), rank: String(a.rank || '').trim() };
+  const r = { role: a.role, name: String(a.name || '').trim(), rank: String(a.rank || '').trim() };
+  if (a.role === 'dsp') { r.post = String(a.post || '').trim(); r.circle = String(a.circle || '').trim(); }
+  return r;
 }
 window._zimniAuthorNow = _zimniAuthorNow;
 // «مرتبہ» / دستخط کی سطر
@@ -3679,7 +4486,7 @@ function _zimniAuthorLine(a) {
   if (!a || !a.role || a.role === 'io') return (typeof getIOSignLine === 'function') ? getIOSignLine() : _zimniIoName();
   let st = '';
   try { st = String(((typeof currentOfficer !== 'undefined' && currentOfficer) || {}).station || '').trim(); } catch (_) { st = ''; }
-  return [a.name, a.rank].filter(Boolean).join(' ') + (a.role === 'sho' && st ? ' تھانہ ' + st : '');
+  return _zimniSeniorText(a) + (a.role === 'sho' && st ? ' تھانہ ' + st : '');
 }
 window._zimniAuthorLine = _zimniAuthorLine;
 function _zimniAuthorHTML(a) {
@@ -3724,6 +4531,7 @@ function _zimniApplyAuthorLines(a) {
 function _zimniSetAuthor(a) {
   const z = _zimniActive; if (!z) return;
   z._author = (a && a.role && a.role !== 'io') ? { role: a.role, name: String(a.name || '').trim(), rank: String(a.rank || '').trim() } : { role: 'io' };
+  if (z._author.role === 'dsp') { z._author.post = String(a.post || '').trim(); z._author.circle = String(a.circle || '').trim(); }
   const w = document.getElementById('zf-author-wrap');
   if (w) w.innerHTML = _zimniAuthorHTML(z._author);
   _zimniApplyAuthorLines(z._author);
@@ -4033,7 +4841,7 @@ async function _saveZimni(silent, keepOpen) {
     // v552: ڈیٹابیس کو ہمیشہ YYYY-MM-DD؛ v566: ہمیشہ کالم 1 کی تاریخ
     report_date: fd.iso,
     content: { bodyHtml, head, serial_no: serialNo, zno: zp.label, zno_suffix: zp.suffix || '', saved_at: savedAt, col1_date: col1Date,
-               main_type: mainType, sub_type: subType,
+               main_type: mainType, sub_type: subType, khulasa: _zimniKhulasaNow(),
                author: author.role === 'io' ? { role: 'io', name: author.name, rank: author.rank } : author },
   };
   if (s161 && s161.n) rec.content.s161 = { first: s161.first, last: s161.last, n: s161.n };
@@ -4266,12 +5074,16 @@ if (window.DIOSync && !window._zimniSyncHooked) {
 //  (چالان جیسا۔ صرف چھپائی کے لیے — اسکرین پر کچھ نہیں بدلتا)
 //  اوپر کے مارجن کے بعد ایک سطر کی جگہ چھوڑی جاتی ہے۔
 // ═══════════════════════════════════════════════════════════════
+// v574 (افسر کا حکم 10 نومبر 2026): نیچے کا مارجن 1cm سے کم — بس اتنا کہ آخری لکیر پرنٹ میں نہ کٹے۔
+//   اوپر 1cm جوں کا توں۔ ایک ہی قدر: اسکرین کا کاغذ، @page، صفحات کا حساب (_zimniPaginate) اور مثل کی لکیر۔
+const ZF_PAGE_BOT_CM = 0.6;
+window.ZF_PAGE_BOT_CM = ZF_PAGE_BOT_CM;
 function _zimniBindHTML() {
   const doc = _zimniDoc();
   if (!doc) return '';
   const IN = 96, CM = 37.8;
   const paper = (typeof _ch173Paper !== 'undefined') ? _ch173Paper : 'legal';
-  const pageH = ((paper === 'a4') ? 11.7 : 13) * IN - (2 * CM);   // اوپر/نیچے 1cm مارجن
+  const pageH = ((paper === 'a4') ? 11.7 : 13) * IN - CM - (ZF_PAGE_BOT_CM * CM);   // اوپر 1cm، نیچے ZF_PAGE_BOT_CM
   if (pageH < 100) return '';
   let padY = 0, lh = 0;
   try {
@@ -4305,6 +5117,18 @@ function _zimniSafePrint(html) {
   try {
     h = h.replace(/<button\b[^>]*>[\s\S]*?<\/button>/gi, '');   // picker/grip buttons
   } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+  // v574: نمونے کا نہ بھرا خانہ (پیلا) — کاغذ / PDF / Word پر خانے کا نام نہیں، ہاتھ سے بھرنے کی خالی جگہ «۔۔۔۔»
+  try {
+    if (h.indexOf('zf-tv') >= 0 && typeof document !== 'undefined') {
+      const t = document.createElement('template'); t.innerHTML = h;
+      t.content.querySelectorAll('.zf-tv').forEach(sp => {
+        if (String(sp.textContent || '') === String(sp.getAttribute('data-tv') || '')) {
+          sp.textContent = '۔۔۔۔۔۔۔۔'; sp.className = 'zf-tvp'; sp.removeAttribute('data-tv');
+        } else { sp.classList.remove('zf-tv'); sp.removeAttribute('data-tv'); }
+      });
+      h = t.innerHTML;
+    }
+  } catch (_) { /* خانہ جوں کا توں — CSS نقطے دار لکیر بناتی ہے */ }
   try {
     if (window.DIO && DIO.html && DIO.html.safe) return DIO.html.safe(h);
   } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
@@ -4323,7 +5147,8 @@ function _zimniPaginate(R, W, opt) {
   var DOC = (R && R.nodeType === 9) ? R : ((R && R.ownerDocument) || W.document);
   var CM=37.795;
   var isA4=(opt.paper==='a4');
-  var contentH=(isA4?11.69:13)*96 - 2*CM;   // ایک صفحے کی کام کی اونچائی (1cm hashiye)
+  var BOT=(opt.botCm!=null && isFinite(+opt.botCm)) ? (+opt.botCm)*CM : 0.6*CM;   // v574: نیچے کا مارجن (اوپر 1cm)
+  var contentH=(isA4?11.69:13)*96 - CM - BOT;   // ایک صفحے کی کام کی اونچائی
   var twoPage=2*contentH;
   var SAFE=16;                 // صفحے کے کنارے سے تھوڑا پہلے روکو (spill نہ ہو)
   var fitLimit=twoPage-SAFE;
@@ -4612,7 +5437,13 @@ function _zimniPaginate(R, W, opt) {
             var bodyC=row.querySelector('td.zf-c-body .zf-body')||row.querySelector('td.zf-c-body');
             var sp=null, firstLine=false;
             if(isBlk && bodyC){
-              sp=lineFind(bodyC, pTop+contentH-EPS);
+              // v574: قطار صفحے پر ٹوٹے تو Chrome ٹوٹے ہوئے حصے کے نیچے بھی خانے کی نچلی padding (+ لکیر) رکھتا ہے —
+              //   وہ جگہ نہ چھوڑی جائے تو پہلا حصہ (ایک دو سطریں) اگلے صفحے پر چلا جاتا، پھر پکا توڑ — بیچ میں
+              //   تقریباً خالی صفحہ (A4 پر 26 مختصر اندراج، اصل PDF سے ثابت)۔ اس لیے حد سے یہ جگہ پہلے ہی کم کرو۔
+              var padB=0;
+              try{ var gcs=(DOC.defaultView||W); [].forEach.call(row.children, function(td){ var cs=gcs.getComputedStyle(td);
+                padB=Math.max(padB, (parseFloat(cs.paddingBottom)||0)+(parseFloat(cs.borderBottomWidth)||0)); }); }catch(e){ padB=0; }
+              sp=lineFind(bodyC, pTop+contentH-EPS-padB);
               if(!sp){ var lb=textEdge(bodyC, true); if(lb!==null) sp=lineFind(bodyC, lb-1); }   // متن سما گیا، نیچے کی جگہ نہیں — آخری سطر اگلے صفحے پر
               var ft=textEdge(bodyC, false);
               if(sp && ft!==null && sp.top<=ft+1) firstLine=true;
@@ -4803,7 +5634,7 @@ function _zimniPrintHTML(inner) {
          چوڑائی بالکل وہی رہے جو اسکرین پر تھی۔ اسی سے کالم 2 کے نمبروں کی سیدھ
          چھپائی میں بھی درست رہتی ہے (چوڑائی بدلنے سے پیراگراف کی اونچائی بدلتی
          تھی اور اسکرین پر ناپا ہوا marginTop غلط ہو جاتا تھا)۔ */
-      @page{ size:${size}; margin:1cm 0; }
+      @page{ size:${size}; margin:1cm 0 ${ZF_PAGE_BOT_CM}cm 0; }
       *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; box-sizing:border-box; }
       html,body{ margin:0; font-family:'Jameel Noori Nastaleeq';
             direction:rtl; text-align:justify; color:#000; line-height:1.4; }
@@ -4814,6 +5645,9 @@ function _zimniPrintHTML(inner) {
       #ch173-doc{ width:${pw} !important; max-width:none !important; height:auto !important;
         min-height:0 !important; padding:0 ${side} !important; margin:0 auto !important;
         transform:none !important; box-shadow:none !important; border-radius:0 !important; }
+      /* v574: نمونے کا خالی خانہ کاغذ / PDF / Word پر — صرف نقطے دار لکیر (پیلا رنگ اور خانے کا نام نہیں) */
+      #ch173-doc .zf-tv{ background:none !important; color:transparent !important; border:0 !important;
+        border-bottom:1px dotted #000 !important; padding:0 !important; }
       /* AHEM: header کو دہرانے نہ دو — ورنہ ہر صفحے پر ٹیبل دوبارہ چھپ جاتا ہے
          (چالان کا بھی یہی اصول: thead{display:table-row-group}) */
       #ch173-doc table.zf-tbl thead{ display:table-row-group !important; page-break-inside:avoid; }
@@ -4869,7 +5703,7 @@ function _zimniPrintHTML(inner) {
     <div id="ch173-doc">${inner}</div>
     <script>
       (function(){
-        var go=(${_zimniPaginate.toString()})(document, window, { paper: window.__PAPER, skel: window.__ZA_SKEL });
+        var go=(${_zimniPaginate.toString()})(document, window, { paper: window.__PAPER, skel: window.__ZA_SKEL, botCm: ${ZF_PAGE_BOT_CM} });
         // AHEM: حساب ہمیشہ فونٹ لوڈ ہونے کے بعد بھی چلے — ورنہ ناپ چھوٹی آتی ہے (split غلط)۔ idempotent ہے۔
         function boot(){
           go();                                   // پہلی جھلک (فونٹ سے پہلے)
@@ -4905,7 +5739,7 @@ function _zimniMigrateCols(html) {
 window._zimniMigrateCols = _zimniMigrateCols;
 
 // v552: چھاپنے سے پہلے قاعدہ لاگو — نیچے کی تاریخ = کالم 1 (سیریل 1) کی تاریخ؛
-//   سرخی = ذیلی ضمنی (محفوظ شدہ پرانی ضمنیوں پر بھی)
+//   v575: سرخی ہمیشہ «رپورٹ ضمنی بیرونی» (اکتوبر کا «سرخی = ذیلی ضمنی» ختم)
 function _zimniPrepBody(html, subType) {
   try {
     const box = document.createElement('div');
@@ -4921,7 +5755,10 @@ function _zimniPrepBody(html, subType) {
       }
       if (sd) sd.textContent = fd.dmy;
     }
-    if (subType) { const t = box.querySelector('.zf-title'); if (t) t.textContent = subType; }
+    // v575: سرخی ہمیشہ «رپورٹ ضمنی بیرونی» (پرانی ضمنی میں نوعیت کا نام ہو تب بھی)؛ کالم 4 میں «از» نہیں — خلاصہ
+    void subType;
+    try { _zimniGuardTitle(box); } catch (_) { /* سرخی */ }
+    try { _zimniKhCell(box); } catch (_) { /* خلاصہ */ }
     _zimniFixClose(box);
     _zimniUnLeftSign(box);           // v564: نام اور تاریخ دستخط کے خانے کے درمیان
     _zimniDropStrayPick(box);        // v566: پرانی ضمنی میں بچا اکیلا «▾» کاغذ پر نہ آئے
@@ -4989,7 +5826,7 @@ try {
       const _o = (typeof currentOfficer !== 'undefined' && currentOfficer) ? currentOfficer : {};
       const _c = (typeof _zimniCase !== 'undefined' && _zimniCase) ? _zimniCase : {};
       const paper = (typeof _ch173Paper !== 'undefined') ? _ch173Paper : 'legal';
-      _zimniPaginate(root, win, { paper: paper, skel: _zimniZaSkel(_o, _c) })();
+      _zimniPaginate(root, win, { paper: paper, skel: _zimniZaSkel(_o, _c), botCm: ZF_PAGE_BOT_CM })();
     }
   });
 } catch (_) { /* براؤزر کی چھپائی پرانے طریقے سے */ }

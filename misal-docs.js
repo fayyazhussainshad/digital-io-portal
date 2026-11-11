@@ -65,10 +65,12 @@ function renderMisalBar(c) {
   const items = MISAL_CASE_DOCS.filter(d => d.id !== 'index_naql').map(d => {
     const saved = _misalDocs[d.id];
     const done  = saved?.status === 'complete';
-    const added = !!saved;
+    // v575: «وقوعہ جات» = کوائف موقع و مال (اسی آلے / سرور کی نقل) — لکھے ہوں تو chip «شامل»
+    const kw    = d.id === 'incidents' && c && c.id && typeof window._zimniKwHas === 'function' && window._zimniKwHas(c.id);
+    const added = !!saved || !!kw;
     const cls   = done ? 'mdoc-done' : added ? 'mdoc-added' : 'mdoc-empty';
     // ALL documents: open the editor directly (no add/remove confirmation box)
-    const action = added ? `_openMisalEditor('${d.id}')` : `_doAddMisalDoc('${d.id}')`;
+    const action = (added || d.id === 'incidents') ? `_openMisalEditor('${d.id}')` : `_doAddMisalDoc('${d.id}')`;
     return `<span class="mdoc-chip ${cls}" onclick="${action}" title="${d.desc}">${d.name}</span>`;
   }).join('');
 
@@ -250,6 +252,8 @@ async function _doAddMisalDoc(docId) {
   if (docId === 'saza_slip') { _openMisalEditor(docId); return; }
   // درخواستیں → seedha full-page editor (darkhwastain.js)
   if (docId === 'darkhwastain') { _openMisalEditor(docId); return; }
+  // v575: وقوعہ جات → seedha کوائف کا صفحہ (کوئی خالی ریکارڈ نہیں بنتا)
+  if (docId === 'incidents') { _openMisalEditor(docId); return; }
   // RFA فارم → seedha full-page editor (rfa-form.js)
   if (docId === 'rfa_form') { _openMisalEditor(docId); return; }
   const isPersonForm = (docId === 'witnesses_fir' || docId === 'witnesses_cross' ||
@@ -278,6 +282,17 @@ function _openMisalEditor(docId, _fromTab) {
   // Full-page view: dastawez poore page par khulti hai, chips background mein.
   // _fromTab=true tab aata hai jab tab-switch se dobara render ho raha ho.
   if (!_fromTab && typeof _dioOpenDocTab === 'function') _dioOpenDocTab(docId);
+
+  // v575 (افسر کی ہدایت، 11 نومبر 2026): وقوعہ جات = کوائف موقع و مال (تمام سمتیں، جائے برآمدگی، مال، IMEI،
+  //   موبائل، انکشافات) — ضمنی یہیں سے لیتی ہے۔ پہلے سے لکھی وقوعہ جات کی تحریر اسی صفحے پر نیچے جوں کی توں۔
+  if (docId === 'incidents') {
+    _openDocId = docId;
+    const go = () => { if (typeof window.dioRenderKawaifPage === 'function') window.dioRenderKawaifPage(_misalCaseId); };
+    if (typeof window.dioRenderKawaifPage === 'function') go();
+    else if (typeof window.dioLoadScript === 'function') Promise.resolve(window.dioLoadScript('zimni.js')).then(go, go);
+    _refreshMisalSidebar();
+    return;
+  }
 
   // Special: شہادتیں shows evidence view
   if (docId === 'shahadatain') {

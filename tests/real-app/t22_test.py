@@ -97,6 +97,10 @@ def run(desktop):
 
         # ═══ A) ضمنی لکھی (غیر محفوظ) → اسی ٹیب میں مقدمہ → ایف آئی آر → «واپس» → ضمنی وہیں ═══
         fz = open_new_zimni(pg, f0, 'c1')
+        if not desktop:
+            # v574: اوپر کی پٹی ہٹنے سے موبائل پر خالی ضمنی پوری اسکرین میں سما جاتی ہے (scroll ہی نہیں) — scroll کی
+            #   جانچ کے لیے پہلے لمبا متن (افسر کا لکھا جیسا)، پھر وہی MA؛ کرسر MA کے بعد ہی رہتا ہے
+            type_zimni(fz, ''.join(PARA) * 8); pg.wait_for_timeout(300)
         type_zimni(fz, MA); pg.wait_for_timeout(400)
         fz.evaluate("window.__alive = 'Z-A'; 0")
         fidZ = active_fid(pg)

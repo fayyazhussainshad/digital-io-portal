@@ -82,8 +82,14 @@ test('v566 C: ایک افسر ایک تاریخ — تفتیشی افسر الگ
   assert.strictEqual(vm.runInContext("_zimniAuthorKey({ role: 'sho', name: ' ندیم  عباس ' })", c), 'sho|ندیم عباس');
   assert.ok(/if \(io\) \{\s*const b = _zimniRecZno\(io\);/.test(Z) && /const suf = ZF_SUFFIXES\.find\(sx => !used\.has\(sx\)\);/.test(Z), '3 → 3-الف → 3-ب');
   assert.ok(/return _zimniZnoParse\(String\(m \+ 1\)\);/.test(Z), '3a: تفتیشی افسر کی ضمنی نہ ہو تو اگلا سادہ نمبر');
-  assert.ok(/'<option value="sho"' \+ \(role === 'sho' \? ' selected' : ''\) \+ '>لکھنے والا: SHO<\/option>'/.test(Z), '1a: «لکھنے والا» کا انتخاب');
-  assert.ok(/sel\.value === 'SHO ضمنی' \? 'sho' : \(sel\.value === 'DSP \/ SDPO ضمنی' \? 'dsp' : ''\)/.test(Z), '«SHO ضمنی» چننے پر SHO');
+  // v575 (افسر کی ہدایت، 11 نومبر 2026): «لکھنے والا» کا خانہ ختم — ہمیشہ تفتیشی افسر، جب تک ضمنی کی قسم میں
+  //   «SHO کی ضمنی» / «DSP کی ضمنی» نہ چنی جائے (پرانی محفوظ ضمنیوں کے نام «SHO ضمنی» / «DSP / SDPO ضمنی» بھی وہی افسر)
+  assert.ok(!/id="zf-author-wrap"/.test(Z), 'اوپر «لکھنے والا» کا خانہ نہیں');
+  assert.ok(/const role = _zimniRoleOfMain\(sel\.value\) \|\| 'io';/.test(Z)
+    && /_zimniSetAuthor\(role === 'io' \? \{ role: 'io' \} : _zimniSeniorDefault\(role\)\)/.test(Z), '«SHO کی ضمنی» چننے پر SHO، باقی اقسام پر تفتیشی افسر');
+  ['_ZIMNI_TYPES', '_ZF_MAIN_OLD', '_zimniMainNorm', '_zimniRoleOfMain'].forEach(n => vm.runInContext(grab(n), c));
+  [['SHO کی ضمنی', 'sho'], ['DSP کی ضمنی', 'dsp'], ['SHO ضمنی', 'sho'], ['DSP / SDPO ضمنی', 'dsp'], ['پہلی ضمنی', ''], ['اول ضمنی', ''], ['', '']]
+    .forEach(([m, r]) => assert.strictEqual(vm.runInContext('_zimniRoleOfMain(' + JSON.stringify(m) + ')', c), r, m));
   assert.ok(/doc\.querySelectorAll\('\[data-k="murattib"\],\[data-k="io_sign"\]'\)/.test(Z) && /line\.appendChild\(_zimniIoSpan\(name\)\);/.test(Z), '2a: مرتبہ + دستخط، نام مقرر');
   assert.ok(!/digital_io_sho_sign/.test(Z), 'کوئی محفوظ دستخط (تصویر) ضمنی میں نہیں');
 });

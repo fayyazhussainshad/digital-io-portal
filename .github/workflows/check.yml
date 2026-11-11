@@ -193,6 +193,10 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh t9_sync_test.py
+      - name: v575 — whole system without the top document bar (⋯ menu in the bottom corner), zimni ▾ in the paper corners (right = type, left = nature), no «لکھنے والا» field (SHO / DSP from the type), heading «رپورٹ ضمنی بیرونی» protected, khulasa in column 4 instead of «از», کوائف in the case chip «وقوعہ جات», naqsha distinctive marks after the four directions, DSP line name-rank-post-circle, Ctrl+R / L / E, plus v574 (151 MW templates, 0.6 cm bottom margin, binding line, Ctrl+S / Ctrl+P, reload, one zimni per date) (v575_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: bash ci_run.sh v575_test.py
       - name: Screenshots and print PDFs
         if: always()
         uses: actions/upload-artifact@v4
