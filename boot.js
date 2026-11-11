@@ -33,7 +33,9 @@
       var s = document.createElement('script');
       s.src = src; s.async = false;      // aapas ki tarteeb barqarar rahe
       s.onload = function () { res(true); };
-      s.onerror = function () { _loaded[src] = null; res(false); };
+      // v578: ناکام <script> صفحے میں رہ جاتا تو اگلی کوشش اوپر والی جانچ سے «آ گئی» سمجھ لی جاتی اور فائل کبھی نہ
+      //   آتی (مثلاً doc-viewer.js ایک بار نیٹ کی خرابی سے رہ جائے تو پورے سیشن میں پورا صفحہ / «⋯» نہیں) — ہٹا دو
+      s.onerror = function () { _loaded[src] = null; try { s.remove(); } catch (_) { /* پرانا براؤزر */ } res(false); };
       document.head.appendChild(s);
     });
     return _loaded[src];
