@@ -196,7 +196,8 @@ def run(b, name, kw):
     d_, m_, u_ = g['doc'], g['cpMain'], g['cpSub']
     check(f'{name}: «▾» ضمنی کی قسم = کاغذ کا دایاں کونا، «▾» نوعیت = بایاں کونا (کاغذ کے اندر، اوپر)',
           m_ and u_ and m_['r'] <= d_['r'] and m_['r'] >= d_['r'] - 12 and u_['l'] >= d_['l'] and u_['l'] <= d_['l'] + 12
-          and abs(m_['t'] - d_['t'] - 4) <= 2 and abs(u_['t'] - d_['t'] - 4) <= 2 and m_['w'] >= 26, (d_, m_, u_))
+          # TASK 19 (11 نومبر 2026): کونوں کے ▾ اب وہی ایک چننے والا بٹن (.dio-pick) جو «ملزمان ▾» کا ہے — 15pt (20px)، موبائل 22.5pt
+          and abs(m_['t'] - d_['t'] - 4) <= 2 and abs(u_['t'] - d_['t'] - 4) <= 2 and m_['w'] >= 20 and m_['w'] == u_['w'], (d_, m_, u_))
     check(f'{name}: کاغذ اوپر سے پوری جگہ پر (اوپر کی جگہ ≤ 20px)', g['docTopInBody'] is not None and g['docTopInBody'] <= 20, g['docTopInBody'])
     check(f'{name}: سرخی «رپورٹ ضمنی بیرونی»؛ کالم 4 میں «از» نہیں', g['title'] == 'رپورٹ ضمنی بیرونی' and 'از' not in g['th4'], (g['title'], g['th4']))
     # پٹی کبھی نہ آئے — اوپر scroll، ماؤس اوپر کنارے پر

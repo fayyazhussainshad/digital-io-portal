@@ -193,14 +193,16 @@ def run(b, tag, args, mobile):
         check(f'{tag}: کراس ورژن — 663/26 (✓ نہیں، صرف خودکار نقل) نہیں · ✓ والا ہاں · پرانا اصل کراس ڈیٹا ہاں', hc == [False, True, True], hc)
         ws(pg, 'c1')
         chips = pg.evaluate("[...document.querySelectorAll('#misal-doc-bar .mdoc-chip')].slice(0, 4).map(c => c.textContent.trim())")
-        check(f'{tag}: کراس کے بغیر مقدمہ — ایف آئی آر / ملزمان / گواہان کی چِپ پر انتخاب (▾) نہیں', chips[1:4] == ['ایف آئی آر', 'ملزمان', 'گواہان'] and not any('▾' in c for c in chips), chips)
+        nodd = pg.evaluate("![...document.querySelectorAll('#misal-doc-bar .mdoc-chip')].slice(0, 4).some(c => c.querySelector('.dio-i[data-ico=dropdown]'))")
+        check(f'{tag}: کراس کے بغیر مقدمہ — ایف آئی آر / ملزمان / گواہان کی چِپ پر انتخاب (▾) نہیں', chips[1:4] == ['ایف آئی آر', 'ملزمان', 'گواہان'] and not any('▾' in c for c in chips) and nodd, chips)
         pg.click("#misal-doc-bar .mdoc-chip:text-is('ایف آئی آر')"); pg.wait_for_timeout(1500)
         dd = pg.evaluate("(() => { const d = document.getElementById('fir-dd'); return d ? getComputedStyle(d).display : 'none'; })()")
         parts = pg.evaluate("[...document.querySelectorAll('#fir-page section.fir-part')].map(s => s.id)")
         check(f'{tag}: ایک ہی کلک — سیدھا ایف آئی آر کا صفحہ (کوئی انتخاب نہیں)، کراس ورژن کا حصہ نہیں', dd == 'none' and parts == ['fir-part-fir'], (dd, parts))
         ws(pg, 'c2')
-        chips2 = pg.evaluate("[...document.querySelectorAll('#misal-doc-bar .mdoc-chip')].slice(1, 4).map(c => c.textContent.trim())")
-        check(f'{tag}: کراس ورژن والے مقدمے میں انتخاب (▾) موجود', all('▾' in c for c in chips2), chips2)
+        # TASK 19 (11 نومبر 2026): ▾ کا حرف اب نشانات کے سیٹ کا «dropdown» نشان (ہر جگہ ایک جیسا)
+        chips2 = pg.evaluate("[...document.querySelectorAll('#misal-doc-bar .mdoc-chip')].slice(1, 4).map(c => [c.textContent.trim(), !!c.querySelector('.dio-i[data-ico=dropdown]')])")
+        check(f'{tag}: کراس ورژن والے مقدمے میں انتخاب (▾) موجود', all(c[1] for c in chips2) and [c[0] for c in chips2] == ['ایف آئی آر', 'ملزمان', 'گواہان'], chips2)
         pg.evaluate("_ddPick('fir-dd','fir')"); pg.wait_for_selector('#fir-page'); pg.wait_for_timeout(800)
         parts2 = pg.evaluate("[...document.querySelectorAll('#fir-page section.fir-part')].map(s => s.id)")
         check(f'{tag}: کراس ورژن والے مقدمے میں دونوں حصے', parts2 == ['fir-part-fir', 'fir-part-cross_version'], parts2)
@@ -247,7 +249,7 @@ def run(b, tag, args, mobile):
         section('کارڈ اور تین بٹن')
         acts = pg.evaluate("(() => { const tr = [...document.querySelectorAll('#cs-rows tr')].find(r => r.innerText.replace(/\\s+/g, '').includes('663/26')); return [...tr.querySelectorAll('button')].map(b => [b.getAttribute('aria-label'), b.getAttribute('onclick')]); })()")
         oc = {a: o for a, o in acts}
-        check(f'{tag}: فہرست میں پرنٹ / ڈاؤن لوڈ / شیئر — تین الگ راستے', "openCasePrint('" in oc.get('پرنٹ', '') and "'download')" in oc.get('ڈاؤنلوڈ', '') and "'share')" in oc.get('شیئر', ''), acts)
+        check(f'{tag}: فہرست میں پرنٹ / ڈاؤن لوڈ / شیئر — تین الگ راستے', "openCasePrint('" in oc.get('پرنٹ', '') and "'download')" in oc.get('ڈاؤن لوڈ', '') and "'share')" in oc.get('شیئر', ''), acts)
         exp = {'print': ('پرنٹ —', ['print']), 'download': ('ڈاؤن لوڈ —', ['pdf', 'word']), 'share': ('شیئر —', ['pdf', 'word'])}
         for mode, (ttl, btns) in exp.items():
             dialog(pg, 'c1', mode)

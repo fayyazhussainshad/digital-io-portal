@@ -208,25 +208,25 @@ function _sazaRender() {
       <!-- v553: لیگل/A4 کا انتخاب یہاں سے ہٹا — پرنٹ کے وقت پوچھا جاتا ہے -->
       <span style="font-size:8.25pt;color:var(--text-muted);">↔ ملزم شامل کرنے کے لیے کالم 1 میں ▾ دبائیں</span>
       <div style="margin-right:auto;display:flex;gap:6px;align-items:center;">
-        <button onmousedown="event.preventDefault()" onclick="_sazaFmt('bold')" title="بولڈ" style="${_sazaBtn()}font-weight:900;">B</button>
-        <button onmousedown="event.preventDefault()" onclick="_sazaFmt('italic')" title="ترچھا" style="${_sazaBtn()}font-style:italic;">I</button>
-        <button onmousedown="event.preventDefault()" onclick="_sazaFmt('underline')" title="انڈر لائن" style="${_sazaBtn()}text-decoration:underline;">U</button>
+        <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_sazaFmt('bold')" title="بولڈ" style="${_sazaBtn()}font-weight:900;" aria-label="بولڈ" data-act="bold"><i class="dio-i" data-ico="bold" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_sazaFmt('italic')" title="ترچھا" style="${_sazaBtn()}font-style:italic;" aria-label="ترچھا" data-act="italic"><i class="dio-i" data-ico="italic" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_sazaFmt('underline')" title="انڈر لائن" style="${_sazaBtn()}text-decoration:underline;" aria-label="انڈر لائن" data-act="underline"><i class="dio-i" data-ico="underline" aria-hidden="true"></i></button>
         <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
-        <button onmousedown="event.preventDefault()" onclick="_sazaFmt('justifyRight')" title="دائیں سیدھ" style="${_sazaBtn()}">⇥</button>
-        <button onmousedown="event.preventDefault()" onclick="_sazaFmt('justifyCenter')" title="درمیان" style="${_sazaBtn()}">⇔</button>
-        <button onmousedown="event.preventDefault()" onclick="_sazaFmt('justifyLeft')" title="بائیں سیدھ" style="${_sazaBtn()}">⇤</button>
-        <button onmousedown="event.preventDefault()" onclick="_sazaFmt('justifyFull')" title="دونوں طرف برابر" style="${_sazaBtn()}">☰</button>
+        <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_sazaFmt('justifyRight')" title="دائیں سیدھ" style="${_sazaBtn()}" aria-label="دائیں سیدھ" data-act="align-right"><i class="dio-i" data-ico="align-right" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_sazaFmt('justifyCenter')" title="درمیان" style="${_sazaBtn()}" aria-label="درمیان" data-act="align-center"><i class="dio-i" data-ico="align-center" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_sazaFmt('justifyLeft')" title="بائیں سیدھ" style="${_sazaBtn()}" aria-label="بائیں سیدھ" data-act="align-left"><i class="dio-i" data-ico="align-left" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_sazaFmt('justifyFull')" title="دونوں طرف برابر" style="${_sazaBtn()}" aria-label="دونوں طرف برابر" data-act="justify"><i class="dio-i" data-ico="justify" aria-hidden="true"></i></button>
         <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
         <select id="saza-font-sel" onchange="_sazaSetFont(this.value)" title="فونٹ سائز"
           style="height:28px;border:1px solid var(--border,#ccc);border-radius:6px;background:var(--bg-card,#fff);color:var(--text-primary,#111);font-size:9.75pt;padding:0 6px;margin:0 1px;cursor:pointer;">
           ${SAZA_FONT_SIZES.map(s => `<option value="${s}" ${String(s)===String(docFont)?'selected':''}>${s}</option>`).join('')}
         </select>
-        <button onmousedown="event.preventDefault()" onclick="_sazaFmt('undo')" title="واپس" style="${_sazaBtn()}">↶</button>
-        <button onmousedown="event.preventDefault()" onclick="_sazaFmt('redo')" title="دوبارہ" style="${_sazaBtn()}">↷</button>
-        <button class="btn btn-primary btn-sm dio-modbtn" onclick="_sazaSave()">💾 محفوظ کریں</button>
-        <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_sazaPrint()">🖨️ پرنٹ کریں</button>
+        <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_sazaFmt('undo')" title="کالعدم" style="${_sazaBtn()}" aria-label="کالعدم" data-act="undo"><i class="dio-i" data-ico="undo" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_sazaFmt('redo')" title="دوبارہ" style="${_sazaBtn()}" aria-label="دوبارہ" data-act="redo"><i class="dio-i" data-ico="redo" aria-hidden="true"></i></button>
+        <button class="btn btn-primary btn-sm dio-modbtn dio-btn" onclick="_sazaSave()" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
+        <button class="btn btn-secondary btn-sm dio-modbtn dio-btn" onclick="_sazaPrint()" title="پرنٹ" aria-label="پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>پرنٹ</span></button>
         <!-- Phase 2A: versions viewer — dio-modbtn NAHI (warna full-page overlay mein chhup jata) -->
-        <button class="btn btn-secondary btn-sm" onclick="_sazaOpenVersions()" title="پرانی نسخے دیکھیں">📜 نسخے</button>
+        <button class="btn btn-secondary btn-sm dio-btn" onclick="_sazaOpenVersions()" title="نسخے دیکھیں" aria-label="نسخے دیکھیں" data-act="view"><i class="dio-i" data-ico="view" aria-hidden="true"></i><span>نسخے دیکھیں</span></button>
       </div>
     </div>
 
@@ -265,7 +265,7 @@ function _sazaRender() {
           </colgroup>
           <thead>
             <tr>
-              <th class="saza-h1">نام ولدیت قومیت سکونت حلیہ و پیشہ ملزم <button class="saza-acc-pick no-print" onclick="_sazaAccPicker(event)" title="ملزمان منتخب کریں">▾</button></th>
+              <th class="saza-h1">نام ولدیت قومیت سکونت حلیہ و پیشہ ملزم <button class="saza-acc-pick no-print dio-pick" onclick="_sazaAccPicker(event)" title="ملزمان منتخب کریں" aria-label="ملزمان منتخب کریں" data-act="dropdown"><i class="dio-i" data-ico="dropdown" aria-hidden="true"></i></button></th>
               <th class="saza-h2">تاریخ گرفتاری</th>
               <th class="saza-h3">جرم</th>
               <th class="saza-h4">حکم اخیر عدالت</th>
@@ -525,10 +525,10 @@ function _sazaAccPicker(ev) {
       ${rows || '<div style="font-size:9pt;color:#777;padding:10px;">کوئی ملزم نہیں</div>'}
     </div>
     <div style="display:flex;gap:6px;padding:8px;border-top:1px solid #e5e7eb;background:#f8fafc;flex-shrink:0;">
-      <button id="saza-acc-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;
-        color:#fff;cursor:pointer;font-size:9.75pt;font-weight:700;font-family:'Jameel Noori Nastaleeq';">✔ شامل کریں</button>
-      <button id="saza-acc-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;
-        cursor:pointer;font-size:9.75pt;font-family:'Jameel Noori Nastaleeq';">بند</button>
+      <button class="dio-btn dio-btn--pri" id="saza-acc-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;
+        color:#fff;cursor:pointer;font-size:9.75pt;font-weight:700;font-family:'Jameel Noori Nastaleeq';" title="شامل کریں" aria-label="شامل کریں" data-act="check"><i class="dio-i" data-ico="check" aria-hidden="true"></i><span>شامل کریں</span></button>
+      <button class="dio-btn" id="saza-acc-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;
+        cursor:pointer;font-size:9.75pt;font-family:'Jameel Noori Nastaleeq';" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>
     </div>`;
   document.body.appendChild(box);
 

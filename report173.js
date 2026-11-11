@@ -614,30 +614,30 @@ function _renderR173() {
         <!-- v553: لیگل/A4 کا انتخاب یہاں سے ہٹا — پرنٹ کے وقت پوچھا جاتا ہے (dioWithPaper) -->
         <span style="font-size:8.25pt;color:var(--text-muted);">↔ کالم کی لکیر کو پکڑ کر چوڑائی بدلیں</span>
         <div style="margin-right:auto;display:flex;gap:6px;">
-          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('bold')" title="بولڈ" style="${_chBtn()}font-weight:900;">B</button>
-          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('italic')" title="ترچھا" style="${_chBtn()}font-style:italic;">I</button>
-          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('underline')" title="انڈر لائن" style="${_chBtn()}text-decoration:underline;">U</button>
+          <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_ch173Fmt('bold')" title="بولڈ" style="${_chBtn()}font-weight:900;" aria-label="بولڈ" data-act="bold"><i class="dio-i" data-ico="bold" aria-hidden="true"></i></button>
+          <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_ch173Fmt('italic')" title="ترچھا" style="${_chBtn()}font-style:italic;" aria-label="ترچھا" data-act="italic"><i class="dio-i" data-ico="italic" aria-hidden="true"></i></button>
+          <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_ch173Fmt('underline')" title="انڈر لائن" style="${_chBtn()}text-decoration:underline;" aria-label="انڈر لائن" data-act="underline"><i class="dio-i" data-ico="underline" aria-hidden="true"></i></button>
           <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
-          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('justifyRight')" title="دائیں سیدھ" style="${_chBtn()}">⇥</button>
-          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('justifyCenter')" title="درمیان" style="${_chBtn()}">⇔</button>
-          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('justifyLeft')" title="بائیں سیدھ" style="${_chBtn()}">⇤</button>
-          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('justifyFull')" title="دونوں طرف برابر (Justify)" style="${_chBtn()}">☰</button>
+          <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_ch173Fmt('justifyRight')" title="دائیں سیدھ" style="${_chBtn()}" aria-label="دائیں سیدھ" data-act="align-right"><i class="dio-i" data-ico="align-right" aria-hidden="true"></i></button>
+          <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_ch173Fmt('justifyCenter')" title="درمیان" style="${_chBtn()}" aria-label="درمیان" data-act="align-center"><i class="dio-i" data-ico="align-center" aria-hidden="true"></i></button>
+          <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_ch173Fmt('justifyLeft')" title="بائیں سیدھ" style="${_chBtn()}" aria-label="بائیں سیدھ" data-act="align-left"><i class="dio-i" data-ico="align-left" aria-hidden="true"></i></button>
+          <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_ch173Fmt('justifyFull')" title="دونوں طرف برابر" style="${_chBtn()}" aria-label="دونوں طرف برابر" data-act="justify"><i class="dio-i" data-ico="justify" aria-hidden="true"></i></button>
           <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
-          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('insertUnorderedList')" title="نقطہ دار فہرست" style="${_chBtn()}">•</button>
-          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('insertOrderedList')" title="نمبر والی فہرست" style="${_chBtn()}font-size:8.25pt;">1.</button>
-          <button onmousedown="event.preventDefault()" onclick="_ch173ClearFmt()" title="فارمیٹ ختم کریں" style="${_chBtn()}">🧹</button>
+          <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_ch173Fmt('insertUnorderedList')" title="نقطہ دار فہرست" style="${_chBtn()}" aria-label="نقطہ دار فہرست" data-act="bullets"><i class="dio-i" data-ico="bullets" aria-hidden="true"></i></button>
+          <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_ch173Fmt('insertOrderedList')" title="نمبر والی فہرست" style="${_chBtn()}font-size:8.25pt;" aria-label="نمبر والی فہرست" data-act="numbers"><i class="dio-i" data-ico="numbers" aria-hidden="true"></i></button>
+          <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_ch173ClearFmt()" title="فارمیٹ ختم کریں" style="${_chBtn()}" aria-label="فارمیٹ ختم کریں" data-act="clear-format"><i class="dio-i" data-ico="clear-format" aria-hidden="true"></i></button>
           <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
-          <button id="ch173-brush-btn" onmousedown="event.preventDefault()"
+          <button class="dio-btn dio-btn--i" id="ch173-brush-btn" onmousedown="event.preventDefault()"
             onclick="_ch173BrushClick(false)" ondblclick="_ch173BrushClick(true)"
-            title="فارمیٹ پینٹر — ایک کلک: ایک بار، ڈبل کلک: بار بار" style="${_chBtn()}">🖌</button>
+            title="فارمیٹ پینٹر" style="${_chBtn()}" aria-label="فارمیٹ پینٹر" data-act="painter"><i class="dio-i" data-ico="painter" aria-hidden="true"></i></button>
           <select id="ch173-font-sel" onchange="_ch173SetFont(this.value)" title="فونٹ سائز"
             style="height:28px;border:1px solid var(--border,#ccc);border-radius:6px;background:var(--bg-card,#fff);color:var(--text-primary,#111);font-size:9.75pt;padding:0 6px;margin:0 1px;cursor:pointer;">
             ${R173_FONT_SIZES.map(s => `<option value="${s}" ${String(s)===String(_ch173DocFont(bs))?'selected':''}>${s}</option>`).join('')}
           </select>
-          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('undo')" title="واپس (Undo)" style="${_chBtn()}">↶</button>
-          <button onmousedown="event.preventDefault()" onclick="_ch173Fmt('redo')" title="دوبارہ (Redo)" style="${_chBtn()}">↷</button>
-          <button id="r173-save-btn" class="btn btn-primary btn-sm dio-modbtn" onclick="_saveR173()">💾 محفوظ کریں</button>
-          <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printR173()">🖨️ پرنٹ کریں</button>
+          <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_ch173Fmt('undo')" title="کالعدم" style="${_chBtn()}" aria-label="کالعدم" data-act="undo"><i class="dio-i" data-ico="undo" aria-hidden="true"></i></button>
+          <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_ch173Fmt('redo')" title="دوبارہ" style="${_chBtn()}" aria-label="دوبارہ" data-act="redo"><i class="dio-i" data-ico="redo" aria-hidden="true"></i></button>
+          <button id="r173-save-btn" class="btn btn-primary btn-sm dio-modbtn dio-btn" onclick="_saveR173()" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
+          <button class="btn btn-secondary btn-sm dio-modbtn dio-btn" onclick="_printR173()" title="پرنٹ" aria-label="پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>پرنٹ</span></button>
         </div>
       </div>
       <div style="flex:1;overflow:auto;min-height:0;padding:16px;background:var(--bg-tertiary);">
@@ -738,9 +738,9 @@ function _renderR173() {
             <tbody>
               <tr>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="madai">${bs.madai !== undefined ? sanitizeHtml(_ch173StripSpan(bs.madai)) : esc(_ch173MudaiLine(c))}</div></div></div></td>
-                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'ghair_giraftar')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div></div></div></td>
-                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'zer_hirasat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div></div></div></td>
-                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print" onclick="_ch173AccPicker(event,'bar_zamanat')" title="ملزمان منتخب کریں">▾</button><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print dio-pick" onclick="_ch173AccPicker(event,'ghair_giraftar')" title="ملزمان منتخب کریں" aria-label="ملزمان منتخب کریں" data-act="dropdown"><i class="dio-i" data-ico="dropdown" aria-hidden="true"></i></button><div class="rotinner" contenteditable="true" data-k="ghair_giraftar">${bv('ghair_giraftar')}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print dio-pick" onclick="_ch173AccPicker(event,'zer_hirasat')" title="ملزمان منتخب کریں" aria-label="ملزمان منتخب کریں" data-act="dropdown"><i class="dio-i" data-ico="dropdown" aria-hidden="true"></i></button><div class="rotinner" contenteditable="true" data-k="zer_hirasat">${bv('zer_hirasat')}</div></div></div></td>
+                <td class="rotcell"><div class="cellbox"><div class="rotclip"><button class="acc-pick no-print dio-pick" onclick="_ch173AccPicker(event,'bar_zamanat')" title="ملزمان منتخب کریں" aria-label="ملزمان منتخب کریں" data-act="dropdown"><i class="dio-i" data-ico="dropdown" aria-hidden="true"></i></button><div class="rotinner" contenteditable="true" data-k="bar_zamanat">${bv('bar_zamanat')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="mal_qabza">${bv('mal_qabza')}</div></div></div></td>
                 <td class="rotcell"><div class="cellbox"><div class="rotclip"><div class="rotinner" contenteditable="true" data-k="shahadat">${bs.shahadat !== undefined ? sanitizeHtml(_ch173StripSpan(bs.shahadat)) : esc(_ch173WitnessText())}</div></div></div></td>
                 <td class="normcell"><div class="normwrap" contenteditable="true" data-mic="true" data-k="halaat">${_ch173HalaatInit(bs, boiler)}</div></td>
@@ -764,7 +764,7 @@ function _renderR173() {
                    onclick="_ch173PickDate(this)" title="تاریخ ڈالنے کے لیے کلک کریں">${bs.sho_date2 !== undefined ? sanitizeHtml(bs.sho_date2) : (bs.sho_date !== undefined ? sanitizeHtml(bs.sho_date) : esc(_ch173Today()))}</div>
             </div>
             <div class="sho-col sho-papers">
-              <div class="sho-papers-head">تفصیل کاغذات<button class="papers-pick no-print" onclick="_ch173PapersPicker(event)" title="کاغذات منتخب کریں">▾</button></div>
+              <div class="sho-papers-head">تفصیل کاغذات<button class="papers-pick no-print dio-pick" onclick="_ch173PapersPicker(event)" title="کاغذات منتخب کریں" aria-label="کاغذات منتخب کریں" data-act="dropdown"><i class="dio-i" data-ico="dropdown" aria-hidden="true"></i></button></div>
               <!-- AHEM: yahan bv() istemal NA karein — woh tamam </span> hata
                    deta hai aur kaghazon ka dhancha (naam + neeche tadaad)
                    toot jata hai. Seedha sanitizeHtml. -->
@@ -972,11 +972,11 @@ async function _saveR173() {
   if (_r173Saving) return;
   _r173Saving = true;
   const _saveBtn = document.getElementById('r173-save-btn');
-  if (_saveBtn) { _saveBtn.disabled = true; _saveBtn.textContent = 'محفوظ ہو رہا ہے…'; }
+  if (_saveBtn) { _saveBtn.disabled = true; dioBtnText(_saveBtn, 'محفوظ ہو رہا ہے…'); }
   try { await _saveR173Inner(); }
   finally {
     _r173Saving = false;
-    if (_saveBtn) { _saveBtn.disabled = false; _saveBtn.innerHTML = '💾 محفوظ کریں'; }
+    if (_saveBtn) { _saveBtn.disabled = false; dioBtnText(_saveBtn, 'محفوظ کریں'); }
   }
 }
 
@@ -3598,10 +3598,10 @@ function _ch173AccPicker(ev, key) {
       ${rows || '<div style="font-size:9pt;color:#777;padding:10px;">باقی کوئی ملزم نہیں</div>'}
     </div>
     <div style="display:flex;gap:6px;padding:8px;border-top:1px solid #e5e7eb;background:#f8fafc;flex-shrink:0;">
-      <button id="ch173-acc-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;
-        color:#fff;cursor:pointer;font-size:9.75pt;font-weight:700;font-family:'Jameel Noori Nastaleeq';">✔ شامل کریں</button>
-      <button id="ch173-acc-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;
-        cursor:pointer;font-size:9.75pt;font-family:'Jameel Noori Nastaleeq';">بند</button>
+      <button class="dio-btn dio-btn--pri" id="ch173-acc-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;
+        color:#fff;cursor:pointer;font-size:9.75pt;font-weight:700;font-family:'Jameel Noori Nastaleeq';" title="شامل کریں" aria-label="شامل کریں" data-act="check"><i class="dio-i" data-ico="check" aria-hidden="true"></i><span>شامل کریں</span></button>
+      <button class="dio-btn" id="ch173-acc-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;
+        cursor:pointer;font-size:9.75pt;font-family:'Jameel Noori Nastaleeq';" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>
     </div>`;
   document.body.appendChild(box);
 
@@ -3814,14 +3814,13 @@ function _ch173PapersPicker(ev) {
     </div>
     <div id="pp-list" style="flex:1;overflow-y:auto;padding:4px 6px;min-height:0;"></div>
     <div style="padding:6px;border-top:1px solid #e5e7eb;background:#f8fafc;flex-shrink:0;">
-      <button id="pp-add" style="width:100%;padding:7px;border:1px dashed #0369a1;border-radius:6px;background:#fff;
-        color:#0369a1;cursor:pointer;font-size:9.75pt;font-weight:700;font-family:'Jameel Noori Nastaleeq';">
-        ＋ نیا کاغذ شامل کریں</button>
+      <button class="dio-btn" id="pp-add" style="width:100%;padding:7px;border:1px dashed #0369a1;border-radius:6px;background:#fff;
+        color:#0369a1;cursor:pointer;font-size:9.75pt;font-weight:700;font-family:'Jameel Noori Nastaleeq';" title="نیا کاغذ شامل کریں" aria-label="نیا کاغذ شامل کریں" data-act="add"><i class="dio-i" data-ico="add" aria-hidden="true"></i><span>نیا کاغذ شامل کریں</span></button>
       <div style="display:flex;gap:6px;margin-top:6px;">
-        <button id="ch173-pp-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;
-          color:#fff;cursor:pointer;font-size:9.75pt;font-weight:700;font-family:'Jameel Noori Nastaleeq';">✔ شامل کریں</button>
-        <button id="ch173-pp-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;
-          cursor:pointer;font-size:9.75pt;font-family:'Jameel Noori Nastaleeq';">بند</button>
+        <button class="dio-btn dio-btn--pri" id="ch173-pp-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;
+          color:#fff;cursor:pointer;font-size:9.75pt;font-weight:700;font-family:'Jameel Noori Nastaleeq';" title="شامل کریں" aria-label="شامل کریں" data-act="check"><i class="dio-i" data-ico="check" aria-hidden="true"></i><span>شامل کریں</span></button>
+        <button class="dio-btn" id="ch173-pp-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;
+          cursor:pointer;font-size:9.75pt;font-family:'Jameel Noori Nastaleeq';" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>
       </div>
     </div>`;
   document.body.appendChild(box);
@@ -3853,9 +3852,9 @@ function _ch173PapersPicker(ev) {
           direction:rtl;text-align:right;background:#fff;outline:none;"
           onfocus="this.style.borderColor='#93c5fd';this.style.background='#f8fbff';"
           onblur="this.style.borderColor='transparent';this.style.background='#fff';">
-        <button class="pp-up"   title="اوپر"  style="${mini}" ${i === 0 ? 'disabled' : ''}>▲</button>
-        <button class="pp-down" title="نیچے"  style="${mini}" ${i === list.length - 1 ? 'disabled' : ''}>▼</button>
-        <button class="pp-del"  title="حذف"   style="${mini}color:#b91c1c;">✕</button>
+        <button class="pp-up dio-btn dio-btn--i"   title="اوپر"  style="${mini}" ${i === 0 ? 'disabled' : ''} aria-label="اوپر" data-act="up"><i class="dio-i" data-ico="up" aria-hidden="true"></i></button>
+        <button class="pp-down dio-btn dio-btn--i" title="نیچے"  style="${mini}" ${i === list.length - 1 ? 'disabled' : ''} aria-label="نیچے" data-act="down"><i class="dio-i" data-ico="down" aria-hidden="true"></i></button>
+        <button class="pp-del dio-btn dio-btn--i dio-btn--del"  title="حذف"   style="${mini}color:#b91c1c;" aria-label="حذف" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i></button>
       </div>`).join('') ||
       '<div style="font-size:9pt;color:#777;padding:10px;">فہرست خالی ہے — ＋ سے شامل کریں</div>';
     if (typeof focusIdx === 'number') {
@@ -4954,9 +4953,9 @@ function _renderR173List() {
   </style>
   <div class="r173-list-wrap" style="padding:14px;direction:rtl;height:100%;overflow-y:auto;">
     <div style="display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap;">
-      <button class="btn btn-primary btn-sm" onclick="_r173NewDoc(false)">+ چالان درج کریں</button>
+      <button class="btn btn-primary btn-sm dio-btn dio-btn--pri" onclick="_r173NewDoc(false)" title="+ چالان درج کریں" aria-label="+ چالان درج کریں" data-act="add"><span>+ چالان درج کریں</span></button>
       <div style="flex:1;"></div>
-      <span style="font-size:8.25pt;color:var(--text-muted);">پرنٹ کے لیے ہر سطر کا 🖨️ دبائیں</span>
+      <span style="font-size:8.25pt;color:var(--text-muted);">پرنٹ کے لیے ہر سطر کا «پرنٹ» بٹن دبائیں</span>
     </div>
     <table class="ct">
       <thead><tr>

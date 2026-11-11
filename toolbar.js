@@ -26,21 +26,21 @@ function buildWordToolbar(editorId, opts) {
   // ── CLIPBOARD ─────────────────────────────────────────────
   html += '<div class="wb-grp">'+
     '<div class="wb-gbody">'+
-      '<button class="wb-big" '+ps+'onclick="_wbExec(\''+E+'\',\'paste\')" title="Paste (Ctrl+V)"><span class="wb-ico">📋</span><span class="wb-blab">Paste</span></button>'+
+      '<button class="wb-big dio-btn" '+ps+'onclick="_wbExec(\''+E+'\',\'paste\')" title="چسپاں (Ctrl+V)" aria-label="چسپاں (Ctrl+V)" data-act="paste"><i class="dio-i" data-ico="paste" aria-hidden="true"></i><span>چسپاں</span></button>'+
       '<div class="wb-gcol" style="gap:1px;">'+
-        '<button class="wb-btn" '+ps+'onclick="document.execCommand(\'cut\')" title="Cut (Ctrl+X)">✂ Cut</button>'+
-        '<button class="wb-btn" '+ps+'onclick="document.execCommand(\'copy\')" title="Copy (Ctrl+C)">⎘ Copy</button>'+
-        '<button class="wb-btn" '+ps+'onclick="_wbFormatPainter(\''+E+'\')" title="Format Painter" id="wbFP-'+E+'">🖌 Format</button>'+
+        '<button class="wb-btn dio-btn" '+ps+'onclick="document.execCommand(\'cut\')" title="کاٹیں (Ctrl+X)" aria-label="کاٹیں (Ctrl+X)" data-act="cut"><i class="dio-i" data-ico="cut" aria-hidden="true"></i><span>کاٹیں</span></button>'+
+        '<button class="wb-btn dio-btn" '+ps+'onclick="document.execCommand(\'copy\')" title="کاپی (Ctrl+C)" aria-label="کاپی (Ctrl+C)" data-act="copy"><i class="dio-i" data-ico="copy" aria-hidden="true"></i><span>کاپی</span></button>'+
+        '<button class="wb-btn dio-btn dio-btn--i" '+ps+'onclick="_wbFormatPainter(\''+E+'\')" title="فارمیٹ پینٹر" aria-label="فارمیٹ پینٹر" data-act="painter" id="wbFP-'+E+'"><i class="dio-i" data-ico="painter" aria-hidden="true"></i></button>'+
       '</div>'+
     '</div>'+
-    '<div class="wb-glab">Clipboard</div>'+
+    '<div class="wb-glab">کلپ بورڈ</div>'+
   '</div><div class="wb-div"></div>';
 
   // ── FONT ──────────────────────────────────────────────────
   html += '<div class="wb-grp">'+
     '<div class="wb-gbody wb-gcol">'+
       '<div class="wb-grow">'+
-        '<select class="wb-font-sel" '+pf+'onchange="'+rc+'_wbFontFamily(\''+E+'\',this.value)" title="Font Family">'+
+        '<select class="wb-font-sel" '+pf+'onchange="'+rc+'_wbFontFamily(\''+E+'\',this.value)" title="فونٹ">'+
           '<option value="\'Jameel Noori Nastaleeq\'" selected>Jameel Noori Nastaleeq</option>'+
           '<option value="\'Arial\',sans-serif">Arial</option>'+
           '<option value="\'Times New Roman\',serif">Times New Roman</option>'+
@@ -48,63 +48,63 @@ function buildWordToolbar(editorId, opts) {
           '<option value="\'Courier New\',monospace">Courier New</option>'+
         '</select>'+
         '<div class="wb-sz-wrap">'+
-          '<button class="wb-sz-btn" '+ps+'onclick="_wbChangeSz(\''+E+'\',-1)" title="Decrease Font Size">A▼</button>'+
-          '<input class="wb-sz-inp" type="number" value="14" min="1" max="400" id="wbSzInp-'+E+'" '+ps+'onchange="'+rc+'_wbFontSize(\''+E+'\',this.value)" title="Font Size">'+
-          '<button class="wb-sz-btn" '+ps+'onclick="_wbChangeSz(\''+E+'\',1)" title="Increase Font Size">A▲</button>'+
+          '<button class="wb-sz-btn dio-btn dio-btn--i" '+ps+'onclick="_wbChangeSz(\''+E+'\',-1)" title="فونٹ چھوٹا" aria-label="فونٹ چھوٹا" data-act="font-down"><i class="dio-i" data-ico="font-down" aria-hidden="true"></i></button>'+
+          '<input class="wb-sz-inp" type="number" value="14" min="1" max="400" id="wbSzInp-'+E+'" '+ps+'onchange="'+rc+'_wbFontSize(\''+E+'\',this.value)" title="فونٹ کا سائز">'+
+          '<button class="wb-sz-btn dio-btn dio-btn--i" '+ps+'onclick="_wbChangeSz(\''+E+'\',1)" title="فونٹ بڑا" aria-label="فونٹ بڑا" data-act="font-up"><i class="dio-i" data-ico="font-up" aria-hidden="true"></i></button>'+
         '</div>'+
-        '<button class="wb-btn" '+ps+'onclick="_wbChangeCaseBtn(\''+E+'\')" title="Change Case">Aa</button>'+
-        '<button class="wb-btn" '+ps+'onclick="_wbClearFmt(\''+E+'\')" title="Clear All Formatting" style="color:#c00;">✕A</button>'+
+        '<button class="wb-btn dio-btn dio-btn--i" '+ps+'onclick="_wbChangeCaseBtn(\''+E+'\')" title="حروف کی شکل" aria-label="حروف کی شکل" data-act="change-case"><i class="dio-i" data-ico="change-case" aria-hidden="true"></i></button>'+
+        '<button class="wb-btn dio-btn dio-btn--i" '+ps+'onclick="_wbClearFmt(\''+E+'\')" title="فارمیٹ ختم کریں" aria-label="فارمیٹ ختم کریں" data-act="clear-format"><i class="dio-i" data-ico="clear-format" aria-hidden="true"></i></button>'+
       '</div>'+
       '<div class="wb-grow">'+
-        '<button class="wb-btn wb-fmt" id="wbB-'+E+'" '+ps+'onclick="_wbExec(\''+E+'\',\'bold\')" title="Bold (Ctrl+B)"><b>B</b></button>'+
-        '<button class="wb-btn wb-fmt wb-it" id="wbI-'+E+'" '+ps+'onclick="_wbExec(\''+E+'\',\'italic\')" title="Italic (Ctrl+I)"><i>I</i></button>'+
-        '<button class="wb-btn wb-fmt wb-ul" id="wbU-'+E+'" '+ps+'onclick="_wbExec(\''+E+'\',\'underline\')" title="Underline (Ctrl+U)">U</button>'+
-        '<button class="wb-btn wb-fmt wb-st" id="wbS-'+E+'" '+ps+'onclick="_wbExec(\''+E+'\',\'strikeThrough\')" title="Strikethrough">ab</button>'+
-        '<button class="wb-btn" '+ps+'onclick="_wbExec(\''+E+'\',\'subscript\')" title="Subscript" style="font-size:8.25pt;">X<sub>2</sub></button>'+
-        '<button class="wb-btn" '+ps+'onclick="_wbExec(\''+E+'\',\'superscript\')" title="Superscript" style="font-size:8.25pt;">X<sup>2</sup></button>'+
+        '<button class="wb-btn wb-fmt dio-btn dio-btn--i" id="wbB-'+E+'" '+ps+'onclick="_wbExec(\''+E+'\',\'bold\')" title="بولڈ (Ctrl+B)" aria-label="بولڈ (Ctrl+B)" data-act="bold"><i class="dio-i" data-ico="bold" aria-hidden="true"></i></button>'+
+        '<button class="wb-btn wb-fmt wb-it dio-btn dio-btn--i" id="wbI-'+E+'" '+ps+'onclick="_wbExec(\''+E+'\',\'italic\')" title="ترچھا (Ctrl+I)" aria-label="ترچھا (Ctrl+I)" data-act="italic"><i class="dio-i" data-ico="italic" aria-hidden="true"></i></button>'+
+        '<button class="wb-btn wb-fmt wb-ul dio-btn dio-btn--i" id="wbU-'+E+'" '+ps+'onclick="_wbExec(\''+E+'\',\'underline\')" title="انڈر لائن (Ctrl+U)" aria-label="انڈر لائن (Ctrl+U)" data-act="underline"><i class="dio-i" data-ico="underline" aria-hidden="true"></i></button>'+
+        '<button class="wb-btn wb-fmt wb-st dio-btn dio-btn--i" id="wbS-'+E+'" '+ps+'onclick="_wbExec(\''+E+'\',\'strikeThrough\')" title="درمیان لکیر" aria-label="درمیان لکیر" data-act="strike"><i class="dio-i" data-ico="strike" aria-hidden="true"></i></button>'+
+        '<button class="wb-btn dio-btn dio-btn--i" '+ps+'onclick="_wbExec(\''+E+'\',\'subscript\')" title="زیریں" aria-label="زیریں" data-act="subscript"><i class="dio-i" data-ico="subscript" aria-hidden="true"></i></button>'+
+        '<button class="wb-btn dio-btn dio-btn--i" '+ps+'onclick="_wbExec(\''+E+'\',\'superscript\')" title="بالائی" aria-label="بالائی" data-act="superscript"><i class="dio-i" data-ico="superscript" aria-hidden="true"></i></button>'+
         '<div class="wb-vdiv"></div>'+
-        '<label class="wb-clr-btn" title="Font Color" '+ps+'>A'+
+        '<label class="wb-clr-btn" title="حروف کا رنگ" '+ps+'>A'+
           '<input type="color" value="#111111" onchange="'+rc+'_wbExec(\''+E+'\',\'foreColor\',this.value);document.getElementById(\'wbFClr-'+E+'\').style.background=this.value" style="width:16px;height:12px;padding:0;border:none;cursor:pointer;">'+
           '<div class="wb-clr-bar" id="wbFClr-'+E+'" style="background:#111;"></div>'+
         '</label>'+
-        '<label class="wb-clr-btn" title="Text Highlight" '+ps+'>🖊'+
+        '<label class="wb-clr-btn" title="نمایاں رنگ" '+ps+'>'+dioIco('pen')+''+
           '<input type="color" value="#ffff00" onchange="'+rc+'_wbExec(\''+E+'\',\'hiliteColor\',this.value);document.getElementById(\'wbHClr-'+E+'\').style.background=this.value" style="width:16px;height:12px;padding:0;border:none;cursor:pointer;">'+
           '<div class="wb-clr-bar" id="wbHClr-'+E+'" style="background:#ff0;"></div>'+
         '</label>'+
       '</div>'+
     '</div>'+
-    '<div class="wb-glab">Font</div>'+
+    '<div class="wb-glab">فونٹ</div>'+
   '</div><div class="wb-div"></div>';
 
   // ── PARAGRAPH ─────────────────────────────────────────────
   html += '<div class="wb-grp">'+
     '<div class="wb-gbody wb-gcol">'+
       '<div class="wb-grow">'+
-        '<button class="wb-btn" id="wbUL-'+E+'" '+ps+'onclick="_wbExec(\''+E+'\',\'insertUnorderedList\')" title="Bullet List">•≡</button>'+
-        '<button class="wb-btn" id="wbOL-'+E+'" '+ps+'onclick="_wbExec(\''+E+'\',\'insertOrderedList\')" title="Numbered List">1≡</button>'+
-        '<button class="wb-btn" '+ps+'onclick="_wbExec(\''+E+'\',\'outdent\')" title="Decrease Indent">⇤</button>'+
-        '<button class="wb-btn" '+ps+'onclick="_wbExec(\''+E+'\',\'indent\')" title="Increase Indent">⇥</button>'+
+        '<button class="wb-btn dio-btn dio-btn--i" id="wbUL-'+E+'" '+ps+'onclick="_wbExec(\''+E+'\',\'insertUnorderedList\')" title="نقطہ دار فہرست" aria-label="نقطہ دار فہرست" data-act="bullets"><i class="dio-i" data-ico="bullets" aria-hidden="true"></i></button>'+
+        '<button class="wb-btn dio-btn dio-btn--i" id="wbOL-'+E+'" '+ps+'onclick="_wbExec(\''+E+'\',\'insertOrderedList\')" title="نمبر والی فہرست" aria-label="نمبر والی فہرست" data-act="numbers"><i class="dio-i" data-ico="numbers" aria-hidden="true"></i></button>'+
+        '<button class="wb-btn dio-btn dio-btn--i" '+ps+'onclick="_wbExec(\''+E+'\',\'outdent\')" title="حاشیہ کم کریں" aria-label="حاشیہ کم کریں" data-act="outdent"><i class="dio-i" data-ico="outdent" aria-hidden="true"></i></button>'+
+        '<button class="wb-btn dio-btn dio-btn--i" '+ps+'onclick="_wbExec(\''+E+'\',\'indent\')" title="حاشیہ بڑھائیں" aria-label="حاشیہ بڑھائیں" data-act="indent"><i class="dio-i" data-ico="indent" aria-hidden="true"></i></button>'+
         '<div class="wb-vdiv"></div>'+
-        '<button class="wb-btn" '+ps+'onclick="_wbDir(\''+E+'\',\'rtl\')" id="wbRTL-'+E+'" title="Right to Left (Urdu)">RTL←</button>'+
-        '<button class="wb-btn" '+ps+'onclick="_wbDir(\''+E+'\',\'ltr\')" id="wbLTR-'+E+'" title="Left to Right">→LTR</button>'+
+        '<button class="wb-btn dio-btn dio-btn--i" '+ps+'onclick="_wbDir(\''+E+'\',\'rtl\')" id="wbRTL-'+E+'" title="اردو — دائیں سے بائیں" aria-label="اردو — دائیں سے بائیں" data-act="rtl"><i class="dio-i" data-ico="rtl" aria-hidden="true"></i></button>'+
+        '<button class="wb-btn dio-btn dio-btn--i" '+ps+'onclick="_wbDir(\''+E+'\',\'ltr\')" id="wbLTR-'+E+'" title="انگریزی — بائیں سے دائیں" aria-label="انگریزی — بائیں سے دائیں" data-act="ltr"><i class="dio-i" data-ico="ltr" aria-hidden="true"></i></button>'+
         '<div class="wb-vdiv"></div>'+
-        '<select class="wb-sel" '+pf+'onchange="'+rc+'_wbLineSpacing(\''+E+'\',this.value)" title="Line Spacing" style="width:58px;">'+
+        '<select class="wb-sel" '+pf+'onchange="'+rc+'_wbLineSpacing(\''+E+'\',this.value)" title="سطری فاصلہ" style="width:58px;">'+
           '<option value="1.0">1.0</option><option value="1.15">1.15</option>'+
           '<option value="1.5" selected>1.5</option><option value="2.0">2.0</option>'+
           '<option value="2.5">2.5</option><option value="3.0">3.0</option>'+
         '</select>'+
       '</div>'+
       '<div class="wb-grow">'+
-        '<button class="wb-btn" id="wbJL-'+E+'" '+ps+'onclick="_wbExec(\''+E+'\',\'justifyLeft\')"   title="Align Left">⬛≡</button>'+
-        '<button class="wb-btn" id="wbJC-'+E+'" '+ps+'onclick="_wbExec(\''+E+'\',\'justifyCenter\')" title="Center">≡⬛≡</button>'+
-        '<button class="wb-btn" id="wbJR-'+E+'" '+ps+'onclick="_wbExec(\''+E+'\',\'justifyRight\')"  title="Align Right">≡⬛</button>'+
-        '<button class="wb-btn" id="wbJF-'+E+'" '+ps+'onclick="_wbExec(\''+E+'\',\'justifyFull\')"   title="Justify">⬛≡⬛</button>'+
+        '<button class="wb-btn dio-btn dio-btn--i" id="wbJL-'+E+'" '+ps+'onclick="_wbExec(\''+E+'\',\'justifyLeft\')"   title="بائیں سیدھ" aria-label="بائیں سیدھ" data-act="align-left"><i class="dio-i" data-ico="align-left" aria-hidden="true"></i></button>'+
+        '<button class="wb-btn dio-btn dio-btn--i" id="wbJC-'+E+'" '+ps+'onclick="_wbExec(\''+E+'\',\'justifyCenter\')" title="درمیان" aria-label="درمیان" data-act="align-center"><i class="dio-i" data-ico="align-center" aria-hidden="true"></i></button>'+
+        '<button class="wb-btn dio-btn dio-btn--i" id="wbJR-'+E+'" '+ps+'onclick="_wbExec(\''+E+'\',\'justifyRight\')"  title="دائیں سیدھ" aria-label="دائیں سیدھ" data-act="align-right"><i class="dio-i" data-ico="align-right" aria-hidden="true"></i></button>'+
+        '<button class="wb-btn dio-btn dio-btn--i" id="wbJF-'+E+'" '+ps+'onclick="_wbExec(\''+E+'\',\'justifyFull\')"   title="دونوں طرف برابر" aria-label="دونوں طرف برابر" data-act="justify"><i class="dio-i" data-ico="justify" aria-hidden="true"></i></button>'+
         '<div class="wb-vdiv"></div>'+
-        '<button class="wb-btn" '+ps+'onclick="_wbExec(\''+E+'\',\'formatBlock\',\'<p>\')" title="Paragraph">¶</button>'+
-        '<button class="wb-btn" '+ps+'onclick="_wbBorder(\''+E+'\')" id="wbBrd-'+E+'" title="Page Border">☐</button>'+
+        '<button class="wb-btn dio-btn dio-btn--i" '+ps+'onclick="_wbExec(\''+E+'\',\'formatBlock\',\'<p>\')" title="پیراگراف نشانات" aria-label="پیراگراف نشانات" data-act="paragraph"><i class="dio-i" data-ico="paragraph" aria-hidden="true"></i></button>'+
+        '<button class="wb-btn dio-btn dio-btn--i" '+ps+'onclick="_wbBorder(\''+E+'\')" id="wbBrd-'+E+'" title="صفحے کا کنارہ" aria-label="صفحے کا کنارہ" data-act="border"><i class="dio-i" data-ico="border" aria-hidden="true"></i></button>'+
       '</div>'+
     '</div>'+
-    '<div class="wb-glab">Paragraph</div>'+
+    '<div class="wb-glab">پیراگراف</div>'+
   '</div><div class="wb-div"></div>';
 
   // ── STYLES ────────────────────────────────────────────────
@@ -112,74 +112,74 @@ function buildWordToolbar(editorId, opts) {
     '<div class="wb-gbody" style="gap:3px;align-items:flex-start;padding-top:2px;">'+
       '<div style="display:flex;flex-direction:column;gap:2px;">'+
         '<div class="wb-grow" style="gap:3px;">'+
-          _styleBtn(E, ps, 'Normal',    'font-size:9pt;',                                                         'Normal')+
-          _styleBtn(E, ps, 'No Spacing','font-size:9pt;line-height:1;',                                          'No Spacing')+
-          _styleBtn(E, ps, 'Heading 1', 'font-size:13.5pt;font-weight:700;color:#1a3a5c;',                          'Heading 1')+
-          _styleBtn(E, ps, 'Heading 2', 'font-size:11.25pt;font-weight:700;color:#2563eb;',                          'Heading 2')+
+          _styleBtn(E, ps, 'عام',    'font-size:9pt;',                                                         'عام')+
+          _styleBtn(E, ps, 'بغیر فاصلہ','font-size:9pt;line-height:1;',                                          'بغیر فاصلہ')+
+          _styleBtn(E, ps, 'سرخی 1', 'font-size:13.5pt;font-weight:700;color:#1a3a5c;',                          'سرخی 1')+
+          _styleBtn(E, ps, 'سرخی 2', 'font-size:11.25pt;font-weight:700;color:#2563eb;',                          'سرخی 2')+
         '</div>'+
         '<div class="wb-grow" style="gap:3px;">'+
-          _styleBtn(E, ps, 'Title',     'font-size:16.5pt;font-weight:800;color:#111;',                             'Title')+
-          _styleBtn(E, ps, 'Subtitle',  'font-size:9.75pt;color:#555;font-style:italic;',                          'Subtitle')+
-          _styleBtn(E, ps, 'Quote',     'font-size:9pt;font-style:italic;border-right:3px solid #888;padding-right:8px;color:#555;', 'Quote')+
-          _styleBtn(E, ps, 'Strong',    'font-size:9pt;font-weight:800;',                                        'Strong')+
+          _styleBtn(E, ps, 'عنوان',     'font-size:16.5pt;font-weight:800;color:#111;',                             'عنوان')+
+          _styleBtn(E, ps, 'ذیلی عنوان',  'font-size:9.75pt;color:#555;font-style:italic;',                          'ذیلی عنوان')+
+          _styleBtn(E, ps, 'اقتباس',     'font-size:9pt;font-style:italic;border-right:3px solid #888;padding-right:8px;color:#555;', 'اقتباس')+
+          _styleBtn(E, ps, 'نمایاں',    'font-size:9pt;font-weight:800;',                                        'نمایاں')+
         '</div>'+
       '</div>'+
     '</div>'+
-    '<div class="wb-glab">Styles</div>'+
+    '<div class="wb-glab">انداز</div>'+
   '</div><div class="wb-div"></div>';
 
   // ── INSERT ────────────────────────────────────────────────
   html += '<div class="wb-grp">'+
     '<div class="wb-gbody">'+
       '<div style="position:relative;">'+
-        '<button class="wb-big" '+ps+'onclick="_wbToggleTbl(\''+E+'\')" title="Insert Table"><span class="wb-ico">⊞</span><span class="wb-blab">Table</span></button>'+
+        '<button class="wb-big dio-btn" '+ps+'onclick="_wbToggleTbl(\''+E+'\')" title="جدول" aria-label="جدول" data-act="table"><i class="dio-i" data-ico="table" aria-hidden="true"></i><span>جدول</span></button>'+
         '<div id="wbtp-'+E+'" class="wb-tbl-picker">'+
-          '<div style="font-size:7.5pt;color:#666;text-align:center;margin-bottom:5px;" id="wbtpl-'+E+'">Insert Table</div>'+
+          '<div style="font-size:7.5pt;color:#666;text-align:center;margin-bottom:5px;" id="wbtpl-'+E+'">جدول داخل کریں</div>'+
           '<div style="display:grid;grid-template-columns:repeat(8,18px);gap:2px;">'+grid+'</div>'+
         '</div>'+
       '</div>'+
     '</div>'+
-    '<div class="wb-glab">Insert</div>'+
+    '<div class="wb-glab">داخل کریں</div>'+
   '</div><div class="wb-div"></div>';
 
   // ── PAGE LAYOUT ───────────────────────────────────────────
   html += '<div class="wb-grp">'+
     '<div class="wb-gbody wb-gcol">'+
       '<div class="wb-grow">'+
-        '<select class="wb-sel" '+pf+'onchange="_wbPageSz(\''+E+'\',this.value)" title="Page Size" style="width:64px;">'+
+        '<select class="wb-sel" '+pf+'onchange="_wbPageSz(\''+E+'\',this.value)" title="کاغذ" style="width:64px;">'+
           '<option value="a4">A4</option><option value="a3">A3</option>'+
           '<option value="legal">Legal</option><option value="letter">Letter</option>'+
         '</select>'+
-        '<select class="wb-sel" '+pf+'onchange="_wbMarg(\''+E+'\',this.value)" title="Margins" style="width:78px;">'+
-          '<option value="20mm">Normal</option><option value="12mm">Narrow</option>'+
-          '<option value="25mm">Moderate</option><option value="38mm">Wide</option>'+
+        '<select class="wb-sel" '+pf+'onchange="_wbMarg(\''+E+'\',this.value)" title="حاشیے" style="width:78px;">'+
+          '<option value="20mm">عام</option><option value="12mm">تنگ</option>'+
+          '<option value="25mm">درمیانہ</option><option value="38mm">چوڑا</option>'+
         '</select>'+
       '</div>'+
     '</div>'+
-    '<div class="wb-glab">Page Layout</div>'+
+    '<div class="wb-glab">صفحہ</div>'+
   '</div><div class="wb-div"></div>';
 
   // ── EDITING ───────────────────────────────────────────────
   html += '<div class="wb-grp">'+
     '<div class="wb-gbody wb-gcol">'+
       '<div class="wb-grow">'+
-        '<button class="wb-btn" '+ps+'onclick="_wbFind(\''+E+'\')" title="Find (Ctrl+F)">🔍 Find</button>'+
-        '<button class="wb-btn" '+ps+'onclick="_wbReplace(\''+E+'\')" title="Find & Replace">↔ Replace</button>'+
+        '<button class="wb-btn dio-btn" '+ps+'onclick="_wbFind(\''+E+'\')" title="تلاش (Ctrl+F)" aria-label="تلاش (Ctrl+F)" data-act="search"><i class="dio-i" data-ico="search" aria-hidden="true"></i><span>تلاش</span></button>'+
+        '<button class="wb-btn dio-btn dio-btn--i" '+ps+'onclick="_wbReplace(\''+E+'\')" title="ڈھونڈیں اور بدلیں (Ctrl+H)" aria-label="ڈھونڈیں اور بدلیں (Ctrl+H)" data-act="find-replace"><i class="dio-i" data-ico="find-replace" aria-hidden="true"></i></button>'+
       '</div>'+
       '<div class="wb-grow">'+
-        '<button class="wb-btn" '+ps+'onclick="_wbExec(\''+E+'\',\'undo\')" title="Undo">↩ Undo</button>'+
-        '<button class="wb-btn" '+ps+'onclick="_wbExec(\''+E+'\',\'redo\')" title="Redo">↪ Redo</button>'+
+        '<button class="wb-btn dio-btn dio-btn--i" '+ps+'onclick="_wbExec(\''+E+'\',\'undo\')" title="کالعدم (Ctrl+Z)" aria-label="کالعدم (Ctrl+Z)" data-act="undo"><i class="dio-i" data-ico="undo" aria-hidden="true"></i></button>'+
+        '<button class="wb-btn dio-btn dio-btn--i" '+ps+'onclick="_wbExec(\''+E+'\',\'redo\')" title="دوبارہ (Ctrl+Y)" aria-label="دوبارہ (Ctrl+Y)" data-act="redo"><i class="dio-i" data-ico="redo" aria-hidden="true"></i></button>'+
       '</div>'+
     '</div>'+
-    '<div class="wb-glab">Editing</div>'+
+    '<div class="wb-glab">تلاش و کالعدم</div>'+
   '</div><div class="wb-div"></div>';
 
   // ── VOICE ─────────────────────────────────────────────────
   html += '<div class="wb-grp dio-voice-grp">'+
     '<div class="wb-gbody">'+
-      '<button class="wb-big" id="voice-btn" onmousedown="event.preventDefault()" onclick="window._globalMicToggle?_globalMicToggle():toggleVoiceInput()" title="آواز سے لکھیں (صرف Desktop)"><span class="wb-ico">🎙️</span><span class="wb-blab">آواز</span></button>'+
+      '<button class="wb-big dio-btn" id="voice-btn" onmousedown="event.preventDefault()" onclick="window._globalMicToggle?_globalMicToggle():toggleVoiceInput()" title="آواز سے لکھیں" aria-label="آواز سے لکھیں" data-act="mic"><i class="dio-i" data-ico="mic" aria-hidden="true"></i><span>آواز سے لکھیں</span></button>'+
     '</div>'+
-    '<div class="wb-glab">Voice</div>'+
+    '<div class="wb-glab">آواز</div>'+
   '</div>';
 
   // ── SAVE ACTIONS (optional) ───────────────────────────────
@@ -188,12 +188,12 @@ function buildWordToolbar(editorId, opts) {
     '<div class="wb-grp">'+
       '<div class="wb-gbody wb-gcol">'+
         '<div class="wb-grow">'+
-          '<button class="wb-doc-save" onclick="'+opts.onSave+'">'+(opts.saveLabel||'💾 Save')+'</button>'+
-          (opts.onComplete?'<button class="wb-doc-done" onclick="'+opts.onComplete+'">'+(opts.completeLabel||'✅')+'</button>':'')+
-          (opts.onPrint?'<button class="wb-btn" onclick="'+opts.onPrint+'" title="Print" style="font-size:12pt;">🖨️</button>':'')+
+          '<button class="wb-doc-save dio-btn" data-act="save" title="محفوظ کریں (Ctrl+S)" aria-label="محفوظ کریں (Ctrl+S)" onclick="'+opts.onSave+'">'+dioIco('save')+'<span>'+(opts.saveLabel||'محفوظ کریں')+'</span></button>'+
+          (opts.onComplete?'<button class="wb-doc-done dio-btn" data-act="check" title="مکمل" aria-label="مکمل" onclick="'+opts.onComplete+'">'+dioIco('check')+'<span>'+(opts.completeLabel||'مکمل')+'</span></button>':'')+
+          (opts.onPrint?'<button class="wb-btn dio-btn dio-btn--i" onclick="'+opts.onPrint+'" title="پرنٹ (Ctrl+P)" aria-label="پرنٹ (Ctrl+P)" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i></button>':'')+
         '</div>'+
       '</div>'+
-      '<div class="wb-glab">Document</div>'+
+      '<div class="wb-glab">دستاویز</div>'+
     '</div>';
   }
 
@@ -419,13 +419,13 @@ function _wbFind(editorId) {
   box.id = 'wb-find-box';
   box.className = 'wb-find-box';
   box.innerHTML =
-    '<div style="font-size:9pt;font-weight:700;margin-bottom:8px;color:#1f1f1f;">🔍 Find & Replace</div>'+
-    '<input id="wbFindInp" placeholder="Find..." style="width:100%;box-sizing:border-box;padding:5px 8px;border:1px solid #bbb;border-radius:4px;font-size:9pt;margin-bottom:6px;">'+
-    '<input id="wbReplInp" placeholder="Replace with..." style="width:100%;box-sizing:border-box;padding:5px 8px;border:1px solid #bbb;border-radius:4px;font-size:9pt;margin-bottom:8px;">'+
+    '<div style="font-size:10.5pt;font-weight:700;margin-bottom:8px;color:#1f1f1f;">'+dioIco('find-replace')+' ڈھونڈیں اور بدلیں</div>'+
+    '<input id="wbFindInp" placeholder="ڈھونڈیں…" style="width:100%;box-sizing:border-box;padding:5px 8px;border:1px solid #bbb;border-radius:4px;font-size:9pt;margin-bottom:6px;">'+
+    '<input id="wbReplInp" placeholder="اس سے بدلیں…" style="width:100%;box-sizing:border-box;padding:5px 8px;border:1px solid #bbb;border-radius:4px;font-size:9pt;margin-bottom:8px;">'+
     '<div style="display:flex;gap:6px;">'+
-      '<button onclick="_wbDoFind(\''+editorId+'\')" style="flex:1;padding:5px;background:#0369a1;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:8.25pt;">Find</button>'+
-      '<button onclick="_wbDoReplace(\''+editorId+'\')" style="flex:1;padding:5px;background:#16a34a;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:8.25pt;">Replace All</button>'+
-      '<button onclick="document.getElementById(\'wb-find-box\').remove()" style="padding:5px 8px;background:#f0f0f0;border:1px solid #bbb;border-radius:4px;cursor:pointer;font-size:8.25pt;">✕</button>'+
+      '<button class="dio-btn" data-act="search" title="تلاش" aria-label="تلاش" onclick="_wbDoFind(\''+editorId+'\')" style="flex:1;">'+dioIco('search')+'<span>تلاش</span></button>'+
+      '<button class="dio-btn" data-act="find-replace" title="سب بدلیں" aria-label="سب بدلیں" onclick="_wbDoReplace(\''+editorId+'\')" style="flex:1;">'+dioIco('find-replace')+'<span>سب بدلیں</span></button>'+
+      '<button class="dio-btn dio-btn--i" data-act="close" title="بند کریں" aria-label="بند کریں" onclick="document.getElementById(\'wb-find-box\').remove()">'+dioIco('close')+'</button>'+
     '</div>';
   document.body.appendChild(box);
   document.getElementById('wbFindInp').focus();

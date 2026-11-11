@@ -49,7 +49,7 @@ function _stRender() {
   <div id="st-area" style="display:flex;flex-direction:column;height:100%;direction:rtl;font-family:'Jameel Noori Nastaleeq';">
     <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg-secondary);">
       <div class="dio-hs1" style="font-weight:700;">ہمراہی ملازمان</div>
-      <button class="btn btn-primary btn-sm dio-add-btn" onclick="_stForm(null)">+ ملازم درج کریں</button>
+      <button class="btn btn-primary btn-sm dio-add-btn dio-btn dio-btn--pri" onclick="_stForm(null)" title="+ ملازم درج کریں" aria-label="+ ملازم درج کریں" data-act="add"><span>+ ملازم درج کریں</span></button>
     </div>
     <div style="flex:1;overflow-y:auto;padding:14px;">
       ${_stList.length ? _stList.map(_stCard).join('') : `
@@ -73,8 +73,8 @@ function _stCard(s) {
     <span style="color:var(--text-muted);font-size:9.75pt;" dir="ltr">${b(s.mobile)}</span>
     <span style="color:var(--text-muted);font-size:9pt;" dir="ltr">${esc(s.cnic||'')}</span>
     <span style="margin-right:auto;display:flex;gap:4px;">
-      <button title="ترمیم" aria-label="ترمیم" class="btn btn-secondary btn-sm" onclick="_stForm('${s.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>
-      <button title="حذف" aria-label="حذف" class="btn btn-danger btn-sm" onclick="_stDelete('${s.id}','${(s.name||'').replace(/'/g,'')}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
+      <button title="ترمیم" aria-label="ترمیم" class="btn btn-secondary btn-sm dio-btn dio-btn--i" onclick="_stForm('${s.id}')" data-act="edit"><i class="dio-i" data-ico="edit" aria-hidden="true"></i></button>
+      <button title="حذف" aria-label="حذف" class="btn btn-danger btn-sm dio-btn dio-btn--i dio-btn--del" onclick="_stDelete('${s.id}','${(s.name||'').replace(/'/g,'')}')" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i></button>
     </span>
   </div>`;
 }

@@ -11,27 +11,23 @@
 function dioEditorToolbar(opts) {
   opts = opts || {};
   const cls = opts.className || 'dio-etb';
-  const B = (label, cmd, tip, style) =>
-    `<button type="button" class="dio-etb-btn" onmousedown="event.preventDefault()" ` +
-    `onclick="dioExec('${cmd}')" title="${tip}" style="${style || ''}">${label}</button>`;
-
-  // Alignment ke saaf SVG icons (MS Word jaise) — unicode se zyada wazeh
-  const _sv = (lines) => `<svg width="15" height="15" viewBox="0 0 16 16" fill="none" ` +
-    `stroke="currentColor" stroke-width="1.6" stroke-linecap="round">${lines}</svg>`;
-  const AL = (svg, cmd, tip) =>
-    `<button type="button" class="dio-etb-btn" onmousedown="event.preventDefault()" ` +
-    `onclick="dioExec('${cmd}')" title="${tip}">${svg}</button>`;
-  const AL_LEFT   = _sv('<line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="10" y2="8"/><line x1="2" y1="12" x2="13" y2="12"/>');
-  const AL_CENTER = _sv('<line x1="3" y1="4" x2="13" y2="4"/><line x1="4" y1="8" x2="12" y2="8"/><line x1="3" y1="12" x2="13" y2="12"/>');
-  const AL_RIGHT  = _sv('<line x1="2" y1="4" x2="14" y2="4"/><line x1="6" y1="8" x2="14" y2="8"/><line x1="3" y1="12" x2="14" y2="12"/>');
-  const AL_JUST   = _sv('<line x1="2" y1="4" x2="14" y2="4"/><line x1="2" y1="8" x2="14" y2="8"/><line x1="2" y1="12" x2="14" y2="12"/>');
+  // TASK 19: ہر ایڈیٹر کی پٹی میں وہی مشترکہ بٹن — نشان اسی سیٹ (dio-icons.js) سے، اشارہ ہر جگہ ایک
+  const KIND = { bold: 'bold', italic: 'italic', underline: 'underline', insertUnorderedList: 'bullets', insertOrderedList: 'numbers',
+    justifyRight: 'align-right', justifyCenter: 'align-center', justifyLeft: 'align-left', justifyFull: 'justify' };
+  const TIP = { bold: 'بولڈ (Ctrl+B)', italic: 'ترچھا (Ctrl+I)', underline: 'انڈر لائن (Ctrl+U)', insertUnorderedList: 'نقطہ دار فہرست',
+    insertOrderedList: 'نمبر والی فہرست', justifyRight: 'دائیں سیدھ', justifyCenter: 'درمیان', justifyLeft: 'بائیں سیدھ', justifyFull: 'دونوں طرف برابر' };
+  const B = (label, cmd) =>
+    `<button type="button" class="dio-etb-btn dio-btn dio-btn--i" onmousedown="event.preventDefault()" ` +
+    `onclick="dioExec('${cmd}')" title="${TIP[cmd]}" aria-label="${TIP[cmd]}" data-act="${KIND[cmd]}">${dioIco(KIND[cmd])}</button>`;
+  const AL = (svg, cmd) => B('', cmd);
+  const AL_LEFT = '', AL_CENTER = '', AL_RIGHT = '', AL_JUST = '';
 
   return `
   <div class="${cls} no-print" style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;">
-    <button type="button" class="dio-etb-btn" onmousedown="event.preventDefault()"
-      onclick="dioExec('undo')" title="واپس (Ctrl+Z)">↶</button>
-    <button type="button" class="dio-etb-btn" onmousedown="event.preventDefault()"
-      onclick="dioExec('redo')" title="دوبارہ (Ctrl+Y)">↷</button>
+    <button type="button" class="dio-etb-btn dio-btn dio-btn--i" onmousedown="event.preventDefault()"
+      onclick="dioExec('undo')" title="کالعدم (Ctrl+Z)" aria-label="کالعدم (Ctrl+Z)" data-act="undo"><i class="dio-i" data-ico="undo" aria-hidden="true"></i></button>
+    <button type="button" class="dio-etb-btn dio-btn dio-btn--i" onmousedown="event.preventDefault()"
+      onclick="dioExec('redo')" title="دوبارہ (Ctrl+Y)" aria-label="دوبارہ (Ctrl+Y)" data-act="redo"><i class="dio-i" data-ico="redo" aria-hidden="true"></i></button>
     <span class="dio-etb-sep"></span>
     ${B('B', 'bold', 'بولڈ (Ctrl+B)', 'font-weight:900;')}
     ${B('I', 'italic', 'ترچھا (Ctrl+I)', 'font-style:italic;')}
@@ -45,28 +41,28 @@ function dioEditorToolbar(opts) {
       <option value="16">16 pt</option><option value="18">18 pt</option>
       <option value="20">20 pt</option><option value="24">24 pt</option>
     </select>
-    <button type="button" class="dio-etb-btn" onmousedown="event.preventDefault()"
-      onclick="dioFontStep(1)" title="فونٹ بڑا">A+</button>
-    <button type="button" class="dio-etb-btn" onmousedown="event.preventDefault()"
-      onclick="dioFontStep(-1)" title="فونٹ چھوٹا" style="font-size:8.25pt;">A−</button>
+    <button type="button" class="dio-etb-btn dio-btn dio-btn--i" onmousedown="event.preventDefault()"
+      onclick="dioFontStep(1)" title="فونٹ بڑا" aria-label="فونٹ بڑا" data-act="font-up"><i class="dio-i" data-ico="font-up" aria-hidden="true"></i></button>
+    <button type="button" class="dio-etb-btn dio-btn dio-btn--i" onmousedown="event.preventDefault()"
+      onclick="dioFontStep(-1)" title="فونٹ چھوٹا" style="font-size:8.25pt;" aria-label="فونٹ چھوٹا" data-act="font-down"><i class="dio-i" data-ico="font-down" aria-hidden="true"></i></button>
     <span class="dio-etb-sep"></span>
     ${AL(AL_RIGHT,  'justifyRight',  'دائیں (Right)')}
     ${AL(AL_CENTER, 'justifyCenter', 'درمیان (Center)')}
     ${AL(AL_LEFT,   'justifyLeft',   'بائیں (Left)')}
     ${AL(AL_JUST,   'justifyFull',   'دونوں طرف برابر (Justify)')}
     <span class="dio-etb-sep"></span>
-    <button type="button" class="dio-etb-btn" onmousedown="event.preventDefault()"
-      onclick="dioSetDir('rtl')" title="اردو — دائیں سے بائیں (RTL)" style="font-weight:800;">؈</button>
-    <button type="button" class="dio-etb-btn" onmousedown="event.preventDefault()"
-      onclick="dioSetDir('ltr')" title="English — Left to Right (LTR)" style="font-weight:800;direction:ltr;">EN</button>
+    <button type="button" class="dio-etb-btn dio-btn dio-btn--i" onmousedown="event.preventDefault()"
+      onclick="dioSetDir('rtl')" title="اردو — دائیں سے بائیں" style="font-weight:800;" aria-label="اردو — دائیں سے بائیں" data-act="rtl"><i class="dio-i" data-ico="rtl" aria-hidden="true"></i></button>
+    <button type="button" class="dio-etb-btn dio-btn dio-btn--i" onmousedown="event.preventDefault()"
+      onclick="dioSetDir('ltr')" title="انگریزی — بائیں سے دائیں" style="font-weight:800;direction:ltr;" aria-label="انگریزی — بائیں سے دائیں" data-act="ltr"><i class="dio-i" data-ico="ltr" aria-hidden="true"></i></button>
     <span class="dio-etb-sep"></span>
     ${B('•', 'insertUnorderedList', 'نقطہ دار فہرست (Bullets)')}
     ${B('1.', 'insertOrderedList', 'نمبر والی فہرست (Numbering)')}
     <span class="dio-etb-sep"></span>
-    <button type="button" class="dio-etb-btn" onmousedown="event.preventDefault()"
-      onclick="dioFindReplace()" title="ڈھونڈیں اور بدلیں (Find &amp; Replace)">🔎</button>
-    <button type="button" class="dio-etb-btn" onmousedown="event.preventDefault()"
-      onclick="dioExec('removeFormat')" title="فارمیٹنگ ہٹائیں (Clear)">✕</button>
+    <button type="button" class="dio-etb-btn dio-btn dio-btn--i" onmousedown="event.preventDefault()"
+      onclick="dioFindReplace()" title="ڈھونڈیں اور بدلیں" aria-label="ڈھونڈیں اور بدلیں" data-act="find-replace"><i class="dio-i" data-ico="find-replace" aria-hidden="true"></i></button>
+    <button type="button" class="dio-etb-btn dio-btn dio-btn--i" onmousedown="event.preventDefault()"
+      onclick="dioExec('removeFormat')" title="فارمیٹ ختم کریں" aria-label="فارمیٹ ختم کریں" data-act="clear-format"><i class="dio-i" data-ico="clear-format" aria-hidden="true"></i></button>
   </div>`;
 }
 
@@ -213,17 +209,17 @@ function dioFindReplace(prefill) {
     "font-family:'Jameel Noori Nastaleeq';max-width:94vw;width:360px;";
   p.innerHTML =
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
-      '<span style="font-weight:800;font-size:11.25pt;">🔎 ڈھونڈیں اور بدلیں</span>' +
-      '<button type="button" onclick="dioFRClose()" title="بند کریں" style="border:none;background:none;font-size:13.5pt;cursor:pointer;color:var(--text-muted,#777);line-height:1;">✕</button>' +
+      '<span style="font-weight:800;font-size:11.25pt;">' + (typeof dioIco === 'function' ? dioIco('find-replace') + ' ' : '') + 'ڈھونڈیں اور بدلیں</span>' +
+      '<button class="dio-btn dio-btn--i" type="button" onclick="dioFRClose()" title="بند کریں" style="border:none;background:none;font-size:13.5pt;cursor:pointer;color:var(--text-muted,#777);line-height:1;" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i></button>' +
     '</div>' +
     '<input id="dio-fr-find" type="text" placeholder="کیا ڈھونڈنا ہے؟" ' +
       'style="width:100%;box-sizing:border-box;padding:8px 10px;margin-bottom:7px;border:1px solid var(--border,#ccc);border-radius:8px;background:var(--bg-tertiary,#f6f8fa);color:inherit;font-size:10.5pt;">' +
     '<input id="dio-fr-repl" type="text" placeholder="کس سے بدلنا ہے؟" ' +
       'style="width:100%;box-sizing:border-box;padding:8px 10px;margin-bottom:9px;border:1px solid var(--border,#ccc);border-radius:8px;background:var(--bg-tertiary,#f6f8fa);color:inherit;font-size:10.5pt;">' +
     '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
-      '<button type="button" onclick="dioFRFindNext()" style="flex:1;min-width:80px;padding:8px;border:1px solid var(--accent,#2563eb);background:var(--bg-tertiary,#eef);color:var(--text-primary,#111);border-radius:8px;cursor:pointer;font-weight:700;font-family:inherit;">ڈھونڈیں ▸</button>' +
-      '<button type="button" onclick="dioFRReplaceOne()" style="flex:1;min-width:80px;padding:8px;border:1px solid var(--border,#ccc);background:var(--bg-card,#fff);color:var(--text-primary,#111);border-radius:8px;cursor:pointer;font-weight:700;font-family:inherit;">بدلیں</button>' +
-      '<button type="button" onclick="dioFRReplaceAll()" style="flex:1;min-width:96px;padding:8px;border:none;background:var(--accent,#2563eb);color:#fff;border-radius:8px;cursor:pointer;font-weight:800;font-family:inherit;">سب بدلیں</button>' +
+      '<button class="dio-btn" type="button" onclick="dioFRFindNext()" style="flex:1;min-width:80px;padding:8px;border:1px solid var(--accent,#2563eb);background:var(--bg-tertiary,#eef);color:var(--text-primary,#111);border-radius:8px;cursor:pointer;font-weight:700;font-family:inherit;" title="تلاش" aria-label="تلاش" data-act="search"><i class="dio-i" data-ico="search" aria-hidden="true"></i><span>تلاش</span></button>' +
+      '<button class="dio-btn" type="button" onclick="dioFRReplaceOne()" style="flex:1;min-width:80px;padding:8px;border:1px solid var(--border,#ccc);background:var(--bg-card,#fff);color:var(--text-primary,#111);border-radius:8px;cursor:pointer;font-weight:700;font-family:inherit;" title="بدلیں" aria-label="بدلیں" data-act="find-replace"><i class="dio-i" data-ico="find-replace" aria-hidden="true"></i><span>بدلیں</span></button>' +
+      '<button class="dio-btn" type="button" onclick="dioFRReplaceAll()" style="flex:1;min-width:96px;padding:8px;border:none;background:var(--accent,#2563eb);color:#fff;border-radius:8px;cursor:pointer;font-weight:800;font-family:inherit;" title="سب بدلیں" aria-label="سب بدلیں" data-act="find-replace"><i class="dio-i" data-ico="find-replace" aria-hidden="true"></i><span>سب بدلیں</span></button>' +
     '</div>' +
     '<div id="dio-fr-note" style="margin-top:8px;font-size:9pt;color:var(--text-muted,#777);min-height:16px;"></div>';
   document.body.appendChild(p);

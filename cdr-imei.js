@@ -272,9 +272,9 @@ function _cdrRenderList() {
         <div class="cdr-li-s">نمبرز: <bdi dir="ltr">${nums}</bdi>${range ? ' · مدت: <bdi>' + esc(range) + '</bdi>' : ''}</div>
       </div>
       <div class="cdr-li-act">
-        <button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation();_cdrOpen('${esc(String(r.id))}')">کھولیں</button>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="event.stopPropagation();_cdrPrintById('${esc(String(r.id))}')" title="یہ CDR درخواست پرنٹ کریں">🖨️ پرنٹ</button>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="event.stopPropagation();_cdrShareById('${esc(String(r.id))}')" title="یہ CDR درخواست شیئر کریں — PDF / Word">📤 شیئر</button>
+        <button type="button" class="btn btn-primary btn-sm dio-btn" onclick="event.stopPropagation();_cdrOpen('${esc(String(r.id))}')" title="کھولیں" aria-label="کھولیں" data-act="open"><i class="dio-i" data-ico="open" aria-hidden="true"></i><span>کھولیں</span></button>
+        <button type="button" class="btn btn-secondary btn-sm dio-btn" onclick="event.stopPropagation();_cdrPrintById('${esc(String(r.id))}')" title="پرنٹ" aria-label="پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>پرنٹ</span></button>
+        <button type="button" class="btn btn-secondary btn-sm dio-btn" onclick="event.stopPropagation();_cdrShareById('${esc(String(r.id))}')" title="شیئر" aria-label="شیئر" data-act="share"><i class="dio-i" data-ico="share" aria-hidden="true"></i><span>شیئر</span></button>
       </div>
     </div>`;
   }).join('');
@@ -283,7 +283,7 @@ function _cdrRenderList() {
   <div class="cdr-listwrap">
     <!-- عنوان درمیان میں · «نیا» بٹن دائیں (SYSTEM RULE: add-new button ہمیشہ دائیں) -->
     <div class="cdr-list-head">
-      <button type="button" class="btn btn-primary btn-sm dio-add-btn" onclick="_newCdr()">+ CDR درخواست درج کریں</button>
+      <button type="button" class="btn btn-primary btn-sm dio-add-btn dio-btn dio-btn--pri" onclick="_newCdr()" title="+ CDR درخواست درج کریں" aria-label="+ CDR درخواست درج کریں" data-act="add"><span>+ CDR درخواست درج کریں</span></button>
       <div class="cdr-list-title">CDR/IMEI درخواستیں — فہرست (${total})</div>
       <span class="btn btn-primary btn-sm" style="visibility:hidden;pointer-events:none;">+ CDR درخواست درج کریں</span>
     </div>
@@ -402,15 +402,15 @@ function _renderCdr() {
     <div class="cdr-scroll" id="cdr-scroll">
       <!-- سکرین کی پٹی (چھپائی میں نہیں): فہرست · CDR کی مدت -->
       <div class="cdr-strip no-print">
-        <button type="button" class="btn btn-secondary btn-sm" onclick="_cdrBackToList()" title="اس مقدمے کی تمام CDR درخواستیں">← فہرست</button>
+        <button type="button" class="btn btn-secondary btn-sm dio-btn" onclick="_cdrBackToList()" title="فہرست" aria-label="فہرست" data-act="back"><i class="dio-i" data-ico="back" aria-hidden="true"></i><span>فہرست</span></button>
         <span class="cdr-strip-t">${esc(title)}</span>
         <span class="cdr-tb-lbl">CDR مورخہ
-          <span class="cdr-cal" title="کس تاریخ سے — تاریخ چنیں">📅<input type="date" class="cdr-date-in" data-for="date_from" value="${_cdrIso(val('date_from'))}" onclick="try{this.showPicker()}catch(_){ /* picker na ho to koi baat nahi */ }" onchange="_cdrSetDate('date_from', this.value)" aria-label="CDR کس تاریخ سے"></span>
+          <span class="cdr-cal dio-pick" title="کس تاریخ سے — تاریخ چنیں"><i class="dio-i" data-ico="calendar" aria-hidden="true"></i><input type="date" class="cdr-date-in" data-for="date_from" value="${_cdrIso(val('date_from'))}" onclick="try{this.showPicker()}catch(_){ /* picker na ho to koi baat nahi */ }" onchange="_cdrSetDate('date_from', this.value)" aria-label="CDR کس تاریخ سے"></span>
           تک
-          <span class="cdr-cal" title="کس تاریخ تک — تاریخ چنیں">📅<input type="date" class="cdr-date-in" data-for="date_to" value="${_cdrIso(val('date_to'))}" onclick="try{this.showPicker()}catch(_){ /* picker na ho to koi baat nahi */ }" onchange="_cdrSetDate('date_to', this.value)" aria-label="CDR کس تاریخ تک"></span>
+          <span class="cdr-cal dio-pick" title="کس تاریخ تک — تاریخ چنیں"><i class="dio-i" data-ico="calendar" aria-hidden="true"></i><input type="date" class="cdr-date-in" data-for="date_to" value="${_cdrIso(val('date_to'))}" onclick="try{this.showPicker()}catch(_){ /* picker na ho to koi baat nahi */ }" onchange="_cdrSetDate('date_to', this.value)" aria-label="CDR کس تاریخ تک"></span>
           <button type="button" class="btn btn-secondary btn-sm" onclick="_cdrSetTahal()" title="دوسری تاریخ کی جگہ «تاحال»" style="padding:2px 8px;">تاحال</button>
         </span>
-        <button type="button" class="btn btn-primary btn-sm dio-modbtn" onclick="_saveCdr()">محفوظ کریں</button>
+        <button type="button" class="btn btn-primary btn-sm dio-modbtn dio-btn" onclick="_saveCdr()" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
       </div>
       <div class="cdr-zoom" id="cdr-zoom">
       <div id="cdr-doc" class="cdr-page" data-acc="${esc(String(acc))}"><div class="cdr-inner" id="cdr-inner">
@@ -426,7 +426,7 @@ function _renderCdr() {
         <div class="cdr-caseline">${H('مقدمہ نمبر')} ${FI('fir', 'unicode-bidi:isolate;')} ${H('مورخہ')} ${FI('fir_date', 'unicode-bidi:isolate;')} ${H('بجرم')} ${FI('jurm')} ${H('تھانہ')} ${FI('fir_thana')}</div>
 
         <div class="cdr-banam-row">
-          ${_cdrAccused.length ? `<span class="cdr-acc-pick no-print" title="ملزم منتخب کریں">▾<select onchange="_cdrPickAccused(this.value)" aria-label="ملزم منتخب کریں">${accOpts}</select></span>` : ''}
+          ${_cdrAccused.length ? `<span class="cdr-acc-pick no-print dio-pick" title="ملزم منتخب کریں"><i class="dio-i" data-ico="dropdown" aria-hidden="true"></i><select onchange="_cdrPickAccused(this.value)" aria-label="ملزم منتخب کریں">${accOpts}</select></span>` : ''}
           <span class="cdr-banam-lbl">بنام:۔</span>
           <div class="cdr-banam-list cdr-fi${banam ? ' cdr-has' : ''}" contenteditable="true" data-k="banam" oninput="_cdrOnInput(this)">${banam}</div>
         </div>

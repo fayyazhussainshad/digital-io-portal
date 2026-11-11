@@ -54,7 +54,7 @@ async function _buildReminders() {
       <div class="page-title">یاددہانیاں</div>
       <div class="page-subtitle">خودکار · عدالتی پیشیاں · دستی</div>
     </div>
-    <button class="btn btn-primary dio-add-btn" onclick="_openAddReminder()">+ یاددہانی درج کریں</button>
+    <button class="btn btn-primary dio-add-btn dio-btn dio-btn--pri" onclick="_openAddReminder()" title="+ یاددہانی درج کریں" aria-label="+ یاددہانی درج کریں" data-act="add"><span>+ یاددہانی درج کریں</span></button>
   </div>
 
   <!-- Overdue Alert -->
@@ -105,8 +105,8 @@ function _remCard(r, isOverdue, isDone=false) {
       </div>
     </div>
     <div style="display:flex;flex-direction:column;gap:3px;">
-      ${!r._isCourtDate ? `<button title="بند کریں" aria-label="بند کریں" class="btn btn-danger btn-sm" onclick="_deleteRem('${r.id}')" style="padding:3px 8px;font-size:8.25pt;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button>` :
-        `<button title="منظور" aria-label="منظور" class="btn btn-secondary btn-sm" onclick="_remMarkCourtDone('${r._courtId}')" style="padding:3px 8px;font-size:8.25pt;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4.5 12.5l5 5 10-11"/></svg></button>`}
+      ${!r._isCourtDate ? `<button title="حذف" aria-label="حذف" class="btn btn-danger btn-sm dio-btn dio-btn--i dio-btn--del" onclick="_deleteRem('${r.id}')" style="padding:3px 8px;font-size:8.25pt;" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i></button>` :
+        `<button title="منظور" aria-label="منظور" class="btn btn-secondary btn-sm dio-btn dio-btn--i" onclick="_remMarkCourtDone('${r._courtId}')" style="padding:3px 8px;font-size:8.25pt;" data-act="check"><i class="dio-i" data-ico="check" aria-hidden="true"></i></button>`}
     </div>
   </div>`;
 }
@@ -187,8 +187,8 @@ function _openAddReminder() {
         <input class="form-input" id="rem-fir" placeholder="مثلاً 245/26" dir="ltr" style="text-align:left;">
       </div>
     </div>`,
-    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-     <button class="btn btn-primary" onclick="_saveRem()">محفوظ</button>`
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+     <button class="btn btn-primary dio-btn dio-btn--pri" onclick="_saveRem()" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>`
   );
 }
 

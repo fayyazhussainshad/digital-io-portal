@@ -130,8 +130,8 @@ function _renderRfaList() {
         <div style="font-weight:700;font-size:11.25pt;direction:ltr;text-align:left;font-family:Arial,sans-serif;">${esc(no)}</div>
         <div style="font-size:9.75pt;color:var(--text-muted);direction:ltr;text-align:left;font-family:Arial,sans-serif;">Purpose: ${esc(purpose)}${dt ? '  ·  ' + dt : ''}</div>
       </div>
-      <button aria-label="حذف کریں" class="btn btn-secondary btn-sm" onclick="event.stopPropagation();_rfaDelete('${r.id}')" title="حذف کریں"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
-      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();_openRfaDoc('${r.id}')">کھولیں</button>
+      <button aria-label="حذف" class="btn btn-secondary btn-sm dio-btn dio-btn--i dio-btn--del" onclick="event.stopPropagation();_rfaDelete('${r.id}')" title="حذف" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i></button>
+      <button class="btn btn-primary btn-sm dio-btn" onclick="event.stopPropagation();_openRfaDoc('${r.id}')" title="کھولیں" aria-label="کھولیں" data-act="open"><i class="dio-i" data-ico="open" aria-hidden="true"></i><span>کھولیں</span></button>
     </div>`;
   }).join('');
 
@@ -139,7 +139,7 @@ function _renderRfaList() {
   <div style="padding:16px;direction:rtl;height:100%;overflow-y:auto;font-family:'Jameel Noori Nastaleeq';">
     <!-- عنوان درمیان میں · "نیا" بٹن دائیں (SYSTEM RULE: add-new button ہمیشہ دائیں) -->
     <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:14px;">
-      <button class="btn btn-primary btn-sm dio-add-btn" onclick="_newRfa()">+ RFA فارم درج کریں</button>
+      <button class="btn btn-primary btn-sm dio-add-btn dio-btn dio-btn--pri" onclick="_newRfa()" title="+ RFA فارم درج کریں" aria-label="+ RFA فارم درج کریں" data-act="add"><span>+ RFA فارم درج کریں</span></button>
       <div class="dio-hs1" style="flex:1;text-align:center;font-weight:800;color:var(--accent);">RFA فارم — فہرست</div>
       <span class="btn btn-primary btn-sm" style="visibility:hidden;pointer-events:none;">+ RFA فارم درج کریں</span>
     </div>
@@ -235,21 +235,21 @@ function _renderRfaForm() {
     <!-- Toolbar (LTR): محفوظ/پرنٹ بائیں طرف · formatting · واپس فہرست دائیں -->
     <div style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
       <div style="display:flex;gap:6px;direction:rtl;font-family:'Jameel Noori Nastaleeq';">
-        <button class="btn btn-primary btn-sm dio-modbtn" onclick="_saveRfa()">محفوظ کریں</button>
-        <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_printRfa()">پرنٹ کریں</button>
+        <button class="btn btn-primary btn-sm dio-modbtn dio-btn" onclick="_saveRfa()" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
+        <button class="btn btn-secondary btn-sm dio-modbtn dio-btn" onclick="_printRfa()" title="پرنٹ" aria-label="پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>پرنٹ</span></button>
       </div>
       <span style="width:1px;height:22px;background:var(--border);margin:0 4px;"></span>
-      <button onmousedown="event.preventDefault()" onclick="_rfaFmt('bold')" title="Bold" style="${_rfaBtn()}font-weight:900;">B</button>
-      <button onmousedown="event.preventDefault()" onclick="_rfaFmt('italic')" title="Italic" style="${_rfaBtn()}font-style:italic;">I</button>
-      <button onmousedown="event.preventDefault()" onclick="_rfaFmt('underline')" title="Underline" style="${_rfaBtn()}text-decoration:underline;">U</button>
+      <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_rfaFmt('bold')" title="بولڈ" style="${_rfaBtn()}font-weight:900;" aria-label="بولڈ" data-act="bold"><i class="dio-i" data-ico="bold" aria-hidden="true"></i></button>
+      <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_rfaFmt('italic')" title="ترچھا" style="${_rfaBtn()}font-style:italic;" aria-label="ترچھا" data-act="italic"><i class="dio-i" data-ico="italic" aria-hidden="true"></i></button>
+      <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_rfaFmt('underline')" title="انڈر لائن" style="${_rfaBtn()}text-decoration:underline;" aria-label="انڈر لائن" data-act="underline"><i class="dio-i" data-ico="underline" aria-hidden="true"></i></button>
       <span style="width:1px;height:22px;background:var(--border);margin:0 4px;"></span>
-      <button onmousedown="event.preventDefault()" onclick="_rfaFmt('justifyLeft')" title="Left" style="${_rfaBtn()}">⇤</button>
-      <button onmousedown="event.preventDefault()" onclick="_rfaFmt('justifyCenter')" title="Center" style="${_rfaBtn()}">⇔</button>
-      <button onmousedown="event.preventDefault()" onclick="_rfaFmt('justifyRight')" title="Right" style="${_rfaBtn()}">⇥</button>
+      <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_rfaFmt('justifyLeft')" title="بائیں سیدھ" style="${_rfaBtn()}" aria-label="بائیں سیدھ" data-act="align-left"><i class="dio-i" data-ico="align-left" aria-hidden="true"></i></button>
+      <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_rfaFmt('justifyCenter')" title="درمیان" style="${_rfaBtn()}" aria-label="درمیان" data-act="align-center"><i class="dio-i" data-ico="align-center" aria-hidden="true"></i></button>
+      <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_rfaFmt('justifyRight')" title="دائیں سیدھ" style="${_rfaBtn()}" aria-label="دائیں سیدھ" data-act="align-right"><i class="dio-i" data-ico="align-right" aria-hidden="true"></i></button>
       <span style="width:1px;height:22px;background:var(--border);margin:0 4px;"></span>
-      <button onmousedown="event.preventDefault()" onclick="_rfaFmt('undo')" title="Undo" style="${_rfaBtn()}">↶</button>
-      <button onmousedown="event.preventDefault()" onclick="_rfaFmt('redo')" title="Redo" style="${_rfaBtn()}">↷</button>
-      <button class="btn btn-secondary btn-sm" onclick="_rfaBackToList()" style="margin-left:auto;direction:rtl;font-family:'Jameel Noori Nastaleeq';">← واپس فہرست</button>
+      <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_rfaFmt('undo')" title="کالعدم" style="${_rfaBtn()}" aria-label="کالعدم" data-act="undo"><i class="dio-i" data-ico="undo" aria-hidden="true"></i></button>
+      <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_rfaFmt('redo')" title="دوبارہ" style="${_rfaBtn()}" aria-label="دوبارہ" data-act="redo"><i class="dio-i" data-ico="redo" aria-hidden="true"></i></button>
+      <button class="btn btn-secondary btn-sm dio-btn" onclick="_rfaBackToList()" style="margin-left:auto;direction:rtl;font-family:'Jameel Noori Nastaleeq';" title="واپس" aria-label="واپس" data-act="back"><i class="dio-i" data-ico="back" aria-hidden="true"></i><span>واپس</span></button>
     </div>
 
     <div style="flex:1;overflow-y:auto;padding:16px;background:var(--bg-tertiary);">

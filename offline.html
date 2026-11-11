@@ -51,6 +51,8 @@
       text-transform: uppercase;
     }
   </style>
+  <script src="dio-icons.js"></script>
+  <link rel="stylesheet" href="dio-ui.css">
 </head>
 <body>
   <div class="card">
@@ -61,7 +63,7 @@
       Digital IO requires an internet connection to sync case data with the secure Supabase database.
       Please reconnect to continue working.
     </p>
-    <button class="btn" onclick="window.location.reload()">🔄 Try Again</button>
+    <button class="btn dio-btn" onclick="window.location.reload()" title="دوبارہ کوشش کریں" aria-label="دوبارہ کوشش کریں" data-act="refresh"><i class="dio-i" data-ico="refresh" aria-hidden="true"></i><span>دوبارہ کوشش کریں</span></button>
     <div class="badge">Digital IO v4 · Police Case Management</div>
   </div>
   <script>

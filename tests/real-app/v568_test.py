@@ -198,7 +198,7 @@ def run(desktop):
         idx = pg.evaluate("[...document.querySelectorAll('#misal-editor #idxz-table td.idxz-n')].map(t => t.textContent.trim()).filter(Boolean)")
         check(f'{tag} B10: غیر محفوظ ڈپلیکیٹ انڈیکس نقل مسل میں نہیں (صرف 3 محفوظ ضمنیاں)', sorted(idx) == sorted(['1', '2', '2-الف']), idx)
         pg.evaluate("_openMisalEditor('zamniyat')"); pg.wait_for_timeout(1800)
-        pg.click(".zt tbody tr.zt-draft button[title='جاری رکھیں']"); pg.wait_for_timeout(2300)
+        pg.click(".zt tbody tr.zt-draft button[data-act='edit']"); pg.wait_for_timeout(2300)
         check(f'{tag} B7: نقل دوبارہ کھلی — نشان برقرار', pg.evaluate("(document.getElementById('zf-dup-badge') || {}).textContent") == 'ڈپلیکیٹ')
         # B9: جوں کی توں نقل — وہی تاریخ + وہی افسر اور وہی نمبر: محفوظ نہیں
         t = save_btn(pg)
@@ -236,7 +236,7 @@ def run(desktop):
         pg.evaluate("_openMisalEditor('statements_161')"); pg.wait_for_timeout(1800)
         def za_list():
             if pg.evaluate("!!document.querySelector('#ch173-doc .zfa-tbl')"):
-                pg.evaluate("window.confirm = () => false; 0"); pg.click("button:has-text('← واپس')"); pg.wait_for_timeout(1500); pg.evaluate("window.confirm = () => true; 0")
+                pg.evaluate("window.confirm = () => false; 0"); pg.click("button[onclick='_zaBackToList()']"); pg.wait_for_timeout(1500); pg.evaluate("window.confirm = () => true; 0")
         def new_za(who, date):
             za_list()
             pg.click("button:has-text('بیان درج کریں')"); pg.wait_for_timeout(1800)
@@ -309,7 +309,7 @@ def run(desktop):
         pg.evaluate("openCaseWorkspace('c1')"); pg.wait_for_timeout(1300)
         pg.evaluate("_openMisalEditor('statements_161')"); pg.wait_for_timeout(1800)
         drow = pg.evaluate("[...document.querySelectorAll('.zat-wrap tr.zt-draft')].length")
-        if drow: pg.click(".zat-wrap tr.zt-draft button[title='جاری رکھیں']"); pg.wait_for_timeout(1600)
+        if drow: pg.click(".zat-wrap tr.zt-draft button[data-act='edit']"); pg.wait_for_timeout(1600)
         back = pg.evaluate("/خودکار مسودہ کی جانچ/.test((document.getElementById('ch173-doc') || {}).textContent || '')")
         check(f'{tag} C12: صفحہ بند ہو کر دوبارہ کھلا — مسودہ فہرست میں، کھولنے پر لکھا متن واپس', drow == 1 and back, (drow, back))
         pg.evaluate("_zaClose()"); pg.wait_for_timeout(1200)

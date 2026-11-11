@@ -923,7 +923,7 @@
       '<button type="button" data-k="word">Word</button>' +
       '<button type="button" data-k="both" class="is-main">PDF + Word</button>' +
       '</div><div class="dio-shr-msg" aria-live="polite"></div>' +
-      '<button type="button" class="dio-shr-x" data-k="x">بند کریں</button></div>';
+      '<button type="button" class="dio-shr-x dio-btn" data-k="x" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button></div>';
     document.body.appendChild(box);
     var msg = box.querySelector('.dio-shr-msg');
     box.addEventListener('click', async function (ev) {

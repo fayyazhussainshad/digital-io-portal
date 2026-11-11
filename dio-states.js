@@ -82,6 +82,8 @@
     '\ud83d\udcbe':'save',   '\u2705':'check',         '\ud83d\udd04':'refresh',
     '\u2696':'court',         '\ud83d\udd0d':'search', '\ud83d\udcda':'list'
   };
+  // TASK 19: بٹن کے نشان اسی ایک سیٹ (dio-icons.js) سے
+  function _icoSet(k) { return (typeof window.dioIco === 'function') ? window.dioIco(k) : ''; }
   function _icon(key, size, extra) {
     var name = ICON_PATHS[key] ? key
              : (ICON_ALIAS[String(key || '').replace(/\ufe0f/g, '').charAt(0)] || 'doc');
@@ -117,7 +119,7 @@
       title = title || 'کوئی ریکارڈ نہیں';
       var actionBtn = '';
       if (action && action.label && action.onClick) {
-        actionBtn = '<button type="button" onclick="' + _esc(action.onClick) + '" style="' + STYLE.btn + URDU_FONT + '">' + _esc(action.label) + '</button>';
+        actionBtn = '<button type="button" class="dio-btn dio-btn--pri" data-act="add" onclick="' + _esc(action.onClick) + '" style="margin-top:10.5pt;">' + _esc(action.label) + '</button>';
       }
       return '<div style="' + STYLE.box + URDU_FONT + '">' +
              '  <div style="' + STYLE.icon + '">' + _icon(icon, 44) + '</div>' +
@@ -137,7 +139,7 @@
       } catch (_) { /* logging khud kabhi na phatte */ }
       var retry = '';
       if (retryFnName) {
-        retry = '<button type="button" onclick="' + _esc(retryFnName) + '()" style="' + STYLE.btn + URDU_FONT + '">دوبارہ کوشش کریں</button>';
+        retry = '<button type="button" class="dio-btn dio-btn--pri" data-act="refresh" title="دوبارہ کوشش کریں" aria-label="دوبارہ کوشش کریں" onclick="' + _esc(retryFnName) + '()" style="margin-top:10.5pt;">' + _icoSet('refresh') + '<span>دوبارہ کوشش کریں</span></button>';
       }
       return '<div style="' + STYLE.box + URDU_FONT + '">' +
              '  <div style="' + STYLE.icon + '">' + _icon('alert', 44) + '</div>' +
@@ -161,7 +163,7 @@
              '  <div style="' + STYLE.icon + '">' + _icon('clock', 44) + '</div>' +
              '  <div style="' + STYLE.title + URDU_FONT + '">سیشن ختم ہو چکا</div>' +
              '  <div style="' + STYLE.hint + URDU_FONT + '">حفاظت کے لیے دوبارہ لاگ ان کریں</div>' +
-             '  <button type="button" onclick="(window.__dioTabChild ? window.top : window).location.reload()" style="' + STYLE.btn + URDU_FONT + '">دوبارہ لاگ ان</button>' +
+             '  <button type="button" class="dio-btn dio-btn--pri" data-act="lock" title="دوبارہ لاگ ان" aria-label="دوبارہ لاگ ان" onclick="(window.__dioTabChild ? window.top : window).location.reload()" style="margin-top:10.5pt;">' + _icoSet('lock') + '<span>دوبارہ لاگ ان</span></button>' +
              '</div>';
     },
 

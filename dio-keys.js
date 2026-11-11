@@ -1229,7 +1229,7 @@
     const o = document.createElement('div');
     o.id = 'dio-keys-help'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true'); o.setAttribute('aria-label', 'شارٹ کٹس');
     o.innerHTML = '<div class="dkh-card"><div class="dkh-top"><h2>شارٹ کٹس — MS Word کی طرح، پورے سسٹم میں</h2>' +
-      '<button type="button" class="dkh-x" aria-label="بند کریں" title="بند کریں (Esc)">✕</button></div>' +
+      '<button type="button" class="dkh-x dio-btn dio-btn--i" aria-label="بند کریں" title="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i></button></div>' +
       '<table><tbody>' + HELP.map(r => '<tr><td>' + r[0] + '</td><td class="dkh-k">' + (r[1] ? KB(r[1]) : '') + '</td></tr>').join('') + '</tbody></table>' +
       '<div class="dkh-note">براؤزر کی ٹیب میں یہ کلیدیں براؤزر کی اپنی ہیں — کوئی ویب سائٹ انہیں استعمال نہیں کر سکتی: ' +
       KB('Ctrl+N / Ctrl+T / Ctrl+W / Ctrl+Shift+N / Ctrl+Shift+T / Ctrl+Tab / Ctrl+Shift+Tab') + ' (انسٹال شدہ Digital IO میں Ctrl+T / Ctrl+W / Ctrl+Tab ہماری ٹیبوں کے لیے)۔ ' +

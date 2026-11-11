@@ -340,7 +340,7 @@ function openChangePasswordModal(){
     `<div style="margin-bottom:12px;font-size:9pt;color:var(--text-muted);">نیا پاسورڈ درج کریں۔ آپ لاگ ان ہی رہیں گے۔</div>
      <div style="margin-bottom:10px;"><label style="display:block;font-size:8.25pt;color:var(--text-muted);margin-bottom:4px;font-weight:600;">نیا پاسورڈ</label><input type="password" id="cp-new" style="width:100%;padding:9px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:9.75pt;box-sizing:border-box;" placeholder="کم از کم 8 حروف"></div>
      <div><label style="display:block;font-size:8.25pt;color:var(--text-muted);margin-bottom:4px;font-weight:600;">نیا پاسورڈ دوبارہ</label><input type="password" id="cp-confirm" style="width:100%;padding:9px 12px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);font-size:9.75pt;box-sizing:border-box;" placeholder="دوبارہ درج کریں"></div>`,
-    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
      <button class="btn btn-primary" onclick="doChangePassword()">پاسورڈ اپ ڈیٹ کریں</button>`
   );
 }

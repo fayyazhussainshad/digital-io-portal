@@ -85,9 +85,9 @@ test('v574: پرانی محفوظ ضمنیوں کے نام نئی اقسام پ�
 
 test('v575: ضمنی کی پٹی چھپی؛ کاغذ کے کونوں میں ▾ (دائیں = ضمنی کی قسم، بائیں = نوعیت)؛ نیچے 0.6cm', () => {
   assert.ok(/<div id="zf-tools" class="no-print zf-tools\$\{inDocView \? '' : ' zf-tools-show'\}">/.test(Z), 'پرانی پٹی صرف دستاویز کی پٹی نہ ہو تو');
-  assert.ok(/id="zf-save-btn" class="btn btn-primary btn-sm dio-modbtn"/.test(Z) && /data-dio-print onclick="_printZimniCurrent\(\)"/.test(Z), 'محفوظ / پرنٹ کے بٹن DOM میں (چھپے)');
+  assert.ok(/id="zf-save-btn" class="btn btn-primary btn-sm dio-modbtn[^"]*"/.test(Z) && /data-dio-print onclick="_printZimniCurrent\(\)"/.test(Z), 'محفوظ / پرنٹ کے بٹن DOM میں (چھپے)');
   assert.ok(!/id="zf-corners"/.test(Z) && !/id="zf-khulasa"/.test(Z), 'کاغذ کے اوپر کوئی قطار / خلاصے کا خانہ نہیں');
-  assert.ok(/id="zf-cp-main" class="zf-cpick no-print" onclick="_zimniCornerMenu\(event,'main'\)"/.test(Z) && /id="zf-cp-sub" class="zf-cpick no-print" onclick="_zimniCornerMenu\(event,'sub'\)"/.test(Z));
+  assert.ok(/id="zf-cp-main" class="zf-cpick no-print[^"]*" onclick="_zimniCornerMenu\(event,'main'\)"/.test(Z) && /id="zf-cp-sub" class="zf-cpick no-print[^"]*" onclick="_zimniCornerMenu\(event,'sub'\)"/.test(Z));
   assert.ok(/if \(m\) \{ m\.style\.top = top \+ 'px'; m\.style\.left = \(left \+ r\.width - 4 - m\.offsetWidth\) \+ 'px'; \}   \/\/ دائیں کونا/.test(Z), 'ضمنی کی قسم = دائیں کونا');
   assert.ok(/if \(u\) \{ u\.style\.top = top \+ 'px'; u\.style\.left = \(left \+ 4\) \+ 'px'; \}/.test(Z), 'نوعیت = بائیں کونا');
   assert.ok(/^const ZF_PAGE_BOT_CM = 0\.6;$/m.test(Z));
@@ -101,7 +101,7 @@ test('v574: کوائف موقع و مال — مقدمے کے ساتھ (آلہ +
   assert.ok(/DIOSync\.ud\.queue\('case_kawaif', cid, 'fields', rec\)/.test(Z) && /localStorage\.setItem\(_ZF_KW_LS \+ cid, JSON\.stringify\(\{ fields: rec \}\)\)/.test(Z));
   assert.ok(/'dio_case_kawaif_', 'dio_cctx_'/.test(A), 'لاگ آؤٹ پر صاف');
   assert.ok(/'\/zimni\.js',\s*'\/zimni-templates\.js'/.test(W), 'service worker کی فہرست میں');
-  assert.ok(/^const CACHE_NAME = 'digital-io-v575';/m.test(W));
+  assert.ok(/^const CACHE_NAME = 'digital-io-v(\d+)';/m.test(W) && +/digital-io-v(\d+)/.exec(W)[1] >= 575);   // TASK 19: ہر deploy پر نیا نسخہ
 });
 
 test('v574: قطار صفحے پر ٹوٹے تو خانے کی نچلی padding کی جگہ پہلے ہی چھوڑی جائے (A4 پر بیچ میں خالی صفحہ نہیں)', () => {

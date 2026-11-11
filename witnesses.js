@@ -130,7 +130,7 @@ function _witPart(type) {
   return `
   <section class="dio-2p-part" id="wit-part-${type}" data-type="${type}">
     <div class="dio-2p-head" style="border-bottom:2px solid ${color};">
-      <div class="dio-2p-btn"><button class="btn btn-primary btn-sm" onclick="_openWitnessForm(null,'${type}')">+ گواہ درج کریں</button></div>
+      <div class="dio-2p-btn"><button class="btn btn-primary btn-sm dio-btn dio-btn--pri" onclick="_openWitnessForm(null,'${type}')" title="+ گواہ درج کریں" aria-label="+ گواہ درج کریں" data-act="add"><span>+ گواہ درج کریں</span></button></div>
       <div class="dio-hs1 dio-2p-title" style="color:${color};">${heading}</div>
       <div aria-hidden="true"></div>
     </div>
@@ -219,9 +219,9 @@ function _renderWitnessList(list, type) {
       <div data-l="پیشہ">${w.profession?esc(w.profession):'—'}</div>
       <div data-l="حیثیت">${esc(statusLabel)}</div>
       <div class="wit-actions">
-        <button title="ترمیم" aria-label="ترمیم" class="btn btn-secondary btn-sm" style="padding:2px 8px;" onclick="_openWitnessForm('${w.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>
+        <button title="ترمیم" aria-label="ترمیم" class="btn btn-secondary btn-sm dio-btn dio-btn--i" style="padding:2px 8px;" onclick="_openWitnessForm('${w.id}')" data-act="edit"><i class="dio-i" data-ico="edit" aria-hidden="true"></i></button>
         <button id="wit-prev-btn-${w.id}" title="سابقہ ریکارڈ" class="btn btn-secondary btn-sm" style="padding:2px 8px;white-space:nowrap;" onclick="_witPrevRecord('${w.id}')">سابقہ ریکارڈ</button>
-        <button title="حذف" aria-label="حذف" class="btn btn-danger btn-sm" style="padding:2px 8px;" onclick="_deleteWitness('${w.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
+        <button title="حذف" aria-label="حذف" class="btn btn-danger btn-sm dio-btn dio-btn--i dio-btn--del" style="padding:2px 8px;" onclick="_deleteWitness('${w.id}')" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i></button>
       </div>
     </div>`;
   }).join('');

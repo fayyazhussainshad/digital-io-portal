@@ -17,9 +17,9 @@ async function _renderFIRView() {
         متن ایف آئی آر — مقدمہ ${esc(c.fir_number||'')}
       </div>
       <div style="display:flex;gap:6px;direction:rtl;flex-wrap:wrap;">
-        <button class="btn btn-primary" onclick="_openFIREditor()">+ متن درج کریں</button>
-        <button class="btn btn-secondary dio-modbtn" onclick="_printFIRAll()">پرنٹ</button>
-        <button class="btn btn-secondary" onclick="_shareFIRAll()">شیئر</button>
+        <button class="btn btn-primary dio-btn dio-btn--pri" onclick="_openFIREditor()" title="+ متن درج کریں" aria-label="+ متن درج کریں" data-act="add"><span>+ متن درج کریں</span></button>
+        <button class="btn btn-secondary dio-modbtn dio-btn" onclick="_printFIRAll()" title="پرنٹ" aria-label="پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>پرنٹ</span></button>
+        <button class="btn btn-secondary dio-btn" onclick="_shareFIRAll()" title="شیئر" aria-label="شیئر" data-act="share"><i class="dio-i" data-ico="share" aria-hidden="true"></i><span>شیئر</span></button>
       </div>
     </div>
 
@@ -76,10 +76,10 @@ async function _loadFIREntries() {
             </td>
             <td style="padding:8px;text-align:center;vertical-align:top;">
               <div style="display:flex;flex-direction:column;gap:4px;align-items:center;">
-                <button class="btn btn-primary btn-sm" onclick="_editFIREntry('${e.id}')" title="ترمیم">ترمیم</button>
-                <button class="btn btn-secondary btn-sm" onclick="_printFIREntry('${e.id}')" title="پرنٹ">پرنٹ</button>
-                <button class="btn btn-secondary btn-sm" onclick="_shareFIREntry('${e.id}')" title="شیئر">شیئر</button>
-                <button aria-label="حذف" class="btn btn-danger btn-sm" onclick="_deleteFIREntry('${e.id}')" title="حذف"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
+                <button class="btn btn-primary btn-sm dio-btn" onclick="_editFIREntry('${e.id}')" title="ترمیم" aria-label="ترمیم" data-act="edit"><i class="dio-i" data-ico="edit" aria-hidden="true"></i><span>ترمیم</span></button>
+                <button class="btn btn-secondary btn-sm dio-btn" onclick="_printFIREntry('${e.id}')" title="پرنٹ" aria-label="پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>پرنٹ</span></button>
+                <button class="btn btn-secondary btn-sm dio-btn" onclick="_shareFIREntry('${e.id}')" title="شیئر" aria-label="شیئر" data-act="share"><i class="dio-i" data-ico="share" aria-hidden="true"></i><span>شیئر</span></button>
+                <button aria-label="حذف" class="btn btn-danger btn-sm dio-btn dio-btn--i dio-btn--del" onclick="_deleteFIREntry('${e.id}')" title="حذف" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i></button>
               </div>
             </td>
           </tr>`).join('')}
@@ -139,8 +139,8 @@ function _openMisalEditorDirect(docId) {
 async function _deleteFIREntry(entryId) {
   openModal('FIR حذف کریں',
     `<p style="color:var(--text-secondary);font-size:9.75pt;">کیا آپ یہ FIR متن مستقل حذف کرنا چاہتے ہیں؟</p>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-     <button class="btn btn-danger" onclick="closeModal();_doDeleteFIR('${entryId}')">حذف کریں</button>`
+    `<button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+     <button class="btn btn-danger dio-btn dio-btn--danger" onclick="closeModal();_doDeleteFIR('${entryId}')" title="حذف" aria-label="حذف" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i><span>حذف</span></button>`
   );
 }
 
@@ -324,7 +324,7 @@ async function _startVoice() {
     btn.style.background  = '#ef4444';
     btn.style.color       = '#fff';
     btn.style.borderColor = '#ef4444';
-    btn.textContent       = 'روکیں';
+    dioBtnText(btn, 'روکیں');
   }
 
   // Status bar
@@ -351,7 +351,7 @@ function _stopVoice() {
     btn.style.background  = '';
     btn.style.color       = '';
     btn.style.borderColor = '';
-    btn.textContent       = 'آواز';
+    dioBtnText(btn, 'آواز سے لکھیں');
   }
 
   const badge = document.getElementById('voice-status');

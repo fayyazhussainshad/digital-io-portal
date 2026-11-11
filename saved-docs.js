@@ -284,8 +284,8 @@ async function dioRenderDocList(docType, cfg) {
       <td style="padding:10px 8px;text-align:center;font-size:10.5pt;">${esc2(title)}</td>
       <td style="padding:10px 8px;text-align:center;font-size:9pt;color:var(--text-muted);white-space:nowrap;"><bdi class="dio-ltr">${esc2(dt.date)}</bdi><br><bdi class="dio-ltr">${esc2(dt.time)}</bdi></td>
       <td style="padding:8px;text-align:center;white-space:nowrap;">
-        <button class="btn btn-primary btn-sm" onclick="_sdOpen('${docType}','${r.id}')" title="کھولیں">کھولیں</button>
-        <button aria-label="حذف" class="btn btn-danger btn-sm" onclick="_sdDelete('${docType}','${r.id}')" title="حذف"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
+        <button class="btn btn-primary btn-sm dio-btn" onclick="_sdOpen('${docType}','${r.id}')" title="کھولیں" aria-label="کھولیں" data-act="open"><i class="dio-i" data-ico="open" aria-hidden="true"></i><span>کھولیں</span></button>
+        <button aria-label="حذف" class="btn btn-danger btn-sm dio-btn dio-btn--i dio-btn--del" onclick="_sdDelete('${docType}','${r.id}')" title="حذف" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i></button>
       </td>
     </tr>`;
   }).join('');

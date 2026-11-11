@@ -100,7 +100,7 @@ def run(pg, tag):
     pg.screenshot(path=f'{OUT}/{tag}_i01_index_empty.png', full_page=False)
     check(f'{tag} no editing toolbar on index', m and not m['toolbar'], m and m['toolbar'])
     check(f'{tag} no saved-files box on index', not m['savedBox'])
-    check(f'{tag} «محفوظ» hidden for index, no «منظوری» button anywhere (v553)', 'محفوظ' in m['hiddenBar'] and not m['approvalBtn'] and 'پرنٹ' not in m['hiddenBar'], [m['hiddenBar'], m['approvalBtn']])
+    check(f'{tag} «محفوظ» hidden for index, no «منظوری» button anywhere (v553)', any('محفوظ' in x for x in m['hiddenBar']) and not m['approvalBtn'] and 'پرنٹ' not in m['hiddenBar'], [m['hiddenBar'], m['approvalBtn']])
     check(f'{tag} no zimni yet → serial column empty', all(s == '' for s in m['zSerials']) and len(m['zSerials']) == 18, m['zSerials'][:4])
     check(f'{tag} zimni table: 2 groups × 3 columns', m['zCols'] == 6, m['zCols'])
     check(f'{tag} zimni: IO-name column wider than date column', m['zW'][2] > m['zW'][1], m['zW'])
@@ -193,7 +193,7 @@ def run(pg, tag):
     check(f'{tag} other documents keep محفوظ + toolbar', 'محفوظ' not in hb and tb, (hb, tb))
     pg.evaluate("_dioSwitchTab('index_naql')"); pg.wait_for_timeout(900)
     hb2 = pg.evaluate("[...document.querySelectorAll('#dio-dv-bar button')].filter(b => getComputedStyle(b).display === 'none').map(b => b.textContent.trim())")
-    check(f'{tag} back on index tab → «محفوظ» hidden again', 'محفوظ' in hb2, hb2)
+    check(f'{tag} back on index tab → «محفوظ» hidden again', any('محفوظ' in x for x in hb2), hb2)   # TASK 19: نام «محفوظ کریں»
     pg.evaluate("_dioExitDocView()"); pg.wait_for_timeout(300)
 
 

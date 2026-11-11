@@ -423,7 +423,7 @@ html:not([data-theme="light"]) #login-screen .dio-lc-hint { color: #f5b942; }
   }
   .modal-header .modal-title, #modal-title { color: #ffffff !important; }
   .modal-header .modal-close,
-  #modal-backdrop .modal-card > div:first-child > button { color: #dbe5f3 !important; }
+  #modal-backdrop .modal-card > div:first-child > button:not(.dio-btn) { color: #dbe5f3 !important; }
 
   /* ── Neeche ki patti ── */
   #main-app .bottombar {

@@ -57,7 +57,7 @@ async function renderAhkamat(container){
   <div style="max-width:100%;margin:0;direction:rtl;">
     <!-- سرخی + تلاش + (ایڈمن) شامل -->
     <div class="page-header">
-      ${canMng ? `<button onclick="_ahkOpenAdd()" class="btn btn-primary dio-add-btn">+ حکم درج کریں</button>` : ''}
+      ${canMng ? `<button onclick="_ahkOpenAdd()" class="btn btn-primary dio-add-btn dio-btn dio-btn--pri" title="+ حکم درج کریں" aria-label="+ حکم درج کریں" data-act="add"><span>+ حکم درج کریں</span></button>` : ''}
       <div>
         <div class="page-title">احکامات و ضوابط</div>
         <div class="page-subtitle">سرکلر، احکامات اور طریقہ کار</div>
@@ -65,8 +65,8 @@ async function renderAhkamat(container){
       <input id="ahk-main-search" type="text" dir="rtl" placeholder="عنوان، نمبر یا متن تلاش کریں…"
         oninput="_ahkFilter(this.value)"
         style="flex:1;min-width:180px;padding:10px 16px;border:1px solid var(--border);border-radius:24px;font-size:11.25pt;outline:none;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq';">
-      <button onclick="_ahkPrintList()" class="btn btn-secondary btn-sm" title="موجودہ فہرست پرنٹ کریں">فہرست</button>
-      <button onclick="dioSharePrint(()=>_ahkPrintList(),'احکامات کی فہرست')" class="btn btn-secondary btn-sm" title="فہرست شیئر — PDF / Word">شیئر</button>
+      <button onclick="_ahkPrintList()" class="btn btn-secondary btn-sm dio-btn" title="فہرست پرنٹ" aria-label="فہرست پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>فہرست پرنٹ</span></button>
+      <button onclick="dioSharePrint(()=>_ahkPrintList(),'احکامات کی فہرست')" class="btn btn-secondary btn-sm dio-btn" title="فہرست شیئر" aria-label="فہرست شیئر" data-act="share"><i class="dio-i" data-ico="share" aria-hidden="true"></i><span>فہرست شیئر</span></button>
     </div>
 
     <!-- درجہ بندی chips -->
@@ -156,7 +156,7 @@ function _ahkRender(){
         <div style="font-size:45pt;margin-bottom:14px;"><svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M8 4h8v3H8z"/><path d="M9 4H6v17h12V4h-3"/><path d="M9 11h6"/><path d="M9 15h6"/></svg></div>
         <div style="font-size:13.5pt;font-weight:800;margin-bottom:8px;">${empty?'ابھی کوئی حکم شامل نہیں':'اس تلاش/درجہ بندی میں کچھ نہیں ملا'}</div>
         <div style="font-size:10.5pt;margin-bottom:${canMng&&empty?'22px':'0'};">${empty?'احکامات، سرکلر اور SOPs یہاں محفوظ ہوں گے':'دوسری درجہ بندی یا تلاش آزمائیں'}</div>
-        ${canMng&&empty?`<button onclick="_ahkOpenAdd()" class="btn btn-primary">+ حکم درج کریں</button>`:''}
+        ${canMng&&empty?`<button onclick="_ahkOpenAdd()" class="btn btn-primary dio-btn dio-btn--pri" title="+ حکم درج کریں" aria-label="+ حکم درج کریں" data-act="add"><span>+ حکم درج کریں</span></button>`:''}
       </div>`;
     return;
   }
@@ -183,10 +183,10 @@ function _ahkRender(){
       </td>
       <td style="padding:10px 8px;text-align:center;">
         <div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap;">
-          ${(hasText||hasFile)?`<button aria-label="پڑھیں" onclick="_ahkView('${a.id}')" title="پڑھیں" style="padding:5px 9px;background:var(--accent);color:#fff;border:1px solid var(--accent);border-radius:6px;cursor:pointer;font-size:9.75pt;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg></button>`:''}
-          ${(hasText||hasFile)?`<button aria-label="پرنٹ" onclick="_ahkView('${a.id}',true)" title="پرنٹ" style="padding:5px 9px;background:var(--text-secondary);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:9.75pt;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M7 9.5V3.5h10v6"/><path d="M4.5 9.5h15v7h-15z"/><path d="M7 13.5h10V21H7z"/></svg></button>`:''}
-          ${canMng?`<button aria-label="ترمیم" onclick="_ahkEdit('${a.id}')" title="ترمیم" style="padding:5px 9px;background:var(--amber);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:9.75pt;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>`:''}
-          ${canMng?`<button aria-label="حذف" onclick="_ahkDelete('${a.id}')" title="حذف" style="padding:5px 9px;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:9.75pt;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>`:''}
+          ${(hasText||hasFile)?`<button class="dio-btn dio-btn--i" aria-label="دیکھیں" onclick="_ahkView('${a.id}')" title="دیکھیں" style="padding:5px 9px;background:var(--accent);color:#fff;border:1px solid var(--accent);border-radius:6px;cursor:pointer;font-size:9.75pt;" data-act="view"><i class="dio-i" data-ico="view" aria-hidden="true"></i></button>`:''}
+          ${(hasText||hasFile)?`<button class="dio-btn dio-btn--i" aria-label="پرنٹ" onclick="_ahkView('${a.id}',true)" title="پرنٹ" style="padding:5px 9px;background:var(--text-secondary);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:9.75pt;" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i></button>`:''}
+          ${canMng?`<button class="dio-btn dio-btn--i" aria-label="ترمیم" onclick="_ahkEdit('${a.id}')" title="ترمیم" style="padding:5px 9px;background:var(--amber);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:9.75pt;" data-act="edit"><i class="dio-i" data-ico="edit" aria-hidden="true"></i></button>`:''}
+          ${canMng?`<button class="dio-btn dio-btn--i dio-btn--del" aria-label="حذف" onclick="_ahkDelete('${a.id}')" title="حذف" style="padding:5px 9px;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:9.75pt;" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i></button>`:''}
         </div>
       </td>
     </tr>`;
@@ -217,8 +217,8 @@ function _ahkOpenAdd(){
   if (!_ahkCanManage()) { showToast('صرف ایڈمن/ایس ایچ او نیا حکم شامل کر سکتا ہے','error'); return; }
   openModal('نیا اندراج — حکم', _ahkFormHtml(null),
     `<div style="display:flex;gap:8px;direction:rtl;">
-      <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-      <button class="btn btn-primary" id="ahk-save-btn" onclick="_ahkSave()">محفوظ کریں</button>
+      <button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+      <button class="btn btn-primary dio-btn dio-btn--pri" id="ahk-save-btn" onclick="_ahkSave()" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
     </div>`);
 }
 
@@ -228,8 +228,8 @@ function _ahkEdit(id){
   if (!a) return;
   openModal('حکم میں ترمیم', _ahkFormHtml(a),
     `<div style="display:flex;gap:8px;direction:rtl;">
-      <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-      <button class="btn btn-primary" id="ahk-save-btn" onclick="_ahkSave('${id}')">محفوظ کریں</button>
+      <button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+      <button class="btn btn-primary dio-btn dio-btn--pri" id="ahk-save-btn" onclick="_ahkSave('${id}')" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
     </div>`);
 }
 
@@ -288,7 +288,7 @@ async function _ahkSave(id){
   if (!body && !file && !hadFile) { showToast('متن یا فائل میں سے کم از کم ایک ضروری ہے','error'); return; }
   if (!navigator.onLine) { showToast('احکامات شامل/تبدیل کرنے کے لیے انٹرنیٹ ضروری ہے','error'); return; }
 
-  if (btn) { btn.disabled = true; btn.textContent = 'محفوظ ہو رہا ہے...'; }
+  if (btn) { btn.disabled = true; dioBtnText(btn, 'محفوظ ہو رہا ہے...'); }
 
   try {
     const rec = {
@@ -339,7 +339,7 @@ async function _ahkSave(id){
     _ahkRender();
   } catch(e){
     showToast('' + (e.message || 'محفوظ نہیں ہو سکا'),'error');
-    if (btn) { btn.disabled = false; btn.textContent = 'محفوظ کریں'; }
+    if (btn) { btn.disabled = false; dioBtnText(btn, 'محفوظ کریں'); }
   }
 }
 
@@ -385,12 +385,12 @@ function _ahkTextReader(a, autoPrint){
       <div style="font-weight:800;font-size:12pt;color:var(--text-primary);flex:1;min-width:140px;">${_ahkEsc(a.title)}</div>
       <input id="ahk-internal-search" type="text" dir="rtl" placeholder="متن میں تلاش کریں..." oninput="_ahkInternalSearch(this.value)"
         style="padding:7px 12px;border:1px solid var(--border);border-radius:20px;font-size:9.75pt;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq';min-width:150px;">
-      <button onclick="_ahkNavMatch(-1)" title="پچھلا" aria-label="پچھلا" style="border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);border-radius:8px;padding:6px 9px;cursor:pointer;display:inline-flex;align-items:center;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
-      <button onclick="_ahkNavMatch(1)" title="اگلا" aria-label="اگلا" style="border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);border-radius:8px;padding:6px 9px;cursor:pointer;display:inline-flex;align-items:center;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+      <button class="dio-btn dio-btn--i" onclick="_ahkNavMatch(-1)" title="پچھلا" aria-label="پچھلا" style="border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);border-radius:8px;padding:6px 9px;cursor:pointer;display:inline-flex;align-items:center;" data-act="prev"><i class="dio-i" data-ico="prev" aria-hidden="true"></i></button>
+      <button class="dio-btn dio-btn--i" onclick="_ahkNavMatch(1)" title="اگلا" aria-label="اگلا" style="border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);border-radius:8px;padding:6px 9px;cursor:pointer;display:inline-flex;align-items:center;" data-act="next"><i class="dio-i" data-ico="next" aria-hidden="true"></i></button>
       <span id="ahk-search-count" style="font-size:9pt;color:#6c757d;"></span>
-      <button onclick="_ahkPrintOne('${a.id}')" style="background:var(--accent);color:#fff;border:1px solid var(--accent);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:9.75pt;">پرنٹ</button>
-      <button onclick="_ahkShareOne('${a.id}')" title="شیئر — PDF / Word" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:9.75pt;">شیئر</button>
-      <button onclick="_ahkCloseReader()" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:9.75pt;font-weight:700;">بند</button>
+      <button class="dio-btn" onclick="_ahkPrintOne('${a.id}')" style="background:var(--accent);color:#fff;border:1px solid var(--accent);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:9.75pt;" title="پرنٹ" aria-label="پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>پرنٹ</span></button>
+      <button class="dio-btn" onclick="_ahkShareOne('${a.id}')" title="شیئر" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:9.75pt;" aria-label="شیئر" data-act="share"><i class="dio-i" data-ico="share" aria-hidden="true"></i><span>شیئر</span></button>
+      <button class="dio-btn" onclick="_ahkCloseReader()" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:9.75pt;font-weight:700;" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>
     </div>
     <div id="ahk-reader-body" style="flex:1;overflow:auto;background:#fff;">
       <style>
@@ -427,7 +427,7 @@ async function _ahkFileReader(a, url, isPdf, autoPrint){
       <a href="${url}" target="_blank" style="background:var(--accent);color:#fff;border-radius:8px;padding:7px 12px;text-decoration:none;font-size:9.75pt;">براؤزر</a>
       <a href="${gview}" target="_blank" style="background:#ea4335;color:#fff;border-radius:8px;padding:7px 12px;text-decoration:none;font-size:9.75pt;">Google Docs</a>
       <a href="${url}" download="${_ahkEsc(a.file_display_name||a.title||'ahkam')}" style="background:var(--green);color:#fff;border-radius:8px;padding:7px 12px;text-decoration:none;font-size:9.75pt;">ڈاؤنلوڈ</a>
-      <button onclick="_ahkCloseReader()" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:9.75pt;font-weight:700;">بند</button>
+      <button class="dio-btn" onclick="_ahkCloseReader()" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:9.75pt;font-weight:700;" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>
     </div>
     <div id="ahk-reader-body" style="flex:1;overflow:auto;background:#fff;">
       <div style="text-align:center;padding:40px;color:#6c757d;">فائل کھل رہی ہے...</div>

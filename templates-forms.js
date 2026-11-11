@@ -67,18 +67,10 @@
     return null;
   }
 
-  function btn(color, label, on, svg) {
-    return '<button type="button" aria-label="' + label + '" title="' + label + '" onclick="' + on + '" ' +
-      'style="padding:5px 9px;background:' + color + ';color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:9.75pt;">' + svg + '</button>';
+  // TASK 19: وہی مشترکہ بٹن (مقدمہ کی فہرست والا) — نشان اسی سیٹ سے، اشارہ اسی کام کا معیاری نام
+  function btn(kind, label, on) {
+    return dioBtn(kind, on, (kind === 'restore') ? { title: label } : {});
   }
-  var IC = {
-    open: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg>',
-    print: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M7 9.5V3.5h10v6"/><path d="M4.5 9.5h15v7h-15z"/><path d="M7 13.5h10V21H7z"/></svg>',
-    share: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="M8.2 10.8l7.6-4M8.2 13.2l7.6 4"/></svg>',
-    reset: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></svg>',
-    del: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg>'
-  };
-
   // ── فہرست ────────────────────────────────────────────────────
   function render() {
     var wrap = document.getElementById('tpl-forms-wrap');
@@ -99,11 +91,11 @@
         '<td class="gp">' + E(f.group || '') + '</td>' +
         '<td class="st">' + state + '</td>' +
         '<td class="ac"><div>' +
-        btn('#1a73e8', 'کھولیں / ترمیم', "DIOFormsUI.open('" + id + "')", IC.open) +
-        btn('#6c757d', 'پرنٹ', "DIOFormsUI.print('" + id + "')", IC.print) +
-        btn('#0f766e', 'شیئر — PDF / Word', "DIOFormsUI.share('" + id + "')", IC.share) +
-        (ed && !f.auto ? btn('#fd7e14', 'اصل فارم بحال کریں', "DIOFormsUI.reset('" + id + "')", IC.reset) : '') +
-        (f.auto ? btn('#dc3545', 'خودکار فارم ہٹائیں', "DIOFormsUI.removeAuto('" + id + "')", IC.del) : '') +
+        btn('edit', 'ترمیم', "DIOFormsUI.open('" + id + "')") +
+        btn('print', 'پرنٹ', "DIOFormsUI.print('" + id + "')") +
+        btn('share', 'شیئر', "DIOFormsUI.share('" + id + "')") +
+        (ed && !f.auto ? btn('restore', 'اصل فارم بحال کریں', "DIOFormsUI.reset('" + id + "')") : '') +
+        (f.auto ? btn('delete', 'حذف', "DIOFormsUI.removeAuto('" + id + "')") : '') +
         '</div></td></tr>';
     }).join('');
     wrap.innerHTML = head +
@@ -136,15 +128,15 @@
     ov.innerHTML =
       '<div class="dio-fv-bar no-print">' +
       '<div class="dio-fv-btns">' +
-      '<button type="button" onclick="DIOFormsUI.save()">محفوظ</button>' +
-      '<button type="button" data-dio-print onclick="DIOFormsUI.printOpen()">پرنٹ</button>' +
-      '<button type="button" onclick="DIOFormsUI.shareOpen()">شیئر — PDF / Word</button>' +
+      '<button class="dio-btn" type="button" onclick="DIOFormsUI.save()" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>' +
+      '<button class="dio-btn" type="button" data-dio-print onclick="DIOFormsUI.printOpen()" title="پرنٹ" aria-label="پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>پرنٹ</span></button>' +
+      '<button class="dio-btn" type="button" onclick="DIOFormsUI.shareOpen()" title="شیئر" aria-label="شیئر" data-act="share"><i class="dio-i" data-ico="share" aria-hidden="true"></i><span>شیئر</span></button>' +
       (f.auto ? '' : '<button type="button" onclick="DIOFormsUI.reset(\'' + J(id) + '\', true)">اصل فارم</button>') +
       '</div>' +
       '<b class="dio-fv-title">' + E(f.name) + '</b>' +
-      '<button type="button" class="dio-fv-close" onclick="DIOFormsUI.close()">بند</button>' +
+      '<button type="button" class="dio-fv-close dio-btn" onclick="DIOFormsUI.close()" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>' +
       '</div>' +
-      '<div class="dio-fv-hint no-print">کاغذ پر کہیں بھی دبا کر لکھیں یا بدلیں — پھر «محفوظ» دبائیں۔ اصل فارم ہمیشہ «اصل فارم» سے واپس آ سکتا ہے۔</div>' +
+      '<div class="dio-fv-hint no-print">کاغذ پر کہیں بھی دبا کر لکھیں یا بدلیں — پھر «محفوظ کریں» دبائیں۔ اصل فارم ہمیشہ «اصل فارم» سے واپس آ سکتا ہے۔</div>' +
       '<div class="dio-fv-scroll" id="dio-fv-scroll"><div class="dio-fv-zoom" id="dio-fv-zoom">' +
       '<div id="dio-fv-paper" contenteditable="true" spellcheck="false" dir="rtl">' + paperHtml(f) + '</div>' +
       '</div></div>';

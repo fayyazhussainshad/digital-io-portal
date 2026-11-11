@@ -57,9 +57,9 @@ test('v568: منسلک اندرونی شیٹ (بیرونی ضمنی) اکیلے 
 
 test('v568: فہرست — ترمیم / پرنٹ / شیئر / ڈپلیکیٹ / حذف (PDF / نقل نہیں)؛ بٹن مقدمہ کی فہرست جیسے', () => {
   const L = fn('_renderZimniList');
-  assert.ok(/dioActBtn\('copy', `_dupZimni\(/.test(L), 'ڈپلیکیٹ');
+  assert.ok(/dioActBtn\('duplicate', `_dupZimni\(/.test(L), 'ڈپلیکیٹ');   // TASK 19: ڈپلیکیٹ کا اپنا نشان
   assert.ok(!/_pdfZimni|_copyZimni/.test(Z), 'PDF / نقل کے فنکشن نہیں');
-  assert.ok(/\.zt-wrap \.zt \.dio-act, \.zat-wrap \.zt \.dio-act \{/.test(read('theme-pro.css')), 'بٹن کی شکل');
+  assert.ok(/function dioActBtn\(kind, js, title\) \{\n  return dioBtn\(/.test(read('app-core.js')) && /html \.dio-btn\.dio-btn \{/.test(read('dio-ui.css')), 'بٹن کی شکل (TASK 19: ایک ہی مشترکہ بٹن)');
 });
 
 test('v568: سروس ورکر کا نیا نسخہ', () => {

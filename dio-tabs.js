@@ -523,14 +523,11 @@
     D.who = function () { return { u: currentUser, o: currentOfficer }; };
     D._state = function () { return S; };                                  // جانچ کے لیے
     var ROOT, STRIP, STAGE, SHEET, EXIT;
+    // TASK 19: نشان اسی ایک سیٹ (dio-icons.js) سے — پٹی کی شکل جوں کی توں
+    var ICO = function (k, c) { return '<i class="dio-i' + (c ? ' ' + c : '') + '" data-ico="' + k + '" aria-hidden="true"></i>'; };
     var ICON = {
-      back: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6l6 6-6 6"/><path d="M20 12H4"/></svg>',
-      fwd: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6l-6 6 6 6"/><path d="M4 12h16"/></svg>',
-      home: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5L12 4l8 6.5V20H4z"/><path d="M9.5 20v-6h5v6"/></svg>',
-      doc: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/></svg>',
-      fold: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7.5h6l2 2.5h9V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z"/></svg>',
-      list: '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>',
-      split: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/></svg>',
+      back: ICO('back'), fwd: ICO('forward'), home: ICO('home', 'ic'), doc: ICO('doc', 'ic'), fold: ICO('folder', 'ic'),
+      list: ICO('list', 'ic'), split: ICO('split'), close: ICO('close'), add: ICO('add'),
     };
     var DASH = { k: 'page', page: 'dashboard' };
 
@@ -1128,7 +1125,7 @@
         'background:var(--dio-file-2,#0b1730);border-bottom:2px solid var(--dio-brass,#c9a227);font-family:"Jameel Noori Nastaleeq";}' +
       '#dio-tabs-strip .nav{display:flex;gap:2px;align-self:center;flex-shrink:0;}' +
       '#dio-tabs-strip .nb{height:30px;min-width:34px;border:none;border-radius:8px;background:transparent;color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;padding:0 8px;font:inherit;font-size:10.5pt;}' +
-      '#dio-tabs-strip .nb svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}' +
+      '#dio-tabs-strip .nb .dio-i{width:13.5pt;height:13.5pt;flex-shrink:0;}' +
       '#dio-tabs-strip .nb:hover{background:rgba(255,255,255,.12);}' +
       '#dio-tabs-strip .nb.off{opacity:.35;}' +
       '#dio-tabs-strip .tabs{display:flex;gap:2px;align-items:flex-end;min-width:0;flex:1 1 auto;overflow:hidden;}' +
@@ -1137,7 +1134,10 @@
       '#dio-tabs-strip .dio-tab .t{overflow:hidden;text-overflow:ellipsis;flex:1 1 auto;min-width:0;padding-top:2px;}' +
       '#dio-tabs-strip .dio-tab .n{flex-shrink:0;font-size:9.75pt;opacity:.9;font-family:Arial,sans-serif;}' +
       '#dio-tabs-strip .sep,#dio-tabs-sheet .sep{opacity:.6;flex-shrink:0;}' +
-      '#dio-tabs-strip .dio-tab .ic{width:15px;height:15px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:.85;}' +
+      '#dio-tabs-strip .dio-tab .ic{width:11.25pt;height:11.25pt;flex-shrink:0;opacity:.85;}' +
+      '#dio-tabs-strip .dio-tab .x .dio-i{width:9pt;height:9pt;}' +
+      '#dio-tabs-strip .plus .dio-i{width:13.5pt;height:13.5pt;vertical-align:middle;}' +
+      '#dio-tabs-sheet .card .cx .dio-i{width:10.5pt;height:10.5pt;vertical-align:middle;}' +
       '#dio-tabs-strip .dio-tab .x{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font:9pt Arial,sans-serif;opacity:.75;flex-shrink:0;}' +
       '#dio-tabs-strip .dio-tab .x:hover{background:rgba(255,255,255,.2);opacity:1;}' +
       '#dio-tabs-strip .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#e9cf73;flex-shrink:0;}' +
@@ -1151,7 +1151,7 @@
       '#dio-tabs-strip .end{display:flex;gap:6px;align-self:center;flex-shrink:0;margin-right:6px;}' +
       '#dio-tabs-strip .split-btn{height:28px;border:1px solid rgba(255,255,255,.3);border-radius:8px;background:transparent;color:#fff;font:inherit;font-size:9.75pt;padding:0 10px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;}' +
       '#dio-tabs-strip .split-btn.on{background:#38bdf8;border-color:#38bdf8;color:#06223a;}' +
-      '#dio-tabs-strip .split-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;}' +
+      '#dio-tabs-strip .split-btn .dio-i{width:12pt;height:12pt;}' +
       '#dio-tabs-strip.m{height:48px;align-items:center;gap:4px;padding:0 6px;}' +
       '#dio-tabs-strip.m .nb{width:40px;height:40px;padding:0;}' +
       '#dio-tabs-strip.m .mtitle{flex:1;min-width:0;color:#fff;font-size:11.25pt;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-top:3px;}' +
@@ -1246,7 +1246,7 @@
           '<button type="button" class="nb' + (canFwd ? '' : ' off') + '" data-act="fwd" title="آگے" aria-label="آگے">' + ICON.fwd + '</button>' +
           '<div class="mtitle">' + (e ? title(e) : '') + (t && t.dirty ? ' <span class="dot" title="غیر محفوظ تبدیلی"></span>' : '') + '</div>' +
           '<button type="button" class="count" data-act="sheet" title="کھلی ٹیبیں" aria-label="کھلی ٹیبیں">' + S.tabs.length + '</button>' +
-          '<button type="button" class="plus" data-act="new" title="نئی ٹیب" aria-label="نئی ٹیب">+</button>';
+          '<button type="button" class="plus" data-act="new" title="نئی ٹیب" aria-label="نئی ٹیب">' + ICON.add + '</button>';
       } else {
         STRIP.className = '';
         STRIP.innerHTML =
@@ -1257,8 +1257,8 @@
             return '<div class="dio-tab' + (on ? ' on' : '') + (two ? ' split2' : '') + (tt.loading ? ' loading' : '') + '" role="tab" aria-selected="' + on + '" data-id="' + tt.id + '" title="' + esc((x.t || '') + (x.n ? ' ' + x.n : '')) + '">' +
               (ICON[x.ic] || ICON.doc) + '<span class="t">' + bidi(x.t || '…') + '</span>' + (x.n ? '<span class="sep">·</span><bdi class="n">' + esc(x.n) + '</bdi>' : '') +
               (tt.dirty ? '<span class="dot" title="غیر محفوظ تبدیلی (ضمنی / بیان کا خودکار مسودہ)"></span>' : '') +
-              '<span class="x" data-act="close" role="button" title="ٹیب بند کریں (Alt+W)" aria-label="ٹیب بند کریں">✕</span></div>';
-          }).join('') + '<button type="button" class="plus" data-act="new" title="نئی ٹیب (Alt+T)" aria-label="نئی ٹیب">+</button></div>' +
+              '<span class="x" data-act="close" role="button" title="ٹیب بند کریں (Alt+W)" aria-label="ٹیب بند کریں">' + ICON.close + '</span></div>';
+          }).join('') + '<button type="button" class="plus" data-act="new" title="نئی ٹیب (Alt+T)" aria-label="نئی ٹیب">' + ICON.add + '</button></div>' +
           '<div class="end"><button type="button" class="split-btn' + (S.split.on ? ' on' : '') + '" data-act="split" title="دو ٹیبیں ساتھ ساتھ">' + ICON.split + '<span>ساتھ ساتھ</span></button></div>';
       }
       if (S.sheet) renderSheet();
@@ -1274,7 +1274,7 @@
           var path = t.entries.slice(Math.max(0, t.idx - 2), t.idx + 1).map(function (x) { return x.t || ''; }).join(' ‹ ');
           return '<div class="card' + (t.id === S.active ? ' on' : '') + '" data-act="open" data-id="' + t.id + '"><div class="bd"><div class="tt">' + title(e) + '</div>' +
             '<div class="pth">' + bidi(path) + '</div>' + (t.dirty ? '<span class="uns">غیر محفوظ تبدیلی</span>' : '') + '</div>' +
-            '<button type="button" class="cx" data-act="close" data-id="' + t.id + '" title="بند کریں" aria-label="بند کریں">✕</button></div>';
+            '<button type="button" class="cx" data-act="close" data-id="' + t.id + '" title="بند کریں" aria-label="بند کریں">' + ICON.close + '</button></div>';
         }).join('') + '</div><div class="ft">ٹیب پر ٹیپ کریں تو وہی کھلے گی — بند صرف ✕ سے</div>';
       SHEET.classList.add('on');
     }

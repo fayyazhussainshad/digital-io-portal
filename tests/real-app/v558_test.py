@@ -229,7 +229,8 @@ def run(b, tag, ctxargs, mobile):
         check(f'{tag}: صاف پیغام «سرور پر محفوظ ہو گئی»', 'سرور پر محفوظ' in t, t)
         check(f'{tag}: کوئی بیان «چالان» (report_173) کی جدول میں نہیں گیا', pg.evaluate("(window.__db.report_173||[]).length") == 0)
         btn = pg.evaluate("document.getElementById('zfa-save-btn').textContent.trim()")
-        check(f'{tag}: محفوظ کے بعد بٹن «اپ ڈیٹ»', 'اپ ڈیٹ' in btn, btn)
+        # TASK 19 (11 نومبر 2026): ایک کام = ایک لفظ — محفوظ کے بعد بھی «محفوظ کریں» (پہلے «اپ ڈیٹ»)؛ ریکارڈ وہی (نیچے کی جانچ)
+        check(f'{tag}: محفوظ کے بعد بٹن «محفوظ کریں» (نشان سمیت)', btn == 'محفوظ کریں' and pg.evaluate("!!document.querySelector('#zfa-save-btn .dio-i[data-ico=save]')"), btn)
         pg.evaluate("""(() => { const s = document.querySelector('#ch173-doc .zfa-wit-stmt'); s.focus(); const r = document.createRange(); r.selectNodeContents(s); r.collapse(false);
             const g = getSelection(); g.removeAllRanges(); g.addRange(r); document.execCommand('insertText', false, ' ترمیم شدہ جملہ۔'); return 0; })()""")
         pg.wait_for_timeout(300)
@@ -278,20 +279,20 @@ def run(b, tag, ctxargs, mobile):
 
     # ═══ 5) فہرست — تاریخ + گواہان کے نام + حالت؛ واپس / بند ═══
     try:
-        pg.click("button:has-text('← واپس')"); pg.wait_for_timeout(1500)
+        pg.click("button[onclick='_zaBackToList()']"); pg.wait_for_timeout(1500)
         L = pg.evaluate("""(() => { const rows = [...document.querySelectorAll('.zat-wrap tbody tr')];
             return rows.map(r => ({ d: (r.querySelector('.dtc')||{}).textContent || '', w: (r.querySelector('.wit')||{}).textContent || '', st: r.textContent.includes('سرور پر محفوظ') })); })()""")
         check(f'{tag}: فہرست — تاریخ (DD/MM/YYYY)، گواہان کے نام، «سرور پر محفوظ»', len(L) == 1 and re.search(r'\d{2}/\d{2}/\d{4}', L[0]['d'])
               and 'احمد علی' in L[0]['w'] and 'غلام رسول' in L[0]['w'] and L[0]['st'], L)
         # دوسرا بیان (اگلا نمبر) — فہرست بنتی جائے
         new_za(pg); pick(pg, 'احمد علی'); pg.click('#zfa-save-btn'); pg.wait_for_timeout(1500)
-        pg.click("button:has-text('← واپس')"); pg.wait_for_timeout(1300)
+        pg.click("button[onclick='_zaBackToList()']"); pg.wait_for_timeout(1300)
         rows = za_rows(pg)
         n = pg.evaluate("document.querySelectorAll('.zat-wrap tbody tr').length")
         check(f'{tag}: دوسرا بیان — نمبر 2، فہرست میں دو قطاریں', sorted(r['sn'] for r in rows) == [1, 2] and n == 2, (rows, n))
         # بند — بیانات کا صفحہ بند
         pg.evaluate("_openZimniA(String(_zaList[0].id))"); pg.wait_for_timeout(1500)
-        pg.click("button:has-text('✕ بند')"); pg.wait_for_timeout(1300)
+        pg.click("button[onclick='_zaClose()']"); pg.wait_for_timeout(1300)
         st = pg.evaluate("({ tab: (typeof _dioActiveTab !== 'undefined' ? _dioActiveTab : null), doc: !!document.querySelector('#ch173-doc .zfa-tbl') })")
         check(f'{tag}: «✕ بند» — بیانات کا صفحہ بند (ٹیب بند، ایڈیٹر نہیں)', st['tab'] != 'statements_161' and not st['doc'], st)
     except Exception as e:
@@ -312,7 +313,7 @@ def run(b, tag, ctxargs, mobile):
         pg.evaluate("_openMisalEditor('statements_161')"); pg.wait_for_timeout(1800)
         dl = pg.evaluate("[...document.querySelectorAll('.zat-wrap tr.zt-draft')].map(r => r.textContent.replace(/\\s+/g, ' '))")
         check(f'{tag}: فہرست میں «مسودہ — ابھی محفوظ نہیں کیا گیا» (گواہ کے نام کے ساتھ)', len(dl) == 1 and 'مسودہ' in dl[0] and 'احمد علی' in dl[0], dl)
-        pg.click(".zat-wrap tr.zt-draft button[title='جاری رکھیں']"); pg.wait_for_timeout(1600)
+        pg.click(".zat-wrap tr.zt-draft button[data-act='edit']"); pg.wait_for_timeout(1600)
         back = pg.evaluate("document.querySelector('#ch173-doc .zfa-body').textContent")
         check(f'{tag}: «جاری رکھیں» — لکھا ہوا جوں کا توں واپس', 'مسودے والا جملہ' in back and 'فوری جملہ' in back)
         pg.click('#zfa-save-btn'); pg.wait_for_timeout(1500)
@@ -321,7 +322,7 @@ def run(b, tag, ctxargs, mobile):
         pg.evaluate("""(() => { const s = document.querySelector('#ch173-doc .zfa-wit-stmt'); document.getElementById('ch173-doc').focus(); const r = document.createRange(); r.selectNodeContents(s); r.collapse(false);
             const g = getSelection(); g.removeAllRanges(); g.addRange(r); document.execCommand('insertText', false, ' واپسی سے پہلے۔'); return 0; })()""")
         pg.wait_for_timeout(300)
-        pg.click("button:has-text('← واپس')"); pg.wait_for_timeout(2000)
+        pg.click("button[onclick='_zaBackToList()']"); pg.wait_for_timeout(2000)
         body = pg.evaluate("window.__db.zimni_androoni_reports[0].content.bodyHtml")
         check(f'{tag}: «واپس» پر غیر محفوظ ترمیم — پوچھ کر محفوظ', 'واپسی سے پہلے' in body and len(za_rows(pg)) == 1)
     except Exception as e:
@@ -341,7 +342,7 @@ def run(b, tag, ctxargs, mobile):
         check(f'{tag}: (عارضی خرابی کے بعد) بیان سیدھا سرور پر', len(za_rows(pg)) == 1, za_rows(pg))
         # انٹرنیٹ بند
         ctx.set_offline(True); pg.wait_for_timeout(300)
-        pg.click("button:has-text('← واپس')"); pg.wait_for_timeout(1200)
+        pg.click("button[onclick='_zaBackToList()']"); pg.wait_for_timeout(1200)
         new_za(pg); pg.wait_for_timeout(500)
         pg.evaluate("""(() => { const b = document.querySelector('#ch173-doc .zfa-body'); b.focus(); document.execCommand('insertText', false, 'آف لائن لکھا گیا بیان۔'); return 0; })()""")
         pg.evaluate("window.__toasts = []; 0")
@@ -349,7 +350,7 @@ def run(b, tag, ctxargs, mobile):
         t = ' | '.join(pg.evaluate('window.__toasts'))
         loc = pg.evaluate("_zaLocalGet('c1').filter(z => _zimniIsPending(z)).length")
         check(f'{tag}: انٹرنیٹ نہیں — بیان اسی آلے پر محفوظ («انٹرنیٹ آنے پر خود سرور پر»)', loc == 1 and 'اس آلے پر محفوظ' in t and len(za_rows(pg)) == 1, (loc, t))
-        pg.click("button:has-text('← واپس')"); pg.wait_for_timeout(1200)
+        pg.click("button[onclick='_zaBackToList()']"); pg.wait_for_timeout(1200)
         stt = pg.evaluate("[...document.querySelectorAll('.zat-wrap tbody tr')].map(r => r.textContent.includes('سرور پر بھیجنا باقی'))")
         check(f'{tag}: فہرست میں حالت «اس آلے پر محفوظ — سرور پر بھیجنا باقی»', stt.count(True) == 1, stt)
         ctx.set_offline(False); pg.wait_for_timeout(5500)       # 'online' → خود sync
@@ -362,11 +363,11 @@ def run(b, tag, ctxargs, mobile):
         new_za(pg); pick(pg, 'احمد علی'); pg.click('#zfa-save-btn'); pg.wait_for_timeout(1500)
         t = ' | '.join(pg.evaluate('window.__toasts'))
         check(f'{tag}: سرور کا رد — اصل وجہ صاف لفظوں میں، «اس آلے پر محفوظ ہے، کچھ ضائع نہیں»', 'اجازت نہیں' in t and 'ضائع نہیں' in t and len(za_rows(pg)) == 2, t[-200:])
-        pg.click("button:has-text('← واپس')"); pg.wait_for_timeout(2500)   # سرور ابھی بھی رد کر رہا ہے
+        pg.click("button[onclick='_zaBackToList()']"); pg.wait_for_timeout(2500)   # سرور ابھی بھی رد کر رہا ہے
         why = pg.evaluate("[...document.querySelectorAll('.zat-wrap .zst-why')].map(x => x.textContent)")
         check(f'{tag}: فہرست میں وجہ بھی', bool(why) and 'اجازت' in why[0], why)
         pg.evaluate("window.__opts.fail = []; window.__toasts = []; 0")
-        pg.click("button:has-text('سرور پر بھیجیں')"); pg.wait_for_timeout(2000)
+        pg.click("button:has-text('سرور پر اپ لوڈ')"); pg.wait_for_timeout(2000)
         check(f'{tag}: «⟳ سرور پر بھیجیں» — اب سرور پر', len(za_rows(pg)) == 3, za_rows(pg))
         # v558 (افسر: «لیپ ٹاپ کی ضمنیاں موبائل پر نہیں») — انٹرنیٹ مسلسل چلتا رہے تب بھی باقی بیان
         #   خود سرور پر (پہلے صرف انٹرنیٹ ٹوٹ کر واپس آنے پر)؛ یہاں ہر منٹ والی کوشش سیدھی بلائی گئی

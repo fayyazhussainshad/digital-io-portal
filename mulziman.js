@@ -141,7 +141,7 @@ function _accPart(type) {
   return `
   <section class="dio-2p-part" id="acc-part-${type}" data-type="${type}">
     <div class="dio-2p-head" style="border-bottom:2px solid ${color};">
-      <div class="dio-2p-btn"><button class="btn btn-primary btn-sm" onclick="_openAccusedForm(null,'${type}')">+ ملزم درج کریں</button></div>
+      <div class="dio-2p-btn"><button class="btn btn-primary btn-sm dio-btn dio-btn--pri" onclick="_openAccusedForm(null,'${type}')" title="+ ملزم درج کریں" aria-label="+ ملزم درج کریں" data-act="add"><span>+ ملزم درج کریں</span></button></div>
       <div class="dio-hs1 dio-2p-title" style="color:${color};">${heading}</div>
       <div aria-hidden="true"></div>
     </div>
@@ -195,9 +195,9 @@ function _renderAccCards(list) {
         </div>
       </div>
       <div style="display:flex;gap:4px;flex-shrink:0;">
-        <button aria-label="ترمیم" class="btn btn-secondary btn-sm" style="padding:2px 7px;" title="ترمیم" onclick="event.stopPropagation();_openAccusedForm('${a.id}','${a.accused_type||'fir'}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>
+        <button aria-label="ترمیم" class="btn btn-secondary btn-sm dio-btn dio-btn--i" style="padding:2px 7px;" title="ترمیم" onclick="event.stopPropagation();_openAccusedForm('${a.id}','${a.accused_type||'fir'}')" data-act="edit"><i class="dio-i" data-ico="edit" aria-hidden="true"></i></button>
         <button id="acc-prev-btn-${a.id}" class="btn btn-secondary btn-sm" style="padding:2px 7px;" title="سابقہ ریکارڈ" onclick="event.stopPropagation();_accPrevRecord('${a.id}')">سابقہ ریکارڈ</button>
-        <button aria-label="حذف" class="btn btn-danger btn-sm" style="padding:2px 7px;" title="حذف" onclick="event.stopPropagation();_deleteAccused('${a.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
+        <button aria-label="حذف" class="btn btn-danger btn-sm dio-btn dio-btn--i dio-btn--del" style="padding:2px 7px;" title="حذف" onclick="event.stopPropagation();_deleteAccused('${a.id}')" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i></button>
       </div>
     </div>`).join('');
 }
@@ -438,8 +438,8 @@ function _accViewDetail(id) {
   </div>`;
 
   openModal('ملزم کی تفصیل', body, `
-    <button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>
-    <button class="btn btn-primary" onclick="closeModal();_openAccusedForm('${a.id}','${a.accused_type||'fir'}')">ترمیم</button>
+    <button class="btn btn-secondary dio-btn" onclick="closeModal()" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>
+    <button class="btn btn-primary dio-btn" onclick="closeModal();_openAccusedForm('${a.id}','${a.accused_type||'fir'}')" title="ترمیم" aria-label="ترمیم" data-act="edit"><i class="dio-i" data-ico="edit" aria-hidden="true"></i><span>ترمیم</span></button>
   `);
 }
 
@@ -488,9 +488,9 @@ function _accOpenViewer(url, name, title) {
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">
         <strong style="font-family:'Jameel Noori Nastaleeq';font-size:12pt;">${title}</strong>
         <div style="display:flex;gap:6px;">
-          <button class="btn btn-secondary btn-sm" onclick="_accDownloadDoc()">ڈاؤن لوڈ</button>
-          <button class="btn btn-primary btn-sm" onclick="_accPrintDoc()">پرنٹ</button>
-          <button title="بند کریں" aria-label="بند کریں" class="btn btn-danger btn-sm" onclick="_accCloseViewer()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button>
+          <button class="btn btn-secondary btn-sm dio-btn" onclick="_accDownloadDoc()" title="ڈاؤن لوڈ" aria-label="ڈاؤن لوڈ" data-act="download"><i class="dio-i" data-ico="download" aria-hidden="true"></i><span>ڈاؤن لوڈ</span></button>
+          <button class="btn btn-primary btn-sm dio-btn" onclick="_accPrintDoc()" title="پرنٹ" aria-label="پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>پرنٹ</span></button>
+          <button title="بند کریں" aria-label="بند کریں" class="btn btn-danger btn-sm dio-btn dio-btn--i" onclick="_accCloseViewer()" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i></button>
         </div>
       </div>
       <div style="text-align:center;">${viewer}</div>

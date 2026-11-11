@@ -789,7 +789,7 @@ function showSubscriptionRequired(sub) {
       <button class="btn btn-primary" style="width:100%;padding:14px;font-size:11.25pt;margin-bottom:10px;" onclick="_showPlans()">
         پلان خریدیں
       </button>
-      <button class="btn btn-secondary" style="width:100%;" onclick="doLogout()">← لاگ آؤٹ</button>
+      <button class="btn btn-secondary dio-btn" style="width:100%;" onclick="doLogout()" title="لاگ آؤٹ" aria-label="لاگ آؤٹ" data-act="logout"><i class="dio-i" data-ico="logout" aria-hidden="true"></i><span>لاگ آؤٹ</span></button>
     </div>
   </div>`;
   _showPlans();
@@ -883,19 +883,19 @@ function _openPayment(planName, amount, days) {
           <div style="font-size:15pt;margin-bottom:4px;"><svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><path d='M7 3h10v18H7z'/><path d='M10.5 18.2h3'/></svg></div>
           <div style="font-weight:700;font-size:9pt;color:var(--green);">JazzCash</div>
           <div style="font-size:9.75pt;font-weight:900;color:var(--text-primary);" id="jc-number">0300-7339260</div>
-          <button onclick="navigator.clipboard.writeText('03007339260').then(()=>showToast('نمبر کاپی ہو گیا','success'))" style="font-size:7.5pt;background:none;border:none;color:var(--accent);cursor:pointer;">کاپی کریں</button>
+          <button class="dio-btn" onclick="navigator.clipboard.writeText('03007339260').then(()=>showToast('نمبر کاپی ہو گیا','success'))" style="font-size:7.5pt;background:none;border:none;color:var(--accent);cursor:pointer;" title="کاپی" aria-label="کاپی" data-act="copy"><i class="dio-i" data-ico="copy" aria-hidden="true"></i><span>کاپی</span></button>
         </div>
         <div style="background:rgba(139,92,246,0.1);border:1px solid #a78bfa;border-radius:8px;padding:12px;text-align:center;">
           <div style="font-size:15pt;margin-bottom:4px;"><svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><path d='M7 3h10v18H7z'/><path d='M10.5 18.2h3'/></svg></div>
           <div style="font-weight:700;font-size:9pt;color:#a78bfa;">EasyPaisa</div>
           <div style="font-size:9.75pt;font-weight:900;color:var(--text-primary);">0300-7339260</div>
-          <button onclick="navigator.clipboard.writeText('03007339260').then(()=>showToast('نمبر کاپی ہو گیا','success'))" style="font-size:7.5pt;background:none;border:none;color:var(--accent);cursor:pointer;">کاپی کریں</button>
+          <button class="dio-btn" onclick="navigator.clipboard.writeText('03007339260').then(()=>showToast('نمبر کاپی ہو گیا','success'))" style="font-size:7.5pt;background:none;border:none;color:var(--accent);cursor:pointer;" title="کاپی" aria-label="کاپی" data-act="copy"><i class="dio-i" data-ico="copy" aria-hidden="true"></i><span>کاپی</span></button>
         </div>
         <div style="background:rgba(56,189,248,0.1);border:1px solid var(--accent);border-radius:8px;padding:12px;text-align:center;">
           <div style="font-size:15pt;margin-bottom:4px;"><svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='opacity:.9;display:inline-block;vertical-align:middle'><path d='M12 3.5l8.5 4.5h-17z'/><path d='M5.5 10v8M10 10v8M14 10v8M18.5 10v8'/><path d='M3.5 20.5h17'/></svg></div>
           <div style="font-weight:700;font-size:9pt;color:var(--accent);">Raast</div>
           <div style="font-size:9.75pt;font-weight:900;color:var(--text-primary);">0300-7339260</div>
-          <button onclick="navigator.clipboard.writeText('03007339260').then(()=>showToast('نمبر کاپی ہو گیا','success'))" style="font-size:7.5pt;background:none;border:none;color:var(--accent);cursor:pointer;">کاپی کریں</button>
+          <button class="dio-btn" onclick="navigator.clipboard.writeText('03007339260').then(()=>showToast('نمبر کاپی ہو گیا','success'))" style="font-size:7.5pt;background:none;border:none;color:var(--accent);cursor:pointer;" title="کاپی" aria-label="کاپی" data-act="copy"><i class="dio-i" data-ico="copy" aria-hidden="true"></i><span>کاپی</span></button>
         </div>
       </div>
 
@@ -926,7 +926,7 @@ function _openPayment(planName, amount, days) {
       </select>
     </div>`,
     `<div style="display:flex;gap:8px;direction:rtl;">
-      <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+      <button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
       <button class="btn btn-primary" onclick="_submitPayment('${planName}',${amount},${days})">درخواست بھیجیں</button>
     </div>`
   );

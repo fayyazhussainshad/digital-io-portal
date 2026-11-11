@@ -318,7 +318,7 @@ async function renderCases(container,fStatus,fQuery,fStation){
 
   container.innerHTML=`
   <div class="page-header">
-    <button class="btn btn-primary dio-add-btn" onclick="openAddCaseModal()">+ مقدمہ درج کریں</button>
+    <button class="btn btn-primary dio-add-btn dio-btn dio-btn--pri" onclick="openAddCaseModal()" title="+ مقدمہ درج کریں" aria-label="+ مقدمہ درج کریں" data-act="add"><span>+ مقدمہ درج کریں</span></button>
     <div>
       <div class="page-title">میرے مقدمات</div>
       <div class="page-subtitle"><span id="cs-count">${cases.length}</span> مقدمات${isArchiveView?' · '+fStation+' آرکائیو':''}</div>
@@ -400,12 +400,12 @@ function renderCaseRow(c,sn){
     <td><span class="pill ${STATUS_CLASSES[c.status]||'pill-blue'}">${STATUS_LABELS[c.status]||c.status}</span></td>
     <td>
       <div style="display:flex;gap:2px;direction:rtl;justify-content:center;flex-direction:row-reverse;">
-        <button aria-label="مقدمہ کھولیں" class="btn btn-secondary btn-sm" onclick="openCaseWorkspace('${c.id}')" title="مقدمہ کھولیں"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M6.5 3.5h7l4.5 4.5V20.5h-11.5z"/><path d="M13.5 3.5V8H18"/></svg></button>
-        <button aria-label="ترمیم" class="btn btn-secondary btn-sm" onclick="openEditCaseModal('${c.id}')" title="ترمیم"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>
-        <button aria-label="پرنٹ" class="btn btn-secondary btn-sm" onclick="openCasePrint('${c.id}')" title="پرنٹ — اس مقدمے کی دستاویزات منتخب کر کے"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M7 8V3.5h10V8"/><path d="M6 17.5H4.5V10a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v7.5H18"/><path d="M7 14h10v6.5H7z"/></svg></button>
-        <button aria-label="ڈاؤنلوڈ" class="btn btn-secondary btn-sm" onclick="openCasePrint('${c.id}','download')" title="ڈاؤنلوڈ — PDF / Word"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M12 3.5v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M4.5 20h15"/></svg></button>
-        <button aria-label="شیئر" class="btn btn-primary   btn-sm" onclick="openCasePrint('${c.id}','share')"    title="شیئر — پوری فائل PDF / Word"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M12 15V3.5"/><path d="M7.5 8L12 3.5 16.5 8"/><path d="M4.5 13.5V20h15v-6.5"/></svg></button>
-        <button aria-label="حذف" class="btn btn-danger    btn-sm" onclick="confirmDeleteCase('${c.id}','${c.fir_number||'?'}')" title="حذف"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
+        <button aria-label="کھولیں" class="btn btn-secondary btn-sm dio-btn dio-btn--i" onclick="openCaseWorkspace('${c.id}')" title="کھولیں" data-act="open"><i class="dio-i" data-ico="open" aria-hidden="true"></i></button>
+        <button aria-label="ترمیم" class="btn btn-secondary btn-sm dio-btn dio-btn--i" onclick="openEditCaseModal('${c.id}')" title="ترمیم" data-act="edit"><i class="dio-i" data-ico="edit" aria-hidden="true"></i></button>
+        <button aria-label="پرنٹ" class="btn btn-secondary btn-sm dio-btn dio-btn--i" onclick="openCasePrint('${c.id}')" title="پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i></button>
+        <button aria-label="ڈاؤن لوڈ" class="btn btn-secondary btn-sm dio-btn dio-btn--i" onclick="openCasePrint('${c.id}','download')" title="ڈاؤن لوڈ" data-act="download"><i class="dio-i" data-ico="download" aria-hidden="true"></i></button>
+        <button aria-label="شیئر" class="btn btn-primary   btn-sm dio-btn dio-btn--i" onclick="openCasePrint('${c.id}','share')"    title="شیئر" data-act="share"><i class="dio-i" data-ico="share" aria-hidden="true"></i></button>
+        <button aria-label="حذف" class="btn btn-danger    btn-sm dio-btn dio-btn--i dio-btn--del" onclick="confirmDeleteCase('${c.id}','${c.fir_number||'?'}')" title="حذف" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i></button>
       </div>
     </td>
   </tr>`;
@@ -654,7 +654,7 @@ async function openCaseWorkspace(id) {
   try {
     const c = await getCase(id);
     if (!c) { 
-      container.innerHTML = `<div style="padding:30px;text-align:center;direction:rtl;"><div style="font-size:30pt;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M12 4L3 19.5h18z"/><path d="M12 10v4.5"/><path d="M12 17.2h.01"/></svg></div><div style="margin-top:10px;">مقدمہ نہیں ملا</div><button class="btn btn-secondary btn-sm" style="margin-top:14px;" onclick="showPage('cases',null)">← واپس مقدمات</button></div>`;
+      container.innerHTML = `<div style="padding:30px;text-align:center;direction:rtl;"><div style="font-size:30pt;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M12 4L3 19.5h18z"/><path d="M12 10v4.5"/><path d="M12 17.2h.01"/></svg></div><div style="margin-top:10px;">مقدمہ نہیں ملا</div><button class="btn btn-secondary btn-sm dio-btn" style="margin-top:14px;" onclick="showPage('cases',null)" title="واپس" aria-label="واپس" data-act="back"><i class="dio-i" data-ico="back" aria-hidden="true"></i><span>واپس</span></button></div>`;
       return; 
     }
     // Track recently viewed
@@ -681,7 +681,7 @@ async function openCaseWorkspace(id) {
       <div style="font-size:30pt;"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M12 4L3 19.5h18z"/><path d="M12 10v4.5"/><path d="M12 17.2h.01"/></svg></div>
       <div style="margin-top:10px;color:var(--text-secondary);">مقدمہ کھولنے میں مسئلہ</div>
       <div style="font-size:8.25pt;color:var(--text-muted);direction:ltr;font-family:monospace;margin-top:8px;">${(err&&err.message)||err}</div>
-      <button class="btn btn-secondary btn-sm" style="margin-top:14px;" onclick="showPage('cases',null)">← واپس مقدمات</button>
+      <button class="btn btn-secondary btn-sm dio-btn" style="margin-top:14px;" onclick="showPage('cases',null)" title="واپس" aria-label="واپس" data-act="back"><i class="dio-i" data-ico="back" aria-hidden="true"></i><span>واپس</span></button>
     </div>`;
   }
 }
@@ -747,9 +747,9 @@ function renderEvidenceTab(c, ev) {
           <div style="font-size:7.5pt;color:var(--text-muted);margin-top:2px;">${esc(e.type)} · ${e.evidence_date||formatDate(e.created_at)}</div>
           ${e.notes ? `<div style="font-size:7.5pt;color:var(--text-faint);margin-top:3px;font-style:italic;">${esc(e.notes)}</div>` : ''}
           <div style="display:flex;gap:6px;direction:rtl;margin-top:8px;">
-            ${hf ? `<button class="btn btn-secondary btn-sm" onclick="openEvidenceFile('${e.id}','${_dioJsHtml(vu||'')}','${_dioJsHtml(e.name)}','${_dioJsHtml(e.type)}')" title="Open File">کھولیں</button>` : ''}
-            <button class="btn btn-secondary btn-sm" onclick="renameEvidence('${e.id}','${_dioJsHtml(e.name)}','${_dioJsHtml(c.fir_number)}')" title="Rename">نام بدلیں</button>
-            <button aria-label="Delete" class="btn btn-danger btn-sm" onclick="deleteWorkspaceEvidence('${e.id}','${c.fir_number}')" title="Delete"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
+            ${hf ? `<button class="btn btn-secondary btn-sm dio-btn" onclick="openEvidenceFile('${e.id}','${_dioJsHtml(vu||'')}','${_dioJsHtml(e.name)}','${_dioJsHtml(e.type)}')" title="کھولیں" aria-label="کھولیں" data-act="open"><i class="dio-i" data-ico="open" aria-hidden="true"></i><span>کھولیں</span></button>` : ''}
+            <button class="btn btn-secondary btn-sm dio-btn dio-btn--i" onclick="renameEvidence('${e.id}','${_dioJsHtml(e.name)}','${_dioJsHtml(c.fir_number)}')" title="نام بدلیں" aria-label="نام بدلیں" data-act="rename"><i class="dio-i" data-ico="rename" aria-hidden="true"></i></button>
+            <button aria-label="حذف" class="btn btn-danger btn-sm dio-btn dio-btn--i dio-btn--del" onclick="deleteWorkspaceEvidence('${e.id}','${c.fir_number}')" title="حذف" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i></button>
           </div>
         </div>
       </div>`; }).join('');
@@ -760,7 +760,7 @@ function renderEvidenceTab(c, ev) {
         <div class="dio-hs1" style="font-weight:700;font-family:'Jameel Noori Nastaleeq';direction:rtl;">شہادتیں — FIR ${c.fir_number}</div>
         <div style="font-size:8.25pt;color:var(--text-muted);margin-top:2px;">${ev.length} فائل منسلک</div>
       </div>
-      <button class="btn btn-primary" onclick="openWorkspaceEvidenceModal('${c.id}','${c.fir_number}')">+ شہادت درج کریں</button>
+      <button class="btn btn-primary dio-btn dio-btn--pri" onclick="openWorkspaceEvidenceModal('${c.id}','${c.fir_number}')" title="+ شہادت درج کریں" aria-label="+ شہادت درج کریں" data-act="add"><span>+ شہادت درج کریں</span></button>
     </div>
     <div class="evidence-grid">${cards}</div>
   </div>`;
@@ -778,8 +778,8 @@ function renameEvidence(id, currentName, firNumber) {
   openModal('Rename Evidence',
     `<div style="margin-bottom:8px;font-size:9pt;color:var(--text-muted);">Enter a new name for this evidence item.</div>
      <input class="form-input" id="ev-rename-input" value="${esc(currentName)}" style="width:100%;box-sizing:border-box;" placeholder="شہادت کا نام">`,
-    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-     <button class="btn btn-primary" onclick="saveEvidenceRename('${id}','${firNumber}')">نام بدلیں</button>`
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+     <button class="btn btn-primary dio-btn dio-btn--i" onclick="saveEvidenceRename('${id}','${firNumber}')" title="نام بدلیں" aria-label="نام بدلیں" data-act="rename"><i class="dio-i" data-ico="rename" aria-hidden="true"></i></button>`
   );
   setTimeout(() => { const i = document.getElementById('ev-rename-input'); if(i){i.focus();i.select();} }, 100);
 }
@@ -802,8 +802,8 @@ async function saveEvidenceRename(id, firNumber) {
 function deleteWorkspaceEvidence(id, firNumber) {
   openModal('Delete Evidence',
     `<p style="color:var(--text-secondary);font-size:9.75pt;">Are you sure you want to delete this evidence item?<br><span style="color:var(--red);font-size:8.25pt;margin-top:8px;display:block;">This cannot be undone.</span></p>`,
-    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-     <button class="btn btn-danger" onclick="closeModal();doDeleteWorkspaceEvidence('${id}','${firNumber}')">حذف کریں</button>`
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+     <button class="btn btn-danger dio-btn dio-btn--danger" onclick="closeModal();doDeleteWorkspaceEvidence('${id}','${firNumber}')" title="حذف" aria-label="حذف" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i><span>حذف</span></button>`
   );
 }
 
@@ -822,7 +822,7 @@ function openWorkspaceEvidenceModal(caseId, firNumber) {
   openModal('Attach Evidence',
     `<div style="margin-bottom:12px;">
        <div style="display:flex;gap:8px;direction:rtl;margin-bottom:12px;">
-         <button class="btn btn-secondary btn-sm" onclick="wevOpenCamera()">کیمرہ</button>
+         <button class="btn btn-secondary btn-sm dio-btn" onclick="wevOpenCamera()" title="کیمرہ" aria-label="کیمرہ" data-act="camera"><i class="dio-i" data-ico="camera" aria-hidden="true"></i><span>کیمرہ</span></button>
          <button class="btn btn-secondary btn-sm" onclick="wevOpenFile()">فائل منتخب کریں</button>
        </div>
        <!-- Camera preview -->
@@ -830,7 +830,7 @@ function openWorkspaceEvidenceModal(caseId, firNumber) {
          <video id="wev-video" style="width:100%;border-radius:8px;max-height:200px;" autoplay playsinline></video>
          <div style="display:flex;gap:8px;direction:rtl;margin-top:8px;">
            <button class="btn btn-primary btn-sm" onclick="wevSnap()">تصویر لیں</button>
-           <button class="btn btn-secondary btn-sm" onclick="wevStopCamera()">بند کریں</button>
+           <button class="btn btn-secondary btn-sm dio-btn" onclick="wevStopCamera()" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>
          </div>
          <canvas id="wev-canvas" style="display:none;"></canvas>
        </div>
@@ -850,7 +850,7 @@ function openWorkspaceEvidenceModal(caseId, firNumber) {
      </div>
      <div style="margin-bottom:10px;"><label class="form-label">شہادت کی تاریخ</label><input class="form-input" id="wev-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
      <div><label class="form-label">تفصیل</label><textarea class="form-input" id="wev-notes" rows="2" placeholder="تفصیل، کہاں سے ملی، وغیرہ"></textarea></div>`,
-    `<button class="btn btn-secondary" onclick="wevStopCamera();closeModal()">منسوخ</button>
+    `<button class="btn btn-secondary dio-btn" onclick="wevStopCamera();closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
      <button class="btn btn-primary" onclick="wevSave('${caseId}','${firNumber}')">شامل کریں</button>`
   );
   window._wevFile = null;
@@ -969,7 +969,7 @@ function goBackToCases() {
   if (titleEl) titleEl.textContent = 'My Cases';
   if (container) renderCases(container);
 }
-function confirmDeleteCase(id,fir){openModal('Confirm Delete',`<p style="color:var(--text-secondary);font-size:9.75pt;">مقدمہ حذف کریں <b style="color:var(--accent);">FIR ${fir}</b>?<br><br><span style="color:var(--red);font-size:8.25pt;">This cannot be undone.</span></p>`,`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button><button class="btn btn-danger" onclick="closeModal();doDeleteCase('${id}')">حذف کریں</button>`);}
+function confirmDeleteCase(id,fir){openModal('Confirm Delete',`<p style="color:var(--text-secondary);font-size:9.75pt;">مقدمہ حذف کریں <b style="color:var(--accent);">FIR ${fir}</b>?<br><br><span style="color:var(--red);font-size:8.25pt;">This cannot be undone.</span></p>`,`<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button><button class="btn btn-danger dio-btn dio-btn--danger" onclick="closeModal();doDeleteCase('${id}')" title="حذف" aria-label="حذف" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i><span>حذف</span></button>`);}
 async function doDeleteCase(id){
   try {
     // v547: نقل «حذف شدہ مواد» میں کامیاب ہو تب ہی مقدمہ حذف — پہلے نقل ناکام ہوتی

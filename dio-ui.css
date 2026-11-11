@@ -1,0 +1,98 @@
+/* ════════════════════════════════════════════════════════════════════════
+   Digital IO — ایک ہی بٹن (TASK 19، افسر کی ہدایت 11 نومبر 2026)
+   ────────────────────────────────────────────────────────────────────────
+   معیار = «میرے مقدمات» کی فہرست کے ایکشن بٹن (24pt مربع، ہلکا سرمئی، 0.75pt کنارہ،
+   6pt گولائی، 11.25pt نشان)۔ ایک ہی کام کا بٹن ہر جگہ یہی — ناپ pt میں۔
+   دو صورتیں (افسر کا فیصلہ):
+     • .dio-btn.dio-btn--i  صرف نشان (فہرست کی قطاریں) — نام اشارے (title) میں
+     • .dio-btn             نشان + نام (پٹیاں، کارڈ، ⋯ فہرست)
+   رنگ (افسر کا فیصلہ): ہر جگہ سرمئی؛ صرف دو استثنا —
+     • .dio-btn--pri    «+ … درج کریں» اور کارڈ کا آخری «محفوظ کریں» (گہرا نیلا)
+     • .dio-btn--danger کارڈ کا آخری «حذف کریں» (سرخ)
+   «حذف» (.dio-btn--del) سرمئی، صرف ماؤس لانے پر سرخ — بالکل مقدمہ کی فہرست کی طرح۔
+   موبائل (≤ 768px): انگلی کے لیے 33pt (= 44px) — مقدمہ کی فہرست کا موبائل ناپ۔
+   ════════════════════════════════════════════════════════════════════════ */
+/* (html .dio-btn.dio-btn = اونچی specificity: پرانے .btn / .data-table .btn-sm کے !important قاعدے اس پر نہ چڑھیں) */
+html .dio-btn.dio-btn {
+  display: inline-flex; align-items: center !important; justify-content: center !important;   /* display بغیر !important: کوڈ کا style="display:none" چلتا رہے */
+  gap: 4.5pt !important; box-sizing: border-box !important;
+  height: 24pt !important; min-height: 24pt !important; min-width: 24pt !important;
+  padding: 0 7.5pt !important; margin: 0;
+  background: var(--dio-canvas, #f6f8fb) !important; color: var(--dio-ink-2, #475569) !important;
+  border: 0.75pt solid var(--dio-line, #e2e8f0) !important; border-radius: 6pt !important;
+  box-shadow: none !important; transform: none !important; text-decoration: none !important;
+  font-family: 'Jameel Noori Nastaleeq' !important; font-size: 10.5pt !important; font-weight: 700 !important;
+  line-height: 1 !important; white-space: nowrap !important; vertical-align: middle;
+  cursor: pointer; user-select: none; -webkit-user-select: none; flex: 0 0 auto !important;
+  transition: background .12s, border-color .12s, color .12s;
+}
+html .dio-btn.dio-btn > span { padding-top: 1.5pt; line-height: 1.2; }
+/* نام والا بٹن کبھی اپنے نام سے تنگ نہیں (پرانی پٹیوں کا مقررہ width — جیسے نقشہ کی 34px — نام پر نہ چڑھے) */
+html .dio-btn.dio-btn:not(.dio-btn--i) { min-width: max-content !important; }
+html .dio-btn.dio-btn .dio-i { width: 11.25pt !important; height: 11.25pt !important; vertical-align: 0; }
+html .dio-btn.dio-btn:hover { background: var(--dio-surface, #ffffff) !important; border-color: var(--dio-brand, #0b3d64) !important; }
+html .dio-btn.dio-btn:focus-visible { outline: 1.5pt solid var(--dio-brand, #0b3d64); outline-offset: 1.5pt; }
+html .dio-btn.dio-btn.dio-btn--i { width: 24pt !important; padding: 0 !important; }
+html .dio-btn.dio-btn.dio-btn--del:hover { background: var(--dio-alert, #b91c1c) !important; border-color: var(--dio-alert, #b91c1c) !important; color: #fff !important; }
+html .dio-btn.dio-btn.dio-btn--pri { background: var(--dio-brand, #0b3d64) !important; border-color: var(--dio-brand, #0b3d64) !important; color: #fff !important; }
+html .dio-btn.dio-btn.dio-btn--pri:hover { background: var(--dio-brand-2, #145b91) !important; border-color: var(--dio-brand-2, #145b91) !important; }
+html .dio-btn.dio-btn.dio-btn--danger { background: var(--dio-alert, #b91c1c) !important; border-color: var(--dio-alert, #b91c1c) !important; color: #fff !important; }
+html .dio-btn.dio-btn.dio-btn--danger:hover { filter: brightness(1.08); }
+/* دبا ہوا / چنا ہوا اوزار (B، سیدھ، قلم …) */
+html .dio-btn.dio-btn.on, html .dio-btn.dio-btn[aria-pressed="true"], html .dio-btn.dio-btn.active {
+  background: var(--dio-surface, #ffffff) !important; border-color: var(--dio-brand, #0b3d64) !important; color: var(--dio-brand, #0b3d64) !important;
+  box-shadow: inset 0 0 0 0.75pt var(--dio-brand, #0b3d64) !important;
+}
+html .dio-btn.dio-btn[hidden] { display: none !important; }
+html .dio-btn.dio-btn[disabled], html .dio-btn.dio-btn.off { opacity: .45; cursor: not-allowed; }
+/* فہرست کی قطار — مقدمہ کی فہرست والی ترتیب */
+.dio-act-row { display: flex; gap: 1.5pt; direction: rtl; flex-direction: row-reverse; justify-content: center; flex-wrap: nowrap; }
+.dio-act-row .dio-btn { margin: 0 1.5pt; }   /* مقدمہ کی فہرست جیسا فاصلہ (وہاں .data-table کا 0 2px) */
+
+@media screen and (max-width: 768px) {
+  html .dio-btn.dio-btn { height: 33pt !important; min-height: 33pt !important; min-width: 33pt !important; }
+  html .dio-btn.dio-btn.dio-btn--i { width: 33pt !important; }
+}
+@media print { html .dio-btn.dio-btn { display: none !important; } }
+
+/* ── ▾ چننے والا چھوٹا بٹن (دستاویز کے اندر: ملزمان / کاغذات / ضمنی کی قسم …) — ہر جگہ ایک ہی شکل ──
+   جگہ (position / top / left) ہر دستاویز کی اپنی رہتی ہے؛ رنگ، ناپ، گولائی اور نشان یہاں سے۔ */
+.dio-pick { position: relative; }
+html .dio-pick.dio-pick {
+  width: 15pt !important; height: 15pt !important; min-width: 15pt !important; min-height: 15pt !important;
+  padding: 0 !important; margin-top: 0; box-sizing: border-box !important;
+  background: #eef6ff !important; color: #0369a1 !important; border: 0.75pt solid #0369a1 !important; border-radius: 3pt !important;
+  box-shadow: none !important; font-size: 9pt !important; line-height: 1 !important; text-align: center; cursor: pointer;
+}
+html .dio-pick.dio-pick:hover, html .dio-pick.dio-pick[aria-expanded="true"] { background: #0369a1 !important; color: #fff !important; }
+html .dio-pick.dio-pick .dio-i { position: absolute; inset: 0; margin: auto; width: 10.5pt; height: 10.5pt; }
+@media screen and (max-width: 768px) {
+  html .dio-pick.dio-pick { width: 22.5pt !important; height: 22.5pt !important; min-width: 22.5pt !important; min-height: 22.5pt !important; }
+  /* چالان (رپورٹ 173) کے تنگ کھڑے خانوں میں 15pt ہی — خانے کا متن نہ ڈھکے (چالان کا ناپ صرف _ch173Layout() کا) */
+  html #ch173-doc:not(.zf-editor) .dio-pick.dio-pick { width: 15pt !important; height: 15pt !important; min-width: 15pt !important; min-height: 15pt !important; }
+}
+@media print { html .dio-pick.dio-pick { display: none !important; } }
+
+/* ── اپنی شکل والی پٹیوں میں نشان کا ناپ (افسر کا اصول: اوپر کی پٹی اور ٹیبوں کی پٹی جوں کی توں، صرف نشان ایک سیٹ کا) ── */
+.dio-tb-icon .dio-i, .topnav-btn .dio-i { width: 14.25pt; height: 14.25pt; }
+.dio-tb-logout .dio-i { width: 13.5pt; height: 13.5pt; }   /* پہلے بھی لاگ آؤٹ کا نشان 18px (باقی 19px) — پٹی ایک px بھی نہ کھسکے */
+.dio-backbtn .dio-i { width: 12.75pt; height: 12.75pt; }
+.dio-thumbbar button .ic .dio-i { width: 15.75pt; height: 15.75pt; vertical-align: middle; }
+#dio-dv-fab .dio-i { width: 15pt; height: 15pt; }
+.logout-btn .dio-i { width: 12pt; height: 12pt; vertical-align: -0.15em; }
+.dio-mbar button .dio-i, .dio-addblk .dio-i { width: 11.25pt; height: 11.25pt; vertical-align: -0.15em; }
+.mdoc-chip .dio-i { width: 10.5pt; height: 10.5pt; vertical-align: -0.1em; }
+#dio-dv-menu .dvm-i .dio-i { width: 11.25pt; height: 11.25pt; }
+/* «⋯» فہرست کی سطریں = وہی بٹن، پوری چوڑائی */
+#dio-dv-menu .dvm-i.dio-btn.dio-btn { width: 100% !important; justify-content: flex-start !important; margin: 1.5pt 0 !important; }
+
+/* ── باقی ہر .btn (منفرد کام، جیسے «PIN سیٹ کریں») — وہی شکل، حروف اور گولائی؛ اپنا رنگ (عام = سرمئی) ── */
+html .btn.btn:not(.dio-btn) {
+  border-radius: 6pt !important; font-family: 'Jameel Noori Nastaleeq' !important; font-size: 10.5pt !important; font-weight: 700 !important;
+  min-height: 24pt; display: inline-flex; align-items: center; justify-content: center; gap: 4.5pt; box-shadow: none !important; transform: none !important;
+}
+html .btn.btn-secondary:not(.dio-btn), html .btn.btn-sm:not(.dio-btn):not(.btn-primary):not(.btn-danger):not(.btn-success) {
+  background: var(--dio-canvas, #f6f8fb) !important; color: var(--dio-ink-2, #475569) !important; border: 0.75pt solid var(--dio-line, #e2e8f0) !important;
+}
+html .btn.btn-secondary:not(.dio-btn):hover { background: var(--dio-surface, #ffffff) !important; border-color: var(--dio-brand, #0b3d64) !important; }
+@media screen and (max-width: 768px) { html .btn.btn:not(.dio-btn) { min-height: 33pt; } }

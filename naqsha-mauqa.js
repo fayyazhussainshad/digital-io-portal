@@ -322,8 +322,8 @@
       _naqAccList.map(a => `<label style="display:flex;align-items:center;gap:8px;padding:7px 6px;cursor:pointer;font-size:9.75pt;border-bottom:1px solid #f1f5f9;"><input type="checkbox" ${chosen.has(a.name) ? 'checked' : ''} value="${E(a.name)}"> <span>${E(a.name)}</span></label>`).join('') +
       '</div>' +
       '<div style="display:flex;gap:6px;padding:8px;border-top:1px solid #e5e7eb;background:#f8fafc;">' +
-      '<button id="naq-acc-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;color:#fff;font-weight:700;cursor:pointer;">✔ شامل کریں</button>' +
-      '<button id="naq-acc-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;cursor:pointer;">بند</button></div>';
+      '<button class="dio-btn dio-btn--pri" id="naq-acc-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;color:#fff;font-weight:700;cursor:pointer;" title="شامل کریں" aria-label="شامل کریں" data-act="check"><i class="dio-i" data-ico="check" aria-hidden="true"></i><span>شامل کریں</span></button>' +
+      '<button class="dio-btn" id="naq-acc-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;cursor:pointer;" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button></div>';
     document.body.appendChild(box);
     const r = (ev.currentTarget || ev.target).getBoundingClientRect();
     box.style.top = Math.min(r.bottom + 4, window.innerHeight - box.offsetHeight - 8) + 'px';
@@ -433,7 +433,7 @@
             <span class="naq-seg"><span class="naq-lbl">تھانہ</span> <span id="naq-h-thana2" class="naq-f" contenteditable="true">${E(hv.thana2 || hv.thana)}</span></span>
           </div>
           <div class="naq-banam">
-            <span class="naq-banam-lbl"><button class="naq-caret no-print" title="ملزمان منتخب کریں" onclick="window._naqAccPicker&&_naqAccPicker(event)">▾</button> بنام</span>
+            <span class="naq-banam-lbl"><button class="naq-caret no-print dio-pick" title="ملزمان منتخب کریں" onclick="window._naqAccPicker&&_naqAccPicker(event)" aria-label="ملزمان منتخب کریں" data-act="dropdown"><i class="dio-i" data-ico="dropdown" aria-hidden="true"></i></button> بنام</span>
             <span id="naq-banam-list" class="naq-banam-list">${_banamHTMLFor(a)}</span>
           </div>
 
@@ -520,59 +520,59 @@
       <div class="naq-topwrap no-print" id="naq-topwrap">
        <div class="naq-toolbar">
         <div class="naq-tools">
-          <button class="naq-tb naq-chiptog" id="naq-tolist" title="اس مقدمے کے تمام محفوظ نقشے" onclick="window._naqBackToList&&_naqBackToList()">← فہرست</button>
+          <button class="naq-tb naq-chiptog dio-btn" id="naq-tolist" title="فہرست" onclick="window._naqBackToList&&_naqBackToList()" aria-label="فہرست" data-act="back"><i class="dio-i" data-ico="back" aria-hidden="true"></i><span>فہرست</span></button>
           <!-- v553: لیگل/A4 کا انتخاب یہاں سے ہٹا — پرنٹ کے وقت پوچھا جاتا ہے -->
           ${fabricOk ? `
           <span class="naq-sep"></span>
-          <button class="naq-tb naq-tool on" data-tool="select" title="منتخب / حرکت" onclick="window._naqPickTool&&_naqPickTool('select')">↖</button>
-          <button class="naq-tb naq-tool" data-tool="pen" title="قلم (آزاد ڈرائنگ)" onclick="window._naqPickTool&&_naqPickTool('pen')">✏️</button>
-          <button class="naq-tb naq-tool" data-tool="line" title="لکیر" onclick="window._naqPickTool&&_naqPickTool('line')">╱</button>
-          <button class="naq-tb naq-tool" data-tool="arrow" title="تیر" onclick="window._naqPickTool&&_naqPickTool('arrow')">➜</button>
-          <button class="naq-tb naq-tool" data-tool="rect" title="مستطیل" onclick="window._naqPickTool&&_naqPickTool('rect')">▭</button>
-          <button class="naq-tb naq-tool" data-tool="ellipse" title="دائرہ / بیضوی" onclick="window._naqPickTool&&_naqPickTool('ellipse')">◯</button>
-          <button class="naq-tb" id="naq-straight" title="سیدھی لکیر — MS Word کی طرح Ctrl (یا Shift) دبا کر کھینچیں تو لکیر سیدھی (0°/45°/90°) رہتی ہے؛ موبائل پر یہ بٹن دبائیں" onclick="window._naqToggleStraight&&_naqToggleStraight()">📏</button>
-          <button class="naq-tb" title="پولیس علامات (لاش، اسلحہ، گاڑی…)" onclick="window._naqToggleSyms&&_naqToggleSyms(event)">🚔</button>
-          <button class="naq-tb" title="امتیازی نشان لگائیں (①②③ — نیچے فہرست خود بنے)" onclick="window._naqAddMark&&_naqAddMark()">①</button>
+          <button class="naq-tb naq-tool on dio-btn dio-btn--i" data-tool="select" title="منتخب / حرکت" onclick="window._naqPickTool&&_naqPickTool('select')" data-act="pointer"><i class="dio-i" data-ico="pointer" aria-hidden="true"></i></button>
+          <button class="naq-tb naq-tool dio-btn dio-btn--i" data-tool="pen" title="قلم (آزاد ڈرائنگ)" onclick="window._naqPickTool&&_naqPickTool('pen')" data-act="pen"><i class="dio-i" data-ico="pen" aria-hidden="true"></i></button>
+          <button class="naq-tb naq-tool dio-btn dio-btn--i" data-tool="line" title="لکیر" onclick="window._naqPickTool&&_naqPickTool('line')" data-act="line"><i class="dio-i" data-ico="line" aria-hidden="true"></i></button>
+          <button class="naq-tb naq-tool dio-btn dio-btn--i" data-tool="arrow" title="تیر" onclick="window._naqPickTool&&_naqPickTool('arrow')" data-act="arrow"><i class="dio-i" data-ico="arrow" aria-hidden="true"></i></button>
+          <button class="naq-tb naq-tool dio-btn dio-btn--i" data-tool="rect" title="مستطیل" onclick="window._naqPickTool&&_naqPickTool('rect')" data-act="rect"><i class="dio-i" data-ico="rect" aria-hidden="true"></i></button>
+          <button class="naq-tb naq-tool dio-btn dio-btn--i" data-tool="ellipse" title="دائرہ / بیضوی" onclick="window._naqPickTool&&_naqPickTool('ellipse')" data-act="circle"><i class="dio-i" data-ico="circle" aria-hidden="true"></i></button>
+          <button class="naq-tb dio-btn dio-btn--i" id="naq-straight" title="سیدھی لکیر — MS Word کی طرح Ctrl (یا Shift) دبا کر کھینچیں تو لکیر سیدھی (0°/45°/90°) رہتی ہے؛ موبائل پر یہ بٹن دبائیں" onclick="window._naqToggleStraight&&_naqToggleStraight()" data-act="ruler"><i class="dio-i" data-ico="ruler" aria-hidden="true"></i></button>
+          <button class="naq-tb dio-btn dio-btn--i" title="پولیس علامات (لاش، اسلحہ، گاڑی…)" onclick="window._naqToggleSyms&&_naqToggleSyms(event)" data-act="symbols"><i class="dio-i" data-ico="symbols" aria-hidden="true"></i></button>
+          <button class="naq-tb dio-btn dio-btn--i" title="امتیازی نشان لگائیں (①②③ — نیچے فہرست خود بنے)" onclick="window._naqAddMark&&_naqAddMark()" data-act="mark"><i class="dio-i" data-ico="mark" aria-hidden="true"></i></button>
           <input type="color" class="naq-color" value="#111111" title="لکیر کا رنگ" onchange="window._naqSetColor&&_naqSetColor(this.value)">
           <select class="naq-sel" title="لکیر کی موٹائی" onchange="window._naqSetWidth&&_naqSetWidth(this.value)">
             ${[1, 2, 3, 4, 6, 8].map(w => `<option value="${w}" ${w === 2 ? 'selected' : ''}>${w}px</option>`).join('')}
           </select>
           <span class="naq-sep"></span>
-          <button class="naq-tb" title="تصویر داخل کریں" onclick="window._naqInsertImg&&_naqInsertImg()">🖼️</button>
-          <button class="naq-tb" title="تصویر بدلیں" onclick="window._naqReplaceImg&&_naqReplaceImg()">🔁</button>
-          <button class="naq-tb" title="متن کا خانہ" onclick="window._naqAddText&&_naqAddText()">🅣</button>
+          <button class="naq-tb dio-btn dio-btn--i" title="تصویر داخل کریں" onclick="window._naqInsertImg&&_naqInsertImg()" data-act="image"><i class="dio-i" data-ico="image" aria-hidden="true"></i></button>
+          <button class="naq-tb dio-btn dio-btn--i" title="تصویر بدلیں" onclick="window._naqReplaceImg&&_naqReplaceImg()" data-act="image-swap"><i class="dio-i" data-ico="image-swap" aria-hidden="true"></i></button>
+          <button class="naq-tb dio-btn dio-btn--i" title="متن کا خانہ" onclick="window._naqAddText&&_naqAddText()" data-act="text"><i class="dio-i" data-ico="text" aria-hidden="true"></i></button>
           <span class="naq-sep"></span>
-          <button class="naq-tb" title="بائیں 90°" onclick="window._naqRotL&&_naqRotL()">⟲</button>
-          <button class="naq-tb" title="دائیں 90°" onclick="window._naqRotR&&_naqRotR()">⟳</button>
-          <button class="naq-tb" title="افقی پلٹ" onclick="window._naqFlipH&&_naqFlipH()">⇋</button>
-          <button class="naq-tb" title="عمودی پلٹ" onclick="window._naqFlipV&&_naqFlipV()">⇅</button>
-          <button class="naq-tb" title="کراپ" onclick="window._naqCropStart&&_naqCropStart()">✂️</button>
+          <button class="naq-tb dio-btn dio-btn--i" title="بائیں 90°" onclick="window._naqRotL&&_naqRotL()" data-act="rotate-left"><i class="dio-i" data-ico="rotate-left" aria-hidden="true"></i></button>
+          <button class="naq-tb dio-btn dio-btn--i" title="دائیں 90°" onclick="window._naqRotR&&_naqRotR()" data-act="rotate-right"><i class="dio-i" data-ico="rotate-right" aria-hidden="true"></i></button>
+          <button class="naq-tb dio-btn dio-btn--i" title="افقی پلٹ" onclick="window._naqFlipH&&_naqFlipH()" data-act="flip-h"><i class="dio-i" data-ico="flip-h" aria-hidden="true"></i></button>
+          <button class="naq-tb dio-btn dio-btn--i" title="عمودی پلٹ" onclick="window._naqFlipV&&_naqFlipV()" data-act="flip-v"><i class="dio-i" data-ico="flip-v" aria-hidden="true"></i></button>
+          <button class="naq-tb dio-btn dio-btn--i" title="کراپ" onclick="window._naqCropStart&&_naqCropStart()" data-act="crop"><i class="dio-i" data-ico="crop" aria-hidden="true"></i></button>
           <span class="naq-sep"></span>
-          <button class="naq-tb" title="کاپی" onclick="window._naqCopy&&_naqCopy()">⧉</button>
-          <button class="naq-tb" title="چسپاں" onclick="window._naqPaste&&_naqPaste()">📋</button>
-          <button class="naq-tb" title="حذف" onclick="window._naqDelete&&_naqDelete()">🗑️</button>
-          <button class="naq-tb" title="آگے" onclick="window._naqForward&&_naqForward()">⬆️</button>
-          <button class="naq-tb" title="پیچھے" onclick="window._naqBackward&&_naqBackward()">⬇️</button>
+          <button class="naq-tb dio-btn dio-btn--i" title="کاپی" onclick="window._naqCopy&&_naqCopy()" aria-label="کاپی" data-act="copy"><i class="dio-i" data-ico="copy" aria-hidden="true"></i></button>
+          <button class="naq-tb dio-btn dio-btn--i" title="چسپاں" onclick="window._naqPaste&&_naqPaste()" aria-label="چسپاں" data-act="paste"><i class="dio-i" data-ico="paste" aria-hidden="true"></i></button>
+          <button class="naq-tb dio-btn dio-btn--i dio-btn--del" title="حذف" onclick="window._naqDelete&&_naqDelete()" aria-label="حذف" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i></button>
+          <button class="naq-tb dio-btn dio-btn--i" title="اوپر لائیں" onclick="window._naqForward&&_naqForward()" aria-label="اوپر لائیں" data-act="bring-forward"><i class="dio-i" data-ico="bring-forward" aria-hidden="true"></i></button>
+          <button class="naq-tb dio-btn dio-btn--i" title="نیچے لے جائیں" onclick="window._naqBackward&&_naqBackward()" aria-label="نیچے لے جائیں" data-act="send-backward"><i class="dio-i" data-ico="send-backward" aria-hidden="true"></i></button>
           <select class="naq-sel" title="متن سائز pt" onchange="window._naqSetFont&&_naqSetFont(this.value)">
             ${[10, 12, 14, 16, 18, 20, 24, 28].map(p => `<option value="${p}" ${p === 16 ? 'selected' : ''}>${p}pt</option>`).join('')}
           </select>
           <span class="naq-sep"></span>
-          <button class="naq-tb" id="naq-undo" title="واپس (Ctrl+Z)" onclick="window._naqUndo&&_naqUndo()">↶</button>
-          <button class="naq-tb" id="naq-redo" title="دوبارہ (Ctrl+Y)" onclick="window._naqRedo&&_naqRedo()">↷</button>
+          <button class="naq-tb dio-btn dio-btn--i" id="naq-undo" title="کالعدم (Ctrl+Z)" onclick="window._naqUndo&&_naqUndo()" aria-label="کالعدم (Ctrl+Z)" data-act="undo"><i class="dio-i" data-ico="undo" aria-hidden="true"></i></button>
+          <button class="naq-tb dio-btn dio-btn--i" id="naq-redo" title="دوبارہ (Ctrl+Y)" onclick="window._naqRedo&&_naqRedo()" aria-label="دوبارہ (Ctrl+Y)" data-act="redo"><i class="dio-i" data-ico="redo" aria-hidden="true"></i></button>
           <span class="naq-sep"></span>
-          <button class="naq-tb naq-tool" title="پین (کھینچ کر گھمائیں)" data-tool="pan" onclick="window._naqPickTool&&_naqPickTool('pan')">✋</button>
-          <button class="naq-tb" title="زوم اِن" onclick="window._naqZoomIn&&_naqZoomIn()">＋</button>
-          <button class="naq-tb" title="زوم آؤٹ" onclick="window._naqZoomOut&&_naqZoomOut()">－</button>
-          <button class="naq-tb" title="زوم ری سیٹ (1:1)" onclick="window._naqZoomReset&&_naqZoomReset()">1:1</button>
+          <button class="naq-tb naq-tool dio-btn dio-btn--i" title="پین (کھینچ کر گھمائیں)" data-tool="pan" onclick="window._naqPickTool&&_naqPickTool('pan')" data-act="pan"><i class="dio-i" data-ico="pan" aria-hidden="true"></i></button>
+          <button class="naq-tb dio-btn dio-btn--i" title="زوم اِن" onclick="window._naqZoomIn&&_naqZoomIn()" data-act="zoom-in"><i class="dio-i" data-ico="zoom-in" aria-hidden="true"></i></button>
+          <button class="naq-tb dio-btn dio-btn--i" title="زوم آؤٹ" onclick="window._naqZoomOut&&_naqZoomOut()" data-act="zoom-out"><i class="dio-i" data-ico="zoom-out" aria-hidden="true"></i></button>
+          <button class="naq-tb dio-btn dio-btn--i" title="زوم ری سیٹ (1:1)" onclick="window._naqZoomReset&&_naqZoomReset()" data-act="zoom-reset"><i class="dio-i" data-ico="zoom-reset" aria-hidden="true"></i></button>
           <input type="file" id="naq-file" accept="image/*" style="display:none" onchange="window._naqFilePicked&&_naqFilePicked(event)">
           ` : ''}
           <span class="naq-sep"></span>
           <label class="naq-hctl" title="نقشے کی جگہ (عنوان اور امتیازی نشانات کے درمیان) — انچ میں">📐 <input id="naq-maph" type="number" step="0.1" min="1.5" max="14" inputmode="decimal" onchange="window._naqSetMapH&&_naqSetMapH(this.value)"> انچ</label>
           <span class="naq-remain" id="naq-remain" title="صفحہ 1 میں باقی جگہ"></span>
-          <button class="naq-tb" title="نقشے کی جگہ کو صفحے کے مطابق کریں (باقی جگہ پوری)" onclick="window._naqFitPage&&_naqFitPage()">⤓ صفحہ</button>
+          <button class="naq-tb dio-btn dio-btn--i" title="نقشے کی جگہ کو صفحے کے مطابق کریں (باقی جگہ پوری)" onclick="window._naqFitPage&&_naqFitPage()" data-act="fit-page"><i class="dio-i" data-ico="fit-page" aria-hidden="true"></i></button>
           <span class="naq-sep"></span>
-          <button class="naq-tb naq-save" title="محفوظ" onclick="window.naqSaveNow&&naqSaveNow()">💾 محفوظ</button>
-          <button class="naq-tb naq-print" title="چھپائی (Ctrl+P)" onclick="window._naqPrint&&_naqPrint()">🖨️</button>
+          <button class="naq-tb naq-save dio-btn" title="محفوظ کریں" onclick="window.naqSaveNow&&naqSaveNow()" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
+          <button class="naq-tb naq-print dio-btn dio-btn--i" title="پرنٹ (Ctrl+P)" onclick="window._naqPrint&&_naqPrint()" aria-label="پرنٹ (Ctrl+P)" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i></button>
         </div>
        </div>
       </div>
@@ -1672,7 +1672,7 @@ ${_docInner(a, hv, io, fabricOk)}
     return `
     <div class="naq-list" dir="rtl">
       <div class="page-header naq-lhead">
-        <button type="button" class="btn btn-primary dio-add-btn" onclick="window._naqNew&&_naqNew()">+ نقشہ موقع درج کریں</button>
+        <button type="button" class="btn btn-primary dio-add-btn dio-btn dio-btn--pri" onclick="window._naqNew&&_naqNew()" title="+ نقشہ موقع درج کریں" aria-label="+ نقشہ موقع درج کریں" data-act="add"><span>+ نقشہ موقع درج کریں</span></button>
         <div class="naq-lttl">
           <div class="dio-h1 naq-lh1">نقشہ موقع — محفوظ نقشے</div>
           <div class="naq-lsub">مقدمہ <bdi dir="ltr">${E((_naqCase || {}).fir_number || '—')}</bdi> · <span id="naq-lcount">${_naqData.sketches.length}</span> نقشے</div>

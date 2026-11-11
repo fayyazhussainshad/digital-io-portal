@@ -37,7 +37,7 @@ async function renderTemplates(container) {
   container.innerHTML = `
   <div style="max-width:100%;margin:0;direction:rtl;">
     <div class="page-header">
-      <button onclick="_openAddTpl()" class="btn btn-primary dio-add-btn">+ ٹمپلیٹ درج کریں</button>
+      <button onclick="_openAddTpl()" class="btn btn-primary dio-add-btn dio-btn dio-btn--pri" title="+ ٹمپلیٹ درج کریں" aria-label="+ ٹمپلیٹ درج کریں" data-act="add"><span>+ ٹمپلیٹ درج کریں</span></button>
       <div>
         <div class="page-title">ٹمپلیٹس</div>
         <div class="page-subtitle">محفوظ شدہ مسودے — ایک دبائیں اور بھر لیں</div>
@@ -139,7 +139,7 @@ function _renderTplTable() {
         <div style="font-size:42pt;margin-bottom:14px;"><svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
         <div style="font-size:12.75pt;font-weight:800;margin-bottom:6px;">کوئی ٹمپلیٹ موجود نہیں</div>
         <div style="font-size:9.75pt;margin-bottom:20px;">«+ ٹمپلیٹ درج کریں» کا بٹن دبائیں</div>
-        <button onclick="_openAddTpl()" class="btn btn-primary">+ ٹمپلیٹ درج کریں</button>
+        <button onclick="_openAddTpl()" class="btn btn-primary dio-btn dio-btn--pri" title="+ ٹمپلیٹ درج کریں" aria-label="+ ٹمپلیٹ درج کریں" data-act="add"><span>+ ٹمپلیٹ درج کریں</span></button>
       </div>`;
     return;
   }
@@ -160,12 +160,12 @@ function _renderTplTable() {
       </td>
       <td style="padding:10px 8px;text-align:center;">
         <div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap;">
-          <button aria-label="دیکھیں" onclick="_editTpl('${t.id}')" title="دیکھیں" style="${_tplBtn('#1a73e8')}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg></button>
-          <button aria-label="نام بدلیں" onclick="_renameTpl('${t.id}')" title="نام بدلیں" style="${_tplBtn('#fd7e14')}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>
-          <button aria-label="نقل بنائیں" onclick="_copyTpl('${t.id}')" title="نقل بنائیں" style="${_tplBtn('#20c997')}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M9 8.5h10.5V20H9z"/><path d="M5 15.5V4h10"/></svg></button>
-          ${hasFile?`<button aria-label="ڈاؤنلوڈ" onclick="_downloadTpl('${t.id}')" title="ڈاؤنلوڈ" style="${_tplBtn('#28a745')}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M12 3.5v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M4.5 20h15"/></svg></button>`:''}
-          ${(hasContent||hasFile)?`<button aria-label="پرنٹ" onclick="_printTpl('${t.id}')" title="پرنٹ" style="${_tplBtn('#6c757d')}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M7 9.5V3.5h10v6"/><path d="M4.5 9.5h15v7h-15z"/><path d="M7 13.5h10V21H7z"/></svg></button>`:''}
-          <button aria-label="حذف" onclick="_deleteTpl('${t.id}')" title="حذف" style="${_tplBtn('#dc3545')}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
+          <button class="dio-btn dio-btn--i" aria-label="دیکھیں" onclick="_editTpl('${t.id}')" title="دیکھیں" style="${_tplBtn('#1a73e8')}" data-act="view"><i class="dio-i" data-ico="view" aria-hidden="true"></i></button>
+          <button class="dio-btn dio-btn--i" aria-label="نام بدلیں" onclick="_renameTpl('${t.id}')" title="نام بدلیں" style="${_tplBtn('#fd7e14')}" data-act="rename"><i class="dio-i" data-ico="rename" aria-hidden="true"></i></button>
+          <button class="dio-btn dio-btn--i" aria-label="ڈپلیکیٹ" onclick="_copyTpl('${t.id}')" title="ڈپلیکیٹ" style="${_tplBtn('#20c997')}" data-act="duplicate"><i class="dio-i" data-ico="duplicate" aria-hidden="true"></i></button>
+          ${hasFile?`<button class="dio-btn dio-btn--i" aria-label="ڈاؤن لوڈ" onclick="_downloadTpl('${t.id}')" title="ڈاؤن لوڈ" style="${_tplBtn('#28a745')}" data-act="download"><i class="dio-i" data-ico="download" aria-hidden="true"></i></button>`:''}
+          ${(hasContent||hasFile)?`<button class="dio-btn dio-btn--i" aria-label="پرنٹ" onclick="_printTpl('${t.id}')" title="پرنٹ" style="${_tplBtn('#6c757d')}" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i></button>`:''}
+          <button class="dio-btn dio-btn--i dio-btn--del" aria-label="حذف" onclick="_deleteTpl('${t.id}')" title="حذف" style="${_tplBtn('#dc3545')}" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i></button>
         </div>
       </td>
     </tr>`;
@@ -218,8 +218,8 @@ function _openAddTpl() {
       <div id="tpl-f-progress" style="font-size:9pt;color:var(--accent);margin-top:8px;"></div>
     </div>`,
     `<div style="display:flex;gap:8px;direction:rtl;">
-      <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-      <button class="btn btn-primary" id="tpl-save-btn" onclick="_saveTpl()">محفوظ کریں</button>
+      <button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+      <button class="btn btn-primary dio-btn dio-btn--pri" id="tpl-save-btn" onclick="_saveTpl()" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
     </div>`);
 }
 
@@ -231,7 +231,7 @@ async function _saveTpl() {
 
   if (!title) { showToast('ٹمپلیٹ کا نام ضروری ہے','error'); return; }
   if (!file) { showToast('ٹمپلیٹ فائل اپلوڈ کریں','error'); return; }
-  if (btn) { btn.disabled = true; btn.textContent = 'محفوظ ہو رہا ہے...'; }
+  if (btn) { btn.disabled = true; dioBtnText(btn, 'محفوظ ہو رہا ہے...'); }
 
   try {
     const oid = await getOfficerId();
@@ -258,7 +258,7 @@ async function _saveTpl() {
     _renderTplTable();
   } catch(e) {
     showToast('' + (e.message||'محفوظ نہیں ہو سکا'),'error');
-    if (btn) { btn.disabled=false; btn.textContent='محفوظ کریں'; }
+    if (btn) { btn.disabled=false; dioBtnText(btn, 'محفوظ کریں'); }
   }
 }
 
@@ -272,8 +272,8 @@ function _renameTpl(id) {
       <input class="form-input" id="tpl-rename-inp" dir="rtl" value="${_tplEsc(t.title||'')}" style="margin-bottom:6px;">
     </div>`,
     `<div style="display:flex;gap:8px;direction:rtl;">
-      <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-      <button class="btn btn-primary" onclick="_doRenameTpl('${id}')">محفوظ کریں</button>
+      <button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+      <button class="btn btn-primary dio-btn dio-btn--pri" onclick="_doRenameTpl('${id}')" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
     </div>`);
 }
 async function _doRenameTpl(id) {
@@ -414,23 +414,23 @@ function _tplBuildFormatToolbar() {
         ${sizes.map(s=>`<option value="${s}" ${s===16?'selected':''}>${s}</option>`).join('')}
       </select>
       ${sep}
-      <button class="tpl-fmt-btn" style="font-weight:bold;" onclick="_tplFmt('bold')" title="Bold">B</button>
-      <button class="tpl-fmt-btn" style="font-style:italic;" onclick="_tplFmt('italic')" title="Italic">I</button>
-      <button class="tpl-fmt-btn" style="text-decoration:underline;" onclick="_tplFmt('underline')" title="Underline">U</button>
+      <button class="tpl-fmt-btn dio-btn dio-btn--i" style="font-weight:bold;" onclick="_tplFmt('bold')" title="بولڈ" aria-label="بولڈ" data-act="bold"><i class="dio-i" data-ico="bold" aria-hidden="true"></i></button>
+      <button class="tpl-fmt-btn dio-btn dio-btn--i" style="font-style:italic;" onclick="_tplFmt('italic')" title="ترچھا" aria-label="ترچھا" data-act="italic"><i class="dio-i" data-ico="italic" aria-hidden="true"></i></button>
+      <button class="tpl-fmt-btn dio-btn dio-btn--i" style="text-decoration:underline;" onclick="_tplFmt('underline')" title="انڈر لائن" aria-label="انڈر لائن" data-act="underline"><i class="dio-i" data-ico="underline" aria-hidden="true"></i></button>
       ${sep}
       <input type="color" value="#000000" onchange="_tplColor(this.value)" title="رنگ" style="width:30px;height:30px;border:1px solid #dee2e6;border-radius:4px;cursor:pointer;padding:2px;">
       ${sep}
       <span style="font-size:9pt;color:#6c757d;">جدول:</span>
-      <button class="tpl-fmt-btn" style="font-size:9pt;" onclick="_tplBorder(1)" title="بارڈر موٹا">▦+</button>
-      <button class="tpl-fmt-btn" style="font-size:9pt;" onclick="_tplBorder(-1)" title="بارڈر پتلا">▦−</button>
-      <button class="tpl-fmt-btn" style="font-size:9pt;" onclick="_tplRowAdd()" title="قطار شامل">+قطار</button>
-      <button class="tpl-fmt-btn" style="font-size:9pt;" onclick="_tplColAdd()" title="کالم شامل">+کالم</button>
-      <button class="tpl-fmt-btn" style="font-size:9pt;color:#dc3545;" onclick="_tplRowDel()" title="قطار حذف">−قطار</button>
-      <button class="tpl-fmt-btn" style="font-size:9pt;color:#dc3545;" onclick="_tplColDel()" title="کالم حذف">−کالم</button>
+      <button class="tpl-fmt-btn dio-btn" style="font-size:9pt;" onclick="_tplBorder(1)" title="بارڈر موٹا" aria-label="بارڈر موٹا" data-act="border"><i class="dio-i" data-ico="border" aria-hidden="true"></i><span>بارڈر موٹا</span></button>
+      <button class="tpl-fmt-btn dio-btn" style="font-size:9pt;" onclick="_tplBorder(-1)" title="بارڈر پتلا" aria-label="بارڈر پتلا" data-act="border"><i class="dio-i" data-ico="border" aria-hidden="true"></i><span>بارڈر پتلا</span></button>
+      <button class="tpl-fmt-btn dio-btn" style="font-size:9pt;" onclick="_tplRowAdd()" title="قطار شامل" aria-label="قطار شامل" data-act="table"><i class="dio-i" data-ico="table" aria-hidden="true"></i><span>قطار شامل</span></button>
+      <button class="tpl-fmt-btn dio-btn" style="font-size:9pt;" onclick="_tplColAdd()" title="کالم شامل" aria-label="کالم شامل" data-act="table"><i class="dio-i" data-ico="table" aria-hidden="true"></i><span>کالم شامل</span></button>
+      <button class="tpl-fmt-btn dio-btn dio-btn--del" style="font-size:9pt;color:#dc3545;" onclick="_tplRowDel()" title="قطار حذف" aria-label="قطار حذف" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i><span>قطار حذف</span></button>
+      <button class="tpl-fmt-btn dio-btn dio-btn--del" style="font-size:9pt;color:#dc3545;" onclick="_tplColDel()" title="کالم حذف" aria-label="کالم حذف" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i><span>کالم حذف</span></button>
       ${sep}
-      <button aria-label="محفوظ" class="tpl-fmt-btn" style="font-size:9pt;" onclick="_tplSaveDoc(_tplDocId)" title="محفوظ"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4.5 4h11.5L19.5 7.5V20h-15z"/><path d="M8 4v6h7.5V4"/><path d="M8 20v-5.5h8V20"/></svg></button>
-      <button aria-label="پرنٹ" class="tpl-fmt-btn" style="font-size:9pt;" onclick="_tplPrintDoc()" title="پرنٹ"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M7 9.5V3.5h10v6"/><path d="M4.5 9.5h15v7h-15z"/><path d="M7 13.5h10V21H7z"/></svg></button>
-      <button aria-label="شیئر" class="tpl-fmt-btn" style="font-size:9pt;" onclick="dioSharePrint(()=>_tplPrintDoc(),'سانچہ')" title="شیئر — PDF / Word"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></svg></button>
+      <button aria-label="محفوظ کریں" class="tpl-fmt-btn dio-btn dio-btn--i" style="font-size:9pt;" onclick="_tplSaveDoc(_tplDocId)" title="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i></button>
+      <button aria-label="پرنٹ" class="tpl-fmt-btn dio-btn dio-btn--i" style="font-size:9pt;" onclick="_tplPrintDoc()" title="پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i></button>
+      <button aria-label="شیئر" class="tpl-fmt-btn dio-btn dio-btn--i" style="font-size:9pt;" onclick="dioSharePrint(()=>_tplPrintDoc(),'سانچہ')" title="شیئر" data-act="share"><i class="dio-i" data-ico="share" aria-hidden="true"></i></button>
     </div>`;
 }
 
@@ -523,7 +523,7 @@ function _editTpl(id, autoPrint) {
     ov.style.cssText='position:fixed;inset:0;z-index:99999;background:#fff;display:flex;flex-direction:column;direction:rtl;';
     ov.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:var(--amber);color:#fff;flex-shrink:0;gap:8px;">
-        <button onclick="_closeTplViewer()" style="${_tplTbBtn()}">بند کریں</button>
+        <button class="dio-btn" onclick="_closeTplViewer()" style="${_tplTbBtn()}" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>
         <div style="font-weight:800;" id="tpl-viewer-title">${_tplEsc(t.title)}</div>
         <button onclick="_renameTpl('${t.id}')" style="${_tplTbBtn()}">نام</button>
       </div>
@@ -546,13 +546,13 @@ function _editTpl(id, autoPrint) {
   ov.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--amber);color:#fff;flex-shrink:0;flex-wrap:wrap;gap:8px;">
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button onclick="_printTplEditor()" style="${_tplTbBtn()}">پرنٹ</button>
-        <button onclick="dioSharePrint(()=>_printTplEditor(),'سانچہ')" style="${_tplTbBtn()}" title="شیئر — PDF / Word">شیئر</button>
-        <button onclick="_copyTplEditor()" style="${_tplTbBtn()}">کاپی</button>
-        <button onclick="_saveTplEditor('${t.id}')" style="${_tplTbBtn()}">محفوظ</button>
+        <button class="dio-btn" onclick="_printTplEditor()" style="${_tplTbBtn()}" title="پرنٹ" aria-label="پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>پرنٹ</span></button>
+        <button class="dio-btn" onclick="dioSharePrint(()=>_printTplEditor(),'سانچہ')" style="${_tplTbBtn()}" title="شیئر" aria-label="شیئر" data-act="share"><i class="dio-i" data-ico="share" aria-hidden="true"></i><span>شیئر</span></button>
+        <button class="dio-btn" onclick="_copyTplEditor()" style="${_tplTbBtn()}" title="کاپی" aria-label="کاپی" data-act="copy"><i class="dio-i" data-ico="copy" aria-hidden="true"></i><span>کاپی</span></button>
+        <button class="dio-btn" onclick="_saveTplEditor('${t.id}')" style="${_tplTbBtn()}" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
       </div>
       <div style="font-size:11.25pt;font-weight:800;">${_tplEsc(t.title)}</div>
-      <button onclick="document.getElementById('tpl-editor-overlay').remove()" style="${_tplTbBtn()}">بند</button>
+      <button class="dio-btn" onclick="document.getElementById('tpl-editor-overlay').remove()" style="${_tplTbBtn()}" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>
     </div>
 
     <!-- Editable template name -->
@@ -672,7 +672,7 @@ function _moveTpl(id) {
       </select>
     </div>`,
     `<div style="display:flex;gap:8px;direction:rtl;">
-      <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+      <button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
       <button class="btn btn-primary" onclick="_doMoveTpl('${id}')">منتقل کریں</button>
     </div>`);
 }
