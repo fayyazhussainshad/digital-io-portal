@@ -15,6 +15,12 @@
 from v564_common import *
 
 R = []
+
+def pick_type(pg, which, value):
+    """v575: کاغذ کے کونے کا «▾» (دائیں = ضمنی کی قسم، بائیں = نوعیت) — افسر کی طرح"""
+    pg.click('#zf-cp-main' if which == 'main' else '#zf-cp-sub'); pg.wait_for_timeout(300)
+    pg.click("#zf-cp-menu button[data-v='" + value + "']"); pg.wait_for_timeout(600)
+
 def check(name, ok, extra=''):
     R.append(('PASS' if ok else 'FAIL', name, extra))
     print(('PASS ' if ok else 'FAIL ') + name + (' — ' + str(extra)[:400] if extra != '' else ''), flush=True)
@@ -255,7 +261,7 @@ def run(desktop):
         # ═══ C) سینئر افسر — اسی تاریخ پر 3-الف، پھر 3-ب ═══
         to_list(pg); new_zimni(pg)
         type_c1(pg, '30/10/2026')
-        pg.evaluate("(() => { const a = document.getElementById('zf-author'); if (a && !a.getClientRects().length) { const b = document.querySelector('#zf-corners .zf-morebtn'); if (b) b.click(); } return 0; })()"); pg.select_option('#zf-author', 'sho'); pg.wait_for_timeout(600)
+        pick_type(pg, 'main', 'SHO کی ضمنی')
         zs = pg.evaluate("_zimniDoc().querySelector('[data-k=zno]').textContent")
         lines = pg.evaluate("[...(_zimniDoc().querySelectorAll('[data-k=murattib],[data-k=io_sign]'))].map(x => x.textContent.trim())")
         check(f'{tag} C: «لکھنے والا: SHO» — اسی تاریخ پر نمبر 3-الف خود', zs == '3-الف', zs)
@@ -272,17 +278,19 @@ def run(desktop):
         check(f'{tag} C: SHO کی ضمنی اسی تاریخ پر محفوظ (3-الف)', res is True and '3-الف' in msg, msg)
         to_list(pg); new_zimni(pg)
         type_c1(pg, '30/10/2026')
-        pg.evaluate("(() => { const a = document.getElementById('zf-author'); if (a && !a.getClientRects().length) { const b = document.querySelector('#zf-corners .zf-morebtn'); if (b) b.click(); } return 0; })()"); pg.select_option('#zf-author', 'dsp'); pg.wait_for_timeout(600)
-        pg.fill('#zf-author-name', 'سید اظہر عباس'); pg.dispatch_event('#zf-author-name', 'change'); pg.wait_for_timeout(400)
+        # v575: «لکھنے والا» کا خانہ ختم — DSP کا نام / رینک / پوسٹ / سرکل اوپر والے DSP-SDPO بٹن کی ترتیبات سے
+        pg.evaluate("localStorage.setItem('digital_io_dsp', JSON.stringify({ name: 'سید اظہر عباس', rank: 'DSP', post: 'SDPO', circle: 'سرکل صدر' })); 0")
+        pick_type(pg, 'main', 'DSP کی ضمنی')
         zd = pg.evaluate("_zimniDoc().querySelector('[data-k=zno]').textContent")
         check(f'{tag} C: دوسرا سینئر (DSP) اسی تاریخ پر — 3-ب', zd == '3-ب', zd)
-        check(f'{tag} C (1a): نام اوپر سے لکھا (صرف اسی ضمنی کے لیے) — دستاویز میں وہی',
-              pg.evaluate("_zimniDoc().querySelector('[data-k=io_sign]').textContent.trim()") == 'سید اظہر عباس DSP')
+        check(f'{tag} C (v575): DSP کی ضمنی — «مرتبہ» اور دستخط: نام، رینک، پوسٹ، سرکل (آخر میں دوبارہ رینک نہیں)',
+              pg.evaluate("[...(_zimniDoc().querySelectorAll('[data-k=murattib],[data-k=io_sign]'))].map(x => x.textContent.trim())") == ['سید اظہر عباس DSP SDPO سرکل صدر'] * 2,
+              pg.evaluate("[...(_zimniDoc().querySelectorAll('[data-k=murattib],[data-k=io_sign]'))].map(x => x.textContent.trim())"))
         res, msg = save(pg)
         check(f'{tag} C: DSP کی ضمنی محفوظ (3-ب)', res is True and '3-ب' in msg, msg)
         # وہی SHO دوبارہ اسی تاریخ → خبردار
         to_list(pg); new_zimni(pg)
-        type_c1(pg, '30/10/2026'); pg.evaluate("(() => { const a = document.getElementById('zf-author'); if (a && !a.getClientRects().length) { const b = document.querySelector('#zf-corners .zf-morebtn'); if (b) b.click(); } return 0; })()"); pg.select_option('#zf-author', 'sho'); pg.wait_for_timeout(500)
+        type_c1(pg, '30/10/2026'); pick_type(pg, 'main', 'SHO کی ضمنی')
         res, msg = save(pg)
         check(f'{tag} C: وہی SHO اسی تاریخ پر دوسری ضمنی — خبردار، محفوظ نہیں', res is False and 'ندیم عباس شاد' in msg and 'ایک افسر ایک تاریخ' in msg, msg)
         # 3a: سینئر افسر ایسی تاریخ پر جس پر تفتیشی افسر کی ضمنی نہیں — اگلا سادہ نمبر

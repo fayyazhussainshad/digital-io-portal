@@ -83,10 +83,13 @@ test('v574: پرانی محفوظ ضمنیوں کے نام نئی اقسام پ�
   assert.strictEqual(N('میری اپنی قسم'), 'میری اپنی قسم', 'افسر کی اپنی قسم جوں کی توں');
 });
 
-test('v574: اوپر کی پٹی چھپی (دستاویز کی پٹی کے بٹن انہی کو دباتے ہیں)، کونوں میں ضمنی / نوعیت، نیچے 0.6cm', () => {
+test('v575: ضمنی کی پٹی چھپی؛ کاغذ کے کونوں میں ▾ (دائیں = ضمنی کی قسم، بائیں = نوعیت)؛ نیچے 0.6cm', () => {
   assert.ok(/<div id="zf-tools" class="no-print zf-tools\$\{inDocView \? '' : ' zf-tools-show'\}">/.test(Z), 'پرانی پٹی صرف دستاویز کی پٹی نہ ہو تو');
   assert.ok(/id="zf-save-btn" class="btn btn-primary btn-sm dio-modbtn"/.test(Z) && /data-dio-print onclick="_printZimniCurrent\(\)"/.test(Z), 'محفوظ / پرنٹ کے بٹن DOM میں (چھپے)');
-  assert.ok(/<span class="zf-cr zf-cr-r"><span id="zf-sub-wrap">/.test(Z) && /<span class="zf-cr zf-cr-l">\$\{_zimniMainSelectHTML\(mainShown\)\}<\/span>/.test(Z), 'دائیں نوعیت، بائیں ضمنی');
+  assert.ok(!/id="zf-corners"/.test(Z) && !/id="zf-khulasa"/.test(Z), 'کاغذ کے اوپر کوئی قطار / خلاصے کا خانہ نہیں');
+  assert.ok(/id="zf-cp-main" class="zf-cpick no-print" onclick="_zimniCornerMenu\(event,'main'\)"/.test(Z) && /id="zf-cp-sub" class="zf-cpick no-print" onclick="_zimniCornerMenu\(event,'sub'\)"/.test(Z));
+  assert.ok(/if \(m\) \{ m\.style\.top = top \+ 'px'; m\.style\.left = \(left \+ r\.width - 4 - m\.offsetWidth\) \+ 'px'; \}   \/\/ دائیں کونا/.test(Z), 'ضمنی کی قسم = دائیں کونا');
+  assert.ok(/if \(u\) \{ u\.style\.top = top \+ 'px'; u\.style\.left = \(left \+ 4\) \+ 'px'; \}/.test(Z), 'نوعیت = بائیں کونا');
   assert.ok(/^const ZF_PAGE_BOT_CM = 0\.6;$/m.test(Z));
   assert.ok(/padding:1cm \$\{side\} \$\{ZF_PAGE_BOT_CM\}cm \$\{side\}/.test(Z), 'اسکرین کا کاغذ = چھپائی');
   assert.ok(/var contentH=\(isA4\?11\.69:13\)\*96 - CM - BOT;/.test(Z), 'صفحے کی اونچائی اسی حاشیے سے');
@@ -98,7 +101,7 @@ test('v574: کوائف موقع و مال — مقدمے کے ساتھ (آلہ +
   assert.ok(/DIOSync\.ud\.queue\('case_kawaif', cid, 'fields', rec\)/.test(Z) && /localStorage\.setItem\(_ZF_KW_LS \+ cid, JSON\.stringify\(\{ fields: rec \}\)\)/.test(Z));
   assert.ok(/'dio_case_kawaif_', 'dio_cctx_'/.test(A), 'لاگ آؤٹ پر صاف');
   assert.ok(/'\/zimni\.js',\s*'\/zimni-templates\.js'/.test(W), 'service worker کی فہرست میں');
-  assert.ok(/^const CACHE_NAME = 'digital-io-v574';/m.test(W));
+  assert.ok(/^const CACHE_NAME = 'digital-io-v575';/m.test(W));
 });
 
 test('v574: قطار صفحے پر ٹوٹے تو خانے کی نچلی padding کی جگہ پہلے ہی چھوڑی جائے (A4 پر بیچ میں خالی صفحہ نہیں)', () => {
@@ -108,8 +111,36 @@ test('v574: قطار صفحے پر ٹوٹے تو خانے کی نچلی padding 
   assert.ok(!/\bdocument\./.test(f.replace(/\/\/.*$/gm, '')), 'document براہِ راست نہیں (DOC.defaultView)');
 });
 
-test('v574: کونوں کی قطار کی اونچائی مقرر — «خودکار محفوظ» کا نشان کاغذ کو نہیں کھسکاتا', () => {
-  assert.ok(/\.zf-cr-m\{ flex:1 1 0; justify-content:center; flex-wrap:wrap; \}/.test(Z), 'بیچ کا حصہ بنیاد 0');
-  assert.ok(/\.zf-stamps\{ display:inline-flex; flex-direction:column; justify-content:center; flex:0 1 16em; min-width:0; max-width:16em;\s*height:30px; overflow:hidden;/.test(Z), 'نشان مقررہ اونچائی');
-  assert.ok(/\.zf-stamps > span\{ display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; \}/.test(Z));
+test('v575: سرخی «رپورٹ ضمنی بیرونی» ہمیشہ؛ نوعیت کا نام کاغذ پر نہیں؛ خلاصہ کالم 4 میں «از» کی جگہ', () => {
+  assert.ok(/const ZIMNI_DEFAULT_TITLE = 'رپورٹ ضمنی بیرونی';/.test(Z));
+  assert.ok(!/_zimniApplyTitle\(tpl\.n\)/.test(Z) && !/_zimniApplyTitle\(sel\.value\)/.test(Z) && !/t\.textContent = subType/.test(Z), 'نوعیت / نمونہ سرخی نہیں بدلتا');
+  assert.ok(/void subType;\s*try \{ _zimniGuardTitle\(box\); \}/.test(Z), 'چھپائی میں بھی وہی سرخی (پرانی ضمنیاں بھی)');
+  assert.ok(/const _ZF_KH_SEL = 'table\.zf-tbl th\.zf-c-from';/.test(Z) && /try \{ _zimniKhSet\(tpl\.kh \|\| '', doc\); \}/.test(Z), 'نمونے کا خلاصہ کالم 4 کی سرخی میں');
+  assert.ok(/if \(old && !\/\^از\[۔\.\]\?\$\/\.test\(old\)\) c\.textContent = old;/.test(Z), '«از۔» ہٹ جاتا ہے');
+});
+
+test('v575: اوپر سے گرنے والی دستاویز کی پٹی پورے نظام سے ہٹی — نیچے کونے میں «⋯» (وہی کام)', () => {
+  const DV = read('doc-viewer.js');
+  assert.ok(/'#dio-dv-bar\{display:none !important;\}'/.test(DV), 'پٹی کبھی نظر نہیں آتی');
+  assert.ok(!/try \{ _dioBarPeekInit\(ov\); \}/.test(DV), 'scroll / ماؤس پر نہیں آتی');
+  assert.ok(/<button id="dio-dv-fab" class="no-print" type="button" onclick="_dioMenuToggle\(event\)"/.test(DV));
+  ['new', 'save', 'print', 'share', 'keys', 'back'].forEach(k => assert.ok(new RegExp("\\['" + k + "', '").test(DV), k));
+  assert.ok(/const map = \{ fir: '#dio-dv-fir', new: 'button\[onclick\^="_dioAddDocPicker"\]', save: '#dio-dv-save', print: 'button\[onclick\^="_dioPrintCurrent"\]',/.test(DV), 'وہی چھپے بٹن');
+});
+
+test('v575: کوائف «وقوعہ جات» میں؛ نقشہ موقع کے امتیازی نشانات سمتوں کے بعد؛ DSP: نام، رینک، پوسٹ، سرکل', () => {
+  const MD = read('misal-docs.js'), SD = read('sho-dsp.js');
+  assert.ok(/if \(docId === 'incidents'\) \{\s*_openDocId = docId;/.test(MD) && /window\.dioRenderKawaifPage\(_misalCaseId\)/.test(MD));
+  assert.ok(/async function dioRenderKawaifPage\(cid\)/.test(Z) && !/await _zimniKwCard\(need/.test(Z), 'ضمنی کوائف نہیں پوچھتی');
+  const c = { window: {} };
+  vm.createContext(c);
+  vm.runInContext(grab('_zimniTplWithMarks'), c);
+  const W = (t) => vm.runInContext('_zimniTplWithMarks(' + JSON.stringify(t) + ')', c);
+  assert.strictEqual(W('جس کے جانب شمال (north) اور جانب مغرب (west) واقع ہے۔نقشہ میں'), 'جس کے جانب شمال (north) اور جانب مغرب (west) واقع ہے۔ (naqshaMarks) نقشہ میں');
+  assert.strictEqual(W('جانب مشرق (east1) واقع ہے۔'), 'جانب مشرق (east1) واقع ہے۔', 'جائے برآمدگی کی سمتیں نہیں');
+  assert.strictEqual(W('شمال (north) تک'), 'شمال (north) تک (naqshaMarks)');
+  vm.runInContext(grab('_zimniSeniorText'), c);
+  assert.strictEqual(vm.runInContext("_zimniSeniorText({ role: 'dsp', name: 'ملک اسلم', rank: 'DSP', post: 'SDPO', circle: 'سرکل صدر' })", c), 'ملک اسلم DSP SDPO سرکل صدر');
+  assert.strictEqual(vm.runInContext("_zimniSeniorText({ role: 'sho', name: 'ندیم', rank: 'SI/SHO' })", c), 'ندیم SI/SHO');
+  assert.ok(/rec\.post = String\(\(document\.getElementById\('shodsp-post'\)\|\|\{\}\)\.value \|\| ''\)\.trim\(\);/.test(SD) && /rec\.circle = /.test(SD));
 });

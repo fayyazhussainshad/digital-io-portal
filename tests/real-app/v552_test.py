@@ -83,11 +83,12 @@ def run(b, tag, vp, mobile=False):
     sign = pg.evaluate("(document.querySelector('#ch173-doc [data-k=\"io_date\"]')||{}).textContent")
     check(f'{tag}: نیچے کی تاریخ = کالم 1 کی تاریخ (14/10/2026)', sign == '14/10/2026', sign)
     type_body(pg, ' مقدمہ کی تفتیش جاری ہے۔')
-    # ذیلی ضمنی → سرخی
-    pg.select_option('#zf-main-type', 'متفرق'); pg.wait_for_timeout(200)
-    pg.select_option('#zf-sub-type', 'متفرق ضمنی'); pg.wait_for_timeout(200)
+    # ذیلی ضمنی → سرخی نہیں بدلتی (v575)
+    # v575: کاغذ کے کونوں کے «▾» (دائیں = ضمنی کی قسم، بائیں = نوعیت)
+    pg.click('#zf-cp-main'); pg.wait_for_timeout(300); pg.click("#zf-cp-menu button[data-v='متفرق']"); pg.wait_for_timeout(400)
+    pg.click('#zf-cp-sub'); pg.wait_for_timeout(300); pg.click("#zf-cp-menu button[data-v='متفرق ضمنی']"); pg.wait_for_timeout(600)
     title = pg.evaluate("document.querySelector('#ch173-doc .zf-title').textContent")
-    check(f'{tag}: سرخی = منتخب ذیلی ضمنی', title == 'متفرق ضمنی', title)
+    check(f'{tag}: سرخی ہمیشہ «رپورٹ ضمنی بیرونی» — نوعیت سے نہیں بدلتی (v575، افسر کی ہدایت)', title == 'رپورٹ ضمنی بیرونی', title)
     pg.evaluate("document.querySelector('#ch173-doc .zf-body').focus()")
     pg.keyboard.press('Control+s'); pg.wait_for_timeout(1500)
     rows = zrows(pg)
@@ -141,7 +142,12 @@ def run(b, tag, vp, mobile=False):
     pg.evaluate(PRINTS)
     pg.evaluate(f"_printZimniById('{rows[0]['id']}')"); pg.wait_for_timeout(200)
     dpl = pg.evaluate('window.__dp')
-    check(f'{tag}: فہرست کا «پرنٹ» — ضمنی کا کاغذ (سرخی اور تاریخ کا قاعدہ لاگو)', len(dpl) == 1 and 'متفرق ضمنی' in dpl[0] and dpl[0].count('14/10/2026') >= 2)
+    # v575: سرخی ہمیشہ «رپورٹ ضمنی بیرونی» — نوعیت کی سرخی («متفرق ضمنی») کہیں نہیں، کالم 4 میں «از۔» نہیں
+    import re as _re
+    _dtxt = _re.sub(r'<[^>]+>', ' ', dpl[0]) if len(dpl) == 1 else ''
+    check(f'{tag}: فہرست کا «پرنٹ» — ضمنی کا کاغذ (سرخی «رپورٹ ضمنی بیرونی»، نوعیت کی سرخی نہیں، «از۔» نہیں، تاریخ کا قاعدہ لاگو)',
+          len(dpl) == 1 and 'رپورٹ ضمنی بیرونی' in _dtxt and 'متفرق ضمنی' not in _dtxt and 'از۔' not in _dtxt and dpl[0].count('14/10/2026') >= 2,
+          len(dpl) == 1 and [_dtxt.count('رپورٹ ضمنی بیرونی'), _dtxt.count('متفرق ضمنی'), _dtxt.count('از۔'), dpl[0].count('14/10/2026')])
     # ── 6) آف لائن: آلے پر، پھر انٹرنیٹ آتے ہی خود sync (دوہرا نہیں) ──
     ctx.set_offline(True); pg.wait_for_timeout(200)
     pg.evaluate("_newZimni()"); pg.wait_for_timeout(1300)
