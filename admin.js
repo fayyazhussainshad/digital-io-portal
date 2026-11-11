@@ -205,7 +205,7 @@ function _renderOfficersTab(officers, role) {
   return `<div class="card" style="padding:0;overflow:hidden;">
     <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
       <div style="font-size:9.75pt;font-weight:700;color:var(--accent);">افسران (${officers.length})</div>
-      ${role==='superadmin'?`<button class="btn btn-primary btn-sm dio-add-btn" onclick="_adminAddOfficer()">+ افسر درج کریں</button>`:''}
+      ${role==='superadmin'?`<button class="btn btn-primary btn-sm dio-add-btn dio-btn dio-btn--pri" onclick="_adminAddOfficer()" title="+ افسر درج کریں" aria-label="+ افسر درج کریں" data-act="add"><span>+ افسر درج کریں</span></button>`:''}
     </div>
     <div style="overflow-x:auto;">
     <table class="data-table" style="width:100%;">
@@ -241,11 +241,11 @@ function _renderOfficersTab(officers, role) {
             </td>
             <td style="text-align:center;font-weight:700;color:var(--accent);">${cases}</td>
             <td style="white-space:nowrap;">
-              <button title="دیکھیں" aria-label="دیکھیں" class="btn btn-secondary btn-sm" onclick="_adminViewOfficer('${o.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg></button>
-              <button aria-label="معلومات ترمیم کریں" class="btn btn-secondary btn-sm" onclick="_adminEditOfficer('${o.id}')" title="معلومات ترمیم کریں"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>
+              <button title="دیکھیں" aria-label="دیکھیں" class="btn btn-secondary btn-sm dio-btn dio-btn--i" onclick="_adminViewOfficer('${o.id}')" data-act="view"><i class="dio-i" data-ico="view" aria-hidden="true"></i></button>
+              <button aria-label="ترمیم" class="btn btn-secondary btn-sm dio-btn dio-btn--i" onclick="_adminEditOfficer('${o.id}')" title="ترمیم" data-act="edit"><i class="dio-i" data-ico="edit" aria-hidden="true"></i></button>
               ${(o.is_suspended || o.suspended)
-                ? `<button title="منظور" aria-label="منظور" class="btn btn-primary btn-sm" onclick="_adminUnsuspend('${o.id}','${esc(o.full_name||'')}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4.5 12.5l5 5 10-11"/></svg></button>`
-                : `<button title="معطل" aria-label="معطل" class="btn btn-danger btn-sm" onclick="_adminSuspend('${o.id}','${esc(o.full_name||'')}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/></svg></button>`}
+                ? `<button title="بحال کریں" aria-label="بحال کریں" class="btn btn-primary btn-sm dio-btn dio-btn--i" onclick="_adminUnsuspend('${o.id}','${esc(o.full_name||'')}')" data-act="unlock"><i class="dio-i" data-ico="unlock" aria-hidden="true"></i></button>`
+                : `<button title="معطل کریں" aria-label="معطل کریں" class="btn btn-danger btn-sm dio-btn dio-btn--i" onclick="_adminSuspend('${o.id}','${esc(o.full_name||'')}')" data-act="lock"><i class="dio-i" data-ico="lock" aria-hidden="true"></i></button>`}
               ${!o.is_approved
                 ? `<button class="btn btn-primary btn-sm" onclick="_adminApproveOfficer('${o.id}')">منظور</button>`:''}
             </td>
@@ -359,8 +359,8 @@ function _renderReportsTab(officers, cases) {
 
   <!-- Print report -->
   <div style="text-align:left;margin-top:12px;">
-    <button class="btn btn-primary" onclick="_adminPrintReport()">رپورٹ پرنٹ کریں</button>
-    <button class="btn btn-secondary" onclick="dioSharePrint(()=>_adminPrintReport(),'انتظامی رپورٹ')" title="شیئر — PDF / Word">شیئر</button>
+    <button class="btn btn-primary dio-btn" onclick="_adminPrintReport()" title="رپورٹ پرنٹ" aria-label="رپورٹ پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>رپورٹ پرنٹ</span></button>
+    <button class="btn btn-secondary dio-btn" onclick="dioSharePrint(()=>_adminPrintReport(),'انتظامی رپورٹ')" title="شیئر" aria-label="شیئر" data-act="share"><i class="dio-i" data-ico="share" aria-hidden="true"></i><span>شیئر</span></button>
   </div>`;
 }
 
@@ -390,7 +390,7 @@ async function _adminGetActivity() {
 async function _adminApprove(regId, name) {
   openModal('درخواست منظور کریں',
     `<p style="color:var(--text-secondary);">کیا آپ <b style="color:var(--green);">${name}</b> کی درخواست منظور کرنا چاہتے ہیں؟</p>`,
-    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
      <button class="btn btn-primary" onclick="closeModal();_doApproveReg('${regId}')">منظور</button>`
   );
 }
@@ -424,7 +424,7 @@ async function _doApproveReg(regId) {
 async function _adminRejectReg(regId, name) {
   openModal('درخواست رد کریں',
     `<p style="color:var(--red);">کیا آپ <b>${name}</b> کی درخواست رد کرنا چاہتے ہیں؟</p>`,
-    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
      <button class="btn btn-danger" onclick="closeModal();_doRejectReg('${regId}')">رد کریں</button>`
   );
 }
@@ -469,7 +469,7 @@ async function _adminSuspend(officerId, name) {
       <label class="form-label" style="margin-top:10px;">وجہ (ضروری)</label>
       <textarea class="form-input" id="suspend-reason" rows="3" placeholder="معطلی کی وجہ لکھیں..."></textarea>
     </div>`,
-    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
      <button class="btn btn-danger" onclick="closeModal();_doSuspend('${officerId}')">معطل کریں</button>`
   );
 }
@@ -494,7 +494,7 @@ async function _doSuspend(officerId) {
 async function _adminUnsuspend(officerId, name) {
   openModal('معطلی ختم کریں',
     `<p>کیا آپ <b style="color:var(--green);">${name}</b> کی معطلی ختم کرنا چاہتے ہیں؟</p>`,
-    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
      <button class="btn btn-primary" onclick="closeModal();_doUnsuspend('${officerId}')">بحال کریں</button>`
   );
 }
@@ -1044,8 +1044,8 @@ async function _adminEditOfficer(officerId) {
       </div>
     </div>
   `, `
-    <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-    <button class="btn btn-primary" onclick="_adminSaveOfficer('${officerId}')">محفوظ کریں</button>
+    <button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+    <button class="btn btn-primary dio-btn dio-btn--pri" onclick="_adminSaveOfficer('${officerId}')" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
   `);
 }
 
@@ -1118,7 +1118,7 @@ async function _adminViewOfficer(officerId) {
       <div><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M3.5 7.5h6l2 2.5h9V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z'/></svg> <b>کل مقدمات:</b> ${cases.length}</div>
       ${o.suspension_reason?`<div><svg viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='currentColor' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' style='vertical-align:-3px'><path d='M4 20h4L18 10l-4-4L4 16v4z'/><path d='M14 6l4 4'/></svg> <b>معطلی وجہ:</b> ${esc(o.suspension_reason)}</div>`:''}
     </div>`,
-    `<button class="btn btn-primary" onclick="closeModal()">بند کریں</button>`
+    `<button class="btn btn-primary dio-btn" onclick="closeModal()" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>`
   );
 }
 
@@ -1140,7 +1140,7 @@ function _adminAddOfficer() {
       </div>
       <div><label class="form-label">عارضی پاسورڈ *</label><input class="form-input" id="ao-pass" type="password" placeholder="Min 8 characters"></div>
     </div>`,
-    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
      <button class="btn btn-primary" onclick="_doAddOfficer()">+ شامل کریں</button>`
   );
 }
@@ -1363,9 +1363,9 @@ async function _renderSubsTab() {
               <td style="font-size:8.25pt;color:${diff<7?'var(--red)':'var(--text-secondary)'};">${formatDate(s.expires_at)} ${diff>0?'('+diff+'d)':''}</td>
               <td style="font-size:7.5pt;font-family:monospace;">${s.payment_ref||'—'}</td>
               <td>
-                ${s.status==='pending'?`<button title="منظور" aria-label="منظور" class="btn btn-primary btn-sm" onclick="_approveSub('${s.id}','${s.officer_id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M4.5 12.5l5 5 10-11"/></svg></button>`:''}
-                ${s.status==='active'?`<button title="بند کریں" aria-label="بند کریں" class="btn btn-danger btn-sm" onclick="_suspendSub('${s.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M5.5 11h13v9.5h-13z"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></svg></button>`:''}
-                ${s.status==='suspended'||s.status==='expired'?`<button title="کھولیں" aria-label="کھولیں" class="btn btn-primary btn-sm" onclick="_approveSub('${s.id}','${s.officer_id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M5.5 11h13v9.5h-13z"/><path d="M8.5 11V8a3.5 3.5 0 0 1 6.4-2"/></svg></button>`:''}
+                ${s.status==='pending'?`<button title="منظور" aria-label="منظور" class="btn btn-primary btn-sm dio-btn dio-btn--i" onclick="_approveSub('${s.id}','${s.officer_id}')" data-act="check"><i class="dio-i" data-ico="check" aria-hidden="true"></i></button>`:''}
+                ${s.status==='active'?`<button title="معطل کریں" aria-label="معطل کریں" class="btn btn-danger btn-sm dio-btn dio-btn--i" onclick="_suspendSub('${s.id}')" data-act="lock"><i class="dio-i" data-ico="lock" aria-hidden="true"></i></button>`:''}
+                ${s.status==='suspended'||s.status==='expired'?`<button title="بحال کریں" aria-label="بحال کریں" class="btn btn-primary btn-sm dio-btn dio-btn--i" onclick="_approveSub('${s.id}','${s.officer_id}')" data-act="unlock"><i class="dio-i" data-ico="unlock" aria-hidden="true"></i></button>`:''}
               </td>
             </tr>`;
           }).join('')}

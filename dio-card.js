@@ -329,7 +329,7 @@
       var pdf = /^data:application\/pdf/.test(u);
       return '<span class="dio-th' + (pdf ? ' pdf' : '') + '" role="button" tabindex="0" title="دیکھیں" onclick="DIOCard.viewKey(\'' + key + '\',' + i + ')">' +
         (pdf ? 'PDF' : '<img alt="" src="' + e(u) + '">') +
-        '<button type="button" class="x" aria-label="ہٹائیں" onclick="event.stopPropagation();DIOCard.removeFile(\'' + key + '\',' + i + ')">✕</button></span>';
+        '<button type="button" class="x dio-btn dio-btn--i" aria-label="بند کریں" onclick="event.stopPropagation();DIOCard.removeFile(\'' + key + '\',' + i + ')" title="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i></button></span>';
     }).join('');
   }
   // items: [[key,label,note,multiple,max]]
@@ -401,10 +401,10 @@
     var v = document.createElement('div');
     v.id = 'dio-viewer'; v.setAttribute('role', 'dialog'); v.setAttribute('aria-label', title || 'فائل');
     v.innerHTML = '<div class="bar">' +
-      (pdf ? '' : '<button type="button" data-z="1">زوم +</button><button type="button" data-z="-1">زوم −</button>') +
-      '<button type="button" data-a="share">شیئر</button><button type="button" data-a="dl">ڈاؤن لوڈ</button>' +
-      '<button type="button" data-a="print">پرنٹ</button>' + (pdf ? '' : '<button type="button" data-a="copy">کاپی</button>') +
-      '<button type="button" data-a="x">بند کریں ✕</button></div>' +
+      (pdf ? '' : '<button class="dio-btn" type="button" data-z="1" title="زوم اِن" aria-label="زوم اِن" data-act="zoom-in"><i class="dio-i" data-ico="zoom-in" aria-hidden="true"></i><span>زوم اِن</span></button><button class="dio-btn" type="button" data-z="-1" title="زوم آؤٹ" aria-label="زوم آؤٹ" data-act="zoom-out"><i class="dio-i" data-ico="zoom-out" aria-hidden="true"></i><span>زوم آؤٹ</span></button>') +
+      '<button class="dio-btn" type="button" data-a="share" title="شیئر" aria-label="شیئر" data-act="share"><i class="dio-i" data-ico="share" aria-hidden="true"></i><span>شیئر</span></button><button class="dio-btn" type="button" data-a="dl" title="ڈاؤن لوڈ" aria-label="ڈاؤن لوڈ" data-act="download"><i class="dio-i" data-ico="download" aria-hidden="true"></i><span>ڈاؤن لوڈ</span></button>' +
+      '<button class="dio-btn" type="button" data-a="print" title="پرنٹ" aria-label="پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>پرنٹ</span></button>' + (pdf ? '' : '<button class="dio-btn" type="button" data-a="copy" title="کاپی" aria-label="کاپی" data-act="copy"><i class="dio-i" data-ico="copy" aria-hidden="true"></i><span>کاپی</span></button>') +
+      '<button class="dio-btn" type="button" data-a="x" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button></div>' +
       '<div class="pane">' + (pdf ? '<iframe title="فائل" src="' + e(url) + '"></iframe>' : '<img alt="" src="' + e(url) + '">') + '</div>';
     document.body.appendChild(v);
     var z = 1, img = v.querySelector('img'), fname = String(name || 'dio_file').replace(/\s+/g, '_');
@@ -471,9 +471,9 @@
 
   /* ── کارڈ کھولنا ───────────────────────────────────────────── */
   function footer(saveCall, saveLabel) {
-    var mic = isPhone() ? '' : '<button type="button" class="dio-mic" id="dio-card-mic" aria-pressed="false" onmousedown="event.preventDefault()" onclick="DIOCard.micToggle()">' + ICON.mic + 'آواز سے لکھیں</button>';
+    var mic = isPhone() ? '' : '<button type="button" class="dio-mic dio-btn" id="dio-card-mic" aria-pressed="false" onmousedown="event.preventDefault()" onclick="DIOCard.micToggle()" title="آواز سے لکھیں" aria-label="آواز سے لکھیں" data-act="mic"><i class="dio-i" data-ico="mic" aria-hidden="true"></i><span>آواز سے لکھیں</span></button>';
     return '<button class="btn btn-primary" onclick="' + saveCall + '">' + e(saveLabel || 'محفوظ کریں') + '</button>' +
-      '<button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>' + mic;
+      '<button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>' + mic;
   }
   function title(item, edit) { return (edit ? 'ترمیم' : 'نیا اندراج') + ' — ' + item; }
   // نیا اندراج کارڈ کھولو

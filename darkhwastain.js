@@ -294,35 +294,35 @@ function _dkRender() {
         ${DK_TYPES.map(t => `<option value="${t.id}" ${t.id === _dkType ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}
       </select>
       <!-- v553: لیگل/A4 کا انتخاب یہاں سے ہٹا — پرنٹ کے وقت پوچھا جاتا ہے -->
-      <button type="button" class="btn btn-secondary btn-sm" onclick="_dkResetBody()" title="اس قسم کا نیا خاکہ لائیں">↺ خاکہ</button>
-      <button type="button" class="btn btn-secondary btn-sm" onclick="_dkShowList()" title="محفوظ درخواستوں کی فہرست">فہرست</button>
+      <button type="button" class="btn btn-secondary btn-sm dio-btn" onclick="_dkResetBody()" title="اس قسم کا نیا خاکہ لائیں" data-act="refresh"><i class="dio-i" data-ico="refresh" aria-hidden="true"></i><span>خاکہ</span></button>
+      <button type="button" class="btn btn-secondary btn-sm dio-btn" onclick="_dkShowList()" title="فہرست" aria-label="فہرست" data-act="back"><i class="dio-i" data-ico="back" aria-hidden="true"></i><span>فہرست</span></button>
       <div style="margin-right:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('bold')" title="بولڈ" style="${_dkBtn()}font-weight:900;">B</button>
-        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('italic')" title="ترچھا" style="${_dkBtn()}font-style:italic;">I</button>
-        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('underline')" title="انڈر لائن" style="${_dkBtn()}text-decoration:underline;">U</button>
+        <button class="dio-btn dio-btn--i" onmousedown="_dkKeep(event)" onclick="_dkFmt('bold')" title="بولڈ" style="${_dkBtn()}font-weight:900;" aria-label="بولڈ" data-act="bold"><i class="dio-i" data-ico="bold" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="_dkKeep(event)" onclick="_dkFmt('italic')" title="ترچھا" style="${_dkBtn()}font-style:italic;" aria-label="ترچھا" data-act="italic"><i class="dio-i" data-ico="italic" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="_dkKeep(event)" onclick="_dkFmt('underline')" title="انڈر لائن" style="${_dkBtn()}text-decoration:underline;" aria-label="انڈر لائن" data-act="underline"><i class="dio-i" data-ico="underline" aria-hidden="true"></i></button>
         <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
-        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('justifyRight')" title="دائیں" style="${_dkBtn()}">≡</button>
-        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('justifyCenter')" title="درمیان" style="${_dkBtn()}">☰</button>
-        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('justifyLeft')" title="بائیں" style="${_dkBtn()}">≡</button>
-        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('justifyFull')" title="برابر" style="${_dkBtn()}">⚌</button>
+        <button class="dio-btn dio-btn--i" onmousedown="_dkKeep(event)" onclick="_dkFmt('justifyRight')" title="دائیں سیدھ" style="${_dkBtn()}" aria-label="دائیں سیدھ" data-act="align-right"><i class="dio-i" data-ico="align-right" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="_dkKeep(event)" onclick="_dkFmt('justifyCenter')" title="درمیان" style="${_dkBtn()}" aria-label="درمیان" data-act="align-center"><i class="dio-i" data-ico="align-center" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="_dkKeep(event)" onclick="_dkFmt('justifyLeft')" title="بائیں سیدھ" style="${_dkBtn()}" aria-label="بائیں سیدھ" data-act="align-left"><i class="dio-i" data-ico="align-left" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="_dkKeep(event)" onclick="_dkFmt('justifyFull')" title="دونوں طرف برابر" style="${_dkBtn()}" aria-label="دونوں طرف برابر" data-act="justify"><i class="dio-i" data-ico="justify" aria-hidden="true"></i></button>
         <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
-        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('insertUnorderedList')" title="نقطہ دار فہرست" style="${_dkBtn()}">•</button>
-        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('insertOrderedList')" title="نمبر والی فہرست" style="${_dkBtn()}">1.</button>
+        <button class="dio-btn dio-btn--i" onmousedown="_dkKeep(event)" onclick="_dkFmt('insertUnorderedList')" title="نقطہ دار فہرست" style="${_dkBtn()}" aria-label="نقطہ دار فہرست" data-act="bullets"><i class="dio-i" data-ico="bullets" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="_dkKeep(event)" onclick="_dkFmt('insertOrderedList')" title="نمبر والی فہرست" style="${_dkBtn()}" aria-label="نمبر والی فہرست" data-act="numbers"><i class="dio-i" data-ico="numbers" aria-hidden="true"></i></button>
         <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
         <select id="dk-font-sel" onmousedown="event.stopPropagation()" onchange="_dkSetFont(this.value)" title="فونٹ سائز"
           style="height:28px;border:1px solid var(--border,#ccc);border-radius:6px;background:var(--bg-card,#fff);color:var(--text-primary,#111);font-size:9.75pt;padding:0 6px;">
           ${DK_FONT_SIZES.map(s => `<option value="${s}" ${String(s)===String(docFont)?'selected':''}>${s} pt</option>`).join('')}
         </select>
-        <button onmousedown="_dkKeep(event)" onclick="_dkFontStep(1)" title="فونٹ بڑا" style="${_dkBtn()}">A+</button>
-        <button onmousedown="_dkKeep(event)" onclick="_dkFontStep(-1)" title="فونٹ چھوٹا" style="${_dkBtn()}font-size:8.25pt;">A−</button>
+        <button class="dio-btn dio-btn--i" onmousedown="_dkKeep(event)" onclick="_dkFontStep(1)" title="فونٹ بڑا" style="${_dkBtn()}" aria-label="فونٹ بڑا" data-act="font-up"><i class="dio-i" data-ico="font-up" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="_dkKeep(event)" onclick="_dkFontStep(-1)" title="فونٹ چھوٹا" style="${_dkBtn()}font-size:8.25pt;" aria-label="فونٹ چھوٹا" data-act="font-down"><i class="dio-i" data-ico="font-down" aria-hidden="true"></i></button>
         <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
-        <button id="dk-fmtpaint-btn" onmousedown="_dkKeep(event)" onclick="_dkFormatPainter()" title="فارمیٹ پینٹر (پہلے متن منتخب کریں، پھر یہ دبائیں، پھر جہاں لگانا ہے وہاں منتخب کریں)" style="${_dkBtn()}">🖌️</button>
-        <button aria-label="فارمیٹنگ ہٹائیں" onmousedown="_dkKeep(event)" onclick="_dkFmt('removeFormat')" title="فارمیٹنگ ہٹائیں" style="${_dkBtn()}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg></button>
+        <button class="dio-btn dio-btn--i" id="dk-fmtpaint-btn" onmousedown="_dkKeep(event)" onclick="_dkFormatPainter()" title="فارمیٹ پینٹر" style="${_dkBtn()}" aria-label="فارمیٹ پینٹر" data-act="painter"><i class="dio-i" data-ico="painter" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" aria-label="فارمیٹ ختم کریں" onmousedown="_dkKeep(event)" onclick="_dkFmt('removeFormat')" title="فارمیٹ ختم کریں" style="${_dkBtn()}" data-act="clear-format"><i class="dio-i" data-ico="clear-format" aria-hidden="true"></i></button>
         <span style="width:1px;height:22px;background:var(--border,#ccc);margin:0 4px;"></span>
-        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('undo')" title="واپس" style="${_dkBtn()}">↶</button>
-        <button onmousedown="_dkKeep(event)" onclick="_dkFmt('redo')" title="دوبارہ" style="${_dkBtn()}">↷</button>
-        <button class="btn btn-primary btn-sm dio-modbtn" onclick="_dkSave()">محفوظ کریں</button>
-        <button class="btn btn-secondary btn-sm dio-modbtn" onclick="_dkPrint()">پرنٹ کریں</button>
+        <button class="dio-btn dio-btn--i" onmousedown="_dkKeep(event)" onclick="_dkFmt('undo')" title="کالعدم" style="${_dkBtn()}" aria-label="کالعدم" data-act="undo"><i class="dio-i" data-ico="undo" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="_dkKeep(event)" onclick="_dkFmt('redo')" title="دوبارہ" style="${_dkBtn()}" aria-label="دوبارہ" data-act="redo"><i class="dio-i" data-ico="redo" aria-hidden="true"></i></button>
+        <button class="btn btn-primary btn-sm dio-modbtn dio-btn" onclick="_dkSave()" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
+        <button class="btn btn-secondary btn-sm dio-modbtn dio-btn" onclick="_dkPrint()" title="پرنٹ" aria-label="پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>پرنٹ</span></button>
       </div>
     </div>
 
@@ -348,7 +348,7 @@ function _dkRender() {
 
         <!-- بنام (accused) — dayen ▾ dropdown, phir بنام + numbered ملزمان -->
         <div class="dk-banam-row" dir="rtl">
-          <button class="dk-acc-pick no-print" onclick="_dkAccPicker(event)" title="ملزمان منتخب کریں">▾</button>
+          <button class="dk-acc-pick no-print dio-pick" onclick="_dkAccPicker(event)" title="ملزمان منتخب کریں" aria-label="ملزمان منتخب کریں" data-act="dropdown"><i class="dio-i" data-ico="dropdown" aria-hidden="true"></i></button>
           <span class="dk-banam-lbl">بنام</span>
           <span class="dk-banam-list" dir="rtl" contenteditable="true" data-k="banam">${_dkChosenNamesHtml()}</span>
         </div>
@@ -422,7 +422,7 @@ function _dkAccPicker(ev) {
     <div style="flex:1;overflow-y:auto;padding:4px 8px;min-height:0;">${rows}</div>
     <div style="display:flex;gap:6px;padding:8px;border-top:1px solid #e5e7eb;background:#f8fafc;flex-shrink:0;">
       <button id="dk-acc-ok" style="flex:1;padding:8px;border:none;border-radius:6px;background:#0369a1;color:#fff;cursor:pointer;font-size:9.75pt;font-weight:700;font-family:'Jameel Noori Nastaleeq';">شامل کریں</button>
-      <button id="dk-acc-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;cursor:pointer;font-size:9.75pt;font-family:'Jameel Noori Nastaleeq';">بند</button>
+      <button class="dio-btn" id="dk-acc-x" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;cursor:pointer;font-size:9.75pt;font-family:'Jameel Noori Nastaleeq';" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>
     </div>`;
   document.body.appendChild(box);
   const r = ev.currentTarget.getBoundingClientRect();

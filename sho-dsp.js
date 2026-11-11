@@ -60,8 +60,8 @@ function openShoDspModal(type) {
       <div style="font-size:9pt;color:var(--text-muted);line-height:1.8;">ضمنی کے «مرتبہ» میں: نام، رینک، پوسٹ، سرکل</div>`}
     </div>
   `, `
-    <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-    <button class="btn btn-primary" onclick="_saveShoDsp('${type}')">محفوظ کریں</button>
+    <button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+    <button class="btn btn-primary dio-btn dio-btn--pri" onclick="_saveShoDsp('${type}')" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
   `);
 }
 window.openShoDspModal = openShoDspModal;
@@ -123,8 +123,8 @@ function openSarkariGari() {
       </div>
     </div>
   `, `
-    <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-    <button class="btn btn-primary" onclick="_saveSarkariGari()">محفوظ کریں</button>
+    <button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+    <button class="btn btn-primary dio-btn dio-btn--pri" onclick="_saveSarkariGari()" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
   `);
 }
 window.openSarkariGari = openSarkariGari;

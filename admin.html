@@ -5,10 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0a0f1a">
   <title>Digital IO — Admin Control Panel</title>
+  <script src="dio-icons.js"></script>
+  <link rel="stylesheet" href="dio-ui.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     @font-face { font-family: "Aptos"; src: local("Aptos"), local("Segoe UI"); font-weight: 400; }
     @font-face { font-family: "Aptos"; src: local("Aptos Bold"), local("Segoe UI Bold"); font-weight: 700; }
+    /* اردو بٹن اور پیغامات — وہی Jameel Noori Nastaleeq جو پورے نظام میں (اپنے سرور سے، کوئی متبادل نہیں) */
+    @font-face { font-family: 'Jameel Noori Nastaleeq'; src: url('fonts/jameel-noori-nastaleeq.woff2') format('woff2'); font-display: block; }
 
     /* ── VARIABLES ── */
     :root {
@@ -329,7 +333,7 @@
     <input type="email" id="adm-email" class="login-input" placeholder="admin@digital-io.com" autocomplete="email">
     <div class="login-label">Password</div>
     <input type="password" id="adm-pass" class="login-input" placeholder="••••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doAdminLogin()">
-    <button class="login-btn" onclick="doAdminLogin()" id="adm-btn">🔐 Access Admin Panel</button>
+    <button class="login-btn dio-btn dio-btn--pri" onclick="doAdminLogin()" id="adm-btn" title="ایڈمن پینل کھولیں" aria-label="ایڈمن پینل کھولیں" data-act="lock"><i class="dio-i" data-ico="lock" aria-hidden="true"></i><span>ایڈمن پینل کھولیں</span></button>
     <div class="login-security">🔒 Admin access only · All actions are audit logged · Unauthorized access is a criminal offence</div>
   </div>
 </div>
@@ -377,7 +381,7 @@
       </nav>
 
       <div class="sidebar-footer">
-        <button class="logout-btn" onclick="doAdminLogout()">🚪 Sign Out</button>
+        <button class="logout-btn dio-btn" onclick="doAdminLogout()" title="لاگ آؤٹ" aria-label="لاگ آؤٹ" data-act="logout"><i class="dio-i" data-ico="logout" aria-hidden="true"></i><span>لاگ آؤٹ</span></button>
         <div class="ver">Digital IO Admin v1.0</div>
       </div>
     </div>
@@ -443,19 +447,19 @@ async function doAdminLogin() {
   const btn   = document.getElementById('adm-btn');
   const err   = document.getElementById('login-err');
   err.style.display = 'none';
-  if (!email || !pass) { showErr('Please enter email and password.'); return; }
+  if (!email || !pass) { showErr('ای میل اور پاس ورڈ لکھیں۔'); return; }
 
-  btn.textContent = '⏳ Verifying...'; btn.disabled = true;
+  dioBtnText(btn, 'تصدیق ہو رہی ہے…'); btn.disabled = true;
 
   const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-  if (error) { showErr('❌ ' + error.message); btn.textContent = '🔐 Access Admin Panel'; btn.disabled = false; return; }
+  if (error) { showErr('لاگ اِن نہیں ہو سکا: ' + error.message); dioBtnText(btn, 'ایڈمن پینل کھولیں'); btn.disabled = false; return; }
 
   // Check admin role
   const { data: roleData } = await sb.from('user_roles').select('role').eq('user_id', data.user.id).single();
   if (!roleData || (roleData.role !== 'admin' && roleData.role !== 'superadmin')) {
     await sb.auth.signOut();
-    showErr('⛔ Access denied. Admin privileges required.');
-    btn.textContent = '🔐 Access Admin Panel'; btn.disabled = false;
+    showErr('رسائی نہیں — یہ صفحہ صرف ایڈمن کے لیے ہے۔');
+    dioBtnText(btn, 'ایڈمن پینل کھولیں'); btn.disabled = false;
     return;
   }
 
@@ -464,7 +468,7 @@ async function doAdminLogin() {
   loginSuccess();
 }
 
-function showErr(msg) { const el = document.getElementById('login-err'); el.textContent = msg; el.style.display = 'block'; }
+function showErr(msg) { const el = document.getElementById('login-err'); el.textContent = msg; el.dir = 'rtl'; el.style.fontFamily = "'Jameel Noori Nastaleeq'"; el.style.textAlign = 'right'; el.style.display = 'block'; }
 
 async function loginSuccess() {
   document.getElementById('login-screen').style.display = 'none';
@@ -489,7 +493,7 @@ async function doAdminLogout() {
   document.getElementById('admin-app').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('adm-pass').value = '';
-  document.getElementById('adm-btn').textContent = '🔐 Access Admin Panel';
+  dioBtnText(document.getElementById('adm-btn'), 'ایڈمن پینل کھولیں');
   document.getElementById('adm-btn').disabled = false;
 }
 
@@ -715,7 +719,7 @@ async function renderRevenue(c) {
             <td style="color:var(--text2);">${o.station||'—'}</td>
             <td style="color:var(--text2);">${o.district||'—'}</td>
             <td style="color:var(--text3);font-size:8.25pt;">${formatDate(o.created_at)}</td>
-            <td><div class="btn-group"><button class="btn btn-success btn-sm" onclick="markPaid('${o.id}')">✅ Mark Paid</button><button class="btn btn-danger btn-sm" onclick="sendPaymentReminder('${o.id}','${o.full_name}')">📧 Remind</button></div></td>
+            <td><div class="btn-group"><button class="btn btn-success btn-sm dio-btn" onclick="markPaid('${o.id}')" title="ادائیگی وصول" aria-label="ادائیگی وصول" data-act="check"><i class="dio-i" data-ico="check" aria-hidden="true"></i><span>ادائیگی وصول</span></button><button class="btn btn-danger btn-sm dio-btn" onclick="sendPaymentReminder('${o.id}','${o.full_name}')" title="یاددہانی" aria-label="یاددہانی" data-act="reminder"><i class="dio-i" data-ico="reminder" aria-hidden="true"></i><span>یاددہانی</span></button></div></td>
           </tr>`).join('')}
         </tbody>
       </table>
@@ -734,7 +738,7 @@ async function renderRevenue(c) {
                 <td><span class="pill pill-blue">${PLANS[o.subscription_plan]?.name||o.subscription_plan||'Monthly'}</span></td>
                 <td style="color:var(--green);font-weight:700;">PKR ${(PLANS[o.subscription_plan]?.price||300).toLocaleString()}</td>
                 <td style="color:var(--text3);font-size:8.25pt;">${o.subscription_expiry ? formatDate(o.subscription_expiry) : '—'}</td>
-                <td><button class="btn btn-secondary btn-sm" onclick="viewOfficerDetail('${o.id}')">Details</button></td>
+                <td><button class="btn btn-secondary btn-sm dio-btn" onclick="viewOfficerDetail('${o.id}')" title="دیکھیں" aria-label="دیکھیں" data-act="view"><i class="dio-i" data-ico="view" aria-hidden="true"></i><span>دیکھیں</span></button></td>
               </tr>`).join('')}
         </tbody>
       </table>
@@ -750,7 +754,7 @@ async function renderOfficers(c) {
   c.innerHTML = `
     <div class="page-header">
       <div><div class="page-title">👮 All Officers</div><div class="page-sub">${officers?.length||0} total registered</div></div>
-      <button class="btn btn-primary" onclick="openAddAdminOfficerModal()">+ Add Officer</button>
+      <button class="btn btn-primary dio-btn dio-btn--pri" onclick="openAddAdminOfficerModal()" title="+ افسر درج کریں" aria-label="+ افسر درج کریں" data-act="add"><span>+ افسر درج کریں</span></button>
     </div>
     <div class="search-bar">
       <input class="search-input" id="off-search" placeholder="🔍 Search by name, badge, station, district..." oninput="filterOfficerTable(this.value)">
@@ -791,11 +795,11 @@ function renderOfficerRows(list) {
       <td><span class="pill ${statusPill}">${statusLabel}</span></td>
       <td style="font-size:8.25pt;color:var(--text4);">${formatDate(o.created_at)}</td>
       <td><div class="btn-group">
-        <button class="btn btn-secondary btn-sm" onclick="viewOfficerDetail('${o.id}')">View</button>
-        ${status==='pending' ? `<button class="btn btn-success btn-sm" onclick="approveOfficer('${o.id}','${o.full_name}')">Approve</button>` : ''}
-        ${status==='active' ? `<button class="btn btn-danger btn-sm" onclick="blockOfficer('${o.id}','${o.full_name}')">Block</button>` : ''}
-        ${status==='blocked' ? `<button class="btn btn-success btn-sm" onclick="unblockOfficer('${o.id}','${o.full_name}')">Unblock</button>` : ''}
-        <button class="btn btn-secondary btn-sm" onclick="resetOfficerPassword('${o.id}','${o.full_name}')">🔐 Reset PW</button>
+        <button class="btn btn-secondary btn-sm dio-btn" onclick="viewOfficerDetail('${o.id}')" title="دیکھیں" aria-label="دیکھیں" data-act="view"><i class="dio-i" data-ico="view" aria-hidden="true"></i><span>دیکھیں</span></button>
+        ${status==='pending' ? `<button class="btn btn-success btn-sm dio-btn" onclick="approveOfficer('${o.id}','${o.full_name}')" title="منظور" aria-label="منظور" data-act="check"><i class="dio-i" data-ico="check" aria-hidden="true"></i><span>منظور</span></button>` : ''}
+        ${status==='active' ? `<button class="btn btn-danger btn-sm dio-btn" onclick="blockOfficer('${o.id}','${o.full_name}')" title="معطل کریں" aria-label="معطل کریں" data-act="lock"><i class="dio-i" data-ico="lock" aria-hidden="true"></i><span>معطل کریں</span></button>` : ''}
+        ${status==='blocked' ? `<button class="btn btn-success btn-sm dio-btn" onclick="unblockOfficer('${o.id}','${o.full_name}')" title="بحال کریں" aria-label="بحال کریں" data-act="unlock"><i class="dio-i" data-ico="unlock" aria-hidden="true"></i><span>بحال کریں</span></button>` : ''}
+        <button class="btn btn-secondary btn-sm dio-btn" onclick="resetOfficerPassword('${o.id}','${o.full_name}')" title="پاس ورڈ ری سیٹ" aria-label="پاس ورڈ ری سیٹ" data-act="lock"><i class="dio-i" data-ico="lock" aria-hidden="true"></i><span>پاس ورڈ ری سیٹ</span></button>
       </div></td>
     </tr>`;
   }).join('');
@@ -847,9 +851,9 @@ async function renderApprovals(c) {
               </div>
             </div>
             <div class="btn-group">
-              <button class="btn btn-secondary btn-sm" onclick="viewOfficerDetail('${o.id}')">👁️ View Details</button>
-              <button class="btn btn-danger btn-sm" onclick="rejectOfficer('${o.id}','${o.full_name}')">❌ Reject</button>
-              <button class="btn btn-success" onclick="approveOfficer('${o.id}','${o.full_name}')">✅ Approve & Activate</button>
+              <button class="btn btn-secondary btn-sm dio-btn" onclick="viewOfficerDetail('${o.id}')" title="دیکھیں" aria-label="دیکھیں" data-act="view"><i class="dio-i" data-ico="view" aria-hidden="true"></i><span>دیکھیں</span></button>
+              <button class="btn btn-danger btn-sm dio-btn dio-btn--danger" onclick="rejectOfficer('${o.id}','${o.full_name}')" title="مسترد کریں" aria-label="مسترد کریں" data-act="reject"><i class="dio-i" data-ico="reject" aria-hidden="true"></i><span>مسترد کریں</span></button>
+              <button class="btn btn-success dio-btn dio-btn--pri" onclick="approveOfficer('${o.id}','${o.full_name}')" title="منظور" aria-label="منظور" data-act="check"><i class="dio-i" data-ico="check" aria-hidden="true"></i><span>منظور</span></button>
             </div>
           </div>
         </div>`).join('')}`;
@@ -875,7 +879,7 @@ async function renderBlocked(c) {
               <td style="color:var(--text2);">${o.station||'—'}</td>
               <td style="color:var(--red);font-size:8.25pt;">${o.block_reason||'No reason provided'}</td>
               <td style="color:var(--text3);font-size:8.25pt;">${formatDate(o.updated_at)}</td>
-              <td><button class="btn btn-success btn-sm" onclick="unblockOfficer('${o.id}','${o.full_name}')">✅ Unblock</button></td>
+              <td><button class="btn btn-success btn-sm dio-btn" onclick="unblockOfficer('${o.id}','${o.full_name}')" title="بحال کریں" aria-label="بحال کریں" data-act="unlock"><i class="dio-i" data-ico="unlock" aria-hidden="true"></i><span>بحال کریں</span></button></td>
             </tr>`).join('')}</tbody>
           </table>
         </div>`}`;
@@ -942,7 +946,7 @@ async function renderAudit(c) {
   c.innerHTML = `
     <div class="page-header">
       <div><div class="page-title">📋 Audit Log</div><div class="page-sub">Last ${data?.length||0} system events</div></div>
-      <button class="btn btn-secondary" onclick="exportAuditLog()">📤 Export CSV</button>
+      <button class="btn btn-secondary dio-btn" onclick="exportAuditLog()" title="CSV ڈاؤن لوڈ" aria-label="CSV ڈاؤن لوڈ" data-act="download"><i class="dio-i" data-ico="download" aria-hidden="true"></i><span>CSV ڈاؤن لوڈ</span></button>
     </div>
     <div class="search-bar">
       <input class="search-input" id="audit-search" placeholder="🔍 Search by action, table, officer..." oninput="filterAuditLog(this.value)">
@@ -989,7 +993,7 @@ function exportAuditLog() {
   const csv = ['#,Action,Table,Record ID,Time', ...list.map((l,i)=>`${i+1},${l.action||''},${l.table_name||''},${l.record_id||''},${l.created_at||''}`)].join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'audit-log-' + new Date().toISOString().slice(0,10) + '.csv'; a.click();
-  showToast('📤 Audit log exported as CSV', 'success');
+  showToast('آڈٹ لاگ کی <bdi dir="ltr">CSV</bdi> فائل ڈاؤن لوڈ ہو گئی', 'success');
 }
 
 // ════════════════════════════════════════════
@@ -1007,7 +1011,7 @@ async function renderAdmins(c) {
   c.innerHTML = `
     <div class="page-header">
       <div><div class="page-title">👨‍💼 Manage Admins</div><div class="page-sub">${adminList.length} admin(s) total</div></div>
-      <button class="btn btn-primary" onclick="openAssignAdminModal()">+ Assign Admin</button>
+      <button class="btn btn-primary dio-btn dio-btn--pri" onclick="openAssignAdminModal()" title="+ ایڈمن درج کریں" aria-label="+ ایڈمن درج کریں" data-act="add"><span>+ ایڈمن درج کریں</span></button>
     </div>
     <div class="alert alert-info">ℹ️ Admins can approve officers, manage subscriptions and view all data. Superadmins can also assign other admins.</div>
     <div class="card">
@@ -1023,7 +1027,7 @@ async function renderAdmins(c) {
                 <td style="font-size:8.25pt;color:var(--text3);">${formatDate(a.created_at)}</td>
                 <td>
                   ${adminRole==='superadmin' && a.user_id !== currentAdmin?.id
-                    ? `<button class="btn btn-danger btn-sm" onclick="removeAdmin('${a.user_id}','${a.officer?.full_name||'this admin'}')">Remove</button>`
+                    ? `<button class="btn btn-danger btn-sm dio-btn dio-btn--del" onclick="removeAdmin('${a.user_id}','${a.officer?.full_name||'this admin'}')" title="حذف" aria-label="حذف" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i><span>حذف</span></button>`
                     : '<span style="font-size:7.5pt;color:var(--text4);">—</span>'}
                 </td>
               </tr>`).join('')}
@@ -1064,7 +1068,7 @@ async function renderSettings(c) {
         <div class="card-title">📊 SYSTEM HEALTH</div>
         ${[['Database Status','🟢 Online'],['Auth Service','🟢 Online'],['Real-time Sync','🟢 Active'],['Backup System','🟢 Running'],['API Status','🟢 Connected'],['Free Tier Limits','Row limit: 500MB / 50,000 rows']].map(([k,v])=>`
           <div class="detail-row"><span class="dk">${k}</span><span class="dv">${v}</span></div>`).join('')}
-        <button class="btn btn-primary" style="width:100%;margin-top:12px;" onclick="showToast('✅ All systems operational.',\'success\')">🔄 Run Health Check</button>
+        <button class="btn btn-primary dio-btn" style="width:100%;margin-top:12px;" onclick="showToast(\'نظام کے تمام حصے ٹھیک کام کر رہے ہیں\',\'success\')" title="نظام کی جانچ" aria-label="نظام کی جانچ" data-act="refresh"><i class="dio-i" data-ico="refresh" aria-hidden="true"></i><span>نظام کی جانچ</span></button>
       </div>
     </div>`;
 }
@@ -1074,8 +1078,8 @@ async function renderSettings(c) {
 // ════════════════════════════════════════════
 async function approveOfficer(id, name) {
   const { error } = await sb.from('officers').update({ is_approved: true }).eq('id', id);
-  if (error) { showToast('❌ Error: ' + error.message, 'error'); return; }
-  showToast(`✅ ${name} approved successfully!`, 'success');
+  if (error) { showToast('خرابی: ' + _ub(error.message), 'error'); return; }
+  showToast(`${_ub(name)} منظور ہو گئے`, 'success');
   await loadApprovalCount();
   showPage('approvals', null);
 }
@@ -1084,8 +1088,8 @@ async function rejectOfficer(id, name) {
   openModal('❌ Reject Registration',
     `<p style="color:var(--text2);font-size:9.75pt;line-height:1.6;">Are you sure you want to reject <b style="color:var(--accent);">${name}</b>?</p>
      <div class="form-group" style="margin-top:12px;"><label class="form-label">Reason (optional)</label><textarea class="form-input" id="reject-reason" rows="2" placeholder="Reason for rejection..."></textarea></div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-     <button class="btn btn-danger" onclick="doRejectOfficer('${id}','${name}')">❌ Reject</button>`
+    `<button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+     <button class="btn btn-danger dio-btn dio-btn--danger" onclick="doRejectOfficer('${id}','${name}')" title="مسترد کریں" aria-label="مسترد کریں" data-act="reject"><i class="dio-i" data-ico="reject" aria-hidden="true"></i><span>مسترد کریں</span></button>`
   );
 }
 
@@ -1093,7 +1097,7 @@ async function doRejectOfficer(id, name) {
   const reason = document.getElementById('reject-reason')?.value || 'Registration rejected by admin';
   await sb.from('officers').update({ is_blocked: true, block_reason: reason }).eq('id', id);
   closeModal();
-  showToast(`Officer ${name} rejected.`, 'info');
+  showToast(`افسر ${_ub(name)} کی درخواست مسترد کر دی گئی`, 'info');
   await loadApprovalCount();
   showPage('approvals', null);
 }
@@ -1102,22 +1106,22 @@ async function blockOfficer(id, name) {
   openModal('🚫 Block Officer',
     `<p style="color:var(--text2);font-size:9.75pt;line-height:1.6;">Block <b style="color:var(--accent);">${name}</b>? They will immediately lose access to the system.</p>
      <div class="form-group" style="margin-top:12px;"><label class="form-label">Reason *</label><textarea class="form-input" id="block-reason" rows="2" placeholder="Reason for blocking..."></textarea></div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-     <button class="btn btn-danger" onclick="doBlockOfficer('${id}','${name}')">🚫 Block Officer</button>`
+    `<button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+     <button class="btn btn-danger dio-btn dio-btn--danger" onclick="doBlockOfficer('${id}','${name}')" title="معطل کریں" aria-label="معطل کریں" data-act="lock"><i class="dio-i" data-ico="lock" aria-hidden="true"></i><span>معطل کریں</span></button>`
   );
 }
 
 async function doBlockOfficer(id, name) {
   const reason = document.getElementById('block-reason')?.value;
-  if (!reason) { showToast('⚠️ Please provide a reason.', 'error'); return; }
+  if (!reason) { showToast('وجہ لکھیں', 'error'); return; }
   await sb.from('officers').update({ is_blocked: true, block_reason: reason }).eq('id', id);
-  closeModal(); showToast(`🚫 ${name} has been blocked.`, 'info');
+  closeModal(); showToast(`${_ub(name)} معطل کر دیے گئے`, 'info');
   showPage('officers', null);
 }
 
 async function unblockOfficer(id, name) {
   await sb.from('officers').update({ is_blocked: false, block_reason: null }).eq('id', id);
-  showToast(`✅ ${name} has been unblocked.`, 'success');
+  showToast(`${_ub(name)} بحال کر دیے گئے`, 'success');
   showPage('officers', null);
 }
 
@@ -1130,28 +1134,28 @@ async function viewOfficerDetail(id) {
       ${[['Full Name',o.full_name||'—'],['Badge No.',o.badge_number||'—'],['Designation',o.designation||'IO'],['Station',o.station||'—'],['District',o.district||'—'],['Registered',formatDate(o.created_at)],['Subscription',PLANS[o.subscription_plan]?.name||'Not Set'],['Sub. Status',o.subscription_status||'Unpaid'],['Expiry',o.subscription_expiry?formatDate(o.subscription_expiry):'—'],['Total Cases',cases?.length||0],['Active Cases',cases?.filter(c=>c.status==='under').length||0],['Approved',o.is_approved?'✅ Yes':'❌ No'],['Blocked',o.is_blocked?'🚫 Yes':'✅ No']].map(([k,v])=>`
         <div class="detail-row"><span class="dk">${k}</span><span class="dv">${v}</span></div>`).join('')}
     </div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Close</button>
-     <button class="btn btn-secondary" onclick="closeModal();resetOfficerPassword('${id}','${o.full_name}')">🔐 Reset Password</button>
-     ${!o.is_approved && !o.is_blocked ? `<button class="btn btn-success" onclick="closeModal();approveOfficer('${id}','${o.full_name}')">✅ Approve</button>` : ''}
-     ${!o.is_blocked ? `<button class="btn btn-danger" onclick="closeModal();blockOfficer('${id}','${o.full_name}')">🚫 Block</button>` : `<button class="btn btn-success" onclick="closeModal();unblockOfficer('${id}','${o.full_name}')">✅ Unblock</button>`}`
+    `<button class="btn btn-secondary dio-btn" onclick="closeModal()" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>
+     <button class="btn btn-secondary dio-btn" onclick="closeModal();resetOfficerPassword('${id}','${o.full_name}')" title="پاس ورڈ ری سیٹ" aria-label="پاس ورڈ ری سیٹ" data-act="lock"><i class="dio-i" data-ico="lock" aria-hidden="true"></i><span>پاس ورڈ ری سیٹ</span></button>
+     ${!o.is_approved && !o.is_blocked ? `<button class="btn btn-success dio-btn dio-btn--pri" onclick="closeModal();approveOfficer('${id}','${o.full_name}')" title="منظور" aria-label="منظور" data-act="check"><i class="dio-i" data-ico="check" aria-hidden="true"></i><span>منظور</span></button>` : ''}
+     ${!o.is_blocked ? `<button class="btn btn-danger dio-btn dio-btn--danger" onclick="closeModal();blockOfficer('${id}','${o.full_name}')" title="معطل کریں" aria-label="معطل کریں" data-act="lock"><i class="dio-i" data-ico="lock" aria-hidden="true"></i><span>معطل کریں</span></button>` : `<button class="btn btn-success dio-btn" onclick="closeModal();unblockOfficer('${id}','${o.full_name}')" title="بحال کریں" aria-label="بحال کریں" data-act="unlock"><i class="dio-i" data-ico="unlock" aria-hidden="true"></i><span>بحال کریں</span></button>`}`
   );
 }
 
 async function markPaid(id) {
   const expiry = new Date(); expiry.setMonth(expiry.getMonth()+1);
   await sb.from('officers').update({ subscription_status: 'active', subscription_plan: 'monthly', subscription_expiry: expiry.toISOString() }).eq('id', id);
-  showToast('✅ Marked as paid — Monthly plan activated.', 'success');
+  showToast('ادائیگی وصول — ماہانہ پلان فعال ہو گیا', 'success');
   showPage('revenue', null);
 }
 
-function sendPaymentReminder(id, name) { showToast(`📧 Payment reminder sent to ${name}. (Email feature coming in Phase 7)`, 'info', 4000); }
+function sendPaymentReminder(id, name) { showToast(`${_ub(name)} کو ادائیگی کی یاددہانی — ای میل کی سہولت ابھی نہیں (مرحلہ 7)`, 'info', 4000); }
 
 async function updateOfficerPlan(id, plan) {
   if (!plan) return;
   const durations = { monthly: 1, biannual: 6, annual: 12 };
   const expiry = new Date(); expiry.setMonth(expiry.getMonth() + durations[plan]);
   await sb.from('officers').update({ subscription_plan: plan, subscription_status: 'active', subscription_expiry: expiry.toISOString() }).eq('id', id);
-  showToast(`✅ Subscription updated to ${PLANS[plan].name}`, 'success');
+  showToast(`سبسکرپشن تبدیل: ${_ub(PLANS[plan].name)}`, 'success');
 }
 
 async function openAssignAdminModal() {
@@ -1174,31 +1178,31 @@ async function openAssignAdminModal() {
          <option value="superadmin">⭐ Superadmin</option>
        </select>
      </div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-     <button class="btn btn-primary" onclick="doAssignAdmin()">Assign Role</button>`
+    `<button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+     <button class="btn btn-primary dio-btn dio-btn--pri" onclick="doAssignAdmin()" title="کردار دیں" aria-label="کردار دیں" data-act="check"><i class="dio-i" data-ico="check" aria-hidden="true"></i><span>کردار دیں</span></button>`
   );
 }
 
 async function doAssignAdmin() {
   const userId = document.getElementById('assign-officer-id').value;
   const role = document.getElementById('assign-role').value;
-  if (!userId) { showToast('⚠️ Please select an officer.', 'error'); return; }
+  if (!userId) { showToast('افسر منتخب کریں', 'error'); return; }
   const { error } = await sb.from('user_roles').upsert({ user_id: userId, role }, { onConflict: 'user_id' });
-  if (error) { showToast('❌ Error: ' + error.message, 'error'); return; }
-  closeModal(); showToast('✅ Admin role assigned successfully!', 'success');
+  if (error) { showToast('خرابی: ' + _ub(error.message), 'error'); return; }
+  closeModal(); showToast('ایڈمن کا کردار دے دیا گیا', 'success');
   showPage('admins', null);
 }
 
 async function removeAdmin(userId, name) {
   openModal('Remove Admin',
     `<p style="color:var(--text2);font-size:9.75pt;">Remove admin privileges from <b style="color:var(--accent);">${name}</b>? They will revert to officer role.</p>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-     <button class="btn btn-danger" onclick="doRemoveAdmin('${userId}')">Remove Admin</button>`
+    `<button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+     <button class="btn btn-danger dio-btn dio-btn--danger" onclick="doRemoveAdmin('${userId}')" title="حذف" aria-label="حذف" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i><span>حذف</span></button>`
   );
 }
 async function doRemoveAdmin(userId) {
   await sb.from('user_roles').update({ role: 'officer' }).eq('user_id', userId);
-  closeModal(); showToast('Admin role removed.', 'info');
+  closeModal(); showToast('ایڈمن کا کردار واپس لے لیا گیا', 'info');
   showPage('admins', null);
 }
 
@@ -1224,8 +1228,8 @@ function openAddAdminOfficerModal() {
      <div style="padding:10px;background:var(--bg);border-radius:var(--r2);font-size:8.25pt;color:var(--text3);margin-top:4px;">
        ℹ️ Officer will receive a verification email. They can change their password after first login.
      </div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-     <button class="btn btn-primary" onclick="doAddOfficerManually()">➕ Create Officer Account</button>`
+    `<button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+     <button class="btn btn-primary dio-btn dio-btn--pri" onclick="doAddOfficerManually()" title="+ افسر کا اکاؤنٹ درج کریں" aria-label="+ افسر کا اکاؤنٹ درج کریں" data-act="add"><span>+ افسر کا اکاؤنٹ درج کریں</span></button>`
   );
 }
 
@@ -1240,14 +1244,14 @@ async function doAddOfficerManually() {
   const password = document.getElementById('ao-password').value;
 
   if (!name || !email || !badge || !station || !district || !password) {
-    showToast('⚠️ Please fill all required fields.', 'error'); return;
+    showToast('تمام ضروری خانے بھریں', 'error'); return;
   }
   if (password.length < 8) {
-    showToast('⚠️ Password must be at least 8 characters.', 'error'); return;
+    showToast('پاس ورڈ کم از کم 8 حروف کا ہو', 'error'); return;
   }
 
   const btn = document.querySelector('#modal-root .btn-primary');
-  if (btn) { btn.textContent = '⏳ Creating...'; btn.disabled = true; }
+  if (btn) { dioBtnText(btn, 'اکاؤنٹ بن رہا ہے…'); btn.disabled = true; }
 
   try {
     // Use server-side SQL function that bypasses MFA completely
@@ -1263,18 +1267,18 @@ async function doAddOfficerManually() {
     });
 
     if (error) {
-      showToast('❌ Error: ' + error.message, 'error');
-      if (btn) { btn.textContent = '➕ Create Officer Account'; btn.disabled = false; }
+      showToast('خرابی: ' + _ub(error.message), 'error');
+      if (btn) { dioBtnText(btn, '+ افسر کا اکاؤنٹ درج کریں'); btn.disabled = false; }
       return;
     }
 
     closeModal();
-    showToast(`✅ Officer ${name} created successfully! They can now log in with their email and password.`, 'success', 5000);
+    showToast(`افسر ${_ub(name)} کا اکاؤنٹ بن گیا — اب وہ اپنی ای میل اور پاس ورڈ سے لاگ اِن کر سکتے ہیں`, 'success', 5000);
     showPage('officers', null);
 
   } catch (err) {
-    showToast('❌ Error: ' + err.message, 'error');
-    if (btn) { btn.textContent = '➕ Create Officer Account'; btn.disabled = false; }
+    showToast('خرابی: ' + _ub(err.message), 'error');
+    if (btn) { dioBtnText(btn, '+ افسر کا اکاؤنٹ درج کریں'); btn.disabled = false; }
   }
 }
 
@@ -1287,7 +1291,7 @@ function openModal(title, body, footer='') {
       <div class="modal-card">
         <div class="modal-header">
           <div class="modal-title">${title}</div>
-          <button class="modal-close" onclick="closeModal()">✕</button>
+          <button class="modal-close dio-btn dio-btn--i" onclick="closeModal()" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i></button>
         </div>
         <div class="modal-body">${body}</div>
         ${footer ? `<div class="modal-footer">${footer}</div>` : ''}
@@ -1299,9 +1303,16 @@ function closeModal() { document.getElementById('modal-root').innerHTML = ''; }
 // ════════════════════════════════════════════
 //  TOAST
 // ════════════════════════════════════════════
+// نام / سرور کا (انگریزی) پیغام — escape اور <bdi> (اردو جملہ الٹا نہ ہو؛ HTML نہ چلے)
+function _ub(v) {
+  const s = String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  return '<bdi>' + s + '</bdi>';
+}
 function showToast(msg, type='info', duration=3500) {
   const t = document.createElement('div');
   t.className = `toast toast-${type}`;
+  t.dir = 'rtl';
+  t.style.fontFamily = "'Jameel Noori Nastaleeq'"; t.style.textAlign = 'right'; t.style.fontSize = '10.5pt'; t.style.lineHeight = '1.8';
   t.innerHTML = msg;
   document.getElementById('toast-root').appendChild(t);
   setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.3s'; setTimeout(()=>t.remove(),300); }, duration);
@@ -1344,7 +1355,7 @@ function startClock() {
 function setupRealtimeSync() {
   sb.channel('admin-realtime')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'officers' }, async () => {
-      showToast('🔄 Officers data updated.', 'info', 2000);
+      showToast('افسران کا ڈیٹا تازہ ہو گیا', 'info', 2000);
       await loadApprovalCount();
       const currentPage = document.getElementById('page-title')?.textContent;
       if (currentPage?.includes('Officer') || currentPage?.includes('Approval') || currentPage?.includes('Blocked')) {
@@ -1353,7 +1364,7 @@ function setupRealtimeSync() {
       if (currentPage?.includes('Dashboard')) showPage('dashboard', null);
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'cases' }, async () => {
-      showToast('🔄 Cases data updated.', 'info', 2000);
+      showToast('مقدمات کا ڈیٹا تازہ ہو گیا', 'info', 2000);
       const currentPage = document.getElementById('page-title')?.textContent;
       if (currentPage?.includes('Dashboard') || currentPage?.includes('Revenue')) {
         showPage(currentPage.includes('Revenue') ? 'revenue' : 'dashboard', null);
@@ -1378,7 +1389,7 @@ function setupRealtimeSync() {
 async function resetOfficerPassword(officerId, officerName) {
   // Get officer's user_id first
   const { data: officer } = await sb.from('officers').select('user_id').eq('id', officerId).single();
-  if (!officer) { showToast('❌ Officer not found.', 'error'); return; }
+  if (!officer) { showToast('افسر نہیں ملا', 'error'); return; }
 
   // Get email from auth.users via a function
   const { data: userData } = await sb.from('officers').select('*, user_roles(role)').eq('id', officerId).single();
@@ -1397,10 +1408,10 @@ async function resetOfficerPassword(officerId, officerName) {
         <div style="font-size:9.75pt;font-weight:600;margin-bottom:8px;">🔑 Set New Password Manually</div>
         <input type="password" class="form-input" id="new-officer-pass" placeholder="Enter new password (min 8 characters)" style="margin-bottom:8px;">
         <input type="password" class="form-input" id="new-officer-pass2" placeholder="Confirm new password">
-        <button class="btn btn-primary" style="width:100%;margin-top:10px;" onclick="doSetOfficerPassword('${officer.user_id}','${officerName}')">🔒 Set Password</button>
+        <button class="btn btn-primary dio-btn dio-btn--pri" style="width:100%;margin-top:10px;" onclick="doSetOfficerPassword('${officer.user_id}','${officerName}')" title="پاس ورڈ سیٹ کریں" aria-label="پاس ورڈ سیٹ کریں" data-act="lock"><i class="dio-i" data-ico="lock" aria-hidden="true"></i><span>پاس ورڈ سیٹ کریں</span></button>
       </div>
     </div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>`
+    `<button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>`
   );
 }
 
@@ -1414,8 +1425,8 @@ async function doSendResetEmail(officerId, officerName) {
     openModal('📧 Send Password Reset Email',
       `<p style="color:var(--text2);font-size:9.75pt;margin-bottom:12px;">Enter the email address of <b style="color:var(--accent);">${officerName}</b>:</p>
        <input type="email" class="form-input" id="reset-email-input" placeholder="officer@example.com">`,
-      `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-       <button class="btn btn-primary" onclick="sendResetByEmail('${officerName}')">📤 Send Reset Email</button>`
+      `<button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+       <button class="btn btn-primary dio-btn dio-btn--pri" onclick="sendResetByEmail('${officerName}')" title="ری سیٹ ای میل بھیجیں" aria-label="ری سیٹ ای میل بھیجیں" data-act="mail"><i class="dio-i" data-ico="mail" aria-hidden="true"></i><span>ری سیٹ ای میل بھیجیں</span></button>`
     );
     return;
   }
@@ -1424,48 +1435,48 @@ async function doSendResetEmail(officerId, officerName) {
     redirectTo: window.location.origin
   });
 
-  if (resetError) { showToast('❌ Error: ' + resetError.message, 'error'); return; }
+  if (resetError) { showToast('خرابی: ' + _ub(resetError.message), 'error'); return; }
   closeModal();
-  showToast(`✅ Password reset email sent to ${officerName}!`, 'success');
+  showToast(`${_ub(officerName)} کو ری سیٹ ای میل بھیج دی گئی`, 'success');
 }
 
 async function sendResetByEmail(officerName) {
   const email = document.getElementById('reset-email-input')?.value.trim();
-  if (!email) { showToast('⚠️ Please enter email.', 'error'); return; }
+  if (!email) { showToast('ای میل لکھیں', 'error'); return; }
   
   const { error } = await sb.auth.resetPasswordForEmail(email, {
     redirectTo: 'https://fayyazhussainshad.github.io/digital-io-portal/'
   });
 
-  if (error) { showToast('❌ Error: ' + error.message, 'error'); return; }
+  if (error) { showToast('خرابی: ' + _ub(error.message), 'error'); return; }
   closeModal();
-  showToast(`✅ Password reset email sent to ${officerName}!`, 'success');
+  showToast(`${_ub(officerName)} کو ری سیٹ ای میل بھیج دی گئی`, 'success');
 }
 
 async function doSetOfficerPassword(userId, officerName) {
   const p1 = document.getElementById('new-officer-pass')?.value;
   const p2 = document.getElementById('new-officer-pass2')?.value;
   
-  if (!p1 || p1.length < 8) { showToast('⚠️ Password must be at least 8 characters.', 'error'); return; }
-  if (p1 !== p2) { showToast('❌ Passwords do not match.', 'error'); return; }
+  if (!p1 || p1.length < 8) { showToast('پاس ورڈ کم از کم 8 حروف کا ہو', 'error'); return; }
+  if (p1 !== p2) { showToast('دونوں پاس ورڈ ایک جیسے نہیں', 'error'); return; }
 
   // Use admin API to update password
   const { error } = await sb.auth.admin.updateUserById(userId, { password: p1 });
   
   if (error) {
     // Fallback: send reset email instead
-    showToast('⚠️ Direct password change requires service key. Sending reset email instead.', 'info', 4000);
-    const email = prompt(`Enter ${officerName}'s email to send reset link:`);
+    showToast('پاس ورڈ یہاں سے براہِ راست نہیں بدلا جا سکتا — اس کی جگہ ری سیٹ ای میل بھیجی جا رہی ہے', 'info', 4000);
+    const email = prompt(`${officerName} کی ای میل لکھیں — ری سیٹ لنک اسی پر جائے گا:`);
     if (email) {
       await sb.auth.resetPasswordForEmail(email, { redirectTo: 'https://fayyazhussainshad.github.io/digital-io-portal/' });
-      showToast('✅ Password reset email sent!', 'success');
+      showToast('ری سیٹ ای میل بھیج دی گئی', 'success');
     }
     closeModal();
     return;
   }
 
   closeModal();
-  showToast(`✅ Password updated for ${officerName}!`, 'success');
+  showToast(`${_ub(officerName)} کا پاس ورڈ بدل دیا گیا`, 'success');
 }
 
 </script>

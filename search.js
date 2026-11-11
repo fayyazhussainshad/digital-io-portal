@@ -290,7 +290,7 @@ async function _srShowDocs(table, id) {
         ${/^data:application\/pdf/.test(d.url) ? '<div style="width:110px;height:110px;border:1px solid var(--border);border-radius:8px;display:grid;place-items:center;">PDF</div>'
           : `<img alt="" src="${esc(d.url)}" style="width:110px;height:110px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">`}
         <div style="font-size:11pt;color:var(--text-muted);">${esc(d.label)}</div></div>`).join('')}</div>`,
-      '<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>');
+      '<button class="btn btn-secondary dio-btn" onclick="closeModal()" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>');
   } catch (e) { showToast('' + (e && e.message || e), 'error'); }
 }
 window._srShowDocs = _srShowDocs;
@@ -379,7 +379,7 @@ function dioOpenMainSearch(q) {
     o.id = 'dio-msearch'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true'); o.setAttribute('aria-label', 'مرکزی تلاش');
     o._back = back;
     o.innerHTML = '<div class="ms-card"><div class="ms-top"><h2>مرکزی تلاش</h2>' +
-      '<button type="button" class="ms-x" aria-label="بند کریں" title="بند کریں (Esc)">✕</button></div>' +
+      '<button type="button" class="ms-x dio-btn dio-btn--i" aria-label="بند کریں" title="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i></button></div>' +
       '<div class="ms-box" role="search"><svg class="ms-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>' +
       '<input id="sr-query" type="search" autocomplete="off" dir="auto" data-dio-ro-ok aria-label="پورے سسٹم میں تلاش"' +
       ' placeholder="تلاش — مقدمہ نمبر، مدعی، ملزم، گواہ، شناختی کارڈ، موبائل، متن…"></div>' +

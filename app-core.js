@@ -530,8 +530,8 @@ window.confirmDelete = function(itemName, onConfirm) {
       <div style="font-size:12.75pt;font-weight:bold;margin-bottom:6px;color:var(--text-primary,#111);">کیا آپ واقعی حذف کرنا چاہتے ہیں؟</div>
       <div style="font-size:10.5pt;color:var(--text-secondary,#777);margin-bottom:20px;">${itemName||''}</div>
       <div style="display:flex;gap:12px;justify-content:center;">
-        <button id="_cd-cancel" style="padding:10px 22px;border:1px solid var(--border,#ccc);border-radius:8px;background:transparent;color:var(--text-primary,#111);cursor:pointer;font-size:11.25pt;">منسوخ</button>
-        <button id="_cd-ok" style="padding:10px 22px;border:none;border-radius:8px;background:var(--red);color:#fff;cursor:pointer;font-size:11.25pt;">حذف کریں</button>
+        <button class="dio-btn" id="_cd-cancel" style="padding:10px 22px;border:1px solid var(--border,#ccc);border-radius:8px;background:transparent;color:var(--text-primary,#111);cursor:pointer;font-size:11.25pt;" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+        <button class="dio-btn dio-btn--del" id="_cd-ok" style="padding:10px 22px;border:none;border-radius:8px;background:var(--red);color:#fff;cursor:pointer;font-size:11.25pt;" title="حذف" aria-label="حذف" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i><span>حذف</span></button>
       </div>
     </div>`;
   document.body.appendChild(dialog);
@@ -1010,7 +1010,7 @@ function openThemePicker() {
           ${t.n}
         </button>`).join('')}
     </div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">بند</button>`
+    `<button class="btn btn-secondary dio-btn" onclick="closeModal()" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>`
   );
 }
 
@@ -1246,25 +1246,16 @@ window.dioBindInsert = dioBindInsert;
 
 // ═══ v558 SYSTEM RULE (افسر کی ہدایت، 27 اکتوبر 2026): «سسٹم کا ہر بٹن پورے سسٹم میں ایک جیسا —
 //   جیسے مقدمہ کی فہرست کے ایکشن بٹن» — فہرستوں کے ایکشن بٹن اسی ایک جگہ سے (وہی شکل، سائز، نشان) ═══
-const DIO_ACT_ICONS = {
-  open:     '<path d="M6.5 3.5h7l4.5 4.5V20.5h-11.5z"/><path d="M13.5 3.5V8H18"/>',
-  edit:     '<path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/>',
-  print:    '<path d="M7 8V3.5h10V8"/><path d="M6 17.5H4.5V10a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v7.5H18"/><path d="M7 14h10v6.5H7z"/>',
-  download: '<path d="M12 3.5v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M4.5 20h15"/>',
-  share:    '<path d="M12 15V3.5"/><path d="M7.5 8L12 3.5 16.5 8"/><path d="M4.5 13.5V20h15v-6.5"/>',
-  delete:   '<path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/>',
-  copy:     '<path d="M8.5 8.5h11v11h-11z"/><path d="M15.5 8.5V4.5h-11v11h4"/>',
-};
-// kind: open | edit | print | download | share | delete | copy ؛ js: onclick کا کوڈ (پہلے سے محفوظ/escape شدہ)
+// TASK 19 (11 نومبر 2026): اب پورے نظام کا ایک ہی بٹن (dio-ui.css کا .dio-btn) اور ایک ہی نشانات کا
+//   سیٹ (dio-icons.js) — یہ دونوں فنکشن اسی پر۔ اشارہ ہمیشہ اسی کام کا معیاری نام (DIO_ACT_LABEL)۔
+// kind: open | edit | print | download | share | delete | copy | duplicate … ؛ js: onclick کا کوڈ (پہلے سے محفوظ/escape شدہ)
+// title: پرانے کالرز کے لیے — اب اشارہ ہمیشہ اسی کام کا معیاری نام (ایک کام = ایک لفظ)
 function dioActBtn(kind, js, title) {
-  const cls = kind === 'share' ? 'btn-primary' : kind === 'delete' ? 'btn-danger' : 'btn-secondary';
-  const t = String(title || '').replace(/"/g, '&quot;');
-  return `<button type="button" aria-label="${t}" class="btn ${cls} btn-sm dio-act" onclick="event.stopPropagation();${js}" title="${t}">`
-    + `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px">${DIO_ACT_ICONS[kind] || DIO_ACT_ICONS.open}</svg></button>`;
+  return dioBtn(kind, 'event.stopPropagation();' + js, { cls: 'btn btn-sm dio-act' });
 }
-// بٹنوں کی قطار — مقدمہ کی فہرست والی ترتیب (دائیں سے، 2px فاصلہ، درمیان میں)
+// بٹنوں کی قطار — مقدمہ کی فہرست والی ترتیب (دائیں سے، درمیان میں) — dio-ui.css کا .dio-act-row
 function dioActRow(html) {
-  return `<div class="dio-act-row" style="display:flex;gap:2px;direction:rtl;justify-content:center;flex-direction:row-reverse;flex-wrap:nowrap;">${html}</div>`;
+  return `<div class="dio-act-row">${html}</div>`;
 }
 window.dioActBtn = dioActBtn;
 window.dioActRow = dioActRow;
@@ -1588,7 +1579,7 @@ window.dioAskPaper = function (opts) {
       '<b class="dpa-h">پرنٹ — کاغذ کا سائز منتخب کریں</b>' +
       '<small class="dpa-sub">تحریر اسی کاغذ کے مطابق خود بخود ترتیب پائے گی</small>' +
       '<div class="dpa-btns">' + opt('legal', 'لیگل', '8.5 × 13 in') + opt('a4', 'A4', '8.27 × 11.69 in') + '</div>' +
-      '<button type="button" class="dpa-x" data-v="">منسوخ</button></div>';
+      '<button type="button" class="dpa-x dio-btn" data-v="" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button></div>';
     if (!document.getElementById('dio-paper-ask-css')) {
       const st = document.createElement('style'); st.id = 'dio-paper-ask-css';
       st.textContent =
@@ -1713,8 +1704,8 @@ function _dioPrintPreview(htmlContent) {
   ov.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:99998;background:rgba(0,0,0,0.8);display:flex;flex-direction:column;align-items:center;padding:12px 0;overflow:auto;';
   ov.innerHTML = `
     <div style="display:flex;gap:12px;margin-bottom:10px;direction:rtl;">
-      <button id="dio-prev-print" style="background:var(--accent);color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:12pt;cursor:pointer;font-family:'Jameel Noori Nastaleeq';">پرنٹ کریں</button>
-      <button id="dio-prev-close" style="background:var(--red);color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:12pt;cursor:pointer;font-family:'Jameel Noori Nastaleeq';">بند کریں</button>
+      <button class="dio-btn" id="dio-prev-print" style="background:var(--accent);color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:12pt;cursor:pointer;font-family:'Jameel Noori Nastaleeq';" title="پرنٹ" aria-label="پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>پرنٹ</span></button>
+      <button class="dio-btn" id="dio-prev-close" style="background:var(--red);color:#fff;padding:10px 24px;border:none;border-radius:8px;font-size:12pt;cursor:pointer;font-family:'Jameel Noori Nastaleeq';" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>
     </div>
     <iframe id="dio-preview-frame" style="width:210mm;max-width:96vw;height:80vh;background:#fff;border:none;border-radius:4px;box-shadow:0 8px 40px rgba(0,0,0,0.5);"></iframe>`;
   document.body.appendChild(ov);
@@ -2129,15 +2120,15 @@ function _dioViewFile(url, name) {
   ov.innerHTML = `
     <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;flex-shrink:0;
          background:var(--bg-secondary);border-bottom:1px solid var(--border);">
-      <button onclick="_dioCloseFileView()" title="واپس"
+      <button class="dio-btn dio-btn--i" onclick="_dioCloseFileView()" title="واپس"
         style="width:34px;height:34px;border-radius:50%;cursor:pointer;border:1px solid var(--border);
                background:var(--bg-card);color:var(--text-primary);font-size:13.5pt;font-weight:900;
-               line-height:1;direction:ltr;">←</button>
+               line-height:1;direction:ltr;" aria-label="واپس" data-act="back"><i class="dio-i" data-ico="back" aria-hidden="true"></i></button>
       <span style="font-weight:700;font-size:10.5pt;">${esc(name || 'فائل')}</span>
       <div style="margin-right:auto;display:flex;gap:6px;">
-        <button class="btn btn-secondary btn-sm" onclick="_dioPrintFileView()">پرنٹ</button>
-        <button class="btn btn-secondary btn-sm" onclick="_dioShareFileView()" title="شیئر — اصل فائل (تصویر ہو تو PDF / Word بھی)">شیئر</button>
-        <button class="btn btn-secondary btn-sm" onclick="_dioDownloadFileView()">محفوظ</button>
+        <button class="btn btn-secondary btn-sm dio-btn" onclick="_dioPrintFileView()" title="پرنٹ" aria-label="پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>پرنٹ</span></button>
+        <button class="btn btn-secondary btn-sm dio-btn" onclick="_dioShareFileView()" title="شیئر" aria-label="شیئر" data-act="share"><i class="dio-i" data-ico="share" aria-hidden="true"></i><span>شیئر</span></button>
+        <button class="btn btn-secondary btn-sm dio-btn" onclick="_dioDownloadFileView()" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
       </div>
     </div>
     <div style="flex:1;min-height:0;background:#525659;overflow:auto;display:flex;

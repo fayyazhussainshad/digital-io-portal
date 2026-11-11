@@ -526,7 +526,7 @@ function buildCrossFields(c) {
 function sectionTag(sectionStr) {
   return `<div style="display:inline-flex;align-items:center;gap:6px;background:var(--nav-active);border:1px solid var(--accent);border-radius:20px;padding:4px 10px;font-size:8.25pt;color:var(--accent);">
     <b>${esc(sectionStr)}</b>
-    <span onclick="removeSection('${_dioJsHtml(sectionStr)}')" style="cursor:pointer;color:var(--text-muted);font-size:10.5pt;line-height:1;" title="Remove">×</span>
+    <span onclick="removeSection('${_dioJsHtml(sectionStr)}')" style="cursor:pointer;color:var(--text-muted);font-size:10.5pt;line-height:1;" title="حذف" aria-label="حذف"><i class="dio-i" data-ico="close" aria-hidden="true"></i></span>
   </div>`;
 }
 
@@ -541,7 +541,7 @@ function _cfOpenCard(isEdit, html, saveCall, saveLabel){
     DIOCard.open('مقدمہ', isEdit, html, saveCall, saveLabel);
   } else {
     openModal(isEdit ? 'ترمیم — مقدمہ' : 'نیا اندراج — مقدمہ', html,
-      '<button class="btn btn-primary" onclick="'+saveCall+'">'+saveLabel+'</button><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>');
+      '<button class="btn btn-primary" onclick="'+saveCall+'">'+saveLabel+'</button><button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>');
   }
   setTimeout(function(){
     // v552: سابقہ اندراجات سے IMEI → ماڈل (تازہ)

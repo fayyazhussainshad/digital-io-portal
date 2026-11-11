@@ -320,8 +320,8 @@
   function render() {
     if (!menu) return;
     var lv = stack[stack.length - 1];
-    var html = '<div class="cc-h">' + (stack.length > 1 ? '<button type="button" data-act="back">← واپس</button>' : '') +
-      '<b>' + E(lv.title) + '</b><button type="button" data-act="close" aria-label="بند کریں">✕</button></div>';
+    var html = '<div class="cc-h">' + (stack.length > 1 ? '<button class="dio-btn" type="button" data-act="back" title="واپس" aria-label="واپس"><i class="dio-i" data-ico="back" aria-hidden="true"></i><span>واپس</span></button>' : '') +
+      '<b>' + E(lv.title) + '</b><button class="dio-btn dio-btn--i" type="button" data-act="close" aria-label="بند کریں" title="بند کریں"><i class="dio-i" data-ico="close" aria-hidden="true"></i></button></div>';
     if (!lv.items || !lv.items.length) {
       html += '<div class="cc-empty">' + E(lv.empty || 'اس مقدمے میں ابھی کچھ درج نہیں') + '</div>';
     }
@@ -334,7 +334,7 @@
           '<span class="cc-l">' + E(x.label) + '</span>' +
           (x.badge ? '<span class="cc-b">' + E(x.badge) + '</span>' : '') +
           (showV ? '<span class="cc-v' + (x.ltr ? ' ltr' : '') + '">' + E(x.long ? (x.value.slice(0, 40) + '…') : x.value) + '</span>' : '') +
-          '</button>' + (x.sub && x.sub.length > 1 ? '<button type="button" class="cc-more" data-s="' + i + '" title="تفصیل (شناختی کارڈ، موبائل …)">‹</button>' : '') + '</div>';
+          '</button>' + (x.sub && x.sub.length > 1 ? '<button type="button" class="cc-more dio-btn dio-btn--i" data-s="' + i + '" title="تفصیل (شناختی کارڈ، موبائل …)" aria-label="تفصیل (شناختی کارڈ، موبائل …)" data-act="next"><i class="dio-i" data-ico="next" aria-hidden="true"></i></button>' : '') + '</div>';
       }
     });
     html += '<div class="cc-f">' + (target || lastEdit ? 'کلک = کرسر کی جگہ لکھیں' : 'کلک = نقل (Copy)') + ' · براؤزر کا مینیو: Shift + دایاں کلک</div>';

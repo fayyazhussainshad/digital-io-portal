@@ -138,23 +138,18 @@
     }
   }
 
-  var ICON_MIC =
-    '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" ' +
-    'stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-    '<rect x="9" y="3" width="6" height="11" rx="3"/>' +
-    '<path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>';
-  var ICON_REC =
-    '<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">' +
-    '<rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor"/></svg>';
+  // TASK 19: نشان اسی ایک سیٹ (dio-icons.js) سے
+  var ICON_MIC = '<i class="dio-i" data-ico="mic" aria-hidden="true" style="width:18pt;height:18pt;"></i>';
+  var ICON_REC = '<i class="dio-i" data-ico="stop" aria-hidden="true" style="width:18pt;height:18pt;"></i>';
 
   function setBtn(on) {
     var cb = document.getElementById('dio-card-mic');          // کارڈ کے footer والا mic
     if (cb) {
       cb.setAttribute('aria-pressed', on ? 'true' : 'false');
       var lbl = on ? '\u0633\u0646 \u0631\u06c1\u0627 \u06c1\u06d2\u2026 \u0628\u0646\u062f \u06a9\u0631\u06cc\u06ba' : '\u0622\u0648\u0627\u0632 \u0633\u06d2 \u0644\u06a9\u06be\u06cc\u06ba';
-      var svg = cb.querySelector('svg');
-      cb.textContent = lbl;
-      if (svg) cb.insertBefore(svg, cb.firstChild);
+      var sp = cb.querySelector('span');
+      if (sp) sp.textContent = lbl;
+      else { var ic = cb.querySelector('.dio-i, svg'); cb.textContent = lbl; if (ic) cb.insertBefore(ic, cb.firstChild); }
     }
     var vb = document.getElementById('voice-btn');
     if (vb) vb.classList.toggle('active', !!on);

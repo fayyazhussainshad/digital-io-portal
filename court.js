@@ -31,7 +31,7 @@ async function _buildCourt() {
       <div class="page-title">عدالتی پیشیاں</div>
       <div class="page-subtitle">آنے والی · گزری ہوئی · کیلنڈر</div>
     </div>
-    <button class="btn btn-primary dio-add-btn" onclick="_openAddCourtDate()">+ پیشی درج کریں</button>
+    <button class="btn btn-primary dio-add-btn dio-btn dio-btn--pri" onclick="_openAddCourtDate()" title="+ پیشی درج کریں" aria-label="+ پیشی درج کریں" data-act="add"><span>+ پیشی درج کریں</span></button>
   </div>
 
   <!-- Alert: overdue -->
@@ -180,8 +180,8 @@ async function _openAddCourtDate(existing) {
       <label class="form-label">نوٹس</label>
       <textarea class="form-input" id="cd-notes" rows="2" placeholder="کوئی خاص ہدایت...">${esc(e.notes||'')}</textarea>
     </div>`,
-    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-     <button class="btn btn-primary" onclick="_saveCourtDate('${existing?.id||''}')">محفوظ کریں</button>`
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+     <button class="btn btn-primary dio-btn dio-btn--pri" onclick="_saveCourtDate('${existing?.id||''}')" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>`
   );
 }
 

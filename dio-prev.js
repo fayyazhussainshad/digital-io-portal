@@ -107,9 +107,9 @@
       '<div><b>فیصلہ</b>' + e(r.faisla || '—') + '</div>' +
       '<div class="more" id="dio-prev-more-' + kind + i + '" hidden>' + e(r.more || '') + '</div>' +
       '<div class="acts">' +
-      (r.more ? '<button type="button" class="dio-mini" onclick="DIOPrev._toggleMore(\'' + kind + i + '\')">دیکھیں</button>' : '') +
-      '<button type="button" class="dio-mini" onclick="DIOPrev._copy(\'' + kind + '\',' + i + ')">کاپی</button>' +
-      '<button type="button" class="dio-mini" onclick="DIOPrev._dl(\'' + kind + '\',' + i + ')">ڈاؤن لوڈ</button>' +
+      (r.more ? '<button type="button" class="dio-mini dio-btn" onclick="DIOPrev._toggleMore(\'' + kind + i + '\')" title="دیکھیں" aria-label="دیکھیں" data-act="view"><i class="dio-i" data-ico="view" aria-hidden="true"></i><span>دیکھیں</span></button>' : '') +
+      '<button type="button" class="dio-mini dio-btn" onclick="DIOPrev._copy(\'' + kind + '\',' + i + ')" title="کاپی" aria-label="کاپی" data-act="copy"><i class="dio-i" data-ico="copy" aria-hidden="true"></i><span>کاپی</span></button>' +
+      '<button type="button" class="dio-mini dio-btn" onclick="DIOPrev._dl(\'' + kind + '\',' + i + ')" title="ڈاؤن لوڈ" aria-label="ڈاؤن لوڈ" data-act="download"><i class="dio-i" data-ico="download" aria-hidden="true"></i><span>ڈاؤن لوڈ</span></button>' +
       (kind === 'm' ? '<button type="button" class="dio-mini" onclick="DIOPrev._remove(' + i + ')">ہٹائیں</button>' : '') +
       '</div></div>';
   }
@@ -125,7 +125,7 @@
     if (state === 'offline') { box.innerHTML = '<div class="dio-hint">سابقہ ریکارڈ کی خودکار تلاش کے لیے انٹرنیٹ درکار ہے۔</div>'; return; }
     if (!_auto.length) { box.innerHTML = state === 'none' ? '<div class="dio-hint">دوسرے مقدمات میں کوئی ریکارڈ نہیں ملا۔</div>' : ''; return; }
     box.innerHTML = '<div class="dio-prev-h">دوسرے مقدمات میں ریکارڈ ملا (' + _auto.length + ')' +
-      '<span class="sp"><button type="button" class="dio-mini v" onclick="DIOPrev._dlAll()">سب ڈاؤن لوڈ</button></span></div>' +
+      '<span class="sp"><button type="button" class="dio-mini v dio-btn" onclick="DIOPrev._dlAll()" title="سب ڈاؤن لوڈ" aria-label="سب ڈاؤن لوڈ" data-act="download"><i class="dio-i" data-ico="download" aria-hidden="true"></i><span>سب ڈاؤن لوڈ</span></button></span></div>' +
       _auto.map(function (r, i) { return recHtml(r, 'a', i); }).join('');
   }
   // records: محفوظ شدہ (prev_records)
@@ -146,11 +146,11 @@
     ]) +
       '<textarea class="dio-paste" id="dp-paste" placeholder="یا کاپی کیا ہوا ریکارڈ یہاں چسپاں کریں (Ctrl+V / دبا کر Paste) — خانے خود بھر جائیں گے" oninput="DIOPrev._onPaste(this)"></textarea>' +
       '<div class="dio-row" style="padding-top:8px;"><button type="button" class="btn btn-primary btn-sm" onclick="DIOPrev._add()">ریکارڈ شامل کریں</button>' +
-      '<button type="button" class="btn btn-secondary btn-sm" onclick="DIOPrev._toggleAdd(false)">بند کریں</button></div>';
+      '<button type="button" class="btn btn-secondary btn-sm dio-btn" onclick="DIOPrev._toggleAdd(false)" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button></div>';
     return '<div class="dio-prev" id="dio-prev">' +
       '<div id="dio-prev-auto"></div>' +
       '<div class="dio-prev-h">سابقہ ریکارڈ <span id="dio-prev-mcount"></span><span class="sp">' +
-      '<button type="button" class="dio-mini v" onclick="DIOPrev._toggleAdd(true)">+ سابقہ ریکارڈ درج کریں</button></span></div>' +
+      '<button type="button" class="dio-mini v dio-btn dio-btn--pri" onclick="DIOPrev._toggleAdd(true)" title="+ سابقہ ریکارڈ درج کریں" aria-label="+ سابقہ ریکارڈ درج کریں" data-act="add"><span>+ سابقہ ریکارڈ درج کریں</span></button></span></div>' +
       '<div id="dio-prev-list">' + _manual.map(function (r, i) { return recHtml(r, 'm', i); }).join('') + '</div>' +
       '<div id="dio-prev-add" hidden>' + addForm + '</div></div>';
   }
@@ -319,8 +319,8 @@
         ? _shown.map(function (r, i) { return recHtml(r, 's', i).replace('<div class="dio-rec">', '<div class="dio-rec"><div style="grid-column:1/-1;">' + src(r) + '</div>'); }).join('')
         : '<div class="dio-hint" style="text-align:center;padding:16px 0;">اس شخص کا کسی دوسرے مقدمے میں کوئی سابقہ ریکارڈ نہیں ملا۔</div>') +
       '</div>';
-    var foot = (_shown.length ? '<button class="btn btn-secondary" onclick="DIOPrev._dlShown()">سب ڈاؤن لوڈ</button>' : '') +
-      '<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>';
+    var foot = (_shown.length ? '<button class="btn btn-secondary dio-btn" onclick="DIOPrev._dlShown()" title="سب ڈاؤن لوڈ" aria-label="سب ڈاؤن لوڈ" data-act="download"><i class="dio-i" data-ico="download" aria-hidden="true"></i><span>سب ڈاؤن لوڈ</span></button>' : '') +
+      '<button class="btn btn-secondary dio-btn" onclick="closeModal()" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>';
     _shownWho = who || '';
     if (typeof openModal === 'function') openModal(title + (_shown.length ? ' (' + _shown.length + ')' : ''), body, foot);
   }

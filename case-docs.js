@@ -26,7 +26,7 @@ function renderDocChecklist(docs, selected) {
       html += `<div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:4px;cursor:pointer;" onclick="toggleDoc('${_dioJsHtml(doc)}',this)">
         <input type="checkbox" checked style="accent-color:var(--accent);width:14px;height:14px;pointer-events:none;">
         <span style="font-size:9pt;color:var(--accent);">${esc(doc)}</span>
-        <span onclick="event.stopPropagation();removeCustomDoc('${_dioJsHtml(doc)}');" style="margin-inline-start:auto;color:var(--red);font-size:9pt;cursor:pointer;">×</span>
+        <span onclick="event.stopPropagation();removeCustomDoc('${_dioJsHtml(doc)}');" style="margin-inline-start:auto;color:var(--red);font-size:9pt;cursor:pointer;" title="حذف" aria-label="حذف"><i class="dio-i" data-ico="close" aria-hidden="true"></i></span>
       </div>`;
     });
   }

@@ -409,12 +409,13 @@
         <div class="dcp-list" id="dcp-list">${rows}</div>
         <div class="dcp-note">${MODES[M].note}</div>
       </div>`;
-    const btn = (cls, act, label) => `<button type="button" class="btn ${cls}" data-dcp="${act}" onclick="_dcpRun('${M}','${act}')">${label}</button>`;
-    const acts = (M === 'print') ? btn('btn-primary', 'print', '🖨️ پرنٹ کریں')
-      : (M === 'download') ? btn('btn-primary', 'pdf', '⬇️ PDF ڈاؤن لوڈ') + btn('btn-primary', 'word', '⬇️ Word ڈاؤن لوڈ')
-      : btn('btn-primary', 'pdf', '📤 PDF شیئر') + btn('btn-primary', 'word', '📤 Word شیئر');
+    // TASK 19: وہی مشترکہ بٹن — نشان + نام (معیاری لفظ آخر میں)
+    const btn = (cls, act, label, ico) => `<button type="button" class="btn ${cls} dio-btn dio-btn--pri" data-dcp="${act}" data-act="${ico}" title="${label}" aria-label="${label}" onclick="_dcpRun('${M}','${act}')">${dioIco(ico)}<span>${label}</span></button>`;
+    const acts = (M === 'print') ? btn('btn-primary', 'print', 'پرنٹ', 'print')
+      : (M === 'download') ? btn('btn-primary', 'pdf', 'PDF ڈاؤن لوڈ', 'download') + btn('btn-primary', 'word', 'Word ڈاؤن لوڈ', 'download')
+      : btn('btn-primary', 'pdf', 'PDF شیئر', 'share') + btn('btn-primary', 'word', 'Word شیئر', 'share');
     const foot = `<div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;">${acts}
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">منسوخ</button></div>`;
+        <button type="button" class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button></div>`;
     openModal(MODES[M].ttl + ' — مقدمہ ' + (_case.fir_number || '') + ' کی دستاویزات', body, foot);
     // کارڈ صرف اتنا چوڑا جتنی ضرورت (پہلے 980px — آدھا خالی)
     try { const mc = document.querySelector('#modal-backdrop .modal-card'); if (mc) mc.style.maxWidth = '520px'; } catch (_) { /* ضمنی */ }
@@ -522,9 +523,9 @@
       '<b style="display:block;font-size:15pt;line-height:1.9;">فائل تیار ہے</b>' +
       '<small style="display:block;font-size:10.5pt;color:var(--text-muted,#667);line-height:1.8;margin-bottom:10px;" dir="auto">' + E(file.name) + '</small>' +
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
-      '<button type="button" class="btn btn-primary" data-k="share" style="min-height:46px;">📤 شیئر کریں</button>' +
-      '<button type="button" class="btn btn-secondary" data-k="dl" style="min-height:46px;">⬇️ ڈاؤن لوڈ</button></div>' +
-      '<button type="button" data-k="x" style="margin-top:6px;background:none;border:0;color:var(--text-muted,#667);font-size:11pt;cursor:pointer;font-family:inherit;min-height:36px;">بند کریں</button></div>';
+      '<button type="button" class="btn btn-primary dio-btn" data-k="share" style="min-height:46px;" title="شیئر" aria-label="شیئر" data-act="share"><i class="dio-i" data-ico="share" aria-hidden="true"></i><span>شیئر</span></button>' +
+      '<button type="button" class="btn btn-secondary dio-btn" data-k="dl" style="min-height:46px;" title="ڈاؤن لوڈ" aria-label="ڈاؤن لوڈ" data-act="download"><i class="dio-i" data-ico="download" aria-hidden="true"></i><span>ڈاؤن لوڈ</span></button></div>' +
+      '<button class="dio-btn" type="button" data-k="x" style="margin-top:6px;background:none;border:0;color:var(--text-muted,#667);font-size:11pt;cursor:pointer;font-family:inherit;min-height:36px;" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button></div>';
     document.body.appendChild(box);
     box.addEventListener('click', async (ev) => {
       const b = ev.target.closest('button'); if (!b) { if (ev.target === box) box.remove(); return; }

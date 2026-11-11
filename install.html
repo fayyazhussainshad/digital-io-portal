@@ -59,6 +59,8 @@
   }
   .footer { font-size:9pt; color:#5a7088; margin-top:20px; }
 </style>
+  <script src="dio-icons.js"></script>
+  <link rel="stylesheet" href="dio-ui.css">
 </head>
 <body>
   <div class="card">
@@ -75,8 +77,8 @@
 
     <div class="url-display" id="appUrl">https://digital-io-portal.vercel.app</div>
 
-    <button class="btn btn-copy" onclick="copyUrl()">📋 لنک کاپی کریں</button>
-    <button class="btn btn-whatsapp" onclick="shareWhatsApp()">📲 WhatsApp پر شیئر کریں</button>
+    <button class="btn btn-copy dio-btn" onclick="copyUrl()" title="لنک کاپی" aria-label="لنک کاپی" data-act="copy"><i class="dio-i" data-ico="copy" aria-hidden="true"></i><span>لنک کاپی</span></button>
+    <button class="btn btn-whatsapp dio-btn" onclick="shareWhatsApp()" title="WhatsApp پر شیئر" aria-label="WhatsApp پر شیئر" data-act="share"><i class="dio-i" data-ico="share" aria-hidden="true"></i><span>WhatsApp پر شیئر</span></button>
 
     <div class="steps">
       <h3>📝 رجسٹر کیسے کریں؟</h3>

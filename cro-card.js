@@ -115,12 +115,12 @@ function _renderCro() {
   area.innerHTML = `
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
     <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--bg-secondary);">
-      <button class="btn btn-secondary btn-sm" onclick="_croBackToList()">← واپس فہرست</button>
+      <button class="btn btn-secondary btn-sm dio-btn" onclick="_croBackToList()" title="واپس" aria-label="واپس" data-act="back"><i class="dio-i" data-ico="back" aria-hidden="true"></i><span>واپس</span></button>
       <div style="font-weight:700;font-size:10.5pt;font-family:'Jameel Noori Nastaleeq';">CRO کارڈ — ${esc(a.name)||'ملزم'}</div>
       <div style="margin-right:auto;display:flex;gap:6px;">
-        <button class="btn btn-primary btn-sm" onclick="_saveCro()">محفوظ کریں</button>
-        <button class="btn btn-secondary btn-sm" onclick="_printCro()">پرنٹ کریں (دونوں طرف)</button>
-        <button class="btn btn-secondary btn-sm" onclick="dioSharePrint(()=>_printCro(),'سی آر او کارڈ')" title="شیئر — PDF / Word">شیئر</button>
+        <button class="btn btn-primary btn-sm dio-btn" onclick="_saveCro()" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
+        <button class="btn btn-secondary btn-sm dio-btn" onclick="_printCro()" title="پرنٹ" aria-label="پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>پرنٹ</span></button>
+        <button class="btn btn-secondary btn-sm dio-btn" onclick="dioSharePrint(()=>_printCro(),'سی آر او کارڈ')" title="شیئر" aria-label="شیئر" data-act="share"><i class="dio-i" data-ico="share" aria-hidden="true"></i><span>شیئر</span></button>
       </div>
     </div>
 

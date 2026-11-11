@@ -774,15 +774,15 @@ b.dio-stat-num { margin-bottom: 2px; }
 }
 /* v568 (TASK 7-A4، افسر کی ہدایت 4 نومبر 2026: «بٹن بالکل مقدمہ کی فہرست کے ایکشن بٹنوں جیسے»):
    محفوظ ضمنیات اور بیانات 161 کی فہرست (.zt) — اوپر والے .data-table کے بٹنوں کی ہو بہو شکل، ناپ اور رنگ */
-.zt-wrap .zt .dio-act, .zat-wrap .zt .dio-act {
+.zt-wrap .zt .dio-act:not(.dio-btn), .zat-wrap .zt .dio-act:not(.dio-btn) {
   background: var(--dio-canvas) !important; border: 1px solid var(--dio-line) !important;
   color: var(--dio-ink-2) !important; border-radius: 8px !important; box-shadow: none !important;
   width: 32px; height: 32px; padding: 0 !important;
   display: inline-flex !important; align-items: center; justify-content: center;
   margin: 0 2px; font-size: revert !important;
 }
-.zt-wrap .zt .dio-act:hover, .zat-wrap .zt .dio-act:hover { background: var(--dio-surface) !important; border-color: var(--dio-brand) !important; }
-.zt-wrap .zt .dio-act.btn-danger:hover, .zat-wrap .zt .dio-act.btn-danger:hover {
+.zt-wrap .zt .dio-act:not(.dio-btn):hover, .zat-wrap .zt .dio-act:not(.dio-btn):hover { background: var(--dio-surface) !important; border-color: var(--dio-brand) !important; }
+.zt-wrap .zt .dio-act.btn-danger:not(.dio-btn):hover, .zat-wrap .zt .dio-act.btn-danger:not(.dio-btn):hover {
   background: var(--dio-alert) !important; border-color: var(--dio-alert) !important; color: #fff !important;
 }
 

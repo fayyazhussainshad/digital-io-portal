@@ -91,6 +91,23 @@ def pdf(pg, name):
     subprocess.run(['pdftoppm', '-png', '-r', '90', '-singlefile', f'{OUT}/{name}.pdf', f'{OUT}/{name}'])
     return calls, info
 
+# ── v577 (افسر کی ہدایت، 11 نومبر 2026): بیانات 161 کی اوپر کی پٹی ختم — گواہ کاغذ کے کونے کے «▾» سے، محفوظ «⋯» سے ──
+def za_pick(pg, label_re, wait=1300):
+    """کاغذ کے دائیں کونے کا «▾» دبا کر وہ گواہ چنو جس کا نام label_re سے ملے (جیسے افسر چنتا ہے)"""
+    pg.click('#zfa-cp-wit'); pg.wait_for_selector('#zfa-cp-menu', timeout=5000)
+    i = pg.evaluate("(re) => [...document.querySelectorAll('#zfa-cp-menu button[data-v]')].findIndex(b => new RegExp(re).test(b.textContent))", label_re)
+    if i < 0:
+        pg.click('#zfa-cp-wit'); return False
+    pg.locator('#zfa-cp-menu button[data-v]').nth(i).click(); pg.wait_for_timeout(wait)
+    return True
+
+
+def za_save(pg):
+    """«⋯» → محفوظ کریں / اپ ڈیٹ (کھلی دستاویز کا اپنا محفوظ)"""
+    pg.click('#dio-dv-fab'); pg.wait_for_selector('#dio-dv-menu', timeout=5000)
+    pg.click("#dio-dv-menu button[data-act='save']")
+
+
 if __name__ == '__main__':
     with sync_playwright() as p:
         b = p.chromium.launch()

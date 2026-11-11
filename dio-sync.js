@@ -203,7 +203,7 @@
     var foot = '<div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap">' +
       (s.mode === 'nosession' ? '<button class="btn btn-primary" onclick="closeModal();DIOSync.relogin()">سرور سے دوبارہ جوڑیں</button>' : '') +
       (s.mode !== 'offline' && s.mode !== 'nosession' ? '<button class="btn btn-primary" onclick="closeModal();DIOSync.kick(true)">ابھی سنک کریں</button>' : '') +
-      '<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button></div>';
+      '<button class="btn btn-secondary dio-btn" onclick="closeModal()" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button></div>';
     if (typeof openModal === 'function') openModal('سنک کی حالت', body, foot);
   };
 

@@ -24,7 +24,7 @@ async function renderSuspects(container) {
   <div style="direction:rtl;">
     <!-- Header -->
     <div class="page-header">
-      <button class="btn btn-primary dio-add-btn" onclick="_openSuspectForm()">+ فرد درج کریں</button>
+      <button class="btn btn-primary dio-add-btn dio-btn dio-btn--pri" onclick="_openSuspectForm()" title="+ فرد درج کریں" aria-label="+ فرد درج کریں" data-act="add"><span>+ فرد درج کریں</span></button>
       <div>
         <div class="page-title">ملزمان / گواہان</div>
         <div class="page-subtitle"><span id="susp-count">${people.length}</span> افراد — مقدمات کے ساتھ منسلک</div>
@@ -204,8 +204,8 @@ function _openSuspectForm(existing) {
       </div>
     </div>
   `, `
-    <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-    <button class="btn btn-primary" onclick="_saveSuspect(${isEdit ? `'${p.id}'` : 'null'})">محفوظ کریں</button>
+    <button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+    <button class="btn btn-primary dio-btn dio-btn--pri" onclick="_saveSuspect(${isEdit ? `'${p.id}'` : 'null'})" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
   `);
 }
 
@@ -271,9 +271,9 @@ async function _viewSuspect(id) {
       </div>
     </div>
   `, `
-    <button class="btn btn-danger btn-sm" onclick="_deleteSuspect('${p.id}')">حذف</button>
+    <button class="btn btn-danger btn-sm dio-btn dio-btn--del" onclick="_deleteSuspect('${p.id}')" title="حذف" aria-label="حذف" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i><span>حذف</span></button>
     <button class="btn btn-secondary" onclick="_openSuspectForm(${JSON.stringify(p).replace(/"/g,'&quot;')})">ترمیم</button>
-    <button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>
+    <button class="btn btn-secondary dio-btn" onclick="closeModal()" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>
   `);
 }
 

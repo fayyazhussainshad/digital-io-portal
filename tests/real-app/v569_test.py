@@ -200,8 +200,7 @@ def run(b, tag, vp, extra):
         pg.evaluate("openCaseWorkspace('c1')"); pg.wait_for_timeout(1300)
         pg.evaluate("_openMisalEditor('statements_161')"); pg.wait_for_timeout(1800)
         pg.click("button:has-text('بیان درج کریں')"); pg.wait_for_timeout(1800)
-        v = pg.evaluate("() => ([...document.querySelectorAll('#zfa-wit-sel option')].find(o => /غلام رسول/.test(o.textContent)) || {}).value")
-        pg.select_option('#zfa-wit-sel', v); pg.wait_for_timeout(1400)
+        za_pick(pg, 'غلام رسول', 1400)   # v577: کاغذ کے کونے کا «▾»
         put_text(pg, '#ch173-doc .zfa-wit-stmt', TXT)
         s = pg.evaluate(SCREEN, '#ch173-doc .zfa-wit-stmt')
         hb = final_print(pg, lambda: pg.evaluate("_printZimniA(); 0"))

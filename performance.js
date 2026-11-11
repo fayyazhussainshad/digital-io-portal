@@ -131,8 +131,8 @@ async function _buildPerf() {
 
   <!-- Print Report -->
   <div style="text-align:left;margin-top:4px;">
-    <button class="btn btn-primary" onclick="_printPerfReport()">کارکردگی رپورٹ پرنٹ کریں</button>
-    <button class="btn btn-secondary" onclick="dioSharePrint(()=>_printPerfReport(),'کارکردگی رپورٹ')" title="شیئر — PDF / Word">شیئر</button>
+    <button class="btn btn-primary dio-btn" onclick="_printPerfReport()" title="کارکردگی رپورٹ پرنٹ" aria-label="کارکردگی رپورٹ پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>کارکردگی رپورٹ پرنٹ</span></button>
+    <button class="btn btn-secondary dio-btn" onclick="dioSharePrint(()=>_printPerfReport(),'کارکردگی رپورٹ')" title="شیئر" aria-label="شیئر" data-act="share"><i class="dio-i" data-ico="share" aria-hidden="true"></i><span>شیئر</span></button>
   </div>`;
 }
 

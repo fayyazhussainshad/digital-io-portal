@@ -112,7 +112,7 @@
         ? node.parentElement.querySelector('.acc-pick') : null;
       html += '<div class="dio-chf-row" data-for="' + k + '">' +
         '<div class="dio-chf-lbl">' + label +
-        (picker ? ' <button type="button" class="dio-chf-pick" data-pick="' + k + '">ملزمان ▾</button>' : '') +
+        (picker ? ' <button type="button" class="dio-chf-pick dio-pick" data-pick="' + k + '" data-act="dropdown">ملزمان <i class="dio-i" data-ico="dropdown" aria-hidden="true"></i></button>' : '') +
         '</div>' +
         '<div class="dio-chf-in ' + (kind === 'area' ? 'area' : 'line') + '" ' +
         'contenteditable="true" data-bind="' + k + '"></div></div>';

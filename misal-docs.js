@@ -87,7 +87,7 @@ function renderMisalBar(c) {
     border-bottom:1px solid var(--border);">
     <div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;align-items:center;">
       <!-- واپس — topbar jaisi hi shakl aur wahi taraf (daain sira) -->
-      <button onclick="dioGoBack()" class="dio-backbtn" style="order:-1;" title="واپس" aria-label="واپس"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6l6 6-6 6"/><path d="M20 12H4"/></svg><span>واپس</span></button>
+      <button onclick="dioGoBack()" class="dio-backbtn" style="order:-1;" title="واپس" aria-label="واپس" data-act="back"><i class="dio-i" data-ico="back" aria-hidden="true"></i><span>واپس</span></button>
       <!-- مقدمہ نمبر — case khulte hi hamesha nazar aaye (kaunsa muqadma khula hai) -->
       <span title="مقدمہ نمبر" style="flex-shrink:0;display:inline-flex;align-items:center;gap:6px;
             padding:5px 12px;border-radius:8px;background:var(--accent-glow,rgba(56,189,248,0.14));
@@ -188,7 +188,7 @@ function _misalDropdown(ddId, label, options, hasData) {
   return `
   <span style="position:relative;display:inline-block;">
     <span class="mdoc-chip ${cls}" onclick="_toggleDD(event,'${ddId}')" style="cursor:pointer;">
-      ${label} ▾
+      ${label} <i class="dio-i" data-ico="dropdown" aria-hidden="true"></i>
     </span>
     <div id="${ddId}" style="display:none;position:fixed;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:5000;min-width:180px;padding:6px;direction:rtl;">
       ${options.map(o => `
@@ -447,10 +447,10 @@ function _renderMisalEditor(docId, def) {
   // ═══ Version history availability (Phase 2A) — sirf saved docs ki nasKhen dikha ke ══
   const _hasVersions = !_isIdx && !!(saved && saved.id);
   const _vBtn = _hasVersions
-    ? `<button onclick="openMisalVersionsModal('${docId}','${saved.id}')" title="پرانی نسخے دیکھیں"
+    ? `<button class="dio-btn" onclick="openMisalVersionsModal('${docId}','${saved.id}')" title="نسخے دیکھیں"
         style="position:absolute;top:8px;left:8px;z-index:10;padding:5px 10px;border:1px solid var(--border);
                background:var(--bg-card);color:var(--text-primary);border-radius:8px;cursor:pointer;
-               font-size:9pt;font-family:'Jameel Noori Nastaleeq';">نسخے</button>`
+               font-size:9pt;font-family:'Jameel Noori Nastaleeq';" aria-label="نسخے دیکھیں" data-act="view"><i class="dio-i" data-ico="view" aria-hidden="true"></i><span>نسخے دیکھیں</span></button>`
     : '';
 
   // MS Word jaisa toolbar (ooper mustaqil) — likhai ke liye
@@ -617,7 +617,7 @@ async function openMisalVersionsModal(docId, documentDbId) {
     `<div id="mv-body" style="direction:rtl;min-height:200px;padding:10px 4px;">
        <div style="text-align:center;color:var(--text-muted);padding:24px;">نسخے لوڈ ہو رہے ہیں...</div>
      </div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`
+    `<button class="btn btn-secondary dio-btn" onclick="closeModal()" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>`
   );
 
   // Load versions + officer names
@@ -677,7 +677,7 @@ async function openMisalVersionsModal(docId, documentDbId) {
             <div style="font-size:9.75pt;font-weight:700;">${esc(ofc)}</div>
             <div style="font-size:8.25pt;color:var(--text-muted);direction:ltr;text-align:right;">${esc(dt)}</div>
           </div>
-          <button class="btn btn-secondary btn-sm" onclick="_previewMisalVersion('${v.id}')">دیکھیں</button>
+          <button class="btn btn-secondary btn-sm dio-btn" onclick="_previewMisalVersion('${v.id}')" title="دیکھیں" aria-label="دیکھیں" data-act="view"><i class="dio-i" data-ico="view" aria-hidden="true"></i><span>دیکھیں</span></button>
         </div>`;
       }).join('')}`;
   } catch (e) {
@@ -717,7 +717,7 @@ async function _previewMisalVersion(versionId) {
        <div style="font-size:8.25pt;color:var(--text-muted);margin-top:8px;text-align:center;">
          یہ صرف مطالعہ کے لیے ہے — دستاویز کا موجودہ نسخہ تبدیل نہیں ہوا
        </div>`,
-      `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>`
+      `<button class="btn btn-secondary dio-btn" onclick="closeModal()" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>`
     );
   } catch (e) {
     showToast('نسخہ نہیں ملا: ' + (e.message||e), 'error');

@@ -125,7 +125,7 @@ function _dioEnterDocView() {
       <!-- واپس — poori sakreen wali dastavez topbar ko dhak leti hai, is liye
            yahan apna button chahiye. Shakl aur jagah topbar jaisi hi hai
            (daain taraf, teer + "واپس") taake afsar ko farq mehsoos na ho. -->
-      <button onclick="dioGoBack()" class="dio-backbtn" title="واپس" aria-label="واپس"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6l6 6-6 6"/><path d="M20 12H4"/></svg><span>واپس</span></button>
+      <button onclick="dioGoBack()" class="dio-backbtn" title="واپس" aria-label="واپس" data-act="back"><i class="dio-i" data-ico="back" aria-hidden="true"></i><span>واپس</span></button>
       <span id="dio-dv-fir" style="font-size:10.5pt;font-weight:900;color:var(--accent);
             font-family:'Jameel Noori Nastaleeq';flex-shrink:0;white-space:nowrap;"></span>
       <div id="dio-dv-tabs" style="display:flex;gap:6px;flex:1;flex-wrap:wrap;min-width:0;"></div>
@@ -134,18 +134,18 @@ function _dioEnterDocView() {
           style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--accent);
                  border-radius:8px;padding:8px 14px;font-size:9.75pt;font-weight:700;cursor:pointer;
                  font-family:'Jameel Noori Nastaleeq';">نئی دستاویز</button>
-        <button id="dio-dv-save" onclick="_dioSaveCurrent()" title="محفوظ کریں"
+        <button class="dio-btn" id="dio-dv-save" onclick="_dioSaveCurrent()" title="محفوظ کریں"
           style="background:var(--green,#16a34a);color:#fff;border:none;border-radius:8px;padding:8px 16px;
                  font-size:9.75pt;font-weight:700;cursor:pointer;
-                 font-family:'Jameel Noori Nastaleeq';">محفوظ</button>
-        <button onclick="_dioPrintCurrent()" title="پرنٹ"
+                 font-family:'Jameel Noori Nastaleeq';" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
+        <button class="dio-btn" onclick="_dioPrintCurrent()" title="پرنٹ"
           style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 16px;
                  font-size:9.75pt;font-weight:700;cursor:pointer;
-                 font-family:'Jameel Noori Nastaleeq';">پرنٹ</button>
-        <button id="dio-dv-share" onclick="_dioShareCurrent()" title="شیئر — پوری فائل PDF / Word"
+                 font-family:'Jameel Noori Nastaleeq';" aria-label="پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>پرنٹ</span></button>
+        <button class="dio-btn" id="dio-dv-share" onclick="_dioShareCurrent()" title="شیئر"
           style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--accent);
                  border-radius:8px;padding:8px 14px;font-size:9.75pt;font-weight:700;cursor:pointer;
-                 font-family:'Jameel Noori Nastaleeq';">شیئر</button>
+                 font-family:'Jameel Noori Nastaleeq';" aria-label="شیئر" data-act="share"><i class="dio-i" data-ico="share" aria-hidden="true"></i><span>شیئر</span></button>
         <!-- v563: MS Word کی کلیدوں کی فہرست — اوپر کی پٹی دستاویز کے نیچے چھپی ہوتی ہے، اس لیے یہاں بھی -->
         <button id="dio-dv-keys" type="button" onclick="window.dioShortcutsHelp&&dioShortcutsHelp()" title="شارٹ کٹس" aria-label="شارٹ کٹس"
           style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);
@@ -156,7 +156,7 @@ function _dioEnterDocView() {
     <div id="dio-dv-body" style="flex:1;min-height:0;overflow:auto;"></div>
     <!-- v575: پٹی کی جگہ — نیچے کونے میں «⋯» (کوئی جگہ نہیں گھیرتا) -->
     <button id="dio-dv-fab" class="no-print" type="button" onclick="_dioMenuToggle(event)" aria-haspopup="menu" aria-expanded="false"
-      title="محفوظ، پرنٹ، شیئر، نئی دستاویز، واپس" aria-label="محفوظ، پرنٹ، شیئر، نئی دستاویز، واپس">⋯</button>`;
+      title="محفوظ، پرنٹ، شیئر، نئی دستاویز، واپس" aria-label="محفوظ، پرنٹ، شیئر، نئی دستاویز، واپس" data-act="more"><i class="dio-i" data-ico="more" aria-hidden="true"></i></button>`;
   document.body.appendChild(ov);
   document.getElementById('dio-dv-body').appendChild(area);
   try {
@@ -375,20 +375,24 @@ function _dioMenuToggle(ev) {
     tabs.forEach((t, i) => {
       const on = (typeof _dioTabs !== 'undefined' && _dioTabs[i] && _dioTabs[i].id === _dioActiveTab);
       const nm = (t.firstChild && t.firstChild.nodeType === 3) ? t.firstChild.nodeValue.trim() : (t.textContent || '').replace('✕', '').trim();
-      h += '<div class="dvm-tab' + (on ? ' on' : '') + '"><button type="button" class="dvm-i" role="menuitem" data-tab="' + i + '">' + (on ? '✓ ' : '') + E(nm) + '</button>'
-        + '<button type="button" class="dvm-x" data-close="' + i + '" title="بند کریں" aria-label="بند کریں">✕</button></div>';
+      h += '<div class="dvm-tab' + (on ? ' on' : '') + '"><button type="button" class="dvm-i" role="menuitem" data-tab="' + i + '">' + (on ? dioIco('check') + ' ' : '') + E(nm) + '</button>'
+        + '<button type="button" class="dvm-x dio-btn dio-btn--i" data-close="' + i + '" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i></button></div>';
     });
   }
   h += '<div class="dvm-sec">دستاویز</div>';
+  // افسر کا فیصلہ (11 نومبر 2026): پہلے سے محفوظ ضمنی / بیان 161 پر «اپ ڈیٹ» — دستاویز کا اپنا (چھپا) بٹن بتاتا ہے
+  const own = ov.querySelector('#zf-save-btn, #zfa-save-btn') || document.querySelector('#zf-save-btn, #zfa-save-btn');
+  const saveLbl = (own && /اپ ڈیٹ/.test(own.textContent || '')) ? 'اپ ڈیٹ' : 'محفوظ کریں';
   const acts = [
-    ['new', 'نئی دستاویز', '＋'],
-    ['save', 'محفوظ', '💾', shown(document.getElementById('dio-dv-save'))],
-    ['print', 'پرنٹ', '🖨'],
-    ['share', 'شیئر', '📤'],
-    ['keys', 'شارٹ کٹس', '⌨'],
-    ['back', 'واپس', '→'],
+    ['new', 'نئی دستاویز', 'add'],
+    ['save', saveLbl, 'save', shown(document.getElementById('dio-dv-save'))],
+    ['print', 'پرنٹ', 'print'],
+    ['share', 'شیئر', 'share'],
+    ['keys', 'شارٹ کٹس', 'keys'],
+    ['back', 'واپس', 'back'],
   ];
-  acts.forEach(a => { if (a[3] === false) return; h += '<button type="button" class="dvm-i" role="menuitem" data-act="' + a[0] + '"><span aria-hidden="true">' + a[2] + '</span><span>' + a[1] + '</span></button>'; });
+  // TASK 19: ہر سطر وہی مشترکہ بٹن — وہی نشان، وہی نام (پورے نظام میں ایک)
+  acts.forEach(a => { if (a[3] === false) return; h += '<button type="button" class="dvm-i dio-btn" role="menuitem" data-act="' + a[0] + '" title="' + a[1] + '" aria-label="' + a[1] + '">' + dioIco(a[2]) + '<span>' + a[1] + '</span></button>'; });
   box.innerHTML = h;
   ov.appendChild(box);
   const f = document.getElementById('dio-dv-fab');
@@ -458,7 +462,7 @@ function _dioAddDocPicker() {
                    font-family:'Jameel Noori Nastaleeq';
                    border:1px solid ${open?'var(--accent)':'var(--border)'};
                    background:${open?'var(--accent)':'var(--bg-tertiary)'};
-                   color:${open?'#fff':'var(--text-primary)'};">${esc(label)}${open?' ✓':''}</span>`;
+                   color:${open?'#fff':'var(--text-primary)'};">${esc(label)}${open?' ' + dioIco('check'):''}</span>`;
         }).join('')}
       </div>
     </div>`).join('') +
@@ -513,7 +517,7 @@ function _dioSaveCurrent() {
   // v558: دستاویز کا اپنا «محفوظ / اپ ڈیٹ» بٹن (ایک ہی ہو) — وہی دباؤ (پرنٹ والا اصول)
   const sb = _dioModuleSaveBtn(document.getElementById('dio-dv-body'));
   if (sb) { sb.click(); return; }
-  if (typeof showToast === 'function') showToast('ℹ️ اس صفحے پر محفوظ کرنے کو کچھ نہیں — اندراج کھول کر اُس کا «محفوظ» دبائیں', 'info');
+  if (typeof showToast === 'function') showToast('ℹ️ اس صفحے پر محفوظ کرنے کو کچھ نہیں — اندراج کھول کر اُس کا «محفوظ کریں» دبائیں', 'info');
 }
 // کھلی دستاویز کا اپنا محفوظ بٹن — واضح نشان [data-dio-save] پہلے، پھر .btn-primary؛
 //   کئی مختلف ہوں (فہرست کی ہر سطر) تو null (اندازہ نہیں)
@@ -581,7 +585,7 @@ function _dioRenderTabs() {
       onclick="_dioSwitchTab('${t.id}')">
       ${esc(t.name)}
       <span onclick="event.stopPropagation();_dioCloseTab('${t.id}')" title="بند کریں"
-        style="opacity:.75;font-weight:900;padding:0 2px;">✕</span>
+        style="opacity:.75;font-weight:900;padding:0 2px;" aria-label="بند کریں">${dioIco('close')}</span>
     </span>`;
   }).join('');
 }

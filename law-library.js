@@ -69,7 +69,7 @@ async function renderLawLibrary(container) {
   <div style="max-width:100%;margin:0;direction:rtl;">
     <!-- Header: search + add -->
     <div class="page-header">
-      <button onclick="_openAddLaw()" class="btn btn-primary dio-add-btn">+ قانون درج کریں</button>
+      <button onclick="_openAddLaw()" class="btn btn-primary dio-add-btn dio-btn dio-btn--pri" title="+ قانون درج کریں" aria-label="+ قانون درج کریں" data-act="add"><span>+ قانون درج کریں</span></button>
       <div>
         <div class="page-title">قانونی لائبریری</div>
         <div class="page-subtitle">قوانین، ضوابط اور حوالہ جاتی مواد</div>
@@ -77,8 +77,8 @@ async function renderLawLibrary(container) {
       <input id="law-main-search" type="text" dir="rtl" placeholder="قانون کا نام یا دفعہ تلاش کریں…"
         oninput="_lawFilter(this.value)"
         style="flex:1;min-width:180px;padding:10px 16px;border:1px solid var(--border);border-radius:24px;font-size:11.25pt;outline:none;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq';">
-      <button onclick="_printAllLaws()" class="btn btn-secondary btn-sm" title="پوری فہرست پرنٹ کریں">فہرست</button>
-      <button onclick="dioSharePrint(()=>_printAllLaws(),'قوانین کی فہرست')" class="btn btn-secondary btn-sm" title="فہرست شیئر — PDF / Word">شیئر</button>
+      <button onclick="_printAllLaws()" class="btn btn-secondary btn-sm dio-btn" title="فہرست پرنٹ" aria-label="فہرست پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>فہرست پرنٹ</span></button>
+      <button onclick="dioSharePrint(()=>_printAllLaws(),'قوانین کی فہرست')" class="btn btn-secondary btn-sm dio-btn" title="فہرست شیئر" aria-label="فہرست شیئر" data-act="share"><i class="dio-i" data-ico="share" aria-hidden="true"></i><span>فہرست شیئر</span></button>
     </div>
 
     ${_lawChipsHtml()}
@@ -133,7 +133,7 @@ function _renderLawCards(list) {
         <div style="font-size:10.5pt;margin-bottom:24px;">${filtered ? 'کوئی دوسری قسم چنیں یا تلاش خالی کریں' : 'پہلا قانون شامل کرنے کے لیے اوپر والا بٹن دبائیں'}</div>
         ${filtered
           ? `<button onclick="_lawClearFilter()" class="btn btn-secondary">چھان بین ہٹائیں</button>`
-          : `<button onclick="_openAddLaw()" class="btn btn-primary">+ قانون درج کریں</button>`}
+          : `<button onclick="_openAddLaw()" class="btn btn-primary dio-btn dio-btn--pri" title="+ قانون درج کریں" aria-label="+ قانون درج کریں" data-act="add"><span>+ قانون درج کریں</span></button>`}
       </div>`;
     return;
   }
@@ -153,11 +153,11 @@ function _renderLawCards(list) {
       <td style="white-space:nowrap;color:var(--text-muted);font-size:9pt;">${kind}</td>
       <td>
         <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
-          ${hasFile?`<button aria-label="پڑھیں" onclick="_viewLaw('${l.id}')" title="پڑھیں" style="${_lawIconBtn('var(--accent)')}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/></svg></button>`:''}
-          ${hasFile?`<button aria-label="ڈاؤنلوڈ" onclick="_downloadLaw('${l.id}')" title="ڈاؤنلوڈ" style="${_lawIconBtn('var(--green)')}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M4.5 20h15"/></svg></button>`:''}
-          ${hasLink?`<button aria-label="آن لائن" onclick="_lawOpenLink('${l.id}')" title="آن لائن" style="${_lawIconBtn('var(--purple, #6f42c1)')}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l2.6-2.6a4.5 4.5 0 0 0-6.4-6.4L11.4 6.2"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0L5 12.6a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2"/></svg></button>`:''}
-          <button aria-label="ترمیم" onclick="_editLaw('${l.id}')" title="ترمیم" style="${_lawIconBtn('var(--amber)')}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></button>
-          <button aria-label="حذف" onclick="_deleteLaw('${l.id}')" title="حذف" style="${_lawIconBtn('var(--red)')}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg></button>
+          ${hasFile?`<button class="dio-btn dio-btn--i" aria-label="دیکھیں" onclick="_viewLaw('${l.id}')" title="دیکھیں" style="${_lawIconBtn('var(--accent)')}" data-act="view"><i class="dio-i" data-ico="view" aria-hidden="true"></i></button>`:''}
+          ${hasFile?`<button class="dio-btn dio-btn--i" aria-label="ڈاؤن لوڈ" onclick="_downloadLaw('${l.id}')" title="ڈاؤن لوڈ" style="${_lawIconBtn('var(--green)')}" data-act="download"><i class="dio-i" data-ico="download" aria-hidden="true"></i></button>`:''}
+          ${hasLink?`<button class="dio-btn dio-btn--i" aria-label="آن لائن لنک" onclick="_lawOpenLink('${l.id}')" title="آن لائن لنک" style="${_lawIconBtn('var(--purple, #6f42c1)')}" data-act="link"><i class="dio-i" data-ico="link" aria-hidden="true"></i></button>`:''}
+          <button class="dio-btn dio-btn--i" aria-label="ترمیم" onclick="_editLaw('${l.id}')" title="ترمیم" style="${_lawIconBtn('var(--amber)')}" data-act="edit"><i class="dio-i" data-ico="edit" aria-hidden="true"></i></button>
+          <button class="dio-btn dio-btn--i dio-btn--del" aria-label="حذف" onclick="_deleteLaw('${l.id}')" title="حذف" style="${_lawIconBtn('var(--red)')}" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i></button>
         </div>
       </td>
     </tr>`;
@@ -222,8 +222,8 @@ function _openAddLaw() {
       <div id="law-f-progress" style="font-size:9pt;color:var(--accent);margin-top:8px;"></div>
     </div>`,
     `<div style="display:flex;gap:8px;direction:rtl;">
-      <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-      <button class="btn btn-primary" id="law-save-btn" onclick="_saveLaw()">محفوظ کریں</button>
+      <button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+      <button class="btn btn-primary dio-btn dio-btn--pri" id="law-save-btn" onclick="_saveLaw()" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
     </div>`);
 }
 
@@ -240,7 +240,7 @@ async function _saveLaw() {
   if (!name) { showToast('قانون کا نام ضروری ہے','error'); return; }
   if (!file && !link) { showToast('فائل یا آن لائن لنک میں سے کم از کم ایک ضروری ہے','error'); return; }
 
-  if (btn) { btn.disabled = true; btn.textContent = 'محفوظ ہو رہا ہے...'; }
+  if (btn) { btn.disabled = true; dioBtnText(btn, 'محفوظ ہو رہا ہے...'); }
 
   try {
     const oid = await getOfficerId();
@@ -284,7 +284,7 @@ async function _saveLaw() {
     _lawRender();
   } catch(e) {
     showToast('' + (e.message||'محفوظ نہیں ہو سکا'),'error');
-    if (btn) { btn.disabled = false; btn.textContent = 'محفوظ کریں'; }
+    if (btn) { btn.disabled = false; dioBtnText(btn, 'محفوظ کریں'); }
   }
 }
 
@@ -307,9 +307,9 @@ function _lawOptions(id) {
       <div style="display:flex;flex-direction:column;gap:10px;">
         <a href="${_lawEsc(l.file_url)}" target="_blank" rel="noopener" onclick="_closeLawOptions()" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--accent);color:#fff;border-radius:10px;text-decoration:none;font-size:11.25pt;"><span style="font-size:15pt;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17"/><path d="M12 3.5c2.6 3.1 2.6 13.9 0 17"/><path d="M12 3.5c-2.6 3.1-2.6 13.9 0 17"/></svg></span> براؤزر میں کھولیں</a>
         <a href="${_lawEsc(gview)}" target="_blank" rel="noopener" onclick="_closeLawOptions()" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#ea4335;color:#fff;border-radius:10px;text-decoration:none;font-size:11.25pt;"><span style="font-size:15pt;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></span> Google Docs میں دیکھیں</a>
-        <button type="button" onclick="_closeLawOptions();_downloadLaw('${l.id}')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--green);color:#fff;border:none;border-radius:10px;text-align:right;font-size:11.25pt;cursor:pointer;font-family:inherit;"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:inline-block;vertical-align:middle"><path d="M12 3.5v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M4.5 20h15"/></svg></span> ڈاؤنلوڈ کریں (${_lawEsc(_lawFileName(l))})</button>
-        ${l.online_link?`<button type="button" onclick="_closeLawOptions();_lawOpenLink('${l.id}')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--purple, #6f42c1);color:#fff;border:none;border-radius:10px;text-align:right;font-size:11.25pt;cursor:pointer;font-family:inherit;"><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:inline-block;vertical-align:middle"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l2.6-2.6a4.5 4.5 0 0 0-6.4-6.4L11.4 6.2"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0L5 12.6a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2"/></svg></span> آن لائن لنک</button>`:''}
-        <button onclick="_closeLawOptions()" style="padding:13px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;font-size:11.25pt;cursor:pointer;color:var(--text-secondary);font-family:inherit;">منسوخ</button>
+        <button class="dio-btn" type="button" onclick="_closeLawOptions();_downloadLaw('${l.id}')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--green);color:#fff;border:none;border-radius:10px;text-align:right;font-size:11.25pt;cursor:pointer;font-family:inherit;" title="ڈاؤن لوڈ" aria-label="ڈاؤن لوڈ" data-act="download"><i class="dio-i" data-ico="download" aria-hidden="true"></i><span>ڈاؤن لوڈ</span></button>
+        ${l.online_link?`<button class="dio-btn" type="button" onclick="_closeLawOptions();_lawOpenLink('${l.id}')" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--purple, #6f42c1);color:#fff;border:none;border-radius:10px;text-align:right;font-size:11.25pt;cursor:pointer;font-family:inherit;" title="آن لائن لنک" aria-label="آن لائن لنک" data-act="link"><i class="dio-i" data-ico="link" aria-hidden="true"></i><span>آن لائن لنک</span></button>`:''}
+        <button class="dio-btn" onclick="_closeLawOptions()" style="padding:13px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;font-size:11.25pt;cursor:pointer;color:var(--text-secondary);font-family:inherit;" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
       </div>
       <div style="font-size:8.625pt;color:var(--text-muted);text-align:center;margin-top:12px;line-height:1.7;">
         ایک بار کھولنے کے بعد یہ فائل آف لائن بھی کھلتی ہے۔<br>
@@ -346,13 +346,13 @@ function _viewLaw(id, autoPrint) {
     <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg-card);color:var(--text-primary);border-bottom:1px solid var(--border);direction:rtl;flex-wrap:wrap;">
       <div style="font-weight:800;font-size:12pt;color:var(--text-primary);flex:1;min-width:140px;">${_lawEsc(l.title||l.name)}</div>
       ${!isPdf ? `<input id="law-internal-search" type="text" dir="rtl" placeholder="سیکشن تلاش کریں... (مثلاً 302)" oninput="_lawInternalSearch(this.value)" style="padding:7px 12px;border:1px solid var(--border);border-radius:20px;font-size:9.75pt;background:var(--bg-card);color:var(--text-primary);font-family:'Jameel Noori Nastaleeq';min-width:160px;">
-      <button onclick="_lawNavMatch(-1)" title="پچھلا" aria-label="پچھلا" style="border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);border-radius:8px;padding:6px 9px;cursor:pointer;display:inline-flex;align-items:center;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
-      <button onclick="_lawNavMatch(1)" title="اگلا" aria-label="اگلا" style="border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);border-radius:8px;padding:6px 9px;cursor:pointer;display:inline-flex;align-items:center;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+      <button class="dio-btn dio-btn--i" onclick="_lawNavMatch(-1)" title="پچھلا" aria-label="پچھلا" style="border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);border-radius:8px;padding:6px 9px;cursor:pointer;display:inline-flex;align-items:center;" data-act="prev"><i class="dio-i" data-ico="prev" aria-hidden="true"></i></button>
+      <button class="dio-btn dio-btn--i" onclick="_lawNavMatch(1)" title="اگلا" aria-label="اگلا" style="border:1px solid var(--border);background:var(--bg-secondary);color:var(--text-primary);border-radius:8px;padding:6px 9px;cursor:pointer;display:inline-flex;align-items:center;" data-act="next"><i class="dio-i" data-ico="next" aria-hidden="true"></i></button>
       <span id="law-search-count" style="font-size:9pt;color:#6c757d;"></span>` : ''}
-      <button onclick="_lawOptions('${l.id}')" title="اختیارات" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:9.75pt;">⋯ اختیارات</button>
-      <button onclick="_printLawReader()" style="background:var(--accent);color:#fff;border:1px solid var(--accent);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:9.75pt;">پرنٹ</button>
-      <button onclick="_shareLawReader('${l.id}')" title="شیئر — PDF / Word" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:9.75pt;">شیئر</button>
-      <button onclick="_closeLawReader()" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:9.75pt;font-weight:700;">بند</button>
+      <button class="dio-btn dio-btn--i" onclick="_lawOptions('${l.id}')" title="اختیارات" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:9.75pt;" data-act="more"><i class="dio-i" data-ico="more" aria-hidden="true"></i></button>
+      <button class="dio-btn" onclick="_printLawReader()" style="background:var(--accent);color:#fff;border:1px solid var(--accent);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:9.75pt;" title="پرنٹ" aria-label="پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>پرنٹ</span></button>
+      <button class="dio-btn" onclick="_shareLawReader('${l.id}')" title="شیئر" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:9.75pt;" aria-label="شیئر" data-act="share"><i class="dio-i" data-ico="share" aria-hidden="true"></i><span>شیئر</span></button>
+      <button class="dio-btn" onclick="_closeLawReader()" style="background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;padding:7px 14px;cursor:pointer;font-size:9.75pt;font-weight:700;" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>
     </div>
     <!-- Body -->
     <div id="law-reader-body" style="flex:1;overflow:auto;background:#fff;">
@@ -433,7 +433,7 @@ async function _renderPdfLaw(url, body, autoPrint) {
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
           <a href="${_lawEsc(url)}" target="_blank" rel="noopener" style="padding:11px 20px;background:var(--accent);color:#fff;border-radius:8px;text-decoration:none;">براؤزر میں کھولیں</a>
           <a href="https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true" target="_blank" style="padding:11px 20px;background:#ea4335;color:#fff;border-radius:8px;text-decoration:none;">Google Docs</a>
-          <button type="button" onclick="_lawDirectDownload(this.dataset.u)" data-u="${_lawEsc(url)}" style="padding:11px 20px;background:var(--green);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-size:11.25pt;">ڈاؤنلوڈ</button>
+          <button class="dio-btn" type="button" onclick="_lawDirectDownload(this.dataset.u)" data-u="${_lawEsc(url)}" style="padding:11px 20px;background:var(--green);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-size:11.25pt;" title="ڈاؤن لوڈ" aria-label="ڈاؤن لوڈ" data-act="download"><i class="dio-i" data-ico="download" aria-hidden="true"></i><span>ڈاؤن لوڈ</span></button>
         </div>
       </div>`;
   }
@@ -714,8 +714,8 @@ function _editLaw(id) {
       <div id="law-e-progress" style="font-size:9pt;color:var(--accent);margin-top:8px;"></div>
     </div>`,
     `<div style="display:flex;gap:8px;direction:rtl;">
-      <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-      <button class="btn btn-primary" id="law-edit-save-btn" onclick="_saveEditedLaw('${id}')">محفوظ کریں</button>
+      <button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+      <button class="btn btn-primary dio-btn dio-btn--pri" id="law-edit-save-btn" onclick="_saveEditedLaw('${id}')" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
     </div>`);
 }
 
@@ -731,7 +731,7 @@ async function _saveEditedLaw(id) {
   const btn = document.getElementById('law-edit-save-btn');
 
   if (!name) { showToast('قانون کا نام ضروری ہے','error'); return; }
-  if (btn) { btn.disabled = true; btn.textContent = 'محفوظ ہو رہا ہے...'; }
+  if (btn) { btn.disabled = true; dioBtnText(btn, 'محفوظ ہو رہا ہے...'); }
 
   try {
     const oid = await getOfficerId();
@@ -765,7 +765,7 @@ async function _saveEditedLaw(id) {
     _lawRender();
   } catch(e) {
     showToast('' + (e.message||'ترمیم ناکام'),'error');
-    if (btn) { btn.disabled = false; btn.textContent = 'محفوظ کریں'; }
+    if (btn) { btn.disabled = false; dioBtnText(btn, 'محفوظ کریں'); }
   }
 }
 

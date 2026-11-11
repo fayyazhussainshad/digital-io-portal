@@ -593,9 +593,9 @@ function _dioShowNoProfile(email, uid) {
         <button onclick="doLogout()" style="flex:1;padding:10px;border:none;border-radius:8px;
                 background:#2563eb;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;font-size:11.25pt;">
           لاگ آؤٹ</button>
-        <button onclick="document.getElementById('dio-noprofile').remove()"
+        <button class="dio-btn" onclick="document.getElementById('dio-noprofile').remove()"
                 style="padding:10px 16px;border:1px solid #2a4a6b;border-radius:8px;background:transparent;
-                       color:#cfe0f0;cursor:pointer;font-family:inherit;font-size:11.25pt;">بند کریں</button>
+                       color:#cfe0f0;cursor:pointer;font-family:inherit;font-size:11.25pt;" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>
       </div>
     </div>`;
   document.body.appendChild(d);
@@ -745,8 +745,8 @@ function _renderOnboardStep() {
   `, `
     <div style="display:flex;gap:8px;width:100%;direction:rtl;">
       <button class="btn btn-secondary" onclick="_skipOnboarding()" style="flex:1;">${isLast?'بند کریں':'چھوڑیں'}</button>
-      ${!isFirst?`<button class="btn btn-secondary" onclick="_onboardPrev()">← پیچھے</button>`:''}
-      ${!isLast?`<button class="btn btn-primary" onclick="_onboardNext()" style="flex:1;">آگے →</button>`:`<button class="btn btn-primary" onclick="_skipOnboarding()" style="flex:1;">شروع کریں</button>`}
+      ${!isFirst?`<button class="btn btn-secondary dio-btn" onclick="_onboardPrev()" title="واپس" aria-label="واپس" data-act="back"><i class="dio-i" data-ico="back" aria-hidden="true"></i><span>واپس</span></button>`:''}
+      ${!isLast?`<button class="btn btn-primary dio-btn" onclick="_onboardNext()" style="flex:1;" title="آگے" aria-label="آگے" data-act="forward"><i class="dio-i" data-ico="forward" aria-hidden="true"></i><span>آگے</span></button>`:`<button class="btn btn-primary" onclick="_skipOnboarding()" style="flex:1;">شروع کریں</button>`}
     </div>
   `);
 }
@@ -1247,8 +1247,8 @@ function _setupPin() {
       <input class="form-input" type="password" id="setup-pin-pass" placeholder="موجودہ پاسورڈ" style="margin-top:8px;">
     </div>
   `, `
-    <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
-    <button class="btn btn-primary" onclick="_savePin()">محفوظ کریں</button>
+    <button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
+    <button class="btn btn-primary dio-btn dio-btn--pri" onclick="_savePin()" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
   `);
 }
 
@@ -1673,7 +1673,7 @@ window.dioLockPinSettings = function() {
     openModal('ایپ لاک PIN',
       `<div style="direction:rtl;font-family:'Jameel Noori Nastaleeq';line-height:1.9;">${has ? 'PIN پہلے سے مقرر ہے۔ آپ نیا PIN مقرر کر سکتے ہیں یا لاک ہٹا سکتے ہیں۔' : 'ابھی کوئی لاک PIN مقرر نہیں۔ بے عملی یا پس منظر میں جانے پر خودکار لاک کے لیے PIN مقرر کریں۔'}</div>`,
       `<div style="display:flex;gap:8px;direction:rtl;flex-wrap:wrap;">
-        <button class="btn btn-secondary" onclick="closeModal()">بند</button>
+        <button class="btn btn-secondary dio-btn" onclick="closeModal()" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>
         ${has ? `<button class="btn btn-danger" onclick="localStorage.removeItem('digital_io_pin_hash');resetSessionTimer();closeModal();showToast('ایپ لاک ہٹا دیا گیا','info')">لاک ہٹائیں</button>` : ''}
         <button class="btn btn-primary" onclick="closeModal();_showPinScreen('set')">${has ? 'نیا PIN' : 'PIN مقرر کریں'}</button>
       </div>`);

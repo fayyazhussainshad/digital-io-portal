@@ -51,7 +51,7 @@ test('تھانہ/ضلع پہلی سطر میں (درخواستوں کا اصول
 
 test('فہرست ملزمان/گواہان کی ترتیب میں + «… درج کریں» (v553: پورے سسٹم کا ایک نمونہ)', () => {
   assert.ok(/<div class="page-title">واقعاتی رپورٹس<\/div>/.test(J));
-  assert.ok(/class="btn btn-primary dio-add-btn" onclick="_irNew\(\)">\+ واقعاتی رپورٹ درج کریں</.test(J));
+  assert.ok(/class="btn btn-primary dio-add-btn dio-btn dio-btn--pri" onclick="_irNew\(\)"[^>]*><span>\+ واقعاتی رپورٹ درج کریں</.test(J));   // TASK 19: ایک ہی بٹن
   assert.ok(/class="form-input" id="ir-list-q"/.test(J) && /class="card ir-card"/.test(J));
 });
 

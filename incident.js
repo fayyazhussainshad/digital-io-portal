@@ -68,21 +68,12 @@ const IR_NATURES = ['جنسی زیادتی', 'قتل', 'نقب زنی', 'راہ�
   'اقدام قتل', 'چوری', 'اغوا', 'دہشت گردی', 'فساد', 'غیر قانونی اسلحہ', 'منشیات', 'فراڈ / دھوکہ', 'توڑ پھوڑ', 'دیگر'];
 const IR_PTYPES = ['متاثرہ', 'مقتول', 'مضروب', 'مغوی', 'مدعی'];
 
+// TASK 19: نشان اسی ایک سیٹ (dio-icons.js) سے
+const _irIco = (k) => (typeof dioIco === 'function' ? dioIco(k) : '');
 const IR_ICON = {
-  back: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>',
-  save: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4"/><path d="M8 20v-6h8v6"/></svg>',
-  print: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V4h10v5"/><path d="M6 18H4v-7h16v7h-2"/><path d="M7 14h10v6H7z"/></svg>',
-  share: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.9l7.6-3.8"/><path d="M8.2 13.1l7.6 3.8"/></svg>',
-  down: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>',
-  del: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/></svg>',
-  pin: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
-  cal: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5h16V20H4z"/><path d="M4 10.5h16"/><path d="M8 3.5v4"/><path d="M16 3.5v4"/></svg>',
-  case: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16v12H4z"/><path d="M9 7V5h6v2"/><path d="M4 12h16"/></svg>',
-  zoom: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/><path d="M8.5 11h5"/><path d="M11 8.5v5"/></svg>',
-  edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 8.5l2 2"/></svg>',
-  tag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>',
-  copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>',
-  plus: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>',
+  back: _irIco('back'), save: _irIco('save'), print: _irIco('print'), share: _irIco('share'), down: _irIco('download'),
+  del: _irIco('delete'), pin: _irIco('location'), cal: _irIco('calendar'), case: _irIco('folder'), zoom: _irIco('zoom-in'),
+  edit: _irIco('edit'), tag: _irIco('text'), copy: _irIco('copy'), plus: _irIco('add'),
 };
 
 /* ═════════════ چھوٹے مددگار ═════════════ */
@@ -329,7 +320,7 @@ function _irRenderList(container) {
   area.innerHTML = `
   <div class="ir-page" style="direction:rtl;">
     <div class="page-header">
-      <button class="btn btn-primary dio-add-btn" onclick="_irNew()">+ واقعاتی رپورٹ درج کریں</button>
+      <button class="btn btn-primary dio-add-btn dio-btn dio-btn--pri" onclick="_irNew()" title="+ واقعاتی رپورٹ درج کریں" aria-label="+ واقعاتی رپورٹ درج کریں" data-act="add"><span>+ واقعاتی رپورٹ درج کریں</span></button>
       <div>
         <div class="page-title">واقعاتی رپورٹس</div>
         <div class="page-subtitle"><span id="ir-count">${_irVisible().length}</span> رپورٹس — تاریخ، نوعیت اور مقام کے ساتھ</div>
@@ -366,7 +357,7 @@ function _irListRows() {
     return `<div class="ir-empty">
       <div class="ir-empty-ico">${IR_LIST_ICON}</div>
       <div>ابھی کوئی واقعاتی رپورٹ محفوظ نہیں</div>
-      <button type="button" class="btn btn-primary" onclick="_irNew()">+ واقعاتی رپورٹ درج کریں</button></div>`;
+      <button type="button" class="btn btn-primary dio-btn dio-btn--pri" onclick="_irNew()" title="+ واقعاتی رپورٹ درج کریں" aria-label="+ واقعاتی رپورٹ درج کریں" data-act="add"><span>+ واقعاتی رپورٹ درج کریں</span></button></div>`;
   }
   const rows = _irVisible();
   const n = document.getElementById('ir-count');
@@ -389,7 +380,9 @@ function _irListRows() {
       victim && `<span><b>${_irE(d.person_type || 'متاثرہ')}:</b> <bdi>${_irE(victim)}</bdi></span>`,
       thana && `<span><b>تھانہ:</b> <bdi>${_irE(thana)}</bdi></span>`,
     ].filter(Boolean).join('<i class="ir-dot">·</i>');
-    const A = (fn, ico, t, cls) => `<button type="button" class="ir-act${cls ? ' ' + cls : ''}" onclick="${fn}('${id}')" title="${t}" aria-label="${t}">${IR_ICON[ico]}<span>${t}</span></button>`;
+    // TASK 19: وہی مشترکہ بٹن — نشان اسی سیٹ سے، نام ہر جگہ ایک
+    const KIND = { print: 'print', edit: 'edit', share: 'share', copy: 'copy', tag: 'rename', del: 'delete' };
+    const A = (fn, ico, t, cls) => `<button type="button" class="ir-act${cls ? ' ' + cls : ''} dio-btn${ico === 'del' ? ' dio-btn--del' : ''}" data-act="${KIND[ico]}" onclick="${fn}('${id}')" title="${t}" aria-label="${t}">${_irIco(KIND[ico])}<span>${t}</span></button>`;
     return `
     <div class="card ir-card" role="button" tabindex="0" onclick="_irOpen('${id}')" onkeydown="if(event.key==='Enter'&&event.target===this)_irOpen('${id}')">
       <div class="ir-card-ico">${IR_LIST_ICON}</div>
@@ -621,13 +614,13 @@ function _irRenderDoc(override) {
   const pType = _irMeta.person_type || 'متاثرہ';
   const label = r => (r.pick === 'ptype') ? `<span id="ir-ptype-l">${_irE(pType)}</span> کا نام` : r.l;
 
-  const pickNature = `<span class="ir-pick no-print" title="نوعیت منتخب کریں">▾<select aria-label="نوعیت وقوعہ منتخب کریں" onchange="_irPickNature(this)">
+  const pickNature = `<span class="ir-pick no-print dio-pick" title="نوعیت منتخب کریں"><i class="dio-i" data-ico="dropdown" aria-hidden="true"></i><select aria-label="نوعیت وقوعہ منتخب کریں" onchange="_irPickNature(this)">
       <option value="">نوعیت منتخب کریں</option>${_irNatureOptions().map(n => `<option>${_irE(n)}</option>`).join('')}</select></span>`;
-  const pickPtype = `<span class="ir-pick no-print" title="حیثیت بدلیں">▾<select aria-label="حیثیت منتخب کریں" onchange="_irPickPtype(this)">
+  const pickPtype = `<span class="ir-pick no-print dio-pick" title="حیثیت بدلیں"><i class="dio-i" data-ico="dropdown" aria-hidden="true"></i><select aria-label="حیثیت منتخب کریں" onchange="_irPickPtype(this)">
       ${IR_PTYPES.map(n => `<option ${n === pType ? 'selected' : ''}>${_irE(n)}</option>`).join('')}<option value="__new">+ نئی حیثیت</option></select></span>`;
-  const pickDt = k => `<span class="ir-pick ir-cal no-print" title="تاریخ و وقت چنیں">${IR_ICON.cal}<input type="datetime-local" aria-label="تاریخ و وقت چنیں"
+  const pickDt = k => `<span class="ir-pick ir-cal no-print dio-pick" title="تاریخ و وقت چنیں">${IR_ICON.cal}<input type="datetime-local" aria-label="تاریخ و وقت چنیں"
       value="${_irE(_irMeta[k + '_iso'] || '')}" onclick="try{this.showPicker()}catch(_){ /* picker na ho to koi baat nahi */ }" onchange="_irSetDt('${k}', this.value)"></span>`;
-  const pickLoc = `<button type="button" class="ir-pick ir-locbtn no-print" title="موجودہ مقام (Lat/Long) دوبارہ لیں" aria-label="مقام لیں" onclick="_irGetLocation(false)">${IR_ICON.pin}</button>`;
+  const pickLoc = `<button type="button" class="ir-pick ir-locbtn no-print dio-pick" title="موجودہ مقام (Lat/Long) دوبارہ لیں" aria-label="مقام لیں" onclick="_irGetLocation(false)" data-act="location"><i class="dio-i" data-ico="location" aria-hidden="true"></i></button>`;
 
   const rowsHtml = IR_ROWS.map(r => {
     let cell;
@@ -661,7 +654,7 @@ function _irRenderDoc(override) {
   v.innerHTML = `
   <div class="ir-strip no-print" role="toolbar" aria-label="واقعاتی رپورٹ">
     <div class="ir-strip-r">
-      <button type="button" class="btn btn-secondary btn-sm" onclick="_irClose()" title="تمام واقعاتی رپورٹس (Esc)">${IR_ICON.back} فہرست</button>
+      <button type="button" class="btn btn-secondary btn-sm dio-btn" onclick="_irClose()" title="فہرست" aria-label="فہرست" data-act="back"><i class="dio-i" data-ico="back" aria-hidden="true"></i><span>فہرست</span></button>
       <div class="ir-strip-tt">
         <span class="ir-strip-t" id="ir-strip-t">${_irE(title)}</span>
         <span class="ir-state" id="ir-state"></span>
@@ -671,11 +664,11 @@ function _irRenderDoc(override) {
     <div class="ir-strip-l">
       <button type="button" class="btn btn-secondary btn-sm" onclick="_irPickCase()" title="مقدمے کا ڈیٹا اس رپورٹ میں لائیں">${IR_ICON.case} مقدمہ سے</button>
       ${phone ? `<button type="button" class="btn btn-secondary btn-sm" onclick="_irToggleView()" id="ir-view-btn" title="موبائل منظر / A4 کاغذ">${IR_ICON.zoom} <span>${_irA4View ? 'موبائل منظر' : 'A4 منظر'}</span></button>` : ''}
-      <button type="button" class="btn btn-secondary btn-sm" onclick="_irShare()" title="شیئر">${IR_ICON.share} شیئر</button>
-      <button type="button" class="btn btn-secondary btn-sm" onclick="_irDownload()" title="ڈاؤن لوڈ">${IR_ICON.down} ڈاؤن لوڈ</button>
-      <button type="button" class="btn btn-secondary btn-sm" data-dio-print onclick="_irPrint()" title="پرنٹ (Ctrl+P)">${IR_ICON.print} پرنٹ</button>
-      <button type="button" class="btn btn-primary btn-sm" onclick="_irSave()" title="محفوظ کریں (Ctrl+S)">${IR_ICON.save} محفوظ کریں</button>
-      ${_irCur ? `<button type="button" class="btn btn-danger btn-sm ir-del" onclick="_irDelete('${_irE(String(_irCur.id))}')" title="حذف" aria-label="حذف">${IR_ICON.del}</button>` : ''}
+      <button type="button" class="btn btn-secondary btn-sm dio-btn" onclick="_irShare()" title="شیئر" aria-label="شیئر" data-act="share"><i class="dio-i" data-ico="share" aria-hidden="true"></i><span>شیئر</span></button>
+      <button type="button" class="btn btn-secondary btn-sm dio-btn" onclick="_irDownload()" title="ڈاؤن لوڈ" aria-label="ڈاؤن لوڈ" data-act="download"><i class="dio-i" data-ico="download" aria-hidden="true"></i><span>ڈاؤن لوڈ</span></button>
+      <button type="button" class="btn btn-secondary btn-sm dio-btn" data-dio-print onclick="_irPrint()" title="پرنٹ (Ctrl+P)" aria-label="پرنٹ (Ctrl+P)" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>پرنٹ</span></button>
+      <button type="button" class="btn btn-primary btn-sm dio-btn" onclick="_irSave()" title="محفوظ کریں (Ctrl+S)" aria-label="محفوظ کریں (Ctrl+S)" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
+      ${_irCur ? `<button type="button" class="btn btn-danger btn-sm ir-del dio-btn dio-btn--i dio-btn--del" onclick="_irDelete('${_irE(String(_irCur.id))}')" title="حذف" aria-label="حذف" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i></button>` : ''}
     </div>
   </div>
   <div class="ir-scroll" id="ir-scroll">
@@ -707,7 +700,7 @@ function _irRenderDoc(override) {
             <div class="ir-signbtns no-print">
               <button type="button" onclick="_irSignPad()">دستخط بنائیں</button>
               <label>تصویر لگائیں<input type="file" accept="image/*" onchange="_irSignFile(this)"></label>
-              ${hasStored && !sign ? '<button type="button" onclick="_irSignStored()">محفوظ دستخط</button>' : ''}
+              ${hasStored && !sign ? '<button class="dio-btn" type="button" onclick="_irSignStored()" title="دستخط محفوظ کریں" aria-label="دستخط محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>دستخط محفوظ کریں</span></button>' : ''}
               ${sign ? '<button type="button" onclick="_irSignClear()">ہٹائیں</button>' : ''}
             </div>
             ${F('sho_line', 'ir-sholine')}
@@ -1079,7 +1072,7 @@ async function _irPickCase() {
       <select id="ir-case-sel" class="form-input" style="width:100%;font-family:inherit;font-size:13pt;">${opts}</select>
       <div style="font-size:11pt;color:var(--text-muted);margin-top:6px;">نوعیت وقوعہ، تاریخ وقوعہ، جائے وقوعہ، اطلاع دہندہ (مدعی) اور ملزمان اس مقدمے سے بھرے جائیں گے — بعد میں ہر خانہ قابلِ ترمیم۔</div>
     </div>`,
-    `<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>
+    `<button class="btn btn-secondary dio-btn" onclick="closeModal()" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>
      <button class="btn btn-primary" onclick="_irApplyCase()">ڈیٹا لائیں</button>`);
 }
 window._irPickCase = _irPickCase;
@@ -1145,7 +1138,7 @@ function _irRefreshSign() {
     try { stored = !!localStorage.getItem(IR_SIGN_KEY); } catch { stored = false; }
     btns.innerHTML = `<button type="button" onclick="_irSignPad()">دستخط بنائیں</button>
       <label>تصویر لگائیں<input type="file" accept="image/*" onchange="_irSignFile(this)"></label>
-      ${stored && !_irMeta.sho_sign ? '<button type="button" onclick="_irSignStored()">محفوظ دستخط</button>' : ''}
+      ${stored && !_irMeta.sho_sign ? '<button class="dio-btn" type="button" onclick="_irSignStored()" title="دستخط محفوظ کریں" aria-label="دستخط محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>دستخط محفوظ کریں</span></button>' : ''}
       ${_irMeta.sho_sign ? '<button type="button" onclick="_irSignClear()">ہٹائیں</button>' : ''}`;
   }
   _irBalanceSoon();
@@ -1195,7 +1188,7 @@ function _irSignPad() {
       <label style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:11.5pt;"><input type="checkbox" id="ir-pad-ok"> متعلقہ SHO کی اجازت موجود ہے</label>
     </div>`,
     `<button class="btn btn-secondary" onclick="_irPadClear()">صاف کریں</button>
-     <button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>
+     <button class="btn btn-secondary dio-btn" onclick="closeModal()" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>
      <button class="btn btn-primary" onclick="_irPadApply()">دستخط لگائیں</button>`);
   setTimeout(_irPadInit, 30);
 }
@@ -1415,7 +1408,7 @@ function _irUpdateTitle() {
   const grp = document.querySelector('.ir-strip-l');
   const onc = `_irDelete('${_irE(String(_irCur.id))}')`;
   const d = grp && grp.querySelector('.ir-del');
-  if (grp && !d) grp.insertAdjacentHTML('beforeend', `<button type="button" class="btn btn-danger btn-sm ir-del" onclick="${onc}" title="حذف" aria-label="حذف">${IR_ICON.del}</button>`);
+  if (grp && !d) grp.insertAdjacentHTML('beforeend', `<button type="button" class="btn btn-danger btn-sm ir-del dio-btn dio-btn--i dio-btn--del" onclick="${onc}" title="حذف" aria-label="حذف" data-act="delete"><i class="dio-i" data-ico="delete" aria-hidden="true"></i></button>`);
   else if (d) d.setAttribute('onclick', onc);
   _irMarkDirty(_irDirty);
 }

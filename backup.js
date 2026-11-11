@@ -75,7 +75,7 @@ async function _buildBackup() {
       <div style="font-size:27pt;margin-bottom:10px;"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="opacity:.42;display:inline-block;vertical-align:middle"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v6h7V4"/><path d="M8 20v-6h8v6"/></svg></div>
       <div class="dio-hs2" style="font-size:9.75pt;font-weight:700;margin-bottom:6px;direction:rtl;">ڈیوائس بیک اپ</div>
       <div style="font-size:8.25pt;color:var(--text-muted);margin-bottom:10px;direction:rtl;">JSON فائل ڈاؤنلوڈ کریں</div>
-      <button class="btn btn-primary btn-sm" style="width:100%;" onclick="_exportAllData()">مکمل ڈیٹا ڈاؤنلوڈ</button>
+      <button class="btn btn-primary btn-sm dio-btn" style="width:100%;" onclick="_exportAllData()" title="مکمل ڈیٹا ڈاؤن لوڈ" aria-label="مکمل ڈیٹا ڈاؤن لوڈ" data-act="download"><i class="dio-i" data-ico="download" aria-hidden="true"></i><span>مکمل ڈیٹا ڈاؤن لوڈ</span></button>
       <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:6px;" onclick="_importData()">ڈیٹا درآمد کریں</button>
     </div>
 
@@ -85,8 +85,8 @@ async function _buildBackup() {
       <div class="dio-hs2" style="font-size:9.75pt;font-weight:700;margin-bottom:6px;direction:rtl;">برآمد کریں</div>
       <button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px;" onclick="_exportCases()">مقدمات (CSV)</button>
       <button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px;" onclick="_exportReminders()">یاددہانیاں (CSV)</button>
-      <button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px;" onclick="_printDataReport()">رپورٹ پرنٹ</button>
-      <button class="btn btn-secondary btn-sm" style="width:100%;" onclick="dioSharePrint(()=>_printDataReport(),'ڈیٹا رپورٹ')" title="شیئر — PDF / Word">رپورٹ شیئر (PDF / Word)</button>
+      <button class="btn btn-secondary btn-sm dio-btn" style="width:100%;margin-bottom:6px;" onclick="_printDataReport()" title="رپورٹ پرنٹ" aria-label="رپورٹ پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>رپورٹ پرنٹ</span></button>
+      <button class="btn btn-secondary btn-sm dio-btn" style="width:100%;" onclick="dioSharePrint(()=>_printDataReport(),'ڈیٹا رپورٹ')" title="رپورٹ شیئر" aria-label="رپورٹ شیئر" data-act="share"><i class="dio-i" data-ico="share" aria-hidden="true"></i><span>رپورٹ شیئر</span></button>
     </div>
   </div>
 
@@ -108,7 +108,7 @@ async function _buildBackup() {
       <div style="display:flex;gap:10px;align-items:center;background:var(--bg-secondary);border-radius:8px;padding:10px;">
         <div style="width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:9.75pt;flex-shrink:0;">1</div>
         <div style="flex:1;font-size:9.75pt;">نیچے بٹن سے مکمل ڈیٹا (JSON) ڈاؤنلوڈ کریں</div>
-        <button class="btn btn-primary btn-sm" onclick="_exportAllData()">ڈاؤنلوڈ</button>
+        <button class="btn btn-primary btn-sm dio-btn" onclick="_exportAllData()" title="ڈاؤن لوڈ" aria-label="ڈاؤن لوڈ" data-act="download"><i class="dio-i" data-ico="download" aria-hidden="true"></i><span>ڈاؤن لوڈ</span></button>
       </div>
       <div style="display:flex;gap:10px;align-items:center;background:var(--bg-secondary);border-radius:8px;padding:10px;">
         <div style="width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:9.75pt;flex-shrink:0;">2</div>
@@ -241,7 +241,7 @@ function _importData() {
       <div id="import-status" style="margin-top:8px;font-size:8.25pt;color:var(--text-muted);"></div>
     </div>`,
     `<div style="display:flex;gap:8px;direction:rtl;">
-      <button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+      <button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
       <button class="btn btn-primary" onclick="_doImport()">درآمد کریں</button>
     </div>`
   );

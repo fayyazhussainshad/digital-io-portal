@@ -57,7 +57,7 @@
       '<div class="dio-hub">' + HUB.map(function (h) {
         return '<button type="button" onclick="DIOEntry.go(\'' + h[0] + '\')">' + h[2] + e(h[1]) + '</button>';
       }).join('') + '</div>',
-      '<button class="btn btn-secondary" onclick="closeModal()">بند کریں</button>');
+      '<button class="btn btn-secondary dio-btn" onclick="closeModal()" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>');
     var mc = document.querySelector('#modal-backdrop .modal-card');
     if (mc) mc.classList.add('dio-entry');
   }
@@ -179,7 +179,7 @@
       var img = /^image\//.test(f.file.type);
       return '<span class="dio-th' + (img ? '' : ' pdf') + '" role="button" tabindex="0" title="دیکھیں" onclick="DIOEntry._evView(' + i + ')">' +
         (img ? '<img alt="" src="' + f.url + '">' : e((f.file.name.split('.').pop() || 'فائل').toUpperCase().slice(0, 4))) +
-        '<button type="button" class="x" aria-label="ہٹائیں" onclick="event.stopPropagation();DIOEntry._evRemove(' + i + ')">✕</button></span>';
+        '<button type="button" class="x dio-btn dio-btn--i" aria-label="بند کریں" onclick="event.stopPropagation();DIOEntry._evRemove(' + i + ')" title="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i></button></span>';
     }).join('');
   }
   function _evAdd(input) {
@@ -209,7 +209,7 @@
         D.fld({ id: 'ev2-time', label: 'وقت', type: 'time', value: pad(now.getHours()) + ':' + pad(now.getMinutes()) }),
         D.fld({ id: 'ev2-loc', label: 'مقام (Lat, Long)', ltr: true, w: 'w-l', grow: true, ph: '30.195720, 71.475280',
           html: '<div class="dio-wb"><input class="dio-c ltr" id="ev2-loc" type="text" dir="ltr" inputmode="decimal" placeholder="30.195720, 71.475280">' +
-            '<button type="button" class="dio-ib" title="موجودہ مقام" aria-label="موجودہ مقام" onclick="DIOCard.getLocation(\'ev2-loc\')">' + D.ICON.pin + '</button></div>' })
+            '<button type="button" class="dio-ib dio-btn dio-btn--i" title="مقام" aria-label="مقام" onclick="DIOCard.getLocation(\'ev2-loc\')" data-act="location"><i class="dio-i" data-ico="location" aria-hidden="true"></i></button></div>' })
       ]) +
       '<div class="dio-hint">تاریخ اور وقت خود آ گئے ہیں — بدلے جا سکتے ہیں۔ مقام کے لیے نشان دبائیں (اجازت درکار)۔</div>' +
       '<div class="dio-up-row"><div class="dio-up"><div class="dio-row" style="padding-top:4px;gap:8px;">' +

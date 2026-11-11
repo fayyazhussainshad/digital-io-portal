@@ -229,7 +229,7 @@ async function _binRestore(binId, type, quiet) {
 async function _binRestoreAll() {
   openModal('سب بحال کریں',
     `<p style="color:var(--text-secondary);font-size:9.75pt;">کیا آپ بن کی تمام اشیاء بحال کرنا چاہتے ہیں؟</p>`,
-    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
      <button class="btn btn-primary" onclick="closeModal();_binDoRestoreAll()">ہاں، سب بحال کریں</button>`
   );
 }
@@ -254,7 +254,7 @@ async function _binDoRestoreAll() {
 async function _binDeletePerm(binId) {
   openModal('مستقل حذف',
     `<p style="color:var(--red);font-size:9.75pt;">یہ آئٹم ہمیشہ کے لیے حذف ہو جائے گا — واپس نہیں آ سکتا!</p>`,
-    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
      <button class="btn btn-danger" onclick="closeModal();_binDoPerm('${binId}')">مستقل حذف</button>`
   );
 }
@@ -271,7 +271,7 @@ async function _binDoPerm(binId) {
 function _binEmptyAll() {
   openModal('بن خالی کریں',
     `<p style="color:var(--red);font-size:9.75pt;">تمام اشیاء ہمیشہ کے لیے حذف ہو جائیں گی — واپس نہیں آ سکتیں!</p>`,
-    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary" onclick="closeModal()">منسوخ</button>
+    `<div style="display:flex;gap:8px;direction:rtl;justify-content:flex-start;"><button class="btn btn-secondary dio-btn" onclick="closeModal()" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>
      <button class="btn btn-danger" onclick="closeModal();_binDoEmpty()">ہاں، بن خالی کریں</button>`
   );
 }

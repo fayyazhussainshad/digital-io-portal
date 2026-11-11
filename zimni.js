@@ -1133,10 +1133,10 @@ function _renderZimniList() {
   </style>
   <div class="zt-wrap">
     <div class="zt-bar">
-      <button class="btn btn-primary btn-sm dio-add-btn" onclick="_newZimni()">+ ضمنی درج کریں</button>
+      <button class="btn btn-primary btn-sm dio-add-btn dio-btn dio-btn--pri" onclick="_newZimni()" title="+ ضمنی درج کریں" aria-label="+ ضمنی درج کریں" data-act="add"><span>+ ضمنی درج کریں</span></button>
       <div class="zt-h">ضمنیات (${list.length})</div>
-      ${pendingCount && navigator.onLine ? `<button class="btn btn-secondary btn-sm" onclick="_zimniSyncPending()">⟳ سرور پر بھیجیں (${pendingCount})</button>` : ''}
-      <button class="btn btn-secondary btn-sm" onclick="_printAllZimni()">🖨️ تمام ضمنیاں</button>
+      ${pendingCount && navigator.onLine ? `<button class="btn btn-secondary btn-sm dio-btn" onclick="_zimniSyncPending()" title="سرور پر اپ لوڈ" aria-label="سرور پر اپ لوڈ" data-act="upload"><i class="dio-i" data-ico="upload" aria-hidden="true"></i><span>سرور پر اپ لوڈ (${pendingCount})</span></button>` : ''}
+      <button class="btn btn-secondary btn-sm dio-btn" onclick="_printAllZimni()" title="تمام ضمنیاں پرنٹ" aria-label="تمام ضمنیاں پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>تمام ضمنیاں پرنٹ</span></button>
     </div>
     ${(list.length || newDrafts.length) ? `
     <table class="zt">
@@ -1169,7 +1169,7 @@ function _renderZimniList() {
               dioActBtn('edit', `_openZimni('${J(z.id)}')`, 'ترمیم')
               + dioActBtn('print', `_printZimniById('${J(z.id)}')`, 'پرنٹ — ضمنی کھولے بغیر')
               + dioActBtn('share', `_emailZimni('${J(z.id)}')`, 'شیئر — PDF / Word')
-              + dioActBtn('copy', `_dupZimni('${J(z.id)}')`, 'ڈپلیکیٹ — اسی ضمنی کی نقل بنا کر ترمیم کے لیے کھولیں')
+              + dioActBtn('duplicate', `_dupZimni('${J(z.id)}')`, 'ڈپلیکیٹ — اسی ضمنی کی نقل بنا کر ترمیم کے لیے کھولیں')
               + dioActBtn('delete', `_deleteZimni('${J(z.id)}')`, 'حذف')
             )}</td>
           </tr>`).join('')}
@@ -1801,7 +1801,7 @@ async function _zimniKwCard(keys, tplName, forTpl) {
   const has = Object.keys(cur).some(k => k !== 'saved_at' && String(cur[k] || '').trim());
   const save = forTpl ? 'ضمنی میں لگائیں' : 'محفوظ کریں';
   const foot = '<button class="btn btn-primary" onclick="_zimniKwDone(true)">' + save + '</button>'
-    + '<button class="btn btn-secondary" onclick="_zimniKwDone(false)">منسوخ</button>';
+    + '<button class="btn btn-secondary dio-btn" onclick="_zimniKwDone(false)" title="منسوخ" aria-label="منسوخ" data-act="cancel"><span>منسوخ</span></button>';
   if (D && D.injectCSS) D.injectCSS();
   openModal((has ? 'ترمیم' : 'نیا اندراج') + ' — کوائف موقع و مال', body, foot);
   const mc = document.querySelector('#modal-backdrop .modal-card');
@@ -1930,7 +1930,7 @@ async function dioRenderKawaifPage(cid) {
       ${oldText ? sec('وقوعہ جات کی پرانی تحریر') + '<div class="zkw-old">' + ((typeof sanitizeHtml === 'function') ? sanitizeHtml(oldHtml) : E(oldText)) + '</div>'
         + '<div class="zkw-bar"><button type="button" class="btn btn-secondary" onclick="_zimniKwOldEdit()">پرانی تحریر میں ترمیم</button></div>' : ''}
       <div class="zkw-bar">
-        <button type="button" class="btn btn-primary" data-dio-save onclick="_zimniKwPageSave(true)">محفوظ کریں</button>
+        <button type="button" class="btn btn-primary dio-btn dio-btn--pri" data-dio-save onclick="_zimniKwPageSave(true)" title="محفوظ کریں" aria-label="محفوظ کریں" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>محفوظ کریں</span></button>
         <span id="zkw-status" data-dio-status>${cur.saved_at ? 'محفوظ: ' + E(_zimniFmtStamp(cur.saved_at)) : ''}</span>
       </div>
     </div>
@@ -2138,7 +2138,7 @@ function _zimniCornerMenu(ev, which) {
     'display:flex;flex-direction:column;max-height:min(70vh,520px);overflow:hidden;';
   const row = (v, label, on) => '<button type="button" role="menuitemradio" aria-checked="' + (on ? 'true' : 'false') + '" data-v="' + E(v) + '" style="display:flex;align-items:center;gap:8px;width:100%;min-height:38px;'
     + 'padding:6px 10px;border:0;border-bottom:1px solid #f1f5f9;background:' + (on ? '#e0f2fe' : '#fff') + ';color:#0f172a;cursor:pointer;text-align:right;font-size:11pt;' + F + '">'
-    + '<span style="width:1.2em;color:#0369a1;font-weight:900;">' + (on ? '✓' : '') + '</span><span style="flex:1;">' + label + '</span></button>';
+    + '<span style="width:1.2em;color:#0369a1;font-weight:900;">' + (on ? dioIco('check') : '') + '</span><span style="flex:1;">' + label + '</span></button>';
   box.innerHTML =
     '<div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:9.75pt;font-weight:700;color:#0369a1;background:#f8fafc;' + F + '">'
       + (which === 'main' ? 'ضمنی کی قسم' : 'ضمنی کی نوعیت') + '</div>'
@@ -2230,41 +2230,41 @@ function _renderZimniEditor() {
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
     <!-- پرانی پٹی کے اوزار — چھپے ہوئے (دستاویز کی پٹی انہی کو چلاتی ہے) -->
     <div id="zf-tools" class="no-print zf-tools${inDocView ? '' : ' zf-tools-show'}">
-      <button type="button" class="btn btn-secondary btn-sm" onclick="_zimniBackToList()" title="اس مقدمے کی تمام ضمنیات">← فہرست</button>
+      <button type="button" class="btn btn-secondary btn-sm dio-btn" onclick="_zimniBackToList()" title="فہرست" aria-label="فہرست" data-act="back"><i class="dio-i" data-ico="back" aria-hidden="true"></i><span>فہرست</span></button>
       <!-- "رپورٹ ضمنی" کا خانہ hidden — قدر save کے لیے (فہرست کا عنوان نہ ٹوٹے) -->
       <input id="zf-head-in" type="hidden" value="${esc(((saved && saved.head) || savedSub || 'رپورٹ ضمنی'))}">
       <div class="zf-tools-fmt" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-        <button id="zf-btn-b" onmousedown="event.preventDefault()" onclick="_zimniFmt('bold')" title="بولڈ" style="${btn}font-weight:900;">B</button>
-        <button id="zf-btn-i" onmousedown="event.preventDefault()" onclick="_zimniFmt('italic')" title="ترچھا" style="${btn}font-style:italic;">I</button>
-        <button id="zf-btn-u" onmousedown="event.preventDefault()" onclick="_zimniFmt('underline')" title="انڈر لائن" style="${btn}text-decoration:underline;">U</button>
+        <button class="dio-btn dio-btn--i" id="zf-btn-b" onmousedown="event.preventDefault()" onclick="_zimniFmt('bold')" title="بولڈ" style="${btn}font-weight:900;" aria-label="بولڈ" data-act="bold"><i class="dio-i" data-ico="bold" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" id="zf-btn-i" onmousedown="event.preventDefault()" onclick="_zimniFmt('italic')" title="ترچھا" style="${btn}font-style:italic;" aria-label="ترچھا" data-act="italic"><i class="dio-i" data-ico="italic" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" id="zf-btn-u" onmousedown="event.preventDefault()" onclick="_zimniFmt('underline')" title="انڈر لائن" style="${btn}text-decoration:underline;" aria-label="انڈر لائن" data-act="underline"><i class="dio-i" data-ico="underline" aria-hidden="true"></i></button>
         ${sep}
-        <button onmousedown="event.preventDefault()" onclick="_zimniFmt('justifyRight')" title="دائیں سیدھ" style="${btn}">⇥</button>
-        <button onmousedown="event.preventDefault()" onclick="_zimniFmt('justifyCenter')" title="درمیان" style="${btn}">⇔</button>
-        <button onmousedown="event.preventDefault()" onclick="_zimniFmt('justifyLeft')" title="بائیں سیدھ" style="${btn}">⇤</button>
-        <button onmousedown="event.preventDefault()" onclick="_zimniFmt('justifyFull')" title="دونوں طرف برابر" style="${btn}">☰</button>
+        <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_zimniFmt('justifyRight')" title="دائیں سیدھ" style="${btn}" aria-label="دائیں سیدھ" data-act="align-right"><i class="dio-i" data-ico="align-right" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_zimniFmt('justifyCenter')" title="درمیان" style="${btn}" aria-label="درمیان" data-act="align-center"><i class="dio-i" data-ico="align-center" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_zimniFmt('justifyLeft')" title="بائیں سیدھ" style="${btn}" aria-label="بائیں سیدھ" data-act="align-left"><i class="dio-i" data-ico="align-left" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_zimniFmt('justifyFull')" title="دونوں طرف برابر" style="${btn}" aria-label="دونوں طرف برابر" data-act="justify"><i class="dio-i" data-ico="justify" aria-hidden="true"></i></button>
         ${sep}
-        <button onmousedown="event.preventDefault()" onclick="_zimniFmt('insertUnorderedList')" title="نقطہ دار فہرست" style="${btn}">•</button>
-        <button onmousedown="event.preventDefault()" onclick="_zimniFmt('insertOrderedList')" title="نمبر والی فہرست" style="${btn}font-size:8.25pt;">1.</button>
-        <button onmousedown="event.preventDefault()" onclick="_ch173ClearFmt()" title="فارمیٹ ختم کریں" style="${btn}">🧹</button>
+        <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_zimniFmt('insertUnorderedList')" title="نقطہ دار فہرست" style="${btn}" aria-label="نقطہ دار فہرست" data-act="bullets"><i class="dio-i" data-ico="bullets" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_zimniFmt('insertOrderedList')" title="نمبر والی فہرست" style="${btn}font-size:8.25pt;" aria-label="نمبر والی فہرست" data-act="numbers"><i class="dio-i" data-ico="numbers" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_ch173ClearFmt()" title="فارمیٹ ختم کریں" style="${btn}" aria-label="فارمیٹ ختم کریں" data-act="clear-format"><i class="dio-i" data-ico="clear-format" aria-hidden="true"></i></button>
         ${sep}
-        <button id="ch173-brush-btn" onmousedown="event.preventDefault()"
+        <button class="dio-btn dio-btn--i" id="ch173-brush-btn" onmousedown="event.preventDefault()"
           onclick="_ch173BrushClick(false)" ondblclick="_ch173BrushClick(true)"
-          title="فارمیٹ پینٹر — ایک کلک: ایک بار، ڈبل کلک: بار بار" style="${btn}">🖌</button>
+          title="فارمیٹ پینٹر" style="${btn}" aria-label="فارمیٹ پینٹر" data-act="painter"><i class="dio-i" data-ico="painter" aria-hidden="true"></i></button>
         <select id="ch173-font-sel" onchange="_zimniSetFont(this.value)" title="فونٹ سائز" style="${selCss}">
           ${sizes.map(s => `<option value="${s}" ${String(s)==='14'?'selected':''}>${s}</option>`).join('')}
         </select>
-        <button onmousedown="event.preventDefault()" onclick="_zimniFmt('undo')" title="واپس (Undo)" style="${btn}">↶</button>
-        <button onmousedown="event.preventDefault()" onclick="_zimniFmt('redo')" title="دوبارہ (Redo)" style="${btn}">↷</button>
+        <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_zimniFmt('undo')" title="کالعدم" style="${btn}" aria-label="کالعدم" data-act="undo"><i class="dio-i" data-ico="undo" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="_zimniFmt('redo')" title="دوبارہ" style="${btn}" aria-label="دوبارہ" data-act="redo"><i class="dio-i" data-ico="redo" aria-hidden="true"></i></button>
         ${sep}
         <!-- ── نیچے والا تیرتا (floating) toolbar اب مکمل یہیں (اوپر) شامل ── -->
-        <button onmousedown="event.preventDefault()" onclick="dioFontStep(1)" title="فونٹ بڑا" style="${btn}">A+</button>
-        <button onmousedown="event.preventDefault()" onclick="dioFontStep(-1)" title="فونٹ چھوٹا" style="${btn}font-size:8.25pt;">A−</button>
-        <button onmousedown="event.preventDefault()" onclick="dioSetDir('rtl')" title="اردو — دائیں سے بائیں (RTL)" style="${btn}font-weight:800;">؈</button>
-        <button onmousedown="event.preventDefault()" onclick="dioSetDir('ltr')" title="English — Left to Right (LTR)" style="${btn}font-weight:800;direction:ltr;">EN</button>
+        <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="dioFontStep(1)" title="فونٹ بڑا" style="${btn}" aria-label="فونٹ بڑا" data-act="font-up"><i class="dio-i" data-ico="font-up" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="dioFontStep(-1)" title="فونٹ چھوٹا" style="${btn}font-size:8.25pt;" aria-label="فونٹ چھوٹا" data-act="font-down"><i class="dio-i" data-ico="font-down" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="dioSetDir('rtl')" title="اردو — دائیں سے بائیں" style="${btn}font-weight:800;" aria-label="اردو — دائیں سے بائیں" data-act="rtl"><i class="dio-i" data-ico="rtl" aria-hidden="true"></i></button>
+        <button class="dio-btn dio-btn--i" onmousedown="event.preventDefault()" onclick="dioSetDir('ltr')" title="انگریزی — بائیں سے دائیں" style="${btn}font-weight:800;direction:ltr;" aria-label="انگریزی — بائیں سے دائیں" data-act="ltr"><i class="dio-i" data-ico="ltr" aria-hidden="true"></i></button>
         ${sep}
-        <button id="zf-save-btn" class="btn btn-primary btn-sm dio-modbtn" onclick="_saveZimni(false,true)" title="${z.id ? 'اپ ڈیٹ' : 'محفوظ کریں'} (Ctrl+S) — ضمنی کھلی رہے گی">💾 ${z.id ? 'اپ ڈیٹ' : 'محفوظ'}</button>
-        <button type="button" class="btn btn-secondary btn-sm" data-dio-print onclick="_printZimniCurrent()" title="پرنٹ (Ctrl+P)">🖨️ پرنٹ</button>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="_shareZimniCurrent()" title="شیئر — PDF / Word">📤 شیئر</button>
+        <button id="zf-save-btn" class="btn btn-primary btn-sm dio-modbtn dio-btn" onclick="_saveZimni(false,true)" title="${z.id ? 'اپ ڈیٹ' : 'محفوظ کریں'} (Ctrl+S)" aria-label="${z.id ? 'اپ ڈیٹ' : 'محفوظ کریں'} (Ctrl+S)" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>${z.id ? 'اپ ڈیٹ' : 'محفوظ کریں'}</span></button>
+        <button type="button" class="btn btn-secondary btn-sm dio-btn" data-dio-print onclick="_printZimniCurrent()" title="پرنٹ (Ctrl+P)" aria-label="پرنٹ (Ctrl+P)" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>پرنٹ</span></button>
+        <button type="button" class="btn btn-secondary btn-sm dio-btn" onclick="_shareZimniCurrent()" title="شیئر" aria-label="شیئر" data-act="share"><i class="dio-i" data-ico="share" aria-hidden="true"></i><span>شیئر</span></button>
       </div>
     </div>
 
@@ -2277,10 +2277,10 @@ function _renderZimniEditor() {
         <span id="zf-sub-wrap">${_zimniSubSelectHTML(mainShown, savedSub)}</span>
         <span id="zf-updated" data-dio-status></span><span id="zf-autosave" data-dio-status></span>
       </div>
-      <button type="button" id="zf-cp-main" class="zf-cpick no-print" onclick="_zimniCornerMenu(event,'main')" aria-haspopup="menu"
-        title="ضمنی کی قسم (SHO کی ضمنی، DSP کی ضمنی، پہلی ضمنی …)" aria-label="ضمنی کی قسم">▾</button>
-      <button type="button" id="zf-cp-sub" class="zf-cpick no-print" onclick="_zimniCornerMenu(event,'sub')" aria-haspopup="menu"
-        title="ضمنی کی نوعیت (گرفتاری ملزمان، برآمدگی …)" aria-label="ضمنی کی نوعیت">▾</button>
+      <button type="button" id="zf-cp-main" class="zf-cpick no-print dio-pick" onclick="_zimniCornerMenu(event,'main')" aria-haspopup="menu"
+        title="ضمنی کی قسم (SHO کی ضمنی، DSP کی ضمنی، پہلی ضمنی …)" aria-label="ضمنی کی قسم" data-act="dropdown"><i class="dio-i" data-ico="dropdown" aria-hidden="true"></i></button>
+      <button type="button" id="zf-cp-sub" class="zf-cpick no-print dio-pick" onclick="_zimniCornerMenu(event,'sub')" aria-haspopup="menu"
+        title="ضمنی کی نوعیت (گرفتاری ملزمان، برآمدگی …)" aria-label="ضمنی کی نوعیت" data-act="dropdown"><i class="dio-i" data-ico="dropdown" aria-hidden="true"></i></button>
       ${z._dupOf ? `<span id="zf-dup-badge" class="no-print zf-cdup" style="${_ZF_DUP_CSS}" title="ضمنی نمبر ${esc(String(z._dupLabel || ''))} کی نقل — ابھی محفوظ نہیں؛ محفوظ ہوتے ہی یہ نشان ہٹ جائے گا">ڈپلیکیٹ</span>` : ''}
       <div id="ch173-doc" class="zf-editor" contenteditable="true" spellcheck="false" style="
         width:${paper==='a4'?'8.27in':'8.5in'};max-width:none;
@@ -2511,9 +2511,9 @@ function _zimniFindReplaceUI(withReplace) {
     <div style="display:flex;gap:6px;align-items:center;">
       <input id="zfr-find" placeholder="تلاش کریں…" style="${inp}">
       <span id="zfr-count" style="font-size:8.25pt;color:var(--text-muted);min-width:38px;text-align:center;">0/0</span>
-      <button id="zfr-prev" title="پچھلا" style="${b}">▲</button>
-      <button id="zfr-next" title="اگلا" style="${b}">▼</button>
-      <button id="zfr-x" title="بند" style="${b}">✕</button>
+      <button class="dio-btn dio-btn--i" id="zfr-prev" title="پچھلا" style="${b}" aria-label="پچھلا" data-act="prev"><i class="dio-i" data-ico="prev" aria-hidden="true"></i></button>
+      <button class="dio-btn dio-btn--i" id="zfr-next" title="اگلا" style="${b}" aria-label="اگلا" data-act="next"><i class="dio-i" data-ico="next" aria-hidden="true"></i></button>
+      <button class="dio-btn dio-btn--i" id="zfr-x" title="بند کریں" style="${b}" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i></button>
     </div>
     <div id="zfr-rep-row" style="display:${withReplace ? 'flex' : 'none'};gap:6px;align-items:center;">
       <input id="zfr-rep-in" placeholder="بدلیں…" style="${inp}">
@@ -3661,11 +3661,11 @@ function _zimniPickers() {
     let b = c2.querySelector('.zf-pick[data-which="' + which + '"]');
     if (!b) {
       b = document.createElement('button');
-      b.type = 'button'; b.className = 'zf-pick no-print';
+      b.type = 'button'; b.className = 'zf-pick no-print dio-pick'; b.setAttribute('data-act', 'dropdown');
       b.setAttribute('contenteditable', 'false'); b.setAttribute('data-which', which);
       b.title = which === 'cross' ? 'کراس ورژن کے ملزمان منتخب کریں' : 'ملزمان منتخب کریں';
       b.setAttribute('aria-label', b.title);
-      b.textContent = '▾';
+      b.innerHTML = dioIco('dropdown');   // TASK 19: اسی سیٹ کا نشان (محفوظ متن سے بٹن پورا نکلتا ہے — _zimniStripPick)
       b.addEventListener('mousedown', (e) => e.preventDefault());
       b.addEventListener('click', (e) => _zimniAccPicker(e, which));
       c2.appendChild(b);
@@ -3743,7 +3743,7 @@ async function _zimniAccPicker(ev, which) {
     + '</div>'
     + '<div style="display:flex;gap:6px;padding:8px;border-top:1px solid #e5e7eb;background:#f8fafc;flex-shrink:0;align-items:center;">'
     + '<span style="flex:1;font-size:8.25pt;color:#64748b;' + F + '">نشان لگاتے / ہٹاتے ہی «بنام» میں</span>'
-    + '<button id="zf-acc-x" type="button" style="padding:7px 14px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;cursor:pointer;font-size:9.75pt;' + F + '">بند</button>'
+    + '<button class="dio-btn" id="zf-acc-x" type="button" style="padding:7px 14px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;cursor:pointer;font-size:9.75pt;' + F + '" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>'
     + '</div>';
   document.body.appendChild(box);
   const r = btn && btn.getBoundingClientRect ? btn.getBoundingClientRect() : { top: 80, bottom: 100, left: 20, width: 20 };
@@ -4878,7 +4878,8 @@ async function _saveZimni(silent, keepOpen) {
   if (draftKey) { try { _zimniClearDraft(draftKey); } catch (_) { /* ikhtiyari */ } }
   _zimniDirty = false;
   try { _zimniStampUpdated(savedAt); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
-  try { const sb = document.getElementById('zf-save-btn'); if (sb) sb.innerHTML = '💾 اپ ڈیٹ'; } catch (_) { /* ikhtiyari */ }
+  // افسر کا فیصلہ (11 نومبر 2026): محفوظ ہونے کے بعد «اپ ڈیٹ» — ضمنی وہی، نئی نہیں بنتی
+  try { const sb = document.getElementById('zf-save-btn'); if (sb) { sb.innerHTML = dioIco('save') + '<span>اپ ڈیٹ</span>'; sb.title = 'اپ ڈیٹ (Ctrl+S)'; sb.setAttribute('aria-label', 'اپ ڈیٹ (Ctrl+S)'); } } catch (_) { /* ikhtiyari */ }
   try { const as = document.getElementById('zf-autosave'); if (as) as.textContent = ''; } catch (_) { /* ikhtiyari */ }
   if (!okLocal && !silent) showToast('آلے کی جگہ (storage) بھری ہوئی ہے — مقامی نقل نہ بن سکی، سرور پر بھیجی جا رہی ہے', 'warn', 6000);
 
@@ -6680,10 +6681,10 @@ function _renderZimniAList() {
   </style>
   <div class="zat-wrap">
     <div class="zt-bar">
-      <button class="btn btn-primary btn-sm dio-add-btn" onclick="_newZimniA()">+ بیان درج کریں</button>
+      <button class="btn btn-primary btn-sm dio-add-btn dio-btn dio-btn--pri" onclick="_newZimniA()" title="+ بیان درج کریں" aria-label="+ بیان درج کریں" data-act="add"><span>+ بیان درج کریں</span></button>
       <div class="zt-h">بیانات 161 ض ف (${list.length})</div>
-      ${pendingCount && navigator.onLine ? `<button class="btn btn-secondary btn-sm" onclick="_zaSyncPending()">⟳ سرور پر بھیجیں (${pendingCount})</button>` : ''}
-      <button class="btn btn-secondary btn-sm" onclick="_printAllZimniA()">🖨️ تمام بیانات</button>
+      ${pendingCount && navigator.onLine ? `<button class="btn btn-secondary btn-sm dio-btn" onclick="_zaSyncPending()" title="سرور پر اپ لوڈ" aria-label="سرور پر اپ لوڈ" data-act="upload"><i class="dio-i" data-ico="upload" aria-hidden="true"></i><span>سرور پر اپ لوڈ (${pendingCount})</span></button>` : ''}
+      <button class="btn btn-secondary btn-sm dio-btn" onclick="_printAllZimniA()" title="تمام بیانات پرنٹ" aria-label="تمام بیانات پرنٹ" data-act="print"><i class="dio-i" data-ico="print" aria-hidden="true"></i><span>تمام بیانات پرنٹ</span></button>
     </div>
     ${(list.length || newDrafts.length) ? `
     <table class="zt">
@@ -6815,30 +6816,37 @@ async function _zaClose() {
 window._zaClose = _zaClose;
 
 // ── EDITOR ──────────────────────────────────────────────────────
-// v558 (افسر کی ہدایت، 22 اکتوبر 2026): اوپر کی ٹول بار مکمل ختم — صرف
-//   • دائیں کونے میں «بیان ازاں ▾» — اس مقدمے کے تمام گواہان (مدعی اور محرر خود شامل)؛ نام
-//     چنتے ہی اُس گواہ کا بیان صفحے پر
-//   • «محفوظ / اپ ڈیٹ» (Ctrl+S بھی)، «← واپس» (بیانات کی فہرست)، «✕ بند»
+// v558 (افسر کی ہدایت، 22 اکتوبر 2026): اوپر کی ٹول بار مکمل ختم — صرف «بیان ازاں ▾»، محفوظ، واپس، بند۔
+// v577 (افسر کی ہدایت، 11 نومبر 2026): وہ پٹی بھی ختم — بیرونی ضمنی کی طرح:
+//   • کاغذ کے دائیں کونے میں «▾» (بیان ازاں) — اس مقدمے کا مدعی (سب سے پہلے)، محرر اور تمام گواہان؛ نام
+//     چنتے ہی اُس گواہ کا بیان صفحے پر؛ جن کا بیان اس صفحے پر پہلے سے ہے اُن کے آگے ✓
+//   • محفوظ کریں / اپ ڈیٹ، پرنٹ، شیئر، واپس — نیچے کونے کے «⋯» سے (Ctrl+S / Ctrl+P بھی)
 //   فونٹ/بولڈ وغیرہ کی بورڈ سے (Ctrl+B/I/U، Ctrl + / −) — ویسے ہی چلتے ہیں۔
 function _zaBarCSS() {
   return `
-  .zfa-bar{ display:flex; align-items:center; gap:8px; padding:6px 10px; border-bottom:1px solid var(--border);
-    flex-wrap:wrap; background:var(--bg-secondary); direction:rtl;
-    font-family:'Jameel Noori Nastaleeq'; }
-  .zfa-bar .zfa-pick{ display:flex; align-items:center; gap:6px; min-width:0; flex:0 1 auto; }
-  .zfa-bar .zfa-pick-lbl{ font-size:12pt; font-weight:700; color:var(--accent); white-space:nowrap; }
-  .zfa-bar #zfa-wit-sel{ height:32px; min-width:12em; max-width:min(26em, 62vw); border:1px solid var(--accent);
-    border-radius:8px; background:var(--bg-card,#fff); color:var(--text-primary,#111); font-size:12pt;
-    padding:0 8px; cursor:pointer; font-family:inherit; }
-  .zfa-bar .zfa-stamps{ display:flex; flex-direction:column; line-height:1.35; font-size:8.5pt; color:var(--text-muted); }
-  .zfa-bar .zfa-end{ margin-right:auto; display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
-  @media (max-width:760px){
-    .zfa-bar{ gap:6px; padding:6px 8px; }
-    .zfa-bar .zfa-pick{ flex:1 1 100%; }
-    .zfa-bar #zfa-wit-sel{ flex:1; max-width:none; min-width:0; }
-    .zfa-bar .zfa-end{ margin-right:0; flex:1 1 100%; justify-content:flex-start; }
-    .zfa-bar .zfa-stamps{ order:3; flex:1 1 100%; }
-  }`;
+  .zfa-cpick{ position:absolute; z-index:5; top:0; left:0; margin:0; box-shadow:0 1px 3px rgba(0,0,0,.18); }
+  @media print{ .zfa-cpick{ display:none !important; } }`;
+}
+
+// ── کاغذ کے دائیں کونے کا «▾» — جگہ (بیرونی ضمنی کے _zimniCornerPos جیسی؛ کاغذ چھوٹا / بڑا ہو تب بھی کونے پر) ──
+function _zaCornerPos() {
+  const sc = document.getElementById('zfa-scroll'), doc = _zimniDoc(), b = document.getElementById('zfa-cp-wit');
+  if (!sc || !doc || !b) return;
+  const sr = sc.getBoundingClientRect(), r = doc.getBoundingClientRect();
+  if (!r.width) return;
+  b.style.top = (r.top - sr.top + sc.scrollTop + 4) + 'px';
+  b.style.left = (r.left - sr.left + sc.scrollLeft + r.width - 4 - b.offsetWidth) + 'px';
+}
+window._zaCornerPos = _zaCornerPos;
+function _zaCornerBind() {
+  const sc = document.getElementById('zfa-scroll');
+  if (!sc || sc._zfaCpBound) { try { _zaCornerPos(); } catch (_) { /* UI */ } return; }
+  sc._zfaCpBound = true;
+  let t = null;
+  const soon = () => { clearTimeout(t); t = setTimeout(() => { try { _zaCornerPos(); } catch (_) { /* UI */ } }, 60); };
+  try { if (window.ResizeObserver) { const ro = new ResizeObserver(soon); ro.observe(sc); const d = _zimniDoc(); if (d) ro.observe(d); } } catch (_) { /* پرانا براؤزر */ }
+  window.addEventListener('resize', soon);
+  _zaCornerPos(); soon();
 }
 
 function _renderZimniAEditor() {
@@ -6858,22 +6866,23 @@ function _renderZimniAEditor() {
   area.innerHTML = `
   <style>${(typeof _ch173CSS === 'function') ? _ch173CSS() : ''}${_zaFormCSS()}${_zaBarCSS()}</style>
   <div style="display:flex;flex-direction:column;height:100%;direction:rtl;">
-    <div class="no-print zfa-bar">
-      <label class="zfa-pick" title="گواہ منتخب کریں — اُس کا بیان اس صفحے پر آ جائے گا">
-        <span class="zfa-pick-lbl">بیان ازاں</span>
-        <select id="zfa-wit-sel" onchange="_zaWitSelChange(this)"><option value="">گواہان لوڈ ہو رہے ہیں…</option></select>
-      </label>
-      <span class="zfa-stamps"><span id="zfa-updated"></span><span id="zfa-autosave"></span></span>
-      <div class="zfa-end">
-        <button type="button" id="zfa-save-btn" class="btn btn-primary btn-sm" data-dio-save onclick="_saveZimniA(false,true)"
-          title="${z.id ? 'اپ ڈیٹ' : 'محفوظ کریں'} (Ctrl+S) — صفحہ کھلا رہے گا">💾 ${z.id ? 'اپ ڈیٹ' : 'محفوظ'}</button>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="_zaBackToList()" title="تمام بیانات کی فہرست">← واپس</button>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="_zaClose()" title="بیانات کا صفحہ بند کریں">✕ بند</button>
-      </div>
+    <!-- v577 (افسر کی ہدایت، 11 نومبر 2026): «جس طرح بیرونی ضمنی میں ٹاپ بار ختم کی گئی ہے اسی طرح بیانات 161ض ف میں بھی» —
+         اوپر کی پٹی ختم۔ گواہ کا انتخاب کاغذ کے دائیں کونے کے «▾» سے (ملزمان والے ▾ کی طرح)؛ محفوظ کریں / اپ ڈیٹ، پرنٹ،
+         شیئر اور واپس نیچے کونے کے «⋯» سے (Ctrl+S / Ctrl+P بھی)۔ نیچے کے چھپے خانے حالت رکھتے ہیں — «⋯»، Ctrl+S اور
+         پرانا کوڈ انہی کو دباتے / پڑھتے ہیں (دو الگ راستے نہیں)۔ -->
+    <div id="zfa-state" class="no-print" hidden style="display:none;">
+      <select id="zfa-wit-sel" onchange="_zaWitSelChange(this)" aria-label="بیان ازاں — گواہ منتخب کریں"><option value="">گواہان لوڈ ہو رہے ہیں…</option></select>
+      <span id="zfa-updated" data-dio-status></span><span id="zfa-autosave" data-dio-status></span>
+      <button type="button" id="zfa-save-btn" class="btn btn-primary btn-sm dio-btn dio-modbtn" data-dio-save onclick="_saveZimniA(false,true)"
+        title="${z.id ? 'اپ ڈیٹ' : 'محفوظ کریں'} (Ctrl+S)" aria-label="${z.id ? 'اپ ڈیٹ' : 'محفوظ کریں'} (Ctrl+S)" data-act="save"><i class="dio-i" data-ico="save" aria-hidden="true"></i><span>${z.id ? 'اپ ڈیٹ' : 'محفوظ کریں'}</span></button>
+      <button type="button" id="zfa-back-btn" class="btn btn-secondary btn-sm dio-btn" onclick="_zaBackToList()" title="واپس" aria-label="واپس" data-act="back"><i class="dio-i" data-ico="back" aria-hidden="true"></i><span>واپس</span></button>
+      <button type="button" id="zfa-close-btn" class="btn btn-secondary btn-sm dio-btn" onclick="_zaClose()" title="بند کریں" aria-label="بند کریں" data-act="close"><i class="dio-i" data-ico="close" aria-hidden="true"></i><span>بند کریں</span></button>
     </div>
 
     <!-- Document — poora editable, kaghaz asal naap par (report173 ke asal functions se) -->
-    <div style="flex:1;overflow:auto;min-height:0;padding:10px;background:var(--bg-tertiary);">
+    <div id="zfa-scroll" style="flex:1;overflow:auto;min-height:0;padding:10px;background:var(--bg-tertiary);position:relative;">
+      <button type="button" id="zfa-cp-wit" class="zfa-cpick no-print dio-pick" onclick="_zaWitMenu(event)" aria-haspopup="menu"
+        title="بیان ازاں — گواہ منتخب کریں" aria-label="بیان ازاں — گواہ منتخب کریں" data-act="dropdown"><i class="dio-i" data-ico="dropdown" aria-hidden="true"></i></button>
       <div id="ch173-doc" contenteditable="true" spellcheck="false" style="
         width:${paper==='a4'?'8.27in':'8.5in'};max-width:none;
         min-height:${paper==='a4'?'11.7in':'13in'};margin:0 auto;
@@ -6903,6 +6912,7 @@ function _renderZimniAEditor() {
     try { _zaWatchEdits(); } catch (_) { /* ikhtiyari qadam */ }                                                // v558: خودکار مسودہ
     try { _zimniLockIO(_zimniDoc()); } catch (_) { /* v564: ہر بیان کے دستخط میں تفتیشی افسر کا نام مقرر */ }
     try { _zaLayout(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
+    try { _zaCornerBind(); } catch (_) { /* ▾ */ }
     // AHEM: خودکار نمبر شمار جان بوجھ کر بند — کالم 1 خالی/manual ہے
     [250, 900, 1800].forEach(ms => setTimeout(() => { try { _zaLayout(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ } }, ms));
     if (typeof applyMicButtons === 'function') applyMicButtons(area);
@@ -6956,16 +6966,22 @@ async function _zaLoadWitnesses() {
   try {
     const c = _zaCase || {};
     const nameKey = (s) => String(s || '').replace(/\s+/g, '');
+    // v577 (افسر کی ہدایت، 11 نومبر 2026): «گواہان لسٹ میں مدعی کا نام بھی» — مدعی ہمیشہ، سب سے پہلے:
+    //   • اسی نام کا گواہ پہلے سے درج ہو تو وہی سطر «(مدعی)» کے نشان کے ساتھ (دو بار نہیں)
+    //   • «مدعی» حیثیت والا اندراج خالی نام کا ہو تو بھی مقدمے کا مدعی ضرور آئے
     const inject = (nm, status) => {
       nm = String(nm || '').trim();
       if (!nm) return;
-      const dup = rows.some(w => w.status === status ||
-        nameKey(w.full_name) === nameKey(nm));
-      if (!dup) rows.unshift({ id: status + '-card', full_name: nm, status, _fromCard: true });
+      const same = rows.find(w => nameKey(w.full_name) === nameKey(nm));
+      if (same) { if (same.status !== 'mudai' && same.status !== 'moharrir') same._role = status; return; }
+      if (rows.some(w => w.status === status && String(w.full_name || '').trim())) return;
+      rows.unshift({ id: status + '-card', full_name: nm, status, _fromCard: true });
     };
-    // ترتیب: مدعی پہلے آئے، پھر محرر (unshift اُلٹا لگاتا ہے، اس لیے پہلے محرر)
     inject(c.fir_writer, 'moharrir');
-    inject(c.complainant, 'mudai');
+    inject(c.complainant || c.complainant_name, 'mudai');
+    // ترتیب: مدعی سب سے پہلے، پھر محرر، پھر باقی گواہ (درج ہونے کی ترتیب سے)
+    const rank = (w) => { const r = w._role || w.status; return r === 'mudai' ? 0 : r === 'moharrir' ? 1 : 2; };
+    rows = rows.map((w, i) => [w, i]).sort((x, y) => rank(x[0]) - rank(y[0]) || x[1] - y[1]).map(x => x[0]);
   } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR do */ }
 
   _zaWitnesses = rows;
@@ -6991,8 +7007,9 @@ async function _zaInsertWitnessStatement(witness) {
            : ((o.full_name || '') + (o.designation ? ' ' + o.designation : '') + (o.station ? ' تھانہ ' + o.station : ''));
   const today = _zimniToday();
   const E = (v) => (typeof esc === 'function') ? esc(v == null ? '' : String(v)) : String(v == null ? '' : v);
-  const isMoharrir = (witness.status === 'moharrir');
-  const isMudai    = (witness.status === 'mudai');
+  const role       = witness._role || witness.status;   // v577: گواہوں میں درج مدعی بھی مدعی
+  const isMoharrir = (role === 'moharrir');
+  const isMudai    = (role === 'mudai');
   const skipFir    = (isMoharrir || isMudai);          // محرر اور مدعی کے بیان میں FIR کا متن خود نہیں آتا
   let nmRaw = String(witness.full_name || witness.name || '').trim();
   if (isMoharrir) {
@@ -7068,19 +7085,81 @@ async function _zaFillWitSel(reload) {
   const doc = _zimniDoc();
   const have = new Set(doc ? [...doc.querySelectorAll('.zfa-wit-block')].map(b => String(b.getAttribute('data-witness-id') || '')) : []);
   const E = (v) => (typeof esc === 'function') ? esc(String(v == null ? '' : v)) : String(v == null ? '' : v);
-  const tag = (w) => (w.status === 'mudai') ? ' (مدعی)' : (w.status === 'moharrir') ? ' (محرر)' : '';
   const list = _zaWitnesses || [];
   sel.innerHTML = `<option value="">${list.length ? '— گواہ منتخب کریں —' : '— اس مقدمے میں کوئی گواہ درج نہیں —'}</option>`
-    + list.map((w, i) => `<option value="${i}">${have.has(String(w.id)) ? '✓ ' : ''}${E(String(w.full_name).trim())}${tag(w)}</option>`).join('')
+    + list.map((w, i) => `<option value="${i}">${have.has(String(w.id)) ? '✓ ' : ''}${E(String(w.full_name).trim())}${_zaWitTag(w)}</option>`).join('')
     + '<option value="__add__">➕ نیا گواہ شامل کریں</option>';
   sel.value = '';
   return list.length;
 }
 window._zaFillWitSel = _zaFillWitSel;
+function _zaWitTag(w) {
+  const r = w && (w._role || w.status);
+  return r === 'mudai' ? ' (مدعی)' : r === 'moharrir' ? ' (محرر)' : '';
+}
+
+// v577: کاغذ کے دائیں کونے کا «▾» — بیرونی ضمنی کے کونے والی فہرست جیسی؛ چننے پر وہی کام جو پہلے ڈراپ ڈاؤن کرتا تھا
+async function _zaWitMenu(ev) {
+  if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+  const btn = document.getElementById('zfa-cp-wit');
+  const old = document.getElementById('zfa-cp-menu');
+  if (old) { old.remove(); if (btn) btn.setAttribute('aria-expanded', 'false'); return; }
+  if (typeof DIO !== 'undefined' && DIO.sub && typeof DIO.sub.blocked === 'function' && DIO.sub.blocked()) { DIO.sub.guard('ترمیم'); return; }   // صرف دیکھنا
+  if (!Array.isArray(_zaWitnesses)) { try { await _zaFillWitSel(true); } catch (_) { /* خالی فہرست */ } }
+  const list = _zaWitnesses || [];
+  const doc = _zimniDoc();
+  const have = new Set(doc ? [...doc.querySelectorAll('.zfa-wit-block')].map(b => String(b.getAttribute('data-witness-id') || '')) : []);
+  const E = (v) => (typeof esc === 'function') ? esc(v == null ? '' : String(v)) : String(v == null ? '' : v);
+  const F = "font-family:'Jameel Noori Nastaleeq';";
+  const box = document.createElement('div');
+  box.id = 'zfa-cp-menu';
+  box.setAttribute('role', 'menu');
+  box.style.cssText = 'position:fixed;z-index:99999;background:#fff;border:1px solid #0369a1;border-radius:10px;' +
+    'box-shadow:0 10px 30px rgba(0,0,0,.28);direction:rtl;width:360px;max-width:92vw;' +
+    'display:flex;flex-direction:column;max-height:min(70vh,520px);overflow:hidden;';
+  const row = (v, label, on) => '<button type="button" role="menuitem" data-v="' + E(v) + '" style="display:flex;align-items:center;gap:8px;width:100%;min-height:38px;'
+    + 'padding:6px 10px;border:0;border-bottom:1px solid #f1f5f9;background:#fff;color:#0f172a;cursor:pointer;text-align:right;font-size:11pt;line-height:1.6;' + F + '">'
+    + '<span style="width:1.2em;flex:none;color:#0369a1;">' + (on ? dioIco('check') : '') + '</span><span style="flex:1;white-space:normal;">' + label + '</span></button>';
+  box.innerHTML =
+    '<div style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:9.75pt;font-weight:700;color:#0369a1;background:#f8fafc;' + F + '">بیان ازاں — گواہ منتخب کریں</div>'
+    + '<div style="flex:1;overflow-y:auto;min-height:0;">'
+    + (list.length ? '' : '<div style="padding:10px;font-size:10.5pt;color:#64748b;' + F + '">اس مقدمے میں کوئی گواہ درج نہیں</div>')
+    + list.map((w, i) => row(String(i), E(String(w.full_name).trim()) + E(_zaWitTag(w)), have.has(String(w.id)))).join('')
+    + row('__add__', dioIco('add') + ' نیا گواہ شامل کریں', false)
+    + '</div>';
+  document.body.appendChild(box);
+  if (btn) btn.setAttribute('aria-expanded', 'true');
+  const r = btn ? btn.getBoundingClientRect() : { top: 80, bottom: 100, left: 20, right: 40 };
+  const bw = box.offsetWidth, bh = box.offsetHeight;
+  let top = r.bottom + 6;
+  if (top + bh > window.innerHeight - 8) top = Math.max(8, window.innerHeight - bh - 8);
+  const left = Math.max(8, Math.min(r.right - bw, window.innerWidth - bw - 8));   // دائیں کونے کی فہرست دائیں کنارے سے
+  box.style.top = top + 'px'; box.style.left = left + 'px';
+  const close = () => {
+    box.remove();
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+    document.removeEventListener('mousedown', off, true); document.removeEventListener('touchstart', off, true); document.removeEventListener('keydown', esc1, true);
+  };
+  const off = (e) => { if (!box.contains(e.target) && !(e.target.closest && e.target.closest('#zfa-cp-wit'))) close(); };
+  const esc1 = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
+  setTimeout(() => { document.addEventListener('mousedown', off, true); document.addEventListener('touchstart', off, true); document.addEventListener('keydown', esc1, true); }, 0);
+  box.addEventListener('click', (e) => {
+    const b = e.target.closest && e.target.closest('button[data-v]');
+    if (!b) return;
+    e.preventDefault();
+    const v = b.getAttribute('data-v');
+    close();
+    _zaWitPick(v);
+  });
+}
+window._zaWitMenu = _zaWitMenu;
 
 function _zaWitSelChange(sel) {
   const v = sel ? sel.value : '';
   if (sel) sel.value = '';
+  _zaWitPick(v);
+}
+function _zaWitPick(v) {
   if (!v) return;
   if (v === '__add__') {
     // نیا گواہ — «نیا اندراج — گواہ» کا کارڈ اسی مقدمے کے ساتھ (بیان کا صفحہ کھلا رہے)؛
@@ -7111,6 +7190,7 @@ function _zaWitSelChange(sel) {
   _zaInsertWitnessStatement(w).then(() => _zaFillWitSel(false)).catch(() => { /* UI */ });
 }
 window._zaWitSelChange = _zaWitSelChange;
+window._zaWitPick = _zaWitPick;
 
 function _zaColResize() {
   const doc = _zimniDoc();
@@ -7631,7 +7711,8 @@ async function _saveZimniA(silent, keepOpen) {
   if (draftKey) { try { _zaClearDraft(draftKey); } catch (_) { /* ikhtiyari */ } }
   _zaDirty = false;
   try { _zaStampUpdated(savedAt); } catch (_) { /* ikhtiyari qadam */ }
-  try { const sb = document.getElementById('zfa-save-btn'); if (sb) { sb.innerHTML = '💾 اپ ڈیٹ'; sb.title = 'اپ ڈیٹ (Ctrl+S) — صفحہ کھلا رہے گا'; } } catch (_) { /* ikhtiyari */ }
+  // افسر کا فیصلہ (11 نومبر 2026): محفوظ ہونے کے بعد «اپ ڈیٹ» — بیان وہی، نیا نہیں بنتا
+  try { const sb = document.getElementById('zfa-save-btn'); if (sb) { sb.innerHTML = dioIco('save') + '<span>اپ ڈیٹ</span>'; sb.title = 'اپ ڈیٹ (Ctrl+S)'; sb.setAttribute('aria-label', 'اپ ڈیٹ (Ctrl+S)'); } } catch (_) { /* ikhtiyari */ }
   try { const as = document.getElementById('zfa-autosave'); if (as) as.textContent = ''; } catch (_) { /* ikhtiyari */ }
   if (!okLocal && !silent) showToast('آلے کی جگہ (storage) بھری ہوئی ہے — مقامی نقل نہ بن سکی، سرور پر بھیجا جا رہا ہے', 'warn', 6000);
 
