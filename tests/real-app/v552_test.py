@@ -96,8 +96,10 @@ def run(b, tag, vp, mobile=False):
     check(f'{tag}: report_date ہمیشہ YYYY-MM-DD', bool(rows) and rows[0]['d'] == '2026-10-14', rows and rows[0]['d'])
     t = ' | '.join(pg.evaluate('window.__toasts'))
     check(f'{tag}: «zimni_content» والا غلط پیغام نہیں', 'zimni_content' not in t and 'سرور پر محفوظ' in t, t[-160:])
-    # TASK 19 (11 نومبر 2026): ایک کام = ایک لفظ — محفوظ کے بعد بھی «محفوظ کریں» (پہلے «اپ ڈیٹ»)؛ وہی ضمنی اپ ڈیٹ ہوتی ہے (نیچے)
-    check(f'{tag}: محفوظ کے بعد بٹن «محفوظ کریں» (ایک کام ایک لفظ — TASK 19)', pg.evaluate("document.getElementById('zf-save-btn').textContent.trim()") == 'محفوظ کریں')
+    # افسر کا فیصلہ (11 نومبر 2026، v577): محفوظ کے بعد «اپ ڈیٹ» — بٹن اور «⋯» کی سطر (TASK 19 کا نشان وہی)؛ وہی ضمنی اپ ڈیٹ ہوتی ہے (نیچے)
+    lab = pg.evaluate("document.getElementById('zf-save-btn').textContent.trim()")
+    # (یہاں ضمنی openZimniEditor سے سیدھی کھلتی ہے — «⋯» والا پورا صفحہ نہیں؛ «⋯» کی سطر v577_test.py جانچتی ہے)
+    check(f'{tag}: محفوظ کے بعد «اپ ڈیٹ» — ضمنی کا بٹن', lab == 'اپ ڈیٹ', lab)
     # ── 2) ترمیم: Ctrl+S = وہی ضمنی (نئی قطار نہیں) ──
     type_body(pg, ' مزید کارروائی۔')
     pg.keyboard.press('Control+s'); pg.wait_for_timeout(1300)

@@ -6,6 +6,7 @@
 import os, sys, json, time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from real import route as real_route, PRINT_HOOK, BASE, OUT
+from real import za_pick, za_save   # v577: بیان 161 — کونے کا «▾»، محفوظ «⋯» سے
 from mock_db_engine import DB
 from playwright.sync_api import sync_playwright
 
@@ -154,8 +155,7 @@ with sync_playwright() as p:
 
     def za_new(pg, who, date, txt):
         pg.evaluate("_newZimniA()"); idle(pg, 1800)
-        v = pg.evaluate("(re) => ([...document.querySelectorAll('#zfa-wit-sel option')].find(o => new RegExp(re).test(o.textContent)) || {}).value", who)
-        pg.select_option('#zfa-wit-sel', v); idle(pg, 1500)
+        za_pick(pg, who, 1500)
         pg.evaluate("""(() => { const e = [...document.querySelectorAll('#ch173-doc .zfa-wit-stmt')].pop(); e.scrollIntoView({ block: 'center' }); e.focus();
           const r = document.createRange(); r.selectNodeContents(e); r.collapse(false); const s = getSelection(); s.removeAllRanges(); s.addRange(r); return 0; })()""")
         pg.keyboard.type(txt)
@@ -173,7 +173,7 @@ with sync_playwright() as p:
     # ═══ C) لیپ ٹاپ: بیان 161 — «محفوظ» بٹن ═══
     za_open(dp)
     za_new(dp, 'غلام رسول', '02/11/2026', ' میں موقع پر موجود تھا۔')
-    dp.click('#zfa-save-btn'); idle(dp, 1800)
+    za_save(dp); idle(dp, 1800)
     rows = db('zimni_androoni_reports')
     srv = rows[0] if rows else {}
     sc = srv.get('content') or {}

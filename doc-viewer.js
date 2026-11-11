@@ -380,9 +380,12 @@ function _dioMenuToggle(ev) {
     });
   }
   h += '<div class="dvm-sec">دستاویز</div>';
+  // افسر کا فیصلہ (11 نومبر 2026): پہلے سے محفوظ ضمنی / بیان 161 پر «اپ ڈیٹ» — دستاویز کا اپنا (چھپا) بٹن بتاتا ہے
+  const own = ov.querySelector('#zf-save-btn, #zfa-save-btn') || document.querySelector('#zf-save-btn, #zfa-save-btn');
+  const saveLbl = (own && /اپ ڈیٹ/.test(own.textContent || '')) ? 'اپ ڈیٹ' : 'محفوظ کریں';
   const acts = [
     ['new', 'نئی دستاویز', 'add'],
-    ['save', 'محفوظ کریں', 'save', shown(document.getElementById('dio-dv-save'))],
+    ['save', saveLbl, 'save', shown(document.getElementById('dio-dv-save'))],
     ['print', 'پرنٹ', 'print'],
     ['share', 'شیئر', 'share'],
     ['keys', 'شارٹ کٹس', 'keys'],

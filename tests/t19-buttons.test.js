@@ -143,7 +143,10 @@ test('T19: بٹن کا نام بدلتے وقت نشان قائم (dioBtnText) �
     assert.ok(!new RegExp(v.replace('$', '\\$') + "\\.textContent\\s*=\\s*'محفوظ").test(s), f + ': محفوظ بٹن کا نام textContent سے (نشان مٹ جاتا)');
     assert.ok(new RegExp('dioBtnText\\(' + v + ", 'محفوظ کریں'\\)").test(s), f + ': واپسی «محفوظ کریں» نشان سمیت');
   }
-  assert.ok(/sb\.innerHTML = dioIco\('save'\) \+ '<span>محفوظ کریں<\/span>'; sb\.title = 'محفوظ کریں \(Ctrl\+S\)'/.test(read('zimni.js')), 'بیان: محفوظ کے بعد بھی «محفوظ کریں»');
+  // افسر کا فیصلہ (11 نومبر 2026): محفوظ ہونے کے بعد ضمنی اور بیان 161 پر «اپ ڈیٹ» (نشان وہی)
+  const zj = read('zimni.js');
+  assert.strictEqual((zj.match(/sb\.innerHTML = dioIco\('save'\) \+ '<span>اپ ڈیٹ<\/span>'; sb\.title = 'اپ ڈیٹ \(Ctrl\+S\)'/g) || []).length, 2, 'ضمنی اور بیان: محفوظ کے بعد «اپ ڈیٹ»');
+  assert.ok(/id="zf-save-btn"[^>]*>[\s\S]{0,120}<span>\$\{z\.id \? 'اپ ڈیٹ' : 'محفوظ کریں'\}<\/span>/.test(zj), 'پرانی ضمنی کھلے تو «اپ ڈیٹ»');
 });
 
 test('T19: انتخاب کے خانوں کا «شامل کریں» — نشان + نام، گہرا نیلا (آخری تصدیقی بٹن)', () => {

@@ -124,7 +124,8 @@ test('v575: اوپر سے گرنے والی دستاویز کی پٹی پورے 
   assert.ok(/'#dio-dv-bar\{display:none !important;\}'/.test(DV), 'پٹی کبھی نظر نہیں آتی');
   assert.ok(!/try \{ _dioBarPeekInit\(ov\); \}/.test(DV), 'scroll / ماؤس پر نہیں آتی');
   assert.ok(/<button id="dio-dv-fab" class="no-print" type="button" onclick="_dioMenuToggle\(event\)"/.test(DV));
-  ['new', 'save', 'print', 'share', 'keys', 'back'].forEach(k => assert.ok(new RegExp("\\['" + k + "', '").test(DV), k));
+  // v577: «محفوظ» کی سطر کا نام پہلے سے محفوظ ضمنی / بیان پر «اپ ڈیٹ» (saveLbl)
+  ['new', 'save', 'print', 'share', 'keys', 'back'].forEach(k => assert.ok(new RegExp("\\['" + k + "', ('|saveLbl)").test(DV), k));
   assert.ok(/const map = \{ fir: '#dio-dv-fir', new: 'button\[onclick\^="_dioAddDocPicker"\]', save: '#dio-dv-save', print: 'button\[onclick\^="_dioPrintCurrent"\]',/.test(DV), 'وہی چھپے بٹن');
 });
 

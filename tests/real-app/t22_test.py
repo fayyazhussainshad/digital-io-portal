@@ -254,10 +254,13 @@ def run(desktop):
         af(pg).evaluate("_openMisalEditor('statements_161'); 0"); pg.wait_for_timeout(2000); wait_active_ready(pg)
         fs = af(pg)
         fs.click("button[onclick*='_newZimniA']"); pg.wait_for_timeout(2000)
-        n1 = tabs(pg)[1]['n']
-        fs.click("button[onclick*='_zaClose']"); pg.wait_for_timeout(1500); wait_active_ready(pg)
+        n1 = tabs(pg)[1]['n']; i1 = tabs(pg)[1]['idx']
+        # v577: بیان 161 کی اوپر کی پٹی ختم (بیرونی ضمنی کی طرح) — «⋯ → واپس» = ایک قدم پیچھے، بیانات کی فہرست
+        fs.click('#dio-dv-fab'); fs.wait_for_selector('#dio-dv-menu', timeout=5000)
+        fs.click("#dio-dv-menu button[data-act='back']"); pg.wait_for_timeout(1500); wait_active_ready(pg)
         T1 = tabs(pg)[1]
-        check(f'{tag} 4) بیان 161 کا «✕ بند» → ایک قدم پیچھے (ایپ بند نہیں، ٹیب کھلی)', T1['n'] == n1 - 1 and len(tabs(pg)) >= 3, [steps0, n1, T1['titles']])
+        lst = af(pg).evaluate("!!document.querySelector('.zat-wrap') && !document.querySelector('#ch173-doc .zfa-tbl')")
+        check(f'{tag} 4) بیان 161 — «⋯ → واپس» → ایک قدم پیچھے: بیانات کی فہرست (ایپ بند نہیں، ٹیب کھلی)', T1['idx'] == i1 - 1 and len(tabs(pg)) >= 3 and lst, [steps0, n1, i1, T1['idx'], T1['titles'], lst])
         if desktop:
             af(pg).click('#dio-dv-body', position={'x': 400, 'y': 300}) if af(pg).evaluate("!!document.getElementById('dio-dv-body')") else None
             nb = tabs(pg)[1]['idx']

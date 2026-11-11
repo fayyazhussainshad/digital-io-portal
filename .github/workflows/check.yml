@@ -201,6 +201,10 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh t19_test.py
+      - name: v577 — statements 161 without the top bar (witness ▾ in the paper's right corner, complainant first, save / print / back from ⋯), «اپ ڈیٹ» after save (zimni + statement + ⋯ row), admin panel messages in Urdu (v577_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: bash ci_run.sh v577_test.py
       - name: Screenshots and print PDFs
         if: always()
         uses: actions/upload-artifact@v4

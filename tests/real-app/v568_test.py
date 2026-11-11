@@ -236,21 +236,20 @@ def run(desktop):
         pg.evaluate("_openMisalEditor('statements_161')"); pg.wait_for_timeout(1800)
         def za_list():
             if pg.evaluate("!!document.querySelector('#ch173-doc .zfa-tbl')"):
-                pg.evaluate("window.confirm = () => false; 0"); pg.click("button[onclick='_zaBackToList()']"); pg.wait_for_timeout(1500); pg.evaluate("window.confirm = () => true; 0")
+                pg.evaluate("window.confirm = () => false; 0"); pg.evaluate("document.getElementById('zfa-back-btn').click()"); pg.wait_for_timeout(1500); pg.evaluate("window.confirm = () => true; 0")
         def new_za(who, date):
             za_list()
             pg.click("button:has-text('بیان درج کریں')"); pg.wait_for_timeout(1800)
-            v = pg.evaluate("(re) => ([...document.querySelectorAll('#zfa-wit-sel option')].find(o => new RegExp(re).test(o.textContent)) || {}).value", who)
-            pg.select_option('#zfa-wit-sel', v); pg.wait_for_timeout(1400)
+            za_pick(pg, who, 1400)   # v577: کاغذ کے کونے کا «▾»
             stmt_end(pg); pg.keyboard.type(' میں موقع پر موجود تھا۔')
             if date:
                 pg.evaluate("(d) => { const e = document.querySelectorAll('#ch173-doc .zfa-wit-date'); e[e.length - 1].textContent = d; return 0; }", date)
             pg.wait_for_timeout(300)
         new_za('غلام رسول', '02/11/2026')
         pg.screenshot(path=V + f'{tag}_03_161_editor.png')
-        n0 = nt(pg); pg.click('#zfa-save-btn'); pg.wait_for_timeout(2200); t = toasts(pg, n0)
+        n0 = nt(pg); za_save(pg); pg.wait_for_timeout(2200); t = toasts(pg, n0)
         za = pg.evaluate(ZA)
-        check(f'{tag} C11: بیان 161 «محفوظ» بٹن — سرور پر، عنوان (گواہ کا نام) اور بیان میں لکھی تاریخ (02/11/2026) کے ساتھ',
+        check(f'{tag} C11: بیان 161 «⋯ → محفوظ کریں» — سرور پر، عنوان (گواہ کا نام) اور بیان میں لکھی تاریخ (02/11/2026) کے ساتھ',
               any('سرور پر محفوظ' in x for x in t) and len(za) == 1 and za[0]['w'] and 'غلام رسول' in za[0]['w'][0] and za[0]['d'] == '2026-11-02' and za[0]['dd'] == '02/11/2026', (t, za))
         new_za('احمد علی', '03/11/2026')
         n0 = nt(pg); stmt_end(pg); pg.keyboard.press('Control+s'); pg.wait_for_timeout(2200); t = toasts(pg, n0)
@@ -269,7 +268,7 @@ def run(desktop):
         pg.evaluate("window.__opts.unique = { zimni_androoni_reports: [['case_id', 'serial_no']] }; 0")
         pg.evaluate("_deleteZimniA(String(_zaList[0].id), true)"); pg.wait_for_timeout(1500)       # بیان 2 حذف (نشان)
         new_za('احمد علی', '04/11/2026')
-        n0 = nt(pg); pg.click('#zfa-save-btn'); pg.wait_for_timeout(2500); t = toasts(pg, n0)
+        n0 = nt(pg); za_save(pg); pg.wait_for_timeout(2500); t = toasts(pg, n0)
         za = pg.evaluate(ZA)
         za_list()
         lr = pg.evaluate("[...document.querySelectorAll('.zat-wrap tbody tr[data-zaid]')].map(r => r.querySelector('.dtc').innerText.trim())")
@@ -278,7 +277,7 @@ def run(desktop):
         # کوئی اور «دوہرا» رد — کبھی جھوٹا «محفوظ» نہیں؛ بیان آلے پر، «سرور پر بھیجنا باقی»؛ رد ختم ہو تو خود سرور پر
         pg.evaluate("window.__opts.fail = ['zimni_androoni_reports:insert']; window.__opts.failCode = '23505'; 0")
         new_za('غلام رسول', '05/11/2026')
-        n0 = nt(pg); pg.click('#zfa-save-btn'); pg.wait_for_timeout(2500); t = toasts(pg, n0)
+        n0 = nt(pg); za_save(pg); pg.wait_for_timeout(2500); t = toasts(pg, n0)
         za_list()
         lr = pg.evaluate("[...document.querySelectorAll('.zat-wrap tbody tr[data-zaid]')].map(r => r.innerText.replace(/\\s+/g, ' '))")
         check(f'{tag} C11: سرور کا «دوہرا» رد — سبز «محفوظ» نہیں (سرخ پیغام)، بیان غائب نہیں: فہرست میں «سرور پر بھیجنا باقی»',
@@ -290,8 +289,7 @@ def run(desktop):
         # C12: لکھتے ہی خودکار مسودہ — صفحہ بند ہو کر دوبارہ کھلے تو متن واپس
         za_list()
         pg.click("button:has-text('بیان درج کریں')"); pg.wait_for_timeout(1800)
-        v = pg.evaluate("([...document.querySelectorAll('#zfa-wit-sel option')].find(o => /احمد علی/.test(o.textContent)) || {}).value")
-        pg.select_option('#zfa-wit-sel', v); pg.wait_for_timeout(1400)
+        za_pick(pg, 'احمد علی', 1400)
         stmt_end(pg); pg.keyboard.type(' خودکار مسودہ کی جانچ۔'); pg.wait_for_timeout(2300)
         dk = pg.evaluate("Object.values(JSON.parse(localStorage.getItem('dio_za_draft_c1') || '{}')).some(d => /خودکار مسودہ کی جانچ/.test(d.bodyHtml || ''))")
         check(f'{tag} C12: لکھتے ہی خودکار مسودہ (1.5 سیکنڈ) اسی آلے پر', dk)

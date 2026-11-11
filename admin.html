@@ -11,6 +11,8 @@
   <style>
     @font-face { font-family: "Aptos"; src: local("Aptos"), local("Segoe UI"); font-weight: 400; }
     @font-face { font-family: "Aptos"; src: local("Aptos Bold"), local("Segoe UI Bold"); font-weight: 700; }
+    /* اردو بٹن اور پیغامات — وہی Jameel Noori Nastaleeq جو پورے نظام میں (اپنے سرور سے، کوئی متبادل نہیں) */
+    @font-face { font-family: 'Jameel Noori Nastaleeq'; src: url('fonts/jameel-noori-nastaleeq.woff2') format('woff2'); font-display: block; }
 
     /* ── VARIABLES ── */
     :root {
@@ -445,18 +447,18 @@ async function doAdminLogin() {
   const btn   = document.getElementById('adm-btn');
   const err   = document.getElementById('login-err');
   err.style.display = 'none';
-  if (!email || !pass) { showErr('Please enter email and password.'); return; }
+  if (!email || !pass) { showErr('ای میل اور پاس ورڈ لکھیں۔'); return; }
 
   dioBtnText(btn, 'تصدیق ہو رہی ہے…'); btn.disabled = true;
 
   const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-  if (error) { showErr('❌ ' + error.message); dioBtnText(btn, 'ایڈمن پینل کھولیں'); btn.disabled = false; return; }
+  if (error) { showErr('لاگ اِن نہیں ہو سکا: ' + error.message); dioBtnText(btn, 'ایڈمن پینل کھولیں'); btn.disabled = false; return; }
 
   // Check admin role
   const { data: roleData } = await sb.from('user_roles').select('role').eq('user_id', data.user.id).single();
   if (!roleData || (roleData.role !== 'admin' && roleData.role !== 'superadmin')) {
     await sb.auth.signOut();
-    showErr('⛔ Access denied. Admin privileges required.');
+    showErr('رسائی نہیں — یہ صفحہ صرف ایڈمن کے لیے ہے۔');
     dioBtnText(btn, 'ایڈمن پینل کھولیں'); btn.disabled = false;
     return;
   }
@@ -466,7 +468,7 @@ async function doAdminLogin() {
   loginSuccess();
 }
 
-function showErr(msg) { const el = document.getElementById('login-err'); el.textContent = msg; el.style.display = 'block'; }
+function showErr(msg) { const el = document.getElementById('login-err'); el.textContent = msg; el.dir = 'rtl'; el.style.fontFamily = "'Jameel Noori Nastaleeq'"; el.style.textAlign = 'right'; el.style.display = 'block'; }
 
 async function loginSuccess() {
   document.getElementById('login-screen').style.display = 'none';
@@ -991,7 +993,7 @@ function exportAuditLog() {
   const csv = ['#,Action,Table,Record ID,Time', ...list.map((l,i)=>`${i+1},${l.action||''},${l.table_name||''},${l.record_id||''},${l.created_at||''}`)].join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'audit-log-' + new Date().toISOString().slice(0,10) + '.csv'; a.click();
-  showToast('📤 Audit log exported as CSV', 'success');
+  showToast('آڈٹ لاگ کی <bdi dir="ltr">CSV</bdi> فائل ڈاؤن لوڈ ہو گئی', 'success');
 }
 
 // ════════════════════════════════════════════
@@ -1066,7 +1068,7 @@ async function renderSettings(c) {
         <div class="card-title">📊 SYSTEM HEALTH</div>
         ${[['Database Status','🟢 Online'],['Auth Service','🟢 Online'],['Real-time Sync','🟢 Active'],['Backup System','🟢 Running'],['API Status','🟢 Connected'],['Free Tier Limits','Row limit: 500MB / 50,000 rows']].map(([k,v])=>`
           <div class="detail-row"><span class="dk">${k}</span><span class="dv">${v}</span></div>`).join('')}
-        <button class="btn btn-primary dio-btn" style="width:100%;margin-top:12px;" onclick="showToast('✅ All systems operational.',\'success\')" title="نظام کی جانچ" aria-label="نظام کی جانچ" data-act="refresh"><i class="dio-i" data-ico="refresh" aria-hidden="true"></i><span>نظام کی جانچ</span></button>
+        <button class="btn btn-primary dio-btn" style="width:100%;margin-top:12px;" onclick="showToast(\'نظام کے تمام حصے ٹھیک کام کر رہے ہیں\',\'success\')" title="نظام کی جانچ" aria-label="نظام کی جانچ" data-act="refresh"><i class="dio-i" data-ico="refresh" aria-hidden="true"></i><span>نظام کی جانچ</span></button>
       </div>
     </div>`;
 }
@@ -1076,8 +1078,8 @@ async function renderSettings(c) {
 // ════════════════════════════════════════════
 async function approveOfficer(id, name) {
   const { error } = await sb.from('officers').update({ is_approved: true }).eq('id', id);
-  if (error) { showToast('❌ Error: ' + error.message, 'error'); return; }
-  showToast(`✅ ${name} approved successfully!`, 'success');
+  if (error) { showToast('خرابی: ' + _ub(error.message), 'error'); return; }
+  showToast(`${_ub(name)} منظور ہو گئے`, 'success');
   await loadApprovalCount();
   showPage('approvals', null);
 }
@@ -1095,7 +1097,7 @@ async function doRejectOfficer(id, name) {
   const reason = document.getElementById('reject-reason')?.value || 'Registration rejected by admin';
   await sb.from('officers').update({ is_blocked: true, block_reason: reason }).eq('id', id);
   closeModal();
-  showToast(`Officer ${name} rejected.`, 'info');
+  showToast(`افسر ${_ub(name)} کی درخواست مسترد کر دی گئی`, 'info');
   await loadApprovalCount();
   showPage('approvals', null);
 }
@@ -1111,15 +1113,15 @@ async function blockOfficer(id, name) {
 
 async function doBlockOfficer(id, name) {
   const reason = document.getElementById('block-reason')?.value;
-  if (!reason) { showToast('⚠️ Please provide a reason.', 'error'); return; }
+  if (!reason) { showToast('وجہ لکھیں', 'error'); return; }
   await sb.from('officers').update({ is_blocked: true, block_reason: reason }).eq('id', id);
-  closeModal(); showToast(`🚫 ${name} has been blocked.`, 'info');
+  closeModal(); showToast(`${_ub(name)} معطل کر دیے گئے`, 'info');
   showPage('officers', null);
 }
 
 async function unblockOfficer(id, name) {
   await sb.from('officers').update({ is_blocked: false, block_reason: null }).eq('id', id);
-  showToast(`✅ ${name} has been unblocked.`, 'success');
+  showToast(`${_ub(name)} بحال کر دیے گئے`, 'success');
   showPage('officers', null);
 }
 
@@ -1142,18 +1144,18 @@ async function viewOfficerDetail(id) {
 async function markPaid(id) {
   const expiry = new Date(); expiry.setMonth(expiry.getMonth()+1);
   await sb.from('officers').update({ subscription_status: 'active', subscription_plan: 'monthly', subscription_expiry: expiry.toISOString() }).eq('id', id);
-  showToast('✅ Marked as paid — Monthly plan activated.', 'success');
+  showToast('ادائیگی وصول — ماہانہ پلان فعال ہو گیا', 'success');
   showPage('revenue', null);
 }
 
-function sendPaymentReminder(id, name) { showToast(`📧 Payment reminder sent to ${name}. (Email feature coming in Phase 7)`, 'info', 4000); }
+function sendPaymentReminder(id, name) { showToast(`${_ub(name)} کو ادائیگی کی یاددہانی — ای میل کی سہولت ابھی نہیں (مرحلہ 7)`, 'info', 4000); }
 
 async function updateOfficerPlan(id, plan) {
   if (!plan) return;
   const durations = { monthly: 1, biannual: 6, annual: 12 };
   const expiry = new Date(); expiry.setMonth(expiry.getMonth() + durations[plan]);
   await sb.from('officers').update({ subscription_plan: plan, subscription_status: 'active', subscription_expiry: expiry.toISOString() }).eq('id', id);
-  showToast(`✅ Subscription updated to ${PLANS[plan].name}`, 'success');
+  showToast(`سبسکرپشن تبدیل: ${_ub(PLANS[plan].name)}`, 'success');
 }
 
 async function openAssignAdminModal() {
@@ -1184,10 +1186,10 @@ async function openAssignAdminModal() {
 async function doAssignAdmin() {
   const userId = document.getElementById('assign-officer-id').value;
   const role = document.getElementById('assign-role').value;
-  if (!userId) { showToast('⚠️ Please select an officer.', 'error'); return; }
+  if (!userId) { showToast('افسر منتخب کریں', 'error'); return; }
   const { error } = await sb.from('user_roles').upsert({ user_id: userId, role }, { onConflict: 'user_id' });
-  if (error) { showToast('❌ Error: ' + error.message, 'error'); return; }
-  closeModal(); showToast('✅ Admin role assigned successfully!', 'success');
+  if (error) { showToast('خرابی: ' + _ub(error.message), 'error'); return; }
+  closeModal(); showToast('ایڈمن کا کردار دے دیا گیا', 'success');
   showPage('admins', null);
 }
 
@@ -1200,7 +1202,7 @@ async function removeAdmin(userId, name) {
 }
 async function doRemoveAdmin(userId) {
   await sb.from('user_roles').update({ role: 'officer' }).eq('user_id', userId);
-  closeModal(); showToast('Admin role removed.', 'info');
+  closeModal(); showToast('ایڈمن کا کردار واپس لے لیا گیا', 'info');
   showPage('admins', null);
 }
 
@@ -1242,10 +1244,10 @@ async function doAddOfficerManually() {
   const password = document.getElementById('ao-password').value;
 
   if (!name || !email || !badge || !station || !district || !password) {
-    showToast('⚠️ Please fill all required fields.', 'error'); return;
+    showToast('تمام ضروری خانے بھریں', 'error'); return;
   }
   if (password.length < 8) {
-    showToast('⚠️ Password must be at least 8 characters.', 'error'); return;
+    showToast('پاس ورڈ کم از کم 8 حروف کا ہو', 'error'); return;
   }
 
   const btn = document.querySelector('#modal-root .btn-primary');
@@ -1265,17 +1267,17 @@ async function doAddOfficerManually() {
     });
 
     if (error) {
-      showToast('❌ Error: ' + error.message, 'error');
+      showToast('خرابی: ' + _ub(error.message), 'error');
       if (btn) { dioBtnText(btn, '+ افسر کا اکاؤنٹ درج کریں'); btn.disabled = false; }
       return;
     }
 
     closeModal();
-    showToast(`✅ Officer ${name} created successfully! They can now log in with their email and password.`, 'success', 5000);
+    showToast(`افسر ${_ub(name)} کا اکاؤنٹ بن گیا — اب وہ اپنی ای میل اور پاس ورڈ سے لاگ اِن کر سکتے ہیں`, 'success', 5000);
     showPage('officers', null);
 
   } catch (err) {
-    showToast('❌ Error: ' + err.message, 'error');
+    showToast('خرابی: ' + _ub(err.message), 'error');
     if (btn) { dioBtnText(btn, '+ افسر کا اکاؤنٹ درج کریں'); btn.disabled = false; }
   }
 }
@@ -1301,9 +1303,16 @@ function closeModal() { document.getElementById('modal-root').innerHTML = ''; }
 // ════════════════════════════════════════════
 //  TOAST
 // ════════════════════════════════════════════
+// نام / سرور کا (انگریزی) پیغام — escape اور <bdi> (اردو جملہ الٹا نہ ہو؛ HTML نہ چلے)
+function _ub(v) {
+  const s = String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  return '<bdi>' + s + '</bdi>';
+}
 function showToast(msg, type='info', duration=3500) {
   const t = document.createElement('div');
   t.className = `toast toast-${type}`;
+  t.dir = 'rtl';
+  t.style.fontFamily = "'Jameel Noori Nastaleeq'"; t.style.textAlign = 'right'; t.style.fontSize = '10.5pt'; t.style.lineHeight = '1.8';
   t.innerHTML = msg;
   document.getElementById('toast-root').appendChild(t);
   setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.3s'; setTimeout(()=>t.remove(),300); }, duration);
@@ -1346,7 +1355,7 @@ function startClock() {
 function setupRealtimeSync() {
   sb.channel('admin-realtime')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'officers' }, async () => {
-      showToast('🔄 Officers data updated.', 'info', 2000);
+      showToast('افسران کا ڈیٹا تازہ ہو گیا', 'info', 2000);
       await loadApprovalCount();
       const currentPage = document.getElementById('page-title')?.textContent;
       if (currentPage?.includes('Officer') || currentPage?.includes('Approval') || currentPage?.includes('Blocked')) {
@@ -1355,7 +1364,7 @@ function setupRealtimeSync() {
       if (currentPage?.includes('Dashboard')) showPage('dashboard', null);
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'cases' }, async () => {
-      showToast('🔄 Cases data updated.', 'info', 2000);
+      showToast('مقدمات کا ڈیٹا تازہ ہو گیا', 'info', 2000);
       const currentPage = document.getElementById('page-title')?.textContent;
       if (currentPage?.includes('Dashboard') || currentPage?.includes('Revenue')) {
         showPage(currentPage.includes('Revenue') ? 'revenue' : 'dashboard', null);
@@ -1380,7 +1389,7 @@ function setupRealtimeSync() {
 async function resetOfficerPassword(officerId, officerName) {
   // Get officer's user_id first
   const { data: officer } = await sb.from('officers').select('user_id').eq('id', officerId).single();
-  if (!officer) { showToast('❌ Officer not found.', 'error'); return; }
+  if (!officer) { showToast('افسر نہیں ملا', 'error'); return; }
 
   // Get email from auth.users via a function
   const { data: userData } = await sb.from('officers').select('*, user_roles(role)').eq('id', officerId).single();
@@ -1426,48 +1435,48 @@ async function doSendResetEmail(officerId, officerName) {
     redirectTo: window.location.origin
   });
 
-  if (resetError) { showToast('❌ Error: ' + resetError.message, 'error'); return; }
+  if (resetError) { showToast('خرابی: ' + _ub(resetError.message), 'error'); return; }
   closeModal();
-  showToast(`✅ Password reset email sent to ${officerName}!`, 'success');
+  showToast(`${_ub(officerName)} کو ری سیٹ ای میل بھیج دی گئی`, 'success');
 }
 
 async function sendResetByEmail(officerName) {
   const email = document.getElementById('reset-email-input')?.value.trim();
-  if (!email) { showToast('⚠️ Please enter email.', 'error'); return; }
+  if (!email) { showToast('ای میل لکھیں', 'error'); return; }
   
   const { error } = await sb.auth.resetPasswordForEmail(email, {
     redirectTo: 'https://fayyazhussainshad.github.io/digital-io-portal/'
   });
 
-  if (error) { showToast('❌ Error: ' + error.message, 'error'); return; }
+  if (error) { showToast('خرابی: ' + _ub(error.message), 'error'); return; }
   closeModal();
-  showToast(`✅ Password reset email sent to ${officerName}!`, 'success');
+  showToast(`${_ub(officerName)} کو ری سیٹ ای میل بھیج دی گئی`, 'success');
 }
 
 async function doSetOfficerPassword(userId, officerName) {
   const p1 = document.getElementById('new-officer-pass')?.value;
   const p2 = document.getElementById('new-officer-pass2')?.value;
   
-  if (!p1 || p1.length < 8) { showToast('⚠️ Password must be at least 8 characters.', 'error'); return; }
-  if (p1 !== p2) { showToast('❌ Passwords do not match.', 'error'); return; }
+  if (!p1 || p1.length < 8) { showToast('پاس ورڈ کم از کم 8 حروف کا ہو', 'error'); return; }
+  if (p1 !== p2) { showToast('دونوں پاس ورڈ ایک جیسے نہیں', 'error'); return; }
 
   // Use admin API to update password
   const { error } = await sb.auth.admin.updateUserById(userId, { password: p1 });
   
   if (error) {
     // Fallback: send reset email instead
-    showToast('⚠️ Direct password change requires service key. Sending reset email instead.', 'info', 4000);
-    const email = prompt(`Enter ${officerName}'s email to send reset link:`);
+    showToast('پاس ورڈ یہاں سے براہِ راست نہیں بدلا جا سکتا — اس کی جگہ ری سیٹ ای میل بھیجی جا رہی ہے', 'info', 4000);
+    const email = prompt(`${officerName} کی ای میل لکھیں — ری سیٹ لنک اسی پر جائے گا:`);
     if (email) {
       await sb.auth.resetPasswordForEmail(email, { redirectTo: 'https://fayyazhussainshad.github.io/digital-io-portal/' });
-      showToast('✅ Password reset email sent!', 'success');
+      showToast('ری سیٹ ای میل بھیج دی گئی', 'success');
     }
     closeModal();
     return;
   }
 
   closeModal();
-  showToast(`✅ Password updated for ${officerName}!`, 'success');
+  showToast(`${_ub(officerName)} کا پاس ورڈ بدل دیا گیا`, 'success');
 }
 
 </script>

@@ -321,8 +321,8 @@ with sync_playwright() as p:
         pg.evaluate("_openMisalEditor('statements_161')"); idle(pg, 1800)
     za_open(mp); za_open(dp)
     dp.click("button:has-text('بیان درج کریں')"); idle(dp, 1800)
-    v = dp.evaluate("() => { const o = [...document.querySelectorAll('#zfa-wit-sel option')].find(o => /مدعی|زاہد/.test(o.textContent)); return o ? o.value : null; }")
-    if v: dp.select_option('#zfa-wit-sel', v); idle(dp, 1200)
+    from real import za_pick   # v577: گواہ کاغذ کے کونے کے «▾» سے
+    za_pick(dp, 'مدعی|زاہد', 1200)
     dp.click('#ch173-doc .zfa-wit-stmt'); dp.keyboard.press('End'); dp.keyboard.type(' میں موقع پر موجود تھا۔'); idle(dp, 300)
     dp.keyboard.press('Control+s'); idle(dp, 1500)
     za = db('zimni_androoni_reports')
