@@ -205,8 +205,12 @@ def run(b, tag, vp, extra):
         s = pg.evaluate(SCREEN, '#ch173-doc .zfa-wit-stmt')
         hb = final_print(pg, lambda: pg.evaluate("_printZimniA(); 0"))
         m = mq.evaluate(PAPER, [hb, '#ch173-doc .zfa-wit-stmt'])
-        check(f'{tag} بیان 161: اسکرین اور پرنٹ پر kerning خودکار (27 اکتوبر / 3 نومبر سے پہلے جیسا)',
-              s and s['kern'] == 'auto' and m['body'] == 'auto' and m['kern'] == 'auto' and 'font-kerning:none' not in hb, (s, m))
+        # v579 (TASK 7-C11، افسر کی ہدایت 12 نومبر 2026 — «پوری طرح justify، الفاظ جُڑے بغیر»): اکیلے بیان 161 کے متن پر
+        #   kerning بند (justify اسی سے برابر پھیلتا ہے)؛ کاغذ کا باقی حصہ (body، عنوان، دستخط) 27 اکتوبر کی طرح خودکار
+        hd = pg.evaluate("[...document.querySelectorAll('#ch173-doc .zfa-wit-head, #ch173-doc .zfa-wit-sign')].map(e => getComputedStyle(e).fontKerning)")
+        check(f'{tag} بیان 161: متن پر kerning بند (v579 — justify، جُڑے الفاظ نہیں: سب سے تنگ جگہ ≥ 0.19em)؛ کاغذ / عنوان / دستخط خودکار',
+              s and s['kern'] == 'none' and m['body'] == 'auto' and m['kern'] == 'none' and m['min'] is not None and m['min'] >= 0.19
+              and hd and all(x == 'auto' for x in hd), (s, m, hd))
     except Exception as e:
         check(f'{tag} بیان 161: حصہ رک گیا', False, repr(e)[:400])
 

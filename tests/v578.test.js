@@ -23,7 +23,8 @@ test('v578: دستاویز کھولتے وقت doc-viewer.js نہ ہو تو پہ
 test('v578: boot.js — ناکام <script> ہٹایا جائے تاکہ اگلی کوشش واقعی فائل لائے', () => {
   const B = read('boot.js');
   assert.ok(/s\.onerror = function \(\) \{ _loaded\[src\] = null; try \{ s\.remove\(\); \} catch \(_\) \{[^}]*\} res\(false\); \};/.test(B));
-  assert.ok(/const CACHE_NAME = 'digital-io-v578';/.test(read('sw.js')));
+  const m = /const CACHE_NAME = 'digital-io-v(\d+)';/.exec(read('sw.js'));   // v579: نیا نسخہ — 578 یا بعد کا
+  assert.ok(m && Number(m[1]) >= 578);
 });
 
 test('v578: Esc — کاغذ کے کونوں کی فہرستیں (بیان 161 / بیرونی ضمنی) صرف خود بند ہوں، دستاویز نہیں', () => {

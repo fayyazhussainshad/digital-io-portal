@@ -297,7 +297,7 @@ def run(desktop):
         # ═══ D) اکیلا بیان 161 = 27 اکتوبر کی ترتیب؛ بیرونی ضمنی کی منسلک اندرونی شیٹ الگ ═══
         kz = pg.evaluate("getComputedStyle(document.getElementById('ch173-doc')).fontKerning")
         h161 = grab(pg, "_printZimniA()", paper)
-        check(f'{tag} D13: اکیلا بیان 161 — kerning خودکار (27 اکتوبر جیسا): اسکرین اور پرنٹ', kz == 'auto' and 'html #ch173-doc{ font-kerning:auto; }' in h161, kz)
+        check(f'{tag} D13: اکیلا بیان 161 کا کاغذ — kerning خودکار (27 اکتوبر جیسا؛ v579: صرف بیان کا متن بند): اسکرین اور پرنٹ', kz == 'auto' and 'html #ch173-doc{ font-kerning:auto; }' in h161, kz)
         # صفحہ بند → دوبارہ لاگ اِن → مسودہ واپس (C12)
         pg.reload(); pg.wait_for_timeout(2500)
         pg.evaluate("""async () => { currentUser = {id:'u1', email:'io@test.pk', user_metadata:{}}; await _loadOfficerProfile(); await loginSuccess(); }"""); pg.wait_for_timeout(2500)

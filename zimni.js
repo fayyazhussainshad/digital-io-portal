@@ -6032,7 +6032,7 @@ try { _dioBindCtrlS(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR 
 
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_A_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_A_VER = 'zimni-androoni v25 — v568: 27 Oct (v558) look restored (kerning auto), date/title from the statement, no false «saved»';
+const ZIMNI_A_VER = 'zimni-androoni v26 — v579: statement text fully justified (screen, print, PDF, Word), kerning off on the statement text only; v568: 27 Oct (v558) look, date/title from the statement, no false «saved»';
 window.ZIMNI_A_VER = ZIMNI_A_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -7540,6 +7540,27 @@ function _zaFormCSS() {
   #ch173-doc .zfa-body{ margin-top:2px; font-size:14pt; line-height:1.5;
     text-align:justify; text-align-last:right; outline:none; white-space:pre-wrap; }
   #ch173-doc .zfa-body > div, #ch173-doc .zfa-body > p{ margin:0 0 1em 0; }
+  /* v579 (TASK 7-C11، افسر کی ہدایت 12 نومبر 2026): «بیانات 161 کا متن پوری طرح justify — اردو دائیں سے، ہر پیراگراف کی
+     آخری سطر دائیں؛ اسکرین، پرنٹ، PDF اور Word — الفاظ جُڑے بغیر»۔ تین اصل وجوہات:
+     (1) اسکرین: index.html کا عام قاعدہ «div { text-align:right }» ہر div (گواہ کا خانہ، بیان) پر سیدھا لگتا تھا اور
+         .zfa-body کا justify وراثت میں نہیں پہنچتا تھا — بیان اسکرین پر صرف دائیں سیدھ میں تھا۔ اب .zfa-body کے اندر ہر
+         div / p اپنے والد کی سیدھ لیتا ہے (عنوان، «بیان سن لیا…»، دستخط کی اپنی !important سیدھ جوں کی توں؛ Ctrl+R / L / E
+         سے کسی پیراگراف کی اپنی سیدھ بھی)۔
+     (2) Jameel Noori کی اپنی kerning اردو الفاظ کے بیچ کی خالی جگہ کو صفر تک کھینچ لیتی ہے؛ براؤزر ایسی جگہ کو justify
+         میں پھیلا نہیں سکتا — ساری اضافی جگہ انگریزی / ہندسوں (ASI، 15/10/2026) کے ساتھ خلا بن کر آتی اور اردو الفاظ
+         جُڑ جاتے۔ صرف بیان کے متن پر فونٹ کی kerning بند (چالان کا 4 نومبر والا قاعدہ) — ہر دو الفاظ کے بیچ پوری خالی
+         جگہ، اور justify اسی کو برابر پھیلاتا ہے۔ عنوان / «بیان سن لیا…» / دستخط پر 27 اکتوبر والی (خودکار)۔
+     (3) Word: جدول کے خانے کے اندر سیدھ فائل میں لکھی نہیں جاتی تھی (خانہ اور متن دونوں justify تھے، اس لیے صرف سب
+         سے باہر) — Word / LibreOffice جدول کے اندر باہر کی سیدھ نہیں لیتے۔ خانہ (td) خود دائیں؛ اس کے اندر .zfa-body کا
+         justify اب فائل میں صاف لکھا جاتا ہے۔ یہ سب صرف اکیلے بیان 161 پر — منسلک اندرونی شیٹ (_zfAttFormCSS) الگ۔ */
+  #ch173-doc table.zfa-tbl td.zfa-c-body{ text-align:right; text-align-last:auto; }
+  #ch173-doc .zfa-body{ font-kerning:none; }
+  #ch173-doc .zfa-body div, #ch173-doc .zfa-body p{ text-align:inherit; text-align-last:inherit; }
+  #ch173-doc .zfa-wit-head, #ch173-doc .zfa-wit-headrow, #ch173-doc .zfa-wit-close,
+  #ch173-doc .zfa-wit-sign{ font-kerning:auto; }
+  /* صفحے کے توڑ سے پہلے کی سطر (پیراگراف اگلے صفحے پر جاری) — کاغذ پر وہ بھی پوری؛ یہ خانہ صرف چھپائی کا _zaBinder بناتا ہے */
+  #ch173-doc .zfa-pgpre{ display:block; text-align-last:justify; }
+  #ch173-doc .zfa-pgsp{ white-space:normal; }
   /* v555: اندرونی ضمنی بھی — پیراگراف انگریزی عہدے (ASI) سے شروع ہو تب بھی بنیادی رُخ RTL
      (بیرونی ضمنی کا اصول)؛ افسر کا اپنا دیا ہوا رُخ (dir) برقرار */
   #ch173-doc .zfa-body:not([dir]), #ch173-doc .zfa-body > div:not([dir]), #ch173-doc .zfa-body > p:not([dir]){
@@ -7897,6 +7918,60 @@ if (window.DIOSync && !window._zaSyncHooked) {
 //  سمائے؛ نمبر شمار کے کالم میں بھی اسی جگہ (نمبر اپنے پیراگراف کی سیدھ میں رہیں)۔
 //  آخری صفحے پر خالی قطار — کھڑی لکیریں صفحے کے نیچے (حاشیے) تک۔
 // ═══════════════════════════════════════════════════════════════
+// v579 (TASK 7-C11، افسر کی ہدایت 12 نومبر 2026 — بیان کا متن کاغذ پر بھی پوری طرح justify):
+//   صفحے کا توڑ (.dio-pgbrk — block) پیراگراف کے بیچ میں لگے تو اُس سے پہلے کی سطر «آخری سطر» بن کر دائیں سیدھ میں رہ
+//   جاتی (text-align-last) — ہر صفحے کی نچلی سطر ادھوری دکھتی۔ اب پیراگراف کا توڑ سے پہلے والا حصہ (اسی سطروں کا سلسلہ)
+//   ایک block خانے (span.zfa-pgpre) میں — اُس کی آخری سطر بھی پوری؛ پیراگراف کی اصل آخری سطر دائیں ہی رہتی ہے۔ span
+//   اس لیے کہ Word (جو صفحے خود بناتا ہے) اسے اسی پیراگراف کا حصہ سمجھے، نیا پیراگراف نہیں۔ سطریں وہیں ٹوٹتی ہیں جہاں
+//   پہلے (justify سطر کے الفاظ نہیں بدلتا) — توڑ کی جگہ اور مثل کی لکیر کا حساب جوں کا توں۔ صرف justify پیراگراف میں؛
+//   توڑ سے پہلے سطر خود ختم ہو (Enter / <br>) تو کچھ نہیں۔ صرف اکیلے بیان 161 کی چھپائی (یہ binder) — ایڈیٹر نہیں بدلتا۔
+function _zaJustifyBeforeBreak(d, brk, body) {
+  const win = d.defaultView;
+  const flowBlock = (n) => {
+    if (!n || n.nodeType !== 1) return false;
+    const cs = win.getComputedStyle(n);
+    if ((cs.cssFloat && cs.cssFloat !== 'none') || cs.position === 'absolute' || cs.position === 'fixed') return false;
+    return !/^(inline|contents|none)/.test(cs.display);
+  };
+  let P = brk.parentNode;
+  while (P && P !== body && !flowBlock(P)) P = P.parentNode;
+  if (!P || P === body || !body.contains(P)) return false;
+  if (win.getComputedStyle(P).textAlign !== 'justify') return false;
+  let A = brk; while (A.parentNode !== P) A = A.parentNode;          // P کا وہ بچہ جس کے اندر توڑ ہے
+  let S = A; while (S.previousSibling && !flowBlock(S.previousSibling)) S = S.previousSibling;   // اسی سطروں کے سلسلے کا آغاز
+  if (S === brk) return false;
+  const r = d.createRange(); r.setStartBefore(S); r.setEndBefore(brk);
+  const txt = r.toString();
+  if (!/[^\s\u00A0\u200B-\u200F\u2066-\u2069]/.test(txt) || /\n[\s\u00A0]*$/.test(txt)) return false;
+  const lastSig = (n) => {
+    for (let c = n.lastChild; c; c = c.previousSibling) {
+      if (c.nodeType === 3) { if (/[^\s\u00A0]/.test(c.nodeValue)) return c; continue; }
+      if (c.nodeType === 1) { if (c.tagName === 'BR') return c; const x = lastSig(c); if (x) return x; }
+    }
+    return null;
+  };
+  const ls = lastSig(r.cloneContents());
+  if (!ls || ls.nodeType !== 3) return false;
+  let firstRun = true;
+  for (let q = S.previousSibling; q; q = q.previousSibling) { if (q.nodeType === 3 && !/\S/.test(q.nodeValue)) continue; firstRun = false; break; }
+  const W = d.createElement('span'); W.className = 'zfa-pgpre';
+  if (!firstRun) W.style.textIndent = '0';                           // پیراگراف کی پہلی سطر نہیں — حاشیہ نہیں
+  W.appendChild(r.extractContents());
+  r.insertNode(W);
+  if (W.nextSibling !== brk) P.insertBefore(brk, W.nextSibling);    // توڑ اسی پیراگراف میں، خانے کے فوراً بعد
+  // سطر کے آخر کی خالی جگہ — pre-wrap میں خانے کے آخر پر یہ لٹکتی نہیں، اس لیے justify کے بعد بھی بائیں کنارے پر ایک
+  //   جگہ خالی رہ جاتی۔ اسے توڑ کے بعد (اگلے صفحے کی پہلی سطر کے شروع میں) عام «normal» خالی جگہ بنا کر رکھو: کاغذ / PDF پر
+  //   سطر کے شروع میں خود غائب، Word اور نقل میں دو لفظوں کے بیچ موجود (الفاظ جُڑتے نہیں)
+  const tail = (n) => { for (let c = n.lastChild; c; c = c.previousSibling) { if (c.nodeType === 3) { if (c.nodeValue.length) return c; continue; } if (c.nodeType === 1) return tail(c); } return null; };
+  const t = tail(W), m = t ? / +$/.exec(t.nodeValue) : null;
+  if (m && m[0].length < t.nodeValue.length) {
+    t.nodeValue = t.nodeValue.slice(0, t.nodeValue.length - m[0].length);
+    const g = d.createElement('span'); g.className = 'zfa-pgsp'; g.textContent = m[0];
+    P.insertBefore(g, brk.nextSibling);
+  }
+  return true;
+}
+window._zaJustifyBeforeBreak = _zaJustifyBeforeBreak;
 function _zaBinder(d, geo) {
   const doc = d.getElementById('ch173-doc'); if (!doc || !geo || geo.ch < 200) return 0;
   try { _zaRefPlace(doc); } catch (_) { /* v558: حوالہ اصل کاغذ کی چوڑائی پر */ }
@@ -7904,6 +7979,7 @@ function _zaBinder(d, geo) {
   let made = 0;
   // پرانے نشان اور ایڈیٹر کی چپکی اونچائیاں (اسکرین کا صفحہ 1) ہٹاؤ
   doc.querySelectorAll('.zfa-bindmark,.zf-bind,.dio-bindgap,.dio-pgbrk,.dio-colpad,tr.zfa-fill').forEach(e => e.remove());
+  doc.querySelectorAll('span.zfa-pgpre, span.zfa-pgsp').forEach(w => { while (w.firstChild) w.parentNode.insertBefore(w.firstChild, w); w.remove(); });   // v579
   doc.querySelectorAll('table.zfa-tbl td, table.zfa-tbl tr').forEach(el => { if (el.style.height) { el.style.height = 'auto'; made++; } });
   // پرانی (خودکار) نمبر شمار — margin سے پیراگراف کی سیدھ، جو ایڈیٹر کے کاغذ کی چوڑائی پر ناپی گئی
   //   تھی؛ دوسرے کاغذ (A4 / لیگل) پر سطریں بدلتی ہیں — اسی کاغذ کی چوڑائی پر دوبارہ (_zaAutoNumbers کا اصول)
@@ -8039,6 +8115,7 @@ function _zaBinder(d, geo) {
       const node = fl || cut(sp);
       const brk = mk('dio-pgbrk'); node.parentNode.insertBefore(brk, node);
       if (brk.getBoundingClientRect().top - dTop <= pTop + 1) { brk.remove(); break; }   // آگے نہیں بڑھ سکتے
+      if (!fl) { try { _zaJustifyBeforeBreak(d, brk, body); } catch (_) { /* سیدھ — توڑ اپنی جگہ ویسے ہی */ } }
       // توڑ سے پہلے کا حاشیہ (پچھلے پیراگراف کا margin) صفحے کی حد پار کرے تو اسے صفر کرو — چھپائی میں
       //   صفحے کے توڑ پر یہ حاشیہ ویسے بھی کٹ جاتا ہے؛ یوں حساب اور چھپائی ایک
       const yOrig = brk.getBoundingClientRect().top - dTop;      // نمبر شمار کی سیدھ اسی (اصل) جگہ کے حساب سے

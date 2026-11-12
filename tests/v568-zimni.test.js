@@ -52,7 +52,9 @@ test('v568: منسلک اندرونی شیٹ (بیرونی ضمنی) اکیلے 
   assert.ok(/html #ch173-doc\{ font-kerning:auto; \}/.test(fn('_zaFormCSS')), 'اکیلا بیان 161: 27 اکتوبر کی طرح kerning خودکار');
   assert.ok(!/font-kerning/.test(fn('_zfAttFormCSS')), 'منسلک شیٹ: کوئی تبدیلی نہیں');
   assert.strictEqual(fn('_zfAttFormCSS').replace('_zfAttFormCSS', 'X'),
-    fn('_zaFormCSS').replace('_zaFormCSS', 'X').replace(/\n  \/\* v568 \(TASK 7-D[\s\S]*?\*\/\n  html #ch173-doc\{ font-kerning:auto; \}/, ''), 'باقی CSS ایک جیسی');
+    fn('_zaFormCSS').replace('_zaFormCSS', 'X').replace(/\n  \/\* v568 \(TASK 7-D[\s\S]*?\*\/\n  html #ch173-doc\{ font-kerning:auto; \}/, '')
+      // v579 (TASK 7-C11): اکیلے بیان 161 کے متن کی justify / kerning — صرف اسی کی CSS میں، منسلک شیٹ میں نہیں
+      .replace(/  \/\* v579 \(TASK 7-C11[\s\S]*?#ch173-doc \.zfa-pgpre\{ display:block; text-align-last:justify; \}\n/, ''), 'باقی CSS ایک جیسی');
 });
 
 test('v568: فہرست — ترمیم / پرنٹ / شیئر / ڈپلیکیٹ / حذف (PDF / نقل نہیں)؛ بٹن مقدمہ کی فہرست جیسے', () => {
