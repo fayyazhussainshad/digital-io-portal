@@ -292,8 +292,14 @@ function _dioDocViewEsc(e) {
   if (shown(fr)) { e.preventDefault(); if (typeof dioFRClose === 'function') dioFRClose(); return; }
   const sb = document.getElementById('dio-share-box');
   if (sb) { e.preventDefault(); sb.remove(); return; }
-  const menu = document.querySelector('#dio-dv-menu, #naq-acc-menu, #saza-acc-menu, #dk-acc-menu, #dio-dv-picker');
-  if (menu) { e.preventDefault(); menu.remove(); return; }
+  // v578: ضمنی / بیان 161 کے کاغذ کے کونوں کی فہرستیں بھی — Esc صرف فہرست بند کرے، دستاویز نہیں (پہلے یہ فہرستیں
+  //   یہاں نہیں تھیں؛ اپنا Esc ایک لمحے بعد لگاتی تھیں — اسی لمحے Esc دبے تو پوری دستاویز بند ہو جاتی)
+  const menu = document.querySelector('#dio-dv-menu, #naq-acc-menu, #saza-acc-menu, #dk-acc-menu, #dio-dv-picker, #zfa-cp-menu, #zf-cp-menu, #zf-acc-menu');
+  if (menu) {
+    e.preventDefault(); menu.remove();
+    document.querySelectorAll('#zfa-cp-wit[aria-expanded="true"], .zf-cpick[aria-expanded="true"]').forEach(b => b.setAttribute('aria-expanded', 'false'));
+    return;
+  }
   if (shown(document.getElementById('modal-backdrop'))) return;      // کارڈ اپنا Esc خود سنبھالتا ہے
   // TASK 22: ٹیب کے اندر Esc = ایک قدم «واپس» (دستاویز اسی ٹیب کی تاریخ میں رہتی ہے، بند نہیں ہوتی)
   if (window.__dioTabChild && typeof window.dioGoBack === 'function') { e.preventDefault(); window.dioGoBack(); return; }

@@ -25,3 +25,11 @@ test('v578: boot.js — ناکام <script> ہٹایا جائے تاکہ اگل�
   assert.ok(/s\.onerror = function \(\) \{ _loaded\[src\] = null; try \{ s\.remove\(\); \} catch \(_\) \{[^}]*\} res\(false\); \};/.test(B));
   assert.ok(/const CACHE_NAME = 'digital-io-v578';/.test(read('sw.js')));
 });
+
+test('v578: Esc — کاغذ کے کونوں کی فہرستیں (بیان 161 / بیرونی ضمنی) صرف خود بند ہوں، دستاویز نہیں', () => {
+  const DV = read('doc-viewer.js');
+  assert.ok(/document\.querySelector\('#dio-dv-menu, #naq-acc-menu, #saza-acc-menu, #dk-acc-menu, #dio-dv-picker, #zfa-cp-menu, #zf-cp-menu, #zf-acc-menu'\)/.test(DV));
+  const Z = read('zimni.js');
+  assert.strictEqual((Z.match(/document\.addEventListener\('keydown', esc1, true\);   \/\/ v578/g) || []).length, 3, 'تینوں فہرستوں کا Esc فوراً');
+  assert.ok(!/setTimeout\(\(\) => \{[^}]*addEventListener\('keydown', esc1/.test(Z), 'Esc اب ایک لمحے بعد نہیں');
+});
