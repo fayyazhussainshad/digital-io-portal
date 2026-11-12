@@ -1202,6 +1202,9 @@
     ['اگلی / پچھلی ٹیب — انسٹال شدہ ایپ میں Ctrl+Tab / Ctrl+Shift+Tab بھی', 'Alt+PageDown / Alt+PageUp'],
     ['ٹیب نمبر 1 تا 8 / آخری ٹیب', 'Ctrl+1 … Ctrl+8 / Ctrl+9'],
     ['منتخب چیز نئی ٹیب میں (لکھتے ہوئے نہیں) · اسی ٹیب میں', 'Ctrl+Enter · Ctrl+click · درمیانی بٹن  /  Enter'],
+    // v581: فہرستیں (مقدمات، بیرونی ضمنیات، بیانات 161) — dio-listnav.js
+    ['فہرست (مقدمات، ضمنیات، بیانات 161): اگلی / پچھلی قطار منتخب · پہلی / آخری · انتخاب ختم', '↓ / ↑ · Home / End · Esc'],
+    ['فہرست کی منتخب قطار کھولیں: اسی ٹیب میں · نئی ٹیب میں', 'Enter · Ctrl+Enter'],
   ];
   function helpCss() {
     if (document.getElementById('dio-keys-help-css')) return;

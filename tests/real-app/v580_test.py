@@ -139,7 +139,8 @@ def form2_pages(pdf, n):
     out = []
     for i in range(1, n + 1):
         t = subprocess.run(['pdftotext', '-f', str(i), '-l', str(i), pdf, '-'], capture_output=True, text=True).stdout
-        if re.search(r'[()]2[()]\s*54|54\s*[()]2[()]', t): out.append(i)
+        t = re.sub('[\u200e\u200f\u202a-\u202e\u2066-\u2069]', '', t)   # v581: فارم نمبر LTR خانے میں — pdftotext سمت کے نشان ڈالتا ہے
+        if re.search(r'[()]2[()]\s*54|54\s*[()]\s*2(?![0-9])', t): out.append(i)
     return out
 
 
