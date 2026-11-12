@@ -640,7 +640,10 @@ window._dioNeed = _dioNeed;
 
 async function openCaseWorkspace(id) {
   // ورک سپیس کو جن سست فائلوں کی ضرورت ہے، پہلے وہ آ جائیں
-  await _dioNeed(['misal-docs.js', 'case-docs.js', 'case-form.js']);
+  // v578: doc-viewer.js بھی — ہر دستاویز اسی کے پورے صفحے اور «⋯» (محفوظ / پرنٹ / شیئر / واپس) میں کھلتی ہے۔
+  //   پہلے یہ پس منظر میں (باری پر) آتی تھی؛ سست فون پر ایپ کھلتے ہی مقدمہ اور دستاویز کھولیں تو یہ ابھی نہ آئی
+  //   ہوتی — دستاویز پورے صفحے کے بغیر، اور بیرونی ضمنی / بیانات 161 میں «⋯» ہی نہیں (اوپر کی پٹی v575 / v577 میں ختم)۔
+  await _dioNeed(['misal-docs.js', 'case-docs.js', 'case-form.js', 'doc-viewer.js']);
   closeMobileSidebar();
   window._inWorkspace = true;  // Prevent background refresh from redirecting back to list
   document.body.classList.add('workspace-mode');  // Hide topbar for more space

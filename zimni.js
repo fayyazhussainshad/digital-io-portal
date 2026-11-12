@@ -2164,7 +2164,8 @@ function _zimniCornerMenu(ev, which) {
   };
   const off = (e) => { if (!box.contains(e.target) && !(e.target.closest && e.target.closest('.zf-cpick'))) close(); };
   const esc1 = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
-  setTimeout(() => { document.addEventListener('mousedown', off, true); document.addEventListener('touchstart', off, true); document.addEventListener('keydown', esc1, true); }, 0);
+  document.addEventListener('keydown', esc1, true);   // v578: Esc فوراً اسی فہرست کا (پہلے ایک لمحے بعد — اس لمحے Esc پوری دستاویز بند کر دیتا)
+  setTimeout(() => { document.addEventListener('mousedown', off, true); document.addEventListener('touchstart', off, true); }, 0);
   box.addEventListener('click', (e) => {
     const b = e.target.closest && e.target.closest('button[data-v]');
     if (!b) return;
@@ -3761,7 +3762,8 @@ async function _zimniAccPicker(ev, which) {
   const close = () => { box.remove(); document.removeEventListener('mousedown', off, true); document.removeEventListener('keydown', esc1, true); };
   const off = (e) => { if (!box.contains(e.target) && !(e.target.closest && e.target.closest('.zf-pick'))) close(); };
   const esc1 = (e) => { if (e.key === 'Escape') { e.preventDefault(); close(); } };
-  setTimeout(() => { document.addEventListener('mousedown', off, true); document.addEventListener('keydown', esc1, true); }, 0);
+  document.addEventListener('keydown', esc1, true);   // v578: Esc فوراً اسی فہرست کا
+  setTimeout(() => { document.addEventListener('mousedown', off, true); }, 0);
   box.querySelector('#zf-acc-x').onclick = close;
 }
 window._zimniAccPicker = _zimniAccPicker;
@@ -7142,7 +7144,8 @@ async function _zaWitMenu(ev) {
   };
   const off = (e) => { if (!box.contains(e.target) && !(e.target.closest && e.target.closest('#zfa-cp-wit'))) close(); };
   const esc1 = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
-  setTimeout(() => { document.addEventListener('mousedown', off, true); document.addEventListener('touchstart', off, true); document.addEventListener('keydown', esc1, true); }, 0);
+  document.addEventListener('keydown', esc1, true);   // v578: Esc فوراً اسی فہرست کا (پہلے ایک لمحے بعد — اس لمحے Esc پوری دستاویز بند کر دیتا)
+  setTimeout(() => { document.addEventListener('mousedown', off, true); document.addEventListener('touchstart', off, true); }, 0);
   box.addEventListener('click', (e) => {
     const b = e.target.closest && e.target.closest('button[data-v]');
     if (!b) return;

@@ -279,6 +279,14 @@ async function _doAddMisalDoc(docId) {
 
 // ── REMOVE FROM CASE ──────────────────────────────────────────
 function _openMisalEditor(docId, _fromTab) {
+  // v578: پورا صفحہ اور «⋯» doc-viewer.js سے — کسی راستے سے یہ ابھی نہ آئی ہو تو پہلے لاؤ، پھر یہی دستاویز
+  //   (ایک بار؛ نہ آ سکے تو پہلے جیسا راستہ)۔ اصل فنکشن سے دوبارہ — ٹیب کی تاریخ میں دوسرا قدم نہیں بنتا۔
+  if (!_fromTab && typeof _dioOpenDocTab !== 'function' && typeof window.dioLoadScript === 'function' && !_openMisalEditorReal._dvTried) {
+    _openMisalEditorReal._dvTried = true;
+    const a = arguments, again = () => _openMisalEditorReal.apply(this, a);
+    Promise.resolve(window.dioLoadScript('doc-viewer.js')).then(again, again);
+    return;
+  }
   // Full-page view: dastawez poore page par khulti hai, chips background mein.
   // _fromTab=true tab aata hai jab tab-switch se dobara render ho raha ho.
   if (!_fromTab && typeof _dioOpenDocTab === 'function') _dioOpenDocTab(docId);
@@ -427,6 +435,7 @@ function _openMisalEditor(docId, _fromTab) {
   const item = document.getElementById('msb-' + docId);
   if (item) item.classList.add('active');
 }
+const _openMisalEditorReal = _openMisalEditor;   // v578: اوپر کی دوبارہ پکار کے لیے (ٹیبوں کی لپیٹ کے بغیر)
 
 // ── SIDEBAR: list of added documents ─────────────────────────
 function _refreshMisalSidebar() {
