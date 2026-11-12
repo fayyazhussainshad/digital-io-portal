@@ -1,6 +1,6 @@
 """(v569) دو آلات ایک ساتھ (لیپ ٹاپ 1366×768 + موبائل 390×844 touch)، ایک سرور (mock_db_engine.py):
 چالان (رپورٹ 173) اور بیرونی ضمنی — لکھو → محفوظ → دوسرے آلے پر کھولو → reload → دوبارہ کھولو:
-متن جوں کا توں؛ چالان پر الفاظ کا آج والا فاصلہ (kerning بند)، ضمنی پر 3 نومبر سے پہلے والا (خودکار) — ہر آلے پر۔
+متن جوں کا توں؛ چالان پر الفاظ کا آج والا فاصلہ (kerning بند)؛ ضمنی کا متن v580 سے justify — اس پر بھی kerning بند (الفاظ جُڑیں نہیں) — ہر آلے پر۔
 چلانا: `python3 v569_sync_test.py`
 """
 import os, sys, json, time, re
@@ -162,8 +162,8 @@ with sync_playwright() as p:
         open_zimni(pg, ZID)
         k = pg.evaluate(KERN, ZBODY)
         pk = pg.evaluate(PAPER, [ZBODY, "document.querySelector('[data-dio-print]').click()"])
-        check(f'{tag}: محفوظ ضمنی کھولی — متن جوں کا توں؛ اسکرین اور کاغذ پر kerning خودکار (3 نومبر سے پہلے جیسی)',
-              k and ztyped and k[1] == ztyped[1] and k[0] == 'auto' and pk == 'auto', (k and k[0], pk, k and k[1][:40]))
+        check(f'{tag}: محفوظ ضمنی کھولی — متن جوں کا توں؛ اسکرین اور کاغذ پر متن کی kerning بند (v580 — justify، افسر کا حکم 12 نومبر)',
+              k and ztyped and k[1] == ztyped[1] and k[0] == 'none' and pk == 'none', (k and k[0], pk, k and k[1][:40]))
         pg.screenshot(path=V + ('mobile' if pg is mp else 'desktop') + '_zimni.png')
     # ═══ 4) موبائل reload ═══
     relogin(mp)
@@ -172,7 +172,7 @@ with sync_playwright() as p:
     check('موبائل (reload کے بعد): چالان — متن وہی، kerning بند', k and k[1] == typed[1] and k[0] == 'none', k and k[0])
     open_zimni(mp, ZID)
     k = mp.evaluate(KERN, ZBODY)
-    check('موبائل (reload کے بعد): ضمنی — متن وہی، kerning خودکار', k and k[1] == ztyped[1] and k[0] == 'auto', k and k[0])
+    check('موبائل (reload کے بعد): ضمنی — متن وہی، متن کی kerning بند (v580)', k and k[1] == ztyped[1] and k[0] == 'none', k and k[0])
     check('سرور: کوئی اضافی / گمشدہ قطار نہیں (چالان 1، ضمنی 1)', len(db('report_173')) == 1 and len(db('zimni_reports')) == 1, (len(db('report_173')), len(db('zimni_reports'))))
     check('دونوں آلات: کوئی JS غلطی نہیں', not D['errs'] and not M['errs'], (D['errs'][:2], M['errs'][:2]))
     b.close()

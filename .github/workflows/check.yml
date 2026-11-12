@@ -161,7 +161,7 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh v569_test.py
-      - name: v569 — two devices + reload (challan kerning off, zimni auto) (v569_sync_test.py)
+      - name: v569 — two devices + reload (challan kerning off; zimni text off since v580, justified) (v569_sync_test.py)
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh v569_sync_test.py
