@@ -176,21 +176,23 @@ def run(b, tag, vp, extra):
         back = pg.evaluate("[...document.querySelectorAll('#ch173-doc tr.zf-blk .zf-body')].map(x => x.textContent)")
         check(f'{tag} ضمنی: محفوظ → دوبارہ کھولی — ہر اندراج کا متن وہی', n == 1 and [words(x) for x in back] == [words(x) for x in ed] and len(ed) == 4, (n, len(back)))
         s = pg.evaluate(SCREEN, ZBODY)
-        check(f'{tag} ضمنی: اسکرین پر kerning خودکار (3 نومبر سے پہلے جیسی)', s and s['kern'] == 'auto' and not s['sheet'], s)
+        # v580 (افسر کا حکم 12 نومبر 2026، «پوری بیرونی ضمنی» justify): متن پر kerning بند (justify میں الفاظ نہ جُڑیں)؛
+        #   کاغذ کا باقی حصہ (body، سرنامہ، دستخط) خودکار — «ہر دستاویز» والا قاعدہ پھر بھی نہیں
+        check(f'{tag} ضمنی: اسکرین پر متن کی kerning بند (v580 — justify)؛ «ہر دستاویز» والا اسکرین قاعدہ نہیں', s and s['kern'] == 'none' and not s['sheet'], s)
         hb = final_print(pg, lambda: pg.evaluate("(document.querySelector('#dio-dv-bar button[onclick=\"_dioPrintCurrent()\"]') || document.querySelector('[data-dio-print]')).click()"))
         open(V + f'{tag}_zimni_print.html', 'w', encoding='utf-8').write(hb)
         m = mq.evaluate(PAPER, [hb, ZBODY])
-        check(f'{tag} ضمنی: «پرنٹ» بٹن کا کاغذ — kerning خودکار، کوئی kerning قاعدہ نہیں؛ فونٹ کی اپنی kerning واپس (سب سے تنگ جگہ < 0.1em، 3 نومبر سے پہلے جیسی)',
-              'font-kerning' not in hb and 'zf-tbl' in hb and m['body'] == 'auto' and m['kern'] == 'auto' and m['gaps'] > 100 and (m['min'] if m['min'] is not None else 1) < 0.1, m)
+        check(f'{tag} ضمنی: «پرنٹ» بٹن کا کاغذ — کاغذ (body) خودکار، «ہر دستاویز» والا قاعدہ نہیں؛ متن پر kerning بند (v580)، سب سے تنگ جگہ ≥ 0.19em (الفاظ جُڑے نہیں)',
+              'dio-text-css' not in hb and 'html #ch173-doc{ font-kerning' not in hb and 'zf-tbl' in hb and m['body'] == 'auto' and m['kern'] == 'none' and m['gaps'] > 100 and (m['min'] or 0) >= 0.19, m)
         if desktop:
             hc = final_print(pg, ctrl_p(pg, ZBODY))
             check(f'{tag} ضمنی: Ctrl+P = «پرنٹ» — کاغذ حرف بحرف ایک', hc == hb and len(hb) > 20000, (len(hc), len(hb)))
         mn = pg.evaluate(MENU, '.zf-body')
-        check(f'{tag} ضمنی: براؤزر مینو (⋮ › Print) — اپنا تیار کاغذ، kerning خودکار', mn['where'] == 'pp-host' and mn['kern'] == 'auto', mn)
+        check(f'{tag} ضمنی: براؤزر مینو (⋮ › Print) — اپنا تیار کاغذ، متن کی kerning بند (v580)', mn['where'] == 'pp-host' and mn['kern'] == 'none', mn)
         raws['zimni'] = re.sub(r'saved_at[^,]*', '', pg.evaluate(RAW, "_dioPrintCurrent()"))
         fk = pg.evaluate(FRAME, raws['zimni'])
         sh = pg.evaluate(SHARE, raws['zimni']) if desktop else 'ok:skip'
-        check(f'{tag} ضمنی: شیئر PDF کا کاغذ — kerning خودکار؛ PDF بنتی ہے', fk == 'auto' and str(sh).startswith('ok:'), (fk, sh))
+        check(f'{tag} ضمنی: شیئر PDF کا کاغذ — کاغذ (body) خودکار؛ PDF بنتی ہے', fk == 'auto' and str(sh).startswith('ok:'), (fk, sh))
     except Exception as e:
         check(f'{tag} ضمنی: حصہ رک گیا', False, repr(e)[:400])
 
@@ -205,8 +207,12 @@ def run(b, tag, vp, extra):
         s = pg.evaluate(SCREEN, '#ch173-doc .zfa-wit-stmt')
         hb = final_print(pg, lambda: pg.evaluate("_printZimniA(); 0"))
         m = mq.evaluate(PAPER, [hb, '#ch173-doc .zfa-wit-stmt'])
-        check(f'{tag} بیان 161: اسکرین اور پرنٹ پر kerning خودکار (27 اکتوبر / 3 نومبر سے پہلے جیسا)',
-              s and s['kern'] == 'auto' and m['body'] == 'auto' and m['kern'] == 'auto' and 'font-kerning:none' not in hb, (s, m))
+        # v579 (TASK 7-C11، افسر کی ہدایت 12 نومبر 2026 — «پوری طرح justify، الفاظ جُڑے بغیر»): اکیلے بیان 161 کے متن پر
+        #   kerning بند (justify اسی سے برابر پھیلتا ہے)؛ کاغذ کا باقی حصہ (body، عنوان، دستخط) 27 اکتوبر کی طرح خودکار
+        hd = pg.evaluate("[...document.querySelectorAll('#ch173-doc .zfa-wit-head, #ch173-doc .zfa-wit-sign')].map(e => getComputedStyle(e).fontKerning)")
+        check(f'{tag} بیان 161: متن پر kerning بند (v579 — justify، جُڑے الفاظ نہیں: سب سے تنگ جگہ ≥ 0.19em)؛ کاغذ / عنوان / دستخط خودکار',
+              s and s['kern'] == 'none' and m['body'] == 'auto' and m['kern'] == 'none' and m['min'] is not None and m['min'] >= 0.19
+              and hd and all(x == 'auto' for x in hd), (s, m, hd))
     except Exception as e:
         check(f'{tag} بیان 161: حصہ رک گیا', False, repr(e)[:400])
 
@@ -256,7 +262,7 @@ def run(b, tag, vp, extra):
             hb = final_print(pg, lambda: pg.evaluate("(h) => { dioPrint(h); return 0; }", merged))
             m = mq.evaluate(PAPER, [hb, 'zz-none'])
             ch = [x for x in m['parts'] if x['challan']]; rest = [x for x in m['parts'] if not x['challan']]
-            check(f'{tag} پورا مقدمہ: چالان والا حصہ kerning بند، ضمنی اور درخواست خودکار',
+            check(f'{tag} پورا مقدمہ: چالان والا حصہ kerning بند، ضمنی اور درخواست کا کاغذ خودکار (ضمنی کا صرف متن v580 سے بند — اوپر جانچا)',
                   m['body'] == 'auto' and len(ch) == 1 and ch[0]['kern'] == 'none' and ch[0]['text'] == 'none' and len(rest) == 2
                   and all(x['kern'] == 'auto' and x['text'] == 'auto' for x in rest), m['parts'])
         except Exception as e:

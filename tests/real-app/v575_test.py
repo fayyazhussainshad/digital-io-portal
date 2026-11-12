@@ -9,7 +9,7 @@
   7) کوائف مقدمے کی chip «وقوعہ جات» میں — ضمنی اب نہیں پوچھتی؛ جو نہ ہو وہ پیلا، کچھ نہیں رکتا
   8) نقشہ موقع کے «امتیازی نشانات» ضمنی میں چاروں سمتوں کے بعد خود؛ خالی ہوں تو پیلا خانہ
   9) DSP کی ضمنی: «مرتبہ» = نام، رینک، پوسٹ، سرکل (آخر میں دوبارہ DSP نہیں)
-  اور v574 کی سب جانچیں: MW کے 151 نمونے، بلاک نظام، مثل کی لکیر، نیچے 0.6cm، Ctrl+S / Ctrl+P، reload، ایک تاریخ ایک ضمنی
+  اور v574 کی سب جانچیں: MW کے 151 نمونے، بلاک نظام، مثل کی لکیر، نیچے 0.6cm (v580: 0.4cm)، Ctrl+S / Ctrl+P، reload، ایک تاریخ ایک ضمنی
 چلانا: `python3 v575_test.py` (سرور: repo کی جڑ میں `python3 -m http.server 8770`)؛ ایک ہی: DIO_ONLY=desktop|mobile
 """
 from v564_common import *
@@ -323,8 +323,8 @@ def run(b, name, kw):
     # ═══ 10) چھپائی — «⋯» → «پرنٹ» اور Ctrl+P ═══
     asked, h = print_snap(pg, 'menu')
     body_h = h.split('<body', 1)[-1] if h else ''
-    check(f'{name}: «⋯» → «پرنٹ» — کاغذ پوچھا، @page اوپر 1cm، نیچے 0.6cm',
-          asked and bool(re.search(r'@page\{\s*size:8\.5in 13in;\s*margin:1cm 0 0\.6cm 0;', h)), re.findall(r'@page\{[^}]*\}', h)[:2])
+    check(f'{name}: «⋯» → «پرنٹ» — کاغذ پوچھا، @page اوپر 1cm، نیچے 0.4cm (v580، افسر کا انتخاب)',
+          asked and bool(re.search(r'@page\{\s*size:8\.5in 13in;\s*margin:1cm 0 0\.4cm 0;', h)), re.findall(r'@page\{[^}]*\}', h)[:2])
     check(f'{name}: چھپائی — سرخی «رپورٹ ضمنی بیرونی»، کالم 4 میں خلاصہ («از» نہیں)، ▾ نہیں',
           'رپورٹ ضمنی بیرونی' in body_h and KH in body_h and '>از۔<' not in body_h and 'zf-cpick' not in body_h and 'نامعلوم ملزم</span>' not in body_h, body_h.count('رپورٹ ضمنی بیرونی'))
     check(f'{name}: چھپائی میں پیلا خانہ نہیں — خالی خانہ «۔۔۔۔۔۔۔۔»', body_h.count('۔۔۔۔۔۔۔۔') >= 1 and 'class="zf-tv"' not in body_h and 'کھیت' in body_h, body_h.count('۔۔۔۔۔۔۔۔'))
@@ -404,17 +404,17 @@ def run(b, name, kw):
     ACCEPT[0] = False
     pg.evaluate("typeof _r173Dirty !== 'undefined' && (_r173Dirty = false); 0")
 
-    # ═══ 15) لمبی ضمنی — صفحات، نیچے 0.6cm، مثل کی لکیر صفحہ 2 پر ═══
+    # ═══ 15) لمبی ضمنی — صفحات، نیچے 0.4cm (v580)، مثل کی لکیر صفحہ 2 پر ═══
     new_zimni(pg)
     pg.evaluate(fill_js()); pg.wait_for_timeout(800)
     asked, h = print_snap(pg, 'menu')
     p3 = html_pdf(b, h, V + f'{name}_long.pdf')
     npg, _sz = pdf_info(p3)
-    an = [analyze(p, 0.6) for p in page_pngs(p3, name + '_long')]
+    an = [analyze(p, 0.4) for p in page_pngs(p3, name + '_long')]
     full = an[:-1]
-    check(f'{name}: لمبی ضمنی — {npg} صفحات؛ کھڑی لکیریں نیچے کے حاشیے (0.6cm) تک — v564 کی حد: 8px',
-          npg >= 2 and all(a_['lines'] >= 2 and all(0.5 <= e <= 0.88 for e in a_['line_end_cm']) for a_ in full), [(a_['lines'], a_['line_end_cm']) for a_ in an])
-    check(f'{name}: کسی صفحے پر سیاہی نیچے کے 0.5cm میں نہیں (پرنٹر میں آخری سطر نہیں کٹتی)', all(a_['low_cm'] >= 0.5 for a_ in an), [a_['low_cm'] for a_ in an])
+    check(f'{name}: لمبی ضمنی — {npg} صفحات؛ کھڑی لکیریں نیچے کے حاشیے (0.4cm) تک — v564 کی حد: 8px',
+          npg >= 2 and all(a_['lines'] >= 2 and all(0.3 <= e <= 0.68 for e in a_['line_end_cm']) for a_ in full), [(a_['lines'], a_['line_end_cm']) for a_ in an])
+    check(f'{name}: کسی صفحے پر سیاہی نیچے کے حاشیے (0.4cm) کے اندر نہیں (پرنٹر میں آخری سطر نہیں کٹتی)', all(a_['low_cm'] >= 0.35 for a_ in an), [a_['low_cm'] for a_ in an])
     ev = all(a_['diag'] >= 100 for i, a_ in enumerate(an) if (i + 1) % 2 == 0)
     od_ = all(a_['diag'] < 45 for i, a_ in enumerate(an) if (i + 1) % 2 == 1)
     check(f'{name}: مثل کی 2pt لکیر — صرف جفت صفحات (2، 4 …) پر', ev and od_, [(i + 1, a_['diag']) for i, a_ in enumerate(an)])

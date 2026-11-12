@@ -54,12 +54,16 @@ test('v569: چالان کا کاغذ — قاعدہ <head> کے شروع میں 
   assert.ok(/text-justify:inter-word !important; word-spacing:normal !important; font-kerning:none !important; \}/.test(R));
 });
 
-test('v569: ضمنی (منسلک اندرونی شیٹ سمیت) کا کاغذ — 3 نومبر سے پہلے کی طرح، kerning کا کوئی قاعدہ نہیں', () => {
+test('v569: ضمنی (منسلک اندرونی شیٹ سمیت) کا کاغذ — پورے کاغذ پر kerning کا کوئی قاعدہ نہیں (v580: صرف متن پر بند، تاکہ justify میں الفاظ نہ جُڑیں)', () => {
   const p = fnOf(Z, '_zimniPrintHTML');
   assert.ok(p, '_zimniPrintHTML');
   assert.ok(!/dio-text-css|dioTextCSS|font-kerning/.test(p));
   assert.ok(/<head><meta charset="UTF-8"><title> <\/title>\n {4}\$\{\(typeof dioFontHead === 'function'\) \? dioFontHead\(\) : ''\}/.test(p), 'v563 کی ترتیب: عنوان کے فوراً بعد فونٹ');
-  assert.ok(!/font-kerning/.test(fnOf(Z, '_zimniFormCSS') + fnOf(Z, '_zfAttFormCSS')), 'ضمنی اور منسلک شیٹ کی CSS');
+  // v580 (افسر کا حکم 12 نومبر 2026، «پوری بیرونی ضمنی» justify): kerning صرف متن کے خانے پر بند — کاغذ / عنوان / سرنامہ پر نہیں
+  const zf = fnOf(Z, '_zimniFormCSS'), za = fnOf(Z, '_zfAttFormCSS');
+  assert.deepStrictEqual(zf.match(/[^\n]*font-kerning[^\n]*/g), ['  #ch173-doc .zf-body{ font-kerning:none; }'], 'ضمنی: صرف .zf-body');
+  assert.ok(!/font-kerning/.test(za.replace('${_zfJustifyCSS()}', '')), 'منسلک شیٹ: صرف مشترکہ justify قاعدہ');
+  assert.ok(!/html #ch173-doc\{ font-kerning/.test(zf + za), 'پورے کاغذ پر نہیں');
   // اکیلا بیان 161 — v568 والا (27 اکتوبر) جوں کا توں
   assert.ok(/html #ch173-doc\{ font-kerning:auto; \}/.test(fnOf(Z, '_zaFormCSS')));
 });

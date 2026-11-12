@@ -83,14 +83,14 @@ test('v574: پرانی محفوظ ضمنیوں کے نام نئی اقسام پ�
   assert.strictEqual(N('میری اپنی قسم'), 'میری اپنی قسم', 'افسر کی اپنی قسم جوں کی توں');
 });
 
-test('v575: ضمنی کی پٹی چھپی؛ کاغذ کے کونوں میں ▾ (دائیں = ضمنی کی قسم، بائیں = نوعیت)؛ نیچے 0.6cm', () => {
+test('v575: ضمنی کی پٹی چھپی؛ کاغذ کے کونوں میں ▾ (دائیں = ضمنی کی قسم، بائیں = نوعیت)؛ نیچے کا حاشیہ ایک قدر (v580: 0.4cm)', () => {
   assert.ok(/<div id="zf-tools" class="no-print zf-tools\$\{inDocView \? '' : ' zf-tools-show'\}">/.test(Z), 'پرانی پٹی صرف دستاویز کی پٹی نہ ہو تو');
   assert.ok(/id="zf-save-btn" class="btn btn-primary btn-sm dio-modbtn[^"]*"/.test(Z) && /data-dio-print onclick="_printZimniCurrent\(\)"/.test(Z), 'محفوظ / پرنٹ کے بٹن DOM میں (چھپے)');
   assert.ok(!/id="zf-corners"/.test(Z) && !/id="zf-khulasa"/.test(Z), 'کاغذ کے اوپر کوئی قطار / خلاصے کا خانہ نہیں');
   assert.ok(/id="zf-cp-main" class="zf-cpick no-print[^"]*" onclick="_zimniCornerMenu\(event,'main'\)"/.test(Z) && /id="zf-cp-sub" class="zf-cpick no-print[^"]*" onclick="_zimniCornerMenu\(event,'sub'\)"/.test(Z));
   assert.ok(/if \(m\) \{ m\.style\.top = top \+ 'px'; m\.style\.left = \(left \+ r\.width - 4 - m\.offsetWidth\) \+ 'px'; \}   \/\/ دائیں کونا/.test(Z), 'ضمنی کی قسم = دائیں کونا');
   assert.ok(/if \(u\) \{ u\.style\.top = top \+ 'px'; u\.style\.left = \(left \+ 4\) \+ 'px'; \}/.test(Z), 'نوعیت = بائیں کونا');
-  assert.ok(/^const ZF_PAGE_BOT_CM = 0\.6;$/m.test(Z));
+  assert.ok(/^const ZF_PAGE_BOT_CM = 0\.4;$/m.test(Z));   // v580 (افسر کا انتخاب 12 نومبر 2026)
   assert.ok(/padding:1cm \$\{side\} \$\{ZF_PAGE_BOT_CM\}cm \$\{side\}/.test(Z), 'اسکرین کا کاغذ = چھپائی');
   assert.ok(/var contentH=\(isA4\?11\.69:13\)\*96 - CM - BOT;/.test(Z), 'صفحے کی اونچائی اسی حاشیے سے');
 });
