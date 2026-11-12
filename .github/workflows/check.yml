@@ -157,7 +157,7 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh v568_sync_test.py
-      - name: v569 — word spacing — the 3 Nov «font kerning off» rule only on the challan (report 173) — challan screen / print button / Ctrl+P (byte-identical) / browser-menu print / share PDF kerning off, narrowest gap ≥ 0.19em; bairooni zimni, darkhwast, saza slip, index, RFA, incident report back to the pre-3-Nov spacing (kerning auto); statement 161 paper auto, its statement text off (v579, justified); whole-case print — challan part off, others auto (v569_test.py)
+      - name: v569 — word spacing — the 3 Nov «font kerning off» rule only on the challan (report 173) — challan screen / print button / Ctrl+P (byte-identical) / browser-menu print / share PDF kerning off, narrowest gap ≥ 0.19em; darkhwast, saza slip, index, RFA, incident report back to the pre-3-Nov spacing (kerning auto); bairooni zimni and statement 161 paper auto, their text off (v579 / v580, justified); whole-case print — challan part off, others auto (v569_test.py)
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh v569_test.py
@@ -193,7 +193,7 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh t9_sync_test.py
-      - name: v575 — whole system without the top document bar (⋯ menu in the bottom corner), zimni ▾ in the paper corners (right = type, left = nature), no «لکھنے والا» field (SHO / DSP from the type), heading «رپورٹ ضمنی بیرونی» protected, khulasa in column 4 instead of «از», کوائف in the case chip «وقوعہ جات», naqsha distinctive marks after the four directions, DSP line name-rank-post-circle, Ctrl+R / L / E, plus v574 (151 MW templates, 0.6 cm bottom margin, binding line, Ctrl+S / Ctrl+P, reload, one zimni per date) (v575_test.py)
+      - name: v575 — whole system without the top document bar (⋯ menu in the bottom corner), zimni ▾ in the paper corners (right = type, left = nature), no «لکھنے والا» field (SHO / DSP from the type), heading «رپورٹ ضمنی بیرونی» protected, khulasa in column 4 instead of «از», کوائف in the case chip «وقوعہ جات», naqsha distinctive marks after the four directions, DSP line name-rank-post-circle, Ctrl+R / L / E, plus v574 (151 MW templates, bottom margin (v580 — 0.4 cm), binding line, Ctrl+S / Ctrl+P, reload, one zimni per date) (v575_test.py)
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh v575_test.py
@@ -209,10 +209,14 @@ jobs:
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh v578_test.py
-      - name: v579 — Task 7-C11 — statement 161 text fully justified (Urdu RTL, last line right) on screen, print, share PDF and Word, no joined words (every gap ≥ 0.19em), the line before a page break justified too; headings / signature unchanged; attached androoni sheet of a bairooni zimni unchanged (v579_test.py)
+      - name: v579 — Task 7-C11 — statement 161 text fully justified (Urdu RTL, last line right) on screen, print, share PDF and Word, no joined words (every gap ≥ 0.19em), the line before a page break justified too; headings / signature unchanged; attached androoni sheet of a bairooni zimni justified too (v580) (v579_test.py)
         if: always()
         working-directory: tests/real-app
         run: bash ci_run.sh v579_test.py
+      - name: v580 — bairooni zimni pages 3, 5, 7 … on the androoni form header (25—54(2), FIR / date / thana), table / blocks / serials kept (a split entry continues under the header), whole bairooni zimni justified with no joined words (screen, print, line before a page break, share PDF, Word), block gap ≈10px (was 21px), bottom margin 0.4 cm, dash numbers (mobile / CNIC) left-to-right on screen / print / Word for zimni and statement 161 while typing (caret kept), saved text unchanged, Save → reload (v580_test.py)
+        if: always()
+        working-directory: tests/real-app
+        run: bash ci_run.sh v580_test.py
       - name: Screenshots and print PDFs
         if: always()
         uses: actions/upload-artifact@v4

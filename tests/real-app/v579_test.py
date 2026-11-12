@@ -5,7 +5,7 @@ PDF اور Word — الفاظ جُڑے بغیر؛ بیرونی ضمنی کی م
 افسر کی ہدایت (12 نومبر 2026):
   11) «The text of بیانات 161 is not properly justified. Make it fully justified (Urdu RTL, last line of each paragraph aligned
       right) on screen, print, PDF and Word — without making words join.»
-  10) منسلک اندرونی شیٹ (بیرونی ضمنی) بالکل ویسی — الگ کوڈ / CSS
+  10) منسلک اندرونی شیٹ (بیرونی ضمنی) — الگ کوڈ، مگر v580 سے متن کا وہی justify قاعدہ (افسر کا حکم 12 نومبر)
 ناپ: ہر سطر کا بایاں سرا (RTL میں سطر کا آخر) کاغذ کے بائیں کنارے تک (justify) — آخری سطر نہیں؛ الفاظ کے بیچ کی ہر خالی جگہ
      ≥ 0.19em (جُڑے الفاظ نہیں)؛ صفحے کے توڑ سے پہلے کی سطر بھی پوری؛ Word میں خانے کے اندر سیدھ لکھی ہوئی، LibreOffice سے کھول کر۔
 چلانا: `python3 v579_test.py` — ایک ہی: DIO_ONLY=desktop|mobile
@@ -194,7 +194,7 @@ def run(desktop):
             except Exception as e:
                 check(f'{tag} 11 Word', False, repr(e)[:300])
 
-        # ═══ 10) بیرونی ضمنی کی منسلک اندرونی شیٹ — جوں کی توں ═══
+        # ═══ 10) بیرونی ضمنی کی منسلک اندرونی شیٹ — v580 سے وہی justify ═══
         try:
             pg.evaluate(OLD + '; 0')
             pg.evaluate("""([txt]) => { const o = currentOfficer || {}; const c = window.__db.cases.find(x => x.id === 'c1');
@@ -218,8 +218,10 @@ def run(desktop):
                 if pg.evaluate("window.__snaps.length"): break
                 pg.wait_for_timeout(200)
             hz = pg.evaluate("window.__snaps[0] || ''")
-            check(f'{tag} 10: بیرونی ضمنی کی منسلک اندرونی شیٹ — کوئی نیا قاعدہ نہیں (kerning خودکار، justify / v579 کی CSS نہیں، کاغذ پر zfa-pgpre نہیں)',
-                  att and att['kern'] == 'auto' and not att['css'] and 'zf-androoni' in hz and 'zfa-pgpre' not in hz and 'font-kerning:none' not in hz, att)
+            # v580 (افسر کا حکم 12 نومبر 2026: «بیرونی ضمنی کے ساتھ لگی اندرونی ضمنی کو ہاتھ نہیں لگایا، اس کو ٹھیک کریں»):
+            #   منسلک شیٹ کا متن بھی وہی justify (متن پر kerning بند) — اسکرین اور کاغذ
+            check(f'{tag} 10: بیرونی ضمنی کی منسلک اندرونی شیٹ — v580: متن justify، متن پر kerning بند (بیان 161 والا قاعدہ)، کاغذ پر بھی',
+                  att and att['kern'] == 'none' and att['ta'] == 'justify' and att['css'] and 'zf-androoni' in hz and '.zfa-body{ font-kerning:none; }' in hz, att)
         except Exception as e:
             check(f'{tag} 10: منسلک اندرونی شیٹ', False, repr(e)[:300])
         check(f'{tag}: کوئی JS غلطی نہیں', not errs, errs[:4])

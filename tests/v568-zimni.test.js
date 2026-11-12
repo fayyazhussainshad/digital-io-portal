@@ -48,13 +48,13 @@ test('v568: منسلک اندرونی شیٹ (بیرونی ضمنی) اکیلے 
   assert.ok(/_zfAttFormCSS\(\)/.test(pr) && !/_zaFormCSS\(/.test(pr), 'پرنٹ');
   assert.ok(/_zfAttDefaultBody/.test(sk) && !/_zaDefaultBody/.test(sk), 'پرنٹ کی شیٹ');
   assert.ok(/_zfAttDefaultBody/.test(en) && /_zfAttAutoNumbers/.test(en) && !/_zaDefaultBody\(|_zaAutoNumbers\(/.test(en), 'ایڈیٹر کی شیٹ');
-  // نقل حرف بہ حرف (صرف نام بدلا): CSS میں kerning کا نیا قاعدہ صرف اکیلے بیان 161 کا
-  assert.ok(/html #ch173-doc\{ font-kerning:auto; \}/.test(fn('_zaFormCSS')), 'اکیلا بیان 161: 27 اکتوبر کی طرح kerning خودکار');
-  assert.ok(!/font-kerning/.test(fn('_zfAttFormCSS')), 'منسلک شیٹ: کوئی تبدیلی نہیں');
+  // نقل حرف بہ حرف (صرف نام بدلا): CSS میں صرف اکیلے بیان 161 کا «کاغذ پر kerning خودکار» (v568) الگ
+  assert.ok(/html #ch173-doc\{ font-kerning:auto; \}/.test(fn('_zaFormCSS')), 'اکیلا بیان 161: 27 اکتوبر کی طرح کاغذ پر kerning خودکار');
+  assert.ok(!/html #ch173-doc\{ font-kerning/.test(fn('_zfAttFormCSS')), 'منسلک شیٹ: کاغذ کا قاعدہ اپنی بیرونی ضمنی والا');
+  // v580 (افسر کا حکم 12 نومبر 2026): منسلک شیٹ کا متن بھی بیان 161 کی طرح justify، الفاظ جُڑے بغیر — دونوں ایک ہی مشترکہ قاعدہ
+  assert.ok(/\$\{_zfJustifyCSS\(\)\}/.test(fn('_zfAttFormCSS')) && /\$\{_zfJustifyCSS\(\)\}/.test(fn('_zaFormCSS')), 'دونوں میں _zfJustifyCSS');
   assert.strictEqual(fn('_zfAttFormCSS').replace('_zfAttFormCSS', 'X'),
-    fn('_zaFormCSS').replace('_zaFormCSS', 'X').replace(/\n  \/\* v568 \(TASK 7-D[\s\S]*?\*\/\n  html #ch173-doc\{ font-kerning:auto; \}/, '')
-      // v579 (TASK 7-C11): اکیلے بیان 161 کے متن کی justify / kerning — صرف اسی کی CSS میں، منسلک شیٹ میں نہیں
-      .replace(/  \/\* v579 \(TASK 7-C11[\s\S]*?#ch173-doc \.zfa-pgsp\{ white-space:normal; \}\n/, ''), 'باقی CSS ایک جیسی');
+    fn('_zaFormCSS').replace('_zaFormCSS', 'X').replace(/\n  \/\* v568 \(TASK 7-D[\s\S]*?\*\/\n  html #ch173-doc\{ font-kerning:auto; \}/, ''), 'باقی CSS ایک جیسی');
 });
 
 test('v568: فہرست — ترمیم / پرنٹ / شیئر / ڈپلیکیٹ / حذف (PDF / نقل نہیں)؛ بٹن مقدمہ کی فہرست جیسے', () => {

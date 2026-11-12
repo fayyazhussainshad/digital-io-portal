@@ -323,8 +323,9 @@ def run(desktop):
         kb = pg.evaluate("getComputedStyle(document.getElementById('ch173-doc')).fontKerning")
         hb = grab(pg, lambda: pg.evaluate("(document.querySelector('#dio-dv-bar button[onclick=\"_dioPrintCurrent()\"]') || document.querySelector('[data-dio-print]')).click()"), paper)
         calls = pg.evaluate("[window.__zaCssCalls, window.__zaBodyCalls]")
-        check(f'{tag} D14: بیرونی ضمنی کی منسلک اندرونی شیٹ — ایڈیٹر اور پرنٹ اکیلے بیان 161 کی CSS / خاکہ نہیں لیتے (اپنی نقل)؛ kerning اپنی ضمنی جیسی (v569: خودکار)',
-              att and calls == [0, 0] and kb == 'auto' and 'font-kerning' not in hb and 'zf-androoni' in hb, (att, calls, kb))
+        # v580: کاغذ (#ch173-doc) خودکار؛ متن پر kerning بند صرف متن کے خانوں میں (.zf-body / .zfa-body — justify)
+        check(f'{tag} D14: بیرونی ضمنی کی منسلک اندرونی شیٹ — ایڈیٹر اور پرنٹ اکیلے بیان 161 کی CSS / خاکہ نہیں لیتے (اپنی نقل)؛ کاغذ کی kerning اپنی ضمنی جیسی (خودکار؛ v580: صرف متن پر بند)',
+              att and calls == [0, 0] and kb == 'auto' and 'html #ch173-doc{ font-kerning' not in hb and 'dio-text-css' not in hb and 'zf-androoni' in hb, (att, calls, kb))
         # C (اصل وجہ 2): اسی ضمنی پر Ctrl+S / اوپر کی پٹی کا «محفوظ» = ضمنی (بیان 161 نہیں)
         pg.evaluate("(() => { const e = document.querySelector('#ch173-doc td.zf-c-body .zf-body'); e.scrollIntoView({ block: 'center' }); e.focus(); const r = document.createRange(); r.selectNodeContents(e); r.collapse(false); const s = getSelection(); s.removeAllRanges(); s.addRange(r); return 0; })()")
         pg.keyboard.type(' نئی سطر'); pg.wait_for_timeout(300)

@@ -15,18 +15,20 @@ const fn = (name) => {
 };
 
 test('v579: اکیلا بیان 161 — متن justify (اسکرین پر index.html کا «div → دائیں» نہیں)، kerning صرف متن پر بند، عنوان / دستخط خودکار', () => {
-  const C = fn('_zaFormCSS');
+  // v580: یہ قاعدے اب مشترکہ _zfJustifyCSS() میں — اکیلا بیان 161 اور منسلک شیٹ دونوں ایک ہی
+  assert.ok(/\$\{_zfJustifyCSS\(\)\}/.test(fn('_zaFormCSS')));
+  const C = fn('_zfJustifyCSS');
   assert.ok(/#ch173-doc table\.zfa-tbl td\.zfa-c-body\{ text-align:right; text-align-last:auto; \}/.test(C), 'Word: خانے کے اندر سیدھ صاف');
   assert.ok(/#ch173-doc \.zfa-body\{ font-kerning:none; \}/.test(C), 'بیان کا متن: kerning بند');
   assert.ok(/#ch173-doc \.zfa-body div, #ch173-doc \.zfa-body p\{ text-align:inherit; text-align-last:inherit; \}/.test(C), 'ہر div / p والد کی سیدھ');
   assert.ok(/#ch173-doc \.zfa-wit-head, #ch173-doc \.zfa-wit-headrow, #ch173-doc \.zfa-wit-close,\n  #ch173-doc \.zfa-wit-sign\{ font-kerning:auto; \}/.test(C), 'عنوان / دستخط 27 اکتوبر جیسے');
   assert.ok(/#ch173-doc \.zfa-pgpre\{ display:block; text-align-last:justify; \}\n  #ch173-doc \.zfa-pgsp\{ white-space:normal; \}/.test(C), 'صفحے کے توڑ سے پہلے کی سطر (اور اس کے آخر کی خالی جگہ)');
-  assert.ok(/html #ch173-doc\{ font-kerning:auto; \}/.test(C), 'کاغذ کا باقی حصہ 27 اکتوبر جیسا');
+  assert.ok(/html #ch173-doc\{ font-kerning:auto; \}/.test(fn('_zaFormCSS')), 'کاغذ کا باقی حصہ 27 اکتوبر جیسا');
 });
 
-test('v579: منسلک اندرونی شیٹ (بیرونی ضمنی) کی CSS اور کاغذ کی تیاری نہیں بدلی', () => {
+test('v579→v580: منسلک اندرونی شیٹ — v580 میں افسر کے حکم سے وہی justify قاعدہ (پہلے جوں کی توں)؛ ضمنی کی چھپائی میں بیان 161 کا binder نہیں', () => {
   const A = fn('_zfAttFormCSS');
-  assert.ok(A && !/font-kerning|zfa-pgpre|v579/.test(A));
+  assert.ok(A && /\$\{_zfJustifyCSS\(\)\}/.test(A) && !/html #ch173-doc\{ font-kerning/.test(A));
   assert.ok(!/_zaJustifyBeforeBreak/.test(fn('_zimniPrintHTML')) && !/_zaJustifyBeforeBreak/.test(fn('_zimniPaginate')));
 });
 
@@ -46,5 +48,5 @@ test('v579: صفحے کا توڑ — صرف اکیلے بیان 161 کے binder 
 test('v579: سروس ورکر کا نیا نسخہ', () => {
   const m = /const CACHE_NAME = 'digital-io-v(\d+)';/.exec(read('sw.js'));
   assert.ok(m && Number(m[1]) >= 579);
-  assert.ok(/ZIMNI_A_VER = 'zimni-androoni v26 — v579/.test(Z));
+  assert.ok(/ZIMNI_A_VER = 'zimni-androoni v\d+ — [^']*v579/.test(Z));
 });
