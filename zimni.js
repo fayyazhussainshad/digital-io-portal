@@ -1,6 +1,6 @@
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_VER = 'zimni v39 (v580) — pages 3, 5, 7 … on the androoni form (25—54(2)) header, blocks / serials kept; text justified, kerning off on the text; block gap ≈10px; bottom margin 0.4 cm; dash numbers LTR';
+const ZIMNI_VER = 'zimni v40 (v581) — police form number 25—54(1) / 25—54(2) left-to-right too (screen, print, Word); v580: pages 3, 5, 7 … on the androoni form (25—54(2)) header, blocks / serials kept; text justified, kerning off on the text; block gap ≈10px; bottom margin 0.4 cm; dash numbers LTR';
 window.ZIMNI_VER = ZIMNI_VER;
 
 /* ═══════════════════════════════════════════════════════════
@@ -3552,7 +3552,8 @@ window._zimniColResize = _zimniColResize;
 //  ڈیش پر سطر نہیں ٹوٹتی) — چالان (_ch173LtrIso) اور واقعاتی رپورٹ والا اصول۔ صرف دکھانے کے لیے: محفوظ / مسودہ / نقل
 //  میں یہ خانہ نہیں (_zimniCleanHTML کھول دیتا ہے) — محفوظ تحریر کبھی نہیں بدلتی؛ لکھتے وقت جس ہندسے پر کرسر ہو
 //  (ابھی لکھا جا رہا) اسے نہیں چھیڑا جاتا، کرسر اپنی جگہ رہتا ہے۔ بیرونی ضمنی، منسلک اندرونی شیٹ اور بیان 161۔
-const ZF_LTRN_RE = /\+?[0-9\u06F0-\u06F9\u0660-\u0669]+(?:[-\u2010-\u2015][0-9\u06F0-\u06F9\u0660-\u0669]+)+/g;
+// v581 (افسر کا حکم 12 نومبر 2026): پولیس فارم نمبر «25—54(2)» بھی سیدھا — قوسین والا آخری نمبر اسی خانے میں
+const ZF_LTRN_RE = /\+?[0-9\u06F0-\u06F9\u0660-\u0669]+(?:[-\u2010-\u2015][0-9\u06F0-\u06F9\u0660-\u0669]+)+(?:\([0-9\u06F0-\u06F9\u0660-\u0669]+\))*/g;
 function _zfLtrNums(root, caretSafe) {
   if (!root) return 0;
   const d = root.ownerDocument || document;
@@ -3564,7 +3565,7 @@ function _zfLtrNums(root, caretSafe) {
   let made = 0, na = null, nf = null;
   nodes.forEach(t => {
     const p = t.parentNode;
-    if (!p || (p.closest && p.closest('.dio-ltrn, .ch173-ltr, bdi, script, style, .zf-formno, .zfa-formno'))) return;   // فارم نمبر کی سطر جوں کی توں
+    if (!p || (p.closest && p.closest('.dio-ltrn, .ch173-ltr, bdi, script, style'))) return;   // v581: فارم نمبر کی سطر بھی (پہلے چھوڑی تھی)
     const v = t.nodeValue; const ms = []; let m;
     ZF_LTRN_RE.lastIndex = 0;
     while ((m = ZF_LTRN_RE.exec(v))) ms.push([m.index, m.index + m[0].length]);
@@ -5870,12 +5871,12 @@ function _zimniAheadHTML(o, c) {
   try {
     const t = document.createElement('template'); t.innerHTML = _zfAttDefaultBody(o || {}, c || {});
     const h = t.content.querySelector('.zfa-head'), m = t.content.querySelector('.zfa-meta');
-    return (h ? h.outerHTML : '') + (m ? m.outerHTML : '');
+    return _zfLtrHTML((h ? h.outerHTML : '') + (m ? m.outerHTML : ''));   // v581: فارم نمبر 25—54(2) سیدھا
   } catch (_) { return ''; }
 }
 window._zimniAheadHTML = _zimniAheadHTML;
 function _zimniZaSkel(o, c) {
-  return '<div class="zf-androoni">' + _zfAttDefaultBody(o || {}, c || {}) + '</div>';   // v568: اپنی منجمد نقل
+  return _zfLtrHTML('<div class="zf-androoni">' + _zfAttDefaultBody(o || {}, c || {}) + '</div>');   // v568: اپنی منجمد نقل؛ v581: فارم نمبر سیدھا
 }
 function _zimniPrintHTML(inner) {
   const paper = (typeof _ch173Paper !== 'undefined') ? _ch173Paper : 'legal';
@@ -6295,7 +6296,7 @@ try { _dioBindCtrlS(); } catch (_) { /* ikhtiyari qadam — na ho sake to chhoR 
 
 // ═══ فائل کا نمبر — تصدیق کے لیے کہ نئی فائل چل رہی ہے یا پرانی cached ═══
 // کنسول میں لکھیں:  ZIMNI_A_VER    →  اگر نیچے والا نمبر نظر آئے تو نئی فائل ہے
-const ZIMNI_A_VER = 'zimni-androoni v27 — v580: dash numbers LTR, attached sheet justified too; v579: statement text fully justified (screen, print, PDF, Word), kerning off on the statement text only; v568: 27 Oct (v558) look, date/title from the statement, no false «saved»';
+const ZIMNI_A_VER = 'zimni-androoni v28 — v581: form number 25—54(2) left-to-right; v580: dash numbers LTR, attached sheet justified too; v579: statement text fully justified (screen, print, PDF, Word), kerning off on the statement text only; v568: 27 Oct (v558) look, date/title from the statement, no false «saved»';
 window.ZIMNI_A_VER = ZIMNI_A_VER;
 
 /* ═══════════════════════════════════════════════════════════

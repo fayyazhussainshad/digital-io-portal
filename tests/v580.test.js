@@ -16,10 +16,10 @@ const fn = (name) => {
   return Z.slice(i, j > i ? j : i + 30000);
 };
 
-test('v580 (7): ڈیش والے ہندسے — LTR خانہ (isolate، سطر نہیں ٹوٹتی)؛ فارم نمبر کی سطر اور پہلے سے LTR حصہ نہیں چھیڑا جاتا', () => {
-  assert.ok(/^const ZF_LTRN_RE = \/\\\+\?\[0-9\\u06F0-\\u06F9\\u0660-\\u0669\]\+\(\?:\[-\\u2010-\\u2015\]\[0-9\\u06F0-\\u06F9\\u0660-\\u0669\]\+\)\+\/g;$/m.test(Z));
+test('v580 (7): ڈیش والے ہندسے — LTR خانہ (isolate، سطر نہیں ٹوٹتی)؛ پہلے سے LTR حصہ نہیں چھیڑا جاتا (v581: فارم نمبر بھی)', () => {
+  assert.ok(/^const ZF_LTRN_RE = \/\\\+\?\[0-9\\u06F0-\\u06F9\\u0660-\\u0669\]\+\(\?:\[-\\u2010-\\u2015\]\[0-9\\u06F0-\\u06F9\\u0660-\\u0669\]\+\)\+/m.test(Z));
   const N = fn('_zfLtrNums');
-  assert.ok(/closest\('\.dio-ltrn, \.ch173-ltr, bdi, script, style, \.zf-formno, \.zfa-formno'\)/.test(N), 'فارم نمبر 25—54(2) جوں کا توں');
+  assert.ok(/closest\('\.dio-ltrn, \.ch173-ltr, bdi, script, style'\)/.test(N), 'v581: فارم نمبر 25—54(2) بھی سیدھا');
   assert.ok(/sp\.className = 'dio-ltrn'; sp\.setAttribute\('dir', 'ltr'\);/.test(N));
   assert.ok(/if \(an === t\) skip\.add\(near\(ao\)\);/.test(N) && /sel\.setBaseAndExtent\(/.test(N), 'لکھا جا رہا ہندسہ نہیں چھیڑا جاتا، کرسر اپنی جگہ');
   const J = fn('_zfJustifyCSS');
@@ -102,6 +102,6 @@ test('v580: صفحہ 3، 5، 7 … — اندرونی ضمنی (25—54(2)) کا
 test('v580: سروس ورکر کا نیا نسخہ؛ نسخوں کے نام', () => {
   const m = /const CACHE_NAME = 'digital-io-v(\d+)';/.exec(read('sw.js'));
   assert.ok(m && Number(m[1]) >= 580);
-  assert.ok(/^const ZIMNI_VER = 'zimni v39 \(v580\)/m.test(Z));
-  assert.ok(/^const ZIMNI_A_VER = 'zimni-androoni v27 — v580/m.test(Z));
+  assert.ok(/^const ZIMNI_VER = 'zimni v\d+ \(v\d+\) — [^']*v580: pages 3, 5, 7/m.test(Z));
+  assert.ok(/^const ZIMNI_A_VER = 'zimni-androoni v\d+ — [^']*v580: dash numbers LTR/m.test(Z));
 });
